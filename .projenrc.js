@@ -1,11 +1,23 @@
-const { typescript } = require('projen');
+const { typescript } = require("projen");
 const project = new typescript.TypeScriptProject({
-  defaultReleaseBranch: 'main',
-  name: 'typesafe-vtl',
+  defaultReleaseBranch: "main",
+  name: "functionless",
 
-  // deps: [],                /* Runtime dependencies of this module. */
-  // description: undefined,  /* The description is just a string that helps people understand the purpose of the package. */
-  // devDeps: [],             /* Build dependencies for this module. */
-  // packageName: undefined,  /* The "name" in package.json. */
+  deps: [
+    "@aws-cdk/aws-appsync-alpha",
+    "aws-cdk-lib",
+    "constructs",
+    "typesafe-dynamodb",
+  ],
+  eslintOptions: {
+    ignorePatterns: ["**"],
+  },
+  tsconfig: {
+    compilerOptions: {
+      lib: ["dom"],
+    },
+  },
+  gitignore: [".DS_Store"],
+  releaseToNpm: false,
 });
 project.synth();

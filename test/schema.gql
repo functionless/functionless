@@ -1,0 +1,14 @@
+type Person {
+  id: String!
+  name: String!
+  children: [Person]
+}
+type Query {
+  getPerson(id: String!): Person
+}
+input PersonInput {
+  name: String!
+}
+type Mutation {
+  addPerson(input: PersonInput!): Person
+}
