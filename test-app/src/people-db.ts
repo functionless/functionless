@@ -1,7 +1,6 @@
 import { Construct } from "constructs";
 import { aws_dynamodb, aws_lambda } from "aws-cdk-lib";
-import { Table } from "../src/table";
-import { Lambda } from "../src/lambda";
+import { Table, Lambda, appsyncFunction, $util } from "functionless";
 
 export interface Person {
   id: string;
@@ -36,4 +35,25 @@ export class PeopleDatabase extends Construct {
       ["person"]
     );
   }
+
+  readonly getPerson = appsyncFunction<(id: string) => ProcessedPerson | null>(
+    (_$context, id) => {
+      const person = this.personTable.getItem({
+        Key: {
+          id: $util.dynamodb.toDynamoDB(id),
+        },
+      });
+
+      if (person === undefined) {
+        return null;
+      }
+
+      const score = this.computeScore(person);
+
+      return {
+        ...person,
+        score,
+      };
+    }
+  );
 }

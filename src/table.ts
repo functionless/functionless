@@ -3,7 +3,6 @@ import { aws_dynamodb } from "aws-cdk-lib";
 import { Unmarshall } from "typesafe-dynamodb/lib/marshall";
 import { GetItemInput, GetItemOutput } from "typesafe-dynamodb/lib/get-item";
 import { KeyAttribute } from "typesafe-dynamodb/lib/key";
-import { Invoke } from "./statement";
 
 export function isTable(a: any): a is AnyTable {
   return a?.kind === "Table";
@@ -19,7 +18,13 @@ export class Table<
   readonly kind: "Table" = "Table";
 
   constructor(readonly resource: aws_dynamodb.ITable) {}
+}
 
+export interface Table<
+  Item extends object,
+  PartitionKey extends keyof Item,
+  RangeKey extends keyof Item | undefined = undefined
+> {
   getItem<
     Key extends KeyAttribute<Item, PartitionKey, RangeKey>,
     AttributesToGet extends keyof Item | undefined = undefined,
@@ -38,9 +43,7 @@ export class Table<
     >
   ): UnmarshallMap<
     GetItemOutput<Item, Key, AttributesToGet, ProjectionExpression>["Item"]
-  > {
-    return new Invoke(this, "GetItem", params) as any;
-  }
+  >;
 }
 
 type UnmarshallMap<Item extends any> = {} & {

@@ -1,6 +1,6 @@
 {
   "extends": "../tsconfig.json",
-  "include": ["./**/*.ts"],
+  "include": ["./**/*.ts", "../test-app/src/people-db.ts"],
   "compilerOptions": {
     "rootDir": "..",
     "noEmit": true

@@ -84,7 +84,19 @@
       "type": "runtime"
     },
     {
+      "name": "immutable",
+      "type": "runtime"
+    },
+    {
+      "name": "ts-patch",
+      "type": "runtime"
+    },
+    {
       "name": "typesafe-dynamodb",
+      "type": "runtime"
+    },
+    {
+      "name": "typescript",
       "type": "runtime"
     }
   ],
