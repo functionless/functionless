@@ -3,9 +3,7 @@ import * as appsync from "@aws-cdk/aws-appsync-alpha";
 import path from "path";
 import { PeopleDatabase } from "./people-db";
 
-export const app = new App({
-  autoSynth: false,
-});
+const app = new App();
 const stack = new Stack(app, "stack");
 
 const schema = new appsync.Schema({

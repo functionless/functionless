@@ -39,9 +39,10 @@ export class PeopleDatabase extends Construct {
   readonly getPerson = appsyncFunction<(id: string) => ProcessedPerson | null>(
     (_$context, id) => {
       const person = this.personTable.getItem({
-        Key: {
-          id: $util.dynamodb.toDynamoDB(id),
+        key: {
+          id: $util.dynamodb.toDynamoDBJson(id),
         },
+        consistentRead: true,
       });
 
       if (person === undefined) {

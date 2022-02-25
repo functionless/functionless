@@ -1,10 +1,12 @@
-import { AnyFunction } from "./appsync";
+import { AnyFunction } from "./function";
 import { AnyLambda } from "./lambda";
 import { AnyTable } from "./table";
 
 class BaseExpr<Kind extends string> {
-  // @ts-ignore
-  parent: Expr;
+  // Expr that contains this one (surrounding scope)
+  parent: Expr | undefined;
+  // Expr that is directly adjacent and above this one (same scope)
+  prev: Expr | undefined;
   constructor(readonly kind: Kind) {}
 }
 
@@ -14,10 +16,10 @@ export type Literal =
   | boolean
   | number
   | string
-  | Expr[]
-  | readonly Expr[]
+  | (Expr | Literal)[]
+  | readonly (Expr | Literal)[]
   | {
-      [key: string]: Expr;
+      [key: string]: Expr | Literal;
     };
 
 export type Expr =
@@ -34,6 +36,7 @@ export type Expr =
   | NumberLiteral
   | ObjectElement
   | ObjectLiteral
+  | ParameterDecl
   | PropRef
   | Reference
   | Return
@@ -49,9 +52,18 @@ export class FunctionDecl<
   F extends AnyFunction = AnyFunction
 > extends BaseExpr<"FunctionDecl"> {
   readonly _functionBrand?: F;
-  constructor(readonly argNames: string[], readonly body: Block) {
+  constructor(readonly parameters: ParameterDecl[], readonly body: Block) {
     super("FunctionDecl");
+    setParent(this, parameters);
     body.parent = this;
+  }
+}
+
+export const isParameterDecl = typeGuard("ParameterDecl");
+
+export class ParameterDecl extends BaseExpr<"ParameterDecl"> {
+  constructor(readonly name: string) {
+    super("ParameterDecl");
   }
 }
 
@@ -60,8 +72,11 @@ export const isBlock = typeGuard("Block");
 export class Block extends BaseExpr<"Block"> {
   constructor(readonly exprs: Expr[]) {
     super("Block");
+    let prev = undefined;
     for (const expr of exprs) {
       expr.parent = this;
+      expr.prev = prev;
+      prev = expr;
     }
   }
 }
@@ -69,7 +84,7 @@ export class Block extends BaseExpr<"Block"> {
 export const isReference = typeGuard("Reference");
 
 export class Reference extends BaseExpr<"Reference"> {
-  constructor(readonly name: AnyTable | AnyLambda) {
+  constructor(readonly ref: () => AnyTable | AnyLambda) {
     super("Reference");
   }
 }
@@ -86,7 +101,7 @@ export class VariableDecl extends BaseExpr<"VariableDecl"> {
 export const isIdentifier = typeGuard("Identifier");
 
 export class Identifier extends BaseExpr<"Identifier"> {
-  constructor(readonly id: string) {
+  constructor(readonly name: string) {
     super("Identifier");
   }
 }
@@ -96,7 +111,7 @@ export const isPropRef = typeGuard("PropRef");
 export class PropRef extends BaseExpr<"PropRef"> {
   constructor(readonly expr: Expr, readonly id: string) {
     super("PropRef");
-    expr.parent = this;
+    setParent(this, expr);
   }
 }
 
@@ -212,8 +227,9 @@ export class StringLiteral extends BaseExpr<"StringLiteral"> {
 export const isArrayLiteral = typeGuard("ArrayLiteral");
 
 export class ArrayLiteral extends BaseExpr<"ArrayLiteral"> {
-  constructor(readonly items: Expr[]) {
+  constructor(readonly items: (Expr | Literal)[]) {
     super("ArrayLiteral");
+    setParent(this, items);
   }
 }
 
@@ -224,8 +240,18 @@ export const isObjectLiteral = typeGuard("ObjectLiteral");
 export class ObjectLiteral extends BaseExpr<"ObjectLiteral"> {
   constructor(readonly properties: ObjectElement[]) {
     super("ObjectLiteral");
-    for (const prop of properties) {
-      prop.parent = this;
+    setParent(this, properties);
+  }
+}
+
+function setParent(parent: Expr, value: Expr | Literal) {
+  if (value) {
+    if (isExpr(value)) {
+      value.parent = parent;
+    } else if (Array.isArray(value)) {
+      value.forEach((v) => setParent(parent, v));
+    } else if (typeof value === "object") {
+      Object.values(value).forEach((v) => setParent(parent, v));
     }
   }
 }

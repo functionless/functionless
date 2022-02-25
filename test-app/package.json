@@ -5,7 +5,8 @@
     "prepare": "ts-patch install -s",
     "build": "tsc",
     "watch": "tsc -w",
-    "synth": "cdk synth"
+    "synth": "cdk synth",
+    "deploy": "cdk deploy"
   },
   "devDependencies": {
     "@types/node": "^14",

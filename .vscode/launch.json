@@ -6,15 +6,9 @@
       "type": "node",
       "request": "launch",
       "runtimeExecutable": "node",
-      "runtimeArgs": [
-        "--enable-source-maps",
-        "--nolazy",
-        "-r",
-        "ts-node/register/transpile-only"
-      ],
-
-      "args": ["../src/tsc.ts"],
-
+      "runtimeArgs": ["--nolazy", "--enable-source-maps"],
+      "args": ["${workspaceRoot}/scripts/compile-test-app.js"],
+      "outFiles": ["${workspaceFolder}/lib/**/*.js", "!**/node_modules/**"],
       "cwd": "${workspaceRoot}/test-app",
       "internalConsoleOptions": "openOnSessionStart",
       "skipFiles": ["<node_internals>/**", "node_modules/**"]
@@ -25,10 +19,8 @@
       "request": "launch",
       "runtimeExecutable": "node",
       "runtimeArgs": ["--nolazy"],
-
       "args": ["./lib/app.js"],
       "outFiles": ["${workspaceFolder}/lib/**/*.js", "!**/node_modules/**"],
-
       "cwd": "${workspaceRoot}/test-app",
       "internalConsoleOptions": "openOnSessionStart",
       "skipFiles": ["<node_internals>/**", "node_modules/**"]

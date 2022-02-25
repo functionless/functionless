@@ -14,10 +14,6 @@
       "type": "build"
     },
     {
-      "name": "@types/source-map-support",
-      "type": "build"
-    },
-    {
       "name": "@typescript-eslint/eslint-plugin",
       "version": "^5",
       "type": "build"
@@ -97,10 +93,6 @@
     },
     {
       "name": "immutable",
-      "type": "runtime"
-    },
-    {
-      "name": "source-map-support",
       "type": "runtime"
     },
     {

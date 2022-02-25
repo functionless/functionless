@@ -87,7 +87,11 @@ export function compile(
                     impl.parameters
                       .slice(1) // the first argument is always $context
                       .map((param) => param.name.getText())
-                      .map((arg) => ts.factory.createStringLiteral(arg))
+                      .map((arg) =>
+                        newExpr("ParameterDecl", [
+                          ts.factory.createStringLiteral(arg),
+                        ])
+                      )
                   ),
                   toExpr(impl.body),
                 ]),
@@ -106,7 +110,29 @@ export function compile(
             ),
           ]);
         } else if (ts.isCallExpression(node)) {
-          const signature = checker.getResolvedSignature(node);
+          const exprType = checker.getTypeAtLocation(node.expression);
+          const functionBrand = exprType.getProperty("__functionBrand");
+          let signature: ts.Signature | undefined;
+          if (functionBrand !== undefined) {
+            const functionType = checker.getTypeOfSymbolAtLocation(
+              functionBrand,
+              node.expression
+            );
+            const signatures = checker.getSignaturesOfType(
+              functionType,
+              ts.SignatureKind.Call
+            );
+
+            if (signatures.length === 1) {
+              signature = signatures[0];
+            } else {
+              throw new Error(
+                `Lambda Functions with multiple signatures are not currently supported.`
+              );
+            }
+          } else {
+            signature = checker.getResolvedSignature(node);
+          }
           if (signature) {
             return newExpr("Call", [
               toExpr(node.expression),
@@ -124,7 +150,7 @@ export function compile(
           const kind = getKind(node);
           if (kind !== undefined) {
             // if this is a reference to a Table or Lambda, retain it
-            return newExpr("Reference", [node]);
+            return ref(node);
           }
 
           return newExpr("Identifier", [
@@ -134,11 +160,11 @@ export function compile(
           const kind = getKind(node);
           if (kind !== undefined) {
             // if this is a reference to a Table or Lambda, retain it
-            return newExpr("Reference", [node]);
+            return ref(node);
           }
           return newExpr("PropRef", [
             toExpr(node.expression),
-            toExpr(node.name),
+            ts.factory.createStringLiteral(node.name.text),
           ]);
         } else if (
           ts.isVariableStatement(node) &&
@@ -147,7 +173,7 @@ export function compile(
           return toExpr(node.declarationList.declarations[0]);
         } else if (ts.isVariableDeclaration(node) && node.initializer) {
           return newExpr("VariableDecl", [
-            toExpr(node.name),
+            ts.factory.createStringLiteral(node.name.getText()),
             toExpr(node.initializer),
           ]);
         } else if (ts.isIfStatement(node)) {
@@ -202,12 +228,12 @@ export function compile(
           ]);
         } else if (ts.isPropertyAssignment(node)) {
           return newExpr("PropertyAssignment", [
-            toExpr(node.name),
+            ts.factory.createStringLiteral(node.name.getText()),
             toExpr(node.initializer),
           ]);
         } else if (ts.isShorthandPropertyAssignment(node)) {
           return newExpr("PropertyAssignment", [
-            toExpr(node.name),
+            ts.factory.createStringLiteral(node.name.getText()),
             toExpr(node.name),
           ]);
         } else if (ts.isSpreadAssignment(node)) {
@@ -238,6 +264,19 @@ export function compile(
         }
 
         throw new Error(`unhandled node: ${node.getText()}`);
+      }
+
+      function ref(node: ts.Expression) {
+        return newExpr("Reference", [
+          ts.factory.createArrowFunction(
+            undefined,
+            undefined,
+            [],
+            undefined,
+            undefined,
+            node
+          ),
+        ]);
       }
 
       function newExpr(type: Expr["kind"], args: ts.Expression[]) {
