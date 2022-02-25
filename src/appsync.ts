@@ -2,7 +2,7 @@ import * as appsync from "@aws-cdk/aws-appsync-alpha";
 import { AppSyncResolverEvent } from "aws-lambda";
 import { Call, FunctionDecl } from "./expression";
 import { AnyFunction } from "./function";
-import { AnyLambda } from "./lambda";
+import { AnyLambda } from "./function";
 import { VTLContext, toVTL } from "./vtl";
 import { AnyTable, isTable } from "./table";
 import {

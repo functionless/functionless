@@ -1,5 +1,5 @@
 import { AnyFunction } from "./function";
-import { AnyLambda } from "./lambda";
+import { AnyLambda } from "./function";
 import { AnyTable } from "./table";
 
 class BaseExpr<Kind extends string> {

@@ -1,4 +1,4 @@
 export * from "./appsync";
-export * from "./lambda";
+export * from "./function";
 export * from "./table";
 export * from "./util";

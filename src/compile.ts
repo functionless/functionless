@@ -2,7 +2,7 @@ import ts from "typescript";
 import { PluginConfig, TransformerExtras } from "ts-patch";
 import { BinaryOp, Expr } from "./expression";
 import { AnyTable } from "./table";
-import { AnyLambda } from "./lambda";
+import { AnyLambda } from "./function";
 export default compile;
 
 /**

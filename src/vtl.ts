@@ -1,6 +1,6 @@
 import { AnyFunction } from "./function";
 import { Call, Expr } from "./expression";
-import { isLambda } from "./lambda";
+import { isLambda } from "./function";
 import { indent, lookupIdentifier } from "./util";
 
 export interface VTLContext {

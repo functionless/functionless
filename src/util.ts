@@ -1,5 +1,5 @@
 import { Expr, Identifier } from "./expression";
-import { AnyLambda } from "./lambda";
+import { AnyLambda } from "./function";
 import { AnyTable } from "./table";
 
 export function lookupIdentifier(id: Identifier) {
