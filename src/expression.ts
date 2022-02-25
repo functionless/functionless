@@ -242,6 +242,12 @@ export class ObjectLiteral extends BaseExpr<"ObjectLiteral"> {
     super("ObjectLiteral");
     setParent(this, properties);
   }
+
+  public getProperty(name: string) {
+    return this.properties.find(
+      (prop) => prop.kind === "PropertyAssignment" && prop.name === name
+    );
+  }
 }
 
 function setParent(parent: Expr, value: Expr | Literal) {

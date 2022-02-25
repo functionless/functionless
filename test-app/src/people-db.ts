@@ -1,37 +1,44 @@
 import { Construct } from "constructs";
 import { aws_dynamodb, aws_lambda } from "aws-cdk-lib";
-import { Table, Lambda, appsyncFunction, $util } from "functionless";
+import { Table, Lambda, $util, AppsyncFunction } from "functionless";
 
 export interface Person {
   id: string;
   name: string;
 }
-
 export interface ProcessedPerson extends Person {
   score: number;
 }
-
 export class PeopleDatabase extends Construct {
-  readonly personTable = new Table<Person, "id", undefined>(
-    new aws_dynamodb.Table(this, "table", {
-      partitionKey: {
-        name: "id",
-        type: aws_dynamodb.AttributeType.STRING,
-      },
-    })
-  );
+  readonly personTable;
+  readonly computeScore;
+  readonly getPerson;
+  readonly addPerson;
 
-  readonly computeScore = new Lambda<(person: Person) => number>(
-    new aws_lambda.Function(this, "ComputeScore", {
-      code: aws_lambda.Code.fromInline("export function handle() {}"),
-      handler: "index.handle",
-      runtime: aws_lambda.Runtime.NODEJS_14_X,
-    }),
-    ["person"]
-  );
+  constructor(scope: Construct, id: string) {
+    super(scope, id);
 
-  readonly getPerson = appsyncFunction<(id: string) => ProcessedPerson | null>(
-    (_$context, id) => {
+    this.personTable = new Table<Person, "id", undefined>(
+      new aws_dynamodb.Table(this, "table", {
+        partitionKey: {
+          name: "id",
+          type: aws_dynamodb.AttributeType.STRING,
+        },
+      })
+    );
+
+    this.computeScore = new Lambda<(person: Person) => number>(
+      new aws_lambda.Function(this, "ComputeScore", {
+        code: aws_lambda.Code.fromInline("export function handle() {}"),
+        handler: "index.handle",
+        runtime: aws_lambda.Runtime.NODEJS_14_X,
+      }),
+      ["person"]
+    );
+
+    this.getPerson = new AppsyncFunction<
+      (id: string) => ProcessedPerson | null
+    >((_$context, id) => {
       const person = this.personTable.getItem({
         key: {
           id: $util.dynamodb.toDynamoDBJson(id),
@@ -49,6 +56,25 @@ export class PeopleDatabase extends Construct {
         ...person,
         score,
       };
-    }
-  );
+    });
+
+    this.addPerson = new AppsyncFunction<(input: { name: string }) => Person>(
+      (_$context, input) => {
+        const person = this.personTable.putItem({
+          key: {
+            id: {
+              S: $util.autoId(),
+            },
+          },
+          attributeValues: {
+            name: {
+              S: input.name,
+            },
+          },
+        });
+
+        return person;
+      }
+    );
+  }
 }

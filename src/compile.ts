@@ -60,12 +60,12 @@ export function compile(
         return ts.visitEachChild(node, visitor, ctx);
       }
 
-      function isAppsyncFunction(node: ts.Node): node is ts.CallExpression {
-        if (ts.isCallExpression(node)) {
+      function isAppsyncFunction(node: ts.Node): node is ts.NewExpression {
+        if (ts.isNewExpression(node)) {
           const exprType = checker.getTypeAtLocation(node.expression);
           const exprDecl = exprType.symbol?.declarations?.[0];
-          if (exprDecl && ts.isFunctionDeclaration(exprDecl)) {
-            if (exprDecl.name?.text === "appsyncFunction") {
+          if (exprDecl && ts.isClassDeclaration(exprDecl)) {
+            if (exprDecl.name?.text === "AppsyncFunction") {
               return true;
             }
           }
@@ -73,11 +73,11 @@ export function compile(
         return false;
       }
 
-      function visitAppsyncFunction(call: ts.CallExpression): ts.Node {
-        if (call.arguments.length === 1) {
+      function visitAppsyncFunction(call: ts.NewExpression): ts.Node {
+        if (call.arguments?.length === 1) {
           const impl = call.arguments[0];
           if (ts.isFunctionExpression(impl) || ts.isArrowFunction(impl)) {
-            return ts.factory.updateCallExpression(
+            return ts.factory.updateNewExpression(
               call,
               call.expression,
               call.typeArguments,

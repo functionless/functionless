@@ -11,7 +11,7 @@ const schema = new appsync.Schema({
   filePath: path.join(__dirname, "..", "schema.gql"),
 });
 
-new appsync.GraphqlApi(stack, "Api", {
+const api = new appsync.GraphqlApi(stack, "Api", {
   name: "demo",
   schema,
   authorizationConfig: {
@@ -25,7 +25,11 @@ new appsync.GraphqlApi(stack, "Api", {
 // @ts-ignore
 const peopleDb = new PeopleDatabase(stack, "PeopleDB");
 
-// // peopleDb.getPerson.addResolver(api, {
-// //   typeName: "Query",
-// //   fieldName: "getPerson",
-// });
+peopleDb.getPerson.addResolver(api, {
+  typeName: "Query",
+  fieldName: "getPerson",
+});
+peopleDb.getPerson.addResolver(api, {
+  typeName: "Mutation",
+  fieldName: "addPerson",
+});
