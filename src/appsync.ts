@@ -3,7 +3,7 @@ import { AppSyncResolverEvent } from "aws-lambda";
 import { Call, FunctionDecl } from "./expression";
 import { AnyFunction } from "./function";
 import { AnyLambda } from "./function";
-import { VTLContext, toVTL } from "./vtl";
+import { VTLContext, synthVTL } from "./vtl";
 import { AnyTable, isTable } from "./table";
 import {
   ToAttributeMap,
@@ -363,7 +363,7 @@ export class AppsyncFunction<
               expr: Call,
               responseMappingTemplate?: appsync.MappingTemplate
             ) {
-              statements.push(toVTL(expr, context));
+              statements.push(synthVTL(expr, context));
               const requestMappingTemplate = appsync.MappingTemplate.fromString(
                 statements.join("\n")
               );
@@ -377,7 +377,7 @@ export class AppsyncFunction<
             }
           } else if (isLastExpr) {
             if (expr.kind === "Return") {
-              statements.push(toVTL(expr.expr, context));
+              statements.push(synthVTL(expr.expr, context));
             } else {
               // for a void function, return 'null'.
               statements.push(`#return`);
@@ -387,7 +387,7 @@ export class AppsyncFunction<
             }
           } else {
             // this expression should be appended to the current mapping template
-            const stmt = toVTL(expr, context);
+            const stmt = synthVTL(expr, context);
             if (stmt.startsWith("#")) {
               statements.push(stmt);
             } else {

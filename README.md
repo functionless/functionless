@@ -1,8 +1,31 @@
 # Functionless
 
-Functionless is a TypeScript compiler transformer and framework for building "**functionless**" applications with the AWS Cloud Development Kit. The term, "functionless", refers to services such as AWS AppSync and AWS Step Functions that are configured with JSON and Velocity Templates. These services have the advantage of
+**Functionless** is a TypeScript compiler plugin that enables you to use TypeScript syntax to express Service-to-Service (aka. "functionless") integrations with AWS AppSync and (coming soon) AWS Step Functions.
 
-See https://serverlessfirst.com/functionless-integration-trade-offs/ for more information on the concept of "functionless"
+```ts
+const getItem = new AppsyncFunction<(key: string) => Item | null>(
+  ($context, key) => {
+    const item = myTable.get({
+      key: {
+        s: key,
+      },
+    });
+
+    return item;
+  }
+);
+```
+
+## Why you should use Service-to-Service Integrations
+
+Paul Swail has a deep dive on this topic which is worth reading: https://serverlessfirst.com/functionless-integration-trade-offs/.
+
+In short: these integrations have many advantages over using AWS Lambda Functions, including:
+
+1. lower latency because there is no cold start, so a service-to-service integration will feel "snappy" when compared to a Lambda Function.
+2. lower cost since there's no intermediate Lambda Invocation when AppSync calls DynamoDB directly.
+3. higher scalability since the handlers are not subject to the concurrent Invocation limits and are running on dedicated Amazon servers.
+4. no operational maintenance such as upgrading dependencies, patching security vulnerabilities, etc. - theoretically, once the configuration is confirmed to be correct, it then becomes entirely AWS's responsibility to ensure the code is running optimally.
 
 ## Setup
 
@@ -163,6 +186,8 @@ new AppsyncFunction(
   )
 );
 ```
+
+## Writing your own Synthesis process
 
 You can access this data structure and build your own interpretations:
 

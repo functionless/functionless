@@ -8,7 +8,7 @@ import {
 import { KeyAttribute } from "typesafe-dynamodb/lib/key";
 import { Narrow } from "typesafe-dynamodb/lib/narrow";
 import { Call } from "./expression";
-import { VTLContext, toVTL } from "./vtl";
+import { VTLContext, synthVTL } from "./vtl";
 
 export function isTable(a: any): a is AnyTable {
   return a?.kind === "Table";
@@ -44,15 +44,12 @@ export class Table<
     // cast to an Expr - the functionless ts-transform will ensure we are passed an Expr
     const input = call.args.input;
     if (input.kind === "ObjectLiteral") {
-      const keyProp = input.properties.find(
-        (prop) => prop.kind === "PropertyAssignment" && prop.name === "key"
-      );
-      if (keyProp) {
-        const key = toVTL(keyProp.expr, context);
+      const key = input.getProperty("key");
+      if (key) {
         return `{
   "operation": "GetItem",
   "version": "2018-05-29,
-  "key": ${key}
+  "key": ${synthVTL(key.expr, context)}
 }` as any;
       }
     }
@@ -81,14 +78,14 @@ export class Table<
       const condition = input.getProperty("condition");
       const _version = input.getProperty("_version");
       if (keyProp) {
-        const key = toVTL(keyProp.expr, context);
+        const key = synthVTL(keyProp.expr, context);
         return `{
   "operation": "PutItem",
-  ${_version ? `"_version": ${toVTL(_version, context)},` : ""}
+  ${_version ? `"_version": ${synthVTL(_version, context)},` : ""}
   "version": "2018-05-29,
   "key": ${key},
-  "attributeValues": ${toVTL(attributeValues, context)}${
-          condition ? `,\n  ${toVTL(condition, context)}` : ""
+  "attributeValues": ${synthVTL(attributeValues, context)}${
+          condition ? `,\n  ${synthVTL(condition, context)}` : ""
         }
 }` as any;
       }

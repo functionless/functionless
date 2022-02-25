@@ -30,7 +30,7 @@ export type Expr =
   | Call
   | FunctionDecl
   | Identifier
-  | If
+  | Condition
   | Map
   | NullLiteral
   | NumberLiteral
@@ -150,11 +150,11 @@ export class Return extends BaseExpr<"Return"> {
   }
 }
 
-export const isIf = typeGuard("If");
+export const isCondition = typeGuard("Condition");
 
-export class If extends BaseExpr<"If"> {
+export class Condition extends BaseExpr<"Condition"> {
   constructor(readonly when: Expr, readonly then: Expr, readonly _else?: Expr) {
-    super("If");
+    super("Condition");
     when.parent = this;
     then.parent = this;
     if (_else) {

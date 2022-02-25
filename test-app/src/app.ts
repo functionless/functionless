@@ -29,7 +29,8 @@ peopleDb.getPerson.addResolver(api, {
   typeName: "Query",
   fieldName: "getPerson",
 });
-peopleDb.getPerson.addResolver(api, {
+
+peopleDb.addPerson.addResolver(api, {
   typeName: "Mutation",
   fieldName: "addPerson",
 });

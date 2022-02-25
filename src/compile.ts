@@ -147,6 +147,9 @@ export function compile(
             ]);
           }
         } else if (ts.isIdentifier(node)) {
+          if (node.text === "undefined" || node.text === "null") {
+            return newExpr("NullLiteral", []);
+          }
           const kind = getKind(node);
           if (kind !== undefined) {
             // if this is a reference to a Table or Lambda, retain it
@@ -177,7 +180,7 @@ export function compile(
             toExpr(node.initializer),
           ]);
         } else if (ts.isIfStatement(node)) {
-          return newExpr("If", [
+          return newExpr("Condition", [
             // when
             toExpr(node.expression),
             // then
@@ -186,7 +189,7 @@ export function compile(
             ...(node.elseStatement ? [toExpr(node.elseStatement)] : []),
           ]);
         } else if (ts.isConditionalExpression(node)) {
-          return newExpr("If", [
+          return newExpr("Condition", [
             // when
             toExpr(node.condition),
             // then

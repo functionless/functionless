@@ -15,14 +15,14 @@ function increment(context: VTLContext): VTLContext {
   };
 }
 
-export function toVTL(expr: Expr, context: VTLContext): string {
+export function synthVTL(expr: Expr, context: VTLContext): string {
   if (expr.kind === "Call") {
     const serviceCall = findFunction(expr);
     if (serviceCall) {
       return serviceCall(expr, context);
     } else {
-      return `${toVTL(expr.expr, context)}(${Object.values(expr.args)
-        .map((arg) => toVTL(arg, context))
+      return `${synthVTL(expr.expr, context)}(${Object.values(expr.args)
+        .map((arg) => synthVTL(arg, context))
         .join(", ")})`;
     }
   } else if (expr.kind === "Identifier") {
@@ -38,7 +38,7 @@ export function toVTL(expr: Expr, context: VTLContext): string {
     // determine is a stash or local variable
     return expr.name;
   } else if (expr.kind === "PropRef") {
-    const left = toVTL(expr.expr, context);
+    const left = synthVTL(expr.expr, context);
     return `${left}.${expr.id}`;
   } else if (expr.kind === "NullLiteral") {
     return "null";
@@ -49,33 +49,36 @@ export function toVTL(expr: Expr, context: VTLContext): string {
   } else if (expr.kind === "StringLiteral") {
     return `"${expr.value}"`;
   } else if (expr.kind === "VariableDecl") {
-    return `#set( $context.stash.${expr.name} = ${toVTL(expr.expr, context)} )`;
+    return `#set( $context.stash.${expr.name} = ${synthVTL(
+      expr.expr,
+      context
+    )} )`;
   } else if (expr.kind === "Binary") {
-    return `${toVTL(expr.left, context)} ${expr.op} ${toVTL(
+    return `${synthVTL(expr.left, context)} ${expr.op} ${synthVTL(
       expr.right,
       context
     )}`;
   } else if (expr.kind === "Unary") {
-    return `${expr.op}${toVTL(expr.expr, context)}`;
+    return `${expr.op}${synthVTL(expr.expr, context)}`;
   } else if (expr.kind === "Block") {
     return expr.exprs
-      .map((expr) => toVTL(expr, increment(context)))
+      .map((expr) => synthVTL(expr, increment(context)))
       .join(indent(context.depth + 1));
   } else if (expr.kind === "FunctionDecl") {
     // ?
-  } else if (expr.kind === "If") {
+  } else if (expr.kind === "Condition") {
     return (
-      (expr.parent?.kind === "If"
+      (expr.parent?.kind === "Condition"
         ? // nested else-if, don't prepend #
           ""
         : // this is the first expr in the if-chain
           "#") +
-      `if( ${toVTL(expr.when, context)} )` +
-      toVTL(expr.then, increment(context)) +
-      (expr._else?.kind === "If"
-        ? `#else${toVTL(expr._else, increment(context))}`
+      `if( ${synthConditionExpr(expr.when, context)} )` +
+      synthVTL(expr.then, increment(context)) +
+      (expr._else?.kind === "Condition"
+        ? `#else${synthVTL(expr._else, increment(context))}`
         : expr._else
-        ? `#else ${toVTL(expr._else, increment(context))} #end`
+        ? `#else ${synthVTL(expr._else, increment(context))} #end`
         : "#end")
     );
   } else if (expr.kind === "Map") {
@@ -83,22 +86,22 @@ export function toVTL(expr: Expr, context: VTLContext): string {
   } else if (expr.kind === "ObjectLiteral") {
     if (Array.isArray(expr.properties)) {
       const properties = expr.properties.map((prop) =>
-        toVTL(prop, increment(context))
+        synthVTL(prop, increment(context))
       );
       return `{\n  ${properties.join(`,\n  ${indent(context.depth + 1)}`)}\n}`;
     } else {
       throw new Error("not implemented");
     }
   } else if (expr.kind === "PropertyAssignment") {
-    return `"${expr.name}": ${$toJson(toVTL(expr.expr, context))}`;
+    return `"${expr.name}": ${$toJson(synthVTL(expr.expr, context))}`;
   } else if (expr.kind === "SpreadAssignment") {
     const mustStash =
       expr.expr.kind === "Identifier" || expr.expr.kind === "PropRef";
     const varName = mustStash
-      ? toVTL(expr.expr, context)
+      ? synthVTL(expr.expr, context)
       : context.generateUniqueName();
     return `${
-      mustStash ? "" : `#set( $${varName} = ${toVTL(expr.expr, context)} )`
+      mustStash ? "" : `#set( $${varName} = ${synthVTL(expr.expr, context)} )`
     }
 #foreach( $key in ${$(varName)}.keySet() )
 "$key": $util.toJson(${$(varName)}.get($key))#if( $foreach.hasNext ),#end
@@ -110,10 +113,37 @@ export function toVTL(expr: Expr, context: VTLContext): string {
       isLambda(ref) ? ref.resource.functionArn : ref.resource.tableArn
     }"`;
   } else if (expr.kind === "Return") {
-    return `#return(${toVTL(expr.expr, context)})`;
+    if (expr.expr.kind === "NullLiteral") {
+      return `#return`;
+    } else {
+      return `#return(${synthVTL(expr.expr, context)})`;
+    }
   }
 
   throw new Error(`cannot synthesize '${expr.kind}' expression to VTL`);
+}
+
+// export function synthCondition(cond: Condition, context: VTLContext): string {
+//   return "";
+// }
+
+export function synthConditionExpr(expr: Expr, context: VTLContext): string {
+  if (
+    expr.kind === "Identifier" ||
+    expr.kind === "PropRef" ||
+    expr.kind === "Call"
+  ) {
+    if (expr.parent?.kind === "Condition") {
+      // truthy
+      // https://cwiki.apache.org/confluence/display/VELOCITY/CheckingForNull
+    }
+    return synthVTL(expr, context);
+  } else if (expr.kind === "NullLiteral") {
+    return `""`;
+  } else if (expr.kind === "Binary") {
+  } else if (expr.kind === "Unary") {
+  }
+  return synthVTL(expr, context);
 }
 
 export function findFunction(call: Call): AnyFunction | undefined {
