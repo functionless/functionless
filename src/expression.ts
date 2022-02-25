@@ -1,4 +1,4 @@
-import { AnyFunction } from "./function";
+import { AnyFunction } from "./appsync";
 import { AnyLambda } from "./lambda";
 import { AnyTable } from "./table";
 

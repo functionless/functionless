@@ -1,5 +1,5 @@
 import { aws_lambda } from "aws-cdk-lib";
-import { AnyFunction } from "./function";
+import { AnyFunction } from "./appsync";
 
 export function isLambda(a: any): a is Lambda<AnyFunction> {
   return a?.kind === "Lambda";

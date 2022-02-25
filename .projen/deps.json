@@ -1,12 +1,20 @@
 {
   "dependencies": [
     {
+      "name": "@types/fs-extra",
+      "type": "build"
+    },
+    {
       "name": "@types/jest",
       "type": "build"
     },
     {
       "name": "@types/node",
       "version": "^12",
+      "type": "build"
+    },
+    {
+      "name": "@types/source-map-support",
       "type": "build"
     },
     {
@@ -84,7 +92,19 @@
       "type": "runtime"
     },
     {
+      "name": "fs-extra",
+      "type": "runtime"
+    },
+    {
       "name": "immutable",
+      "type": "runtime"
+    },
+    {
+      "name": "source-map-support",
+      "type": "runtime"
+    },
+    {
+      "name": "ts-node",
       "type": "runtime"
     },
     {

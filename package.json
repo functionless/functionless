@@ -23,8 +23,10 @@
     "projen": "npx projen"
   },
   "devDependencies": {
+    "@types/fs-extra": "^9.0.13",
     "@types/jest": "^27.4.0",
     "@types/node": "^12",
+    "@types/source-map-support": "^0.5.4",
     "@typescript-eslint/eslint-plugin": "^5",
     "@typescript-eslint/parser": "^5",
     "eslint": "^8",
@@ -44,7 +46,10 @@
     "@aws-cdk/aws-appsync-alpha": "^2.13.0-alpha.0",
     "aws-cdk-lib": "^2.13.0",
     "constructs": "^10.0.69",
+    "fs-extra": "^10.0.1",
     "immutable": "^4.0.0",
+    "source-map-support": "^0.5.21",
+    "ts-node": "^10.5.0",
     "ts-patch": "^2.0.1",
     "typesafe-dynamodb": "^0.1.4",
     "typescript": "^4.5.5"

@@ -4,5 +4,6 @@
   "compilerOptions": {
     "rootDir": "..",
     "noEmit": true
-  }
+  },
+  "exclude": ["node_modules"]
 }

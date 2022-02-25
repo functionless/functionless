@@ -266,6 +266,8 @@ export class TypeSafeAppsyncFunction<F extends AnyFunction = AnyFunction> {
     function findService(expr: Expr): AnyTable | AnyLambda | undefined {
       if (expr.kind === "Reference") {
         return expr.name;
+      } else if (expr.kind === "PropRef") {
+        return findService(expr.expr);
       } else if (expr.kind === "Call") {
         return findService(expr.expr);
       } else if (expr.kind === "VariableDecl") {

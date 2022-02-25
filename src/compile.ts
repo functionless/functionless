@@ -1,7 +1,8 @@
-import * as ts from "typescript";
+import ts from "typescript";
 import { PluginConfig, TransformerExtras } from "ts-patch";
 import { BinaryOp, Expr } from "./expression";
-import { AnyLambda, AnyTable } from ".";
+import { AnyTable } from "./table";
+import { AnyLambda } from "./lambda";
 export default compile;
 
 /**
@@ -21,8 +22,8 @@ export interface FunctionlessConfig extends PluginConfig {}
  */
 export function compile(
   program: ts.Program,
-  _config: FunctionlessConfig,
-  _extras: TransformerExtras
+  _config?: FunctionlessConfig,
+  _extras?: TransformerExtras
 ): ts.TransformerFactory<ts.SourceFile> {
   const checker = program.getTypeChecker();
   return (ctx) => {
@@ -62,7 +63,7 @@ export function compile(
       function isAppsyncFunction(node: ts.Node): node is ts.CallExpression {
         if (ts.isCallExpression(node)) {
           const exprType = checker.getTypeAtLocation(node.expression);
-          const exprDecl = exprType.symbol.declarations?.[0];
+          const exprDecl = exprType.symbol?.declarations?.[0];
           if (exprDecl && ts.isFunctionDeclaration(exprDecl)) {
             if (exprDecl.name?.text === "appsyncFunction") {
               return true;
@@ -119,10 +120,6 @@ export function compile(
               ),
             ]);
           }
-          // return newExpr("Call", [
-          //   toExpr(node.expression),
-          //   ts.factory.createArrayLiteralExpression(node.arguments.map(toExpr)),
-          // ]);
         } else if (ts.isIdentifier(node)) {
           const kind = getKind(node);
           if (kind !== undefined) {

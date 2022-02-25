@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "rootDir": ".",
+    "rootDir": "src",
     "outDir": "lib",
     "alwaysStrict": true,
     "declaration": true,
@@ -8,6 +8,7 @@
     "experimentalDecorators": true,
     "inlineSourceMap": true,
     "inlineSources": true,
+    "declarationMap": true,
     "lib": ["dom"],
     "module": "CommonJS",
     "noEmitOnError": false,
