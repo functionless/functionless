@@ -1,6 +1,6 @@
-# Functionless
+# Functionless `λ<`
 
-**Functionless** is a TypeScript compiler plugin that enables you to use TypeScript syntax to express Service-to-Service (aka. "functionless") integrations with AWS AppSync and (coming soon) AWS Step Functions.
+**Functionless** is a TypeScript plugin that compiles TypeScript code to Service-to-Service (aka. "functionless") integrations, such as AWS AppSync [Resolvers](https://docs.aws.amazon.com/appsync/latest/devguide/configuring-resolvers.html) and [Velocity Templates](https://docs.aws.amazon.com/appsync/latest/devguide/resolver-mapping-template-reference-programming-guide.html), or (coming soon) [Amazon States Language](https://docs.aws.amazon.com/step-functions/latest/dg/concepts-amazon-states-language.html) for AWS Step Functions.
 
 ```ts
 const getItem = new AppsyncFunction<(key: string) => Item | null>(
@@ -18,14 +18,14 @@ const getItem = new AppsyncFunction<(key: string) => Item | null>(
 
 ## Why you should use Service-to-Service Integrations
 
-Paul Swail has a deep dive on this topic which is worth reading: https://serverlessfirst.com/functionless-integration-trade-offs/.
+Paul Swail has a piece on this topic which is worth reading: https://serverlessfirst.com/functionless-integration-trade-offs/.
 
 In short: these integrations have many advantages over using AWS Lambda Functions, including:
 
-1. lower latency because there is no cold start, so a service-to-service integration will feel "snappy" when compared to a Lambda Function.
-2. lower cost since there's no intermediate Lambda Invocation when AppSync calls DynamoDB directly.
-3. higher scalability since the handlers are not subject to the concurrent Invocation limits and are running on dedicated Amazon servers.
-4. no operational maintenance such as upgrading dependencies, patching security vulnerabilities, etc. - theoretically, once the configuration is confirmed to be correct, it then becomes entirely AWS's responsibility to ensure the code is running optimally.
+1. **lower latency** - there is no cold start, so a service-to-service integration will feel "snappy" when compared to a Lambda Function.
+2. **lower cost** - there's no intermediate Lambda Invocation when AppSync calls DynamoDB directly.
+3. **higher scalability** - the handlers are not subject to the concurrent invocation limits and are running on dedicated Amazon servers.
+4. **no operational maintenance** - such as upgrading dependencies, patching security vulnerabilities, etc. - theoretically, once the configuration is confirmed to be correct, it then becomes entirely AWS's responsibility to ensure the code is running optimally.
 
 ## Setup
 
