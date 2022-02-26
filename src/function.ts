@@ -27,17 +27,14 @@ export class Lambda<F extends AnyFunction> {
     return Object.assign(lambda, this);
 
     function lambda(call: Call, vtl: VTL): string {
-      const payload = vtl.var("{}");
-
+      const payload = vtl.var(`{}`);
       for (const [argName, argVal] of Object.entries(call.args)) {
         vtl.qr(`${payload}.put('${argName}', ${vtl.eval(argVal)})`);
       }
-
-      return `{
-  "version": "2018-05-29",
-  "operation": "Invoke",
-  "payload": ${vtl.json(payload)}
-}`;
+      const request = vtl.var(
+        `{"version": "2018-05-29", "operation": "Invoke", "payload": ${payload}}`
+      );
+      return vtl.json(request);
     }
   }
 }

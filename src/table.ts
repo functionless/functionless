@@ -32,18 +32,17 @@ export class Table<
 
   public getItem(call: Call, vtl: VTL): any {
     // cast to an Expr - the functionless ts-transform will ensure we are passed an Expr
-    const input = call.args.input;
-    if (input.kind === "ObjectLiteral") {
-      const key = input.getProperty("key");
-      if (key) {
-        return `{
-  "operation": "GetItem",
-  "version": "2018-05-29",
-  "key": ${vtl.json(vtl.eval(key.expr))}
-  }` as any;
-      }
-    }
-    throw new Error(`unable to interpret expression: ${input.kind}`);
+    const input = vtl.eval(call.args.input);
+    const request = vtl.var(
+      `{"operation": "GetItem", "version": "2018-05-20"}`
+    );
+    vtl.qr(`${request}.put('key', ${input}.get('key'))`);
+    vtl.add(
+      `#if(${input}.containsKey('consistentRead'))
+$util.qr(${request}.put('consistentRead', ${input}.get('consistentRead')))
+#end`
+    );
+    return vtl.json(request);
   }
 
   // @ts-ignore
@@ -61,28 +60,25 @@ export class Table<
 
   public putItem(call: Call, vtl: VTL): any {
     // cast to an Expr - the functionless ts-transform will ensure we are passed an Expr
-    const input = call.args.input;
-    if (input.kind === "ObjectLiteral") {
-      const keyProp = input.getProperty("key")!;
-      const attributeValues = input.getProperty("attributeValues")!;
-      const condition = input.getProperty("condition");
-      const _version = input.getProperty("_version");
-      if (keyProp) {
-        const obj = vtl.var(
-          `{"operation": "PutItem", "version": "2018-05-20", "attributeValues": ${vtl.eval(
-            attributeValues
-          )}}`
-        );
-        if (_version) {
-          vtl.qr(`${obj}.put("_version", ${vtl.eval(_version)})`);
-        }
-        if (condition) {
-          vtl.qr(`${obj}.put("condition", ${vtl.eval(condition)})`);
-        }
-        return vtl.json(obj);
-      }
-    }
-    throw new Error(`unable to interpret expression: ${input.kind}`);
+    const input = vtl.eval(call.args.input);
+    const request = vtl.var(
+      `{"operation": "PutItem", "version": "2018-05-20"}`
+    );
+    vtl.qr(`${request}.put('key', ${input}.get('key'))`);
+    vtl.qr(
+      `${request}.put('attributeValues', ${input}.get('attributeValues'))`
+    );
+    vtl.add(
+      `#if(${input}.containsKey('condition'))
+$util.qr(${request}.put('condition', ${input}.get('condition')))
+#end`
+    );
+    vtl.add(
+      `#if(${input}.containsKey('_version'))
+$util.qr(${request}.put('_version', ${input}.get('_version')))
+#end`
+    );
+    return vtl.json(request);
   }
 }
 

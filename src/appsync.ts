@@ -3,7 +3,7 @@ import { AppSyncResolverEvent } from "aws-lambda";
 import { Call, FunctionDecl } from "./expression";
 import { AnyFunction } from "./function";
 import { AnyLambda } from "./function";
-import { VTLContext, $toJson } from "./vtl";
+import { VTL } from "./vtl";
 import { AnyTable, isTable } from "./table";
 import { findService, toName } from "./analysis";
 
@@ -34,15 +34,6 @@ export class AppsyncFunction<
     options: ResolverOptions
   ): appsync.Resolver {
     let stageIt = 0;
-    let nameIt = 0;
-    const generateUniqueName = () => {
-      return `var${nameIt++}`;
-    };
-
-    const context: VTLContext = {
-      generateUniqueName,
-      depth: 0,
-    };
 
     const resolverCount = countResolvers(this.decl);
 
@@ -91,7 +82,7 @@ export class AppsyncFunction<
       const circuitBreaker = `#if($context.stash.return__flag)
   #return($context.stash.return__val)
 #end`;
-      let statements: string[] = [];
+      let template = new VTL(circuitBreaker);
       const functions = decl.body.exprs
         .map((expr, i) => {
           const isLastExpr = i + 1 === decl.body.exprs.length;
@@ -142,11 +133,11 @@ export class AppsyncFunction<
               expr: Call,
               responseMappingTemplate?: appsync.MappingTemplate
             ) {
-              statements.push(synthVTL(expr, context));
+              template.call(expr);
               const requestMappingTemplate = appsync.MappingTemplate.fromString(
-                [circuitBreaker, ...statements].join("\n")
+                template.toVTL()
               );
-              statements = [circuitBreaker];
+              template = new VTL(circuitBreaker);
               const name = `${toName(expr.expr)}_${stageIt++}`;
               return dataSource.createFunction({
                 name,
@@ -156,19 +147,13 @@ export class AppsyncFunction<
             }
           } else if (isLastExpr) {
             if (expr.kind === "Return") {
-              statements.push($toJson(synthVTL(expr.expr, context)));
+              template.return(expr.expr);
             } else {
-              // for a void function, return 'null'.
-              statements.push(`#return`);
+              template.return("$null");
             }
           } else {
             // this expression should be appended to the current mapping template
-            const stmt = synthVTL(expr, context);
-            if (stmt.startsWith("#")) {
-              statements.push(stmt);
-            } else {
-              statements.push(`$util.qr(${stmt})`);
-            }
+            template.eval(expr);
           }
 
           return undefined;
@@ -177,7 +162,7 @@ export class AppsyncFunction<
           (func): func is Exclude<typeof func, undefined> => func !== undefined
         );
 
-      return [functions, statements.join("\n")] as const;
+      return [functions, template.toVTL()] as const;
     }
 
     function countResolvers(decl: FunctionDecl<F>): number {

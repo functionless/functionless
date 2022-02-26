@@ -12,6 +12,18 @@ export class VTL {
 
   private varIt = 0;
 
+  constructor(...statements: string[]) {
+    this.statements.push(...statements);
+  }
+
+  public toVTL(): string {
+    return this.statements.join("\n");
+  }
+
+  public add(...statements: string[]) {
+    this.statements.push(...statements);
+  }
+
   /**
    * Declare a new variable.
    *
@@ -19,7 +31,7 @@ export class VTL {
    * @returns the variable reference, e.g. $v1
    */
   public var(expr?: string): string {
-    const varName = `v${(this.varIt += 1)}`;
+    const varName = `$v${(this.varIt += 1)}`;
     if (expr === undefined) {
       return varName;
     }
@@ -43,7 +55,7 @@ export class VTL {
    * @param expr expression string to evaluate quietly (i.e. without emitting to output) .
    */
   public qr(expr: string) {
-    this.statements.push(`$util.qr(${expr})`);
+    this.add(`$util.qr(${expr})`);
   }
 
   /**
@@ -53,7 +65,39 @@ export class VTL {
    * @param expr the value to set the variable to
    */
   public set(reference: string, expr: string): void {
-    this.statements.push(`#set(${reference} = ${expr})`);
+    this.add(`#set(${reference} = ${expr})`);
+  }
+
+  /**
+   * Evaluate and return an {@link expr}.
+   *
+   * @param expr expression to evaluate
+   * @returns a `#return` VTL expression.
+   */
+  public return(expr: string | Expr): void {
+    if (typeof expr === "string") {
+      this.add(`#return(${expr})`);
+    } else {
+      return this.return(this.eval(expr));
+    }
+  }
+
+  /**
+   * Call a service API. The Call expression will be evaluated and JSON will be rendered
+   * to the Velocity Template output. This JSON payload will be passed to the
+   * service-to-service integration, e.g. a Dynamo API request.
+   *
+   * ```json
+   * #set($payload = {
+   *   "operation": "GetItem",
+   *   "key": $util.toJson($util.toDynamoDB($key)),
+   * })
+   * $util.toJson($payload)
+   * ```
+   * @param call
+   */
+  public call(call: Call): void {
+    this.add(this.eval(call));
   }
 
   /**
@@ -75,7 +119,7 @@ export class VTL {
       for (const exp of expr.exprs) {
         last = this.eval(exp);
       }
-      return this.var(last ?? `$null`);
+      return last ?? "$null";
     } else if (expr.kind === "BooleanLiteral") {
       return this.var(`${expr.value}`);
     } else if (expr.kind === "Call") {
@@ -91,38 +135,20 @@ export class VTL {
       }
     } else if (expr.kind === "ConditionExpr") {
       const val = this.var();
-      let first = true;
-      let cond: Expr = expr;
-      while (cond.kind === "ConditionExpr") {
-        const when = this.eval(expr.when);
-        if (first) {
-          this.statements.push(`#if(${when})`);
-          first = false;
-        } else {
-          this.statements.push(`#elseif(${when})`);
-        }
-        this.set(val, this.eval(expr.then));
-      }
-      this.statements.push(`#else`);
-      this.set(val, this.eval(expr));
-      this.statements.push(`#end`);
+      this.add(`#if(${this.eval(expr.when)})`);
+      this.set(val, this.eval(expr.then));
+      this.add("#else");
+      this.set(val, this.eval(expr._else));
+      this.add("#end");
       return val;
     } else if (expr.kind === "ConditionStmt") {
-      let first = true;
-      let cond: Expr = expr;
-      while (cond.kind === "ConditionStmt") {
-        const when = this.eval(expr.when);
-        if (first) {
-          this.statements.push(`#if(${when})`);
-          first = false;
-        } else {
-          this.statements.push(`#elseif(${when})`);
-        }
-        this.eval(expr.then);
+      this.add(`#if(${this.eval(expr.when)})`);
+      this.eval(expr.then);
+      if (expr._else) {
+        this.add("#else");
+        this.eval(expr._else);
       }
-      this.statements.push(`#else`);
-      this.eval(expr);
-      this.statements.push(`#end`);
+      this.add("#end");
       return `$null`;
     } else if (expr.kind === "FunctionDecl") {
     } else if (expr.kind === "Identifier") {
@@ -151,22 +177,25 @@ export class VTL {
         if (prop.kind === "PropertyAssignment") {
           this.qr(`${obj}.put('${prop.name}', ${this.eval(prop.expr)})`);
         } else if (prop.kind === "SpreadAssignment") {
-          const itemName = this.generateVariableName();
+          const itemName = this.var();
           const items = this.eval(prop.expr);
-          this.statements.push(`#foreach( ${itemName} in ${items}.keySet() )`);
+          this.add(`#foreach( ${itemName} in ${items}.keySet() )`);
           this.qr(`${obj}.put(${itemName}, ${items}.get(${itemName}))`);
-          this.statements.push(`#end`);
+          this.add(`#end`);
         } else {
           assertNever(prop);
         }
       }
+      return obj;
     } else if (expr.kind === "ParameterDecl") {
     } else if (expr.kind === "PropertyAssignment") {
+      throw new Error("");
     } else if (expr.kind === "Reference") {
     } else if (expr.kind === "Return") {
-      this.set("#context.stash.return__flag", "true");
-      this.set("#context.stash.return__val", this.eval(expr.expr));
-      this.statements.push(`#return($context.stash.return__val)`);
+      this.set("$context.stash.return__flag", "true");
+      this.set("$context.stash.return__val", this.eval(expr.expr));
+      this.add(`#return($context.stash.return__val)`);
+      return "$null";
     } else if (expr.kind === "SpreadAssignment") {
       // handled as part of ObjectLiteral
     } else if (expr.kind === "StringLiteral") {
