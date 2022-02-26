@@ -8,7 +8,7 @@ import {
 import { KeyAttribute } from "typesafe-dynamodb/lib/key";
 import { Narrow } from "typesafe-dynamodb/lib/narrow";
 import { Call } from "./expression";
-import { VTLContext, synthVTL, $toJson } from "./vtl";
+import { VTL } from "./vtl";
 
 export function isTable(a: any): a is AnyTable {
   return a?.kind === "Table";
@@ -30,7 +30,7 @@ export class Table<
     Key extends KeyAttribute<Item, PartitionKey, RangeKey>
   >(input: { key: Key; consistentRead?: boolean }): Narrow<Item, Key>;
 
-  public getItem(call: Call, context: VTLContext): any {
+  public getItem(call: Call, vtl: VTL): any {
     // cast to an Expr - the functionless ts-transform will ensure we are passed an Expr
     const input = call.args.input;
     if (input.kind === "ObjectLiteral") {
@@ -39,7 +39,7 @@ export class Table<
         return `{
   "operation": "GetItem",
   "version": "2018-05-29",
-  "key": ${$toJson(synthVTL(key.expr, context))}
+  "key": ${vtl.json(vtl.eval(key.expr))}
   }` as any;
       }
     }
@@ -59,7 +59,7 @@ export class Table<
     _version?: number;
   }): Narrow<Item, Key>;
 
-  public putItem(call: Call, context: VTLContext): any {
+  public putItem(call: Call, vtl: VTL): any {
     // cast to an Expr - the functionless ts-transform will ensure we are passed an Expr
     const input = call.args.input;
     if (input.kind === "ObjectLiteral") {
@@ -68,17 +68,18 @@ export class Table<
       const condition = input.getProperty("condition");
       const _version = input.getProperty("_version");
       if (keyProp) {
-        const key = $toJson(synthVTL(keyProp.expr, context));
-        return `{
-  "operation": "PutItem",${
-    _version ? `\n  "_version": ${$toJson(synthVTL(_version, context))},` : ""
-  }
-  "version": "2018-05-29",
-  "key": ${key},
-  ${synthVTL(attributeValues, context)}${
-          condition ? `,\n  ${$toJson(synthVTL(condition, context))}` : ""
+        const obj = vtl.var(
+          `{"operation": "PutItem", "version": "2018-05-20", "attributeValues": ${vtl.eval(
+            attributeValues
+          )}}`
+        );
+        if (_version) {
+          vtl.qr(`${obj}.put("_version", ${vtl.eval(_version)})`);
         }
-}` as any;
+        if (condition) {
+          vtl.qr(`${obj}.put("condition", ${vtl.eval(condition)})`);
+        }
+        return vtl.json(obj);
       }
     }
     throw new Error(`unable to interpret expression: ${input.kind}`);

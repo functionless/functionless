@@ -3,7 +3,7 @@ import { AppSyncResolverEvent } from "aws-lambda";
 import { Call, FunctionDecl } from "./expression";
 import { AnyFunction } from "./function";
 import { AnyLambda } from "./function";
-import { VTLContext, synthVTL, $toJson } from "./vtl";
+import { VTLContext, $toJson } from "./vtl";
 import { AnyTable, isTable } from "./table";
 import { findService, toName } from "./analysis";
 

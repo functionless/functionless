@@ -10,17 +10,17 @@ class BaseExpr<Kind extends string> {
   constructor(readonly kind: Kind) {}
 }
 
-export type Literal =
-  | undefined
-  | null
-  | boolean
-  | number
-  | string
-  | (Expr | Literal)[]
-  | readonly (Expr | Literal)[]
-  | {
-      [key: string]: Expr | Literal;
-    };
+// export type Literal =
+//   | undefined
+//   | null
+//   | boolean
+//   | number
+//   | string
+//   | (Expr | Literal)[]
+//   | readonly (Expr | Literal)[]
+//   | {
+//       [key: string]: Expr | Literal;
+//     };
 
 export type Expr =
   | ArrayLiteral
@@ -28,9 +28,10 @@ export type Expr =
   | Block
   | BooleanLiteral
   | Call
+  | ConditionExpr
+  | ConditionStmt
   | FunctionDecl
   | Identifier
-  | Condition
   | Map
   | NullLiteral
   | NumberLiteral
@@ -150,11 +151,24 @@ export class Return extends BaseExpr<"Return"> {
   }
 }
 
-export const isCondition = typeGuard("Condition");
+export const isConditionStmt = typeGuard("ConditionStmt");
 
-export class Condition extends BaseExpr<"Condition"> {
+export class ConditionStmt extends BaseExpr<"ConditionStmt"> {
   constructor(readonly when: Expr, readonly then: Expr, readonly _else?: Expr) {
-    super("Condition");
+    super("ConditionStmt");
+    when.parent = this;
+    then.parent = this;
+    if (_else) {
+      _else.parent = this;
+    }
+  }
+}
+
+export const isConditionExpr = typeGuard("ConditionExpr");
+
+export class ConditionExpr extends BaseExpr<"ConditionExpr"> {
+  constructor(readonly when: Expr, readonly then: Expr, readonly _else: Expr) {
+    super("ConditionExpr");
     when.parent = this;
     then.parent = this;
     if (_else) {
@@ -203,7 +217,7 @@ export class NullLiteral extends BaseExpr<"NullLiteral"> {
 export const isBooleanLiteral = typeGuard("BooleanLiteral");
 
 export class BooleanLiteral extends BaseExpr<"BooleanLiteral"> {
-  constructor(readonly value: string) {
+  constructor(readonly value: boolean) {
     super("BooleanLiteral");
   }
 }
@@ -211,7 +225,7 @@ export class BooleanLiteral extends BaseExpr<"BooleanLiteral"> {
 export const isNumberLiteral = typeGuard("NumberLiteral");
 
 export class NumberLiteral extends BaseExpr<"NumberLiteral"> {
-  constructor(readonly value: string) {
+  constructor(readonly value: number) {
     super("NumberLiteral");
   }
 }
@@ -227,7 +241,7 @@ export class StringLiteral extends BaseExpr<"StringLiteral"> {
 export const isArrayLiteral = typeGuard("ArrayLiteral");
 
 export class ArrayLiteral extends BaseExpr<"ArrayLiteral"> {
-  constructor(readonly items: (Expr | Literal)[]) {
+  constructor(readonly items: Expr[]) {
     super("ArrayLiteral");
     setParent(this, items);
   }
@@ -250,14 +264,14 @@ export class ObjectLiteral extends BaseExpr<"ObjectLiteral"> {
   }
 }
 
-function setParent(parent: Expr, value: Expr | Literal) {
+function setParent(parent: Expr, value: Expr | Expr[]) {
   if (value) {
     if (isExpr(value)) {
       value.parent = parent;
     } else if (Array.isArray(value)) {
       value.forEach((v) => setParent(parent, v));
     } else if (typeof value === "object") {
-      Object.values(value).forEach((v) => setParent(parent, v));
+      // Object.values(value).forEach((v) => setParent(parent, v));
     }
   }
 }

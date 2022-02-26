@@ -180,7 +180,7 @@ export function compile(
             toExpr(node.initializer),
           ]);
         } else if (ts.isIfStatement(node)) {
-          return newExpr("Condition", [
+          return newExpr("ConditionStmt", [
             // when
             toExpr(node.expression),
             // then
@@ -189,7 +189,7 @@ export function compile(
             ...(node.elseStatement ? [toExpr(node.elseStatement)] : []),
           ]);
         } else if (ts.isConditionalExpression(node)) {
-          return newExpr("Condition", [
+          return newExpr("ConditionExpr", [
             // when
             toExpr(node.condition),
             // then
