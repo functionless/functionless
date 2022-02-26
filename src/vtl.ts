@@ -1,7 +1,7 @@
 import { AnyFunction } from "./function";
 import { Call, Expr } from "./expression";
 import { isLambda } from "./function";
-import { indent, lookupIdentifier } from "./util";
+import { lookupIdentifier } from "./analysis";
 
 export interface VTLContext {
   depth: number;
@@ -33,7 +33,8 @@ export function synthVTL(expr: Expr, context: VTLContext): string {
     const ref = lookupIdentifier(expr);
     if (ref?.kind === "VariableDecl") {
       return `$context.stash.${expr.name}`;
-    } else if (ref?.kind === "FunctionDecl") {
+    } else if (ref?.kind === "ParameterDecl") {
+      return `$context.arguments.${ref.name}`;
     }
     // determine is a stash or local variable
     return expr.name;
@@ -41,7 +42,7 @@ export function synthVTL(expr: Expr, context: VTLContext): string {
     const left = synthVTL(expr.expr, context);
     return `${left}.${expr.id}`;
   } else if (expr.kind === "NullLiteral") {
-    return "null";
+    return "$null";
   } else if (expr.kind === "BooleanLiteral") {
     return `${expr.value}`;
   } else if (expr.kind === "NumberLiteral") {
@@ -59,11 +60,11 @@ export function synthVTL(expr: Expr, context: VTLContext): string {
       context
     )}`;
   } else if (expr.kind === "Unary") {
-    return `${expr.op}${synthVTL(expr.expr, context)}`;
+    return `${expr.op} ${synthVTL(expr.expr, context)}`;
   } else if (expr.kind === "Block") {
     return expr.exprs
       .map((expr) => synthVTL(expr, increment(context)))
-      .join(indent(context.depth + 1));
+      .join("\n");
   } else if (expr.kind === "FunctionDecl") {
     // ?
   } else if (expr.kind === "Condition") {
@@ -73,7 +74,7 @@ export function synthVTL(expr: Expr, context: VTLContext): string {
           ""
         : // this is the first expr in the if-chain
           "#") +
-      `if( ${synthConditionExpr(expr.when, context)} )` +
+      `if( ${synthVTL(expr.when, context)} )` +
       synthVTL(expr.then, increment(context)) +
       (expr._else?.kind === "Condition"
         ? `#else${synthVTL(expr._else, increment(context))}`
@@ -82,13 +83,13 @@ export function synthVTL(expr: Expr, context: VTLContext): string {
         : "#end")
     );
   } else if (expr.kind === "Map") {
-    // ?
+    // TODO
   } else if (expr.kind === "ObjectLiteral") {
     if (Array.isArray(expr.properties)) {
       const properties = expr.properties.map((prop) =>
         synthVTL(prop, increment(context))
       );
-      return `{\n  ${properties.join(`,\n  ${indent(context.depth + 1)}`)}\n}`;
+      return `{\n${properties.join(`,\n `)}\n}`;
     } else {
       throw new Error("not implemented");
     }
@@ -104,7 +105,7 @@ export function synthVTL(expr: Expr, context: VTLContext): string {
       mustStash ? "" : `#set( $${varName} = ${synthVTL(expr.expr, context)} )`
     }
 #foreach( $key in ${$(varName)}.keySet() )
-"$key": $util.toJson(${$(varName)}.get($key))#if( $foreach.hasNext ),#end
+  "$key": $util.toJson(${$(varName)}.get($key))#if( $foreach.hasNext ),#end
 #end`;
   } else if (expr.kind === "Reference") {
     const ref = expr.ref();
@@ -113,38 +114,18 @@ export function synthVTL(expr: Expr, context: VTLContext): string {
       isLambda(ref) ? ref.resource.functionArn : ref.resource.tableArn
     }"`;
   } else if (expr.kind === "Return") {
-    if (expr.expr.kind === "NullLiteral") {
-      return `#return`;
-    } else {
-      return `#return(${synthVTL(expr.expr, context)})`;
-    }
+    return `
+#set($context.stash.return__flag = true)
+#set($context.stash.return__val = ${synthVTL(expr.expr, context)})
+#return($context.stash.return__val)`;
   }
 
   throw new Error(`cannot synthesize '${expr.kind}' expression to VTL`);
 }
 
-// export function synthCondition(cond: Condition, context: VTLContext): string {
-//   return "";
-// }
-
-export function synthConditionExpr(expr: Expr, context: VTLContext): string {
-  if (
-    expr.kind === "Identifier" ||
-    expr.kind === "PropRef" ||
-    expr.kind === "Call"
-  ) {
-    if (expr.parent?.kind === "Condition") {
-      // truthy
-      // https://cwiki.apache.org/confluence/display/VELOCITY/CheckingForNull
-    }
-    return synthVTL(expr, context);
-  } else if (expr.kind === "NullLiteral") {
-    return `""`;
-  } else if (expr.kind === "Binary") {
-  } else if (expr.kind === "Unary") {
-  }
-  return synthVTL(expr, context);
-}
+// https://velocity.apache.org/engine/devel/user-guide.html#conditionals
+// https://cwiki.apache.org/confluence/display/VELOCITY/CheckingForNull
+// https://velocity.apache.org/engine/devel/user-guide.html#set
 
 export function findFunction(call: Call): AnyFunction | undefined {
   return find(call.expr);
@@ -161,17 +142,16 @@ export function findFunction(call: Call): AnyFunction | undefined {
     }
   }
 }
-function $toJson(expr: string): string {
-  if (expr.startsWith("$util")) {
-    return expr;
-  } else if (expr.startsWith("$")) {
+
+export function $toJson(expr: string): string {
+  if (expr.startsWith("$")) {
     return `$util.toJson(${expr})`;
   } else {
     return expr;
   }
 }
 
-function $(varName: string): string {
+export function $(varName: string): string {
   if (varName.startsWith("$")) {
     return varName;
   } else {

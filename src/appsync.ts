@@ -3,17 +3,200 @@ import { AppSyncResolverEvent } from "aws-lambda";
 import { Call, FunctionDecl } from "./expression";
 import { AnyFunction } from "./function";
 import { AnyLambda } from "./function";
-import { VTLContext, synthVTL } from "./vtl";
+import { VTLContext, synthVTL, $toJson } from "./vtl";
 import { AnyTable, isTable } from "./table";
+import { findService, toName } from "./analysis";
+
+export interface ResolverOptions
+  extends Pick<
+    appsync.BaseResolverProps,
+    "typeName" | "fieldName" | "cachingConfig"
+  > {}
+
+export interface $Context<Source>
+  extends Omit<AppSyncResolverEvent<never, Source>, "arguments" | "stash"> {}
+
+export class AppsyncFunction<
+  F extends AnyFunction = AnyFunction,
+  Source = undefined
+> {
+  public readonly decl: FunctionDecl<F>;
+
+  constructor(
+    // @ts-ignore
+    fn: ($context: $Context<Source>, ...args: Parameters<F>) => ReturnType<F>
+  ) {
+    this.decl = fn as unknown as FunctionDecl<F>;
+  }
+
+  public addResolver(
+    api: appsync.GraphqlApi,
+    options: ResolverOptions
+  ): appsync.Resolver {
+    let stageIt = 0;
+    let nameIt = 0;
+    const generateUniqueName = () => {
+      return `var${nameIt++}`;
+    };
+
+    const context: VTLContext = {
+      generateUniqueName,
+      depth: 0,
+    };
+
+    const resolverCount = countResolvers(this.decl);
+
+    if (resolverCount === 0) {
+      // mock integration
+      const [pipelineConfig, responseMappingTemplate] = synthesizeFunctions(
+        this.decl
+      );
+
+      if (pipelineConfig.length !== 0) {
+        throw new Error(
+          `expected 0 functions in pipelineConfig, but found ${pipelineConfig.length}`
+        );
+      }
+
+      return api.createResolver({
+        ...options,
+        // dataSource: new appsync.NoneDataSource(api, "None", {
+        //   api,
+        // }),
+        requestMappingTemplate: appsync.MappingTemplate.fromString("{}"),
+        responseMappingTemplate: appsync.MappingTemplate.fromString(
+          responseMappingTemplate
+        ),
+      });
+
+      // } else if (resolverCount === 1) {
+      // single stage
+    } else {
+      // pipeline resolver
+      const [pipelineConfig, responseMappingTemplate] = synthesizeFunctions(
+        this.decl
+      );
+
+      return api.createResolver({
+        ...options,
+        pipelineConfig,
+        requestMappingTemplate: appsync.MappingTemplate.fromString("{}"),
+        responseMappingTemplate: appsync.MappingTemplate.fromString(
+          responseMappingTemplate
+        ),
+      });
+    }
+
+    function synthesizeFunctions(decl: FunctionDecl<F>) {
+      const circuitBreaker = `#if($context.stash.return__flag)
+  #return($context.stash.return__val)
+#end`;
+      let statements: string[] = [];
+      const functions = decl.body.exprs
+        .map((expr, i) => {
+          const isLastExpr = i + 1 === decl.body.exprs.length;
+          const service = findService(expr);
+          if (service) {
+            // we must now render a resolver with request mapping template
+            const dataSource = getDataSource(api, service, () =>
+              isTable(service)
+                ? new appsync.DynamoDbDataSource(
+                    api,
+                    service.resource.node.addr,
+                    {
+                      api,
+                      table: service.resource,
+                    }
+                  )
+                : new appsync.LambdaDataSource(
+                    api,
+                    service.resource.node.addr,
+                    {
+                      api,
+                      lambdaFunction: service.resource,
+                    }
+                  )
+            );
+
+            if (expr.kind === "Call") {
+              return createStage(expr);
+            } else if (expr.kind === "Return" && expr.expr.kind === "Call") {
+              return createStage(expr.expr);
+            } else if (
+              expr.kind === "VariableDecl" &&
+              expr.expr.kind === "Call"
+            ) {
+              const responseMappingTemplate =
+                appsync.MappingTemplate.fromString(
+                  `#set( $context.stash.${expr.name} = $context.result )\n{}`
+                );
+
+              return createStage(expr.expr, responseMappingTemplate);
+            } else {
+              throw new Error(
+                `only a 'VariableDecl', 'Call' or 'Return' expression may call a service`
+              );
+            }
+
+            function createStage(
+              expr: Call,
+              responseMappingTemplate?: appsync.MappingTemplate
+            ) {
+              statements.push(synthVTL(expr, context));
+              const requestMappingTemplate = appsync.MappingTemplate.fromString(
+                [circuitBreaker, ...statements].join("\n")
+              );
+              statements = [circuitBreaker];
+              const name = `${toName(expr.expr)}_${stageIt++}`;
+              return dataSource.createFunction({
+                name,
+                requestMappingTemplate,
+                responseMappingTemplate,
+              });
+            }
+          } else if (isLastExpr) {
+            if (expr.kind === "Return") {
+              statements.push($toJson(synthVTL(expr.expr, context)));
+            } else {
+              // for a void function, return 'null'.
+              statements.push(`#return`);
+            }
+          } else {
+            // this expression should be appended to the current mapping template
+            const stmt = synthVTL(expr, context);
+            if (stmt.startsWith("#")) {
+              statements.push(stmt);
+            } else {
+              statements.push(`$util.qr(${stmt})`);
+            }
+          }
+
+          return undefined;
+        })
+        .filter(
+          (func): func is Exclude<typeof func, undefined> => func !== undefined
+        );
+
+      return [functions, statements.join("\n")] as const;
+    }
+
+    function countResolvers(decl: FunctionDecl<F>): number {
+      return decl.body.exprs.filter((expr) => findService(expr) !== undefined)
+        .length;
+    }
+  }
+}
+
 import {
   ToAttributeMap,
   ToAttributeValue,
 } from "typesafe-dynamodb/lib/attribute-value";
-import { findService, toName } from "./util";
+
+export declare const $util: $util;
 
 export interface dynamodb {
-  toDynamoDBJson<T>(value: T): ToAttributeValue<T>;
-  toMapValuesJson<T extends object>(value: T): ToAttributeMap<T>;
+  toDynamoDB<T>(value: T): ToAttributeValue<T>;
+  toMapValues<T extends object>(value: T): ToAttributeMap<T>;
 }
 
 /**
@@ -181,7 +364,7 @@ export interface $util {
   /**
    * Returns true if object is a string.
    */
-  isstring(obj: any): obj is string;
+  isString(obj: any): obj is string;
 
   /**
    * Returns true if object is a Number.
@@ -215,200 +398,6 @@ export interface $util {
    * Returns a string describing the multi-auth type being used by a request, returning back either "IAM Authorization", "User Pool Authorization", "Open ID Connect Authorization", or "API Key Authorization".
    */
   authType(): string;
-}
-
-export declare const $util: $util;
-
-export interface ResolverOptions
-  extends Pick<
-    appsync.BaseResolverProps,
-    "typeName" | "fieldName" | "cachingConfig"
-  > {}
-
-export interface $Context<Source>
-  extends Omit<AppSyncResolverEvent<never, Source>, "arguments" | "stash"> {}
-
-/**
- * Creates an AppSync Resolver chain.
- *
- * @param fn implementation of the appsync resolver chain.
- */
-// export class AppsyncFunction<F extends AnyFunction, Source = undefined>(
-//   fn: ($context: $Context<Source>, ...args: Parameters<F>) => ReturnType<F>
-// ): TypeSafeAppsyncFunction<F> {
-//   const expr = fn as unknown as FunctionDecl<F>;
-//   return new TypeSafeAppsyncFunction(expr);
-// }
-
-export class AppsyncFunction<
-  F extends AnyFunction = AnyFunction,
-  Source = undefined
-> {
-  public readonly decl: FunctionDecl<F>;
-
-  constructor(
-    // @ts-ignore
-    fn: ($context: $Context<Source>, ...args: Parameters<F>) => ReturnType<F>
-  ) {
-    this.decl = fn as unknown as FunctionDecl<F>;
-  }
-
-  public addResolver(
-    api: appsync.GraphqlApi,
-    options: ResolverOptions
-  ): appsync.Resolver {
-    let stageIt = 0;
-    let nameIt = 0;
-    const generateUniqueName = () => {
-      return `var${nameIt++}`;
-    };
-
-    const context: VTLContext = {
-      generateUniqueName,
-      depth: 0,
-    };
-
-    const resolverCount = countResolvers(this.decl);
-
-    if (resolverCount === 0) {
-      // mock integration
-      const [pipelineConfig, responseMappingTemplate] = synthesizeFunctions(
-        this.decl
-      );
-
-      if (pipelineConfig.length !== 0) {
-        throw new Error(
-          `expected 0 functions in pipelineConfig, but found ${pipelineConfig.length}`
-        );
-      }
-
-      return api.createResolver({
-        ...options,
-        // dataSource: new appsync.NoneDataSource(api, "None", {
-        //   api,
-        // }),
-        requestMappingTemplate: appsync.MappingTemplate.fromString("{}"),
-        responseMappingTemplate: appsync.MappingTemplate.fromString(
-          responseMappingTemplate
-        ),
-      });
-
-      // } else if (resolverCount === 1) {
-      // single stage
-    } else {
-      // pipeline resolver
-      const [pipelineConfig, responseMappingTemplate] = synthesizeFunctions(
-        this.decl
-      );
-
-      return api.createResolver({
-        ...options,
-        pipelineConfig,
-        requestMappingTemplate: appsync.MappingTemplate.fromString("{}"),
-        responseMappingTemplate: appsync.MappingTemplate.fromString(
-          responseMappingTemplate
-        ),
-      });
-    }
-
-    function synthesizeFunctions(decl: FunctionDecl<F>) {
-      let statements: string[] = [];
-      const functions = decl.body.exprs
-        .map((expr, i) => {
-          const isLastExpr = i + 1 === decl.body.exprs.length;
-          const service = findService(expr);
-          if (service) {
-            // we must now render a resolver with request mapping template
-            const dataSource = getDataSource(api, service, () =>
-              isTable(service)
-                ? new appsync.DynamoDbDataSource(
-                    api,
-                    service.resource.node.addr,
-                    {
-                      api,
-                      table: service.resource,
-                    }
-                  )
-                : new appsync.LambdaDataSource(
-                    api,
-                    service.resource.node.addr,
-                    {
-                      api,
-                      lambdaFunction: service.resource,
-                    }
-                  )
-            );
-
-            if (expr.kind === "Call") {
-              return createStage(expr);
-            } else if (expr.kind === "Return" && expr.expr.kind === "Call") {
-              return createStage(expr.expr);
-            } else if (
-              expr.kind === "VariableDecl" &&
-              expr.expr.kind === "Call"
-            ) {
-              const responseMappingTemplate =
-                appsync.MappingTemplate.fromString(
-                  `#set( $context.stash.${expr.name} = $context.result )`
-                );
-
-              return createStage(expr.expr, responseMappingTemplate);
-            } else {
-              throw new Error(
-                `only a 'VariableDecl', 'Call' or 'Return' expression may call a service`
-              );
-            }
-
-            function createStage(
-              expr: Call,
-              responseMappingTemplate?: appsync.MappingTemplate
-            ) {
-              statements.push(synthVTL(expr, context));
-              const requestMappingTemplate = appsync.MappingTemplate.fromString(
-                statements.join("\n")
-              );
-              statements = [];
-              const name = `${toName(expr.expr)}_${stageIt++}`;
-              return dataSource.createFunction({
-                name,
-                requestMappingTemplate,
-                responseMappingTemplate,
-              });
-            }
-          } else if (isLastExpr) {
-            if (expr.kind === "Return") {
-              statements.push(synthVTL(expr.expr, context));
-            } else {
-              // for a void function, return 'null'.
-              statements.push(`#return`);
-              throw new Error(
-                `last expression must be 'Return', but was '${expr.kind}'`
-              );
-            }
-          } else {
-            // this expression should be appended to the current mapping template
-            const stmt = synthVTL(expr, context);
-            if (stmt.startsWith("#")) {
-              statements.push(stmt);
-            } else {
-              statements.push(`qr(${stmt})`);
-            }
-          }
-
-          return undefined;
-        })
-        .filter(
-          (func): func is Exclude<typeof func, undefined> => func !== undefined
-        );
-
-      return [functions, statements.join("\n")] as const;
-    }
-
-    function countResolvers(decl: FunctionDecl<F>): number {
-      return decl.body.exprs.filter((expr) => findService(expr) !== undefined)
-        .length;
-    }
-  }
 }
 
 const dataSourcesSymbol = Symbol.for("functionless.DataSources");

@@ -37,9 +37,9 @@ export function findService(expr: Expr): AnyTable | AnyLambda | undefined {
   return undefined;
 }
 
-export function indent(depth: number) {
-  return "\n" + Array.from(new Array(depth)).join(" ");
-}
+// export function indent(depth: number) {
+//   return Array.from(new Array(depth)).join(" ");
+// }
 
 // derives a name from an expression - this can be used to name infrastructure, such as an AppsyncFunction.
 // e.g. table.getItem(..) => "table_getItem"

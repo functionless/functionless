@@ -1,6 +1,6 @@
 import { aws_lambda } from "aws-cdk-lib";
 import { Call } from "./expression";
-import { synthVTL, VTLContext } from "./vtl";
+import { $toJson, synthVTL, VTLContext } from "./vtl";
 
 export type AnyFunction = (...args: any[]) => any;
 
@@ -28,12 +28,10 @@ export class Lambda<F extends AnyFunction> {
 
     function lambda(call: Call, context: VTLContext): string {
       const payload = Object.entries(call.args)
-        .map(([argName, argVal]) => {
-          const val = synthVTL(argVal, context);
-          return `"${argName}": ${
-            val.startsWith("$") ? `$util.toJson(${val})` : val
-          }`;
-        })
+        .map(
+          ([argName, argVal]) =>
+            `"${argName}": ${$toJson(synthVTL(argVal, context))}`
+        )
         .join(",\n    ");
       return `{
   "version": "2018-05-29",

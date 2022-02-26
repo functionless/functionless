@@ -41,7 +41,7 @@ export class PeopleDatabase extends Construct {
     >((_$context, id) => {
       const person = this.personTable.getItem({
         key: {
-          id: $util.dynamodb.toDynamoDBJson(id),
+          id: $util.dynamodb.toDynamoDB(id),
         },
         consistentRead: true,
       });
