@@ -29,11 +29,12 @@ export class PeopleDatabase extends Construct {
 
     this.computeScore = new Lambda<(person: Person) => number>(
       new aws_lambda.Function(this, "ComputeScore", {
-        code: aws_lambda.Code.fromInline("export function handle() {}"),
+        code: aws_lambda.Code.fromInline(
+          "exports.handle = async function() {return 1;}"
+        ),
         handler: "index.handle",
         runtime: aws_lambda.Runtime.NODEJS_14_X,
-      }),
-      ["person"]
+      })
     );
 
     this.getPerson = new AppsyncFunction<

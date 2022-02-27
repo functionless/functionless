@@ -4,7 +4,6 @@ const project = new typescript.TypeScriptProject({
   name: "functionless",
   deps: [
     "@aws-cdk/aws-appsync-alpha",
-    "immutable",
     "aws-cdk-lib",
     "constructs",
     "fs-extra",
