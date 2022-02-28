@@ -120,10 +120,6 @@
       "type": "peer"
     },
     {
-      "name": "ts-patch",
-      "type": "peer"
-    },
-    {
       "name": "typesafe-dynamodb",
       "version": "^0.1.4",
       "type": "peer"
