@@ -131,11 +131,11 @@ There are two aspects to Functionless:
 
 ### Type-Safe Wrappers - Function and Table
 
-You must wrap your CDK L2 Constructs in the corresponding wrapper provided by functionless. At this time, we support Lambda Functions and DynamoDB Tables.
+You must wrap your CDK L2 Constructs in the corresponding wrapper provided by functionless. At this time, Lambda Functions and DynamoDB Tables are supported.
 
 **Function**
 
-The `Function` wrapper annotates an `aws_lambda.Function` with its TypeScript function signature. This signature controls how the Function can be called from within an AppsyncFunction.
+The `Function` wrapper annotates an `aws_lambda.Function` with a TypeScript function signature that controls how the Function can be called from within an AppsyncFunction.
 
 ```ts
 import { aws_lambda } from "aws-cdk-lib";
@@ -148,11 +148,21 @@ const myFunc = new Function<(name: string) => string>(
 );
 ```
 
+Within an [AppsyncFunction](#appsyncfunction), you can use the `myFunc` reference like an ordinary Function:
+
+```ts
+new AppsyncFunction(() => {
+  return myFunc("name");
+});
+```
+
 **Table**
 
-The `Table` wrapper annotates an `aws_dynamodb.Table` with a type-safe interface.
+The `Table` wrapper annotates an `aws_dynamodb.Table` with a type-safe interface that describes the Table's data.
 
-First, declare a `interface` to describe your Table's data. You can use any of the features available in [`typesafe-dynamodb`](https://github.com/sam-goodwin/typesafe-dynamodb).
+See [`typesafe-dynamodb`](https://github.com/sam-goodwin/typesafe-dynamodb) for more information on how to model DynamoDB Tables with TypeScript.
+
+In short: you first declare an `interface` describing the data in your Table:
 
 ```ts
 interface Item {
@@ -161,7 +171,7 @@ interface Item {
 }
 ```
 
-Then, wrap your `aws_dynamodb.Table` CDK Construct with the `functionless.Table` construct, specify the `Item` type, Partition Key `"id"` and (optionally) the Range Key.
+Then, wrap a `aws_dynamodb.Table` CDK Construct with the `functionless.Table` construct, specify the `Item` type, Partition Key `"id"` and (optionally) the Range Key.
 
 ```ts
 import { aws_dynamodb } from "aws-cdk-lib";
@@ -173,6 +183,16 @@ const myTable = new Table<Item, "key">(
     ..
   })
 )
+```
+
+Finally, call `getItem`, `putItem`, etc. from within an [AppsyncFunction](#appsyncfunction):
+
+```ts
+new AppsyncFunction(() => {
+  return myTable.get({
+    key: $util.toDynamoDB("key"),
+  });
+});
 ```
 
 ### AppsyncFunction
