@@ -1,22 +1,7 @@
 import "jest";
 import { $util } from "../lib";
-import { FunctionDecl } from "../src/declaration";
 import { reflect } from "../src/reflect";
-import { VTL } from "../src/vtl";
-
-// generates boilerplate for the circuit-breaker logic for implementing early return
-function returnExpr(varName: string) {
-  return `#set($context.stash.return__val = ${varName})
-#set($context.stash.return__flag = true)
-#return($context.stash.return__val)`;
-}
-
-function testCase(decl: FunctionDecl, expected: string) {
-  const vtl = new VTL();
-  vtl.eval(decl.body);
-  const actual = vtl.toVTL();
-  expect(actual).toEqual(expected);
-}
+import { returnExpr, testCase } from "./util";
 
 test("empty function returning an argument", () => {
   testCase(
