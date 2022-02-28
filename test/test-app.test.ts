@@ -7,7 +7,7 @@ jest.setTimeout(60000);
 
 import { tsc } from "../src/tsc";
 
-const disableTest = true;
+const disableTest = false;
 
 describe("workflow", () => {
   test("should compile test-app", async () => {

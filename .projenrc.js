@@ -32,9 +32,11 @@ const project = new typescript.TypeScriptProject({
     },
   },
   gitignore: [".DS_Store"],
-  releaseToNpm: false,
+  releaseToNpm: true,
 });
 
 project.testTask.prependExec("ts-patch install -s");
+
+project.addPackageIgnore("/test-app");
 
 project.synth();
