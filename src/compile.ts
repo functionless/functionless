@@ -284,12 +284,20 @@ export function compile(
           ]);
         } else if (ts.isPropertyAssignment(node)) {
           return newExpr("PropAssignExpr", [
-            ts.factory.createStringLiteral(node.name.getText()),
+            ts.isStringLiteral(node.name) ||
+            (ts.isIdentifier(node.name) &&
+              (node.name.text === "null" || node.name.text === "undefined"))
+              ? string(node.name.text)
+              : ts.isComputedPropertyName(node.name)
+              ? toExpr(node.name.expression)
+              : toExpr(node.name),
             toExpr(node.initializer),
           ]);
         } else if (ts.isShorthandPropertyAssignment(node)) {
           return newExpr("PropAssignExpr", [
-            ts.factory.createStringLiteral(node.name.getText()),
+            newExpr("Identifier", [
+              ts.factory.createStringLiteral(node.name.text),
+            ]),
             toExpr(node.name),
           ]);
         } else if (ts.isSpreadAssignment(node)) {

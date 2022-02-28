@@ -68,26 +68,28 @@ export class Table<
 
   constructor(readonly resource: aws_dynamodb.ITable) {}
 
+  /**
+   * @see https://docs.aws.amazon.com/appsync/latest/devguide/resolver-mapping-template-reference-dynamodb.html#aws-appsync-resolver-mapping-template-reference-dynamodb-getitem
+   */
   // @ts-ignore
   public getItem<
     Key extends KeyAttribute<Item, PartitionKey, RangeKey>
   >(input: { key: Key; consistentRead?: boolean }): Narrow<Item, Key>;
 
   public getItem(call: CallExpr, vtl: VTL): any {
-    // cast to an Expr - the functionless ts-transform will ensure we are passed an Expr
     const input = vtl.eval(call.args.input);
     const request = vtl.var(
-      `{"operation": "GetItem", "version": "2018-05-20"}`
+      `{"operation": "GetItem", "version": "2018-05-29"}`
     );
     vtl.qr(`${request}.put('key', ${input}.get('key'))`);
-    vtl.add(
-      `#if(${input}.containsKey('consistentRead'))
-$util.qr(${request}.put('consistentRead', ${input}.get('consistentRead')))
-#end`
-    );
+    addIfDefined(vtl, input, request, "consistentRead");
+
     return vtl.json(request);
   }
 
+  /**
+   * @see https://docs.aws.amazon.com/appsync/latest/devguide/resolver-mapping-template-reference-dynamodb.html#aws-appsync-resolver-mapping-template-reference-dynamodb-putitem
+   */
   // @ts-ignore
   public putItem<
     Key extends KeyAttribute<Item, PartitionKey, RangeKey>,
@@ -102,27 +104,114 @@ $util.qr(${request}.put('consistentRead', ${input}.get('consistentRead')))
   }): Narrow<Item, Key>;
 
   public putItem(call: CallExpr, vtl: VTL): any {
-    // cast to an Expr - the functionless ts-transform will ensure we are passed an Expr
     const input = vtl.eval(call.args.input);
     const request = vtl.var(
-      `{"operation": "PutItem", "version": "2018-05-20"}`
+      `{"operation": "PutItem", "version": "2018-05-29"}`
     );
     vtl.qr(`${request}.put('key', ${input}.get('key'))`);
     vtl.qr(
       `${request}.put('attributeValues', ${input}.get('attributeValues'))`
     );
-    vtl.add(
-      `#if(${input}.containsKey('condition'))
-$util.qr(${request}.put('condition', ${input}.get('condition')))
-#end`
-    );
-    vtl.add(
-      `#if(${input}.containsKey('_version'))
-$util.qr(${request}.put('_version', ${input}.get('_version')))
-#end`
-    );
+    addIfDefined(vtl, input, request, "condition");
+    addIfDefined(vtl, input, request, "_version");
+
     return vtl.json(request);
   }
+
+  /**
+   * @see https://docs.aws.amazon.com/appsync/latest/devguide/resolver-mapping-template-reference-dynamodb.html#aws-appsync-resolver-mapping-template-reference-dynamodb-updateitem
+   */
+  // @ts-ignore
+  public updateItem<
+    Key extends KeyAttribute<Item, PartitionKey, RangeKey>,
+    UpdateExpression extends string,
+    ConditionExpression extends string | undefined
+  >(input: {
+    key: Key;
+    update: DynamoExpression<UpdateExpression>;
+    condition?: DynamoExpression<ConditionExpression>;
+    _version?: number;
+  }): Narrow<Item, Key>;
+
+  public updateItem(call: CallExpr, vtl: VTL): any {
+    const input = vtl.eval(call.args.input);
+    const request = vtl.var(
+      `{"operation": "UpdateItem", "version": "2018-05-29"}`
+    );
+    vtl.qr(`${request}.put('key', ${input}.get('key'))`);
+    vtl.qr(`${request}.put('update', ${input}.get('update'))`);
+    addIfDefined(vtl, input, request, "condition");
+    addIfDefined(vtl, input, request, "_version");
+
+    return vtl.json(request);
+  }
+
+  /**
+   * @see https://docs.aws.amazon.com/appsync/latest/devguide/resolver-mapping-template-reference-dynamodb.html#aws-appsync-resolver-mapping-template-reference-dynamodb-deleteitem
+   */
+  // @ts-ignore
+  public deleteItem<
+    Key extends KeyAttribute<Item, PartitionKey, RangeKey>,
+    ConditionExpression extends string | undefined
+  >(input: {
+    key: Key;
+    condition?: DynamoExpression<ConditionExpression>;
+    _version?: number;
+  }): Narrow<Item, Key>;
+
+  public deleteItem(call: CallExpr, vtl: VTL): any {
+    const input = vtl.eval(call.args.input);
+    const request = vtl.var(
+      `{"operation": "DeleteItem", "version": "2018-05-29"}`
+    );
+    vtl.qr(`${request}.put('key', ${input}.get('key'))`);
+    addIfDefined(vtl, input, request, "condition");
+    addIfDefined(vtl, input, request, "_version");
+
+    return vtl.json(request);
+  }
+
+  /**
+   * @see https://docs.aws.amazon.com/appsync/latest/devguide/resolver-mapping-template-reference-dynamodb.html#aws-appsync-resolver-mapping-template-reference-dynamodb-query
+   */
+  // @ts-ignore
+  public query<Query extends string, Filter extends string | undefined>(input: {
+    query: DynamoExpression<Query>;
+    filter?: DynamoExpression<Filter>;
+    index?: string;
+    nextToken?: string;
+    limit?: number;
+    scanIndexForward?: boolean;
+    consistentRead?: boolean;
+    select?: "ALL_ATTRIBUTES" | "ALL_PROJECTED_ATTRIBUTES";
+  }): {
+    items: Item[];
+    nextToken: string;
+    scannedCount: number;
+  };
+
+  public query(call: CallExpr, vtl: VTL): any {
+    const input = vtl.eval(call.args.input);
+    const request = vtl.var(`{"operation": "Query", "version": "2018-05-29"}`);
+    vtl.qr(`${request}.put('key', ${input}.get('key'))`);
+    vtl.qr(`${request}.put('query', ${input}.get('query'))`);
+    addIfDefined(vtl, input, request, "index");
+    addIfDefined(vtl, input, request, "nextToken");
+    addIfDefined(vtl, input, request, "limit");
+    addIfDefined(vtl, input, request, "scanIndexForward");
+    addIfDefined(vtl, input, request, "consistentRead");
+    addIfDefined(vtl, input, request, "select");
+
+    return vtl.json(request);
+  }
+}
+
+function addIfDefined(vtl: VTL, from: string, to: string, key: string) {
+  vtl.add(
+    `#if(${from}.containsKey('${key}'))`,
+    `$util.qr(${to}.put('${key}', ${from}.get('${key}')))`,
+    `#end`
+  );
 }
 
 export type DynamoExpression<Expression extends string | undefined> =

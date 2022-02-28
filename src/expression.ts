@@ -222,7 +222,10 @@ export class ObjectLiteralExpr extends BaseNode<"ObjectLiteralExpr"> {
 
   public getProperty(name: string) {
     return this.properties.find(
-      (prop) => prop.kind === "PropAssignExpr" && prop.name === name
+      (prop) =>
+        prop.kind === "PropAssignExpr" &&
+        ((prop.name.kind === "Identifier" && prop.name.name === name) ||
+          (prop.name.kind === "StringLiteralExpr" && prop.name.value === name))
     );
   }
 }
@@ -230,7 +233,7 @@ export class ObjectLiteralExpr extends BaseNode<"ObjectLiteralExpr"> {
 export const isPropAssignExpr = typeGuard("PropAssignExpr");
 
 export class PropAssignExpr extends BaseNode<"PropAssignExpr"> {
-  constructor(readonly name: string, readonly expr: Expr) {
+  constructor(readonly name: Expr, readonly expr: Expr) {
     super("PropAssignExpr");
     expr.parent = this;
   }

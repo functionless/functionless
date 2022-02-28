@@ -42,6 +42,8 @@ export function findService(
     return findService(expr.expr);
   } else if (expr.kind === "VariableStmt" && expr.expr) {
     return findService(expr.expr);
+  } else if (expr.kind === "ReturnStmt") {
+    return findService(expr.expr);
   }
   return undefined;
 }

@@ -6,14 +6,18 @@ export interface Person {
   id: string;
   name: string;
 }
+
 export interface ProcessedPerson extends Person {
   score: number;
 }
+
 export class PeopleDatabase extends Construct {
   readonly personTable;
   readonly computeScore;
   readonly getPerson;
   readonly addPerson;
+  readonly updateName;
+  readonly deletePerson;
 
   constructor(scope: Construct, id: string) {
     super(scope, id);
@@ -76,6 +80,33 @@ export class PeopleDatabase extends Construct {
 
         return person;
       }
+    );
+
+    this.updateName = new AppsyncFunction<(id: string, name: string) => Person>(
+      (_, id, name) =>
+        this.personTable.updateItem({
+          key: {
+            id: $util.dynamodb.toDynamoDB(id),
+          },
+          update: {
+            expression: "SET #name = :name",
+            expressionNames: {
+              "#name": "name",
+            },
+            expressionValues: {
+              ":name": $util.dynamodb.toDynamoDB(name),
+            },
+          },
+        })
+    );
+
+    this.deletePerson = new AppsyncFunction<(id: string) => Person | undefined>(
+      (_, id) =>
+        this.personTable.deleteItem({
+          key: {
+            id: $util.dynamodb.toDynamoDB(id),
+          },
+        })
     );
   }
 }
