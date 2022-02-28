@@ -114,13 +114,15 @@ Finally, configure the `functionless/lib/compile` TypeScript transformer plugin 
 There are two aspects to Functionless:
 
 1. Type-Safe wrappers of CDK L2 Constructs
-2. An AppsyncFunction with a TypeScript function representing the Appsync Resolver Pipeline
+2. An AppsyncFunction which represents the Appsync Resolver Pipeline
 
 ### Type-Safe Wrappers - Function and Table
 
 You must wrap your CDK L2 Constructs in the corresponding wrapper provided by functionless. At this time, we currently support AWS Lambda Functions and AWS DynamoDB Tables.
 
 **Function**:
+
+The `Function` wrapper annotates an `aws_lambda.Function` with a TypeScript function signature. This signature controls how the Function can be called from within an AppsyncFunction.
 
 ```ts
 import { aws_lambda } from "aws-cdk-lib";
@@ -135,11 +137,22 @@ const myFunc = new Function<(name: string) => string>(
 
 **Table**
 
+The `Table` wrapper annotates an `aws_dynamodb.Table` with a type-safe interface.
+
+First, declare a `interface` to describe your Table's data. You can use any of the features available in [`typesafe-dynamodb`](https://github.com/sam-goodwin/typesafe-dynamodb).
+
 ```ts
 interface Item {
   key: string;
   data: number;
 }
+```
+
+Then, wrap your `aws_dynamodb.Table` CDK Construct with the `functionless.Table` construct, specify the `Item` type, Partition Key `"id"` and (optionally) the Range Key.
+
+```ts
+import { aws_dynamodb } from "aws-cdk-lib";
+import { Table } from "functionless";
 
 // see https://github.com/sam-goodwin/typesafe-dynamodb for more information on type-safe DynamoDB Tables.
 const myTable = new Table<Item, "key">(
@@ -151,22 +164,59 @@ const myTable = new Table<Item, "key">(
 
 ### AppsyncFunction
 
-Then, instantiate an `AppsyncFunction` and provide a function which implements an [Appsync Resolver](https://docs.aws.amazon.com/appsync/latest/devguide/configuring-resolvers.html).
+After wrapping your Functions and Tables, you can then instantiate an `AppsyncFunction` and interact with them using standard TypeScript syntax.
 
 ```ts
-// make sure you explicitly provide a type-signature for the function, or else the compiler transformer will not function
-const getItem = new AppsyncFunction<(key: string) => Item | null>(
-  ($context, key) => {
-    const item = myTable.get({
-      key: {
-        S: key,
-      },
-    });
+const getItem = new AppsyncFunction<
+  // you must explicitly provide a type-signature for the function
+  (key: string) => Item | null
+>(($context, key) => {
+  const item = myTable.get({
+    key: {
+      S: key,
+    },
+  });
 
-    return item;
-  }
-);
+  const processedName = myFunc(item.key);
+
+  return {
+    ...item,
+    processedName,
+  };
+});
 ```
+
+Calls to services such as Table or Function can only be performed at the top-level. See below for some examples of valid and invalid service calls
+
+**Valid**:
+
+```ts
+// stash the result of the service call - the most common use-case
+const item = myTable.get();
+
+// calling the service but discarding the result is fine
+myTable.get();
+```
+
+**Invalid**:
+
+```ts
+// you cannot in-line a call as the if condition, store it as a variable first
+if (myTable.get()) {
+}
+
+if (condition) {
+  // it is not currently possible to conditionally call a service, but this will be supported at a later time
+  myTable.get();
+}
+
+for (const item in list) {
+  // resolvers cannot be contained within a loop
+  myTable.get();
+}
+```
+
+### TypeScript -> Velocity Template Logic
 
 ## Why you should use Service-to-Service Integrations
 
@@ -260,24 +310,37 @@ new AppsyncFunction(
 );
 ```
 
-## Writing your own Synthesis process
+## Writing your own interpreters
 
-You can access this data structure and build your own interpretations:
+Functionless converts TypeScript function syntax into a [`FunctionDecl`](./src/declaration.ts) AST data object. This object contains a total representation of the syntax contained within the Function and can then be processed within your CDK application. This is how `AppsyncFunction` works.
+
+To get a `FunctionDecl` for a function, use the `functionless.reflect` utility:
 
 ```ts
-import { Expr } from "functionless/lib/expression";
+import { reflect } from "functionless";
 
-const myFunc = new AppsyncFunction<F>(..);
+const functionDecl = reflect((arg: string) => {
+  return `${arg}_1`;
+});
+```
 
-myFunc.decl // FunctionDecl<F>
+Then, write a recursive function to process the representation:
 
-processExpr(myFunc.decl);
+```ts
+import { FunctionlessNode } from "functionless";
 
-// write recursive functions to process the expressions
-function processExpr(expr: Expr) {
+function processExpr(node: FunctionlessNode) {
   // do work
-  if (expr.kind === "FunctionDecl") {
+  if (node.kind === "FunctionDecl") {
     // blah
   }
 }
 ```
+
+See the following files to understand the structure of the Abstract Syntax Tree:
+
+1. [expression.ts](./src/expression.ts)
+2. [statement.ts](./src/statement.ts)
+3. [declaration.ts](./src/declaration.ts)
+
+For an example of an evaluator, see [vtl.ts](./src/vtl.ts).
