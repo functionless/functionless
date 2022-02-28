@@ -135,7 +135,7 @@ ${returnExpr("$context.arguments.list")}`
   );
 });
 
-// TODO
+// TODO https://github.com/sam-goodwin/functionless/issues/8
 // test("push multiple args is expanded to multiple add calls", () => {
 //   const template = reflect((list: string[]) => {
 //     list.push("hello", "world");
@@ -392,7 +392,7 @@ $util.error('Reduce of empty array with no initial value')
 #end
 #foreach($item in $context.arguments.list)
 #if($foreach.index == 0)
-#set($str = item)
+#set($str = $item)
 #else
 #set($v1 = \"\${str}\${item}\")
 #set($str = $v1)
