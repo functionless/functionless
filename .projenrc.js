@@ -35,9 +35,10 @@ const project = new typescript.TypeScriptProject({
   releaseToNpm: true,
 });
 
+project.testTask.prependExec(
+  "cd ./test-app && yarn && yarn build && yarn synth"
+);
 project.testTask.prependExec("ts-patch install -s");
-project.testTask.prependExec("yarn link");
-project.testTask.prependExec("cd ./test-app && yarn link functionless");
 
 project.addPackageIgnore("/test-app");
 
