@@ -129,8 +129,8 @@ Finally, configure the `functionless/lib/compile` TypeScript transformer plugin 
 There are three aspects your need to learn before using Functionless in your CDK application:
 
 1. Appsync Integration interfaces for `Function` and `Table`.
-2. `AppsyncFunction` construct for creating Appsync Resolvers with TypeScript syntax.
-3. Use the `AppsyncFunction` to create Resolvers and add them to an `@aws-cdk/aws-appsync-alpha.GraphQLApi`.
+2. `AppsyncFunction` construct for defining Appsync Resolver with TypeScript syntax.
+3. Add Resolvers to an `@aws-cdk/aws-appsync-alpha.GraphQLApi`.
 
 ### Appsync Integration interfaces for `Function` and `Table`
 
@@ -206,7 +206,7 @@ new AppsyncFunction(() => {
 });
 ```
 
-### `AppsyncFunction` construct for creating Appsync Resolvers with TypeScript syntax
+### `AppsyncFunction` construct for defining Appsync Resolver with TypeScript syntax
 
 After wrapping your Functions/Tables, you can then instantiate an `AppsyncFunction` and interact with them using standard TypeScript syntax.
 
@@ -260,11 +260,11 @@ for (const item in list) {
 }
 ```
 
-### Using the `AppsyncFunction` to create Resolvers and add them to an `@aws-cdk/aws-appsync-alpha.GraphQLApi`
+### Add Resolvers to an `@aws-cdk/aws-appsync-alpha.GraphQLApi`
 
 When you create a `new AppsyncFunction`, it does not immediately generate an Appsync Resolver. `AppsyncFunction` is more like a template for creating resolvers and can be re-used across more than one API.
 
-To add to an API, use the `addResolver`
+To add to an API, use the `addResolver` utility on `AppsyncFunction`.
 
 ```ts
 const app = new App();
@@ -404,7 +404,6 @@ const b = ["hello", 1, util.toJson(a)];
 ```
 #set($a = [])
 #set($b = ['hello', 1, $util.toJson($a)])
-
 ```
 
 #### SpreadElementExpr
@@ -465,6 +464,60 @@ const a = $util.toJson(val);
 ```
 $util.error('error')
 #set($a = $util.toJson($val))
+```
+
+#### If Statement
+
+An `if` statement translates to a series of `#if`, `#else` statements.
+
+```ts
+if (a === "hello") {
+  return a;
+}
+```
+
+```
+#if($a == 'hello')
+  #return($a)
+#end
+```
+
+`#elseif` is not used because evaluating the condition may translate to a series of `#set` or `$util.qr` statements. For this reason, all `else if` clauses are translated to `#else` with a nested `#if`:
+
+```ts
+if (a === "hello") {
+  return a;
+} else if (call() === "hello") {
+  return false;
+}
+```
+
+```
+#if($a == 'hello')
+  #return($a)
+#else
+  #set($v1 = call())
+  #if($v1 === "hello")
+    #return($a)
+  #end
+#end
+```
+
+#### Conditional Expressions
+
+A conditional expression, i.e. `cond ? then : else` are translated into `#if` and `#else` statements that assign a shared variable with the result of their computation;
+
+```ts
+const a = condition ? "left" : "right;
+```
+
+```
+#if($condition)
+#set($result = 'left')
+#else
+#set($result = 'right')
+#end
+#set($a = $result)
 ```
 
 #### For-In-Statement
