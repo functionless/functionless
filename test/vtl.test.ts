@@ -53,9 +53,7 @@ $util.qr($v1.put('list', ['hello']))
 $util.qr($v2.put('key', 'value'))
 $util.qr($v1.put('obj', $v2))
 $util.qr($v1.put('arg', $context.arguments.arg))
-#foreach( $v3 in $context.arguments.obj.keySet() )
-$util.qr($v1.put($v3, $context.arguments.obj.get($v3)))
-#end
+$util.qr($v1.putAll($context.arguments.obj))
 ${returnExpr("$v1")}`
   );
 });
@@ -90,9 +88,7 @@ test("return in-line spread object", () => {
     }),
     `#set($v1 = {})
 $util.qr($v1.put('id', $util.autoId()))
-#foreach( $v2 in $context.arguments.obj.keySet() )
-$util.qr($v1.put($v2, $context.arguments.obj.get($v2)))
-#end
+$util.qr($v1.putAll($context.arguments.obj))
 ${returnExpr("$v1")}`
   );
 });

@@ -355,11 +355,7 @@ export class VTL {
         if (prop.kind === "PropAssignExpr") {
           this.qr(`$${obj}.put('${prop.name}', ${this.$(prop.expr)})`);
         } else if (prop.kind === "SpreadAssignExpr") {
-          const itemName = this.newLocalVarName();
-          const items = this.$(prop.expr);
-          this.add(`#foreach( $${itemName} in ${items}.keySet() )`);
-          this.qr(`$${obj}.put($${itemName}, ${items}.get($${itemName}))`);
-          this.add(`#end`);
+          this.qr(`$${obj}.putAll(${this.$(prop.expr)})`);
         } else {
           assertNever(prop);
         }
