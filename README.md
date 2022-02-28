@@ -131,7 +131,6 @@ There are three aspects your need to learn before using Functionless in your CDK
 1. Appsync Integration interfaces for `Function` and `Table`.
 2. `AppsyncFunction` construct for creating Appsync Resolvers with TypeScript syntax.
 3. Use the `AppsyncFunction` to create Resolvers and add them to an `@aws-cdk/aws-appsync-alpha.GraphQLApi`.
-4.
 
 ### Appsync Integration interfaces for `Function` and `Table`
 
