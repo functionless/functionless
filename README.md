@@ -315,6 +315,10 @@ new AppsyncFunction((arg: string) => {
 });
 ```
 
+```
+#return($context.arguments.arg)
+```
+
 #### Variable Declaration
 
 If in the top-level scope, all Variables are stored in `$context.stash`.
@@ -329,10 +333,6 @@ new AppsyncFunction(() => {
 ```
 #set($context.stash.a = 'value')
 #set($context.stash.b = $context.stash.a)
-```
-
-```
-#return($context.arguments.arg)
 ```
 
 #### Variable Declaration in a nested scope
