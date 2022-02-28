@@ -6,16 +6,57 @@ import { AnyLambda } from "./function";
 import { VTL } from "./vtl";
 import { AnyTable, isTable } from "./table";
 import { findService, toName } from "./util";
+import {
+  ToAttributeMap,
+  ToAttributeValue,
+} from "typesafe-dynamodb/lib/attribute-value";
+import { FunctionDecl } from "./declaration";
 
-export interface ResolverOptions
-  extends Pick<
-    appsync.BaseResolverProps,
-    "typeName" | "fieldName" | "cachingConfig"
-  > {}
-
+/**
+ * The shape of the AWS Appsync `$context` variable.
+ *
+ * Both the `arguments` and `stash` fields are purposely omitted since they are used internally
+ * by the TypeScript->VTL conversion logic.
+ *
+ * @see https://docs.aws.amazon.com/appsync/latest/devguide/resolver-context-reference.html
+ */
 export interface $Context<Source>
   extends Omit<AppSyncResolverEvent<never, Source>, "arguments" | "stash"> {}
 
+/**
+ * An AWS AppSync Resolver Function derived from TypeScript syntax.
+ *
+ * First, you must wrap a CDK L2 Construct in the corresponding Functionless type-safe interfaces.
+ * ```ts
+ * const table = new Table<Person, "id">(new aws_dynamodb.Table(scope, "id", props));
+ * ```
+ *
+ * Then, call the table from within the new AppsyncFunction:
+ * ```ts
+ * const getPerson = new AppsyncFunction<
+ *   (id: string) => Person | undefined
+ * >(($context, id) => {
+ *  const person = table.get({
+ *    key: {
+ *      id: $util.toDynamoDB(id)
+ *    }
+ *  });
+ *  return person;
+ * });
+ * ```
+ *
+ * Finally, the `getPerson` function can be used to create resolvers on a GraphQLAPI
+ * ```ts
+ * import * as appsync from "@aws-cdk/aws-appsync-alpha";
+ *
+ * const api = new appsync.GraphQLApi(..);
+ *
+ * getPerson.createResolver(api, {
+ *   typeName: "Query",
+ *   fieldName: "getPerson"
+ * });
+ * ```
+ */
 export class AppsyncFunction<
   F extends AnyFunction = AnyFunction,
   Source = undefined
@@ -29,9 +70,30 @@ export class AppsyncFunction<
     this.decl = fn as unknown as FunctionDecl<F>;
   }
 
+  /**
+   * Generate and add an AWS Appsync Resolver to an AWS Appsync GraphQL API.
+   *
+   * ```ts
+   * import * as appsync from "@aws-cdk/aws-appsync-alpha";
+   *
+   * const api = new appsync.GraphQLApi(..);
+   *
+   * getPerson.createResolver(api, {
+   *   typeName: "Query",
+   *   fieldName: "getPerson"
+   * });
+   * ```
+   *
+   * @param api the AWS Appsync API to add this Resolver to
+   * @param options typeName, fieldName and cachingConfig for this Resolver.
+   * @returns a reference to the generated {@link appsync.Resolver}.
+   */
   public addResolver(
     api: appsync.GraphqlApi,
-    options: ResolverOptions
+    options: Pick<
+      appsync.BaseResolverProps,
+      "typeName" | "fieldName" | "cachingConfig"
+    >
   ): appsync.Resolver {
     let stageIt = 0;
 
@@ -176,16 +238,33 @@ export class AppsyncFunction<
   }
 }
 
-import {
-  ToAttributeMap,
-  ToAttributeValue,
-} from "typesafe-dynamodb/lib/attribute-value";
-import { FunctionDecl } from "./declaration";
-
+/**
+ * A reference to the AWS Appsync `$util` variable globally available to all Resolvers.
+ *
+ * Use the functions on `$util` to perform computations within an {@link AppsyncFunction}. They
+ * will be translated directly to calls within the Velocity Template Engine.
+ *
+ * @see https://docs.aws.amazon.com/appsync/latest/devguide/resolver-util-reference.html
+ */
 export declare const $util: $util;
 
+/**
+ * $util.dynamodb contains helper methods that make it easier to write and read data to Amazon DynamoDB, such as automatic type mapping and formatting. These methods are designed to make mapping primitive types and Lists to the proper DynamoDB input format automatically, which is a Map of the format { "TYPE" : VALUE }.
+ *
+ * @see https://docs.aws.amazon.com/appsync/latest/devguide/resolver-util-reference.html#dynamodb-helpers-in-util-dynamodb
+ */
 export interface dynamodb {
+  /**
+   * General object conversion tool for DynamoDB that converts input objects to the appropriate DynamoDB representation. It's opinionated about how it represents some types: e.g., it will use lists ("L") rather than sets ("SS", "NS", "BS"). This returns an object that describes the DynamoDB attribute value.
+   *
+   * @param value a JSON value to convert {@link ToAttributeValue}.
+   * @see https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_AttributeValue.html
+   */
   toDynamoDB<T>(value: T): ToAttributeValue<T>;
+  /**
+   * Creates a copy of the map where each value has been converted to its appropriate DynamoDB format. It's opinionated about how it represents some of the nested objects: e.g., it will use lists ("L") rather than sets ("SS", "NS", "BS").
+   * @param value an object to convert {@link ToAttributeMap}
+   */
   toMapValues<T extends object>(value: T): ToAttributeMap<T>;
 }
 
@@ -193,6 +272,11 @@ export interface dynamodb {
  * @see https://docs.aws.amazon.com/appsync/latest/devguide/resolver-util-reference.html
  */
 export interface $util {
+  /**
+   * $util.dynamodb contains helper methods that make it easier to write and read data to Amazon DynamoDB, such as automatic type mapping and formatting. These methods are designed to make mapping primitive types and Lists to the proper DynamoDB input format automatically, which is a Map of the format { "TYPE" : VALUE }.
+   *
+   * @see https://docs.aws.amazon.com/appsync/latest/devguide/resolver-util-reference.html#dynamodb-helpers-in-util-dynamodb
+   */
   readonly dynamodb: dynamodb;
 
   /**

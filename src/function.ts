@@ -2,16 +2,45 @@ import { aws_lambda } from "aws-cdk-lib";
 import { CallExpr } from "./expression";
 import { VTL } from "./vtl";
 
+// @ts-ignore - imported for typedoc
+import type { AppsyncFunction } from "./appsync";
+
 export type AnyFunction = (...args: any[]) => any;
 
-export function isLambda(a: any): a is Lambda<AnyFunction> {
-  return a?.kind === "Lambda";
+export function isFunction(a: any): a is Function<AnyFunction> {
+  return a?.kind === "Function";
 }
 
-export type AnyLambda = Lambda<AnyFunction>;
+export type AnyLambda = Function<AnyFunction>;
 
-export class Lambda<F extends AnyFunction> {
-  readonly kind: "Lambda" = "Lambda";
+/**
+ * Wraps an {@link aws_lambda.Function} with a type-safe interface that can be
+ * called from within an {@link AppsyncFunction}.
+ *
+ * For example:
+ * ```ts
+ * const getPerson = new Function<(key: string) => Person>(
+ *   new aws_lambda.Function(..)
+ * );
+ *
+ * new AppsyncFunction(() => {
+ *   return getPerson("value");
+ * })
+ * ```
+ *
+ * Note the explicitly provided function signature, `(key: string) => Person`. This
+ * defines the function signature of the Lambda Function. The call, `getPerson("value")`
+ * will be translated to a JSON object:
+ * ```json
+ * {
+ *   "key": "value"
+ * }
+ * ```
+ *
+ * Make sure to implement your Lambda Function entrypoints accordingly.
+ */
+export class Function<F extends AnyFunction> {
+  readonly kind: "Function" = "Function";
 
   // @ts-ignore - this makes `F` easily available at compile time
   readonly __functionBrand: F;
@@ -38,6 +67,6 @@ export class Lambda<F extends AnyFunction> {
     }
   }
 }
-export interface Lambda<F extends AnyFunction> {
+export interface Function<F extends AnyFunction> {
   (...args: Parameters<F>): ReturnType<F>;
 }

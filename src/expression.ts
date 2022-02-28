@@ -4,6 +4,9 @@ import { BaseNode, isNode, setParent, typeGuard } from "./node";
 import { BlockStmt, IfStmt, isIfStmt } from "./statement";
 import { AnyTable } from "./table";
 
+/**
+ * An {@link Expr} (Expression) is a Node that will be interpreted to a value.
+ */
 export type Expr =
   | ArrayLiteralExpr
   | BinaryExpr

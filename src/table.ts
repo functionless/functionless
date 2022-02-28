@@ -4,11 +4,13 @@ import {
   ExpressionAttributeNames,
   ExpressionAttributeValues,
 } from "typesafe-dynamodb/lib/expression-attributes";
-
 import { KeyAttribute } from "typesafe-dynamodb/lib/key";
 import { Narrow } from "typesafe-dynamodb/lib/narrow";
 import { CallExpr } from "./expression";
 import { VTL } from "./vtl";
+
+// @ts-ignore - imported for typedoc
+import type { AppsyncFunction } from "./appsync";
 
 export function isTable(a: any): a is AnyTable {
   return a?.kind === "Table";
@@ -16,6 +18,47 @@ export function isTable(a: any): a is AnyTable {
 
 export type AnyTable = Table<object, keyof object, keyof object | undefined>;
 
+/**
+ * Wraps an {@link aws_dynamodb.Table} with a type-safe interface that can be
+ * called from within an {@link AppsyncFunction}.
+ *
+ * Its interface, e.g. `getItem`, `putItem`, is in 1:1 correspondence with the
+ * AWS Appsync Resolver API https://docs.aws.amazon.com/appsync/latest/devguide/resolver-mapping-template-reference-dynamodb.html
+ *
+ * For example:
+ * ```ts
+ * interface Person {
+ *   id: string;
+ *   name: string;
+ *   age: number;
+ * }
+ *
+ * const personTable = new Table<Person, "id">(
+ *   new aws_dynamodb.Table(..)
+ * );
+ *
+ * const getPerson = new AppsyncFunction<
+ *   (personId: string) => Person | undefined
+ * >(($context, personId: string) => {
+ *   const person = personTable.get({
+ *     key: {
+ *       id: $util.toDynamoDB(personId)
+ *     }
+ *   });
+ *
+ *   return person;
+ * });
+ * ```
+ *
+ * Note the type-signature of `Table<Person, "id">`. This declares a table whose contents
+ * are of the shape, `Person`, and that the PartitionKey is the `id` field.
+ *
+ * You can also specify the RangeKey:
+ * ```ts
+ * new Table<Person, "id", "age">(..)
+ * ```
+ * @see https://github.com/sam-goodwin/typesafe-dynamodb - for more information on how to model your DynamoDB table with TypeScript
+ */
 export class Table<
   Item extends object,
   PartitionKey extends keyof Item,

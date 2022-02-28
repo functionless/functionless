@@ -1,6 +1,6 @@
 import { Construct } from "constructs";
 import { aws_dynamodb, aws_lambda } from "aws-cdk-lib";
-import { Table, Lambda, $util, AppsyncFunction } from "functionless";
+import { Table, Function, $util, AppsyncFunction } from "functionless";
 
 export interface Person {
   id: string;
@@ -27,7 +27,7 @@ export class PeopleDatabase extends Construct {
       })
     );
 
-    this.computeScore = new Lambda<(person: Person) => number>(
+    this.computeScore = new Function<(person: Person) => number>(
       new aws_lambda.Function(this, "ComputeScore", {
         code: aws_lambda.Code.fromInline(
           "exports.handle = async function() {return 1;}"

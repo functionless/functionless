@@ -1,6 +1,10 @@
 import { Expr } from "./expression";
 import { BaseNode, isNode, typeGuard } from "./node";
 
+/**
+ * A {@link Stmt} (Statement) is unit of execution that does not yield any value. They are translated
+ * to `#set`, `$util.qr` and `#return` directives.
+ */
 export type Stmt =
   | BlockStmt
   | ExprStmt
