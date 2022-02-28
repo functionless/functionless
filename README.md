@@ -218,7 +218,7 @@ for (const item in list) {
 
 ### TypeScript -> Velocity Template Logic
 
-In order to write effective VTL templates, it helps to understand how TypeScript syntax maps to Velocity Template Expressions.
+In order to write effective VTL templates, it helps to understand how TypeScript syntax maps to Velocity Template Statements.
 
 An AppSync Request Mapping Template is synthesized by evaluating all [Expressions](./src/expression.ts) to a series of `#set`, `$util.qr`, `#foreach` and `#if` statements. The end result is an object containing the returned result of the function which can then be converted to JSON with `$util.toJson`.
 
@@ -315,11 +315,11 @@ const b = ["hello", 1, util.toJson(a)];
 
 ```
 
-#### ArrayLiteralExpr containing SpreadElementExpr
+#### SpreadElementExpr
 
-There is a special case when you use a SpreadElementExpr (e.g. `[...list]`) because there is no way to achieve this behavior in VTL without first assigning a list and then using `addAll` to copy the items in.
+There is a special case when you use a `SpreadElementExpr` (e.g. `[...list]`) because there is no way to achieve this behavior in VTL without first assigning a list and then using `addAll` to copy the items in.
 
-If you ever use SpreadElementExpr, a temporary variable will be first initialized with an empty array (`[]`):
+If you ever use `SpreadElementExpr`, a temporary variable will be first initialized with an empty array (`[]`):
 
 ```ts
 const c = [...b];
@@ -331,9 +331,9 @@ $util.qr($c.addAll($b))
 #set($c = $v1)
 ```
 
-#### ObjectLiteralExpr`
+#### ObjectLiteralExpr
 
-An ObjectLiteralExpr is first stored as an empty map `{}` in a temporary variable and subsequent statements are generated to add each of the elements in.
+An `ObjectLiteralExpr` is first stored as an empty map `{}` in a temporary variable and subsequent statements are generated to add each of the elements in.
 
 ```ts
 const a = {
@@ -344,10 +344,9 @@ const a = {
 ```
 #set($a = {})
 $util.qr($a.put('key', 'string'))
-
 ```
 
-#### ObjectLiteralExpr and SpreadAssignExpr
+#### SpreadAssignExpr
 
 If you spread an object into another, a [`java.util.Map.putAll`](https://docs.oracle.com/javase/8/docs/api/java/util/HashMap.html#putAll-java.util.Map-) statement is generated to copy over each item in the source object into the destination object.
 
@@ -376,7 +375,7 @@ $util.error('error')
 #set($a = $util.toJson($val))
 ```
 
-### For-In-Statement
+#### For-In-Statement
 
 A `for-in` statement iterates over the keys in an object using `java.util.Map.keySet()`.
 
@@ -394,7 +393,7 @@ for (const i in obj) {
 #end
 ```
 
-### For-Of-Statement
+#### For-Of-Statement
 
 A `for-of` statement iterates over the items in a `java.util.List`.
 
