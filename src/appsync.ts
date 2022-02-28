@@ -5,7 +5,7 @@ import { AnyFunction } from "./function";
 import { AnyLambda } from "./function";
 import { VTL } from "./vtl";
 import { AnyTable, isTable } from "./table";
-import { findService, toName } from "./analysis";
+import { findService, toName } from "./util";
 
 export interface ResolverOptions
   extends Pick<

@@ -1,5 +1,5 @@
 import { CallExpr, Expr } from "./expression";
-import { findFunction, isInTopLevelScope, lookupIdentifier } from "./analysis";
+import { findFunction, isInTopLevelScope, lookupIdentifier } from "./util";
 import { assertNever } from "./assert";
 import { FunctionlessNode } from "./node";
 import { Stmt } from "./statement";

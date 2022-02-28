@@ -1,4 +1,4 @@
-export * from "./analysis";
+export * from "./util";
 export * from "./appsync";
 export * from "./declaration";
 export * from "./expression";
