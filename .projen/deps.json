@@ -1,6 +1,10 @@
 {
   "dependencies": [
     {
+      "name": "@types/fs-extra",
+      "type": "build"
+    },
+    {
       "name": "@types/jest",
       "type": "build"
     },
@@ -84,7 +88,23 @@
       "type": "runtime"
     },
     {
+      "name": "fs-extra",
+      "type": "runtime"
+    },
+    {
+      "name": "ts-node",
+      "type": "runtime"
+    },
+    {
+      "name": "ts-patch",
+      "type": "runtime"
+    },
+    {
       "name": "typesafe-dynamodb",
+      "type": "runtime"
+    },
+    {
+      "name": "typescript",
       "type": "runtime"
     }
   ],

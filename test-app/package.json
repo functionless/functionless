@@ -1,0 +1,22 @@
+{
+  "name": "test",
+  "private": true,
+  "scripts": {
+    "prepare": "ts-patch install -s",
+    "build": "tsc",
+    "watch": "tsc -w",
+    "synth": "cdk synth",
+    "deploy": "cdk deploy"
+  },
+  "devDependencies": {
+    "@types/node": "^14",
+    "@aws-cdk/aws-appsync-alpha": "^2.13.0-alpha.0",
+    "aws-cdk-lib": "^2.13.0",
+    "aws-cdk": "^2.13.0",
+    "functionless": "file:../",
+    "typescript": "^4.5.5",
+    "ts-node": "^10.5.0",
+    "ts-patch": "^2.0.1",
+    "constructs": "^10.0.71"
+  }
+}

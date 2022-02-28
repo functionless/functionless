@@ -1,145 +1,75 @@
-import * as appsync from "@aws-cdk/aws-appsync-alpha";
-import { AppSyncResolverEvent } from "aws-lambda";
-import { assertNever } from "./assert";
-import { Environment } from "./environment";
-import { Identifier } from "./expression";
-import { AnyLambda } from "./lambda";
-import { renderExpr } from "./render";
-import { isExprStmt, isInvoke, isVariableDecl, Stmt } from "./statement";
-import { AnyTable, isTable } from "./table";
+import { aws_lambda } from "aws-cdk-lib";
+import { CallExpr } from "./expression";
+import { VTL } from "./vtl";
+
+// @ts-ignore - imported for typedoc
+import type { AppsyncFunction } from "./appsync";
 
 export type AnyFunction = (...args: any[]) => any;
 
-export interface ResolverOptions
-  extends Pick<
-    appsync.BaseResolverProps,
-    "typeName" | "fieldName" | "cachingConfig"
-  > {}
-
-export interface $Context<Source>
-  extends Omit<AppSyncResolverEvent<never, Source>, "arguments" | "stash"> {}
-
-export function appsyncFunction<F extends AnyFunction, Source = undefined>(
-  fn: ($context: $Context<Source>, ...args: Parameters<F>) => ReturnType<F>
-): TypeSafeAppsyncFunction<F> {
-  return new TypeSafeAppsyncFunction(
-    ...Environment.closure(() =>
-      fn(
-        {
-          info: new Identifier("$context.info") as any,
-          prev: new Identifier("$context.prev") as any,
-          request: new Identifier("$context.request") as any,
-          source: new Identifier("$context.source") as any,
-          identity: new Identifier("$context.identity") as any,
-        },
-        // TODO: inject this with compiler transform
-        ...([] as any)
-      )
-    )
-  );
+export function isFunction(a: any): a is Function<AnyFunction> {
+  return a?.kind === "Function";
 }
 
-export class TypeSafeAppsyncFunction<F extends AnyFunction = AnyFunction> {
+export type AnyLambda = Function<AnyFunction>;
+
+/**
+ * Wraps an {@link aws_lambda.Function} with a type-safe interface that can be
+ * called from within an {@link AppsyncFunction}.
+ *
+ * For example:
+ * ```ts
+ * const getPerson = new Function<(key: string) => Person>(
+ *   new aws_lambda.Function(..)
+ * );
+ *
+ * new AppsyncFunction(() => {
+ *   return getPerson("value");
+ * })
+ * ```
+ *
+ * Note the explicitly provided function signature, `(key: string) => Person`. This
+ * defines the function signature of the Lambda Function. The call, `getPerson("value")`
+ * will be translated to a JSON object:
+ * ```json
+ * {
+ *   "operation": "Invoke",
+ *   "payload": {
+ *     "key": "value"
+ *   }
+ * }
+ * ```
+ *
+ * Make sure to implement your Lambda Function entry-points accordingly.
+ */
+export class Function<F extends AnyFunction> {
+  readonly kind: "Function" = "Function";
+
+  // @ts-ignore - this makes `F` easily available at compile time
+  readonly __functionBrand: F;
+
   constructor(
-    private readonly environment: Environment,
-    private readonly result: ReturnType<F>
-  ) {}
+    readonly resource: aws_lambda.IFunction,
+    /**
+     * Names of the arguments in order.
+     * If this is omitted, then it will be injected by a TS transform.
+     */
+    readonly args: string[] = []
+  ) {
+    return Object.assign(lambda, this);
 
-  public addResolver(
-    api: appsync.GraphqlApi,
-    options: ResolverOptions
-  ): appsync.Resolver {
-    if (this.environment.statements.length === 1) {
-      const [dataSource, requestMappingTemplate] = renderStmt(
-        this.environment.statements[0]
-      );
-      return api.createResolver({
-        ...options,
-        dataSource,
-        requestMappingTemplate,
-        responseMappingTemplate: appsync.MappingTemplate.fromString(
-          renderExpr(this.result)
-        ),
-      });
-    } else {
-      const name = `${options.typeName}.${options.fieldName}`;
-
-      const pipelineConfig = this.environment.statements.map((stmt, i) => {
-        const [dataSource, requestMappingTemplate] = renderStmt(stmt);
-        return dataSource.createFunction({
-          name: `${name}-${i}`,
-          requestMappingTemplate,
-        });
-      });
-
-      return api.createResolver({
-        ...options,
-        pipelineConfig:
-          pipelineConfig.length === 0 ? undefined : pipelineConfig,
-        responseMappingTemplate: appsync.MappingTemplate.fromString(
-          renderExpr(this.result)
-        ),
-      });
-    }
-
-    function renderStmt(stmt: Stmt) {
-      if (isInvoke(stmt)) {
-        const dataSource = getDataSource(api, stmt.target, () =>
-          isTable(stmt.target)
-            ? new appsync.DynamoDbDataSource(
-                api,
-                stmt.target.resource.node.addr,
-                {
-                  api,
-                  table: stmt.target.resource,
-                }
-              )
-            : new appsync.LambdaDataSource(
-                api,
-                stmt.target.resource.node.addr,
-                {
-                  api,
-                  lambdaFunction: stmt.target.resource,
-                }
-              )
-        );
-
-        return [
-          dataSource,
-          appsync.MappingTemplate.fromString(renderExpr(stmt.payload)),
-        ] as const;
-      } else if (isVariableDecl(stmt)) {
-        throw new Error("todo");
-      } else if (isExprStmt(stmt)) {
-        throw new Error("todo");
+    function lambda(call: CallExpr, vtl: VTL): string {
+      const payload = vtl.var(`{}`);
+      for (const [argName, argVal] of Object.entries(call.args)) {
+        vtl.qr(`${payload}.put('${argName}', ${vtl.eval(argVal)})`);
       }
-      return assertNever(stmt);
+      const request = vtl.var(
+        `{"version": "2018-05-29", "operation": "Invoke", "payload": ${payload}}`
+      );
+      return vtl.json(request);
     }
   }
 }
-
-const dataSourcesSymbol = Symbol.for("functionless.DataSources");
-
-const dataSources: WeakMap<
-  appsync.GraphqlApi,
-  WeakMap<any, appsync.BaseDataSource>
-> = ((global as any)[dataSourcesSymbol] ??= new WeakMap());
-
-function getDataSources(api: appsync.GraphqlApi) {
-  if (!dataSources.has(api)) {
-    dataSources.set(api, new WeakMap());
-  }
-  return dataSources.get(api)!;
-}
-
-function getDataSource(
-  api: appsync.GraphqlApi,
-  target: AnyLambda | AnyTable,
-  compute: () => appsync.BaseDataSource
-): appsync.BaseDataSource {
-  const ds = getDataSources(api);
-  if (!ds.has(target)) {
-    ds.set(target, compute());
-  }
-  return ds.get(target)!;
+export interface Function<F extends AnyFunction> {
+  (...args: Parameters<F>): ReturnType<F>;
 }

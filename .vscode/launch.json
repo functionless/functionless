@@ -1,0 +1,29 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "compile test-app",
+      "type": "node",
+      "request": "launch",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["--nolazy", "--enable-source-maps"],
+      "args": ["${workspaceRoot}/scripts/compile-test-app.js"],
+      "outFiles": ["${workspaceFolder}/lib/**/*.js", "!**/node_modules/**"],
+      "cwd": "${workspaceRoot}/test-app",
+      "internalConsoleOptions": "openOnSessionStart",
+      "skipFiles": ["<node_internals>/**", "node_modules/**"]
+    },
+    {
+      "name": "synth test-app",
+      "type": "node",
+      "request": "launch",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["--nolazy"],
+      "args": ["./lib/app.js"],
+      "outFiles": ["${workspaceFolder}/lib/**/*.js", "!**/node_modules/**"],
+      "cwd": "${workspaceRoot}/test-app",
+      "internalConsoleOptions": "openOnSessionStart",
+      "skipFiles": ["<node_internals>/**", "node_modules/**"]
+    }
+  ]
+}

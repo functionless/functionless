@@ -2,6 +2,7 @@ type Person {
   id: String!
   name: String!
   children: [Person]
+  score: Int!
 }
 type Query {
   getPerson(id: String!): Person

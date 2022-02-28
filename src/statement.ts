@@ -1,58 +1,127 @@
-import { Environment } from "./environment";
-import { BaseExpr, Expr } from "./expression";
-import { AnyLambda } from "./lambda";
-import { AnyTable } from "./table";
+import { Expr } from "./expression";
+import { BaseNode, isNode, typeGuard } from "./node";
 
-export type Stmt = ExprStmt | Invoke | VariableDecl;
+/**
+ * A {@link Stmt} (Statement) is unit of execution that does not yield any value. They are translated
+ * to `#set`, `$util.qr` and `#return` directives.
+ */
+export type Stmt =
+  | BreakStmt
+  | BlockStmt
+  | ExprStmt
+  | ForInStmt
+  | ForOfStmt
+  | ReturnStmt
+  | VariableStmt;
 
-export const isStmt = guard("ExprStmt", "Invoke", "VariableDecl");
-
-export const StmtIndex = Symbol.for("functionless.StmtIndex");
-
-class BaseStmt<Kind extends string> extends BaseExpr<Kind> {
-  readonly [StmtIndex]: number;
-
-  constructor(kind: Kind) {
-    super(kind);
-
-    this[StmtIndex] = Environment.get().addStatement(this as unknown as Stmt);
-  }
+export function isStmt(a: any): a is Stmt {
+  return (
+    isNode(a) &&
+    (isBlock(a) ||
+      isExprStmt(a) ||
+      isForInStmt(a) ||
+      isForOfStmt(a) ||
+      isReturn(a) ||
+      isVariableStmt(a))
+  );
 }
 
-export const isVariableDecl = guard("VariableDecl");
+export const isExprStmt = typeGuard("ExprStmt");
 
-export class VariableDecl extends BaseStmt<"VariableDecl"> {
-  constructor(readonly name: string, readonly expr: Expr) {
-    super("VariableDecl");
-  }
-}
-
-export const isInvoke = guard("Invoke");
-
-export class Invoke<
-  Target extends AnyLambda | AnyTable = AnyLambda | AnyTable,
-  Payload = any
-> extends BaseStmt<"Invoke"> {
-  constructor(
-    readonly target: Target,
-    readonly method: string,
-    readonly payload: Payload
-  ) {
-    super("Invoke");
-  }
-}
-
-export const isExprStmt = guard("ExprStmt");
-
-export class ExprStmt extends BaseStmt<"ExprStmt"> {
+export class ExprStmt extends BaseNode<"ExprStmt"> {
   constructor(readonly expr: Expr) {
     super("ExprStmt");
+    expr.parent = this;
   }
 }
 
-function guard<Kind extends Stmt["kind"]>(
-  ...kinds: Kind[]
-): (a: any) => a is Extract<Stmt, { kind: Kind }> {
-  return (a: any): a is Extract<Stmt, { kind: Kind }> =>
-    kinds.find((kind) => a.kind === kind) !== undefined;
+export const isVariableStmt = typeGuard("VariableStmt");
+
+export class VariableStmt<
+  E extends Expr | undefined = Expr | undefined
+> extends BaseNode<"VariableStmt"> {
+  constructor(readonly name: string, readonly expr: E) {
+    super("VariableStmt");
+    if (expr) {
+      expr.parent = this;
+    }
+  }
+}
+
+export const isBlock = typeGuard("BlockStmt");
+
+export class BlockStmt extends BaseNode<"BlockStmt"> {
+  constructor(readonly statements: Stmt[]) {
+    super("BlockStmt");
+    let prev = undefined;
+    for (const expr of statements) {
+      expr.parent = this;
+      expr.prev = prev;
+      prev = expr;
+    }
+  }
+}
+
+export const isReturn = typeGuard("ReturnStmt");
+
+export class ReturnStmt extends BaseNode<"ReturnStmt"> {
+  constructor(readonly expr: Expr) {
+    super("ReturnStmt");
+    expr.parent = this;
+  }
+}
+
+export const isIfStmt = typeGuard("IfStmt");
+
+export class IfStmt extends BaseNode<"IfStmt"> {
+  constructor(
+    readonly when: Expr,
+    readonly then: BlockStmt,
+    readonly _else?: BlockStmt
+  ) {
+    super("IfStmt");
+    when.parent = this;
+    then.parent = this;
+    if (_else) {
+      _else.parent = this;
+    }
+  }
+}
+
+export const isForOfStmt = typeGuard("ForOfStmt");
+
+export class ForOfStmt extends BaseNode<"ForOfStmt"> {
+  constructor(
+    readonly i: VariableStmt,
+    readonly expr: Expr,
+    readonly body: BlockStmt
+  ) {
+    super("ForOfStmt");
+    i.parent = this;
+    expr.parent = this;
+    body.parent = this;
+  }
+}
+
+export const isForInStmt = typeGuard("ForInStmt");
+
+export class ForInStmt extends BaseNode<"ForInStmt"> {
+  constructor(
+    readonly i: VariableStmt,
+    readonly expr: Expr,
+    readonly body: BlockStmt
+  ) {
+    super("ForInStmt");
+    i.parent = this;
+    expr.parent = this;
+    body.parent = this;
+  }
+}
+
+export const isBreakStmt = typeGuard("BreakStmt");
+
+export class BreakStmt extends BaseNode<"BreakStmt"> {
+  constructor() {
+    super("BreakStmt");
+  }
 }
