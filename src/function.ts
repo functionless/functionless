@@ -33,11 +33,14 @@ export type AnyLambda = Function<AnyFunction>;
  * will be translated to a JSON object:
  * ```json
  * {
- *   "key": "value"
+ *   "operation": "Invoke",
+ *   "payload": {
+ *     "key": "value"
+ *   }
  * }
  * ```
  *
- * Make sure to implement your Lambda Function entrypoints accordingly.
+ * Make sure to implement your Lambda Function entry-points accordingly.
  */
 export class Function<F extends AnyFunction> {
   readonly kind: "Function" = "Function";

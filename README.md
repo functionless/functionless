@@ -1,31 +1,73 @@
 # Functionless `λ<`
 
-**Functionless** is a TypeScript plugin that compiles TypeScript code to Service-to-Service (aka. "functionless") integrations, such as AWS AppSync [Resolvers](https://docs.aws.amazon.com/appsync/latest/devguide/configuring-resolvers.html) and [Velocity Templates](https://docs.aws.amazon.com/appsync/latest/devguide/resolver-mapping-template-reference-programming-guide.html), or (coming soon) [Amazon States Language](https://docs.aws.amazon.com/step-functions/latest/dg/concepts-amazon-states-language.html) for AWS Step Functions.
+**Functionless** is a TypeScript plugin that transforms TypeScript code into Service-to-Service (aka. "functionless") integrations, such as AWS AppSync [Resolvers](https://docs.aws.amazon.com/appsync/latest/devguide/configuring-resolvers.html) and [Velocity Templates](https://docs.aws.amazon.com/appsync/latest/devguide/resolver-mapping-template-reference-programming-guide.html), or (coming soon) [Amazon States Language](https://docs.aws.amazon.com/step-functions/latest/dg/concepts-amazon-states-language.html) for AWS Step Functions.
+
+For example, the below function creates an Appsync Resolver Pipeline with two stages:
+
+1. Call the `myTable` DynamoDB Table
+2. Call the `myFunction` Lambda Function
 
 ```ts
-const getItem = new AppsyncFunction<(key: string) => Item | null>(
-  ($context, key) => {
+const getItem = new AppsyncFunction<(id: string) => Item | null>(
+  ($context, id) => {
     const item = myTable.get({
-      key: {
-        s: key,
-      },
+      id: $util.toDynamoDB(id),
     });
 
-    return item;
+    const score = myFunction(item);
+
+    return {
+      ...item,
+      score,
+    };
   }
 );
 ```
 
-## Why you should use Service-to-Service Integrations
+Functionless parses the TypeScript code and converts it to Apache Velocity Templates and an AWS Appsync CloudFormation configuration, saving you from writing all of that boilerplate. Below are snippets of the Velocity Templates that this TypeScript code generates.
 
-Paul Swail has a piece on this topic which is worth reading: https://serverlessfirst.com/functionless-integration-trade-offs/.
+**Get Item**:
 
-In short: these integrations have many advantages over using AWS Lambda Functions, including:
+```
+#set($id = $util.toDynamoDB(id))
+{
+  "operation": "GetItem",
+  "key": {
+    "id": $util.toJson($id)
+  }
+}
+```
 
-1. **lower latency** - there is no cold start, so a service-to-service integration will feel "snappy" when compared to a Lambda Function.
-2. **lower cost** - there's no intermediate Lambda Invocation when AppSync calls DynamoDB directly.
-3. **higher scalability** - the handlers are not subject to the concurrent invocation limits and are running on dedicated Amazon servers.
-4. **no operational maintenance** - such as upgrading dependencies, patching security vulnerabilities, etc. - theoretically, once the configuration is confirmed to be correct, it then becomes entirely AWS's responsibility to ensure the code is running optimally.
+**Invoke Function**:
+
+```
+{
+  "operation": "Invoke",
+  "payload": {
+    "item": $util.toJson($context.stash.item)
+  }
+}
+```
+
+**Resolver Mapping Template**:
+
+```
+#set(v1 = {})
+#foreach($k in $context.stash.item.keySet())
+$util.qr($v1.put($k, $context.stash.item[$k]))
+#end
+$util.qr($v1.put('score', $context.stash.score))
+$util.toJson($v1)
+```
+
+**Final JSON**
+
+```json
+{
+  "id": "user-id",
+  "score": 9001
+}
+```
 
 ## Setup
 
@@ -69,15 +111,31 @@ Finally, configure the `functionless/lib/compile` TypeScript transformer plugin 
 
 `functionless` makes configuring services like AWS Appsync as easy as writing TypeScript functions.
 
-First, wrap your `aws_lambda.Function` or `aws_dynamodb.Table` CDK Constructs in `functionless.Lambda` or `functionless.Table` helper classes:
+There are two aspects to Functionless:
+
+1. Type-Safe wrappers of CDK L2 Constructs
+2. An AppsyncFunction with a TypeScript function representing the Appsync Resolver Pipeline
+
+### Type-Safe Wrappers - Function and Table
+
+You must wrap your CDK L2 Constructs in the corresponding wrapper provided by functionless. At this time, we currently support AWS Lambda Functions and AWS DynamoDB Tables.
+
+**Function**:
 
 ```ts
-const myFunc = new Lambda<(name: string) => string>(
+import { aws_lambda } from "aws-cdk-lib";
+import { Function } from "functionless";
+
+const myFunc = new Function<(name: string) => string>(
   new aws_lambda.Function(this, "MyFunc", {
     ..
   })
 );
+```
 
+**Table**
+
+```ts
 interface Item {
   key: string;
   data: number;
@@ -91,6 +149,8 @@ const myTable = new Table<Item, "key">(
 )
 ```
 
+### AppsyncFunction
+
 Then, instantiate an `AppsyncFunction` and provide a function which implements an [Appsync Resolver](https://docs.aws.amazon.com/appsync/latest/devguide/configuring-resolvers.html).
 
 ```ts
@@ -99,7 +159,7 @@ const getItem = new AppsyncFunction<(key: string) => Item | null>(
   ($context, key) => {
     const item = myTable.get({
       key: {
-        s: key,
+        S: key,
       },
     });
 
@@ -108,9 +168,22 @@ const getItem = new AppsyncFunction<(key: string) => Item | null>(
 );
 ```
 
+## Why you should use Service-to-Service Integrations
+
+Paul Swail has a piece on this topic which is worth reading: https://serverlessfirst.com/functionless-integration-trade-offs/.
+
+In short: these integrations have many advantages over using AWS Lambda Functions, including:
+
+1. **lower latency** - there is no cold start, so a service-to-service integration will feel "snappy" when compared to a Lambda Function.
+2. **lower cost** - there's no intermediate Lambda Invocation when AppSync calls DynamoDB directly.
+3. **higher scalability** - the handlers are not subject to the concurrent invocation limits and are running on dedicated Amazon servers.
+4. **no operational maintenance** - such as upgrading dependencies, patching security vulnerabilities, etc. - theoretically, once the configuration is confirmed to be correct, it then becomes entirely AWS's responsibility to ensure the code is running optimally.
+
+The downsides of these integrations are their dependence on Domain Specific Languages (DSL) such as Apache Velocity Templates or Amazon States Language JSON. These DSLs are difficult to work with since they lack the type-safety and expressiveness of TypeScript. Functionless aims to solve this problem by converting beautiful, type-safe TypeScript code directly into these configurations.
+
 ## How it Works
 
-When you compile your application with `tsc`, the [`functionless/lib/compile`](./src/compile.ts) transformer will replace the function declaration in `new AppsyncFunction(F)`, `F`, with [Abstract Syntax Tree](./src/expression.ts) data structure that represents the function's implementation. This AST is then synthesized to Velocity Templates and AWS AppSync Resolver configurations, using the `@aws-cdk/aws-appsync-alpha` CDK Construct Library.
+When you compile your application with `tsc`, the [`functionless/lib/compile`](./src/compile.ts) transformer will replace the function declaration, `F`, in `new AppsyncFunction(F)` with its corresponding [Abstract Syntax Tree](./src/expression.ts) representation. This representation is then synthesized to Velocity Templates and AWS AppSync Resolver configurations, using the `@aws-cdk/aws-appsync-alpha` CDK Construct Library.
 
 For example, this function declaration:
 
