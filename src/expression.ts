@@ -1,163 +1,70 @@
-import { AnyFunction } from "./function";
-import { AnyLambda } from "./function";
+import { ParameterDecl } from "./declaration";
+import { AnyFunction, AnyLambda } from "./function";
+import { BaseNode, isNode, setParent, typeGuard } from "./node";
+import { BlockStmt, IfStmt, isIfStmt } from "./statement";
 import { AnyTable } from "./table";
 
-export declare function reflect<F extends AnyFunction>(
-  func: F
-): FunctionDecl<F>;
-
-class BaseNode<Kind extends string> {
-  // Expr that contains this one (surrounding scope)
-  parent: Node | undefined;
-  // Expr that is directly adjacent and above this one (same scope)
-  prev: Node | undefined;
-  constructor(readonly kind: Kind) {}
-}
-
-// export type Literal =
-//   | undefined
-//   | null
-//   | boolean
-//   | number
-//   | string
-//   | (Expr | Literal)[]
-//   | readonly (Expr | Literal)[]
-//   | {
-//       [key: string]: Expr | Literal;
-//     };
-
-export type Node = Expr | Stmt;
-
-export type Stmt =
-  | Block
-  | ExprStmt
-  | ForInStmt
-  | ForOfStmt
-  | ParameterDecl
-  | Return
-  | VariableDecl;
-
 export type Expr =
-  | ArrayLiteral
-  | Binary
-  | BooleanLiteral
-  | Call
+  | ArrayLiteralExpr
+  | BinaryExpr
+  | BooleanLiteralExpr
+  | CallExpr
   | ConditionExpr
-  | ConditionStmt
-  | ElementAccess
-  | FunctionDecl
+  | FunctionExpr
+  | IfStmt
+  | ElementAccessExpr
   | Identifier
-  | NullLiteral
-  | NumberLiteral
-  | ObjectLiteral
-  | PropAssign
-  | PropRef
-  | Reference
-  | StringLiteral
-  | SpreadAssignment
-  | Unary;
+  | NullLiteralExpr
+  | NumberLiteralExpr
+  | ObjectLiteralExpr
+  | PropAssignExpr
+  | PropAccessExpr
+  | ReferenceExpr
+  | StringLiteralExpr
+  | SpreadAssignExpr
+  | UnaryExpr;
 
-export function isNode(a: any): a is Expr {
-  return typeof a?.kind === "string";
-}
 export function isExpr(a: any) {
   return (
     isNode(a) &&
-    (isArrayLiteral(a) ||
-      isBinary(a) ||
+    (isArrayLiteralExpr(a) ||
+      isBinaryExpr(a) ||
       isBooleanLiteral(a) ||
-      isCall(a) ||
+      isCallExpr(a) ||
       isConditionExpr(a) ||
-      isConditionStmt(a) ||
-      isElementAccess(a) ||
-      isFunctionDecl(a) ||
+      isFunctionExpr(a) ||
+      isIfStmt(a) ||
+      isElementAccessExpr(a) ||
       isIdentifier(a) ||
-      isNullLiteral(a) ||
-      isNumberLiteral(a) ||
-      isPropAssign(a) ||
-      isObjectLiteral(a) ||
-      isPropRef(a) ||
-      isReference(a) ||
-      isStringLiteral(a) ||
-      isUnary(a))
+      isNullLiteralExpr(a) ||
+      isNumberLiteralExpr(a) ||
+      isPropAssignExpr(a) ||
+      isObjectLiteralExpr(a) ||
+      isPropAccessExpr(a) ||
+      isReferenceExpr(a) ||
+      isStringLiteralExpr(a) ||
+      isUnaryExpr(a))
   );
 }
 
-export function isStmt(a: any): a is Stmt {
-  return (
-    isNode(a) &&
-    (isBlock(a) ||
-      isExprStmt(a) ||
-      isForInStmt(a) ||
-      isForOfStmt(a) ||
-      isParameterDecl(a) ||
-      isReturn(a) ||
-      isVariableDecl(a))
-  );
-}
+export const isFunctionExpr = typeGuard("FunctionExpr");
 
-export const isExprStmt = typeGuard("ExprStmt");
-
-export class ExprStmt extends BaseNode<"ExprStmt"> {
-  constructor(readonly expr: Expr) {
-    super("ExprStmt");
-    expr.parent = this;
-  }
-}
-
-export const isFunctionDecl = typeGuard("FunctionDecl");
-
-export class FunctionDecl<
+export class FunctionExpr<
   F extends AnyFunction = AnyFunction
-> extends BaseNode<"FunctionDecl"> {
+> extends BaseNode<"FunctionExpr"> {
   readonly _functionBrand?: F;
-  constructor(readonly parameters: ParameterDecl[], readonly body: Block) {
-    super("FunctionDecl");
+  constructor(readonly parameters: ParameterDecl[], readonly body: BlockStmt) {
+    super("FunctionExpr");
     setParent(this, parameters);
     body.parent = this;
   }
 }
 
-export const isParameterDecl = typeGuard("ParameterDecl");
+export const isReferenceExpr = typeGuard("ReferenceExpr");
 
-export class ParameterDecl extends BaseNode<"ParameterDecl"> {
-  constructor(readonly name: string) {
-    super("ParameterDecl");
-  }
-}
-
-export const isBlock = typeGuard("Block");
-
-export class Block extends BaseNode<"Block"> {
-  constructor(readonly statements: Stmt[]) {
-    super("Block");
-    let prev = undefined;
-    for (const expr of statements) {
-      expr.parent = this;
-      expr.prev = prev;
-      prev = expr;
-    }
-  }
-}
-
-export const isReference = typeGuard("Reference");
-
-export class Reference extends BaseNode<"Reference"> {
+export class ReferenceExpr extends BaseNode<"ReferenceExpr"> {
   constructor(readonly ref: () => AnyTable | AnyLambda) {
-    super("Reference");
-  }
-}
-
-export const isVariableDecl = typeGuard("VariableDecl");
-
-export class VariableDecl<
-  E extends Expr | undefined = Expr | undefined
-> extends BaseNode<"VariableDecl"> {
-  constructor(readonly name: string, readonly expr: E) {
-    super("VariableDecl");
-    if (expr) {
-      expr.parent = this;
-    }
+    super("ReferenceExpr");
   }
 }
 
@@ -169,63 +76,37 @@ export class Identifier extends BaseNode<"Identifier"> {
   }
 }
 
-export const isPropRef = typeGuard("PropRef");
+export const isPropAccessExpr = typeGuard("PropAccessExpr");
 
-export class PropRef extends BaseNode<"PropRef"> {
+export class PropAccessExpr extends BaseNode<"PropAccessExpr"> {
   constructor(readonly expr: Expr, readonly name: string) {
-    super("PropRef");
+    super("PropAccessExpr");
     setParent(this, expr);
   }
 }
 
-export const isElementAccess = typeGuard("ElementAccess");
+export const isElementAccessExpr = typeGuard("ElementAccessExpr");
 
-export class ElementAccess extends BaseNode<"ElementAccess"> {
+export class ElementAccessExpr extends BaseNode<"ElementAccessExpr"> {
   constructor(readonly expr: Expr, readonly element: Expr) {
-    super("ElementAccess");
+    super("ElementAccessExpr");
     setParent(this, expr);
   }
 }
 
-export const isCall = typeGuard("Call");
+export const isCallExpr = typeGuard("CallExpr");
 
-export class Call extends BaseNode<"Call"> {
+export class CallExpr extends BaseNode<"CallExpr"> {
   constructor(
     readonly expr: Expr,
     readonly args: {
       [argName: string]: Expr;
     }
   ) {
-    super("Call");
+    super("CallExpr");
     expr.parent = this;
     for (const arg of Object.values(args)) {
       arg.parent = this;
-    }
-  }
-}
-
-export const isReturn = typeGuard("Return");
-
-export class Return extends BaseNode<"Return"> {
-  constructor(readonly expr: Expr) {
-    super("Return");
-    expr.parent = this;
-  }
-}
-
-export const isConditionStmt = typeGuard("ConditionStmt");
-
-export class ConditionStmt extends BaseNode<"ConditionStmt"> {
-  constructor(
-    readonly when: Expr,
-    readonly then: Block,
-    readonly _else?: Block
-  ) {
-    super("ConditionStmt");
-    when.parent = this;
-    then.parent = this;
-    if (_else) {
-      _else.parent = this;
     }
   }
 }
@@ -243,7 +124,7 @@ export class ConditionExpr extends BaseNode<"ConditionExpr"> {
   }
 }
 
-export const isBinary = typeGuard("Binary");
+export const isBinaryExpr = typeGuard("BinaryExpr");
 
 export type BinaryOp =
   | "="
@@ -258,153 +139,105 @@ export type BinaryOp =
   | "&&"
   | "||";
 
-export class Binary extends BaseNode<"Binary"> {
+export class BinaryExpr extends BaseNode<"BinaryExpr"> {
   constructor(
     readonly left: Expr,
     readonly op: BinaryOp,
     readonly right: Expr
   ) {
-    super("Binary");
+    super("BinaryExpr");
     left.parent = this;
     right.parent = this;
   }
 }
 
-export const isUnary = typeGuard("Unary");
+export const isUnaryExpr = typeGuard("UnaryExpr");
 
 export type UnaryOp = "!";
 
-export class Unary extends BaseNode<"Unary"> {
+export class UnaryExpr extends BaseNode<"UnaryExpr"> {
   constructor(readonly op: UnaryOp, readonly expr: Expr) {
-    super("Unary");
+    super("UnaryExpr");
     expr.parent = this;
   }
 }
 
 // literals
 
-export const isNullLiteral = typeGuard("NullLiteral");
+export const isNullLiteralExpr = typeGuard("NullLiteralExpr");
 
-export class NullLiteral extends BaseNode<"NullLiteral"> {
+export class NullLiteralExpr extends BaseNode<"NullLiteralExpr"> {
   constructor() {
-    super("NullLiteral");
+    super("NullLiteralExpr");
   }
 }
 
-export const isBooleanLiteral = typeGuard("BooleanLiteral");
+export const isBooleanLiteral = typeGuard("BooleanLiteralExpr");
 
-export class BooleanLiteral extends BaseNode<"BooleanLiteral"> {
+export class BooleanLiteralExpr extends BaseNode<"BooleanLiteralExpr"> {
   constructor(readonly value: boolean) {
-    super("BooleanLiteral");
+    super("BooleanLiteralExpr");
   }
 }
 
-export const isNumberLiteral = typeGuard("NumberLiteral");
+export const isNumberLiteralExpr = typeGuard("NumberLiteralExpr");
 
-export class NumberLiteral extends BaseNode<"NumberLiteral"> {
+export class NumberLiteralExpr extends BaseNode<"NumberLiteralExpr"> {
   constructor(readonly value: number) {
-    super("NumberLiteral");
+    super("NumberLiteralExpr");
   }
 }
 
-export const isStringLiteral = typeGuard("StringLiteral");
+export const isStringLiteralExpr = typeGuard("StringLiteralExpr");
 
-export class StringLiteral extends BaseNode<"StringLiteral"> {
+export class StringLiteralExpr extends BaseNode<"StringLiteralExpr"> {
   constructor(readonly value: string) {
-    super("StringLiteral");
+    super("StringLiteralExpr");
   }
 }
 
-export const isArrayLiteral = typeGuard("ArrayLiteral");
+export const isArrayLiteralExpr = typeGuard("ArrayLiteralExpr");
 
-export class ArrayLiteral extends BaseNode<"ArrayLiteral"> {
+export class ArrayLiteralExpr extends BaseNode<"ArrayLiteralExpr"> {
   constructor(readonly items: Expr[]) {
-    super("ArrayLiteral");
+    super("ArrayLiteralExpr");
     setParent(this, items);
   }
 }
 
-export type ObjectElement = PropAssign | SpreadAssignment;
+export type ObjectElementExpr = PropAssignExpr | SpreadAssignExpr;
 
-export const isObjectLiteral = typeGuard("ObjectLiteral");
+export const isObjectLiteralExpr = typeGuard("ObjectLiteralExpr");
 
-export class ObjectLiteral extends BaseNode<"ObjectLiteral"> {
-  constructor(readonly properties: ObjectElement[]) {
-    super("ObjectLiteral");
+export class ObjectLiteralExpr extends BaseNode<"ObjectLiteralExpr"> {
+  constructor(readonly properties: ObjectElementExpr[]) {
+    super("ObjectLiteralExpr");
     setParent(this, properties);
   }
 
   public getProperty(name: string) {
     return this.properties.find(
-      (prop) => prop.kind === "PropAssign" && prop.name === name
+      (prop) => prop.kind === "PropAssignExpr" && prop.name === name
     );
   }
 }
 
-function setParent(parent: Node, value: Node | Node[]) {
-  if (value) {
-    if (isNode(value)) {
-      value.parent = parent;
-    } else if (Array.isArray(value)) {
-      value.forEach((v) => setParent(parent, v));
-    } else if (typeof value === "object") {
-      // Object.values(value).forEach((v) => setParent(parent, v));
-    }
-  }
-}
+export const isPropAssignExpr = typeGuard("PropAssignExpr");
 
-export const isPropAssign = typeGuard("PropAssign");
-
-export class PropAssign extends BaseNode<"PropAssign"> {
+export class PropAssignExpr extends BaseNode<"PropAssignExpr"> {
   constructor(readonly name: string, readonly expr: Expr) {
-    super("PropAssign");
+    super("PropAssignExpr");
     expr.parent = this;
   }
 }
 
-export const isSpreadAssignment = typeGuard("SpreadAssignment");
+export const isSpreadAssignmentExpr = typeGuard("SpreadAssignExpr");
 
-export class SpreadAssignment extends BaseNode<"SpreadAssignment"> {
+export class SpreadAssignExpr extends BaseNode<"SpreadAssignExpr"> {
   constructor(readonly expr: Expr) {
-    super("SpreadAssignment");
+    super("SpreadAssignExpr");
     expr.parent = this;
   }
 }
 
-export const isForOfStmt = typeGuard("ForOfStmt");
-
-export class ForOfStmt extends BaseNode<"ForOfStmt"> {
-  constructor(
-    readonly i: VariableDecl,
-    readonly expr: Expr,
-    readonly body: Block
-  ) {
-    super("ForOfStmt");
-    i.parent = this;
-    expr.parent = this;
-    body.parent = this;
-  }
-}
-
-export const isForInStmt = typeGuard("ForInStmt");
-
-export class ForInStmt extends BaseNode<"ForInStmt"> {
-  constructor(
-    readonly i: VariableDecl,
-    readonly expr: Expr,
-    readonly body: Block
-  ) {
-    super("ForInStmt");
-    i.parent = this;
-    expr.parent = this;
-    body.parent = this;
-  }
-}
-
-// generates type guards
-function typeGuard<Kind extends Node["kind"]>(
-  ...kinds: Kind[]
-): (a: any) => a is Extract<Node, { kind: Kind }> {
-  return (a: any): a is Extract<Node, { kind: Kind }> =>
-    kinds.find((kind) => a.kind === kind) !== undefined;
-}
+// Statements

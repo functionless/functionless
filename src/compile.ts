@@ -1,8 +1,9 @@
 import ts from "typescript";
 import { PluginConfig, TransformerExtras } from "ts-patch";
-import { BinaryOp, Node } from "./expression";
+import { BinaryOp } from "./expression";
 import { AnyTable } from "./table";
 import { AnyLambda } from "./function";
+import { FunctionlessNode } from "./node";
 export default compile;
 
 /**
@@ -37,7 +38,7 @@ export function compile(
           undefined,
           ts.factory.createNamespaceImport(functionless)
         ),
-        ts.factory.createStringLiteral("functionless/lib/expression")
+        ts.factory.createStringLiteral("functionless")
       );
 
       return ts.factory.updateSourceFile(
@@ -119,7 +120,7 @@ export function compile(
 
       function toExpr(node: ts.Node): ts.Expression {
         if (ts.isArrowFunction(node) || ts.isFunctionExpression(node)) {
-          return newExpr("FunctionDecl", [
+          return newExpr("FunctionExpr", [
             ts.factory.createArrayLiteralExpression(
               node.parameters
                 .map((param) => param.name.getText())
@@ -158,7 +159,7 @@ export function compile(
             signature = checker.getResolvedSignature(node);
           }
           if (signature) {
-            return newExpr("Call", [
+            return newExpr("CallExpr", [
               toExpr(node.expression),
               ts.factory.createObjectLiteralExpression(
                 signature.parameters.map((parameter, i) =>
@@ -171,14 +172,14 @@ export function compile(
             ]);
           }
         } else if (ts.isBlock(node)) {
-          return newExpr("Block", [
+          return newExpr("BlockStmt", [
             ts.factory.createArrayLiteralExpression(
               node.statements.map(toExpr)
             ),
           ]);
         } else if (ts.isIdentifier(node)) {
           if (node.text === "undefined" || node.text === "null") {
-            return newExpr("NullLiteral", []);
+            return newExpr("NullLiteralExpr", []);
           }
           const kind = getKind(node);
           if (kind !== undefined) {
@@ -195,12 +196,12 @@ export function compile(
             // if this is a reference to a Table or Lambda, retain it
             return ref(node);
           }
-          return newExpr("PropRef", [
+          return newExpr("PropAccessExpr", [
             toExpr(node.expression),
             ts.factory.createStringLiteral(node.name.text),
           ]);
         } else if (ts.isElementAccessExpression(node)) {
-          return newExpr("ElementAccess", [
+          return newExpr("ElementAccessExpr", [
             toExpr(node.expression),
             toExpr(node.argumentExpression),
           ]);
@@ -215,7 +216,7 @@ export function compile(
             ...(node.initializer ? [toExpr(node.initializer)] : []),
           ]);
         } else if (ts.isIfStatement(node)) {
-          return newExpr("ConditionStmt", [
+          return newExpr("IfStmt", [
             // when
             toExpr(node.expression),
             // then
@@ -239,7 +240,7 @@ export function compile(
               `invalid Binary Operator: ${node.operatorToken.getText()}`
             );
           }
-          return newExpr("Binary", [
+          return newExpr("BinaryExpr", [
             toExpr(node.left),
             ts.factory.createStringLiteral(op),
             toExpr(node.right),
@@ -250,55 +251,55 @@ export function compile(
               `invalid Unary Operator: ${ts.tokenToString(node.operator)}`
             );
           }
-          return newExpr("Unary", [toExpr(node.operand)]);
+          return newExpr("UnaryExpr", [toExpr(node.operand)]);
         } else if (ts.isReturnStatement(node)) {
           return newExpr(
-            "Return",
+            "ReturnStmt",
             node.expression
               ? [toExpr(node.expression)]
               : [ts.factory.createNull()]
           );
         } else if (ts.isObjectLiteralExpression(node)) {
-          return newExpr("ObjectLiteral", [
+          return newExpr("ObjectLiteralExpr", [
             ts.factory.createArrayLiteralExpression(
               node.properties.map(toExpr)
             ),
           ]);
         } else if (ts.isPropertyAssignment(node)) {
-          return newExpr("PropAssign", [
+          return newExpr("PropAssignExpr", [
             ts.factory.createStringLiteral(node.name.getText()),
             toExpr(node.initializer),
           ]);
         } else if (ts.isShorthandPropertyAssignment(node)) {
-          return newExpr("PropAssign", [
+          return newExpr("PropAssignExpr", [
             ts.factory.createStringLiteral(node.name.getText()),
             toExpr(node.name),
           ]);
         } else if (ts.isSpreadAssignment(node)) {
-          return newExpr("SpreadAssignment", [toExpr(node.expression)]);
+          return newExpr("SpreadAssignExpr", [toExpr(node.expression)]);
         } else if (ts.isArrayLiteralExpression(node)) {
-          return newExpr("ArrayLiteral", [
+          return newExpr("ArrayLiteralExpr", [
             ts.factory.updateArrayLiteralExpression(
               node,
               node.elements.map(toExpr)
             ),
           ]);
         } else if (node.kind === ts.SyntaxKind.NullKeyword) {
-          return newExpr("NullLiteral", []);
+          return newExpr("NullLiteralExpr", []);
         } else if (ts.isNumericLiteral(node)) {
-          return newExpr("NumberLiteral", [node]);
+          return newExpr("NumberLiteralExpr", [node]);
         } else if (ts.isStringLiteral(node)) {
-          return newExpr("StringLiteral", [node]);
+          return newExpr("StringLiteralExpr", [node]);
         } else if (ts.isLiteralExpression(node)) {
           // const type = checker.getTypeAtLocation(node);
           // if (type.symbol.escapedName === "boolean") {
-          //   return newExpr("BooleanLiteral", [node]);
+          //   return newExpr("BooleanLiteralExpr", [node]);
           // }
         } else if (
           node.kind === ts.SyntaxKind.TrueKeyword ||
           node.kind === ts.SyntaxKind.FalseKeyword
         ) {
-          return newExpr("BooleanLiteral", [node as ts.Expression]);
+          return newExpr("BooleanLiteralExpr", [node as ts.Expression]);
         } else if (ts.isForOfStatement(node) || ts.isForInStatement(node)) {
           if (ts.isVariableDeclarationList(node.initializer)) {
             if (node.initializer.declarations.length === 1) {
@@ -324,7 +325,7 @@ export function compile(
       }
 
       function ref(node: ts.Expression) {
-        return newExpr("Reference", [
+        return newExpr("ReferenceExpr", [
           ts.factory.createArrowFunction(
             undefined,
             undefined,
@@ -336,7 +337,7 @@ export function compile(
         ]);
       }
 
-      function newExpr(type: Node["kind"], args: ts.Expression[]) {
+      function newExpr(type: FunctionlessNode["kind"], args: ts.Expression[]) {
         return ts.factory.createNewExpression(
           ts.factory.createPropertyAccessExpression(functionless, type),
           undefined,

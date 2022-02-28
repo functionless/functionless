@@ -1,6 +1,6 @@
 import * as appsync from "@aws-cdk/aws-appsync-alpha";
 import { AppSyncResolverEvent } from "aws-lambda";
-import { Call, FunctionDecl } from "./expression";
+import { CallExpr } from "./expression";
 import { AnyFunction } from "./function";
 import { AnyLambda } from "./function";
 import { VTL } from "./vtl";
@@ -109,13 +109,16 @@ export class AppsyncFunction<
                   )
             );
 
-            if (expr.kind === "ExprStmt" && expr.expr.kind === "Call") {
+            if (expr.kind === "ExprStmt" && expr.expr.kind === "CallExpr") {
               return createStage(expr.expr);
-            } else if (expr.kind === "Return" && expr.expr.kind === "Call") {
+            } else if (
+              expr.kind === "ReturnStmt" &&
+              expr.expr.kind === "CallExpr"
+            ) {
               return createStage(expr.expr);
             } else if (
               expr.kind === "VariableDecl" &&
-              expr.expr?.kind === "Call"
+              expr.expr?.kind === "CallExpr"
             ) {
               const responseMappingTemplate =
                 appsync.MappingTemplate.fromString(
@@ -130,7 +133,7 @@ export class AppsyncFunction<
             }
 
             function createStage(
-              expr: Call,
+              expr: CallExpr,
               responseMappingTemplate?: appsync.MappingTemplate
             ) {
               template.call(expr);
@@ -146,7 +149,7 @@ export class AppsyncFunction<
               });
             }
           } else if (isLastExpr) {
-            if (expr.kind === "Return") {
+            if (expr.kind === "ReturnStmt") {
               template.return(expr.expr);
             } else {
               template.return("$null");
@@ -177,6 +180,7 @@ import {
   ToAttributeMap,
   ToAttributeValue,
 } from "typesafe-dynamodb/lib/attribute-value";
+import { FunctionDecl } from "./declaration";
 
 export declare const $util: $util;
 

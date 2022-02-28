@@ -1,16 +1,19 @@
-import { Call, Node, Identifier } from "./expression";
+import { CallExpr, Identifier } from "./expression";
 import { AnyFunction, AnyLambda } from "./function";
+import { FunctionlessNode } from "./node";
 import { AnyTable } from "./table";
 
 export function lookupIdentifier(id: Identifier) {
   return lookup(id.parent);
 
-  function lookup(expr: Node | undefined): Node | undefined {
+  function lookup(
+    expr: FunctionlessNode | undefined
+  ): FunctionlessNode | undefined {
     if (expr === undefined) {
       return undefined;
     } else if (expr.kind === "VariableDecl" && expr.name === id.name) {
       return expr;
-    } else if (expr.kind === "FunctionDecl") {
+    } else if (expr.kind === "FunctionDecl" || expr.kind === "FunctionExpr") {
       const parameter = expr.parameters.find((param) => param.name === id.name);
       if (parameter) {
         return parameter;
@@ -28,12 +31,14 @@ export function lookupIdentifier(id: Identifier) {
   }
 }
 
-export function findService(expr: Node): AnyTable | AnyLambda | undefined {
-  if (expr.kind === "Reference") {
+export function findService(
+  expr: FunctionlessNode
+): AnyTable | AnyLambda | undefined {
+  if (expr.kind === "ReferenceExpr") {
     return expr.ref();
-  } else if (expr.kind === "PropRef") {
+  } else if (expr.kind === "PropAccessExpr") {
     return findService(expr.expr);
-  } else if (expr.kind === "Call") {
+  } else if (expr.kind === "CallExpr") {
     return findService(expr.expr);
   } else if (expr.kind === "VariableDecl" && expr.expr) {
     return findService(expr.expr);
@@ -47,26 +52,26 @@ export function findService(expr: Node): AnyTable | AnyLambda | undefined {
 
 // derives a name from an expression - this can be used to name infrastructure, such as an AppsyncFunction.
 // e.g. table.getItem(..) => "table_getItem"
-export function toName(expr: Node): string {
+export function toName(expr: FunctionlessNode): string {
   if (expr.kind === "Identifier") {
     return expr.name;
-  } else if (expr.kind === "PropRef") {
+  } else if (expr.kind === "PropAccessExpr") {
     return `${toName(expr.expr)}_${expr.name}`;
-  } else if (expr.kind === "Reference") {
+  } else if (expr.kind === "ReferenceExpr") {
     return expr.ref().resource.node.addr;
   } else {
     throw new Error(`invalid expression: '${expr.kind}'`);
   }
 }
 
-export function isInTopLevelScope(expr: Node): boolean {
+export function isInTopLevelScope(expr: FunctionlessNode): boolean {
   if (expr.parent === undefined) {
     return true;
   }
   return walk(expr.parent);
 
-  function walk(expr: Node): boolean {
-    if (expr.kind === "FunctionDecl") {
+  function walk(expr: FunctionlessNode): boolean {
+    if (expr.kind === "FunctionDecl" || expr.kind === "FunctionExpr") {
       return expr.parent === undefined;
     } else if (expr.kind === "ForInStmt" || expr.kind === "ForOfStmt") {
       return false;
@@ -77,15 +82,15 @@ export function isInTopLevelScope(expr: Node): boolean {
   }
 }
 
-export function findFunction(call: Call): AnyFunction | undefined {
+export function findFunction(call: CallExpr): AnyFunction | undefined {
   return find(call.expr);
 
-  function find(expr: Node): any {
-    if (expr.kind === "PropRef") {
+  function find(expr: FunctionlessNode): any {
+    if (expr.kind === "PropAccessExpr") {
       return find(expr.expr)?.[expr.name];
     } else if (expr.kind === "Identifier") {
       return undefined;
-    } else if (expr.kind === "Reference") {
+    } else if (expr.kind === "ReferenceExpr") {
       return expr.ref();
     } else {
       return undefined;

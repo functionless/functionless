@@ -7,7 +7,7 @@ import {
 
 import { KeyAttribute } from "typesafe-dynamodb/lib/key";
 import { Narrow } from "typesafe-dynamodb/lib/narrow";
-import { Call } from "./expression";
+import { CallExpr } from "./expression";
 import { VTL } from "./vtl";
 
 export function isTable(a: any): a is AnyTable {
@@ -30,7 +30,7 @@ export class Table<
     Key extends KeyAttribute<Item, PartitionKey, RangeKey>
   >(input: { key: Key; consistentRead?: boolean }): Narrow<Item, Key>;
 
-  public getItem(call: Call, vtl: VTL): any {
+  public getItem(call: CallExpr, vtl: VTL): any {
     // cast to an Expr - the functionless ts-transform will ensure we are passed an Expr
     const input = vtl.eval(call.args.input);
     const request = vtl.var(
@@ -58,7 +58,7 @@ $util.qr(${request}.put('consistentRead', ${input}.get('consistentRead')))
     _version?: number;
   }): Narrow<Item, Key>;
 
-  public putItem(call: Call, vtl: VTL): any {
+  public putItem(call: CallExpr, vtl: VTL): any {
     // cast to an Expr - the functionless ts-transform will ensure we are passed an Expr
     const input = vtl.eval(call.args.input);
     const request = vtl.var(

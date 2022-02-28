@@ -1,5 +1,5 @@
 import { aws_lambda } from "aws-cdk-lib";
-import { Call } from "./expression";
+import { CallExpr } from "./expression";
 import { VTL } from "./vtl";
 
 export type AnyFunction = (...args: any[]) => any;
@@ -26,7 +26,7 @@ export class Lambda<F extends AnyFunction> {
   ) {
     return Object.assign(lambda, this);
 
-    function lambda(call: Call, vtl: VTL): string {
+    function lambda(call: CallExpr, vtl: VTL): string {
       const payload = vtl.var(`{}`);
       for (const [argName, argVal] of Object.entries(call.args)) {
         vtl.qr(`${payload}.put('${argName}', ${vtl.eval(argVal)})`);

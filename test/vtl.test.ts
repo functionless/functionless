@@ -1,6 +1,7 @@
 import "jest";
 import { $util } from "../lib";
-import { FunctionDecl, reflect } from "../src/expression";
+import { FunctionDecl } from "../src/declaration";
+import { reflect } from "../src/reflect";
 import { VTL } from "../src/vtl";
 
 // generates boilerplate for the circuit-breaker logic for implementing early return

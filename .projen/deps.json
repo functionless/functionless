@@ -92,10 +92,6 @@
       "type": "runtime"
     },
     {
-      "name": "immutable",
-      "type": "runtime"
-    },
-    {
       "name": "ts-node",
       "type": "runtime"
     },
