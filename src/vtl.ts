@@ -49,7 +49,7 @@ export class VTL {
   // }
 
   private newLocalVarName() {
-    return `v${(this.varIt += 1)}`;
+    return `$v${(this.varIt += 1)}`;
   }
 
   /**
@@ -79,37 +79,11 @@ export class VTL {
    */
   public set(reference: string, expr: Expr | string): string {
     this.add(
-      `#set(\$${reference} = ${typeof expr === "string" ? expr : this.$(expr)})`
+      `#set(${reference} = ${
+        typeof expr === "string" ? expr : this.eval(expr)
+      })`
     );
     return reference;
-  }
-
-  /**
-   * References an expression.
-   * @param expr
-   * @param surround
-   * @returns
-   */
-  public $(expr: Expr, returnVar?: string, surround = false): string {
-    const text = this.eval(expr, returnVar);
-    if (text.startsWith("$")) {
-      return text;
-    }
-    return (expr.kind === "ArrayLiteralExpr" &&
-      expr.items.find((item) => item.kind === "SpreadElementExpr") !==
-        undefined) ||
-      expr.kind === "BinaryExpr" ||
-      expr.kind === "CallExpr" ||
-      expr.kind === "ConditionExpr" ||
-      expr.kind === "ElementAccessExpr" ||
-      expr.kind === "Identifier" ||
-      expr.kind === "ObjectLiteralExpr" ||
-      expr.kind === "PropAccessExpr" ||
-      expr.kind === "UnaryExpr"
-      ? surround
-        ? `\${${text}}`
-        : `\$${text}`
-      : text;
   }
 
   /**
@@ -169,21 +143,21 @@ export class VTL {
         node.items.find((item) => item.kind === "SpreadElementExpr") ===
         undefined
       ) {
-        return `[${node.items.map((item) => this.$(item)).join(", ")}]`;
+        return `[${node.items.map((item) => this.eval(item)).join(", ")}]`;
       } else {
         // contains a spread, e.g. [...i], so we will store in a variable
         const list = this.var("[]");
         for (const item of node.items) {
           if (item.kind === "SpreadElementExpr") {
-            this.qr(`$${list}.addAll(${this.$(item.expr)})`);
+            this.qr(`${list}.addAll(${this.eval(item.expr)})`);
           } else {
-            this.qr(`$${list}.add(${this.$(item)})`);
+            this.qr(`${list}.add(${this.eval(item)})`);
           }
         }
         return list;
       }
     } else if (node.kind === "BinaryExpr") {
-      return `${this.$(node.left)} ${node.op} ${this.$(node.right)}`;
+      return `${this.eval(node.left)} ${node.op} ${this.eval(node.right)}`;
     } else if (node.kind === "BlockStmt") {
       for (const stmt of node.statements) {
         this.eval(stmt);
@@ -209,19 +183,21 @@ export class VTL {
           // list.forEach(item => ..)
           // list.forEach((item, idx) => ..)
           const fn = node.args.callbackfn as FunctionExpr;
-          const value = fn.parameters[0]?.name ?? this.newLocalVarName();
+          const value = fn.parameters[0]?.name
+            ? `$${fn.parameters[0].name}`
+            : this.newLocalVarName();
           const index = fn.parameters[1]?.name;
           const array = fn.parameters[2]?.name;
 
           const newList = node.expr.name === "map" ? this.var(`[]`) : undefined;
 
-          const list = this.$(node.expr.expr);
-          this.add(`#foreach($${value} in ${list})`);
+          const list = this.eval(node.expr.expr);
+          this.add(`#foreach(${value} in ${list})`);
           if (index) {
             this.add(`#set($${index} = $foreach.index)`);
           }
           if (array) {
-            this.add(`#set($${array} = $${list})`);
+            this.add(`#set($${array} = ${list})`);
           }
 
           const tmp = this.newLocalVarName();
@@ -229,7 +205,7 @@ export class VTL {
             this.eval(stmt, tmp);
           }
           if (node.expr.name === "map") {
-            this.qr(`$${newList}.add($${tmp})`);
+            this.qr(`${newList}.add(${tmp})`);
           }
 
           this.add("#end");
@@ -242,13 +218,20 @@ export class VTL {
           const initialValue = node.args.initialValue;
 
           // (previousValue: string[], currentValue: string, currentIndex: number, array: string[])
-          const previousValue =
-            fn.parameters[0]?.name ?? this.newLocalVarName();
-          const currentValue = fn.parameters[1]?.name ?? this.newLocalVarName();
-          const currentIndex = fn.parameters[2]?.name;
-          const array = fn.parameters[3]?.name;
+          const previousValue = fn.parameters[0]?.name
+            ? `$${fn.parameters[0].name}`
+            : this.newLocalVarName();
+          const currentValue = fn.parameters[1]?.name
+            ? `$${fn.parameters[1].name}`
+            : this.newLocalVarName();
+          const currentIndex = fn.parameters[2]?.name
+            ? `$${fn.parameters[2].name}`
+            : undefined;
+          const array = fn.parameters[3]?.name
+            ? `$${fn.parameters[3].name}`
+            : undefined;
 
-          const list = this.$(node.expr.expr);
+          const list = this.eval(node.expr.expr);
           if (initialValue !== undefined) {
             this.set(previousValue, initialValue);
           } else {
@@ -259,12 +242,12 @@ export class VTL {
             this.add(`#end`);
           }
 
-          this.add(`#foreach($${currentValue} in ${list})`);
+          this.add(`#foreach(${currentValue} in ${list})`);
           if (currentIndex) {
-            this.add(`#set($${currentIndex} = $foreach.index)`);
+            this.add(`#set(${currentIndex} = $foreach.index)`);
           }
           if (array) {
-            this.add(`#set($${array} = ${list})`);
+            this.add(`#set(${array} = ${list})`);
           }
 
           const body = () => {
@@ -272,7 +255,7 @@ export class VTL {
             for (const stmt of fn.body.statements) {
               this.eval(stmt, tmp);
             }
-            this.set(previousValue, `$${tmp}`);
+            this.set(previousValue, `${tmp}`);
 
             this.add("#end");
           };
@@ -292,7 +275,7 @@ export class VTL {
         // this is an array map, forEach, reduce call
       }
       return `${this.eval(node.expr)}(${Object.values(node.args)
-        .map((arg) => this.$(arg))
+        .map((arg) => this.eval(arg))
         .join(", ")})`;
     } else if (node.kind === "ConditionExpr") {
       const val = this.newLocalVarName();
@@ -312,10 +295,10 @@ export class VTL {
       this.add("#end");
       return undefined;
     } else if (node.kind === "ExprStmt") {
-      return this.qr(this.$(node.expr));
+      return this.qr(this.eval(node.expr));
     } else if (node.kind === "ForOfStmt" || node.kind === "ForInStmt") {
       this.add(
-        `#foreach($${node.i.name} in ${this.$(node.expr)}${
+        `#foreach($${node.i.name} in ${this.eval(node.expr)}${
           node.kind === "ForInStmt" ? ".keySet()" : ""
         })`
       );
@@ -328,14 +311,18 @@ export class VTL {
     } else if (node.kind === "Identifier") {
       const ref = lookupIdentifier(node);
       if (ref?.kind === "VariableStmt" && isInTopLevelScope(ref)) {
-        return `context.stash.${node.name}`;
+        return `$context.stash.${node.name}`;
       } else if (
         ref?.kind === "ParameterDecl" &&
         ref.parent?.kind === "FunctionDecl"
       ) {
-        return `context.arguments.${ref.name}`;
+        return `$context.arguments.${ref.name}`;
       }
-      return node.name;
+      if (node.name.startsWith("$")) {
+        return node.name;
+      } else {
+        return `$${node.name}`;
+      }
     } else if (node.kind === "PropAccessExpr") {
       let name = node.name;
       if (name === "push" && node.parent?.kind === "CallExpr") {
@@ -344,7 +331,7 @@ export class VTL {
       }
       return `${this.eval(node.expr)}.${name}`;
     } else if (node.kind === "ElementAccessExpr") {
-      return `${this.eval(node.expr)}[${this.$(node.element)}]`;
+      return `${this.eval(node.expr)}[${this.eval(node.element)}]`;
     } else if (node.kind === "NullLiteralExpr") {
       return "$null";
     } else if (node.kind === "NumberLiteralExpr") {
@@ -353,9 +340,9 @@ export class VTL {
       const obj = this.var("{}");
       for (const prop of node.properties) {
         if (prop.kind === "PropAssignExpr") {
-          this.qr(`$${obj}.put('${prop.name}', ${this.$(prop.expr)})`);
+          this.qr(`${obj}.put('${prop.name}', ${this.eval(prop.expr)})`);
         } else if (prop.kind === "SpreadAssignExpr") {
-          this.qr(`$${obj}.putAll(${this.$(prop.expr)})`);
+          this.qr(`${obj}.putAll(${this.eval(prop.expr)})`);
         } else {
           assertNever(prop);
         }
@@ -368,7 +355,7 @@ export class VTL {
       if (returnVar) {
         this.set(returnVar, node.expr);
       } else {
-        this.set("context.stash.return__val", node.expr);
+        this.set("$context.stash.return__val", node.expr);
         this.add("#set($context.stash.return__flag = true)");
         this.add(`#return($context.stash.return__val)`);
       }
@@ -383,15 +370,21 @@ export class VTL {
           if (expr.kind === "StringLiteralExpr") {
             return expr.value;
           }
-          return this.$(expr, returnVar, true);
+          const text = this.eval(expr, returnVar);
+          if (text.startsWith("$")) {
+            return `\${${text.slice(1)}}`;
+          } else {
+            const varName = this.var(text);
+            return `\${${varName.slice(1)}}`;
+          }
         })
         .join("")}"`;
     } else if (node.kind === "UnaryExpr") {
       return `${node.op} ${this.eval(node.expr)}`;
     } else if (node.kind === "VariableStmt") {
       const varName = isInTopLevelScope(node)
-        ? `context.stash.${node.name}`
-        : node.name;
+        ? `$context.stash.${node.name}`
+        : `$${node.name}`;
 
       if (node.expr) {
         return this.set(varName, node.expr);
