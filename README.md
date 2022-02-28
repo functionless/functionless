@@ -126,10 +126,12 @@ Finally, configure the `functionless/lib/compile` TypeScript transformer plugin 
 
 `functionless` makes configuring services like AWS Appsync as easy as writing TypeScript functions.
 
-There are two aspects your need to learn before using Functionless in your CDK application:
+There are three aspects your need to learn before using Functionless in your CDK application:
 
 1. Appsync Integration interfaces for `Function` and `Table`.
 2. `AppsyncFunction` construct for creating Appsync Resolvers with TypeScript syntax.
+3. Use the `AppsyncFunction` to create Resolvers and add them to an `@aws-cdk/aws-appsync-alpha.GraphQLApi`.
+4.
 
 ### Appsync Integration interfaces for `Function` and `Table`
 
@@ -259,7 +261,43 @@ for (const item in list) {
 }
 ```
 
-### TypeScript -> Velocity Template Logic
+### Using the `AppsyncFunction` to create Resolvers and add them to an `@aws-cdk/aws-appsync-alpha.GraphQLApi`
+
+When you create a `new AppsyncFunction`, it does not immediately generate an Appsync Resolver. `AppsyncFunction` is more like a template for creating resolvers and can be re-used across more than one API.
+
+To add to an API, use the `addResolver`
+
+```ts
+const app = new App();
+
+const stack = new Stack(app, "stack");
+
+const schema = new appsync.Schema({
+  filePath: path.join(__dirname, "..", "schema.gql"),
+});
+
+const api = new appsync.GraphqlApi(stack, "Api", {
+  name: "demo",
+  schema,
+  authorizationConfig: {
+    defaultAuthorization: {
+      authorizationType: appsync.AuthorizationType.IAM,
+    },
+  },
+  xrayEnabled: true,
+});
+
+// create a template AppsyncFunction
+const getPerson = new AppsyncFunction(..);
+
+// use it add resolvers to a GraphqlApi.
+getPerson.addResolver(api, {
+  typeName: "Query",
+  fieldName: "getPerson",
+});
+```
+
+## TypeScript -> Velocity Template Logic
 
 In order to write effective VTL templates, it helps to understand how TypeScript syntax maps to Velocity Template Statements.
 
