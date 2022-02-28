@@ -7,7 +7,7 @@ export type Stmt =
   | ForInStmt
   | ForOfStmt
   | ReturnStmt
-  | VariableDecl;
+  | VariableStmt;
 
 export function isStmt(a: any): a is Stmt {
   return (
@@ -17,7 +17,7 @@ export function isStmt(a: any): a is Stmt {
       isForInStmt(a) ||
       isForOfStmt(a) ||
       isReturn(a) ||
-      isVariableDecl(a))
+      isVariableStmt(a))
   );
 }
 
@@ -30,13 +30,13 @@ export class ExprStmt extends BaseNode<"ExprStmt"> {
   }
 }
 
-export const isVariableDecl = typeGuard("VariableDecl");
+export const isVariableStmt = typeGuard("VariableStmt");
 
-export class VariableDecl<
+export class VariableStmt<
   E extends Expr | undefined = Expr | undefined
-> extends BaseNode<"VariableDecl"> {
+> extends BaseNode<"VariableStmt"> {
   constructor(readonly name: string, readonly expr: E) {
-    super("VariableDecl");
+    super("VariableStmt");
     if (expr) {
       expr.parent = this;
     }
@@ -87,7 +87,7 @@ export const isForOfStmt = typeGuard("ForOfStmt");
 
 export class ForOfStmt extends BaseNode<"ForOfStmt"> {
   constructor(
-    readonly i: VariableDecl,
+    readonly i: VariableStmt,
     readonly expr: Expr,
     readonly body: BlockStmt
   ) {
@@ -102,7 +102,7 @@ export const isForInStmt = typeGuard("ForInStmt");
 
 export class ForInStmt extends BaseNode<"ForInStmt"> {
   constructor(
-    readonly i: VariableDecl,
+    readonly i: VariableStmt,
     readonly expr: Expr,
     readonly body: BlockStmt
   ) {

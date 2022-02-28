@@ -117,7 +117,7 @@ export class AppsyncFunction<
             ) {
               return createStage(expr.expr);
             } else if (
-              expr.kind === "VariableDecl" &&
+              expr.kind === "VariableStmt" &&
               expr.expr?.kind === "CallExpr"
             ) {
               const responseMappingTemplate =

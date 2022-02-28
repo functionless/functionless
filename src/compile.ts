@@ -211,7 +211,7 @@ export function compile(
         ) {
           return toExpr(node.declarationList.declarations[0]);
         } else if (ts.isVariableDeclaration(node)) {
-          return newExpr("VariableDecl", [
+          return newExpr("VariableStmt", [
             ts.factory.createStringLiteral(node.name.getText()),
             ...(node.initializer ? [toExpr(node.initializer)] : []),
           ]);

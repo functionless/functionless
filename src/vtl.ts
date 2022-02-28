@@ -179,7 +179,7 @@ export class VTL {
         return node.name;
       }
       const ref = lookupIdentifier(node);
-      if (ref?.kind === "VariableDecl" && isInTopLevelScope(ref)) {
+      if (ref?.kind === "VariableStmt" && isInTopLevelScope(ref)) {
         return `$context.stash.${node.name}`;
       } else if (ref?.kind === "ParameterDecl") {
         return `$context.arguments.${ref.name}`;
@@ -229,7 +229,7 @@ export class VTL {
       return `'${node.value}'`;
     } else if (node.kind === "UnaryExpr") {
       return `${node.op} ${this.eval(node.expr)}`;
-    } else if (node.kind === "VariableDecl") {
+    } else if (node.kind === "VariableStmt") {
       const varName = isInTopLevelScope(node)
         ? `$context.stash.${node.name}`
         : `$${node.name}`;

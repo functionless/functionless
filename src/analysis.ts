@@ -11,7 +11,7 @@ export function lookupIdentifier(id: Identifier) {
   ): FunctionlessNode | undefined {
     if (expr === undefined) {
       return undefined;
-    } else if (expr.kind === "VariableDecl" && expr.name === id.name) {
+    } else if (expr.kind === "VariableStmt" && expr.name === id.name) {
       return expr;
     } else if (expr.kind === "FunctionDecl" || expr.kind === "FunctionExpr") {
       const parameter = expr.parameters.find((param) => param.name === id.name);
@@ -40,7 +40,7 @@ export function findService(
     return findService(expr.expr);
   } else if (expr.kind === "CallExpr") {
     return findService(expr.expr);
-  } else if (expr.kind === "VariableDecl" && expr.expr) {
+  } else if (expr.kind === "VariableStmt" && expr.expr) {
     return findService(expr.expr);
   }
   return undefined;
