@@ -366,7 +366,7 @@ $util.qr($util.error($item))
 ${returnExpr(`$null`)}`
   ));
 
-test("reduce over list", () =>
+test("reduce over list with initial value", () =>
   testCase(
     reflect((list: string[]) => {
       return list.reduce((newList: string[], item) => {
@@ -382,4 +382,25 @@ $util.qr($v2.add($item))
 #set($newList = $v1)
 #end
 ${returnExpr("$newList")}`
+  ));
+
+test("reduce over list without initial value", () =>
+  testCase(
+    reflect((list: string[]) => {
+      return list.reduce((str: string, item) => {
+        return `${str}${item}`;
+      });
+    }),
+    `#if($context.arguments.list.isEmpty())
+$util.error('Reduce of empty array with no initial value')
+#end
+#foreach($item in $context.arguments.list)
+#if($foreach.index == 0)
+#set($str = item)
+#else
+#set($v1 = \"\${str}\${item}\")
+#set($str = $v1)
+#end
+#end
+${returnExpr("$str")}`
   ));

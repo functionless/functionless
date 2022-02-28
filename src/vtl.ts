@@ -206,6 +206,8 @@ export class VTL {
         if (node.expr.name === "map" || node.expr.name == "forEach") {
           // list.map(item => ..)
           // list.map((item, idx) => ..)
+          // list.forEach(item => ..)
+          // list.forEach((item, idx) => ..)
           const fn = node.args.callbackfn as FunctionExpr;
           const value = fn.parameters[0]?.name ?? this.newLocalVarName();
           const index = fn.parameters[1]?.name;
@@ -233,6 +235,9 @@ export class VTL {
           this.add("#end");
           return newList ?? `$null`;
         } else if (node.expr.name === "reduce") {
+          // list.reduce((result: string[], next) => [...result, next], []);
+          // list.reduce((result, next) => [...result, next]);
+
           const fn = node.args.callbackfn as FunctionExpr;
           const initialValue = node.args.initialValue;
 
@@ -243,11 +248,17 @@ export class VTL {
           const currentIndex = fn.parameters[2]?.name;
           const array = fn.parameters[3]?.name;
 
+          const list = this.$(node.expr.expr);
           if (initialValue !== undefined) {
             this.set(previousValue, initialValue);
+          } else {
+            this.add(`#if(${list}.isEmpty())`);
+            this.add(
+              `$util.error('Reduce of empty array with no initial value')`
+            );
+            this.add(`#end`);
           }
 
-          const list = this.$(node.expr.expr);
           this.add(`#foreach($${currentValue} in ${list})`);
           if (currentIndex) {
             this.add(`#set($${currentIndex} = $foreach.index)`);
@@ -256,13 +267,26 @@ export class VTL {
             this.add(`#set($${array} = ${list})`);
           }
 
-          const tmp = this.newLocalVarName();
-          for (const stmt of fn.body.statements) {
-            this.eval(stmt, tmp);
-          }
-          this.set(previousValue, `$${tmp}`);
+          const body = () => {
+            const tmp = this.newLocalVarName();
+            for (const stmt of fn.body.statements) {
+              this.eval(stmt, tmp);
+            }
+            this.set(previousValue, `$${tmp}`);
 
-          this.add("#end");
+            this.add("#end");
+          };
+
+          if (initialValue === undefined) {
+            this.add("#if($foreach.index == 0)");
+            this.set(previousValue, currentValue);
+            this.add("#else");
+            body();
+            this.add("#end");
+          } else {
+            body();
+          }
+
           return previousValue;
         }
         // this is an array map, forEach, reduce call
