@@ -6,9 +6,11 @@ export interface Person {
   id: string;
   name: string;
 }
+
 export interface ProcessedPerson extends Person {
   score: number;
 }
+
 export class PeopleDatabase extends Construct {
   readonly personTable;
   readonly computeScore;
