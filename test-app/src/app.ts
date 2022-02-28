@@ -34,3 +34,13 @@ peopleDb.addPerson.addResolver(api, {
   typeName: "Mutation",
   fieldName: "addPerson",
 });
+
+peopleDb.updateName.addResolver(api, {
+  typeName: "Mutation",
+  fieldName: "updateName",
+});
+
+peopleDb.deletePerson.addResolver(api, {
+  typeName: "Mutation",
+  fieldName: "deletePerson",
+});

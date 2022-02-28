@@ -74,10 +74,9 @@ export class Table<
   >(input: { key: Key; consistentRead?: boolean }): Narrow<Item, Key>;
 
   public getItem(call: CallExpr, vtl: VTL): any {
-    // cast to an Expr - the functionless ts-transform will ensure we are passed an Expr
     const input = vtl.eval(call.args.input);
     const request = vtl.var(
-      `{"operation": "GetItem", "version": "2018-05-20"}`
+      `{"operation": "GetItem", "version": "2018-05-29"}`
     );
     vtl.qr(`${request}.put('key', ${input}.get('key'))`);
     vtl.add(
@@ -102,10 +101,9 @@ $util.qr(${request}.put('consistentRead', ${input}.get('consistentRead')))
   }): Narrow<Item, Key>;
 
   public putItem(call: CallExpr, vtl: VTL): any {
-    // cast to an Expr - the functionless ts-transform will ensure we are passed an Expr
     const input = vtl.eval(call.args.input);
     const request = vtl.var(
-      `{"operation": "PutItem", "version": "2018-05-20"}`
+      `{"operation": "PutItem", "version": "2018-05-29"}`
     );
     vtl.qr(`${request}.put('key', ${input}.get('key'))`);
     vtl.qr(
@@ -120,6 +118,67 @@ $util.qr(${request}.put('condition', ${input}.get('condition')))
       `#if(${input}.containsKey('_version'))
 $util.qr(${request}.put('_version', ${input}.get('_version')))
 #end`
+    );
+    return vtl.json(request);
+  }
+
+  // @ts-ignore
+  public updateItem<
+    Key extends KeyAttribute<Item, PartitionKey, RangeKey>,
+    UpdateExpression extends string,
+    ConditionExpression extends string | undefined
+  >(input: {
+    key: Key;
+    update: DynamoExpression<UpdateExpression>;
+    condition?: DynamoExpression<ConditionExpression>;
+    _version?: number;
+  }): Narrow<Item, Key>;
+
+  public updateItem(call: CallExpr, vtl: VTL): any {
+    const input = vtl.eval(call.args.input);
+    const request = vtl.var(
+      `{"operation": "UpdateItem", "version": "2018-05-29"}`
+    );
+    vtl.qr(`${request}.put('key', ${input}.get('key'))`);
+    vtl.qr(`${request}.put('update', ${input}.get('update'))`);
+    vtl.add(
+      `#if(${input}.containsKey('condition'))`,
+      `$util.qr(${request}.put('condition', ${input}.get('condition')))`,
+      `#end`
+    );
+    vtl.add(
+      `#if(${input}.containsKey('_version'))`,
+      `$util.qr(${request}.put('_version', ${input}.get('_version')))`,
+      `#end`
+    );
+    return vtl.json(request);
+  }
+
+  // @ts-ignore
+  public deleteItem<
+    Key extends KeyAttribute<Item, PartitionKey, RangeKey>,
+    ConditionExpression extends string | undefined
+  >(input: {
+    key: Key;
+    condition?: DynamoExpression<ConditionExpression>;
+    _version?: number;
+  }): Narrow<Item, Key>;
+
+  public deleteItem(call: CallExpr, vtl: VTL): any {
+    const input = vtl.eval(call.args.input);
+    const request = vtl.var(
+      `{"operation": "DeleteItem", "version": "2018-05-29"}`
+    );
+    vtl.qr(`${request}.put('key', ${input}.get('key'))`);
+    vtl.add(
+      `#if(${input}.containsKey('condition'))`,
+      `$util.qr(${request}.put('condition', ${input}.get('condition')))`,
+      `#end`
+    );
+    vtl.add(
+      `#if(${input}.containsKey('_version'))`,
+      `$util.qr(${request}.put('_version', ${input}.get('_version')))`,
+      `#end`
     );
     return vtl.json(request);
   }

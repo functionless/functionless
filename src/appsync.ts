@@ -45,7 +45,7 @@ export interface $Context<Source>
  * });
  * ```
  *
- * Finally, the `getPerson` function can be used to create resolvers on a GraphQLAPI
+ * Finally, the `getPerson` function can be used to create resolvers on a GraphQL API
  * ```ts
  * import * as appsync from "@aws-cdk/aws-appsync-alpha";
  *
@@ -113,9 +113,15 @@ export class AppsyncFunction<
 
       return api.createResolver({
         ...options,
-        // dataSource: new appsync.NoneDataSource(api, "None", {
-        //   api,
-        // }),
+        dataSource: getDataSource(
+          api,
+          null,
+          () =>
+            new appsync.NoneDataSource(api, "None", {
+              api,
+              name: "None",
+            })
+        ),
         requestMappingTemplate: appsync.MappingTemplate.fromString("{}"),
         responseMappingTemplate: appsync.MappingTemplate.fromString(
           responseMappingTemplate
@@ -177,7 +183,14 @@ export class AppsyncFunction<
               expr.kind === "ReturnStmt" &&
               expr.expr.kind === "CallExpr"
             ) {
-              return createStage(expr.expr);
+              return createStage(
+                expr.expr,
+                appsync.MappingTemplate.fromString(
+                  `#set( $context.stash.return__flag = true )
+#set( $context.stash.return__val = $context.result )
+{}`
+                )
+              );
             } else if (
               expr.kind === "VariableStmt" &&
               expr.expr?.kind === "CallExpr"
@@ -196,7 +209,9 @@ export class AppsyncFunction<
 
             function createStage(
               expr: CallExpr,
-              responseMappingTemplate?: appsync.MappingTemplate
+              responseMappingTemplate: appsync.MappingTemplate = appsync.MappingTemplate.fromString(
+                "{}"
+              )
             ) {
               template.call(expr);
               const requestMappingTemplate = appsync.MappingTemplate.fromString(
@@ -488,15 +503,17 @@ function getDataSources(api: appsync.GraphqlApi) {
   return dataSources.get(api)!;
 }
 
+const None = Symbol.for("functionless.None");
+
 // @ts-ignore
 function getDataSource(
   api: appsync.GraphqlApi,
-  target: AnyLambda | AnyTable,
+  target: AnyLambda | AnyTable | null,
   compute: () => appsync.BaseDataSource
 ): appsync.BaseDataSource {
   const ds = getDataSources(api);
-  if (!ds.has(target)) {
+  if (!ds.has(target ?? None)) {
     ds.set(target, compute());
   }
-  return ds.get(target)!;
+  return ds.get(target ?? None)!;
 }

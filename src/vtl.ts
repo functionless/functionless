@@ -340,7 +340,13 @@ export class VTL {
       const obj = this.var("{}");
       for (const prop of node.properties) {
         if (prop.kind === "PropAssignExpr") {
-          this.qr(`${obj}.put('${prop.name}', ${this.eval(prop.expr)})`);
+          const name =
+            prop.name.kind === "Identifier"
+              ? `'${prop.name.name}'`
+              : prop.name.kind === "StringLiteralExpr"
+              ? `'${prop.name.value}'`
+              : this.eval(prop.name);
+          this.qr(`${obj}.put(${name}, ${this.eval(prop.expr)})`);
         } else if (prop.kind === "SpreadAssignExpr") {
           this.qr(`${obj}.putAll(${this.eval(prop.expr)})`);
         } else {
