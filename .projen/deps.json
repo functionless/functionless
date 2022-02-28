@@ -1,6 +1,11 @@
 {
   "dependencies": [
     {
+      "name": "@aws-cdk/aws-appsync-alpha",
+      "version": "2.14.0-alpha.0",
+      "type": "build"
+    },
+    {
       "name": "@types/fs-extra",
       "type": "build"
     },
@@ -21,6 +26,16 @@
     {
       "name": "@typescript-eslint/parser",
       "version": "^5",
+      "type": "build"
+    },
+    {
+      "name": "aws-cdk-lib",
+      "version": "2.14.0",
+      "type": "build"
+    },
+    {
+      "name": "constructs",
+      "version": "10.0.0",
       "type": "build"
     },
     {
@@ -72,39 +87,50 @@
       "type": "build"
     },
     {
+      "name": "ts-node",
+      "type": "build"
+    },
+    {
+      "name": "ts-patch",
+      "type": "build"
+    },
+    {
+      "name": "typesafe-dynamodb",
+      "version": "0.1.4",
+      "type": "build"
+    },
+    {
       "name": "typescript",
+      "version": "4.5.5",
       "type": "build"
     },
     {
       "name": "@aws-cdk/aws-appsync-alpha",
-      "type": "runtime"
+      "version": "^2.14.0-alpha.0",
+      "type": "peer"
     },
     {
       "name": "aws-cdk-lib",
-      "type": "runtime"
+      "version": "^2.14.0",
+      "type": "peer"
     },
     {
       "name": "constructs",
-      "type": "runtime"
-    },
-    {
-      "name": "fs-extra",
-      "type": "runtime"
-    },
-    {
-      "name": "ts-node",
-      "type": "runtime"
-    },
-    {
-      "name": "ts-patch",
-      "type": "runtime"
+      "version": "^10.0.0",
+      "type": "peer"
     },
     {
       "name": "typesafe-dynamodb",
-      "type": "runtime"
+      "version": "^0.1.4",
+      "type": "peer"
     },
     {
       "name": "typescript",
+      "version": "^4.5.5",
+      "type": "peer"
+    },
+    {
+      "name": "fs-extra",
       "type": "runtime"
     }
   ],

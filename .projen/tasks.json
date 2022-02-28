@@ -236,7 +236,7 @@
           "exec": "yarn install --check-files"
         },
         {
-          "exec": "yarn upgrade @types/fs-extra @types/jest @types/node @typescript-eslint/eslint-plugin @typescript-eslint/parser eslint-import-resolver-node eslint-import-resolver-typescript eslint-plugin-import eslint jest jest-junit json-schema npm-check-updates standard-version ts-jest typescript @aws-cdk/aws-appsync-alpha aws-cdk-lib constructs fs-extra ts-node ts-patch typesafe-dynamodb typescript"
+          "exec": "yarn upgrade @aws-cdk/aws-appsync-alpha @types/fs-extra @types/jest @types/node @typescript-eslint/eslint-plugin @typescript-eslint/parser aws-cdk-lib constructs eslint-import-resolver-node eslint-import-resolver-typescript eslint-plugin-import eslint jest jest-junit json-schema npm-check-updates standard-version ts-jest ts-node ts-patch typesafe-dynamodb typescript @aws-cdk/aws-appsync-alpha aws-cdk-lib constructs typesafe-dynamodb typescript fs-extra"
         },
         {
           "exec": "npx projen"

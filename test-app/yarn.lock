@@ -2,10 +2,10 @@
 # yarn lockfile v1
 
 
-"@aws-cdk/aws-appsync-alpha@^2.13.0-alpha.0":
-  version "2.13.0-alpha.0"
-  resolved "https://registry.yarnpkg.com/@aws-cdk/aws-appsync-alpha/-/aws-appsync-alpha-2.13.0-alpha.0.tgz#e580dd0505a82337cc257ea20957fdf5626fdaea"
-  integrity sha512-/wAT5azT6H867uczIqFIeJxS4GrtghkqN5J9QlNOHASDyBRkQOvH6EBjk6WHii4fqql1stbEA92ae07+jRKLJQ==
+"@aws-cdk/aws-appsync-alpha@^2.14.0-alpha.0":
+  version "2.14.0-alpha.0"
+  resolved "https://registry.yarnpkg.com/@aws-cdk/aws-appsync-alpha/-/aws-appsync-alpha-2.14.0-alpha.0.tgz#8b670c7168e7f822d7ba3defe18803e78a902ae5"
+  integrity sha512-d4XV1qOH4rmrb0JvWQqU0ZrNVbWaDy/LoRXay3vXxeGqIf5f41pBebSL6y44RTUuWqbAxibxT4lRzaXJMGznEQ==
 
 "@aws-cdk/cfnspec@2.13.0":
   version "2.13.0"
@@ -875,10 +875,10 @@ at-least-node@^1.0.0:
   resolved "https://registry.yarnpkg.com/at-least-node/-/at-least-node-1.0.0.tgz#602cd4b46e844ad4effc92a8011a3c46e0238dc2"
   integrity sha512-+q/t7Ekv1EDY2l6Gda6LLiX14rU9TV20Wa3ofeQmwPFZbOMo9DXrLbOjFaaclkXKWidIaopwAObQDqwWtGUjqg==
 
-aws-cdk-lib@^2.13.0:
-  version "2.13.0"
-  resolved "https://registry.yarnpkg.com/aws-cdk-lib/-/aws-cdk-lib-2.13.0.tgz#d780e5d684c3fd2c9bb1e7c2b3d2ead2dec578b4"
-  integrity sha512-nKpQk+9H7T128gpzl+7XTu+19Yzj6kmCMrvSwTXLa/qr4/soEpXI68/+19ymEAHOYEL4Dd3eyk490P+y0wzi6A==
+aws-cdk-lib@^2.14.0:
+  version "2.14.0"
+  resolved "https://registry.yarnpkg.com/aws-cdk-lib/-/aws-cdk-lib-2.14.0.tgz#aee4db9607a9a7560adc81088771f7a01a480f7e"
+  integrity sha512-hxKH+eQ9k1L+D6BBvD0HNRf3Y6vyOJ4e3N9E+IkJKkCXJvirUJW4QSqAEVDS+Es6aiIjvZCTNMNWyEbJYdDazQ==
   dependencies:
     "@balena/dockerignore" "^1.0.2"
     case "1.6.3"
@@ -1118,7 +1118,7 @@ concat-map@0.0.1:
   resolved "https://registry.yarnpkg.com/concat-map/-/concat-map-0.0.1.tgz#d8a96bd77fd68df7793a73036a3ba0d5405d477b"
   integrity sha1-2Klr13/Wjfd5OnMDajug1UBdR3s=
 
-constructs@^10.0.69, constructs@^10.0.71:
+constructs@^10.0.71:
   version "10.0.71"
   resolved "https://registry.yarnpkg.com/constructs/-/constructs-10.0.71.tgz#769c6d9dace773286d68d1d8fb6a626b1dd6c3d6"
   integrity sha512-wo4Pkb8GbooMMeBlFOkqAoHgrKERVWXRCQL7Unx0iqlVTQVY22IHDnTaKxw0NTldNYzzob9ka5Okq424eFfO4Q==
@@ -1419,14 +1419,7 @@ function-bind@^1.1.1:
 "functionless@file:..":
   version "0.0.0"
   dependencies:
-    "@aws-cdk/aws-appsync-alpha" "^2.13.0-alpha.0"
-    aws-cdk-lib "^2.13.0"
-    constructs "^10.0.69"
     fs-extra "^10.0.1"
-    ts-node "^10.5.0"
-    ts-patch "^2.0.1"
-    typesafe-dynamodb "^0.1.4"
-    typescript "^4.5.5"
 
 get-caller-file@^2.0.5:
   version "2.0.5"

@@ -2,17 +2,24 @@ const { typescript } = require("projen");
 const project = new typescript.TypeScriptProject({
   defaultReleaseBranch: "main",
   name: "functionless",
-  deps: [
+  deps: ["fs-extra"],
+  devDeps: [
     "@aws-cdk/aws-appsync-alpha",
+    "@types/fs-extra",
     "aws-cdk-lib",
     "constructs",
-    "fs-extra",
     "ts-node",
     "ts-patch",
     "typesafe-dynamodb",
     "typescript",
   ],
-  devDeps: ["@types/fs-extra"],
+  peerDeps: [
+    "@aws-cdk/aws-appsync-alpha@^2.14.0-alpha.0",
+    "aws-cdk-lib@^2.14.0",
+    "constructs@^10.0.0",
+    "typesafe-dynamodb@^0.1.4",
+    "typescript@^4.5.5",
+  ],
   eslintOptions: {
     ignorePatterns: ["**"],
   },
