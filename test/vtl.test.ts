@@ -48,14 +48,13 @@ $util.qr($v1.put('null', $null))
 $util.qr($v1.put('undefined', $null))
 $util.qr($v1.put('string', 'hello'))
 $util.qr($v1.put('number', 1))
-#set($v2 = ['hello'])
-$util.qr($v1.put('list', $v2))
-#set($v3 = {})
-$util.qr($v3.put('key', 'value'))
-$util.qr($v1.put('obj', $v3))
+$util.qr($v1.put('list', ['hello']))
+#set($v2 = {})
+$util.qr($v2.put('key', 'value'))
+$util.qr($v1.put('obj', $v2))
 $util.qr($v1.put('arg', $context.arguments.arg))
-#foreach( $v4 in $context.arguments.obj.keySet() )
-$util.qr($v1.put($v4, $context.arguments.obj.get($v4)))
+#foreach( $v3 in $context.arguments.obj.keySet() )
+$util.qr($v1.put($v3, $context.arguments.obj.get($v3)))
 #end
 ${returnExpr("$v1")}`
   );
@@ -103,8 +102,7 @@ test("return in-line list literal", () => {
     reflect((a: string, b: string) => {
       return [a, b];
     }),
-    `#set($v1 = [$context.arguments.a, $context.arguments.b])
-${returnExpr("$v1")}`
+    returnExpr("[$context.arguments.a, $context.arguments.b]")
   );
 });
 
@@ -114,8 +112,7 @@ test("return list literal variable", () => {
       const list = [a, b];
       return list;
     }),
-    `#set($v1 = [$context.arguments.a, $context.arguments.b])
-#set($context.stash.list = $v1)
+    `#set($context.stash.list = [$context.arguments.a, $context.arguments.b])
 ${returnExpr("$context.stash.list")}`
   );
 });
@@ -126,8 +123,7 @@ test("return list element", () => {
       const list = [a, b];
       return list[0];
     }),
-    `#set($v1 = [$context.arguments.a, $context.arguments.b])
-#set($context.stash.list = $v1)
+    `#set($context.stash.list = [$context.arguments.a, $context.arguments.b])
 ${returnExpr("$context.stash.list[0]")}`
   );
 });
@@ -168,8 +164,7 @@ test("if statement", () => {
         return false;
       }
     }),
-    `#set($v1 = $context.arguments.list.length > 0)
-#if($v1)
+    `#if($context.arguments.list.length > 0)
 ${returnExpr("true")}
 #else
 ${returnExpr("false")}
@@ -182,8 +177,7 @@ test("return conditional expression", () => {
     reflect((list: string[]) => {
       return list.length > 0 ? true : false;
     }),
-    `#set($v2 = $context.arguments.list.length > 0)
-#if($v2)
+    `#if($context.arguments.list.length > 0)
 #set($v1 = true)
 #else
 #set($v1 = false)
@@ -200,8 +194,7 @@ test("property assignment of conditional expression", () => {
       };
     }),
     `#set($v1 = {})
-#set($v3 = $context.arguments.list.length > 0)
-#if($v3)
+#if($context.arguments.list.length > 0)
 #set($v2 = true)
 #else
 #set($v2 = false)
@@ -220,8 +213,7 @@ test("for-of loop", () => {
       }
       return newList;
     }),
-    `#set($v1 = [])
-#set($context.stash.newList = $v1)
+    `#set($context.stash.newList = [])
 #foreach($item in $context.arguments.list)
 $util.qr($context.stash.newList.add($item))
 #end
@@ -239,8 +231,7 @@ test("local variable inside for-of loop is declared as a local variable", () => 
       }
       return newList;
     }),
-    `#set($v1 = [])
-#set($context.stash.newList = $v1)
+    `#set($context.stash.newList = [])
 #foreach($item in $context.arguments.list)
 #set($i = $item)
 $util.qr($context.stash.newList.add($i))
@@ -258,11 +249,37 @@ test("for-in loop and element access", () => {
       }
       return newList;
     }),
-    `#set($v1 = [])
-#set($context.stash.newList = $v1)
+    `#set($context.stash.newList = [])
 #foreach($key in $context.arguments.record.keySet())
 $util.qr($context.stash.newList.add($context.arguments.record[$key]))
 #end
 ${returnExpr("$context.stash.newList")}`
+  );
+});
+
+test("template expression", () => {
+  testCase(
+    reflect((a: string) => {
+      const local = a;
+      return `head ${a} ${local}${a}`;
+    }),
+    `#set($context.stash.local = $context.arguments.a)
+${returnExpr(
+  `"head \${context.arguments.a} \${context.stash.local}\${context.arguments.a}"`
+)}`
+  );
+});
+
+test("conditional expression in template expression", () => {
+  testCase(
+    reflect((a: string) => {
+      return `head ${a === "hello" ? "world" : a}`;
+    }),
+    `#if($context.arguments.a == 'hello')
+#set($v1 = 'world')
+#else
+#set($v1 = $context.arguments.a)
+#end
+${returnExpr(`"head \${v1}"`)}`
   );
 });

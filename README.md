@@ -118,11 +118,11 @@ There are two aspects to Functionless:
 
 ### Type-Safe Wrappers - Function and Table
 
-You must wrap your CDK L2 Constructs in the corresponding wrapper provided by functionless. At this time, we currently support AWS Lambda Functions and AWS DynamoDB Tables.
+You must wrap your CDK L2 Constructs in the corresponding wrapper provided by functionless. At this time, we support Lambda Functions and DynamoDB Tables.
 
-**Function**:
+**Function**
 
-The `Function` wrapper annotates an `aws_lambda.Function` with a TypeScript function signature. This signature controls how the Function can be called from within an AppsyncFunction.
+The `Function` wrapper annotates an `aws_lambda.Function` with its TypeScript function signature. This signature controls how the Function can be called from within an AppsyncFunction.
 
 ```ts
 import { aws_lambda } from "aws-cdk-lib";
@@ -262,23 +262,26 @@ Is replaced with the following AST data structure:
 new AppsyncFunction(
   new FunctionDecl(
     [new ParameterDecl("input")],
-    new Block([
-      new VariableDecl(
+    new BlockStmt([
+      new VariableStmt(
         "person",
-        new Call(
-          new PropRef(new Reference(() => this.personTable), "putItem"),
+        new CallExpr(
+          new PropAccessExpr(
+            new ReferenceExpr(() => this.personTable),
+            "putItem"
+          ),
           {
-            input: new ObjectLiteral([
-              new PropertyAssignment(
+            input: new ObjectLiteralExpr([
+              new PropAssignExpr(
                 "key",
-                new ObjectLiteral([
-                  new PropertyAssignment(
+                new ObjectLiteralExpr([
+                  new PropAssignExpr(
                     "id",
-                    new ObjectLiteral([
-                      new PropertyAssignment(
+                    new ObjectLiteralExpr([
+                      new PropAssignExpr(
                         "S",
-                        new Call(
-                          new PropRef(new Identifier("$util"), "autoId"),
+                        new CallExpr(
+                          new PropAccessExpr(new Identifier("$util"), "autoId"),
                           {}
                         )
                       ),
@@ -286,15 +289,15 @@ new AppsyncFunction(
                   ),
                 ])
               ),
-              new PropertyAssignment(
+              new PropAssignExpr(
                 "attributeValues",
-                new ObjectLiteral([
-                  new PropertyAssignment(
+                new ObjectLiteralExpr([
+                  new PropAssignExpr(
                     "name",
-                    new ObjectLiteral([
-                      new PropertyAssignment(
+                    new ObjectLiteralExpr([
+                      new PropAssignExpr(
                         "S",
-                        new PropRef(new Identifier("input"), "name")
+                        new PropAccessExpr(new Identifier("input"), "name")
                       ),
                     ])
                   ),
@@ -304,7 +307,7 @@ new AppsyncFunction(
           }
         )
       ),
-      new Return(new Identifier("person")),
+      new ReturnStmt(new Identifier("person")),
     ])
   )
 );
@@ -312,7 +315,7 @@ new AppsyncFunction(
 
 ## Writing your own interpreters
 
-Functionless converts TypeScript function syntax into a [`FunctionDecl`](./src/declaration.ts) AST data object. This object contains a total representation of the syntax contained within the Function and can then be processed within your CDK application. This is how `AppsyncFunction` works.
+Functionless converts TypeScript function syntax into a [`FunctionDecl`](./src/declaration.ts) AST data object. This object contains a total representation of the syntax contained within the Function and can then be processed within your CDK application.
 
 To get a `FunctionDecl` for a function, use the `functionless.reflect` utility:
 

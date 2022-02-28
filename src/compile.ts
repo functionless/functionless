@@ -319,6 +319,20 @@ export function compile(
               }
             }
           }
+        } else if (ts.isTemplateExpression(node)) {
+          const exprs = [];
+          if (node.head.text) {
+            exprs.push(string(node.head.text));
+          }
+          for (const span of node.templateSpans) {
+            exprs.push(toExpr(span.expression));
+            if (span.literal.text) {
+              exprs.push(string(span.literal.text));
+            }
+          }
+          return newExpr("TemplateExpr", [
+            ts.factory.createArrayLiteralExpression(exprs),
+          ]);
         }
 
         throw new Error(`unhandled node: ${node.getText()}`);
@@ -334,6 +348,12 @@ export function compile(
             undefined,
             node
           ),
+        ]);
+      }
+
+      function string(literal: string): ts.Expression {
+        return newExpr("StringLiteralExpr", [
+          ts.factory.createStringLiteral(literal),
         ]);
       }
 

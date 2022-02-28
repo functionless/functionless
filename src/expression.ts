@@ -25,6 +25,7 @@ export type Expr =
   | ReferenceExpr
   | StringLiteralExpr
   | SpreadAssignExpr
+  | TemplateExpr
   | UnaryExpr;
 
 export function isExpr(a: any) {
@@ -234,7 +235,7 @@ export class PropAssignExpr extends BaseNode<"PropAssignExpr"> {
   }
 }
 
-export const isSpreadAssignmentExpr = typeGuard("SpreadAssignExpr");
+export const isSpreadAssignExpr = typeGuard("SpreadAssignExpr");
 
 export class SpreadAssignExpr extends BaseNode<"SpreadAssignExpr"> {
   constructor(readonly expr: Expr) {
@@ -243,4 +244,14 @@ export class SpreadAssignExpr extends BaseNode<"SpreadAssignExpr"> {
   }
 }
 
-// Statements
+export const isTemplateExpr = typeGuard("SpreadAssignExpr");
+
+/**
+ * Interpolates a TemplateExpr to a string `this ${is} a template expression`
+ */
+export class TemplateExpr extends BaseNode<"TemplateExpr"> {
+  constructor(readonly exprs: Expr[]) {
+    super("TemplateExpr");
+    setParent(this, exprs);
+  }
+}
