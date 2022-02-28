@@ -25,6 +25,7 @@ export type Expr =
   | ReferenceExpr
   | StringLiteralExpr
   | SpreadAssignExpr
+  | SpreadElementExpr
   | TemplateExpr
   | UnaryExpr;
 
@@ -240,6 +241,15 @@ export const isSpreadAssignExpr = typeGuard("SpreadAssignExpr");
 export class SpreadAssignExpr extends BaseNode<"SpreadAssignExpr"> {
   constructor(readonly expr: Expr) {
     super("SpreadAssignExpr");
+    expr.parent = this;
+  }
+}
+
+export const isSpreadElementExpr = typeGuard("SpreadElementExpr");
+
+export class SpreadElementExpr extends BaseNode<"SpreadElementExpr"> {
+  constructor(readonly expr: Expr) {
+    super("SpreadElementExpr");
     expr.parent = this;
   }
 }

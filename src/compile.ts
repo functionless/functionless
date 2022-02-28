@@ -58,7 +58,7 @@ export function compile(
         if (isAppsyncFunction(node)) {
           return visitAppsyncFunction(node);
         } else if (isReflectFunction(node)) {
-          return toFunctionDecl(node.arguments[0]);
+          return toFunction("FunctionDecl", node.arguments[0]);
         }
         return ts.visitEachChild(node, visitor, ctx);
       }
@@ -102,14 +102,15 @@ export function compile(
               call,
               call.expression,
               call.typeArguments,
-              [toFunctionDecl(impl, 1)]
+              [toFunction("FunctionDecl", impl, 1)]
             );
           }
         }
         return call;
       }
 
-      function toFunctionDecl(
+      function toFunction(
+        type: "FunctionDecl" | "FunctionExpr",
         impl: ts.FunctionDeclaration | ts.ArrowFunction | ts.FunctionExpression,
         dropArgs?: number
       ): ts.Expression {
@@ -117,7 +118,21 @@ export function compile(
           dropArgs === undefined
             ? impl.parameters
             : impl.parameters.slice(dropArgs);
-        return newExpr("FunctionDecl", [
+
+        if (impl.body === undefined) {
+          throw new Error(
+            `cannot parse declaration-only function: ${impl.getText()}`
+          );
+        }
+        const body = ts.isBlock(impl.body)
+          ? toExpr(impl.body)
+          : newExpr("BlockStmt", [
+              ts.factory.createArrayLiteralExpression([
+                newExpr("ReturnStmt", [toExpr(impl.body)]),
+              ]),
+            ]);
+
+        return newExpr(type, [
           ts.factory.createArrayLiteralExpression(
             params
               .map((param) => param.name.getText())
@@ -125,7 +140,7 @@ export function compile(
                 newExpr("ParameterDecl", [ts.factory.createStringLiteral(arg)])
               )
           ),
-          toExpr(impl.body),
+          body,
         ]);
       }
 
@@ -133,18 +148,7 @@ export function compile(
         if (node === undefined) {
           return newExpr("NullLiteralExpr", []);
         } else if (ts.isArrowFunction(node) || ts.isFunctionExpression(node)) {
-          return newExpr("FunctionExpr", [
-            ts.factory.createArrayLiteralExpression(
-              node.parameters
-                .map((param) => param.name.getText())
-                .map((arg) =>
-                  newExpr("ParameterDecl", [
-                    ts.factory.createStringLiteral(arg),
-                  ])
-                )
-            ),
-            toExpr(node.body),
-          ]);
+          return toFunction("FunctionExpr", node);
         } else if (ts.isExpressionStatement(node)) {
           return newExpr("ExprStmt", [toExpr(node.expression)]);
         } else if (ts.isCallExpression(node)) {
@@ -290,6 +294,8 @@ export function compile(
           ]);
         } else if (ts.isSpreadAssignment(node)) {
           return newExpr("SpreadAssignExpr", [toExpr(node.expression)]);
+        } else if (ts.isSpreadElement(node)) {
+          return newExpr("SpreadElementExpr", [toExpr(node.expression)]);
         } else if (ts.isArrayLiteralExpression(node)) {
           return newExpr("ArrayLiteralExpr", [
             ts.factory.updateArrayLiteralExpression(

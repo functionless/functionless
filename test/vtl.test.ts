@@ -318,5 +318,68 @@ test("map over list", () =>
 #foreach($item in $context.arguments.list)
 #set($v2 = \"hello \${item}\")
 $util.qr($v1.add($v2))
+#end
 ${returnExpr(`$v1`)}`
+  ));
+
+test("map over list with in-line return", () =>
+  testCase(
+    reflect((list: string[]) => {
+      return list.map((item) => `hello ${item}`);
+    }),
+    `#set($v1 = [])
+#foreach($item in $context.arguments.list)
+#set($v2 = \"hello \${item}\")
+$util.qr($v1.add($v2))
+#end
+${returnExpr(`$v1`)}`
+  ));
+
+test("chain map over list", () =>
+  testCase(
+    reflect((list: string[]) => {
+      return list.map((item) => `hello ${item}`).map((item) => `hello ${item}`);
+    }),
+    `#set($v1 = [])
+#set($v2 = [])
+#foreach($item in $context.arguments.list)
+#set($v3 = "hello \${item}")
+$util.qr($v2.add($v3))
+#end
+#foreach($item in $v2)
+#set($v4 = "hello \${item}")
+$util.qr($v1.add($v4))
+#end
+${returnExpr("$v1")}`
+  ));
+
+test("forEach over list", () =>
+  testCase(
+    reflect((list: string[]) => {
+      return list.forEach((item) => {
+        $util.error(item);
+      });
+    }),
+    `#foreach($item in $context.arguments.list)
+$util.qr($util.error($item))
+#end
+${returnExpr(`$null`)}`
+  ));
+
+test("reduce over list", () =>
+  testCase(
+    reflect((list: string[]) => {
+      return list.reduce((newList: string[], item) => {
+        return [...newList, item];
+      }, []);
+    }),
+    `#set($newList = [])
+#foreach($item in $context.arguments.list)
+#set($v2 = [])
+$util.qr($v2.addAll($newList))
+$util.qr($v2.add($item))
+#set($v1 = $v2)
+#set($newList = $v1)
+#end
+${returnExpr("$newList")}`
   ));

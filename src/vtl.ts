@@ -95,8 +95,11 @@ export class VTL {
     if (text.startsWith("$")) {
       return text;
     }
-    return expr.kind === "CallExpr" ||
+    return (expr.kind === "ArrayLiteralExpr" &&
+      expr.items.find((item) => item.kind === "SpreadElementExpr") !==
+        undefined) ||
       expr.kind === "BinaryExpr" ||
+      expr.kind === "CallExpr" ||
       expr.kind === "ConditionExpr" ||
       expr.kind === "ElementAccessExpr" ||
       expr.kind === "Identifier" ||
@@ -162,7 +165,23 @@ export class VTL {
   public eval(expr: Stmt, returnVar?: string): void;
   public eval(node: FunctionlessNode, returnVar?: string): string | void {
     if (node.kind === "ArrayLiteralExpr") {
-      return `[${node.items.map((item) => this.$(item)).join(", ")}]`;
+      if (
+        node.items.find((item) => item.kind === "SpreadElementExpr") ===
+        undefined
+      ) {
+        return `[${node.items.map((item) => this.$(item)).join(", ")}]`;
+      } else {
+        // contains a spread, e.g. [...i], so we will store in a variable
+        const list = this.var("[]");
+        for (const item of node.items) {
+          if (item.kind === "SpreadElementExpr") {
+            this.qr(`$${list}.addAll(${this.$(item.expr)})`);
+          } else {
+            this.qr(`$${list}.add(${this.$(item)})`);
+          }
+        }
+        return list;
+      }
     } else if (node.kind === "BinaryExpr") {
       return `${this.$(node.left)} ${node.op} ${this.$(node.right)}`;
     } else if (node.kind === "BlockStmt") {
@@ -184,16 +203,17 @@ export class VTL {
           node.expr.name === "forEach" ||
           node.expr.name === "reduce")
       ) {
-        if (node.expr.name === "map") {
+        if (node.expr.name === "map" || node.expr.name == "forEach") {
           // list.map(item => ..)
           // list.map((item, idx) => ..)
           const fn = node.args.callbackfn as FunctionExpr;
-          const newList = this.var(`[]`);
-          const list = this.$(node.expr.expr);
           const value = fn.parameters[0]?.name ?? this.newLocalVarName();
           const index = fn.parameters[1]?.name;
           const array = fn.parameters[2]?.name;
 
+          const newList = node.expr.name === "map" ? this.var(`[]`) : undefined;
+
+          const list = this.$(node.expr.expr);
           this.add(`#foreach($${value} in ${list})`);
           if (index) {
             this.add(`#set($${index} = $foreach.index)`);
@@ -206,8 +226,44 @@ export class VTL {
           for (const stmt of fn.body.statements) {
             this.eval(stmt, tmp);
           }
-          this.qr(`$${newList}.add($${tmp})`);
-          return newList;
+          if (node.expr.name === "map") {
+            this.qr(`$${newList}.add($${tmp})`);
+          }
+
+          this.add("#end");
+          return newList ?? `$null`;
+        } else if (node.expr.name === "reduce") {
+          const fn = node.args.callbackfn as FunctionExpr;
+          const initialValue = node.args.initialValue;
+
+          // (previousValue: string[], currentValue: string, currentIndex: number, array: string[])
+          const previousValue =
+            fn.parameters[0]?.name ?? this.newLocalVarName();
+          const currentValue = fn.parameters[1]?.name ?? this.newLocalVarName();
+          const currentIndex = fn.parameters[2]?.name;
+          const array = fn.parameters[3]?.name;
+
+          if (initialValue !== undefined) {
+            this.set(previousValue, initialValue);
+          }
+
+          const list = this.$(node.expr.expr);
+          this.add(`#foreach($${currentValue} in ${list})`);
+          if (currentIndex) {
+            this.add(`#set($${currentIndex} = $foreach.index)`);
+          }
+          if (array) {
+            this.add(`#set($${array} = ${list})`);
+          }
+
+          const tmp = this.newLocalVarName();
+          for (const stmt of fn.body.statements) {
+            this.eval(stmt, tmp);
+          }
+          this.set(previousValue, `$${tmp}`);
+
+          this.add("#end");
+          return previousValue;
         }
         // this is an array map, forEach, reduce call
       }
