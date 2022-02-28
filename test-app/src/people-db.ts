@@ -1,6 +1,7 @@
 import { Construct } from "constructs";
 import { aws_dynamodb, aws_lambda } from "aws-cdk-lib";
 import { Table, Lambda, $util, AppsyncFunction } from "functionless";
+import { reflect } from "../../lib/expression";
 
 export interface Person {
   id: string;
@@ -17,6 +18,11 @@ export class PeopleDatabase extends Construct {
 
   constructor(scope: Construct, id: string) {
     super(scope, id);
+
+    // @ts-ignore
+    const r = reflect((a: string) => {
+      return a[0];
+    });
 
     this.personTable = new Table<Person, "id", undefined>(
       new aws_dynamodb.Table(this, "table", {

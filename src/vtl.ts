@@ -1,6 +1,5 @@
-import { AnyFunction } from "./function";
-import { Call, Expr } from "./expression";
-import { lookupIdentifier } from "./analysis";
+import { Call, Expr, Node, Stmt } from "./expression";
+import { findFunction, isInTopLevelScope, lookupIdentifier } from "./analysis";
 import { assertNever } from "./assert";
 
 // https://velocity.apache.org/engine/devel/user-guide.html#conditionals
@@ -30,13 +29,22 @@ export class VTL {
    * @param expr - optional value to initialize the value to
    * @returns the variable reference, e.g. $v1
    */
-  public var(expr?: string): string {
-    const varName = `$v${(this.varIt += 1)}`;
-    if (expr === undefined) {
-      return varName;
+  public var(expr?: string): string;
+  public var(id: string, expr: string): string;
+  public var(a?: string, b?: string): string {
+    if (a === undefined && b === undefined) {
+      return this.newLocalVarName();
+    } else if (a && b) {
+      this.set(a, b);
+      return a;
     }
-    this.set(varName, expr);
+    const varName = this.newLocalVarName();
+    this.set(varName, a!);
     return varName;
+  }
+
+  private newLocalVarName() {
+    return `$v${(this.varIt += 1)}`;
   }
 
   /**
@@ -54,7 +62,7 @@ export class VTL {
    *
    * @param expr expression string to evaluate quietly (i.e. without emitting to output) .
    */
-  public qr(expr: string) {
+  public qr(expr: string): void {
     this.add(`$util.qr(${expr})`);
   }
 
@@ -107,74 +115,92 @@ export class VTL {
    * @param expr the {@link Expr} to evaluate.
    * @returns a variable reference to the evaluated value
    */
-  public eval(expr: Expr): string {
-    if (expr.kind === "ArrayLiteral") {
-      return this.var(`[${expr.items.map(this.eval).join(", ")}]`);
-    } else if (expr.kind === "Binary") {
+  public eval(expr: Expr): string;
+  public eval(expr: Stmt): void;
+  public eval(node: Node): string | void {
+    if (node.kind === "ArrayLiteral") {
       return this.var(
-        `${this.eval(expr.left)} ${expr.op} ${this.eval(expr.right)}`
+        `[${node.items.map((item) => this.eval(item)).join(", ")}]`
       );
-    } else if (expr.kind === "Block") {
-      let last;
-      for (const exp of expr.exprs) {
-        last = this.eval(exp);
+    } else if (node.kind === "Binary") {
+      return this.var(
+        `${this.eval(node.left)} ${node.op} ${this.eval(node.right)}`
+      );
+    } else if (node.kind === "Block") {
+      for (const stmt of node.statements) {
+        this.eval(stmt);
       }
-      return last ?? "$null";
-    } else if (expr.kind === "BooleanLiteral") {
-      return this.var(`${expr.value}`);
-    } else if (expr.kind === "Call") {
-      const serviceCall = findFunction(expr);
+      return undefined;
+    } else if (node.kind === "BooleanLiteral") {
+      return `${node.value}`;
+    } else if (node.kind === "Call") {
+      const serviceCall = findFunction(node);
       if (serviceCall) {
-        return serviceCall(expr, this);
+        return serviceCall(node, this);
       } else {
-        return this.var(
-          `${this.eval(expr.expr)}(${Object.values(expr.args)
-            .map(this.eval)
-            .join(", ")})`
-        );
+        return `${this.eval(node.expr)}(${Object.values(node.args)
+          .map((arg) => this.eval(arg))
+          .join(", ")})`;
       }
-    } else if (expr.kind === "ConditionExpr") {
+    } else if (node.kind === "ConditionExpr") {
       const val = this.var();
-      this.add(`#if(${this.eval(expr.when)})`);
-      this.set(val, this.eval(expr.then));
+      this.add(`#if(${this.eval(node.when)})`);
+      this.set(val, this.eval(node.then));
       this.add("#else");
-      this.set(val, this.eval(expr._else));
+      this.set(val, this.eval(node._else));
       this.add("#end");
       return val;
-    } else if (expr.kind === "ConditionStmt") {
-      this.add(`#if(${this.eval(expr.when)})`);
-      this.eval(expr.then);
-      if (expr._else) {
+    } else if (node.kind === "ConditionStmt") {
+      this.add(`#if(${this.eval(node.when)})`);
+      this.eval(node.then);
+      if (node._else) {
         this.add("#else");
-        this.eval(expr._else);
+        this.eval(node._else);
       }
       this.add("#end");
-      return `$null`;
-    } else if (expr.kind === "FunctionDecl") {
-    } else if (expr.kind === "Identifier") {
-      if (expr.name.startsWith("$")) {
-        return expr.name;
+      return undefined;
+    } else if (node.kind === "ExprStmt") {
+      return this.qr(this.eval(node.expr));
+    } else if (node.kind === "ForOfStmt" || node.kind === "ForInStmt") {
+      const list = this.eval(node.expr);
+      this.add(
+        `#foreach($${node.i.name} in ${list}${
+          node.kind === "ForInStmt" ? ".keySet()" : ""
+        })`
+      );
+      this.eval(node.body);
+      this.add(`#end`);
+      return undefined;
+    } else if (node.kind === "FunctionDecl") {
+    } else if (node.kind === "Identifier") {
+      if (node.name.startsWith("$")) {
+        return node.name;
       }
-
-      const ref = lookupIdentifier(expr);
-      if (ref?.kind === "VariableDecl") {
-        return `$context.stash.${expr.name}`;
+      const ref = lookupIdentifier(node);
+      if (ref?.kind === "VariableDecl" && isInTopLevelScope(ref)) {
+        return `$context.stash.${node.name}`;
       } else if (ref?.kind === "ParameterDecl") {
         return `$context.arguments.${ref.name}`;
       }
       // determine is a stash or local variable
-      return expr.name;
-    } else if (expr.kind === "PropRef") {
-      return `${this.eval(expr.expr)}.${expr.id}`;
-    } else if (expr.kind === "Map") {
-    } else if (expr.kind === "NullLiteral") {
+      return `$${node.name}`;
+    } else if (node.kind === "PropRef") {
+      let name = node.name;
+      if (name === "push" && node.parent?.kind === "Call") {
+        // this is a push to an array, rename to 'add'
+        name = "add";
+      }
+      return `${this.eval(node.expr)}.${name}`;
+    } else if (node.kind === "ElementAccess") {
+      return `${this.eval(node.expr)}[${this.eval(node.element)}]`;
+    } else if (node.kind === "NullLiteral") {
       return `$null`;
-    } else if (expr.kind === "NumberLiteral") {
-      return this.var(expr.value.toString(10));
-    } else if (expr.kind === "ObjectLiteral") {
+    } else if (node.kind === "NumberLiteral") {
+      return node.value.toString(10);
+    } else if (node.kind === "ObjectLiteral") {
       const obj = this.var("{}");
-      for (const prop of expr.properties) {
-        if (prop.kind === "PropertyAssignment") {
+      for (const prop of node.properties) {
+        if (prop.kind === "PropAssign") {
           this.qr(`${obj}.put('${prop.name}', ${this.eval(prop.expr)})`);
         } else if (prop.kind === "SpreadAssignment") {
           const itemName = this.var();
@@ -187,41 +213,33 @@ export class VTL {
         }
       }
       return obj;
-    } else if (expr.kind === "ParameterDecl") {
-    } else if (expr.kind === "PropertyAssignment") {
-      throw new Error("");
-    } else if (expr.kind === "Reference") {
-    } else if (expr.kind === "Return") {
+    } else if (node.kind === "ParameterDecl") {
+    } else if (node.kind === "PropAssign") {
+    } else if (node.kind === "Reference") {
+    } else if (node.kind === "Return") {
+      this.set("$context.stash.return__val", this.eval(node.expr));
       this.set("$context.stash.return__flag", "true");
-      this.set("$context.stash.return__val", this.eval(expr.expr));
       this.add(`#return($context.stash.return__val)`);
       return "$null";
-    } else if (expr.kind === "SpreadAssignment") {
+    } else if (node.kind === "SpreadAssignment") {
       // handled as part of ObjectLiteral
-    } else if (expr.kind === "StringLiteral") {
-      return this.var(`"${expr.value}"`);
-    } else if (expr.kind === "Unary") {
-      return `${expr.op} ${this.eval(expr.expr)}`;
-    } else if (expr.kind === "VariableDecl") {
-      return this.var(this.eval(expr.expr));
+    } else if (node.kind === "StringLiteral") {
+      return `'${node.value}'`;
+    } else if (node.kind === "Unary") {
+      return `${node.op} ${this.eval(node.expr)}`;
+    } else if (node.kind === "VariableDecl") {
+      const varName = isInTopLevelScope(node)
+        ? `$context.stash.${node.name}`
+        : `$${node.name}`;
+
+      if (node.expr) {
+        const expr = this.eval(node.expr);
+        return this.var(varName, expr);
+      } else {
+        return varName;
+      }
     }
 
-    throw new Error(`cannot evaluate Expr kind: '${expr.kind}'`);
-  }
-}
-
-export function findFunction(call: Call): AnyFunction | undefined {
-  return find(call.expr);
-
-  function find(expr: Expr): any {
-    if (expr.kind === "PropRef") {
-      return find(expr.expr)?.[expr.id];
-    } else if (expr.kind === "Identifier") {
-      return undefined;
-    } else if (expr.kind === "Reference") {
-      return expr.ref();
-    } else {
-      return undefined;
-    }
+    throw new Error(`cannot evaluate Expr kind: '${node.kind}'`);
   }
 }

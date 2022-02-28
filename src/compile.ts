@@ -1,6 +1,6 @@
 import ts from "typescript";
 import { PluginConfig, TransformerExtras } from "ts-patch";
-import { BinaryOp, Expr } from "./expression";
+import { BinaryOp, Node } from "./expression";
 import { AnyTable } from "./table";
 import { AnyLambda } from "./function";
 export default compile;
@@ -56,8 +56,23 @@ export function compile(
       function visitor(node: ts.Node): ts.Node {
         if (isAppsyncFunction(node)) {
           return visitAppsyncFunction(node);
+        } else if (isReflectFunction(node)) {
+          return toExpr(node.arguments[0]);
         }
         return ts.visitEachChild(node, visitor, ctx);
+      }
+
+      function isReflectFunction(node: ts.Node): node is ts.CallExpression {
+        if (ts.isCallExpression(node)) {
+          const exprType = checker.getTypeAtLocation(node.expression);
+          const exprDecl = exprType.symbol?.declarations?.[0];
+          if (exprDecl && ts.isFunctionDeclaration(exprDecl)) {
+            if (exprDecl.name?.text === "reflect") {
+              return true;
+            }
+          }
+        }
+        return false;
       }
 
       function isAppsyncFunction(node: ts.Node): node is ts.NewExpression {
@@ -103,12 +118,21 @@ export function compile(
       }
 
       function toExpr(node: ts.Node): ts.Expression {
-        if (ts.isBlock(node)) {
-          return newExpr("Block", [
+        if (ts.isArrowFunction(node) || ts.isFunctionExpression(node)) {
+          return newExpr("FunctionDecl", [
             ts.factory.createArrayLiteralExpression(
-              node.statements.map(toExpr)
+              node.parameters
+                .map((param) => param.name.getText())
+                .map((arg) =>
+                  newExpr("ParameterDecl", [
+                    ts.factory.createStringLiteral(arg),
+                  ])
+                )
             ),
+            toExpr(node.body),
           ]);
+        } else if (ts.isExpressionStatement(node)) {
+          return newExpr("ExprStmt", [toExpr(node.expression)]);
         } else if (ts.isCallExpression(node)) {
           const exprType = checker.getTypeAtLocation(node.expression);
           const functionBrand = exprType.getProperty("__functionBrand");
@@ -146,6 +170,12 @@ export function compile(
               ),
             ]);
           }
+        } else if (ts.isBlock(node)) {
+          return newExpr("Block", [
+            ts.factory.createArrayLiteralExpression(
+              node.statements.map(toExpr)
+            ),
+          ]);
         } else if (ts.isIdentifier(node)) {
           if (node.text === "undefined" || node.text === "null") {
             return newExpr("NullLiteral", []);
@@ -169,15 +199,20 @@ export function compile(
             toExpr(node.expression),
             ts.factory.createStringLiteral(node.name.text),
           ]);
+        } else if (ts.isElementAccessExpression(node)) {
+          return newExpr("ElementAccess", [
+            toExpr(node.expression),
+            toExpr(node.argumentExpression),
+          ]);
         } else if (
           ts.isVariableStatement(node) &&
           node.declarationList.declarations.length === 1
         ) {
           return toExpr(node.declarationList.declarations[0]);
-        } else if (ts.isVariableDeclaration(node) && node.initializer) {
+        } else if (ts.isVariableDeclaration(node)) {
           return newExpr("VariableDecl", [
             ts.factory.createStringLiteral(node.name.getText()),
-            toExpr(node.initializer),
+            ...(node.initializer ? [toExpr(node.initializer)] : []),
           ]);
         } else if (ts.isIfStatement(node)) {
           return newExpr("ConditionStmt", [
@@ -230,24 +265,24 @@ export function compile(
             ),
           ]);
         } else if (ts.isPropertyAssignment(node)) {
-          return newExpr("PropertyAssignment", [
+          return newExpr("PropAssign", [
             ts.factory.createStringLiteral(node.name.getText()),
             toExpr(node.initializer),
           ]);
         } else if (ts.isShorthandPropertyAssignment(node)) {
-          return newExpr("PropertyAssignment", [
+          return newExpr("PropAssign", [
             ts.factory.createStringLiteral(node.name.getText()),
             toExpr(node.name),
           ]);
         } else if (ts.isSpreadAssignment(node)) {
           return newExpr("SpreadAssignment", [toExpr(node.expression)]);
         } else if (ts.isArrayLiteralExpression(node)) {
-          return ts.factory.updateArrayLiteralExpression(
-            node,
-            node.elements.map(toExpr)
-          );
-        } else if (ts.isLiteralExpression(node)) {
-          return node;
+          return newExpr("ArrayLiteral", [
+            ts.factory.updateArrayLiteralExpression(
+              node,
+              node.elements.map(toExpr)
+            ),
+          ]);
         } else if (node.kind === ts.SyntaxKind.NullKeyword) {
           return newExpr("NullLiteral", []);
         } else if (ts.isNumericLiteral(node)) {
@@ -264,6 +299,25 @@ export function compile(
           node.kind === ts.SyntaxKind.FalseKeyword
         ) {
           return newExpr("BooleanLiteral", [node as ts.Expression]);
+        } else if (ts.isForOfStatement(node) || ts.isForInStatement(node)) {
+          if (ts.isVariableDeclarationList(node.initializer)) {
+            if (node.initializer.declarations.length === 1) {
+              const varDecl = node.initializer.declarations[0];
+              if (ts.isIdentifier(varDecl.name)) {
+                // for (const i in list)
+                return newExpr(
+                  ts.isForOfStatement(node) ? "ForOfStmt" : "ForInStmt",
+                  [
+                    toExpr(varDecl),
+                    toExpr(node.expression),
+                    toExpr(node.statement),
+                  ]
+                );
+              } else if (ts.isArrayBindingPattern(varDecl.name)) {
+                // for (const [a, b] in list)
+              }
+            }
+          }
         }
 
         throw new Error(`unhandled node: ${node.getText()}`);
@@ -282,7 +336,7 @@ export function compile(
         ]);
       }
 
-      function newExpr(type: Expr["kind"], args: ts.Expression[]) {
+      function newExpr(type: Node["kind"], args: ts.Expression[]) {
         return ts.factory.createNewExpression(
           ts.factory.createPropertyAccessExpression(functionless, type),
           undefined,
@@ -315,6 +369,9 @@ function getOperator(op: ts.BinaryOperatorToken): BinaryOp | undefined {
 }
 
 const OperatorMappings = {
+  [ts.SyntaxKind.EqualsToken]: "=",
+  [ts.SyntaxKind.PlusToken]: "+",
+  [ts.SyntaxKind.MinusToken]: "-",
   [ts.SyntaxKind.AmpersandAmpersandToken]: "&&",
   [ts.SyntaxKind.BarBarToken]: "||",
   [ts.SyntaxKind.EqualsEqualsToken]: "==",

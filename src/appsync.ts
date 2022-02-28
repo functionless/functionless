@@ -83,9 +83,9 @@ export class AppsyncFunction<
   #return($context.stash.return__val)
 #end`;
       let template = new VTL(circuitBreaker);
-      const functions = decl.body.exprs
+      const functions = decl.body.statements
         .map((expr, i) => {
-          const isLastExpr = i + 1 === decl.body.exprs.length;
+          const isLastExpr = i + 1 === decl.body.statements.length;
           const service = findService(expr);
           if (service) {
             // we must now render a resolver with request mapping template
@@ -109,13 +109,13 @@ export class AppsyncFunction<
                   )
             );
 
-            if (expr.kind === "Call") {
-              return createStage(expr);
+            if (expr.kind === "ExprStmt" && expr.expr.kind === "Call") {
+              return createStage(expr.expr);
             } else if (expr.kind === "Return" && expr.expr.kind === "Call") {
               return createStage(expr.expr);
             } else if (
               expr.kind === "VariableDecl" &&
-              expr.expr.kind === "Call"
+              expr.expr?.kind === "Call"
             ) {
               const responseMappingTemplate =
                 appsync.MappingTemplate.fromString(
@@ -166,8 +166,9 @@ export class AppsyncFunction<
     }
 
     function countResolvers(decl: FunctionDecl<F>): number {
-      return decl.body.exprs.filter((expr) => findService(expr) !== undefined)
-        .length;
+      return decl.body.statements.filter(
+        (expr) => findService(expr) !== undefined
+      ).length;
     }
   }
 }
