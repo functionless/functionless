@@ -221,6 +221,29 @@ ${returnExpr("$context.stash.newList")}`
   );
 });
 
+test("break from for-loop", () => {
+  testCase(
+    reflect((list: string[]) => {
+      const newList = [];
+      for (const item of list) {
+        if (item === "hello") {
+          break;
+        }
+        newList.push(item);
+      }
+      return newList;
+    }),
+    `#set($context.stash.newList = [])
+#foreach($item in $context.arguments.list)
+#if($item == 'hello')
+#break
+#end
+$util.qr($context.stash.newList.add($item))
+#end
+${returnExpr("$context.stash.newList")}`
+  );
+});
+
 test("local variable inside for-of loop is declared as a local variable", () => {
   testCase(
     reflect((list: string[]) => {
@@ -283,3 +306,17 @@ test("conditional expression in template expression", () => {
 ${returnExpr(`"head \${v1}"`)}`
   );
 });
+
+test("map over list", () =>
+  testCase(
+    reflect((list: string[]) => {
+      return list.map((item) => {
+        return `hello ${item}`;
+      });
+    }),
+    `#set($v1 = [])
+#foreach($item in $context.arguments.list)
+#set($v2 = \"hello \${item}\")
+$util.qr($v1.add($v2))
+${returnExpr(`$v1`)}`
+  ));

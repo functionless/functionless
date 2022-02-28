@@ -3,6 +3,7 @@ import { findFunction, isInTopLevelScope, lookupIdentifier } from "./util";
 import { assertNever } from "./assert";
 import { FunctionlessNode } from "./node";
 import { Stmt } from "./statement";
+import { FunctionExpr } from ".";
 
 // https://velocity.apache.org/engine/devel/user-guide.html#conditionals
 // https://cwiki.apache.org/confluence/display/VELOCITY/CheckingForNull
@@ -89,8 +90,8 @@ export class VTL {
    * @param surround
    * @returns
    */
-  public $(expr: Expr, surround = false): string {
-    const text = this.eval(expr);
+  public $(expr: Expr, returnVar?: string, surround = false): string {
+    const text = this.eval(expr, returnVar);
     if (text.startsWith("$")) {
       return text;
     }
@@ -157,9 +158,9 @@ export class VTL {
    * @param expr the {@link Expr} to evaluate.
    * @returns a variable reference to the evaluated value
    */
-  public eval(expr: Expr): string;
-  public eval(expr: Stmt): void;
-  public eval(node: FunctionlessNode): string | void {
+  public eval(expr: Expr, returnVar?: string): string;
+  public eval(expr: Stmt, returnVar?: string): void;
+  public eval(node: FunctionlessNode, returnVar?: string): string | void {
     if (node.kind === "ArrayLiteralExpr") {
       return `[${node.items.map((item) => this.$(item)).join(", ")}]`;
     } else if (node.kind === "BinaryExpr") {
@@ -171,15 +172,48 @@ export class VTL {
       return undefined;
     } else if (node.kind === "BooleanLiteralExpr") {
       return `${node.value}`;
+    } else if (node.kind === "BreakStmt") {
+      return this.add("#break");
     } else if (node.kind === "CallExpr") {
       const serviceCall = findFunction(node);
       if (serviceCall) {
         return serviceCall(node, this);
-      } else {
-        return `${this.eval(node.expr)}(${Object.values(node.args)
-          .map((arg) => this.$(arg))
-          .join(", ")})`;
+      } else if (
+        node.expr.kind === "PropAccessExpr" &&
+        (node.expr.name === "map" ||
+          node.expr.name === "forEach" ||
+          node.expr.name === "reduce")
+      ) {
+        if (node.expr.name === "map") {
+          // list.map(item => ..)
+          // list.map((item, idx) => ..)
+          const fn = node.args.callbackfn as FunctionExpr;
+          const newList = this.var(`[]`);
+          const list = this.$(node.expr.expr);
+          const value = fn.parameters[0]?.name ?? this.newLocalVarName();
+          const index = fn.parameters[1]?.name;
+          const array = fn.parameters[2]?.name;
+
+          this.add(`#foreach($${value} in ${list})`);
+          if (index) {
+            this.add(`#set($${index} = $foreach.index)`);
+          }
+          if (array) {
+            this.add(`#set($${array} = $${list})`);
+          }
+
+          const tmp = this.newLocalVarName();
+          for (const stmt of fn.body.statements) {
+            this.eval(stmt, tmp);
+          }
+          this.qr(`$${newList}.add($${tmp})`);
+          return newList;
+        }
+        // this is an array map, forEach, reduce call
       }
+      return `${this.eval(node.expr)}(${Object.values(node.args)
+        .map((arg) => this.$(arg))
+        .join(", ")})`;
     } else if (node.kind === "ConditionExpr") {
       const val = this.newLocalVarName();
       this.add(`#if(${this.eval(node.when)})`);
@@ -209,11 +243,16 @@ export class VTL {
       this.add(`#end`);
       return undefined;
     } else if (node.kind === "FunctionDecl") {
+    } else if (node.kind === "FunctionExpr") {
+      return this.eval(node.body);
     } else if (node.kind === "Identifier") {
       const ref = lookupIdentifier(node);
       if (ref?.kind === "VariableStmt" && isInTopLevelScope(ref)) {
         return `context.stash.${node.name}`;
-      } else if (ref?.kind === "ParameterDecl") {
+      } else if (
+        ref?.kind === "ParameterDecl" &&
+        ref.parent?.kind === "FunctionDecl"
+      ) {
         return `context.arguments.${ref.name}`;
       }
       return node.name;
@@ -250,10 +289,14 @@ export class VTL {
     } else if (node.kind === "PropAssignExpr") {
     } else if (node.kind === "ReferenceExpr") {
     } else if (node.kind === "ReturnStmt") {
-      this.set("context.stash.return__val", node.expr);
-      this.add("#set($context.stash.return__flag = true)");
-      this.add(`#return($context.stash.return__val)`);
-      return "$null";
+      if (returnVar) {
+        this.set(returnVar, node.expr);
+      } else {
+        this.set("context.stash.return__val", node.expr);
+        this.add("#set($context.stash.return__flag = true)");
+        this.add(`#return($context.stash.return__val)`);
+      }
+      return undefined;
     } else if (node.kind === "SpreadAssignExpr") {
       // handled as part of ObjectLiteral
     } else if (node.kind === "StringLiteralExpr") {
@@ -264,7 +307,7 @@ export class VTL {
           if (expr.kind === "StringLiteralExpr") {
             return expr.value;
           }
-          return this.$(expr, true);
+          return this.$(expr, returnVar, true);
         })
         .join("")}"`;
     } else if (node.kind === "UnaryExpr") {

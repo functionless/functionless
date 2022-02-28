@@ -1,6 +1,6 @@
 import { Construct } from "constructs";
 import { aws_dynamodb, aws_lambda } from "aws-cdk-lib";
-import { Table, Function, $util, AppsyncFunction } from "functionless";
+import { Table, Function, $util, AppsyncFunction, reflect } from "functionless";
 
 export interface Person {
   id: string;

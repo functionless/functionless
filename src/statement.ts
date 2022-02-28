@@ -6,6 +6,7 @@ import { BaseNode, isNode, typeGuard } from "./node";
  * to `#set`, `$util.qr` and `#return` directives.
  */
 export type Stmt =
+  | BreakStmt
   | BlockStmt
   | ExprStmt
   | ForInStmt
@@ -114,5 +115,13 @@ export class ForInStmt extends BaseNode<"ForInStmt"> {
     i.parent = this;
     expr.parent = this;
     body.parent = this;
+  }
+}
+
+export const isBreakStmt = typeGuard("BreakStmt");
+
+export class BreakStmt extends BaseNode<"BreakStmt"> {
+  constructor() {
+    super("BreakStmt");
   }
 }

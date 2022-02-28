@@ -58,12 +58,17 @@ export function compile(
         if (isAppsyncFunction(node)) {
           return visitAppsyncFunction(node);
         } else if (isReflectFunction(node)) {
-          return toExpr(node.arguments[0]);
+          return toFunctionDecl(node.arguments[0]);
         }
         return ts.visitEachChild(node, visitor, ctx);
       }
 
-      function isReflectFunction(node: ts.Node): node is ts.CallExpression {
+      function isReflectFunction(node: ts.Node): node is ts.CallExpression & {
+        arguments: [
+          ts.FunctionExpression | ts.ArrowFunction,
+          ...ts.Expression[]
+        ];
+      } {
         if (ts.isCallExpression(node)) {
           const exprType = checker.getTypeAtLocation(node.expression);
           const exprDecl = exprType.symbol?.declarations?.[0];
@@ -97,29 +102,37 @@ export function compile(
               call,
               call.expression,
               call.typeArguments,
-              [
-                newExpr("FunctionDecl", [
-                  ts.factory.createArrayLiteralExpression(
-                    impl.parameters
-                      .slice(1) // the first argument is always $context
-                      .map((param) => param.name.getText())
-                      .map((arg) =>
-                        newExpr("ParameterDecl", [
-                          ts.factory.createStringLiteral(arg),
-                        ])
-                      )
-                  ),
-                  toExpr(impl.body),
-                ]),
-              ]
+              [toFunctionDecl(impl, 1)]
             );
           }
         }
         return call;
       }
 
-      function toExpr(node: ts.Node): ts.Expression {
-        if (ts.isArrowFunction(node) || ts.isFunctionExpression(node)) {
+      function toFunctionDecl(
+        impl: ts.FunctionDeclaration | ts.ArrowFunction | ts.FunctionExpression,
+        dropArgs?: number
+      ): ts.Expression {
+        const params =
+          dropArgs === undefined
+            ? impl.parameters
+            : impl.parameters.slice(dropArgs);
+        return newExpr("FunctionDecl", [
+          ts.factory.createArrayLiteralExpression(
+            params
+              .map((param) => param.name.getText())
+              .map((arg) =>
+                newExpr("ParameterDecl", [ts.factory.createStringLiteral(arg)])
+              )
+          ),
+          toExpr(impl.body),
+        ]);
+      }
+
+      function toExpr(node: ts.Node | undefined): ts.Expression {
+        if (node === undefined) {
+          return newExpr("NullLiteralExpr", []);
+        } else if (ts.isArrowFunction(node) || ts.isFunctionExpression(node)) {
           return newExpr("FunctionExpr", [
             ts.factory.createArrayLiteralExpression(
               node.parameters
@@ -333,6 +346,8 @@ export function compile(
           return newExpr("TemplateExpr", [
             ts.factory.createArrayLiteralExpression(exprs),
           ]);
+        } else if (ts.isBreakStatement(node)) {
+          return newExpr("BreakStmt", []);
         }
 
         throw new Error(`unhandled node: ${node.getText()}`);
