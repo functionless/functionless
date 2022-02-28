@@ -36,6 +36,8 @@ const project = new typescript.TypeScriptProject({
 });
 
 project.testTask.prependExec("ts-patch install -s");
+project.testTask.prependExec("yarn link");
+project.testTask.prependExec("cd ./test-app && yarn link functionless");
 
 project.addPackageIgnore("/test-app");
 

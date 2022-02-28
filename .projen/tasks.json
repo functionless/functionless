@@ -164,6 +164,12 @@
       "description": "Run tests",
       "steps": [
         {
+          "exec": "cd ./test-app && yarn link functionless"
+        },
+        {
+          "exec": "yarn link"
+        },
+        {
           "exec": "ts-patch install -s"
         },
         {
