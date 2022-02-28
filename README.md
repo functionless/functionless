@@ -126,8 +126,8 @@ Finally, configure the `functionless/lib/compile` TypeScript transformer plugin 
 
 There are two aspects to Functionless:
 
-1. Type-Safe wrappers of CDK L2 Constructs
-2. An AppsyncFunction which represents the Appsync Resolver Pipeline
+1. Type-Safe wrappers of CDK L2 Constructs, such as Function and Table.
+2. An AppsyncFunction which represents the Appsync Resolver Pipeline with TypeScript syntax.
 
 ### Type-Safe Wrappers - Function and Table
 
