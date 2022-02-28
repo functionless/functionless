@@ -1,5 +1,7 @@
 # Functionless `λ<`
 
+[![npm version](https://badge.fury.io/js/functionless.svg)](https://badge.fury.io/js/functionless)
+
 **Functionless** is a TypeScript plugin that transforms TypeScript code into Service-to-Service (aka. "functionless") integrations, such as AWS AppSync [Resolvers](https://docs.aws.amazon.com/appsync/latest/devguide/configuring-resolvers.html) and [Velocity Templates](https://docs.aws.amazon.com/appsync/latest/devguide/resolver-mapping-template-reference-programming-guide.html), or (coming soon) [Amazon States Language](https://docs.aws.amazon.com/step-functions/latest/dg/concepts-amazon-states-language.html) for AWS Step Functions.
 
 For example, the below function creates an Appsync Resolver Pipeline with two stages:
@@ -60,7 +62,7 @@ $util.qr($v1.put('score', $context.stash.score))
 $util.toJson($v1)
 ```
 
-**Final JSON**
+**Final JSON Output of the Resolver**
 
 ```json
 {
@@ -77,7 +79,7 @@ In short: these integrations have many advantages over using AWS Lambda Function
 
 1. **lower latency** - there is no cold start, so a service-to-service integration will feel "snappy" when compared to a Lambda Function.
 2. **lower cost** - there's no intermediate Lambda Invocation when AppSync calls DynamoDB directly.
-3. **higher scalability** - the handlers are not subject to the concurrent invocation limits and are running on dedicated Amazon servers.
+3. **higher scalability** - the handlers are not subject to Lambda's concurrent invocation limits and are running on dedicated Amazon servers.
 4. **no operational maintenance** - such as upgrading dependencies, patching security vulnerabilities, etc. - theoretically, once the configuration is confirmed to be correct, it then becomes entirely AWS's responsibility to ensure the code is running optimally.
 
 The downsides of these integrations are their dependence on Domain Specific Languages (DSL) such as Apache Velocity Templates or Amazon States Language JSON. These DSLs are difficult to work with since they lack the type-safety and expressiveness of TypeScript. Functionless aims to solve this problem by converting beautiful, type-safe TypeScript code directly into these configurations.
@@ -124,18 +126,19 @@ Finally, configure the `functionless/lib/compile` TypeScript transformer plugin 
 
 `functionless` makes configuring services like AWS Appsync as easy as writing TypeScript functions.
 
-There are two aspects to Functionless:
+There are three aspects your need to learn before using Functionless in your CDK application:
 
-1. Type-Safe wrappers of CDK L2 Constructs, such as Function and Table.
-2. An AppsyncFunction which represents the Appsync Resolver Pipeline with TypeScript syntax.
+1. Appsync Integration interfaces for `Function` and `Table`.
+2. `AppsyncFunction` construct for defining Appsync Resolver with TypeScript syntax.
+3. Add Resolvers to an `@aws-cdk/aws-appsync-alpha.GraphQLApi`.
 
-### Type-Safe Wrappers - Function and Table
+### Appsync Integration interfaces for `Function` and `Table`
 
-You must wrap your CDK L2 Constructs in the corresponding wrapper provided by functionless. At this time, Lambda Functions and DynamoDB Tables are supported.
+You must wrap your CDK L2 Constructs in the corresponding wrapper class provided by functionless. Currently, Lambda `Function` and DynamoDB `Table` are supported.
 
 **Function**
 
-The `Function` wrapper annotates an `aws_lambda.Function` with a TypeScript function signature that controls how the Function can be called from within an AppsyncFunction.
+The `Function` wrapper annotates an `aws_lambda.Function` with a TypeScript function signature that controls how it can be called from within an `AppsyncFunction`.
 
 ```ts
 import { aws_lambda } from "aws-cdk-lib";
@@ -152,8 +155,16 @@ Within an [AppsyncFunction](#appsyncfunction), you can use the `myFunc` referenc
 
 ```ts
 new AppsyncFunction(() => {
-  return myFunc("name");
+  return myFunc("my name");
 });
+```
+
+The arguments are converted into keys on an object that is passed to the Lambda Function.
+
+```json
+{
+  "name": "my name"
+}
 ```
 
 **Table**
@@ -185,7 +196,7 @@ const myTable = new Table<Item, "key">(
 )
 ```
 
-Finally, call `getItem`, `putItem`, etc. from within an [AppsyncFunction](#appsyncfunction):
+Finally, call `getItem`, `putItem`, etc. (see: [#3](https://github.com/sam-goodwin/functionless/issues/3)) from within an [AppsyncFunction](#appsyncfunction):
 
 ```ts
 new AppsyncFunction(() => {
@@ -195,9 +206,9 @@ new AppsyncFunction(() => {
 });
 ```
 
-### AppsyncFunction
+### `AppsyncFunction` construct for defining Appsync Resolver with TypeScript syntax
 
-After wrapping your Functions and Tables, you can then instantiate an `AppsyncFunction` and interact with them using standard TypeScript syntax.
+After wrapping your Functions/Tables, you can then instantiate an `AppsyncFunction` and interact with them using standard TypeScript syntax.
 
 ```ts
 const getItem = new AppsyncFunction<
@@ -249,7 +260,43 @@ for (const item in list) {
 }
 ```
 
-### TypeScript -> Velocity Template Logic
+### Add Resolvers to an `@aws-cdk/aws-appsync-alpha.GraphQLApi`
+
+When you create a `new AppsyncFunction`, it does not immediately generate an Appsync Resolver. `AppsyncFunction` is more like a template for creating resolvers and can be re-used across more than one API.
+
+To add to an API, use the `addResolver` utility on `AppsyncFunction`.
+
+```ts
+const app = new App();
+
+const stack = new Stack(app, "stack");
+
+const schema = new appsync.Schema({
+  filePath: path.join(__dirname, "..", "schema.gql"),
+});
+
+const api = new appsync.GraphqlApi(stack, "Api", {
+  name: "demo",
+  schema,
+  authorizationConfig: {
+    defaultAuthorization: {
+      authorizationType: appsync.AuthorizationType.IAM,
+    },
+  },
+  xrayEnabled: true,
+});
+
+// create a template AppsyncFunction
+const getPerson = new AppsyncFunction(..);
+
+// use it add resolvers to a GraphqlApi.
+getPerson.addResolver(api, {
+  typeName: "Query",
+  fieldName: "getPerson",
+});
+```
+
+## TypeScript -> Velocity Template Logic
 
 In order to write effective VTL templates, it helps to understand how TypeScript syntax maps to Velocity Template Statements.
 
@@ -257,7 +304,21 @@ An AppSync Request Mapping Template is synthesized by evaluating all [Expression
 
 The following section provides a reference guide on how each of the supported TypeScript syntax is mapped to VTL.
 
-#### Variable - Top Level Scope
+#### Parameter Reference
+
+A reference to a top-level Function Parameter is mapped to a `$context.arguments`-prefixed reference in VTL:
+
+```ts
+new AppsyncFunction((arg: string) => {
+  return arg;
+});
+```
+
+```
+#return($context.arguments.arg)
+```
+
+#### Variable Declaration
 
 If in the top-level scope, all Variables are stored in `$context.stash`.
 
@@ -273,21 +334,7 @@ new AppsyncFunction(() => {
 #set($context.stash.b = $context.stash.a)
 ```
 
-#### Variable Reference - Function Parameter
-
-A reference to a top-level Function Parameter is mapped to a `$context.arguments`-prefixed reference in VTL:
-
-```ts
-new AppsyncFunction((arg: string) => {
-  return arg;
-});
-```
-
-```
-#return($context.arguments.arg)
-```
-
-#### Variable Declaration - Nested Scope
+#### Variable Declaration in a nested scope
 
 If in a nested scope, then the local variable name is used. These variables will not be available across Resolver Pipeline stages - but this should not be a problem as they are contained within a nested scope in TypeScript also.
 
@@ -315,6 +362,18 @@ new AppsyncFunction(() => {
 #set($a = 'value')
 #set($b = $a)
 #end
+```
+
+#### Template Expressions (string interpolation)
+
+Template expressions translate almost 1:1 with VTL:
+
+```ts
+const a = `hello ${name}`;
+```
+
+```
+#set($context.stash.a = "hello ${name}")
 ```
 
 #### Property and Index Assignment
@@ -345,7 +404,6 @@ const b = ["hello", 1, util.toJson(a)];
 ```
 #set($a = [])
 #set($b = ['hello', 1, $util.toJson($a)])
-
 ```
 
 #### SpreadElementExpr
@@ -406,6 +464,60 @@ const a = $util.toJson(val);
 ```
 $util.error('error')
 #set($a = $util.toJson($val))
+```
+
+#### If Statement
+
+An `if` statement translates to a series of `#if`, `#else` statements.
+
+```ts
+if (a === "hello") {
+  return a;
+}
+```
+
+```
+#if($a == 'hello')
+  #return($a)
+#end
+```
+
+`#elseif` is not used because evaluating the condition may translate to a series of `#set` or `$util.qr` statements. For this reason, all `else if` clauses are translated to `#else` with a nested `#if`:
+
+```ts
+if (a === "hello") {
+  return a;
+} else if (call() === "hello") {
+  return false;
+}
+```
+
+```
+#if($a == 'hello')
+  #return($a)
+#else
+  #set($v1 = call())
+  #if($v1 === "hello")
+    #return($a)
+  #end
+#end
+```
+
+#### Conditional Expressions
+
+A conditional expression, i.e. `cond ? then : else` are translated into `#if` and `#else` statements that assign a shared variable with the result of their computation;
+
+```ts
+const a = condition ? "left" : "right;
+```
+
+```
+#if($condition)
+#set($result = 'left')
+#else
+#set($result = 'right')
+#end
+#set($a = $result)
 ```
 
 #### For-In-Statement
