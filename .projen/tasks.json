@@ -167,6 +167,9 @@
           "exec": "ts-patch install -s"
         },
         {
+          "exec": "cd ./test-app && yarn && yarn build && yarn synth"
+        },
+        {
           "exec": "jest --passWithNoTests --all --updateSnapshot"
         },
         {

@@ -1423,8 +1423,6 @@ function-bind@^1.1.1:
     aws-cdk-lib "^2.13.0"
     constructs "^10.0.69"
     fs-extra "^10.0.1"
-    immutable "^4.0.0"
-    source-map-support "^0.5.21"
     ts-node "^10.5.0"
     ts-patch "^2.0.1"
     typesafe-dynamodb "^0.1.4"
@@ -1546,11 +1544,6 @@ ignore@^5.2.0:
   version "5.2.0"
   resolved "https://registry.yarnpkg.com/ignore/-/ignore-5.2.0.tgz#6d3bac8fa7fe0d45d9f9be7bac2fc279577e345a"
   integrity sha512-CmxgYGiEPCLhfLnpPp1MoRmifwEIOgjcHXxOBjv7mY96c+eWScsOP9c112ZyLdWHi0FxHjI+4uVhKYp/gcdRmQ==
-
-immutable@^4.0.0:
-  version "4.0.0"
-  resolved "https://registry.yarnpkg.com/immutable/-/immutable-4.0.0.tgz#b86f78de6adef3608395efb269a91462797e2c23"
-  integrity sha512-zIE9hX70qew5qTUjSS7wi1iwj/l7+m54KWU247nhM3v806UdGj1yDndXj+IOYxxtW9zyLI+xqFNZjTuDaLUqFw==
 
 inflight@^1.0.4:
   version "1.0.6"
