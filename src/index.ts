@@ -4,5 +4,6 @@ export * from "./expression";
 export * from "./function";
 export * from "./reflect";
 export * from "./statement";
+export * from "./step-function";
 export * from "./table";
 export * from "./util";

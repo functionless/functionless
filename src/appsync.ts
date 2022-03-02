@@ -56,6 +56,8 @@ export interface $Context<Source>
  *   fieldName: "getPerson"
  * });
  * ```
+ *
+ * @functionless AppsyncFunction
  */
 export class AppsyncFunction<
   F extends AnyFunction = AnyFunction,

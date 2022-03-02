@@ -55,43 +55,62 @@ export function compile(
       );
 
       function visitor(node: ts.Node): ts.Node {
-        if (isAppsyncFunction(node)) {
-          return visitAppsyncFunction(node);
-        } else if (isReflectFunction(node)) {
-          return toFunction("FunctionDecl", node.arguments[0]);
+        const type = getFunctionlessType(node);
+        if (type === "AppsyncFunction") {
+          return visitAppsyncFunction(node as ts.NewExpression);
+        } else if (type === "StepFunction") {
+          return visitStepFunction(node as ts.NewExpression);
+        } else if (type === "reflect") {
+          return toFunction(
+            "FunctionDecl",
+            (node as ts.CallExpression).arguments[0] as ts.FunctionExpression
+          );
         }
         return ts.visitEachChild(node, visitor, ctx);
       }
 
-      function isReflectFunction(node: ts.Node): node is ts.CallExpression & {
-        arguments: [
-          ts.FunctionExpression | ts.ArrowFunction,
-          ...ts.Expression[]
-        ];
-      } {
-        if (ts.isCallExpression(node)) {
-          const exprType = checker.getTypeAtLocation(node.expression);
-          const exprDecl = exprType.symbol?.declarations?.[0];
-          if (exprDecl && ts.isFunctionDeclaration(exprDecl)) {
-            if (exprDecl.name?.text === "reflect") {
-              return true;
-            }
-          }
-        }
-        return false;
-      }
-
-      function isAppsyncFunction(node: ts.Node): node is ts.NewExpression {
+      function getFunctionlessType(
+        node: ts.Node
+      ): "AppsyncFunction" | "StepFunction" | "reflect" | undefined {
         if (ts.isNewExpression(node)) {
           const exprType = checker.getTypeAtLocation(node.expression);
           const exprDecl = exprType.symbol?.declarations?.[0];
           if (exprDecl && ts.isClassDeclaration(exprDecl)) {
-            if (exprDecl.name?.text === "AppsyncFunction") {
-              return true;
+            const name = exprDecl.name?.text;
+            if (name === "AppsyncFunction") {
+              return "AppsyncFunction";
+            } else if (
+              name === "ExpressStepFunction" ||
+              name === "StepFunction"
+            ) {
+              return "StepFunction";
+            }
+          }
+        } else if (ts.isCallExpression(node)) {
+          const exprType = checker.getTypeAtLocation(node.expression);
+          const exprDecl = exprType.symbol?.declarations?.[0];
+          if (exprDecl && ts.isFunctionDeclaration(exprDecl)) {
+            if (exprDecl.name?.text === "reflect") {
+              return "reflect";
             }
           }
         }
-        return false;
+        return undefined;
+      }
+
+      function visitStepFunction(call: ts.NewExpression): ts.Node {
+        if (call.arguments?.length === 1) {
+          const impl = call.arguments[0];
+          if (ts.isFunctionExpression(impl) || ts.isArrowFunction(impl)) {
+            return ts.factory.updateNewExpression(
+              call,
+              call.expression,
+              call.typeArguments,
+              [toFunction("FunctionDecl", impl)]
+            );
+          }
+        }
+        return call;
       }
 
       function visitAppsyncFunction(call: ts.NewExpression): ts.Node {

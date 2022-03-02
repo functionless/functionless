@@ -11,6 +11,7 @@ export type Stmt =
   | ExprStmt
   | ForInStmt
   | ForOfStmt
+  | IfStmt
   | ReturnStmt
   | VariableStmt;
 
@@ -77,7 +78,7 @@ export class IfStmt extends BaseNode<"IfStmt"> {
   constructor(
     readonly when: Expr,
     readonly then: BlockStmt,
-    readonly _else?: BlockStmt
+    readonly _else?: IfStmt | BlockStmt
   ) {
     super("IfStmt");
     when.parent = this;

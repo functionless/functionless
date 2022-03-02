@@ -9,7 +9,13 @@ import { FunctionExpr } from ".";
 // https://cwiki.apache.org/confluence/display/VELOCITY/CheckingForNull
 // https://velocity.apache.org/engine/devel/user-guide.html#set
 
+export function isVTL(a: any): a is VTL {
+  return a?.kind === "VTL";
+}
+
 export class VTL {
+  readonly kind: "VTL" = "VTL";
+
   private readonly statements: string[] = [];
 
   private varIt = 0;

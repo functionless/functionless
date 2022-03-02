@@ -4,6 +4,7 @@ import { VTL } from "./vtl";
 
 // @ts-ignore - imported for typedoc
 import type { AppsyncFunction } from "./appsync";
+import { ASL } from "./asl";
 
 export type AnyFunction = (...args: any[]) => any;
 
@@ -48,25 +49,25 @@ export class Function<F extends AnyFunction> {
   // @ts-ignore - this makes `F` easily available at compile time
   readonly __functionBrand: F;
 
-  constructor(
-    readonly resource: aws_lambda.IFunction,
-    /**
-     * Names of the arguments in order.
-     * If this is omitted, then it will be injected by a TS transform.
-     */
-    readonly args: string[] = []
-  ) {
+  constructor(readonly resource: aws_lambda.IFunction) {
     return Object.assign(lambda, this);
 
-    function lambda(call: CallExpr, vtl: VTL): string {
-      const payload = vtl.var(`{}`);
-      for (const [argName, argVal] of Object.entries(call.args)) {
-        vtl.qr(`${payload}.put('${argName}', ${vtl.eval(argVal)})`);
+    function lambda(call: CallExpr, context: VTL | ASL): any {
+      if (context.kind === "VTL") {
+        const payload = context.var(`{}`);
+        for (const [argName, argVal] of Object.entries(call.args)) {
+          context.qr(`${payload}.put('${argName}', ${context.eval(argVal)})`);
+        }
+        const request = context.var(
+          `{"version": "2018-05-29", "operation": "Invoke", "payload": ${payload}}`
+        );
+        return context.json(request);
+      } else if (context.kind === "ASL") {
+        context;
+      } else {
+        console.error(`invalid Function call context`, context);
+        throw new Error(`invalid Function call context: ${context}`);
       }
-      const request = vtl.var(
-        `{"version": "2018-05-29", "operation": "Invoke", "payload": ${payload}}`
-      );
-      return vtl.json(request);
     }
   }
 }
