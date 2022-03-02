@@ -86,12 +86,35 @@ export function compile(
           const exprType = checker.getTypeAtLocation(node.expression);
           const exprDecl = exprType.symbol?.declarations?.[0];
           if (exprDecl && ts.isClassDeclaration(exprDecl)) {
-            if (exprDecl.name?.text === "AppsyncFunction") {
-              return true;
-            }
+            return getFunctionlessKind(exprDecl) === "AppsyncFunction";
           }
         }
         return false;
+      }
+
+      // Gets the static FunctionlessKind property from a ClassDeclaration
+      function getFunctionlessKind(
+        clss: ts.ClassDeclaration
+      ): string | undefined {
+        const member = clss.members.find(
+          (member) =>
+            member.modifiers?.find(
+              (mod) => mod.kind === ts.SyntaxKind.StaticKeyword
+            ) !== undefined &&
+            member.name &&
+            ts.isIdentifier(member.name) &&
+            member.name.text === "FunctionlessType"
+        );
+
+        if (
+          member &&
+          ts.isPropertyDeclaration(member) &&
+          member.initializer &&
+          ts.isStringLiteral(member.initializer)
+        ) {
+          return member.initializer.text;
+        }
+        return undefined;
       }
 
       function visitAppsyncFunction(call: ts.NewExpression): ts.Node {

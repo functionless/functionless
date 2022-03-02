@@ -61,6 +61,11 @@ export class AppsyncFunction<
   F extends AnyFunction = AnyFunction,
   Source = undefined
 > {
+  /**
+   * This static property identifies this class as an AppsyncFunction to the TypeScript plugin.
+   */
+  public static readonly FunctionlessType = "AppsyncFunction";
+
   public readonly decl: FunctionDecl<F>;
 
   constructor(
