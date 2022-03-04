@@ -12,7 +12,7 @@ export default compile;
 export interface FunctionlessConfig extends PluginConfig {}
 
 /**
- * TypeScript Transformer which transforms functionless functions, such as `appsyncFunction`,
+ * TypeScript Transformer which transforms functionless functions, such as `AppsyncResolver`,
  * into an AST that can be interpreted at CDK synth time to produce VTL templates and AppSync
  * Resolver configurations.
  *
@@ -55,8 +55,8 @@ export function compile(
       );
 
       function visitor(node: ts.Node): ts.Node {
-        if (isAppsyncFunction(node)) {
-          return visitAppsyncFunction(node);
+        if (isAppsyncResolver(node)) {
+          return visitAppsyncResolver(node);
         } else if (isReflectFunction(node)) {
           return toFunction("FunctionDecl", node.arguments[0]);
         }
@@ -81,12 +81,12 @@ export function compile(
         return false;
       }
 
-      function isAppsyncFunction(node: ts.Node): node is ts.NewExpression {
+      function isAppsyncResolver(node: ts.Node): node is ts.NewExpression {
         if (ts.isNewExpression(node)) {
           const exprType = checker.getTypeAtLocation(node.expression);
           const exprDecl = exprType.symbol?.declarations?.[0];
           if (exprDecl && ts.isClassDeclaration(exprDecl)) {
-            return getFunctionlessKind(exprDecl) === "AppsyncFunction";
+            return getFunctionlessKind(exprDecl) === "AppsyncResolver";
           }
         }
         return false;
@@ -117,7 +117,7 @@ export function compile(
         return undefined;
       }
 
-      function visitAppsyncFunction(call: ts.NewExpression): ts.Node {
+      function visitAppsyncResolver(call: ts.NewExpression): ts.Node {
         if (call.arguments?.length === 1) {
           const impl = call.arguments[0];
           if (ts.isFunctionExpression(impl) || ts.isArrowFunction(impl)) {

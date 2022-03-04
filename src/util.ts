@@ -52,7 +52,7 @@ export function findService(
 //   return Array.from(new Array(depth)).join(" ");
 // }
 
-// derives a name from an expression - this can be used to name infrastructure, such as an AppsyncFunction.
+// derives a name from an expression - this can be used to name infrastructure, such as an AppsyncResolver.
 // e.g. table.getItem(..) => "table_getItem"
 export function toName(expr: FunctionlessNode): string {
   if (expr.kind === "Identifier") {

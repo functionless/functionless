@@ -1,7 +1,6 @@
 import * as appsync from "@aws-cdk/aws-appsync-alpha";
 import { AppSyncResolverEvent } from "aws-lambda";
 import { CallExpr } from "./expression";
-import { AnyFunction } from "./function";
 import { AnyLambda } from "./function";
 import { VTL } from "./vtl";
 import { AnyTable, isTable } from "./table";
@@ -11,6 +10,7 @@ import {
   ToAttributeValue,
 } from "typesafe-dynamodb/lib/attribute-value";
 import { FunctionDecl } from "./declaration";
+import { Literal } from "./literal";
 
 /**
  * The shape of the AWS Appsync `$context` variable.
@@ -20,8 +20,35 @@ import { FunctionDecl } from "./declaration";
  *
  * @see https://docs.aws.amazon.com/appsync/latest/devguide/resolver-context-reference.html
  */
-export interface $Context<Source>
-  extends Omit<AppSyncResolverEvent<never, Source>, "arguments" | "stash"> {}
+export interface AppsyncContext<
+  Arguments extends ResolverArguments,
+  Source = undefined
+> extends Omit<AppSyncResolverEvent<never, Source>, "arguments" | "stash"> {
+  arguments: Arguments;
+}
+
+/**
+ * The shape of an AWS Appsync Resolver's `$context.arguments`.
+ *
+ * The values must be of type {@link Literal} and cannot be arbitrary JavaScript types since
+ * they must be receivable in a GraphQL request.
+ */
+export interface ResolverArguments {
+  [key: string]: Literal;
+}
+
+/**
+ * A {@link ResolverFunction} is a function that represents an AWS Appsync Resolver Pipeline.
+ *
+ * @tparam Arguments - an object describing the shape of `$context.arguments`.
+ * @tparam Result - the type of data returned by the Resolver.
+ * @tparam Source - the parent type of the Appsync Resolver.
+ */
+export type ResolverFunction<
+  Arguments extends ResolverArguments,
+  Result,
+  Source
+> = ($context: AppsyncContext<Arguments, Source>) => Result;
 
 /**
  * An AWS AppSync Resolver Function derived from TypeScript syntax.
@@ -31,18 +58,17 @@ export interface $Context<Source>
  * const table = new Table<Person, "id">(new aws_dynamodb.Table(scope, "id", props));
  * ```
  *
- * Then, call the table from within the new AppsyncFunction:
+ * Then, call the table from within the new AppsyncResolver:
  * ```ts
- * const getPerson = new AppsyncFunction<
- *   (id: string) => Person | undefined
- * >(($context, id) => {
- *  const person = table.get({
- *    key: {
- *      id: $util.toDynamoDB(id)
- *    }
- *  });
- *  return person;
- * });
+ * const getPerson = new AppsyncResolver<{id: string}, Person | undefined>(
+ *   ($context, id) => {
+ *     const person = table.get({
+ *       key: {
+ *         id: $util.toDynamoDB(id)
+ *       }
+ *     });
+ *     return person;
+ *   });
  * ```
  *
  * Finally, the `getPerson` function can be used to create resolvers on a GraphQL API
@@ -57,22 +83,22 @@ export interface $Context<Source>
  * });
  * ```
  */
-export class AppsyncFunction<
-  F extends AnyFunction = AnyFunction,
+export class AppsyncResolver<
+  Arguments extends ResolverArguments,
+  Result,
   Source = undefined
 > {
   /**
-   * This static property identifies this class as an AppsyncFunction to the TypeScript plugin.
+   * This static property identifies this class as an AppsyncResolver to the TypeScript plugin.
    */
-  public static readonly FunctionlessType = "AppsyncFunction";
+  public static readonly FunctionlessType = "AppsyncResolver";
 
-  public readonly decl: FunctionDecl<F>;
+  public readonly decl: FunctionDecl<
+    ResolverFunction<Arguments, Result, Source>
+  >;
 
-  constructor(
-    // @ts-ignore
-    fn: ($context: $Context<Source>, ...args: Parameters<F>) => ReturnType<F>
-  ) {
-    this.decl = fn as unknown as FunctionDecl<F>;
+  constructor(fn: ResolverFunction<Arguments, Result, Source>) {
+    this.decl = fn as unknown as FunctionDecl;
   }
 
   /**
@@ -151,7 +177,9 @@ export class AppsyncFunction<
       });
     }
 
-    function synthesizeFunctions(decl: FunctionDecl<F>) {
+    function synthesizeFunctions(
+      decl: FunctionDecl<ResolverFunction<Arguments, Result, Source>>
+    ) {
       const circuitBreaker = `#if($context.stash.return__flag)
   #return($context.stash.return__val)
 #end`;
@@ -250,7 +278,9 @@ export class AppsyncFunction<
       return [functions, template.toVTL()] as const;
     }
 
-    function countResolvers(decl: FunctionDecl<F>): number {
+    function countResolvers(
+      decl: FunctionDecl<ResolverFunction<Arguments, Result, Source>>
+    ): number {
       return decl.body.statements.filter(
         (expr) => findService(expr) !== undefined
       ).length;
@@ -261,7 +291,7 @@ export class AppsyncFunction<
 /**
  * A reference to the AWS Appsync `$util` variable globally available to all Resolvers.
  *
- * Use the functions on `$util` to perform computations within an {@link AppsyncFunction}. They
+ * Use the functions on `$util` to perform computations within an {@link AppsyncResolver}. They
  * will be translated directly to calls within the Velocity Template Engine.
  *
  * @see https://docs.aws.amazon.com/appsync/latest/devguide/resolver-util-reference.html

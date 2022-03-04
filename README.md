@@ -10,7 +10,7 @@ For example, the below function creates an Appsync Resolver Pipeline with two st
 2. Call the `myFunction` Lambda Function
 
 ```ts
-const getItem = new AppsyncFunction<(id: string) => Item | null>(
+const getItem = new AppsyncResolver<{ id: string }, Item | null>(
   ($context, id) => {
     const item = myTable.get({
       id: $util.toDynamoDB(id),
@@ -129,7 +129,7 @@ Finally, configure the `functionless/lib/compile` TypeScript transformer plugin 
 There are three aspects your need to learn before using Functionless in your CDK application:
 
 1. Appsync Integration interfaces for `Function` and `Table`.
-2. `AppsyncFunction` construct for defining Appsync Resolver with TypeScript syntax.
+2. `AppsyncResolver` construct for defining Appsync Resolver with TypeScript syntax.
 3. Add Resolvers to an `@aws-cdk/aws-appsync-alpha.GraphQLApi`.
 
 ### Appsync Integration interfaces for `Function` and `Table`
@@ -138,7 +138,7 @@ You must wrap your CDK L2 Constructs in the corresponding wrapper class provided
 
 **Function**
 
-The `Function` wrapper annotates an `aws_lambda.Function` with a TypeScript function signature that controls how it can be called from within an `AppsyncFunction`.
+The `Function` wrapper annotates an `aws_lambda.Function` with a TypeScript function signature that controls how it can be called from within an `AppsyncResolver`.
 
 ```ts
 import { aws_lambda } from "aws-cdk-lib";
@@ -151,10 +151,10 @@ const myFunc = new Function<(name: string) => string>(
 );
 ```
 
-Within an [AppsyncFunction](#appsyncfunction), you can use the `myFunc` reference like an ordinary Function:
+Within an [AppsyncResolver](#AppsyncResolver), you can use the `myFunc` reference like an ordinary Function:
 
 ```ts
-new AppsyncFunction(() => {
+new AppsyncResolver(() => {
   return myFunc("my name");
 });
 ```
@@ -196,38 +196,37 @@ const myTable = new Table<Item, "key">(
 )
 ```
 
-Finally, call `getItem`, `putItem`, etc. (see: [#3](https://github.com/sam-goodwin/functionless/issues/3)) from within an [AppsyncFunction](#appsyncfunction):
+Finally, call `getItem`, `putItem`, etc. (see: [#3](https://github.com/sam-goodwin/functionless/issues/3)) from within an [AppsyncResolver](#AppsyncResolver):
 
 ```ts
-new AppsyncFunction(() => {
+new AppsyncResolver(() => {
   return myTable.get({
     key: $util.toDynamoDB("key"),
   });
 });
 ```
 
-### `AppsyncFunction` construct for defining Appsync Resolver with TypeScript syntax
+### `AppsyncResolver` construct for defining Appsync Resolver with TypeScript syntax
 
-After wrapping your Functions/Tables, you can then instantiate an `AppsyncFunction` and interact with them using standard TypeScript syntax.
+After wrapping your Functions/Tables, you can then instantiate an `AppsyncResolver` and interact with them using standard TypeScript syntax.
 
 ```ts
-const getItem = new AppsyncFunction<
-  // you must explicitly provide a type-signature for the function
-  (key: string) => Item | null
->(($context, key) => {
-  const item = myTable.get({
-    key: {
-      S: key,
-    },
-  });
+const getItem = new AppsyncResolver(
+  ($context: AppsyncContext<{ key: string }>, key) => {
+    const item = myTable.get({
+      key: {
+        S: key,
+      },
+    });
 
-  const processedName = myFunc(item.key);
+    const processedName = myFunc(item.key);
 
-  return {
-    ...item,
-    processedName,
-  };
-});
+    return {
+      ...item,
+      processedName,
+    };
+  }
+);
 ```
 
 Calls to services such as Table or Function can only be performed at the top-level. See below for some examples of valid and invalid service calls
@@ -262,9 +261,9 @@ for (const item in list) {
 
 ### Add Resolvers to an `@aws-cdk/aws-appsync-alpha.GraphQLApi`
 
-When you create a `new AppsyncFunction`, it does not immediately generate an Appsync Resolver. `AppsyncFunction` is more like a template for creating resolvers and can be re-used across more than one API.
+When you create a `new AppsyncResolver`, it does not immediately generate an Appsync Resolver. `AppsyncResolver` is more like a template for creating resolvers and can be re-used across more than one API.
 
-To add to an API, use the `addResolver` utility on `AppsyncFunction`.
+To add to an API, use the `addResolver` utility on `AppsyncResolver`.
 
 ```ts
 const app = new App();
@@ -286,8 +285,8 @@ const api = new appsync.GraphqlApi(stack, "Api", {
   xrayEnabled: true,
 });
 
-// create a template AppsyncFunction
-const getPerson = new AppsyncFunction(..);
+// create a template AppsyncResolver
+const getPerson = new AppsyncResolver(..);
 
 // use it add resolvers to a GraphqlApi.
 getPerson.addResolver(api, {
@@ -306,11 +305,11 @@ The following section provides a reference guide on how each of the supported Ty
 
 #### Parameter Reference
 
-A reference to a top-level Function Parameter is mapped to a `$context.arguments`-prefixed reference in VTL:
+A reference to the top-level Function Parameter is mapped to a `$context` in VTL:
 
 ```ts
-new AppsyncFunction((arg: string) => {
-  return arg;
+new AppsyncResolver((c: AppsyncContext<{ arg: string }>) => {
+  return c.arguments.arg;
 });
 ```
 
@@ -323,7 +322,7 @@ new AppsyncFunction((arg: string) => {
 If in the top-level scope, all Variables are stored in `$context.stash`.
 
 ```ts
-new AppsyncFunction(() => {
+new AppsyncResolver(() => {
   const a = "value";
   const b = a;
 });
@@ -339,7 +338,7 @@ new AppsyncFunction(() => {
 If in a nested scope, then the local variable name is used. These variables will not be available across Resolver Pipeline stages - but this should not be a problem as they are contained within a nested scope in TypeScript also.
 
 ```ts
-new AppsyncFunction(() => {
+new AppsyncResolver(() => {
   if (condition) {
     const a = "value";
     const b = a;
@@ -636,12 +635,12 @@ $util.qr($v1.put($b, true))
 
 ## How it Works
 
-When you compile your application with `tsc`, the [`functionless/lib/compile`](./src/compile.ts) transformer will replace the function declaration, `F`, in `new AppsyncFunction(F)` with its corresponding [Abstract Syntax Tree](./src/expression.ts) representation. This representation is then synthesized to Velocity Templates and AWS AppSync Resolver configurations, using the `@aws-cdk/aws-appsync-alpha` CDK Construct Library.
+When you compile your application with `tsc`, the [`functionless/lib/compile`](./src/compile.ts) transformer will replace the function declaration, `F`, in `new AppsyncResolver(F)` with its corresponding [Abstract Syntax Tree](./src/expression.ts) representation. This representation is then synthesized to Velocity Templates and AWS AppSync Resolver configurations, using the `@aws-cdk/aws-appsync-alpha` CDK Construct Library.
 
 For example, this function declaration:
 
 ```ts
-new AppsyncFunction<(input: { name: string }) => Person>((_$context, input) => {
+new AppsyncResolver<(input: { name: string }) => Person>((_$context, input) => {
   const person = this.personTable.putItem({
     key: {
       id: {
@@ -662,7 +661,7 @@ new AppsyncFunction<(input: { name: string }) => Person>((_$context, input) => {
 Is replaced with the following AST data structure:
 
 ```ts
-new AppsyncFunction(
+new AppsyncResolver(
   new FunctionDecl(
     [new ParameterDecl("input")],
     new BlockStmt([
