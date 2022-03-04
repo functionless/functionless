@@ -10,20 +10,18 @@ For example, the below function creates an Appsync Resolver Pipeline with two st
 2. Call the `myFunction` Lambda Function
 
 ```ts
-const getItem = new AppsyncResolver<{ id: string }, Item | null>(
-  ($context, id) => {
-    const item = myTable.get({
-      id: $util.toDynamoDB(id),
-    });
+const getItem = new AppsyncResolver<{ id: string }, Item | null>(($context) => {
+  const item = myTable.get({
+    id: $util.toDynamoDB($context.arguments.id),
+  });
 
-    const score = myFunction(item);
+  const score = myFunction(item);
 
-    return {
-      ...item,
-      score,
-    };
-  }
-);
+  return {
+    ...item,
+    score,
+  };
+});
 ```
 
 Functionless parses the TypeScript code and converts it to Apache Velocity Templates and an AWS Appsync CloudFormation configuration, saving you from writing all of that boilerplate. Below are snippets of the Velocity Templates that this TypeScript code generates.
