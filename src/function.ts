@@ -3,7 +3,7 @@ import { CallExpr } from "./expression";
 import { VTL } from "./vtl";
 
 // @ts-ignore - imported for typedoc
-import type { AppsyncFunction } from "./appsync";
+import type { AppsyncResolver } from "./appsync";
 
 export type AnyFunction = (...args: any[]) => any;
 
@@ -15,7 +15,7 @@ export type AnyLambda = Function<AnyFunction>;
 
 /**
  * Wraps an {@link aws_lambda.Function} with a type-safe interface that can be
- * called from within an {@link AppsyncFunction}.
+ * called from within an {@link AppsyncResolver}.
  *
  * For example:
  * ```ts
@@ -23,7 +23,7 @@ export type AnyLambda = Function<AnyFunction>;
  *   new aws_lambda.Function(..)
  * );
  *
- * new AppsyncFunction(() => {
+ * new AppsyncResolver(() => {
  *   return getPerson("value");
  * })
  * ```

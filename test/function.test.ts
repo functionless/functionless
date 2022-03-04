@@ -1,5 +1,5 @@
 import "jest";
-import { reflect } from "../src";
+import { AppsyncContext, reflect } from "../src";
 import { Function } from "../src";
 import { returnExpr, testCase } from "./util";
 
@@ -13,8 +13,8 @@ const fn2 = new Function<(arg: string, optional?: string) => Item>(null as any);
 
 test("call function", () =>
   testCase(
-    reflect((arg: string) => {
-      return fn1(arg);
+    reflect((context: AppsyncContext<{ arg: string }>) => {
+      return fn1(context.arguments.arg);
     }),
     `#set($v1 = {})
 $util.qr($v1.put('arg', $context.arguments.arg))
@@ -24,8 +24,8 @@ ${returnExpr("$util.toJson($v2)")}`
 
 test("call function omitting optional arg", () =>
   testCase(
-    reflect((arg: string) => {
-      return fn2(arg);
+    reflect((context: AppsyncContext<{ arg: string }>) => {
+      return fn2(context.arguments.arg);
     }),
     `#set($v1 = {})
 $util.qr($v1.put('arg', $context.arguments.arg))
@@ -36,8 +36,8 @@ ${returnExpr("$util.toJson($v2)")}`
 
 test("call function including optional arg", () =>
   testCase(
-    reflect((arg: string) => {
-      return fn2(arg, "hello");
+    reflect((context: AppsyncContext<{ arg: string }>) => {
+      return fn2(context.arguments.arg, "hello");
     }),
     `#set($v1 = {})
 $util.qr($v1.put('arg', $context.arguments.arg))
