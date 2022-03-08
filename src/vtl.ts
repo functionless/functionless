@@ -10,11 +10,13 @@ import { FunctionExpr } from ".";
 // https://velocity.apache.org/engine/devel/user-guide.html#set
 
 export function isVTL(a: any): a is VTL {
-  return a?.kind === "VTL";
+  return (a as VTL | undefined)?.kind === VTL.ContextName;
 }
 
 export class VTL {
-  readonly kind: "VTL" = "VTL";
+  static readonly ContextName = "Velocity Template";
+
+  readonly kind = VTL.ContextName;
 
   private readonly statements: string[] = [];
 
@@ -406,6 +408,7 @@ export class VTL {
       }
     }
 
+    debugger;
     throw new Error(`cannot evaluate Expr kind: '${node.kind}'`);
   }
 }

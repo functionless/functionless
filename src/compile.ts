@@ -1,9 +1,8 @@
 import ts from "typescript";
 import { PluginConfig, TransformerExtras } from "ts-patch";
-import { BinaryOp } from "./expression";
-import { AnyTable } from "./table";
-import { AnyLambda } from "./function";
+import { BinaryOp, CanReference } from "./expression";
 import { FunctionlessNode } from "./node";
+
 export default compile;
 
 /**
@@ -58,7 +57,7 @@ export function compile(
         const type = getFunctionlessType(node);
         if (type === "AppsyncResolver") {
           return visitAppsyncResolver(node as ts.NewExpression);
-        } else if (type === "StepFunction") {
+        } else if (type === "StepFunction" || type === "ExpressStepFunction") {
           return visitStepFunction(node as ts.NewExpression);
         } else if (type === "reflect") {
           return toFunction(
@@ -117,18 +116,16 @@ export function compile(
       }
 
       function visitStepFunction(call: ts.NewExpression): ts.Node {
-        if (call.arguments?.length === 1) {
-          const impl = call.arguments[0];
-          if (ts.isFunctionExpression(impl) || ts.isArrowFunction(impl)) {
-            return ts.factory.updateNewExpression(
-              call,
-              call.expression,
-              call.typeArguments,
-              [toFunction("FunctionDecl", impl)]
-            );
-          }
-        }
-        return call;
+        return ts.factory.updateNewExpression(
+          call,
+          call.expression,
+          call.typeArguments,
+          call.arguments?.map((arg) =>
+            ts.isFunctionExpression(arg) || ts.isArrowFunction(arg)
+              ? toFunction("FunctionDecl", arg)
+              : arg
+          )
+        );
       }
 
       function visitAppsyncResolver(call: ts.NewExpression): ts.Node {
@@ -327,7 +324,7 @@ export function compile(
               ? string(node.name.text)
               : ts.isComputedPropertyName(node.name)
               ? toExpr(node.name.expression)
-              : toExpr(node.name),
+              : string(node.name.text),
             toExpr(node.initializer),
           ]);
         } else if (ts.isShorthandPropertyAssignment(node)) {
@@ -431,9 +428,7 @@ export function compile(
         );
       }
 
-      function getKind(
-        node: ts.Node
-      ): (AnyLambda | AnyTable)["kind"] | undefined {
+      function getKind(node: ts.Node): CanReference["kind"] | undefined {
         const exprType = checker.getTypeAtLocation(node);
         const exprKind = exprType.getProperty("kind");
         if (exprKind) {

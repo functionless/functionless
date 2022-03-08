@@ -14,6 +14,16 @@ export class BaseNode<Kind extends string> {
   // Expr that is directly adjacent and above this one (same scope)
   prev: FunctionlessNode | undefined;
   constructor(readonly kind: Kind) {}
+
+  public as<K extends FunctionlessNode["kind"]>(
+    kind: K
+  ): Extract<this, { kind: K }> {
+    // @ts-ignore
+    if (this.kind !== kind) {
+      throw new Error(`expected `);
+    }
+    return this as any;
+  }
 }
 
 export function setParent(

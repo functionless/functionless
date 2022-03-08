@@ -1,8 +1,10 @@
+import { AnyStepFunction } from ".";
 import { ParameterDecl } from "./declaration";
 import { AnyFunction, AnyLambda } from "./function";
 import { BaseNode, isNode, setParent, typeGuard } from "./node";
 import { BlockStmt, isIfStmt } from "./statement";
 import { AnyTable } from "./table";
+import { AWS } from "./aws";
 
 /**
  * An {@link Expr} (Expression) is a Node that will be interpreted to a value.
@@ -82,8 +84,10 @@ export class FunctionExpr<
 
 export const isReferenceExpr = typeGuard("ReferenceExpr");
 
+export type CanReference = AnyTable | AnyLambda | AnyStepFunction | typeof AWS;
+
 export class ReferenceExpr extends BaseNode<"ReferenceExpr"> {
-  constructor(readonly ref: () => AnyTable | AnyLambda) {
+  constructor(readonly ref: () => CanReference) {
     super("ReferenceExpr");
   }
 }

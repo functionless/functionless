@@ -1,16 +1,21 @@
 import { aws_dynamodb } from "aws-cdk-lib";
-import { ToAttributeMap } from "typesafe-dynamodb/lib/attribute-value";
+import {
+  NativeBinaryAttribute,
+  ToAttributeMap,
+} from "typesafe-dynamodb/lib/attribute-value";
 import {
   ExpressionAttributeNames,
   ExpressionAttributeValues,
 } from "typesafe-dynamodb/lib/expression-attributes";
-import { KeyAttribute } from "typesafe-dynamodb/lib/key";
 import { Narrow } from "typesafe-dynamodb/lib/narrow";
 import { CallExpr } from "./expression";
-import { VTL } from "./vtl";
+import { isVTL, VTL } from "./vtl";
 
 // @ts-ignore - imported for typedoc
 import type { AppsyncResolver } from "./appsync";
+import { TableKey } from "typesafe-dynamodb/lib/key";
+import { JsonFormat } from "typesafe-dynamodb";
+import { CallContext } from "./context";
 
 export function isTable(a: any): a is AnyTable {
   return a?.kind === "Table";
@@ -73,10 +78,20 @@ export class Table<
    */
   // @ts-ignore
   public getItem<
-    Key extends KeyAttribute<Item, PartitionKey, RangeKey>
-  >(input: { key: Key; consistentRead?: boolean }): Narrow<Item, Key>;
+    Key extends TableKey<
+      Item,
+      PartitionKey,
+      RangeKey,
+      JsonFormat.AttributeValue
+    >
+  >(input: {
+    key: Key;
+    consistentRead?: boolean;
+  }): Narrow<Item, AttributeKeyToObject<Key>, JsonFormat.Document>;
 
-  public getItem(call: CallExpr, vtl: VTL): any {
+  public getItem(call: CallExpr, vtl: CallContext): any {
+    assertIsVTLContext(vtl, "getItem");
+
     const input = vtl.eval(call.args.input);
     const request = vtl.var(
       `{"operation": "GetItem", "version": "2018-05-29"}`
@@ -92,18 +107,27 @@ export class Table<
    */
   // @ts-ignore
   public putItem<
-    Key extends KeyAttribute<Item, PartitionKey, RangeKey>,
+    Key extends TableKey<
+      Item,
+      PartitionKey,
+      RangeKey,
+      JsonFormat.AttributeValue
+    >,
     ConditionExpression extends string | undefined = undefined
   >(input: {
     key: Key;
     attributeValues: ToAttributeMap<
-      Omit<Narrow<Item, Key>, Exclude<PartitionKey | RangeKey, undefined>>
+      Omit<
+        Narrow<Item, AttributeKeyToObject<Key>, JsonFormat.Document>,
+        Exclude<PartitionKey | RangeKey, undefined>
+      >
     >;
     condition?: DynamoExpression<ConditionExpression>;
     _version?: number;
-  }): Narrow<Item, Key>;
+  }): Narrow<Item, AttributeKeyToObject<Key>, JsonFormat.Document>;
 
-  public putItem(call: CallExpr, vtl: VTL): any {
+  public putItem(call: CallExpr, vtl: CallContext): any {
+    assertIsVTLContext(vtl, "putItem");
     const input = vtl.eval(call.args.input);
     const request = vtl.var(
       `{"operation": "PutItem", "version": "2018-05-29"}`
@@ -123,7 +147,12 @@ export class Table<
    */
   // @ts-ignore
   public updateItem<
-    Key extends KeyAttribute<Item, PartitionKey, RangeKey>,
+    Key extends TableKey<
+      Item,
+      PartitionKey,
+      RangeKey,
+      JsonFormat.AttributeValue
+    >,
     UpdateExpression extends string,
     ConditionExpression extends string | undefined
   >(input: {
@@ -131,9 +160,11 @@ export class Table<
     update: DynamoExpression<UpdateExpression>;
     condition?: DynamoExpression<ConditionExpression>;
     _version?: number;
-  }): Narrow<Item, Key>;
+  }): Narrow<Item, AttributeKeyToObject<Key>, JsonFormat.Document>;
 
-  public updateItem(call: CallExpr, vtl: VTL): any {
+  public updateItem(call: CallExpr, vtl: CallContext): any {
+    assertIsVTLContext(vtl, "updateItem");
+
     const input = vtl.eval(call.args.input);
     const request = vtl.var(
       `{"operation": "UpdateItem", "version": "2018-05-29"}`
@@ -151,15 +182,22 @@ export class Table<
    */
   // @ts-ignore
   public deleteItem<
-    Key extends KeyAttribute<Item, PartitionKey, RangeKey>,
+    Key extends TableKey<
+      Item,
+      PartitionKey,
+      RangeKey,
+      JsonFormat.AttributeValue
+    >,
     ConditionExpression extends string | undefined
   >(input: {
     key: Key;
     condition?: DynamoExpression<ConditionExpression>;
     _version?: number;
-  }): Narrow<Item, Key>;
+  }): Narrow<Item, AttributeKeyToObject<Key>, JsonFormat.Document>;
 
-  public deleteItem(call: CallExpr, vtl: VTL): any {
+  public deleteItem(call: CallExpr, vtl: CallContext): any {
+    assertIsVTLContext(vtl, "deleteItem");
+
     const input = vtl.eval(call.args.input);
     const request = vtl.var(
       `{"operation": "DeleteItem", "version": "2018-05-29"}`
@@ -190,7 +228,9 @@ export class Table<
     scannedCount: number;
   };
 
-  public query(call: CallExpr, vtl: VTL): any {
+  public query(call: CallExpr, vtl: CallContext): any {
+    assertIsVTLContext(vtl, "query");
+
     const input = vtl.eval(call.args.input);
     const request = vtl.var(`{"operation": "Query", "version": "2018-05-29"}`);
     vtl.qr(`${request}.put('key', ${input}.get('key'))`);
@@ -206,6 +246,27 @@ export class Table<
   }
 }
 
+function assertIsVTLContext(
+  context: CallContext,
+  methodName: string
+): asserts context is VTL {
+  if (!isVTL(context)) {
+    throw new Error(
+      `Table.${methodName} is only allowed within a '${VTL.ContextName}' context, but was called within a '${context.kind}' context.`
+    );
+  }
+}
+
+type AttributeKeyToObject<T> = {
+  [k in keyof T]: T[k] extends { S: infer S }
+    ? S
+    : T[k] extends { N: `${infer N}` }
+    ? N
+    : T[k] extends { B: any }
+    ? NativeBinaryAttribute
+    : never;
+};
+
 function addIfDefined(vtl: VTL, from: string, to: string, key: string) {
   vtl.add(
     `#if(${from}.containsKey('${key}'))`,
@@ -217,7 +278,7 @@ function addIfDefined(vtl: VTL, from: string, to: string, key: string) {
 export type DynamoExpression<Expression extends string | undefined> =
   {} & RenameKeys<
     ExpressionAttributeNames<Expression> &
-      ExpressionAttributeValues<Expression> & {
+      ExpressionAttributeValues<Expression, JsonFormat.AttributeValue> & {
         expression?: Expression;
       },
     {

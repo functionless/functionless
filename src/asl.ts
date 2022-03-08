@@ -1,5 +1,5 @@
 import { Construct } from "constructs";
-import { aws_stepfunctions } from "aws-cdk-lib";
+import { aws_stepfunctions, aws_stepfunctions_tasks } from "aws-cdk-lib";
 
 import { assertNever } from "./assert";
 import { Expr, isLiteralExpr } from "./expression";
@@ -7,7 +7,7 @@ import { Stmt } from "./statement";
 import { findFunction, isInTopLevelScope, lookupIdentifier } from "./util";
 
 export function isASL(a: any): a is ASL {
-  return a?.kind === "ASL";
+  return (a as ASL | undefined)?.kind === ASL.ContextName;
 }
 
 type Chain = aws_stepfunctions.IChainable & aws_stepfunctions.INextable;
@@ -16,7 +16,9 @@ type Chain = aws_stepfunctions.IChainable & aws_stepfunctions.INextable;
  * Amazon States Language (ASL) Generator.
  */
 export class ASL {
-  readonly kind: "ASL" = "ASL";
+  static readonly ContextName = "Amazon States Language";
+
+  readonly kind = ASL.ContextName;
 
   protected varNameIt: number = 0;
   protected constructNameIt: number = 0;
@@ -60,7 +62,8 @@ export class ASL {
         let chain: Chain | undefined;
         for (const s of stmt.statements) {
           if (chain !== undefined) {
-            chain = chain.next(this.evalStmt(s));
+            const next = this.evalStmt(s);
+            chain = chain.next(next);
           } else {
             chain = this.evalStmt(s) ?? chain;
           }
@@ -76,7 +79,7 @@ export class ASL {
     } else if (stmt.kind === "ForInStmt") {
     } else if (stmt.kind === "ForOfStmt") {
     } else if (stmt.kind === "IfStmt") {
-      const choice = new aws_stepfunctions.Choice(
+      let choice = new aws_stepfunctions.Choice(
         this.scope,
         this.getNextConstructId(),
         {
@@ -87,7 +90,10 @@ export class ASL {
 
       let curr: Stmt | undefined = stmt;
       while (curr?.kind === "IfStmt") {
-        choice.when(this.evalCondition(curr.when), this.evalStmt(curr.then));
+        choice = choice.when(
+          this.evalCondition(curr.when),
+          this.evalStmt(curr.then)
+        );
         curr = curr._else;
       }
       if (curr !== undefined) {
@@ -109,25 +115,35 @@ export class ASL {
       return assertNever(stmt);
     }
 
+    debugger;
     throw new Error(`cannot evaluate statement: '${stmt.kind}`);
   }
 
-  public evalExpr(expr: Expr, outputPath?: string): Chain {
+  public evalExpr(
+    expr: Expr,
+    outputPath: string = aws_stepfunctions.JsonPath.DISCARD
+  ): Chain {
     if (expr.kind === "ArrayLiteralExpr") {
     } else if (expr.kind === "BinaryExpr") {
     } else if (expr.kind === "BooleanLiteralExpr") {
     } else if (expr.kind === "CallExpr") {
       const serviceCall = findFunction(expr);
       if (serviceCall) {
-        return serviceCall(expr, this, outputPath);
+        return new aws_stepfunctions_tasks.CallAwsService(
+          this.scope,
+          this.getNextConstructId(),
+          {
+            ...serviceCall(expr, this, outputPath),
+            outputPath,
+          }
+        );
       }
     } else if (expr.kind === "ConditionExpr") {
       const choice = new aws_stepfunctions.Choice(
         this.scope,
         this.getNextConstructId(),
         {
-          // inputPath: ?
-          // outputPath: ?
+          outputPath,
         }
       );
 
@@ -144,7 +160,14 @@ export class ASL {
       } else {
         return choice.afterwards();
       }
+    } else if (expr.kind === "NullLiteralExpr") {
+      return new aws_stepfunctions.Pass(this.scope, this.getNextConstructId(), {
+        outputPath,
+        result: aws_stepfunctions.Result.fromObject({ val: null }),
+        resultPath: "$.val",
+      });
     }
+    debugger;
     throw new Error(`cannot evaluate expression kind: '${expr.kind}'`);
   }
 
@@ -227,6 +250,7 @@ export class ASL {
         // return aws_stepfunctions.Condition.str
       }
     }
+    debugger;
     throw new Error(`cannot evaluate expression: '${expr.kind}`);
   }
 
@@ -253,6 +277,7 @@ export class ASL {
       )}]`;
     }
 
+    debugger;
     throw new Error(
       `expression kind '${expr.kind}' cannot be evaluated to a JSON Path expression.`
     );
@@ -264,6 +289,8 @@ export class ASL {
     } else if (expr.kind === "NumberLiteralExpr") {
       return expr.value.toString(10);
     }
+
+    debugger;
     throw new Error(
       `Expression kind '${expr.kind}' is not allowed as an element in a Step Function`
     );

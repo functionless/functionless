@@ -1,7 +1,6 @@
-import { CallExpr, Identifier } from "./expression";
-import { AnyFunction, AnyLambda } from "./function";
+import { CallExpr, CanReference, Identifier } from "./expression";
+import { AnyFunction } from "./function";
 import { FunctionlessNode } from "./node";
-import { AnyTable } from "./table";
 
 export function lookupIdentifier(id: Identifier) {
   return lookup(id.parent);
@@ -31,9 +30,7 @@ export function lookupIdentifier(id: Identifier) {
   }
 }
 
-export function findService(
-  expr: FunctionlessNode
-): AnyTable | AnyLambda | undefined {
+export function findService(expr: FunctionlessNode): CanReference | undefined {
   if (expr.kind === "ReferenceExpr") {
     return expr.ref();
   } else if (expr.kind === "PropAccessExpr") {
@@ -60,7 +57,12 @@ export function toName(expr: FunctionlessNode): string {
   } else if (expr.kind === "PropAccessExpr") {
     return `${toName(expr.expr)}_${expr.name}`;
   } else if (expr.kind === "ReferenceExpr") {
-    return expr.ref().resource.node.addr;
+    const ref = expr.ref();
+    if (ref.kind === "AWS") {
+      return "AWS";
+    } else {
+      return ref.resource.node.addr;
+    }
   } else {
     throw new Error(`invalid expression: '${expr.kind}'`);
   }

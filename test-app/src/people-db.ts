@@ -1,11 +1,13 @@
 import { Construct } from "constructs";
 import { aws_dynamodb, aws_lambda } from "aws-cdk-lib";
 import {
+  AWS,
   Table,
   Function,
   $util,
   AppsyncResolver,
   AppsyncContext,
+  ExpressStepFunction,
 } from "functionless";
 
 export interface Person {
@@ -24,6 +26,7 @@ export class PeopleDatabase extends Construct {
   readonly addPerson;
   readonly updateName;
   readonly deletePerson;
+  readonly getPersonMachine;
 
   constructor(scope: Construct, id: string) {
     super(scope, id);
@@ -47,27 +50,43 @@ export class PeopleDatabase extends Construct {
       })
     );
 
+    // a synchronous Express Step Function for getting a Person
+    this.getPersonMachine = new ExpressStepFunction(
+      this,
+      "GetPersonMachine",
+      (id: string) => {
+        const person = AWS.DynamoDB.GetItem({
+          Table: this.personTable,
+          Key: {
+            id: {
+              S: id,
+            },
+          },
+        });
+
+        if (person.Item === undefined) {
+          return undefined;
+        }
+
+        const score = this.computeScore({
+          id: person.Item.id.S,
+          name: person.Item.name.S,
+        });
+
+        return {
+          id: person.Item.id.S,
+          name: person.Item.name.S,
+          score,
+        };
+      }
+    );
+
     this.getPerson = new AppsyncResolver<
       { id: string },
       ProcessedPerson | undefined
     >(($context) => {
-      const person = this.personTable.getItem({
-        key: {
-          id: $util.dynamodb.toDynamoDB($context.arguments.id),
-        },
-        consistentRead: true,
-      });
-
-      if (person === undefined) {
-        return undefined;
-      }
-
-      const score = this.computeScore(person);
-
-      return {
-        ...person,
-        score,
-      };
+      // example of integrating with an Express Step Function from Appsync
+      return this.getPersonMachine($context.arguments.id);
     });
 
     this.addPerson = new AppsyncResolver<{ input: { name: string } }, Person>(

@@ -1,9 +1,7 @@
 import * as appsync from "@aws-cdk/aws-appsync-alpha";
 import { AppSyncResolverEvent } from "aws-lambda";
-import { CallExpr } from "./expression";
-import { AnyLambda } from "./function";
+import { CallExpr, CanReference } from "./expression";
 import { VTL } from "./vtl";
-import { AnyTable, isTable } from "./table";
 import { findService, toName } from "./util";
 import {
   ToAttributeMap,
@@ -192,25 +190,47 @@ export class AppsyncResolver<
           const service = findService(expr);
           if (service) {
             // we must now render a resolver with request mapping template
-            const dataSource = getDataSource(api, service, () =>
-              isTable(service)
-                ? new appsync.DynamoDbDataSource(
+            const dataSource = getDataSource(api, service, () => {
+              if (service.kind === "Table") {
+                return new appsync.DynamoDbDataSource(
+                  api,
+                  service.resource.node.addr,
+                  {
                     api,
-                    service.resource.node.addr,
-                    {
-                      api,
-                      table: service.resource,
-                    }
-                  )
-                : new appsync.LambdaDataSource(
+                    table: service.resource,
+                  }
+                );
+              } else if (service.kind === "Function") {
+                return new appsync.LambdaDataSource(
+                  api,
+                  service.resource.node.addr,
+                  {
                     api,
-                    service.resource.node.addr,
-                    {
-                      api,
-                      lambdaFunction: service.resource,
-                    }
-                  )
-            );
+                    lambdaFunction: service.resource,
+                  }
+                );
+              } else if (service.kind === "StepFunction") {
+                const ds = new appsync.HttpDataSource(
+                  api,
+                  service.resource.node.addr,
+                  {
+                    api,
+                    endpoint: `https://states.${service.resource.stack.region}.amazonaws.com/`,
+                    authorizationConfig: {
+                      signingRegion: api.stack.region,
+                      signingServiceName: "states",
+                    },
+                  }
+                );
+                service.resource.grantStartSyncExecution(ds.grantPrincipal);
+                return ds;
+              } else {
+                // TODO: use HTTP resolvers for the AWS-SDK types.
+                throw new Error(
+                  `${service.kind} cannot be used within an Appsync Resolver, please use an Appsync-compatible function`
+                );
+              }
+            });
 
             if (expr.kind === "ExprStmt" && expr.expr.kind === "CallExpr") {
               return createStage(expr.expr);
@@ -545,7 +565,7 @@ const None = Symbol.for("functionless.None");
 // @ts-ignore
 function getDataSource(
   api: appsync.GraphqlApi,
-  target: AnyLambda | AnyTable | null,
+  target: CanReference | null,
   compute: () => appsync.BaseDataSource
 ): appsync.BaseDataSource {
   const ds = getDataSources(api);

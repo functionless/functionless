@@ -1,10 +1,11 @@
 import { aws_lambda } from "aws-cdk-lib";
 import { CallExpr } from "./expression";
-import { VTL } from "./vtl";
-import { ASL } from "./asl";
+import { isVTL, VTL } from "./vtl";
+import { ASL, isASL } from "./asl";
 
 // @ts-ignore - imported for typedoc
 import type { AppsyncResolver } from "./appsync";
+import { makeCallable } from "./callable";
 
 export type AnyFunction = (...args: any[]) => any;
 
@@ -50,10 +51,8 @@ export class Function<F extends AnyFunction> {
   readonly __functionBrand: F;
 
   constructor(readonly resource: aws_lambda.IFunction) {
-    return Object.assign(lambda, this);
-
-    function lambda(call: CallExpr, context: VTL | ASL): any {
-      if (context.kind === "VTL") {
+    return makeCallable(this, (call: CallExpr, context: VTL | ASL): any => {
+      if (isVTL(context)) {
         const payload = context.var(`{}`);
         for (const [argName, argVal] of Object.entries(call.args)) {
           context.qr(`${payload}.put('${argName}', ${context.eval(argVal)})`);
@@ -62,13 +61,13 @@ export class Function<F extends AnyFunction> {
           `{"version": "2018-05-29", "operation": "Invoke", "payload": ${payload}}`
         );
         return context.json(request);
-      } else if (context.kind === "ASL") {
+      } else if (isASL(context)) {
         context;
       } else {
         console.error(`invalid Function call context`, context);
         throw new Error(`invalid Function call context: ${context}`);
       }
-    }
+    });
   }
 }
 export interface Function<F extends AnyFunction> {
