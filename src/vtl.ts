@@ -322,7 +322,8 @@ export class VTL {
         ref?.kind === "ParameterDecl" &&
         ref.parent?.kind === "FunctionDecl"
       ) {
-        return `$context.arguments.${ref.name}`;
+        // regardless of the name of the first argument in the root FunctionDecl, it is always the intrinsic Appsync `$context`.
+        return "$context";
       }
       if (node.name.startsWith("$")) {
         return node.name;

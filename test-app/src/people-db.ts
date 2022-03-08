@@ -1,6 +1,12 @@
 import { Construct } from "constructs";
 import { aws_dynamodb, aws_lambda } from "aws-cdk-lib";
-import { Table, Function, $util, AppsyncFunction } from "functionless";
+import {
+  Table,
+  Function,
+  $util,
+  AppsyncResolver,
+  AppsyncContext,
+} from "functionless";
 
 export interface Person {
   id: string;
@@ -41,18 +47,19 @@ export class PeopleDatabase extends Construct {
       })
     );
 
-    this.getPerson = new AppsyncFunction<
-      (id: string) => ProcessedPerson | null
-    >((_$context, id) => {
+    this.getPerson = new AppsyncResolver<
+      { id: string },
+      ProcessedPerson | undefined
+    >(($context) => {
       const person = this.personTable.getItem({
         key: {
-          id: $util.dynamodb.toDynamoDB(id),
+          id: $util.dynamodb.toDynamoDB($context.arguments.id),
         },
         consistentRead: true,
       });
 
       if (person === undefined) {
-        return null;
+        return undefined;
       }
 
       const score = this.computeScore(person);
@@ -63,8 +70,8 @@ export class PeopleDatabase extends Construct {
       };
     });
 
-    this.addPerson = new AppsyncFunction<(input: { name: string }) => Person>(
-      (_$context, input) => {
+    this.addPerson = new AppsyncResolver<{ input: { name: string } }, Person>(
+      ($context) => {
         const person = this.personTable.putItem({
           key: {
             id: {
@@ -73,7 +80,7 @@ export class PeopleDatabase extends Construct {
           },
           attributeValues: {
             name: {
-              S: input.name,
+              S: $context.arguments.input.name,
             },
           },
         });
@@ -82,11 +89,12 @@ export class PeopleDatabase extends Construct {
       }
     );
 
-    this.updateName = new AppsyncFunction<(id: string, name: string) => Person>(
-      (_, id, name) =>
+    // example of inferring the TArguments and TResult from the function signature
+    this.updateName = new AppsyncResolver(
+      ($context: AppsyncContext<{ id: string; name: string }>) =>
         this.personTable.updateItem({
           key: {
-            id: $util.dynamodb.toDynamoDB(id),
+            id: $util.dynamodb.toDynamoDB($context.arguments.id),
           },
           update: {
             expression: "SET #name = :name",
@@ -94,17 +102,18 @@ export class PeopleDatabase extends Construct {
               "#name": "name",
             },
             expressionValues: {
-              ":name": $util.dynamodb.toDynamoDB(name),
+              ":name": $util.dynamodb.toDynamoDB($context.arguments.name),
             },
           },
         })
     );
 
-    this.deletePerson = new AppsyncFunction<(id: string) => Person | undefined>(
-      (_, id) =>
+    // example of explicitly specifying TArguments and TResult
+    this.deletePerson = new AppsyncResolver<{ id: string }, Person | undefined>(
+      ($context) =>
         this.personTable.deleteItem({
           key: {
-            id: $util.dynamodb.toDynamoDB(id),
+            id: $util.dynamodb.toDynamoDB($context.arguments.id),
           },
         })
     );

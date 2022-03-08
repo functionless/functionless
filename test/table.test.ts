@@ -1,5 +1,5 @@
 import "jest";
-import { $util, reflect } from "../src";
+import { $util, AppsyncContext, reflect } from "../src";
 import { Table } from "../src";
 import { returnExpr, testCase } from "./util";
 
@@ -12,11 +12,11 @@ const table = new Table<Item, "id">(null as any);
 
 test("get item", () =>
   testCase(
-    reflect((id: string): Item | undefined => {
+    reflect((context: AppsyncContext<{ id: string }>): Item | undefined => {
       return table.getItem({
         key: {
           id: {
-            S: id,
+            S: context.arguments.id,
           },
         },
       });
@@ -37,11 +37,11 @@ ${returnExpr("$util.toJson($v4)")}`
 
 test("get item and set consistentRead:true", () =>
   testCase(
-    reflect((id: string): Item | undefined => {
+    reflect((context: AppsyncContext<{ id: string }>): Item | undefined => {
       return table.getItem({
         key: {
           id: {
-            S: id,
+            S: context.arguments.id,
           },
         },
         consistentRead: true,
@@ -64,31 +64,35 @@ ${returnExpr("$util.toJson($v4)")}`
 
 test("put item", () =>
   testCase(
-    reflect((id: string, name: number): Item | undefined => {
-      return table.putItem({
-        key: {
-          id: {
-            S: id,
-          },
-        },
-        attributeValues: {
-          name: {
-            N: `${name}`,
-          },
-        },
-        condition: {
-          expression: "#name = :val",
-          expressionNames: {
-            "#name": "name",
-          },
-          expressionValues: {
-            ":val": {
-              S: id,
+    reflect(
+      (
+        context: AppsyncContext<{ id: string; name: number }>
+      ): Item | undefined => {
+        return table.putItem({
+          key: {
+            id: {
+              S: context.arguments.id,
             },
           },
-        },
-      });
-    }),
+          attributeValues: {
+            name: {
+              N: `${context.arguments.name}`,
+            },
+          },
+          condition: {
+            expression: "#name = :val",
+            expressionNames: {
+              "#name": "name",
+            },
+            expressionValues: {
+              ":val": {
+                S: context.arguments.id,
+              },
+            },
+          },
+        });
+      }
+    ),
     `#set($v1 = {})
 #set($v2 = {})
 #set($v3 = {})
@@ -127,11 +131,11 @@ $util.qr($v10.put('_version', $v1.get('_version')))
 
 test("update item", () =>
   testCase(
-    reflect((id: string): Item | undefined => {
+    reflect((context: AppsyncContext<{ id: string }>): Item | undefined => {
       return table.updateItem({
         key: {
           id: {
-            S: id,
+            S: context.arguments.id,
           },
         },
         update: {
@@ -168,11 +172,11 @@ ${returnExpr("$util.toJson($v6)")}`
 
 test("delete item", () =>
   testCase(
-    reflect((id: string): Item | undefined => {
+    reflect((context: AppsyncContext<{ id: string }>): Item | undefined => {
       return table.deleteItem({
         key: {
           id: {
-            S: id,
+            S: context.arguments.id,
           },
         },
         condition: {
@@ -208,7 +212,7 @@ ${returnExpr("$util.toJson($v6)")}`
 
 test("query", () =>
   testCase(
-    reflect((id: string, sort: number): Item[] => {
+    reflect((context: AppsyncContext<{ id: string; sort: number }>): Item[] => {
       return table.query({
         query: {
           expression: "id = :id and #name = :val",
@@ -216,8 +220,8 @@ test("query", () =>
             "#name": "name",
           },
           expressionValues: {
-            ":id": $util.dynamodb.toDynamoDB(id),
-            ":val": $util.dynamodb.toDynamoDB(sort),
+            ":id": $util.dynamodb.toDynamoDB(context.arguments.id),
+            ":val": $util.dynamodb.toDynamoDB(context.arguments.sort),
           },
         },
       }).items;

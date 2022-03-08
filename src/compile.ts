@@ -12,7 +12,7 @@ export default compile;
 export interface FunctionlessConfig extends PluginConfig {}
 
 /**
- * TypeScript Transformer which transforms functionless functions, such as `appsyncFunction`,
+ * TypeScript Transformer which transforms functionless functions, such as `AppsyncResolver`,
  * into an AST that can be interpreted at CDK synth time to produce VTL templates and AppSync
  * Resolver configurations.
  *
@@ -56,8 +56,8 @@ export function compile(
 
       function visitor(node: ts.Node): ts.Node {
         const type = getFunctionlessType(node);
-        if (type === "AppsyncFunction") {
-          return visitAppsyncFunction(node as ts.NewExpression);
+        if (type === "AppsyncResolver") {
+          return visitAppsyncResolver(node as ts.NewExpression);
         } else if (type === "StepFunction") {
           return visitStepFunction(node as ts.NewExpression);
         } else if (type === "reflect") {
@@ -71,20 +71,38 @@ export function compile(
 
       function getFunctionlessType(
         node: ts.Node
-      ): "AppsyncFunction" | "StepFunction" | "reflect" | undefined {
+      ):
+        | "AppsyncResolver"
+        | "StepFunction"
+        | "ExpressStepFunction"
+        | "reflect"
+        | undefined {
         if (ts.isNewExpression(node)) {
           const exprType = checker.getTypeAtLocation(node.expression);
           const exprDecl = exprType.symbol?.declarations?.[0];
           if (exprDecl && ts.isClassDeclaration(exprDecl)) {
-            const name = exprDecl.name?.text;
-            if (name === "AppsyncFunction") {
-              return "AppsyncFunction";
-            } else if (
-              name === "ExpressStepFunction" ||
-              name === "StepFunction"
+            const member = exprDecl.members.find(
+              (member) =>
+                member.modifiers?.find(
+                  (mod) => mod.kind === ts.SyntaxKind.StaticKeyword
+                ) !== undefined &&
+                member.name &&
+                ts.isIdentifier(member.name) &&
+                member.name.text === "FunctionlessType"
+            );
+
+            if (
+              member &&
+              ts.isPropertyDeclaration(member) &&
+              member.initializer &&
+              ts.isStringLiteral(member.initializer) &&
+              (member.initializer.text === "AppsyncResolver" ||
+                member.initializer.text === "StepFunction" ||
+                member.initializer.text === "ExpressStepFunction")
             ) {
-              return "StepFunction";
+              return member.initializer.text;
             }
+            return undefined;
           }
         } else if (ts.isCallExpression(node)) {
           const exprType = checker.getTypeAtLocation(node.expression);
@@ -113,7 +131,7 @@ export function compile(
         return call;
       }
 
-      function visitAppsyncFunction(call: ts.NewExpression): ts.Node {
+      function visitAppsyncResolver(call: ts.NewExpression): ts.Node {
         if (call.arguments?.length === 1) {
           const impl = call.arguments[0];
           if (ts.isFunctionExpression(impl) || ts.isArrowFunction(impl)) {
@@ -121,7 +139,7 @@ export function compile(
               call,
               call.expression,
               call.typeArguments,
-              [toFunction("FunctionDecl", impl, 1)]
+              [toFunction("FunctionDecl", impl)]
             );
           }
         }
