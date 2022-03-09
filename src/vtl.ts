@@ -193,17 +193,15 @@ export class VTL {
 
             // Try to flatten any maps before this operation
             // returns the first variable to be used in the foreach of this operation (may be the `value`)
-            const [firstVariable, list, render] = this.flattenListMapOperations(
+            const list = this.flattenListMapOperations(
               node.expr.expr,
               value,
+              (firstVariable, list) => {
+                this.add(`#foreach(${firstVariable} in ${list})`);
+              },
               // If array is present, do not flatten the map, this option immediatly evaluates the next expression
               !!array
             );
-
-            this.add(`#foreach(${firstVariable} in ${list})`);
-
-            // Render any flatten maps before the current one
-            render?.();
 
             // Render the body
             const tmp = this.renderMapOrForEachBody(
@@ -243,31 +241,29 @@ export class VTL {
               ? `$${fn.parameters[3].name}`
               : undefined;
 
-            const [firstVariable, list, render] = this.flattenListMapOperations(
-              node.expr.expr,
-              currentValue,
-              // If array is present, do not flatten maps before the reduce, this option immediatly evaluates the next expression
-              !!array
-            );
-
             // create a new local variable name to hold the initial/previous value
             // this is becaue previousValue may not be unique and isn't contained within the loop
             const previousTmp = this.newLocalVarName();
 
-            if (initialValue !== undefined) {
-              this.set(previousTmp, initialValue);
-            } else {
-              this.add(`#if(${list}.isEmpty())`);
-              this.add(
-                `$util.error('Reduce of empty array with no initial value')`
-              );
-              this.add(`#end`);
-            }
+            const list = this.flattenListMapOperations(
+              node.expr.expr,
+              currentValue,
+              (firstVariable, list) => {
+                if (initialValue !== undefined) {
+                  this.set(previousTmp, initialValue);
+                } else {
+                  this.add(`#if(${list}.isEmpty())`);
+                  this.add(
+                    `$util.error('Reduce of empty array with no initial value')`
+                  );
+                  this.add(`#end`);
+                }
 
-            this.add(`#foreach(${firstVariable} in ${list})`);
-
-            // Render any flatten maps before the current one
-            render?.();
+                this.add(`#foreach(${firstVariable} in ${list})`);
+              },
+              // If array is present, do not flatten maps before the reduce, this option immediatly evaluates the next expression
+              !!array
+            );
 
             if (currentIndex) {
               this.add(`#set(${currentIndex} = $foreach.index)`);
@@ -487,14 +483,16 @@ export class VTL {
    * Recursively flattens map operations until a non-map or a map with `array` paremeter is found.
    * Evaluates the expression after the last map.
    *
+   * @param before a method which executes once the
    * @return [firstVariable, list variable, render function]
    */
   private flattenListMapOperations(
     expr: Expr,
     // Should start with $
     returnVariable: string,
+    before: (firstVariable: string, list: string) => void,
     alwaysEvaluate?: boolean
-  ): [string, string, (() => void) | undefined] {
+  ): string {
     if (
       !alwaysEvaluate &&
       expr.kind === "CallExpr" &&
@@ -505,26 +503,26 @@ export class VTL {
 
       const next = expr.expr.expr;
 
-      const [lastValue, list, lastRender] = this.flattenListMapOperations(
+      const list = this.flattenListMapOperations(
         next,
         value,
+        before,
         // If we find array, the next expression should be evaluated.
         // A map which relies on `array` cannot be flattened further as the array will be inaccurate.
         !!array
       );
 
-      return [
-        lastValue,
-        list,
-        () => {
-          lastRender?.();
+      this.renderMapOrForEachBody(expr, list, returnVariable, index, array);
 
-          this.renderMapOrForEachBody(expr, list, returnVariable, index, array);
-        },
-      ];
+      return list;
     }
+
+    const list = this.eval(expr);
+
+    before(returnVariable, list);
+
     // If the expression isn't a map, return the expression and return variable, render nothing
-    return [returnVariable, this.eval(expr), undefined];
+    return list;
   }
 }
 

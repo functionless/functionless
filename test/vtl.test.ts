@@ -473,23 +473,23 @@ test("map and reduce with array over list with initial value", () =>
           return [...newList, item];
         }, []);
     }),
-    `#set($v1 = [])
+    `#set($v2 = [])
 #foreach($item in $context.arguments.list)
-#set($v2 = "hello \${item}")
-$util.qr($v1.add($v2))
+#set($v3 = "hello \${item}")
+$util.qr($v2.add($v3))
 #end
-#set($v3 = [])
-#foreach($item in $v1)
+#set($v1 = [])
+#foreach($item in $v2)
 #set($_i = $foreach.index)
-#set($_arr = $v1)
-#set($newList = $v3)
+#set($_arr = $v2)
+#set($newList = $v1)
 #set($v5 = [])
 $util.qr($v5.addAll($newList))
 $util.qr($v5.add($item))
 #set($v4 = $v5)
-#set($v3 = $v4)
+#set($v1 = $v4)
 #end
-${returnExpr("$v3")}`
+${returnExpr("$v1")}`
   ));
 
 test("map and reduce and map and reduce over list with initial value", () =>
@@ -505,25 +505,25 @@ test("map and reduce and map and reduce over list with initial value", () =>
           return [...newList, item];
         }, []);
     }),
-    `#set($v1 = [])
+    `#set($v2 = [])
 #foreach($item in $context.arguments.list)
 #set($item = "hello \${item}")
-#set($newList = $v1)
-#set($v3 = [])
-$util.qr($v3.addAll($newList))
-$util.qr($v3.add($item))
-#set($v2 = $v3)
-#set($v1 = $v2)
-#end
+#set($newList = $v2)
 #set($v4 = [])
-#foreach($item in $v1)
+$util.qr($v4.addAll($newList))
+$util.qr($v4.add($item))
+#set($v3 = $v4)
+#set($v2 = $v3)
+#end
+#set($v1 = [])
+#foreach($item in $v2)
 #set($item = "hello \${item}")
-#set($newList = $v4)
+#set($newList = $v1)
 #set($v6 = [])
 $util.qr($v6.addAll($newList))
 $util.qr($v6.add($item))
 #set($v5 = $v6)
-#set($v4 = $v5)
+#set($v1 = $v5)
 #end
-${returnExpr("$v4")}`
+${returnExpr("$v1")}`
   ));
