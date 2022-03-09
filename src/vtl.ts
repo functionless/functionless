@@ -175,6 +175,7 @@ export class VTL {
         if (serviceCall) {
           return serviceCall(node, this);
         } else if (
+          // If the parent is a propAccessExpr
           node.expr.kind === "PropAccessExpr" &&
           (node.expr.name === "map" ||
             node.expr.name === "forEach" ||
@@ -185,29 +186,31 @@ export class VTL {
             // list.map((item, idx) => ..)
             // list.forEach(item => ..)
             // list.forEach((item, idx) => ..)
-            const fn = node.args.callbackfn as FunctionExpr;
-            const value = fn.parameters[0]?.name
-              ? `$${fn.parameters[0].name}`
-              : this.newLocalVarName();
-            const index = fn.parameters[1]?.name;
-            const array = fn.parameters[2]?.name;
-
             const newList =
               node.expr.name === "map" ? this.var(`[]`) : undefined;
 
-            const list = this.eval(node.expr.expr);
-            this.add(`#foreach(${value} in ${list})`);
-            if (index) {
-              this.add(`#set($${index} = $foreach.index)`);
-            }
-            if (array) {
-              this.add(`#set($${array} = ${list})`);
-            }
+            const [value, index, array] = this.mapForEachArgs(node);
 
-            const tmp = this.newLocalVarName();
-            for (const stmt of fn.body.statements) {
-              this.eval(stmt, tmp);
-            }
+            const [firstVariable, list, render] =
+              this.divePropAccessMapOperations(
+                node.expr.expr,
+                `$${value}`,
+                !!array
+              );
+
+            this.add(`#foreach(${firstVariable} in ${list})`);
+
+            render();
+
+            const tmp = this.renderMapOrForEach(
+              node,
+              list,
+              undefined,
+              index,
+              array
+            );
+
+            // Add the final value to the array
             if (node.expr.name === "map") {
               this.qr(`${newList}.add(${tmp})`);
             }
@@ -235,9 +238,19 @@ export class VTL {
               ? `$${fn.parameters[3].name}`
               : undefined;
 
-            const list = this.eval(node.expr.expr);
+            const [firstVariable, list, render] =
+              this.divePropAccessMapOperations(
+                node.expr.expr,
+                currentValue,
+                !!array
+              );
+
+            // create a new local variable name to hold the initial/previous value
+            // this is becaue previousValue may not be unique and isn't contained within the loop
+            const previousTmp = this.newLocalVarName();
+
             if (initialValue !== undefined) {
-              this.set(previousValue, initialValue);
+              this.set(previousTmp, initialValue);
             } else {
               this.add(`#if(${list}.isEmpty())`);
               this.add(
@@ -246,7 +259,10 @@ export class VTL {
               this.add(`#end`);
             }
 
-            this.add(`#foreach(${currentValue} in ${list})`);
+            this.add(`#foreach(${firstVariable} in ${list})`);
+
+            render();
+
             if (currentIndex) {
               this.add(`#set(${currentIndex} = $foreach.index)`);
             }
@@ -255,18 +271,21 @@ export class VTL {
             }
 
             const body = () => {
+              // set previousValue variable name to avoid remapping
+              this.set(previousValue, previousTmp);
               const tmp = this.newLocalVarName();
               for (const stmt of fn.body.statements) {
                 this.eval(stmt, tmp);
               }
-              this.set(previousValue, `${tmp}`);
+              // set the previous temp to be used later
+              this.set(previousTmp, `${tmp}`);
 
               this.add("#end");
             };
 
             if (initialValue === undefined) {
               this.add("#if($foreach.index == 0)");
-              this.set(previousValue, currentValue);
+              this.set(previousTmp, currentValue);
               this.add("#else");
               body();
               this.add("#end");
@@ -274,7 +293,7 @@ export class VTL {
               body();
             }
 
-            return previousValue;
+            return previousTmp;
           }
           // this is an array map, forEach, reduce call
         }
@@ -417,5 +436,79 @@ export class VTL {
 
     const __exhaustive: never = node;
     return __exhaustive;
+  }
+
+  private mapForEachArgs(call: CallExpr) {
+    const fn = call.args.callbackfn as FunctionExpr;
+    return fn.parameters.map((p) => p.name);
+  }
+
+  private renderMapOrForEach(
+    call: CallExpr,
+    list: string,
+    // Should start with $
+    returnVariable?: string,
+    index?: string,
+    array?: string
+  ) {
+    if (index) {
+      this.add(`#set($${index} = $foreach.index)`);
+    }
+    if (array) {
+      this.add(`#set($${array} = ${list})`);
+    }
+
+    const fn = call.args.callbackfn as FunctionExpr;
+
+    const tmp = returnVariable ? returnVariable : this.newLocalVarName();
+
+    for (const stmt of fn.body.statements) {
+      this.eval(stmt, tmp);
+    }
+
+    return tmp;
+  }
+
+  /**
+   * Recursively dives into map operations until a non-map or a map with arr paremeter is found.
+   * evaluates the expression after the last map.
+   *
+   * @return [firstVariable, list variable, render function]
+   */
+  private divePropAccessMapOperations(
+    expr: Expr,
+    // Should start with $
+    returnVariable: string,
+    alwaysEvaluate?: boolean
+  ): [string, string, () => void] {
+    if (
+      !alwaysEvaluate &&
+      expr.kind === "CallExpr" &&
+      expr.expr.kind === "PropAccessExpr" &&
+      expr.expr.name === "map"
+    ) {
+      const [value, index, array] = this.mapForEachArgs(expr);
+
+      const next = expr.expr.expr;
+
+      // If we find array, stop recursing as array wouldn't be correct in the current map.
+      const [lastValue, list, lastRender] = this.divePropAccessMapOperations(
+        next,
+        `$${value}`,
+        !!array
+      );
+
+      return [
+        lastValue,
+        list,
+        () => {
+          lastRender();
+
+          this.renderMapOrForEach(expr, list, returnVariable, index, array);
+        },
+      ];
+    }
+    // If the expression isn't a map, return the expression and return variable, render nothing
+    return [returnVariable, this.eval(expr), () => {}];
   }
 }
