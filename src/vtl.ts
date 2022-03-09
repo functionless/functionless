@@ -189,22 +189,27 @@ export class VTL {
             const newList =
               node.expr.name === "map" ? this.var(`[]`) : undefined;
 
-            const [value, index, array] = this.mapForEachArgs(node);
+            const [value, index, array] = getMapForEachArgs(node);
 
-            const [firstVariable, list, render] =
-              this.divePropAccessMapOperations(
-                node.expr.expr,
-                `$${value}`,
-                !!array
-              );
+            // Try to flatten any maps before this operation
+            // returns the first variable to be used in the foreach of this operation (may be the `value`)
+            const [firstVariable, list, render] = this.flattenListMapOperations(
+              node.expr.expr,
+              value,
+              // If array is present, do not flatten the map, this option immediatly evaluates the next expression
+              !!array
+            );
 
             this.add(`#foreach(${firstVariable} in ${list})`);
 
-            render();
+            // Render any flatten maps before the current one
+            render?.();
 
-            const tmp = this.renderMapOrForEach(
+            // Render the body
+            const tmp = this.renderMapOrForEachBody(
               node,
               list,
+              // the return location will be generated
               undefined,
               index,
               array
@@ -238,12 +243,12 @@ export class VTL {
               ? `$${fn.parameters[3].name}`
               : undefined;
 
-            const [firstVariable, list, render] =
-              this.divePropAccessMapOperations(
-                node.expr.expr,
-                currentValue,
-                !!array
-              );
+            const [firstVariable, list, render] = this.flattenListMapOperations(
+              node.expr.expr,
+              currentValue,
+              // If array is present, do not flatten maps before the reduce, this option immediatly evaluates the next expression
+              !!array
+            );
 
             // create a new local variable name to hold the initial/previous value
             // this is becaue previousValue may not be unique and isn't contained within the loop
@@ -261,7 +266,8 @@ export class VTL {
 
             this.add(`#foreach(${firstVariable} in ${list})`);
 
-            render();
+            // Render any flatten maps before the current one
+            render?.();
 
             if (currentIndex) {
               this.add(`#set(${currentIndex} = $foreach.index)`);
@@ -438,12 +444,20 @@ export class VTL {
     return __exhaustive;
   }
 
-  private mapForEachArgs(call: CallExpr) {
-    const fn = call.args.callbackfn as FunctionExpr;
-    return fn.parameters.map((p) => p.name);
-  }
-
-  private renderMapOrForEach(
+  /**
+   * Adds the VTL required to execute the body of a single map or forEach.
+   *
+   * @param call the map or foreach to render
+   * @param list the list to give to the `array` parameter, should be the same one used in the vtl foreach
+   * @param returnVariable The variable to put the final map value into. If not provided, will be generated.
+   *                       Should start with a '$'.
+   * @param index The optional `index` variable name to add if present.
+   *              Should start with a '$'.
+   * @param array The optional `array` variable name to add if present.
+   *              Should start with a '$'.
+   * @returns The returnVariable or generated variable name.
+   */
+  private renderMapOrForEachBody(
     call: CallExpr,
     list: string,
     // Should start with $
@@ -452,10 +466,10 @@ export class VTL {
     array?: string
   ) {
     if (index) {
-      this.add(`#set($${index} = $foreach.index)`);
+      this.add(`#set(${index} = $foreach.index)`);
     }
     if (array) {
-      this.add(`#set($${array} = ${list})`);
+      this.add(`#set(${array} = ${list})`);
     }
 
     const fn = call.args.callbackfn as FunctionExpr;
@@ -470,31 +484,32 @@ export class VTL {
   }
 
   /**
-   * Recursively dives into map operations until a non-map or a map with arr paremeter is found.
-   * evaluates the expression after the last map.
+   * Recursively flattens map operations until a non-map or a map with `array` paremeter is found.
+   * Evaluates the expression after the last map.
    *
    * @return [firstVariable, list variable, render function]
    */
-  private divePropAccessMapOperations(
+  private flattenListMapOperations(
     expr: Expr,
     // Should start with $
     returnVariable: string,
     alwaysEvaluate?: boolean
-  ): [string, string, () => void] {
+  ): [string, string, (() => void) | undefined] {
     if (
       !alwaysEvaluate &&
       expr.kind === "CallExpr" &&
       expr.expr.kind === "PropAccessExpr" &&
       expr.expr.name === "map"
     ) {
-      const [value, index, array] = this.mapForEachArgs(expr);
+      const [value, index, array] = getMapForEachArgs(expr);
 
       const next = expr.expr.expr;
 
-      // If we find array, stop recursing as array wouldn't be correct in the current map.
-      const [lastValue, list, lastRender] = this.divePropAccessMapOperations(
+      const [lastValue, list, lastRender] = this.flattenListMapOperations(
         next,
-        `$${value}`,
+        value,
+        // If we find array, the next expression should be evaluated.
+        // A map which relies on `array` cannot be flattened further as the array will be inaccurate.
         !!array
       );
 
@@ -502,13 +517,21 @@ export class VTL {
         lastValue,
         list,
         () => {
-          lastRender();
+          lastRender?.();
 
-          this.renderMapOrForEach(expr, list, returnVariable, index, array);
+          this.renderMapOrForEachBody(expr, list, returnVariable, index, array);
         },
       ];
     }
     // If the expression isn't a map, return the expression and return variable, render nothing
-    return [returnVariable, this.eval(expr), () => {}];
+    return [returnVariable, this.eval(expr), undefined];
   }
 }
+
+/**
+ * Returns the [value, index, array] arguments if this CallExpr is a `forEach` or `map` call.
+ */
+const getMapForEachArgs = (call: CallExpr) => {
+  const fn = call.args.callbackfn as FunctionExpr;
+  return fn.parameters.map((p) => (p.name ? `$${p.name}` : p.name));
+};
