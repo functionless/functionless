@@ -129,277 +129,293 @@ export class VTL {
   }
 
   /**
-   * Evaluate an {@link Expr} by emitting statements to this VTL template and
+   * Evaluate an {@link Expr} or {@link Stmt} by emitting statements to this VTL template and
    * return a variable reference to the evaluated value.
    *
-   * @param expr the {@link Expr} to evaluate.
+   * @param node the {@link Expr} or {@link Stmt} to evaluate.
    * @returns a variable reference to the evaluated value
    */
-  public eval(expr: Expr, returnVar?: string): string;
-  public eval(expr: Stmt, returnVar?: string): void;
+  public eval(node: Expr, returnVar?: string): string;
+  public eval(node: Stmt, returnVar?: string): void;
   public eval(node: FunctionlessNode, returnVar?: string): string | void {
-    if (node.kind === "ArrayLiteralExpr") {
-      if (
-        node.items.find((item) => item.kind === "SpreadElementExpr") ===
-        undefined
-      ) {
-        return `[${node.items.map((item) => this.eval(item)).join(", ")}]`;
-      } else {
-        // contains a spread, e.g. [...i], so we will store in a variable
-        const list = this.var("[]");
-        for (const item of node.items) {
-          if (item.kind === "SpreadElementExpr") {
-            this.qr(`${list}.addAll(${this.eval(item.expr)})`);
-          } else {
-            this.qr(`${list}.add(${this.eval(item)})`);
+    switch (node.kind) {
+      case "ArrayLiteralExpr": {
+        if (
+          node.items.find((item) => item.kind === "SpreadElementExpr") ===
+          undefined
+        ) {
+          return `[${node.items.map((item) => this.eval(item)).join(", ")}]`;
+        } else {
+          // contains a spread, e.g. [...i], so we will store in a variable
+          const list = this.var("[]");
+          for (const item of node.items) {
+            if (item.kind === "SpreadElementExpr") {
+              this.qr(`${list}.addAll(${this.eval(item.expr)})`);
+            } else {
+              this.qr(`${list}.add(${this.eval(item)})`);
+            }
           }
+          return list;
         }
-        return list;
       }
-    } else if (node.kind === "BinaryExpr") {
-      return `${this.eval(node.left)} ${node.op} ${this.eval(node.right)}`;
-    } else if (node.kind === "BlockStmt") {
-      for (const stmt of node.statements) {
-        this.eval(stmt);
+      case "BinaryExpr": {
+        return `${this.eval(node.left)} ${node.op} ${this.eval(node.right)}`;
       }
-      return undefined;
-    } else if (node.kind === "BooleanLiteralExpr") {
-      return `${node.value}`;
-    } else if (node.kind === "BreakStmt") {
-      return this.add("#break");
-    } else if (node.kind === "CallExpr") {
-      const serviceCall = findFunction(node);
-      if (serviceCall) {
-        return serviceCall(node, this);
-      } else if (
-        node.expr.kind === "PropAccessExpr" &&
-        (node.expr.name === "map" ||
-          node.expr.name === "forEach" ||
-          node.expr.name === "reduce")
-      ) {
-        if (node.expr.name === "map" || node.expr.name == "forEach") {
-          // list.map(item => ..)
-          // list.map((item, idx) => ..)
-          // list.forEach(item => ..)
-          // list.forEach((item, idx) => ..)
-          const fn = node.args.callbackfn as FunctionExpr;
-          const value = fn.parameters[0]?.name
-            ? `$${fn.parameters[0].name}`
-            : this.newLocalVarName();
-          const index = fn.parameters[1]?.name;
-          const array = fn.parameters[2]?.name;
+      case "BlockStmt":
+        for (const stmt of node.statements) {
+          this.eval(stmt);
+        }
+        return undefined;
+      case "BooleanLiteralExpr":
+        return `${node.value}`;
+      case "BreakStmt":
+        return this.add("#break");
+      case "CallExpr": {
+        const serviceCall = findFunction(node);
+        if (serviceCall) {
+          return serviceCall(node, this);
+        } else if (
+          node.expr.kind === "PropAccessExpr" &&
+          (node.expr.name === "map" ||
+            node.expr.name === "forEach" ||
+            node.expr.name === "reduce")
+        ) {
+          if (node.expr.name === "map" || node.expr.name == "forEach") {
+            // list.map(item => ..)
+            // list.map((item, idx) => ..)
+            // list.forEach(item => ..)
+            // list.forEach((item, idx) => ..)
+            const fn = node.args.callbackfn as FunctionExpr;
+            const value = fn.parameters[0]?.name
+              ? `$${fn.parameters[0].name}`
+              : this.newLocalVarName();
+            const index = fn.parameters[1]?.name;
+            const array = fn.parameters[2]?.name;
 
-          const newList = node.expr.name === "map" ? this.var(`[]`) : undefined;
+            const newList =
+              node.expr.name === "map" ? this.var(`[]`) : undefined;
 
-          const list = this.eval(node.expr.expr);
-          this.add(`#foreach(${value} in ${list})`);
-          if (index) {
-            this.add(`#set($${index} = $foreach.index)`);
-          }
-          if (array) {
-            this.add(`#set($${array} = ${list})`);
-          }
+            const list = this.eval(node.expr.expr);
+            this.add(`#foreach(${value} in ${list})`);
+            if (index) {
+              this.add(`#set($${index} = $foreach.index)`);
+            }
+            if (array) {
+              this.add(`#set($${array} = ${list})`);
+            }
 
-          const tmp = this.newLocalVarName();
-          for (const stmt of fn.body.statements) {
-            this.eval(stmt, tmp);
-          }
-          if (node.expr.name === "map") {
-            this.qr(`${newList}.add(${tmp})`);
-          }
-
-          this.add("#end");
-          return newList ?? `$null`;
-        } else if (node.expr.name === "reduce") {
-          // list.reduce((result: string[], next) => [...result, next], []);
-          // list.reduce((result, next) => [...result, next]);
-
-          const fn = node.args.callbackfn as FunctionExpr;
-          const initialValue = node.args.initialValue;
-
-          // (previousValue: string[], currentValue: string, currentIndex: number, array: string[])
-          const previousValue = fn.parameters[0]?.name
-            ? `$${fn.parameters[0].name}`
-            : this.newLocalVarName();
-          const currentValue = fn.parameters[1]?.name
-            ? `$${fn.parameters[1].name}`
-            : this.newLocalVarName();
-          const currentIndex = fn.parameters[2]?.name
-            ? `$${fn.parameters[2].name}`
-            : undefined;
-          const array = fn.parameters[3]?.name
-            ? `$${fn.parameters[3].name}`
-            : undefined;
-
-          const list = this.eval(node.expr.expr);
-          if (initialValue !== undefined) {
-            this.set(previousValue, initialValue);
-          } else {
-            this.add(`#if(${list}.isEmpty())`);
-            this.add(
-              `$util.error('Reduce of empty array with no initial value')`
-            );
-            this.add(`#end`);
-          }
-
-          this.add(`#foreach(${currentValue} in ${list})`);
-          if (currentIndex) {
-            this.add(`#set(${currentIndex} = $foreach.index)`);
-          }
-          if (array) {
-            this.add(`#set(${array} = ${list})`);
-          }
-
-          const body = () => {
             const tmp = this.newLocalVarName();
             for (const stmt of fn.body.statements) {
               this.eval(stmt, tmp);
             }
-            this.set(previousValue, `${tmp}`);
+            if (node.expr.name === "map") {
+              this.qr(`${newList}.add(${tmp})`);
+            }
 
             this.add("#end");
-          };
+            return newList ?? `$null`;
+          } else if (node.expr.name === "reduce") {
+            // list.reduce((result: string[], next) => [...result, next], []);
+            // list.reduce((result, next) => [...result, next]);
 
-          if (initialValue === undefined) {
-            this.add("#if($foreach.index == 0)");
-            this.set(previousValue, currentValue);
-            this.add("#else");
-            body();
-            this.add("#end");
-          } else {
-            body();
+            const fn = node.args.callbackfn as FunctionExpr;
+            const initialValue = node.args.initialValue;
+
+            // (previousValue: string[], currentValue: string, currentIndex: number, array: string[])
+            const previousValue = fn.parameters[0]?.name
+              ? `$${fn.parameters[0].name}`
+              : this.newLocalVarName();
+            const currentValue = fn.parameters[1]?.name
+              ? `$${fn.parameters[1].name}`
+              : this.newLocalVarName();
+            const currentIndex = fn.parameters[2]?.name
+              ? `$${fn.parameters[2].name}`
+              : undefined;
+            const array = fn.parameters[3]?.name
+              ? `$${fn.parameters[3].name}`
+              : undefined;
+
+            const list = this.eval(node.expr.expr);
+            if (initialValue !== undefined) {
+              this.set(previousValue, initialValue);
+            } else {
+              this.add(`#if(${list}.isEmpty())`);
+              this.add(
+                `$util.error('Reduce of empty array with no initial value')`
+              );
+              this.add(`#end`);
+            }
+
+            this.add(`#foreach(${currentValue} in ${list})`);
+            if (currentIndex) {
+              this.add(`#set(${currentIndex} = $foreach.index)`);
+            }
+            if (array) {
+              this.add(`#set(${array} = ${list})`);
+            }
+
+            const body = () => {
+              const tmp = this.newLocalVarName();
+              for (const stmt of fn.body.statements) {
+                this.eval(stmt, tmp);
+              }
+              this.set(previousValue, `${tmp}`);
+
+              this.add("#end");
+            };
+
+            if (initialValue === undefined) {
+              this.add("#if($foreach.index == 0)");
+              this.set(previousValue, currentValue);
+              this.add("#else");
+              body();
+              this.add("#end");
+            } else {
+              body();
+            }
+
+            return previousValue;
           }
-
-          return previousValue;
+          // this is an array map, forEach, reduce call
         }
-        // this is an array map, forEach, reduce call
+        return `${this.eval(node.expr)}(${Object.values(node.args)
+          .map((arg) => this.eval(arg))
+          .join(", ")})`;
       }
-      return `${this.eval(node.expr)}(${Object.values(node.args)
-        .map((arg) => this.eval(arg))
-        .join(", ")})`;
-    } else if (node.kind === "ConditionExpr") {
-      const val = this.newLocalVarName();
-      this.add(`#if(${this.eval(node.when)})`);
-      this.set(val, node.then);
-      this.add("#else");
-      this.set(val, node._else);
-      this.add("#end");
-      return val;
-    } else if (node.kind === "IfStmt") {
-      this.add(`#if(${this.eval(node.when)})`);
-      this.eval(node.then);
-      if (node._else) {
+      case "ConditionExpr": {
+        const val = this.newLocalVarName();
+        this.add(`#if(${this.eval(node.when)})`);
+        this.set(val, node.then);
         this.add("#else");
-        this.eval(node._else);
+        this.set(val, node._else);
+        this.add("#end");
+        return val;
       }
-      this.add("#end");
-      return undefined;
-    } else if (node.kind === "ExprStmt") {
-      return this.qr(this.eval(node.expr));
-    } else if (node.kind === "ForOfStmt" || node.kind === "ForInStmt") {
-      this.add(
-        `#foreach($${node.i.name} in ${this.eval(node.expr)}${
-          node.kind === "ForInStmt" ? ".keySet()" : ""
-        })`
-      );
-      this.eval(node.body);
-      this.add(`#end`);
-      return undefined;
-    } else if (node.kind === "FunctionDecl") {
-    } else if (node.kind === "FunctionExpr") {
-      return this.eval(node.body);
-    } else if (node.kind === "Identifier") {
-      const ref = lookupIdentifier(node);
-      if (ref?.kind === "VariableStmt" && isInTopLevelScope(ref)) {
-        return `$context.stash.${node.name}`;
-      } else if (
-        ref?.kind === "ParameterDecl" &&
-        ref.parent?.kind === "FunctionDecl"
-      ) {
-        // regardless of the name of the first argument in the root FunctionDecl, it is always the intrinsic Appsync `$context`.
-        return "$context";
+      case "IfStmt": {
+        this.add(`#if(${this.eval(node.when)})`);
+        this.eval(node.then);
+        if (node._else) {
+          this.add("#else");
+          this.eval(node._else);
+        }
+        this.add("#end");
+        return undefined;
       }
-      if (node.name.startsWith("$")) {
-        return node.name;
-      } else {
-        return `$${node.name}`;
-      }
-    } else if (node.kind === "PropAccessExpr") {
-      let name = node.name;
-      if (name === "push" && node.parent?.kind === "CallExpr") {
-        // this is a push to an array, rename to 'add'
-        name = "add";
-      }
-      return `${this.eval(node.expr)}.${name}`;
-    } else if (node.kind === "ElementAccessExpr") {
-      return `${this.eval(node.expr)}[${this.eval(node.element)}]`;
-    } else if (node.kind === "NullLiteralExpr") {
-      return "$null";
-    } else if (node.kind === "NumberLiteralExpr") {
-      return node.value.toString(10);
-    } else if (node.kind === "ObjectLiteralExpr") {
-      const obj = this.var("{}");
-      for (const prop of node.properties) {
-        if (prop.kind === "PropAssignExpr") {
-          const name =
-            prop.name.kind === "Identifier"
-              ? `'${prop.name.name}'`
-              : prop.name.kind === "StringLiteralExpr"
-              ? `'${prop.name.value}'`
-              : this.eval(prop.name);
-          this.qr(`${obj}.put(${name}, ${this.eval(prop.expr)})`);
-        } else if (prop.kind === "SpreadAssignExpr") {
-          this.qr(`${obj}.putAll(${this.eval(prop.expr)})`);
+      case "ExprStmt":
+        return this.qr(this.eval(node.expr));
+      case "ForOfStmt":
+      case "ForInStmt":
+        this.add(
+          `#foreach($${node.i.name} in ${this.eval(node.expr)}${
+            node.kind === "ForInStmt" ? ".keySet()" : ""
+          })`
+        );
+        this.eval(node.body);
+        this.add(`#end`);
+        return undefined;
+      case "FunctionDecl":
+        throw new Error(`cannot evaluate Expr kind: '${node.kind}'`);
+      case "FunctionExpr":
+        return this.eval(node.body);
+      case "Identifier": {
+        const ref = lookupIdentifier(node);
+        if (ref?.kind === "VariableStmt" && isInTopLevelScope(ref)) {
+          return `$context.stash.${node.name}`;
+        } else if (
+          ref?.kind === "ParameterDecl" &&
+          ref.parent?.kind === "FunctionDecl"
+        ) {
+          // regardless of the name of the first argument in the root FunctionDecl, it is always the intrinsic Appsync `$context`.
+          return "$context";
+        }
+        if (node.name.startsWith("$")) {
+          return node.name;
         } else {
-          assertNever(prop);
+          return `$${node.name}`;
         }
       }
-      return obj;
-    } else if (node.kind === "ParameterDecl") {
-    } else if (node.kind === "PropAssignExpr") {
-    } else if (node.kind === "ReferenceExpr") {
-    } else if (node.kind === "ReturnStmt") {
-      if (returnVar) {
-        this.set(returnVar, node.expr);
-      } else {
-        this.set("$context.stash.return__val", node.expr);
-        this.add("#set($context.stash.return__flag = true)");
-        this.add(`#return($context.stash.return__val)`);
+      case "PropAccessExpr": {
+        let name = node.name;
+        if (name === "push" && node.parent?.kind === "CallExpr") {
+          // this is a push to an array, rename to 'add'
+          name = "add";
+        }
+        return `${this.eval(node.expr)}.${name}`;
       }
-      return undefined;
-    } else if (node.kind === "SpreadAssignExpr") {
-      // handled as part of ObjectLiteral
-    } else if (node.kind === "StringLiteralExpr") {
-      return `'${node.value}'`;
-    } else if (node.kind === "TemplateExpr") {
-      return `"${node.exprs
-        .map((expr) => {
-          if (expr.kind === "StringLiteralExpr") {
-            return expr.value;
-          }
-          const text = this.eval(expr, returnVar);
-          if (text.startsWith("$")) {
-            return `\${${text.slice(1)}}`;
+      case "ElementAccessExpr":
+        return `${this.eval(node.expr)}[${this.eval(node.element)}]`;
+      case "NullLiteralExpr":
+        return "$null";
+      case "NumberLiteralExpr":
+        return node.value.toString(10);
+      case "ObjectLiteralExpr": {
+        const obj = this.var("{}");
+        for (const prop of node.properties) {
+          if (prop.kind === "PropAssignExpr") {
+            const name =
+              prop.name.kind === "Identifier"
+                ? `'${prop.name.name}'`
+                : prop.name.kind === "StringLiteralExpr"
+                ? `'${prop.name.value}'`
+                : this.eval(prop.name);
+            this.qr(`${obj}.put(${name}, ${this.eval(prop.expr)})`);
+          } else if (prop.kind === "SpreadAssignExpr") {
+            this.qr(`${obj}.putAll(${this.eval(prop.expr)})`);
           } else {
-            const varName = this.var(text);
-            return `\${${varName.slice(1)}}`;
+            assertNever(prop);
           }
-        })
-        .join("")}"`;
-    } else if (node.kind === "UnaryExpr") {
-      return `${node.op} ${this.eval(node.expr)}`;
-    } else if (node.kind === "VariableStmt") {
-      const varName = isInTopLevelScope(node)
-        ? `$context.stash.${node.name}`
-        : `$${node.name}`;
-
-      if (node.expr) {
-        return this.set(varName, node.expr);
-      } else {
-        return varName;
+        }
+        return obj;
       }
+      case "ParameterDecl":
+      case "PropAssignExpr":
+      case "ReferenceExpr":
+        throw new Error(`cannot evaluate Expr kind: '${node.kind}'`);
+      case "ReturnStmt":
+        if (returnVar) {
+          this.set(returnVar, node.expr);
+        } else {
+          this.set("$context.stash.return__val", node.expr);
+          this.add("#set($context.stash.return__flag = true)");
+          this.add(`#return($context.stash.return__val)`);
+        }
+        return undefined;
+      case "SpreadAssignExpr":
+      case "SpreadElementExpr":
+        throw new Error(`cannot evaluate Expr kind: '${node.kind}'`);
+      // handled as part of ObjectLiteral
+      case "StringLiteralExpr":
+        return `'${node.value}'`;
+      case "TemplateExpr":
+        return `"${node.exprs
+          .map((expr) => {
+            if (expr.kind === "StringLiteralExpr") {
+              return expr.value;
+            }
+            const text = this.eval(expr, returnVar);
+            if (text.startsWith("$")) {
+              return `\${${text.slice(1)}}`;
+            } else {
+              const varName = this.var(text);
+              return `\${${varName.slice(1)}}`;
+            }
+          })
+          .join("")}"`;
+      case "UnaryExpr":
+        return `${node.op} ${this.eval(node.expr)}`;
+      case "VariableStmt":
+        const varName = isInTopLevelScope(node)
+          ? `$context.stash.${node.name}`
+          : `$${node.name}`;
+
+        if (node.expr) {
+          return this.set(varName, node.expr);
+        } else {
+          return varName;
+        }
     }
 
-    throw new Error(`cannot evaluate Expr kind: '${node.kind}'`);
+    const __exhaustive: never = node;
+    return __exhaustive;
   }
 }
