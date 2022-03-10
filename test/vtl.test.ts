@@ -333,14 +333,57 @@ test("chain map over list", () =>
         .map((item) => `hello ${item}`);
     }),
     `#set($v1 = [])
+#foreach($item in $context.arguments.list)
+#set($item = "hello \${item}")
+#set($v2 = "hello \${item}")
+$util.qr($v1.add($v2))
+#end
+${returnExpr("$v1")}`
+  ));
+
+test("chain map over list multiple array", () =>
+  testCase(
+    reflect((context: AppsyncContext<{ list: string[] }>) => {
+      return context.arguments.list
+        .map((item, _i, _arr) => `hello ${item}`)
+        .map((item, _i, _arr) => `hello ${item}`);
+    }),
+    `#set($v1 = [])
 #set($v2 = [])
 #foreach($item in $context.arguments.list)
+#set($_i = $foreach.index)
+#set($_arr = $context.arguments.list)
 #set($v3 = "hello \${item}")
 $util.qr($v2.add($v3))
 #end
 #foreach($item in $v2)
+#set($_i = $foreach.index)
+#set($_arr = $v2)
 #set($v4 = "hello \${item}")
 $util.qr($v1.add($v4))
+#end
+${returnExpr("$v1")}`
+  ));
+
+test("chain map over list complex", () =>
+  testCase(
+    reflect((context: AppsyncContext<{ list: string[] }>) => {
+      return context.arguments.list
+        .map((item, i, arr) => {
+          const x = i + 1;
+          return `hello ${item} ${x} ${arr.length}`;
+        })
+        .map((item2, ii) => `hello ${item2} ${ii}`);
+    }),
+    `#set($v1 = [])
+#foreach($item in $context.arguments.list)
+#set($i = $foreach.index)
+#set($arr = $context.arguments.list)
+#set($x = $i + 1)
+#set($item2 = "hello \${item} \${x} \${arr.length}")
+#set($ii = $foreach.index)
+#set($v2 = "hello \${item2} \${ii}")
+$util.qr($v1.add($v2))
 #end
 ${returnExpr("$v1")}`
   ));
@@ -365,15 +408,16 @@ test("reduce over list with initial value", () =>
         return [...newList, item];
       }, []);
     }),
-    `#set($newList = [])
+    `#set($v1 = [])
 #foreach($item in $context.arguments.list)
-#set($v2 = [])
-$util.qr($v2.addAll($newList))
-$util.qr($v2.add($item))
-#set($v1 = $v2)
 #set($newList = $v1)
+#set($v3 = [])
+$util.qr($v3.addAll($newList))
+$util.qr($v3.add($item))
+#set($v2 = $v3)
+#set($v1 = $v2)
 #end
-${returnExpr("$newList")}`
+${returnExpr("$v1")}`
   ));
 
 test("reduce over list without initial value", () =>
@@ -388,11 +432,98 @@ $util.error('Reduce of empty array with no initial value')
 #end
 #foreach($item in $context.arguments.list)
 #if($foreach.index == 0)
-#set($str = $item)
+#set($v1 = $item)
 #else
-#set($v1 = \"\${str}\${item}\")
 #set($str = $v1)
+#set($v2 = \"\${str}\${item}\")
+#set($v1 = $v2)
 #end
 #end
-${returnExpr("$str")}`
+${returnExpr("$v1")}`
+  ));
+
+test("map and reduce over list with initial value", () =>
+  testCase(
+    reflect((context: AppsyncContext<{ list: string[] }>) => {
+      return context.arguments.list
+        .map((item) => `hello ${item}`)
+        .reduce((newList: string[], item) => {
+          return [...newList, item];
+        }, []);
+    }),
+    `#set($v1 = [])
+#foreach($item in $context.arguments.list)
+#set($item = "hello \${item}")
+#set($newList = $v1)
+#set($v3 = [])
+$util.qr($v3.addAll($newList))
+$util.qr($v3.add($item))
+#set($v2 = $v3)
+#set($v1 = $v2)
+#end
+${returnExpr("$v1")}`
+  ));
+
+test("map and reduce with array over list with initial value", () =>
+  testCase(
+    reflect((context: AppsyncContext<{ list: string[] }>) => {
+      return context.arguments.list
+        .map((item) => `hello ${item}`)
+        .reduce((newList: string[], item, _i, _arr) => {
+          return [...newList, item];
+        }, []);
+    }),
+    `#set($v2 = [])
+#foreach($item in $context.arguments.list)
+#set($v3 = "hello \${item}")
+$util.qr($v2.add($v3))
+#end
+#set($v1 = [])
+#foreach($item in $v2)
+#set($_i = $foreach.index)
+#set($_arr = $v2)
+#set($newList = $v1)
+#set($v5 = [])
+$util.qr($v5.addAll($newList))
+$util.qr($v5.add($item))
+#set($v4 = $v5)
+#set($v1 = $v4)
+#end
+${returnExpr("$v1")}`
+  ));
+
+test("map and reduce and map and reduce over list with initial value", () =>
+  testCase(
+    reflect((context: AppsyncContext<{ list: string[] }>) => {
+      return context.arguments.list
+        .map((item) => `hello ${item}`)
+        .reduce((newList: string[], item) => {
+          return [...newList, item];
+        }, [])
+        .map((item) => `hello ${item}`)
+        .reduce((newList: string[], item) => {
+          return [...newList, item];
+        }, []);
+    }),
+    `#set($v2 = [])
+#foreach($item in $context.arguments.list)
+#set($item = "hello \${item}")
+#set($newList = $v2)
+#set($v4 = [])
+$util.qr($v4.addAll($newList))
+$util.qr($v4.add($item))
+#set($v3 = $v4)
+#set($v2 = $v3)
+#end
+#set($v1 = [])
+#foreach($item in $v2)
+#set($item = "hello \${item}")
+#set($newList = $v1)
+#set($v6 = [])
+$util.qr($v6.addAll($newList))
+$util.qr($v6.add($item))
+#set($v5 = $v6)
+#set($v1 = $v5)
+#end
+${returnExpr("$v1")}`
   ));
