@@ -1,16 +1,161 @@
 import { Construct } from "constructs";
-import { aws_stepfunctions, aws_stepfunctions_tasks } from "aws-cdk-lib";
+import { aws_iam, aws_stepfunctions } from "aws-cdk-lib";
 
 import { assertNever } from "./assert";
-import { Expr, isLiteralExpr } from "./expression";
+import { CallExpr, Expr, isLiteralExpr } from "./expression";
 import { Stmt } from "./statement";
-import { findFunction, isInTopLevelScope, lookupIdentifier } from "./util";
+import { findFunction, lookupIdentifier } from "./util";
+import { FunctionDecl } from "./declaration";
 
 export function isASL(a: any): a is ASL {
   return (a as ASL | undefined)?.kind === ASL.ContextName;
 }
 
-type Chain = aws_stepfunctions.IChainable & aws_stepfunctions.INextable;
+export interface StateMachine<S extends States> {
+  Version?: "1.0";
+  Comment?: string;
+  TimeoutSeconds?: number;
+  StartAt: keyof S;
+  States: S;
+}
+export interface States {
+  [stateName: string]: State;
+}
+export type State = Succeed | Fail | Choice | Task | Pass | Map | Parallel;
+export type TerminalState = Succeed | Fail | Extract<State, { End: true }>;
+
+export interface Succeed {
+  Type: "Succeed";
+  Comment?: string;
+  InputPath?: string;
+  OutputPath?: string;
+}
+
+export interface Fail {
+  Type: "Fail";
+  Comment?: string;
+  Error: string;
+}
+
+export interface TaskParameters {
+  [key: string]: any;
+}
+
+export type Nextable =
+  | {
+      End: true;
+      Next?: never;
+    }
+  | {
+      End?: never;
+      Next: string;
+    };
+
+export interface Pass {
+  Comment?: string;
+  Type: "Pass";
+  InputPath?: string;
+  OutputPath?: string;
+  ResultPath?: string;
+}
+
+export interface Choice {
+  Type: "Choice";
+  Comment?: string;
+  InputPath?: string;
+  OutputPath?: string;
+  Choices: Branch[];
+  Default?: string;
+}
+
+export interface Branch extends Condition {
+  Next: string;
+}
+
+export interface Condition {
+  Variable?: string;
+  Not?: Condition;
+  And?: Condition[];
+  Or?: Condition[];
+  BooleanEquals?: string;
+  BooleanEqualsPath?: string;
+  IsBoolean?: string;
+  IsNull?: string;
+  IsNumeric?: string;
+  IsPresent?: string;
+  IsString?: string;
+  IsTimestamp?: string;
+  NumericEquals?: number;
+  NumericEqualsPath?: string;
+  NumericGreaterThan?: number;
+  NumericGreaterThanPath?: string;
+  NumericGreaterThanEquals?: number;
+  NumericGreaterThanEqualsPath?: string;
+  NumericLessThan?: number;
+  NumericLessThanPath?: string;
+  NumericLessThanEquals?: number;
+  NumericLessThanEqualsPath?: string;
+  StringEquals?: string;
+  StringEqualsPath?: string;
+  StringGreaterThan?: string;
+  StringGreaterThanPath?: string;
+  StringGreaterThanEquals?: string;
+  StringGreaterThanEqualsPath?: string;
+  StringLessThan?: string;
+  StringLessThanPath?: string;
+  StringLessThanEquals?: string;
+  StringLessThanEqualsPath?: string;
+  StringMatches?: string;
+  TimestampEquals?: string;
+  TimestampEqualsPath?: string;
+  TimestampGreaterThan?: string;
+  TimestampGreaterThanPath?: string;
+  TimestampGreaterThanEquals?: string;
+  TimestampGreaterThanEqualsPath?: string;
+  TimestampLessThan?: string;
+  TimestampLessThanPath?: string;
+  TimestampLessThanEquals?: string;
+  TimestampLessThanEqualsPath?: string;
+}
+
+export interface Retry {
+  ErrorEquals: string[];
+  IntervalSeconds?: number;
+  MaxAttempts?: number;
+  BackoffRate?: number;
+}
+
+export interface Catch {
+  ErrorEquals: string[];
+  ResultPath?: string;
+  Next: string;
+}
+
+export type BaseTask = Nextable & {
+  Comment?: string;
+  InputPath?: string;
+  OutputPath?: string;
+  Parameters?: TaskParameters;
+  ResultSelector?: string;
+  ResultPath?: string;
+  Retry?: Retry[];
+  Catch?: Catch[];
+};
+
+export type Task = BaseTask & {
+  Type: "Task";
+  Resource: string;
+};
+
+export type Map = BaseTask & {
+  Type: "Map";
+  Iterator: States;
+};
+
+export type Parallel = BaseTask & {
+  Type: "Parallel";
+  Iterator: States;
+};
 
 /**
  * Amazon States Language (ASL) Generator.
@@ -23,10 +168,14 @@ export class ASL {
   protected varNameIt: number = 0;
   protected constructNameIt: number = 0;
 
-  constructor(readonly scope: Construct, readonly parent?: ASL) {}
+  constructor(
+    readonly scope: Construct,
+    readonly role: aws_iam.IRole,
+    readonly parent?: ASL
+  ) {}
 
   private push(): ASL {
-    return new ASL(this.scope, this.parent);
+    return new ASL(this.scope, this.role, this.parent);
   }
 
   private pop() {
@@ -48,7 +197,7 @@ export class ASL {
     }
   }
 
-  private getNextConstructId(): string {
+  private getNextStateId(): string {
     if (this.parent) {
       return this.parent.getNextVarName();
     } else {
@@ -56,135 +205,133 @@ export class ASL {
     }
   }
 
-  public evalStmt(stmt: Stmt): Chain {
-    if (stmt.kind === "BlockStmt") {
-      return this.block(() => {
-        let chain: Chain | undefined;
-        for (const s of stmt.statements) {
-          if (chain !== undefined) {
-            const next = this.evalStmt(s);
-            chain = chain.next(next);
-          } else {
-            chain = this.evalStmt(s) ?? chain;
-          }
-        }
-        return (
-          chain ??
-          new aws_stepfunctions.Pass(this.scope, this.getNextConstructId())
-        );
-      });
-    } else if (stmt.kind === "BreakStmt") {
-    } else if (stmt.kind === "ExprStmt") {
-      return this.evalExpr(stmt.expr, aws_stepfunctions.JsonPath.DISCARD);
-    } else if (stmt.kind === "ForInStmt") {
-    } else if (stmt.kind === "ForOfStmt") {
-    } else if (stmt.kind === "IfStmt") {
-      let choice = new aws_stepfunctions.Choice(
-        this.scope,
-        this.getNextConstructId(),
-        {
-          // inputPath: ?
-          // outputPath: ?
-        }
-      );
+  public interpret(func: FunctionDecl): StateMachine<States> {
+    const returnState = this.getNextStateId();
+    const throwState = this.getNextStateId();
 
-      let curr: Stmt | undefined = stmt;
-      while (curr?.kind === "IfStmt") {
-        choice = choice.when(
-          this.evalCondition(curr.when),
-          this.evalStmt(curr.then)
-        );
-        curr = curr._else;
+    const states = this.execute(func.body, returnState, throwState);
+    const start = Object.keys(states)[0];
+
+    return {
+      StartAt: start,
+      States: {
+        ...states,
+        [returnState]: {
+          Type: "Succeed",
+        },
+        [throwState]: {
+          Type: "Fail",
+          Error: "TODO",
+        },
+      },
+    };
+  }
+
+  public execute(
+    stmt: Stmt,
+    returnState: string,
+    throwState: string,
+    breakState?: string
+  ): States {
+    if (stmt.kind === "BlockStmt") {
+      return stmt.statements.reduce((states: States, s, i) => {
+        if (i < stmt.statements.length - 1) {
+          return {
+            ...states,
+            ...this.execute(s, returnState, throwState),
+          };
+        } else {
+          return {
+            ...states,
+            ...this.execute(s, returnState, throwState),
+          };
+        }
+      }, {});
+    } else if (stmt.kind === "BreakStmt") {
+      if (breakState === undefined) {
+        throw new Error(`cannot break outside of a for-loop`);
       }
-      if (curr !== undefined) {
-        return choice.otherwise(this.evalStmt(curr)).afterwards();
-      } else {
-        return choice.afterwards();
-      }
+    } else if (stmt.kind === "ExprStmt") {
+    } else if (stmt.kind === "ForInStmt") {
+      throw new Error(`for-in is no supported in Amazon States Language`);
+    } else if (stmt.kind === "ForOfStmt") {
+      const innerReturnState = this.getNextStateId();
+      const innerThrowState = this.getNextStateId();
+      return {
+        [this.getNextStateId()]: {
+          Type: "Map",
+          InputPath: this.evalJsonPath(stmt.expr),
+          End: undefined,
+          Next: "",
+          Iterator: this.execute(
+            stmt.body,
+            innerReturnState,
+            innerThrowState,
+            innerReturnState
+          ),
+        },
+      };
+    } else if (stmt.kind === "IfStmt") {
+      return {
+        [this.getNextStateId()]: {
+          Type: "Choice",
+          Choices: [],
+          Default: "",
+        },
+      };
     } else if (stmt.kind === "ReturnStmt") {
-      return this.evalExpr(stmt.expr, "$").next(
-        new aws_stepfunctions.Succeed(this.scope, this.getNextConstructId(), {
-          outputPath: "$",
-        })
-      );
+      return {
+        [this.getNextStateId()]: {
+          ...this.eval(stmt.expr),
+          End: undefined,
+          Next: returnState,
+        },
+      };
     } else if (stmt.kind === "VariableStmt") {
-      if (stmt.expr && isInTopLevelScope(stmt)) {
-        return this.evalExpr(stmt.expr, `$.${stmt.name}`);
+      if (stmt.expr === undefined) {
+        return {};
       }
+      return {
+        [this.getNextStateId()]: this.eval(stmt.expr),
+      };
     } else {
       return assertNever(stmt);
     }
-
-    debugger;
-    throw new Error(`cannot evaluate statement: '${stmt.kind}`);
   }
 
-  public evalExpr(
-    expr: Expr,
-    outputPath: string = aws_stepfunctions.JsonPath.DISCARD
-  ): Chain {
-    if (expr.kind === "ArrayLiteralExpr") {
-    } else if (expr.kind === "BinaryExpr") {
-    } else if (expr.kind === "BooleanLiteralExpr") {
-    } else if (expr.kind === "CallExpr") {
-      const serviceCall = findFunction(expr);
-      if (serviceCall) {
-        return new aws_stepfunctions_tasks.CallAwsService(
-          this.scope,
-          this.getNextConstructId(),
-          {
-            ...serviceCall(expr, this, outputPath),
-            outputPath,
-          }
-        );
-      }
-    } else if (expr.kind === "ConditionExpr") {
-      const choice = new aws_stepfunctions.Choice(
-        this.scope,
-        this.getNextConstructId(),
-        {
-          outputPath,
-        }
-      );
+  public eval(expr: Expr): State {
+    switch (expr.kind) {
+      case "CallExpr":
+        return this.call(expr);
 
-      let curr: Expr | undefined = expr;
-      while (curr?.kind === "ConditionExpr") {
-        choice.when(
-          this.evalCondition(curr.when),
-          this.evalExpr(curr.then, outputPath)
-        );
-        curr = curr._else;
-      }
-      if (curr !== undefined) {
-        return choice.otherwise(this.evalExpr(curr, outputPath)).afterwards();
-      } else {
-        return choice.afterwards();
-      }
-    } else if (expr.kind === "NullLiteralExpr") {
-      return new aws_stepfunctions.Pass(this.scope, this.getNextConstructId(), {
-        outputPath,
-        result: aws_stepfunctions.Result.fromObject({ val: null }),
-        resultPath: "$.val",
-      });
+      default:
+        throw new Error(`cannot eval expression kind '${expr.kind}'`);
     }
-    debugger;
-    throw new Error(`cannot evaluate expression kind: '${expr.kind}'`);
   }
 
-  public evalCondition(expr: Expr): aws_stepfunctions.Condition {
+  public call(call: CallExpr): Task {
+    const serviceCall = findFunction(call);
+    if (serviceCall) {
+      return {
+        Type: "Task",
+      };
+    }
+  }
+
+  public condition(expr: Expr): Condition {
     if (expr.kind === "UnaryExpr") {
-      return aws_stepfunctions.Condition.not(this.evalCondition(expr.expr));
+      return {
+        Not: this.condition(expr.expr),
+      };
     } else if (expr.kind === "BinaryExpr") {
       if (expr.op === "&&") {
-        return aws_stepfunctions.Condition.and(
-          this.evalCondition(expr.left),
-          this.evalCondition(expr.right)
-        );
+        return {
+          And: [this.condition(expr.left), this.condition(expr.right)],
+        };
       } else if (expr.op === "||") {
-        return aws_stepfunctions.Condition.or(
-          this.evalCondition(expr.left),
-          this.evalCondition(expr.right)
-        );
+        return {
+          Or: [this.condition(expr.left), this.condition(expr.right)],
+        };
       } else if (expr.op === "+" || expr.op === "-") {
       } else {
         if (isLiteralExpr(expr.left) && isLiteralExpr(expr.right)) {
@@ -195,49 +342,91 @@ export class ASL {
 
           if (lit.kind === "NullLiteralExpr") {
             if (expr.op === "!=") {
-              return aws_stepfunctions.Condition.isNotNull(
-                this.evalJsonPath(val)
-              );
+              return {
+                Not: {
+                  IsNull: this.evalJsonPath(val),
+                },
+              };
             } else if (expr.op === "==") {
-              return aws_stepfunctions.Condition.isNull(this.evalJsonPath(val));
+              return {
+                IsNull: this.evalJsonPath(val),
+              };
             }
           } else if (lit.kind === "StringLiteralExpr") {
-            const args = [this.evalJsonPath(val), lit.value] as const;
+            const [variable, value] = [
+              this.evalJsonPath(val),
+              lit.value,
+            ] as const;
             if (expr.op === "==") {
-              return aws_stepfunctions.Condition.stringEquals(...args);
+              return {
+                Variable: variable,
+                StringEquals: value,
+              };
             } else if (expr.op === "!=") {
-              return aws_stepfunctions.Condition.not(
-                aws_stepfunctions.Condition.stringEquals(...args)
-              );
+              return {
+                Not: {
+                  Variable: variable,
+                  StringEquals: value,
+                },
+              };
             } else if (expr.op === "<") {
-              return aws_stepfunctions.Condition.stringLessThan(...args);
+              return {
+                Variable: variable,
+                StringLessThan: value,
+              };
             } else if (expr.op === "<=") {
-              return aws_stepfunctions.Condition.stringLessThanEquals(...args);
+              return {
+                Variable: variable,
+                StringLessThanEquals: value,
+              };
             } else if (expr.op === ">") {
-              return aws_stepfunctions.Condition.stringGreaterThan(...args);
+              return {
+                Variable: variable,
+                StringGreaterThan: value,
+              };
             } else if (expr.op === ">=") {
-              return aws_stepfunctions.Condition.stringGreaterThanEquals(
-                ...args
-              );
+              return {
+                Variable: variable,
+                StringGreaterThanEquals: value,
+              };
             }
           } else if (lit.kind === "NumberLiteralExpr") {
-            const args = [this.evalJsonPath(val), lit.value] as const;
+            const [variable, value] = [
+              this.evalJsonPath(val),
+              lit.value,
+            ] as const;
             if (expr.op === "==") {
-              return aws_stepfunctions.Condition.numberEquals(...args);
+              return {
+                Variable: variable,
+                NumericEquals: value,
+              };
             } else if (expr.op === "!=") {
-              return aws_stepfunctions.Condition.not(
-                aws_stepfunctions.Condition.numberEquals(...args)
-              );
+              return {
+                Not: {
+                  Variable: variable,
+                  NumericEquals: value,
+                },
+              };
             } else if (expr.op === "<") {
-              return aws_stepfunctions.Condition.numberLessThan(...args);
+              return {
+                Variable: variable,
+                NumericLessThan: value,
+              };
             } else if (expr.op === "<=") {
-              return aws_stepfunctions.Condition.numberLessThanEquals(...args);
+              return {
+                Variable: variable,
+                NumericLessThanEquals: value,
+              };
             } else if (expr.op === ">") {
-              return aws_stepfunctions.Condition.numberGreaterThan(...args);
+              return {
+                Variable: variable,
+                NumericGreaterThan: value,
+              };
             } else if (expr.op === ">=") {
-              return aws_stepfunctions.Condition.numberGreaterThanEquals(
-                ...args
-              );
+              return {
+                Variable: variable,
+                NumericGreaterThanEquals: value,
+              };
             }
           }
         }
@@ -296,5 +485,3 @@ export class ASL {
     );
   }
 }
-
-export interface Task {}
