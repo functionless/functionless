@@ -23,10 +23,12 @@ const getPerson = new Function<(id: string) => Person | undefined>(
 );
 
 test("test", () => {
-  const fn = new ExpressStepFunction((id: string): Person | undefined => {
-    const person = getPerson(id);
-    return person;
-  });
-
-  fn.createStateMachine(stack, "test1");
+  const fn = new ExpressStepFunction(
+    stack,
+    "fn",
+    (id: string): Person | undefined => {
+      const person = getPerson(id);
+      return person;
+    }
+  );
 });
