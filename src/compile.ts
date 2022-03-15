@@ -58,14 +58,18 @@ export function compile(
         if (isAppsyncResolver(node)) {
           return visitAppsyncResolver(node);
         } else if (isReflectFunction(node)) {
-          return toFunction("FunctionDecl", node.arguments[0]);
+          const func = node.arguments[0];
+          if (ts.isIdentifier(func)) {
+            throw new Error("Reflect does not support function references");
+          }
+          return toFunction("FunctionDecl", func);
         }
         return ts.visitEachChild(node, visitor, ctx);
       }
 
       function isReflectFunction(node: ts.Node): node is ts.CallExpression & {
         arguments: [
-          ts.FunctionExpression | ts.ArrowFunction,
+          ts.FunctionExpression | ts.ArrowFunction | ts.Identifier,
           ...ts.Expression[]
         ];
       } {
@@ -73,6 +77,7 @@ export function compile(
           const exprType = checker.getTypeAtLocation(node.expression);
           const exprDecl = exprType.symbol?.declarations?.[0];
           if (exprDecl && ts.isFunctionDeclaration(exprDecl)) {
+            console.log(exprDecl.name?.text);
             if (exprDecl.name?.text === "reflect") {
               return true;
             }
