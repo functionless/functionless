@@ -1,9 +1,8 @@
 import { App, Stack } from "aws-cdk-lib";
-import { AppsyncResolver, FunctionDecl, reflect } from "../src";
+import { AppsyncResolver, FunctionDecl } from "../src";
 
 import * as appsync from "@aws-cdk/aws-appsync-alpha";
 import path from "path";
-import { EventBusEvent, EventPredicateFunction } from "../src/eventbridge";
 import { FnLsEventPattern, synthesizeEventPattern } from "../src/eventpattern";
 
 // generates boilerplate for the circuit-breaker logic for implementing early return
@@ -41,16 +40,18 @@ export function appsyncTestCase(decl: FunctionDecl, ...expected: string[]) {
   expect(actual).toEqual(expected);
 }
 
-export function ebEventPatternTestCase<
-  E extends EventBusEvent = EventBusEvent<any>
->(predicate: EventPredicateFunction<E>, expected: FnLsEventPattern) {
-  const result = synthesizeEventPattern(reflect(predicate));
+export function ebEventPatternTestCase(
+  decl: FunctionDecl,
+  expected: FnLsEventPattern
+) {
+  const result = synthesizeEventPattern(decl);
 
   expect(result).toEqual(expected);
 }
 
-export function ebEventPatternTestCaseError<
-  E extends EventBusEvent = EventBusEvent<any>
->(predicate: EventPredicateFunction<E>, message?: string) {
-  expect(() => synthesizeEventPattern(reflect(predicate))).toThrow(message);
+export function ebEventPatternTestCaseError(
+  decl: FunctionDecl,
+  message?: string
+) {
+  expect(() => synthesizeEventPattern(decl)).toThrow(message);
 }
