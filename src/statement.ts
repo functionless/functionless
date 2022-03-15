@@ -13,7 +13,8 @@ export type Stmt =
   | ForOfStmt
   | IfStmt
   | ReturnStmt
-  | VariableStmt;
+  | VariableStmt
+  | IfStmt;
 
 export function isStmt(a: any): a is Stmt {
   return (
