@@ -31,7 +31,7 @@ type RangeKey<T extends Table<any, any, any>> = T extends Table<
  *
  * @see https://docs.aws.amazon.com/step-functions/latest/dg/supported-services-awssdk.html
  */
-export namespace $aws {
+export namespace $AWS {
   export const kind = "AWS";
 
   export namespace DynamoDB {

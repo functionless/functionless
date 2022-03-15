@@ -1,7 +1,13 @@
 import { Construct } from "constructs";
-import { aws_dynamodb, aws_lambda } from "aws-cdk-lib";
 import {
-  $aws,
+  aws_dynamodb,
+  aws_lambda,
+  aws_logs,
+  aws_stepfunctions,
+  RemovalPolicy,
+} from "aws-cdk-lib";
+import {
+  $AWS,
   Table,
   Function,
   $util,
@@ -39,6 +45,7 @@ export class PeopleDatabase extends Construct {
         },
       })
     );
+    this.personTable.resource.applyRemovalPolicy(RemovalPolicy.DESTROY);
 
     this.computeScore = new Function<(person: Person) => number>(
       new aws_lambda.Function(this, "ComputeScore", {
@@ -54,8 +61,14 @@ export class PeopleDatabase extends Construct {
     this.getPersonMachine = new ExpressStepFunction(
       this,
       "GetPersonMachine",
+      {
+        logs: {
+          destination: new aws_logs.LogGroup(this, "GetPersonMachineLogs"),
+          level: aws_stepfunctions.LogLevel.ALL,
+        },
+      },
       (id: string) => {
-        const person = $aws.DynamoDB.GetItem({
+        const person = $AWS.DynamoDB.GetItem({
           TableName: this.personTable,
           Key: {
             id: {
@@ -86,7 +99,13 @@ export class PeopleDatabase extends Construct {
       ProcessedPerson | undefined
     >(($context) => {
       // example of integrating with an Express Step Function from Appsync
-      return this.getPersonMachine($context.arguments.id);
+      const person = this.getPersonMachine($context.arguments.id);
+
+      if (person.status === "SUCCEEDED") {
+        return person.output;
+      } else {
+        $util.error(person.cause, person.error);
+      }
     });
 
     this.addPerson = new AppsyncResolver<{ input: { name: string } }, Person>(

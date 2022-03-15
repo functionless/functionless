@@ -22,7 +22,7 @@ export type AnyStepFunction =
   | ExpressStepFunction<AnyFunction>
   | StepFunction<AnyFunction>;
 
-class BaseStepFunction<F extends AnyFunction>
+abstract class BaseStepFunction<F extends AnyFunction>
   extends Resource
   implements aws_stepfunctions.IStateMachine
 {
@@ -76,7 +76,8 @@ class BaseStepFunction<F extends AnyFunction>
 
     this.resource = new aws_stepfunctions.CfnStateMachine(this, "Resource", {
       roleArn: this.role.roleArn,
-      definition: this.definition,
+      definitionString: JSON.stringify(this.definition),
+      stateMachineType: this.getStepFunctionType(),
       loggingConfiguration: props?.logs
         ? this.buildLoggingConfiguration(props?.logs)
         : undefined,
@@ -84,43 +85,49 @@ class BaseStepFunction<F extends AnyFunction>
         ? this.buildTracingConfiguration()
         : undefined,
     });
+    // required or else adding logs can fail due invalid IAM policy
+    this.resource.node.addDependency(this.role);
 
     this.stateMachineArn = this.resource.attrArn;
 
-    // @ts-ignore
     return makeCallable(this, (call: CallExpr, context: VTL | ASL) => {
       if (isASL(context)) {
+        // TODO
       } else if (isVTL(context)) {
         const args = context.var(
           `{${Object.entries(call.args)
             .map(([name, expr]) => `"${name}": ${context.eval(expr)}`)
             .join(",")}}`
         );
-        return context.var(
-          JSON.stringify(
-            {
-              version: "2018-05-29",
-              method: "POST",
-              resourcePath: "/",
-              params: {
-                headers: {
-                  "content-type": "application/x-amz-json-1.0",
-                  "x-amz-target": "AWSStepFunctions.StartExecution",
-                },
-                body: {
-                  stateMachineArn: this.stateMachineArn,
-                  input: `$util.escapeJavaScript($util.toJson(${args}))`,
-                },
+        return JSON.stringify(
+          {
+            version: "2018-05-29",
+            method: "POST",
+            resourcePath: "/",
+            params: {
+              headers: {
+                "content-type": "application/x-amz-json-1.0",
+                "x-amz-target":
+                  this.getStepFunctionType() ===
+                  aws_stepfunctions.StateMachineType.EXPRESS
+                    ? "AWSStepFunctions.StartSyncExecution"
+                    : "AWSStepFunctions.StartExecution",
+              },
+              body: {
+                stateMachineArn: this.stateMachineArn,
+                input: `$util.escapeJavaScript($util.toJson(${args}))`,
               },
             },
-            null,
-            2
-          )
+          },
+          null,
+          2
         );
       }
       return;
     });
   }
+
+  public abstract getStepFunctionType(): aws_stepfunctions.StateMachineType;
 
   /**
    * Add the given statement to the role's policy
@@ -468,12 +475,54 @@ export class ExpressStepFunction<
    * This static property identifies this class as an ExpressStepFunction to the TypeScript plugin.
    */
   public static readonly FunctionlessType = "ExpressStepFunction";
+
+  public getStepFunctionType(): aws_stepfunctions.StateMachineType.EXPRESS {
+    return aws_stepfunctions.StateMachineType.EXPRESS;
+  }
 }
 
+interface BaseSyncExecutionResult {
+  billingDetails: {
+    billedDurationInMilliseconds: number;
+    billedMemoryUsedInMB: number;
+  };
+  executionArn: string;
+  input: string;
+  inputDetails: {
+    included: boolean;
+  };
+  name: string;
+
+  outputDetails: {
+    included: boolean;
+  };
+  startDate: number;
+  stateMachineArn: string;
+  status: "SUCCEEDED" | "FAILED" | "TIMED_OUT";
+  stopDate: number;
+  traceHeader: string;
+}
+export interface SyncExecutionFailedResult extends BaseSyncExecutionResult {
+  cause: string;
+  error: string;
+  status: "FAILED" | "TIMED_OUT";
+}
+export interface SyncExecutionSuccessResult<T> extends BaseSyncExecutionResult {
+  output: T;
+  status: "SUCCEEDED";
+}
+export type SyncExecutionResult<T> =
+  | SyncExecutionFailedResult
+  | SyncExecutionSuccessResult<T>;
+
 export interface ExpressStepFunction<F extends AnyFunction> {
-  (...args: Parameters<F>): ReturnType<F>;
-  (name: string, traceHeader: string, ...args: Parameters<F>): ReturnType<F>;
-  (name: string, ...args: Parameters<F>): ReturnType<F>;
+  (...args: Parameters<F>): SyncExecutionResult<ReturnType<F>>;
+  (
+    name: string,
+    traceHeader: string,
+    ...args: Parameters<F>
+  ): SyncExecutionResult<ReturnType<F>>;
+  (name: string, ...args: Parameters<F>): SyncExecutionResult<ReturnType<F>>;
 }
 
 export class StepFunction<F extends AnyFunction> extends BaseStepFunction<F> {
@@ -481,18 +530,21 @@ export class StepFunction<F extends AnyFunction> extends BaseStepFunction<F> {
    * This static property identifies this class as an StepFunction to the TypeScript plugin.
    */
   public static readonly FunctionlessType = "StepFunction";
+
+  public getStepFunctionType(): aws_stepfunctions.StateMachineType.STANDARD {
+    return aws_stepfunctions.StateMachineType.STANDARD;
+  }
 }
 
 export interface StepFunction<F extends AnyFunction> {
-  (name: string, ...args: Parameters<F>): CheckStepFunctionStatus<
-    ReturnType<F>
-  >;
+  (
+    name: string,
+    ...args: Parameters<F>
+  ): AWS.StepFunctions.StartExecutionOutput;
   (
     name: string,
     traceHeader: string,
     ...args: Parameters<F>
-  ): CheckStepFunctionStatus<ReturnType<F>>;
-  (...args: Parameters<F>): CheckStepFunctionStatus<ReturnType<F>>;
+  ): AWS.StepFunctions.StartExecutionOutput;
+  (...args: Parameters<F>): AWS.StepFunctions.StartExecutionOutput;
 }
-
-export type CheckStepFunctionStatus<T> = () => T;

@@ -359,6 +359,8 @@ export class ASL {
     } else if (isStmt(node)) {
       if (node.kind === "TryStmt" && node.finallyBlock) {
         return this.getStateName(node.finallyBlock.statements[0]);
+      } else if (node.kind === "ReturnStmt") {
+        return this.return(node);
       } else if (node.next) {
         return this.getStateName(node.next);
       }
@@ -371,7 +373,6 @@ export class ASL {
   /**
    * Find the nearest state on the call stack to return the value to.
    */
-  // @ts-ignore
   private return(node: FunctionlessNode | undefined): string {
     if (node === undefined) {
       throw new Error(`Stack Underflow`);
@@ -394,7 +395,7 @@ export class ASL {
     if (node === undefined) {
       throw new Error(`Stack Underflow`);
     } else if (node.kind === "FunctionDecl") {
-      return "Fail";
+      return "Throw";
     } else if (node.kind === "FunctionExpr") {
       return this.getThrowTransition(node);
     } else if (node.kind === "TryStmt") {
@@ -432,7 +433,7 @@ export class ASL {
 
       return {
         ...task,
-        OutputPath:
+        ResultPath:
           call.parent?.kind === "VariableStmt"
             ? `$.${call.parent.name}`
             : call.parent?.kind === "ReturnStmt"
@@ -459,7 +460,7 @@ export class ASL {
 
         return {
           ...task,
-          OutputPath:
+          ResultPath:
             expr.parent?.kind === "VariableStmt"
               ? `$.${expr.parent.name}`
               : expr.parent?.kind === "ReturnStmt"
@@ -488,7 +489,7 @@ export class ASL {
         Parameters: {
           [`result${isLiteralExpr(expr) ? "" : ".$"}`]: this.evalJson(expr),
         },
-        ResultPath: "$.result",
+        OutputPath: "$.result",
       };
     } else {
       throw new Error(`cannot eval expression kind '${expr.kind}'`);
@@ -536,9 +537,6 @@ export class ASL {
       }
       return payload;
     } else if (isLiteralExpr(expr)) {
-      if (expr.value === null) {
-        return undefined;
-      }
       return expr.value;
     } else if (expr.kind === "ReferenceExpr") {
       const ref = expr.ref();
@@ -547,7 +545,7 @@ export class ASL {
       } else if (ref.kind === "StepFunction") {
         return ref.stateMachineArn;
       } else if (ref.kind === "Table") {
-        return ref.resource.tableArn;
+        return ref.resource.tableName;
       }
     }
     throw new Error(`cannot evaluate ${expr.kind} to JSON`);
@@ -578,13 +576,29 @@ export class ASL {
           if (lit.kind === "NullLiteralExpr") {
             if (expr.op === "!=") {
               return {
-                Variable: this.evalJsonPath(val),
-                IsNull: false,
+                And: [
+                  {
+                    Variable: this.evalJsonPath(val),
+                    IsPresent: true,
+                  },
+                  {
+                    Variable: this.evalJsonPath(val),
+                    IsNull: false,
+                  },
+                ],
               };
             } else if (expr.op === "==") {
               return {
-                Variable: this.evalJsonPath(val),
-                IsNull: true,
+                Or: [
+                  {
+                    Variable: this.evalJsonPath(val),
+                    IsPresent: false,
+                  },
+                  {
+                    Variable: this.evalJsonPath(val),
+                    IsNull: true,
+                  },
+                ],
               };
             }
           } else if (lit.kind === "StringLiteralExpr") {

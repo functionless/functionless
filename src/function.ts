@@ -1,5 +1,5 @@
 import { aws_lambda } from "aws-cdk-lib";
-import { CallExpr } from "./expression";
+import { CallExpr, isLiteralExpr } from "./expression";
 import { isVTL, VTL } from "./vtl";
 import { ASL, isASL, Task } from "./asl";
 
@@ -66,16 +66,14 @@ export class Function<F extends AnyFunction> {
         const task: Partial<Task> = {
           Type: "Task",
           Resource: this.resource.functionArn,
-          InputPath: "$.payload",
-          Parameters: {
-            payload: Object.entries(call.args).reduce(
-              (args, [argName, argExpr]) => ({
-                ...args,
-                [argName]: context.evalJson(argExpr!),
-              }),
-              {}
-            ),
-          },
+          Parameters: Object.entries(call.args).reduce(
+            (args, [argName, argExpr]) => ({
+              ...args,
+              [`${argName}${isLiteralExpr(argExpr) ? "" : ".$"}`]:
+                context.evalJson(argExpr!),
+            }),
+            {}
+          ),
         };
         return task;
       } else {

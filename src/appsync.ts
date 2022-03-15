@@ -9,6 +9,7 @@ import {
 } from "typesafe-dynamodb/lib/attribute-value";
 import { FunctionDecl } from "./declaration";
 import { Literal } from "./literal";
+import { aws_stepfunctions } from "aws-cdk-lib";
 
 /**
  * The shape of the AWS Appsync `$context` variable.
@@ -215,14 +216,26 @@ export class AppsyncResolver<
                   service.resource.node.addr,
                   {
                     api,
-                    endpoint: `https://states.${service.resource.stack.region}.amazonaws.com/`,
+                    endpoint: `https://${
+                      service.getStepFunctionType() ===
+                      aws_stepfunctions.StateMachineType.EXPRESS
+                        ? "sync-states"
+                        : "states"
+                    }.${service.resource.stack.region}.amazonaws.com/`,
                     authorizationConfig: {
                       signingRegion: api.stack.region,
                       signingServiceName: "states",
                     },
                   }
                 );
-                service.grantStartSyncExecution(ds.grantPrincipal);
+                if (
+                  service.getStepFunctionType() ===
+                  aws_stepfunctions.StateMachineType.EXPRESS
+                ) {
+                  service.grantStartSyncExecution(ds.grantPrincipal);
+                } else {
+                  service.grantStartExecution(ds.grantPrincipal);
+                }
                 return ds;
               } else {
                 // TODO: use HTTP resolvers for the AWS-SDK types.
@@ -231,6 +244,22 @@ export class AppsyncResolver<
                 );
               }
             });
+
+            let returnValName = "$context.result";
+            let pre: string | undefined;
+            if (service.kind === "StepFunction") {
+              returnValName = "$context.stash.sfn__result";
+              pre = `#if($context.result.statusCode == 200)
+  #set(${returnValName} = $util.parseJson($context.result.body))
+${
+  service.getStepFunctionType() === aws_stepfunctions.StateMachineType.EXPRESS
+    ? `  #set(${returnValName}.output = $util.parseJson(${returnValName}.output))\n`
+    : ""
+}
+#else 
+  $util.error($context.result.body, "$context.result.statusCode")
+#end`;
+            }
 
             if (expr.kind === "ExprStmt" && expr.expr.kind === "CallExpr") {
               return createStage(expr.expr);
@@ -241,8 +270,10 @@ export class AppsyncResolver<
               return createStage(
                 expr.expr,
                 appsync.MappingTemplate.fromString(
-                  `#set( $context.stash.return__flag = true )
-#set( $context.stash.return__val = $context.result )
+                  `${
+                    pre ? `${pre}\n` : ""
+                  }#set( $context.stash.return__flag = true )
+#set( $context.stash.return__val = ${returnValName} )
 {}`
                 )
               );
@@ -252,7 +283,9 @@ export class AppsyncResolver<
             ) {
               const responseMappingTemplate =
                 appsync.MappingTemplate.fromString(
-                  `#set( $context.stash.${expr.name} = $context.result )\n{}`
+                  `${pre ? `${pre}\n` : ""}#set( $context.stash.${
+                    expr.name
+                  } = ${returnValName} )\n{}`
                 );
 
               return createStage(expr.expr, responseMappingTemplate);
@@ -265,7 +298,7 @@ export class AppsyncResolver<
             function createStage(
               expr: CallExpr,
               responseMappingTemplate: appsync.MappingTemplate = appsync.MappingTemplate.fromString(
-                "{}"
+                `${pre ? `${pre}\n` : ""}{}`
               )
             ) {
               template.call(expr);
@@ -283,6 +316,8 @@ export class AppsyncResolver<
           } else if (isLastExpr) {
             if (expr.kind === "ReturnStmt") {
               template.return(expr.expr);
+            } else if (expr.kind === "IfStmt") {
+              template.eval(expr);
             } else {
               template.return("$null");
             }

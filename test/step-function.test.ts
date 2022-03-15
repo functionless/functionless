@@ -62,18 +62,15 @@ test("return a single Lambda Function call", () => {
       State1: {
         Type: "Task",
         Resource: getPerson.resource.functionArn,
-        InputPath: "$.payload",
         Next: "Success",
-        OutputPath: "$",
+        ResultPath: "$",
         Parameters: {
-          payload: {
-            id: "$.id",
-          },
+          "id.$": "$.id",
         },
         Catch: [
           {
             ErrorEquals: ["States.All"],
-            Next: "Fail",
+            Next: "Throw",
           },
         ],
       },
@@ -105,18 +102,15 @@ test("call Lambda Function, store as variable, return variable", () => {
       State1: {
         Type: "Task",
         Resource: getPerson.resource.functionArn,
-        InputPath: "$.payload",
         Next: "State2",
-        OutputPath: "$.person",
+        ResultPath: "$.person",
         Parameters: {
-          payload: {
-            id: "$.id",
-          },
+          "id.$": "$.id",
         },
         Catch: [
           {
             ErrorEquals: ["States.All"],
-            Next: "Fail",
+            Next: "Throw",
           },
         ],
       },
@@ -125,7 +119,7 @@ test("call Lambda Function, store as variable, return variable", () => {
         Parameters: {
           "result.$": "$.person",
         },
-        ResultPath: "$.result",
+        OutputPath: "$.result",
         Next: "Success",
       },
       Success: {
@@ -172,18 +166,18 @@ test("return AWS.DynamoDB.GetItem", () => {
         Catch: [
           {
             ErrorEquals: ["States.All"],
-            Next: "Fail",
+            Next: "Throw",
           },
         ],
         Next: "State2",
-        OutputPath: "$.person",
+        ResultPath: "$.person",
         Parameters: {
           Key: {
             id: {
               "S.$": "$.id",
             },
           },
-          TableName: personTable.resource.tableArn,
+          TableName: personTable.resource.tableName,
         },
         Resource: "arn:aws:states:::aws-sdk:dynamodb:getItem",
         Type: "Task",
@@ -191,8 +185,16 @@ test("return AWS.DynamoDB.GetItem", () => {
       State2: {
         Choices: [
           {
-            Variable: "$.person.Item",
-            IsNull: true,
+            Or: [
+              {
+                Variable: "$.person.Item",
+                IsPresent: false,
+              },
+              {
+                Variable: "$.person.Item",
+                IsNull: true,
+              },
+            ],
             Next: "State3",
           },
         ],
@@ -202,9 +204,9 @@ test("return AWS.DynamoDB.GetItem", () => {
       State3: {
         Next: "Success",
         Parameters: {
-          result: undefined,
+          result: null,
         },
-        ResultPath: "$.result",
+        OutputPath: "$.result",
         Type: "Pass",
       },
       State4: {
@@ -215,7 +217,7 @@ test("return AWS.DynamoDB.GetItem", () => {
             "name.$": "$.person.Item.name.S",
           },
         },
-        ResultPath: "$.result",
+        OutputPath: "$.result",
         Type: "Pass",
       },
       Success: {
@@ -269,18 +271,18 @@ test("call AWS.DynamoDB.GetItem, then Lambda and return LiteralExpr", () => {
         Catch: [
           {
             ErrorEquals: ["States.All"],
-            Next: "Fail",
+            Next: "Throw",
           },
         ],
         Next: "State2",
-        OutputPath: "$.person",
+        ResultPath: "$.person",
         Parameters: {
           Key: {
             id: {
               "S.$": "$.id",
             },
           },
-          TableName: personTable.resource.tableArn,
+          TableName: personTable.resource.tableName,
         },
         Resource: "arn:aws:states:::aws-sdk:dynamodb:getItem",
         Type: "Task",
@@ -288,38 +290,43 @@ test("call AWS.DynamoDB.GetItem, then Lambda and return LiteralExpr", () => {
       State2: {
         Choices: [
           {
-            Variable: "$.person.Item",
-            IsNull: true,
+            Or: [
+              {
+                Variable: "$.person.Item",
+                IsPresent: false,
+              },
+              {
+                Variable: "$.person.Item",
+                IsNull: true,
+              },
+            ],
             Next: "State3",
           },
         ],
-        Default: "Success",
+        Default: "State4",
         Type: "Choice",
       },
       State3: {
         Next: "Success",
         Parameters: {
-          result: undefined,
+          result: null,
         },
-        ResultPath: "$.result",
+        OutputPath: "$.result",
         Type: "Pass",
       },
       State4: {
         Catch: [
           {
             ErrorEquals: ["States.All"],
-            Next: "Fail",
+            Next: "Throw",
           },
         ],
-        InputPath: "$.payload",
         Next: "State5",
-        OutputPath: "$.score",
+        ResultPath: "$.score",
         Parameters: {
-          payload: {
-            person: {
-              "id.$": "$.person.Item.id.S",
-              "name.$": "$.person.Item.name.S",
-            },
+          person: {
+            "id.$": "$.person.Item.id.S",
+            "name.$": "$.person.Item.name.S",
           },
         },
         Resource: computeScore.resource.functionArn,
@@ -334,7 +341,7 @@ test("call AWS.DynamoDB.GetItem, then Lambda and return LiteralExpr", () => {
             "score.$": "$.score",
           },
         },
-        ResultPath: "$.result",
+        OutputPath: "$.result",
         Type: "Pass",
       },
       Success: {
