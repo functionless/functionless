@@ -60,7 +60,9 @@ export function compile(
         } else if (isReflectFunction(node)) {
           const func = node.arguments[0];
           if (ts.isIdentifier(func)) {
-            throw new Error("Reflect does not support function references");
+            throw new Error(
+              `Reflect does not support function references: ${func.text}`
+            );
           }
           return toFunction("FunctionDecl", func);
         }
