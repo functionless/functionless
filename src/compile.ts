@@ -79,7 +79,6 @@ export function compile(
           const exprType = checker.getTypeAtLocation(node.expression);
           const exprDecl = exprType.symbol?.declarations?.[0];
           if (exprDecl && ts.isFunctionDeclaration(exprDecl)) {
-            console.log(exprDecl.name?.text);
             if (exprDecl.name?.text === "reflect") {
               return true;
             }
