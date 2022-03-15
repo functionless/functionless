@@ -9,10 +9,11 @@ export function isNode(a: any): a is Expr {
 }
 
 export class BaseNode<Kind extends string> {
-  // Expr that contains this one (surrounding scope)
+  /**
+   * Node that contains this one (surrounding scope).
+   */
   parent: FunctionlessNode | undefined;
-  // Expr that is directly adjacent and above this one (same scope)
-  prev: FunctionlessNode | undefined;
+
   constructor(readonly kind: Kind) {}
 
   public as<K extends FunctionlessNode["kind"]>(

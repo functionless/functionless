@@ -1,7 +1,7 @@
 import { aws_lambda } from "aws-cdk-lib";
 import { CallExpr } from "./expression";
 import { isVTL, VTL } from "./vtl";
-import { ASL, isASL } from "./asl";
+import { ASL, isASL, Task } from "./asl";
 
 // @ts-ignore - imported for typedoc
 import type { AppsyncResolver } from "./appsync";
@@ -62,7 +62,22 @@ export class Function<F extends AnyFunction> {
         );
         return context.json(request);
       } else if (isASL(context)) {
-        context;
+        this.resource.grantInvoke(context.role);
+        const task: Partial<Task> = {
+          Type: "Task",
+          Resource: this.resource.functionArn,
+          InputPath: "$.payload",
+          Parameters: {
+            payload: Object.entries(call.args).reduce(
+              (args, [argName, argExpr]) => ({
+                ...args,
+                [argName]: context.evalJson(argExpr!),
+              }),
+              {}
+            ),
+          },
+        };
+        return task;
       } else {
         console.error(`invalid Function call context`, context);
         throw new Error(`invalid Function call context: ${context}`);

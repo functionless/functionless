@@ -8,28 +8,46 @@ import { BaseNode, isNode, typeGuard } from "./node";
 export type Stmt =
   | BreakStmt
   | BlockStmt
+  | CatchClause
   | ExprStmt
   | ForInStmt
   | ForOfStmt
   | IfStmt
   | ReturnStmt
+  | ThrowStmt
+  | TryStmt
   | VariableStmt;
 
 export function isStmt(a: any): a is Stmt {
   return (
     isNode(a) &&
-    (isBlock(a) ||
+    (isBreakStmt(a) ||
+      isBlockStmt(a) ||
+      isCatchStmt(a) ||
       isExprStmt(a) ||
       isForInStmt(a) ||
       isForOfStmt(a) ||
       isReturn(a) ||
+      isThrowStmt(a) ||
+      isTryStmt(a) ||
       isVariableStmt(a))
   );
 }
 
+export class BaseStmt<Kind extends string> extends BaseNode<Kind> {
+  /**
+   * Node that is prior to this node.
+   */
+  prev: Stmt | undefined;
+  /**
+   * Node that is subsequent to this node.
+   */
+  next: Stmt | undefined;
+}
+
 export const isExprStmt = typeGuard("ExprStmt");
 
-export class ExprStmt extends BaseNode<"ExprStmt"> {
+export class ExprStmt extends BaseStmt<"ExprStmt"> {
   constructor(readonly expr: Expr) {
     super("ExprStmt");
     expr.parent = this;
@@ -40,7 +58,7 @@ export const isVariableStmt = typeGuard("VariableStmt");
 
 export class VariableStmt<
   E extends Expr | undefined = Expr | undefined
-> extends BaseNode<"VariableStmt"> {
+> extends BaseStmt<"VariableStmt"> {
   constructor(readonly name: string, readonly expr: E) {
     super("VariableStmt");
     if (expr) {
@@ -49,23 +67,22 @@ export class VariableStmt<
   }
 }
 
-export const isBlock = typeGuard("BlockStmt");
+export const isBlockStmt = typeGuard("BlockStmt");
 
-export class BlockStmt extends BaseNode<"BlockStmt"> {
+export class BlockStmt extends BaseStmt<"BlockStmt"> {
   constructor(readonly statements: Stmt[]) {
     super("BlockStmt");
-    let prev = undefined;
-    for (const expr of statements) {
+    statements.forEach((expr, i) => {
       expr.parent = this;
-      expr.prev = prev;
-      prev = expr;
-    }
+      expr.prev = i > 0 ? statements[i - 1] : undefined;
+      expr.next = i + 1 < statements.length ? statements[i + 1] : undefined;
+    });
   }
 }
 
 export const isReturn = typeGuard("ReturnStmt");
 
-export class ReturnStmt extends BaseNode<"ReturnStmt"> {
+export class ReturnStmt extends BaseStmt<"ReturnStmt"> {
   constructor(readonly expr: Expr) {
     super("ReturnStmt");
     expr.parent = this;
@@ -74,7 +91,7 @@ export class ReturnStmt extends BaseNode<"ReturnStmt"> {
 
 export const isIfStmt = typeGuard("IfStmt");
 
-export class IfStmt extends BaseNode<"IfStmt"> {
+export class IfStmt extends BaseStmt<"IfStmt"> {
   constructor(
     readonly when: Expr,
     readonly then: BlockStmt,
@@ -91,7 +108,7 @@ export class IfStmt extends BaseNode<"IfStmt"> {
 
 export const isForOfStmt = typeGuard("ForOfStmt");
 
-export class ForOfStmt extends BaseNode<"ForOfStmt"> {
+export class ForOfStmt extends BaseStmt<"ForOfStmt"> {
   constructor(
     readonly i: VariableStmt,
     readonly expr: Expr,
@@ -106,7 +123,7 @@ export class ForOfStmt extends BaseNode<"ForOfStmt"> {
 
 export const isForInStmt = typeGuard("ForInStmt");
 
-export class ForInStmt extends BaseNode<"ForInStmt"> {
+export class ForInStmt extends BaseStmt<"ForInStmt"> {
   constructor(
     readonly i: VariableStmt,
     readonly expr: Expr,
@@ -121,8 +138,51 @@ export class ForInStmt extends BaseNode<"ForInStmt"> {
 
 export const isBreakStmt = typeGuard("BreakStmt");
 
-export class BreakStmt extends BaseNode<"BreakStmt"> {
+export class BreakStmt extends BaseStmt<"BreakStmt"> {
   constructor() {
     super("BreakStmt");
+  }
+}
+
+export const isTryStmt = typeGuard("TryStmt");
+
+export class TryStmt extends BaseStmt<"TryStmt"> {
+  constructor(
+    readonly tryBlock: BlockStmt,
+    readonly catchClause?: CatchClause,
+    readonly finallyBlock?: BlockStmt
+  ) {
+    super("TryStmt");
+    tryBlock.parent = this;
+    if (catchClause) {
+      catchClause.parent = this;
+    }
+    if (finallyBlock) {
+      finallyBlock.parent = this;
+    }
+  }
+}
+
+export const isCatchStmt = typeGuard("CatchClause");
+
+export class CatchClause extends BaseStmt<"CatchClause"> {
+  constructor(
+    readonly variableDecl: VariableStmt | undefined,
+    readonly block: BlockStmt
+  ) {
+    super("CatchClause");
+    if (variableDecl) {
+      variableDecl.parent = this;
+    }
+    block.parent = this;
+  }
+}
+
+export const isThrowStmt = typeGuard("ThrowStmt");
+
+export class ThrowStmt extends BaseStmt<"ThrowStmt"> {
+  constructor(readonly expr: Expr) {
+    super("ThrowStmt");
+    expr.parent = this;
   }
 }

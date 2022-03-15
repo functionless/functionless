@@ -1,7 +1,7 @@
 import { Construct } from "constructs";
 import { aws_dynamodb, aws_lambda } from "aws-cdk-lib";
 import {
-  AWS,
+  $aws,
   Table,
   Function,
   $util,
@@ -55,8 +55,8 @@ export class PeopleDatabase extends Construct {
       this,
       "GetPersonMachine",
       (id: string) => {
-        const person = AWS.DynamoDB.GetItem({
-          Table: this.personTable,
+        const person = $aws.DynamoDB.GetItem({
+          TableName: this.personTable,
           Key: {
             id: {
               S: id,

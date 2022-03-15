@@ -222,7 +222,7 @@ export class AppsyncResolver<
                     },
                   }
                 );
-                service.resource.grantStartSyncExecution(ds.grantPrincipal);
+                service.grantStartSyncExecution(ds.grantPrincipal);
                 return ds;
               } else {
                 // TODO: use HTTP resolvers for the AWS-SDK types.

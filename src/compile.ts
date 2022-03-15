@@ -396,6 +396,25 @@ export function compile(
           ]);
         } else if (ts.isBreakStatement(node)) {
           return newExpr("BreakStmt", []);
+        } else if (ts.isTryStatement(node)) {
+          return newExpr("TryStmt", [
+            toExpr(node.tryBlock),
+            node.catchClause
+              ? toExpr(node.catchClause)
+              : ts.factory.createIdentifier("undefined"),
+            node.finallyBlock
+              ? toExpr(node.finallyBlock)
+              : ts.factory.createIdentifier("undefined"),
+          ]);
+        } else if (ts.isCatchClause(node)) {
+          return newExpr("CatchClause", [
+            node.variableDeclaration
+              ? toExpr(node.variableDeclaration)
+              : ts.factory.createIdentifier("undefined"),
+            toExpr(node.block),
+          ]);
+        } else if (ts.isThrowStatement(node)) {
+          return newExpr("ThrowStmt", [toExpr(node.expression)]);
         }
 
         throw new Error(`unhandled node: ${node.getText()}`);

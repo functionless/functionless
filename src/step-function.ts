@@ -12,13 +12,11 @@ import {
 
 import { FunctionDecl, isFunctionDecl } from "./declaration";
 import { AnyFunction } from "./function";
-import { ASL, isASL } from "./asl";
+import { ASL, isASL, StateMachine, States } from "./asl";
 import { isVTL, VTL } from "./vtl";
 import { makeCallable } from "./callable";
 import { CallExpr } from "./expression";
 import { LogOptions } from "aws-cdk-lib/aws-stepfunctions";
-
-import { StatesMetrics } from "aws-cdk-lib/aws-stepfunctions/lib/stepfunctions-canned-metrics.generated";
 
 export type AnyStepFunction =
   | ExpressStepFunction<AnyFunction>
@@ -38,6 +36,12 @@ class BaseStepFunction<F extends AnyFunction>
 
   readonly stateMachineArn: string;
   readonly role: aws_iam.IRole;
+  readonly definition: StateMachine<States>;
+
+  /**
+   * The principal this state machine is running as
+   */
+  readonly grantPrincipal;
 
   constructor(scope: Construct, id: string, props: StepFunctionProps, func: F);
 
@@ -66,11 +70,13 @@ class BaseStepFunction<F extends AnyFunction>
         assumedBy: new aws_iam.ServicePrincipal("states.amazonaws.com"),
       });
 
-    const asl = new ASL(this, this.role);
+    this.grantPrincipal = this.role.grantPrincipal;
+
+    this.definition = new ASL(this, this.role, this.decl).definition;
 
     this.resource = new aws_stepfunctions.CfnStateMachine(this, "Resource", {
       roleArn: this.role.roleArn,
-      definition: asl.interpret(this.decl),
+      definition: this.definition,
       loggingConfiguration: props?.logs
         ? this.buildLoggingConfiguration(props?.logs)
         : undefined,
@@ -114,13 +120,6 @@ class BaseStepFunction<F extends AnyFunction>
       }
       return;
     });
-  }
-
-  /**
-   * The principal this state machine is running as
-   */
-  public get grantPrincipal() {
-    return this.role.grantPrincipal;
   }
 
   /**
@@ -250,7 +249,15 @@ class BaseStepFunction<F extends AnyFunction>
   public metricFailed(
     props?: aws_cloudwatch.MetricOptions
   ): aws_cloudwatch.Metric {
-    return this.cannedMetric(StatesMetrics.executionsFailedSum, props);
+    return this.cannedMetric(
+      (dimensions) => ({
+        namespace: "AWS/States",
+        metricName: "ExecutionsFailed",
+        dimensionsMap: dimensions,
+        statistic: "Sum",
+      }),
+      props
+    );
   }
 
   /**
@@ -273,7 +280,15 @@ class BaseStepFunction<F extends AnyFunction>
   public metricAborted(
     props?: aws_cloudwatch.MetricOptions
   ): aws_cloudwatch.Metric {
-    return this.cannedMetric(StatesMetrics.executionsAbortedSum, props);
+    return this.cannedMetric(
+      (dimensions) => ({
+        namespace: "AWS/States",
+        metricName: "ExecutionsAborted",
+        dimensionsMap: dimensions,
+        statistic: "Sum",
+      }),
+      props
+    );
   }
 
   /**
@@ -284,7 +299,15 @@ class BaseStepFunction<F extends AnyFunction>
   public metricSucceeded(
     props?: aws_cloudwatch.MetricOptions
   ): aws_cloudwatch.Metric {
-    return this.cannedMetric(StatesMetrics.executionsSucceededSum, props);
+    return this.cannedMetric(
+      (dimensions) => ({
+        namespace: "AWS/States",
+        metricName: "ExecutionsSucceeded",
+        dimensionsMap: dimensions,
+        statistic: "Sum",
+      }),
+      props
+    );
   }
 
   /**
@@ -295,7 +318,15 @@ class BaseStepFunction<F extends AnyFunction>
   public metricTimedOut(
     props?: aws_cloudwatch.MetricOptions
   ): aws_cloudwatch.Metric {
-    return this.cannedMetric(StatesMetrics.executionsTimedOutSum, props);
+    return this.cannedMetric(
+      (dimensions) => ({
+        namespace: "AWS/States",
+        metricName: "ExecutionsTimedOut",
+        dimensionsMap: dimensions,
+        statistic: "Sum",
+      }),
+      props
+    );
   }
 
   /**
@@ -317,7 +348,15 @@ class BaseStepFunction<F extends AnyFunction>
   public metricTime(
     props?: aws_cloudwatch.MetricOptions
   ): aws_cloudwatch.Metric {
-    return this.cannedMetric(StatesMetrics.executionTimeAverage, props);
+    return this.cannedMetric(
+      (dimensions) => ({
+        namespace: "AWS/States",
+        metricName: "ExecutionTime",
+        dimensionsMap: dimensions,
+        statistic: "Average",
+      }),
+      props
+    );
   }
 
   /**

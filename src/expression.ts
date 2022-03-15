@@ -2,9 +2,9 @@ import { AnyStepFunction } from ".";
 import { ParameterDecl } from "./declaration";
 import { AnyFunction, AnyLambda } from "./function";
 import { BaseNode, isNode, setParent, typeGuard } from "./node";
-import { BlockStmt, isIfStmt } from "./statement";
+import { BlockStmt } from "./statement";
 import { AnyTable } from "./table";
-import { AWS } from "./aws";
+import { $aws } from "./aws";
 
 /**
  * An {@link Expr} (Expression) is a Node that will be interpreted to a value.
@@ -30,7 +30,13 @@ export type Expr =
   | TemplateExpr
   | UnaryExpr;
 
-export function isExpr(a: any) {
+export function assertIsExpr(a: any, message?: string): asserts a is Expr {
+  if (!isExpr(a)) {
+    throw new Error(message ?? `expected an Expr`);
+  }
+}
+
+export function isExpr(a: any): a is Expr {
   return (
     isNode(a) &&
     (isArrayLiteralExpr(a) ||
@@ -39,7 +45,6 @@ export function isExpr(a: any) {
       isCallExpr(a) ||
       isConditionExpr(a) ||
       isFunctionExpr(a) ||
-      isIfStmt(a) ||
       isElementAccessExpr(a) ||
       isIdentifier(a) ||
       isNullLiteralExpr(a) ||
@@ -84,7 +89,7 @@ export class FunctionExpr<
 
 export const isReferenceExpr = typeGuard("ReferenceExpr");
 
-export type CanReference = AnyTable | AnyLambda | AnyStepFunction | typeof AWS;
+export type CanReference = AnyTable | AnyLambda | AnyStepFunction | typeof $aws;
 
 export class ReferenceExpr extends BaseNode<"ReferenceExpr"> {
   constructor(readonly ref: () => CanReference) {
@@ -130,7 +135,9 @@ export class CallExpr extends BaseNode<"CallExpr"> {
     super("CallExpr");
     expr.parent = this;
     for (const arg of Object.values(args)) {
-      arg.parent = this;
+      if (arg) {
+        arg.parent = this;
+      }
     }
   }
 }
@@ -191,6 +198,7 @@ export class UnaryExpr extends BaseNode<"UnaryExpr"> {
 export const isNullLiteralExpr = typeGuard("NullLiteralExpr");
 
 export class NullLiteralExpr extends BaseNode<"NullLiteralExpr"> {
+  readonly value = null;
   constructor() {
     super("NullLiteralExpr");
   }

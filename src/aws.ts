@@ -2,11 +2,9 @@ import { Table } from "./table";
 import { GetItemInput, GetItemOutput } from "typesafe-dynamodb/lib/get-item";
 import { TableKey } from "typesafe-dynamodb/lib/key";
 import { JsonFormat } from "typesafe-dynamodb";
-import { CallExpr, ObjectLiteralExpr } from "./expression";
-import { ASL, isASL } from "./asl";
+import { CallExpr, isObjectLiteralExpr, ObjectLiteralExpr } from "./expression";
+import { ASL, isASL, Task } from "./asl";
 import { CallContext } from "./context";
-
-import { aws_stepfunctions_tasks } from "aws-cdk-lib";
 
 type Item<T extends Table<any, any, any>> = T extends Table<infer I, any, any>
   ? I
@@ -33,7 +31,7 @@ type RangeKey<T extends Table<any, any, any>> = T extends Table<
  *
  * @see https://docs.aws.amazon.com/step-functions/latest/dg/supported-services-awssdk.html
  */
-export namespace AWS {
+export namespace $aws {
   export const kind = "AWS";
 
   export namespace DynamoDB {
@@ -52,7 +50,7 @@ export namespace AWS {
       AttributesToGet extends keyof Item<T> | undefined = undefined,
       ProjectionExpression extends string | undefined = undefined
     >(
-      input: { Table: T } & Omit<
+      input: { TableName: T } & Omit<
         GetItemInput<
           Item<T>,
           PartitionKey<T>,
@@ -76,13 +74,19 @@ export namespace AWS {
 
     // @ts-ignore
     export function GetItem(
-      expr: CallExpr,
+      call: CallExpr,
       context: CallContext
-    ): aws_stepfunctions_tasks.CallAwsServiceProps {
+    ): Partial<Task> {
       assertIsASL(context, "DynamoDB.GetItem");
 
-      const tableProp = (expr.args.input as ObjectLiteralExpr).getProperty(
-        "Table"
+      const input = call.args.input;
+      if (!isObjectLiteralExpr(input)) {
+        throw new Error(
+          `input parameter must be an ObjectLiteralExpr, but was ${input?.kind}`
+        );
+      }
+      const tableProp = (call.args.input as ObjectLiteralExpr).getProperty(
+        "TableName"
       );
 
       if (
@@ -96,12 +100,12 @@ export namespace AWS {
       if (table.kind !== "Table") {
         throw new Error(``);
       }
+      table.resource.grantReadData(context.role);
 
       return {
-        service: "dynamodb",
-        action: "getItem",
-        iamResources: [table.resource.tableArn],
-        iamAction: "dynamodb:GetItem",
+        Type: "Task",
+        Resource: "arn:aws:states:::aws-sdk:dynamodb:getItem",
+        Parameters: context.evalJson(input),
       };
     }
   }

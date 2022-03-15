@@ -18,7 +18,7 @@ const project = new typescript.TypeScriptProject({
     "aws-cdk-lib@^2.15.0",
     "constructs@^10.0.0",
     "typesafe-dynamodb@^0.1.5",
-    "typescript@^4.5.5",
+    "typescript@^4.6.2",
   ],
   eslintOptions: {
     ignorePatterns: ["**"],

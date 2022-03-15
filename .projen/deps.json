@@ -101,7 +101,7 @@
     },
     {
       "name": "typescript",
-      "version": "4.5.5",
+      "version": "4.6.2",
       "type": "build"
     },
     {
@@ -126,7 +126,7 @@
     },
     {
       "name": "typescript",
-      "version": "^4.5.5",
+      "version": "^4.6.2",
       "type": "peer"
     },
     {

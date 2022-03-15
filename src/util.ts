@@ -1,6 +1,7 @@
 import { CallExpr, CanReference, Identifier } from "./expression";
 import { AnyFunction } from "./function";
 import { FunctionlessNode } from "./node";
+import { isStmt } from "./statement";
 
 export function lookupIdentifier(id: Identifier) {
   return lookup(id.parent);
@@ -22,7 +23,7 @@ export function lookupIdentifier(id: Identifier) {
         return expr.i;
       }
     }
-    if (expr.prev) {
+    if (isStmt(expr) && expr.prev) {
       return lookup(expr.prev);
     } else {
       return lookup(expr.parent);

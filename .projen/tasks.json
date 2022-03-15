@@ -218,19 +218,19 @@
       },
       "steps": [
         {
-          "exec": "npm-check-updates --dep dev --upgrade --target=minor --reject='projen'"
+          "exec": "npm-check-updates --dep dev --upgrade --target=minor --reject='@aws-cdk/aws-appsync-alpha,aws-cdk-lib,constructs,typesafe-dynamodb,typescript,projen'"
         },
         {
-          "exec": "npm-check-updates --dep optional --upgrade --target=minor --reject='projen'"
+          "exec": "npm-check-updates --dep optional --upgrade --target=minor --reject='@aws-cdk/aws-appsync-alpha,aws-cdk-lib,constructs,typesafe-dynamodb,typescript,projen'"
         },
         {
-          "exec": "npm-check-updates --dep peer --upgrade --target=minor --reject='projen'"
+          "exec": "npm-check-updates --dep peer --upgrade --target=minor --reject='@aws-cdk/aws-appsync-alpha,aws-cdk-lib,constructs,typesafe-dynamodb,typescript,projen'"
         },
         {
-          "exec": "npm-check-updates --dep prod --upgrade --target=minor --reject='projen'"
+          "exec": "npm-check-updates --dep prod --upgrade --target=minor --reject='@aws-cdk/aws-appsync-alpha,aws-cdk-lib,constructs,typesafe-dynamodb,typescript,projen'"
         },
         {
-          "exec": "npm-check-updates --dep bundle --upgrade --target=minor --reject='projen'"
+          "exec": "npm-check-updates --dep bundle --upgrade --target=minor --reject='@aws-cdk/aws-appsync-alpha,aws-cdk-lib,constructs,typesafe-dynamodb,typescript,projen'"
         },
         {
           "exec": "yarn install --check-files"

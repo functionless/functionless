@@ -442,10 +442,14 @@ export class VTL {
         } else {
           return varName;
         }
+      case "ThrowStmt":
+        return `#throw(${this.eval(node.expr)})`;
+      case "TryStmt":
+      case "CatchClause":
+        throw new Error(`${node.kind} is not yet supported in VTL`);
     }
 
-    const __exhaustive: never = node;
-    return __exhaustive;
+    return assertNever(node);
   }
 
   /**
