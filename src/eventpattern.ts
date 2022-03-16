@@ -1,5 +1,13 @@
 import { aws_events } from "aws-cdk-lib";
-import { BinaryExpr, Expr, FunctionDecl, PropAccessExpr, UnaryExpr } from ".";
+import {
+  BinaryExpr,
+  CallExpr,
+  ElementAccessExpr,
+  Expr,
+  FunctionDecl,
+  PropAccessExpr,
+  UnaryExpr,
+} from ".";
 import { assertDefined, assertNever, assertString } from "./assert";
 import { Stmt } from "./statement";
 
@@ -18,6 +26,8 @@ export const synthesizeEventPattern = (
       return handlePropAccess(expr);
     } else if (expr.kind === "UnaryExpr") {
       return handleUnaryExpression(expr);
+    } else if (expr.kind === "CallExpr") {
+      return handleCall(expr);
     } else {
       throw new Error(`${expr.kind} is unsupported`);
     }
@@ -40,6 +50,109 @@ export const synthesizeEventPattern = (
     } else {
       throw new Error(`Unsupported binary operator ${expr.op}`);
     }
+  };
+
+  const handleCall = (expr: CallExpr): ClassDocument => {
+    if (
+      // the expr of the call
+      expr.expr.kind === "PropAccessExpr" ||
+      expr.expr.kind === "ElementAccessExpr"
+    ) {
+      const operation = getPropertyAccessKey(expr.expr);
+
+      if (operation === "includes") {
+        const searchElement = getConstant(expr.args["searchElement"])?.value;
+
+        console.log(expr.args);
+
+        if (
+          Object.values(expr.args).filter((e) => e.kind !== "NullLiteralExpr")
+            .length > 1
+        ) {
+          throw new Error("Includes only supports the searchElement argument");
+        }
+
+        if (
+          typeof searchElement !== "string" &&
+          typeof searchElement !== "number" &&
+          typeof searchElement !== "boolean"
+        ) {
+          throw Error(
+            "Includes operation only supports numbers, string, or booleans."
+          );
+        }
+        // the property the call is on
+        const eventReference = getEventReference(expr.expr.expr);
+
+        if (!eventReference) {
+          throw new Error(
+            "Includes operation must be on a property of the event."
+          );
+        }
+
+        if (
+          expr.expr.expr.kind === "PropAccessExpr" ||
+          expr.expr.expr.kind === "ElementAccessExpr"
+        ) {
+          if (
+            expr.expr.expr.type === "string[]" ||
+            expr.expr.expr.type === "number[]" ||
+            expr.expr.expr.type === "boolean[]"
+          ) {
+            assertValidEventRefererence(eventReference);
+            return eventReferenceToPattern(eventReference, {
+              value: searchElement,
+            });
+          }
+
+          // TODO: support for strings
+          throw new Error(
+            `Includes operation only supported on Arrays, found ${expr.expr.expr.type}.`
+          );
+        }
+      } else if (operation === "startsWith") {
+        const searchString = assertString(
+          getConstant(expr.args["searchString"])?.value
+        );
+
+        if (
+          Object.values(expr.args).filter((e) => e.kind !== "NullLiteralExpr")
+            .length > 1
+        ) {
+          throw new Error("Includes only supports the searchString argument");
+        }
+
+        // the property the call is on
+        const eventReference = getEventReference(expr.expr.expr);
+
+        if (!eventReference) {
+          throw new Error(
+            "StartsWith operation must be on a property of the event."
+          );
+        }
+
+        if (
+          expr.expr.expr.kind === "PropAccessExpr" ||
+          expr.expr.expr.kind === "ElementAccessExpr"
+        ) {
+          if (expr.expr.expr.type === "string") {
+            assertValidEventRefererence(eventReference);
+            return eventReferenceToPattern(eventReference, {
+              prefix: searchString,
+            });
+          }
+
+          // TODO: support for strings
+          throw new Error(
+            `Includes operation only supported on Arrays, found ${expr.expr.expr.type}.`
+          );
+        }
+      }
+
+      throw new Error(`Unsupported operation ${operation}`);
+    }
+
+    throw new Error("Operations only supported on properties of the event.");
   };
 
   const handleUnaryExpression = (expr: UnaryExpr): ClassDocument => {
@@ -91,7 +204,7 @@ export const synthesizeEventPattern = (
     } else if (isAnythingButClassification(pattern)) {
       return pattern.anythingBut === null
         ? { null: true }
-        : typeof pattern.anythingBut === "string" && pattern.prefix
+        : typeof pattern.anythingBut === "string" && pattern.isPrefix
         ? { prefix: pattern.anythingBut }
         : { value: pattern.anythingBut };
     } else if (isExactMatchClassficiation(pattern)) {
@@ -101,7 +214,7 @@ export const synthesizeEventPattern = (
     } else if (isPresentClassification(pattern)) {
       return { isPresent: !pattern.isPresent };
     } else if (isPrefixMatchClassficiation(pattern)) {
-      return { anythingBut: pattern.prefix, prefix: true };
+      return { anythingBut: pattern.prefix, isPrefix: true };
     } else if (isEmptyClassification(pattern)) {
       return pattern;
     } else if (isNullMatchClassification(pattern)) {
@@ -261,10 +374,7 @@ export const synthesizeEventPattern = (
       expression.kind === "PropAccessExpr" ||
       expression.kind === "ElementAccessExpr"
     ) {
-      const key =
-        expression.kind === "PropAccessExpr"
-          ? expression.name
-          : assertString(getConstant(expression.element)?.value);
+      const key = getPropertyAccessKey(expression);
       const parent = getEventReference(expression.expr);
       if (parent) {
         return [...parent, key];
@@ -272,6 +382,14 @@ export const synthesizeEventPattern = (
       return undefined;
     }
     return undefined;
+  };
+
+  const getPropertyAccessKey = (
+    expr: PropAccessExpr | ElementAccessExpr
+  ): string => {
+    return expr.kind === "PropAccessExpr"
+      ? expr.name
+      : assertString(getConstant(expr.element)?.value);
   };
 
   const getConstant = (
@@ -530,7 +648,7 @@ export const isPresentClassification = (
 
 type AnythingButClassification = {
   anythingBut: number | string | null;
-  prefix?: boolean;
+  isPrefix?: boolean;
 };
 
 export const isAnythingButClassification = (
@@ -592,7 +710,7 @@ const classificationToPattern = (
       {
         "anything-but":
           typeof classification.anythingBut === "string" &&
-          classification.prefix
+          classification.isPrefix
             ? { prefix: classification.anythingBut }
             : classification.anythingBut,
       },

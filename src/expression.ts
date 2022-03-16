@@ -96,7 +96,11 @@ export class PropAccessExpr extends BaseNode<"PropAccessExpr"> {
 export const isElementAccessExpr = typeGuard("ElementAccessExpr");
 
 export class ElementAccessExpr extends BaseNode<"ElementAccessExpr"> {
-  constructor(readonly expr: Expr, readonly element: Expr) {
+  constructor(
+    readonly expr: Expr,
+    readonly element: Expr,
+    readonly type?: string
+  ) {
     super("ElementAccessExpr");
     setParent(this, expr);
   }

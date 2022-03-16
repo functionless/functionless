@@ -257,14 +257,18 @@ export function compile(
           return newExpr("PropAccessExpr", [
             toExpr(node.expression),
             ts.factory.createStringLiteral(node.name.text),
-            ts.factory.createStringLiteral(
-              type ? checker.typeToString(type) : ""
-            ),
+            type
+              ? ts.factory.createStringLiteral(checker.typeToString(type))
+              : ts.factory.createIdentifier("undefined"),
           ]);
         } else if (ts.isElementAccessExpression(node)) {
+          const type = checker.getTypeAtLocation(node.argumentExpression);
           return newExpr("ElementAccessExpr", [
             toExpr(node.expression),
             toExpr(node.argumentExpression),
+            type
+              ? ts.factory.createStringLiteral(checker.typeToString(type))
+              : ts.factory.createIdentifier("undefined"),
           ]);
         } else if (
           ts.isVariableStatement(node) &&

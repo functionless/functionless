@@ -12,6 +12,8 @@ type TestEvent = EventBusEvent<{
   };
   bool: boolean;
   array: string[];
+  numArray: number[];
+  boolArray: boolean[];
 }>;
 
 describe("event pattern", () => {
@@ -104,7 +106,7 @@ describe("event pattern", () => {
       );
     });
 
-    describe.skip("array", () => {
+    describe("array", () => {
       test("array", () => {
         ebEventPatternTestCase(
           reflect<EventPredicateFunction<TestEvent>>((event) =>
@@ -116,11 +118,58 @@ describe("event pattern", () => {
         );
       });
 
-      test("array explicit equals error", () => {
-        ebEventPatternTestCaseError(
+      test("num array", () => {
+        ebEventPatternTestCase(
+          reflect<EventPredicateFunction<TestEvent>>((event) =>
+            event.detail.numArray.includes(1)
+          ),
+          {
+            detail: { numArray: [1] },
+          }
+        );
+      });
+
+      test("bool array", () => {
+        ebEventPatternTestCase(
+          reflect<EventPredicateFunction<TestEvent>>((event) =>
+            event.detail.boolArray.includes(true)
+          ),
+          {
+            detail: { boolArray: [true] },
+          }
+        );
+      });
+
+      test("array not includes", () => {
+        ebEventPatternTestCase(
           reflect<EventPredicateFunction<TestEvent>>(
-            (event) => event.detail.array === ["a", "b"]
-          )
+            (event) => !event.detail.array.includes("something")
+          ),
+          {
+            detail: { array: [{ "anything-but": "something" }] },
+          }
+        );
+      });
+
+      test("num array not includes", () => {
+        ebEventPatternTestCase(
+          reflect<EventPredicateFunction<TestEvent>>(
+            (event) => !event.detail.numArray.includes(1)
+          ),
+          {
+            detail: { numArray: [{ "anything-but": 1 }] },
+          }
+        );
+      });
+
+      test("bool array not includes", () => {
+        ebEventPatternTestCase(
+          reflect<EventPredicateFunction<TestEvent>>(
+            (event) => !event.detail.boolArray.includes(true)
+          ),
+          {
+            detail: { boolArray: [false] },
+          }
         );
       });
 
@@ -134,15 +183,28 @@ describe("event pattern", () => {
     });
   });
 
-  test.skip("prefix", () => {
-    ebEventPatternTestCase(
-      reflect<EventPredicateFunction<TestEvent>>((event) =>
-        event.source.startsWith("l")
-      ),
-      {
-        source: [{ prefix: "l" }],
-      }
-    );
+  describe("prefix", () => {
+    test("prefix", () => {
+      ebEventPatternTestCase(
+        reflect<EventPredicateFunction<TestEvent>>((event) =>
+          event.source.startsWith("l")
+        ),
+        {
+          source: [{ prefix: "l" }],
+        }
+      );
+    });
+
+    test("prefix", () => {
+      ebEventPatternTestCase(
+        reflect<EventPredicateFunction<TestEvent>>(
+          (event) => !event.source.startsWith("l")
+        ),
+        {
+          source: [{ "anything-but": { prefix: "l" } }],
+        }
+      );
+    });
   });
 
   describe.skip("numeric range single", () => {
