@@ -149,7 +149,8 @@ export type BinaryOp =
   | ">"
   | ">="
   | "&&"
-  | "||";
+  | "||"
+  | "in";
 
 export class BinaryExpr extends BaseNode<"BinaryExpr"> {
   constructor(
@@ -179,7 +180,7 @@ export class UnaryExpr extends BaseNode<"UnaryExpr"> {
 export const isNullLiteralExpr = typeGuard("NullLiteralExpr");
 
 export class NullLiteralExpr extends BaseNode<"NullLiteralExpr"> {
-  constructor() {
+  constructor(readonly undefined: boolean) {
     super("NullLiteralExpr");
   }
 }

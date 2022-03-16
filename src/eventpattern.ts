@@ -8,7 +8,12 @@ import {
   PropAccessExpr,
   UnaryExpr,
 } from ".";
-import { assertDefined, assertNever, assertString } from "./assert";
+import {
+  assertDefined,
+  assertNever,
+  assertNumber,
+  assertString,
+} from "./assert";
 import { Stmt } from "./statement";
 
 /**
@@ -47,9 +52,42 @@ export const synthesizeEventPattern = (
       return handleEquals(expr);
     } else if (expr.op === "!=") {
       return handleNotEquals(expr);
+    } else if ([">", ">=", "<", "<="].includes(expr.op)) {
+      return handleNumericRange(expr);
+    } else if (expr.op === "in") {
+      return handleInOperation(expr);
     } else {
       throw new Error(`Unsupported binary operator ${expr.op}`);
     }
+  };
+
+  const handleNumericRange = (expr: BinaryExpr): ClassDocument => {
+    const { eventReference, eventExpr, other, op } = assertOneEventReference(
+      expr.left,
+      expr.right,
+      expr.op
+    );
+
+    if (eventExpr.type !== "number") {
+      throw new Error(
+        "Numeric range only supported for event properties of type number"
+      );
+    }
+
+    const value = assertNumber(getConstant(other)?.value);
+
+    assertValidEventRefererence(eventReference);
+    if (op === "<" || op === "<=") {
+      return eventReferenceToPattern(eventReference, {
+        upper: { value, inclusive: op === "<=" },
+      });
+    } else if (op === ">" || op === ">=") {
+      return eventReferenceToPattern(eventReference, {
+        lower: { value, inclusive: op === ">=" },
+      });
+    }
+
+    throw Error(`Unsupported numeric range operation: ${op}.`);
   };
 
   const handleCall = (expr: CallExpr): ClassDocument => {
@@ -62,8 +100,6 @@ export const synthesizeEventPattern = (
 
       if (operation === "includes") {
         const searchElement = getConstant(expr.args["searchElement"])?.value;
-
-        console.log(expr.args);
 
         if (
           Object.values(expr.args).filter((e) => e.kind !== "NullLiteralExpr")
@@ -164,6 +200,25 @@ export const synthesizeEventPattern = (
     }
 
     throw new Error(`Unsupported unary expression ${expr.op}`);
+  };
+
+  // TODO: validate that the right side is an object, though the compiler should take care of most cases
+  const handleInOperation = (expr: BinaryExpr): ClassDocument => {
+    const eventReference = getEventReference(expr.right);
+
+    const value = assertString(getConstant(expr.left)?.value);
+
+    if (!eventReference) {
+      throw new Error(
+        "Expected the right side of an in operator to be a event reference."
+      );
+    }
+
+    const upadteEventReference = [...eventReference, value];
+
+    assertValidEventRefererence(upadteEventReference);
+
+    return eventReferenceToPattern(upadteEventReference, { isPresent: true });
   };
 
   /**
@@ -277,6 +332,8 @@ export const synthesizeEventPattern = (
       return eventReferenceToPattern(eventReference, <PresentClassification>{
         isPresent: false,
       });
+    } else if (value === null) {
+      return eventReferenceToPattern(eventReference, { null: true });
     } else if (
       typeof value === "string" ||
       typeof value === "number" ||
@@ -291,8 +348,8 @@ export const synthesizeEventPattern = (
     );
   };
 
-  const handleNotEquals = (_expr: BinaryExpr): ClassDocument => {
-    return { doc: {} };
+  const handleNotEquals = (expr: BinaryExpr): ClassDocument => {
+    return negateDocument(handleEquals(expr));
   };
 
   const assertOneEventReference = (
@@ -301,7 +358,7 @@ export const synthesizeEventPattern = (
     op: BinaryExpr["op"]
   ): {
     eventReference: EventReference;
-    eventExpr: Expr;
+    eventExpr: PropAccessExpr | ElementAccessExpr;
     other: Expr;
     op: string;
   } => {
@@ -311,12 +368,17 @@ export const synthesizeEventPattern = (
       throw new Error("Expected exactly one event reference, got two.");
     } else if (Array.isArray(leftExpr)) {
       assertValidEventRefererence(leftExpr);
-      return { eventReference: leftExpr, eventExpr: left, other: right, op };
+      return {
+        eventReference: leftExpr,
+        eventExpr: left as PropAccessExpr | ElementAccessExpr,
+        other: right,
+        op,
+      };
     } else if (Array.isArray(rightExpr)) {
       assertValidEventRefererence(rightExpr);
       return {
         eventReference: rightExpr,
-        eventExpr: right,
+        eventExpr: right as PropAccessExpr | ElementAccessExpr,
         other: left,
         op: invertBinaryOperator(op),
       };
@@ -394,7 +456,7 @@ export const synthesizeEventPattern = (
 
   const getConstant = (
     expr: Expr
-  ): { value: string | number | boolean | undefined } | undefined => {
+  ): { value: string | number | boolean | undefined | null } | undefined => {
     if (
       expr.kind === "StringLiteralExpr" ||
       expr.kind === "NumberLiteralExpr" ||
@@ -404,7 +466,7 @@ export const synthesizeEventPattern = (
     }
     // TODO: support null and undefined as separate values;
     else if (expr.kind === "NullLiteralExpr") {
-      return { value: undefined };
+      return { value: expr.undefined ? undefined : null };
     }
     return undefined;
   };
@@ -724,7 +786,7 @@ const classificationToPattern = (
         number: [
           ...(classification.lower
             ? [
-                classification.lower.inclusive ? ">=" : "=",
+                classification.lower.inclusive ? ">=" : ">",
                 classification.lower.value,
               ]
             : []),

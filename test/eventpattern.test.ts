@@ -29,6 +29,28 @@ describe("event pattern", () => {
       );
     });
 
+    test("double equals", () => {
+      ebEventPatternTestCase(
+        reflect<EventPredicateFunction<TestEvent>>(
+          (event) => event.source == "lambda"
+        ),
+        {
+          source: ["lambda"],
+        }
+      );
+    });
+
+    test("is null", () => {
+      ebEventPatternTestCase(
+        reflect<EventPredicateFunction<TestEvent>>(
+          (event) => event.source === null
+        ),
+        {
+          source: [null],
+        }
+      );
+    });
+
     test("detail", () => {
       ebEventPatternTestCase(
         reflect<EventPredicateFunction<TestEvent>>(
@@ -207,7 +229,7 @@ describe("event pattern", () => {
     });
   });
 
-  describe.skip("numeric range single", () => {
+  describe("numeric range single", () => {
     test("numeric range single", () => {
       ebEventPatternTestCase(
         reflect<EventPredicateFunction<TestEvent>>(
@@ -242,7 +264,7 @@ describe("event pattern", () => {
     });
   });
 
-  describe.skip("not", () => {
+  describe("not", () => {
     test("string", () => {
       ebEventPatternTestCase(
         reflect<EventPredicateFunction<TestEvent>>(
@@ -293,17 +315,39 @@ describe("event pattern", () => {
           (event) => !event.detail.str.startsWith("something")
         ),
         {
-          detail: { array: [{ "anything-but": { prefix: "something" } }] },
+          detail: { str: [{ "anything-but": { prefix: "something" } }] },
         }
       );
     });
   });
 
-  describe.skip("exists", () => {
+  describe("exists", () => {
     test("does", () => {
       ebEventPatternTestCase(
         reflect<EventPredicateFunction<TestEvent>>(
           (event) => event.detail.optional !== undefined
+        ),
+        {
+          detail: { optional: [{ exists: true }] },
+        }
+      );
+    });
+
+    test("does in", () => {
+      ebEventPatternTestCase(
+        reflect<EventPredicateFunction<TestEvent>>(
+          (event) => "optional" in event.detail
+        ),
+        {
+          detail: { optional: [{ exists: true }] },
+        }
+      );
+    });
+
+    test("does exist lone value", () => {
+      ebEventPatternTestCase(
+        reflect<EventPredicateFunction<TestEvent>>(
+          (event) => event.detail.optional
         ),
         {
           detail: { optional: [{ exists: true }] },
@@ -318,6 +362,28 @@ describe("event pattern", () => {
         ),
         {
           detail: { optional: [{ exists: false }] },
+        }
+      );
+    });
+
+    test("does not in", () => {
+      ebEventPatternTestCase(
+        reflect<EventPredicateFunction<TestEvent>>(
+          (event) => !("optional" in event.detail)
+        ),
+        {
+          detail: { optional: [{ exists: false }] },
+        }
+      );
+    });
+
+    test("exists at event level", () => {
+      ebEventPatternTestCase(
+        reflect<EventPredicateFunction<TestEvent>>(
+          (event) => "source" in event
+        ),
+        {
+          source: [{ exists: true }],
         }
       );
     });

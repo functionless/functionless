@@ -186,7 +186,9 @@ export function compile(
 
       function toExpr(node: ts.Node | undefined): ts.Expression {
         if (node === undefined) {
-          return newExpr("NullLiteralExpr", []);
+          return newExpr("NullLiteralExpr", [
+            ts.factory.createIdentifier("true"),
+          ]);
         } else if (ts.isArrowFunction(node) || ts.isFunctionExpression(node)) {
           return toFunction("FunctionExpr", node);
         } else if (ts.isExpressionStatement(node)) {
@@ -236,7 +238,11 @@ export function compile(
           ]);
         } else if (ts.isIdentifier(node)) {
           if (node.text === "undefined" || node.text === "null") {
-            return newExpr("NullLiteralExpr", []);
+            return newExpr("NullLiteralExpr", [
+              ts.factory.createIdentifier(
+                node.text === "undefined" ? "true" : "false"
+              ),
+            ]);
           }
           const kind = getKind(node);
           if (kind !== undefined) {
@@ -365,7 +371,9 @@ export function compile(
             ),
           ]);
         } else if (node.kind === ts.SyntaxKind.NullKeyword) {
-          return newExpr("NullLiteralExpr", []);
+          return newExpr("NullLiteralExpr", [
+            ts.factory.createIdentifier("false"),
+          ]);
         } else if (ts.isNumericLiteral(node)) {
           return newExpr("NumberLiteralExpr", [node]);
         } else if (ts.isStringLiteral(node)) {
@@ -487,4 +495,5 @@ const OperatorMappings: Record<number, BinaryOp> = {
   [ts.SyntaxKind.GreaterThanToken]: ">",
   [ts.SyntaxKind.ExclamationEqualsToken]: "!=",
   [ts.SyntaxKind.ExclamationEqualsEqualsToken]: "!=",
+  [ts.SyntaxKind.InKeyword]: "in",
 } as const;
