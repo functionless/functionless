@@ -1,6 +1,6 @@
 import { App, aws_dynamodb, aws_lambda, Stack } from "aws-cdk-lib";
 import "jest";
-import { $aws, ExpressStepFunction, Function, Table } from "../src";
+import { $AWS, ExpressStepFunction, Function, Table } from "../src";
 import { StateMachine, States } from "../src/asl";
 
 interface Person {
@@ -139,7 +139,7 @@ test("return AWS.DynamoDB.GetItem", () => {
     stack,
     "fn",
     (id: string): Person | undefined => {
-      const person = $aws.DynamoDB.GetItem({
+      const person = $AWS.DynamoDB.GetItem({
         TableName: personTable,
         Key: {
           id: {
@@ -238,7 +238,7 @@ test("call AWS.DynamoDB.GetItem, then Lambda and return LiteralExpr", () => {
     stack,
     "fn",
     (id: string): (Person & { score: number }) | undefined => {
-      const person = $aws.DynamoDB.GetItem({
+      const person = $AWS.DynamoDB.GetItem({
         TableName: personTable,
         Key: {
           id: {
