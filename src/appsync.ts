@@ -248,17 +248,29 @@ export class AppsyncResolver<
             let returnValName = "$context.result";
             let pre: string | undefined;
             if (service.kind === "StepFunction") {
-              returnValName = "$context.stash.sfn__result";
-              pre = `#if($context.result.statusCode == 200)
+              returnValName = "$sfn__result";
+
+              if (
+                service.getStepFunctionType() ===
+                aws_stepfunctions.StateMachineType.EXPRESS
+              ) {
+                pre = `#if($context.result.statusCode == 200)
   #set(${returnValName} = $util.parseJson($context.result.body))
-${
-  service.getStepFunctionType() === aws_stepfunctions.StateMachineType.EXPRESS
-    ? `  #set(${returnValName}.output = $util.parseJson(${returnValName}.output))\n`
-    : ""
-}
+  #if(${returnValName}.output == 'null')
+    $util.qr(${returnValName}.put("output", $null))
+  #else
+    #set(${returnValName}.output = $util.parseJson(${returnValName}.output))
+  #end
 #else 
   $util.error($context.result.body, "$context.result.statusCode")
 #end`;
+              } else {
+                pre = `#if($context.result.statusCode == 200)
+  #set(${returnValName} = $util.parseJson($context.result.body))
+#else 
+  $util.error($context.result.body, "$context.result.statusCode")
+#end`;
+              }
             }
 
             if (expr.kind === "ExprStmt" && expr.expr.kind === "CallExpr") {

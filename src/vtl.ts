@@ -34,28 +34,6 @@ export class VTL {
     this.statements.push(...statements);
   }
 
-  /**
-   * Declare a new variable.
-   *
-   * @param expr - optional value to initialize the value to
-   * @returns the variable reference, e.g. $v1
-   */
-  // public var(expr?: Expr | string): string;
-  // public var(id?: string): string;
-  // public var(id: string, expr: Expr): string;
-  // public var(a?: string | Expr, b?: Expr): string {
-  //   if (a === undefined && b === undefined) {
-  //     return this.newLocalVarName();
-  //   } else if (typeof a === "string") {
-
-  //     this.set(a, b);
-  //     return a;
-  //   }
-  //   const varName = this.newLocalVarName();
-  //   this.set(varName, a as Expr);
-  //   return varName;
-  // }
-
   private newLocalVarName() {
     return `$v${(this.varIt += 1)}`;
   }
