@@ -253,9 +253,13 @@ export function compile(
             // if this is a reference to a Table or Lambda, retain it
             return ref(node);
           }
+          const type = checker.getTypeAtLocation(node.name);
           return newExpr("PropAccessExpr", [
             toExpr(node.expression),
             ts.factory.createStringLiteral(node.name.text),
+            ts.factory.createStringLiteral(
+              type ? checker.typeToString(type) : ""
+            ),
           ]);
         } else if (ts.isElementAccessExpression(node)) {
           return newExpr("ElementAccessExpr", [
@@ -308,7 +312,12 @@ export function compile(
               `invalid Unary Operator: ${ts.tokenToString(node.operator)}`
             );
           }
-          return newExpr("UnaryExpr", [toExpr(node.operand)]);
+          return newExpr("UnaryExpr", [
+            ts.factory.createStringLiteral(
+              ts.tokenToString(node.operator) ?? ""
+            ),
+            toExpr(node.operand),
+          ]);
         } else if (ts.isReturnStatement(node)) {
           return newExpr(
             "ReturnStmt",
@@ -402,6 +411,8 @@ export function compile(
           ]);
         } else if (ts.isBreakStatement(node)) {
           return newExpr("BreakStmt", []);
+        } else if (ts.isParenthesizedExpression(node)) {
+          return toExpr(node.expression);
         }
 
         throw new Error(`unhandled node: ${node.getText()}`);
@@ -458,7 +469,7 @@ function getOperator(op: ts.BinaryOperatorToken): BinaryOp | undefined {
   return OperatorMappings[op.kind as keyof typeof OperatorMappings];
 }
 
-const OperatorMappings = {
+const OperatorMappings: Record<number, BinaryOp> = {
   [ts.SyntaxKind.EqualsToken]: "=",
   [ts.SyntaxKind.PlusToken]: "+",
   [ts.SyntaxKind.MinusToken]: "-",
@@ -470,4 +481,6 @@ const OperatorMappings = {
   [ts.SyntaxKind.LessThanToken]: "<",
   [ts.SyntaxKind.GreaterThanEqualsToken]: ">=",
   [ts.SyntaxKind.GreaterThanToken]: ">",
+  [ts.SyntaxKind.ExclamationEqualsToken]: "!=",
+  [ts.SyntaxKind.ExclamationEqualsEqualsToken]: "!=",
 } as const;

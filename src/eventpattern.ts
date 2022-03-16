@@ -1,6 +1,6 @@
 import { aws_events } from "aws-cdk-lib";
-import { BinaryExpr, Expr, FunctionDecl } from ".";
-import { assertDefined, assertString } from "./assert";
+import { BinaryExpr, Expr, FunctionDecl, PropAccessExpr, UnaryExpr } from ".";
+import { assertDefined, assertNever, assertString } from "./assert";
 import { Stmt } from "./statement";
 
 /**
@@ -11,16 +11,20 @@ export const synthesizeEventPattern = (
 ): FnLsEventPattern => {
   const eventDecl = predicate.parameters[0];
 
-  const handleExpr = (expr: Expr): FnLsEventPattern => {
+  const handleExpr = (expr: Expr): ClassDocument => {
     if (expr.kind === "BinaryExpr") {
       return handleBinary(expr);
+    } else if (expr.kind === "PropAccessExpr") {
+      return handlePropAccess(expr);
+    } else if (expr.kind === "UnaryExpr") {
+      return handleUnaryExpression(expr);
     } else {
       throw new Error(`${expr.kind} is unsupported`);
     }
     // assertNever(expr);
   };
 
-  const handleSmnt = (stmt: Stmt): FnLsEventPattern => {
+  const handleSmnt = (stmt: Stmt): ClassDocument => {
     if (stmt.kind === "ReturnStmt") {
       return handleExpr(stmt.expr);
     } else {
@@ -28,11 +32,112 @@ export const synthesizeEventPattern = (
     }
   };
 
-  const handleBinary = (expr: BinaryExpr): FnLsEventPattern => {
+  const handleBinary = (expr: BinaryExpr): ClassDocument => {
     if (expr.op === "==") {
       return handleEquals(expr);
+    } else if (expr.op === "!=") {
+      return handleNotEquals(expr);
     } else {
       throw new Error(`Unsupported binary operator ${expr.op}`);
+    }
+  };
+
+  const handleUnaryExpression = (expr: UnaryExpr): ClassDocument => {
+    const sub = handleExpr(expr.expr);
+
+    // TODO: Support negating more complex documents
+    if (expr.op === "!") {
+      return negateDocument(sub);
+    }
+
+    throw new Error(`Unsupported unary expression ${expr.op}`);
+  };
+
+  /**
+   * { isPresent: true } => { isPresent: false }
+   * { value: true } => { value: false }
+   * { value "a" } => { "anything-but": "a" }
+   * Do not support
+   *   * documents with more than one field in in - do not support OR accross multiple fields, inverting multiple AND fields is OR
+   *   * aggregate classifications (OR logic) - do not support AND within a field, inverting OR statements becomes AND
+   */
+  const negateDocument = (classDocument: ClassDocument): ClassDocument => {
+    if (Object.keys(classDocument).length > 1) {
+      throw Error(
+        "Can only negate simple statements like equals, doesn't equals, and prefix."
+      );
+    }
+    const [key = undefined] = Object.keys(classDocument.doc);
+    if (!key) {
+      return { doc: {} };
+    }
+
+    const entry = classDocument.doc[key];
+
+    return {
+      doc: {
+        [key]: isClassDocument(entry)
+          ? negateDocument(entry)
+          : negateClassification(entry),
+      },
+    };
+  };
+
+  const negateClassification = (
+    pattern: PatternClassification
+  ): PatternClassification => {
+    if (isAggregateClassification(pattern)) {
+      throw Error("Can only negate simple statments like boolean and equals.");
+    } else if (isAnythingButClassification(pattern)) {
+      return pattern.anythingBut === null
+        ? { null: true }
+        : typeof pattern.anythingBut === "string" && pattern.prefix
+        ? { prefix: pattern.anythingBut }
+        : { value: pattern.anythingBut };
+    } else if (isExactMatchClassficiation(pattern)) {
+      return typeof pattern.value === "boolean"
+        ? { value: !pattern.value }
+        : { anythingBut: pattern.value };
+    } else if (isPresentClassification(pattern)) {
+      return { isPresent: !pattern.isPresent };
+    } else if (isPrefixMatchClassficiation(pattern)) {
+      return { anythingBut: pattern.prefix, prefix: true };
+    } else if (isEmptyClassification(pattern)) {
+      return pattern;
+    } else if (isNullMatchClassification(pattern)) {
+      return { anythingBut: null };
+    } else if (isNumericRangeClassficiation(pattern)) {
+      return {
+        lower: pattern.upper
+          ? { inclusive: !pattern.upper.inclusive, value: pattern.upper.value }
+          : undefined,
+        upper: pattern.lower
+          ? { inclusive: !pattern.lower.inclusive, value: pattern.lower.value }
+          : undefined,
+      };
+    }
+
+    assertNever(pattern);
+  };
+
+  /*
+   * event.detail.bool
+   * event.detail.string
+   */
+  const handlePropAccess = (expr: PropAccessExpr): ClassDocument => {
+    const eventReference = getEventReference(expr);
+
+    if (!eventReference) {
+      throw Error("Expected lone property reference to reference the event.");
+    }
+
+    assertValidEventRefererence(eventReference);
+
+    if (expr.type === "boolean") {
+      return eventReferenceToPattern(eventReference, { value: true });
+    } else {
+      // for all other fields, assert they are simply present
+      return eventReferenceToPattern(eventReference, { isPresent: true });
     }
   };
 
@@ -43,7 +148,7 @@ export const synthesizeEventPattern = (
    * event.x === undefined => exists: false
    * event.x === null => null: true
    */
-  const handleEquals = (expr: BinaryExpr): FnLsEventPattern => {
+  const handleEquals = (expr: BinaryExpr): ClassDocument => {
     const { eventReference, other } = assertOneEventReference(
       expr.left,
       expr.right,
@@ -73,21 +178,35 @@ export const synthesizeEventPattern = (
     );
   };
 
+  const handleNotEquals = (_expr: BinaryExpr): ClassDocument => {
+    return { doc: {} };
+  };
+
   const assertOneEventReference = (
     left: Expr,
     right: Expr,
     op: BinaryExpr["op"]
-  ): { eventReference: EventReference; other: Expr; op: string } => {
+  ): {
+    eventReference: EventReference;
+    eventExpr: Expr;
+    other: Expr;
+    op: string;
+  } => {
     const leftExpr = getEventReference(left);
     const rightExpr = getEventReference(right);
     if (Array.isArray(leftExpr) && Array.isArray(rightExpr)) {
       throw new Error("Expected exactly one event reference, got two.");
     } else if (Array.isArray(leftExpr)) {
       assertValidEventRefererence(leftExpr);
-      return { eventReference: leftExpr, other: right, op };
+      return { eventReference: leftExpr, eventExpr: left, other: right, op };
     } else if (Array.isArray(rightExpr)) {
       assertValidEventRefererence(rightExpr);
-      return { eventReference: rightExpr, other: left, op: invertOperator(op) };
+      return {
+        eventReference: rightExpr,
+        eventExpr: right,
+        other: left,
+        op: invertBinaryOperator(op),
+      };
     }
     throw new Error("Expected exactly one event reference, got zero.");
   };
@@ -95,22 +214,26 @@ export const synthesizeEventPattern = (
   const eventReferenceToPattern = (
     eventReference: [string, ...string[]],
     classification: PatternClassification
-  ): FnLsEventPattern => {
+  ): ClassDocument => {
     const [head, ...tail] = eventReference;
     if (tail.length < 1) {
       return {
-        [head]: classification,
+        doc: {
+          [head]: classification,
+        },
       };
     }
     return {
-      [head]: eventReferenceToPattern(
-        tail as [string, ...string[]],
-        classification
-      ),
+      doc: {
+        [head]: eventReferenceToPattern(
+          tail as [string, ...string[]],
+          classification
+        ),
+      },
     };
   };
 
-  const invertOperator = (op: BinaryExpr["op"]): string => {
+  const invertBinaryOperator = (op: BinaryExpr["op"]): string => {
     switch (op) {
       case "<":
         return ">=";
@@ -332,7 +455,9 @@ export const synthesizeEventPattern = (
     throw new Error("Missing return statement in predicate block.");
   }
 
-  return handleSmnt(ret);
+  const result = handleSmnt(ret);
+
+  return classDocumentToEventPattern(result);
 };
 
 interface AggregateClassification {
@@ -342,6 +467,7 @@ interface AggregateClassification {
     | NumericRangeClassficiation
     | PresentClassification
     | NullMatchClassification
+    | AnythingButClassification
   )[];
 }
 
@@ -382,8 +508,8 @@ export const isPrefixMatchClassficiation = (
 };
 
 interface NumericRangeClassficiation {
-  lower?: { value: number; inclusive: number };
-  upper?: { value: number; inclusive: number };
+  lower?: { value: number; inclusive: boolean };
+  upper?: { value: number; inclusive: boolean };
 }
 
 export const isNumericRangeClassficiation = (
@@ -402,6 +528,17 @@ export const isPresentClassification = (
   return "isPresent" in x;
 };
 
+type AnythingButClassification = {
+  anythingBut: number | string | null;
+  prefix?: boolean;
+};
+
+export const isAnythingButClassification = (
+  x: any
+): x is AnythingButClassification => {
+  return "anythingBut" in x;
+};
+
 interface EmptyClassification {
   empty: true;
 }
@@ -412,6 +549,7 @@ export const isEmptyClassification = (
   return "empty" in x;
 };
 
+// TODO: the naming here is stupid, fix it..
 type PatternClassification =
   | AggregateClassification
   | ExactMatchClassficiation
@@ -419,7 +557,79 @@ type PatternClassification =
   | NumericRangeClassficiation
   | PresentClassification
   | NullMatchClassification
+  | AnythingButClassification
   | EmptyClassification;
+
+const classDocumentToEventPattern = (
+  classDocument: ClassDocument
+): SubPattern => {
+  return Object.entries(classDocument.doc).reduce(
+    (pattern, [key, entry]) => ({
+      ...pattern,
+      [key]: isClassDocument(entry)
+        ? classDocumentToEventPattern(entry)
+        : classificationToPattern(entry),
+    }),
+    {}
+  );
+};
+
+const classificationToPattern = (
+  classification: PatternClassification
+): PatternList | undefined => {
+  if (isEmptyClassification(classification)) {
+    return undefined;
+  } else if (isExactMatchClassficiation(classification)) {
+    return [classification.value];
+  } else if (isNullMatchClassification(classification)) {
+    return [null];
+  } else if (isPresentClassification(classification)) {
+    return [{ exists: classification.isPresent }];
+  } else if (isPrefixMatchClassficiation(classification)) {
+    return [{ prefix: classification.prefix }];
+  } else if (isAnythingButClassification(classification)) {
+    return [
+      {
+        "anything-but":
+          typeof classification.anythingBut === "string" &&
+          classification.prefix
+            ? { prefix: classification.anythingBut }
+            : classification.anythingBut,
+      },
+    ];
+  } else if (isNumericRangeClassficiation(classification)) {
+    if (!classification.lower && !classification.upper) {
+      return undefined;
+    }
+    return [
+      {
+        number: [
+          ...(classification.lower
+            ? [
+                classification.lower.inclusive ? ">=" : "=",
+                classification.lower.value,
+              ]
+            : []),
+          ...(classification.upper
+            ? [
+                classification.upper.inclusive ? "<=" : "<",
+                classification.upper.value,
+              ]
+            : []),
+        ] as [string, number, string, number] | [string, number],
+      },
+    ];
+  } else if (isAggregateClassification(classification)) {
+    return classification.classifications
+      .map(classificationToPattern)
+      .reduce(
+        (acc, pattern) => [...(acc ?? []), ...(pattern ?? [])],
+        [] as PatternList
+      );
+  }
+
+  assertNever(classification);
+};
 
 interface ExistsPattern {
   exists: boolean;
@@ -441,7 +651,7 @@ export const isPrefixPattern = (x: any): x is PrefixPattern => {
  * Can only contain a single prefix pattern.
  */
 interface AnythingButPattern {
-  "anything-but": (string | number)[] | string | number | PrefixPattern;
+  "anything-but": (string | number)[] | string | number | PrefixPattern | null;
 }
 
 export const isAnythingButPattern = (x: any): x is AnythingButPattern => {
@@ -486,6 +696,24 @@ export type FnLsEventPattern = {
   [key in keyof aws_events.EventPattern]: key extends "detail"
     ? Pattern
     : Exclude<Pattern, SubPattern>;
+};
+
+export type ClassDocument = {
+  doc: {
+    [key: string]: ClassDocument | PatternClassification;
+  };
+};
+
+export const isClassDocument = (
+  x: PatternClassification | ClassDocument
+): x is ClassDocument => {
+  return "doc" in x;
+};
+
+export type EventClassDocument = {
+  [key in keyof aws_events.EventPattern]: key extends "detail"
+    ? ClassDocument | PatternClassification
+    : PatternClassification;
 };
 
 export const isSubSet = (set1: any[], set2: any[]): boolean => {

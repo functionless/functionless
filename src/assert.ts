@@ -1,5 +1,9 @@
 export function assertNever(value: never): never {
-  throw new Error(`reached unreachable branch with value: ${value}`);
+  throw new Error(
+    `reached unreachable branch with value: ${
+      typeof value === "string" ? value : JSON.stringify(value)
+    }`
+  );
 }
 
 export function assertString(value: any, message?: string): string {

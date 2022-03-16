@@ -83,7 +83,11 @@ export class Identifier extends BaseNode<"Identifier"> {
 export const isPropAccessExpr = typeGuard("PropAccessExpr");
 
 export class PropAccessExpr extends BaseNode<"PropAccessExpr"> {
-  constructor(readonly expr: Expr, readonly name: string) {
+  constructor(
+    readonly expr: Expr,
+    readonly name: string,
+    readonly type?: string
+  ) {
     super("PropAccessExpr");
     setParent(this, expr);
   }
@@ -162,7 +166,7 @@ export type UnaryOp = "!";
 export class UnaryExpr extends BaseNode<"UnaryExpr"> {
   constructor(readonly op: UnaryOp, readonly expr: Expr) {
     super("UnaryExpr");
-    expr.parent = this;
+    setParent(this, expr);
   }
 }
 
