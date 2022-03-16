@@ -61,7 +61,12 @@ export class PeopleDatabase extends Construct {
     this.getPersonMachine = new ExpressStepFunction(
       this,
       "GetPersonMachine",
-
+      {
+        logs: {
+          destination: new aws_logs.LogGroup(this, "GetPersonMachineLogs"),
+          level: aws_stepfunctions.LogLevel.ALL,
+        },
+      },
       (id: string) => {
         const person = $AWS.DynamoDB.GetItem({
           TableName: this.personTable,
