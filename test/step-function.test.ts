@@ -63,7 +63,6 @@ test("return a single Lambda Function call", () => {
         Type: "Task",
         Resource: getPerson.resource.functionArn,
         Next: "Success",
-        ResultPath: "$",
         Parameters: {
           "id.$": "$.id",
         },
@@ -343,6 +342,75 @@ test("call AWS.DynamoDB.GetItem, then Lambda and return LiteralExpr", () => {
         },
         OutputPath: "$.result",
         Type: "Pass",
+      },
+      Success: {
+        Type: "Succeed",
+      },
+      Throw: {
+        Error: "TODO",
+        Type: "Fail",
+      },
+    },
+  };
+  expect(definition).toEqual(expected);
+});
+
+test("for-loop over a list literal", () => {
+  const { stack, computeScore } = init();
+  const definition = new ExpressStepFunction(
+    stack,
+    "fn",
+    (id: string): void => {
+      const people = ["sam", "brendan"];
+      for (const name of people) {
+        computeScore({
+          id,
+          name,
+        });
+      }
+    }
+  ).definition;
+
+  const expected: StateMachine<States> = {
+    StartAt: "State1",
+    States: {
+      State1: {
+        Next: "State2",
+        OutputPath: "$.result",
+        ResultPath: "$.people",
+        Parameters: {
+          result: ["sam", "brendan"],
+        },
+        Type: "Pass",
+      },
+      State2: {
+        Type: "Map",
+        InputPath: "$.people",
+        MaxConcurrency: 1,
+        Parameters: {
+          "name.$": "$$.Map.Item.Value",
+        },
+        Iterator: {
+          State3: {
+            Catch: [
+              {
+                ErrorEquals: ["States.All"],
+                Next: "Throw",
+              },
+            ],
+            Next: "Success",
+            Parameters: {
+              person: {
+                "id.$": "$.id",
+                "name.$": "$.name",
+              },
+            },
+            Resource: computeScore.resource.functionArn,
+            ResultPath: "DISCARD",
+            Type: "Task",
+          },
+        },
+        Next: "Success",
       },
       Success: {
         Type: "Succeed",

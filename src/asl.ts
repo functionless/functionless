@@ -3,7 +3,6 @@ import { aws_iam, aws_stepfunctions } from "aws-cdk-lib";
 
 import { assertNever } from "./assert";
 import {
-  CallExpr,
   Expr,
   FunctionExpr,
   isLiteralExpr,
@@ -18,7 +17,7 @@ import {
   isStmt,
   Stmt,
 } from "./statement";
-import { findFunction, lookupIdentifier } from "./util";
+import { findFunction } from "./util";
 import { FunctionDecl } from "./declaration";
 import { FunctionlessNode } from "./node";
 import { JsonPath } from "aws-cdk-lib/aws-stepfunctions";
@@ -151,7 +150,7 @@ export interface Catch {
   Next: string;
 }
 
-export type BaseTask = Nextable & {
+export interface BaseTask extends Nextable {
   Comment?: string;
   InputPath?: string;
   OutputPath?: string;
@@ -160,22 +159,30 @@ export type BaseTask = Nextable & {
   ResultPath?: string;
   Retry?: Retry[];
   Catch?: Catch[];
-};
+}
 
-export type Task = BaseTask & {
+export interface Task extends BaseTask {
   Type: "Task";
   Resource: string;
-};
+}
 
-export type MapTask = BaseTask & {
+/**
+ *
+ * @see https://docs.aws.amazon.com/step-functions/latest/dg/amazon-states-language-map-state.html
+ */
+export interface MapTask extends BaseTask {
   Type: "Map";
   Iterator: States;
-};
+  /**
+   * The MaxConcurrency field’s value is an integer that provides an upper bound on how many invocations of the Iterator may run in parallel. For instance, a MaxConcurrency value of 10 will limit your Map state to 10 concurrent iterations running at one time.
+   */
+  MaxConcurrency?: number;
+}
 
-export type ParallelTask = BaseTask & {
+export interface ParallelTask extends BaseTask {
   Type: "Parallel";
   Iterator: States;
-};
+}
 
 /**
  * Amazon States Language (ASL) Generator.
@@ -239,6 +246,8 @@ export class ASL {
         if (stmt.expr.kind === "FunctionExpr") {
           [[stmt, nextName()], ...bind(stmt.expr.body)];
         }
+      } else if (stmt.kind === "ForInStmt" || stmt.kind === "ForOfStmt") {
+        return [[stmt, nextName()], ...bind(stmt.body)];
       }
       return [[stmt, nextName()]];
     }
@@ -279,6 +288,9 @@ export class ASL {
         }
       }
     } else if (stmt.kind === "ExprStmt") {
+      return {
+        [this.getStateName(stmt)]: this.eval(stmt.expr),
+      };
     } else if (stmt.kind === "ForInStmt") {
       throw new Error(`for-in is no supported in Amazon States Language`);
     } else if (stmt.kind === "ForOfStmt") {
@@ -288,6 +300,10 @@ export class ASL {
           InputPath: this.evalJsonPath(stmt.expr),
           Next: this.next(stmt),
           Iterator: this.execute(stmt.body),
+          MaxConcurrency: 1,
+          Parameters: {
+            [`${stmt.i.name}.$`]: "$$.Map.Item.Value",
+          },
         },
       };
     } else if (stmt.kind === "IfStmt") {
@@ -426,33 +442,13 @@ export class ASL {
     return name;
   }
 
-  public call(call: CallExpr) {
-    const serviceCall = findFunction(call);
-    if (serviceCall) {
-      const task: Task = serviceCall(call, this);
-
-      return {
-        ...task,
-        ResultPath:
-          call.parent?.kind === "VariableStmt"
-            ? `$.${call.parent.name}`
-            : call.parent?.kind === "ReturnStmt"
-            ? "$"
-            : JsonPath.DISCARD,
-        Catch: [
-          {
-            // https://docs.aws.amazon.com/step-functions/latest/dg/concepts-error-handling.html
-            ErrorEquals: ["States.All"],
-            Next: this.throw(call),
-          },
-        ],
-        Next: this.next(call),
-      };
-    }
-    throw new Error(`call must be a service call, ${call}`);
-  }
-
   public eval(expr: Expr): State {
+    const ResultPath =
+      expr.parent?.kind === "VariableStmt"
+        ? `$.${expr.parent.name}`
+        : expr.parent?.kind === "ReturnStmt"
+        ? undefined
+        : JsonPath.DISCARD;
     if (expr.kind === "CallExpr") {
       const serviceCall = findFunction(expr);
       if (serviceCall) {
@@ -460,12 +456,7 @@ export class ASL {
 
         return {
           ...task,
-          ResultPath:
-            expr.parent?.kind === "VariableStmt"
-              ? `$.${expr.parent.name}`
-              : expr.parent?.kind === "ReturnStmt"
-              ? "$"
-              : JsonPath.DISCARD,
+          ...(ResultPath ? { ResultPath } : {}),
           Catch: [
             {
               // https://docs.aws.amazon.com/step-functions/latest/dg/concepts-error-handling.html
@@ -490,6 +481,7 @@ export class ASL {
           [`result${isLiteralExpr(expr) ? "" : ".$"}`]: this.evalJson(expr),
         },
         OutputPath: "$.result",
+        ...(ResultPath ? { ResultPath } : {}),
       };
     } else {
       throw new Error(`cannot eval expression kind '${expr.kind}'`);
@@ -498,7 +490,7 @@ export class ASL {
 
   public evalJson(expr: Expr): any {
     if (expr.kind === "Identifier") {
-      return `$.${expr.name}`;
+      return this.evalJsonPath(expr);
     } else if (expr.kind === "PropAccessExpr") {
       return `${this.evalJson(expr.expr)}.${expr.name}`;
     } else if (
@@ -698,14 +690,6 @@ export class ASL {
         ...expr.items.map((item) => this.evalJsonPath(item))
       );
     } else if (expr.kind === "Identifier") {
-      const ref = lookupIdentifier(expr);
-      if (
-        ref?.kind === "ParameterDecl" &&
-        ref.parent?.kind === "FunctionExpr"
-      ) {
-        // this is a nested FunctionExpr, such as in list.map.
-        return `$$.Map.Item.Value`;
-      }
       return `$.${expr.name}`;
     } else if (expr.kind === "PropAccessExpr") {
       return `${this.evalJsonPath(expr.expr)}.${expr.name}`;
