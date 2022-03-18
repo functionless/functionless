@@ -317,7 +317,12 @@ export function compile(
             toExpr(node.right),
           ]);
         } else if (ts.isPrefixUnaryExpression(node)) {
-          if (node.operator !== ts.SyntaxKind.ExclamationToken) {
+          if (
+            ![
+              ts.SyntaxKind.ExclamationToken,
+              ts.SyntaxKind.MinusToken,
+            ].includes(node.operator)
+          ) {
             throw new Error(
               `invalid Unary Operator: ${ts.tokenToString(node.operator)}`
             );

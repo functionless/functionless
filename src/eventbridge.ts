@@ -19,7 +19,7 @@ type EventHandlerFunction<E extends EventBusEvent = EventBusEvent<any>> = (
 ) => void;
 
 export type EventPredicateFunction<
-  E extends EventBusEvent = EventBusEvent<any>
+  E extends EventBusEvent = EventBusEvent<any>,
 > = (event: E) => void;
 
 export class EventBusRule<T extends EventBusEvent> extends Construct {

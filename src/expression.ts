@@ -166,7 +166,7 @@ export class BinaryExpr extends BaseNode<"BinaryExpr"> {
 
 export const isUnaryExpr = typeGuard("UnaryExpr");
 
-export type UnaryOp = "!";
+export type UnaryOp = "!" | "-";
 
 export class UnaryExpr extends BaseNode<"UnaryExpr"> {
   constructor(readonly op: UnaryOp, readonly expr: Expr) {

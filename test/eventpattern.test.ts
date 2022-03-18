@@ -95,6 +95,17 @@ describe("event pattern", () => {
       );
     });
 
+    test("negative number", () => {
+      ebEventPatternTestCase(
+        reflect<EventPredicateFunction<TestEvent>>(
+          (event) => event.detail.num === -50
+        ),
+        {
+          detail: { num: [-50] },
+        }
+      );
+    });
+
     test("boolean implicit", () => {
       ebEventPatternTestCase(
         reflect<EventPredicateFunction<TestEvent>>(
@@ -147,6 +158,17 @@ describe("event pattern", () => {
           ),
           {
             detail: { numArray: [1] },
+          }
+        );
+      });
+
+      test("num array", () => {
+        ebEventPatternTestCase(
+          reflect<EventPredicateFunction<TestEvent>>((event) =>
+            event.detail.numArray.includes(-1)
+          ),
+          {
+            detail: { numArray: [-1] },
           }
         );
       });
@@ -259,6 +281,28 @@ describe("event pattern", () => {
         ),
         {
           detail: { num: [{ number: [">=", 100] }] },
+        }
+      );
+    });
+
+    test("numeric range inverted", () => {
+      ebEventPatternTestCase(
+        reflect<EventPredicateFunction<TestEvent>>(
+          (event) => 100 < event.detail.num
+        ),
+        {
+          detail: { num: [{ number: [">", 100] }] },
+        }
+      );
+    });
+
+    test("numeric range inverted", () => {
+      ebEventPatternTestCase(
+        reflect<EventPredicateFunction<TestEvent>>(
+          (event) => 100 >= event.detail.num
+        ),
+        {
+          detail: { num: [{ number: ["<=", 100] }] },
         }
       );
     });
@@ -465,7 +509,7 @@ describe("event pattern", () => {
     });
   });
 
-  describe.skip("numeric aggregate", () => {
+  describe("numeric aggregate", () => {
     test("numeric range aggregate", () => {
       ebEventPatternTestCase(
         reflect<EventPredicateFunction<TestEvent>>(
@@ -486,7 +530,18 @@ describe("event pattern", () => {
             event.detail.num > 50
         ),
         {
-          detail: { num: [{ number: [">", 50, "<", 1000] }] },
+          detail: { num: [{ number: [">=", 100, "<", 1000] }] },
+        }
+      );
+    });
+
+    test("numeric range negate", () => {
+      ebEventPatternTestCase(
+        reflect<EventPredicateFunction<TestEvent>>(
+          (event) => !(event.detail.num >= 100 && event.detail.num < 1000)
+        ),
+        {
+          detail: { num: [{ number: [">=", 1000, "<", 100] }] },
         }
       );
     });
@@ -502,6 +557,208 @@ describe("event pattern", () => {
         {
           detail: { num: [{ number: [">=", 100, "<", 200] }] },
         }
+      );
+    });
+
+    test("numeric range aggregate with other fields", () => {
+      ebEventPatternTestCase(
+        reflect<EventPredicateFunction<TestEvent>>(
+          (event) =>
+            event.detail.num >= 100 &&
+            event.detail.num < 1000 &&
+            event.detail.str === "something"
+        ),
+        {
+          detail: {
+            num: [{ number: [">=", 100, "<", 1000] }],
+            str: ["something"],
+          },
+        }
+      );
+    });
+
+    test("numeric range or exclusive", () => {
+      ebEventPatternTestCase(
+        reflect<EventPredicateFunction<TestEvent>>(
+          (event) => event.detail.num > 300 || event.detail.num < 200
+        ),
+        {
+          detail: { num: [{ number: [">", 300] }, { number: ["<", 200] }] },
+        }
+      );
+    });
+
+    test("numeric range or exclusive negate", () => {
+      ebEventPatternTestCase(
+        reflect<EventPredicateFunction<TestEvent>>(
+          (event) => !(event.detail.num > 300 || event.detail.num < 200)
+        ),
+        {
+          detail: { num: [{ number: [">=", 200, "<=", 300] }] },
+        }
+      );
+    });
+
+    // the ranges represent infinity, so the clause is removed
+    test("numeric range or aggregate empty", () => {
+      ebEventPatternTestCase(
+        reflect<EventPredicateFunction<TestEvent>>(
+          (event) => event.detail.num < 300 || event.detail.num > 200
+        ),
+        {
+          detail: {},
+        }
+      );
+    });
+
+    test("numeric range or aggregate", () => {
+      ebEventPatternTestCase(
+        reflect<EventPredicateFunction<TestEvent>>(
+          (event) =>
+            (event.detail.num > 300 && event.detail.num < 350) ||
+            event.detail.num < 200
+        ),
+        {
+          detail: {
+            num: [{ number: [">", 300, "<", 350] }, { number: ["<", 200] }],
+          },
+        }
+      );
+    });
+
+    test("numeric range or and AND", () => {
+      ebEventPatternTestCase(
+        reflect<EventPredicateFunction<TestEvent>>(
+          (event) =>
+            (event.detail.num > 300 || event.detail.num < 200) &&
+            event.detail.num > 0
+        ),
+        {
+          detail: {
+            num: [{ number: [">", 300] }, { number: [">", 0, "<", 200] }],
+          },
+        }
+      );
+    });
+
+    /**
+     * > 300
+     * < 200
+     *
+     * Second range is invalid
+     * > 0
+     * < 500
+     */
+    test("numeric range or and AND part reduced", () => {
+      ebEventPatternTestCase(
+        reflect<EventPredicateFunction<TestEvent>>(
+          (event) =>
+            (event.detail.num > 300 || event.detail.num < 200) &&
+            (event.detail.num > 0 || event.detail.num < 500)
+        ),
+        {
+          detail: {
+            num: [{ number: [">", 300] }, { number: ["<", 200] }],
+          },
+        }
+      );
+    });
+
+    test("numeric range or and AND part reduced inverted", () => {
+      ebEventPatternTestCase(
+        reflect<EventPredicateFunction<TestEvent>>(
+          (event) =>
+            (event.detail.num > 0 || event.detail.num < 500) &&
+            (event.detail.num > 300 || event.detail.num < 200)
+        ),
+        {
+          detail: {
+            num: [{ number: [">", 300] }, { number: ["<", 200] }],
+          },
+        }
+      );
+    });
+
+    test("numeric range or and AND part reduced both valid", () => {
+      ebEventPatternTestCase(
+        reflect<EventPredicateFunction<TestEvent>>(
+          (event) =>
+            (event.detail.num > 300 || event.detail.num < 200) &&
+            (event.detail.num > 250 || event.detail.num < 100)
+        ),
+        {
+          detail: {
+            num: [{ number: [">", 300] }, { number: ["<", 100] }],
+          },
+        }
+      );
+    });
+
+    test("numeric range multiple distinct segments", () => {
+      ebEventPatternTestCase(
+        reflect<EventPredicateFunction<TestEvent>>(
+          (event) =>
+            (event.detail.num > 300 && event.detail.num < 400) ||
+            (event.detail.num > 0 && event.detail.num < 200) ||
+            (event.detail.num > -100 && event.detail.num < -50)
+        ),
+        {
+          detail: {
+            num: [
+              { number: [">", 300, "<", 400] },
+              { number: [">", 0, "<", 200] },
+              { number: [">", -100, "<", -50] },
+            ],
+          },
+        }
+      );
+    });
+
+    test("numeric range multiple distinct segments overlapped", () => {
+      ebEventPatternTestCase(
+        reflect<EventPredicateFunction<TestEvent>>(
+          (event) =>
+            (event.detail.num > 300 && event.detail.num < 400) ||
+            (event.detail.num > 0 && event.detail.num < 200) ||
+            (event.detail.num > -100 && event.detail.num < -50) ||
+            event.detail.num > -200
+        ),
+        {
+          detail: {
+            num: [{ number: [">", -200] }],
+          },
+        }
+      );
+    });
+
+    test("numeric range multiple distinct segments merged", () => {
+      ebEventPatternTestCase(
+        reflect<EventPredicateFunction<TestEvent>>(
+          (event) =>
+            (event.detail.num > 300 && event.detail.num < 400) ||
+            (event.detail.num > 0 && event.detail.num < 200) ||
+            (event.detail.num > -100 && event.detail.num < -50) ||
+            (event.detail.num > -200 && event.detail.num < 200)
+        ),
+        {
+          detail: {
+            num: [
+              { number: [">", -200, "<", 200] },
+              { number: [">", 300, "<", 400] },
+            ],
+          },
+        }
+      );
+    });
+
+    // Note: another option would be to just drop the invalid range.
+    test("numeric range or and AND error", () => {
+      ebEventPatternTestCaseError(
+        reflect<EventPredicateFunction<TestEvent>>(
+          (event) =>
+            (event.detail.num > 300 || event.detail.num < 200) &&
+            event.detail.num > 400
+        )
       );
     });
 

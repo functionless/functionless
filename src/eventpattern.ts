@@ -56,9 +56,339 @@ export const synthesizeEventPattern = (
       return handleNumericRange(expr);
     } else if (expr.op === "in") {
       return handleInOperation(expr);
+    } else if (expr.op === "&&") {
+      return handleAnd(expr);
+    } else if (expr.op === "||") {
+      return handleOr(expr);
     } else {
       throw new Error(`Unsupported binary operator ${expr.op}`);
     }
+  };
+
+  const handleAnd = (expr: BinaryExpr): ClassDocument => {
+    const left = handleExpr(expr.left);
+    const right = handleExpr(expr.right);
+
+    return andDocuments(left, right);
+  };
+
+  const andDocuments = (
+    classDocument1: ClassDocument,
+    classDocument2: ClassDocument
+  ): ClassDocument => {
+    const allKeys = [
+      ...new Set([
+        ...Object.keys(classDocument1.doc),
+        ...Object.keys(classDocument2.doc),
+      ]),
+    ];
+
+    return allKeys.reduce((doc, key) => {
+      // if key is only in one document, return it
+      const pattern = !(key in classDocument1.doc)
+        ? classDocument2.doc?.[key]
+        : !(key in classDocument2.doc)
+        ? classDocument1.doc?.[key]
+        : undefined;
+      // if the key is in both documents, try to merge them
+      const mergedPattern =
+        pattern ??
+        andMergePattern(key, classDocument1.doc[key], classDocument2.doc[key]);
+      return {
+        doc: {
+          ...doc.doc,
+          [key]: mergedPattern,
+        },
+      };
+    }, {} as ClassDocument);
+  };
+
+  const andMergePattern = (
+    key: string,
+    pattern1: ClassDocument | PatternClassification,
+    pattern2: ClassDocument | PatternClassification
+  ): ClassDocument | PatternClassification => {
+    // both are documents, lets merge the documents
+    if (isClassDocument(pattern1) && isClassDocument(pattern2)) {
+      return andDocuments(pattern1, pattern2);
+      // both are patterns, merge the patterns
+    } else if (!isClassDocument(pattern1) && !isClassDocument(pattern2)) {
+      if (isNumericAggregationClassification(pattern1)) {
+        if (isNumericAggregationClassification(pattern2)) {
+          const joinedRanges = pattern1.ranges.reduce((ranges, range) => {
+            const joinedRanges = pattern2.ranges
+              .map((r) => joinNumericRange(r, range, true))
+              .filter((r) => validateNumericRange(r));
+            if (joinedRanges.length === 0) {
+              throw new Error(
+                `At least one OR statement in a numeric range must be valid with the other side`
+              );
+            }
+            return [...ranges, ...joinedRanges];
+          }, [] as NumericRangeClassficiation[]);
+
+          return reduceNumericAggregate({ ranges: joinedRanges });
+        }
+        if (isNumericRangeClassficiation(pattern2)) {
+          const joinedRanges = pattern1.ranges.map((r) =>
+            joinNumericRange(pattern2, r)
+          );
+          return reduceNumericAggregate({ ranges: joinedRanges });
+        }
+      }
+      if (isNumericAggregationClassification(pattern2)) {
+        if (isNumericRangeClassficiation(pattern1)) {
+          const joinedRanges = pattern2.ranges.map((r) =>
+            joinNumericRange(pattern1, r)
+          );
+          return reduceNumericAggregate({ ranges: joinedRanges });
+        }
+      }
+      if (
+        isNumericRangeClassficiation(pattern1) &&
+        isNumericRangeClassficiation(pattern2)
+      ) {
+        return joinNumericRange(pattern1, pattern2);
+      }
+      // TODO: expand the supported cases
+      throw new Error(
+        `Cannot apply AND to patterns ${JSON.stringify(
+          pattern1
+        )} and ${JSON.stringify(pattern2)}`
+      );
+    }
+    // we don't know how to do this (yet?)
+    throw new Error(`Patterns of key ${key} defined at different levels.`);
+  };
+
+  const joinNumericRange = (
+    pattern1: NumericRangeClassficiation,
+    pattern2: NumericRangeClassficiation,
+    allowZeroRange?: boolean
+  ): NumericRangeClassficiation => {
+    // x > 10 && x > 5 => x > 10
+    // x >= 10 && x > 9 => x >= 10
+    // x > 10 && x >= 10 => x > 10
+    const newLower = maxComparison(pattern1.lower, pattern2.lower);
+    const newUpper = minComparison(pattern1.upper, pattern2.upper);
+    // merging ranges that are conflicting 1.lower = 10, 2.upper = 5
+    const newRange = { upper: newUpper, lower: newLower };
+    if (!allowZeroRange && !validateNumericRange(newRange)) {
+      throw new Error(
+        `Found zero range numeric range lower ${newRange.lower?.value} inclusive: ${newRange.lower?.inclusive}, upper ${newRange.upper?.value} inclusive: ${newRange.upper?.inclusive}`
+      );
+    }
+    return newRange;
+  };
+
+  const maxComparison = (
+    comp1: NumericRangeOperand,
+    comp2: NumericRangeOperand
+  ): NumericRangeOperand => {
+    // one is strictly greater than the other
+    if (comp1.value > comp2.value) return comp1;
+    if (comp2.value > comp1.value) return comp2;
+    // resolve conflicting inclusivity - inclusive is lower
+    return {
+      value: comp1.value,
+      inclusive: comp1.inclusive && comp2.inclusive,
+    };
+  };
+
+  const minComparison = (
+    comp1: NumericRangeOperand,
+    comp2: NumericRangeOperand
+  ): NumericRangeOperand => {
+    // one is strictly less than the other
+    if (comp1.value < comp2.value) return comp1;
+    if (comp2.value < comp1.value) return comp2;
+    // resolve conflicting inclusivity - inclusive is lower
+    return {
+      value: comp1.value,
+      inclusive: comp1.inclusive || comp2.inclusive,
+    };
+  };
+
+  const handleOr = (expr: BinaryExpr): ClassDocument => {
+    const left = handleExpr(expr.left);
+    const right = handleExpr(expr.right);
+
+    return orDocuments(left, right);
+  };
+
+  /**
+   * Event bridge does not support OR across fields, only AND logic
+   * If applying OR and there are already multiple fields on either side of the or the field on either side are different, fail
+   */
+  const orDocuments = (
+    classDocument1: ClassDocument,
+    classDocument2: ClassDocument
+  ): ClassDocument => {
+    const doc1Keys = Object.keys(classDocument1.doc);
+    const doc2Keys = Object.keys(classDocument2.doc);
+    if (doc1Keys.length > 1 || doc2Keys.length > 1) {
+      throw Error(
+        `Event bridge does not support OR logic between multiple fields, found ${doc1Keys.join(
+          ","
+        )} and ${doc2Keys.join(",")}.`
+      );
+    }
+    if (doc1Keys.length === 0) {
+      return classDocument2;
+    }
+    if (doc2Keys.length === 0) {
+      return classDocument1;
+    }
+    if (doc1Keys[0] !== doc2Keys[0]) {
+      throw Error(
+        `Event bridge does not support OR logic between multiple fields, found ${doc1Keys[0]} and ${doc2Keys[0]}.`
+      );
+    }
+    const key = doc1Keys[0];
+
+    return {
+      doc: {
+        [key]: orMergePattern(
+          key,
+          classDocument1.doc[key],
+          classDocument2.doc[key]
+        ),
+      },
+    };
+  };
+
+  /**
+   * See table: https://github.com/sam-goodwin/functionless/issues/37#issuecomment-1066313146
+   */
+  const orMergePattern = (
+    key: string,
+    pattern1: ClassDocument | PatternClassification,
+    pattern2: ClassDocument | PatternClassification
+  ): ClassDocument | PatternClassification => {
+    // both are documents, lets merge the documents
+    if (isClassDocument(pattern1) && isClassDocument(pattern2)) {
+      return orDocuments(pattern1, pattern2);
+      // both are patterns, merge the patterns
+    } else if (!isClassDocument(pattern1) && !isClassDocument(pattern2)) {
+      if (isPresentClassification(pattern1)) {
+        if (isPresentClassification(pattern2)) {
+          // when the logic is "name" in event.detail || !("name" in event.detail), simplify to empty logic
+          if (pattern1.isPresent != pattern2.isPresent) {
+            return <EmptyClassification>{ empty: true };
+          }
+          // if both are exists: true or exists: false
+          return pattern1;
+        }
+        // If one of the classifications are exists: true, return exists: true
+        if (pattern1.isPresent) {
+          return pattern1;
+        }
+      }
+      if (isPresentClassification(pattern2)) {
+        // If one of the classifications are exists: true, return exists: true
+        if (pattern2.isPresent) {
+          return pattern1;
+        }
+      }
+      if (isNumericAggregationClassification(pattern1)) {
+        if (isNumericAggregationClassification(pattern2)) {
+          return reduceNumericAggregate({
+            ranges: [...pattern1.ranges, ...pattern2.ranges],
+          });
+        }
+        if (isNumericRangeClassficiation(pattern2)) {
+          return reduceNumericAggregate({
+            ranges: [...pattern1.ranges, pattern2],
+          });
+        }
+      }
+      if (isNumericAggregationClassification(pattern2)) {
+        if (isNumericRangeClassficiation(pattern1)) {
+          return reduceNumericAggregate({
+            ranges: [...pattern2.ranges, pattern1],
+          });
+        }
+      }
+      if (isNumericRangeClassficiation(pattern1)) {
+        if (isNumericRangeClassficiation(pattern2)) {
+          return mergeNumericOr(pattern1, pattern2);
+        }
+      }
+      return <AggregateClassification>{
+        classifications: [pattern1, pattern2],
+      };
+    }
+    // we don't know how to do this (yet?)
+    throw new Error(`Patterns of key ${key} defined at different levels.`);
+  };
+
+  /**
+   * If the ranges overlap, merge them.
+   * If the range are mutually exclusive, return an aggregate.
+   */
+  const mergeNumericOr = (
+    pattern1: NumericRangeClassficiation,
+    pattern2: NumericRangeClassficiation
+  ): NumericAggregationClassification | NumericRangeClassficiation => {
+    if (isOverlappngRange(pattern1, pattern2)) {
+      // merge the overlapping ranges by finding the min lower and max upper
+      const minLower = minComparison(pattern1.lower, pattern2.lower);
+      const maxUpper = maxComparison(pattern1.upper, pattern2.upper);
+
+      return { lower: minLower, upper: maxUpper };
+    }
+
+    // when not overlapping, return who sets of numeric ranges
+    return { ranges: [pattern1, pattern2] };
+  };
+
+  // [lower1, upper1]
+  //              [lower2, upper2]
+  // https://stackoverflow.com/questions/325933/determine-whether-two-date-ranges-overlap/325964#325964
+  // When one of the factors is exclusive in a pair, use > or <
+  // [lower1, upper1)
+  //                (lower2, upper2]
+  //                (lower1, upper2]
+  // [lower2, upper2)
+  const isOverlappngRange = (
+    pattern1: NumericRangeClassficiation,
+    pattern2: NumericRangeClassficiation
+  ) => {
+    const lower1 = pattern1.lower?.value ?? Number.NEGATIVE_INFINITY;
+    const lower2 = pattern2.lower?.value ?? Number.NEGATIVE_INFINITY;
+    const upper1 = pattern1.upper?.value ?? Number.POSITIVE_INFINITY;
+    const upper2 = pattern2.upper?.value ?? Number.POSITIVE_INFINITY;
+    const firstInclusive =
+      pattern1.lower?.inclusive && pattern2.upper?.inclusive;
+    const secondInclusive =
+      pattern1.upper?.inclusive && pattern2.lower?.inclusive;
+
+    return (
+      (firstInclusive ? lower1 <= upper2 : lower1 < upper2) &&
+      (secondInclusive ? upper1 >= lower2 : upper1 > lower2)
+    );
+  };
+
+  const validateNumericRange = (range: NumericRangeClassficiation): boolean => {
+    if (range.lower) {
+      if (range.upper) {
+        // when both lower and upper are given, the lower must be lower than the upper
+        if (range.lower.value == range.upper.value) {
+          // x >= 10 && x <= 10 => valid (can be 10)
+          // x >= 10 && x < 10 => invalid (zero range)
+          // x > 10 && x <= 10 => invalid (zero range)
+          // x > 10 && x < 10 => invalid (zero range)
+          if (range.lower.inclusive && range.upper.inclusive) {
+            return true;
+          }
+          return false;
+        }
+        // lower vakue must be less than upper value
+        // x > 10 && x < 100
+        return range.lower?.value < range.upper?.value;
+      }
+    }
+    return !!range.lower || !!range.upper;
   };
 
   const handleNumericRange = (expr: BinaryExpr): ClassDocument => {
@@ -80,14 +410,85 @@ export const synthesizeEventPattern = (
     if (op === "<" || op === "<=") {
       return eventReferenceToPattern(eventReference, {
         upper: { value, inclusive: op === "<=" },
+        lower: { value: Number.NEGATIVE_INFINITY, inclusive: true },
       });
     } else if (op === ">" || op === ">=") {
       return eventReferenceToPattern(eventReference, {
         lower: { value, inclusive: op === ">=" },
+        upper: { value: Number.POSITIVE_INFINITY, inclusive: true },
       });
     }
 
     throw Error(`Unsupported numeric range operation: ${op}.`);
+  };
+
+  const reduceNumericAggregate = (
+    classification: NumericAggregationClassification
+  ):
+    | EmptyClassification
+    | NumericRangeClassficiation
+    | NumericAggregationClassification => {
+    const reduced = reduceNumericRanges(classification.ranges);
+
+    if (reduced.length === 0) {
+      return { empty: true };
+    } else if (reduced.length === 1) {
+      return reduced[0];
+    }
+    return { ranges: reduced };
+  };
+
+  /**
+   * one or more ranges merge with multiple other ranges
+   * [1, 10], [11, 20], [8, 12]
+   * [1, 10], [11, 20]
+   * [1, 12], [8, 20]
+   * [1, 20]
+   *
+   * one or more ranges merge with one other range
+   * [1, 10], [11, 20], [12, 21]
+   * [1, 10], [11, 20]
+   * [1, 10], [11, 21]
+   *
+   * one or more ranges merge with multiple other range early
+   * [8, 12], [1, 10], [11, 20]
+   * [1, 12]
+   * [1, 20]
+   *
+   * no ranges merge
+   * [1, 10], [11, 20], [21, 22]
+   * [1, 10], [11, 20], [21, 22]
+   */
+  const reduceNumericRanges = (
+    ranges: NumericRangeClassficiation[]
+  ): NumericRangeClassficiation[] => {
+    return ranges.reduce((newRanges, range) => {
+      const [overlappingRanges, otherRanges] = newRanges.reduce(
+        ([over, other], r) =>
+          isOverlappngRange(range, r)
+            ? [[...over, r], other]
+            : [over, [...other, r]],
+        [[], []] as [NumericRangeClassficiation[], NumericRangeClassficiation[]]
+      );
+
+      if (overlappingRanges.length === 0) {
+        return [...newRanges, range];
+      }
+
+      const mergedRanges = overlappingRanges
+        .map((r) => mergeNumericOr(r, range))
+        .reduce(
+          (acc, r) => [
+            ...acc,
+            ...(isNumericAggregationClassification(r) ? r.ranges : [r]),
+          ],
+          [] as NumericRangeClassficiation[]
+        );
+
+      const reducedRanges = reduceNumericRanges(mergedRanges);
+
+      return [...reducedRanges, ...otherRanges];
+    }, [] as NumericRangeClassficiation[]);
   };
 
   const handleCall = (expr: CallExpr): ClassDocument => {
@@ -108,15 +509,6 @@ export const synthesizeEventPattern = (
           throw new Error("Includes only supports the searchElement argument");
         }
 
-        if (
-          typeof searchElement !== "string" &&
-          typeof searchElement !== "number" &&
-          typeof searchElement !== "boolean"
-        ) {
-          throw Error(
-            "Includes operation only supports numbers, string, or booleans."
-          );
-        }
         // the property the call is on
         const eventReference = getEventReference(expr.expr.expr);
 
@@ -130,11 +522,27 @@ export const synthesizeEventPattern = (
           expr.expr.expr.kind === "PropAccessExpr" ||
           expr.expr.expr.kind === "ElementAccessExpr"
         ) {
+          if (expr.expr.expr.type === "number[]") {
+            const num = assertNumber(searchElement);
+            assertValidEventRefererence(eventReference);
+            return eventReferenceToPattern(eventReference, {
+              lower: { value: num, inclusive: true },
+              upper: { value: num, inclusive: true },
+            });
+          }
           if (
             expr.expr.expr.type === "string[]" ||
-            expr.expr.expr.type === "number[]" ||
             expr.expr.expr.type === "boolean[]"
           ) {
+            if (
+              typeof searchElement !== "string" &&
+              typeof searchElement !== "boolean"
+            ) {
+              throw Error(
+                "Includes operation only supports string or booleans."
+              );
+            }
+
             assertValidEventRefererence(eventReference);
             return eventReferenceToPattern(eventReference, {
               value: searchElement,
@@ -275,18 +683,32 @@ export const synthesizeEventPattern = (
     } else if (isNullMatchClassification(pattern)) {
       return { anythingBut: null };
     } else if (isNumericRangeClassficiation(pattern)) {
-      return {
-        lower: pattern.upper
-          ? { inclusive: !pattern.upper.inclusive, value: pattern.upper.value }
-          : undefined,
-        upper: pattern.lower
-          ? { inclusive: !pattern.lower.inclusive, value: pattern.lower.value }
-          : undefined,
-      };
+      return negateNumericRange(pattern);
+    } else if (isNumericAggregationClassification(pattern)) {
+      if (pattern.ranges.length === 0) {
+        return { empty: true };
+      }
+      // numeric range aggregations are ORs, when we negate an OR, we need to flip each range and turn it into an AND
+      return pattern.ranges
+        .map((r) => negateNumericRange(r))
+        .reduce((joined, range) => joinNumericRange(joined, range));
     }
 
     assertNever(pattern);
   };
+
+  const negateNumericRange = (
+    pattern: NumericRangeClassficiation
+  ): NumericRangeClassficiation => ({
+    lower:
+      pattern.upper.value !== Number.POSITIVE_INFINITY
+        ? { inclusive: !pattern.upper.inclusive, value: pattern.upper.value }
+        : { value: Number.NEGATIVE_INFINITY, inclusive: true },
+    upper:
+      pattern.lower.value !== Number.NEGATIVE_INFINITY
+        ? { inclusive: !pattern.lower.inclusive, value: pattern.lower.value }
+        : { value: Number.POSITIVE_INFINITY, inclusive: true },
+  });
 
   /*
    * event.detail.bool
@@ -334,11 +756,14 @@ export const synthesizeEventPattern = (
       });
     } else if (value === null) {
       return eventReferenceToPattern(eventReference, { null: true });
-    } else if (
-      typeof value === "string" ||
-      typeof value === "number" ||
-      typeof value === "boolean"
-    ) {
+      // represent a single numeric value using a range to simplify range computation
+      // [x, x]
+    } else if (typeof value === "number") {
+      return eventReferenceToPattern(eventReference, {
+        lower: { value, inclusive: true },
+        upper: { value, inclusive: true },
+      });
+    } else if (typeof value === "string" || typeof value === "boolean") {
       return eventReferenceToPattern(eventReference, { value });
     } else if (value === null) {
       return eventReferenceToPattern(eventReference, { null: true });
@@ -411,13 +836,13 @@ export const synthesizeEventPattern = (
   const invertBinaryOperator = (op: BinaryExpr["op"]): string => {
     switch (op) {
       case "<":
-        return ">=";
-      case "<=":
         return ">";
+      case "<=":
+        return ">=";
       case ">":
-        return "<=";
-      case ">=":
         return "<";
+      case ">=":
+        return "<=";
       default:
         return op;
     }
@@ -467,164 +892,12 @@ export const synthesizeEventPattern = (
     // TODO: support null and undefined as separate values;
     else if (expr.kind === "NullLiteralExpr") {
       return { value: expr.undefined ? undefined : null };
+    } else if (expr.kind === "UnaryExpr" && expr.op === "-") {
+      const number = assertNumber(getConstant(expr.expr)?.value);
+      return { value: -number };
     }
     return undefined;
   };
-
-  /**
-   * Handles a branching AND statement.
-   * Merges the pattern matchers discovered on the left anf right side.
-   *
-   * AND Rules:
-   * Merging distinct fields is OK
-   * Merging varying levels of fields is an ERROR
-   *    { details: [null] } CANNOT merge with { detail: { name: ["sam"] } }
-   * Merging same fields is an ERROR for non-negatives values
-   *    { source: ["lambda"] } CANNOT merge with { source: ["events"] }
-   * Merging negation is OK
-   *    { source: [{ anything-but: ["lambda"] }] } can merge with { source: [{ anything-but: ["events"] }] }
-   *    => { source: [{ anything-but: ["lambda", "events"] }] }
-   * Merging negation, prefix, exists with non-negative and negative values just results in the non-negagive values
-   *    { source: [{ anything-but: ["lambda"] }] } can merge with { source: ["events"] }
-   *    => { source: ["events"] }
-   */
-  // const handleAnd = (expr: BinaryExpr): FnLsEventPattern => {
-  //   const left = handleExpr(expr.left);
-  //   const right = handleExpr(expr.right);
-
-  //   // TODO: fix type cheating
-  //   return mergeEventPattern(
-  //     left as any,
-  //     right as any,
-  //     // merge a single field or fail based on the contents of the pattern matchers
-  //     handleAndMerge
-  //   ) as FnLsEventPattern;
-  // };
-
-  // const handleAndMerge = (
-  //   l: PatternClassification,
-  //   r: PatternClassification
-  // ): PatternClassification => {
-  //   const aggregate = isAggregateClassification(l)
-  //     ? l
-  //     : isAggregateClassification(r)
-  //     ? r
-  //     : undefined;
-  //   // handle as an aggregate
-  //   if (aggregate) {
-  //     return handleAggregateAndMerge(aggregate, l === aggregate ? r : l);
-  //   } else if (isExactMatchClassficiation(l)) {
-  //     if (isExactMatchClassficiation(r)) {
-  //       if (l.value == r.value) {
-  //         return l;
-  //       }
-  //       // TODO
-  //       throw Error("");
-  //     } else if (isPresentClassification(r)) {
-  //       if (r.isPresent) {
-  //         return l;
-  //       } else {
-  //         throw new Error(
-  //           "Contradiction between equals matcher and not exists in AND."
-  //         );
-  //       }
-  //     } else {
-  //       // TODO
-  //       throw new Error("");
-  //     }
-  //   } else if (isNullMatchClassification(l)) {
-  //     if (isNullMatchClassification(r)) {
-  //       return l;
-  //     } else if (isPresentClassification(r)) {
-  //       if (r.isPresent) {
-  //         return l;
-  //       } else {
-  //         throw new Error(
-  //           "Contradiction between null matcher and not exists in AND."
-  //         );
-  //       }
-  //     } else {
-  //       // TODO
-  //       throw new Error("");
-  //     }
-  //   } else if (isPrefixMatchClassficiation(l)) {
-  //     if (isPrefixMatchClassficiation(r)) {
-  //       if (l.prefix.startsWith(r.prefix)) {
-  //         return l;
-  //       } else if (r.prefix.startsWith(l.prefix)) {
-  //         return r;
-  //       } else {
-  //         // TODO
-  //         throw Error("");
-  //       }
-  //     } else if (isPresentClassification(r)) {
-  //       if (r.isPresent) {
-  //         return l;
-  //       } else {
-  //         throw new Error(
-  //           "Contradiction between prefix matcher and not exists in AND."
-  //         );
-  //       }
-  //     } else {
-  //       // TODO
-  //       throw new Error("");
-  //     }
-  //   }
-  // };
-
-  // const handleAggregateAndMerge = (
-  //   aggregate: AggregateClassification,
-  //   other: PatternClassification
-  // ): PatternClassification => {};
-
-  // const mergeEventPattern = (
-  //   left: Record<string, PatternClassification>,
-  //   right: Record<string, PatternClassification>,
-  //   mergePatternArray: (
-  //     l: PatternClassification,
-  //     r: PatternClassification
-  //   ) => PatternClassification
-  // ): Record<string, any> => {
-  //   // unique keys
-  //   const keys = [...new Set([...Object.keys(left), ...Object.keys(right)])];
-
-  //   const resolveFields = (l?: any, r?: any): any | undefined => {
-  //     // one is undefined, take the other
-  //     if (typeof l === "undefined" || typeof l === "undefined") {
-  //       return l ? l : r;
-  //     } else if (Array.isArray(l) !== Array.isArray(r)) {
-  //       // TODO: this error could be more specific, revisit
-  //       throw new Error(
-  //         `Pattern depth between conditional branches are not the same Left: ${l} Right: ${r}`
-  //       );
-  //     } else if (Array.isArray(l) && Array.isArray(r)) {
-  //       // Merge arrays based on the rules, AND and OR will be different.
-  //       return mergePatternArray(l, r);
-  //     } else if (typeof l === "object" && typeof r === "object") {
-  //       // Deep objects
-  //       return mergeEventPattern(l, r, mergePatternArray);
-  //     } else {
-  //       throw new Error(
-  //         `Unknown matcher type Left: ${typeof l} Right: ${typeof l}`
-  //       );
-  //     }
-  //   };
-
-  //   return keys.reduce((acc, field) => {
-  //     const l = left[field];
-  //     const r = right[field];
-
-  //     return {
-  //       ...acc,
-  //       [field]: resolveFields(l, r),
-  //     };
-  //   }, {});
-  // };
-
-  // const handleOr = (
-  //   left: aws_events.EventPattern,
-  //   right: aws_events.EventPattern
-  // ): FnLsEventPattern => {};
 
   // find the return, we'll the resolve the rest as needed.
   const [ret] = predicate.body.statements.filter(
@@ -644,7 +917,6 @@ interface AggregateClassification {
   classifications: (
     | ExactMatchClassficiation
     | PrefixMatchClassficiation
-    | NumericRangeClassficiation
     | PresentClassification
     | NullMatchClassification
     | AnythingButClassification
@@ -654,11 +926,22 @@ interface AggregateClassification {
 export const isAggregateClassification = (
   x: PatternClassification
 ): x is AggregateClassification => {
-  return "classificaiton" in x;
+  return "classifications" in x;
+};
+
+interface NumericAggregationClassification {
+  ranges: NumericRangeClassficiation[];
+}
+
+export const isNumericAggregationClassification = (
+  x: PatternClassification
+): x is NumericAggregationClassification => {
+  return "ranges" in x;
 };
 
 export interface ExactMatchClassficiation {
-  value: string | number | boolean;
+  // use NumericRange to represent a number
+  value: string | boolean;
 }
 
 export const isExactMatchClassficiation = (
@@ -687,9 +970,14 @@ export const isPrefixMatchClassficiation = (
   return "prefix" in x;
 };
 
+interface NumericRangeOperand {
+  value: number;
+  inclusive: boolean;
+}
+
 interface NumericRangeClassficiation {
-  lower?: { value: number; inclusive: boolean };
-  upper?: { value: number; inclusive: boolean };
+  lower: NumericRangeOperand;
+  upper: NumericRangeOperand;
 }
 
 export const isNumericRangeClassficiation = (
@@ -709,7 +997,8 @@ export const isPresentClassification = (
 };
 
 type AnythingButClassification = {
-  anythingBut: number | string | null;
+  // use NumericRange to represent a number
+  anythingBut: string | null;
   isPrefix?: boolean;
 };
 
@@ -738,20 +1027,38 @@ type PatternClassification =
   | PresentClassification
   | NullMatchClassification
   | AnythingButClassification
-  | EmptyClassification;
+  | EmptyClassification
+  | NumericAggregationClassification;
+
+const isPositiveSingleValueRange = (
+  classification: NumericRangeClassficiation
+) =>
+  classification.lower.value === classification.upper.value &&
+  classification.lower.inclusive &&
+  classification.upper.inclusive;
+
+const isNegativeSingleValueRange = (
+  classification: NumericRangeClassficiation
+) =>
+  classification.lower.value === classification.upper.value &&
+  !classification.lower.inclusive &&
+  !classification.upper.inclusive;
 
 const classDocumentToEventPattern = (
   classDocument: ClassDocument
 ): SubPattern => {
-  return Object.entries(classDocument.doc).reduce(
-    (pattern, [key, entry]) => ({
+  return Object.entries(classDocument.doc).reduce((pattern, [key, entry]) => {
+    const keyPattern = isClassDocument(entry)
+      ? classDocumentToEventPattern(entry)
+      : classificationToPattern(entry);
+    if (!keyPattern) {
+      return pattern;
+    }
+    return {
       ...pattern,
-      [key]: isClassDocument(entry)
-        ? classDocumentToEventPattern(entry)
-        : classificationToPattern(entry),
-    }),
-    {}
-  );
+      [key]: keyPattern,
+    };
+  }, {});
 };
 
 const classificationToPattern = (
@@ -781,16 +1088,27 @@ const classificationToPattern = (
     if (!classification.lower && !classification.upper) {
       return undefined;
     }
+    if (isPositiveSingleValueRange(classification)) {
+      return [classification.lower.value];
+    } else if (isNegativeSingleValueRange(classification)) {
+      return [{ "anything-but": classification.lower.value }];
+    }
+    if (
+      classification.lower.value === Number.NEGATIVE_INFINITY &&
+      classification.upper.value === Number.POSITIVE_INFINITY
+    ) {
+      return undefined;
+    }
     return [
       {
         number: [
-          ...(classification.lower
+          ...(classification.lower.value !== Number.NEGATIVE_INFINITY
             ? [
                 classification.lower.inclusive ? ">=" : ">",
                 classification.lower.value,
               ]
             : []),
-          ...(classification.upper
+          ...(classification.upper.value !== Number.POSITIVE_INFINITY
             ? [
                 classification.upper.inclusive ? "<=" : "<",
                 classification.upper.value,
@@ -800,7 +1118,20 @@ const classificationToPattern = (
       },
     ];
   } else if (isAggregateClassification(classification)) {
+    if (classification.classifications.length === 0) {
+      return undefined;
+    }
     return classification.classifications
+      .map(classificationToPattern)
+      .reduce(
+        (acc, pattern) => [...(acc ?? []), ...(pattern ?? [])],
+        [] as PatternList
+      );
+  } else if (isNumericAggregationClassification(classification)) {
+    if (classification.ranges.length === 0) {
+      return undefined;
+    }
+    return classification.ranges
       .map(classificationToPattern)
       .reduce(
         (acc, pattern) => [...(acc ?? []), ...(pattern ?? [])],
