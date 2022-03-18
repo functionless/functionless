@@ -1,7 +1,7 @@
 import { aws_events } from "aws-cdk-lib";
 import { Rule } from "aws-cdk-lib/aws-events";
 import { Construct } from "constructs";
-import { FunctionDecl } from "./declaration";
+import { FunctionDecl } from "../declaration";
 import { synthesizeEventPattern } from "./eventpattern";
 
 export interface EventBusEvent<
@@ -19,7 +19,7 @@ type EventHandlerFunction<E extends EventBusEvent = EventBusEvent<any>> = (
 ) => void;
 
 export type EventPredicateFunction<
-  E extends EventBusEvent = EventBusEvent<any>,
+  E extends EventBusEvent = EventBusEvent<any>
 > = (event: E) => void;
 
 export class EventBusRule<T extends EventBusEvent> extends Construct {

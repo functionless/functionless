@@ -3,7 +3,8 @@ import { AppsyncResolver, FunctionDecl } from "../src";
 
 import * as appsync from "@aws-cdk/aws-appsync-alpha";
 import path from "path";
-import { FnLsEventPattern, synthesizeEventPattern } from "../src/eventpattern";
+import { synthesizeEventPattern } from "../src/eventbridge/eventpattern";
+import { FnLsEventPattern } from "../src/eventbridge/eventpattern/types";
 
 // generates boilerplate for the circuit-breaker logic for implementing early return
 export function returnExpr(varName: string) {
