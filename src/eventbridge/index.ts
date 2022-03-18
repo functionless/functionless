@@ -3,6 +3,7 @@ import { Rule } from "aws-cdk-lib/aws-events";
 import { Construct } from "constructs";
 import { FunctionDecl } from "../declaration";
 import { synthesizeEventPattern } from "./eventpattern";
+import { synthesizeEventBridgeTarget } from "./targets";
 
 export interface EventBusEvent<
   T = any,
@@ -20,7 +21,16 @@ type EventHandlerFunction<E extends EventBusEvent = EventBusEvent<any>> = (
 
 export type EventPredicateFunction<
   E extends EventBusEvent = EventBusEvent<any>
-> = (event: E) => void;
+> = (event: E) => boolean;
+
+export class EventBusTarget<T extends EventBusEvent> {
+  target: aws_events.IRuleTarget;
+
+  constructor(func: EventHandlerFunction<T>) {
+    const decl = func as unknown as FunctionDecl;
+    this.target = synthesizeEventBridgeTarget(decl);
+  }
+}
 
 export class EventBusRule<T extends EventBusEvent> extends Construct {
   public readonly rule: aws_events.Rule;
@@ -41,28 +51,28 @@ export class EventBusRule<T extends EventBusEvent> extends Construct {
       eventBus: bus,
     });
   }
+
+  target<E extends T>(target: EventHandlerFunction<E>): EventBusRule<T>;
+  target<E extends T>(target: EventBusTarget<E>): EventBusRule<T>;
+  target<E extends T>(
+    target: EventHandlerFunction<E> | EventBusTarget<E>
+  ): EventBusRule<T> {
+    const _target =
+      target instanceof EventBusTarget ? target : new EventBusTarget<E>(target);
+    this.rule.addTarget(_target.target);
+    return this;
+  }
 }
 
-export class EventBus<E extends EventBusEvent> extends Construct {
+export class EventBus<E extends EventBusEvent> {
   /**
    * This static property identifies this class as an EventBus to the TypeScript plugin.
    */
   public static readonly FunctionlessType = "EventBus";
 
-  public readonly decl: FunctionDecl;
+  constructor(private readonly bus: aws_events.EventBus) {}
 
-  constructor(
-    scope: Construct,
-    id: string,
-    private readonly bus: aws_events.EventBus,
-    readonly fn: EventHandlerFunction
-  ) {
-    super(scope, id);
-    // The Functionless TSC compiler plugin will transform the `EventHandlerFunction` into a FunctionDecl.
-    this.decl = fn as unknown as FunctionDecl;
-  }
-
-  when(id: string, predicate: EventPredicateFunction<E>) {
-    return new EventBusRule<E>(this, id, this.bus, predicate);
+  when(scope: Construct, id: string, predicate: EventPredicateFunction<E>) {
+    return new EventBusRule<E>(scope, id, this.bus, predicate);
   }
 }

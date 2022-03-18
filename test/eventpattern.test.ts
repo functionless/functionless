@@ -391,7 +391,7 @@ describe("event pattern", () => {
     test("does exist lone value", () => {
       ebEventPatternTestCase(
         reflect<EventPredicateFunction<TestEvent>>(
-          (event) => event.detail.optional
+          (event) => !!event.detail.optional
         ),
         {
           detail: { optional: [{ exists: true }] },
@@ -450,7 +450,7 @@ describe("event pattern", () => {
       ebEventPatternTestCase(
         reflect<EventPredicateFunction<TestEvent>>((event) => {
           const myInternalContant = "hi";
-          event.detail.str === myInternalContant;
+          return event.detail.str === myInternalContant;
         }),
         {
           detail: { optional: ["hi"] },
@@ -462,7 +462,7 @@ describe("event pattern", () => {
       ebEventPatternTestCase(
         reflect<EventPredicateFunction<TestEvent>>((event) => {
           const myInternalContant = "hi";
-          event.detail.str === `${myInternalContant} there`;
+          return event.detail.str === `${myInternalContant} there`;
         }),
         {
           detail: { optional: ["hi there"] },
@@ -474,7 +474,7 @@ describe("event pattern", () => {
       ebEventPatternTestCase(
         reflect<EventPredicateFunction<TestEvent>>((event) => {
           const myInternalContant = { value: "hi" };
-          event.detail.str === myInternalContant.value;
+          return event.detail.str === myInternalContant.value;
         }),
         {
           detail: { optional: ["hi"] },
@@ -486,7 +486,7 @@ describe("event pattern", () => {
       ebEventPatternTestCaseError(
         reflect<EventPredicateFunction<TestEvent>>((event) => {
           const myInternalContant = (() => "hi" + " " + "there")();
-          event.detail.str === myInternalContant;
+          return event.detail.str === myInternalContant;
         })
       );
     });
@@ -495,7 +495,7 @@ describe("event pattern", () => {
       ebEventPatternTestCaseError(
         reflect<EventPredicateFunction<TestEvent>>((event) => {
           const myMethod = () => "hi" + " " + "there";
-          event.detail.str === myMethod();
+          return event.detail.str === myMethod();
         })
       );
     });
@@ -504,7 +504,7 @@ describe("event pattern", () => {
   describe("simple invalid", () => {
     test("error on raw event in predicate", () => {
       ebEventPatternTestCaseError(
-        reflect<EventPredicateFunction<TestEvent>>((event) => event)
+        reflect<EventPredicateFunction<TestEvent>>((event) => !!event)
       );
     });
   });

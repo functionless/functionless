@@ -1,7 +1,8 @@
-import { App, Stack } from "aws-cdk-lib";
+import { App, aws_events, Stack } from "aws-cdk-lib";
 import * as appsync from "@aws-cdk/aws-appsync-alpha";
 import path from "path";
 import { PeopleDatabase } from "./people-db";
+import { EventBus, EventBusEvent } from "functionless";
 
 export const app = new App();
 
@@ -44,3 +45,23 @@ peopleDb.deletePerson.addResolver(api, {
   typeName: "Mutation",
   fieldName: "deletePerson",
 });
+
+type MyEvent = EventBusEvent<{
+  value: string;
+}>;
+
+new EventBus<MyEvent>(new aws_events.EventBus(stack, "bus"))
+  .when(stack, "aRule", (event) => event.detail.value === "hello")
+  .target((event) =>
+    peopleDb.computeScore({ id: event.source, name: event.detail.value })
+  )
+  .target((event) =>
+    peopleDb.personTable.putItem({
+      key: {
+        id: {
+          S: event.source,
+        },
+      },
+      attributeValues: { name: { S: event.detail.value } },
+    })
+  );
