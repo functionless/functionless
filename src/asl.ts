@@ -20,7 +20,6 @@ import {
 import { findFunction } from "./util";
 import { FunctionDecl } from "./declaration";
 import { FunctionlessNode } from "./node";
-import { JsonPath } from "aws-cdk-lib/aws-stepfunctions";
 
 export function isASL(a: any): a is ASL {
   return (a as ASL | undefined)?.kind === ASL.ContextName;
@@ -56,7 +55,8 @@ export interface Succeed {
 export interface Fail {
   Type: "Fail";
   Comment?: string;
-  Error: string;
+  Error?: string;
+  Cause?: string;
 }
 
 export interface TaskParameters {
@@ -71,9 +71,10 @@ export interface Nextable {
 export interface Pass {
   Comment?: string;
   Type: "Pass";
+  Result?: any;
   InputPath?: string;
   OutputPath?: string;
-  ResultPath?: string;
+  ResultPath?: string | null;
   Parameters?: TaskParameters;
   Next?: string;
   End?: boolean;
@@ -147,7 +148,7 @@ export interface Retry {
 
 export interface Catch {
   ErrorEquals: string[];
-  ResultPath?: string;
+  ResultPath?: string | null;
   Next: string;
 }
 
@@ -156,8 +157,11 @@ export interface BaseTask extends Nextable {
   InputPath?: string;
   OutputPath?: string;
   Parameters?: TaskParameters;
+  /**
+   * Pass a collection of key value pairs, where the values are static or selected from the result. For more information, see ResultSelector.
+   */
   ResultSelector?: string;
-  ResultPath?: string;
+  ResultPath?: string | null;
   Retry?: Retry[];
   Catch?: Catch[];
 }
@@ -173,9 +177,30 @@ export interface Task extends BaseTask {
  */
 export interface MapTask extends BaseTask {
   Type: "Map";
+  /**
+   * The Iterator field’s value is an object that defines a state machine which will process each element of the array.
+   */
   Iterator: StateMachine<States>;
   /**
-   * The MaxConcurrency field’s value is an integer that provides an upper bound on how many invocations of the Iterator may run in parallel. For instance, a MaxConcurrency value of 10 will limit your Map state to 10 concurrent iterations running at one time.
+   * The ItemsPath field’s value is a reference path identifying where in the effective input the array field is found. For more information, see ItemsPath.
+   *
+   * States within an Iterator field can only transition to each other, and no state outside the Iterator field can transition to a state within it.
+   *
+   * If any iteration fails, entire Map state fails, and all iterations are terminated.
+   */
+  ItemsPath?: string;
+  /**
+   * Specifies where (in the input) to place the output of the branches. The input is then filtered as specified by the OutputPath field (if present) before being used as the state's output. For more information, see Input and Output Processing.
+   */
+  ResultPath?: string | null;
+  /**
+   * The `MaxConcurrency` field’s value is an integer that provides an upper bound on how many invocations of the Iterator may run in parallel. For instance, a MaxConcurrency value of 10 will limit your Map state to 10 concurrent iterations running at one time.
+   *
+   * Concurrent iterations may be limited. When this occurs, some iterations will not begin until previous iterations have completed. The likelihood of this occurring increases when your input array has more than 40 items.
+   *
+   * The default value is 0, which places no quota on parallelism and iterations are invoked as concurrently as possible.
+   *
+   * A MaxConcurrency value of 1 invokes the Iterator once for each array element in the order of their appearance in the input, and will not start a new iteration until the previous has completed.
    */
   MaxConcurrency?: number;
 }
@@ -184,9 +209,6 @@ export interface ParallelTask extends BaseTask {
   Type: "Parallel";
   Iterator: States;
 }
-
-const SuccessState = "Success";
-const ThrowState = "Throw";
 
 /**
  * Amazon States Language (ASL) Generator.
@@ -201,9 +223,15 @@ export class ASL {
    * the AST and assigning each state a unique name. These names are then used to
    * resolve state transitions.
    */
-  readonly stateTransitions: Map<Stmt, string>;
-  readonly returnTransitions: Map<FunctionDecl | FunctionExpr, string>;
-  readonly throwTransitions: Map<FunctionDecl | FunctionExpr, string>;
+  readonly stateNames: Map<Stmt, string>;
+  readonly returnTransitions: Map<
+    FunctionDecl | FunctionExpr | ForInStmt | ForOfStmt,
+    string
+  >;
+  readonly throwTransitions: Map<
+    FunctionDecl | FunctionExpr | ForInStmt | ForOfStmt,
+    string
+  >;
 
   readonly definition: StateMachine<States>;
 
@@ -212,25 +240,18 @@ export class ASL {
     readonly role: aws_iam.IRole,
     readonly decl: FunctionDecl
   ) {
-    let i = 0;
-    const nameMap = new Map<string, number>();
-    const nextName = (stmt: Stmt) => {
-      let name = toStateName(stmt) ?? `State${(i += 1)}`;
-      if (name.length > 120) {
-        name = name.slice(0, 120);
-      }
-      const count = nameMap.get(name);
-      if (count === undefined) {
-        nameMap.set(name, 1);
-        return name;
-      } else {
-        nameMap.set(name, count + 1);
-        return `${name} ${count}`;
-      }
-    };
-    this.stateTransitions = new Map<Stmt, string>(bind(decl.body));
+    this.stateNames = new Map();
     this.returnTransitions = new Map();
     this.throwTransitions = new Map();
+
+    const terminalStates = {
+      [this.getReturnStateName(this.decl)]: {
+        Type: "Succeed",
+      },
+      [this.getThrowStateName(this.decl)]: {
+        Type: "Fail",
+      },
+    } as const;
 
     const states = this.execute(this.decl.body);
 
@@ -240,125 +261,9 @@ export class ASL {
       StartAt: start,
       States: {
         ...states,
-        [SuccessState]: {
-          Type: "Succeed",
-        },
-        [ThrowState]: {
-          Type: "Fail",
-          Error: "TODO",
-        },
+        ...terminalStates,
       },
     };
-
-    function bind(stmt: Stmt | undefined): [Stmt, string][] {
-      if (stmt === undefined) {
-        return [];
-      } else if (stmt.kind === "BlockStmt") {
-        return stmt.statements.reduce(
-          (arr: [Stmt, string][], stmt) => arr.concat(bind(stmt)),
-          []
-        );
-      } else if (stmt.kind === "IfStmt") {
-        return [
-          [stmt, nextName(stmt)],
-          ...bind(stmt.then),
-          ...bind(stmt._else),
-        ];
-      } else if (stmt.kind === "ExprStmt") {
-        if (stmt.expr.kind === "FunctionExpr") {
-          [[stmt, nextName(stmt)], ...bind(stmt.expr.body)];
-        }
-      } else if (stmt.kind === "ForInStmt" || stmt.kind === "ForOfStmt") {
-        return [[stmt, nextName(stmt)], ...bind(stmt.body)];
-      }
-      return [[stmt, nextName(stmt)]];
-    }
-
-    function toStateName(stmt: Stmt): string | undefined {
-      if (stmt.kind === "IfStmt") {
-        return `if(${exprToString(stmt.when)})`;
-      } else if (stmt.kind === "ExprStmt") {
-        return exprToString(stmt.expr);
-      } else if (stmt.kind === "BlockStmt") {
-        return undefined;
-      } else if (stmt.kind === "BreakStmt") {
-        return "break";
-      } else if (stmt.kind === "CatchClause") {
-        return `catch${
-          stmt.variableDecl?.name ? `(${stmt.variableDecl?.name})` : ""
-        }`;
-      } else if (stmt.kind === "ForInStmt") {
-        return `for(${stmt.i.name} in ${exprToString(stmt.expr)})`;
-      } else if (stmt.kind === "ForOfStmt") {
-        return `for(${stmt.i.name} of ${exprToString(stmt.expr)})`;
-      } else if (stmt.kind === "ReturnStmt") {
-        return `return ${exprToString(stmt.expr)}`;
-      } else if (stmt.kind === "ThrowStmt") {
-        return `throw ${exprToString(stmt.expr)}`;
-      } else if (stmt.kind === "TryStmt") {
-        return `try`;
-      } else if (stmt.kind === "VariableStmt") {
-        return `${stmt.name} = ${
-          stmt.expr ? exprToString(stmt.expr) : "undefined"
-        }`;
-      } else {
-        return assertNever(stmt);
-      }
-    }
-
-    function exprToString(expr: Expr): string {
-      if (expr.kind === "ArrayLiteralExpr") {
-        return `[${expr.items.map(exprToString).join(", ")}]`;
-      } else if (expr.kind === "BinaryExpr") {
-        return `${exprToString(expr.left)} ${expr.op} ${exprToString(
-          expr.right
-        )}`;
-      } else if (expr.kind === "BooleanLiteralExpr") {
-        return `${expr.value}`;
-      } else if (expr.kind === "CallExpr") {
-        return `${exprToString(expr.expr)}(${Object.values(expr.args)
-          .map(exprToString)
-          .join(", ")})`;
-      } else if (expr.kind === "ConditionExpr") {
-        return `if(${exprToString(expr.when)})`;
-      } else if (expr.kind === "ElementAccessExpr") {
-        return `${exprToString(expr.expr)}[${exprToString(expr.element)}]`;
-      } else if (expr.kind === "FunctionExpr") {
-        return `function(${expr.parameters
-          .map((param) => param.name)
-          .join(", ")})`;
-      } else if (expr.kind === "Identifier") {
-        return expr.name;
-      } else if (expr.kind === "NullLiteralExpr") {
-        return `null`;
-      } else if (expr.kind === "NumberLiteralExpr") {
-        return `${expr.value}`;
-      } else if (expr.kind === "ObjectLiteralExpr") {
-        return `{${expr.properties.map(exprToString).join(", ")}}`;
-      } else if (expr.kind === "PropAccessExpr") {
-        return `${exprToString(expr.expr)}.${expr.name}`;
-      } else if (expr.kind === "PropAssignExpr") {
-        return `${
-          expr.name.kind === "StringLiteralExpr"
-            ? expr.name.value
-            : exprToString(expr.name)
-        }: ${exprToString(expr.expr)}`;
-      } else if (expr.kind === "ReferenceExpr") {
-        return expr.name;
-      } else if (expr.kind === "SpreadAssignExpr") {
-        return `...${exprToString(expr.expr)}`;
-      } else if (expr.kind === "SpreadElementExpr") {
-        return `...${exprToString(expr.expr)}`;
-      } else if (expr.kind === "StringLiteralExpr") {
-        return `"${expr.value}"`;
-      } else if (expr.kind === "TemplateExpr") {
-        return `\`${expr.exprs.map(exprToString).join("")}\``;
-      } else if (expr.kind === "UnaryExpr") {
-        return `${expr.op}${exprToString(expr.expr)}`;
-      } else {
-        return assertNever(expr);
-      }
-    }
   }
 
   public execute(stmt: Stmt): States {
@@ -405,24 +310,30 @@ export class ASL {
       return {
         [this.getStateName(stmt)]: {
           Type: "Map",
-          InputPath: this.evalJsonPath(stmt.expr),
+          ResultPath: null,
+          ItemsPath: this.evalJsonPath(stmt.expr),
           Next: this.next(stmt),
+          MaxConcurrency: 1,
+          Catch: [
+            {
+              ErrorEquals: ["States.All"],
+              Next: this.throw(stmt.parent),
+            },
+          ],
+          Parameters: {
+            [`${stmt.i.name}.$`]: "$$.Map.Item.Value",
+          },
           Iterator: {
             StartAt: this.getStateName(stmt.body.statements[0]),
             States: {
               ...this.execute(stmt.body),
-              [SuccessState]: {
+              [this.getReturnStateName(stmt)]: {
                 Type: "Succeed",
               },
-              [ThrowState]: {
+              [this.getThrowStateName(stmt)]: {
                 Type: "Fail",
-                Error: "TODO",
               },
             },
-          },
-          MaxConcurrency: 1,
-          Parameters: {
-            [`${stmt.i.name}.$`]: "$$.Map.Item.Value",
           },
         },
       };
@@ -491,7 +402,7 @@ export class ASL {
     if (node === undefined) {
       throw new Error(`Stack Underflow`);
     } else if (node.kind === "FunctionDecl" || node.kind === "FunctionExpr") {
-      return SuccessState;
+      return this.getReturnStateName(node);
     } else if (isExpr(node)) {
       return this.next(node.parent);
     } else if (isStmt(node)) {
@@ -503,8 +414,7 @@ export class ASL {
         return this.getStateName(node.next);
       }
     }
-
-    return this.next(node.parent);
+    return this.return(node.parent);
   }
 
   /**
@@ -513,13 +423,13 @@ export class ASL {
   private return(node: FunctionlessNode | undefined): string {
     if (node === undefined) {
       throw new Error(`Stack Underflow`);
-    } else if (node.kind === "FunctionDecl") {
-      return "Success";
-    } else if (node.kind === "FunctionExpr") {
-      if (!this.returnTransitions.has(node)) {
-        throw new Error(`Not Implemented`);
-      }
-      return this.returnTransitions.get(node)!;
+    } else if (
+      node.kind === "FunctionDecl" ||
+      node.kind === "FunctionExpr" ||
+      node.kind === "ForInStmt" ||
+      node.kind === "ForOfStmt"
+    ) {
+      return this.getReturnStateName(node);
     } else {
       return this.return(node.parent);
     }
@@ -531,10 +441,13 @@ export class ASL {
   private throw(node: FunctionlessNode | undefined): string {
     if (node === undefined) {
       throw new Error(`Stack Underflow`);
-    } else if (node.kind === "FunctionDecl") {
-      return "Throw";
-    } else if (node.kind === "FunctionExpr") {
-      return this.getThrowTransition(node);
+    } else if (
+      node.kind === "FunctionDecl" ||
+      node.kind === "FunctionExpr" ||
+      node.kind === "ForInStmt" ||
+      node.kind === "ForOfStmt"
+    ) {
+      return this.getThrowStateName(node);
     } else if (node.kind === "TryStmt") {
       if (node.catchClause) {
         return this.next(node.catchClause);
@@ -548,28 +461,13 @@ export class ASL {
     }
   }
 
-  private getThrowTransition(node: FunctionDecl | FunctionExpr) {
-    if (!this.throwTransitions.has(node)) {
-      throw new Error(`not implemented`);
-    }
-    return this.throwTransitions.get(node)!;
-  }
-
-  private getStateName(stmt: Stmt): string {
-    const name = this.stateTransitions.get(stmt);
-    if (name === undefined) {
-      throw new Error(``);
-    }
-    return name;
-  }
-
   public eval(expr: Expr): State {
     const ResultPath =
       expr.parent?.kind === "VariableStmt"
         ? `$.${expr.parent.name}`
         : expr.parent?.kind === "ReturnStmt"
-        ? undefined
-        : JsonPath.DISCARD;
+        ? "$"
+        : null;
     if (expr.kind === "CallExpr") {
       const serviceCall = findFunction(expr);
       if (serviceCall) {
@@ -577,7 +475,7 @@ export class ASL {
 
         return {
           ...task,
-          ...(ResultPath ? { ResultPath } : {}),
+          ResultPath,
           Catch: [
             {
               // https://docs.aws.amazon.com/step-functions/latest/dg/concepts-error-handling.html
@@ -602,7 +500,7 @@ export class ASL {
           [`result${isLiteralExpr(expr) ? "" : ".$"}`]: this.evalJson(expr),
         },
         OutputPath: "$.result",
-        ...(ResultPath ? { ResultPath } : {}),
+        ResultPath,
       };
     } else {
       throw new Error(`cannot eval expression kind '${expr.kind}'`);
@@ -837,5 +735,126 @@ export class ASL {
     throw new Error(
       `Expression kind '${expr.kind}' is not allowed as an element in a Step Function`
     );
+  }
+
+  private getStateName(stmt: Stmt): string {
+    if (!this.stateNames.has(stmt)) {
+      const stateName = toStateName(stmt);
+      if (stateName === undefined) {
+        throw new Error(`cannot transition to ${stmt.kind}`);
+      }
+      this.stateNames.set(stmt, stateName);
+    }
+    return this.stateNames.get(stmt)!;
+
+    function toStateName(stmt: Stmt): string | undefined {
+      if (stmt.kind === "IfStmt") {
+        return `if(${exprToString(stmt.when)})`;
+      } else if (stmt.kind === "ExprStmt") {
+        return exprToString(stmt.expr);
+      } else if (stmt.kind === "BlockStmt") {
+        return undefined;
+      } else if (stmt.kind === "BreakStmt") {
+        return "break";
+      } else if (stmt.kind === "CatchClause") {
+        return `catch${
+          stmt.variableDecl?.name ? `(${stmt.variableDecl?.name})` : ""
+        }`;
+      } else if (stmt.kind === "ForInStmt") {
+        return `for(${stmt.i.name} in ${exprToString(stmt.expr)})`;
+      } else if (stmt.kind === "ForOfStmt") {
+        return `for(${stmt.i.name} of ${exprToString(stmt.expr)})`;
+      } else if (stmt.kind === "ReturnStmt") {
+        return `return ${exprToString(stmt.expr)}`;
+      } else if (stmt.kind === "ThrowStmt") {
+        return `throw ${exprToString(stmt.expr)}`;
+      } else if (stmt.kind === "TryStmt") {
+        return `try`;
+      } else if (stmt.kind === "VariableStmt") {
+        return `${stmt.name} = ${
+          stmt.expr ? exprToString(stmt.expr) : "undefined"
+        }`;
+      } else {
+        return assertNever(stmt);
+      }
+    }
+
+    function exprToString(expr: Expr): string {
+      if (expr.kind === "ArrayLiteralExpr") {
+        return `[${expr.items.map(exprToString).join(", ")}]`;
+      } else if (expr.kind === "BinaryExpr") {
+        return `${exprToString(expr.left)} ${expr.op} ${exprToString(
+          expr.right
+        )}`;
+      } else if (expr.kind === "BooleanLiteralExpr") {
+        return `${expr.value}`;
+      } else if (expr.kind === "CallExpr") {
+        return `${exprToString(expr.expr)}(${Object.values(expr.args)
+          .map(exprToString)
+          .join(", ")})`;
+      } else if (expr.kind === "ConditionExpr") {
+        return `if(${exprToString(expr.when)})`;
+      } else if (expr.kind === "ElementAccessExpr") {
+        return `${exprToString(expr.expr)}[${exprToString(expr.element)}]`;
+      } else if (expr.kind === "FunctionExpr") {
+        return `function(${expr.parameters
+          .map((param) => param.name)
+          .join(", ")})`;
+      } else if (expr.kind === "Identifier") {
+        return expr.name;
+      } else if (expr.kind === "NullLiteralExpr") {
+        return `null`;
+      } else if (expr.kind === "NumberLiteralExpr") {
+        return `${expr.value}`;
+      } else if (expr.kind === "ObjectLiteralExpr") {
+        return `{${expr.properties.map(exprToString).join(", ")}}`;
+      } else if (expr.kind === "PropAccessExpr") {
+        return `${exprToString(expr.expr)}.${expr.name}`;
+      } else if (expr.kind === "PropAssignExpr") {
+        return `${
+          expr.name.kind === "StringLiteralExpr"
+            ? expr.name.value
+            : exprToString(expr.name)
+        }: ${exprToString(expr.expr)}`;
+      } else if (expr.kind === "ReferenceExpr") {
+        return expr.name;
+      } else if (expr.kind === "SpreadAssignExpr") {
+        return `...${exprToString(expr.expr)}`;
+      } else if (expr.kind === "SpreadElementExpr") {
+        return `...${exprToString(expr.expr)}`;
+      } else if (expr.kind === "StringLiteralExpr") {
+        return `"${expr.value}"`;
+      } else if (expr.kind === "TemplateExpr") {
+        return `\`${expr.exprs.map(exprToString).join("")}\``;
+      } else if (expr.kind === "UnaryExpr") {
+        return `${expr.op}${exprToString(expr.expr)}`;
+      } else {
+        return assertNever(expr);
+      }
+    }
+  }
+
+  private getReturnStateName(
+    node: FunctionDecl | FunctionExpr | ForInStmt | ForOfStmt
+  ) {
+    return this.getOrCreateTransition(this.returnTransitions, "Success", node);
+  }
+
+  private getThrowStateName(
+    node: FunctionDecl | FunctionExpr | ForInStmt | ForOfStmt
+  ) {
+    return this.getOrCreateTransition(this.throwTransitions, "Throw", node);
+  }
+
+  private getOrCreateTransition<
+    Node extends FunctionDecl | FunctionExpr | ForInStmt | ForOfStmt
+  >(transitions: Map<Node, string>, prefix: string, node: Node) {
+    if (!transitions.has(node)) {
+      transitions.set(
+        node,
+        `${prefix}${transitions.size === 0 ? "" : transitions.size}`
+      );
+    }
+    return transitions.get(node)!;
   }
 }

@@ -63,6 +63,7 @@ test("return a single Lambda Function call", () => {
         Type: "Task",
         Resource: getPerson.resource.functionArn,
         Next: "Success",
+        ResultPath: "$",
         Parameters: {
           "id.$": "$.id",
         },
@@ -77,7 +78,6 @@ test("return a single Lambda Function call", () => {
         Type: "Succeed",
       },
       Throw: {
-        Error: "TODO",
         Type: "Fail",
       },
     },
@@ -115,6 +115,7 @@ test("call Lambda Function, store as variable, return variable", () => {
       },
       "return person": {
         Type: "Pass",
+        ResultPath: "$",
         Parameters: {
           "result.$": "$.person",
         },
@@ -125,7 +126,6 @@ test("call Lambda Function, store as variable, return variable", () => {
         Type: "Succeed",
       },
       Throw: {
-        Error: "TODO",
         Type: "Fail",
       },
     },
@@ -204,6 +204,7 @@ test("return AWS.DynamoDB.GetItem", () => {
       },
       "return null": {
         Next: "Success",
+        ResultPath: "$",
         Parameters: {
           result: null,
         },
@@ -218,6 +219,7 @@ test("return AWS.DynamoDB.GetItem", () => {
             "name.$": "$.person.Item.name.S",
           },
         },
+        ResultPath: "$",
         OutputPath: "$.result",
         Type: "Pass",
       },
@@ -225,7 +227,6 @@ test("return AWS.DynamoDB.GetItem", () => {
         Type: "Succeed",
       },
       Throw: {
-        Error: "TODO",
         Type: "Fail",
       },
     },
@@ -316,6 +317,7 @@ test("call AWS.DynamoDB.GetItem, then Lambda and return LiteralExpr", () => {
           result: null,
         },
         OutputPath: "$.result",
+        ResultPath: "$",
         Type: "Pass",
       },
       "score = computeScore({id: person.Item.id.S, name: person.Item.name.S})":
@@ -339,6 +341,7 @@ test("call AWS.DynamoDB.GetItem, then Lambda and return LiteralExpr", () => {
         },
       "return {id: person.Item.id.S, name: person.Item.name.S, score: score}": {
         Next: "Success",
+        ResultPath: "$",
         Parameters: {
           result: {
             "id.$": "$.person.Item.id.S",
@@ -353,7 +356,6 @@ test("call AWS.DynamoDB.GetItem, then Lambda and return LiteralExpr", () => {
         Type: "Succeed",
       },
       Throw: {
-        Error: "TODO",
         Type: "Fail",
       },
     },
@@ -391,8 +393,16 @@ test("for-loop over a list literal", () => {
       },
       "for(name of people)": {
         Type: "Map",
-        InputPath: "$.people",
+        ItemsPath: "$.people",
+        ResultPath: null,
         MaxConcurrency: 1,
+        Next: "Success",
+        Catch: [
+          {
+            ErrorEquals: ["States.All"],
+            Next: "Throw",
+          },
+        ],
         Parameters: {
           "name.$": "$$.Map.Item.Value",
         },
@@ -400,13 +410,14 @@ test("for-loop over a list literal", () => {
           StartAt: "computeScore({id: id, name: name})",
           States: {
             "computeScore({id: id, name: name})": {
+              ResultPath: null,
               Catch: [
                 {
                   ErrorEquals: ["States.All"],
-                  Next: "Throw",
+                  Next: "Throw1",
                 },
               ],
-              Next: "Success",
+              Next: "Success1",
               Parameters: {
                 person: {
                   "id.$": "$.id",
@@ -414,25 +425,21 @@ test("for-loop over a list literal", () => {
                 },
               },
               Resource: computeScore.resource.functionArn,
-              ResultPath: "DISCARD",
               Type: "Task",
             },
-            Success: {
+            Success1: {
               Type: "Succeed",
             },
-            Throw: {
+            Throw1: {
               Type: "Fail",
-              Error: "TODO",
             },
           },
         },
-        Next: "Success",
       },
       Success: {
         Type: "Succeed",
       },
       Throw: {
-        Error: "TODO",
         Type: "Fail",
       },
     },

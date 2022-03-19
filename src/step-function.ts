@@ -22,6 +22,12 @@ export type AnyStepFunction =
   | ExpressStepFunction<AnyFunction>
   | StepFunction<AnyFunction>;
 
+// export const $SFN = {
+//   map<T, U>(list: T[], iterator: (item: T, index: number) => U): U[] {
+//     return [];
+//   }
+// }
+
 abstract class BaseStepFunction<F extends AnyFunction>
   extends Resource
   implements aws_stepfunctions.IStateMachine
