@@ -50,10 +50,6 @@ export type ResolverFunction<
   Source
 > = ($context: AppsyncContext<Arguments, Source>) => Result;
 
-export interface MaterializedResolverProps extends appsync.ResolverProps {
-  templates: string[];
-}
-
 export interface MaterializedResolver extends appsync.Resolver {
   readonly templates: string[];
 }
