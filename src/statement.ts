@@ -11,6 +11,7 @@ export type Stmt =
   | ExprStmt
   | ForInStmt
   | ForOfStmt
+  | IfStmt
   | ReturnStmt
   | VariableStmt;
 
@@ -21,6 +22,7 @@ export function isStmt(a: any): a is Stmt {
       isExprStmt(a) ||
       isForInStmt(a) ||
       isForOfStmt(a) ||
+      isIfStmt(a) ||
       isReturn(a) ||
       isVariableStmt(a))
   );

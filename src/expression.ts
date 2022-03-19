@@ -1,7 +1,7 @@
 import { ParameterDecl } from "./declaration";
 import { AnyFunction, AnyLambda } from "./function";
 import { BaseNode, isNode, setParent, typeGuard } from "./node";
-import { BlockStmt, IfStmt, isIfStmt } from "./statement";
+import { BlockStmt } from "./statement";
 import { AnyTable } from "./table";
 
 /**
@@ -14,7 +14,6 @@ export type Expr =
   | CallExpr
   | ConditionExpr
   | FunctionExpr
-  | IfStmt
   | ElementAccessExpr
   | Identifier
   | NullLiteralExpr
@@ -38,7 +37,6 @@ export function isExpr(a: any) {
       isCallExpr(a) ||
       isConditionExpr(a) ||
       isFunctionExpr(a) ||
-      isIfStmt(a) ||
       isElementAccessExpr(a) ||
       isIdentifier(a) ||
       isNullLiteralExpr(a) ||

@@ -4,12 +4,18 @@ import { AppsyncContext } from "../src";
 import { reflect } from "../src/reflect";
 import { returnExpr, testCase } from "./util";
 
+const payload = `{
+  "version": "2018-05-29",
+  "payload": null
+}`;
+
 test("empty function returning an argument", () => {
   testCase(
     reflect((context: AppsyncContext<{ a: string }>) => {
       return context.arguments.a;
     }),
-    returnExpr("$context.arguments.a")
+    payload,
+    "#return($context.arguments.a)"
   );
 });
 
@@ -33,6 +39,7 @@ test("return literal object with values", () => {
         };
       }
     ),
+    payload,
     `#set($context.stash.arg = $context.arguments.arg)
 #set($context.stash.obj = $context.arguments.obj)
 #set($v1 = {})
@@ -46,7 +53,7 @@ $util.qr($v2.put('key', 'value'))
 $util.qr($v1.put('obj', $v2))
 $util.qr($v1.put('arg', $context.stash.arg))
 $util.qr($v1.putAll($context.stash.obj))
-${returnExpr("$v1")}`
+#return($v1)`
   );
 });
 
@@ -55,7 +62,8 @@ test("call function and return its value", () => {
     reflect(() => {
       return $util.autoId();
     }),
-    returnExpr("$util.autoId()")
+    payload,
+    "#return($util.autoId())"
   );
 });
 
@@ -65,8 +73,9 @@ test("call function, assign to variable and return variable reference", () => {
       const id = $util.autoId();
       return id;
     }),
+    payload,
     `#set($context.stash.id = $util.autoId())
-${returnExpr("$context.stash.id")}`
+#return($context.stash.id)`
   );
 });
 
@@ -78,10 +87,11 @@ test("return in-line spread object", () => {
         ...context.arguments.obj,
       };
     }),
+    payload,
     `#set($v1 = {})
 $util.qr($v1.put('id', $util.autoId()))
 $util.qr($v1.putAll($context.arguments.obj))
-${returnExpr("$v1")}`
+#return($v1)`
   );
 });
 
@@ -90,7 +100,8 @@ test("return in-line list literal", () => {
     reflect((context: AppsyncContext<{ a: string; b: string }>) => {
       return [context.arguments.a, context.arguments.b];
     }),
-    returnExpr("[$context.arguments.a, $context.arguments.b]")
+    payload,
+    "#return([$context.arguments.a, $context.arguments.b])"
   );
 });
 
@@ -100,8 +111,9 @@ test("return list literal variable", () => {
       const list = [context.arguments.a, context.arguments.b];
       return list;
     }),
+    payload,
     `#set($context.stash.list = [$context.arguments.a, $context.arguments.b])
-${returnExpr("$context.stash.list")}`
+#return($context.stash.list)`
   );
 });
 
@@ -111,8 +123,9 @@ test("return list element", () => {
       const list = [context.arguments.a, context.arguments.b];
       return list[0];
     }),
+    payload,
     `#set($context.stash.list = [$context.arguments.a, $context.arguments.b])
-${returnExpr("$context.stash.list[0]")}`
+#return($context.stash.list[0])`
   );
 });
 
@@ -122,8 +135,9 @@ test("push element to array is renamed to add", () => {
       context.arguments.list.push("hello");
       return context.arguments.list;
     }),
+    payload,
     `$util.qr($context.arguments.list.add('hello'))
-${returnExpr("$context.arguments.list")}`
+#return($context.arguments.list)`
   );
 });
 
@@ -152,6 +166,7 @@ test("if statement", () => {
         return false;
       }
     }),
+    payload,
     `#if($context.arguments.list.length > 0)
 ${returnExpr("true")}
 #else
@@ -165,12 +180,13 @@ test("return conditional expression", () => {
     reflect((context: AppsyncContext<{ list: string[] }>) => {
       return context.arguments.list.length > 0 ? true : false;
     }),
+    payload,
     `#if($context.arguments.list.length > 0)
 #set($v1 = true)
 #else
 #set($v1 = false)
 #end
-${returnExpr("$v1")}`
+#return($v1)`
   );
 });
 
@@ -181,6 +197,7 @@ test("property assignment of conditional expression", () => {
         prop: context.arguments.list.length > 0 ? true : false,
       };
     }),
+    payload,
     `#set($v1 = {})
 #if($context.arguments.list.length > 0)
 #set($v2 = true)
@@ -188,7 +205,7 @@ test("property assignment of conditional expression", () => {
 #set($v2 = false)
 #end
 $util.qr($v1.put('prop', $v2))
-${returnExpr("$v1")}`
+#return($v1)`
   );
 });
 
@@ -201,11 +218,12 @@ test("for-of loop", () => {
       }
       return newList;
     }),
+    payload,
     `#set($context.stash.newList = [])
 #foreach($item in $context.arguments.list)
 $util.qr($context.stash.newList.add($item))
 #end
-${returnExpr("$context.stash.newList")}`
+#return($context.stash.newList)`
   );
 });
 
@@ -221,6 +239,7 @@ test("break from for-loop", () => {
       }
       return newList;
     }),
+    payload,
     `#set($context.stash.newList = [])
 #foreach($item in $context.arguments.list)
 #if($item == 'hello')
@@ -228,7 +247,7 @@ test("break from for-loop", () => {
 #end
 $util.qr($context.stash.newList.add($item))
 #end
-${returnExpr("$context.stash.newList")}`
+#return($context.stash.newList)`
   );
 });
 
@@ -242,12 +261,13 @@ test("local variable inside for-of loop is declared as a local variable", () => 
       }
       return newList;
     }),
+    payload,
     `#set($context.stash.newList = [])
 #foreach($item in $context.arguments.list)
 #set($i = $item)
 $util.qr($context.stash.newList.add($i))
 #end
-${returnExpr("$context.stash.newList")}`
+#return($context.stash.newList)`
   );
 });
 
@@ -260,11 +280,12 @@ test("for-in loop and element access", () => {
       }
       return newList;
     }),
+    payload,
     `#set($context.stash.newList = [])
 #foreach($key in $context.arguments.record.keySet())
 $util.qr($context.stash.newList.add($context.arguments.record[$key]))
 #end
-${returnExpr("$context.stash.newList")}`
+#return($context.stash.newList)`
   );
 });
 
@@ -274,10 +295,9 @@ test("template expression", () => {
       const local = context.arguments.a;
       return `head ${context.arguments.a} ${local}${context.arguments.a}`;
     }),
+    payload,
     `#set($context.stash.local = $context.arguments.a)
-${returnExpr(
-  `"head \${context.arguments.a} \${context.stash.local}\${context.arguments.a}"`
-)}`
+#return("head \${context.arguments.a} \${context.stash.local}\${context.arguments.a}")`
   );
 });
 
@@ -288,12 +308,13 @@ test("conditional expression in template expression", () => {
         context.arguments.a === "hello" ? "world" : context.arguments.a
       }`;
     }),
+    payload,
     `#if($context.arguments.a == 'hello')
 #set($v1 = 'world')
 #else
 #set($v1 = $context.arguments.a)
 #end
-${returnExpr(`"head \${v1}"`)}`
+#return("head \${v1}")`
   );
 });
 
@@ -304,12 +325,13 @@ test("map over list", () =>
         return `hello ${item}`;
       });
     }),
+    payload,
     `#set($v1 = [])
 #foreach($item in $context.arguments.list)
 #set($v2 = \"hello \${item}\")
 $util.qr($v1.add($v2))
 #end
-${returnExpr(`$v1`)}`
+#return($v1)`
   ));
 
 test("map over list with in-line return", () =>
@@ -317,12 +339,13 @@ test("map over list with in-line return", () =>
     reflect((context: AppsyncContext<{ list: string[] }>) => {
       return context.arguments.list.map((item) => `hello ${item}`);
     }),
+    payload,
     `#set($v1 = [])
 #foreach($item in $context.arguments.list)
 #set($v2 = \"hello \${item}\")
 $util.qr($v1.add($v2))
 #end
-${returnExpr(`$v1`)}`
+#return($v1)`
   ));
 
 test("chain map over list", () =>
@@ -332,13 +355,14 @@ test("chain map over list", () =>
         .map((item) => `hello ${item}`)
         .map((item) => `hello ${item}`);
     }),
+    payload,
     `#set($v1 = [])
 #foreach($item in $context.arguments.list)
 #set($item = "hello \${item}")
 #set($v2 = "hello \${item}")
 $util.qr($v1.add($v2))
 #end
-${returnExpr("$v1")}`
+#return($v1)`
   ));
 
 test("chain map over list multiple array", () =>
@@ -348,6 +372,7 @@ test("chain map over list multiple array", () =>
         .map((item, _i, _arr) => `hello ${item}`)
         .map((item, _i, _arr) => `hello ${item}`);
     }),
+    payload,
     `#set($v1 = [])
 #set($v2 = [])
 #foreach($item in $context.arguments.list)
@@ -362,7 +387,7 @@ $util.qr($v2.add($v3))
 #set($v4 = "hello \${item}")
 $util.qr($v1.add($v4))
 #end
-${returnExpr("$v1")}`
+#return($v1)`
   ));
 
 test("chain map over list complex", () =>
@@ -375,6 +400,7 @@ test("chain map over list complex", () =>
         })
         .map((item2, ii) => `hello ${item2} ${ii}`);
     }),
+    payload,
     `#set($v1 = [])
 #foreach($item in $context.arguments.list)
 #set($i = $foreach.index)
@@ -385,7 +411,7 @@ test("chain map over list complex", () =>
 #set($v2 = "hello \${item2} \${ii}")
 $util.qr($v1.add($v2))
 #end
-${returnExpr("$v1")}`
+#return($v1)`
   ));
 
 test("forEach over list", () =>
@@ -395,10 +421,11 @@ test("forEach over list", () =>
         $util.error(item);
       });
     }),
+    payload,
     `#foreach($item in $context.arguments.list)
 $util.qr($util.error($item))
 #end
-${returnExpr(`$null`)}`
+#return($null)`
   ));
 
 test("reduce over list with initial value", () =>
@@ -408,6 +435,7 @@ test("reduce over list with initial value", () =>
         return [...newList, item];
       }, []);
     }),
+    payload,
     `#set($v1 = [])
 #foreach($item in $context.arguments.list)
 #set($newList = $v1)
@@ -417,7 +445,7 @@ $util.qr($v3.add($item))
 #set($v2 = $v3)
 #set($v1 = $v2)
 #end
-${returnExpr("$v1")}`
+#return($v1)`
   ));
 
 test("reduce over list without initial value", () =>
@@ -427,6 +455,7 @@ test("reduce over list without initial value", () =>
         return `${str}${item}`;
       });
     }),
+    payload,
     `#if($context.arguments.list.isEmpty())
 $util.error('Reduce of empty array with no initial value')
 #end
@@ -439,7 +468,7 @@ $util.error('Reduce of empty array with no initial value')
 #set($v1 = $v2)
 #end
 #end
-${returnExpr("$v1")}`
+#return($v1)`
   ));
 
 test("map and reduce over list with initial value", () =>
@@ -451,6 +480,7 @@ test("map and reduce over list with initial value", () =>
           return [...newList, item];
         }, []);
     }),
+    payload,
     `#set($v1 = [])
 #foreach($item in $context.arguments.list)
 #set($item = "hello \${item}")
@@ -461,7 +491,7 @@ $util.qr($v3.add($item))
 #set($v2 = $v3)
 #set($v1 = $v2)
 #end
-${returnExpr("$v1")}`
+#return($v1)`
   ));
 
 test("map and reduce with array over list with initial value", () =>
@@ -473,6 +503,7 @@ test("map and reduce with array over list with initial value", () =>
           return [...newList, item];
         }, []);
     }),
+    payload,
     `#set($v2 = [])
 #foreach($item in $context.arguments.list)
 #set($v3 = "hello \${item}")
@@ -489,7 +520,7 @@ $util.qr($v5.add($item))
 #set($v4 = $v5)
 #set($v1 = $v4)
 #end
-${returnExpr("$v1")}`
+#return($v1)`
   ));
 
 test("map and reduce and map and reduce over list with initial value", () =>
@@ -505,6 +536,7 @@ test("map and reduce and map and reduce over list with initial value", () =>
           return [...newList, item];
         }, []);
     }),
+    payload,
     `#set($v2 = [])
 #foreach($item in $context.arguments.list)
 #set($item = "hello \${item}")
@@ -525,5 +557,5 @@ $util.qr($v6.add($item))
 #set($v5 = $v6)
 #set($v1 = $v5)
 #end
-${returnExpr("$v1")}`
+#return($v1)`
   ));
