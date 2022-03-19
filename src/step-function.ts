@@ -34,6 +34,7 @@ abstract class BaseStepFunction<F extends AnyFunction>
   // @ts-ignore
   readonly __functionBrand: F;
 
+  readonly stateMachineName: string;
   readonly stateMachineArn: string;
   readonly role: aws_iam.IRole;
   readonly definition: StateMachine<States>;
@@ -88,6 +89,7 @@ abstract class BaseStepFunction<F extends AnyFunction>
     // required or else adding logs can fail due invalid IAM policy
     this.resource.node.addDependency(this.role);
 
+    this.stateMachineName = this.resource.attrName;
     this.stateMachineArn = this.resource.attrArn;
 
     return makeCallable(this, (call: CallExpr, context: VTL | ASL) => {

@@ -75,7 +75,8 @@ export interface Pass {
   OutputPath?: string;
   ResultPath?: string;
   Parameters?: TaskParameters;
-  Next: string;
+  Next?: string;
+  End?: boolean;
 }
 
 export interface Choice {
@@ -172,7 +173,7 @@ export interface Task extends BaseTask {
  */
 export interface MapTask extends BaseTask {
   Type: "Map";
-  Iterator: States;
+  Iterator: StateMachine<States>;
   /**
    * The MaxConcurrency field’s value is an integer that provides an upper bound on how many invocations of the Iterator may run in parallel. For instance, a MaxConcurrency value of 10 will limit your Map state to 10 concurrent iterations running at one time.
    */
@@ -183,6 +184,9 @@ export interface ParallelTask extends BaseTask {
   Type: "Parallel";
   Iterator: States;
 }
+
+const SuccessState = "Success";
+const ThrowState = "Throw";
 
 /**
  * Amazon States Language (ASL) Generator.
@@ -209,7 +213,21 @@ export class ASL {
     readonly decl: FunctionDecl
   ) {
     let i = 0;
-    const nextName = () => `State${(i += 1)}`;
+    const nameMap = new Map<string, number>();
+    const nextName = (stmt: Stmt) => {
+      let name = toStateName(stmt) ?? `State${(i += 1)}`;
+      if (name.length > 120) {
+        name = name.slice(0, 120);
+      }
+      const count = nameMap.get(name);
+      if (count === undefined) {
+        nameMap.set(name, 1);
+        return name;
+      } else {
+        nameMap.set(name, count + 1);
+        return `${name} ${count}`;
+      }
+    };
     this.stateTransitions = new Map<Stmt, string>(bind(decl.body));
     this.returnTransitions = new Map();
     this.throwTransitions = new Map();
@@ -222,10 +240,10 @@ export class ASL {
       StartAt: start,
       States: {
         ...states,
-        Success: {
+        [SuccessState]: {
           Type: "Succeed",
         },
-        Throw: {
+        [ThrowState]: {
           Type: "Fail",
           Error: "TODO",
         },
@@ -241,15 +259,105 @@ export class ASL {
           []
         );
       } else if (stmt.kind === "IfStmt") {
-        return [[stmt, nextName()], ...bind(stmt.then), ...bind(stmt._else)];
+        return [
+          [stmt, nextName(stmt)],
+          ...bind(stmt.then),
+          ...bind(stmt._else),
+        ];
       } else if (stmt.kind === "ExprStmt") {
         if (stmt.expr.kind === "FunctionExpr") {
-          [[stmt, nextName()], ...bind(stmt.expr.body)];
+          [[stmt, nextName(stmt)], ...bind(stmt.expr.body)];
         }
       } else if (stmt.kind === "ForInStmt" || stmt.kind === "ForOfStmt") {
-        return [[stmt, nextName()], ...bind(stmt.body)];
+        return [[stmt, nextName(stmt)], ...bind(stmt.body)];
       }
-      return [[stmt, nextName()]];
+      return [[stmt, nextName(stmt)]];
+    }
+
+    function toStateName(stmt: Stmt): string | undefined {
+      if (stmt.kind === "IfStmt") {
+        return `if(${exprToString(stmt.when)})`;
+      } else if (stmt.kind === "ExprStmt") {
+        return exprToString(stmt.expr);
+      } else if (stmt.kind === "BlockStmt") {
+        return undefined;
+      } else if (stmt.kind === "BreakStmt") {
+        return "break";
+      } else if (stmt.kind === "CatchClause") {
+        return `catch${
+          stmt.variableDecl?.name ? `(${stmt.variableDecl?.name})` : ""
+        }`;
+      } else if (stmt.kind === "ForInStmt") {
+        return `for(${stmt.i.name} in ${exprToString(stmt.expr)})`;
+      } else if (stmt.kind === "ForOfStmt") {
+        return `for(${stmt.i.name} of ${exprToString(stmt.expr)})`;
+      } else if (stmt.kind === "ReturnStmt") {
+        return `return ${exprToString(stmt.expr)}`;
+      } else if (stmt.kind === "ThrowStmt") {
+        return `throw ${exprToString(stmt.expr)}`;
+      } else if (stmt.kind === "TryStmt") {
+        return `try`;
+      } else if (stmt.kind === "VariableStmt") {
+        return `${stmt.name} = ${
+          stmt.expr ? exprToString(stmt.expr) : "undefined"
+        }`;
+      } else {
+        return assertNever(stmt);
+      }
+    }
+
+    function exprToString(expr: Expr): string {
+      if (expr.kind === "ArrayLiteralExpr") {
+        return `[${expr.items.map(exprToString).join(", ")}]`;
+      } else if (expr.kind === "BinaryExpr") {
+        return `${exprToString(expr.left)} ${expr.op} ${exprToString(
+          expr.right
+        )}`;
+      } else if (expr.kind === "BooleanLiteralExpr") {
+        return `${expr.value}`;
+      } else if (expr.kind === "CallExpr") {
+        return `${exprToString(expr.expr)}(${Object.values(expr.args)
+          .map(exprToString)
+          .join(", ")})`;
+      } else if (expr.kind === "ConditionExpr") {
+        return `if(${exprToString(expr.when)})`;
+      } else if (expr.kind === "ElementAccessExpr") {
+        return `${exprToString(expr.expr)}[${exprToString(expr.element)}]`;
+      } else if (expr.kind === "FunctionExpr") {
+        return `function(${expr.parameters
+          .map((param) => param.name)
+          .join(", ")})`;
+      } else if (expr.kind === "Identifier") {
+        return expr.name;
+      } else if (expr.kind === "NullLiteralExpr") {
+        return `null`;
+      } else if (expr.kind === "NumberLiteralExpr") {
+        return `${expr.value}`;
+      } else if (expr.kind === "ObjectLiteralExpr") {
+        return `{${expr.properties.map(exprToString).join(", ")}}`;
+      } else if (expr.kind === "PropAccessExpr") {
+        return `${exprToString(expr.expr)}.${expr.name}`;
+      } else if (expr.kind === "PropAssignExpr") {
+        return `${
+          expr.name.kind === "StringLiteralExpr"
+            ? expr.name.value
+            : exprToString(expr.name)
+        }: ${exprToString(expr.expr)}`;
+      } else if (expr.kind === "ReferenceExpr") {
+        return expr.name;
+      } else if (expr.kind === "SpreadAssignExpr") {
+        return `...${exprToString(expr.expr)}`;
+      } else if (expr.kind === "SpreadElementExpr") {
+        return `...${exprToString(expr.expr)}`;
+      } else if (expr.kind === "StringLiteralExpr") {
+        return `"${expr.value}"`;
+      } else if (expr.kind === "TemplateExpr") {
+        return `\`${expr.exprs.map(exprToString).join("")}\``;
+      } else if (expr.kind === "UnaryExpr") {
+        return `${expr.op}${exprToString(expr.expr)}`;
+      } else {
+        return assertNever(expr);
+      }
     }
   }
 
@@ -299,7 +407,19 @@ export class ASL {
           Type: "Map",
           InputPath: this.evalJsonPath(stmt.expr),
           Next: this.next(stmt),
-          Iterator: this.execute(stmt.body),
+          Iterator: {
+            StartAt: this.getStateName(stmt.body.statements[0]),
+            States: {
+              ...this.execute(stmt.body),
+              [SuccessState]: {
+                Type: "Succeed",
+              },
+              [ThrowState]: {
+                Type: "Fail",
+                Error: "TODO",
+              },
+            },
+          },
           MaxConcurrency: 1,
           Parameters: {
             [`${stmt.i.name}.$`]: "$$.Map.Item.Value",
@@ -370,6 +490,8 @@ export class ASL {
   private next(node: FunctionlessNode | undefined): string {
     if (node === undefined) {
       throw new Error(`Stack Underflow`);
+    } else if (node.kind === "FunctionDecl" || node.kind === "FunctionExpr") {
+      return SuccessState;
     } else if (isExpr(node)) {
       return this.next(node.parent);
     } else if (isStmt(node)) {
@@ -380,9 +502,8 @@ export class ASL {
       } else if (node.next) {
         return this.getStateName(node.next);
       }
-    } else if (node.kind === "FunctionDecl") {
-      return "Success";
     }
+
     return this.next(node.parent);
   }
 

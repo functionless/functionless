@@ -57,6 +57,16 @@ export class PeopleDatabase extends Construct {
       })
     );
 
+    new ExpressStepFunction(this, "TestMachine", () => {
+      const names = ["sam", "brendan"];
+      for (const name of names) {
+        this.computeScore({
+          id: "id",
+          name,
+        });
+      }
+    });
+
     // a synchronous Express Step Function for getting a Person
     this.getPersonMachine = new ExpressStepFunction(
       this,

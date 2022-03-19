@@ -57,9 +57,9 @@ test("return a single Lambda Function call", () => {
   ).definition;
 
   expect(definition).toEqual({
-    StartAt: "State1",
+    StartAt: "return getPerson(id)",
     States: {
-      State1: {
+      "return getPerson(id)": {
         Type: "Task",
         Resource: getPerson.resource.functionArn,
         Next: "Success",
@@ -96,12 +96,12 @@ test("call Lambda Function, store as variable, return variable", () => {
   ).definition;
 
   expect(definition).toEqual({
-    StartAt: "State1",
+    StartAt: "person = getPerson(id)",
     States: {
-      State1: {
+      "person = getPerson(id)": {
         Type: "Task",
         Resource: getPerson.resource.functionArn,
-        Next: "State2",
+        Next: "return person",
         ResultPath: "$.person",
         Parameters: {
           "id.$": "$.id",
@@ -113,7 +113,7 @@ test("call Lambda Function, store as variable, return variable", () => {
           },
         ],
       },
-      State2: {
+      "return person": {
         Type: "Pass",
         Parameters: {
           "result.$": "$.person",
@@ -159,29 +159,31 @@ test("return AWS.DynamoDB.GetItem", () => {
   ).definition;
 
   const expected: StateMachine<States> = {
-    StartAt: "State1",
+    StartAt:
+      "person = $AWS.DynamoDB.GetItem({TableName: personTable, Key: {id: {S: id}}})",
     States: {
-      State1: {
-        Catch: [
-          {
-            ErrorEquals: ["States.All"],
-            Next: "Throw",
-          },
-        ],
-        Next: "State2",
-        ResultPath: "$.person",
-        Parameters: {
-          Key: {
-            id: {
-              "S.$": "$.id",
+      "person = $AWS.DynamoDB.GetItem({TableName: personTable, Key: {id: {S: id}}})":
+        {
+          Catch: [
+            {
+              ErrorEquals: ["States.All"],
+              Next: "Throw",
             },
+          ],
+          Next: "if(person.Item == null)",
+          ResultPath: "$.person",
+          Parameters: {
+            Key: {
+              id: {
+                "S.$": "$.id",
+              },
+            },
+            TableName: personTable.resource.tableName,
           },
-          TableName: personTable.resource.tableName,
+          Resource: "arn:aws:states:::aws-sdk:dynamodb:getItem",
+          Type: "Task",
         },
-        Resource: "arn:aws:states:::aws-sdk:dynamodb:getItem",
-        Type: "Task",
-      },
-      State2: {
+      "if(person.Item == null)": {
         Choices: [
           {
             Or: [
@@ -194,13 +196,13 @@ test("return AWS.DynamoDB.GetItem", () => {
                 IsNull: true,
               },
             ],
-            Next: "State3",
+            Next: "return null",
           },
         ],
-        Default: "State4",
+        Default: "return {id: person.Item.id.S, name: person.Item.name.S}",
         Type: "Choice",
       },
-      State3: {
+      "return null": {
         Next: "Success",
         Parameters: {
           result: null,
@@ -208,7 +210,7 @@ test("return AWS.DynamoDB.GetItem", () => {
         OutputPath: "$.result",
         Type: "Pass",
       },
-      State4: {
+      "return {id: person.Item.id.S, name: person.Item.name.S}": {
         Next: "Success",
         Parameters: {
           result: {
@@ -264,29 +266,31 @@ test("call AWS.DynamoDB.GetItem, then Lambda and return LiteralExpr", () => {
   ).definition;
 
   const expected: StateMachine<States> = {
-    StartAt: "State1",
+    StartAt:
+      "person = $AWS.DynamoDB.GetItem({TableName: personTable, Key: {id: {S: id}}})",
     States: {
-      State1: {
-        Catch: [
-          {
-            ErrorEquals: ["States.All"],
-            Next: "Throw",
-          },
-        ],
-        Next: "State2",
-        ResultPath: "$.person",
-        Parameters: {
-          Key: {
-            id: {
-              "S.$": "$.id",
+      "person = $AWS.DynamoDB.GetItem({TableName: personTable, Key: {id: {S: id}}})":
+        {
+          Catch: [
+            {
+              ErrorEquals: ["States.All"],
+              Next: "Throw",
             },
+          ],
+          Next: "if(person.Item == null)",
+          ResultPath: "$.person",
+          Parameters: {
+            Key: {
+              id: {
+                "S.$": "$.id",
+              },
+            },
+            TableName: personTable.resource.tableName,
           },
-          TableName: personTable.resource.tableName,
+          Resource: "arn:aws:states:::aws-sdk:dynamodb:getItem",
+          Type: "Task",
         },
-        Resource: "arn:aws:states:::aws-sdk:dynamodb:getItem",
-        Type: "Task",
-      },
-      State2: {
+      "if(person.Item == null)": {
         Choices: [
           {
             Or: [
@@ -299,13 +303,14 @@ test("call AWS.DynamoDB.GetItem, then Lambda and return LiteralExpr", () => {
                 IsNull: true,
               },
             ],
-            Next: "State3",
+            Next: "return null",
           },
         ],
-        Default: "State4",
+        Default:
+          "score = computeScore({id: person.Item.id.S, name: person.Item.name.S})",
         Type: "Choice",
       },
-      State3: {
+      "return null": {
         Next: "Success",
         Parameters: {
           result: null,
@@ -313,25 +318,26 @@ test("call AWS.DynamoDB.GetItem, then Lambda and return LiteralExpr", () => {
         OutputPath: "$.result",
         Type: "Pass",
       },
-      State4: {
-        Catch: [
-          {
-            ErrorEquals: ["States.All"],
-            Next: "Throw",
+      "score = computeScore({id: person.Item.id.S, name: person.Item.name.S})":
+        {
+          Catch: [
+            {
+              ErrorEquals: ["States.All"],
+              Next: "Throw",
+            },
+          ],
+          Next: "return {id: person.Item.id.S, name: person.Item.name.S, score: score}",
+          ResultPath: "$.score",
+          Parameters: {
+            person: {
+              "id.$": "$.person.Item.id.S",
+              "name.$": "$.person.Item.name.S",
+            },
           },
-        ],
-        Next: "State5",
-        ResultPath: "$.score",
-        Parameters: {
-          person: {
-            "id.$": "$.person.Item.id.S",
-            "name.$": "$.person.Item.name.S",
-          },
+          Resource: computeScore.resource.functionArn,
+          Type: "Task",
         },
-        Resource: computeScore.resource.functionArn,
-        Type: "Task",
-      },
-      State5: {
+      "return {id: person.Item.id.S, name: person.Item.name.S, score: score}": {
         Next: "Success",
         Parameters: {
           result: {
@@ -372,10 +378,10 @@ test("for-loop over a list literal", () => {
   ).definition;
 
   const expected: StateMachine<States> = {
-    StartAt: "State1",
+    StartAt: 'people = ["sam", "brendan"]',
     States: {
-      State1: {
-        Next: "State2",
+      'people = ["sam", "brendan"]': {
+        Next: "for(name of people)",
         OutputPath: "$.result",
         ResultPath: "$.people",
         Parameters: {
@@ -383,7 +389,7 @@ test("for-loop over a list literal", () => {
         },
         Type: "Pass",
       },
-      State2: {
+      "for(name of people)": {
         Type: "Map",
         InputPath: "$.people",
         MaxConcurrency: 1,
@@ -391,23 +397,33 @@ test("for-loop over a list literal", () => {
           "name.$": "$$.Map.Item.Value",
         },
         Iterator: {
-          State3: {
-            Catch: [
-              {
-                ErrorEquals: ["States.All"],
-                Next: "Throw",
+          StartAt: "computeScore({id: id, name: name})",
+          States: {
+            "computeScore({id: id, name: name})": {
+              Catch: [
+                {
+                  ErrorEquals: ["States.All"],
+                  Next: "Throw",
+                },
+              ],
+              Next: "Success",
+              Parameters: {
+                person: {
+                  "id.$": "$.id",
+                  "name.$": "$.name",
+                },
               },
-            ],
-            Next: "Success",
-            Parameters: {
-              person: {
-                "id.$": "$.id",
-                "name.$": "$.name",
-              },
+              Resource: computeScore.resource.functionArn,
+              ResultPath: "DISCARD",
+              Type: "Task",
             },
-            Resource: computeScore.resource.functionArn,
-            ResultPath: "DISCARD",
-            Type: "Task",
+            Success: {
+              Type: "Succeed",
+            },
+            Throw: {
+              Type: "Fail",
+              Error: "TODO",
+            },
           },
         },
         Next: "Success",

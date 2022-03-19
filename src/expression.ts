@@ -92,7 +92,7 @@ export const isReferenceExpr = typeGuard("ReferenceExpr");
 export type CanReference = AnyTable | AnyLambda | AnyStepFunction | typeof $AWS;
 
 export class ReferenceExpr extends BaseNode<"ReferenceExpr"> {
-  constructor(readonly ref: () => CanReference) {
+  constructor(readonly name: string, readonly ref: () => CanReference) {
     super("ReferenceExpr");
   }
 }

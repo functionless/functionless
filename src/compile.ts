@@ -422,6 +422,7 @@ export function compile(
 
       function ref(node: ts.Expression) {
         return newExpr("ReferenceExpr", [
+          ts.factory.createStringLiteral(exprToString(node)),
           ts.factory.createArrowFunction(
             undefined,
             undefined,
@@ -431,6 +432,20 @@ export function compile(
             node
           ),
         ]);
+      }
+
+      function exprToString(node: ts.Expression): string {
+        if (ts.isIdentifier(node)) {
+          return node.text;
+        } else if (ts.isPropertyAccessExpression(node)) {
+          return `${exprToString(node.expression)}.${exprToString(node.name)}`;
+        } else if (ts.isElementAccessExpression(node)) {
+          return `${exprToString(node.expression)}[${exprToString(
+            node.argumentExpression
+          )}]`;
+        } else {
+          return "";
+        }
       }
 
       function string(literal: string): ts.Expression {
