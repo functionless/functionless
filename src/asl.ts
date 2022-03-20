@@ -388,11 +388,8 @@ export class ASL {
       };
     } else if (stmt.kind === "CatchClause") {
       return this.execute(stmt.block);
-    } else {
-      return assertNever(stmt);
     }
-
-    throw new Error(`cannot convert Statement '${stmt.kind}' to ASL`);
+    return assertNever(stmt);
   }
 
   /**
@@ -401,7 +398,9 @@ export class ASL {
   private next(node: FunctionlessNode | undefined): string {
     if (node === undefined) {
       throw new Error(`Stack Underflow`);
-    } else if (node.kind === "FunctionDecl" || node.kind === "FunctionExpr") {
+    } else if (node.kind === "FunctionDecl") {
+      return this.getReturnStateName(node);
+    } else if (node.kind === "FunctionExpr") {
       return this.getReturnStateName(node);
     } else if (isExpr(node)) {
       return this.next(node.parent);
@@ -490,8 +489,7 @@ export class ASL {
     } else if (
       expr.kind === "Identifier" ||
       expr.kind === "PropAccessExpr" ||
-      expr.kind === "ElementAccessExpr" ||
-      isLiteralExpr(expr)
+      expr.kind === "ElementAccessExpr"
     ) {
       return {
         Type: "Pass",
@@ -500,6 +498,13 @@ export class ASL {
           [`result${isLiteralExpr(expr) ? "" : ".$"}`]: this.evalJson(expr),
         },
         OutputPath: "$.result",
+        ResultPath,
+      };
+    } else if (isLiteralExpr(expr)) {
+      return {
+        Type: "Pass",
+        Next: this.next(expr),
+        Result: this.evalJson(expr),
         ResultPath,
       };
     } else {

@@ -2,10 +2,10 @@
 # yarn lockfile v1
 
 
-"@aws-cdk/aws-appsync-alpha@^2.15.0-alpha.0":
-  version "2.15.0-alpha.0"
-  resolved "https://registry.yarnpkg.com/@aws-cdk/aws-appsync-alpha/-/aws-appsync-alpha-2.15.0-alpha.0.tgz#12946c2ebeb6682a95766d36147ebe9764245bee"
-  integrity sha512-Nr2wWtyoqyWQYFcGfUr1EZdun6Mvzvc9qpybB52gnBuTOQJ4ahgiacNgGeM3nRxPMMQ0JYmbAePXDXGEMhTdbA==
+"@aws-cdk/aws-appsync-alpha@^2.17.0-alpha.0":
+  version "2.17.0-alpha.0"
+  resolved "https://registry.yarnpkg.com/@aws-cdk/aws-appsync-alpha/-/aws-appsync-alpha-2.17.0-alpha.0.tgz#e9ff91d1711949326be2f44f135cb87b2f59cd0e"
+  integrity sha512-e6c6vQkavl0EQvh24oulzzeF/WvMTkN6bzefb22ujJrzGp5l1NR3UIS7JD6MHjxL/FLr77yTINAudGtHmq1XpQ==
 
 "@aws-crypto/ie11-detection@^2.0.0":
   version "2.0.0"
@@ -752,10 +752,10 @@ at-least-node@^1.0.0:
   resolved "https://registry.yarnpkg.com/at-least-node/-/at-least-node-1.0.0.tgz#602cd4b46e844ad4effc92a8011a3c46e0238dc2"
   integrity sha512-+q/t7Ekv1EDY2l6Gda6LLiX14rU9TV20Wa3ofeQmwPFZbOMo9DXrLbOjFaaclkXKWidIaopwAObQDqwWtGUjqg==
 
-aws-cdk-lib@^2.15.0:
-  version "2.15.0"
-  resolved "https://registry.yarnpkg.com/aws-cdk-lib/-/aws-cdk-lib-2.15.0.tgz#002531e461d6b9dece5b4fff739bef63ec19e7b7"
-  integrity sha512-QyxP4GM8bgwIdvE93V9WgE7y/yutFrY8pRxveCy6uY6E29Na2Lbes+4NT4xxcmLuj8h4bgcimbOreRw01OWcFA==
+aws-cdk-lib@^2.17.0:
+  version "2.17.0"
+  resolved "https://registry.yarnpkg.com/aws-cdk-lib/-/aws-cdk-lib-2.17.0.tgz#822b397fbc1a44f647abbdb31d6a85f18bd89043"
+  integrity sha512-bga2HptbGx3rMdSkIKxBS13miogj/DHB2VPfQZAoKoCOAanOot+M3mHhYqe5aNdxhrppaRjG2eid2p1/MvRnvg==
   dependencies:
     "@balena/dockerignore" "^1.0.2"
     case "1.6.3"
@@ -767,10 +767,10 @@ aws-cdk-lib@^2.15.0:
     semver "^7.3.5"
     yaml "1.10.2"
 
-aws-cdk@^2.15.0:
-  version "2.15.0"
-  resolved "https://registry.yarnpkg.com/aws-cdk/-/aws-cdk-2.15.0.tgz#ec4ef5a7aadc96d794d6db13c8115da63ffd9a2d"
-  integrity sha512-MtMkebXK+rSkT1cLwRr6yFjwpbHcJq5TE0XpJm7qFVpeiLAWZR+P2gAvCayxjaI+XUEGqGXnSfiAgDSm+IlX5g==
+aws-cdk@^2.17.0:
+  version "2.17.0"
+  resolved "https://registry.yarnpkg.com/aws-cdk/-/aws-cdk-2.17.0.tgz#cb9149c55f1bec54eacfe0242d3454faf4292e2e"
+  integrity sha512-gRPPpTONOjtQ40A8sc2SzXPGDzFlVbSPPts1pjOx4VBJ2S91A0ON3Fkby+XX/Xqdo1GITTWAk5Va4PnoYyUhmA==
   optionalDependencies:
     fsevents "2.3.2"
 
@@ -1221,7 +1221,7 @@ typesafe-dynamodb@^0.1.5:
     "@types/aws-lambda" "^8.10.92"
     aws-sdk "^2.1079.0"
 
-typescript@^4.5.5:
+typescript@^4.6.2:
   version "4.6.2"
   resolved "https://registry.yarnpkg.com/typescript/-/typescript-4.6.2.tgz#fe12d2727b708f4eef40f51598b3398baa9611d4"
   integrity sha512-HM/hFigTBHZhLXshn9sN37H085+hQGeJHJ/X7LpBWLID/fbc2acUMfU+lGD98X81sKP+pFa9f0DZmCwB9GnbAg==
