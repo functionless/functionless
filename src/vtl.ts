@@ -1,9 +1,8 @@
-import { CallExpr, Expr } from "./expression";
+import { CallExpr, Expr, FunctionExpr } from "./expression";
 import { findFunction, isInTopLevelScope, lookupIdentifier } from "./util";
 import { assertNever } from "./assert";
 import { FunctionlessNode } from "./node";
 import { Stmt } from "./statement";
-import { FunctionExpr } from ".";
 
 // https://velocity.apache.org/engine/devel/user-guide.html#conditionals
 // https://cwiki.apache.org/confluence/display/VELOCITY/CheckingForNull
@@ -17,6 +16,9 @@ export class VTL {
   static readonly ContextName = "Velocity Template";
 
   readonly kind = VTL.ContextName;
+  public static readonly CircuitBreaker = `#if($context.stash.return__flag)
+  #return($context.stash.return__val)
+#end`;
 
   private readonly statements: string[] = [];
 

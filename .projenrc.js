@@ -42,6 +42,10 @@ const project = new typescript.TypeScriptProject({
   releaseToNpm: true,
 });
 
+project.compileTask.prependExec(
+  "yarn link && cd ./test-app && yarn link functionless"
+);
+
 project.testTask.prependExec(
   "cd ./test-app && yarn && yarn build && yarn synth"
 );

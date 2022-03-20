@@ -1,6 +1,6 @@
 import * as appsync from "@aws-cdk/aws-appsync-alpha";
 import { AppSyncResolverEvent } from "aws-lambda";
-import { CallExpr, CanReference } from "./expression";
+import { CanReference, CallExpr, Expr } from "./expression";
 import { VTL } from "./vtl";
 import { findService, toName } from "./util";
 import {
@@ -10,6 +10,7 @@ import {
 import { FunctionDecl } from "./declaration";
 import { Literal } from "./literal";
 import { aws_stepfunctions } from "aws-cdk-lib";
+import { Construct } from "constructs";
 
 /**
  * The shape of the AWS Appsync `$context` variable.
@@ -48,6 +49,29 @@ export type ResolverFunction<
   Result,
   Source
 > = ($context: AppsyncContext<Arguments, Source>) => Result;
+
+export interface SynthesizedAppsyncResolverProps extends appsync.ResolverProps {
+  readonly templates: string[];
+}
+
+/**
+ * An {@link appsync.Resolver} synthesized by a {@link AppsyncResolver}.
+ */
+export class SynthesizedAppsyncResolver extends appsync.Resolver {
+  /**
+   * All of the Request and Response Mapping templates in the order they are executed by the AppSync service.
+   */
+  readonly templates: string[];
+
+  constructor(
+    scope: Construct,
+    id: string,
+    props: SynthesizedAppsyncResolverProps
+  ) {
+    super(scope, id, props);
+    this.templates = props.templates;
+  }
+}
 
 /**
  * An AWS AppSync Resolver Function derived from TypeScript syntax.
@@ -126,10 +150,11 @@ export class AppsyncResolver<
       appsync.BaseResolverProps,
       "typeName" | "fieldName" | "cachingConfig"
     >
-  ): appsync.Resolver {
+  ): SynthesizedAppsyncResolver {
     let stageIt = 0;
 
     const resolverCount = countResolvers(this.decl);
+    const templates: string[] = [];
 
     if (resolverCount === 0) {
       // mock integration
@@ -143,52 +168,80 @@ export class AppsyncResolver<
         );
       }
 
-      return api.createResolver({
-        ...options,
-        dataSource: getDataSource(
-          api,
-          null,
-          () =>
-            new appsync.NoneDataSource(api, "None", {
-              api,
-              name: "None",
-            })
-        ),
-        requestMappingTemplate: appsync.MappingTemplate.fromString("{}"),
-        responseMappingTemplate: appsync.MappingTemplate.fromString(
-          responseMappingTemplate
-        ),
-      });
+      const requestMappingTemplate = `{
+  "version": "2018-05-29",
+  "payload": null
+}`;
+      templates.push(requestMappingTemplate);
 
+      const resolver = new SynthesizedAppsyncResolver(
+        api,
+        `${options.typeName}${options.fieldName}Resolver`,
+        {
+          ...options,
+          api,
+          templates,
+          dataSource: getDataSource(
+            api,
+            null,
+            () =>
+              new appsync.NoneDataSource(api, "None", {
+                api,
+                name: "None",
+              })
+          ),
+          requestMappingTemplate: appsync.MappingTemplate.fromString(
+            requestMappingTemplate
+          ),
+          responseMappingTemplate: appsync.MappingTemplate.fromString(
+            responseMappingTemplate
+          ),
+        }
+      );
+
+      templates.push(responseMappingTemplate);
+      return resolver;
       // } else if (resolverCount === 1) {
       // single stage
     } else {
       // pipeline resolver
+      const requestMappingTemplate = "{}";
+      templates.push(requestMappingTemplate);
+
       const [pipelineConfig, responseMappingTemplate] = synthesizeFunctions(
         this.decl
       );
 
-      return api.createResolver({
-        ...options,
-        pipelineConfig,
-        requestMappingTemplate: appsync.MappingTemplate.fromString("{}"),
-        responseMappingTemplate: appsync.MappingTemplate.fromString(
-          responseMappingTemplate
-        ),
-      });
+      const resolver = new SynthesizedAppsyncResolver(
+        api,
+        `${options.typeName}${options.fieldName}Resolver`,
+        {
+          ...options,
+          api,
+          templates,
+          pipelineConfig,
+          requestMappingTemplate: appsync.MappingTemplate.fromString(
+            requestMappingTemplate
+          ),
+          responseMappingTemplate: appsync.MappingTemplate.fromString(
+            responseMappingTemplate
+          ),
+        }
+      );
+      templates.push(responseMappingTemplate);
+
+      return resolver;
     }
 
     function synthesizeFunctions(
       decl: FunctionDecl<ResolverFunction<Arguments, Result, Source>>
     ) {
-      const circuitBreaker = `#if($context.stash.return__flag)
-  #return($context.stash.return__val)
-#end`;
-      let template = new VTL(circuitBreaker);
+      let template =
+        resolverCount === 0 ? new VTL() : new VTL(VTL.CircuitBreaker);
       const functions = decl.body.statements
-        .map((expr, i) => {
+        .map((stmt, i) => {
           const isLastExpr = i + 1 === decl.body.statements.length;
-          const service = findService(expr);
+          const service = findService(stmt);
           if (service) {
             // we must now render a resolver with request mapping template
             const dataSource = getDataSource(api, service, () => {
@@ -273,69 +326,126 @@ export class AppsyncResolver<
               }
             }
 
-            if (expr.kind === "ExprStmt" && expr.expr.kind === "CallExpr") {
-              return createStage(expr.expr);
-            } else if (
-              expr.kind === "ReturnStmt" &&
-              expr.expr.kind === "CallExpr"
-            ) {
+            if (stmt.kind === "ExprStmt") {
+              return createStage(findServiceCallExpr(stmt.expr), "{}");
+            } else if (stmt.kind === "ReturnStmt") {
               return createStage(
-                expr.expr,
-                appsync.MappingTemplate.fromString(
-                  `${
-                    pre ? `${pre}\n` : ""
-                  }#set( $context.stash.return__flag = true )
-#set( $context.stash.return__val = ${returnValName} )
+                findServiceCallExpr(stmt.expr),
+                `${
+                  pre ? `${pre}\n` : ""
+                }#set( $context.stash.return__flag = true )
+#set( $context.stash.return__val = ${getResult(stmt.expr)} )
 {}`
-                )
               );
             } else if (
-              expr.kind === "VariableStmt" &&
-              expr.expr?.kind === "CallExpr"
+              stmt.kind === "VariableStmt" &&
+              stmt.expr?.kind === "CallExpr"
             ) {
-              const responseMappingTemplate =
-                appsync.MappingTemplate.fromString(
-                  `${pre ? `${pre}\n` : ""}#set( $context.stash.${
-                    expr.name
-                  } = ${returnValName} )\n{}`
-                );
-
-              return createStage(expr.expr, responseMappingTemplate);
+              return createStage(
+                findServiceCallExpr(stmt.expr),
+                `${pre ? `${pre}\n` : ""}#set( $context.stash.${
+                  stmt.name
+                } = ${getResult(stmt.expr)} )\n{}`
+              );
             } else {
               throw new Error(
                 `only a 'VariableDecl', 'Call' or 'Return' expression may call a service`
               );
             }
 
+            /**
+             * Recursively resolve the {@link expr} to the {@link CallExpr} that is calling the service.
+             *
+             * @param expr an Expression that contains (somewhere nested within) a {@link CallExpr} to an external service.
+             * @returns the {@link CallExpr} that
+             */
+            function findServiceCallExpr(expr: Expr): CallExpr {
+              if (
+                expr.kind === "CallExpr" &&
+                (expr.expr.kind === "ReferenceExpr" ||
+                  (expr.expr.kind === "PropAccessExpr" &&
+                    expr.expr.expr.kind === "ReferenceExpr"))
+              ) {
+                // this catches specific cases:
+                // lambdaFunction()
+                // table.get()
+                // table.<method-name>()
+
+                // all other Calls or PropAccessExpr are considered "after" the service call, e.g.
+                // lambdaFunction().prop
+                // table.query().Items.size() //.size() is still a Call but not a call to a service.
+                return expr;
+              } else if (expr.kind === "PropAccessExpr") {
+                return findServiceCallExpr(expr.expr);
+              } else if (expr.kind === "CallExpr") {
+                return findServiceCallExpr(expr.expr);
+              } else {
+                throw new Error(``);
+              }
+            }
+
+            /**
+             * Resolve a VTL expression that applies in-line expressions such as PropAccessExpr to
+             * the result from `$context.result` in a Response Mapping template.
+             *
+             * Example:
+             * ```ts
+             * const items = table.query().items
+             * ```
+             *
+             * The Response Mapping Template will include:
+             * ```
+             * #set($context.stash.items = $context.result.items)
+             * ```
+             *
+             * @param expr the {@link Expr} which is triggering a call to an external service, such as a Table or Function.
+             * @returns a VTL expression to be included in the Response Mapping Template to extract the contents from `$context.result`.
+             */
+            function getResult(expr: Expr): string {
+              if (expr.kind === "CallExpr") {
+                template.call(expr);
+                return returnValName;
+              } else if (expr.kind === "PropAccessExpr") {
+                return `${getResult(expr.expr)}.${expr.name}`;
+              } else if (expr.kind === "ElementAccessExpr") {
+                return `${getResult(expr.expr)}[${getResult(expr.element)}]`;
+              } else {
+                throw new Error(
+                  `invalid Expression in-lined with Service Call: ${expr.kind}`
+                );
+              }
+            }
+
             function createStage(
               expr: CallExpr,
-              responseMappingTemplate: appsync.MappingTemplate = appsync.MappingTemplate.fromString(
-                `${pre ? `${pre}\n` : ""}{}`
-              )
+              responseMappingTemplate: string
             ) {
-              template.call(expr);
-              const requestMappingTemplate = appsync.MappingTemplate.fromString(
-                template.toVTL()
-              );
-              template = new VTL(circuitBreaker);
+              const requestMappingTemplateString = template.toVTL();
+              templates.push(requestMappingTemplateString);
+              templates.push(responseMappingTemplate);
+              template = new VTL(VTL.CircuitBreaker);
               const name = `${toName(expr.expr)}_${stageIt++}`;
               return dataSource.createFunction({
                 name,
-                requestMappingTemplate,
-                responseMappingTemplate,
+                requestMappingTemplate: appsync.MappingTemplate.fromString(
+                  requestMappingTemplateString
+                ),
+                responseMappingTemplate: appsync.MappingTemplate.fromString(
+                  responseMappingTemplate
+                ),
               });
             }
           } else if (isLastExpr) {
-            if (expr.kind === "ReturnStmt") {
-              template.return(expr.expr);
-            } else if (expr.kind === "IfStmt") {
-              template.eval(expr);
+            if (stmt.kind === "ReturnStmt") {
+              template.return(stmt.expr);
+            } else if (stmt.kind === "IfStmt") {
+              template.eval(stmt);
             } else {
               template.return("$null");
             }
           } else {
             // this expression should be appended to the current mapping template
-            template.eval(expr);
+            template.eval(stmt);
           }
 
           return undefined;
@@ -607,7 +717,9 @@ function getDataSources(api: appsync.GraphqlApi) {
   return dataSources.get(api)!;
 }
 
-const None = Symbol.for("functionless.None");
+const None = {
+  none: Symbol.for("functionless.None"),
+};
 
 // @ts-ignore
 function getDataSource(
@@ -616,8 +728,9 @@ function getDataSource(
   compute: () => appsync.BaseDataSource
 ): appsync.BaseDataSource {
   const ds = getDataSources(api);
-  if (!ds.has(target ?? None)) {
-    ds.set(target, compute());
+  const key = target ?? None;
+  if (!ds.has(key)) {
+    ds.set(key, compute());
   }
-  return ds.get(target ?? None)!;
+  return ds.get(key)!;
 }
