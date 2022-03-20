@@ -142,7 +142,7 @@ The `Function` wrapper annotates an `aws_lambda.Function` with a TypeScript func
 import { aws_lambda } from "aws-cdk-lib";
 import { Function } from "functionless";
 
-const myFunc = new Function<(name: string) => string>(
+const myFunc = new Function<string, string>(
   new aws_lambda.Function(this, "MyFunc", {
     ..
   })
