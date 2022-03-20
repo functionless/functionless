@@ -1,17 +1,29 @@
+import { App, aws_dynamodb, Stack } from "aws-cdk-lib";
 import "jest";
 import { $util, AppsyncContext, reflect } from "../src";
 import { Table } from "../src";
-import { returnExpr, testCase } from "./util";
+import { VTL } from "../src/vtl";
+import { appsyncTestCase } from "./util";
 
 interface Item {
   id: string;
   name: number;
 }
 
-const table = new Table<Item, "id">(null as any);
+const app = new App({ autoSynth: false });
+const stack = new Stack(app, "stack");
+
+const table = new Table<Item, "id">(
+  new aws_dynamodb.Table(stack, "Table", {
+    partitionKey: {
+      name: "id",
+      type: aws_dynamodb.AttributeType.STRING,
+    },
+  })
+);
 
 test("get item", () =>
-  testCase(
+  appsyncTestCase(
     reflect((context: AppsyncContext<{ id: string }>): Item | undefined => {
       return table.getItem({
         key: {
@@ -21,7 +33,11 @@ test("get item", () =>
         },
       });
     }),
-    `#set($v1 = {})
+    // pipeline's request mapping template
+    "{}",
+    // function's request mapping template
+    `${VTL.CircuitBreaker}
+#set($v1 = {})
 #set($v2 = {})
 #set($v3 = {})
 $util.qr($v3.put('S', $context.arguments.id))
@@ -32,11 +48,19 @@ $util.qr($v4.put('key', $v1.get('key')))
 #if($v1.containsKey('consistentRead'))
 $util.qr($v4.put('consistentRead', $v1.get('consistentRead')))
 #end
-${returnExpr("$util.toJson($v4)")}`
+$util.toJson($v4)`,
+    // function's response mapping template
+    `#set( $context.stash.return__flag = true )
+#set( $context.stash.return__val = $context.result )
+{}`,
+    // response mapping template
+    `#if($context.stash.return__flag)
+  #return($context.stash.return__val)
+#end`
   ));
 
 test("get item and set consistentRead:true", () =>
-  testCase(
+  appsyncTestCase(
     reflect((context: AppsyncContext<{ id: string }>): Item | undefined => {
       return table.getItem({
         key: {
@@ -47,7 +71,11 @@ test("get item and set consistentRead:true", () =>
         consistentRead: true,
       });
     }),
-    `#set($v1 = {})
+    // pipeline's request mapping template
+    "{}",
+    // function's request mapping template
+    `${VTL.CircuitBreaker}
+#set($v1 = {})
 #set($v2 = {})
 #set($v3 = {})
 $util.qr($v3.put('S', $context.arguments.id))
@@ -59,11 +87,19 @@ $util.qr($v4.put('key', $v1.get('key')))
 #if($v1.containsKey('consistentRead'))
 $util.qr($v4.put('consistentRead', $v1.get('consistentRead')))
 #end
-${returnExpr("$util.toJson($v4)")}`
+$util.toJson($v4)`,
+    // function's response mapping template
+    `#set( $context.stash.return__flag = true )
+#set( $context.stash.return__val = $context.result )
+{}`,
+    // pipeline's response mapping template
+    `#if($context.stash.return__flag)
+  #return($context.stash.return__val)
+#end`
   ));
 
 test("put item", () =>
-  testCase(
+  appsyncTestCase(
     reflect(
       (
         context: AppsyncContext<{ id: string; name: number }>
@@ -93,7 +129,11 @@ test("put item", () =>
         });
       }
     ),
-    `#set($v1 = {})
+    // pipeline's request mapping template
+    "{}",
+    // function's request mapping template
+    `${VTL.CircuitBreaker}
+#set($v1 = {})
 #set($v2 = {})
 #set($v3 = {})
 $util.qr($v3.put('S', $context.arguments.id))
@@ -124,13 +164,19 @@ $util.qr($v10.put('condition', $v1.get('condition')))
 #if($v1.containsKey('_version'))
 $util.qr($v10.put('_version', $v1.get('_version')))
 #end
-#set($context.stash.return__val = $util.toJson($v10))
-#set($context.stash.return__flag = true)
-#return($context.stash.return__val)`
+$util.toJson($v10)`,
+    // function's response mapping template
+    `#set( $context.stash.return__flag = true )
+#set( $context.stash.return__val = $context.result )
+{}`,
+    // pipeline's response mapping template
+    `#if($context.stash.return__flag)
+  #return($context.stash.return__val)
+#end`
   ));
 
 test("update item", () =>
-  testCase(
+  appsyncTestCase(
     reflect((context: AppsyncContext<{ id: string }>): Item | undefined => {
       return table.updateItem({
         key: {
@@ -146,7 +192,11 @@ test("update item", () =>
         },
       });
     }),
-    `#set($v1 = {})
+    // pipeline's request mapping template
+    "{}",
+    // function's request mapping template
+    `${VTL.CircuitBreaker}
+#set($v1 = {})
 #set($v2 = {})
 #set($v3 = {})
 $util.qr($v3.put('S', $context.arguments.id))
@@ -167,11 +217,19 @@ $util.qr($v6.put('condition', $v1.get('condition')))
 #if($v1.containsKey('_version'))
 $util.qr($v6.put('_version', $v1.get('_version')))
 #end
-${returnExpr("$util.toJson($v6)")}`
+$util.toJson($v6)`,
+    // function's response mapping template
+    `#set( $context.stash.return__flag = true )
+#set( $context.stash.return__val = $context.result )
+{}`,
+    // pipeline's response mapping template
+    `#if($context.stash.return__flag)
+  #return($context.stash.return__val)
+#end`
   ));
 
 test("delete item", () =>
-  testCase(
+  appsyncTestCase(
     reflect((context: AppsyncContext<{ id: string }>): Item | undefined => {
       return table.deleteItem({
         key: {
@@ -187,7 +245,11 @@ test("delete item", () =>
         },
       });
     }),
-    `#set($v1 = {})
+    // pipeline's request mapping template
+    "{}",
+    // function's request mapping template
+    `${VTL.CircuitBreaker}
+#set($v1 = {})
 #set($v2 = {})
 #set($v3 = {})
 $util.qr($v3.put('S', $context.arguments.id))
@@ -207,11 +269,19 @@ $util.qr($v6.put('condition', $v1.get('condition')))
 #if($v1.containsKey('_version'))
 $util.qr($v6.put('_version', $v1.get('_version')))
 #end
-${returnExpr("$util.toJson($v6)")}`
+$util.toJson($v6)`,
+    // function's response mapping template
+    `#set( $context.stash.return__flag = true )
+#set( $context.stash.return__val = $context.result )
+{}`,
+    // pipeline's response mapping template
+    `#if($context.stash.return__flag)
+  #return($context.stash.return__val)
+#end`
   ));
 
 test("query", () =>
-  testCase(
+  appsyncTestCase(
     reflect((context: AppsyncContext<{ id: string; sort: number }>): Item[] => {
       return table.query({
         query: {
@@ -226,7 +296,11 @@ test("query", () =>
         },
       }).items;
     }),
-    `#set($v1 = {})
+    // pipeline's request mapping template
+    "{}",
+    // function's request mapping template
+    `${VTL.CircuitBreaker}
+#set($v1 = {})
 #set($v2 = {})
 $util.qr($v2.put('expression', 'id = :id and #name = :val'))
 #set($v3 = {})
@@ -258,7 +332,13 @@ $util.qr($v5.put('consistentRead', $v1.get('consistentRead')))
 #if($v1.containsKey('select'))
 $util.qr($v5.put('select', $v1.get('select')))
 #end
-#set($context.stash.return__val = $util.toJson($v5).items)
-#set($context.stash.return__flag = true)
-#return($context.stash.return__val)`
+$util.toJson($v5)`,
+    // function's response mapping template
+    `#set( $context.stash.return__flag = true )
+#set( $context.stash.return__val = $context.result.items )
+{}`,
+    // pipeline's response mapping template
+    `#if($context.stash.return__flag)
+  #return($context.stash.return__val)
+#end`
   ));
