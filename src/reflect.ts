@@ -1,5 +1,5 @@
 import { FunctionDecl } from "./declaration";
-import { AnyFunction } from "./function";
+import { AnyFunction } from "./util";
 
 /**
  * A macro (compile-time) function that converts an ArrowFunction or FunctionExpression to a {@link FunctionDecl}.

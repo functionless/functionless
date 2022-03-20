@@ -1,5 +1,5 @@
 import "jest";
-import { $util } from "../lib";
+import { $util } from "../src";
 import { AppsyncContext } from "../src";
 import { reflect } from "../src/reflect";
 import { returnExpr, appsyncTestCase } from "./util";

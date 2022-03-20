@@ -1,8 +1,9 @@
 import { ParameterDecl } from "./declaration";
-import { AnyFunction, AnyLambda } from "./function";
+import { AnyLambda } from "./function";
 import { BaseNode, isNode, setParent, typeGuard } from "./node";
 import { BlockStmt } from "./statement";
 import { AnyTable } from "./table";
+import { AnyFunction } from "./util";
 
 /**
  * An {@link Expr} (Expression) is a Node that will be interpreted to a value.

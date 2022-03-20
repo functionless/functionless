@@ -1,6 +1,6 @@
-import { AnyFunction } from "./function";
 import { BaseNode, isNode, setParent, typeGuard } from "./node";
 import { BlockStmt } from "./statement";
+import { AnyFunction } from "./util";
 
 export type Decl = FunctionDecl | ParameterDecl;
 

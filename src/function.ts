@@ -5,13 +5,11 @@ import { VTL } from "./vtl";
 // @ts-ignore - imported for typedoc
 import type { AppsyncResolver } from "./appsync";
 
-export type AnyFunction = (...args: any[]) => any;
-
-export function isFunction(a: any): a is Function<AnyFunction> {
+export function isFunction(a: any): a is Function {
   return a?.kind === "Function";
 }
 
-export type AnyLambda = Function<AnyFunction>;
+export type AnyLambda = Function;
 
 /**
  * Wraps an {@link aws_lambda.Function} with a type-safe interface that can be
@@ -42,27 +40,18 @@ export type AnyLambda = Function<AnyFunction>;
  *
  * Make sure to implement your Lambda Function entry-points accordingly.
  */
-export class Function<F extends AnyFunction> {
+export class Function<P = undefined, O = void> {
   readonly kind: "Function" = "Function";
 
-  // @ts-ignore - this makes `F` easily available at compile time
-  readonly __functionBrand: F;
-
-  constructor(
-    readonly resource: aws_lambda.IFunction,
-    /**
-     * Names of the arguments in order.
-     * If this is omitted, then it will be injected by a TS transform.
-     */
-    readonly args: string[] = []
-  ) {
+  constructor(readonly resource: aws_lambda.IFunction) {
     return Object.assign(lambda, this);
 
     function lambda(call: CallExpr, vtl: VTL): string {
-      const payload = vtl.var(`{}`);
-      for (const [argName, argVal] of Object.entries(call.args)) {
-        vtl.qr(`${payload}.put('${argName}', ${vtl.eval(argVal)})`);
-      }
+      // first argument is the payload
+      const [payloadKey] = Object.keys(call.args);
+
+      const payload = vtl.eval(call.args[payloadKey]);
+
       const request = vtl.var(
         `{"version": "2018-05-29", "operation": "Invoke", "payload": ${payload}}`
       );
@@ -70,6 +59,13 @@ export class Function<F extends AnyFunction> {
     }
   }
 }
-export interface Function<F extends AnyFunction> {
-  (...args: Parameters<F>): ReturnType<F>;
+
+type ConditionalFunction<P, O> = P extends undefined
+  ? () => O
+  : (payload: P) => O;
+
+export interface Function<P = undefined, O = void> {
+  (...args: Parameters<ConditionalFunction<P, O>>): ReturnType<
+    ConditionalFunction<P, O>
+  >;
 }

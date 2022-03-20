@@ -37,7 +37,7 @@ export class PeopleDatabase extends Construct {
       })
     );
 
-    this.computeScore = new Function<(person: Person) => number>(
+    this.computeScore = new Function<Person, number>(
       new aws_lambda.Function(this, "ComputeScore", {
         code: aws_lambda.Code.fromInline(
           "exports.handle = async function() {return 1;}"
