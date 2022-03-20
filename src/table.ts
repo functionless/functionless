@@ -1,16 +1,20 @@
 import { aws_dynamodb } from "aws-cdk-lib";
-import { ToAttributeMap } from "typesafe-dynamodb/lib/attribute-value";
+import {
+  NativeBinaryAttribute,
+  ToAttributeMap,
+} from "typesafe-dynamodb/lib/attribute-value";
 import {
   ExpressionAttributeNames,
   ExpressionAttributeValues,
 } from "typesafe-dynamodb/lib/expression-attributes";
-import { KeyAttribute } from "typesafe-dynamodb/lib/key";
+import { TableKey } from "typesafe-dynamodb/lib/key";
 import { Narrow } from "typesafe-dynamodb/lib/narrow";
 import { CallExpr } from "./expression";
 import { VTL } from "./vtl";
 
 // @ts-ignore - imported for typedoc
 import type { AppsyncResolver } from "./appsync";
+import { JsonFormat } from "typesafe-dynamodb";
 
 export function isTable(a: any): a is AnyTable {
   return a?.kind === "Table";
@@ -73,8 +77,16 @@ export class Table<
    */
   // @ts-ignore
   public getItem<
-    Key extends KeyAttribute<Item, PartitionKey, RangeKey>
-  >(input: { key: Key; consistentRead?: boolean }): Narrow<Item, Key>;
+    Key extends TableKey<
+      Item,
+      PartitionKey,
+      RangeKey,
+      JsonFormat.AttributeValue
+    >
+  >(input: {
+    key: Key;
+    consistentRead?: boolean;
+  }): Narrow<Item, AttributeKeyToObject<Key>, JsonFormat.Document>;
 
   public getItem(call: CallExpr, vtl: VTL): any {
     const input = vtl.eval(call.args.input);
@@ -92,16 +104,24 @@ export class Table<
    */
   // @ts-ignore
   public putItem<
-    Key extends KeyAttribute<Item, PartitionKey, RangeKey>,
+    Key extends TableKey<
+      Item,
+      PartitionKey,
+      RangeKey,
+      JsonFormat.AttributeValue
+    >,
     ConditionExpression extends string | undefined = undefined
   >(input: {
     key: Key;
     attributeValues: ToAttributeMap<
-      Omit<Narrow<Item, Key>, Exclude<PartitionKey | RangeKey, undefined>>
+      Omit<
+        Narrow<Item, AttributeKeyToObject<Key>, JsonFormat.Document>,
+        Exclude<PartitionKey | RangeKey, undefined>
+      >
     >;
     condition?: DynamoExpression<ConditionExpression>;
     _version?: number;
-  }): Narrow<Item, Key>;
+  }): Narrow<Item, AttributeKeyToObject<Key>, JsonFormat.Document>;
 
   public putItem(call: CallExpr, vtl: VTL): any {
     const input = vtl.eval(call.args.input);
@@ -123,7 +143,12 @@ export class Table<
    */
   // @ts-ignore
   public updateItem<
-    Key extends KeyAttribute<Item, PartitionKey, RangeKey>,
+    Key extends TableKey<
+      Item,
+      PartitionKey,
+      RangeKey,
+      JsonFormat.AttributeValue
+    >,
     UpdateExpression extends string,
     ConditionExpression extends string | undefined
   >(input: {
@@ -131,7 +156,7 @@ export class Table<
     update: DynamoExpression<UpdateExpression>;
     condition?: DynamoExpression<ConditionExpression>;
     _version?: number;
-  }): Narrow<Item, Key>;
+  }): Narrow<Item, AttributeKeyToObject<Key>, JsonFormat.Document>;
 
   public updateItem(call: CallExpr, vtl: VTL): any {
     const input = vtl.eval(call.args.input);
@@ -151,13 +176,18 @@ export class Table<
    */
   // @ts-ignore
   public deleteItem<
-    Key extends KeyAttribute<Item, PartitionKey, RangeKey>,
+    Key extends TableKey<
+      Item,
+      PartitionKey,
+      RangeKey,
+      JsonFormat.AttributeValue
+    >,
     ConditionExpression extends string | undefined
   >(input: {
     key: Key;
     condition?: DynamoExpression<ConditionExpression>;
     _version?: number;
-  }): Narrow<Item, Key>;
+  }): Narrow<Item, AttributeKeyToObject<Key>, JsonFormat.Document>;
 
   public deleteItem(call: CallExpr, vtl: VTL): any {
     const input = vtl.eval(call.args.input);
@@ -206,6 +236,16 @@ export class Table<
   }
 }
 
+type AttributeKeyToObject<T> = {
+  [k in keyof T]: T[k] extends { S: infer S }
+    ? S
+    : T[k] extends { N: `${infer N}` }
+    ? N
+    : T[k] extends { B: any }
+    ? NativeBinaryAttribute
+    : never;
+};
+
 function addIfDefined(vtl: VTL, from: string, to: string, key: string) {
   vtl.add(
     `#if(${from}.containsKey('${key}'))`,
@@ -217,7 +257,7 @@ function addIfDefined(vtl: VTL, from: string, to: string, key: string) {
 export type DynamoExpression<Expression extends string | undefined> =
   {} & RenameKeys<
     ExpressionAttributeNames<Expression> &
-      ExpressionAttributeValues<Expression> & {
+      ExpressionAttributeValues<Expression, JsonFormat.AttributeValue> & {
         expression?: Expression;
       },
     {
