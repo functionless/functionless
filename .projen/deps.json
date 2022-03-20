@@ -96,7 +96,7 @@
     },
     {
       "name": "typesafe-dynamodb",
-      "version": "0.1.4",
+      "version": "0.1.5",
       "type": "build"
     },
     {
@@ -121,7 +121,7 @@
     },
     {
       "name": "typesafe-dynamodb",
-      "version": "^0.1.4",
+      "version": "^0.1.5",
       "type": "peer"
     },
     {

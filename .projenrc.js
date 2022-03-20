@@ -17,7 +17,7 @@ const project = new typescript.TypeScriptProject({
     "@aws-cdk/aws-appsync-alpha@^2.14.0-alpha.0",
     "aws-cdk-lib@^2.14.0",
     "constructs@^10.0.0",
-    "typesafe-dynamodb@^0.1.4",
+    "typesafe-dynamodb@^0.1.5",
     "typescript@^4.5.5",
   ],
   eslintOptions: {
