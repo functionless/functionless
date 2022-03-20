@@ -11,6 +11,7 @@ import {
 } from "typesafe-dynamodb/lib/attribute-value";
 import { FunctionDecl } from "./declaration";
 import { Literal } from "./literal";
+import { Construct } from "constructs";
 
 /**
  * The shape of the AWS Appsync `$context` variable.
@@ -50,16 +51,27 @@ export type ResolverFunction<
   Source
 > = ($context: AppsyncContext<Arguments, Source>) => Result;
 
-export interface MaterializedResolver extends appsync.Resolver {
+export interface SynthesizedAppsyncResolverProps extends appsync.ResolverProps {
   readonly templates: string[];
 }
 
-export function materialize(
-  templates: string[],
-  resolver: appsync.Resolver
-): MaterializedResolver {
-  (resolver as any).templates = templates;
-  return resolver as MaterializedResolver;
+/**
+ * An {@link appsync.Resolver} synthesized by a {@link AppsyncResolver}.
+ */
+export class SynthesizedAppsyncResolver extends appsync.Resolver {
+  /**
+   * All of the Request and Response Mapping templates in the order they are executed by the AppSync service.
+   */
+  readonly templates: string[];
+
+  constructor(
+    scope: Construct,
+    id: string,
+    props: SynthesizedAppsyncResolverProps
+  ) {
+    super(scope, id, props);
+    this.templates = props.templates;
+  }
 }
 
 /**
@@ -137,13 +149,12 @@ export class AppsyncResolver<
       appsync.BaseResolverProps,
       "typeName" | "fieldName" | "cachingConfig"
     >
-  ): MaterializedResolver {
+  ): SynthesizedAppsyncResolver {
     let stageIt = 0;
 
     const resolverCount = countResolvers(this.decl);
     const templates: string[] = [];
 
-    let resolver: MaterializedResolver;
     if (resolverCount === 0) {
       // mock integration
       const [pipelineConfig, responseMappingTemplate] = synthesizeFunctions(
@@ -162,10 +173,13 @@ export class AppsyncResolver<
 }`;
       templates.push(requestMappingTemplate);
 
-      resolver = materialize(
-        templates,
-        api.createResolver({
+      const resolver = new SynthesizedAppsyncResolver(
+        api,
+        `${options.typeName}${options.fieldName}Resolver`,
+        {
           ...options,
+          api,
+          templates,
           dataSource: getDataSource(
             api,
             null,
@@ -181,7 +195,7 @@ export class AppsyncResolver<
           responseMappingTemplate: appsync.MappingTemplate.fromString(
             responseMappingTemplate
           ),
-        })
+        }
       );
 
       templates.push(responseMappingTemplate);
@@ -197,10 +211,13 @@ export class AppsyncResolver<
         this.decl
       );
 
-      const resolver = materialize(
-        templates,
-        api.createResolver({
+      const resolver = new SynthesizedAppsyncResolver(
+        api,
+        `${options.typeName}${options.fieldName}Resolver`,
+        {
           ...options,
+          api,
+          templates,
           pipelineConfig,
           requestMappingTemplate: appsync.MappingTemplate.fromString(
             requestMappingTemplate
@@ -208,7 +225,7 @@ export class AppsyncResolver<
           responseMappingTemplate: appsync.MappingTemplate.fromString(
             responseMappingTemplate
           ),
-        })
+        }
       );
       templates.push(responseMappingTemplate);
 
@@ -247,17 +264,17 @@ export class AppsyncResolver<
             );
 
             if (stmt.kind === "ExprStmt") {
-              return createStage(getCall(stmt.expr));
+              return createStage(findServiceCallExpr(stmt.expr), "{}");
             } else if (stmt.kind === "ReturnStmt") {
               return createStage(
-                getCall(stmt.expr),
+                findServiceCallExpr(stmt.expr),
                 `#set( $context.stash.return__flag = true )
 #set( $context.stash.return__val = ${getResult(stmt.expr)} )
 {}`
               );
             } else if (stmt.kind === "VariableStmt" && stmt.expr) {
               return createStage(
-                getCall(stmt.expr),
+                findServiceCallExpr(stmt.expr),
                 `#set( $context.stash.${stmt.name} = ${getResult(
                   stmt.expr
                 )} )\n{}`
@@ -267,23 +284,55 @@ export class AppsyncResolver<
                 `only a 'VariableDecl', 'Call' or 'Return' expression may call a service`
               );
             }
-            function getCall(expr: Expr): CallExpr {
+
+            /**
+             * Recursively resolve the {@link expr} to the {@link CallExpr} that is calling the service.
+             *
+             * @param expr an Expression that contains (somewhere nested within) a {@link CallExpr} to an external service.
+             * @returns the {@link CallExpr} that
+             */
+            function findServiceCallExpr(expr: Expr): CallExpr {
               if (
                 expr.kind === "CallExpr" &&
                 (expr.expr.kind === "ReferenceExpr" ||
                   (expr.expr.kind === "PropAccessExpr" &&
                     expr.expr.expr.kind === "ReferenceExpr"))
               ) {
+                // this catches specific cases:
+                // lambdaFunction()
+                // table.get()
+                // table.<method-name>()
+
+                // all other Calls or PropAccessExpr are considered "after" the service call, e.g.
+                // lambdaFunction().prop
+                // table.query().Items.size() //.size() is still a Call but not a call to a service.
                 return expr;
               } else if (expr.kind === "PropAccessExpr") {
-                return getCall(expr.expr);
+                return findServiceCallExpr(expr.expr);
               } else if (expr.kind === "CallExpr") {
-                return getCall(expr.expr);
+                return findServiceCallExpr(expr.expr);
               } else {
                 throw new Error(``);
               }
             }
 
+            /**
+             * Resolve a VTL expression that applies in-line expressions such as PropAccessExpr to
+             * the result from `$context.result` in a Response Mapping template.
+             *
+             * Example:
+             * ```ts
+             * const items = table.query().items
+             * ```
+             *
+             * The Response Mapping Template will include:
+             * ```
+             * #set($context.stash.items = $context.result.items)
+             * ```
+             *
+             * @param expr the {@link Expr} which is triggering a call to an external service, such as a Table or Function.
+             * @returns a VTL expression to be included in the Response Mapping Template to extract the contents from `$context.result`.
+             */
             function getResult(expr: Expr): string {
               if (expr.kind === "CallExpr") {
                 template.call(expr);
@@ -301,7 +350,7 @@ export class AppsyncResolver<
 
             function createStage(
               expr: CallExpr,
-              responseMappingTemplate: string = "{}"
+              responseMappingTemplate: string
             ) {
               const requestMappingTemplateString = template.toVTL();
               templates.push(requestMappingTemplateString);

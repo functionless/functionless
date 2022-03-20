@@ -3,7 +3,7 @@ import "jest";
 import { $util, AppsyncContext, reflect } from "../src";
 import { Table } from "../src";
 import { VTL } from "../src/vtl";
-import { testCase } from "./util";
+import { appsyncTestCase } from "./util";
 
 interface Item {
   id: string;
@@ -23,7 +23,7 @@ const table = new Table<Item, "id">(
 );
 
 test("get item", () =>
-  testCase(
+  appsyncTestCase(
     reflect((context: AppsyncContext<{ id: string }>): Item | undefined => {
       return table.getItem({
         key: {
@@ -60,7 +60,7 @@ $util.toJson($v4)`,
   ));
 
 test("get item and set consistentRead:true", () =>
-  testCase(
+  appsyncTestCase(
     reflect((context: AppsyncContext<{ id: string }>): Item | undefined => {
       return table.getItem({
         key: {
@@ -99,7 +99,7 @@ $util.toJson($v4)`,
   ));
 
 test("put item", () =>
-  testCase(
+  appsyncTestCase(
     reflect(
       (
         context: AppsyncContext<{ id: string; name: number }>
@@ -176,7 +176,7 @@ $util.toJson($v10)`,
   ));
 
 test("update item", () =>
-  testCase(
+  appsyncTestCase(
     reflect((context: AppsyncContext<{ id: string }>): Item | undefined => {
       return table.updateItem({
         key: {
@@ -229,7 +229,7 @@ $util.toJson($v6)`,
   ));
 
 test("delete item", () =>
-  testCase(
+  appsyncTestCase(
     reflect((context: AppsyncContext<{ id: string }>): Item | undefined => {
       return table.deleteItem({
         key: {
@@ -281,7 +281,7 @@ $util.toJson($v6)`,
   ));
 
 test("query", () =>
-  testCase(
+  appsyncTestCase(
     reflect((context: AppsyncContext<{ id: string; sort: number }>): Item[] => {
       return table.query({
         query: {

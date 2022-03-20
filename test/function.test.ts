@@ -3,7 +3,7 @@ import "jest";
 import { AppsyncContext, reflect } from "../src";
 import { Function } from "../src";
 import { VTL } from "../src/vtl";
-import { testCase } from "./util";
+import { appsyncTestCase } from "./util";
 
 interface Item {
   id: string;
@@ -25,7 +25,7 @@ const fn1 = new Function<(arg: string) => Item>(lambda);
 const fn2 = new Function<(arg: string, optional?: string) => Item>(lambda);
 
 test("call function", () =>
-  testCase(
+  appsyncTestCase(
     reflect((context: AppsyncContext<{ arg: string }>) => {
       return fn1(context.arguments.arg);
     }),
@@ -47,8 +47,45 @@ $util.toJson($v2)`,
 #end`
   ));
 
+test("call function and conditional return", () =>
+  appsyncTestCase(
+    reflect((context: AppsyncContext<{ arg: string }>) => {
+      const result = fn1(context.arguments.arg);
+
+      if (result.id === "sam") {
+        return true;
+      } else {
+        return false;
+      }
+    }),
+    // pipeline's request mapping template
+    "{}",
+    // function's request mapping template
+    `${VTL.CircuitBreaker}
+#set($v1 = {})
+$util.qr($v1.put('arg', $context.arguments.arg))
+#set($v2 = {\"version\": \"2018-05-29\", \"operation\": \"Invoke\", \"payload\": $v1})
+$util.toJson($v2)`,
+    // function's response mapping template
+    `#set( $context.stash.result = $context.result )
+{}`,
+    // response mapping template
+    `#if($context.stash.return__flag)
+  #return($context.stash.return__val)
+#end
+#if($context.stash.result.id == 'sam')
+#set($context.stash.return__val = true)
+#set($context.stash.return__flag = true)
+#return($context.stash.return__val)
+#else
+#set($context.stash.return__val = false)
+#set($context.stash.return__flag = true)
+#return($context.stash.return__val)
+#end`
+  ));
+
 test("call function omitting optional arg", () =>
-  testCase(
+  appsyncTestCase(
     reflect((context: AppsyncContext<{ arg: string }>) => {
       return fn2(context.arguments.arg);
     }),
@@ -72,7 +109,7 @@ $util.toJson($v2)`,
   ));
 
 test("call function including optional arg", () =>
-  testCase(
+  appsyncTestCase(
     reflect((context: AppsyncContext<{ arg: string }>) => {
       return fn2(context.arguments.arg, "hello");
     }),

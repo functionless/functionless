@@ -2,7 +2,7 @@ import "jest";
 import { $util } from "../lib";
 import { AppsyncContext } from "../src";
 import { reflect } from "../src/reflect";
-import { returnExpr, testCase } from "./util";
+import { returnExpr, appsyncTestCase } from "./util";
 
 const payload = `{
   "version": "2018-05-29",
@@ -10,7 +10,7 @@ const payload = `{
 }`;
 
 test("empty function returning an argument", () => {
-  testCase(
+  appsyncTestCase(
     reflect((context: AppsyncContext<{ a: string }>) => {
       return context.arguments.a;
     }),
@@ -20,7 +20,7 @@ test("empty function returning an argument", () => {
 });
 
 test("return literal object with values", () => {
-  testCase(
+  appsyncTestCase(
     reflect(
       (context: AppsyncContext<{ arg: string; obj: Record<string, any> }>) => {
         const arg = context.arguments.arg;
@@ -58,7 +58,7 @@ $util.qr($v1.putAll($context.stash.obj))
 });
 
 test("call function and return its value", () => {
-  testCase(
+  appsyncTestCase(
     reflect(() => {
       return $util.autoId();
     }),
@@ -68,7 +68,7 @@ test("call function and return its value", () => {
 });
 
 test("call function, assign to variable and return variable reference", () => {
-  testCase(
+  appsyncTestCase(
     reflect(() => {
       const id = $util.autoId();
       return id;
@@ -80,7 +80,7 @@ test("call function, assign to variable and return variable reference", () => {
 });
 
 test("return in-line spread object", () => {
-  testCase(
+  appsyncTestCase(
     reflect((context: AppsyncContext<{ obj: { key: string } }>) => {
       return {
         id: $util.autoId(),
@@ -96,7 +96,7 @@ $util.qr($v1.putAll($context.arguments.obj))
 });
 
 test("return in-line list literal", () => {
-  testCase(
+  appsyncTestCase(
     reflect((context: AppsyncContext<{ a: string; b: string }>) => {
       return [context.arguments.a, context.arguments.b];
     }),
@@ -106,7 +106,7 @@ test("return in-line list literal", () => {
 });
 
 test("return list literal variable", () => {
-  testCase(
+  appsyncTestCase(
     reflect((context: AppsyncContext<{ a: string; b: string }>) => {
       const list = [context.arguments.a, context.arguments.b];
       return list;
@@ -118,7 +118,7 @@ test("return list literal variable", () => {
 });
 
 test("return list element", () => {
-  testCase(
+  appsyncTestCase(
     reflect((context: AppsyncContext<{ a: string; b: string }>) => {
       const list = [context.arguments.a, context.arguments.b];
       return list[0];
@@ -130,7 +130,7 @@ test("return list element", () => {
 });
 
 test("push element to array is renamed to add", () => {
-  testCase(
+  appsyncTestCase(
     reflect((context: AppsyncContext<{ list: string[] }>) => {
       context.arguments.list.push("hello");
       return context.arguments.list;
@@ -158,7 +158,7 @@ test("push element to array is renamed to add", () => {
 // });
 
 test("if statement", () => {
-  testCase(
+  appsyncTestCase(
     reflect((context: AppsyncContext<{ list: string[] }>) => {
       if (context.arguments.list.length > 0) {
         return true;
@@ -176,7 +176,7 @@ ${returnExpr("false")}
 });
 
 test("return conditional expression", () => {
-  testCase(
+  appsyncTestCase(
     reflect((context: AppsyncContext<{ list: string[] }>) => {
       return context.arguments.list.length > 0 ? true : false;
     }),
@@ -191,7 +191,7 @@ test("return conditional expression", () => {
 });
 
 test("property assignment of conditional expression", () => {
-  testCase(
+  appsyncTestCase(
     reflect((context: AppsyncContext<{ list: string[] }>) => {
       return {
         prop: context.arguments.list.length > 0 ? true : false,
@@ -210,7 +210,7 @@ $util.qr($v1.put('prop', $v2))
 });
 
 test("for-of loop", () => {
-  testCase(
+  appsyncTestCase(
     reflect((context: AppsyncContext<{ list: string[] }>) => {
       const newList = [];
       for (const item of context.arguments.list) {
@@ -228,7 +228,7 @@ $util.qr($context.stash.newList.add($item))
 });
 
 test("break from for-loop", () => {
-  testCase(
+  appsyncTestCase(
     reflect((context: AppsyncContext<{ list: string[] }>) => {
       const newList = [];
       for (const item of context.arguments.list) {
@@ -252,7 +252,7 @@ $util.qr($context.stash.newList.add($item))
 });
 
 test("local variable inside for-of loop is declared as a local variable", () => {
-  testCase(
+  appsyncTestCase(
     reflect((context: AppsyncContext<{ list: string[] }>) => {
       const newList = [];
       for (const item of context.arguments.list) {
@@ -272,7 +272,7 @@ $util.qr($context.stash.newList.add($i))
 });
 
 test("for-in loop and element access", () => {
-  testCase(
+  appsyncTestCase(
     reflect((context: AppsyncContext<{ record: Record<string, any> }>) => {
       const newList = [];
       for (const key in context.arguments.record) {
@@ -290,7 +290,7 @@ $util.qr($context.stash.newList.add($context.arguments.record[$key]))
 });
 
 test("template expression", () => {
-  testCase(
+  appsyncTestCase(
     reflect((context: AppsyncContext<{ a: string }>) => {
       const local = context.arguments.a;
       return `head ${context.arguments.a} ${local}${context.arguments.a}`;
@@ -302,7 +302,7 @@ test("template expression", () => {
 });
 
 test("conditional expression in template expression", () => {
-  testCase(
+  appsyncTestCase(
     reflect((context: AppsyncContext<{ a: string }>) => {
       return `head ${
         context.arguments.a === "hello" ? "world" : context.arguments.a
@@ -319,7 +319,7 @@ test("conditional expression in template expression", () => {
 });
 
 test("map over list", () =>
-  testCase(
+  appsyncTestCase(
     reflect((context: AppsyncContext<{ list: string[] }>) => {
       return context.arguments.list.map((item) => {
         return `hello ${item}`;
@@ -335,7 +335,7 @@ $util.qr($v1.add($v2))
   ));
 
 test("map over list with in-line return", () =>
-  testCase(
+  appsyncTestCase(
     reflect((context: AppsyncContext<{ list: string[] }>) => {
       return context.arguments.list.map((item) => `hello ${item}`);
     }),
@@ -349,7 +349,7 @@ $util.qr($v1.add($v2))
   ));
 
 test("chain map over list", () =>
-  testCase(
+  appsyncTestCase(
     reflect((context: AppsyncContext<{ list: string[] }>) => {
       return context.arguments.list
         .map((item) => `hello ${item}`)
@@ -366,7 +366,7 @@ $util.qr($v1.add($v2))
   ));
 
 test("chain map over list multiple array", () =>
-  testCase(
+  appsyncTestCase(
     reflect((context: AppsyncContext<{ list: string[] }>) => {
       return context.arguments.list
         .map((item, _i, _arr) => `hello ${item}`)
@@ -391,7 +391,7 @@ $util.qr($v1.add($v4))
   ));
 
 test("chain map over list complex", () =>
-  testCase(
+  appsyncTestCase(
     reflect((context: AppsyncContext<{ list: string[] }>) => {
       return context.arguments.list
         .map((item, i, arr) => {
@@ -415,7 +415,7 @@ $util.qr($v1.add($v2))
   ));
 
 test("forEach over list", () =>
-  testCase(
+  appsyncTestCase(
     reflect((context: AppsyncContext<{ list: string[] }>) => {
       return context.arguments.list.forEach((item) => {
         $util.error(item);
@@ -429,7 +429,7 @@ $util.qr($util.error($item))
   ));
 
 test("reduce over list with initial value", () =>
-  testCase(
+  appsyncTestCase(
     reflect((context: AppsyncContext<{ list: string[] }>) => {
       return context.arguments.list.reduce((newList: string[], item) => {
         return [...newList, item];
@@ -449,7 +449,7 @@ $util.qr($v3.add($item))
   ));
 
 test("reduce over list without initial value", () =>
-  testCase(
+  appsyncTestCase(
     reflect((context: AppsyncContext<{ list: string[] }>) => {
       return context.arguments.list.reduce((str: string, item) => {
         return `${str}${item}`;
@@ -472,7 +472,7 @@ $util.error('Reduce of empty array with no initial value')
   ));
 
 test("map and reduce over list with initial value", () =>
-  testCase(
+  appsyncTestCase(
     reflect((context: AppsyncContext<{ list: string[] }>) => {
       return context.arguments.list
         .map((item) => `hello ${item}`)
@@ -495,7 +495,7 @@ $util.qr($v3.add($item))
   ));
 
 test("map and reduce with array over list with initial value", () =>
-  testCase(
+  appsyncTestCase(
     reflect((context: AppsyncContext<{ list: string[] }>) => {
       return context.arguments.list
         .map((item) => `hello ${item}`)
@@ -524,7 +524,7 @@ $util.qr($v5.add($item))
   ));
 
 test("map and reduce and map and reduce over list with initial value", () =>
-  testCase(
+  appsyncTestCase(
     reflect((context: AppsyncContext<{ list: string[] }>) => {
       return context.arguments.list
         .map((item) => `hello ${item}`)

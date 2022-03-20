@@ -11,7 +11,7 @@ export function returnExpr(varName: string) {
 #return($context.stash.return__val)`;
 }
 
-export function testCase(decl: FunctionDecl, ...expected: string[]) {
+export function appsyncTestCase(decl: FunctionDecl, ...expected: string[]) {
   const app = new App({ autoSynth: false });
   const stack = new Stack(app, "stack");
 
