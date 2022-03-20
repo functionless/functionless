@@ -65,7 +65,14 @@ export function compile(
 
       function isReflectFunction(node: ts.Node): node is ts.CallExpression & {
         arguments: [
-          ts.FunctionExpression | ts.ArrowFunction,
+          (
+            | ts.FunctionExpression
+            | ts.ArrowFunction
+            | ts.Identifier
+            | ts.PropertyAccessExpression
+            | ts.ElementAccessExpression
+            | ts.CallExpression
+          ),
           ...ts.Expression[]
         ];
       } {
@@ -134,9 +141,19 @@ export function compile(
 
       function toFunction(
         type: "FunctionDecl" | "FunctionExpr",
-        impl: ts.FunctionDeclaration | ts.ArrowFunction | ts.FunctionExpression,
+        impl: ts.Node,
         dropArgs?: number
       ): ts.Expression {
+        if (
+          !ts.isFunctionDeclaration(impl) &&
+          !ts.isArrowFunction(impl) &&
+          !ts.isFunctionExpression(impl)
+        ) {
+          throw new Error(
+            `Functionless reflection only supports function parameters with bodies, no signature only declarations or references. Found ${impl.getText()}.`
+          );
+        }
+
         const params =
           dropArgs === undefined
             ? impl.parameters
