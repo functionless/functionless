@@ -1,10 +1,11 @@
-import { App, Stack } from "aws-cdk-lib";
+import { App, aws_events, Stack } from "aws-cdk-lib";
 import { AppsyncResolver, FunctionDecl } from "../src";
 
 import * as appsync from "@aws-cdk/aws-appsync-alpha";
 import path from "path";
 import { synthesizeEventPattern } from "../src/eventbridge/eventpattern";
 import { FnLsEventPattern } from "../src/eventbridge/eventpattern/types";
+import { synthesizeEventBridgeTargets } from "../src/eventbridge/targets";
 
 // generates boilerplate for the circuit-breaker logic for implementing early return
 export function returnExpr(varName: string) {
@@ -55,4 +56,20 @@ export function ebEventPatternTestCaseError(
   message?: string
 ) {
   expect(() => synthesizeEventPattern(decl)).toThrow(message);
+}
+
+export function ebEventTargetTestCase(
+  decl: FunctionDecl,
+  ...targets: aws_events.IRuleTarget[]
+) {
+  const result = synthesizeEventBridgeTargets(decl);
+
+  expect(result).toEqual(targets);
+}
+
+export function ebEventTargetTestCaseError(
+  decl: FunctionDecl,
+  message?: string
+) {
+  expect(() => synthesizeEventBridgeTargets(decl)).toThrow(message);
 }

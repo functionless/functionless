@@ -3,9 +3,12 @@ import { Rule } from "aws-cdk-lib/aws-events";
 import { Construct } from "constructs";
 import { FunctionDecl } from "../declaration";
 import { synthesizeEventPattern } from "./eventpattern";
-import { synthesizeEventBridgeTarget } from "./targets";
+import { synthesizeEventBridgeTargets } from "./targets";
+import { Function } from "../function";
+import { Table } from "../table";
+import { AnyFunction } from "..";
 
-export interface EventBusEvent<
+export interface EventBusRuleInput<
   T = any,
   DetailType extends string = string,
   Source extends string = string
@@ -15,24 +18,26 @@ export interface EventBusEvent<
   detail: T;
 }
 
-type EventHandlerFunction<E extends EventBusEvent = EventBusEvent<any>> = (
-  event: E
-) => void;
+export type EventTransformFunction<
+  E extends EventBusRuleInput = EventBusRuleInput<any>,
+  O = never
+> = (event: E) => O;
 
 export type EventPredicateFunction<
-  E extends EventBusEvent = EventBusEvent<any>
+  E extends EventBusRuleInput = EventBusRuleInput<any>
 > = (event: E) => boolean;
 
-export class EventBusTarget<T extends EventBusEvent> {
-  target: aws_events.IRuleTarget;
-
-  constructor(func: EventHandlerFunction<T>) {
+export class EventBusRuleInput<T extends EventBusRuleInput> {
+  constructor(func: EventTransformFunction<T>) {
     const decl = func as unknown as FunctionDecl;
-    this.target = synthesizeEventBridgeTarget(decl);
   }
+
+  as<O>(func: EventTransformFunction<T, O>): EventBusRuleInput<O> {}
+
+  set(target: (x: T) => any): void {}
 }
 
-export class EventBusRule<T extends EventBusEvent> extends Construct {
+export class EventBusRule<T extends EventBusRuleInput> extends Construct {
   public readonly rule: aws_events.Rule;
 
   constructor(
@@ -52,19 +57,12 @@ export class EventBusRule<T extends EventBusEvent> extends Construct {
     });
   }
 
-  target<E extends T>(target: EventHandlerFunction<E>): EventBusRule<T>;
-  target<E extends T>(target: EventBusTarget<E>): EventBusRule<T>;
-  target<E extends T>(
-    target: EventHandlerFunction<E> | EventBusTarget<E>
-  ): EventBusRule<T> {
-    const _target =
-      target instanceof EventBusTarget ? target : new EventBusTarget<E>(target);
-    this.rule.addTarget(_target.target);
-    return this;
-  }
+  as<O>(target: EventTransformFunction<T>): EventBusRuleInput<O> {}
+
+  set(target: (x: T) => any): void {}
 }
 
-export class EventBus<E extends EventBusEvent> {
+export class EventBus<E extends EventBusRuleInput> {
   /**
    * This static property identifies this class as an EventBus to the TypeScript plugin.
    */

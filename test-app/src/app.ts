@@ -2,7 +2,7 @@ import { App, aws_events, Stack } from "aws-cdk-lib";
 import * as appsync from "@aws-cdk/aws-appsync-alpha";
 import path from "path";
 import { PeopleDatabase } from "./people-db";
-import { EventBus, EventBusEvent } from "functionless";
+import { EventBus, EventBusRuleInput } from "functionless";
 
 export const app = new App();
 
@@ -46,7 +46,7 @@ peopleDb.deletePerson.addResolver(api, {
   fieldName: "deletePerson",
 });
 
-type MyEvent = EventBusEvent<{
+type MyEvent = EventBusRuleInput<{
   value: string;
 }>;
 
