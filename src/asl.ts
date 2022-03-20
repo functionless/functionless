@@ -244,13 +244,28 @@ export class ASL {
     this.returnTransitions = new Map();
     this.throwTransitions = new Map();
 
-    const terminalStates = {
+    const hasVoidBranch = isTerminal(
+      decl.body.statements[decl.body.statements.length - 1]
+    );
+
+    const terminalStates: States = {
       [this.getReturnStateName(this.decl)]: {
         Type: "Succeed",
       },
       [this.getThrowStateName(this.decl)]: {
         Type: "Fail",
       },
+      // if the last statement isn't terminal, we need to inject a Pass state
+      // that returns `null` to satisfy the `void` contract of the function.
+      ...(hasVoidBranch
+        ? {
+            ReturnNull: {
+              Type: "Pass",
+              Result: null,
+              End: true,
+            },
+          }
+        : {}),
     } as const;
 
     const states = this.execute(this.decl.body);
@@ -411,8 +426,11 @@ export class ASL {
         return this.return(node);
       } else if (node.next) {
         return this.getStateName(node.next);
+      } else if (node.parent?.kind === "FunctionDecl") {
+        return "ReturnNull";
       }
     }
+
     return this.return(node.parent);
   }
 
@@ -861,5 +879,20 @@ export class ASL {
       );
     }
     return transitions.get(node)!;
+  }
+}
+
+// checks if a Stmt is terminal - meaning all branches explicitly return a value
+function isTerminal(stmt: Stmt): boolean {
+  if (stmt.kind === "ReturnStmt") {
+    return true;
+  } else if (stmt.kind === "IfStmt") {
+    return (
+      isTerminal(stmt.then) &&
+      stmt._else !== undefined &&
+      isTerminal(stmt._else)
+    );
+  } else {
+    return false;
   }
 }

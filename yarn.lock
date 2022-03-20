@@ -9,10 +9,10 @@
   dependencies:
     "@jridgewell/trace-mapping" "^0.3.0"
 
-"@aws-cdk/aws-appsync-alpha@2.17.0-alpha.0":
-  version "2.17.0-alpha.0"
-  resolved "https://registry.yarnpkg.com/@aws-cdk/aws-appsync-alpha/-/aws-appsync-alpha-2.17.0-alpha.0.tgz#e9ff91d1711949326be2f44f135cb87b2f59cd0e"
-  integrity sha512-e6c6vQkavl0EQvh24oulzzeF/WvMTkN6bzefb22ujJrzGp5l1NR3UIS7JD6MHjxL/FLr77yTINAudGtHmq1XpQ==
+"@aws-cdk/aws-appsync-alpha@2.15.0-alpha.0":
+  version "2.15.0-alpha.0"
+  resolved "https://registry.yarnpkg.com/@aws-cdk/aws-appsync-alpha/-/aws-appsync-alpha-2.15.0-alpha.0.tgz#12946c2ebeb6682a95766d36147ebe9764245bee"
+  integrity sha512-Nr2wWtyoqyWQYFcGfUr1EZdun6Mvzvc9qpybB52gnBuTOQJ4ahgiacNgGeM3nRxPMMQ0JYmbAePXDXGEMhTdbA==
 
 "@aws-crypto/ie11-detection@^2.0.0":
   version "2.0.0"
@@ -1817,10 +1817,10 @@ at-least-node@^1.0.0:
   resolved "https://registry.yarnpkg.com/at-least-node/-/at-least-node-1.0.0.tgz#602cd4b46e844ad4effc92a8011a3c46e0238dc2"
   integrity sha512-+q/t7Ekv1EDY2l6Gda6LLiX14rU9TV20Wa3ofeQmwPFZbOMo9DXrLbOjFaaclkXKWidIaopwAObQDqwWtGUjqg==
 
-aws-cdk-lib@2.17.0:
-  version "2.17.0"
-  resolved "https://registry.yarnpkg.com/aws-cdk-lib/-/aws-cdk-lib-2.17.0.tgz#822b397fbc1a44f647abbdb31d6a85f18bd89043"
-  integrity sha512-bga2HptbGx3rMdSkIKxBS13miogj/DHB2VPfQZAoKoCOAanOot+M3mHhYqe5aNdxhrppaRjG2eid2p1/MvRnvg==
+aws-cdk-lib@2.15.0:
+  version "2.15.0"
+  resolved "https://registry.yarnpkg.com/aws-cdk-lib/-/aws-cdk-lib-2.15.0.tgz#002531e461d6b9dece5b4fff739bef63ec19e7b7"
+  integrity sha512-QyxP4GM8bgwIdvE93V9WgE7y/yutFrY8pRxveCy6uY6E29Na2Lbes+4NT4xxcmLuj8h4bgcimbOreRw01OWcFA==
   dependencies:
     "@balena/dockerignore" "^1.0.2"
     case "1.6.3"
