@@ -142,7 +142,7 @@ The `Function` wrapper annotates an `aws_lambda.Function` with a TypeScript func
 import { aws_lambda } from "aws-cdk-lib";
 import { Function } from "functionless";
 
-const myFunc = new Function<string, string>(
+const myFunc = new Function<{ name: string }, string>(
   new aws_lambda.Function(this, "MyFunc", {
     ..
   })
@@ -153,11 +153,11 @@ Within an [AppsyncResolver](#AppsyncResolver), you can use the `myFunc` referenc
 
 ```ts
 new AppsyncResolver(() => {
-  return myFunc("my name");
+  return myFunc({ name: "my name" });
 });
 ```
 
-The arguments are converted into keys on an object that is passed to the Lambda Function.
+The first argument is passed to the Lambda Function.
 
 ```json
 {
