@@ -1,7 +1,10 @@
 import { CallExpr, Identifier } from "./expression";
-import { AnyFunction, AnyLambda } from "./function";
+import { AnyLambda } from "./function";
 import { FunctionlessNode } from "./node";
 import { AnyTable } from "./table";
+import { VTL } from "./vtl";
+
+export type AnyFunction = (...args: any[]) => any;
 
 export function lookupIdentifier(id: Identifier) {
   return lookup(id.parent);
@@ -84,7 +87,9 @@ export function isInTopLevelScope(expr: FunctionlessNode): boolean {
   }
 }
 
-export function findFunction(call: CallExpr): AnyFunction | undefined {
+export function findFunction(
+  call: CallExpr
+): ((call: CallExpr, vtl: VTL) => string) | undefined {
   return find(call.expr);
 
   function find(expr: FunctionlessNode): any {
