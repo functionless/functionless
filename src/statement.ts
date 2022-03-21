@@ -1,4 +1,5 @@
-import { Expr } from "./expression";
+import { FunctionDecl } from "./declaration";
+import { Expr, FunctionExpr } from "./expression";
 import { BaseNode, isNode, typeGuard } from "./node";
 
 /**
@@ -70,7 +71,19 @@ export class VariableStmt<
 
 export const isBlockStmt = typeGuard("BlockStmt");
 
+export type BlockStmtParent =
+  | ForInStmt
+  | ForOfStmt
+  | FunctionDecl
+  | FunctionExpr
+  | IfStmt
+  | TryStmt
+  | CatchClause;
+
 export class BlockStmt extends BaseStmt<"BlockStmt"> {
+  // @ts-ignore
+  parent: BlockStmtParent;
+
   constructor(readonly statements: Stmt[]) {
     super("BlockStmt");
     statements.forEach((expr, i) => {
@@ -80,8 +93,30 @@ export class BlockStmt extends BaseStmt<"BlockStmt"> {
     });
   }
 
-  public getLastStmt(): Stmt | undefined {
-    return this.statements[this.statements.length - 1];
+  public isEmpty(): this is {
+    readonly statements: [];
+  } {
+    return this.statements.length === 0;
+  }
+
+  public isNotEmpty(): this is {
+    readonly statements: [Stmt, ...Stmt[]];
+  } {
+    return this.statements.length > 0;
+  }
+
+  public get firstStmt(): this["statements"][0] {
+    return this.statements[0];
+  }
+
+  public get lastStmt(): this["statements"]["length"] extends 0
+    ? undefined
+    : Stmt {
+    if (this.isEmpty()) {
+      return undefined!;
+    } else {
+      return this.statements[this.statements.length - 1] as any;
+    }
   }
 }
 
@@ -171,6 +206,8 @@ export class TryStmt extends BaseStmt<"TryStmt"> {
 export const isCatchClause = typeGuard("CatchClause");
 
 export class CatchClause extends BaseStmt<"CatchClause"> {
+  // @ts-ignore
+  parent: TryStmt;
   constructor(
     readonly variableDecl: VariableStmt | undefined,
     readonly block: BlockStmt

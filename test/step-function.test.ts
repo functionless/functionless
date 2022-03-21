@@ -46,6 +46,151 @@ function init() {
   return { stack, computeScore, getPerson, personTable };
 }
 
+test("empty function", () => {
+  const { stack } = init();
+  const definition = new ExpressStepFunction(stack, "fn", () => {}).definition;
+
+  const expected: StateMachine<States> = {
+    StartAt: "return null",
+    States: {
+      Success: {
+        Type: "Succeed",
+      },
+      "return null": {
+        Next: "Success",
+        Result: null,
+        ResultPath: "$",
+        Type: "Pass",
+      },
+    },
+  };
+  expect(definition).toEqual(expected);
+});
+
+test("return void", () => {
+  const { stack } = init();
+  const definition = new ExpressStepFunction(stack, "fn", () => {
+    return;
+  }).definition;
+
+  const expected: StateMachine<States> = {
+    StartAt: "return null",
+    States: {
+      "return null": {
+        Next: "Success",
+        Result: null,
+        ResultPath: "$",
+        Type: "Pass",
+      },
+      Success: {
+        Type: "Succeed",
+      },
+    },
+  };
+  expect(definition).toEqual(expected);
+});
+
+test("conditionally return void", () => {
+  const { stack } = init();
+  const definition = new ExpressStepFunction(stack, "fn", (id: string) => {
+    if (id === "hello") {
+      return;
+    }
+  }).definition;
+
+  const expected: StateMachine<States> = {
+    StartAt: 'if(id == "hello")',
+    States: {
+      Success: {
+        Type: "Succeed",
+      },
+      'if(id == "hello")': {
+        Choices: [
+          {
+            Next: "return null",
+            StringEquals: "hello",
+            Variable: "$.id",
+          },
+        ],
+        Default: "return null",
+        Type: "Choice",
+      },
+      "return null": {
+        Next: "Success",
+        Result: null,
+        ResultPath: "$",
+        Type: "Pass",
+      },
+    },
+  };
+  expect(definition).toEqual(expected);
+});
+
+test("for-loop and do nothing", () => {
+  const { stack } = init();
+  const definition = new ExpressStepFunction(stack, "fn", (items: string[]) => {
+    for (const item of items) {
+      // @ts-ignore
+      const a = item;
+    }
+  }).definition;
+
+  const expected: StateMachine<States> = {
+    StartAt: "for(item of items)",
+    States: {
+      Success: {
+        Type: "Succeed",
+      },
+      Throw: {
+        Type: "Fail",
+      },
+      "for(item of items)": {
+        Catch: [
+          {
+            ErrorEquals: ["States.All"],
+            Next: "Throw",
+          },
+        ],
+        ItemsPath: "$.items",
+        Iterator: {
+          StartAt: "a = item",
+          States: {
+            Success1: {
+              Type: "Succeed",
+            },
+            Throw1: {
+              Type: "Fail",
+            },
+            "a = item": {
+              Next: "Success1",
+              OutputPath: "$.result",
+              Parameters: {
+                "result.$": "$.item",
+              },
+              ResultPath: "$.a",
+              Type: "Pass",
+            },
+          },
+        },
+        MaxConcurrency: 1,
+        Next: "return null",
+        Parameters: {
+          "item.$": "$$.Map.Item.Value",
+        },
+        ResultPath: null,
+        Type: "Map",
+      },
+      "return null": {
+        Next: "Success",
+        Result: null,
+        ResultPath: "$",
+        Type: "Pass",
+      },
+    },
+  };
+  expect(definition).toEqual(expected);
+});
+
 test("return a single Lambda Function call", () => {
   const { stack, getPerson } = init();
   const definition = new ExpressStepFunction(
@@ -435,6 +580,76 @@ test("for-loop over a list literal", () => {
         Result: null,
         ResultPath: "$",
         Next: "Success",
+      },
+      Success: {
+        Type: "Succeed",
+      },
+      Throw: {
+        Type: "Fail",
+      },
+    },
+  };
+  expect(definition).toEqual(expected);
+});
+
+test("conditionally call DynamoDB and then void", () => {
+  const { stack, personTable } = init();
+  const definition = new ExpressStepFunction(
+    stack,
+    "fn",
+    (id: string): void => {
+      if (id === "hello") {
+        $AWS.DynamoDB.GetItem({
+          TableName: personTable,
+          Key: {
+            id: {
+              S: id,
+            },
+          },
+        });
+      }
+    }
+  ).definition;
+
+  const expected: StateMachine<States> = {
+    StartAt: 'if(id == "hello")',
+    States: {
+      'if(id == "hello")': {
+        Choices: [
+          {
+            Next: "$AWS.DynamoDB.GetItem({TableName: personTable, Key: {id: {S: id}}})",
+            StringEquals: "hello",
+            Variable: "$.id",
+          },
+        ],
+        Default: "return null",
+        Type: "Choice",
+      },
+      "$AWS.DynamoDB.GetItem({TableName: personTable, Key: {id: {S: id}}})": {
+        Catch: [
+          {
+            ErrorEquals: ["States.All"],
+            Next: "Throw",
+          },
+        ],
+        Next: "return null",
+        Parameters: {
+          Key: {
+            id: {
+              "S.$": "$.id",
+            },
+          },
+          TableName: personTable.resource.tableName,
+        },
+        Resource: "arn:aws:states:::aws-sdk:dynamodb:getItem",
+        ResultPath: null,
+        Type: "Task",
+      },
+      "return null": {
+        Next: "Success",
+        Result: null,
+        ResultPath: "$",
+        Type: "Pass",
       },
       Success: {
         Type: "Succeed",

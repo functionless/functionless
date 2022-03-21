@@ -7,7 +7,6 @@ import {
   FunctionExpr,
   isLiteralExpr,
   isReferenceExpr,
-  isExpr,
   NullLiteralExpr,
 } from "./expression";
 import {
@@ -15,7 +14,6 @@ import {
   ForInStmt,
   ForOfStmt,
   IfStmt,
-  isStmt,
   ReturnStmt,
   Stmt,
 } from "./statement";
@@ -23,6 +21,7 @@ import { findFunction, isTerminal } from "./util";
 import { FunctionDecl } from "./declaration";
 import { FunctionlessNode } from "./node";
 import { visitEachChild } from "./visit";
+import { collect } from "./collect";
 
 export function isASL(a: any): a is ASL {
   return (a as ASL | undefined)?.kind === ASL.ContextName;
@@ -249,20 +248,19 @@ export class ASL {
     this.returnTransitions = new Map();
     this.throwTransitions = new Map();
 
-    // re-write the AST to include explicit `ReturnStmt(NullLiteral())` statements
-    // this simplifies the interpreter code by always having a node to chain onto, even when
-    // the AST has no final `ReturnStmt` (i.e. when the function is a void function)
-    // without this, chains that should return null will actually include the entire state as their output
     this.decl = visitEachChild(decl, function visit(node): FunctionlessNode {
+      // re-write the AST to include explicit `ReturnStmt(NullLiteral())` statements
+      // this simplifies the interpreter code by always having a node to chain onto, even when
+      // the AST has no final `ReturnStmt` (i.e. when the function is a void function)
+      // without this, chains that should return null will actually include the entire state as their output
       if (
         node.kind === "BlockStmt" &&
         (node.parent?.kind === "FunctionExpr" ||
           node.parent?.kind === "FunctionDecl")
       ) {
-        const lastStmt = node.getLastStmt();
-        if (lastStmt === undefined) {
+        if (node.lastStmt === undefined) {
           return new BlockStmt([new ReturnStmt(new NullLiteralExpr())]);
-        } else if (!isTerminal(lastStmt)) {
+        } else if (!isTerminal(node.lastStmt)) {
           return new BlockStmt([
             ...node.statements.map((stmt) => visitEachChild(stmt, visit)),
             new ReturnStmt(new NullLiteralExpr()),
@@ -276,10 +274,25 @@ export class ASL {
       [this.getReturnStateName(this.decl)]: {
         Type: "Succeed",
       },
-      [this.getThrowStateName(this.decl)]: {
+    };
+    if (requiresFailState(this.decl)) {
+      // don't add the Fail state if it is unreachable
+      // we determine that it is unreachable if there are no service calls
+      terminalStates[this.getThrowStateName(this.decl)] = {
         Type: "Fail",
-      },
-    } as const;
+      };
+    }
+
+    function requiresFailState(node: FunctionlessNode): boolean {
+      if (
+        node.kind === "ReferenceExpr" ||
+        node.kind === "ForOfStmt" ||
+        node.kind === "ForInStmt"
+      ) {
+        return true;
+      }
+      return collect(node, requiresFailState).reduce((a, b) => a || b, false);
+    }
 
     const states = this.execute(this.decl.body);
 
@@ -330,7 +343,7 @@ export class ASL {
       }
     } else if (stmt.kind === "ExprStmt") {
       return {
-        [this.getStateName(stmt)]: this.eval(stmt.expr),
+        [this.getStateName(stmt)]: this.eval(stmt.expr, this.next(stmt)),
       };
     } else if (stmt.kind === "ForInStmt") {
       throw new Error(`for-in is no supported in Amazon States Language`);
@@ -366,12 +379,15 @@ export class ASL {
         },
       };
     } else if (stmt.kind === "IfStmt") {
-      const states: States = {};
+      let states: States = {};
       const choices: Branch[] = [];
 
       let curr: IfStmt | BlockStmt | undefined = stmt;
       while (curr?.kind === "IfStmt") {
-        Object.assign(states, this.execute(curr.then));
+        states = {
+          ...states,
+          ...this.execute(curr.then),
+        };
         choices.push({
           Next: this.getStateName(curr.then.statements[0]),
           ...this.condition(curr.when),
@@ -392,7 +408,7 @@ export class ASL {
       };
     } else if (stmt.kind === "ReturnStmt") {
       return {
-        [this.getStateName(stmt)]: this.eval(stmt.expr),
+        [this.getStateName(stmt)]: this.eval(stmt.expr, this.next(stmt)),
       };
     } else if (stmt.kind === "ThrowStmt") {
       return {
@@ -406,7 +422,7 @@ export class ASL {
         return {};
       }
       return {
-        [this.getStateName(stmt)]: this.eval(stmt.expr),
+        [this.getStateName(stmt)]: this.eval(stmt.expr, this.next(stmt)),
       };
     } else if (stmt.kind === "TryStmt") {
       return {
@@ -423,26 +439,46 @@ export class ASL {
   /**
    * Find the next state that the {@link node} should transition to.
    */
-  private next(node: FunctionlessNode | undefined): string {
-    if (node === undefined) {
-      throw new Error(`Stack Underflow`);
-    } else if (node.kind === "FunctionDecl") {
-      return this.getReturnStateName(node);
-    } else if (node.kind === "FunctionExpr") {
-      return this.getReturnStateName(node);
-    } else if (isExpr(node)) {
-      return this.next(node.parent);
-    } else if (isStmt(node)) {
-      if (node.kind === "TryStmt" && node.finallyBlock) {
-        return this.getStateName(node.finallyBlock.statements[0]);
-      } else if (node.kind === "ReturnStmt") {
-        return this.return(node);
-      } else if (node.next) {
-        return this.getStateName(node.next);
+  private next(node: Stmt): string {
+    if (node.kind === "ReturnStmt") {
+      return this.return(node);
+    } else if (node.next) {
+      return this.getStateName(node.next);
+    } else if (node.parent?.kind === "BlockStmt") {
+      const block = node.parent;
+      const scope = node.parent.parent;
+      if (scope === undefined) {
+        throw new Error(`broken AST - BlockStmt without a parent node`);
+      } else if (scope.kind === "FunctionDecl") {
+      } else if (scope.kind === "FunctionExpr") {
+      } else if (scope.kind === "ForInStmt" || scope.kind === "ForOfStmt") {
+      } else if (scope.kind === "IfStmt") {
+        return this.next(scope);
+      } else if (scope.kind === "TryStmt") {
+        if (block === scope.tryBlock) {
+          // need to move to the finally block
+          if (scope.finallyBlock?.isNotEmpty()) {
+            return this.getStateName(scope.finallyBlock.firstStmt);
+          }
+          return this.next(scope);
+        } else if (block === scope.finallyBlock) {
+          // we're exiting the finallyBlock, so let's progress past it
+          return this.next(scope);
+        } else {
+          throw new Error(`impossible`);
+        }
+      } else if (scope.kind === "CatchClause") {
+        const tryStmt = scope.parent;
+        if (tryStmt.finallyBlock?.isNotEmpty()) {
+          return this.getStateName(tryStmt.finallyBlock.firstStmt);
+        }
+        return this.next(scope);
+      } else {
+        return assertNever(scope);
       }
     }
 
-    return this.return(node.parent);
+    return this.return(node);
   }
 
   /**
@@ -489,14 +525,22 @@ export class ASL {
     }
   }
 
-  public eval(expr: Expr): State {
+  public eval(expr: Expr | undefined, next: string): State {
     const ResultPath =
-      expr.parent?.kind === "VariableStmt"
+      expr?.parent?.kind === "VariableStmt"
         ? `$.${expr.parent.name}`
-        : expr.parent?.kind === "ReturnStmt"
+        : expr?.parent?.kind === "ReturnStmt"
         ? "$"
         : null;
-    if (expr.kind === "CallExpr") {
+
+    if (expr === undefined || expr.kind === "NullLiteralExpr") {
+      return {
+        Type: "Pass",
+        Next: next,
+        Result: null,
+        ResultPath,
+      };
+    } else if (expr.kind === "CallExpr") {
       const serviceCall = findFunction(expr);
       if (serviceCall) {
         const task: Task = serviceCall(expr, this);
@@ -511,17 +555,10 @@ export class ASL {
               Next: this.throw(expr),
             },
           ],
-          Next: this.next(expr),
+          Next: next,
         };
       }
       throw new Error(`call must be a service call, ${expr}`);
-    } else if (expr.kind === "NullLiteralExpr") {
-      return {
-        Type: "Pass",
-        Next: this.next(expr),
-        Result: null,
-        ResultPath,
-      };
     } else if (
       expr.kind === "Identifier" ||
       expr.kind === "PropAccessExpr" ||
@@ -530,7 +567,7 @@ export class ASL {
     ) {
       return {
         Type: "Pass",
-        Next: this.next(expr),
+        Next: next,
         Parameters: {
           [`result${isLiteralExpr(expr) ? "" : ".$"}`]: this.evalJson(expr),
         },
@@ -800,7 +837,11 @@ export class ASL {
       } else if (stmt.kind === "ForOfStmt") {
         return `for(${stmt.variableDecl.name} of ${exprToString(stmt.expr)})`;
       } else if (stmt.kind === "ReturnStmt") {
-        return `return ${exprToString(stmt.expr)}`;
+        if (stmt.expr) {
+          return `return ${exprToString(stmt.expr)}`;
+        } else {
+          return `return`;
+        }
       } else if (stmt.kind === "ThrowStmt") {
         return `throw ${exprToString(stmt.expr)}`;
       } else if (stmt.kind === "TryStmt") {

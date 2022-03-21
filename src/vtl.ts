@@ -382,9 +382,9 @@ export class VTL {
         throw new Error(`cannot evaluate Expr kind: '${node.kind}'`);
       case "ReturnStmt":
         if (returnVar) {
-          this.set(returnVar, node.expr);
+          this.set(returnVar, node.expr ?? "$null");
         } else {
-          this.set("$context.stash.return__val", node.expr);
+          this.set("$context.stash.return__val", node.expr ?? "$null");
           this.add("#set($context.stash.return__flag = true)");
           this.add(`#return($context.stash.return__val)`);
         }

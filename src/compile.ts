@@ -318,7 +318,7 @@ export function compile(
             "ReturnStmt",
             node.expression
               ? [toExpr(node.expression)]
-              : [ts.factory.createNull()]
+              : [newExpr("NullLiteralExpr", [])]
           );
         } else if (ts.isObjectLiteralExpression(node)) {
           return newExpr("ObjectLiteralExpr", [
