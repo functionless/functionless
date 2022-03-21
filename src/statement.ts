@@ -23,7 +23,7 @@ export function isStmt(a: any): a is Stmt {
     isNode(a) &&
     (isBreakStmt(a) ||
       isBlockStmt(a) ||
-      isCatchStmt(a) ||
+      isCatchClause(a) ||
       isExprStmt(a) ||
       isForInStmt(a) ||
       isForOfStmt(a) ||
@@ -79,6 +79,10 @@ export class BlockStmt extends BaseStmt<"BlockStmt"> {
       expr.next = i + 1 < statements.length ? statements[i + 1] : undefined;
     });
   }
+
+  public getLastStmt(): Stmt | undefined {
+    return this.statements[this.statements.length - 1];
+  }
 }
 
 export const isReturn = typeGuard("ReturnStmt");
@@ -111,12 +115,12 @@ export const isForOfStmt = typeGuard("ForOfStmt");
 
 export class ForOfStmt extends BaseStmt<"ForOfStmt"> {
   constructor(
-    readonly i: VariableStmt,
+    readonly variableDecl: VariableStmt,
     readonly expr: Expr,
     readonly body: BlockStmt
   ) {
     super("ForOfStmt");
-    i.parent = this;
+    variableDecl.parent = this;
     expr.parent = this;
     body.parent = this;
   }
@@ -126,12 +130,12 @@ export const isForInStmt = typeGuard("ForInStmt");
 
 export class ForInStmt extends BaseStmt<"ForInStmt"> {
   constructor(
-    readonly i: VariableStmt,
+    readonly variableDecl: VariableStmt,
     readonly expr: Expr,
     readonly body: BlockStmt
   ) {
     super("ForInStmt");
-    i.parent = this;
+    variableDecl.parent = this;
     expr.parent = this;
     body.parent = this;
   }
@@ -164,7 +168,7 @@ export class TryStmt extends BaseStmt<"TryStmt"> {
   }
 }
 
-export const isCatchStmt = typeGuard("CatchClause");
+export const isCatchClause = typeGuard("CatchClause");
 
 export class CatchClause extends BaseStmt<"CatchClause"> {
   constructor(

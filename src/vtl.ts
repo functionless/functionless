@@ -315,7 +315,7 @@ export class VTL {
       case "ForOfStmt":
       case "ForInStmt":
         this.add(
-          `#foreach($${node.i.name} in ${this.eval(node.expr)}${
+          `#foreach($${node.variableDecl.name} in ${this.eval(node.expr)}${
             node.kind === "ForInStmt" ? ".keySet()" : ""
           })`
         );

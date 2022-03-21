@@ -1,7 +1,7 @@
 import { CallExpr, CanReference, Identifier } from "./expression";
 import { AnyFunction } from "./function";
 import { FunctionlessNode } from "./node";
-import { isStmt } from "./statement";
+import { isStmt, Stmt } from "./statement";
 
 export function lookupIdentifier(id: Identifier) {
   return lookup(id.parent);
@@ -19,8 +19,8 @@ export function lookupIdentifier(id: Identifier) {
         return parameter;
       }
     } else if (expr.kind === "ForInStmt" || expr.kind === "ForOfStmt") {
-      if (expr.i.name === id.name) {
-        return expr.i;
+      if (expr.variableDecl.name === id.name) {
+        return expr.variableDecl;
       }
     }
     if (isStmt(expr) && expr.prev) {
@@ -100,5 +100,75 @@ export function findFunction(call: CallExpr): AnyFunction | undefined {
     } else {
       return undefined;
     }
+  }
+}
+
+export function ensureItemOf<T>(
+  arr: any[],
+  f: (item: any) => item is T,
+  message: string
+): asserts arr is T[] {
+  for (const item of arr) {
+    if (!f(item)) {
+      throw new Error(message);
+    }
+  }
+}
+
+export function ensure<T>(
+  a: any,
+  is: (a: any) => a is T,
+  message: string
+): asserts a is T {
+  if (!is(a)) {
+    debugger;
+    throw new Error(message);
+  }
+}
+
+type EnsureOr<T extends ((a: any) => a is any)[]> = T[number] extends (
+  a: any
+) => a is infer T
+  ? T
+  : never;
+
+export function anyOf<T extends ((a: any) => a is any)[]>(
+  ...fns: T
+): (a: any) => a is EnsureOr<T> {
+  return (a: any): a is EnsureOr<T> => {
+    for (const f of fns) {
+      if (f(a)) {
+        return true;
+      }
+    }
+    return false;
+  };
+}
+
+export type AnyDepthArray<T> = T | T[] | AnyDepthArray<T>[];
+
+export function flatten<T>(arr: AnyDepthArray<T>): T[] {
+  if (Array.isArray(arr)) {
+    return (arr as T[]).reduce(
+      (a: T[], b: AnyDepthArray<T>) => a.concat(flatten(b)),
+      []
+    );
+  } else {
+    return [arr];
+  }
+}
+
+// checks if a Stmt is terminal - meaning all branches explicitly return a value
+export function isTerminal(stmt: Stmt): boolean {
+  if (stmt.kind === "ReturnStmt") {
+    return true;
+  } else if (stmt.kind === "IfStmt") {
+    return (
+      isTerminal(stmt.then) &&
+      stmt._else !== undefined &&
+      isTerminal(stmt._else)
+    );
+  } else {
+    return false;
   }
 }

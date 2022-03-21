@@ -14,8 +14,8 @@ const project = new typescript.TypeScriptProject({
     "typescript",
   ],
   peerDeps: [
-    "@aws-cdk/aws-appsync-alpha@^2.15.0-alpha.0",
-    "aws-cdk-lib@^2.15.0",
+    "@aws-cdk/aws-appsync-alpha@^2.17.0-alpha.0",
+    "aws-cdk-lib@^2.17.0",
     "constructs@^10.0.0",
     "typesafe-dynamodb@^0.1.5",
     "typescript@^4.6.2",

@@ -47,5 +47,5 @@ export function typeGuard<Kind extends FunctionlessNode["kind"]>(
   ...kinds: Kind[]
 ): (a: any) => a is Extract<FunctionlessNode, { kind: Kind }> {
   return (a: any): a is Extract<FunctionlessNode, { kind: Kind }> =>
-    kinds.find((kind) => a.kind === kind) !== undefined;
+    kinds.find((kind) => a?.kind === kind) !== undefined;
 }

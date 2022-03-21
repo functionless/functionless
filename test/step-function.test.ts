@@ -205,10 +205,7 @@ test("return AWS.DynamoDB.GetItem", () => {
       "return null": {
         Next: "Success",
         ResultPath: "$",
-        Parameters: {
-          result: null,
-        },
-        OutputPath: "$.result",
+        Result: null,
         Type: "Pass",
       },
       "return {id: person.Item.id.S, name: person.Item.name.S}": {
@@ -313,10 +310,7 @@ test("call AWS.DynamoDB.GetItem, then Lambda and return LiteralExpr", () => {
       },
       "return null": {
         Next: "Success",
-        Parameters: {
-          result: null,
-        },
-        OutputPath: "$.result",
+        Result: null,
         ResultPath: "$",
         Type: "Pass",
       },
@@ -396,7 +390,7 @@ test("for-loop over a list literal", () => {
         ItemsPath: "$.people",
         ResultPath: null,
         MaxConcurrency: 1,
-        Next: "Success",
+        Next: "return null",
         Catch: [
           {
             ErrorEquals: ["States.All"],
@@ -435,6 +429,12 @@ test("for-loop over a list literal", () => {
             },
           },
         },
+      },
+      "return null": {
+        Type: "Pass",
+        Result: null,
+        ResultPath: "$",
+        Next: "Success",
       },
       Success: {
         Type: "Succeed",

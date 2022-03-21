@@ -1,4 +1,4 @@
-import { AnyStepFunction } from ".";
+import { AnyStepFunction } from "./step-function";
 import { ParameterDecl } from "./declaration";
 import { AnyFunction, AnyLambda } from "./function";
 import { BaseNode, isNode, setParent, typeGuard } from "./node";
@@ -29,12 +29,6 @@ export type Expr =
   | SpreadElementExpr
   | TemplateExpr
   | UnaryExpr;
-
-export function assertIsExpr(a: any, message?: string): asserts a is Expr {
-  if (!isExpr(a)) {
-    throw new Error(message ?? `expected an Expr`);
-  }
-}
 
 export function isExpr(a: any): a is Expr {
   return (
@@ -238,6 +232,11 @@ export class ArrayLiteralExpr extends BaseNode<"ArrayLiteralExpr"> {
 }
 
 export type ObjectElementExpr = PropAssignExpr | SpreadAssignExpr;
+
+export const isObjectElementExpr = typeGuard(
+  "PropAssignExpr",
+  "SpreadAssignExpr"
+);
 
 export const isObjectLiteralExpr = typeGuard("ObjectLiteralExpr");
 

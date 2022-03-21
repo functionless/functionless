@@ -9,12 +9,12 @@
     "deploy": "cdk deploy"
   },
   "devDependencies": {
-    "@types/node": "^14",
     "@aws-cdk/aws-appsync-alpha": "^2.17.0-alpha.0",
-    "aws-cdk": "^2.17.0",
+    "@types/node": "^14",
     "aws-cdk-lib": "^2.17.0",
+    "aws-cdk": "^2.17.0",
     "constructs": "10.0.0",
-    "functionless": "file:..",
+    "functionless": "file:../",
     "ts-node": "^10.5.0",
     "ts-patch": "^2.0.1",
     "typesafe-dynamodb": "^0.1.5",
