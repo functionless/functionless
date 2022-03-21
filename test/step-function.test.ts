@@ -14,7 +14,7 @@ function init() {
   });
   const stack = new Stack(app, "stack");
 
-  const getPerson = new Function<(id: string) => Person | undefined>(
+  const getPerson = new Function<{ id: string }, Person | undefined>(
     new aws_lambda.Function(stack, "Func", {
       code: aws_lambda.Code.fromInline(
         "exports.handle = function() { return {id: 'id', name: 'name' }; }"
@@ -24,7 +24,7 @@ function init() {
     })
   );
 
-  const computeScore = new Function<(person: Person) => number>(
+  const computeScore = new Function<Person, number>(
     new aws_lambda.Function(stack, "ComputeScore", {
       code: aws_lambda.Code.fromInline(
         "exports.handle = function() { return 1; }"
@@ -197,20 +197,23 @@ test("return a single Lambda Function call", () => {
     stack,
     "fn",
     (id: string): Person | undefined => {
-      return getPerson(id);
+      return getPerson({ id });
     }
   ).definition;
 
   expect(definition).toEqual({
-    StartAt: "return getPerson(id)",
+    StartAt: "return getPerson({id: id})",
     States: {
-      "return getPerson(id)": {
+      "return getPerson({id: id})": {
         Type: "Task",
-        Resource: getPerson.resource.functionArn,
+        Resource: "arn:aws:states:::lambda:invoke",
         Next: "Success",
         ResultPath: "$",
         Parameters: {
-          "id.$": "$.id",
+          FunctionName: getPerson.resource.functionName,
+          Payload: {
+            "id.$": "$.id",
+          },
         },
         Catch: [
           {
@@ -235,21 +238,24 @@ test("call Lambda Function, store as variable, return variable", () => {
     stack,
     "fn",
     (id: string): Person | undefined => {
-      const person = getPerson(id);
+      const person = getPerson({ id });
       return person;
     }
   ).definition;
 
   expect(definition).toEqual({
-    StartAt: "person = getPerson(id)",
+    StartAt: "person = getPerson({id: id})",
     States: {
-      "person = getPerson(id)": {
+      "person = getPerson({id: id})": {
         Type: "Task",
-        Resource: getPerson.resource.functionArn,
+        Resource: "arn:aws:states:::lambda:invoke",
         Next: "return person",
         ResultPath: "$.person",
         Parameters: {
-          "id.$": "$.id",
+          FunctionName: getPerson.resource.functionName,
+          Payload: {
+            "id.$": "$.id",
+          },
         },
         Catch: [
           {
@@ -317,15 +323,16 @@ test("return AWS.DynamoDB.GetItem", () => {
           ],
           Next: "if(person.Item == null)",
           ResultPath: "$.person",
+          Resource: "arn:aws:states:::aws-sdk:dynamodb:getItem",
           Parameters: {
+            TableName: personTable.resource.tableName,
             Key: {
               id: {
                 "S.$": "$.id",
               },
             },
-            TableName: personTable.resource.tableName,
           },
-          Resource: "arn:aws:states:::aws-sdk:dynamodb:getItem",
+
           Type: "Task",
         },
       "if(person.Item == null)": {
@@ -470,12 +477,13 @@ test("call AWS.DynamoDB.GetItem, then Lambda and return LiteralExpr", () => {
           Next: "return {id: person.Item.id.S, name: person.Item.name.S, score: score}",
           ResultPath: "$.score",
           Parameters: {
-            person: {
+            FunctionName: computeScore.resource.functionName,
+            Payload: {
               "id.$": "$.person.Item.id.S",
               "name.$": "$.person.Item.name.S",
             },
           },
-          Resource: computeScore.resource.functionArn,
+          Resource: "arn:aws:states:::lambda:invoke",
           Type: "Task",
         },
       "return {id: person.Item.id.S, name: person.Item.name.S, score: score}": {
@@ -558,12 +566,13 @@ test("for-loop over a list literal", () => {
               ],
               Next: "Success1",
               Parameters: {
-                person: {
+                FunctionName: computeScore.resource.functionName,
+                Payload: {
                   "id.$": "$.id",
                   "name.$": "$.name",
                 },
               },
-              Resource: computeScore.resource.functionArn,
+              Resource: "arn:aws:states:::lambda:invoke",
               Type: "Task",
             },
             Success1: {

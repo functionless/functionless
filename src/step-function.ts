@@ -11,12 +11,12 @@ import {
 } from "aws-cdk-lib";
 
 import { FunctionDecl, isFunctionDecl } from "./declaration";
-import { AnyFunction } from "./function";
 import { ASL, isASL, StateMachine, States } from "./asl";
 import { isVTL, VTL } from "./vtl";
 import { makeCallable } from "./callable";
 import { CallExpr } from "./expression";
 import { LogOptions } from "aws-cdk-lib/aws-stepfunctions";
+import { AnyFunction } from "./util";
 
 export type AnyStepFunction =
   | ExpressStepFunction<AnyFunction>

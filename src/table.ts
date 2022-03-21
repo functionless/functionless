@@ -69,7 +69,7 @@ export class Table<
   PartitionKey extends keyof Item,
   RangeKey extends keyof Item | undefined = undefined
 > {
-  readonly kind: "Table" = "Table";
+  readonly kind = "Table" as const;
 
   constructor(readonly resource: aws_dynamodb.ITable) {}
 

@@ -543,7 +543,7 @@ export class ASL {
     } else if (expr.kind === "CallExpr") {
       const serviceCall = findFunction(expr);
       if (serviceCall) {
-        const task: Task = serviceCall(expr, this);
+        const task = serviceCall(expr, this);
 
         return {
           ...task,

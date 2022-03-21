@@ -1,7 +1,10 @@
 import { CallExpr, CanReference, Identifier } from "./expression";
-import { AnyFunction } from "./function";
-import { FunctionlessNode } from "./node";
 import { isStmt, Stmt } from "./statement";
+import { FunctionlessNode } from "./node";
+import { VTL } from "./vtl";
+import { ASL, Task } from "./asl";
+
+export type AnyFunction = (...args: any[]) => any;
 
 export function lookupIdentifier(id: Identifier) {
   return lookup(id.parent);
@@ -87,7 +90,12 @@ export function isInTopLevelScope(expr: FunctionlessNode): boolean {
   }
 }
 
-export function findFunction(call: CallExpr): AnyFunction | undefined {
+export function findFunction(
+  call: CallExpr
+):
+  | (((call: CallExpr, context: VTL) => string) &
+      ((call: CallExpr, context: ASL) => Omit<Task, "Next">))
+  | undefined {
   return find(call.expr);
 
   function find(expr: FunctionlessNode): any {

@@ -21,22 +21,22 @@ const lambda = new aws_lambda.Function(stack, "F", {
   runtime: aws_lambda.Runtime.NODEJS_14_X,
 });
 
-const fn1 = new Function<(arg: string) => Item>(lambda);
-const fn2 = new Function<(arg: string, optional?: string) => Item>(lambda);
+const fn1 = new Function<{ arg: string }, Item>(lambda);
+const fn2 = new Function<{ arg: string; optional?: string }, Item>(lambda);
+const fn3 = new Function<undefined, Item>(lambda);
+const fn4 = new Function<{ arg: string }, void>(lambda);
 
 test("call function", () =>
   appsyncTestCase(
     reflect((context: AppsyncContext<{ arg: string }>) => {
-      return fn1(context.arguments.arg);
+      return fn1(context.arguments);
     }),
     // pipeline's request mapping template
     "{}",
     // function's request mapping template
     `${VTL.CircuitBreaker}
-#set($v1 = {})
-$util.qr($v1.put('arg', $context.arguments.arg))
-#set($v2 = {\"version\": \"2018-05-29\", \"operation\": \"Invoke\", \"payload\": $v1})
-$util.toJson($v2)`,
+#set($v1 = {\"version\": \"2018-05-29\", \"operation\": \"Invoke\", \"payload\": $context.arguments})
+$util.toJson($v1)`,
     // function's response mapping template
     `#set( $context.stash.return__flag = true )
 #set( $context.stash.return__val = $context.result )
@@ -50,7 +50,7 @@ $util.toJson($v2)`,
 test("call function and conditional return", () =>
   appsyncTestCase(
     reflect((context: AppsyncContext<{ arg: string }>) => {
-      const result = fn1(context.arguments.arg);
+      const result = fn1(context.arguments);
 
       if (result.id === "sam") {
         return true;
@@ -62,10 +62,8 @@ test("call function and conditional return", () =>
     "{}",
     // function's request mapping template
     `${VTL.CircuitBreaker}
-#set($v1 = {})
-$util.qr($v1.put('arg', $context.arguments.arg))
-#set($v2 = {\"version\": \"2018-05-29\", \"operation\": \"Invoke\", \"payload\": $v1})
-$util.toJson($v2)`,
+#set($v1 = {\"version\": \"2018-05-29\", \"operation\": \"Invoke\", \"payload\": $context.arguments})
+$util.toJson($v1)`,
     // function's response mapping template
     `#set( $context.stash.result = $context.result )
 {}`,
@@ -87,17 +85,14 @@ $util.toJson($v2)`,
 test("call function omitting optional arg", () =>
   appsyncTestCase(
     reflect((context: AppsyncContext<{ arg: string }>) => {
-      return fn2(context.arguments.arg);
+      return fn2(context.arguments);
     }),
     // pipeline's request mapping template
     "{}",
     // function's request mapping template
     `${VTL.CircuitBreaker}
-#set($v1 = {})
-$util.qr($v1.put('arg', $context.arguments.arg))
-$util.qr($v1.put('optional', $null))
-#set($v2 = {\"version\": \"2018-05-29\", \"operation\": \"Invoke\", \"payload\": $v1})
-$util.toJson($v2)`,
+#set($v1 = {\"version\": \"2018-05-29\", \"operation\": \"Invoke\", \"payload\": $context.arguments})
+$util.toJson($v1)`,
     // function's response mapping template
     `#set( $context.stash.return__flag = true )
 #set( $context.stash.return__val = $context.result )
@@ -111,7 +106,7 @@ $util.toJson($v2)`,
 test("call function including optional arg", () =>
   appsyncTestCase(
     reflect((context: AppsyncContext<{ arg: string }>) => {
-      return fn2(context.arguments.arg, "hello");
+      return fn2({ arg: context.arguments.arg, optional: "hello" });
     }),
     // pipeline's request mapping template
     "{}",
@@ -122,6 +117,48 @@ $util.qr($v1.put('arg', $context.arguments.arg))
 $util.qr($v1.put('optional', 'hello'))
 #set($v2 = {\"version\": \"2018-05-29\", \"operation\": \"Invoke\", \"payload\": $v1})
 $util.toJson($v2)`,
+    // function's response mapping template
+    `#set( $context.stash.return__flag = true )
+#set( $context.stash.return__val = $context.result )
+{}`,
+    // response mapping template
+    `#if($context.stash.return__flag)
+  #return($context.stash.return__val)
+#end`
+  ));
+
+test("call function including with no parameters", () =>
+  appsyncTestCase(
+    reflect(() => {
+      return fn3();
+    }),
+    // pipeline's request mapping template
+    "{}",
+    // function's request mapping template
+    `${VTL.CircuitBreaker}
+#set($v1 = {\"version\": \"2018-05-29\", \"operation\": \"Invoke\", \"payload\": $null})
+$util.toJson($v1)`,
+    // function's response mapping template
+    `#set( $context.stash.return__flag = true )
+#set( $context.stash.return__val = $context.result )
+{}`,
+    // response mapping template
+    `#if($context.stash.return__flag)
+  #return($context.stash.return__val)
+#end`
+  ));
+
+test("call function including with void result", () =>
+  appsyncTestCase(
+    reflect((context: AppsyncContext<{ arg: string }>) => {
+      return fn4(context.arguments);
+    }),
+    // pipeline's request mapping template
+    "{}",
+    // function's request mapping template
+    `${VTL.CircuitBreaker}
+#set($v1 = {\"version\": \"2018-05-29\", \"operation\": \"Invoke\", \"payload\": $context.arguments})
+$util.toJson($v1)`,
     // function's response mapping template
     `#set( $context.stash.return__flag = true )
 #set( $context.stash.return__val = $context.result )
