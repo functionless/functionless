@@ -5,12 +5,40 @@ import { aws_events } from "aws-cdk-lib";
 import { ebEventTargetTestCase, ebEventTargetTestCaseError } from "./util";
 
 interface testEvent
-  extends EventBusRuleInput<{ value: string; num: number; array: string[] }> {}
+  extends EventBusRuleInput<{
+    value: string;
+    num: number;
+    array: string[];
+    "blah-blah": string;
+    "blah blah": string;
+  }> {}
 
 test("event path", () => {
   ebEventTargetTestCase<testEvent>(
     reflect((event) => event.source),
     aws_events.RuleTargetInput.fromEventPath("$.source")
+  );
+});
+
+test("event path index access", () => {
+  ebEventTargetTestCase<testEvent>(
+    reflect((event) => event["source"]),
+    aws_events.RuleTargetInput.fromEventPath("$.source")
+  );
+});
+
+test("event path index access special json path", () => {
+  ebEventTargetTestCase<testEvent>(
+    reflect((event) => event.detail["blah-blah"]),
+    aws_events.RuleTargetInput.fromEventPath("$.detail.blah-blah")
+  );
+});
+
+test("event path index access spaces json path", () => {
+  ebEventTargetTestCase<testEvent>(
+    reflect((event) => event.detail["blah blah"]),
+    // Note: this doesn't look right, but it was tested with the event bridge sandbox and worked
+    aws_events.RuleTargetInput.fromEventPath("$.detail.blah blah")
   );
 });
 

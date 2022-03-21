@@ -29,7 +29,7 @@ import {
  */
 export const getReferencePath = (
   expression: Expr,
-  identityName: string
+  identityName?: string
 ): string[] | undefined => {
   if (isIdentifier(expression)) {
     if (expression.name === identityName) {

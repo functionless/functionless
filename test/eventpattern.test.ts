@@ -29,6 +29,26 @@ describe("event pattern", () => {
       );
     });
 
+    test("no event parameter", () => {
+      ebEventPatternTestCase(
+        reflect<EventPredicateFunction<TestEvent>>(() => true),
+        {
+          source: [{ prefix: "" }],
+        }
+      );
+    });
+
+    test("index access", () => {
+      ebEventPatternTestCase(
+        reflect<EventPredicateFunction<TestEvent>>(
+          (event) => event["source"] === "lambda"
+        ),
+        {
+          source: ["lambda"],
+        }
+      );
+    });
+
     test("double equals", () => {
       ebEventPatternTestCase(
         reflect<EventPredicateFunction<TestEvent>>(

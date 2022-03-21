@@ -160,18 +160,21 @@ export const isNegativeSingleValueRange = (pattern: NumericRangePattern) =>
 export const patternDocumentToEventPattern = (
   patternDocument: PatternDocument
 ): fnls_event_bridge.SubPattern => {
-  return Object.entries(patternDocument.doc).reduce((pattern, [key, entry]) => {
-    const keyPattern = isPatternDocument(entry)
-      ? patternDocumentToEventPattern(entry)
-      : patternToEventBridgePattern(entry);
-    if (!keyPattern) {
-      return pattern;
-    }
-    return {
-      ...pattern,
-      [key]: keyPattern,
-    };
-  }, {});
+  return Object.entries(patternDocument.doc).reduce(
+    (pattern, [key, entry]) => {
+      const keyPattern = isPatternDocument(entry)
+        ? patternDocumentToEventPattern(entry)
+        : patternToEventBridgePattern(entry);
+      if (!keyPattern) {
+        return pattern;
+      }
+      return {
+        ...pattern,
+        [key]: keyPattern,
+      };
+    },
+    {} as fnls_event_bridge.SubPattern
+  );
 };
 
 export const patternToEventBridgePattern = (

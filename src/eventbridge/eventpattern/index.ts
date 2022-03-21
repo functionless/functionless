@@ -4,6 +4,7 @@ import {
   CallExpr,
   ElementAccessExpr,
   Expr,
+  isBooleanLiteral,
   PropAccessExpr,
   UnaryExpr,
 } from "../../expression";
@@ -61,7 +62,7 @@ import { getConstant, getPropertyAccessKey, getReferencePath } from "../utils";
 export const synthesizeEventPattern = (
   predicate: FunctionDecl
 ): fnls_event_bridge.FnLsEventPattern => {
-  const eventDecl = predicate.parameters[0];
+  const [eventDecl = undefined] = predicate.parameters;
 
   const handleExpr = (expr: Expr): PatternDocument => {
     if (isBinaryExpr(expr)) {
@@ -72,6 +73,8 @@ export const synthesizeEventPattern = (
       return handleUnaryExpression(expr);
     } else if (isCallExpr(expr)) {
       return handleCall(expr);
+    } else if (isBooleanLiteral(expr)) {
+      return { doc: {} };
     } else {
       throw new Error(`${expr.kind} is unsupported`);
     }
@@ -621,7 +624,7 @@ export const synthesizeEventPattern = (
    * Recurse an expression to find a reference to the event.
    */
   const getEventReference = (expression: Expr): string[] | undefined => {
-    return getReferencePath(expression, eventDecl.name);
+    return getReferencePath(expression, eventDecl?.name);
   };
 
   // find the return, we'll the resolve the rest as needed.
@@ -633,7 +636,14 @@ export const synthesizeEventPattern = (
 
   const result = handleSmnt(ret);
 
-  return patternDocumentToEventPattern(result);
+  const doc = patternDocumentToEventPattern(result);
+
+  const isEmpty = !Object.values(doc).some(
+    (x) => !!x && (!Array.isArray(x) || x.length > 0)
+  );
+
+  // empty prefix on source should always be true and represent a match all rule.
+  return isEmpty ? { source: [{ prefix: "" }] } : doc;
 };
 
 type EventReference = [string] | ["detail", ...string[]];
