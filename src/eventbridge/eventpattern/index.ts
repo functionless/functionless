@@ -41,14 +41,10 @@ import {
 import {
   BinaryOp,
   isBinaryExpr,
-  isBooleanLiteral,
   isCallExpr,
   isElementAccessExpr,
-  isIdentifier,
   isNullLiteralExpr,
-  isNumberLiteralExpr,
   isPropAccessExpr,
-  isStringLiteralExpr,
   isUnaryExpr,
 } from "../..";
 import {
@@ -57,6 +53,7 @@ import {
   STARTS_WITH_SEARCH_STRING,
 } from "./constants";
 import { invertBinaryOperator } from "./utils";
+import { getConstant, getPropertyAccessKey, getReferencePath } from "../utils";
 
 /**
  * https://github.com/sam-goodwin/functionless/issues/37#issuecomment-1066313146
@@ -624,26 +621,7 @@ export const synthesizeEventPattern = (
    * Recurse an expression to find a reference to the event.
    */
   const getEventReference = (expression: Expr): string[] | undefined => {
-    if (isIdentifier(expression)) {
-      if (expression.name === eventDecl.name) {
-        return [];
-      }
-      // TODO: support references
-      throw Error(
-        `All identifiers must point to the event parameter, found: ${expression.name}`
-      );
-    } else if (
-      isPropAccessExpr(expression) ||
-      isElementAccessExpr(expression)
-    ) {
-      const key = getPropertyAccessKey(expression);
-      const parent = getEventReference(expression.expr);
-      if (parent) {
-        return [...parent, key];
-      }
-      return undefined;
-    }
-    return undefined;
+    return getReferencePath(expression, eventDecl.name);
   };
 
   // find the return, we'll the resolve the rest as needed.
@@ -676,42 +654,6 @@ function assertValidEventRefererence(
     }
   }
 }
-
-/**
- * Retrieves a string, number, boolean, undefined, or null constant from the given expression.
- * Wrap the value to not be ambiguous with the undefined value.
- * When one is not found, return undefined (not wrapped).
- *
- * TODO: Support following references.
- */
-const getConstant = (
-  expr: Expr
-): { value: string | number | boolean | undefined | null } | undefined => {
-  if (
-    isStringLiteralExpr(expr) ||
-    isNumberLiteralExpr(expr) ||
-    isBooleanLiteral(expr)
-  ) {
-    return { value: expr.value };
-  } else if (isNullLiteralExpr(expr)) {
-    return { value: expr.undefined ? undefined : null };
-  } else if (isUnaryExpr(expr) && expr.op === "-") {
-    const number = assertNumber(getConstant(expr.expr)?.value);
-    return { value: -number };
-  }
-  return undefined;
-};
-
-/**
- * Normalize retrieving the name of a property between a element access and property access expression.
- */
-const getPropertyAccessKey = (
-  expr: PropAccessExpr | ElementAccessExpr
-): string => {
-  return isPropAccessExpr(expr)
-    ? expr.name
-    : assertString(getConstant(expr.element)?.value);
-};
 
 /**
  * { isPresent: true } => { isPresent: false }

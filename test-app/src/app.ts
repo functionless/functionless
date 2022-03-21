@@ -1,7 +1,7 @@
 import { App, aws_events, Stack } from "aws-cdk-lib";
 import * as appsync from "@aws-cdk/aws-appsync-alpha";
 import path from "path";
-import { PeopleDatabase } from "./people-db";
+import { PeopleDatabase, Person } from "./people-db";
 import { EventBus, EventBusRuleInput } from "functionless";
 
 export const app = new App();
@@ -52,16 +52,8 @@ type MyEvent = EventBusRuleInput<{
 
 new EventBus<MyEvent>(new aws_events.EventBus(stack, "bus"))
   .when(stack, "aRule", (event) => event.detail.value === "hello")
-  .target((event) =>
-    peopleDb.computeScore({ id: event.source, name: event.detail.value })
-  )
-  .target((event) =>
-    peopleDb.personTable.putItem({
-      key: {
-        id: {
-          S: event.source,
-        },
-      },
-      attributeValues: { name: { S: event.detail.value } },
-    })
-  );
+  .map<Person>((event) => ({
+    id: event.source,
+    name: event.detail.value,
+  }))
+  .pipe(peopleDb.computeScore);

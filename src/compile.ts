@@ -381,7 +381,10 @@ export function compile(
           ]);
         } else if (ts.isNumericLiteral(node)) {
           return newExpr("NumberLiteralExpr", [node]);
-        } else if (ts.isStringLiteral(node)) {
+        } else if (
+          ts.isStringLiteral(node) ||
+          ts.isNoSubstitutionTemplateLiteral(node)
+        ) {
           return newExpr("StringLiteralExpr", [node]);
         } else if (ts.isLiteralExpression(node)) {
           // const type = checker.getTypeAtLocation(node);
@@ -432,7 +435,7 @@ export function compile(
           return toExpr(node.expression);
         }
 
-        throw new Error(`unhandled node: ${node.getText()}`);
+        throw new Error(`unhandled node: ${node.getText()} ${node.kind}`);
       }
 
       function ref(node: ts.Expression) {

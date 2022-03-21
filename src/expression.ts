@@ -265,7 +265,7 @@ export class SpreadElementExpr extends BaseNode<"SpreadElementExpr"> {
   }
 }
 
-export const isTemplateExpr = typeGuard("SpreadAssignExpr");
+export const isTemplateExpr = typeGuard("TemplateExpr");
 
 /**
  * Interpolates a TemplateExpr to a string `this ${is} a template expression`
