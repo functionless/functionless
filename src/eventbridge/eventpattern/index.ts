@@ -14,7 +14,6 @@ import {
   assertNumber,
   assertString,
 } from "../../assert";
-import { isReturn, Stmt } from "../../statement";
 import {
   PatternDocument,
   Pattern,
@@ -54,7 +53,15 @@ import {
   STARTS_WITH_SEARCH_STRING,
 } from "./constants";
 import { invertBinaryOperator } from "./utils";
-import { getConstant, getPropertyAccessKey, getReferencePath } from "../utils";
+import {
+  assertValidEventRefererence,
+  EventReference,
+  flattenReturnEvent,
+  getConstant,
+  getPropertyAccessKey,
+  getReferencePath,
+  ReferencePath,
+} from "../utils";
 
 /**
  * https://github.com/sam-goodwin/functionless/issues/37#issuecomment-1066313146
@@ -79,14 +86,6 @@ export const synthesizeEventPattern = (
       throw new Error(`${expr.kind} is unsupported`);
     }
     // assertNever(expr);
-  };
-
-  const handleSmnt = (stmt: Stmt): PatternDocument => {
-    if (isReturn(stmt)) {
-      return handleExpr(stmt.expr);
-    } else {
-      throw new Error(`Unsupported statement ${stmt.kind}`);
-    }
   };
 
   const handleBinary = (expr: BinaryExpr): PatternDocument => {
@@ -334,9 +333,9 @@ export const synthesizeEventPattern = (
       );
     }
 
-    const value = assertNumber(getConstant(other)?.value);
+    const value = assertNumber(getConstant(other)?.constant);
 
-    assertValidEventRefererence(eventReference);
+    assertValidEventRefererence(eventReference, eventDecl?.name);
     const range = createSingleNumericRange(value, op);
     if (range) {
       return eventReferenceToPatternDocument(eventReference, range);
@@ -387,7 +386,7 @@ export const synthesizeEventPattern = (
   ): PatternDocument => {
     const searchElement = getConstant(
       expr.args[INCLUDES_SEARCH_ELEMENT]
-    )?.value;
+    )?.constant;
 
     if (
       Object.values(expr.args).filter((e) => !isNullLiteralExpr(e)).length > 1
@@ -406,9 +405,9 @@ export const synthesizeEventPattern = (
       isPropAccessExpr(expr.expr.expr) ||
       isElementAccessExpr(expr.expr.expr)
     ) {
+      assertValidEventRefererence(eventReference, eventDecl?.name);
       if (expr.expr.expr.type === "number[]") {
         const num = assertNumber(searchElement);
-        assertValidEventRefererence(eventReference);
         return eventReferenceToPatternDocument(eventReference, {
           lower: { value: num, inclusive: true },
           upper: { value: num, inclusive: true },
@@ -425,7 +424,6 @@ export const synthesizeEventPattern = (
           throw Error("Includes operation only supports string or booleans.");
         }
 
-        assertValidEventRefererence(eventReference);
         return eventReferenceToPatternDocument(eventReference, {
           value: searchElement,
         });
@@ -446,7 +444,7 @@ export const synthesizeEventPattern = (
     expr: CallExpr & { expr: PropAccessExpr | ElementAccessExpr }
   ): PatternDocument => {
     const searchString = assertString(
-      getConstant(expr.args[STARTS_WITH_SEARCH_STRING])?.value
+      getConstant(expr.args[STARTS_WITH_SEARCH_STRING])?.constant
     );
 
     if (
@@ -469,7 +467,7 @@ export const synthesizeEventPattern = (
       isElementAccessExpr(expr.expr.expr)
     ) {
       if (expr.expr.expr.type === "string") {
-        assertValidEventRefererence(eventReference);
+        assertValidEventRefererence(eventReference, eventDecl?.name);
         return eventReferenceToPatternDocument(eventReference, {
           prefix: searchString,
         });
@@ -501,7 +499,7 @@ export const synthesizeEventPattern = (
   const handleInOperation = (expr: BinaryExpr): PatternDocument => {
     const eventReference = getEventReference(expr.right);
 
-    const value = assertString(getConstant(expr.left)?.value);
+    const value = assertString(getConstant(expr.left)?.constant);
 
     if (!eventReference) {
       throw new Error(
@@ -509,11 +507,14 @@ export const synthesizeEventPattern = (
       );
     }
 
-    const upadteEventReference = [...eventReference, value];
+    const updateEventReference: ReferencePath = {
+      identity: eventReference.identity,
+      reference: [...eventReference.reference, value],
+    };
 
-    assertValidEventRefererence(upadteEventReference);
+    assertValidEventRefererence(updateEventReference, eventDecl?.name);
 
-    return eventReferenceToPatternDocument(upadteEventReference, {
+    return eventReferenceToPatternDocument(updateEventReference, {
       isPresent: true,
     });
   };
@@ -529,7 +530,7 @@ export const synthesizeEventPattern = (
       throw Error("Expected lone property reference to reference the event.");
     }
 
-    assertValidEventRefererence(eventReference);
+    assertValidEventRefererence(eventReference, eventDecl?.name);
 
     return eventReferenceToPatternDocument(
       eventReference,
@@ -554,7 +555,7 @@ export const synthesizeEventPattern = (
       expr.op
     );
 
-    const { value } = assertDefined(
+    const { constant: value } = assertDefined(
       getConstant(other),
       "Equivency must compare to a constant value."
     );
@@ -578,7 +579,7 @@ export const synthesizeEventPattern = (
       return eventReferenceToPatternDocument(eventReference, { value });
     }
     throw new Error(
-      `Unsupported equivelency: ${eventReference.join(",")} ${value}`
+      `Unsupported equivelency: ${eventReference.reference.join(",")} ${value}`
     );
   };
 
@@ -598,18 +599,18 @@ export const synthesizeEventPattern = (
   } => {
     const leftExpr = getEventReference(left);
     const rightExpr = getEventReference(right);
-    if (Array.isArray(leftExpr) && Array.isArray(rightExpr)) {
+    if (leftExpr !== undefined && rightExpr !== undefined) {
       throw new Error("Expected exactly one event reference, got two.");
-    } else if (Array.isArray(leftExpr)) {
-      assertValidEventRefererence(leftExpr);
+    } else if (leftExpr !== undefined) {
+      assertValidEventRefererence(leftExpr, eventDecl?.name);
       return {
         eventReference: leftExpr,
         eventExpr: left as PropAccessExpr | ElementAccessExpr,
         other: right,
         op,
       };
-    } else if (Array.isArray(rightExpr)) {
-      assertValidEventRefererence(rightExpr);
+    } else if (rightExpr !== undefined) {
+      assertValidEventRefererence(rightExpr, eventDecl?.name);
       return {
         eventReference: rightExpr,
         eventExpr: right as PropAccessExpr | ElementAccessExpr,
@@ -623,18 +624,13 @@ export const synthesizeEventPattern = (
   /**
    * Recurse an expression to find a reference to the event.
    */
-  const getEventReference = (expression: Expr): string[] | undefined => {
-    return getReferencePath(expression, eventDecl?.name);
+  const getEventReference = (expression: Expr): ReferencePath | undefined => {
+    return getReferencePath(expression);
   };
 
-  // find the return, we'll the resolve the rest as needed.
-  const [ret] = predicate.body.statements.filter((expr) => isReturn(expr));
+  const flattenedExpression = flattenReturnEvent(predicate.body.statements);
 
-  if (!ret) {
-    throw new Error("Missing return statement in predicate block.");
-  }
-
-  const result = handleSmnt(ret);
+  const result = handleExpr(flattenedExpression);
 
   const doc = patternDocumentToEventPattern(result);
 
@@ -645,25 +641,6 @@ export const synthesizeEventPattern = (
   // empty prefix on source should always be true and represent a match all rule.
   return isEmpty ? { source: [{ prefix: "" }] } : doc;
 };
-
-type EventReference = [string] | ["detail", ...string[]];
-
-// TODO: validate again object schema?
-function assertValidEventRefererence(
-  eventReference: string[]
-): asserts eventReference is EventReference {
-  if (eventReference.length === 0) {
-    throw new Error("Direct use of the event is invalid.");
-  }
-  if (eventReference.length > 1) {
-    const [first] = eventReference;
-    if (first !== "detail") {
-      throw `Event references with depth greater than one must be on the detail propert, got ${eventReference.join(
-        ","
-      )}`;
-    }
-  }
-}
 
 /**
  * { isPresent: true } => { isPresent: false }
@@ -728,23 +705,24 @@ const negateClassification = (pattern: Pattern): Pattern => {
 };
 
 const eventReferenceToPatternDocument = (
-  eventReference: [string, ...string[]],
+  eventReference: EventReference,
   pattern: Pattern
 ): PatternDocument => {
-  const [head, ...tail] = eventReference;
-  if (tail.length < 1) {
+  const __inner = (refs: [string, ...string[]]): PatternDocument => {
+    const [head, ...tail] = refs;
+    if (tail.length < 1) {
+      return {
+        doc: {
+          [head]: pattern,
+        },
+      };
+    }
     return {
       doc: {
-        [head]: pattern,
+        [head]: __inner(tail as [string, ...string[]]),
       },
     };
-  }
-  return {
-    doc: {
-      [head]: eventReferenceToPatternDocument(
-        tail as [string, ...string[]],
-        pattern
-      ),
-    },
   };
+
+  return __inner(eventReference.reference);
 };

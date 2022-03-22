@@ -453,15 +453,15 @@ describe("event pattern", () => {
     });
   });
 
-  describe.skip("references", () => {
+  describe("references", () => {
     const myConstant = "hello";
-    test("external constant", () => {
+    test.skip("external constant", () => {
       ebEventPatternTestCase(
         reflect<EventPredicateFunction<TestEvent>>(
           (event) => event.detail.str === myConstant
         ),
         {
-          detail: { optional: [myConstant] },
+          detail: { str: [myConstant] },
         }
       );
     });
@@ -473,7 +473,7 @@ describe("event pattern", () => {
           return event.detail.str === myInternalContant;
         }),
         {
-          detail: { optional: ["hi"] },
+          detail: { str: ["hi"] },
         }
       );
     });
@@ -485,7 +485,7 @@ describe("event pattern", () => {
           return event.detail.str === `${myInternalContant} there`;
         }),
         {
-          detail: { optional: ["hi there"] },
+          detail: { str: ["hi there"] },
         }
       );
     });
@@ -497,7 +497,7 @@ describe("event pattern", () => {
           return event.detail.str === myInternalContant.value;
         }),
         {
-          detail: { optional: ["hi"] },
+          detail: { str: ["hi"] },
         }
       );
     });

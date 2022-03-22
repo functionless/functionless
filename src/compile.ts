@@ -433,6 +433,10 @@ export function compile(
           return newExpr("BreakStmt", []);
         } else if (ts.isParenthesizedExpression(node)) {
           return toExpr(node.expression);
+        } else if (ts.isAsExpression(node)) {
+          return toExpr(node.expression);
+        } else if (ts.isTypeAssertionExpression(node)) {
+          return toExpr(node.expression);
         }
 
         throw new Error(`unhandled node: ${node.getText()} ${node.kind}`);

@@ -241,7 +241,7 @@ test("object with bare undefined", () => {
   );
 });
 
-describe.skip("referencing", () => {
+describe("referencing", () => {
   test("dereference", () => {
     ebEventTargetTestCase<testEvent>(
       reflect((event) => {
@@ -281,6 +281,20 @@ describe.skip("referencing", () => {
     );
   });
 
+  // Functionless doesn't support computed properties currently
+  test.skip("constant computed prop name", () => {
+    ebEventTargetTestCase<testEvent>(
+      reflect(() => {
+        const value = "hi";
+
+        return { [value]: value };
+      }),
+      aws_events.RuleTargetInput.fromObject({
+        hi: "hi",
+      })
+    );
+  });
+
   test("constant from object", () => {
     ebEventTargetTestCase<testEvent>(
       reflect(() => {
@@ -290,6 +304,98 @@ describe.skip("referencing", () => {
       }),
       aws_events.RuleTargetInput.fromObject({
         value: "hi",
+      })
+    );
+  });
+
+  test("spread with constant object", () => {
+    ebEventTargetTestCase<testEvent>(
+      reflect(() => {
+        const config = { value: "hi" };
+
+        return { ...config };
+      }),
+      aws_events.RuleTargetInput.fromObject({
+        value: "hi",
+      })
+    );
+  });
+
+  test("object element access", () => {
+    ebEventTargetTestCase<testEvent>(
+      reflect(() => {
+        const config = { value: "hi" };
+
+        return { val: config["value"] };
+      }),
+      aws_events.RuleTargetInput.fromObject({
+        val: "hi",
+      })
+    );
+  });
+
+  test("object access", () => {
+    ebEventTargetTestCase<testEvent>(
+      reflect(() => {
+        const config = { value: "hi" } as any;
+
+        return { val: config.value };
+      }),
+      aws_events.RuleTargetInput.fromObject({
+        val: "hi",
+      })
+    );
+  });
+
+  test("constant list", () => {
+    ebEventTargetTestCase<testEvent>(
+      reflect(() => {
+        const config = ["hi"];
+
+        return { values: config };
+      }),
+      aws_events.RuleTargetInput.fromObject({
+        values: ["hi"],
+      })
+    );
+  });
+
+  test("spread with constant list", () => {
+    ebEventTargetTestCase<testEvent>(
+      reflect(() => {
+        const config = ["hi"];
+
+        return { values: [...config, "there"] };
+      }),
+      aws_events.RuleTargetInput.fromObject({
+        values: ["hi", "there"],
+      })
+    );
+  });
+
+  test("array index", () => {
+    ebEventTargetTestCase<testEvent>(
+      reflect(() => {
+        const config = ["hi"];
+
+        return { values: [config[0], "there"] };
+      }),
+      aws_events.RuleTargetInput.fromObject({
+        values: ["hi", "there"],
+      })
+    );
+  });
+
+  test("array index variable index", () => {
+    ebEventTargetTestCase<testEvent>(
+      reflect(() => {
+        const index = 0;
+        const config = ["hi"];
+
+        return { values: [config[index], "there"] };
+      }),
+      aws_events.RuleTargetInput.fromObject({
+        values: ["hi", "there"],
       })
     );
   });
@@ -316,6 +422,31 @@ describe("not allowed", () => {
     );
   });
 
+  test("direct event", () => {
+    ebEventTargetTestCaseError<testEvent>(
+      reflect((event) => event),
+      "Unsupported direct use of the event parameter."
+    );
+  });
+
+  test("direct event in object", () => {
+    ebEventTargetTestCaseError<testEvent>(
+      reflect((event) => ({
+        event,
+      })),
+      "Unsupported direct use of the event parameter."
+    );
+  });
+
+  test("direct event in object", () => {
+    ebEventTargetTestCaseError<testEvent>(
+      reflect((event) => ({
+        event: (<any>event.source).blah,
+      })),
+      "Event references with depth greater than one must be on the detail propert, got source,blah"
+    );
+  });
+
   test("service call", () => {
     const func = new Function<string, void>(null as any);
     ebEventTargetTestCaseError<testEvent>(
@@ -338,10 +469,27 @@ describe("not allowed", () => {
     );
   });
 
-  test("spread", () => {
+  test("spread obj ref", () => {
     ebEventTargetTestCaseError<testEvent>(
       reflect((event) => ({ ...event.detail, field: "hello" })),
-      "Event Bridge input transforms do not support object spreading."
+      "Event Bridge input transforms do not support object spreading non-constant objects."
+    );
+  });
+
+  test("spread array ref", () => {
+    ebEventTargetTestCaseError<testEvent>(
+      reflect((event) => [...event.detail.array]),
+      "Event Bridge input transforms do not support array spreading non-constant arrays."
+    );
+  });
+
+  test("object access missing key", () => {
+    ebEventTargetTestCaseError<testEvent>(
+      reflect(() => {
+        const obj = { val: "" } as any;
+        return { val: obj["blah"] };
+      }),
+      "Cannot find property blah in Object with keys: val"
     );
   });
 });
