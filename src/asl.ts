@@ -7,6 +7,7 @@ import {
   FunctionExpr,
   isLiteralExpr,
   isReferenceExpr,
+  isVariableReference,
   NullLiteralExpr,
 } from "./expression";
 import {
@@ -60,9 +61,15 @@ export interface Fail {
   Cause?: string;
 }
 
-export interface TaskParameters {
-  [key: string]: any;
-}
+export type Parameters =
+  | null
+  | boolean
+  | number
+  | string
+  | Parameters[]
+  | {
+      [name: string]: Parameters;
+    };
 
 export interface Nextable {
   End?: true;
@@ -76,7 +83,7 @@ export interface Pass {
   InputPath?: string;
   OutputPath?: string;
   ResultPath?: string | null;
-  Parameters?: TaskParameters;
+  Parameters?: Parameters;
   Next?: string;
   End?: boolean;
 }
@@ -157,7 +164,7 @@ export interface BaseTask extends Nextable {
   Comment?: string;
   InputPath?: string;
   OutputPath?: string;
-  Parameters?: TaskParameters;
+  Parameters?: Parameters;
   /**
    * Pass a collection of key value pairs, where the values are static or selected from the result. For more information, see ResultSelector.
    */
@@ -380,19 +387,12 @@ export class ASL {
             OutputPath: "$.null",
           },
         };
-      } else if (
-        stmt.expr.kind === "PropAccessExpr" ||
-        stmt.expr.kind === "ElementAccessExpr" ||
-        stmt.expr.kind === "Identifier"
-      ) {
+      } else if (isVariableReference(stmt.expr)) {
         return {
           [this.getStateName(stmt)]: {
             Type: "Pass",
             End: true,
-            Parameters: {
-              "result.$": this.toJsonPath(stmt.expr),
-            },
-            OutputPath: "$.result",
+            OutputPath: this.toJsonPath(stmt.expr),
           },
         };
       }
@@ -541,11 +541,7 @@ export class ASL {
         };
       }
       throw new Error(`call must be a service call, ${expr}`);
-    } else if (
-      expr.kind === "Identifier" ||
-      expr.kind === "PropAccessExpr" ||
-      expr.kind === "ElementAccessExpr"
-    ) {
+    } else if (isVariableReference(expr)) {
       return {
         Type: "Pass",
         Parameters: {
@@ -569,17 +565,9 @@ export class ASL {
     } else if (
       expr.kind === "BinaryExpr" &&
       expr.op === "=" &&
-      (expr.left.kind === "Identifier" ||
-        expr.left.kind === "PropAccessExpr" ||
-        expr.left.kind === "ElementAccessExpr")
+      isVariableReference(expr.left)
     ) {
-      // is the right operand a reference, e.g. a, a.prop, a[0]
-      const isRightRef =
-        expr.right.kind === "Identifier" ||
-        expr.right.kind === "PropAccessExpr" ||
-        expr.right.kind === "ElementAccessExpr";
-
-      if (expr.right.kind === "NullLiteralExpr" || isRightRef) {
+      if (expr.right.kind === "NullLiteralExpr") {
         return {
           Type: "Pass",
           ...props,
@@ -587,9 +575,15 @@ export class ASL {
             ...Object.fromEntries(
               getLexicalScope(expr).map((name) => [`${name}.$`, `$.${name}`])
             ),
-            [`${this.toJsonPath(expr.left)}${isRightRef ? ".$" : ""}`]:
-              isRightRef ? this.toJsonPath(expr.right) : null,
+            [this.toJsonPath(expr.left)]: null,
           },
+        };
+      } else if (isVariableReference(expr.right)) {
+        return {
+          Type: "Pass",
+          ...props,
+          InputPath: this.toJsonPath(expr.right),
+          ResultPath: this.toJsonPath(expr.left),
         };
       } else if (isLiteralExpr(expr.right)) {
         return {
@@ -614,6 +608,11 @@ export class ASL {
     ) {
       return `${this.toJson(expr.expr)}[${expr.element.value}]`;
     } else if (expr.kind === "ArrayLiteralExpr") {
+      if (expr.items.find(isVariableReference) !== undefined) {
+        return `States.Array(${expr.items
+          .map((item) => this.toJsonPath(item))
+          .join(", ")})`;
+      }
       return expr.items.map((item) => this.toJson(item));
     } else if (expr.kind === "ObjectLiteralExpr") {
       const payload: any = {};

@@ -73,15 +73,12 @@ test("return identifier", () => {
   }).definition;
 
   const expected: StateMachine<States> = {
-    StartAt: "return null",
+    StartAt: "return id",
     States: {
       "return id": {
         Type: "Pass",
         End: true,
-        Parameters: {
-          result: null,
-        },
-        OutputPath: "$.result",
+        OutputPath: "$.id",
       },
     },
   };
@@ -108,6 +105,7 @@ test("let and set", () => {
     a = {
       key: "value",
     };
+    a = a;
     return a;
   }).definition;
 
@@ -176,20 +174,22 @@ test("let and set", () => {
         Type: "Pass",
       },
       'a = {key: "value"}': {
-        Next: "return a",
+        Next: "a = a",
         Parameters: {
           key: "value",
         },
         ResultPath: "$.a",
         Type: "Pass",
       },
+      "a = a": {
+        Next: "return a",
+        InputPath: "$.a",
+        ResultPath: "$.a",
+        Type: "Pass",
+      },
       "return a": {
         End: true,
-        OutputPath: "$.result",
-        Parameters: {
-          "result.$": "$.a",
-        },
-        ResultPath: "$",
+        OutputPath: "$.a",
         Type: "Pass",
       },
     },
@@ -445,7 +445,6 @@ test("call Lambda Function, store as variable, return variable", () => {
       "person = getPerson({id: id})": {
         Type: "Task",
         Resource: "arn:aws:states:::lambda:invoke",
-        Next: "return person",
         ResultPath: "$.person",
         Parameters: {
           FunctionName: getPerson.resource.functionName,
@@ -453,14 +452,11 @@ test("call Lambda Function, store as variable, return variable", () => {
             "id.$": "$.id",
           },
         },
+        Next: "return person",
       },
       "return person": {
         Type: "Pass",
-        ResultPath: "$",
-        Parameters: {
-          "result.$": "$.person",
-        },
-        OutputPath: "$.result",
+        OutputPath: "$.person",
         End: true,
       },
     },

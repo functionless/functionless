@@ -94,6 +94,14 @@ export class ReferenceExpr extends BaseNode<"ReferenceExpr"> {
   }
 }
 
+export type VariableReference = Identifier | PropAccessExpr | ElementAccessExpr;
+
+export function isVariableReference(expr: Expr): expr is VariableReference {
+  return (
+    isIdentifier(expr) || isPropAccessExpr(expr) || isElementAccessExpr(expr)
+  );
+}
+
 export const isIdentifier = typeGuard("Identifier");
 
 export class Identifier extends BaseNode<"Identifier"> {
