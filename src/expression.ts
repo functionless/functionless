@@ -16,18 +16,19 @@ export type Expr =
   | BooleanLiteralExpr
   | CallExpr
   | ConditionExpr
-  | FunctionExpr
   | ElementAccessExpr
+  | FunctionExpr
   | Identifier
+  | NewExpr
   | NullLiteralExpr
   | NumberLiteralExpr
   | ObjectLiteralExpr
-  | PropAssignExpr
   | PropAccessExpr
+  | PropAssignExpr
   | ReferenceExpr
-  | StringLiteralExpr
   | SpreadAssignExpr
   | SpreadElementExpr
+  | StringLiteralExpr
   | TemplateExpr
   | UnaryExpr;
 
@@ -42,6 +43,7 @@ export function isExpr(a: any): a is Expr {
       isFunctionExpr(a) ||
       isElementAccessExpr(a) ||
       isIdentifier(a) ||
+      isNewExpr(a) ||
       isNullLiteralExpr(a) ||
       isNumberLiteralExpr(a) ||
       isPropAssignExpr(a) ||
@@ -128,6 +130,25 @@ export class CallExpr extends BaseNode<"CallExpr"> {
     }
   ) {
     super("CallExpr");
+    expr.parent = this;
+    for (const arg of Object.values(args)) {
+      if (arg) {
+        arg.parent = this;
+      }
+    }
+  }
+}
+
+export const isNewExpr = typeGuard("NewExpr");
+
+export class NewExpr extends BaseNode<"NewExpr"> {
+  constructor(
+    readonly expr: Expr,
+    readonly args: {
+      [argName: string]: Expr;
+    }
+  ) {
+    super("NewExpr");
     expr.parent = this;
     for (const arg of Object.values(args)) {
       if (arg) {

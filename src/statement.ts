@@ -83,9 +83,11 @@ export type BlockStmtParent =
 export class BlockStmt extends BaseStmt<"BlockStmt"> {
   // @ts-ignore
   parent: BlockStmtParent;
+  readonly empty: boolean;
 
   constructor(readonly statements: Stmt[]) {
     super("BlockStmt");
+    this.empty = statements.length === 0;
     statements.forEach((expr, i) => {
       expr.parent = this;
       expr.prev = i > 0 ? statements[i - 1] : undefined;
@@ -94,12 +96,14 @@ export class BlockStmt extends BaseStmt<"BlockStmt"> {
   }
 
   public isEmpty(): this is {
+    empty: true;
     readonly statements: [];
   } {
     return this.statements.length === 0;
   }
 
   public isNotEmpty(): this is {
+    empty: false;
     readonly statements: [Stmt, ...Stmt[]];
   } {
     return this.statements.length > 0;
@@ -109,9 +113,7 @@ export class BlockStmt extends BaseStmt<"BlockStmt"> {
     return this.statements[0];
   }
 
-  public get lastStmt(): this["statements"]["length"] extends 0
-    ? undefined
-    : Stmt {
+  public get lastStmt(): this["empty"] extends true ? undefined : Stmt {
     if (this.isEmpty()) {
       return undefined!;
     } else {
@@ -189,7 +191,7 @@ export const isTryStmt = typeGuard("TryStmt");
 export class TryStmt extends BaseStmt<"TryStmt"> {
   constructor(
     readonly tryBlock: BlockStmt,
-    readonly catchClause?: CatchClause,
+    readonly catchClause: CatchClause,
     readonly finallyBlock?: BlockStmt
   ) {
     super("TryStmt");

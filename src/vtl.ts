@@ -343,6 +343,8 @@ export class VTL {
           return `$${node.name}`;
         }
       }
+      case "NewExpr":
+        throw new Error(`NewExpr is not supported by Velocity Templates`);
       case "PropAccessExpr": {
         let name = node.name;
         if (name === "push" && node.parent?.kind === "CallExpr") {

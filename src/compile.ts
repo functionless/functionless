@@ -195,7 +195,7 @@ export function compile(
           return toFunction("FunctionExpr", node);
         } else if (ts.isExpressionStatement(node)) {
           return newExpr("ExprStmt", [toExpr(node.expression)]);
-        } else if (ts.isCallExpression(node)) {
+        } else if (ts.isCallExpression(node) || ts.isNewExpression(node)) {
           const exprType = checker.getTypeAtLocation(node.expression);
           const functionBrand = exprType.getProperty("__functionBrand");
           let signature: ts.Signature | undefined;
@@ -220,13 +220,13 @@ export function compile(
             signature = checker.getResolvedSignature(node);
           }
           if (signature) {
-            return newExpr("CallExpr", [
+            return newExpr(ts.isCallExpression(node) ? "CallExpr" : "NewExpr", [
               toExpr(node.expression),
               ts.factory.createObjectLiteralExpression(
                 signature.parameters.map((parameter, i) =>
                   ts.factory.createPropertyAssignment(
                     parameter.name,
-                    toExpr(node.arguments[i])
+                    toExpr(node.arguments?.[i])
                   )
                 )
               ),

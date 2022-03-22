@@ -53,14 +53,13 @@ test("empty function", () => {
   const expected: StateMachine<States> = {
     StartAt: "return null",
     States: {
-      Success: {
-        Type: "Succeed",
-      },
       "return null": {
-        Next: "Success",
-        Result: null,
-        ResultPath: "$",
         Type: "Pass",
+        End: true,
+        Parameters: {
+          null: null,
+        },
+        OutputPath: "$.null",
       },
     },
   };
@@ -77,13 +76,12 @@ test("return void", () => {
     StartAt: "return null",
     States: {
       "return null": {
-        Next: "Success",
-        Result: null,
-        ResultPath: "$",
         Type: "Pass",
-      },
-      Success: {
-        Type: "Succeed",
+        End: true,
+        Parameters: {
+          null: null,
+        },
+        OutputPath: "$.null",
       },
     },
   };
@@ -101,9 +99,6 @@ test("conditionally return void", () => {
   const expected: StateMachine<States> = {
     StartAt: 'if(id == "hello")',
     States: {
-      Success: {
-        Type: "Succeed",
-      },
       'if(id == "hello")': {
         Choices: [
           {
@@ -116,14 +111,113 @@ test("conditionally return void", () => {
         Type: "Choice",
       },
       "return null": {
-        Next: "Success",
-        Result: null,
-        ResultPath: "$",
         Type: "Pass",
+        End: true,
+        Parameters: {
+          null: null,
+        },
+        OutputPath: "$.null",
       },
     },
   };
   expect(definition).toEqual(expected);
+});
+
+test("if-else", () => {
+  const { stack } = init();
+  const definition = new ExpressStepFunction(stack, "fn", (id: string) => {
+    if (id === "hello") {
+      return "hello";
+    } else {
+      return "world";
+    }
+  }).definition;
+
+  expect(definition).toEqual({
+    StartAt: 'if(id == "hello")',
+    States: {
+      'if(id == "hello")': {
+        Choices: [
+          {
+            Next: 'return "hello"',
+            StringEquals: "hello",
+            Variable: "$.id",
+          },
+        ],
+        Default: 'return "world"',
+        Type: "Choice",
+      },
+      'return "world"': {
+        End: true,
+        Result: "world",
+        ResultPath: "$",
+        Type: "Pass",
+      },
+      'return "hello"': {
+        End: true,
+        Result: "hello",
+        ResultPath: "$",
+        Type: "Pass",
+      },
+    },
+  });
+});
+
+test("if-else-if", () => {
+  const { stack } = init();
+  const definition = new ExpressStepFunction(
+    stack,
+    "fn",
+    (id: string): string | void => {
+      if (id === "hello") {
+        return "hello";
+      } else if (id === "world") {
+        return "world";
+      }
+    }
+  ).definition;
+
+  expect(definition).toEqual({
+    StartAt: 'if(id == "hello")',
+    States: {
+      'if(id == "hello")': {
+        Choices: [
+          {
+            Next: 'return "hello"',
+            StringEquals: "hello",
+            Variable: "$.id",
+          },
+          {
+            Next: 'return "world"',
+            StringEquals: "world",
+            Variable: "$.id",
+          },
+        ],
+        Default: "return null",
+        Type: "Choice",
+      },
+      'return "hello"': {
+        End: true,
+        Result: "hello",
+        ResultPath: "$",
+        Type: "Pass",
+      },
+      'return "world"': {
+        End: true,
+        Result: "world",
+        ResultPath: "$",
+        Type: "Pass",
+      },
+      "return null": {
+        Type: "Pass",
+        End: true,
+        Parameters: {
+          null: null,
+        },
+        OutputPath: "$.null",
+      },
+    },
+  });
 });
 
 test("for-loop and do nothing", () => {
@@ -138,31 +232,13 @@ test("for-loop and do nothing", () => {
   const expected: StateMachine<States> = {
     StartAt: "for(item of items)",
     States: {
-      Success: {
-        Type: "Succeed",
-      },
-      Throw: {
-        Type: "Fail",
-      },
       "for(item of items)": {
-        Catch: [
-          {
-            ErrorEquals: ["States.All"],
-            Next: "Throw",
-          },
-        ],
         ItemsPath: "$.items",
         Iterator: {
           StartAt: "a = item",
           States: {
-            Success1: {
-              Type: "Succeed",
-            },
-            Throw1: {
-              Type: "Fail",
-            },
             "a = item": {
-              Next: "Success1",
+              End: true,
               OutputPath: "$.result",
               Parameters: {
                 "result.$": "$.item",
@@ -181,10 +257,12 @@ test("for-loop and do nothing", () => {
         Type: "Map",
       },
       "return null": {
-        Next: "Success",
-        Result: null,
-        ResultPath: "$",
         Type: "Pass",
+        End: true,
+        Parameters: {
+          null: null,
+        },
+        OutputPath: "$.null",
       },
     },
   };
@@ -207,7 +285,7 @@ test("return a single Lambda Function call", () => {
       "return getPerson({id: id})": {
         Type: "Task",
         Resource: "arn:aws:states:::lambda:invoke",
-        Next: "Success",
+        End: true,
         ResultPath: "$",
         Parameters: {
           FunctionName: getPerson.resource.functionName,
@@ -215,18 +293,6 @@ test("return a single Lambda Function call", () => {
             "id.$": "$.id",
           },
         },
-        Catch: [
-          {
-            ErrorEquals: ["States.All"],
-            Next: "Throw",
-          },
-        ],
-      },
-      Success: {
-        Type: "Succeed",
-      },
-      Throw: {
-        Type: "Fail",
       },
     },
   });
@@ -257,12 +323,6 @@ test("call Lambda Function, store as variable, return variable", () => {
             "id.$": "$.id",
           },
         },
-        Catch: [
-          {
-            ErrorEquals: ["States.All"],
-            Next: "Throw",
-          },
-        ],
       },
       "return person": {
         Type: "Pass",
@@ -271,13 +331,7 @@ test("call Lambda Function, store as variable, return variable", () => {
           "result.$": "$.person",
         },
         OutputPath: "$.result",
-        Next: "Success",
-      },
-      Success: {
-        Type: "Succeed",
-      },
-      Throw: {
-        Type: "Fail",
+        End: true,
       },
     },
   });
@@ -315,12 +369,6 @@ test("return AWS.DynamoDB.GetItem", () => {
     States: {
       "person = $AWS.DynamoDB.GetItem({TableName: personTable, Key: {id: {S: id}}})":
         {
-          Catch: [
-            {
-              ErrorEquals: ["States.All"],
-              Next: "Throw",
-            },
-          ],
           Next: "if(person.Item == null)",
           ResultPath: "$.person",
           Resource: "arn:aws:states:::aws-sdk:dynamodb:getItem",
@@ -355,28 +403,21 @@ test("return AWS.DynamoDB.GetItem", () => {
         Type: "Choice",
       },
       "return null": {
-        Next: "Success",
-        ResultPath: "$",
-        Result: null,
         Type: "Pass",
+        End: true,
+        Parameters: {
+          null: null,
+        },
+        OutputPath: "$.null",
       },
       "return {id: person.Item.id.S, name: person.Item.name.S}": {
-        Next: "Success",
+        End: true,
         Parameters: {
-          result: {
-            "id.$": "$.person.Item.id.S",
-            "name.$": "$.person.Item.name.S",
-          },
+          "id.$": "$.person.Item.id.S",
+          "name.$": "$.person.Item.name.S",
         },
         ResultPath: "$",
-        OutputPath: "$.result",
         Type: "Pass",
-      },
-      Success: {
-        Type: "Succeed",
-      },
-      Throw: {
-        Type: "Fail",
       },
     },
   };
@@ -421,12 +462,6 @@ test("call AWS.DynamoDB.GetItem, then Lambda and return LiteralExpr", () => {
     States: {
       "person = $AWS.DynamoDB.GetItem({TableName: personTable, Key: {id: {S: id}}})":
         {
-          Catch: [
-            {
-              ErrorEquals: ["States.All"],
-              Next: "Throw",
-            },
-          ],
           Next: "if(person.Item == null)",
           ResultPath: "$.person",
           Parameters: {
@@ -461,19 +496,15 @@ test("call AWS.DynamoDB.GetItem, then Lambda and return LiteralExpr", () => {
         Type: "Choice",
       },
       "return null": {
-        Next: "Success",
-        Result: null,
-        ResultPath: "$",
         Type: "Pass",
+        End: true,
+        Parameters: {
+          null: null,
+        },
+        OutputPath: "$.null",
       },
       "score = computeScore({id: person.Item.id.S, name: person.Item.name.S})":
         {
-          Catch: [
-            {
-              ErrorEquals: ["States.All"],
-              Next: "Throw",
-            },
-          ],
           Next: "return {id: person.Item.id.S, name: person.Item.name.S, score: score}",
           ResultPath: "$.score",
           Parameters: {
@@ -487,23 +518,14 @@ test("call AWS.DynamoDB.GetItem, then Lambda and return LiteralExpr", () => {
           Type: "Task",
         },
       "return {id: person.Item.id.S, name: person.Item.name.S, score: score}": {
-        Next: "Success",
+        End: true,
         ResultPath: "$",
         Parameters: {
-          result: {
-            "id.$": "$.person.Item.id.S",
-            "name.$": "$.person.Item.name.S",
-            "score.$": "$.score",
-          },
+          "id.$": "$.person.Item.id.S",
+          "name.$": "$.person.Item.name.S",
+          "score.$": "$.score",
         },
-        OutputPath: "$.result",
         Type: "Pass",
-      },
-      Success: {
-        Type: "Succeed",
-      },
-      Throw: {
-        Type: "Fail",
       },
     },
   };
@@ -530,13 +552,10 @@ test("for-loop over a list literal", () => {
     StartAt: 'people = ["sam", "brendan"]',
     States: {
       'people = ["sam", "brendan"]': {
-        Next: "for(name of people)",
-        OutputPath: "$.result",
-        ResultPath: "$.people",
-        Parameters: {
-          result: ["sam", "brendan"],
-        },
         Type: "Pass",
+        ResultPath: "$.people",
+        Result: ["sam", "brendan"],
+        Next: "for(name of people)",
       },
       "for(name of people)": {
         Type: "Map",
@@ -544,12 +563,6 @@ test("for-loop over a list literal", () => {
         ResultPath: null,
         MaxConcurrency: 1,
         Next: "return null",
-        Catch: [
-          {
-            ErrorEquals: ["States.All"],
-            Next: "Throw",
-          },
-        ],
         Parameters: {
           "name.$": "$$.Map.Item.Value",
         },
@@ -558,13 +571,7 @@ test("for-loop over a list literal", () => {
           States: {
             "computeScore({id: id, name: name})": {
               ResultPath: null,
-              Catch: [
-                {
-                  ErrorEquals: ["States.All"],
-                  Next: "Throw1",
-                },
-              ],
-              Next: "Success1",
+              End: true,
               Parameters: {
                 FunctionName: computeScore.resource.functionName,
                 Payload: {
@@ -575,26 +582,16 @@ test("for-loop over a list literal", () => {
               Resource: "arn:aws:states:::lambda:invoke",
               Type: "Task",
             },
-            Success1: {
-              Type: "Succeed",
-            },
-            Throw1: {
-              Type: "Fail",
-            },
           },
         },
       },
       "return null": {
         Type: "Pass",
-        Result: null,
-        ResultPath: "$",
-        Next: "Success",
-      },
-      Success: {
-        Type: "Succeed",
-      },
-      Throw: {
-        Type: "Fail",
+        End: true,
+        Parameters: {
+          null: null,
+        },
+        OutputPath: "$.null",
       },
     },
   };
@@ -635,12 +632,6 @@ test("conditionally call DynamoDB and then void", () => {
         Type: "Choice",
       },
       "$AWS.DynamoDB.GetItem({TableName: personTable, Key: {id: {S: id}}})": {
-        Catch: [
-          {
-            ErrorEquals: ["States.All"],
-            Next: "Throw",
-          },
-        ],
         Next: "return null",
         Parameters: {
           Key: {
@@ -655,18 +646,106 @@ test("conditionally call DynamoDB and then void", () => {
         Type: "Task",
       },
       "return null": {
-        Next: "Success",
-        Result: null,
-        ResultPath: "$",
         Type: "Pass",
-      },
-      Success: {
-        Type: "Succeed",
-      },
-      Throw: {
-        Type: "Fail",
+        End: true,
+        Parameters: {
+          null: null,
+        },
+        OutputPath: "$.null",
       },
     },
   };
   expect(definition).toEqual(expected);
 });
+
+test("throw new Error", () => {
+  const { stack } = init();
+
+  const definition = new ExpressStepFunction(stack, "fn", () => {
+    throw new Error("cause");
+  }).definition;
+
+  expect(definition).toEqual({
+    StartAt: 'throw new Error("cause")',
+    States: {
+      'throw new Error("cause")': {
+        Type: "Fail",
+        Error: "Error",
+        Cause: '{"message":"cause"}',
+      },
+    },
+  });
+});
+
+class CustomError {
+  constructor(readonly property: string) {}
+}
+
+test("throw new CustomError", () => {
+  const { stack } = init();
+
+  const definition = new ExpressStepFunction(stack, "fn", () => {
+    throw new CustomError("cause");
+  }).definition;
+
+  expect(definition).toEqual({
+    StartAt: 'throw new CustomError("cause")',
+    States: {
+      'throw new CustomError("cause")': {
+        Type: "Fail",
+        Error: "CustomError",
+        Cause: '{"property":"cause"}',
+      },
+    },
+  });
+});
+
+// test("try-catch Error", () => {
+//   const { stack } = init();
+
+//   // @ts-ignore
+//   const definition = new ExpressStepFunction(stack, "fn", () => {
+//     try {
+//       throw new Error("cause");
+//     } catch (err: any) {
+//       if (err.message === "cause") {
+//         return "hello";
+//       } else {
+//         return "world";
+//       }
+//     }
+//   }).definition;
+
+//   expect(definition).toEqual({
+//     StartAt: "try",
+//     States: {
+//       try: {
+//         Type: "Parallel",
+//         Branches: [
+//           {
+//             StartAt: 'throw new Error("cause")',
+//             States: {
+//               'throw new Error("cause")': {
+//                 Cause: '{"message":"cause"}',
+//                 Error: "Error",
+//                 Type: "Fail",
+//               },
+//             },
+//           },
+//         ],
+//       },
+//       Success: {
+//         Type: "Succeed",
+//       },
+//       'return "hello"': {
+//         End: true,
+//         OutputPath: "$.result",
+//         Parameters: {
+//           result: "hello",
+//         },
+//         ResultPath: "$",
+//         Type: "Pass",
+//       },
+//     },
+//   });
+// });

@@ -12,6 +12,7 @@ import {
   Identifier,
   isExpr,
   isObjectElementExpr,
+  NewExpr,
   NullLiteralExpr,
   NumberLiteralExpr,
   ObjectElementExpr,
@@ -113,26 +114,26 @@ export function visitEachChild<T extends FunctionlessNode>(
     return new BooleanLiteralExpr(node.value) as T;
   } else if (node.kind === "BreakStmt") {
     return new BreakStmt() as T;
-  } else if (node.kind === "CallExpr") {
+  } else if (node.kind === "CallExpr" || node.kind === "NewExpr") {
     const expr = visitor(node.expr);
     ensure(
       expr,
       isExpr,
-      `visitEachChild of a CallExpr's expr must return a single Expr`
+      `visitEachChild of a ${node.kind}'s expr must return a single Expr`
     );
     const args = Object.entries(node.args).reduce((args, [argName, argVal]) => {
       const transformedVal = visitor(argVal);
       ensure(
         transformedVal,
         isExpr,
-        `visitEachChild of a CallExpr's argument must return a single Expr`
+        `visitEachChild of a ${node.kind}'s argument must return a single Expr`
       );
       return {
         ...args,
         [argName]: transformedVal,
       };
     }, {});
-    return new CallExpr(expr, args) as T;
+    return new (node.kind === "CallExpr" ? CallExpr : NewExpr)(expr, args) as T;
   } else if (node.kind === "CatchClause") {
     const variableDecl = node.variableDecl
       ? visitor(node.variableDecl)
@@ -357,16 +358,12 @@ export function visitEachChild<T extends FunctionlessNode>(
     const tryBlock = visitor(node.tryBlock);
     ensure(tryBlock, isBlockStmt, `a TryStmt's tryBlock must be a BlockStmt`);
 
-    const catchClause = node.catchClause
-      ? visitor(node.catchClause)
-      : undefined;
-    if (catchClause) {
-      ensure(
-        catchClause,
-        isCatchClause,
-        `a TryStmt's catchClause must be a CatchClause`
-      );
-    }
+    const catchClause = visitor(node.catchClause);
+    ensure(
+      catchClause,
+      isCatchClause,
+      `a TryStmt's catchClause must be a CatchClause`
+    );
 
     const finallyBlock = node.finallyBlock
       ? visitor(node.finallyBlock)

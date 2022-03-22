@@ -26,7 +26,7 @@ export function collect<T extends FunctionlessNode, U>(
     );
   } else if (node.kind === "BooleanLiteralExpr") {
   } else if (node.kind === "BreakStmt") {
-  } else if (node.kind === "CallExpr") {
+  } else if (node.kind === "CallExpr" || node.kind === "NewExpr") {
     return Object.values(node.args).reduce(
       (items: U[], item) => items.concat([walk(item)]),
       [walk(node.expr)]

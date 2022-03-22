@@ -168,8 +168,23 @@ export function flatten<T>(arr: AnyDepthArray<T>): T[] {
 
 // checks if a Stmt is terminal - meaning all branches explicitly return a value
 export function isTerminal(stmt: Stmt): boolean {
-  if (stmt.kind === "ReturnStmt") {
+  if (stmt.kind === "ReturnStmt" || stmt.kind === "ThrowStmt") {
     return true;
+  } else if (stmt.kind === "TryStmt") {
+    if (stmt.finallyBlock) {
+      return (
+        isTerminal(stmt.finallyBlock) ||
+        (isTerminal(stmt.tryBlock) && isTerminal(stmt.catchClause.block))
+      );
+    } else {
+      return isTerminal(stmt.tryBlock) && isTerminal(stmt.catchClause.block);
+    }
+  } else if (stmt.kind === "BlockStmt") {
+    if (stmt.isEmpty()) {
+      return false;
+    } else {
+      return isTerminal(stmt.lastStmt);
+    }
   } else if (stmt.kind === "IfStmt") {
     return (
       isTerminal(stmt.then) &&
