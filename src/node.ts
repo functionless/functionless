@@ -25,6 +25,16 @@ export class BaseNode<Kind extends string> {
     }
     return this as any;
   }
+
+  public findNearestParent<K extends FunctionlessNode["kind"]>(
+    kind: K
+  ): Extract<FunctionlessNode, { kind: K }> | undefined {
+    if (this.parent?.kind === kind) {
+      return this.parent as Extract<FunctionlessNode, { kind: K }>;
+    } else {
+      return this.parent?.findNearestParent(kind);
+    }
+  }
 }
 
 export function setParent(

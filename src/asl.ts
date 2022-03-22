@@ -3,6 +3,7 @@ import { aws_iam, aws_stepfunctions } from "aws-cdk-lib";
 
 import { assertNever } from "./assert";
 import {
+  ElementAccessExpr,
   Expr,
   FunctionExpr,
   isLiteralExpr,
@@ -18,7 +19,12 @@ import {
   ReturnStmt,
   Stmt,
 } from "./statement";
-import { findFunction, getLexicalScope, isTerminal } from "./util";
+import {
+  findFunction,
+  getLexicalScope,
+  isTerminal,
+  lookupIdentifier,
+} from "./util";
 import { FunctionDecl } from "./declaration";
 import { FunctionlessNode } from "./node";
 import { visitEachChild } from "./visit";
@@ -327,9 +333,7 @@ export class ASL {
           ResultPath: null,
         }),
       };
-    } else if (stmt.kind === "ForInStmt") {
-      throw new Error(`for-in is no supported in Amazon States Language`);
-    } else if (stmt.kind === "ForOfStmt") {
+    } else if (stmt.kind === "ForOfStmt" || stmt.kind === "ForInStmt") {
       return {
         [this.getStateName(stmt)]: {
           Type: "Map",
@@ -338,7 +342,20 @@ export class ASL {
           Next: this.next(stmt),
           MaxConcurrency: 1,
           Parameters: {
-            [`${stmt.variableDecl.name}.$`]: "$$.Map.Item.Value",
+            ...(stmt.kind === "ForInStmt"
+              ? {
+                  // use special `0_` prefix (impossible variable name in JavaScript)
+                  // to store a reference to the value so that we can implement array index
+                  // for (const i in items) {
+                  //   items[i] // $$.Map.Item.Value
+                  // }
+                  [`0_${stmt.variableDecl.name}.$`]: "$$.Map.Item.Value",
+                }
+              : {}),
+            [`${stmt.variableDecl.name}.$`]:
+              stmt.kind === "ForOfStmt"
+                ? "$$.Map.Item.Value"
+                : "$$.Map.Item.Index",
           },
           Iterator: {
             StartAt: this.getStateName(stmt.body.statements[0]),
@@ -545,7 +562,7 @@ export class ASL {
       return {
         Type: "Pass",
         Parameters: {
-          [`result${isLiteralExpr(expr) ? "" : ".$"}`]: this.toJson(expr),
+          [`result${isLiteralExpr(expr) ? "" : ".$"}`]: this.toJsonPath(expr),
         },
         OutputPath: "$.result",
         ...props,
@@ -653,6 +670,8 @@ export class ASL {
       } else if (ref.kind === "Table") {
         return ref.resource.tableName;
       }
+    } else if (expr.kind === "ElementAccessExpr") {
+      return this.toJsonPath(expr);
     }
     throw new Error(`cannot evaluate ${expr.kind} to JSON`);
   }
@@ -667,13 +686,50 @@ export class ASL {
     } else if (expr.kind === "PropAccessExpr") {
       return `${this.toJsonPath(expr.expr)}.${expr.name}`;
     } else if (expr.kind === "ElementAccessExpr") {
-      return `${this.toJsonPath(expr.expr)}[${this.evalElement(expr.element)}]`;
+      return this.elementAccessExprToJsonPath(expr);
     }
 
-    debugger;
     throw new Error(
       `expression kind '${expr.kind}' cannot be evaluated to a JSON Path expression.`
     );
+  }
+
+  /**
+   * We're indexing the array we're iterating over with the key. For this special case, we know that
+   * the value points to `$$.Map.Item.Value`.
+   *
+   * In the below example:
+   * 1. the value of `$$.Map.Item.Index` is stashed in `$.i` (as expected)
+   * 2. the value of `$$.Map.Item.Value` is stashed in `$.0_i`. Special `0_` prefix is impossible
+   *    to produce with TypeScript syntax and is therefore safe to use a prefix to store the hidden value.
+   *
+   * ```
+   * for (const i in items) {
+   *   const a = items[i]
+   *   {
+   *     Type: Pass
+   *     ResultPath: $.a
+   *     InputPath: "$.0_i"
+   *   }
+   * }
+   * ```
+   */
+  private elementAccessExprToJsonPath(expr: ElementAccessExpr): string {
+    if (expr.element.kind === "Identifier" && expr.expr.kind === "Identifier") {
+      const element = lookupIdentifier(expr.element);
+      if (
+        element?.kind === "VariableStmt" &&
+        element?.parent?.kind === "ForInStmt" &&
+        expr.findNearestParent("ForInStmt") === element.parent
+      ) {
+        return `$.0_${element.name}`;
+      } else {
+        throw new Error(
+          `cannot use an Identifier to index an Array or Object except for an array in a for-in statement`
+        );
+      }
+    }
+    return `${this.toJsonPath(expr.expr)}[${this.evalElement(expr.element)}]`;
   }
 
   public toCondition(expr: Expr): Condition {
@@ -813,7 +869,6 @@ export class ASL {
         // return aws_stepfunctions.Condition.str
       }
     }
-    debugger;
     throw new Error(`cannot evaluate expression: '${expr.kind}`);
   }
 
@@ -824,7 +879,6 @@ export class ASL {
       return expr.value.toString(10);
     }
 
-    debugger;
     throw new Error(
       `Expression kind '${expr.kind}' is not allowed as an element in a Step Function`
     );

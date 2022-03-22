@@ -125,6 +125,7 @@ export class ElementAccessExpr extends BaseNode<"ElementAccessExpr"> {
   constructor(readonly expr: Expr, readonly element: Expr) {
     super("ElementAccessExpr");
     setParent(this, expr);
+    setParent(this, element);
   }
 }
 

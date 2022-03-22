@@ -59,10 +59,10 @@ export class PeopleDatabase extends Construct {
 
     new ExpressStepFunction(this, "TestMachine", () => {
       const names = ["sam", "brendan"];
-      for (const name of names) {
+      for (const i in names) {
         this.computeScore({
           id: "id",
-          name,
+          name: names[i],
         });
       }
     });

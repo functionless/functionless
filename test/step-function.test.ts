@@ -85,6 +85,59 @@ test("return identifier", () => {
   expect(definition).toEqual(expected);
 });
 
+test("return PropAccessExpr", () => {
+  const { stack } = init();
+  const definition = new ExpressStepFunction(
+    stack,
+    "fn",
+    (input: { id: string }) => {
+      return input.id;
+    }
+  ).definition;
+
+  const expected: StateMachine<States> = {
+    StartAt: "return input.id",
+    States: {
+      "return input.id": {
+        Type: "Pass",
+        End: true,
+        OutputPath: "$.input.id",
+      },
+    },
+  };
+  expect(definition).toEqual(expected);
+});
+
+test("return optional PropAccessExpr", () => {
+  const { stack } = init();
+  const definition = new ExpressStepFunction(
+    stack,
+    "fn",
+    (input: { id?: string }) => {
+      return input?.id;
+    }
+  ).definition;
+
+  const expected: StateMachine<States> = {
+    StartAt: "return input.id",
+    States: {
+      "return input.id": {
+        Type: "Pass",
+        End: true,
+        // this can cause an error in Step Functions
+        // need to use Choice and isPresent to compute a temporary variable
+        // wish: step functions would default a missing reference to null
+        // or understand the concept of `undefined` and would delete the
+        // OutputPath if `$.input.id`
+        // see: https://twitter.com/samgoodwin89/status/1506170918216736771
+
+        OutputPath: "$.input.id",
+      },
+    },
+  };
+  expect(definition).toEqual(expected);
+});
+
 test("let and set", () => {
   const { stack } = init();
   const definition = new ExpressStepFunction(stack, "fn", () => {
@@ -397,6 +450,56 @@ test("for-loop and do nothing", () => {
     },
   };
   expect(definition).toEqual(expected);
+});
+
+test("for i in items, items[i]", () => {
+  const { stack } = init();
+  const definition = new ExpressStepFunction(stack, "fn", (items: string[]) => {
+    for (const i in items) {
+      // @ts-ignore
+      const a = items[i];
+    }
+  }).definition;
+
+  expect(definition).toEqual({
+    StartAt: "for(i in items)",
+    States: {
+      "for(i in items)": {
+        ItemsPath: "$.items",
+        Iterator: {
+          StartAt: "a = items[i]",
+          States: {
+            "a = items[i]": {
+              End: true,
+              OutputPath: "$.result",
+              Parameters: {
+                "result.$": "$.0_i",
+              },
+              ResultPath: "$.a",
+              Type: "Pass",
+            },
+          },
+        },
+        MaxConcurrency: 1,
+        Next: "return null",
+        Parameters: {
+          // special prefixed value so that we can index the array
+          "0_i.$": "$$.Map.Item.Value",
+          "i.$": "$$.Map.Item.Index",
+        },
+        ResultPath: null,
+        Type: "Map",
+      },
+      "return null": {
+        End: true,
+        OutputPath: "$.null",
+        Parameters: {
+          null: null,
+        },
+        Type: "Pass",
+      },
+    },
+  });
 });
 
 test("return a single Lambda Function call", () => {
