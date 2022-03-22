@@ -64,7 +64,6 @@ export const synthesizeEventBridgeTargets = (
       return constant.constant;
     } else if (isPropAccessExpr(expr) || isElementAccessExpr(expr)) {
       const ref = getReferencePath(expr);
-      console.log(ref, expr);
       assertValidEventRefererence(ref, eventDecl?.name);
       const path = refToJsonPath(ref);
 

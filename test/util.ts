@@ -91,13 +91,15 @@ export function ebEventTargetTestCase<T extends EventBusRuleInput>(
     ...expected
   } = targetInput.bind(rule);
 
-  expect(stack.resolve(recievedInput)).toEqual(stack.resolve(expectedInput));
-
-  expect(stack.resolve(recievedTemplate)).toEqual(
-    stack.resolve(expectedTemplate)
-  );
-
-  expect(recieved).toEqual(expected);
+  expect({
+    ...recieved,
+    inputTemplate: stack.resolve(recievedTemplate),
+    input: stack.resolve(recievedInput),
+  }).toEqual({
+    ...expected,
+    inputTemplate: stack.resolve(expectedTemplate),
+    input: stack.resolve(expectedInput),
+  });
 }
 
 export function ebEventTargetTestCaseError<T extends EventBusRuleInput>(

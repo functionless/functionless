@@ -3,6 +3,7 @@ import { EventBusRuleInput } from "../src/eventbridge";
 import { Function, reflect } from "../src";
 import { aws_events } from "aws-cdk-lib";
 import { ebEventTargetTestCase, ebEventTargetTestCaseError } from "./util";
+import { EventField } from "aws-cdk-lib/aws-events";
 
 interface testEvent
   extends EventBusRuleInput<{
@@ -238,6 +239,18 @@ test("object with bare undefined", () => {
   ebEventTargetTestCase<testEvent>(
     reflect(() => undefined),
     aws_events.RuleTargetInput.fromObject(undefined)
+  );
+});
+
+type MyString = string;
+interface MyTest extends EventBusRuleInput<{ s: MyString }> {}
+
+test("non-string type", () => {
+  ebEventTargetTestCase<MyTest>(
+    reflect((event) => event.detail.s + event.detail.s),
+    aws_events.RuleTargetInput.fromObject(
+      `${EventField.fromPath("$.detail.s")}${EventField.fromPath("$.detail.s")}`
+    )
   );
 });
 
