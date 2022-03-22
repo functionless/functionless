@@ -66,6 +66,136 @@ test("empty function", () => {
   expect(definition).toEqual(expected);
 });
 
+test("return identifier", () => {
+  const { stack } = init();
+  const definition = new ExpressStepFunction(stack, "fn", (id: string) => {
+    return id;
+  }).definition;
+
+  const expected: StateMachine<States> = {
+    StartAt: "return null",
+    States: {
+      "return id": {
+        Type: "Pass",
+        End: true,
+        Parameters: {
+          result: null,
+        },
+        OutputPath: "$.result",
+      },
+    },
+  };
+  expect(definition).toEqual(expected);
+});
+
+test("let and set", () => {
+  const { stack } = init();
+  const definition = new ExpressStepFunction(stack, "fn", () => {
+    let a;
+    a = null;
+    a = true;
+    a = false;
+    a = 0;
+    a = "hello";
+    a = [null];
+    a = [1];
+    a = [true];
+    a = [
+      {
+        key: "value",
+      },
+    ];
+    a = {
+      key: "value",
+    };
+    return a;
+  }).definition;
+
+  expect(definition).toEqual({
+    StartAt: "a = undefined",
+    States: {
+      'a = "hello"': {
+        Next: "a = [null]",
+        Parameters: "hello",
+        ResultPath: "$.a",
+        Type: "Pass",
+      },
+      "a = 0": {
+        Next: 'a = "hello"',
+        Parameters: 0,
+        ResultPath: "$.a",
+        Type: "Pass",
+      },
+      "a = [1]": {
+        Next: "a = [true]",
+        Parameters: [1],
+        ResultPath: "$.a",
+        Type: "Pass",
+      },
+      "a = [null]": {
+        Next: "a = [1]",
+        Parameters: [null],
+        ResultPath: "$.a",
+        Type: "Pass",
+      },
+      "a = [true]": {
+        Next: 'a = [{key: "value"}]',
+        Parameters: [true],
+        ResultPath: "$.a",
+        Type: "Pass",
+      },
+      'a = [{key: "value"}]': {
+        Next: 'a = {key: "value"}',
+        Parameters: [
+          {
+            key: "value",
+          },
+        ],
+        ResultPath: "$.a",
+        Type: "Pass",
+      },
+      "a = false": {
+        Next: "a = 0",
+        Parameters: false,
+        ResultPath: "$.a",
+        Type: "Pass",
+      },
+      "a = null": {
+        Next: "a = true",
+        Parameters: {
+          "$.a": null,
+          "a.$": "$.a",
+        },
+        ResultPath: null,
+        Type: "Pass",
+      },
+      "a = true": {
+        Next: "a = false",
+        Parameters: true,
+        ResultPath: "$.a",
+        Type: "Pass",
+      },
+      'a = {key: "value"}': {
+        Next: "return a",
+        Parameters: {
+          key: "value",
+        },
+        ResultPath: "$.a",
+        Type: "Pass",
+      },
+      "return a": {
+        End: true,
+        OutputPath: "$.result",
+        Parameters: {
+          "result.$": "$.a",
+        },
+        ResultPath: "$",
+        Type: "Pass",
+      },
+    },
+  });
+});
+
 test("return void", () => {
   const { stack } = init();
   const definition = new ExpressStepFunction(stack, "fn", () => {
@@ -570,6 +700,7 @@ test("for-loop over a list literal", () => {
           StartAt: "computeScore({id: id, name: name})",
           States: {
             "computeScore({id: id, name: name})": {
+              Type: "Task",
               ResultPath: null,
               End: true,
               Parameters: {
@@ -580,7 +711,6 @@ test("for-loop over a list literal", () => {
                 },
               },
               Resource: "arn:aws:states:::lambda:invoke",
-              Type: "Task",
             },
           },
         },

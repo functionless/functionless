@@ -195,3 +195,32 @@ export function isTerminal(stmt: Stmt): boolean {
     return false;
   }
 }
+
+export function getLexicalScope(node: FunctionlessNode): string[] {
+  return Array.from(new Set(getLexicalScope(node)));
+
+  function getLexicalScope(node: FunctionlessNode | undefined): string[] {
+    if (node === undefined) {
+      return [];
+    }
+    return getLexicalScope(
+      isStmt(node) && node.prev ? node.prev : node.parent
+    ).concat(getNames(node));
+  }
+
+  function getNames(node: FunctionlessNode | undefined): string[] {
+    if (node === undefined) {
+      return [];
+    } else if (node.kind === "VariableStmt") {
+      return [node.name];
+    } else if (node.kind === "FunctionExpr" || node.kind === "FunctionDecl") {
+      return node.parameters.map((param) => param.name);
+    } else if (node.kind === "ForInStmt" || node.kind === "ForOfStmt") {
+      return [node.variableDecl.name];
+    } else if (node.kind === "CatchClause" && node.variableDecl?.name) {
+      return [node.variableDecl?.name];
+    } else {
+      return [];
+    }
+  }
+}

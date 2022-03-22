@@ -52,9 +52,7 @@ export class Function<P, O> {
           Parameters: {
             FunctionName: this.resource.functionName,
             Payload:
-              "payload" in call.args
-                ? context.evalJson(call.args.payload)
-                : null,
+              "payload" in call.args ? context.toJson(call.args.payload) : null,
           },
         };
         return task;

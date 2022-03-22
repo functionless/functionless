@@ -105,7 +105,7 @@ export namespace $AWS {
       return {
         Type: "Task",
         Resource: "arn:aws:states:::aws-sdk:dynamodb:getItem",
-        Parameters: context.evalJson(input),
+        Parameters: context.toJson(input),
       };
     }
   }

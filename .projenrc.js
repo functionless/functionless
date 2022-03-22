@@ -26,7 +26,7 @@ const project = new typescript.TypeScriptProject({
   tsconfig: {
     compilerOptions: {
       declarationMap: true,
-      lib: ["dom"],
+      lib: ["dom", "ES2019"],
     },
   },
   tsconfigDev: {

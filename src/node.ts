@@ -21,7 +21,7 @@ export class BaseNode<Kind extends string> {
   ): Extract<this, { kind: K }> {
     // @ts-ignore
     if (this.kind !== kind) {
-      throw new Error(`expected `);
+      throw new Error(`expected to be a ${kind} but was ${this.kind}`);
     }
     return this as any;
   }

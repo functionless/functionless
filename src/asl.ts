@@ -17,7 +17,7 @@ import {
   ReturnStmt,
   Stmt,
 } from "./statement";
-import { findFunction, isTerminal } from "./util";
+import { findFunction, getLexicalScope, isTerminal } from "./util";
 import { FunctionDecl } from "./declaration";
 import { FunctionlessNode } from "./node";
 import { visitEachChild } from "./visit";
@@ -269,41 +269,6 @@ export class ASL {
       return visitEachChild(node, visit);
     });
 
-    // if (requiresSuccessState(this.decl)) {
-    //   terminalStates[this.getReturnStateName(this.decl)] = {
-    //     Type: "Succeed",
-    //   };
-    // }
-
-    // function requiresSuccessState(node: FunctionlessNode): boolean {
-    //   if (node.kind === "ReturnStmt") {
-    //     return true;
-    //   }
-    //   return collect(node, requiresSuccessState).reduce(
-    //     (a, b) => a || b,
-    //     false
-    //   );
-    // }
-
-    // if (requiresFailState(this.decl)) {
-    //   // don't add the Fail state if it is unreachable
-    //   // we determine that it is unreachable if there are no service calls
-    //   terminalStates[this.getThrowStateName(this.decl)] = {
-    //     Type: "Fail",
-    //   };
-    // }
-
-    // function requiresFailState(node: FunctionlessNode): boolean {
-    //   if (
-    //     node.kind === "ReferenceExpr" ||
-    //     node.kind === "ForOfStmt" ||
-    //     node.kind === "ForInStmt"
-    //   ) {
-    //     return true;
-    //   }
-    //   return collect(node, requiresFailState).reduce((a, b) => a || b, false);
-    // }
-
     const states = this.execute(this.decl.body);
 
     const start = this.getStateName(this.decl.body.statements[0]);
@@ -362,7 +327,7 @@ export class ASL {
         [this.getStateName(stmt)]: {
           Type: "Map",
           ResultPath: null,
-          ItemsPath: this.evalJsonPath(stmt.expr),
+          ItemsPath: this.toJsonPath(stmt.expr),
           Next: this.next(stmt),
           MaxConcurrency: 1,
           Parameters: {
@@ -384,7 +349,7 @@ export class ASL {
 
         choices.push({
           Next: this.getStateName(curr.then.statements[0]),
-          ...this.condition(curr.when),
+          ...this.toCondition(curr.when),
         });
         curr = curr._else;
       }
@@ -415,6 +380,21 @@ export class ASL {
             OutputPath: "$.null",
           },
         };
+      } else if (
+        stmt.expr.kind === "PropAccessExpr" ||
+        stmt.expr.kind === "ElementAccessExpr" ||
+        stmt.expr.kind === "Identifier"
+      ) {
+        return {
+          [this.getStateName(stmt)]: {
+            Type: "Pass",
+            End: true,
+            Parameters: {
+              "result.$": this.toJsonPath(stmt.expr),
+            },
+            OutputPath: "$.result",
+          },
+        };
       }
       return {
         [this.getStateName(stmt)]: this.eval(stmt.expr, {
@@ -435,7 +415,7 @@ export class ASL {
             Object.entries(stmt.expr.args).reduce(
               (args: any, [argName, argVal]) => ({
                 ...args,
-                [argName]: this.evalJson(argVal),
+                [argName]: this.toJson(argVal),
               }),
               {}
             )
@@ -569,7 +549,7 @@ export class ASL {
       return {
         Type: "Pass",
         Parameters: {
-          [`result${isLiteralExpr(expr) ? "" : ".$"}`]: this.evalJson(expr),
+          [`result${isLiteralExpr(expr) ? "" : ".$"}`]: this.toJson(expr),
         },
         OutputPath: "$.result",
         ...props,
@@ -577,32 +557,64 @@ export class ASL {
     } else if (expr.kind === "ObjectLiteralExpr") {
       return {
         Type: "Pass",
-        Parameters: this.evalJson(expr),
+        Parameters: this.toJson(expr),
         ...props,
       };
     } else if (isLiteralExpr(expr)) {
       return {
         Type: "Pass",
-        Result: this.evalJson(expr),
+        Result: this.toJson(expr),
         ...props,
       };
-    } else {
-      throw new Error(`cannot eval expression kind '${expr.kind}'`);
+    } else if (
+      expr.kind === "BinaryExpr" &&
+      expr.op === "=" &&
+      (expr.left.kind === "Identifier" ||
+        expr.left.kind === "PropAccessExpr" ||
+        expr.left.kind === "ElementAccessExpr")
+    ) {
+      // is the right operand a reference, e.g. a, a.prop, a[0]
+      const isRightRef =
+        expr.right.kind === "Identifier" ||
+        expr.right.kind === "PropAccessExpr" ||
+        expr.right.kind === "ElementAccessExpr";
+
+      if (expr.right.kind === "NullLiteralExpr" || isRightRef) {
+        return {
+          Type: "Pass",
+          ...props,
+          Parameters: {
+            ...Object.fromEntries(
+              getLexicalScope(expr).map((name) => [`${name}.$`, `$.${name}`])
+            ),
+            [`${this.toJsonPath(expr.left)}${isRightRef ? ".$" : ""}`]:
+              isRightRef ? this.toJsonPath(expr.right) : null,
+          },
+        };
+      } else if (isLiteralExpr(expr.right)) {
+        return {
+          Type: "Pass",
+          ...props,
+          Parameters: this.toJson(expr.right),
+          ResultPath: this.toJsonPath(expr.left),
+        };
+      }
     }
+    throw new Error(`cannot eval expression kind '${expr.kind}'`);
   }
 
-  public evalJson(expr: Expr): any {
+  public toJson(expr: Expr): any {
     if (expr.kind === "Identifier") {
-      return this.evalJsonPath(expr);
+      return this.toJsonPath(expr);
     } else if (expr.kind === "PropAccessExpr") {
-      return `${this.evalJson(expr.expr)}.${expr.name}`;
+      return `${this.toJson(expr.expr)}.${expr.name}`;
     } else if (
       expr.kind === "ElementAccessExpr" &&
       expr.element.kind === "NumberLiteralExpr"
     ) {
-      return `${this.evalJson(expr.expr)}[${expr.element.value}]`;
+      return `${this.toJson(expr.expr)}[${expr.element.value}]`;
     } else if (expr.kind === "ArrayLiteralExpr") {
-      return expr.items.map(this.evalJson);
+      return expr.items.map((item) => this.toJson(item));
     } else if (expr.kind === "ObjectLiteralExpr") {
       const payload: any = {};
       for (const prop of expr.properties) {
@@ -628,7 +640,7 @@ export class ASL {
           }${
             isLiteralExpr(prop.expr) || isReferenceExpr(prop.expr) ? "" : ".$"
           }`
-        ] = this.evalJson(prop.expr);
+        ] = this.toJson(prop.expr);
       }
       return payload;
     } else if (isLiteralExpr(expr)) {
@@ -646,19 +658,38 @@ export class ASL {
     throw new Error(`cannot evaluate ${expr.kind} to JSON`);
   }
 
-  public condition(expr: Expr): Condition {
+  public toJsonPath(expr: Expr): string {
+    if (expr.kind === "ArrayLiteralExpr") {
+      return aws_stepfunctions.JsonPath.array(
+        ...expr.items.map((item) => this.toJsonPath(item))
+      );
+    } else if (expr.kind === "Identifier") {
+      return `$.${expr.name}`;
+    } else if (expr.kind === "PropAccessExpr") {
+      return `${this.toJsonPath(expr.expr)}.${expr.name}`;
+    } else if (expr.kind === "ElementAccessExpr") {
+      return `${this.toJsonPath(expr.expr)}[${this.evalElement(expr.element)}]`;
+    }
+
+    debugger;
+    throw new Error(
+      `expression kind '${expr.kind}' cannot be evaluated to a JSON Path expression.`
+    );
+  }
+
+  public toCondition(expr: Expr): Condition {
     if (expr.kind === "UnaryExpr") {
       return {
-        Not: this.condition(expr.expr),
+        Not: this.toCondition(expr.expr),
       };
     } else if (expr.kind === "BinaryExpr") {
       if (expr.op === "&&") {
         return {
-          And: [this.condition(expr.left), this.condition(expr.right)],
+          And: [this.toCondition(expr.left), this.toCondition(expr.right)],
         };
       } else if (expr.op === "||") {
         return {
-          Or: [this.condition(expr.left), this.condition(expr.right)],
+          Or: [this.toCondition(expr.left), this.toCondition(expr.right)],
         };
       } else if (expr.op === "+" || expr.op === "-") {
       } else {
@@ -673,11 +704,11 @@ export class ASL {
               return {
                 And: [
                   {
-                    Variable: this.evalJsonPath(val),
+                    Variable: this.toJsonPath(val),
                     IsPresent: true,
                   },
                   {
-                    Variable: this.evalJsonPath(val),
+                    Variable: this.toJsonPath(val),
                     IsNull: false,
                   },
                 ],
@@ -686,11 +717,11 @@ export class ASL {
               return {
                 Or: [
                   {
-                    Variable: this.evalJsonPath(val),
+                    Variable: this.toJsonPath(val),
                     IsPresent: false,
                   },
                   {
-                    Variable: this.evalJsonPath(val),
+                    Variable: this.toJsonPath(val),
                     IsNull: true,
                   },
                 ],
@@ -698,7 +729,7 @@ export class ASL {
             }
           } else if (lit.kind === "StringLiteralExpr") {
             const [variable, value] = [
-              this.evalJsonPath(val),
+              this.toJsonPath(val),
               lit.value,
             ] as const;
             if (expr.op === "==") {
@@ -736,7 +767,7 @@ export class ASL {
             }
           } else if (lit.kind === "NumberLiteralExpr") {
             const [variable, value] = [
-              this.evalJsonPath(val),
+              this.toJsonPath(val),
               lit.value,
             ] as const;
             if (expr.op === "==") {
@@ -785,27 +816,6 @@ export class ASL {
     }
     debugger;
     throw new Error(`cannot evaluate expression: '${expr.kind}`);
-  }
-
-  public evalJsonPath(expr: Expr): string {
-    if (expr.kind === "ArrayLiteralExpr") {
-      return aws_stepfunctions.JsonPath.array(
-        ...expr.items.map((item) => this.evalJsonPath(item))
-      );
-    } else if (expr.kind === "Identifier") {
-      return `$.${expr.name}`;
-    } else if (expr.kind === "PropAccessExpr") {
-      return `${this.evalJsonPath(expr.expr)}.${expr.name}`;
-    } else if (expr.kind === "ElementAccessExpr") {
-      return `${this.evalJsonPath(expr.expr)}[${this.evalElement(
-        expr.element
-      )}]`;
-    }
-
-    debugger;
-    throw new Error(
-      `expression kind '${expr.kind}' cannot be evaluated to a JSON Path expression.`
-    );
   }
 
   private evalElement(expr: Expr): string {
