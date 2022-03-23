@@ -28,6 +28,7 @@ import {
 import { FunctionDecl } from "./declaration";
 import { FunctionlessNode } from "./node";
 import { visitEachChild } from "./visit";
+import { collect } from "./collect";
 
 export function isASL(a: any): a is ASL {
   return (a as ASL | undefined)?.kind === ASL.ContextName;
@@ -284,7 +285,7 @@ export class ASL {
 
     const states = this.execute(this.decl.body);
 
-    const start = this.getStateName(this.decl.body.statements[0]);
+    const start = this.stepTo(this.decl.body);
 
     this.definition = {
       StartAt: start,
@@ -419,26 +420,6 @@ export class ASL {
           End: true,
         }),
       };
-    } else if (stmt.kind === "ThrowStmt") {
-      if (stmt.expr.kind !== "NewExpr") {
-        throw new Error(`the expr of a ThrowStmt must be a NewExpr`);
-      }
-
-      return {
-        [this.getStateName(stmt)]: {
-          Type: "Fail",
-          Error: exprToString(stmt.expr.expr),
-          Cause: JSON.stringify(
-            Object.entries(stmt.expr.args).reduce(
-              (args: any, [argName, argVal]) => ({
-                ...args,
-                [argName]: this.toJson(argVal),
-              }),
-              {}
-            )
-          ),
-        },
-      };
     } else if (stmt.kind === "VariableStmt") {
       if (stmt.expr === undefined) {
         return {};
@@ -450,28 +431,113 @@ export class ASL {
           Next: this.next(stmt),
         }),
       };
-    } else if (stmt.kind === "TryStmt") {
-      if (stmt.tryBlock.isNotEmpty()) {
+    } else if (stmt.kind === "ThrowStmt") {
+      if (stmt.expr.kind !== "NewExpr") {
+        throw new Error(`the expr of a ThrowStmt must be a NewExpr`);
+      }
+
+      const catchClause = stmt.findThrowCatchClause();
+
+      // TODO: handle case where we are inside a for-loop or `.map` function
+      if (catchClause) {
+        // const { hasTask } = analyzeFlow(catchClause.parent);
+
+        // if this `throw` is within a try-catch, then Pass the error to the `catch` state
         return {
           [this.getStateName(stmt)]: {
-            Type: "Parallel",
-            Branches: [
-              {
-                StartAt: this.getStateName(stmt.tryBlock.firstStmt),
-                States: this.execute(stmt.tryBlock),
-              },
-            ],
+            Type: "Pass",
+            Result: Object.entries(stmt.expr.args).reduce(
+              (args: any, [argName, argVal]) => ({
+                ...args,
+                [argName]: this.toJson(argVal),
+              }),
+              {}
+            ),
+            Next: this.stepTo(catchClause),
+            ResultPath: catchClause.variableDecl
+              ? `$.${catchClause.variableDecl.name}`
+              : null,
           },
-          ...(stmt.catchClause ? this.execute(stmt.catchClause) : {}),
-          ...(stmt.finallyBlock ? this.execute(stmt.finallyBlock) : {}),
         };
       } else {
-        throw new Error(`tryBlock must have at least one statement`);
+        // if this throw is not within a try-catch, then Fail the State Machine
+        return {
+          [this.getStateName(stmt)]: {
+            Type: "Fail",
+            Error: exprToString(stmt.expr.expr),
+            Cause: JSON.stringify(
+              Object.entries(stmt.expr.args).reduce(
+                (args: any, [argName, argVal]) => ({
+                  ...args,
+                  [argName]: this.toJson(argVal),
+                }),
+                {}
+              )
+            ),
+          },
+        };
       }
+    } else if (stmt.kind === "TryStmt") {
+      const { hasTask } = analyzeFlow(stmt.tryBlock);
+
+      return {
+        ...this.execute(stmt.tryBlock),
+        ...(hasTask && stmt.catchClause.variableDecl
+          ? {
+              [this.getStateName(stmt.catchClause.variableDecl)]: {
+                Type: "Pass",
+                Next: `0_${this.getStateName(stmt.catchClause.variableDecl)}`,
+                Parameters: {
+                  "0_ParsedError.$": `States.StringToJson(${`$.${stmt.catchClause.variableDecl.name}`}.Cause)`,
+                },
+                ResultPath: `$.${stmt.catchClause.variableDecl.name}`,
+              },
+              [`0_${this.getStateName(stmt.catchClause.variableDecl)}`]: {
+                Type: "Pass",
+                InputPath: `$.${stmt.catchClause.variableDecl.name}.0_ParsedError`,
+                ResultPath: `$.${stmt.catchClause.variableDecl.name}`,
+                Next: this.getStateName(stmt.catchClause.block.firstStmt),
+              },
+            }
+          : {}),
+        ...this.execute(stmt.catchClause.block),
+        ...(stmt.finallyBlock ? this.execute(stmt.finallyBlock) : {}),
+      };
     } else if (stmt.kind === "CatchClause") {
       return this.execute(stmt.block);
     }
     return assertNever(stmt);
+  }
+
+  private stepTo(node: Stmt): string {
+    if (node.kind === "BlockStmt") {
+      if (node.isEmpty()) {
+        throw new Error(`a BlockStmt must have at least one statement`);
+      }
+      return this.stepTo(node.firstStmt);
+    } else if (node.kind === "TryStmt") {
+      return this.stepTo(node.tryBlock);
+    } else if (node.kind === "CatchClause") {
+      const { hasTask } = analyzeFlow(node.parent);
+      if (hasTask && node.variableDecl) {
+        return this.stepTo(node.variableDecl);
+      } else {
+        return this.stepTo(node.block);
+      }
+    } else {
+      return this.getStateName(node);
+    }
+  }
+
+  private getStateName(stmt: Stmt): string {
+    if (!this.stateNames.has(stmt)) {
+      const stateName = toStateName(stmt);
+      if (stateName === undefined) {
+        throw new Error(`cannot transition to ${stmt.kind}`);
+      }
+      this.stateNames.set(stmt, stateName);
+    }
+    return this.stateNames.get(stmt)!;
   }
 
   /**
@@ -481,7 +547,9 @@ export class ASL {
     if (node.kind === "ReturnStmt") {
       return this.return(node);
     } else if (node.next) {
-      return this.getStateName(node.next);
+      return this.stepTo(node.next);
+    } else if (node.kind === "TryStmt" && isTerminal(node)) {
+      return undefined;
     } else if (node.parent?.kind === "BlockStmt") {
       const block = node.parent;
       const scope = node.parent.parent;
@@ -497,7 +565,7 @@ export class ASL {
         if (block === scope.tryBlock) {
           // need to move to the finally block
           if (scope.finallyBlock?.isNotEmpty()) {
-            return this.getStateName(scope.finallyBlock.firstStmt);
+            return this.stepTo(scope.finallyBlock);
           }
           return this.next(scope);
         } else if (block === scope.finallyBlock) {
@@ -509,7 +577,7 @@ export class ASL {
       } else if (scope.kind === "CatchClause") {
         const tryStmt = scope.parent;
         if (tryStmt.finallyBlock?.isNotEmpty()) {
-          return this.getStateName(tryStmt.finallyBlock.firstStmt);
+          return this.stepTo(tryStmt.finallyBlock);
         }
         return this.next(scope);
       } else {
@@ -535,6 +603,44 @@ export class ASL {
     }
   }
 
+  // private throw(node: FunctionlessNode): string | undefined {
+  //   const catchClause = node.findThrowCatchClause();
+  //   if (catchClause) {
+  //     const { hasTask } = analyzeFlow(catchClause.parent.tryBlock);
+
+  //     if (catchClause.variableDecl && hasTask) {
+  //       // we first need to know if `hasTask` is true before routing to the `catch(err)` block
+  //       // if there is no Task, then we will not have states to parse the Cause JSON string and should
+  //       // therefore jump straight to the firstStmt of the catchClause instead
+  //       return this.getStateName(catchClause.variableDecl);
+  //     } else {
+  //       return this.getStateName(catchClause.block.firstStmt);
+  //     }
+  //   } else {
+  //     return undefined;
+  //   }
+  //   // const parent = node.parent;
+  //   // if (parent === undefined) {
+  //   //   return undefined;
+  //   // } else if (parent.kind === "TryStmt") {
+  //   //   const { hasTask } = analyzeFlow(parent.tryBlock);
+
+  //   //   if (parent.catchClause.variableDecl && hasTask) {
+  //   //     // we first need to know if `hasTask` is true before routing to the `catch(err)` block
+  //   //     // if there is no Task, then we will not have states to parse the Cause JSON string and should
+  //   //     // therefore jump straight to the firstStmt of the catchClause instead
+  //   //     return this.getStateName(parent.catchClause.variableDecl);
+  //   //   } else {
+  //   //     return this.getStateName(parent.catchClause.block.firstStmt);
+  //   //   }
+  //   // } else if (parent.kind === "CatchClause") {
+  //   //   // skip the try-block
+  //   //   return this.throw(parent.parent);
+  //   // } else {
+  //   //   return this.throw(parent);
+  //   // }
+  // }
+
   public eval(
     expr: Expr,
     props: {
@@ -552,9 +658,21 @@ export class ASL {
       if (serviceCall) {
         const task = serviceCall(expr, this);
 
+        const catchClause = expr.findThrowCatchClause();
+
         return {
           ...task,
           ...props,
+          ...(catchClause
+            ? {
+                Catch: [
+                  {
+                    ErrorEquals: ["States.ALL"],
+                    Next: this.stepTo(catchClause),
+                  },
+                ],
+              }
+            : {}),
         };
       }
       throw new Error(`call must be a service call, ${expr}`);
@@ -883,17 +1001,23 @@ export class ASL {
       `Expression kind '${expr.kind}' is not allowed as an element in a Step Function`
     );
   }
+}
 
-  private getStateName(stmt: Stmt): string {
-    if (!this.stateNames.has(stmt)) {
-      const stateName = toStateName(stmt);
-      if (stateName === undefined) {
-        throw new Error(`cannot transition to ${stmt.kind}`);
-      }
-      this.stateNames.set(stmt, stateName);
-    }
-    return this.stateNames.get(stmt)!;
+interface FlowResult {
+  hasTask?: true;
+  hasThrow?: true;
+}
+
+/**
+ * Analyze the flow contained within a section of the AST and determine if it has any tasks or throw statements.
+ */
+function analyzeFlow(node: FunctionlessNode): FlowResult {
+  if (node.kind === "CallExpr" && findFunction(node) !== undefined) {
+    return { hasTask: true };
+  } else if (node.kind === "ThrowStmt") {
+    return { hasThrow: true };
   }
+  return collect(node, analyzeFlow).reduce((a, b) => ({ ...a, ...b }), {});
 }
 
 function toStateName(stmt: Stmt): string | undefined {
@@ -924,9 +1048,13 @@ function toStateName(stmt: Stmt): string | undefined {
   } else if (stmt.kind === "TryStmt") {
     return `try`;
   } else if (stmt.kind === "VariableStmt") {
-    return `${stmt.name} = ${
-      stmt.expr ? exprToString(stmt.expr) : "undefined"
-    }`;
+    if (stmt.parent?.kind === "CatchClause") {
+      return `catch(${stmt.name})`;
+    } else {
+      return `${stmt.name} = ${
+        stmt.expr ? exprToString(stmt.expr) : "undefined"
+      }`;
+    }
   } else {
     return assertNever(stmt);
   }

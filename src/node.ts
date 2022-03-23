@@ -1,6 +1,6 @@
 import { Decl } from "./declaration";
 import { Expr } from "./expression";
-import { Stmt } from "./statement";
+import type { CatchClause, Stmt } from "./statement";
 
 export type FunctionlessNode = Decl | Expr | Stmt;
 
@@ -33,6 +33,23 @@ export class BaseNode<Kind extends string> {
       return this.parent as Extract<FunctionlessNode, { kind: K }>;
     } else {
       return this.parent?.findNearestParent(kind);
+    }
+  }
+
+  /**
+   * Finds the {@link CatchClause} that this Node should throw to.
+   */
+  public findThrowCatchClause(): CatchClause | undefined {
+    const scope = this.parent;
+    if (scope === undefined) {
+      return undefined;
+    } else if (scope.kind === "TryStmt") {
+      return scope.catchClause;
+    } else if (scope.kind === "CatchClause") {
+      // skip the try-block
+      return scope.parent.findThrowCatchClause();
+    } else {
+      return scope.findThrowCatchClause();
     }
   }
 }

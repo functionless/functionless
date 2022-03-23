@@ -483,7 +483,7 @@ test("for i in items, items[i]", () => {
         MaxConcurrency: 1,
         Next: "return null",
         Parameters: {
-          // special prefixed value so that we can index the array
+          // special prefixed value so that we can index the
           "0_i.$": "$$.Map.Item.Value",
           "i.$": "$$.Map.Item.Index",
         },
@@ -929,52 +929,524 @@ test("throw new CustomError", () => {
   });
 });
 
-// test("try-catch Error", () => {
-//   const { stack } = init();
+test("catch and throw new Error", () => {
+  const { stack } = init();
 
-//   // @ts-ignore
-//   const definition = new ExpressStepFunction(stack, "fn", () => {
-//     try {
-//       throw new Error("cause");
-//     } catch (err: any) {
-//       if (err.message === "cause") {
-//         return "hello";
-//       } else {
-//         return "world";
-//       }
-//     }
-//   }).definition;
+  const definition = new ExpressStepFunction(stack, "fn", () => {
+    try {
+      throw new Error("cause");
+    } catch (err: any) {
+      throw new CustomError("custom cause");
+    }
+  }).definition;
 
-//   expect(definition).toEqual({
-//     StartAt: "try",
-//     States: {
-//       try: {
-//         Type: "Parallel",
-//         Branches: [
-//           {
-//             StartAt: 'throw new Error("cause")',
-//             States: {
-//               'throw new Error("cause")': {
-//                 Cause: '{"message":"cause"}',
-//                 Error: "Error",
-//                 Type: "Fail",
-//               },
-//             },
-//           },
-//         ],
-//       },
-//       Success: {
-//         Type: "Succeed",
-//       },
-//       'return "hello"': {
-//         End: true,
-//         OutputPath: "$.result",
-//         Parameters: {
-//           result: "hello",
-//         },
-//         ResultPath: "$",
-//         Type: "Pass",
-//       },
-//     },
-//   });
-// });
+  expect(definition).toEqual({
+    StartAt: 'throw new Error("cause")',
+    States: {
+      'throw new Error("cause")': {
+        Type: "Pass",
+        Result: {
+          message: "cause",
+        },
+        ResultPath: "$.err",
+        Next: 'throw new CustomError("custom cause")',
+      },
+      'throw new CustomError("custom cause")': {
+        Type: "Fail",
+        Error: "CustomError",
+        Cause: '{"property":"custom cause"}',
+      },
+    },
+  });
+});
+
+test("try-catch with inner return and no catch variable", () => {
+  const { stack, computeScore } = init();
+
+  const definition = new ExpressStepFunction(stack, "fn", () => {
+    try {
+      computeScore({
+        id: "id",
+        name: "name",
+      });
+      return "hello";
+    } catch {
+      return "world";
+    }
+  }).definition;
+
+  expect(definition).toEqual({
+    StartAt: 'computeScore({id: "id", name: "name"})',
+    States: {
+      'computeScore({id: "id", name: "name"})': {
+        Type: "Task",
+
+        Parameters: {
+          FunctionName: computeScore.resource.functionName,
+          Payload: {
+            id: "id",
+            name: "name",
+          },
+        },
+        Resource: "arn:aws:states:::lambda:invoke",
+        ResultPath: null,
+        Catch: [
+          {
+            ErrorEquals: ["States.ALL"],
+            Next: 'return "world"',
+          },
+        ],
+        Next: 'return "hello"',
+      },
+      'return "hello"': {
+        End: true,
+        Result: "hello",
+        ResultPath: "$",
+        Type: "Pass",
+      },
+      'return "world"': {
+        End: true,
+        Result: "world",
+        ResultPath: "$",
+        Type: "Pass",
+      },
+    },
+  });
+});
+
+test("try-catch with inner return and a catch variable", () => {
+  const { stack, computeScore } = init();
+
+  const definition = new ExpressStepFunction(stack, "fn", () => {
+    try {
+      computeScore({
+        id: "id",
+        name: "name",
+      });
+      return "hello";
+    } catch (err: any) {
+      return err.message;
+    }
+  }).definition;
+
+  expect(definition).toEqual({
+    StartAt: 'computeScore({id: "id", name: "name"})',
+    States: {
+      'computeScore({id: "id", name: "name"})': {
+        Catch: [
+          {
+            ErrorEquals: ["States.ALL"],
+            Next: "catch(err)",
+          },
+        ],
+        Next: 'return "hello"',
+        Parameters: {
+          FunctionName: computeScore.resource.functionName,
+          Payload: {
+            id: "id",
+            name: "name",
+          },
+        },
+        Resource: "arn:aws:states:::lambda:invoke",
+        ResultPath: null,
+        Type: "Task",
+      },
+      "catch(err)": {
+        Next: "0_catch(err)",
+        Parameters: {
+          "0_ParsedError.$": "States.StringToJson($.err.Cause)",
+        },
+        ResultPath: "$.err",
+        Type: "Pass",
+      },
+      "0_catch(err)": {
+        InputPath: "$.err.0_ParsedError",
+        Next: "return err.message",
+        ResultPath: "$.err",
+        Type: "Pass",
+      },
+      'return "hello"': {
+        End: true,
+        Result: "hello",
+        ResultPath: "$",
+        Type: "Pass",
+      },
+      "return err.message": {
+        End: true,
+        OutputPath: "$.err.message",
+        Type: "Pass",
+      },
+    },
+  });
+});
+
+test("try-catch with guaranteed throw new Error", () => {
+  const { stack } = init();
+
+  const definition = new ExpressStepFunction(stack, "fn", () => {
+    try {
+      throw new Error("cause");
+    } catch (err: any) {
+      if (err.message === "cause") {
+        return "hello";
+      } else {
+        return "world";
+      }
+    }
+  }).definition;
+
+  expect(definition).toEqual({
+    StartAt: 'throw new Error("cause")',
+    States: {
+      'throw new Error("cause")': {
+        Type: "Pass",
+        Next: 'if(err.message == "cause")',
+        Result: {
+          message: "cause",
+        },
+        ResultPath: "$.err",
+      },
+      'if(err.message == "cause")': {
+        Choices: [
+          {
+            Next: 'return "hello"',
+            StringEquals: "cause",
+            Variable: "$.err.message",
+          },
+        ],
+        Default: 'return "world"',
+        Type: "Choice",
+      },
+      'return "hello"': {
+        End: true,
+        Result: "hello",
+        ResultPath: "$",
+        Type: "Pass",
+      },
+      'return "world"': {
+        End: true,
+        Result: "world",
+        ResultPath: "$",
+        Type: "Pass",
+      },
+    },
+  });
+});
+
+test("try-catch with optional throw of an Error", () => {
+  const { stack } = init();
+
+  const definition = new ExpressStepFunction(stack, "fn", (id: string) => {
+    try {
+      if (id === "hello") {
+        throw new Error("cause");
+      }
+      return "hello world";
+    } catch (err: any) {
+      if (err.message === "cause") {
+        return "hello";
+      } else {
+        return "world";
+      }
+    }
+  }).definition;
+
+  expect(definition).toEqual({
+    StartAt: 'if(id == "hello")',
+    States: {
+      'if(id == "hello")': {
+        Choices: [
+          {
+            Next: 'throw new Error("cause")',
+            StringEquals: "hello",
+            Variable: "$.id",
+          },
+        ],
+        Default: 'return "hello world"',
+        Type: "Choice",
+      },
+      'throw new Error("cause")': {
+        Next: 'if(err.message == "cause")',
+        Result: {
+          message: "cause",
+        },
+        ResultPath: "$.err",
+        Type: "Pass",
+      },
+      'if(err.message == "cause")': {
+        Choices: [
+          {
+            Next: 'return "hello"',
+            StringEquals: "cause",
+            Variable: "$.err.message",
+          },
+        ],
+        Default: 'return "world"',
+        Type: "Choice",
+      },
+      'return "hello world"': {
+        End: true,
+        Result: "hello world",
+        ResultPath: "$",
+        Type: "Pass",
+      },
+      'return "hello"': {
+        End: true,
+        Result: "hello",
+        ResultPath: "$",
+        Type: "Pass",
+      },
+      'return "world"': {
+        End: true,
+        Result: "world",
+        ResultPath: "$",
+        Type: "Pass",
+      },
+    },
+  });
+});
+
+test("try-catch with optional task", () => {
+  const { stack, computeScore } = init();
+
+  const definition = new ExpressStepFunction(stack, "fn", (id: string) => {
+    try {
+      if (id === "hello") {
+        computeScore({
+          id,
+          name: "sam",
+        });
+      }
+      return "hello world";
+    } catch (err: any) {
+      if (err.message === "cause") {
+        return "hello";
+      } else {
+        return "world";
+      }
+    }
+  }).definition;
+
+  expect(definition).toEqual({
+    StartAt: 'if(id == "hello")',
+    States: {
+      'if(id == "hello")': {
+        Choices: [
+          {
+            Next: 'computeScore({id: id, name: "sam"})',
+            StringEquals: "hello",
+            Variable: "$.id",
+          },
+        ],
+        Default: 'return "hello world"',
+        Type: "Choice",
+      },
+      'computeScore({id: id, name: "sam"})': {
+        Catch: [
+          {
+            ErrorEquals: ["States.ALL"],
+            Next: "catch(err)",
+          },
+        ],
+        Next: 'return "hello world"',
+        Parameters: {
+          FunctionName: computeScore.resource.functionName,
+          Payload: {
+            "id.$": "$.id",
+            name: "sam",
+          },
+        },
+        Resource: "arn:aws:states:::lambda:invoke",
+        ResultPath: null,
+        Type: "Task",
+      },
+      'return "hello world"': {
+        End: true,
+        Result: "hello world",
+        ResultPath: "$",
+        Type: "Pass",
+      },
+      "catch(err)": {
+        Next: "0_catch(err)",
+        Parameters: {
+          "0_ParsedError.$": "States.StringToJson($.err.Cause)",
+        },
+        ResultPath: "$.err",
+        Type: "Pass",
+      },
+      "0_catch(err)": {
+        InputPath: "$.err.0_ParsedError",
+        Next: 'if(err.message == "cause")',
+        ResultPath: "$.err",
+        Type: "Pass",
+      },
+      'if(err.message == "cause")': {
+        Choices: [
+          {
+            Next: 'return "hello"',
+            StringEquals: "cause",
+            Variable: "$.err.message",
+          },
+        ],
+        Default: 'return "world"',
+        Type: "Choice",
+      },
+      'return "hello"': {
+        End: true,
+        Result: "hello",
+        ResultPath: "$",
+        Type: "Pass",
+      },
+      'return "world"': {
+        End: true,
+        Result: "world",
+        ResultPath: "$",
+        Type: "Pass",
+      },
+    },
+  });
+});
+
+test("try-catch with optional return of task", () => {
+  const { stack, computeScore } = init();
+
+  const definition = new ExpressStepFunction(stack, "fn", (id: string) => {
+    try {
+      if (id === "hello") {
+        return computeScore({
+          id,
+          name: "sam",
+        });
+      }
+      return "hello world";
+    } catch (err: any) {
+      if (err.message === "cause") {
+        return "hello";
+      } else {
+        return "world";
+      }
+    }
+  }).definition;
+
+  expect(definition).toEqual({
+    StartAt: 'if(id == "hello")',
+    States: {
+      'if(id == "hello")': {
+        Choices: [
+          {
+            Next: 'return computeScore({id: id, name: "sam"})',
+            StringEquals: "hello",
+            Variable: "$.id",
+          },
+        ],
+        Default: 'return "hello world"',
+        Type: "Choice",
+      },
+      'return computeScore({id: id, name: "sam"})': {
+        Catch: [
+          {
+            ErrorEquals: ["States.ALL"],
+            Next: "catch(err)",
+          },
+        ],
+        End: true,
+        Parameters: {
+          FunctionName: computeScore.resource.functionName,
+          Payload: {
+            "id.$": "$.id",
+            name: "sam",
+          },
+        },
+        Resource: "arn:aws:states:::lambda:invoke",
+        ResultPath: "$",
+        Type: "Task",
+      },
+      'return "hello world"': {
+        End: true,
+        Result: "hello world",
+        ResultPath: "$",
+        Type: "Pass",
+      },
+      "catch(err)": {
+        Next: "0_catch(err)",
+        Parameters: {
+          "0_ParsedError.$": "States.StringToJson($.err.Cause)",
+        },
+        ResultPath: "$.err",
+        Type: "Pass",
+      },
+      "0_catch(err)": {
+        InputPath: "$.err.0_ParsedError",
+        Next: 'if(err.message == "cause")',
+        ResultPath: "$.err",
+        Type: "Pass",
+      },
+      'if(err.message == "cause")': {
+        Choices: [
+          {
+            Next: 'return "hello"',
+            StringEquals: "cause",
+            Variable: "$.err.message",
+          },
+        ],
+        Default: 'return "world"',
+        Type: "Choice",
+      },
+      'return "hello"': {
+        End: true,
+        Result: "hello",
+        ResultPath: "$",
+        Type: "Pass",
+      },
+      'return "world"': {
+        End: true,
+        Result: "world",
+        ResultPath: "$",
+        Type: "Pass",
+      },
+    },
+  });
+});
+
+test("nested try-catch", () => {
+  const { stack } = init();
+
+  const definition = new ExpressStepFunction(stack, "fn", () => {
+    try {
+      try {
+        throw new Error("error1");
+      } catch {
+        throw new Error("error2");
+      }
+    } catch {
+      throw new Error("error3");
+    }
+  }).definition;
+
+  expect(definition).toEqual({
+    StartAt: 'throw new Error("error1")',
+    States: {
+      'throw new Error("error1")': {
+        Next: 'throw new Error("error2")',
+        Result: {
+          message: "error1",
+        },
+        ResultPath: null,
+        Type: "Pass",
+      },
+      'throw new Error("error2")': {
+        Next: 'throw new Error("error3")',
+        Result: {
+          message: "error2",
+        },
+        ResultPath: null,
+        Type: "Pass",
+      },
+      'throw new Error("error3")': {
+        Cause: '{"message":"error3"}',
+        Error: "Error",
+        Type: "Fail",
+      },
+    },
+  });
+});
