@@ -2,7 +2,7 @@ import { aws_events, aws_events_targets } from "aws-cdk-lib";
 import { Construct } from "constructs";
 import { FunctionDecl } from "../declaration";
 import { synthesizeEventPattern } from "./eventpattern";
-import { Function } from "../function";
+import { Function, isFunction } from "../function";
 import { synthesizeEventBridgeTargets } from "./targets";
 
 export interface EventBusRuleInput<
@@ -25,7 +25,7 @@ export type EventPredicateFunction<
 
 export type LambdaTargetProps<P> = {
   func: Function<P, any>;
-} & Exclude<aws_events_targets.LambdaFunctionProps, "event">;
+} & Omit<aws_events_targets.LambdaFunctionProps, "event">;
 
 export type EventBusTargetProps<P extends EventBusRuleInput> = {
   bus: EventBus<P>;
@@ -51,21 +51,14 @@ export class EventBusTransform<T extends EventBusRuleInput, P> {
   pipe<P>(props: LambdaTargetProps<P>): void;
   pipe<P>(func: Function<P, any>): void;
   pipe<P>(resource: Function<P, any> | LambdaTargetProps<P>): void {
-    const _props = resource instanceof Function ? { func: resource } : resource;
-
-    this.rule.rule.addTarget(
-      new aws_events_targets.LambdaFunction(_props.func.resource, {
-        deadLetterQueue: _props.deadLetterQueue,
-        maxEventAge: _props.maxEventAge,
-        retryAttempts: _props.retryAttempts,
-        event: this.targetInput,
-      })
-    );
+    pipe(this.rule.rule, resource, this.targetInput);
   }
 }
 
 export class EventBusRule<T extends EventBusRuleInput> extends Construct {
   public readonly rule: aws_events.Rule;
+
+  public static readonly FunctionlessType = "EventBusRule";
 
   constructor(
     scope: Construct,
@@ -88,11 +81,11 @@ export class EventBusRule<T extends EventBusRuleInput> extends Construct {
     return new EventBusTransform<T, P>(transform, this);
   }
 
-  pipe<P>(props: LambdaTargetProps<P>): void;
-  pipe<P>(func: Function<P, any>): void;
+  pipe(props: LambdaTargetProps<T>): void;
+  pipe(func: Function<T, any>): void;
   pipe(bus: EventBus<T>): void;
   pipe(props: EventBusTargetProps<T>): void;
-  pipe<P>(resource: EvnetBusTargetResource<T, P>): void {
+  pipe(resource: EvnetBusTargetResource<T, T>): void {
     pipe(this.rule, resource);
   }
 }
@@ -115,8 +108,8 @@ const pipe = <T extends EventBusRuleInput, P>(
   resource: EvnetBusTargetResource<T, P>,
   targetInput?: aws_events.RuleTargetInput
 ) => {
-  if (resource instanceof Function || "func" in resource) {
-    const _props = resource instanceof Function ? { func: resource } : resource;
+  if (isFunction(resource) || "func" in resource) {
+    const _props = isFunction(resource) ? { func: resource } : resource;
 
     return rule.addTarget(
       new aws_events_targets.LambdaFunction(_props.func.resource, {

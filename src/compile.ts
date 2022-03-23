@@ -4,6 +4,8 @@ import { BinaryOp } from "./expression";
 import { AnyTable } from "./table";
 import { AnyLambda } from "./function";
 import { FunctionlessNode } from "./node";
+import { EventBus, EventBusRule } from "./eventbridge";
+import { AppsyncResolver } from "./appsync";
 export default compile;
 
 /**
@@ -55,26 +57,91 @@ export function compile(
       );
 
       function visitor(node: ts.Node): ts.Node {
-        if (isAppsyncResolver(node)) {
-          return visitAppsyncResolver(node);
-        } else if (isReflectFunction(node)) {
-          return toFunction("FunctionDecl", node.arguments[0]);
-        }
-        return ts.visitEachChild(node, visitor, ctx);
+        const _visit = () => {
+          if (isAppsyncResolver(node)) {
+            return visitAppsyncResolver(node);
+          } else if (isReflectFunction(node)) {
+            return toFunction("FunctionDecl", node.arguments[0]);
+          } else if (isEventBusWhenFunction(node)) {
+            return visitEventBusWhen(node);
+          } else if (isEventBusMapFunction(node)) {
+            return visitEventBusMap(node);
+          }
+          return node;
+        };
+        // keep processing the children of the updated node.
+        return ts.visitEachChild(_visit(), visitor, ctx);
+      }
+
+      /**
+       * Various types that could be in a call argument position of a function parameter.
+       */
+      type TsFunctionParameter =
+        | ts.FunctionExpression
+        | ts.ArrowFunction
+        | ts.Identifier
+        | ts.PropertyAccessExpression
+        | ts.ElementAccessExpression
+        | ts.CallExpression;
+
+      type EventBusWhenInterface = ts.CallExpression & {
+        arguments: [any, any, TsFunctionParameter];
+      };
+
+      type EventBusMapInterface = ts.CallExpression & {
+        arguments: [TsFunctionParameter];
+      };
+
+      function isEventBusWhenFunction(
+        node: ts.Node
+      ): node is EventBusWhenInterface {
+        return (
+          ts.isCallExpression(node) &&
+          ts.isPropertyAccessExpression(node.expression) &&
+          node.expression.name.text === "when" &&
+          isEventBus(node.expression.expression)
+        );
+      }
+
+      function isEventBusMapFunction(
+        node: ts.Node
+      ): node is EventBusMapInterface {
+        return (
+          ts.isCallExpression(node) &&
+          ts.isPropertyAccessExpression(node.expression) &&
+          node.expression.name.text === "map" &&
+          isEventBusRule(node.expression.expression)
+        );
+      }
+
+      /**
+       * Checks to see if a node is of type EventBus.
+       * The node could be any kind of node that returns an event bus rule.
+       */
+      function isEventBus(node: ts.Node) {
+        return isFunctionlessClassOfKind(node, EventBus.FunctionlessType);
+      }
+
+      /**
+       * Checks to see if a node is of type EventBusRule.
+       * The node could be any kind of node that returns an event bus rule.
+       */
+      function isEventBusRule(node: ts.Node) {
+        return isFunctionlessClassOfKind(node, EventBusRule.FunctionlessType);
+      }
+
+      function isFunctionlessClassOfKind(node: ts.Node, kind: string) {
+        const type = checker.getTypeAtLocation(node);
+        const exprDecl = type.symbol?.declarations?.[0];
+        return (
+          !!exprDecl &&
+          ts.isClassDeclaration(exprDecl) &&
+          getFunctionlessKind(exprDecl) === kind
+        );
       }
 
       function isReflectFunction(node: ts.Node): node is ts.CallExpression & {
-        arguments: [
-          (
-            | ts.FunctionExpression
-            | ts.ArrowFunction
-            | ts.Identifier
-            | ts.PropertyAccessExpression
-            | ts.ElementAccessExpression
-            | ts.CallExpression
-          ),
-          ...ts.Expression[]
-        ];
+        arguments: [TsFunctionParameter, ...ts.Expression[]];
       } {
         if (ts.isCallExpression(node)) {
           const exprType = checker.getTypeAtLocation(node.expression);
@@ -90,11 +157,10 @@ export function compile(
 
       function isAppsyncResolver(node: ts.Node): node is ts.NewExpression {
         if (ts.isNewExpression(node)) {
-          const exprType = checker.getTypeAtLocation(node.expression);
-          const exprDecl = exprType.symbol?.declarations?.[0];
-          if (exprDecl && ts.isClassDeclaration(exprDecl)) {
-            return getFunctionlessKind(exprDecl) === "AppsyncResolver";
-          }
+          return isFunctionlessClassOfKind(
+            node.expression,
+            AppsyncResolver.FunctionlessType
+          );
         }
         return false;
       }
@@ -124,6 +190,28 @@ export function compile(
         return undefined;
       }
 
+      function visitEventBusWhen(call: EventBusWhenInterface): ts.Node {
+        const [one, two, impl] = call.arguments;
+
+        return ts.factory.updateCallExpression(
+          call,
+          call.expression,
+          call.typeArguments,
+          [one, two, toFunction("FunctionDecl", impl)]
+        );
+      }
+
+      function visitEventBusMap(call: EventBusMapInterface): ts.Node {
+        const [impl] = call.arguments;
+
+        return ts.factory.updateCallExpression(
+          call,
+          call.expression,
+          call.typeArguments,
+          [toFunction("FunctionDecl", impl)]
+        );
+      }
+
       function visitAppsyncResolver(call: ts.NewExpression): ts.Node {
         if (call.arguments?.length === 1) {
           const impl = call.arguments[0];
@@ -141,7 +229,7 @@ export function compile(
 
       function toFunction(
         type: "FunctionDecl" | "FunctionExpr",
-        impl: ts.Node,
+        impl: TsFunctionParameter,
         dropArgs?: number
       ): ts.Expression {
         if (

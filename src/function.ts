@@ -5,7 +5,7 @@ import { VTL } from "./vtl";
 // @ts-ignore - imported for typedoc
 import type { AppsyncResolver } from "./appsync";
 
-export function isFunction(a: any): a is Function<any, any> {
+export function isFunction<P = any, O = any>(a: any): a is Function<P, O> {
   return a?.kind === "Function";
 }
 
