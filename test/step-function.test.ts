@@ -929,6 +929,84 @@ test("throw new CustomError", () => {
   });
 });
 
+test("try, throw, empty catch", () => {
+  const { stack } = init();
+
+  const definition = new ExpressStepFunction(stack, "fn", () => {
+    try {
+      throw new CustomError("cause");
+    } catch {}
+  }).definition;
+
+  expect(definition).toEqual({
+    StartAt: 'throw new CustomError("cause")',
+    States: {
+      'throw new CustomError("cause")': {
+        Next: "return null",
+        Result: {
+          property: "cause",
+        },
+        ResultPath: null,
+        Type: "Pass",
+      },
+      "return null": {
+        End: true,
+        OutputPath: "$.null",
+        Parameters: {
+          null: null,
+        },
+        Type: "Pass",
+      },
+    },
+  });
+});
+
+test("try, task, empty catch", () => {
+  const { stack, computeScore } = init();
+
+  const definition = new ExpressStepFunction(stack, "fn", () => {
+    try {
+      computeScore({
+        id: "id",
+        name: "name",
+      });
+    } catch {}
+  }).definition;
+
+  expect(definition).toEqual({
+    StartAt: 'computeScore({id: "id", name: "name"})',
+    States: {
+      'computeScore({id: "id", name: "name"})': {
+        Catch: [
+          {
+            ErrorEquals: ["States.ALL"],
+            Next: "return null",
+          },
+        ],
+        Next: "return null",
+        Parameters: {
+          FunctionName: computeScore.resource.functionName,
+          Payload: {
+            id: "id",
+            name: "name",
+          },
+        },
+        Resource: "arn:aws:states:::lambda:invoke",
+        ResultPath: null,
+        Type: "Task",
+      },
+      "return null": {
+        End: true,
+        OutputPath: "$.null",
+        Parameters: {
+          null: null,
+        },
+        Type: "Pass",
+      },
+    },
+  });
+});
+
 test("catch and throw new Error", () => {
   const { stack } = init();
 
@@ -1446,6 +1524,104 @@ test("nested try-catch", () => {
         Cause: '{"message":"error3"}',
         Error: "Error",
         Type: "Fail",
+      },
+    },
+  });
+});
+
+test("throw in for-of", () => {
+  const { stack } = init();
+
+  const definition = new ExpressStepFunction(stack, "fn", (items: string[]) => {
+    // @ts-ignore
+    for (const item of items) {
+      throw new Error("err");
+    }
+  }).definition;
+
+  expect(definition).toEqual({
+    StartAt: "for(item of items)",
+    States: {
+      "for(item of items)": {
+        ItemsPath: "$.items",
+        Iterator: {
+          StartAt: 'throw new Error("err")',
+          States: {
+            'throw new Error("err")': {
+              Cause: '{"message":"err"}',
+              Error: "Error",
+              Type: "Fail",
+            },
+          },
+        },
+        MaxConcurrency: 1,
+        Next: "return null",
+        Parameters: {
+          "item.$": "$$.Map.Item.Value",
+        },
+        ResultPath: null,
+        Type: "Map",
+      },
+      "return null": {
+        End: true,
+        OutputPath: "$.null",
+        Parameters: {
+          null: null,
+        },
+        Type: "Pass",
+      },
+    },
+  });
+});
+
+test("try-catch surrounding throw in for-of", () => {
+  const { stack } = init();
+
+  const definition = new ExpressStepFunction(
+    stack,
+    "fn",
+    (items: string[]): string | void => {
+      try {
+        // @ts-ignore
+        for (const item of items) {
+          throw new Error("err");
+        }
+      } catch {
+        return "hello";
+      }
+    }
+  ).definition;
+
+  expect(definition).toEqual({
+    StartAt: "for(item of items)",
+    States: {
+      "for(item of items)": {
+        ItemsPath: "$.items",
+        Iterator: {
+          StartAt: 'throw new Error("err")',
+          States: {
+            'throw new Error("err")': {
+              Cause: '{"message":"err"}',
+              Error: "Error",
+              Type: "Fail",
+            },
+          },
+        },
+        MaxConcurrency: 1,
+        Next: "return null",
+        Parameters: {
+          "item.$": "$$.Map.Item.Value",
+        },
+        ResultPath: null,
+        Type: "Map",
+      },
+      "return null": {
+        End: true,
+        OutputPath: "$.null",
+        Parameters: {
+          null: null,
+        },
+        Type: "Pass",
       },
     },
   });

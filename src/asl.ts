@@ -526,7 +526,11 @@ export class ASL {
   private stepTo(stmt: Stmt): string {
     if (stmt.kind === "BlockStmt") {
       if (stmt.isEmpty()) {
-        throw new Error(`a BlockStmt must have at least one statement`);
+        const next = this.next(stmt as any)!;
+        if (next === undefined) {
+          throw new Error(`a BlockStmt must have at least one statement`);
+        }
+        return next;
       }
       return this.stepTo(stmt.firstStmt);
     } else if (stmt.kind === "TryStmt") {
