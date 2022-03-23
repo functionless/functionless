@@ -1,5 +1,5 @@
-import { Decl } from "./declaration";
-import { Expr } from "./expression";
+import type { Decl } from "./declaration";
+import type { Expr } from "./expression";
 import type { CatchClause, Stmt } from "./statement";
 
 export type FunctionlessNode = Decl | Expr | Stmt;
