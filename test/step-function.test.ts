@@ -887,6 +887,121 @@ test("conditionally call DynamoDB and then void", () => {
   expect(definition).toEqual(expected);
 });
 
+test("waitFor literal number of seconds", () => {
+  const { stack } = init();
+
+  const definition = new ExpressStepFunction(stack, "fn", (): string | void => {
+    $SFN.waitFor(1);
+  }).definition;
+
+  expect(definition).toEqual({
+    StartAt: "$SFN.waitFor(1)",
+    States: {
+      "$SFN.waitFor(1)": {
+        Next: "return null",
+        Seconds: 1,
+        Type: "Wait",
+      },
+      "return null": {
+        End: true,
+        OutputPath: "$.null",
+        Parameters: {
+          null: null,
+        },
+        Type: "Pass",
+      },
+    },
+  });
+});
+
+test("waitFor reference number of seconds", () => {
+  const { stack } = init();
+
+  const definition = new ExpressStepFunction(
+    stack,
+    "fn",
+    (seconds: number): string | void => {
+      $SFN.waitFor(seconds);
+    }
+  ).definition;
+
+  expect(definition).toEqual({
+    StartAt: "$SFN.waitFor(seconds)",
+    States: {
+      "$SFN.waitFor(seconds)": {
+        Next: "return null",
+        SecondsPath: "$.seconds",
+        Type: "Wait",
+      },
+      "return null": {
+        End: true,
+        OutputPath: "$.null",
+        Parameters: {
+          null: null,
+        },
+        Type: "Pass",
+      },
+    },
+  });
+});
+test("waitFor literal timestamp", () => {
+  const { stack } = init();
+
+  const definition = new ExpressStepFunction(stack, "fn", (): string | void => {
+    $SFN.waitUntil("2022-08-01T00:00:00Z");
+  }).definition;
+
+  expect(definition).toEqual({
+    StartAt: '$SFN.waitUntil("2022-08-01T00:00:00Z")',
+    States: {
+      '$SFN.waitUntil("2022-08-01T00:00:00Z")': {
+        Next: "return null",
+        Timestamp: "2022-08-01T00:00:00Z",
+        Type: "Wait",
+      },
+      "return null": {
+        End: true,
+        OutputPath: "$.null",
+        Parameters: {
+          null: null,
+        },
+        Type: "Pass",
+      },
+    },
+  });
+});
+
+test("waitUntil reference timestamp", () => {
+  const { stack } = init();
+
+  const definition = new ExpressStepFunction(
+    stack,
+    "fn",
+    (until: string): string | void => {
+      $SFN.waitUntil(until);
+    }
+  ).definition;
+
+  expect(definition).toEqual({
+    StartAt: "$SFN.waitUntil(until)",
+    States: {
+      "$SFN.waitUntil(until)": {
+        Next: "return null",
+        TimestampPath: "$.until",
+        Type: "Wait",
+      },
+      "return null": {
+        End: true,
+        OutputPath: "$.null",
+        Parameters: {
+          null: null,
+        },
+        Type: "Pass",
+      },
+    },
+  });
+});
+
 test("throw new Error", () => {
   const { stack } = init();
 
@@ -1719,115 +1834,47 @@ test("try-catch, err variable, contains for-of, throw", () => {
   });
 });
 
-test("waitFor literal number of seconds", () => {
-  const { stack } = init();
+test("try-catch-finally", () => {
+  const { stack, computeScore } = init();
 
   const definition = new ExpressStepFunction(stack, "fn", (): string | void => {
-    $SFN.waitFor(1);
+    try {
+      computeScore({
+        id: "id",
+        name: "name",
+      });
+    } catch {
+    } finally {
+      return "hello";
+    }
   }).definition;
 
   expect(definition).toEqual({
-    StartAt: "$SFN.waitFor(1)",
+    StartAt: 'computeScore({id: "id", name: "name"})',
     States: {
-      "$SFN.waitFor(1)": {
-        Next: "return null",
-        Seconds: 1,
-        Type: "Wait",
-      },
-      "return null": {
-        End: true,
-        OutputPath: "$.null",
+      'computeScore({id: "id", name: "name"})': {
+        Catch: [
+          {
+            ErrorEquals: ["States.ALL"],
+            Next: 'return "hello"',
+          },
+        ],
+        Next: 'return "hello"',
         Parameters: {
-          null: null,
+          FunctionName: computeScore.resource.functionName,
+          Payload: {
+            id: "id",
+            name: "name",
+          },
         },
-        Type: "Pass",
+        Resource: "arn:aws:states:::lambda:invoke",
+        ResultPath: null,
+        Type: "Task",
       },
-    },
-  });
-});
-
-test("waitFor reference number of seconds", () => {
-  const { stack } = init();
-
-  const definition = new ExpressStepFunction(
-    stack,
-    "fn",
-    (seconds: number): string | void => {
-      $SFN.waitFor(seconds);
-    }
-  ).definition;
-
-  expect(definition).toEqual({
-    StartAt: "$SFN.waitFor(seconds)",
-    States: {
-      "$SFN.waitFor(seconds)": {
-        Next: "return null",
-        SecondsPath: "$.seconds",
-        Type: "Wait",
-      },
-      "return null": {
+      'return "hello"': {
         End: true,
-        OutputPath: "$.null",
-        Parameters: {
-          null: null,
-        },
-        Type: "Pass",
-      },
-    },
-  });
-});
-test("waitFor literal timestamp", () => {
-  const { stack } = init();
-
-  const definition = new ExpressStepFunction(stack, "fn", (): string | void => {
-    $SFN.waitUntil("2022-08-01T00:00:00Z");
-  }).definition;
-
-  expect(definition).toEqual({
-    StartAt: '$SFN.waitUntil("2022-08-01T00:00:00Z")',
-    States: {
-      '$SFN.waitUntil("2022-08-01T00:00:00Z")': {
-        Next: "return null",
-        Timestamp: "2022-08-01T00:00:00Z",
-        Type: "Wait",
-      },
-      "return null": {
-        End: true,
-        OutputPath: "$.null",
-        Parameters: {
-          null: null,
-        },
-        Type: "Pass",
-      },
-    },
-  });
-});
-
-test("waitUntil reference timestamp", () => {
-  const { stack } = init();
-
-  const definition = new ExpressStepFunction(
-    stack,
-    "fn",
-    (until: string): string | void => {
-      $SFN.waitUntil(until);
-    }
-  ).definition;
-
-  expect(definition).toEqual({
-    StartAt: "$SFN.waitUntil(until)",
-    States: {
-      "$SFN.waitUntil(until)": {
-        Next: "return null",
-        TimestampPath: "$.until",
-        Type: "Wait",
-      },
-      "return null": {
-        End: true,
-        OutputPath: "$.null",
-        Parameters: {
-          null: null,
-        },
+        Result: "hello",
+        ResultPath: "$",
         Type: "Pass",
       },
     },

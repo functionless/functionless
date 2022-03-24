@@ -91,11 +91,8 @@ export type BlockStmtParent =
   | CatchClause;
 
 export class BlockStmt extends BaseStmt<"BlockStmt", BlockStmtParent> {
-  readonly empty: boolean;
-
   constructor(readonly statements: Stmt[]) {
     super("BlockStmt");
-    this.empty = statements.length === 0;
     statements.forEach((stmt, i) => {
       stmt.setParent(this as never);
       stmt.prev = i > 0 ? statements[i - 1] : undefined;
@@ -104,24 +101,22 @@ export class BlockStmt extends BaseStmt<"BlockStmt", BlockStmtParent> {
   }
 
   public isEmpty(): this is {
-    empty: true;
     readonly statements: [];
   } {
     return this.statements.length === 0;
   }
 
   public isNotEmpty(): this is {
-    empty: false;
     readonly statements: [Stmt, ...Stmt[]];
   } {
     return this.statements.length > 0;
   }
 
-  public get firstStmt(): this["statements"][0] {
+  public get firstStmt(): Stmt | undefined {
     return this.statements[0];
   }
 
-  public get lastStmt(): this["empty"] extends true ? undefined : Stmt {
+  public get lastStmt(): Stmt | undefined {
     if (this.isEmpty()) {
       return undefined!;
     } else {

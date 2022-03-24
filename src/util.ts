@@ -183,7 +183,7 @@ export function isTerminal(stmt: Stmt): boolean {
     if (stmt.isEmpty()) {
       return false;
     } else {
-      return isTerminal(stmt.lastStmt);
+      return isTerminal(stmt.lastStmt!);
     }
   } else if (stmt.kind === "IfStmt") {
     return (

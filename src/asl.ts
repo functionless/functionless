@@ -12,12 +12,11 @@ import {
 } from "./expression";
 import {
   BlockStmt,
-  ForInStmt,
-  ForOfStmt,
   IfStmt,
   isCatchClause,
   isForInStmt,
   isForOfStmt,
+  isStmt,
   isTryStmt,
   ReturnStmt,
   Stmt,
@@ -349,7 +348,10 @@ export class ASL {
 
     const states = this.execute(this.decl.body);
 
-    const start = this.stepTo(this.decl.body);
+    const start = this.stepIn(this.decl.body);
+    if (start === undefined) {
+      throw new Error(`State Machine has no States`);
+    }
 
     this.definition = {
       StartAt: start,
@@ -384,24 +386,16 @@ export class ASL {
         }
       }, {});
     } else if (stmt.kind === "BreakStmt") {
+      const loop = stmt.findParent(anyOf(isForOfStmt, isForInStmt));
+      if (loop === undefined) {
+        throw new Error(`Stack Underflow`);
+      }
       return {
         [this.getStateName(stmt)]: {
           Type: "Pass",
-          Next: this.next(findLoop(stmt)),
+          Next: this.next(loop),
         },
       };
-      function findLoop(
-        node: FunctionlessNode | undefined
-      ): ForOfStmt | ForInStmt {
-        if (node === undefined) {
-          throw new Error(`Stack Underflow`);
-        }
-        if (node.kind === "ForOfStmt" || node.kind === "ForInStmt") {
-          return node;
-        } else {
-          return findLoop(node.parent);
-        }
-      }
     } else if (stmt.kind === "ExprStmt") {
       return {
         [this.getStateName(stmt)]: this.eval(stmt.expr, {
@@ -429,7 +423,7 @@ export class ASL {
                 [
                   {
                     ErrorEquals: ["States.ALL"],
-                    Next: this.stepTo(errorScope.catchClause),
+                    Next: this.stepIn(errorScope.catchClause)!,
                     ResultPath: errorScope.catchClause.variableDecl
                       ? `$.${errorScope.catchClause.variableDecl.name}`
                       : null,
@@ -559,7 +553,7 @@ export class ASL {
               }),
               {}
             ),
-            Next: this.stepTo(catchClause),
+            Next: this.stepIn(catchClause),
             ResultPath: catchClause.variableDecl
               ? `$.${catchClause.variableDecl.name}`
               : null,
@@ -602,7 +596,7 @@ export class ASL {
                 Type: "Pass",
                 InputPath: `$.${stmt.catchClause.variableDecl.name}.0_ParsedError`,
                 ResultPath: `$.${stmt.catchClause.variableDecl.name}`,
-                Next: this.getStateName(stmt.catchClause.block.firstStmt),
+                Next: this.getStateName(stmt.catchClause.block.firstStmt!),
               },
             }
           : {}),
@@ -621,28 +615,54 @@ export class ASL {
    * @param stmt the {@link Stmt} to step into,
    * @returns the name of the State representing the beginning of this {@link stmt}.
    */
-  private stepTo(stmt: Stmt): string {
-    if (stmt.kind === "BlockStmt") {
+  private stepIn(stmt: Stmt): string | undefined {
+    if (stmt.kind === "TryStmt") {
+      return this.stepIn(stmt.tryBlock);
+    } else if (stmt.kind === "BlockStmt") {
       if (stmt.isEmpty()) {
-        const next = this.next(stmt as any)!;
-        if (next === undefined) {
-          throw new Error(`a BlockStmt must have at least one statement`);
-        }
-        return next;
+        return this.stepOut(stmt);
+      } else {
+        return this.stepIn(stmt.firstStmt!);
       }
-      return this.stepTo(stmt.firstStmt);
-    } else if (stmt.kind === "TryStmt") {
-      return this.stepTo(stmt.tryBlock);
     } else if (stmt.kind === "CatchClause") {
       const { hasTask } = analyzeFlow(stmt.parent);
       if (hasTask && stmt.variableDecl) {
-        return this.stepTo(stmt.variableDecl);
+        return this.stepIn(stmt.variableDecl);
       } else {
-        return this.stepTo(stmt.block);
+        return this.stepIn(stmt.block);
       }
     } else {
       return this.getStateName(stmt);
     }
+  }
+
+  private stepOut(node: FunctionlessNode): string | undefined {
+    if (isStmt(node) && node.next) {
+      return this.stepIn(node.next);
+    }
+    const scope = node.parent;
+    if (scope === undefined) {
+      return undefined;
+    } else if (scope.kind === "TryStmt") {
+      if (scope.tryBlock === node) {
+      } else if (scope.finallyBlock === node) {
+        // stepping out of the finallyBlock
+        if (scope.next) {
+          return this.stepIn(scope.next);
+        } else {
+          return this.stepOut(scope);
+        }
+      }
+    } else if (scope.kind === "CatchClause") {
+      if (scope.parent.finallyBlock) {
+        return this.stepIn(scope.parent.finallyBlock);
+      } else {
+        return this.stepOut(scope.parent);
+      }
+    } else if (isStmt(scope) && scope.next) {
+      return this.stepIn(scope.next);
+    }
+    return this.stepOut(scope);
   }
 
   /**
@@ -652,7 +672,7 @@ export class ASL {
     if (node.kind === "ReturnStmt") {
       return this.return(node);
     } else if (node.next) {
-      return this.stepTo(node.next);
+      return this.stepIn(node.next);
     } else if (node.kind === "TryStmt" && isTerminal(node)) {
       return undefined;
     } else if (node.parent?.kind === "BlockStmt") {
@@ -670,7 +690,7 @@ export class ASL {
         if (block === scope.tryBlock) {
           // need to move to the finally block
           if (scope.finallyBlock?.isNotEmpty()) {
-            return this.stepTo(scope.finallyBlock);
+            return this.stepIn(scope.finallyBlock);
           }
           return this.next(scope);
         } else if (block === scope.finallyBlock) {
@@ -682,7 +702,7 @@ export class ASL {
       } else if (scope.kind === "CatchClause") {
         const tryStmt = scope.parent;
         if (tryStmt.finallyBlock?.isNotEmpty()) {
-          return this.stepTo(tryStmt.finallyBlock);
+          return this.stepIn(tryStmt.finallyBlock);
         }
         return this.next(scope);
       } else {
@@ -700,7 +720,7 @@ export class ASL {
     if (node === undefined) {
       throw new Error(`Stack Underflow`);
     } else if (node.kind === "FunctionDecl" || node.kind === "FunctionExpr") {
-      return this.getStateName(node.body.lastStmt);
+      return this.getStateName(node.body.lastStmt!);
     } else if (node.kind === "ForInStmt" || node.kind === "ForOfStmt") {
       return this.getStateName(node);
     } else {
@@ -735,24 +755,30 @@ export class ASL {
             ...props,
           };
         }
-        const task = serviceCall(expr, this);
+
+        const taskState = {
+          ...serviceCall(expr, this),
+          ...props,
+        };
 
         const catchClause = expr.findCatchClause();
-
-        return {
-          ...task,
-          ...props,
-          ...(catchClause
-            ? {
-                Catch: [
-                  {
-                    ErrorEquals: ["States.ALL"],
-                    Next: this.stepTo(catchClause),
-                  },
-                ],
-              }
-            : {}),
-        };
+        if (catchClause) {
+          const next = this.stepIn(catchClause);
+          if (next === undefined) {
+            throw new Error(`CatchClause with no Next state`);
+          }
+          return {
+            ...taskState,
+            Catch: [
+              {
+                ErrorEquals: ["States.ALL"],
+                Next: next,
+              },
+            ],
+          };
+        } else {
+          return taskState;
+        }
       }
       throw new Error(`call must be a service call, ${expr}`);
     } else if (isVariableReference(expr)) {
