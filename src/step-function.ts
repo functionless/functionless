@@ -11,7 +11,7 @@ import {
 } from "aws-cdk-lib";
 
 import { FunctionDecl, isFunctionDecl } from "./declaration";
-import { ASL, isASL, StateMachine, States } from "./asl";
+import { ASL, isASL, StateMachine, States, Wait } from "./asl";
 import { isVTL, VTL } from "./vtl";
 import { makeCallable } from "./callable";
 import { CallExpr } from "./expression";
@@ -27,6 +27,73 @@ export type AnyStepFunction =
 //     return [];
 //   }
 // }
+
+export namespace $SFN {
+  export const kind = "SFN";
+  /**
+   * Wait for a specific number of {@link seconds}.
+   *
+   * @see https://docs.aws.amazon.com/step-functions/latest/dg/amazon-states-language-wait-state.html
+   */
+  // @ts-ignore
+  export function waitFor(seconds: number): void;
+
+  export function waitFor(call: CallExpr, context: VTL | ASL): Wait {
+    if (context.kind !== ASL.ContextName) {
+      throw new Error(
+        `$SFN.wait is only available in the ${ASL.ContextName} context`
+      );
+    }
+    const seconds = call.args.seconds;
+    if (seconds === undefined) {
+      throw new Error(`the 'seconds' argument is required`);
+    }
+
+    if (seconds.kind === "NumberLiteralExpr") {
+      return {
+        Type: "Wait",
+        Seconds: seconds.value,
+      };
+    } else {
+      return {
+        Type: "Wait",
+        SecondsPath: ASL.toJsonPath(seconds),
+      };
+    }
+  }
+
+  /**
+   * Wait until a {@link timestamp}.
+   *
+   * @see https://docs.aws.amazon.com/step-functions/latest/dg/amazon-states-language-wait-state.html
+   */
+  // @ts-ignore
+  export function waitUntil(timestamp: string): void;
+
+  export function waitUntil(call: CallExpr, context: VTL | ASL): Wait {
+    if (context.kind !== ASL.ContextName) {
+      throw new Error(
+        `$SFN.wait is only available in the ${ASL.ContextName} context`
+      );
+    }
+    const timestamp = call.args.timestamp;
+    if (timestamp === undefined) {
+      throw new Error(`the 'timestamp' argument is required`);
+    }
+
+    if (timestamp.kind === "StringLiteralExpr") {
+      return {
+        Type: "Wait",
+        Timestamp: timestamp.value,
+      };
+    } else {
+      return {
+        Type: "Wait",
+        TimestampPath: ASL.toJsonPath(timestamp),
+      };
+    }
+  }
+}
 
 abstract class BaseStepFunction<F extends AnyFunction>
   extends Resource

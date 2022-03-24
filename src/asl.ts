@@ -15,10 +15,15 @@ import {
   ForInStmt,
   ForOfStmt,
   IfStmt,
+  isCatchClause,
+  isForInStmt,
+  isForOfStmt,
+  isTryStmt,
   ReturnStmt,
   Stmt,
 } from "./statement";
 import {
+  anyOf,
   findFunction,
   getLexicalScope,
   isTerminal,
@@ -27,7 +32,6 @@ import {
 import { FunctionDecl } from "./declaration";
 import { FunctionlessNode } from "./node";
 import { visitEachChild } from "./visit";
-import { collect } from "./collect";
 
 export function isASL(a: any): a is ASL {
   return (a as ASL | undefined)?.kind === ASL.ContextName;
@@ -44,27 +48,81 @@ export interface States {
   [stateName: string]: State;
 }
 export type State =
-  | Succeed
-  | Fail
   | Choice
-  | Task
-  | Pass
+  | Fail
   | MapTask
-  | ParallelTask;
+  | ParallelTask
+  | Pass
+  | Succeed
+  | Task
+  | Wait;
 export type TerminalState = Succeed | Fail | Extract<State, { End: true }>;
 
-export interface Succeed {
-  Type: "Succeed";
+/**
+ * @see https://docs.aws.amazon.com/step-functions/latest/dg/amazon-states-language-common-fields.html
+ */
+export interface CommonFields {
+  /**
+   * The name of the next state that is run when the current state finishes. Some state types, such as Choice, allow multiple transition states.
+   */
+  Next?: string;
+  /**
+   * Designates this state as a terminal state (ends the execution) if set to true. There can be any number of terminal states per state machine. Only one of Next or End can be used in a state. Some state types, such as Choice, don't support or use the End field.
+   */
+  End?: boolean;
+  /**
+   * Holds a human-readable description of the state.
+   */
   Comment?: string;
+  /**
+   * A path that selects a portion of the state's input to be passed to the state's task for processing. If omitted, it has the value $ which designates the entire input. For more information, see Input and Output Processing).
+   */
   InputPath?: string;
+  /**
+   * A path that selects a portion of the state's input to be passed to the state's output. If omitted, it has the value $ which designates the entire input. For more information, see Input and Output Processing.
+   */
   OutputPath?: string;
 }
 
-export interface Fail {
+/**
+ * @see https://docs.aws.amazon.com/step-functions/latest/dg/amazon-states-language-succeed-state.html
+ */
+export interface Succeed extends Omit<CommonFields, "Next" | "End"> {
+  Type: "Succeed";
+}
+
+/**
+ * @see https://docs.aws.amazon.com/step-functions/latest/dg/amazon-states-language-fail-state.html
+ */
+export interface Fail extends Pick<CommonFields, "Comment"> {
   Type: "Fail";
-  Comment?: string;
   Error?: string;
   Cause?: string;
+}
+
+/**
+ * @see https://docs.aws.amazon.com/step-functions/latest/dg/amazon-states-language-wait-state.html
+ */
+export interface Wait extends CommonFields {
+  Type: "Wait";
+  /**
+   * A time, in seconds, to wait before beginning the state specified in the Next field.
+   */
+  Seconds?: number;
+  /**
+   * An absolute time to wait until beginning the state specified in the Next field.
+   *
+   * Timestamps must conform to the RFC3339 profile of ISO 8601, with the further restrictions that an uppercase T must separate the date and time portions, and an uppercase Z must denote that a numeric time zone offset is not present, for example, 2016-08-18T17:33:00Z.
+   */
+  Timestamp?: string;
+  /**
+   * A time, in seconds, to wait before beginning the state specified in the Next field, specified using a path from the state's input data.
+   */
+  SecondsPath?: string;
+  /**
+   * An absolute time to wait until beginning the state specified in the Next field, specified using a path from the state's input data.
+   */
+  TimestampPath?: string;
 }
 
 export type Parameters =
@@ -77,36 +135,56 @@ export type Parameters =
       [name: string]: Parameters;
     };
 
-export interface Nextable {
-  End?: true;
-  Next?: string;
-}
-
-export interface Pass {
+/**
+ * @see https://docs.aws.amazon.com/step-functions/latest/dg/amazon-states-language-pass-state.html
+ */
+export interface Pass extends CommonFields {
   Comment?: string;
   Type: "Pass";
   Result?: any;
-  InputPath?: string;
-  OutputPath?: string;
   ResultPath?: string | null;
   Parameters?: Parameters;
-  Next?: string;
-  End?: boolean;
 }
 
-export interface Choice {
-  Type: "Choice";
+/**
+ * @see https://docs.aws.amazon.com/step-functions/latest/dg/amazon-states-language-task-state.html
+ */
+export interface CommonTaskFields extends CommonFields {
   Comment?: string;
-  InputPath?: string;
-  OutputPath?: string;
+  Parameters?: Parameters;
+  ResultSelector?: string;
+  ResultPath?: string | null;
+  Retry?: Retry[];
+  Catch?: Catch[];
+}
+
+/**
+ * @see https://docs.aws.amazon.com/step-functions/latest/dg/amazon-states-language-task-state.html
+ */
+export interface Task extends CommonTaskFields {
+  Type: "Task";
+  Resource: string;
+}
+
+/**
+ * @see https://docs.aws.amazon.com/step-functions/latest/dg/amazon-states-language-choice-state.html
+ */
+export interface Choice extends Omit<CommonFields, "End" | "Next"> {
+  Type: "Choice";
   Choices: Branch[];
   Default?: string;
 }
 
+/**
+ * @see https://docs.aws.amazon.com/step-functions/latest/dg/amazon-states-language-choice-state.html
+ */
 export interface Branch extends Condition {
   Next: string;
 }
 
+/**
+ * @see https://docs.aws.amazon.com/step-functions/latest/dg/amazon-states-language-choice-state.html
+ */
 export interface Condition {
   Variable?: string;
   Not?: Condition;
@@ -153,6 +231,9 @@ export interface Condition {
   TimestampLessThanEqualsPath?: string;
 }
 
+/**
+ * @see https://docs.aws.amazon.com/step-functions/latest/dg/concepts-error-handling.html
+ */
 export interface Retry {
   ErrorEquals: string[];
   IntervalSeconds?: number;
@@ -160,36 +241,19 @@ export interface Retry {
   BackoffRate?: number;
 }
 
+/**
+ * @see https://docs.aws.amazon.com/step-functions/latest/dg/concepts-error-handling.html
+ */
 export interface Catch {
   ErrorEquals: string[];
   ResultPath?: string | null;
   Next: string;
 }
 
-export interface BaseTask extends Nextable {
-  Comment?: string;
-  InputPath?: string;
-  OutputPath?: string;
-  Parameters?: Parameters;
-  /**
-   * Pass a collection of key value pairs, where the values are static or selected from the result. For more information, see ResultSelector.
-   */
-  ResultSelector?: string;
-  ResultPath?: string | null;
-  Retry?: Retry[];
-  Catch?: Catch[];
-}
-
-export interface Task extends BaseTask {
-  Type: "Task";
-  Resource: string;
-}
-
 /**
- *
  * @see https://docs.aws.amazon.com/step-functions/latest/dg/amazon-states-language-map-state.html
  */
-export interface MapTask extends BaseTask {
+export interface MapTask extends CommonTaskFields {
   Type: "Map";
   /**
    * The Iterator field’s value is an object that defines a state machine which will process each element of the array.
@@ -219,7 +283,10 @@ export interface MapTask extends BaseTask {
   MaxConcurrency?: number;
 }
 
-export interface ParallelTask extends BaseTask {
+/**
+ * @see https://docs.aws.amazon.com/step-functions/latest/dg/amazon-states-language-parallel-state.html
+ */
+export interface ParallelTask extends CommonTaskFields {
   Type: "Parallel";
   Branches: StateMachine<States>[];
 }
@@ -343,9 +410,32 @@ export class ASL {
         }),
       };
     } else if (stmt.kind === "ForOfStmt" || stmt.kind === "ForInStmt") {
+      const errorScope = stmt.findParent(
+        anyOf(isTryStmt, isCatchClause, isForOfStmt, isForInStmt)
+      );
+
       return {
         [this.getStateName(stmt)]: {
           Type: "Map",
+          Catch:
+            errorScope?.kind === "TryStmt"
+              ? /*
+                  we are inside a TryStmt, like:
+                  try {
+                    for(const item of items )
+                  }
+                  // the for-loop's Catch must route to the try-catch block's Catch
+                */
+                [
+                  {
+                    ErrorEquals: ["States.ALL"],
+                    Next: this.stepTo(errorScope.catchClause),
+                    ResultPath: errorScope.catchClause.variableDecl
+                      ? `$.${errorScope.catchClause.variableDecl.name}`
+                      : null,
+                  },
+                ]
+              : undefined,
           ResultPath: null,
           ItemsPath: ASL.toJsonPath(stmt.expr),
           Next: this.next(stmt),
@@ -444,10 +534,18 @@ export class ASL {
         throw new Error(`the expr of a ThrowStmt must be a NewExpr`);
       }
 
-      const catchClause = stmt.findThrowCatchClause();
+      const closure = stmt.findParent(anyOf(isForOfStmt, isForInStmt));
+      const catchClause = stmt.findCatchClause();
 
       // TODO: handle case where we are inside a for-loop or `.map` function
-      if (catchClause) {
+      if (
+        catchClause &&
+        (closure === undefined ||
+          // if the try-catch is inside the closure, then use Type: Pass
+          // if the closure is inside the try-catch, then use Type: Fail
+          //    - the for-loop will have to add a Catch clause to route the error outside
+          (closure && closure.contains(catchClause)))
+      ) {
         // const { hasTask } = analyzeFlow(catchClause.parent);
 
         // if this `throw` is within a try-catch, then Pass the error to the `catch` state
@@ -627,9 +725,19 @@ export class ASL {
     if (expr.kind === "CallExpr") {
       const serviceCall = findFunction(expr);
       if (serviceCall) {
+        if (
+          expr.expr.kind === "PropAccessExpr" &&
+          (expr.expr.name === "waitFor" || expr.expr.name === "waitUntil")
+        ) {
+          delete (props as any).ResultPath;
+          return {
+            ...(serviceCall as any)(expr, this),
+            ...props,
+          };
+        }
         const task = serviceCall(expr, this);
 
-        const catchClause = expr.findThrowCatchClause();
+        const catchClause = expr.findCatchClause();
 
         return {
           ...task,
@@ -713,12 +821,18 @@ interface FlowResult {
  * Analyze the flow contained within a section of the AST and determine if it has any tasks or throw statements.
  */
 function analyzeFlow(node: FunctionlessNode): FlowResult {
-  if (node.kind === "CallExpr" && findFunction(node) !== undefined) {
-    return { hasTask: true };
-  } else if (node.kind === "ThrowStmt") {
-    return { hasThrow: true };
-  }
-  return collect(node, analyzeFlow).reduce((a, b) => ({ ...a, ...b }), {});
+  return node.children
+    .map(analyzeFlow)
+    .reduce(
+      (a, b) => ({ ...a, ...b }),
+      (node.kind === "CallExpr" && findFunction(node) !== undefined) ||
+        node.kind === "ForInStmt" ||
+        node.kind === "ForOfStmt"
+        ? { hasTask: true }
+        : node.kind === "ThrowStmt"
+        ? { hasThrow: true }
+        : {}
+    );
 }
 
 export namespace ASL {
@@ -828,7 +942,7 @@ export namespace ASL {
       if (
         element?.kind === "VariableStmt" &&
         element?.parent?.kind === "ForInStmt" &&
-        expr.findNearestParent("ForInStmt") === element.parent
+        expr.findParent(isForInStmt) === element.parent
       ) {
         return `$.0_${element.name}`;
       } else {

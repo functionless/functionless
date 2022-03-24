@@ -1,6 +1,6 @@
 import { App, aws_dynamodb, aws_lambda, Stack } from "aws-cdk-lib";
 import "jest";
-import { $AWS, ExpressStepFunction, Function, Table } from "../src";
+import { $AWS, $SFN, ExpressStepFunction, Function, Table } from "../src";
 import { StateMachine, States } from "../src/asl";
 
 interface Person {
@@ -1574,7 +1574,7 @@ test("throw in for-of", () => {
   });
 });
 
-test("try-catch surrounding throw in for-of", () => {
+test("try-catch, no variable, contains for-of, throw", () => {
   const { stack } = init();
 
   const definition = new ExpressStepFunction(
@@ -1596,14 +1596,21 @@ test("try-catch surrounding throw in for-of", () => {
     StartAt: "for(item of items)",
     States: {
       "for(item of items)": {
+        Catch: [
+          {
+            ErrorEquals: ["States.ALL"],
+            ResultPath: null,
+            Next: 'return "hello"',
+          },
+        ],
         ItemsPath: "$.items",
         Iterator: {
           StartAt: 'throw new Error("err")',
           States: {
             'throw new Error("err")': {
-              Cause: '{"message":"err"}',
-              Error: "Error",
               Type: "Fail",
+              Error: "Error",
+              Cause: '{"message":"err"}',
             },
           },
         },
@@ -1614,6 +1621,206 @@ test("try-catch surrounding throw in for-of", () => {
         },
         ResultPath: null,
         Type: "Map",
+      },
+      'return "hello"': {
+        End: true,
+        Result: "hello",
+        ResultPath: "$",
+        Type: "Pass",
+      },
+      "return null": {
+        End: true,
+        OutputPath: "$.null",
+        Parameters: {
+          null: null,
+        },
+        Type: "Pass",
+      },
+    },
+  });
+});
+
+test("try-catch, err variable, contains for-of, throw", () => {
+  const { stack } = init();
+
+  const definition = new ExpressStepFunction(
+    stack,
+    "fn",
+    (items: string[]): string | void => {
+      try {
+        // @ts-ignore
+        for (const item of items) {
+          throw new Error("err");
+        }
+      } catch (err: any) {
+        return err.message;
+      }
+    }
+  ).definition;
+
+  expect(definition).toEqual({
+    StartAt: "for(item of items)",
+    States: {
+      "for(item of items)": {
+        Catch: [
+          {
+            ErrorEquals: ["States.ALL"],
+            ResultPath: "$.err",
+            Next: "catch(err)",
+          },
+        ],
+        ItemsPath: "$.items",
+        Iterator: {
+          StartAt: 'throw new Error("err")',
+          States: {
+            'throw new Error("err")': {
+              Type: "Fail",
+              Error: "Error",
+              Cause: '{"message":"err"}',
+            },
+          },
+        },
+        MaxConcurrency: 1,
+        Next: "return null",
+        Parameters: {
+          "item.$": "$$.Map.Item.Value",
+        },
+        ResultPath: null,
+        Type: "Map",
+      },
+      "catch(err)": {
+        Next: "0_catch(err)",
+        Parameters: {
+          "0_ParsedError.$": "States.StringToJson($.err.Cause)",
+        },
+        ResultPath: "$.err",
+        Type: "Pass",
+      },
+      "0_catch(err)": {
+        InputPath: "$.err.0_ParsedError",
+        Next: "return err.message",
+        ResultPath: "$.err",
+        Type: "Pass",
+      },
+      "return err.message": {
+        End: true,
+        OutputPath: "$.err.message",
+        Type: "Pass",
+      },
+      "return null": {
+        End: true,
+        OutputPath: "$.null",
+        Parameters: {
+          null: null,
+        },
+        Type: "Pass",
+      },
+    },
+  });
+});
+
+test("waitFor literal number of seconds", () => {
+  const { stack } = init();
+
+  const definition = new ExpressStepFunction(stack, "fn", (): string | void => {
+    $SFN.waitFor(1);
+  }).definition;
+
+  expect(definition).toEqual({
+    StartAt: "$SFN.waitFor(1)",
+    States: {
+      "$SFN.waitFor(1)": {
+        Next: "return null",
+        Seconds: 1,
+        Type: "Wait",
+      },
+      "return null": {
+        End: true,
+        OutputPath: "$.null",
+        Parameters: {
+          null: null,
+        },
+        Type: "Pass",
+      },
+    },
+  });
+});
+
+test("waitFor reference number of seconds", () => {
+  const { stack } = init();
+
+  const definition = new ExpressStepFunction(
+    stack,
+    "fn",
+    (seconds: number): string | void => {
+      $SFN.waitFor(seconds);
+    }
+  ).definition;
+
+  expect(definition).toEqual({
+    StartAt: "$SFN.waitFor(seconds)",
+    States: {
+      "$SFN.waitFor(seconds)": {
+        Next: "return null",
+        SecondsPath: "$.seconds",
+        Type: "Wait",
+      },
+      "return null": {
+        End: true,
+        OutputPath: "$.null",
+        Parameters: {
+          null: null,
+        },
+        Type: "Pass",
+      },
+    },
+  });
+});
+test("waitFor literal timestamp", () => {
+  const { stack } = init();
+
+  const definition = new ExpressStepFunction(stack, "fn", (): string | void => {
+    $SFN.waitUntil("2022-08-01T00:00:00Z");
+  }).definition;
+
+  expect(definition).toEqual({
+    StartAt: '$SFN.waitUntil("2022-08-01T00:00:00Z")',
+    States: {
+      '$SFN.waitUntil("2022-08-01T00:00:00Z")': {
+        Next: "return null",
+        Timestamp: "2022-08-01T00:00:00Z",
+        Type: "Wait",
+      },
+      "return null": {
+        End: true,
+        OutputPath: "$.null",
+        Parameters: {
+          null: null,
+        },
+        Type: "Pass",
+      },
+    },
+  });
+});
+
+test("waitUntil reference timestamp", () => {
+  const { stack } = init();
+
+  const definition = new ExpressStepFunction(
+    stack,
+    "fn",
+    (until: string): string | void => {
+      $SFN.waitUntil(until);
+    }
+  ).definition;
+
+  expect(definition).toEqual({
+    StartAt: "$SFN.waitUntil(until)",
+    States: {
+      "$SFN.waitUntil(until)": {
+        Next: "return null",
+        TimestampPath: "$.until",
+        Type: "Wait",
       },
       "return null": {
         End: true,

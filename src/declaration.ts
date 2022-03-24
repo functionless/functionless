@@ -1,4 +1,5 @@
-import { BaseNode, isNode, setParent, typeGuard } from "./node";
+import { FunctionExpr } from "./expression";
+import { BaseNode, isNode, typeGuard } from "./node";
 import { BlockStmt } from "./statement";
 import { AnyFunction } from "./util";
 
@@ -10,20 +11,24 @@ export function isDecl(a: any): a is Decl {
 
 export const isFunctionDecl = typeGuard("FunctionDecl");
 
-export class FunctionDecl<
-  F extends AnyFunction = AnyFunction
-> extends BaseNode<"FunctionDecl"> {
+export class FunctionDecl<F extends AnyFunction = AnyFunction> extends BaseNode<
+  "FunctionDecl",
+  undefined
+> {
   readonly _functionBrand?: F;
   constructor(readonly parameters: ParameterDecl[], readonly body: BlockStmt) {
     super("FunctionDecl");
-    setParent(this, parameters);
-    body.parent = this;
+    parameters.forEach((param) => param.setParent(this));
+    body.setParent(this);
   }
 }
 
 export const isParameterDecl = typeGuard("ParameterDecl");
 
-export class ParameterDecl extends BaseNode<"ParameterDecl"> {
+export class ParameterDecl extends BaseNode<
+  "ParameterDecl",
+  FunctionDecl | FunctionExpr
+> {
   constructor(readonly name: string) {
     super("ParameterDecl");
   }
