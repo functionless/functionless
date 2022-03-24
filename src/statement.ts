@@ -37,7 +37,7 @@ export function isStmt(a: any): a is Stmt {
 }
 
 export class BaseStmt<
-  Kind extends string,
+  Kind extends FunctionlessNode["kind"],
   Parent extends FunctionlessNode | undefined = BlockStmt | IfStmt
 > extends BaseNode<Kind, Parent> {
   /**

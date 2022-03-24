@@ -16,7 +16,6 @@ import {
   isCatchClause,
   isForInStmt,
   isForOfStmt,
-  isStmt,
   isTryStmt,
   ReturnStmt,
   Stmt,
@@ -348,7 +347,7 @@ export class ASL {
 
     const states = this.execute(this.decl.body);
 
-    const start = this.stepIn(this.decl.body);
+    const start = this.step(this.decl.body);
     if (start === undefined) {
       throw new Error(`State Machine has no States`);
     }
@@ -423,7 +422,7 @@ export class ASL {
                 [
                   {
                     ErrorEquals: ["States.ALL"],
-                    Next: this.stepIn(errorScope.catchClause)!,
+                    Next: this.step(errorScope.catchClause)!,
                     ResultPath: errorScope.catchClause.variableDecl
                       ? `$.${errorScope.catchClause.variableDecl.name}`
                       : null,
@@ -553,7 +552,7 @@ export class ASL {
               }),
               {}
             ),
-            Next: this.stepIn(catchClause),
+            Next: this.step(catchClause),
             ResultPath: catchClause.variableDecl
               ? `$.${catchClause.variableDecl.name}`
               : null,
@@ -610,59 +609,36 @@ export class ASL {
   }
 
   /**
-   * Transition to the State that is the beginning of this {@link stmt}.
+   * Transition to the State that is the beginning of this {@link next}.
    *
    * @param stmt the {@link Stmt} to step into,
-   * @returns the name of the State representing the beginning of this {@link stmt}.
+   * @returns the name of the State representing the beginning of this {@link next}.
    */
-  private stepIn(stmt: Stmt): string | undefined {
-    if (stmt.kind === "TryStmt") {
-      return this.stepIn(stmt.tryBlock);
-    } else if (stmt.kind === "BlockStmt") {
-      if (stmt.isEmpty()) {
-        return this.stepOut(stmt);
-      } else {
-        return this.stepIn(stmt.firstStmt!);
-      }
+  private step(stmt: Stmt | undefined): string | undefined {
+    if (stmt === undefined) {
+      return undefined;
     } else if (stmt.kind === "CatchClause") {
-      const { hasTask } = analyzeFlow(stmt.parent);
+      const { hasTask } = analyzeFlow(stmt.parent.tryBlock);
       if (hasTask && stmt.variableDecl) {
-        return this.stepIn(stmt.variableDecl);
+        return this.getStateName(stmt.variableDecl);
       } else {
-        return this.stepIn(stmt.block);
+        return this.step(stmt.block);
       }
+    } else if (stmt.kind === "BlockStmt") {
+      return this.step(stmt.stepIn());
     } else {
       return this.getStateName(stmt);
     }
-  }
 
-  private stepOut(node: FunctionlessNode): string | undefined {
-    if (isStmt(node) && node.next) {
-      return this.stepIn(node.next);
-    }
-    const scope = node.parent;
-    if (scope === undefined) {
-      return undefined;
-    } else if (scope.kind === "TryStmt") {
-      if (scope.tryBlock === node) {
-      } else if (scope.finallyBlock === node) {
-        // stepping out of the finallyBlock
-        if (scope.next) {
-          return this.stepIn(scope.next);
-        } else {
-          return this.stepOut(scope);
-        }
-      }
-    } else if (scope.kind === "CatchClause") {
-      if (scope.parent.finallyBlock) {
-        return this.stepIn(scope.parent.finallyBlock);
-      } else {
-        return this.stepOut(scope.parent);
-      }
-    } else if (isStmt(scope) && scope.next) {
-      return this.stepIn(scope.next);
-    }
-    return this.stepOut(scope);
+    // const next = stmt.stepIn();
+    // if (next !== undefined) {
+    //   if (next.kind === "CatchClause" || next.kind === "BlockStmt") {
+    //     return this.step(next);
+    //   } else if (isStmt(next)) {
+    //     return this.getStateName(next);
+    //   }
+    // }
+    // return undefined;
   }
 
   /**
@@ -672,7 +648,7 @@ export class ASL {
     if (node.kind === "ReturnStmt") {
       return this.return(node);
     } else if (node.next) {
-      return this.stepIn(node.next);
+      return this.step(node.next);
     } else if (node.kind === "TryStmt" && isTerminal(node)) {
       return undefined;
     } else if (node.parent?.kind === "BlockStmt") {
@@ -690,7 +666,7 @@ export class ASL {
         if (block === scope.tryBlock) {
           // need to move to the finally block
           if (scope.finallyBlock?.isNotEmpty()) {
-            return this.stepIn(scope.finallyBlock);
+            return this.step(scope.finallyBlock);
           }
           return this.next(scope);
         } else if (block === scope.finallyBlock) {
@@ -702,7 +678,7 @@ export class ASL {
       } else if (scope.kind === "CatchClause") {
         const tryStmt = scope.parent;
         if (tryStmt.finallyBlock?.isNotEmpty()) {
-          return this.stepIn(tryStmt.finallyBlock);
+          return this.step(tryStmt.finallyBlock);
         }
         return this.next(scope);
       } else {
@@ -763,8 +739,9 @@ export class ASL {
 
         const catchClause = expr.findCatchClause();
         if (catchClause) {
-          const next = this.stepIn(catchClause);
+          const next = this.step(catchClause);
           if (next === undefined) {
+            this.step(catchClause);
             throw new Error(`CatchClause with no Next state`);
           }
           return {

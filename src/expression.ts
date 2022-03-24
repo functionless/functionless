@@ -77,7 +77,7 @@ export const isLiteralPrimitiveExpr = typeGuard(
 );
 
 export class BaseExpr<
-  Kind extends string,
+  Kind extends FunctionlessNode["kind"],
   Parent extends FunctionlessNode | undefined =
     | ExprStmt
     | VariableStmt

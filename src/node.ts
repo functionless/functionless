@@ -14,7 +14,7 @@ export interface HasParent<Parent extends FunctionlessNode> {
 }
 
 export class BaseNode<
-  Kind extends string,
+  Kind extends FunctionlessNode["kind"],
   Parent extends FunctionlessNode | undefined = FunctionlessNode | undefined
 > {
   // @ts-ignore
@@ -108,6 +108,61 @@ export class BaseNode<
       }
       return false;
     }
+  }
+
+  public stepIn(): Stmt | undefined {
+    const self = this as unknown as FunctionlessNode;
+
+    if (self.kind === "TryStmt") {
+      return self.tryBlock.stepIn();
+    } else if (self.kind === "BlockStmt") {
+      if (self.isEmpty()) {
+        return self.stepOut();
+      } else {
+        return self.firstStmt?.stepIn();
+      }
+    } else if (self.kind === "CatchClause") {
+      if (self.variableDecl) {
+        return self.variableDecl.stepIn();
+      } else {
+        return self.block.stepIn();
+      }
+    } else if ("next" in self) {
+      // isStmt
+      return self;
+    } else {
+      return undefined;
+    }
+  }
+
+  public stepOut(): Stmt | undefined {
+    const node = this as unknown as FunctionlessNode;
+    if ("next" in node && node.next) {
+      return node.next.stepIn();
+    }
+    const scope = node.parent;
+    if (scope === undefined) {
+      return undefined;
+    } else if (scope.kind === "TryStmt") {
+      if (scope.tryBlock === node) {
+      } else if (scope.finallyBlock === node) {
+        // stepping out of the finallyBlock
+        if (scope.next) {
+          return scope.next.stepIn();
+        } else {
+          return scope.stepOut();
+        }
+      }
+    } else if (scope.kind === "CatchClause") {
+      if (scope.parent.finallyBlock) {
+        return scope.parent.finallyBlock.stepIn();
+      } else {
+        return scope.parent.stepOut();
+      }
+    } else if ("next" in scope && scope.next) {
+      return scope.next.stepIn();
+    }
+    return scope.stepOut();
   }
 }
 
