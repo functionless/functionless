@@ -14,6 +14,7 @@ export type Pattern =
   | NumericRangePattern
   | PresentPattern
   | AnythingButPattern
+  | AnythingButPrefixPattern
   | EmptyPattern
   | NumericAggregationPattern;
 
@@ -41,6 +42,7 @@ export interface AggregatePattern {
     | PrefixMatchPattern
     | PresentPattern
     | AnythingButPattern
+    | AnythingButPrefixPattern
   )[];
 }
 
@@ -126,12 +128,27 @@ export const isPresentPattern = (x: Pattern): x is PresentPattern => {
  */
 export type AnythingButPattern = {
   // use NumericRange to represent a number
-  anythingBut: string | null;
-  isPrefix?: boolean;
+  anythingBut: (string | null)[];
 };
 
 export const isAnythingButPattern = (x: any): x is AnythingButPattern => {
   return "anythingBut" in x;
+};
+
+/**
+ * NOT logic for string and null.
+ *
+ * Use {@link NumericRangePattern} to represent NOT logic for numbers.
+ */
+export type AnythingButPrefixPattern = {
+  // use NumericRange to represent a number
+  anythingButPrefix: string;
+};
+
+export const isAnythingButPrefixPattern = (
+  x: any
+): x is AnythingButPrefixPattern => {
+  return "anythingButPrefix" in x;
 };
 
 /**
@@ -160,21 +177,18 @@ export const isNegativeSingleValueRange = (pattern: NumericRangePattern) =>
 export const patternDocumentToEventPattern = (
   patternDocument: PatternDocument
 ): fnls_event_bridge.SubPattern => {
-  return Object.entries(patternDocument.doc).reduce(
-    (pattern, [key, entry]) => {
-      const keyPattern = isPatternDocument(entry)
-        ? patternDocumentToEventPattern(entry)
-        : patternToEventBridgePattern(entry);
-      if (!keyPattern) {
-        return pattern;
-      }
-      return {
-        ...pattern,
-        [key]: keyPattern,
-      };
-    },
-    {} as fnls_event_bridge.SubPattern
-  );
+  return Object.entries(patternDocument.doc).reduce((pattern, [key, entry]) => {
+    const keyPattern = isPatternDocument(entry)
+      ? patternDocumentToEventPattern(entry)
+      : patternToEventBridgePattern(entry);
+    if (!keyPattern || Object.keys(keyPattern).length === 0) {
+      return pattern;
+    }
+    return {
+      ...pattern,
+      [key]: keyPattern,
+    };
+  }, {} as fnls_event_bridge.SubPattern);
 };
 
 export const patternToEventBridgePattern = (
@@ -189,14 +203,16 @@ export const patternToEventBridgePattern = (
   } else if (isPrefixMatchPattern(pattern)) {
     return [{ prefix: pattern.prefix }];
   } else if (isAnythingButPattern(pattern)) {
-    return [
-      {
-        "anything-but":
-          typeof pattern.anythingBut === "string" && pattern.isPrefix
-            ? { prefix: pattern.anythingBut }
-            : pattern.anythingBut,
-      },
-    ];
+    return Array.isArray(pattern.anythingBut) &&
+      pattern.anythingBut.length === 1
+      ? [{ "anything-but": pattern.anythingBut[0] }]
+      : [
+          {
+            "anything-but": pattern.anythingBut,
+          },
+        ];
+  } else if (isAnythingButPrefixPattern(pattern)) {
+    return [{ "anything-but": { prefix: pattern.anythingButPrefix } }];
   } else if (isNumericRangePattern(pattern)) {
     if (
       pattern.lower.value === Number.NEGATIVE_INFINITY &&

@@ -24,7 +24,7 @@ export const isPrefixPattern = (x: any): x is PrefixPattern => {
  * Can only contain a single prefix pattern.
  */
 export interface AnythingButPattern {
-  "anything-but": (string | number)[] | string | number | PrefixPattern | null;
+  "anything-but": (string | number | null)[] | string | number | PrefixPattern | null;
 }
 
 export const isAnythingButPattern = (x: any): x is AnythingButPattern => {

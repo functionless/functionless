@@ -27,6 +27,7 @@ import {
   isPrefixMatchPattern,
   isEmptyPattern,
   patternDocumentToEventPattern,
+  isAnythingButPrefixPattern,
 } from "./pattern";
 import * as fnls_event_bridge from "./types";
 import {
@@ -154,6 +155,44 @@ export const synthesizeEventPattern = (
       return andDocuments(pattern1, pattern2);
       // both are patterns, merge the patterns
     } else if (!isPatternDocument(pattern1) && !isPatternDocument(pattern2)) {
+      if (isPresentPattern(pattern1)) {
+        if (isPresentPattern(pattern2)) {
+          // same pattern, merge
+          if (pattern1.isPresent === pattern2.isPresent) {
+            return pattern1;
+          } else {
+            throw new Error("Field cannot both be present and not present.");
+          }
+        }
+        // If the pattern checks for presense, return othe other pattern, they should all imply the pattern is present.
+        if (pattern1.isPresent) {
+          return pattern2;
+        }
+        // checks for not present
+        // take anything but, because !x && x !== "x" => !x
+        if (isAnythingButPattern(pattern2)) {
+          return pattern1;
+        }
+        // cannot && exists: false and any other pattern as it would be impossible.
+        throw new Error(
+          "Invalid comparison: pattern cannot both be not present as a positive value."
+        );
+      }
+      if (isPresentPattern(pattern2)) {
+        // If the pattern checks for presense, return othe other pattern, they should all imply the pattern is present.
+        if (pattern2.isPresent) {
+          return pattern1;
+        }
+        // checks for not present
+        // take anything but, because !x && x !== "x" => !x
+        if (isAnythingButPattern(pattern1)) {
+          return pattern2;
+        }
+        // cannot && exists: false and any other pattern as it would be impossible.
+        throw new Error(
+          "Invalid comparison: Pattern cannot both be not present as a positive value."
+        );
+      }
       if (isNumericAggregationPattern(pattern1)) {
         if (isNumericAggregationPattern(pattern2)) {
           return andNumericAggregation(pattern1, pattern2);
@@ -169,6 +208,13 @@ export const synthesizeEventPattern = (
       }
       if (isNumericRangePattern(pattern1) && isNumericRangePattern(pattern2)) {
         return joinNumericRange(pattern1, pattern2);
+      }
+      if (isAnythingButPattern(pattern1)) {
+        if (isAnythingButPattern(pattern2)) {
+          return {
+            anythingBut: [...pattern1.anythingBut, ...pattern2.anythingBut],
+          };
+        }
       }
       // TODO: expand the supported cases
       throw new Error(
@@ -300,6 +346,12 @@ export const synthesizeEventPattern = (
       // TODO support OR logic with exists: false
       if (isNumericRangePattern(pattern2)) {
         throw Error("Cannot OR a numeric ranges with any other pattern.");
+      }
+      if (isAnythingButPattern(pattern1)) {
+        // x !== "a" || x !== "b" => true
+        if (isAnythingButPattern(pattern2)) {
+          return { empty: true };
+        }
       }
       return {
         patterns: [
@@ -578,9 +630,8 @@ export const synthesizeEventPattern = (
     ) {
       return eventReferenceToPatternDocument(eventReference, { value });
     }
-    throw new Error(
-      `Unsupported equivelency: ${eventReference.reference.join(",")} ${value}`
-    );
+    const __exchaustive: never = value;
+    return __exchaustive;
   };
 
   const handleNotEquals = (expr: BinaryExpr): PatternDocument => {
@@ -676,17 +727,21 @@ const negateClassification = (pattern: Pattern): Pattern => {
   if (isAggregatePattern(pattern)) {
     throw Error("Can only negate simple statments like boolean and equals.");
   } else if (isAnythingButPattern(pattern)) {
-    return typeof pattern.anythingBut === "string" && pattern.isPrefix
-      ? { prefix: pattern.anythingBut }
+    return Array.isArray(pattern.anythingBut)
+      ? pattern.anythingBut.length > 1
+        ? { patterns: pattern.anythingBut.map((x) => ({ value: x })) }
+        : { value: pattern.anythingBut[0] }
       : { value: pattern.anythingBut };
+  } else if (isAnythingButPrefixPattern(pattern)) {
+    return { prefix: pattern.anythingButPrefix };
   } else if (isExactMatchPattern(pattern)) {
     return typeof pattern.value === "boolean"
       ? { value: !pattern.value }
-      : { anythingBut: pattern.value };
+      : { anythingBut: [pattern.value] };
   } else if (isPresentPattern(pattern)) {
     return { isPresent: !pattern.isPresent };
   } else if (isPrefixMatchPattern(pattern)) {
-    return { anythingBut: pattern.prefix, isPrefix: true };
+    return { anythingButPrefix: pattern.prefix };
   } else if (isEmptyPattern(pattern)) {
     return pattern;
   } else if (isNumericRangePattern(pattern)) {

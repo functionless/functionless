@@ -627,7 +627,7 @@ describe("event pattern", () => {
           (event) => event.detail.num < 300 || event.detail.num > 200
         ),
         {
-          detail: {},
+          source: [{ prefix: "" }],
         }
       );
     });
@@ -814,7 +814,7 @@ describe("event pattern", () => {
     });
   });
 
-  describe.skip("aggregate", () => {
+  describe("aggregate", () => {
     test("test for optional", () => {
       ebEventPatternTestCase(
         reflect<EventPredicateFunction<TestEvent>>(
@@ -840,6 +840,332 @@ describe("event pattern", () => {
         {
           detail: {
             optionalNum: [{ numeric: [">", 10, "<", 100] }],
+          },
+        }
+      );
+    });
+
+    test("number and string separate fields", () => {
+      ebEventPatternTestCase(
+        reflect<EventPredicateFunction<TestEvent>>(
+          (event) => event.detail.num === 10 && event.detail.str === "hello"
+        ),
+        {
+          detail: {
+            str: ["hello"],
+            num: [10],
+          },
+        }
+      );
+    });
+
+    test("same field AND string", () => {
+      ebEventPatternTestCaseError(
+        reflect<EventPredicateFunction<TestEvent>>(
+          (event) =>
+            event.detail.str === "hi" && <any>event.detail.str === "hello"
+        )
+      );
+    });
+
+    test("same field OR string", () => {
+      ebEventPatternTestCase(
+        reflect<EventPredicateFunction<TestEvent>>(
+          (event) => event.detail.str === "hi" || event.detail.str === "hello"
+        ),
+        {
+          detail: {
+            str: ["hi", "hello"],
+          },
+        }
+      );
+    });
+
+    test("same field OR string and AND another field ", () => {
+      ebEventPatternTestCase(
+        reflect<EventPredicateFunction<TestEvent>>(
+          (event) =>
+            (event.detail.str === "hi" || event.detail.str === "hello") &&
+            event.detail.num === 100
+        ),
+        {
+          detail: {
+            str: ["hi", "hello"],
+            num: [100],
+          },
+        }
+      );
+    });
+
+    test("same field AND another field ", () => {
+      ebEventPatternTestCase(
+        reflect<EventPredicateFunction<TestEvent>>(
+          (event) => event.detail.str === "hello" && event.detail.num === 100
+        ),
+        {
+          detail: {
+            str: ["hello"],
+            num: [100],
+          },
+        }
+      );
+    });
+
+    test("same field || another field ", () => {
+      ebEventPatternTestCaseError(
+        reflect<EventPredicateFunction<TestEvent>>(
+          (event) => event.detail.str === "hello" || event.detail.num === 100
+        )
+      );
+    });
+
+    test("lots of AND", () => {
+      ebEventPatternTestCase(
+        reflect<EventPredicateFunction<TestEvent>>(
+          (event) =>
+            event.detail.str === "hi" &&
+            event.detail.num === 100 &&
+            event.source === "lambda" &&
+            event.region === "us-east-1" &&
+            event.id === "10"
+        ),
+        {
+          detail: {
+            str: ["hi"],
+            num: [100],
+          },
+          id: ["10"],
+          source: ["lambda"],
+          region: ["us-east-1"],
+        }
+      );
+    });
+
+    test("AND prefix", () => {
+      ebEventPatternTestCase(
+        reflect<EventPredicateFunction<TestEvent>>(
+          (event) =>
+            event.detail.str.startsWith("hi") && event.detail.num === 100
+        ),
+        {
+          detail: {
+            str: [{ prefix: "hi" }],
+            num: [100],
+          },
+        }
+      );
+    });
+
+    test("AND list", () => {
+      ebEventPatternTestCase(
+        reflect<EventPredicateFunction<TestEvent>>(
+          (event) =>
+            event.detail.array.includes("hi") && event.detail.num === 100
+        ),
+        {
+          detail: {
+            array: ["hi"],
+            num: [100],
+          },
+        }
+      );
+    });
+
+    test("AND exists", () => {
+      ebEventPatternTestCase(
+        reflect<EventPredicateFunction<TestEvent>>(
+          (event) => !!event.detail.optional && event.detail.num === 100
+        ),
+        {
+          detail: {
+            optional: [{ exists: true }],
+            num: [100],
+          },
+        }
+      );
+    });
+
+    test("AND not exists", () => {
+      ebEventPatternTestCase(
+        reflect<EventPredicateFunction<TestEvent>>(
+          (event) => !event.detail.optional && event.detail.num === 100
+        ),
+        {
+          detail: {
+            optional: [{ exists: false }],
+            num: [100],
+          },
+        }
+      );
+    });
+
+    test("AND not equals", () => {
+      ebEventPatternTestCase(
+        reflect<EventPredicateFunction<TestEvent>>(
+          (event) => event.detail.str !== "hi" && event.detail.str !== "hello"
+        ),
+        {
+          detail: {
+            str: [{ "anything-but": ["hi", "hello"] }],
+          },
+        }
+      );
+    });
+
+    test("AND not not equals", () => {
+      ebEventPatternTestCase(
+        reflect<EventPredicateFunction<TestEvent>>(
+          // str === "hi" || str === "hello"
+          (event) =>
+            !(event.detail.str !== "hi" && event.detail.str !== "hello")
+        ),
+        {
+          detail: {
+            str: ["hi", "hello"],
+          },
+        }
+      );
+    });
+
+    test("AND not exists and exists impossible", () => {
+      ebEventPatternTestCaseError(
+        reflect<EventPredicateFunction<TestEvent>>(
+          (event) => !event.detail.str && <any>event.detail.str
+        )
+      );
+    });
+
+    test("AND not exists and not equals", () => {
+      ebEventPatternTestCase(
+        reflect<EventPredicateFunction<TestEvent>>(
+          (event) => !event.detail.str && event.detail.str !== "x"
+        ),
+        {
+          detail: {
+            str: [{ exists: false }],
+          },
+        }
+      );
+    });
+
+    test("AND not null and not value", () => {
+      ebEventPatternTestCase(
+        reflect<EventPredicateFunction<TestEvent>>(
+          (event) => event.detail.str !== null && event.detail.str !== "x"
+        ),
+        {
+          detail: {
+            str: [{ "anything-but": [null, "x"] }],
+          },
+        }
+      );
+    });
+
+    test("AND not not exists and not equals", () => {
+      ebEventPatternTestCase(
+        reflect<EventPredicateFunction<TestEvent>>(
+          (event) => !(!event.detail.str && event.detail.str !== "x")
+        ),
+        {
+          detail: {
+            str: [{ exists: true }],
+          },
+        }
+      );
+    });
+
+    test("AND not exists and not equals", () => {
+      ebEventPatternTestCase(
+        reflect<EventPredicateFunction<TestEvent>>(
+          (event) => event.detail.str !== "x" && !event.detail.str
+        ),
+        {
+          detail: {
+            str: [{ exists: false }],
+          },
+        }
+      );
+    });
+
+    test("OR not equals", () => {
+      ebEventPatternTestCase(
+        reflect<EventPredicateFunction<TestEvent>>(
+          (event) =>
+            event.detail.str !== "hi" || <any>event.detail.str !== "hello"
+        ),
+        { source: [{ prefix: "" }] }
+      );
+    });
+
+    test("AND not eq", () => {
+      ebEventPatternTestCase(
+        reflect<EventPredicateFunction<TestEvent>>(
+          (event) => event.detail.str !== "hi" && event.detail.num === 100
+        ),
+        {
+          detail: {
+            str: [{ "anything-but": "hi" }],
+            num: [100],
+          },
+        }
+      );
+    });
+
+    test("OR not exists", () => {
+      ebEventPatternTestCase(
+        reflect<EventPredicateFunction<TestEvent>>(
+          (event) =>
+            !event.detail.optional || event.detail.optional === "cheese"
+        ),
+        {
+          detail: {
+            optional: [{ exists: false }, "cheese"],
+          },
+        }
+      );
+    });
+
+    test("OR not exists not eq", () => {
+      ebEventPatternTestCase(
+        reflect<EventPredicateFunction<TestEvent>>(
+          (event) =>
+            !event.detail.optional || event.detail.optional !== "cheese"
+        ),
+        {
+          detail: {
+            optional: [{ exists: false }, { "anything-but": "cheese" }],
+          },
+        }
+      );
+    });
+
+    test("OR not exists starts with", () => {
+      ebEventPatternTestCase(
+        reflect<EventPredicateFunction<TestEvent>>(
+          (event) =>
+            !event.detail.optional || event.detail.optional.startsWith("cheese")
+        ),
+        {
+          detail: {
+            optional: [{ exists: false }, { prefix: "cheese" }],
+          },
+        }
+      );
+    });
+
+    test("OR not exists not starts with", () => {
+      ebEventPatternTestCase(
+        reflect<EventPredicateFunction<TestEvent>>(
+          (event) =>
+            !event.detail.optional ||
+            !event.detail.optional.startsWith("cheese")
+        ),
+        {
+          detail: {
+            optional: [
+              { exists: false },
+              { "anything-but": { prefix: "cheese" } },
+            ],
           },
         }
       );
