@@ -11,8 +11,14 @@ export interface EventBusRuleInput<
   Source extends string = string
 > {
   source: Source;
-  detailType: DetailType;
+  'detail-type': DetailType;
   detail: T;
+  version: string;
+  id: string;
+  account: string;
+  time: string;
+  region: string;
+  resources: string[];
 }
 
 /**
