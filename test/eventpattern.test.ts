@@ -6,6 +6,7 @@ type TestEvent = EventBusRuleInput<{
   num: number;
   str: string;
   optional?: string;
+  optionalNum?: number;
   "multi-part": string;
   deep: {
     value: string;
@@ -278,7 +279,7 @@ describe("event pattern", () => {
           (event) => event.detail.num < 100
         ),
         {
-          detail: { num: [{ number: ["<", 100] }] },
+          detail: { num: [{ numeric: ["<", 100] }] },
         }
       );
     });
@@ -289,7 +290,7 @@ describe("event pattern", () => {
           (event) => event.detail.num > 100
         ),
         {
-          detail: { num: [{ number: [">", 100] }] },
+          detail: { num: [{ numeric: [">", 100] }] },
         }
       );
     });
@@ -300,7 +301,7 @@ describe("event pattern", () => {
           (event) => event.detail.num >= 100
         ),
         {
-          detail: { num: [{ number: [">=", 100] }] },
+          detail: { num: [{ numeric: [">=", 100] }] },
         }
       );
     });
@@ -311,7 +312,7 @@ describe("event pattern", () => {
           (event) => 100 < event.detail.num
         ),
         {
-          detail: { num: [{ number: [">", 100] }] },
+          detail: { num: [{ numeric: [">", 100] }] },
         }
       );
     });
@@ -322,7 +323,7 @@ describe("event pattern", () => {
           (event) => 100 >= event.detail.num
         ),
         {
-          detail: { num: [{ number: ["<=", 100] }] },
+          detail: { num: [{ numeric: ["<=", 100] }] },
         }
       );
     });
@@ -536,7 +537,7 @@ describe("event pattern", () => {
           (event) => event.detail.num >= 100 && event.detail.num < 1000
         ),
         {
-          detail: { num: [{ number: [">=", 100, "<", 1000] }] },
+          detail: { num: [{ numeric: [">=", 100, "<", 1000] }] },
         }
       );
     });
@@ -550,7 +551,7 @@ describe("event pattern", () => {
             event.detail.num > 50
         ),
         {
-          detail: { num: [{ number: [">=", 100, "<", 1000] }] },
+          detail: { num: [{ numeric: [">=", 100, "<", 1000] }] },
         }
       );
     });
@@ -561,7 +562,7 @@ describe("event pattern", () => {
           (event) => !(event.detail.num >= 100 && event.detail.num < 1000)
         ),
         {
-          detail: { num: [{ number: [">=", 1000, "<", 100] }] },
+          detail: { num: [{ numeric: [">=", 1000, "<", 100] }] },
         }
       );
     });
@@ -575,7 +576,7 @@ describe("event pattern", () => {
             event.detail.num < 200
         ),
         {
-          detail: { num: [{ number: [">=", 100, "<", 200] }] },
+          detail: { num: [{ numeric: [">=", 100, "<", 200] }] },
         }
       );
     });
@@ -590,7 +591,7 @@ describe("event pattern", () => {
         ),
         {
           detail: {
-            num: [{ number: [">=", 100, "<", 1000] }],
+            num: [{ numeric: [">=", 100, "<", 1000] }],
             str: ["something"],
           },
         }
@@ -603,7 +604,7 @@ describe("event pattern", () => {
           (event) => event.detail.num > 300 || event.detail.num < 200
         ),
         {
-          detail: { num: [{ number: [">", 300] }, { number: ["<", 200] }] },
+          detail: { num: [{ numeric: [">", 300] }, { numeric: ["<", 200] }] },
         }
       );
     });
@@ -614,7 +615,7 @@ describe("event pattern", () => {
           (event) => !(event.detail.num > 300 || event.detail.num < 200)
         ),
         {
-          detail: { num: [{ number: [">=", 200, "<=", 300] }] },
+          detail: { num: [{ numeric: [">=", 200, "<=", 300] }] },
         }
       );
     });
@@ -640,7 +641,7 @@ describe("event pattern", () => {
         ),
         {
           detail: {
-            num: [{ number: [">", 300, "<", 350] }, { number: ["<", 200] }],
+            num: [{ numeric: [">", 300, "<", 350] }, { numeric: ["<", 200] }],
           },
         }
       );
@@ -655,7 +656,7 @@ describe("event pattern", () => {
         ),
         {
           detail: {
-            num: [{ number: [">", 300] }, { number: [">", 0, "<", 200] }],
+            num: [{ numeric: [">", 300] }, { numeric: [">", 0, "<", 200] }],
           },
         }
       );
@@ -678,7 +679,7 @@ describe("event pattern", () => {
         ),
         {
           detail: {
-            num: [{ number: [">", 300] }, { number: ["<", 200] }],
+            num: [{ numeric: [">", 300] }, { numeric: ["<", 200] }],
           },
         }
       );
@@ -693,7 +694,7 @@ describe("event pattern", () => {
         ),
         {
           detail: {
-            num: [{ number: [">", 300] }, { number: ["<", 200] }],
+            num: [{ numeric: [">", 300] }, { numeric: ["<", 200] }],
           },
         }
       );
@@ -708,7 +709,7 @@ describe("event pattern", () => {
         ),
         {
           detail: {
-            num: [{ number: [">", 300] }, { number: ["<", 100] }],
+            num: [{ numeric: [">", 300] }, { numeric: ["<", 100] }],
           },
         }
       );
@@ -725,9 +726,9 @@ describe("event pattern", () => {
         {
           detail: {
             num: [
-              { number: [">", 300, "<", 400] },
-              { number: [">", 0, "<", 200] },
-              { number: [">", -100, "<", -50] },
+              { numeric: [">", 300, "<", 400] },
+              { numeric: [">", 0, "<", 200] },
+              { numeric: [">", -100, "<", -50] },
             ],
           },
         }
@@ -745,7 +746,7 @@ describe("event pattern", () => {
         ),
         {
           detail: {
-            num: [{ number: [">", -200] }],
+            num: [{ numeric: [">", -200] }],
           },
         }
       );
@@ -763,8 +764,8 @@ describe("event pattern", () => {
         {
           detail: {
             num: [
-              { number: [">", -200, "<", 200] },
-              { number: [">", 300, "<", 400] },
+              { numeric: [">", -200, "<", 200] },
+              { numeric: [">", 300, "<", 400] },
             ],
           },
         }
@@ -813,5 +814,35 @@ describe("event pattern", () => {
     });
   });
 
-  describe.skip("aggregate", () => {});
+  describe.skip("aggregate", () => {
+    test("test for optional", () => {
+      ebEventPatternTestCase(
+        reflect<EventPredicateFunction<TestEvent>>(
+          (event) =>
+            !!event.detail.optional && event.detail.optional === "value"
+        ),
+        {
+          detail: {
+            optional: ["value"],
+          },
+        }
+      );
+    });
+
+    test("test for optional number", () => {
+      ebEventPatternTestCase(
+        reflect<EventPredicateFunction<TestEvent>>(
+          (event) =>
+            !!event.detail.optionalNum &&
+            event.detail.optionalNum > 10 &&
+            event.detail.optionalNum < 100
+        ),
+        {
+          detail: {
+            optionalNum: [{ numeric: [">", 10, "<", 100] }],
+          },
+        }
+      );
+    });
+  });
 });

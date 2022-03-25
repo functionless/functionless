@@ -32,7 +32,7 @@ export const isAnythingButPattern = (x: any): x is AnythingButPattern => {
 };
 
 export interface NumberPattern {
-  number: [string, number, string, number] | [string, number];
+  numeric: [string, number, string, number] | [string, number];
 }
 
 export const isNumberPattern = (x: any): x is NumberPattern => {

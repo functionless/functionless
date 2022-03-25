@@ -211,7 +211,7 @@ export const patternToEventBridgePattern = (
     }
     return [
       {
-        number: [
+        numeric: [
           ...(pattern.lower.value !== Number.NEGATIVE_INFINITY
             ? [pattern.lower.inclusive ? ">=" : ">", pattern.lower.value]
             : []),
