@@ -1,6 +1,6 @@
 import type { Decl } from "./declaration";
 import type { Expr } from "./expression";
-import type { CatchClause, Stmt } from "./statement";
+import type { BlockStmt, CatchClause, Stmt } from "./statement";
 
 export type FunctionlessNode = Decl | Expr | Stmt;
 
@@ -110,22 +110,25 @@ export class BaseNode<
     }
   }
 
-  public stepIn(): Stmt | undefined {
+  /**
+   * @returns the {@link Stmt} that will be run immediately after this Node.
+   */
+  public step(): Stmt | undefined {
     const self = this as unknown as FunctionlessNode;
 
     if (self.kind === "TryStmt") {
-      return self.tryBlock.stepIn();
+      return self.tryBlock.step();
     } else if (self.kind === "BlockStmt") {
       if (self.isEmpty()) {
-        return self.stepOut();
+        return self.exit();
       } else {
-        return self.firstStmt?.stepIn();
+        return self.firstStmt?.step();
       }
     } else if (self.kind === "CatchClause") {
       if (self.variableDecl) {
-        return self.variableDecl.stepIn();
+        return self.variableDecl.step();
       } else {
-        return self.block.stepIn();
+        return self.block.step();
       }
     } else if ("next" in self) {
       // isStmt
@@ -135,10 +138,11 @@ export class BaseNode<
     }
   }
 
-  public stepOut(): Stmt | undefined {
+  private exit(): Stmt | undefined {
     const node = this as unknown as FunctionlessNode;
     if ("next" in node && node.next) {
-      return node.next.stepIn();
+      // isStmt
+      return node.next.step();
     }
     const scope = node.parent;
     if (scope === undefined) {
@@ -148,21 +152,78 @@ export class BaseNode<
       } else if (scope.finallyBlock === node) {
         // stepping out of the finallyBlock
         if (scope.next) {
-          return scope.next.stepIn();
+          return scope.next.step();
         } else {
-          return scope.stepOut();
+          return scope.exit();
         }
       }
     } else if (scope.kind === "CatchClause") {
       if (scope.parent.finallyBlock) {
-        return scope.parent.finallyBlock.stepIn();
+        return scope.parent.finallyBlock.step();
       } else {
-        return scope.parent.stepOut();
+        return scope.parent.exit();
       }
     } else if ("next" in scope && scope.next) {
-      return scope.next.stepIn();
+      // isStmt
+      return scope.next.step();
     }
-    return scope.stepOut();
+    return scope.exit();
+  }
+
+  /**
+   * @returns the {@link Stmt} that will be run if an error was raised from this Node.
+   */
+  public error(): CatchClause | BlockStmt | undefined {
+    // CatchClause that will handle the error
+    const catchClause = this.findCatchClause();
+
+    // CatchClause that contains the Node that is raising the error
+    const surroundingCatch = this.findParent(
+      // inside the catchClause
+      (p): p is CatchClause => p.kind === "CatchClause"
+    );
+
+    if (catchClause) {
+      if (
+        surroundingCatch &&
+        // we're within a catch with a finally interception block
+        surroundingCatch.parent.finallyBlock &&
+        /*
+         try {
+           try {
+           } catch {
+             // error is happening within the nested catch block
+             throw new Error("")
+           } finally {
+             // and there is a finally block which intercepts the error - goto here
+             return "intercepted";
+           }
+         } catch {
+           // so don't goto here
+         }
+         */
+        catchClause.parent.tryBlock.contains(surroundingCatch)
+      ) {
+        // finally block intercepts the thrown error
+        return surroundingCatch.parent.finallyBlock;
+      }
+    } else if (surroundingCatch?.parent.finallyBlock) {
+      // there is no catch handler for this error, but there is a surrounding finally block to intercept us
+      /*
+      try {
+      } catch {
+        // error thrown with a catch
+        throw new Error("")
+      } finally {
+        // and intercepted by this finally block
+        return "intercepted";
+      }
+      */
+      return surroundingCatch.parent.finallyBlock;
+    }
+    // default behavior is to use the catchClause to handle (if one exists)
+    // otherwise return `undefined` - signalling that the error is terminal
+    return catchClause;
   }
 }
 

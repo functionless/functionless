@@ -1880,3 +1880,156 @@ test("try-catch-finally", () => {
     },
   });
 });
+
+test("try, catch (err), handle error, finally", () => {
+  const { stack, computeScore } = init();
+
+  const definition = new ExpressStepFunction(stack, "fn", (): string | void => {
+    try {
+      computeScore({
+        id: "id",
+        name: "name",
+      });
+    } catch (err: any) {
+      computeScore({
+        id: "id",
+        name: err.message,
+      });
+    } finally {
+      return "hello";
+    }
+  }).definition;
+
+  expect(definition).toEqual({
+    StartAt: 'computeScore({id: "id", name: "name"})',
+    States: {
+      'computeScore({id: "id", name: "name"})': {
+        Catch: [
+          {
+            ErrorEquals: ["States.ALL"],
+            Next: "catch(err)",
+          },
+        ],
+        Next: 'return "hello"',
+        Parameters: {
+          FunctionName: computeScore.resource.functionName,
+          Payload: {
+            id: "id",
+            name: "name",
+          },
+        },
+        Resource: "arn:aws:states:::lambda:invoke",
+        ResultPath: null,
+        Type: "Task",
+      },
+      "catch(err)": {
+        Next: "0_catch(err)",
+        Parameters: {
+          "0_ParsedError.$": "States.StringToJson($.err.Cause)",
+        },
+        ResultPath: "$.err",
+        Type: "Pass",
+      },
+      "0_catch(err)": {
+        InputPath: "$.err.0_ParsedError",
+        Next: 'computeScore({id: "id", name: err.message})',
+        ResultPath: "$.err",
+        Type: "Pass",
+      },
+      'computeScore({id: "id", name: err.message})': {
+        Next: 'return "hello"',
+        Parameters: {
+          FunctionName: computeScore.resource.functionName,
+          Payload: {
+            id: "id",
+            "name.$": "$.err.message",
+          },
+        },
+        Resource: "arn:aws:states:::lambda:invoke",
+        ResultPath: null,
+        Type: "Task",
+      },
+      'return "hello"': {
+        End: true,
+        Result: "hello",
+        ResultPath: "$",
+        Type: "Pass",
+      },
+    },
+  });
+});
+
+test("try, throw, finally", () => {
+  const { stack } = init();
+
+  const definition = new ExpressStepFunction(stack, "fn", (): string | void => {
+    try {
+      throw new Error("cause");
+    } catch {
+    } finally {
+      return "hello";
+    }
+  }).definition;
+
+  expect(definition).toEqual({
+    StartAt: 'throw new Error("cause")',
+    States: {
+      'throw new Error("cause")': {
+        Next: 'return "hello"',
+        Result: {
+          message: "cause",
+        },
+        ResultPath: null,
+        Type: "Pass",
+      },
+      'return "hello"': {
+        End: true,
+        Result: "hello",
+        ResultPath: "$",
+        Type: "Pass",
+      },
+    },
+  });
+});
+
+test("try, throw, catch, throw, finally, return", () => {
+  const { stack } = init();
+
+  const definition = new ExpressStepFunction(stack, "fn", (): string | void => {
+    try {
+      throw new Error("go");
+    } catch {
+      throw new Error("little");
+    } finally {
+      return "rock-star";
+    }
+  }).definition;
+
+  expect(definition).toEqual({
+    StartAt: 'throw new Error("go")',
+    States: {
+      'throw new Error("go")': {
+        Next: 'throw new Error("little")',
+        Result: {
+          message: "go",
+        },
+        ResultPath: null,
+        Type: "Pass",
+      },
+      'throw new Error("little")': {
+        Next: `return "rock-star"`,
+        Result: {
+          message: "little",
+        },
+        ResultPath: null,
+        Type: "Pass",
+      },
+      'return "rock-star"': {
+        End: true,
+        Result: "rock-star",
+        ResultPath: "$",
+        Type: "Pass",
+      },
+    },
+  });
+});

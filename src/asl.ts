@@ -8,10 +8,12 @@ import {
   isLiteralExpr,
   isReferenceExpr,
   isVariableReference,
+  NewExpr,
   NullLiteralExpr,
 } from "./expression";
 import {
   BlockStmt,
+  CatchClause,
   IfStmt,
   isCatchClause,
   isForInStmt,
@@ -347,7 +349,7 @@ export class ASL {
 
     const states = this.execute(this.decl.body);
 
-    const start = this.step(this.decl.body);
+    const start = this.transition(this.decl.body);
     if (start === undefined) {
       throw new Error(`State Machine has no States`);
     }
@@ -422,7 +424,7 @@ export class ASL {
                 [
                   {
                     ErrorEquals: ["States.ALL"],
-                    Next: this.step(errorScope.catchClause)!,
+                    Next: this.transition(errorScope.catchClause)!,
                     ResultPath: errorScope.catchClause.variableDecl
                       ? `$.${errorScope.catchClause.variableDecl.name}`
                       : null,
@@ -527,54 +529,70 @@ export class ASL {
         throw new Error(`the expr of a ThrowStmt must be a NewExpr`);
       }
 
-      const closure = stmt.findParent(anyOf(isForOfStmt, isForInStmt));
-      const catchClause = stmt.findCatchClause();
+      const fail = () => ({
+        [this.getStateName(stmt)]: {
+          Type: "Fail",
+          Error: exprToString((stmt.expr as NewExpr).expr),
+          Cause: JSON.stringify(
+            Object.entries((stmt.expr as NewExpr).args).reduce(
+              (args: any, [argName, argVal]) => ({
+                ...args,
+                [argName]: ASL.toJson(argVal),
+              }),
+              {}
+            )
+          ),
+        } as const,
+      });
 
-      // TODO: handle case where we are inside a for-loop or `.map` function
-      if (
-        catchClause &&
-        (closure === undefined ||
-          // if the try-catch is inside the closure, then use Type: Pass
-          // if the closure is inside the try-catch, then use Type: Fail
-          //    - the for-loop will have to add a Catch clause to route the error outside
-          (closure && closure.contains(catchClause)))
-      ) {
-        // const { hasTask } = analyzeFlow(catchClause.parent);
-
-        // if this `throw` is within a try-catch, then Pass the error to the `catch` state
-        return {
+      const pass = (catchOrFinally: CatchClause | BlockStmt) =>
+        ({
           [this.getStateName(stmt)]: {
             Type: "Pass",
-            Result: Object.entries(stmt.expr.args).reduce(
+            Result: Object.entries((stmt.expr as NewExpr).args).reduce(
               (args: any, [argName, argVal]) => ({
                 ...args,
                 [argName]: ASL.toJson(argVal),
               }),
               {}
             ),
-            Next: this.step(catchClause),
-            ResultPath: catchClause.variableDecl
-              ? `$.${catchClause.variableDecl.name}`
-              : null,
+            Next: this.transition(catchOrFinally),
+            ResultPath:
+              catchOrFinally.kind === "CatchClause" &&
+              catchOrFinally.variableDecl
+                ? `$.${catchOrFinally.variableDecl.name}`
+                : // TODO: we may want to generate an error name in this case so that
+                  // we can identify when an error was thrown to know how to exit a finally block
+                  null,
           },
-        };
+        } as const);
+
+      // detect the immediate for-loop closure surrounding this throw statement
+      // because of how step function's Catch feature works, we need to check if the try
+      // is inside or outside the closure
+      const mapOrParallelClosure = stmt.findParent(
+        anyOf(isForOfStmt, isForInStmt)
+      );
+
+      // catchClause or finallyBlock that will run upon throwing this error
+      // i.e. if this throw is within a try, then this is that try's catchClause
+      const catchOrFinally = stmt.error();
+      if (catchOrFinally === undefined) {
+        // error is terminal
+        return fail();
+      } else if (mapOrParallelClosure) {
+        if (mapOrParallelClosure.contains(catchOrFinally)) {
+          // the catch/finally handler is nearer than the surrounding Map/Parallel State
+
+          return pass(catchOrFinally);
+        } else {
+          // the Map/Parallel tasks are closer than the catch/finally, so we use a Fail State
+          // to terminate the Map/Parallel and delegate the propagation of the error to the
+          // Map/Parallel state
+          return fail();
+        }
       } else {
-        // if this throw is not within a try-catch, then Fail the State Machine
-        return {
-          [this.getStateName(stmt)]: {
-            Type: "Fail",
-            Error: exprToString(stmt.expr.expr),
-            Cause: JSON.stringify(
-              Object.entries(stmt.expr.args).reduce(
-                (args: any, [argName, argVal]) => ({
-                  ...args,
-                  [argName]: ASL.toJson(argVal),
-                }),
-                {}
-              )
-            ),
-          },
-        };
+        return pass(catchOrFinally);
       }
     } else if (stmt.kind === "TryStmt") {
       const { hasTask } = analyzeFlow(stmt.tryBlock);
@@ -609,46 +627,47 @@ export class ASL {
   }
 
   /**
-   * Transition to the State that is the beginning of this {@link next}.
+   * Transition to the State that represents the beginning of the {@link stmt}.
    *
-   * @param stmt the {@link Stmt} to step into,
+   * @param stmt the {@link Stmt} to transition to.
    * @returns the name of the State representing the beginning of this {@link next}.
    */
-  private step(stmt: Stmt | undefined): string | undefined {
+  private transition(stmt: Stmt | undefined): string | undefined {
     if (stmt === undefined) {
       return undefined;
     } else if (stmt.kind === "CatchClause") {
+      // CatchClause has special logic depending on whether the tryBlock contains a Task
       const { hasTask } = analyzeFlow(stmt.parent.tryBlock);
       if (hasTask && stmt.variableDecl) {
+        // if we have a Task and the variableDecl is defined, then we need to do extra
+        // work to parse the Catch block into the variableDecl
         return this.getStateName(stmt.variableDecl);
       } else {
-        return this.step(stmt.block);
+        // this is an empty catch block or a catch block where the variable is ignored
+        // so just transition into the catch block
+        return this.transition(stmt.block);
       }
     } else if (stmt.kind === "BlockStmt") {
-      return this.step(stmt.stepIn());
+      // a BlockStmt does not have a state representing itself, so we instead step into it
+      return this.transition(stmt.step());
     } else {
+      // this is a Stmt that will have a singular state representing its beginning, return its name
       return this.getStateName(stmt);
     }
-
-    // const next = stmt.stepIn();
-    // if (next !== undefined) {
-    //   if (next.kind === "CatchClause" || next.kind === "BlockStmt") {
-    //     return this.step(next);
-    //   } else if (isStmt(next)) {
-    //     return this.getStateName(next);
-    //   }
-    // }
-    // return undefined;
   }
 
   /**
    * Find the next state that the {@link node} should transition to.
+   *
+   * We can't use `node.step` because that logic does not understand Step Function's limitations.
+   *
+   * TODO: can we simplify the logic here, make more use of {@link this.step} and {@link Stmt.step}?
    */
   private next(node: Stmt): string | undefined {
     if (node.kind === "ReturnStmt") {
       return this.return(node);
     } else if (node.next) {
-      return this.step(node.next);
+      return this.transition(node.next);
     } else if (node.kind === "TryStmt" && isTerminal(node)) {
       return undefined;
     } else if (node.parent?.kind === "BlockStmt") {
@@ -666,7 +685,7 @@ export class ASL {
         if (block === scope.tryBlock) {
           // need to move to the finally block
           if (scope.finallyBlock?.isNotEmpty()) {
-            return this.step(scope.finallyBlock);
+            return this.transition(scope.finallyBlock);
           }
           return this.next(scope);
         } else if (block === scope.finallyBlock) {
@@ -678,7 +697,7 @@ export class ASL {
       } else if (scope.kind === "CatchClause") {
         const tryStmt = scope.parent;
         if (tryStmt.finallyBlock?.isNotEmpty()) {
-          return this.step(tryStmt.finallyBlock);
+          return this.transition(tryStmt.finallyBlock);
         }
         return this.next(scope);
       } else {
@@ -739,9 +758,9 @@ export class ASL {
 
         const catchClause = expr.findCatchClause();
         if (catchClause) {
-          const next = this.step(catchClause);
+          const next = this.transition(catchClause);
           if (next === undefined) {
-            this.step(catchClause);
+            this.transition(catchClause);
             throw new Error(`CatchClause with no Next state`);
           }
           return {
