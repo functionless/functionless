@@ -15,8 +15,21 @@ export interface EventBusRuleInput<
   detail: T;
 }
 
+/**
+ * https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-transform-target-input.html#eb-transform-input-predefined
+ */
+export interface EventTransformUtils {
+  context: {
+    ruleArn: string;
+    ruleName: string;
+    ingestionTime: string;
+    eventJson: string;
+  };
+}
+
 export type EventTransformFunction<E extends EventBusRuleInput, O = any> = (
-  event: E
+  event: E,
+  $utils: EventTransformUtils
 ) => O;
 
 export type EventPredicateFunction<

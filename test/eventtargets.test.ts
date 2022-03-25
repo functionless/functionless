@@ -254,6 +254,161 @@ test("non-string type", () => {
   );
 });
 
+describe("predefined", () => {
+  test("direct event", () => {
+    ebEventTargetTestCase<testEvent>(
+      reflect((event) => event),
+      {
+        bind: () => {
+          return { inputPathsMap: {}, inputTemplate: "<aws.events.event>" };
+        },
+      }
+    );
+  });
+
+  test("direct rule name", () => {
+    ebEventTargetTestCase<testEvent>(
+      reflect((_event, u) => u.context.ruleName),
+      {
+        bind: () => {
+          return {
+            inputPathsMap: {},
+            inputTemplate: '"<aws.events.rule-name>"',
+          };
+        },
+      }
+    );
+  });
+
+  test("direct rule name in template", () => {
+    ebEventTargetTestCase<testEvent>(
+      reflect((_event, u) => `blah ${u.context.ruleName}`),
+      {
+        bind: () => {
+          return {
+            inputPathsMap: {},
+            inputTemplate: '"blah <aws.events.rule-name>"',
+          };
+        },
+      }
+    );
+  });
+
+  test("direct event json name", () => {
+    ebEventTargetTestCase<testEvent>(
+      reflect((_event, u) => u.context.eventJson),
+      {
+        bind: () => {
+          return {
+            inputPathsMap: {},
+            inputTemplate: '"<aws.events.event.json>"',
+          };
+        },
+      }
+    );
+  });
+
+  test("direct event in object", () => {
+    ebEventTargetTestCase<testEvent>(
+      reflect((event) => ({
+        evnt: event,
+      })),
+      {
+        bind: () => ({
+          inputPathsMap: {},
+          inputTemplate: `{"evnt":<aws.events.event>}`,
+        }),
+      }
+    );
+  });
+
+  test("direct event in template", () => {
+    ebEventTargetTestCase<testEvent>(
+      reflect((event) => `original: ${event}`),
+      {
+        bind: () => ({
+          inputPathsMap: {},
+          inputTemplate: '"original: <aws.events.event>"',
+        }),
+      }
+    );
+  });
+
+  test("rule name", () => {
+    ebEventTargetTestCase<testEvent>(
+      reflect((_, $utils) => ({ value: $utils.context.ruleName })),
+      {
+        bind: () => ({
+          inputPathsMap: {},
+          inputTemplate: `{"value":<aws.events.rule-name>}`,
+        }),
+      }
+    );
+  });
+
+  test("rule arn", () => {
+    ebEventTargetTestCase<testEvent>(
+      reflect((_, $utils) => ({ value: $utils.context.ruleArn })),
+      {
+        bind: () => ({
+          inputPathsMap: {},
+          inputTemplate: `{"value":<aws.events.rule-arn>}`,
+        }),
+      }
+    );
+  });
+
+  test("event json", () => {
+    ebEventTargetTestCase<testEvent>(
+      reflect((_, $utils) => ({ value: $utils.context.eventJson })),
+      {
+        bind: () => ({
+          inputPathsMap: {},
+          inputTemplate: `{"value":<aws.events.event.json>}`,
+        }),
+      }
+    );
+  });
+
+  test("time", () => {
+    ebEventTargetTestCase<testEvent>(
+      reflect((_, $utils) => ({ value: $utils.context.ingestionTime })),
+      {
+        bind: () => ({
+          inputPathsMap: {},
+          inputTemplate: `{"value":<aws.events.ingestion-time>}`,
+        }),
+      }
+    );
+  });
+
+  test("different utils name", () => {
+    ebEventTargetTestCase<testEvent>(
+      reflect((_, utils) => ({ value: utils.context.ruleName })),
+      {
+        bind: () => ({
+          inputPathsMap: {},
+          inputTemplate: `{"value":<aws.events.rule-name>}`,
+        }),
+      }
+    );
+  });
+
+  test("different utils name at the top", () => {
+    ebEventTargetTestCase<testEvent>(
+      reflect((_, utils) => utils.context.ruleName),
+      {
+        bind: () => {
+          return {
+            inputPathsMap: {},
+            inputTemplate: '"<aws.events.rule-name>"',
+          };
+        },
+      }
+    );
+  });
+});
+
 describe("referencing", () => {
   test("dereference", () => {
     ebEventTargetTestCase<testEvent>(
@@ -435,28 +590,13 @@ describe("not allowed", () => {
     );
   });
 
-  test("direct event", () => {
-    ebEventTargetTestCaseError<testEvent>(
-      reflect((event) => event),
-      "Unsupported direct use of the event parameter."
-    );
-  });
-
-  test("direct event in object", () => {
-    ebEventTargetTestCaseError<testEvent>(
-      reflect((event) => ({
-        event,
-      })),
-      "Unsupported direct use of the event parameter."
-    );
-  });
-
-  test("direct event in object", () => {
+  // Note: this cannot happen with the type checker, but validating in case someone tries to hack around it
+  test("use of deep fields outside of detail", () => {
     ebEventTargetTestCaseError<testEvent>(
       reflect((event) => ({
         event: (<any>event.source).blah,
       })),
-      "Event references with depth greater than one must be on the detail propert, got source,blah"
+      "Event references with depth greater than one must be on the detail property, got source,blah"
     );
   });
 

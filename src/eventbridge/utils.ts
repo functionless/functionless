@@ -99,8 +99,6 @@ export const getPropertyAccessKey = (
  * Retrieves a string, number, boolean, undefined, or null constant from the given expression.
  * Wrap the value to not be ambiguous with the undefined value.
  * When one is not found, return undefined (not wrapped).
- *
- * TODO: Support following references.
  */
 export const getConstant = (expr: Expr): Constant | undefined => {
   if (
@@ -287,26 +285,25 @@ export type EventReference = ReferencePath & {
 // TODO: validate again object schema?
 export function assertValidEventRefererence(
   eventReference?: ReferencePath,
-  eventName?: string
+  eventName?: string,
+  utilsName?: string
 ): asserts eventReference is EventReference {
   if (!eventReference) {
     throw Error("Valid event reference was not provided.");
   }
-  if (eventReference.identity !== eventName) {
-    throw Error(
-      `Unresolved references can only reference the event paremeter: ${eventName}, but found ${eventReference.identity}`
-    );
-  }
-  if (eventReference.reference.length === 0) {
-    throw new Error("Direct use of the event is invalid.");
-  }
-  if (eventReference.reference.length > 1) {
-    const [first] = eventReference.reference;
-    if (first !== "detail") {
-      throw `Event references with depth greater than one must be on the detail propert, got ${eventReference.reference.join(
-        ","
-      )}`;
+  if (eventReference.identity === eventName) {
+    if (eventReference.reference.length > 1) {
+      const [first] = eventReference.reference;
+      if (first !== "detail") {
+        throw `Event references with depth greater than one must be on the detail property, got ${eventReference.reference.join(
+          ","
+        )}`;
+      }
     }
+  } else if (!utilsName || eventReference.identity !== utilsName) {
+    throw Error(
+      `Unresolved references can only reference the event paremeter (${eventName}) or the $utils parameter (${utilsName}), but found ${eventReference.identity}`
+    );
   }
 }
 
