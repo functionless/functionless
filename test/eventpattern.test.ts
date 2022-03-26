@@ -260,7 +260,7 @@ describe("event pattern", () => {
       );
     });
 
-    test("prefix", () => {
+    test("not prefix", () => {
       ebEventPatternTestCase(
         reflect<EventPredicateFunction<TestEvent>>(
           (event) => !event.source.startsWith("l")
@@ -268,6 +268,16 @@ describe("event pattern", () => {
         {
           source: [{ "anything-but": { prefix: "l" } }],
         }
+      );
+    });
+
+    // Functionless reflect doesn't support calls of type any
+    test.skip("prefix non string", () => {
+      ebEventPatternTestCaseError(
+        reflect<EventPredicateFunction<TestEvent>>((event) =>
+          (<any>event.detail.num).startsWith("l")
+        ),
+        `Starts With operation only supported on strings, found number.`
       );
     });
   });
@@ -341,6 +351,72 @@ describe("event pattern", () => {
       );
     });
 
+    test("not not prefix", () => {
+      ebEventPatternTestCase(
+        reflect<EventPredicateFunction<TestEvent>>(
+          (event) => !!event.source.startsWith("lambda")
+        ),
+        {
+          source: [{ prefix: "lambda" }],
+        }
+      );
+    });
+
+    test("negate string equals", () => {
+      ebEventPatternTestCase(
+        reflect<EventPredicateFunction<TestEvent>>(
+          (event) => !(event.source === "lambda")
+        ),
+        {
+          source: [{ "anything-but": "lambda" }],
+        }
+      );
+    });
+
+    test("negate not string equals", () => {
+      ebEventPatternTestCase(
+        reflect<EventPredicateFunction<TestEvent>>(
+          (event) => !(event.source !== "lambda")
+        ),
+        {
+          source: ["lambda"],
+        }
+      );
+    });
+
+    test("not bool true", () => {
+      ebEventPatternTestCase(
+        reflect<EventPredicateFunction<TestEvent>>(
+          (event) => event.detail.bool !== true
+        ),
+        {
+          detail: { bool: [false] },
+        }
+      );
+    });
+
+    test("negate not bool true", () => {
+      ebEventPatternTestCase(
+        reflect<EventPredicateFunction<TestEvent>>(
+          (event) => !(event.detail.bool !== true)
+        ),
+        {
+          detail: { bool: [true] },
+        }
+      );
+    });
+
+    test("negate bool true", () => {
+      ebEventPatternTestCase(
+        reflect<EventPredicateFunction<TestEvent>>(
+          (event) => !(event.detail.bool === true)
+        ),
+        {
+          detail: { bool: [false] },
+        }
+      );
+    });
+
     test("string wrapped", () => {
       ebEventPatternTestCase(
         reflect<EventPredicateFunction<TestEvent>>(
@@ -383,6 +459,43 @@ describe("event pattern", () => {
           detail: { str: [{ "anything-but": { prefix: "something" } }] },
         }
       );
+    });
+
+    test("negate multiple fields", () => {
+      ebEventPatternTestCaseError(
+        reflect<EventPredicateFunction<TestEvent>>(
+          (event) => !(event.detail.str === "hello" && event.id === "there")
+        ),
+        "Can only negate simple statements like equals, doesn't equals, and prefix."
+      );
+    });
+
+    test("negate multiple", () => {
+      ebEventPatternTestCaseError(
+        reflect<EventPredicateFunction<TestEvent>>(
+          (event) => !(event.detail.str || !event.detail.str)
+        ),
+        "Impossible logic discovered."
+      );
+    });
+
+    test("negate negate multiple", () => {
+      ebEventPatternTestCase(
+        reflect<EventPredicateFunction<TestEvent>>(
+          (event) => !!(event.detail.str || !event.detail.str)
+        ),
+        { source: [{ prefix: "" }] }
+      );
+    });
+
+    test("negate intrafield valid aggregate", () => {
+      ebEventPatternTestCaseError(
+        reflect<EventPredicateFunction<TestEvent>>(
+          (event) =>
+            !(event.detail.str.startsWith("hello") || event.detail.str === "hi")
+        )
+      ),
+        "Can only negate simple statments like boolean and equals.";
     });
   });
 
@@ -956,6 +1069,37 @@ describe("event pattern", () => {
       );
     });
 
+    test("AND not prefix", () => {
+      ebEventPatternTestCaseError(
+        reflect<EventPredicateFunction<TestEvent>>(
+          (event) =>
+            !event.detail.str.startsWith("hi") && event.detail.str !== "hello"
+        ),
+        "Event Bridge patterns do not support AND logic between NOT prefix and any other logic."
+      );
+    });
+
+    test("AND not prefix reverse", () => {
+      ebEventPatternTestCaseError(
+        reflect<EventPredicateFunction<TestEvent>>(
+          (event) =>
+            event.detail.str !== "hello" && !event.detail.str.startsWith("hi")
+        ),
+        "Event Bridge patterns do not support AND logic between NOT prefix and any other logic."
+      );
+    });
+
+    test("AND not two prefix", () => {
+      ebEventPatternTestCaseError(
+        reflect<EventPredicateFunction<TestEvent>>(
+          (event) =>
+            !event.detail.str.startsWith("hello") &&
+            !event.detail.str.startsWith("hi")
+        ),
+        "Event Bridge patterns do not support AND logic between NOT prefix and any other logic."
+      );
+    });
+
     test("AND list", () => {
       ebEventPatternTestCase(
         reflect<EventPredicateFunction<TestEvent>>(
@@ -1168,6 +1312,24 @@ describe("event pattern", () => {
             ],
           },
         }
+      );
+    });
+  });
+
+  describe("error edge cases", () => {
+    test("comparing non event values", () => {
+      ebEventPatternTestCaseError(
+        reflect<EventPredicateFunction<TestEvent>>((_event) => "10" === "10"),
+        "Expected exactly one event reference, got zero."
+      );
+    });
+
+    test("comparing two event values", () => {
+      ebEventPatternTestCaseError(
+        reflect<EventPredicateFunction<TestEvent>>(
+          (event) => event.id === event.region
+        ),
+        "Expected exactly one event reference, got two."
       );
     });
   });

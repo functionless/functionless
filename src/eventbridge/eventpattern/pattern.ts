@@ -16,7 +16,8 @@ export type Pattern =
   | AnythingButPattern
   | AnythingButPrefixPattern
   | EmptyPattern
-  | NumericAggregationPattern;
+  | NumericAggregationPattern
+  | NeverPattern;
 
 /**
  * The base of an event pattern is a object with multiple fields. Additionally some fields like detail can be deep.
@@ -43,6 +44,7 @@ export interface AggregatePattern {
     | PresentPattern
     | AnythingButPattern
     | AnythingButPrefixPattern
+    | NeverPattern
   )[];
 }
 
@@ -152,7 +154,7 @@ export const isAnythingButPrefixPattern = (
 };
 
 /**
- * A Pattern that represents no logic.
+ * A Pattern that represents logic that is always true.
  * This pattern will be filtered out by the end of the compilation.
  * If the only pattern remaining is a EmptyPattern, the field will be removed from the pattern.
  */
@@ -162,6 +164,20 @@ export interface EmptyPattern {
 
 export const isEmptyPattern = (x: Pattern): x is EmptyPattern => {
   return "empty" in x;
+};
+
+/**
+ * A Pattern that represents logic that is never true.
+ * This pattern may be filtered out at the end.
+ * It is the opposite of EmptyPattern
+ * If it is applied to AND logic, either between or within a field, an error is thrown.
+ */
+export interface NeverPattern {
+  never: true;
+}
+
+export const isNeverPattern = (x: Pattern): x is NeverPattern => {
+  return "never" in x;
 };
 
 export const isPositiveSingleValueRange = (pattern: NumericRangePattern) =>
@@ -192,7 +208,8 @@ export const patternDocumentToEventPattern = (
 };
 
 export const patternToEventBridgePattern = (
-  pattern: Pattern
+  pattern: Pattern,
+  aggregate?: boolean
 ): fnls_event_bridge.PatternList | undefined => {
   if (isEmptyPattern(pattern)) {
     return undefined;
@@ -242,7 +259,7 @@ export const patternToEventBridgePattern = (
       return undefined;
     }
     return pattern.patterns
-      .map(patternToEventBridgePattern)
+      .map((p) => patternToEventBridgePattern(p, pattern.patterns.length > 1))
       .reduce(
         (acc, pattern) => [...(acc ?? []), ...(pattern ?? [])],
         [] as fnls_event_bridge.PatternList
@@ -252,11 +269,18 @@ export const patternToEventBridgePattern = (
       return undefined;
     }
     return pattern.ranges
-      .map(patternToEventBridgePattern)
+      .map((x) => patternToEventBridgePattern(x, true))
       .reduce(
         (acc, pattern) => [...(acc ?? []), ...(pattern ?? [])],
         [] as fnls_event_bridge.PatternList
       );
+  } else if (isNeverPattern(pattern)) {
+    // if never is in an aggregate and not the lone pattern, return undefined
+    // if never is the lone value, either in an aggregate or directly on a field, fail
+    if (!aggregate) {
+      throw Error("Impossible logic discovered.");
+    }
+    return undefined;
   }
 
   assertNever(pattern);

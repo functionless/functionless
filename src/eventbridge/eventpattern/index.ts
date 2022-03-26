@@ -28,6 +28,7 @@ import {
   isEmptyPattern,
   patternDocumentToEventPattern,
   isAnythingButPrefixPattern,
+  isNeverPattern,
 } from "./pattern";
 import * as fnls_event_bridge from "./types";
 import {
@@ -215,6 +216,21 @@ export const synthesizeEventPattern = (
             anythingBut: [...pattern1.anythingBut, ...pattern2.anythingBut],
           };
         }
+      }
+      if (isAnythingButPrefixPattern(pattern1)) {
+        if (isAnythingButPrefixPattern(pattern2)) {
+          if (pattern1.anythingButPrefix === pattern2.anythingButPrefix) {
+            return pattern1;
+          }
+        }
+        throw Error(
+          "Event Bridge patterns do not support AND logic between NOT prefix and any other logic."
+        );
+      }
+      if (isAnythingButPrefixPattern(pattern2)) {
+        throw Error(
+          "Event Bridge patterns do not support AND logic between NOT prefix and any other logic."
+        );
       }
       // TODO: expand the supported cases
       throw new Error(
@@ -495,9 +511,9 @@ export const synthesizeEventPattern = (
   const handleStartsWithCall = (
     expr: CallExpr & { expr: PropAccessExpr | ElementAccessExpr }
   ): PatternDocument => {
-    const searchString = assertString(
-      getConstant(expr.args[STARTS_WITH_SEARCH_STRING])?.constant
-    );
+    const arg =
+      expr.args[STARTS_WITH_SEARCH_STRING] ?? Object.values(expr.args)[0];
+    const searchString = assertString(getConstant(arg)?.constant);
 
     if (
       Object.values(expr.args).filter((e) => !isNullLiteralExpr(e)).length > 1
@@ -702,7 +718,7 @@ export const synthesizeEventPattern = (
  *   * aggregate pattern (OR logic) - do not support AND within a field, inverting OR statements becomes AND, the one exception are numeric ranges.
  */
 const negateDocument = (classDocument: PatternDocument): PatternDocument => {
-  if (Object.keys(classDocument).length > 1) {
+  if (Object.keys(classDocument.doc).length > 1) {
     throw Error(
       "Can only negate simple statements like equals, doesn't equals, and prefix."
     );
@@ -743,7 +759,7 @@ const negateClassification = (pattern: Pattern): Pattern => {
   } else if (isPrefixMatchPattern(pattern)) {
     return { anythingButPrefix: pattern.prefix };
   } else if (isEmptyPattern(pattern)) {
-    return pattern;
+    return { never: true };
   } else if (isNumericRangePattern(pattern)) {
     return negateNumericRange(pattern);
   } else if (isNumericAggregationPattern(pattern)) {
@@ -754,6 +770,8 @@ const negateClassification = (pattern: Pattern): Pattern => {
     return pattern.ranges
       .map((r) => negateNumericRange(r))
       .reduce((joined, range) => joinNumericRange(joined, range));
+  } else if (isNeverPattern(pattern)) {
+    return { empty: true };
   }
 
   assertNever(pattern);
