@@ -2135,7 +2135,7 @@ test("try, throw, catch, throw, finally, return", () => {
         Result: {
           message: "little",
         },
-        ResultPath: "$.0_tmp",
+        ResultPath: null,
         Type: "Pass",
       },
       'return "rock-star"': {
@@ -2143,23 +2143,6 @@ test("try, throw, catch, throw, finally, return", () => {
         Result: "rock-star",
         ResultPath: "$",
         Type: "Pass",
-      },
-      "exit finally": {
-        Choices: [
-          {
-            IsPresent: true,
-            Next: "throw finally",
-            Variable: "$.0_tmp",
-          },
-        ],
-        Default: undefined,
-        Type: "Choice",
-      },
-      "throw finally": {
-        Cause:
-          "an error was re-thrown from a finally block which is unsupported by Step Functions",
-        Error: "ReThrowFromFinally",
-        Type: "Fail",
       },
     },
   });

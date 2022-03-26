@@ -542,7 +542,7 @@ export class ASL {
         throw new Error(`the expr of a ThrowStmt must be a NewExpr`);
       }
 
-      const throwTransition = this.getThrowStateTransition(stmt);
+      const throwTransition = this.throw(stmt);
       if (throwTransition === undefined) {
         return {
           [this.getStateName(stmt)]: {
@@ -605,9 +605,15 @@ export class ASL {
               ...this.execute(stmt.finallyBlock),
               ...(canThrow(stmt.catchClause)
                 ? (() => {
-                    const throwTarget = this.getThrowStateTransition(
-                      stmt.finallyBlock
-                    );
+                    if (isTerminal(stmt.finallyBlock)) {
+                      // if every branch in the finallyBlock is terminal (meaning it always throws or returns)
+                      // then we don't need the exit and throw blocks of a finally - because the finally
+                      // will always return
+                      // this is an extreme edge case
+                      // see: https://github.com/microsoft/TypeScript/issues/27454
+                      return {};
+                    }
+                    const throwTarget = this.throw(stmt.finallyBlock);
                     return {
                       [`exit ${this.getStateName(stmt.finallyBlock)}`]: {
                         // when exiting the finally block, if we entered via an error, then we need to re-throw the error
@@ -650,48 +656,6 @@ export class ASL {
     return assertNever(stmt);
   }
 
-  private getThrowStateTransition(node: FunctionlessNode):
-    | {
-        Next: string | undefined;
-        ResultPath: string | null;
-      }
-    | undefined {
-    // detect the immediate for-loop closure surrounding this throw statement
-    // because of how step function's Catch feature works, we need to check if the try
-    // is inside or outside the closure
-    const mapOrParallelClosure = node.findParent(
-      anyOf(isForOfStmt, isForInStmt)
-    );
-
-    // catchClause or finallyBlock that will run upon throwing this error
-    const catchOrFinally = node.error();
-    if (catchOrFinally === undefined) {
-      // error is terminal
-      return undefined;
-    } else if (
-      mapOrParallelClosure === undefined ||
-      mapOrParallelClosure.contains(catchOrFinally)
-    ) {
-      // the catch/finally handler is nearer than the surrounding Map/Parallel State
-      return {
-        Next: this.transition(catchOrFinally),
-        ResultPath:
-          catchOrFinally.kind === "CatchClause" && catchOrFinally.variableDecl
-            ? `$.${catchOrFinally.variableDecl.name}`
-            : catchOrFinally.kind === "BlockStmt" &&
-              catchOrFinally.isFinallyBlock() &&
-              canThrow(catchOrFinally.parent.catchClause)
-            ? `$.${this.getDeterministicGeneratedName(catchOrFinally)}`
-            : null,
-      };
-    } else {
-      // the Map/Parallel tasks are closer than the catch/finally, so we use a Fail State
-      // to terminate the Map/Parallel and delegate the propagation of the error to the
-      // Map/Parallel state
-      return undefined;
-    }
-  }
-
   public eval(
     expr: Expr,
     props: {
@@ -725,7 +689,7 @@ export class ASL {
           ...props,
         };
 
-        const throwOrPass = this.getThrowStateTransition(expr);
+        const throwOrPass = this.throw(expr);
         if (throwOrPass?.Next) {
           return {
             ...taskState,
@@ -740,29 +704,6 @@ export class ASL {
         } else {
           return taskState;
         }
-
-        // // const catchClause = expr.error();
-        // if (throwOrPass) {
-        //   const next = this.transition(catchClause);
-        //   if (next === undefined) {
-        //     throw new Error(`CatchClause with no Next state`);
-        //   }
-        //   return {
-        //     ...taskState,
-        //     ...(_throw
-        //       ? {
-        //           Catch: [
-        //             {
-        //               ErrorEquals: ["States.ALL"],
-        //               Next: next,
-        //             },
-        //           ],
-        //         }
-        //       : {}),
-        //   };
-        // } else {
-        //   return taskState;
-        // }
       }
       throw new Error(`call must be a service call, ${expr}`);
     } else if (isVariableReference(expr)) {
@@ -919,6 +860,67 @@ export class ASL {
       return this.getStateName(node);
     } else {
       return this.return(node.parent);
+    }
+  }
+
+  /**
+   * Find the transition edge from this {@link node} to the State which will handle
+   * the error.
+   *
+   * This error may be
+   *
+   * @param node
+   * @returns `undefined` if the error is terminal, otherwise a Next, ResultPath
+   */
+  private throw(node: FunctionlessNode):
+    | {
+        /**
+         * Name of the state to transition to.
+         */
+        Next: string | undefined;
+        /**
+         * JSON Path to store the the error payload.
+         */
+        ResultPath: string | null;
+      }
+    | undefined {
+    // detect the immediate for-loop closure surrounding this throw statement
+    // because of how step function's Catch feature works, we need to check if the try
+    // is inside or outside the closure
+    const mapOrParallelClosure = node.findParent(
+      anyOf(isForOfStmt, isForInStmt)
+    );
+
+    // catchClause or finallyBlock that will run upon throwing this error
+    const catchOrFinally = node.error();
+    if (catchOrFinally === undefined) {
+      // error is terminal
+      return undefined;
+    } else if (
+      mapOrParallelClosure === undefined ||
+      mapOrParallelClosure.contains(catchOrFinally)
+    ) {
+      // the catch/finally handler is nearer than the surrounding Map/Parallel State
+      return {
+        Next: this.transition(catchOrFinally),
+        ResultPath:
+          catchOrFinally.kind === "CatchClause" && catchOrFinally.variableDecl
+            ? `$.${catchOrFinally.variableDecl.name}`
+            : catchOrFinally.kind === "BlockStmt" &&
+              catchOrFinally.isFinallyBlock() &&
+              canThrow(catchOrFinally.parent.catchClause) &&
+              // we only store the error thrown from the catchClause if the finallyBlock is not terminal
+              // by terminal, we mean that every branch returns a value - meaning that the re-throw
+              // behavior of a finally will never be triggered - the return within the finally intercepts it
+              !isTerminal(catchOrFinally)
+            ? `$.${this.getDeterministicGeneratedName(catchOrFinally)}`
+            : null,
+      };
+    } else {
+      // the Map/Parallel tasks are closer than the catch/finally, so we use a Fail State
+      // to terminate the Map/Parallel and delegate the propagation of the error to the
+      // Map/Parallel state
+      return undefined;
     }
   }
 }
