@@ -13,10 +13,12 @@ export interface HasParent<Parent extends FunctionlessNode> {
   set parent(parent: Parent);
 }
 
-export class BaseNode<
+export abstract class BaseNode<
   Kind extends FunctionlessNode["kind"],
   Parent extends FunctionlessNode | undefined = FunctionlessNode | undefined
 > {
+  abstract readonly nodeKind: "Expr" | "Stmt" | "Decl";
+
   // @ts-ignore
   parent: Parent;
 
@@ -70,6 +72,12 @@ export class BaseNode<
    * Finds the {@link CatchClause} that this Node should throw to.
    */
   public findCatchClause(): CatchClause | undefined {
+    if (
+      this.kind === "BlockStmt" &&
+      (this as unknown as BlockStmt).isFinallyBlock()
+    ) {
+      return this.parent!.findCatchClause();
+    }
     const scope = this.parent;
     if (scope === undefined) {
       return undefined;
@@ -77,6 +85,9 @@ export class BaseNode<
       return scope.catchClause;
     } else if (scope.kind === "CatchClause") {
       // skip the try-block
+      return scope.parent.findCatchClause();
+    } else if (scope.kind === "BlockStmt" && scope.isFinallyBlock()) {
+      // skip the finally block
       return scope.parent.findCatchClause();
     } else {
       return scope.findCatchClause();
@@ -134,11 +145,12 @@ export class BaseNode<
       // isStmt
       return self;
     } else {
-      return undefined;
+      // is an Exor
+      return self.exit();
     }
   }
 
-  private exit(): Stmt | undefined {
+  public exit(): Stmt | undefined {
     const node = this as unknown as FunctionlessNode;
     if ("next" in node && node.next) {
       // isStmt
@@ -163,11 +175,12 @@ export class BaseNode<
       } else {
         return scope.parent.exit();
       }
-    } else if ("next" in scope && scope.next) {
-      // isStmt
+    } else if (scope.nodeKind === "Stmt" && scope.next) {
       return scope.next.step();
+    } else if (scope.nodeKind === "Expr") {
+      return scope.parent?.step();
     }
-    return scope.exit();
+    return undefined;
   }
 
   /**

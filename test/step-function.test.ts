@@ -24,6 +24,16 @@ function init() {
     })
   );
 
+  const task = new Function<string | void, void>(
+    new aws_lambda.Function(stack, "Task", {
+      code: aws_lambda.Code.fromInline(
+        "exports.handle = function() { return 1; }"
+      ),
+      handler: "index.handle",
+      runtime: aws_lambda.Runtime.NODEJS_14_X,
+    })
+  );
+
   const computeScore = new Function<Person, number>(
     new aws_lambda.Function(stack, "ComputeScore", {
       code: aws_lambda.Code.fromInline(
@@ -43,7 +53,7 @@ function init() {
     })
   );
 
-  return { stack, computeScore, getPerson, personTable };
+  return { stack, task, computeScore, getPerson, personTable };
 }
 
 test("empty function", () => {
@@ -279,7 +289,7 @@ test("conditionally return void", () => {
     }
   }).definition;
 
-  const expected: StateMachine<States> = {
+  expect(definition).toEqual({
     StartAt: 'if(id == "hello")',
     States: {
       'if(id == "hello")': {
@@ -290,20 +300,27 @@ test("conditionally return void", () => {
             Variable: "$.id",
           },
         ],
-        Default: "return null",
+        Default: "return null 1",
         Type: "Choice",
       },
       "return null": {
-        Type: "Pass",
         End: true,
+        OutputPath: "$.null",
         Parameters: {
           null: null,
         },
+        Type: "Pass",
+      },
+      "return null 1": {
+        End: true,
         OutputPath: "$.null",
+        Parameters: {
+          null: null,
+        },
+        Type: "Pass",
       },
     },
-  };
-  expect(definition).toEqual(expected);
+  });
 });
 
 test("if-else", () => {
@@ -1096,6 +1113,7 @@ test("try, task, empty catch", () => {
           {
             ErrorEquals: ["States.ALL"],
             Next: "return null",
+            ResultPath: null,
           },
         ],
         Next: "return null",
@@ -1187,6 +1205,7 @@ test("try-catch with inner return and no catch variable", () => {
           {
             ErrorEquals: ["States.ALL"],
             Next: 'return "world"',
+            ResultPath: null,
           },
         ],
         Next: 'return "hello"',
@@ -1230,6 +1249,7 @@ test("try-catch with inner return and a catch variable", () => {
           {
             ErrorEquals: ["States.ALL"],
             Next: "catch(err)",
+            ResultPath: "$.err",
           },
         ],
         Next: 'return "hello"',
@@ -1439,6 +1459,7 @@ test("try-catch with optional task", () => {
           {
             ErrorEquals: ["States.ALL"],
             Next: "catch(err)",
+            ResultPath: "$.err",
           },
         ],
         Next: 'return "hello world"',
@@ -1540,6 +1561,7 @@ test("try-catch with optional return of task", () => {
           {
             ErrorEquals: ["States.ALL"],
             Next: "catch(err)",
+            ResultPath: "$.err",
           },
         ],
         End: true,
@@ -1857,6 +1879,7 @@ test("try-catch-finally", () => {
           {
             ErrorEquals: ["States.ALL"],
             Next: 'return "hello"',
+            ResultPath: null,
           },
         ],
         Next: 'return "hello"',
@@ -1881,78 +1904,169 @@ test("try-catch-finally", () => {
   });
 });
 
-test("try, catch (err), handle error, finally", () => {
-  const { stack, computeScore } = init();
+test("try { task } catch { throw } finally { task() }", () => {
+  const { stack, task } = init();
 
   const definition = new ExpressStepFunction(stack, "fn", (): string | void => {
     try {
-      computeScore({
-        id: "id",
-        name: "name",
-      });
-    } catch (err: any) {
-      computeScore({
-        id: "id",
-        name: err.message,
-      });
+      task();
+    } catch {
+      throw new Error("cause");
     } finally {
-      return "hello";
+      task("recover");
     }
   }).definition;
 
   expect(definition).toEqual({
-    StartAt: 'computeScore({id: "id", name: "name"})',
+    StartAt: "task(null)",
     States: {
-      'computeScore({id: "id", name: "name"})': {
+      "task(null)": {
         Catch: [
           {
             ErrorEquals: ["States.ALL"],
-            Next: "catch(err)",
+            Next: 'throw new Error("cause")',
+            ResultPath: null,
           },
         ],
-        Next: 'return "hello"',
+        Next: 'task("recover")',
         Parameters: {
-          FunctionName: computeScore.resource.functionName,
-          Payload: {
-            id: "id",
-            name: "name",
-          },
+          FunctionName: task.resource.functionName,
+          Payload: null,
         },
         Resource: "arn:aws:states:::lambda:invoke",
         ResultPath: null,
         Type: "Task",
       },
-      "catch(err)": {
-        Next: "0_catch(err)",
-        Parameters: {
-          "0_ParsedError.$": "States.StringToJson($.err.Cause)",
+      'throw new Error("cause")': {
+        Next: 'task("recover")',
+        Result: {
+          message: "cause",
         },
-        ResultPath: "$.err",
+        ResultPath: "$.0_tmp",
         Type: "Pass",
       },
-      "0_catch(err)": {
-        InputPath: "$.err.0_ParsedError",
-        Next: 'computeScore({id: "id", name: err.message})',
-        ResultPath: "$.err",
-        Type: "Pass",
-      },
-      'computeScore({id: "id", name: err.message})': {
-        Next: 'return "hello"',
+      'task("recover")': {
+        Next: "exit finally",
         Parameters: {
-          FunctionName: computeScore.resource.functionName,
-          Payload: {
-            id: "id",
-            "name.$": "$.err.message",
-          },
+          FunctionName: task.resource.functionName,
+          Payload: "recover",
         },
         Resource: "arn:aws:states:::lambda:invoke",
         ResultPath: null,
         Type: "Task",
       },
-      'return "hello"': {
+      "exit finally": {
+        Choices: [
+          {
+            IsPresent: true,
+            Next: "throw finally",
+            Variable: "$.0_tmp",
+          },
+        ],
+        Default: "return null",
+        Type: "Choice",
+      },
+      "throw finally": {
+        Cause:
+          "an error was re-thrown from a finally block which is unsupported by Step Functions",
+        Error: "ReThrowFromFinally",
+        Type: "Fail",
+      },
+      "return null": {
         End: true,
-        Result: "hello",
-        ResultPath: "$",
+        OutputPath: "$.null",
+        Parameters: {
+          null: null,
+        },
+        Type: "Pass",
+      },
+    },
+  });
+});
+
+test("try { task() } catch { task() } finally { task() }", () => {
+  const { stack, task } = init();
+
+  const definition = new ExpressStepFunction(stack, "fn", (): void => {
+    try {
+      task("1");
+    } catch {
+      task("2");
+    } finally {
+      task("3");
+    }
+  }).definition;
+
+  expect(definition).toEqual({
+    StartAt: 'task("1")',
+    States: {
+      'task("1")': {
+        Catch: [
+          {
+            ErrorEquals: ["States.ALL"],
+            Next: 'task("2")',
+            ResultPath: null,
+          },
+        ],
+        Next: 'task("3")',
+        Parameters: {
+          FunctionName: task.resource.functionName,
+          Payload: "1",
+        },
+        Resource: "arn:aws:states:::lambda:invoke",
+        ResultPath: null,
+        Type: "Task",
+      },
+      'task("2")': {
+        Catch: [
+          {
+            ErrorEquals: ["States.ALL"],
+            Next: 'task("3")',
+            ResultPath: "$.0_tmp",
+          },
+        ],
+        Next: 'task("3")',
+        Parameters: {
+          FunctionName: task.resource.functionName,
+          Payload: "2",
+        },
+        Resource: "arn:aws:states:::lambda:invoke",
+        ResultPath: null,
+        Type: "Task",
+      },
+      'task("3")': {
+        Next: "exit finally",
+        Parameters: {
+          FunctionName: task.resource.functionName,
+          Payload: "3",
+        },
+        Resource: "arn:aws:states:::lambda:invoke",
+        ResultPath: null,
+        Type: "Task",
+      },
+      "exit finally": {
+        Choices: [
+          {
+            IsPresent: true,
+            Next: "throw finally",
+            Variable: "$.0_tmp",
+          },
+        ],
+        Default: "return null",
+        Type: "Choice",
+      },
+      "throw finally": {
+        Cause:
+          "an error was re-thrown from a finally block which is unsupported by Step Functions",
+        Error: "ReThrowFromFinally",
+        Type: "Fail",
+      },
+      "return null": {
+        End: true,
+        OutputPath: "$.null",
+        Parameters: {
+          null: null,
+        },
         Type: "Pass",
       },
     },
@@ -2021,7 +2135,7 @@ test("try, throw, catch, throw, finally, return", () => {
         Result: {
           message: "little",
         },
-        ResultPath: null,
+        ResultPath: "$.0_tmp",
         Type: "Pass",
       },
       'return "rock-star"': {
@@ -2029,6 +2143,23 @@ test("try, throw, catch, throw, finally, return", () => {
         Result: "rock-star",
         ResultPath: "$",
         Type: "Pass",
+      },
+      "exit finally": {
+        Choices: [
+          {
+            IsPresent: true,
+            Next: "throw finally",
+            Variable: "$.0_tmp",
+          },
+        ],
+        Default: undefined,
+        Type: "Choice",
+      },
+      "throw finally": {
+        Cause:
+          "an error was re-thrown from a finally block which is unsupported by Step Functions",
+        Error: "ReThrowFromFinally",
+        Type: "Fail",
       },
     },
   });

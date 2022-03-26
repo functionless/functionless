@@ -40,6 +40,8 @@ export class BaseStmt<
   Kind extends FunctionlessNode["kind"],
   Parent extends FunctionlessNode | undefined = BlockStmt | IfStmt
 > extends BaseNode<Kind, Parent> {
+  readonly nodeKind: "Stmt" = "Stmt";
+
   /**
    * Node that is prior to this node.
    */
@@ -98,6 +100,14 @@ export class BlockStmt extends BaseStmt<"BlockStmt", BlockStmtParent> {
       stmt.prev = i > 0 ? statements[i - 1] : undefined;
       stmt.next = i + 1 < statements.length ? statements[i + 1] : undefined;
     });
+  }
+
+  public isFinallyBlock(): this is {
+    parent: TryStmt & {
+      finallyBlock: BlockStmt;
+    };
+  } {
+    return this.parent.kind === "TryStmt" && this.parent.finallyBlock === this;
   }
 
   public isEmpty(): this is {

@@ -84,7 +84,9 @@ export class BaseExpr<
     | ReturnStmt
     | Expr
     | undefined
-> extends BaseNode<Kind, Parent> {}
+> extends BaseNode<Kind, Parent> {
+  readonly nodeKind: "Expr" = "Expr";
+}
 
 export const isFunctionExpr = typeGuard("FunctionExpr");
 
@@ -304,7 +306,10 @@ export class ObjectLiteralExpr extends BaseExpr<"ObjectLiteralExpr"> {
 
 export const isPropAssignExpr = typeGuard("PropAssignExpr");
 
-export class PropAssignExpr extends BaseExpr<"PropAssignExpr"> {
+export class PropAssignExpr extends BaseExpr<
+  "PropAssignExpr",
+  ObjectLiteralExpr
+> {
   constructor(readonly name: Expr, readonly expr: Expr) {
     super("PropAssignExpr");
     expr.setParent(this);
@@ -313,7 +318,10 @@ export class PropAssignExpr extends BaseExpr<"PropAssignExpr"> {
 
 export const isSpreadAssignExpr = typeGuard("SpreadAssignExpr");
 
-export class SpreadAssignExpr extends BaseNode<"SpreadAssignExpr"> {
+export class SpreadAssignExpr extends BaseExpr<
+  "SpreadAssignExpr",
+  ObjectLiteralExpr
+> {
   constructor(readonly expr: Expr) {
     super("SpreadAssignExpr");
     expr.setParent(this);
@@ -322,7 +330,10 @@ export class SpreadAssignExpr extends BaseNode<"SpreadAssignExpr"> {
 
 export const isSpreadElementExpr = typeGuard("SpreadElementExpr");
 
-export class SpreadElementExpr extends BaseNode<"SpreadElementExpr"> {
+export class SpreadElementExpr extends BaseExpr<
+  "SpreadElementExpr",
+  ObjectLiteralExpr
+> {
   constructor(readonly expr: Expr) {
     super("SpreadElementExpr");
     expr.setParent(this);
@@ -334,7 +345,7 @@ export const isTemplateExpr = typeGuard("SpreadAssignExpr");
 /**
  * Interpolates a TemplateExpr to a string `this ${is} a template expression`
  */
-export class TemplateExpr extends BaseNode<"TemplateExpr"> {
+export class TemplateExpr extends BaseExpr<"TemplateExpr"> {
   constructor(readonly exprs: Expr[]) {
     super("TemplateExpr");
     exprs.forEach((expr) => expr.setParent(this));

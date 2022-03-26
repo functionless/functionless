@@ -13,7 +13,6 @@ import {
 } from "./expression";
 import {
   BlockStmt,
-  CatchClause,
   IfStmt,
   isCatchClause,
   isForInStmt,
@@ -316,15 +315,15 @@ export class ASL {
    * the AST and assigning each state a unique name. These names are then used to
    * resolve state transitions.
    */
-  private readonly stateNames: Map<Stmt, string>;
+  private readonly stateNames = new Map<Stmt, string>();
+  private readonly stateNamesCount = new Map<string, number>();
+  private readonly generatedNames = new Map<FunctionlessNode, string>();
 
   constructor(
     readonly scope: Construct,
     readonly role: aws_iam.IRole,
     decl: FunctionDecl
   ) {
-    this.stateNames = new Map();
-
     this.decl = visitEachChild(decl, function visit(node): FunctionlessNode {
       // re-write the AST to include explicit `ReturnStmt(NullLiteral())` statements
       // this simplifies the interpreter code by always having a node to chain onto, even when
@@ -360,11 +359,25 @@ export class ASL {
     };
   }
 
+  private getDeterministicGeneratedName(node: FunctionlessNode): string {
+    if (!this.generatedNames.has(node)) {
+      this.generatedNames.set(node, `${this.generatedNames.size}_tmp`);
+    }
+    return this.generatedNames.get(node)!;
+  }
+
   private getStateName(stmt: Stmt): string {
     if (!this.stateNames.has(stmt)) {
-      const stateName = toStateName(stmt);
+      let stateName = toStateName(stmt);
       if (stateName === undefined) {
         throw new Error(`cannot transition to ${stmt.kind}`);
+      }
+      if (this.stateNamesCount.has(stateName)) {
+        const count = this.stateNamesCount.get(stateName)!;
+        this.stateNamesCount.set(stateName, count + 1);
+        stateName = `${stateName} ${count}`;
+      } else {
+        this.stateNamesCount.set(stateName, 1);
       }
       this.stateNames.set(stmt, stateName);
     }
@@ -529,24 +542,25 @@ export class ASL {
         throw new Error(`the expr of a ThrowStmt must be a NewExpr`);
       }
 
-      const fail = () => ({
-        [this.getStateName(stmt)]: {
-          Type: "Fail",
-          Error: exprToString((stmt.expr as NewExpr).expr),
-          Cause: JSON.stringify(
-            Object.entries((stmt.expr as NewExpr).args).reduce(
-              (args: any, [argName, argVal]) => ({
-                ...args,
-                [argName]: ASL.toJson(argVal),
-              }),
-              {}
-            )
-          ),
-        } as const,
-      });
-
-      const pass = (catchOrFinally: CatchClause | BlockStmt) =>
-        ({
+      const throwTransition = this.getThrowStateTransition(stmt);
+      if (throwTransition === undefined) {
+        return {
+          [this.getStateName(stmt)]: {
+            Type: "Fail",
+            Error: exprToString((stmt.expr as NewExpr).expr),
+            Cause: JSON.stringify(
+              Object.entries((stmt.expr as NewExpr).args).reduce(
+                (args: any, [argName, argVal]) => ({
+                  ...args,
+                  [argName]: ASL.toJson(argVal),
+                }),
+                {}
+              )
+            ),
+          } as const,
+        };
+      } else {
+        return {
           [this.getStateName(stmt)]: {
             Type: "Pass",
             Result: Object.entries((stmt.expr as NewExpr).args).reduce(
@@ -556,74 +570,255 @@ export class ASL {
               }),
               {}
             ),
-            Next: this.transition(catchOrFinally),
-            ResultPath:
-              catchOrFinally.kind === "CatchClause" &&
-              catchOrFinally.variableDecl
-                ? `$.${catchOrFinally.variableDecl.name}`
-                : // TODO: we may want to generate an error name in this case so that
-                  // we can identify when an error was thrown to know how to exit a finally block
-                  null,
+            ...throwTransition,
           },
-        } as const);
-
-      // detect the immediate for-loop closure surrounding this throw statement
-      // because of how step function's Catch feature works, we need to check if the try
-      // is inside or outside the closure
-      const mapOrParallelClosure = stmt.findParent(
-        anyOf(isForOfStmt, isForInStmt)
-      );
-
-      // catchClause or finallyBlock that will run upon throwing this error
-      // i.e. if this throw is within a try, then this is that try's catchClause
-      const catchOrFinally = stmt.error();
-      if (catchOrFinally === undefined) {
-        // error is terminal
-        return fail();
-      } else if (mapOrParallelClosure) {
-        if (mapOrParallelClosure.contains(catchOrFinally)) {
-          // the catch/finally handler is nearer than the surrounding Map/Parallel State
-
-          return pass(catchOrFinally);
-        } else {
-          // the Map/Parallel tasks are closer than the catch/finally, so we use a Fail State
-          // to terminate the Map/Parallel and delegate the propagation of the error to the
-          // Map/Parallel state
-          return fail();
-        }
-      } else {
-        return pass(catchOrFinally);
+        } as const;
       }
     } else if (stmt.kind === "TryStmt") {
-      const { hasTask } = analyzeFlow(stmt.tryBlock);
+      const tryFlow = analyzeFlow(stmt.tryBlock);
+
+      const errorVariableName = stmt.catchClause.variableDecl?.name;
 
       return {
         ...this.execute(stmt.tryBlock),
-        ...(hasTask && stmt.catchClause.variableDecl
+        ...(tryFlow.hasTask && stmt.catchClause.variableDecl
           ? {
               [this.getStateName(stmt.catchClause.variableDecl)]: {
                 Type: "Pass",
                 Next: `0_${this.getStateName(stmt.catchClause.variableDecl)}`,
                 Parameters: {
-                  "0_ParsedError.$": `States.StringToJson(${`$.${stmt.catchClause.variableDecl.name}`}.Cause)`,
+                  "0_ParsedError.$": `States.StringToJson(${`$.${errorVariableName}`}.Cause)`,
                 },
-                ResultPath: `$.${stmt.catchClause.variableDecl.name}`,
+                ResultPath: `$.${errorVariableName}`,
               },
               [`0_${this.getStateName(stmt.catchClause.variableDecl)}`]: {
                 Type: "Pass",
-                InputPath: `$.${stmt.catchClause.variableDecl.name}.0_ParsedError`,
-                ResultPath: `$.${stmt.catchClause.variableDecl.name}`,
+                InputPath: `$.${errorVariableName}.0_ParsedError`,
+                ResultPath: `$.${errorVariableName}`,
                 Next: this.getStateName(stmt.catchClause.block.firstStmt!),
               },
             }
           : {}),
         ...this.execute(stmt.catchClause.block),
-        ...(stmt.finallyBlock ? this.execute(stmt.finallyBlock) : {}),
+        ...(stmt.finallyBlock
+          ? {
+              ...this.execute(stmt.finallyBlock),
+              ...(canThrow(stmt.catchClause)
+                ? (() => {
+                    const throwTarget = this.getThrowStateTransition(
+                      stmt.finallyBlock
+                    );
+                    return {
+                      [`exit ${this.getStateName(stmt.finallyBlock)}`]: {
+                        // when exiting the finally block, if we entered via an error, then we need to re-throw the error
+                        Type: "Choice",
+                        Choices: [
+                          {
+                            // errors thrown from the catch block will be directed to this special variable for the `finally` block
+                            Variable: `$.${this.getDeterministicGeneratedName(
+                              stmt.finallyBlock
+                            )}`,
+                            IsPresent: true,
+                            Next: `throw ${this.getStateName(
+                              stmt.finallyBlock
+                            )}`,
+                          },
+                        ],
+                        Default: this.transition(stmt.finallyBlock.exit()),
+                      },
+                      [`throw ${this.getStateName(stmt.finallyBlock)}`]:
+                        throwTarget
+                          ? {
+                              Type: "Pass",
+                              ...throwTarget,
+                            }
+                          : {
+                              Type: "Fail",
+                              Error: "ReThrowFromFinally",
+                              Cause:
+                                "an error was re-thrown from a finally block which is unsupported by Step Functions",
+                            },
+                    };
+                  })()
+                : {}),
+            }
+          : {}),
       };
     } else if (stmt.kind === "CatchClause") {
       return this.execute(stmt.block);
     }
     return assertNever(stmt);
+  }
+
+  private getThrowStateTransition(node: FunctionlessNode):
+    | {
+        Next: string | undefined;
+        ResultPath: string | null;
+      }
+    | undefined {
+    // detect the immediate for-loop closure surrounding this throw statement
+    // because of how step function's Catch feature works, we need to check if the try
+    // is inside or outside the closure
+    const mapOrParallelClosure = node.findParent(
+      anyOf(isForOfStmt, isForInStmt)
+    );
+
+    // catchClause or finallyBlock that will run upon throwing this error
+    const catchOrFinally = node.error();
+    if (catchOrFinally === undefined) {
+      // error is terminal
+      return undefined;
+    } else if (
+      mapOrParallelClosure === undefined ||
+      mapOrParallelClosure.contains(catchOrFinally)
+    ) {
+      // the catch/finally handler is nearer than the surrounding Map/Parallel State
+      return {
+        Next: this.transition(catchOrFinally),
+        ResultPath:
+          catchOrFinally.kind === "CatchClause" && catchOrFinally.variableDecl
+            ? `$.${catchOrFinally.variableDecl.name}`
+            : catchOrFinally.kind === "BlockStmt" &&
+              catchOrFinally.isFinallyBlock() &&
+              canThrow(catchOrFinally.parent.catchClause)
+            ? `$.${this.getDeterministicGeneratedName(catchOrFinally)}`
+            : null,
+      };
+    } else {
+      // the Map/Parallel tasks are closer than the catch/finally, so we use a Fail State
+      // to terminate the Map/Parallel and delegate the propagation of the error to the
+      // Map/Parallel state
+      return undefined;
+    }
+  }
+
+  public eval(
+    expr: Expr,
+    props: {
+      ResultPath: string | null;
+      End?: true;
+      Next?: string;
+    }
+  ): State {
+    if (props.End === undefined && props.Next === undefined) {
+      // Hack: delete props.Next when End is true to clean up test cases
+      // TODO: make this cleaner somehow?
+      delete props.Next;
+      props.End = true;
+    }
+    if (expr.kind === "CallExpr") {
+      const serviceCall = findFunction(expr);
+      if (serviceCall) {
+        if (
+          expr.expr.kind === "PropAccessExpr" &&
+          (expr.expr.name === "waitFor" || expr.expr.name === "waitUntil")
+        ) {
+          delete (props as any).ResultPath;
+          return {
+            ...(serviceCall as any)(expr, this),
+            ...props,
+          };
+        }
+
+        const taskState = {
+          ...serviceCall(expr, this),
+          ...props,
+        };
+
+        const throwOrPass = this.getThrowStateTransition(expr);
+        if (throwOrPass?.Next) {
+          return {
+            ...taskState,
+            Catch: [
+              {
+                ErrorEquals: ["States.ALL"],
+                Next: throwOrPass.Next,
+                ResultPath: throwOrPass.ResultPath,
+              },
+            ],
+          };
+        } else {
+          return taskState;
+        }
+
+        // // const catchClause = expr.error();
+        // if (throwOrPass) {
+        //   const next = this.transition(catchClause);
+        //   if (next === undefined) {
+        //     throw new Error(`CatchClause with no Next state`);
+        //   }
+        //   return {
+        //     ...taskState,
+        //     ...(_throw
+        //       ? {
+        //           Catch: [
+        //             {
+        //               ErrorEquals: ["States.ALL"],
+        //               Next: next,
+        //             },
+        //           ],
+        //         }
+        //       : {}),
+        //   };
+        // } else {
+        //   return taskState;
+        // }
+      }
+      throw new Error(`call must be a service call, ${expr}`);
+    } else if (isVariableReference(expr)) {
+      return {
+        Type: "Pass",
+        Parameters: {
+          [`result${isLiteralExpr(expr) ? "" : ".$"}`]: ASL.toJsonPath(expr),
+        },
+        OutputPath: "$.result",
+        ...props,
+      };
+    } else if (expr.kind === "ObjectLiteralExpr") {
+      return {
+        Type: "Pass",
+        Parameters: ASL.toJson(expr),
+        ...props,
+      };
+    } else if (isLiteralExpr(expr)) {
+      return {
+        Type: "Pass",
+        Result: ASL.toJson(expr),
+        ...props,
+      };
+    } else if (
+      expr.kind === "BinaryExpr" &&
+      expr.op === "=" &&
+      isVariableReference(expr.left)
+    ) {
+      if (expr.right.kind === "NullLiteralExpr") {
+        return {
+          Type: "Pass",
+          ...props,
+          Parameters: {
+            ...Object.fromEntries(
+              getLexicalScope(expr).map((name) => [`${name}.$`, `$.${name}`])
+            ),
+            [ASL.toJsonPath(expr.left)]: null,
+          },
+        };
+      } else if (isVariableReference(expr.right)) {
+        return {
+          Type: "Pass",
+          ...props,
+          InputPath: ASL.toJsonPath(expr.right),
+          ResultPath: ASL.toJsonPath(expr.left),
+        };
+      } else if (isLiteralExpr(expr.right)) {
+        return {
+          Type: "Pass",
+          ...props,
+          Parameters: ASL.toJson(expr.right),
+          ResultPath: ASL.toJsonPath(expr.left),
+        };
+      }
+    }
+    throw new Error(`cannot eval expression kind '${expr.kind}'`);
   }
 
   /**
@@ -690,6 +885,10 @@ export class ASL {
           return this.next(scope);
         } else if (block === scope.finallyBlock) {
           // we're exiting the finallyBlock, so let's progress past it
+          if (canThrow(scope.catchClause)) {
+            // if the catchClause can throw, then we need to transition through the `exit finally` state first
+            return `exit ${this.getStateName(scope.finallyBlock)}`;
+          }
           return this.next(scope);
         } else {
           throw new Error(`impossible`);
@@ -722,121 +921,16 @@ export class ASL {
       return this.return(node.parent);
     }
   }
-
-  public eval(
-    expr: Expr,
-    props: {
-      ResultPath: string | null;
-      End?: true;
-      Next?: string;
-    }
-  ): State {
-    if (props.End === undefined && props.Next === undefined) {
-      // Hack: delete props.Next when End is true to clean up test cases
-      // TODO: make this cleaner somehow?
-      delete props.Next;
-      props.End = true;
-    }
-    if (expr.kind === "CallExpr") {
-      const serviceCall = findFunction(expr);
-      if (serviceCall) {
-        if (
-          expr.expr.kind === "PropAccessExpr" &&
-          (expr.expr.name === "waitFor" || expr.expr.name === "waitUntil")
-        ) {
-          delete (props as any).ResultPath;
-          return {
-            ...(serviceCall as any)(expr, this),
-            ...props,
-          };
-        }
-
-        const taskState = {
-          ...serviceCall(expr, this),
-          ...props,
-        };
-
-        const catchClause = expr.findCatchClause();
-        if (catchClause) {
-          const next = this.transition(catchClause);
-          if (next === undefined) {
-            this.transition(catchClause);
-            throw new Error(`CatchClause with no Next state`);
-          }
-          return {
-            ...taskState,
-            Catch: [
-              {
-                ErrorEquals: ["States.ALL"],
-                Next: next,
-              },
-            ],
-          };
-        } else {
-          return taskState;
-        }
-      }
-      throw new Error(`call must be a service call, ${expr}`);
-    } else if (isVariableReference(expr)) {
-      return {
-        Type: "Pass",
-        Parameters: {
-          [`result${isLiteralExpr(expr) ? "" : ".$"}`]: ASL.toJsonPath(expr),
-        },
-        OutputPath: "$.result",
-        ...props,
-      };
-    } else if (expr.kind === "ObjectLiteralExpr") {
-      return {
-        Type: "Pass",
-        Parameters: ASL.toJson(expr),
-        ...props,
-      };
-    } else if (isLiteralExpr(expr)) {
-      return {
-        Type: "Pass",
-        Result: ASL.toJson(expr),
-        ...props,
-      };
-    } else if (
-      expr.kind === "BinaryExpr" &&
-      expr.op === "=" &&
-      isVariableReference(expr.left)
-    ) {
-      if (expr.right.kind === "NullLiteralExpr") {
-        return {
-          Type: "Pass",
-          ...props,
-          Parameters: {
-            ...Object.fromEntries(
-              getLexicalScope(expr).map((name) => [`${name}.$`, `$.${name}`])
-            ),
-            [ASL.toJsonPath(expr.left)]: null,
-          },
-        };
-      } else if (isVariableReference(expr.right)) {
-        return {
-          Type: "Pass",
-          ...props,
-          InputPath: ASL.toJsonPath(expr.right),
-          ResultPath: ASL.toJsonPath(expr.left),
-        };
-      } else if (isLiteralExpr(expr.right)) {
-        return {
-          Type: "Pass",
-          ...props,
-          Parameters: ASL.toJson(expr.right),
-          ResultPath: ASL.toJsonPath(expr.left),
-        };
-      }
-    }
-    throw new Error(`cannot eval expression kind '${expr.kind}'`);
-  }
 }
 
 interface FlowResult {
   hasTask?: true;
   hasThrow?: true;
+}
+
+function canThrow(node: FunctionlessNode): boolean {
+  const flow = analyzeFlow(node);
+  return (flow.hasTask || flow.hasThrow) ?? false;
 }
 
 /**
@@ -1129,7 +1223,11 @@ function toStateName(stmt: Stmt): string | undefined {
   } else if (stmt.kind === "ExprStmt") {
     return exprToString(stmt.expr);
   } else if (stmt.kind === "BlockStmt") {
-    return undefined;
+    if (stmt.isFinallyBlock()) {
+      return "finally";
+    } else {
+      return undefined;
+    }
   } else if (stmt.kind === "BreakStmt") {
     return "break";
   } else if (stmt.kind === "CatchClause") {

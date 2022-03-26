@@ -33,6 +33,7 @@ export class PeopleDatabase extends Construct {
   readonly updateName;
   readonly deletePerson;
   readonly getPersonMachine;
+  readonly testMachine;
 
   constructor(scope: Construct, id: string) {
     super(scope, id);
@@ -57,7 +58,7 @@ export class PeopleDatabase extends Construct {
       })
     );
 
-    new ExpressStepFunction(this, "TestMachine", () => {
+    this.testMachine = new ExpressStepFunction(this, "TestMachine", () => {
       const names = ["sam", "brendan"];
       for (const i in names) {
         this.computeScore({
