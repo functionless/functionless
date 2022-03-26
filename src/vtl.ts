@@ -1,5 +1,5 @@
 import { CallExpr, Expr, FunctionExpr } from "./expression";
-import { findFunction, isInTopLevelScope, lookupIdentifier } from "./util";
+import { findFunction, isInTopLevelScope } from "./util";
 import { assertNever } from "./assert";
 import { FunctionlessNode } from "./node";
 import { Stmt } from "./statement";
@@ -327,7 +327,7 @@ export class VTL {
       case "FunctionExpr":
         return this.eval(node.body);
       case "Identifier": {
-        const ref = lookupIdentifier(node);
+        const ref = node.lookup();
         if (ref?.kind === "VariableStmt" && isInTopLevelScope(ref)) {
           return `$context.stash.${node.name}`;
         } else if (

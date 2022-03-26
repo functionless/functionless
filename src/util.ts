@@ -1,38 +1,10 @@
-import { CallExpr, CanReference, Identifier } from "./expression";
-import { isStmt, Stmt } from "./statement";
+import { CallExpr, CanReference } from "./expression";
+// import { isStmt } from "./statement";
 import { FunctionlessNode } from "./node";
 import { VTL } from "./vtl";
 import { ASL, Task } from "./asl";
 
 export type AnyFunction = (...args: any[]) => any;
-
-export function lookupIdentifier(id: Identifier) {
-  return lookup(id.parent);
-
-  function lookup(
-    expr: FunctionlessNode | undefined
-  ): FunctionlessNode | undefined {
-    if (expr === undefined) {
-      return undefined;
-    } else if (expr.kind === "VariableStmt" && expr.name === id.name) {
-      return expr;
-    } else if (expr.kind === "FunctionDecl" || expr.kind === "FunctionExpr") {
-      const parameter = expr.parameters.find((param) => param.name === id.name);
-      if (parameter) {
-        return parameter;
-      }
-    } else if (expr.kind === "ForInStmt" || expr.kind === "ForOfStmt") {
-      if (expr.variableDecl.name === id.name) {
-        return expr.variableDecl;
-      }
-    }
-    if (isStmt(expr) && expr.prev) {
-      return lookup(expr.prev);
-    } else {
-      return lookup(expr.parent);
-    }
-  }
-}
 
 export function findService(expr: FunctionlessNode): CanReference | undefined {
   if (expr.kind === "ReferenceExpr") {
@@ -48,10 +20,6 @@ export function findService(expr: FunctionlessNode): CanReference | undefined {
   }
   return undefined;
 }
-
-// export function indent(depth: number) {
-//   return Array.from(new Array(depth)).join(" ");
-// }
 
 // derives a name from an expression - this can be used to name infrastructure, such as an AppsyncResolver.
 // e.g. table.getItem(..) => "table_getItem"
@@ -163,64 +131,5 @@ export function flatten<T>(arr: AnyDepthArray<T>): T[] {
     );
   } else {
     return [arr];
-  }
-}
-
-// checks if a Stmt is terminal - meaning all branches explicitly return a value
-export function isTerminal(stmt: Stmt): boolean {
-  if (stmt.kind === "ReturnStmt" || stmt.kind === "ThrowStmt") {
-    return true;
-  } else if (stmt.kind === "TryStmt") {
-    if (stmt.finallyBlock) {
-      return (
-        isTerminal(stmt.finallyBlock) ||
-        (isTerminal(stmt.tryBlock) && isTerminal(stmt.catchClause.block))
-      );
-    } else {
-      return isTerminal(stmt.tryBlock) && isTerminal(stmt.catchClause.block);
-    }
-  } else if (stmt.kind === "BlockStmt") {
-    if (stmt.isEmpty()) {
-      return false;
-    } else {
-      return isTerminal(stmt.lastStmt!);
-    }
-  } else if (stmt.kind === "IfStmt") {
-    return (
-      isTerminal(stmt.then) &&
-      stmt._else !== undefined &&
-      isTerminal(stmt._else)
-    );
-  } else {
-    return false;
-  }
-}
-
-export function getLexicalScope(node: FunctionlessNode): string[] {
-  return Array.from(new Set(getLexicalScope(node)));
-
-  function getLexicalScope(node: FunctionlessNode | undefined): string[] {
-    if (node === undefined) {
-      return [];
-    }
-    return getLexicalScope(
-      isStmt(node) && node.prev ? node.prev : node.parent
-    ).concat(getNames(node));
-  }
-
-  function getNames(node: FunctionlessNode | undefined): string[] {
-    if (node === undefined) {
-      return [];
-    } else if (node.kind === "VariableStmt") {
-      return [node.name];
-    } else if (node.kind === "FunctionExpr" || node.kind === "FunctionDecl") {
-      return node.parameters.map((param) => param.name);
-    } else if (node.kind === "ForInStmt" || node.kind === "ForOfStmt") {
-      return [node.variableDecl.name];
-    } else if (node.kind === "CatchClause" && node.variableDecl?.name) {
-      return [node.variableDecl?.name];
-    } else {
-      return [];
-    }
   }
 }

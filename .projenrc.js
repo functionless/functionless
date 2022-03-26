@@ -22,6 +22,7 @@ const project = new typescript.TypeScriptProject({
   ],
   eslintOptions: {
     ignorePatterns: ["**"],
+    lintProjenRc: true,
   },
   tsconfig: {
     compilerOptions: {

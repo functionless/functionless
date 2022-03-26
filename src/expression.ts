@@ -125,6 +125,10 @@ export class Identifier extends BaseExpr<"Identifier"> {
   constructor(readonly name: string) {
     super("Identifier");
   }
+
+  public lookup(): VariableStmt | ParameterDecl | undefined {
+    return this.getLexicalScope().get(this.name);
+  }
 }
 
 export const isPropAccessExpr = typeGuard("PropAccessExpr");

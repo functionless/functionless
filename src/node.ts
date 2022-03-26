@@ -1,6 +1,6 @@
-import type { Decl } from "./declaration";
+import type { Decl, ParameterDecl } from "./declaration";
 import type { Expr } from "./expression";
-import type { BlockStmt, CatchClause, Stmt } from "./statement";
+import type { BlockStmt, CatchClause, Stmt, VariableStmt } from "./statement";
 
 export type FunctionlessNode = Decl | Expr | Stmt;
 
@@ -150,6 +150,9 @@ export abstract class BaseNode<
     }
   }
 
+  /**
+   * @returns the {@link Stmt} that will be run after exiting the scope of this Node.
+   */
   public exit(): Stmt | undefined {
     const node = this as unknown as FunctionlessNode;
     if ("next" in node && node.next) {
@@ -237,6 +240,85 @@ export abstract class BaseNode<
     // default behavior is to use the catchClause to handle (if one exists)
     // otherwise return `undefined` - signalling that the error is terminal
     return catchClause;
+  }
+
+  /**
+   * @returns an array of all the visible names in this node's scope.
+   */
+  public getVisibleNames(): string[] {
+    return Array.from(this.getLexicalScope().keys());
+  }
+
+  /**
+   * @returns a mapping of name to the node visible in this node's scope.
+   */
+  public getLexicalScope(): Map<string, VariableStmt | ParameterDecl> {
+    return new Map(getLexicalScope(this as unknown as FunctionlessNode));
+
+    type Binding = [string, VariableStmt | ParameterDecl];
+
+    function getLexicalScope(node: FunctionlessNode | undefined): Binding[] {
+      if (node === undefined) {
+        return [];
+      }
+      return getLexicalScope(
+        node.nodeKind === "Stmt" && node.prev ? node.prev : node.parent
+      ).concat(getNames(node));
+    }
+
+    function getNames(node: FunctionlessNode | undefined): Binding[] {
+      if (node === undefined) {
+        return [];
+      } else if (node.kind === "VariableStmt") {
+        return [[node.name, node]];
+      } else if (node.kind === "FunctionExpr" || node.kind === "FunctionDecl") {
+        return node.parameters.reduce(
+          (bindings: Binding[], param) => [...bindings, [param.name, param]],
+          []
+        );
+      } else if (node.kind === "ForInStmt" || node.kind === "ForOfStmt") {
+        return [[node.variableDecl.name, node.variableDecl]];
+      } else if (node.kind === "CatchClause" && node.variableDecl?.name) {
+        return [[node.variableDecl.name, node.variableDecl]];
+      } else {
+        return [];
+      }
+    }
+  }
+
+  /**
+   * @returns checks if this Node is terminal - meaning all branches explicitly return a value
+   */
+  public isTerminal(): boolean {
+    const stmt: FunctionlessNode = this as any;
+    if (stmt.kind === "ReturnStmt" || stmt.kind === "ThrowStmt") {
+      return true;
+    } else if (stmt.kind === "TryStmt") {
+      if (stmt.finallyBlock) {
+        return (
+          stmt.finallyBlock.isTerminal() ||
+          (stmt.tryBlock.isTerminal() && stmt.catchClause.block.isTerminal())
+        );
+      } else {
+        return (
+          stmt.tryBlock.isTerminal() && stmt.catchClause.block.isTerminal()
+        );
+      }
+    } else if (stmt.kind === "BlockStmt") {
+      if (stmt.isEmpty()) {
+        return false;
+      } else {
+        return stmt.lastStmt!.isTerminal();
+      }
+    } else if (stmt.kind === "IfStmt") {
+      return (
+        stmt.then.isTerminal() &&
+        stmt._else !== undefined &&
+        stmt._else.isTerminal()
+      );
+    } else {
+      return false;
+    }
   }
 }
 

@@ -21,13 +21,7 @@ import {
   ReturnStmt,
   Stmt,
 } from "./statement";
-import {
-  anyOf,
-  findFunction,
-  getLexicalScope,
-  isTerminal,
-  lookupIdentifier,
-} from "./util";
+import { anyOf, findFunction } from "./util";
 import { FunctionDecl } from "./declaration";
 import { FunctionlessNode } from "./node";
 import { visitEachChild } from "./visit";
@@ -55,6 +49,7 @@ export type State =
   | Succeed
   | Task
   | Wait;
+
 export type TerminalState = Succeed | Fail | Extract<State, { End: true }>;
 
 /**
@@ -336,7 +331,7 @@ export class ASL {
       ) {
         if (node.lastStmt === undefined) {
           return new BlockStmt([new ReturnStmt(new NullLiteralExpr())]);
-        } else if (!isTerminal(node.lastStmt)) {
+        } else if (!node.lastStmt.isTerminal()) {
           return new BlockStmt([
             ...node.statements.map((stmt) => visitEachChild(stmt, visit)),
             new ReturnStmt(new NullLiteralExpr()),
@@ -605,7 +600,7 @@ export class ASL {
               ...this.execute(stmt.finallyBlock),
               ...(canThrow(stmt.catchClause)
                 ? (() => {
-                    if (isTerminal(stmt.finallyBlock)) {
+                    if (stmt.finallyBlock.isTerminal()) {
                       // if every branch in the finallyBlock is terminal (meaning it always throws or returns)
                       // then we don't need the exit and throw blocks of a finally - because the finally
                       // will always return
@@ -738,7 +733,7 @@ export class ASL {
           ...props,
           Parameters: {
             ...Object.fromEntries(
-              getLexicalScope(expr).map((name) => [`${name}.$`, `$.${name}`])
+              expr.getVisibleNames().map((name) => [`${name}.$`, `$.${name}`])
             ),
             [ASL.toJsonPath(expr.left)]: null,
           },
@@ -804,7 +799,7 @@ export class ASL {
       return this.return(node);
     } else if (node.next) {
       return this.transition(node.next);
-    } else if (node.kind === "TryStmt" && isTerminal(node)) {
+    } else if (node.kind === "TryStmt" && node.isTerminal()) {
       return undefined;
     } else if (node.parent?.kind === "BlockStmt") {
       const block = node.parent;
@@ -867,8 +862,6 @@ export class ASL {
    * Find the transition edge from this {@link node} to the State which will handle
    * the error.
    *
-   * This error may be
-   *
    * @param node
    * @returns `undefined` if the error is terminal, otherwise a Next, ResultPath
    */
@@ -912,7 +905,7 @@ export class ASL {
               // we only store the error thrown from the catchClause if the finallyBlock is not terminal
               // by terminal, we mean that every branch returns a value - meaning that the re-throw
               // behavior of a finally will never be triggered - the return within the finally intercepts it
-              !isTerminal(catchOrFinally)
+              !catchOrFinally.isTerminal()
             ? `$.${this.getDeterministicGeneratedName(catchOrFinally)}`
             : null,
       };
@@ -925,14 +918,14 @@ export class ASL {
   }
 }
 
-interface FlowResult {
-  hasTask?: true;
-  hasThrow?: true;
-}
-
 function canThrow(node: FunctionlessNode): boolean {
   const flow = analyzeFlow(node);
   return (flow.hasTask || flow.hasThrow) ?? false;
+}
+
+interface FlowResult {
+  hasTask?: true;
+  hasThrow?: true;
 }
 
 /**
@@ -1056,7 +1049,7 @@ export namespace ASL {
    */
   function elementAccessExprToJsonPath(expr: ElementAccessExpr): string {
     if (expr.element.kind === "Identifier" && expr.expr.kind === "Identifier") {
-      const element = lookupIdentifier(expr.element);
+      const element = expr.element.lookup();
       if (
         element?.kind === "VariableStmt" &&
         element?.parent?.kind === "ForInStmt" &&
