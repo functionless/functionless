@@ -2147,3 +2147,93 @@ test("try, throw, catch, throw, finally, return", () => {
     },
   });
 });
+
+test("try { throw } catch { (maybe) throw } finally { task }", () => {
+  const { stack, task } = init();
+
+  const definition = new ExpressStepFunction(
+    stack,
+    "fn",
+    (id: string): string | void => {
+      try {
+        throw new Error("go");
+      } catch {
+        if (id === "sam") {
+          throw new Error("little");
+        }
+      } finally {
+        // task should run after both throws
+        // for second throw, an error should be re-thrown
+        task();
+      }
+    }
+  ).definition;
+
+  expect(definition).toEqual({
+    StartAt: 'throw new Error("go")',
+    States: {
+      'throw new Error("go")': {
+        Next: 'if(id == "sam")',
+        Result: {
+          message: "go",
+        },
+        ResultPath: null,
+        Type: "Pass",
+      },
+      'if(id == "sam")': {
+        Choices: [
+          {
+            Next: 'throw new Error("little")',
+            StringEquals: "sam",
+            Variable: "$.id",
+          },
+        ],
+        Default: "task(null)",
+        Type: "Choice",
+      },
+      'throw new Error("little")': {
+        Next: "task(null)",
+        Result: {
+          message: "little",
+        },
+        ResultPath: "$.0_tmp",
+        Type: "Pass",
+      },
+      "task(null)": {
+        Next: "exit finally",
+        Parameters: {
+          FunctionName: task.resource.functionName,
+          Payload: null,
+        },
+        Resource: "arn:aws:states:::lambda:invoke",
+        ResultPath: null,
+        Type: "Task",
+      },
+      "exit finally": {
+        Choices: [
+          {
+            IsPresent: true,
+            Next: "throw finally",
+            Variable: "$.0_tmp",
+          },
+        ],
+        Default: "return null",
+        Type: "Choice",
+      },
+      "throw finally": {
+        Cause:
+          "an error was re-thrown from a finally block which is unsupported by Step Functions",
+        Error: "ReThrowFromFinally",
+        Type: "Fail",
+      },
+      "return null": {
+        End: true,
+        OutputPath: "$.null",
+        Parameters: {
+          null: null,
+        },
+        Type: "Pass",
+      },
+    },
+  });
+});
