@@ -428,6 +428,8 @@ export class VTL {
         return `#throw(${this.eval(node.expr)})`;
       case "TryStmt":
       case "CatchClause":
+      case "DoStmt":
+      case "WhileStmt":
         throw new Error(`${node.kind} is not yet supported in VTL`);
     }
 

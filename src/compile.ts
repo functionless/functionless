@@ -425,6 +425,30 @@ export function compile(
           ]);
         } else if (ts.isThrowStatement(node)) {
           return newExpr("ThrowStmt", [toExpr(node.expression)]);
+        } else if (ts.isWhileStatement(node)) {
+          return newExpr("WhileStmt", [
+            toExpr(node.expression),
+            ts.isBlock(node.statement)
+              ? toExpr(node.statement)
+              : // re-write a standalone statement as as BlockStmt
+                newExpr("BlockStmt", [
+                  ts.factory.createArrayLiteralExpression([
+                    toExpr(node.statement),
+                  ]),
+                ]),
+          ]);
+        } else if (ts.isDoStatement(node)) {
+          return newExpr("DoStmt", [
+            ts.isBlock(node.statement)
+              ? toExpr(node.statement)
+              : // re-write a standalone statement as as BlockStmt
+                newExpr("BlockStmt", [
+                  ts.factory.createArrayLiteralExpression([
+                    toExpr(node.statement),
+                  ]),
+                ]),
+            toExpr(node.expression),
+          ]);
         }
 
         throw new Error(`unhandled node: ${node.getText()}`);

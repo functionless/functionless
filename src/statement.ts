@@ -10,6 +10,7 @@ export type Stmt =
   | BreakStmt
   | BlockStmt
   | CatchClause
+  | DoStmt
   | ExprStmt
   | ForInStmt
   | ForOfStmt
@@ -17,7 +18,8 @@ export type Stmt =
   | ReturnStmt
   | ThrowStmt
   | TryStmt
-  | VariableStmt;
+  | VariableStmt
+  | WhileStmt;
 
 export function isStmt(a: any): a is Stmt {
   return (
@@ -84,13 +86,15 @@ export class VariableStmt<
 export const isBlockStmt = typeGuard("BlockStmt");
 
 export type BlockStmtParent =
+  | CatchClause
+  | DoStmt
   | ForInStmt
   | ForOfStmt
   | FunctionDecl
   | FunctionExpr
   | IfStmt
   | TryStmt
-  | CatchClause;
+  | WhileStmt;
 
 export class BlockStmt extends BaseStmt<"BlockStmt", BlockStmtParent> {
   constructor(readonly statements: Stmt[]) {
@@ -239,5 +243,25 @@ export class ThrowStmt extends BaseStmt<"ThrowStmt"> {
   constructor(readonly expr: Expr) {
     super("ThrowStmt");
     expr.setParent(this as never);
+  }
+}
+
+export const isWhileStmt = typeGuard("WhileStmt");
+
+export class WhileStmt extends BaseStmt<"WhileStmt"> {
+  constructor(readonly condition: Expr, readonly block: BlockStmt) {
+    super("WhileStmt");
+    condition.setParent(this);
+    block.setParent(this);
+  }
+}
+
+export const isDoStmt = typeGuard("DoStmt");
+
+export class DoStmt extends BaseStmt<"DoStmt"> {
+  constructor(readonly block: BlockStmt, readonly condition: Expr) {
+    super("DoStmt");
+    block.setParent(this);
+    condition.setParent(this);
   }
 }

@@ -460,7 +460,7 @@ export class ASL {
                 : "$$.Map.Item.Index",
           },
           Iterator: {
-            StartAt: this.getStateName(stmt.body.statements[0]),
+            StartAt: this.getStateName(stmt.body.step()!),
             States: this.execute(stmt.body),
           },
         },
@@ -647,6 +647,25 @@ export class ASL {
       };
     } else if (stmt.kind === "CatchClause") {
       return this.execute(stmt.block);
+    } else if (stmt.kind === "WhileStmt" || stmt.kind === "DoStmt") {
+      const whenTrue = this.transition(stmt.block);
+      if (whenTrue === undefined) {
+        throw new Error(`a ${stmt.kind} block must have at least one Stmt`);
+      }
+      const whenFalse = this.next(stmt);
+      return {
+        [this.getStateName(stmt)]: {
+          Type: "Choice",
+          Choices: [
+            {
+              ...ASL.toCondition(stmt.condition),
+              Next: whenTrue,
+            },
+          ],
+          Default: whenFalse,
+        },
+        ...this.execute(stmt.block),
+      };
     }
     return assertNever(stmt);
   }
@@ -752,6 +771,11 @@ export class ASL {
           Parameters: ASL.toJson(expr.right),
           ResultPath: ASL.toJsonPath(expr.left),
         };
+      } else if (expr.right.kind === "CallExpr") {
+        return this.eval(expr.right, {
+          ...props,
+          ResultPath: ASL.toJsonPath(expr.left),
+        });
       }
     }
     throw new Error(`cannot eval expression kind '${expr.kind}'`);
@@ -810,6 +834,8 @@ export class ASL {
       } else if (scope.kind === "FunctionExpr") {
       } else if (scope.kind === "ForInStmt" || scope.kind === "ForOfStmt") {
         return undefined;
+      } else if (scope.kind === "WhileStmt" || scope.kind === "DoStmt") {
+        return this.getStateName(scope);
       } else if (scope.kind === "IfStmt") {
         return this.next(scope);
       } else if (scope.kind === "TryStmt") {
@@ -1229,6 +1255,8 @@ function toStateName(stmt: Stmt): string | undefined {
     return `catch${
       stmt.variableDecl?.name ? `(${stmt.variableDecl?.name})` : ""
     }`;
+  } else if (stmt.kind === "DoStmt") {
+    return `do...while (${exprToString(stmt.condition)})`;
   } else if (stmt.kind === "ForInStmt") {
     return `for(${stmt.variableDecl.name} in ${exprToString(stmt.expr)})`;
   } else if (stmt.kind === "ForOfStmt") {
@@ -1251,6 +1279,8 @@ function toStateName(stmt: Stmt): string | undefined {
         stmt.expr ? exprToString(stmt.expr) : "undefined"
       }`;
     }
+  } else if (stmt.kind === "WhileStmt") {
+    return `while (${exprToString(stmt.condition)})`;
   } else {
     return assertNever(stmt);
   }

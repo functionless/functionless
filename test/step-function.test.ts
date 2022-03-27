@@ -24,7 +24,7 @@ function init() {
     })
   );
 
-  const task = new Function<string | void, void>(
+  const task = new Function<string | void, number | null>(
     new aws_lambda.Function(stack, "Task", {
       code: aws_lambda.Code.fromInline(
         "exports.handle = function() { return 1; }"
@@ -173,7 +173,7 @@ test("let and set", () => {
   }).definition;
 
   expect(definition).toEqual({
-    StartAt: "a = undefined",
+    StartAt: "a = null",
     States: {
       'a = "hello"': {
         Next: "a = [null]",
@@ -2225,6 +2225,632 @@ test("try { throw } catch { (maybe) throw } finally { task }", () => {
           "an error was re-thrown from a finally block which is unsupported by Step Functions",
         Error: "ReThrowFromFinally",
         Type: "Fail",
+      },
+      "return null": {
+        End: true,
+        OutputPath: "$.null",
+        Parameters: {
+          null: null,
+        },
+        Type: "Pass",
+      },
+    },
+  });
+});
+
+test("try { task() } catch { (maybe) throw } finally { task }", () => {
+  const { stack, task } = init();
+
+  const definition = new ExpressStepFunction(
+    stack,
+    "fn",
+    (id: string): string | void => {
+      try {
+        task("1");
+      } catch {
+        if (id === "sam") {
+          throw new Error("little");
+        }
+      } finally {
+        // task should run after both throws
+        // for second throw, an error should be re-thrown
+        task("2");
+      }
+    }
+  ).definition;
+
+  expect(definition).toEqual({
+    StartAt: 'task("1")',
+    States: {
+      'task("1")': {
+        Catch: [
+          {
+            ErrorEquals: ["States.ALL"],
+            Next: 'if(id == "sam")',
+            ResultPath: null,
+          },
+        ],
+        Next: 'task("2")',
+        Parameters: {
+          FunctionName: task.resource.functionName,
+          Payload: "1",
+        },
+        Resource: "arn:aws:states:::lambda:invoke",
+        ResultPath: null,
+        Type: "Task",
+      },
+      'if(id == "sam")': {
+        Choices: [
+          {
+            Next: 'throw new Error("little")',
+            StringEquals: "sam",
+            Variable: "$.id",
+          },
+        ],
+        Default: 'task("2")',
+        Type: "Choice",
+      },
+      'throw new Error("little")': {
+        Next: 'task("2")',
+        Result: {
+          message: "little",
+        },
+        ResultPath: "$.0_tmp",
+        Type: "Pass",
+      },
+      'task("2")': {
+        Next: "exit finally",
+        Parameters: {
+          FunctionName: task.resource.functionName,
+          Payload: "2",
+        },
+        Resource: "arn:aws:states:::lambda:invoke",
+        ResultPath: null,
+        Type: "Task",
+      },
+      "exit finally": {
+        Choices: [
+          {
+            IsPresent: true,
+            Next: "throw finally",
+            Variable: "$.0_tmp",
+          },
+        ],
+        Default: "return null",
+        Type: "Choice",
+      },
+      "throw finally": {
+        Cause:
+          "an error was re-thrown from a finally block which is unsupported by Step Functions",
+        Error: "ReThrowFromFinally",
+        Type: "Fail",
+      },
+      "return null": {
+        End: true,
+        OutputPath: "$.null",
+        Parameters: {
+          null: null,
+        },
+        Type: "Pass",
+      },
+    },
+  });
+});
+
+test("try { task() } catch(err) { (maybe) throw } finally { task }", () => {
+  const { stack, task } = init();
+
+  const definition = new ExpressStepFunction(stack, "fn", (): string | void => {
+    try {
+      task("1");
+    } catch (err: any) {
+      if (err.message === "sam") {
+        throw new Error("little");
+      }
+    } finally {
+      // task should run after both throws
+      // for second throw, an error should be re-thrown
+      task("2");
+    }
+  }).definition;
+
+  expect(definition).toEqual({
+    StartAt: 'task("1")',
+    States: {
+      'task("1")': {
+        Catch: [
+          {
+            ErrorEquals: ["States.ALL"],
+            Next: "catch(err)",
+            ResultPath: "$.err",
+          },
+        ],
+        Next: 'task("2")',
+        Parameters: {
+          FunctionName: task.resource.functionName,
+          Payload: "1",
+        },
+        Resource: "arn:aws:states:::lambda:invoke",
+        ResultPath: null,
+        Type: "Task",
+      },
+      "catch(err)": {
+        Next: "0_catch(err)",
+        Parameters: {
+          "0_ParsedError.$": "States.StringToJson($.err.Cause)",
+        },
+        ResultPath: "$.err",
+        Type: "Pass",
+      },
+      "0_catch(err)": {
+        InputPath: "$.err.0_ParsedError",
+        Next: 'if(err.message == "sam")',
+        ResultPath: "$.err",
+        Type: "Pass",
+      },
+      'if(err.message == "sam")': {
+        Choices: [
+          {
+            Next: 'throw new Error("little")',
+            StringEquals: "sam",
+            Variable: "$.err.message",
+          },
+        ],
+        Default: 'task("2")',
+        Type: "Choice",
+      },
+      'throw new Error("little")': {
+        Next: 'task("2")',
+        Result: {
+          message: "little",
+        },
+        ResultPath: "$.0_tmp",
+        Type: "Pass",
+      },
+      'task("2")': {
+        Next: "exit finally",
+        Parameters: {
+          FunctionName: task.resource.functionName,
+          Payload: "2",
+        },
+        Resource: "arn:aws:states:::lambda:invoke",
+        ResultPath: null,
+        Type: "Task",
+      },
+      "exit finally": {
+        Choices: [
+          {
+            IsPresent: true,
+            Next: "throw finally",
+            Variable: "$.0_tmp",
+          },
+        ],
+        Default: "return null",
+        Type: "Choice",
+      },
+      "throw finally": {
+        Cause:
+          "an error was re-thrown from a finally block which is unsupported by Step Functions",
+        Error: "ReThrowFromFinally",
+        Type: "Fail",
+      },
+      "return null": {
+        End: true,
+        OutputPath: "$.null",
+        Parameters: {
+          null: null,
+        },
+        Type: "Pass",
+      },
+    },
+  });
+});
+
+test("try { for-of } catch { (maybe) throw } finally { task }", () => {
+  const { stack, task } = init();
+
+  const definition = new ExpressStepFunction(
+    stack,
+    "fn",
+    (items: string[]): string | void => {
+      try {
+        for (const item of items) {
+          task(item);
+        }
+      } catch (err: any) {
+        if (err.message === "you dun' goofed") {
+          throw new Error("little");
+        }
+      } finally {
+        // task should run after both throws
+        // for second throw, an error should be re-thrown
+        task("2");
+      }
+    }
+  ).definition;
+
+  expect(definition).toEqual({
+    StartAt: "for(item of items)",
+    States: {
+      "for(item of items)": {
+        Catch: [
+          {
+            ErrorEquals: ["States.ALL"],
+            Next: "catch(err)",
+            ResultPath: "$.err",
+          },
+        ],
+        ItemsPath: "$.items",
+        Iterator: {
+          StartAt: "task(item)",
+          States: {
+            "task(item)": {
+              End: true,
+              Parameters: {
+                FunctionName: task.resource.functionName,
+                Payload: "$.item",
+              },
+              Resource: "arn:aws:states:::lambda:invoke",
+              ResultPath: null,
+              Type: "Task",
+            },
+          },
+        },
+        MaxConcurrency: 1,
+        Next: 'task("2")',
+        Parameters: {
+          "item.$": "$$.Map.Item.Value",
+        },
+        ResultPath: null,
+        Type: "Map",
+      },
+      "0_catch(err)": {
+        InputPath: "$.err.0_ParsedError",
+        Next: 'if(err.message == "you dun\' goofed")',
+        ResultPath: "$.err",
+        Type: "Pass",
+      },
+      "catch(err)": {
+        Next: "0_catch(err)",
+        Parameters: {
+          "0_ParsedError.$": "States.StringToJson($.err.Cause)",
+        },
+        ResultPath: "$.err",
+        Type: "Pass",
+      },
+      'if(err.message == "you dun\' goofed")': {
+        Choices: [
+          {
+            Next: 'throw new Error("little")',
+            StringEquals: "you dun' goofed",
+            Variable: "$.err.message",
+          },
+        ],
+        Default: 'task("2")',
+        Type: "Choice",
+      },
+      'throw new Error("little")': {
+        Next: 'task("2")',
+        Result: {
+          message: "little",
+        },
+        ResultPath: "$.0_tmp",
+        Type: "Pass",
+      },
+      "return null": {
+        End: true,
+        OutputPath: "$.null",
+        Parameters: {
+          null: null,
+        },
+        Type: "Pass",
+      },
+      'task("2")': {
+        Next: "exit finally",
+        Parameters: {
+          FunctionName: task.resource.functionName,
+          Payload: "2",
+        },
+        Resource: "arn:aws:states:::lambda:invoke",
+        ResultPath: null,
+        Type: "Task",
+      },
+      "exit finally": {
+        Choices: [
+          {
+            IsPresent: true,
+            Next: "throw finally",
+            Variable: "$.0_tmp",
+          },
+        ],
+        Default: "return null",
+        Type: "Choice",
+      },
+      "throw finally": {
+        Cause:
+          "an error was re-thrown from a finally block which is unsupported by Step Functions",
+        Error: "ReThrowFromFinally",
+        Type: "Fail",
+      },
+    },
+  });
+});
+
+test("for-of { try { task() } catch (err) { if(err) throw } finally { task() } }", () => {
+  const { stack, task } = init();
+
+  const definition = new ExpressStepFunction(
+    stack,
+    "fn",
+    (items: string[]): string | void => {
+      for (const item of items) {
+        try {
+          task(item);
+        } catch (err: any) {
+          if (err.message === "you dun' goofed") {
+            throw new Error("little");
+          }
+        } finally {
+          // task should run after both throws
+          // for second throw, an error should be re-thrown
+          task("2");
+        }
+      }
+    }
+  ).definition;
+
+  expect(definition).toEqual({
+    StartAt: "for(item of items)",
+    States: {
+      "for(item of items)": {
+        Catch: undefined,
+        ItemsPath: "$.items",
+        Iterator: {
+          StartAt: "task(item)",
+          States: {
+            "task(item)": {
+              Catch: [
+                {
+                  ErrorEquals: ["States.ALL"],
+                  Next: "catch(err)",
+                  ResultPath: "$.err",
+                },
+              ],
+              Next: 'task("2")',
+              Parameters: {
+                FunctionName: task.resource.functionName,
+                Payload: "$.item",
+              },
+              Resource: "arn:aws:states:::lambda:invoke",
+              ResultPath: null,
+              Type: "Task",
+            },
+            "0_catch(err)": {
+              InputPath: "$.err.0_ParsedError",
+              Next: 'if(err.message == "you dun\' goofed")',
+              ResultPath: "$.err",
+              Type: "Pass",
+            },
+            "catch(err)": {
+              Next: "0_catch(err)",
+              Parameters: {
+                "0_ParsedError.$": "States.StringToJson($.err.Cause)",
+              },
+              ResultPath: "$.err",
+              Type: "Pass",
+            },
+            'if(err.message == "you dun\' goofed")': {
+              Choices: [
+                {
+                  Next: 'throw new Error("little")',
+                  StringEquals: "you dun' goofed",
+                  Variable: "$.err.message",
+                },
+              ],
+              Default: 'task("2")',
+              Type: "Choice",
+            },
+            'throw new Error("little")': {
+              Next: 'task("2")',
+              Result: {
+                message: "little",
+              },
+              ResultPath: "$.0_tmp",
+              Type: "Pass",
+            },
+            'task("2")': {
+              Next: "exit finally",
+              Parameters: {
+                FunctionName: task.resource.functionName,
+                Payload: "2",
+              },
+              Resource: "arn:aws:states:::lambda:invoke",
+              ResultPath: null,
+              Type: "Task",
+            },
+            "exit finally": {
+              Choices: [
+                {
+                  IsPresent: true,
+                  Next: "throw finally",
+                  Variable: "$.0_tmp",
+                },
+              ],
+              Default: undefined,
+              Type: "Choice",
+            },
+            "throw finally": {
+              Cause:
+                "an error was re-thrown from a finally block which is unsupported by Step Functions",
+              Error: "ReThrowFromFinally",
+              Type: "Fail",
+            },
+          },
+        },
+        MaxConcurrency: 1,
+        Next: "return null",
+        Parameters: {
+          "item.$": "$$.Map.Item.Value",
+        },
+        ResultPath: null,
+        Type: "Map",
+      },
+      "return null": {
+        End: true,
+        OutputPath: "$.null",
+        Parameters: {
+          null: null,
+        },
+        Type: "Pass",
+      },
+    },
+  });
+});
+
+test("while (cond) { cond = task() }", () => {
+  const { stack, task } = init();
+  const definition = new ExpressStepFunction(stack, "fn", () => {
+    let cond;
+    while (cond === undefined) {
+      cond = task();
+    }
+  }).definition;
+
+  expect(definition).toEqual({
+    StartAt: "while (cond == null)",
+    States: {
+      "while (cond == null)": {
+        Choices: [
+          {
+            Next: "cond = task(null)",
+            Or: [
+              {
+                IsPresent: false,
+                Variable: "$.cond",
+              },
+              {
+                IsNull: true,
+                Variable: "$.cond",
+              },
+            ],
+          },
+        ],
+        Default: "return null",
+        Type: "Choice",
+      },
+      "cond = task(null)": {
+        Next: "while (cond == null)",
+        Parameters: {
+          FunctionName: task.resource.functionName,
+          Payload: null,
+        },
+        Resource: "arn:aws:states:::lambda:invoke",
+        ResultPath: "$.cond",
+        Type: "Task",
+      },
+      "return null": {
+        End: true,
+        OutputPath: "$.null",
+        Parameters: {
+          null: null,
+        },
+        Type: "Pass",
+      },
+    },
+  });
+});
+
+test("while (cond); cond = task()", () => {
+  const { stack, task } = init();
+  const definition = new ExpressStepFunction(stack, "fn", () => {
+    let cond;
+    while (cond === undefined) cond = task();
+  }).definition;
+
+  expect(definition).toEqual({
+    StartAt: "while (cond == null)",
+    States: {
+      "while (cond == null)": {
+        Choices: [
+          {
+            Next: "cond = task(null)",
+            Or: [
+              {
+                IsPresent: false,
+                Variable: "$.cond",
+              },
+              {
+                IsNull: true,
+                Variable: "$.cond",
+              },
+            ],
+          },
+        ],
+        Default: "return null",
+        Type: "Choice",
+      },
+      "cond = task(null)": {
+        Next: "while (cond == null)",
+        Parameters: {
+          FunctionName: task.resource.functionName,
+          Payload: null,
+        },
+        Resource: "arn:aws:states:::lambda:invoke",
+        ResultPath: "$.cond",
+        Type: "Task",
+      },
+      "return null": {
+        End: true,
+        OutputPath: "$.null",
+        Parameters: {
+          null: null,
+        },
+        Type: "Pass",
+      },
+    },
+  });
+});
+
+test("let cond; do { cond = task() } while (cond)", () => {
+  const { stack, task } = init();
+  const definition = new ExpressStepFunction(stack, "fn", () => {
+    let cond;
+    do {
+      cond = task();
+    } while (cond === undefined);
+  }).definition;
+
+  expect(definition).toEqual({
+    StartAt: "cond = task(null)",
+    States: {
+      "do...while (cond == null)": {
+        Choices: [
+          {
+            Next: "cond = task(null)",
+            Or: [
+              {
+                IsPresent: false,
+                Variable: "$.cond",
+              },
+              {
+                IsNull: true,
+                Variable: "$.cond",
+              },
+            ],
+          },
+        ],
+        Default: "return null",
+        Type: "Choice",
+      },
+      "cond = task(null)": {
+        Next: "do...while (cond == null)",
+        Parameters: {
+          FunctionName: task.resource.functionName,
+          Payload: null,
+        },
+        Resource: "arn:aws:states:::lambda:invoke",
+        ResultPath: "$.cond",
+        Type: "Task",
       },
       "return null": {
         End: true,

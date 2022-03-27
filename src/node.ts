@@ -141,11 +141,18 @@ export abstract class BaseNode<
       } else {
         return self.block.step();
       }
-    } else if ("next" in self) {
-      // isStmt
+    } else if (self.kind === "VariableStmt" && self.expr === undefined) {
+      if (self.next) {
+        return self.next.step();
+      } else {
+        return self.exit();
+      }
+    } else if (self.kind === "DoStmt") {
+      return self.block.step();
+    } else if (self.nodeKind === "Stmt") {
       return self;
     } else {
-      // is an Exor
+      // is an Expr
       return self.exit();
     }
   }

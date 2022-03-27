@@ -32,6 +32,7 @@ import {
   BlockStmt,
   BreakStmt,
   CatchClause,
+  DoStmt,
   ExprStmt,
   ForInStmt,
   ForOfStmt,
@@ -46,6 +47,7 @@ import {
   ThrowStmt,
   TryStmt,
   VariableStmt,
+  WhileStmt,
 } from "./statement";
 import { anyOf, ensure, ensureItemOf, flatten } from "./util";
 
@@ -169,6 +171,12 @@ export function visitEachChild<T extends FunctionlessNode>(
     ensure(_else, isExpr, `ConditionExpr's else must be an Expr`);
 
     return new ConditionExpr(when, then, _else) as T;
+  } else if (node.kind === "DoStmt") {
+    const block = visitor(node.block);
+    ensure(block, isBlockStmt, `a DoStmt's block must be a BlockStmt`);
+    const condition = visitor(node.condition);
+    ensure(condition, isExpr, `a DoStmt's condition must be an Expr`);
+    return new DoStmt(block, condition) as T;
   } else if (node.kind == "ElementAccessExpr") {
     const expr = visitor(node.expr);
     const element = visitor(node.element);
@@ -386,6 +394,12 @@ export function visitEachChild<T extends FunctionlessNode>(
       ensure(expr, isExpr, `a VariableStmt's expr must be an Expr`);
     }
     return new VariableStmt(node.name, expr) as T;
+  } else if (node.kind === "WhileStmt") {
+    const condition = visitor(node.condition);
+    ensure(condition, isExpr, `a WhileStmt's condition must be an Expr`);
+    const block = visitor(node.block);
+    ensure(block, isBlockStmt, `a WhileStmt's block must be a BlockStmt`);
+    return new WhileStmt(condition, block) as T;
   }
   return assertNever(node);
 }
