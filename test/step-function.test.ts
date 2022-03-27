@@ -2863,3 +2863,845 @@ test("let cond; do { cond = task() } while (cond)", () => {
     },
   });
 });
+
+test("list.map(item => task(item))", () => {
+  const { stack, task } = init();
+  const definition = new ExpressStepFunction(stack, "fn", (list: string[]) => {
+    return list.map((item) => task(item));
+  }).definition;
+
+  expect(definition).toEqual({
+    StartAt: "return list.map(function(item))",
+    States: {
+      "return list.map(function(item))": {
+        End: true,
+        ItemsPath: "$.list",
+        Iterator: {
+          StartAt: "return task(item)",
+          States: {
+            "return task(item)": {
+              End: true,
+              Parameters: {
+                FunctionName: task.resource.functionName,
+                Payload: "$.item",
+              },
+              Resource: "arn:aws:states:::lambda:invoke",
+              ResultPath: "$",
+              Type: "Task",
+            },
+          },
+        },
+        MaxConcurrency: 1,
+        Parameters: {
+          item: "$$.Map.Item.Value",
+        },
+        ResultPath: "$",
+        Type: "Map",
+      },
+    },
+  });
+});
+
+test("list.map((item, i) => if (i == 0) task(item))", () => {
+  const { stack, task } = init();
+  const definition = new ExpressStepFunction(stack, "fn", (list: string[]) => {
+    return list.map((item, i) => {
+      if (i === 0) {
+        return task(item);
+      } else {
+        return null;
+      }
+    });
+  }).definition;
+
+  expect(definition).toEqual({
+    StartAt: "return list.map(function(item, i))",
+    States: {
+      "return list.map(function(item, i))": {
+        Type: "Map",
+        End: true,
+        ItemsPath: "$.list",
+        MaxConcurrency: 1,
+        Parameters: {
+          i: "$$.Map.Item.Index",
+          item: "$$.Map.Item.Value",
+        },
+        ResultPath: "$",
+        Iterator: {
+          StartAt: "if(i == 0)",
+          States: {
+            "if(i == 0)": {
+              Choices: [
+                {
+                  Next: "return task(item)",
+                  NumericEquals: 0,
+                  Variable: "$.i",
+                },
+              ],
+              Default: "return null",
+              Type: "Choice",
+            },
+            "return task(item)": {
+              End: true,
+              Parameters: {
+                FunctionName: task.resource.functionName,
+                Payload: "$.item",
+              },
+              Resource: "arn:aws:states:::lambda:invoke",
+              ResultPath: "$",
+              Type: "Task",
+            },
+            "return null": {
+              End: true,
+              OutputPath: "$.null",
+              Parameters: {
+                null: null,
+              },
+              Type: "Pass",
+            },
+          },
+        },
+      },
+    },
+  });
+});
+
+test("list.map((item, i, list) => if (i == 0) task(item) else task(list[0]))", () => {
+  const { stack, task } = init();
+  const definition = new ExpressStepFunction(stack, "fn", (list: string[]) => {
+    return list.map((item, i) => {
+      if (i === 0) {
+        return task(item);
+      } else {
+        return task(list[0]);
+      }
+    });
+  }).definition;
+
+  expect(definition).toEqual({
+    StartAt: "return list.map(function(item, i))",
+    States: {
+      "return list.map(function(item, i))": {
+        End: true,
+        ItemsPath: "$.list",
+        Iterator: {
+          StartAt: "if(i == 0)",
+          States: {
+            "if(i == 0)": {
+              Choices: [
+                {
+                  Next: "return task(item)",
+                  NumericEquals: 0,
+                  Variable: "$.i",
+                },
+              ],
+              Default: "return task(list[0])",
+              Type: "Choice",
+            },
+            "return task(item)": {
+              End: true,
+              Parameters: {
+                FunctionName: task.resource.functionName,
+                Payload: "$.item",
+              },
+              Resource: "arn:aws:states:::lambda:invoke",
+              ResultPath: "$",
+              Type: "Task",
+            },
+            "return task(list[0])": {
+              End: true,
+              Parameters: {
+                FunctionName: task.resource.functionName,
+                Payload: "$.list[0]",
+              },
+              Resource: "arn:aws:states:::lambda:invoke",
+              ResultPath: "$",
+              Type: "Task",
+            },
+          },
+        },
+        MaxConcurrency: 1,
+        Parameters: {
+          i: "$$.Map.Item.Index",
+          item: "$$.Map.Item.Value",
+        },
+        ResultPath: "$",
+        Type: "Map",
+      },
+    },
+  });
+});
+
+test("try { list.map(item => task(item)) }", () => {
+  const { stack, task } = init();
+  const definition = new ExpressStepFunction(stack, "fn", (list: string[]) => {
+    try {
+      return list.map((item) => task(item));
+    } catch {
+      return null;
+    }
+  }).definition;
+
+  expect(definition).toEqual({
+    StartAt: "return list.map(function(item))",
+    States: {
+      "return list.map(function(item))": {
+        Catch: [
+          {
+            ErrorEquals: ["States.ALL"],
+            Next: "return null",
+            ResultPath: null,
+          },
+        ],
+        End: true,
+        ItemsPath: "$.list",
+        Iterator: {
+          StartAt: "return task(item)",
+          States: {
+            "return task(item)": {
+              End: true,
+              Parameters: {
+                FunctionName: task.resource.functionName,
+                Payload: "$.item",
+              },
+              Resource: "arn:aws:states:::lambda:invoke",
+              ResultPath: "$",
+              Type: "Task",
+            },
+          },
+        },
+        MaxConcurrency: 1,
+        Parameters: {
+          item: "$$.Map.Item.Value",
+        },
+        ResultPath: "$",
+        Type: "Map",
+      },
+      "return null": {
+        End: true,
+        OutputPath: "$.null",
+        Parameters: {
+          null: null,
+        },
+        Type: "Pass",
+      },
+    },
+  });
+});
+
+test("try { list.map(item => task(item)) }", () => {
+  const { stack, task } = init();
+  const definition = new ExpressStepFunction(stack, "fn", (list: string[]) => {
+    return list.map((item) => {
+      try {
+        return task(item);
+      } catch {
+        return null;
+      }
+    });
+  }).definition;
+
+  expect(definition).toEqual({
+    StartAt: "return list.map(function(item))",
+    States: {
+      "return list.map(function(item))": {
+        End: true,
+        ItemsPath: "$.list",
+        Iterator: {
+          StartAt: "return task(item)",
+          States: {
+            "return task(item)": {
+              Catch: [
+                {
+                  ErrorEquals: ["States.ALL"],
+                  Next: "return null",
+                  ResultPath: null,
+                },
+              ],
+              End: true,
+              Parameters: {
+                FunctionName: task.resource.functionName,
+                Payload: "$.item",
+              },
+              Resource: "arn:aws:states:::lambda:invoke",
+              ResultPath: "$",
+              Type: "Task",
+            },
+            "return null": {
+              End: true,
+              OutputPath: "$.null",
+              Parameters: {
+                null: null,
+              },
+              Type: "Pass",
+            },
+          },
+        },
+        MaxConcurrency: 1,
+        Parameters: {
+          item: "$$.Map.Item.Value",
+        },
+        ResultPath: "$",
+        Type: "Map",
+      },
+    },
+  });
+});
+
+test("try { list.map(item => throw) }", () => {
+  const { stack } = init();
+  const definition = new ExpressStepFunction(stack, "fn", (list: string[]) => {
+    try {
+      return list.map(() => {
+        throw new Error("cause");
+      });
+    } catch {
+      return null;
+    }
+  }).definition;
+
+  expect(definition).toEqual({
+    StartAt: "return list.map(function())",
+    States: {
+      "return list.map(function())": {
+        Catch: [
+          {
+            ErrorEquals: ["States.ALL"],
+            Next: "return null",
+            ResultPath: null,
+          },
+        ],
+        End: true,
+        ItemsPath: "$.list",
+        Iterator: {
+          StartAt: 'throw new Error("cause")',
+          States: {
+            'throw new Error("cause")': {
+              Type: "Fail",
+              Error: "Error",
+              Cause: '{"message":"cause"}',
+            },
+          },
+        },
+        MaxConcurrency: 1,
+        Parameters: {},
+        ResultPath: "$",
+        Type: "Map",
+      },
+      "return null": {
+        End: true,
+        OutputPath: "$.null",
+        Parameters: {
+          null: null,
+        },
+        Type: "Pass",
+      },
+    },
+  });
+});
+
+test("try { list.map(item => throw) } catch (err)", () => {
+  const { stack } = init();
+  const definition = new ExpressStepFunction(stack, "fn", (list: string[]) => {
+    try {
+      return list.map(() => {
+        throw new Error("cause");
+      });
+    } catch (err: any) {
+      if (err.message === "cause") {
+        return 0;
+      } else {
+        return 1;
+      }
+    }
+  }).definition;
+
+  expect(definition).toEqual({
+    StartAt: "return list.map(function())",
+    States: {
+      "return list.map(function())": {
+        Catch: [
+          {
+            ErrorEquals: ["States.ALL"],
+            Next: "catch(err)",
+            ResultPath: "$.err",
+          },
+        ],
+        End: true,
+        ItemsPath: "$.list",
+        Iterator: {
+          StartAt: 'throw new Error("cause")',
+          States: {
+            'throw new Error("cause")': {
+              Cause: '{"message":"cause"}',
+              Error: "Error",
+              Type: "Fail",
+            },
+          },
+        },
+        MaxConcurrency: 1,
+        Parameters: {},
+        ResultPath: "$",
+        Type: "Map",
+      },
+      "catch(err)": {
+        Next: "0_catch(err)",
+        Parameters: {
+          "0_ParsedError.$": "States.StringToJson($.err.Cause)",
+        },
+        ResultPath: "$.err",
+        Type: "Pass",
+      },
+      "0_catch(err)": {
+        InputPath: "$.err.0_ParsedError",
+        Next: 'if(err.message == "cause")',
+        ResultPath: "$.err",
+        Type: "Pass",
+      },
+      'if(err.message == "cause")': {
+        Choices: [
+          {
+            Next: "return 0",
+            StringEquals: "cause",
+            Variable: "$.err.message",
+          },
+        ],
+        Default: "return 1",
+        Type: "Choice",
+      },
+      "return 0": {
+        End: true,
+        Result: 0,
+        ResultPath: "$",
+        Type: "Pass",
+      },
+      "return 1": {
+        End: true,
+        Result: 1,
+        ResultPath: "$",
+        Type: "Pass",
+      },
+    },
+  });
+});
+
+test("list.forEach(item => task(item))", () => {
+  const { stack, task } = init();
+  const definition = new ExpressStepFunction(stack, "fn", (list: string[]) => {
+    return list.forEach((item) => task(item));
+  }).definition;
+
+  expect(definition).toEqual({
+    StartAt: "return list.forEach(function(item))",
+    States: {
+      "return list.forEach(function(item))": {
+        End: true,
+        ItemsPath: "$.list",
+        Iterator: {
+          StartAt: "return task(item)",
+          States: {
+            "return task(item)": {
+              End: true,
+              Parameters: {
+                FunctionName: task.resource.functionName,
+                Payload: "$.item",
+              },
+              Resource: "arn:aws:states:::lambda:invoke",
+              ResultPath: "$",
+              Type: "Task",
+            },
+          },
+        },
+        MaxConcurrency: 1,
+        Parameters: {
+          item: "$$.Map.Item.Value",
+        },
+        ResultPath: "$",
+        Type: "Map",
+      },
+    },
+  });
+});
+
+test("list.forEach((item, i) => if (i == 0) task(item))", () => {
+  const { stack, task } = init();
+  const definition = new ExpressStepFunction(stack, "fn", (list: string[]) => {
+    return list.forEach((item, i) => {
+      if (i === 0) {
+        return task(item);
+      } else {
+        return null;
+      }
+    });
+  }).definition;
+
+  expect(definition).toEqual({
+    StartAt: "return list.forEach(function(item, i))",
+    States: {
+      "return list.forEach(function(item, i))": {
+        Type: "Map",
+        End: true,
+        ItemsPath: "$.list",
+        MaxConcurrency: 1,
+        Parameters: {
+          i: "$$.Map.Item.Index",
+          item: "$$.Map.Item.Value",
+        },
+        ResultPath: "$",
+        Iterator: {
+          StartAt: "if(i == 0)",
+          States: {
+            "if(i == 0)": {
+              Choices: [
+                {
+                  Next: "return task(item)",
+                  NumericEquals: 0,
+                  Variable: "$.i",
+                },
+              ],
+              Default: "return null",
+              Type: "Choice",
+            },
+            "return task(item)": {
+              End: true,
+              Parameters: {
+                FunctionName: task.resource.functionName,
+                Payload: "$.item",
+              },
+              Resource: "arn:aws:states:::lambda:invoke",
+              ResultPath: "$",
+              Type: "Task",
+            },
+            "return null": {
+              End: true,
+              OutputPath: "$.null",
+              Parameters: {
+                null: null,
+              },
+              Type: "Pass",
+            },
+          },
+        },
+      },
+    },
+  });
+});
+
+test("list.forEach((item, i, list) => if (i == 0) task(item) else task(list[0]))", () => {
+  const { stack, task } = init();
+  const definition = new ExpressStepFunction(stack, "fn", (list: string[]) => {
+    return list.forEach((item, i) => {
+      if (i === 0) {
+        return task(item);
+      } else {
+        return task(list[0]);
+      }
+    });
+  }).definition;
+
+  expect(definition).toEqual({
+    StartAt: "return list.forEach(function(item, i))",
+    States: {
+      "return list.forEach(function(item, i))": {
+        End: true,
+        ItemsPath: "$.list",
+        Iterator: {
+          StartAt: "if(i == 0)",
+          States: {
+            "if(i == 0)": {
+              Choices: [
+                {
+                  Next: "return task(item)",
+                  NumericEquals: 0,
+                  Variable: "$.i",
+                },
+              ],
+              Default: "return task(list[0])",
+              Type: "Choice",
+            },
+            "return task(item)": {
+              End: true,
+              Parameters: {
+                FunctionName: task.resource.functionName,
+                Payload: "$.item",
+              },
+              Resource: "arn:aws:states:::lambda:invoke",
+              ResultPath: "$",
+              Type: "Task",
+            },
+            "return task(list[0])": {
+              End: true,
+              Parameters: {
+                FunctionName: task.resource.functionName,
+                Payload: "$.list[0]",
+              },
+              Resource: "arn:aws:states:::lambda:invoke",
+              ResultPath: "$",
+              Type: "Task",
+            },
+          },
+        },
+        MaxConcurrency: 1,
+        Parameters: {
+          i: "$$.Map.Item.Index",
+          item: "$$.Map.Item.Value",
+        },
+        ResultPath: "$",
+        Type: "Map",
+      },
+    },
+  });
+});
+
+test("try { list.forEach(item => task(item)) }", () => {
+  const { stack, task } = init();
+  const definition = new ExpressStepFunction(stack, "fn", (list: string[]) => {
+    try {
+      return list.forEach((item) => task(item));
+    } catch {
+      return null;
+    }
+  }).definition;
+
+  expect(definition).toEqual({
+    StartAt: "return list.forEach(function(item))",
+    States: {
+      "return list.forEach(function(item))": {
+        Catch: [
+          {
+            ErrorEquals: ["States.ALL"],
+            Next: "return null",
+            ResultPath: null,
+          },
+        ],
+        End: true,
+        ItemsPath: "$.list",
+        Iterator: {
+          StartAt: "return task(item)",
+          States: {
+            "return task(item)": {
+              End: true,
+              Parameters: {
+                FunctionName: task.resource.functionName,
+                Payload: "$.item",
+              },
+              Resource: "arn:aws:states:::lambda:invoke",
+              ResultPath: "$",
+              Type: "Task",
+            },
+          },
+        },
+        MaxConcurrency: 1,
+        Parameters: {
+          item: "$$.Map.Item.Value",
+        },
+        ResultPath: "$",
+        Type: "Map",
+      },
+      "return null": {
+        End: true,
+        OutputPath: "$.null",
+        Parameters: {
+          null: null,
+        },
+        Type: "Pass",
+      },
+    },
+  });
+});
+
+test("try { list.forEach(item => task(item)) }", () => {
+  const { stack, task } = init();
+  const definition = new ExpressStepFunction(stack, "fn", (list: string[]) => {
+    return list.forEach((item) => {
+      try {
+        return task(item);
+      } catch {
+        return null;
+      }
+    });
+  }).definition;
+
+  expect(definition).toEqual({
+    StartAt: "return list.forEach(function(item))",
+    States: {
+      "return list.forEach(function(item))": {
+        End: true,
+        ItemsPath: "$.list",
+        Iterator: {
+          StartAt: "return task(item)",
+          States: {
+            "return task(item)": {
+              Catch: [
+                {
+                  ErrorEquals: ["States.ALL"],
+                  Next: "return null",
+                  ResultPath: null,
+                },
+              ],
+              End: true,
+              Parameters: {
+                FunctionName: task.resource.functionName,
+                Payload: "$.item",
+              },
+              Resource: "arn:aws:states:::lambda:invoke",
+              ResultPath: "$",
+              Type: "Task",
+            },
+            "return null": {
+              End: true,
+              OutputPath: "$.null",
+              Parameters: {
+                null: null,
+              },
+              Type: "Pass",
+            },
+          },
+        },
+        MaxConcurrency: 1,
+        Parameters: {
+          item: "$$.Map.Item.Value",
+        },
+        ResultPath: "$",
+        Type: "Map",
+      },
+    },
+  });
+});
+
+test("try { list.forEach(item => throw) }", () => {
+  const { stack } = init();
+  const definition = new ExpressStepFunction(stack, "fn", (list: string[]) => {
+    try {
+      return list.forEach(() => {
+        throw new Error("cause");
+      });
+    } catch {
+      return null;
+    }
+  }).definition;
+
+  expect(definition).toEqual({
+    StartAt: "return list.forEach(function())",
+    States: {
+      "return list.forEach(function())": {
+        Catch: [
+          {
+            ErrorEquals: ["States.ALL"],
+            Next: "return null",
+            ResultPath: null,
+          },
+        ],
+        End: true,
+        ItemsPath: "$.list",
+        Iterator: {
+          StartAt: 'throw new Error("cause")',
+          States: {
+            'throw new Error("cause")': {
+              Type: "Fail",
+              Error: "Error",
+              Cause: '{"message":"cause"}',
+            },
+          },
+        },
+        MaxConcurrency: 1,
+        Parameters: {},
+        ResultPath: "$",
+        Type: "Map",
+      },
+      "return null": {
+        End: true,
+        OutputPath: "$.null",
+        Parameters: {
+          null: null,
+        },
+        Type: "Pass",
+      },
+    },
+  });
+});
+
+test("try { list.forEach(item => throw) } catch (err)", () => {
+  const { stack } = init();
+  const definition = new ExpressStepFunction(stack, "fn", (list: string[]) => {
+    try {
+      return list.forEach(() => {
+        throw new Error("cause");
+      });
+    } catch (err: any) {
+      if (err.message === "cause") {
+        return 0;
+      } else {
+        return 1;
+      }
+    }
+  }).definition;
+
+  expect(definition).toEqual({
+    StartAt: "return list.forEach(function())",
+    States: {
+      "return list.forEach(function())": {
+        Catch: [
+          {
+            ErrorEquals: ["States.ALL"],
+            Next: "catch(err)",
+            ResultPath: "$.err",
+          },
+        ],
+        End: true,
+        ItemsPath: "$.list",
+        Iterator: {
+          StartAt: 'throw new Error("cause")',
+          States: {
+            'throw new Error("cause")': {
+              Cause: '{"message":"cause"}',
+              Error: "Error",
+              Type: "Fail",
+            },
+          },
+        },
+        MaxConcurrency: 1,
+        Parameters: {},
+        ResultPath: "$",
+        Type: "Map",
+      },
+      "catch(err)": {
+        Next: "0_catch(err)",
+        Parameters: {
+          "0_ParsedError.$": "States.StringToJson($.err.Cause)",
+        },
+        ResultPath: "$.err",
+        Type: "Pass",
+      },
+      "0_catch(err)": {
+        InputPath: "$.err.0_ParsedError",
+        Next: 'if(err.message == "cause")',
+        ResultPath: "$.err",
+        Type: "Pass",
+      },
+      'if(err.message == "cause")': {
+        Choices: [
+          {
+            Next: "return 0",
+            StringEquals: "cause",
+            Variable: "$.err.message",
+          },
+        ],
+        Default: "return 1",
+        Type: "Choice",
+      },
+      "return 0": {
+        End: true,
+        Result: 0,
+        ResultPath: "$",
+        Type: "Pass",
+      },
+      "return 1": {
+        End: true,
+        Result: 1,
+        ResultPath: "$",
+        Type: "Pass",
+      },
+    },
+  });
+});

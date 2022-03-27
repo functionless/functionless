@@ -3,21 +3,22 @@ import { aws_iam, aws_stepfunctions } from "aws-cdk-lib";
 
 import { assertNever } from "./assert";
 import {
+  CallExpr,
   ElementAccessExpr,
   Expr,
+  isFunctionExpr,
   isLiteralExpr,
   isReferenceExpr,
   isVariableReference,
   NewExpr,
   NullLiteralExpr,
+  PropAccessExpr,
 } from "./expression";
 import {
   BlockStmt,
   IfStmt,
-  isCatchClause,
   isForInStmt,
   isForOfStmt,
-  isTryStmt,
   ReturnStmt,
   Stmt,
 } from "./statement";
@@ -413,32 +414,20 @@ export class ASL {
         }),
       };
     } else if (stmt.kind === "ForOfStmt" || stmt.kind === "ForInStmt") {
-      const errorScope = stmt.findParent(
-        anyOf(isTryStmt, isCatchClause, isForOfStmt, isForInStmt)
-      );
+      const throwTransition = this.throw(stmt);
 
       return {
         [this.getStateName(stmt)]: {
           Type: "Map",
-          Catch:
-            errorScope?.kind === "TryStmt"
-              ? /*
-                  we are inside a TryStmt, like:
-                  try {
-                    for(const item of items )
-                  }
-                  // the for-loop's Catch must route to the try-catch block's Catch
-                */
-                [
-                  {
-                    ErrorEquals: ["States.ALL"],
-                    Next: this.transition(errorScope.catchClause)!,
-                    ResultPath: errorScope.catchClause.variableDecl
-                      ? `$.${errorScope.catchClause.variableDecl.name}`
-                      : null,
-                  },
-                ]
-              : undefined,
+          Catch: throwTransition
+            ? [
+                {
+                  ErrorEquals: ["States.ALL"],
+                  Next: throwTransition.Next!,
+                  ResultPath: throwTransition.ResultPath,
+                },
+              ]
+            : undefined,
           ResultPath: null,
           ItemsPath: ASL.toJsonPath(stmt.expr),
           Next: this.next(stmt),
@@ -718,8 +707,51 @@ export class ASL {
         } else {
           return taskState;
         }
+      } else if (isMapOrForEach(expr)) {
+        const throwTransition = this.throw(expr);
+
+        const callbackfn = expr.args.callbackfn;
+        if (callbackfn !== undefined && callbackfn.kind === "FunctionExpr") {
+          const callbackStates = this.execute(callbackfn.body);
+          const callbackStart = this.getStateName(callbackfn.body.step()!);
+
+          const listPath = ASL.toJsonPath(expr.expr.expr);
+          return {
+            Type: "Map",
+            MaxConcurrency: 1,
+            Iterator: {
+              States: callbackStates,
+              StartAt: callbackStart,
+            },
+            ...props,
+            ItemsPath: listPath,
+            Parameters: Object.fromEntries(
+              callbackfn.parameters.map((param, i) => [
+                param.name,
+                i === 0
+                  ? "$$.Map.Item.Value"
+                  : i == 1
+                  ? "$$.Map.Item.Index"
+                  : listPath,
+              ])
+            ),
+            ...(throwTransition
+              ? {
+                  Catch: [
+                    {
+                      ErrorEquals: ["States.ALL"],
+                      Next: throwTransition.Next!,
+                      ResultPath: throwTransition.ResultPath,
+                    },
+                  ],
+                }
+              : {}),
+          };
+        }
       }
-      throw new Error(`call must be a service call, ${expr}`);
+      throw new Error(
+        `call must be a service call or list .map, .forEach or .filter, ${expr}`
+      );
     } else if (isVariableReference(expr)) {
       return {
         Type: "Pass",
@@ -907,7 +939,7 @@ export class ASL {
     // because of how step function's Catch feature works, we need to check if the try
     // is inside or outside the closure
     const mapOrParallelClosure = node.findParent(
-      anyOf(isForOfStmt, isForInStmt)
+      anyOf(isForOfStmt, isForInStmt, isFunctionExpr)
     );
 
     // catchClause or finallyBlock that will run upon throwing this error
@@ -944,6 +976,15 @@ export class ASL {
   }
 }
 
+function isMapOrForEach(expr: CallExpr): expr is CallExpr & {
+  expr: PropAccessExpr;
+} {
+  return (
+    expr.expr.kind === "PropAccessExpr" &&
+    (expr.expr.name === "map" || expr.expr.name === "forEach")
+  );
+}
+
 function canThrow(node: FunctionlessNode): boolean {
   const flow = analyzeFlow(node);
   return (flow.hasTask || flow.hasThrow) ?? false;
@@ -962,7 +1003,8 @@ function analyzeFlow(node: FunctionlessNode): FlowResult {
     .map(analyzeFlow)
     .reduce(
       (a, b) => ({ ...a, ...b }),
-      (node.kind === "CallExpr" && findFunction(node) !== undefined) ||
+      (node.kind === "CallExpr" &&
+        (findFunction(node) !== undefined || isMapOrForEach(node))) ||
         node.kind === "ForInStmt" ||
         node.kind === "ForOfStmt"
         ? { hasTask: true }
@@ -1296,7 +1338,12 @@ function exprToString(expr: Expr): string {
   } else if (expr.kind === "CallExpr" || expr.kind === "NewExpr") {
     return `${expr.kind === "NewExpr" ? "new " : ""}${exprToString(
       expr.expr
-    )}(${Object.values(expr.args).map(exprToString).join(", ")})`;
+    )}(${Object.entries(expr.args)
+      .filter(
+        ([name, val]) => !(name === "thisArg" && val.kind === "NullLiteralExpr")
+      )
+      .map(([_, val]) => exprToString(val))
+      .join(", ")})`;
   } else if (expr.kind === "ConditionExpr") {
     return `if(${exprToString(expr.when)})`;
   } else if (expr.kind === "ElementAccessExpr") {
