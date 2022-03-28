@@ -748,9 +748,15 @@ export class ASL {
               : {}),
           };
         }
+      } else if (isSlice(expr)) {
+        return {
+          Type: "Pass",
+          ...props,
+          InputPath: ASL.toJsonPath(expr),
+        };
       }
       throw new Error(
-        `call must be a service call or list .map, .forEach or .filter, ${expr}`
+        `call must be a service call or list .slice, .map, .forEach or .filter, ${expr}`
       );
     } else if (isVariableReference(expr)) {
       return {
@@ -985,6 +991,14 @@ export function isMapOrForEach(expr: CallExpr): expr is CallExpr & {
   );
 }
 
+function isSlice(expr: CallExpr): expr is CallExpr & {
+  expr: PropAccessExpr & {
+    name: "slice";
+  };
+} {
+  return expr.expr.kind === "PropAccessExpr" && expr.expr.name === "slice";
+}
+
 function canThrow(node: FunctionlessNode): boolean {
   const flow = analyzeFlow(node);
   return (flow.hasTask || flow.hasThrow) ?? false;
@@ -1016,7 +1030,9 @@ function analyzeFlow(node: FunctionlessNode): FlowResult {
 
 export namespace ASL {
   export function toJson(expr: Expr): any {
-    if (expr.kind === "Identifier") {
+    if (expr.kind === "CallExpr" && isSlice(expr)) {
+      return sliceToJsonPath(expr);
+    } else if (expr.kind === "Identifier") {
       return toJsonPath(expr);
     } else if (expr.kind === "PropAccessExpr") {
       return `${toJson(expr.expr)}.${expr.name}`;
@@ -1082,6 +1098,8 @@ export namespace ASL {
       return aws_stepfunctions.JsonPath.array(
         ...expr.items.map((item) => toJsonPath(item))
       );
+    } else if (expr.kind === "CallExpr" && isSlice(expr)) {
+      return sliceToJsonPath(expr);
     } else if (expr.kind === "Identifier") {
       return `$.${expr.name}`;
     } else if (expr.kind === "PropAccessExpr") {
@@ -1093,6 +1111,27 @@ export namespace ASL {
     throw new Error(
       `expression kind '${expr.kind}' cannot be evaluated to a JSON Path expression.`
     );
+  }
+
+  function sliceToJsonPath(expr: CallExpr & { expr: PropAccessExpr }) {
+    const start = expr.args.start;
+    if (start.kind !== "NumberLiteralExpr") {
+      throw new Error(
+        `the 'start' argument of slice must be a NumberLiteralExpr`
+      );
+    }
+
+    const end = expr.args.end;
+    if (end.kind !== "NullLiteralExpr") {
+      if (end.kind !== "NumberLiteralExpr") {
+        throw new Error(
+          `the 'end' argument of slice must be a NumberLiteralExpr`
+        );
+      }
+      return `${toJsonPath(expr.expr.expr)}[${start.value}:${end.value}]`;
+    } else {
+      return `${toJsonPath(expr.expr.expr)}[${start.value}:]`;
+    }
   }
 
   /**

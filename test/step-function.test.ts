@@ -95,6 +95,69 @@ test("return optional PropAccessExpr", () => {
   expect(definition).toEqual(expected);
 });
 
+test("return items.slice(1)", () => {
+  const { stack } = initStepFunctionApp();
+  const definition = new ExpressStepFunction(stack, "fn", (items: string[]) => {
+    return items.slice(1);
+  }).definition;
+
+  expect(definition).toEqual({
+    StartAt: "return items.slice(1, null)",
+    States: {
+      "return items.slice(1, null)": {
+        End: true,
+        InputPath: "$.items[1:]",
+        ResultPath: "$",
+        Type: "Pass",
+      },
+    },
+  });
+});
+
+test("return items.slice(1, 3)", () => {
+  const { stack } = initStepFunctionApp();
+  const definition = new ExpressStepFunction(stack, "fn", (items: string[]) => {
+    return items.slice(1, 3);
+  }).definition;
+
+  expect(definition).toEqual({
+    StartAt: "return items.slice(1, 3)",
+    States: {
+      "return items.slice(1, 3)": {
+        End: true,
+        InputPath: "$.items[1:3]",
+        ResultPath: "$",
+        Type: "Pass",
+      },
+    },
+  });
+});
+
+test("return task(items.slice(1, 3))", () => {
+  const { stack, task } = initStepFunctionApp();
+  const definition = new ExpressStepFunction(stack, "fn", (items: string[]) => {
+    return task({ key: items.slice(1, 3) });
+  }).definition;
+
+  expect(definition).toEqual({
+    StartAt: "return task({key: items.slice(1, 3)})",
+    States: {
+      "return task({key: items.slice(1, 3)})": {
+        Type: "Task",
+        End: true,
+        Resource: "arn:aws:states:::lambda:invoke",
+        Parameters: {
+          FunctionName: task.resource.functionName,
+          Payload: {
+            "key.$": "$.items[1:3]",
+          },
+        },
+        ResultPath: "$",
+      },
+    },
+  });
+});
+
 test("let and set", () => {
   const { stack } = initStepFunctionApp();
   const definition = new ExpressStepFunction(stack, "fn", () => {

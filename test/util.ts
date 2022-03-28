@@ -60,7 +60,7 @@ export function initStepFunctionApp() {
     })
   );
 
-  const task = new Function<string | void, number | null>(
+  const task = new Function<any, number | null>(
     new aws_lambda.Function(stack, "Task", {
       code: aws_lambda.Code.fromInline(
         "exports.handle = function() { return 1; }"
