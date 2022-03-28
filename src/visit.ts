@@ -32,6 +32,7 @@ import {
   BlockStmt,
   BreakStmt,
   CatchClause,
+  ContinueStmt,
   DoStmt,
   ExprStmt,
   ForInStmt,
@@ -116,6 +117,8 @@ export function visitEachChild<T extends FunctionlessNode>(
     return new BooleanLiteralExpr(node.value) as T;
   } else if (node.kind === "BreakStmt") {
     return new BreakStmt() as T;
+  } else if (node.kind === "ContinueStmt") {
+    return new ContinueStmt() as T;
   } else if (node.kind === "CallExpr" || node.kind === "NewExpr") {
     const expr = visitor(node.expr);
     ensure(

@@ -4540,15 +4540,17 @@ test("break from for-loop", () => {
     StartAt: "for(item of items)",
     States: {
       "for(item of items)": {
-        Catch: undefined,
+        Catch: [
+          {
+            ErrorEquals: ["Break"],
+            Next: "return null",
+            ResultPath: null,
+          },
+        ],
         ItemsPath: "$.items",
         Iterator: {
           StartAt: 'if(item == "hello")',
           States: {
-            break: {
-              Type: "Fail",
-              Error: "Break",
-            },
             'if(item == "hello")': {
               Choices: [
                 {
@@ -4557,8 +4559,16 @@ test("break from for-loop", () => {
                   Variable: "$.item",
                 },
               ],
-              Default: undefined,
+              Default: '0_otherwise_if(item == "hello")',
               Type: "Choice",
+            },
+            '0_otherwise_if(item == "hello")': {
+              End: true,
+              Type: "Pass",
+            },
+            break: {
+              Type: "Fail",
+              Error: "Break",
             },
           },
         },
@@ -4645,6 +4655,188 @@ test("break from do-while-loop", () => {
       break: {
         Next: "return null",
         Type: "Pass",
+      },
+      "return null": {
+        End: true,
+        OutputPath: "$.null",
+        Parameters: {
+          null: null,
+        },
+        Type: "Pass",
+      },
+    },
+  });
+});
+
+test("continue in for loop", () => {
+  const { stack } = initStepFunctionApp();
+  const definition = new ExpressStepFunction(stack, "fn", (items: string[]) => {
+    for (const item of items) {
+      if (item === "hello") {
+        continue;
+      }
+    }
+  }).definition;
+
+  expect(definition).toEqual({
+    StartAt: "for(item of items)",
+    States: {
+      "for(item of items)": {
+        ItemsPath: "$.items",
+        Iterator: {
+          StartAt: 'if(item == "hello")',
+          States: {
+            'if(item == "hello")': {
+              Choices: [
+                {
+                  Next: "continue",
+                  StringEquals: "hello",
+                  Variable: "$.item",
+                },
+              ],
+              Default: undefined,
+              Type: "Choice",
+            },
+            continue: {
+              End: true,
+              ResultPath: null,
+              Type: "Pass",
+            },
+          },
+        },
+        MaxConcurrency: 1,
+        Next: "return null",
+        Parameters: {
+          "item.$": "$$.Map.Item.Value",
+        },
+        ResultPath: null,
+        Type: "Map",
+      },
+      "return null": {
+        End: true,
+        OutputPath: "$.null",
+        Parameters: {
+          null: null,
+        },
+        Type: "Pass",
+      },
+    },
+  });
+});
+
+test("continue in while loop", () => {
+  const { stack, task } = initStepFunctionApp();
+  const definition = new ExpressStepFunction(stack, "fn", (key: string) => {
+    while (true) {
+      if (key === "sam") {
+        continue;
+      }
+      task(key);
+    }
+  }).definition;
+
+  expect(definition).toEqual({
+    StartAt: "while (true)",
+    States: {
+      "while (true)": {
+        Choices: [
+          {
+            IsPresent: false,
+            Next: 'if(key == "sam")',
+            Variable: "$.0_true",
+          },
+        ],
+        Default: "return null",
+        Type: "Choice",
+      },
+      'if(key == "sam")': {
+        Choices: [
+          {
+            Next: "continue",
+            StringEquals: "sam",
+            Variable: "$.key",
+          },
+        ],
+        Default: "task(key)",
+        Type: "Choice",
+      },
+      continue: {
+        Next: "while (true)",
+        ResultPath: null,
+        Type: "Pass",
+      },
+      "task(key)": {
+        Next: "while (true)",
+        Parameters: {
+          FunctionName: task.resource.functionName,
+          Payload: "$.key",
+        },
+        Resource: "arn:aws:states:::lambda:invoke",
+        ResultPath: null,
+        Type: "Task",
+      },
+      "return null": {
+        End: true,
+        OutputPath: "$.null",
+        Parameters: {
+          null: null,
+        },
+        Type: "Pass",
+      },
+    },
+  });
+});
+
+test("continue in do..while loop", () => {
+  const { stack, task } = initStepFunctionApp();
+  const definition = new ExpressStepFunction(stack, "fn", (key: string) => {
+    do {
+      if (key === "sam") {
+        continue;
+      }
+      task(key);
+    } while (true);
+  }).definition;
+
+  expect(definition).toEqual({
+    StartAt: 'if(key == "sam")',
+    States: {
+      'if(key == "sam")': {
+        Choices: [
+          {
+            Next: "continue",
+            StringEquals: "sam",
+            Variable: "$.key",
+          },
+        ],
+        Default: "task(key)",
+        Type: "Choice",
+      },
+      continue: {
+        Next: 'if(key == "sam")',
+        ResultPath: null,
+        Type: "Pass",
+      },
+      "task(key)": {
+        Next: "do...while (true)",
+        Parameters: {
+          FunctionName: "${Token[TOKEN.223]}",
+          Payload: "$.key",
+        },
+        Resource: "arn:aws:states:::lambda:invoke",
+        ResultPath: null,
+        Type: "Task",
+      },
+      "do...while (true)": {
+        Choices: [
+          {
+            IsPresent: false,
+            Next: 'if(key == "sam")',
+            Variable: "$.0_true",
+          },
+        ],
+        Default: "return null",
+        Type: "Choice",
       },
       "return null": {
         End: true,

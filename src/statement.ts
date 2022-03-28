@@ -10,6 +10,7 @@ export type Stmt =
   | BreakStmt
   | BlockStmt
   | CatchClause
+  | ContinueStmt
   | DoStmt
   | ExprStmt
   | ForInStmt
@@ -27,6 +28,7 @@ export function isStmt(a: any): a is Stmt {
     (isBreakStmt(a) ||
       isBlockStmt(a) ||
       isCatchClause(a) ||
+      isContinueStmt(a) ||
       isExprStmt(a) ||
       isForInStmt(a) ||
       isForOfStmt(a) ||
@@ -244,6 +246,18 @@ export class BreakStmt extends BaseStmt<"BreakStmt"> {
 
   public clone(): this {
     return new BreakStmt() as this;
+  }
+}
+
+export const isContinueStmt = typeGuard("ContinueStmt");
+
+export class ContinueStmt extends BaseStmt<"ContinueStmt"> {
+  constructor() {
+    super("ContinueStmt");
+  }
+
+  public clone(): this {
+    return new ContinueStmt() as this;
   }
 }
 

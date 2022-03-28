@@ -421,6 +421,34 @@ export class ASL {
                 Next: this.next(loop),
               },
       };
+    } else if (stmt.kind === "ContinueStmt") {
+      const loop = stmt.findParent(
+        anyOf(isForOfStmt, isForInStmt, isWhileStmt, isDoStmt)
+      );
+      if (loop === undefined) {
+        throw new Error(`Stack Underflow`);
+      }
+
+      return {
+        [this.getStateName(stmt)]:
+          loop.kind === "ForInStmt" || loop.kind === "ForOfStmt"
+            ? {
+                Type: "Pass",
+                End: true,
+                ResultPath: null,
+              }
+            : loop.kind === "WhileStmt"
+            ? {
+                Type: "Pass",
+                Next: this.getStateName(loop),
+                ResultPath: null,
+              }
+            : {
+                Type: "Pass",
+                Next: this.getStateName(loop.step()!),
+                ResultPath: null,
+              },
+      };
     } else if (stmt.kind === "ExprStmt") {
       return {
         [this.getStateName(stmt)]: this.eval(stmt.expr, {
@@ -430,27 +458,32 @@ export class ASL {
       };
     } else if (stmt.kind === "ForOfStmt" || stmt.kind === "ForInStmt") {
       const throwTransition = this.throw(stmt);
+
+      const Catch = [
+        ...(hasBreak(stmt)
+          ? [
+              {
+                ErrorEquals: ["Break"],
+                Next: this.next(stmt)!,
+                ResultPath: null,
+              },
+            ]
+          : []),
+        ...(throwTransition
+          ? [
+              {
+                ErrorEquals: ["States.ALL"],
+                Next: throwTransition.Next!,
+                ResultPath: throwTransition.ResultPath,
+              },
+            ]
+          : []),
+      ];
+
       return {
         [this.getStateName(stmt)]: {
           Type: "Map",
-          Catch: throwTransition
-            ? [
-                ...(hasBreak(stmt)
-                  ? [
-                      {
-                        ErrorEquals: ["Break"],
-                        Next: this.next(stmt)!,
-                        ResultPath: null,
-                      },
-                    ]
-                  : []),
-                {
-                  ErrorEquals: ["States.ALL"],
-                  Next: throwTransition.Next!,
-                  ResultPath: throwTransition.ResultPath,
-                },
-              ]
-            : undefined,
+          ...(Catch.length > 0 ? { Catch } : {}),
           ResultPath: null,
           ItemsPath: ASL.toJsonPath(stmt.expr),
           Next: this.next(stmt),
@@ -494,16 +527,26 @@ export class ASL {
       if (curr?.kind === "BlockStmt") {
         Object.assign(states, this.execute(curr));
       }
+      const next =
+        curr === undefined
+          ? this.next(stmt)
+          : // there was an else
+            this.getStateName(curr.statements[0]);
+
       return {
         [this.getStateName(stmt)]: {
           Type: "Choice",
           Choices: choices,
-          Default:
-            curr === undefined
-              ? this.next(stmt)
-              : // there was an else
-                this.getStateName(curr.statements[0]),
+          Default: next ?? `0_otherwise_${this.getStateName(stmt)}`,
         },
+        ...(next === undefined
+          ? {
+              [`0_otherwise_${this.getStateName(stmt)}`]: {
+                Type: "Pass",
+                End: true,
+              },
+            }
+          : {}),
         ...states,
       };
     } else if (stmt.kind === "ReturnStmt") {
@@ -1496,6 +1539,8 @@ function toStateName(stmt: Stmt): string | undefined {
     }
   } else if (stmt.kind === "BreakStmt") {
     return "break";
+  } else if (stmt.kind === "ContinueStmt") {
+    return "continue";
   } else if (stmt.kind === "CatchClause") {
     return `catch${
       stmt.variableDecl?.name ? `(${stmt.variableDecl?.name})` : ""

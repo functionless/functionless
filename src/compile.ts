@@ -413,6 +413,8 @@ export function compile(
           ]);
         } else if (ts.isBreakStatement(node)) {
           return newExpr("BreakStmt", []);
+        } else if (ts.isContinueStatement(node)) {
+          return newExpr("ContinueStmt", []);
         } else if (ts.isTryStatement(node)) {
           return newExpr("TryStmt", [
             toExpr(node.tryBlock),
