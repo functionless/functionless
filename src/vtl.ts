@@ -140,6 +140,8 @@ export class VTL {
             if (item.kind === "SpreadElementExpr") {
               this.qr(`${list}.addAll(${this.eval(item.expr)})`);
             } else {
+              // we use addAll because `list.push(item)` is pared as `list.push(...[item])`
+              // - i.e. the compiler passes us an ArrayLiteralExpr even if there is one arg
               this.qr(`${list}.add(${this.eval(item)})`);
             }
           }
@@ -348,8 +350,9 @@ export class VTL {
       case "PropAccessExpr": {
         let name = node.name;
         if (name === "push" && node.parent?.kind === "CallExpr") {
-          // this is a push to an array, rename to 'add'
-          name = "add";
+          // this is a push to an array, rename to 'addAll'
+          // addAll because the var-args are converted to an ArrayLiteralExpr
+          name = "addAll";
         }
         return `${this.eval(node.expr)}.${name}`;
       }

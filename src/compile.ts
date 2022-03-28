@@ -226,7 +226,14 @@ export function compile(
                 signature.parameters.map((parameter, i) =>
                   ts.factory.createPropertyAssignment(
                     parameter.name,
-                    toExpr(node.arguments?.[i])
+                    (parameter.declarations?.[0] as ts.ParameterDeclaration)
+                      ?.dotDotDotToken
+                      ? newExpr("ArrayLiteralExpr", [
+                          ts.factory.createArrayLiteralExpression(
+                            node.arguments?.slice(i).map(toExpr) ?? []
+                          ),
+                        ])
+                      : toExpr(node.arguments?.[i])
                   )
                 )
               ),

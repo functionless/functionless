@@ -16,15 +16,16 @@ import {
   isASL,
   isMapOrForEach,
   MapTask,
+  ParallelTask,
   StateMachine,
   States,
   Wait,
 } from "./asl";
 import { isVTL, VTL } from "./vtl";
 import { makeCallable } from "./callable";
-import { CallExpr } from "./expression";
+import { CallExpr, isFunctionExpr } from "./expression";
 import { LogOptions } from "aws-cdk-lib/aws-stepfunctions";
-import { AnyFunction } from "./util";
+import { AnyFunction, ensureItemOf } from "./util";
 
 export type AnyStepFunction =
   | ExpressStepFunction<AnyFunction>
@@ -112,7 +113,7 @@ export namespace $SFN {
   ): void;
 
   export function forEach(call: CallExpr, context: VTL | ASL): MapTask {
-    return mapOrForEach(call, context);
+    return mapOrForEach("forEach", call, context);
   }
 
   // @ts-ignore
@@ -131,14 +132,17 @@ export namespace $SFN {
   ): U[];
 
   export function map(call: CallExpr, context: VTL | ASL): MapTask {
-    return mapOrForEach(call, context);
+    return mapOrForEach("map", call, context);
   }
 
-  function mapOrForEach(call: CallExpr, context: VTL | ASL): MapTask {
-    if (context.kind !== "Amazon States Language") {
-      throw new Error(`$SFN.map is only supported by ${ASL.ContextName}`);
+  function mapOrForEach(
+    kind: "map" | "forEach",
+    call: CallExpr,
+    context: VTL | ASL
+  ): MapTask {
+    if (context.kind !== ASL.ContextName) {
+      throw new Error(`$SFN.${kind} is only supported by ${ASL.ContextName}`);
     }
-    const throwTransition = context.throw(call);
 
     if (isMapOrForEach(call)) {
       const callbackfn = call.args.callbackfn;
@@ -181,7 +185,6 @@ export namespace $SFN {
           States: callbackStates,
           StartAt: callbackStart,
         },
-
         ItemsPath: listPath,
         Parameters: Object.fromEntries(
           callbackfn.parameters.map((param, i) => [
@@ -193,30 +196,41 @@ export namespace $SFN {
               : listPath,
           ])
         ),
-        ...(throwTransition
-          ? {
-              Catch: [
-                {
-                  ErrorEquals: ["States.ALL"],
-                  Next: throwTransition.Next!,
-                  ResultPath: throwTransition.ResultPath,
-                },
-              ],
-            }
-          : {}),
       };
     }
     throw new Error(`invalid arguments to $SFN.map`);
   }
 
+  // @ts-ignore
   export function parallel<Paths extends readonly (() => any)[]>(
     ...paths: Paths
   ): {
     [i in keyof Paths]: i extends `${number}`
       ? ReturnType<Extract<Paths[i], () => any>>
       : Paths[i];
-  } {
-    throw new Error(`${paths}`);
+  };
+
+  export function parallel(call: CallExpr, context: VTL | ASL): ParallelTask {
+    if (context.kind !== ASL.ContextName) {
+      throw new Error(`$SFN.${kind} is only supported by ${ASL.ContextName}`);
+    }
+    const paths = call.args.paths;
+    if (paths.kind !== "ArrayLiteralExpr") {
+      throw new Error(`invalid arguments to $SFN.parallel`);
+    }
+    ensureItemOf(
+      paths.items,
+      isFunctionExpr,
+      `each parallel path must be an inline FunctionExpr`
+    );
+
+    return {
+      Type: "Parallel",
+      Branches: paths.items.map((func) => ({
+        StartAt: context.getStateName(func.body.step()!),
+        States: context.execute(func.body),
+      })),
+    };
   }
 }
 
