@@ -11,7 +11,15 @@ import {
 } from "aws-cdk-lib";
 
 import { FunctionDecl, isFunctionDecl } from "./declaration";
-import { ASL, isASL, StateMachine, States, Wait } from "./asl";
+import {
+  ASL,
+  isASL,
+  isMapOrForEach,
+  MapTask,
+  StateMachine,
+  States,
+  Wait,
+} from "./asl";
 import { isVTL, VTL } from "./vtl";
 import { makeCallable } from "./callable";
 import { CallExpr } from "./expression";
@@ -21,12 +29,6 @@ import { AnyFunction } from "./util";
 export type AnyStepFunction =
   | ExpressStepFunction<AnyFunction>
   | StepFunction<AnyFunction>;
-
-// export const $SFN = {
-//   map<T, U>(list: T[], iterator: (item: T, index: number) => U): U[] {
-//     return [];
-//   }
-// }
 
 export namespace $SFN {
   export const kind = "SFN";
@@ -92,6 +94,129 @@ export namespace $SFN {
         TimestampPath: ASL.toJsonPath(timestamp),
       };
     }
+  }
+
+  // @ts-ignore
+  export function forEach<T>(
+    array: T[],
+    callbackfn: (item: T, index: number, array: T[]) => void
+  ): void;
+
+  // @ts-ignore
+  export function forEach<T>(
+    array: T[],
+    props: {
+      maxConcurrency: number;
+    },
+    callbackfn: (item: T, index: number, array: T[]) => void
+  ): void;
+
+  export function forEach(call: CallExpr, context: VTL | ASL): MapTask {
+    return mapOrForEach(call, context);
+  }
+
+  // @ts-ignore
+  export function map<T, U>(
+    array: T[],
+    callbackfn: (item: T, index: number, array: T[]) => U
+  ): U[];
+
+  // @ts-ignore
+  export function map<T, U>(
+    array: T[],
+    props: {
+      maxConcurrency: number;
+    },
+    callbackfn: (item: T, index: number, array: T[]) => U
+  ): U[];
+
+  export function map(call: CallExpr, context: VTL | ASL): MapTask {
+    return mapOrForEach(call, context);
+  }
+
+  function mapOrForEach(call: CallExpr, context: VTL | ASL): MapTask {
+    if (context.kind !== "Amazon States Language") {
+      throw new Error(`$SFN.map is only supported by ${ASL.ContextName}`);
+    }
+    const throwTransition = context.throw(call);
+
+    if (isMapOrForEach(call)) {
+      const callbackfn = call.args.callbackfn;
+      if (callbackfn === undefined || callbackfn.kind !== "FunctionExpr") {
+        throw new Error(`missing callbackfn in $SFN.map`);
+      }
+      const callbackStates = context.execute(callbackfn.body);
+      const callbackStart = context.getStateName(callbackfn.body.step()!);
+      const props = call.args.props;
+      let maxConcurrency: number | undefined;
+      if (props !== undefined) {
+        if (props.kind === "ObjectLiteralExpr") {
+          const maxConcurrencyProp = props.getProperty("maxConcurrency");
+          if (
+            maxConcurrencyProp?.kind === "PropAssignExpr" &&
+            maxConcurrencyProp.expr.kind === "NumberLiteralExpr"
+          ) {
+            maxConcurrency = maxConcurrencyProp.expr.value;
+            if (maxConcurrency <= 0) {
+              throw new Error(`maxConcurrency must be > 0`);
+            }
+          } else {
+            throw new Error(
+              `property 'maxConcurrency' must be a NumberLiteralExpr`
+            );
+          }
+        } else {
+          throw new Error(`argument 'props' must be an ObjectLiteralExpr`);
+        }
+      }
+      const listPath = ASL.toJsonPath(call.args.array);
+      return {
+        Type: "Map",
+        ...(maxConcurrency
+          ? {
+              MaxConcurrency: maxConcurrency,
+            }
+          : {}),
+        Iterator: {
+          States: callbackStates,
+          StartAt: callbackStart,
+        },
+
+        ItemsPath: listPath,
+        Parameters: Object.fromEntries(
+          callbackfn.parameters.map((param, i) => [
+            param.name,
+            i === 0
+              ? "$$.Map.Item.Value"
+              : i == 1
+              ? "$$.Map.Item.Index"
+              : listPath,
+          ])
+        ),
+        ...(throwTransition
+          ? {
+              Catch: [
+                {
+                  ErrorEquals: ["States.ALL"],
+                  Next: throwTransition.Next!,
+                  ResultPath: throwTransition.ResultPath,
+                },
+              ],
+            }
+          : {}),
+      };
+    }
+    throw new Error(`invalid arguments to $SFN.map`);
+  }
+
+  export function parallel<Paths extends readonly (() => any)[]>(
+    ...paths: Paths
+  ): {
+    [i in keyof Paths]: i extends `${number}`
+      ? ReturnType<Extract<Paths[i], () => any>>
+      : Paths[i];
+  } {
+    throw new Error(`${paths}`);
   }
 }
 

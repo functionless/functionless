@@ -362,7 +362,7 @@ export class ASL {
     return this.generatedNames.get(node)!;
   }
 
-  private getStateName(stmt: Stmt): string {
+  public getStateName(stmt: Stmt): string {
     if (!this.stateNames.has(stmt)) {
       let stateName = toStateName(stmt);
       if (stateName === undefined) {
@@ -923,7 +923,7 @@ export class ASL {
    * @param node
    * @returns `undefined` if the error is terminal, otherwise a Next, ResultPath
    */
-  private throw(node: FunctionlessNode):
+  public throw(node: FunctionlessNode):
     | {
         /**
          * Name of the state to transition to.
@@ -976,7 +976,7 @@ export class ASL {
   }
 }
 
-function isMapOrForEach(expr: CallExpr): expr is CallExpr & {
+export function isMapOrForEach(expr: CallExpr): expr is CallExpr & {
   expr: PropAccessExpr;
 } {
   return (

@@ -1,63 +1,10 @@
-import { App, aws_dynamodb, aws_lambda, Stack } from "aws-cdk-lib";
 import "jest";
-import { $AWS, $SFN, ExpressStepFunction, Function, Table } from "../src";
+import { $AWS, $SFN, ExpressStepFunction } from "../src";
 import { StateMachine, States } from "../src/asl";
-
-interface Person {
-  id: string;
-  name: string;
-}
-
-function init() {
-  const app = new App({
-    autoSynth: false,
-  });
-  const stack = new Stack(app, "stack");
-
-  const getPerson = new Function<{ id: string }, Person | undefined>(
-    new aws_lambda.Function(stack, "Func", {
-      code: aws_lambda.Code.fromInline(
-        "exports.handle = function() { return {id: 'id', name: 'name' }; }"
-      ),
-      handler: "index.handle",
-      runtime: aws_lambda.Runtime.NODEJS_14_X,
-    })
-  );
-
-  const task = new Function<string | void, number | null>(
-    new aws_lambda.Function(stack, "Task", {
-      code: aws_lambda.Code.fromInline(
-        "exports.handle = function() { return 1; }"
-      ),
-      handler: "index.handle",
-      runtime: aws_lambda.Runtime.NODEJS_14_X,
-    })
-  );
-
-  const computeScore = new Function<Person, number>(
-    new aws_lambda.Function(stack, "ComputeScore", {
-      code: aws_lambda.Code.fromInline(
-        "exports.handle = function() { return 1; }"
-      ),
-      handler: "index.handle",
-      runtime: aws_lambda.Runtime.NODEJS_14_X,
-    })
-  );
-
-  const personTable = new Table<Person, "id">(
-    new aws_dynamodb.Table(stack, "Table", {
-      partitionKey: {
-        name: "id",
-        type: aws_dynamodb.AttributeType.STRING,
-      },
-    })
-  );
-
-  return { stack, task, computeScore, getPerson, personTable };
-}
+import { initStepFunctionApp, Person } from "./util";
 
 test("empty function", () => {
-  const { stack } = init();
+  const { stack } = initStepFunctionApp();
   const definition = new ExpressStepFunction(stack, "fn", () => {}).definition;
 
   const expected: StateMachine<States> = {
@@ -77,7 +24,7 @@ test("empty function", () => {
 });
 
 test("return identifier", () => {
-  const { stack } = init();
+  const { stack } = initStepFunctionApp();
   const definition = new ExpressStepFunction(stack, "fn", (id: string) => {
     return id;
   }).definition;
@@ -96,7 +43,7 @@ test("return identifier", () => {
 });
 
 test("return PropAccessExpr", () => {
-  const { stack } = init();
+  const { stack } = initStepFunctionApp();
   const definition = new ExpressStepFunction(
     stack,
     "fn",
@@ -119,7 +66,7 @@ test("return PropAccessExpr", () => {
 });
 
 test("return optional PropAccessExpr", () => {
-  const { stack } = init();
+  const { stack } = initStepFunctionApp();
   const definition = new ExpressStepFunction(
     stack,
     "fn",
@@ -149,7 +96,7 @@ test("return optional PropAccessExpr", () => {
 });
 
 test("let and set", () => {
-  const { stack } = init();
+  const { stack } = initStepFunctionApp();
   const definition = new ExpressStepFunction(stack, "fn", () => {
     let a;
     a = null;
@@ -260,7 +207,7 @@ test("let and set", () => {
 });
 
 test("return void", () => {
-  const { stack } = init();
+  const { stack } = initStepFunctionApp();
   const definition = new ExpressStepFunction(stack, "fn", () => {
     return;
   }).definition;
@@ -282,7 +229,7 @@ test("return void", () => {
 });
 
 test("conditionally return void", () => {
-  const { stack } = init();
+  const { stack } = initStepFunctionApp();
   const definition = new ExpressStepFunction(stack, "fn", (id: string) => {
     if (id === "hello") {
       return;
@@ -324,7 +271,7 @@ test("conditionally return void", () => {
 });
 
 test("if-else", () => {
-  const { stack } = init();
+  const { stack } = initStepFunctionApp();
   const definition = new ExpressStepFunction(stack, "fn", (id: string) => {
     if (id === "hello") {
       return "hello";
@@ -364,7 +311,7 @@ test("if-else", () => {
 });
 
 test("if-else-if", () => {
-  const { stack } = init();
+  const { stack } = initStepFunctionApp();
   const definition = new ExpressStepFunction(
     stack,
     "fn",
@@ -421,7 +368,7 @@ test("if-else-if", () => {
 });
 
 test("for-loop and do nothing", () => {
-  const { stack } = init();
+  const { stack } = initStepFunctionApp();
   const definition = new ExpressStepFunction(stack, "fn", (items: string[]) => {
     for (const item of items) {
       // @ts-ignore
@@ -470,7 +417,7 @@ test("for-loop and do nothing", () => {
 });
 
 test("for i in items, items[i]", () => {
-  const { stack } = init();
+  const { stack } = initStepFunctionApp();
   const definition = new ExpressStepFunction(stack, "fn", (items: string[]) => {
     for (const i in items) {
       // @ts-ignore
@@ -520,7 +467,7 @@ test("for i in items, items[i]", () => {
 });
 
 test("return a single Lambda Function call", () => {
-  const { stack, getPerson } = init();
+  const { stack, getPerson } = initStepFunctionApp();
   const definition = new ExpressStepFunction(
     stack,
     "fn",
@@ -549,7 +496,7 @@ test("return a single Lambda Function call", () => {
 });
 
 test("call Lambda Function, store as variable, return variable", () => {
-  const { stack, getPerson } = init();
+  const { stack, getPerson } = initStepFunctionApp();
   const definition = new ExpressStepFunction(
     stack,
     "fn",
@@ -584,7 +531,7 @@ test("call Lambda Function, store as variable, return variable", () => {
 });
 
 test("return AWS.DynamoDB.GetItem", () => {
-  const { stack, personTable } = init();
+  const { stack, personTable } = initStepFunctionApp();
   const definition = new ExpressStepFunction(
     stack,
     "fn",
@@ -671,7 +618,7 @@ test("return AWS.DynamoDB.GetItem", () => {
 });
 
 test("call AWS.DynamoDB.GetItem, then Lambda and return LiteralExpr", () => {
-  const { stack, personTable, computeScore } = init();
+  const { stack, personTable, computeScore } = initStepFunctionApp();
   const definition = new ExpressStepFunction(
     stack,
     "fn",
@@ -779,7 +726,7 @@ test("call AWS.DynamoDB.GetItem, then Lambda and return LiteralExpr", () => {
 });
 
 test("for-loop over a list literal", () => {
-  const { stack, computeScore } = init();
+  const { stack, computeScore } = initStepFunctionApp();
   const definition = new ExpressStepFunction(
     stack,
     "fn",
@@ -845,7 +792,7 @@ test("for-loop over a list literal", () => {
 });
 
 test("conditionally call DynamoDB and then void", () => {
-  const { stack, personTable } = init();
+  const { stack, personTable } = initStepFunctionApp();
   const definition = new ExpressStepFunction(
     stack,
     "fn",
@@ -905,7 +852,7 @@ test("conditionally call DynamoDB and then void", () => {
 });
 
 test("waitFor literal number of seconds", () => {
-  const { stack } = init();
+  const { stack } = initStepFunctionApp();
 
   const definition = new ExpressStepFunction(stack, "fn", (): string | void => {
     $SFN.waitFor(1);
@@ -932,7 +879,7 @@ test("waitFor literal number of seconds", () => {
 });
 
 test("waitFor reference number of seconds", () => {
-  const { stack } = init();
+  const { stack } = initStepFunctionApp();
 
   const definition = new ExpressStepFunction(
     stack,
@@ -962,7 +909,7 @@ test("waitFor reference number of seconds", () => {
   });
 });
 test("waitFor literal timestamp", () => {
-  const { stack } = init();
+  const { stack } = initStepFunctionApp();
 
   const definition = new ExpressStepFunction(stack, "fn", (): string | void => {
     $SFN.waitUntil("2022-08-01T00:00:00Z");
@@ -989,7 +936,7 @@ test("waitFor literal timestamp", () => {
 });
 
 test("waitUntil reference timestamp", () => {
-  const { stack } = init();
+  const { stack } = initStepFunctionApp();
 
   const definition = new ExpressStepFunction(
     stack,
@@ -1020,7 +967,7 @@ test("waitUntil reference timestamp", () => {
 });
 
 test("throw new Error", () => {
-  const { stack } = init();
+  const { stack } = initStepFunctionApp();
 
   const definition = new ExpressStepFunction(stack, "fn", () => {
     throw new Error("cause");
@@ -1043,7 +990,7 @@ class CustomError {
 }
 
 test("throw new CustomError", () => {
-  const { stack } = init();
+  const { stack } = initStepFunctionApp();
 
   const definition = new ExpressStepFunction(stack, "fn", () => {
     throw new CustomError("cause");
@@ -1062,7 +1009,7 @@ test("throw new CustomError", () => {
 });
 
 test("try, throw, empty catch", () => {
-  const { stack } = init();
+  const { stack } = initStepFunctionApp();
 
   const definition = new ExpressStepFunction(stack, "fn", () => {
     try {
@@ -1094,7 +1041,7 @@ test("try, throw, empty catch", () => {
 });
 
 test("try, task, empty catch", () => {
-  const { stack, computeScore } = init();
+  const { stack, computeScore } = initStepFunctionApp();
 
   const definition = new ExpressStepFunction(stack, "fn", () => {
     try {
@@ -1141,7 +1088,7 @@ test("try, task, empty catch", () => {
 });
 
 test("catch and throw new Error", () => {
-  const { stack } = init();
+  const { stack } = initStepFunctionApp();
 
   const definition = new ExpressStepFunction(stack, "fn", () => {
     try {
@@ -1172,7 +1119,7 @@ test("catch and throw new Error", () => {
 });
 
 test("try-catch with inner return and no catch variable", () => {
-  const { stack, computeScore } = init();
+  const { stack, computeScore } = initStepFunctionApp();
 
   const definition = new ExpressStepFunction(stack, "fn", () => {
     try {
@@ -1227,7 +1174,7 @@ test("try-catch with inner return and no catch variable", () => {
 });
 
 test("try-catch with inner return and a catch variable", () => {
-  const { stack, computeScore } = init();
+  const { stack, computeScore } = initStepFunctionApp();
 
   const definition = new ExpressStepFunction(stack, "fn", () => {
     try {
@@ -1294,7 +1241,7 @@ test("try-catch with inner return and a catch variable", () => {
 });
 
 test("try-catch with guaranteed throw new Error", () => {
-  const { stack } = init();
+  const { stack } = initStepFunctionApp();
 
   const definition = new ExpressStepFunction(stack, "fn", () => {
     try {
@@ -1347,7 +1294,7 @@ test("try-catch with guaranteed throw new Error", () => {
 });
 
 test("try-catch with optional throw of an Error", () => {
-  const { stack } = init();
+  const { stack } = initStepFunctionApp();
 
   const definition = new ExpressStepFunction(stack, "fn", (id: string) => {
     try {
@@ -1420,7 +1367,7 @@ test("try-catch with optional throw of an Error", () => {
 });
 
 test("try-catch with optional task", () => {
-  const { stack, computeScore } = init();
+  const { stack, computeScore } = initStepFunctionApp();
 
   const definition = new ExpressStepFunction(stack, "fn", (id: string) => {
     try {
@@ -1522,7 +1469,7 @@ test("try-catch with optional task", () => {
 });
 
 test("try-catch with optional return of task", () => {
-  const { stack, computeScore } = init();
+  const { stack, computeScore } = initStepFunctionApp();
 
   const definition = new ExpressStepFunction(stack, "fn", (id: string) => {
     try {
@@ -1624,7 +1571,7 @@ test("try-catch with optional return of task", () => {
 });
 
 test("nested try-catch", () => {
-  const { stack } = init();
+  const { stack } = initStepFunctionApp();
 
   const definition = new ExpressStepFunction(stack, "fn", () => {
     try {
@@ -1667,7 +1614,7 @@ test("nested try-catch", () => {
 });
 
 test("throw in for-of", () => {
-  const { stack } = init();
+  const { stack } = initStepFunctionApp();
 
   const definition = new ExpressStepFunction(stack, "fn", (items: string[]) => {
     // @ts-ignore
@@ -1712,7 +1659,7 @@ test("throw in for-of", () => {
 });
 
 test("try-catch, no variable, contains for-of, throw", () => {
-  const { stack } = init();
+  const { stack } = initStepFunctionApp();
 
   const definition = new ExpressStepFunction(
     stack,
@@ -1778,7 +1725,7 @@ test("try-catch, no variable, contains for-of, throw", () => {
 });
 
 test("try-catch, err variable, contains for-of, throw", () => {
-  const { stack } = init();
+  const { stack } = initStepFunctionApp();
 
   const definition = new ExpressStepFunction(
     stack,
@@ -1857,7 +1804,7 @@ test("try-catch, err variable, contains for-of, throw", () => {
 });
 
 test("try-catch-finally", () => {
-  const { stack, computeScore } = init();
+  const { stack, computeScore } = initStepFunctionApp();
 
   const definition = new ExpressStepFunction(stack, "fn", (): string | void => {
     try {
@@ -1905,7 +1852,7 @@ test("try-catch-finally", () => {
 });
 
 test("try { task } catch { throw } finally { task() }", () => {
-  const { stack, task } = init();
+  const { stack, task } = initStepFunctionApp();
 
   const definition = new ExpressStepFunction(stack, "fn", (): string | void => {
     try {
@@ -1985,7 +1932,7 @@ test("try { task } catch { throw } finally { task() }", () => {
 });
 
 test("try { task() } catch { task() } finally { task() }", () => {
-  const { stack, task } = init();
+  const { stack, task } = initStepFunctionApp();
 
   const definition = new ExpressStepFunction(stack, "fn", (): void => {
     try {
@@ -2074,7 +2021,7 @@ test("try { task() } catch { task() } finally { task() }", () => {
 });
 
 test("try, throw, finally", () => {
-  const { stack } = init();
+  const { stack } = initStepFunctionApp();
 
   const definition = new ExpressStepFunction(stack, "fn", (): string | void => {
     try {
@@ -2107,7 +2054,7 @@ test("try, throw, finally", () => {
 });
 
 test("try, throw, catch, throw, finally, return", () => {
-  const { stack } = init();
+  const { stack } = initStepFunctionApp();
 
   const definition = new ExpressStepFunction(stack, "fn", (): string | void => {
     try {
@@ -2149,7 +2096,7 @@ test("try, throw, catch, throw, finally, return", () => {
 });
 
 test("try { throw } catch { (maybe) throw } finally { task }", () => {
-  const { stack, task } = init();
+  const { stack, task } = initStepFunctionApp();
 
   const definition = new ExpressStepFunction(
     stack,
@@ -2239,7 +2186,7 @@ test("try { throw } catch { (maybe) throw } finally { task }", () => {
 });
 
 test("try { task() } catch { (maybe) throw } finally { task }", () => {
-  const { stack, task } = init();
+  const { stack, task } = initStepFunctionApp();
 
   const definition = new ExpressStepFunction(
     stack,
@@ -2338,7 +2285,7 @@ test("try { task() } catch { (maybe) throw } finally { task }", () => {
 });
 
 test("try { task() } catch(err) { (maybe) throw } finally { task }", () => {
-  const { stack, task } = init();
+  const { stack, task } = initStepFunctionApp();
 
   const definition = new ExpressStepFunction(stack, "fn", (): string | void => {
     try {
@@ -2447,7 +2394,7 @@ test("try { task() } catch(err) { (maybe) throw } finally { task }", () => {
 });
 
 test("try { for-of } catch { (maybe) throw } finally { task }", () => {
-  const { stack, task } = init();
+  const { stack, task } = initStepFunctionApp();
 
   const definition = new ExpressStepFunction(
     stack,
@@ -2577,7 +2524,7 @@ test("try { for-of } catch { (maybe) throw } finally { task }", () => {
 });
 
 test("for-of { try { task() } catch (err) { if(err) throw } finally { task() } }", () => {
-  const { stack, task } = init();
+  const { stack, task } = initStepFunctionApp();
 
   const definition = new ExpressStepFunction(
     stack,
@@ -2708,7 +2655,7 @@ test("for-of { try { task() } catch (err) { if(err) throw } finally { task() } }
 });
 
 test("while (cond) { cond = task() }", () => {
-  const { stack, task } = init();
+  const { stack, task } = initStepFunctionApp();
   const definition = new ExpressStepFunction(stack, "fn", () => {
     let cond;
     while (cond === undefined) {
@@ -2761,7 +2708,7 @@ test("while (cond) { cond = task() }", () => {
 });
 
 test("while (cond); cond = task()", () => {
-  const { stack, task } = init();
+  const { stack, task } = initStepFunctionApp();
   const definition = new ExpressStepFunction(stack, "fn", () => {
     let cond;
     while (cond === undefined) cond = task();
@@ -2812,7 +2759,7 @@ test("while (cond); cond = task()", () => {
 });
 
 test("let cond; do { cond = task() } while (cond)", () => {
-  const { stack, task } = init();
+  const { stack, task } = initStepFunctionApp();
   const definition = new ExpressStepFunction(stack, "fn", () => {
     let cond;
     do {
@@ -2865,7 +2812,7 @@ test("let cond; do { cond = task() } while (cond)", () => {
 });
 
 test("list.map(item => task(item))", () => {
-  const { stack, task } = init();
+  const { stack, task } = initStepFunctionApp();
   const definition = new ExpressStepFunction(stack, "fn", (list: string[]) => {
     return list.map((item) => task(item));
   }).definition;
@@ -2903,7 +2850,7 @@ test("list.map(item => task(item))", () => {
 });
 
 test("list.map((item, i) => if (i == 0) task(item))", () => {
-  const { stack, task } = init();
+  const { stack, task } = initStepFunctionApp();
   const definition = new ExpressStepFunction(stack, "fn", (list: string[]) => {
     return list.map((item, i) => {
       if (i === 0) {
@@ -2967,7 +2914,7 @@ test("list.map((item, i) => if (i == 0) task(item))", () => {
 });
 
 test("list.map((item, i, list) => if (i == 0) task(item) else task(list[0]))", () => {
-  const { stack, task } = init();
+  const { stack, task } = initStepFunctionApp();
   const definition = new ExpressStepFunction(stack, "fn", (list: string[]) => {
     return list.map((item, i) => {
       if (i === 0) {
@@ -3033,7 +2980,7 @@ test("list.map((item, i, list) => if (i == 0) task(item) else task(list[0]))", (
 });
 
 test("try { list.map(item => task(item)) }", () => {
-  const { stack, task } = init();
+  const { stack, task } = initStepFunctionApp();
   const definition = new ExpressStepFunction(stack, "fn", (list: string[]) => {
     try {
       return list.map((item) => task(item));
@@ -3090,7 +3037,7 @@ test("try { list.map(item => task(item)) }", () => {
 });
 
 test("try { list.map(item => task(item)) }", () => {
-  const { stack, task } = init();
+  const { stack, task } = initStepFunctionApp();
   const definition = new ExpressStepFunction(stack, "fn", (list: string[]) => {
     return list.map((item) => {
       try {
@@ -3149,7 +3096,7 @@ test("try { list.map(item => task(item)) }", () => {
 });
 
 test("try { list.map(item => throw) }", () => {
-  const { stack } = init();
+  const { stack } = initStepFunctionApp();
   const definition = new ExpressStepFunction(stack, "fn", (list: string[]) => {
     try {
       return list.map(() => {
@@ -3201,7 +3148,7 @@ test("try { list.map(item => throw) }", () => {
 });
 
 test("try { list.map(item => throw) } catch (err)", () => {
-  const { stack } = init();
+  const { stack } = initStepFunctionApp();
   const definition = new ExpressStepFunction(stack, "fn", (list: string[]) => {
     try {
       return list.map(() => {
@@ -3286,7 +3233,7 @@ test("try { list.map(item => throw) } catch (err)", () => {
 });
 
 test("list.forEach(item => task(item))", () => {
-  const { stack, task } = init();
+  const { stack, task } = initStepFunctionApp();
   const definition = new ExpressStepFunction(stack, "fn", (list: string[]) => {
     return list.forEach((item) => task(item));
   }).definition;
@@ -3324,7 +3271,7 @@ test("list.forEach(item => task(item))", () => {
 });
 
 test("list.forEach((item, i) => if (i == 0) task(item))", () => {
-  const { stack, task } = init();
+  const { stack, task } = initStepFunctionApp();
   const definition = new ExpressStepFunction(stack, "fn", (list: string[]) => {
     return list.forEach((item, i) => {
       if (i === 0) {
@@ -3388,7 +3335,7 @@ test("list.forEach((item, i) => if (i == 0) task(item))", () => {
 });
 
 test("list.forEach((item, i, list) => if (i == 0) task(item) else task(list[0]))", () => {
-  const { stack, task } = init();
+  const { stack, task } = initStepFunctionApp();
   const definition = new ExpressStepFunction(stack, "fn", (list: string[]) => {
     return list.forEach((item, i) => {
       if (i === 0) {
@@ -3454,7 +3401,7 @@ test("list.forEach((item, i, list) => if (i == 0) task(item) else task(list[0]))
 });
 
 test("try { list.forEach(item => task(item)) }", () => {
-  const { stack, task } = init();
+  const { stack, task } = initStepFunctionApp();
   const definition = new ExpressStepFunction(stack, "fn", (list: string[]) => {
     try {
       return list.forEach((item) => task(item));
@@ -3511,7 +3458,7 @@ test("try { list.forEach(item => task(item)) }", () => {
 });
 
 test("try { list.forEach(item => task(item)) }", () => {
-  const { stack, task } = init();
+  const { stack, task } = initStepFunctionApp();
   const definition = new ExpressStepFunction(stack, "fn", (list: string[]) => {
     return list.forEach((item) => {
       try {
@@ -3570,7 +3517,7 @@ test("try { list.forEach(item => task(item)) }", () => {
 });
 
 test("try { list.forEach(item => throw) }", () => {
-  const { stack } = init();
+  const { stack } = initStepFunctionApp();
   const definition = new ExpressStepFunction(stack, "fn", (list: string[]) => {
     try {
       return list.forEach(() => {
@@ -3622,7 +3569,7 @@ test("try { list.forEach(item => throw) }", () => {
 });
 
 test("try { list.forEach(item => throw) } catch (err)", () => {
-  const { stack } = init();
+  const { stack } = initStepFunctionApp();
   const definition = new ExpressStepFunction(stack, "fn", (list: string[]) => {
     try {
       return list.forEach(() => {
@@ -3700,6 +3647,283 @@ test("try { list.forEach(item => throw) } catch (err)", () => {
         End: true,
         Result: 1,
         ResultPath: "$",
+        Type: "Pass",
+      },
+    },
+  });
+});
+
+test("return $SFN.map(list, (item) => task(item))", () => {
+  const { stack, task } = initStepFunctionApp();
+  const definition = new ExpressStepFunction(stack, "fn", (list: string[]) => {
+    return $SFN.map(list, (item) => task(item));
+  }).definition;
+
+  expect(definition).toEqual({
+    StartAt: "return $SFN.map(list, function(item))",
+    States: {
+      "return $SFN.map(list, function(item))": {
+        End: true,
+        ItemsPath: "$.list",
+        Iterator: {
+          StartAt: "return task(item)",
+          States: {
+            "return task(item)": {
+              End: true,
+              Parameters: {
+                FunctionName: task.resource.functionName,
+                Payload: "$.item",
+              },
+              Resource: "arn:aws:states:::lambda:invoke",
+              ResultPath: "$",
+              Type: "Task",
+            },
+          },
+        },
+        Parameters: {
+          item: "$$.Map.Item.Value",
+        },
+        ResultPath: "$",
+        Type: "Map",
+      },
+    },
+  });
+});
+
+test("return $SFN.map(list, {maxConcurrency: 2} (item) => task(item))", () => {
+  const { stack, task } = initStepFunctionApp();
+  const definition = new ExpressStepFunction(stack, "fn", (list: string[]) => {
+    return $SFN.map(list, { maxConcurrency: 2 }, (item) => task(item));
+  }).definition;
+
+  expect(definition).toEqual({
+    StartAt: "return $SFN.map(list, {maxConcurrency: 2}, function(item))",
+    States: {
+      "return $SFN.map(list, {maxConcurrency: 2}, function(item))": {
+        End: true,
+        ItemsPath: "$.list",
+        MaxConcurrency: 2,
+        Iterator: {
+          StartAt: "return task(item)",
+          States: {
+            "return task(item)": {
+              End: true,
+              Parameters: {
+                FunctionName: task.resource.functionName,
+                Payload: "$.item",
+              },
+              Resource: "arn:aws:states:::lambda:invoke",
+              ResultPath: "$",
+              Type: "Task",
+            },
+          },
+        },
+        Parameters: {
+          item: "$$.Map.Item.Value",
+        },
+        ResultPath: "$",
+        Type: "Map",
+      },
+    },
+  });
+});
+
+test("$SFN.map(list, (item) => task(item))", () => {
+  const { stack, task } = initStepFunctionApp();
+  const definition = new ExpressStepFunction(stack, "fn", (list: string[]) => {
+    $SFN.map(list, (item) => task(item));
+  }).definition;
+
+  expect(definition).toEqual({
+    StartAt: "$SFN.map(list, function(item))",
+    States: {
+      "$SFN.map(list, function(item))": {
+        ItemsPath: "$.list",
+        Next: "return null",
+        Iterator: {
+          StartAt: "return task(item)",
+          States: {
+            "return task(item)": {
+              End: true,
+              Parameters: {
+                FunctionName: task.resource.functionName,
+                Payload: "$.item",
+              },
+              Resource: "arn:aws:states:::lambda:invoke",
+              ResultPath: "$",
+              Type: "Task",
+            },
+          },
+        },
+        Parameters: {
+          item: "$$.Map.Item.Value",
+        },
+        ResultPath: null,
+        Type: "Map",
+      },
+      "return null": {
+        End: true,
+        OutputPath: "$.null",
+        Parameters: {
+          null: null,
+        },
+        Type: "Pass",
+      },
+    },
+  });
+});
+
+test("result = $SFN.map(list, (item) => task(item))", () => {
+  const { stack, task } = initStepFunctionApp();
+  const definition = new ExpressStepFunction(stack, "fn", (list: string[]) => {
+    const result = $SFN.map(list, (item) => task(item));
+    return result;
+  }).definition;
+
+  expect(definition).toEqual({
+    StartAt: "result = $SFN.map(list, function(item))",
+    States: {
+      "result = $SFN.map(list, function(item))": {
+        ItemsPath: "$.list",
+        Iterator: {
+          StartAt: "return task(item)",
+          States: {
+            "return task(item)": {
+              End: true,
+              Parameters: {
+                FunctionName: task.resource.functionName,
+                Payload: "$.item",
+              },
+              Resource: "arn:aws:states:::lambda:invoke",
+              ResultPath: "$",
+              Type: "Task",
+            },
+          },
+        },
+        Next: "return result",
+        Parameters: {
+          item: "$$.Map.Item.Value",
+        },
+        ResultPath: "$.result",
+        Type: "Map",
+      },
+      "return result": {
+        End: true,
+        OutputPath: "$.result",
+        Type: "Pass",
+      },
+    },
+  });
+});
+
+test("return $SFN.map(list, (item) => try { task(item)) } catch { return null }", () => {
+  const { stack, task } = initStepFunctionApp();
+  const definition = new ExpressStepFunction(stack, "fn", (list: string[]) => {
+    return $SFN.map(list, (item) => {
+      try {
+        return task(item);
+      } catch {
+        return null;
+      }
+    });
+  }).definition;
+
+  expect(definition).toEqual({
+    StartAt: "return $SFN.map(list, function(item))",
+    States: {
+      "return $SFN.map(list, function(item))": {
+        End: true,
+        ItemsPath: "$.list",
+        Iterator: {
+          StartAt: "return task(item)",
+          States: {
+            "return task(item)": {
+              Catch: [
+                {
+                  ErrorEquals: ["States.ALL"],
+                  Next: "return null",
+                  ResultPath: null,
+                },
+              ],
+              End: true,
+              Parameters: {
+                FunctionName: task.resource.functionName,
+                Payload: "$.item",
+              },
+              Resource: "arn:aws:states:::lambda:invoke",
+              ResultPath: "$",
+              Type: "Task",
+            },
+            "return null": {
+              End: true,
+              OutputPath: "$.null",
+              Parameters: {
+                null: null,
+              },
+              Type: "Pass",
+            },
+          },
+        },
+        Parameters: {
+          item: "$$.Map.Item.Value",
+        },
+        ResultPath: "$",
+        Type: "Map",
+      },
+    },
+  });
+});
+
+test("try { $SFN.map(list, (item) => task(item)) } catch { return null }", () => {
+  const { stack, task } = initStepFunctionApp();
+  const definition = new ExpressStepFunction(stack, "fn", (list: string[]) => {
+    try {
+      return $SFN.map(list, (item) => task(item));
+    } catch {
+      return null;
+    }
+  }).definition;
+
+  expect(definition).toEqual({
+    StartAt: "return $SFN.map(list, function(item))",
+    States: {
+      "return $SFN.map(list, function(item))": {
+        Catch: [
+          {
+            ErrorEquals: ["States.ALL"],
+            Next: "return null",
+            ResultPath: null,
+          },
+        ],
+        End: true,
+        ItemsPath: "$.list",
+        Iterator: {
+          StartAt: "return task(item)",
+          States: {
+            "return task(item)": {
+              End: true,
+              Parameters: {
+                FunctionName: task.resource.functionName,
+                Payload: "$.item",
+              },
+              Resource: "arn:aws:states:::lambda:invoke",
+              ResultPath: "$",
+              Type: "Task",
+            },
+          },
+        },
+        Parameters: {
+          item: "$$.Map.Item.Value",
+        },
+        ResultPath: "$",
+        Type: "Map",
+      },
+      "return null": {
+        End: true,
+        OutputPath: "$.null",
+        Parameters: {
+          null: null,
+        },
         Type: "Pass",
       },
     },
