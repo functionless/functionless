@@ -16,11 +16,17 @@ import {
 } from "./expression";
 import {
   BlockStmt,
+  DoStmt,
+  ForInStmt,
+  ForOfStmt,
   IfStmt,
+  isDoStmt,
   isForInStmt,
   isForOfStmt,
+  isWhileStmt,
   ReturnStmt,
   Stmt,
+  WhileStmt,
 } from "./statement";
 import { anyOf, findFunction } from "./util";
 import { FunctionDecl } from "./declaration";
@@ -396,15 +402,24 @@ export class ASL {
         }
       }, {});
     } else if (stmt.kind === "BreakStmt") {
-      const loop = stmt.findParent(anyOf(isForOfStmt, isForInStmt));
+      const loop = stmt.findParent(
+        anyOf(isForOfStmt, isForInStmt, isWhileStmt, isDoStmt)
+      );
       if (loop === undefined) {
         throw new Error(`Stack Underflow`);
       }
+
       return {
-        [this.getStateName(stmt)]: {
-          Type: "Pass",
-          Next: this.next(loop),
-        },
+        [this.getStateName(stmt)]:
+          loop.kind === "ForInStmt" || loop.kind === "ForOfStmt"
+            ? {
+                Type: "Fail",
+                Error: "Break",
+              }
+            : {
+                Type: "Pass",
+                Next: this.next(loop),
+              },
       };
     } else if (stmt.kind === "ExprStmt") {
       return {
@@ -415,12 +430,20 @@ export class ASL {
       };
     } else if (stmt.kind === "ForOfStmt" || stmt.kind === "ForInStmt") {
       const throwTransition = this.throw(stmt);
-
       return {
         [this.getStateName(stmt)]: {
           Type: "Map",
           Catch: throwTransition
             ? [
+                ...(hasBreak(stmt)
+                  ? [
+                      {
+                        ErrorEquals: ["Break"],
+                        Next: this.next(stmt)!,
+                        ResultPath: null,
+                      },
+                    ]
+                  : []),
                 {
                   ErrorEquals: ["States.ALL"],
                   Next: throwTransition.Next!,
@@ -484,6 +507,15 @@ export class ASL {
         ...states,
       };
     } else if (stmt.kind === "ReturnStmt") {
+      const parent = stmt.findParent(
+        anyOf(isFunctionExpr, isForInStmt, isForOfStmt)
+      );
+      if (parent?.kind === "ForInStmt" || parent?.kind === "ForOfStmt") {
+        throw new Error(
+          `a 'return' statement is not allowed within a for loop`
+        );
+      }
+
       if (stmt.expr.kind === "NullLiteralExpr") {
         return {
           [this.getStateName(stmt)]: {
@@ -1036,6 +1068,35 @@ function analyzeFlow(node: FunctionlessNode): FlowResult {
     );
 }
 
+function hasBreak(loop: ForInStmt | ForOfStmt | WhileStmt | DoStmt): boolean {
+  for (const child of loop.children) {
+    if (hasBreak(child)) {
+      return true;
+    }
+  }
+  return false;
+
+  function hasBreak(node: FunctionlessNode): boolean {
+    if (
+      node.kind === "ForInStmt" ||
+      node.kind === "ForOfStmt" ||
+      node.kind === "WhileStmt" ||
+      node.kind === "DoStmt"
+    ) {
+      return false;
+    } else if (node.kind === "BreakStmt") {
+      return true;
+    } else {
+      for (const child of node.children) {
+        if (hasBreak(child)) {
+          return true;
+        }
+      }
+      return false;
+    }
+  }
+}
+
 export namespace ASL {
   export function toJson(expr: Expr): any {
     if (expr.kind === "CallExpr") {
@@ -1283,7 +1344,12 @@ export namespace ASL {
   }
 
   export function toCondition(expr: Expr): Condition {
-    if (expr.kind === "UnaryExpr") {
+    if (expr.kind === "BooleanLiteralExpr") {
+      return {
+        IsPresent: !expr.value,
+        Variable: `$.0_${expr.value}`,
+      };
+    } else if (expr.kind === "UnaryExpr") {
       return {
         Not: toCondition(expr.expr),
       };

@@ -4525,3 +4525,135 @@ test("template literal strings", () => {
     },
   });
 });
+
+test("break from for-loop", () => {
+  const { stack } = initStepFunctionApp();
+  const definition = new ExpressStepFunction(stack, "fn", (items: string[]) => {
+    for (const item of items) {
+      if (item === "hello") {
+        break;
+      }
+    }
+  }).definition;
+
+  expect(definition).toEqual({
+    StartAt: "for(item of items)",
+    States: {
+      "for(item of items)": {
+        Catch: undefined,
+        ItemsPath: "$.items",
+        Iterator: {
+          StartAt: 'if(item == "hello")',
+          States: {
+            break: {
+              Type: "Fail",
+              Error: "Break",
+            },
+            'if(item == "hello")': {
+              Choices: [
+                {
+                  Next: "break",
+                  StringEquals: "hello",
+                  Variable: "$.item",
+                },
+              ],
+              Default: undefined,
+              Type: "Choice",
+            },
+          },
+        },
+        MaxConcurrency: 1,
+        Next: "return null",
+        Parameters: {
+          "item.$": "$$.Map.Item.Value",
+        },
+        ResultPath: null,
+        Type: "Map",
+      },
+      "return null": {
+        End: true,
+        OutputPath: "$.null",
+        Parameters: {
+          null: null,
+        },
+        Type: "Pass",
+      },
+    },
+  });
+});
+
+test("break from while-loop", () => {
+  const { stack } = initStepFunctionApp();
+  const definition = new ExpressStepFunction(stack, "fn", () => {
+    while (true) {
+      break;
+    }
+  }).definition;
+
+  expect(definition).toEqual({
+    StartAt: "while (true)",
+    States: {
+      "while (true)": {
+        Choices: [
+          {
+            IsPresent: false,
+            Next: "break",
+            Variable: "$.0_true",
+          },
+        ],
+        Default: "return null",
+        Type: "Choice",
+      },
+      break: {
+        Next: "return null",
+        Type: "Pass",
+      },
+      "return null": {
+        End: true,
+        OutputPath: "$.null",
+        Parameters: {
+          null: null,
+        },
+        Type: "Pass",
+      },
+    },
+  });
+});
+
+test("break from do-while-loop", () => {
+  const { stack } = initStepFunctionApp();
+  const definition = new ExpressStepFunction(stack, "fn", () => {
+    do {
+      break;
+    } while (true);
+  }).definition;
+
+  expect(definition).toEqual({
+    StartAt: "break",
+    States: {
+      "do...while (true)": {
+        Choices: [
+          {
+            IsPresent: false,
+            Next: "break",
+            Variable: "$.0_true",
+          },
+        ],
+        Default: "return null",
+        Type: "Choice",
+      },
+      break: {
+        Next: "return null",
+        Type: "Pass",
+      },
+      "return null": {
+        End: true,
+        OutputPath: "$.null",
+        Parameters: {
+          null: null,
+        },
+        Type: "Pass",
+      },
+    },
+  });
+});
