@@ -1,4 +1,4 @@
-import ts from "typescript";
+import ts, { Statement } from "typescript";
 import { PluginConfig, TransformerExtras } from "ts-patch";
 import { BinaryOp } from "./expression";
 import { AnyTable } from "./table";
@@ -55,10 +55,22 @@ export function compile(
       );
 
       function visitor(node: ts.Node): ts.Node {
-        if (isAppsyncResolver(node)) {
-          return visitAppsyncResolver(node);
-        } else if (isReflectFunction(node)) {
-          return toFunction("FunctionDecl", node.arguments[0]);
+        try {
+          if (isAppsyncResolver(node)) {
+            return visitAppsyncResolver(node);
+          } else if (isReflectFunction(node)) {
+            return toFunction("FunctionDecl", node.arguments[0]);
+          }
+        } catch (err) {
+          const error =
+            err instanceof Error ? err : Error("Unknown compiler error.");
+          return newExpr("Err", [
+            ts.factory.createNewExpression(
+              ts.factory.createIdentifier(error.name),
+              undefined,
+              [ts.factory.createStringLiteral(error.message)]
+            ),
+          ]) as unknown as Statement;
         }
         return ts.visitEachChild(node, visitor, ctx);
       }

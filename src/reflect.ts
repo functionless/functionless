@@ -1,4 +1,5 @@
 import { FunctionDecl } from "./declaration";
+import { Err } from "./error";
 import { AnyFunction } from "./util";
 
 /**
@@ -29,4 +30,4 @@ import { AnyFunction } from "./util";
  */
 export declare function reflect<F extends AnyFunction>(
   func: F
-): FunctionDecl<F>;
+): FunctionDecl<F> | Err;

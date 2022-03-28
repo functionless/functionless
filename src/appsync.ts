@@ -9,9 +9,10 @@ import {
   ToAttributeMap,
   ToAttributeValue,
 } from "typesafe-dynamodb/lib/attribute-value";
-import { FunctionDecl } from "./declaration";
+import { FunctionDecl, isFunctionDecl } from "./declaration";
 import { Literal } from "./literal";
 import { Construct } from "constructs";
+import { isErr } from "./error";
 
 /**
  * The shape of the AWS Appsync `$context` variable.
@@ -122,7 +123,13 @@ export class AppsyncResolver<
   >;
 
   constructor(fn: ResolverFunction<Arguments, Result, Source>) {
-    this.decl = fn as unknown as FunctionDecl;
+    if (isFunctionDecl(fn)) {
+      this.decl = fn;
+    } else if (isErr(fn)) {
+      throw fn.error;
+    } else {
+      throw Error("Unknown compiler error.");
+    }
   }
 
   /**

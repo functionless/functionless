@@ -1,6 +1,7 @@
 export * from "./appsync";
 export * from "./declaration";
 export * from "./expression";
+export * from "./error";
 export * from "./function";
 export * from "./reflect";
 export * from "./statement";
