@@ -415,6 +415,8 @@ export class VTL {
         } else {
           return varName;
         }
+      case "Err":
+        throw node.error;
     }
 
     const __exhaustive: never = node;

@@ -1,8 +1,9 @@
 import { Decl } from "./declaration";
+import { Err } from "./error";
 import { Expr } from "./expression";
 import { Stmt } from "./statement";
 
-export type FunctionlessNode = Decl | Expr | Stmt;
+export type FunctionlessNode = Decl | Expr | Stmt | Err;
 
 export function isNode(a: any): a is Expr {
   return typeof a?.kind === "string";

@@ -3,6 +3,7 @@ import { AppsyncResolver, FunctionDecl } from "../src";
 
 import * as appsync from "@aws-cdk/aws-appsync-alpha";
 import path from "path";
+import { Err, isErr } from "../src/error";
 
 // generates boilerplate for the circuit-breaker logic for implementing early return
 export function returnExpr(varName: string) {
@@ -11,9 +12,16 @@ export function returnExpr(varName: string) {
 #return($context.stash.return__val)`;
 }
 
-export function appsyncTestCase(decl: FunctionDecl, ...expected: string[]) {
+export function appsyncTestCase(
+  decl: FunctionDecl | Err,
+  ...expected: string[]
+) {
   const app = new App({ autoSynth: false });
   const stack = new Stack(app, "stack");
+
+  if (isErr(decl)) {
+    throw decl.error;
+  }
 
   const schema = new appsync.Schema({
     filePath: path.join(__dirname, "..", "test-app", "schema.gql"),
