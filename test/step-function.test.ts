@@ -133,7 +133,7 @@ test("return items.slice(1, 3)", () => {
   });
 });
 
-test("return task(items.slice(1, 3))", () => {
+test("return task({key: items.slice(1, 3)})", () => {
   const { stack, task } = initStepFunctionApp();
   const definition = new ExpressStepFunction(stack, "fn", (items: string[]) => {
     return task({ key: items.slice(1, 3) });
@@ -154,6 +154,47 @@ test("return task(items.slice(1, 3))", () => {
         },
         ResultPath: "$",
       },
+    },
+  });
+});
+
+test("return task({ key: items.filter(*) })", () => {
+  const { stack, task } = initStepFunctionApp();
+  const definition = new ExpressStepFunction(
+    stack,
+    "fn",
+    (items: { str: string; items: string[] }[]) => {
+      return task({
+        equals: items.filter((item) => item.str === "hello"),
+        and: items.filter(
+          (item) => item.str === "hello" && item.items[0] === "hello"
+        ),
+        or: items.filter(
+          (item) => item.str === "hello" || item.items[0] === "hello"
+        ),
+      });
+    }
+  ).definition;
+
+  expect(definition).toEqual({
+    StartAt:
+      "return task({equals: items.filter(function(item)), and: items.filter(function(item)), or: items.filter(function(item))})",
+    States: {
+      "return task({equals: items.filter(function(item)), and: items.filter(function(item)), or: items.filter(function(item))})":
+        {
+          Type: "Task",
+          End: true,
+          Resource: "arn:aws:states:::lambda:invoke",
+          Parameters: {
+            FunctionName: task.resource.functionName,
+            Payload: {
+              "equals.$": "$.items[?(@.str=='hello')]",
+              "and.$": "$.items[?(@.str=='hello'&&@.items[0]=='hello')]",
+              "or.$": "$.items[?(@.str=='hello'||@.items[0]=='hello')]",
+            },
+          },
+          ResultPath: "$",
+        },
     },
   });
 });
