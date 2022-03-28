@@ -29,6 +29,8 @@ export abstract class BaseNode<
 
   constructor(readonly kind: Kind) {}
 
+  public abstract clone(): this;
+
   public setParent(parent: FunctionlessNode | undefined) {
     this.parent = parent as Parent;
     if (parent) {

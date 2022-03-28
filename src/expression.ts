@@ -77,7 +77,7 @@ export const isLiteralPrimitiveExpr = typeGuard(
   "StringLiteralExpr"
 );
 
-export class BaseExpr<
+export abstract class BaseExpr<
   Kind extends FunctionlessNode["kind"],
   Parent extends FunctionlessNode | undefined =
     | ExprStmt
@@ -100,6 +100,13 @@ export class FunctionExpr<
     parameters.forEach((param) => param.setParent(this));
     body.setParent(this);
   }
+
+  public clone(): this {
+    return new FunctionExpr(
+      this.parameters.map((p) => p.clone()),
+      this.body.clone()
+    ) as this;
+  }
 }
 
 export const isReferenceExpr = typeGuard("ReferenceExpr");
@@ -109,6 +116,10 @@ export type CanReference = AnyTable | AnyLambda | AnyStepFunction | typeof $AWS;
 export class ReferenceExpr extends BaseExpr<"ReferenceExpr"> {
   constructor(readonly name: string, readonly ref: () => CanReference) {
     super("ReferenceExpr");
+  }
+
+  public clone(): this {
+    return new ReferenceExpr(this.name, this.ref) as this;
   }
 }
 
@@ -127,6 +138,10 @@ export class Identifier extends BaseExpr<"Identifier"> {
     super("Identifier");
   }
 
+  public clone(): this {
+    return new Identifier(this.name) as this;
+  }
+
   public lookup(): VariableStmt | ParameterDecl | undefined {
     return this.getLexicalScope().get(this.name);
   }
@@ -139,6 +154,10 @@ export class PropAccessExpr extends BaseExpr<"PropAccessExpr"> {
     super("PropAccessExpr");
     expr.setParent(this);
   }
+
+  public clone(): this {
+    return new PropAccessExpr(this.expr.clone(), this.name) as this;
+  }
 }
 
 export const isElementAccessExpr = typeGuard("ElementAccessExpr");
@@ -148,6 +167,13 @@ export class ElementAccessExpr extends BaseExpr<"ElementAccessExpr"> {
     super("ElementAccessExpr");
     expr.setParent(this);
     element.setParent(this);
+  }
+
+  public clone(): this {
+    return new ElementAccessExpr(
+      this.expr.clone(),
+      this.element.clone()
+    ) as this;
   }
 }
 
@@ -168,6 +194,18 @@ export class CallExpr extends BaseExpr<"CallExpr"> {
       }
     }
   }
+
+  public clone(): this {
+    return new CallExpr(
+      this.expr.clone(),
+      Object.fromEntries(
+        Object.entries(this.args).map(([argName, argVal]) => [
+          argName,
+          argVal.clone(),
+        ])
+      )
+    ) as this;
+  }
 }
 
 export const isNewExpr = typeGuard("NewExpr");
@@ -187,6 +225,18 @@ export class NewExpr extends BaseExpr<"NewExpr"> {
       }
     }
   }
+
+  public clone(): this {
+    return new NewExpr(
+      this.expr.clone(),
+      Object.fromEntries(
+        Object.entries(this.args).map(([argName, argVal]) => [
+          argName,
+          argVal.clone(),
+        ])
+      )
+    ) as this;
+  }
 }
 
 export const isConditionExpr = typeGuard("ConditionExpr");
@@ -199,6 +249,14 @@ export class ConditionExpr extends BaseExpr<"ConditionExpr"> {
     if (_else) {
       _else.setParent(this);
     }
+  }
+
+  public clone(): this {
+    return new ConditionExpr(
+      this.when.clone(),
+      this.then.clone(),
+      this._else.clone()
+    ) as this;
   }
 }
 
@@ -227,6 +285,14 @@ export class BinaryExpr extends BaseExpr<"BinaryExpr"> {
     left.setParent(this);
     right.setParent(this);
   }
+
+  public clone(): this {
+    return new BinaryExpr(
+      this.left.clone(),
+      this.op,
+      this.right.clone()
+    ) as this;
+  }
 }
 
 export const isUnaryExpr = typeGuard("UnaryExpr");
@@ -237,6 +303,10 @@ export class UnaryExpr extends BaseExpr<"UnaryExpr"> {
   constructor(readonly op: UnaryOp, readonly expr: Expr) {
     super("UnaryExpr");
     expr.setParent(this);
+  }
+
+  public clone(): this {
+    return new UnaryExpr(this.op, this.expr.clone()) as this;
   }
 }
 
@@ -249,6 +319,10 @@ export class NullLiteralExpr extends BaseExpr<"NullLiteralExpr"> {
   constructor() {
     super("NullLiteralExpr");
   }
+
+  public clone(): this {
+    return new NullLiteralExpr() as this;
+  }
 }
 
 export const isBooleanLiteral = typeGuard("BooleanLiteralExpr");
@@ -256,6 +330,10 @@ export const isBooleanLiteral = typeGuard("BooleanLiteralExpr");
 export class BooleanLiteralExpr extends BaseExpr<"BooleanLiteralExpr"> {
   constructor(readonly value: boolean) {
     super("BooleanLiteralExpr");
+  }
+
+  public clone(): this {
+    return new BooleanLiteralExpr(this.value) as this;
   }
 }
 
@@ -265,6 +343,10 @@ export class NumberLiteralExpr extends BaseExpr<"NumberLiteralExpr"> {
   constructor(readonly value: number) {
     super("NumberLiteralExpr");
   }
+
+  public clone(): this {
+    return new NumberLiteralExpr(this.value) as this;
+  }
 }
 
 export const isStringLiteralExpr = typeGuard("StringLiteralExpr");
@@ -272,6 +354,10 @@ export const isStringLiteralExpr = typeGuard("StringLiteralExpr");
 export class StringLiteralExpr extends BaseExpr<"StringLiteralExpr"> {
   constructor(readonly value: string) {
     super("StringLiteralExpr");
+  }
+
+  public clone(): this {
+    return new StringLiteralExpr(this.value) as this;
   }
 }
 
@@ -281,6 +367,10 @@ export class ArrayLiteralExpr extends BaseExpr<"ArrayLiteralExpr"> {
   constructor(readonly items: Expr[]) {
     super("ArrayLiteralExpr");
     items.forEach((item) => item.setParent(this));
+  }
+
+  public clone(): this {
+    return new ArrayLiteralExpr(this.items.map((item) => item.clone())) as this;
   }
 }
 
@@ -297,6 +387,12 @@ export class ObjectLiteralExpr extends BaseExpr<"ObjectLiteralExpr"> {
   constructor(readonly properties: ObjectElementExpr[]) {
     super("ObjectLiteralExpr");
     properties.forEach((prop) => prop.setParent(this));
+  }
+
+  public clone(): this {
+    return new ObjectLiteralExpr(
+      this.properties.map((prop) => prop.clone())
+    ) as this;
   }
 
   public getProperty(name: string) {
@@ -319,6 +415,10 @@ export class PropAssignExpr extends BaseExpr<
     super("PropAssignExpr");
     expr.setParent(this);
   }
+
+  public clone(): this {
+    return new PropAssignExpr(this.name.clone(), this.expr.clone()) as this;
+  }
 }
 
 export const isSpreadAssignExpr = typeGuard("SpreadAssignExpr");
@@ -330,6 +430,10 @@ export class SpreadAssignExpr extends BaseExpr<
   constructor(readonly expr: Expr) {
     super("SpreadAssignExpr");
     expr.setParent(this);
+  }
+
+  public clone(): this {
+    return new SpreadAssignExpr(this.expr.clone()) as this;
   }
 }
 
@@ -343,6 +447,10 @@ export class SpreadElementExpr extends BaseExpr<
     super("SpreadElementExpr");
     expr.setParent(this);
   }
+
+  public clone(): this {
+    return new SpreadElementExpr(this.expr.clone()) as this;
+  }
 }
 
 export const isTemplateExpr = typeGuard("TemplateExpr");
@@ -354,5 +462,9 @@ export class TemplateExpr extends BaseExpr<"TemplateExpr"> {
   constructor(readonly exprs: Expr[]) {
     super("TemplateExpr");
     exprs.forEach((expr) => expr.setParent(this));
+  }
+
+  public clone(): this {
+    return new TemplateExpr(this.exprs.map((expr) => expr.clone())) as this;
   }
 }

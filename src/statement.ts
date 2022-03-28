@@ -38,7 +38,7 @@ export function isStmt(a: any): a is Stmt {
   );
 }
 
-export class BaseStmt<
+export abstract class BaseStmt<
   Kind extends FunctionlessNode["kind"],
   Parent extends FunctionlessNode | undefined = BlockStmt | IfStmt
 > extends BaseNode<Kind, Parent> {
@@ -61,6 +61,10 @@ export class ExprStmt extends BaseStmt<"ExprStmt"> {
     super("ExprStmt");
     expr.setParent(this);
   }
+
+  public clone(): this {
+    return new ExprStmt(this.expr.clone()) as this;
+  }
 }
 
 export const isVariableStmt = typeGuard("VariableStmt");
@@ -80,6 +84,10 @@ export class VariableStmt<
     if (expr) {
       expr.setParent(this);
     }
+  }
+
+  public clone(): this {
+    return new VariableStmt(this.name, this.expr?.clone()) as this;
   }
 }
 
@@ -104,6 +112,10 @@ export class BlockStmt extends BaseStmt<"BlockStmt", BlockStmtParent> {
       stmt.prev = i > 0 ? statements[i - 1] : undefined;
       stmt.next = i + 1 < statements.length ? statements[i + 1] : undefined;
     });
+  }
+
+  public clone(): this {
+    return new BlockStmt(this.statements.map((stmt) => stmt.clone())) as this;
   }
 
   public isFinallyBlock(): this is {
@@ -146,6 +158,10 @@ export class ReturnStmt extends BaseStmt<"ReturnStmt"> {
     super("ReturnStmt");
     expr.setParent(this);
   }
+
+  public clone(): this {
+    return new ReturnStmt(this.expr.clone()) as this;
+  }
 }
 
 export const isIfStmt = typeGuard("IfStmt");
@@ -163,6 +179,14 @@ export class IfStmt extends BaseStmt<"IfStmt"> {
       _else.setParent(this);
     }
   }
+
+  public clone(): this {
+    return new IfStmt(
+      this.when.clone(),
+      this.then.clone(),
+      this._else?.clone()
+    ) as this;
+  }
 }
 
 export const isForOfStmt = typeGuard("ForOfStmt");
@@ -177,6 +201,14 @@ export class ForOfStmt extends BaseStmt<"ForOfStmt"> {
     variableDecl.setParent(this);
     expr.setParent(this as never);
     body.setParent(this);
+  }
+
+  public clone(): this {
+    return new ForOfStmt(
+      this.variableDecl.clone(),
+      this.expr.clone(),
+      this.body.clone()
+    ) as this;
   }
 }
 
@@ -193,6 +225,14 @@ export class ForInStmt extends BaseStmt<"ForInStmt"> {
     expr.setParent(this as never);
     body.setParent(this);
   }
+
+  public clone(): this {
+    return new ForInStmt(
+      this.variableDecl.clone(),
+      this.expr.clone(),
+      this.body.clone()
+    ) as this;
+  }
 }
 
 export const isBreakStmt = typeGuard("BreakStmt");
@@ -200,6 +240,10 @@ export const isBreakStmt = typeGuard("BreakStmt");
 export class BreakStmt extends BaseStmt<"BreakStmt"> {
   constructor() {
     super("BreakStmt");
+  }
+
+  public clone(): this {
+    return new BreakStmt() as this;
   }
 }
 
@@ -220,6 +264,14 @@ export class TryStmt extends BaseStmt<"TryStmt"> {
       finallyBlock.setParent(this);
     }
   }
+
+  public clone(): this {
+    return new TryStmt(
+      this.tryBlock.clone(),
+      this.catchClause.clone(),
+      this.finallyBlock?.clone()
+    ) as this;
+  }
 }
 
 export const isCatchClause = typeGuard("CatchClause");
@@ -235,6 +287,13 @@ export class CatchClause extends BaseStmt<"CatchClause", TryStmt> {
     }
     block.setParent(this);
   }
+
+  public clone(): this {
+    return new CatchClause(
+      this.variableDecl?.clone(),
+      this.block.clone()
+    ) as this;
+  }
 }
 
 export const isThrowStmt = typeGuard("ThrowStmt");
@@ -243,6 +302,10 @@ export class ThrowStmt extends BaseStmt<"ThrowStmt"> {
   constructor(readonly expr: Expr) {
     super("ThrowStmt");
     expr.setParent(this as never);
+  }
+
+  public clone(): this {
+    return new ThrowStmt(this.expr.clone()) as this;
   }
 }
 
@@ -254,6 +317,10 @@ export class WhileStmt extends BaseStmt<"WhileStmt"> {
     condition.setParent(this);
     block.setParent(this);
   }
+
+  public clone(): this {
+    return new WhileStmt(this.condition.clone(), this.block.clone()) as this;
+  }
 }
 
 export const isDoStmt = typeGuard("DoStmt");
@@ -263,5 +330,9 @@ export class DoStmt extends BaseStmt<"DoStmt"> {
     super("DoStmt");
     block.setParent(this);
     condition.setParent(this);
+  }
+
+  public clone(): this {
+    return new DoStmt(this.block.clone(), this.condition.clone()) as this;
   }
 }

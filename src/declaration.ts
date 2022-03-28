@@ -11,7 +11,7 @@ export function isDecl(a: any): a is Decl {
 
 export const isFunctionDecl = typeGuard("FunctionDecl");
 
-class BaseDecl<
+abstract class BaseDecl<
   Kind extends FunctionlessNode["kind"],
   Parent extends FunctionlessNode | undefined
 > extends BaseNode<Kind, Parent> {
@@ -28,6 +28,13 @@ export class FunctionDecl<F extends AnyFunction = AnyFunction> extends BaseDecl<
     parameters.forEach((param) => param.setParent(this));
     body.setParent(this);
   }
+
+  public clone(): this {
+    return new FunctionDecl(
+      this.parameters.map((param) => param.clone()),
+      this.body.clone()
+    ) as this;
+  }
 }
 
 export const isParameterDecl = typeGuard("ParameterDecl");
@@ -38,5 +45,9 @@ export class ParameterDecl extends BaseDecl<
 > {
   constructor(readonly name: string) {
     super("ParameterDecl");
+  }
+
+  public clone(): this {
+    return new ParameterDecl(this.name) as this;
   }
 }
