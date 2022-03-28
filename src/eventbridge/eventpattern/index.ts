@@ -64,13 +64,17 @@ import {
   getReferencePath,
   ReferencePath,
 } from "../utils";
+import { Err, isErr } from "../../error";
 
 /**
  * https://github.com/sam-goodwin/functionless/issues/37#issuecomment-1066313146
  */
 export const synthesizeEventPattern = (
-  predicate: FunctionDecl
+  predicate: FunctionDecl | Err
 ): fnls_event_bridge.FnLsEventPattern => {
+  if (isErr(predicate)) {
+    throw predicate.error;
+  }
   const [eventDecl = undefined] = predicate.parameters;
 
   const handleExpr = (expr: Expr): PatternDocument => {

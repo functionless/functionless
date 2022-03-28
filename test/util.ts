@@ -12,6 +12,7 @@ import { synthesizeEventPattern } from "../src/eventbridge/eventpattern";
 import { FnLsEventPattern } from "../src/eventbridge/eventpattern/types";
 import { synthesizeEventBridgeTargets } from "../src/eventbridge/targets";
 import { Rule } from "aws-cdk-lib/aws-events";
+import { Err, isErr } from "../src/error";
 
 // generates boilerplate for the circuit-breaker logic for implementing early return
 export function returnExpr(varName: string) {
@@ -20,9 +21,16 @@ export function returnExpr(varName: string) {
 #return($context.stash.return__val)`;
 }
 
-export function appsyncTestCase(decl: FunctionDecl, ...expected: string[]) {
+export function appsyncTestCase(
+  decl: FunctionDecl | Err,
+  ...expected: string[]
+) {
   const app = new App({ autoSynth: false });
   const stack = new Stack(app, "stack");
+
+  if (isErr(decl)) {
+    throw decl.error;
+  }
 
   const schema = new appsync.Schema({
     filePath: path.join(__dirname, "..", "test-app", "schema.gql"),
@@ -49,7 +57,7 @@ export function appsyncTestCase(decl: FunctionDecl, ...expected: string[]) {
 }
 
 export function ebEventPatternTestCase(
-  decl: FunctionDecl,
+  decl: FunctionDecl | Err,
   expected: FnLsEventPattern
 ) {
   const result = synthesizeEventPattern(decl);
@@ -58,7 +66,7 @@ export function ebEventPatternTestCase(
 }
 
 export function ebEventPatternTestCaseError(
-  decl: FunctionDecl,
+  decl: FunctionDecl | Err,
   message?: string
 ) {
   expect(() => synthesizeEventPattern(decl)).toThrow(message);
@@ -71,7 +79,7 @@ beforeEach(() => {
 });
 
 export function ebEventTargetTestCase<T extends EventBusRuleInput>(
-  decl: FunctionDecl<EventTransformFunction<T>>,
+  decl: FunctionDecl<EventTransformFunction<T>> | Err,
   targetInput: aws_events.RuleTargetInput
 ) {
   const result = synthesizeEventBridgeTargets(decl);
@@ -103,7 +111,7 @@ export function ebEventTargetTestCase<T extends EventBusRuleInput>(
 }
 
 export function ebEventTargetTestCaseError<T extends EventBusRuleInput>(
-  decl: FunctionDecl<EventTransformFunction<T>>,
+  decl: FunctionDecl<EventTransformFunction<T>> | Err,
   message?: string
 ) {
   expect(() => synthesizeEventBridgeTargets(decl)).toThrow(message);

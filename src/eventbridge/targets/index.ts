@@ -2,6 +2,7 @@ import { aws_events } from "aws-cdk-lib";
 import { RuleTargetInput } from "aws-cdk-lib/aws-events";
 import { assertString } from "../../assert";
 import { FunctionDecl } from "../../declaration";
+import { Err, isErr } from "../../error";
 import {
   ArrayLiteralExpr,
   Expr,
@@ -44,8 +45,11 @@ type PREDEFINED = typeof PREDEFINED_VALUES[number];
  * https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-transform-target-input.html
  */
 export const synthesizeEventBridgeTargets = (
-  decl: FunctionDecl
+  decl: FunctionDecl | Err
 ): aws_events.RuleTargetInput => {
+  if (isErr(decl)) {
+    throw decl.error;
+  }
   const [eventDecl = undefined, utilsDecl = undefined] = decl.parameters;
 
   const expression = flattenReturnEvent(decl.body.statements);
