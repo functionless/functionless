@@ -36,8 +36,8 @@ export class Function<P, O> {
     return Object.assign(lambda, this);
 
     function lambda(call: CallExpr, vtl: VTL): string {
-      const payload =
-        "payload" in call.args ? vtl.eval(call.args.payload) : "$null";
+      const payloadArg = call.getArgument("payload");
+      const payload = payloadArg ? vtl.eval(payloadArg.expr) : "$null";
 
       const request = vtl.var(
         `{"version": "2018-05-29", "operation": "Invoke", "payload": ${payload}}`

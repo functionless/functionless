@@ -27,7 +27,8 @@ export type Expr =
   | SpreadAssignExpr
   | SpreadElementExpr
   | TemplateExpr
-  | UnaryExpr;
+  | UnaryExpr
+  | ArgumentExpr;
 
 export function isExpr(a: any) {
   return (
@@ -47,7 +48,9 @@ export function isExpr(a: any) {
       isPropAccessExpr(a) ||
       isReferenceExpr(a) ||
       isStringLiteralExpr(a) ||
-      isUnaryExpr(a))
+      isTemplateExpr(a) ||
+      isUnaryExpr(a) ||
+      isArgumentExpr(a))
   );
 }
 
@@ -98,20 +101,27 @@ export class ElementAccessExpr extends BaseNode<"ElementAccessExpr"> {
   }
 }
 
+export const isArgumentExpr = typeGuard("ArgumentExpr");
+
+export class ArgumentExpr extends BaseNode<"ArgumentExpr"> {
+  constructor(readonly expr: Expr, readonly name?: string) {
+    super("ArgumentExpr");
+    setParent(this, expr);
+  }
+}
+
 export const isCallExpr = typeGuard("CallExpr");
 
 export class CallExpr extends BaseNode<"CallExpr"> {
-  constructor(
-    readonly expr: Expr,
-    readonly args: {
-      [argName: string]: Expr;
-    }
-  ) {
+  constructor(readonly expr: Expr, readonly args: ArgumentExpr[]) {
     super("CallExpr");
     expr.parent = this;
-    for (const arg of Object.values(args)) {
-      arg.parent = this;
-    }
+
+    args.forEach((arg) => setParent(this, arg));
+  }
+
+  getArgument(name: string): ArgumentExpr | undefined {
+    return this.args.find((arg) => arg.name === name);
   }
 }
 

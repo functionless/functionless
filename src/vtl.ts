@@ -1,6 +1,6 @@
 import { CallExpr, Expr, FunctionExpr } from "./expression";
 import { findFunction, isInTopLevelScope, lookupIdentifier } from "./util";
-import { assertNever } from "./assert";
+import { assertNever, assertNodeKind } from "./assert";
 import { FunctionlessNode } from "./node";
 import { Stmt } from "./statement";
 
@@ -205,8 +205,11 @@ export class VTL {
             // list.reduce((result: string[], next) => [...result, next], []);
             // list.reduce((result, next) => [...result, next]);
 
-            const fn = node.args.callbackfn as FunctionExpr;
-            const initialValue = node.args.initialValue;
+            const fn = assertNodeKind<FunctionExpr>(
+              node.getArgument("callbackfn")?.expr,
+              "FunctionExpr"
+            );
+            const initialValue = node.getArgument("initialValue")?.expr;
 
             // (previousValue: string[], currentValue: string, currentIndex: number, array: string[])
             const previousValue = fn.parameters[0]?.name
@@ -417,6 +420,8 @@ export class VTL {
         }
       case "Err":
         throw node.error;
+      case "ArgumentExpr":
+        return this.eval(node.expr);
     }
 
     const __exhaustive: never = node;
@@ -451,7 +456,10 @@ export class VTL {
       this.add(`#set(${array} = ${list})`);
     }
 
-    const fn = call.args.callbackfn as FunctionExpr;
+    const fn = assertNodeKind<FunctionExpr>(
+      call.getArgument("callbackfn")?.expr,
+      "FunctionExpr"
+    );
 
     const tmp = returnVariable ? returnVariable : this.newLocalVarName();
 
@@ -513,6 +521,9 @@ export class VTL {
  * Returns the [value, index, array] arguments if this CallExpr is a `forEach` or `map` call.
  */
 const getMapForEachArgs = (call: CallExpr) => {
-  const fn = call.args.callbackfn as FunctionExpr;
+  const fn = assertNodeKind<FunctionExpr>(
+    call.getArgument("callbackfn")?.expr,
+    "FunctionExpr"
+  );
   return fn.parameters.map((p) => (p.name ? `$${p.name}` : p.name));
 };
