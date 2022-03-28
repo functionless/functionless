@@ -45,17 +45,18 @@ export function isExpr(a: any): a is Expr {
       isBooleanLiteral(a) ||
       isCallExpr(a) ||
       isConditionExpr(a) ||
-      isFunctionExpr(a) ||
       isElementAccessExpr(a) ||
+      isFunctionExpr(a) ||
       isIdentifier(a) ||
       isNewExpr(a) ||
       isNullLiteralExpr(a) ||
       isNumberLiteralExpr(a) ||
-      isPropAssignExpr(a) ||
       isObjectLiteralExpr(a) ||
       isPropAccessExpr(a) ||
+      isPropAssignExpr(a) ||
       isReferenceExpr(a) ||
       isStringLiteralExpr(a) ||
+      isTemplateExpr(a) ||
       isUnaryExpr(a))
   );
 }
@@ -344,7 +345,7 @@ export class SpreadElementExpr extends BaseExpr<
   }
 }
 
-export const isTemplateExpr = typeGuard("SpreadAssignExpr");
+export const isTemplateExpr = typeGuard("TemplateExpr");
 
 /**
  * Interpolates a TemplateExpr to a string `this ${is} a template expression`

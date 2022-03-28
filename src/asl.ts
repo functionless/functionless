@@ -1101,6 +1101,12 @@ export namespace ASL {
       }
     } else if (expr.kind === "ElementAccessExpr") {
       return toJsonPath(expr);
+    } else if (expr.kind === "TemplateExpr") {
+      return `States.Format(${expr.exprs
+        .map((e) => (isLiteralExpr(e) ? toJson(e) : "{}"))
+        .join("")},${expr.exprs
+        .filter((e) => !isLiteralExpr(e))
+        .map((e) => toJsonPath(e))})`;
     }
     throw new Error(`cannot evaluate ${expr.kind} to JSON`);
   }
@@ -1506,7 +1512,9 @@ function exprToString(expr: Expr): string {
   } else if (expr.kind === "StringLiteralExpr") {
     return `"${expr.value}"`;
   } else if (expr.kind === "TemplateExpr") {
-    return `\`${expr.exprs.map(exprToString).join("")}\``;
+    return `\`${expr.exprs
+      .map((e) => (e.kind === "StringLiteralExpr" ? e.value : exprToString(e)))
+      .join("")}\``;
   } else if (expr.kind === "UnaryExpr") {
     return `${expr.op}${exprToString(expr.expr)}`;
   } else {
