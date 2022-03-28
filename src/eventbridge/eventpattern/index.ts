@@ -457,7 +457,10 @@ export const synthesizeEventPattern = (
     expr: CallExpr & { expr: PropAccessExpr | ElementAccessExpr }
   ): PatternDocument => {
     const searchElement = getConstant(
-      expr.args[INCLUDES_SEARCH_ELEMENT]
+      assertDefined(
+        expr.args.length > 0 ? Object.values(expr.args)[0] : undefined,
+        `Includes must have a single string argument ${INCLUDES_SEARCH_ELEMENT}.`
+      ).expr
     )?.constant;
 
     if (
@@ -515,9 +518,11 @@ export const synthesizeEventPattern = (
   const handleStartsWithCall = (
     expr: CallExpr & { expr: PropAccessExpr | ElementAccessExpr }
   ): PatternDocument => {
-    const arg =
-      expr.args[STARTS_WITH_SEARCH_STRING] ?? Object.values(expr.args)[0];
-    const searchString = assertString(getConstant(arg)?.constant);
+    const arg = assertDefined(
+      expr.args.length > 0 ? Object.values(expr.args)[0] : undefined,
+      `StartsWith must contain a single string argument ${STARTS_WITH_SEARCH_STRING}`
+    );
+    const searchString = assertString(getConstant(arg.expr)?.constant);
 
     if (
       Object.values(expr.args).filter((e) => !isNullLiteralExpr(e)).length > 1

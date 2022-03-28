@@ -271,8 +271,7 @@ describe("event pattern", () => {
       );
     });
 
-    // Functionless reflect doesn't support calls of type any
-    test.skip("prefix non string", () => {
+    test("prefix non string", () => {
       ebEventPatternTestCaseError(
         reflect<EventPredicateFunction<TestEvent>>((event) =>
           (<any>event.detail.num).startsWith("l")
