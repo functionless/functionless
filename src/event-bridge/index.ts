@@ -1,4 +1,4 @@
-export * from "./bus";
+export { EventBus } from "./bus";
 export * from "./rule";
 export * from "./types";
 // Do not export `pipe`

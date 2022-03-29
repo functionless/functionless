@@ -27,7 +27,7 @@ import { EventBusRuleInput } from "./types";
  *
  * // instantiate an aws_events.EventBus Construct
  * const awsBus = new aws_events.EventBus(this, "mybus");
- * 
+ *
  * // Wrap the aws_events.EventBus with the functionless.EventBus
  * new functionless.EventBus<myEvent>(awsBus)
  *    // when the payload is equal to some value
