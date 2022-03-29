@@ -1,15 +1,24 @@
-import ts, { Statement } from "typescript";
+import ts from "typescript";
 import { PluginConfig, TransformerExtras } from "ts-patch";
 import { BinaryOp } from "./expression";
 import { AnyTable } from "./table";
 import { AnyLambda } from "./function";
 import { FunctionlessNode } from "./node";
+import { AppsyncResolver } from "./appsync";
+import glob from "glob";
+import { assertDefined } from "./assert";
+
 export default compile;
 
 /**
  * Configuration options for the functionless TS transform.
  */
-export interface FunctionlessConfig extends PluginConfig {}
+export interface FunctionlessConfig extends PluginConfig {
+  /**
+   * Glob to exclude
+   */
+  exclude?: string;
+}
 
 /**
  * TypeScript Transformer which transforms functionless functions, such as `AppsyncResolver`,
@@ -26,6 +35,10 @@ export function compile(
   _config?: FunctionlessConfig,
   _extras?: TransformerExtras
 ): ts.TransformerFactory<ts.SourceFile> {
+  const ignore = _config?.exclude
+    ? new Set(glob.sync(_config.exclude, { absolute: true }))
+    : new Set();
+
   const checker = program.getTypeChecker();
   return (ctx) => {
     const functionless = ts.factory.createUniqueName("functionless");
@@ -41,6 +54,11 @@ export function compile(
         ts.factory.createStringLiteral("functionless")
       );
 
+      // Do not transform any of the files matched by "exclude"
+      if (ignore.has(sf.fileName)) {
+        return sf;
+      }
+
       return ts.factory.updateSourceFile(
         sf,
         [
@@ -55,12 +73,39 @@ export function compile(
       );
 
       function visitor(node: ts.Node): ts.Node {
-        try {
+        const _visit = () => {
           if (isAppsyncResolver(node)) {
             return visitAppsyncResolver(node);
           } else if (isReflectFunction(node)) {
-            return toFunction("FunctionDecl", node.arguments[0]);
+            return errorBoundary(() =>
+              toFunction("FunctionDecl", node.arguments[0])
+            );
           }
+          return node;
+        };
+        // keep processing the children of the updated node.
+        return ts.visitEachChild(_visit(), visitor, ctx);
+      }
+
+      /**
+       * Various types that could be in a call argument position of a function parameter.
+       */
+      type TsFunctionParameter =
+        | ts.FunctionExpression
+        | ts.ArrowFunction
+        | ts.Identifier
+        | ts.PropertyAccessExpression
+        | ts.ElementAccessExpression
+        | ts.CallExpression;
+
+      /**
+       * Catches any errors and wraps them in a {@link Err} node.
+       */
+      function errorBoundary<T extends ts.Node>(
+        func: () => T
+      ): T | ts.NewExpression {
+        try {
+          return func();
         } catch (err) {
           const error =
             err instanceof Error ? err : Error("Unknown compiler error.");
@@ -70,23 +115,22 @@ export function compile(
               undefined,
               [ts.factory.createStringLiteral(error.message)]
             ),
-          ]) as unknown as Statement;
+          ]);
         }
-        return ts.visitEachChild(node, visitor, ctx);
+      }
+
+      function isFunctionlessClassOfKind(node: ts.Node, kind: string) {
+        const type = checker.getTypeAtLocation(node);
+        const exprDecl = type.symbol?.declarations?.[0];
+        return (
+          !!exprDecl &&
+          ts.isClassDeclaration(exprDecl) &&
+          getFunctionlessKind(exprDecl) === kind
+        );
       }
 
       function isReflectFunction(node: ts.Node): node is ts.CallExpression & {
-        arguments: [
-          (
-            | ts.FunctionExpression
-            | ts.ArrowFunction
-            | ts.Identifier
-            | ts.PropertyAccessExpression
-            | ts.ElementAccessExpression
-            | ts.CallExpression
-          ),
-          ...ts.Expression[]
-        ];
+        arguments: [TsFunctionParameter, ...ts.Expression[]];
       } {
         if (ts.isCallExpression(node)) {
           const exprType = checker.getTypeAtLocation(node.expression);
@@ -102,11 +146,10 @@ export function compile(
 
       function isAppsyncResolver(node: ts.Node): node is ts.NewExpression {
         if (ts.isNewExpression(node)) {
-          const exprType = checker.getTypeAtLocation(node.expression);
-          const exprDecl = exprType.symbol?.declarations?.[0];
-          if (exprDecl && ts.isClassDeclaration(exprDecl)) {
-            return getFunctionlessKind(exprDecl) === "AppsyncResolver";
-          }
+          return isFunctionlessClassOfKind(
+            node.expression,
+            AppsyncResolver.FunctionlessType
+          );
         }
         return false;
       }
@@ -144,7 +187,7 @@ export function compile(
               call,
               call.expression,
               call.typeArguments,
-              [toFunction("FunctionDecl", impl, 1)]
+              [errorBoundary(() => toFunction("FunctionDecl", impl, 1))]
             );
           }
         }
@@ -153,7 +196,7 @@ export function compile(
 
       function toFunction(
         type: "FunctionDecl" | "FunctionExpr",
-        impl: ts.Node,
+        impl: TsFunctionParameter,
         dropArgs?: number
       ): ts.Expression {
         if (
@@ -198,7 +241,9 @@ export function compile(
 
       function toExpr(node: ts.Node | undefined): ts.Expression {
         if (node === undefined) {
-          return newExpr("NullLiteralExpr", []);
+          return newExpr("NullLiteralExpr", [
+            ts.factory.createIdentifier("true"),
+          ]);
         } else if (ts.isArrowFunction(node) || ts.isFunctionExpression(node)) {
           return toFunction("FunctionExpr", node);
         } else if (ts.isExpressionStatement(node)) {
@@ -251,7 +296,11 @@ export function compile(
           ]);
         } else if (ts.isIdentifier(node)) {
           if (node.text === "undefined" || node.text === "null") {
-            return newExpr("NullLiteralExpr", []);
+            return newExpr("NullLiteralExpr", [
+              ts.factory.createIdentifier(
+                node.text === "undefined" ? "true" : "false"
+              ),
+            ]);
           }
           const kind = getKind(node);
           if (kind !== undefined) {
@@ -268,14 +317,22 @@ export function compile(
             // if this is a reference to a Table or Lambda, retain it
             return ref(node);
           }
+          const type = checker.getTypeAtLocation(node.name);
           return newExpr("PropAccessExpr", [
             toExpr(node.expression),
             ts.factory.createStringLiteral(node.name.text),
+            type
+              ? ts.factory.createStringLiteral(checker.typeToString(type))
+              : ts.factory.createIdentifier("undefined"),
           ]);
         } else if (ts.isElementAccessExpression(node)) {
+          const type = checker.getTypeAtLocation(node.argumentExpression);
           return newExpr("ElementAccessExpr", [
             toExpr(node.expression),
             toExpr(node.argumentExpression),
+            type
+              ? ts.factory.createStringLiteral(checker.typeToString(type))
+              : ts.factory.createIdentifier("undefined"),
           ]);
         } else if (
           ts.isVariableStatement(node) &&
@@ -318,12 +375,23 @@ export function compile(
             toExpr(node.right),
           ]);
         } else if (ts.isPrefixUnaryExpression(node)) {
-          if (node.operator !== ts.SyntaxKind.ExclamationToken) {
+          if (
+            node.operator !== ts.SyntaxKind.ExclamationToken &&
+            node.operator !== ts.SyntaxKind.MinusToken
+          ) {
             throw new Error(
               `invalid Unary Operator: ${ts.tokenToString(node.operator)}`
             );
           }
-          return newExpr("UnaryExpr", [toExpr(node.operand)]);
+          return newExpr("UnaryExpr", [
+            ts.factory.createStringLiteral(
+              assertDefined(
+                ts.tokenToString(node.operator),
+                `Unary operator token cannot be stringified: ${node.operator}`
+              )
+            ),
+            toExpr(node.operand),
+          ]);
         } else if (ts.isReturnStatement(node)) {
           return newExpr(
             "ReturnStmt",
@@ -367,10 +435,15 @@ export function compile(
             ),
           ]);
         } else if (node.kind === ts.SyntaxKind.NullKeyword) {
-          return newExpr("NullLiteralExpr", []);
+          return newExpr("NullLiteralExpr", [
+            ts.factory.createIdentifier("false"),
+          ]);
         } else if (ts.isNumericLiteral(node)) {
           return newExpr("NumberLiteralExpr", [node]);
-        } else if (ts.isStringLiteral(node)) {
+        } else if (
+          ts.isStringLiteral(node) ||
+          ts.isNoSubstitutionTemplateLiteral(node)
+        ) {
           return newExpr("StringLiteralExpr", [node]);
         } else if (ts.isLiteralExpression(node)) {
           // const type = checker.getTypeAtLocation(node);
@@ -425,7 +498,7 @@ export function compile(
           return toExpr(node.expression);
         }
 
-        throw new Error(`unhandled node: ${node.getText()}`);
+        throw new Error(`unhandled node: ${node.getText()} ${node.kind}`);
       }
 
       function ref(node: ts.Expression) {
@@ -479,7 +552,7 @@ function getOperator(op: ts.BinaryOperatorToken): BinaryOp | undefined {
   return OperatorMappings[op.kind as keyof typeof OperatorMappings];
 }
 
-const OperatorMappings = {
+const OperatorMappings: Record<number, BinaryOp> = {
   [ts.SyntaxKind.EqualsToken]: "=",
   [ts.SyntaxKind.PlusToken]: "+",
   [ts.SyntaxKind.MinusToken]: "-",

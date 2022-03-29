@@ -2,9 +2,10 @@ const { typescript } = require("projen");
 const project = new typescript.TypeScriptProject({
   defaultReleaseBranch: "main",
   name: "functionless",
-  deps: ["fs-extra"],
+  deps: ["fs-extra", "glob"],
   devDeps: [
     "@aws-cdk/aws-appsync-alpha",
+    "@types/glob",
     "@types/fs-extra",
     "aws-cdk-lib",
     "constructs",
@@ -34,6 +35,8 @@ const project = new typescript.TypeScriptProject({
       plugins: [
         {
           transform: "./lib/compile",
+          // exclude the source of this package while running tests.
+          exclude: "./src/{,**}/*",
         },
       ],
     },

@@ -1,6 +1,7 @@
 import {
   BinaryExpr,
   CallExpr,
+  Err,
   ExprStmt,
   FunctionDecl,
   NumberLiteralExpr,
@@ -123,5 +124,13 @@ test("named function args", () => {
 
   expect(call.getArgument("searchString")?.expr.kind).toEqual(
     "StringLiteralExpr"
+  );
+});
+
+test("err", () => {
+  const fn = () => {};
+  const result = assertNodeKind<Err>(reflect(fn), "Err");
+  expect(result.error.message).toEqual(
+    "Functionless reflection only supports function parameters with bodies, no signature only declarations or references. Found fn."
   );
 });
