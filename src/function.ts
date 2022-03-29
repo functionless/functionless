@@ -1,5 +1,5 @@
 import { aws_lambda } from "aws-cdk-lib";
-import { CallExpr } from "./expression";
+import { CallExpr, isVariableReference } from "./expression";
 import { isVTL, VTL } from "./vtl";
 import { ASL, isASL, Task } from "./asl";
 
@@ -51,7 +51,7 @@ export class Function<P, O> {
           Resource: "arn:aws:states:::lambda:invoke",
           Parameters: {
             FunctionName: this.resource.functionName,
-            Payload:
+            [`Payload${isVariableReference(call.args.payload) ? ".$" : ""}`]:
               "payload" in call.args ? ASL.toJson(call.args.payload) : null,
           },
         };

@@ -58,6 +58,13 @@ export abstract class BaseNode<
     return this.children.filter(is);
   }
 
+  public collectChildren<T>(f: (node: FunctionlessNode) => T[]): T[] {
+    return this.children.reduce(
+      (nodes: T[], child) => [...nodes, ...f(child)],
+      []
+    );
+  }
+
   public findParent<N extends FunctionlessNode>(
     is: (node: FunctionlessNode) => node is N
   ): N | undefined {

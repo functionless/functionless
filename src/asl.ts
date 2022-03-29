@@ -6,6 +6,7 @@ import {
   CallExpr,
   ElementAccessExpr,
   Expr,
+  Identifier,
   isFunctionExpr,
   isLiteralExpr,
   isReferenceExpr,
@@ -27,6 +28,7 @@ import {
   isWhileStmt,
   ReturnStmt,
   Stmt,
+  VariableStmt,
   WhileStmt,
 } from "./statement";
 import { anyOf, findFunction } from "./util";
@@ -192,7 +194,7 @@ export interface Condition {
   Not?: Condition;
   And?: Condition[];
   Or?: Condition[];
-  BooleanEquals?: string;
+  BooleanEquals?: boolean;
   BooleanEqualsPath?: string;
   IsBoolean?: boolean;
   IsNull?: boolean;
@@ -327,16 +329,19 @@ export class ASL {
     readonly role: aws_iam.IRole,
     decl: FunctionDecl
   ) {
-    this.decl = visitEachChild(decl, function visit(node): FunctionlessNode {
-      // re-write the AST to include explicit `ReturnStmt(NullLiteral())` statements
-      // this simplifies the interpreter code by always having a node to chain onto, even when
-      // the AST has no final `ReturnStmt` (i.e. when the function is a void function)
-      // without this, chains that should return null will actually include the entire state as their output
+    const self = this;
+    this.decl = visitEachChild(decl, function visit(node):
+      | FunctionlessNode
+      | FunctionlessNode[] {
       if (
         node.kind === "BlockStmt" &&
         (node.parent?.kind === "FunctionExpr" ||
           node.parent?.kind === "FunctionDecl")
       ) {
+        // re-write the AST to include explicit `ReturnStmt(NullLiteral())` statements
+        // this simplifies the interpreter code by always having a node to chain onto, even when
+        // the AST has no final `ReturnStmt` (i.e. when the function is a void function)
+        // without this, chains that should return null will actually include the entire state as their output
         if (node.lastStmt === undefined) {
           return new BlockStmt([new ReturnStmt(new NullLiteralExpr())]);
         } else if (!node.lastStmt.isTerminal()) {
@@ -344,6 +349,59 @@ export class ASL {
             ...node.statements.map((stmt) => visitEachChild(stmt, visit)),
             new ReturnStmt(new NullLiteralExpr()),
           ]);
+        }
+      } else if (
+        node.kind === "ExprStmt" ||
+        node.kind === "VariableStmt" ||
+        node.kind === "ReturnStmt"
+      ) {
+        const expr = node.expr;
+        if (expr?.kind === "CallExpr") {
+          // reduce nested Tasks to individual calls
+          const nestedTasks = expr.children.flatMap(function findTasks(
+            node: FunctionlessNode
+          ): CallExpr[] {
+            if (isTask(node)) {
+              return [node, ...node.collectChildren(findTasks)];
+            } else if (node.kind === "FunctionExpr") {
+              // do not recurse into FunctionExpr - they do not need to be hoisted
+              return [];
+            } else {
+              return node.collectChildren(findTasks);
+            }
+          });
+
+          function isTask(node: FunctionlessNode): node is CallExpr {
+            return node.kind === "CallExpr" && findFunction(node) !== undefined;
+          }
+
+          if (nestedTasks.length > 0) {
+            const nestedTaskSet = new Set<FunctionlessNode>(nestedTasks);
+
+            const replaced = replaceTasks(node);
+
+            return [
+              // hoist all nested calls to individual VariableStmt(CallExpr())
+              ...nestedTasks.map(
+                (task) =>
+                  new VariableStmt(
+                    self.getDeterministicGeneratedName(task),
+                    task.clone()
+                  )
+              ),
+              ...(Array.isArray(replaced) ? replaced : [replaced]),
+            ];
+
+            function replaceTasks(
+              node: FunctionlessNode
+            ): FunctionlessNode | FunctionlessNode[] {
+              if (nestedTaskSet.has(node)) {
+                return new Identifier(self.getDeterministicGeneratedName(node));
+              } else {
+                return visitEachChild(node, replaceTasks);
+              }
+            }
+          }
         }
       }
       return visitEachChild(node, visit);
@@ -833,8 +891,8 @@ export class ASL {
       } else if (isFilter(expr)) {
         const throwTransition = this.throw(expr);
 
-        const callbackfn = expr.args.callbackfn;
-        if (callbackfn !== undefined && callbackfn.kind === "FunctionExpr") {
+        const predicate = expr.args.predicate;
+        if (predicate !== undefined && predicate.kind === "FunctionExpr") {
           try {
             // first try to implement filter optimally with JSON Path
             return {
@@ -844,8 +902,8 @@ export class ASL {
             };
           } catch {
             // if JSON Path fails, then implement as a Map
-            const callbackStates = this.execute(callbackfn.body);
-            const callbackStart = this.getStateName(callbackfn.body.step()!);
+            const callbackStates = this.execute(predicate.body);
+            const callbackStart = this.getStateName(predicate.body.step()!);
 
             const tmp = `$.${this.getDeterministicGeneratedName(expr)}`;
 
@@ -869,7 +927,7 @@ export class ASL {
                     Choices: [
                       {
                         Next: `filter_keep_${tmp}`,
-                        And: [{}],
+                        ...ASL.isTruthy(tmp),
                       },
                     ],
                   },
@@ -890,7 +948,7 @@ export class ASL {
               ...props,
               ItemsPath: listPath,
               Parameters: Object.fromEntries(
-                callbackfn.parameters.map((param, i) => [
+                predicate.parameters.map((param, i) => [
                   param.name,
                   i === 0
                     ? "$$.Map.Item.Value"
@@ -974,6 +1032,8 @@ export class ASL {
           ResultPath: ASL.toJsonPath(expr.left),
         });
       }
+    } else if (expr.kind === "BinaryExpr") {
+    } else if (expr.kind === "ConditionExpr") {
     }
     throw new Error(`cannot eval expression kind '${expr.kind}'`);
   }
@@ -1290,11 +1350,11 @@ export namespace ASL {
     } else if (expr.kind === "ElementAccessExpr") {
       return toJsonPath(expr);
     } else if (expr.kind === "TemplateExpr") {
-      return `States.Format(${expr.exprs
+      return `States.Format('${expr.exprs
         .map((e) => (isLiteralExpr(e) ? toJson(e) : "{}"))
         .join("")},${expr.exprs
         .filter((e) => !isLiteralExpr(e))
-        .map((e) => toJsonPath(e))})`;
+        .map((e) => toJsonPath(e))}')`;
     }
     throw new Error(`cannot evaluate ${expr.kind} to JSON`);
   }
@@ -1469,6 +1529,109 @@ export namespace ASL {
       `Expression kind '${expr.kind}' is not allowed as an element in a Step Function`
     );
   }
+
+  export const isTruthy = (v: string): Condition =>
+    and(
+      isPresent(v),
+      isNotNull(v),
+      or(
+        and(isString(v), not(stringEquals(v, ""))),
+        and(isNumeric(v), not(numericEquals(v, 0))),
+        and(isBoolean(v), ref(v))
+      )
+    );
+
+  export const ref = (Variable: string): Condition => ({ Variable });
+
+  export const and = (...cond: Condition[]): Condition => ({
+    And: cond,
+  });
+
+  export const or = (...cond: Condition[]): Condition => ({
+    Or: cond,
+  });
+
+  export const not = (cond: Condition): Condition => ({
+    Not: cond,
+  });
+
+  export const isPresent = (Variable: string): Condition => ({
+    IsPresent: true,
+    Variable,
+  });
+
+  export const isNull = (Variable: string): Condition => ({
+    IsNull: true,
+    Variable,
+  });
+
+  export const isNotNull = (Variable: string): Condition => ({
+    IsNull: false,
+    Variable,
+  });
+
+  export const isBoolean = (Variable: string): Condition => ({
+    IsBoolean: true,
+    Variable,
+  });
+
+  export const isString = (Variable: string): Condition => ({
+    IsString: true,
+    Variable,
+  });
+
+  export const isNumeric = (Variable: string): Condition => ({
+    IsNumeric: true,
+    Variable,
+  });
+
+  export const stringEqualsPath = (
+    Variable: string,
+    path: string
+  ): Condition => ({
+    And: [
+      isString(Variable),
+      {
+        StringEqualsPath: path,
+      },
+    ],
+  });
+
+  export const stringEquals = (
+    Variable: string,
+    string: string
+  ): Condition => ({
+    And: [
+      isString(Variable),
+      {
+        StringEquals: string,
+      },
+    ],
+  });
+
+  export const numericEqualsPath = (
+    Variable: string,
+    path: string
+  ): Condition => ({
+    And: [
+      isNumeric(Variable),
+      {
+        NumericEqualsPath: path,
+      },
+    ],
+  });
+
+  export const numericEquals = (
+    Variable: string,
+    number: number
+  ): Condition => ({
+    And: [
+      isNumeric(Variable),
+      {
+        NumericEquals: number,
+      },
+    ],
+  });
 
   export function toCondition(expr: Expr): Condition {
     if (expr.kind === "BooleanLiteralExpr") {

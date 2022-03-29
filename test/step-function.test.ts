@@ -2790,7 +2790,7 @@ test("try { for-of } catch { (maybe) throw } finally { task }", () => {
               End: true,
               Parameters: {
                 FunctionName: task.resource.functionName,
-                Payload: "$.item",
+                "Payload.$": "$.item",
               },
               Resource: "arn:aws:states:::lambda:invoke",
               ResultPath: null,
@@ -2921,7 +2921,7 @@ test("for-of { try { task() } catch (err) { if(err) throw } finally { task() } }
               Next: 'task("2")',
               Parameters: {
                 FunctionName: task.resource.functionName,
-                Payload: "$.item",
+                "Payload.$": "$.item",
               },
               Resource: "arn:aws:states:::lambda:invoke",
               ResultPath: null,
@@ -3185,7 +3185,7 @@ test("list.map(item => task(item))", () => {
               End: true,
               Parameters: {
                 FunctionName: task.resource.functionName,
-                Payload: "$.item",
+                "Payload.$": "$.item",
               },
               Resource: "arn:aws:states:::lambda:invoke",
               ResultPath: "$",
@@ -3247,7 +3247,7 @@ test("list.map((item, i) => if (i == 0) task(item))", () => {
               End: true,
               Parameters: {
                 FunctionName: task.resource.functionName,
-                Payload: "$.item",
+                "Payload.$": "$.item",
               },
               Resource: "arn:aws:states:::lambda:invoke",
               ResultPath: "$",
@@ -3304,7 +3304,7 @@ test("list.map((item, i, list) => if (i == 0) task(item) else task(list[0]))", (
               End: true,
               Parameters: {
                 FunctionName: task.resource.functionName,
-                Payload: "$.item",
+                "Payload.$": "$.item",
               },
               Resource: "arn:aws:states:::lambda:invoke",
               ResultPath: "$",
@@ -3314,7 +3314,7 @@ test("list.map((item, i, list) => if (i == 0) task(item) else task(list[0]))", (
               End: true,
               Parameters: {
                 FunctionName: task.resource.functionName,
-                Payload: "$.list[0]",
+                "Payload.$": "$.list[0]",
               },
               Resource: "arn:aws:states:::lambda:invoke",
               ResultPath: "$",
@@ -3364,7 +3364,7 @@ test("try { list.map(item => task(item)) }", () => {
               End: true,
               Parameters: {
                 FunctionName: task.resource.functionName,
-                Payload: "$.item",
+                "Payload.$": "$.item",
               },
               Resource: "arn:aws:states:::lambda:invoke",
               ResultPath: "$",
@@ -3423,7 +3423,7 @@ test("try { list.map(item => task(item)) }", () => {
               End: true,
               Parameters: {
                 FunctionName: task.resource.functionName,
-                Payload: "$.item",
+                "Payload.$": "$.item",
               },
               Resource: "arn:aws:states:::lambda:invoke",
               ResultPath: "$",
@@ -3606,7 +3606,7 @@ test("list.forEach(item => task(item))", () => {
               End: true,
               Parameters: {
                 FunctionName: task.resource.functionName,
-                Payload: "$.item",
+                "Payload.$": "$.item",
               },
               Resource: "arn:aws:states:::lambda:invoke",
               ResultPath: "$",
@@ -3668,7 +3668,7 @@ test("list.forEach((item, i) => if (i == 0) task(item))", () => {
               End: true,
               Parameters: {
                 FunctionName: task.resource.functionName,
-                Payload: "$.item",
+                "Payload.$": "$.item",
               },
               Resource: "arn:aws:states:::lambda:invoke",
               ResultPath: "$",
@@ -3725,7 +3725,7 @@ test("list.forEach((item, i, list) => if (i == 0) task(item) else task(list[0]))
               End: true,
               Parameters: {
                 FunctionName: task.resource.functionName,
-                Payload: "$.item",
+                "Payload.$": "$.item",
               },
               Resource: "arn:aws:states:::lambda:invoke",
               ResultPath: "$",
@@ -3735,7 +3735,7 @@ test("list.forEach((item, i, list) => if (i == 0) task(item) else task(list[0]))
               End: true,
               Parameters: {
                 FunctionName: task.resource.functionName,
-                Payload: "$.list[0]",
+                "Payload.$": "$.list[0]",
               },
               Resource: "arn:aws:states:::lambda:invoke",
               ResultPath: "$",
@@ -3785,7 +3785,7 @@ test("try { list.forEach(item => task(item)) }", () => {
               End: true,
               Parameters: {
                 FunctionName: task.resource.functionName,
-                Payload: "$.item",
+                "Payload.$": "$.item",
               },
               Resource: "arn:aws:states:::lambda:invoke",
               ResultPath: "$",
@@ -3844,7 +3844,7 @@ test("try { list.forEach(item => task(item)) }", () => {
               End: true,
               Parameters: {
                 FunctionName: task.resource.functionName,
-                Payload: "$.item",
+                "Payload.$": "$.item",
               },
               Resource: "arn:aws:states:::lambda:invoke",
               ResultPath: "$",
@@ -4027,7 +4027,7 @@ test("return $SFN.map(list, (item) => task(item))", () => {
               End: true,
               Parameters: {
                 FunctionName: task.resource.functionName,
-                Payload: "$.item",
+                "Payload.$": "$.item",
               },
               Resource: "arn:aws:states:::lambda:invoke",
               ResultPath: "$",
@@ -4065,7 +4065,7 @@ test("return $SFN.map(list, {maxConcurrency: 2} (item) => task(item))", () => {
               End: true,
               Parameters: {
                 FunctionName: task.resource.functionName,
-                Payload: "$.item",
+                "Payload.$": "$.item",
               },
               Resource: "arn:aws:states:::lambda:invoke",
               ResultPath: "$",
@@ -4102,7 +4102,7 @@ test("$SFN.map(list, (item) => task(item))", () => {
               End: true,
               Parameters: {
                 FunctionName: task.resource.functionName,
-                Payload: "$.item",
+                "Payload.$": "$.item",
               },
               Resource: "arn:aws:states:::lambda:invoke",
               ResultPath: "$",
@@ -4147,7 +4147,7 @@ test("result = $SFN.map(list, (item) => task(item))", () => {
               End: true,
               Parameters: {
                 FunctionName: task.resource.functionName,
-                Payload: "$.item",
+                "Payload.$": "$.item",
               },
               Resource: "arn:aws:states:::lambda:invoke",
               ResultPath: "$",
@@ -4203,7 +4203,7 @@ test("return $SFN.map(list, (item) => try { task(item)) } catch { return null }"
               End: true,
               Parameters: {
                 FunctionName: task.resource.functionName,
-                Payload: "$.item",
+                "Payload.$": "$.item",
               },
               Resource: "arn:aws:states:::lambda:invoke",
               ResultPath: "$",
@@ -4259,7 +4259,7 @@ test("try { $SFN.map(list, (item) => task(item)) } catch { return null }", () =>
               End: true,
               Parameters: {
                 FunctionName: task.resource.functionName,
-                Payload: "$.item",
+                "Payload.$": "$.item",
               },
               Resource: "arn:aws:states:::lambda:invoke",
               ResultPath: "$",
@@ -4304,7 +4304,7 @@ test("return $SFN.forEach(list, (item) => task(item))", () => {
               End: true,
               Parameters: {
                 FunctionName: task.resource.functionName,
-                Payload: "$.item",
+                "Payload.$": "$.item",
               },
               Resource: "arn:aws:states:::lambda:invoke",
               ResultPath: "$",
@@ -4342,7 +4342,7 @@ test("return $SFN.forEach(list, {maxConcurrency: 2} (item) => task(item))", () =
               End: true,
               Parameters: {
                 FunctionName: task.resource.functionName,
-                Payload: "$.item",
+                "Payload.$": "$.item",
               },
               Resource: "arn:aws:states:::lambda:invoke",
               ResultPath: "$",
@@ -4379,7 +4379,7 @@ test("$SFN.forEach(list, (item) => task(item))", () => {
               End: true,
               Parameters: {
                 FunctionName: task.resource.functionName,
-                Payload: "$.item",
+                "Payload.$": "$.item",
               },
               Resource: "arn:aws:states:::lambda:invoke",
               ResultPath: "$",
@@ -4424,7 +4424,7 @@ test("result = $SFN.forEach(list, (item) => task(item))", () => {
               End: true,
               Parameters: {
                 FunctionName: task.resource.functionName,
-                Payload: "$.item",
+                "Payload.$": "$.item",
               },
               Resource: "arn:aws:states:::lambda:invoke",
               ResultPath: "$",
@@ -4480,7 +4480,7 @@ test("return $SFN.forEach(list, (item) => try { task(item)) } catch { return nul
               End: true,
               Parameters: {
                 FunctionName: task.resource.functionName,
-                Payload: "$.item",
+                "Payload.$": "$.item",
               },
               Resource: "arn:aws:states:::lambda:invoke",
               ResultPath: "$",
@@ -4536,7 +4536,7 @@ test("try { $SFN.forEach(list, (item) => task(item)) } catch { return null }", (
               End: true,
               Parameters: {
                 FunctionName: task.resource.functionName,
-                Payload: "$.item",
+                "Payload.$": "$.item",
               },
               Resource: "arn:aws:states:::lambda:invoke",
               ResultPath: "$",
@@ -4807,7 +4807,7 @@ test("template literal strings", () => {
         Parameters: {
           FunctionName: task.resource.functionName,
           Payload: {
-            "key.$": "States.Format({} hello {},$.obj.str,$.obj.items[0])",
+            "key.$": "States.Format('{} hello {},$.obj.str,$.obj.items[0]')",
           },
         },
         Resource: "arn:aws:states:::lambda:invoke",
@@ -4986,12 +4986,16 @@ test("continue in for loop", () => {
                   Variable: "$.item",
                 },
               ],
-              Default: undefined,
+              Default: '0_empty_else_if(item == "hello")',
               Type: "Choice",
             },
             continue: {
               End: true,
               ResultPath: null,
+              Type: "Pass",
+            },
+            '0_empty_else_if(item == "hello")': {
+              End: true,
               Type: "Pass",
             },
           },
@@ -5061,7 +5065,7 @@ test("continue in while loop", () => {
         Next: "while (true)",
         Parameters: {
           FunctionName: task.resource.functionName,
-          Payload: "$.key",
+          "Payload.$": "$.key",
         },
         Resource: "arn:aws:states:::lambda:invoke",
         ResultPath: null,
@@ -5112,8 +5116,8 @@ test("continue in do..while loop", () => {
       "task(key)": {
         Next: "do...while (true)",
         Parameters: {
-          FunctionName: "${Token[TOKEN.223]}",
-          Payload: "$.key",
+          FunctionName: task.resource.functionName,
+          "Payload.$": "$.key",
         },
         Resource: "arn:aws:states:::lambda:invoke",
         ResultPath: null,
@@ -5142,11 +5146,35 @@ test("continue in do..while loop", () => {
   });
 });
 
-test("items.filter(task(item) !== null)", () => {
+test("return task(task())", () => {
   const { stack, task } = initStepFunctionApp();
-  const definition = new ExpressStepFunction(stack, "fn", (items: string[]) => {
-    return items.filter((item) => task(item) !== null);
+  const definition = new ExpressStepFunction(stack, "fn", () => {
+    return task(task());
   }).definition;
 
-  expect(definition).toEqual({});
+  expect(definition).toEqual({
+    StartAt: "0_tmp = task(null)",
+    States: {
+      "0_tmp = task(null)": {
+        Next: "return task(0_tmp)",
+        Parameters: {
+          FunctionName: task.resource.functionName,
+          Payload: null,
+        },
+        Resource: "arn:aws:states:::lambda:invoke",
+        ResultPath: "$.0_tmp",
+        Type: "Task",
+      },
+      "return task(0_tmp)": {
+        End: true,
+        Parameters: {
+          FunctionName: task.resource.functionName,
+          "Payload.$": "$.0_tmp",
+        },
+        Resource: "arn:aws:states:::lambda:invoke",
+        ResultPath: "$",
+        Type: "Task",
+      },
+    },
+  });
 });
