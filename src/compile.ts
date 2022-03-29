@@ -1,4 +1,4 @@
-import ts, { Statement } from "typescript";
+import ts from "typescript";
 import { PluginConfig, TransformerExtras } from "ts-patch";
 import { BinaryOp } from "./expression";
 import { AnyTable } from "./table";
@@ -7,12 +7,20 @@ import { FunctionlessNode } from "./node";
 import { EventBus, EventBusRule } from "./event-bridge";
 import { AppsyncResolver } from "./appsync";
 import { assertDefined } from "./assert";
+import { EventBusTransform } from "./event-bridge/transform";
+import glob from "glob";
+
 export default compile;
 
 /**
  * Configuration options for the functionless TS transform.
  */
-export interface FunctionlessConfig extends PluginConfig {}
+export interface FunctionlessConfig extends PluginConfig {
+  /**
+   * Glob to exclude
+   */
+  exclude?: string;
+}
 
 /**
  * TypeScript Transformer which transforms functionless functions, such as `AppsyncResolver`,
@@ -29,8 +37,14 @@ export function compile(
   _config?: FunctionlessConfig,
   _extras?: TransformerExtras
 ): ts.TransformerFactory<ts.SourceFile> {
+  const ignore = _config?.exclude
+    ? glob.sync(_config.exclude, { absolute: true })
+    : [];
+
   const checker = program.getTypeChecker();
   return (ctx) => {
+    console.log("ignoring", ignore.join());
+
     const functionless = ts.factory.createUniqueName("functionless");
     return (sf) => {
       const functionlessImport = ts.factory.createImportDeclaration(
@@ -43,6 +57,13 @@ export function compile(
         ),
         ts.factory.createStringLiteral("functionless")
       );
+
+      console.log("sf", sf.fileName);
+
+      if (ignore.includes(sf.fileName)) {
+        console.log("ignoring");
+        return sf;
+      }
 
       return ts.factory.updateSourceFile(
         sf,
@@ -59,28 +80,20 @@ export function compile(
 
       function visitor(node: ts.Node): ts.Node {
         const _visit = () => {
-          try {
-            if (isAppsyncResolver(node)) {
-              return visitAppsyncResolver(node);
-            } else if (isReflectFunction(node)) {
-              return toFunction("FunctionDecl", node.arguments[0]);
-            } else if (isEventBusWhenFunction(node)) {
-              return visitEventBusWhen(node);
-            } else if (isEventBusMapFunction(node)) {
-              return visitEventBusMap(node);
-            }
-            return node;
-          } catch (err) {
-            const error =
-              err instanceof Error ? err : Error("Unknown compiler error.");
-            return newExpr("Err", [
-              ts.factory.createNewExpression(
-                ts.factory.createIdentifier(error.name),
-                undefined,
-                [ts.factory.createStringLiteral(error.message)]
-              ),
-            ]) as unknown as Statement;
+          if (isAppsyncResolver(node)) {
+            return visitAppsyncResolver(node);
+          } else if (isReflectFunction(node)) {
+            return toFunction("FunctionDecl", node.arguments[0]);
+          } else if (isEventBusWhenFunction(node)) {
+            return visitEventBusWhen(node);
+          } else if (isEventBusMapFunction(node)) {
+            return visitEventBusMap(node);
+          } else if (isNewEventBusRule(node)) {
+            return visitEventBusRule(node);
+          } else if (isNewEventBusTransform(node)) {
+            return visitEventTransform(node);
           }
+          return node;
         };
         // keep processing the children of the updated node.
         return ts.visitEachChild(_visit(), visitor, ctx);
@@ -97,6 +110,14 @@ export function compile(
         | ts.ElementAccessExpression
         | ts.CallExpression;
 
+      type EventBusRuleInterface = ts.NewExpression & {
+        arguments: [any, any, any, TsFunctionParameter];
+      };
+
+      type EventBusTransformInterface = ts.NewExpression & {
+        arguments: [TsFunctionParameter, any];
+      };
+
       type EventBusWhenInterface = ts.CallExpression & {
         arguments: [any, any, TsFunctionParameter];
       };
@@ -104,6 +125,16 @@ export function compile(
       type EventBusMapInterface = ts.CallExpression & {
         arguments: [TsFunctionParameter];
       };
+
+      function isNewEventBusRule(node: ts.Node): node is EventBusRuleInterface {
+        return ts.isNewExpression(node) && isEventBusRule(node.expression);
+      }
+
+      function isNewEventBusTransform(
+        node: ts.Node
+      ): node is EventBusTransformInterface {
+        return ts.isNewExpression(node) && isEventBusTransform(node.expression);
+      }
 
       function isEventBusWhenFunction(
         node: ts.Node
@@ -141,6 +172,38 @@ export function compile(
        */
       function isEventBusRule(node: ts.Node) {
         return isFunctionlessClassOfKind(node, EventBusRule.FunctionlessType);
+      }
+
+      /**
+       * Checks to see if a node is of type EventBusRule.
+       * The node could be any kind of node that returns an event bus rule.
+       */
+      function isEventBusTransform(node: ts.Node) {
+        return isFunctionlessClassOfKind(
+          node,
+          EventBusTransform.FunctionlessType
+        );
+      }
+
+      /**
+       * Catches any errors and wraps them in a {@link Err} node.
+       */
+      function errorBoundary<T extends ts.Node>(
+        func: () => T
+      ): T | ts.NewExpression {
+        try {
+          return func();
+        } catch (err) {
+          const error =
+            err instanceof Error ? err : Error("Unknown compiler error.");
+          return newExpr("Err", [
+            ts.factory.createNewExpression(
+              ts.factory.createIdentifier(error.name),
+              undefined,
+              [ts.factory.createStringLiteral(error.message)]
+            ),
+          ]);
+        }
       }
 
       function isFunctionlessClassOfKind(node: ts.Node, kind: string) {
@@ -203,6 +266,33 @@ export function compile(
         return undefined;
       }
 
+      function visitEventBusRule(call: EventBusRuleInterface): ts.Node {
+        const [one, two, three, impl] = call.arguments;
+
+        return ts.factory.updateNewExpression(
+          call,
+          call.expression,
+          call.typeArguments,
+          [
+            one,
+            two,
+            three,
+            errorBoundary(() => toFunction("FunctionDecl", impl)),
+          ]
+        );
+      }
+
+      function visitEventTransform(call: EventBusTransformInterface): ts.Node {
+        const [impl, ...rest] = call.arguments;
+
+        return ts.factory.updateNewExpression(
+          call,
+          call.expression,
+          call.typeArguments,
+          [errorBoundary(() => toFunction("FunctionDecl", impl)), ...rest]
+        );
+      }
+
       function visitEventBusWhen(call: EventBusWhenInterface): ts.Node {
         const [one, two, impl] = call.arguments;
 
@@ -210,7 +300,7 @@ export function compile(
           call,
           call.expression,
           call.typeArguments,
-          [one, two, toFunction("FunctionDecl", impl)]
+          [one, two, errorBoundary(() => toFunction("FunctionDecl", impl))]
         );
       }
 
@@ -221,7 +311,7 @@ export function compile(
           call,
           call.expression,
           call.typeArguments,
-          [toFunction("FunctionDecl", impl)]
+          [errorBoundary(() => toFunction("FunctionDecl", impl))]
         );
       }
 
@@ -233,7 +323,7 @@ export function compile(
               call,
               call.expression,
               call.typeArguments,
-              [toFunction("FunctionDecl", impl, 1)]
+              [errorBoundary(() => toFunction("FunctionDecl", impl, 1))]
             );
           }
         }

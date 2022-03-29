@@ -2,7 +2,7 @@ const { typescript } = require("projen");
 const project = new typescript.TypeScriptProject({
   defaultReleaseBranch: "main",
   name: "functionless",
-  deps: ["fs-extra"],
+  deps: ["fs-extra", "glob"],
   devDeps: [
     "@aws-cdk/aws-appsync-alpha",
     "@types/fs-extra",
@@ -12,6 +12,7 @@ const project = new typescript.TypeScriptProject({
     "ts-patch",
     "typesafe-dynamodb",
     "typescript",
+    "@types/glob",
   ],
   peerDeps: [
     "@aws-cdk/aws-appsync-alpha@^2.14.0-alpha.0",
@@ -34,6 +35,7 @@ const project = new typescript.TypeScriptProject({
       plugins: [
         {
           transform: "./lib/compile",
+          exclude: "./src/{,**}/*",
         },
       ],
     },

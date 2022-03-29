@@ -15,7 +15,7 @@ test("new bus", () => {
   new EventBus(bus);
 });
 
-test.skip("new rule without when", () => {
+test("new rule without when", () => {
   const bus = new aws_events.EventBus(stack, "bus");
 
   const rule = new EventBusRule(stack, "rule", bus, (_event) => true);
@@ -23,7 +23,7 @@ test.skip("new rule without when", () => {
   expect(rule.rule._renderEventPattern()).toEqual({ source: [{ prefix: "" }] });
 });
 
-test.skip("new transform without map", () => {
+test("new transform without map", () => {
   const bus = new aws_events.EventBus(stack, "bus");
 
   const rule = new EventBusRule(stack, "rule", bus, (_event) => true);
@@ -85,9 +85,9 @@ test("new bus with when map pipe function props", () => {
     aws_lambda.Function.fromFunctionArn(stack, "func", "")
   );
 
-  const rule = busBus
-    .when(stack, "rule", () => true)
-    .map((event) => event.source);
+  const _rule = busBus.when(stack, "rule", () => true);
+  console.log(_rule);
+  const rule = _rule.map((event) => event.source);
   rule.pipe({ func, retryAttempts: 10 });
 
   expect(rule.targetInput.bind(rule.rule.rule)).toEqual({

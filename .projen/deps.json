@@ -10,6 +10,10 @@
       "type": "build"
     },
     {
+      "name": "@types/glob",
+      "type": "build"
+    },
+    {
       "name": "@types/jest",
       "type": "build"
     },
@@ -131,6 +135,10 @@
     },
     {
       "name": "fs-extra",
+      "type": "runtime"
+    },
+    {
+      "name": "glob",
       "type": "runtime"
     }
   ],

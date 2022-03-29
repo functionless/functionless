@@ -38,6 +38,8 @@ export interface EventTransformUtils {
 export class EventBusTransform<T extends EventBusRuleInput, P> {
   readonly targetInput: aws_events.RuleTargetInput;
 
+  public static readonly FunctionlessType = "EventBusTransform";
+
   constructor(
     func: EventTransformFunction<T, P>,
     readonly rule: EventBusRule<T>
