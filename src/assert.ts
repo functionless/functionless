@@ -1,7 +1,21 @@
 import { FunctionlessNode } from "./node";
 
 export function assertNever(value: never): never {
-  throw new Error(`reached unreachable branch with value: ${value}`);
+  throw new Error(
+    `reached unreachable branch with value: ${
+      typeof value === "string" ? value : JSON.stringify(value)
+    }`
+  );
+}
+
+export function assertDefined<T>(
+  value?: T,
+  message?: string
+): Exclude<T, undefined> {
+  if (value === undefined) {
+    throw new Error(message ?? "Expected value to be present");
+  }
+  return value as Exclude<T, undefined>;
 }
 
 export function assertNodeKind<T extends FunctionlessNode>(
