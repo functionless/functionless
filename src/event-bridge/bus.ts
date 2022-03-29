@@ -6,6 +6,11 @@ import { EventBusRuleInput } from "./types";
 /**
  * A Functionless wrapper for a AWS CDK {@link aws_events.EventBus}.
  *
+ * Wrap your {@link aws_events.EventBus} instance with this class,
+ * specify a type to represent the events passing through the EventBus,
+ * and then use the .when, .map and .pipe functions to express
+ * EventBus Event Patterns and Targets Inputs with native TypeScript syntax.
+ *
  * Filtering events and sending them to Lambda.
  *
  * ```ts
@@ -14,15 +19,17 @@ import { EventBusRuleInput } from "./types";
  * }
  *
  * // An event with the payload
- * type myEvent = EventBusRuleInput<Payload>;
+ * interface myEvent extends EventBusRuleInput<Payload> {}
  *
  * const myAwsFunction = new aws_lambda.Function(this, 'myFunction', { ... });
  * // A function that expects the payload.
- * const myLambdaFunction = new Function<Payload, void>();
+ * const myLambdaFunction = new functionless.Function<Payload, void>(myAwsFunction);
  *
- * // Some AWS Event Bus, may be new, may be default or imported.
+ * // instantiate an aws_events.EventBus Construct
  * const awsBus = new aws_events.EventBus(this, "mybus");
- * new EventBus<myEvent>(awsBus)
+ * 
+ * // Wrap the aws_events.EventBus with the functionless.EventBus
+ * new functionless.EventBus<myEvent>(awsBus)
  *    // when the payload is equal to some value
  *    .when(this, 'rule1', event => event.detail.value === "some value")
  *    // grab the payload
@@ -34,9 +41,10 @@ import { EventBusRuleInput } from "./types";
  * Forwarding to another Event Bus based on some predicate:
  *
  * ```ts
+ * // Using an imported event bus
  * const anotherEventBus = aws_event.EventBus.fromEventBusArn(...);
  *
- * new EventBus<myEvent>(awsBus)
+ * new functionless.EventBus<myEvent>(awsBus)
  *    // when the payload is equal to some value
  *    .when(this, 'rule2', event => event.detail.value === "some value")
  *    // send verbatim to the other event bus
@@ -52,7 +60,7 @@ export class EventBus<E extends EventBusRuleInput> {
   constructor(readonly bus: aws_events.EventBus) {}
 
   /**
-   * Filter events using as a EventBus Rule using a Functionless predicte function.
+   * EventBus Rules can filter events using Functionless predicate functions.
    *
    * Equals
    *

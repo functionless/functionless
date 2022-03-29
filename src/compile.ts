@@ -4,7 +4,7 @@ import { BinaryOp } from "./expression";
 import { AnyTable } from "./table";
 import { AnyLambda } from "./function";
 import { FunctionlessNode } from "./node";
-import { EventBus, EventBusRule } from "./eventbridge";
+import { EventBus, EventBusRule } from "./event-bridge";
 import { AppsyncResolver } from "./appsync";
 import { assertDefined } from "./assert";
 export default compile;

@@ -1,6 +1,6 @@
 import { aws_events, aws_lambda, Stack } from "aws-cdk-lib";
-import { EventBus, EventBusRule } from "../src/eventbridge";
-import { EventBusTransform } from "../src/eventbridge/transform";
+import { EventBus, EventBusRule } from "../src/event-bridge";
+import { EventBusTransform } from "../src/event-bridge/transform";
 import { Function } from "../src/function";
 
 let stack: Stack;

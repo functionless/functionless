@@ -7,4 +7,4 @@ export * from "./reflect";
 export * from "./statement";
 export * from "./table";
 export * from "./util";
-export * from "./eventbridge";
+export * from "./event-bridge";

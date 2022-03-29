@@ -2,7 +2,7 @@ import { aws_events } from "aws-cdk-lib";
 import { Construct } from "constructs";
 import { EventBus } from "./bus";
 import { FunctionDecl } from "../declaration";
-import { synthesizeEventPattern } from "./eventpattern";
+import { synthesizeEventPattern } from "./event-pattern";
 import { Function } from "../function";
 import { EventBusRuleInput } from "./types";
 import { EventTransformFunction, EventBusTransform } from "./transform";
@@ -26,7 +26,7 @@ export type EventPredicateFunction<
  * Represents a set of events filtered by the when predicate using event bus's EventPatterns.
  * https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-event-patterns.html
  *
- * See {@link EventBus}.when for more details on filtering events.
+ * @see EventBus.when for more details on filtering events.
  */
 export class EventBusRule<T extends EventBusRuleInput> extends Construct {
   public readonly rule: aws_events.Rule;

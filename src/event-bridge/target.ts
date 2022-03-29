@@ -17,9 +17,9 @@ export type EventBusTargetResource<T extends EventBusRuleInput, P> =
   | EventBus<T>
   | EventBusTargetProps<T>;
 
-  /**
-   * Add a target to the run based on the configuration given.
-   */
+/**
+ * Add a target to the run based on the configuration given.
+ */
 export const pipe = <T extends EventBusRuleInput, P>(
   rule: aws_events.Rule,
   resource: EventBusTargetResource<T, P>,

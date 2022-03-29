@@ -1,6 +1,6 @@
 import { aws_events } from "aws-cdk-lib";
 import { FunctionDecl } from "../declaration";
-import { synthesizeEventBridgeTargets } from "./targets";
+import { synthesizeEventBridgeTargets } from "./target-input";
 import { Function } from "../function";
 import { LambdaTargetProps, pipe } from "./target";
 import { EventBusRuleInput } from "./types";
@@ -33,7 +33,7 @@ export interface EventTransformUtils {
  * Represents an event that has been transformed using Target Input Transformers.
  * https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-transform-target-input.html
  *
- * See {@link EventBusRule}.map for more details on transforming event details.
+ * @see EventBusRule.map for more details on transforming event details.
  */
 export class EventBusTransform<T extends EventBusRuleInput, P> {
   readonly targetInput: aws_events.RuleTargetInput;
@@ -51,7 +51,7 @@ export class EventBusTransform<T extends EventBusRuleInput, P> {
    *
    * EventBus is not a valid pipe target for transformed events.
    *
-   * See {@link EventBusRule}.pipe for more details on pipe.
+   * @see EventBusRule.pipe for more details on pipe.
    */
   pipe<P>(props: LambdaTargetProps<P>): void;
   pipe<P>(func: Function<P, any>): void;

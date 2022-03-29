@@ -3,12 +3,12 @@ import { AppsyncResolver, EventBusRuleInput, FunctionDecl } from "../src";
 
 import * as appsync from "@aws-cdk/aws-appsync-alpha";
 import path from "path";
-import { synthesizeEventPattern } from "../src/eventbridge/eventpattern";
-import { FunctionlessEventPattern } from "../src/eventbridge/eventpattern/types";
+import { synthesizeEventPattern } from "../src/event-bridge/event-pattern";
+import { FunctionlessEventPattern } from "../src/event-bridge/event-pattern/types";
 import { Rule } from "aws-cdk-lib/aws-events";
 import { Err, isErr } from "../src/error";
-import { EventTransformFunction } from "../src/eventbridge/transform";
-import { synthesizeEventBridgeTargets } from "../src/eventbridge/targets/synth";
+import { EventTransformFunction } from "../src/event-bridge/transform";
+import { synthesizeEventBridgeTargets } from "../src/event-bridge/target-input/synth";
 
 // generates boilerplate for the circuit-breaker logic for implementing early return
 export function returnExpr(varName: string) {

@@ -1,4 +1,4 @@
-import { EventBusRuleInput } from "../src/eventbridge";
+import { EventBusRuleInput } from "../src/event-bridge";
 
 import { Function, reflect } from "../src";
 import { aws_events } from "aws-cdk-lib";
