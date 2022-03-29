@@ -449,7 +449,7 @@ describe("referencing", () => {
   });
 
   // Functionless doesn't support computed properties currently
-  test.skip("constant computed prop name", () => {
+  test("constant computed prop name", () => {
     ebEventTargetTestCase<testEvent>(
       reflect(() => {
         const value = "hi";

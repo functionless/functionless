@@ -85,9 +85,9 @@ test("new bus with when map pipe function props", () => {
     aws_lambda.Function.fromFunctionArn(stack, "func", "")
   );
 
-  const _rule = busBus.when(stack, "rule", () => true);
-  console.log(_rule);
-  const rule = _rule.map((event) => event.source);
+  const rule = busBus
+    .when(stack, "rule", () => true)
+    .map((event) => event.source);
   rule.pipe({ func, retryAttempts: 10 });
 
   expect(rule.targetInput.bind(rule.rule.rule)).toEqual({
