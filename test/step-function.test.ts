@@ -5179,11 +5179,20 @@ test("return task(task())", () => {
   });
 });
 
-test("return cond ? task(1) : task(2))", () => {
-  const { stack, task } = initStepFunctionApp();
-  const definition = new ExpressStepFunction(stack, "fn", (cond: boolean) => {
-    return cond ? task(1) : task(2);
-  }).definition;
+// test("return cond ? task(1) : task(2))", () => {
+//   const { stack, task } = initStepFunctionApp();
+//   const definition = new ExpressStepFunction(stack, "fn", (cond: boolean) => {
+//     return cond ? task(1) : task(2);
+//   }).definition;
 
-  expect(definition).toEqual({});
-});
+//   expect(definition).toEqual({});
+// });
+
+// test("return task(1) ?? task(2))", () => {
+//   const { stack, task } = initStepFunctionApp();
+//   const definition = new ExpressStepFunction(stack, "fn", () => {
+//     return task(1) ?? task(2);
+//   }).definition;
+
+//   expect(definition).toEqual({});
+// });

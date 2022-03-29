@@ -359,7 +359,7 @@ export class ASL {
       ) {
         const expr = node.expr;
         if (expr?.kind === "CallExpr") {
-          // reduce nested Tasks to individual calls
+          // reduce nested Tasks to individual Statements
           const nestedTasks = expr.children.flatMap(function findTasks(
             node: FunctionlessNode
           ): CallExpr[] {
@@ -380,7 +380,15 @@ export class ASL {
           if (nestedTasks.length > 0) {
             const nestedTaskSet = new Set<FunctionlessNode>(nestedTasks);
 
-            const replaced = replaceTasks(node);
+            const replaced = (function replaceTasks(
+              node: FunctionlessNode
+            ): FunctionlessNode | FunctionlessNode[] {
+              if (nestedTaskSet.has(node)) {
+                return new Identifier(self.getDeterministicGeneratedName(node));
+              } else {
+                return visitEachChild(node, replaceTasks);
+              }
+            })(node);
 
             return [
               // hoist all nested calls to individual VariableStmt(CallExpr())
@@ -393,16 +401,6 @@ export class ASL {
               ),
               ...(Array.isArray(replaced) ? replaced : [replaced]),
             ];
-
-            function replaceTasks(
-              node: FunctionlessNode
-            ): FunctionlessNode | FunctionlessNode[] {
-              if (nestedTaskSet.has(node)) {
-                return new Identifier(self.getDeterministicGeneratedName(node));
-              } else {
-                return visitEachChild(node, replaceTasks);
-              }
-            }
           }
         }
       }
