@@ -9,6 +9,7 @@ import {
   isFunctionExpr,
   isLiteralExpr,
   isReferenceExpr,
+  isTypeOfExpr,
   isVariableReference,
   NewExpr,
   NullLiteralExpr,
@@ -537,11 +538,11 @@ export class ASL {
         [this.getStateName(stmt)]: {
           Type: "Choice",
           Choices: choices,
-          Default: next ?? `0_otherwise_${this.getStateName(stmt)}`,
+          Default: next ?? `0_empty_else_${this.getStateName(stmt)}`,
         },
         ...(next === undefined
           ? {
-              [`0_otherwise_${this.getStateName(stmt)}`]: {
+              [`0_empty_else_${this.getStateName(stmt)}`]: {
                 Type: "Pass",
                 End: true,
               },
@@ -823,12 +824,95 @@ export class ASL {
               : {}),
           };
         }
-      } else if (isSlice(expr) || isFilter(expr)) {
+      } else if (isSlice(expr)) {
         return {
           Type: "Pass",
           ...props,
           InputPath: ASL.toJsonPath(expr),
         };
+      } else if (isFilter(expr)) {
+        const throwTransition = this.throw(expr);
+
+        const callbackfn = expr.args.callbackfn;
+        if (callbackfn !== undefined && callbackfn.kind === "FunctionExpr") {
+          try {
+            // first try to implement filter optimally with JSON Path
+            return {
+              Type: "Pass",
+              ...props,
+              InputPath: ASL.toJsonPath(expr),
+            };
+          } catch {
+            // if JSON Path fails, then implement as a Map
+            const callbackStates = this.execute(callbackfn.body);
+            const callbackStart = this.getStateName(callbackfn.body.step()!);
+
+            const tmp = `$.${this.getDeterministicGeneratedName(expr)}`;
+
+            const listPath = ASL.toJsonPath(expr.expr.expr);
+            return {
+              Type: "Map",
+              MaxConcurrency: 1,
+              Iterator: {
+                StartAt: callbackStart,
+                States: {
+                  ...callbackStates,
+                  [`filter_stash_${tmp}`]: {
+                    Type: "Pass",
+                    InputPath: "$",
+                    Comment:
+                      "stores the boolean return from the .filter statement",
+                    ResultPath: tmp,
+                  },
+                  [`filter_keep_or_discard_${tmp}`]: {
+                    Type: "Choice",
+                    Choices: [
+                      {
+                        Next: `filter_keep_${tmp}`,
+                        And: [{}],
+                      },
+                    ],
+                  },
+                  [`filter_keep_${tmp}`]: {
+                    Type: "Pass",
+                    Parameters: {},
+                    ResultPath: tmp,
+                  },
+                  [`filter_discard_${tmp}`]: {
+                    Type: "Pass",
+                    Parameters: {
+                      discard: true,
+                    },
+                    ResultPath: tmp,
+                  },
+                },
+              },
+              ...props,
+              ItemsPath: listPath,
+              Parameters: Object.fromEntries(
+                callbackfn.parameters.map((param, i) => [
+                  param.name,
+                  i === 0
+                    ? "$$.Map.Item.Value"
+                    : i == 1
+                    ? "$$.Map.Item.Index"
+                    : listPath,
+                ])
+              ),
+              ...(throwTransition
+                ? {
+                    Catch: [
+                      {
+                        ErrorEquals: ["States.ALL"],
+                        Next: throwTransition.Next!,
+                        ResultPath: throwTransition.ResultPath,
+                      },
+                    ],
+                  }
+                : {}),
+            };
+          }
+        }
       }
       throw new Error(
         `call must be a service call or list .slice, .map, .forEach or .filter, ${expr}`
@@ -1407,13 +1491,69 @@ export namespace ASL {
         };
       } else if (expr.op === "+" || expr.op === "-") {
       } else {
-        if (isLiteralExpr(expr.left) && isLiteralExpr(expr.right)) {
-        } else if (isLiteralExpr(expr.left) || isLiteralExpr(expr.right)) {
-          const [lit, val] = isLiteralExpr(expr.left)
-            ? [expr.left, expr.right]
-            : [expr.right, expr.left];
+        const isLiteralOrTypeOfExpr = anyOf(isLiteralExpr, isTypeOfExpr);
 
-          if (lit.kind === "NullLiteralExpr") {
+        if (isLiteralExpr(expr.left) && isLiteralExpr(expr.right)) {
+        } else if (
+          isLiteralOrTypeOfExpr(expr.left) ||
+          isLiteralOrTypeOfExpr(expr.right)
+        ) {
+          const [literalOrTypeOf, val] =
+            isLiteralOrTypeOfExpr(expr.left) || isLiteralOrTypeOfExpr(expr.left)
+              ? [expr.left, expr.right]
+              : [expr.right, expr.left];
+
+          if (literalOrTypeOf.kind === "TypeOfExpr") {
+            const supportedTypeNames = [
+              "undefined",
+              "boolean",
+              "number",
+              "string",
+              "bigint",
+            ] as const;
+
+            if (expr.right.kind !== "StringLiteralExpr") {
+              throw new Error(
+                `typeof expression can only be compared against a string literal, such as typeof x === "string"`
+              );
+            }
+
+            const type = expr.right.value as typeof supportedTypeNames[number];
+            if (!supportedTypeNames.includes(type)) {
+              throw new Error(`unsupported typeof comparison: "${type}"`);
+            }
+            const Variable = toJsonPath(literalOrTypeOf.expr);
+            if (expr.op === "==" || expr.op === "!=") {
+              if (type === "undefined") {
+                return {
+                  Variable,
+                  IsPresent: expr.op !== "==",
+                };
+              } else {
+                const flag = expr.op === "==";
+                return {
+                  [expr.op === "==" ? "And" : "Or"]: [
+                    {
+                      Variable,
+                      IsPresent: flag,
+                    },
+                    {
+                      Variable,
+                      ...(type === "boolean"
+                        ? { IsBoolean: flag }
+                        : type === "string"
+                        ? { IsString: flag }
+                        : { IsNumeric: flag }),
+                    },
+                  ],
+                };
+              }
+            } else {
+              throw new Error(
+                `unsupported operand '${expr.op}' with 'typeof' expression.`
+              );
+            }
+          } else if (literalOrTypeOf.kind === "NullLiteralExpr") {
             if (expr.op === "!=") {
               return {
                 And: [
@@ -1441,8 +1581,11 @@ export namespace ASL {
                 ],
               };
             }
-          } else if (lit.kind === "StringLiteralExpr") {
-            const [variable, value] = [toJsonPath(val), lit.value] as const;
+          } else if (literalOrTypeOf.kind === "StringLiteralExpr") {
+            const [variable, value] = [
+              toJsonPath(val),
+              literalOrTypeOf.value,
+            ] as const;
             if (expr.op === "==") {
               return {
                 Variable: variable,
@@ -1476,8 +1619,11 @@ export namespace ASL {
                 StringGreaterThanEquals: value,
               };
             }
-          } else if (lit.kind === "NumberLiteralExpr") {
-            const [variable, value] = [toJsonPath(val), lit.value] as const;
+          } else if (literalOrTypeOf.kind === "NumberLiteralExpr") {
+            const [variable, value] = [
+              toJsonPath(val),
+              literalOrTypeOf.value,
+            ] as const;
             if (expr.op === "==") {
               return {
                 Variable: variable,
@@ -1626,6 +1772,8 @@ function exprToString(expr: Expr): string {
     return `\`${expr.exprs
       .map((e) => (e.kind === "StringLiteralExpr" ? e.value : exprToString(e)))
       .join("")}\``;
+  } else if (expr.kind === "TypeOfExpr") {
+    return `typeof ${exprToString(expr.expr)}`;
   } else if (expr.kind === "UnaryExpr") {
     return `${expr.op}${exprToString(expr.expr)}`;
   } else {

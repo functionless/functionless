@@ -373,6 +373,298 @@ test("if-else", () => {
   });
 });
 
+test("if (typeof x === ??)", () => {
+  const { stack } = initStepFunctionApp();
+  const definition = new ExpressStepFunction(stack, "fn", (id: any) => {
+    if (id === null) {
+      return "null";
+    } else if (typeof id === "undefined") {
+      return "undefined";
+    } else if (typeof id === "string") {
+      return "string";
+    } else if (typeof id === "boolean") {
+      return "boolean";
+    } else if (typeof id === "number") {
+      return "number";
+    } else if (typeof id === "bigint") {
+      return "bigint";
+    }
+    return null;
+  }).definition;
+
+  expect(definition).toEqual({
+    StartAt: "if(id == null)",
+    States: {
+      "if(id == null)": {
+        Choices: [
+          {
+            Next: 'return "null"',
+            Or: [
+              {
+                IsPresent: false,
+                Variable: "$.id",
+              },
+              {
+                IsNull: true,
+                Variable: "$.id",
+              },
+            ],
+          },
+          {
+            IsPresent: false,
+            Next: 'return "undefined"',
+            Variable: "$.id",
+          },
+          {
+            And: [
+              {
+                IsPresent: true,
+                Variable: "$.id",
+              },
+              {
+                IsString: true,
+                Variable: "$.id",
+              },
+            ],
+            Next: 'return "string"',
+          },
+          {
+            And: [
+              {
+                IsPresent: true,
+                Variable: "$.id",
+              },
+              {
+                IsBoolean: true,
+                Variable: "$.id",
+              },
+            ],
+            Next: 'return "boolean"',
+          },
+          {
+            And: [
+              {
+                IsPresent: true,
+                Variable: "$.id",
+              },
+              {
+                IsNumeric: true,
+                Variable: "$.id",
+              },
+            ],
+            Next: 'return "number"',
+          },
+          {
+            And: [
+              {
+                IsPresent: true,
+                Variable: "$.id",
+              },
+              {
+                IsNumeric: true,
+                Variable: "$.id",
+              },
+            ],
+            Next: 'return "bigint"',
+          },
+        ],
+        Default: "return null",
+        Type: "Choice",
+      },
+      'return "bigint"': {
+        End: true,
+        Result: "bigint",
+        ResultPath: "$",
+        Type: "Pass",
+      },
+      'return "boolean"': {
+        End: true,
+        Result: "boolean",
+        ResultPath: "$",
+        Type: "Pass",
+      },
+      'return "null"': {
+        End: true,
+        Result: "null",
+        ResultPath: "$",
+        Type: "Pass",
+      },
+      'return "number"': {
+        End: true,
+        Result: "number",
+        ResultPath: "$",
+        Type: "Pass",
+      },
+      'return "string"': {
+        End: true,
+        Result: "string",
+        ResultPath: "$",
+        Type: "Pass",
+      },
+      'return "undefined"': {
+        End: true,
+        Result: "undefined",
+        ResultPath: "$",
+        Type: "Pass",
+      },
+      "return null": {
+        End: true,
+        OutputPath: "$.null",
+        Parameters: {
+          null: null,
+        },
+        Type: "Pass",
+      },
+    },
+  });
+});
+
+test("if (typeof x !== ??)", () => {
+  const { stack } = initStepFunctionApp();
+  const definition = new ExpressStepFunction(stack, "fn", (id: any) => {
+    if (id !== null) {
+      return "null";
+    } else if (typeof id !== "undefined") {
+      return "undefined";
+    } else if (typeof id !== "string") {
+      return "string";
+    } else if (typeof id !== "boolean") {
+      return "boolean";
+    } else if (typeof id !== "number") {
+      return "number";
+    } else if (typeof id !== "bigint") {
+      return "bigint";
+    }
+    return null;
+  }).definition;
+
+  expect(definition).toEqual({
+    StartAt: "if(id != null)",
+    States: {
+      "if(id != null)": {
+        Choices: [
+          {
+            And: [
+              {
+                IsPresent: true,
+                Variable: "$.id",
+              },
+              {
+                IsNull: false,
+                Variable: "$.id",
+              },
+            ],
+            Next: 'return "null"',
+          },
+          {
+            IsPresent: true,
+            Next: 'return "undefined"',
+            Variable: "$.id",
+          },
+          {
+            Next: 'return "string"',
+            Or: [
+              {
+                IsPresent: false,
+                Variable: "$.id",
+              },
+              {
+                IsString: false,
+                Variable: "$.id",
+              },
+            ],
+          },
+          {
+            Next: 'return "boolean"',
+            Or: [
+              {
+                IsPresent: false,
+                Variable: "$.id",
+              },
+              {
+                IsBoolean: false,
+                Variable: "$.id",
+              },
+            ],
+          },
+          {
+            Next: 'return "number"',
+            Or: [
+              {
+                IsPresent: false,
+                Variable: "$.id",
+              },
+              {
+                IsNumeric: false,
+                Variable: "$.id",
+              },
+            ],
+          },
+          {
+            Next: 'return "bigint"',
+            Or: [
+              {
+                IsPresent: false,
+                Variable: "$.id",
+              },
+              {
+                IsNumeric: false,
+                Variable: "$.id",
+              },
+            ],
+          },
+        ],
+        Default: "return null",
+        Type: "Choice",
+      },
+      'return "bigint"': {
+        End: true,
+        Result: "bigint",
+        ResultPath: "$",
+        Type: "Pass",
+      },
+      'return "boolean"': {
+        End: true,
+        Result: "boolean",
+        ResultPath: "$",
+        Type: "Pass",
+      },
+      'return "null"': {
+        End: true,
+        Result: "null",
+        ResultPath: "$",
+        Type: "Pass",
+      },
+      'return "number"': {
+        End: true,
+        Result: "number",
+        ResultPath: "$",
+        Type: "Pass",
+      },
+      'return "string"': {
+        End: true,
+        Result: "string",
+        ResultPath: "$",
+        Type: "Pass",
+      },
+      'return "undefined"': {
+        End: true,
+        Result: "undefined",
+        ResultPath: "$",
+        Type: "Pass",
+      },
+      "return null": {
+        End: true,
+        OutputPath: "$.null",
+        Parameters: {
+          null: null,
+        },
+        Type: "Pass",
+      },
+    },
+  });
+});
+
 test("if-else-if", () => {
   const { stack } = initStepFunctionApp();
   const definition = new ExpressStepFunction(
@@ -4559,10 +4851,10 @@ test("break from for-loop", () => {
                   Variable: "$.item",
                 },
               ],
-              Default: '0_otherwise_if(item == "hello")',
+              Default: '0_empty_else_if(item == "hello")',
               Type: "Choice",
             },
-            '0_otherwise_if(item == "hello")': {
+            '0_empty_else_if(item == "hello")': {
               End: true,
               Type: "Pass",
             },
@@ -4848,4 +5140,13 @@ test("continue in do..while loop", () => {
       },
     },
   });
+});
+
+test("items.filter(task(item) !== null)", () => {
+  const { stack, task } = initStepFunctionApp();
+  const definition = new ExpressStepFunction(stack, "fn", (items: string[]) => {
+    return items.filter((item) => task(item) !== null);
+  }).definition;
+
+  expect(definition).toEqual({});
 });

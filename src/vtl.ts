@@ -433,6 +433,7 @@ export class VTL {
       case "CatchClause":
       case "ContinueStmt":
       case "DoStmt":
+      case "TypeOfExpr":
       case "WhileStmt":
         throw new Error(`${node.kind} is not yet supported in VTL`);
     }

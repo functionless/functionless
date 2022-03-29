@@ -434,6 +434,8 @@ export function compile(
           ]);
         } else if (ts.isThrowStatement(node)) {
           return newExpr("ThrowStmt", [toExpr(node.expression)]);
+        } else if (ts.isTypeOfExpression(node)) {
+          return newExpr("TypeOfExpr", [toExpr(node.expression)]);
         } else if (ts.isWhileStatement(node)) {
           return newExpr("WhileStmt", [
             toExpr(node.expression),
@@ -533,6 +535,8 @@ const OperatorMappings = {
   [ts.SyntaxKind.MinusToken]: "-",
   [ts.SyntaxKind.AmpersandAmpersandToken]: "&&",
   [ts.SyntaxKind.BarBarToken]: "||",
+  [ts.SyntaxKind.ExclamationEqualsToken]: "!=",
+  [ts.SyntaxKind.ExclamationEqualsEqualsToken]: "!=",
   [ts.SyntaxKind.EqualsEqualsToken]: "==",
   [ts.SyntaxKind.EqualsEqualsEqualsToken]: "==",
   [ts.SyntaxKind.LessThanEqualsToken]: "<=",

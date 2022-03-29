@@ -24,6 +24,7 @@ import {
   SpreadElementExpr,
   StringLiteralExpr,
   TemplateExpr,
+  TypeOfExpr,
   UnaryExpr,
 } from "./expression";
 import { FunctionlessNode } from "./node";
@@ -387,14 +388,18 @@ export function visitEachChild<T extends FunctionlessNode>(
       );
     }
     return new TryStmt(tryBlock, catchClause, finallyBlock) as T;
+  } else if (node.kind === "TypeOfExpr") {
+    const expr = visitor(node.expr);
+    ensure(expr, isExpr, `a TypeOfExpr's expr property must be an Expr`);
+    return new TypeOfExpr(expr) as T;
   } else if (node.kind === "UnaryExpr") {
     const expr = visitor(node.expr);
-    ensure(expr, isExpr, `a UnaryExpr's expr must be an Expr`);
+    ensure(expr, isExpr, `a UnaryExpr's expr property must be an Expr`);
     return new UnaryExpr(node.op, expr) as T;
   } else if (node.kind === "VariableStmt") {
     const expr = node.expr ? visitor(node.expr) : undefined;
     if (expr) {
-      ensure(expr, isExpr, `a VariableStmt's expr must be an Expr`);
+      ensure(expr, isExpr, `a VariableStmt's expr property must be an Expr`);
     }
     return new VariableStmt(node.name, expr) as T;
   } else if (node.kind === "WhileStmt") {

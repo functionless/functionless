@@ -35,6 +35,7 @@ export type Expr =
   | SpreadElementExpr
   | StringLiteralExpr
   | TemplateExpr
+  | TypeOfExpr
   | UnaryExpr;
 
 export function isExpr(a: any): a is Expr {
@@ -57,6 +58,7 @@ export function isExpr(a: any): a is Expr {
       isReferenceExpr(a) ||
       isStringLiteralExpr(a) ||
       isTemplateExpr(a) ||
+      isTypeOfExpr(a) ||
       isUnaryExpr(a))
   );
 }
@@ -466,5 +468,17 @@ export class TemplateExpr extends BaseExpr<"TemplateExpr"> {
 
   public clone(): this {
     return new TemplateExpr(this.exprs.map((expr) => expr.clone())) as this;
+  }
+}
+
+export const isTypeOfExpr = typeGuard("TypeOfExpr");
+
+export class TypeOfExpr extends BaseExpr<"TypeOfExpr"> {
+  constructor(readonly expr: Expr) {
+    super("TypeOfExpr");
+  }
+
+  public clone(): this {
+    return new TypeOfExpr(this.expr.clone()) as this;
   }
 }
