@@ -38,13 +38,11 @@ export function compile(
   _extras?: TransformerExtras
 ): ts.TransformerFactory<ts.SourceFile> {
   const ignore = _config?.exclude
-    ? glob.sync(_config.exclude, { absolute: true })
-    : [];
+    ? new Set(glob.sync(_config.exclude, { absolute: true }))
+    : new Set();
 
   const checker = program.getTypeChecker();
   return (ctx) => {
-    console.log("ignoring", ignore.join());
-
     const functionless = ts.factory.createUniqueName("functionless");
     return (sf) => {
       const functionlessImport = ts.factory.createImportDeclaration(
@@ -58,10 +56,8 @@ export function compile(
         ts.factory.createStringLiteral("functionless")
       );
 
-      console.log("sf", sf.fileName);
-
-      if (ignore.includes(sf.fileName)) {
-        console.log("ignoring");
+      // Do not transform any of the files matched by "exclude"
+      if (ignore.has(sf.fileName)) {
         return sf;
       }
 
@@ -83,7 +79,9 @@ export function compile(
           if (isAppsyncResolver(node)) {
             return visitAppsyncResolver(node);
           } else if (isReflectFunction(node)) {
-            return toFunction("FunctionDecl", node.arguments[0]);
+            return errorBoundary(() =>
+              toFunction("FunctionDecl", node.arguments[0])
+            );
           } else if (isEventBusWhenFunction(node)) {
             return visitEventBusWhen(node);
           } else if (isEventBusMapFunction(node)) {
