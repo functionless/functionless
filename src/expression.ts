@@ -9,6 +9,7 @@ import { AnyFunction } from "./util";
  * An {@link Expr} (Expression) is a Node that will be interpreted to a value.
  */
 export type Expr =
+  | Argument
   | ArrayLiteralExpr
   | BinaryExpr
   | BooleanLiteralExpr
@@ -32,7 +33,8 @@ export type Expr =
 export function isExpr(a: any) {
   return (
     isNode(a) &&
-    (isArrayLiteralExpr(a) ||
+    (isArgument(a) ||
+      isArrayLiteralExpr(a) ||
       isBinaryExpr(a) ||
       isBooleanLiteral(a) ||
       isCallExpr(a) ||
@@ -47,6 +49,7 @@ export function isExpr(a: any) {
       isPropAccessExpr(a) ||
       isReferenceExpr(a) ||
       isStringLiteralExpr(a) ||
+      isTemplateExpr(a) ||
       isUnaryExpr(a))
   );
 }
@@ -98,20 +101,27 @@ export class ElementAccessExpr extends BaseNode<"ElementAccessExpr"> {
   }
 }
 
+export const isArgument = typeGuard("Argument");
+
+export class Argument extends BaseNode<"Argument"> {
+  constructor(readonly expr: Expr, readonly name?: string) {
+    super("Argument");
+    setParent(this, expr);
+  }
+}
+
 export const isCallExpr = typeGuard("CallExpr");
 
 export class CallExpr extends BaseNode<"CallExpr"> {
-  constructor(
-    readonly expr: Expr,
-    readonly args: {
-      [argName: string]: Expr;
-    }
-  ) {
+  constructor(readonly expr: Expr, readonly args: Argument[]) {
     super("CallExpr");
     expr.parent = this;
-    for (const arg of Object.values(args)) {
-      arg.parent = this;
-    }
+
+    args.forEach((arg) => setParent(this, arg));
+  }
+
+  public getArgument(name: string): Argument | undefined {
+    return this.args.find((arg) => arg.name === name);
   }
 }
 

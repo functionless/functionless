@@ -227,19 +227,22 @@ export function compile(
           } else {
             signature = checker.getResolvedSignature(node);
           }
-          if (signature) {
-            return newExpr("CallExpr", [
-              toExpr(node.expression),
-              ts.factory.createObjectLiteralExpression(
-                signature.parameters.map((parameter, i) =>
-                  ts.factory.createPropertyAssignment(
-                    parameter.name,
-                    toExpr(node.arguments[i])
-                  )
-                )
-              ),
-            ]);
-          }
+          return newExpr("CallExpr", [
+            toExpr(node.expression),
+            ts.factory.createArrayLiteralExpression(
+              node.arguments.map((arg, i) =>
+                newExpr("Argument", [
+                  toExpr(arg),
+                  // the arguments array may not match the signature or the signature may be unknown
+                  signature?.parameters?.[i]?.name
+                    ? ts.factory.createStringLiteral(
+                        signature?.parameters?.[i]?.name
+                      )
+                    : ts.factory.createIdentifier("undefined"),
+                ])
+              )
+            ),
+          ]);
         } else if (ts.isBlock(node)) {
           return newExpr("BlockStmt", [
             ts.factory.createArrayLiteralExpression(
@@ -414,6 +417,12 @@ export function compile(
           ]);
         } else if (ts.isBreakStatement(node)) {
           return newExpr("BreakStmt", []);
+        } else if (ts.isParenthesizedExpression(node)) {
+          return toExpr(node.expression);
+        } else if (ts.isAsExpression(node)) {
+          return toExpr(node.expression);
+        } else if (ts.isTypeAssertionExpression(node)) {
+          return toExpr(node.expression);
         }
 
         throw new Error(`unhandled node: ${node.getText()}`);

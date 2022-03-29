@@ -9,12 +9,13 @@ import {
 } from "typesafe-dynamodb/lib/expression-attributes";
 import { TableKey } from "typesafe-dynamodb/lib/key";
 import { Narrow } from "typesafe-dynamodb/lib/narrow";
-import { CallExpr } from "./expression";
+import { CallExpr, ObjectLiteralExpr } from "./expression";
 import { VTL } from "./vtl";
 
 // @ts-ignore - imported for typedoc
 import type { AppsyncResolver } from "./appsync";
 import { JsonFormat } from "typesafe-dynamodb";
+import { assertNodeKind } from "./assert";
 
 export function isTable(a: any): a is AnyTable {
   return a?.kind === "Table";
@@ -89,7 +90,12 @@ export class Table<
   }): Narrow<Item, AttributeKeyToObject<Key>, JsonFormat.Document>;
 
   public getItem(call: CallExpr, vtl: VTL): any {
-    const input = vtl.eval(call.args.input);
+    const input = vtl.eval(
+      assertNodeKind<ObjectLiteralExpr>(
+        call.getArgument("input")?.expr,
+        "ObjectLiteralExpr"
+      )
+    );
     const request = vtl.var(
       `{"operation": "GetItem", "version": "2018-05-29"}`
     );
@@ -124,7 +130,12 @@ export class Table<
   }): Narrow<Item, AttributeKeyToObject<Key>, JsonFormat.Document>;
 
   public putItem(call: CallExpr, vtl: VTL): any {
-    const input = vtl.eval(call.args.input);
+    const input = vtl.eval(
+      assertNodeKind<ObjectLiteralExpr>(
+        call.getArgument("input")?.expr,
+        "ObjectLiteralExpr"
+      )
+    );
     const request = vtl.var(
       `{"operation": "PutItem", "version": "2018-05-29"}`
     );
@@ -159,7 +170,12 @@ export class Table<
   }): Narrow<Item, AttributeKeyToObject<Key>, JsonFormat.Document>;
 
   public updateItem(call: CallExpr, vtl: VTL): any {
-    const input = vtl.eval(call.args.input);
+    const input = vtl.eval(
+      assertNodeKind<ObjectLiteralExpr>(
+        call.getArgument("input")?.expr,
+        "ObjectLiteralExpr"
+      )
+    );
     const request = vtl.var(
       `{"operation": "UpdateItem", "version": "2018-05-29"}`
     );
@@ -190,7 +206,12 @@ export class Table<
   }): Narrow<Item, AttributeKeyToObject<Key>, JsonFormat.Document>;
 
   public deleteItem(call: CallExpr, vtl: VTL): any {
-    const input = vtl.eval(call.args.input);
+    const input = vtl.eval(
+      assertNodeKind<ObjectLiteralExpr>(
+        call.getArgument("input")?.expr,
+        "ObjectLiteralExpr"
+      )
+    );
     const request = vtl.var(
       `{"operation": "DeleteItem", "version": "2018-05-29"}`
     );
@@ -221,7 +242,12 @@ export class Table<
   };
 
   public query(call: CallExpr, vtl: VTL): any {
-    const input = vtl.eval(call.args.input);
+    const input = vtl.eval(
+      assertNodeKind<ObjectLiteralExpr>(
+        call.getArgument("input")?.expr,
+        "ObjectLiteralExpr"
+      )
+    );
     const request = vtl.var(`{"operation": "Query", "version": "2018-05-29"}`);
     vtl.qr(`${request}.put('key', ${input}.get('key'))`);
     vtl.qr(`${request}.put('query', ${input}.get('query'))`);
