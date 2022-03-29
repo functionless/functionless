@@ -198,7 +198,7 @@ export function compile(
 
       function toExpr(node: ts.Node | undefined): ts.Expression {
         if (node === undefined) {
-          return newExpr("NullLiteralExpr", []);
+          return newExpr("UndefinedLiteralExpr", []);
         } else if (ts.isArrowFunction(node) || ts.isFunctionExpression(node)) {
           return toFunction("FunctionExpr", node);
         } else if (ts.isExpressionStatement(node)) {
@@ -250,7 +250,9 @@ export function compile(
             ),
           ]);
         } else if (ts.isIdentifier(node)) {
-          if (node.text === "undefined" || node.text === "null") {
+          if (node.text === "undefined") {
+            return newExpr("UndefinedLiteralExpr", []);
+          } else if (node.text === "null") {
             return newExpr("NullLiteralExpr", []);
           }
           const kind = getKind(node);
@@ -343,11 +345,11 @@ export function compile(
             (ts.isIdentifier(node.name) &&
               (node.name.text === "null" || node.name.text === "undefined"))
               ? string(node.name.text)
-              : ts.isComputedPropertyName(node.name)
-              ? toExpr(node.name.expression)
               : toExpr(node.name),
             toExpr(node.initializer),
           ]);
+        } else if (ts.isComputedPropertyName(node)) {
+          return newExpr("ComputedPropertyNameExpr", [toExpr(node.expression)]);
         } else if (ts.isShorthandPropertyAssignment(node)) {
           return newExpr("PropAssignExpr", [
             newExpr("Identifier", [

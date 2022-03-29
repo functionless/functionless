@@ -350,6 +350,7 @@ export class VTL {
       case "ElementAccessExpr":
         return `${this.eval(node.expr)}[${this.eval(node.element)}]`;
       case "NullLiteralExpr":
+      case "UndefinedLiteralExpr":
         return "$null";
       case "NumberLiteralExpr":
         return node.value.toString(10);
@@ -360,8 +361,6 @@ export class VTL {
             const name =
               prop.name.kind === "Identifier"
                 ? `'${prop.name.name}'`
-                : prop.name.kind === "StringLiteralExpr"
-                ? `'${prop.name.value}'`
                 : this.eval(prop.name);
             this.qr(`${obj}.put(${name}, ${this.eval(prop.expr)})`);
           } else if (prop.kind === "SpreadAssignExpr") {
@@ -372,6 +371,8 @@ export class VTL {
         }
         return obj;
       }
+      case "ComputedPropertyNameExpr":
+        return this.eval(node.expr);
       case "ParameterDecl":
       case "PropAssignExpr":
       case "ReferenceExpr":

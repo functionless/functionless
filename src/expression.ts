@@ -15,6 +15,7 @@ export type Expr =
   | BooleanLiteralExpr
   | CallExpr
   | ConditionExpr
+  | ComputedPropertyNameExpr
   | FunctionExpr
   | ElementAccessExpr
   | Identifier
@@ -28,7 +29,8 @@ export type Expr =
   | SpreadAssignExpr
   | SpreadElementExpr
   | TemplateExpr
-  | UnaryExpr;
+  | UnaryExpr
+  | UndefinedLiteralExpr;
 
 export function isExpr(a: any) {
   return (
@@ -39,6 +41,7 @@ export function isExpr(a: any) {
       isBooleanLiteral(a) ||
       isCallExpr(a) ||
       isConditionExpr(a) ||
+      isComputedPropertyNameExpr(a) ||
       isFunctionExpr(a) ||
       isElementAccessExpr(a) ||
       isIdentifier(a) ||
@@ -50,7 +53,8 @@ export function isExpr(a: any) {
       isReferenceExpr(a) ||
       isStringLiteralExpr(a) ||
       isTemplateExpr(a) ||
-      isUnaryExpr(a))
+      isUnaryExpr(a) ||
+      isUndefinedLiteralExpr(a))
   );
 }
 
@@ -186,6 +190,14 @@ export class NullLiteralExpr extends BaseNode<"NullLiteralExpr"> {
   }
 }
 
+export const isUndefinedLiteralExpr = typeGuard("UndefinedLiteralExpr");
+
+export class UndefinedLiteralExpr extends BaseNode<"UndefinedLiteralExpr"> {
+  constructor() {
+    super("UndefinedLiteralExpr");
+  }
+}
+
 export const isBooleanLiteral = typeGuard("BooleanLiteralExpr");
 
 export class BooleanLiteralExpr extends BaseNode<"BooleanLiteralExpr"> {
@@ -228,23 +240,27 @@ export class ObjectLiteralExpr extends BaseNode<"ObjectLiteralExpr"> {
     super("ObjectLiteralExpr");
     setParent(this, properties);
   }
-
-  public getProperty(name: string) {
-    return this.properties.find(
-      (prop) =>
-        prop.kind === "PropAssignExpr" &&
-        ((prop.name.kind === "Identifier" && prop.name.name === name) ||
-          (prop.name.kind === "StringLiteralExpr" && prop.name.value === name))
-    );
-  }
 }
 
 export const isPropAssignExpr = typeGuard("PropAssignExpr");
 
 export class PropAssignExpr extends BaseNode<"PropAssignExpr"> {
-  constructor(readonly name: Expr, readonly expr: Expr) {
+  constructor(
+    readonly name: Identifier | ComputedPropertyNameExpr,
+    readonly expr: Expr
+  ) {
     super("PropAssignExpr");
-    expr.parent = this;
+    setParent(this, name);
+    setParent(this, expr);
+  }
+}
+
+export const isComputedPropertyNameExpr = typeGuard("ComputedPropertyNameExpr");
+
+export class ComputedPropertyNameExpr extends BaseNode<"ComputedPropertyNameExpr"> {
+  constructor(readonly expr: Expr) {
+    super("ComputedPropertyNameExpr");
+    setParent(this, expr);
   }
 }
 

@@ -30,7 +30,7 @@ test("return literal object with values", () => {
           undefined: undefined,
           string: "hello",
           number: 1,
-          list: ["hello"],
+          ["list"]: ["hello"],
           obj: {
             key: "value",
           },
@@ -53,6 +53,46 @@ $util.qr($v2.put('key', 'value'))
 $util.qr($v1.put('obj', $v2))
 $util.qr($v1.put('arg', $context.stash.arg))
 $util.qr($v1.putAll($context.stash.obj))
+#return($v1)`
+  );
+});
+
+test("computed property names", () => {
+  appsyncTestCase(
+    reflect(
+      (context: AppsyncContext<{ arg: string; obj: Record<string, any> }>) => {
+        const name = context.arguments.arg;
+        const value = name + "_test";
+        return {
+          [name]: context.arguments.arg,
+          [value]: context.arguments.arg,
+        };
+      }
+    ),
+    payload,
+    `#set($context.stash.name = $context.arguments.arg)
+#set($context.stash.value = $context.stash.name + '_test')
+#set($v1 = {})
+$util.qr($v1.put($context.stash.name, $context.arguments.arg))
+$util.qr($v1.put($context.stash.value, $context.arguments.arg))
+#return($v1)`
+  );
+});
+
+test("null and undefined", () => {
+  appsyncTestCase(
+    reflect(
+      (_context: AppsyncContext<{ arg: string; obj: Record<string, any> }>) => {
+        return {
+          name: null,
+          value: undefined,
+        };
+      }
+    ),
+    payload,
+    `#set($v1 = {})
+$util.qr($v1.put('name', $null))
+$util.qr($v1.put('value', $null))
 #return($v1)`
   );
 });
