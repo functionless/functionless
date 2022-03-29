@@ -26,7 +26,10 @@
     "declarationMap": true,
     "plugins": [
       {
-        "transform": "./lib/compile"
+        "transform": "./lib/compile",
+        "exclude": [
+          "./src/{,**}/*"
+        ]
       }
     ]
   },
