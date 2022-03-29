@@ -9,7 +9,7 @@ import { AnyFunction } from "./util";
  * An {@link Expr} (Expression) is a Node that will be interpreted to a value.
  */
 export type Expr =
-  | ArgumentExpr
+  | Argument
   | ArrayLiteralExpr
   | BinaryExpr
   | BooleanLiteralExpr
@@ -33,7 +33,7 @@ export type Expr =
 export function isExpr(a: any) {
   return (
     isNode(a) &&
-    (isArgumentExpr(a) ||
+    (isArgument(a) ||
       isArrayLiteralExpr(a) ||
       isBinaryExpr(a) ||
       isBooleanLiteral(a) ||
@@ -101,11 +101,11 @@ export class ElementAccessExpr extends BaseNode<"ElementAccessExpr"> {
   }
 }
 
-export const isArgumentExpr = typeGuard("ArgumentExpr");
+export const isArgument = typeGuard("Argument");
 
-export class ArgumentExpr extends BaseNode<"ArgumentExpr"> {
+export class Argument extends BaseNode<"Argument"> {
   constructor(readonly expr: Expr, readonly name?: string) {
-    super("ArgumentExpr");
+    super("Argument");
     setParent(this, expr);
   }
 }
@@ -113,14 +113,14 @@ export class ArgumentExpr extends BaseNode<"ArgumentExpr"> {
 export const isCallExpr = typeGuard("CallExpr");
 
 export class CallExpr extends BaseNode<"CallExpr"> {
-  constructor(readonly expr: Expr, readonly args: ArgumentExpr[]) {
+  constructor(readonly expr: Expr, readonly args: Argument[]) {
     super("CallExpr");
     expr.parent = this;
 
     args.forEach((arg) => setParent(this, arg));
   }
 
-  getArgument(name: string): ArgumentExpr | undefined {
+  public getArgument(name: string): Argument | undefined {
     return this.args.find((arg) => arg.name === name);
   }
 }

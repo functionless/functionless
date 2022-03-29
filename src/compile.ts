@@ -276,7 +276,7 @@ export function compile(
             toExpr(node.expression),
             ts.factory.createArrayLiteralExpression(
               node.arguments.map((arg, i) =>
-                newExpr("ArgumentExpr", [
+                newExpr("Argument", [
                   toExpr(arg),
                   // the arguments array may not match the signature or the signature may be unknown
                   signature?.parameters?.[i]?.name
