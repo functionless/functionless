@@ -53,7 +53,7 @@ export const isAggregatePattern = (x: Pattern): x is AggregatePattern => {
 };
 
 /**
- * One or more {@link NumericRangePattern} with OR/Union logic applied. 
+ * One or more {@link NumericRangePattern} with OR/Union logic applied.
  */
 export interface NumericAggregationPattern {
   ranges: NumericRangePattern[];
@@ -174,9 +174,16 @@ export const isEmptyPattern = (x: Pattern): x is EmptyPattern => {
  * This pattern may be filtered out at the end.
  * It is the opposite of EmptyPattern
  * If it is applied to AND logic, either between or within a field, an error is thrown.
+ * 
+ * When to return NeverPattern and when to Error
+ * * NeverPattern - when the logic is impossible, but valid aka, contradictions x !== "a" && x === "a". These MAY later be evaluated to possible using an OR.
+ * * Error - When the combination is unsupported by Event Bridge or Functionless.
+ *           For example, if we do not know how to represent !x.startsWith("x") && x.startsWith("y"), 
+ *           then we need to fail compilation as the logic may filter a event if it was supported and not ignored.
  */
 export interface NeverPattern {
   never: true;
+  reason?: string;
 }
 
 export const isNeverPattern = (x: Pattern): x is NeverPattern => {
@@ -306,7 +313,11 @@ export const patternToEventBridgePattern = (
     // if never is in an aggregate and not the lone pattern, return undefined
     // if never is the lone value, either in an aggregate or directly on a field, fail
     if (!aggregate) {
-      throw Error("Impossible logic discovered.");
+      throw Error(
+        pattern.reason
+          ? `Impossible logic discovered: ${pattern.reason}`
+          : "Impossible logic discovered."
+      );
     }
     return undefined;
   }

@@ -242,7 +242,8 @@ describe("event pattern", () => {
         ebEventPatternTestCaseError(
           reflect<EventPredicateFunction<TestEvent>>(
             (event) => event.detail.array === ["a", "b"]
-          )
+          ),
+          "Equivency must compare to a constant value."
         );
       });
     });
@@ -620,7 +621,8 @@ describe("event pattern", () => {
         reflect<EventPredicateFunction<TestEvent>>((event) => {
           const myInternalContant = (() => "hi" + " " + "there")();
           return event.detail.str === myInternalContant;
-        })
+        }),
+        "Equivency must compare to a constant value."
       );
     });
 
@@ -629,7 +631,8 @@ describe("event pattern", () => {
         reflect<EventPredicateFunction<TestEvent>>((event) => {
           const myMethod = () => "hi" + " " + "there";
           return event.detail.str === myMethod();
-        })
+        }),
+        "Equivency must compare to a constant value."
       );
     });
   });
@@ -637,7 +640,8 @@ describe("event pattern", () => {
   describe("simple invalid", () => {
     test("error on raw event in predicate", () => {
       ebEventPatternTestCaseError(
-        reflect<EventPredicateFunction<TestEvent>>((event) => !!event)
+        reflect<EventPredicateFunction<TestEvent>>((event) => !!event),
+        "Identifier is unsupported"
       );
     });
   });
@@ -845,7 +849,7 @@ describe("event pattern", () => {
     });
 
     // TODO: this should work, invalid ranges should not fail until the end when no range will be valid.
-    test.skip("numeric range or and AND part reduced both losing some range", () => {
+    test("numeric range or and AND part reduced both losing some range", () => {
       ebEventPatternTestCase(
         reflect<EventPredicateFunction<TestEvent>>(
           (event) =>
@@ -920,7 +924,7 @@ describe("event pattern", () => {
     });
 
     // TODO: drop the invalid range.
-    test.skip("numeric range or and AND dropped range", () => {
+    test("numeric range or and AND dropped range", () => {
       ebEventPatternTestCase(
         reflect<EventPredicateFunction<TestEvent>>(
           (event) =>
@@ -942,12 +946,12 @@ describe("event pattern", () => {
             event.detail.num >= 100 &&
             event.detail.num < 1000 &&
             event.detail.num < 50
-        )
+        ),
+        "Found zero range numeric range lower 100 inclusive: true, upper 50 inclusive: false"
       );
     });
 
-    // TODO FIXME, drop the invalid range at the OR.
-    test.skip("numeric range nil range error upper", () => {
+    test("numeric range nil range OR valid range", () => {
       ebEventPatternTestCase(
         reflect<EventPredicateFunction<TestEvent>>(
           (event) =>
@@ -959,6 +963,37 @@ describe("event pattern", () => {
         {
           detail: {
             num: [10],
+          },
+        }
+      );
+    });
+
+    test("numeric range nil range AND invalid range", () => {
+      ebEventPatternTestCaseError(
+        reflect<EventPredicateFunction<TestEvent>>(
+          (event) =>
+            event.detail.num >= 100 &&
+            event.detail.num < 1000 &&
+            event.detail.num < 50 &&
+            event.detail.num === 10
+        ),
+        "Impossible logic discovered: Found zero range numeric range lower 100 inclusive: true, upper 50 inclusive: false"
+      );
+    });
+
+    test("numeric range nil range OR valid aggregate range", () => {
+      ebEventPatternTestCase(
+        reflect<EventPredicateFunction<TestEvent>>(
+          (event) =>
+            event.detail.num === 10 ||
+            event.detail.num === 11 ||
+            (event.detail.num >= 100 &&
+              event.detail.num < 1000 &&
+              event.detail.num < 50)
+        ),
+        {
+          detail: {
+            num: [10, 11],
           },
         }
       );
@@ -979,11 +1014,12 @@ describe("event pattern", () => {
       ebEventPatternTestCaseError(
         reflect<EventPredicateFunction<TestEvent>>(
           (event) => event.detail.num >= 100 && event.detail.num < 50
-        )
+        ),
+        "Found zero range numeric range lower 100 inclusive: true, upper 50 inclusive: false"
       );
     });
 
-    test.skip("numeric range nil range illogical with override", () => {
+    test("numeric range nil range illogical with override", () => {
       ebEventPatternTestCase(
         reflect<EventPredicateFunction<TestEvent>>(
           (event) =>
@@ -1049,12 +1085,13 @@ describe("event pattern", () => {
         reflect<EventPredicateFunction<TestEvent>>(
           (event) =>
             event.detail.str === "hi" && <any>event.detail.str === "hello"
-        )
+        ),
+        "hello"
       );
     });
 
     // TODO: only fail when the final state is impossible.
-    test.skip("same field AND string with OR", () => {
+    test("same field AND string with OR", () => {
       ebEventPatternTestCase(
         reflect<EventPredicateFunction<TestEvent>>(
           (event) =>
@@ -1070,7 +1107,7 @@ describe("event pattern", () => {
     });
 
     // TODO fix this
-    test.skip("same field AND string identical", () => {
+    test("same field AND string identical", () => {
       ebEventPatternTestCase(
         reflect<EventPredicateFunction<TestEvent>>(
           (event) => event.detail.str === "hi" && event.detail.str === "hi"
@@ -1130,7 +1167,8 @@ describe("event pattern", () => {
       ebEventPatternTestCaseError(
         reflect<EventPredicateFunction<TestEvent>>(
           (event) => event.detail.str === "hello" || event.detail.num === 100
-        )
+        ),
+        `Event bridge does not support OR logic between multiple fields, found str and num.`
       );
     });
 
@@ -1277,12 +1315,13 @@ describe("event pattern", () => {
       ebEventPatternTestCaseError(
         reflect<EventPredicateFunction<TestEvent>>(
           (event) => !event.detail.str && <any>event.detail.str
-        )
+        ),
+        "Field cannot both be present and not present."
       );
     });
 
     // TODO: this should work
-    test.skip("AND not exists and exists impossible", () => {
+    test("AND not exists and exists impossible", () => {
       ebEventPatternTestCase(
         reflect<EventPredicateFunction<TestEvent>>(
           (event) =>
@@ -1305,6 +1344,30 @@ describe("event pattern", () => {
         {
           detail: {
             str: [{ exists: false }],
+          },
+        }
+      );
+    });
+
+    test("AND not exists and value", () => {
+      ebEventPatternTestCaseError(
+        reflect<EventPredicateFunction<TestEvent>>(
+          (event) => !event.detail.str && event.detail.str === "x"
+        ),
+        "Invalid comparison: pattern cannot both be not present as a positive value"
+      );
+    });
+
+    test("AND not exists and value", () => {
+      ebEventPatternTestCase(
+        reflect<EventPredicateFunction<TestEvent>>(
+          (event) =>
+            event.detail.str === "hello" ||
+            (!event.detail.str && event.detail.str === "x")
+        ),
+        {
+          detail: {
+            str: ["hello"],
           },
         }
       );

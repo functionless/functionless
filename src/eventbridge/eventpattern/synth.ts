@@ -29,6 +29,8 @@ import {
   patternDocumentToEventPattern,
   isAnythingButPrefixPattern,
   isNeverPattern,
+  NumericRangePattern,
+  NeverPattern,
 } from "./pattern";
 import * as functionless_event_bridge from "./types";
 import {
@@ -188,6 +190,12 @@ export const synthesizeEventPattern = (
    *    When one field is a Not Present (exists: false) Pattern and the other is an AnythingBut (not) pattern, we ignore the AnythingBut (!x && !x !== "a" => !x)
    *    When both fields are numbers or numeric ranges see {@link andNumericAggregation}
    *    When both fields are AnythingBut (not) logic, merge them together (x !== "y" && x !== "z" is valid)
+   *
+   * When to return NeverPattern and when to Error
+   * * NeverPattern - when the logic is impossible, but valid aka, contradictions x !== "a" && x === "a". These MAY later be evaluated to possible using an OR.
+   * * Error - When the combination is unsupported by Event Bridge or Functionless.
+   *           For example, if we do not know how to represent !x.startsWith("x") && x.startsWith("y"),
+   *           then we need to fail compilation as the logic may filter a event if it was supported and not ignored.
    */
   const andMergePattern = (
     key: string,
@@ -199,13 +207,21 @@ export const synthesizeEventPattern = (
       return andDocuments(pattern1, pattern2);
       // both are patterns, merge the patterns
     } else if (!isPatternDocument(pattern1) && !isPatternDocument(pattern2)) {
-      if (isPresentPattern(pattern1)) {
+      // In AND logic, if either side is impossible, the whole statement will be impossible.
+      if (isNeverPattern(pattern1)) {
+        return pattern1;
+      } else if (isNeverPattern(pattern2)) {
+        return pattern2;
+      } else if (isPresentPattern(pattern1)) {
         if (isPresentPattern(pattern2)) {
           // same pattern, merge
           if (pattern1.isPresent === pattern2.isPresent) {
             return pattern1;
           } else {
-            throw new Error("Field cannot both be present and not present.");
+            return {
+              never: true,
+              reason: "Field cannot both be present and not present.",
+            };
           }
         }
         // If the pattern checks for presense, return othe other pattern, they should all imply the pattern is present.
@@ -218,9 +234,11 @@ export const synthesizeEventPattern = (
           return pattern1;
         }
         // cannot && exists: false and any other pattern as it would be impossible.
-        throw new Error(
-          "Invalid comparison: pattern cannot both be not present as a positive value."
-        );
+        return {
+          never: true,
+          reason:
+            "Invalid comparison: pattern cannot both be not present as a positive value.",
+        };
       } else if (isPresentPattern(pattern2)) {
         // If the pattern checks for presense, return othe other pattern, they should all imply the pattern is present.
         if (pattern2.isPresent) {
@@ -232,9 +250,11 @@ export const synthesizeEventPattern = (
           return pattern2;
         }
         // cannot && exists: false and any other pattern as it would be impossible.
-        throw new Error(
-          "Invalid comparison: Pattern cannot both be not present as a positive value."
-        );
+        return {
+          never: true,
+          reason:
+            "Invalid comparison: pattern cannot both be not present as a positive value.",
+        };
       }
       // AND (intersect) logic between two numeric aggregate ranges (unions), between a numeric aggregate and a single numeric range or between two numeric ranges
       else if (isNumericAggregationPattern(pattern1)) {
@@ -275,6 +295,45 @@ export const synthesizeEventPattern = (
         throw Error(
           "Event Bridge patterns do not support AND logic between NOT prefix and any other logic."
         );
+      } else if (
+        isExactMatchPattern(pattern1) ||
+        isExactMatchPattern(pattern2)
+      ) {
+        if (isExactMatchPattern(pattern1) && isExactMatchPattern(pattern2)) {
+          if (pattern1.value === pattern2.value) {
+            return pattern1;
+          }
+          return {
+            never: true,
+            reason: `Field ${key} cannot be both ${pattern1.value} and ${pattern2.value}`,
+          };
+        } else if (isExactMatchPattern(pattern1)) {
+          if (isPrefixMatchPattern(pattern2)) {
+            if (
+              typeof pattern1.value === "string" &&
+              pattern1.value.startsWith(pattern2.prefix)
+            ) {
+              return pattern1;
+            }
+            return {
+              never: true,
+              reason: `Field ${key} cannot be both ${pattern1.value} and start with ${pattern2.prefix}`,
+            };
+          }
+        } else if (isExactMatchPattern(pattern2)) {
+          if (isPrefixMatchPattern(pattern1)) {
+            if (
+              typeof pattern2.value === "string" &&
+              pattern2.value.startsWith(pattern1.prefix)
+            ) {
+              return pattern1;
+            }
+            return {
+              never: true,
+              reason: `Field ${key} cannot be both ${pattern2.value} and start with ${pattern1.prefix}`,
+            };
+          }
+        }
       }
       throw new Error(
         `Cannot apply AND to patterns ${JSON.stringify(
@@ -352,7 +411,12 @@ export const synthesizeEventPattern = (
       return orDocuments(pattern1, pattern2);
       // both are patterns, merge the patterns
     } else if (!isPatternDocument(pattern1) && !isPatternDocument(pattern2)) {
-      if (isPresentPattern(pattern1)) {
+      if (isNeverPattern(pattern1)) {
+        return pattern2;
+      } else if (isNeverPattern(pattern2)) {
+        return pattern1;
+      } else if (isPresentPattern(pattern1)) {
+        // when evaluating OR logic, nevers can be dropped.
         if (isPresentPattern(pattern2)) {
           // when the logic is "name" in event.detail || !("name" in event.detail), simplify to empty logic
           if (pattern1.isPresent != pattern2.isPresent) {
@@ -811,7 +875,7 @@ const negateClassification = (pattern: Pattern): Pattern => {
     }
     // numeric range aggregations are ORs, when we negate an OR, we need to flip each range and turn it into an AND
     return pattern.ranges
-      .map((r) => negateNumericRange(r))
+      .map((r) => negateNumericRange(r) as NumericRangePattern | NeverPattern)
       .reduce((joined, range) => intersectNumericRange(joined, range));
   } else if (isNeverPattern(pattern)) {
     return { empty: true };

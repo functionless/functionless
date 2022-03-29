@@ -5,6 +5,9 @@ import {
   NumericAggregationPattern,
   EmptyPattern,
   isNumericAggregationPattern,
+  NeverPattern,
+  isNeverPattern,
+  isNumericRangePattern,
 } from "./pattern";
 
 /**
@@ -15,18 +18,22 @@ import {
  * x > 10 && x >= 10 => x > 10
  */
 export const intersectNumericRange = (
-  pattern1: NumericRangePattern,
-  pattern2: NumericRangePattern,
+  pattern1: NumericRangePattern | NeverPattern,
+  pattern2: NumericRangePattern | NeverPattern,
   allowZeroRange?: boolean
-): NumericRangePattern => {
+): NumericRangePattern | NeverPattern => {
+  if (isNeverPattern(pattern1) || isNeverPattern(pattern2)) {
+    return isNeverPattern(pattern1) ? pattern1 : pattern2;
+  }
   const newLower = maxComparison(pattern1.lower, pattern2.lower);
   const newUpper = minComparison(pattern1.upper, pattern2.upper);
   // merging ranges that are conflicting 1.lower = 10, 2.upper = 5
   const newRange = { upper: newUpper, lower: newLower };
   if (!allowZeroRange && !validateNumericRange(newRange)) {
-    throw new Error(
-      `Found zero range numeric range lower ${newRange.lower?.value} inclusive: ${newRange.lower?.inclusive}, upper ${newRange.upper?.value} inclusive: ${newRange.upper?.inclusive}`
-    );
+    return {
+      never: true,
+      reason: `Found zero range numeric range lower ${newRange.lower?.value} inclusive: ${newRange.lower?.inclusive}, upper ${newRange.upper?.value} inclusive: ${newRange.upper?.inclusive}`,
+    };
   }
   return newRange;
 };
@@ -271,18 +278,25 @@ export const negateNumericRange = (
 export const intersectNumericAggregation = (
   aggregation1: NumericAggregationPattern,
   aggregation2: NumericAggregationPattern
-): NumericAggregationPattern | NumericRangePattern | EmptyPattern => {
+):
+  | NumericAggregationPattern
+  | NumericRangePattern
+  | EmptyPattern
+  | NeverPattern => {
   const joinedRanges = aggregation1.ranges.reduce((ranges, range) => {
     const joinedRanges = aggregation2.ranges
       .map((r) => intersectNumericRange(r, range, true))
-      .filter((r) => validateNumericRange(r));
-    if (joinedRanges.length === 0) {
-      throw new Error(
-        `At least one OR statement in a numeric range must be valid with the other side`
-      );
-    }
+      .filter(isNumericRangePattern)
+      .filter(validateNumericRange);
     return [...ranges, ...joinedRanges];
   }, [] as NumericRangePattern[]);
+
+  if (joinedRanges.length === 0) {
+    return {
+      never: true,
+      reason: `Zero intersection numeric ranges.`,
+    };
+  }
 
   return reduceNumericAggregate({ ranges: joinedRanges });
 };
@@ -293,10 +307,21 @@ export const intersectNumericAggregation = (
 export const intersectNumericAggregationWithRange = (
   aggregation: NumericAggregationPattern,
   range: NumericRangePattern
-): NumericAggregationPattern | NumericRangePattern | EmptyPattern => {
-  const joinedRanges = aggregation.ranges.map((r) =>
-    intersectNumericRange(range, r)
-  );
+):
+  | NumericAggregationPattern
+  | NumericRangePattern
+  | EmptyPattern
+  | NeverPattern => {
+  const joinedRanges = aggregation.ranges
+    .map((r) => intersectNumericRange(range, r))
+    .filter(isNumericRangePattern)
+    .filter(validateNumericRange);
+  if (joinedRanges.length === 0) {
+    return {
+      never: true,
+      reason: `Zero intersection numeric ranges.`,
+    };
+  }
   return reduceNumericAggregate({ ranges: joinedRanges });
 };
 
