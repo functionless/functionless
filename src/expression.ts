@@ -9,6 +9,7 @@ import { AnyFunction } from "./util";
  * An {@link Expr} (Expression) is a Node that will be interpreted to a value.
  */
 export type Expr =
+  | ArgumentExpr
   | ArrayLiteralExpr
   | BinaryExpr
   | BooleanLiteralExpr
@@ -27,13 +28,13 @@ export type Expr =
   | SpreadAssignExpr
   | SpreadElementExpr
   | TemplateExpr
-  | UnaryExpr
-  | ArgumentExpr;
+  | UnaryExpr;
 
 export function isExpr(a: any) {
   return (
     isNode(a) &&
-    (isArrayLiteralExpr(a) ||
+    (isArgumentExpr(a) ||
+      isArrayLiteralExpr(a) ||
       isBinaryExpr(a) ||
       isBooleanLiteral(a) ||
       isCallExpr(a) ||
@@ -49,8 +50,7 @@ export function isExpr(a: any) {
       isReferenceExpr(a) ||
       isStringLiteralExpr(a) ||
       isTemplateExpr(a) ||
-      isUnaryExpr(a) ||
-      isArgumentExpr(a))
+      isUnaryExpr(a))
   );
 }
 
