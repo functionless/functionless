@@ -330,7 +330,7 @@ export class ASL {
     decl: FunctionDecl
   ) {
     const self = this;
-    this.decl = visitEachChild(decl, function visit(node):
+    this.decl = visitEachChild(decl, function normalizeAST(node):
       | FunctionlessNode
       | FunctionlessNode[] {
       if (
@@ -346,7 +346,9 @@ export class ASL {
           return new BlockStmt([new ReturnStmt(new NullLiteralExpr())]);
         } else if (!node.lastStmt.isTerminal()) {
           return new BlockStmt([
-            ...node.statements.map((stmt) => visitEachChild(stmt, visit)),
+            ...node.statements.map((stmt) =>
+              visitEachChild(stmt, normalizeAST)
+            ),
             new ReturnStmt(new NullLiteralExpr()),
           ]);
         }
@@ -404,7 +406,7 @@ export class ASL {
           }
         }
       }
-      return visitEachChild(node, visit);
+      return visitEachChild(node, normalizeAST);
     });
 
     const states = this.execute(this.decl.body);
@@ -1033,7 +1035,7 @@ export class ASL {
         });
       }
     } else if (expr.kind === "BinaryExpr") {
-    } else if (expr.kind === "ConditionExpr") {
+      // TODO
     }
     throw new Error(`cannot eval expression kind '${expr.kind}'`);
   }
@@ -1855,7 +1857,7 @@ function toStateName(stmt: Stmt): string | undefined {
       stmt.variableDecl?.name ? `(${stmt.variableDecl?.name})` : ""
     }`;
   } else if (stmt.kind === "DoStmt") {
-    return `do...while (${exprToString(stmt.condition)})`;
+    return `while (${exprToString(stmt.condition)})`;
   } else if (stmt.kind === "ForInStmt") {
     return `for(${stmt.variableDecl.name} in ${exprToString(stmt.expr)})`;
   } else if (stmt.kind === "ForOfStmt") {

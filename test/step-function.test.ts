@@ -3125,7 +3125,7 @@ test("let cond; do { cond = task() } while (cond)", () => {
   expect(definition).toEqual({
     StartAt: "cond = task(null)",
     States: {
-      "do...while (cond == null)": {
+      "while (cond == null)": {
         Choices: [
           {
             Next: "cond = task(null)",
@@ -3145,7 +3145,7 @@ test("let cond; do { cond = task() } while (cond)", () => {
         Type: "Choice",
       },
       "cond = task(null)": {
-        Next: "do...while (cond == null)",
+        Next: "while (cond == null)",
         Parameters: {
           FunctionName: task.resource.functionName,
           Payload: null,
@@ -4933,7 +4933,7 @@ test("break from do-while-loop", () => {
   expect(definition).toEqual({
     StartAt: "break",
     States: {
-      "do...while (true)": {
+      "while (true)": {
         Choices: [
           {
             IsPresent: false,
@@ -5114,7 +5114,7 @@ test("continue in do..while loop", () => {
         Type: "Pass",
       },
       "task(key)": {
-        Next: "do...while (true)",
+        Next: "while (true)",
         Parameters: {
           FunctionName: task.resource.functionName,
           "Payload.$": "$.key",
@@ -5123,7 +5123,7 @@ test("continue in do..while loop", () => {
         ResultPath: null,
         Type: "Task",
       },
-      "do...while (true)": {
+      "while (true)": {
         Choices: [
           {
             IsPresent: false,
@@ -5177,4 +5177,13 @@ test("return task(task())", () => {
       },
     },
   });
+});
+
+test("return cond ? task(1) : task(2))", () => {
+  const { stack, task } = initStepFunctionApp();
+  const definition = new ExpressStepFunction(stack, "fn", (cond: boolean) => {
+    return cond ? task(1) : task(2);
+  }).definition;
+
+  expect(definition).toEqual({});
 });
