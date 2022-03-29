@@ -5,7 +5,7 @@ import { AnyTable } from "./table";
 import { AnyLambda } from "./function";
 import { FunctionlessNode } from "./node";
 import { AppsyncResolver } from "./appsync";
-import glob from "glob";
+import minimatch from "minimatch";
 import { assertDefined } from "./assert";
 
 export default compile;
@@ -17,7 +17,7 @@ export interface FunctionlessConfig extends PluginConfig {
   /**
    * Glob to exclude
    */
-  exclude?: string;
+  exclude?: string[];
 }
 
 /**
@@ -35,10 +35,9 @@ export function compile(
   _config?: FunctionlessConfig,
   _extras?: TransformerExtras
 ): ts.TransformerFactory<ts.SourceFile> {
-  const ignore = _config?.exclude
-    ? new Set(glob.sync(_config.exclude, { absolute: true }))
-    : new Set();
-
+  const excludeMatchers = _config?.exclude
+    ? _config.exclude.map((pattern) => minimatch.makeRe(pattern))
+    : [];
   const checker = program.getTypeChecker();
   return (ctx) => {
     const functionless = ts.factory.createUniqueName("functionless");
@@ -55,7 +54,7 @@ export function compile(
       );
 
       // Do not transform any of the files matched by "exclude"
-      if (ignore.has(sf.fileName)) {
+      if (excludeMatchers.some((matcher) => matcher.test(sf.fileName))) {
         return sf;
       }
 

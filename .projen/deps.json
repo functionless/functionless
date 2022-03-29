@@ -10,11 +10,11 @@
       "type": "build"
     },
     {
-      "name": "@types/glob",
+      "name": "@types/jest",
       "type": "build"
     },
     {
-      "name": "@types/jest",
+      "name": "@types/minimatch",
       "type": "build"
     },
     {
@@ -138,7 +138,7 @@
       "type": "runtime"
     },
     {
-      "name": "glob",
+      "name": "minimatch",
       "type": "runtime"
     }
   ],
