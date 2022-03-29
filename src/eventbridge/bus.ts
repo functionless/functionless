@@ -1,0 +1,114 @@
+import { aws_events } from "aws-cdk-lib";
+import { Construct } from "constructs";
+import { EventBusRule, EventPredicateFunction } from "./rule";
+import { EventBusRuleInput } from "./types";
+
+/**
+ * A Functionless wrapper for a AWS CDK {@link aws_events.EventBus}.
+ *
+ * Filtering events and sending them to Lambda.
+ *
+ * ```ts
+ * interface Payload {
+ *    value: string;
+ * }
+ *
+ * // An event with the payload
+ * type myEvent = EventBusRuleInput<Payload>;
+ *
+ * const myAwsFunction = new aws_lambda.Function(this, 'myFunction', { ... });
+ * // A function that expects the payload.
+ * const myLambdaFunction = new Function<Payload, void>();
+ *
+ * // Some AWS Event Bus, may be new, may be default or imported.
+ * const awsBus = new aws_events.EventBus(this, "mybus");
+ * new EventBus<myEvent>(awsBus)
+ *    // when the payload is equal to some value
+ *    .when(this, 'rule1', event => event.detail.value === "some value")
+ *    // grab the payload
+ *    .map(event => event.detail)
+ *    // send to the function
+ *    .pipe(myLambdaFunction);
+ * ```
+ *
+ * Forwarding to another Event Bus based on some predicate:
+ *
+ * ```ts
+ * const anotherEventBus = aws_event.EventBus.fromEventBusArn(...);
+ *
+ * new EventBus<myEvent>(awsBus)
+ *    // when the payload is equal to some value
+ *    .when(this, 'rule2', event => event.detail.value === "some value")
+ *    // send verbatim to the other event bus
+ *    .pipe(anotherEventBus);
+ * ```
+ */
+export class EventBus<E extends EventBusRuleInput> {
+  /**
+   * This static property identifies this class as an EventBus to the TypeScript plugin.
+   */
+  public static readonly FunctionlessType = "EventBus";
+
+  constructor(readonly bus: aws_events.EventBus) {}
+
+  /**
+   * Filter events using as a EventBus Rule using a Functionless predicte function.
+   *
+   * Equals
+   *
+   * ```ts
+   * when(this, 'rule', (event) => event.source === "lambda")
+   * ```
+   *
+   * Starts With (Prefix)
+   *
+   * ```ts
+   * when(this, 'rule', (event) => event.id.startsWith("2022"))
+   * ```
+   *
+   * Not
+   *
+   * ```ts
+   * when(this, 'rule', (event) => event.source !== "dynamo")
+   * ```
+   *
+   * Numeric Ranges
+   *
+   * ```ts
+   * when(this, 'rule', (event) => event.detail.num >= 10 || event.detail.num > 100 && event.detail.num < 1000)
+   * ```
+   *
+   * Presence
+   *
+   * ```ts
+   * when(this, 'rule', (event) => !event.detail.optional)
+   * ```
+   *
+   * Multiple Fields
+   *
+   * ```ts
+   * when(this, 'rule', (event) => event.source === "lambda" && event['detail-type'] === "SUCCESS")
+   * ```
+   *
+   * Array Includes
+   *
+   * ```ts
+   * when(this, 'rule', (event) => event.detail.list.includes("someValue"))
+   * ```
+   *
+   * Unsupported by Event Bridge
+   * * OR Logic between multiple fields
+   * * AND logic between most logic on a single field (except for numeric ranges.)
+   * * Multiple `!field.startsWith(...)` on a single field
+   * * Any operation on an Array other than `includes` and presence (`event.detail.list === undefined`).
+   * * Any string operation other than `===/==`, `!==/!=`, `startsWith`, and presence (`!==/=== undefined`).
+   * * Math (`event.detail.num + 1 < 10`)
+   * * Comparisons between fields (`event.detail.previous !== event.id`)
+   *
+   * Unsupported by Functionless:
+   * * Variables from outside of the function scope
+   */
+  when(scope: Construct, id: string, predicate: EventPredicateFunction<E>) {
+    return new EventBusRule<E>(scope, id, this.bus, predicate);
+  }
+}

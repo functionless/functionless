@@ -1,5 +1,6 @@
 import { aws_events, aws_lambda, Stack } from "aws-cdk-lib";
-import { EventBus } from "../src/eventbridge";
+import { EventBus, EventBusRule } from "../src/eventbridge";
+import { EventBusTransform } from "../src/eventbridge/transform";
 import { Function } from "../src/function";
 
 let stack: Stack;
@@ -12,6 +13,25 @@ test("new bus", () => {
   const bus = new aws_events.EventBus(stack, "bus");
 
   new EventBus(bus);
+});
+
+test.skip("new rule without when", () => {
+  const bus = new aws_events.EventBus(stack, "bus");
+
+  const rule = new EventBusRule(stack, "rule", bus, (_event) => true);
+
+  expect(rule.rule._renderEventPattern()).toEqual({ source: [{ prefix: "" }] });
+});
+
+test.skip("new transform without map", () => {
+  const bus = new aws_events.EventBus(stack, "bus");
+
+  const rule = new EventBusRule(stack, "rule", bus, (_event) => true);
+  const transform = new EventBusTransform((event) => event.source, rule);
+
+  expect(transform.targetInput.bind(rule.rule)).toEqual({
+    inputPath: "$.source",
+  } as aws_events.RuleTargetInputProperties);
 });
 
 test("new bus with when", () => {

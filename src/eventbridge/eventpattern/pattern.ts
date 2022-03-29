@@ -1,5 +1,5 @@
 import { assertNever } from "../../assert";
-import * as fnls_event_bridge from "./types";
+import * as functionless_event_bridge from "./types";
 
 /**
  * These are simlified and better structured interfaces/types to make it easier to work with Event Bridge Patterns.
@@ -22,11 +22,11 @@ export type Pattern =
 /**
  * The base of an event pattern is a object with multiple fields. Additionally some fields like detail can be deep.
  */
-export type PatternDocument = {
+export interface PatternDocument {
   doc: {
     [key: string]: PatternDocument | Pattern;
   };
-};
+}
 
 export const isPatternDocument = (
   x: Pattern | PatternDocument
@@ -52,6 +52,9 @@ export const isAggregatePattern = (x: Pattern): x is AggregatePattern => {
   return "patterns" in x;
 };
 
+/**
+ * One or more {@link NumericRangePattern} with OR/Union logic applied. 
+ */
 export interface NumericAggregationPattern {
   ranges: NumericRangePattern[];
 }
@@ -90,7 +93,7 @@ export const isPrefixMatchPattern = (x: Pattern): x is PrefixMatchPattern => {
  * The lower or upper end of a numeric range.
  * Use {@link Number.POSITIVE_INFINITY} or {@link Number.NEGATIVE_INFINITY} to represent no LOWER or UPPER value.
  */
-export interface NumericRangeOperand {
+export interface NumericRangeLimit {
   value: number;
   inclusive: boolean;
 }
@@ -104,8 +107,8 @@ export interface NumericRangeOperand {
  * Generally represents the AND logic of a numeric range.
  */
 export interface NumericRangePattern {
-  lower: NumericRangeOperand;
-  upper: NumericRangeOperand;
+  lower: NumericRangeLimit;
+  upper: NumericRangeLimit;
 }
 
 export const isNumericRangePattern = (x: Pattern): x is NumericRangePattern => {
@@ -190,9 +193,19 @@ export const isNegativeSingleValueRange = (pattern: NumericRangePattern) =>
   !pattern.lower.inclusive &&
   !pattern.upper.inclusive;
 
+/**
+ * Transforms the proprietary {@link PatternDocuemnt} into AWS's EventPattern schema.
+ * https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-event-patterns.html
+ *
+ * For each field,
+ *  if the field is a nested PatternDocument, recurse.
+ *  if the field is a Pattern, output the pattern as a EvnetPattern.
+ *
+ * We will not maintain empty patterns or pattern documents.
+ */
 export const patternDocumentToEventPattern = (
   patternDocument: PatternDocument
-): fnls_event_bridge.SubPattern => {
+): functionless_event_bridge.SubPattern => {
   return Object.entries(patternDocument.doc).reduce((pattern, [key, entry]) => {
     const keyPattern = isPatternDocument(entry)
       ? patternDocumentToEventPattern(entry)
@@ -204,13 +217,16 @@ export const patternDocumentToEventPattern = (
       ...pattern,
       [key]: keyPattern,
     };
-  }, {} as fnls_event_bridge.SubPattern);
+  }, {} as functionless_event_bridge.SubPattern);
 };
 
+/**
+ * Transforms the proprietary {@link Pattern} into a EventBridge's {@link functionless_event_bridge.PatternList} schema.
+ */
 export const patternToEventBridgePattern = (
   pattern: Pattern,
   aggregate?: boolean
-): fnls_event_bridge.PatternList | undefined => {
+): functionless_event_bridge.PatternList | undefined => {
   if (isEmptyPattern(pattern)) {
     return undefined;
   } else if (isExactMatchPattern(pattern)) {
@@ -242,6 +258,18 @@ export const patternToEventBridgePattern = (
     } else if (isNegativeSingleValueRange(pattern)) {
       return [{ "anything-but": pattern.lower.value }];
     }
+    /**
+     * turns the structured numeric range {@link NumericRangePattern}
+     * into the EventBridge format {@link functionless_event_bridge.NumberPattern}
+     *
+     * if the Lower or Upper are NEGATIVE_INFINITY or POSITIVE_INFIITY respectively, do not include in the range.
+     * if the Lower or Upper range values are inclusive, add a `=` to the sign.
+     *
+     * { lower: { value: 10, inclusive: false }, upper: { value: POSITIVE_INFINITY } } =>  { numeric: [">", 10] }
+     * { lower: { value: 10, inclusive: true }, upper: { value: POSITIVE_INFINITY } } =>  { numeric: [">=", 10] }
+     * { lower: { value: 10, inclusive: true }, upper: { value: 100, inclusive: false } } =>  { numeric: [">=", 10, "<", 100] }
+     * { lower: { value: NEGATIVE_INFINITY }, upper: { value: 100, inclusive: true } } =>  { numeric: ["<=", 100] }
+     */
     return [
       {
         numeric: [
@@ -262,7 +290,7 @@ export const patternToEventBridgePattern = (
       .map((p) => patternToEventBridgePattern(p, pattern.patterns.length > 1))
       .reduce(
         (acc, pattern) => [...(acc ?? []), ...(pattern ?? [])],
-        [] as fnls_event_bridge.PatternList
+        [] as functionless_event_bridge.PatternList
       );
   } else if (isNumericAggregationPattern(pattern)) {
     if (pattern.ranges.length === 0) {
@@ -272,7 +300,7 @@ export const patternToEventBridgePattern = (
       .map((x) => patternToEventBridgePattern(x, true))
       .reduce(
         (acc, pattern) => [...(acc ?? []), ...(pattern ?? [])],
-        [] as fnls_event_bridge.PatternList
+        [] as functionless_event_bridge.PatternList
       );
   } else if (isNeverPattern(pattern)) {
     // if never is in an aggregate and not the lone pattern, return undefined

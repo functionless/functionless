@@ -190,7 +190,7 @@ export class UnaryExpr extends BaseNode<"UnaryExpr"> {
 export const isNullLiteralExpr = typeGuard("NullLiteralExpr");
 
 export class NullLiteralExpr extends BaseNode<"NullLiteralExpr"> {
-  constructor(readonly undefined: boolean) {
+  constructor(readonly isUndefined: boolean) {
     super("NullLiteralExpr");
   }
 }

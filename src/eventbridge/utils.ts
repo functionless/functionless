@@ -38,8 +38,6 @@ import { isReturn, isVariableStmt, Stmt, VariableStmt } from "../statement";
  * }
  *
  * Given the propertyAccesssExpr for "prop2", this function will return ["prop1", "prop2"];
- *
- * TODO support references
  */
 export const getReferencePath = (
   expression: Expr
@@ -84,7 +82,7 @@ export const getPropertyAccessKey = (
 ): string | number => {
   const key = isPropAccessExpr(expr)
     ? expr.name
-    : getConstant(expr.element)?.constant;
+    : evalToConstant(expr.element)?.constant;
 
   if (!(typeof key === "string" || typeof key === "number")) {
     throw new Error(
@@ -99,8 +97,19 @@ export const getPropertyAccessKey = (
  * Retrieves a string, number, boolean, undefined, or null constant from the given expression.
  * Wrap the value to not be ambiguous with the undefined value.
  * When one is not found, return undefined (not wrapped).
+ * 
+ * "value" -> { value: "value" }
+ * undefined -> { value: undefined }
+ * null -> { value: undefined }
+ * call() -> undefined
+ * true -> { value: true }
+ * -10 -> { value: -10 }
+ * 
+ * Note: constants that follow references must already be resolved to a simple constant by {@link flattenedExpression}.
+ * const obj = { val: "hello" };
+ * obj.val -> { value: "hello" }
  */
-export const getConstant = (expr: Expr): Constant | undefined => {
+export const evalToConstant = (expr: Expr): Constant | undefined => {
   if (
     isStringLiteralExpr(expr) ||
     isNumberLiteralExpr(expr) ||
@@ -108,9 +117,9 @@ export const getConstant = (expr: Expr): Constant | undefined => {
   ) {
     return { constant: expr.value };
   } else if (isNullLiteralExpr(expr)) {
-    return { constant: expr.undefined ? undefined : null };
+    return { constant: expr.isUndefined ? undefined : null };
   } else if (isUnaryExpr(expr) && expr.op === "-") {
-    const number = assertNumber(getConstant(expr.expr)?.constant);
+    const number = assertNumber(evalToConstant(expr.expr)?.constant);
     return { constant: -number };
   }
   return undefined;
@@ -249,7 +258,7 @@ export const flattenExpression = (expr: Expr, scope: EventScope): Expr => {
       flattenExpression(x, scope)
     );
 
-    const flattenedConstants = flattenedExpressions.map((e) => getConstant(e));
+    const flattenedConstants = flattenedExpressions.map((e) => evalToConstant(e));
     const allConstants = flattenedConstants.every((c) => !!c);
 
     // when all of values are constants, turn them into a string constant now.

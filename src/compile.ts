@@ -6,6 +6,7 @@ import { AnyLambda } from "./function";
 import { FunctionlessNode } from "./node";
 import { EventBus, EventBusRule } from "./eventbridge";
 import { AppsyncResolver } from "./appsync";
+import { assertDefined } from "./assert";
 export default compile;
 
 /**
@@ -421,10 +422,8 @@ export function compile(
           ]);
         } else if (ts.isPrefixUnaryExpression(node)) {
           if (
-            ![
-              ts.SyntaxKind.ExclamationToken,
-              ts.SyntaxKind.MinusToken,
-            ].includes(node.operator)
+            node.operator !== ts.SyntaxKind.ExclamationToken &&
+            node.operator !== ts.SyntaxKind.MinusToken
           ) {
             throw new Error(
               `invalid Unary Operator: ${ts.tokenToString(node.operator)}`
@@ -432,7 +431,10 @@ export function compile(
           }
           return newExpr("UnaryExpr", [
             ts.factory.createStringLiteral(
-              ts.tokenToString(node.operator) ?? ""
+              assertDefined(
+                ts.tokenToString(node.operator),
+                `Unary operator token cannot be stringified: ${node.operator}`
+              )
             ),
             toExpr(node.operand),
           ]);

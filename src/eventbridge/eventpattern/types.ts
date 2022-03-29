@@ -1,4 +1,4 @@
-import { aws_events } from "aws-cdk-lib";
+import { aws_events as functionless_event_bridge } from "aws-cdk-lib";
 
 /**
  * CDK does not contain rich types for event bridge event patterns.
@@ -58,12 +58,15 @@ export type PatternList = (
 export type Pattern = PatternList | undefined | SubPattern;
 
 /**
- * As of CDK 2.14, Event Bridge doesn't support the content matchers.
+ * AWS's Event Pattern
+ * https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-event-patterns.html
+ * 
+ * CDK's Event Bridge types don't support the content matchers schemas.
  * To use with CDK, cast to {@link aws_events.EventPattern}.
  * https://github.com/aws/aws-cdk/issues/6184
  */
-export type FnLsEventPattern = {
-  [key in keyof aws_events.EventPattern]: key extends "detail"
+export type FunctionlessEventPattern = {
+  [key in keyof functionless_event_bridge.EventPattern]: key extends "detail"
     ? Pattern
     : Exclude<Pattern, SubPattern>;
 };

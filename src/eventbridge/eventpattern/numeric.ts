@@ -1,20 +1,24 @@
-import { BinaryOp } from "../..";
+import { BinaryOp } from "../../expression";
 import {
   NumericRangePattern,
-  NumericRangeOperand,
+  NumericRangeLimit,
   NumericAggregationPattern,
   EmptyPattern,
   isNumericAggregationPattern,
 } from "./pattern";
 
-export const joinNumericRange = (
+/**
+ * Join two numeric ranges together to represent values in both ranges.
+ * Throw an error if the range could not match a single value.
+ * x > 10 && x > 5 => x > 10
+ * x >= 10 && x > 9 => x >= 10
+ * x > 10 && x >= 10 => x > 10
+ */
+export const intersectNumericRange = (
   pattern1: NumericRangePattern,
   pattern2: NumericRangePattern,
   allowZeroRange?: boolean
 ): NumericRangePattern => {
-  // x > 10 && x > 5 => x > 10
-  // x >= 10 && x > 9 => x >= 10
-  // x > 10 && x >= 10 => x > 10
   const newLower = maxComparison(pattern1.lower, pattern2.lower);
   const newUpper = minComparison(pattern1.upper, pattern2.upper);
   // merging ranges that are conflicting 1.lower = 10, 2.upper = 5
@@ -27,39 +31,63 @@ export const joinNumericRange = (
   return newRange;
 };
 
+/**
+ * Given two limits of two ranges, return the limit that is the largest.
+ *
+ * The symbol of the limit doesn't matter.
+ *
+ * 10, 9 => 10
+ * 100, 1000 => 1000
+ * 100 (inclusive), 100 (exclusive) => 100 (exclusive)
+ */
 const maxComparison = (
-  comp1: NumericRangeOperand,
-  comp2: NumericRangeOperand
-): NumericRangeOperand => {
+  limit1: NumericRangeLimit,
+  limit2: NumericRangeLimit
+): NumericRangeLimit => {
   // one is strictly greater than the other
-  if (comp1.value > comp2.value) return comp1;
-  if (comp2.value > comp1.value) return comp2;
+  if (limit1.value > limit2.value) return limit1;
+  if (limit2.value > limit1.value) return limit2;
   // resolve conflicting inclusivity - inclusive is lower
   return {
-    value: comp1.value,
-    inclusive: comp1.inclusive && comp2.inclusive,
-  };
-};
-
-const minComparison = (
-  comp1: NumericRangeOperand,
-  comp2: NumericRangeOperand
-): NumericRangeOperand => {
-  // one is strictly less than the other
-  if (comp1.value < comp2.value) return comp1;
-  if (comp2.value < comp1.value) return comp2;
-  // resolve conflicting inclusivity - inclusive is lower
-  return {
-    value: comp1.value,
-    inclusive: comp1.inclusive || comp2.inclusive,
+    value: limit1.value,
+    inclusive: limit1.inclusive && limit2.inclusive,
   };
 };
 
 /**
- * If the ranges overlap, merge them.
- * If the range are mutually exclusive, return an aggregate.
+ * Given two limits of two ranges, return the limit that is the smallest.
+ *
+ * The symbol of the limit doesn't matter.
+ *
+ * 10, 9 => 9
+ * 100, 1000 => 100
+ * 100 (inclusive), 100 (exclusive) => 100 (inclusive)
+ * 100 (exclusive), 100 (exclusive) => 100 (exclusive)
  */
-export const mergeNumericOr = (
+const minComparison = (
+  limit1: NumericRangeLimit,
+  limit2: NumericRangeLimit
+): NumericRangeLimit => {
+  // one is strictly less than the other
+  if (limit1.value < limit2.value) return limit1;
+  if (limit2.value < limit1.value) return limit2;
+  // resolve conflicting inclusivity - inclusive is lower
+  return {
+    value: limit1.value,
+    inclusive: limit1.inclusive || limit2.inclusive,
+  };
+};
+
+/**
+ * If the ranges overlap, return the union of them.
+ * If the range are mutually exclusive, return an aggregate with two ranges.
+ *
+ * [10, 20] [15, 30] => [10, 30]
+ * [10, 20] [21, 30] => [10, 20] [21, 30]
+ * [10, 20] [20, 30] => [10, 30]
+ * [10, 20) (20, 30] => [10, 20) (20, 30]
+ */
+export const unionNumericRange = (
   pattern1: NumericRangePattern,
   pattern2: NumericRangePattern
 ): NumericAggregationPattern | NumericRangePattern => {
@@ -101,12 +129,19 @@ export const isOverlappngRange = (
   );
 };
 
-export const validateNumericRange = (
-  range: NumericRangePattern
-): boolean => {
+/**
+ * In a valid range, the lower is before the upper.
+ *
+ * [10, 5] => invalid
+ * [5, 10] => valid
+ * [10, 10) => invalid
+ * [10, 10] => valid
+ */
+export const validateNumericRange = (range: NumericRangePattern): boolean => {
   if (range.lower) {
     if (range.upper) {
       // when both lower and upper are given, the lower must be lower than the upper
+      // when the lower and the upper are the same, the values must be inclusive, else there is zero range.
       if (range.lower.value == range.upper.value) {
         // x >= 10 && x <= 10 => valid (can be 10)
         // x >= 10 && x < 10 => invalid (zero range)
@@ -117,7 +152,7 @@ export const validateNumericRange = (
         }
         return false;
       }
-      // lower vakue must be less than upper value
+      // lower value must be less than upper value
       // x > 10 && x < 100
       return range.lower?.value < range.upper?.value;
     }
@@ -125,13 +160,14 @@ export const validateNumericRange = (
   return !!range.lower || !!range.upper;
 };
 
+/**
+ * Runs {@link reduceNumericRanges} and then checks to see if the outcome is
+ * empty, singular, or still an aggregate.
+ */
 export const reduceNumericAggregate = (
-  classification: NumericAggregationPattern
-):
-  | EmptyPattern
-  | NumericRangePattern
-  | NumericAggregationPattern => {
-  const reduced = reduceNumericRanges(classification.ranges);
+  pattern: NumericAggregationPattern
+): EmptyPattern | NumericRangePattern | NumericAggregationPattern => {
+  const reduced = reduceNumericRanges(pattern.ranges);
 
   if (reduced.length === 0) {
     return { empty: true };
@@ -142,6 +178,11 @@ export const reduceNumericAggregate = (
 };
 
 /**
+ * Given one to many ranges, collapse them all to the least number of ranges when one or more overlap.
+ * This operation may take multiple iterations to find all overlappting ranges.
+ *
+ * TODO: this can probably be simplified to a single iteration by ordering the ranges, the performance impact will be minimal.
+ *
  * one or more ranges merge with multiple other ranges
  * [1, 10], [11, 20], [8, 12]
  * [1, 10], [11, 20]
@@ -179,7 +220,7 @@ export const reduceNumericRanges = (
     }
 
     const mergedRanges = overlappingRanges
-      .map((r) => mergeNumericOr(r, range))
+      .map((r) => unionNumericRange(r, range))
       .reduce(
         (acc, r) => [
           ...acc,
@@ -194,6 +235,14 @@ export const reduceNumericRanges = (
   }, [] as NumericRangePattern[]);
 };
 
+/**
+ * Invert numeric ranges!
+ *
+ * [10, 20] => [neg_inf, 10), (20, inf]
+ * (10, 20) => [neg_inf, 10], [20, inf]
+ * (10, inf] => [neg_inf, 10]
+ * [neg_inf, 20] => (20, inf]
+ */
 export const negateNumericRange = (
   pattern: NumericRangePattern
 ): NumericRangePattern => ({
@@ -207,16 +256,25 @@ export const negateNumericRange = (
       : { value: Number.POSITIVE_INFINITY, inclusive: true },
 });
 
-export const andNumericAggregation = (
+/**
+ * Intersect multiple numeric ranges.
+ * 1. attempt to intersect each numeric ranges.
+ * 2. validate each result
+ * 3. filter invalid result.
+ * 4. Fail if no results are valid.
+ *
+ * [10, 20] AND ( [5, 15] OR [25, 30] ) => [10, 15]
+ * [10, 20] AND ( [25, 30] OR [35, 40] ) => INVALID (cannot AND either range on the other side)
+ * ([10, 20] OR [30, 40]) AND ( [5, 15] OR [25, 30] ) => [10,15] OR 30
+ * ([10, 20] OR [30, 40]) AND ( [5, 15] OR [25, 30) ) => INVALID
+ */
+export const intersectNumericAggregation = (
   aggregation1: NumericAggregationPattern,
   aggregation2: NumericAggregationPattern
-):
-  | NumericAggregationPattern
-  | NumericRangePattern
-  | EmptyPattern => {
+): NumericAggregationPattern | NumericRangePattern | EmptyPattern => {
   const joinedRanges = aggregation1.ranges.reduce((ranges, range) => {
     const joinedRanges = aggregation2.ranges
-      .map((r) => joinNumericRange(r, range, true))
+      .map((r) => intersectNumericRange(r, range, true))
       .filter((r) => validateNumericRange(r));
     if (joinedRanges.length === 0) {
       throw new Error(
@@ -229,19 +287,22 @@ export const andNumericAggregation = (
   return reduceNumericAggregate({ ranges: joinedRanges });
 };
 
-export const andNumericAggregationWithRange = (
+/**
+ * Apply intersection logic between a single range and set of aggregate ranges (OR logic).
+ */
+export const intersectNumericAggregationWithRange = (
   aggregation: NumericAggregationPattern,
   range: NumericRangePattern
-):
-  | NumericAggregationPattern
-  | NumericRangePattern
-  | EmptyPattern => {
+): NumericAggregationPattern | NumericRangePattern | EmptyPattern => {
   const joinedRanges = aggregation.ranges.map((r) =>
-    joinNumericRange(range, r)
+    intersectNumericRange(range, r)
   );
   return reduceNumericAggregate({ ranges: joinedRanges });
 };
 
+/**
+ * Creates a single numeric range entry with only one limit (lower or upper) set.
+ */
 export const createSingleNumericRange = (
   value: number,
   op: BinaryOp

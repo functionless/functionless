@@ -1,18 +1,14 @@
 import { App, aws_events, Stack } from "aws-cdk-lib";
-import {
-  AppsyncResolver,
-  EventBusRuleInput,
-  EventTransformFunction,
-  FunctionDecl,
-} from "../src";
+import { AppsyncResolver, EventBusRuleInput, FunctionDecl } from "../src";
 
 import * as appsync from "@aws-cdk/aws-appsync-alpha";
 import path from "path";
 import { synthesizeEventPattern } from "../src/eventbridge/eventpattern";
-import { FnLsEventPattern } from "../src/eventbridge/eventpattern/types";
-import { synthesizeEventBridgeTargets } from "../src/eventbridge/targets";
+import { FunctionlessEventPattern } from "../src/eventbridge/eventpattern/types";
 import { Rule } from "aws-cdk-lib/aws-events";
 import { Err, isErr } from "../src/error";
+import { EventTransformFunction } from "../src/eventbridge/transform";
+import { synthesizeEventBridgeTargets } from "../src/eventbridge/targets/synth";
 
 // generates boilerplate for the circuit-breaker logic for implementing early return
 export function returnExpr(varName: string) {
@@ -58,7 +54,7 @@ export function appsyncTestCase(
 
 export function ebEventPatternTestCase(
   decl: FunctionDecl | Err,
-  expected: FnLsEventPattern
+  expected: FunctionlessEventPattern
 ) {
   const result = synthesizeEventPattern(decl);
 

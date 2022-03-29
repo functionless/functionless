@@ -5,14 +5,13 @@ import { aws_events } from "aws-cdk-lib";
 import { ebEventTargetTestCase, ebEventTargetTestCaseError } from "./util";
 import { EventField } from "aws-cdk-lib/aws-events";
 
-interface testEvent
-  extends EventBusRuleInput<{
-    value: string;
-    num: number;
-    array: string[];
-    "blah-blah": string;
-    "blah blah": string;
-  }> {}
+type testEvent = EventBusRuleInput<{
+  value: string;
+  num: number;
+  array: string[];
+  "blah-blah": string;
+  "blah blah": string;
+}>;
 
 test("event path", () => {
   ebEventTargetTestCase<testEvent>(

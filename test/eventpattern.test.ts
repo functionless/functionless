@@ -827,6 +827,41 @@ describe("event pattern", () => {
       );
     });
 
+    test("numeric range or and AND part reduced both ranges", () => {
+      ebEventPatternTestCase(
+        reflect<EventPredicateFunction<TestEvent>>(
+          (event) =>
+            ((event.detail.num >= 10 && event.detail.num <= 20) ||
+              (event.detail.num >= 30 && event.detail.num <= 40)) &&
+            ((event.detail.num >= 5 && event.detail.num <= 15) ||
+              (event.detail.num >= 25 && event.detail.num <= 30))
+        ),
+        {
+          detail: {
+            num: [{ numeric: [">=", 10, "<=", 15] }, 30],
+          },
+        }
+      );
+    });
+
+    // TODO: this should work, invalid ranges should not fail until the end when no range will be valid.
+    test.skip("numeric range or and AND part reduced both losing some range", () => {
+      ebEventPatternTestCase(
+        reflect<EventPredicateFunction<TestEvent>>(
+          (event) =>
+            ((event.detail.num >= 10 && event.detail.num <= 20) ||
+              (event.detail.num >= 30 && event.detail.num <= 40)) &&
+            ((event.detail.num >= 5 && event.detail.num <= 15) ||
+              (event.detail.num >= 25 && event.detail.num < 30))
+        ),
+        {
+          detail: {
+            num: [{ numeric: [">=", 10, "<=", 15] }],
+          },
+        }
+      );
+    });
+
     test("numeric range multiple distinct segments", () => {
       ebEventPatternTestCase(
         reflect<EventPredicateFunction<TestEvent>>(
@@ -884,14 +919,19 @@ describe("event pattern", () => {
       );
     });
 
-    // Note: another option would be to just drop the invalid range.
-    test("numeric range or and AND error", () => {
-      ebEventPatternTestCaseError(
+    // TODO: drop the invalid range.
+    test.skip("numeric range or and AND dropped range", () => {
+      ebEventPatternTestCase(
         reflect<EventPredicateFunction<TestEvent>>(
           (event) =>
             (event.detail.num > 300 || event.detail.num < 200) &&
             event.detail.num > 400
-        )
+        ),
+        {
+          detail: {
+            num: [{ numeric: [">", 400] }],
+          },
+        }
       );
     });
 
@@ -903,6 +943,24 @@ describe("event pattern", () => {
             event.detail.num < 1000 &&
             event.detail.num < 50
         )
+      );
+    });
+
+    // TODO FIXME, drop the invalid range at the OR.
+    test.skip("numeric range nil range error upper", () => {
+      ebEventPatternTestCase(
+        reflect<EventPredicateFunction<TestEvent>>(
+          (event) =>
+            event.detail.num === 10 ||
+            (event.detail.num >= 100 &&
+              event.detail.num < 1000 &&
+              event.detail.num < 50)
+        ),
+        {
+          detail: {
+            num: [10],
+          },
+        }
       );
     });
 
@@ -922,6 +980,21 @@ describe("event pattern", () => {
         reflect<EventPredicateFunction<TestEvent>>(
           (event) => event.detail.num >= 100 && event.detail.num < 50
         )
+      );
+    });
+
+    test.skip("numeric range nil range illogical with override", () => {
+      ebEventPatternTestCase(
+        reflect<EventPredicateFunction<TestEvent>>(
+          (event) =>
+            event.detail.num === 10 ||
+            (event.detail.num >= 100 && event.detail.num < 50)
+        ),
+        {
+          detail: {
+            num: [10],
+          },
+        }
       );
     });
   });
@@ -977,6 +1050,36 @@ describe("event pattern", () => {
           (event) =>
             event.detail.str === "hi" && <any>event.detail.str === "hello"
         )
+      );
+    });
+
+    // TODO: only fail when the final state is impossible.
+    test.skip("same field AND string with OR", () => {
+      ebEventPatternTestCase(
+        reflect<EventPredicateFunction<TestEvent>>(
+          (event) =>
+            event.detail.str === "huh" ||
+            (event.detail.str === "hi" && <any>event.detail.str === "hello")
+        ),
+        {
+          detail: {
+            str: ["huh"],
+          },
+        }
+      );
+    });
+
+    // TODO fix this
+    test.skip("same field AND string identical", () => {
+      ebEventPatternTestCase(
+        reflect<EventPredicateFunction<TestEvent>>(
+          (event) => event.detail.str === "hi" && event.detail.str === "hi"
+        ),
+        {
+          detail: {
+            str: ["hi"],
+          },
+        }
       );
     });
 
@@ -1175,6 +1278,22 @@ describe("event pattern", () => {
         reflect<EventPredicateFunction<TestEvent>>(
           (event) => !event.detail.str && <any>event.detail.str
         )
+      );
+    });
+
+    // TODO: this should work
+    test.skip("AND not exists and exists impossible", () => {
+      ebEventPatternTestCase(
+        reflect<EventPredicateFunction<TestEvent>>(
+          (event) =>
+            event.detail.str === "hi" ||
+            (!event.detail.str && <any>event.detail.str)
+        ),
+        {
+          detail: {
+            str: ["hi"],
+          },
+        }
       );
     });
 
