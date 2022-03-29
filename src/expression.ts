@@ -120,7 +120,7 @@ export class CallExpr extends BaseNode<"CallExpr"> {
     args.forEach((arg) => setParent(this, arg));
   }
 
-  getArgument(name: string): Argument | undefined {
+  public getArgument(name: string): Argument | undefined {
     return this.args.find((arg) => arg.name === name);
   }
 }
