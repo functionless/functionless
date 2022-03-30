@@ -1,4 +1,11 @@
 import { Table } from "./table";
+import {
+  UpdateItemInput,
+  UpdateItemOutput,
+} from "typesafe-dynamodb/lib/update-item";
+import { PutItemInput, PutItemOutput } from "typesafe-dynamodb/lib/put-item";
+import { ScanInput, ScanOutput } from "typesafe-dynamodb/lib/scan";
+import { QueryInput, QueryOutput } from "typesafe-dynamodb/lib/query";
 import { GetItemInput, GetItemOutput } from "typesafe-dynamodb/lib/get-item";
 import {
   DeleteItemInput,
@@ -10,6 +17,8 @@ import { CallExpr, isObjectLiteralExpr, ObjectLiteralExpr } from "./expression";
 import { ASL, isASL, Task } from "./asl";
 import { CallContext } from "./context";
 import { VTL } from "./vtl";
+
+import type { DynamoDB as AWSDynamoDB } from "aws-sdk";
 
 type Item<T extends Table<any, any, any>> = T extends Table<infer I, any, any>
   ? I
@@ -40,6 +49,43 @@ export namespace $AWS {
   export const kind = "AWS";
 
   export namespace DynamoDB {
+    /**
+     * @see https://docs.aws.amazon.com/step-functions/latest/dg/connect-ddb.html
+     */
+    // @ts-ignore
+    export function DeleteItem<
+      T extends Table<any, any, any>,
+      Key extends TableKey<
+        Item<T>,
+        PartitionKey<T>,
+        RangeKey<T>,
+        JsonFormat.AttributeValue
+      >,
+      ConditionExpression extends string | undefined,
+      ReturnValue extends AWSDynamoDB.ReturnValue = "NONE"
+    >(
+      input: { TableName: T } & Omit<
+        DeleteItemInput<
+          Item<T>,
+          PartitionKey<T>,
+          RangeKey<T>,
+          Key,
+          ConditionExpression,
+          ReturnValue,
+          JsonFormat.AttributeValue
+        >,
+        "TableName"
+      >
+    ): DeleteItemOutput<Item<T>, ReturnValue, JsonFormat.AttributeValue>;
+
+    // @ts-ignore
+    export function DeleteItem(
+      call: CallExpr,
+      context: CallContext
+    ): Partial<Task> {
+      return dynamoRequest(call, context, "deleteItem");
+    }
+
     /**
      * @see https://docs.aws.amazon.com/step-functions/latest/dg/connect-ddb.html
      */
@@ -77,7 +123,6 @@ export namespace $AWS {
       JsonFormat.AttributeValue
     >;
 
-    // @ts-ignore
     export function GetItem(
       call: CallExpr,
       context: CallContext
@@ -89,7 +134,7 @@ export namespace $AWS {
      * @see https://docs.aws.amazon.com/step-functions/latest/dg/connect-ddb.html
      */
     // @ts-ignore
-    export function DeleteItem<
+    export function UpdateItem<
       T extends Table<any, any, any>,
       Key extends TableKey<
         Item<T>,
@@ -97,29 +142,118 @@ export namespace $AWS {
         RangeKey<T>,
         JsonFormat.AttributeValue
       >,
-      ConditionExpression extends string | undefined,
-      ReturnValue extends string
+      UpdateExpression extends string,
+      ConditionExpression extends string | undefined = undefined,
+      ReturnValue extends AWSDynamoDB.ReturnValue = "NONE",
+      AttributesToGet extends keyof Item<T> | undefined = undefined,
+      ProjectionExpression extends string | undefined = undefined
     >(
       input: { TableName: T } & Omit<
-        DeleteItemInput<
+        UpdateItemInput<
           Item<T>,
           PartitionKey<T>,
           RangeKey<T>,
           Key,
+          UpdateExpression,
           ConditionExpression,
           ReturnValue,
           JsonFormat.AttributeValue
         >,
         "TableName"
       >
-    ): DeleteItemOutput<Item<T>, ReturnValue, JsonFormat.AttributeValue>;
+    ): UpdateItemOutput<
+      Item<T>,
+      PartitionKey<T>,
+      RangeKey<T>,
+      Key,
+      ReturnValue,
+      JsonFormat.AttributeValue
+    >;
 
-    // @ts-ignore
-    export function DeleteItem(
+    export function UpdateItem(
       call: CallExpr,
       context: CallContext
     ): Partial<Task> {
-      return dynamoRequest(call, context, "deleteItem");
+      return dynamoRequest(call, context, "updateItem");
+    }
+
+    /**
+     * @see https://docs.aws.amazon.com/step-functions/latest/dg/connect-ddb.html
+     */
+    // @ts-ignore
+    export function PutItem<
+      T extends Table<any, any, any>,
+      I extends Item<T>,
+      ConditionExpression extends string | undefined = undefined,
+      ReturnValue extends AWSDynamoDB.ReturnValue = "NONE",
+      ProjectionExpression extends string | undefined = undefined
+    >(
+      input: { TableName: T } & Omit<
+        PutItemInput<
+          Item<T>,
+          ConditionExpression,
+          ReturnValue,
+          JsonFormat.AttributeValue
+        >,
+        "TableName"
+      >
+    ): PutItemOutput<I, ReturnValue, JsonFormat.AttributeValue>;
+
+    export function PutItem(
+      call: CallExpr,
+      context: CallContext
+    ): Partial<Task> {
+      return dynamoRequest(call, context, "putItem");
+    }
+
+    // @ts-ignore
+    export function Query<
+      T extends Table<any, any, any>,
+      KeyConditionExpression extends string,
+      FilterExpression extends string | undefined = undefined,
+      ProjectionExpression extends string | undefined = undefined,
+      AttributesToGet extends keyof Item<T> | undefined = undefined
+    >(
+      input: { TableName: T } & Omit<
+        QueryInput<
+          Item<T>,
+          KeyConditionExpression,
+          FilterExpression,
+          ProjectionExpression,
+          AttributesToGet,
+          JsonFormat.AttributeValue
+        >,
+        "TableName"
+      >
+    ): QueryOutput<Item<T>, AttributesToGet, JsonFormat.AttributeValue>;
+
+    // @ts-ignore
+    export function Query(call: CallExpr, context: CallContext): Partial<Task> {
+      return dynamoRequest(call, context, "query");
+    }
+
+    // @ts-ignore
+    export function Scan<
+      T extends Table<any, any, any>,
+      FilterExpression extends string | undefined = undefined,
+      ProjectionExpression extends string | undefined = undefined,
+      AttributesToGet extends keyof Item<T> | undefined = undefined
+    >(
+      input: { TableName: T } & Omit<
+        ScanInput<
+          Item<T>,
+          FilterExpression,
+          ProjectionExpression,
+          AttributesToGet,
+          JsonFormat.AttributeValue
+        >,
+        "TableName"
+      >
+    ): ScanOutput<Item<T>, AttributesToGet, JsonFormat.AttributeValue>;
+
+    // @ts-ignore
+    export function Scan(call: CallExpr, context: CallContext): Partial<Task> {
+      return dynamoRequest(call, context, "scan");
     }
 
     function dynamoRequest(

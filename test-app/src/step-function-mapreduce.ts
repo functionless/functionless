@@ -183,76 +183,63 @@ export const addComment = new AppsyncResolver<
   fieldName: "addComment",
 });
 
+export const deletePost = new AppsyncResolver<
+  { postId: string },
+  AWS.StepFunctions.StartExecutionOutput
+>(($context) => {
+  return deleteWorkflow($context.arguments.postId);
+}).addResolver(api, {
+  typeName: "Mutation",
+  fieldName: "deletePost",
+});
+
 export const deleteWorkflow = new StepFunction(
   stack,
   "DeletePostWorkflow",
   (postId: string) => {
-    const state = {
-      attemptsLeft: 10,
-    };
-    while (state.attemptsLeft > 0) {
+    while (true) {
       try {
-        const comments = $AWS.DynamoDB.GetItem({
+        const comments = $AWS.DynamoDB.Query({
           TableName: database,
-          Key: {
-            pk: {
+          KeyConditionExpression: `pk = :pk`,
+          ExpressionAttributeValues: {
+            ":pk": {
               S: `Post|${postId}`,
-            },
-            sk: {
-              S: "",
             },
           },
         });
 
-        $AWS.DynamoDB.DeleteItem({
-          TableName: database,
-          Key: {
-            pk: {
-              S: `Post|${postId}`,
+        if (comments.Items !== undefined && comments.Items.length > 0) {
+          $SFN.map(comments.Items, (comment) =>
+            $AWS.DynamoDB.DeleteItem({
+              TableName: database,
+              Key: {
+                pk: comment.pk,
+                sk: comment.sk,
+              },
+            })
+          );
+        } else {
+          $AWS.DynamoDB.DeleteItem({
+            TableName: database,
+            Key: {
+              pk: {
+                S: `Post|${postId}`,
+              },
+              sk: {
+                S: "",
+              },
             },
-            sk: {
-              S: "",
-            },
-          },
-        });
+          });
+        }
 
-        return "success";
+        return {
+          status: "deleted",
+          postId,
+        };
       } catch {
-        $SFN.waitFor(60);
+        $SFN.waitFor(10);
       }
     }
   }
 );
-
-export const deletePost = new AppsyncResolver<{ postId: string }, Comment>(
-  ($context) => {
-    const commentId = $util.autoUlid();
-    return database.putItem({
-      key: {
-        pk: {
-          S: `Post|${$context.arguments.postId}`,
-        },
-        sk: {
-          S: `Comment|${commentId}`,
-        },
-      },
-      attributeValues: {
-        postId: {
-          S: $context.arguments.postId,
-        },
-        commentId: {
-          S: commentId,
-        },
-        commentText: {
-          S: $context.arguments.commentText,
-        },
-        createdTime: {
-          S: $util.time.nowISO8601(),
-        },
-      },
-    });
-  }
-).addResolver(api, {
-  typeName: "Mutation",
-  fieldName: "addComment",
-});
