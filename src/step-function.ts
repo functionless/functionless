@@ -36,6 +36,10 @@ export namespace $SFN {
   /**
    * Wait for a specific number of {@link seconds}.
    *
+   * ```ts
+   * new ExpressStepFunction(this, "F", (seconds: number) => $SFN.waitFor(seconds))
+   * ```
+   *
    * @see https://docs.aws.amazon.com/step-functions/latest/dg/amazon-states-language-wait-state.html
    */
   // @ts-ignore
@@ -68,6 +72,10 @@ export namespace $SFN {
   /**
    * Wait until a {@link timestamp}.
    *
+   * ```ts
+   * new ExpressStepFunction(this, "F", (timestamp: string) => $SFN.waitUntil(timestamp))
+   * ```
+   *
    * @see https://docs.aws.amazon.com/step-functions/latest/dg/amazon-states-language-wait-state.html
    */
   // @ts-ignore
@@ -97,12 +105,40 @@ export namespace $SFN {
     }
   }
 
+  /**
+   * Process each item in an {@link array} in parallel and run with the default maxConcurrency.
+   *
+   * Example:
+   * ```ts
+   * new ExpressStepFunction(this, "F", (items: string[]) => {
+   *   $SFN.forEach(items, item => task(item))
+   * });
+   * ```
+   *
+   * @param array the list of items to process
+   * @param props configure the maxConcurrency
+   * @param callbackfn function to process each item
+   */
   // @ts-ignore
   export function forEach<T>(
     array: T[],
     callbackfn: (item: T, index: number, array: T[]) => void
   ): void;
 
+  /**
+   * Process each item in an {@link array} in parallel and run with the default maxConcurrency.
+   *
+   * Example:
+   * ```ts
+   * new ExpressStepFunction(this, "F"} (items: string[]) => {
+   *   $SFN.forEach(items, { maxConcurrency: 2 }, item => task(item));
+   * });
+   * ```
+   *
+   * @param array the list of items to process
+   * @param props configure the maxConcurrency
+   * @param callbackfn function to process each item
+   */
   // @ts-ignore
   export function forEach<T>(
     array: T[],
@@ -116,13 +152,42 @@ export namespace $SFN {
     return mapOrForEach("forEach", call, context);
   }
 
+  /**
+   * Map over each item in an {@link array} in parallel and run with the default maxConcurrency.
+   *
+   * Example:
+   * ```ts
+   * new ExpressStepFunction(this, "F", (items: string[]) => {
+   *   return $SFN.map(items, item => task(item))
+   * });
+   * ```
+   *
+   * @param array the list of items to map over
+   * @param props configure the maxConcurrency
+   * @param callbackfn function to process each item
+   * @returns an array containing the result of each mapped item
+   */
   // @ts-ignore
   export function map<T, U>(
     array: T[],
     callbackfn: (item: T, index: number, array: T[]) => U
   ): U[];
 
-  // @ts-ignore
+  /**
+   * Map over each item in an {@link array} in parallel and run with a maxConcurrency of {@link props}.maxConcurrency
+   *
+   * Example:
+   * ```ts
+   * new ExpressStepFunction(this, "F",  (items: string[]) => {
+   *   return $SFN.map(items, { maxConcurrency: 2 }, item => task(item))
+   * });
+   * ```
+   *
+   * @param array the list of items to map over
+   * @param props configure the maxConcurrency
+   * @param callbackfn function to process each item
+   * @returns an array containing the result of each mapped item
+   */
   export function map<T, U>(
     array: T[],
     props: {
@@ -205,6 +270,19 @@ export namespace $SFN {
     throw new Error(`invalid arguments to $SFN.map`);
   }
 
+  /**
+   * Run 1 or more workflows in parallel.
+   *
+   * ```ts
+   * new ExpressStepFunction(this, "F", (id: string) => {
+   *   const results = $SFN.parallel(
+   *     () => task1(id)
+   *     () => task2(id)
+   *   )
+   * })
+   * ```
+   * @param paths
+   */
   // @ts-ignore
   export function parallel<Paths extends readonly (() => any)[]>(
     ...paths: Paths
@@ -689,6 +767,30 @@ export interface StepFunctionProps
     "definition" | "stateMachineType"
   > {}
 
+/**
+ * An {@link ExpressStepFunction} is a callable Function which executes on the managed
+ * AWS Step Function infrastructure. Like a Lambda Function, it runs within memory of
+ * a single machine, except unlike Lambda, the entire environment is managed and operated
+ * by AWS. Meaning, there is no Operating System, Memory, CPU, Credentials or API Clients
+ * to manage. The entire workflow is configured at build-time via the Amazon State Language (ASL).
+ *
+ * With Functionless, the ASL is derived from type-safe TypeScript code instead of JSON.
+ *
+ * ```ts
+ * import * as f from "functionless";
+ *
+ * const table = new f.Function<string, number>(new aws_lambda.Function(..))
+ *
+ * const getItem = new ExpressStepFunction(this, "F", () => {
+ *   return f.$AWS.DynamoDB.GetItem({
+ *     TableName: table,
+ *     Key: {
+ *       ..
+ *     }
+ *   });
+ * });
+ * ```
+ */
 export class ExpressStepFunction<
   F extends AnyFunction
 > extends BaseStepFunction<F> {

@@ -48,6 +48,9 @@ type RangeKey<T extends Table<any, any, any>> = T extends Table<
 export namespace $AWS {
   export const kind = "AWS";
 
+  /**
+   * @see https://docs.aws.amazon.com/step-functions/latest/dg/connect-ddb.html
+   */
   export namespace DynamoDB {
     /**
      * @see https://docs.aws.amazon.com/step-functions/latest/dg/connect-ddb.html
