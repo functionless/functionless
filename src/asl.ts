@@ -889,8 +889,6 @@ export class ASL {
           InputPath: ASL.toJsonPath(expr),
         };
       } else if (isFilter(expr)) {
-        const throwTransition = this.throw(expr);
-
         const predicate = expr.args.predicate;
         if (predicate !== undefined && predicate.kind === "FunctionExpr") {
           try {
@@ -901,74 +899,7 @@ export class ASL {
               InputPath: ASL.toJsonPath(expr),
             };
           } catch {
-            // if JSON Path fails, then implement as a Map
-            const callbackStates = this.execute(predicate.body);
-            const callbackStart = this.getStateName(predicate.body.step()!);
-
-            const tmp = `$.${this.getDeterministicGeneratedName(expr)}`;
-
-            const listPath = ASL.toJsonPath(expr.expr.expr);
-            return {
-              Type: "Map",
-              MaxConcurrency: 1,
-              Iterator: {
-                StartAt: callbackStart,
-                States: {
-                  ...callbackStates,
-                  [`filter_stash_${tmp}`]: {
-                    Type: "Pass",
-                    InputPath: "$",
-                    Comment:
-                      "stores the boolean return from the .filter statement",
-                    ResultPath: tmp,
-                  },
-                  [`filter_keep_or_discard_${tmp}`]: {
-                    Type: "Choice",
-                    Choices: [
-                      {
-                        Next: `filter_keep_${tmp}`,
-                        ...ASL.isTruthy(tmp),
-                      },
-                    ],
-                  },
-                  [`filter_keep_${tmp}`]: {
-                    Type: "Pass",
-                    Parameters: {},
-                    ResultPath: tmp,
-                  },
-                  [`filter_discard_${tmp}`]: {
-                    Type: "Pass",
-                    Parameters: {
-                      discard: true,
-                    },
-                    ResultPath: tmp,
-                  },
-                },
-              },
-              ...props,
-              ItemsPath: listPath,
-              Parameters: Object.fromEntries(
-                predicate.parameters.map((param, i) => [
-                  param.name,
-                  i === 0
-                    ? "$$.Map.Item.Value"
-                    : i == 1
-                    ? "$$.Map.Item.Index"
-                    : listPath,
-                ])
-              ),
-              ...(throwTransition
-                ? {
-                    Catch: [
-                      {
-                        ErrorEquals: ["States.ALL"],
-                        Next: throwTransition.Next!,
-                        ResultPath: throwTransition.ResultPath,
-                      },
-                    ],
-                  }
-                : {}),
-            };
+            throw new Error(`.filter with sub-tasks are not yet supported`);
           }
         }
       }

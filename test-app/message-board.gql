@@ -1,0 +1,29 @@
+
+
+
+type Post {
+  postId: ID,
+  title: String!
+  comments(nextToken: String, limit: Int): CommentPage
+}
+
+type CommentPage {
+  nextToken: String
+  comments: Comment[]!
+}
+
+type Comment {
+  userId: ID!
+  tweetId: ID!
+  tweetText: String!
+  createdTime: String!
+}
+type Query {
+  getPost(postId: ID!): Post
+}
+
+type Mutation {
+  createPost(title: String): Post!
+  deletePost(post: String): Post
+  addComment(postId: ID!): Comment!
+}
