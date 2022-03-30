@@ -18,6 +18,10 @@
       "type": "build"
     },
     {
+      "name": "@types/minimatch",
+      "type": "build"
+    },
+    {
       "name": "@types/node",
       "version": "^12",
       "type": "build"
@@ -138,7 +142,7 @@
       "type": "runtime"
     },
     {
-      "name": "glob",
+      "name": "minimatch",
       "type": "runtime"
     }
   ],

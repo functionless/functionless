@@ -4,10 +4,13 @@ import {
   Err,
   ExprStmt,
   FunctionDecl,
+  NullLiteralExpr,
   NumberLiteralExpr,
+  ObjectLiteralExpr,
   reflect,
   ReturnStmt,
   StringLiteralExpr,
+  UndefinedLiteralExpr,
 } from "../src";
 import { assertNodeKind } from "../src/assert";
 
@@ -125,6 +128,51 @@ test("named function args", () => {
   expect(call.getArgument("searchString")?.expr.kind).toEqual(
     "StringLiteralExpr"
   );
+});
+
+test("null", () => {
+  const result = assertNodeKind<FunctionDecl>(
+    reflect(() => null),
+    "FunctionDecl"
+  );
+
+  const ret = assertNodeKind<ReturnStmt>(
+    result.body.statements[0],
+    "ReturnStmt"
+  );
+  assertNodeKind<NullLiteralExpr>(ret.expr, "NullLiteralExpr");
+});
+
+test("undefined", () => {
+  const result = assertNodeKind<FunctionDecl>(
+    reflect(() => undefined),
+    "FunctionDecl"
+  );
+
+  const ret = assertNodeKind<ReturnStmt>(
+    result.body.statements[0],
+    "ReturnStmt"
+  );
+  assertNodeKind<UndefinedLiteralExpr>(ret.expr, "UndefinedLiteralExpr");
+});
+
+test("computed object name", () => {
+  const result = assertNodeKind<FunctionDecl>(
+    reflect(() => {
+      const name = "aName";
+      return {
+        [name]: "value",
+      };
+    }),
+    "FunctionDecl"
+  );
+
+  const ret = assertNodeKind<ReturnStmt>(
+    result.body.statements[1],
+    "ReturnStmt"
+  );
+  const obj = assertNodeKind<ObjectLiteralExpr>(ret.expr, "ObjectLiteralExpr");
+  obj.properties
 });
 
 test("err", () => {

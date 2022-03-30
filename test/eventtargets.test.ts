@@ -641,7 +641,7 @@ describe("not allowed", () => {
         const obj = { val: "" } as any;
         return { val: obj["blah"] };
       }),
-      "Cannot find property blah in Object with keys: val"
+      "Cannot find property blah in Object with constant keys: val"
     );
   });
 });

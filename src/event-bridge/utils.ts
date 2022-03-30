@@ -1,4 +1,4 @@
-import { assertNumber } from "../assert";
+import { assertNodeKind, assertNumber } from "../assert";
 import {
   ArrayLiteralExpr,
   BinaryExpr,
@@ -7,6 +7,7 @@ import {
   isArrayLiteralExpr,
   isBinaryExpr,
   isBooleanLiteral,
+  isComputedPropertyNameExpr,
   isElementAccessExpr,
   isIdentifier,
   isNullLiteralExpr,
@@ -18,6 +19,7 @@ import {
   isStringLiteralExpr,
   isTemplateExpr,
   isUnaryExpr,
+  isUndefinedLiteralExpr,
   NumberLiteralExpr,
   ObjectLiteralExpr,
   PropAccessExpr,
@@ -97,14 +99,14 @@ export const getPropertyAccessKey = (
  * Retrieves a string, number, boolean, undefined, or null constant from the given expression.
  * Wrap the value to not be ambiguous with the undefined value.
  * When one is not found, return undefined (not wrapped).
- * 
+ *
  * "value" -> { value: "value" }
  * undefined -> { value: undefined }
  * null -> { value: undefined }
  * call() -> undefined
  * true -> { value: true }
  * -10 -> { value: -10 }
- * 
+ *
  * Note: constants that follow references must already be resolved to a simple constant by {@link flattenedExpression}.
  * const obj = { val: "hello" };
  * obj.val -> { value: "hello" }
@@ -117,7 +119,9 @@ export const evalToConstant = (expr: Expr): Constant | undefined => {
   ) {
     return { constant: expr.value };
   } else if (isNullLiteralExpr(expr)) {
-    return { constant: expr.isUndefined ? undefined : null };
+    return { constant: null };
+  } else if (isUndefinedLiteralExpr(expr)) {
+    return { constant: undefined };
   } else if (isUnaryExpr(expr) && expr.op === "-") {
     const number = assertNumber(evalToConstant(expr.expr)?.constant);
     return { constant: -number };
@@ -189,10 +193,12 @@ export const flattenExpression = (expr: Expr, scope: EventScope): Expr => {
     const parent = flattenExpression(expr.expr, scope);
     if (isObjectLiteralExpr(parent)) {
       if (typeof key === "string") {
-        const val = parent.getProperty(key)?.expr;
+        const val = parent.properties
+          .filter(isPropAssignExpr)
+          .find((p) => (isIdentifier(p.name) ? p.name.name === key : false));
         if (!val) {
           throw Error(
-            `Cannot find property ${key} in Object with keys: ${parent.properties
+            `Cannot find property ${key} in Object with constant keys: ${parent.properties
               .filter(isPropAssignExpr)
               .map((e) => e.name)
               .filter(isIdentifier)
@@ -200,7 +206,7 @@ export const flattenExpression = (expr: Expr, scope: EventScope): Expr => {
               .join()}`
           );
         }
-        return val;
+        return val.expr;
       }
       throw Error(`Object access must be a string.`);
     } else if (isArrayLiteralExpr(parent)) {
@@ -212,6 +218,8 @@ export const flattenExpression = (expr: Expr, scope: EventScope): Expr => {
     return typeof key === "string"
       ? new PropAccessExpr(parent, key, expr.type)
       : new ElementAccessExpr(parent, new NumberLiteralExpr(key), expr.type);
+  } else if (isComputedPropertyNameExpr(expr)) {
+    return flattenExpression(expr.expr, scope);
   } else if (isArrayLiteralExpr(expr)) {
     return new ArrayLiteralExpr(
       expr.items.reduce((items, x) => {
@@ -239,7 +247,15 @@ export const flattenExpression = (expr: Expr, scope: EventScope): Expr => {
         if (isPropAssignExpr(e)) {
           return [
             ...props,
-            new PropAssignExpr(e.name, flattenExpression(e.expr, scope)),
+            new PropAssignExpr(
+              isIdentifier(e.name)
+                ? e.name
+                : assertNodeKind<StringLiteralExpr>(
+                    flattenExpression(e.name, scope),
+                    "StringLiteralExpr"
+                  ),
+              flattenExpression(e.expr, scope)
+            ),
           ];
         } else {
           const flattened = flattenExpression(e.expr, scope);
@@ -258,7 +274,9 @@ export const flattenExpression = (expr: Expr, scope: EventScope): Expr => {
       flattenExpression(x, scope)
     );
 
-    const flattenedConstants = flattenedExpressions.map((e) => evalToConstant(e));
+    const flattenedConstants = flattenedExpressions.map((e) =>
+      evalToConstant(e)
+    );
     const allConstants = flattenedConstants.every((c) => !!c);
 
     // when all of values are constants, turn them into a string constant now.

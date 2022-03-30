@@ -9,12 +9,13 @@ import { AnyFunction } from "./util";
  * An {@link Expr} (Expression) is a Node that will be interpreted to a value.
  */
 export type Expr =
-  | ArgumentExpr
+  | Argument
   | ArrayLiteralExpr
   | BinaryExpr
   | BooleanLiteralExpr
   | CallExpr
   | ConditionExpr
+  | ComputedPropertyNameExpr
   | FunctionExpr
   | ElementAccessExpr
   | Identifier
@@ -28,17 +29,19 @@ export type Expr =
   | SpreadAssignExpr
   | SpreadElementExpr
   | TemplateExpr
-  | UnaryExpr;
+  | UnaryExpr
+  | UndefinedLiteralExpr;
 
 export function isExpr(a: any) {
   return (
     isNode(a) &&
-    (isArgumentExpr(a) ||
+    (isArgument(a) ||
       isArrayLiteralExpr(a) ||
       isBinaryExpr(a) ||
       isBooleanLiteral(a) ||
       isCallExpr(a) ||
       isConditionExpr(a) ||
+      isComputedPropertyNameExpr(a) ||
       isFunctionExpr(a) ||
       isElementAccessExpr(a) ||
       isIdentifier(a) ||
@@ -50,7 +53,8 @@ export function isExpr(a: any) {
       isReferenceExpr(a) ||
       isStringLiteralExpr(a) ||
       isTemplateExpr(a) ||
-      isUnaryExpr(a))
+      isUnaryExpr(a) ||
+      isUndefinedLiteralExpr(a))
   );
 }
 
@@ -109,11 +113,11 @@ export class ElementAccessExpr extends BaseNode<"ElementAccessExpr"> {
   }
 }
 
-export const isArgumentExpr = typeGuard("ArgumentExpr");
+export const isArgument = typeGuard("Argument");
 
-export class ArgumentExpr extends BaseNode<"ArgumentExpr"> {
+export class Argument extends BaseNode<"Argument"> {
   constructor(readonly expr: Expr, readonly name?: string) {
-    super("ArgumentExpr");
+    super("Argument");
     setParent(this, expr);
   }
 }
@@ -121,14 +125,14 @@ export class ArgumentExpr extends BaseNode<"ArgumentExpr"> {
 export const isCallExpr = typeGuard("CallExpr");
 
 export class CallExpr extends BaseNode<"CallExpr"> {
-  constructor(readonly expr: Expr, readonly args: ArgumentExpr[]) {
+  constructor(readonly expr: Expr, readonly args: Argument[]) {
     super("CallExpr");
     expr.parent = this;
 
     args.forEach((arg) => setParent(this, arg));
   }
 
-  getArgument(name: string): ArgumentExpr | undefined {
+  public getArgument(name: string): Argument | undefined {
     return this.args.find((arg) => arg.name === name);
   }
 }
@@ -190,8 +194,16 @@ export class UnaryExpr extends BaseNode<"UnaryExpr"> {
 export const isNullLiteralExpr = typeGuard("NullLiteralExpr");
 
 export class NullLiteralExpr extends BaseNode<"NullLiteralExpr"> {
-  constructor(readonly isUndefined: boolean) {
+  constructor() {
     super("NullLiteralExpr");
+  }
+}
+
+export const isUndefinedLiteralExpr = typeGuard("UndefinedLiteralExpr");
+
+export class UndefinedLiteralExpr extends BaseNode<"UndefinedLiteralExpr"> {
+  constructor() {
+    super("UndefinedLiteralExpr");
   }
 }
 
@@ -237,23 +249,27 @@ export class ObjectLiteralExpr extends BaseNode<"ObjectLiteralExpr"> {
     super("ObjectLiteralExpr");
     setParent(this, properties);
   }
-
-  public getProperty(name: string) {
-    return this.properties.find(
-      (prop) =>
-        prop.kind === "PropAssignExpr" &&
-        ((prop.name.kind === "Identifier" && prop.name.name === name) ||
-          (prop.name.kind === "StringLiteralExpr" && prop.name.value === name))
-    );
-  }
 }
 
 export const isPropAssignExpr = typeGuard("PropAssignExpr");
 
 export class PropAssignExpr extends BaseNode<"PropAssignExpr"> {
-  constructor(readonly name: Expr, readonly expr: Expr) {
+  constructor(
+    readonly name: Identifier | ComputedPropertyNameExpr | StringLiteralExpr,
+    readonly expr: Expr
+  ) {
     super("PropAssignExpr");
-    expr.parent = this;
+    setParent(this, name);
+    setParent(this, expr);
+  }
+}
+
+export const isComputedPropertyNameExpr = typeGuard("ComputedPropertyNameExpr");
+
+export class ComputedPropertyNameExpr extends BaseNode<"ComputedPropertyNameExpr"> {
+  constructor(readonly expr: Expr) {
+    super("ComputedPropertyNameExpr");
+    setParent(this, expr);
   }
 }
 

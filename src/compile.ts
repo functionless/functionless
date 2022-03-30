@@ -8,7 +8,8 @@ import { EventBus, EventBusRule } from "./event-bridge";
 import { AppsyncResolver } from "./appsync";
 import { assertDefined } from "./assert";
 import { EventBusTransform } from "./event-bridge/transform";
-import glob from "glob";
+import minimatch from "minimatch";
+import path from "path";
 
 export default compile;
 
@@ -19,7 +20,7 @@ export interface FunctionlessConfig extends PluginConfig {
   /**
    * Glob to exclude
    */
-  exclude?: string;
+  exclude?: string[];
 }
 
 /**
@@ -37,10 +38,9 @@ export function compile(
   _config?: FunctionlessConfig,
   _extras?: TransformerExtras
 ): ts.TransformerFactory<ts.SourceFile> {
-  const ignore = _config?.exclude
-    ? new Set(glob.sync(_config.exclude, { absolute: true }))
-    : new Set();
-
+  const excludeMatchers = _config?.exclude
+    ? _config.exclude.map((pattern) => minimatch.makeRe(path.resolve(pattern)))
+    : [];
   const checker = program.getTypeChecker();
   return (ctx) => {
     const functionless = ts.factory.createUniqueName("functionless");
@@ -57,7 +57,7 @@ export function compile(
       );
 
       // Do not transform any of the files matched by "exclude"
-      if (ignore.has(sf.fileName)) {
+      if (excludeMatchers.some((matcher) => matcher.test(sf.fileName))) {
         return sf;
       }
 
@@ -375,9 +375,7 @@ export function compile(
 
       function toExpr(node: ts.Node | undefined): ts.Expression {
         if (node === undefined) {
-          return newExpr("NullLiteralExpr", [
-            ts.factory.createIdentifier("true"),
-          ]);
+          return newExpr("UndefinedLiteralExpr", []);
         } else if (ts.isArrowFunction(node) || ts.isFunctionExpression(node)) {
           return toFunction("FunctionExpr", node);
         } else if (ts.isExpressionStatement(node)) {
@@ -410,7 +408,7 @@ export function compile(
             toExpr(node.expression),
             ts.factory.createArrayLiteralExpression(
               node.arguments.map((arg, i) =>
-                newExpr("ArgumentExpr", [
+                newExpr("Argument", [
                   toExpr(arg),
                   // the arguments array may not match the signature or the signature may be unknown
                   signature?.parameters?.[i]?.name
@@ -429,12 +427,10 @@ export function compile(
             ),
           ]);
         } else if (ts.isIdentifier(node)) {
-          if (node.text === "undefined" || node.text === "null") {
-            return newExpr("NullLiteralExpr", [
-              ts.factory.createIdentifier(
-                node.text === "undefined" ? "true" : "false"
-              ),
-            ]);
+          if (node.text === "undefined") {
+            return newExpr("UndefinedLiteralExpr", []);
+          } else if (node.text === "null") {
+            return newExpr("NullLiteralExpr", []);
           }
           const kind = getKind(node);
           if (kind !== undefined) {
@@ -545,11 +541,11 @@ export function compile(
             (ts.isIdentifier(node.name) &&
               (node.name.text === "null" || node.name.text === "undefined"))
               ? string(node.name.text)
-              : ts.isComputedPropertyName(node.name)
-              ? toExpr(node.name.expression)
               : toExpr(node.name),
             toExpr(node.initializer),
           ]);
+        } else if (ts.isComputedPropertyName(node)) {
+          return newExpr("ComputedPropertyNameExpr", [toExpr(node.expression)]);
         } else if (ts.isShorthandPropertyAssignment(node)) {
           return newExpr("PropAssignExpr", [
             newExpr("Identifier", [
