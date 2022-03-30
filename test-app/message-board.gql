@@ -25,5 +25,5 @@ type Query {
 type Mutation {
   createPost(title: String): Post!
   deletePost(post: String): Post
-  addComment(postId: ID!): Comment!
+  addComment(postId: ID!, commentText: String!): Comment!
 }

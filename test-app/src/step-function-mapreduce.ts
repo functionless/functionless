@@ -1,5 +1,12 @@
 import { App, aws_dynamodb, Stack } from "aws-cdk-lib";
-import { $util, AppsyncResolver, Table } from "functionless";
+import {
+  $AWS,
+  $SFN,
+  $util,
+  AppsyncResolver,
+  StepFunction,
+  Table,
+} from "functionless";
 import * as appsync from "@aws-cdk/aws-appsync-alpha";
 import path from "path";
 
@@ -48,7 +55,7 @@ const schema = new appsync.Schema({
   filePath: path.join(__dirname, "..", "message-board.gql"),
 });
 
-const tweetApi = new appsync.GraphqlApi(stack, "Api", {
+const api = new appsync.GraphqlApi(stack, "Api", {
   name: "demo",
   schema,
   authorizationConfig: {
@@ -62,25 +69,26 @@ const tweetApi = new appsync.GraphqlApi(stack, "Api", {
   },
 });
 
-const getPost = new AppsyncResolver<{ postId: string }, Post | undefined>(
-  ($context) => {
-    return database.getItem({
-      key: {
-        pk: {
-          S: `Post|${$context.arguments.postId}`,
-        },
-        sk: {
-          S: "",
-        },
+export const getPost = new AppsyncResolver<
+  { postId: string },
+  Post | undefined
+>(($context) => {
+  return database.getItem({
+    key: {
+      pk: {
+        S: `Post|${$context.arguments.postId}`,
       },
-    });
-  }
-).addResolver(tweetApi, {
+      sk: {
+        S: "",
+      },
+    },
+  });
+}).addResolver(api, {
   typeName: "Query",
   fieldName: "getPost",
 });
 
-const comments = new AppsyncResolver<
+export const comments = new AppsyncResolver<
   { nextToken?: string; limit?: number },
   CommentPage,
   Omit<Post, "comments">
@@ -107,22 +115,144 @@ const comments = new AppsyncResolver<
   return {
     comments: [],
   };
-}).addResolver(tweetApi, {
+}).addResolver(api, {
   typeName: "Post",
   fieldName: "comments",
 });
 
-const createPost = new AppsyncResolver<{title: string}, Post>($context => {
-  const postId = $util.autoUlid();
-  database.putItem({
+export const createPost = new AppsyncResolver<{ title: string }, Post>(
+  ($context) => {
+    const postId = $util.autoUlid();
+    const post = database.putItem({
+      key: {
+        pk: {
+          S: `Post|${postId}`,
+        },
+        sk: {
+          S: "",
+        },
+      },
+      attributeValues: {
+        postId: {
+          S: postId,
+        },
+        title: {
+          S: $context.arguments.title,
+        },
+      },
+    });
+
+    return post;
+  }
+).addResolver(api, {
+  typeName: "Mutation",
+  fieldName: "createPost",
+});
+
+export const addComment = new AppsyncResolver<
+  { postId: string; commentText: string },
+  Comment
+>(($context) => {
+  const commentId = $util.autoUlid();
+  return database.putItem({
     key: {
       pk: {
-        S: `Post|${postId}`
+        S: `Post|${$context.arguments.postId}`,
       },
       sk: {
-        S: $util.
+        S: `Comment|${commentId}`,
+      },
+    },
+    attributeValues: {
+      postId: {
+        S: $context.arguments.postId,
+      },
+      commentId: {
+        S: commentId,
+      },
+      commentText: {
+        S: $context.arguments.commentText,
+      },
+      createdTime: {
+        S: $util.time.nowISO8601(),
+      },
+    },
+  });
+}).addResolver(api, {
+  typeName: "Mutation",
+  fieldName: "addComment",
+});
+
+export const deleteWorkflow = new StepFunction(
+  stack,
+  "DeletePostWorkflow",
+  (postId: string) => {
+    const state = {
+      attemptsLeft: 10,
+    };
+    while (state.attemptsLeft > 0) {
+      try {
+        const comments = $AWS.DynamoDB.GetItem({
+          TableName: database,
+          Key: {
+            pk: {
+              S: `Post|${postId}`,
+            },
+            sk: {
+              S: "",
+            },
+          },
+        });
+
+        $AWS.DynamoDB.DeleteItem({
+          TableName: database,
+          Key: {
+            pk: {
+              S: `Post|${postId}`,
+            },
+            sk: {
+              S: "",
+            },
+          },
+        });
+
+        return "success";
+      } catch {
+        $SFN.waitFor(60);
       }
     }
-  })
+  }
+);
 
-})
+export const deletePost = new AppsyncResolver<{ postId: string }, Comment>(
+  ($context) => {
+    const commentId = $util.autoUlid();
+    return database.putItem({
+      key: {
+        pk: {
+          S: `Post|${$context.arguments.postId}`,
+        },
+        sk: {
+          S: `Comment|${commentId}`,
+        },
+      },
+      attributeValues: {
+        postId: {
+          S: $context.arguments.postId,
+        },
+        commentId: {
+          S: commentId,
+        },
+        commentText: {
+          S: $context.arguments.commentText,
+        },
+        createdTime: {
+          S: $util.time.nowISO8601(),
+        },
+      },
+    });
+  }
+).addResolver(api, {
+  typeName: "Mutation",
+  fieldName: "addComment",
+});
