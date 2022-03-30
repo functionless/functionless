@@ -7,6 +7,7 @@ import { FunctionlessNode } from "./node";
 import { AppsyncResolver } from "./appsync";
 import minimatch from "minimatch";
 import { assertDefined } from "./assert";
+import path from "path";
 
 export default compile;
 
@@ -36,7 +37,7 @@ export function compile(
   _extras?: TransformerExtras
 ): ts.TransformerFactory<ts.SourceFile> {
   const excludeMatchers = _config?.exclude
-    ? _config.exclude.map((pattern) => minimatch.makeRe(pattern))
+    ? _config.exclude.map((pattern) => minimatch.makeRe(path.resolve(pattern)))
     : [];
   const checker = program.getTypeChecker();
   return (ctx) => {
