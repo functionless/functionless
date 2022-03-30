@@ -47,7 +47,7 @@ export namespace $SFN {
         `$SFN.wait is only available in the ${ASL.ContextName} context`
       );
     }
-    const seconds = call.args.seconds;
+    const seconds = call.getArgument("seconds")?.expr;
     if (seconds === undefined) {
       throw new Error(`the 'seconds' argument is required`);
     }
@@ -79,7 +79,7 @@ export namespace $SFN {
         `$SFN.wait is only available in the ${ASL.ContextName} context`
       );
     }
-    const timestamp = call.args.timestamp;
+    const timestamp = call.getArgument("timestamp")?.expr;
     if (timestamp === undefined) {
       throw new Error(`the 'timestamp' argument is required`);
     }
@@ -145,13 +145,13 @@ export namespace $SFN {
     }
 
     if (isMapOrForEach(call)) {
-      const callbackfn = call.args.callbackfn;
+      const callbackfn = call.getArgument("callbackfn")?.expr;
       if (callbackfn === undefined || callbackfn.kind !== "FunctionExpr") {
         throw new Error(`missing callbackfn in $SFN.map`);
       }
       const callbackStates = context.execute(callbackfn.body);
       const callbackStart = context.getStateName(callbackfn.body.step()!);
-      const props = call.args.props;
+      const props = call.getArgument("props")?.expr;
       let maxConcurrency: number | undefined;
       if (props !== undefined) {
         if (props.kind === "ObjectLiteralExpr") {
@@ -173,7 +173,11 @@ export namespace $SFN {
           throw new Error(`argument 'props' must be an ObjectLiteralExpr`);
         }
       }
-      const listPath = ASL.toJsonPath(call.args.array);
+      const array = call.getArgument("array")?.expr;
+      if (array === undefined) {
+        throw new Error(`missing argument 'array'`);
+      }
+      const arrayPath = ASL.toJsonPath(array);
       return {
         Type: "Map",
         ...(maxConcurrency
@@ -185,7 +189,7 @@ export namespace $SFN {
           States: callbackStates,
           StartAt: callbackStart,
         },
-        ItemsPath: listPath,
+        ItemsPath: arrayPath,
         Parameters: Object.fromEntries(
           callbackfn.parameters.map((param, i) => [
             param.name,
@@ -193,7 +197,7 @@ export namespace $SFN {
               ? "$$.Map.Item.Value"
               : i == 1
               ? "$$.Map.Item.Index"
-              : listPath,
+              : arrayPath,
           ])
         ),
       };
@@ -214,7 +218,10 @@ export namespace $SFN {
     if (context.kind !== ASL.ContextName) {
       throw new Error(`$SFN.${kind} is only supported by ${ASL.ContextName}`);
     }
-    const paths = call.args.paths;
+    const paths = call.getArgument("paths")?.expr;
+    if (paths === undefined) {
+      throw new Error("missing required argument 'paths'");
+    }
     if (paths.kind !== "ArrayLiteralExpr") {
       throw new Error(`invalid arguments to $SFN.parallel`);
     }

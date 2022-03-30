@@ -1,17 +1,23 @@
 import { assertNever } from "./assert";
 import { FunctionDecl, isParameterDecl, ParameterDecl } from "./declaration";
+import { Err } from "./error";
 import {
+  Argument,
   ArrayLiteralExpr,
   BinaryExpr,
   BooleanLiteralExpr,
   CallExpr,
+  ComputedPropertyNameExpr,
   ConditionExpr,
   ElementAccessExpr,
   Expr,
   FunctionExpr,
   Identifier,
+  isComputedPropertyNameExpr,
   isExpr,
+  isIdentifier,
   isObjectElementExpr,
+  isStringLiteralExpr,
   NewExpr,
   NullLiteralExpr,
   NumberLiteralExpr,
@@ -26,6 +32,7 @@ import {
   TemplateExpr,
   TypeOfExpr,
   UnaryExpr,
+  UndefinedLiteralExpr,
 } from "./expression";
 import { FunctionlessNode } from "./node";
 
@@ -66,7 +73,11 @@ export function visitEachChild<T extends FunctionlessNode>(
     node: FunctionlessNode
   ) => FunctionlessNode | FunctionlessNode[] | undefined
 ): T {
-  if (node.kind === "ArrayLiteralExpr") {
+  if (node.kind === "Argument") {
+    const expr = visitor(node.expr);
+    ensure(expr, isExpr, `an Argument's expr must be an Expr`);
+    return new Argument(expr, node.name) as T;
+  } else if (node.kind === "ArrayLiteralExpr") {
     return new ArrayLiteralExpr(
       node.items.reduce((items: Expr[], item) => {
         let result = visitor(item);
@@ -127,18 +138,15 @@ export function visitEachChild<T extends FunctionlessNode>(
       isExpr,
       `visitEachChild of a ${node.kind}'s expr must return a single Expr`
     );
-    const args = Object.entries(node.args).reduce((args, [argName, argVal]) => {
-      const transformedVal = visitor(argVal);
+    const args = node.args.flatMap((arg) => {
+      const expr = visitor(arg.expr);
       ensure(
-        transformedVal,
+        expr,
         isExpr,
         `visitEachChild of a ${node.kind}'s argument must return a single Expr`
       );
-      return {
-        ...args,
-        [argName]: transformedVal,
-      };
-    }, {});
+      return new Argument(expr, arg.name);
+    });
     return new (node.kind === "CallExpr" ? CallExpr : NewExpr)(expr, args) as T;
   } else if (node.kind === "CatchClause") {
     const variableDecl = node.variableDecl
@@ -165,6 +173,14 @@ export function visitEachChild<T extends FunctionlessNode>(
     }
 
     return new CatchClause(variableDecl, block) as T;
+  } else if (node.kind === "ComputedPropertyNameExpr") {
+    const expr = visitor(node.expr);
+    ensure(
+      expr,
+      isExpr,
+      `a ComputedPropertyNameExpr's expr property must be an Expr`
+    );
+    return new ComputedPropertyNameExpr(expr) as T;
   } else if (node.kind === "ConditionExpr") {
     const when = visitor(node.when);
     const then = visitor(node.then);
@@ -181,6 +197,8 @@ export function visitEachChild<T extends FunctionlessNode>(
     const condition = visitor(node.condition);
     ensure(condition, isExpr, `a DoStmt's condition must be an Expr`);
     return new DoStmt(block, condition) as T;
+  } else if (node.kind === "Err") {
+    return new Err(node.error) as T;
   } else if (node.kind == "ElementAccessExpr") {
     const expr = visitor(node.expr);
     const element = visitor(node.element);
@@ -309,8 +327,8 @@ export function visitEachChild<T extends FunctionlessNode>(
     const expr = visitor(node.expr);
     ensure(
       name,
-      isExpr,
-      "a PropAssignExpr's name property must be an Expr node type"
+      anyOf(isIdentifier, isStringLiteralExpr, isComputedPropertyNameExpr),
+      `a PropAssignExpr's name property must be an Identifier, StringLiteralExpr or ComputedNameProperty node type`
     );
     ensure(
       expr,
@@ -396,6 +414,8 @@ export function visitEachChild<T extends FunctionlessNode>(
     const expr = visitor(node.expr);
     ensure(expr, isExpr, `a UnaryExpr's expr property must be an Expr`);
     return new UnaryExpr(node.op, expr) as T;
+  } else if (node.kind === "UndefinedLiteralExpr") {
+    return new UndefinedLiteralExpr() as T;
   } else if (node.kind === "VariableStmt") {
     const expr = node.expr ? visitor(node.expr) : undefined;
     if (expr) {

@@ -16,11 +16,14 @@ import { AnyFunction } from "./util";
  * An {@link Expr} (Expression) is a Node that will be interpreted to a value.
  */
 export type Expr =
+  | Argument
   | ArrayLiteralExpr
   | BinaryExpr
   | BooleanLiteralExpr
   | CallExpr
   | ConditionExpr
+  | ComputedPropertyNameExpr
+  | FunctionExpr
   | ElementAccessExpr
   | FunctionExpr
   | Identifier
@@ -36,16 +39,20 @@ export type Expr =
   | StringLiteralExpr
   | TemplateExpr
   | TypeOfExpr
-  | UnaryExpr;
+  | UnaryExpr
+  | UndefinedLiteralExpr;
 
 export function isExpr(a: any): a is Expr {
   return (
     isNode(a) &&
-    (isArrayLiteralExpr(a) ||
+    (isArgument(a) ||
+      isArrayLiteralExpr(a) ||
       isBinaryExpr(a) ||
       isBooleanLiteral(a) ||
       isCallExpr(a) ||
       isConditionExpr(a) ||
+      isComputedPropertyNameExpr(a) ||
+      isFunctionExpr(a) ||
       isElementAccessExpr(a) ||
       isFunctionExpr(a) ||
       isIdentifier(a) ||
@@ -59,13 +66,15 @@ export function isExpr(a: any): a is Expr {
       isStringLiteralExpr(a) ||
       isTemplateExpr(a) ||
       isTypeOfExpr(a) ||
-      isUnaryExpr(a))
+      isUnaryExpr(a) ||
+      isUndefinedLiteralExpr(a))
   );
 }
 
 export const isLiteralExpr = typeGuard(
   "ArrayLiteralExpr",
   "BooleanLiteralExpr",
+  "UndefinedLiteralExpr",
   "NullLiteralExpr",
   "NumberLiteralExpr",
   "ObjectLiteralExpr",
@@ -179,33 +188,36 @@ export class ElementAccessExpr extends BaseExpr<"ElementAccessExpr"> {
   }
 }
 
+export const isArgument = typeGuard("Argument");
+
+export class Argument extends BaseExpr<"Argument", CallExpr | NewExpr> {
+  constructor(readonly expr: Expr, readonly name?: string) {
+    super("Argument");
+    expr.setParent(this);
+  }
+
+  public clone(): this {
+    return new Argument(this.expr.clone(), this.name) as this;
+  }
+}
+
 export const isCallExpr = typeGuard("CallExpr");
 
 export class CallExpr extends BaseExpr<"CallExpr"> {
-  constructor(
-    readonly expr: Expr,
-    readonly args: {
-      [argName: string]: Expr;
-    }
-  ) {
+  constructor(readonly expr: Expr, readonly args: Argument[]) {
     super("CallExpr");
     expr.setParent(this);
-    for (const arg of Object.values(args)) {
-      if (arg) {
-        arg.setParent(this);
-      }
-    }
+    args.forEach((arg) => arg.setParent(this));
+  }
+
+  public getArgument(name: string): Argument | undefined {
+    return this.args.find((arg) => arg.name === name);
   }
 
   public clone(): this {
     return new CallExpr(
       this.expr.clone(),
-      Object.fromEntries(
-        Object.entries(this.args).map(([argName, argVal]) => [
-          argName,
-          argVal.clone(),
-        ])
-      )
+      this.args.map((arg) => arg.clone())
     ) as this;
   }
 }
@@ -213,12 +225,7 @@ export class CallExpr extends BaseExpr<"CallExpr"> {
 export const isNewExpr = typeGuard("NewExpr");
 
 export class NewExpr extends BaseExpr<"NewExpr"> {
-  constructor(
-    readonly expr: Expr,
-    readonly args: {
-      [argName: string]: Expr;
-    }
-  ) {
+  constructor(readonly expr: Expr, readonly args: Argument[]) {
     super("NewExpr");
     expr.setParent(this);
     for (const arg of Object.values(args)) {
@@ -231,12 +238,7 @@ export class NewExpr extends BaseExpr<"NewExpr"> {
   public clone(): this {
     return new NewExpr(
       this.expr.clone(),
-      Object.fromEntries(
-        Object.entries(this.args).map(([argName, argVal]) => [
-          argName,
-          argVal.clone(),
-        ])
-      )
+      this.args.map((arg) => arg.clone())
     ) as this;
   }
 }
@@ -327,6 +329,20 @@ export class NullLiteralExpr extends BaseExpr<"NullLiteralExpr"> {
   }
 }
 
+export const isUndefinedLiteralExpr = typeGuard("UndefinedLiteralExpr");
+
+export class UndefinedLiteralExpr extends BaseExpr<"UndefinedLiteralExpr"> {
+  readonly value = undefined;
+
+  constructor() {
+    super("UndefinedLiteralExpr");
+  }
+
+  public clone(): this {
+    return new UndefinedLiteralExpr() as this;
+  }
+}
+
 export const isBooleanLiteral = typeGuard("BooleanLiteralExpr");
 
 export class BooleanLiteralExpr extends BaseExpr<"BooleanLiteralExpr"> {
@@ -396,14 +412,19 @@ export class ObjectLiteralExpr extends BaseExpr<"ObjectLiteralExpr"> {
       this.properties.map((prop) => prop.clone())
     ) as this;
   }
-
   public getProperty(name: string) {
-    return this.properties.find(
-      (prop) =>
-        prop.kind === "PropAssignExpr" &&
-        ((prop.name.kind === "Identifier" && prop.name.name === name) ||
-          (prop.name.kind === "StringLiteralExpr" && prop.name.value === name))
-    );
+    return this.properties.find((prop) => {
+      if (prop.kind === "PropAssignExpr") {
+        if (prop.name.kind === "Identifier") {
+          return prop.name.name === name;
+        } else if (prop.name.kind === "StringLiteralExpr") {
+          return prop.name.value === name;
+        } else if (prop.name.expr.kind === "StringLiteralExpr") {
+          return prop.name.expr.value === name;
+        }
+      }
+      return false;
+    });
   }
 }
 
@@ -413,13 +434,33 @@ export class PropAssignExpr extends BaseExpr<
   "PropAssignExpr",
   ObjectLiteralExpr
 > {
-  constructor(readonly name: Expr, readonly expr: Expr) {
+  constructor(
+    readonly name: Identifier | ComputedPropertyNameExpr | StringLiteralExpr,
+    readonly expr: Expr
+  ) {
     super("PropAssignExpr");
+    name.setParent(this);
     expr.setParent(this);
   }
 
   public clone(): this {
     return new PropAssignExpr(this.name.clone(), this.expr.clone()) as this;
+  }
+}
+
+export const isComputedPropertyNameExpr = typeGuard("ComputedPropertyNameExpr");
+
+export class ComputedPropertyNameExpr extends BaseExpr<
+  "ComputedPropertyNameExpr",
+  PropAssignExpr
+> {
+  constructor(readonly expr: Expr) {
+    super("ComputedPropertyNameExpr");
+    expr.setParent(this);
+  }
+
+  public clone(): this {
+    return new ComputedPropertyNameExpr(this.expr.clone()) as this;
   }
 }
 

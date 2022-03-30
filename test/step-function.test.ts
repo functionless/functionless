@@ -102,9 +102,9 @@ test("return items.slice(1)", () => {
   }).definition;
 
   expect(definition).toEqual({
-    StartAt: "return items.slice(1, null)",
+    StartAt: "return items.slice(1, undefined)",
     States: {
-      "return items.slice(1, null)": {
+      "return items.slice(1, undefined)": {
         End: true,
         InputPath: "$.items[1:]",
         ResultPath: "$",
@@ -376,7 +376,7 @@ test("if-else", () => {
 test("if (typeof x === ??)", () => {
   const { stack } = initStepFunctionApp();
   const definition = new ExpressStepFunction(stack, "fn", (id: any) => {
-    if (id === null) {
+    if (id === undefined) {
       return "null";
     } else if (typeof id === "undefined") {
       return "undefined";
@@ -393,9 +393,9 @@ test("if (typeof x === ??)", () => {
   }).definition;
 
   expect(definition).toEqual({
-    StartAt: "if(id == null)",
+    StartAt: "if(id == undefined)",
     States: {
-      "if(id == null)": {
+      "if(id == undefined)": {
         Choices: [
           {
             Next: 'return "null"',
@@ -522,7 +522,7 @@ test("if (typeof x === ??)", () => {
 test("if (typeof x !== ??)", () => {
   const { stack } = initStepFunctionApp();
   const definition = new ExpressStepFunction(stack, "fn", (id: any) => {
-    if (id !== null) {
+    if (id !== undefined) {
       return "null";
     } else if (typeof id !== "undefined") {
       return "undefined";
@@ -539,9 +539,9 @@ test("if (typeof x !== ??)", () => {
   }).definition;
 
   expect(definition).toEqual({
-    StartAt: "if(id != null)",
+    StartAt: "if(id != undefined)",
     States: {
-      "if(id != null)": {
+      "if(id != undefined)": {
         Choices: [
           {
             And: [
@@ -917,7 +917,7 @@ test("return AWS.DynamoDB.GetItem", () => {
     States: {
       "person = $AWS.DynamoDB.GetItem({TableName: personTable, Key: {id: {S: id}}})":
         {
-          Next: "if(person.Item == null)",
+          Next: "if(person.Item == undefined)",
           ResultPath: "$.person",
           Resource: "arn:aws:states:::aws-sdk:dynamodb:getItem",
           Parameters: {
@@ -931,7 +931,7 @@ test("return AWS.DynamoDB.GetItem", () => {
 
           Type: "Task",
         },
-      "if(person.Item == null)": {
+      "if(person.Item == undefined)": {
         Choices: [
           {
             Or: [
@@ -944,13 +944,13 @@ test("return AWS.DynamoDB.GetItem", () => {
                 IsNull: true,
               },
             ],
-            Next: "return null",
+            Next: "return undefined",
           },
         ],
         Default: "return {id: person.Item.id.S, name: person.Item.name.S}",
         Type: "Choice",
       },
-      "return null": {
+      "return undefined": {
         Type: "Pass",
         End: true,
         Parameters: {
@@ -1010,7 +1010,7 @@ test("call AWS.DynamoDB.GetItem, then Lambda and return LiteralExpr", () => {
     States: {
       "person = $AWS.DynamoDB.GetItem({TableName: personTable, Key: {id: {S: id}}})":
         {
-          Next: "if(person.Item == null)",
+          Next: "if(person.Item == undefined)",
           ResultPath: "$.person",
           Parameters: {
             Key: {
@@ -1023,7 +1023,7 @@ test("call AWS.DynamoDB.GetItem, then Lambda and return LiteralExpr", () => {
           Resource: "arn:aws:states:::aws-sdk:dynamodb:getItem",
           Type: "Task",
         },
-      "if(person.Item == null)": {
+      "if(person.Item == undefined)": {
         Choices: [
           {
             Or: [
@@ -1036,14 +1036,14 @@ test("call AWS.DynamoDB.GetItem, then Lambda and return LiteralExpr", () => {
                 IsNull: true,
               },
             ],
-            Next: "return null",
+            Next: "return undefined",
           },
         ],
         Default:
           "score = computeScore({id: person.Item.id.S, name: person.Item.name.S})",
         Type: "Choice",
       },
-      "return null": {
+      "return undefined": {
         Type: "Pass",
         End: true,
         Parameters: {
@@ -2220,9 +2220,9 @@ test("try { task } catch { throw } finally { task() }", () => {
   }).definition;
 
   expect(definition).toEqual({
-    StartAt: "task(null)",
+    StartAt: "task(undefined)",
     States: {
-      "task(null)": {
+      "task(undefined)": {
         Catch: [
           {
             ErrorEquals: ["States.ALL"],
@@ -2490,18 +2490,18 @@ test("try { throw } catch { (maybe) throw } finally { task }", () => {
             Variable: "$.id",
           },
         ],
-        Default: "task(null)",
+        Default: "task(undefined)",
         Type: "Choice",
       },
       'throw new Error("little")': {
-        Next: "task(null)",
+        Next: "task(undefined)",
         Result: {
           message: "little",
         },
         ResultPath: "$.0_tmp",
         Type: "Pass",
       },
-      "task(null)": {
+      "task(undefined)": {
         Next: "exit finally",
         Parameters: {
           FunctionName: task.resource.functionName,
@@ -3019,12 +3019,12 @@ test("while (cond) { cond = task() }", () => {
   }).definition;
 
   expect(definition).toEqual({
-    StartAt: "while (cond == null)",
+    StartAt: "while (cond == undefined)",
     States: {
-      "while (cond == null)": {
+      "while (cond == undefined)": {
         Choices: [
           {
-            Next: "cond = task(null)",
+            Next: "cond = task(undefined)",
             Or: [
               {
                 IsPresent: false,
@@ -3040,8 +3040,8 @@ test("while (cond) { cond = task() }", () => {
         Default: "return null",
         Type: "Choice",
       },
-      "cond = task(null)": {
-        Next: "while (cond == null)",
+      "cond = task(undefined)": {
+        Next: "while (cond == undefined)",
         Parameters: {
           FunctionName: task.resource.functionName,
           Payload: null,
@@ -3070,12 +3070,12 @@ test("while (cond); cond = task()", () => {
   }).definition;
 
   expect(definition).toEqual({
-    StartAt: "while (cond == null)",
+    StartAt: "while (cond == undefined)",
     States: {
-      "while (cond == null)": {
+      "while (cond == undefined)": {
         Choices: [
           {
-            Next: "cond = task(null)",
+            Next: "cond = task(undefined)",
             Or: [
               {
                 IsPresent: false,
@@ -3091,8 +3091,8 @@ test("while (cond); cond = task()", () => {
         Default: "return null",
         Type: "Choice",
       },
-      "cond = task(null)": {
-        Next: "while (cond == null)",
+      "cond = task(undefined)": {
+        Next: "while (cond == undefined)",
         Parameters: {
           FunctionName: task.resource.functionName,
           Payload: null,
@@ -3123,12 +3123,12 @@ test("let cond; do { cond = task() } while (cond)", () => {
   }).definition;
 
   expect(definition).toEqual({
-    StartAt: "cond = task(null)",
+    StartAt: "cond = task(undefined)",
     States: {
-      "while (cond == null)": {
+      "while (cond == undefined)": {
         Choices: [
           {
-            Next: "cond = task(null)",
+            Next: "cond = task(undefined)",
             Or: [
               {
                 IsPresent: false,
@@ -3144,8 +3144,8 @@ test("let cond; do { cond = task() } while (cond)", () => {
         Default: "return null",
         Type: "Choice",
       },
-      "cond = task(null)": {
-        Next: "while (cond == null)",
+      "cond = task(undefined)": {
+        Next: "while (cond == undefined)",
         Parameters: {
           FunctionName: task.resource.functionName,
           Payload: null,
@@ -4693,9 +4693,9 @@ test("return $SFN.parallel(() => try { task() } catch { return null })) }", () =
       "return $SFN.parallel([function()])": {
         Branches: [
           {
-            StartAt: "return task(null)",
+            StartAt: "return task(undefined)",
             States: {
-              "return task(null)": {
+              "return task(undefined)": {
                 Catch: [
                   {
                     ErrorEquals: ["States.ALL"],
@@ -5153,9 +5153,9 @@ test("return task(task())", () => {
   }).definition;
 
   expect(definition).toEqual({
-    StartAt: "0_tmp = task(null)",
+    StartAt: "0_tmp = task(undefined)",
     States: {
-      "0_tmp = task(null)": {
+      "0_tmp = task(undefined)": {
         Next: "return task(0_tmp)",
         Parameters: {
           FunctionName: task.resource.functionName,

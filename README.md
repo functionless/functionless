@@ -120,6 +120,21 @@ Finally, configure the `functionless/lib/compile` TypeScript transformer plugin 
 }
 ```
 
+Files can be ignored by the transformer by using glob patterns in the `tsconfig.json`:
+
+```json
+{
+  "compilerOptions": {
+    "plugins": [
+      {
+        "transform": "functionless/lib/compile",
+        "exclude": ["./src/**/protected/*"]
+      },
+    ]
+  }
+}
+```
+
 ## Usage
 
 `functionless` makes configuring services like AWS Appsync as easy as writing TypeScript functions.

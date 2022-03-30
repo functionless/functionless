@@ -36,9 +36,10 @@ export class Function<P, O> {
 
   constructor(readonly resource: aws_lambda.IFunction) {
     return makeCallable(this, (call: CallExpr, context: VTL | ASL): any => {
+      const payloadArg = call.getArgument("payload");
+
       if (isVTL(context)) {
-        const payload =
-          "payload" in call.args ? context.eval(call.args.payload) : "$null";
+        const payload = payloadArg ? context.eval(payloadArg.expr) : "$null";
 
         const request = context.var(
           `{"version": "2018-05-29", "operation": "Invoke", "payload": ${payload}}`
@@ -51,8 +52,9 @@ export class Function<P, O> {
           Resource: "arn:aws:states:::lambda:invoke",
           Parameters: {
             FunctionName: this.resource.functionName,
-            [`Payload${isVariableReference(call.args.payload) ? ".$" : ""}`]:
-              "payload" in call.args ? ASL.toJson(call.args.payload) : null,
+            [`Payload${
+              payloadArg && isVariableReference(payloadArg.expr) ? ".$" : ""
+            }`]: payloadArg ? ASL.toJson(payloadArg.expr) : null,
           },
         };
         return task;

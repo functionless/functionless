@@ -1,8 +1,9 @@
 import type { Decl, ParameterDecl } from "./declaration";
+import type { Err } from "./error";
 import type { Expr } from "./expression";
 import type { BlockStmt, CatchClause, Stmt, VariableStmt } from "./statement";
 
-export type FunctionlessNode = Decl | Expr | Stmt;
+export type FunctionlessNode = Decl | Expr | Stmt | Err;
 
 export function isNode(a: any): a is FunctionlessNode {
   return typeof a?.kind === "string";
@@ -17,7 +18,7 @@ export abstract class BaseNode<
   Kind extends FunctionlessNode["kind"],
   Parent extends FunctionlessNode | undefined = FunctionlessNode | undefined
 > {
-  abstract readonly nodeKind: "Expr" | "Stmt" | "Decl";
+  abstract readonly nodeKind: "Err" | "Expr" | "Stmt" | "Decl";
 
   // @ts-ignore
   parent: Parent;
@@ -205,7 +206,7 @@ export abstract class BaseNode<
   /**
    * @returns the {@link Stmt} that will be run if an error was raised from this Node.
    */
-  public error(): CatchClause | BlockStmt | undefined {
+  public throw(): CatchClause | BlockStmt | undefined {
     // CatchClause that will handle the error
     const catchClause = this.findCatchClause();
 

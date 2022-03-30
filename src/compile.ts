@@ -2,13 +2,23 @@ import ts from "typescript";
 import { PluginConfig, TransformerExtras } from "ts-patch";
 import { BinaryOp, CanReference } from "./expression";
 import { FunctionlessNode } from "./node";
+import { AppsyncResolver } from "./appsync";
+import minimatch from "minimatch";
+import { assertDefined } from "./assert";
+import { StepFunction } from ".";
+import { ExpressStepFunction } from "./step-function";
 
 export default compile;
 
 /**
  * Configuration options for the functionless TS transform.
  */
-export interface FunctionlessConfig extends PluginConfig {}
+export interface FunctionlessConfig extends PluginConfig {
+  /**
+   * Glob to exclude
+   */
+  exclude?: string[];
+}
 
 /**
  * TypeScript Transformer which transforms functionless functions, such as `AppsyncResolver`,
@@ -25,6 +35,9 @@ export function compile(
   _config?: FunctionlessConfig,
   _extras?: TransformerExtras
 ): ts.TransformerFactory<ts.SourceFile> {
+  const excludeMatchers = _config?.exclude
+    ? _config.exclude.map((pattern) => minimatch.makeRe(pattern))
+    : [];
   const checker = program.getTypeChecker();
   return (ctx) => {
     const functionless = ts.factory.createUniqueName("functionless");
@@ -40,6 +53,11 @@ export function compile(
         ts.factory.createStringLiteral("functionless")
       );
 
+      // Do not transform any of the files matched by "exclude"
+      if (excludeMatchers.some((matcher) => matcher.test(sf.fileName))) {
+        return sf;
+      }
+
       return ts.factory.updateSourceFile(
         sf,
         [
@@ -54,63 +72,124 @@ export function compile(
       );
 
       function visitor(node: ts.Node): ts.Node {
-        const type = getFunctionlessType(node);
-        if (type === "AppsyncResolver") {
+        if (isAppsyncResolver(node)) {
           return visitAppsyncResolver(node as ts.NewExpression);
-        } else if (type === "StepFunction" || type === "ExpressStepFunction") {
+        } else if (isStepFunction(node)) {
           return visitStepFunction(node as ts.NewExpression);
-        } else if (type === "reflect") {
-          return toFunction(
-            "FunctionDecl",
-            (node as ts.CallExpression).arguments[0] as ts.FunctionExpression
+        } else if (isReflectFunction(node)) {
+          return errorBoundary(() =>
+            toFunction("FunctionDecl", node.arguments[0])
           );
         }
+        // keep processing the children of the updated node.
         return ts.visitEachChild(node, visitor, ctx);
       }
 
-      function getFunctionlessType(
-        node: ts.Node
-      ):
-        | "AppsyncResolver"
-        | "StepFunction"
-        | "ExpressStepFunction"
-        | "reflect"
-        | undefined {
-        if (ts.isNewExpression(node)) {
-          const exprType = checker.getTypeAtLocation(node.expression);
-          const exprDecl = exprType.symbol?.declarations?.[0];
-          if (exprDecl && ts.isClassDeclaration(exprDecl)) {
-            const member = exprDecl.members.find(
-              (member) =>
-                member.modifiers?.find(
-                  (mod) => mod.kind === ts.SyntaxKind.StaticKeyword
-                ) !== undefined &&
-                member.name &&
-                ts.isIdentifier(member.name) &&
-                member.name.text === "FunctionlessType"
-            );
-
-            if (
-              member &&
-              ts.isPropertyDeclaration(member) &&
-              member.initializer &&
-              ts.isStringLiteral(member.initializer) &&
-              (member.initializer.text === "AppsyncResolver" ||
-                member.initializer.text === "StepFunction" ||
-                member.initializer.text === "ExpressStepFunction")
-            ) {
-              return member.initializer.text;
-            }
-            return undefined;
-          }
-        } else if (ts.isCallExpression(node)) {
+      function isReflectFunction(node: ts.Node): node is ts.CallExpression & {
+        arguments: [TsFunctionParameter, ...ts.Expression[]];
+      } {
+        if (ts.isCallExpression(node)) {
           const exprType = checker.getTypeAtLocation(node.expression);
           const exprDecl = exprType.symbol?.declarations?.[0];
           if (exprDecl && ts.isFunctionDeclaration(exprDecl)) {
             if (exprDecl.name?.text === "reflect") {
-              return "reflect";
+              return true;
             }
           }
+        }
+        return false;
+      }
+
+      function isAppsyncResolver(node: ts.Node): node is ts.NewExpression & {
+        arguments: [TsFunctionParameter, ...ts.Expression[]];
+      } {
+        if (ts.isNewExpression(node)) {
+          return isFunctionlessClassOfKind(
+            node.expression,
+            AppsyncResolver.FunctionlessType
+          );
+        }
+        return false;
+      }
+
+      function isStepFunction(node: ts.Node): node is ts.NewExpression & {
+        arguments: [TsFunctionParameter, ...ts.Expression[]];
+      } {
+        if (ts.isNewExpression(node)) {
+          return (
+            isFunctionlessClassOfKind(node, StepFunction.FunctionlessType) ||
+            isFunctionlessClassOfKind(
+              node,
+              ExpressStepFunction.FunctionlessType
+            )
+          );
+        }
+        return false;
+      }
+
+      /**
+       * Various types that could be in a call argument position of a function parameter.
+       */
+      type TsFunctionParameter =
+        | ts.FunctionExpression
+        | ts.ArrowFunction
+        | ts.Identifier
+        | ts.PropertyAccessExpression
+        | ts.ElementAccessExpression
+        | ts.CallExpression;
+
+      /**
+       * Catches any errors and wraps them in a {@link Err} node.
+       */
+      function errorBoundary<T extends ts.Node>(
+        func: () => T
+      ): T | ts.NewExpression {
+        try {
+          return func();
+        } catch (err) {
+          const error =
+            err instanceof Error ? err : Error("Unknown compiler error.");
+          return newExpr("Err", [
+            ts.factory.createNewExpression(
+              ts.factory.createIdentifier(error.name),
+              undefined,
+              [ts.factory.createStringLiteral(error.message)]
+            ),
+          ]);
+        }
+      }
+
+      function isFunctionlessClassOfKind(node: ts.Node, kind: string) {
+        const type = checker.getTypeAtLocation(node);
+        const exprDecl = type.symbol?.declarations?.[0];
+        return (
+          !!exprDecl &&
+          ts.isClassDeclaration(exprDecl) &&
+          getFunctionlessKind(exprDecl) === kind
+        );
+      }
+
+      // Gets the static FunctionlessKind property from a ClassDeclaration
+      function getFunctionlessKind(
+        clss: ts.ClassDeclaration
+      ): string | undefined {
+        const member = clss.members.find(
+          (member) =>
+            member.modifiers?.find(
+              (mod) => mod.kind === ts.SyntaxKind.StaticKeyword
+            ) !== undefined &&
+            member.name &&
+            ts.isIdentifier(member.name) &&
+            member.name.text === "FunctionlessType"
+        );
+
+        if (
+          member &&
+          ts.isPropertyDeclaration(member) &&
+          member.initializer &&
+          ts.isStringLiteral(member.initializer)
+        ) {
+          return member.initializer.text;
         }
         return undefined;
       }
@@ -136,7 +215,7 @@ export function compile(
               call,
               call.expression,
               call.typeArguments,
-              [toFunction("FunctionDecl", impl)]
+              [errorBoundary(() => toFunction("FunctionDecl", impl, 1))]
             );
           }
         }
@@ -145,7 +224,7 @@ export function compile(
 
       function toFunction(
         type: "FunctionDecl" | "FunctionExpr",
-        impl: ts.Node,
+        impl: TsFunctionParameter,
         dropArgs?: number
       ): ts.Expression {
         if (
@@ -190,7 +269,7 @@ export function compile(
 
       function toExpr(node: ts.Node | undefined): ts.Expression {
         if (node === undefined) {
-          return newExpr("NullLiteralExpr", []);
+          return newExpr("UndefinedLiteralExpr", []);
         } else if (ts.isArrowFunction(node) || ts.isFunctionExpression(node)) {
           return toFunction("FunctionExpr", node);
         } else if (ts.isExpressionStatement(node)) {
@@ -222,10 +301,9 @@ export function compile(
           if (signature) {
             return newExpr(ts.isCallExpression(node) ? "CallExpr" : "NewExpr", [
               toExpr(node.expression),
-              ts.factory.createObjectLiteralExpression(
+              ts.factory.createArrayLiteralExpression(
                 signature.parameters.map((parameter, i) =>
-                  ts.factory.createPropertyAssignment(
-                    parameter.name,
+                  newExpr("Argument", [
                     (parameter.declarations?.[0] as ts.ParameterDeclaration)
                       ?.dotDotDotToken
                       ? newExpr("ArrayLiteralExpr", [
@@ -233,9 +311,22 @@ export function compile(
                             node.arguments?.slice(i).map(toExpr) ?? []
                           ),
                         ])
-                      : toExpr(node.arguments?.[i])
-                  )
+                      : toExpr(node.arguments?.[i]),
+                    ts.factory.createStringLiteral(parameter.name),
+                  ])
                 )
+              ),
+            ]);
+          } else {
+            return newExpr("CallExpr", [
+              toExpr(node.expression),
+              ts.factory.createArrayLiteralExpression(
+                node.arguments?.map((arg) =>
+                  newExpr("Argument", [
+                    toExpr(arg),
+                    ts.factory.createIdentifier("undefined"),
+                  ])
+                ) ?? []
               ),
             ]);
           }
@@ -246,7 +337,9 @@ export function compile(
             ),
           ]);
         } else if (ts.isIdentifier(node)) {
-          if (node.text === "undefined" || node.text === "null") {
+          if (node.text === "undefined") {
+            return newExpr("UndefinedLiteralExpr", []);
+          } else if (node.text === "null") {
             return newExpr("NullLiteralExpr", []);
           }
           const kind = getKind(node);
@@ -264,14 +357,22 @@ export function compile(
             // if this is a reference to a Table or Lambda, retain it
             return ref(node);
           }
+          const type = checker.getTypeAtLocation(node.name);
           return newExpr("PropAccessExpr", [
             toExpr(node.expression),
             ts.factory.createStringLiteral(node.name.text),
+            type
+              ? ts.factory.createStringLiteral(checker.typeToString(type))
+              : ts.factory.createIdentifier("undefined"),
           ]);
         } else if (ts.isElementAccessExpression(node)) {
+          const type = checker.getTypeAtLocation(node.argumentExpression);
           return newExpr("ElementAccessExpr", [
             toExpr(node.expression),
             toExpr(node.argumentExpression),
+            type
+              ? ts.factory.createStringLiteral(checker.typeToString(type))
+              : ts.factory.createIdentifier("undefined"),
           ]);
         } else if (
           ts.isVariableStatement(node) &&
@@ -314,12 +415,23 @@ export function compile(
             toExpr(node.right),
           ]);
         } else if (ts.isPrefixUnaryExpression(node)) {
-          if (node.operator !== ts.SyntaxKind.ExclamationToken) {
+          if (
+            node.operator !== ts.SyntaxKind.ExclamationToken &&
+            node.operator !== ts.SyntaxKind.MinusToken
+          ) {
             throw new Error(
               `invalid Unary Operator: ${ts.tokenToString(node.operator)}`
             );
           }
-          return newExpr("UnaryExpr", [toExpr(node.operand)]);
+          return newExpr("UnaryExpr", [
+            ts.factory.createStringLiteral(
+              assertDefined(
+                ts.tokenToString(node.operator),
+                `Unary operator token cannot be stringified: ${node.operator}`
+              )
+            ),
+            toExpr(node.operand),
+          ]);
         } else if (ts.isReturnStatement(node)) {
           return newExpr(
             "ReturnStmt",
@@ -335,15 +447,13 @@ export function compile(
           ]);
         } else if (ts.isPropertyAssignment(node)) {
           return newExpr("PropAssignExpr", [
-            ts.isStringLiteral(node.name) ||
-            (ts.isIdentifier(node.name) &&
-              (node.name.text === "null" || node.name.text === "undefined"))
+            ts.isStringLiteral(node.name) || ts.isIdentifier(node.name)
               ? string(node.name.text)
-              : ts.isComputedPropertyName(node.name)
-              ? toExpr(node.name.expression)
-              : string(node.name.text),
+              : toExpr(node.name),
             toExpr(node.initializer),
           ]);
+        } else if (ts.isComputedPropertyName(node)) {
+          return newExpr("ComputedPropertyNameExpr", [toExpr(node.expression)]);
         } else if (ts.isShorthandPropertyAssignment(node)) {
           return newExpr("PropAssignExpr", [
             newExpr("Identifier", [
@@ -366,7 +476,10 @@ export function compile(
           return newExpr("NullLiteralExpr", []);
         } else if (ts.isNumericLiteral(node)) {
           return newExpr("NumberLiteralExpr", [node]);
-        } else if (ts.isStringLiteral(node)) {
+        } else if (
+          ts.isStringLiteral(node) ||
+          ts.isNoSubstitutionTemplateLiteral(node)
+        ) {
           return newExpr("StringLiteralExpr", [node]);
         } else if (ts.isLiteralExpression(node)) {
           // const type = checker.getTypeAtLocation(node);
@@ -460,9 +573,15 @@ export function compile(
                 ]),
             toExpr(node.expression),
           ]);
+        } else if (ts.isParenthesizedExpression(node)) {
+          return toExpr(node.expression);
+        } else if (ts.isAsExpression(node)) {
+          return toExpr(node.expression);
+        } else if (ts.isTypeAssertionExpression(node)) {
+          return toExpr(node.expression);
         }
 
-        throw new Error(`unhandled node: ${node.getText()}`);
+        throw new Error(`unhandled node: ${node.getText()} ${node.kind}`);
       }
 
       function ref(node: ts.Expression) {
@@ -529,7 +648,7 @@ function getOperator(op: ts.BinaryOperatorToken): BinaryOp | undefined {
   return OperatorMappings[op.kind as keyof typeof OperatorMappings];
 }
 
-const OperatorMappings = {
+const OperatorMappings: Record<number, BinaryOp> = {
   [ts.SyntaxKind.EqualsToken]: "=",
   [ts.SyntaxKind.PlusToken]: "+",
   [ts.SyntaxKind.MinusToken]: "-",

@@ -269,15 +269,13 @@ export namespace $AWS {
     ): Partial<Task> {
       assertIsASL(context, `DynamoDB.${operationName}`);
 
-      const input = call.args.input;
+      const input = call.getArgument("input")?.expr;
       if (!isObjectLiteralExpr(input)) {
         throw new Error(
           `input parameter must be an ObjectLiteralExpr, but was ${input?.kind}`
         );
       }
-      const tableProp = (call.args.input as ObjectLiteralExpr).getProperty(
-        "TableName"
-      );
+      const tableProp = (input as ObjectLiteralExpr).getProperty("TableName");
 
       if (
         tableProp?.kind !== "PropAssignExpr" ||

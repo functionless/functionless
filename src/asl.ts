@@ -15,6 +15,7 @@ import {
   NewExpr,
   NullLiteralExpr,
   PropAccessExpr,
+  StringLiteralExpr,
 } from "./expression";
 import {
   BlockStmt,
@@ -618,7 +619,10 @@ export class ASL {
         );
       }
 
-      if (stmt.expr.kind === "NullLiteralExpr") {
+      if (
+        stmt.expr.kind === "NullLiteralExpr" ||
+        stmt.expr.kind === "UndefinedLiteralExpr"
+      ) {
         return {
           [this.getStateName(stmt)]: {
             Type: "Pass",
@@ -667,10 +671,10 @@ export class ASL {
             Type: "Fail",
             Error: exprToString((stmt.expr as NewExpr).expr),
             Cause: JSON.stringify(
-              Object.entries((stmt.expr as NewExpr).args).reduce(
-                (args: any, [argName, argVal]) => ({
+              (stmt.expr as NewExpr).args.reduce(
+                (args: any, arg) => ({
                   ...args,
-                  [argName]: ASL.toJson(argVal),
+                  [arg.name!]: ASL.toJson(arg.expr),
                 }),
                 {}
               )
@@ -681,10 +685,10 @@ export class ASL {
         return {
           [this.getStateName(stmt)]: {
             Type: "Pass",
-            Result: Object.entries((stmt.expr as NewExpr).args).reduce(
-              (args: any, [argName, argVal]) => ({
+            Result: (stmt.expr as NewExpr).args.reduce(
+              (args: any, arg) => ({
                 ...args,
-                [argName]: ASL.toJson(argVal),
+                [arg.name!]: ASL.toJson(arg.expr),
               }),
               {}
             ),
@@ -844,7 +848,7 @@ export class ASL {
       } else if (isMapOrForEach(expr)) {
         const throwTransition = this.throw(expr);
 
-        const callbackfn = expr.args.callbackfn;
+        const callbackfn = expr.getArgument("callbackfn")?.expr;
         if (callbackfn !== undefined && callbackfn.kind === "FunctionExpr") {
           const callbackStates = this.execute(callbackfn.body);
           const callbackStart = this.getStateName(callbackfn.body.step()!);
@@ -889,7 +893,7 @@ export class ASL {
           InputPath: ASL.toJsonPath(expr),
         };
       } else if (isFilter(expr)) {
-        const predicate = expr.args.predicate;
+        const predicate = expr.getArgument("predicate")?.expr;
         if (predicate !== undefined && predicate.kind === "FunctionExpr") {
           try {
             // first try to implement filter optimally with JSON Path
@@ -966,6 +970,7 @@ export class ASL {
     } else if (expr.kind === "BinaryExpr") {
       // TODO
     }
+    debugger;
     throw new Error(`cannot eval expression kind '${expr.kind}'`);
   }
 
@@ -1099,7 +1104,7 @@ export class ASL {
     );
 
     // catchClause or finallyBlock that will run upon throwing this error
-    const catchOrFinally = node.error();
+    const catchOrFinally = node.throw();
     if (catchOrFinally === undefined) {
       // error is terminal
       return undefined;
@@ -1217,7 +1222,9 @@ function hasBreak(loop: ForInStmt | ForOfStmt | WhileStmt | DoStmt): boolean {
 
 export namespace ASL {
   export function toJson(expr: Expr): any {
-    if (expr.kind === "CallExpr") {
+    if (expr.kind === "Argument") {
+      return toJson(expr.expr);
+    } else if (expr.kind === "CallExpr") {
       if (isSlice(expr)) {
         return sliceToJsonPath(expr);
       } else if (isFilter(expr)) {
@@ -1248,27 +1255,31 @@ export namespace ASL {
           );
         }
         if (
-          prop.name.kind !== "StringLiteralExpr" &&
-          prop.name.kind !== "Identifier"
+          (prop.name.kind === "ComputedPropertyNameExpr" &&
+            prop.name.expr.kind === "StringLiteralExpr") ||
+          prop.name.kind === "Identifier" ||
+          prop.name.kind === "StringLiteralExpr"
         ) {
+          payload[
+            `${
+              prop.name.kind === "Identifier"
+                ? prop.name.name
+                : prop.name.kind === "StringLiteralExpr"
+                ? prop.name.value
+                : (prop.name.expr as StringLiteralExpr).value
+            }${
+              isLiteralExpr(prop.expr) || isReferenceExpr(prop.expr) ? "" : ".$"
+            }`
+          ] = toJson(prop.expr);
+        } else {
           throw new Error(
             `computed name of PropAssignExpr is not supported in Amazon States Language`
           );
         }
-
-        payload[
-          `${
-            prop.name.kind === "StringLiteralExpr"
-              ? prop.name.value
-              : prop.name.name
-          }${
-            isLiteralExpr(prop.expr) || isReferenceExpr(prop.expr) ? "" : ".$"
-          }`
-        ] = toJson(prop.expr);
       }
       return payload;
     } else if (isLiteralExpr(expr)) {
-      return expr.value;
+      return expr.value ?? null;
     } else if (expr.kind === "ReferenceExpr") {
       const ref = expr.ref();
       if (ref.kind === "Function") {
@@ -1287,6 +1298,7 @@ export namespace ASL {
         .filter((e) => !isLiteralExpr(e))
         .map((e) => toJsonPath(e))}')`;
     }
+    debugger;
     throw new Error(`cannot evaluate ${expr.kind} to JSON`);
   }
 
@@ -1315,16 +1327,19 @@ export namespace ASL {
   }
 
   function sliceToJsonPath(expr: CallExpr & { expr: PropAccessExpr }) {
-    const start = expr.args.start;
-    if (start.kind !== "NumberLiteralExpr") {
+    const start = expr.getArgument("start")?.expr;
+    if (start?.kind !== "NumberLiteralExpr") {
       throw new Error(
         `the 'start' argument of slice must be a NumberLiteralExpr`
       );
     }
 
-    const end = expr.args.end;
-    if (end.kind !== "NullLiteralExpr") {
-      if (end.kind !== "NumberLiteralExpr") {
+    const end = expr.getArgument("end")?.expr;
+    if (
+      end?.kind !== "NullLiteralExpr" &&
+      end?.kind !== "UndefinedLiteralExpr"
+    ) {
+      if (end?.kind !== "NumberLiteralExpr") {
         throw new Error(
           `the 'end' argument of slice must be a NumberLiteralExpr`
         );
@@ -1336,8 +1351,8 @@ export namespace ASL {
   }
 
   function filterToJsonPath(expr: CallExpr & { expr: PropAccessExpr }): string {
-    const predicate = expr.args.predicate;
-    if (predicate.kind !== "FunctionExpr") {
+    const predicate = expr.getArgument("predicate")?.expr;
+    if (predicate?.kind !== "FunctionExpr") {
       throw new Error(
         `the 'predicate' argument of slice must be a FunctionExpr`
       );
@@ -1647,7 +1662,10 @@ export namespace ASL {
                 `unsupported operand '${expr.op}' with 'typeof' expression.`
               );
             }
-          } else if (literalOrTypeOf.kind === "NullLiteralExpr") {
+          } else if (
+            literalOrTypeOf.kind === "NullLiteralExpr" ||
+            literalOrTypeOf.kind === "UndefinedLiteralExpr"
+          ) {
             if (expr.op === "!=") {
               return {
                 And: [
@@ -1762,6 +1780,8 @@ export namespace ASL {
         // return aws_stepfunctions.Condition.str
       }
     }
+    debugger;
+    toCondition(expr);
     throw new Error(`cannot evaluate expression: '${expr.kind}`);
   }
 }
@@ -1817,7 +1837,9 @@ function toStateName(stmt: Stmt): string | undefined {
 }
 
 function exprToString(expr: Expr): string {
-  if (expr.kind === "ArrayLiteralExpr") {
+  if (expr.kind === "Argument") {
+    return exprToString(expr.expr);
+  } else if (expr.kind === "ArrayLiteralExpr") {
     return `[${expr.items.map(exprToString).join(", ")}]`;
   } else if (expr.kind === "BinaryExpr") {
     return `${exprToString(expr.left)} ${expr.op} ${exprToString(expr.right)}`;
@@ -1826,14 +1848,17 @@ function exprToString(expr: Expr): string {
   } else if (expr.kind === "CallExpr" || expr.kind === "NewExpr") {
     return `${expr.kind === "NewExpr" ? "new " : ""}${exprToString(
       expr.expr
-    )}(${Object.entries(expr.args)
+    )}(${expr.args
       .filter(
-        ([name, val]) => !(name === "thisArg" && val.kind === "NullLiteralExpr")
+        (arg) =>
+          !(arg.name === "thisArg" && arg.expr.kind === "UndefinedLiteralExpr")
       )
-      .map(([_, val]) => exprToString(val))
+      .map((arg) => exprToString(arg.expr))
       .join(", ")})`;
   } else if (expr.kind === "ConditionExpr") {
     return `if(${exprToString(expr.when)})`;
+  } else if (expr.kind === "ComputedPropertyNameExpr") {
+    return `[${exprToString(expr.expr)}]`;
   } else if (expr.kind === "ElementAccessExpr") {
     return `${exprToString(expr.expr)}[${exprToString(expr.element)}]`;
   } else if (expr.kind === "FunctionExpr") {
@@ -1850,9 +1875,15 @@ function exprToString(expr: Expr): string {
     return `${exprToString(expr.expr)}.${expr.name}`;
   } else if (expr.kind === "PropAssignExpr") {
     return `${
-      expr.name.kind === "StringLiteralExpr"
+      expr.name.kind === "Identifier"
+        ? expr.name.name
+        : expr.name.kind === "StringLiteralExpr"
         ? expr.name.value
-        : exprToString(expr.name)
+        : expr.name.kind === "ComputedPropertyNameExpr"
+        ? expr.name.expr.kind === "StringLiteralExpr"
+          ? expr.name.expr.value
+          : exprToString(expr.name.expr)
+        : assertNever(expr.name)
     }: ${exprToString(expr.expr)}`;
   } else if (expr.kind === "ReferenceExpr") {
     return expr.name;
@@ -1870,6 +1901,8 @@ function exprToString(expr: Expr): string {
     return `typeof ${exprToString(expr.expr)}`;
   } else if (expr.kind === "UnaryExpr") {
     return `${expr.op}${exprToString(expr.expr)}`;
+  } else if (expr.kind === "UndefinedLiteralExpr") {
+    return "undefined";
   } else {
     return assertNever(expr);
   }
