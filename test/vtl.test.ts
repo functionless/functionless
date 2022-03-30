@@ -599,3 +599,12 @@ $util.qr($v6.add($item))
 #end
 #return($v1)`
   ));
+
+test("$util.time.nowISO8601", () =>
+  appsyncTestCase(
+    reflect(() => {
+      return $util.time.nowISO8601();
+    }),
+    payload,
+    "#return($util.time.nowISO8601())"
+  ));
