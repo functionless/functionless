@@ -686,7 +686,7 @@ export interface time {
   parseFormattedToEpochMilliSeconds(
     timestamp: string,
     format: string,
-    tiemzeone: string
+    timezone: string
   ): number;
 
   /**
@@ -713,7 +713,7 @@ export interface time {
    * Converts a epoch milliseconds timestamp, passed as a long, to a timestamp formatted according to the supplied format in the supplied timezone.
    */
   epochMilliSecondsToFormatted(
-    epoc: number,
+    epoch: number,
     format: string,
     timezone: string
   ): string;
