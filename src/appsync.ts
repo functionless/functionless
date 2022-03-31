@@ -157,8 +157,6 @@ export class AppsyncResolver<
       "typeName" | "fieldName" | "cachingConfig"
     >
   ): SynthesizedAppsyncResolver {
-    let stageIt = 0;
-
     const resolverCount = countResolvers(this.decl);
     const templates: string[] = [];
 
@@ -363,7 +361,7 @@ export class AppsyncResolver<
               templates.push(requestMappingTemplateString);
               templates.push(responseMappingTemplate);
               template = new VTL(VTL.CircuitBreaker);
-              const name = `${toName(expr.expr)}_${stageIt++}`;
+              const name = getUniqueName(api, toName(expr.expr));
               return dataSource.createFunction({
                 name,
                 requestMappingTemplate: appsync.MappingTemplate.fromString(
@@ -446,6 +444,13 @@ export interface $util {
    * @see https://docs.aws.amazon.com/appsync/latest/devguide/resolver-util-reference.html#dynamodb-helpers-in-util-dynamodb
    */
   readonly dynamodb: dynamodb;
+
+  /**
+   * The $util.time variable contains datetime methods to help generate timestamps, convert between datetime formats, and parse datetime strings. The syntax for datetime formats is based on DateTimeFormatter which you can reference for further documentation. Below we provide some examples, as well as a list of available methods and descriptions.
+   *
+   * @see https://docs.aws.amazon.com/appsync/latest/devguide/time-helpers-in-util-time.html
+   */
+  readonly time: time;
 
   /**
    * Returns the input string as a JavaScript escaped string.
@@ -640,6 +645,101 @@ export interface $util {
    * Returns a string describing the multi-auth type being used by a request, returning back either "IAM Authorization", "User Pool Authorization", "Open ID Connect Authorization", or "API Key Authorization".
    */
   authType(): string;
+}
+
+export interface time {
+  /**
+   * Returns a String representation of UTC in ISO8601 format.
+   */
+  nowISO8601(): string;
+
+  /**
+   * Returns the number of seconds from the epoch of 1970-01-01T00:00:00Z to now.
+   */
+  nowEpochSeconds(): number;
+
+  /**
+   * Returns the number of milliseconds from the epoch of 1970-01-01T00:00:00Z to now.
+   */
+  nowEpochMilliSeconds(): number;
+
+  /**
+   * Returns a string of the current timestamp in UTC using the specified format from a String input type.
+   */
+  nowFormatted(format: string): string;
+
+  /**
+   * Returns a string of the current timestamp for a timezone using the specified format and timezone from String input types.
+   */
+  nowFormatted(format: string, timezone: string): string;
+
+  /**
+   * Parses a timestamp passed as a String, along with a format, and return the timestamp as milliseconds since epoch.
+   */
+  parseFormattedToEpochMilliSeconds(timestamp: string, format: string): number;
+
+  /**
+   * Parses a timestamp passed as a String, along with a format and time zone, and return the timestamp as milliseconds since epoch.
+   */
+  parseFormattedToEpochMilliSeconds(
+    timestamp: string,
+    format: string,
+    timezone: string
+  ): number;
+
+  /**
+   * Parses an ISO8601 timestamp, passed as a String, and return the timestamp as milliseconds since epoch.
+   */
+  parseISO8601ToEpochMilliSeconds(timestamp: string): number;
+
+  /**
+   * Converts an epoch milliseconds timestamp to an epoch seconds timestamp.
+   */
+  epochMilliSecondsToSeconds(epoch: number): number;
+
+  /**
+   * Converts a epoch milliseconds timestamp to an ISO8601 timestamp.
+   */
+  epochMilliSecondsToISO8601(epoch: number): string;
+
+  /**
+   * Converts a epoch milliseconds timestamp, passed as long, to a timestamp formatted according to the supplied format in UTC.
+   */
+  epochMilliSecondsToFormatted(epoch: number, format: string): string;
+
+  /**
+   * Converts a epoch milliseconds timestamp, passed as a long, to a timestamp formatted according to the supplied format in the supplied timezone.
+   */
+  epochMilliSecondsToFormatted(
+    epoch: number,
+    format: string,
+    timezone: string
+  ): string;
+}
+
+const uniqueNamesSymbol = Symbol.for("functionless.UniqueNames");
+
+const names: WeakMap<
+  appsync.GraphqlApi,
+  {
+    [name: string]: number;
+  }
+> = ((global as any)[uniqueNamesSymbol] ??= new WeakMap());
+
+function getUniqueName(api: appsync.GraphqlApi, name: string): string {
+  let uniqueNames = names.get(api);
+  if (uniqueNames === undefined) {
+    uniqueNames = {};
+    names.set(api, uniqueNames);
+  }
+  const counter = uniqueNames[name];
+  if (counter === undefined) {
+    uniqueNames[name] = 0;
+    return name;
+  } else {
+    uniqueNames[name] += 1;
+    return `${name}_${counter}`;
+  }
 }
 
 const dataSourcesSymbol = Symbol.for("functionless.DataSources");

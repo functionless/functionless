@@ -13,5 +13,6 @@ input PersonInput {
 type Mutation {
   deletePerson(id: ID!): Person
   addPerson(input: PersonInput!): Person
+  addPerson2(input: PersonInput!): Person
   updateName(id: ID!, name: String!): Person
 }
