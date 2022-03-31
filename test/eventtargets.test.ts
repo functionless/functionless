@@ -7,6 +7,7 @@ import { EventField } from "aws-cdk-lib/aws-events";
 
 type testEvent = EventBusRuleInput<{
   value: string;
+  optional?: string;
   num: number;
   array: string[];
   "blah-blah": string;
@@ -71,6 +72,13 @@ test("string concat", () => {
     aws_events.RuleTargetInput.fromText(
       `hello ${aws_events.EventField.fromPath("$.source")}`
     )
+  );
+});
+
+test("optional assert", () => {
+  ebEventTargetTestCase<testEvent>(
+    reflect((event) => event.detail.optional!),
+    aws_events.RuleTargetInput.fromEventPath(`$.detail.optional`)
   );
 });
 

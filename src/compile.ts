@@ -626,9 +626,13 @@ export function compile(
           return toExpr(node.expression);
         } else if (ts.isTypeAssertionExpression(node)) {
           return toExpr(node.expression);
+        } else if (ts.isNonNullExpression(node)) {
+          return toExpr(node.expression);
         }
 
-        throw new Error(`unhandled node: ${node.getText()} ${node.kind}`);
+        throw new Error(
+          `unhandled node: ${node.getText()} ${ts.SyntaxKind[node.kind]}`
+        );
       }
 
       function ref(node: ts.Expression) {
