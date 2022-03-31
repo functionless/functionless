@@ -36,7 +36,7 @@ export class EventBusRule<T extends EventBusRuleInput> extends Construct {
   constructor(
     scope: Construct,
     id: string,
-    bus: aws_events.EventBus,
+    bus: aws_events.IEventBus,
     predicate: EventPredicateFunction<T>
   ) {
     super(scope, id);

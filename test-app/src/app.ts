@@ -3,6 +3,7 @@ import * as appsync from "@aws-cdk/aws-appsync-alpha";
 import path from "path";
 import { PeopleDatabase, Person } from "./people-db";
 import { EventBus, EventBusRuleInput } from "functionless";
+import { PeopleEvents } from "./people-events";
 
 export const app = new App();
 
@@ -63,3 +64,5 @@ new EventBus<MyEvent>(new aws_events.EventBus(stack, "bus"))
     name: event.detail.value,
   }))
   .pipe(peopleDb.computeScore);
+
+new PeopleEvents(stack, "peopleEvents");

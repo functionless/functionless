@@ -4,7 +4,7 @@ import { AppsyncResolver, EventBusRuleInput, FunctionDecl } from "../src";
 import * as appsync from "@aws-cdk/aws-appsync-alpha";
 import path from "path";
 import { synthesizeEventPattern } from "../src/event-bridge/event-pattern";
-import { FunctionlessEventPattern } from "../src/event-bridge/event-pattern/types";
+import { FunctionlessEventPattern } from "../src/event-bridge";
 import { Rule } from "aws-cdk-lib/aws-events";
 import { Err, isErr } from "../src/error";
 import { EventTransformFunction } from "../src/event-bridge/transform";

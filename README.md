@@ -129,7 +129,7 @@ Files can be ignored by the transformer by using glob patterns in the `tsconfig.
       {
         "transform": "functionless/lib/compile",
         "exclude": ["./src/**/protected/*"]
-      },
+      }
     ]
   }
 }
@@ -139,13 +139,18 @@ Files can be ignored by the transformer by using glob patterns in the `tsconfig.
 
 `functionless` makes configuring services like AWS Appsync as easy as writing TypeScript functions.
 
+- [App Sync](#App-Sync)
+- [Event Bridge](#Event-Bridge)
+
+### App Sync
+
 There are three aspects your need to learn before using Functionless in your CDK application:
 
 1. Appsync Integration interfaces for `Function` and `Table`.
 2. `AppsyncResolver` construct for defining Appsync Resolver with TypeScript syntax.
 3. Add Resolvers to an `@aws-cdk/aws-appsync-alpha.GraphQLApi`.
 
-### Appsync Integration interfaces for `Function` and `Table`
+#### Appsync Integration interfaces for `Function` and `Table`
 
 You must wrap your CDK L2 Constructs in the corresponding wrapper class provided by functionless. Currently, Lambda `Function` and DynamoDB `Table` are supported.
 
@@ -219,7 +224,7 @@ new AppsyncResolver(() => {
 });
 ```
 
-### `AppsyncResolver` construct for defining Appsync Resolver with TypeScript syntax
+#### `AppsyncResolver` construct for defining Appsync Resolver with TypeScript syntax
 
 After wrapping your Functions/Tables, you can then instantiate an `AppsyncResolver` and interact with them using standard TypeScript syntax.
 
@@ -272,7 +277,7 @@ for (const item in list) {
 }
 ```
 
-### Add Resolvers to an `@aws-cdk/aws-appsync-alpha.GraphQLApi`
+#### Add Resolvers to an `@aws-cdk/aws-appsync-alpha.GraphQLApi`
 
 When you create a `new AppsyncResolver`, it does not immediately generate an Appsync Resolver. `AppsyncResolver` is more like a template for creating resolvers and can be re-used across more than one API.
 
@@ -306,6 +311,238 @@ getPerson.addResolver(api, {
   typeName: "Query",
   fieldName: "getPerson",
 });
+```
+
+### Event Bridge
+
+Functionless makes using Event Bridge easy by leveraging typescript instead of AWS Event Bridge's proprietary logic and transform configuration.
+
+Event Bridge can:
+
+- Create Rules (`EventBusRule`) on a Event Bus to match incoming events.
+- Transform the event before sending to some services like `Lambda` Functions.
+- Target other AWS services like Lambda and other Event Buses
+
+Functionless uses a wrapped version of CDK's Event Bus, lets create a CDK event bus first.
+
+```ts
+// Create a new Event Bus using CDK.
+const awsBus = new aws_events.EventBus(this, "myBus");
+
+// Functionless also supports using the default bus or importing an Event Bus.
+const defaultBus = EventBus.fromEventBusName(this, "defaultBus", "default");
+const importedBus = EventBus.fromEventBusArn(this, "defaultBus", arn);
+```
+
+Functionless supports well typed events, lets add our event schema to Typescript.
+
+```ts
+interface UserDetails {
+  id?: string;
+  name: string;
+  age: number;
+  interests: string[];
+}
+
+interface UserEvent
+  extends functionless.EventBusRuleInput<
+    UserDetails,
+    // We can provide custom detail-types to match on
+    "Create" | "Update" | "Delete"
+  > {}
+```
+
+And wrap our CDK `EventBus`
+
+```ts
+const bus = functionless.EventBus<UserEvent>(awsEventBus);
+```
+
+#### Create Rules (`EventBusRule`) on a Event Bus to match incoming events.
+
+Now that you have a wrapped `EventBus`, lets add some rules.
+
+Functionless lets you write logic in Typescript on the type safe event.
+
+Lets match all of the create or updated events with one rule and another rule for deletes.
+
+```ts
+const createOrUpdateEvents = bus.when(
+  this,
+  "createOrUpdateRule",
+  (event) =>
+    event["detail-type"] === "Create" || event["detail-type"] === "Update"
+);
+const deleteEvents = bus.when(
+  this,
+  "deleteRule",
+  (event) => event["detail-type"] === "Delete"
+);
+```
+
+We also want to do something special when we get a new cat lover who is between 18 and 30 years old, lets make another rule for those.
+
+```ts
+const youngAdultCatLoversEvents = bus.when(
+  (event) =>
+    event["detail-type"] === "Create" &&
+    event.detail.interests.includes("CATS") &&
+    event.detail.age >= 18 &&
+    event.detail.age < 30
+);
+```
+
+#### Transform the event before sending to some services like `Lambda` Functions.
+
+We have two lambda functions to invoke, one for create or updates and another for deletes, lets make those.
+
+```ts
+const createOrUpdateFunction = new aws_lambda.Function(this, 'createOrUpdate', ...);
+const deleteFunction = new aws_lambda.Function(this, 'delete', ...);
+```
+
+and wrap them with Functionless's `Function` wrapper, including given them input types.
+
+```ts
+interface CreateOrUpdate {
+  id?: string;
+  name: string;
+  age: number;
+  operation: "Create" | "Update";
+  interests: string[];
+}
+
+interface Delete {
+  id: string;
+}
+
+const createOrUpdate = functionless.Function<CreateOrUpdate, void>(createOrUpdateFunction);
+const delete = functionless.Function<Delete, void>(createOrUpdateFunction);
+```
+
+The events from before do not match the formats from before, so lets transform them to the structures match.
+
+```ts
+const createOrUpdateEventsTransformed =
+  createOrUpdateEvents.map<CreateOrUpdate>((event) => ({
+    id: event.detail.id,
+    name: event.detai.name,
+    age: event.detail.age,
+    operation: event["detail-type"],
+    interests: event.detail.interests,
+  }));
+
+const deleteEventsTransformed = createOrUpdateEvents.map<Delete>((event) => ({
+  id: event.detail.id,
+}));
+```
+
+#### Target other AWS services like Lambda and other Event Buses
+
+Now that we have created rules on our event buses using `when` and transformed those matched events using `map`, we need to send the events somewhere.
+
+We can `pipe` the transformed events to the lambda functions we defined earlier.
+
+```ts
+createOrUpdateEventsTransformed.pipe(createOrUpdate);
+deleteEventsTransformed.pipe(delete);
+```
+
+What about our young cat lovers? We want to forward those events to our sister team's event bus for processing.
+
+```ts
+const youngAdultCatLoversEvents = functionless.EventBus(
+  aws_events.EventBus.fromEventBusArn(this, "catTeamBus", catTeamBusArn)
+);
+
+// Note: EventBridge does not support transforming events which target other event buses. These events are sent as is.
+youngAdultCatLoversEvents.pipe(youngAdultCatLoversEvents);
+```
+
+#### Summary
+
+Lets look at the above all together.
+
+```ts
+interface UserDetails {
+  id?: string;
+  name: string;
+  age: number;
+  interests: string[];
+}
+
+interface UserEvent
+  extends functionless.EventBusRuleInput<
+    UserDetails,
+    // We can provide custom detail-types to match on
+    "Create" | "Update" | "Delete"
+  > {}
+
+interface CreateOrUpdate {
+  id?: string;
+  name: string;
+  age: number;
+  operation: "Create" | "Update";
+  interests: string[];
+}
+
+interface Delete {
+  id: string;
+}
+
+const createOrUpdateFunction = new functionless.Function<CreateOrUpdate, void>(
+  new aws_lambda.Function(this, "createOrUpdate", { ... })
+);
+
+const deleteFunction = new functionless.Function<Delete, void>(
+  new aws_lambda.Function(this, "delete", { ... })
+);
+
+const bus = new functionless.EventBus<UserEvent>(
+  new aws_events.EventBus(this, "myBus")
+);
+
+// Create and update events are sent to a spcific lambda function.
+bus
+  .when(
+    this,
+    "createOrUpdateRule",
+    (event) =>
+      event["detail-type"] === "Create" || event["detail-type"] === "Update"
+  )
+  .map<CreateOrUpdate>((event) => ({
+    id: event.detail.id,
+    name: event.detail.name,
+    age: event.detail.age,
+    operation: event["detail-type"] as "Create" | "Update",
+    interests: event.detail.interests,
+  }))
+  .pipe(createOrUpdateFunction);
+
+// Delete events are sent to a spcific lambda function.
+bus
+  .when(this, "deleteRule", (event) => event["detail-type"] === "Delete")
+  .map<Delete>((event) => ({
+    id: event.detail.id!,
+  }))
+  .pipe(deleteFunction);
+
+const youngAdultCatLoversBus = new functionless.EventBus<UserEvent>(
+  aws_events.EventBus.fromEventBusArn(this, "catTeamBus", "")
+);
+
+// New, young, cat loving users are forwarded to our sister team.
+bus
+  .when(
+    this,
+    "catLovers",
+    (event) =>
+      event["detail-type"] === "Create" &&
+      event.detail.interests.includes("CATS") &&
+      event.detail.age >= 18 &&
+      event.detail.age < 30
+  )
+  .pipe(youngAdultCatLoversBus);
 ```
 
 ## TypeScript -> Velocity Template Logic

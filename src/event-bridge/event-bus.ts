@@ -57,7 +57,7 @@ export class EventBus<E extends EventBusRuleInput> {
    */
   public static readonly FunctionlessType = "EventBus";
 
-  constructor(readonly bus: aws_events.EventBus) {}
+  constructor(readonly bus: aws_events.IEventBus) {}
 
   /**
    * EventBus Rules can filter events using Functionless predicate functions.
