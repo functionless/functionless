@@ -35,6 +35,12 @@ peopleDb.addPerson.addResolver(api, {
   fieldName: "addPerson",
 });
 
+// add a duplicate addPerson API to test duplicates
+peopleDb.addPerson.addResolver(api, {
+  typeName: "Mutation",
+  fieldName: "addPerson2",
+});
+
 peopleDb.updateName.addResolver(api, {
   typeName: "Mutation",
   fieldName: "updateName",

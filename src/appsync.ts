@@ -157,8 +157,6 @@ export class AppsyncResolver<
       "typeName" | "fieldName" | "cachingConfig"
     >
   ): SynthesizedAppsyncResolver {
-    let stageIt = 0;
-
     const resolverCount = countResolvers(this.decl);
     const templates: string[] = [];
 
@@ -363,7 +361,7 @@ export class AppsyncResolver<
               templates.push(requestMappingTemplateString);
               templates.push(responseMappingTemplate);
               template = new VTL(VTL.CircuitBreaker);
-              const name = `${toName(expr.expr)}_${stageIt++}`;
+              const name = getUniqueName(api, toName(expr.expr));
               return dataSource.createFunction({
                 name,
                 requestMappingTemplate: appsync.MappingTemplate.fromString(
@@ -717,6 +715,31 @@ export interface time {
     format: string,
     timezone: string
   ): string;
+}
+
+const uniqueNamesSymbol = Symbol.for("functionless.UniqueNames");
+
+const names: WeakMap<
+  appsync.GraphqlApi,
+  {
+    [name: string]: number;
+  }
+> = ((global as any)[uniqueNamesSymbol] ??= new WeakMap());
+
+function getUniqueName(api: appsync.GraphqlApi, name: string): string {
+  let uniqueNames = names.get(api);
+  if (uniqueNames === undefined) {
+    uniqueNames = {};
+    names.set(api, uniqueNames);
+  }
+  const counter = uniqueNames[name];
+  if (counter === undefined) {
+    uniqueNames[name] = 0;
+    return name;
+  } else {
+    uniqueNames[name] += 1;
+    return `${name}_${counter}`;
+  }
 }
 
 const dataSourcesSymbol = Symbol.for("functionless.DataSources");
