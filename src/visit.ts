@@ -43,6 +43,7 @@ import {
   ContinueStmt,
   DoStmt,
   ExprStmt,
+  FinallyBlock,
   ForInStmt,
   ForOfStmt,
   IfStmt,
@@ -405,7 +406,11 @@ export function visitEachChild<T extends FunctionlessNode>(
         `a TryStmt's finallyBlock must be a BlockStmt`
       );
     }
-    return new TryStmt(tryBlock, catchClause, finallyBlock) as T;
+    return new TryStmt(
+      tryBlock,
+      catchClause,
+      finallyBlock as FinallyBlock
+    ) as T;
   } else if (node.kind === "TypeOfExpr") {
     const expr = visitor(node.expr);
     ensure(expr, isExpr, `a TypeOfExpr's expr property must be an Expr`);

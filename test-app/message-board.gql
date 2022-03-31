@@ -1,29 +1,31 @@
-
-
-
 type Post {
-  postId: ID,
+  postId: ID!
   title: String!
   comments(nextToken: String, limit: Int): CommentPage
 }
 
 type CommentPage {
   nextToken: String
-  comments: Comment[]!
+  comments: [Comment]!
 }
 
 type Comment {
-  userId: ID!
-  tweetId: ID!
-  tweetText: String!
+  postId: ID!
+  commentId: ID!
+  commentText: String!
   createdTime: String!
 }
 type Query {
   getPost(postId: ID!): Post
 }
 
+type StartExecutionOutput {
+  executionArn: String!
+  startDate: Float!
+}
+
 type Mutation {
   createPost(title: String): Post!
-  deletePost(post: String): Post
+  deletePost(postId: ID!): StartExecutionOutput
   addComment(postId: ID!, commentText: String!): Comment!
 }

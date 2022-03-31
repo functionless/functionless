@@ -120,11 +120,7 @@ export class BlockStmt extends BaseStmt<"BlockStmt", BlockStmtParent> {
     return new BlockStmt(this.statements.map((stmt) => stmt.clone())) as this;
   }
 
-  public isFinallyBlock(): this is {
-    parent: TryStmt & {
-      finallyBlock: BlockStmt;
-    };
-  } {
+  public isFinallyBlock(): this is FinallyBlock {
     return this.parent.kind === "TryStmt" && this.parent.finallyBlock === this;
   }
 
@@ -146,7 +142,7 @@ export class BlockStmt extends BaseStmt<"BlockStmt", BlockStmtParent> {
 
   public get lastStmt(): Stmt | undefined {
     if (this.isEmpty()) {
-      return undefined!;
+      return undefined;
     } else {
       return this.statements[this.statements.length - 1] as any;
     }
@@ -261,13 +257,19 @@ export class ContinueStmt extends BaseStmt<"ContinueStmt"> {
   }
 }
 
+export interface FinallyBlock extends BlockStmt {
+  parent: TryStmt & {
+    finallyBlock: FinallyBlock;
+  };
+}
+
 export const isTryStmt = typeGuard("TryStmt");
 
 export class TryStmt extends BaseStmt<"TryStmt"> {
   constructor(
     readonly tryBlock: BlockStmt,
     readonly catchClause: CatchClause,
-    readonly finallyBlock?: BlockStmt
+    readonly finallyBlock?: FinallyBlock
   ) {
     super("TryStmt");
     tryBlock.setParent(this);

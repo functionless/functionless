@@ -172,15 +172,21 @@ export abstract class BaseNode<
    */
   public exit(): Stmt | undefined {
     const node = this as unknown as FunctionlessNode;
-    if ("next" in node && node.next) {
-      // isStmt
+    if (node.nodeKind === "Stmt" && node.next) {
       return node.next.step();
     }
     const scope = node.parent;
     if (scope === undefined) {
       return undefined;
+    } else if (scope.kind === "WhileStmt") {
+      return scope;
     } else if (scope.kind === "TryStmt") {
-      if (scope.tryBlock === node) {
+      if (scope.tryBlock === node || scope.catchClause === node) {
+        if (scope.finallyBlock) {
+          return scope.finallyBlock.step();
+        } else {
+          return scope.exit();
+        }
       } else if (scope.finallyBlock === node) {
         // stepping out of the finallyBlock
         if (scope.next) {
@@ -200,7 +206,7 @@ export abstract class BaseNode<
     } else if (scope.nodeKind === "Expr") {
       return scope.parent?.step();
     }
-    return undefined;
+    return scope.exit();
   }
 
   /**

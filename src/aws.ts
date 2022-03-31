@@ -291,7 +291,15 @@ export namespace $AWS {
       if (table.kind !== "Table") {
         throw new Error(``);
       }
-      table.resource.grantReadData(context.role);
+      if (
+        operationName === "deleteItem" ||
+        operationName === "putItem" ||
+        operationName === "updateItem"
+      ) {
+        table.resource.grantWriteData(context.role);
+      } else {
+        table.resource.grantReadData(context.role);
+      }
 
       return {
         Type: "Task",

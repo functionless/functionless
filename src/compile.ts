@@ -201,7 +201,7 @@ export function compile(
           call.typeArguments,
           call.arguments?.map((arg) =>
             ts.isFunctionExpression(arg) || ts.isArrowFunction(arg)
-              ? toFunction("FunctionDecl", arg)
+              ? errorBoundary(() => toFunction("FunctionDecl", arg))
               : arg
           )
         );

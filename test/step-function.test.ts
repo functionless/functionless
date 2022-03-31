@@ -913,9 +913,9 @@ test("return AWS.DynamoDB.GetItem", () => {
 
   const expected: StateMachine<States> = {
     StartAt:
-      "person = $AWS.DynamoDB.GetItem({TableName: personTable, Key: {id: {S: id}}})",
+      "person = $AWS.DynamoDB.GetItem({TableName: personTable, Key: {id: {S: id}}}",
     States: {
-      "person = $AWS.DynamoDB.GetItem({TableName: personTable, Key: {id: {S: id}}})":
+      "person = $AWS.DynamoDB.GetItem({TableName: personTable, Key: {id: {S: id}}}":
         {
           Next: "if(person.Item == undefined)",
           ResultPath: "$.person",
@@ -1006,9 +1006,9 @@ test("call AWS.DynamoDB.GetItem, then Lambda and return LiteralExpr", () => {
 
   const expected: StateMachine<States> = {
     StartAt:
-      "person = $AWS.DynamoDB.GetItem({TableName: personTable, Key: {id: {S: id}}})",
+      "person = $AWS.DynamoDB.GetItem({TableName: personTable, Key: {id: {S: id}}}",
     States: {
-      "person = $AWS.DynamoDB.GetItem({TableName: personTable, Key: {id: {S: id}}})":
+      "person = $AWS.DynamoDB.GetItem({TableName: personTable, Key: {id: {S: id}}}":
         {
           Next: "if(person.Item == undefined)",
           ResultPath: "$.person",
@@ -2905,7 +2905,6 @@ test("for-of { try { task() } catch (err) { if(err) throw } finally { task() } }
     StartAt: "for(item of items)",
     States: {
       "for(item of items)": {
-        Catch: undefined,
         ItemsPath: "$.items",
         Iterator: {
           StartAt: "task(item)",
@@ -2978,7 +2977,7 @@ test("for-of { try { task() } catch (err) { if(err) throw } finally { task() } }
                   Variable: "$.0_tmp",
                 },
               ],
-              Default: undefined,
+              Default: "return null",
               Type: "Choice",
             },
             "throw finally": {
@@ -3195,7 +3194,7 @@ test("list.map(item => task(item))", () => {
         },
         MaxConcurrency: 1,
         Parameters: {
-          item: "$$.Map.Item.Value",
+          "item.$": "$$.Map.Item.Value",
         },
         ResultPath: "$",
         Type: "Map",
@@ -3225,8 +3224,8 @@ test("list.map((item, i) => if (i == 0) task(item))", () => {
         ItemsPath: "$.list",
         MaxConcurrency: 1,
         Parameters: {
-          i: "$$.Map.Item.Index",
-          item: "$$.Map.Item.Value",
+          "i.$": "$$.Map.Item.Index",
+          "item.$": "$$.Map.Item.Value",
         },
         ResultPath: "$",
         Iterator: {
@@ -3324,8 +3323,8 @@ test("list.map((item, i, list) => if (i == 0) task(item) else task(list[0]))", (
         },
         MaxConcurrency: 1,
         Parameters: {
-          i: "$$.Map.Item.Index",
-          item: "$$.Map.Item.Value",
+          "i.$": "$$.Map.Item.Index",
+          "item.$": "$$.Map.Item.Value",
         },
         ResultPath: "$",
         Type: "Map",
@@ -3374,7 +3373,7 @@ test("try { list.map(item => task(item)) }", () => {
         },
         MaxConcurrency: 1,
         Parameters: {
-          item: "$$.Map.Item.Value",
+          "item.$": "$$.Map.Item.Value",
         },
         ResultPath: "$",
         Type: "Map",
@@ -3441,7 +3440,7 @@ test("try { list.map(item => task(item)) }", () => {
         },
         MaxConcurrency: 1,
         Parameters: {
-          item: "$$.Map.Item.Value",
+          "item.$": "$$.Map.Item.Value",
         },
         ResultPath: "$",
         Type: "Map",
@@ -3616,7 +3615,7 @@ test("list.forEach(item => task(item))", () => {
         },
         MaxConcurrency: 1,
         Parameters: {
-          item: "$$.Map.Item.Value",
+          "item.$": "$$.Map.Item.Value",
         },
         ResultPath: "$",
         Type: "Map",
@@ -3646,8 +3645,8 @@ test("list.forEach((item, i) => if (i == 0) task(item))", () => {
         ItemsPath: "$.list",
         MaxConcurrency: 1,
         Parameters: {
-          i: "$$.Map.Item.Index",
-          item: "$$.Map.Item.Value",
+          "i.$": "$$.Map.Item.Index",
+          "item.$": "$$.Map.Item.Value",
         },
         ResultPath: "$",
         Iterator: {
@@ -3745,8 +3744,8 @@ test("list.forEach((item, i, list) => if (i == 0) task(item) else task(list[0]))
         },
         MaxConcurrency: 1,
         Parameters: {
-          i: "$$.Map.Item.Index",
-          item: "$$.Map.Item.Value",
+          "i.$": "$$.Map.Item.Index",
+          "item.$": "$$.Map.Item.Value",
         },
         ResultPath: "$",
         Type: "Map",
@@ -3795,7 +3794,7 @@ test("try { list.forEach(item => task(item)) }", () => {
         },
         MaxConcurrency: 1,
         Parameters: {
-          item: "$$.Map.Item.Value",
+          "item.$": "$$.Map.Item.Value",
         },
         ResultPath: "$",
         Type: "Map",
@@ -3862,7 +3861,7 @@ test("try { list.forEach(item => task(item)) }", () => {
         },
         MaxConcurrency: 1,
         Parameters: {
-          item: "$$.Map.Item.Value",
+          "item.$": "$$.Map.Item.Value",
         },
         ResultPath: "$",
         Type: "Map",
@@ -4036,7 +4035,7 @@ test("return $SFN.map(list, (item) => task(item))", () => {
           },
         },
         Parameters: {
-          item: "$$.Map.Item.Value",
+          "item.$": "$$.Map.Item.Value",
         },
         ResultPath: "$",
         Type: "Map",
@@ -4074,7 +4073,7 @@ test("return $SFN.map(list, {maxConcurrency: 2} (item) => task(item))", () => {
           },
         },
         Parameters: {
-          item: "$$.Map.Item.Value",
+          "item.$": "$$.Map.Item.Value",
         },
         ResultPath: "$",
         Type: "Map",
@@ -4111,7 +4110,7 @@ test("$SFN.map(list, (item) => task(item))", () => {
           },
         },
         Parameters: {
-          item: "$$.Map.Item.Value",
+          "item.$": "$$.Map.Item.Value",
         },
         ResultPath: null,
         Type: "Map",
@@ -4157,7 +4156,7 @@ test("result = $SFN.map(list, (item) => task(item))", () => {
         },
         Next: "return result",
         Parameters: {
-          item: "$$.Map.Item.Value",
+          "item.$": "$$.Map.Item.Value",
         },
         ResultPath: "$.result",
         Type: "Map",
@@ -4220,7 +4219,7 @@ test("return $SFN.map(list, (item) => try { task(item)) } catch { return null }"
           },
         },
         Parameters: {
-          item: "$$.Map.Item.Value",
+          "item.$": "$$.Map.Item.Value",
         },
         ResultPath: "$",
         Type: "Map",
@@ -4268,7 +4267,7 @@ test("try { $SFN.map(list, (item) => task(item)) } catch { return null }", () =>
           },
         },
         Parameters: {
-          item: "$$.Map.Item.Value",
+          "item.$": "$$.Map.Item.Value",
         },
         ResultPath: "$",
         Type: "Map",
@@ -4313,7 +4312,7 @@ test("return $SFN.forEach(list, (item) => task(item))", () => {
           },
         },
         Parameters: {
-          item: "$$.Map.Item.Value",
+          "item.$": "$$.Map.Item.Value",
         },
         ResultPath: "$",
         Type: "Map",
@@ -4351,7 +4350,7 @@ test("return $SFN.forEach(list, {maxConcurrency: 2} (item) => task(item))", () =
           },
         },
         Parameters: {
-          item: "$$.Map.Item.Value",
+          "item.$": "$$.Map.Item.Value",
         },
         ResultPath: "$",
         Type: "Map",
@@ -4388,7 +4387,7 @@ test("$SFN.forEach(list, (item) => task(item))", () => {
           },
         },
         Parameters: {
-          item: "$$.Map.Item.Value",
+          "item.$": "$$.Map.Item.Value",
         },
         ResultPath: null,
         Type: "Map",
@@ -4434,7 +4433,7 @@ test("result = $SFN.forEach(list, (item) => task(item))", () => {
         },
         Next: "return result",
         Parameters: {
-          item: "$$.Map.Item.Value",
+          "item.$": "$$.Map.Item.Value",
         },
         ResultPath: "$.result",
         Type: "Map",
@@ -4497,7 +4496,7 @@ test("return $SFN.forEach(list, (item) => try { task(item)) } catch { return nul
           },
         },
         Parameters: {
-          item: "$$.Map.Item.Value",
+          "item.$": "$$.Map.Item.Value",
         },
         ResultPath: "$",
         Type: "Map",
@@ -4545,7 +4544,7 @@ test("try { $SFN.forEach(list, (item) => task(item)) } catch { return null }", (
           },
         },
         Parameters: {
-          item: "$$.Map.Item.Value",
+          "item.$": "$$.Map.Item.Value",
         },
         ResultPath: "$",
         Type: "Map",
@@ -4766,9 +4765,9 @@ test("return task({ key: items.filter(*) })", () => {
 
   expect(definition).toEqual({
     StartAt:
-      "return task({equals: items.filter(function(item)), and: items.filter(function(item)), or: items.filter(function(item))})",
+      "return task({equals: items.filter(function(item)), and: items.filter(functi",
     States: {
-      "return task({equals: items.filter(function(item)), and: items.filter(function(item)), or: items.filter(function(item))})":
+      "return task({equals: items.filter(function(item)), and: items.filter(functi":
         {
           Type: "Task",
           End: true,
@@ -4807,7 +4806,7 @@ test("template literal strings", () => {
         Parameters: {
           FunctionName: task.resource.functionName,
           Payload: {
-            "key.$": "States.Format('{} hello {},$.obj.str,$.obj.items[0]')",
+            "key.$": "States.Format('{} hello {}',$.obj.str,$.obj.items[0])",
           },
         },
         Resource: "arn:aws:states:::lambda:invoke",
@@ -5196,3 +5195,63 @@ test("return task(task())", () => {
 
 //   expect(definition).toEqual({});
 // });
+
+test("while(true) { try { } catch { wait }", () => {
+  const { stack, task } = initStepFunctionApp();
+  const definition = new ExpressStepFunction(stack, "fn", () => {
+    while (true) {
+      try {
+        task();
+      } catch {
+        $SFN.waitFor(1);
+      }
+    }
+  }).definition;
+
+  expect(definition).toEqual({
+    StartAt: "while (true)",
+    States: {
+      "while (true)": {
+        Choices: [
+          {
+            IsPresent: false,
+            Next: "task(undefined)",
+            Variable: "$.0_true",
+          },
+        ],
+        Default: "return null",
+        Type: "Choice",
+      },
+      "task(undefined)": {
+        Catch: [
+          {
+            ErrorEquals: ["States.ALL"],
+            Next: "$SFN.waitFor(1)",
+            ResultPath: null,
+          },
+        ],
+        Next: "while (true)",
+        Parameters: {
+          FunctionName: task.resource.functionName,
+          Payload: null,
+        },
+        Resource: "arn:aws:states:::lambda:invoke",
+        ResultPath: null,
+        Type: "Task",
+      },
+      "$SFN.waitFor(1)": {
+        Next: "while (true)",
+        Seconds: 1,
+        Type: "Wait",
+      },
+      "return null": {
+        End: true,
+        OutputPath: "$.null",
+        Parameters: {
+          null: null,
+        },
+        Type: "Pass",
+      },
+    },
+  });
+});

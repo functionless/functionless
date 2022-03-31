@@ -1,5 +1,4 @@
 import { CallExpr, CanReference } from "./expression";
-// import { isStmt } from "./statement";
 import { FunctionlessNode } from "./node";
 import { VTL } from "./vtl";
 import { ASL, Task } from "./asl";
@@ -58,6 +57,10 @@ export function isInTopLevelScope(expr: FunctionlessNode): boolean {
   }
 }
 
+/**
+ * @param call call expression that may reference a callable integration
+ * @returns the reference to the callable function, e.g. a Lambda Function or method on a DynamoDB Table
+ */
 export function findFunction(
   call: CallExpr
 ):
@@ -84,10 +87,8 @@ export function ensureItemOf<T>(
   f: (item: any) => item is T,
   message: string
 ): asserts arr is T[] {
-  for (const item of arr) {
-    if (!f(item)) {
-      throw new Error(message);
-    }
+  if (arr.some((item) => !f(item))) {
+    throw new Error(message);
   }
 }
 
@@ -111,14 +112,7 @@ type EnsureOr<T extends ((a: any) => a is any)[]> = T[number] extends (
 export function anyOf<T extends ((a: any) => a is any)[]>(
   ...fns: T
 ): (a: any) => a is EnsureOr<T> {
-  return (a: any): a is EnsureOr<T> => {
-    for (const f of fns) {
-      if (f(a)) {
-        return true;
-      }
-    }
-    return false;
-  };
+  return (a: any): a is EnsureOr<T> => fns.some((f) => f(a));
 }
 
 export type AnyDepthArray<T> = T | T[] | AnyDepthArray<T>[];

@@ -255,7 +255,6 @@ export class Table<
       )
     );
     const request = vtl.var(`{"operation": "Query", "version": "2018-05-29"}`);
-    vtl.qr(`${request}.put('key', ${input}.get('key'))`);
     vtl.qr(`${request}.put('query', ${input}.get('query'))`);
     addIfDefined(vtl, input, request, "index");
     addIfDefined(vtl, input, request, "nextToken");

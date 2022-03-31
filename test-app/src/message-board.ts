@@ -1,4 +1,4 @@
-import { App, aws_dynamodb, Stack } from "aws-cdk-lib";
+import { App, aws_dynamodb, RemovalPolicy, Stack } from "aws-cdk-lib";
 import {
   $AWS,
   $SFN,
@@ -11,11 +11,11 @@ import * as appsync from "@aws-cdk/aws-appsync-alpha";
 import path from "path";
 
 export const app = new App();
-export const stack = new Stack(app, "StepFunctionMapReduce");
+export const stack = new Stack(app, "message-board");
 
 interface Post<PostID extends string = string> {
   pk: `Post|${PostID}`;
-  sk: "";
+  sk: "Post";
   postId: PostID;
   title: string;
 }
@@ -28,8 +28,8 @@ interface Comment<
   sk: `Comment|${CommentID}`;
   postId: PostID;
   commentId: CommentID;
-  createdTime: string;
   commentText: string;
+  createdTime: string;
 }
 
 interface CommentPage {
@@ -48,6 +48,7 @@ const database = new Table<Post | Comment, "pk", "sk">(
       type: aws_dynamodb.AttributeType.STRING,
     },
     billingMode: aws_dynamodb.BillingMode.PAY_PER_REQUEST,
+    removalPolicy: RemovalPolicy.DESTROY,
   })
 );
 
@@ -56,7 +57,7 @@ const schema = new appsync.Schema({
 });
 
 const api = new appsync.GraphqlApi(stack, "Api", {
-  name: "demo",
+  name: "MessageBoard",
   schema,
   authorizationConfig: {
     defaultAuthorization: {
@@ -66,6 +67,7 @@ const api = new appsync.GraphqlApi(stack, "Api", {
   xrayEnabled: true,
   logConfig: {
     fieldLogLevel: appsync.FieldLogLevel.ALL,
+    excludeVerboseContent: false,
   },
 });
 
@@ -79,7 +81,7 @@ export const getPost = new AppsyncResolver<
         S: `Post|${$context.arguments.postId}`,
       },
       sk: {
-        S: "",
+        S: "Post",
       },
     },
   });
@@ -95,18 +97,24 @@ export const comments = new AppsyncResolver<
 >(($context) => {
   const response = database.query({
     query: {
-      expression: `pk = :pk`,
+      expression: `pk = :pk and begins_with(#sk,:sk)`,
       expressionValues: {
         ":pk": {
           S: $context.source.pk,
         },
+        ":sk": {
+          S: "Comment|",
+        },
+      },
+      expressionNames: {
+        "#sk": "sk",
       },
     },
     nextToken: $context.arguments.nextToken,
     limit: $context.arguments.limit,
   });
 
-  if (response.items) {
+  if (response.items !== undefined) {
     return {
       comments: response.items as Comment[],
       nextToken: response.nextToken,
@@ -129,7 +137,7 @@ export const createPost = new AppsyncResolver<{ title: string }, Post>(
           S: `Post|${postId}`,
         },
         sk: {
-          S: "",
+          S: "Post",
         },
       },
       attributeValues: {
@@ -183,16 +191,6 @@ export const addComment = new AppsyncResolver<
   fieldName: "addComment",
 });
 
-export const deletePost = new AppsyncResolver<
-  { postId: string },
-  AWS.StepFunctions.StartExecutionOutput
->(($context) => {
-  return deleteWorkflow($context.arguments.postId);
-}).addResolver(api, {
-  typeName: "Mutation",
-  fieldName: "deletePost",
-});
-
 export const deleteWorkflow = new StepFunction(
   stack,
   "DeletePostWorkflow",
@@ -209,8 +207,8 @@ export const deleteWorkflow = new StepFunction(
           },
         });
 
-        if (comments.Items !== undefined && comments.Items.length > 0) {
-          $SFN.map(comments.Items, (comment) =>
+        if (comments.Items?.[0] !== undefined) {
+          $SFN.forEach(comments.Items, (comment) =>
             $AWS.DynamoDB.DeleteItem({
               TableName: database,
               Key: {
@@ -227,19 +225,44 @@ export const deleteWorkflow = new StepFunction(
                 S: `Post|${postId}`,
               },
               sk: {
-                S: "",
+                S: "Post",
               },
             },
           });
-        }
 
-        return {
-          status: "deleted",
-          postId,
-        };
+          return {
+            status: "deleted",
+            postId,
+          };
+        }
       } catch {
         $SFN.waitFor(10);
       }
     }
   }
 );
+
+export const deletePost = new AppsyncResolver<
+  { postId: string },
+  AWS.StepFunctions.StartExecutionOutput | undefined
+>(($context) => {
+  const item = database.getItem({
+    key: {
+      pk: {
+        S: `Post|${$context.arguments.postId}`,
+      },
+      sk: {
+        S: "Post",
+      },
+    },
+  });
+
+  if (item === undefined) {
+    return undefined;
+  }
+
+  return deleteWorkflow($context.arguments.postId);
+}).addResolver(api, {
+  typeName: "Mutation",
+  fieldName: "deletePost",
+});

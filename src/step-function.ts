@@ -21,11 +21,11 @@ import {
   States,
   Wait,
 } from "./asl";
-import { isVTL, VTL } from "./vtl";
+import { isVTL } from "./vtl";
 import { makeCallable } from "./callable";
 import { CallExpr, isFunctionExpr } from "./expression";
-import { LogOptions } from "aws-cdk-lib/aws-stepfunctions";
 import { AnyFunction, ensureItemOf } from "./util";
+import { CallContext } from "./context";
 
 export type AnyStepFunction =
   | ExpressStepFunction<AnyFunction>
@@ -45,13 +45,13 @@ export namespace $SFN {
   // @ts-ignore
   export function waitFor(seconds: number): void;
 
-  export function waitFor(call: CallExpr, context: VTL | ASL): Wait {
+  export function waitFor(call: CallExpr, context: CallContext): Wait {
     if (context.kind !== ASL.ContextName) {
       throw new Error(
         `$SFN.wait is only available in the ${ASL.ContextName} context`
       );
     }
-    const seconds = call.getArgument("seconds")?.expr;
+    const seconds = call.args[0].expr;
     if (seconds === undefined) {
       throw new Error(`the 'seconds' argument is required`);
     }
@@ -81,13 +81,13 @@ export namespace $SFN {
   // @ts-ignore
   export function waitUntil(timestamp: string): void;
 
-  export function waitUntil(call: CallExpr, context: VTL | ASL): Wait {
+  export function waitUntil(call: CallExpr, context: CallContext): Wait {
     if (context.kind !== ASL.ContextName) {
       throw new Error(
         `$SFN.wait is only available in the ${ASL.ContextName} context`
       );
     }
-    const timestamp = call.getArgument("timestamp")?.expr;
+    const timestamp = call.args[0]?.expr;
     if (timestamp === undefined) {
       throw new Error(`the 'timestamp' argument is required`);
     }
@@ -148,7 +148,7 @@ export namespace $SFN {
     callbackfn: (item: T, index: number, array: T[]) => void
   ): void;
 
-  export function forEach(call: CallExpr, context: VTL | ASL): MapTask {
+  export function forEach(call: CallExpr, context: CallContext): MapTask {
     return mapOrForEach("forEach", call, context);
   }
 
@@ -196,14 +196,14 @@ export namespace $SFN {
     callbackfn: (item: T, index: number, array: T[]) => U
   ): U[];
 
-  export function map(call: CallExpr, context: VTL | ASL): MapTask {
+  export function map(call: CallExpr, context: CallContext): MapTask {
     return mapOrForEach("map", call, context);
   }
 
   function mapOrForEach(
     kind: "map" | "forEach",
     call: CallExpr,
-    context: VTL | ASL
+    context: CallContext
   ): MapTask {
     if (context.kind !== ASL.ContextName) {
       throw new Error(`$SFN.${kind} is only supported by ${ASL.ContextName}`);
@@ -257,7 +257,7 @@ export namespace $SFN {
         ItemsPath: arrayPath,
         Parameters: Object.fromEntries(
           callbackfn.parameters.map((param, i) => [
-            param.name,
+            `${param.name}.$`,
             i === 0
               ? "$$.Map.Item.Value"
               : i == 1
@@ -292,7 +292,7 @@ export namespace $SFN {
       : Paths[i];
   };
 
-  export function parallel(call: CallExpr, context: VTL | ASL): ParallelTask {
+  export function parallel(call: CallExpr, context: CallContext): ParallelTask {
     if (context.kind !== ASL.ContextName) {
       throw new Error(`$SFN.${kind} is only supported by ${ASL.ContextName}`);
     }
@@ -389,13 +389,13 @@ abstract class BaseStepFunction<F extends AnyFunction>
     this.stateMachineName = this.resource.attrName;
     this.stateMachineArn = this.resource.attrArn;
 
-    return makeCallable(this, (call: CallExpr, context: VTL | ASL) => {
+    return makeCallable(this, (call: CallExpr, context: CallContext) => {
       if (isASL(context)) {
         // TODO
       } else if (isVTL(context)) {
         const args = context.var(
-          `{${Object.entries(call.args)
-            .map(([name, expr]) => `"${name}": ${context.eval(expr)}`)
+          `{${call.args
+            .map((arg) => `"${arg.name}": ${context.eval(arg.expr)}`)
             .join(",")}}`
         );
         return JSON.stringify(
@@ -691,7 +691,7 @@ abstract class BaseStepFunction<F extends AnyFunction>
   }
 
   private buildLoggingConfiguration(
-    logOptions: LogOptions
+    logOptions: aws_stepfunctions.LogOptions
   ): aws_stepfunctions.CfnStateMachine.LoggingConfigurationProperty {
     // https://docs.aws.amazon.com/step-functions/latest/dg/cw-logs.html#cloudwatch-iam-policy
     this.addToRolePolicy(

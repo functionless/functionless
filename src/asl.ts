@@ -20,9 +20,11 @@ import {
 import {
   BlockStmt,
   DoStmt,
+  FinallyBlock,
   ForInStmt,
   ForOfStmt,
   IfStmt,
+  isBlockStmt,
   isDoStmt,
   isForInStmt,
   isForOfStmt,
@@ -428,11 +430,21 @@ export class ASL {
     return this.generatedNames.get(node)!;
   }
 
+  /**
+   * Gets a unique State name for the Stmt. This function always returns the same
+   * name for the same {@link stmt} instance.
+   *
+   * The AST is stringified, truncated to < 75 characters and a monotonically incrementing
+   * number is added as a suffix in the case where to {@link Stmt}s produce the same text.
+   */
   public getStateName(stmt: Stmt): string {
     if (!this.stateNames.has(stmt)) {
       let stateName = toStateName(stmt);
       if (stateName === undefined) {
         throw new Error(`cannot transition to ${stmt.kind}`);
+      }
+      if (stateName.length > 75) {
+        stateName = stateName.slice(0, 75);
       }
       if (this.stateNamesCount.has(stateName)) {
         const count = this.stateNamesCount.get(stateName)!;
@@ -664,34 +676,28 @@ export class ASL {
         throw new Error(`the expr of a ThrowStmt must be a NewExpr`);
       }
 
+      const error = (stmt.expr as NewExpr).args.reduce(
+        (args: any, arg) => ({
+          ...args,
+          [arg.name!]: ASL.toJson(arg.expr),
+        }),
+        {}
+      );
+
       const throwTransition = this.throw(stmt);
       if (throwTransition === undefined) {
         return {
           [this.getStateName(stmt)]: {
             Type: "Fail",
             Error: exprToString((stmt.expr as NewExpr).expr),
-            Cause: JSON.stringify(
-              (stmt.expr as NewExpr).args.reduce(
-                (args: any, arg) => ({
-                  ...args,
-                  [arg.name!]: ASL.toJson(arg.expr),
-                }),
-                {}
-              )
-            ),
+            Cause: JSON.stringify(error),
           } as const,
         };
       } else {
         return {
           [this.getStateName(stmt)]: {
             Type: "Pass",
-            Result: (stmt.expr as NewExpr).args.reduce(
-              (args: any, arg) => ({
-                ...args,
-                [arg.name!]: ASL.toJson(arg.expr),
-              }),
-              {}
-            ),
+            Result: error,
             ...throwTransition,
           },
         } as const;
@@ -865,7 +871,7 @@ export class ASL {
             ItemsPath: listPath,
             Parameters: Object.fromEntries(
               callbackfn.parameters.map((param, i) => [
-                param.name,
+                `${param.name}.$`,
                 i === 0
                   ? "$$.Map.Item.Value"
                   : i == 1
@@ -1016,50 +1022,43 @@ export class ASL {
       return this.return(node);
     } else if (node.next) {
       return this.transition(node.next);
-    } else if (node.kind === "TryStmt" && node.isTerminal()) {
-      return undefined;
-    } else if (node.parent?.kind === "BlockStmt") {
-      const block = node.parent;
-      const scope = node.parent.parent;
-      if (scope === undefined) {
-        throw new Error(`broken AST - BlockStmt without a parent node`);
-      } else if (scope.kind === "FunctionDecl") {
-      } else if (scope.kind === "FunctionExpr") {
-      } else if (scope.kind === "ForInStmt" || scope.kind === "ForOfStmt") {
+    } else {
+      const exit = node.exit();
+      if (exit === undefined) {
         return undefined;
-      } else if (scope.kind === "WhileStmt" || scope.kind === "DoStmt") {
-        return this.getStateName(scope);
-      } else if (scope.kind === "IfStmt") {
-        return this.next(scope);
-      } else if (scope.kind === "TryStmt") {
-        if (block === scope.tryBlock) {
-          // need to move to the finally block
-          if (scope.finallyBlock?.isNotEmpty()) {
-            return this.transition(scope.finallyBlock);
-          }
-          return this.next(scope);
-        } else if (block === scope.finallyBlock) {
-          // we're exiting the finallyBlock, so let's progress past it
-          if (canThrow(scope.catchClause)) {
-            // if the catchClause can throw, then we need to transition through the `exit finally` state first
-            return `exit ${this.getStateName(scope.finallyBlock)}`;
-          }
-          return this.next(scope);
-        } else {
-          throw new Error(`impossible`);
-        }
-      } else if (scope.kind === "CatchClause") {
-        const tryStmt = scope.parent;
-        if (tryStmt.finallyBlock?.isNotEmpty()) {
-          return this.transition(tryStmt.finallyBlock);
-        }
-        return this.next(scope);
-      } else {
-        return assertNever(scope);
       }
-    }
 
-    return this.return(node);
+      const scope = node.findParent(
+        anyOf(isForOfStmt, isForInStmt, isWhileStmt, isDoStmt)
+      );
+
+      const finallyBlock = node.findParent(
+        (node): node is FinallyBlock =>
+          isBlockStmt(node) && node.isFinallyBlock()
+      );
+
+      if (
+        node.parent === finallyBlock &&
+        canThrow(finallyBlock.parent.catchClause)
+      ) {
+        // if we're exiting the `finally` block and the `catch` clause can throw an error
+        // we need to exit via the special exit state that re-throws
+        return `exit ${this.getStateName(finallyBlock)}`;
+      }
+
+      if (scope && !scope.contains(exit)) {
+        // we exited out of the loop
+        if (scope.kind === "ForInStmt" || scope.kind === "ForOfStmt") {
+          // if we're exiting a for-loop, then we return undefined
+          // to indicate that the State should have Next:undefined and End: true
+          return undefined;
+        } else {
+          return this.transition(scope);
+        }
+      }
+
+      return this.transition(exit);
+    }
   }
 
   /**
@@ -1294,9 +1293,9 @@ export namespace ASL {
     } else if (expr.kind === "TemplateExpr") {
       return `States.Format('${expr.exprs
         .map((e) => (isLiteralExpr(e) ? toJson(e) : "{}"))
-        .join("")},${expr.exprs
+        .join("")}',${expr.exprs
         .filter((e) => !isLiteralExpr(e))
-        .map((e) => toJsonPath(e))}')`;
+        .map((e) => toJsonPath(e))})`;
     }
     debugger;
     throw new Error(`cannot evaluate ${expr.kind} to JSON`);
@@ -1599,6 +1598,9 @@ export namespace ASL {
           Or: [toCondition(expr.left), toCondition(expr.right)],
         };
       } else if (expr.op === "+" || expr.op === "-") {
+        throw new Error(
+          `operation '${expr.op}' is not supported in a Condition`
+        );
       } else {
         const isLiteralOrTypeOfExpr = anyOf(isLiteralExpr, isTypeOfExpr);
 
