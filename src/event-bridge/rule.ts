@@ -1,6 +1,6 @@
 import { aws_events } from "aws-cdk-lib";
 import { Construct } from "constructs";
-import { EventBus } from "./bus";
+import { EventBus } from "./event-bus";
 import { FunctionDecl } from "../declaration";
 import { synthesizeEventPattern } from "./event-pattern";
 import { Function } from "../function";

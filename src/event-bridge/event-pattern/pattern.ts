@@ -1,5 +1,5 @@
 import { assertNever } from "../../assert";
-import * as functionless_event_bridge from "./types";
+import * as functionless_event_bridge from "../types";
 
 /**
  * These are simlified and better structured interfaces/types to make it easier to work with Event Bridge Patterns.
@@ -174,11 +174,11 @@ export const isEmptyPattern = (x: Pattern): x is EmptyPattern => {
  * This pattern may be filtered out at the end.
  * It is the opposite of EmptyPattern
  * If it is applied to AND logic, either between or within a field, an error is thrown.
- * 
+ *
  * When to return NeverPattern and when to Error
  * * NeverPattern - when the logic is impossible, but valid aka, contradictions x !== "a" && x === "a". These MAY later be evaluated to possible using an OR.
  * * Error - When the combination is unsupported by Event Bridge or Functionless.
- *           For example, if we do not know how to represent !x.startsWith("x") && x.startsWith("y"), 
+ *           For example, if we do not know how to represent !x.startsWith("x") && x.startsWith("y"),
  *           then we need to fail compilation as the logic may filter a event if it was supported and not ignored.
  */
 export interface NeverPattern {

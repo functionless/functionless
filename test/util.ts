@@ -8,7 +8,7 @@ import { FunctionlessEventPattern } from "../src/event-bridge/event-pattern/type
 import { Rule } from "aws-cdk-lib/aws-events";
 import { Err, isErr } from "../src/error";
 import { EventTransformFunction } from "../src/event-bridge/transform";
-import { synthesizeEventBridgeTargets } from "../src/event-bridge/target-input/synth";
+import { synthesizeEventBridgeTargets } from "../src/event-bridge/target-input";
 
 // generates boilerplate for the circuit-breaker logic for implementing early return
 export function returnExpr(varName: string) {

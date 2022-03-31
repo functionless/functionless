@@ -25,7 +25,6 @@
   "devDependencies": {
     "@aws-cdk/aws-appsync-alpha": "2.14.0-alpha.0",
     "@types/fs-extra": "^9.0.13",
-    "@types/glob": "^7.2.0",
     "@types/jest": "^27.4.1",
     "@types/minimatch": "^3.0.5",
     "@types/node": "^12",

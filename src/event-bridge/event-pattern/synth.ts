@@ -32,7 +32,7 @@ import {
   NumericRangePattern,
   NeverPattern,
 } from "./pattern";
-import * as functionless_event_bridge from "./types";
+import * as functionless_event_bridge from "../types";
 import {
   intersectNumericRange,
   reduceNumericAggregate,
@@ -52,12 +52,6 @@ import {
   isUnaryExpr,
 } from "../..";
 import {
-  INCLUDES_SEARCH_ELEMENT,
-  OPERATIONS,
-  STARTS_WITH_SEARCH_STRING,
-} from "./constants";
-import { invertBinaryOperator } from "./utils";
-import {
   assertValidEventRefererence,
   EventReference,
   flattenReturnEvent,
@@ -67,6 +61,10 @@ import {
   ReferencePath,
 } from "../utils";
 import { Err, isErr } from "../../error";
+
+const OPERATIONS = { STARTS_WITH: "startsWith", INCLUDES: "includes" };
+const INCLUDES_SEARCH_ELEMENT = "searchElement";
+const STARTS_WITH_SEARCH_STRING = "searchString";
 
 /**
  * Turns a Typescript function into a Event Bridge Event Pattern.
@@ -905,4 +903,19 @@ const eventReferenceToPatternDocument = (
   };
 
   return __inner(eventReference.reference);
+};
+
+export const invertBinaryOperator = (op: BinaryOp): BinaryOp => {
+  switch (op) {
+    case "<":
+      return ">";
+    case "<=":
+      return ">=";
+    case ">":
+      return "<";
+    case ">=":
+      return "<=";
+    default:
+      return op;
+  }
 };

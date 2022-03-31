@@ -1,5 +1,5 @@
 import { aws_events, aws_events_targets } from "aws-cdk-lib";
-import { EventBus } from "./bus";
+import { EventBus } from "./event-bus";
 import { Function, isFunction } from "../function";
 import { EventBusRuleInput } from "./types";
 

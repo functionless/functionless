@@ -1,8 +1,8 @@
 import { aws_events } from "aws-cdk-lib";
 import { RuleTargetInput } from "aws-cdk-lib/aws-events";
-import { assertString } from "../../assert";
-import { FunctionDecl } from "../../declaration";
-import { Err, isErr } from "../../error";
+import { assertString } from "../assert";
+import { FunctionDecl } from "../declaration";
+import { Err, isErr } from "../error";
 import {
   ArrayLiteralExpr,
   Expr,
@@ -15,7 +15,7 @@ import {
   isPropAssignExpr,
   isTemplateExpr,
   ObjectLiteralExpr,
-} from "../../expression";
+} from "../expression";
 import {
   assertValidEventRefererence,
   flattenReturnEvent,
@@ -23,7 +23,7 @@ import {
   getReferencePath,
   isStringType,
   ReferencePath,
-} from "../utils";
+} from "./utils";
 
 const PREDEFINED_VALUES = [
   "<aws.events.event>",
