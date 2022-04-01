@@ -104,5 +104,22 @@ export class PeopleEvents extends Construct {
           event.detail.age < 30
       )
       .pipe(youngAdultCatLoversBus);
+
+    // a function to view the events which make it to the cat bus
+    youngAdultCatLoversBus
+      .when(this, "catSinkRule", () => true)
+      .pipe(
+        new functionless.Function<Delete, void>(
+          new aws_lambda.Function(this, "cats", {
+            code: aws_lambda.Code.fromInline(`
+          exports.handler = async (event) => {
+              console.log('event: ', event)
+            };
+          `),
+            runtime: aws_lambda.Runtime.NODEJS_14_X,
+            handler: "index.handler",
+          })
+        )
+      );
   }
 }
