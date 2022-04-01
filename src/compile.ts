@@ -72,17 +72,20 @@ export function compile(
       );
 
       function visitor(node: ts.Node): ts.Node {
-        if (isAppsyncResolver(node)) {
-          return visitAppsyncResolver(node as ts.NewExpression);
-        } else if (isStepFunction(node)) {
-          return visitStepFunction(node as ts.NewExpression);
-        } else if (isReflectFunction(node)) {
-          return errorBoundary(() =>
-            toFunction("FunctionDecl", node.arguments[0])
-          );
-        }
+        const visit = () => {
+          if (isAppsyncResolver(node)) {
+            return visitAppsyncResolver(node as ts.NewExpression);
+          } else if (isStepFunction(node)) {
+            return visitStepFunction(node as ts.NewExpression);
+          } else if (isReflectFunction(node)) {
+            return errorBoundary(() =>
+              toFunction("FunctionDecl", node.arguments[0])
+            );
+          }
+          return node;
+        };
         // keep processing the children of the updated node.
-        return ts.visitEachChild(node, visitor, ctx);
+        return ts.visitEachChild(visit(), visitor, ctx);
       }
 
       function isReflectFunction(node: ts.Node): node is ts.CallExpression & {
