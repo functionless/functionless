@@ -383,6 +383,9 @@ export class ASL {
           if (nestedTasks.length > 0) {
             const nestedTaskSet = new Set<FunctionlessNode>(nestedTasks);
 
+            // walks through the tree and replaces nodes with an Identifier referencing the
+            // result of their pre-computed value - this normalizes the whole AST into
+            // a linear sequence of `variable = constant or computation` operations.
             const replaced = (function replaceTasks(
               node: FunctionlessNode
             ): FunctionlessNode | FunctionlessNode[] {
@@ -423,6 +426,14 @@ export class ASL {
     };
   }
 
+  /**
+   * Generate a deterministic and unique variable name for a node.
+   *
+   * The value is cached so that the same node reference always has the same name.
+   *
+   * @param node the node to generate a name for
+   * @returns a unique variable name that can be used in JSON Path
+   */
   private getDeterministicGeneratedName(node: FunctionlessNode): string {
     if (!this.generatedNames.has(node)) {
       this.generatedNames.set(node, `${this.generatedNames.size}_tmp`);
@@ -460,19 +471,13 @@ export class ASL {
 
   public execute(stmt: Stmt): States {
     if (stmt.kind === "BlockStmt") {
-      return stmt.statements.reduce((states: States, s, i) => {
-        if (i < stmt.statements.length - 1) {
-          return {
-            ...states,
-            ...this.execute(s),
-          };
-        } else {
-          return {
-            ...states,
-            ...this.execute(s),
-          };
-        }
-      }, {});
+      return stmt.statements.reduce(
+        (states: States, s) => ({
+          ...states,
+          ...this.execute(s),
+        }),
+        {}
+      );
     } else if (stmt.kind === "BreakStmt") {
       const loop = stmt.findParent(
         anyOf(isForOfStmt, isForInStmt, isWhileStmt, isDoStmt)
@@ -803,6 +808,13 @@ export class ASL {
     return assertNever(stmt);
   }
 
+  /**
+   * Evaluate an {@link Expr} to a single {@link State}.
+   *
+   * @param expr the {@link Expr} to evaluate.
+   * @param props where to store the result, whether this is the end state or not, where to go to next
+   * @returns the {@link State}
+   */
   public eval(
     expr: Expr,
     props: {
@@ -1605,6 +1617,7 @@ export namespace ASL {
         const isLiteralOrTypeOfExpr = anyOf(isLiteralExpr, isTypeOfExpr);
 
         if (isLiteralExpr(expr.left) && isLiteralExpr(expr.right)) {
+          throw new Error(`cannot compare two literal expressions`);
         } else if (
           isLiteralOrTypeOfExpr(expr.left) ||
           isLiteralOrTypeOfExpr(expr.right)
