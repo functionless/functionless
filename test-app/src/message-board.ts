@@ -20,30 +20,6 @@ import path from "path";
 export const app = new App();
 export const stack = new Stack(app, "message-board");
 
-interface Post<PostID extends string = string> {
-  pk: `Post|${PostID}`;
-  sk: "Post";
-  postId: PostID;
-  title: string;
-}
-
-interface Comment<
-  PostID extends string = string,
-  CommentID extends string = string
-> {
-  pk: `Post|${PostID}`;
-  sk: `Comment|${CommentID}`;
-  postId: PostID;
-  commentId: CommentID;
-  commentText: string;
-  createdTime: string;
-}
-
-interface CommentPage {
-  nextToken?: string;
-  comments: Comment[];
-}
-
 const database = new Table<Post | Comment, "pk", "sk">(
   new aws_dynamodb.Table(stack, "MessageBoard", {
     tableName: "MessageBoard",
@@ -331,3 +307,27 @@ export const getDeletionStatus = new AppsyncResolver<
   typeName: "Query",
   fieldName: "getDeletionStatus",
 });
+
+export interface Post<PostID extends string = string> {
+  pk: `Post|${PostID}`;
+  sk: "Post";
+  postId: PostID;
+  title: string;
+}
+
+export interface Comment<
+  PostID extends string = string,
+  CommentID extends string = string
+> {
+  pk: `Post|${PostID}`;
+  sk: `Comment|${CommentID}`;
+  postId: PostID;
+  commentId: CommentID;
+  commentText: string;
+  createdTime: string;
+}
+
+export interface CommentPage {
+  nextToken?: string;
+  comments: Comment[];
+}
