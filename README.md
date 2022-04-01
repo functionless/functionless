@@ -6,9 +6,8 @@
 
 For example, the below function creates an Appsync Resolver Pipeline with two stages:
 
-1. Get an item from the `myTable` DynamoDB Table
-2. Call the `myFunction` Lambda Function
-3. Start the `myStepF Step Function
+1. Put an item into the `postTable` DynamoDB Table
+2. Trigger a long-running Step Function workflow to validate the contents
 
 ```ts
 const postTable = new Table<Post, "postId">(new aws_dynamodb.Table(this, "PostTable", { .. }));
