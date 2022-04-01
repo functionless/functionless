@@ -16,6 +16,8 @@ export function findService(expr: FunctionlessNode): CanReference | undefined {
     return findService(expr.expr);
   } else if (expr.kind === "ReturnStmt" && expr.expr) {
     return findService(expr.expr);
+  } else if (expr.kind === "ExprStmt") {
+    return findService(expr.expr);
   }
   return undefined;
 }

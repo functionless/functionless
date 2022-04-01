@@ -56,6 +56,7 @@ export class Function<P, O> {
               payloadArg && isVariableReference(payloadArg.expr) ? ".$" : ""
             }`]: payloadArg ? ASL.toJson(payloadArg.expr) : null,
           },
+          ResultSelector: "$.Payload",
         };
         return task;
       } else {

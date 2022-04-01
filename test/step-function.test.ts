@@ -146,6 +146,7 @@ test("return task({key: items.slice(1, 3)})", () => {
         Type: "Task",
         End: true,
         Resource: "arn:aws:states:::lambda:invoke",
+        ResultSelector: "$.Payload",
         Parameters: {
           FunctionName: task.resource.functionName,
           Payload: {
@@ -839,6 +840,7 @@ test("return a single Lambda Function call", () => {
         Resource: "arn:aws:states:::lambda:invoke",
         End: true,
         ResultPath: "$",
+        ResultSelector: "$.Payload",
         Parameters: {
           FunctionName: getPerson.resource.functionName,
           Payload: {
@@ -868,6 +870,7 @@ test("call Lambda Function, store as variable, return variable", () => {
         Type: "Task",
         Resource: "arn:aws:states:::lambda:invoke",
         ResultPath: "$.person",
+        ResultSelector: "$.Payload",
         Parameters: {
           FunctionName: getPerson.resource.functionName,
           Payload: {
@@ -1055,6 +1058,7 @@ test("call AWS.DynamoDB.GetItem, then Lambda and return LiteralExpr", () => {
         {
           Next: "return {id: person.Item.id.S, name: person.Item.name.S, score: score}",
           ResultPath: "$.score",
+          ResultSelector: "$.Payload",
           Parameters: {
             FunctionName: computeScore.resource.functionName,
             Payload: {
@@ -1121,6 +1125,7 @@ test("for-loop over a list literal", () => {
               Type: "Task",
               ResultPath: null,
               End: true,
+              ResultSelector: "$.Payload",
               Parameters: {
                 FunctionName: computeScore.resource.functionName,
                 Payload: {
@@ -1419,6 +1424,7 @@ test("try, task, empty catch", () => {
           },
         ],
         Next: "return null",
+        ResultSelector: "$.Payload",
         Parameters: {
           FunctionName: computeScore.resource.functionName,
           Payload: {
@@ -1494,6 +1500,7 @@ test("try-catch with inner return and no catch variable", () => {
       'computeScore({id: "id", name: "name"})': {
         Type: "Task",
 
+        ResultSelector: "$.Payload",
         Parameters: {
           FunctionName: computeScore.resource.functionName,
           Payload: {
@@ -1555,6 +1562,7 @@ test("try-catch with inner return and a catch variable", () => {
           },
         ],
         Next: 'return "hello"',
+        ResultSelector: "$.Payload",
         Parameters: {
           FunctionName: computeScore.resource.functionName,
           Payload: {
@@ -1765,6 +1773,7 @@ test("try-catch with optional task", () => {
           },
         ],
         Next: 'return "hello world"',
+        ResultSelector: "$.Payload",
         Parameters: {
           FunctionName: computeScore.resource.functionName,
           Payload: {
@@ -1867,6 +1876,7 @@ test("try-catch with optional return of task", () => {
           },
         ],
         End: true,
+        ResultSelector: "$.Payload",
         Parameters: {
           FunctionName: computeScore.resource.functionName,
           Payload: {
@@ -2185,6 +2195,7 @@ test("try-catch-finally", () => {
           },
         ],
         Next: 'return "hello"',
+        ResultSelector: "$.Payload",
         Parameters: {
           FunctionName: computeScore.resource.functionName,
           Payload: {
@@ -2231,6 +2242,7 @@ test("try { task } catch { throw } finally { task() }", () => {
           },
         ],
         Next: 'task("recover")',
+        ResultSelector: "$.Payload",
         Parameters: {
           FunctionName: task.resource.functionName,
           Payload: null,
@@ -2249,6 +2261,7 @@ test("try { task } catch { throw } finally { task() }", () => {
       },
       'task("recover")': {
         Next: "exit finally",
+        ResultSelector: "$.Payload",
         Parameters: {
           FunctionName: task.resource.functionName,
           Payload: "recover",
@@ -2311,6 +2324,7 @@ test("try { task() } catch { task() } finally { task() }", () => {
           },
         ],
         Next: 'task("3")',
+        ResultSelector: "$.Payload",
         Parameters: {
           FunctionName: task.resource.functionName,
           Payload: "1",
@@ -2328,6 +2342,7 @@ test("try { task() } catch { task() } finally { task() }", () => {
           },
         ],
         Next: 'task("3")',
+        ResultSelector: "$.Payload",
         Parameters: {
           FunctionName: task.resource.functionName,
           Payload: "2",
@@ -2338,6 +2353,7 @@ test("try { task() } catch { task() } finally { task() }", () => {
       },
       'task("3")': {
         Next: "exit finally",
+        ResultSelector: "$.Payload",
         Parameters: {
           FunctionName: task.resource.functionName,
           Payload: "3",
@@ -2503,6 +2519,7 @@ test("try { throw } catch { (maybe) throw } finally { task }", () => {
       },
       "task(undefined)": {
         Next: "exit finally",
+        ResultSelector: "$.Payload",
         Parameters: {
           FunctionName: task.resource.functionName,
           Payload: null,
@@ -2573,6 +2590,7 @@ test("try { task() } catch { (maybe) throw } finally { task }", () => {
           },
         ],
         Next: 'task("2")',
+        ResultSelector: "$.Payload",
         Parameters: {
           FunctionName: task.resource.functionName,
           Payload: "1",
@@ -2602,6 +2620,7 @@ test("try { task() } catch { (maybe) throw } finally { task }", () => {
       },
       'task("2")': {
         Next: "exit finally",
+        ResultSelector: "$.Payload",
         Parameters: {
           FunctionName: task.resource.functionName,
           Payload: "2",
@@ -2668,6 +2687,7 @@ test("try { task() } catch(err) { (maybe) throw } finally { task }", () => {
           },
         ],
         Next: 'task("2")',
+        ResultSelector: "$.Payload",
         Parameters: {
           FunctionName: task.resource.functionName,
           Payload: "1",
@@ -2711,6 +2731,7 @@ test("try { task() } catch(err) { (maybe) throw } finally { task }", () => {
       },
       'task("2")': {
         Next: "exit finally",
+        ResultSelector: "$.Payload",
         Parameters: {
           FunctionName: task.resource.functionName,
           Payload: "2",
@@ -2788,6 +2809,7 @@ test("try { for-of } catch { (maybe) throw } finally { task }", () => {
           States: {
             "task(item)": {
               End: true,
+              ResultSelector: "$.Payload",
               Parameters: {
                 FunctionName: task.resource.functionName,
                 "Payload.$": "$.item",
@@ -2849,6 +2871,7 @@ test("try { for-of } catch { (maybe) throw } finally { task }", () => {
       },
       'task("2")': {
         Next: "exit finally",
+        ResultSelector: "$.Payload",
         Parameters: {
           FunctionName: task.resource.functionName,
           Payload: "2",
@@ -2918,6 +2941,7 @@ test("for-of { try { task() } catch (err) { if(err) throw } finally { task() } }
                 },
               ],
               Next: 'task("2")',
+              ResultSelector: "$.Payload",
               Parameters: {
                 FunctionName: task.resource.functionName,
                 "Payload.$": "$.item",
@@ -2961,6 +2985,7 @@ test("for-of { try { task() } catch (err) { if(err) throw } finally { task() } }
             },
             'task("2")': {
               Next: "exit finally",
+              ResultSelector: "$.Payload",
               Parameters: {
                 FunctionName: task.resource.functionName,
                 Payload: "2",
@@ -3041,6 +3066,7 @@ test("while (cond) { cond = task() }", () => {
       },
       "cond = task(undefined)": {
         Next: "while (cond == undefined)",
+        ResultSelector: "$.Payload",
         Parameters: {
           FunctionName: task.resource.functionName,
           Payload: null,
@@ -3092,6 +3118,7 @@ test("while (cond); cond = task()", () => {
       },
       "cond = task(undefined)": {
         Next: "while (cond == undefined)",
+        ResultSelector: "$.Payload",
         Parameters: {
           FunctionName: task.resource.functionName,
           Payload: null,
@@ -3145,6 +3172,7 @@ test("let cond; do { cond = task() } while (cond)", () => {
       },
       "cond = task(undefined)": {
         Next: "while (cond == undefined)",
+        ResultSelector: "$.Payload",
         Parameters: {
           FunctionName: task.resource.functionName,
           Payload: null,
@@ -3182,6 +3210,7 @@ test("list.map(item => task(item))", () => {
           States: {
             "return task(item)": {
               End: true,
+              ResultSelector: "$.Payload",
               Parameters: {
                 FunctionName: task.resource.functionName,
                 "Payload.$": "$.item",
@@ -3244,6 +3273,7 @@ test("list.map((item, i) => if (i == 0) task(item))", () => {
             },
             "return task(item)": {
               End: true,
+              ResultSelector: "$.Payload",
               Parameters: {
                 FunctionName: task.resource.functionName,
                 "Payload.$": "$.item",
@@ -3301,6 +3331,7 @@ test("list.map((item, i, list) => if (i == 0) task(item) else task(list[0]))", (
             },
             "return task(item)": {
               End: true,
+              ResultSelector: "$.Payload",
               Parameters: {
                 FunctionName: task.resource.functionName,
                 "Payload.$": "$.item",
@@ -3311,6 +3342,7 @@ test("list.map((item, i, list) => if (i == 0) task(item) else task(list[0]))", (
             },
             "return task(list[0])": {
               End: true,
+              ResultSelector: "$.Payload",
               Parameters: {
                 FunctionName: task.resource.functionName,
                 "Payload.$": "$.list[0]",
@@ -3361,6 +3393,7 @@ test("try { list.map(item => task(item)) }", () => {
           States: {
             "return task(item)": {
               End: true,
+              ResultSelector: "$.Payload",
               Parameters: {
                 FunctionName: task.resource.functionName,
                 "Payload.$": "$.item",
@@ -3420,6 +3453,7 @@ test("try { list.map(item => task(item)) }", () => {
                 },
               ],
               End: true,
+              ResultSelector: "$.Payload",
               Parameters: {
                 FunctionName: task.resource.functionName,
                 "Payload.$": "$.item",
@@ -3603,6 +3637,7 @@ test("list.forEach(item => task(item))", () => {
           States: {
             "return task(item)": {
               End: true,
+              ResultSelector: "$.Payload",
               Parameters: {
                 FunctionName: task.resource.functionName,
                 "Payload.$": "$.item",
@@ -3665,6 +3700,7 @@ test("list.forEach((item, i) => if (i == 0) task(item))", () => {
             },
             "return task(item)": {
               End: true,
+              ResultSelector: "$.Payload",
               Parameters: {
                 FunctionName: task.resource.functionName,
                 "Payload.$": "$.item",
@@ -3722,6 +3758,7 @@ test("list.forEach((item, i, list) => if (i == 0) task(item) else task(list[0]))
             },
             "return task(item)": {
               End: true,
+              ResultSelector: "$.Payload",
               Parameters: {
                 FunctionName: task.resource.functionName,
                 "Payload.$": "$.item",
@@ -3732,6 +3769,7 @@ test("list.forEach((item, i, list) => if (i == 0) task(item) else task(list[0]))
             },
             "return task(list[0])": {
               End: true,
+              ResultSelector: "$.Payload",
               Parameters: {
                 FunctionName: task.resource.functionName,
                 "Payload.$": "$.list[0]",
@@ -3782,6 +3820,7 @@ test("try { list.forEach(item => task(item)) }", () => {
           States: {
             "return task(item)": {
               End: true,
+              ResultSelector: "$.Payload",
               Parameters: {
                 FunctionName: task.resource.functionName,
                 "Payload.$": "$.item",
@@ -3841,6 +3880,7 @@ test("try { list.forEach(item => task(item)) }", () => {
                 },
               ],
               End: true,
+              ResultSelector: "$.Payload",
               Parameters: {
                 FunctionName: task.resource.functionName,
                 "Payload.$": "$.item",
@@ -4024,6 +4064,7 @@ test("return $SFN.map(list, (item) => task(item))", () => {
           States: {
             "return task(item)": {
               End: true,
+              ResultSelector: "$.Payload",
               Parameters: {
                 FunctionName: task.resource.functionName,
                 "Payload.$": "$.item",
@@ -4062,6 +4103,7 @@ test("return $SFN.map(list, {maxConcurrency: 2} (item) => task(item))", () => {
           States: {
             "return task(item)": {
               End: true,
+              ResultSelector: "$.Payload",
               Parameters: {
                 FunctionName: task.resource.functionName,
                 "Payload.$": "$.item",
@@ -4099,6 +4141,7 @@ test("$SFN.map(list, (item) => task(item))", () => {
           States: {
             "return task(item)": {
               End: true,
+              ResultSelector: "$.Payload",
               Parameters: {
                 FunctionName: task.resource.functionName,
                 "Payload.$": "$.item",
@@ -4144,6 +4187,7 @@ test("result = $SFN.map(list, (item) => task(item))", () => {
           States: {
             "return task(item)": {
               End: true,
+              ResultSelector: "$.Payload",
               Parameters: {
                 FunctionName: task.resource.functionName,
                 "Payload.$": "$.item",
@@ -4200,6 +4244,7 @@ test("return $SFN.map(list, (item) => try { task(item)) } catch { return null }"
                 },
               ],
               End: true,
+              ResultSelector: "$.Payload",
               Parameters: {
                 FunctionName: task.resource.functionName,
                 "Payload.$": "$.item",
@@ -4256,6 +4301,7 @@ test("try { $SFN.map(list, (item) => task(item)) } catch { return null }", () =>
           States: {
             "return task(item)": {
               End: true,
+              ResultSelector: "$.Payload",
               Parameters: {
                 FunctionName: task.resource.functionName,
                 "Payload.$": "$.item",
@@ -4301,6 +4347,7 @@ test("return $SFN.forEach(list, (item) => task(item))", () => {
           States: {
             "return task(item)": {
               End: true,
+              ResultSelector: "$.Payload",
               Parameters: {
                 FunctionName: task.resource.functionName,
                 "Payload.$": "$.item",
@@ -4339,6 +4386,7 @@ test("return $SFN.forEach(list, {maxConcurrency: 2} (item) => task(item))", () =
           States: {
             "return task(item)": {
               End: true,
+              ResultSelector: "$.Payload",
               Parameters: {
                 FunctionName: task.resource.functionName,
                 "Payload.$": "$.item",
@@ -4376,6 +4424,7 @@ test("$SFN.forEach(list, (item) => task(item))", () => {
           States: {
             "return task(item)": {
               End: true,
+              ResultSelector: "$.Payload",
               Parameters: {
                 FunctionName: task.resource.functionName,
                 "Payload.$": "$.item",
@@ -4421,6 +4470,7 @@ test("result = $SFN.forEach(list, (item) => task(item))", () => {
           States: {
             "return task(item)": {
               End: true,
+              ResultSelector: "$.Payload",
               Parameters: {
                 FunctionName: task.resource.functionName,
                 "Payload.$": "$.item",
@@ -4477,6 +4527,7 @@ test("return $SFN.forEach(list, (item) => try { task(item)) } catch { return nul
                 },
               ],
               End: true,
+              ResultSelector: "$.Payload",
               Parameters: {
                 FunctionName: task.resource.functionName,
                 "Payload.$": "$.item",
@@ -4533,6 +4584,7 @@ test("try { $SFN.forEach(list, (item) => task(item)) } catch { return null }", (
           States: {
             "return task(item)": {
               End: true,
+              ResultSelector: "$.Payload",
               Parameters: {
                 FunctionName: task.resource.functionName,
                 "Payload.$": "$.item",
@@ -4703,6 +4755,7 @@ test("return $SFN.parallel(() => try { task() } catch { return null })) }", () =
                   },
                 ],
                 End: true,
+                ResultSelector: "$.Payload",
                 Parameters: {
                   FunctionName: task.resource.functionName,
                   Payload: null,
@@ -4772,6 +4825,7 @@ test("return task({ key: items.filter(*) })", () => {
           Type: "Task",
           End: true,
           Resource: "arn:aws:states:::lambda:invoke",
+          ResultSelector: "$.Payload",
           Parameters: {
             FunctionName: task.resource.functionName,
             Payload: {
@@ -4803,6 +4857,7 @@ test("template literal strings", () => {
     States: {
       "return task({key: `obj.str hello obj.items[0]`})": {
         End: true,
+        ResultSelector: "$.Payload",
         Parameters: {
           FunctionName: task.resource.functionName,
           Payload: {
@@ -5062,6 +5117,7 @@ test("continue in while loop", () => {
       },
       "task(key)": {
         Next: "while (true)",
+        ResultSelector: "$.Payload",
         Parameters: {
           FunctionName: task.resource.functionName,
           "Payload.$": "$.key",
@@ -5114,6 +5170,7 @@ test("continue in do..while loop", () => {
       },
       "task(key)": {
         Next: "while (true)",
+        ResultSelector: "$.Payload",
         Parameters: {
           FunctionName: task.resource.functionName,
           "Payload.$": "$.key",
@@ -5156,6 +5213,7 @@ test("return task(task())", () => {
     States: {
       "0_tmp = task(undefined)": {
         Next: "return task(0_tmp)",
+        ResultSelector: "$.Payload",
         Parameters: {
           FunctionName: task.resource.functionName,
           Payload: null,
@@ -5166,6 +5224,7 @@ test("return task(task())", () => {
       },
       "return task(0_tmp)": {
         End: true,
+        ResultSelector: "$.Payload",
         Parameters: {
           FunctionName: task.resource.functionName,
           "Payload.$": "$.0_tmp",
@@ -5231,6 +5290,7 @@ test("while(true) { try { } catch { wait }", () => {
           },
         ],
         Next: "while (true)",
+        ResultSelector: "$.Payload",
         Parameters: {
           FunctionName: task.resource.functionName,
           Payload: null,
@@ -5250,6 +5310,39 @@ test("while(true) { try { } catch { wait }", () => {
         Parameters: {
           null: null,
         },
+        Type: "Pass",
+      },
+    },
+  });
+});
+
+test("call Step Function from another Step Function", () => {
+  const { stack } = initStepFunctionApp();
+  const machine1 = new ExpressStepFunction(stack, "machine1", () => {
+    return "hello";
+  });
+
+  const definition = new ExpressStepFunction(stack, "machine2", () => {
+    const result = machine1();
+    return result;
+  }).definition;
+
+  expect(definition).toEqual({
+    StartAt: "result = machine1()",
+    States: {
+      "result = machine1()": {
+        Next: "return result",
+        Parameters: {
+          Input: {},
+          StateMachineArn: machine1.stateMachineArn,
+        },
+        Resource: "arn:aws:states:::aws-sdk:sfn:startSyncExecution",
+        ResultPath: "$.result",
+        Type: "Task",
+      },
+      "return result": {
+        End: true,
+        OutputPath: "$.result",
         Type: "Pass",
       },
     },

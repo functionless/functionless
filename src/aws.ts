@@ -13,10 +13,16 @@ import {
 } from "typesafe-dynamodb/lib/delete-item";
 import { TableKey } from "typesafe-dynamodb/lib/key";
 import { JsonFormat } from "typesafe-dynamodb";
-import { CallExpr, isObjectLiteralExpr, ObjectLiteralExpr } from "./expression";
+import {
+  CallExpr,
+  isObjectLiteralExpr,
+  isVariableReference,
+  ObjectLiteralExpr,
+} from "./expression";
 import { ASL, isASL, Task } from "./asl";
 import { CallContext } from "./context";
 import { VTL } from "./vtl";
+import { Function } from "./function";
 
 import type { DynamoDB as AWSDynamoDB } from "aws-sdk";
 
@@ -306,6 +312,64 @@ export namespace $AWS {
         Resource: `arn:aws:states:::aws-sdk:dynamodb:${operationName}`,
         Parameters: ASL.toJson(input),
       };
+    }
+  }
+
+  export namespace Lambda {
+    /**
+     * @param input
+     * @see https://docs.aws.amazon.com/lambda/latest/dg/API_Invoke.html
+     */
+    // @ts-ignore
+    export function Invoke<Input, Output>(input: {
+      FunctionName: Function<Input, Output>;
+      Payload: Input;
+      ClientContext?: string;
+      InvocationType?: "Event" | "RequestResponse" | "DryRun";
+      LogType?: "None" | "Tail";
+      Qualifier?: string;
+    }): Omit<AWS.Lambda.InvocationResponse, "payload"> & {
+      Payload: Output;
+    };
+
+    export function Invoke(call: CallExpr, context: CallContext): any {
+      const input = call.args[0].expr;
+      if (input === undefined) {
+        throw new Error(`missing argument 'input'`);
+      } else if (input.kind !== "ObjectLiteralExpr") {
+        throw new Error(`argument 'input' must be an ObjectLiteralExpr`);
+      }
+      const functionName = input.getProperty("FunctionName")?.expr;
+      if (functionName === undefined) {
+        throw new Error(`missing required property 'FunctionName'`);
+      } else if (functionName.kind !== "ReferenceExpr") {
+        throw new Error(
+          `property 'FunctionName' must reference a functionless.Function`
+        );
+      }
+      const functionRef = functionName.ref();
+      if (functionRef.kind !== "Function") {
+        throw new Error(
+          `property 'FunctionName' must reference a functionless.Function`
+        );
+      }
+      const payload = input.getProperty("Payload")?.expr;
+      if (payload === undefined) {
+        throw new Error(`missing property 'payload'`);
+      }
+
+      if (isASL(context)) {
+        const task: Partial<Task> = {
+          Type: "Task",
+          Resource: "arn:aws:states:::lambda:invoke",
+          Parameters: {
+            FunctionName: functionRef.resource.functionName,
+            [`Payload${payload && isVariableReference(payload) ? ".$" : ""}`]:
+              payload ? ASL.toJson(payload) : null,
+          },
+        };
+        return task;
+      }
     }
   }
 }

@@ -286,6 +286,7 @@ export class AppsyncResolver<
                     },
                   }
                 );
+                service.grantRead(ds.grantPrincipal);
                 if (
                   service.getStepFunctionType() ===
                   aws_stepfunctions.StateMachineType.EXPRESS
@@ -332,7 +333,9 @@ export class AppsyncResolver<
             }
 
             if (stmt.kind === "ExprStmt") {
-              return createStage(findServiceCallExpr(stmt.expr), "{}");
+              const call = findServiceCallExpr(stmt.expr);
+              template.call(call);
+              return createStage(call, "{}");
             } else if (stmt.kind === "ReturnStmt") {
               return createStage(
                 findServiceCallExpr(stmt.expr),

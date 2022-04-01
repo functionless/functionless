@@ -1,9 +1,16 @@
-import { App, aws_dynamodb, RemovalPolicy, Stack } from "aws-cdk-lib";
+import {
+  App,
+  aws_dynamodb,
+  aws_lambda,
+  RemovalPolicy,
+  Stack,
+} from "aws-cdk-lib";
 import {
   $AWS,
   $SFN,
   $util,
   AppsyncResolver,
+  Function,
   StepFunction,
   Table,
 } from "functionless";
@@ -39,6 +46,7 @@ interface CommentPage {
 
 const database = new Table<Post | Comment, "pk", "sk">(
   new aws_dynamodb.Table(stack, "MessageBoard", {
+    tableName: "MessageBoard",
     partitionKey: {
       name: "pk",
       type: aws_dynamodb.AttributeType.STRING,
@@ -157,12 +165,46 @@ export const createPost = new AppsyncResolver<{ title: string }, Post>(
   fieldName: "createPost",
 });
 
+export const validateComment = new Function<
+  { commentText: string },
+  "ok" | "bad"
+>(
+  new aws_lambda.Function(stack, "ValidateComment", {
+    code: aws_lambda.Code.fromInline(
+      `exports.handle = async function() { return 'ok'; }`
+    ),
+    handler: "index.handle",
+    runtime: aws_lambda.Runtime.NODEJS_14_X,
+  })
+);
+
+export const commentValidationWorkflow = new StepFunction(
+  stack,
+  "CommentValidationWorkflow",
+  (postId: string, commentId: string, commentText: string) => {
+    const status = validateComment({ commentText });
+    if (status === "bad") {
+      $AWS.DynamoDB.DeleteItem({
+        TableName: database,
+        Key: {
+          pk: {
+            S: `Post|${postId}`,
+          },
+          sk: {
+            S: `Comment|${commentId}`,
+          },
+        },
+      });
+    }
+  }
+);
+
 export const addComment = new AppsyncResolver<
   { postId: string; commentText: string },
   Comment
 >(($context) => {
   const commentId = $util.autoUlid();
-  return database.putItem({
+  const comment = database.putItem({
     key: {
       pk: {
         S: `Post|${$context.arguments.postId}`,
@@ -186,6 +228,15 @@ export const addComment = new AppsyncResolver<
       },
     },
   });
+
+  // kick off a workflow to validate the comment
+  commentValidationWorkflow(
+    comment.postId,
+    comment.commentId,
+    comment.commentText
+  );
+
+  return comment;
 }).addResolver(api, {
   typeName: "Mutation",
   fieldName: "addComment",
@@ -265,4 +316,18 @@ export const deletePost = new AppsyncResolver<
 }).addResolver(api, {
   typeName: "Mutation",
   fieldName: "deletePost",
+});
+
+export const getDeletionStatus = new AppsyncResolver<
+  { executionArn: string },
+  string | undefined
+>(($context) => {
+  const executionStatus = deleteWorkflow.describeExecution(
+    $context.arguments.executionArn
+  );
+
+  return executionStatus.status;
+}).addResolver(api, {
+  typeName: "Query",
+  fieldName: "getDeletionStatus",
 });

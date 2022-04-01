@@ -19,13 +19,15 @@ import {
   ParallelTask,
   StateMachine,
   States,
+  Task,
   Wait,
 } from "./asl";
 import { isVTL } from "./vtl";
 import { makeCallable } from "./callable";
-import { CallExpr, isFunctionExpr } from "./expression";
+import { CallExpr, isFunctionExpr, isVariableReference } from "./expression";
 import { AnyFunction, ensureItemOf } from "./util";
 import { CallContext } from "./context";
+import { assertNever } from "./assert";
 
 export type AnyStepFunction =
   | ExpressStepFunction<AnyFunction>
@@ -392,6 +394,35 @@ abstract class BaseStepFunction<F extends AnyFunction>
     return makeCallable(this, (call: CallExpr, context: CallContext) => {
       if (isASL(context)) {
         // TODO
+        this.grantStartExecution(context.role);
+        if (
+          this.getStepFunctionType() ===
+          aws_stepfunctions.StateMachineType.EXPRESS
+        ) {
+          this.grantStartSyncExecution(context.role);
+        }
+
+        const task: Task = {
+          Type: "Task",
+          Resource: `arn:aws:states:::aws-sdk:sfn:${
+            this.getStepFunctionType() ===
+            aws_stepfunctions.StateMachineType.EXPRESS
+              ? "startSyncExecution"
+              : "startExecution"
+          }`,
+          Parameters: {
+            StateMachineArn: this.stateMachineArn,
+            Input: call.args.reduce(
+              (args, arg) => ({
+                ...args,
+                [`${arg.name!}${isVariableReference(arg.expr) ? ".$" : ""}`]:
+                  ASL.toJson(arg.expr),
+              }),
+              {}
+            ),
+          },
+        };
+        return task;
       } else if (isVTL(context)) {
         const args = context.var(
           `{${call.args
@@ -422,8 +453,53 @@ abstract class BaseStepFunction<F extends AnyFunction>
           2
         );
       }
-      return;
+      return assertNever(context);
     });
+  }
+
+  // @ts-ignore
+  public describeExecution(
+    executionArn: string
+  ): AWS.StepFunctions.DescribeExecutionOutput;
+
+  public describeExecution(call: CallExpr, context: CallContext): any {
+    const executionArn = call.args[0]?.expr;
+    if (executionArn === undefined) {
+      throw new Error(`missing argument 'executionArn'`);
+    }
+    if (isASL(context)) {
+      // need DescribeExecution
+      this.grantRead(context.role);
+
+      const task: Task = {
+        Type: "Task",
+        Resource: `arn:aws:states:::aws-sdk:sfn:describeExecution`,
+        Parameters: {
+          StateMachineArn: this.stateMachineArn,
+        },
+      };
+      return task;
+    } else if (isVTL(context)) {
+      return JSON.stringify(
+        {
+          version: "2018-05-29",
+          method: "POST",
+          resourcePath: "/",
+          params: {
+            headers: {
+              "content-type": "application/x-amz-json-1.0",
+              "x-amz-target": "AWSStepFunctions.DescribeExecution",
+            },
+            body: {
+              executionArn: context.eval(executionArn),
+            },
+          },
+        },
+        null,
+        2
+      );
+    }
+    return assertNever(context);
   }
 
   public abstract getStepFunctionType(): aws_stepfunctions.StateMachineType;

@@ -17,6 +17,7 @@ type Comment {
 }
 type Query {
   getPost(postId: ID!): Post
+  getDeletionStatus(executionArn: String!): String
 }
 
 type StartExecutionOutput {
