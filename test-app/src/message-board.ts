@@ -13,6 +13,7 @@ import {
   Function,
   StepFunction,
   Table,
+  Function,
 } from "functionless";
 import * as appsync from "@aws-cdk/aws-appsync-alpha";
 import path from "path";

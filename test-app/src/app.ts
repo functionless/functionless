@@ -1,7 +1,9 @@
 import { App, Stack } from "aws-cdk-lib";
 import * as appsync from "@aws-cdk/aws-appsync-alpha";
 import path from "path";
-import { PeopleDatabase } from "./people-db";
+import { PeopleDatabase, Person } from "./people-db";
+import { EventBus, EventBusRuleInput } from "functionless";
+import { PeopleEvents } from "./people-events";
 
 export const app = new App();
 
@@ -53,3 +55,17 @@ peopleDb.deletePerson.addResolver(api, {
   typeName: "Mutation",
   fieldName: "deletePerson",
 });
+
+type MyEvent = EventBusRuleInput<{
+  value: string;
+}>;
+
+new EventBus<MyEvent>(stack, "bus")
+  .when(stack, "aRule", (event) => event.detail.value === "hello")
+  .map<Person>((event) => ({
+    id: event.source,
+    name: event.detail.value,
+  }))
+  .pipe(peopleDb.computeScore);
+
+new PeopleEvents(stack, "peopleEvents");

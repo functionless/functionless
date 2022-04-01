@@ -9,3 +9,4 @@ export * from "./statement";
 export * from "./step-function";
 export * from "./table";
 export * from "./util";
+export * from "./event-bridge";

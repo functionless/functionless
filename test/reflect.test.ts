@@ -110,7 +110,7 @@ test("any function args", () => {
   const expr = assertNodeKind<ExprStmt>(result.body.statements[0], "ExprStmt");
   const call = assertNodeKind<CallExpr>(expr.expr, "CallExpr");
 
-  expect(call.args).toHaveLength(0);
+  expect(call.args).toHaveLength(1);
   expect(call.getArgument("searchString")).toBeUndefined();
 });
 
