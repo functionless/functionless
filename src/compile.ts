@@ -4,10 +4,8 @@ import { BinaryOp } from "./expression";
 import { AnyTable } from "./table";
 import { AnyLambda } from "./function";
 import { FunctionlessNode } from "./node";
-import { EventBus, EventBusRule } from "./event-bridge";
 import { AppsyncResolver } from "./appsync";
 import { assertDefined } from "./assert";
-import { EventBusTransform } from "./event-bridge/transform";
 import minimatch from "minimatch";
 import path from "path";
 
@@ -161,7 +159,7 @@ export function compile(
        * The node could be any kind of node that returns an event bus rule.
        */
       function isEventBus(node: ts.Node) {
-        return isFunctionlessClassOfKind(node, EventBus.FunctionlessType);
+        return nodeExtendsFunctionlessType(node, "IEventBus");
       }
 
       /**
@@ -169,7 +167,7 @@ export function compile(
        * The node could be any kind of node that returns an event bus rule.
        */
       function isEventBusRule(node: ts.Node) {
-        return isFunctionlessClassOfKind(node, EventBusRule.FunctionlessType);
+        return nodeExtendsFunctionlessType(node, "IEventBusRule");
       }
 
       /**
@@ -177,10 +175,7 @@ export function compile(
        * The node could be any kind of node that returns an event bus rule.
        */
       function isEventBusTransform(node: ts.Node) {
-        return isFunctionlessClassOfKind(
-          node,
-          EventBusTransform.FunctionlessType
-        );
+        return nodeExtendsFunctionlessType(node, "EventBusTransform");
       }
 
       /**
@@ -204,14 +199,61 @@ export function compile(
         }
       }
 
-      function isFunctionlessClassOfKind(node: ts.Node, kind: string) {
+      /**
+       * Checks if a type, class, or interface extends or implements a type, class, or interface name.
+       */
+      function extendsType(type: ts.Type | undefined, exts: string): boolean {
+        if (type?.symbol?.name === exts) {
+          return true;
+        }
+
+        const exprDecl = type?.symbol?.declarations?.[0];
+
+        return !!(
+          exprDecl &&
+          (ts.isClassDeclaration(exprDecl) ||
+            ts.isInterfaceDeclaration(exprDecl)) &&
+          !!exprDecl.heritageClauses &&
+          exprDecl.heritageClauses
+            .reduce((acc: ts.Node[], clauses) => [...acc, ...clauses.types], [])
+            .map(checker.getTypeAtLocation)
+            .some((node) => extendsType(node, exts))
+        );
+      }
+
+      /**
+       * Checks if a node's type extends or implements a type, class or interface name
+       * and that that type extends the {@link __FunctionlessBase}.
+       */
+      function nodeExtendsFunctionlessType(
+        node: ts.Node,
+        exts: string
+      ): boolean {
         const type = checker.getTypeAtLocation(node);
-        const exprDecl = type.symbol?.declarations?.[0];
+        return (
+          extendsType(type, exts) && extendsType(type, "__FunctionlessBase")
+        );
+      }
+
+      function isFunctionlessType(
+        type: ts.Type | undefined,
+        kind: string
+      ): boolean {
+        const exprDecl = type?.symbol?.declarations?.[0];
         return (
           !!exprDecl &&
           ts.isClassDeclaration(exprDecl) &&
-          getFunctionlessKind(exprDecl) === kind
+          ((getFunctionlessKind(exprDecl) === kind ||
+            exprDecl.heritageClauses?.some((h) =>
+              h.types.some((t) => isFunctionlessClassOfKind(t, kind))
+            )) ??
+            false)
         );
+      }
+
+      function isFunctionlessClassOfKind(node: ts.Node, kind: string) {
+        const type = checker.getTypeAtLocation(node);
+        return isFunctionlessType(type, kind);
       }
 
       function isReflectFunction(node: ts.Node): node is ts.CallExpression & {

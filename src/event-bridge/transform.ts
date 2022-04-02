@@ -4,7 +4,8 @@ import { synthesizeEventBridgeTargets } from "./target-input";
 import { Function } from "../function";
 import { LambdaTargetProps, pipe } from "./target";
 import { EventBusRuleInput } from "./types";
-import { EventBusRule } from "./rule";
+import { IEventBusRule } from "./rule";
+import { __FunctionlessBase } from "../util";
 
 /**
  * A function interface used by the {@link EventBusRule}'s map function.
@@ -35,14 +36,16 @@ export interface EventTransformUtils {
  *
  * @see EventBusRule.map for more details on transforming event details.
  */
-export class EventBusTransform<T extends EventBusRuleInput, P> {
+export class EventBusTransform<T extends EventBusRuleInput, P>
+  implements __FunctionlessBase
+{
   readonly targetInput: aws_events.RuleTargetInput;
 
   public static readonly FunctionlessType = "EventBusTransform";
 
   constructor(
     func: EventTransformFunction<T, P>,
-    readonly rule: EventBusRule<T>
+    readonly rule: IEventBusRule<T>
   ) {
     const decl = func as unknown as FunctionDecl;
     this.targetInput = synthesizeEventBridgeTargets(decl);
@@ -58,6 +61,6 @@ export class EventBusTransform<T extends EventBusRuleInput, P> {
   pipe<P>(props: LambdaTargetProps<P>): void;
   pipe<P>(func: Function<P, any>): void;
   pipe<P>(resource: Function<P, any> | LambdaTargetProps<P>): void {
-    pipe(this.rule.rule, resource, this.targetInput);
+    pipe(this.rule, resource, this.targetInput);
   }
 }

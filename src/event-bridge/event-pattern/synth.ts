@@ -1,4 +1,4 @@
-import { FunctionDecl } from "../../declaration";
+import { FunctionDecl, isFunctionDecl } from "../../declaration";
 import {
   BinaryExpr,
   CallExpr,
@@ -78,10 +78,14 @@ const STARTS_WITH_SEARCH_STRING = "searchString";
  * https://github.com/sam-goodwin/functionless/issues/37#issuecomment-1066313146
  */
 export const synthesizeEventPattern = (
-  predicate: FunctionDecl | Err
+  predicate: FunctionDecl | Err | any
 ): functionless_event_bridge.FunctionlessEventPattern => {
   if (isErr(predicate)) {
     throw predicate.error;
+  } else if (!isFunctionDecl(predicate)) {
+    throw Error(
+      "Expected parameter to synthesizeEventPattern to be compiled by functionless."
+    );
   }
   const [eventDecl = undefined] = predicate.parameters;
 

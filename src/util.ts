@@ -104,3 +104,9 @@ export function findFunction(
     }
   }
 }
+
+/**
+ * An interface used to identify interfaces owned by Functionless.
+ * Interfaces cannot have static members or decorators.
+ */
+export interface __FunctionlessBase {}

@@ -1,5 +1,5 @@
 import * as functionless from "functionless";
-import { aws_events, aws_lambda } from "aws-cdk-lib";
+import { aws_lambda } from "aws-cdk-lib";
 import { Construct } from "constructs";
 
 interface UserDetails {
@@ -59,9 +59,7 @@ export class PeopleEvents extends Construct {
       })
     );
 
-    const bus = new functionless.EventBus<UserEvent>(
-      new aws_events.EventBus(this, "myBus")
-    );
+    const bus = new functionless.EventBus<UserEvent>(this, "myBus");
 
     // Create and update events are sent to a spcific lambda function.
     bus
@@ -88,8 +86,9 @@ export class PeopleEvents extends Construct {
       }))
       .pipe(deleteFunction);
 
-    const youngAdultCatLoversBus = new functionless.EventBus<UserEvent>(
-      new aws_events.EventBus(this, "catTeamBus")
+    const catPeopleBus = new functionless.EventBus<UserEvent>(
+      this,
+      "catTeamBus"
     );
 
     // New, young, cat loving users are forwarded to our sister team.
@@ -103,10 +102,10 @@ export class PeopleEvents extends Construct {
           event.detail.age >= 18 &&
           event.detail.age < 30
       )
-      .pipe(youngAdultCatLoversBus);
+      .pipe(catPeopleBus);
 
     // a function to view the events which make it to the cat bus
-    youngAdultCatLoversBus
+    catPeopleBus
       .when(this, "catSinkRule", () => true)
       .pipe(
         new functionless.Function<Delete, void>(

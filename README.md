@@ -137,12 +137,10 @@ Files can be ignored by the transformer by using glob patterns in the `tsconfig.
 
 ## Usage
 
+<details>
+  <summary>App Sync</summary>
+
 `functionless` makes configuring services like AWS Appsync as easy as writing TypeScript functions.
-
-- [App Sync](#App-Sync)
-- [Event Bridge](#Event-Bridge)
-
-### App Sync
 
 There are three aspects your need to learn before using Functionless in your CDK application:
 
@@ -150,7 +148,7 @@ There are three aspects your need to learn before using Functionless in your CDK
 2. `AppsyncResolver` construct for defining Appsync Resolver with TypeScript syntax.
 3. Add Resolvers to an `@aws-cdk/aws-appsync-alpha.GraphQLApi`.
 
-#### Appsync Integration interfaces for `Function` and `Table`
+### Appsync Integration interfaces for `Function` and `Table`
 
 You must wrap your CDK L2 Constructs in the corresponding wrapper class provided by functionless. Currently, Lambda `Function` and DynamoDB `Table` are supported.
 
@@ -224,7 +222,7 @@ new AppsyncResolver(() => {
 });
 ```
 
-#### `AppsyncResolver` construct for defining Appsync Resolver with TypeScript syntax
+### `AppsyncResolver` construct for defining Appsync Resolver with TypeScript syntax
 
 After wrapping your Functions/Tables, you can then instantiate an `AppsyncResolver` and interact with them using standard TypeScript syntax.
 
@@ -277,7 +275,7 @@ for (const item in list) {
 }
 ```
 
-#### Add Resolvers to an `@aws-cdk/aws-appsync-alpha.GraphQLApi`
+### Add Resolvers to an `@aws-cdk/aws-appsync-alpha.GraphQLApi`
 
 When you create a `new AppsyncResolver`, it does not immediately generate an Appsync Resolver. `AppsyncResolver` is more like a template for creating resolvers and can be re-used across more than one API.
 
@@ -313,7 +311,9 @@ getPerson.addResolver(api, {
 });
 ```
 
-### Event Bridge
+</details>
+<details>
+  <summary>Event Bridge</summary>
 
 Functionless makes using Event Bridge easy by leveraging typescript instead of AWS Event Bridge's proprietary logic and transform configuration.
 
@@ -327,11 +327,18 @@ Functionless uses a wrapped version of CDK's Event Bus, lets create a CDK event 
 
 ```ts
 // Create a new Event Bus using CDK.
-const awsBus = new aws_events.EventBus(this, "myBus");
+const bus = new functionless.EventBus(this, "myBus");
 
 // Functionless also supports using the default bus or importing an Event Bus.
-const defaultBus = EventBus.fromEventBusName(this, "defaultBus", "default");
-const importedBus = EventBus.fromEventBusArn(this, "defaultBus", arn);
+const awsBus = functionless.EventBus.fromBus(
+  new aws_events.EventBus(this, "awsBus")
+);
+const defaultBus = functionless.EventBus.fromBus(
+  aws_events.EventBus.fromEventBusName(this, "defaultBus", "default")
+);
+const importedBus = functionless.EventBus.fromBus(
+  aws_events.EventBus.fromEventBusArn(this, "defaultBus", arn)
+);
 ```
 
 Functionless supports well typed events, lets add our event schema to Typescript.
@@ -352,19 +359,13 @@ interface UserEvent
   > {}
 ```
 
-And wrap our CDK `EventBus`
-
-```ts
-const bus = functionless.EventBus<UserEvent>(awsEventBus);
-```
-
-#### Create Rules (`EventBusRule`) on a Event Bus to match incoming events.
+### Create Rules (`EventBusRule`) on a Event Bus to match incoming events.
 
 Now that you have a wrapped `EventBus`, lets add some rules.
 
 Functionless lets you write logic in Typescript on the type safe event.
 
-Lets match all of the create or updated events with one rule and another rule for deletes.
+Lets match all of the `Create` or `Update` events with one rule and another rule for `Delete`s.
 
 ```ts
 const createOrUpdateEvents = bus.when(
@@ -383,7 +384,7 @@ const deleteEvents = bus.when(
 We also want to do something special when we get a new cat lover who is between 18 and 30 years old, lets make another rule for those.
 
 ```ts
-const youngAdultCatLoversEvents = bus.when(
+const catPeopleEvents = bus.when(
   (event) =>
     event["detail-type"] === "Create" &&
     event.detail.interests.includes("CATS") &&
@@ -392,7 +393,7 @@ const youngAdultCatLoversEvents = bus.when(
 );
 ```
 
-#### Transform the event before sending to some services like `Lambda` Functions.
+### Transform the event before sending to some services like `Lambda` Functions.
 
 We have two lambda functions to invoke, one for create or updates and another for deletes, lets make those.
 
@@ -416,8 +417,12 @@ interface Delete {
   id: string;
 }
 
-const createOrUpdate = functionless.Function<CreateOrUpdate, void>(createOrUpdateFunction);
-const delete = functionless.Function<Delete, void>(createOrUpdateFunction);
+const createOrUpdateOperation = functionless.Function<CreateOrUpdate, void>(
+  createOrUpdateFunction
+);
+const deleteOperation = functionless.Function<Delete, void>(
+  createOrUpdateFunction
+);
 ```
 
 The events from before do not match the formats from before, so lets transform them to the structures match.
@@ -437,29 +442,29 @@ const deleteEventsTransformed = createOrUpdateEvents.map<Delete>((event) => ({
 }));
 ```
 
-#### Target other AWS services like Lambda and other Event Buses
+### Target other AWS services like Lambda and other Event Buses
 
 Now that we have created rules on our event buses using `when` and transformed those matched events using `map`, we need to send the events somewhere.
 
 We can `pipe` the transformed events to the lambda functions we defined earlier.
 
 ```ts
-createOrUpdateEventsTransformed.pipe(createOrUpdate);
-deleteEventsTransformed.pipe(delete);
+createOrUpdateEventsTransformed.pipe(createOrUpdateOperation);
+deleteEventsTransformed.pipe(deleteOperation);
 ```
 
 What about our young cat lovers? We want to forward those events to our sister team's event bus for processing.
 
 ```ts
-const youngAdultCatLoversEvents = functionless.EventBus(
+const catPeopleBus = functionless.EventBus.fromBus(
   aws_events.EventBus.fromEventBusArn(this, "catTeamBus", catTeamBusArn)
 );
 
 // Note: EventBridge does not support transforming events which target other event buses. These events are sent as is.
-youngAdultCatLoversEvents.pipe(youngAdultCatLoversEvents);
+catPeopleEvents.pipe(catPeopleBus);
 ```
 
-#### Summary
+### Summary
 
 Lets look at the above all together.
 
@@ -498,9 +503,7 @@ const deleteFunction = new functionless.Function<Delete, void>(
   new aws_lambda.Function(this, "delete", { ... })
 );
 
-const bus = new functionless.EventBus<UserEvent>(
-  new aws_events.EventBus(this, "myBus")
-);
+const bus = new functionless.EventBus<UserEvent>(this, "myBus");
 
 // Create and update events are sent to a spcific lambda function.
 bus
@@ -527,11 +530,7 @@ bus
   }))
   .pipe(deleteFunction);
 
-const youngAdultCatLoversBus = new functionless.EventBus<UserEvent>(
-  aws_events.EventBus.fromEventBusArn(this, "catTeamBus", catBusArn)
-);
-
-// New, young, cat loving users are forwarded to our sister team.
+// New, young users interested in cat are forwarded to our sister team.
 bus
   .when(
     this,
@@ -542,10 +541,19 @@ bus
       event.detail.age >= 18 &&
       event.detail.age < 30
   )
-  .pipe(youngAdultCatLoversBus);
+  .pipe(
+    functionless.EventBus<UserEvent>.fromBus(
+      aws_events.EventBus.fromEventBusArn(this, "catTeamBus", catBusArn)
+    )
+  );
 ```
 
-## TypeScript -> Velocity Template Logic
+</details>
+
+## TypeScript 
+
+<details>
+  <summary>-> Velocity Template Logic</summary>
 
 In order to write effective VTL templates, it helps to understand how TypeScript syntax maps to Velocity Template Statements.
 
@@ -883,7 +891,9 @@ $util.qr($v1.put($b, true))
 #end
 ```
 
-## Typescript -> Event patterns
+</details>
+<details>
+  <summary>-> Event patterns</summary>
 
 Event patterns are all predicates that filter on the incoming event. The pattern is modeled as a predicate on the bus, resulting in a rule that follows the logic in the predicate.
 
@@ -1090,7 +1100,9 @@ Simplification
 }
 ```
 
-## Typescript -> Event Target Input Transformers
+</details>
+<details>
+  <summary>-> Event Target Input Transformers</summary>
 
 Event input transformers are pure functions that transform the input json into a json object or string sent to the target. The transformer is modeled as a map function.
 
@@ -1196,6 +1208,8 @@ Simple inputs can use `eventPath`.
   "inputTemplate": "{ \"value\": <field>, \"source\": <source>, \"constant\": \"hello\" }"
 }
 ```
+
+</details>
 
 ## How it Works
 

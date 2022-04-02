@@ -2,6 +2,7 @@ import { aws_events, aws_events_targets } from "aws-cdk-lib";
 import { EventBus } from "./event-bus";
 import { Function, isFunction } from "../function";
 import { EventBusRuleInput } from "./types";
+import { IEventBusRule } from "./rule";
 
 export type LambdaTargetProps<P> = {
   func: Function<P, any>;
@@ -21,14 +22,14 @@ export type EventBusTargetResource<T extends EventBusRuleInput, P> =
  * Add a target to the run based on the configuration given.
  */
 export const pipe = <T extends EventBusRuleInput, P>(
-  rule: aws_events.Rule,
+  rule: IEventBusRule<T>,
   resource: EventBusTargetResource<T, P>,
   targetInput?: aws_events.RuleTargetInput
 ) => {
   if (isFunction(resource) || "func" in resource) {
     const _props = isFunction(resource) ? { func: resource } : resource;
 
-    return rule.addTarget(
+    return rule.rule.addTarget(
       new aws_events_targets.LambdaFunction(_props.func.resource, {
         deadLetterQueue: _props.deadLetterQueue,
         maxEventAge: _props.maxEventAge,
@@ -43,7 +44,7 @@ export const pipe = <T extends EventBusRuleInput, P>(
 
     const _props = resource instanceof EventBus ? { bus: resource } : resource;
 
-    return rule.addTarget(
+    return rule.rule.addTarget(
       new aws_events_targets.EventBus(_props.bus.bus, {
         deadLetterQueue: _props.deadLetterQueue,
         role: _props.role,

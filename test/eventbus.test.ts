@@ -9,14 +9,18 @@ beforeEach(() => {
   stack = new Stack();
 });
 
-test("new bus", () => {
+test("new bus from aws bus", () => {
   const bus = new aws_events.EventBus(stack, "bus");
 
-  new EventBus(bus);
+  EventBus.fromBus(bus);
+});
+
+test("new bus without wrapper", () => {
+  new EventBus(stack, "bus");
 });
 
 test("new rule without when", () => {
-  const bus = new aws_events.EventBus(stack, "bus");
+  const bus = new EventBus(stack, "bus");
 
   const rule = new EventBusRule(stack, "rule", bus, (_event) => true);
 
@@ -24,7 +28,7 @@ test("new rule without when", () => {
 });
 
 test("new transform without map", () => {
-  const bus = new aws_events.EventBus(stack, "bus");
+  const bus = new EventBus(stack, "bus");
 
   const rule = new EventBusRule(stack, "rule", bus, (_event) => true);
   const transform = new EventBusTransform((event) => event.source, rule);
@@ -34,17 +38,25 @@ test("new transform without map", () => {
   } as aws_events.RuleTargetInputProperties);
 });
 
-test("new bus with when", () => {
-  const bus = new aws_events.EventBus(stack, "bus");
+test("rule from existing rule", () => {
+  const awsRule = new aws_events.Rule(stack, "rule");
 
-  const rule = new EventBus(bus).when(stack, "rule", () => true);
+  const rule = EventBusRule.fromRule(awsRule);
+  const transform = new EventBusTransform((event) => event.source, rule);
+
+  expect(transform.targetInput.bind(rule.rule)).toEqual({
+    inputPath: "$.source",
+  } as aws_events.RuleTargetInputProperties);
+});
+
+test("new bus with when", () => {
+  const rule = new EventBus(stack, "bus").when(stack, "rule", () => true);
 
   expect(rule.rule._renderEventPattern()).toEqual({ source: [{ prefix: "" }] });
 });
 
 test("new bus with when pipe event bus", () => {
-  const bus = new aws_events.EventBus(stack, "bus");
-  const busBus = new EventBus(bus);
+  const busBus = new EventBus(stack, "bus");
 
   const rule = busBus.when(stack, "rule", () => true);
   rule.pipe(busBus);
@@ -55,9 +67,8 @@ test("new bus with when pipe event bus", () => {
   ).toHaveProperty("arn");
 });
 
-test("new bus with when map pipe function", () => {
-  const bus = new aws_events.EventBus(stack, "bus");
-  const busBus = new EventBus(bus);
+test("new bus with when map pipe function aa", () => {
+  const busBus = new EventBus(stack, "bus");
 
   const func = new Function(
     aws_lambda.Function.fromFunctionArn(stack, "func", "")
@@ -78,8 +89,7 @@ test("new bus with when map pipe function", () => {
 });
 
 test("new bus with when map pipe function props", () => {
-  const bus = new aws_events.EventBus(stack, "bus");
-  const busBus = new EventBus(bus);
+  const busBus = new EventBus(stack, "bus");
 
   const func = new Function(
     aws_lambda.Function.fromFunctionArn(stack, "func", "")

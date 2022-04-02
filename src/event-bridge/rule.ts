@@ -1,6 +1,6 @@
 import { aws_events } from "aws-cdk-lib";
 import { Construct } from "constructs";
-import { EventBus } from "./event-bus";
+import { EventBus, IEventBus } from "./event-bus";
 import { FunctionDecl } from "../declaration";
 import { synthesizeEventPattern } from "./event-pattern";
 import { Function } from "../function";
@@ -12,6 +12,7 @@ import {
   LambdaTargetProps,
   pipe,
 } from "./target";
+import { __FunctionlessBase } from "../util";
 
 /**
  * A function interface used by the {@link EventBus}'s when function to generate a rule.
@@ -22,33 +23,8 @@ export type EventPredicateFunction<
   E extends EventBusRuleInput = EventBusRuleInput<any>
 > = (event: E) => boolean;
 
-/**
- * Represents a set of events filtered by the when predicate using event bus's EventPatterns.
- * https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-event-patterns.html
- *
- * @see EventBus.when for more details on filtering events.
- */
-export class EventBusRule<T extends EventBusRuleInput> extends Construct {
-  public readonly rule: aws_events.Rule;
-
-  public static readonly FunctionlessType = "EventBusRule";
-
-  constructor(
-    scope: Construct,
-    id: string,
-    bus: aws_events.IEventBus,
-    predicate: EventPredicateFunction<T>
-  ) {
-    super(scope, id);
-
-    const decl = predicate as unknown as FunctionDecl;
-    const pattern = synthesizeEventPattern(decl);
-
-    this.rule = new aws_events.Rule(this, "rule", {
-      eventPattern: pattern as aws_events.EventPattern,
-      eventBus: bus,
-    });
-  }
+export interface IEventBusRule<T extends EventBusRuleInput> extends __FunctionlessBase {
+  readonly rule: aws_events.Rule;
 
   /**
    * Transform the event before sending to a target using pipe using TargetInput transforms.
@@ -118,9 +94,7 @@ export class EventBusRule<T extends EventBusRuleInput> extends Construct {
    * Unsupported by Functionless:
    * * Variables from outside of the function scope
    */
-  map<P>(transform: EventTransformFunction<T, P>): EventBusTransform<T, P> {
-    return new EventBusTransform<T, P>(transform, this);
-  }
+  map<P>(transform: EventTransformFunction<T, P>): EventBusTransform<T, P>;
 
   /**
    * Defines a target of the {@link EventBusTransform}'s rule using this TargetInput.
@@ -158,7 +132,71 @@ export class EventBusRule<T extends EventBusRuleInput> extends Construct {
   pipe(func: Function<T, any>): void;
   pipe(bus: EventBus<T>): void;
   pipe(props: EventBusTargetProps<T>): void;
+}
+
+abstract class EventBusRuleBase<T extends EventBusRuleInput>
+  implements IEventBusRule<T>
+{
+  public static readonly FunctionlessType = "EventBusRule";
+
+  constructor(readonly rule: aws_events.Rule) {}
+
+  /**
+   * @inheritdoc
+   */
+  map<P>(transform: EventTransformFunction<T, P>): EventBusTransform<T, P> {
+    return new EventBusTransform<T, P>(transform, this);
+  }
+
+  /**
+   * @inheritdoc
+   */
+  pipe(props: LambdaTargetProps<T>): void;
+  pipe(func: Function<T, any>): void;
+  pipe(bus: EventBus<T>): void;
+  pipe(props: EventBusTargetProps<T>): void;
   pipe(resource: EventBusTargetResource<T, T>): void {
-    pipe(this.rule, resource);
+    pipe(this, resource);
+  }
+}
+
+/**
+ * Represents a set of events filtered by the when predicate using event bus's EventPatterns.
+ * https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-event-patterns.html
+ *
+ * @see EventBus.when for more details on filtering events.
+ */
+export class EventBusRule<
+  T extends EventBusRuleInput
+> extends EventBusRuleBase<T> {
+  constructor(
+    scope: Construct,
+    id: string,
+    bus: IEventBus<T>,
+    predicate: EventPredicateFunction<T>
+  ) {
+    const decl = predicate as unknown as FunctionDecl;
+    const pattern = synthesizeEventPattern(decl);
+
+    const rule = new aws_events.Rule(scope, id, {
+      eventPattern: pattern as aws_events.EventPattern,
+      eventBus: bus.bus,
+    });
+
+    super(rule);
+  }
+
+  public static fromRule<T extends EventBusRuleInput>(
+    rule: aws_events.Rule
+  ): IEventBusRule<T> {
+    return new ImportedEventBusRule(rule);
+  }
+}
+
+class ImportedEventBusRule<
+  T extends EventBusRuleInput
+> extends EventBusRuleBase<T> {
+  constructor(rule: aws_events.Rule) {
+    super(rule);
   }
 }
