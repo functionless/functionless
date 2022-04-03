@@ -1,4 +1,4 @@
-import { App, aws_events, Stack } from "aws-cdk-lib";
+import { App, Stack } from "aws-cdk-lib";
 import * as appsync from "@aws-cdk/aws-appsync-alpha";
 import path from "path";
 import { PeopleDatabase, Person } from "./people-db";
@@ -57,7 +57,7 @@ type MyEvent = EventBusRuleInput<{
   value: string;
 }>;
 
-new EventBus<MyEvent>(new aws_events.EventBus(stack, "bus"))
+new EventBus<MyEvent>(stack, "bus")
   .when(stack, "aRule", (event) => event.detail.value === "hello")
   .map<Person>((event) => ({
     id: event.source,
