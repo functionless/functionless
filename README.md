@@ -2,72 +2,50 @@
 
 [![npm version](https://badge.fury.io/js/functionless.svg)](https://badge.fury.io/js/functionless)
 
-**Functionless** is a TypeScript plugin that transforms TypeScript code into Service-to-Service (aka. "functionless") integrations, such as AWS AppSync [Resolvers](https://docs.aws.amazon.com/appsync/latest/devguide/configuring-resolvers.html) and [Velocity Templates](https://docs.aws.amazon.com/appsync/latest/devguide/resolver-mapping-template-reference-programming-guide.html), or (coming soon) [Amazon States Language](https://docs.aws.amazon.com/step-functions/latest/dg/concepts-amazon-states-language.html) for AWS Step Functions.
+**Functionless** is a TypeScript plugin that transforms TypeScript code into Service-to-Service (aka. "functionless") integrations, such as AWS AppSync [Resolvers](https://docs.aws.amazon.com/appsync/latest/devguide/configuring-resolvers.html) and [Velocity Templates](https://docs.aws.amazon.com/appsync/latest/devguide/resolver-mapping-template-reference-programming-guide.html), or [Amazon States Language](https://docs.aws.amazon.com/step-functions/latest/dg/concepts-amazon-states-language.html) for AWS Step Functions.
 
 For example, the below function creates an Appsync Resolver Pipeline with two stages:
 
-1. Call the `myTable` DynamoDB Table
-2. Call the `myFunction` Lambda Function
+1. Put an item into the `postTable` DynamoDB Table
+2. Trigger a long-running Step Function workflow to validate the contents
 
 ```ts
-const getItem = new AppsyncResolver<{ id: string }, Item | null>(($context) => {
-  const item = myTable.get({
-    id: $util.toDynamoDB($context.arguments.id),
+const postTable = new Table<Post, "postId">(new aws_dynamodb.Table(this, "PostTable", { .. }));
+
+// Query.addPost AppSync Resolver
+const addPost = new AppsyncResolver<{ title: string, text: string }, Post>(($context) => {
+  const post = postDatabase.get({
+    key: $util.toDynamoDB($util.autoUuid()),
+    title: $util.toDynamoDB($context.arguments.title),
+    text: $util.toDynamoDB($context.arguments.text),
   });
 
-  const score = myFunction(item);
+  // start execution of a long-running workflow to validate the Post
+  validatePostWorkflow(post);
 
-  return {
-    ...item,
-    score,
-  };
+  return post;
+});
+
+// a Lambda Function which can validate the contents of a Post
+const validatePost = new Function<Post, >(new aws_lambda.Function(this, "Validate", { .. }))
+
+// Step Function workflow that validates the contents of a Post and deletes it if bad
+const validatePostWorkflow = new StepFunction(this, "ValidatePostWorkflow", (post: Post) => {
+  const validationResult = validatePost(post);
+  if (validationResult.status === "Not Cool") {
+    $AWS.DynamoDB.DeleteItem({
+      TableName: postTable,
+      Key: {
+        postId: {
+          S: post.postId
+        }
+      }
+    });
+  }
 });
 ```
 
-Functionless parses the TypeScript code and converts it to Apache Velocity Templates and an AWS Appsync CloudFormation configuration, saving you from writing all of that boilerplate. Below are snippets of the Velocity Templates that this TypeScript code generates.
-
-**Get Item**:
-
-```
-#set($id = $util.toDynamoDB(id))
-{
-  "operation": "GetItem",
-  "key": {
-    "id": $util.toJson($id)
-  }
-}
-```
-
-**Invoke Function**:
-
-```
-{
-  "operation": "Invoke",
-  "payload": {
-    "item": $util.toJson($context.stash.item)
-  }
-}
-```
-
-**Resolver Mapping Template**:
-
-```
-#set(v1 = {})
-#foreach($k in $context.stash.item.keySet())
-$util.qr($v1.put($k, $context.stash.item[$k]))
-#end
-$util.qr($v1.put('score', $context.stash.score))
-$util.toJson($v1)
-```
-
-**Final JSON Output of the Resolver**
-
-```json
-{
-  "id": "user-id",
-  "score": 9001
-}
-```
+Functionless parses the TypeScript code and converts it to Amazon States Language, Apache Velocity Templates and a CloudFormation configuration, saving you from writing all of that boilerplate.
 
 ## Why you should use Service-to-Service Integrations
 
@@ -129,7 +107,7 @@ Files can be ignored by the transformer by using glob patterns in the `tsconfig.
       {
         "transform": "functionless/lib/compile",
         "exclude": ["./src/**/protected/*"]
-      },
+      }
     ]
   }
 }
@@ -315,6 +293,9 @@ In order to write effective VTL templates, it helps to understand how TypeScript
 An AppSync Request Mapping Template is synthesized by evaluating all [Expressions](./src/expression.ts) to a series of `#set`, `$util.qr`, `#foreach` and `#if` statements. The end result is an object containing the returned result of the function which can then be converted to JSON with `$util.toJson`.
 
 The following section provides a reference guide on how each of the supported TypeScript syntax is mapped to VTL.
+
+<details>
+<summary>Click to expand</summary>
 
 #### Parameter Reference
 
@@ -645,6 +626,8 @@ $util.qr($v1.put($b, true))
 #set($a = $v1)
 #end
 ```
+
+</details>
 
 ## How it Works
 

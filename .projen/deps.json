@@ -2,7 +2,7 @@
   "dependencies": [
     {
       "name": "@aws-cdk/aws-appsync-alpha",
-      "version": "2.14.0-alpha.0",
+      "version": "2.17.0-alpha.0",
       "type": "build"
     },
     {
@@ -34,7 +34,7 @@
     },
     {
       "name": "aws-cdk-lib",
-      "version": "2.14.0",
+      "version": "2.17.0",
       "type": "build"
     },
     {
@@ -105,17 +105,17 @@
     },
     {
       "name": "typescript",
-      "version": "4.5.5",
+      "version": "4.6.2",
       "type": "build"
     },
     {
       "name": "@aws-cdk/aws-appsync-alpha",
-      "version": "^2.14.0-alpha.0",
+      "version": "^2.17.0-alpha.0",
       "type": "peer"
     },
     {
       "name": "aws-cdk-lib",
-      "version": "^2.14.0",
+      "version": "^2.17.0",
       "type": "peer"
     },
     {
@@ -130,7 +130,7 @@
     },
     {
       "name": "typescript",
-      "version": "^4.5.5",
+      "version": "^4.6.2",
       "type": "peer"
     },
     {

@@ -110,7 +110,7 @@ test("any function args", () => {
   const expr = assertNodeKind<ExprStmt>(result.body.statements[0], "ExprStmt");
   const call = assertNodeKind<CallExpr>(expr.expr, "CallExpr");
 
-  expect(call.args).toHaveLength(1);
+  expect(call.args).toHaveLength(0);
   expect(call.getArgument("searchString")).toBeUndefined();
 });
 
@@ -172,7 +172,7 @@ test("computed object name", () => {
     "ReturnStmt"
   );
   const obj = assertNodeKind<ObjectLiteralExpr>(ret.expr, "ObjectLiteralExpr");
-  obj.properties
+  obj.properties;
 });
 
 test("err", () => {

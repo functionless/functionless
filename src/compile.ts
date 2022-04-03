@@ -1,13 +1,12 @@
 import ts from "typescript";
+import path from "path";
 import { PluginConfig, TransformerExtras } from "ts-patch";
-import { BinaryOp } from "./expression";
-import { AnyTable } from "./table";
-import { AnyLambda } from "./function";
+import { BinaryOp, CanReference } from "./expression";
 import { FunctionlessNode } from "./node";
 import { AppsyncResolver } from "./appsync";
 import minimatch from "minimatch";
 import { assertDefined } from "./assert";
-import path from "path";
+import { StepFunction, ExpressStepFunction } from "./step-function";
 
 export default compile;
 
@@ -73,9 +72,11 @@ export function compile(
       );
 
       function visitor(node: ts.Node): ts.Node {
-        const _visit = () => {
+        const visit = () => {
           if (isAppsyncResolver(node)) {
-            return visitAppsyncResolver(node);
+            return visitAppsyncResolver(node as ts.NewExpression);
+          } else if (isStepFunction(node)) {
+            return visitStepFunction(node as ts.NewExpression);
           } else if (isReflectFunction(node)) {
             return errorBoundary(() =>
               toFunction("FunctionDecl", node.arguments[0])
@@ -84,7 +85,49 @@ export function compile(
           return node;
         };
         // keep processing the children of the updated node.
-        return ts.visitEachChild(_visit(), visitor, ctx);
+        return ts.visitEachChild(visit(), visitor, ctx);
+      }
+
+      function isReflectFunction(node: ts.Node): node is ts.CallExpression & {
+        arguments: [TsFunctionParameter, ...ts.Expression[]];
+      } {
+        if (ts.isCallExpression(node)) {
+          const exprType = checker.getTypeAtLocation(node.expression);
+          const exprDecl = exprType.symbol?.declarations?.[0];
+          if (exprDecl && ts.isFunctionDeclaration(exprDecl)) {
+            if (exprDecl.name?.text === "reflect") {
+              return true;
+            }
+          }
+        }
+        return false;
+      }
+
+      function isAppsyncResolver(node: ts.Node): node is ts.NewExpression & {
+        arguments: [TsFunctionParameter, ...ts.Expression[]];
+      } {
+        if (ts.isNewExpression(node)) {
+          return isFunctionlessClassOfKind(
+            node.expression,
+            AppsyncResolver.FunctionlessType
+          );
+        }
+        return false;
+      }
+
+      function isStepFunction(node: ts.Node): node is ts.NewExpression & {
+        arguments: [TsFunctionParameter, ...ts.Expression[]];
+      } {
+        if (ts.isNewExpression(node)) {
+          return (
+            isFunctionlessClassOfKind(node, StepFunction.FunctionlessType) ||
+            isFunctionlessClassOfKind(
+              node,
+              ExpressStepFunction.FunctionlessType
+            )
+          );
+        }
+        return false;
       }
 
       /**
@@ -129,31 +172,6 @@ export function compile(
         );
       }
 
-      function isReflectFunction(node: ts.Node): node is ts.CallExpression & {
-        arguments: [TsFunctionParameter, ...ts.Expression[]];
-      } {
-        if (ts.isCallExpression(node)) {
-          const exprType = checker.getTypeAtLocation(node.expression);
-          const exprDecl = exprType.symbol?.declarations?.[0];
-          if (exprDecl && ts.isFunctionDeclaration(exprDecl)) {
-            if (exprDecl.name?.text === "reflect") {
-              return true;
-            }
-          }
-        }
-        return false;
-      }
-
-      function isAppsyncResolver(node: ts.Node): node is ts.NewExpression {
-        if (ts.isNewExpression(node)) {
-          return isFunctionlessClassOfKind(
-            node.expression,
-            AppsyncResolver.FunctionlessType
-          );
-        }
-        return false;
-      }
-
       // Gets the static FunctionlessKind property from a ClassDeclaration
       function getFunctionlessKind(
         clss: ts.ClassDeclaration
@@ -177,6 +195,19 @@ export function compile(
           return member.initializer.text;
         }
         return undefined;
+      }
+
+      function visitStepFunction(call: ts.NewExpression): ts.Node {
+        return ts.factory.updateNewExpression(
+          call,
+          call.expression,
+          call.typeArguments,
+          call.arguments?.map((arg) =>
+            ts.isFunctionExpression(arg) || ts.isArrowFunction(arg)
+              ? errorBoundary(() => toFunction("FunctionDecl", arg))
+              : arg
+          )
+        );
       }
 
       function visitAppsyncResolver(call: ts.NewExpression): ts.Node {
@@ -246,7 +277,7 @@ export function compile(
           return toFunction("FunctionExpr", node);
         } else if (ts.isExpressionStatement(node)) {
           return newExpr("ExprStmt", [toExpr(node.expression)]);
-        } else if (ts.isCallExpression(node)) {
+        } else if (ts.isCallExpression(node) || ts.isNewExpression(node)) {
           const exprType = checker.getTypeAtLocation(node.expression);
           const functionBrand = exprType.getProperty("__functionBrand");
           let signature: ts.Signature | undefined;
@@ -270,22 +301,38 @@ export function compile(
           } else {
             signature = checker.getResolvedSignature(node);
           }
-          return newExpr("CallExpr", [
-            toExpr(node.expression),
-            ts.factory.createArrayLiteralExpression(
-              node.arguments.map((arg, i) =>
-                newExpr("Argument", [
-                  toExpr(arg),
-                  // the arguments array may not match the signature or the signature may be unknown
-                  signature?.parameters?.[i]?.name
-                    ? ts.factory.createStringLiteral(
-                        signature?.parameters?.[i]?.name
-                      )
-                    : ts.factory.createIdentifier("undefined"),
-                ])
-              )
-            ),
-          ]);
+          if (signature) {
+            return newExpr(ts.isCallExpression(node) ? "CallExpr" : "NewExpr", [
+              toExpr(node.expression),
+              ts.factory.createArrayLiteralExpression(
+                signature.parameters.map((parameter, i) =>
+                  newExpr("Argument", [
+                    (parameter.declarations?.[0] as ts.ParameterDeclaration)
+                      ?.dotDotDotToken
+                      ? newExpr("ArrayLiteralExpr", [
+                          ts.factory.createArrayLiteralExpression(
+                            node.arguments?.slice(i).map(toExpr) ?? []
+                          ),
+                        ])
+                      : toExpr(node.arguments?.[i]),
+                    ts.factory.createStringLiteral(parameter.name),
+                  ])
+                )
+              ),
+            ]);
+          } else {
+            return newExpr("CallExpr", [
+              toExpr(node.expression),
+              ts.factory.createArrayLiteralExpression(
+                node.arguments?.map((arg) =>
+                  newExpr("Argument", [
+                    toExpr(arg),
+                    ts.factory.createIdentifier("undefined"),
+                  ])
+                ) ?? []
+              ),
+            ]);
+          }
         } else if (ts.isBlock(node)) {
           return newExpr("BlockStmt", [
             ts.factory.createArrayLiteralExpression(
@@ -393,7 +440,7 @@ export function compile(
             "ReturnStmt",
             node.expression
               ? [toExpr(node.expression)]
-              : [ts.factory.createNull()]
+              : [newExpr("NullLiteralExpr", [])]
           );
         } else if (ts.isObjectLiteralExpression(node)) {
           return newExpr("ObjectLiteralExpr", [
@@ -403,9 +450,7 @@ export function compile(
           ]);
         } else if (ts.isPropertyAssignment(node)) {
           return newExpr("PropAssignExpr", [
-            ts.isStringLiteral(node.name) ||
-            (ts.isIdentifier(node.name) &&
-              (node.name.text === "null" || node.name.text === "undefined"))
+            ts.isStringLiteral(node.name) || ts.isIdentifier(node.name)
               ? string(node.name.text)
               : toExpr(node.name),
             toExpr(node.initializer),
@@ -484,6 +529,53 @@ export function compile(
           ]);
         } else if (ts.isBreakStatement(node)) {
           return newExpr("BreakStmt", []);
+        } else if (ts.isContinueStatement(node)) {
+          return newExpr("ContinueStmt", []);
+        } else if (ts.isTryStatement(node)) {
+          return newExpr("TryStmt", [
+            toExpr(node.tryBlock),
+            node.catchClause
+              ? toExpr(node.catchClause)
+              : ts.factory.createIdentifier("undefined"),
+            node.finallyBlock
+              ? toExpr(node.finallyBlock)
+              : ts.factory.createIdentifier("undefined"),
+          ]);
+        } else if (ts.isCatchClause(node)) {
+          return newExpr("CatchClause", [
+            node.variableDeclaration
+              ? toExpr(node.variableDeclaration)
+              : ts.factory.createIdentifier("undefined"),
+            toExpr(node.block),
+          ]);
+        } else if (ts.isThrowStatement(node)) {
+          return newExpr("ThrowStmt", [toExpr(node.expression)]);
+        } else if (ts.isTypeOfExpression(node)) {
+          return newExpr("TypeOfExpr", [toExpr(node.expression)]);
+        } else if (ts.isWhileStatement(node)) {
+          return newExpr("WhileStmt", [
+            toExpr(node.expression),
+            ts.isBlock(node.statement)
+              ? toExpr(node.statement)
+              : // re-write a standalone statement as as BlockStmt
+                newExpr("BlockStmt", [
+                  ts.factory.createArrayLiteralExpression([
+                    toExpr(node.statement),
+                  ]),
+                ]),
+          ]);
+        } else if (ts.isDoStatement(node)) {
+          return newExpr("DoStmt", [
+            ts.isBlock(node.statement)
+              ? toExpr(node.statement)
+              : // re-write a standalone statement as as BlockStmt
+                newExpr("BlockStmt", [
+                  ts.factory.createArrayLiteralExpression([
+                    toExpr(node.statement),
+                  ]),
+                ]),
+            toExpr(node.expression),
+          ]);
         } else if (ts.isParenthesizedExpression(node)) {
           return toExpr(node.expression);
         } else if (ts.isAsExpression(node)) {
@@ -497,6 +589,7 @@ export function compile(
 
       function ref(node: ts.Expression) {
         return newExpr("ReferenceExpr", [
+          ts.factory.createStringLiteral(exprToString(node)),
           ts.factory.createArrowFunction(
             undefined,
             undefined,
@@ -506,6 +599,20 @@ export function compile(
             node
           ),
         ]);
+      }
+
+      function exprToString(node: ts.Expression): string {
+        if (ts.isIdentifier(node)) {
+          return node.text;
+        } else if (ts.isPropertyAccessExpression(node)) {
+          return `${exprToString(node.expression)}.${exprToString(node.name)}`;
+        } else if (ts.isElementAccessExpression(node)) {
+          return `${exprToString(node.expression)}[${exprToString(
+            node.argumentExpression
+          )}]`;
+        } else {
+          return "";
+        }
       }
 
       function string(literal: string): ts.Expression {
@@ -522,9 +629,7 @@ export function compile(
         );
       }
 
-      function getKind(
-        node: ts.Node
-      ): (AnyLambda | AnyTable)["kind"] | undefined {
+      function getKind(node: ts.Node): CanReference["kind"] | undefined {
         const exprType = checker.getTypeAtLocation(node);
         const exprKind = exprType.getProperty("kind");
         if (exprKind) {
@@ -552,6 +657,8 @@ const OperatorMappings: Record<number, BinaryOp> = {
   [ts.SyntaxKind.MinusToken]: "-",
   [ts.SyntaxKind.AmpersandAmpersandToken]: "&&",
   [ts.SyntaxKind.BarBarToken]: "||",
+  [ts.SyntaxKind.ExclamationEqualsToken]: "!=",
+  [ts.SyntaxKind.ExclamationEqualsEqualsToken]: "!=",
   [ts.SyntaxKind.EqualsEqualsToken]: "==",
   [ts.SyntaxKind.EqualsEqualsEqualsToken]: "==",
   [ts.SyntaxKind.LessThanEqualsToken]: "<=",

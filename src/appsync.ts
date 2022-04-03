@@ -1,9 +1,7 @@
 import * as appsync from "@aws-cdk/aws-appsync-alpha";
 import { AppSyncResolverEvent } from "aws-lambda";
-import { CallExpr, Expr } from "./expression";
-import { AnyLambda } from "./function";
+import { CanReference, CallExpr, Expr } from "./expression";
 import { VTL } from "./vtl";
-import { AnyTable, isTable } from "./table";
 import { findService, toName } from "./util";
 import {
   ToAttributeMap,
@@ -11,6 +9,7 @@ import {
 } from "typesafe-dynamodb/lib/attribute-value";
 import { FunctionDecl, isFunctionDecl } from "./declaration";
 import { Literal } from "./literal";
+import { aws_stepfunctions } from "aws-cdk-lib";
 import { Construct } from "constructs";
 import { isErr } from "./error";
 
@@ -107,6 +106,8 @@ export class SynthesizedAppsyncResolver extends appsync.Resolver {
  *   fieldName: "getPerson"
  * });
  * ```
+ *
+ * @functionless AppsyncFunction
  */
 export class AppsyncResolver<
   Arguments extends ResolverArguments,
@@ -248,41 +249,111 @@ export class AppsyncResolver<
           const service = findService(stmt);
           if (service) {
             // we must now render a resolver with request mapping template
-            const dataSource = getDataSource(api, service, () =>
-              isTable(service)
-                ? new appsync.DynamoDbDataSource(
+            const dataSource = getDataSource(api, service, () => {
+              if (service.kind === "Table") {
+                return new appsync.DynamoDbDataSource(
+                  api,
+                  service.resource.node.addr,
+                  {
                     api,
-                    service.resource.node.addr,
-                    {
-                      api,
-                      table: service.resource,
-                    }
-                  )
-                : new appsync.LambdaDataSource(
+                    table: service.resource,
+                  }
+                );
+              } else if (service.kind === "Function") {
+                return new appsync.LambdaDataSource(
+                  api,
+                  service.resource.node.addr,
+                  {
                     api,
-                    service.resource.node.addr,
-                    {
-                      api,
-                      lambdaFunction: service.resource,
-                    }
-                  )
-            );
+                    lambdaFunction: service.resource,
+                  }
+                );
+              } else if (service.kind === "StepFunction") {
+                const ds = new appsync.HttpDataSource(
+                  api,
+                  service.resource.node.addr,
+                  {
+                    api,
+                    endpoint: `https://${
+                      service.getStepFunctionType() ===
+                      aws_stepfunctions.StateMachineType.EXPRESS
+                        ? "sync-states"
+                        : "states"
+                    }.${service.resource.stack.region}.amazonaws.com/`,
+                    authorizationConfig: {
+                      signingRegion: api.stack.region,
+                      signingServiceName: "states",
+                    },
+                  }
+                );
+                service.grantRead(ds.grantPrincipal);
+                if (
+                  service.getStepFunctionType() ===
+                  aws_stepfunctions.StateMachineType.EXPRESS
+                ) {
+                  service.grantStartSyncExecution(ds.grantPrincipal);
+                } else {
+                  service.grantStartExecution(ds.grantPrincipal);
+                }
+                return ds;
+              } else {
+                // TODO: use HTTP resolvers for the AWS-SDK types.
+                throw new Error(
+                  `${service.kind} cannot be used within an Appsync Resolver, please use an Appsync-compatible function`
+                );
+              }
+            });
+
+            let returnValName = "$context.result";
+            let pre: string | undefined;
+            if (service.kind === "StepFunction") {
+              returnValName = "$sfn__result";
+
+              if (
+                service.getStepFunctionType() ===
+                aws_stepfunctions.StateMachineType.EXPRESS
+              ) {
+                pre = `#if($context.result.statusCode == 200)
+  #set(${returnValName} = $util.parseJson($context.result.body))
+  #if(${returnValName}.output == 'null')
+    $util.qr(${returnValName}.put("output", $null))
+  #else
+    #set(${returnValName}.output = $util.parseJson(${returnValName}.output))
+  #end
+#else 
+  $util.error($context.result.body, "$context.result.statusCode")
+#end`;
+              } else {
+                pre = `#if($context.result.statusCode == 200)
+  #set(${returnValName} = $util.parseJson($context.result.body))
+#else 
+  $util.error($context.result.body, "$context.result.statusCode")
+#end`;
+              }
+            }
 
             if (stmt.kind === "ExprStmt") {
-              return createStage(findServiceCallExpr(stmt.expr), "{}");
+              const call = findServiceCallExpr(stmt.expr);
+              template.call(call);
+              return createStage(call, "{}");
             } else if (stmt.kind === "ReturnStmt") {
               return createStage(
                 findServiceCallExpr(stmt.expr),
-                `#set( $context.stash.return__flag = true )
+                `${
+                  pre ? `${pre}\n` : ""
+                }#set( $context.stash.return__flag = true )
 #set( $context.stash.return__val = ${getResult(stmt.expr)} )
 {}`
               );
-            } else if (stmt.kind === "VariableStmt" && stmt.expr) {
+            } else if (
+              stmt.kind === "VariableStmt" &&
+              stmt.expr?.kind === "CallExpr"
+            ) {
               return createStage(
                 findServiceCallExpr(stmt.expr),
-                `#set( $context.stash.${stmt.name} = ${getResult(
-                  stmt.expr
-                )} )\n{}`
+                `${pre ? `${pre}\n` : ""}#set( $context.stash.${
+                  stmt.name
+                } = ${getResult(stmt.expr)} )\n{}`
               );
             } else {
               throw new Error(
@@ -341,7 +412,7 @@ export class AppsyncResolver<
             function getResult(expr: Expr): string {
               if (expr.kind === "CallExpr") {
                 template.call(expr);
-                return "$context.result";
+                return returnValName;
               } else if (expr.kind === "PropAccessExpr") {
                 return `${getResult(expr.expr)}.${expr.name}`;
               } else if (expr.kind === "ElementAccessExpr") {
@@ -763,7 +834,7 @@ const None = {
 // @ts-ignore
 function getDataSource(
   api: appsync.GraphqlApi,
-  target: AnyLambda | AnyTable | null,
+  target: CanReference | null,
   compute: () => appsync.BaseDataSource
 ): appsync.BaseDataSource {
   const ds = getDataSources(api);

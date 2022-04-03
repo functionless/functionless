@@ -176,7 +176,7 @@ test("push element to array is renamed to add", () => {
       return context.arguments.list;
     }),
     payload,
-    `$util.qr($context.arguments.list.add('hello'))
+    `$util.qr($context.arguments.list.addAll(['hello']))
 #return($context.arguments.list)`
   );
 });
@@ -191,8 +191,8 @@ test("push element to array is renamed to add", () => {
 //   const vtl = new VTL();
 //   vtl.eval(template.body);
 //   const actual = vtl.toVTL();
-//   const expected = `$util.qr($context.arguments.list.add('hello'))
-//   $util.qr($context.arguments.list.add('world'))
+//   const expected = `$util.qr($context.arguments.list.addAll(['hello']))
+//   $util.qr($context.arguments.list.addAll(['world']))
 // ${returnExpr("$context.arguments.list")}`;
 //   expect(actual).toEqual(expected);
 // });
@@ -261,7 +261,7 @@ test("for-of loop", () => {
     payload,
     `#set($context.stash.newList = [])
 #foreach($item in $context.arguments.list)
-$util.qr($context.stash.newList.add($item))
+$util.qr($context.stash.newList.addAll([$item]))
 #end
 #return($context.stash.newList)`
   );
@@ -285,7 +285,7 @@ test("break from for-loop", () => {
 #if($item == 'hello')
 #break
 #end
-$util.qr($context.stash.newList.add($item))
+$util.qr($context.stash.newList.addAll([$item]))
 #end
 #return($context.stash.newList)`
   );
@@ -305,7 +305,7 @@ test("local variable inside for-of loop is declared as a local variable", () => 
     `#set($context.stash.newList = [])
 #foreach($item in $context.arguments.list)
 #set($i = $item)
-$util.qr($context.stash.newList.add($i))
+$util.qr($context.stash.newList.addAll([$i]))
 #end
 #return($context.stash.newList)`
   );
@@ -323,7 +323,7 @@ test("for-in loop and element access", () => {
     payload,
     `#set($context.stash.newList = [])
 #foreach($key in $context.arguments.record.keySet())
-$util.qr($context.stash.newList.add($context.arguments.record[$key]))
+$util.qr($context.stash.newList.addAll([$context.arguments.record[$key]]))
 #end
 #return($context.stash.newList)`
   );
