@@ -1,6 +1,6 @@
 import { aws_events } from "aws-cdk-lib";
 import { RuleTargetInput } from "aws-cdk-lib/aws-events";
-import { assertString } from "../assert";
+import { assertConstantValue, assertString } from "../assert";
 import { FunctionDecl, isFunctionDecl } from "../declaration";
 import { Err, isErr } from "../error";
 import {
@@ -208,7 +208,10 @@ export const synthesizeEventBridgeTargets = (
             : assertString(evalToConstant(expr.name)?.constant, expr.name.kind);
           return {
             ...obj,
-            [name]: exprToInternalLiteral(expr.expr),
+            [name]: assertConstantValue(
+              exprToInternalLiteral(expr.expr),
+              "Event Bridge input transforms can only output constant values."
+            ),
           };
         } else {
           throw new Error(
@@ -270,8 +273,8 @@ const RuleInputWrapper = (wrapped: RuleTargetInput): RuleTargetInput => ({
     }
     if (value.input) {
       // These values should all be runtime resolvable.
-      const input: string = rule.stack.resolve(value.input);
-      if (input) {
+      const input = rule.stack.resolve(value.input);
+      if (typeof input === "string" && input) {
         if (PREDEFINED_VALUES.some((v) => input.includes(v))) {
           return {
             inputTemplate: input.replace(

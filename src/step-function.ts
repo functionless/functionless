@@ -24,14 +24,20 @@ import {
 } from "./asl";
 import { isVTL } from "./vtl";
 import { makeCallable } from "./callable";
-import { CallExpr, isFunctionExpr, isVariableReference } from "./expression";
-import { AnyFunction, ensureItemOf } from "./util";
+import {
+  Argument,
+  CallExpr,
+  Expr,
+  isFunctionExpr,
+  isVariableReference,
+} from "./expression";
+import { ensureItemOf } from "./util";
 import { CallContext } from "./context";
-import { assertNever } from "./assert";
+import { assertNever, assertNodeKind } from "./assert";
 
 export type AnyStepFunction =
-  | ExpressStepFunction<AnyFunction>
-  | StepFunction<AnyFunction>;
+  | ExpressStepFunction<any, any>
+  | StepFunction<any, any>;
 
 export namespace $SFN {
   export const kind = "SFN";
@@ -321,18 +327,23 @@ export namespace $SFN {
   }
 }
 
-abstract class BaseStepFunction<F extends AnyFunction>
+export function isStepFunction<P = any, O = any>(
+  a: any
+): a is StepFunction<P, O> | ExpressStepFunction<P, O> {
+  return a?.kind === "StepFunction";
+}
+abstract class BaseStepFunction<P extends Record<string, any> | undefined, O>
   extends Resource
   implements aws_stepfunctions.IStateMachine
 {
   readonly kind = "StepFunction";
   readonly functionlessKind = "StepFunction";
 
-  readonly decl: FunctionDecl<F>;
+  readonly decl: FunctionDecl<(arg: P) => O>;
   readonly resource: aws_stepfunctions.CfnStateMachine;
 
   // @ts-ignore
-  readonly __functionBrand: F;
+  readonly __functionBrand: (arg: P) => O;
 
   readonly stateMachineName: string;
   readonly stateMachineArn: string;
@@ -344,18 +355,26 @@ abstract class BaseStepFunction<F extends AnyFunction>
    */
   readonly grantPrincipal;
 
-  constructor(scope: Construct, id: string, props: StepFunctionProps, func: F);
+  constructor(
+    scope: Construct,
+    id: string,
+    props: StepFunctionProps,
+    func: (arg: P) => O
+  );
 
-  constructor(scope: Construct, id: string, func: F);
+  constructor(scope: Construct, id: string, func: (arg: P) => O);
 
   constructor(
     scope: Construct,
     id: string,
     ...args:
-      | [props: StepFunctionProps, func: FunctionDecl<F>]
-      | [func: FunctionDecl<F>]
+      | [props: StepFunctionProps, func: (arg: P) => O]
+      | [func: (arg: P) => O]
   ) {
-    const props = isFunctionDecl(args[0]) ? undefined : args[0];
+    const props =
+      isFunctionDecl(args[0]) || typeof args[0] === "function"
+        ? undefined
+        : args[0];
     if (props?.stateMachineName !== undefined) {
       validateStateMachineName(props.stateMachineName);
     }
@@ -363,7 +382,9 @@ abstract class BaseStepFunction<F extends AnyFunction>
       ...props,
       physicalName: props?.stateMachineName,
     });
-    this.decl = isFunctionDecl(args[0]) ? args[0] : args[1]!;
+    this.decl = isFunctionDecl(args[0])
+      ? args[0]
+      : assertNodeKind<FunctionDecl>(args[1] as any, "FunctionDecl");
 
     this.role =
       props?.role ??
@@ -413,14 +434,16 @@ abstract class BaseStepFunction<F extends AnyFunction>
           }`,
           Parameters: {
             StateMachineArn: this.stateMachineArn,
-            Input: call.args.reduce(
-              (args, arg) => ({
-                ...args,
-                [`${arg.name!}${isVariableReference(arg.expr) ? ".$" : ""}`]:
-                  ASL.toJson(arg.expr),
-              }),
-              {}
-            ),
+            Input: call.args
+              .filter((arg): arg is Argument & { expr: Expr } => !!arg.expr)
+              .reduce(
+                (args, arg) => ({
+                  ...args,
+                  [`${arg.name!}${isVariableReference(arg.expr) ? ".$" : ""}`]:
+                    ASL.toJson(arg.expr),
+                }),
+                {}
+              ),
           },
         };
         return task;
@@ -869,8 +892,9 @@ export interface StepFunctionProps
  * ```
  */
 export class ExpressStepFunction<
-  F extends AnyFunction
-> extends BaseStepFunction<F> {
+  P extends Record<string, any> | undefined,
+  O
+> extends BaseStepFunction<P, O> {
   /**
    * This static property identifies this class as an ExpressStepFunction to the TypeScript plugin.
    */
@@ -915,17 +939,28 @@ export type SyncExecutionResult<T> =
   | SyncExecutionFailedResult
   | SyncExecutionSuccessResult<T>;
 
-export interface ExpressStepFunction<F extends AnyFunction> {
-  (...args: Parameters<F>): SyncExecutionResult<ReturnType<F>>;
+type ConditionalMachine<P, O> = P extends undefined
+  ? () => O | ((name: string, traceHeader: string) => O) | ((name: string) => O)
+  : (
+      payload: P
+    ) =>
+      | O
+      | ((name: string, traceHeader: string, payload: P) => O)
+      | ((name: string, payload: P) => O);
+
+export interface ExpressStepFunction<
+  P extends Record<string, any> | undefined,
+  O
+> {
   (
-    name: string,
-    traceHeader: string,
-    ...args: Parameters<F>
-  ): SyncExecutionResult<ReturnType<F>>;
-  (name: string, ...args: Parameters<F>): SyncExecutionResult<ReturnType<F>>;
+    ...args: Parameters<ConditionalMachine<P, SyncExecutionResult<O>>>
+  ): SyncExecutionResult<O>;
 }
 
-export class StepFunction<F extends AnyFunction> extends BaseStepFunction<F> {
+export class StepFunction<
+  P extends Record<string, any> | undefined,
+  O
+> extends BaseStepFunction<P, O> {
   /**
    * This static property identifies this class as an StepFunction to the TypeScript plugin.
    */
@@ -936,15 +971,10 @@ export class StepFunction<F extends AnyFunction> extends BaseStepFunction<F> {
   }
 }
 
-export interface StepFunction<F extends AnyFunction> {
+export interface StepFunction<P extends Record<string, any> | undefined, O> {
   (
-    name: string,
-    ...args: Parameters<F>
+    ...args: Parameters<
+      ConditionalMachine<P, AWS.StepFunctions.StartExecutionOutput>
+    >
   ): AWS.StepFunctions.StartExecutionOutput;
-  (
-    name: string,
-    traceHeader: string,
-    ...args: Parameters<F>
-  ): AWS.StepFunctions.StartExecutionOutput;
-  (...args: Parameters<F>): AWS.StepFunctions.StartExecutionOutput;
 }

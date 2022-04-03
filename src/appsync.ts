@@ -12,6 +12,9 @@ import { Literal } from "./literal";
 import { aws_stepfunctions } from "aws-cdk-lib";
 import { Construct } from "constructs";
 import { isErr } from "./error";
+import { isTable } from "./table";
+import { isFunction } from "./function";
+import { isStepFunction } from "./step-function";
 
 /**
  * The shape of the AWS Appsync `$context` variable.
@@ -250,7 +253,7 @@ export class AppsyncResolver<
           if (service) {
             // we must now render a resolver with request mapping template
             const dataSource = getDataSource(api, service, () => {
-              if (service.kind === "Table") {
+              if (isTable(service)) {
                 return new appsync.DynamoDbDataSource(
                   api,
                   service.resource.node.addr,
@@ -259,7 +262,7 @@ export class AppsyncResolver<
                     table: service.resource,
                   }
                 );
-              } else if (service.kind === "Function") {
+              } else if (isFunction(service)) {
                 return new appsync.LambdaDataSource(
                   api,
                   service.resource.node.addr,
@@ -268,7 +271,7 @@ export class AppsyncResolver<
                     lambdaFunction: service.resource,
                   }
                 );
-              } else if (service.kind === "StepFunction") {
+              } else if (isStepFunction(service)) {
                 const ds = new appsync.HttpDataSource(
                   api,
                   service.resource.node.addr,
@@ -299,14 +302,14 @@ export class AppsyncResolver<
               } else {
                 // TODO: use HTTP resolvers for the AWS-SDK types.
                 throw new Error(
-                  `${service.kind} cannot be used within an Appsync Resolver, please use an Appsync-compatible function`
+                  `Reference cannot be used within an Appsync Resolver, please use an Appsync-compatible function`
                 );
               }
             });
 
             let returnValName = "$context.result";
             let pre: string | undefined;
-            if (service.kind === "StepFunction") {
+            if (isStepFunction(service)) {
               returnValName = "$sfn__result";
 
               if (

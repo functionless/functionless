@@ -11,7 +11,9 @@ import {
   EventBusTargetResource,
   LambdaTargetProps,
   pipe,
+  StateMachineTargetProps,
 } from "./target";
+import { ExpressStepFunction, StepFunction } from "../step-function";
 
 /**
  * A function interface used by the {@link EventBus}'s when function to generate a rule.
@@ -77,7 +79,7 @@ export interface IEventBusRule<T extends EventBusRuleInput> {
    * ```
    *
    *
-   * Local varaibles
+   * Local variables
    *
    * ```ts
    * .map(event => {
@@ -136,6 +138,9 @@ export interface IEventBusRule<T extends EventBusRuleInput> {
   pipe(func: Function<T, any>): void;
   pipe(bus: EventBus<T>): void;
   pipe(props: EventBusTargetProps<T>): void;
+  pipe(props: StateMachineTargetProps<T>): void;
+  pipe(props: StepFunction<T, any>): void;
+  pipe(props: ExpressStepFunction<T, any>): void;
 }
 
 abstract class EventBusRuleBase<T extends EventBusRuleInput>
@@ -163,8 +168,11 @@ abstract class EventBusRuleBase<T extends EventBusRuleInput>
   pipe(func: Function<T, any>): void;
   pipe(bus: EventBus<T>): void;
   pipe(props: EventBusTargetProps<T>): void;
+  pipe(props: StateMachineTargetProps<T>): void;
+  pipe(props: StepFunction<T, any>): void;
+  pipe(props: ExpressStepFunction<T, any>): void;
   pipe(resource: EventBusTargetResource<T, T>): void {
-    pipe(this, resource);
+    pipe(this, resource as any);
   }
 }
 

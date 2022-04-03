@@ -22,7 +22,8 @@ import {
 import { ASL, isASL, Task } from "./asl";
 import { CallContext } from "./context";
 import { VTL } from "./vtl";
-import { Function } from "./function";
+import { Function, isFunction } from "./function";
+import { isTable } from "./table";
 
 import type { DynamoDB as AWSDynamoDB } from "aws-sdk";
 
@@ -45,6 +46,10 @@ type RangeKey<T extends Table<any, any, any>> = T extends Table<
 >
   ? SK
   : never;
+
+export function isAWS(a: any): a is typeof $AWS {
+  return a?.kind === "AWS";
+}
 
 /**
  * The `AWS` namespace exports functions that map to AWS Step Functions AWS-SDK Integrations.
@@ -294,7 +299,7 @@ export namespace $AWS {
       }
 
       const table = tableProp.expr.ref();
-      if (table.kind !== "Table") {
+      if (!isTable(table)) {
         throw new Error(``);
       }
       if (
@@ -348,7 +353,7 @@ export namespace $AWS {
         );
       }
       const functionRef = functionName.ref();
-      if (functionRef.kind !== "Function") {
+      if (!isFunction(functionRef)) {
         throw new Error(
           `property 'FunctionName' must reference a functionless.Function`
         );

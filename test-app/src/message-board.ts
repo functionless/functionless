@@ -1,6 +1,7 @@
 import {
   App,
   aws_dynamodb,
+  aws_events,
   aws_lambda,
   RemovalPolicy,
   Stack,
@@ -13,6 +14,8 @@ import {
   Function,
   StepFunction,
   Table,
+  EventBus,
+  EventBusRuleInput,
 } from "functionless";
 import * as appsync from "@aws-cdk/aws-appsync-alpha";
 import path from "path";
@@ -154,26 +157,25 @@ export const validateComment = new Function<
   })
 );
 
-export const commentValidationWorkflow = new StepFunction(
-  stack,
-  "CommentValidationWorkflow",
-  (postId: string, commentId: string, commentText: string) => {
-    const status = validateComment({ commentText });
-    if (status === "bad") {
-      $AWS.DynamoDB.DeleteItem({
-        TableName: database,
-        Key: {
-          pk: {
-            S: `Post|${postId}`,
-          },
-          sk: {
-            S: `Comment|${commentId}`,
-          },
+export const commentValidationWorkflow = new StepFunction<
+  { postId: string; commentId: string; commentText: string },
+  void
+>(stack, "CommentValidationWorkflow", (input) => {
+  const status = validateComment({ commentText: input.commentText });
+  if (status === "bad") {
+    $AWS.DynamoDB.DeleteItem({
+      TableName: database,
+      Key: {
+        pk: {
+          S: `Post|${input.postId}`,
         },
-      });
-    }
+        sk: {
+          S: `Comment|${input.commentId}`,
+        },
+      },
+    });
   }
-);
+});
 
 export const addComment = new AppsyncResolver<
   { postId: string; commentText: string },
@@ -206,11 +208,7 @@ export const addComment = new AppsyncResolver<
   });
 
   // kick off a workflow to validate the comment
-  commentValidationWorkflow(
-    comment.postId,
-    comment.commentId,
-    comment.commentText
-  );
+  commentValidationWorkflow(comment);
 
   return comment;
 }).addResolver(api, {
@@ -218,10 +216,10 @@ export const addComment = new AppsyncResolver<
   fieldName: "addComment",
 });
 
-export const deleteWorkflow = new StepFunction(
+export const deleteWorkflow = new StepFunction<{ postId: string }, void>(
   stack,
   "DeletePostWorkflow",
-  (postId: string) => {
+  (input) => {
     while (true) {
       try {
         const comments = $AWS.DynamoDB.Query({
@@ -229,7 +227,7 @@ export const deleteWorkflow = new StepFunction(
           KeyConditionExpression: `pk = :pk`,
           ExpressionAttributeValues: {
             ":pk": {
-              S: `Post|${postId}`,
+              S: `Post|${input.postId}`,
             },
           },
         });
@@ -249,7 +247,7 @@ export const deleteWorkflow = new StepFunction(
             TableName: database,
             Key: {
               pk: {
-                S: `Post|${postId}`,
+                S: `Post|${input.postId}`,
               },
               sk: {
                 S: "Post",
@@ -259,7 +257,7 @@ export const deleteWorkflow = new StepFunction(
 
           return {
             status: "deleted",
-            postId,
+            postId: input.postId,
           };
         }
       } catch {
@@ -288,7 +286,7 @@ export const deletePost = new AppsyncResolver<
     return undefined;
   }
 
-  return deleteWorkflow($context.arguments.postId);
+  return deleteWorkflow({ postId: $context.arguments.postId });
 }).addResolver(api, {
   typeName: "Mutation",
   fieldName: "deletePost",
@@ -331,3 +329,67 @@ export interface CommentPage {
   nextToken?: string;
   comments: Comment[];
 }
+
+interface Notification {
+  message: string;
+}
+
+// TODO: Make this easier - https://github.com/sam-goodwin/functionless/issues/44
+interface StepFunctionDetail {
+  executionArn: string;
+  stateMachineArn: string;
+  name: string;
+  status: "SUCCEEDED" | "RUNNING";
+  startDate: number;
+  stopDate: number | null;
+  input: string;
+  inputDetails: {
+    included: boolean;
+  };
+  output: null | string;
+  outputDetails: null;
+}
+
+interface StepFunctionSucceededEvent
+  extends EventBusRuleInput<
+    StepFunctionDetail,
+    "Step Functions Execution Status Change"
+  > {}
+
+interface TestDeleteEvent
+  extends EventBusRuleInput<{ postId: string }, "Delete", "test"> {}
+
+const sendNotification = new Function<Notification, void>(
+  new aws_lambda.Function(stack, "sendNotification", {
+    code: aws_lambda.Code.fromInline(`
+exports.handler = async (event) => {
+    console.log('notification: ', event)
+  };
+`),
+    runtime: aws_lambda.Runtime.NODEJS_14_X,
+    handler: "index.handler",
+  })
+);
+
+const defaultBus = EventBus.fromBus<
+  StepFunctionSucceededEvent | TestDeleteEvent
+>(aws_events.EventBus.fromEventBusName(stack, "defaultBus", "default"));
+
+defaultBus
+  .when(
+    stack,
+    "deleteSuccessfullEvent",
+    (event) =>
+      event["detail-type"] === "Step Functions Execution Status Change" &&
+      event.detail.status === "SUCCEEDED" &&
+      event.detail.stateMachineArn === deleteWorkflow.stateMachineArn
+  )
+  .map((event) => ({
+    message: `post deleted ${event.id} using ${deleteWorkflow.stateMachineName}`,
+  }))
+  .pipe(sendNotification);
+
+defaultBus
+  .when(stack, 'testDelete', (event) => event.source === "test")
+  .map((event) => event.detail)
+  .pipe(deleteWorkflow);

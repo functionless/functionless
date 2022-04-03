@@ -123,9 +123,12 @@ export class VTL {
    * @param node the {@link Expr} or {@link Stmt} to evaluate.
    * @returns a variable reference to the evaluated value
    */
-  public eval(node: Expr, returnVar?: string): string;
+  public eval(node?: Expr, returnVar?: string): string;
   public eval(node: Stmt, returnVar?: string): void;
-  public eval(node: FunctionlessNode, returnVar?: string): string | void {
+  public eval(node?: FunctionlessNode, returnVar?: string): string | void {
+    if (!node) {
+      return "$null";
+    }
     switch (node.kind) {
       case "ArrayLiteralExpr": {
         if (

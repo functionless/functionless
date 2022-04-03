@@ -62,6 +62,7 @@ import {
   ReferencePath,
 } from "../utils";
 import { Err, isErr } from "../../error";
+import { assertPrimitive } from "../../assert";
 
 const OPERATIONS = { STARTS_WITH: "startsWith", INCLUDES: "includes" };
 const INCLUDES_SEARCH_ELEMENT = "searchElement";
@@ -559,16 +560,22 @@ export const synthesizeEventPattern = (
   ): PatternDocument => {
     const searchElement = evalToConstant(
       assertDefined(
-        expr.args[0],
+        expr.args[0].expr,
         `Includes must have a single string argument ${INCLUDES_SEARCH_ELEMENT}.`
-      ).expr
+      )
     )?.constant;
 
     if (
       expr.args
         .map((e) => e.expr)
-        .filter((e) => !isNullLiteralExpr(e) && !isUndefinedLiteralExpr(e))
-        .length > 1
+        .filter(
+          (e) =>
+            !(
+              e === undefined ||
+              isNullLiteralExpr(e) ||
+              isUndefinedLiteralExpr(e)
+            )
+        ).length > 1
     ) {
       throw new Error(`Includes only supports the searchElement argument`);
     }
@@ -623,16 +630,22 @@ export const synthesizeEventPattern = (
     expr: CallExpr & { expr: PropAccessExpr | ElementAccessExpr }
   ): PatternDocument => {
     const arg = assertDefined(
-      expr.args[0],
+      expr.args[0].expr,
       `StartsWith must contain a single string argument ${STARTS_WITH_SEARCH_STRING}`
     );
-    const searchString = assertString(evalToConstant(arg.expr)?.constant);
+    const searchString = assertString(evalToConstant(arg)?.constant);
 
     if (
       expr.args
         .map((e) => e.expr)
-        .filter((e) => !isNullLiteralExpr(e) && !isUndefinedLiteralExpr(e))
-        .length > 1
+        .filter(
+          (e) =>
+            !(
+              e === undefined ||
+              isNullLiteralExpr(e) ||
+              isUndefinedLiteralExpr(e)
+            )
+        ).length > 1
     ) {
       throw new Error("Includes only supports the searchString argument");
     }
@@ -739,9 +752,14 @@ export const synthesizeEventPattern = (
       expr.op
     );
 
-    const { constant: value } = assertDefined(
+    const constant = assertDefined(
       evalToConstant(other),
       "Equivency must compare to a constant value."
+    );
+
+    const value = assertPrimitive(
+      constant.constant,
+      "Event Patterns can only compare primitive values"
     );
 
     if (typeof value === "undefined") {

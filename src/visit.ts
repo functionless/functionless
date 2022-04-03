@@ -75,6 +75,9 @@ export function visitEachChild<T extends FunctionlessNode>(
   ) => FunctionlessNode | FunctionlessNode[] | undefined
 ): T {
   if (node.kind === "Argument") {
+    if (!node.expr) {
+      return node.clone() as T;
+    }
     const expr = visitor(node.expr);
     ensure(expr, isExpr, `an Argument's expr must be an Expr`);
     return new Argument(expr, node.name) as T;
@@ -140,6 +143,9 @@ export function visitEachChild<T extends FunctionlessNode>(
       `visitEachChild of a ${node.kind}'s expr must return a single Expr`
     );
     const args = node.args.flatMap((arg) => {
+      if (!arg.expr) {
+        return arg.clone();
+      }
       const expr = visitor(arg.expr);
       ensure(
         expr,

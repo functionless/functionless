@@ -1,4 +1,5 @@
 import { aws_events, aws_lambda, Stack } from "aws-cdk-lib";
+import { ExpressStepFunction, StepFunction } from "../src";
 import { EventBus, EventBusRule } from "../src/event-bridge";
 import { EventBusTransform } from "../src/event-bridge/transform";
 import { Function } from "../src/function";
@@ -73,6 +74,44 @@ test("new bus with when map pipe function", () => {
   const func = new Function(
     aws_lambda.Function.fromFunctionArn(stack, "func", "")
   );
+
+  const rule = busBus
+    .when(stack, "rule", () => true)
+    .map((event) => event.source);
+  rule.pipe(func);
+
+  expect(rule.targetInput.bind(rule.rule.rule)).toEqual({
+    inputPath: "$.source",
+  } as aws_events.RuleTargetInputProperties);
+  expect((rule.rule.rule as any).targets.length).toEqual(1);
+  expect(
+    (rule.rule.rule as any).targets[0] as aws_events.IRuleTarget
+  ).toHaveProperty("arn");
+});
+
+test("new bus with when map pipe step function", () => {
+  const busBus = new EventBus(stack, "bus");
+
+  const func = new StepFunction(stack, "sfn", () => {});
+
+  const rule = busBus
+    .when(stack, "rule", () => true)
+    .map((event) => event.source);
+  rule.pipe(func);
+
+  expect(rule.targetInput.bind(rule.rule.rule)).toEqual({
+    inputPath: "$.source",
+  } as aws_events.RuleTargetInputProperties);
+  expect((rule.rule.rule as any).targets.length).toEqual(1);
+  expect(
+    (rule.rule.rule as any).targets[0] as aws_events.IRuleTarget
+  ).toHaveProperty("arn");
+});
+
+test("new bus with when map pipe express step function", () => {
+  const busBus = new EventBus(stack, "bus");
+
+  const func = new ExpressStepFunction(stack, "sfn", () => {});
 
   const rule = busBus
     .when(stack, "rule", () => true)

@@ -1,7 +1,7 @@
 import { EventBusRuleInput } from "../src/event-bridge";
 
-import { Function, reflect } from "../src";
-import { aws_events } from "aws-cdk-lib";
+import { Function, reflect, StepFunction } from "../src";
+import { aws_events, Stack } from "aws-cdk-lib";
 import { ebEventTargetTestCase, ebEventTargetTestCaseError } from "./util";
 import { EventField } from "aws-cdk-lib/aws-events";
 
@@ -575,16 +575,57 @@ describe("referencing", () => {
     );
   });
 
-  test.skip("constant from outside", () => {
+  test("constant from outside", () => {
     const value = "hi";
 
     ebEventTargetTestCase<testEvent>(
       reflect(() => {
-        return { value };
+        return { value: value };
       }),
       aws_events.RuleTargetInput.fromObject({
         value: "hi",
       })
+    );
+  });
+
+  test("constant from outside into object", () => {
+    const value = "hello";
+    const value2 = "hello2";
+
+    ebEventTargetTestCase<testEvent>(
+      reflect(() => {
+        return { value2, value };
+      }),
+      aws_events.RuleTargetInput.fromObject({
+        value2: "hello2",
+        value: "hello",
+      })
+    );
+  });
+
+  test("step functions property", () => {
+    const stack = new Stack();
+
+    const sfn = new StepFunction(stack, "sfn", () => {});
+
+    ebEventTargetTestCase<testEvent>(
+      reflect(() => {
+        return { sfn: sfn.stateMachineArn };
+      }),
+      aws_events.RuleTargetInput.fromObject({
+        sfn: sfn.stateMachineArn,
+      })
+    );
+  });
+
+  test("constant from outside into object", () => {
+    const value = () => {};
+
+    ebEventTargetTestCaseError<testEvent>(
+      reflect(() => {
+        return { value: value };
+      }),
+      "Event Bridge input transforms can only output constant values."
     );
   });
 });
@@ -650,6 +691,99 @@ describe("not allowed", () => {
         return { val: obj["blah"] };
       }),
       "Cannot find property blah in Object with constant keys: val"
+    );
+  });
+});
+
+// https://github.com/sam-goodwin/functionless/issues/68
+describe.skip("destructure", () => {
+  test("descture parameter", () => {
+    ebEventTargetTestCase<testEvent>(
+      reflect(({ detail }) => {
+        return { value: detail.value };
+      }),
+      aws_events.RuleTargetInput.fromObject({
+        value: aws_events.EventField.fromPath("$.detail.value"),
+      })
+    );
+  });
+
+  test("descture variable", () => {
+    ebEventTargetTestCase<testEvent>(
+      reflect((event) => {
+        const { value } = event.detail;
+
+        return { value: value };
+      }),
+      aws_events.RuleTargetInput.fromObject({
+        value: aws_events.EventField.fromPath("$.detail.value"),
+      })
+    );
+  });
+
+  test("descture multi-layer variable", () => {
+    ebEventTargetTestCase<testEvent>(
+      reflect((event) => {
+        const {
+          detail: { value },
+        } = event;
+
+        return { value: value };
+      }),
+      aws_events.RuleTargetInput.fromObject({
+        value: aws_events.EventField.fromPath("$.detail.value"),
+      })
+    );
+  });
+
+  test("descture array doesn't work", () => {
+    ebEventTargetTestCaseError<testEvent>(
+      reflect((event) => {
+        const [first] = event.detail.array;
+
+        return { value: first };
+      })
+    );
+  });
+
+  test("descture parameter array doesn't work", () => {
+    ebEventTargetTestCase<testEvent>(
+      reflect(
+        ({
+          detail: {
+            array: [first],
+          },
+        }) => {
+          return { value: first };
+        }
+      ),
+      aws_events.RuleTargetInput.fromObject({
+        value: aws_events.EventField.fromPath("$.detail.value"),
+      })
+    );
+  });
+
+  test("descture variable rename", () => {
+    ebEventTargetTestCase<testEvent>(
+      reflect((event) => {
+        const { value: val } = event.detail;
+
+        return { value: val };
+      }),
+      aws_events.RuleTargetInput.fromObject({
+        value: aws_events.EventField.fromPath("$.detail.value"),
+      })
+    );
+  });
+
+  test("descture parameter rename", () => {
+    ebEventTargetTestCase<testEvent>(
+      reflect(({ source: src }) => {
+        return { value: src };
+      }),
+      aws_events.RuleTargetInput.fromObject({
+        value: aws_events.EventField.fromPath("$.source"),
+      })
     );
   });
 });
