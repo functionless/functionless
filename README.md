@@ -4,6 +4,21 @@
 
 **Functionless** is a TypeScript plugin that transforms TypeScript code into Service-to-Service (aka. "functionless") integrations, such as AWS AppSync [Resolvers](https://docs.aws.amazon.com/appsync/latest/devguide/configuring-resolvers.html) and [Velocity Templates](https://docs.aws.amazon.com/appsync/latest/devguide/resolver-mapping-template-reference-programming-guide.html), or [Amazon States Language](https://docs.aws.amazon.com/step-functions/latest/dg/concepts-amazon-states-language.html) for AWS Step Functions.
 
+## Resources
+
+- [Getting Started](./docs/0-Getting-Started.md)
+- [Environment Setup](./docs/2-Environment-Setup.md)
+- [Integrations](./docs/2-Integrations.md)
+- [Appsync Resolvers](./docs/3-Appsync-Resolvers.md)
+- [TypeScript → Velocity Templates Reference Guide](./docs/3-AppSync-Resolvers-VTL.md)
+- [Step Functions](./docs/4-Step-Functions.md)
+- [TypeScript → Amazon States Language Reference Guide](./docs/4-Step-Functions-ASL.md)
+- [Writing your own Interpreters](./docs/7-Your-Own-Interpreters.md)
+- [How Functionless Works](./docs/8-How-it-Works.md)
+- [Philosophy of "Functionless" Programming](./docs/9-Philosophy.md)
+
+## Example
+
 For example, the below function creates an Appsync Resolver Pipeline with two stages:
 
 1. Put an item into the `postTable` DynamoDB Table

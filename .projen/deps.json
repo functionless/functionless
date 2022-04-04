@@ -100,10 +100,7 @@
     },
     {
       "name": "typedoc",
-      "type": "build"
-    },
-    {
-      "name": "typedoc-plugin-markdown",
+      "version": "^0.21.4",
       "type": "build"
     },
     {

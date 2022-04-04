@@ -4,7 +4,8 @@ const project = new typescript.TypeScriptProject({
   name: "functionless",
   deps: ["fs-extra", "minimatch"],
   releaseToNpm: true,
-
+  docgen: true,
+  docsDirectory: "docs/api-reference",
   devDeps: [
     "@aws-cdk/aws-appsync-alpha",
     "@types/fs-extra",
@@ -15,8 +16,6 @@ const project = new typescript.TypeScriptProject({
     "ts-patch",
     "typesafe-dynamodb",
     "typescript",
-    "typedoc",
-    "typedoc-plugin-markdown",
   ],
   peerDeps: [
     "@aws-cdk/aws-appsync-alpha@^2.17.0-alpha.0",
@@ -51,9 +50,6 @@ const project = new typescript.TypeScriptProject({
 
 project.compileTask.prependExec(
   "yarn link && cd ./test-app && yarn link functionless"
-);
-project.compileTask.prependExec(
-  "typedoc --plugin typedoc-plugin-markdown --out docs/api-reference src/index.ts"
 );
 
 project.testTask.prependExec(

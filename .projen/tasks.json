@@ -78,9 +78,6 @@
       "description": "Only compile",
       "steps": [
         {
-          "exec": "typedoc --plugin typedoc-plugin-markdown --out docs/api-reference src/index.ts"
-        },
-        {
           "exec": "yarn link && cd ./test-app && yarn link functionless"
         },
         {
@@ -94,6 +91,15 @@
       "steps": [
         {
           "exec": "node .projenrc.js"
+        }
+      ]
+    },
+    "docgen": {
+      "name": "docgen",
+      "description": "Generate TypeScript API reference docs/api-reference",
+      "steps": [
+        {
+          "exec": "typedoc src --disableSources --out docs/api-reference"
         }
       ]
     },
@@ -132,7 +138,12 @@
     },
     "post-compile": {
       "name": "post-compile",
-      "description": "Runs after successful compilation"
+      "description": "Runs after successful compilation",
+      "steps": [
+        {
+          "spawn": "docgen"
+        }
+      ]
     },
     "post-upgrade": {
       "name": "post-upgrade",
@@ -244,7 +255,7 @@
           "exec": "yarn install --check-files"
         },
         {
-          "exec": "yarn upgrade @aws-cdk/aws-appsync-alpha @types/fs-extra @types/jest @types/minimatch @types/node @typescript-eslint/eslint-plugin @typescript-eslint/parser aws-cdk-lib constructs eslint-import-resolver-node eslint-import-resolver-typescript eslint-plugin-import eslint jest jest-junit json-schema npm-check-updates standard-version ts-jest ts-node ts-patch typedoc typedoc-plugin-markdown typesafe-dynamodb typescript @aws-cdk/aws-appsync-alpha aws-cdk-lib constructs typesafe-dynamodb typescript fs-extra minimatch"
+          "exec": "yarn upgrade @aws-cdk/aws-appsync-alpha @types/fs-extra @types/jest @types/minimatch @types/node @typescript-eslint/eslint-plugin @typescript-eslint/parser aws-cdk-lib constructs eslint-import-resolver-node eslint-import-resolver-typescript eslint-plugin-import eslint jest jest-junit json-schema npm-check-updates standard-version ts-jest ts-node ts-patch typedoc typesafe-dynamodb typescript @aws-cdk/aws-appsync-alpha aws-cdk-lib constructs typesafe-dynamodb typescript fs-extra minimatch"
         },
         {
           "exec": "npx projen"
