@@ -81,7 +81,7 @@ getPerson.createResolver(api, {
 
 #### Defined in
 
-[src/appsync.ts:126](https://github.com/sam-goodwin/functionless/blob/a9095de/src/appsync.ts#L126)
+[src/appsync.ts:126](https://github.com/sam-goodwin/functionless/blob/8f02ec6/src/appsync.ts#L126)
 
 ## Properties
 
@@ -91,7 +91,7 @@ getPerson.createResolver(api, {
 
 #### Defined in
 
-[src/appsync.ts:122](https://github.com/sam-goodwin/functionless/blob/a9095de/src/appsync.ts#L122)
+[src/appsync.ts:122](https://github.com/sam-goodwin/functionless/blob/8f02ec6/src/appsync.ts#L122)
 
 ___
 
@@ -103,7 +103,7 @@ This static property identifies this class as an AppsyncResolver to the TypeScri
 
 #### Defined in
 
-[src/appsync.ts:120](https://github.com/sam-goodwin/functionless/blob/a9095de/src/appsync.ts#L120)
+[src/appsync.ts:120](https://github.com/sam-goodwin/functionless/blob/8f02ec6/src/appsync.ts#L120)
 
 ## Methods
 
@@ -139,4 +139,4 @@ a reference to the generated {@link appsync.Resolver}.
 
 #### Defined in
 
-[src/appsync.ts:154](https://github.com/sam-goodwin/functionless/blob/a9095de/src/appsync.ts#L154)
+[src/appsync.ts:154](https://github.com/sam-goodwin/functionless/blob/8f02ec6/src/appsync.ts#L154)
