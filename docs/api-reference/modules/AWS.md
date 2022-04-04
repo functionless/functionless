@@ -25,4 +25,4 @@ The `AWS` namespace exports functions that map to AWS Step Functions AWS-SDK Int
 
 #### Defined in
 
-[src/aws.ts:55](https://github.com/sam-goodwin/functionless/blob/3947743/src/aws.ts#L55)
+[src/aws.ts:55](https://github.com/sam-goodwin/functionless/blob/6691871/src/aws.ts#L55)

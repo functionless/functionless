@@ -119,7 +119,7 @@ BaseNode<Kind, Parent\>.constructor
 
 #### Defined in
 
-[src/node.ts:31](https://github.com/sam-goodwin/functionless/blob/3947743/src/node.ts#L31)
+[src/node.ts:31](https://github.com/sam-goodwin/functionless/blob/6691871/src/node.ts#L31)
 
 ## Properties
 
@@ -135,7 +135,7 @@ BaseNode.children
 
 #### Defined in
 
-[src/node.ts:29](https://github.com/sam-goodwin/functionless/blob/3947743/src/node.ts#L29)
+[src/node.ts:29](https://github.com/sam-goodwin/functionless/blob/6691871/src/node.ts#L29)
 
 ___
 
@@ -159,7 +159,7 @@ BaseNode.nodeKind
 
 #### Defined in
 
-[src/expression.ts:100](https://github.com/sam-goodwin/functionless/blob/3947743/src/expression.ts#L100)
+[src/expression.ts:100](https://github.com/sam-goodwin/functionless/blob/6691871/src/expression.ts#L100)
 
 ___
 
@@ -173,7 +173,7 @@ BaseNode.parent
 
 #### Defined in
 
-[src/node.ts:24](https://github.com/sam-goodwin/functionless/blob/3947743/src/node.ts#L24)
+[src/node.ts:24](https://github.com/sam-goodwin/functionless/blob/6691871/src/node.ts#L24)
 
 ## Methods
 
@@ -203,7 +203,7 @@ BaseNode.as
 
 #### Defined in
 
-[src/node.ts:42](https://github.com/sam-goodwin/functionless/blob/3947743/src/node.ts#L42)
+[src/node.ts:42](https://github.com/sam-goodwin/functionless/blob/6691871/src/node.ts#L42)
 
 ___
 
@@ -221,7 +221,7 @@ BaseNode.clone
 
 #### Defined in
 
-[src/node.ts:33](https://github.com/sam-goodwin/functionless/blob/3947743/src/node.ts#L33)
+[src/node.ts:33](https://github.com/sam-goodwin/functionless/blob/6691871/src/node.ts#L33)
 
 ___
 
@@ -251,7 +251,7 @@ BaseNode.collectChildren
 
 #### Defined in
 
-[src/node.ts:62](https://github.com/sam-goodwin/functionless/blob/3947743/src/node.ts#L62)
+[src/node.ts:62](https://github.com/sam-goodwin/functionless/blob/6691871/src/node.ts#L62)
 
 ___
 
@@ -276,7 +276,7 @@ BaseNode.contains
 
 #### Defined in
 
-[src/node.ts:107](https://github.com/sam-goodwin/functionless/blob/3947743/src/node.ts#L107)
+[src/node.ts:107](https://github.com/sam-goodwin/functionless/blob/6691871/src/node.ts#L107)
 
 ___
 
@@ -296,7 +296,7 @@ BaseNode.exit
 
 #### Defined in
 
-[src/node.ts:173](https://github.com/sam-goodwin/functionless/blob/3947743/src/node.ts#L173)
+[src/node.ts:173](https://github.com/sam-goodwin/functionless/blob/6691871/src/node.ts#L173)
 
 ___
 
@@ -316,7 +316,7 @@ BaseNode.findCatchClause
 
 #### Defined in
 
-[src/node.ts:84](https://github.com/sam-goodwin/functionless/blob/3947743/src/node.ts#L84)
+[src/node.ts:84](https://github.com/sam-goodwin/functionless/blob/6691871/src/node.ts#L84)
 
 ___
 
@@ -346,7 +346,7 @@ BaseNode.findChildren
 
 #### Defined in
 
-[src/node.ts:56](https://github.com/sam-goodwin/functionless/blob/3947743/src/node.ts#L56)
+[src/node.ts:56](https://github.com/sam-goodwin/functionless/blob/6691871/src/node.ts#L56)
 
 ___
 
@@ -376,7 +376,7 @@ BaseNode.findParent
 
 #### Defined in
 
-[src/node.ts:69](https://github.com/sam-goodwin/functionless/blob/3947743/src/node.ts#L69)
+[src/node.ts:69](https://github.com/sam-goodwin/functionless/blob/6691871/src/node.ts#L69)
 
 ___
 
@@ -396,7 +396,7 @@ BaseNode.getLexicalScope
 
 #### Defined in
 
-[src/node.ts:278](https://github.com/sam-goodwin/functionless/blob/3947743/src/node.ts#L278)
+[src/node.ts:278](https://github.com/sam-goodwin/functionless/blob/6691871/src/node.ts#L278)
 
 ___
 
@@ -416,7 +416,7 @@ BaseNode.getVisibleNames
 
 #### Defined in
 
-[src/node.ts:271](https://github.com/sam-goodwin/functionless/blob/3947743/src/node.ts#L271)
+[src/node.ts:271](https://github.com/sam-goodwin/functionless/blob/6691871/src/node.ts#L271)
 
 ___
 
@@ -446,7 +446,7 @@ BaseNode.is
 
 #### Defined in
 
-[src/node.ts:52](https://github.com/sam-goodwin/functionless/blob/3947743/src/node.ts#L52)
+[src/node.ts:52](https://github.com/sam-goodwin/functionless/blob/6691871/src/node.ts#L52)
 
 ___
 
@@ -466,7 +466,7 @@ BaseNode.isTerminal
 
 #### Defined in
 
-[src/node.ts:315](https://github.com/sam-goodwin/functionless/blob/3947743/src/node.ts#L315)
+[src/node.ts:315](https://github.com/sam-goodwin/functionless/blob/6691871/src/node.ts#L315)
 
 ___
 
@@ -490,7 +490,7 @@ BaseNode.setParent
 
 #### Defined in
 
-[src/node.ts:35](https://github.com/sam-goodwin/functionless/blob/3947743/src/node.ts#L35)
+[src/node.ts:35](https://github.com/sam-goodwin/functionless/blob/6691871/src/node.ts#L35)
 
 ___
 
@@ -510,7 +510,7 @@ BaseNode.step
 
 #### Defined in
 
-[src/node.ts:137](https://github.com/sam-goodwin/functionless/blob/3947743/src/node.ts#L137)
+[src/node.ts:137](https://github.com/sam-goodwin/functionless/blob/6691871/src/node.ts#L137)
 
 ___
 
@@ -530,4 +530,4 @@ BaseNode.throw
 
 #### Defined in
 
-[src/node.ts:215](https://github.com/sam-goodwin/functionless/blob/3947743/src/node.ts#L215)
+[src/node.ts:215](https://github.com/sam-goodwin/functionless/blob/6691871/src/node.ts#L215)

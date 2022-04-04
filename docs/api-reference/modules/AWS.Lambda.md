@@ -43,4 +43,4 @@
 
 #### Defined in
 
-[src/aws.ts:324](https://github.com/sam-goodwin/functionless/blob/3947743/src/aws.ts#L324)
+[src/aws.ts:324](https://github.com/sam-goodwin/functionless/blob/6691871/src/aws.ts#L324)
