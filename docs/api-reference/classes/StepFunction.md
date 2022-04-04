@@ -33,7 +33,7 @@
 
 #### Defined in
 
-[src/step-function.ts:939](https://github.com/sam-goodwin/functionless/blob/d22ce12/src/step-function.ts#L939)
+[src/step-function.ts:939](https://github.com/sam-goodwin/functionless/blob/96a5ccc/src/step-function.ts#L939)
 
 ### StepFunction
 
@@ -53,7 +53,7 @@
 
 #### Defined in
 
-[src/step-function.ts:943](https://github.com/sam-goodwin/functionless/blob/d22ce12/src/step-function.ts#L943)
+[src/step-function.ts:943](https://github.com/sam-goodwin/functionless/blob/96a5ccc/src/step-function.ts#L943)
 
 ### StepFunction
 
@@ -71,7 +71,7 @@
 
 #### Defined in
 
-[src/step-function.ts:948](https://github.com/sam-goodwin/functionless/blob/d22ce12/src/step-function.ts#L948)
+[src/step-function.ts:948](https://github.com/sam-goodwin/functionless/blob/96a5ccc/src/step-function.ts#L948)
 
 ## Table of contents
 
@@ -150,7 +150,7 @@ BaseStepFunction<F\>.constructor
 
 #### Defined in
 
-[src/step-function.ts:346](https://github.com/sam-goodwin/functionless/blob/d22ce12/src/step-function.ts#L346)
+[src/step-function.ts:346](https://github.com/sam-goodwin/functionless/blob/96a5ccc/src/step-function.ts#L346)
 
 • **new StepFunction**<`F`\>(`scope`, `id`, `func`)
 
@@ -174,7 +174,7 @@ BaseStepFunction<F\>.constructor
 
 #### Defined in
 
-[src/step-function.ts:348](https://github.com/sam-goodwin/functionless/blob/d22ce12/src/step-function.ts#L348)
+[src/step-function.ts:348](https://github.com/sam-goodwin/functionless/blob/96a5ccc/src/step-function.ts#L348)
 
 ## Properties
 
@@ -188,7 +188,7 @@ BaseStepFunction.\_\_functionBrand
 
 #### Defined in
 
-[src/step-function.ts:334](https://github.com/sam-goodwin/functionless/blob/d22ce12/src/step-function.ts#L334)
+[src/step-function.ts:334](https://github.com/sam-goodwin/functionless/blob/96a5ccc/src/step-function.ts#L334)
 
 ___
 
@@ -202,7 +202,7 @@ BaseStepFunction.decl
 
 #### Defined in
 
-[src/step-function.ts:330](https://github.com/sam-goodwin/functionless/blob/d22ce12/src/step-function.ts#L330)
+[src/step-function.ts:330](https://github.com/sam-goodwin/functionless/blob/96a5ccc/src/step-function.ts#L330)
 
 ___
 
@@ -216,7 +216,7 @@ BaseStepFunction.definition
 
 #### Defined in
 
-[src/step-function.ts:339](https://github.com/sam-goodwin/functionless/blob/d22ce12/src/step-function.ts#L339)
+[src/step-function.ts:339](https://github.com/sam-goodwin/functionless/blob/96a5ccc/src/step-function.ts#L339)
 
 ___
 
@@ -246,7 +246,7 @@ BaseStepFunction.grantPrincipal
 
 #### Defined in
 
-[src/step-function.ts:344](https://github.com/sam-goodwin/functionless/blob/d22ce12/src/step-function.ts#L344)
+[src/step-function.ts:344](https://github.com/sam-goodwin/functionless/blob/96a5ccc/src/step-function.ts#L344)
 
 ___
 
@@ -260,7 +260,7 @@ BaseStepFunction.kind
 
 #### Defined in
 
-[src/step-function.ts:328](https://github.com/sam-goodwin/functionless/blob/d22ce12/src/step-function.ts#L328)
+[src/step-function.ts:328](https://github.com/sam-goodwin/functionless/blob/96a5ccc/src/step-function.ts#L328)
 
 ___
 
@@ -315,7 +315,7 @@ BaseStepFunction.resource
 
 #### Defined in
 
-[src/step-function.ts:331](https://github.com/sam-goodwin/functionless/blob/d22ce12/src/step-function.ts#L331)
+[src/step-function.ts:331](https://github.com/sam-goodwin/functionless/blob/96a5ccc/src/step-function.ts#L331)
 
 ___
 
@@ -329,7 +329,7 @@ BaseStepFunction.role
 
 #### Defined in
 
-[src/step-function.ts:338](https://github.com/sam-goodwin/functionless/blob/d22ce12/src/step-function.ts#L338)
+[src/step-function.ts:338](https://github.com/sam-goodwin/functionless/blob/96a5ccc/src/step-function.ts#L338)
 
 ___
 
@@ -357,7 +357,7 @@ BaseStepFunction.stateMachineArn
 
 #### Defined in
 
-[src/step-function.ts:337](https://github.com/sam-goodwin/functionless/blob/d22ce12/src/step-function.ts#L337)
+[src/step-function.ts:337](https://github.com/sam-goodwin/functionless/blob/96a5ccc/src/step-function.ts#L337)
 
 ___
 
@@ -371,7 +371,7 @@ BaseStepFunction.stateMachineName
 
 #### Defined in
 
-[src/step-function.ts:336](https://github.com/sam-goodwin/functionless/blob/d22ce12/src/step-function.ts#L336)
+[src/step-function.ts:336](https://github.com/sam-goodwin/functionless/blob/96a5ccc/src/step-function.ts#L336)
 
 ___
 
@@ -383,7 +383,7 @@ This static property identifies this class as an StepFunction to the TypeScript 
 
 #### Defined in
 
-[src/step-function.ts:931](https://github.com/sam-goodwin/functionless/blob/d22ce12/src/step-function.ts#L931)
+[src/step-function.ts:931](https://github.com/sam-goodwin/functionless/blob/96a5ccc/src/step-function.ts#L931)
 
 ## Methods
 
@@ -409,7 +409,7 @@ BaseStepFunction.addToRolePolicy
 
 #### Defined in
 
-[src/step-function.ts:510](https://github.com/sam-goodwin/functionless/blob/d22ce12/src/step-function.ts#L510)
+[src/step-function.ts:510](https://github.com/sam-goodwin/functionless/blob/96a5ccc/src/step-function.ts#L510)
 
 ___
 
@@ -467,7 +467,7 @@ BaseStepFunction.describeExecution
 
 #### Defined in
 
-[src/step-function.ts:461](https://github.com/sam-goodwin/functionless/blob/d22ce12/src/step-function.ts#L461)
+[src/step-function.ts:461](https://github.com/sam-goodwin/functionless/blob/96a5ccc/src/step-function.ts#L461)
 
 ___
 
@@ -567,7 +567,7 @@ BaseStepFunction.getStepFunctionType
 
 #### Defined in
 
-[src/step-function.ts:933](https://github.com/sam-goodwin/functionless/blob/d22ce12/src/step-function.ts#L933)
+[src/step-function.ts:933](https://github.com/sam-goodwin/functionless/blob/96a5ccc/src/step-function.ts#L933)
 
 ___
 
@@ -594,7 +594,7 @@ BaseStepFunction.grant
 
 #### Defined in
 
-[src/step-function.ts:597](https://github.com/sam-goodwin/functionless/blob/d22ce12/src/step-function.ts#L597)
+[src/step-function.ts:597](https://github.com/sam-goodwin/functionless/blob/96a5ccc/src/step-function.ts#L597)
 
 ___
 
@@ -621,7 +621,7 @@ BaseStepFunction.grantExecution
 
 #### Defined in
 
-[src/step-function.ts:586](https://github.com/sam-goodwin/functionless/blob/d22ce12/src/step-function.ts#L586)
+[src/step-function.ts:586](https://github.com/sam-goodwin/functionless/blob/96a5ccc/src/step-function.ts#L586)
 
 ___
 
@@ -648,7 +648,7 @@ BaseStepFunction.grantRead
 
 #### Defined in
 
-[src/step-function.ts:542](https://github.com/sam-goodwin/functionless/blob/d22ce12/src/step-function.ts#L542)
+[src/step-function.ts:542](https://github.com/sam-goodwin/functionless/blob/96a5ccc/src/step-function.ts#L542)
 
 ___
 
@@ -675,7 +675,7 @@ BaseStepFunction.grantStartExecution
 
 #### Defined in
 
-[src/step-function.ts:518](https://github.com/sam-goodwin/functionless/blob/d22ce12/src/step-function.ts#L518)
+[src/step-function.ts:518](https://github.com/sam-goodwin/functionless/blob/96a5ccc/src/step-function.ts#L518)
 
 ___
 
@@ -702,7 +702,7 @@ BaseStepFunction.grantStartSyncExecution
 
 #### Defined in
 
-[src/step-function.ts:530](https://github.com/sam-goodwin/functionless/blob/d22ce12/src/step-function.ts#L530)
+[src/step-function.ts:530](https://github.com/sam-goodwin/functionless/blob/96a5ccc/src/step-function.ts#L530)
 
 ___
 
@@ -728,7 +728,7 @@ BaseStepFunction.grantTaskResponse
 
 #### Defined in
 
-[src/step-function.ts:571](https://github.com/sam-goodwin/functionless/blob/d22ce12/src/step-function.ts#L571)
+[src/step-function.ts:571](https://github.com/sam-goodwin/functionless/blob/96a5ccc/src/step-function.ts#L571)
 
 ___
 
@@ -757,7 +757,7 @@ BaseStepFunction.metric
 
 #### Defined in
 
-[src/step-function.ts:613](https://github.com/sam-goodwin/functionless/blob/d22ce12/src/step-function.ts#L613)
+[src/step-function.ts:613](https://github.com/sam-goodwin/functionless/blob/96a5ccc/src/step-function.ts#L613)
 
 ___
 
@@ -785,7 +785,7 @@ BaseStepFunction.metricAborted
 
 #### Defined in
 
-[src/step-function.ts:662](https://github.com/sam-goodwin/functionless/blob/d22ce12/src/step-function.ts#L662)
+[src/step-function.ts:662](https://github.com/sam-goodwin/functionless/blob/96a5ccc/src/step-function.ts#L662)
 
 ___
 
@@ -813,7 +813,7 @@ BaseStepFunction.metricFailed
 
 #### Defined in
 
-[src/step-function.ts:631](https://github.com/sam-goodwin/functionless/blob/d22ce12/src/step-function.ts#L631)
+[src/step-function.ts:631](https://github.com/sam-goodwin/functionless/blob/96a5ccc/src/step-function.ts#L631)
 
 ___
 
@@ -841,7 +841,7 @@ BaseStepFunction.metricStarted
 
 #### Defined in
 
-[src/step-function.ts:719](https://github.com/sam-goodwin/functionless/blob/d22ce12/src/step-function.ts#L719)
+[src/step-function.ts:719](https://github.com/sam-goodwin/functionless/blob/96a5ccc/src/step-function.ts#L719)
 
 ___
 
@@ -869,7 +869,7 @@ BaseStepFunction.metricSucceeded
 
 #### Defined in
 
-[src/step-function.ts:681](https://github.com/sam-goodwin/functionless/blob/d22ce12/src/step-function.ts#L681)
+[src/step-function.ts:681](https://github.com/sam-goodwin/functionless/blob/96a5ccc/src/step-function.ts#L681)
 
 ___
 
@@ -897,7 +897,7 @@ BaseStepFunction.metricThrottled
 
 #### Defined in
 
-[src/step-function.ts:650](https://github.com/sam-goodwin/functionless/blob/d22ce12/src/step-function.ts#L650)
+[src/step-function.ts:650](https://github.com/sam-goodwin/functionless/blob/96a5ccc/src/step-function.ts#L650)
 
 ___
 
@@ -925,7 +925,7 @@ BaseStepFunction.metricTime
 
 #### Defined in
 
-[src/step-function.ts:730](https://github.com/sam-goodwin/functionless/blob/d22ce12/src/step-function.ts#L730)
+[src/step-function.ts:730](https://github.com/sam-goodwin/functionless/blob/96a5ccc/src/step-function.ts#L730)
 
 ___
 
@@ -953,7 +953,7 @@ BaseStepFunction.metricTimedOut
 
 #### Defined in
 
-[src/step-function.ts:700](https://github.com/sam-goodwin/functionless/blob/d22ce12/src/step-function.ts#L700)
+[src/step-function.ts:700](https://github.com/sam-goodwin/functionless/blob/96a5ccc/src/step-function.ts#L700)
 
 ___
 
