@@ -41,7 +41,7 @@ General object conversion tool for DynamoDB that converts input objects to the a
 
 #### Defined in
 
-[src/appsync.ts:500](https://github.com/sam-goodwin/functionless/blob/96a5ccc/src/appsync.ts#L500)
+[src/appsync.ts:500](https://github.com/sam-goodwin/functionless/blob/72d5f75/src/appsync.ts#L500)
 
 ___
 
@@ -69,4 +69,4 @@ Creates a copy of the map where each value has been converted to its appropriate
 
 #### Defined in
 
-[src/appsync.ts:505](https://github.com/sam-goodwin/functionless/blob/96a5ccc/src/appsync.ts#L505)
+[src/appsync.ts:505](https://github.com/sam-goodwin/functionless/blob/72d5f75/src/appsync.ts#L505)

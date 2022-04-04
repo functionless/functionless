@@ -76,7 +76,7 @@ BaseDecl&lt;
 
 #### Defined in
 
-[src/declaration.ts:26](https://github.com/sam-goodwin/functionless/blob/96a5ccc/src/declaration.ts#L26)
+[src/declaration.ts:26](https://github.com/sam-goodwin/functionless/blob/72d5f75/src/declaration.ts#L26)
 
 ## Properties
 
@@ -86,7 +86,7 @@ BaseDecl&lt;
 
 #### Defined in
 
-[src/declaration.ts:25](https://github.com/sam-goodwin/functionless/blob/96a5ccc/src/declaration.ts#L25)
+[src/declaration.ts:25](https://github.com/sam-goodwin/functionless/blob/72d5f75/src/declaration.ts#L25)
 
 ___
 
@@ -108,7 +108,7 @@ BaseDecl.children
 
 #### Defined in
 
-[src/node.ts:29](https://github.com/sam-goodwin/functionless/blob/96a5ccc/src/node.ts#L29)
+[src/node.ts:29](https://github.com/sam-goodwin/functionless/blob/72d5f75/src/node.ts#L29)
 
 ___
 
@@ -132,7 +132,7 @@ BaseDecl.nodeKind
 
 #### Defined in
 
-[src/declaration.ts:18](https://github.com/sam-goodwin/functionless/blob/96a5ccc/src/declaration.ts#L18)
+[src/declaration.ts:18](https://github.com/sam-goodwin/functionless/blob/72d5f75/src/declaration.ts#L18)
 
 ___
 
@@ -152,7 +152,7 @@ BaseDecl.parent
 
 #### Defined in
 
-[src/node.ts:24](https://github.com/sam-goodwin/functionless/blob/96a5ccc/src/node.ts#L24)
+[src/node.ts:24](https://github.com/sam-goodwin/functionless/blob/72d5f75/src/node.ts#L24)
 
 ## Methods
 
@@ -182,7 +182,7 @@ BaseDecl.as
 
 #### Defined in
 
-[src/node.ts:42](https://github.com/sam-goodwin/functionless/blob/96a5ccc/src/node.ts#L42)
+[src/node.ts:42](https://github.com/sam-goodwin/functionless/blob/72d5f75/src/node.ts#L42)
 
 ___
 
@@ -200,7 +200,7 @@ BaseDecl.clone
 
 #### Defined in
 
-[src/declaration.ts:32](https://github.com/sam-goodwin/functionless/blob/96a5ccc/src/declaration.ts#L32)
+[src/declaration.ts:32](https://github.com/sam-goodwin/functionless/blob/72d5f75/src/declaration.ts#L32)
 
 ___
 
@@ -230,7 +230,7 @@ BaseDecl.collectChildren
 
 #### Defined in
 
-[src/node.ts:62](https://github.com/sam-goodwin/functionless/blob/96a5ccc/src/node.ts#L62)
+[src/node.ts:62](https://github.com/sam-goodwin/functionless/blob/72d5f75/src/node.ts#L62)
 
 ___
 
@@ -255,7 +255,7 @@ BaseDecl.contains
 
 #### Defined in
 
-[src/node.ts:107](https://github.com/sam-goodwin/functionless/blob/96a5ccc/src/node.ts#L107)
+[src/node.ts:107](https://github.com/sam-goodwin/functionless/blob/72d5f75/src/node.ts#L107)
 
 ___
 
@@ -275,7 +275,7 @@ BaseDecl.exit
 
 #### Defined in
 
-[src/node.ts:173](https://github.com/sam-goodwin/functionless/blob/96a5ccc/src/node.ts#L173)
+[src/node.ts:173](https://github.com/sam-goodwin/functionless/blob/72d5f75/src/node.ts#L173)
 
 ___
 
@@ -295,7 +295,7 @@ BaseDecl.findCatchClause
 
 #### Defined in
 
-[src/node.ts:84](https://github.com/sam-goodwin/functionless/blob/96a5ccc/src/node.ts#L84)
+[src/node.ts:84](https://github.com/sam-goodwin/functionless/blob/72d5f75/src/node.ts#L84)
 
 ___
 
@@ -325,7 +325,7 @@ BaseDecl.findChildren
 
 #### Defined in
 
-[src/node.ts:56](https://github.com/sam-goodwin/functionless/blob/96a5ccc/src/node.ts#L56)
+[src/node.ts:56](https://github.com/sam-goodwin/functionless/blob/72d5f75/src/node.ts#L56)
 
 ___
 
@@ -355,7 +355,7 @@ BaseDecl.findParent
 
 #### Defined in
 
-[src/node.ts:69](https://github.com/sam-goodwin/functionless/blob/96a5ccc/src/node.ts#L69)
+[src/node.ts:69](https://github.com/sam-goodwin/functionless/blob/72d5f75/src/node.ts#L69)
 
 ___
 
@@ -375,7 +375,7 @@ BaseDecl.getLexicalScope
 
 #### Defined in
 
-[src/node.ts:278](https://github.com/sam-goodwin/functionless/blob/96a5ccc/src/node.ts#L278)
+[src/node.ts:278](https://github.com/sam-goodwin/functionless/blob/72d5f75/src/node.ts#L278)
 
 ___
 
@@ -395,7 +395,7 @@ BaseDecl.getVisibleNames
 
 #### Defined in
 
-[src/node.ts:271](https://github.com/sam-goodwin/functionless/blob/96a5ccc/src/node.ts#L271)
+[src/node.ts:271](https://github.com/sam-goodwin/functionless/blob/72d5f75/src/node.ts#L271)
 
 ___
 
@@ -425,7 +425,7 @@ BaseDecl.is
 
 #### Defined in
 
-[src/node.ts:52](https://github.com/sam-goodwin/functionless/blob/96a5ccc/src/node.ts#L52)
+[src/node.ts:52](https://github.com/sam-goodwin/functionless/blob/72d5f75/src/node.ts#L52)
 
 ___
 
@@ -445,7 +445,7 @@ BaseDecl.isTerminal
 
 #### Defined in
 
-[src/node.ts:315](https://github.com/sam-goodwin/functionless/blob/96a5ccc/src/node.ts#L315)
+[src/node.ts:315](https://github.com/sam-goodwin/functionless/blob/72d5f75/src/node.ts#L315)
 
 ___
 
@@ -469,7 +469,7 @@ BaseDecl.setParent
 
 #### Defined in
 
-[src/node.ts:35](https://github.com/sam-goodwin/functionless/blob/96a5ccc/src/node.ts#L35)
+[src/node.ts:35](https://github.com/sam-goodwin/functionless/blob/72d5f75/src/node.ts#L35)
 
 ___
 
@@ -489,7 +489,7 @@ BaseDecl.step
 
 #### Defined in
 
-[src/node.ts:137](https://github.com/sam-goodwin/functionless/blob/96a5ccc/src/node.ts#L137)
+[src/node.ts:137](https://github.com/sam-goodwin/functionless/blob/72d5f75/src/node.ts#L137)
 
 ___
 
@@ -509,4 +509,4 @@ BaseDecl.throw
 
 #### Defined in
 
-[src/node.ts:215](https://github.com/sam-goodwin/functionless/blob/96a5ccc/src/node.ts#L215)
+[src/node.ts:215](https://github.com/sam-goodwin/functionless/blob/72d5f75/src/node.ts#L215)
