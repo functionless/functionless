@@ -153,7 +153,7 @@ ___
 
 #### Defined in
 
-[src/appsync.ts:55](https://github.com/sam-goodwin/functionless/blob/6691871/src/appsync.ts#L55)
+[src/appsync.ts:55](https://github.com/sam-goodwin/functionless/blob/a095355/src/appsync.ts#L55)
 
 ___
 

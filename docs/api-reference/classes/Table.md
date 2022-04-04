@@ -92,7 +92,7 @@ new Table<Person, "id", "age">(..)
 
 #### Defined in
 
-[src/table.ts:75](https://github.com/sam-goodwin/functionless/blob/6691871/src/table.ts#L75)
+[src/table.ts:75](https://github.com/sam-goodwin/functionless/blob/a095355/src/table.ts#L75)
 
 ## Properties
 
@@ -102,7 +102,7 @@ new Table<Person, "id", "age">(..)
 
 #### Defined in
 
-[src/table.ts:73](https://github.com/sam-goodwin/functionless/blob/6691871/src/table.ts#L73)
+[src/table.ts:73](https://github.com/sam-goodwin/functionless/blob/a095355/src/table.ts#L73)
 
 ___
 
@@ -140,7 +140,7 @@ ___
 
 #### Defined in
 
-[src/table.ts:200](https://github.com/sam-goodwin/functionless/blob/6691871/src/table.ts#L200)
+[src/table.ts:200](https://github.com/sam-goodwin/functionless/blob/a095355/src/table.ts#L200)
 
 ___
 
@@ -170,7 +170,7 @@ ___
 
 #### Defined in
 
-[src/table.ts:81](https://github.com/sam-goodwin/functionless/blob/6691871/src/table.ts#L81)
+[src/table.ts:81](https://github.com/sam-goodwin/functionless/blob/a095355/src/table.ts#L81)
 
 ___
 
@@ -203,7 +203,7 @@ ___
 
 #### Defined in
 
-[src/table.ts:115](https://github.com/sam-goodwin/functionless/blob/6691871/src/table.ts#L115)
+[src/table.ts:115](https://github.com/sam-goodwin/functionless/blob/a095355/src/table.ts#L115)
 
 ___
 
@@ -246,7 +246,7 @@ ___
 
 #### Defined in
 
-[src/table.ts:235](https://github.com/sam-goodwin/functionless/blob/6691871/src/table.ts#L235)
+[src/table.ts:235](https://github.com/sam-goodwin/functionless/blob/a095355/src/table.ts#L235)
 
 ___
 
@@ -280,4 +280,4 @@ ___
 
 #### Defined in
 
-[src/table.ts:160](https://github.com/sam-goodwin/functionless/blob/6691871/src/table.ts#L160)
+[src/table.ts:160](https://github.com/sam-goodwin/functionless/blob/a095355/src/table.ts#L160)
