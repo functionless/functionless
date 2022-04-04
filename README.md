@@ -6,8 +6,7 @@
 
 ## Resources
 
-- [Getting Started](./docs/0-Getting-Started.md)
-- [Environment Setup](./docs/2-Environment-Setup.md)
+- [Project Setup](./docs/1-Project-Setup.md)
 - [Integrations](./docs/2-Integrations.md)
 - [Appsync Resolvers](./docs/3-Appsync-Resolvers.md)
 - [TypeScript → Velocity Templates Reference Guide](./docs/3-AppSync-Resolvers-VTL.md)
