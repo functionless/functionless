@@ -12,6 +12,11 @@ For example, the below function creates an Appsync Resolver Pipeline with two st
 ```ts
 const postTable = new Table<Post, "postId">(new aws_dynamodb.Table(this, "PostTable", { .. }));
 
+// a Lambda Function which can validate the contents of a Post
+const validatePost = new Function<Post, "Cool" | "Not Cool">(
+  new aws_lambda.Function(this, "Validate", { .. })
+);
+
 // Query.addPost AppSync Resolver
 const addPost = new AppsyncResolver<{ title: string, text: string }, Post>(($context) => {
   const post = postDatabase.get({
@@ -26,13 +31,12 @@ const addPost = new AppsyncResolver<{ title: string, text: string }, Post>(($con
   return post;
 });
 
-// a Lambda Function which can validate the contents of a Post
-const validatePost = new Function<Post, >(new aws_lambda.Function(this, "Validate", { .. }))
-
 // Step Function workflow that validates the contents of a Post and deletes it if bad
 const validatePostWorkflow = new StepFunction(this, "ValidatePostWorkflow", (post: Post) => {
+  // run some computation, maybe it's slow, so best to put in a StepFunction
   const validationResult = validatePost(post);
   if (validationResult.status === "Not Cool") {
+    // delete bad posts
     $AWS.DynamoDB.DeleteItem({
       TableName: postTable,
       Key: {
@@ -115,25 +119,19 @@ Files can be ignored by the transformer by using glob patterns in the `tsconfig.
 
 ## Usage
 
-`functionless` makes configuring services like AWS Appsync as easy as writing TypeScript functions.
+`functionless` makes configuring services like AWS Step Functions and Appsync as easy as writing TypeScript functions. To get started, you only need to wrap your Constructs with the Functionless type-safe extension classes, `Function` and `Table`, and then write your business logic with `AppsyncResolver`, `StepFunction` or `ExpressStepFunction`.
 
-There are three aspects your need to learn before using Functionless in your CDK application:
-
-1. Appsync Integration interfaces for `Function` and `Table`.
-2. `AppsyncResolver` construct for defining Appsync Resolver with TypeScript syntax.
-3. Add Resolvers to an `@aws-cdk/aws-appsync-alpha.GraphQLApi`.
-
-### Appsync Integration interfaces for `Function` and `Table`
+### Integration interfaces for `Function` and `Table`
 
 You must wrap your CDK L2 Constructs in the corresponding wrapper class provided by functionless. Currently, Lambda `Function` and DynamoDB `Table` are supported.
 
 **Function**
 
-The `Function` wrapper annotates an `aws_lambda.Function` with a TypeScript function signature that controls how it can be called from within an `AppsyncResolver`.
+The `Function` wrapper annotates an `aws_lambda.Function` with a TypeScript function signature that controls how it can be called.
 
 ```ts
 import { aws_lambda } from "aws-cdk-lib";
-import { Function } from "functionless";
+import { Function, StepFunction } from "functionless";
 
 const myFunc = new Function<{ name: string }, string>(
   new aws_lambda.Function(this, "MyFunc", {
@@ -142,7 +140,7 @@ const myFunc = new Function<{ name: string }, string>(
 );
 ```
 
-Within an [AppsyncResolver](#AppsyncResolver), you can use the `myFunc` reference like an ordinary Function:
+Within an AppsyncResolver, the `myFunc` function is integrated with an ordinary function call.
 
 ```ts
 new AppsyncResolver(() => {
@@ -150,12 +148,33 @@ new AppsyncResolver(() => {
 });
 ```
 
-The first argument is passed to the Lambda Function.
+Input to the Lambda Function is a JSON object, as should be expected.
 
 ```json
 {
   "name": "my name"
 }
+```
+
+In a `StepFunction`, calling the `myFunc` function configures an integration that returns only the `Payload`:
+
+```ts
+new StepFunction(this, "MyStepFunction", (name: string) => {
+  return myFunc({ name });
+});
+```
+
+To get the entire AWS SDK request, use `$AWS.Lambda.Invoke`:
+
+```ts
+new StepFunction(this, "MyStepFunction", (name: string) => {
+  return $AWS.Lambda.Invoke({
+    FunctionName: myFunc,
+    Payload: {
+      name,
+    },
+  });
+});
 ```
 
 **Table**
@@ -195,6 +214,21 @@ new AppsyncResolver(() => {
     key: $util.toDynamoDB("key"),
   });
 });
+```
+
+For `StepFunction` and `ExpressStepFunction`, you must use the `$AWS.DynamoDB.*` APIs to interact with the table instead of the `Table`'s methods. This is because Step Functions doesn't marshall DynamoDB's JSON format on behalf of the caller. For this, use the `$AWS` APIs which are a one-to-one model of the [AWS SDK service integrations](https://docs.aws.amazon.com/step-functions/latest/dg/supported-services-awssdk.html).
+
+```ts
+new StepFunction() => {
+  return $AWS.DynamoDB.GetItem({
+    TableName: myTable,
+    Key: {
+      key: {
+        S: "key"
+      }
+    }
+  });
+})
 ```
 
 ### `AppsyncResolver` construct for defining Appsync Resolver with TypeScript syntax
