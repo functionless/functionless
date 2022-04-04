@@ -147,6 +147,9 @@ export class EventBus<E extends EventBusRuleInput> extends EventBusBase<E> {
     super(new aws_events.EventBus(scope, id, props));
   }
 
+  /**
+   * Import an {@link aws_events.IEventBus} wrapped with Functionless abilities.
+   */
   static fromBus<E extends EventBusRuleInput>(
     bus: aws_events.IEventBus
   ): IEventBus<E> {

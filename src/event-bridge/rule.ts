@@ -188,6 +188,9 @@ export class EventBusRule<
     super(rule);
   }
 
+  /**
+   * Import an {@link aws_events.Rule} wrapped with Functionless abilities.
+   */
   public static fromRule<T extends EventBusRuleInput>(
     rule: aws_events.Rule
   ): IEventBusRule<T> {
