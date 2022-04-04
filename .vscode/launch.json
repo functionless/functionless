@@ -20,10 +20,36 @@
       "runtimeExecutable": "node",
       "runtimeArgs": ["--nolazy"],
       "args": ["./lib/app.js"],
-      "outFiles": ["${workspaceFolder}/lib/**/*.js", "!**/node_modules/**"],
+      "outFiles": [
+        "${workspaceRoot}/lib/**/*.js",
+        "${workspaceRoot}/test-app/lib/**/*.js",
+        "!**/node_modules/**"
+      ],
       "cwd": "${workspaceRoot}/test-app",
       "internalConsoleOptions": "openOnSessionStart",
-      "skipFiles": ["<node_internals>/**", "node_modules/**"]
+      "skipFiles": ["<node_internals>/**", "node_modules/**"],
+      "env": {
+        "TS_NODE_PROJECT": "${workspaceRoot}/test-app/tsconfig.json"
+      }
+    },
+    {
+      "name": "synth message-board",
+      "type": "node",
+      "request": "launch",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["--nolazy"],
+      "args": ["./lib/message-board.js"],
+      "outFiles": [
+        "${workspaceRoot}/lib/**/*.js",
+        "${workspaceRoot}/test-app/lib/**/*.js",
+        "!**/node_modules/**"
+      ],
+      "cwd": "${workspaceRoot}/test-app",
+      "internalConsoleOptions": "openOnSessionStart",
+      "skipFiles": ["<node_internals>/**", "node_modules/**"],
+      "env": {
+        "TS_NODE_PROJECT": "${workspaceRoot}/test-app/tsconfig.json"
+      }
     }
   ]
 }

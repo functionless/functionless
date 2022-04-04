@@ -23,14 +23,14 @@
     "projen": "npx projen"
   },
   "devDependencies": {
-    "@aws-cdk/aws-appsync-alpha": "2.14.0-alpha.0",
+    "@aws-cdk/aws-appsync-alpha": "2.17.0-alpha.0",
     "@types/fs-extra": "^9.0.13",
     "@types/jest": "^27.4.1",
     "@types/minimatch": "^3.0.5",
     "@types/node": "^12",
     "@typescript-eslint/eslint-plugin": "^5",
     "@typescript-eslint/parser": "^5",
-    "aws-cdk-lib": "2.14.0",
+    "aws-cdk-lib": "2.17.0",
     "constructs": "10.0.0",
     "eslint": "^8",
     "eslint-import-resolver-node": "^0.3.6",
@@ -46,14 +46,14 @@
     "ts-node": "^10.7.0",
     "ts-patch": "^2.0.1",
     "typesafe-dynamodb": "0.1.5",
-    "typescript": "4.5.5"
+    "typescript": "4.6.2"
   },
   "peerDependencies": {
-    "@aws-cdk/aws-appsync-alpha": "^2.14.0-alpha.0",
-    "aws-cdk-lib": "^2.14.0",
+    "@aws-cdk/aws-appsync-alpha": "^2.17.0-alpha.0",
+    "aws-cdk-lib": "^2.17.0",
     "constructs": "^10.0.0",
     "typesafe-dynamodb": "^0.1.5",
-    "typescript": "^4.5.5"
+    "typescript": "^4.6.2"
   },
   "dependencies": {
     "fs-extra": "^10.0.1",

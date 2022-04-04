@@ -5,6 +5,7 @@ import {
   ElementAccessExpr,
   Expr,
   isBooleanLiteral,
+  isUndefinedLiteralExpr,
   PropAccessExpr,
   UnaryExpr,
 } from "../../expression";
@@ -558,15 +559,18 @@ export const synthesizeEventPattern = (
   ): PatternDocument => {
     const searchElement = evalToConstant(
       assertDefined(
-        expr.args.length > 0 ? Object.values(expr.args)[0] : undefined,
+        expr.args[0],
         `Includes must have a single string argument ${INCLUDES_SEARCH_ELEMENT}.`
       ).expr
     )?.constant;
 
     if (
-      Object.values(expr.args).filter((e) => !isNullLiteralExpr(e)).length > 1
+      expr.args
+        .map((e) => e.expr)
+        .filter((e) => !isNullLiteralExpr(e) && !isUndefinedLiteralExpr(e))
+        .length > 1
     ) {
-      throw new Error("Includes only supports the searchElement argument");
+      throw new Error(`Includes only supports the searchElement argument`);
     }
 
     // the property the call is on
@@ -619,13 +623,16 @@ export const synthesizeEventPattern = (
     expr: CallExpr & { expr: PropAccessExpr | ElementAccessExpr }
   ): PatternDocument => {
     const arg = assertDefined(
-      expr.args.length > 0 ? Object.values(expr.args)[0] : undefined,
+      expr.args[0],
       `StartsWith must contain a single string argument ${STARTS_WITH_SEARCH_STRING}`
     );
     const searchString = assertString(evalToConstant(arg.expr)?.constant);
 
     if (
-      Object.values(expr.args).filter((e) => !isNullLiteralExpr(e)).length > 1
+      expr.args
+        .map((e) => e.expr)
+        .filter((e) => !isNullLiteralExpr(e) && !isUndefinedLiteralExpr(e))
+        .length > 1
     ) {
       throw new Error("Includes only supports the searchString argument");
     }

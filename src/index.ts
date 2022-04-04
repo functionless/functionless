@@ -1,3 +1,4 @@
+export * from "./aws";
 export * from "./appsync";
 export * from "./declaration";
 export * from "./expression";
@@ -5,6 +6,7 @@ export * from "./error";
 export * from "./function";
 export * from "./reflect";
 export * from "./statement";
+export * from "./step-function";
 export * from "./table";
 export * from "./util";
 export * from "./event-bridge";

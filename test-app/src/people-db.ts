@@ -1,11 +1,19 @@
 import { Construct } from "constructs";
-import { aws_dynamodb, aws_lambda } from "aws-cdk-lib";
 import {
+  aws_dynamodb,
+  aws_lambda,
+  aws_logs,
+  aws_stepfunctions,
+  RemovalPolicy,
+} from "aws-cdk-lib";
+import {
+  $AWS,
   Table,
   Function,
   $util,
   AppsyncResolver,
   AppsyncContext,
+  ExpressStepFunction,
 } from "functionless";
 
 export interface Person {
@@ -24,6 +32,8 @@ export class PeopleDatabase extends Construct {
   readonly addPerson;
   readonly updateName;
   readonly deletePerson;
+  readonly getPersonMachine;
+  readonly testMachine;
 
   constructor(scope: Construct, id: string) {
     super(scope, id);
@@ -36,6 +46,7 @@ export class PeopleDatabase extends Construct {
         },
       })
     );
+    this.personTable.resource.applyRemovalPolicy(RemovalPolicy.DESTROY);
 
     this.computeScore = new Function<Person, number>(
       new aws_lambda.Function(this, "ComputeScore", {
@@ -47,27 +58,67 @@ export class PeopleDatabase extends Construct {
       })
     );
 
+    this.testMachine = new ExpressStepFunction(this, "TestMachine", () => {
+      const names = ["sam", "brendan"];
+
+      for (const i in names) {
+        this.computeScore({
+          id: "id",
+          name: names[i],
+        });
+      }
+    });
+
+    // a synchronous Express Step Function for getting a Person
+    this.getPersonMachine = new ExpressStepFunction(
+      this,
+      "GetPersonMachine",
+      {
+        logs: {
+          destination: new aws_logs.LogGroup(this, "GetPersonMachineLogs"),
+          level: aws_stepfunctions.LogLevel.ALL,
+        },
+      },
+      (id: string) => {
+        const person = $AWS.DynamoDB.GetItem({
+          TableName: this.personTable,
+          Key: {
+            id: {
+              S: id,
+            },
+          },
+        });
+
+        if (person.Item === undefined) {
+          return undefined;
+        }
+
+        const score = this.computeScore({
+          id: person.Item.id.S,
+          name: person.Item.name.S,
+        });
+
+        return {
+          id: person.Item.id.S,
+          name: person.Item.name.S,
+          score,
+        };
+      }
+    );
+
     this.getPerson = new AppsyncResolver<
       { id: string },
       ProcessedPerson | undefined
     >(($context) => {
-      const person = this.personTable.getItem({
-        key: {
-          id: $util.dynamodb.toDynamoDB($context.arguments.id),
-        },
-        consistentRead: true,
-      });
+      let person;
+      // example of integrating with an Express Step Function from Appsync
+      person = this.getPersonMachine($context.arguments.id);
 
-      if (person === undefined) {
-        return undefined;
+      if (person.status === "SUCCEEDED") {
+        return person.output;
+      } else {
+        $util.error(person.cause, person.error);
       }
-
-      const score = this.computeScore(person);
-
-      return {
-        ...person,
-        score,
-      };
     });
 
     this.addPerson = new AppsyncResolver<{ input: { name: string } }, Person>(

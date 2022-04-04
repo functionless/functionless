@@ -1,5 +1,5 @@
 import { CallExpr, Expr, FunctionExpr } from "./expression";
-import { findFunction, isInTopLevelScope, lookupIdentifier } from "./util";
+import { findFunction, isInTopLevelScope } from "./util";
 import { assertNever, assertNodeKind } from "./assert";
 import { FunctionlessNode } from "./node";
 import { Stmt } from "./statement";
@@ -8,7 +8,14 @@ import { Stmt } from "./statement";
 // https://cwiki.apache.org/confluence/display/VELOCITY/CheckingForNull
 // https://velocity.apache.org/engine/devel/user-guide.html#set
 
+export function isVTL(a: any): a is VTL {
+  return (a as VTL | undefined)?.kind === VTL.ContextName;
+}
+
 export class VTL {
+  static readonly ContextName = "Velocity Template";
+
+  readonly kind = VTL.ContextName;
   public static readonly CircuitBreaker = `#if($context.stash.return__flag)
   #return($context.stash.return__val)
 #end`;
@@ -133,6 +140,8 @@ export class VTL {
             if (item.kind === "SpreadElementExpr") {
               this.qr(`${list}.addAll(${this.eval(item.expr)})`);
             } else {
+              // we use addAll because `list.push(item)` is pared as `list.push(...[item])`
+              // - i.e. the compiler passes us an ArrayLiteralExpr even if there is one arg
               this.qr(`${list}.add(${this.eval(item)})`);
             }
           }
@@ -311,7 +320,7 @@ export class VTL {
       case "ForOfStmt":
       case "ForInStmt":
         this.add(
-          `#foreach($${node.i.name} in ${this.eval(node.expr)}${
+          `#foreach($${node.variableDecl.name} in ${this.eval(node.expr)}${
             node.kind === "ForInStmt" ? ".keySet()" : ""
           })`
         );
@@ -323,7 +332,7 @@ export class VTL {
       case "FunctionExpr":
         return this.eval(node.body);
       case "Identifier": {
-        const ref = lookupIdentifier(node);
+        const ref = node.lookup();
         if (ref?.kind === "VariableStmt" && isInTopLevelScope(ref)) {
           return `$context.stash.${node.name}`;
         } else if (
@@ -339,11 +348,14 @@ export class VTL {
           return `$${node.name}`;
         }
       }
+      case "NewExpr":
+        throw new Error(`NewExpr is not supported by Velocity Templates`);
       case "PropAccessExpr": {
         let name = node.name;
         if (name === "push" && node.parent?.kind === "CallExpr") {
-          // this is a push to an array, rename to 'add'
-          name = "add";
+          // this is a push to an array, rename to 'addAll'
+          // addAll because the var-args are converted to an ArrayLiteralExpr
+          name = "addAll";
         }
         return `${this.eval(node.expr)}.${name}`;
       }
@@ -379,9 +391,9 @@ export class VTL {
         throw new Error(`cannot evaluate Expr kind: '${node.kind}'`);
       case "ReturnStmt":
         if (returnVar) {
-          this.set(returnVar, node.expr);
+          this.set(returnVar, node.expr ?? "$null");
         } else {
-          this.set("$context.stash.return__val", node.expr);
+          this.set("$context.stash.return__val", node.expr ?? "$null");
           this.add("#set($context.stash.return__flag = true)");
           this.add(`#return($context.stash.return__val)`);
         }
@@ -419,14 +431,22 @@ export class VTL {
         } else {
           return varName;
         }
+      case "ThrowStmt":
+        return `#throw(${this.eval(node.expr)})`;
+      case "TryStmt":
+      case "CatchClause":
+      case "ContinueStmt":
+      case "DoStmt":
+      case "TypeOfExpr":
+      case "WhileStmt":
+        throw new Error(`${node.kind} is not yet supported in VTL`);
       case "Err":
         throw node.error;
       case "Argument":
         return this.eval(node.expr);
     }
 
-    const __exhaustive: never = node;
-    return __exhaustive;
+    return assertNever(node);
   }
 
   /**

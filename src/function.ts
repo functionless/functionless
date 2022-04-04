@@ -1,9 +1,11 @@
 import { aws_lambda } from "aws-cdk-lib";
-import { CallExpr } from "./expression";
-import { VTL } from "./vtl";
+import { CallExpr, isVariableReference } from "./expression";
+import { isVTL, VTL } from "./vtl";
+import { ASL, isASL, Task } from "./asl";
 
 // @ts-ignore - imported for typedoc
 import type { AppsyncResolver } from "./appsync";
+import { makeCallable } from "./callable";
 
 export function isFunction<P = any, O = any>(a: any): a is Function<P, O> {
   return a?.kind === "Function";
@@ -33,17 +35,35 @@ export class Function<P, O> {
   readonly __functionBrand: ConditionalFunction<P, O>;
 
   constructor(readonly resource: aws_lambda.IFunction) {
-    return Object.assign(lambda, this);
-
-    function lambda(call: CallExpr, vtl: VTL): string {
+    return makeCallable(this, (call: CallExpr, context: VTL | ASL): any => {
       const payloadArg = call.getArgument("payload");
-      const payload = payloadArg ? vtl.eval(payloadArg.expr) : "$null";
 
-      const request = vtl.var(
-        `{"version": "2018-05-29", "operation": "Invoke", "payload": ${payload}}`
-      );
-      return vtl.json(request);
-    }
+      if (isVTL(context)) {
+        const payload = payloadArg ? context.eval(payloadArg.expr) : "$null";
+
+        const request = context.var(
+          `{"version": "2018-05-29", "operation": "Invoke", "payload": ${payload}}`
+        );
+        return context.json(request);
+      } else if (isASL(context)) {
+        this.resource.grantInvoke(context.role);
+        const task: Partial<Task> = {
+          Type: "Task",
+          Resource: "arn:aws:states:::lambda:invoke",
+          Parameters: {
+            FunctionName: this.resource.functionName,
+            [`Payload${
+              payloadArg && isVariableReference(payloadArg.expr) ? ".$" : ""
+            }`]: payloadArg ? ASL.toJson(payloadArg.expr) : null,
+          },
+          ResultSelector: "$.Payload",
+        };
+        return task;
+      } else {
+        console.error(`invalid Function call context`, context);
+        throw new Error(`invalid Function call context: ${context}`);
+      }
+    });
   }
 }
 

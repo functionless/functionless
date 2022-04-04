@@ -7,14 +7,15 @@ import {
   ExpressionAttributeNames,
   ExpressionAttributeValues,
 } from "typesafe-dynamodb/lib/expression-attributes";
-import { TableKey } from "typesafe-dynamodb/lib/key";
 import { Narrow } from "typesafe-dynamodb/lib/narrow";
+import { isVTL, VTL } from "./vtl";
 import { CallExpr, ObjectLiteralExpr } from "./expression";
-import { VTL } from "./vtl";
 
 // @ts-ignore - imported for typedoc
 import type { AppsyncResolver } from "./appsync";
+import { TableKey } from "typesafe-dynamodb/lib/key";
 import { JsonFormat } from "typesafe-dynamodb";
+import { CallContext } from "./context";
 import { assertNodeKind } from "./assert";
 
 export function isTable(a: any): a is AnyTable {
@@ -89,7 +90,9 @@ export class Table<
     consistentRead?: boolean;
   }): Narrow<Item, AttributeKeyToObject<Key>, JsonFormat.Document>;
 
-  public getItem(call: CallExpr, vtl: VTL): any {
+  public getItem(call: CallExpr, vtl: CallContext): any {
+    assertIsVTLContext(vtl, "getItem");
+
     const input = vtl.eval(
       assertNodeKind<ObjectLiteralExpr>(
         call.getArgument("input")?.expr,
@@ -129,7 +132,8 @@ export class Table<
     _version?: number;
   }): Narrow<Item, AttributeKeyToObject<Key>, JsonFormat.Document>;
 
-  public putItem(call: CallExpr, vtl: VTL): any {
+  public putItem(call: CallExpr, vtl: CallContext): any {
+    assertIsVTLContext(vtl, "putItem");
     const input = vtl.eval(
       assertNodeKind<ObjectLiteralExpr>(
         call.getArgument("input")?.expr,
@@ -169,7 +173,9 @@ export class Table<
     _version?: number;
   }): Narrow<Item, AttributeKeyToObject<Key>, JsonFormat.Document>;
 
-  public updateItem(call: CallExpr, vtl: VTL): any {
+  public updateItem(call: CallExpr, vtl: CallContext): any {
+    assertIsVTLContext(vtl, "updateItem");
+
     const input = vtl.eval(
       assertNodeKind<ObjectLiteralExpr>(
         call.getArgument("input")?.expr,
@@ -249,7 +255,6 @@ export class Table<
       )
     );
     const request = vtl.var(`{"operation": "Query", "version": "2018-05-29"}`);
-    vtl.qr(`${request}.put('key', ${input}.get('key'))`);
     vtl.qr(`${request}.put('query', ${input}.get('query'))`);
     addIfDefined(vtl, input, request, "index");
     addIfDefined(vtl, input, request, "nextToken");
@@ -259,6 +264,17 @@ export class Table<
     addIfDefined(vtl, input, request, "select");
 
     return vtl.json(request);
+  }
+}
+
+function assertIsVTLContext(
+  context: CallContext,
+  methodName: string
+): asserts context is VTL {
+  if (!isVTL(context)) {
+    throw new Error(
+      `Table.${methodName} is only allowed within a '${VTL.ContextName}' context, but was called within a '${context.kind}' context.`
+    );
   }
 }
 

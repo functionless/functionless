@@ -1,42 +1,11 @@
-import { CallExpr, Identifier } from "./expression";
-import { AnyLambda } from "./function";
+import { CallExpr, CanReference } from "./expression";
 import { FunctionlessNode } from "./node";
-import { AnyTable } from "./table";
 import { VTL } from "./vtl";
+import { ASL, Task } from "./asl";
 
 export type AnyFunction = (...args: any[]) => any;
 
-export function lookupIdentifier(id: Identifier) {
-  return lookup(id.parent);
-
-  function lookup(
-    expr: FunctionlessNode | undefined
-  ): FunctionlessNode | undefined {
-    if (expr === undefined) {
-      return undefined;
-    } else if (expr.kind === "VariableStmt" && expr.name === id.name) {
-      return expr;
-    } else if (expr.kind === "FunctionDecl" || expr.kind === "FunctionExpr") {
-      const parameter = expr.parameters.find((param) => param.name === id.name);
-      if (parameter) {
-        return parameter;
-      }
-    } else if (expr.kind === "ForInStmt" || expr.kind === "ForOfStmt") {
-      if (expr.i.name === id.name) {
-        return expr.i;
-      }
-    }
-    if (expr.prev) {
-      return lookup(expr.prev);
-    } else {
-      return lookup(expr.parent);
-    }
-  }
-}
-
-export function findService(
-  expr: FunctionlessNode
-): AnyTable | AnyLambda | undefined {
+export function findService(expr: FunctionlessNode): CanReference | undefined {
   if (expr.kind === "ReferenceExpr") {
     return expr.ref();
   } else if (expr.kind === "PropAccessExpr") {
@@ -45,15 +14,13 @@ export function findService(
     return findService(expr.expr);
   } else if (expr.kind === "VariableStmt" && expr.expr) {
     return findService(expr.expr);
-  } else if (expr.kind === "ReturnStmt") {
+  } else if (expr.kind === "ReturnStmt" && expr.expr) {
+    return findService(expr.expr);
+  } else if (expr.kind === "ExprStmt") {
     return findService(expr.expr);
   }
   return undefined;
 }
-
-// export function indent(depth: number) {
-//   return Array.from(new Array(depth)).join(" ");
-// }
 
 // derives a name from an expression - this can be used to name infrastructure, such as an AppsyncResolver.
 // e.g. table.getItem(..) => "table_getItem"
@@ -63,7 +30,12 @@ export function toName(expr: FunctionlessNode): string {
   } else if (expr.kind === "PropAccessExpr") {
     return `${toName(expr.expr)}_${expr.name}`;
   } else if (expr.kind === "ReferenceExpr") {
-    return expr.ref().resource.node.addr;
+    const ref = expr.ref();
+    if (ref.kind === "AWS") {
+      return "AWS";
+    } else {
+      return ref.resource.node.addr;
+    }
   } else {
     throw new Error(`invalid expression: '${expr.kind}'`);
   }
@@ -87,9 +59,16 @@ export function isInTopLevelScope(expr: FunctionlessNode): boolean {
   }
 }
 
+/**
+ * @param call call expression that may reference a callable integration
+ * @returns the reference to the callable function, e.g. a Lambda Function or method on a DynamoDB Table
+ */
 export function findFunction(
   call: CallExpr
-): ((call: CallExpr, vtl: VTL) => string) | undefined {
+):
+  | (((call: CallExpr, context: VTL) => string) &
+      ((call: CallExpr, context: ASL) => Omit<Task, "Next">))
+  | undefined {
   return find(call.expr);
 
   function find(expr: FunctionlessNode): any {
@@ -102,6 +81,52 @@ export function findFunction(
     } else {
       return undefined;
     }
+  }
+}
+
+export function ensureItemOf<T>(
+  arr: any[],
+  f: (item: any) => item is T,
+  message: string
+): asserts arr is T[] {
+  if (arr.some((item) => !f(item))) {
+    throw new Error(message);
+  }
+}
+
+export function ensure<T>(
+  a: any,
+  is: (a: any) => a is T,
+  message: string
+): asserts a is T {
+  if (!is(a)) {
+    debugger;
+    throw new Error(message);
+  }
+}
+
+type EnsureOr<T extends ((a: any) => a is any)[]> = T[number] extends (
+  a: any
+) => a is infer T
+  ? T
+  : never;
+
+export function anyOf<T extends ((a: any) => a is any)[]>(
+  ...fns: T
+): (a: any) => a is EnsureOr<T> {
+  return (a: any): a is EnsureOr<T> => fns.some((f) => f(a));
+}
+
+export type AnyDepthArray<T> = T | T[] | AnyDepthArray<T>[];
+
+export function flatten<T>(arr: AnyDepthArray<T>): T[] {
+  if (Array.isArray(arr)) {
+    return (arr as T[]).reduce(
+      (a: T[], b: AnyDepthArray<T>) => a.concat(flatten(b)),
+      []
+    );
+  } else {
+    return [arr];
   }
 }
 

@@ -1,12 +1,18 @@
-import { App, aws_events, Stack } from "aws-cdk-lib";
-import { AppsyncResolver, EventBusRuleInput, FunctionDecl } from "../src";
+import { App, aws_dynamodb, aws_events, aws_lambda, Stack } from "aws-cdk-lib";
+import {
+  AppsyncResolver,
+  FunctionDecl,
+  Table,
+  Function,
+  EventBusRuleInput,
+  FunctionlessEventPattern,
+} from "../src";
 
 import * as appsync from "@aws-cdk/aws-appsync-alpha";
 import path from "path";
-import { synthesizeEventPattern } from "../src/event-bridge/event-pattern";
-import { FunctionlessEventPattern } from "../src/event-bridge";
 import { Rule } from "aws-cdk-lib/aws-events";
 import { Err, isErr } from "../src/error";
+import { synthesizeEventPattern } from "../src/event-bridge/event-pattern/synth";
 import { EventTransformFunction } from "../src/event-bridge/transform";
 import { synthesizeEventBridgeTargets } from "../src/event-bridge/target-input";
 
@@ -50,6 +56,59 @@ export function appsyncTestCase(
   }).templates;
 
   expect(actual).toEqual(expected);
+}
+
+export interface Person {
+  id: string;
+  name: string;
+}
+
+export function initStepFunctionApp() {
+  const app = new App({
+    autoSynth: false,
+  });
+  const stack = new Stack(app, "stack");
+
+  const getPerson = new Function<{ id: string }, Person | undefined>(
+    new aws_lambda.Function(stack, "Func", {
+      code: aws_lambda.Code.fromInline(
+        "exports.handle = function() { return {id: 'id', name: 'name' }; }"
+      ),
+      handler: "index.handle",
+      runtime: aws_lambda.Runtime.NODEJS_14_X,
+    })
+  );
+
+  const task = new Function<any, number | null>(
+    new aws_lambda.Function(stack, "Task", {
+      code: aws_lambda.Code.fromInline(
+        "exports.handle = function() { return 1; }"
+      ),
+      handler: "index.handle",
+      runtime: aws_lambda.Runtime.NODEJS_14_X,
+    })
+  );
+
+  const computeScore = new Function<Person, number>(
+    new aws_lambda.Function(stack, "ComputeScore", {
+      code: aws_lambda.Code.fromInline(
+        "exports.handle = function() { return 1; }"
+      ),
+      handler: "index.handle",
+      runtime: aws_lambda.Runtime.NODEJS_14_X,
+    })
+  );
+
+  const personTable = new Table<Person, "id">(
+    new aws_dynamodb.Table(stack, "Table", {
+      partitionKey: {
+        name: "id",
+        type: aws_dynamodb.AttributeType.STRING,
+      },
+    })
+  );
+
+  return { stack, task, computeScore, getPerson, personTable };
 }
 
 export function ebEventPatternTestCase(

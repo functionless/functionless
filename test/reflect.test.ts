@@ -172,7 +172,7 @@ test("computed object name", () => {
     "ReturnStmt"
   );
   const obj = assertNodeKind<ObjectLiteralExpr>(ret.expr, "ObjectLiteralExpr");
-  obj.properties
+  obj.properties;
 });
 
 test("err", () => {

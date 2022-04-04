@@ -22,6 +22,9 @@ const api = new appsync.GraphqlApi(stack, "Api", {
     },
   },
   xrayEnabled: true,
+  logConfig: {
+    fieldLogLevel: appsync.FieldLogLevel.ALL,
+  },
 });
 
 // @ts-ignore

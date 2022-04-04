@@ -4,6 +4,7 @@ import {
   BinaryExpr,
   ElementAccessExpr,
   Expr,
+  Identifier,
   isArrayLiteralExpr,
   isBinaryExpr,
   isBooleanLiteral,
@@ -195,15 +196,24 @@ export const flattenExpression = (expr: Expr, scope: EventScope): Expr => {
       if (typeof key === "string") {
         const val = parent.properties
           .filter(isPropAssignExpr)
-          .find((p) => (isIdentifier(p.name) ? p.name.name === key : false));
+          .find((p) =>
+            isIdentifier(p.name)
+              ? p.name.name === key
+              : isStringLiteralExpr(p.name)
+              ? p.name.value === key
+              : false
+          );
         if (!val) {
           throw Error(
             `Cannot find property ${key} in Object with constant keys: ${parent.properties
               .filter(isPropAssignExpr)
               .map((e) => e.name)
-              .filter(isIdentifier)
-              .map((e) => e.name)
-              .join()}`
+              .filter(
+                (e): e is Identifier | StringLiteralExpr =>
+                  isIdentifier(e) || isStringLiteralExpr(e)
+              )
+              .map((e) => (isIdentifier(e) ? e.name : e.value))
+              .join()} of ${parent.properties.length} keys.`
           );
         }
         return val.expr;

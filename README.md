@@ -2,72 +2,50 @@
 
 [![npm version](https://badge.fury.io/js/functionless.svg)](https://badge.fury.io/js/functionless)
 
-**Functionless** is a TypeScript plugin that transforms TypeScript code into Service-to-Service (aka. "functionless") integrations, such as AWS AppSync [Resolvers](https://docs.aws.amazon.com/appsync/latest/devguide/configuring-resolvers.html) and [Velocity Templates](https://docs.aws.amazon.com/appsync/latest/devguide/resolver-mapping-template-reference-programming-guide.html), or (coming soon) [Amazon States Language](https://docs.aws.amazon.com/step-functions/latest/dg/concepts-amazon-states-language.html) for AWS Step Functions.
+**Functionless** is a TypeScript plugin that transforms TypeScript code into Service-to-Service (aka. "functionless") integrations, such as AWS AppSync [Resolvers](https://docs.aws.amazon.com/appsync/latest/devguide/configuring-resolvers.html) and [Velocity Templates](https://docs.aws.amazon.com/appsync/latest/devguide/resolver-mapping-template-reference-programming-guide.html), or [Amazon States Language](https://docs.aws.amazon.com/step-functions/latest/dg/concepts-amazon-states-language.html) for AWS Step Functions.
 
 For example, the below function creates an Appsync Resolver Pipeline with two stages:
 
-1. Call the `myTable` DynamoDB Table
-2. Call the `myFunction` Lambda Function
+1. Put an item into the `postTable` DynamoDB Table
+2. Trigger a long-running Step Function workflow to validate the contents
 
 ```ts
-const getItem = new AppsyncResolver<{ id: string }, Item | null>(($context) => {
-  const item = myTable.get({
-    id: $util.toDynamoDB($context.arguments.id),
+const postTable = new Table<Post, "postId">(new aws_dynamodb.Table(this, "PostTable", { .. }));
+
+// Query.addPost AppSync Resolver
+const addPost = new AppsyncResolver<{ title: string, text: string }, Post>(($context) => {
+  const post = postDatabase.get({
+    key: $util.toDynamoDB($util.autoUuid()),
+    title: $util.toDynamoDB($context.arguments.title),
+    text: $util.toDynamoDB($context.arguments.text),
   });
 
-  const score = myFunction(item);
+  // start execution of a long-running workflow to validate the Post
+  validatePostWorkflow(post);
 
-  return {
-    ...item,
-    score,
-  };
+  return post;
+});
+
+// a Lambda Function which can validate the contents of a Post
+const validatePost = new Function<Post, >(new aws_lambda.Function(this, "Validate", { .. }))
+
+// Step Function workflow that validates the contents of a Post and deletes it if bad
+const validatePostWorkflow = new StepFunction(this, "ValidatePostWorkflow", (post: Post) => {
+  const validationResult = validatePost(post);
+  if (validationResult.status === "Not Cool") {
+    $AWS.DynamoDB.DeleteItem({
+      TableName: postTable,
+      Key: {
+        postId: {
+          S: post.postId
+        }
+      }
+    });
+  }
 });
 ```
 
-Functionless parses the TypeScript code and converts it to Apache Velocity Templates and an AWS Appsync CloudFormation configuration, saving you from writing all of that boilerplate. Below are snippets of the Velocity Templates that this TypeScript code generates.
-
-**Get Item**:
-
-```
-#set($id = $util.toDynamoDB(id))
-{
-  "operation": "GetItem",
-  "key": {
-    "id": $util.toJson($id)
-  }
-}
-```
-
-**Invoke Function**:
-
-```
-{
-  "operation": "Invoke",
-  "payload": {
-    "item": $util.toJson($context.stash.item)
-  }
-}
-```
-
-**Resolver Mapping Template**:
-
-```
-#set(v1 = {})
-#foreach($k in $context.stash.item.keySet())
-$util.qr($v1.put($k, $context.stash.item[$k]))
-#end
-$util.qr($v1.put('score', $context.stash.score))
-$util.toJson($v1)
-```
-
-**Final JSON Output of the Resolver**
-
-```json
-{
-  "id": "user-id",
-  "score": 9001
-}
-```
+Functionless parses the TypeScript code and converts it to Amazon States Language, Apache Velocity Templates and a CloudFormation configuration, saving you from writing all of that boilerplate.
 
 ## Why you should use Service-to-Service Integrations
 
@@ -137,10 +115,12 @@ Files can be ignored by the transformer by using glob patterns in the `tsconfig.
 
 ## Usage
 
-<details>
-  <summary>App Sync</summary>
-
 `functionless` makes configuring services like AWS Appsync as easy as writing TypeScript functions.
+
+- [App Sync](#App-Sync)
+- [Event Bridge](#Event-Bridge)
+
+### App Sync
 
 There are three aspects your need to learn before using Functionless in your CDK application:
 
@@ -148,7 +128,7 @@ There are three aspects your need to learn before using Functionless in your CDK
 2. `AppsyncResolver` construct for defining Appsync Resolver with TypeScript syntax.
 3. Add Resolvers to an `@aws-cdk/aws-appsync-alpha.GraphQLApi`.
 
-### Appsync Integration interfaces for `Function` and `Table`
+#### Appsync Integration interfaces for `Function` and `Table`
 
 You must wrap your CDK L2 Constructs in the corresponding wrapper class provided by functionless. Currently, Lambda `Function` and DynamoDB `Table` are supported.
 
@@ -222,7 +202,7 @@ new AppsyncResolver(() => {
 });
 ```
 
-### `AppsyncResolver` construct for defining Appsync Resolver with TypeScript syntax
+#### `AppsyncResolver` construct for defining Appsync Resolver with TypeScript syntax
 
 After wrapping your Functions/Tables, you can then instantiate an `AppsyncResolver` and interact with them using standard TypeScript syntax.
 
@@ -275,7 +255,7 @@ for (const item in list) {
 }
 ```
 
-### Add Resolvers to an `@aws-cdk/aws-appsync-alpha.GraphQLApi`
+#### Add Resolvers to an `@aws-cdk/aws-appsync-alpha.GraphQLApi`
 
 When you create a `new AppsyncResolver`, it does not immediately generate an Appsync Resolver. `AppsyncResolver` is more like a template for creating resolvers and can be re-used across more than one API.
 
@@ -311,9 +291,7 @@ getPerson.addResolver(api, {
 });
 ```
 
-</details>
-<details>
-  <summary>Event Bridge</summary>
+### Event Bridge
 
 Functionless makes using Event Bridge easy by leveraging typescript instead of AWS Event Bridge's proprietary logic and transform configuration.
 
@@ -359,7 +337,7 @@ interface UserEvent
   > {}
 ```
 
-### Create Rules (`EventBusRule`) on a Event Bus to match incoming events.
+#### Create Rules (`EventBusRule`) on a Event Bus to match incoming events.
 
 Now that you have a wrapped `EventBus`, lets add some rules.
 
@@ -393,7 +371,7 @@ const catPeopleEvents = bus.when(
 );
 ```
 
-### Transform the event before sending to some services like `Lambda` Functions.
+#### Transform the event before sending to some services like `Lambda` Functions.
 
 We have two lambda functions to invoke, one for create or updates and another for deletes, lets make those.
 
@@ -442,7 +420,7 @@ const deleteEventsTransformed = createOrUpdateEvents.map<Delete>((event) => ({
 }));
 ```
 
-### Target other AWS services like Lambda and other Event Buses
+#### Target other AWS services like Lambda and other Event Buses
 
 Now that we have created rules on our event buses using `when` and transformed those matched events using `map`, we need to send the events somewhere.
 
@@ -464,7 +442,7 @@ const catPeopleBus = functionless.EventBus.fromBus(
 catPeopleEvents.pipe(catPeopleBus);
 ```
 
-### Summary
+#### Summary
 
 Lets look at the above all together.
 
@@ -548,18 +526,16 @@ bus
   );
 ```
 
-</details>
-
-## TypeScript 
-
-<details>
-  <summary>-> Velocity Template Logic</summary>
+## TypeScript -> Velocity Template Logic
 
 In order to write effective VTL templates, it helps to understand how TypeScript syntax maps to Velocity Template Statements.
 
 An AppSync Request Mapping Template is synthesized by evaluating all [Expressions](./src/expression.ts) to a series of `#set`, `$util.qr`, `#foreach` and `#if` statements. The end result is an object containing the returned result of the function which can then be converted to JSON with `$util.toJson`.
 
 The following section provides a reference guide on how each of the supported TypeScript syntax is mapped to VTL.
+
+<details>
+<summary>Click to expand</summary>
 
 #### Parameter Reference
 
@@ -892,8 +868,8 @@ $util.qr($v1.put($b, true))
 ```
 
 </details>
-<details>
-  <summary>-> Event patterns</summary>
+
+## Typescript -> Event patterns
 
 Event patterns are all predicates that filter on the incoming event. The pattern is modeled as a predicate on the bus, resulting in a rule that follows the logic in the predicate.
 
@@ -902,6 +878,9 @@ https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-event-patterns.html
 ```ts
 .when(event => event.detail.value === "something")
 ```
+
+<details>
+<summary>Click to expand</summary>
 
 ### Equals
 
@@ -1101,14 +1080,17 @@ Simplification
 ```
 
 </details>
-<details>
-  <summary>-> Event Target Input Transformers</summary>
+
+## Typescript -> Event Target Input Transformers
 
 Event input transformers are pure functions that transform the input json into a json object or string sent to the target. The transformer is modeled as a map function.
 
 https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-transform-target-input.html
 
 > Limit: Event Bridge does not support input transformation when sending data between buses.
+
+<details>
+<summary>Click to expand</summary>
 
 ### Constant
 
