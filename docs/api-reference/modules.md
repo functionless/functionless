@@ -175,7 +175,7 @@
 
 #### Defined in
 
-[src/util.ts:120](https://github.com/sam-goodwin/functionless/blob/f58aa43/src/util.ts#L120)
+[src/util.ts:120](https://github.com/sam-goodwin/functionless/blob/a9095de/src/util.ts#L120)
 
 ___
 
@@ -199,7 +199,7 @@ ___
 
 #### Defined in
 
-[src/util.ts:6](https://github.com/sam-goodwin/functionless/blob/f58aa43/src/util.ts#L6)
+[src/util.ts:6](https://github.com/sam-goodwin/functionless/blob/a9095de/src/util.ts#L6)
 
 ___
 
@@ -209,7 +209,7 @@ ___
 
 #### Defined in
 
-[src/function.ts:14](https://github.com/sam-goodwin/functionless/blob/f58aa43/src/function.ts#L14)
+[src/function.ts:14](https://github.com/sam-goodwin/functionless/blob/a9095de/src/function.ts#L14)
 
 ___
 
@@ -219,7 +219,7 @@ ___
 
 #### Defined in
 
-[src/step-function.ts:32](https://github.com/sam-goodwin/functionless/blob/f58aa43/src/step-function.ts#L32)
+[src/step-function.ts:32](https://github.com/sam-goodwin/functionless/blob/a9095de/src/step-function.ts#L32)
 
 ___
 
@@ -229,7 +229,7 @@ ___
 
 #### Defined in
 
-[src/table.ts:25](https://github.com/sam-goodwin/functionless/blob/f58aa43/src/table.ts#L25)
+[src/table.ts:25](https://github.com/sam-goodwin/functionless/blob/a9095de/src/table.ts#L25)
 
 ___
 
@@ -239,7 +239,7 @@ ___
 
 #### Defined in
 
-[src/expression.ts:269](https://github.com/sam-goodwin/functionless/blob/f58aa43/src/expression.ts#L269)
+[src/expression.ts:269](https://github.com/sam-goodwin/functionless/blob/a9095de/src/expression.ts#L269)
 
 ___
 
@@ -249,7 +249,7 @@ ___
 
 #### Defined in
 
-[src/statement.ts:98](https://github.com/sam-goodwin/functionless/blob/f58aa43/src/statement.ts#L98)
+[src/statement.ts:98](https://github.com/sam-goodwin/functionless/blob/a9095de/src/statement.ts#L98)
 
 ___
 
@@ -259,7 +259,7 @@ ___
 
 #### Defined in
 
-[src/expression.ts:125](https://github.com/sam-goodwin/functionless/blob/f58aa43/src/expression.ts#L125)
+[src/expression.ts:125](https://github.com/sam-goodwin/functionless/blob/a9095de/src/expression.ts#L125)
 
 ___
 
@@ -269,7 +269,7 @@ ___
 
 #### Defined in
 
-[src/declaration.ts:6](https://github.com/sam-goodwin/functionless/blob/f58aa43/src/declaration.ts#L6)
+[src/declaration.ts:6](https://github.com/sam-goodwin/functionless/blob/a9095de/src/declaration.ts#L6)
 
 ___
 
@@ -285,7 +285,7 @@ ___
 
 #### Defined in
 
-[src/table.ts:299](https://github.com/sam-goodwin/functionless/blob/f58aa43/src/table.ts#L299)
+[src/table.ts:299](https://github.com/sam-goodwin/functionless/blob/a9095de/src/table.ts#L299)
 
 ___
 
@@ -297,7 +297,7 @@ An [Expr](modules.md#expr) (Expression) is a Node that will be interpreted to a 
 
 #### Defined in
 
-[src/expression.ts:18](https://github.com/sam-goodwin/functionless/blob/f58aa43/src/expression.ts#L18)
+[src/expression.ts:18](https://github.com/sam-goodwin/functionless/blob/a9095de/src/expression.ts#L18)
 
 ___
 
@@ -307,7 +307,7 @@ ___
 
 #### Defined in
 
-[src/expression.ts:395](https://github.com/sam-goodwin/functionless/blob/f58aa43/src/expression.ts#L395)
+[src/expression.ts:395](https://github.com/sam-goodwin/functionless/blob/a9095de/src/expression.ts#L395)
 
 ___
 
@@ -347,7 +347,7 @@ A [ResolverFunction](modules.md#resolverfunction) is a function that represents 
 
 #### Defined in
 
-[src/appsync.ts:48](https://github.com/sam-goodwin/functionless/blob/f58aa43/src/appsync.ts#L48)
+[src/appsync.ts:48](https://github.com/sam-goodwin/functionless/blob/a9095de/src/appsync.ts#L48)
 
 ___
 
@@ -360,7 +360,7 @@ to `#set`, `$util.qr` and `#return` directives.
 
 #### Defined in
 
-[src/statement.ts:9](https://github.com/sam-goodwin/functionless/blob/f58aa43/src/statement.ts#L9)
+[src/statement.ts:9](https://github.com/sam-goodwin/functionless/blob/a9095de/src/statement.ts#L9)
 
 ___
 
@@ -376,7 +376,7 @@ ___
 
 #### Defined in
 
-[src/step-function.ts:913](https://github.com/sam-goodwin/functionless/blob/f58aa43/src/step-function.ts#L913)
+[src/step-function.ts:913](https://github.com/sam-goodwin/functionless/blob/a9095de/src/step-function.ts#L913)
 
 ___
 
@@ -386,7 +386,7 @@ ___
 
 #### Defined in
 
-[src/expression.ts:304](https://github.com/sam-goodwin/functionless/blob/f58aa43/src/expression.ts#L304)
+[src/expression.ts:304](https://github.com/sam-goodwin/functionless/blob/a9095de/src/expression.ts#L304)
 
 ___
 
@@ -396,7 +396,7 @@ ___
 
 #### Defined in
 
-[src/expression.ts:137](https://github.com/sam-goodwin/functionless/blob/f58aa43/src/expression.ts#L137)
+[src/expression.ts:137](https://github.com/sam-goodwin/functionless/blob/a9095de/src/expression.ts#L137)
 
 ___
 
@@ -406,7 +406,7 @@ ___
 
 #### Defined in
 
-[src/statement.ts:74](https://github.com/sam-goodwin/functionless/blob/f58aa43/src/statement.ts#L74)
+[src/statement.ts:74](https://github.com/sam-goodwin/functionless/blob/a9095de/src/statement.ts#L74)
 
 ## Variables
 
@@ -423,7 +423,7 @@ will be translated directly to calls within the Velocity Template Engine.
 
 #### Defined in
 
-[src/appsync.ts:486](https://github.com/sam-goodwin/functionless/blob/f58aa43/src/appsync.ts#L486)
+[src/appsync.ts:486](https://github.com/sam-goodwin/functionless/blob/a9095de/src/appsync.ts#L486)
 
 ## Functions
 
@@ -461,7 +461,7 @@ a is EnsureOr<T\>
 
 #### Defined in
 
-[src/util.ts:114](https://github.com/sam-goodwin/functionless/blob/f58aa43/src/util.ts#L114)
+[src/util.ts:114](https://github.com/sam-goodwin/functionless/blob/a9095de/src/util.ts#L114)
 
 ___
 
@@ -489,7 +489,7 @@ asserts a is T
 
 #### Defined in
 
-[src/util.ts:97](https://github.com/sam-goodwin/functionless/blob/f58aa43/src/util.ts#L97)
+[src/util.ts:97](https://github.com/sam-goodwin/functionless/blob/a9095de/src/util.ts#L97)
 
 ___
 
@@ -517,7 +517,7 @@ asserts arr is T[]
 
 #### Defined in
 
-[src/util.ts:87](https://github.com/sam-goodwin/functionless/blob/f58aa43/src/util.ts#L87)
+[src/util.ts:87](https://github.com/sam-goodwin/functionless/blob/a9095de/src/util.ts#L87)
 
 ___
 
@@ -539,7 +539,7 @@ the reference to the callable function, e.g. a Lambda Function or method on a Dy
 
 #### Defined in
 
-[src/util.ts:66](https://github.com/sam-goodwin/functionless/blob/f58aa43/src/util.ts#L66)
+[src/util.ts:66](https://github.com/sam-goodwin/functionless/blob/a9095de/src/util.ts#L66)
 
 ___
 
@@ -559,7 +559,7 @@ ___
 
 #### Defined in
 
-[src/util.ts:8](https://github.com/sam-goodwin/functionless/blob/f58aa43/src/util.ts#L8)
+[src/util.ts:8](https://github.com/sam-goodwin/functionless/blob/a9095de/src/util.ts#L8)
 
 ___
 
@@ -585,7 +585,7 @@ ___
 
 #### Defined in
 
-[src/util.ts:122](https://github.com/sam-goodwin/functionless/blob/f58aa43/src/util.ts#L122)
+[src/util.ts:122](https://github.com/sam-goodwin/functionless/blob/a9095de/src/util.ts#L122)
 
 ___
 
@@ -605,7 +605,7 @@ a is Argument
 
 #### Defined in
 
-[src/expression.ts:191](https://github.com/sam-goodwin/functionless/blob/f58aa43/src/expression.ts#L191)
+[src/expression.ts:191](https://github.com/sam-goodwin/functionless/blob/a9095de/src/expression.ts#L191)
 
 ___
 
@@ -625,7 +625,7 @@ a is ArrayLiteralExpr
 
 #### Defined in
 
-[src/expression.ts:382](https://github.com/sam-goodwin/functionless/blob/f58aa43/src/expression.ts#L382)
+[src/expression.ts:382](https://github.com/sam-goodwin/functionless/blob/a9095de/src/expression.ts#L382)
 
 ___
 
@@ -645,7 +645,7 @@ a is BinaryExpr
 
 #### Defined in
 
-[src/expression.ts:267](https://github.com/sam-goodwin/functionless/blob/f58aa43/src/expression.ts#L267)
+[src/expression.ts:267](https://github.com/sam-goodwin/functionless/blob/a9095de/src/expression.ts#L267)
 
 ___
 
@@ -665,7 +665,7 @@ a is BlockStmt
 
 #### Defined in
 
-[src/statement.ts:96](https://github.com/sam-goodwin/functionless/blob/f58aa43/src/statement.ts#L96)
+[src/statement.ts:96](https://github.com/sam-goodwin/functionless/blob/a9095de/src/statement.ts#L96)
 
 ___
 
@@ -685,7 +685,7 @@ a is BooleanLiteralExpr
 
 #### Defined in
 
-[src/expression.ts:346](https://github.com/sam-goodwin/functionless/blob/f58aa43/src/expression.ts#L346)
+[src/expression.ts:346](https://github.com/sam-goodwin/functionless/blob/a9095de/src/expression.ts#L346)
 
 ___
 
@@ -705,7 +705,7 @@ a is BreakStmt
 
 #### Defined in
 
-[src/statement.ts:236](https://github.com/sam-goodwin/functionless/blob/f58aa43/src/statement.ts#L236)
+[src/statement.ts:236](https://github.com/sam-goodwin/functionless/blob/a9095de/src/statement.ts#L236)
 
 ___
 
@@ -725,7 +725,7 @@ a is CallExpr
 
 #### Defined in
 
-[src/expression.ts:204](https://github.com/sam-goodwin/functionless/blob/f58aa43/src/expression.ts#L204)
+[src/expression.ts:204](https://github.com/sam-goodwin/functionless/blob/a9095de/src/expression.ts#L204)
 
 ___
 
@@ -745,7 +745,7 @@ a is CatchClause
 
 #### Defined in
 
-[src/statement.ts:293](https://github.com/sam-goodwin/functionless/blob/f58aa43/src/statement.ts#L293)
+[src/statement.ts:293](https://github.com/sam-goodwin/functionless/blob/a9095de/src/statement.ts#L293)
 
 ___
 
@@ -765,7 +765,7 @@ a is ComputedPropertyNameExpr
 
 #### Defined in
 
-[src/expression.ts:451](https://github.com/sam-goodwin/functionless/blob/f58aa43/src/expression.ts#L451)
+[src/expression.ts:451](https://github.com/sam-goodwin/functionless/blob/a9095de/src/expression.ts#L451)
 
 ___
 
@@ -785,7 +785,7 @@ a is ConditionExpr
 
 #### Defined in
 
-[src/expression.ts:246](https://github.com/sam-goodwin/functionless/blob/f58aa43/src/expression.ts#L246)
+[src/expression.ts:246](https://github.com/sam-goodwin/functionless/blob/a9095de/src/expression.ts#L246)
 
 ___
 
@@ -805,7 +805,7 @@ a is ContinueStmt
 
 #### Defined in
 
-[src/statement.ts:248](https://github.com/sam-goodwin/functionless/blob/f58aa43/src/statement.ts#L248)
+[src/statement.ts:248](https://github.com/sam-goodwin/functionless/blob/a9095de/src/statement.ts#L248)
 
 ___
 
@@ -825,7 +825,7 @@ a is Decl
 
 #### Defined in
 
-[src/declaration.ts:8](https://github.com/sam-goodwin/functionless/blob/f58aa43/src/declaration.ts#L8)
+[src/declaration.ts:8](https://github.com/sam-goodwin/functionless/blob/a9095de/src/declaration.ts#L8)
 
 ___
 
@@ -845,7 +845,7 @@ a is DoStmt
 
 #### Defined in
 
-[src/statement.ts:342](https://github.com/sam-goodwin/functionless/blob/f58aa43/src/statement.ts#L342)
+[src/statement.ts:342](https://github.com/sam-goodwin/functionless/blob/a9095de/src/statement.ts#L342)
 
 ___
 
@@ -865,7 +865,7 @@ a is ElementAccessExpr
 
 #### Defined in
 
-[src/expression.ts:174](https://github.com/sam-goodwin/functionless/blob/f58aa43/src/expression.ts#L174)
+[src/expression.ts:174](https://github.com/sam-goodwin/functionless/blob/a9095de/src/expression.ts#L174)
 
 ___
 
@@ -885,7 +885,7 @@ a is Err
 
 #### Defined in
 
-[src/error.ts:3](https://github.com/sam-goodwin/functionless/blob/f58aa43/src/error.ts#L3)
+[src/error.ts:3](https://github.com/sam-goodwin/functionless/blob/a9095de/src/error.ts#L3)
 
 ___
 
@@ -905,7 +905,7 @@ a is Expr
 
 #### Defined in
 
-[src/expression.ts:45](https://github.com/sam-goodwin/functionless/blob/f58aa43/src/expression.ts#L45)
+[src/expression.ts:45](https://github.com/sam-goodwin/functionless/blob/a9095de/src/expression.ts#L45)
 
 ___
 
@@ -925,7 +925,7 @@ a is ExprStmt
 
 #### Defined in
 
-[src/statement.ts:59](https://github.com/sam-goodwin/functionless/blob/f58aa43/src/statement.ts#L59)
+[src/statement.ts:59](https://github.com/sam-goodwin/functionless/blob/a9095de/src/statement.ts#L59)
 
 ___
 
@@ -945,7 +945,7 @@ a is ForInStmt
 
 #### Defined in
 
-[src/statement.ts:213](https://github.com/sam-goodwin/functionless/blob/f58aa43/src/statement.ts#L213)
+[src/statement.ts:213](https://github.com/sam-goodwin/functionless/blob/a9095de/src/statement.ts#L213)
 
 ___
 
@@ -965,7 +965,7 @@ a is ForOfStmt
 
 #### Defined in
 
-[src/statement.ts:190](https://github.com/sam-goodwin/functionless/blob/f58aa43/src/statement.ts#L190)
+[src/statement.ts:190](https://github.com/sam-goodwin/functionless/blob/a9095de/src/statement.ts#L190)
 
 ___
 
@@ -985,7 +985,7 @@ a is Function<any, any\>
 
 #### Defined in
 
-[src/function.ts:10](https://github.com/sam-goodwin/functionless/blob/f58aa43/src/function.ts#L10)
+[src/function.ts:10](https://github.com/sam-goodwin/functionless/blob/a9095de/src/function.ts#L10)
 
 ___
 
@@ -1005,7 +1005,7 @@ a is FunctionDecl<AnyFunction\>
 
 #### Defined in
 
-[src/declaration.ts:12](https://github.com/sam-goodwin/functionless/blob/f58aa43/src/declaration.ts#L12)
+[src/declaration.ts:12](https://github.com/sam-goodwin/functionless/blob/a9095de/src/declaration.ts#L12)
 
 ___
 
@@ -1025,7 +1025,7 @@ a is FunctionExpr<AnyFunction\> \| FunctionExpr<AnyFunction\>
 
 #### Defined in
 
-[src/expression.ts:103](https://github.com/sam-goodwin/functionless/blob/f58aa43/src/expression.ts#L103)
+[src/expression.ts:103](https://github.com/sam-goodwin/functionless/blob/a9095de/src/expression.ts#L103)
 
 ___
 
@@ -1045,7 +1045,7 @@ a is Identifier
 
 #### Defined in
 
-[src/expression.ts:145](https://github.com/sam-goodwin/functionless/blob/f58aa43/src/expression.ts#L145)
+[src/expression.ts:145](https://github.com/sam-goodwin/functionless/blob/a9095de/src/expression.ts#L145)
 
 ___
 
@@ -1065,7 +1065,7 @@ a is IfStmt
 
 #### Defined in
 
-[src/statement.ts:165](https://github.com/sam-goodwin/functionless/blob/f58aa43/src/statement.ts#L165)
+[src/statement.ts:165](https://github.com/sam-goodwin/functionless/blob/a9095de/src/statement.ts#L165)
 
 ___
 
@@ -1085,7 +1085,7 @@ ___
 
 #### Defined in
 
-[src/util.ts:44](https://github.com/sam-goodwin/functionless/blob/f58aa43/src/util.ts#L44)
+[src/util.ts:44](https://github.com/sam-goodwin/functionless/blob/a9095de/src/util.ts#L44)
 
 ___
 
@@ -1105,7 +1105,7 @@ a is ArrayLiteralExpr \| BooleanLiteralExpr \| NullLiteralExpr \| NumberLiteralE
 
 #### Defined in
 
-[src/expression.ts:74](https://github.com/sam-goodwin/functionless/blob/f58aa43/src/expression.ts#L74)
+[src/expression.ts:74](https://github.com/sam-goodwin/functionless/blob/a9095de/src/expression.ts#L74)
 
 ___
 
@@ -1125,7 +1125,7 @@ a is BooleanLiteralExpr \| NullLiteralExpr \| NumberLiteralExpr \| StringLiteral
 
 #### Defined in
 
-[src/expression.ts:84](https://github.com/sam-goodwin/functionless/blob/f58aa43/src/expression.ts#L84)
+[src/expression.ts:84](https://github.com/sam-goodwin/functionless/blob/a9095de/src/expression.ts#L84)
 
 ___
 
@@ -1145,7 +1145,7 @@ a is NewExpr
 
 #### Defined in
 
-[src/expression.ts:225](https://github.com/sam-goodwin/functionless/blob/f58aa43/src/expression.ts#L225)
+[src/expression.ts:225](https://github.com/sam-goodwin/functionless/blob/a9095de/src/expression.ts#L225)
 
 ___
 
@@ -1165,7 +1165,7 @@ a is NullLiteralExpr
 
 #### Defined in
 
-[src/expression.ts:319](https://github.com/sam-goodwin/functionless/blob/f58aa43/src/expression.ts#L319)
+[src/expression.ts:319](https://github.com/sam-goodwin/functionless/blob/a9095de/src/expression.ts#L319)
 
 ___
 
@@ -1185,7 +1185,7 @@ a is NumberLiteralExpr
 
 #### Defined in
 
-[src/expression.ts:358](https://github.com/sam-goodwin/functionless/blob/f58aa43/src/expression.ts#L358)
+[src/expression.ts:358](https://github.com/sam-goodwin/functionless/blob/a9095de/src/expression.ts#L358)
 
 ___
 
@@ -1205,7 +1205,7 @@ a is PropAssignExpr \| SpreadAssignExpr
 
 #### Defined in
 
-[src/expression.ts:397](https://github.com/sam-goodwin/functionless/blob/f58aa43/src/expression.ts#L397)
+[src/expression.ts:397](https://github.com/sam-goodwin/functionless/blob/a9095de/src/expression.ts#L397)
 
 ___
 
@@ -1225,7 +1225,7 @@ a is ObjectLiteralExpr
 
 #### Defined in
 
-[src/expression.ts:402](https://github.com/sam-goodwin/functionless/blob/f58aa43/src/expression.ts#L402)
+[src/expression.ts:402](https://github.com/sam-goodwin/functionless/blob/a9095de/src/expression.ts#L402)
 
 ___
 
@@ -1245,7 +1245,7 @@ a is ParameterDecl
 
 #### Defined in
 
-[src/declaration.ts:40](https://github.com/sam-goodwin/functionless/blob/f58aa43/src/declaration.ts#L40)
+[src/declaration.ts:40](https://github.com/sam-goodwin/functionless/blob/a9095de/src/declaration.ts#L40)
 
 ___
 
@@ -1265,7 +1265,7 @@ a is PropAccessExpr
 
 #### Defined in
 
-[src/expression.ts:161](https://github.com/sam-goodwin/functionless/blob/f58aa43/src/expression.ts#L161)
+[src/expression.ts:161](https://github.com/sam-goodwin/functionless/blob/a9095de/src/expression.ts#L161)
 
 ___
 
@@ -1285,7 +1285,7 @@ a is PropAssignExpr
 
 #### Defined in
 
-[src/expression.ts:431](https://github.com/sam-goodwin/functionless/blob/f58aa43/src/expression.ts#L431)
+[src/expression.ts:431](https://github.com/sam-goodwin/functionless/blob/a9095de/src/expression.ts#L431)
 
 ___
 
@@ -1305,7 +1305,7 @@ a is ReferenceExpr
 
 #### Defined in
 
-[src/expression.ts:123](https://github.com/sam-goodwin/functionless/blob/f58aa43/src/expression.ts#L123)
+[src/expression.ts:123](https://github.com/sam-goodwin/functionless/blob/a9095de/src/expression.ts#L123)
 
 ___
 
@@ -1325,7 +1325,7 @@ a is ReturnStmt
 
 #### Defined in
 
-[src/statement.ts:152](https://github.com/sam-goodwin/functionless/blob/f58aa43/src/statement.ts#L152)
+[src/statement.ts:152](https://github.com/sam-goodwin/functionless/blob/a9095de/src/statement.ts#L152)
 
 ___
 
@@ -1345,7 +1345,7 @@ a is SpreadAssignExpr
 
 #### Defined in
 
-[src/expression.ts:467](https://github.com/sam-goodwin/functionless/blob/f58aa43/src/expression.ts#L467)
+[src/expression.ts:467](https://github.com/sam-goodwin/functionless/blob/a9095de/src/expression.ts#L467)
 
 ___
 
@@ -1365,7 +1365,7 @@ a is SpreadElementExpr
 
 #### Defined in
 
-[src/expression.ts:483](https://github.com/sam-goodwin/functionless/blob/f58aa43/src/expression.ts#L483)
+[src/expression.ts:483](https://github.com/sam-goodwin/functionless/blob/a9095de/src/expression.ts#L483)
 
 ___
 
@@ -1385,7 +1385,7 @@ a is Stmt
 
 #### Defined in
 
-[src/statement.ts:25](https://github.com/sam-goodwin/functionless/blob/f58aa43/src/statement.ts#L25)
+[src/statement.ts:25](https://github.com/sam-goodwin/functionless/blob/a9095de/src/statement.ts#L25)
 
 ___
 
@@ -1405,7 +1405,7 @@ a is StringLiteralExpr
 
 #### Defined in
 
-[src/expression.ts:370](https://github.com/sam-goodwin/functionless/blob/f58aa43/src/expression.ts#L370)
+[src/expression.ts:370](https://github.com/sam-goodwin/functionless/blob/a9095de/src/expression.ts#L370)
 
 ___
 
@@ -1425,7 +1425,7 @@ a is AnyTable
 
 #### Defined in
 
-[src/table.ts:21](https://github.com/sam-goodwin/functionless/blob/f58aa43/src/table.ts#L21)
+[src/table.ts:21](https://github.com/sam-goodwin/functionless/blob/a9095de/src/table.ts#L21)
 
 ___
 
@@ -1445,7 +1445,7 @@ a is TemplateExpr
 
 #### Defined in
 
-[src/expression.ts:499](https://github.com/sam-goodwin/functionless/blob/f58aa43/src/expression.ts#L499)
+[src/expression.ts:499](https://github.com/sam-goodwin/functionless/blob/a9095de/src/expression.ts#L499)
 
 ___
 
@@ -1465,7 +1465,7 @@ a is ThrowStmt
 
 #### Defined in
 
-[src/statement.ts:315](https://github.com/sam-goodwin/functionless/blob/f58aa43/src/statement.ts#L315)
+[src/statement.ts:315](https://github.com/sam-goodwin/functionless/blob/a9095de/src/statement.ts#L315)
 
 ___
 
@@ -1485,7 +1485,7 @@ a is TryStmt
 
 #### Defined in
 
-[src/statement.ts:266](https://github.com/sam-goodwin/functionless/blob/f58aa43/src/statement.ts#L266)
+[src/statement.ts:266](https://github.com/sam-goodwin/functionless/blob/a9095de/src/statement.ts#L266)
 
 ___
 
@@ -1505,7 +1505,7 @@ a is TypeOfExpr
 
 #### Defined in
 
-[src/expression.ts:515](https://github.com/sam-goodwin/functionless/blob/f58aa43/src/expression.ts#L515)
+[src/expression.ts:515](https://github.com/sam-goodwin/functionless/blob/a9095de/src/expression.ts#L515)
 
 ___
 
@@ -1525,7 +1525,7 @@ a is UnaryExpr
 
 #### Defined in
 
-[src/expression.ts:302](https://github.com/sam-goodwin/functionless/blob/f58aa43/src/expression.ts#L302)
+[src/expression.ts:302](https://github.com/sam-goodwin/functionless/blob/a9095de/src/expression.ts#L302)
 
 ___
 
@@ -1545,7 +1545,7 @@ a is UndefinedLiteralExpr
 
 #### Defined in
 
-[src/expression.ts:332](https://github.com/sam-goodwin/functionless/blob/f58aa43/src/expression.ts#L332)
+[src/expression.ts:332](https://github.com/sam-goodwin/functionless/blob/a9095de/src/expression.ts#L332)
 
 ___
 
@@ -1565,7 +1565,7 @@ expr is VariableReference
 
 #### Defined in
 
-[src/expression.ts:139](https://github.com/sam-goodwin/functionless/blob/f58aa43/src/expression.ts#L139)
+[src/expression.ts:139](https://github.com/sam-goodwin/functionless/blob/a9095de/src/expression.ts#L139)
 
 ___
 
@@ -1585,7 +1585,7 @@ a is VariableStmt<undefined \| Expr\>
 
 #### Defined in
 
-[src/statement.ts:72](https://github.com/sam-goodwin/functionless/blob/f58aa43/src/statement.ts#L72)
+[src/statement.ts:72](https://github.com/sam-goodwin/functionless/blob/a9095de/src/statement.ts#L72)
 
 ___
 
@@ -1605,7 +1605,7 @@ a is WhileStmt
 
 #### Defined in
 
-[src/statement.ts:328](https://github.com/sam-goodwin/functionless/blob/f58aa43/src/statement.ts#L328)
+[src/statement.ts:328](https://github.com/sam-goodwin/functionless/blob/a9095de/src/statement.ts#L328)
 
 ___
 
@@ -1653,7 +1653,7 @@ const decl2 = reflect(computeFunction())
 
 #### Defined in
 
-[src/reflect.ts:31](https://github.com/sam-goodwin/functionless/blob/f58aa43/src/reflect.ts#L31)
+[src/reflect.ts:31](https://github.com/sam-goodwin/functionless/blob/a9095de/src/reflect.ts#L31)
 
 ___
 
@@ -1673,4 +1673,4 @@ ___
 
 #### Defined in
 
-[src/util.ts:27](https://github.com/sam-goodwin/functionless/blob/f58aa43/src/util.ts#L27)
+[src/util.ts:27](https://github.com/sam-goodwin/functionless/blob/a9095de/src/util.ts#L27)

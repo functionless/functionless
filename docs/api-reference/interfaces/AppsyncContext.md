@@ -41,7 +41,7 @@ by the TypeScript->VTL conversion logic.
 
 #### Defined in
 
-[src/appsync.ts:28](https://github.com/sam-goodwin/functionless/blob/f58aa43/src/appsync.ts#L28)
+[src/appsync.ts:28](https://github.com/sam-goodwin/functionless/blob/a9095de/src/appsync.ts#L28)
 
 ___
 

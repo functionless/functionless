@@ -41,7 +41,7 @@ new AppsyncResolver(() => {
 
 #### Defined in
 
-[src/function.ts:75](https://github.com/sam-goodwin/functionless/blob/f58aa43/src/function.ts#L75)
+[src/function.ts:75](https://github.com/sam-goodwin/functionless/blob/a9095de/src/function.ts#L75)
 
 ## Table of contents
 
@@ -76,7 +76,7 @@ new AppsyncResolver(() => {
 
 #### Defined in
 
-[src/function.ts:37](https://github.com/sam-goodwin/functionless/blob/f58aa43/src/function.ts#L37)
+[src/function.ts:37](https://github.com/sam-goodwin/functionless/blob/a9095de/src/function.ts#L37)
 
 ## Properties
 
@@ -86,7 +86,7 @@ new AppsyncResolver(() => {
 
 #### Defined in
 
-[src/function.ts:35](https://github.com/sam-goodwin/functionless/blob/f58aa43/src/function.ts#L35)
+[src/function.ts:35](https://github.com/sam-goodwin/functionless/blob/a9095de/src/function.ts#L35)
 
 ___
 
@@ -96,7 +96,7 @@ ___
 
 #### Defined in
 
-[src/function.ts:32](https://github.com/sam-goodwin/functionless/blob/f58aa43/src/function.ts#L32)
+[src/function.ts:32](https://github.com/sam-goodwin/functionless/blob/a9095de/src/function.ts#L32)
 
 ___
 
