@@ -52,7 +52,7 @@
 
 #### Defined in
 
-[src/expression.ts:337](https://github.com/sam-goodwin/functionless/blob/261ad48/src/expression.ts#L337)
+[src/expression.ts:337](https://github.com/sam-goodwin/functionless/blob/f58aa43/src/expression.ts#L337)
 
 ## Properties
 
@@ -68,7 +68,7 @@ The immediate Child nodes contained within this Node.
 
 #### Defined in
 
-[src/node.ts:29](https://github.com/sam-goodwin/functionless/blob/261ad48/src/node.ts#L29)
+[src/node.ts:29](https://github.com/sam-goodwin/functionless/blob/f58aa43/src/node.ts#L29)
 
 ___
 
@@ -92,7 +92,7 @@ ___
 
 #### Defined in
 
-[src/expression.ts:100](https://github.com/sam-goodwin/functionless/blob/261ad48/src/expression.ts#L100)
+[src/expression.ts:100](https://github.com/sam-goodwin/functionless/blob/f58aa43/src/expression.ts#L100)
 
 ___
 
@@ -106,7 +106,7 @@ ___
 
 #### Defined in
 
-[src/node.ts:24](https://github.com/sam-goodwin/functionless/blob/261ad48/src/node.ts#L24)
+[src/node.ts:24](https://github.com/sam-goodwin/functionless/blob/f58aa43/src/node.ts#L24)
 
 ___
 
@@ -116,7 +116,7 @@ ___
 
 #### Defined in
 
-[src/expression.ts:335](https://github.com/sam-goodwin/functionless/blob/261ad48/src/expression.ts#L335)
+[src/expression.ts:335](https://github.com/sam-goodwin/functionless/blob/f58aa43/src/expression.ts#L335)
 
 ## Methods
 
@@ -146,7 +146,7 @@ ___
 
 #### Defined in
 
-[src/node.ts:42](https://github.com/sam-goodwin/functionless/blob/261ad48/src/node.ts#L42)
+[src/node.ts:42](https://github.com/sam-goodwin/functionless/blob/f58aa43/src/node.ts#L42)
 
 ___
 
@@ -164,7 +164,7 @@ ___
 
 #### Defined in
 
-[src/expression.ts:341](https://github.com/sam-goodwin/functionless/blob/261ad48/src/expression.ts#L341)
+[src/expression.ts:341](https://github.com/sam-goodwin/functionless/blob/f58aa43/src/expression.ts#L341)
 
 ___
 
@@ -194,7 +194,7 @@ ___
 
 #### Defined in
 
-[src/node.ts:62](https://github.com/sam-goodwin/functionless/blob/261ad48/src/node.ts#L62)
+[src/node.ts:62](https://github.com/sam-goodwin/functionless/blob/f58aa43/src/node.ts#L62)
 
 ___
 
@@ -219,7 +219,7 @@ ___
 
 #### Defined in
 
-[src/node.ts:107](https://github.com/sam-goodwin/functionless/blob/261ad48/src/node.ts#L107)
+[src/node.ts:107](https://github.com/sam-goodwin/functionless/blob/f58aa43/src/node.ts#L107)
 
 ___
 
@@ -239,7 +239,7 @@ the [Stmt](../modules.md#stmt) that will be run after exiting the scope of this 
 
 #### Defined in
 
-[src/node.ts:173](https://github.com/sam-goodwin/functionless/blob/261ad48/src/node.ts#L173)
+[src/node.ts:173](https://github.com/sam-goodwin/functionless/blob/f58aa43/src/node.ts#L173)
 
 ___
 
@@ -259,7 +259,7 @@ Finds the [CatchClause](CatchClause.md) that this Node should throw to.
 
 #### Defined in
 
-[src/node.ts:84](https://github.com/sam-goodwin/functionless/blob/261ad48/src/node.ts#L84)
+[src/node.ts:84](https://github.com/sam-goodwin/functionless/blob/f58aa43/src/node.ts#L84)
 
 ___
 
@@ -289,7 +289,7 @@ ___
 
 #### Defined in
 
-[src/node.ts:56](https://github.com/sam-goodwin/functionless/blob/261ad48/src/node.ts#L56)
+[src/node.ts:56](https://github.com/sam-goodwin/functionless/blob/f58aa43/src/node.ts#L56)
 
 ___
 
@@ -319,7 +319,7 @@ ___
 
 #### Defined in
 
-[src/node.ts:69](https://github.com/sam-goodwin/functionless/blob/261ad48/src/node.ts#L69)
+[src/node.ts:69](https://github.com/sam-goodwin/functionless/blob/f58aa43/src/node.ts#L69)
 
 ___
 
@@ -339,7 +339,7 @@ a mapping of name to the node visible in this node's scope.
 
 #### Defined in
 
-[src/node.ts:278](https://github.com/sam-goodwin/functionless/blob/261ad48/src/node.ts#L278)
+[src/node.ts:278](https://github.com/sam-goodwin/functionless/blob/f58aa43/src/node.ts#L278)
 
 ___
 
@@ -359,7 +359,7 @@ an array of all the visible names in this node's scope.
 
 #### Defined in
 
-[src/node.ts:271](https://github.com/sam-goodwin/functionless/blob/261ad48/src/node.ts#L271)
+[src/node.ts:271](https://github.com/sam-goodwin/functionless/blob/f58aa43/src/node.ts#L271)
 
 ___
 
@@ -389,7 +389,7 @@ this is N
 
 #### Defined in
 
-[src/node.ts:52](https://github.com/sam-goodwin/functionless/blob/261ad48/src/node.ts#L52)
+[src/node.ts:52](https://github.com/sam-goodwin/functionless/blob/f58aa43/src/node.ts#L52)
 
 ___
 
@@ -409,7 +409,7 @@ checks if this Node is terminal - meaning all branches explicitly return a value
 
 #### Defined in
 
-[src/node.ts:315](https://github.com/sam-goodwin/functionless/blob/261ad48/src/node.ts#L315)
+[src/node.ts:315](https://github.com/sam-goodwin/functionless/blob/f58aa43/src/node.ts#L315)
 
 ___
 
@@ -433,7 +433,7 @@ ___
 
 #### Defined in
 
-[src/node.ts:35](https://github.com/sam-goodwin/functionless/blob/261ad48/src/node.ts#L35)
+[src/node.ts:35](https://github.com/sam-goodwin/functionless/blob/f58aa43/src/node.ts#L35)
 
 ___
 
@@ -453,7 +453,7 @@ the [Stmt](../modules.md#stmt) that will be run immediately after this Node.
 
 #### Defined in
 
-[src/node.ts:137](https://github.com/sam-goodwin/functionless/blob/261ad48/src/node.ts#L137)
+[src/node.ts:137](https://github.com/sam-goodwin/functionless/blob/f58aa43/src/node.ts#L137)
 
 ___
 
@@ -473,4 +473,4 @@ the [Stmt](../modules.md#stmt) that will be run if an error was raised from this
 
 #### Defined in
 
-[src/node.ts:215](https://github.com/sam-goodwin/functionless/blob/261ad48/src/node.ts#L215)
+[src/node.ts:215](https://github.com/sam-goodwin/functionless/blob/f58aa43/src/node.ts#L215)

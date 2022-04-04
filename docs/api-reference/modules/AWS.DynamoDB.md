@@ -46,7 +46,7 @@
 
 #### Defined in
 
-[src/aws.ts:65](https://github.com/sam-goodwin/functionless/blob/261ad48/src/aws.ts#L65)
+[src/aws.ts:65](https://github.com/sam-goodwin/functionless/blob/f58aa43/src/aws.ts#L65)
 
 ___
 
@@ -77,7 +77,7 @@ ___
 
 #### Defined in
 
-[src/aws.ts:102](https://github.com/sam-goodwin/functionless/blob/261ad48/src/aws.ts#L102)
+[src/aws.ts:102](https://github.com/sam-goodwin/functionless/blob/f58aa43/src/aws.ts#L102)
 
 ___
 
@@ -109,7 +109,7 @@ ___
 
 #### Defined in
 
-[src/aws.ts:193](https://github.com/sam-goodwin/functionless/blob/261ad48/src/aws.ts#L193)
+[src/aws.ts:193](https://github.com/sam-goodwin/functionless/blob/f58aa43/src/aws.ts#L193)
 
 ___
 
@@ -139,7 +139,7 @@ ___
 
 #### Defined in
 
-[src/aws.ts:219](https://github.com/sam-goodwin/functionless/blob/261ad48/src/aws.ts#L219)
+[src/aws.ts:219](https://github.com/sam-goodwin/functionless/blob/f58aa43/src/aws.ts#L219)
 
 ___
 
@@ -168,7 +168,7 @@ ___
 
 #### Defined in
 
-[src/aws.ts:245](https://github.com/sam-goodwin/functionless/blob/261ad48/src/aws.ts#L245)
+[src/aws.ts:245](https://github.com/sam-goodwin/functionless/blob/f58aa43/src/aws.ts#L245)
 
 ___
 
@@ -202,4 +202,4 @@ ___
 
 #### Defined in
 
-[src/aws.ts:146](https://github.com/sam-goodwin/functionless/blob/261ad48/src/aws.ts#L146)
+[src/aws.ts:146](https://github.com/sam-goodwin/functionless/blob/f58aa43/src/aws.ts#L146)
