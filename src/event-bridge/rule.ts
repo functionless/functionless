@@ -12,7 +12,6 @@ import {
   LambdaTargetProps,
   pipe,
 } from "./target";
-import { __FunctionlessBase } from "../util";
 
 /**
  * A function interface used by the {@link EventBus}'s when function to generate a rule.
@@ -23,8 +22,10 @@ export type EventPredicateFunction<
   E extends EventBusRuleInput = EventBusRuleInput<any>
 > = (event: E) => boolean;
 
-export interface IEventBusRule<T extends EventBusRuleInput> extends __FunctionlessBase {
+export interface IEventBusRule<T extends EventBusRuleInput> {
   readonly rule: aws_events.Rule;
+
+  readonly functionlessKind: typeof EventBusRuleBase.FunctionlessType;
 
   /**
    * Transform the event before sending to a target using pipe using TargetInput transforms.
@@ -138,6 +139,7 @@ abstract class EventBusRuleBase<T extends EventBusRuleInput>
   implements IEventBusRule<T>
 {
   public static readonly FunctionlessType = "EventBusRule";
+  readonly functionlessKind = "EventBusRule";
 
   constructor(readonly rule: aws_events.Rule) {}
 

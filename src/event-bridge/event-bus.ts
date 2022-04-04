@@ -1,12 +1,12 @@
 import { aws_events } from "aws-cdk-lib";
 import { Construct } from "constructs";
-import { __FunctionlessBase } from "../util";
 import { EventBusRule, EventPredicateFunction, IEventBusRule } from "./rule";
 import { EventBusRuleInput } from "./types";
 
-export interface IEventBus<E extends EventBusRuleInput>
-  extends __FunctionlessBase {
+export interface IEventBus<E extends EventBusRuleInput> {
   readonly bus: aws_events.IEventBus;
+
+  readonly functionlessKind: typeof EventBusBase.FunctionlessType;
 
   /**
    * EventBus Rules can filter events using Functionless predicate functions.
@@ -71,7 +71,6 @@ export interface IEventBus<E extends EventBusRuleInput>
     predicate: EventPredicateFunction<E>
   ): EventBusRule<E>;
 }
-
 abstract class EventBusBase<E extends EventBusRuleInput>
   implements IEventBus<E>
 {
@@ -79,6 +78,7 @@ abstract class EventBusBase<E extends EventBusRuleInput>
    * This static property identifies this class as an EventBus to the TypeScript plugin.
    */
   public static readonly FunctionlessType = "EventBus";
+  readonly functionlessKind = "EventBus";
 
   constructor(readonly bus: aws_events.IEventBus) {}
 

@@ -5,7 +5,6 @@ import { Function } from "../function";
 import { LambdaTargetProps, pipe } from "./target";
 import { EventBusRuleInput } from "./types";
 import { IEventBusRule } from "./rule";
-import { __FunctionlessBase } from "../util";
 
 /**
  * A function interface used by the {@link EventBusRule}'s map function.
@@ -36,9 +35,7 @@ export interface EventTransformUtils {
  *
  * @see EventBusRule.map for more details on transforming event details.
  */
-export class EventBusTransform<T extends EventBusRuleInput, P>
-  implements __FunctionlessBase
-{
+export class EventBusTransform<T extends EventBusRuleInput, P> {
   readonly targetInput: aws_events.RuleTargetInput;
 
   public static readonly FunctionlessType = "EventBusTransform";

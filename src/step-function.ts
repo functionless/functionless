@@ -326,6 +326,7 @@ abstract class BaseStepFunction<F extends AnyFunction>
   implements aws_stepfunctions.IStateMachine
 {
   readonly kind = "StepFunction";
+  readonly functionlessKind = "StepFunction";
 
   readonly decl: FunctionDecl<F>;
   readonly resource: aws_stepfunctions.CfnStateMachine;

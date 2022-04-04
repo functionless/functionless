@@ -129,9 +129,3 @@ export function flatten<T>(arr: AnyDepthArray<T>): T[] {
     return [arr];
   }
 }
-
-/**
- * An interface used to identify interfaces owned by Functionless.
- * Interfaces cannot have static members or decorators.
- */
-export interface __FunctionlessBase {}

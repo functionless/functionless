@@ -7,6 +7,8 @@ import { AppsyncResolver } from "./appsync";
 import { assertDefined } from "./assert";
 import { StepFunction, ExpressStepFunction } from "./step-function";
 import minimatch from "minimatch";
+import { EventBus, EventBusRule } from "./event-bridge";
+import { EventBusTransform } from "./event-bridge/transform";
 
 export default compile;
 
@@ -202,7 +204,7 @@ export function compile(
        * The node could be any kind of node that returns an event bus rule.
        */
       function isEventBus(node: ts.Node) {
-        return nodeExtendsFunctionlessType(node, "IEventBus");
+        return isFunctionlessClassOfKind(node, EventBus.FunctionlessType);
       }
 
       /**
@@ -210,7 +212,7 @@ export function compile(
        * The node could be any kind of node that returns an event bus rule.
        */
       function isEventBusRule(node: ts.Node) {
-        return nodeExtendsFunctionlessType(node, "IEventBusRule");
+        return isFunctionlessClassOfKind(node, EventBusRule.FunctionlessType);
       }
 
       /**
@@ -218,7 +220,10 @@ export function compile(
        * The node could be any kind of node that returns an event bus rule.
        */
       function isEventBusTransform(node: ts.Node) {
-        return nodeExtendsFunctionlessType(node, "EventBusTransform");
+        return isFunctionlessClassOfKind(
+          node,
+          EventBusTransform.FunctionlessType
+        );
       }
 
       /**
@@ -243,55 +248,16 @@ export function compile(
       }
 
       /**
-       * Checks if a type, class, or interface extends or implements a type, class, or interface name.
+       * Checks if the type contains one of
+       * a static property FunctionlessType with the value of {@param kind}
+       * a property signature functionlessKind with literal type with the value of {@param kind}
+       * a readonly property functionlessKind with literal type with the value of {@param kind}
        */
-      function extendsType(type: ts.Type | undefined, exts: string): boolean {
-        if (type?.symbol?.name === exts) {
-          return true;
-        }
-
-        const exprDecl = type?.symbol?.declarations?.[0];
-
-        return !!(
-          exprDecl &&
-          (ts.isClassDeclaration(exprDecl) ||
-            ts.isInterfaceDeclaration(exprDecl)) &&
-          !!exprDecl.heritageClauses &&
-          exprDecl.heritageClauses
-            .reduce((acc: ts.Node[], clauses) => [...acc, ...clauses.types], [])
-            .map(checker.getTypeAtLocation)
-            .some((node) => extendsType(node, exts))
-        );
-      }
-
-      /**
-       * Checks if a node's type extends or implements a type, class or interface name
-       * and that that type extends the {@link __FunctionlessBase}.
-       */
-      function nodeExtendsFunctionlessType(
-        node: ts.Node,
-        exts: string
-      ): boolean {
-        const type = checker.getTypeAtLocation(node);
-        return (
-          extendsType(type, exts) && extendsType(type, "__FunctionlessBase")
-        );
-      }
-
       function isFunctionlessType(
         type: ts.Type | undefined,
         kind: string
       ): boolean {
-        const exprDecl = type?.symbol?.declarations?.[0];
-        return (
-          !!exprDecl &&
-          ts.isClassDeclaration(exprDecl) &&
-          ((getFunctionlessKind(exprDecl) === kind ||
-            exprDecl.heritageClauses?.some((h) =>
-              h.types.some((t) => isFunctionlessClassOfKind(t, kind))
-            )) ??
-            false)
-        );
+        return !!type && getFunctionlessTypeKind(type) === kind;
       }
 
       function isFunctionlessClassOfKind(node: ts.Node, kind: string) {
@@ -299,27 +265,27 @@ export function compile(
         return isFunctionlessType(type, kind);
       }
 
-      // Gets the static FunctionlessKind property from a ClassDeclaration
-      function getFunctionlessKind(
-        clss: ts.ClassDeclaration
-      ): string | undefined {
-        const member = clss.members.find(
-          (member) =>
-            member.modifiers?.find(
-              (mod) => mod.kind === ts.SyntaxKind.StaticKeyword
-            ) !== undefined &&
-            member.name &&
-            ts.isIdentifier(member.name) &&
-            member.name.text === "FunctionlessType"
-        );
+      function getFunctionlessTypeKind(type: ts.Type): string | undefined {
+        const prop = type
+          .getProperties()
+          .find(
+            (p) =>
+              p.name === "FunctionlessType" || p.name === "functionlessKind"
+          );
 
-        if (
-          member &&
-          ts.isPropertyDeclaration(member) &&
-          member.initializer &&
-          ts.isStringLiteral(member.initializer)
-        ) {
-          return member.initializer.text;
+        if (prop && prop.valueDeclaration) {
+          if (
+            ts.isPropertyDeclaration(prop.valueDeclaration) &&
+            prop.valueDeclaration.initializer &&
+            ts.isStringLiteral(prop.valueDeclaration.initializer)
+          ) {
+            return prop.valueDeclaration.initializer.text;
+          } else if (ts.isPropertySignature(prop.valueDeclaration)) {
+            const type = checker.getTypeAtLocation(prop.valueDeclaration);
+            if (type.isStringLiteral()) {
+              return type.value;
+            }
+          }
         }
         return undefined;
       }
