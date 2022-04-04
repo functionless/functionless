@@ -99,6 +99,14 @@
       "type": "build"
     },
     {
+      "name": "typedoc",
+      "type": "build"
+    },
+    {
+      "name": "typedoc-plugin-markdown",
+      "type": "build"
+    },
+    {
       "name": "typesafe-dynamodb",
       "version": "0.1.5",
       "type": "build"

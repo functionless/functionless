@@ -1,3 +1,5 @@
+functionless / [Exports](modules.md)
+
 # Functionless `λ<`
 
 [![npm version](https://badge.fury.io/js/functionless.svg)](https://badge.fury.io/js/functionless)

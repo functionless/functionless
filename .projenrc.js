@@ -3,6 +3,8 @@ const project = new typescript.TypeScriptProject({
   defaultReleaseBranch: "main",
   name: "functionless",
   deps: ["fs-extra", "minimatch"],
+  releaseToNpm: true,
+
   devDeps: [
     "@aws-cdk/aws-appsync-alpha",
     "@types/fs-extra",
@@ -13,6 +15,8 @@ const project = new typescript.TypeScriptProject({
     "ts-patch",
     "typesafe-dynamodb",
     "typescript",
+    "typedoc",
+    "typedoc-plugin-markdown",
   ],
   peerDeps: [
     "@aws-cdk/aws-appsync-alpha@^2.17.0-alpha.0",
@@ -21,6 +25,7 @@ const project = new typescript.TypeScriptProject({
     "typesafe-dynamodb@^0.1.5",
     "typescript@^4.6.2",
   ],
+  gitignore: [".DS_Store"],
   eslintOptions: {
     ignorePatterns: ["**"],
     lintProjenRc: true,
@@ -42,12 +47,13 @@ const project = new typescript.TypeScriptProject({
       ],
     },
   },
-  gitignore: [".DS_Store"],
-  releaseToNpm: true,
 });
 
 project.compileTask.prependExec(
   "yarn link && cd ./test-app && yarn link functionless"
+);
+project.compileTask.prependExec(
+  "typedoc --plugin typedoc-plugin-markdown --out docs/api-reference src/index.ts"
 );
 
 project.testTask.prependExec(
