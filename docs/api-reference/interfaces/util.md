@@ -53,7 +53,7 @@ $util.dynamodb contains helper methods that make it easier to write and read dat
 
 #### Defined in
 
-[src/appsync.ts:517](https://github.com/sam-goodwin/functionless/blob/72d5f75/src/appsync.ts#L517)
+[src/appsync.ts:517](https://github.com/sam-goodwin/functionless/blob/3947743/src/appsync.ts#L517)
 
 ___
 
@@ -67,7 +67,7 @@ The $util.time variable contains datetime methods to help generate timestamps, c
 
 #### Defined in
 
-[src/appsync.ts:524](https://github.com/sam-goodwin/functionless/blob/72d5f75/src/appsync.ts#L524)
+[src/appsync.ts:524](https://github.com/sam-goodwin/functionless/blob/3947743/src/appsync.ts#L524)
 
 ## Methods
 
@@ -89,7 +89,7 @@ Appends a custom error. This can be used in request or response mapping template
 
 #### Defined in
 
-[src/appsync.ts:604](https://github.com/sam-goodwin/functionless/blob/72d5f75/src/appsync.ts#L604)
+[src/appsync.ts:604](https://github.com/sam-goodwin/functionless/blob/3947743/src/appsync.ts#L604)
 
 ▸ **appendError**(`message`, `errorType`): `void`
 
@@ -108,7 +108,7 @@ Appends a custom error. This can be used in request or response mapping template
 
 #### Defined in
 
-[src/appsync.ts:609](https://github.com/sam-goodwin/functionless/blob/72d5f75/src/appsync.ts#L609)
+[src/appsync.ts:609](https://github.com/sam-goodwin/functionless/blob/3947743/src/appsync.ts#L609)
 
 ▸ **appendError**(`message`, `errorType`, `data`): `void`
 
@@ -128,7 +128,7 @@ Appends a custom error. This can be used in request or response mapping template
 
 #### Defined in
 
-[src/appsync.ts:614](https://github.com/sam-goodwin/functionless/blob/72d5f75/src/appsync.ts#L614)
+[src/appsync.ts:614](https://github.com/sam-goodwin/functionless/blob/3947743/src/appsync.ts#L614)
 
 ▸ **appendError**(`message`, `errorType`, `data`, `errorInfo`): `void`
 
@@ -147,7 +147,7 @@ Appends a custom error. This can be used in request or response mapping template
 
 #### Defined in
 
-[src/appsync.ts:619](https://github.com/sam-goodwin/functionless/blob/72d5f75/src/appsync.ts#L619)
+[src/appsync.ts:619](https://github.com/sam-goodwin/functionless/blob/3947743/src/appsync.ts#L619)
 
 ___
 
@@ -163,7 +163,7 @@ Returns a string describing the multi-auth type being used by a request, returni
 
 #### Defined in
 
-[src/appsync.ts:718](https://github.com/sam-goodwin/functionless/blob/72d5f75/src/appsync.ts#L718)
+[src/appsync.ts:718](https://github.com/sam-goodwin/functionless/blob/3947743/src/appsync.ts#L718)
 
 ___
 
@@ -179,7 +179,7 @@ Returns a 128-bit randomly generated UUID.
 
 #### Defined in
 
-[src/appsync.ts:564](https://github.com/sam-goodwin/functionless/blob/72d5f75/src/appsync.ts#L564)
+[src/appsync.ts:564](https://github.com/sam-goodwin/functionless/blob/3947743/src/appsync.ts#L564)
 
 ___
 
@@ -195,7 +195,7 @@ Returns a 128-bit randomly generated ULID (Universally Unique Lexicographically 
 
 #### Defined in
 
-[src/appsync.ts:569](https://github.com/sam-goodwin/functionless/blob/72d5f75/src/appsync.ts#L569)
+[src/appsync.ts:569](https://github.com/sam-goodwin/functionless/blob/3947743/src/appsync.ts#L569)
 
 ___
 
@@ -217,7 +217,7 @@ Decodes the data from a base64-encoded string.
 
 #### Defined in
 
-[src/appsync.ts:549](https://github.com/sam-goodwin/functionless/blob/72d5f75/src/appsync.ts#L549)
+[src/appsync.ts:549](https://github.com/sam-goodwin/functionless/blob/3947743/src/appsync.ts#L549)
 
 ___
 
@@ -239,7 +239,7 @@ Encodes the input into a base64-encoded string.
 
 #### Defined in
 
-[src/appsync.ts:544](https://github.com/sam-goodwin/functionless/blob/72d5f75/src/appsync.ts#L544)
+[src/appsync.ts:544](https://github.com/sam-goodwin/functionless/blob/3947743/src/appsync.ts#L544)
 
 ___
 
@@ -268,7 +268,7 @@ Returns the first object if it is not null. Otherwise, returns second object as 
 
 #### Defined in
 
-[src/appsync.ts:664](https://github.com/sam-goodwin/functionless/blob/72d5f75/src/appsync.ts#L664)
+[src/appsync.ts:664](https://github.com/sam-goodwin/functionless/blob/3947743/src/appsync.ts#L664)
 
 ___
 
@@ -298,7 +298,7 @@ Returns the first string if it is not null or blank. Otherwise, returns second s
 
 #### Defined in
 
-[src/appsync.ts:677](https://github.com/sam-goodwin/functionless/blob/72d5f75/src/appsync.ts#L677)
+[src/appsync.ts:677](https://github.com/sam-goodwin/functionless/blob/3947743/src/appsync.ts#L677)
 
 ___
 
@@ -328,7 +328,7 @@ Returns the first string if it is not null or empty. Otherwise, returns second s
 
 #### Defined in
 
-[src/appsync.ts:669](https://github.com/sam-goodwin/functionless/blob/72d5f75/src/appsync.ts#L669)
+[src/appsync.ts:669](https://github.com/sam-goodwin/functionless/blob/3947743/src/appsync.ts#L669)
 
 ___
 
@@ -350,7 +350,7 @@ Throws a custom error. Use this in request or response mapping templates to dete
 
 #### Defined in
 
-[src/appsync.ts:579](https://github.com/sam-goodwin/functionless/blob/72d5f75/src/appsync.ts#L579)
+[src/appsync.ts:579](https://github.com/sam-goodwin/functionless/blob/3947743/src/appsync.ts#L579)
 
 ▸ **error**(`errorMessage`, `errorType`): `never`
 
@@ -369,7 +369,7 @@ Throws a custom error. Use this in request or response mapping templates to dete
 
 #### Defined in
 
-[src/appsync.ts:584](https://github.com/sam-goodwin/functionless/blob/72d5f75/src/appsync.ts#L584)
+[src/appsync.ts:584](https://github.com/sam-goodwin/functionless/blob/3947743/src/appsync.ts#L584)
 
 ▸ **error**(`errorMessage`, `errorType`, `errorData`): `never`
 
@@ -389,7 +389,7 @@ Throws a custom error. Use this in request or response mapping templates to dete
 
 #### Defined in
 
-[src/appsync.ts:589](https://github.com/sam-goodwin/functionless/blob/72d5f75/src/appsync.ts#L589)
+[src/appsync.ts:589](https://github.com/sam-goodwin/functionless/blob/3947743/src/appsync.ts#L589)
 
 ▸ **error**(`errorMessage`, `errorType`, `errorData`, `errorInfo`): `never`
 
@@ -410,7 +410,7 @@ Throws a custom error. This can be used in request or response mapping templates
 
 #### Defined in
 
-[src/appsync.ts:594](https://github.com/sam-goodwin/functionless/blob/72d5f75/src/appsync.ts#L594)
+[src/appsync.ts:594](https://github.com/sam-goodwin/functionless/blob/3947743/src/appsync.ts#L594)
 
 ___
 
@@ -432,7 +432,7 @@ Returns the input string as a JavaScript escaped string.
 
 #### Defined in
 
-[src/appsync.ts:529](https://github.com/sam-goodwin/functionless/blob/72d5f75/src/appsync.ts#L529)
+[src/appsync.ts:529](https://github.com/sam-goodwin/functionless/blob/3947743/src/appsync.ts#L529)
 
 ___
 
@@ -454,7 +454,7 @@ obj is boolean
 
 #### Defined in
 
-[src/appsync.ts:695](https://github.com/sam-goodwin/functionless/blob/72d5f75/src/appsync.ts#L695)
+[src/appsync.ts:695](https://github.com/sam-goodwin/functionless/blob/3947743/src/appsync.ts#L695)
 
 ___
 
@@ -476,7 +476,7 @@ obj is any[]
 
 #### Defined in
 
-[src/appsync.ts:700](https://github.com/sam-goodwin/functionless/blob/72d5f75/src/appsync.ts#L700)
+[src/appsync.ts:700](https://github.com/sam-goodwin/functionless/blob/3947743/src/appsync.ts#L700)
 
 ___
 
@@ -498,7 +498,7 @@ obj is Record<string, any\>
 
 #### Defined in
 
-[src/appsync.ts:705](https://github.com/sam-goodwin/functionless/blob/72d5f75/src/appsync.ts#L705)
+[src/appsync.ts:705](https://github.com/sam-goodwin/functionless/blob/3947743/src/appsync.ts#L705)
 
 ___
 
@@ -520,7 +520,7 @@ Returns true if the supplied object is null.
 
 #### Defined in
 
-[src/appsync.ts:649](https://github.com/sam-goodwin/functionless/blob/72d5f75/src/appsync.ts#L649)
+[src/appsync.ts:649](https://github.com/sam-goodwin/functionless/blob/3947743/src/appsync.ts#L649)
 
 ___
 
@@ -542,7 +542,7 @@ Returns true if the supplied data is null or a blank string. Otherwise, returns 
 
 #### Defined in
 
-[src/appsync.ts:659](https://github.com/sam-goodwin/functionless/blob/72d5f75/src/appsync.ts#L659)
+[src/appsync.ts:659](https://github.com/sam-goodwin/functionless/blob/3947743/src/appsync.ts#L659)
 
 ___
 
@@ -564,7 +564,7 @@ Returns true if the supplied data is null or an empty string. Otherwise, returns
 
 #### Defined in
 
-[src/appsync.ts:654](https://github.com/sam-goodwin/functionless/blob/72d5f75/src/appsync.ts#L654)
+[src/appsync.ts:654](https://github.com/sam-goodwin/functionless/blob/3947743/src/appsync.ts#L654)
 
 ___
 
@@ -586,7 +586,7 @@ obj is number
 
 #### Defined in
 
-[src/appsync.ts:690](https://github.com/sam-goodwin/functionless/blob/72d5f75/src/appsync.ts#L690)
+[src/appsync.ts:690](https://github.com/sam-goodwin/functionless/blob/3947743/src/appsync.ts#L690)
 
 ___
 
@@ -608,7 +608,7 @@ obj is string
 
 #### Defined in
 
-[src/appsync.ts:685](https://github.com/sam-goodwin/functionless/blob/72d5f75/src/appsync.ts#L685)
+[src/appsync.ts:685](https://github.com/sam-goodwin/functionless/blob/3947743/src/appsync.ts#L685)
 
 ___
 
@@ -631,7 +631,7 @@ Returns true if the specified pattern in the first argument matches the supplied
 
 #### Defined in
 
-[src/appsync.ts:714](https://github.com/sam-goodwin/functionless/blob/72d5f75/src/appsync.ts#L714)
+[src/appsync.ts:714](https://github.com/sam-goodwin/functionless/blob/3947743/src/appsync.ts#L714)
 
 ___
 
@@ -653,7 +653,7 @@ Takes "stringified" JSON and returns an object representation of the result.
 
 #### Defined in
 
-[src/appsync.ts:554](https://github.com/sam-goodwin/functionless/blob/72d5f75/src/appsync.ts#L554)
+[src/appsync.ts:554](https://github.com/sam-goodwin/functionless/blob/3947743/src/appsync.ts#L554)
 
 ___
 
@@ -675,7 +675,7 @@ Takes an object and returns a "stringified" JSON representation of that object.
 
 #### Defined in
 
-[src/appsync.ts:559](https://github.com/sam-goodwin/functionless/blob/72d5f75/src/appsync.ts#L559)
+[src/appsync.ts:559](https://github.com/sam-goodwin/functionless/blob/3947743/src/appsync.ts#L559)
 
 ___
 
@@ -697,7 +697,7 @@ Returns a string describing the type of the object. Supported type identificatio
 
 #### Defined in
 
-[src/appsync.ts:710](https://github.com/sam-goodwin/functionless/blob/72d5f75/src/appsync.ts#L710)
+[src/appsync.ts:710](https://github.com/sam-goodwin/functionless/blob/3947743/src/appsync.ts#L710)
 
 ___
 
@@ -713,7 +713,7 @@ Throws Unauthorized for the field being resolved. Use this in request or respons
 
 #### Defined in
 
-[src/appsync.ts:574](https://github.com/sam-goodwin/functionless/blob/72d5f75/src/appsync.ts#L574)
+[src/appsync.ts:574](https://github.com/sam-goodwin/functionless/blob/3947743/src/appsync.ts#L574)
 
 ___
 
@@ -735,7 +735,7 @@ Decodes an application/x-www-form-urlencoded encoded string back to its non-enco
 
 #### Defined in
 
-[src/appsync.ts:539](https://github.com/sam-goodwin/functionless/blob/72d5f75/src/appsync.ts#L539)
+[src/appsync.ts:539](https://github.com/sam-goodwin/functionless/blob/3947743/src/appsync.ts#L539)
 
 ___
 
@@ -757,7 +757,7 @@ Returns the input string as an application/x-www-form-urlencoded encoded string.
 
 #### Defined in
 
-[src/appsync.ts:534](https://github.com/sam-goodwin/functionless/blob/72d5f75/src/appsync.ts#L534)
+[src/appsync.ts:534](https://github.com/sam-goodwin/functionless/blob/3947743/src/appsync.ts#L534)
 
 ___
 
@@ -780,7 +780,7 @@ If the condition is false, throw a CustomTemplateException with the specified me
 
 #### Defined in
 
-[src/appsync.ts:629](https://github.com/sam-goodwin/functionless/blob/72d5f75/src/appsync.ts#L629)
+[src/appsync.ts:629](https://github.com/sam-goodwin/functionless/blob/3947743/src/appsync.ts#L629)
 
 ▸ **validate**(`condition`, `message`, `data`): `void`
 
@@ -800,7 +800,7 @@ If the condition is false, throw a CustomTemplateException with the specified me
 
 #### Defined in
 
-[src/appsync.ts:634](https://github.com/sam-goodwin/functionless/blob/72d5f75/src/appsync.ts#L634)
+[src/appsync.ts:634](https://github.com/sam-goodwin/functionless/blob/3947743/src/appsync.ts#L634)
 
 ▸ **validate**(`condition`, `message`, `data`, `info`): `void`
 
@@ -821,4 +821,4 @@ If the condition is false, throw a CustomTemplateException with the specified me
 
 #### Defined in
 
-[src/appsync.ts:639](https://github.com/sam-goodwin/functionless/blob/72d5f75/src/appsync.ts#L639)
+[src/appsync.ts:639](https://github.com/sam-goodwin/functionless/blob/3947743/src/appsync.ts#L639)

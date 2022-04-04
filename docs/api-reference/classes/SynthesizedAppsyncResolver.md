@@ -47,7 +47,7 @@ appsync.Resolver.constructor
 
 #### Defined in
 
-[src/appsync.ts:67](https://github.com/sam-goodwin/functionless/blob/72d5f75/src/appsync.ts#L67)
+[src/appsync.ts:67](https://github.com/sam-goodwin/functionless/blob/3947743/src/appsync.ts#L67)
 
 ## Properties
 
@@ -93,7 +93,7 @@ All of the Request and Response Mapping templates in the order they are executed
 
 #### Defined in
 
-[src/appsync.ts:65](https://github.com/sam-goodwin/functionless/blob/72d5f75/src/appsync.ts#L65)
+[src/appsync.ts:65](https://github.com/sam-goodwin/functionless/blob/3947743/src/appsync.ts#L65)
 
 ## Methods
 

@@ -37,7 +37,7 @@ Converts a epoch milliseconds timestamp, passed as long, to a timestamp formatte
 
 #### Defined in
 
-[src/appsync.ts:779](https://github.com/sam-goodwin/functionless/blob/72d5f75/src/appsync.ts#L779)
+[src/appsync.ts:779](https://github.com/sam-goodwin/functionless/blob/3947743/src/appsync.ts#L779)
 
 ▸ **epochMilliSecondsToFormatted**(`epoch`, `format`, `timezone`): `string`
 
@@ -57,7 +57,7 @@ Converts a epoch milliseconds timestamp, passed as a long, to a timestamp format
 
 #### Defined in
 
-[src/appsync.ts:784](https://github.com/sam-goodwin/functionless/blob/72d5f75/src/appsync.ts#L784)
+[src/appsync.ts:784](https://github.com/sam-goodwin/functionless/blob/3947743/src/appsync.ts#L784)
 
 ___
 
@@ -79,7 +79,7 @@ Converts a epoch milliseconds timestamp to an ISO8601 timestamp.
 
 #### Defined in
 
-[src/appsync.ts:774](https://github.com/sam-goodwin/functionless/blob/72d5f75/src/appsync.ts#L774)
+[src/appsync.ts:774](https://github.com/sam-goodwin/functionless/blob/3947743/src/appsync.ts#L774)
 
 ___
 
@@ -101,7 +101,7 @@ Converts an epoch milliseconds timestamp to an epoch seconds timestamp.
 
 #### Defined in
 
-[src/appsync.ts:769](https://github.com/sam-goodwin/functionless/blob/72d5f75/src/appsync.ts#L769)
+[src/appsync.ts:769](https://github.com/sam-goodwin/functionless/blob/3947743/src/appsync.ts#L769)
 
 ___
 
@@ -117,7 +117,7 @@ Returns the number of milliseconds from the epoch of 1970-01-01T00:00:00Z to now
 
 #### Defined in
 
-[src/appsync.ts:735](https://github.com/sam-goodwin/functionless/blob/72d5f75/src/appsync.ts#L735)
+[src/appsync.ts:735](https://github.com/sam-goodwin/functionless/blob/3947743/src/appsync.ts#L735)
 
 ___
 
@@ -133,7 +133,7 @@ Returns the number of seconds from the epoch of 1970-01-01T00:00:00Z to now.
 
 #### Defined in
 
-[src/appsync.ts:730](https://github.com/sam-goodwin/functionless/blob/72d5f75/src/appsync.ts#L730)
+[src/appsync.ts:730](https://github.com/sam-goodwin/functionless/blob/3947743/src/appsync.ts#L730)
 
 ___
 
@@ -155,7 +155,7 @@ Returns a string of the current timestamp in UTC using the specified format from
 
 #### Defined in
 
-[src/appsync.ts:740](https://github.com/sam-goodwin/functionless/blob/72d5f75/src/appsync.ts#L740)
+[src/appsync.ts:740](https://github.com/sam-goodwin/functionless/blob/3947743/src/appsync.ts#L740)
 
 ▸ **nowFormatted**(`format`, `timezone`): `string`
 
@@ -174,7 +174,7 @@ Returns a string of the current timestamp for a timezone using the specified for
 
 #### Defined in
 
-[src/appsync.ts:745](https://github.com/sam-goodwin/functionless/blob/72d5f75/src/appsync.ts#L745)
+[src/appsync.ts:745](https://github.com/sam-goodwin/functionless/blob/3947743/src/appsync.ts#L745)
 
 ___
 
@@ -190,7 +190,7 @@ Returns a String representation of UTC in ISO8601 format.
 
 #### Defined in
 
-[src/appsync.ts:725](https://github.com/sam-goodwin/functionless/blob/72d5f75/src/appsync.ts#L725)
+[src/appsync.ts:725](https://github.com/sam-goodwin/functionless/blob/3947743/src/appsync.ts#L725)
 
 ___
 
@@ -213,7 +213,7 @@ Parses a timestamp passed as a String, along with a format, and return the times
 
 #### Defined in
 
-[src/appsync.ts:750](https://github.com/sam-goodwin/functionless/blob/72d5f75/src/appsync.ts#L750)
+[src/appsync.ts:750](https://github.com/sam-goodwin/functionless/blob/3947743/src/appsync.ts#L750)
 
 ▸ **parseFormattedToEpochMilliSeconds**(`timestamp`, `format`, `timezone`): `number`
 
@@ -233,7 +233,7 @@ Parses a timestamp passed as a String, along with a format and time zone, and re
 
 #### Defined in
 
-[src/appsync.ts:755](https://github.com/sam-goodwin/functionless/blob/72d5f75/src/appsync.ts#L755)
+[src/appsync.ts:755](https://github.com/sam-goodwin/functionless/blob/3947743/src/appsync.ts#L755)
 
 ___
 
@@ -255,4 +255,4 @@ Parses an ISO8601 timestamp, passed as a String, and return the timestamp as mil
 
 #### Defined in
 
-[src/appsync.ts:764](https://github.com/sam-goodwin/functionless/blob/72d5f75/src/appsync.ts#L764)
+[src/appsync.ts:764](https://github.com/sam-goodwin/functionless/blob/3947743/src/appsync.ts#L764)
