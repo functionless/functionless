@@ -70,7 +70,10 @@ export class PeopleDatabase extends Construct {
     });
 
     // a synchronous Express Step Function for getting a Person
-    this.getPersonMachine = new ExpressStepFunction(
+    this.getPersonMachine = new ExpressStepFunction<
+      { id: string },
+      undefined | ProcessedPerson
+    >(
       this,
       "GetPersonMachine",
       {
@@ -79,12 +82,12 @@ export class PeopleDatabase extends Construct {
           level: aws_stepfunctions.LogLevel.ALL,
         },
       },
-      (id: string) => {
+      (input) => {
         const person = $AWS.DynamoDB.GetItem({
           TableName: this.personTable,
           Key: {
             id: {
-              S: id,
+              S: input.id,
             },
           },
         });
@@ -112,7 +115,7 @@ export class PeopleDatabase extends Construct {
     >(($context) => {
       let person;
       // example of integrating with an Express Step Function from Appsync
-      person = this.getPersonMachine($context.arguments.id);
+      person = this.getPersonMachine({ id: $context.arguments.id });
 
       if (person.status === "SUCCEEDED") {
         return person.output;
