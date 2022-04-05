@@ -399,7 +399,7 @@ const createOrUpdateOperation = functionless.Function<CreateOrUpdate, void>(
   createOrUpdateFunction
 );
 const deleteOperation = functionless.Function<Delete, void>(
-  createOrUpdateFunction
+  deleteFunction
 );
 ```
 
@@ -483,7 +483,7 @@ const deleteFunction = new functionless.Function<Delete, void>(
 
 const bus = new functionless.EventBus<UserEvent>(this, "myBus");
 
-// Create and update events are sent to a spcific lambda function.
+// Create and update events are sent to a specific lambda function.
 bus
   .when(
     this,
@@ -1020,7 +1020,7 @@ Reduction
 
 ### And Logic
 
-> Limit: Except for the case of numeric ranges and a few others Event Bridge does not support AND logic within the same field. The logic `event.resources.includs("resource1") && event.resources.includs("resource2")` is impossible.
+> Limit: Except for the case of numeric ranges and a few others Event Bridge does not support AND logic within the same field. The logic `event.resources.includes("resource1") && event.resources.includes("resource2")` is impossible.
 
 ```ts
 .when(event => event.source === "lambda" && event.id.startsWith("idPrefix"))
