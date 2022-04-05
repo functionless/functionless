@@ -1,7 +1,32 @@
 import { aws_events } from "aws-cdk-lib";
 import { Construct } from "constructs";
+import { ASL, isASL, Task } from "../asl";
+import { makeCallable } from "../callable";
+import { CallContext } from "../context";
+import {
+  CallExpr,
+  Expr,
+  Identifier,
+  isArrayLiteralExpr,
+  isComputedPropertyNameExpr,
+  isIdentifier,
+  isObjectLiteralExpr,
+  isSpreadAssignExpr,
+  ObjectLiteralExpr,
+  PropAssignExpr,
+  StringLiteralExpr,
+} from "../expression";
 import { EventBusRule, EventPredicateFunction, IEventBusRule } from "./rule";
 import { EventBusRuleInput } from "./types";
+
+export const isEventBus = <E extends EventBusRuleInput>(
+  v: any
+): v is IEventBus<E> => {
+  return (
+    "functionlessKind" in v &&
+    v.functionlessKind === EventBusBase.FunctionlessType
+  );
+};
 
 export interface IEventBus<E extends EventBusRuleInput> {
   readonly bus: aws_events.IEventBus;
@@ -73,6 +98,11 @@ export interface IEventBus<E extends EventBusRuleInput> {
     id: string,
     predicate: EventPredicateFunction<E>
   ): EventBusRule<E>;
+
+  /**
+   * Put one or more events on an Event Bus.
+   */
+  (...events: Partial<E>[]): void;
 }
 abstract class EventBusBase<E extends EventBusRuleInput>
   implements IEventBus<E>
@@ -83,7 +113,109 @@ abstract class EventBusBase<E extends EventBusRuleInput>
   public static readonly FunctionlessType = "EventBus";
   readonly functionlessKind = "EventBus";
 
-  constructor(readonly bus: aws_events.IEventBus) {}
+  readonly bus: aws_events.IEventBus;
+
+  constructor(bus: aws_events.IEventBus) {
+    this.bus = bus;
+    return makeCallable(this, (call: CallExpr, context: CallContext) => {
+      if (isASL(context)) {
+        this.bus.grantPutEventsTo(context.role);
+
+        // Lets validate and normalize that the events are
+        const eventObjs = call.args.reduce(
+          (events: ObjectLiteralExpr[], arg) => {
+            if (isArrayLiteralExpr(arg.expr)) {
+              if (
+                !arg.expr.items.every((item): item is ObjectLiteralExpr =>
+                  isObjectLiteralExpr(item)
+                )
+              ) {
+                throw Error(
+                  "Event Bus put events must use inline object parameters. Variable references are not supported currently."
+                );
+              }
+              return [...events, ...arg.expr.items];
+            } else if (isObjectLiteralExpr(arg.expr)) {
+              return [...events, arg.expr];
+            }
+            throw Error(
+              "Event Bus put events must use inline object parameters. Variable references are not supported currently."
+            );
+          },
+          []
+        );
+
+        // The interface should prevent this.
+        if (eventObjs.length === 0) {
+          throw Error("Must provide at least one event.");
+        }
+
+        const propertyMap: Record<keyof EventBusRuleInput, string> = {
+          "detail-type": "DetailType",
+          account: "Account",
+          detail: "Detail",
+          id: "Id",
+          region: "Region",
+          resources: "Resources",
+          source: "Source",
+          time: "Time",
+          version: "Version",
+        };
+
+        const events = eventObjs.map((event) => {
+          const props = event.properties.filter(
+            (
+              e
+            ): e is PropAssignExpr & {
+              name: StringLiteralExpr | Identifier;
+            } => !(isSpreadAssignExpr(e) || isComputedPropertyNameExpr(e.name))
+          );
+          if (props.length < event.properties.length) {
+            throw Error(
+              "Event Bus put events must use inline objects instantiated without computed or spread keys."
+            );
+          }
+          return (
+            props
+              .map(
+                (prop) =>
+                  [
+                    isIdentifier(prop.name) ? prop.name.name : prop.name.value,
+                    prop.expr,
+                  ] as const
+              )
+              .filter(
+                (x): x is [keyof typeof propertyMap, Expr] =>
+                  x[0] in propertyMap && !!x[1]
+              )
+              /**
+               * Build the parameter payload for an event entry.
+               * All members must be in Pascal case.
+               */
+              .reduce(
+                (acc: Record<string, string>, [name, expr]) => ({
+                  ...acc,
+                  [propertyMap[name]]: ASL.toJson(expr),
+                }),
+                { EventBusName: this.bus.eventBusArn }
+              )
+          );
+        });
+
+        const task: Task = {
+          Resource: "arn:aws:states:::events:putEvents",
+          Type: "Task",
+          Parameters: {
+            Entries: events,
+          },
+        };
+
+        return task;
+      }
+
+      throw Error(`Event Bridge integration not supported on ${context.kind}`);
+    });
+  }
 
   /**
    * @inheritdoc
@@ -95,6 +227,10 @@ abstract class EventBusBase<E extends EventBusRuleInput>
   ): IEventBusRule<E> {
     return new EventBusRule<E>(scope, id, this, predicate);
   }
+}
+
+interface EventBusBase<E extends EventBusRuleInput> {
+  (event: Partial<E>, ...events: Partial<E>[]): void;
 }
 
 /**

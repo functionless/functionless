@@ -803,7 +803,7 @@ export function compile(
                 symbol.valueDeclaration.initializer &&
                 !hasParent(symbol.valueDeclaration, scope)
               ) {
-                return ref(symbol.valueDeclaration.initializer);
+                return ref(ts.factory.createIdentifier(symbol.name));
               }
             }
           }
