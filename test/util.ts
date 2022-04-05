@@ -1,9 +1,20 @@
-import { App, aws_dynamodb, aws_lambda, Stack } from "aws-cdk-lib";
-import { AppsyncResolver, FunctionDecl, Table, Function } from "../src";
+import { App, aws_dynamodb, aws_events, aws_lambda, Stack } from "aws-cdk-lib";
+import {
+  AppsyncResolver,
+  FunctionDecl,
+  Table,
+  Function,
+  EventBusRuleInput,
+  FunctionlessEventPattern,
+} from "../src";
 
 import * as appsync from "@aws-cdk/aws-appsync-alpha";
 import path from "path";
+import { Rule } from "aws-cdk-lib/aws-events";
 import { Err, isErr } from "../src/error";
+import { synthesizeEventPattern } from "../src/event-bridge/event-pattern/synth";
+import { EventTransformFunction } from "../src/event-bridge/transform";
+import { synthesizeEventBridgeTargets } from "../src/event-bridge/target-input";
 
 // generates boilerplate for the circuit-breaker logic for implementing early return
 export function returnExpr(varName: string) {
@@ -98,4 +109,65 @@ export function initStepFunctionApp() {
   );
 
   return { stack, task, computeScore, getPerson, personTable };
+}
+
+export function ebEventPatternTestCase(
+  decl: FunctionDecl | Err,
+  expected: FunctionlessEventPattern
+) {
+  const result = synthesizeEventPattern(decl);
+
+  expect(result).toEqual(expected);
+}
+
+export function ebEventPatternTestCaseError(
+  decl: FunctionDecl | Err,
+  message?: string
+) {
+  expect(() => synthesizeEventPattern(decl)).toThrow(message);
+}
+
+let stack: Stack;
+
+beforeEach(() => {
+  stack = new Stack();
+});
+
+export function ebEventTargetTestCase<T extends EventBusRuleInput>(
+  decl: FunctionDecl<EventTransformFunction<T>> | Err,
+  targetInput: aws_events.RuleTargetInput
+) {
+  const result = synthesizeEventBridgeTargets(decl);
+
+  const rule = new Rule(stack, "testrule");
+
+  // input template can contain tokens, lets fix that.
+
+  const {
+    inputTemplate: recievedTemplate,
+    input: recievedInput,
+    ...recieved
+  } = result.bind(rule);
+  const {
+    inputTemplate: expectedTemplate,
+    input: expectedInput,
+    ...expected
+  } = targetInput.bind(rule);
+
+  expect({
+    ...recieved,
+    inputTemplate: stack.resolve(recievedTemplate),
+    input: stack.resolve(recievedInput),
+  }).toEqual({
+    ...expected,
+    inputTemplate: stack.resolve(expectedTemplate),
+    input: stack.resolve(expectedInput),
+  });
+}
+
+export function ebEventTargetTestCaseError<T extends EventBusRuleInput>(
+  decl: FunctionDecl<EventTransformFunction<T>> | Err,
+  message?: string
+) {
+  expect(() => synthesizeEventBridgeTargets(decl)).toThrow(message);
 }

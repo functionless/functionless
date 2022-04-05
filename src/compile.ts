@@ -4,9 +4,11 @@ import { PluginConfig, TransformerExtras } from "ts-patch";
 import { BinaryOp, CanReference } from "./expression";
 import { FunctionlessNode } from "./node";
 import { AppsyncResolver } from "./appsync";
-import minimatch from "minimatch";
 import { assertDefined } from "./assert";
 import { StepFunction, ExpressStepFunction } from "./step-function";
+import minimatch from "minimatch";
+import { EventBus, EventBusRule } from "./event-bridge";
+import { EventBusTransform } from "./event-bridge/transform";
 
 export default compile;
 
@@ -81,6 +83,14 @@ export function compile(
             return errorBoundary(() =>
               toFunction("FunctionDecl", node.arguments[0])
             );
+          } else if (isEventBusWhenFunction(node)) {
+            return visitEventBusWhen(node);
+          } else if (isEventBusMapFunction(node)) {
+            return visitEventBusMap(node);
+          } else if (isNewEventBusRule(node)) {
+            return visitEventBusRule(node);
+          } else if (isNewEventBusTransform(node)) {
+            return visitEventTransform(node);
           }
           return node;
         };
@@ -141,6 +151,81 @@ export function compile(
         | ts.ElementAccessExpression
         | ts.CallExpression;
 
+      type EventBusRuleInterface = ts.NewExpression & {
+        arguments: [any, any, any, TsFunctionParameter];
+      };
+
+      type EventBusTransformInterface = ts.NewExpression & {
+        arguments: [TsFunctionParameter, any];
+      };
+
+      type EventBusWhenInterface = ts.CallExpression & {
+        arguments: [any, any, TsFunctionParameter];
+      };
+
+      type EventBusMapInterface = ts.CallExpression & {
+        arguments: [TsFunctionParameter];
+      };
+
+      function isNewEventBusRule(node: ts.Node): node is EventBusRuleInterface {
+        return ts.isNewExpression(node) && isEventBusRule(node.expression);
+      }
+
+      function isNewEventBusTransform(
+        node: ts.Node
+      ): node is EventBusTransformInterface {
+        return ts.isNewExpression(node) && isEventBusTransform(node.expression);
+      }
+
+      function isEventBusWhenFunction(
+        node: ts.Node
+      ): node is EventBusWhenInterface {
+        return (
+          ts.isCallExpression(node) &&
+          ts.isPropertyAccessExpression(node.expression) &&
+          node.expression.name.text === "when" &&
+          isEventBus(node.expression.expression)
+        );
+      }
+
+      function isEventBusMapFunction(
+        node: ts.Node
+      ): node is EventBusMapInterface {
+        return (
+          ts.isCallExpression(node) &&
+          ts.isPropertyAccessExpression(node.expression) &&
+          node.expression.name.text === "map" &&
+          isEventBusRule(node.expression.expression)
+        );
+      }
+
+      /**
+       * Checks to see if a node is of type EventBus.
+       * The node could be any kind of node that returns an event bus rule.
+       */
+      function isEventBus(node: ts.Node) {
+        return isFunctionlessClassOfKind(node, EventBus.FunctionlessType);
+      }
+
+      /**
+       * Checks to see if a node is of type {@link EventBusRule}.
+       * The node could be any kind of node that returns an event bus rule.
+       */
+      function isEventBusRule(node: ts.Node) {
+        return isFunctionlessClassOfKind(node, EventBusRule.FunctionlessType);
+      }
+
+      /**
+       * Checks to see if a node is of type {@link EventBusTransform}.
+       * The node could be any kind of node that returns an event bus rule.
+       */
+      function isEventBusTransform(node: ts.Node) {
+        return isFunctionlessClassOfKind(
+          node,
+          EventBusTransform.FunctionlessType
+        );
+      }
+
       /**
        * Catches any errors and wraps them in a {@link Err} node.
        */
@@ -162,37 +247,42 @@ export function compile(
         }
       }
 
-      function isFunctionlessClassOfKind(node: ts.Node, kind: string) {
-        const type = checker.getTypeAtLocation(node);
-        const exprDecl = type.symbol?.declarations?.[0];
-        return (
-          !!exprDecl &&
-          ts.isClassDeclaration(exprDecl) &&
-          getFunctionlessKind(exprDecl) === kind
-        );
+      /**
+       * Checks if the type contains one of
+       * a static property FunctionlessType with the value of {@param kind}
+       * a property signature functionlessKind with literal type with the value of {@param kind}
+       * a readonly property functionlessKind with literal type with the value of {@param kind}
+       */
+      function isFunctionlessType(
+        type: ts.Type | undefined,
+        kind: string
+      ): boolean {
+        return !!type && getFunctionlessTypeKind(type) === kind;
       }
 
-      // Gets the static FunctionlessKind property from a ClassDeclaration
-      function getFunctionlessKind(
-        clss: ts.ClassDeclaration
-      ): string | undefined {
-        const member = clss.members.find(
-          (member) =>
-            member.modifiers?.find(
-              (mod) => mod.kind === ts.SyntaxKind.StaticKeyword
-            ) !== undefined &&
-            member.name &&
-            ts.isIdentifier(member.name) &&
-            member.name.text === "FunctionlessType"
-        );
+      function isFunctionlessClassOfKind(node: ts.Node, kind: string) {
+        const type = checker.getTypeAtLocation(node);
+        return isFunctionlessType(type, kind);
+      }
 
-        if (
-          member &&
-          ts.isPropertyDeclaration(member) &&
-          member.initializer &&
-          ts.isStringLiteral(member.initializer)
-        ) {
-          return member.initializer.text;
+      function getFunctionlessTypeKind(type: ts.Type): string | undefined {
+        const functionlessType = type.getProperty("FunctionlessType");
+        const functionlessKind = type.getProperty("functionlessKind");
+        const prop = functionlessType ?? functionlessKind;
+
+        if (prop && prop.valueDeclaration) {
+          if (
+            ts.isPropertyDeclaration(prop.valueDeclaration) &&
+            prop.valueDeclaration.initializer &&
+            ts.isStringLiteral(prop.valueDeclaration.initializer)
+          ) {
+            return prop.valueDeclaration.initializer.text;
+          } else if (ts.isPropertySignature(prop.valueDeclaration)) {
+            const type = checker.getTypeAtLocation(prop.valueDeclaration);
+            if (type.isStringLiteral()) {
+              return type.value;
+            }
+          }
         }
         return undefined;
       }
@@ -207,6 +297,55 @@ export function compile(
               ? errorBoundary(() => toFunction("FunctionDecl", arg))
               : arg
           )
+        );
+      }
+
+      function visitEventBusRule(call: EventBusRuleInterface): ts.Node {
+        const [one, two, three, impl] = call.arguments;
+
+        return ts.factory.updateNewExpression(
+          call,
+          call.expression,
+          call.typeArguments,
+          [
+            one,
+            two,
+            three,
+            errorBoundary(() => toFunction("FunctionDecl", impl)),
+          ]
+        );
+      }
+
+      function visitEventTransform(call: EventBusTransformInterface): ts.Node {
+        const [impl, ...rest] = call.arguments;
+
+        return ts.factory.updateNewExpression(
+          call,
+          call.expression,
+          call.typeArguments,
+          [errorBoundary(() => toFunction("FunctionDecl", impl)), ...rest]
+        );
+      }
+
+      function visitEventBusWhen(call: EventBusWhenInterface): ts.Node {
+        const [one, two, impl] = call.arguments;
+
+        return ts.factory.updateCallExpression(
+          call,
+          call.expression,
+          call.typeArguments,
+          [one, two, errorBoundary(() => toFunction("FunctionDecl", impl))]
+        );
+      }
+
+      function visitEventBusMap(call: EventBusMapInterface): ts.Node {
+        const [impl] = call.arguments;
+
+        return ts.factory.updateCallExpression(
+          call,
+          call.expression,
+          call.typeArguments,
+          [errorBoundary(() => toFunction("FunctionDecl", impl))]
         );
       }
 
@@ -301,7 +440,7 @@ export function compile(
           } else {
             signature = checker.getResolvedSignature(node);
           }
-          if (signature) {
+          if (signature && signature.parameters.length > 0) {
             return newExpr(ts.isCallExpression(node) ? "CallExpr" : "NewExpr", [
               toExpr(node.expression),
               ts.factory.createArrayLiteralExpression(
@@ -476,7 +615,9 @@ export function compile(
             ),
           ]);
         } else if (node.kind === ts.SyntaxKind.NullKeyword) {
-          return newExpr("NullLiteralExpr", []);
+          return newExpr("NullLiteralExpr", [
+            ts.factory.createIdentifier("false"),
+          ]);
         } else if (ts.isNumericLiteral(node)) {
           return newExpr("NumberLiteralExpr", [node]);
         } else if (
@@ -582,9 +723,13 @@ export function compile(
           return toExpr(node.expression);
         } else if (ts.isTypeAssertionExpression(node)) {
           return toExpr(node.expression);
+        } else if (ts.isNonNullExpression(node)) {
+          return toExpr(node.expression);
         }
 
-        throw new Error(`unhandled node: ${node.getText()} ${node.kind}`);
+        throw new Error(
+          `unhandled node: ${node.getText()} ${ts.SyntaxKind[node.kind]}`
+        );
       }
 
       function ref(node: ts.Expression) {
@@ -665,4 +810,7 @@ const OperatorMappings: Record<number, BinaryOp> = {
   [ts.SyntaxKind.LessThanToken]: "<",
   [ts.SyntaxKind.GreaterThanEqualsToken]: ">=",
   [ts.SyntaxKind.GreaterThanToken]: ">",
+  [ts.SyntaxKind.ExclamationEqualsToken]: "!=",
+  [ts.SyntaxKind.ExclamationEqualsEqualsToken]: "!=",
+  [ts.SyntaxKind.InKeyword]: "in",
 } as const;

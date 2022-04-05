@@ -8,6 +8,20 @@ export function assertNever(value: never): never {
   );
 }
 
+export function assertString(value: any, message?: string): string {
+  if (typeof value !== "string") {
+    throw new Error(message ?? `Expected string, got ${value}`);
+  }
+  return value;
+}
+
+export function assertNumber(value: any, message?: string): number {
+  if (typeof value !== "number") {
+    throw new Error(message ?? `Expected number, got ${value}`);
+  }
+  return value;
+}
+
 export function assertDefined<T>(
   value?: T,
   message?: string

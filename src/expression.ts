@@ -161,20 +161,28 @@ export class Identifier extends BaseExpr<"Identifier"> {
 export const isPropAccessExpr = typeGuard("PropAccessExpr");
 
 export class PropAccessExpr extends BaseExpr<"PropAccessExpr"> {
-  constructor(readonly expr: Expr, readonly name: string) {
+  constructor(
+    readonly expr: Expr,
+    readonly name: string,
+    readonly type?: string
+  ) {
     super("PropAccessExpr");
     expr.setParent(this);
   }
 
   public clone(): this {
-    return new PropAccessExpr(this.expr.clone(), this.name) as this;
+    return new PropAccessExpr(this.expr.clone(), this.name, this.type) as this;
   }
 }
 
 export const isElementAccessExpr = typeGuard("ElementAccessExpr");
 
 export class ElementAccessExpr extends BaseExpr<"ElementAccessExpr"> {
-  constructor(readonly expr: Expr, readonly element: Expr) {
+  constructor(
+    readonly expr: Expr,
+    readonly element: Expr,
+    readonly type?: string
+  ) {
     super("ElementAccessExpr");
     expr.setParent(this);
     element.setParent(this);
@@ -183,7 +191,8 @@ export class ElementAccessExpr extends BaseExpr<"ElementAccessExpr"> {
   public clone(): this {
     return new ElementAccessExpr(
       this.expr.clone(),
-      this.element.clone()
+      this.element.clone(),
+      this.type
     ) as this;
   }
 }
@@ -277,7 +286,8 @@ export type BinaryOp =
   | ">"
   | ">="
   | "&&"
-  | "||";
+  | "||"
+  | "in";
 
 export class BinaryExpr extends BaseExpr<"BinaryExpr"> {
   constructor(
@@ -301,7 +311,7 @@ export class BinaryExpr extends BaseExpr<"BinaryExpr"> {
 
 export const isUnaryExpr = typeGuard("UnaryExpr");
 
-export type UnaryOp = "!";
+export type UnaryOp = "!" | "-";
 
 export class UnaryExpr extends BaseExpr<"UnaryExpr"> {
   constructor(readonly op: UnaryOp, readonly expr: Expr) {

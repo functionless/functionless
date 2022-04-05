@@ -7,7 +7,7 @@ import { ASL, isASL, Task } from "./asl";
 import type { AppsyncResolver } from "./appsync";
 import { makeCallable } from "./callable";
 
-export function isFunction(a: any): a is Function<any, any> {
+export function isFunction<P = any, O = any>(a: any): a is Function<P, O> {
   return a?.kind === "Function";
 }
 
