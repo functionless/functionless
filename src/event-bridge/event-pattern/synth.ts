@@ -79,7 +79,7 @@ const STARTS_WITH_SEARCH_STRING = "searchString";
  * https://github.com/sam-goodwin/functionless/issues/37#issuecomment-1066313146
  */
 export const synthesizeEventPattern = (
-  predicate: FunctionDecl | Err | any
+  predicate: FunctionDecl | Err | unknown
 ): functionless_event_bridge.FunctionlessEventPattern => {
   if (isErr(predicate)) {
     throw predicate.error;

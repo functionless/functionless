@@ -208,7 +208,7 @@ export function compile(
       }
 
       /**
-       * Checks to see if a node is of type EventBusRule.
+       * Checks to see if a node is of type {@link EventBusRule}.
        * The node could be any kind of node that returns an event bus rule.
        */
       function isEventBusRule(node: ts.Node) {
@@ -216,7 +216,7 @@ export function compile(
       }
 
       /**
-       * Checks to see if a node is of type EventBusRule.
+       * Checks to see if a node is of type {@link EventBusTransform}.
        * The node could be any kind of node that returns an event bus rule.
        */
       function isEventBusTransform(node: ts.Node) {
@@ -266,12 +266,9 @@ export function compile(
       }
 
       function getFunctionlessTypeKind(type: ts.Type): string | undefined {
-        const prop = type
-          .getProperties()
-          .find(
-            (p) =>
-              p.name === "FunctionlessType" || p.name === "functionlessKind"
-          );
+        const functionlessType = type.getProperty("FunctionlessType");
+        const functionlessKind = type.getProperty("functionlessKind");
+        const prop = functionlessType ?? functionlessKind;
 
         if (prop && prop.valueDeclaration) {
           if (

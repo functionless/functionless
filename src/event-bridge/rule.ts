@@ -25,6 +25,9 @@ export type EventPredicateFunction<
 export interface IEventBusRule<T extends EventBusRuleInput> {
   readonly rule: aws_events.Rule;
 
+  /**
+   * This static property identifies this class as an EventBusRule to the TypeScript plugin.
+   */
   readonly functionlessKind: typeof EventBusRuleBase.FunctionlessType;
 
   /**
@@ -87,7 +90,7 @@ export interface IEventBusRule<T extends EventBusRuleInput> {
    *
    * Unsupported by EventBridge:
    * * String slicing/sub string
-   * * Arithmatic
+   * * Arithmetic
    * * Boolean logic `event.source === "lambda"`)
    * * Formatting the whole event `event: ${event}`
    * * More...
@@ -138,6 +141,9 @@ export interface IEventBusRule<T extends EventBusRuleInput> {
 abstract class EventBusRuleBase<T extends EventBusRuleInput>
   implements IEventBusRule<T>
 {
+  /**
+   * This static properties identifies this class as an EventBusRule to the TypeScript plugin.
+   */
   public static readonly FunctionlessType = "EventBusRule";
   readonly functionlessKind = "EventBusRule";
 

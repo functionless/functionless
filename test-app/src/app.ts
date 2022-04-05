@@ -56,9 +56,11 @@ peopleDb.deletePerson.addResolver(api, {
   fieldName: "deletePerson",
 });
 
-type MyEvent = EventBusRuleInput<{
+interface MyEventDetails {
   value: string;
-}>;
+}
+
+interface MyEvent extends EventBusRuleInput<MyEventDetails> {}
 
 new EventBus<MyEvent>(stack, "bus")
   .when(stack, "aRule", (event) => event.detail.value === "hello")

@@ -6,6 +6,9 @@ import { EventBusRuleInput } from "./types";
 export interface IEventBus<E extends EventBusRuleInput> {
   readonly bus: aws_events.IEventBus;
 
+  /**
+   * This static property identifies this class as an EventBus to the TypeScript plugin.
+   */
   readonly functionlessKind: typeof EventBusBase.FunctionlessType;
 
   /**
@@ -75,7 +78,7 @@ abstract class EventBusBase<E extends EventBusRuleInput>
   implements IEventBus<E>
 {
   /**
-   * This static property identifies this class as an EventBus to the TypeScript plugin.
+   * This static properties identifies this class as an EventBus to the TypeScript plugin.
    */
   public static readonly FunctionlessType = "EventBus";
   readonly functionlessKind = "EventBus";

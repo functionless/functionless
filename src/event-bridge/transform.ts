@@ -38,6 +38,9 @@ export interface EventTransformUtils {
 export class EventBusTransform<T extends EventBusRuleInput, P> {
   readonly targetInput: aws_events.RuleTargetInput;
 
+  /**
+   * This static property identifies this class as an EventBusTransform to the TypeScript plugin.
+   */
   public static readonly FunctionlessType = "EventBusTransform";
 
   constructor(

@@ -67,7 +67,7 @@ test("new bus with when pipe event bus", () => {
   ).toHaveProperty("arn");
 });
 
-test("new bus with when map pipe function aa", () => {
+test("new bus with when map pipe function", () => {
   const busBus = new EventBus(stack, "bus");
 
   const func = new Function(

@@ -34,13 +34,13 @@ import { isReturn, isVariableStmt, Stmt, VariableStmt } from "../statement";
 /**
  * Returns a string array representing the property access starting from a named identity.
  *
- * Does not return the itentity name given.
+ * Does not return the identity name given.
  *
  * (event) => {
  *   event.prop1.prop2
  * }
  *
- * Given the propertyAccesssExpr for "prop2", this function will return ["prop1", "prop2"];
+ * Given the PropertyAccessExpr for "prop2", this function will return ["prop1", "prop2"];
  */
 export const getReferencePath = (
   expression: Expr
@@ -339,7 +339,7 @@ export function assertValidEventRefererence(
     }
   } else if (!utilsName || eventReference.identity !== utilsName) {
     throw Error(
-      `Unresolved references can only reference the event paremeter (${eventName}) or the $utils parameter (${utilsName}), but found ${eventReference.identity}`
+      `Unresolved references can only reference the event parameter (${eventName}) or the $utils parameter (${utilsName}), but found ${eventReference.identity}`
     );
   }
 }
