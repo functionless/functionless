@@ -21,7 +21,6 @@ export interface Post<PostID extends string> {
   sk: string;
   postId: PostID;
   content: string;
-  createdTime: string;
 }
 ```
 
@@ -58,7 +57,7 @@ Let's break this down a bit. Notice that there is a `functionless.Table` and an 
 
 Let's move on to building the GraphQL API - we'll use our first "functionless integration" there.
 
-Before we can do anything useful, we need a simple GraphQL schema with our `Post` type, a `createPost` mutation and a `getPost` query. Let's create that:
+Before we can do anything useful, we need a simple GraphQL schema with our `Post` type, a `createPost` mutation and a `getPost` query. Let's get that out of the way:
 
 ```graphql
 // message-board.gql
@@ -113,9 +112,9 @@ Import `AppsyncResolver` from the `functionless` library:
 import { AppsyncResolver } from "functionless";
 ```
 
-This class is how we create Resolver Functions for Appsync. These Resolver Functions configure AppSync to transform requests, call (integrate with) backend services and then transform and return responses. An Appsync Resolver is configured with CloudFormation and Apache Velocity Templates, but Functionless makes this easy by transforming your TypeScript code into those configurations.
+This class is how we create Resolver Functions for Appsync. These Resolver Functions configure AppSync to transform requests, integrate with backend services and then transform and return responses. An Appsync Resolver is configured with CloudFormation and Apache Velocity Templates, but Functionless makes this easy by transforming your TypeScript code into those configurations so you don't have to learn them (yuck!).
 
-To implement `createPost`, instantiate a new `AppsyncResolver` and implement its logic with a function:
+To implement `createPost`, instantiate a new `AppsyncResolver` and implement its logic with a function (yes, it's that simple):
 
 ```ts
 export const createPost = new AppsyncResolver<{ title: string }, Post>(
@@ -146,7 +145,7 @@ export const createPost = new AppsyncResolver<{ title: string }, Post>(
 });
 ```
 
-Let's break this down into its key components, starting with teh `AppsyncResolver` signature:
+Let's break this down into its key components, starting with the `AppsyncResolver` signature:
 
 ```ts
 export const createPost = new AppsyncResolver<{ content: string }, Post>(
@@ -156,7 +155,7 @@ export const createPost = new AppsyncResolver<{ content: string }, Post>(
 );
 ```
 
-The type argument, `{content: string}`, represents the GraphQL function's arguments, and `Post` (the other type argument) is the return type:
+The type argument, `{content: string}`, represents the GraphQL function's arguments, and `Post` (the other type argument) is the return type. It's simply the function signature.
 
 ```ts
 type Mutation {
@@ -195,3 +194,23 @@ This should feel similar to a Lambda Function, but with some nuances.
 
 - Notice that we generate a ULID for the `postId` with the utility, `$util.autoUlid()`. This refers to [Appsync's Utility helpers in $util](https://docs.aws.amazon.com/appsync/latest/devguide/utility-helpers-in-util.html). Because an AppsyncResolver is converted into Apache Velocity Templates and CloudFormation, the ordinary way of generating an ID (e.g. by using the `uuid` module) does not work - you must instead use the Appsync service's built-in utility functions.
 - The `content` GraphQL argument is available as `$context.arguments.content`. This refers to the [`$context` primitive built in to the Appsync service](https://docs.aws.amazon.com/appsync/latest/devguide/resolver-context-reference.html).
+- The reason we can simply return the result of `putItem` is because the data is automatically marshalled from DynamoDB's JSON format to simple JSON. Also, remember how we declared our Table - `Table<Person, "pk", "sk">`? This means the return type of `putItem` is a `Person` - so everything type checks correctly. Pretty neat, right? Functionless is all programming the cloud, just like you would your local machine!
+
+Finally, the `addResolver` function adds this Appsync Resolver logic to our Message Board GraphQL API. Calling this function will generate all of the Apache Velocity Templates and configure a Resolver Pipeline for the `createPost` field on the `Mutation` type in our GraphQL API.
+
+```ts
+export const createPost = new AppsyncResolver<
+  { title: string },
+  Post
+>().addResolver(api, {
+// (omitted)
+  typeName: "Mutation",
+  fieldName: "createPost",
+});
+```
+
+Now that we know how to write AppsyncResolvers, implementing getPost should be straight-forward - maybe you want to give that a try?
+
+## Express Step Function
+
+Next
