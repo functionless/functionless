@@ -145,12 +145,6 @@ export function hasParent(node: ts.Node, parent: ts.Node): boolean {
   return hasParent(node.parent, parent);
 }
 
-/**
- * An interface used to identify interfaces owned by Functionless.
- * Interfaces cannot have static members or decorators.
- */
-export interface __FunctionlessBase {}
-
 export type ConstantValue =
   | PrimitiveValue
   | { [key: string]: ConstantValue }

@@ -7,6 +7,7 @@ const project = new typescript.TypeScriptProject({
     "@aws-cdk/aws-appsync-alpha",
     "@types/fs-extra",
     "@types/minimatch",
+    "amplify-appsync-simulator",
     "aws-cdk-lib",
     "constructs",
     "ts-node",

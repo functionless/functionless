@@ -25,11 +25,11 @@ import {
 import { isVTL } from "./vtl";
 import { makeCallable } from "./callable";
 import {
-  Argument,
   CallExpr,
-  Expr,
+  isComputedPropertyNameExpr,
   isFunctionExpr,
-  isVariableReference,
+  isObjectLiteralExpr,
+  isSpreadAssignExpr,
 } from "./expression";
 import { ensureItemOf } from "./util";
 import { CallContext } from "./context";
@@ -424,6 +424,8 @@ abstract class BaseStepFunction<P extends Record<string, any> | undefined, O>
           this.grantStartSyncExecution(context.role);
         }
 
+        const { name, input, traceHeader } = retrieveMachineArgs(call);
+
         const task: Task = {
           Type: "Task",
           Resource: `arn:aws:states:::aws-sdk:sfn:${
@@ -434,48 +436,52 @@ abstract class BaseStepFunction<P extends Record<string, any> | undefined, O>
           }`,
           Parameters: {
             StateMachineArn: this.stateMachineArn,
-            Input: call.args
-              .filter((arg): arg is Argument & { expr: Expr } => !!arg.expr)
-              .reduce(
-                (args, arg) => ({
-                  ...args,
-                  [`${arg.name!}${isVariableReference(arg.expr) ? ".$" : ""}`]:
-                    ASL.toJson(arg.expr),
-                }),
-                {}
-              ),
+            ...(input ? { Input: ASL.toJson(input) } : {}),
+            ...(name ? { Name: ASL.toJson(name) } : {}),
+            ...(traceHeader ? { TraceHeader: ASL.toJson(traceHeader) } : {}),
           },
         };
         return task;
       } else if (isVTL(context)) {
-        const args = context.var(
-          `{${call.args
-            .map((arg) => `"${arg.name}": ${context.eval(arg.expr)}`)
-            .join(",")}}`
+        const { name, input, traceHeader } = retrieveMachineArgs(call);
+
+        const inputObj = context.var("{}");
+        input &&
+          context.put(
+            inputObj,
+            context.str("input"),
+            `$util.toJson(${context.eval(input)})`
+          );
+        name && context.put(inputObj, context.str("name"), context.eval(name));
+        traceHeader &&
+          context.put(
+            inputObj,
+            context.str("traceHeader"),
+            context.eval(traceHeader)
+          );
+        context.put(
+          inputObj,
+          context.str("stateMachineArn"),
+          context.str(this.stateMachineArn)
         );
-        return JSON.stringify(
-          {
-            version: "2018-05-29",
-            method: "POST",
-            resourcePath: "/",
-            params: {
-              headers: {
-                "content-type": "application/x-amz-json-1.0",
-                "x-amz-target":
-                  this.getStepFunctionType() ===
-                  aws_stepfunctions.StateMachineType.EXPRESS
-                    ? "AWSStepFunctions.StartSyncExecution"
-                    : "AWSStepFunctions.StartExecution",
-              },
-              body: {
-                stateMachineArn: this.stateMachineArn,
-                input: `$util.escapeJavaScript($util.toJson(${args}))`,
-              },
-            },
-          },
-          null,
-          2
-        );
+
+        return `{
+  "version": "2018-05-29",
+  "method": "POST",
+  "resourcePath": "/",
+  "params": {
+    "headers": {
+      "content-type": "application/x-amz-json-1.0",
+      "x-amz-target": "${
+        this.getStepFunctionType() ===
+        aws_stepfunctions.StateMachineType.EXPRESS
+          ? "AWSStepFunctions.StartSyncExecution"
+          : "AWSStepFunctions.StartExecution"
+      }"
+    },
+    "body": $util.toJson(${inputObj})
+  }
+}`;
       }
       return assertNever(context);
     });
@@ -504,24 +510,20 @@ abstract class BaseStepFunction<P extends Record<string, any> | undefined, O>
       };
       return task;
     } else if (isVTL(context)) {
-      return JSON.stringify(
-        {
-          version: "2018-05-29",
-          method: "POST",
-          resourcePath: "/",
-          params: {
-            headers: {
-              "content-type": "application/x-amz-json-1.0",
-              "x-amz-target": "AWSStepFunctions.DescribeExecution",
-            },
-            body: {
-              executionArn: context.eval(executionArn),
-            },
-          },
-        },
-        null,
-        2
-      );
+      return `{
+  "version": "2018-05-29",
+  "method": "POST",
+  "resourcePath": "/",
+  "params": {
+    "headers": {
+      "content-type": "application/x-amz-json-1.0",
+      "x-amz-target": "AWSStepFunctions.DescribeExecution"
+    },
+    "body": {
+      "executionArn": ${context.json(context.eval(executionArn))}
+    }
+  }
+}`;
     }
     return assertNever(context);
   }
@@ -845,6 +847,37 @@ abstract class BaseStepFunction<P extends Record<string, any> | undefined, O>
   }
 }
 
+function retrieveMachineArgs(call: CallExpr) {
+  // object reference
+  // machine(inputObj) => inputObj: { name: "hi", input: ... }
+  // Inline Object
+  // machine({ input: { ... } })
+  // Inline with reference
+  // machine({ input: ref, name: "hi", traceHeader: "hi" })
+  const arg = call.args[0];
+
+  if (!arg.expr || !isObjectLiteralExpr(arg.expr)) {
+    throw Error(
+      "Step function invocation must use a single, inline object parameter. Variable references are not supported currently."
+    );
+  } else if (
+    arg.expr.properties.some(
+      (x) => isSpreadAssignExpr(x) || isComputedPropertyNameExpr(x.name)
+    )
+  ) {
+    throw Error(
+      "Step function invocation must use a single, inline object instantiated without computed or spread keys."
+    );
+  }
+
+  // we know the keys cannot be computed, so it is safe to use getProperty
+  return {
+    name: arg.expr.getProperty("name")?.expr,
+    traceHeader: arg.expr.getProperty("traceHeader")?.expr,
+    input: arg.expr.getProperty("input")?.expr,
+  };
+}
+
 function validateStateMachineName(stateMachineName: string) {
   if (!Token.isUnresolved(stateMachineName)) {
     if (stateMachineName.length < 1 || stateMachineName.length > 80) {
@@ -939,22 +972,28 @@ export type SyncExecutionResult<T> =
   | SyncExecutionFailedResult
   | SyncExecutionSuccessResult<T>;
 
-type ConditionalMachine<P, O> = P extends undefined
-  ? () => O | ((name: string, traceHeader: string) => O) | ((name: string) => O)
-  : (
-      payload: P
-    ) =>
-      | O
-      | ((name: string, traceHeader: string, payload: P) => O)
-      | ((name: string, payload: P) => O);
+// do not support undefined values, arguments must be present or missing
+export type StepFunctionRequest<P extends Record<string, any> | undefined> =
+  (P extends undefined ? {} : { input: P }) &
+    (
+      | {
+          name: string;
+          traceHeader: string;
+        }
+      | {
+          name: string;
+        }
+      | {
+          traceHeader: string;
+        }
+      | {}
+    );
 
 export interface ExpressStepFunction<
   P extends Record<string, any> | undefined,
   O
 > {
-  (
-    ...args: Parameters<ConditionalMachine<P, SyncExecutionResult<O>>>
-  ): SyncExecutionResult<O>;
+  (input: StepFunctionRequest<P>): SyncExecutionResult<O>;
 }
 
 export class StepFunction<
@@ -972,9 +1011,5 @@ export class StepFunction<
 }
 
 export interface StepFunction<P extends Record<string, any> | undefined, O> {
-  (
-    ...args: Parameters<
-      ConditionalMachine<P, AWS.StepFunctions.StartExecutionOutput>
-    >
-  ): AWS.StepFunctions.StartExecutionOutput;
+  (input: StepFunctionRequest<P>): AWS.StepFunctions.StartExecutionOutput;
 }

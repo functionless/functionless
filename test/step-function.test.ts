@@ -1,5 +1,5 @@
 import "jest";
-import { $AWS, $SFN, ExpressStepFunction } from "../src";
+import { $AWS, $SFN, ExpressStepFunction, SyncExecutionResult } from "../src";
 import { StateMachine, States } from "../src/asl";
 import { initStepFunctionApp, Person } from "./util";
 
@@ -5479,17 +5479,16 @@ test("call Step Function from another Step Function", () => {
   });
 
   const definition = new ExpressStepFunction(stack, "machine2", () => {
-    const result = machine1();
+    const result = machine1({});
     return result;
   }).definition;
 
   expect(definition).toEqual({
-    StartAt: "result = machine1()",
+    StartAt: "result = machine1({})",
     States: {
-      "result = machine1()": {
+      "result = machine1({})": {
         Next: "return result",
         Parameters: {
-          Input: {},
           StateMachineArn: machine1.stateMachineArn,
         },
         Resource: "arn:aws:states:::aws-sdk:sfn:startSyncExecution",
@@ -5503,4 +5502,220 @@ test("call Step Function from another Step Function", () => {
       },
     },
   });
+});
+
+test("call Step Function from another Step Function with name and trace", () => {
+  const { stack } = initStepFunctionApp();
+  const machine1 = new ExpressStepFunction(stack, "machine1", () => {
+    return "hello";
+  });
+
+  const definition = new ExpressStepFunction(stack, "machine2", () => {
+    const result = machine1({
+      name: "exec1",
+      traceHeader: "1",
+    });
+    return result;
+  }).definition;
+
+  expect(definition).toEqual({
+    StartAt: 'result = machine1({name: "exec1", traceHeader: "1"})',
+    States: {
+      'result = machine1({name: "exec1", traceHeader: "1"})': {
+        Next: "return result",
+        Parameters: {
+          StateMachineArn: machine1.stateMachineArn,
+          Name: "exec1",
+          TraceHeader: "1",
+        },
+        Resource: "arn:aws:states:::aws-sdk:sfn:startSyncExecution",
+        ResultPath: "$.result",
+        Type: "Task",
+      },
+      "return result": {
+        End: true,
+        OutputPath: "$.result",
+        Type: "Pass",
+      },
+    },
+  });
+});
+
+test("call Step Function from another Step Function with input", () => {
+  const { stack } = initStepFunctionApp();
+  const machine1 = new ExpressStepFunction<{ value: string }, string>(
+    stack,
+    "machine1",
+    () => {
+      return "hello";
+    }
+  );
+
+  const definition = new ExpressStepFunction(stack, "machine2", () => {
+    const result = machine1({
+      input: {
+        value: "hello",
+      },
+    });
+    return result;
+  }).definition;
+
+  expect(definition).toEqual({
+    StartAt: 'result = machine1({input: {value: "hello"}})',
+    States: {
+      'result = machine1({input: {value: "hello"}})': {
+        Next: "return result",
+        Parameters: {
+          Input: {
+            value: "hello",
+          },
+          StateMachineArn: machine1.stateMachineArn,
+        },
+        Resource: "arn:aws:states:::aws-sdk:sfn:startSyncExecution",
+        ResultPath: "$.result",
+        Type: "Task",
+      },
+      "return result": {
+        End: true,
+        OutputPath: "$.result",
+        Type: "Pass",
+      },
+    },
+  });
+});
+
+test("call Step Function from another Step Function with dynamic input", () => {
+  const { stack } = initStepFunctionApp();
+  const machine1 = new ExpressStepFunction<{ value: string }, string>(
+    stack,
+    "machine1",
+    () => {
+      return "hello";
+    }
+  );
+
+  const definition = new ExpressStepFunction<
+    { value1: string },
+    SyncExecutionResult<string>
+  >(stack, "machine2", (input) => {
+    const result = machine1({
+      input: {
+        value: input.value1,
+      },
+    });
+    return result;
+  }).definition;
+
+  expect(definition).toEqual({
+    StartAt: "result = machine1({input: {value: input.value1}})",
+    States: {
+      "result = machine1({input: {value: input.value1}})": {
+        Next: "return result",
+        Parameters: {
+          Input: {
+            "value.$": "$.value1",
+          },
+          StateMachineArn: machine1.stateMachineArn,
+        },
+        Resource: "arn:aws:states:::aws-sdk:sfn:startSyncExecution",
+        ResultPath: "$.result",
+        Type: "Task",
+      },
+      "return result": {
+        End: true,
+        OutputPath: "$.result",
+        Type: "Pass",
+      },
+    },
+  });
+});
+
+test("call Step Function from another Step Function not supported with reference argument", () => {
+  const { stack } = initStepFunctionApp();
+  const machine1 = new ExpressStepFunction<{ value: string }, string>(
+    stack,
+    "machine1",
+    () => {
+      return "hello";
+    }
+  );
+
+  expect(
+    () =>
+      new ExpressStepFunction<{ value1: string }, SyncExecutionResult<string>>(
+        stack,
+        "machine2",
+        (input) => {
+          const _input = {
+            input: {
+              value: input.value1,
+            },
+          };
+          const result = machine1(_input);
+          return result;
+        }
+      )
+  ).toThrow(
+    "Step function invocation must use a single, inline object parameter. Variable references are not supported currently."
+  );
+});
+
+test("call Step Function from another Step Function not supported with computed keys", () => {
+  const { stack } = initStepFunctionApp();
+  const machine1 = new ExpressStepFunction<{ value: string }, string>(
+    stack,
+    "machine1",
+    () => {
+      return "hello";
+    }
+  );
+
+  expect(
+    () =>
+      new ExpressStepFunction<{ value1: string }, SyncExecutionResult<string>>(
+        stack,
+        "machine2",
+        (input) => {
+          const _inputStr = "input";
+          const result = machine1({
+            [_inputStr]: {
+              value: input.value1,
+            },
+          });
+          return result;
+        }
+      )
+  ).toThrow(
+    "Step function invocation must use a single, inline object instantiated without computed or spread keys."
+  );
+});
+
+test("call Step Function from another Step Function not supported with spread assignment", () => {
+  const { stack } = initStepFunctionApp();
+  const machine1 = new ExpressStepFunction<{ value: string }, string>(
+    stack,
+    "machine1",
+    () => {
+      return "hello";
+    }
+  );
+
+  expect(
+    () =>
+      new ExpressStepFunction<{ value1: string }, SyncExecutionResult<string>>(
+        stack,
+        "machine2",
+        (input) => {
+          const _input = {
+            input: {
+              value: input.value1,
+            },
+          };
+          const result = machine1({ ..._input });
+          return result;
+        }
+      )
+  ).toThrow(
+    "Step function invocation must use a single, inline object instantiated without computed or spread keys."
+  );
 });

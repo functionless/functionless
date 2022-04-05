@@ -787,7 +787,7 @@ export function compile(
       ): ts.NewExpression | undefined {
         if (symbol) {
           if (symbol.valueDeclaration) {
-            // Identities in Shorthand Property Assignment value declarations return the shorthand prop assignment and not the value.
+            // Identifies if Shorthand Property Assignment value declarations return the shorthand prop assignment and not the value.
             // const value = "hello"
             // const v = { value } <== shorthand prop assignment.
             // The checker supports getting the value assignment symbol, recursively call this method on the new symbol instead.

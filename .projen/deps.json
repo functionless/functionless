@@ -33,6 +33,10 @@
       "type": "build"
     },
     {
+      "name": "amplify-appsync-simulator",
+      "type": "build"
+    },
+    {
       "name": "aws-cdk-lib",
       "version": "2.17.0",
       "type": "build"

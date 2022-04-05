@@ -115,7 +115,7 @@ export class PeopleDatabase extends Construct {
     >(($context) => {
       let person;
       // example of integrating with an Express Step Function from Appsync
-      person = this.getPersonMachine({ id: $context.arguments.id });
+      person = this.getPersonMachine({ input: { id: $context.arguments.id } });
 
       if (person.status === "SUCCEEDED") {
         return person.output;

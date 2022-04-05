@@ -208,7 +208,7 @@ export const addComment = new AppsyncResolver<
   });
 
   // kick off a workflow to validate the comment
-  commentValidationWorkflow(comment);
+  commentValidationWorkflow({ input: comment });
 
   return comment;
 }).addResolver(api, {
@@ -286,7 +286,7 @@ export const deletePost = new AppsyncResolver<
     return undefined;
   }
 
-  return deleteWorkflow({ postId: $context.arguments.postId });
+  return deleteWorkflow({ input: { postId: $context.arguments.postId } });
 }).addResolver(api, {
   typeName: "Mutation",
   fieldName: "deletePost",
@@ -390,6 +390,6 @@ defaultBus
   .pipe(sendNotification);
 
 defaultBus
-  .when(stack, 'testDelete', (event) => event.source === "test")
+  .when(stack, "testDelete", (event) => event.source === "test")
   .map((event) => event.detail)
   .pipe(deleteWorkflow);
