@@ -345,7 +345,7 @@ export type EventReference = ReferencePath & {
 };
 
 // TODO: validate again object schema?
-export function assertValidEventRefererence(
+export function assertValidEventReference(
   eventReference?: ReferencePath,
   eventName?: string,
   utilsName?: string

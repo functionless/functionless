@@ -1377,6 +1377,22 @@ export namespace ASL {
     }
   }
 
+  /**
+   * Returns a object with the key formatted based on the contents of the value.
+   * in ASL, object keys that reference json path values must have a suffix of ".$"
+   * { "input.$": "$.value" }
+   */
+  export function toJsonAssignment(
+    key: string,
+    expr: Expr
+  ): Record<string, any> {
+    const value = ASL.toJson(expr);
+
+    return {
+      [isVariableReference(expr) ? `${key}.$` : key]: value,
+    };
+  }
+
   function filterToJsonPath(expr: CallExpr & { expr: PropAccessExpr }): string {
     const predicate = expr.getArgument("predicate")?.expr;
     if (predicate?.kind !== "FunctionExpr") {

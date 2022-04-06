@@ -17,7 +17,7 @@ import {
   ObjectLiteralExpr,
 } from "../expression";
 import {
-  assertValidEventRefererence,
+  assertValidEventReference,
   flattenReturnEvent,
   evalToConstant,
   getReferencePath,
@@ -115,7 +115,7 @@ export const synthesizeEventBridgeTargets = (
       isIdentifier(expr)
     ) {
       const ref = getReferencePath(expr);
-      assertValidEventRefererence(ref, eventDecl?.name, utilsDecl?.name);
+      assertValidEventReference(ref, eventDecl?.name, utilsDecl?.name);
       // If the event parameter is used directly, replace it with the predefined <aws.events.event> reference.
       if (
         eventDecl &&

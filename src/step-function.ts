@@ -33,7 +33,7 @@ import {
 } from "./expression";
 import { ensureItemOf } from "./util";
 import { CallContext } from "./context";
-import { assertNever, assertNodeKind } from "./assert";
+import { assertDefined, assertNever, assertNodeKind } from "./assert";
 
 export type AnyStepFunction =
   | ExpressStepFunction<any, any>
@@ -436,9 +436,11 @@ abstract class BaseStepFunction<P extends Record<string, any> | undefined, O>
           }`,
           Parameters: {
             StateMachineArn: this.stateMachineArn,
-            ...(input ? { Input: ASL.toJson(input) } : {}),
-            ...(name ? { Name: ASL.toJson(name) } : {}),
-            ...(traceHeader ? { TraceHeader: ASL.toJson(traceHeader) } : {}),
+            ...(input ? ASL.toJsonAssignment("Input", input) : {}),
+            ...(name ? ASL.toJsonAssignment("Name", name) : {}),
+            ...(traceHeader
+              ? ASL.toJsonAssignment("TraceHeader", traceHeader)
+              : {}),
           },
         };
         return task;
@@ -485,47 +487,6 @@ abstract class BaseStepFunction<P extends Record<string, any> | undefined, O>
       }
       return assertNever(context);
     });
-  }
-
-  // @ts-ignore
-  public describeExecution(
-    executionArn: string
-  ): AWS.StepFunctions.DescribeExecutionOutput;
-
-  public describeExecution(call: CallExpr, context: CallContext): any {
-    const executionArn = call.args[0]?.expr;
-    if (executionArn === undefined) {
-      throw new Error(`missing argument 'executionArn'`);
-    }
-    if (isASL(context)) {
-      // need DescribeExecution
-      this.grantRead(context.role);
-
-      const task: Task = {
-        Type: "Task",
-        Resource: `arn:aws:states:::aws-sdk:sfn:describeExecution`,
-        Parameters: {
-          StateMachineArn: this.stateMachineArn,
-        },
-      };
-      return task;
-    } else if (isVTL(context)) {
-      return `{
-  "version": "2018-05-29",
-  "method": "POST",
-  "resourcePath": "/",
-  "params": {
-    "headers": {
-      "content-type": "application/x-amz-json-1.0",
-      "x-amz-target": "AWSStepFunctions.DescribeExecution"
-    },
-    "body": {
-      "executionArn": ${context.json(context.eval(executionArn))}
-    }
-  }
-}`;
-    }
-    return assertNever(context);
   }
 
   public abstract getStepFunctionType(): aws_stepfunctions.StateMachineType;
@@ -1007,6 +968,53 @@ export class StepFunction<
 
   public getStepFunctionType(): aws_stepfunctions.StateMachineType.STANDARD {
     return aws_stepfunctions.StateMachineType.STANDARD;
+  }
+
+  //@ts-ignore
+  public describeExecution(
+    executionArn: string
+  ): AWS.StepFunctions.DescribeExecutionOutput;
+
+  //@ts-ignore
+  private describeExecution(call: CallExpr, context: CallContext): any {
+    const executionArn = call.args[0]?.expr;
+    if (executionArn === undefined) {
+      throw new Error(`missing argument 'executionArn'`);
+    }
+    if (isASL(context)) {
+      // need DescribeExecution
+      this.grantRead(context.role);
+
+      const executionArnExpr = assertDefined(
+        call.args[0].expr,
+        "Describe Execution requires a single string argument."
+      );
+
+      const argValue = ASL.toJsonAssignment("ExecutionArn", executionArnExpr);
+
+      const task: Task = {
+        Type: "Task",
+        Resource: `arn:aws:states:::aws-sdk:sfn:describeExecution`,
+        Parameters: argValue,
+      };
+      return task;
+    } else if (isVTL(context)) {
+      return `{
+  "version": "2018-05-29",
+  "method": "POST",
+  "resourcePath": "/",
+  "params": {
+    "headers": {
+      "content-type": "application/x-amz-json-1.0",
+      "x-amz-target": "AWSStepFunctions.DescribeExecution"
+    },
+    "body": {
+      "executionArn": ${context.json(context.eval(executionArn))}
+    }
+  }
+}`;
+    }
+    return assertNever(context);
   }
 }
 
