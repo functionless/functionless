@@ -1309,3 +1309,44 @@ See the following files to understand the structure of the Abstract Syntax Tree:
 3. [declaration.ts](./src/declaration.ts)
 
 For an example of an evaluator, see [vtl.ts](./src/vtl.ts).
+
+## Generating resolver types from the schema
+
+Functionless can be used together with [graphql code generator](https://www.graphql-code-generator.com/) to automatically generate types from the schema.
+
+Two plugins are necessary to generate resolver types:
+
+- [typescript](https://www.graphql-code-generator.com/plugins/typescript)
+- [typescript-resolver](https://www.graphql-code-generator.com/plugins/typescript-resolvers)
+
+Both of those plugins need to be configured to generate types that can be easily imported into your app.
+
+```yaml
+overwrite: true
+schema:
+  # The path to your schema
+  - "schema.gql"
+generates:
+  # path to the file with the generated types
+  src/generated-types.ts:
+    plugins:
+      - "typescript"
+      - "typescript-resolvers"
+    config:
+      # Set to true in order to allow the Resolver type to be callable
+      makeResolverTypeCallable: true
+      # This will cause the generator to avoid using optionals (?), so all field resolvers must be implemented in order to avoid compilation errors
+      avoidOptionals: true
+      # custom type for the resolver makes it easy to reference arguments, source and result from the resolver
+      customResolverFn: "{ args: TArgs; context: TContext; result: TResult; source: TParent;}"
+      # appsync allows returnning undefined instead of null only when a type is optional
+      maybeValue: T | null | undefined
+      # typename is not really usefull for resolvers and can cause clashes in the case where a type extends another type but have different names
+      skipTypename: true
+```
+
+you can then use `npx graphql-codegen --config codegen.yml` to generate the types, you should regenerate them any time you update your schema
+
+The generated types will include a `Resolvers` type that can be used to reference the types of all resolvers and get access to the type of parameters, result and source. e.g. `type GetPersonQueryArgs = Resolvers["Query"]["getPerson"]['args']`
+
+Check the [test-app](https://github.com/sam-goodwin/functionless/tree/main/test-app/people-db) for a working example.

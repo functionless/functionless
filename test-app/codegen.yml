@@ -1,0 +1,20 @@
+overwrite: true
+schema:
+  # The path to your schema
+  - "schema.gql"
+generates:
+  src/generated-types.ts:
+    plugins:
+      - "typescript"
+      - "typescript-resolvers"
+    config:
+      # Set to true in order to allow the Resolver type to be callable
+      makeResolverTypeCallable: true
+      # This will cause the generator to avoid using optionals (?), so all field resolvers must be implemented in order to avoid compilation errors
+      avoidOptionals: true
+      # custom type for the resolver makes it easy to reference arguments, source and result from the resolver
+      customResolverFn: "{ args: TArgs; context: TContext; result: TResult; source: TParent;}"
+      # appsync allows returnning undefined instead of null only when a type is optional
+      maybeValue: T | null | undefined
+      # typename is not really usefull for resolvers and can cause clashes in the case where a type extends another type but have different names
+      skipTypename: true
