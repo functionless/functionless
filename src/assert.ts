@@ -34,7 +34,7 @@ export function assertDefined<T>(
 }
 
 export function assertPrimitive(val: any, message?: string): PrimitiveValue {
-  if (isPrimitive(val === "string")) {
+  if (isPrimitive(val)) {
     return val;
   }
 

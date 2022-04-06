@@ -499,7 +499,7 @@ export function compile(
           const symbol = checker.getSymbolAtLocation(node);
           /**
            * If the identifier is not within the closure, we attempt to enclose the reference in its own closure.
-           * cosnt val = "hello";
+           * const val = "hello";
            * reflect(() => return { value: val }; );
            *
            * result
@@ -774,7 +774,7 @@ export function compile(
       /**
        * Follow the parent of the symbol to determine if the identifier shares the same scope as the current closure being compiled.
        * If not within the scope of the current closure, return a reference that returns the external value if possible.
-       * cosnt val = "hello";
+       * const val = "hello";
        * reflect(() => return { value: val }; );
        *
        * result

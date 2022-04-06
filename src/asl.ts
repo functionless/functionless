@@ -1335,13 +1335,9 @@ export namespace ASL {
     } else if (expr.kind === "Identifier") {
       const ref = expr.lookup();
       // If the identifier references a parameter expression and that parameter expression
-      // is in a FunctionExpr or FunctionDecl and that Function is at the top (no parent).
-      if (
-        ref &&
-        isParameterDecl(ref) &&
-        anyOf(isFunctionExpr, isFunctionDecl)(ref.parent) &&
-        ref.parent.parent === undefined
-      ) {
+      // is in a FunctionDecl and that Function is at the top (no parent).
+      // This logic needs to be updated to support destructured inputs: https://github.com/sam-goodwin/functionless/issues/68
+      if (ref && isParameterDecl(ref) && isFunctionDecl(ref.parent)) {
         return "$";
       }
       return `$.${expr.name}`;

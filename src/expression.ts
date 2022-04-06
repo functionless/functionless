@@ -23,7 +23,6 @@ export type Expr =
   | CallExpr
   | ConditionExpr
   | ComputedPropertyNameExpr
-  | FunctionExpr
   | ElementAccessExpr
   | FunctionExpr
   | Identifier
