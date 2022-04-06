@@ -40,6 +40,10 @@ export class VTL {
     return `$v${(this.varIt += 1)}`;
   }
 
+  public str(value: string) {
+    return `'${value}'`;
+  }
+
   /**
    * Converts a variable {@link reference} to JSON using the built-in `$util.toJson` intrinsic function.
    *
@@ -85,6 +89,35 @@ export class VTL {
   }
 
   /**
+   * The put method on an object.
+   *
+   * $var.put("name", "value")
+   *
+   * @param objVar should be a variable referencing an object.
+   * @param name should be a quoted string or variable that represents the name to set in the object
+   * @param expr should be a quoted string or a variable that represents the value to set
+   */
+  public put(objVar: string, name: string, expr: string | Expr) {
+    this.qr(
+      `${objVar}.put(${name}, ${
+        typeof expr === "string" ? expr : this.eval(expr)
+      })`
+    );
+  }
+
+  /**
+   * The putAll method on an object.
+   *
+   * $var.putAll($otherObj)
+   *
+   * @param objVar should be a variable referencing an object.
+   * @param expr should be a variable that represents an object to merge with the expression
+   */
+  public putAll(objVar: string, expr: Expr) {
+    this.qr(`${objVar}.putAll(${this.eval(expr)})`);
+  }
+
+  /**
    * Evaluate and return an {@link expr}.
    *
    * @param expr expression to evaluate
@@ -123,9 +156,12 @@ export class VTL {
    * @param node the {@link Expr} or {@link Stmt} to evaluate.
    * @returns a variable reference to the evaluated value
    */
-  public eval(node: Expr, returnVar?: string): string;
+  public eval(node?: Expr, returnVar?: string): string;
   public eval(node: Stmt, returnVar?: string): void;
-  public eval(node: FunctionlessNode, returnVar?: string): string | void {
+  public eval(node?: FunctionlessNode, returnVar?: string): string | void {
+    if (!node) {
+      return "$null";
+    }
     switch (node.kind) {
       case "ArrayLiteralExpr": {
         if (
@@ -372,11 +408,11 @@ export class VTL {
           if (prop.kind === "PropAssignExpr") {
             const name =
               prop.name.kind === "Identifier"
-                ? `'${prop.name.name}'`
+                ? this.str(prop.name.name)
                 : this.eval(prop.name);
-            this.qr(`${obj}.put(${name}, ${this.eval(prop.expr)})`);
+            this.put(obj, name, prop.expr);
           } else if (prop.kind === "SpreadAssignExpr") {
-            this.qr(`${obj}.putAll(${this.eval(prop.expr)})`);
+            this.putAll(obj, prop.expr);
           } else {
             assertNever(prop);
           }
@@ -403,7 +439,7 @@ export class VTL {
         throw new Error(`cannot evaluate Expr kind: '${node.kind}'`);
       // handled as part of ObjectLiteral
       case "StringLiteralExpr":
-        return `'${node.value}'`;
+        return this.str(node.value);
       case "TemplateExpr":
         return `"${node.exprs
           .map((expr) => {

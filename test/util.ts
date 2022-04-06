@@ -15,6 +15,15 @@ import { Err, isErr } from "../src/error";
 import { synthesizeEventPattern } from "../src/event-bridge/event-pattern/synth";
 import { EventTransformFunction } from "../src/event-bridge/transform";
 import { synthesizeEventBridgeTargets } from "../src/event-bridge/target-input";
+import {
+  AmplifyAppSyncSimulator,
+  AmplifyAppSyncSimulatorAuthenticationType,
+  AppSyncGraphQLExecutionContext,
+} from "amplify-appsync-simulator";
+import {
+  AppSyncVTLRenderContext,
+  VelocityTemplate,
+} from "amplify-appsync-simulator/lib/velocity";
 
 // generates boilerplate for the circuit-breaker logic for implementing early return
 export function returnExpr(varName: string) {
@@ -23,10 +32,7 @@ export function returnExpr(varName: string) {
 #return($context.stash.return__val)`;
 }
 
-export function appsyncTestCase(
-  decl: FunctionDecl | Err,
-  ...expected: string[]
-) {
+export function getAppSyncTemplates(decl: FunctionDecl | Err): string[] {
   const app = new App({ autoSynth: false });
   const stack = new Stack(app, "stack");
 
@@ -50,12 +56,49 @@ export function appsyncTestCase(
   });
 
   const appsyncFunction = new AppsyncResolver(decl as any);
-  const actual = appsyncFunction.addResolver(api, {
+  return appsyncFunction.addResolver(api, {
     typeName: "Query",
     fieldName: "getPerson",
   }).templates;
+}
+
+export function appsyncTestCase(
+  decl: FunctionDecl | Err,
+  ...expected: string[]
+) {
+  const actual = getAppSyncTemplates(decl);
 
   expect(actual).toEqual(expected);
+}
+
+const simulator = new AmplifyAppSyncSimulator();
+export function appsyncVelocityJsonTestCase(
+  vtl: string,
+  context: AppSyncVTLRenderContext,
+  expected: { result: Record<string, any>; returned?: boolean },
+  requestContext?: AppSyncGraphQLExecutionContext
+) {
+  const template = new VelocityTemplate(
+    { content: vtl, path: "test.json" },
+    simulator
+  );
+
+  const result = template.render(
+    context,
+    requestContext ?? {
+      headers: {},
+      requestAuthorizationMode:
+        AmplifyAppSyncSimulatorAuthenticationType.OPENID_CONNECT,
+    },
+    // various errors when the simulator is missing these
+    { fieldNodes: [], path: "test.json" } as any
+  );
+
+  expect(result.errors).toHaveLength(0);
+
+  expect(JSON.parse(JSON.stringify(result.result))).toEqual(expected.result);
+  expected.returned !== undefined &&
+    expect(result.isReturn).toEqual(expected.returned);
 }
 
 export interface Person {

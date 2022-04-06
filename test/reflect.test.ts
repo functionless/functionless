@@ -125,7 +125,7 @@ test("named function args", () => {
   const expr = assertNodeKind<ExprStmt>(result.body.statements[0], "ExprStmt");
   const call = assertNodeKind<CallExpr>(expr.expr, "CallExpr");
 
-  expect(call.getArgument("searchString")?.expr.kind).toEqual(
+  expect(call.getArgument("searchString")?.expr?.kind).toEqual(
     "StringLiteralExpr"
   );
 });

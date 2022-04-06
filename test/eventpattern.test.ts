@@ -569,13 +569,26 @@ describe("event pattern", () => {
 
   describe("references", () => {
     const myConstant = "hello";
-    test.skip("external constant", () => {
+    test("external constant", () => {
       ebEventPatternTestCase(
         reflect<EventPredicateFunction<TestEvent>>(
           (event) => event.detail.str === myConstant
         ),
         {
           detail: { str: [myConstant] },
+        }
+      );
+    });
+
+    const constantObj = { value: "hello2" };
+
+    test("external constant", () => {
+      ebEventPatternTestCase(
+        reflect<EventPredicateFunction<TestEvent>>(
+          (event) => event.detail.str === constantObj.value
+        ),
+        {
+          detail: { str: [constantObj.value] },
         }
       );
     });
@@ -1513,5 +1526,93 @@ describe("event pattern", () => {
         "Expected exactly one event reference, got two."
       );
     });
+  });
+});
+
+// https://github.com/sam-goodwin/functionless/issues/68
+describe.skip("destructure", () => {
+  test("descture parameter", () => {
+    ebEventPatternTestCase(
+      reflect<EventPredicateFunction<TestEvent>>(
+        ({ source }) => source === "lambda"
+      ),
+      {
+        source: ["lambda"],
+      }
+    );
+  });
+
+  test("descture variable", () => {
+    ebEventPatternTestCase(
+      reflect<EventPredicateFunction<TestEvent>>((event) => {
+        const { source } = event;
+        return source === "lambda";
+      }),
+      {
+        source: ["lambda"],
+      }
+    );
+  });
+
+  test("descture multi-layer variable", () => {
+    ebEventPatternTestCase(
+      reflect<EventPredicateFunction<TestEvent>>((event) => {
+        const {
+          detail: { str },
+        } = event;
+        return str === "lambda";
+      }),
+      {
+        detail: { str: ["lambda"] },
+      }
+    );
+  });
+
+  test("descture array doesn't work", () => {
+    ebEventPatternTestCaseError(
+      reflect<EventPredicateFunction<TestEvent>>((event) => {
+        const {
+          detail: {
+            array: [value],
+          },
+        } = event;
+        return value === "lambda";
+      })
+    );
+  });
+
+  test("descture parameter array doesn't work", () => {
+    ebEventPatternTestCaseError(
+      reflect<EventPredicateFunction<TestEvent>>(
+        ({
+          detail: {
+            array: [value],
+          },
+        }) => value === "lambda"
+      )
+    );
+  });
+
+  test("descture variable rename", () => {
+    ebEventPatternTestCase(
+      reflect<EventPredicateFunction<TestEvent>>((event) => {
+        const { source: src } = event;
+        return src === "lambda";
+      }),
+      {
+        source: ["lambda"],
+      }
+    );
+  });
+
+  test("descture parameter rename", () => {
+    ebEventPatternTestCase(
+      reflect<EventPredicateFunction<TestEvent>>(
+        ({ source: src }) => src === "lambda"
+      ),
+      {
+        source: ["lambda"],
+      }
+    );
   });
 });

@@ -23,7 +23,6 @@ export type Expr =
   | CallExpr
   | ConditionExpr
   | ComputedPropertyNameExpr
-  | FunctionExpr
   | ElementAccessExpr
   | FunctionExpr
   | Identifier
@@ -122,7 +121,12 @@ export class FunctionExpr<
 
 export const isReferenceExpr = typeGuard("ReferenceExpr");
 
-export type CanReference = AnyTable | AnyLambda | AnyStepFunction | typeof $AWS;
+export type CanReference =
+  | AnyTable
+  | AnyLambda
+  | AnyStepFunction
+  | typeof $AWS
+  | unknown;
 
 export class ReferenceExpr extends BaseExpr<"ReferenceExpr"> {
   constructor(readonly name: string, readonly ref: () => CanReference) {
@@ -200,13 +204,13 @@ export class ElementAccessExpr extends BaseExpr<"ElementAccessExpr"> {
 export const isArgument = typeGuard("Argument");
 
 export class Argument extends BaseExpr<"Argument", CallExpr | NewExpr> {
-  constructor(readonly expr: Expr, readonly name?: string) {
+  constructor(readonly expr?: Expr, readonly name?: string) {
     super("Argument");
-    expr.setParent(this);
+    expr?.setParent(this);
   }
 
   public clone(): this {
-    return new Argument(this.expr.clone(), this.name) as this;
+    return new Argument(this.expr?.clone(), this.name) as this;
   }
 }
 
@@ -527,6 +531,8 @@ export const isTypeOfExpr = typeGuard("TypeOfExpr");
 export class TypeOfExpr extends BaseExpr<"TypeOfExpr"> {
   constructor(readonly expr: Expr) {
     super("TypeOfExpr");
+
+    expr.setParent(this);
   }
 
   public clone(): this {

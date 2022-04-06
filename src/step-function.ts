@@ -24,14 +24,20 @@ import {
 } from "./asl";
 import { isVTL } from "./vtl";
 import { makeCallable } from "./callable";
-import { CallExpr, isFunctionExpr, isVariableReference } from "./expression";
-import { AnyFunction, ensureItemOf } from "./util";
+import {
+  CallExpr,
+  isComputedPropertyNameExpr,
+  isFunctionExpr,
+  isObjectLiteralExpr,
+  isSpreadAssignExpr,
+} from "./expression";
+import { ensureItemOf } from "./util";
 import { CallContext } from "./context";
-import { assertNever } from "./assert";
+import { assertDefined, assertNever, assertNodeKind } from "./assert";
 
 export type AnyStepFunction =
-  | ExpressStepFunction<AnyFunction>
-  | StepFunction<AnyFunction>;
+  | ExpressStepFunction<any, any>
+  | StepFunction<any, any>;
 
 export namespace $SFN {
   export const kind = "SFN";
@@ -321,18 +327,23 @@ export namespace $SFN {
   }
 }
 
-abstract class BaseStepFunction<F extends AnyFunction>
+export function isStepFunction<P = any, O = any>(
+  a: any
+): a is StepFunction<P, O> | ExpressStepFunction<P, O> {
+  return a?.kind === "StepFunction";
+}
+abstract class BaseStepFunction<P extends Record<string, any> | undefined, O>
   extends Resource
   implements aws_stepfunctions.IStateMachine
 {
   readonly kind = "StepFunction";
   readonly functionlessKind = "StepFunction";
 
-  readonly decl: FunctionDecl<F>;
+  readonly decl: FunctionDecl<(arg: P) => O>;
   readonly resource: aws_stepfunctions.CfnStateMachine;
 
   // @ts-ignore
-  readonly __functionBrand: F;
+  readonly __functionBrand: (arg: P) => O;
 
   readonly stateMachineName: string;
   readonly stateMachineArn: string;
@@ -344,18 +355,26 @@ abstract class BaseStepFunction<F extends AnyFunction>
    */
   readonly grantPrincipal;
 
-  constructor(scope: Construct, id: string, props: StepFunctionProps, func: F);
+  constructor(
+    scope: Construct,
+    id: string,
+    props: StepFunctionProps,
+    func: (arg: P) => O
+  );
 
-  constructor(scope: Construct, id: string, func: F);
+  constructor(scope: Construct, id: string, func: (arg: P) => O);
 
   constructor(
     scope: Construct,
     id: string,
     ...args:
-      | [props: StepFunctionProps, func: FunctionDecl<F>]
-      | [func: FunctionDecl<F>]
+      | [props: StepFunctionProps, func: (arg: P) => O]
+      | [func: (arg: P) => O]
   ) {
-    const props = isFunctionDecl(args[0]) ? undefined : args[0];
+    const props =
+      isFunctionDecl(args[0]) || typeof args[0] === "function"
+        ? undefined
+        : args[0];
     if (props?.stateMachineName !== undefined) {
       validateStateMachineName(props.stateMachineName);
     }
@@ -363,7 +382,9 @@ abstract class BaseStepFunction<F extends AnyFunction>
       ...props,
       physicalName: props?.stateMachineName,
     });
-    this.decl = isFunctionDecl(args[0]) ? args[0] : args[1]!;
+    this.decl = isFunctionDecl(args[0])
+      ? args[0]
+      : assertNodeKind<FunctionDecl>(args[1] as any, "FunctionDecl");
 
     this.role =
       props?.role ??
@@ -403,6 +424,8 @@ abstract class BaseStepFunction<F extends AnyFunction>
           this.grantStartSyncExecution(context.role);
         }
 
+        const { name, input, traceHeader } = retrieveMachineArgs(call);
+
         const task: Task = {
           Type: "Task",
           Resource: `arn:aws:states:::aws-sdk:sfn:${
@@ -413,94 +436,57 @@ abstract class BaseStepFunction<F extends AnyFunction>
           }`,
           Parameters: {
             StateMachineArn: this.stateMachineArn,
-            Input: call.args.reduce(
-              (args, arg) => ({
-                ...args,
-                [`${arg.name!}${isVariableReference(arg.expr) ? ".$" : ""}`]:
-                  ASL.toJson(arg.expr),
-              }),
-              {}
-            ),
+            ...(input ? ASL.toJsonAssignment("Input", input) : {}),
+            ...(name ? ASL.toJsonAssignment("Name", name) : {}),
+            ...(traceHeader
+              ? ASL.toJsonAssignment("TraceHeader", traceHeader)
+              : {}),
           },
         };
         return task;
       } else if (isVTL(context)) {
-        const args = context.var(
-          `{${call.args
-            .map((arg) => `"${arg.name}": ${context.eval(arg.expr)}`)
-            .join(",")}}`
+        const { name, input, traceHeader } = retrieveMachineArgs(call);
+
+        const inputObj = context.var("{}");
+        input &&
+          context.put(
+            inputObj,
+            context.str("input"),
+            `$util.toJson(${context.eval(input)})`
+          );
+        name && context.put(inputObj, context.str("name"), context.eval(name));
+        traceHeader &&
+          context.put(
+            inputObj,
+            context.str("traceHeader"),
+            context.eval(traceHeader)
+          );
+        context.put(
+          inputObj,
+          context.str("stateMachineArn"),
+          context.str(this.stateMachineArn)
         );
-        return JSON.stringify(
-          {
-            version: "2018-05-29",
-            method: "POST",
-            resourcePath: "/",
-            params: {
-              headers: {
-                "content-type": "application/x-amz-json-1.0",
-                "x-amz-target":
-                  this.getStepFunctionType() ===
-                  aws_stepfunctions.StateMachineType.EXPRESS
-                    ? "AWSStepFunctions.StartSyncExecution"
-                    : "AWSStepFunctions.StartExecution",
-              },
-              body: {
-                stateMachineArn: this.stateMachineArn,
-                input: `$util.escapeJavaScript($util.toJson(${args}))`,
-              },
-            },
-          },
-          null,
-          2
-        );
+
+        return `{
+  "version": "2018-05-29",
+  "method": "POST",
+  "resourcePath": "/",
+  "params": {
+    "headers": {
+      "content-type": "application/x-amz-json-1.0",
+      "x-amz-target": "${
+        this.getStepFunctionType() ===
+        aws_stepfunctions.StateMachineType.EXPRESS
+          ? "AWSStepFunctions.StartSyncExecution"
+          : "AWSStepFunctions.StartExecution"
+      }"
+    },
+    "body": $util.toJson(${inputObj})
+  }
+}`;
       }
       return assertNever(context);
     });
-  }
-
-  // @ts-ignore
-  public describeExecution(
-    executionArn: string
-  ): AWS.StepFunctions.DescribeExecutionOutput;
-
-  public describeExecution(call: CallExpr, context: CallContext): any {
-    const executionArn = call.args[0]?.expr;
-    if (executionArn === undefined) {
-      throw new Error(`missing argument 'executionArn'`);
-    }
-    if (isASL(context)) {
-      // need DescribeExecution
-      this.grantRead(context.role);
-
-      const task: Task = {
-        Type: "Task",
-        Resource: `arn:aws:states:::aws-sdk:sfn:describeExecution`,
-        Parameters: {
-          StateMachineArn: this.stateMachineArn,
-        },
-      };
-      return task;
-    } else if (isVTL(context)) {
-      return JSON.stringify(
-        {
-          version: "2018-05-29",
-          method: "POST",
-          resourcePath: "/",
-          params: {
-            headers: {
-              "content-type": "application/x-amz-json-1.0",
-              "x-amz-target": "AWSStepFunctions.DescribeExecution",
-            },
-            body: {
-              executionArn: context.eval(executionArn),
-            },
-          },
-        },
-        null,
-        2
-      );
-    }
-    return assertNever(context);
   }
 
   public abstract getStepFunctionType(): aws_stepfunctions.StateMachineType;
@@ -822,6 +808,37 @@ abstract class BaseStepFunction<F extends AnyFunction>
   }
 }
 
+function retrieveMachineArgs(call: CallExpr) {
+  // object reference
+  // machine(inputObj) => inputObj: { name: "hi", input: ... }
+  // Inline Object
+  // machine({ input: { ... } })
+  // Inline with reference
+  // machine({ input: ref, name: "hi", traceHeader: "hi" })
+  const arg = call.args[0];
+
+  if (!arg.expr || !isObjectLiteralExpr(arg.expr)) {
+    throw Error(
+      "Step function invocation must use a single, inline object parameter. Variable references are not supported currently."
+    );
+  } else if (
+    arg.expr.properties.some(
+      (x) => isSpreadAssignExpr(x) || isComputedPropertyNameExpr(x.name)
+    )
+  ) {
+    throw Error(
+      "Step function invocation must use a single, inline object instantiated without computed or spread keys."
+    );
+  }
+
+  // we know the keys cannot be computed, so it is safe to use getProperty
+  return {
+    name: arg.expr.getProperty("name")?.expr,
+    traceHeader: arg.expr.getProperty("traceHeader")?.expr,
+    input: arg.expr.getProperty("input")?.expr,
+  };
+}
+
 function validateStateMachineName(stateMachineName: string) {
   if (!Token.isUnresolved(stateMachineName)) {
     if (stateMachineName.length < 1 || stateMachineName.length > 80) {
@@ -869,8 +886,9 @@ export interface StepFunctionProps
  * ```
  */
 export class ExpressStepFunction<
-  F extends AnyFunction
-> extends BaseStepFunction<F> {
+  P extends Record<string, any> | undefined,
+  O
+> extends BaseStepFunction<P, O> {
   /**
    * This static property identifies this class as an ExpressStepFunction to the TypeScript plugin.
    */
@@ -915,17 +933,34 @@ export type SyncExecutionResult<T> =
   | SyncExecutionFailedResult
   | SyncExecutionSuccessResult<T>;
 
-export interface ExpressStepFunction<F extends AnyFunction> {
-  (...args: Parameters<F>): SyncExecutionResult<ReturnType<F>>;
-  (
-    name: string,
-    traceHeader: string,
-    ...args: Parameters<F>
-  ): SyncExecutionResult<ReturnType<F>>;
-  (name: string, ...args: Parameters<F>): SyncExecutionResult<ReturnType<F>>;
+// do not support undefined values, arguments must be present or missing
+export type StepFunctionRequest<P extends Record<string, any> | undefined> =
+  (P extends undefined ? {} : { input: P }) &
+    (
+      | {
+          name: string;
+          traceHeader: string;
+        }
+      | {
+          name: string;
+        }
+      | {
+          traceHeader: string;
+        }
+      | {}
+    );
+
+export interface ExpressStepFunction<
+  P extends Record<string, any> | undefined,
+  O
+> {
+  (input: StepFunctionRequest<P>): SyncExecutionResult<O>;
 }
 
-export class StepFunction<F extends AnyFunction> extends BaseStepFunction<F> {
+export class StepFunction<
+  P extends Record<string, any> | undefined,
+  O
+> extends BaseStepFunction<P, O> {
   /**
    * This static property identifies this class as an StepFunction to the TypeScript plugin.
    */
@@ -934,17 +969,55 @@ export class StepFunction<F extends AnyFunction> extends BaseStepFunction<F> {
   public getStepFunctionType(): aws_stepfunctions.StateMachineType.STANDARD {
     return aws_stepfunctions.StateMachineType.STANDARD;
   }
+
+  //@ts-ignore
+  public describeExecution(
+    executionArn: string
+  ): AWS.StepFunctions.DescribeExecutionOutput;
+
+  //@ts-ignore
+  private describeExecution(call: CallExpr, context: CallContext): any {
+    const executionArn = call.args[0]?.expr;
+    if (executionArn === undefined) {
+      throw new Error(`missing argument 'executionArn'`);
+    }
+    if (isASL(context)) {
+      // need DescribeExecution
+      this.grantRead(context.role);
+
+      const executionArnExpr = assertDefined(
+        call.args[0].expr,
+        "Describe Execution requires a single string argument."
+      );
+
+      const argValue = ASL.toJsonAssignment("ExecutionArn", executionArnExpr);
+
+      const task: Task = {
+        Type: "Task",
+        Resource: `arn:aws:states:::aws-sdk:sfn:describeExecution`,
+        Parameters: argValue,
+      };
+      return task;
+    } else if (isVTL(context)) {
+      return `{
+  "version": "2018-05-29",
+  "method": "POST",
+  "resourcePath": "/",
+  "params": {
+    "headers": {
+      "content-type": "application/x-amz-json-1.0",
+      "x-amz-target": "AWSStepFunctions.DescribeExecution"
+    },
+    "body": {
+      "executionArn": ${context.json(context.eval(executionArn))}
+    }
+  }
+}`;
+    }
+    return assertNever(context);
+  }
 }
 
-export interface StepFunction<F extends AnyFunction> {
-  (
-    name: string,
-    ...args: Parameters<F>
-  ): AWS.StepFunctions.StartExecutionOutput;
-  (
-    name: string,
-    traceHeader: string,
-    ...args: Parameters<F>
-  ): AWS.StepFunctions.StartExecutionOutput;
-  (...args: Parameters<F>): AWS.StepFunctions.StartExecutionOutput;
+export interface StepFunction<P extends Record<string, any> | undefined, O> {
+  (input: StepFunctionRequest<P>): AWS.StepFunctions.StartExecutionOutput;
 }

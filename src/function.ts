@@ -39,7 +39,9 @@ export class Function<P, O> {
       const payloadArg = call.getArgument("payload");
 
       if (isVTL(context)) {
-        const payload = payloadArg ? context.eval(payloadArg.expr) : "$null";
+        const payload = payloadArg?.expr
+          ? context.eval(payloadArg.expr)
+          : "$null";
 
         const request = context.var(
           `{"version": "2018-05-29", "operation": "Invoke", "payload": ${payload}}`
@@ -53,7 +55,9 @@ export class Function<P, O> {
           Parameters: {
             FunctionName: this.resource.functionName,
             [`Payload${
-              payloadArg && isVariableReference(payloadArg.expr) ? ".$" : ""
+              payloadArg?.expr && isVariableReference(payloadArg.expr)
+                ? ".$"
+                : ""
             }`]: payloadArg ? ASL.toJson(payloadArg.expr) : null,
           },
           ResultSelector: "$.Payload",

@@ -2,6 +2,11 @@ import { CallExpr, CanReference } from "./expression";
 import { FunctionlessNode } from "./node";
 import { VTL } from "./vtl";
 import { ASL, Task } from "./asl";
+import { isAWS } from "./aws";
+import ts from "typescript";
+import { isTable } from "./table";
+import { isFunction } from "./function";
+import { isStepFunction } from "./step-function";
 
 export type AnyFunction = (...args: any[]) => any;
 
@@ -31,11 +36,12 @@ export function toName(expr: FunctionlessNode): string {
     return `${toName(expr.expr)}_${expr.name}`;
   } else if (expr.kind === "ReferenceExpr") {
     const ref = expr.ref();
-    if (ref.kind === "AWS") {
+    if (isAWS(ref)) {
       return "AWS";
-    } else {
+    } else if (isTable(ref) || isFunction(ref) || isStepFunction(ref)) {
       return ref.resource.node.addr;
     }
+    throw Error("Cannot derive a name from a external node.");
   } else {
     throw new Error(`invalid expression: '${expr.kind}'`);
   }
@@ -129,3 +135,29 @@ export function flatten<T>(arr: AnyDepthArray<T>): T[] {
     return [arr];
   }
 }
+
+export function hasParent(node: ts.Node, parent: ts.Node): boolean {
+  if (!node.parent) {
+    return false;
+  } else if (node.parent === parent) {
+    return true;
+  }
+  return hasParent(node.parent, parent);
+}
+
+export type ConstantValue =
+  | PrimitiveValue
+  | { [key: string]: ConstantValue }
+  | ConstantValue[];
+
+export type PrimitiveValue = string | number | boolean | undefined | null;
+
+export const isPrimitive = (val: any): val is PrimitiveValue => {
+  return (
+    typeof val === "string" ||
+    typeof val === "number" ||
+    typeof val === "boolean" ||
+    typeof val === "undefined" ||
+    val === null
+  );
+};

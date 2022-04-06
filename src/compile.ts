@@ -6,6 +6,7 @@ import { FunctionlessNode } from "./node";
 import { AppsyncResolver } from "./appsync";
 import { assertDefined } from "./assert";
 import { StepFunction, ExpressStepFunction } from "./step-function";
+import { hasParent } from "./util";
 import minimatch from "minimatch";
 import { EventBus, EventBusRule } from "./event-bridge";
 import { EventBusTransform } from "./event-bridge/transform";
@@ -390,10 +391,10 @@ export function compile(
           );
         }
         const body = ts.isBlock(impl.body)
-          ? toExpr(impl.body)
+          ? toExpr(impl.body, impl)
           : newExpr("BlockStmt", [
               ts.factory.createArrayLiteralExpression([
-                newExpr("ReturnStmt", [toExpr(impl.body)]),
+                newExpr("ReturnStmt", [toExpr(impl.body, impl)]),
               ]),
             ]);
 
@@ -409,13 +410,16 @@ export function compile(
         ]);
       }
 
-      function toExpr(node: ts.Node | undefined): ts.Expression {
+      function toExpr(
+        node: ts.Node | undefined,
+        scope: ts.Node
+      ): ts.Expression {
         if (node === undefined) {
-          return newExpr("UndefinedLiteralExpr", []);
+          return ts.factory.createIdentifier("undefined");
         } else if (ts.isArrowFunction(node) || ts.isFunctionExpression(node)) {
           return toFunction("FunctionExpr", node);
         } else if (ts.isExpressionStatement(node)) {
-          return newExpr("ExprStmt", [toExpr(node.expression)]);
+          return newExpr("ExprStmt", [toExpr(node.expression, scope)]);
         } else if (ts.isCallExpression(node) || ts.isNewExpression(node)) {
           const exprType = checker.getTypeAtLocation(node.expression);
           const functionBrand = exprType.getProperty("__functionBrand");
@@ -442,7 +446,7 @@ export function compile(
           }
           if (signature && signature.parameters.length > 0) {
             return newExpr(ts.isCallExpression(node) ? "CallExpr" : "NewExpr", [
-              toExpr(node.expression),
+              toExpr(node.expression, scope),
               ts.factory.createArrayLiteralExpression(
                 signature.parameters.map((parameter, i) =>
                   newExpr("Argument", [
@@ -450,10 +454,12 @@ export function compile(
                       ?.dotDotDotToken
                       ? newExpr("ArrayLiteralExpr", [
                           ts.factory.createArrayLiteralExpression(
-                            node.arguments?.slice(i).map(toExpr) ?? []
+                            node.arguments
+                              ?.slice(i)
+                              .map((x) => toExpr(x, scope)) ?? []
                           ),
                         ])
-                      : toExpr(node.arguments?.[i]),
+                      : toExpr(node.arguments?.[i], scope),
                     ts.factory.createStringLiteral(parameter.name),
                   ])
                 )
@@ -461,11 +467,11 @@ export function compile(
             ]);
           } else {
             return newExpr("CallExpr", [
-              toExpr(node.expression),
+              toExpr(node.expression, scope),
               ts.factory.createArrayLiteralExpression(
                 node.arguments?.map((arg) =>
                   newExpr("Argument", [
-                    toExpr(arg),
+                    toExpr(arg, scope),
                     ts.factory.createIdentifier("undefined"),
                   ])
                 ) ?? []
@@ -475,7 +481,7 @@ export function compile(
         } else if (ts.isBlock(node)) {
           return newExpr("BlockStmt", [
             ts.factory.createArrayLiteralExpression(
-              node.statements.map(toExpr)
+              node.statements.map((x) => toExpr(x, scope))
             ),
           ]);
         } else if (ts.isIdentifier(node)) {
@@ -490,6 +496,23 @@ export function compile(
             return ref(node);
           }
 
+          const symbol = checker.getSymbolAtLocation(node);
+          /**
+           * If the identifier is not within the closure, we attempt to enclose the reference in its own closure.
+           * const val = "hello";
+           * reflect(() => return { value: val }; );
+           *
+           * result
+           *
+           * return { value: () => val };
+           */
+          if (symbol) {
+            const ref = outOfScopeIdentifierToRef(symbol, scope);
+            if (ref) {
+              return ref;
+            }
+          }
+
           return newExpr("Identifier", [
             ts.factory.createStringLiteral(node.text),
           ]);
@@ -501,7 +524,7 @@ export function compile(
           }
           const type = checker.getTypeAtLocation(node.name);
           return newExpr("PropAccessExpr", [
-            toExpr(node.expression),
+            toExpr(node.expression, scope),
             ts.factory.createStringLiteral(node.name.text),
             type
               ? ts.factory.createStringLiteral(checker.typeToString(type))
@@ -510,8 +533,8 @@ export function compile(
         } else if (ts.isElementAccessExpression(node)) {
           const type = checker.getTypeAtLocation(node.argumentExpression);
           return newExpr("ElementAccessExpr", [
-            toExpr(node.expression),
-            toExpr(node.argumentExpression),
+            toExpr(node.expression, scope),
+            toExpr(node.argumentExpression, scope),
             type
               ? ts.factory.createStringLiteral(checker.typeToString(type))
               : ts.factory.createIdentifier("undefined"),
@@ -520,29 +543,29 @@ export function compile(
           ts.isVariableStatement(node) &&
           node.declarationList.declarations.length === 1
         ) {
-          return toExpr(node.declarationList.declarations[0]);
+          return toExpr(node.declarationList.declarations[0], scope);
         } else if (ts.isVariableDeclaration(node)) {
           return newExpr("VariableStmt", [
             ts.factory.createStringLiteral(node.name.getText()),
-            ...(node.initializer ? [toExpr(node.initializer)] : []),
+            ...(node.initializer ? [toExpr(node.initializer, scope)] : []),
           ]);
         } else if (ts.isIfStatement(node)) {
           return newExpr("IfStmt", [
             // when
-            toExpr(node.expression),
+            toExpr(node.expression, scope),
             // then
-            toExpr(node.thenStatement),
+            toExpr(node.thenStatement, scope),
             // else
-            ...(node.elseStatement ? [toExpr(node.elseStatement)] : []),
+            ...(node.elseStatement ? [toExpr(node.elseStatement, scope)] : []),
           ]);
         } else if (ts.isConditionalExpression(node)) {
           return newExpr("ConditionExpr", [
             // when
-            toExpr(node.condition),
+            toExpr(node.condition, scope),
             // then
-            toExpr(node.whenTrue),
+            toExpr(node.whenTrue, scope),
             // else
-            toExpr(node.whenFalse),
+            toExpr(node.whenFalse, scope),
           ]);
         } else if (ts.isBinaryExpression(node)) {
           const op = getOperator(node.operatorToken);
@@ -552,9 +575,9 @@ export function compile(
             );
           }
           return newExpr("BinaryExpr", [
-            toExpr(node.left),
+            toExpr(node.left, scope),
             ts.factory.createStringLiteral(op),
-            toExpr(node.right),
+            toExpr(node.right, scope),
           ]);
         } else if (ts.isPrefixUnaryExpression(node)) {
           if (
@@ -572,46 +595,48 @@ export function compile(
                 `Unary operator token cannot be stringified: ${node.operator}`
               )
             ),
-            toExpr(node.operand),
+            toExpr(node.operand, scope),
           ]);
         } else if (ts.isReturnStatement(node)) {
           return newExpr(
             "ReturnStmt",
             node.expression
-              ? [toExpr(node.expression)]
+              ? [toExpr(node.expression, scope)]
               : [newExpr("NullLiteralExpr", [])]
           );
         } else if (ts.isObjectLiteralExpression(node)) {
           return newExpr("ObjectLiteralExpr", [
             ts.factory.createArrayLiteralExpression(
-              node.properties.map(toExpr)
+              node.properties.map((x) => toExpr(x, scope))
             ),
           ]);
         } else if (ts.isPropertyAssignment(node)) {
           return newExpr("PropAssignExpr", [
             ts.isStringLiteral(node.name) || ts.isIdentifier(node.name)
               ? string(node.name.text)
-              : toExpr(node.name),
-            toExpr(node.initializer),
+              : toExpr(node.name, scope),
+            toExpr(node.initializer, scope),
           ]);
         } else if (ts.isComputedPropertyName(node)) {
-          return newExpr("ComputedPropertyNameExpr", [toExpr(node.expression)]);
+          return newExpr("ComputedPropertyNameExpr", [
+            toExpr(node.expression, scope),
+          ]);
         } else if (ts.isShorthandPropertyAssignment(node)) {
           return newExpr("PropAssignExpr", [
             newExpr("Identifier", [
               ts.factory.createStringLiteral(node.name.text),
             ]),
-            toExpr(node.name),
+            toExpr(node.name, scope),
           ]);
         } else if (ts.isSpreadAssignment(node)) {
-          return newExpr("SpreadAssignExpr", [toExpr(node.expression)]);
+          return newExpr("SpreadAssignExpr", [toExpr(node.expression, scope)]);
         } else if (ts.isSpreadElement(node)) {
-          return newExpr("SpreadElementExpr", [toExpr(node.expression)]);
+          return newExpr("SpreadElementExpr", [toExpr(node.expression, scope)]);
         } else if (ts.isArrayLiteralExpression(node)) {
           return newExpr("ArrayLiteralExpr", [
             ts.factory.updateArrayLiteralExpression(
               node,
-              node.elements.map(toExpr)
+              node.elements.map((x) => toExpr(x, scope))
             ),
           ]);
         } else if (node.kind === ts.SyntaxKind.NullKeyword) {
@@ -644,9 +669,9 @@ export function compile(
                 return newExpr(
                   ts.isForOfStatement(node) ? "ForOfStmt" : "ForInStmt",
                   [
-                    toExpr(varDecl),
-                    toExpr(node.expression),
-                    toExpr(node.statement),
+                    toExpr(varDecl, scope),
+                    toExpr(node.expression, scope),
+                    toExpr(node.statement, scope),
                   ]
                 );
               } else if (ts.isArrayBindingPattern(varDecl.name)) {
@@ -660,7 +685,7 @@ export function compile(
             exprs.push(string(node.head.text));
           }
           for (const span of node.templateSpans) {
-            exprs.push(toExpr(span.expression));
+            exprs.push(toExpr(span.expression, scope));
             if (span.literal.text) {
               exprs.push(string(span.literal.text));
             }
@@ -674,57 +699,57 @@ export function compile(
           return newExpr("ContinueStmt", []);
         } else if (ts.isTryStatement(node)) {
           return newExpr("TryStmt", [
-            toExpr(node.tryBlock),
+            toExpr(node.tryBlock, scope),
             node.catchClause
-              ? toExpr(node.catchClause)
+              ? toExpr(node.catchClause, scope)
               : ts.factory.createIdentifier("undefined"),
             node.finallyBlock
-              ? toExpr(node.finallyBlock)
+              ? toExpr(node.finallyBlock, scope)
               : ts.factory.createIdentifier("undefined"),
           ]);
         } else if (ts.isCatchClause(node)) {
           return newExpr("CatchClause", [
             node.variableDeclaration
-              ? toExpr(node.variableDeclaration)
+              ? toExpr(node.variableDeclaration, scope)
               : ts.factory.createIdentifier("undefined"),
-            toExpr(node.block),
+            toExpr(node.block, scope),
           ]);
         } else if (ts.isThrowStatement(node)) {
-          return newExpr("ThrowStmt", [toExpr(node.expression)]);
+          return newExpr("ThrowStmt", [toExpr(node.expression, scope)]);
         } else if (ts.isTypeOfExpression(node)) {
-          return newExpr("TypeOfExpr", [toExpr(node.expression)]);
+          return newExpr("TypeOfExpr", [toExpr(node.expression, scope)]);
         } else if (ts.isWhileStatement(node)) {
           return newExpr("WhileStmt", [
-            toExpr(node.expression),
+            toExpr(node.expression, scope),
             ts.isBlock(node.statement)
-              ? toExpr(node.statement)
+              ? toExpr(node.statement, scope)
               : // re-write a standalone statement as as BlockStmt
                 newExpr("BlockStmt", [
                   ts.factory.createArrayLiteralExpression([
-                    toExpr(node.statement),
+                    toExpr(node.statement, scope),
                   ]),
                 ]),
           ]);
         } else if (ts.isDoStatement(node)) {
           return newExpr("DoStmt", [
             ts.isBlock(node.statement)
-              ? toExpr(node.statement)
+              ? toExpr(node.statement, scope)
               : // re-write a standalone statement as as BlockStmt
                 newExpr("BlockStmt", [
                   ts.factory.createArrayLiteralExpression([
-                    toExpr(node.statement),
+                    toExpr(node.statement, scope),
                   ]),
                 ]),
-            toExpr(node.expression),
+            toExpr(node.expression, scope),
           ]);
         } else if (ts.isParenthesizedExpression(node)) {
-          return toExpr(node.expression);
+          return toExpr(node.expression, scope);
         } else if (ts.isAsExpression(node)) {
-          return toExpr(node.expression);
+          return toExpr(node.expression, scope);
         } else if (ts.isTypeAssertionExpression(node)) {
-          return toExpr(node.expression);
+          return toExpr(node.expression, scope);
         } else if (ts.isNonNullExpression(node)) {
-          return toExpr(node.expression);
+          return toExpr(node.expression, scope);
         }
 
         throw new Error(
@@ -744,6 +769,46 @@ export function compile(
             node
           ),
         ]);
+      }
+
+      /**
+       * Follow the parent of the symbol to determine if the identifier shares the same scope as the current closure being compiled.
+       * If not within the scope of the current closure, return a reference that returns the external value if possible.
+       * const val = "hello";
+       * reflect(() => return { value: val }; );
+       *
+       * result
+       *
+       * return { value: () => val };
+       */
+      function outOfScopeIdentifierToRef(
+        symbol: ts.Symbol,
+        scope: ts.Node
+      ): ts.NewExpression | undefined {
+        if (symbol) {
+          if (symbol.valueDeclaration) {
+            // Identifies if Shorthand Property Assignment value declarations return the shorthand prop assignment and not the value.
+            // const value = "hello"
+            // const v = { value } <== shorthand prop assignment.
+            // The checker supports getting the value assignment symbol, recursively call this method on the new symbol instead.
+            if (ts.isShorthandPropertyAssignment(symbol.valueDeclaration)) {
+              const updatedSymbol = checker.getShorthandAssignmentValueSymbol(
+                symbol.valueDeclaration
+              );
+              return updatedSymbol
+                ? outOfScopeIdentifierToRef(updatedSymbol, scope)
+                : undefined;
+            } else if (ts.isVariableDeclaration(symbol.valueDeclaration)) {
+              if (
+                symbol.valueDeclaration.initializer &&
+                !hasParent(symbol.valueDeclaration, scope)
+              ) {
+                return ref(symbol.valueDeclaration.initializer);
+              }
+            }
+          }
+        }
+        return;
       }
 
       function exprToString(node: ts.Expression): string {
@@ -774,7 +839,9 @@ export function compile(
         );
       }
 
-      function getKind(node: ts.Node): CanReference["kind"] | undefined {
+      function getKind(
+        node: ts.Node
+      ): Extract<CanReference, "kind"> | undefined {
         const exprType = checker.getTypeAtLocation(node);
         const exprKind = exprType.getProperty("kind");
         if (exprKind) {

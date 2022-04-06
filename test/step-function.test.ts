@@ -1,5 +1,11 @@
 import "jest";
-import { $AWS, $SFN, ExpressStepFunction } from "../src";
+import {
+  $AWS,
+  $SFN,
+  ExpressStepFunction,
+  StepFunction,
+  SyncExecutionResult,
+} from "../src";
 import { StateMachine, States } from "../src/asl";
 import { initStepFunctionApp, Person } from "./util";
 
@@ -25,14 +31,18 @@ test("empty function", () => {
 
 test("return identifier", () => {
   const { stack } = initStepFunctionApp();
-  const definition = new ExpressStepFunction(stack, "fn", (id: string) => {
-    return id;
-  }).definition;
+  const definition = new ExpressStepFunction<{ id: string }, string>(
+    stack,
+    "fn",
+    (input) => {
+      return input.id;
+    }
+  ).definition;
 
   const expected: StateMachine<States> = {
-    StartAt: "return id",
+    StartAt: "return input.id",
     States: {
-      "return id": {
+      "return input.id": {
         Type: "Pass",
         End: true,
         OutputPath: "$.id",
@@ -44,18 +54,18 @@ test("return identifier", () => {
 
 test("return PropAccessExpr", () => {
   const { stack } = initStepFunctionApp();
-  const definition = new ExpressStepFunction(
+  const definition = new ExpressStepFunction<{ input: { id: string } }, string>(
     stack,
     "fn",
-    (input: { id: string }) => {
-      return input.id;
+    (input) => {
+      return input.input.id;
     }
   ).definition;
 
   const expected: StateMachine<States> = {
-    StartAt: "return input.id",
+    StartAt: "return input.input.id",
     States: {
-      "return input.id": {
+      "return input.input.id": {
         Type: "Pass",
         End: true,
         OutputPath: "$.input.id",
@@ -67,18 +77,17 @@ test("return PropAccessExpr", () => {
 
 test("return optional PropAccessExpr", () => {
   const { stack } = initStepFunctionApp();
-  const definition = new ExpressStepFunction(
-    stack,
-    "fn",
-    (input: { id?: string }) => {
-      return input?.id;
-    }
-  ).definition;
+  const definition = new ExpressStepFunction<
+    { input: { id?: string } },
+    string | undefined
+  >(stack, "fn", (input) => {
+    return input.input?.id;
+  }).definition;
 
   const expected: StateMachine<States> = {
-    StartAt: "return input.id",
+    StartAt: "return input.input.id",
     States: {
-      "return input.id": {
+      "return input.input.id": {
         Type: "Pass",
         End: true,
         // this can cause an error in Step Functions
@@ -97,14 +106,18 @@ test("return optional PropAccessExpr", () => {
 
 test("return items.slice(1)", () => {
   const { stack } = initStepFunctionApp();
-  const definition = new ExpressStepFunction(stack, "fn", (items: string[]) => {
-    return items.slice(1);
-  }).definition;
+  const definition = new ExpressStepFunction<{ items: string[] }, string[]>(
+    stack,
+    "fn",
+    (input) => {
+      return input.items.slice(1);
+    }
+  ).definition;
 
   expect(definition).toEqual({
-    StartAt: "return items.slice(1, undefined)",
+    StartAt: "return input.items.slice(1)",
     States: {
-      "return items.slice(1, undefined)": {
+      "return input.items.slice(1)": {
         End: true,
         InputPath: "$.items[1:]",
         ResultPath: "$",
@@ -116,14 +129,18 @@ test("return items.slice(1)", () => {
 
 test("return items.slice(1, 3)", () => {
   const { stack } = initStepFunctionApp();
-  const definition = new ExpressStepFunction(stack, "fn", (items: string[]) => {
-    return items.slice(1, 3);
-  }).definition;
+  const definition = new ExpressStepFunction<{ items: string[] }, string[]>(
+    stack,
+    "fn",
+    (input) => {
+      return input.items.slice(1, 3);
+    }
+  ).definition;
 
   expect(definition).toEqual({
-    StartAt: "return items.slice(1, 3)",
+    StartAt: "return input.items.slice(1, 3)",
     States: {
-      "return items.slice(1, 3)": {
+      "return input.items.slice(1, 3)": {
         End: true,
         InputPath: "$.items[1:3]",
         ResultPath: "$",
@@ -135,14 +152,17 @@ test("return items.slice(1, 3)", () => {
 
 test("return task({key: items.slice(1, 3)})", () => {
   const { stack, task } = initStepFunctionApp();
-  const definition = new ExpressStepFunction(stack, "fn", (items: string[]) => {
-    return task({ key: items.slice(1, 3) });
+  const definition = new ExpressStepFunction<
+    { items: string[] },
+    number | null
+  >(stack, "fn", (input) => {
+    return task({ key: input.items.slice(1, 3) });
   }).definition;
 
   expect(definition).toEqual({
-    StartAt: "return task({key: items.slice(1, 3)})",
+    StartAt: "return task({key: input.items.slice(1, 3)})",
     States: {
-      "return task({key: items.slice(1, 3)})": {
+      "return task({key: input.items.slice(1, 3)})": {
         Type: "Task",
         End: true,
         Resource: "arn:aws:states:::lambda:invoke",
@@ -294,16 +314,20 @@ test("return void", () => {
 
 test("conditionally return void", () => {
   const { stack } = initStepFunctionApp();
-  const definition = new ExpressStepFunction(stack, "fn", (id: string) => {
-    if (id === "hello") {
-      return;
+  const definition = new ExpressStepFunction<{ id: string }, void>(
+    stack,
+    "fn",
+    (input) => {
+      if (input.id === "hello") {
+        return;
+      }
     }
-  }).definition;
+  ).definition;
 
   expect(definition).toEqual({
-    StartAt: 'if(id == "hello")',
+    StartAt: 'if(input.id == "hello")',
     States: {
-      'if(id == "hello")': {
+      'if(input.id == "hello")': {
         Choices: [
           {
             Next: "return null",
@@ -336,18 +360,22 @@ test("conditionally return void", () => {
 
 test("if-else", () => {
   const { stack } = initStepFunctionApp();
-  const definition = new ExpressStepFunction(stack, "fn", (id: string) => {
-    if (id === "hello") {
-      return "hello";
-    } else {
-      return "world";
+  const definition = new ExpressStepFunction<{ id: string }, string>(
+    stack,
+    "fn",
+    (input) => {
+      if (input.id === "hello") {
+        return "hello";
+      } else {
+        return "world";
+      }
     }
-  }).definition;
+  ).definition;
 
   expect(definition).toEqual({
-    StartAt: 'if(id == "hello")',
+    StartAt: 'if(input.id == "hello")',
     States: {
-      'if(id == "hello")': {
+      'if(input.id == "hello")': {
         Choices: [
           {
             Next: 'return "hello"',
@@ -376,27 +404,31 @@ test("if-else", () => {
 
 test("if (typeof x === ??)", () => {
   const { stack } = initStepFunctionApp();
-  const definition = new ExpressStepFunction(stack, "fn", (id: any) => {
-    if (id === undefined) {
-      return "null";
-    } else if (typeof id === "undefined") {
-      return "undefined";
-    } else if (typeof id === "string") {
-      return "string";
-    } else if (typeof id === "boolean") {
-      return "boolean";
-    } else if (typeof id === "number") {
-      return "number";
-    } else if (typeof id === "bigint") {
-      return "bigint";
+  const definition = new ExpressStepFunction<{ id: string }, string | null>(
+    stack,
+    "fn",
+    (input) => {
+      if (input.id === undefined) {
+        return "null";
+      } else if (typeof input.id === "undefined") {
+        return "undefined";
+      } else if (typeof input.id === "string") {
+        return "string";
+      } else if (typeof input.id === "boolean") {
+        return "boolean";
+      } else if (typeof input.id === "number") {
+        return "number";
+      } else if (typeof input.id === "bigint") {
+        return "bigint";
+      }
+      return null;
     }
-    return null;
-  }).definition;
+  ).definition;
 
   expect(definition).toEqual({
-    StartAt: "if(id == undefined)",
+    StartAt: "if(input.id == undefined)",
     States: {
-      "if(id == undefined)": {
+      "if(input.id == undefined)": {
         Choices: [
           {
             Next: 'return "null"',
@@ -522,27 +554,31 @@ test("if (typeof x === ??)", () => {
 
 test("if (typeof x !== ??)", () => {
   const { stack } = initStepFunctionApp();
-  const definition = new ExpressStepFunction(stack, "fn", (id: any) => {
-    if (id !== undefined) {
-      return "null";
-    } else if (typeof id !== "undefined") {
-      return "undefined";
-    } else if (typeof id !== "string") {
-      return "string";
-    } else if (typeof id !== "boolean") {
-      return "boolean";
-    } else if (typeof id !== "number") {
-      return "number";
-    } else if (typeof id !== "bigint") {
-      return "bigint";
+  const definition = new ExpressStepFunction<{ id: any }, string | null>(
+    stack,
+    "fn",
+    (input) => {
+      if (input.id !== undefined) {
+        return "null";
+      } else if ("undefined" !== typeof input.id) {
+        return "undefined";
+      } else if (typeof input.id !== "string") {
+        return "string";
+      } else if (typeof input.id !== "boolean") {
+        return "boolean";
+      } else if (typeof input.id !== "number") {
+        return "number";
+      } else if (typeof input.id !== "bigint") {
+        return "bigint";
+      }
+      return null;
     }
-    return null;
-  }).definition;
+  ).definition;
 
   expect(definition).toEqual({
-    StartAt: "if(id != undefined)",
+    StartAt: "if(input.id != undefined)",
     States: {
-      "if(id != undefined)": {
+      "if(input.id != undefined)": {
         Choices: [
           {
             And: [
@@ -668,22 +704,23 @@ test("if (typeof x !== ??)", () => {
 
 test("if-else-if", () => {
   const { stack } = initStepFunctionApp();
-  const definition = new ExpressStepFunction(
+  const definition = new ExpressStepFunction<{ id: string }, string | void>(
     stack,
     "fn",
-    (id: string): string | void => {
-      if (id === "hello") {
+    (input) => {
+      if (input.id === "hello") {
         return "hello";
-      } else if (id === "world") {
+      } else if (input.id === "world") {
         return "world";
       }
+      return;
     }
   ).definition;
 
   expect(definition).toEqual({
-    StartAt: 'if(id == "hello")',
+    StartAt: 'if(input.id == "hello")',
     States: {
-      'if(id == "hello")': {
+      'if(input.id == "hello")': {
         Choices: [
           {
             Next: 'return "hello"',
@@ -725,17 +762,21 @@ test("if-else-if", () => {
 
 test("for-loop and do nothing", () => {
   const { stack } = initStepFunctionApp();
-  const definition = new ExpressStepFunction(stack, "fn", (items: string[]) => {
-    for (const item of items) {
-      // @ts-ignore
-      const a = item;
+  const definition = new ExpressStepFunction<{ items: string[] }, void>(
+    stack,
+    "fn",
+    (input) => {
+      for (const item of input.items) {
+        // @ts-ignore
+        const a = item;
+      }
     }
-  }).definition;
+  ).definition;
 
   const expected: StateMachine<States> = {
-    StartAt: "for(item of items)",
+    StartAt: "for(item of input.items)",
     States: {
-      "for(item of items)": {
+      "for(item of input.items)": {
         ItemsPath: "$.items",
         Iterator: {
           StartAt: "a = item",
@@ -774,17 +815,21 @@ test("for-loop and do nothing", () => {
 
 test("for i in items, items[i]", () => {
   const { stack } = initStepFunctionApp();
-  const definition = new ExpressStepFunction(stack, "fn", (items: string[]) => {
-    for (const i in items) {
-      // @ts-ignore
-      const a = items[i];
+  const definition = new ExpressStepFunction<{ items: string[] }, void>(
+    stack,
+    "fn",
+    (input) => {
+      for (const i in input.items) {
+        // @ts-ignore
+        const a = items[i];
+      }
     }
-  }).definition;
+  ).definition;
 
   expect(definition).toEqual({
-    StartAt: "for(i in items)",
+    StartAt: "for(i in input.items)",
     States: {
-      "for(i in items)": {
+      "for(i in input.items)": {
         ItemsPath: "$.items",
         Iterator: {
           StartAt: "a = items[i]",
@@ -824,18 +869,17 @@ test("for i in items, items[i]", () => {
 
 test("return a single Lambda Function call", () => {
   const { stack, getPerson } = initStepFunctionApp();
-  const definition = new ExpressStepFunction(
-    stack,
-    "fn",
-    (id: string): Person | undefined => {
-      return getPerson({ id });
-    }
-  ).definition;
+  const definition = new ExpressStepFunction<
+    { id: string },
+    Person | undefined
+  >(stack, "fn", (input) => {
+    return getPerson({ id: input.id });
+  }).definition;
 
   expect(definition).toEqual({
-    StartAt: "return getPerson({id: id})",
+    StartAt: "return getPerson({id: input.id})",
     States: {
-      "return getPerson({id: id})": {
+      "return getPerson({id: input.id})": {
         Type: "Task",
         Resource: "arn:aws:states:::lambda:invoke",
         End: true,
@@ -854,19 +898,18 @@ test("return a single Lambda Function call", () => {
 
 test("call Lambda Function, store as variable, return variable", () => {
   const { stack, getPerson } = initStepFunctionApp();
-  const definition = new ExpressStepFunction(
-    stack,
-    "fn",
-    (id: string): Person | undefined => {
-      const person = getPerson({ id });
-      return person;
-    }
-  ).definition;
+  const definition = new ExpressStepFunction<
+    { id: string },
+    Person | undefined
+  >(stack, "fn", (input) => {
+    const person = getPerson({ id: input.id });
+    return person;
+  }).definition;
 
   expect(definition).toEqual({
-    StartAt: "person = getPerson({id: id})",
+    StartAt: "person = getPerson({id: input.id})",
     States: {
-      "person = getPerson({id: id})": {
+      "person = getPerson({id: input.id})": {
         Type: "Task",
         Resource: "arn:aws:states:::lambda:invoke",
         ResultPath: "$.person",
@@ -890,35 +933,34 @@ test("call Lambda Function, store as variable, return variable", () => {
 
 test("return AWS.DynamoDB.GetItem", () => {
   const { stack, personTable } = initStepFunctionApp();
-  const definition = new ExpressStepFunction(
-    stack,
-    "fn",
-    (id: string): Person | undefined => {
-      const person = $AWS.DynamoDB.GetItem({
-        TableName: personTable,
-        Key: {
-          id: {
-            S: id,
-          },
+  const definition = new ExpressStepFunction<
+    { id: string },
+    Person | undefined
+  >(stack, "fn", (input) => {
+    const person = $AWS.DynamoDB.GetItem({
+      TableName: personTable,
+      Key: {
+        id: {
+          S: input.id,
         },
-      });
+      },
+    });
 
-      if (person.Item === undefined) {
-        return undefined;
-      }
-
-      return {
-        id: person.Item.id.S,
-        name: person.Item.name.S,
-      };
+    if (person.Item === undefined) {
+      return undefined;
     }
-  ).definition;
+
+    return {
+      id: person.Item.id.S,
+      name: person.Item.name.S,
+    };
+  }).definition;
 
   const expected: StateMachine<States> = {
     StartAt:
-      "person = $AWS.DynamoDB.GetItem({TableName: personTable, Key: {id: {S: id}}}",
+      "person = $AWS.DynamoDB.GetItem({TableName: personTable, Key: {id: {S: input",
     States: {
-      "person = $AWS.DynamoDB.GetItem({TableName: personTable, Key: {id: {S: id}}}":
+      "person = $AWS.DynamoDB.GetItem({TableName: personTable, Key: {id: {S: input":
         {
           Next: "if(person.Item == undefined)",
           ResultPath: "$.person",
@@ -977,41 +1019,40 @@ test("return AWS.DynamoDB.GetItem", () => {
 
 test("call AWS.DynamoDB.GetItem, then Lambda and return LiteralExpr", () => {
   const { stack, personTable, computeScore } = initStepFunctionApp();
-  const definition = new ExpressStepFunction(
-    stack,
-    "fn",
-    (id: string): (Person & { score: number }) | undefined => {
-      const person = $AWS.DynamoDB.GetItem({
-        TableName: personTable,
-        Key: {
-          id: {
-            S: id,
-          },
+  const definition = new ExpressStepFunction<
+    { id: string },
+    (Person & { score: number }) | undefined
+  >(stack, "fn", (input) => {
+    const person = $AWS.DynamoDB.GetItem({
+      TableName: personTable,
+      Key: {
+        id: {
+          S: input.id,
         },
-      });
+      },
+    });
 
-      if (person.Item === undefined) {
-        return undefined;
-      }
-
-      const score = computeScore({
-        id: person.Item.id.S,
-        name: person.Item.name.S,
-      });
-
-      return {
-        id: person.Item.id.S,
-        name: person.Item.name.S,
-        score,
-      };
+    if (person.Item === undefined) {
+      return undefined;
     }
-  ).definition;
+
+    const score = computeScore({
+      id: person.Item.id.S,
+      name: person.Item.name.S,
+    });
+
+    return {
+      id: person.Item.id.S,
+      name: person.Item.name.S,
+      score,
+    };
+  }).definition;
 
   const expected: StateMachine<States> = {
     StartAt:
-      "person = $AWS.DynamoDB.GetItem({TableName: personTable, Key: {id: {S: id}}}",
+      "person = $AWS.DynamoDB.GetItem({TableName: personTable, Key: {id: {S: input",
     States: {
-      "person = $AWS.DynamoDB.GetItem({TableName: personTable, Key: {id: {S: id}}}":
+      "person = $AWS.DynamoDB.GetItem({TableName: personTable, Key: {id: {S: input":
         {
           Next: "if(person.Item == undefined)",
           ResultPath: "$.person",
@@ -1086,14 +1127,14 @@ test("call AWS.DynamoDB.GetItem, then Lambda and return LiteralExpr", () => {
 
 test("for-loop over a list literal", () => {
   const { stack, computeScore } = initStepFunctionApp();
-  const definition = new ExpressStepFunction(
+  const definition = new ExpressStepFunction<{ id: string }, void>(
     stack,
     "fn",
-    (id: string): void => {
+    (input) => {
       const people = ["sam", "brendan"];
       for (const name of people) {
         computeScore({
-          id,
+          id: input.id,
           name,
         });
       }
@@ -1119,9 +1160,9 @@ test("for-loop over a list literal", () => {
           "name.$": "$$.Map.Item.Value",
         },
         Iterator: {
-          StartAt: "computeScore({id: id, name: name})",
+          StartAt: "computeScore({id: input.id, name: name})",
           States: {
-            "computeScore({id: id, name: name})": {
+            "computeScore({id: input.id, name: name})": {
               Type: "Task",
               ResultPath: null,
               End: true,
@@ -1153,16 +1194,16 @@ test("for-loop over a list literal", () => {
 
 test("conditionally call DynamoDB and then void", () => {
   const { stack, personTable } = initStepFunctionApp();
-  const definition = new ExpressStepFunction(
+  const definition = new ExpressStepFunction<{ id: string }, void>(
     stack,
     "fn",
-    (id: string): void => {
-      if (id === "hello") {
+    (input): void => {
+      if (input.id === "hello") {
         $AWS.DynamoDB.GetItem({
           TableName: personTable,
           Key: {
             id: {
-              S: id,
+              S: input.id,
             },
           },
         });
@@ -1171,12 +1212,12 @@ test("conditionally call DynamoDB and then void", () => {
   ).definition;
 
   const expected: StateMachine<States> = {
-    StartAt: 'if(id == "hello")',
+    StartAt: 'if(input.id == "hello")',
     States: {
-      'if(id == "hello")': {
+      'if(input.id == "hello")': {
         Choices: [
           {
-            Next: "$AWS.DynamoDB.GetItem({TableName: personTable, Key: {id: {S: id}}})",
+            Next: "$AWS.DynamoDB.GetItem({TableName: personTable, Key: {id: {S: input.id}}})",
             StringEquals: "hello",
             Variable: "$.id",
           },
@@ -1184,20 +1225,21 @@ test("conditionally call DynamoDB and then void", () => {
         Default: "return null",
         Type: "Choice",
       },
-      "$AWS.DynamoDB.GetItem({TableName: personTable, Key: {id: {S: id}}})": {
-        Next: "return null",
-        Parameters: {
-          Key: {
-            id: {
-              "S.$": "$.id",
+      "$AWS.DynamoDB.GetItem({TableName: personTable, Key: {id: {S: input.id}}})":
+        {
+          Next: "return null",
+          Parameters: {
+            Key: {
+              id: {
+                "S.$": "$.id",
+              },
             },
+            TableName: personTable.resource.tableName,
           },
-          TableName: personTable.resource.tableName,
+          Resource: "arn:aws:states:::aws-sdk:dynamodb:getItem",
+          ResultPath: null,
+          Type: "Task",
         },
-        Resource: "arn:aws:states:::aws-sdk:dynamodb:getItem",
-        ResultPath: null,
-        Type: "Task",
-      },
       "return null": {
         Type: "Pass",
         End: true,
@@ -1241,18 +1283,17 @@ test("waitFor literal number of seconds", () => {
 test("waitFor reference number of seconds", () => {
   const { stack } = initStepFunctionApp();
 
-  const definition = new ExpressStepFunction(
-    stack,
-    "fn",
-    (seconds: number): string | void => {
-      $SFN.waitFor(seconds);
-    }
-  ).definition;
+  const definition = new ExpressStepFunction<
+    { seconds: number },
+    string | void
+  >(stack, "fn", (input) => {
+    $SFN.waitFor(input.seconds);
+  }).definition;
 
   expect(definition).toEqual({
-    StartAt: "$SFN.waitFor(seconds)",
+    StartAt: "$SFN.waitFor(input.seconds)",
     States: {
-      "$SFN.waitFor(seconds)": {
+      "$SFN.waitFor(input.seconds)": {
         Next: "return null",
         SecondsPath: "$.seconds",
         Type: "Wait",
@@ -1298,18 +1339,18 @@ test("waitFor literal timestamp", () => {
 test("waitUntil reference timestamp", () => {
   const { stack } = initStepFunctionApp();
 
-  const definition = new ExpressStepFunction(
+  const definition = new ExpressStepFunction<{ until: string }, string | void>(
     stack,
     "fn",
-    (until: string): string | void => {
-      $SFN.waitUntil(until);
+    (input) => {
+      $SFN.waitUntil(input.until);
     }
   ).definition;
 
   expect(definition).toEqual({
-    StartAt: "$SFN.waitUntil(until)",
+    StartAt: "$SFN.waitUntil(input.until)",
     States: {
-      "$SFN.waitUntil(until)": {
+      "$SFN.waitUntil(input.until)": {
         Next: "return null",
         TimestampPath: "$.until",
         Type: "Wait",
@@ -1659,25 +1700,29 @@ test("try-catch with guaranteed throw new Error", () => {
 test("try-catch with optional throw of an Error", () => {
   const { stack } = initStepFunctionApp();
 
-  const definition = new ExpressStepFunction(stack, "fn", (id: string) => {
-    try {
-      if (id === "hello") {
-        throw new Error("cause");
-      }
-      return "hello world";
-    } catch (err: any) {
-      if (err.message === "cause") {
-        return "hello";
-      } else {
-        return "world";
+  const definition = new ExpressStepFunction<{ id: string }, void>(
+    stack,
+    "fn",
+    (input) => {
+      try {
+        if (input.id === "hello") {
+          throw new Error("cause");
+        }
+        return "hello world";
+      } catch (err: any) {
+        if (err.message === "cause") {
+          return "hello";
+        } else {
+          return "world";
+        }
       }
     }
-  }).definition;
+  ).definition;
 
   expect(definition).toEqual({
-    StartAt: 'if(id == "hello")',
+    StartAt: 'if(input.id == "hello")',
     States: {
-      'if(id == "hello")': {
+      'if(input.id == "hello")': {
         Choices: [
           {
             Next: 'throw new Error("cause")',
@@ -1732,31 +1777,35 @@ test("try-catch with optional throw of an Error", () => {
 test("try-catch with optional task", () => {
   const { stack, computeScore } = initStepFunctionApp();
 
-  const definition = new ExpressStepFunction(stack, "fn", (id: string) => {
-    try {
-      if (id === "hello") {
-        computeScore({
-          id,
-          name: "sam",
-        });
-      }
-      return "hello world";
-    } catch (err: any) {
-      if (err.message === "cause") {
-        return "hello";
-      } else {
-        return "world";
+  const definition = new ExpressStepFunction<{ id: string }, string>(
+    stack,
+    "fn",
+    (input) => {
+      try {
+        if (input.id === "hello") {
+          computeScore({
+            id: input.id,
+            name: "sam",
+          });
+        }
+        return "hello world";
+      } catch (err: any) {
+        if (err.message === "cause") {
+          return "hello";
+        } else {
+          return "world";
+        }
       }
     }
-  }).definition;
+  ).definition;
 
   expect(definition).toEqual({
-    StartAt: 'if(id == "hello")',
+    StartAt: 'if(input.id == "hello")',
     States: {
-      'if(id == "hello")': {
+      'if(input.id == "hello")': {
         Choices: [
           {
-            Next: 'computeScore({id: id, name: "sam"})',
+            Next: 'computeScore({id: input.id, name: "sam"})',
             StringEquals: "hello",
             Variable: "$.id",
           },
@@ -1764,7 +1813,7 @@ test("try-catch with optional task", () => {
         Default: 'return "hello world"',
         Type: "Choice",
       },
-      'computeScore({id: id, name: "sam"})': {
+      'computeScore({id: input.id, name: "sam"})': {
         Catch: [
           {
             ErrorEquals: ["States.ALL"],
@@ -1835,31 +1884,35 @@ test("try-catch with optional task", () => {
 test("try-catch with optional return of task", () => {
   const { stack, computeScore } = initStepFunctionApp();
 
-  const definition = new ExpressStepFunction(stack, "fn", (id: string) => {
-    try {
-      if (id === "hello") {
-        return computeScore({
-          id,
-          name: "sam",
-        });
-      }
-      return "hello world";
-    } catch (err: any) {
-      if (err.message === "cause") {
-        return "hello";
-      } else {
-        return "world";
+  const definition = new ExpressStepFunction<{ id: string }, string | number>(
+    stack,
+    "fn",
+    (input) => {
+      try {
+        if (input.id === "hello") {
+          return computeScore({
+            id: input.id,
+            name: "sam",
+          });
+        }
+        return "hello world";
+      } catch (err: any) {
+        if (err.message === "cause") {
+          return "hello";
+        } else {
+          return "world";
+        }
       }
     }
-  }).definition;
+  ).definition;
 
   expect(definition).toEqual({
-    StartAt: 'if(id == "hello")',
+    StartAt: 'if(input.id == "hello")',
     States: {
-      'if(id == "hello")': {
+      'if(input.id == "hello")': {
         Choices: [
           {
-            Next: 'return computeScore({id: id, name: "sam"})',
+            Next: 'return computeScore({id: input.id, name: "sam"})',
             StringEquals: "hello",
             Variable: "$.id",
           },
@@ -1867,7 +1920,7 @@ test("try-catch with optional return of task", () => {
         Default: 'return "hello world"',
         Type: "Choice",
       },
-      'return computeScore({id: id, name: "sam"})': {
+      'return computeScore({id: input.id, name: "sam"})': {
         Catch: [
           {
             ErrorEquals: ["States.ALL"],
@@ -1981,17 +2034,21 @@ test("nested try-catch", () => {
 test("throw in for-of", () => {
   const { stack } = initStepFunctionApp();
 
-  const definition = new ExpressStepFunction(stack, "fn", (items: string[]) => {
-    // @ts-ignore
-    for (const item of items) {
-      throw new Error("err");
+  const definition = new ExpressStepFunction<{ items: string[] }, void>(
+    stack,
+    "fn",
+    (input) => {
+      // @ts-ignore
+      for (const item of input.items) {
+        throw new Error("err");
+      }
     }
-  }).definition;
+  ).definition;
 
   expect(definition).toEqual({
-    StartAt: "for(item of items)",
+    StartAt: "for(item of input.items)",
     States: {
-      "for(item of items)": {
+      "for(item of input.items)": {
         ItemsPath: "$.items",
         Iterator: {
           StartAt: 'throw new Error("err")',
@@ -2026,25 +2083,24 @@ test("throw in for-of", () => {
 test("try-catch, no variable, contains for-of, throw", () => {
   const { stack } = initStepFunctionApp();
 
-  const definition = new ExpressStepFunction(
-    stack,
-    "fn",
-    (items: string[]): string | void => {
-      try {
-        // @ts-ignore
-        for (const item of items) {
-          throw new Error("err");
-        }
-      } catch {
-        return "hello";
+  const definition = new ExpressStepFunction<
+    { items: string[] },
+    string | void
+  >(stack, "fn", (input): string | void => {
+    try {
+      // @ts-ignore
+      for (const item of input.items) {
+        throw new Error("err");
       }
+    } catch {
+      return "hello";
     }
-  ).definition;
+  }).definition;
 
   expect(definition).toEqual({
-    StartAt: "for(item of items)",
+    StartAt: "for(item of input.items)",
     States: {
-      "for(item of items)": {
+      "for(item of input.items)": {
         Catch: [
           {
             ErrorEquals: ["States.ALL"],
@@ -2092,25 +2148,24 @@ test("try-catch, no variable, contains for-of, throw", () => {
 test("try-catch, err variable, contains for-of, throw", () => {
   const { stack } = initStepFunctionApp();
 
-  const definition = new ExpressStepFunction(
-    stack,
-    "fn",
-    (items: string[]): string | void => {
-      try {
-        // @ts-ignore
-        for (const item of items) {
-          throw new Error("err");
-        }
-      } catch (err: any) {
-        return err.message;
+  const definition = new ExpressStepFunction<
+    { items: string[] },
+    string | void
+  >(stack, "fn", (input): string | void => {
+    try {
+      // @ts-ignore
+      for (const item of input.items) {
+        throw new Error("err");
       }
+    } catch (err: any) {
+      return err.message;
     }
-  ).definition;
+  }).definition;
 
   expect(definition).toEqual({
-    StartAt: "for(item of items)",
+    StartAt: "for(item of input.items)",
     States: {
-      "for(item of items)": {
+      "for(item of input.items)": {
         Catch: [
           {
             ErrorEquals: ["States.ALL"],
@@ -2231,9 +2286,9 @@ test("try { task } catch { throw } finally { task() }", () => {
   }).definition;
 
   expect(definition).toEqual({
-    StartAt: "task(undefined)",
+    StartAt: "task()",
     States: {
-      "task(undefined)": {
+      "task()": {
         Catch: [
           {
             ErrorEquals: ["States.ALL"],
@@ -2245,7 +2300,7 @@ test("try { task } catch { throw } finally { task() }", () => {
         ResultSelector: "$.Payload",
         Parameters: {
           FunctionName: task.resource.functionName,
-          Payload: null,
+          Payload: undefined,
         },
         Resource: "arn:aws:states:::lambda:invoke",
         ResultPath: null,
@@ -2469,14 +2524,14 @@ test("try, throw, catch, throw, finally, return", () => {
 test("try { throw } catch { (maybe) throw } finally { task }", () => {
   const { stack, task } = initStepFunctionApp();
 
-  const definition = new ExpressStepFunction(
+  const definition = new ExpressStepFunction<{ id: string }, string | void>(
     stack,
     "fn",
-    (id: string): string | void => {
+    (input) => {
       try {
         throw new Error("go");
       } catch {
-        if (id === "sam") {
+        if (input.id === "sam") {
           throw new Error("little");
         }
       } finally {
@@ -2491,14 +2546,14 @@ test("try { throw } catch { (maybe) throw } finally { task }", () => {
     StartAt: 'throw new Error("go")',
     States: {
       'throw new Error("go")': {
-        Next: 'if(id == "sam")',
+        Next: 'if(input.id == "sam")',
         Result: {
           message: "go",
         },
         ResultPath: null,
         Type: "Pass",
       },
-      'if(id == "sam")': {
+      'if(input.id == "sam")': {
         Choices: [
           {
             Next: 'throw new Error("little")',
@@ -2506,23 +2561,23 @@ test("try { throw } catch { (maybe) throw } finally { task }", () => {
             Variable: "$.id",
           },
         ],
-        Default: "task(undefined)",
+        Default: "task()",
         Type: "Choice",
       },
       'throw new Error("little")': {
-        Next: "task(undefined)",
+        Next: "task()",
         Result: {
           message: "little",
         },
         ResultPath: "$.0_tmp",
         Type: "Pass",
       },
-      "task(undefined)": {
+      "task()": {
         Next: "exit finally",
         ResultSelector: "$.Payload",
         Parameters: {
           FunctionName: task.resource.functionName,
-          Payload: null,
+          Payload: undefined,
         },
         Resource: "arn:aws:states:::lambda:invoke",
         ResultPath: null,
@@ -2560,14 +2615,14 @@ test("try { throw } catch { (maybe) throw } finally { task }", () => {
 test("try { task() } catch { (maybe) throw } finally { task }", () => {
   const { stack, task } = initStepFunctionApp();
 
-  const definition = new ExpressStepFunction(
+  const definition = new ExpressStepFunction<{ id: string }, string | void>(
     stack,
     "fn",
-    (id: string): string | void => {
+    (input) => {
       try {
         task("1");
       } catch {
-        if (id === "sam") {
+        if (input.id === "sam") {
           throw new Error("little");
         }
       } finally {
@@ -2585,7 +2640,7 @@ test("try { task() } catch { (maybe) throw } finally { task }", () => {
         Catch: [
           {
             ErrorEquals: ["States.ALL"],
-            Next: 'if(id == "sam")',
+            Next: 'if(input.id == "sam")',
             ResultPath: null,
           },
         ],
@@ -2599,7 +2654,7 @@ test("try { task() } catch { (maybe) throw } finally { task }", () => {
         ResultPath: null,
         Type: "Task",
       },
-      'if(id == "sam")': {
+      'if(input.id == "sam")': {
         Choices: [
           {
             Next: 'throw new Error("little")',
@@ -2772,30 +2827,29 @@ test("try { task() } catch(err) { (maybe) throw } finally { task }", () => {
 test("try { for-of } catch { (maybe) throw } finally { task }", () => {
   const { stack, task } = initStepFunctionApp();
 
-  const definition = new ExpressStepFunction(
-    stack,
-    "fn",
-    (items: string[]): string | void => {
-      try {
-        for (const item of items) {
-          task(item);
-        }
-      } catch (err: any) {
-        if (err.message === "you dun' goofed") {
-          throw new Error("little");
-        }
-      } finally {
-        // task should run after both throws
-        // for second throw, an error should be re-thrown
-        task("2");
+  const definition = new ExpressStepFunction<
+    { items: string[] },
+    string | void
+  >(stack, "fn", (input): string | void => {
+    try {
+      for (const item of input.items) {
+        task(item);
       }
+    } catch (err: any) {
+      if (err.message === "you dun' goofed") {
+        throw new Error("little");
+      }
+    } finally {
+      // task should run after both throws
+      // for second throw, an error should be re-thrown
+      task("2");
     }
-  ).definition;
+  }).definition;
 
   expect(definition).toEqual({
-    StartAt: "for(item of items)",
+    StartAt: "for(item of input.items)",
     States: {
-      "for(item of items)": {
+      "for(item of input.items)": {
         Catch: [
           {
             ErrorEquals: ["States.ALL"],
@@ -2904,30 +2958,29 @@ test("try { for-of } catch { (maybe) throw } finally { task }", () => {
 test("for-of { try { task() } catch (err) { if(err) throw } finally { task() } }", () => {
   const { stack, task } = initStepFunctionApp();
 
-  const definition = new ExpressStepFunction(
-    stack,
-    "fn",
-    (items: string[]): string | void => {
-      for (const item of items) {
-        try {
-          task(item);
-        } catch (err: any) {
-          if (err.message === "you dun' goofed") {
-            throw new Error("little");
-          }
-        } finally {
-          // task should run after both throws
-          // for second throw, an error should be re-thrown
-          task("2");
+  const definition = new ExpressStepFunction<
+    { items: string[] },
+    string | void
+  >(stack, "fn", (input): string | void => {
+    for (const item of input.items) {
+      try {
+        task(item);
+      } catch (err: any) {
+        if (err.message === "you dun' goofed") {
+          throw new Error("little");
         }
+      } finally {
+        // task should run after both throws
+        // for second throw, an error should be re-thrown
+        task("2");
       }
     }
-  ).definition;
+  }).definition;
 
   expect(definition).toEqual({
-    StartAt: "for(item of items)",
+    StartAt: "for(item of input.items)",
     States: {
-      "for(item of items)": {
+      "for(item of input.items)": {
         ItemsPath: "$.items",
         Iterator: {
           StartAt: "task(item)",
@@ -3048,7 +3101,7 @@ test("while (cond) { cond = task() }", () => {
       "while (cond == undefined)": {
         Choices: [
           {
-            Next: "cond = task(undefined)",
+            Next: "cond = task()",
             Or: [
               {
                 IsPresent: false,
@@ -3064,12 +3117,12 @@ test("while (cond) { cond = task() }", () => {
         Default: "return null",
         Type: "Choice",
       },
-      "cond = task(undefined)": {
+      "cond = task()": {
         Next: "while (cond == undefined)",
         ResultSelector: "$.Payload",
         Parameters: {
           FunctionName: task.resource.functionName,
-          Payload: null,
+          Payload: undefined,
         },
         Resource: "arn:aws:states:::lambda:invoke",
         ResultPath: "$.cond",
@@ -3100,7 +3153,7 @@ test("while (cond); cond = task()", () => {
       "while (cond == undefined)": {
         Choices: [
           {
-            Next: "cond = task(undefined)",
+            Next: "cond = task()",
             Or: [
               {
                 IsPresent: false,
@@ -3116,12 +3169,12 @@ test("while (cond); cond = task()", () => {
         Default: "return null",
         Type: "Choice",
       },
-      "cond = task(undefined)": {
+      "cond = task()": {
         Next: "while (cond == undefined)",
         ResultSelector: "$.Payload",
         Parameters: {
           FunctionName: task.resource.functionName,
-          Payload: null,
+          Payload: undefined,
         },
         Resource: "arn:aws:states:::lambda:invoke",
         ResultPath: "$.cond",
@@ -3149,12 +3202,12 @@ test("let cond; do { cond = task() } while (cond)", () => {
   }).definition;
 
   expect(definition).toEqual({
-    StartAt: "cond = task(undefined)",
+    StartAt: "cond = task()",
     States: {
       "while (cond == undefined)": {
         Choices: [
           {
-            Next: "cond = task(undefined)",
+            Next: "cond = task()",
             Or: [
               {
                 IsPresent: false,
@@ -3170,12 +3223,12 @@ test("let cond; do { cond = task() } while (cond)", () => {
         Default: "return null",
         Type: "Choice",
       },
-      "cond = task(undefined)": {
+      "cond = task()": {
         Next: "while (cond == undefined)",
         ResultSelector: "$.Payload",
         Parameters: {
           FunctionName: task.resource.functionName,
-          Payload: null,
+          Payload: undefined,
         },
         Resource: "arn:aws:states:::lambda:invoke",
         ResultPath: "$.cond",
@@ -3195,14 +3248,17 @@ test("let cond; do { cond = task() } while (cond)", () => {
 
 test("list.map(item => task(item))", () => {
   const { stack, task } = initStepFunctionApp();
-  const definition = new ExpressStepFunction(stack, "fn", (list: string[]) => {
-    return list.map((item) => task(item));
+  const definition = new ExpressStepFunction<
+    { list: string[] },
+    (number | null)[]
+  >(stack, "fn", (input) => {
+    return input.list.map((item) => task(item));
   }).definition;
 
   expect(definition).toEqual({
-    StartAt: "return list.map(function(item))",
+    StartAt: "return input.list.map(function(item))",
     States: {
-      "return list.map(function(item))": {
+      "return input.list.map(function(item))": {
         End: true,
         ItemsPath: "$.list",
         Iterator: {
@@ -3234,8 +3290,11 @@ test("list.map(item => task(item))", () => {
 
 test("list.map((item, i) => if (i == 0) task(item))", () => {
   const { stack, task } = initStepFunctionApp();
-  const definition = new ExpressStepFunction(stack, "fn", (list: string[]) => {
-    return list.map((item, i) => {
+  const definition = new ExpressStepFunction<
+    { list: string[] },
+    (number | null)[]
+  >(stack, "fn", (input) => {
+    return input.list.map((item, i) => {
       if (i === 0) {
         return task(item);
       } else {
@@ -3245,9 +3304,9 @@ test("list.map((item, i) => if (i == 0) task(item))", () => {
   }).definition;
 
   expect(definition).toEqual({
-    StartAt: "return list.map(function(item, i))",
+    StartAt: "return input.list.map(function(item, i))",
     States: {
-      "return list.map(function(item, i))": {
+      "return input.list.map(function(item, i))": {
         Type: "Map",
         End: true,
         ItemsPath: "$.list",
@@ -3299,20 +3358,23 @@ test("list.map((item, i) => if (i == 0) task(item))", () => {
 
 test("list.map((item, i, list) => if (i == 0) task(item) else task(list[0]))", () => {
   const { stack, task } = initStepFunctionApp();
-  const definition = new ExpressStepFunction(stack, "fn", (list: string[]) => {
-    return list.map((item, i) => {
+  const definition = new ExpressStepFunction<
+    { list: string[] },
+    (number | null)[]
+  >(stack, "fn", (input) => {
+    return input.list.map((item, i) => {
       if (i === 0) {
         return task(item);
       } else {
-        return task(list[0]);
+        return task(input.list[0]);
       }
     });
   }).definition;
 
   expect(definition).toEqual({
-    StartAt: "return list.map(function(item, i))",
+    StartAt: "return input.list.map(function(item, i))",
     States: {
-      "return list.map(function(item, i))": {
+      "return input.list.map(function(item, i))": {
         End: true,
         ItemsPath: "$.list",
         Iterator: {
@@ -3326,7 +3388,7 @@ test("list.map((item, i, list) => if (i == 0) task(item) else task(list[0]))", (
                   Variable: "$.i",
                 },
               ],
-              Default: "return task(list[0])",
+              Default: "return task(input.list[0])",
               Type: "Choice",
             },
             "return task(item)": {
@@ -3340,7 +3402,7 @@ test("list.map((item, i, list) => if (i == 0) task(item) else task(list[0]))", (
               ResultPath: "$",
               Type: "Task",
             },
-            "return task(list[0])": {
+            "return task(input.list[0])": {
               End: true,
               ResultSelector: "$.Payload",
               Parameters: {
@@ -3367,18 +3429,21 @@ test("list.map((item, i, list) => if (i == 0) task(item) else task(list[0]))", (
 
 test("try { list.map(item => task(item)) }", () => {
   const { stack, task } = initStepFunctionApp();
-  const definition = new ExpressStepFunction(stack, "fn", (list: string[]) => {
+  const definition = new ExpressStepFunction<
+    { list: string[] },
+    (null | number)[] | null
+  >(stack, "fn", (input) => {
     try {
-      return list.map((item) => task(item));
+      return input.list.map((item) => task(item));
     } catch {
       return null;
     }
   }).definition;
 
   expect(definition).toEqual({
-    StartAt: "return list.map(function(item))",
+    StartAt: "return input.list.map(function(item))",
     States: {
-      "return list.map(function(item))": {
+      "return input.list.map(function(item))": {
         Catch: [
           {
             ErrorEquals: ["States.ALL"],
@@ -3425,8 +3490,11 @@ test("try { list.map(item => task(item)) }", () => {
 
 test("try { list.map(item => task(item)) }", () => {
   const { stack, task } = initStepFunctionApp();
-  const definition = new ExpressStepFunction(stack, "fn", (list: string[]) => {
-    return list.map((item) => {
+  const definition = new ExpressStepFunction<
+    { list: string[] },
+    (number | null)[]
+  >(stack, "fn", (input) => {
+    return input.list.map((item) => {
       try {
         return task(item);
       } catch {
@@ -3436,9 +3504,9 @@ test("try { list.map(item => task(item)) }", () => {
   }).definition;
 
   expect(definition).toEqual({
-    StartAt: "return list.map(function(item))",
+    StartAt: "return input.list.map(function(item))",
     States: {
-      "return list.map(function(item))": {
+      "return input.list.map(function(item))": {
         End: true,
         ItemsPath: "$.list",
         Iterator: {
@@ -3485,9 +3553,12 @@ test("try { list.map(item => task(item)) }", () => {
 
 test("try { list.map(item => throw) }", () => {
   const { stack } = initStepFunctionApp();
-  const definition = new ExpressStepFunction(stack, "fn", (list: string[]) => {
+  const definition = new ExpressStepFunction<
+    { list: string[] },
+    null | string[]
+  >(stack, "fn", (input) => {
     try {
-      return list.map(() => {
+      return input.list.map(() => {
         throw new Error("cause");
       });
     } catch {
@@ -3496,9 +3567,9 @@ test("try { list.map(item => throw) }", () => {
   }).definition;
 
   expect(definition).toEqual({
-    StartAt: "return list.map(function())",
+    StartAt: "return input.list.map(function())",
     States: {
-      "return list.map(function())": {
+      "return input.list.map(function())": {
         Catch: [
           {
             ErrorEquals: ["States.ALL"],
@@ -3537,9 +3608,12 @@ test("try { list.map(item => throw) }", () => {
 
 test("try { list.map(item => throw) } catch (err)", () => {
   const { stack } = initStepFunctionApp();
-  const definition = new ExpressStepFunction(stack, "fn", (list: string[]) => {
+  const definition = new ExpressStepFunction<
+    { list: string[] },
+    string[] | number
+  >(stack, "fn", (input) => {
     try {
-      return list.map(() => {
+      return input.list.map(() => {
         throw new Error("cause");
       });
     } catch (err: any) {
@@ -3552,9 +3626,9 @@ test("try { list.map(item => throw) } catch (err)", () => {
   }).definition;
 
   expect(definition).toEqual({
-    StartAt: "return list.map(function())",
+    StartAt: "return input.list.map(function())",
     States: {
-      "return list.map(function())": {
+      "return input.list.map(function())": {
         Catch: [
           {
             ErrorEquals: ["States.ALL"],
@@ -3622,14 +3696,18 @@ test("try { list.map(item => throw) } catch (err)", () => {
 
 test("list.forEach(item => task(item))", () => {
   const { stack, task } = initStepFunctionApp();
-  const definition = new ExpressStepFunction(stack, "fn", (list: string[]) => {
-    return list.forEach((item) => task(item));
-  }).definition;
+  const definition = new ExpressStepFunction<{ list: string[] }, void>(
+    stack,
+    "fn",
+    (input) => {
+      return input.list.forEach((item) => task(item));
+    }
+  ).definition;
 
   expect(definition).toEqual({
-    StartAt: "return list.forEach(function(item))",
+    StartAt: "return input.list.forEach(function(item))",
     States: {
-      "return list.forEach(function(item))": {
+      "return input.list.forEach(function(item))": {
         End: true,
         ItemsPath: "$.list",
         Iterator: {
@@ -3661,20 +3739,24 @@ test("list.forEach(item => task(item))", () => {
 
 test("list.forEach((item, i) => if (i == 0) task(item))", () => {
   const { stack, task } = initStepFunctionApp();
-  const definition = new ExpressStepFunction(stack, "fn", (list: string[]) => {
-    return list.forEach((item, i) => {
-      if (i === 0) {
-        return task(item);
-      } else {
-        return null;
-      }
-    });
-  }).definition;
+  const definition = new ExpressStepFunction<{ list: string[] }, void>(
+    stack,
+    "fn",
+    (input) => {
+      return input.list.forEach((item, i) => {
+        if (i === 0) {
+          return task(item);
+        } else {
+          return null;
+        }
+      });
+    }
+  ).definition;
 
   expect(definition).toEqual({
-    StartAt: "return list.forEach(function(item, i))",
+    StartAt: "return input.list.forEach(function(item, i))",
     States: {
-      "return list.forEach(function(item, i))": {
+      "return input.list.forEach(function(item, i))": {
         Type: "Map",
         End: true,
         ItemsPath: "$.list",
@@ -3726,20 +3808,24 @@ test("list.forEach((item, i) => if (i == 0) task(item))", () => {
 
 test("list.forEach((item, i, list) => if (i == 0) task(item) else task(list[0]))", () => {
   const { stack, task } = initStepFunctionApp();
-  const definition = new ExpressStepFunction(stack, "fn", (list: string[]) => {
-    return list.forEach((item, i) => {
-      if (i === 0) {
-        return task(item);
-      } else {
-        return task(list[0]);
-      }
-    });
-  }).definition;
+  const definition = new ExpressStepFunction<{ list: string[] }, void>(
+    stack,
+    "fn",
+    (input) => {
+      return input.list.forEach((item, i) => {
+        if (i === 0) {
+          return task(item);
+        } else {
+          return task(input.list[0]);
+        }
+      });
+    }
+  ).definition;
 
   expect(definition).toEqual({
-    StartAt: "return list.forEach(function(item, i))",
+    StartAt: "return input.list.forEach(function(item, i))",
     States: {
-      "return list.forEach(function(item, i))": {
+      "return input.list.forEach(function(item, i))": {
         End: true,
         ItemsPath: "$.list",
         Iterator: {
@@ -3753,7 +3839,7 @@ test("list.forEach((item, i, list) => if (i == 0) task(item) else task(list[0]))
                   Variable: "$.i",
                 },
               ],
-              Default: "return task(list[0])",
+              Default: "return task(input.list[0])",
               Type: "Choice",
             },
             "return task(item)": {
@@ -3767,7 +3853,7 @@ test("list.forEach((item, i, list) => if (i == 0) task(item) else task(list[0]))
               ResultPath: "$",
               Type: "Task",
             },
-            "return task(list[0])": {
+            "return task(input.list[0])": {
               End: true,
               ResultSelector: "$.Payload",
               Parameters: {
@@ -3794,18 +3880,22 @@ test("list.forEach((item, i, list) => if (i == 0) task(item) else task(list[0]))
 
 test("try { list.forEach(item => task(item)) }", () => {
   const { stack, task } = initStepFunctionApp();
-  const definition = new ExpressStepFunction(stack, "fn", (list: string[]) => {
-    try {
-      return list.forEach((item) => task(item));
-    } catch {
-      return null;
+  const definition = new ExpressStepFunction<{ list: string[] }, void | null>(
+    stack,
+    "fn",
+    (input) => {
+      try {
+        return input.list.forEach((item) => task(item));
+      } catch {
+        return null;
+      }
     }
-  }).definition;
+  ).definition;
 
   expect(definition).toEqual({
-    StartAt: "return list.forEach(function(item))",
+    StartAt: "return input.list.forEach(function(item))",
     States: {
-      "return list.forEach(function(item))": {
+      "return input.list.forEach(function(item))": {
         Catch: [
           {
             ErrorEquals: ["States.ALL"],
@@ -3852,20 +3942,24 @@ test("try { list.forEach(item => task(item)) }", () => {
 
 test("try { list.forEach(item => task(item)) }", () => {
   const { stack, task } = initStepFunctionApp();
-  const definition = new ExpressStepFunction(stack, "fn", (list: string[]) => {
-    return list.forEach((item) => {
-      try {
-        return task(item);
-      } catch {
-        return null;
-      }
-    });
-  }).definition;
+  const definition = new ExpressStepFunction<{ list: string[] }, void>(
+    stack,
+    "fn",
+    (input) => {
+      return input.list.forEach((item) => {
+        try {
+          return task(item);
+        } catch {
+          return null;
+        }
+      });
+    }
+  ).definition;
 
   expect(definition).toEqual({
-    StartAt: "return list.forEach(function(item))",
+    StartAt: "return input.list.forEach(function(item))",
     States: {
-      "return list.forEach(function(item))": {
+      "return input.list.forEach(function(item))": {
         End: true,
         ItemsPath: "$.list",
         Iterator: {
@@ -3912,20 +4006,24 @@ test("try { list.forEach(item => task(item)) }", () => {
 
 test("try { list.forEach(item => throw) }", () => {
   const { stack } = initStepFunctionApp();
-  const definition = new ExpressStepFunction(stack, "fn", (list: string[]) => {
-    try {
-      return list.forEach(() => {
-        throw new Error("cause");
-      });
-    } catch {
-      return null;
+  const definition = new ExpressStepFunction<{ list: string[] }, void | null>(
+    stack,
+    "fn",
+    (input) => {
+      try {
+        return input.list.forEach(() => {
+          throw new Error("cause");
+        });
+      } catch {
+        return null;
+      }
     }
-  }).definition;
+  ).definition;
 
   expect(definition).toEqual({
-    StartAt: "return list.forEach(function())",
+    StartAt: "return input.list.forEach(function())",
     States: {
-      "return list.forEach(function())": {
+      "return input.list.forEach(function())": {
         Catch: [
           {
             ErrorEquals: ["States.ALL"],
@@ -3964,24 +4062,28 @@ test("try { list.forEach(item => throw) }", () => {
 
 test("try { list.forEach(item => throw) } catch (err)", () => {
   const { stack } = initStepFunctionApp();
-  const definition = new ExpressStepFunction(stack, "fn", (list: string[]) => {
-    try {
-      return list.forEach(() => {
-        throw new Error("cause");
-      });
-    } catch (err: any) {
-      if (err.message === "cause") {
-        return 0;
-      } else {
-        return 1;
+  const definition = new ExpressStepFunction<{ list: string[] }, void | number>(
+    stack,
+    "fn",
+    (input) => {
+      try {
+        return input.list.forEach(() => {
+          throw new Error("cause");
+        });
+      } catch (err: any) {
+        if (err.message === "cause") {
+          return 0;
+        } else {
+          return 1;
+        }
       }
     }
-  }).definition;
+  ).definition;
 
   expect(definition).toEqual({
-    StartAt: "return list.forEach(function())",
+    StartAt: "return input.list.forEach(function())",
     States: {
-      "return list.forEach(function())": {
+      "return input.list.forEach(function())": {
         Catch: [
           {
             ErrorEquals: ["States.ALL"],
@@ -4049,14 +4151,17 @@ test("try { list.forEach(item => throw) } catch (err)", () => {
 
 test("return $SFN.map(list, (item) => task(item))", () => {
   const { stack, task } = initStepFunctionApp();
-  const definition = new ExpressStepFunction(stack, "fn", (list: string[]) => {
-    return $SFN.map(list, (item) => task(item));
+  const definition = new ExpressStepFunction<
+    { list: string[] },
+    (number | null)[]
+  >(stack, "fn", (input) => {
+    return $SFN.map(input.list, (item) => task(item));
   }).definition;
 
   expect(definition).toEqual({
-    StartAt: "return $SFN.map(list, function(item))",
+    StartAt: "return $SFN.map(input.list, function(item))",
     States: {
-      "return $SFN.map(list, function(item))": {
+      "return $SFN.map(input.list, function(item))": {
         End: true,
         ItemsPath: "$.list",
         Iterator: {
@@ -4087,14 +4192,17 @@ test("return $SFN.map(list, (item) => task(item))", () => {
 
 test("return $SFN.map(list, {maxConcurrency: 2} (item) => task(item))", () => {
   const { stack, task } = initStepFunctionApp();
-  const definition = new ExpressStepFunction(stack, "fn", (list: string[]) => {
-    return $SFN.map(list, { maxConcurrency: 2 }, (item) => task(item));
+  const definition = new ExpressStepFunction<
+    { list: string[] },
+    (number | null)[]
+  >(stack, "fn", (input) => {
+    return $SFN.map(input.list, { maxConcurrency: 2 }, (item) => task(item));
   }).definition;
 
   expect(definition).toEqual({
-    StartAt: "return $SFN.map(list, {maxConcurrency: 2}, function(item))",
+    StartAt: "return $SFN.map(input.list, {maxConcurrency: 2}, function(item))",
     States: {
-      "return $SFN.map(list, {maxConcurrency: 2}, function(item))": {
+      "return $SFN.map(input.list, {maxConcurrency: 2}, function(item))": {
         End: true,
         ItemsPath: "$.list",
         MaxConcurrency: 2,
@@ -4126,14 +4234,18 @@ test("return $SFN.map(list, {maxConcurrency: 2} (item) => task(item))", () => {
 
 test("$SFN.map(list, (item) => task(item))", () => {
   const { stack, task } = initStepFunctionApp();
-  const definition = new ExpressStepFunction(stack, "fn", (list: string[]) => {
-    $SFN.map(list, (item) => task(item));
-  }).definition;
+  const definition = new ExpressStepFunction<{ list: string[] }, void>(
+    stack,
+    "fn",
+    (input) => {
+      $SFN.map(input.list, (item) => task(item));
+    }
+  ).definition;
 
   expect(definition).toEqual({
-    StartAt: "$SFN.map(list, function(item))",
+    StartAt: "$SFN.map(input.list, function(item))",
     States: {
-      "$SFN.map(list, function(item))": {
+      "$SFN.map(input.list, function(item))": {
         ItemsPath: "$.list",
         Next: "return null",
         Iterator: {
@@ -4172,15 +4284,18 @@ test("$SFN.map(list, (item) => task(item))", () => {
 
 test("result = $SFN.map(list, (item) => task(item))", () => {
   const { stack, task } = initStepFunctionApp();
-  const definition = new ExpressStepFunction(stack, "fn", (list: string[]) => {
-    const result = $SFN.map(list, (item) => task(item));
+  const definition = new ExpressStepFunction<
+    { list: string[] },
+    (number | null)[]
+  >(stack, "fn", (input) => {
+    const result = $SFN.map(input.list, (item) => task(item));
     return result;
   }).definition;
 
   expect(definition).toEqual({
-    StartAt: "result = $SFN.map(list, function(item))",
+    StartAt: "result = $SFN.map(input.list, function(item))",
     States: {
-      "result = $SFN.map(list, function(item))": {
+      "result = $SFN.map(input.list, function(item))": {
         ItemsPath: "$.list",
         Iterator: {
           StartAt: "return task(item)",
@@ -4216,8 +4331,11 @@ test("result = $SFN.map(list, (item) => task(item))", () => {
 
 test("return $SFN.map(list, (item) => try { task(item)) } catch { return null }", () => {
   const { stack, task } = initStepFunctionApp();
-  const definition = new ExpressStepFunction(stack, "fn", (list: string[]) => {
-    return $SFN.map(list, (item) => {
+  const definition = new ExpressStepFunction<
+    { list: string[] },
+    (number | null)[]
+  >(stack, "fn", (input) => {
+    return $SFN.map(input.list, (item) => {
       try {
         return task(item);
       } catch {
@@ -4227,9 +4345,9 @@ test("return $SFN.map(list, (item) => try { task(item)) } catch { return null }"
   }).definition;
 
   expect(definition).toEqual({
-    StartAt: "return $SFN.map(list, function(item))",
+    StartAt: "return $SFN.map(input.list, function(item))",
     States: {
-      "return $SFN.map(list, function(item))": {
+      "return $SFN.map(input.list, function(item))": {
         End: true,
         ItemsPath: "$.list",
         Iterator: {
@@ -4275,18 +4393,21 @@ test("return $SFN.map(list, (item) => try { task(item)) } catch { return null }"
 
 test("try { $SFN.map(list, (item) => task(item)) } catch { return null }", () => {
   const { stack, task } = initStepFunctionApp();
-  const definition = new ExpressStepFunction(stack, "fn", (list: string[]) => {
+  const definition = new ExpressStepFunction<
+    { list: string[] },
+    (number | null)[] | null
+  >(stack, "fn", (input) => {
     try {
-      return $SFN.map(list, (item) => task(item));
+      return $SFN.map(input.list, (item) => task(item));
     } catch {
       return null;
     }
   }).definition;
 
   expect(definition).toEqual({
-    StartAt: "return $SFN.map(list, function(item))",
+    StartAt: "return $SFN.map(input.list, function(item))",
     States: {
-      "return $SFN.map(list, function(item))": {
+      "return $SFN.map(input.list, function(item))": {
         Catch: [
           {
             ErrorEquals: ["States.ALL"],
@@ -4332,14 +4453,18 @@ test("try { $SFN.map(list, (item) => task(item)) } catch { return null }", () =>
 
 test("return $SFN.forEach(list, (item) => task(item))", () => {
   const { stack, task } = initStepFunctionApp();
-  const definition = new ExpressStepFunction(stack, "fn", (list: string[]) => {
-    return $SFN.forEach(list, (item) => task(item));
-  }).definition;
+  const definition = new ExpressStepFunction<{ list: string[] }, void>(
+    stack,
+    "fn",
+    (input) => {
+      return $SFN.forEach(input.list, (item) => task(item));
+    }
+  ).definition;
 
   expect(definition).toEqual({
-    StartAt: "return $SFN.forEach(list, function(item))",
+    StartAt: "return $SFN.forEach(input.list, function(item))",
     States: {
-      "return $SFN.forEach(list, function(item))": {
+      "return $SFN.forEach(input.list, function(item))": {
         End: true,
         ItemsPath: "$.list",
         Iterator: {
@@ -4370,14 +4495,21 @@ test("return $SFN.forEach(list, (item) => task(item))", () => {
 
 test("return $SFN.forEach(list, {maxConcurrency: 2} (item) => task(item))", () => {
   const { stack, task } = initStepFunctionApp();
-  const definition = new ExpressStepFunction(stack, "fn", (list: string[]) => {
-    return $SFN.forEach(list, { maxConcurrency: 2 }, (item) => task(item));
-  }).definition;
+  const definition = new ExpressStepFunction<{ list: string[] }, void>(
+    stack,
+    "fn",
+    (input) => {
+      return $SFN.forEach(input.list, { maxConcurrency: 2 }, (item) =>
+        task(item)
+      );
+    }
+  ).definition;
 
   expect(definition).toEqual({
-    StartAt: "return $SFN.forEach(list, {maxConcurrency: 2}, function(item))",
+    StartAt:
+      "return $SFN.forEach(input.list, {maxConcurrency: 2}, function(item))",
     States: {
-      "return $SFN.forEach(list, {maxConcurrency: 2}, function(item))": {
+      "return $SFN.forEach(input.list, {maxConcurrency: 2}, function(item))": {
         End: true,
         ItemsPath: "$.list",
         MaxConcurrency: 2,
@@ -4409,14 +4541,18 @@ test("return $SFN.forEach(list, {maxConcurrency: 2} (item) => task(item))", () =
 
 test("$SFN.forEach(list, (item) => task(item))", () => {
   const { stack, task } = initStepFunctionApp();
-  const definition = new ExpressStepFunction(stack, "fn", (list: string[]) => {
-    $SFN.forEach(list, (item) => task(item));
-  }).definition;
+  const definition = new ExpressStepFunction<{ list: string[] }, void>(
+    stack,
+    "fn",
+    (input) => {
+      $SFN.forEach(input.list, (item) => task(item));
+    }
+  ).definition;
 
   expect(definition).toEqual({
-    StartAt: "$SFN.forEach(list, function(item))",
+    StartAt: "$SFN.forEach(input.list, function(item))",
     States: {
-      "$SFN.forEach(list, function(item))": {
+      "$SFN.forEach(input.list, function(item))": {
         ItemsPath: "$.list",
         Next: "return null",
         Iterator: {
@@ -4455,15 +4591,19 @@ test("$SFN.forEach(list, (item) => task(item))", () => {
 
 test("result = $SFN.forEach(list, (item) => task(item))", () => {
   const { stack, task } = initStepFunctionApp();
-  const definition = new ExpressStepFunction(stack, "fn", (list: string[]) => {
-    const result = $SFN.forEach(list, (item) => task(item));
-    return result;
-  }).definition;
+  const definition = new ExpressStepFunction<{ list: string[] }, void>(
+    stack,
+    "fn",
+    (input) => {
+      const result = $SFN.forEach(input.list, (item) => task(item));
+      return result;
+    }
+  ).definition;
 
   expect(definition).toEqual({
-    StartAt: "result = $SFN.forEach(list, function(item))",
+    StartAt: "result = $SFN.forEach(input.list, function(item))",
     States: {
-      "result = $SFN.forEach(list, function(item))": {
+      "result = $SFN.forEach(input.list, function(item))": {
         ItemsPath: "$.list",
         Iterator: {
           StartAt: "return task(item)",
@@ -4499,20 +4639,24 @@ test("result = $SFN.forEach(list, (item) => task(item))", () => {
 
 test("return $SFN.forEach(list, (item) => try { task(item)) } catch { return null }", () => {
   const { stack, task } = initStepFunctionApp();
-  const definition = new ExpressStepFunction(stack, "fn", (list: string[]) => {
-    return $SFN.forEach(list, (item) => {
-      try {
-        return task(item);
-      } catch {
-        return null;
-      }
-    });
-  }).definition;
+  const definition = new ExpressStepFunction<{ list: string[] }, void>(
+    stack,
+    "fn",
+    (input) => {
+      return $SFN.forEach(input.list, (item) => {
+        try {
+          return task(item);
+        } catch {
+          return null;
+        }
+      });
+    }
+  ).definition;
 
   expect(definition).toEqual({
-    StartAt: "return $SFN.forEach(list, function(item))",
+    StartAt: "return $SFN.forEach(input.list, function(item))",
     States: {
-      "return $SFN.forEach(list, function(item))": {
+      "return $SFN.forEach(input.list, function(item))": {
         End: true,
         ItemsPath: "$.list",
         Iterator: {
@@ -4558,18 +4702,22 @@ test("return $SFN.forEach(list, (item) => try { task(item)) } catch { return nul
 
 test("try { $SFN.forEach(list, (item) => task(item)) } catch { return null }", () => {
   const { stack, task } = initStepFunctionApp();
-  const definition = new ExpressStepFunction(stack, "fn", (list: string[]) => {
-    try {
-      return $SFN.forEach(list, (item) => task(item));
-    } catch {
-      return null;
+  const definition = new ExpressStepFunction<{ list: string[] }, void | null>(
+    stack,
+    "fn",
+    (input) => {
+      try {
+        return $SFN.forEach(input.list, (item) => task(item));
+      } catch {
+        return null;
+      }
     }
-  }).definition;
+  ).definition;
 
   expect(definition).toEqual({
-    StartAt: "return $SFN.forEach(list, function(item))",
+    StartAt: "return $SFN.forEach(input.list, function(item))",
     States: {
-      "return $SFN.forEach(list, function(item))": {
+      "return $SFN.forEach(input.list, function(item))": {
         Catch: [
           {
             ErrorEquals: ["States.ALL"],
@@ -4744,9 +4892,9 @@ test("return $SFN.parallel(() => try { task() } catch { return null })) }", () =
       "return $SFN.parallel([function()])": {
         Branches: [
           {
-            StartAt: "return task(undefined)",
+            StartAt: "return task()",
             States: {
-              "return task(undefined)": {
+              "return task()": {
                 Catch: [
                   {
                     ErrorEquals: ["States.ALL"],
@@ -4758,7 +4906,7 @@ test("return $SFN.parallel(() => try { task() } catch { return null })) }", () =
                 ResultSelector: "$.Payload",
                 Parameters: {
                   FunctionName: task.resource.functionName,
-                  Payload: null,
+                  Payload: undefined,
                 },
                 Resource: "arn:aws:states:::lambda:invoke",
                 ResultPath: "$",
@@ -4800,27 +4948,26 @@ test("return $SFN.parallel(() => try { task() } catch { return null })) }", () =
 
 test("return task({ key: items.filter(*) })", () => {
   const { stack, task } = initStepFunctionApp();
-  const definition = new ExpressStepFunction(
-    stack,
-    "fn",
-    (items: { str: string; items: string[] }[]) => {
-      return task({
-        equals: items.filter((item) => item.str === "hello"),
-        and: items.filter(
-          (item) => item.str === "hello" && item.items[0] === "hello"
-        ),
-        or: items.filter(
-          (item) => item.str === "hello" || item.items[0] === "hello"
-        ),
-      });
-    }
-  ).definition;
+  const definition = new ExpressStepFunction<
+    { items: { str: string; items: string[] }[] },
+    number | null
+  >(stack, "fn", (input) => {
+    return task({
+      equals: input.items.filter((item) => item.str === "hello"),
+      and: input.items.filter(
+        (item) => item.str === "hello" && item.items[0] === "hello"
+      ),
+      or: input.items.filter(
+        (item) => item.str === "hello" || item.items[0] === "hello"
+      ),
+    });
+  }).definition;
 
   expect(definition).toEqual({
     StartAt:
-      "return task({equals: items.filter(function(item)), and: items.filter(functi",
+      "return task({equals: input.items.filter(function(item)), and: input.items.f",
     States: {
-      "return task({equals: items.filter(function(item)), and: items.filter(functi":
+      "return task({equals: input.items.filter(function(item)), and: input.items.f":
         {
           Type: "Task",
           End: true,
@@ -4842,20 +4989,19 @@ test("return task({ key: items.filter(*) })", () => {
 
 test("template literal strings", () => {
   const { stack, task } = initStepFunctionApp();
-  const definition = new ExpressStepFunction(
-    stack,
-    "fn",
-    (obj: { str: string; items: string }) => {
-      return task({
-        key: `${obj.str} ${"hello"} ${obj.items[0]}`,
-      });
-    }
-  ).definition;
+  const definition = new ExpressStepFunction<
+    { obj: { str: string; items: string } },
+    number | null
+  >(stack, "fn", (input) => {
+    return task({
+      key: `${input.obj.str} ${"hello"} ${input.obj.items[0]}`,
+    });
+  }).definition;
 
   expect(definition).toEqual({
-    StartAt: "return task({key: `obj.str hello obj.items[0]`})",
+    StartAt: "return task({key: `input.obj.str hello input.obj.items[0]`})",
     States: {
-      "return task({key: `obj.str hello obj.items[0]`})": {
+      "return task({key: `input.obj.str hello input.obj.items[0]`})": {
         End: true,
         ResultSelector: "$.Payload",
         Parameters: {
@@ -4874,18 +5020,22 @@ test("template literal strings", () => {
 
 test("break from for-loop", () => {
   const { stack } = initStepFunctionApp();
-  const definition = new ExpressStepFunction(stack, "fn", (items: string[]) => {
-    for (const item of items) {
-      if (item === "hello") {
-        break;
+  const definition = new ExpressStepFunction<{ items: string[] }, void>(
+    stack,
+    "fn",
+    (input) => {
+      for (const item of input.items) {
+        if (item === "hello") {
+          break;
+        }
       }
     }
-  }).definition;
+  ).definition;
 
   expect(definition).toEqual({
-    StartAt: "for(item of items)",
+    StartAt: "for(item of input.items)",
     States: {
-      "for(item of items)": {
+      "for(item of input.items)": {
         Catch: [
           {
             ErrorEquals: ["Break"],
@@ -5016,18 +5166,22 @@ test("break from do-while-loop", () => {
 
 test("continue in for loop", () => {
   const { stack } = initStepFunctionApp();
-  const definition = new ExpressStepFunction(stack, "fn", (items: string[]) => {
-    for (const item of items) {
-      if (item === "hello") {
-        continue;
+  const definition = new ExpressStepFunction<{ items: string[] }, void>(
+    stack,
+    "fn",
+    (input) => {
+      for (const item of input.items) {
+        if (item === "hello") {
+          continue;
+        }
       }
     }
-  }).definition;
+  ).definition;
 
   expect(definition).toEqual({
-    StartAt: "for(item of items)",
+    StartAt: "for(item of input.items)",
     States: {
-      "for(item of items)": {
+      "for(item of input.items)": {
         ItemsPath: "$.items",
         Iterator: {
           StartAt: 'if(item == "hello")',
@@ -5076,14 +5230,18 @@ test("continue in for loop", () => {
 
 test("continue in while loop", () => {
   const { stack, task } = initStepFunctionApp();
-  const definition = new ExpressStepFunction(stack, "fn", (key: string) => {
-    while (true) {
-      if (key === "sam") {
-        continue;
+  const definition = new ExpressStepFunction<{ key: string }, void>(
+    stack,
+    "fn",
+    (input) => {
+      while (true) {
+        if (input.key === "sam") {
+          continue;
+        }
+        task(input.key);
       }
-      task(key);
     }
-  }).definition;
+  ).definition;
 
   expect(definition).toEqual({
     StartAt: "while (true)",
@@ -5092,14 +5250,14 @@ test("continue in while loop", () => {
         Choices: [
           {
             IsPresent: false,
-            Next: 'if(key == "sam")',
+            Next: 'if(input.key == "sam")',
             Variable: "$.0_true",
           },
         ],
         Default: "return null",
         Type: "Choice",
       },
-      'if(key == "sam")': {
+      'if(input.key == "sam")': {
         Choices: [
           {
             Next: "continue",
@@ -5107,7 +5265,7 @@ test("continue in while loop", () => {
             Variable: "$.key",
           },
         ],
-        Default: "task(key)",
+        Default: "task(input.key)",
         Type: "Choice",
       },
       continue: {
@@ -5115,7 +5273,7 @@ test("continue in while loop", () => {
         ResultPath: null,
         Type: "Pass",
       },
-      "task(key)": {
+      "task(input.key)": {
         Next: "while (true)",
         ResultSelector: "$.Payload",
         Parameters: {
@@ -5140,19 +5298,23 @@ test("continue in while loop", () => {
 
 test("continue in do..while loop", () => {
   const { stack, task } = initStepFunctionApp();
-  const definition = new ExpressStepFunction(stack, "fn", (key: string) => {
-    do {
-      if (key === "sam") {
-        continue;
-      }
-      task(key);
-    } while (true);
-  }).definition;
+  const definition = new ExpressStepFunction<{ key: string }, void>(
+    stack,
+    "fn",
+    (input) => {
+      do {
+        if (input.key === "sam") {
+          continue;
+        }
+        task(input.key);
+      } while (true);
+    }
+  ).definition;
 
   expect(definition).toEqual({
-    StartAt: 'if(key == "sam")',
+    StartAt: 'if(input.key == "sam")',
     States: {
-      'if(key == "sam")': {
+      'if(input.key == "sam")': {
         Choices: [
           {
             Next: "continue",
@@ -5160,15 +5322,15 @@ test("continue in do..while loop", () => {
             Variable: "$.key",
           },
         ],
-        Default: "task(key)",
+        Default: "task(input.key)",
         Type: "Choice",
       },
       continue: {
-        Next: 'if(key == "sam")',
+        Next: 'if(input.key == "sam")',
         ResultPath: null,
         Type: "Pass",
       },
-      "task(key)": {
+      "task(input.key)": {
         Next: "while (true)",
         ResultSelector: "$.Payload",
         Parameters: {
@@ -5183,7 +5345,7 @@ test("continue in do..while loop", () => {
         Choices: [
           {
             IsPresent: false,
-            Next: 'if(key == "sam")',
+            Next: 'if(input.key == "sam")',
             Variable: "$.0_true",
           },
         ],
@@ -5209,14 +5371,14 @@ test("return task(task())", () => {
   }).definition;
 
   expect(definition).toEqual({
-    StartAt: "0_tmp = task(undefined)",
+    StartAt: "0_tmp = task()",
     States: {
-      "0_tmp = task(undefined)": {
+      "0_tmp = task()": {
         Next: "return task(0_tmp)",
         ResultSelector: "$.Payload",
         Parameters: {
           FunctionName: task.resource.functionName,
-          Payload: null,
+          Payload: undefined,
         },
         Resource: "arn:aws:states:::lambda:invoke",
         ResultPath: "$.0_tmp",
@@ -5274,14 +5436,14 @@ test("while(true) { try { } catch { wait }", () => {
         Choices: [
           {
             IsPresent: false,
-            Next: "task(undefined)",
+            Next: "task()",
             Variable: "$.0_true",
           },
         ],
         Default: "return null",
         Type: "Choice",
       },
-      "task(undefined)": {
+      "task()": {
         Catch: [
           {
             ErrorEquals: ["States.ALL"],
@@ -5293,7 +5455,7 @@ test("while(true) { try { } catch { wait }", () => {
         ResultSelector: "$.Payload",
         Parameters: {
           FunctionName: task.resource.functionName,
-          Payload: null,
+          Payload: undefined,
         },
         Resource: "arn:aws:states:::lambda:invoke",
         ResultPath: null,
@@ -5323,20 +5485,394 @@ test("call Step Function from another Step Function", () => {
   });
 
   const definition = new ExpressStepFunction(stack, "machine2", () => {
-    const result = machine1();
+    const result = machine1({});
     return result;
   }).definition;
 
   expect(definition).toEqual({
-    StartAt: "result = machine1()",
+    StartAt: "result = machine1({})",
     States: {
-      "result = machine1()": {
+      "result = machine1({})": {
         Next: "return result",
         Parameters: {
-          Input: {},
           StateMachineArn: machine1.stateMachineArn,
         },
         Resource: "arn:aws:states:::aws-sdk:sfn:startSyncExecution",
+        ResultPath: "$.result",
+        Type: "Task",
+      },
+      "return result": {
+        End: true,
+        OutputPath: "$.result",
+        Type: "Pass",
+      },
+    },
+  });
+});
+
+test("call Step Function from another Step Function with name and trace", () => {
+  const { stack } = initStepFunctionApp();
+  const machine1 = new ExpressStepFunction(stack, "machine1", () => {
+    return "hello";
+  });
+
+  const definition = new ExpressStepFunction(stack, "machine2", () => {
+    const result = machine1({
+      name: "exec1",
+      traceHeader: "1",
+    });
+    return result;
+  }).definition;
+
+  expect(definition).toEqual({
+    StartAt: 'result = machine1({name: "exec1", traceHeader: "1"})',
+    States: {
+      'result = machine1({name: "exec1", traceHeader: "1"})': {
+        Next: "return result",
+        Parameters: {
+          StateMachineArn: machine1.stateMachineArn,
+          Name: "exec1",
+          TraceHeader: "1",
+        },
+        Resource: "arn:aws:states:::aws-sdk:sfn:startSyncExecution",
+        ResultPath: "$.result",
+        Type: "Task",
+      },
+      "return result": {
+        End: true,
+        OutputPath: "$.result",
+        Type: "Pass",
+      },
+    },
+  });
+});
+
+test("call Step Function from another Step Function with name and trace from variables", () => {
+  const { stack } = initStepFunctionApp();
+  const machine1 = new ExpressStepFunction(stack, "machine1", () => {
+    return "hello";
+  });
+
+  const definition = new ExpressStepFunction(
+    stack,
+    "machine2",
+    (input: { name: string; header: string }) => {
+      const result = machine1({
+        name: input.name,
+        traceHeader: input.header,
+      });
+      return result;
+    }
+  ).definition;
+
+  expect(definition).toEqual({
+    StartAt: "result = machine1({name: input.name, traceHeader: input.header})",
+    States: {
+      "result = machine1({name: input.name, traceHeader: input.header})": {
+        Next: "return result",
+        Parameters: {
+          StateMachineArn: machine1.stateMachineArn,
+          "Name.$": "$.name",
+          "TraceHeader.$": "$.header",
+        },
+        Resource: "arn:aws:states:::aws-sdk:sfn:startSyncExecution",
+        ResultPath: "$.result",
+        Type: "Task",
+      },
+      "return result": {
+        End: true,
+        OutputPath: "$.result",
+        Type: "Pass",
+      },
+    },
+  });
+});
+
+test("call Step Function from another Step Function with input", () => {
+  const { stack } = initStepFunctionApp();
+  const machine1 = new ExpressStepFunction<{ value: string }, string>(
+    stack,
+    "machine1",
+    () => {
+      return "hello";
+    }
+  );
+
+  const definition = new ExpressStepFunction(stack, "machine2", () => {
+    const result = machine1({
+      input: {
+        value: "hello",
+      },
+    });
+    return result;
+  }).definition;
+
+  expect(definition).toEqual({
+    StartAt: 'result = machine1({input: {value: "hello"}})',
+    States: {
+      'result = machine1({input: {value: "hello"}})': {
+        Next: "return result",
+        Parameters: {
+          Input: {
+            value: "hello",
+          },
+          StateMachineArn: machine1.stateMachineArn,
+        },
+        Resource: "arn:aws:states:::aws-sdk:sfn:startSyncExecution",
+        ResultPath: "$.result",
+        Type: "Task",
+      },
+      "return result": {
+        End: true,
+        OutputPath: "$.result",
+        Type: "Pass",
+      },
+    },
+  });
+});
+
+test("call Step Function from another Step Function with dynamic input", () => {
+  const { stack } = initStepFunctionApp();
+  const machine1 = new ExpressStepFunction<{ value: string }, string>(
+    stack,
+    "machine1",
+    () => {
+      return "hello";
+    }
+  );
+
+  const definition = new ExpressStepFunction<
+    { value1: string },
+    SyncExecutionResult<string>
+  >(stack, "machine2", (input) => {
+    const result = machine1({
+      input: {
+        value: input.value1,
+      },
+    });
+    return result;
+  }).definition;
+
+  expect(definition).toEqual({
+    StartAt: "result = machine1({input: {value: input.value1}})",
+    States: {
+      "result = machine1({input: {value: input.value1}})": {
+        Next: "return result",
+        Parameters: {
+          Input: {
+            "value.$": "$.value1",
+          },
+          StateMachineArn: machine1.stateMachineArn,
+        },
+        Resource: "arn:aws:states:::aws-sdk:sfn:startSyncExecution",
+        ResultPath: "$.result",
+        Type: "Task",
+      },
+      "return result": {
+        End: true,
+        OutputPath: "$.result",
+        Type: "Pass",
+      },
+    },
+  });
+});
+
+test("call Step Function from another Step Function with dynamic input field input", () => {
+  const { stack } = initStepFunctionApp();
+  const machine1 = new ExpressStepFunction<{ value: string }, string>(
+    stack,
+    "machine1",
+    () => {
+      return "hello";
+    }
+  );
+
+  const definition = new ExpressStepFunction<
+    { value: string },
+    SyncExecutionResult<string>
+  >(stack, "machine2", (input) => {
+    const result = machine1({
+      input: input,
+    });
+    return result;
+  }).definition;
+
+  expect(definition).toEqual({
+    StartAt: "result = machine1({input: input})",
+    States: {
+      "result = machine1({input: input})": {
+        Next: "return result",
+        Parameters: {
+          "Input.$": "$",
+          StateMachineArn: machine1.stateMachineArn,
+        },
+        Resource: "arn:aws:states:::aws-sdk:sfn:startSyncExecution",
+        ResultPath: "$.result",
+        Type: "Task",
+      },
+      "return result": {
+        End: true,
+        OutputPath: "$.result",
+        Type: "Pass",
+      },
+    },
+  });
+});
+
+test("call Step Function from another Step Function not supported with reference argument", () => {
+  const { stack } = initStepFunctionApp();
+  const machine1 = new ExpressStepFunction<{ value: string }, string>(
+    stack,
+    "machine1",
+    () => {
+      return "hello";
+    }
+  );
+
+  expect(
+    () =>
+      new ExpressStepFunction<{ value1: string }, SyncExecutionResult<string>>(
+        stack,
+        "machine2",
+        (input) => {
+          const _input = {
+            input: {
+              value: input.value1,
+            },
+          };
+          const result = machine1(_input);
+          return result;
+        }
+      )
+  ).toThrow(
+    "Step function invocation must use a single, inline object parameter. Variable references are not supported currently."
+  );
+});
+
+test("call Step Function from another Step Function not supported with computed keys", () => {
+  const { stack } = initStepFunctionApp();
+  const machine1 = new ExpressStepFunction<{ value: string }, string>(
+    stack,
+    "machine1",
+    () => {
+      return "hello";
+    }
+  );
+
+  expect(
+    () =>
+      new ExpressStepFunction<{ value1: string }, SyncExecutionResult<string>>(
+        stack,
+        "machine2",
+        (input) => {
+          const _inputStr = "input";
+          const result = machine1({
+            [_inputStr]: {
+              value: input.value1,
+            },
+          });
+          return result;
+        }
+      )
+  ).toThrow(
+    "Step function invocation must use a single, inline object instantiated without computed or spread keys."
+  );
+});
+
+test("call Step Function from another Step Function not supported with spread assignment", () => {
+  const { stack } = initStepFunctionApp();
+  const machine1 = new ExpressStepFunction<{ value: string }, string>(
+    stack,
+    "machine1",
+    () => {
+      return "hello";
+    }
+  );
+
+  expect(
+    () =>
+      new ExpressStepFunction<{ value1: string }, SyncExecutionResult<string>>(
+        stack,
+        "machine2",
+        (input) => {
+          const _input = {
+            input: {
+              value: input.value1,
+            },
+          };
+          const result = machine1({ ..._input });
+          return result;
+        }
+      )
+  ).toThrow(
+    "Step function invocation must use a single, inline object instantiated without computed or spread keys."
+  );
+});
+
+test("call Step Function describe from another Step Function", () => {
+  const { stack } = initStepFunctionApp();
+  const machine1 = new StepFunction<{ value: string }, string>(
+    stack,
+    "machine1",
+    () => {
+      return "hello";
+    }
+  );
+
+  const definition = new ExpressStepFunction(stack, "machine2", () => {
+    const result = machine1.describeExecution("hello");
+    return result;
+  }).definition;
+
+  expect(definition).toEqual({
+    StartAt: 'result = machine1.describeExecution("hello")',
+    States: {
+      'result = machine1.describeExecution("hello")': {
+        Next: "return result",
+        Parameters: {
+          ExecutionArn: "hello",
+        },
+        Resource: "arn:aws:states:::aws-sdk:sfn:describeExecution",
+        ResultPath: "$.result",
+        Type: "Task",
+      },
+      "return result": {
+        End: true,
+        OutputPath: "$.result",
+        Type: "Pass",
+      },
+    },
+  });
+});
+
+test("call Step Function describe from another Step Function from context", () => {
+  const { stack } = initStepFunctionApp();
+  const machine1 = new StepFunction<{ value: string }, string>(
+    stack,
+    "machine1",
+    () => {
+      return "hello";
+    }
+  );
+
+  const definition = new ExpressStepFunction(
+    stack,
+    "machine2",
+    (input: { id: string }) => {
+      const result = machine1.describeExecution(input.id);
+      return result;
+    }
+  ).definition;
+
+  expect(definition).toEqual({
+    StartAt: "result = machine1.describeExecution(input.id)",
+    States: {
+      "result = machine1.describeExecution(input.id)": {
+        Next: "return result",
+        Parameters: {
+          "ExecutionArn.$": "$.id",
+        },
+        Resource: "arn:aws:states:::aws-sdk:sfn:describeExecution",
         ResultPath: "$.result",
         Type: "Task",
       },

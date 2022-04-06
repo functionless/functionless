@@ -2,15 +2,16 @@ import { aws_events } from "aws-cdk-lib";
 import { FunctionDecl } from "../declaration";
 import { synthesizeEventBridgeTargets } from "./target-input";
 import { Function } from "../function";
-import { LambdaTargetProps, pipe } from "./target";
+import { LambdaTargetProps, pipe, StateMachineTargetProps } from "./target";
 import { EventBusRuleInput } from "./types";
 import { IEventBusRule } from "./rule";
+import { StepFunction, ExpressStepFunction } from "../step-function";
 
 /**
  * A function interface used by the {@link EventBusRule}'s map function.
  *
  * event is the event matched by the rule. This argument is optional.
- * $utils is a collection of built-in utilities wrapping EventBridge TargetInputs like contextual constants avaliable to the transformer.
+ * $utils is a collection of built-in utilities wrapping EventBridge TargetInputs like contextual constants available to the transformer.
  */
 export type EventTransformFunction<E extends EventBusRuleInput, O = any> = (
   event: E,
@@ -60,7 +61,17 @@ export class EventBusTransform<T extends EventBusRuleInput, P> {
    */
   pipe<P>(props: LambdaTargetProps<P>): void;
   pipe<P>(func: Function<P, any>): void;
-  pipe<P>(resource: Function<P, any> | LambdaTargetProps<P>): void {
-    pipe(this.rule, resource, this.targetInput);
+  pipe<P>(props: StateMachineTargetProps<P>): void;
+  pipe<P>(props: StepFunction<P, any>): void;
+  pipe<P>(props: ExpressStepFunction<P, any>): void;
+  pipe<P>(
+    resource:
+      | Function<P, any>
+      | LambdaTargetProps<P>
+      | StateMachineTargetProps<P>
+      | StepFunction<P, any>
+      | ExpressStepFunction<P, any>
+  ): void {
+    pipe(this.rule, resource as any, this.targetInput);
   }
 }
