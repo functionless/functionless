@@ -23,6 +23,7 @@ import {
   ProcessedPerson,
 } from "./generated-types";
 
+export { Person };
 export class PeopleDatabase extends Construct {
   readonly personTable;
   readonly computeScore;

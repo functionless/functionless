@@ -28,10 +28,7 @@
       {
         "transform": "functionless/lib/compile"
       }
-    ],
-    "paths": {
-      "functionless": ["../"]
-    }
+    ]
   },
   "include": [".projenrc.js", "src/**/*.ts"],
   "exclude": ["node_modules"]
