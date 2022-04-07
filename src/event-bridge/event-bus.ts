@@ -16,7 +16,7 @@ import {
   PropAssignExpr,
   StringLiteralExpr,
 } from "../expression";
-import { EventBusRule, EventPredicateFunction, IEventBusRule } from "./rule";
+import { EventBusRule, EventPredicateFunction } from "./rule";
 import { EventBusRuleInput } from "./types";
 
 export const isEventBus = <E extends EventBusRuleInput>(
@@ -28,14 +28,7 @@ export const isEventBus = <E extends EventBusRuleInput>(
   );
 };
 
-export interface IEventBus<E extends EventBusRuleInput> {
-  readonly bus: aws_events.IEventBus;
-
-  /**
-   * This static property identifies this class as an EventBus to the TypeScript plugin.
-   */
-  readonly functionlessKind: typeof EventBusBase.FunctionlessType;
-
+export interface IEventBusFilterable<E extends EventBusRuleInput> {
   /**
    * EventBus Rules can filter events using Functionless predicate functions.
    *
@@ -98,6 +91,16 @@ export interface IEventBus<E extends EventBusRuleInput> {
     id: string,
     predicate: EventPredicateFunction<E>
   ): EventBusRule<E>;
+}
+
+export interface IEventBus<E extends EventBusRuleInput>
+  extends IEventBusFilterable<E> {
+  readonly bus: aws_events.IEventBus;
+
+  /**
+   * This static property identifies this class as an EventBus to the TypeScript plugin.
+   */
+  readonly functionlessKind: typeof EventBusBase.FunctionlessType;
 
   /**
    * Put one or more events on an Event Bus.
@@ -222,7 +225,7 @@ abstract class EventBusBase<E extends EventBusRuleInput>
     scope: Construct,
     id: string,
     predicate: EventPredicateFunction<E>
-  ): IEventBusRule<E> {
+  ): EventBusRule<E> {
     return new EventBusRule<E>(scope, id, this, predicate);
   }
 }

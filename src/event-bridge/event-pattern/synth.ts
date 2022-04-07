@@ -68,20 +68,44 @@ const OPERATIONS = { STARTS_WITH: "startsWith", INCLUDES: "includes" };
 const INCLUDES_SEARCH_ELEMENT = "searchElement";
 const STARTS_WITH_SEARCH_STRING = "searchString";
 
+export const synthesizeEventPattern = (
+  document: PatternDocument
+): functionless_event_bridge.FunctionlessEventPattern => {
+  const doc = patternDocumentToEventPattern(document);
+
+  const isEmpty = !Object.values(doc).some(
+    (x) => !!x && (!Array.isArray(x) || x.length > 0)
+  );
+
+  // empty prefix on source should always be true and represent a match all rule.
+  return isEmpty ? { source: [{ prefix: "" }] } : doc;
+};
+
 /**
- * Turns a Typescript function into a Event Bridge Event Pattern.
+ * Turns a Typescript function into a Pattern Document, which is the intermediate state used by
+ * functionless to generate event pattern.
  *
  * (event) => event.source === "lambda"
  *
  * {
- *    source: ["lambda"]
+ *    doc: {
+ *        source: {
+ *              value: "lambda"
+ *        }
+ *   }
  * }
+ *
+ * Use {@link synthesizeEventPattern} to generate a Event Pattern usable by event bridge.
  *
  * https://github.com/sam-goodwin/functionless/issues/37#issuecomment-1066313146
  */
-export const synthesizeEventPattern = (
-  predicate: FunctionDecl | Err | unknown
-): functionless_event_bridge.FunctionlessEventPattern => {
+export const synthesizePatternDocument = (
+  predicate: FunctionDecl | Err | unknown,
+  /**
+   * Document to join (AND) with the predicate.
+   */
+  aggregateDocument?: PatternDocument
+): PatternDocument => {
   if (isErr(predicate)) {
     throw predicate.error;
   } else if (!isFunctionDecl(predicate)) {
@@ -831,16 +855,11 @@ export const synthesizeEventPattern = (
 
   const flattenedExpression = flattenReturnEvent(predicate.body.statements);
 
-  const result = evalExpr(flattenedExpression);
-
-  const doc = patternDocumentToEventPattern(result);
-
-  const isEmpty = !Object.values(doc).some(
-    (x) => !!x && (!Array.isArray(x) || x.length > 0)
-  );
-
-  // empty prefix on source should always be true and represent a match all rule.
-  return isEmpty ? { source: [{ prefix: "" }] } : doc;
+  const doc = evalExpr(flattenedExpression);
+  if (aggregateDocument) {
+    return andDocuments(aggregateDocument, doc);
+  }
+  return doc;
 };
 
 /**

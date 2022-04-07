@@ -86,7 +86,7 @@ export function compile(
             );
           } else if (isEventBusWhenFunction(node)) {
             return visitEventBusWhen(node);
-          } else if (isEventBusMapFunction(node)) {
+          } else if (isEventBusRuleMapFunction(node)) {
             return visitEventBusMap(node);
           } else if (isNewEventBusRule(node)) {
             return visitEventBusRule(node);
@@ -185,11 +185,12 @@ export function compile(
           ts.isCallExpression(node) &&
           ts.isPropertyAccessExpression(node.expression) &&
           node.expression.name.text === "when" &&
-          isEventBus(node.expression.expression)
+          (isEventBus(node.expression.expression) ||
+            isEventBusRule(node.expression.expression))
         );
       }
 
-      function isEventBusMapFunction(
+      function isEventBusRuleMapFunction(
         node: ts.Node
       ): node is EventBusMapInterface {
         return (

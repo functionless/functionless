@@ -3,6 +3,7 @@ import {
   Arn,
   ArnFormat,
   aws_cloudwatch,
+  aws_events,
   aws_iam,
   aws_stepfunctions,
   Resource,
@@ -34,6 +35,9 @@ import {
 import { ensureItemOf } from "./util";
 import { CallContext } from "./context";
 import { assertDefined, assertNever, assertNodeKind } from "./assert";
+import { IEventBusRule } from "./event-bridge/rule";
+import { EventBusRuleInput } from "./event-bridge/types";
+import { EventBus } from "./event-bridge";
 
 export type AnyStepFunction =
   | ExpressStepFunction<any, any>
@@ -332,6 +336,28 @@ export function isStepFunction<P = any, O = any>(
 ): a is StepFunction<P, O> | ExpressStepFunction<P, O> {
   return a?.kind === "StepFunction";
 }
+
+interface StepFunctionDetail {
+  executionArn: string;
+  stateMachineArn: string;
+  name: string;
+  status: "SUCCEEDED" | "RUNNING";
+  startDate: number;
+  stopDate: number | null;
+  input: string;
+  inputDetails: {
+    included: boolean;
+  };
+  output: null | string;
+  outputDetails: null;
+}
+
+// TODO add source
+interface StepFunctionSucceededEvent
+  extends EventBusRuleInput<
+    StepFunctionDetail,
+    "Step Functions Execution Status Change"
+  > {}
 abstract class BaseStepFunction<P extends Record<string, any> | undefined, O>
   extends Resource
   implements aws_stepfunctions.IStateMachine
@@ -487,6 +513,52 @@ abstract class BaseStepFunction<P extends Record<string, any> | undefined, O>
       }
       return assertNever(context);
     });
+  }
+
+  // TODO: add ability to further filter the rule.
+  public onSuccess(
+    scope: Construct,
+    id: string
+  ): IEventBusRule<StepFunctionSucceededEvent> {
+    // TODO singleton
+    const defaultBus = aws_events.EventBus.fromEventBusName(
+      this,
+      "__functionless_defaultBus",
+      "default"
+    );
+    const bus = EventBus.fromBus<StepFunctionSucceededEvent>(defaultBus);
+    return bus.when(
+      scope,
+      id,
+      (event) =>
+        event["detail-type"] === "Step Functions Execution Status Change" &&
+        event.detail.status === "SUCCEEDED" &&
+        // TODO: figure out a more natural way to do this... resources: { prefix: machineArn }
+        // Maybe use `some(x => x.startsWith(...)k)`?
+        (event.resources as unknown as string).startsWith(this.stateMachineArn)
+    );
+  }
+
+  public onStatusChange(
+    scope: Construct,
+    id: string
+  ): IEventBusRule<StepFunctionSucceededEvent> {
+    // TODO singleton
+    const defaultBus = aws_events.EventBus.fromEventBusName(
+      this,
+      "__functionless_defaultBus",
+      "default"
+    );
+    const bus = EventBus.fromBus<StepFunctionSucceededEvent>(defaultBus);
+    return bus.when(
+      scope,
+      id,
+      (event) =>
+        event["detail-type"] === "Step Functions Execution Status Change" &&
+        // TODO: figure out a more natural way to do this... resources: { prefix: machineArn }
+        // Maybe use `some(x => x.startsWith(...)k)`?
+        (event.resources as unknown as string).startsWith(this.stateMachineArn)
+    );
   }
 
   public abstract getStepFunctionType(): aws_stepfunctions.StateMachineType;

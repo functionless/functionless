@@ -1531,7 +1531,7 @@ describe("event pattern", () => {
 
 // https://github.com/sam-goodwin/functionless/issues/68
 describe.skip("destructure", () => {
-  test("descture parameter", () => {
+  test("destructure parameter", () => {
     ebEventPatternTestCase(
       reflect<EventPredicateFunction<TestEvent>>(
         ({ source }) => source === "lambda"
@@ -1542,7 +1542,7 @@ describe.skip("destructure", () => {
     );
   });
 
-  test("descture variable", () => {
+  test("destructure variable", () => {
     ebEventPatternTestCase(
       reflect<EventPredicateFunction<TestEvent>>((event) => {
         const { source } = event;
@@ -1554,7 +1554,7 @@ describe.skip("destructure", () => {
     );
   });
 
-  test("descture multi-layer variable", () => {
+  test("destructure multi-layer variable", () => {
     ebEventPatternTestCase(
       reflect<EventPredicateFunction<TestEvent>>((event) => {
         const {
@@ -1568,7 +1568,7 @@ describe.skip("destructure", () => {
     );
   });
 
-  test("descture array doesn't work", () => {
+  test("destructure array doesn't work", () => {
     ebEventPatternTestCaseError(
       reflect<EventPredicateFunction<TestEvent>>((event) => {
         const {
@@ -1581,7 +1581,7 @@ describe.skip("destructure", () => {
     );
   });
 
-  test("descture parameter array doesn't work", () => {
+  test("destructure parameter array doesn't work", () => {
     ebEventPatternTestCaseError(
       reflect<EventPredicateFunction<TestEvent>>(
         ({
@@ -1605,7 +1605,7 @@ describe.skip("destructure", () => {
     );
   });
 
-  test("descture parameter rename", () => {
+  test("destructure parameter rename", () => {
     ebEventPatternTestCase(
       reflect<EventPredicateFunction<TestEvent>>(
         ({ source: src }) => src === "lambda"

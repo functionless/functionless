@@ -56,6 +56,24 @@ test("new bus with when", () => {
   expect(rule.rule._renderEventPattern()).toEqual({ source: [{ prefix: "" }] });
 });
 
+test("refine rule", () => {
+  const rule = new EventBus(stack, "bus").when(
+    stack,
+    "rule",
+    (event) => event.source === "lambda"
+  );
+  const rule2 = rule.when(
+    stack,
+    "rule1",
+    (event) => event["detail-type"] === "something"
+  );
+
+  expect(rule2.rule._renderEventPattern()).toEqual({
+    source: ["lambda"],
+    "detail-type": ["something"],
+  });
+});
+
 test("new bus with when pipe event bus", () => {
   const busBus = new EventBus(stack, "bus");
 
@@ -65,6 +83,24 @@ test("new bus with when pipe event bus", () => {
   expect((rule.rule as any).targets.length).toEqual(1);
   expect(
     (rule.rule as any).targets[0] as aws_events.IRuleTarget
+  ).toHaveProperty("arn");
+});
+
+test("refined bus with when pipe event bus", () => {
+  const busBus = new EventBus(stack, "bus");
+
+  const rule = busBus.when(stack, "rule", (event) => event.source === "lambda");
+  const rule2 = rule.when(
+    stack,
+    "rule1",
+    (event) => event["detail-type"] === "something"
+  );
+  rule2.pipe(busBus);
+
+  expect((rule.rule as any).targets.length).toEqual(0);
+  expect((rule2.rule as any).targets.length).toEqual(1);
+  expect(
+    (rule2.rule as any).targets[0] as aws_events.IRuleTarget
   ).toHaveProperty("arn");
 });
 
@@ -86,6 +122,30 @@ test("new bus with when map pipe function", () => {
   expect((rule.rule.rule as any).targets.length).toEqual(1);
   expect(
     (rule.rule.rule as any).targets[0] as aws_events.IRuleTarget
+  ).toHaveProperty("arn");
+});
+
+test("refined bus with when pipe function", () => {
+  const func = new Function(
+    aws_lambda.Function.fromFunctionArn(stack, "func", "")
+  );
+  const rule = new EventBus(stack, "bus").when(
+    stack,
+    "rule",
+    (event) => event.source === "lambda"
+  );
+  const rule2 = rule.when(
+    stack,
+    "rule1",
+    (event) => event["detail-type"] === "something"
+  );
+  const map = rule2.map((event) => event.source);
+  map.pipe(func);
+
+  expect((rule.rule as any).targets.length).toEqual(0);
+  expect((rule2.rule as any).targets.length).toEqual(1);
+  expect(
+    (map.rule.rule as any).targets[0] as aws_events.IRuleTarget
   ).toHaveProperty("arn");
 });
 
