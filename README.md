@@ -398,9 +398,7 @@ interface Delete {
 const createOrUpdateOperation = functionless.Function<CreateOrUpdate, void>(
   createOrUpdateFunction
 );
-const deleteOperation = functionless.Function<Delete, void>(
-  deleteFunction
-);
+const deleteOperation = functionless.Function<Delete, void>(deleteFunction);
 ```
 
 The events from before do not match the formats from before, so lets transform them to the structures match.
@@ -1319,7 +1317,7 @@ Two plugins are necessary to generate resolver types:
 - [typescript](https://www.graphql-code-generator.com/plugins/typescript)
 - [typescript-resolver](https://www.graphql-code-generator.com/plugins/typescript-resolvers)
 
-Both of those plugins need to be configured to generate types that can be easily imported into your app.
+Both of those plugins need to be configured by creating a [codegen.yml](./src/test-app/codegen.yml) file.
 
 ```yaml
 overwrite: true
@@ -1345,8 +1343,64 @@ generates:
       skipTypename: true
 ```
 
-you can then use `npx graphql-codegen --config codegen.yml` to generate the types, you should regenerate them any time you update your schema
+you can then use `npx graphql-codegen --config codegen.yml` to generate a [file containing the types](./src/test-app/generated-types.ts), you should re-generate them any time you update your schema.
 
-The generated types will include a `Resolvers` type that can be used to reference the types of all resolvers and get access to the type of parameters, result and source. e.g. `type GetPersonQueryArgs = Resolvers["Query"]["getPerson"]['args']`
+If you use the following schema
 
-Check the [test-app](https://github.com/sam-goodwin/functionless/tree/main/test-app/people-db) for a working example.
+```gql
+type Person {
+  id: String!
+  name: String!
+}
+
+type Query {
+  getPerson(id: String!): ProcessedPerson
+}
+```
+
+The generated types will include type definitions for all graphql types, inputs and resovlers. Those types can then be imported in your cdk app.
+
+```ts
+import { QueryResolvers, Person } from "./generated-types";
+import { $util, AppsyncResolver } from "functionless";
+
+export class PeopleDatabase extends Construct {
+  readonly personTable;
+  readonly getPerson;
+
+  constructor(scope: Construct, id: string) {
+    super(scope, id);
+    // Person type can be used to define your typesafe dynamodb table
+    this.personTable = new Table<Person, "id", undefined>(
+      new aws_dynamodb.Table(this, "table", {
+        partitionKey: {
+          name: "id",
+          type: aws_dynamodb.AttributeType.STRING,
+        },
+      })
+    );
+    // QueryResolvers type can be used to get parameters for AppsyncResolver
+    this.getPerson = new AppsyncResolver<
+      QueryResolvers["addPerson"]["args"],
+      QueryResolvers["addPerson"]["result"]
+    >(($context) => {
+      const person = this.personTable.putItem({
+        key: {
+          id: {
+            S: $util.autoId(),
+          },
+        },
+        attributeValues: {
+          name: {
+            S: $context.arguments.input.name,
+          },
+        },
+      });
+
+      return person;
+    });
+  }
+}
+```
+
+Check the [test-app](./src/test-app/people-db.ts) for a full working example.
