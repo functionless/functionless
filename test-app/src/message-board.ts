@@ -369,28 +369,6 @@ interface Notification {
   message: string;
 }
 
-// TODO: Make this easier - https://github.com/sam-goodwin/functionless/issues/44
-interface StepFunctionDetail {
-  executionArn: string;
-  stateMachineArn: string;
-  name: string;
-  status: "SUCCEEDED" | "RUNNING";
-  startDate: number;
-  stopDate: number | null;
-  input: string;
-  inputDetails: {
-    included: boolean;
-  };
-  output: null | string;
-  outputDetails: null;
-}
-
-interface StepFunctionSucceededEvent
-  extends EventBusRuleInput<
-    StepFunctionDetail,
-    "Step Functions Execution Status Change"
-  > {}
-
 interface TestDeleteEvent
   extends EventBusRuleInput<{ postId: string }, "Delete", "test"> {}
 
@@ -406,19 +384,12 @@ exports.handler = async (event) => {
   })
 );
 
-const defaultBus = EventBus.fromBus<
-  StepFunctionSucceededEvent | TestDeleteEvent
->(aws_events.EventBus.fromEventBusName(stack, "defaultBus", "default"));
+const defaultBus = EventBus.fromBus<TestDeleteEvent>(
+  aws_events.EventBus.fromEventBusName(stack, "defaultBus", "default")
+);
 
-defaultBus
-  .when(
-    stack,
-    "deleteSuccessfullEvent",
-    (event) =>
-      event["detail-type"] === "Step Functions Execution Status Change" &&
-      event.detail.status === "SUCCEEDED" &&
-      event.detail.stateMachineArn === deleteWorkflow.stateMachineArn
-  )
+deleteWorkflow
+  .onSuccess(stack, "deleteSuccessfulEvent")
   .map((event) => ({
     message: `post deleted ${event.id} using ${deleteWorkflow.stateMachineName}`,
   }))

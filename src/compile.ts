@@ -751,6 +751,9 @@ export function compile(
           return toExpr(node.expression, scope);
         } else if (ts.isNonNullExpression(node)) {
           return toExpr(node.expression, scope);
+        } else if (node.kind === ts.SyntaxKind.ThisKeyword) {
+          // assuming that this is used in a valid location, create a closure around that instance.
+          return ref(ts.factory.createIdentifier("this"));
         }
 
         throw new Error(

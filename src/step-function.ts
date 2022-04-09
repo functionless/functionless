@@ -35,9 +35,12 @@ import {
 import { ensureItemOf } from "./util";
 import { CallContext } from "./context";
 import { assertDefined, assertNever, assertNodeKind } from "./assert";
-import { IEventBusRule } from "./event-bridge/rule";
 import { EventBusRuleInput } from "./event-bridge/types";
-import { EventBus } from "./event-bridge";
+import {
+  EventBus,
+  EventBusPredicateRuleBase,
+  EventBusRule,
+} from "./event-bridge";
 
 export type AnyStepFunction =
   | ExpressStepFunction<any, any>
@@ -341,7 +344,8 @@ interface StepFunctionDetail {
   executionArn: string;
   stateMachineArn: string;
   name: string;
-  status: "SUCCEEDED" | "RUNNING";
+  // TODO: validate and flesh out this list
+  status: "SUCCEEDED" | "RUNNING" | "FAILURE";
   startDate: number;
   stopDate: number | null;
   input: string;
@@ -515,11 +519,10 @@ abstract class BaseStepFunction<P extends Record<string, any> | undefined, O>
     });
   }
 
-  // TODO: add ability to further filter the rule.
   public onSuccess(
     scope: Construct,
     id: string
-  ): IEventBusRule<StepFunctionSucceededEvent> {
+  ): EventBusRule<StepFunctionSucceededEvent> {
     // TODO singleton
     const defaultBus = aws_events.EventBus.fromEventBusName(
       this,
@@ -527,22 +530,28 @@ abstract class BaseStepFunction<P extends Record<string, any> | undefined, O>
       "default"
     );
     const bus = EventBus.fromBus<StepFunctionSucceededEvent>(defaultBus);
-    return bus.when(
+
+    return new EventBusPredicateRuleBase(
       scope,
       id,
-      (event) =>
-        event["detail-type"] === "Step Functions Execution Status Change" &&
-        event.detail.status === "SUCCEEDED" &&
-        // TODO: figure out a more natural way to do this... resources: { prefix: machineArn }
-        // Maybe use `some(x => x.startsWith(...)k)`?
-        (event.resources as unknown as string).startsWith(this.stateMachineArn)
+      bus,
+      this.statusChangeEventDocument(),
+      {
+        doc: {
+          detail: {
+            doc: {
+              status: { value: "SUCCEEDED" },
+            },
+          },
+        },
+      }
     );
   }
 
-  public onStatusChange(
+  public onFailure(
     scope: Construct,
     id: string
-  ): IEventBusRule<StepFunctionSucceededEvent> {
+  ): EventBusRule<StepFunctionSucceededEvent> {
     // TODO singleton
     const defaultBus = aws_events.EventBus.fromEventBusName(
       this,
@@ -550,14 +559,57 @@ abstract class BaseStepFunction<P extends Record<string, any> | undefined, O>
       "default"
     );
     const bus = EventBus.fromBus<StepFunctionSucceededEvent>(defaultBus);
-    return bus.when(
+
+    return new EventBusPredicateRuleBase(
       scope,
       id,
-      (event) =>
-        event["detail-type"] === "Step Functions Execution Status Change" &&
-        // TODO: figure out a more natural way to do this... resources: { prefix: machineArn }
-        // Maybe use `some(x => x.startsWith(...)k)`?
-        (event.resources as unknown as string).startsWith(this.stateMachineArn)
+      bus,
+      this.statusChangeEventDocument(),
+      {
+        doc: {
+          detail: {
+            doc: {
+              status: { value: "FAILED" },
+            },
+          },
+        },
+      }
+    );
+  }
+
+  private statusChangeEventDocument() {
+    return {
+      doc: {
+        "detail-type": { value: "Step Functions Execution Status Change" },
+        detail: {
+          doc: {
+            stateMachineArn: { value: this.stateMachineArn },
+          },
+        },
+      },
+    };
+  }
+
+  /**
+   * Create event bus rule that matches any status change on this machine.
+   */
+  public onStatusChange(
+    scope: Construct,
+    id: string
+  ): EventBusRule<StepFunctionSucceededEvent> {
+    // TODO singleton
+    const defaultBus = aws_events.EventBus.fromEventBusName(
+      this,
+      "__functionless_defaultBus",
+      "default"
+    );
+    const bus = EventBus.fromBus<StepFunctionSucceededEvent>(defaultBus);
+    // We are not able to use the nice "when" function here because we don't compile
+    return new EventBusPredicateRuleBase(
+      scope,
+      id,
+      bus,
+      this.statusChangeEventDocument()
     );
   }
 

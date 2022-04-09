@@ -1,8 +1,8 @@
 import { aws_events } from "aws-cdk-lib";
 import { Construct } from "constructs";
 import { EventBus, IEventBus, IEventBusFilterable } from "./event-bus";
-import { FunctionDecl } from "../declaration";
 import {
+  andDocuments,
   synthesizeEventPattern,
   synthesizePatternDocument,
 } from "./event-pattern";
@@ -18,7 +18,6 @@ import {
 } from "./target";
 import { ExpressStepFunction, StepFunction } from "../step-function";
 import { PatternDocument } from "./event-pattern/pattern";
-import { assertNodeKind } from "../assert";
 
 /**
  * A function interface used by the {@link EventBus}'s when function to generate a rule.
@@ -192,37 +191,40 @@ abstract class EventBusRuleBase<T extends EventBusRuleInput>
 }
 
 /**
- * Special base rule that supports some internal behaviors like aggregate rules.
+ * Special base rule that supports some internal behaviors like joining (AND) compiled rules.
  */
 export class EventBusPredicateRuleBase<T extends EventBusRuleInput>
   extends EventBusRuleBase<T>
   implements IEventBusFilterable<T>
 {
-  private readonly document: PatternDocument;
+  readonly document: PatternDocument;
   constructor(
     scope: Construct,
     id: string,
     private bus: IEventBus<T>,
-    predicate: EventPredicateFunction<T>,
     /**
-     * A document to join (AND) with the predicate.
+     * Functionless Pattern Document representation of Event Bridge rules.
+     */
+    document: PatternDocument,
+    /**
+     * Documents to join (AND) with the document.
      * Allows chaining of when statement.
      */
-    aggregateDocument?: PatternDocument
+    ...aggregateDocuments: PatternDocument[]
   ) {
-    const decl = assertNodeKind<FunctionDecl>(predicate as any, "FunctionDecl");
-    const document = synthesizePatternDocument(decl, aggregateDocument);
-    const pattern = synthesizeEventPattern(document);
+    const _document = aggregateDocuments.reduce(andDocuments, document);
+    const pattern = synthesizeEventPattern(_document);
 
     const rule = () =>
       new aws_events.Rule(scope, id, {
+        // CDK's event pattern format does not support the pattern matchers like prefix.
         eventPattern: pattern as aws_events.EventPattern,
         eventBus: bus.bus,
       });
 
     super(rule);
 
-    this.document = document;
+    this.document = _document;
   }
 
   /**
@@ -233,12 +235,14 @@ export class EventBusPredicateRuleBase<T extends EventBusRuleInput>
     id: string,
     predicate: EventPredicateFunction<T>
   ): EventBusPredicateRuleBase<T> {
+    const document = synthesizePatternDocument(predicate as any);
+
     return new EventBusPredicateRuleBase<T>(
       scope,
       id,
       this.bus,
-      predicate,
-      this.document
+      this.document,
+      document
     );
   }
 }
@@ -252,6 +256,17 @@ export class EventBusPredicateRuleBase<T extends EventBusRuleInput>
 export class EventBusRule<
   T extends EventBusRuleInput
 > extends EventBusPredicateRuleBase<T> {
+  constructor(
+    scope: Construct,
+    id: string,
+    bus: IEventBus<T>,
+    predicate?: EventPredicateFunction<T>
+  ) {
+    const document = synthesizePatternDocument(predicate as any);
+
+    super(scope, id, bus, document);
+  }
+
   /**
    * Import an {@link aws_events.Rule} wrapped with Functionless abilities.
    */

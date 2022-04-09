@@ -1616,3 +1616,49 @@ describe.skip("destructure", () => {
     );
   });
 });
+
+// TODO: create ticket
+describe.skip("list some", () => {
+  test("list starts with", () => {
+    ebEventPatternTestCase(
+      reflect<EventPredicateFunction<TestEvent>>((event) =>
+        event.resources.some((r) => r.startsWith("hi"))
+      ),
+      {
+        resources: [{ prefix: "hi" }],
+      }
+    );
+  });
+
+  test("list starts with AND errors", () => {
+    ebEventPatternTestCaseError(
+      reflect<EventPredicateFunction<TestEvent>>((event) =>
+        event.resources.some((r) => r.startsWith("hi") && r === "taco")
+      )
+    );
+  });
+
+  test("list starts with OR is fine", () => {
+    ebEventPatternTestCase(
+      reflect<EventPredicateFunction<TestEvent>>((event) =>
+        event.resources.some(
+          (r) => r.startsWith("hi") || r.startsWith("taco") || r === "cheddar"
+        )
+      ),
+      {
+        resources: [{ prefix: "hi" }, { prefix: "taco" }, "cheddar"],
+      }
+    );
+  });
+
+  test("list some instead of includes", () => {
+    ebEventPatternTestCase(
+      reflect<EventPredicateFunction<TestEvent>>((event) =>
+        event.resources.some((r) => r === "cheddar")
+      ),
+      {
+        resources: ["cheddar"],
+      }
+    );
+  });
+});
