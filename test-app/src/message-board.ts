@@ -1,7 +1,6 @@
 import {
   App,
   aws_dynamodb,
-  aws_events,
   aws_lambda,
   RemovalPolicy,
   Stack,
@@ -384,9 +383,7 @@ exports.handler = async (event) => {
   })
 );
 
-const defaultBus = EventBus.fromBus<TestDeleteEvent>(
-  aws_events.EventBus.fromEventBusName(stack, "defaultBus", "default")
-);
+const defaultBus = EventBus.default<TestDeleteEvent>(stack);
 
 deleteWorkflow
   .onSuccess(stack, "deleteSuccessfulEvent")
