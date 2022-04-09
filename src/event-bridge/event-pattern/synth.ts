@@ -68,6 +68,25 @@ const OPERATIONS = { STARTS_WITH: "startsWith", INCLUDES: "includes" };
 const INCLUDES_SEARCH_ELEMENT = "searchElement";
 const STARTS_WITH_SEARCH_STRING = "searchString";
 
+/**
+ * Turns a pattern document into the Event Bridge Pattern format.
+ * 
+ * To transform from a {@link EventBusPredicateFunction}, first call {@link synthesizePatternDocument}.
+ * 
+ *  {
+ *    doc: {
+ *        source: {
+ *              value: "lambda"
+ *        }
+ *   }
+ * }
+ * 
+ * becomes
+ * 
+ * {
+ *    source: ["lambda"]
+ * }
+ */
 export const synthesizeEventPattern = (
   document: PatternDocument
 ): functionless_event_bridge.FunctionlessEventPattern => {

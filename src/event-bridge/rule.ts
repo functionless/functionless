@@ -260,7 +260,7 @@ export class EventBusRule<
     scope: Construct,
     id: string,
     bus: IEventBus<T>,
-    predicate?: EventPredicateFunction<T>
+    predicate: EventPredicateFunction<T>
   ) {
     const document = synthesizePatternDocument(predicate as any);
 

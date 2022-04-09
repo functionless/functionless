@@ -861,7 +861,6 @@ describe("event pattern", () => {
       );
     });
 
-    // TODO: this should work, invalid ranges should not fail until the end when no range will be valid.
     test("numeric range or and AND part reduced both losing some range", () => {
       ebEventPatternTestCase(
         reflect<EventPredicateFunction<TestEvent>>(
@@ -936,7 +935,6 @@ describe("event pattern", () => {
       );
     });
 
-    // TODO: drop the invalid range.
     test("numeric range or and AND dropped range", () => {
       ebEventPatternTestCase(
         reflect<EventPredicateFunction<TestEvent>>(
@@ -1103,7 +1101,6 @@ describe("event pattern", () => {
       );
     });
 
-    // TODO: only fail when the final state is impossible.
     test("same field AND string with OR", () => {
       ebEventPatternTestCase(
         reflect<EventPredicateFunction<TestEvent>>(
@@ -1119,7 +1116,6 @@ describe("event pattern", () => {
       );
     });
 
-    // TODO fix this
     test("same field AND string identical", () => {
       ebEventPatternTestCase(
         reflect<EventPredicateFunction<TestEvent>>(
@@ -1333,7 +1329,6 @@ describe("event pattern", () => {
       );
     });
 
-    // TODO: this should work
     test("AND not exists and exists impossible", () => {
       ebEventPatternTestCase(
         reflect<EventPredicateFunction<TestEvent>>(

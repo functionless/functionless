@@ -3,7 +3,6 @@ import {
   Arn,
   ArnFormat,
   aws_cloudwatch,
-  aws_events,
   aws_iam,
   aws_stepfunctions,
   Resource,
@@ -362,6 +361,7 @@ interface StepFunctionSucceededEvent
     StepFunctionDetail,
     "Step Functions Execution Status Change"
   > {}
+
 abstract class BaseStepFunction<P extends Record<string, any> | undefined, O>
   extends Resource
   implements aws_stepfunctions.IStateMachine
@@ -519,17 +519,24 @@ abstract class BaseStepFunction<P extends Record<string, any> | undefined, O>
     });
   }
 
+  private statusChangeEventDocument() {
+    return {
+      doc: {
+        "detail-type": { value: "Step Functions Execution Status Change" },
+        detail: {
+          doc: {
+            stateMachineArn: { value: this.stateMachineArn },
+          },
+        },
+      },
+    };
+  }
+
   public onSuccess(
     scope: Construct,
     id: string
   ): EventBusRule<StepFunctionSucceededEvent> {
-    // TODO singleton
-    const defaultBus = aws_events.EventBus.fromEventBusName(
-      this,
-      "__functionless_defaultBus",
-      "default"
-    );
-    const bus = EventBus.fromBus<StepFunctionSucceededEvent>(defaultBus);
+    const bus = EventBus.default<StepFunctionSucceededEvent>(this);
 
     return new EventBusPredicateRuleBase(
       scope,
@@ -552,13 +559,7 @@ abstract class BaseStepFunction<P extends Record<string, any> | undefined, O>
     scope: Construct,
     id: string
   ): EventBusRule<StepFunctionSucceededEvent> {
-    // TODO singleton
-    const defaultBus = aws_events.EventBus.fromEventBusName(
-      this,
-      "__functionless_defaultBus",
-      "default"
-    );
-    const bus = EventBus.fromBus<StepFunctionSucceededEvent>(defaultBus);
+    const bus = EventBus.default<StepFunctionSucceededEvent>(this);
 
     return new EventBusPredicateRuleBase(
       scope,
@@ -577,19 +578,6 @@ abstract class BaseStepFunction<P extends Record<string, any> | undefined, O>
     );
   }
 
-  private statusChangeEventDocument() {
-    return {
-      doc: {
-        "detail-type": { value: "Step Functions Execution Status Change" },
-        detail: {
-          doc: {
-            stateMachineArn: { value: this.stateMachineArn },
-          },
-        },
-      },
-    };
-  }
-
   /**
    * Create event bus rule that matches any status change on this machine.
    */
@@ -597,13 +585,8 @@ abstract class BaseStepFunction<P extends Record<string, any> | undefined, O>
     scope: Construct,
     id: string
   ): EventBusRule<StepFunctionSucceededEvent> {
-    // TODO singleton
-    const defaultBus = aws_events.EventBus.fromEventBusName(
-      this,
-      "__functionless_defaultBus",
-      "default"
-    );
-    const bus = EventBus.fromBus<StepFunctionSucceededEvent>(defaultBus);
+    const bus = EventBus.default<StepFunctionSucceededEvent>(this);
+
     // We are not able to use the nice "when" function here because we don't compile
     return new EventBusPredicateRuleBase(
       scope,
