@@ -24,9 +24,9 @@ import { PatternDocument } from "./event-pattern/pattern";
  *
  * event is every event sent to the bus to be filtered. This argument is optional.
  */
-export type EventPredicateFunction<
-  E extends EventBusRuleInput = EventBusRuleInput<any>
-> = (event: E) => boolean;
+export type EventPredicateFunction<E, O extends E = E> =
+  | ((event: E) => event is O)
+  | ((event: E) => boolean);
 
 export interface IEventBusRule<T extends EventBusRuleInput> {
   readonly rule: aws_events.Rule;
@@ -201,7 +201,7 @@ export class EventBusPredicateRuleBase<T extends EventBusRuleInput>
   constructor(
     scope: Construct,
     id: string,
-    private bus: IEventBus<T>,
+    private bus: IEventBus<any>,
     /**
      * Functionless Pattern Document representation of Event Bridge rules.
      */
@@ -230,14 +230,14 @@ export class EventBusPredicateRuleBase<T extends EventBusRuleInput>
   /**
    * @inheritdoc
    */
-  public when(
+  public when<O extends T>(
     scope: Construct,
     id: string,
-    predicate: EventPredicateFunction<T>
-  ): EventBusPredicateRuleBase<T> {
+    predicate: EventPredicateFunction<T, O>
+  ): EventBusPredicateRuleBase<O> {
     const document = synthesizePatternDocument(predicate as any);
 
-    return new EventBusPredicateRuleBase<T>(
+    return new EventBusPredicateRuleBase<O>(
       scope,
       id,
       this.bus,
@@ -254,13 +254,14 @@ export class EventBusPredicateRuleBase<T extends EventBusRuleInput>
  * @see EventBus.when for more details on filtering events.
  */
 export class EventBusRule<
-  T extends EventBusRuleInput
-> extends EventBusPredicateRuleBase<T> {
+  T extends EventBusRuleInput,
+  O extends T = T
+> extends EventBusPredicateRuleBase<O> {
   constructor(
     scope: Construct,
     id: string,
-    bus: IEventBus<T>,
-    predicate: EventPredicateFunction<T>
+    bus: IEventBus,
+    predicate: EventPredicateFunction<T, O>
   ) {
     const document = synthesizePatternDocument(predicate as any);
 
@@ -273,7 +274,7 @@ export class EventBusRule<
   public static fromRule<T extends EventBusRuleInput>(
     rule: aws_events.Rule
   ): IEventBusRule<T> {
-    return new ImportedEventBusRule(rule);
+    return new ImportedEventBusRule<T>(rule);
   }
 }
 

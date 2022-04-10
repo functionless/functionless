@@ -86,14 +86,14 @@ export interface IEventBusFilterable<E extends EventBusRuleInput> {
    * Unsupported by Functionless:
    * * Variables from outside of the function scope
    */
-  when(
+  when<O extends E>(
     scope: Construct,
     id: string,
-    predicate: EventPredicateFunction<E>
-  ): EventBusRule<E>;
+    predicate: EventPredicateFunction<E, O>
+  ): EventBusRule<E, O>;
 }
 
-export interface IEventBus<E extends EventBusRuleInput>
+export interface IEventBus<E extends EventBusRuleInput = EventBusRuleInput>
   extends IEventBusFilterable<E> {
   readonly bus: aws_events.IEventBus;
 
@@ -221,12 +221,12 @@ abstract class EventBusBase<E extends EventBusRuleInput>
   /**
    * @inheritdoc
    */
-  when(
+  when<O extends E>(
     scope: Construct,
     id: string,
-    predicate: EventPredicateFunction<E>
-  ): EventBusRule<E> {
-    return new EventBusRule<E>(scope, id, this, predicate);
+    predicate: EventPredicateFunction<E, O>
+  ): EventBusRule<E, O> {
+    return new EventBusRule<E, O>(scope, id, this as any, predicate);
   }
 }
 
@@ -300,8 +300,8 @@ export class EventBus<E extends EventBusRuleInput> extends EventBusBase<E> {
 
   /**
    * Retrieves the default event bus as a singleton on the given stack or the stack of the given construct.
-   * 
-   * Equivalent to doing 
+   *
+   * Equivalent to doing
    * ```ts
    * const awsBus = aws_events.EventBus.fromEventBusName(Stack.of(scope), id, "default");
    * new functionless.EventBus.fromBus(awsBus);
