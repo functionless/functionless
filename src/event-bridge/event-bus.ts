@@ -102,7 +102,7 @@ export interface IEventBus<E extends EventBusRuleInput> {
   /**
    * Put one or more events on an Event Bus.
    */
-  (...events: Partial<E>[]): void;
+  (event: Partial<E>, ...events: Partial<E>[]): void;
 }
 abstract class EventBusBase<E extends EventBusRuleInput>
   implements IEventBus<E>
