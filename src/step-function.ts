@@ -339,12 +339,14 @@ export function isStepFunction<P = any, O = any>(
   return a?.kind === "StepFunction";
 }
 
+/**
+ * {@see https://docs.aws.amazon.com/step-functions/latest/dg/cw-events.html}
+ */
 interface StepFunctionDetail {
   executionArn: string;
   stateMachineArn: string;
   name: string;
-  // TODO: validate and flesh out this list
-  status: "SUCCEEDED" | "RUNNING" | "FAILURE";
+  status: "SUCCEEDED" | "RUNNING" | "FAILED" | "TIMED_OUT" | "ABORTED";
   startDate: number;
   stopDate: number | null;
   input: string;
@@ -352,14 +354,16 @@ interface StepFunctionDetail {
     included: boolean;
   };
   output: null | string;
-  outputDetails: null;
+  outputDetails: null | {
+    included: boolean;
+  };
 }
 
-// TODO add source
 interface StepFunctionSucceededEvent
   extends EventBusRuleInput<
     StepFunctionDetail,
-    "Step Functions Execution Status Change"
+    "Step Functions Execution Status Change",
+    "aws.states"
   > {}
 
 abstract class BaseStepFunction<P extends Record<string, any> | undefined, O>
@@ -522,6 +526,7 @@ abstract class BaseStepFunction<P extends Record<string, any> | undefined, O>
   private statusChangeEventDocument() {
     return {
       doc: {
+        source: { value: "aws.states" },
         "detail-type": { value: "Step Functions Execution Status Change" },
         detail: {
           doc: {
@@ -571,6 +576,75 @@ abstract class BaseStepFunction<P extends Record<string, any> | undefined, O>
           detail: {
             doc: {
               status: { value: "FAILED" },
+            },
+          },
+        },
+      }
+    );
+  }
+
+  public onStarted(
+    scope: Construct,
+    id: string
+  ): EventBusRule<StepFunctionSucceededEvent> {
+    const bus = EventBus.default<StepFunctionSucceededEvent>(this);
+
+    return new EventBusPredicateRuleBase(
+      scope,
+      id,
+      bus,
+      this.statusChangeEventDocument(),
+      {
+        doc: {
+          detail: {
+            doc: {
+              status: { value: "RUNNING" },
+            },
+          },
+        },
+      }
+    );
+  }
+
+  public onTimedOut(
+    scope: Construct,
+    id: string
+  ): EventBusRule<StepFunctionSucceededEvent> {
+    const bus = EventBus.default<StepFunctionSucceededEvent>(this);
+
+    return new EventBusPredicateRuleBase(
+      scope,
+      id,
+      bus,
+      this.statusChangeEventDocument(),
+      {
+        doc: {
+          detail: {
+            doc: {
+              status: { value: "TIMED_OUT" },
+            },
+          },
+        },
+      }
+    );
+  }
+
+  public onAborted(
+    scope: Construct,
+    id: string
+  ): EventBusRule<StepFunctionSucceededEvent> {
+    const bus = EventBus.default<StepFunctionSucceededEvent>(this);
+
+    return new EventBusPredicateRuleBase(
+      scope,
+      id,
+      bus,
+      this.statusChangeEventDocument(),
+      {
+        doc: {
+          detail: {
+            doc: {
+              status: { value: "ABORTED" },
             },
           },
         },
