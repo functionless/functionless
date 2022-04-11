@@ -121,15 +121,13 @@ abstract class EventBusBase<E extends EventBusRuleInput>
       if (isASL(context)) {
         this.bus.grantPutEventsTo(context.role);
 
-        // Lets validate and normalize that the events are
+        // Validate that the events are object literals.
+        // Then normalize nested arrays of events into a single list of events.
+        // TODO Relax these restrictions: https://github.com/sam-goodwin/functionless/issues/101 
         const eventObjs = call.args.reduce(
           (events: ObjectLiteralExpr[], arg) => {
             if (isArrayLiteralExpr(arg.expr)) {
-              if (
-                !arg.expr.items.every((item): item is ObjectLiteralExpr =>
-                  isObjectLiteralExpr(item)
-                )
-              ) {
+              if (!arg.expr.items.every(isObjectLiteralExpr)) {
                 throw Error(
                   "Event Bus put events must use inline object parameters. Variable references are not supported currently."
                 );
