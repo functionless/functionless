@@ -386,7 +386,7 @@ exports.handler = async (event) => {
 const defaultBus = EventBus.default<TestDeleteEvent>(stack);
 
 deleteWorkflow
-  .onSuccess(stack, "deleteSuccessfulEvent")
+  .onSucceeded(stack, "deleteSuccessfulEvent")
   .map((event) => ({
     message: `post deleted ${event.id} using ${deleteWorkflow.stateMachineName}`,
   }))
