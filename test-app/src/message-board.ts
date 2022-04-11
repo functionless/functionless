@@ -216,6 +216,25 @@ export const addComment = new AppsyncResolver<
   fieldName: "addComment",
 });
 
+interface MessageDeletedEvent
+  extends EventBusRuleInput<
+    { count: number },
+    "Delete-Message-Success",
+    "MessageDeleter"
+  > {}
+
+interface PostDeletedEvent
+  extends EventBusRuleInput<
+    { id: string },
+    "Delete-Post-Success",
+    "MessageDeleter"
+  > {}
+
+const customDeleteBus = new EventBus<MessageDeletedEvent | PostDeletedEvent>(
+  stack,
+  "deleteBus"
+);
+
 export const deleteWorkflow = new StepFunction<{ postId: string }, void>(
   stack,
   "DeletePostWorkflow",
@@ -242,6 +261,14 @@ export const deleteWorkflow = new StepFunction<{ postId: string }, void>(
               },
             })
           );
+
+          customDeleteBus({
+            "detail-type": "Delete-Message-Success",
+            source: "MessageDeleter",
+            detail: {
+              count: comments.Items.length,
+            },
+          });
         } else {
           $AWS.DynamoDB.DeleteItem({
             TableName: database,
@@ -252,6 +279,14 @@ export const deleteWorkflow = new StepFunction<{ postId: string }, void>(
               sk: {
                 S: "Post",
               },
+            },
+          });
+
+          customDeleteBus({
+            "detail-type": "Delete-Post-Success",
+            source: "MessageDeleter",
+            detail: {
+              id: input.postId,
             },
           });
 
@@ -393,3 +428,27 @@ defaultBus
   .when(stack, "testDelete", (event) => event.source === "test")
   .map((event) => event.detail)
   .pipe(deleteWorkflow);
+
+customDeleteBus
+  .when(
+    stack,
+    "Delete Message Rule",
+    (event) => event["detail-type"] === "Delete-Message-Success"
+  )
+  // TODO: the when should narrow the type
+  .map<Notification>((event) => ({
+    message: `Messages deleted: ${(<MessageDeletedEvent>event).detail.count}`,
+  }))
+  .pipe(sendNotification);
+
+customDeleteBus
+  .when(
+    stack,
+    "Delete Post Rule",
+    (event) => event["detail-type"] === "Delete-Post-Success"
+  )
+  // TODO: the when should narrow the type
+  .map<Notification>((event) => ({
+    message: `Post Deleted: ${(<PostDeletedEvent>event).detail.id}`,
+  }))
+  .pipe(sendNotification);

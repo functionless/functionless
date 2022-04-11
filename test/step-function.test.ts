@@ -1,7 +1,10 @@
+import { Stack } from "aws-cdk-lib";
 import "jest";
 import {
   $AWS,
   $SFN,
+  EventBus,
+  EventBusRuleInput,
   ExpressStepFunction,
   StepFunction,
   SyncExecutionResult,
@@ -54,10 +57,10 @@ test("return identifier", () => {
 
 test("return PropAccessExpr", () => {
   const { stack } = initStepFunctionApp();
-  const definition = new ExpressStepFunction<{ input: { id: string } }, string>(
+  const definition = new ExpressStepFunction(
     stack,
     "fn",
-    (input) => {
+    (input: { input: { id: string } }) => {
       return input.input.id;
     }
   ).definition;
@@ -552,8 +555,147 @@ test("if (typeof x === ??)", () => {
   });
 });
 
+let stack: Stack;
+
+beforeEach(() => {
+  stack = new Stack();
+});
+
+test("put an event bus event", () => {
+  interface BusDetails {
+    value: string;
+  }
+  interface BusEvent extends EventBusRuleInput<BusDetails> {}
+
+  const bus = new EventBus<BusEvent>(stack, "testBus2");
+
+  const definition = new ExpressStepFunction<{ id: string }, void>(
+    stack,
+    "fn",
+    (input) => {
+      bus({
+        "detail-type": "someEvent",
+        source: "sfnTest",
+        detail: {
+          value: input.id,
+        },
+      });
+    }
+  ).definition;
+
+  expect(definition).toEqual({
+    StartAt:
+      'bus({detail-type: "someEvent", source: "sfnTest", detail: {value: input.id}',
+    States: {
+      'bus({detail-type: "someEvent", source: "sfnTest", detail: {value: input.id}':
+        {
+          Type: "Task",
+          Resource: "arn:aws:states:::events:putEvents",
+          Next: "return null",
+          Parameters: {
+            Entries: [
+              {
+                Detail: {
+                  "value.$": "$.id",
+                },
+                DetailType: "someEvent",
+                EventBusName: bus.bus.eventBusArn,
+                Source: "sfnTest",
+              },
+            ],
+          },
+          ResultPath: null,
+        },
+      "return null": {
+        End: true,
+        OutputPath: "$.null",
+        Parameters: {
+          null: null,
+        },
+        Type: "Pass",
+      },
+    },
+  });
+});
+
+test("put multiple event bus events", () => {
+  interface BusDetails {
+    value: string;
+    constant?: string;
+  }
+  interface BusEvent extends EventBusRuleInput<BusDetails> {}
+
+  const bus = new EventBus<BusEvent>(stack, "testBus");
+
+  const definition = new ExpressStepFunction<{ id: string }, void>(
+    stack,
+    "fn",
+    (input) => {
+      bus(
+        {
+          "detail-type": "someEvent",
+          source: "sfnTest",
+          detail: {
+            value: input.id,
+          },
+        },
+        {
+          "detail-type": "someOtherEvent",
+          source: "sfnTest",
+          detail: {
+            constant: "hi",
+            value: input.id,
+          },
+        }
+      );
+    }
+  ).definition;
+
+  expect(definition).toEqual({
+    StartAt:
+      'bus({detail-type: "someEvent", source: "sfnTest", detail: {value: input.id}',
+    States: {
+      'bus({detail-type: "someEvent", source: "sfnTest", detail: {value: input.id}':
+        {
+          Type: "Task",
+          Resource: "arn:aws:states:::events:putEvents",
+          Next: "return null",
+          Parameters: {
+            Entries: [
+              {
+                Detail: {
+                  "value.$": "$.id",
+                },
+                DetailType: "someEvent",
+                EventBusName: bus.bus.eventBusArn,
+                Source: "sfnTest",
+              },
+              {
+                Detail: {
+                  constant: "hi",
+                  "value.$": "$.id",
+                },
+                DetailType: "someOtherEvent",
+                EventBusName: bus.bus.eventBusArn,
+                Source: "sfnTest",
+              },
+            ],
+          },
+          ResultPath: null,
+        },
+      "return null": {
+        End: true,
+        OutputPath: "$.null",
+        Parameters: {
+          null: null,
+        },
+        Type: "Pass",
+      },
+    },
+  });
+});
+
 test("if (typeof x !== ??)", () => {
-  const { stack } = initStepFunctionApp();
   const definition = new ExpressStepFunction<{ id: any }, string | null>(
     stack,
     "fn",

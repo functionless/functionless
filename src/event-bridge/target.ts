@@ -1,5 +1,5 @@
 import { aws_events, aws_events_targets } from "aws-cdk-lib";
-import { EventBus } from "./event-bus";
+import { IEventBus, isEventBus } from "./event-bus";
 import { Function, isFunction } from "../function";
 import { EventBusRuleInput } from "./types";
 import { IEventBusRule } from "./rule";
@@ -19,7 +19,7 @@ const isLambdaTargetProps = <P>(props: any): props is LambdaTargetProps<P> => {
 };
 
 export type EventBusTargetProps<P extends EventBusRuleInput> = {
-  bus: EventBus<P>;
+  bus: IEventBus<P>;
 } & aws_events_targets.EventBusProps;
 
 const isEventBusTargetProps = <P extends EventBusRuleInput>(
@@ -42,7 +42,7 @@ const isStateMachineTargetProps = <P>(
 export type EventBusTargetResource<T extends EventBusRuleInput, P> =
   | Function<P, any>
   | LambdaTargetProps<P>
-  | EventBus<T>
+  | IEventBus<T>
   | EventBusTargetProps<T>
   | ExpressStepFunction<P, any>
   | StepFunction<P, any>
@@ -69,16 +69,14 @@ export function pipe<T extends EventBusRuleInput, P>(
         event: targetInput,
       })
     );
-  } else if (
-    resource instanceof EventBus ||
-    isEventBusTargetProps<T>(resource)
-  ) {
+  } else if (isEventBus<T>(resource) || isEventBusTargetProps<T>(resource)) {
     if (targetInput) {
       throw new Error("Event bus rule target does not support target input.");
     }
 
-    const _props: EventBusTargetProps<T> =
-      resource instanceof EventBus ? { bus: resource } : resource;
+    const _props: EventBusTargetProps<T> = isEventBus<T>(resource)
+      ? { bus: resource }
+      : resource;
 
     return rule.rule.addTarget(
       new aws_events_targets.EventBus(_props.bus.bus, {
