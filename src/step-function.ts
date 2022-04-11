@@ -359,7 +359,7 @@ interface StepFunctionDetail {
   };
 }
 
-interface StepFunctionSucceededEvent
+interface StepFunctionStatusChangedEvent
   extends EventBusRuleInput<
     StepFunctionDetail,
     "Step Functions Execution Status Change",
@@ -537,11 +537,11 @@ abstract class BaseStepFunction<P extends Record<string, any> | undefined, O>
     };
   }
 
-  public onSuccess(
+  public onSucceeded(
     scope: Construct,
     id: string
-  ): EventBusRule<StepFunctionSucceededEvent> {
-    const bus = EventBus.default<StepFunctionSucceededEvent>(this);
+  ): EventBusRule<StepFunctionStatusChangedEvent> {
+    const bus = EventBus.default<StepFunctionStatusChangedEvent>(this);
 
     return new EventBusPredicateRuleBase(
       scope,
@@ -560,11 +560,11 @@ abstract class BaseStepFunction<P extends Record<string, any> | undefined, O>
     );
   }
 
-  public onFailure(
+  public onFailed(
     scope: Construct,
     id: string
-  ): EventBusRule<StepFunctionSucceededEvent> {
-    const bus = EventBus.default<StepFunctionSucceededEvent>(this);
+  ): EventBusRule<StepFunctionStatusChangedEvent> {
+    const bus = EventBus.default<StepFunctionStatusChangedEvent>(this);
 
     return new EventBusPredicateRuleBase(
       scope,
@@ -586,8 +586,8 @@ abstract class BaseStepFunction<P extends Record<string, any> | undefined, O>
   public onStarted(
     scope: Construct,
     id: string
-  ): EventBusRule<StepFunctionSucceededEvent> {
-    const bus = EventBus.default<StepFunctionSucceededEvent>(this);
+  ): EventBusRule<StepFunctionStatusChangedEvent> {
+    const bus = EventBus.default<StepFunctionStatusChangedEvent>(this);
 
     return new EventBusPredicateRuleBase(
       scope,
@@ -609,8 +609,8 @@ abstract class BaseStepFunction<P extends Record<string, any> | undefined, O>
   public onTimedOut(
     scope: Construct,
     id: string
-  ): EventBusRule<StepFunctionSucceededEvent> {
-    const bus = EventBus.default<StepFunctionSucceededEvent>(this);
+  ): EventBusRule<StepFunctionStatusChangedEvent> {
+    const bus = EventBus.default<StepFunctionStatusChangedEvent>(this);
 
     return new EventBusPredicateRuleBase(
       scope,
@@ -632,8 +632,8 @@ abstract class BaseStepFunction<P extends Record<string, any> | undefined, O>
   public onAborted(
     scope: Construct,
     id: string
-  ): EventBusRule<StepFunctionSucceededEvent> {
-    const bus = EventBus.default<StepFunctionSucceededEvent>(this);
+  ): EventBusRule<StepFunctionStatusChangedEvent> {
+    const bus = EventBus.default<StepFunctionStatusChangedEvent>(this);
 
     return new EventBusPredicateRuleBase(
       scope,
@@ -655,11 +655,11 @@ abstract class BaseStepFunction<P extends Record<string, any> | undefined, O>
   /**
    * Create event bus rule that matches any status change on this machine.
    */
-  public onStatusChange(
+  public onStatusChanged(
     scope: Construct,
     id: string
-  ): EventBusRule<StepFunctionSucceededEvent> {
-    const bus = EventBus.default<StepFunctionSucceededEvent>(this);
+  ): EventBusRule<StepFunctionStatusChangedEvent> {
+    const bus = EventBus.default<StepFunctionStatusChangedEvent>(this);
 
     // We are not able to use the nice "when" function here because we don't compile
     return new EventBusPredicateRuleBase(
