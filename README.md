@@ -372,7 +372,7 @@ const catPeopleEvents = bus.when(
 );
 ```
 
-Rules can be further refined by chaining multiple `when` predicates together.
+Rules can be further refined by calling `when` on a Functionless `EventBusRule`.
 
 ```ts
 // Cat people who are between 18 and 30 and do not also like dogs.
