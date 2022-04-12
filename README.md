@@ -372,6 +372,13 @@ const catPeopleEvents = bus.when(
 );
 ```
 
+Rules can be further refined by chaining multiple `when` predicates together.
+
+```ts
+// Cat people who are between 18 and 30 and do not also like dogs.
+catPeopleEvents.when(event => !event.detail.interests.includes("DOGS"))
+```
+
 #### Transform the event before sending to some services like `Lambda` Functions.
 
 We have two lambda functions to invoke, one for create or updates and another for deletes, lets make those.
