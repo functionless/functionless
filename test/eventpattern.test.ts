@@ -861,7 +861,6 @@ describe("event pattern", () => {
       );
     });
 
-    // TODO: this should work, invalid ranges should not fail until the end when no range will be valid.
     test("numeric range or and AND part reduced both losing some range", () => {
       ebEventPatternTestCase(
         reflect<EventPredicateFunction<TestEvent>>(
@@ -936,7 +935,6 @@ describe("event pattern", () => {
       );
     });
 
-    // TODO: drop the invalid range.
     test("numeric range or and AND dropped range", () => {
       ebEventPatternTestCase(
         reflect<EventPredicateFunction<TestEvent>>(
@@ -1103,7 +1101,6 @@ describe("event pattern", () => {
       );
     });
 
-    // TODO: only fail when the final state is impossible.
     test("same field AND string with OR", () => {
       ebEventPatternTestCase(
         reflect<EventPredicateFunction<TestEvent>>(
@@ -1119,7 +1116,6 @@ describe("event pattern", () => {
       );
     });
 
-    // TODO fix this
     test("same field AND string identical", () => {
       ebEventPatternTestCase(
         reflect<EventPredicateFunction<TestEvent>>(
@@ -1333,7 +1329,6 @@ describe("event pattern", () => {
       );
     });
 
-    // TODO: this should work
     test("AND not exists and exists impossible", () => {
       ebEventPatternTestCase(
         reflect<EventPredicateFunction<TestEvent>>(
@@ -1531,7 +1526,7 @@ describe("event pattern", () => {
 
 // https://github.com/sam-goodwin/functionless/issues/68
 describe.skip("destructure", () => {
-  test("descture parameter", () => {
+  test("destructure parameter", () => {
     ebEventPatternTestCase(
       reflect<EventPredicateFunction<TestEvent>>(
         ({ source }) => source === "lambda"
@@ -1542,7 +1537,7 @@ describe.skip("destructure", () => {
     );
   });
 
-  test("descture variable", () => {
+  test("destructure variable", () => {
     ebEventPatternTestCase(
       reflect<EventPredicateFunction<TestEvent>>((event) => {
         const { source } = event;
@@ -1554,7 +1549,7 @@ describe.skip("destructure", () => {
     );
   });
 
-  test("descture multi-layer variable", () => {
+  test("destructure multi-layer variable", () => {
     ebEventPatternTestCase(
       reflect<EventPredicateFunction<TestEvent>>((event) => {
         const {
@@ -1568,7 +1563,7 @@ describe.skip("destructure", () => {
     );
   });
 
-  test("descture array doesn't work", () => {
+  test("destructure array doesn't work", () => {
     ebEventPatternTestCaseError(
       reflect<EventPredicateFunction<TestEvent>>((event) => {
         const {
@@ -1581,7 +1576,7 @@ describe.skip("destructure", () => {
     );
   });
 
-  test("descture parameter array doesn't work", () => {
+  test("destructure parameter array doesn't work", () => {
     ebEventPatternTestCaseError(
       reflect<EventPredicateFunction<TestEvent>>(
         ({
@@ -1605,13 +1600,59 @@ describe.skip("destructure", () => {
     );
   });
 
-  test("descture parameter rename", () => {
+  test("destructure parameter rename", () => {
     ebEventPatternTestCase(
       reflect<EventPredicateFunction<TestEvent>>(
         ({ source: src }) => src === "lambda"
       ),
       {
         source: ["lambda"],
+      }
+    );
+  });
+});
+
+// TODO: create ticket
+describe.skip("list some", () => {
+  test("list starts with", () => {
+    ebEventPatternTestCase(
+      reflect<EventPredicateFunction<TestEvent>>((event) =>
+        event.resources.some((r) => r.startsWith("hi"))
+      ),
+      {
+        resources: [{ prefix: "hi" }],
+      }
+    );
+  });
+
+  test("list starts with AND errors", () => {
+    ebEventPatternTestCaseError(
+      reflect<EventPredicateFunction<TestEvent>>((event) =>
+        event.resources.some((r) => r.startsWith("hi") && r === "taco")
+      )
+    );
+  });
+
+  test("list starts with OR is fine", () => {
+    ebEventPatternTestCase(
+      reflect<EventPredicateFunction<TestEvent>>((event) =>
+        event.resources.some(
+          (r) => r.startsWith("hi") || r.startsWith("taco") || r === "cheddar"
+        )
+      ),
+      {
+        resources: [{ prefix: "hi" }, { prefix: "taco" }, "cheddar"],
+      }
+    );
+  });
+
+  test("list some instead of includes", () => {
+    ebEventPatternTestCase(
+      reflect<EventPredicateFunction<TestEvent>>((event) =>
+        event.resources.some((r) => r === "cheddar")
+      ),
+      {
+        resources: ["cheddar"],
       }
     );
   });

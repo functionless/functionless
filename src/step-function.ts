@@ -34,6 +34,12 @@ import {
 import { ensureItemOf } from "./util";
 import { CallContext } from "./context";
 import { assertDefined, assertNever, assertNodeKind } from "./assert";
+import { EventBusRuleInput } from "./event-bridge/types";
+import {
+  EventBus,
+  EventBusPredicateRuleBase,
+  EventBusRule,
+} from "./event-bridge";
 
 export type AnyStepFunction =
   | ExpressStepFunction<any, any>
@@ -332,6 +338,34 @@ export function isStepFunction<P = any, O = any>(
 ): a is StepFunction<P, O> | ExpressStepFunction<P, O> {
   return a?.kind === "StepFunction";
 }
+
+/**
+ * {@see https://docs.aws.amazon.com/step-functions/latest/dg/cw-events.html}
+ */
+interface StepFunctionDetail {
+  executionArn: string;
+  stateMachineArn: string;
+  name: string;
+  status: "SUCCEEDED" | "RUNNING" | "FAILED" | "TIMED_OUT" | "ABORTED";
+  startDate: number;
+  stopDate: number | null;
+  input: string;
+  inputDetails: {
+    included: boolean;
+  };
+  output: null | string;
+  outputDetails: null | {
+    included: boolean;
+  };
+}
+
+interface StepFunctionStatusChangedEvent
+  extends EventBusRuleInput<
+    StepFunctionDetail,
+    "Step Functions Execution Status Change",
+    "aws.states"
+  > {}
+
 abstract class BaseStepFunction<P extends Record<string, any> | undefined, O>
   extends Resource
   implements aws_stepfunctions.IStateMachine
@@ -487,6 +521,153 @@ abstract class BaseStepFunction<P extends Record<string, any> | undefined, O>
       }
       return assertNever(context);
     });
+  }
+
+  private statusChangeEventDocument() {
+    return {
+      doc: {
+        source: { value: "aws.states" },
+        "detail-type": { value: "Step Functions Execution Status Change" },
+        detail: {
+          doc: {
+            stateMachineArn: { value: this.stateMachineArn },
+          },
+        },
+      },
+    };
+  }
+
+  public onSucceeded(
+    scope: Construct,
+    id: string
+  ): EventBusRule<StepFunctionStatusChangedEvent> {
+    const bus = EventBus.default<StepFunctionStatusChangedEvent>(this);
+
+    return new EventBusPredicateRuleBase(
+      scope,
+      id,
+      bus,
+      this.statusChangeEventDocument(),
+      {
+        doc: {
+          detail: {
+            doc: {
+              status: { value: "SUCCEEDED" },
+            },
+          },
+        },
+      }
+    );
+  }
+
+  public onFailed(
+    scope: Construct,
+    id: string
+  ): EventBusRule<StepFunctionStatusChangedEvent> {
+    const bus = EventBus.default<StepFunctionStatusChangedEvent>(this);
+
+    return new EventBusPredicateRuleBase(
+      scope,
+      id,
+      bus,
+      this.statusChangeEventDocument(),
+      {
+        doc: {
+          detail: {
+            doc: {
+              status: { value: "FAILED" },
+            },
+          },
+        },
+      }
+    );
+  }
+
+  public onStarted(
+    scope: Construct,
+    id: string
+  ): EventBusRule<StepFunctionStatusChangedEvent> {
+    const bus = EventBus.default<StepFunctionStatusChangedEvent>(this);
+
+    return new EventBusPredicateRuleBase(
+      scope,
+      id,
+      bus,
+      this.statusChangeEventDocument(),
+      {
+        doc: {
+          detail: {
+            doc: {
+              status: { value: "RUNNING" },
+            },
+          },
+        },
+      }
+    );
+  }
+
+  public onTimedOut(
+    scope: Construct,
+    id: string
+  ): EventBusRule<StepFunctionStatusChangedEvent> {
+    const bus = EventBus.default<StepFunctionStatusChangedEvent>(this);
+
+    return new EventBusPredicateRuleBase(
+      scope,
+      id,
+      bus,
+      this.statusChangeEventDocument(),
+      {
+        doc: {
+          detail: {
+            doc: {
+              status: { value: "TIMED_OUT" },
+            },
+          },
+        },
+      }
+    );
+  }
+
+  public onAborted(
+    scope: Construct,
+    id: string
+  ): EventBusRule<StepFunctionStatusChangedEvent> {
+    const bus = EventBus.default<StepFunctionStatusChangedEvent>(this);
+
+    return new EventBusPredicateRuleBase(
+      scope,
+      id,
+      bus,
+      this.statusChangeEventDocument(),
+      {
+        doc: {
+          detail: {
+            doc: {
+              status: { value: "ABORTED" },
+            },
+          },
+        },
+      }
+    );
+  }
+
+  /**
+   * Create event bus rule that matches any status change on this machine.
+   */
+  public onStatusChanged(
+    scope: Construct,
+    id: string
+  ): EventBusRule<StepFunctionStatusChangedEvent> {
+    const bus = EventBus.default<StepFunctionStatusChangedEvent>(this);
+
+    // We are not able to use the nice "when" function here because we don't compile
+    return new EventBusPredicateRuleBase(
+      scope,
+      id,
+      bus,
+      this.statusChangeEventDocument()
+    );
   }
 
   public abstract getStepFunctionType(): aws_stepfunctions.StateMachineType;

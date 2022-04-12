@@ -69,19 +69,58 @@ const INCLUDES_SEARCH_ELEMENT = "searchElement";
 const STARTS_WITH_SEARCH_STRING = "searchString";
 
 /**
- * Turns a Typescript function into a Event Bridge Event Pattern.
+ * Turns a pattern document into the Event Bridge Pattern format.
+ * 
+ * To transform from a {@link EventBusPredicateFunction}, first call {@link synthesizePatternDocument}.
+ * 
+ *  {
+ *    doc: {
+ *        source: {
+ *              value: "lambda"
+ *        }
+ *   }
+ * }
+ * 
+ * becomes
+ * 
+ * {
+ *    source: ["lambda"]
+ * }
+ */
+export const synthesizeEventPattern = (
+  document: PatternDocument
+): functionless_event_bridge.FunctionlessEventPattern => {
+  const doc = patternDocumentToEventPattern(document);
+
+  const isEmpty = !Object.values(doc).some(
+    (x) => !!x && (!Array.isArray(x) || x.length > 0)
+  );
+
+  // empty prefix on source should always be true and represent a match all rule.
+  return isEmpty ? { source: [{ prefix: "" }] } : doc;
+};
+
+/**
+ * Turns a Typescript function into a Pattern Document, which is the intermediate state used by
+ * functionless to generate event pattern.
  *
  * (event) => event.source === "lambda"
  *
  * {
- *    source: ["lambda"]
+ *    doc: {
+ *        source: {
+ *              value: "lambda"
+ *        }
+ *   }
  * }
+ *
+ * Use {@link synthesizeEventPattern} to generate a Event Pattern usable by event bridge.
  *
  * https://github.com/sam-goodwin/functionless/issues/37#issuecomment-1066313146
  */
-export const synthesizeEventPattern = (
+export const synthesizePatternDocument = (
   predicate: FunctionDecl | Err | unknown
-): functionless_event_bridge.FunctionlessEventPattern => {
+): PatternDocument => {
   if (isErr(predicate)) {
     throw predicate.error;
   } else if (!isFunctionDecl(predicate)) {
@@ -130,223 +169,6 @@ export const synthesizeEventPattern = (
     const right = evalExpr(expr.right);
 
     return andDocuments(left, right);
-  };
-
-  /**
-   * AND logic between two collections of patterns.
-   *
-   * Event bridge suports AND logic between fields
-   *
-   * { field1: Pattern } && { field2: Pattern }
-   * => { field1: Pattern, field2: Pattern }
-   *
-   * When both documents contain the same field, Event bridge may support AND between two patterns on a single field.
-   * See {@link andMergePattern}
-   */
-  const andDocuments = (
-    classDocument1: PatternDocument,
-    classDocument2: PatternDocument
-  ): PatternDocument => {
-    const allKeys = [
-      ...new Set([
-        ...Object.keys(classDocument1.doc),
-        ...Object.keys(classDocument2.doc),
-      ]),
-    ];
-
-    return allKeys.reduce(
-      (doc: PatternDocument, key) => {
-        // if key is only in one document, return it
-        const pattern = !(key in classDocument1.doc)
-          ? classDocument2.doc?.[key]
-          : !(key in classDocument2.doc)
-          ? classDocument1.doc?.[key]
-          : undefined;
-        // if the key is in both documents, try to merge them
-        const mergedPattern =
-          pattern ??
-          andMergePattern(
-            key,
-            classDocument1.doc[key],
-            classDocument2.doc[key]
-          );
-        return {
-          doc: {
-            ...doc.doc,
-            [key]: mergedPattern,
-          },
-        };
-      },
-      { doc: {} }
-    );
-  };
-
-  /**
-   * When applying AND logic between {@link andDocuments} and both documents contain the same field, we attempt to merge them.
-   *
-   * In genral, Event Bridge DOES NOT support AND logic within a single field as a pattern is a array of OR pattern matchers.
-   *
-   * We do, however support a few cases.
-   *    When each field is itself a document, recurse into {@link andDocuments}
-   *       When one is a Document and one is a Pattern, we will fail to merge.
-   *    When each field is the same pattern, return the pattern.
-   *    When one field is a Present (exists: true) Pattern, ignore the check for present. (x && x === "a" => x === "a")
-   *    When one field is a Not Present (exists: false) Pattern and the other is an AnythingBut (not) pattern, we ignore the AnythingBut (!x && !x !== "a" => !x)
-   *    When both fields are numbers or numeric ranges see {@link andNumericAggregation}
-   *    When both fields are AnythingBut (not) logic, merge them together (x !== "y" && x !== "z" is valid)
-   *
-   * When to return NeverPattern and when to Error
-   * * NeverPattern - when the logic is impossible, but valid aka, contradictions x !== "a" && x === "a". These MAY later be evaluated to possible using an OR.
-   * * Error - When the combination is unsupported by Event Bridge or Functionless.
-   *           For example, if we do not know how to represent !x.startsWith("x") && x.startsWith("y"),
-   *           then we need to fail compilation as the logic may filter a event if it was supported and not ignored.
-   */
-  const andMergePattern = (
-    key: string,
-    pattern1: PatternDocument | Pattern,
-    pattern2: PatternDocument | Pattern
-  ): PatternDocument | Pattern => {
-    // both are documents, lets merge the documents
-    if (isPatternDocument(pattern1) && isPatternDocument(pattern2)) {
-      return andDocuments(pattern1, pattern2);
-      // both are patterns, merge the patterns
-    } else if (!isPatternDocument(pattern1) && !isPatternDocument(pattern2)) {
-      // In AND logic, if either side is impossible, the whole statement will be impossible.
-      if (isNeverPattern(pattern1)) {
-        return pattern1;
-      } else if (isNeverPattern(pattern2)) {
-        return pattern2;
-      } else if (isPresentPattern(pattern1)) {
-        if (isPresentPattern(pattern2)) {
-          // same pattern, merge
-          if (pattern1.isPresent === pattern2.isPresent) {
-            return pattern1;
-          } else {
-            return {
-              never: true,
-              reason: "Field cannot both be present and not present.",
-            };
-          }
-        }
-        // If the pattern checks for presense, return othe other pattern, they should all imply the pattern is present.
-        else if (pattern1.isPresent) {
-          return pattern2;
-        }
-        // checks for not present
-        // take anything but, because !x && x !== "x" => !x
-        else if (isAnythingButPattern(pattern2)) {
-          return pattern1;
-        }
-        // cannot && exists: false and any other pattern as it would be impossible.
-        return {
-          never: true,
-          reason:
-            "Invalid comparison: pattern cannot both be not present as a positive value.",
-        };
-      } else if (isPresentPattern(pattern2)) {
-        // If the pattern checks for presense, return othe other pattern, they should all imply the pattern is present.
-        if (pattern2.isPresent) {
-          return pattern1;
-        }
-        // checks for not present
-        // take anything but, because !x && x !== "x" => !x
-        else if (isAnythingButPattern(pattern1)) {
-          return pattern2;
-        }
-        // cannot && exists: false and any other pattern as it would be impossible.
-        return {
-          never: true,
-          reason:
-            "Invalid comparison: pattern cannot both be not present as a positive value.",
-        };
-      }
-      // AND (intersect) logic between two numeric aggregate ranges (unions), between a numeric aggregate and a single numeric range or between two numeric ranges
-      else if (isNumericAggregationPattern(pattern1)) {
-        if (isNumericAggregationPattern(pattern2)) {
-          return intersectNumericAggregation(pattern1, pattern2);
-        } else if (isNumericRangePattern(pattern2)) {
-          return intersectNumericAggregationWithRange(pattern1, pattern2);
-        }
-      } else if (isNumericAggregationPattern(pattern2)) {
-        if (isNumericRangePattern(pattern1)) {
-          return intersectNumericAggregationWithRange(pattern2, pattern1);
-        }
-      } else if (
-        isNumericRangePattern(pattern1) &&
-        isNumericRangePattern(pattern2)
-      ) {
-        return intersectNumericRange(pattern1, pattern2);
-      }
-      // AND logic between anything but (not equals) patterns
-      else if (isAnythingButPattern(pattern1)) {
-        if (isAnythingButPattern(pattern2)) {
-          return {
-            anythingBut: [...pattern1.anythingBut, ...pattern2.anythingBut],
-          };
-        }
-      }
-      if (
-        isAnythingButPrefixPattern(pattern1) ||
-        isAnythingButPrefixPattern(pattern2)
-      ) {
-        if (
-          isAnythingButPrefixPattern(pattern1) &&
-          isAnythingButPrefixPattern(pattern2) &&
-          pattern1.anythingButPrefix === pattern2.anythingButPrefix
-        ) {
-          return pattern1;
-        }
-        throw Error(
-          "Event Bridge patterns do not support AND logic between NOT prefix and any other logic."
-        );
-      } else if (
-        isExactMatchPattern(pattern1) ||
-        isExactMatchPattern(pattern2)
-      ) {
-        if (isExactMatchPattern(pattern1) && isExactMatchPattern(pattern2)) {
-          if (pattern1.value === pattern2.value) {
-            return pattern1;
-          }
-          return {
-            never: true,
-            reason: `Field ${key} cannot be both ${pattern1.value} and ${pattern2.value}`,
-          };
-        } else if (isExactMatchPattern(pattern1)) {
-          if (isPrefixMatchPattern(pattern2)) {
-            if (
-              typeof pattern1.value === "string" &&
-              pattern1.value.startsWith(pattern2.prefix)
-            ) {
-              return pattern1;
-            }
-            return {
-              never: true,
-              reason: `Field ${key} cannot be both ${pattern1.value} and start with ${pattern2.prefix}`,
-            };
-          }
-        } else if (isExactMatchPattern(pattern2)) {
-          if (isPrefixMatchPattern(pattern1)) {
-            if (
-              typeof pattern2.value === "string" &&
-              pattern2.value.startsWith(pattern1.prefix)
-            ) {
-              return pattern1;
-            }
-            return {
-              never: true,
-              reason: `Field ${key} cannot be both ${pattern2.value} and start with ${pattern1.prefix}`,
-            };
-          }
-        }
-      }
-      throw new Error(
-        `Cannot apply AND to patterns ${JSON.stringify(
-          pattern1
-        )} and ${JSON.stringify(pattern2)}`
-      );
-    }
-    // we don't know how to do this (yet?)
-    throw new Error(`Patterns of key ${key} defined at different levels.`);
   };
 
   /**
@@ -780,8 +602,8 @@ export const synthesizeEventPattern = (
     ) {
       return eventReferenceToPatternDocument(eventReference, { value });
     }
-    const __exchaustive: never = value;
-    return __exchaustive;
+    const __exhaustive: never = value;
+    return __exhaustive;
   };
 
   const evalNotEquals = (expr: BinaryExpr): PatternDocument => {
@@ -831,16 +653,7 @@ export const synthesizeEventPattern = (
 
   const flattenedExpression = flattenReturnEvent(predicate.body.statements);
 
-  const result = evalExpr(flattenedExpression);
-
-  const doc = patternDocumentToEventPattern(result);
-
-  const isEmpty = !Object.values(doc).some(
-    (x) => !!x && (!Array.isArray(x) || x.length > 0)
-  );
-
-  // empty prefix on source should always be true and represent a match all rule.
-  return isEmpty ? { source: [{ prefix: "" }] } : doc;
+  return evalExpr(flattenedExpression);
 };
 
 /**
@@ -947,4 +760,214 @@ export const invertBinaryOperator = (op: BinaryOp): BinaryOp => {
     default:
       return op;
   }
+};
+
+/**
+ * AND logic between two collections of patterns.
+ *
+ * Event bridge supports AND logic between fields
+ *
+ * { field1: Pattern } && { field2: Pattern }
+ * => { field1: Pattern, field2: Pattern }
+ *
+ * When both documents contain the same field, Event bridge may support AND between two patterns on a single field.
+ * See {@link andMergePattern}
+ */
+export const andDocuments = (
+  classDocument1: PatternDocument,
+  classDocument2: PatternDocument
+): PatternDocument => {
+  const allKeys = [
+    ...new Set([
+      ...Object.keys(classDocument1.doc),
+      ...Object.keys(classDocument2.doc),
+    ]),
+  ];
+
+  return allKeys.reduce(
+    (doc: PatternDocument, key) => {
+      // if key is only in one document, return it
+      const pattern = !(key in classDocument1.doc)
+        ? classDocument2.doc?.[key]
+        : !(key in classDocument2.doc)
+        ? classDocument1.doc?.[key]
+        : undefined;
+      // if the key is in both documents, try to merge them
+      const mergedPattern =
+        pattern ??
+        andMergePattern(key, classDocument1.doc[key], classDocument2.doc[key]);
+      return {
+        doc: {
+          ...doc.doc,
+          [key]: mergedPattern,
+        },
+      };
+    },
+    { doc: {} }
+  );
+};
+
+/**
+ * When applying AND logic between {@link andDocuments} and both documents contain the same field, we attempt to merge them.
+ *
+ * In general, Event Bridge DOES NOT support AND logic within a single field as a pattern is a array of OR pattern matchers.
+ *
+ * We do, however support a few cases.
+ *    When each field is itself a document, recurse into {@link andDocuments}
+ *       When one is a Document and one is a Pattern, we will fail to merge.
+ *    When each field is the same pattern, return the pattern.
+ *    When one field is a Present (exists: true) Pattern, ignore the check for present. (x && x === "a" => x === "a")
+ *    When one field is a Not Present (exists: false) Pattern and the other is an AnythingBut (not) pattern, we ignore the AnythingBut (!x && !x !== "a" => !x)
+ *    When both fields are numbers or numeric ranges see {@link andNumericAggregation}
+ *    When both fields are AnythingBut (not) logic, merge them together (x !== "y" && x !== "z" is valid)
+ *
+ * When to return NeverPattern and when to Error
+ * * NeverPattern - when the logic is impossible, but valid aka, contradictions x !== "a" && x === "a". These MAY later be evaluated to possible using an OR.
+ * * Error - When the combination is unsupported by Event Bridge or Functionless.
+ *           For example, if we do not know how to represent !x.startsWith("x") && x.startsWith("y"),
+ *           then we need to fail compilation as the logic may filter a event if it was supported and not ignored.
+ */
+const andMergePattern = (
+  key: string,
+  pattern1: PatternDocument | Pattern,
+  pattern2: PatternDocument | Pattern
+): PatternDocument | Pattern => {
+  // both are documents, lets merge the documents
+  if (isPatternDocument(pattern1) && isPatternDocument(pattern2)) {
+    return andDocuments(pattern1, pattern2);
+    // both are patterns, merge the patterns
+  } else if (!isPatternDocument(pattern1) && !isPatternDocument(pattern2)) {
+    // In AND logic, if either side is impossible, the whole statement will be impossible.
+    if (isNeverPattern(pattern1)) {
+      return pattern1;
+    } else if (isNeverPattern(pattern2)) {
+      return pattern2;
+    } else if (isPresentPattern(pattern1)) {
+      if (isPresentPattern(pattern2)) {
+        // same pattern, merge
+        if (pattern1.isPresent === pattern2.isPresent) {
+          return pattern1;
+        } else {
+          return {
+            never: true,
+            reason: "Field cannot both be present and not present.",
+          };
+        }
+      }
+      // If the pattern checks for presence, return other pattern, they should all imply the pattern is present.
+      else if (pattern1.isPresent) {
+        return pattern2;
+      }
+      // checks for not present
+      // take anything but, because !x && x !== "x" => !x
+      else if (isAnythingButPattern(pattern2)) {
+        return pattern1;
+      }
+      // cannot && exists: false and any other pattern as it would be impossible.
+      return {
+        never: true,
+        reason:
+          "Invalid comparison: pattern cannot both be not present as a positive value.",
+      };
+    } else if (isPresentPattern(pattern2)) {
+      // If the pattern checks for presence, return other pattern, they should all imply the pattern is present.
+      if (pattern2.isPresent) {
+        return pattern1;
+      }
+      // checks for not present
+      // take anything but, because !x && x !== "x" => !x
+      else if (isAnythingButPattern(pattern1)) {
+        return pattern2;
+      }
+      // cannot && exists: false and any other pattern as it would be impossible.
+      return {
+        never: true,
+        reason:
+          "Invalid comparison: pattern cannot both be not present as a positive value.",
+      };
+    }
+    // AND (intersect) logic between two numeric aggregate ranges (unions), between a numeric aggregate and a single numeric range or between two numeric ranges
+    else if (isNumericAggregationPattern(pattern1)) {
+      if (isNumericAggregationPattern(pattern2)) {
+        return intersectNumericAggregation(pattern1, pattern2);
+      } else if (isNumericRangePattern(pattern2)) {
+        return intersectNumericAggregationWithRange(pattern1, pattern2);
+      }
+    } else if (isNumericAggregationPattern(pattern2)) {
+      if (isNumericRangePattern(pattern1)) {
+        return intersectNumericAggregationWithRange(pattern2, pattern1);
+      }
+    } else if (
+      isNumericRangePattern(pattern1) &&
+      isNumericRangePattern(pattern2)
+    ) {
+      return intersectNumericRange(pattern1, pattern2);
+    }
+    // AND logic between anything but (not equals) patterns
+    else if (isAnythingButPattern(pattern1)) {
+      if (isAnythingButPattern(pattern2)) {
+        return {
+          anythingBut: [...pattern1.anythingBut, ...pattern2.anythingBut],
+        };
+      }
+    }
+    if (
+      isAnythingButPrefixPattern(pattern1) ||
+      isAnythingButPrefixPattern(pattern2)
+    ) {
+      if (
+        isAnythingButPrefixPattern(pattern1) &&
+        isAnythingButPrefixPattern(pattern2) &&
+        pattern1.anythingButPrefix === pattern2.anythingButPrefix
+      ) {
+        return pattern1;
+      }
+      throw Error(
+        "Event Bridge patterns do not support AND logic between NOT prefix and any other logic."
+      );
+    } else if (isExactMatchPattern(pattern1) || isExactMatchPattern(pattern2)) {
+      if (isExactMatchPattern(pattern1) && isExactMatchPattern(pattern2)) {
+        if (pattern1.value === pattern2.value) {
+          return pattern1;
+        }
+        return {
+          never: true,
+          reason: `Field ${key} cannot be both ${pattern1.value} and ${pattern2.value}`,
+        };
+      } else if (isExactMatchPattern(pattern1)) {
+        if (isPrefixMatchPattern(pattern2)) {
+          if (
+            typeof pattern1.value === "string" &&
+            pattern1.value.startsWith(pattern2.prefix)
+          ) {
+            return pattern1;
+          }
+          return {
+            never: true,
+            reason: `Field ${key} cannot be both ${pattern1.value} and start with ${pattern2.prefix}`,
+          };
+        }
+      } else if (isExactMatchPattern(pattern2)) {
+        if (isPrefixMatchPattern(pattern1)) {
+          if (
+            typeof pattern2.value === "string" &&
+            pattern2.value.startsWith(pattern1.prefix)
+          ) {
+            return pattern1;
+          }
+          return {
+            never: true,
+            reason: `Field ${key} cannot be both ${pattern2.value} and start with ${pattern1.prefix}`,
+          };
+        }
+      }
+    }
+    throw new Error(
+      `Cannot apply AND to patterns ${JSON.stringify(
+        pattern1
+      )} and ${JSON.stringify(pattern2)}`
+    );
+  }
+  // we don't know how to do this (yet?)
+  throw new Error(`Patterns of key ${key} defined at different levels.`);
 };

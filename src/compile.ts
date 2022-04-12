@@ -86,7 +86,7 @@ export function compile(
             );
           } else if (isEventBusWhenFunction(node)) {
             return visitEventBusWhen(node);
-          } else if (isEventBusMapFunction(node)) {
+          } else if (isEventBusRuleMapFunction(node)) {
             return visitEventBusMap(node);
           } else if (isNewEventBusRule(node)) {
             return visitEventBusRule(node);
@@ -168,16 +168,29 @@ export function compile(
         arguments: [TsFunctionParameter];
       };
 
+      /**
+       * Matches the patterns:
+       *   * new EventBusRule()
+       */
       function isNewEventBusRule(node: ts.Node): node is EventBusRuleInterface {
         return ts.isNewExpression(node) && isEventBusRule(node.expression);
       }
 
+      /**
+       * Matches the patterns:
+       *   * new EventBusTransform()
+       */
       function isNewEventBusTransform(
         node: ts.Node
       ): node is EventBusTransformInterface {
         return ts.isNewExpression(node) && isEventBusTransform(node.expression);
       }
 
+      /**
+       * Matches the patterns:
+       *   * IEventBus.when
+       *   * IEventBusRule.when
+       */
       function isEventBusWhenFunction(
         node: ts.Node
       ): node is EventBusWhenInterface {
@@ -185,11 +198,16 @@ export function compile(
           ts.isCallExpression(node) &&
           ts.isPropertyAccessExpression(node.expression) &&
           node.expression.name.text === "when" &&
-          isEventBus(node.expression.expression)
+          (isEventBus(node.expression.expression) ||
+            isEventBusRule(node.expression.expression))
         );
       }
 
-      function isEventBusMapFunction(
+      /**
+       * Matches the patterns:
+       *   * IEventBusRule.map()
+       */
+      function isEventBusRuleMapFunction(
         node: ts.Node
       ): node is EventBusMapInterface {
         return (
@@ -203,6 +221,9 @@ export function compile(
       /**
        * Checks to see if a node is of type EventBus.
        * The node could be any kind of node that returns an event bus rule.
+       * 
+       * Matches the patterns:
+       *   * IEventBus
        */
       function isEventBus(node: ts.Node) {
         return isFunctionlessClassOfKind(node, EventBus.FunctionlessType);
@@ -211,7 +232,10 @@ export function compile(
       /**
        * Checks to see if a node is of type {@link EventBusRule}.
        * The node could be any kind of node that returns an event bus rule.
-       */
+       * 
+       * Matches the patterns:
+       *   * IEventBusRule
+      */
       function isEventBusRule(node: ts.Node) {
         return isFunctionlessClassOfKind(node, EventBusRule.FunctionlessType);
       }
@@ -219,6 +243,9 @@ export function compile(
       /**
        * Checks to see if a node is of type {@link EventBusTransform}.
        * The node could be any kind of node that returns an event bus rule.
+       * 
+       * Matches the patterns:
+       *   * IEventBusTransform
        */
       function isEventBusTransform(node: ts.Node) {
         return isFunctionlessClassOfKind(
@@ -750,6 +777,9 @@ export function compile(
           return toExpr(node.expression, scope);
         } else if (ts.isNonNullExpression(node)) {
           return toExpr(node.expression, scope);
+        } else if (node.kind === ts.SyntaxKind.ThisKeyword) {
+          // assuming that this is used in a valid location, create a closure around that instance.
+          return ref(ts.factory.createIdentifier("this"));
         }
 
         throw new Error(

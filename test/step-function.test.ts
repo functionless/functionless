@@ -6026,3 +6026,49 @@ test("call Step Function describe from another Step Function from context", () =
     },
   });
 });
+
+test("on success event", () => {
+  const machine = new StepFunction(stack, "machine", () => {});
+
+  const success = machine.onSucceeded(stack, "onSuccess");
+
+  expect(success.rule._renderEventPattern()).toEqual({
+    source: ["aws.states"],
+    "detail-type": ["Step Functions Execution Status Change"],
+    detail: {
+      status: ["SUCCEEDED"],
+      stateMachineArn: [machine.stateMachineArn],
+    },
+  });
+});
+
+test("on status change event", () => {
+  const machine = new StepFunction(stack, "machine", () => {});
+
+  const statusChange = machine.onStatusChanged(stack, "onSuccess");
+
+  expect(statusChange.rule._renderEventPattern()).toEqual({
+    source: ["aws.states"],
+    "detail-type": ["Step Functions Execution Status Change"],
+    detail: {
+      stateMachineArn: [machine.stateMachineArn],
+    },
+  });
+});
+
+test("on status change event refine", () => {
+  const machine = new StepFunction(stack, "machine", () => {});
+
+  const success = machine
+    .onStatusChanged(stack, "onStatus")
+    .when(stack, "onRunning", (event) => event.detail.status === "RUNNING");
+
+  expect(success.rule._renderEventPattern()).toEqual({
+    source: ["aws.states"],
+    "detail-type": ["Step Functions Execution Status Change"],
+    detail: {
+      status: ["RUNNING"],
+      stateMachineArn: [machine.stateMachineArn],
+    },
+  });
+});

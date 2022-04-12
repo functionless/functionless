@@ -1,8 +1,11 @@
 import { aws_events } from "aws-cdk-lib";
 import { Construct } from "constructs";
-import { EventBus, IEventBus } from "./event-bus";
-import { FunctionDecl } from "../declaration";
-import { synthesizeEventPattern } from "./event-pattern";
+import { EventBus, IEventBus, IEventBusFilterable } from "./event-bus";
+import {
+  andDocuments,
+  synthesizeEventPattern,
+  synthesizePatternDocument,
+} from "./event-pattern";
 import { Function } from "../function";
 import { EventBusRuleInput } from "./types";
 import { EventTransformFunction, EventBusTransform } from "./transform";
@@ -14,15 +17,16 @@ import {
   StateMachineTargetProps,
 } from "./target";
 import { ExpressStepFunction, StepFunction } from "../step-function";
+import { PatternDocument } from "./event-pattern/pattern";
 
 /**
  * A function interface used by the {@link EventBus}'s when function to generate a rule.
  *
  * event is every event sent to the bus to be filtered. This argument is optional.
  */
-export type EventPredicateFunction<
-  E extends EventBusRuleInput = EventBusRuleInput<any>
-> = (event: E) => boolean;
+export type EventPredicateFunction<E, O extends E = E> =
+  | ((event: E) => event is O)
+  | ((event: E) => boolean);
 
 export interface IEventBusRule<T extends EventBusRuleInput> {
   readonly rule: aws_events.Rule;
@@ -152,7 +156,17 @@ abstract class EventBusRuleBase<T extends EventBusRuleInput>
   public static readonly FunctionlessType = "EventBusRule";
   readonly functionlessKind = "EventBusRule";
 
-  constructor(readonly rule: aws_events.Rule) {}
+  _rule: aws_events.Rule | undefined = undefined;
+
+  // only generate the rule when needed
+  get rule() {
+    if (!this._rule) {
+      this._rule = this.ruleGenerator();
+    }
+    return this._rule;
+  }
+
+  constructor(readonly ruleGenerator: () => aws_events.Rule) {}
 
   /**
    * @inheritdoc
@@ -166,7 +180,7 @@ abstract class EventBusRuleBase<T extends EventBusRuleInput>
    */
   pipe(props: LambdaTargetProps<T>): void;
   pipe(func: Function<T, any>): void;
-  pipe(bus: EventBus<T>): void;
+  pipe(bus: IEventBus<T>): void;
   pipe(props: EventBusTargetProps<T>): void;
   pipe(props: StateMachineTargetProps<T>): void;
   pipe(props: StepFunction<T, any>): void;
@@ -177,29 +191,81 @@ abstract class EventBusRuleBase<T extends EventBusRuleInput>
 }
 
 /**
+ * Special base rule that supports some internal behaviors like joining (AND) compiled rules.
+ */
+export class EventBusPredicateRuleBase<T extends EventBusRuleInput>
+  extends EventBusRuleBase<T>
+  implements IEventBusFilterable<T>
+{
+  readonly document: PatternDocument;
+  constructor(
+    scope: Construct,
+    id: string,
+    private bus: IEventBus<any>,
+    /**
+     * Functionless Pattern Document representation of Event Bridge rules.
+     */
+    document: PatternDocument,
+    /**
+     * Documents to join (AND) with the document.
+     * Allows chaining of when statement.
+     */
+    ...aggregateDocuments: PatternDocument[]
+  ) {
+    const _document = aggregateDocuments.reduce(andDocuments, document);
+    const pattern = synthesizeEventPattern(_document);
+
+    const rule = () =>
+      new aws_events.Rule(scope, id, {
+        // CDK's event pattern format does not support the pattern matchers like prefix.
+        eventPattern: pattern as aws_events.EventPattern,
+        eventBus: bus.bus,
+      });
+
+    super(rule);
+
+    this.document = _document;
+  }
+
+  /**
+   * @inheritdoc
+   */
+  public when<O extends T>(
+    scope: Construct,
+    id: string,
+    predicate: EventPredicateFunction<T, O>
+  ): EventBusPredicateRuleBase<O> {
+    const document = synthesizePatternDocument(predicate as any);
+
+    return new EventBusPredicateRuleBase<O>(
+      scope,
+      id,
+      this.bus,
+      this.document,
+      document
+    );
+  }
+}
+
+/**
  * Represents a set of events filtered by the when predicate using event bus's EventPatterns.
  * https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-event-patterns.html
  *
  * @see EventBus.when for more details on filtering events.
  */
 export class EventBusRule<
-  T extends EventBusRuleInput
-> extends EventBusRuleBase<T> {
+  T extends EventBusRuleInput,
+  O extends T = T
+> extends EventBusPredicateRuleBase<O> {
   constructor(
     scope: Construct,
     id: string,
-    bus: IEventBus<T>,
-    predicate: EventPredicateFunction<T>
+    bus: IEventBus,
+    predicate: EventPredicateFunction<T, O>
   ) {
-    const decl = predicate as unknown as FunctionDecl;
-    const pattern = synthesizeEventPattern(decl);
+    const document = synthesizePatternDocument(predicate as any);
 
-    const rule = new aws_events.Rule(scope, id, {
-      eventPattern: pattern as aws_events.EventPattern,
-      eventBus: bus.bus,
-    });
-
-    super(rule);
+    super(scope, id, bus, document);
   }
 
   /**
@@ -208,7 +274,7 @@ export class EventBusRule<
   public static fromRule<T extends EventBusRuleInput>(
     rule: aws_events.Rule
   ): IEventBusRule<T> {
-    return new ImportedEventBusRule(rule);
+    return new ImportedEventBusRule<T>(rule);
   }
 }
 
@@ -216,6 +282,6 @@ class ImportedEventBusRule<
   T extends EventBusRuleInput
 > extends EventBusRuleBase<T> {
   constructor(rule: aws_events.Rule) {
-    super(rule);
+    super(() => rule);
   }
 }

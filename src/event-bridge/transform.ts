@@ -59,12 +59,12 @@ export class EventBusTransform<T extends EventBusRuleInput, P> {
    *
    * @see EventBusRule.pipe for more details on pipe.
    */
-  pipe<P>(props: LambdaTargetProps<P>): void;
-  pipe<P>(func: Function<P, any>): void;
-  pipe<P>(props: StateMachineTargetProps<P>): void;
-  pipe<P>(props: StepFunction<P, any>): void;
-  pipe<P>(props: ExpressStepFunction<P, any>): void;
-  pipe<P>(
+  pipe(props: LambdaTargetProps<P>): void;
+  pipe(func: Function<P, any>): void;
+  pipe(props: StateMachineTargetProps<P>): void;
+  pipe(props: StepFunction<P, any>): void;
+  pipe(props: ExpressStepFunction<P, any>): void;
+  pipe(
     resource:
       | Function<P, any>
       | LambdaTargetProps<P>

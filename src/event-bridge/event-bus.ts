@@ -1,4 +1,4 @@
-import { aws_events } from "aws-cdk-lib";
+import { aws_events, Stack } from "aws-cdk-lib";
 import { Construct } from "constructs";
 import { ASL, isASL, Task } from "../asl";
 import { makeCallable } from "../callable";
@@ -16,7 +16,7 @@ import {
   PropAssignExpr,
   StringLiteralExpr,
 } from "../expression";
-import { EventBusRule, EventPredicateFunction, IEventBusRule } from "./rule";
+import { EventBusRule, EventPredicateFunction } from "./rule";
 import { EventBusRuleInput } from "./types";
 
 export const isEventBus = <E extends EventBusRuleInput>(
@@ -28,14 +28,7 @@ export const isEventBus = <E extends EventBusRuleInput>(
   );
 };
 
-export interface IEventBus<E extends EventBusRuleInput> {
-  readonly bus: aws_events.IEventBus;
-
-  /**
-   * This static property identifies this class as an EventBus to the TypeScript plugin.
-   */
-  readonly functionlessKind: typeof EventBusBase.FunctionlessType;
-
+export interface IEventBusFilterable<E extends EventBusRuleInput> {
   /**
    * EventBus Rules can filter events using Functionless predicate functions.
    *
@@ -93,11 +86,21 @@ export interface IEventBus<E extends EventBusRuleInput> {
    * Unsupported by Functionless:
    * * Variables from outside of the function scope
    */
-  when(
+  when<O extends E>(
     scope: Construct,
     id: string,
-    predicate: EventPredicateFunction<E>
-  ): EventBusRule<E>;
+    predicate: EventPredicateFunction<E, O>
+  ): EventBusRule<E, O>;
+}
+
+export interface IEventBus<E extends EventBusRuleInput = EventBusRuleInput>
+  extends IEventBusFilterable<E> {
+  readonly bus: aws_events.IEventBus;
+
+  /**
+   * This static property identifies this class as an EventBus to the TypeScript plugin.
+   */
+  readonly functionlessKind: typeof EventBusBase.FunctionlessType;
 
   /**
    * Put one or more events on an Event Bus.
@@ -218,12 +221,12 @@ abstract class EventBusBase<E extends EventBusRuleInput>
   /**
    * @inheritdoc
    */
-  when(
+  when<O extends E>(
     scope: Construct,
     id: string,
-    predicate: EventPredicateFunction<E>
-  ): IEventBusRule<E> {
-    return new EventBusRule<E>(scope, id, this, predicate);
+    predicate: EventPredicateFunction<E, O>
+  ): EventBusRule<E, O> {
+    return new EventBusRule<E, O>(scope, id, this as any, predicate);
   }
 }
 
@@ -291,6 +294,36 @@ export class EventBus<E extends EventBusRuleInput> extends EventBusBase<E> {
     bus: aws_events.IEventBus
   ): IEventBus<E> {
     return new ImportedEventBus<E>(bus);
+  }
+
+  static #singletonDefaultNode = "__DefaultBus";
+
+  /**
+   * Retrieves the default event bus as a singleton on the given stack or the stack of the given construct.
+   *
+   * Equivalent to doing
+   * ```ts
+   * const awsBus = aws_events.EventBus.fromEventBusName(Stack.of(scope), id, "default");
+   * new functionless.EventBus.fromBus(awsBus);
+   * ```
+   */
+  static default<E extends EventBusRuleInput>(stack: Stack): IEventBus<E>;
+  static default<E extends EventBusRuleInput>(scope: Construct): IEventBus<E>;
+  static default<E extends EventBusRuleInput>(
+    scope: Construct | Stack
+  ): IEventBus<E> {
+    const stack = scope instanceof Stack ? scope : Stack.of(scope);
+    const bus =
+      (stack.node.tryFindChild(
+        EventBus.#singletonDefaultNode
+      ) as aws_events.IEventBus) ??
+      aws_events.EventBus.fromEventBusName(
+        stack,
+        EventBus.#singletonDefaultNode,
+        "default"
+      );
+
+    return EventBus.fromBus<E>(bus);
   }
 }
 

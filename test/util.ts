@@ -12,7 +12,10 @@ import * as appsync from "@aws-cdk/aws-appsync-alpha";
 import path from "path";
 import { Rule } from "aws-cdk-lib/aws-events";
 import { Err, isErr } from "../src/error";
-import { synthesizeEventPattern } from "../src/event-bridge/event-pattern/synth";
+import {
+  synthesizeEventPattern,
+  synthesizePatternDocument,
+} from "../src/event-bridge/event-pattern/synth";
 import { EventTransformFunction } from "../src/event-bridge/transform";
 import { synthesizeEventBridgeTargets } from "../src/event-bridge/target-input";
 import {
@@ -158,7 +161,8 @@ export function ebEventPatternTestCase(
   decl: FunctionDecl | Err,
   expected: FunctionlessEventPattern
 ) {
-  const result = synthesizeEventPattern(decl);
+  const document = synthesizePatternDocument(decl);
+  const result = synthesizeEventPattern(document);
 
   expect(result).toEqual(expected);
 }
@@ -167,7 +171,10 @@ export function ebEventPatternTestCaseError(
   decl: FunctionDecl | Err,
   message?: string
 ) {
-  expect(() => synthesizeEventPattern(decl)).toThrow(message);
+  expect(() => {
+    const document = synthesizePatternDocument(decl);
+    synthesizeEventPattern(document);
+  }).toThrow(message);
 }
 
 let stack: Stack;
