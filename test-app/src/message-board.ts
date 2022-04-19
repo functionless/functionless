@@ -420,3 +420,8 @@ customDeleteBus
     message: `Post Deleted: ${(<PostDeletedEvent>event).detail.id}`,
   }))
   .pipe(sendNotification);
+
+new Function(stack, "testFunc", (_something: string) => {
+  console.log("huh?!?!?!??!!");
+  console.log("strange");
+});

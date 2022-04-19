@@ -3,7 +3,7 @@ import { BaseNode, FunctionlessNode, isNode, typeGuard } from "./node";
 import { BlockStmt } from "./statement";
 import { AnyFunction } from "./util";
 
-export type Decl = FunctionDecl | ParameterDecl;
+export type Decl = FunctionDecl | ParameterDecl | HoistedFunctionDecl;
 
 export function isDecl(a: any): a is Decl {
   return isNode(a) && (isFunctionDecl(a) || isParameterDecl(a));
@@ -33,6 +33,34 @@ export class FunctionDecl<F extends AnyFunction = AnyFunction> extends BaseDecl<
     return new FunctionDecl(
       this.parameters.map((param) => param.clone()),
       this.body.clone()
+    ) as this;
+  }
+}
+
+export const isHoistedFunctionDecl = typeGuard("HoistedFunctionDecl");
+
+
+/**
+ * Instead of serializing this function to AST, this function has been hoisted to a module export with a random name.
+ */
+export class HoistedFunctionDecl<
+  F extends AnyFunction = AnyFunction
+> extends BaseDecl<"HoistedFunctionDecl", undefined> {
+  readonly _functionBrand?: F;
+  constructor(
+    readonly exportName: string,
+    readonly sourceFile: string,
+    readonly parameters: ParameterDecl[]
+  ) {
+    super("HoistedFunctionDecl");
+    parameters.forEach((param) => param.setParent(this));
+  }
+
+  public clone(): this {
+    return new HoistedFunctionDecl(
+      this.exportName,
+      this.sourceFile,
+      this.parameters.map((param) => param.clone())
     ) as this;
   }
 }

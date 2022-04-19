@@ -1,4 +1,4 @@
-import { aws_lambda } from "aws-cdk-lib";
+import { AssetHashType, aws_lambda, DockerImage } from "aws-cdk-lib";
 import { CallExpr, isVariableReference } from "./expression";
 import { isVTL, VTL } from "./vtl";
 import { ASL, isASL, Task } from "./asl";
@@ -6,12 +6,18 @@ import { ASL, isASL, Task } from "./asl";
 // @ts-ignore - imported for typedoc
 import type { AppsyncResolver } from "./appsync";
 import { makeCallable } from "./callable";
+import { HoistedFunctionDecl, isHoistedFunctionDecl } from "./declaration";
+import { Construct } from "constructs";
+import { execSync } from "child_process";
+import path from "path";
 
 export function isFunction<P = any, O = any>(a: any): a is Function<P, O> {
   return a?.kind === "Function";
 }
 
 export type AnyLambda = Function<any, any>;
+
+export type FunctionClosure<P, O> = (payload: P) => O;
 
 /**
  * Wraps an {@link aws_lambda.Function} with a type-safe interface that can be
@@ -30,11 +36,59 @@ export type AnyLambda = Function<any, any>;
  */
 export class Function<P, O> {
   readonly kind = "Function" as const;
+  public static readonly FunctionlessType = "Function";
+  readonly resource: aws_lambda.IFunction;
 
   // @ts-ignore - this makes `F` easily available at compile time
   readonly __functionBrand: ConditionalFunction<P, O>;
 
-  constructor(readonly resource: aws_lambda.IFunction) {
+  constructor(scope: Construct, id: string, func: HoistedFunctionDecl);
+  constructor(scope: Construct, id: string, func: FunctionClosure<P, O>);
+  constructor(resource: aws_lambda.IFunction);
+  constructor(
+    resource: aws_lambda.IFunction | Construct,
+    id?: string,
+    func?: HoistedFunctionDecl | FunctionClosure<P, O>
+  ) {
+    if (func && id) {
+      if (isHoistedFunctionDecl(func)) {
+        this.resource = new aws_lambda.Function(resource, id, {
+          runtime: aws_lambda.Runtime.NODEJS_14_X,
+          handler: "index.handler",
+          code: aws_lambda.Code.fromAsset("", {
+            assetHashType: AssetHashType.OUTPUT,
+            bundling: {
+              image: DockerImage.fromRegistry("empty"),
+              local: {
+                tryBundle(outdir: string) {
+                  execSync(
+                    `npx ts-node-esm "${path.join(
+                      __dirname,
+                      "../scripts/bundle-handler.mjs"
+                    )}" "${outdir}/index.js" "${path.dirname(
+                      func.sourceFile
+                    )}" <<-EOM
+import * as inp from "${func.sourceFile}";
+
+export const handler = (() => inp.${func.exportName})();
+EOM`
+                  );
+                  return true;
+                },
+              },
+            },
+          }),
+          // code: aws_lambda.Code.fromInline("blah"),
+        });
+      } else {
+        throw Error(
+          "Expected lambda to be passed a compiled function closure or a aws_lambda.IFunction"
+        );
+      }
+    } else {
+      this.resource = resource as aws_lambda.IFunction;
+    }
+
     return makeCallable(this, (call: CallExpr, context: VTL | ASL): any => {
       const payloadArg = call.getArgument("payload");
 

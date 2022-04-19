@@ -1,4 +1,7 @@
 const { typescript } = require("projen");
+
+const MIN_CDK_VERSION = "2.20.0";
+
 const project = new typescript.TypeScriptProject({
   defaultReleaseBranch: "main",
   name: "functionless",
@@ -7,18 +10,38 @@ const project = new typescript.TypeScriptProject({
     "@aws-cdk/aws-appsync-alpha",
     "@types/fs-extra",
     "@types/minimatch",
+    "@types/uuid",
     "amplify-appsync-simulator",
     "aws-cdk-lib",
     "constructs",
+    "esbuild",
+    "uuid",
     "ts-node",
     "ts-patch",
     "typesafe-dynamodb",
     "typescript",
+    /**
+     * For CDK Local Stack tests
+     */
+    `@aws-cdk/cloud-assembly-schema@${MIN_CDK_VERSION}`,
+    `@aws-cdk/cloudformation-diff@${MIN_CDK_VERSION}`,
+    `@aws-cdk/cx-api@${MIN_CDK_VERSION}`,
+    `aws-cdk@${MIN_CDK_VERSION}`,
+    `cdk-assets@${MIN_CDK_VERSION}`,
+    "promptly",
+    "proxy-agent",
+    /**
+     * End Local
+     */
   ],
+  scripts: {
+    localstack: "./scripts/localstack",
+  },
   peerDeps: [
-    "@aws-cdk/aws-appsync-alpha@^2.17.0-alpha.0",
-    "aws-cdk-lib@^2.17.0",
+    `@aws-cdk/aws-appsync-alpha@^${MIN_CDK_VERSION}-alpha.0`,
+    `aws-cdk-lib@^${MIN_CDK_VERSION}`,
     "constructs@^10.0.0",
+    "esbuild",
     "typesafe-dynamodb@^0.1.5",
     "typescript@^4.6.2",
   ],
@@ -55,6 +78,8 @@ project.testTask.prependExec(
   "cd ./test-app && yarn && yarn build && yarn synth"
 );
 project.testTask.prependExec("ts-patch install -s");
+project.testTask.prependExec("./scripts/localstack");
+project.testTask.exec("localstack stop");
 
 project.addPackageIgnore("/test-app");
 

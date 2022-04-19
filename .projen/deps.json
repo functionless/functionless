@@ -2,7 +2,22 @@
   "dependencies": [
     {
       "name": "@aws-cdk/aws-appsync-alpha",
-      "version": "2.17.0-alpha.0",
+      "version": "2.20.0-alpha.0",
+      "type": "build"
+    },
+    {
+      "name": "@aws-cdk/cloud-assembly-schema",
+      "version": "2.20.0",
+      "type": "build"
+    },
+    {
+      "name": "@aws-cdk/cloudformation-diff",
+      "version": "2.20.0",
+      "type": "build"
+    },
+    {
+      "name": "@aws-cdk/cx-api",
+      "version": "2.20.0",
       "type": "build"
     },
     {
@@ -23,6 +38,10 @@
       "type": "build"
     },
     {
+      "name": "@types/uuid",
+      "type": "build"
+    },
+    {
       "name": "@typescript-eslint/eslint-plugin",
       "version": "^5",
       "type": "build"
@@ -38,12 +57,26 @@
     },
     {
       "name": "aws-cdk-lib",
-      "version": "2.17.0",
+      "version": "2.20.0",
+      "type": "build"
+    },
+    {
+      "name": "aws-cdk",
+      "version": "2.20.0",
+      "type": "build"
+    },
+    {
+      "name": "cdk-assets",
+      "version": "2.20.0",
       "type": "build"
     },
     {
       "name": "constructs",
       "version": "10.0.0",
+      "type": "build"
+    },
+    {
+      "name": "esbuild",
       "type": "build"
     },
     {
@@ -86,6 +119,14 @@
       "type": "build"
     },
     {
+      "name": "promptly",
+      "type": "build"
+    },
+    {
+      "name": "proxy-agent",
+      "type": "build"
+    },
+    {
       "name": "standard-version",
       "version": "^9",
       "type": "build"
@@ -113,18 +154,26 @@
       "type": "build"
     },
     {
+      "name": "uuid",
+      "type": "build"
+    },
+    {
       "name": "@aws-cdk/aws-appsync-alpha",
-      "version": "^2.17.0-alpha.0",
+      "version": "^2.20.0-alpha.0",
       "type": "peer"
     },
     {
       "name": "aws-cdk-lib",
-      "version": "^2.17.0",
+      "version": "^2.20.0",
       "type": "peer"
     },
     {
       "name": "constructs",
       "version": "^10.0.0",
+      "type": "peer"
+    },
+    {
+      "name": "esbuild",
       "type": "peer"
     },
     {
