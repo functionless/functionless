@@ -18,7 +18,6 @@
     "noImplicitThis": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
-    "resolveJsonModule": true,
     "strict": true,
     "strictNullChecks": true,
     "strictPropertyInitialization": true,
@@ -30,6 +29,6 @@
       }
     ]
   },
-  "include": [".projenrc.js", "src/**/*.ts"],
+  "include": [".projenrc.js", "src/**/*.ts", "src/async-app.ts"],
   "exclude": ["node_modules"]
 }

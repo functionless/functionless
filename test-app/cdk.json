@@ -1,3 +1,3 @@
 {
-  "app": "ts-node ./src/message-board.ts"
+  "app": "ts-node ./src/async-app.ts"
 }

@@ -1,3 +1,4 @@
+export { AsyncApp, SynthesizeAsync } from "./app";
 export * from "./aws";
 export * from "./appsync";
 export * from "./declaration";
