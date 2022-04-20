@@ -6,12 +6,17 @@ import { ASL, isASL, Task } from "./asl";
 // @ts-ignore - imported for typedoc
 import type { AppsyncResolver } from "./appsync";
 import { makeCallable } from "./callable";
+import { HoistedFunctionDecl, isHoistedFunctionDecl } from "./declaration";
+import { Construct } from "constructs";
+import { HandlerFunction } from "./instrumentor";
 
 export function isFunction<P = any, O = any>(a: any): a is Function<P, O> {
   return a?.kind === "Function";
 }
 
 export type AnyLambda = Function<any, any>;
+
+export type FunctionClosure<P, O> = (payload: P) => O;
 
 /**
  * Wraps an {@link aws_lambda.Function} with a type-safe interface that can be
@@ -30,11 +35,36 @@ export type AnyLambda = Function<any, any>;
  */
 export class Function<P, O> {
   readonly kind = "Function" as const;
+  public static readonly FunctionlessType = "Function";
+  readonly resource: aws_lambda.IFunction;
 
   // @ts-ignore - this makes `F` easily available at compile time
   readonly __functionBrand: ConditionalFunction<P, O>;
 
-  constructor(readonly resource: aws_lambda.IFunction) {
+  constructor(scope: Construct, id: string, func: HoistedFunctionDecl);
+  constructor(scope: Construct, id: string, func: FunctionClosure<P, O>);
+  constructor(resource: aws_lambda.IFunction);
+  constructor(
+    resource: aws_lambda.IFunction | Construct,
+    id?: string,
+    func?: HoistedFunctionDecl | FunctionClosure<P, O>
+  ) {
+    if (func && id) {
+      if (isHoistedFunctionDecl(func)) {
+        this.resource = new aws_lambda.Function(resource, id, {
+          runtime: aws_lambda.Runtime.NODEJS_14_X,
+          handler: "index.handler",
+          code: new HandlerFunction(func.closure),
+        });
+      } else {
+        throw Error(
+          "Expected lambda to be passed a compiled function closure or a aws_lambda.IFunction"
+        );
+      }
+    } else {
+      this.resource = resource as aws_lambda.IFunction;
+    }
+
     return makeCallable(this, (call: CallExpr, context: VTL | ASL): any => {
       const payloadArg = call.getArgument("payload");
 

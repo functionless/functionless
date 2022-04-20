@@ -10,6 +10,7 @@ import { hasParent } from "./util";
 import minimatch from "minimatch";
 import { EventBus, EventBusRule } from "./event-bridge";
 import { EventBusTransform } from "./event-bridge/transform";
+import { Function } from "./function";
 
 export default compile;
 
@@ -61,11 +62,15 @@ export function compile(
         return sf;
       }
 
+      // Statement collection to append to the end.
+      const additionalStatements: ts.Statement[] = [];
+
       return ts.factory.updateSourceFile(
         sf,
         [
           functionlessImport,
           ...sf.statements.map((stmt) => visitor(stmt) as ts.Statement),
+          ...additionalStatements,
         ],
         sf.isDeclarationFile,
         sf.referencedFiles,
@@ -92,6 +97,8 @@ export function compile(
             return visitEventBusRule(node);
           } else if (isNewEventBusTransform(node)) {
             return visitEventTransform(node);
+          } else if (isNewFunctionlessFunction(node)) {
+            return visitFunction(node);
           }
           return node;
         };
@@ -168,6 +175,10 @@ export function compile(
         arguments: [TsFunctionParameter];
       };
 
+      type FunctionInterface = ts.NewExpression & {
+        arguments: [any, any, TsFunctionParameter];
+      };
+
       /**
        * Matches the patterns:
        *   * new EventBusRule()
@@ -221,7 +232,7 @@ export function compile(
       /**
        * Checks to see if a node is of type EventBus.
        * The node could be any kind of node that returns an event bus rule.
-       * 
+       *
        * Matches the patterns:
        *   * IEventBus
        */
@@ -232,10 +243,10 @@ export function compile(
       /**
        * Checks to see if a node is of type {@link EventBusRule}.
        * The node could be any kind of node that returns an event bus rule.
-       * 
+       *
        * Matches the patterns:
        *   * IEventBusRule
-      */
+       */
       function isEventBusRule(node: ts.Node) {
         return isFunctionlessClassOfKind(node, EventBusRule.FunctionlessType);
       }
@@ -243,7 +254,7 @@ export function compile(
       /**
        * Checks to see if a node is of type {@link EventBusTransform}.
        * The node could be any kind of node that returns an event bus rule.
-       * 
+       *
        * Matches the patterns:
        *   * IEventBusTransform
        */
@@ -251,6 +262,21 @@ export function compile(
         return isFunctionlessClassOfKind(
           node,
           EventBusTransform.FunctionlessType
+        );
+      }
+
+      function isNewFunctionlessFunction(
+        node: ts.Node
+      ): node is FunctionInterface {
+        return (
+          ts.isNewExpression(node) &&
+          isFunctionlessClassOfKind(
+            node.expression,
+            Function.FunctionlessType
+          ) &&
+          // only take the form with the arrow function at the end.
+          node.arguments?.length === 3 &&
+          ts.isArrowFunction(node.arguments[2])
         );
       }
 
@@ -390,6 +416,44 @@ export function compile(
           }
         }
         return call;
+      }
+
+      function visitFunction(func: FunctionInterface): ts.Node {
+        const [_one, _two, funcDecl] = func.arguments;
+
+        if (
+          !ts.isFunctionDeclaration(funcDecl) &&
+          !ts.isArrowFunction(funcDecl) &&
+          !ts.isFunctionExpression(funcDecl)
+        ) {
+          throw new Error(
+            `Functionless reflection only supports function parameters with bodies, no signature only declarations or references. Found ${
+              ts.SyntaxKind[funcDecl.kind]
+            }.`
+          );
+        }
+
+        return ts.factory.updateNewExpression(
+          func,
+          func.expression,
+          func.typeArguments,
+          [
+            _one,
+            _two,
+            newExpr("HoistedFunctionDecl", [
+              funcDecl,
+              ts.factory.createArrayLiteralExpression(
+                funcDecl.parameters
+                  .map((param) => param.name.getText())
+                  .map((arg) =>
+                    newExpr("ParameterDecl", [
+                      ts.factory.createStringLiteral(arg),
+                    ])
+                  )
+              ),
+            ]),
+          ]
+        );
       }
 
       function toFunction(

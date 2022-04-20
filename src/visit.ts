@@ -439,6 +439,8 @@ export function visitEachChild<T extends FunctionlessNode>(
     const block = visitor(node.block);
     ensure(block, isBlockStmt, `a WhileStmt's block must be a BlockStmt`);
     return new WhileStmt(condition, block) as T;
+  } else if (node.kind === "HoistedFunctionDecl") {
+    throw Error(`${node.kind} are not supported.`);
   }
   return assertNever(node);
 }

@@ -364,6 +364,7 @@ export class VTL {
         this.add(`#end`);
         return undefined;
       case "FunctionDecl":
+      case "HoistedFunctionDecl":
         throw new Error(`cannot evaluate Expr kind: '${node.kind}'`);
       case "FunctionExpr":
         return this.eval(node.body);
