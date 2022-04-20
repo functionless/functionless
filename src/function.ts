@@ -8,7 +8,7 @@ import type { AppsyncResolver } from "./appsync";
 import { makeCallable } from "./callable";
 import { HoistedFunctionDecl, isHoistedFunctionDecl } from "./declaration";
 import { Construct } from "constructs";
-import { HandlerFunction } from "./instrumentor";
+import { HandleFunction } from "./instrumentor";
 
 export function isFunction<P = any, O = any>(a: any): a is Function<P, O> {
   return a?.kind === "Function";
@@ -51,11 +51,7 @@ export class Function<P, O> {
   ) {
     if (func && id) {
       if (isHoistedFunctionDecl(func)) {
-        this.resource = new aws_lambda.Function(resource, id, {
-          runtime: aws_lambda.Runtime.NODEJS_14_X,
-          handler: "index.handler",
-          code: new HandlerFunction(func.closure),
-        });
+        this.resource = new HandleFunction(resource, id, func.closure).resource;
       } else {
         throw Error(
           "Expected lambda to be passed a compiled function closure or a aws_lambda.IFunction"

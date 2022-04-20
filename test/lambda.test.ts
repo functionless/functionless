@@ -1,7 +1,6 @@
 import { App, aws_lambda, Stack } from "aws-cdk-lib";
 import { deployStack } from "./localstack";
-import { Function } from "../src";
-import { nodeModuleNameResolver } from "typescript";
+import { AsyncApp, Function } from "../src";
 // import { runtime } from "@pulumi/pulumi";
 
 jest.setTimeout(500000);
@@ -16,7 +15,7 @@ export function flushPromises(): Promise<void> {
 
 // Inspiration: https://github.com/aws/aws-cdk/pull/18667#issuecomment-1075348390
 beforeAll(async () => {
-  app = new App();
+  app = new AsyncApp();
   stack = new Stack(app, "testStack2", {
     env: {
       account: "000000000000",
@@ -38,7 +37,7 @@ beforeAll(async () => {
 
   await flushPromises();
 
-  // new Function(stack, "func2", (event) => event);
+  new Function(stack, "func2", (event) => event);
 
   // const create = () => new Function(stack, "func3", (event) => event);
   // create();
@@ -72,8 +71,7 @@ beforeAll(async () => {
 
 test("simple", async () => {
   // runtime.serializeFunction(() => {}).then((x) => console.log(x.text));
-
-  new Function(stack, "func2", (event) => event);
+  // new Function(stack, "func2", (event) => event);
 });
 
 // const lambda = new Lambda(clientConfig);

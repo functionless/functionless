@@ -1,13 +1,13 @@
 import { ISynthesisSession, Stack } from "aws-cdk-lib";
 import { Construct } from "constructs";
-import { AsyncApp, SynthesizeAsync } from "functionless";
+import { AsyncApp, SynthesizeAsync, Function } from "functionless";
 
 const app = new AsyncApp();
 
 const stack = new Stack(app, "stack");
 
 export interface AsyncHookProps {
-  hook: (session: ISynthesisSession) => Promise<void>; 
+  hook: (session: ISynthesisSession) => Promise<void>;
 }
 
 class AsyncHook extends Construct implements SynthesizeAsync {
@@ -17,7 +17,7 @@ class AsyncHook extends Construct implements SynthesizeAsync {
 
     this.hook = props.hook;
   }
-  
+
   public synthesizeAsync(session: ISynthesisSession): Promise<void> {
     return this.hook(session);
   }
@@ -26,6 +26,11 @@ class AsyncHook extends Construct implements SynthesizeAsync {
 new AsyncHook(stack, "Hook", {
   async hook(_session) {
     console.log("hook");
-  }
+  },
 });
 
+new Function(stack, "testFunc", (_something: string) => {
+  console.log("weeee");
+  console.log("huh?!?!?!??!!");
+  console.log("strange");
+});
