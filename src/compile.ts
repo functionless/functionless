@@ -11,7 +11,6 @@ import minimatch from "minimatch";
 import { EventBus, EventBusRule } from "./event-bridge";
 import { EventBusTransform } from "./event-bridge/transform";
 import { Function } from "./function";
-import { v5 as uuid } from "uuid";
 
 export default compile;
 
@@ -434,36 +433,6 @@ export function compile(
           );
         }
 
-        // Generate random UUID from the function text and a UUID unique to functionless.
-        // TODO: check to see if this same function has already been compiled?
-        const id = uuid(
-          funcDecl.getText(),
-          "7e8f9228-62c7-4f1d-9ab8-feef55bb8c70"
-        )
-          .replace(/\-/g, "")
-          .replace(/^\d*/g, "");
-
-        const closure = ts.factory.createVariableStatement(
-          ts.factory.createModifiersFromModifierFlags(ts.ModifierFlags.Export),
-          ts.factory.createVariableDeclarationList([
-            ts.factory.createVariableDeclaration(
-              id,
-              undefined,
-              undefined,
-              // ts.addSyntheticLeadingComment(
-              funcDecl
-              // ts.SyntaxKind.MultiLineCommentTrivia,
-              // " @__PURE__ ",
-              // false
-              // )
-            ),
-          ])
-        );
-
-        const file = ts.createSourceFile(path.join(path.dirname(sf.fileName), 'generated', id), `${closure}`, ts.ScriptTarget.Latest, true);
-        
-        additionalStatements.push(closure);
-
         return ts.factory.updateNewExpression(
           func,
           func.expression,
@@ -472,8 +441,7 @@ export function compile(
             _one,
             _two,
             newExpr("HoistedFunctionDecl", [
-              ts.factory.createStringLiteral(id),
-              ts.factory.createStringLiteral(file.fileName),
+              funcDecl,
               ts.factory.createArrayLiteralExpression(
                 funcDecl.parameters
                   .map((param) => param.name.getText())

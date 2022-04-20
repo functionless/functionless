@@ -8,14 +8,18 @@ const project = new typescript.TypeScriptProject({
   deps: ["fs-extra", "minimatch"],
   devDeps: [
     "@aws-cdk/aws-appsync-alpha",
+    // "@types/deasync",
     "@types/fs-extra",
     "@types/minimatch",
     "@types/uuid",
     "amplify-appsync-simulator",
     "aws-cdk-lib",
     "constructs",
+    // "deasync",
     "esbuild",
-    "uuid",
+    "@pulumi/pulumi",
+    // "uuid",
+    "synckit",
     "ts-node",
     "ts-patch",
     "typesafe-dynamodb",
@@ -68,6 +72,9 @@ const project = new typescript.TypeScriptProject({
   },
   gitignore: [".DS_Store"],
   releaseToNpm: true,
+  jestOptions: {
+    jestConfig: {},
+  },
 });
 
 project.compileTask.prependExec(

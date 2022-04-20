@@ -28,6 +28,7 @@
     "@aws-cdk/cloud-assembly-schema": "2.20.0",
     "@aws-cdk/cloudformation-diff": "2.20.0",
     "@aws-cdk/cx-api": "2.20.0",
+    "@pulumi/pulumi": "^3.29.1",
     "@types/fs-extra": "^9.0.13",
     "@types/jest": "^27.4.1",
     "@types/minimatch": "^3.0.5",
@@ -53,12 +54,12 @@
     "promptly": "^3.2.0",
     "proxy-agent": "^5.0.0",
     "standard-version": "^9",
+    "synckit": "*",
     "ts-jest": "^27.1.3",
     "ts-node": "^10.7.0",
     "ts-patch": "^2.0.1",
     "typesafe-dynamodb": "0.1.5",
-    "typescript": "4.6.2",
-    "uuid": "^8.3.2"
+    "typescript": "4.6.2"
   },
   "peerDependencies": {
     "@aws-cdk/aws-appsync-alpha": "^2.20.0-alpha.0",

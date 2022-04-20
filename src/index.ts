@@ -5,6 +5,7 @@ export * from "./error";
 export * from "./event-bridge";
 export * from "./expression";
 export * from "./function";
+export * from "./instrumentor";
 export * from "./reflect";
 export * from "./statement";
 export * from "./step-function";

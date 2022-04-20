@@ -21,6 +21,10 @@
       "type": "build"
     },
     {
+      "name": "@pulumi/pulumi",
+      "type": "build"
+    },
+    {
       "name": "@types/fs-extra",
       "type": "build"
     },
@@ -132,6 +136,10 @@
       "type": "build"
     },
     {
+      "name": "synckit",
+      "type": "build"
+    },
+    {
       "name": "ts-jest",
       "type": "build"
     },
@@ -151,10 +159,6 @@
     {
       "name": "typescript",
       "version": "4.6.2",
-      "type": "build"
-    },
-    {
-      "name": "uuid",
       "type": "build"
     },
     {

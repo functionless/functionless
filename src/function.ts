@@ -1,4 +1,4 @@
-import { AssetHashType, aws_lambda, DockerImage } from "aws-cdk-lib";
+import { aws_lambda } from "aws-cdk-lib";
 import { CallExpr, isVariableReference } from "./expression";
 import { isVTL, VTL } from "./vtl";
 import { ASL, isASL, Task } from "./asl";
@@ -8,8 +8,7 @@ import type { AppsyncResolver } from "./appsync";
 import { makeCallable } from "./callable";
 import { HoistedFunctionDecl, isHoistedFunctionDecl } from "./declaration";
 import { Construct } from "constructs";
-import { execSync } from "child_process";
-import path from "path";
+import { HandlerFunction } from "./instrumentor";
 
 export function isFunction<P = any, O = any>(a: any): a is Function<P, O> {
   return a?.kind === "Function";
@@ -55,30 +54,7 @@ export class Function<P, O> {
         this.resource = new aws_lambda.Function(resource, id, {
           runtime: aws_lambda.Runtime.NODEJS_14_X,
           handler: "index.handler",
-          code: aws_lambda.Code.fromAsset("", {
-            assetHashType: AssetHashType.OUTPUT,
-            bundling: {
-              image: DockerImage.fromRegistry("empty"),
-              local: {
-                tryBundle(outdir: string) {
-                  execSync(
-                    `npx ts-node-esm "${path.join(
-                      __dirname,
-                      "../scripts/bundle-handler.mjs"
-                    )}" "${outdir}/index.js" "${path.dirname(
-                      func.sourceFile
-                    )}" <<-EOM
-import * as inp from "${func.sourceFile}";
-
-export const handler = (() => inp.${func.exportName})();
-EOM`
-                  );
-                  return true;
-                },
-              },
-            },
-          }),
-          // code: aws_lambda.Code.fromInline("blah"),
+          code: new HandlerFunction(func.closure),
         });
       } else {
         throw Error(

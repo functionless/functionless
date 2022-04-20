@@ -39,7 +39,6 @@ export class FunctionDecl<F extends AnyFunction = AnyFunction> extends BaseDecl<
 
 export const isHoistedFunctionDecl = typeGuard("HoistedFunctionDecl");
 
-
 /**
  * Instead of serializing this function to AST, this function has been hoisted to a module export with a random name.
  */
@@ -48,8 +47,7 @@ export class HoistedFunctionDecl<
 > extends BaseDecl<"HoistedFunctionDecl", undefined> {
   readonly _functionBrand?: F;
   constructor(
-    readonly exportName: string,
-    readonly sourceFile: string,
+    readonly closure: AnyFunction,
     readonly parameters: ParameterDecl[]
   ) {
     super("HoistedFunctionDecl");
@@ -58,8 +56,7 @@ export class HoistedFunctionDecl<
 
   public clone(): this {
     return new HoistedFunctionDecl(
-      this.exportName,
-      this.sourceFile,
+      this.closure,
       this.parameters.map((param) => param.clone())
     ) as this;
   }
