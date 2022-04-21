@@ -29,7 +29,7 @@ new AsyncHook(stack, "Hook", {
   },
 });
 
-new Function(stack, "testFunc", (_something: string) => {
+new Function(stack, "testFunc", async (_something: string) => {
   console.log("weeee");
   console.log("huh?!?!?!??!!");
   console.log("strange");

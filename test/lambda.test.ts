@@ -1,4 +1,4 @@
-import { App, aws_lambda, Stack } from "aws-cdk-lib";
+import { aws_lambda, Stack } from "aws-cdk-lib";
 import { deployStack } from "./localstack";
 import { AsyncApp, Function } from "../src";
 // import { runtime } from "@pulumi/pulumi";
@@ -7,15 +7,12 @@ jest.setTimeout(500000);
 
 // const CF = new CloudFormation(clientConfig);
 let stack: Stack;
-let app: App;
-
-export function flushPromises(): Promise<void> {
-  return new Promise(jest.requireActual("timers").setImmediate);
-}
+let app: AsyncApp;
 
 // Inspiration: https://github.com/aws/aws-cdk/pull/18667#issuecomment-1075348390
 beforeAll(async () => {
   app = new AsyncApp();
+  
   stack = new Stack(app, "testStack2", {
     env: {
       account: "000000000000",
@@ -35,9 +32,7 @@ beforeAll(async () => {
     })
   );
 
-  await flushPromises();
-
-  new Function(stack, "func2", (event) => event);
+  new Function(stack, "func2", async (event) => event);
 
   // const create = () => new Function(stack, "func3", (event) => event);
   // create();
@@ -65,8 +60,6 @@ beforeAll(async () => {
   // await flushPromises();
 
   await deployStack(app, stack);
-
-  await flushPromises();
 });
 
 test("simple", async () => {

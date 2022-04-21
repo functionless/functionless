@@ -16,7 +16,7 @@ export function isFunction<P = any, O = any>(a: any): a is Function<P, O> {
 
 export type AnyLambda = Function<any, any>;
 
-export type FunctionClosure<P, O> = (payload: P) => O;
+export type FunctionClosure<P, O> = (payload: P) => Promise<O>;
 
 /**
  * Wraps an {@link aws_lambda.Function} with a type-safe interface that can be

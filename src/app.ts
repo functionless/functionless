@@ -91,6 +91,13 @@ export async function synthesizeAsync(
   root: IConstruct,
   options: SynthesisOptions = {}
 ): Promise<cxapi.CloudAssembly> {
+  await visit(root, "pre", async (construct) => {
+    if (isSynthesizeAsync(construct)) {
+      console.log("is async", construct.node.id);
+      await construct.synthesizeAsync(undefined as unknown as any);
+    }
+  });
+
   // we start by calling "synth" on all nested assemblies (which will take care of all their children)
   synthNestedAssemblies(root, options);
 
@@ -269,6 +276,12 @@ async function synthesizeTree(
       validateOnSynth,
     };
 
+    // // run async hooks after synchronous synth processes
+    // if (isSynthesizeAsync(construct)) {
+    //   console.log("is async", construct.node.id);
+    //   await construct.synthesizeAsync(session);
+    // }
+
     if (Stack.isStack(construct)) {
       construct.synthesizer.synthesize(session);
     } else if (construct instanceof TreeMetadata) {
@@ -276,11 +289,6 @@ async function synthesizeTree(
     } else {
       const custom = getCustomSynthesis(construct);
       custom?.onSynthesize(session);
-    }
-
-    // run async hooks after synchronous synth processes
-    if (isSynthesizeAsync(construct)) {
-      await construct.synthesizeAsync(session);
     }
   });
 }
@@ -321,10 +329,12 @@ async function visit(
   cb: (x: IConstruct) => Promise<void>
 ) {
   if (order === "pre") {
-    cb(root);
+    console.log(root.node.id);
+    await cb(root);
   }
 
   for (const child of root.node.children) {
+    console.log(root.node.id, child.node.id);
     if (Stage.isStage(child)) {
       continue;
     }
@@ -332,6 +342,7 @@ async function visit(
   }
 
   if (order === "post") {
+    console.log(root.node.id);
     await cb(root);
   }
 }

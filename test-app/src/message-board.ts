@@ -421,7 +421,7 @@ customDeleteBus
   }))
   .pipe(sendNotification);
 
-new Function(stack, "testFunc", (_something: string) => {
+new Function(stack, "testFunc", async (_something: string) => {
   console.log("huh?!?!?!??!!");
   console.log("strange");
 });
