@@ -153,7 +153,6 @@ export class CallbackLambdaCode extends aws_lambda.Code {
         user: scope.node.addr,
         local: {
           tryBundle(outdir: string) {
-            console.log(outdir);
             fs.writeFileSync(path.resolve(outdir, "index.js"), result.text);
             return true;
           },

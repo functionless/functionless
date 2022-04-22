@@ -84,6 +84,11 @@ project.testTask.prependExec("ts-patch install -s");
 project.testTask.prependExec("./scripts/localstack");
 project.testTask.exec("localstack stop");
 
+project.testTask.env("DEFAULT_REGION", "ap-northeast-1");
+project.testTask.env("AWS_ACCOUNT_ID", "000000000000");
+project.testTask.env("AWS_ACCESS_KEY_ID", "test");
+project.testTask.env("AWS_SECRET_ACCESS_KEY", "test");
+
 project.addPackageIgnore("/test-app");
 
 project.synth();

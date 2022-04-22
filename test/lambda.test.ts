@@ -211,6 +211,102 @@ testResource(
   }
 );
 
+testResource(
+  "Call Lambda with math",
+  (parent) => {
+    const create = () => {
+      new Function(
+        parent,
+        "function",
+        async () => {
+          const v1 = 1 + 2; // 3
+          const v2 = v1 * 3; // 9
+          return v2 - 4; // 5
+        },
+        {
+          functionName: "func9",
+        }
+      );
+    };
+
+    create();
+  },
+  async () => {
+    const result = await lambda
+      .invoke({
+        FunctionName: "func9",
+        Payload: JSON.stringify({}),
+      })
+      .promise();
+
+    expect(result.Payload).toEqual(`5
+`);
+  }
+);
+
+testResource(
+  "Call Lambda payload",
+  (parent) => {
+    const create = () => {
+      new Function(
+        parent,
+        "function",
+        async (event: { val: string }) => {
+          return `value: ${event.val}`;
+        },
+        {
+          functionName: "func10",
+        }
+      );
+    };
+
+    create();
+  },
+  async () => {
+    const result = await lambda
+      .invoke({
+        FunctionName: "func10",
+        Payload: JSON.stringify({ val: "hi" }),
+      })
+      .promise();
+
+    expect(result.Payload).toEqual(`"value: hi"
+`);
+  }
+);
+
+testResource(
+  "Call Lambda throw error",
+  (parent) => {
+    const create = () => {
+      new Function(
+        parent,
+        "function",
+        async () => {
+          throw Error("AHHHHHHHHH");
+        },
+        {
+          functionName: "func11",
+        }
+      );
+    };
+
+    create();
+  },
+  async () => {
+    const result = await lambda
+      .invoke({
+        FunctionName: "func11",
+        Payload: JSON.stringify({}),
+      })
+      .promise();
+
+    expect(result.Payload)
+      .toEqual(`{"errorMessage":"AHHHHHHHHH","errorType":"Error"}
+`);
+  }
+);
+
 // Leave me at the end please.
 tests.forEach(({ name, test: testFunc }) => {
   test(name, testFunc);
