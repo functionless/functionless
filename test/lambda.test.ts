@@ -1,16 +1,15 @@
 import { App, aws_lambda, Stack } from "aws-cdk-lib";
-import { deployStack } from "./localstack";
+import { clientConfig, deployStack } from "./localstack";
 import { Function } from "../src";
+import { Lambda } from "aws-sdk";
+import { Construct } from "constructs";
 
 jest.setTimeout(500000);
 
 // const CF = new CloudFormation(clientConfig);
+const lambda = new Lambda(clientConfig);
 let stack: Stack;
 let app: App;
-
-// export function flushPromises(): Promise<void> {
-//   return new Promise(jest.requireActual("timers").setImmediate);
-// }
 
 // Inspiration: https://github.com/aws/aws-cdk/pull/18667#issuecomment-1075348390
 beforeAll(async () => {
@@ -34,200 +33,185 @@ beforeAll(async () => {
     })
   );
 
-  new Function(stack, "func2", (event) => event);
+  tests.forEach(({ resources }, i) => {
+    const construct = new Construct(stack, `parent${i}`);
+    resources(construct);
+  });
 
-  // const create = () => new Function(stack, "func3", (event) => event);
-  // create();
-
-  // const create2 = () => {
-  //   const val = "a";
-  //   new Function(stack, "func4", () => val);
-  // };
-
-  // create2();
-
-  // const create3 = (val: string) => {
-  //   new Function(stack, "func5", () => val);
-  // };
-
-  // create3("b");
-
-  // const create4 = (id: string, val: string) => {
-  //   new Function(stack, id, () => val);
-  // };
-
-  // create4("func6", "c");
-  // create4("func7", "d");
-
-  // await flushPromises();
-
-  // await flushPromises();
   await deployStack(app, stack);
 });
 
-test("simple", async () => {
-  // runtime.serializeFunction(() => {}).then((x) => console.log(x.text));
-  // new Function(stack, "func2", (event) => event);
+interface ResourceTest {
+  name: string;
+  resources: (parent: Construct) => void;
+  test: () => Promise<void>;
+}
+
+const tests: ResourceTest[] = [];
+
+/**
+ * Allow for a suit of tests that deploy a single stack once and test the results in separate test cases.
+ */
+const testResource = (
+  name: string,
+  resources: ResourceTest["resources"],
+  test: ResourceTest["test"]
+) => {
+  tests.push({ name, resources, test });
+};
+
+testResource(
+  "Call Lambda",
+  (parent) => {
+    new Function(parent, "func2", async (event) => event, {
+      functionName: "func2",
+    });
+  },
+  async () => {
+    const result = await lambda
+      .invoke({
+        FunctionName: "func2",
+        Payload: JSON.stringify({}),
+      })
+      .promise();
+
+    expect(result.Payload).toEqual(`{}
+`);
+  }
+);
+
+testResource(
+  "Call Lambda from closure",
+  (parent) => {
+    const create = () =>
+      new Function(parent, "function", async (event) => event, {
+        functionName: "func3",
+      });
+    create();
+  },
+  async () => {
+    const result = await lambda
+      .invoke({
+        FunctionName: "func3",
+        Payload: JSON.stringify({}),
+      })
+      .promise();
+
+    expect(result.Payload).toEqual(`{}
+`);
+  }
+);
+
+testResource(
+  "Call Lambda from closure with variables",
+  (parent) => {
+    const create = () => {
+      const val = "a";
+      new Function(parent, "function", async () => val, {
+        functionName: "func4",
+      });
+    };
+
+    create();
+  },
+  async () => {
+    const result = await lambda
+      .invoke({
+        FunctionName: "func4",
+        Payload: JSON.stringify({}),
+      })
+      .promise();
+
+    expect(result.Payload).toEqual(`"a"
+`);
+  }
+);
+
+testResource(
+  "Call Lambda from closure with parameter",
+  (parent) => {
+    const create = (val: string) => {
+      new Function(parent, "func5", async () => val, {
+        functionName: "func5",
+      });
+    };
+
+    create("b");
+  },
+  async () => {
+    const result = await lambda
+      .invoke({
+        FunctionName: "func5",
+        Payload: JSON.stringify({}),
+      })
+      .promise();
+
+    expect(result.Payload).toEqual(`"b"
+`);
+  }
+);
+
+testResource(
+  "Call Lambda from closure with parameter multiple",
+  (parent) => {
+    const create = (id: string, val: string) => {
+      new Function(parent, id, async () => val, {
+        functionName: id,
+      });
+    };
+
+    create("func6", "c");
+    create("func7", "d");
+  },
+  async () => {
+    const result = await lambda
+      .invoke({
+        FunctionName: "func6",
+        Payload: JSON.stringify({}),
+      })
+      .promise();
+
+    expect(result.Payload).toEqual(`"c"
+`);
+
+    const result2 = await lambda
+      .invoke({
+        FunctionName: "func7",
+        Payload: JSON.stringify({}),
+      })
+      .promise();
+
+    expect(result2.Payload).toEqual(`"d"
+`);
+  }
+);
+
+testResource(
+  "Call Lambda with object",
+  (parent) => {
+    const create = () => {
+      const obj = { val: 1 };
+      new Function(parent, "function", async () => obj.val, {
+        functionName: "func8",
+      });
+    };
+
+    create();
+  },
+  async () => {
+    const result = await lambda
+      .invoke({
+        FunctionName: "func8",
+        Payload: JSON.stringify({}),
+      })
+      .promise();
+
+    expect(result.Payload).toEqual(`1
+`);
+  }
+);
+
+// Leave me at the end please.
+tests.forEach(({ name, test: testFunc }) => {
+  test(name, testFunc);
 });
-
-// const lambda = new Lambda(clientConfig);
-
-// test("Call Lambda", async () => {
-//   await flushPromises();
-
-//   const resources = await CF.listStackResources({
-//     StackName: stack.artifactId,
-//   }).promise();
-
-//   console.log(
-//     resources.StackResourceSummaries?.map((s) => [
-//       s.PhysicalResourceId,
-//       s.LogicalResourceId,
-//       s.ResourceType,
-//     ])
-//   );
-
-//   const testFunc = resources.StackResourceSummaries?.find(
-//     (r) =>
-//       r.ResourceType === "AWS::Lambda::Function" &&
-//       r.LogicalResourceId?.startsWith("testFunc")
-//   );
-
-//   expect(testFunc).not.toBeUndefined();
-
-//   const result = await lambda
-//     .invoke({
-//       FunctionName: testFunc?.PhysicalResourceId!,
-//       Payload: JSON.stringify({}),
-//     })
-//     .promise();
-
-//   expect(result.Payload).toEqual(`null
-// `);
-// });
-
-// test("Call Lambda from closure", async () => {
-//   const resources = await CF.listStackResources({
-//     StackName: stack.artifactId,
-//   }).promise();
-
-//   const testFunc = resources.StackResourceSummaries?.find(
-//     (r) =>
-//       r.ResourceType === "AWS::Lambda::Function" &&
-//       r.LogicalResourceId?.startsWith("func2")
-//   );
-
-//   expect(testFunc).not.toBeUndefined();
-
-//   const result = await lambda
-//     .invoke({
-//       FunctionName: testFunc?.PhysicalResourceId!,
-//       Payload: JSON.stringify({ test: "me" }),
-//     })
-//     .promise();
-
-//   console.log(result);
-
-//   expect(result.Payload).toEqual(`null
-// `);
-// });
-
-// test("Call Lambda from closure basic", async () => {
-//   const resources = await CF.listStackResources({
-//     StackName: stack.artifactId,
-//   }).promise();
-
-//   const testFunc = resources.StackResourceSummaries?.find(
-//     (r) =>
-//       r.ResourceType === "AWS::Lambda::Function" &&
-//       r.LogicalResourceId?.startsWith("func3")
-//   );
-
-//   expect(testFunc).not.toBeUndefined();
-
-//   const result = await lambda
-//     .invoke({
-//       FunctionName: testFunc?.PhysicalResourceId!,
-//       Payload: JSON.stringify({}),
-//     })
-//     .promise();
-
-//   expect(result.Payload).toEqual(`null
-// `);
-// });
-
-// test("Call Lambda from closure with variables", async () => {
-//   await deployStack(app, stack);
-
-//   const resources = await CF.listStackResources({
-//     StackName: stack.artifactId,
-//   }).promise();
-
-//   const testFunc = resources.StackResourceSummaries?.find(
-//     (r) =>
-//       r.ResourceType === "AWS::Lambda::Function" &&
-//       r.LogicalResourceId?.startsWith("func2")
-//   );
-
-//   expect(testFunc).not.toBeUndefined();
-
-//   const result = await lambda
-//     .invoke({
-//       FunctionName: testFunc?.PhysicalResourceId!,
-//       Payload: JSON.stringify({}),
-//     })
-//     .promise();
-
-//   expect(result.Payload).toEqual(`null
-// `);
-// });
-
-// test("Call Lambda from closure with parameter", async () => {
-//   const resources = await CF.listStackResources({
-//     StackName: stack.artifactId,
-//   }).promise();
-
-//   const testFunc = resources.StackResourceSummaries?.find(
-//     (r) =>
-//       r.ResourceType === "AWS::Lambda::Function" &&
-//       r.LogicalResourceId?.startsWith("func2")
-//   );
-
-//   expect(testFunc).not.toBeUndefined();
-
-//   const result = await lambda
-//     .invoke({
-//       FunctionName: testFunc?.PhysicalResourceId!,
-//       Payload: JSON.stringify({}),
-//     })
-//     .promise();
-
-//   expect(result.Payload).toEqual(`null
-// `);
-// });
-
-// test("Call Lambda from closure with parameter multiple", async () => {
-//   await deployStack(app, stack);
-
-//   const resources = await CF.listStackResources({
-//     StackName: stack.artifactId,
-//   }).promise();
-
-//   const testFunc = resources.StackResourceSummaries?.find(
-//     (r) =>
-//       r.ResourceType === "AWS::Lambda::Function" &&
-//       r.LogicalResourceId?.startsWith("func2")
-//   );
-
-//   expect(testFunc).not.toBeUndefined();
-
-//   const result = await lambda
-//     .invoke({
-//       FunctionName: testFunc?.PhysicalResourceId!,
-//       Payload: JSON.stringify({}),
-//     })
-//     .promise();
-
-//   expect(result.Payload).toEqual(`null
-// `);
-// });

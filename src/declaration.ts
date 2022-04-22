@@ -3,7 +3,7 @@ import { BaseNode, FunctionlessNode, isNode, typeGuard } from "./node";
 import { BlockStmt } from "./statement";
 import { AnyFunction } from "./util";
 
-export type Decl = FunctionDecl | ParameterDecl | HoistedFunctionDecl;
+export type Decl = FunctionDecl | ParameterDecl | NativeFunctionDecl;
 
 export function isDecl(a: any): a is Decl {
   return isNode(a) && (isFunctionDecl(a) || isParameterDecl(a));
@@ -37,27 +37,27 @@ export class FunctionDecl<F extends AnyFunction = AnyFunction> extends BaseDecl<
   }
 }
 
-export const isHoistedFunctionDecl = typeGuard("HoistedFunctionDecl");
+export const isNativeFunctionDecl = typeGuard("NativeFunctionDecl");
 
 /**
- * Instead of serializing this function to AST, this function has been hoisted to a module export with a random name.
+ * A function declaration which contains the original closure instead of Functionless expressions.
  */
-export class HoistedFunctionDecl<
+export class NativeFunctionDecl<
   F extends AnyFunction = AnyFunction
-> extends BaseDecl<"HoistedFunctionDecl", undefined> {
+> extends BaseDecl<"NativeFunctionDecl", undefined> {
   readonly _functionBrand?: F;
   constructor(
-    readonly closure: AnyFunction,
-    readonly parameters: ParameterDecl[]
+    readonly parameters: ParameterDecl[],
+    readonly closure: AnyFunction
   ) {
-    super("HoistedFunctionDecl");
+    super("NativeFunctionDecl");
     parameters.forEach((param) => param.setParent(this));
   }
 
   public clone(): this {
-    return new HoistedFunctionDecl(
-      this.closure,
-      this.parameters.map((param) => param.clone())
+    return new NativeFunctionDecl(
+      this.parameters.map((param) => param.clone()),
+      this.closure
     ) as this;
   }
 }

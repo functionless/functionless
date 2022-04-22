@@ -176,7 +176,7 @@ export function compile(
       };
 
       type FunctionInterface = ts.NewExpression & {
-        arguments: [any, any, TsFunctionParameter];
+        arguments: [any, any, TsFunctionParameter, any | undefined];
       };
 
       /**
@@ -275,7 +275,7 @@ export function compile(
             Function.FunctionlessType
           ) &&
           // only take the form with the arrow function at the end.
-          node.arguments?.length === 3 &&
+          (node.arguments?.length === 3 || node.arguments?.length === 4) &&
           ts.isArrowFunction(node.arguments[2])
         );
       }
@@ -419,7 +419,7 @@ export function compile(
       }
 
       function visitFunction(func: FunctionInterface): ts.Node {
-        const [_one, _two, funcDecl] = func.arguments;
+        const [_one, _two, funcDecl, _four] = func.arguments;
 
         if (
           !ts.isFunctionDeclaration(funcDecl) &&
@@ -440,8 +440,7 @@ export function compile(
           [
             _one,
             _two,
-            newExpr("HoistedFunctionDecl", [
-              funcDecl,
+            newExpr("NativeFunctionDecl", [
               ts.factory.createArrayLiteralExpression(
                 funcDecl.parameters
                   .map((param) => param.name.getText())
@@ -451,7 +450,9 @@ export function compile(
                     ])
                   )
               ),
+              funcDecl,
             ]),
+            _four,
           ]
         );
       }

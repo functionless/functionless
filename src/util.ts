@@ -5,7 +5,7 @@ import { ASL, Task } from "./asl";
 import { isAWS } from "./aws";
 import ts from "typescript";
 import { isTable } from "./table";
-import { isFunction } from "./function";
+import { isFunction, Function } from "./function";
 import { isStepFunction } from "./step-function";
 import { App } from "aws-cdk-lib";
 import { SynthesisOptions } from "aws-cdk-lib/core/lib/private/synthesis";
@@ -170,5 +170,6 @@ export const isPrimitive = (val: any): val is PrimitiveValue => {
  */
 export const asyncSynth = async (app: App, options?: SynthesisOptions) => {
   await new Promise(setImmediate);
+  await Promise.all(Function.promises);
   return app.synth(options);
 };

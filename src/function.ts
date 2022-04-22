@@ -1,4 +1,4 @@
-import { aws_lambda, DockerImage } from "aws-cdk-lib";
+import { AssetHashType, aws_lambda, DockerImage } from "aws-cdk-lib";
 import { CallExpr, isVariableReference } from "./expression";
 import { isVTL, VTL } from "./vtl";
 import { ASL, isASL, Task } from "./asl";
@@ -6,7 +6,7 @@ import { ASL, isASL, Task } from "./asl";
 // @ts-ignore - imported for typedoc
 import type { AppsyncResolver } from "./appsync";
 import { makeCallable } from "./callable";
-import { HoistedFunctionDecl, isHoistedFunctionDecl } from "./declaration";
+import { NativeFunctionDecl, isNativeFunctionDecl } from "./declaration";
 import { Construct } from "constructs";
 import { AnyFunction } from "./util";
 import { runtime } from "@pulumi/pulumi";
@@ -19,7 +19,7 @@ export function isFunction<P = any, O = any>(a: any): a is Function<P, O> {
 
 export type AnyLambda = Function<any, any>;
 
-export type FunctionClosure<P, O> = (payload: P) => O;
+export type FunctionClosure<P, O> = (payload: P) => Promise<O>;
 
 /**
  * Wraps an {@link aws_lambda.Function} with a type-safe interface that can be
@@ -41,20 +41,34 @@ export class Function<P, O> {
   public static readonly FunctionlessType = "Function";
   readonly resource: aws_lambda.IFunction;
 
+  static promises: Promise<any>[] = [];
+
   // @ts-ignore - this makes `F` easily available at compile time
   readonly __functionBrand: ConditionalFunction<P, O>;
 
-  constructor(scope: Construct, id: string, func: HoistedFunctionDecl);
-  constructor(scope: Construct, id: string, func: FunctionClosure<P, O>);
+  constructor(
+    scope: Construct,
+    id: string,
+    func: NativeFunctionDecl,
+    props?: Omit<aws_lambda.FunctionProps, "code" | "handler" | "runtime">
+  );
+  constructor(
+    scope: Construct,
+    id: string,
+    func: FunctionClosure<P, O>,
+    props?: Omit<aws_lambda.FunctionProps, "code" | "handler" | "runtime">
+  );
   constructor(resource: aws_lambda.IFunction);
   constructor(
     resource: aws_lambda.IFunction | Construct,
     id?: string,
-    func?: HoistedFunctionDecl | FunctionClosure<P, O>
+    func?: NativeFunctionDecl | FunctionClosure<P, O>,
+    props?: Omit<aws_lambda.FunctionProps, "code" | "handler" | "runtime">
   ) {
     if (func && id) {
-      if (isHoistedFunctionDecl(func)) {
+      if (isNativeFunctionDecl(func)) {
         this.resource = new aws_lambda.Function(resource, id, {
+          ...props,
           runtime: aws_lambda.Runtime.NODEJS_14_X,
           handler: "index.handler",
           code: new CallbackLambdaCode(func.closure),
@@ -120,7 +134,7 @@ export class CallbackLambdaCode extends aws_lambda.Code {
   }
 
   bind(scope: Construct): aws_lambda.CodeConfig {
-    this.generate(scope);
+    Function.promises.push(this.generate(scope));
 
     // Lets give the function something lightweight while we process the closure.
     return aws_lambda.Code.fromInline(
@@ -132,10 +146,14 @@ export class CallbackLambdaCode extends aws_lambda.Code {
     const result = await runtime.serializeFunction(this.func);
 
     const asset = aws_lambda.Code.fromAsset("", {
+      assetHashType: AssetHashType.OUTPUT,
       bundling: {
         image: DockerImage.fromRegistry("empty"),
+        // This forces the bundle directory and cache key to be unique. It does nothing else.
+        user: scope.node.addr,
         local: {
           tryBundle(outdir: string) {
+            console.log(outdir);
             fs.writeFileSync(path.resolve(outdir, "index.js"), result.text);
             return true;
           },
