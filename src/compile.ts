@@ -160,15 +160,20 @@ export function compile(
         | ts.CallExpression;
 
       type EventBusRuleInterface = ts.NewExpression & {
-        arguments: [any, any, any, TsFunctionParameter];
+        arguments: [
+          ts.Expression,
+          ts.Expression,
+          ts.Expression,
+          TsFunctionParameter
+        ];
       };
 
       type EventBusTransformInterface = ts.NewExpression & {
-        arguments: [TsFunctionParameter, any];
+        arguments: [TsFunctionParameter, ts.Expression];
       };
 
       type EventBusWhenInterface = ts.CallExpression & {
-        arguments: [any, any, TsFunctionParameter];
+        arguments: [ts.Expression, ts.Expression, TsFunctionParameter];
       };
 
       type EventBusMapInterface = ts.CallExpression & {
@@ -176,7 +181,12 @@ export function compile(
       };
 
       type FunctionInterface = ts.NewExpression & {
-        arguments: [any, any, TsFunctionParameter, any | undefined];
+        arguments: [
+          ts.Expression,
+          ts.Expression,
+          TsFunctionParameter,
+          ts.Expression | undefined
+        ];
       };
 
       /**
@@ -452,7 +462,7 @@ export function compile(
               ),
               funcDecl,
             ]),
-            _four,
+            ...(_four ? [_four] : []),
           ]
         );
       }
