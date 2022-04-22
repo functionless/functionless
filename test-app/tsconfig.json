@@ -27,6 +27,9 @@
     "plugins": [
       {
         "transform": "functionless/lib/compile"
+      },
+      {
+        "name": "functionless/lib/language-service-plugin"
       }
     ]
   },

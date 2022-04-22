@@ -3,13 +3,17 @@ import path from "path";
 import { PluginConfig, TransformerExtras } from "ts-patch";
 import { BinaryOp, CanReference } from "./expression";
 import { FunctionlessNode } from "./node";
-import { AppsyncResolver } from "./appsync";
 import { assertDefined } from "./assert";
-import { StepFunction, ExpressStepFunction } from "./step-function";
 import { hasParent } from "./util";
 import minimatch from "minimatch";
-import { EventBus, EventBusRule } from "./event-bridge";
-import { EventBusTransform } from "./event-bridge/transform";
+import {
+  EventBusMapInterface,
+  EventBusRuleInterface,
+  EventBusTransformInterface,
+  EventBusWhenInterface,
+  makeFunctionlessChecker,
+  TsFunctionParameter,
+} from "./checker";
 
 export default compile;
 
@@ -41,7 +45,7 @@ export function compile(
   const excludeMatchers = _config?.exclude
     ? _config.exclude.map((pattern) => minimatch.makeRe(path.resolve(pattern)))
     : [];
-  const checker = program.getTypeChecker();
+  const checker = makeFunctionlessChecker(program.getTypeChecker());
   return (ctx) => {
     const functionless = ts.factory.createUniqueName("functionless");
     return (sf) => {
@@ -76,182 +80,27 @@ export function compile(
 
       function visitor(node: ts.Node): ts.Node {
         const visit = () => {
-          if (isAppsyncResolver(node)) {
+          if (checker.isAppsyncResolver(node)) {
             return visitAppsyncResolver(node as ts.NewExpression);
-          } else if (isStepFunction(node)) {
+          } else if (checker.isStepFunction(node)) {
             return visitStepFunction(node as ts.NewExpression);
-          } else if (isReflectFunction(node)) {
+          } else if (checker.isReflectFunction(node)) {
             return errorBoundary(() =>
               toFunction("FunctionDecl", node.arguments[0])
             );
-          } else if (isEventBusWhenFunction(node)) {
+          } else if (checker.isEventBusWhenFunction(node)) {
             return visitEventBusWhen(node);
-          } else if (isEventBusRuleMapFunction(node)) {
+          } else if (checker.isEventBusRuleMapFunction(node)) {
             return visitEventBusMap(node);
-          } else if (isNewEventBusRule(node)) {
+          } else if (checker.isNewEventBusRule(node)) {
             return visitEventBusRule(node);
-          } else if (isNewEventBusTransform(node)) {
+          } else if (checker.isNewEventBusTransform(node)) {
             return visitEventTransform(node);
           }
           return node;
         };
         // keep processing the children of the updated node.
         return ts.visitEachChild(visit(), visitor, ctx);
-      }
-
-      function isReflectFunction(node: ts.Node): node is ts.CallExpression & {
-        arguments: [TsFunctionParameter, ...ts.Expression[]];
-      } {
-        if (ts.isCallExpression(node)) {
-          const exprType = checker.getTypeAtLocation(node.expression);
-          const exprDecl = exprType.symbol?.declarations?.[0];
-          if (exprDecl && ts.isFunctionDeclaration(exprDecl)) {
-            if (exprDecl.name?.text === "reflect") {
-              return true;
-            }
-          }
-        }
-        return false;
-      }
-
-      function isAppsyncResolver(node: ts.Node): node is ts.NewExpression & {
-        arguments: [TsFunctionParameter, ...ts.Expression[]];
-      } {
-        if (ts.isNewExpression(node)) {
-          return isFunctionlessClassOfKind(
-            node.expression,
-            AppsyncResolver.FunctionlessType
-          );
-        }
-        return false;
-      }
-
-      function isStepFunction(node: ts.Node): node is ts.NewExpression & {
-        arguments: [TsFunctionParameter, ...ts.Expression[]];
-      } {
-        if (ts.isNewExpression(node)) {
-          return (
-            isFunctionlessClassOfKind(node, StepFunction.FunctionlessType) ||
-            isFunctionlessClassOfKind(
-              node,
-              ExpressStepFunction.FunctionlessType
-            )
-          );
-        }
-        return false;
-      }
-
-      /**
-       * Various types that could be in a call argument position of a function parameter.
-       */
-      type TsFunctionParameter =
-        | ts.FunctionExpression
-        | ts.ArrowFunction
-        | ts.Identifier
-        | ts.PropertyAccessExpression
-        | ts.ElementAccessExpression
-        | ts.CallExpression;
-
-      type EventBusRuleInterface = ts.NewExpression & {
-        arguments: [any, any, any, TsFunctionParameter];
-      };
-
-      type EventBusTransformInterface = ts.NewExpression & {
-        arguments: [TsFunctionParameter, any];
-      };
-
-      type EventBusWhenInterface = ts.CallExpression & {
-        arguments: [any, any, TsFunctionParameter];
-      };
-
-      type EventBusMapInterface = ts.CallExpression & {
-        arguments: [TsFunctionParameter];
-      };
-
-      /**
-       * Matches the patterns:
-       *   * new EventBusRule()
-       */
-      function isNewEventBusRule(node: ts.Node): node is EventBusRuleInterface {
-        return ts.isNewExpression(node) && isEventBusRule(node.expression);
-      }
-
-      /**
-       * Matches the patterns:
-       *   * new EventBusTransform()
-       */
-      function isNewEventBusTransform(
-        node: ts.Node
-      ): node is EventBusTransformInterface {
-        return ts.isNewExpression(node) && isEventBusTransform(node.expression);
-      }
-
-      /**
-       * Matches the patterns:
-       *   * IEventBus.when
-       *   * IEventBusRule.when
-       */
-      function isEventBusWhenFunction(
-        node: ts.Node
-      ): node is EventBusWhenInterface {
-        return (
-          ts.isCallExpression(node) &&
-          ts.isPropertyAccessExpression(node.expression) &&
-          node.expression.name.text === "when" &&
-          (isEventBus(node.expression.expression) ||
-            isEventBusRule(node.expression.expression))
-        );
-      }
-
-      /**
-       * Matches the patterns:
-       *   * IEventBusRule.map()
-       */
-      function isEventBusRuleMapFunction(
-        node: ts.Node
-      ): node is EventBusMapInterface {
-        return (
-          ts.isCallExpression(node) &&
-          ts.isPropertyAccessExpression(node.expression) &&
-          node.expression.name.text === "map" &&
-          isEventBusRule(node.expression.expression)
-        );
-      }
-
-      /**
-       * Checks to see if a node is of type EventBus.
-       * The node could be any kind of node that returns an event bus rule.
-       * 
-       * Matches the patterns:
-       *   * IEventBus
-       */
-      function isEventBus(node: ts.Node) {
-        return isFunctionlessClassOfKind(node, EventBus.FunctionlessType);
-      }
-
-      /**
-       * Checks to see if a node is of type {@link EventBusRule}.
-       * The node could be any kind of node that returns an event bus rule.
-       * 
-       * Matches the patterns:
-       *   * IEventBusRule
-      */
-      function isEventBusRule(node: ts.Node) {
-        return isFunctionlessClassOfKind(node, EventBusRule.FunctionlessType);
-      }
-
-      /**
-       * Checks to see if a node is of type {@link EventBusTransform}.
-       * The node could be any kind of node that returns an event bus rule.
-       * 
-       * Matches the patterns:
-       *   * IEventBusTransform
-       */
-      function isEventBusTransform(node: ts.Node) {
-        return isFunctionlessClassOfKind(
-          node,
-          EventBusTransform.FunctionlessType
-        );
       }
 
       /**
@@ -273,46 +122,6 @@ export function compile(
             ),
           ]);
         }
-      }
-
-      /**
-       * Checks if the type contains one of
-       * a static property FunctionlessType with the value of {@param kind}
-       * a property signature functionlessKind with literal type with the value of {@param kind}
-       * a readonly property functionlessKind with literal type with the value of {@param kind}
-       */
-      function isFunctionlessType(
-        type: ts.Type | undefined,
-        kind: string
-      ): boolean {
-        return !!type && getFunctionlessTypeKind(type) === kind;
-      }
-
-      function isFunctionlessClassOfKind(node: ts.Node, kind: string) {
-        const type = checker.getTypeAtLocation(node);
-        return isFunctionlessType(type, kind);
-      }
-
-      function getFunctionlessTypeKind(type: ts.Type): string | undefined {
-        const functionlessType = type.getProperty("FunctionlessType");
-        const functionlessKind = type.getProperty("functionlessKind");
-        const prop = functionlessType ?? functionlessKind;
-
-        if (prop && prop.valueDeclaration) {
-          if (
-            ts.isPropertyDeclaration(prop.valueDeclaration) &&
-            prop.valueDeclaration.initializer &&
-            ts.isStringLiteral(prop.valueDeclaration.initializer)
-          ) {
-            return prop.valueDeclaration.initializer.text;
-          } else if (ts.isPropertySignature(prop.valueDeclaration)) {
-            const type = checker.getTypeAtLocation(prop.valueDeclaration);
-            if (type.isStringLiteral()) {
-              return type.value;
-            }
-          }
-        }
-        return undefined;
       }
 
       function visitStepFunction(call: ts.NewExpression): ts.Node {
