@@ -295,6 +295,39 @@ testResource(
   }
 );
 
+// testResource(
+//   "Call Lambda put event to bus",
+//   (parent) => {
+//     const create = () => {
+//       const bus = new EventBus(parent, "bus");
+//       new Function(
+//         parent,
+//         "function",
+//         async () => {
+//           await bus({ "detail-type": "bus-test" });
+//         },
+//         {
+//           functionName: "func12",
+//         }
+//       );
+//     };
+
+//     create();
+//   },
+//   async () => {
+//     const result = await lambda
+//       .invoke({
+//         FunctionName: "func11",
+//         Payload: JSON.stringify({}),
+//       })
+//       .promise();
+
+//     expect(result.Payload)
+//       .toEqual(`{"errorMessage":"AHHHHHHHHH","errorType":"Error"}
+// `);
+//   }
+// );
+
 // Leave me at the end please.
 tests.forEach(({ name, test: testFunc }) => {
   test(name, testFunc);

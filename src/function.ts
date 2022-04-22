@@ -1,5 +1,9 @@
 import { AssetHashType, aws_lambda, DockerImage } from "aws-cdk-lib";
-import { CallExpr, isVariableReference } from "./expression";
+import {
+  CallExpr,
+  isArrayLiteralExpr,
+  isVariableReference,
+} from "./expression";
 import { isVTL, VTL } from "./vtl";
 import { ASL, isASL, Task } from "./asl";
 
@@ -44,12 +48,19 @@ abstract class FunctionBase<P, O> implements IFunction<P, O> {
 
   constructor(readonly resource: aws_lambda.IFunction) {
     return makeCallable(this, (call: CallExpr, context: VTL | ASL): any => {
-      const payloadArg = call.getArgument("payload");
+      /**
+       * The function will either contain args: [payloadExpr] | [] or payload: expr | undefined
+       */
+      const args = call.getArgument("args");
+      const payload = call.getArgument("payload");
+      const [payloadArg = undefined] = payload
+        ? [payload.expr]
+        : args && isArrayLiteralExpr(args?.expr)
+        ? args.expr.items
+        : [];
 
       if (isVTL(context)) {
-        const payload = payloadArg?.expr
-          ? context.eval(payloadArg.expr)
-          : "$null";
+        const payload = payloadArg ? context.eval(payloadArg) : "$null";
 
         const request = context.var(
           `{"version": "2018-05-29", "operation": "Invoke", "payload": ${payload}}`
@@ -63,10 +74,8 @@ abstract class FunctionBase<P, O> implements IFunction<P, O> {
           Parameters: {
             FunctionName: this.resource.functionName,
             [`Payload${
-              payloadArg?.expr && isVariableReference(payloadArg.expr)
-                ? ".$"
-                : ""
-            }`]: payloadArg ? ASL.toJson(payloadArg.expr) : null,
+              payloadArg && isVariableReference(payloadArg) ? ".$" : ""
+            }`]: payloadArg ? ASL.toJson(payloadArg) : undefined,
           },
           ResultSelector: "$.Payload",
         };
