@@ -31,26 +31,10 @@ export type EventBusMapInterface = ts.CallExpression & {
   arguments: [TsFunctionParameter];
 };
 
-export interface FunctionlessChecker extends ts.TypeChecker {
-  isAppsyncResolver(node: ts.Node): node is ts.NewExpression & {
-    arguments: [TsFunctionParameter, ...ts.Expression[]];
-  };
-  isEventBusRuleMapFunction(node: ts.Node): node is EventBusMapInterface;
-  isEventBusWhenFunction(node: ts.Node): node is EventBusWhenInterface;
-  isFunctionlessType(type: ts.Type | undefined, kind: string): boolean;
-  isNewEventBusRule(node: ts.Node): node is EventBusRuleInterface;
-  isNewEventBusTransform(node: ts.Node): node is EventBusTransformInterface;
-  isReflectFunction(node: ts.Node): node is ts.CallExpression & {
-    arguments: [TsFunctionParameter, ...ts.Expression[]];
-  };
-  isStepFunction(node: ts.Node): node is ts.NewExpression & {
-    arguments: [TsFunctionParameter, ...ts.Expression[]];
-  };
-}
+export interface FunctionlessChecker
+  extends ReturnType<typeof makeFunctionlessChecker> {}
 
-export function makeFunctionlessChecker(
-  checker: ts.TypeChecker
-): FunctionlessChecker {
+export function makeFunctionlessChecker(checker: ts.TypeChecker) {
   return {
     ...checker,
     isAppsyncResolver,

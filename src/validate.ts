@@ -14,14 +14,12 @@ export function validate(
   checker: FunctionlessChecker,
   sf: import("typescript").SourceFile
 ): ts.Diagnostic[] {
-  return (
-    ts.forEachChild(sf, function visit(node): ts.Diagnostic[] {
-      if (checker.isStepFunction(node)) {
-        return validateStepFunctionNode(node);
-      }
-      return ts.forEachChild(node, visit) ?? [];
-    }) ?? []
-  );
+  return (function visit(node: ts.Node): ts.Diagnostic[] {
+    return [
+      ...(checker.isStepFunction(node) ? validateStepFunctionNode(node) : []),
+      ...(ts.forEachChild(node, visit) ?? []),
+    ];
+  })(sf);
 
   function validateStepFunctionNode(node: ts.Node): ts.Diagnostic[] {
     if (
@@ -31,6 +29,8 @@ export function validate(
     ) {
       // assignment statement
       // TODO: check if the assignment references an expression in an illegal scope
+      const variable = checker.getSymbolAtLocation(node.expression.left);
+      const value = checker.getSymbolAtLocation(node.expression.right);
     }
 
     return descend();
