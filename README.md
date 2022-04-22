@@ -27,7 +27,7 @@ const addPost = new AppsyncResolver<{ title: string, text: string }, Post>(($con
 });
 
 // a Lambda Function which can validate the contents of a Post
-const validatePost = new Function<Post, >(new aws_lambda.Function(this, "Validate", { .. }))
+const validatePost = new Function<Post, { status: string}>(this, "Validate", async (event) => {...});
 
 // Step Function workflow that validates the contents of a Post and deletes it if bad
 const validatePostWorkflow = new StepFunction(this, "ValidatePostWorkflow", (post: Post) => {
@@ -141,7 +141,7 @@ The `Function` wrapper annotates an `aws_lambda.Function` with a TypeScript func
 import { aws_lambda } from "aws-cdk-lib";
 import { Function } from "functionless";
 
-const myFunc = new Function<{ name: string }, string>(
+const myFunc = Function.fromFunction<{ name: string }, string>(
   new aws_lambda.Function(this, "MyFunc", {
     ..
   })
@@ -377,7 +377,7 @@ Rules can be further refined by calling `when` on a Functionless `EventBusRule`.
 
 ```ts
 // Cat people who are between 18 and 30 and do not also like dogs.
-catPeopleEvents.when(event => !event.detail.interests.includes("DOGS"))
+catPeopleEvents.when((event) => !event.detail.interests.includes("DOGS"));
 ```
 
 #### Transform the event before sending to some services like `Lambda` Functions.
@@ -506,13 +506,9 @@ interface Delete {
   id: string;
 }
 
-const createOrUpdateFunction = new functionless.Function<CreateOrUpdate, void>(
-  new aws_lambda.Function(this, "createOrUpdate", { ... })
-);
+const createOrUpdateFunction = new functionless.Function<CreateOrUpdate, void>(this, "createOrUpdate", ...);
 
-const deleteFunction = new functionless.Function<Delete, void>(
-  new aws_lambda.Function(this, "delete", { ... })
-);
+const deleteFunction = new functionless.Function<Delete, void>(this, "delete", ...);
 
 const bus = new functionless.EventBus<UserEvent>(this, "myBus");
 
@@ -564,10 +560,10 @@ bus
 Functionless supports the use of native typescript callbacks as lambda function handlers.
 
 ```ts
-new Function(this, 'myFunction', async (event) => {
+new Function(this, "myFunction", async (event) => {
   console.log(event);
   return Object.keys(event).length;
-})
+});
 ```
 
 #### !!CAVEAT: Using Function Callbacks with `app.synth()`!!
@@ -576,13 +572,15 @@ Normal use of the CDK through the CLI should work just fine without doing anythi
 
 The problem comes when using the explicit `app.synth()` method. This is a common case if trying to test your CDK code through testing tooling like `jest`.
 
-CDK does not natively support async code through the constructs, however, Functionless is using `pulumi`'s `serializeFunction` which is an async function. 
+CDK does not natively support async code through the constructs, however, Functionless is using `pulumi`'s `serializeFunction` which is an async function.
 
 When using `.synth()` programmatically, use the provided `asyncSynth` method to wrap your app.
 
 ```ts
-const cloudAssembly = asyncSynth(app, options);
+const cloudAssembly = await asyncSynth(app, options);
 ```
+
+For a full example of testing CDK using [`localstack`](https://localstack.cloud/) in jest, see [here](https://github.com/sam-goodwin/functionless/blob/253c33a14c246b70481f75f94cbffcb38d21053b/test/localstack.ts#L18).
 
 ## TypeScript -> Velocity Template Logic
 

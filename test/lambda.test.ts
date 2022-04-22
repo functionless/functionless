@@ -1,4 +1,4 @@
-import { App, aws_lambda, Stack } from "aws-cdk-lib";
+import { App, Stack } from "aws-cdk-lib";
 import { clientConfig, deployStack } from "./localstack";
 import { Function } from "../src";
 import { Lambda } from "aws-sdk";
@@ -20,18 +20,6 @@ beforeAll(async () => {
       region: "us-east-1",
     },
   });
-
-  new Function(
-    new aws_lambda.Function(stack, "testFunc", {
-      code: aws_lambda.Code.fromInline(`
-    exports.handler = async (event) => {
-        console.log('event: ', event)
-      };
-    `),
-      runtime: aws_lambda.Runtime.NODEJS_14_X,
-      handler: "index.handler",
-    })
-  );
 
   tests.forEach(({ resources }, i) => {
     const construct = new Construct(stack, `parent${i}`);

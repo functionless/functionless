@@ -21,10 +21,12 @@ const lambda = new aws_lambda.Function(stack, "F", {
   runtime: aws_lambda.Runtime.NODEJS_14_X,
 });
 
-const fn1 = new Function<{ arg: string }, Item>(lambda);
-const fn2 = new Function<{ arg: string; optional?: string }, Item>(lambda);
-const fn3 = new Function<undefined, Item>(lambda);
-const fn4 = new Function<{ arg: string }, void>(lambda);
+const fn1 = Function.fromFunction<{ arg: string }, Item>(lambda);
+const fn2 = Function.fromFunction<{ arg: string; optional?: string }, Item>(
+  lambda
+);
+const fn3 = Function.fromFunction<undefined, Item>(lambda);
+const fn4 = Function.fromFunction<{ arg: string }, void>(lambda);
 
 test("call function", () =>
   appsyncTestCase(

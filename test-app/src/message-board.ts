@@ -1,10 +1,4 @@
-import {
-  App,
-  aws_dynamodb,
-  aws_lambda,
-  RemovalPolicy,
-  Stack,
-} from "aws-cdk-lib";
+import { App, aws_dynamodb, RemovalPolicy, Stack } from "aws-cdk-lib";
 import {
   $AWS,
   $SFN,
@@ -146,15 +140,9 @@ export const createPost = new AppsyncResolver<{ title: string }, Post>(
 export const validateComment = new Function<
   { commentText: string },
   "ok" | "bad"
->(
-  new aws_lambda.Function(stack, "ValidateComment", {
-    code: aws_lambda.Code.fromInline(
-      `exports.handle = async function() { return 'ok'; }`
-    ),
-    handler: "index.handle",
-    runtime: aws_lambda.Runtime.NODEJS_14_X,
-  })
-);
+>(stack, "ValidateComment", async () => {
+  return "ok" as const;
+});
 
 export const commentValidationWorkflow = new StepFunction<
   { postId: string; commentId: string; commentText: string },
@@ -372,15 +360,11 @@ interface TestDeleteEvent
   extends EventBusRuleInput<{ postId: string }, "Delete", "test"> {}
 
 const sendNotification = new Function<Notification, void>(
-  new aws_lambda.Function(stack, "sendNotification", {
-    code: aws_lambda.Code.fromInline(`
-exports.handler = async (event) => {
-    console.log('notification: ', event)
-  };
-`),
-    runtime: aws_lambda.Runtime.NODEJS_14_X,
-    handler: "index.handler",
-  })
+  stack,
+  "sendNotification",
+  async (event) => {
+    console.log("notification: ", event);
+  }
 );
 
 const defaultBus = EventBus.default<TestDeleteEvent>(stack);

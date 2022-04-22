@@ -13,7 +13,7 @@ import { runtime } from "@pulumi/pulumi";
 import path from "path";
 import fs from "fs";
 
-export function isFunction<P = any, O = any>(a: any): a is Function<P, O> {
+export function isFunction<P = any, O = any>(a: any): a is IFunction<P, O> {
   return a?.kind === "Function";
 }
 
@@ -21,67 +21,28 @@ export type AnyLambda = Function<any, any>;
 
 export type FunctionClosure<P, O> = (payload: P) => Promise<O>;
 
-/**
- * Wraps an {@link aws_lambda.Function} with a type-safe interface that can be
- * called from within an {@link AppsyncResolver}.
- *
- * For example:
- * ```ts
- * const getPerson = new Function<string, Person>(
- *   new aws_lambda.Function(..)
- * );
- *
- * new AppsyncResolver(() => {
- *   return getPerson("value");
- * })
- * ```
- */
-export class Function<P, O> {
-  readonly kind = "Function" as const;
-  public static readonly FunctionlessType = "Function";
+export interface IFunction<P, O> {
+  readonly functionlessKind: typeof Function.FunctionlessType;
+  readonly kind: typeof Function.FunctionlessType;
   readonly resource: aws_lambda.IFunction;
 
-  static promises: Promise<any>[] = [];
+  (...args: Parameters<ConditionalFunction<P, O>>): ReturnType<
+    ConditionalFunction<P, O>
+  >;
+}
 
-  // @ts-ignore - this makes `F` easily available at compile time
-  readonly __functionBrand: ConditionalFunction<P, O>;
+interface FunctionBase<P, O> {
+  (...args: Parameters<ConditionalFunction<P, O>>): ReturnType<
+    ConditionalFunction<P, O>
+  >;
+}
 
-  constructor(
-    scope: Construct,
-    id: string,
-    func: NativeFunctionDecl,
-    props?: Omit<aws_lambda.FunctionProps, "code" | "handler" | "runtime">
-  );
-  constructor(
-    scope: Construct,
-    id: string,
-    func: FunctionClosure<P, O>,
-    props?: Omit<aws_lambda.FunctionProps, "code" | "handler" | "runtime">
-  );
-  constructor(resource: aws_lambda.IFunction);
-  constructor(
-    resource: aws_lambda.IFunction | Construct,
-    id?: string,
-    func?: NativeFunctionDecl | FunctionClosure<P, O>,
-    props?: Omit<aws_lambda.FunctionProps, "code" | "handler" | "runtime">
-  ) {
-    if (func && id) {
-      if (isNativeFunctionDecl(func)) {
-        this.resource = new aws_lambda.Function(resource, id, {
-          ...props,
-          runtime: aws_lambda.Runtime.NODEJS_14_X,
-          handler: "index.handler",
-          code: new CallbackLambdaCode(func.closure),
-        });
-      } else {
-        throw Error(
-          "Expected lambda to be passed a compiled function closure or a aws_lambda.IFunction"
-        );
-      }
-    } else {
-      this.resource = resource as aws_lambda.IFunction;
-    }
+abstract class FunctionBase<P, O> implements IFunction<P, O> {
+  readonly kind = "Function" as const;
+  readonly functionlessKind = "Function";
+  public static readonly FunctionlessType = "Function";
 
+  constructor(readonly resource: aws_lambda.IFunction) {
     return makeCallable(this, (call: CallExpr, context: VTL | ASL): any => {
       const payloadArg = call.getArgument("payload");
 
@@ -118,22 +79,112 @@ export class Function<P, O> {
   }
 }
 
+const PromisesSymbol = Symbol.for("functionless.Function.promises");
+
+/**
+ * Wraps an {@link aws_lambda.Function} with a type-safe interface that can be
+ * called from within an {@link AppsyncResolver}.
+ *
+ * For example:
+ * ```ts
+ * const getPerson = Function.fromFunction<string, Person>(
+ *   new aws_lambda.Function(..)
+ * );
+ *
+ * new AppsyncResolver(() => {
+ *   return getPerson("value");
+ * })
+ * ```
+ */
+export class Function<P, O> extends FunctionBase<P, O> {
+  /**
+   * Dangling promises which are processing Function handler code from the function serializer.
+   * To correctly resolve these for CDK synthesis, either use `asyncSynth()` or use `cdk synth` in the CDK cli.
+   * https://twitter.com/samgoodwin89/status/1516887131108438016?s=20&t=7GRGOQ1Bp0h_cPsJgFk3Ww
+   */
+  public static readonly promises = ((global as any)[PromisesSymbol] =
+    (global as any)[PromisesSymbol] ?? []);
+
+  // @ts-ignore - this makes `F` easily available at compile time
+  readonly __functionBrand: ConditionalFunction<P, O>;
+
+  /**
+   * Create a lambda function using a native typescript closure.
+   *
+   * ```ts
+   * new Function<{ val: string }, string>(this, 'myFunction', async (event) => event.val);
+   * ```
+   */
+  constructor(
+    scope: Construct,
+    id: string,
+    func: FunctionClosure<P, O>,
+    props?: Omit<aws_lambda.FunctionProps, "code" | "handler" | "runtime">
+  );
+  /**
+   * @private
+   */
+  constructor(
+    scope: Construct,
+    id: string,
+    func: NativeFunctionDecl,
+    props?: Omit<aws_lambda.FunctionProps, "code" | "handler" | "runtime">
+  );
+  /**
+   * Wrap an existing lambda function with Functionless.
+   * @deprecated use `Function.fromFunction()`
+   */
+  constructor(resource: aws_lambda.IFunction);
+  /**
+   * @private
+   */
+  constructor(
+    resource: aws_lambda.IFunction | Construct,
+    id?: string,
+    func?: NativeFunctionDecl | FunctionClosure<P, O>,
+    props?: Omit<aws_lambda.FunctionProps, "code" | "handler" | "runtime">
+  ) {
+    let _resource: aws_lambda.IFunction;
+    if (func && id) {
+      if (isNativeFunctionDecl(func)) {
+        _resource = new aws_lambda.Function(resource, id, {
+          ...props,
+          runtime: aws_lambda.Runtime.NODEJS_14_X,
+          handler: "index.handler",
+          code: new CallbackLambdaCode(func.closure),
+        });
+      } else {
+        throw Error(
+          "Expected lambda to be passed a compiled function closure or a aws_lambda.IFunction"
+        );
+      }
+    } else {
+      _resource = resource as aws_lambda.IFunction;
+    }
+    return super(_resource) as unknown as Function<P, O>;
+  }
+
+  public static fromFunction<P, O>(func: aws_lambda.IFunction) {
+    return new ImportedFunction<P, O>(func);
+  }
+}
+
+class ImportedFunction<P, O> extends FunctionBase<P, O> {
+  constructor(func: aws_lambda.IFunction) {
+    return super(func) as unknown as ImportedFunction<P, O>;
+  }
+}
+
 type ConditionalFunction<P, O> = P extends undefined
   ? () => O
   : (payload: P) => O;
-
-export interface Function<P, O> {
-  (...args: Parameters<ConditionalFunction<P, O>>): ReturnType<
-    ConditionalFunction<P, O>
-  >;
-}
 
 export class CallbackLambdaCode extends aws_lambda.Code {
   constructor(private func: AnyFunction) {
     super();
   }
 
-  bind(scope: Construct): aws_lambda.CodeConfig {
+  public bind(scope: Construct): aws_lambda.CodeConfig {
     Function.promises.push(this.generate(scope));
 
     // Lets give the function something lightweight while we process the closure.
@@ -142,6 +193,11 @@ export class CallbackLambdaCode extends aws_lambda.Code {
     ).bind(scope);
   }
 
+  /**
+   * Thanks to cloudy for the help getting this to work.
+   * https://github.com/skyrpex/cloudy/blob/main/packages/cdk/src/aws-lambda/callback-function.ts#L518-L540
+   * https://twitter.com/samgoodwin89/status/1516887131108438016?s=20&t=7GRGOQ1Bp0h_cPsJgFk3Ww
+   */
   async generate(scope: Construct) {
     const result = await runtime.serializeFunction(this.func);
 

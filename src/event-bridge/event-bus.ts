@@ -252,9 +252,8 @@ interface EventBusBase<E extends EventBusRuleInput> {
  * // An event with the payload
  * interface myEvent extends EventBusRuleInput<Payload> {}
  *
- * const myAwsFunction = new aws_lambda.Function(this, 'myFunction', { ... });
  * // A function that expects the payload.
- * const myLambdaFunction = new functionless.Function<Payload, void>(myAwsFunction);
+ * const myLambdaFunction = new functionless.Function<Payload, void>(this, 'myFunction', ...);
  *
  * // instantiate an aws_events.EventBus Construct
  * const awsBus = new aws_events.EventBus(this, "mybus");
