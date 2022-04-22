@@ -7,6 +7,8 @@ import ts from "typescript";
 import { isTable } from "./table";
 import { isFunction } from "./function";
 import { isStepFunction } from "./step-function";
+import { App } from "aws-cdk-lib";
+import { SynthesisOptions } from "aws-cdk-lib/core/lib/private/synthesis";
 
 export type AnyFunction = (...args: any[]) => any;
 
@@ -160,4 +162,13 @@ export const isPrimitive = (val: any): val is PrimitiveValue => {
     typeof val === "undefined" ||
     val === null
   );
+};
+
+/**
+ * Experimental hack that waits for async code in CDK construct instantiation to complete before
+ * calling app.synth().
+ */
+export const asyncSynth = async (app: App, options?: SynthesisOptions) => {
+  await new Promise(setImmediate);
+  return app.synth(options);
 };

@@ -1,8 +1,6 @@
 import { App, aws_lambda, Stack } from "aws-cdk-lib";
 import { deployStack } from "./localstack";
 import { Function } from "../src";
-import { nodeModuleNameResolver } from "typescript";
-// import { runtime } from "@pulumi/pulumi";
 
 jest.setTimeout(500000);
 
@@ -10,9 +8,9 @@ jest.setTimeout(500000);
 let stack: Stack;
 let app: App;
 
-export function flushPromises(): Promise<void> {
-  return new Promise(jest.requireActual("timers").setImmediate);
-}
+// export function flushPromises(): Promise<void> {
+//   return new Promise(jest.requireActual("timers").setImmediate);
+// }
 
 // Inspiration: https://github.com/aws/aws-cdk/pull/18667#issuecomment-1075348390
 beforeAll(async () => {
@@ -36,9 +34,7 @@ beforeAll(async () => {
     })
   );
 
-  await flushPromises();
-
-  // new Function(stack, "func2", (event) => event);
+  new Function(stack, "func2", (event) => event);
 
   // const create = () => new Function(stack, "func3", (event) => event);
   // create();
@@ -65,15 +61,13 @@ beforeAll(async () => {
 
   // await flushPromises();
 
+  // await flushPromises();
   await deployStack(app, stack);
-
-  await flushPromises();
 });
 
 test("simple", async () => {
   // runtime.serializeFunction(() => {}).then((x) => console.log(x.text));
-
-  new Function(stack, "func2", (event) => event);
+  // new Function(stack, "func2", (event) => event);
 });
 
 // const lambda = new Lambda(clientConfig);

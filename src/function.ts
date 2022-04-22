@@ -1,4 +1,4 @@
-import { aws_lambda } from "aws-cdk-lib";
+import { aws_lambda, DockerImage } from "aws-cdk-lib";
 import { CallExpr, isVariableReference } from "./expression";
 import { isVTL, VTL } from "./vtl";
 import { ASL, isASL, Task } from "./asl";
@@ -8,7 +8,10 @@ import type { AppsyncResolver } from "./appsync";
 import { makeCallable } from "./callable";
 import { HoistedFunctionDecl, isHoistedFunctionDecl } from "./declaration";
 import { Construct } from "constructs";
-import { HandlerFunction } from "./instrumentor";
+import { AnyFunction } from "./util";
+import { runtime } from "@pulumi/pulumi";
+import path from "path";
+import fs from "fs";
 
 export function isFunction<P = any, O = any>(a: any): a is Function<P, O> {
   return a?.kind === "Function";
@@ -54,7 +57,7 @@ export class Function<P, O> {
         this.resource = new aws_lambda.Function(resource, id, {
           runtime: aws_lambda.Runtime.NODEJS_14_X,
           handler: "index.handler",
-          code: new HandlerFunction(func.closure),
+          code: new CallbackLambdaCode(func.closure),
         });
       } else {
         throw Error(
@@ -109,4 +112,51 @@ export interface Function<P, O> {
   (...args: Parameters<ConditionalFunction<P, O>>): ReturnType<
     ConditionalFunction<P, O>
   >;
+}
+
+export class CallbackLambdaCode extends aws_lambda.Code {
+  constructor(private func: AnyFunction) {
+    super();
+  }
+
+  bind(scope: Construct): aws_lambda.CodeConfig {
+    this.generate(scope);
+
+    // Lets give the function something lightweight while we process the closure.
+    return aws_lambda.Code.fromInline(
+      "If you are seeing this in your lambda code, consult the README."
+    ).bind(scope);
+  }
+
+  async generate(scope: Construct) {
+    const result = await runtime.serializeFunction(this.func);
+
+    const asset = aws_lambda.Code.fromAsset("", {
+      bundling: {
+        image: DockerImage.fromRegistry("empty"),
+        local: {
+          tryBundle(outdir: string) {
+            fs.writeFileSync(path.resolve(outdir, "index.js"), result.text);
+            return true;
+          },
+        },
+      },
+    });
+
+    const funcResource = scope.node.findChild(
+      "Resource"
+    ) as aws_lambda.CfnFunction;
+
+    const codeConfig = asset.bind(scope);
+
+    funcResource.code = {
+      s3Bucket: codeConfig.s3Location?.bucketName,
+      s3Key: codeConfig.s3Location?.objectKey,
+      s3ObjectVersion: codeConfig.s3Location?.objectVersion,
+      zipFile: codeConfig.inlineCode,
+      imageUri: codeConfig.image?.imageUri,
+    };
+
+    asset.bindToResource(funcResource);
+  }
 }

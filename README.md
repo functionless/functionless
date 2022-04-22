@@ -119,6 +119,7 @@ Files can be ignored by the transformer by using glob patterns in the `tsconfig.
 
 - [App Sync](#App-Sync)
 - [Event Bridge](#Event-Bridge)
+- [Lambda](#Lambda)
 
 ### App Sync
 
@@ -556,6 +557,31 @@ bus
       aws_events.EventBus.fromEventBusArn(this, "catTeamBus", catBusArn)
     )
   );
+```
+
+### Lambda
+
+Functionless supports the use of native typescript callbacks as lambda function handlers.
+
+```ts
+new Function(this, 'myFunction', async (event) => {
+  console.log(event);
+  return Object.keys(event).length;
+})
+```
+
+#### !!CAVEAT: Using Function Callbacks with `app.synth()`!!
+
+Normal use of the CDK through the CLI should work just fine without doing anything special.
+
+The problem comes when using the explicit `app.synth()` method. This is a common case if trying to test your CDK code through testing tooling like `jest`.
+
+CDK does not natively support async code through the constructs, however, Functionless is using `pulumi`'s `serializeFunction` which is an async function. 
+
+When using `.synth()` programmatically, use the provided `asyncSynth` method to wrap your app.
+
+```ts
+const cloudAssembly = asyncSynth(app, options);
 ```
 
 ## TypeScript -> Velocity Template Logic

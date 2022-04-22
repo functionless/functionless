@@ -255,7 +255,7 @@
           "exec": "yarn install --check-files"
         },
         {
-          "exec": "yarn upgrade @aws-cdk/aws-appsync-alpha @aws-cdk/cloud-assembly-schema @aws-cdk/cloudformation-diff @aws-cdk/cx-api @pulumi/pulumi @types/fs-extra @types/jest @types/minimatch @types/node @types/uuid @typescript-eslint/eslint-plugin @typescript-eslint/parser amplify-appsync-simulator aws-cdk-lib aws-cdk cdk-assets constructs esbuild eslint-import-resolver-node eslint-import-resolver-typescript eslint-plugin-import eslint jest jest-junit json-schema npm-check-updates promptly proxy-agent standard-version synckit ts-jest ts-node ts-patch typesafe-dynamodb typescript @aws-cdk/aws-appsync-alpha aws-cdk-lib constructs esbuild typesafe-dynamodb typescript fs-extra minimatch"
+          "exec": "yarn upgrade @aws-cdk/aws-appsync-alpha @aws-cdk/cloud-assembly-schema @aws-cdk/cloudformation-diff @aws-cdk/cx-api @pulumi/pulumi @types/fs-extra @types/jest @types/minimatch @types/node @types/uuid @typescript-eslint/eslint-plugin @typescript-eslint/parser amplify-appsync-simulator aws-cdk-lib aws-cdk cdk-assets constructs esbuild eslint-import-resolver-node eslint-import-resolver-typescript eslint-plugin-import eslint jest jest-junit json-schema npm-check-updates promptly proxy-agent standard-version ts-jest ts-node ts-patch typesafe-dynamodb typescript @aws-cdk/aws-appsync-alpha aws-cdk-lib constructs esbuild typesafe-dynamodb typescript fs-extra minimatch"
         },
         {
           "exec": "npx projen"

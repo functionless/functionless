@@ -136,10 +136,6 @@
       "type": "build"
     },
     {
-      "name": "synckit",
-      "type": "build"
-    },
-    {
       "name": "ts-jest",
       "type": "build"
     },
