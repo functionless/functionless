@@ -1,4 +1,9 @@
-import { AssetHashType, aws_lambda, DockerImage } from "aws-cdk-lib";
+import {
+  AssetHashType,
+  aws_lambda,
+  DockerImage,
+  Tokenization,
+} from "aws-cdk-lib";
 import {
   CallExpr,
   isArrayLiteralExpr,
@@ -16,6 +21,7 @@ import { AnyFunction } from "./util";
 import { runtime } from "@pulumi/pulumi";
 import path from "path";
 import fs from "fs";
+import { isEventBus } from "./event-bridge/event-bus";
 
 export function isFunction<P = any, O = any>(a: any): a is IFunction<P, O> {
   return a?.kind === "Function";
@@ -208,7 +214,50 @@ export class CallbackLambdaCode extends aws_lambda.Code {
    * https://twitter.com/samgoodwin89/status/1516887131108438016?s=20&t=7GRGOQ1Bp0h_cPsJgFk3Ww
    */
   async generate(scope: Construct) {
-    const result = await runtime.serializeFunction(this.func);
+    let tokens: string[] = [];
+    const result = await runtime.serializeFunction(this.func, {
+      serialize: (obj) => {
+        if (typeof obj === "object") {
+          console.log("is object", obj);
+          if (isEventBus(obj)) {
+            console.log("event bus" + obj);
+            return true;
+          } else if (obj instanceof Construct) {
+            console.log("is construct", obj.node.id);
+            return true;
+          }
+        } else if (typeof obj === "string") {
+          const reversed =
+            Tokenization.reverse(obj, { failConcat: false }) ??
+            Tokenization.reverseString(obj).tokens;
+          if (!Array.isArray(reversed) || reversed.length > 0) {
+            if (Array.isArray(reversed)) {
+              tokens = [...tokens, ...reversed.map((s) => s.toString())];
+            } else {
+              tokens = [...tokens, reversed.toString()];
+            }
+          }
+        }
+        return true;
+      },
+    });
+
+    const tokenContext = tokens.map((t) => {
+      const id = new RegExp("\\${Token\\[TOKEN\\.([0-9]*)\\]}", "g").exec(
+        t
+      )?.[1];
+      return {
+        id,
+        token: t,
+        env: `__functionless${id}`,
+      };
+    });
+
+    const resultText = tokenContext.reduce(
+      // TODO: support templated strings
+      (r, t) => r.split(`"${t.token}"`).join(`process.env.${t.env}`),
+      result.text
+    );
 
     const asset = aws_lambda.Code.fromAsset("", {
       assetHashType: AssetHashType.OUTPUT,
@@ -218,12 +267,20 @@ export class CallbackLambdaCode extends aws_lambda.Code {
         user: scope.node.addr,
         local: {
           tryBundle(outdir: string) {
-            fs.writeFileSync(path.resolve(outdir, "index.js"), result.text);
+            fs.writeFileSync(path.resolve(outdir, "index.js"), resultText);
             return true;
           },
         },
       },
     });
+
+    if (!(scope instanceof aws_lambda.Function)) {
+      throw new Error(
+        "CallbackLambdaCode can only be used on aws_lambda.Function"
+      );
+    }
+
+    tokenContext.forEach((t) => scope.addEnvironment(t.env, t.token));
 
     const funcResource = scope.node.findChild(
       "Resource"

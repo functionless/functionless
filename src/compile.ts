@@ -1,4 +1,4 @@
-import ts from "typescript";
+import ts, { isCallExpression, TransformationContext } from "typescript";
 import path from "path";
 import { PluginConfig, TransformerExtras } from "ts-patch";
 import { BinaryOp, CanReference } from "./expression";
@@ -69,7 +69,7 @@ export function compile(
         sf,
         [
           functionlessImport,
-          ...sf.statements.map((stmt) => visitor(stmt) as ts.Statement),
+          ...(sf.statements.flatMap((stmt) => visitor(stmt)) as ts.Statement[]),
           ...additionalStatements,
         ],
         sf.isDeclarationFile,
@@ -79,7 +79,7 @@ export function compile(
         sf.libReferenceDirectives
       );
 
-      function visitor(node: ts.Node): ts.Node {
+      function visitor(node: ts.Node): ts.Node | ts.Node[] {
         const visit = () => {
           if (isAppsyncResolver(node)) {
             return visitAppsyncResolver(node as ts.NewExpression);
@@ -98,7 +98,7 @@ export function compile(
           } else if (isNewEventBusTransform(node)) {
             return visitEventTransform(node);
           } else if (isNewFunctionlessFunction(node)) {
-            return visitFunction(node);
+            return visitFunction(node, ctx);
           }
           return node;
         };
@@ -237,6 +237,10 @@ export function compile(
           node.expression.name.text === "map" &&
           isEventBusRule(node.expression.expression)
         );
+      }
+
+      function isEventBusPutCall(node: ts.Node): node is ts.CallExpression {
+        return isCallExpression(node) && isEventBus(node.expression);
       }
 
       /**
@@ -428,7 +432,10 @@ export function compile(
         return call;
       }
 
-      function visitFunction(func: FunctionInterface): ts.Node {
+      function visitFunction(
+        func: FunctionInterface,
+        context: TransformationContext
+      ): ts.Node {
         const [_one, _two, funcDecl, _four] = func.arguments;
 
         if (
@@ -450,20 +457,96 @@ export function compile(
           [
             _one,
             _two,
-            newExpr("NativeFunctionDecl", [
-              ts.factory.createArrayLiteralExpression(
-                funcDecl.parameters
-                  .map((param) => param.name.getText())
-                  .map((arg) =>
-                    newExpr("ParameterDecl", [
-                      ts.factory.createStringLiteral(arg),
-                    ])
-                  )
-              ),
-              funcDecl,
-            ]),
+            toNativeFunction(funcDecl, context),
             ...(_four ? [_four] : []),
           ]
+        );
+      }
+
+      /**
+       * const functionless_eventBusClient = new EventBridge();
+       * const MY_BUS = process.env["MY_BUS"];
+       * export const handler = async () => {
+       *  const events = events;
+       *  await functionless_eventBusClient.putEvents(events.map(event => ({ EventBusArn: MY_BUS, ... })));
+       * }
+       */
+
+      /**
+       * const bus = new bus();
+       * new Function(this, '', async () => {
+       *  const functionless_eventBusClient = new EventBridge();
+       *  const events = events;
+       *  await functionless_eventBusClient.putEvents(events.map(event => ({ EventBusArn: bus.eventBusArn, ... })));
+       * });
+       */
+      // class NativeContext {
+      //   getClientFor(type: "EventBridge", id: ts.Identifier): { clientId: ts.Identifier, resourceId: ts.Expression } {
+      //     return {
+      //       clientId: ts.factory.createIdentifier("functionless_eb"),
+      //       resourceId: ts.factory.createPropertyAccessExpression(id, "eventBusArn")
+      //     }
+      //   }
+      // }
+
+      function toNativeFunction(
+        impl: TsFunctionParameter,
+        context: TransformationContext
+      ): ts.NewExpression {
+        if (
+          !ts.isFunctionDeclaration(impl) &&
+          !ts.isArrowFunction(impl) &&
+          !ts.isFunctionExpression(impl)
+        ) {
+          throw new Error(
+            `Functionless reflection only supports function parameters with bodies, no signature only declarations or references. Found ${impl.getText()}.`
+          );
+        }
+
+        if (impl.body === undefined) {
+          throw new Error(
+            `cannot parse declaration-only function: ${impl.getText()}`
+          );
+        }
+
+        const body = toNativeExpr(impl.body, context) as ts.ConciseBody;
+
+        const closure = ts.factory.createArrowFunction(
+          impl.modifiers,
+          impl.typeParameters,
+          impl.parameters,
+          impl.type,
+          undefined,
+          body
+        );
+
+        return newExpr("NativeFunctionDecl", [
+          ts.factory.createArrayLiteralExpression(
+            impl.parameters
+              .map((param) => param.name.getText())
+              .map((arg) =>
+                newExpr("ParameterDecl", [ts.factory.createStringLiteral(arg)])
+              )
+          ),
+          closure,
+        ]);
+      }
+
+      function toNativeExpr(
+        node: ts.Node,
+        context: TransformationContext
+      ): ts.Node | undefined {
+        if (isEventBusPutCall(node)) {
+          // add client
+          // get bus arn as env variable
+          // create client call that uses the env variable and the parameters
+          return context.factory.createIdentifier("thisisbus");
+        }
+        // let everything else fall through, process their children too
+        return ts.visitEachChild(
+          node,
+          (node) => toNativeExpr(node, context),
+          context
         );
       }
 

@@ -1,15 +1,20 @@
-import { App, Stack } from "aws-cdk-lib";
+import { App, aws_events, CfnOutput, Stack } from "aws-cdk-lib";
 import { clientConfig, deployStack } from "./localstack";
-import { Function } from "../src";
-import { Lambda } from "aws-sdk";
+import { EventBus, Function } from "../src";
+import { Lambda, CloudFormation } from "aws-sdk";
 import { Construct } from "constructs";
 
 jest.setTimeout(500000);
 
 // const CF = new CloudFormation(clientConfig);
 const lambda = new Lambda(clientConfig);
+const CF = new CloudFormation(clientConfig);
 let stack: Stack;
 let app: App;
+
+const tests: ResourceTest[] = [];
+// will be set in the before all
+let testContexts: any[];
 
 // Inspiration: https://github.com/aws/aws-cdk/pull/18667#issuecomment-1075348390
 beforeAll(async () => {
@@ -21,31 +26,46 @@ beforeAll(async () => {
     },
   });
 
-  tests.forEach(({ resources }, i) => {
+  testContexts = tests.map(({ resources }, i) => {
     const construct = new Construct(stack, `parent${i}`);
-    resources(construct);
+    return resources(construct);
   });
 
   await deployStack(app, stack);
 });
 
-interface ResourceTest {
+interface ResourceTest<T = any> {
   name: string;
-  resources: (parent: Construct) => void;
-  test: () => Promise<void>;
+  resources: (parent: Construct) => T | void;
+  test: (context: T) => Promise<void>;
 }
-
-const tests: ResourceTest[] = [];
 
 /**
  * Allow for a suit of tests that deploy a single stack once and test the results in separate test cases.
  */
-const testResource = (
+const testResource = <T>(
   name: string,
-  resources: ResourceTest["resources"],
-  test: ResourceTest["test"]
+  resources: ResourceTest<T>["resources"],
+  test: ResourceTest<T>["test"]
 ) => {
   tests.push({ name, resources, test });
+};
+
+const testFunction = async (
+  functionName: string,
+  payload: any,
+  expected: any
+) => {
+  const result = await lambda
+    .invoke({
+      FunctionName: functionName,
+      Payload: JSON.stringify(payload),
+    })
+    .promise();
+
+  expect(
+    result.Payload ? JSON.parse(result.Payload.toString()) : undefined
+  ).toEqual(expected);
 };
 
 testResource(
@@ -56,15 +76,7 @@ testResource(
     });
   },
   async () => {
-    const result = await lambda
-      .invoke({
-        FunctionName: "func2",
-        Payload: JSON.stringify({}),
-      })
-      .promise();
-
-    expect(result.Payload).toEqual(`{}
-`);
+    await testFunction("func2", {}, {});
   }
 );
 
@@ -78,15 +90,7 @@ testResource(
     create();
   },
   async () => {
-    const result = await lambda
-      .invoke({
-        FunctionName: "func3",
-        Payload: JSON.stringify({}),
-      })
-      .promise();
-
-    expect(result.Payload).toEqual(`{}
-`);
+    await testFunction("func3", {}, {});
   }
 );
 
@@ -103,15 +107,7 @@ testResource(
     create();
   },
   async () => {
-    const result = await lambda
-      .invoke({
-        FunctionName: "func4",
-        Payload: JSON.stringify({}),
-      })
-      .promise();
-
-    expect(result.Payload).toEqual(`"a"
-`);
+    await testFunction("func4", {}, "a");
   }
 );
 
@@ -127,15 +123,7 @@ testResource(
     create("b");
   },
   async () => {
-    const result = await lambda
-      .invoke({
-        FunctionName: "func5",
-        Payload: JSON.stringify({}),
-      })
-      .promise();
-
-    expect(result.Payload).toEqual(`"b"
-`);
+    await testFunction("func5", {}, "b");
   }
 );
 
@@ -152,25 +140,8 @@ testResource(
     create("func7", "d");
   },
   async () => {
-    const result = await lambda
-      .invoke({
-        FunctionName: "func6",
-        Payload: JSON.stringify({}),
-      })
-      .promise();
-
-    expect(result.Payload).toEqual(`"c"
-`);
-
-    const result2 = await lambda
-      .invoke({
-        FunctionName: "func7",
-        Payload: JSON.stringify({}),
-      })
-      .promise();
-
-    expect(result2.Payload).toEqual(`"d"
-`);
+    await testFunction("func6", {}, "c");
+    await testFunction("func7", {}, "d");
   }
 );
 
@@ -187,15 +158,7 @@ testResource(
     create();
   },
   async () => {
-    const result = await lambda
-      .invoke({
-        FunctionName: "func8",
-        Payload: JSON.stringify({}),
-      })
-      .promise();
-
-    expect(result.Payload).toEqual(`1
-`);
+    await testFunction("func8", {}, 1);
   }
 );
 
@@ -220,15 +183,7 @@ testResource(
     create();
   },
   async () => {
-    const result = await lambda
-      .invoke({
-        FunctionName: "func9",
-        Payload: JSON.stringify({}),
-      })
-      .promise();
-
-    expect(result.Payload).toEqual(`5
-`);
+    await testFunction("func9", {}, 5);
   }
 );
 
@@ -251,15 +206,7 @@ testResource(
     create();
   },
   async () => {
-    const result = await lambda
-      .invoke({
-        FunctionName: "func10",
-        Payload: JSON.stringify({ val: "hi" }),
-      })
-      .promise();
-
-    expect(result.Payload).toEqual(`"value: hi"
-`);
+    await testFunction("func10", { val: "hi" }, "value: hi");
   }
 );
 
@@ -282,53 +229,66 @@ testResource(
     create();
   },
   async () => {
-    const result = await lambda
-      .invoke({
-        FunctionName: "func11",
-        Payload: JSON.stringify({}),
-      })
-      .promise();
-
-    expect(result.Payload)
-      .toEqual(`{"errorMessage":"AHHHHHHHHH","errorType":"Error"}
-`);
+    await testFunction(
+      "func11",
+      {},
+      { errorMessage: "AHHHHHHHHH", errorType: "Error" }
+    );
   }
 );
 
-// testResource(
-//   "Call Lambda put event to bus",
-//   (parent) => {
-//     const create = () => {
-//       const bus = new EventBus(parent, "bus");
-//       new Function(
-//         parent,
-//         "function",
-//         async () => {
-//           await bus({ "detail-type": "bus-test" });
-//         },
-//         {
-//           functionName: "func12",
-//         }
-//       );
-//     };
+testResource(
+  "Call Lambda put event to bus",
+  (parent) => {
+    const create = () => {
+      const bus = new EventBus(parent, "bus");
+      const busbus = new aws_events.EventBus(parent, "busbus");
+      const func = new Function(
+        parent,
+        "function",
+        async () => {
+          return `${bus.eventBusArn} ${busbus.eventBusArn}`;
+        },
+        {
+          functionName: "func12",
+        }
+      );
 
-//     create();
-//   },
-//   async () => {
-//     const result = await lambda
-//       .invoke({
-//         FunctionName: "func11",
-//         Payload: JSON.stringify({}),
-//       })
-//       .promise();
+      return { bus, busbus, func };
+    };
 
-//     expect(result.Payload)
-//       .toEqual(`{"errorMessage":"AHHHHHHHHH","errorType":"Error"}
-// `);
-//   }
-// );
+    const res = create();
+
+    return {
+      busOutput: new CfnOutput(parent, "out1", {
+        value: res.bus.eventBusArn,
+        exportName: "busOut",
+      }).exportName,
+      busbusOutput: new CfnOutput(parent, "out2", {
+        value: res.busbus.eventBusArn,
+        exportName: "busbusOut",
+      }).exportName,
+    };
+  },
+  async (context) => {
+    const stackOutputs = (
+      await CF.describeStacks({ StackName: stack.stackName }).promise()
+    ).Stacks?.[0].Outputs;
+    const busOut = stackOutputs?.find(
+      (o) => o.ExportName === context.busOutput
+    );
+    const busBusOut = stackOutputs?.find(
+      (o) => o.ExportName === context.busbusOutput
+    );
+    await testFunction(
+      "func12",
+      {},
+      `${busOut?.OutputValue} ${busBusOut?.OutputValue}`
+    );
+  }
+);
 
 // Leave me at the end please.
-tests.forEach(({ name, test: testFunc }) => {
-  test(name, testFunc);
+tests.forEach(({ name, test: testFunc }, i) => {
+  test(name, () => testFunc(testContexts[i]));
 });

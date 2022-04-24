@@ -96,6 +96,8 @@ export interface IEventBusFilterable<E extends EventBusRuleInput> {
 export interface IEventBus<E extends EventBusRuleInput = EventBusRuleInput>
   extends IEventBusFilterable<E> {
   readonly bus: aws_events.IEventBus;
+  readonly eventBusArn: string;
+  readonly eventBusName: string;
 
   /**
    * This static property identifies this class as an EventBus to the TypeScript plugin.
@@ -115,11 +117,12 @@ abstract class EventBusBase<E extends EventBusRuleInput>
    */
   public static readonly FunctionlessType = "EventBus";
   readonly functionlessKind = "EventBus";
+  readonly eventBusName: string;
+  readonly eventBusArn: string;
 
-  readonly bus: aws_events.IEventBus;
-
-  constructor(bus: aws_events.IEventBus) {
-    this.bus = bus;
+  constructor(readonly bus: aws_events.IEventBus) {
+    this.eventBusName = bus.eventBusName;
+    this.eventBusArn = bus.eventBusArn;
     return makeCallable(this, (call: CallExpr, context: CallContext) => {
       if (isASL(context)) {
         this.bus.grantPutEventsTo(context.role);

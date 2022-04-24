@@ -1,4 +1,10 @@
-import { App, aws_dynamodb, RemovalPolicy, Stack } from "aws-cdk-lib";
+import {
+  App,
+  aws_dynamodb,
+  RemovalPolicy,
+  Stack,
+  aws_events,
+} from "aws-cdk-lib";
 import {
   $AWS,
   $SFN,
@@ -405,7 +411,11 @@ customDeleteBus
   }))
   .pipe(sendNotification);
 
+const busbusbus = new aws_events.EventBus(stack, "busbus");
+
 new Function(stack, "testFunc", async (_something: string) => {
+  console.log(customDeleteBus.eventBusArn);
+  console.log(busbusbus.eventBusArn);
   console.log("huh?!?!?!??!!");
   console.log("strange");
 });
