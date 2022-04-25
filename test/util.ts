@@ -1,4 +1,4 @@
-import { App, aws_dynamodb, aws_events, Stack } from "aws-cdk-lib";
+import { App, aws_dynamodb, aws_events, aws_lambda, Stack } from "aws-cdk-lib";
 import {
   AppsyncResolver,
   FunctionDecl,
@@ -115,19 +115,22 @@ export function initStepFunctionApp() {
   });
   const stack = new Stack(app, "stack");
 
-  const getPerson = new Function<{ id: string }, Person | undefined>(
-    stack,
-    "Func",
-    async () => ({ id: "id", name: "name" })
+  const lambda = new aws_lambda.Function(stack, "F", {
+    code: aws_lambda.Code.fromInline(
+      "exports.handler = function() { return null; }"
+    ),
+    handler: "index.handler",
+    runtime: aws_lambda.Runtime.NODEJS_14_X,
+  });
+
+  // These functions do not actually execute.
+  const getPerson = Function.fromFunction<{ id: string }, Person | undefined>(
+    lambda
   );
 
-  const task = new Function<any, number | null>(stack, "Task", async () => 1);
+  const task = Function.fromFunction<any, number | null>(lambda);
 
-  const computeScore = new Function<Person, number>(
-    stack,
-    "ComputeScore",
-    async () => 1
-  );
+  const computeScore = Function.fromFunction<Person, number>(lambda);
 
   const personTable = new Table<Person, "id">(
     new aws_dynamodb.Table(stack, "Table", {

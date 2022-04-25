@@ -1,7 +1,7 @@
 import { CallExpr, CanReference } from "./expression";
 import { FunctionlessNode } from "./node";
 import { VTL } from "./vtl";
-import { ASL, Task } from "./asl";
+import { ASL, State } from "./asl";
 import { isAWS } from "./aws";
 import ts from "typescript";
 import { isTable } from "./table";
@@ -67,16 +67,17 @@ export function isInTopLevelScope(expr: FunctionlessNode): boolean {
   }
 }
 
+export interface Integration {
+  vtl: (call: CallExpr, context: VTL) => string;
+  asl: (call: CallExpr, context: ASL) => Omit<State, "Next">;
+  native: (context: Function<any, any>) => void;
+}
+
 /**
  * @param call call expression that may reference a callable integration
  * @returns the reference to the callable function, e.g. a Lambda Function or method on a DynamoDB Table
  */
-export function findFunction(
-  call: CallExpr
-):
-  | (((call: CallExpr, context: VTL) => string) &
-      ((call: CallExpr, context: ASL) => Omit<Task, "Next">))
-  | undefined {
+export function findFunction(call: CallExpr): Integration | undefined {
   return find(call.expr);
 
   function find(expr: FunctionlessNode): any {

@@ -1,4 +1,4 @@
-import ts, { isCallExpression, TransformationContext } from "typescript";
+import ts from "typescript";
 import path from "path";
 import { PluginConfig, TransformerExtras } from "ts-patch";
 import { BinaryOp, CanReference } from "./expression";
@@ -45,7 +45,30 @@ export function compile(
   const checker = program.getTypeChecker();
   return (ctx) => {
     const functionless = ts.factory.createUniqueName("functionless");
+    const awsClient = ts.factory.createUniqueName("aws");
     return (sf) => {
+      // const imports = sf.statements
+      //   .filter(
+      //     (
+      //       s
+      //     ): s is ts.ImportDeclaration & {
+      //       moduleSpecifier: ts.StringLiteral;
+      //     } =>
+      //       ts.isImportDeclaration(s) && ts.isStringLiteral(s.moduleSpecifier)
+      //   )
+      //   .reduce(
+      //     (acc: Record<string, ts.ImportDeclaration>, d) => ({
+      //       ...acc,
+      //       [d.moduleSpecifier.text]: d,
+      //     }),
+      //     {}
+      //   );
+
+      // Do not transform any of the files matched by "exclude"
+      if (excludeMatchers.some((matcher) => matcher.test(sf.fileName))) {
+        return sf;
+      }
+
       const functionlessImport = ts.factory.createImportDeclaration(
         undefined,
         undefined,
@@ -57,20 +80,25 @@ export function compile(
         ts.factory.createStringLiteral("functionless")
       );
 
-      // Do not transform any of the files matched by "exclude"
-      if (excludeMatchers.some((matcher) => matcher.test(sf.fileName))) {
-        return sf;
-      }
-
-      // Statement collection to append to the end.
-      const additionalStatements: ts.Statement[] = [];
+      // TODO: do this dynamically based on need.
+      // TODO: use aws sdk 3?
+      const awsImport = ts.factory.createImportDeclaration(
+        undefined,
+        undefined,
+        ts.factory.createImportClause(
+          false,
+          undefined,
+          ts.factory.createNamespaceImport(awsClient)
+        ),
+        ts.factory.createStringLiteral("aws-sdk")
+      );
 
       return ts.factory.updateSourceFile(
         sf,
         [
           functionlessImport,
+          awsImport,
           ...(sf.statements.flatMap((stmt) => visitor(stmt)) as ts.Statement[]),
-          ...additionalStatements,
         ],
         sf.isDeclarationFile,
         sf.referencedFiles,
@@ -240,7 +268,15 @@ export function compile(
       }
 
       function isEventBusPutCall(node: ts.Node): node is ts.CallExpression {
-        return isCallExpression(node) && isEventBus(node.expression);
+        return ts.isCallExpression(node) && isEventBus(node.expression);
+      }
+
+      function isFunctionCall(node: ts.Node): node is ts.CallExpression {
+        return ts.isCallExpression(node) && isFunction(node.expression);
+      }
+
+      function isFunction(node: ts.Node) {
+        return isFunctionlessClassOfKind(node, Function.FunctionlessType);
       }
 
       /**
@@ -293,6 +329,26 @@ export function compile(
           ts.isArrowFunction(node.arguments[2])
         );
       }
+
+      // function isCDKConstruct(type: ts.Type): boolean {
+      //   const constructImport = imports["constructs"];
+      //   const constructSymbol = constructImport
+      //     ? checker.getSymbolAtLocation(constructImport.moduleSpecifier)
+      //     : undefined;
+      //   const constructExports = constructSymbol
+      //     ? checker.getExportsOfModule(constructSymbol)
+      //     : undefined;
+      //   const constructExportSymbol = constructExports?.find(
+      //     (s) => s.name === "Construct"
+      //   );
+
+      //   return (
+      //     (!constructExportSymbol ||
+      //       type.symbol === constructExportSymbol ||
+      //       type.getBaseTypes()?.some((t) => isCDKConstruct(t))) ??
+      //     false
+      //   );
+      // }
 
       /**
        * Catches any errors and wraps them in a {@link Err} node.
@@ -434,21 +490,9 @@ export function compile(
 
       function visitFunction(
         func: FunctionInterface,
-        context: TransformationContext
+        context: ts.TransformationContext
       ): ts.Node {
         const [_one, _two, funcDecl, _four] = func.arguments;
-
-        if (
-          !ts.isFunctionDeclaration(funcDecl) &&
-          !ts.isArrowFunction(funcDecl) &&
-          !ts.isFunctionExpression(funcDecl)
-        ) {
-          throw new Error(
-            `Functionless reflection only supports function parameters with bodies, no signature only declarations or references. Found ${
-              ts.SyntaxKind[funcDecl.kind]
-            }.`
-          );
-        }
 
         return ts.factory.updateNewExpression(
           func,
@@ -457,7 +501,7 @@ export function compile(
           [
             _one,
             _two,
-            toNativeFunction(funcDecl, context),
+            errorBoundary(() => toNativeFunction(funcDecl, context)),
             ...(_four ? [_four] : []),
           ]
         );
@@ -489,9 +533,12 @@ export function compile(
       //   }
       // }
 
+      /**
+       * Native Functions do not allow the creation of resources, CDK constructs or functionless.
+       */
       function toNativeFunction(
         impl: TsFunctionParameter,
-        context: TransformationContext
+        context: ts.TransformationContext
       ): ts.NewExpression {
         if (
           !ts.isFunctionDeclaration(impl) &&
@@ -534,14 +581,197 @@ export function compile(
 
       function toNativeExpr(
         node: ts.Node,
-        context: TransformationContext
-      ): ts.Node | undefined {
+        context: ts.TransformationContext
+      ): ts.Node | ts.Node[] | undefined {
         if (isEventBusPutCall(node)) {
           // add client
           // get bus arn as env variable
           // create client call that uses the env variable and the parameters
           return context.factory.createIdentifier("thisisbus");
+        } else if (isFunctionCall(node)) {
+          const client = context.factory.createUniqueName("lambda");
+          return [
+            context.factory.createVariableStatement(undefined, [
+              context.factory.createVariableDeclaration(
+                client,
+                undefined,
+                undefined,
+                context.factory.createNewExpression(
+                  context.factory.createPropertyAccessExpression(
+                    awsClient,
+                    "Lambda"
+                  ),
+                  undefined,
+                  []
+                )
+              ),
+            ]),
+            /*
+            in: func(payload)
+            out: (await lambdaClient.invoke({
+              FunctionName: func.resource.functionName,
+              Payload: payload
+            }).promise()).Payload
+            */
+            context.factory.createPropertyAccessExpression(
+              context.factory.createAwaitExpression(
+                context.factory.createCallExpression(
+                  context.factory.createPropertyAccessExpression(
+                    context.factory.createCallExpression(
+                      context.factory.createPropertyAccessExpression(
+                        client,
+                        "invoke"
+                      ),
+                      undefined,
+                      [
+                        context.factory.createObjectLiteralExpression([
+                          context.factory.createPropertyAssignment(
+                            "FunctionName",
+                            context.factory.createPropertyAccessExpression(
+                              context.factory.createPropertyAccessExpression(
+                                node.expression,
+                                "resource"
+                              ),
+                              "functionName"
+                            )
+                          ),
+                          ...(node.arguments.length > 0
+                            ? [
+                                context.factory.createPropertyAssignment(
+                                  "Payload",
+                                  node.arguments[0]
+                                ),
+                              ]
+                            : []),
+                        ]),
+                      ]
+                    ),
+                    "promise"
+                  ),
+                  undefined,
+                  undefined
+                )
+              ),
+              "Payload"
+            ),
+          ];
+        } else if (ts.isNewExpression(node)) {
+          const newType = checker.getTypeAtLocation(node);
+          // cannot create new resources in native runtime code.
+          const functionlessKind = getFunctionlessTypeKind(newType);
+          if (getFunctionlessTypeKind(newType)) {
+            throw Error(
+              `Cannot initialize new resources in a native function, found ${functionlessKind}.`
+            );
+          }
+          // TODO: check for CDK constructs
+          // const type = checker.getTypeAtLocation(node.expression);
+          // if (isCDKConstruct(type)) {
+          //   throw Error(
+          //     `Cannot initialize new resources in a native function, found ${type.symbol.name}.`
+          //   );
+          // }
+        } else if (ts.isReturnStatement(node)) {
+          const child = node.expression
+            ? toNativeExpr(node.expression, context)
+            : undefined;
+          if (!child) {
+            return node;
+          } else if (Array.isArray(child)) {
+            // if multiple nodes are returned, assume the last one is the value to assign and the rest should be injected as siblings.
+            const [last, ...rest] = child.reverse();
+            return [
+              ...rest.reverse(),
+              context.factory.updateReturnStatement(
+                node,
+                last as ts.Expression
+              ),
+            ];
+          } else {
+            return context.factory.updateReturnStatement(
+              node,
+              child as ts.Expression
+            );
+          }
+        } else if (ts.isVariableDeclarationList(node)) {
+          // bubble any extra nodes to the top of the variable declaration list.
+          const [extra, declarations] = node.declarations.reduce(
+            ([extra, declarations], decl) => {
+              const values = toNativeExpr(decl, context);
+              if (!values) {
+                return [extra, declarations];
+              } else if (Array.isArray(values)) {
+                const [decl, ...ext] = values.reverse();
+                return [
+                  [...extra, ...ext],
+                  [...declarations, decl as ts.VariableDeclaration],
+                ];
+              } else {
+                return [
+                  extra,
+                  [...declarations, decl as ts.VariableDeclaration],
+                ];
+              }
+            },
+            [[], []] as [ts.Node[], ts.VariableDeclaration[]]
+          );
+
+          return [
+            ...extra,
+            context.factory.updateVariableDeclarationList(node, declarations),
+          ];
+        } else if (ts.isVariableDeclaration(node)) {
+          const child = node.initializer
+            ? toNativeExpr(node.initializer, context)
+            : undefined;
+          if (!child) {
+            return node;
+          } else if (Array.isArray(child)) {
+            const newDecl = context.factory.updateVariableDeclaration(
+              node,
+              node.name,
+              node.exclamationToken,
+              node.type,
+              child.length > 0
+                ? (child[child.length - 1] as ts.Expression)
+                : undefined
+            );
+            return [
+              ...(child.length > 1 ? child.slice(0, child.length - 1) : []),
+              newDecl,
+            ];
+          } else {
+            return context.factory.updateVariableDeclaration(
+              node,
+              node.name,
+              node.exclamationToken,
+              node.type,
+              child as ts.Expression
+            );
+          }
+        } else if (ts.isVariableStatement(node)) {
+          const decls = toNativeExpr(node.declarationList, context);
+          if (!decls) {
+            return node;
+          } else if (Array.isArray(decls)) {
+            const [decl, ...extra] = decls.reverse();
+            return [
+              ...extra.reverse(),
+              context.factory.updateVariableStatement(
+                node,
+                node.modifiers,
+                decl as ts.VariableDeclarationList
+              ),
+            ];
+          } else {
+            return context.factory.updateVariableStatement(
+              node,
+              node.modifiers,
+              decls as ts.VariableDeclarationList
+            );
+          }
         }
+
         // let everything else fall through, process their children too
         return ts.visitEachChild(
           node,
@@ -1069,3 +1299,12 @@ const OperatorMappings: Record<number, BinaryOp> = {
   [ts.SyntaxKind.ExclamationEqualsEqualsToken]: "!=",
   [ts.SyntaxKind.InKeyword]: "in",
 } as const;
+
+// const isTsStatement = (node: ts.Node): node is ts.Statement =>
+//   "_statementBrand" in node;
+
+// const isTsExpression = (node: ts.Node): node is ts.Expression =>
+//   "_expressionBrand" in node;
+
+// const isTsDeclaration = (node: ts.Node): node is ts.Declaration =>
+//   "_declarationBrand" in node;

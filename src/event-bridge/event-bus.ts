@@ -1,8 +1,6 @@
 import { aws_events, Stack } from "aws-cdk-lib";
 import { Construct } from "constructs";
-import { ASL, isASL, Task } from "../asl";
-import { makeCallable } from "../callable";
-import { CallContext } from "../context";
+import { ASL } from "../asl";
 import {
   CallExpr,
   Expr,
@@ -16,6 +14,9 @@ import {
   PropAssignExpr,
   StringLiteralExpr,
 } from "../expression";
+import { Function } from "../function";
+import { Integration } from "../util";
+import { VTL } from "../vtl";
 import { EventBusRule, EventPredicateFunction } from "./rule";
 import { EventBusRuleInput } from "./types";
 
@@ -110,7 +111,7 @@ export interface IEventBus<E extends EventBusRuleInput = EventBusRuleInput>
   (event: Partial<E>, ...events: Partial<E>[]): void;
 }
 abstract class EventBusBase<E extends EventBusRuleInput>
-  implements IEventBus<E>
+  implements IEventBus<E>, Integration
 {
   /**
    * This static properties identifies this class as an EventBus to the TypeScript plugin.
@@ -123,102 +124,102 @@ abstract class EventBusBase<E extends EventBusRuleInput>
   constructor(readonly bus: aws_events.IEventBus) {
     this.eventBusName = bus.eventBusName;
     this.eventBusArn = bus.eventBusArn;
-    return makeCallable(this, (call: CallExpr, context: CallContext) => {
-      if (isASL(context)) {
-        this.bus.grantPutEventsTo(context.role);
+  }
 
-        // Validate that the events are object literals.
-        // Then normalize nested arrays of events into a single list of events.
-        // TODO Relax these restrictions: https://github.com/sam-goodwin/functionless/issues/101
-        const eventObjs = call.args.reduce(
-          (events: ObjectLiteralExpr[], arg) => {
-            if (isArrayLiteralExpr(arg.expr)) {
-              if (!arg.expr.items.every(isObjectLiteralExpr)) {
-                throw Error(
-                  "Event Bus put events must use inline object parameters. Variable references are not supported currently."
-                );
-              }
-              return [...events, ...arg.expr.items];
-            } else if (isObjectLiteralExpr(arg.expr)) {
-              return [...events, arg.expr];
-            }
-            throw Error(
-              "Event Bus put events must use inline object parameters. Variable references are not supported currently."
-            );
-          },
-          []
-        );
+  vtl(_call: CallExpr, context: VTL): string {
+    throw Error(`Event Bridge integration not supported on ${context.kind}`);
+  }
 
-        // The interface should prevent this.
-        if (eventObjs.length === 0) {
-          throw Error("Must provide at least one event.");
+  asl(call: CallExpr, context: ASL) {
+    this.bus.grantPutEventsTo(context.role);
+
+    // Validate that the events are object literals.
+    // Then normalize nested arrays of events into a single list of events.
+    // TODO Relax these restrictions: https://github.com/sam-goodwin/functionless/issues/101
+    const eventObjs = call.args.reduce((events: ObjectLiteralExpr[], arg) => {
+      if (isArrayLiteralExpr(arg.expr)) {
+        if (!arg.expr.items.every(isObjectLiteralExpr)) {
+          throw Error(
+            "Event Bus put events must use inline object parameters. Variable references are not supported currently."
+          );
         }
-
-        const propertyMap: Record<keyof EventBusRuleInput, string> = {
-          "detail-type": "DetailType",
-          account: "Account",
-          detail: "Detail",
-          id: "Id",
-          region: "Region",
-          resources: "Resources",
-          source: "Source",
-          time: "Time",
-          version: "Version",
-        };
-
-        const events = eventObjs.map((event) => {
-          const props = event.properties.filter(
-            (
-              e
-            ): e is PropAssignExpr & {
-              name: StringLiteralExpr | Identifier;
-            } => !(isSpreadAssignExpr(e) || isComputedPropertyNameExpr(e.name))
-          );
-          if (props.length < event.properties.length) {
-            throw Error(
-              "Event Bus put events must use inline objects instantiated without computed or spread keys."
-            );
-          }
-          return (
-            props
-              .map(
-                (prop) =>
-                  [
-                    isIdentifier(prop.name) ? prop.name.name : prop.name.value,
-                    prop.expr,
-                  ] as const
-              )
-              .filter(
-                (x): x is [keyof typeof propertyMap, Expr] =>
-                  x[0] in propertyMap && !!x[1]
-              )
-              /**
-               * Build the parameter payload for an event entry.
-               * All members must be in Pascal case.
-               */
-              .reduce(
-                (acc: Record<string, string>, [name, expr]) => ({
-                  ...acc,
-                  [propertyMap[name]]: ASL.toJson(expr),
-                }),
-                { EventBusName: this.bus.eventBusArn }
-              )
-          );
-        });
-
-        const task: Task = {
-          Resource: "arn:aws:states:::events:putEvents",
-          Type: "Task",
-          Parameters: {
-            Entries: events,
-          },
-        };
-
-        return task;
+        return [...events, ...arg.expr.items];
+      } else if (isObjectLiteralExpr(arg.expr)) {
+        return [...events, arg.expr];
       }
+      throw Error(
+        "Event Bus put events must use inline object parameters. Variable references are not supported currently."
+      );
+    }, []);
 
-      throw Error(`Event Bridge integration not supported on ${context.kind}`);
+    // The interface should prevent this.
+    if (eventObjs.length === 0) {
+      throw Error("Must provide at least one event.");
+    }
+
+    const propertyMap: Record<keyof EventBusRuleInput, string> = {
+      "detail-type": "DetailType",
+      account: "Account",
+      detail: "Detail",
+      id: "Id",
+      region: "Region",
+      resources: "Resources",
+      source: "Source",
+      time: "Time",
+      version: "Version",
+    };
+
+    const events = eventObjs.map((event) => {
+      const props = event.properties.filter(
+        (
+          e
+        ): e is PropAssignExpr & {
+          name: StringLiteralExpr | Identifier;
+        } => !(isSpreadAssignExpr(e) || isComputedPropertyNameExpr(e.name))
+      );
+      if (props.length < event.properties.length) {
+        throw Error(
+          "Event Bus put events must use inline objects instantiated without computed or spread keys."
+        );
+      }
+      return (
+        props
+          .map(
+            (prop) =>
+              [
+                isIdentifier(prop.name) ? prop.name.name : prop.name.value,
+                prop.expr,
+              ] as const
+          )
+          .filter(
+            (x): x is [keyof typeof propertyMap, Expr] =>
+              x[0] in propertyMap && !!x[1]
+          )
+          /**
+           * Build the parameter payload for an event entry.
+           * All members must be in Pascal case.
+           */
+          .reduce(
+            (acc: Record<string, string>, [name, expr]) => ({
+              ...acc,
+              [propertyMap[name]]: ASL.toJson(expr),
+            }),
+            { EventBusName: this.bus.eventBusArn }
+          )
+      );
     });
+
+    return {
+      Resource: "arn:aws:states:::events:putEvents",
+      Type: "Task" as const,
+      Parameters: {
+        Entries: events,
+      },
+    };
+  }
+
+  native(_context: Function<any, any>) {
+    throw Error(`Event Bridge integration not supported on ${_context.kind}`);
   }
 
   /**

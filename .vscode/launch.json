@@ -2,6 +2,21 @@
   "version": "0.2.0",
   "configurations": [
     {
+      "type": "aws-sam",
+      "request": "direct-invoke",
+      "name": "message-board-testFuncB346065B-zllkEyeNxDAI:index.handler (nodejs14.x)",
+      "invokeTarget": {
+        "target": "code",
+        "projectRoot": "${workspaceFolder}/message-board-testFuncB346065B-zllkEyeNxDAI",
+        "lambdaHandler": "index.handler"
+      },
+      "lambda": {
+        "runtime": "nodejs14.x",
+        "payload": {},
+        "environmentVariables": {}
+      }
+    },
+    {
       "name": "compile test-app",
       "type": "node",
       "request": "launch",

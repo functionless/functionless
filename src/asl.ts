@@ -843,20 +843,20 @@ export class ASL {
           (expr.expr.name === "waitFor" || expr.expr.name === "waitUntil")
         ) {
           delete (props as any).ResultPath;
-          return {
-            ...(serviceCall as any)(expr, this),
+          return <State>{
+            ...serviceCall.asl(expr, this),
             ...props,
           };
         }
 
-        const taskState = {
-          ...serviceCall(expr, this),
+        const taskState = <State>{
+          ...serviceCall.asl(expr, this),
           ...props,
         };
 
         const throwOrPass = this.throw(expr);
         if (throwOrPass?.Next) {
-          return {
+          return <State>{
             ...taskState,
             Catch: [
               {

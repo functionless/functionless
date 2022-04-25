@@ -69,7 +69,9 @@ const project = new typescript.TypeScriptProject({
   gitignore: [".DS_Store"],
   releaseToNpm: true,
   jestOptions: {
-    jestConfig: {},
+    jestConfig: {
+      coveragePathIgnorePatterns: ["/test/", "/node_modules/"],
+    },
   },
 });
 

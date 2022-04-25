@@ -4,24 +4,19 @@ import {
   DockerImage,
   Tokenization,
 } from "aws-cdk-lib";
-import {
-  CallExpr,
-  isArrayLiteralExpr,
-  isVariableReference,
-} from "./expression";
-import { isVTL, VTL } from "./vtl";
-import { ASL, isASL, Task } from "./asl";
+import { CallExpr, isVariableReference } from "./expression";
+import { VTL } from "./vtl";
+import { ASL } from "./asl";
 
 // @ts-ignore - imported for typedoc
 import type { AppsyncResolver } from "./appsync";
-import { makeCallable } from "./callable";
 import { NativeFunctionDecl, isNativeFunctionDecl } from "./declaration";
 import { Construct } from "constructs";
-import { AnyFunction } from "./util";
+import { AnyFunction, Integration } from "./util";
 import { runtime } from "@pulumi/pulumi";
 import path from "path";
 import fs from "fs";
-import { isEventBus } from "./event-bridge/event-bus";
+import { Err, isErr } from "./error";
 
 export function isFunction<P = any, O = any>(a: any): a is IFunction<P, O> {
   return a?.kind === "Function";
@@ -41,57 +36,50 @@ export interface IFunction<P, O> {
   >;
 }
 
-interface FunctionBase<P, O> {
-  (...args: Parameters<ConditionalFunction<P, O>>): ReturnType<
-    ConditionalFunction<P, O>
-  >;
-}
-
-abstract class FunctionBase<P, O> implements IFunction<P, O> {
+abstract class FunctionBase<P, O> implements IFunction<P, O>, Integration {
   readonly kind = "Function" as const;
   readonly functionlessKind = "Function";
   public static readonly FunctionlessType = "Function";
 
-  constructor(readonly resource: aws_lambda.IFunction) {
-    return makeCallable(this, (call: CallExpr, context: VTL | ASL): any => {
-      /**
-       * The function will either contain args: [payloadExpr] | [] or payload: expr | undefined
-       */
-      const args = call.getArgument("args");
-      const payload = call.getArgument("payload");
-      const [payloadArg = undefined] = payload
-        ? [payload.expr]
-        : args && isArrayLiteralExpr(args?.expr)
-        ? args.expr.items
-        : [];
+  // @ts-ignore - this makes `F` easily available at compile time
+  readonly __functionBrand: ConditionalFunction<P, O>;
 
-      if (isVTL(context)) {
-        const payload = payloadArg ? context.eval(payloadArg) : "$null";
+  constructor(readonly resource: aws_lambda.IFunction) {}
 
-        const request = context.var(
-          `{"version": "2018-05-29", "operation": "Invoke", "payload": ${payload}}`
-        );
-        return context.json(request);
-      } else if (isASL(context)) {
-        this.resource.grantInvoke(context.role);
-        const task: Partial<Task> = {
-          Type: "Task",
-          Resource: "arn:aws:states:::lambda:invoke",
-          Parameters: {
-            FunctionName: this.resource.functionName,
-            [`Payload${
-              payloadArg && isVariableReference(payloadArg) ? ".$" : ""
-            }`]: payloadArg ? ASL.toJson(payloadArg) : undefined,
-          },
-          ResultSelector: "$.Payload",
-        };
-        return task;
-      } else {
-        console.error(`invalid Function call context`, context);
-        throw new Error(`invalid Function call context: ${context}`);
-      }
-    });
+  vtl(call: CallExpr, context: VTL) {
+    const payloadArg = call.getArgument("payload")?.expr;
+    const payload = payloadArg ? context.eval(payloadArg) : "$null";
+
+    const request = context.var(
+      `{"version": "2018-05-29", "operation": "Invoke", "payload": ${payload}}`
+    );
+    return context.json(request);
   }
+
+  asl(call: CallExpr, context: ASL) {
+    const payloadArg = call.getArgument("payload")?.expr;
+    this.resource.grantInvoke(context.role);
+    return {
+      Type: "Task" as const,
+      Resource: "arn:aws:states:::lambda:invoke",
+      Parameters: {
+        FunctionName: this.resource.functionName,
+        [`Payload${payloadArg && isVariableReference(payloadArg) ? ".$" : ""}`]:
+          payloadArg ? ASL.toJson(payloadArg) : undefined,
+      },
+      ResultSelector: "$.Payload",
+    };
+  }
+
+  native(context: Function<any, any>) {
+    this.resource.grantInvoke(context.resource);
+  }
+}
+
+interface FunctionBase<P, O> {
+  (...args: Parameters<ConditionalFunction<P, O>>): ReturnType<
+    ConditionalFunction<P, O>
+  >;
 }
 
 const PromisesSymbol = Symbol.for("functionless.Function.promises");
@@ -120,9 +108,6 @@ export class Function<P, O> extends FunctionBase<P, O> {
   public static readonly promises = ((global as any)[PromisesSymbol] =
     (global as any)[PromisesSymbol] ?? []);
 
-  // @ts-ignore - this makes `F` easily available at compile time
-  readonly __functionBrand: ConditionalFunction<P, O>;
-
   /**
    * Create a lambda function using a native typescript closure.
    *
@@ -142,7 +127,7 @@ export class Function<P, O> extends FunctionBase<P, O> {
   constructor(
     scope: Construct,
     id: string,
-    func: NativeFunctionDecl,
+    func: NativeFunctionDecl | Err,
     props?: Omit<aws_lambda.FunctionProps, "code" | "handler" | "runtime">
   );
   /**
@@ -156,7 +141,7 @@ export class Function<P, O> extends FunctionBase<P, O> {
   constructor(
     resource: aws_lambda.IFunction | Construct,
     id?: string,
-    func?: NativeFunctionDecl | FunctionClosure<P, O>,
+    func?: NativeFunctionDecl | Err | FunctionClosure<P, O>,
     props?: Omit<aws_lambda.FunctionProps, "code" | "handler" | "runtime">
   ) {
     let _resource: aws_lambda.IFunction;
@@ -168,6 +153,8 @@ export class Function<P, O> extends FunctionBase<P, O> {
           handler: "index.handler",
           code: new CallbackLambdaCode(func.closure),
         });
+      } else if (isErr(func)) {
+        throw func.error;
       } else {
         throw Error(
           "Expected lambda to be passed a compiled function closure or a aws_lambda.IFunction"
@@ -179,21 +166,22 @@ export class Function<P, O> extends FunctionBase<P, O> {
     return super(_resource) as unknown as Function<P, O>;
   }
 
-  public static fromFunction<P, O>(func: aws_lambda.IFunction) {
+  public static fromFunction<P, O>(
+    func: aws_lambda.IFunction
+  ): ImportedFunction<P, O> {
     return new ImportedFunction<P, O>(func);
   }
 }
 
-class ImportedFunction<P, O> extends FunctionBase<P, O> {
+export class ImportedFunction<P, O> extends FunctionBase<P, O> {
   constructor(func: aws_lambda.IFunction) {
     return super(func) as unknown as ImportedFunction<P, O>;
   }
 }
 
 type ConditionalFunction<P, O> = P extends undefined
-  ? () => O
+  ? (payload?: P) => O
   : (payload: P) => O;
-
 export class CallbackLambdaCode extends aws_lambda.Code {
   constructor(private func: AnyFunction) {
     super();
@@ -217,16 +205,7 @@ export class CallbackLambdaCode extends aws_lambda.Code {
     let tokens: string[] = [];
     const result = await runtime.serializeFunction(this.func, {
       serialize: (obj) => {
-        if (typeof obj === "object") {
-          console.log("is object", obj);
-          if (isEventBus(obj)) {
-            console.log("event bus" + obj);
-            return true;
-          } else if (obj instanceof Construct) {
-            console.log("is construct", obj.node.id);
-            return true;
-          }
-        } else if (typeof obj === "string") {
+        if (typeof obj === "string") {
           const reversed =
             Tokenization.reverse(obj, { failConcat: false }) ??
             Tokenization.reverseString(obj).tokens;
@@ -249,7 +228,8 @@ export class CallbackLambdaCode extends aws_lambda.Code {
       return {
         id,
         token: t,
-        env: `__functionless${id}`,
+        // env variables must start with a alpha character
+        env: `env__functionless${id}`,
       };
     });
 
@@ -258,6 +238,8 @@ export class CallbackLambdaCode extends aws_lambda.Code {
       (r, t) => r.split(`"${t.token}"`).join(`process.env.${t.env}`),
       result.text
     );
+
+    // console.log(resultText);
 
     const asset = aws_lambda.Code.fromAsset("", {
       assetHashType: AssetHashType.OUTPUT,

@@ -199,7 +199,7 @@ export class VTL {
       case "CallExpr": {
         const serviceCall = findFunction(node);
         if (serviceCall) {
-          return serviceCall(node, this);
+          return serviceCall.vtl(node, this);
         } else if (
           // If the parent is a propAccessExpr
           node.expr.kind === "PropAccessExpr" &&

@@ -14,18 +14,17 @@ import {
 import { TableKey } from "typesafe-dynamodb/lib/key";
 import { JsonFormat } from "typesafe-dynamodb";
 import {
-  CallExpr,
   isObjectLiteralExpr,
   isVariableReference,
   ObjectLiteralExpr,
 } from "./expression";
-import { ASL, isASL, Task } from "./asl";
+import { ASL, isASL } from "./asl";
 import { CallContext } from "./context";
-import { VTL } from "./vtl";
 import { Function, isFunction } from "./function";
 import { isTable } from "./table";
 
 import type { DynamoDB as AWSDynamoDB } from "aws-sdk";
+import { Integration } from "./util";
 
 type Item<T extends Table<any, any, any>> = T extends Table<infer I, any, any>
   ? I
@@ -93,12 +92,7 @@ export namespace $AWS {
     ): DeleteItemOutput<Item<T>, ReturnValue, JsonFormat.AttributeValue>;
 
     // @ts-ignore
-    export function DeleteItem(
-      call: CallExpr,
-      context: CallContext
-    ): Partial<Task> {
-      return dynamoRequest(call, context, "deleteItem");
-    }
+    export const DeleteItem = dynamoRequestIntegration("deleteItem");
 
     /**
      * @see https://docs.aws.amazon.com/step-functions/latest/dg/connect-ddb.html
@@ -137,12 +131,8 @@ export namespace $AWS {
       JsonFormat.AttributeValue
     >;
 
-    export function GetItem(
-      call: CallExpr,
-      context: CallContext
-    ): Partial<Task> {
-      return dynamoRequest(call, context, "getItem");
-    }
+    // @ts-ignore
+    export const GetItem = dynamoRequestIntegration("getItem");
 
     /**
      * @see https://docs.aws.amazon.com/step-functions/latest/dg/connect-ddb.html
@@ -158,9 +148,7 @@ export namespace $AWS {
       >,
       UpdateExpression extends string,
       ConditionExpression extends string | undefined = undefined,
-      ReturnValue extends AWSDynamoDB.ReturnValue = "NONE",
-      AttributesToGet extends keyof Item<T> | undefined = undefined,
-      ProjectionExpression extends string | undefined = undefined
+      ReturnValue extends AWSDynamoDB.ReturnValue = "NONE"
     >(
       input: { TableName: T } & Omit<
         UpdateItemInput<
@@ -184,12 +172,8 @@ export namespace $AWS {
       JsonFormat.AttributeValue
     >;
 
-    export function UpdateItem(
-      call: CallExpr,
-      context: CallContext
-    ): Partial<Task> {
-      return dynamoRequest(call, context, "updateItem");
-    }
+    // @ts-ignore
+    export const UpdateItem = dynamoRequestIntegration("updateItem");
 
     /**
      * @see https://docs.aws.amazon.com/step-functions/latest/dg/connect-ddb.html
@@ -199,8 +183,7 @@ export namespace $AWS {
       T extends Table<any, any, any>,
       I extends Item<T>,
       ConditionExpression extends string | undefined = undefined,
-      ReturnValue extends AWSDynamoDB.ReturnValue = "NONE",
-      ProjectionExpression extends string | undefined = undefined
+      ReturnValue extends AWSDynamoDB.ReturnValue = "NONE"
     >(
       input: { TableName: T } & Omit<
         PutItemInput<
@@ -213,12 +196,8 @@ export namespace $AWS {
       >
     ): PutItemOutput<I, ReturnValue, JsonFormat.AttributeValue>;
 
-    export function PutItem(
-      call: CallExpr,
-      context: CallContext
-    ): Partial<Task> {
-      return dynamoRequest(call, context, "putItem");
-    }
+    // @ts-ignore
+    export const PutItem = dynamoRequestIntegration("putItem");
 
     // @ts-ignore
     export function Query<
@@ -242,9 +221,7 @@ export namespace $AWS {
     ): QueryOutput<Item<T>, AttributesToGet, JsonFormat.AttributeValue>;
 
     // @ts-ignore
-    export function Query(call: CallExpr, context: CallContext): Partial<Task> {
-      return dynamoRequest(call, context, "query");
-    }
+    export const Query = dynamoRequestIntegration("query");
 
     // @ts-ignore
     export function Scan<
@@ -266,13 +243,9 @@ export namespace $AWS {
     ): ScanOutput<Item<T>, AttributesToGet, JsonFormat.AttributeValue>;
 
     // @ts-ignore
-    export function Scan(call: CallExpr, context: CallContext): Partial<Task> {
-      return dynamoRequest(call, context, "scan");
-    }
+    export const Scan = dynamoRequestIntegration("scan");
 
-    function dynamoRequest(
-      call: CallExpr,
-      context: VTL | ASL,
+    function dynamoRequestIntegration(
       operationName:
         | "deleteItem"
         | "getItem"
@@ -280,42 +253,53 @@ export namespace $AWS {
         | "updateItem"
         | "scan"
         | "query"
-    ): Partial<Task> {
-      assertIsASL(context, `DynamoDB.${operationName}`);
-
-      const input = call.getArgument("input")?.expr;
-      if (!isObjectLiteralExpr(input)) {
-        throw new Error(
-          `input parameter must be an ObjectLiteralExpr, but was ${input?.kind}`
-        );
-      }
-      const tableProp = (input as ObjectLiteralExpr).getProperty("TableName");
-
-      if (
-        tableProp?.kind !== "PropAssignExpr" ||
-        tableProp.expr.kind !== "ReferenceExpr"
-      ) {
-        throw new Error(``);
-      }
-
-      const table = tableProp.expr.ref();
-      if (!isTable(table)) {
-        throw new Error(``);
-      }
-      if (
-        operationName === "deleteItem" ||
-        operationName === "putItem" ||
-        operationName === "updateItem"
-      ) {
-        table.resource.grantWriteData(context.role);
-      } else {
-        table.resource.grantReadData(context.role);
-      }
-
+    ): Integration {
       return {
-        Type: "Task",
-        Resource: `arn:aws:states:::aws-sdk:dynamodb:${operationName}`,
-        Parameters: ASL.toJson(input),
+        asl(call, context) {
+          const input = call.getArgument("input")?.expr;
+          if (!isObjectLiteralExpr(input)) {
+            throw new Error(
+              `input parameter must be an ObjectLiteralExpr, but was ${input?.kind}`
+            );
+          }
+          const tableProp = (input as ObjectLiteralExpr).getProperty(
+            "TableName"
+          );
+
+          if (
+            tableProp?.kind !== "PropAssignExpr" ||
+            tableProp.expr.kind !== "ReferenceExpr"
+          ) {
+            throw new Error(``);
+          }
+
+          const table = tableProp.expr.ref();
+          if (!isTable(table)) {
+            throw new Error(``);
+          }
+          if (
+            operationName === "deleteItem" ||
+            operationName === "putItem" ||
+            operationName === "updateItem"
+          ) {
+            table.resource.grantWriteData(context.role);
+          } else {
+            table.resource.grantReadData(context.role);
+          }
+
+          return {
+            Type: "Task",
+            Resource: `arn:aws:states:::aws-sdk:dynamodb:${operationName}`,
+            Parameters: ASL.toJson(input),
+          };
+        },
+        vtl(_, context) {
+          assertIsASL(context, `DynamoDB.${operationName}`);
+          return "";
+        },
+        native(context) {
+          assertIsASL(context, `DynamoDB.${operationName}`);
+        },
       };
     }
   }
@@ -337,34 +321,34 @@ export namespace $AWS {
       Payload: Output;
     };
 
-    export function Invoke(call: CallExpr, context: CallContext): any {
-      const input = call.args[0].expr;
-      if (input === undefined) {
-        throw new Error(`missing argument 'input'`);
-      } else if (input.kind !== "ObjectLiteralExpr") {
-        throw new Error(`argument 'input' must be an ObjectLiteralExpr`);
-      }
-      const functionName = input.getProperty("FunctionName")?.expr;
-      if (functionName === undefined) {
-        throw new Error(`missing required property 'FunctionName'`);
-      } else if (functionName.kind !== "ReferenceExpr") {
-        throw new Error(
-          `property 'FunctionName' must reference a functionless.Function`
-        );
-      }
-      const functionRef = functionName.ref();
-      if (!isFunction(functionRef)) {
-        throw new Error(
-          `property 'FunctionName' must reference a functionless.Function`
-        );
-      }
-      const payload = input.getProperty("Payload")?.expr;
-      if (payload === undefined) {
-        throw new Error(`missing property 'payload'`);
-      }
-
-      if (isASL(context)) {
-        const task: Partial<Task> = {
+    // @ts-ignore
+    export const Invoke: Integration = {
+      asl(call) {
+        const input = call.args[0].expr;
+        if (input === undefined) {
+          throw new Error(`missing argument 'input'`);
+        } else if (input.kind !== "ObjectLiteralExpr") {
+          throw new Error(`argument 'input' must be an ObjectLiteralExpr`);
+        }
+        const functionName = input.getProperty("FunctionName")?.expr;
+        if (functionName === undefined) {
+          throw new Error(`missing required property 'FunctionName'`);
+        } else if (functionName.kind !== "ReferenceExpr") {
+          throw new Error(
+            `property 'FunctionName' must reference a functionless.Function`
+          );
+        }
+        const functionRef = functionName.ref();
+        if (!isFunction(functionRef)) {
+          throw new Error(
+            `property 'FunctionName' must reference a functionless.Function`
+          );
+        }
+        const payload = input.getProperty("Payload")?.expr;
+        if (payload === undefined) {
+          throw new Error(`missing property 'payload'`);
+        }
+        return {
           Type: "Task",
           Resource: "arn:aws:states:::lambda:invoke",
           Parameters: {
@@ -373,9 +357,14 @@ export namespace $AWS {
               payload ? ASL.toJson(payload) : null,
           },
         };
-        return task;
-      }
-    }
+      },
+      vtl(_, context): any {
+        assertIsASL(context, "Lambda.Invoke");
+      },
+      native(context) {
+        assertIsASL(context, "Lambda.Invoke");
+      },
+    };
   }
 }
 

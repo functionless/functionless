@@ -582,6 +582,11 @@ const cloudAssembly = await asyncSynth(app, options);
 
 For a full example of testing CDK using [`localstack`](https://localstack.cloud/) in jest, see [here](https://github.com/sam-goodwin/functionless/blob/253c33a14c246b70481f75f94cbffcb38d21053b/test/localstack.ts#L18).
 
+#### Troubleshooting: Tests with `Function` are extremely slow.
+
+1. Ensure you are not running coverage on your `/test` files. The function serializer will try to serialize the coverage instrumentation.
+2. Use `Function.fromFunction` if you are not testing the behavior of your lambda.
+
 ## TypeScript -> Velocity Template Logic
 
 In order to write effective VTL templates, it helps to understand how TypeScript syntax maps to Velocity Template Statements.

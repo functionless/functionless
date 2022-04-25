@@ -1,7 +1,7 @@
 import { FunctionExpr } from "./expression";
 import { BaseNode, FunctionlessNode, isNode, typeGuard } from "./node";
 import { BlockStmt } from "./statement";
-import { AnyFunction } from "./util";
+import { AnyFunction, Integration } from "./util";
 
 export type Decl = FunctionDecl | ParameterDecl | NativeFunctionDecl;
 
@@ -48,7 +48,8 @@ export class NativeFunctionDecl<
   readonly _functionBrand?: F;
   constructor(
     readonly parameters: ParameterDecl[],
-    readonly closure: AnyFunction
+    readonly closure: AnyFunction,
+    readonly integrations: Integration[]
   ) {
     super("NativeFunctionDecl");
     parameters.forEach((param) => param.setParent(this));
@@ -57,7 +58,8 @@ export class NativeFunctionDecl<
   public clone(): this {
     return new NativeFunctionDecl(
       this.parameters.map((param) => param.clone()),
-      this.closure
+      this.closure,
+      this.integrations
     ) as this;
   }
 }

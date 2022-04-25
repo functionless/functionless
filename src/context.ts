@@ -1,5 +1,6 @@
 import { ASL } from "./asl";
 import { VTL } from "./vtl";
+import { Function } from "./function";
 
 // @ts-ignore - imported for ts-doc
 import type { Table } from "./table";
@@ -14,4 +15,4 @@ import type { Table } from "./table";
  *
  * For example, the {@link Table.getItem}.
  */
-export type CallContext = ASL | VTL;
+export type CallContext = ASL | VTL | Function<any, any>;

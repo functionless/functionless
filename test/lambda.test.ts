@@ -288,6 +288,63 @@ testResource(
   }
 );
 
+test("should not create new resources in lambda", async () => {
+  await expect(
+    async () => {
+      const stack = new Stack();
+      new Function(stack, "function", async () => {
+        const bus = new aws_events.EventBus(stack, "busbus");
+        return bus.eventBusArn;
+      });
+      await deployStack(app, stack);
+    }
+    // TODO: add error message
+  ).toThrow();
+});
+
+test("should not create new functionless resources in lambda", async () => {
+  await expect(
+    async () => {
+      const stack = new Stack();
+      new Function(stack, "function", async () => {
+        const bus = new EventBus(stack, "busbus");
+        return bus.eventBusArn;
+      });
+      await deployStack(app, stack);
+    }
+    // TODO: add error message
+  ).toThrow();
+});
+
+testResource(
+  "Call Lambda invoke client",
+  (parent) => {
+    const create = () => {
+      const func1 = new Function<undefined, string>(
+        parent,
+        "func1",
+        async () => "hi"
+      );
+      new Function(
+        parent,
+        "function",
+        async () => {
+          // TODO should be awaited?
+          return func1();
+        },
+        {
+          functionName: "func14",
+        }
+      );
+    };
+
+    create();
+  },
+  async () => {
+    await testFunction("func14", {}, "hi");
+  }
+);
+
 // Leave me at the end please.
 tests.forEach(({ name, test: testFunc }, i) => {
   test(name, () => testFunc(testContexts[i]));

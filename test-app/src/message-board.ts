@@ -4,6 +4,7 @@ import {
   RemovalPolicy,
   Stack,
   aws_events,
+  Duration,
 } from "aws-cdk-lib";
 import {
   $AWS,
@@ -413,9 +414,25 @@ customDeleteBus
 
 const busbusbus = new aws_events.EventBus(stack, "busbus");
 
-new Function(stack, "testFunc", async (_something: string) => {
-  console.log(customDeleteBus.eventBusArn);
-  console.log(busbusbus.eventBusArn);
-  console.log("huh?!?!?!??!!");
-  console.log("strange");
+const func = new Function<undefined, string>(stack, "testFunc2", async () => {
+  return "hi";
 });
+
+const func1 = new Function(
+  stack,
+  "testFunc",
+  async () => {
+    console.log(customDeleteBus.eventBusArn);
+    console.log(busbusbus.eventBusArn);
+    console.log("huh?!?!?!??!!");
+    console.log("strange");
+    const result = func();
+    console.log(`function result: ${result}`);
+  },
+  {
+    timeout: Duration.minutes(1),
+  }
+);
+
+// this needs to be happen automatically.
+func.resource.grantInvoke(func1.resource);
