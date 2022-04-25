@@ -1,8 +1,9 @@
 import { CallExpr, Expr, FunctionExpr } from "./expression";
-import { findFunction, isInTopLevelScope } from "./util";
+import { isInTopLevelScope } from "./util";
 import { assertNever, assertNodeKind } from "./assert";
 import { FunctionlessNode } from "./node";
 import { Stmt } from "./statement";
+import { findIntegration } from "./integration";
 
 // https://velocity.apache.org/engine/devel/user-guide.html#conditionals
 // https://cwiki.apache.org/confluence/display/VELOCITY/CheckingForNull
@@ -197,9 +198,9 @@ export class VTL {
       case "BreakStmt":
         return this.add("#break");
       case "CallExpr": {
-        const serviceCall = findFunction(node);
+        const serviceCall = findIntegration(node);
         if (serviceCall) {
-          return serviceCall(node, this);
+          return serviceCall.vtl(node, this);
         } else if (
           // If the parent is a propAccessExpr
           node.expr.kind === "PropAccessExpr" &&

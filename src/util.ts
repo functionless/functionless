@@ -1,7 +1,5 @@
-import { CallExpr, CanReference } from "./expression";
+import { CanReference } from "./expression";
 import { FunctionlessNode } from "./node";
-import { VTL } from "./vtl";
-import { ASL, Task } from "./asl";
 import { isAWS } from "./aws";
 import ts from "typescript";
 import { isTable } from "./table";
@@ -62,31 +60,6 @@ export function isInTopLevelScope(expr: FunctionlessNode): boolean {
       return true;
     }
     return walk(expr.parent);
-  }
-}
-
-/**
- * @param call call expression that may reference a callable integration
- * @returns the reference to the callable function, e.g. a Lambda Function or method on a DynamoDB Table
- */
-export function findFunction(
-  call: CallExpr
-):
-  | (((call: CallExpr, context: VTL) => string) &
-      ((call: CallExpr, context: ASL) => Omit<Task, "Next">))
-  | undefined {
-  return find(call.expr);
-
-  function find(expr: FunctionlessNode): any {
-    if (expr.kind === "PropAccessExpr") {
-      return find(expr.expr)?.[expr.name];
-    } else if (expr.kind === "Identifier") {
-      return undefined;
-    } else if (expr.kind === "ReferenceExpr") {
-      return expr.ref();
-    } else {
-      return undefined;
-    }
   }
 }
 
