@@ -16,7 +16,7 @@ import type { AppsyncResolver } from "./appsync";
 import { TableKey } from "typesafe-dynamodb/lib/key";
 import { JsonFormat } from "typesafe-dynamodb";
 import { assertNodeKind } from "./assert";
-import { IntegrationHandler, makeIntegration } from "./integration";
+import { IIntegration, makeIntegration } from "./integration";
 
 export function isTable(a: any): a is AnyTable {
   return a?.kind === "Table";
@@ -312,7 +312,9 @@ type RenameKeys<
   [k in keyof T as k extends keyof Substitutions ? Substitutions[k] : k]: T[k];
 };
 
-function tableIntegrationBase(methodName: string): Pick<IntegrationHandler, 'kind' | 'unhandledContext'> {
+function tableIntegrationBase(
+  methodName: string
+): Pick<IIntegration, "kind" | "unhandledContext"> {
   return {
     kind: `Table.${methodName}`,
     unhandledContext(kind, context) {
