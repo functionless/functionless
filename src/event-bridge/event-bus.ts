@@ -116,7 +116,7 @@ abstract class EventBusBase<E extends EventBusRuleInput>
    */
   public static readonly FunctionlessType = "EventBus";
   readonly functionlessKind = "EventBus";
-  readonly kind = "EventBus"; 
+  readonly kind = "EventBus";
   readonly eventBusName: string;
   readonly eventBusArn: string;
 
@@ -247,8 +247,9 @@ interface EventBusBase<E extends EventBusRuleInput> {
  * // An event with the payload
  * interface myEvent extends EventBusRuleInput<Payload> {}
  *
+ * const myAwsFunction = new aws_lambda.Function(this, 'myFunction', { ... });
  * // A function that expects the payload.
- * const myLambdaFunction = new functionless.Function<Payload, void>(this, 'myFunction', ...);
+ * const myLambdaFunction = new functionless.Function<Payload, void>(myAwsFunction);
  *
  * // instantiate an aws_events.EventBus Construct
  * const awsBus = new aws_events.EventBus(this, "mybus");
