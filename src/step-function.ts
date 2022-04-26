@@ -105,69 +105,98 @@ export namespace $SFN {
     },
   });
 
-  type forEach =
-    | (<T>(
-        array: T[],
-        callbackfn: (item: T, index: number, array: T[]) => void
-      ) => void) &
-        (<T>(
-          array: T[],
-          props: {
-            maxConcurrency: number;
-          },
-          callbackfn: (item: T, index: number, array: T[]) => void
-        ) => void);
+  interface ForEach {
+    /**
+     * Process each item in an {@link array} in parallel and run with the default maxConcurrency.
+     *
+     * Example:
+     * ```ts
+     * new ExpressStepFunction(this, "F"} (items: string[]) => {
+     *   $SFN.forEach(items, { maxConcurrency: 2 }, item => task(item));
+     * });
+     * ```
+     *
+     * @param array the list of items to process
+     * @param callbackfn function to process each item
+     */
+    <T>(
+      array: T[],
+      callbackfn: (item: T, index: number, array: T[]) => void
+    ): void;
+    /**
+     * Process each item in an {@link array} in parallel and run with the default maxConcurrency.
+     *
+     * Example:
+     * ```ts
+     * new ExpressStepFunction(this, "F"} (items: string[]) => {
+     *   $SFN.forEach(items, { maxConcurrency: 2 }, item => task(item));
+     * });
+     * ```
+     *
+     * @param array the list of items to process
+     * @param props configure the maxConcurrency
+     * @param callbackfn function to process each item
+     */
+    <T>(
+      array: T[],
+      props: {
+        maxConcurrency: number;
+      },
+      callbackfn: (item: T, index: number, array: T[]) => void
+    ): void;
+  }
 
-  /**
-   * Process each item in an {@link array} in parallel and run with the default maxConcurrency.
-   *
-   * Example:
-   * ```ts
-   * new ExpressStepFunction(this, "F"} (items: string[]) => {
-   *   $SFN.forEach(items, { maxConcurrency: 2 }, item => task(item));
-   * });
-   * ```
-   *
-   * @param array the list of items to process
-   * @param props configure the maxConcurrency
-   * @param callbackfn function to process each item
-   */
-  export const forEach = makeIntegration<forEach>({
+  export const forEach = makeIntegration<ForEach>({
     ...sfnIntegrationBase("forEach"),
     asl(call, context) {
       return mapOrForEach(call, context);
     },
   });
 
-  type map =
-    | (<T, U>(
-        array: T[],
-        callbackfn: (item: T, index: number, array: T[]) => U
-      ) => U[]) &
-        (<T, U>(
-          array: T[],
-          props: {
-            maxConcurrency: number;
-          },
-          callbackfn: (item: T, index: number, array: T[]) => U
-        ) => U[]);
+  interface Map {
+    /**
+     * Map over each item in an {@link array} in parallel and run with the default maxConcurrency.
+     *
+     * Example:
+     * ```ts
+     * new ExpressStepFunction(this, "F", (items: string[]) => {
+     *   return $SFN.map(items, item => task(item))
+     * });
+     * ```
+     *
+     * @param array the list of items to map over
+     * @param callbackfn function to process each item
+     * @returns an array containing the result of each mapped item
+     */
+    <T, U>(
+      array: T[],
+      callbackfn: (item: T, index: number, array: T[]) => U
+    ): U[];
+    /**
+     * Map over each item in an {@link array} in parallel and run with the default maxConcurrency.
+     *
+     * Example:
+     * ```ts
+     * new ExpressStepFunction(this, "F", (items: string[]) => {
+     *   return $SFN.map(items, item => task(item))
+     * });
+     * ```
+     *
+     * @param array the list of items to map over
+     * @param props configure the maxConcurrency
+     * @param callbackfn function to process each item
+     * @returns an array containing the result of each mapped item
+     */
+    <T, U>(
+      array: T[],
+      props: {
+        maxConcurrency: number;
+      },
+      callbackfn: (item: T, index: number, array: T[]) => U
+    ): U[];
+  }
 
-  /**
-   * Map over each item in an {@link array} in parallel and run with the default maxConcurrency.
-   *
-   * Example:
-   * ```ts
-   * new ExpressStepFunction(this, "F", (items: string[]) => {
-   *   return $SFN.map(items, item => task(item))
-   * });
-   * ```
-   *
-   * @param array the list of items to map over
-   * @param props configure the maxConcurrency
-   * @param callbackfn function to process each item
-   * @returns an array containing the result of each mapped item
-   */
-  export const map = makeIntegration<map>({
+  export const map = makeIntegration<Map>({
     ...sfnIntegrationBase("map"),
     asl(call, context) {
       return mapOrForEach(call, context);
