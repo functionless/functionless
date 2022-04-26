@@ -1,7 +1,7 @@
 import { FunctionExpr } from "./expression";
 import { BaseNode, FunctionlessNode, isNode, typeGuard } from "./node";
 import { BlockStmt } from "./statement";
-import { AnyFunction, Integration } from "./util";
+import { AnyFunction } from "./util";
 
 export type Decl = FunctionDecl | ParameterDecl | NativeFunctionDecl;
 

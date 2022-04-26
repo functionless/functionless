@@ -834,7 +834,6 @@ const None = {
   none: Symbol.for("functionless.None"),
 };
 
-// @ts-ignore
 function getDataSource(
   api: appsync.GraphqlApi,
   target: CanReference | null,

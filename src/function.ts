@@ -12,11 +12,12 @@ import { ASL } from "./asl";
 import type { AppsyncResolver } from "./appsync";
 import { NativeFunctionDecl, isNativeFunctionDecl } from "./declaration";
 import { Construct } from "constructs";
-import { AnyFunction, Integration } from "./util";
+import { AnyFunction } from "./util";
 import { runtime } from "@pulumi/pulumi";
 import path from "path";
 import fs from "fs";
 import { Err, isErr } from "./error";
+import { IntegrationHandler } from "./integration";
 
 export function isFunction<P = any, O = any>(a: any): a is IFunction<P, O> {
   return a?.kind === "Function";
@@ -36,7 +37,7 @@ export interface IFunction<P, O> {
   >;
 }
 
-abstract class FunctionBase<P, O> implements IFunction<P, O>, Integration {
+abstract class FunctionBase<P, O> implements IFunction<P, O>, IntegrationHandler {
   readonly kind = "Function" as const;
   readonly functionlessKind = "Function";
   public static readonly FunctionlessType = "Function";

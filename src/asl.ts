@@ -35,7 +35,8 @@ import {
   VariableStmt,
   WhileStmt,
 } from "./statement";
-import { anyOf, findFunction } from "./util";
+import { anyOf } from "./util";
+import { findIntegration } from "./integration";
 import { FunctionDecl, isParameterDecl, isFunctionDecl } from "./declaration";
 import { FunctionlessNode } from "./node";
 import { visitEachChild } from "./visit";
@@ -381,7 +382,9 @@ export class ASL {
           });
 
           function isTask(node: FunctionlessNode): node is CallExpr {
-            return node.kind === "CallExpr" && findFunction(node) !== undefined;
+            return (
+              node.kind === "CallExpr" && findIntegration(node) !== undefined
+            );
           }
 
           if (nestedTasks.length > 0) {
@@ -836,7 +839,7 @@ export class ASL {
       props.End = true;
     }
     if (expr.kind === "CallExpr") {
-      const serviceCall = findFunction(expr);
+      const serviceCall = findIntegration(expr);
       if (serviceCall) {
         if (
           expr.expr.kind === "PropAccessExpr" &&
@@ -1198,7 +1201,7 @@ function analyzeFlow(node: FunctionlessNode): FlowResult {
     .reduce(
       (a, b) => ({ ...a, ...b }),
       (node.kind === "CallExpr" &&
-        (findFunction(node) !== undefined || isMapOrForEach(node))) ||
+        (findIntegration(node) !== undefined || isMapOrForEach(node))) ||
         node.kind === "ForInStmt" ||
         node.kind === "ForOfStmt"
         ? { hasTask: true }

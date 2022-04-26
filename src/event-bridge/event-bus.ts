@@ -14,9 +14,7 @@ import {
   PropAssignExpr,
   StringLiteralExpr,
 } from "../expression";
-import { Function } from "../function";
-import { Integration } from "../util";
-import { VTL } from "../vtl";
+import { IntegrationHandler } from "../integration";
 import { EventBusRule, EventPredicateFunction } from "./rule";
 import { EventBusRuleInput } from "./types";
 
@@ -111,23 +109,20 @@ export interface IEventBus<E extends EventBusRuleInput = EventBusRuleInput>
   (event: Partial<E>, ...events: Partial<E>[]): void;
 }
 abstract class EventBusBase<E extends EventBusRuleInput>
-  implements IEventBus<E>, Integration
+  implements IEventBus<E>, IntegrationHandler
 {
   /**
    * This static properties identifies this class as an EventBus to the TypeScript plugin.
    */
   public static readonly FunctionlessType = "EventBus";
   readonly functionlessKind = "EventBus";
+  readonly kind = "EventBus";
   readonly eventBusName: string;
   readonly eventBusArn: string;
 
   constructor(readonly bus: aws_events.IEventBus) {
     this.eventBusName = bus.eventBusName;
     this.eventBusArn = bus.eventBusArn;
-  }
-
-  vtl(_call: CallExpr, context: VTL): string {
-    throw Error(`Event Bridge integration not supported on ${context.kind}`);
   }
 
   asl(call: CallExpr, context: ASL) {
@@ -216,10 +211,6 @@ abstract class EventBusBase<E extends EventBusRuleInput>
         Entries: events,
       },
     };
-  }
-
-  native(_context: Function<any, any>) {
-    throw Error(`Event Bridge integration not supported on ${_context.kind}`);
   }
 
   /**
