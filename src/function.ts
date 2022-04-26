@@ -18,6 +18,7 @@ import path from "path";
 import fs from "fs";
 import { Err, isErr } from "./error";
 import { Integration, IIntegration } from "./integration";
+import { Lambda, EventBridge } from "aws-sdk";
 
 export function isFunction<P = any, O = any>(a: any): a is IFunction<P, O> {
   return a?.kind === "Function";
@@ -37,9 +38,7 @@ export interface IFunction<P, O> {
   >;
 }
 
-abstract class FunctionBase<P, O>
-  implements IFunction<P, O>, IIntegration
-{
+abstract class FunctionBase<P, O> implements IFunction<P, O>, IIntegration {
   readonly kind = "Function" as const;
   readonly functionlessKind = "Function";
   public static readonly FunctionlessType = "Function";
@@ -74,8 +73,25 @@ abstract class FunctionBase<P, O>
     };
   }
 
-  native(context: Function<any, any>) {
-    this.resource.grantInvoke(context.resource);
+  get native() {
+    const func = this.resource;
+    return <NativeIntegration<FunctionBase<P, O>>>{
+      bootstrap: (context: Function<any, any>) => {
+        this.resource.grantInvoke(context.resource);
+      },
+      // This method is called from the runtime lambda code (context) to invoke this lambda function.
+      call: async (args, prewarmContext) => {
+        const [payload] = args;
+        const lambdaClient = prewarmContext.lambda();
+        return await lambdaClient.invoke({
+          FunctionName: func.functionName,
+          ...(payload ? { Payload: JSON.stringify(payload) } : undefined),
+        });
+      },
+      preWarm: (preWarmContext: NativePreWarmContext) => {
+        preWarmContext.lambda();
+      },
+    };
   }
 }
 
@@ -149,13 +165,15 @@ export class Function<P, O> extends FunctionBase<P, O> {
   ) {
     let _resource: aws_lambda.IFunction;
     let integrations: IIntegration[] = [];
+    let callbackLambdaCode: CallbackLambdaCode | undefined = undefined;
     if (func && id) {
       if (isNativeFunctionDecl(func)) {
+        callbackLambdaCode = new CallbackLambdaCode(func.closure);
         _resource = new aws_lambda.Function(resource, id, {
           ...props,
           runtime: aws_lambda.Runtime.NODEJS_14_X,
           handler: "index.handler",
-          code: new CallbackLambdaCode(func.closure),
+          code: callbackLambdaCode,
         });
 
         integrations = func.integrations;
@@ -169,12 +187,23 @@ export class Function<P, O> extends FunctionBase<P, O> {
     } else {
       _resource = resource as aws_lambda.IFunction;
     }
-    super(_resource) as unknown as Function<P, O>;
+    super(_resource);
 
-    // may use this and must be after super
-    integrations
+    // retrieve and bootstrap all found native integrations. Will fail if the integration does not support native integration.
+    const nativeIntegrationsPrewarm = integrations
       .map((i) => new Integration(i))
-      .forEach((integration) => integration.native(this));
+      .map((integration) => {
+        const integ = integration.native;
+        integ.bootstrap(this);
+        return integ;
+      })
+      .filter((i) => i.preWarm)
+      .map((i) => i.preWarm);
+    // Start serializing process, add the callback to the promises so we can later ensure completion
+    callbackLambdaCode &&
+      Function.promises.push(
+        callbackLambdaCode.generate(nativeIntegrationsPrewarm)
+      );
   }
 
   public static fromFunction<P, O>(
@@ -193,17 +222,34 @@ export class ImportedFunction<P, O> extends FunctionBase<P, O> {
 type ConditionalFunction<P, O> = P extends undefined
   ? (payload?: P) => O
   : (payload: P) => O;
+
+/**
+ * A special lambda code wrapper that serializes whatever closure it is given.
+ *
+ * Caveat: Relies on async functions which may not finish when using CDK's app.synth()
+ *
+ * Ensure the generate function's promise is completed using something like Lambda.promises and the `asyncSynth` function.
+ *
+ * Use:
+ * * Initialize the {@link CallbackLambdaCode} `const code = new CallbackLambdaCode()`
+ * * First bind the code to a Function `new aws_lambda.Function(..., { code })`
+ * * Then call generate `const promise = code.generate(integrations)`
+ * *
+ */
 export class CallbackLambdaCode extends aws_lambda.Code {
-  constructor(private func: AnyFunction) {
+  private scope: Construct | undefined = undefined;
+
+  constructor(
+    private func: (preWarmContext: NativePreWarmContext) => AnyFunction
+  ) {
     super();
   }
 
   public bind(scope: Construct): aws_lambda.CodeConfig {
-    Function.promises.push(this.generate(scope));
-
+    this.scope = scope;
     // Lets give the function something lightweight while we process the closure.
     return aws_lambda.Code.fromInline(
-      "If you are seeing this in your lambda code, consult the README."
+      "If you are seeing this in your lambda code, ensure generate is called and then consult the README."
     ).bind(scope);
   }
 
@@ -212,25 +258,42 @@ export class CallbackLambdaCode extends aws_lambda.Code {
    * https://github.com/skyrpex/cloudy/blob/main/packages/cdk/src/aws-lambda/callback-function.ts#L518-L540
    * https://twitter.com/samgoodwin89/status/1516887131108438016?s=20&t=7GRGOQ1Bp0h_cPsJgFk3Ww
    */
-  async generate(scope: Construct) {
+  public async generate(
+    integrationPrewarms: NativeIntegration<AnyFunction>["preWarm"][]
+  ) {
+    if (!this.scope) {
+      throw Error("Must first be bound to a Construct using .bind().");
+    }
+    const scope = this.scope;
     let tokens: string[] = [];
-    const result = await runtime.serializeFunction(this.func, {
-      serialize: (obj) => {
-        if (typeof obj === "string") {
-          const reversed =
-            Tokenization.reverse(obj, { failConcat: false }) ??
-            Tokenization.reverseString(obj).tokens;
-          if (!Array.isArray(reversed) || reversed.length > 0) {
-            if (Array.isArray(reversed)) {
-              tokens = [...tokens, ...reversed.map((s) => s.toString())];
-            } else {
-              tokens = [...tokens, reversed.toString()];
+    const preWarmContext = new NativePreWarmContext();
+    const func = this.func(preWarmContext);
+
+    const result = await runtime.serializeFunction(
+      // factory function allows us to prewarm the clients and other context.
+      () => {
+        integrationPrewarms.forEach((i) => i?.(preWarmContext));
+        return func;
+      },
+      {
+        isFactoryFunction: true,
+        serialize: (obj) => {
+          if (typeof obj === "string") {
+            const reversed =
+              Tokenization.reverse(obj, { failConcat: false }) ??
+              Tokenization.reverseString(obj).tokens;
+            if (!Array.isArray(reversed) || reversed.length > 0) {
+              if (Array.isArray(reversed)) {
+                tokens = [...tokens, ...reversed.map((s) => s.toString())];
+              } else {
+                tokens = [...tokens, reversed.toString()];
+              }
             }
           }
-        }
-        return true;
-      },
-    });
+          return true;
+        },
+      }
+    );
 
     const tokenContext = tokens.map((t) => {
       const id = new RegExp("\\${Token\\[TOKEN\\.([0-9]*)\\]}", "g").exec(
@@ -290,5 +353,71 @@ export class CallbackLambdaCode extends aws_lambda.Code {
     };
 
     asset.bindToResource(funcResource);
+  }
+}
+
+export interface NativeIntegration<F extends AnyFunction> {
+  bootstrap: (context: Function<any, any>) => void;
+  /**
+   * @param args The arguments passed to the integration function by the user.
+   * @param preWarmContext contains singleton instances of client and other objects initialized outside of the native
+   *                       function handler.
+   */
+  call: (
+    args: Parameters<F>,
+    preWarmContext: NativePreWarmContext
+  ) => Promise<ReturnType<F>>;
+  /**
+   * Method called outside of the handler to initialize things like the PreWarmContext
+   */
+  preWarm?: (preWarmContext: NativePreWarmContext) => void;
+}
+
+export class NativePreWarmContext {
+  private readonly cache: Record<string, any>;
+
+  constructor() {
+    this.cache = {};
+  }
+
+  public lambda(): Lambda {
+    return this.getOrInit("LAMBDA", () => new Lambda());
+  }
+
+  public eventBridge(): EventBridge {
+    return this.getOrInit("EVENT_BRIDGE", () => new EventBridge());
+  }
+
+  public registerCustom(
+    key: string,
+    init: () => {},
+    allowExists: boolean = false
+  ) {
+    if (key in this.cache && !allowExists) {
+      throw Error(
+        `Prewarm Context key ${key} already exists. Use context.custom to get the object or set allowExists to true.`
+      );
+    }
+    return this.getOrInit(key, init);
+  }
+
+  public custom(key: string) {
+    this.getOrFail(key);
+  }
+
+  private getOrInit<T>(key: string, create: () => T): T {
+    if (!this.cache[key]) {
+      this.cache[key] = create();
+    }
+    return this.cache[key];
+  }
+
+  private getOrFail<T>(key: string): T {
+    if (!this.cache[key]) {
+      throw Error(
+        `Prewarm Context key ${key} does not exist. Initialize it with context.registerCustom.`
+      );
+    }
+    return this.cache[key];
   }
 }

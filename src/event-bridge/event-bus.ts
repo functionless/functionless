@@ -14,6 +14,7 @@ import {
   PropAssignExpr,
   StringLiteralExpr,
 } from "../expression";
+import { Function, NativeIntegration, NativePreWarmContext } from "../function";
 import { IIntegration } from "../integration";
 import { EventBusRule, EventPredicateFunction } from "./rule";
 import { EventBusRuleInput } from "./types";
@@ -212,6 +213,28 @@ abstract class EventBusBase<E extends EventBusRuleInput>
       },
     };
   }
+
+  native = <NativeIntegration<EventBusBase<E>>>{
+    bootstrap: (context: Function<any, any>) => {
+      this.bus.grantPutEventsTo(context.resource);
+    },
+    preWarm: (prewarmContext: NativePreWarmContext) => {
+      prewarmContext.eventBridge();
+    },
+    call: async (args, preWarmContext) => {
+      const eventBridge = preWarmContext.eventBridge();
+      await eventBridge.putEvents({
+        Entries: args.map((event) => ({
+          Detail: JSON.stringify(event.detail),
+          EventBusName: this.eventBusName,
+          DetailType: event["detail-type"],
+          Resources: event.resources,
+          Source: event.source,
+          Time: event.time ? new Date(event.time) : undefined,
+        })),
+      });
+    },
+  };
 
   /**
    * @inheritdoc

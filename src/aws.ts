@@ -283,7 +283,7 @@ export namespace $AWS {
         },
         unhandledContext(kind, context) {
           throw new Error(
-            `${kind} is only available within an '${ASL.ContextName}' context, but was called from within a '${context.kind}' context.`
+            `${kind} is only available within an '${ASL.ContextName}' context, but was called from within a '${context}' context.`
           );
         },
       };
@@ -345,7 +345,7 @@ export namespace $AWS {
       },
       unhandledContext(kind, context) {
         throw new Error(
-          `$AWS.${kind} is only available within an '${ASL.ContextName}' context, but was called from within a '${context.kind}' context.`
+          `$AWS.${kind} is only available within an '${ASL.ContextName}' context, but was called from within a '${context}' context.`
         );
       },
     });

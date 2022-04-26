@@ -3,7 +3,7 @@ import { ASL, State } from "./asl";
 import { FunctionlessNode } from "./node";
 import { VTL } from "./vtl";
 import { AnyFunction } from "./util";
-import { Function } from "./function";
+import { Function, NativeIntegration } from "./function";
 
 /**
  * All integration methods supported by functionless.
@@ -22,7 +22,7 @@ interface IntegrationMethods {
   /**
    * Native javascript code integrations that execute at runtime like Lambda.
    */
-  native: (context: Function<any, any>) => void;
+  native: NativeIntegration<AnyFunction>;
 }
 
 /**
@@ -84,7 +84,7 @@ export type IIntegration = {
   /**
    * Optional method that allows overriding the {@link Error} thrown when a integration is not supported by a handler.
    */
-  readonly unhandledContext?: (kind: string, context: CallContext) => Error;
+  readonly unhandledContext?: (kind: string, context: CallContext['kind']) => Error;
 };
 
 /**
@@ -99,32 +99,32 @@ export class Integration implements IntegrationMethods {
     this.kind = integration.kind;
   }
 
-  private unhandledContext<T>(context: CallContext): T {
+  private unhandledContext<T>(context: CallContext['kind']): T {
     if (this.integration.unhandledContext) {
       throw this.integration.unhandledContext(this.kind, context);
     }
-    throw Error(`${this.kind} is not supported by context ${context.kind}.`);
+    throw Error(`${this.kind} is not supported by context ${context}.`);
   }
 
   public vtl(call: CallExpr, context: VTL): string {
     if (this.integration.vtl) {
       return this.integration.vtl(call, context);
     }
-    return this.unhandledContext(context);
+    return this.unhandledContext(context.kind);
   }
 
   public asl(call: CallExpr, context: ASL): Omit<State, "Next"> {
     if (this.integration.asl) {
       return this.integration.asl(call, context);
     }
-    return this.unhandledContext(context);
+    return this.unhandledContext(context.kind);
   }
 
-  native(context: Function<any, any>) {
+  public get native(): NativeIntegration<AnyFunction> {
     if (this.integration.native) {
-      return this.integration.native(context);
+      return this.integration.native;
     }
-    return this.unhandledContext(context);
+    return this.unhandledContext('Function');
   }
 }
 

@@ -319,7 +319,7 @@ function tableIntegrationBase(
     kind: `Table.${methodName}`,
     unhandledContext(kind, context) {
       throw new Error(
-        `${kind} is only allowed within a '${VTL.ContextName}' context, but was called within a '${context.kind}' context.`
+        `${kind} is only allowed within a '${VTL.ContextName}' context, but was called within a '${context}' context.`
       );
     },
   };

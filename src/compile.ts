@@ -507,6 +507,11 @@ export function compile(
         );
       }
 
+      interface NativeExprContext {
+        preWarmContext: ts.Identifier;
+        registerIntegration: (node: ts.Expression) => void;
+      }
+
       /**
        * const functionless_eventBusClient = new EventBridge();
        * const MY_BUS = process.env["MY_BUS"];
@@ -558,8 +563,18 @@ export function compile(
 
         const integrations: ts.Expression[] = [];
 
-        const body = toNativeExpr(impl.body, context, (integ) =>
-          integrations.push(integ)
+        const preWarmContext =
+          context.factory.createUniqueName("preWarmContext");
+
+        const nativeExprContext: NativeExprContext = {
+          preWarmContext,
+          registerIntegration: (integ) => integrations.push(integ),
+        };
+
+        const body = toNativeExpr(
+          impl.body,
+          context,
+          nativeExprContext
         ) as ts.ConciseBody;
 
         const closure = ts.factory.createArrowFunction(
@@ -579,7 +594,25 @@ export function compile(
                 newExpr("ParameterDecl", [ts.factory.createStringLiteral(arg)])
               )
           ),
-          closure,
+          // (prewarmContext) => closure;
+          context.factory.createArrowFunction(
+            undefined,
+            undefined,
+            [
+              context.factory.createParameterDeclaration(
+                undefined,
+                undefined,
+                undefined,
+                preWarmContext,
+                undefined,
+                undefined,
+                undefined
+              ),
+            ],
+            undefined,
+            undefined,
+            closure
+          ),
           context.factory.createArrayLiteralExpression(integrations),
         ]);
       }
@@ -587,82 +620,116 @@ export function compile(
       function toNativeExpr(
         node: ts.Node,
         context: ts.TransformationContext,
-        registerIntegration: (node: ts.Expression) => void
+        nativeExprContext: NativeExprContext
       ): ts.Node | ts.Node[] | undefined {
         if (isEventBusPutCall(node)) {
           // add client
           // get bus arn as env variable
           // create client call that uses the env variable and the parameters
-          return context.factory.createIdentifier("thisisbus");
-        } else if (isFunctionCall(node)) {
-          // add the function identifier to the integrations
-          registerIntegration(node.expression);
-          const client = context.factory.createUniqueName("lambda");
-          return [
-            context.factory.createVariableStatement(undefined, [
-              context.factory.createVariableDeclaration(
-                client,
-                undefined,
-                undefined,
-                context.factory.createNewExpression(
-                  context.factory.createPropertyAccessExpression(
-                    awsClient,
-                    "Lambda"
-                  ),
-                  undefined,
-                  []
-                )
-              ),
-            ]),
-            /*
-            in: func(payload)
-            out: (await lambdaClient.invoke({
+          /*
+            in: bus(event1, event2)
+            out: (await eventBridgeClient.PutEvents({
+              Entries: [
+                {
+                  EventBusName: bus.bus.eventBusArn,
+                  Source: event1.source,
+                  DetailType: event1["detail-type"],
+                  Detail: JSON.parse(event1.detail)
+                }
+              ]
               FunctionName: func.resource.functionName,
               Payload: payload
             }).promise()).Payload
             */
-            context.factory.createPropertyAccessExpression(
-              context.factory.createAwaitExpression(
-                context.factory.createCallExpression(
-                  context.factory.createPropertyAccessExpression(
-                    context.factory.createCallExpression(
-                      context.factory.createPropertyAccessExpression(
-                        client,
-                        "invoke"
-                      ),
-                      undefined,
-                      [
-                        context.factory.createObjectLiteralExpression([
-                          context.factory.createPropertyAssignment(
-                            "FunctionName",
-                            context.factory.createPropertyAccessExpression(
-                              context.factory.createPropertyAccessExpression(
-                                node.expression,
-                                "resource"
-                              ),
-                              "functionName"
-                            )
-                          ),
-                          ...(node.arguments.length > 0
-                            ? [
-                                context.factory.createPropertyAssignment(
-                                  "Payload",
-                                  node.arguments[0]
-                                ),
-                              ]
-                            : []),
-                        ]),
-                      ]
-                    ),
-                    "promise"
-                  ),
-                  undefined,
-                  undefined
-                )
+          return context.factory.createIdentifier("thisisbus");
+        } else if (isFunctionCall(node)) {
+          // add the function identifier to the integrations
+          nativeExprContext.registerIntegration(node.expression);
+          // call the integration call function with the prewarm context and arguments
+          // At this point, we know native will not be undefined
+          // integration.native.call(args, preWarmContext)
+          return [
+            context.factory.createCallExpression(
+              context.factory.createPropertyAccessExpression(
+                context.factory.createPropertyAccessExpression(
+                  node.expression,
+                  "native"
+                ),
+                "call"
               ),
-              "Payload"
+              undefined,
+              [
+                context.factory.createArrayLiteralExpression(node.arguments),
+                nativeExprContext.preWarmContext,
+              ]
             ),
           ];
+          // const client = context.factory.createUniqueName("lambda");
+          // return [
+          //   context.factory.createVariableStatement(undefined, [
+          //     context.factory.createVariableDeclaration(
+          //       client,
+          //       undefined,
+          //       undefined,
+          //       context.factory.createNewExpression(
+          //         context.factory.createPropertyAccessExpression(
+          //           awsClient,
+          //           "Lambda"
+          //         ),
+          //         undefined,
+          //         []
+          //       )
+          //     ),
+          //   ]),
+          //   /*
+          //   in: func(payload)
+          //   out: (await lambdaClient.invoke({
+          //     FunctionName: func.resource.functionName,
+          //     Payload: payload
+          //   }).promise()).Payload
+          //   */
+          //   context.factory.createPropertyAccessExpression(
+          //     context.factory.createAwaitExpression(
+          //       context.factory.createCallExpression(
+          //         context.factory.createPropertyAccessExpression(
+          //           context.factory.createCallExpression(
+          //             context.factory.createPropertyAccessExpression(
+          //               client,
+          //               "invoke"
+          //             ),
+          //             undefined,
+          //             [
+          //               context.factory.createObjectLiteralExpression([
+          //                 context.factory.createPropertyAssignment(
+          //                   "FunctionName",
+          //                   context.factory.createPropertyAccessExpression(
+          //                     context.factory.createPropertyAccessExpression(
+          //                       node.expression,
+          //                       "resource"
+          //                     ),
+          //                     "functionName"
+          //                   )
+          //                 ),
+          //                 ...(node.arguments.length > 0
+          //                   ? [
+          //                       context.factory.createPropertyAssignment(
+          //                         "Payload",
+          //                         node.arguments[0]
+          //                       ),
+          //                     ]
+          //                   : []),
+          //               ]),
+          //             ]
+          //           ),
+          //           "promise"
+          //         ),
+          //         undefined,
+          //         undefined
+          //       )
+          //     ),
+          //     "Payload"
+          //   ),
+          // ];
         } else if (ts.isNewExpression(node)) {
           const newType = checker.getTypeAtLocation(node);
           // cannot create new resources in native runtime code.
@@ -681,7 +748,7 @@ export function compile(
           // }
         } else if (ts.isReturnStatement(node)) {
           const child = node.expression
-            ? toNativeExpr(node.expression, context, registerIntegration)
+            ? toNativeExpr(node.expression, context, nativeExprContext)
             : undefined;
           if (!child) {
             return node;
@@ -705,7 +772,7 @@ export function compile(
           // bubble any extra nodes to the top of the variable declaration list.
           const [extra, declarations] = node.declarations.reduce(
             ([extra, declarations], decl) => {
-              const values = toNativeExpr(decl, context, registerIntegration);
+              const values = toNativeExpr(decl, context, nativeExprContext);
               if (!values) {
                 return [extra, declarations];
               } else if (Array.isArray(values)) {
@@ -730,7 +797,7 @@ export function compile(
           ];
         } else if (ts.isVariableDeclaration(node)) {
           const child = node.initializer
-            ? toNativeExpr(node.initializer, context, registerIntegration)
+            ? toNativeExpr(node.initializer, context, nativeExprContext)
             : undefined;
           if (!child) {
             return node;
@@ -761,7 +828,7 @@ export function compile(
           const decls = toNativeExpr(
             node.declarationList,
             context,
-            registerIntegration
+            nativeExprContext
           );
           if (!decls) {
             return node;
@@ -787,7 +854,7 @@ export function compile(
         // let everything else fall through, process their children too
         return ts.visitEachChild(
           node,
-          (node) => toNativeExpr(node, context, registerIntegration),
+          (node) => toNativeExpr(node, context, nativeExprContext),
           context
         );
       }
