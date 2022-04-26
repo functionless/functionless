@@ -16,7 +16,7 @@ import type { AppsyncResolver } from "./appsync";
 import { TableKey } from "typesafe-dynamodb/lib/key";
 import { JsonFormat } from "typesafe-dynamodb";
 import { assertNodeKind } from "./assert";
-import { IntegrationHandler } from "./integration";
+import { IntegrationHandler, makeIntegration } from "./integration";
 
 export function isTable(a: any): a is AnyTable {
   return a?.kind === "Table";
@@ -77,21 +77,20 @@ export class Table<
   /**
    * @see https://docs.aws.amazon.com/appsync/latest/devguide/resolver-mapping-template-reference-dynamodb.html#aws-appsync-resolver-mapping-template-reference-dynamodb-getitem
    */
-  // @ts-ignore
-  public getItem<
-    Key extends TableKey<
-      Item,
-      PartitionKey,
-      RangeKey,
-      JsonFormat.AttributeValue
-    >
-  >(input: {
-    key: Key;
-    consistentRead?: boolean;
-  }): Narrow<Item, AttributeKeyToObject<Key>, JsonFormat.Document>;
 
-  // @ts-ignore
-  public getItem: IntegrationHandler = {
+  public getItem = makeIntegration<
+    <
+      Key extends TableKey<
+        Item,
+        PartitionKey,
+        RangeKey,
+        JsonFormat.AttributeValue
+      >
+    >(input: {
+      key: Key;
+      consistentRead?: boolean;
+    }) => Narrow<Item, AttributeKeyToObject<Key>, JsonFormat.Document>
+  >({
     ...tableIntegrationBase("getItem"),
     vtl(call, vtl) {
       const input = vtl.eval(
@@ -108,34 +107,32 @@ export class Table<
 
       return vtl.json(request);
     },
-  };
+  });
 
   /**
    * @see https://docs.aws.amazon.com/appsync/latest/devguide/resolver-mapping-template-reference-dynamodb.html#aws-appsync-resolver-mapping-template-reference-dynamodb-putitem
    */
-  // @ts-ignore
-  public putItem<
-    Key extends TableKey<
-      Item,
-      PartitionKey,
-      RangeKey,
-      JsonFormat.AttributeValue
-    >,
-    ConditionExpression extends string | undefined = undefined
-  >(input: {
-    key: Key;
-    attributeValues: ToAttributeMap<
-      Omit<
-        Narrow<Item, AttributeKeyToObject<Key>, JsonFormat.Document>,
-        Exclude<PartitionKey | RangeKey, undefined>
-      >
-    >;
-    condition?: DynamoExpression<ConditionExpression>;
-    _version?: number;
-  }): Narrow<Item, AttributeKeyToObject<Key>, JsonFormat.Document>;
-
-  // @ts-ignore
-  public putItem: IntegrationHandler = {
+  public putItem = makeIntegration<
+    <
+      Key extends TableKey<
+        Item,
+        PartitionKey,
+        RangeKey,
+        JsonFormat.AttributeValue
+      >,
+      ConditionExpression extends string | undefined = undefined
+    >(input: {
+      key: Key;
+      attributeValues: ToAttributeMap<
+        Omit<
+          Narrow<Item, AttributeKeyToObject<Key>, JsonFormat.Document>,
+          Exclude<PartitionKey | RangeKey, undefined>
+        >
+      >;
+      condition?: DynamoExpression<ConditionExpression>;
+      _version?: number;
+    }) => Narrow<Item, AttributeKeyToObject<Key>, JsonFormat.Document>
+  >({
     ...tableIntegrationBase("putItem"),
     vtl(call, vtl) {
       const input = vtl.eval(
@@ -156,30 +153,28 @@ export class Table<
 
       return vtl.json(request);
     },
-  };
+  });
 
   /**
    * @see https://docs.aws.amazon.com/appsync/latest/devguide/resolver-mapping-template-reference-dynamodb.html#aws-appsync-resolver-mapping-template-reference-dynamodb-updateitem
    */
-  // @ts-ignore
-  public updateItem<
-    Key extends TableKey<
-      Item,
-      PartitionKey,
-      RangeKey,
-      JsonFormat.AttributeValue
-    >,
-    UpdateExpression extends string,
-    ConditionExpression extends string | undefined
-  >(input: {
-    key: Key;
-    update: DynamoExpression<UpdateExpression>;
-    condition?: DynamoExpression<ConditionExpression>;
-    _version?: number;
-  }): Narrow<Item, AttributeKeyToObject<Key>, JsonFormat.Document>;
-
-  // @ts-ignore
-  public updateItem = {
+  public updateItem = makeIntegration<
+    <
+      Key extends TableKey<
+        Item,
+        PartitionKey,
+        RangeKey,
+        JsonFormat.AttributeValue
+      >,
+      UpdateExpression extends string,
+      ConditionExpression extends string | undefined
+    >(input: {
+      key: Key;
+      update: DynamoExpression<UpdateExpression>;
+      condition?: DynamoExpression<ConditionExpression>;
+      _version?: number;
+    }) => Narrow<Item, AttributeKeyToObject<Key>, JsonFormat.Document>
+  >({
     ...tableIntegrationBase("updateItem"),
     vtl(call, vtl) {
       const input = vtl.eval(
@@ -198,28 +193,26 @@ export class Table<
 
       return vtl.json(request);
     },
-  } as IntegrationHandler;
+  });
 
   /**
    * @see https://docs.aws.amazon.com/appsync/latest/devguide/resolver-mapping-template-reference-dynamodb.html#aws-appsync-resolver-mapping-template-reference-dynamodb-deleteitem
    */
-  // @ts-ignore
-  public deleteItem<
-    Key extends TableKey<
-      Item,
-      PartitionKey,
-      RangeKey,
-      JsonFormat.AttributeValue
-    >,
-    ConditionExpression extends string | undefined
-  >(input: {
-    key: Key;
-    condition?: DynamoExpression<ConditionExpression>;
-    _version?: number;
-  }): Narrow<Item, AttributeKeyToObject<Key>, JsonFormat.Document>;
-
-  // @ts-ignore
-  public deleteItem: IntegrationHandler = {
+  public deleteItem = makeIntegration<
+    <
+      Key extends TableKey<
+        Item,
+        PartitionKey,
+        RangeKey,
+        JsonFormat.AttributeValue
+      >,
+      ConditionExpression extends string | undefined
+    >(input: {
+      key: Key;
+      condition?: DynamoExpression<ConditionExpression>;
+      _version?: number;
+    }) => Narrow<Item, AttributeKeyToObject<Key>, JsonFormat.Document>
+  >({
     ...tableIntegrationBase("deleteItem"),
     vtl(call, vtl) {
       const input = vtl.eval(
@@ -237,29 +230,27 @@ export class Table<
 
       return vtl.json(request);
     },
-  };
+  });
 
   /**
    * @see https://docs.aws.amazon.com/appsync/latest/devguide/resolver-mapping-template-reference-dynamodb.html#aws-appsync-resolver-mapping-template-reference-dynamodb-query
    */
-  // @ts-ignore
-  public query<Query extends string, Filter extends string | undefined>(input: {
-    query: DynamoExpression<Query>;
-    filter?: DynamoExpression<Filter>;
-    index?: string;
-    nextToken?: string;
-    limit?: number;
-    scanIndexForward?: boolean;
-    consistentRead?: boolean;
-    select?: "ALL_ATTRIBUTES" | "ALL_PROJECTED_ATTRIBUTES";
-  }): {
-    items: Item[];
-    nextToken: string;
-    scannedCount: number;
-  };
-
-  // @ts-ignore
-  public query = <IntegrationHandler>{
+  public query = makeIntegration<
+    <Query extends string, Filter extends string | undefined>(input: {
+      query: DynamoExpression<Query>;
+      filter?: DynamoExpression<Filter>;
+      index?: string;
+      nextToken?: string;
+      limit?: number;
+      scanIndexForward?: boolean;
+      consistentRead?: boolean;
+      select?: "ALL_ATTRIBUTES" | "ALL_PROJECTED_ATTRIBUTES";
+    }) => {
+      items: Item[];
+      nextToken: string;
+      scannedCount: number;
+    }
+  >({
     ...tableIntegrationBase("query"),
     vtl(call, vtl) {
       const input = vtl.eval(
@@ -281,7 +272,7 @@ export class Table<
 
       return vtl.json(request);
     },
-  };
+  });
 }
 
 type AttributeKeyToObject<T> = {
@@ -321,7 +312,7 @@ type RenameKeys<
   [k in keyof T as k extends keyof Substitutions ? Substitutions[k] : k]: T[k];
 };
 
-function tableIntegrationBase(methodName: string): Partial<IntegrationHandler> {
+function tableIntegrationBase(methodName: string): Pick<IntegrationHandler, 'kind' | 'unhandledContext'> {
   return {
     kind: `Table.${methodName}`,
     unhandledContext(kind, context) {

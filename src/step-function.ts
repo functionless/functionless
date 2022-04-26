@@ -35,7 +35,7 @@ import {
   EventBusPredicateRuleBase,
   EventBusRule,
 } from "./event-bridge";
-import type { IntegrationHandler } from "./integration";
+import { IntegrationHandler, makeIntegration } from "./integration";
 
 export type AnyStepFunction =
   | ExpressStepFunction<any, any>
@@ -52,11 +52,7 @@ export namespace $SFN {
    *
    * @see https://docs.aws.amazon.com/step-functions/latest/dg/amazon-states-language-wait-state.html
    */
-  // @ts-ignore
-  export function waitFor(seconds: number): void;
-
-  // @ts-ignore
-  export const waitFor: IntegrationHandler = {
+  export const waitFor = makeIntegration<(seconds: number) => void>({
     ...tableIntegrationBase("waitFor"),
     asl(call) {
       const seconds = call.args[0].expr;
@@ -76,7 +72,7 @@ export namespace $SFN {
         };
       }
     },
-  };
+  });
 
   /**
    * Wait until a {@link timestamp}.
@@ -87,11 +83,7 @@ export namespace $SFN {
    *
    * @see https://docs.aws.amazon.com/step-functions/latest/dg/amazon-states-language-wait-state.html
    */
-  // @ts-ignore
-  export function waitUntil(timestamp: string): void;
-
-  // @ts-ignore
-  export const waitUntil: IntegrationHandler = {
+  export const waitUntil = makeIntegration<(timestamp: string) => void>({
     ...tableIntegrationBase("waitUntil"),
     asl(call) {
       const timestamp = call.args[0]?.expr;
@@ -111,27 +103,20 @@ export namespace $SFN {
         };
       }
     },
-  };
+  });
 
-  /**
-   * Process each item in an {@link array} in parallel and run with the default maxConcurrency.
-   *
-   * Example:
-   * ```ts
-   * new ExpressStepFunction(this, "F", (items: string[]) => {
-   *   $SFN.forEach(items, item => task(item))
-   * });
-   * ```
-   *
-   * @param array the list of items to process
-   * @param props configure the maxConcurrency
-   * @param callbackfn function to process each item
-   */
-  // @ts-ignore
-  export function forEach<T>(
-    array: T[],
-    callbackfn: (item: T, index: number, array: T[]) => void
-  ): void;
+  type forEach =
+    | (<T>(
+        array: T[],
+        callbackfn: (item: T, index: number, array: T[]) => void
+      ) => void) &
+        (<T>(
+          array: T[],
+          props: {
+            maxConcurrency: number;
+          },
+          callbackfn: (item: T, index: number, array: T[]) => void
+        ) => void);
 
   /**
    * Process each item in an {@link array} in parallel and run with the default maxConcurrency.
@@ -147,22 +132,25 @@ export namespace $SFN {
    * @param props configure the maxConcurrency
    * @param callbackfn function to process each item
    */
-  // @ts-ignore
-  export function forEach<T>(
-    array: T[],
-    props: {
-      maxConcurrency: number;
-    },
-    callbackfn: (item: T, index: number, array: T[]) => void
-  ): void;
-
-  // @ts-ignore
-  export const forEach: IntegrationHandler = {
+  export const forEach = makeIntegration<forEach>({
     ...tableIntegrationBase("forEach"),
     asl(call, context) {
       return mapOrForEach(call, context);
     },
-  };
+  });
+
+  type map =
+    | (<T, U>(
+        array: T[],
+        callbackfn: (item: T, index: number, array: T[]) => U
+      ) => U[]) &
+        (<T, U>(
+          array: T[],
+          props: {
+            maxConcurrency: number;
+          },
+          callbackfn: (item: T, index: number, array: T[]) => U
+        ) => U[]);
 
   /**
    * Map over each item in an {@link array} in parallel and run with the default maxConcurrency.
@@ -179,43 +167,12 @@ export namespace $SFN {
    * @param callbackfn function to process each item
    * @returns an array containing the result of each mapped item
    */
-  // @ts-ignore
-  export function map<T, U>(
-    array: T[],
-    callbackfn: (item: T, index: number, array: T[]) => U
-  ): U[];
-
-  /**
-   * Map over each item in an {@link array} in parallel and run with a maxConcurrency of {@link props}.maxConcurrency
-   *
-   * Example:
-   * ```ts
-   * new ExpressStepFunction(this, "F",  (items: string[]) => {
-   *   return $SFN.map(items, { maxConcurrency: 2 }, item => task(item))
-   * });
-   * ```
-   *
-   * @param array the list of items to map over
-   * @param props configure the maxConcurrency
-   * @param callbackfn function to process each item
-   * @returns an array containing the result of each mapped item
-   */
-  // @ts-ignore
-  export function map<T, U>(
-    array: T[],
-    props: {
-      maxConcurrency: number;
-    },
-    callbackfn: (item: T, index: number, array: T[]) => U
-  ): U[];
-
-  // @ts-ignore
-  export const map: IntegrationHandler = {
+  export const map = makeIntegration<map>({
     ...tableIntegrationBase("map"),
     asl(call, context) {
       return mapOrForEach(call, context);
     },
-  };
+  });
 
   function mapOrForEach(call: CallExpr, context: ASL): MapTask {
     if (isMapOrForEach(call)) {
@@ -292,17 +249,15 @@ export namespace $SFN {
    * ```
    * @param paths
    */
-  // @ts-ignore
-  export function parallel<Paths extends readonly (() => any)[]>(
-    ...paths: Paths
-  ): {
-    [i in keyof Paths]: i extends `${number}`
-      ? ReturnType<Extract<Paths[i], () => any>>
-      : Paths[i];
-  };
-
-  // @ts-ignore
-  export const parallel: IntegrationHandler = {
+  export const parallel = makeIntegration<
+    <Paths extends readonly (() => any)[]>(
+      ...paths: Paths
+    ) => {
+      [i in keyof Paths]: i extends `${number}`
+        ? ReturnType<Extract<Paths[i], () => any>>
+        : Paths[i];
+    }
+  >({
     ...tableIntegrationBase("parallel"),
     asl(call, context) {
       const paths = call.getArgument("paths")?.expr;
@@ -326,10 +281,12 @@ export namespace $SFN {
         })),
       };
     },
-  };
+  });
 }
 
-function tableIntegrationBase(methodName: string): Partial<IntegrationHandler> {
+function tableIntegrationBase(
+  methodName: string
+): Pick<IntegrationHandler, "kind" | "unhandledContext"> {
   return {
     kind: `$SFN.${methodName}`,
     unhandledContext(kind, context) {
@@ -1162,13 +1119,9 @@ export class StepFunction<
     return executionArn;
   }
 
-  //@ts-ignore
-  public describeExecution(
-    executionArn: string
-  ): AWS.StepFunctions.DescribeExecutionOutput;
-
-  //@ts-ignore
-  private describeExecution: IntegrationHandler = {
+  public describeExecution = makeIntegration<
+    (executionArn: string) => AWS.StepFunctions.DescribeExecutionOutput
+  >({
     kind: "StepFunction.describeExecution",
     vtl: (call, context) => {
       const executionArn = this.getArgs(call);
@@ -1210,7 +1163,7 @@ export class StepFunction<
         `${name} is only available in the ${ASL.ContextName} and ${VTL.ContextName} context, but was used in ${context.kind}.`
       );
     },
-  };
+  });
 }
 
 export interface StepFunction<P extends Record<string, any> | undefined, O> {

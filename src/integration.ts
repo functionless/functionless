@@ -2,6 +2,7 @@ import { CallExpr } from "./expression";
 import { ASL, State } from "./asl";
 import { FunctionlessNode } from "./node";
 import { VTL } from "./vtl";
+import { AnyFunction } from "./util";
 
 /**
  * Integration types supported by Functionless.
@@ -20,21 +21,18 @@ import { VTL } from "./vtl";
  *       // return Step Function task.
  *    }
  *
- *    default: IntegrationHandler = {
+ *    default = makeIntegration<() => string>({
  *        kind: "Function.default",
  *        asl: (call, context) => {
  *            // return step function task
  *        }
- *    }
+ *    });
  * }
  *
  * // an interface to provide the actual callable methods to users
  * export interface Function {
  *    // call me to send a string payload
  *    (payload: String) => string
- *
- *    // call me to send a default payload
- *    default: () => string;
  * }
  *
  * // use
@@ -104,6 +102,12 @@ export class Integration implements Omit<AllIntegrations, "unhandledContext"> {
     }
     return this.unhandledContext(context);
   }
+}
+
+export function makeIntegration<F extends AnyFunction>(
+  integration: IntegrationHandler
+): F {
+  return integration as unknown as F;
 }
 
 /**
