@@ -556,7 +556,11 @@ export function compile(
           );
         }
 
-        const body = toNativeExpr(impl.body, context) as ts.ConciseBody;
+        const integrations: ts.Expression[] = [];
+
+        const body = toNativeExpr(impl.body, context, (integ) =>
+          integrations.push(integ)
+        ) as ts.ConciseBody;
 
         const closure = ts.factory.createArrowFunction(
           impl.modifiers,
@@ -576,12 +580,14 @@ export function compile(
               )
           ),
           closure,
+          context.factory.createArrayLiteralExpression(integrations),
         ]);
       }
 
       function toNativeExpr(
         node: ts.Node,
-        context: ts.TransformationContext
+        context: ts.TransformationContext,
+        registerIntegration: (node: ts.Expression) => void
       ): ts.Node | ts.Node[] | undefined {
         if (isEventBusPutCall(node)) {
           // add client
@@ -589,6 +595,8 @@ export function compile(
           // create client call that uses the env variable and the parameters
           return context.factory.createIdentifier("thisisbus");
         } else if (isFunctionCall(node)) {
+          // add the function identifier to the integrations
+          registerIntegration(node.expression);
           const client = context.factory.createUniqueName("lambda");
           return [
             context.factory.createVariableStatement(undefined, [
@@ -673,7 +681,7 @@ export function compile(
           // }
         } else if (ts.isReturnStatement(node)) {
           const child = node.expression
-            ? toNativeExpr(node.expression, context)
+            ? toNativeExpr(node.expression, context, registerIntegration)
             : undefined;
           if (!child) {
             return node;
@@ -697,7 +705,7 @@ export function compile(
           // bubble any extra nodes to the top of the variable declaration list.
           const [extra, declarations] = node.declarations.reduce(
             ([extra, declarations], decl) => {
-              const values = toNativeExpr(decl, context);
+              const values = toNativeExpr(decl, context, registerIntegration);
               if (!values) {
                 return [extra, declarations];
               } else if (Array.isArray(values)) {
@@ -722,7 +730,7 @@ export function compile(
           ];
         } else if (ts.isVariableDeclaration(node)) {
           const child = node.initializer
-            ? toNativeExpr(node.initializer, context)
+            ? toNativeExpr(node.initializer, context, registerIntegration)
             : undefined;
           if (!child) {
             return node;
@@ -750,7 +758,11 @@ export function compile(
             );
           }
         } else if (ts.isVariableStatement(node)) {
-          const decls = toNativeExpr(node.declarationList, context);
+          const decls = toNativeExpr(
+            node.declarationList,
+            context,
+            registerIntegration
+          );
           if (!decls) {
             return node;
           } else if (Array.isArray(decls)) {
@@ -775,7 +787,7 @@ export function compile(
         // let everything else fall through, process their children too
         return ts.visitEachChild(
           node,
-          (node) => toNativeExpr(node, context),
+          (node) => toNativeExpr(node, context, registerIntegration),
           context
         );
       }

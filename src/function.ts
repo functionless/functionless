@@ -17,7 +17,7 @@ import { runtime } from "@pulumi/pulumi";
 import path from "path";
 import fs from "fs";
 import { Err, isErr } from "./error";
-import { IntegrationHandler } from "./integration";
+import { Integration, IntegrationHandler } from "./integration";
 
 export function isFunction<P = any, O = any>(a: any): a is IFunction<P, O> {
   return a?.kind === "Function";
@@ -37,7 +37,9 @@ export interface IFunction<P, O> {
   >;
 }
 
-abstract class FunctionBase<P, O> implements IFunction<P, O>, IntegrationHandler {
+abstract class FunctionBase<P, O>
+  implements IFunction<P, O>, IntegrationHandler
+{
   readonly kind = "Function" as const;
   readonly functionlessKind = "Function";
   public static readonly FunctionlessType = "Function";
@@ -146,6 +148,7 @@ export class Function<P, O> extends FunctionBase<P, O> {
     props?: Omit<aws_lambda.FunctionProps, "code" | "handler" | "runtime">
   ) {
     let _resource: aws_lambda.IFunction;
+    let integrations: IntegrationHandler[] = [];
     if (func && id) {
       if (isNativeFunctionDecl(func)) {
         _resource = new aws_lambda.Function(resource, id, {
@@ -154,6 +157,8 @@ export class Function<P, O> extends FunctionBase<P, O> {
           handler: "index.handler",
           code: new CallbackLambdaCode(func.closure),
         });
+
+        integrations = func.integrations;
       } else if (isErr(func)) {
         throw func.error;
       } else {
@@ -164,7 +169,12 @@ export class Function<P, O> extends FunctionBase<P, O> {
     } else {
       _resource = resource as aws_lambda.IFunction;
     }
-    return super(_resource) as unknown as Function<P, O>;
+    super(_resource) as unknown as Function<P, O>;
+
+    // may use this and must be after super
+    integrations
+      .map((i) => new Integration(i))
+      .forEach((integration) => integration.native(this));
   }
 
   public static fromFunction<P, O>(

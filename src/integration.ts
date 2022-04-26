@@ -3,6 +3,7 @@ import { ASL, State } from "./asl";
 import { FunctionlessNode } from "./node";
 import { VTL } from "./vtl";
 import { AnyFunction } from "./util";
+import { Function } from "./function";
 
 /**
  * Integration types supported by Functionless.
@@ -66,10 +67,14 @@ export interface IntegrationHandler {
    * @private
    */
   asl?: (call: CallExpr, context: ASL) => Omit<State, "Next">;
+  /**
+   * Native javascript code integrations that execute at runtime like Lambda.
+   */
+  native?: (context: Function<any, any>) => void;
 }
 
 type AllIntegrations = {
-  [key in keyof IntegrationHandler]: IntegrationHandler[key];
+  [key in keyof IntegrationHandler]-?: IntegrationHandler[key];
 };
 
 /**
@@ -102,6 +107,13 @@ export class Integration implements Omit<AllIntegrations, "unhandledContext"> {
     }
     return this.unhandledContext(context);
   }
+
+  native(context: Function<any, any>) {
+    if (this.integration.native) {
+      return this.integration.native(context);
+    }
+    return this.unhandledContext(context);
+  }
 }
 
 export function makeIntegration<F extends AnyFunction>(
@@ -131,4 +143,4 @@ export function findIntegration(call: CallExpr): Integration | undefined {
   }
 }
 
-export type CallContext = ASL | VTL;
+export type CallContext = ASL | VTL | Function<any, any>;

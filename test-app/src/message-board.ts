@@ -418,7 +418,7 @@ const func = new Function<undefined, string>(stack, "testFunc2", async () => {
   return "hi";
 });
 
-const func1 = new Function(
+new Function(
   stack,
   "testFunc",
   async () => {
@@ -433,6 +433,3 @@ const func1 = new Function(
     timeout: Duration.minutes(1),
   }
 );
-
-// this needs to be happen automatically.
-func.resource.grantInvoke(func1.resource);
