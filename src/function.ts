@@ -5,7 +5,7 @@ import { ASL } from "./asl";
 
 // @ts-ignore - imported for typedoc
 import type { AppsyncResolver } from "./appsync";
-import { IntegrationHandler } from "./integration";
+import { IIntegration } from "./integration";
 
 export function isFunction<P = any, O = any>(a: any): a is Function<P, O> {
   return a?.kind === "Function";
@@ -28,7 +28,7 @@ export type AnyLambda = Function<any, any>;
  * })
  * ```
  */
-export class Function<P, O> implements IntegrationHandler {
+export class Function<P, O> implements IIntegration {
   readonly kind = "Function" as const;
 
   // @ts-ignore - this makes `F` easily available at compile time
@@ -36,7 +36,7 @@ export class Function<P, O> implements IntegrationHandler {
 
   constructor(readonly resource: aws_lambda.IFunction) {}
 
-  vtl(call: CallExpr, context: VTL) {
+  public vtl(call: CallExpr, context: VTL) {
     const payloadArg = call.getArgument("payload");
     const payload = payloadArg?.expr ? context.eval(payloadArg.expr) : "$null";
 
@@ -46,7 +46,7 @@ export class Function<P, O> implements IntegrationHandler {
     return context.json(request);
   }
 
-  asl(call: CallExpr, context: ASL) {
+  public asl(call: CallExpr, context: ASL) {
     const payloadArg = call.getArgument("payload");
     this.resource.grantInvoke(context.role);
     return {
