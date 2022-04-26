@@ -6,10 +6,30 @@ import { AnyFunction } from "./util";
 import { Function } from "./function";
 
 /**
+ * All integration methods supported by functionless.
+ */
+interface IntegrationMethods {
+  /**
+   * Integrate with VTL applications like AppAsync.
+   * @private
+   */
+  vtl: (call: CallExpr, context: VTL) => string;
+  /**
+   * Integrate with ASL applications like StepFunctions.
+   * @private
+   */
+  asl: (call: CallExpr, context: ASL) => Omit<State, "Next">;
+  /**
+   * Native javascript code integrations that execute at runtime like Lambda.
+   */
+  native: (context: Function<any, any>) => void;
+}
+
+/**
  * Integration types supported by Functionless.
  *
- * Add an integration by creating a any object that has a property named "kind" and either implements the
- * {@link IntegrationHandler} interface or has methods that implement it (or both).
+ * Add an integration by creating any object that has a property named "kind" and either implements the
+ * {@link IIntegration} interface or has methods that implement it (or both).
  *
  * Example showing both strategies:
  *
@@ -18,11 +38,12 @@ import { Function } from "./function";
  *    readonly kind = "Function",
  *
  *    // Integration Handler for ASL
- *    asl(call, context) {
+ *    public asl(call, context) {
  *       // return Step Function task.
  *    }
  *
- *    default = makeIntegration<() => string>({
+ *    // Example class method - some wrapper function that generates special ASL tasks when using a Function.
+ *    public specialPayload = makeIntegration<() => string>({
  *        kind: "Function.default",
  *        asl: (call, context) => {
  *            // return step function task
@@ -42,7 +63,8 @@ import { Function } from "./function";
  * // uses the ASL
  * new StepFunction(..., () => {
  *    func1("some string");
- *    func1.default();
+ *    // Calling our special method in a step function closure
+ *    func1.specialPayload();
  * })
  * ```
  *
@@ -51,57 +73,47 @@ import { Function } from "./function";
  * Implement the unhandledContext function to customize the error message for unsupported contexts.
  * Otherwise the error will be: `${this.name} is not supported by context ${context.kind}.`
  */
-export interface IntegrationHandler {
+export type IIntegration = {
+  // all integration methods are optional
+  [integ in keyof IntegrationMethods]?: IntegrationMethods[integ];
+} & {
   /**
    * Integration Handler kind - for example StepFunction.describeExecution
    */
   readonly kind: string;
-  unhandledContext?: <T>(kind: string, context: CallContext) => T;
   /**
-   * Integrate with VTL applications like AppAsync.
-   * @private
+   * Optional method that allows overriding the {@link Error} thrown when a integration is not supported by a handler.
    */
-  vtl?: (call: CallExpr, context: VTL) => string;
-  /**
-   * Integrate with ASL applications like StepFunctions.
-   * @private
-   */
-  asl?: (call: CallExpr, context: ASL) => Omit<State, "Next">;
-  /**
-   * Native javascript code integrations that execute at runtime like Lambda.
-   */
-  native?: (context: Function<any, any>) => void;
-}
-
-type AllIntegrations = {
-  [key in keyof IntegrationHandler]-?: IntegrationHandler[key];
+  readonly unhandledContext?: (kind: string, context: CallContext) => Error;
 };
 
 /**
- * Wrapper class for Integration handlers that provides default error handling for unsupported integrations.
+ * Internal wrapper class for Integration handlers that provides default error handling for unsupported integrations.
+ *
+ * Functionless wraps IntegrationHandlers at runtime with this class.
  * @private
  */
-export class Integration implements Omit<AllIntegrations, "unhandledContext"> {
+export class Integration implements IntegrationMethods {
   readonly kind: string;
-  constructor(readonly integration: IntegrationHandler) {
+  constructor(readonly integration: IIntegration) {
     this.kind = integration.kind;
   }
 
   private unhandledContext<T>(context: CallContext): T {
     if (this.integration.unhandledContext) {
-      return this.integration.unhandledContext(this.kind, context);
+      throw this.integration.unhandledContext(this.kind, context);
     }
     throw Error(`${this.kind} is not supported by context ${context.kind}.`);
   }
 
-  vtl(call: CallExpr, context: VTL): string {
+  public vtl(call: CallExpr, context: VTL): string {
     if (this.integration.vtl) {
       return this.integration.vtl(call, context);
     }
     return this.unhandledContext(context);
   }
 
-  asl(call: CallExpr, context: ASL): Omit<State, "Next"> {
+  public asl(call: CallExpr, context: ASL): Omit<State, "Next"> {
     if (this.integration.asl) {
       return this.integration.asl(call, context);
     }
@@ -117,7 +129,7 @@ export class Integration implements Omit<AllIntegrations, "unhandledContext"> {
 }
 
 export function makeIntegration<F extends AnyFunction>(
-  integration: IntegrationHandler
+  integration: IIntegration
 ): F {
   return integration as unknown as F;
 }

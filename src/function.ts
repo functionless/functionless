@@ -17,7 +17,7 @@ import { runtime } from "@pulumi/pulumi";
 import path from "path";
 import fs from "fs";
 import { Err, isErr } from "./error";
-import { Integration, IntegrationHandler } from "./integration";
+import { Integration, IIntegration } from "./integration";
 
 export function isFunction<P = any, O = any>(a: any): a is IFunction<P, O> {
   return a?.kind === "Function";
@@ -38,7 +38,7 @@ export interface IFunction<P, O> {
 }
 
 abstract class FunctionBase<P, O>
-  implements IFunction<P, O>, IntegrationHandler
+  implements IFunction<P, O>, IIntegration
 {
   readonly kind = "Function" as const;
   readonly functionlessKind = "Function";
@@ -49,7 +49,7 @@ abstract class FunctionBase<P, O>
 
   constructor(readonly resource: aws_lambda.IFunction) {}
 
-  vtl(call: CallExpr, context: VTL) {
+  public vtl(call: CallExpr, context: VTL) {
     const payloadArg = call.getArgument("payload")?.expr;
     const payload = payloadArg ? context.eval(payloadArg) : "$null";
 
@@ -59,8 +59,8 @@ abstract class FunctionBase<P, O>
     return context.json(request);
   }
 
-  asl(call: CallExpr, context: ASL) {
-    const payloadArg = call.getArgument("payload")?.expr;
+  public asl(call: CallExpr, context: ASL) {
+    const payloadArg = call.getArgument("payload");
     this.resource.grantInvoke(context.role);
     return {
       Type: "Task" as const,
@@ -148,7 +148,7 @@ export class Function<P, O> extends FunctionBase<P, O> {
     props?: Omit<aws_lambda.FunctionProps, "code" | "handler" | "runtime">
   ) {
     let _resource: aws_lambda.IFunction;
-    let integrations: IntegrationHandler[] = [];
+    let integrations: IIntegration[] = [];
     if (func && id) {
       if (isNativeFunctionDecl(func)) {
         _resource = new aws_lambda.Function(resource, id, {

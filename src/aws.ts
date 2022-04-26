@@ -23,7 +23,7 @@ import { Function, isFunction } from "./function";
 import { isTable } from "./table";
 
 import type { DynamoDB as AWSDynamoDB } from "aws-sdk";
-import { IntegrationHandler, makeIntegration } from "./integration";
+import { IIntegration, makeIntegration } from "./integration";
 
 type Item<T extends Table<any, any, any>> = T extends Table<infer I, any, any>
   ? I
@@ -240,7 +240,7 @@ export namespace $AWS {
         | "updateItem"
         | "scan"
         | "query"
-    ): IntegrationHandler {
+    ): IIntegration {
       return {
         kind: `$AWS.${operationName}`,
         asl(call, context) {

@@ -1,5 +1,5 @@
 import { FunctionExpr } from "./expression";
-import { IntegrationHandler } from "./integration";
+import { IIntegration } from "./integration";
 import { BaseNode, FunctionlessNode, isNode, typeGuard } from "./node";
 import { BlockStmt } from "./statement";
 import { AnyFunction } from "./util";
@@ -50,7 +50,7 @@ export class NativeFunctionDecl<
   constructor(
     readonly parameters: ParameterDecl[],
     readonly closure: AnyFunction,
-    readonly integrations: IntegrationHandler[]
+    readonly integrations: IIntegration[]
   ) {
     super("NativeFunctionDecl");
     parameters.forEach((param) => param.setParent(this));

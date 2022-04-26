@@ -35,7 +35,7 @@ import {
   EventBusPredicateRuleBase,
   EventBusRule,
 } from "./event-bridge";
-import { IntegrationHandler, makeIntegration } from "./integration";
+import { IIntegration, makeIntegration } from "./integration";
 
 export type AnyStepFunction =
   | ExpressStepFunction<any, any>
@@ -53,7 +53,7 @@ export namespace $SFN {
    * @see https://docs.aws.amazon.com/step-functions/latest/dg/amazon-states-language-wait-state.html
    */
   export const waitFor = makeIntegration<(seconds: number) => void>({
-    ...tableIntegrationBase("waitFor"),
+    ...sfnIntegrationBase("waitFor"),
     asl(call) {
       const seconds = call.args[0].expr;
       if (seconds === undefined) {
@@ -84,7 +84,7 @@ export namespace $SFN {
    * @see https://docs.aws.amazon.com/step-functions/latest/dg/amazon-states-language-wait-state.html
    */
   export const waitUntil = makeIntegration<(timestamp: string) => void>({
-    ...tableIntegrationBase("waitUntil"),
+    ...sfnIntegrationBase("waitUntil"),
     asl(call) {
       const timestamp = call.args[0]?.expr;
       if (timestamp === undefined) {
@@ -133,7 +133,7 @@ export namespace $SFN {
    * @param callbackfn function to process each item
    */
   export const forEach = makeIntegration<forEach>({
-    ...tableIntegrationBase("forEach"),
+    ...sfnIntegrationBase("forEach"),
     asl(call, context) {
       return mapOrForEach(call, context);
     },
@@ -168,7 +168,7 @@ export namespace $SFN {
    * @returns an array containing the result of each mapped item
    */
   export const map = makeIntegration<map>({
-    ...tableIntegrationBase("map"),
+    ...sfnIntegrationBase("map"),
     asl(call, context) {
       return mapOrForEach(call, context);
     },
@@ -258,7 +258,7 @@ export namespace $SFN {
         : Paths[i];
     }
   >({
-    ...tableIntegrationBase("parallel"),
+    ...sfnIntegrationBase("parallel"),
     asl(call, context) {
       const paths = call.getArgument("paths")?.expr;
       if (paths === undefined) {
@@ -284,9 +284,9 @@ export namespace $SFN {
   });
 }
 
-function tableIntegrationBase(
+function sfnIntegrationBase(
   methodName: string
-): Pick<IntegrationHandler, "kind" | "unhandledContext"> {
+): Pick<IIntegration, "kind" | "unhandledContext"> {
   return {
     kind: `$SFN.${methodName}`,
     unhandledContext(kind, context) {
@@ -332,7 +332,7 @@ interface StepFunctionStatusChangedEvent
 
 abstract class BaseStepFunction<P extends Record<string, any> | undefined, O>
   extends Resource
-  implements aws_stepfunctions.IStateMachine, IntegrationHandler
+  implements aws_stepfunctions.IStateMachine, IIntegration
 {
   readonly kind = "StepFunction";
   readonly functionlessKind = "StepFunction";
