@@ -23,7 +23,8 @@ import { Function, isFunction } from "./function";
 import { isTable } from "./table";
 
 import type { DynamoDB as AWSDynamoDB } from "aws-sdk";
-import { IIntegration, makeIntegration } from "./integration";
+import { Integration, makeIntegration } from "./integration";
+import { AnyFunction } from "./util";
 
 type Item<T extends Table<any, any, any>> = T extends Table<infer I, any, any>
   ? I
@@ -64,184 +65,191 @@ export namespace $AWS {
     /**
      * @see https://docs.aws.amazon.com/step-functions/latest/dg/connect-ddb.html
      */
-    export const DeleteItem = makeIntegration<
-      <
-        T extends Table<any, any, any>,
-        Key extends TableKey<
-          Item<T>,
-          PartitionKey<T>,
-          RangeKey<T>,
-          JsonFormat.AttributeValue
-        >,
-        ConditionExpression extends string | undefined,
-        ReturnValue extends AWSDynamoDB.ReturnValue = "NONE"
-      >(
-        input: { TableName: T } & Omit<
-          DeleteItemInput<
+    export const DeleteItem =
+      makeDynamoIntegration<
+        <
+          T extends Table<any, any, any>,
+          Key extends TableKey<
             Item<T>,
             PartitionKey<T>,
             RangeKey<T>,
-            Key,
-            ConditionExpression,
-            ReturnValue,
             JsonFormat.AttributeValue
           >,
-          "TableName"
-        >
-      ) => DeleteItemOutput<Item<T>, ReturnValue, JsonFormat.AttributeValue>
-    >(dynamoRequestIntegration("deleteItem"));
+          ConditionExpression extends string | undefined,
+          ReturnValue extends AWSDynamoDB.ReturnValue = "NONE"
+        >(
+          input: { TableName: T } & Omit<
+            DeleteItemInput<
+              Item<T>,
+              PartitionKey<T>,
+              RangeKey<T>,
+              Key,
+              ConditionExpression,
+              ReturnValue,
+              JsonFormat.AttributeValue
+            >,
+            "TableName"
+          >
+        ) => DeleteItemOutput<Item<T>, ReturnValue, JsonFormat.AttributeValue>
+      >("deleteItem");
 
     /**
      * @see https://docs.aws.amazon.com/step-functions/latest/dg/connect-ddb.html
      */
-    export const GetItem = makeIntegration<
-      <
-        T extends Table<any, any, any>,
-        Key extends TableKey<
-          Item<T>,
-          PartitionKey<T>,
-          RangeKey<T>,
-          JsonFormat.AttributeValue
-        >,
-        AttributesToGet extends keyof Item<T> | undefined = undefined,
-        ProjectionExpression extends string | undefined = undefined
-      >(
-        input: { TableName: T } & Omit<
-          GetItemInput<
+    export const GetItem =
+      makeDynamoIntegration<
+        <
+          T extends Table<any, any, any>,
+          Key extends TableKey<
             Item<T>,
             PartitionKey<T>,
             RangeKey<T>,
-            Key,
-            AttributesToGet,
-            ProjectionExpression,
             JsonFormat.AttributeValue
           >,
-          "TableName"
+          AttributesToGet extends keyof Item<T> | undefined = undefined,
+          ProjectionExpression extends string | undefined = undefined
+        >(
+          input: { TableName: T } & Omit<
+            GetItemInput<
+              Item<T>,
+              PartitionKey<T>,
+              RangeKey<T>,
+              Key,
+              AttributesToGet,
+              ProjectionExpression,
+              JsonFormat.AttributeValue
+            >,
+            "TableName"
+          >
+        ) => GetItemOutput<
+          Item<T>,
+          PartitionKey<T>,
+          RangeKey<T>,
+          Key,
+          AttributesToGet,
+          ProjectionExpression,
+          JsonFormat.AttributeValue
         >
-      ) => GetItemOutput<
-        Item<T>,
-        PartitionKey<T>,
-        RangeKey<T>,
-        Key,
-        AttributesToGet,
-        ProjectionExpression,
-        JsonFormat.AttributeValue
-      >
-    >(dynamoRequestIntegration("getItem"));
+      >("getItem");
 
     /**
      * @see https://docs.aws.amazon.com/step-functions/latest/dg/connect-ddb.html
      */
-    export const UpdateItem = makeIntegration<
-      <
-        T extends Table<any, any, any>,
-        Key extends TableKey<
-          Item<T>,
-          PartitionKey<T>,
-          RangeKey<T>,
-          JsonFormat.AttributeValue
-        >,
-        UpdateExpression extends string,
-        ConditionExpression extends string | undefined = undefined,
-        ReturnValue extends AWSDynamoDB.ReturnValue = "NONE"
-      >(
-        input: { TableName: T } & Omit<
-          UpdateItemInput<
+    export const UpdateItem =
+      makeDynamoIntegration<
+        <
+          T extends Table<any, any, any>,
+          Key extends TableKey<
             Item<T>,
             PartitionKey<T>,
             RangeKey<T>,
-            Key,
-            UpdateExpression,
-            ConditionExpression,
-            ReturnValue,
             JsonFormat.AttributeValue
           >,
-          "TableName"
+          UpdateExpression extends string,
+          ConditionExpression extends string | undefined = undefined,
+          ReturnValue extends AWSDynamoDB.ReturnValue = "NONE"
+        >(
+          input: { TableName: T } & Omit<
+            UpdateItemInput<
+              Item<T>,
+              PartitionKey<T>,
+              RangeKey<T>,
+              Key,
+              UpdateExpression,
+              ConditionExpression,
+              ReturnValue,
+              JsonFormat.AttributeValue
+            >,
+            "TableName"
+          >
+        ) => UpdateItemOutput<
+          Item<T>,
+          PartitionKey<T>,
+          RangeKey<T>,
+          Key,
+          ReturnValue,
+          JsonFormat.AttributeValue
         >
-      ) => UpdateItemOutput<
-        Item<T>,
-        PartitionKey<T>,
-        RangeKey<T>,
-        Key,
-        ReturnValue,
-        JsonFormat.AttributeValue
-      >
-    >(dynamoRequestIntegration("updateItem"));
+      >("updateItem");
 
     /**
      * @see https://docs.aws.amazon.com/step-functions/latest/dg/connect-ddb.html
      */
-    export const PutItem = makeIntegration<
-      <
-        T extends Table<any, any, any>,
-        I extends Item<T>,
-        ConditionExpression extends string | undefined = undefined,
-        ReturnValue extends AWSDynamoDB.ReturnValue = "NONE"
-      >(
-        input: { TableName: T } & Omit<
-          PutItemInput<
-            Item<T>,
-            ConditionExpression,
-            ReturnValue,
-            JsonFormat.AttributeValue
-          >,
-          "TableName"
-        >
-      ) => PutItemOutput<I, ReturnValue, JsonFormat.AttributeValue>
-    >(dynamoRequestIntegration("putItem"));
+    export const PutItem =
+      makeDynamoIntegration<
+        <
+          T extends Table<any, any, any>,
+          I extends Item<T>,
+          ConditionExpression extends string | undefined = undefined,
+          ReturnValue extends AWSDynamoDB.ReturnValue = "NONE"
+        >(
+          input: { TableName: T } & Omit<
+            PutItemInput<
+              Item<T>,
+              ConditionExpression,
+              ReturnValue,
+              JsonFormat.AttributeValue
+            >,
+            "TableName"
+          >
+        ) => PutItemOutput<I, ReturnValue, JsonFormat.AttributeValue>
+      >("putItem");
 
-    export const Query = makeIntegration<
-      <
-        T extends Table<any, any, any>,
-        KeyConditionExpression extends string,
-        FilterExpression extends string | undefined = undefined,
-        ProjectionExpression extends string | undefined = undefined,
-        AttributesToGet extends keyof Item<T> | undefined = undefined
-      >(
-        input: { TableName: T } & Omit<
-          QueryInput<
-            Item<T>,
-            KeyConditionExpression,
-            FilterExpression,
-            ProjectionExpression,
-            AttributesToGet,
-            JsonFormat.AttributeValue
-          >,
-          "TableName"
-        >
-      ) => QueryOutput<Item<T>, AttributesToGet, JsonFormat.AttributeValue>
-    >(dynamoRequestIntegration("query"));
+    export const Query =
+      makeDynamoIntegration<
+        <
+          T extends Table<any, any, any>,
+          KeyConditionExpression extends string,
+          FilterExpression extends string | undefined = undefined,
+          ProjectionExpression extends string | undefined = undefined,
+          AttributesToGet extends keyof Item<T> | undefined = undefined
+        >(
+          input: { TableName: T } & Omit<
+            QueryInput<
+              Item<T>,
+              KeyConditionExpression,
+              FilterExpression,
+              ProjectionExpression,
+              AttributesToGet,
+              JsonFormat.AttributeValue
+            >,
+            "TableName"
+          >
+        ) => QueryOutput<Item<T>, AttributesToGet, JsonFormat.AttributeValue>
+      >("query");
 
-    export const Scan = makeIntegration<
-      <
-        T extends Table<any, any, any>,
-        FilterExpression extends string | undefined = undefined,
-        ProjectionExpression extends string | undefined = undefined,
-        AttributesToGet extends keyof Item<T> | undefined = undefined
-      >(
-        input: { TableName: T } & Omit<
-          ScanInput<
-            Item<T>,
-            FilterExpression,
-            ProjectionExpression,
-            AttributesToGet,
-            JsonFormat.AttributeValue
-          >,
-          "TableName"
-        >
-      ) => ScanOutput<Item<T>, AttributesToGet, JsonFormat.AttributeValue>
-    >(dynamoRequestIntegration("scan"));
+    export const Scan =
+      makeDynamoIntegration<
+        <
+          T extends Table<any, any, any>,
+          FilterExpression extends string | undefined = undefined,
+          ProjectionExpression extends string | undefined = undefined,
+          AttributesToGet extends keyof Item<T> | undefined = undefined
+        >(
+          input: { TableName: T } & Omit<
+            ScanInput<
+              Item<T>,
+              FilterExpression,
+              ProjectionExpression,
+              AttributesToGet,
+              JsonFormat.AttributeValue
+            >,
+            "TableName"
+          >
+        ) => ScanOutput<Item<T>, AttributesToGet, JsonFormat.AttributeValue>
+      >("scan");
 
-    function dynamoRequestIntegration(
+    function makeDynamoIntegration<F extends AnyFunction>(
       operationName:
         | "deleteItem"
         | "getItem"
         | "putItem"
         | "updateItem"
         | "scan"
-        | "query"
-    ): IIntegration {
-      return {
+        | "query",
+      integration?: Omit<Integration, "name">
+    ): F {
+      return makeIntegration<F>({
         kind: `$AWS.${operationName}`,
         asl(call, context) {
           const input = call.getArgument("input")?.expr;
@@ -286,7 +294,8 @@ export namespace $AWS {
             `${kind} is only available within an '${ASL.ContextName}' context, but was called from within a '${context.kind}' context.`
           );
         },
-      };
+        ...integration,
+      });
     }
   }
 

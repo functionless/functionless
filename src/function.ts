@@ -5,7 +5,7 @@ import { ASL } from "./asl";
 
 // @ts-ignore - imported for typedoc
 import type { AppsyncResolver } from "./appsync";
-import { IIntegration } from "./integration";
+import { Integration } from "./integration";
 
 export function isFunction<P = any, O = any>(a: any): a is Function<P, O> {
   return a?.kind === "Function";
@@ -28,7 +28,7 @@ export type AnyLambda = Function<any, any>;
  * })
  * ```
  */
-export class Function<P, O> implements IIntegration {
+export class Function<P, O> implements Integration {
   readonly kind = "Function" as const;
 
   // @ts-ignore - this makes `F` easily available at compile time

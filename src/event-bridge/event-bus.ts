@@ -14,7 +14,7 @@ import {
   PropAssignExpr,
   StringLiteralExpr,
 } from "../expression";
-import { IIntegration } from "../integration";
+import { Integration } from "../integration";
 import { EventBusRule, EventPredicateFunction } from "./rule";
 import { EventBusRuleInput } from "./types";
 
@@ -109,7 +109,7 @@ export interface IEventBus<E extends EventBusRuleInput = EventBusRuleInput>
   (event: Partial<E>, ...events: Partial<E>[]): void;
 }
 abstract class EventBusBase<E extends EventBusRuleInput>
-  implements IEventBus<E>, IIntegration
+  implements IEventBus<E>, Integration
 {
   /**
    * This static properties identifies this class as an EventBus to the TypeScript plugin.
