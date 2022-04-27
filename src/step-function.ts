@@ -27,7 +27,7 @@ import {
   isObjectLiteralExpr,
   isSpreadAssignExpr,
 } from "./expression";
-import { ensureItemOf } from "./util";
+import { AnyFunction, ensureItemOf } from "./util";
 import { assertDefined, assertNodeKind } from "./assert";
 import { EventBusRuleInput } from "./event-bridge/types";
 import {
@@ -35,7 +35,7 @@ import {
   EventBusPredicateRuleBase,
   EventBusRule,
 } from "./event-bridge";
-import { IIntegration, makeIntegration } from "./integration";
+import { Integration, makeIntegration } from "./integration";
 
 export type AnyStepFunction =
   | ExpressStepFunction<any, any>
@@ -52,27 +52,29 @@ export namespace $SFN {
    *
    * @see https://docs.aws.amazon.com/step-functions/latest/dg/amazon-states-language-wait-state.html
    */
-  export const waitFor = makeIntegration<(seconds: number) => void>({
-    ...sfnIntegrationBase("waitFor"),
-    asl(call) {
-      const seconds = call.args[0].expr;
-      if (seconds === undefined) {
-        throw new Error(`the 'seconds' argument is required`);
-      }
+  export const waitFor = makeStepFunctionIntegration<(seconds: number) => void>(
+    "waitFor",
+    {
+      asl(call) {
+        const seconds = call.args[0].expr;
+        if (seconds === undefined) {
+          throw new Error(`the 'seconds' argument is required`);
+        }
 
-      if (seconds.kind === "NumberLiteralExpr") {
-        return {
-          Type: "Wait" as const,
-          Seconds: seconds.value,
-        };
-      } else {
-        return {
-          Type: "Wait" as const,
-          SecondsPath: ASL.toJsonPath(seconds),
-        };
-      }
-    },
-  });
+        if (seconds.kind === "NumberLiteralExpr") {
+          return {
+            Type: "Wait" as const,
+            Seconds: seconds.value,
+          };
+        } else {
+          return {
+            Type: "Wait" as const,
+            SecondsPath: ASL.toJsonPath(seconds),
+          };
+        }
+      },
+    }
+  );
 
   /**
    * Wait until a {@link timestamp}.
@@ -83,8 +85,9 @@ export namespace $SFN {
    *
    * @see https://docs.aws.amazon.com/step-functions/latest/dg/amazon-states-language-wait-state.html
    */
-  export const waitUntil = makeIntegration<(timestamp: string) => void>({
-    ...sfnIntegrationBase("waitUntil"),
+  export const waitUntil = makeStepFunctionIntegration<
+    (timestamp: string) => void
+  >("waitUntil", {
     asl(call) {
       const timestamp = call.args[0]?.expr;
       if (timestamp === undefined) {
@@ -146,8 +149,7 @@ export namespace $SFN {
     ): void;
   }
 
-  export const forEach = makeIntegration<ForEach>({
-    ...sfnIntegrationBase("forEach"),
+  export const forEach = makeStepFunctionIntegration<ForEach>("forEach", {
     asl(call, context) {
       return mapOrForEach(call, context);
     },
@@ -196,8 +198,7 @@ export namespace $SFN {
     ): U[];
   }
 
-  export const map = makeIntegration<Map>({
-    ...sfnIntegrationBase("map"),
+  export const map = makeStepFunctionIntegration<Map>("map", {
     asl(call, context) {
       return mapOrForEach(call, context);
     },
@@ -278,7 +279,7 @@ export namespace $SFN {
    * ```
    * @param paths
    */
-  export const parallel = makeIntegration<
+  export const parallel = makeStepFunctionIntegration<
     <Paths extends readonly (() => any)[]>(
       ...paths: Paths
     ) => {
@@ -286,8 +287,7 @@ export namespace $SFN {
         ? ReturnType<Extract<Paths[i], () => any>>
         : Paths[i];
     }
-  >({
-    ...sfnIntegrationBase("parallel"),
+  >("parallel", {
     asl(call, context) {
       const paths = call.getArgument("paths")?.expr;
       if (paths === undefined) {
@@ -313,17 +313,19 @@ export namespace $SFN {
   });
 }
 
-function sfnIntegrationBase(
-  methodName: string
-): Pick<IIntegration, "kind" | "unhandledContext"> {
-  return {
+function makeStepFunctionIntegration<F extends AnyFunction>(
+  methodName: string,
+  integration: Omit<Integration, "kind">
+): F {
+  return makeIntegration<F>({
     kind: `$SFN.${methodName}`,
     unhandledContext(kind, context) {
       throw new Error(
         `${kind} is only allowed within a '${VTL.ContextName}' context, but was called within a '${context}' context.`
       );
     },
-  };
+    ...integration,
+  });
 }
 
 export function isStepFunction<P = any, O = any>(
@@ -361,7 +363,7 @@ interface StepFunctionStatusChangedEvent
 
 abstract class BaseStepFunction<P extends Record<string, any> | undefined, O>
   extends Resource
-  implements aws_stepfunctions.IStateMachine, IIntegration
+  implements aws_stepfunctions.IStateMachine, Integration
 {
   readonly kind = "StepFunction";
   readonly functionlessKind = "StepFunction";

@@ -17,7 +17,7 @@ import { runtime } from "@pulumi/pulumi";
 import path from "path";
 import fs from "fs";
 import { Err, isErr } from "./error";
-import { Integration, IIntegration } from "./integration";
+import { IntegrationImpl, Integration } from "./integration";
 import { Lambda, EventBridge } from "aws-sdk";
 
 export function isFunction<P = any, O = any>(a: any): a is IFunction<P, O> {
@@ -38,15 +38,53 @@ export interface IFunction<P, O> {
   >;
 }
 
-abstract class FunctionBase<P, O> implements IFunction<P, O>, IIntegration {
+abstract class FunctionBase<P, O> implements IFunction<P, O>, Integration {
   readonly kind = "Function" as const;
+  readonly native: NativeIntegration<FunctionBase<P, O>>;
   readonly functionlessKind = "Function";
   public static readonly FunctionlessType = "Function";
 
   // @ts-ignore - this makes `F` easily available at compile time
   readonly __functionBrand: ConditionalFunction<P, O>;
 
-  constructor(readonly resource: aws_lambda.IFunction) {}
+  constructor(readonly resource: aws_lambda.IFunction) {
+    const functionName = this.resource.functionName;
+
+    // Native is used when this function is called from another lambda function's serialized closure.
+    // define this here to closure the functionName without using `this`
+    this.native = {
+      /**
+       * Wire up permissions for this function to be called by the calling function
+       */
+      bootstrap: (context: Function<any, any>) => {
+        this.resource.grantInvoke(context.resource);
+      },
+      /**
+       * This method is called from the calling runtime lambda code (context) to invoke this lambda function.
+       */
+      call: async (args, prewarmContext) => {
+        const [payload] = args;
+        const lambdaClient = prewarmContext.lambda();
+        // TODO: what should the response type be?
+        const response = (
+          await lambdaClient
+            .invoke({
+              FunctionName: functionName,
+              ...(payload ? { Payload: JSON.stringify(payload) } : undefined),
+            })
+            .promise()
+        ).Payload?.toString();
+        return response ? JSON.parse(response) : undefined;
+      },
+      /**
+       * Code that runs once per lambda invocation
+       * The pre-warm client supports singleton invocation of clients (or other logic) across all integrations in the caller function.
+       */
+      preWarm: (preWarmContext: NativePreWarmContext) => {
+        preWarmContext.lambda();
+      },
+    };
+  }
 
   public vtl(call: CallExpr, context: VTL) {
     const payloadArg = call.getArgument("payload")?.expr;
@@ -70,27 +108,6 @@ abstract class FunctionBase<P, O> implements IFunction<P, O>, IIntegration {
           payloadArg ? ASL.toJson(payloadArg) : undefined,
       },
       ResultSelector: "$.Payload",
-    };
-  }
-
-  get native() {
-    const func = this.resource;
-    return <NativeIntegration<FunctionBase<P, O>>>{
-      bootstrap: (context: Function<any, any>) => {
-        this.resource.grantInvoke(context.resource);
-      },
-      // This method is called from the runtime lambda code (context) to invoke this lambda function.
-      call: async (args, prewarmContext) => {
-        const [payload] = args;
-        const lambdaClient = prewarmContext.lambda();
-        return await lambdaClient.invoke({
-          FunctionName: func.functionName,
-          ...(payload ? { Payload: JSON.stringify(payload) } : undefined),
-        });
-      },
-      preWarm: (preWarmContext: NativePreWarmContext) => {
-        preWarmContext.lambda();
-      },
     };
   }
 }
@@ -164,7 +181,7 @@ export class Function<P, O> extends FunctionBase<P, O> {
     props?: Omit<aws_lambda.FunctionProps, "code" | "handler" | "runtime">
   ) {
     let _resource: aws_lambda.IFunction;
-    let integrations: IIntegration[] = [];
+    let integrations: Integration[] = [];
     let callbackLambdaCode: CallbackLambdaCode | undefined = undefined;
     if (func && id) {
       if (isNativeFunctionDecl(func)) {
@@ -191,7 +208,7 @@ export class Function<P, O> extends FunctionBase<P, O> {
 
     // retrieve and bootstrap all found native integrations. Will fail if the integration does not support native integration.
     const nativeIntegrationsPrewarm = integrations
-      .map((i) => new Integration(i))
+      .map((i) => new IntegrationImpl(i))
       .map((integration) => {
         const integ = integration.native;
         integ.bootstrap(this);
@@ -388,21 +405,21 @@ export class NativePreWarmContext {
     return this.getOrInit("EVENT_BRIDGE", () => new EventBridge());
   }
 
-  public registerCustom(
+  public registerCustom<T>(
     key: string,
-    init: () => {},
+    init: () => T,
     allowExists: boolean = false
-  ) {
+  ): T {
     if (key in this.cache && !allowExists) {
       throw Error(
         `Prewarm Context key ${key} already exists. Use context.custom to get the object or set allowExists to true.`
       );
     }
-    return this.getOrInit(key, init);
+    return this.getOrInit<T>(key, init);
   }
 
-  public custom(key: string) {
-    this.getOrFail(key);
+  public custom<T>(key: string): T {
+    return this.getOrFail<T>(key);
   }
 
   private getOrInit<T>(key: string, create: () => T): T {

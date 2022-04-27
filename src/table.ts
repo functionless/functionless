@@ -16,7 +16,8 @@ import type { AppsyncResolver } from "./appsync";
 import { TableKey } from "typesafe-dynamodb/lib/key";
 import { JsonFormat } from "typesafe-dynamodb";
 import { assertNodeKind } from "./assert";
-import { IIntegration, makeIntegration } from "./integration";
+import { Integration, makeIntegration } from "./integration";
+import { AnyFunction } from "./util";
 
 export function isTable(a: any): a is AnyTable {
   return a?.kind === "Table";
@@ -78,7 +79,7 @@ export class Table<
    * @see https://docs.aws.amazon.com/appsync/latest/devguide/resolver-mapping-template-reference-dynamodb.html#aws-appsync-resolver-mapping-template-reference-dynamodb-getitem
    */
 
-  public getItem = makeIntegration<
+  public getItem = makeTableIntegration<
     <
       Key extends TableKey<
         Item,
@@ -90,8 +91,7 @@ export class Table<
       key: Key;
       consistentRead?: boolean;
     }) => Narrow<Item, AttributeKeyToObject<Key>, JsonFormat.Document>
-  >({
-    ...tableIntegrationBase("getItem"),
+  >("getItem", {
     vtl(call, vtl) {
       const input = vtl.eval(
         assertNodeKind<ObjectLiteralExpr>(
@@ -112,7 +112,7 @@ export class Table<
   /**
    * @see https://docs.aws.amazon.com/appsync/latest/devguide/resolver-mapping-template-reference-dynamodb.html#aws-appsync-resolver-mapping-template-reference-dynamodb-putitem
    */
-  public putItem = makeIntegration<
+  public putItem = makeTableIntegration<
     <
       Key extends TableKey<
         Item,
@@ -132,8 +132,7 @@ export class Table<
       condition?: DynamoExpression<ConditionExpression>;
       _version?: number;
     }) => Narrow<Item, AttributeKeyToObject<Key>, JsonFormat.Document>
-  >({
-    ...tableIntegrationBase("putItem"),
+  >("putItem", {
     vtl(call, vtl) {
       const input = vtl.eval(
         assertNodeKind<ObjectLiteralExpr>(
@@ -158,7 +157,7 @@ export class Table<
   /**
    * @see https://docs.aws.amazon.com/appsync/latest/devguide/resolver-mapping-template-reference-dynamodb.html#aws-appsync-resolver-mapping-template-reference-dynamodb-updateitem
    */
-  public updateItem = makeIntegration<
+  public updateItem = makeTableIntegration<
     <
       Key extends TableKey<
         Item,
@@ -174,8 +173,7 @@ export class Table<
       condition?: DynamoExpression<ConditionExpression>;
       _version?: number;
     }) => Narrow<Item, AttributeKeyToObject<Key>, JsonFormat.Document>
-  >({
-    ...tableIntegrationBase("updateItem"),
+  >("updateItem", {
     vtl(call, vtl) {
       const input = vtl.eval(
         assertNodeKind<ObjectLiteralExpr>(
@@ -198,7 +196,7 @@ export class Table<
   /**
    * @see https://docs.aws.amazon.com/appsync/latest/devguide/resolver-mapping-template-reference-dynamodb.html#aws-appsync-resolver-mapping-template-reference-dynamodb-deleteitem
    */
-  public deleteItem = makeIntegration<
+  public deleteItem = makeTableIntegration<
     <
       Key extends TableKey<
         Item,
@@ -212,8 +210,7 @@ export class Table<
       condition?: DynamoExpression<ConditionExpression>;
       _version?: number;
     }) => Narrow<Item, AttributeKeyToObject<Key>, JsonFormat.Document>
-  >({
-    ...tableIntegrationBase("deleteItem"),
+  >("deleteItem", {
     vtl(call, vtl) {
       const input = vtl.eval(
         assertNodeKind<ObjectLiteralExpr>(
@@ -235,7 +232,7 @@ export class Table<
   /**
    * @see https://docs.aws.amazon.com/appsync/latest/devguide/resolver-mapping-template-reference-dynamodb.html#aws-appsync-resolver-mapping-template-reference-dynamodb-query
    */
-  public query = makeIntegration<
+  public query = makeTableIntegration<
     <Query extends string, Filter extends string | undefined>(input: {
       query: DynamoExpression<Query>;
       filter?: DynamoExpression<Filter>;
@@ -250,8 +247,7 @@ export class Table<
       nextToken: string;
       scannedCount: number;
     }
-  >({
-    ...tableIntegrationBase("query"),
+  >("query", {
     vtl(call, vtl) {
       const input = vtl.eval(
         assertNodeKind<ObjectLiteralExpr>(
@@ -312,15 +308,17 @@ type RenameKeys<
   [k in keyof T as k extends keyof Substitutions ? Substitutions[k] : k]: T[k];
 };
 
-function tableIntegrationBase(
-  methodName: string
-): Pick<IIntegration, "kind" | "unhandledContext"> {
-  return {
+function makeTableIntegration<F extends AnyFunction>(
+  methodName: string,
+  integration: Omit<Integration, "kind">
+): F {
+  return makeIntegration<F>({
     kind: `Table.${methodName}`,
     unhandledContext(kind, context) {
       throw new Error(
         `${kind} is only allowed within a '${VTL.ContextName}' context, but was called within a '${context}' context.`
       );
     },
-  };
+    ...integration,
+  });
 }

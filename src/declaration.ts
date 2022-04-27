@@ -1,6 +1,6 @@
 import { FunctionExpr } from "./expression";
 import { NativePreWarmContext } from "./function";
-import { IIntegration } from "./integration";
+import { Integration } from "./integration";
 import { BaseNode, FunctionlessNode, isNode, typeGuard } from "./node";
 import { BlockStmt } from "./statement";
 import { AnyFunction } from "./util";
@@ -52,7 +52,7 @@ export class NativeFunctionDecl<
     readonly parameters: ParameterDecl[],
     // Compiler generates a closure that can inject in the preWarm context.
     readonly closure: (preWarmContext: NativePreWarmContext) => AnyFunction,
-    readonly integrations: IIntegration[]
+    readonly integrations: Integration[]
   ) {
     super("NativeFunctionDecl");
     parameters.forEach((param) => param.setParent(this));

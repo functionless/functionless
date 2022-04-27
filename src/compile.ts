@@ -647,21 +647,26 @@ export function compile(
           nativeExprContext.registerIntegration(node.expression);
           // call the integration call function with the prewarm context and arguments
           // At this point, we know native will not be undefined
-          // integration.native.call(args, preWarmContext)
+          // await integration.native.call(args, preWarmContext)
+          // FIXME: doesn't work without an array
+          // TODO: Support both sync and async function invocations: https://github.com/sam-goodwin/functionless/issues/105
           return [
-            context.factory.createCallExpression(
-              context.factory.createPropertyAccessExpression(
+            context.factory.createAwaitExpression(
+              context.factory.createCallExpression(
                 context.factory.createPropertyAccessExpression(
-                  node.expression,
-                  "native"
+                  context.factory.createPropertyAccessExpression(
+                    node.expression,
+                    "native"
+                  ),
+                  "call"
                 ),
-                "call"
-              ),
-              undefined,
-              [
-                context.factory.createArrayLiteralExpression(node.arguments),
-                nativeExprContext.preWarmContext,
-              ]
+                undefined,
+                [
+                  context.factory.createArrayLiteralExpression(node.arguments),
+                  // TODO: determine if this is needed at all?
+                  nativeExprContext.preWarmContext,
+                ]
+              )
             ),
           ];
           // const client = context.factory.createUniqueName("lambda");
