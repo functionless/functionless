@@ -249,12 +249,19 @@ export class AppsyncResolver<
           const service = findDeepIntegration(stmt);
           if (service) {
             // we must now render a resolver with request mapping template
-            const dataSource = service.appSyncVtl.dataSource(api);
+            const dataSource = singletonConstruct(
+              api,
+              service.appSyncVtl.dataSourceId(),
+              (scope, id) => service.appSyncVtl.dataSource(scope, id)
+            );
 
-            const resultTemplate = service.appSyncVtl.result?.();
+            const resultValName = "$context.result";
+
+            // The integration can optionally transform the result into a new variable.
+            const resultTemplate = service.appSyncVtl.result?.(resultValName);
             const pre = resultTemplate?.template;
             const returnValName =
-              resultTemplate?.returnVariable ?? "$context.result";
+              resultTemplate?.returnVariable ?? resultValName;
 
             if (stmt.kind === "ExprStmt") {
               const call = findServiceCallExpr(stmt.expr);
@@ -737,10 +744,41 @@ function getUniqueName(api: appsync.GraphqlApi, name: string): string {
   }
 }
 
+/**
+ * Hooks used to create an app sync integration, implement using the {@link Integration} interface.
+ *
+ * 1. Get the AppSync data source
+ * 2. Create the VTL request template to make data source call.
+ * 3. Optionally post process the result of the data source call.
+ */
 export interface AppSyncVtlIntegration {
-  dataSource: (api: appsync.GraphqlApi) => appsync.BaseDataSource;
+  /**
+   * Retrieve the id of the date source to use for the integration.
+   *
+   * If the ID is unique to the current {@link appsync.GraphqlApi}, the `dataSource` will be called next with this id.
+   */
+  dataSourceId: () => string;
+  /**
+   * Retrieve a unique data source for the {@link appsync.GraphqlApi}.
+   * Use the dataSourceId hook to return a unique id.
+   * This method will only be called once per api or unique data source id.
+   *
+   * @param api - the api construct which should be the parent of the returned {@link appsync.BaseDataSource}
+   * @param dataSourceId - the ID given by the dataSourceId hook, should be used as the construct id for the new data source.
+   */
+  dataSource: (
+    api: appsync.GraphqlApi,
+    dataSourceId: string
+  ) => appsync.BaseDataSource;
+  /**
+   * Return a VTL template which builds a valid request to the integration's endpoint.
+   * Should reflect the contents of the CallExpr.
+   */
   request: (call: CallExpr, context: VTL) => string;
-  result?: () => {
+  /**
+   * Optionally transform the result of the API and place into a unique variable.
+   */
+  result?: (resultVariable: string) => {
     returnVariable: string;
     template: string;
   };

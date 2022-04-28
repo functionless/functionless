@@ -77,10 +77,12 @@ export interface Integration<K extends string = string>
   readonly kind: K;
   /**
    * Optional method that allows overriding the {@link Error} thrown when a integration is not supported by a handler.
+   * @param kind - The Kind of the integration.
+   * @param contextKind - the Kind of the context attempting to use the integration.
    */
   readonly unhandledContext?: (
     kind: string,
-    context: CallContext["kind"]
+    contextKind: CallContext["kind"]
   ) => Error;
 }
 
@@ -96,11 +98,11 @@ export class IntegrationImpl implements IntegrationMethods {
     this.kind = integration.kind;
   }
 
-  private unhandledContext<T>(context: CallContext["kind"]): T {
+  private unhandledContext<T>(contextKind: CallContext["kind"]): T {
     if (this.integration.unhandledContext) {
-      throw this.integration.unhandledContext(this.kind, context);
+      throw this.integration.unhandledContext(this.kind, contextKind);
     }
-    throw Error(`${this.kind} is not supported by context ${context}.`);
+    throw Error(`${this.kind} is not supported by context ${contextKind}.`);
   }
 
   public get appSyncVtl(): AppSyncVtlIntegration {

@@ -6,7 +6,6 @@ import { ASL } from "./asl";
 // @ts-ignore - imported for typedoc
 import type { AppsyncResolver, AppSyncVtlIntegration } from "./appsync";
 import { Integration } from "./integration";
-import { singletonConstruct } from "./util";
 
 export function isFunction<P = any, O = any>(a: any): a is Function<P, O> {
   return a?.kind === "Function";
@@ -38,19 +37,14 @@ export class Function<P, O> implements Integration {
   readonly __functionBrand: ConditionalFunction<P, O>;
 
   constructor(readonly resource: aws_lambda.IFunction) {
-
-    // Integration object for appsync VTL 
+    // Integration object for appsync VTL
     this.appSyncVtl = {
-      dataSource(api) {
-        return singletonConstruct(
+      dataSourceId: () => resource.node.addr,
+      dataSource(api, id) {
+        return new appsync.LambdaDataSource(api, id, {
           api,
-          resource.node.addr,
-          (scope, id) =>
-            new appsync.LambdaDataSource(scope, id, {
-              api,
-              lambdaFunction: resource,
-            })
-        );
+          lambdaFunction: resource,
+        });
       },
       request(call, context) {
         const payloadArg = call.getArgument("payload");

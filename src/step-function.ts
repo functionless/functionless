@@ -28,7 +28,7 @@ import {
   isObjectLiteralExpr,
   isSpreadAssignExpr,
 } from "./expression";
-import { AnyFunction, ensureItemOf, singletonConstruct } from "./util";
+import { AnyFunction, ensureItemOf } from "./util";
 import { assertDefined, assertNodeKind } from "./assert";
 import { EventBusRuleInput } from "./event-bridge/types";
 import {
@@ -452,9 +452,7 @@ abstract class BaseStepFunction<P extends Record<string, any> | undefined, O>
     this.stateMachineArn = this.resource.attrArn;
 
     // Integration object for appsync vtl
-    this.appSyncVtl = {
-      dataSource: this.appSyncDataSource,
-      result: this.appSyncResult,
+    this.appSyncVtl = this.appSyncIntegration({
       request: (call, context) => {
         const { name, input, traceHeader } = retrieveMachineArgs(call);
 
@@ -496,74 +494,74 @@ abstract class BaseStepFunction<P extends Record<string, any> | undefined, O>
   }
 }`;
       },
-    };
+    });
   }
 
-  // Common data source retriever for appsync.
-  protected appSyncDataSource: AppSyncVtlIntegration["dataSource"] = (api) => {
-    return singletonConstruct(api, this.resource.node.addr, (scope, id) => {
-      const ds = new appsync.HttpDataSource(scope, id, {
-        api,
-        endpoint: `https://${
+  appSyncIntegration(
+    integration: Pick<AppSyncVtlIntegration, "request">
+  ): AppSyncVtlIntegration {
+    return {
+      ...integration,
+      dataSourceId: () => this.resource.node.addr,
+      dataSource: (api, dataSourceId) => {
+        const ds = new appsync.HttpDataSource(api, dataSourceId, {
+          api,
+          endpoint: `https://${
+            this.getStepFunctionType() ===
+            aws_stepfunctions.StateMachineType.EXPRESS
+              ? "sync-states"
+              : "states"
+          }.${this.resource.stack.region}.amazonaws.com/`,
+          authorizationConfig: {
+            signingRegion: api.stack.region,
+            signingServiceName: "states",
+          },
+        });
+
+        this.grantRead(ds.grantPrincipal);
+        if (
           this.getStepFunctionType() ===
           aws_stepfunctions.StateMachineType.EXPRESS
-            ? "sync-states"
-            : "states"
-        }.${this.resource.stack.region}.amazonaws.com/`,
-        authorizationConfig: {
-          signingRegion: api.stack.region,
-          signingServiceName: "states",
-        },
-      });
+        ) {
+          this.grantStartSyncExecution(ds.grantPrincipal);
+        } else {
+          this.grantStartExecution(ds.grantPrincipal);
+        }
+        return ds;
+      },
+      result: (resultVariable) => {
+        const returnValName = "$sfn__result";
 
-      this.grantRead(ds.grantPrincipal);
-      if (
-        this.getStepFunctionType() ===
-        aws_stepfunctions.StateMachineType.EXPRESS
-      ) {
-        this.grantStartSyncExecution(ds.grantPrincipal);
-      } else {
-        this.grantStartExecution(ds.grantPrincipal);
-      }
-      return ds;
-    });
-  };
-
-  /**
-   * Common app sync result handler for step functions.
-   * Step functions requires a special post processor based on the machine type
-   * and creates a special result variable.
-   */
-  protected appSyncResult: AppSyncVtlIntegration["result"] = () => {
-    const returnValName = "$sfn__result";
-
-    if (
-      this.getStepFunctionType() === aws_stepfunctions.StateMachineType.EXPRESS
-    ) {
-      return {
-        returnVariable: returnValName,
-        template: `#if($context.result.statusCode == 200)
-#set(${returnValName} = $util.parseJson($context.result.body))
-#if(${returnValName}.output == 'null')
-$util.qr(${returnValName}.put("output", $null))
-#else
-#set(${returnValName}.output = $util.parseJson(${returnValName}.output))
-#end
-#else 
-$util.error($context.result.body, "$context.result.statusCode")
-#end`,
-      };
-    } else {
-      return {
-        returnVariable: returnValName,
-        template: `#if($context.result.statusCode == 200)
-#set(${returnValName} = $util.parseJson($context.result.body))
-#else 
-$util.error($context.result.body, "$context.result.statusCode")
-#end`,
-      };
-    }
-  };
+        if (
+          this.getStepFunctionType() ===
+          aws_stepfunctions.StateMachineType.EXPRESS
+        ) {
+          return {
+            returnVariable: returnValName,
+            template: `#if(${resultVariable}.statusCode == 200)
+    #set(${returnValName} = $util.parseJson(${resultVariable}.body))
+    #if(${returnValName}.output == 'null')
+    $util.qr(${returnValName}.put("output", $null))
+    #else
+    #set(${returnValName}.output = $util.parseJson(${returnValName}.output))
+    #end
+    #else 
+    $util.error(${resultVariable}.body, "${resultVariable}.statusCode")
+    #end`,
+          };
+        } else {
+          return {
+            returnVariable: returnValName,
+            template: `#if(${resultVariable}.statusCode == 200)
+    #set(${returnValName} = $util.parseJson(${resultVariable}.body))
+    #else 
+    $util.error(${resultVariable}.body, "${resultVariable}.statusCode")
+    #end`,
+          };
+        }
+      },
+    };
+  }
 
   asl(call: CallExpr, context: ASL) {
     this.grantStartExecution(context.role);
@@ -1227,9 +1225,7 @@ export class StepFunction<
     "StepFunction.describeExecution"
   >({
     kind: "StepFunction.describeExecution",
-    appSyncVtl: {
-      dataSource: this.appSyncDataSource,
-      result: this.appSyncResult,
+    appSyncVtl: this.appSyncIntegration({
       request(call, context) {
         const executionArn = getArgs(call);
         return `{
@@ -1247,7 +1243,7 @@ export class StepFunction<
   }
 }`;
       },
-    },
+    }),
     asl: (call, context) => {
       // need DescribeExecution
       this.grantRead(context.role);
@@ -1266,9 +1262,9 @@ export class StepFunction<
       };
       return task;
     },
-    unhandledContext: (name, context) => {
+    unhandledContext: (kind, contextKind) => {
       throw new Error(
-        `${name} is only available in the ${ASL.ContextName} and ${VTL.ContextName} context, but was used in ${context}.`
+        `${kind} is only available in the ${ASL.ContextName} and ${VTL.ContextName} context, but was used in ${contextKind}.`
       );
     },
   });

@@ -18,7 +18,7 @@ import { TableKey } from "typesafe-dynamodb/lib/key";
 import { JsonFormat } from "typesafe-dynamodb";
 import { assertNodeKind } from "./assert";
 import { Integration, makeIntegration } from "./integration";
-import { AnyFunction, singletonConstruct } from "./util";
+import { AnyFunction } from "./util";
 
 export function isTable(a: any): a is AnyTable {
   return a?.kind === "Table";
@@ -289,29 +289,25 @@ export class Table<
   makeTableIntegration<F extends AnyFunction, K extends string>(
     methodName: K,
     integration: Omit<Integration, "kind" | "appSyncVtl"> & {
-      appSyncVtl: Omit<AppSyncVtlIntegration, "dataSource">;
+      appSyncVtl: Omit<AppSyncVtlIntegration, "dataSource" | "dataSourceId">;
     }
   ): F {
     return makeIntegration<F, `Table.${K}`>({
       ...integration,
       kind: `Table.${methodName}`,
       appSyncVtl: {
-        dataSource: (api) => {
-          return singletonConstruct(
+        dataSourceId: () => this.resource.node.addr,
+        dataSource: (api, dataSourceId) => {
+          return new appsync.DynamoDbDataSource(api, dataSourceId, {
             api,
-            this.resource.node.addr,
-            (scope, id) =>
-              new appsync.DynamoDbDataSource(scope, id, {
-                api,
-                table: this.resource,
-              })
-          );
+            table: this.resource,
+          });
         },
         ...integration.appSyncVtl,
       },
-      unhandledContext(kind, context) {
+      unhandledContext(kind, contextKind) {
         throw new Error(
-          `${kind} is only allowed within a '${VTL.ContextName}' context, but was called within a '${context}' context.`
+          `${kind} is only allowed within a '${VTL.ContextName}' context, but was called within a '${contextKind}' context.`
         );
       },
     });
