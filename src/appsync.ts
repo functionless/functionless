@@ -1,20 +1,17 @@
 import * as appsync from "@aws-cdk/aws-appsync-alpha";
 import { AppSyncResolverEvent } from "aws-lambda";
-import { CanReference, CallExpr, Expr } from "./expression";
+import { CallExpr, Expr } from "./expression";
 import { VTL } from "./vtl";
-import { findService, toName } from "./util";
 import {
   ToAttributeMap,
   ToAttributeValue,
 } from "typesafe-dynamodb/lib/attribute-value";
 import { FunctionDecl, isFunctionDecl } from "./declaration";
 import { Literal } from "./literal";
-import { aws_stepfunctions } from "aws-cdk-lib";
 import { Construct } from "constructs";
 import { isErr } from "./error";
-import { isTable } from "./table";
-import { isFunction } from "./function";
-import { isStepFunction } from "./step-function";
+import { findDeepIntegration, IntegrationImpl } from "./integration";
+import { singletonConstruct } from "./util";
 
 /**
  * The shape of the AWS Appsync `$context` variable.
@@ -189,11 +186,11 @@ export class AppsyncResolver<
           ...options,
           api,
           templates,
-          dataSource: getDataSource(
+          dataSource: singletonConstruct(
             api,
-            null,
-            () =>
-              new appsync.NoneDataSource(api, "None", {
+            "None",
+            (scope, id) =>
+              new appsync.NoneDataSource(scope, id, {
                 api,
                 name: "None",
               })
@@ -249,99 +246,23 @@ export class AppsyncResolver<
       const functions = decl.body.statements
         .map((stmt, i) => {
           const isLastExpr = i + 1 === decl.body.statements.length;
-          const service = findService(stmt);
+          const service = findDeepIntegration(stmt);
           if (service) {
             // we must now render a resolver with request mapping template
-            const dataSource = getDataSource(api, service, () => {
-              if (isTable(service)) {
-                return new appsync.DynamoDbDataSource(
-                  api,
-                  service.resource.node.addr,
-                  {
-                    api,
-                    table: service.resource,
-                  }
-                );
-              } else if (isFunction(service)) {
-                return new appsync.LambdaDataSource(
-                  api,
-                  service.resource.node.addr,
-                  {
-                    api,
-                    lambdaFunction: service.resource,
-                  }
-                );
-              } else if (isStepFunction(service)) {
-                const ds = new appsync.HttpDataSource(
-                  api,
-                  service.resource.node.addr,
-                  {
-                    api,
-                    endpoint: `https://${
-                      service.getStepFunctionType() ===
-                      aws_stepfunctions.StateMachineType.EXPRESS
-                        ? "sync-states"
-                        : "states"
-                    }.${service.resource.stack.region}.amazonaws.com/`,
-                    authorizationConfig: {
-                      signingRegion: api.stack.region,
-                      signingServiceName: "states",
-                    },
-                  }
-                );
-                service.grantRead(ds.grantPrincipal);
-                if (
-                  service.getStepFunctionType() ===
-                  aws_stepfunctions.StateMachineType.EXPRESS
-                ) {
-                  service.grantStartSyncExecution(ds.grantPrincipal);
-                } else {
-                  service.grantStartExecution(ds.grantPrincipal);
-                }
-                return ds;
-              } else {
-                // TODO: use HTTP resolvers for the AWS-SDK types.
-                throw new Error(
-                  `Reference cannot be used within an Appsync Resolver, please use an Appsync-compatible function`
-                );
-              }
-            });
+            const dataSource = service.appSyncVtl.dataSource(api);
 
-            let returnValName = "$context.result";
-            let pre: string | undefined;
-            if (isStepFunction(service)) {
-              returnValName = "$sfn__result";
-
-              if (
-                service.getStepFunctionType() ===
-                aws_stepfunctions.StateMachineType.EXPRESS
-              ) {
-                pre = `#if($context.result.statusCode == 200)
-  #set(${returnValName} = $util.parseJson($context.result.body))
-  #if(${returnValName}.output == 'null')
-    $util.qr(${returnValName}.put("output", $null))
-  #else
-    #set(${returnValName}.output = $util.parseJson(${returnValName}.output))
-  #end
-#else 
-  $util.error($context.result.body, "$context.result.statusCode")
-#end`;
-              } else {
-                pre = `#if($context.result.statusCode == 200)
-  #set(${returnValName} = $util.parseJson($context.result.body))
-#else 
-  $util.error($context.result.body, "$context.result.statusCode")
-#end`;
-              }
-            }
+            const resultTemplate = service.appSyncVtl.result?.();
+            const pre = resultTemplate?.template;
+            const returnValName =
+              resultTemplate?.returnVariable ?? "$context.result";
 
             if (stmt.kind === "ExprStmt") {
               const call = findServiceCallExpr(stmt.expr);
               template.call(call);
-              return createStage(call, "{}");
+              return createStage(service, "{}");
             } else if (stmt.kind === "ReturnStmt") {
               return createStage(
-                findServiceCallExpr(stmt.expr),
+                service,
                 `${
                   pre ? `${pre}\n` : ""
                 }#set( $context.stash.return__flag = true )
@@ -353,7 +274,7 @@ export class AppsyncResolver<
               stmt.expr?.kind === "CallExpr"
             ) {
               return createStage(
-                findServiceCallExpr(stmt.expr),
+                service,
                 `${pre ? `${pre}\n` : ""}#set( $context.stash.${
                   stmt.name
                 } = ${getResult(stmt.expr)} )\n{}`
@@ -428,14 +349,14 @@ export class AppsyncResolver<
             }
 
             function createStage(
-              expr: CallExpr,
+              integration: IntegrationImpl,
               responseMappingTemplate: string
             ) {
               const requestMappingTemplateString = template.toVTL();
               templates.push(requestMappingTemplateString);
               templates.push(responseMappingTemplate);
               template = new VTL(VTL.CircuitBreaker);
-              const name = getUniqueName(api, toName(expr.expr));
+              const name = getUniqueName(api, integration.kind);
               return dataSource.createFunction({
                 name,
                 requestMappingTemplate: appsync.MappingTemplate.fromString(
@@ -472,7 +393,7 @@ export class AppsyncResolver<
       decl: FunctionDecl<ResolverFunction<Arguments, Result, Source>>
     ): number {
       return decl.body.statements.filter(
-        (expr) => findService(expr) !== undefined
+        (expr) => findDeepIntegration(expr) !== undefined
       ).length;
     }
   }
@@ -816,33 +737,11 @@ function getUniqueName(api: appsync.GraphqlApi, name: string): string {
   }
 }
 
-const dataSourcesSymbol = Symbol.for("functionless.DataSources");
-
-const dataSources: WeakMap<
-  appsync.GraphqlApi,
-  WeakMap<any, appsync.BaseDataSource>
-> = ((global as any)[dataSourcesSymbol] ??= new WeakMap());
-
-function getDataSources(api: appsync.GraphqlApi) {
-  if (!dataSources.has(api)) {
-    dataSources.set(api, new WeakMap());
-  }
-  return dataSources.get(api)!;
-}
-
-const None = {
-  none: Symbol.for("functionless.None"),
-};
-
-function getDataSource(
-  api: appsync.GraphqlApi,
-  target: CanReference | null,
-  compute: () => appsync.BaseDataSource
-): appsync.BaseDataSource {
-  const ds = getDataSources(api);
-  const key = target ?? None;
-  if (!ds.has(key)) {
-    ds.set(key, compute());
-  }
-  return ds.get(key)!;
+export interface AppSyncVtlIntegration {
+  dataSource: (api: appsync.GraphqlApi) => appsync.BaseDataSource;
+  request: (call: CallExpr, context: VTL) => string;
+  result?: () => {
+    returnVariable: string;
+    template: string;
+  };
 }

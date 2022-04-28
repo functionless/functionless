@@ -3,16 +3,17 @@ import { ASL, State } from "./asl";
 import { FunctionlessNode } from "./node";
 import { VTL } from "./vtl";
 import { AnyFunction } from "./util";
+import { AppSyncVtlIntegration } from "./appsync";
 
 /**
  * All integration methods supported by functionless.
  */
 interface IntegrationMethods {
   /**
-   * Integrate with VTL applications like AppAsync.
+   * Integrate with AppSync VTL applications.
    * @private
    */
-  vtl: (call: CallExpr, context: VTL) => string;
+  appSyncVtl: AppSyncVtlIntegration;
   /**
    * Integrate with ASL applications like StepFunctions.
    * @private
@@ -68,15 +69,19 @@ interface IntegrationMethods {
  * Implement the unhandledContext function to customize the error message for unsupported contexts.
  * Otherwise the error will be: `${this.name} is not supported by context ${context.kind}.`
  */
-export interface Integration extends Partial<IntegrationMethods> {
+export interface Integration<K extends string = string>
+  extends Partial<IntegrationMethods> {
   /**
    * Integration Handler kind - for example StepFunction.describeExecution
    */
-  readonly kind: string;
+  readonly kind: K;
   /**
    * Optional method that allows overriding the {@link Error} thrown when a integration is not supported by a handler.
    */
-  readonly unhandledContext?: (kind: string, context: CallContext) => Error;
+  readonly unhandledContext?: (
+    kind: string,
+    context: CallContext["kind"]
+  ) => Error;
 }
 
 /**
@@ -91,31 +96,31 @@ export class IntegrationImpl implements IntegrationMethods {
     this.kind = integration.kind;
   }
 
-  private unhandledContext<T>(context: CallContext): T {
+  private unhandledContext<T>(context: CallContext["kind"]): T {
     if (this.integration.unhandledContext) {
       throw this.integration.unhandledContext(this.kind, context);
     }
-    throw Error(`${this.kind} is not supported by context ${context.kind}.`);
+    throw Error(`${this.kind} is not supported by context ${context}.`);
   }
 
-  public vtl(call: CallExpr, context: VTL): string {
-    if (this.integration.vtl) {
-      return this.integration.vtl(call, context);
+  public get appSyncVtl(): AppSyncVtlIntegration {
+    if (this.integration.appSyncVtl) {
+      return this.integration.appSyncVtl;
     }
-    return this.unhandledContext(context);
+    return this.unhandledContext("Velocity Template");
   }
 
   public asl(call: CallExpr, context: ASL): Omit<State, "Next"> {
     if (this.integration.asl) {
       return this.integration.asl(call, context);
     }
-    return this.unhandledContext(context);
+    return this.unhandledContext(context.kind);
   }
 }
 
 /**
  * Helper method which masks an {@link Integration} object as a function of any form.
- * 
+ *
  * ```ts
  * export namespace MyIntegrations {
  *    export const callMe = makeIntegration<(payload: string) => void>({
@@ -123,19 +128,19 @@ export class IntegrationImpl implements IntegrationMethods {
  *    })
  * }
  * ```
- * 
+ *
  * Creates an integration object at callMe, which is callable by a user.
- * 
+ *
  * ```ts
  * MyIntegrations.callMe("some string");
  * ```
- * 
+ *
  * @private
  */
-export function makeIntegration<F extends AnyFunction>(
-  integration: Integration
-): F {
-  return integration as unknown as F;
+export function makeIntegration<F extends AnyFunction, K extends string>(
+  integration: Integration<K>
+): { kind: K } & F {
+  return integration as unknown as { kind: K } & F;
 }
 
 /**
@@ -144,9 +149,7 @@ export function makeIntegration<F extends AnyFunction>(
  */
 export function findIntegration(call: CallExpr): IntegrationImpl | undefined {
   const integration = find(call.expr);
-  return integration
-    ? new IntegrationImpl(integration)
-    : undefined;
+  return integration ? new IntegrationImpl(integration) : undefined;
 
   function find(expr: FunctionlessNode): any {
     if (expr.kind === "PropAccessExpr") {
@@ -159,6 +162,26 @@ export function findIntegration(call: CallExpr): IntegrationImpl | undefined {
       return undefined;
     }
   }
+}
+
+/**
+ * Dive until we find a integration object.
+ */
+export function findDeepIntegration(
+  expr: FunctionlessNode
+): IntegrationImpl | undefined {
+  if (expr.kind === "PropAccessExpr") {
+    return findDeepIntegration(expr.expr);
+  } else if (expr.kind === "CallExpr") {
+    return findIntegration(expr);
+  } else if (expr.kind === "VariableStmt" && expr.expr) {
+    return findDeepIntegration(expr.expr);
+  } else if (expr.kind === "ReturnStmt" && expr.expr) {
+    return findDeepIntegration(expr.expr);
+  } else if (expr.kind === "ExprStmt") {
+    return findDeepIntegration(expr.expr);
+  }
+  return undefined;
 }
 
 export type CallContext = ASL | VTL;

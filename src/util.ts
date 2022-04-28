@@ -1,49 +1,8 @@
-import { CanReference } from "./expression";
 import { FunctionlessNode } from "./node";
-import { isAWS } from "./aws";
 import ts from "typescript";
-import { isTable } from "./table";
-import { isFunction } from "./function";
-import { isStepFunction } from "./step-function";
+import { Construct } from "constructs";
 
 export type AnyFunction = (...args: any[]) => any;
-
-export function findService(expr: FunctionlessNode): CanReference | undefined {
-  if (expr.kind === "ReferenceExpr") {
-    return expr.ref();
-  } else if (expr.kind === "PropAccessExpr") {
-    return findService(expr.expr);
-  } else if (expr.kind === "CallExpr") {
-    return findService(expr.expr);
-  } else if (expr.kind === "VariableStmt" && expr.expr) {
-    return findService(expr.expr);
-  } else if (expr.kind === "ReturnStmt" && expr.expr) {
-    return findService(expr.expr);
-  } else if (expr.kind === "ExprStmt") {
-    return findService(expr.expr);
-  }
-  return undefined;
-}
-
-// derives a name from an expression - this can be used to name infrastructure, such as an AppsyncResolver.
-// e.g. table.getItem(..) => "table_getItem"
-export function toName(expr: FunctionlessNode): string {
-  if (expr.kind === "Identifier") {
-    return expr.name;
-  } else if (expr.kind === "PropAccessExpr") {
-    return `${toName(expr.expr)}_${expr.name}`;
-  } else if (expr.kind === "ReferenceExpr") {
-    const ref = expr.ref();
-    if (isAWS(ref)) {
-      return "AWS";
-    } else if (isTable(ref) || isFunction(ref) || isStepFunction(ref)) {
-      return ref.resource.node.addr;
-    }
-    throw Error("Cannot derive a name from a external node.");
-  } else {
-    throw new Error(`invalid expression: '${expr.kind}'`);
-  }
-}
 
 export function isInTopLevelScope(expr: FunctionlessNode): boolean {
   if (expr.parent === undefined) {
@@ -133,4 +92,10 @@ export const isPrimitive = (val: any): val is PrimitiveValue => {
     typeof val === "undefined" ||
     val === null
   );
+};
+
+
+export const singletonConstruct = <T extends Construct>(scope: Construct, id: string, create: (scope: Construct, id: string) => T): T => {
+  const child = scope.node.tryFindChild(id);
+  return child ? child as T : create(scope, id);
 };
