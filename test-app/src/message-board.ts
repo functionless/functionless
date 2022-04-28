@@ -427,6 +427,7 @@ new Function(
     console.log("huh?!?!?!??!!");
     console.log("strange");
     const result = func();
+    console.log(`function result: ${result}`);
     customDeleteBus({
       "detail-type": "Delete-Post-Success",
       source: "MessageDeleter",
@@ -434,10 +435,10 @@ new Function(
         id: "from the test method!!",
       },
     });
-    $AWS.EventBridge.putEvents<typeof customDeleteBus>({
+    const result2 = $AWS.EventBridge.putEvents({
       Entries: [
         {
-          EventBusName: customDeleteBus,
+          EventBusName: customDeleteBus.eventBusArn,
           Source: "MessageDeleter",
           Detail: JSON.stringify({
             id: "from the sdk put event method!",
@@ -446,7 +447,7 @@ new Function(
         },
       ],
     });
-    console.log(`function result: ${result}`);
+    console.log(`bus: ${result2}`);
   },
   {
     timeout: Duration.minutes(1),

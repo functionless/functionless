@@ -300,6 +300,7 @@ export class AppsyncResolver<
                 }
                 return ds;
               } else {
+                console.log(service);
                 // TODO: use HTTP resolvers for the AWS-SDK types.
                 throw new Error(
                   `Reference cannot be used within an Appsync Resolver, please use an Appsync-compatible function`

@@ -149,14 +149,13 @@ export class IntegrationImpl<F extends AnyFunction = AnyFunction>
  * ```ts
  * MyIntegrations.callMe("some string");
  * ```
- *
+ * 
  * @private
  */
-export function makeIntegration<
-  F extends AnyFunction,
-  K extends string = string
->(integration: Integration<F, K>): F {
-  return integration as unknown as F;
+export function makeIntegration<F extends AnyFunction, K extends string>(
+  integration: Integration<F, K>
+): { kind: K } & F {
+  return integration as unknown as { kind: K } & F;
 }
 
 /**

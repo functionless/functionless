@@ -299,7 +299,7 @@ testResource(
         const result = $AWS.EventBridge.putEvents({
           Entries: [
             {
-              EventBusName: bus,
+              EventBusName: bus.eventBusArn,
               Source: "MyEvent",
               DetailType: "DetailType",
               Detail: "",

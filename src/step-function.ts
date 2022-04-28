@@ -52,29 +52,29 @@ export namespace $SFN {
    *
    * @see https://docs.aws.amazon.com/step-functions/latest/dg/amazon-states-language-wait-state.html
    */
-  export const waitFor = makeStepFunctionIntegration<(seconds: number) => void>(
-    "waitFor",
-    {
-      asl(call) {
-        const seconds = call.args[0].expr;
-        if (seconds === undefined) {
-          throw new Error(`the 'seconds' argument is required`);
-        }
+  export const waitFor = makeStepFunctionIntegration<
+    (seconds: number) => void,
+    "waitFor"
+  >("waitFor", {
+    asl(call) {
+      const seconds = call.args[0].expr;
+      if (seconds === undefined) {
+        throw new Error(`the 'seconds' argument is required`);
+      }
 
-        if (seconds.kind === "NumberLiteralExpr") {
-          return {
-            Type: "Wait" as const,
-            Seconds: seconds.value,
-          };
-        } else {
-          return {
-            Type: "Wait" as const,
-            SecondsPath: ASL.toJsonPath(seconds),
-          };
-        }
-      },
-    }
-  );
+      if (seconds.kind === "NumberLiteralExpr") {
+        return {
+          Type: "Wait" as const,
+          Seconds: seconds.value,
+        };
+      } else {
+        return {
+          Type: "Wait" as const,
+          SecondsPath: ASL.toJsonPath(seconds),
+        };
+      }
+    },
+  });
 
   /**
    * Wait until a {@link timestamp}.
@@ -86,7 +86,8 @@ export namespace $SFN {
    * @see https://docs.aws.amazon.com/step-functions/latest/dg/amazon-states-language-wait-state.html
    */
   export const waitUntil = makeStepFunctionIntegration<
-    (timestamp: string) => void
+    (timestamp: string) => void,
+    "waitUntil"
   >("waitUntil", {
     asl(call) {
       const timestamp = call.args[0]?.expr;
@@ -149,11 +150,14 @@ export namespace $SFN {
     ): void;
   }
 
-  export const forEach = makeStepFunctionIntegration<ForEach>("forEach", {
-    asl(call, context) {
-      return mapOrForEach(call, context);
-    },
-  });
+  export const forEach = makeStepFunctionIntegration<ForEach, "forEach">(
+    "forEach",
+    {
+      asl(call, context) {
+        return mapOrForEach(call, context);
+      },
+    }
+  );
 
   interface Map {
     /**
@@ -198,7 +202,7 @@ export namespace $SFN {
     ): U[];
   }
 
-  export const map = makeStepFunctionIntegration<Map>("map", {
+  export const map = makeStepFunctionIntegration<Map, "map">("map", {
     asl(call, context) {
       return mapOrForEach(call, context);
     },
@@ -286,7 +290,8 @@ export namespace $SFN {
       [i in keyof Paths]: i extends `${number}`
         ? ReturnType<Extract<Paths[i], () => any>>
         : Paths[i];
-    }
+    },
+    "parallel"
   >("parallel", {
     asl(call, context) {
       const paths = call.getArgument("paths")?.expr;
@@ -313,11 +318,11 @@ export namespace $SFN {
   });
 }
 
-function makeStepFunctionIntegration<F extends AnyFunction>(
-  methodName: string,
+function makeStepFunctionIntegration<F extends AnyFunction, K extends string>(
+  methodName: K,
   integration: Omit<Integration, "kind">
 ): F {
-  return makeIntegration<F>({
+  return makeIntegration<F, `$SFN.${K}`>({
     kind: `$SFN.${methodName}`,
     unhandledContext(kind, context) {
       throw new Error(
@@ -1151,7 +1156,8 @@ export class StepFunction<
   }
 
   public describeExecution = makeIntegration<
-    (executionArn: string) => AWS.StepFunctions.DescribeExecutionOutput
+    (executionArn: string) => AWS.StepFunctions.DescribeExecutionOutput,
+    "StepFunction.describeExecution"
   >({
     kind: "StepFunction.describeExecution",
     vtl: (call, context) => {

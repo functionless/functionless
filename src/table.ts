@@ -90,7 +90,8 @@ export class Table<
     >(input: {
       key: Key;
       consistentRead?: boolean;
-    }) => Narrow<Item, AttributeKeyToObject<Key>, JsonFormat.Document>
+    }) => Narrow<Item, AttributeKeyToObject<Key>, JsonFormat.Document>,
+    "getItem"
   >("getItem", {
     vtl(call, vtl) {
       const input = vtl.eval(
@@ -131,7 +132,8 @@ export class Table<
       >;
       condition?: DynamoExpression<ConditionExpression>;
       _version?: number;
-    }) => Narrow<Item, AttributeKeyToObject<Key>, JsonFormat.Document>
+    }) => Narrow<Item, AttributeKeyToObject<Key>, JsonFormat.Document>,
+    "putItem"
   >("putItem", {
     vtl(call, vtl) {
       const input = vtl.eval(
@@ -172,7 +174,8 @@ export class Table<
       update: DynamoExpression<UpdateExpression>;
       condition?: DynamoExpression<ConditionExpression>;
       _version?: number;
-    }) => Narrow<Item, AttributeKeyToObject<Key>, JsonFormat.Document>
+    }) => Narrow<Item, AttributeKeyToObject<Key>, JsonFormat.Document>,
+    "updateItem"
   >("updateItem", {
     vtl(call, vtl) {
       const input = vtl.eval(
@@ -209,7 +212,8 @@ export class Table<
       key: Key;
       condition?: DynamoExpression<ConditionExpression>;
       _version?: number;
-    }) => Narrow<Item, AttributeKeyToObject<Key>, JsonFormat.Document>
+    }) => Narrow<Item, AttributeKeyToObject<Key>, JsonFormat.Document>,
+    "deleteItem"
   >("deleteItem", {
     vtl(call, vtl) {
       const input = vtl.eval(
@@ -246,7 +250,8 @@ export class Table<
       items: Item[];
       nextToken: string;
       scannedCount: number;
-    }
+    },
+    "query"
   >("query", {
     vtl(call, vtl) {
       const input = vtl.eval(
@@ -308,11 +313,11 @@ type RenameKeys<
   [k in keyof T as k extends keyof Substitutions ? Substitutions[k] : k]: T[k];
 };
 
-function makeTableIntegration<F extends AnyFunction>(
-  methodName: string,
+function makeTableIntegration<F extends AnyFunction, K extends string>(
+  methodName: K,
   integration: Omit<Integration, "kind">
 ): F {
-  return makeIntegration<F>({
+  return makeIntegration<F, `Table.${K}`>({
     kind: `Table.${methodName}`,
     unhandledContext(kind, context) {
       throw new Error(
