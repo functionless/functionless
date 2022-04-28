@@ -1,6 +1,6 @@
 import { App, aws_events, CfnOutput, Stack } from "aws-cdk-lib";
 import { clientConfig, deployStack } from "./localstack";
-import { EventBus, Function } from "../src";
+import { $AWS, EventBus, Function } from "../src";
 import { Lambda, CloudFormation } from "aws-sdk";
 import { Construct } from "constructs";
 
@@ -285,6 +285,36 @@ testResource(
       {},
       `${busOut?.OutputValue} ${busBusOut?.OutputValue}`
     );
+  }
+);
+
+testResource(
+  "Call Lambda AWS SDK put event to bus",
+  (parent) => {
+    const bus = new EventBus<any>(parent, "bus");
+    new Function(
+      parent,
+      "function",
+      async () => {
+        const result = $AWS.EventBridge.putEvents({
+          Entries: [
+            {
+              EventBusName: bus,
+              Source: "MyEvent",
+              DetailType: "DetailType",
+              Detail: "",
+            },
+          ],
+        });
+        return result.FailedEntryCount;
+      },
+      {
+        functionName: "func15",
+      }
+    );
+  },
+  async () => {
+    await testFunction("func15", {}, 0);
   }
 );
 

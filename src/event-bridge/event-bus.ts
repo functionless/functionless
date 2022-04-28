@@ -107,7 +107,10 @@ export interface IEventBus<E extends EventBusRuleInput = EventBusRuleInput>
   /**
    * Put one or more events on an Event Bus.
    */
-  (event: Partial<E>, ...events: Partial<E>[]): void;
+  (
+    event: EventBusPutEventInput<E>,
+    ...events: EventBusPutEventInput<E>[]
+  ): void;
 }
 abstract class EventBusBase<E extends EventBusRuleInput>
   implements IEventBus<E>, Integration
@@ -121,9 +124,37 @@ abstract class EventBusBase<E extends EventBusRuleInput>
   readonly eventBusName: string;
   readonly eventBusArn: string;
 
+  readonly native: NativeIntegration<EventBusBase<E>>;
+
   constructor(readonly bus: aws_events.IEventBus) {
     this.eventBusName = bus.eventBusName;
     this.eventBusArn = bus.eventBusArn;
+
+    // Closure event bus base
+    const eventBusName = this.eventBusName;
+    this.native = <NativeIntegration<EventBusBase<E>>>{
+      bootstrap: (context: Function<any, any>) => {
+        this.bus.grantPutEventsTo(context.resource);
+      },
+      preWarm: (prewarmContext: NativePreWarmContext) => {
+        prewarmContext.eventBridge();
+      },
+      call: async (args, preWarmContext) => {
+        const eventBridge = preWarmContext.eventBridge();
+        await eventBridge
+          .putEvents({
+            Entries: args.map((event) => ({
+              Detail: JSON.stringify(event.detail),
+              EventBusName: eventBusName,
+              DetailType: event["detail-type"],
+              Resources: event.resources,
+              Source: event.source,
+              Time: event.time ? new Date(event.time) : undefined,
+            })),
+          })
+          .promise();
+      },
+    };
   }
 
   asl(call: CallExpr, context: ASL) {
@@ -214,28 +245,6 @@ abstract class EventBusBase<E extends EventBusRuleInput>
     };
   }
 
-  native = <NativeIntegration<EventBusBase<E>>>{
-    bootstrap: (context: Function<any, any>) => {
-      this.bus.grantPutEventsTo(context.resource);
-    },
-    preWarm: (prewarmContext: NativePreWarmContext) => {
-      prewarmContext.eventBridge();
-    },
-    call: async (args, preWarmContext) => {
-      const eventBridge = preWarmContext.eventBridge();
-      await eventBridge.putEvents({
-        Entries: args.map((event) => ({
-          Detail: JSON.stringify(event.detail),
-          EventBusName: this.eventBusName,
-          DetailType: event["detail-type"],
-          Resources: event.resources,
-          Source: event.source,
-          Time: event.time ? new Date(event.time) : undefined,
-        })),
-      });
-    },
-  };
-
   /**
    * @inheritdoc
    */
@@ -248,8 +257,14 @@ abstract class EventBusBase<E extends EventBusRuleInput>
   }
 }
 
+export type EventBusPutEventInput<E extends EventBusRuleInput> = Partial<E> &
+  Pick<E, "detail" | "source" | "detail-type">;
+
 interface EventBusBase<E extends EventBusRuleInput> {
-  (event: Partial<E>, ...events: Partial<E>[]): void;
+  (
+    event: EventBusPutEventInput<E>,
+    ...events: EventBusPutEventInput<E>[]
+  ): void;
 }
 
 /**

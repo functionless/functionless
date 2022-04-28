@@ -19,12 +19,13 @@ import {
   ObjectLiteralExpr,
 } from "./expression";
 import { ASL } from "./asl";
-import { Function, isFunction } from "./function";
+import { Function, isFunction, NativePreWarmContext } from "./function";
 import { isTable } from "./table";
 
 import type { DynamoDB as AWSDynamoDB } from "aws-sdk";
 import { Integration, makeIntegration } from "./integration";
 import { AnyFunction } from "./util";
+import { IEventBus } from "./event-bridge/event-bus";
 
 type Item<T extends Table<any, any, any>> = T extends Table<infer I, any, any>
   ? I
@@ -356,6 +357,44 @@ export namespace $AWS {
         throw new Error(
           `$AWS.${kind} is only available within an '${ASL.ContextName}' context, but was called from within a '${context}' context.`
         );
+      },
+    });
+  }
+
+  type PutEventEntry<B extends IEventBus = IEventBus<any>> = Omit<
+    AWS.EventBridge.Types.PutEventsRequestEntry,
+    "EventBusName"
+  > & {
+    EventBusName: B;
+  };
+
+  export namespace EventBridge {
+    export const putEvents = makeIntegration<
+      <B extends IEventBus>(
+        request: Omit<AWS.EventBridge.Types.PutEventsRequest, "Entries"> & {
+          Entries: PutEventEntry<B>[];
+        }
+      ) => AWS.EventBridge.Types.PutEventsResponse,
+      "EventBridge.putEvent"
+    >({
+      kind: "EventBridge.putEvent",
+      native: {
+        // Access needs to be granted manually
+        bootstrap: () => {},
+        preWarm: (prewarmContext: NativePreWarmContext) => {
+          prewarmContext.eventBridge();
+        },
+        call: async ([request], preWarmContext) => {
+          const eventBridge = preWarmContext.eventBridge();
+          return await eventBridge
+            .putEvents({
+              Entries: request.Entries.map((e) => ({
+                ...e,
+                EventBusName: e.EventBusName.eventBusArn,
+              })),
+            })
+            .promise();
+        },
       },
     });
   }

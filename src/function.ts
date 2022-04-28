@@ -38,7 +38,7 @@ export interface IFunction<P, O> {
   >;
 }
 
-abstract class FunctionBase<P, O> implements IFunction<P, O>, Integration {
+abstract class FunctionBase<P, O> implements IFunction<P, O>, Integration<FunctionBase<P, O>> {
   readonly kind = "Function" as const;
   readonly native: NativeIntegration<FunctionBase<P, O>>;
   readonly functionlessKind = "Function";

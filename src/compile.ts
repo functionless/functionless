@@ -1,7 +1,7 @@
 import ts from "typescript";
 import path from "path";
 import { PluginConfig, TransformerExtras } from "ts-patch";
-import { BinaryOp, CanReference } from "./expression";
+import { BinaryOp } from "./expression";
 import { FunctionlessNode } from "./node";
 import { AppsyncResolver } from "./appsync";
 import { assertDefined } from "./assert";
@@ -267,17 +267,17 @@ export function compile(
         );
       }
 
-      function isEventBusPutCall(node: ts.Node): node is ts.CallExpression {
-        return ts.isCallExpression(node) && isEventBus(node.expression);
-      }
+      // function isEventBusPutCall(node: ts.Node): node is ts.CallExpression {
+      //   return ts.isCallExpression(node) && isEventBus(node.expression);
+      // }
 
-      function isFunctionCall(node: ts.Node): node is ts.CallExpression {
-        return ts.isCallExpression(node) && isFunction(node.expression);
-      }
+      // function isFunctionCall(node: ts.Node): node is ts.CallExpression {
+      //   return ts.isCallExpression(node) && isFunction(node.expression);
+      // }
 
-      function isFunction(node: ts.Node) {
-        return isFunctionlessClassOfKind(node, Function.FunctionlessType);
-      }
+      // function isFunction(node: ts.Node) {
+      //   return isFunctionlessClassOfKind(node, Function.FunctionlessType);
+      // }
 
       /**
        * Checks to see if a node is of type EventBus.
@@ -622,119 +622,38 @@ export function compile(
         context: ts.TransformationContext,
         nativeExprContext: NativeExprContext
       ): ts.Node | ts.Node[] | undefined {
-        if (isEventBusPutCall(node)) {
-          // add client
-          // get bus arn as env variable
-          // create client call that uses the env variable and the parameters
-          /*
-            in: bus(event1, event2)
-            out: (await eventBridgeClient.PutEvents({
-              Entries: [
-                {
-                  EventBusName: bus.bus.eventBusArn,
-                  Source: event1.source,
-                  DetailType: event1["detail-type"],
-                  Detail: JSON.parse(event1.detail)
-                }
-              ]
-              FunctionName: func.resource.functionName,
-              Payload: payload
-            }).promise()).Payload
-            */
-          return context.factory.createIdentifier("thisisbus");
-        } else if (isFunctionCall(node)) {
-          // add the function identifier to the integrations
-          nativeExprContext.registerIntegration(node.expression);
-          // call the integration call function with the prewarm context and arguments
-          // At this point, we know native will not be undefined
-          // await integration.native.call(args, preWarmContext)
-          // FIXME: doesn't work without an array
-          // TODO: Support both sync and async function invocations: https://github.com/sam-goodwin/functionless/issues/105
-          return [
-            context.factory.createAwaitExpression(
-              context.factory.createCallExpression(
-                context.factory.createPropertyAccessExpression(
+        if (ts.isCallExpression(node)) {
+          // Integration nodes have a static "kind" property.
+          if (isIntegrationNode(node.expression)) {
+            // add the function identifier to the integrations
+            nativeExprContext.registerIntegration(node.expression);
+            // call the integration call function with the prewarm context and arguments
+            // At this point, we know native will not be undefined
+            // await integration.native.call(args, preWarmContext)
+            // FIXME: doesn't work without an array
+            // TODO: Support both sync and async function invocations: https://github.com/sam-goodwin/functionless/issues/105
+            return [
+              context.factory.createAwaitExpression(
+                context.factory.createCallExpression(
                   context.factory.createPropertyAccessExpression(
-                    node.expression,
-                    "native"
+                    context.factory.createPropertyAccessExpression(
+                      node.expression,
+                      "native"
+                    ),
+                    "call"
                   ),
-                  "call"
-                ),
-                undefined,
-                [
-                  context.factory.createArrayLiteralExpression(node.arguments),
-                  // TODO: determine if this is needed at all?
-                  nativeExprContext.preWarmContext,
-                ]
-              )
-            ),
-          ];
-          // const client = context.factory.createUniqueName("lambda");
-          // return [
-          //   context.factory.createVariableStatement(undefined, [
-          //     context.factory.createVariableDeclaration(
-          //       client,
-          //       undefined,
-          //       undefined,
-          //       context.factory.createNewExpression(
-          //         context.factory.createPropertyAccessExpression(
-          //           awsClient,
-          //           "Lambda"
-          //         ),
-          //         undefined,
-          //         []
-          //       )
-          //     ),
-          //   ]),
-          //   /*
-          //   in: func(payload)
-          //   out: (await lambdaClient.invoke({
-          //     FunctionName: func.resource.functionName,
-          //     Payload: payload
-          //   }).promise()).Payload
-          //   */
-          //   context.factory.createPropertyAccessExpression(
-          //     context.factory.createAwaitExpression(
-          //       context.factory.createCallExpression(
-          //         context.factory.createPropertyAccessExpression(
-          //           context.factory.createCallExpression(
-          //             context.factory.createPropertyAccessExpression(
-          //               client,
-          //               "invoke"
-          //             ),
-          //             undefined,
-          //             [
-          //               context.factory.createObjectLiteralExpression([
-          //                 context.factory.createPropertyAssignment(
-          //                   "FunctionName",
-          //                   context.factory.createPropertyAccessExpression(
-          //                     context.factory.createPropertyAccessExpression(
-          //                       node.expression,
-          //                       "resource"
-          //                     ),
-          //                     "functionName"
-          //                   )
-          //                 ),
-          //                 ...(node.arguments.length > 0
-          //                   ? [
-          //                       context.factory.createPropertyAssignment(
-          //                         "Payload",
-          //                         node.arguments[0]
-          //                       ),
-          //                     ]
-          //                   : []),
-          //               ]),
-          //             ]
-          //           ),
-          //           "promise"
-          //         ),
-          //         undefined,
-          //         undefined
-          //       )
-          //     ),
-          //     "Payload"
-          //   ),
-          // ];
+                  undefined,
+                  [
+                    context.factory.createArrayLiteralExpression(
+                      node.arguments
+                    ),
+                    // TODO: determine if this is needed at all?
+                    nativeExprContext.preWarmContext,
+                  ]
+                )
+              ),
+            ];
+          }
         } else if (ts.isNewExpression(node)) {
           const newType = checker.getTypeAtLocation(node);
           // cannot create new resources in native runtime code.
@@ -989,8 +908,7 @@ export function compile(
           } else if (node.text === "null") {
             return newExpr("NullLiteralExpr", []);
           }
-          const kind = getKind(node);
-          if (kind !== undefined) {
+          if (isIntegrationNode(node)) {
             // if this is a reference to a Table or Lambda, retain it
             return ref(node);
           }
@@ -1016,8 +934,7 @@ export function compile(
             ts.factory.createStringLiteral(node.text),
           ]);
         } else if (ts.isPropertyAccessExpression(node)) {
-          const kind = getKind(node);
-          if (kind !== undefined) {
+          if (isIntegrationNode(node)) {
             // if this is a reference to a Table or Lambda, retain it
             return ref(node);
           }
@@ -1341,9 +1258,7 @@ export function compile(
         );
       }
 
-      function getKind(
-        node: ts.Node
-      ): Extract<CanReference, "kind"> | undefined {
+      function isIntegrationNode(node: ts.Node): boolean {
         const exprType = checker.getTypeAtLocation(node);
         const exprKind = exprType.getProperty("kind");
         if (exprKind) {
@@ -1351,11 +1266,9 @@ export function compile(
             exprKind,
             node
           );
-          if (exprKindType.isStringLiteral()) {
-            return exprKindType.value as any;
-          }
+          return exprKindType.isStringLiteral();
         }
-        return undefined;
+        return false;
       }
     };
   };

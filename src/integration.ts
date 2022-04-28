@@ -8,7 +8,7 @@ import { Function, NativeIntegration } from "./function";
 /**
  * All integration methods supported by functionless.
  */
-interface IntegrationMethods {
+interface IntegrationMethods<F extends AnyFunction> {
   /**
    * Integrate with VTL applications like AppAsync.
    * @private
@@ -22,7 +22,7 @@ interface IntegrationMethods {
   /**
    * Native javascript code integrations that execute at runtime like Lambda.
    */
-  native: NativeIntegration<AnyFunction>;
+  native: NativeIntegration<F>;
 }
 
 /**
@@ -73,16 +73,22 @@ interface IntegrationMethods {
  * Implement the unhandledContext function to customize the error message for unsupported contexts.
  * Otherwise the error will be: `${this.name} is not supported by context ${context.kind}.`
  */
-export interface Integration extends Partial<IntegrationMethods> {
+export interface Integration<
+  F extends AnyFunction = AnyFunction,
+  K extends string = string
+> extends Partial<IntegrationMethods<F>> {
   /**
    * Integration Handler kind - for example StepFunction.describeExecution
    */
-  readonly kind: string;
+  readonly kind: K;
   /**
    * Optional method that allows overriding the {@link Error} thrown when a integration is not supported by a handler.
    */
-  readonly unhandledContext?: (kind: string, context: CallContext['kind']) => Error;
-};
+  readonly unhandledContext?: (
+    kind: string,
+    context: CallContext["kind"]
+  ) => Error;
+}
 
 /**
  * Internal wrapper class for Integration handlers that provides default error handling for unsupported integrations.
@@ -90,13 +96,15 @@ export interface Integration extends Partial<IntegrationMethods> {
  * Functionless wraps Integration at runtime with this class.
  * @private
  */
-export class IntegrationImpl implements IntegrationMethods {
+export class IntegrationImpl<F extends AnyFunction = AnyFunction>
+  implements IntegrationMethods<F>
+{
   readonly kind: string;
   constructor(readonly integration: Integration) {
     this.kind = integration.kind;
   }
 
-  private unhandledContext<T>(context: CallContext['kind']): T {
+  private unhandledContext<T>(context: CallContext["kind"]): T {
     if (this.integration.unhandledContext) {
       throw this.integration.unhandledContext(this.kind, context);
     }
@@ -117,17 +125,17 @@ export class IntegrationImpl implements IntegrationMethods {
     return this.unhandledContext(context.kind);
   }
 
-  public get native(): NativeIntegration<AnyFunction> {
+  public get native(): NativeIntegration<F> {
     if (this.integration.native) {
       return this.integration.native;
     }
-    return this.unhandledContext('Function');
+    return this.unhandledContext("Function");
   }
 }
 
 /**
  * Helper method which masks an {@link Integration} object as a function of any form.
- * 
+ *
  * ```ts
  * export namespace MyIntegrations {
  *    export const callMe = makeIntegration<(payload: string) => void>({
@@ -135,18 +143,19 @@ export class IntegrationImpl implements IntegrationMethods {
  *    })
  * }
  * ```
- * 
+ *
  * Creates an integration object at callMe, which is callable by a user.
- * 
+ *
  * ```ts
  * MyIntegrations.callMe("some string");
  * ```
- * 
+ *
  * @private
  */
-export function makeIntegration<F extends AnyFunction>(
-  integration: Integration
-): F {
+export function makeIntegration<
+  F extends AnyFunction,
+  K extends string = string
+>(integration: Integration<F, K>): F {
   return integration as unknown as F;
 }
 
@@ -156,9 +165,7 @@ export function makeIntegration<F extends AnyFunction>(
  */
 export function findIntegration(call: CallExpr): IntegrationImpl | undefined {
   const integration = find(call.expr);
-  return integration
-    ? new IntegrationImpl(integration)
-    : undefined;
+  return integration ? new IntegrationImpl(integration) : undefined;
 
   function find(expr: FunctionlessNode): any {
     if (expr.kind === "PropAccessExpr") {
