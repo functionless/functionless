@@ -1,6 +1,42 @@
-const { readFileSync, writeFileSync } = require("fs");
-const { join } = require("path");
-const { typescript } = require("projen");
+const { readFileSync, writeFileSync, mkdirSync, chmodSync } = require("fs");
+const { join, dirname } = require("path");
+const { typescript, Component } = require("projen");
+
+/**
+ * Adds githooks into the /git/hooks folder during projen synth.
+ *
+ * @see https://git-scm.com/docs/githooks
+ *
+ * githooks: {
+ *    preCommit: ["lint-staged"] // array of bash commands
+ * }
+ */
+class GitHooksComponent extends Component {
+  constructor(project, options) {
+    super(project);
+
+    this.options = options;
+  }
+
+  synthesize() {
+    if (this.options.githooks && this.options.githooks.preCommit) {
+      const outdir = this.project.outdir;
+      const preCommitFile = join(outdir, ".git/hooks/pre-commit");
+      console.log("creating ", preCommitFile);
+      try {
+        mkdirSync(dirname(preCommitFile));
+      } catch {}
+
+      writeFileSync(
+        preCommitFile,
+        `#!/bin/sh
+${this.options.githooks.preCommit.join("\n")}`
+      );
+
+      chmodSync(preCommitFile, "755");
+    }
+  }
+}
 
 /**
  * Projen does not currently support a way to set `*` for deerDependency versions.
@@ -10,20 +46,27 @@ const { typescript } = require("projen");
  *
  * @aws-cdk 2.0 uses pre-release version tags (ex: 2.17.0-alpha.0) for all experimental features.
  * NPM/Semver does not allow version ranges for versions with pre-release tags (ex: 2.17.0-alpha.0)
- * 
+ *
  * This means we cannot specify a peer version range for @aws-cdk/aws-appsync-alpha, pinning consumers to one CDK version
  * or ignoring/overriding npm/yarn errors and warnings.
- * 
+ *
  * TODO: Remove this hack once https://github.com/projen/projen/issues/1802 is resolved.
  */
 class CustomTypescriptProject extends typescript.TypeScriptProject {
   constructor(opts) {
     super(opts);
 
+    new GitHooksComponent(this, opts);
+
     this.postSynthesize = this.postSynthesize.bind(this);
   }
+
   postSynthesize() {
     super.postSynthesize();
+
+    /**
+     * Hack to fix peer dep issue
+     */
 
     const outdir = this.outdir;
     const rootPackageJson = join(outdir, "package.json");
@@ -50,6 +93,7 @@ const project = new CustomTypescriptProject({
     "@types/fs-extra",
     "@types/minimatch",
     "amplify-appsync-simulator",
+    "prettier",
     "ts-node",
     "ts-patch",
   ],
@@ -83,6 +127,15 @@ const project = new CustomTypescriptProject({
   },
   gitignore: [".DS_Store"],
   releaseToNpm: true,
+  githooks: {
+    preCommit: ["npx -y lint-staged"],
+  },
+});
+
+const packageJson = project.tryFindObjectFile("package.json");
+
+packageJson.addOverride("lint-staged", {
+  "*.{ts,js,json}": "prettier --write",
 });
 
 project.compileTask.prependExec(
