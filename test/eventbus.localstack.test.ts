@@ -147,6 +147,15 @@ testResource(
 
     const item = await getItem(3);
 
+    if (!item.Item) {
+      console.log(context.bus, context.table);
+      console.log(
+        await DB.scan({
+          TableName: context.table,
+        }).promise()
+      );
+    }
+
     expect(item.Item).toBeDefined();
   }
 );
