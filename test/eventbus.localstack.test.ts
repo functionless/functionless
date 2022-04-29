@@ -117,45 +117,45 @@ testResource(
     };
   },
   async (context) => {
+    const id = `${context.bus}${Math.floor(Math.random() * 1000000)}`;
+
     await EB.putEvents({
       Entries: [
         {
           EventBusName: context.bus,
           Source: "test",
           Detail: JSON.stringify({
-            id: context.bus,
+            id,
           }),
         },
       ],
     }).promise();
     const getItem = async (
-      attempts: number
+      attempts: number,
+      waitMillis: number,
+      factor: number
     ): Promise<DynamoDB.GetItemOutput> => {
       const item = await DB.getItem({
         Key: {
-          id: { S: context.bus },
+          id: { S: id },
         },
         TableName: context.table,
         ConsistentRead: true,
       }).promise();
       if (!item.Item && attempts) {
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-        return await getItem(attempts - 1);
+        await new Promise((resolve) => setTimeout(resolve, waitMillis));
+        return await getItem(attempts - 1, waitMillis * factor, factor);
       }
       return item;
     };
 
-    const item = await getItem(3);
-
-    if (!item.Item) {
-      await new Promise((resolve) => setTimeout(resolve, 10000));
-      console.log(context.bus, context.table);
-      console.log(
-        await DB.scan({
-          TableName: context.table,
-        }).promise()
-      );
-    }
+    // Give time for the event to make it to dynamo. Localstack is pretty slow.
+    // 1 - 1s
+    // 2 - 2s
+    // 3 - 4s
+    // 4 - 8s
+    // 5 - 16s
+    const item = await getItem(5, 1000, 2);
 
     expect(item.Item).toBeDefined();
   }
