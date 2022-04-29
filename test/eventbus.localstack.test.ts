@@ -139,7 +139,7 @@ testResource(
         ConsistentRead: true,
       }).promise();
       if (!item.Item && attempts) {
-        await new Promise((resolve) => setTimeout(resolve, 100));
+        await new Promise((resolve) => setTimeout(resolve, 1000));
         return await getItem(attempts - 1);
       }
       return item;
@@ -148,6 +148,7 @@ testResource(
     const item = await getItem(3);
 
     if (!item.Item) {
+      await new Promise((resolve) => setTimeout(resolve, 10000));
       console.log(context.bus, context.table);
       console.log(
         await DB.scan({
