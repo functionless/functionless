@@ -3,13 +3,9 @@ const { join } = require("path");
 const { typescript, TextFile } = require("projen");
 
 /**
- * Adds githooks into the /git/hooks folder during projen synth.
+ * Adds githooks into the .git/hooks folder during projen synth.
  *
  * @see https://git-scm.com/docs/githooks
- *
- * githooks: {
- *    preCommit: ["lint-staged"] // array of bash commands
- * }
  */
 class GitHooksPreCommitComponent extends TextFile {
   constructor(project) {
