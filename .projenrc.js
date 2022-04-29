@@ -22,7 +22,6 @@ class GitHooksComponent extends Component {
     if (this.options.githooks && this.options.githooks.preCommit) {
       const outdir = this.project.outdir;
       const preCommitFile = join(outdir, ".git/hooks/pre-commit");
-      console.log("creating ", preCommitFile);
       try {
         mkdirSync(dirname(preCommitFile));
       } catch {}
@@ -81,7 +80,7 @@ class CustomTypescriptProject extends typescript.TypeScriptProject {
       },
     };
 
-    writeFileSync(rootPackageJson, JSON.stringify(updated, null, 2));
+    writeFileSync(rootPackageJson, `${JSON.stringify(updated, null, 2)}\n`);
   }
 }
 
