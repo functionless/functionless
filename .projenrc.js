@@ -1,6 +1,23 @@
-const { readFileSync, writeFileSync } = require("fs");
+const { readFileSync, writeFileSync, chmodSync } = require("fs");
 const { join } = require("path");
-const { typescript } = require("projen");
+const { typescript, TextFile } = require("projen");
+
+/**
+ * Adds githooks into the .git/hooks folder during projen synth.
+ *
+ * @see https://git-scm.com/docs/githooks
+ */
+class GitHooksPreCommitComponent extends TextFile {
+  constructor(project) {
+    super(project, ".git/hooks/pre-commit", {
+      lines: ["#!/bin/sh", "npx -y lint-staged"],
+    });
+  }
+
+  postSynthesize() {
+    chmodSync(this.path, "755");
+  }
+}
 
 /**
  * Projen does not currently support a way to set `*` for deerDependency versions.
@@ -10,20 +27,27 @@ const { typescript } = require("projen");
  *
  * @aws-cdk 2.0 uses pre-release version tags (ex: 2.17.0-alpha.0) for all experimental features.
  * NPM/Semver does not allow version ranges for versions with pre-release tags (ex: 2.17.0-alpha.0)
- * 
+ *
  * This means we cannot specify a peer version range for @aws-cdk/aws-appsync-alpha, pinning consumers to one CDK version
  * or ignoring/overriding npm/yarn errors and warnings.
- * 
+ *
  * TODO: Remove this hack once https://github.com/projen/projen/issues/1802 is resolved.
  */
 class CustomTypescriptProject extends typescript.TypeScriptProject {
   constructor(opts) {
     super(opts);
 
+    new GitHooksPreCommitComponent(this);
+
     this.postSynthesize = this.postSynthesize.bind(this);
   }
+
   postSynthesize() {
     super.postSynthesize();
+
+    /**
+     * Hack to fix peer dep issue
+     */
 
     const outdir = this.outdir;
     const rootPackageJson = join(outdir, "package.json");
@@ -38,7 +62,7 @@ class CustomTypescriptProject extends typescript.TypeScriptProject {
       },
     };
 
-    writeFileSync(rootPackageJson, JSON.stringify(updated, null, 2));
+    writeFileSync(rootPackageJson, `${JSON.stringify(updated, null, 2)}\n`);
   }
 }
 
@@ -50,6 +74,7 @@ const project = new CustomTypescriptProject({
     "@types/fs-extra",
     "@types/minimatch",
     "amplify-appsync-simulator",
+    "prettier",
     "ts-node",
     "ts-patch",
   ],
@@ -83,6 +108,12 @@ const project = new CustomTypescriptProject({
   },
   gitignore: [".DS_Store"],
   releaseToNpm: true,
+});
+
+const packageJson = project.tryFindObjectFile("package.json");
+
+packageJson.addOverride("lint-staged", {
+  "*.{ts,js,json}": "prettier --write",
 });
 
 project.compileTask.prependExec(
