@@ -128,13 +128,24 @@ testResource(
         },
       ],
     }).promise();
-    const item = await DB.getItem({
-      Key: {
-        id: { S: context.bus },
-      },
-      TableName: context.table,
-      ConsistentRead: true,
-    }).promise();
+    const getItem = async (
+      attempts: number
+    ): Promise<DynamoDB.GetItemOutput> => {
+      const item = await DB.getItem({
+        Key: {
+          id: { S: context.bus },
+        },
+        TableName: context.table,
+        ConsistentRead: true,
+      }).promise();
+      if (!item.Item && attempts) {
+        await new Promise((resolve) => setTimeout(resolve, 100));
+        return await getItem(attempts - 1);
+      }
+      return item;
+    };
+
+    const item = await getItem(3);
 
     expect(item.Item).toBeDefined();
   }
