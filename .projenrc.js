@@ -1,6 +1,6 @@
-const { readFileSync, writeFileSync, mkdirSync, chmodSync } = require("fs");
-const { join, dirname } = require("path");
-const { typescript, Component } = require("projen");
+const { readFileSync, writeFileSync, chmodSync } = require("fs");
+const { join } = require("path");
+const { typescript, TextFile } = require("projen");
 
 /**
  * Adds githooks into the /git/hooks folder during projen synth.
@@ -11,29 +11,15 @@ const { typescript, Component } = require("projen");
  *    preCommit: ["lint-staged"] // array of bash commands
  * }
  */
-class GitHooksComponent extends Component {
-  constructor(project, options) {
-    super(project);
-
-    this.options = options;
+class GitHooksPreCommitComponent extends TextFile {
+  constructor(project) {
+    super(project, ".git/hooks/pre-commit", {
+      lines: ["#!/bin/sh", "npx -y lint-staged"],
+    });
   }
 
-  synthesize() {
-    if (this.options.githooks && this.options.githooks.preCommit) {
-      const outdir = this.project.outdir;
-      const preCommitFile = join(outdir, ".git/hooks/pre-commit");
-      try {
-        mkdirSync(dirname(preCommitFile));
-      } catch {}
-
-      writeFileSync(
-        preCommitFile,
-        `#!/bin/sh
-${this.options.githooks.preCommit.join("\n")}`
-      );
-
-      chmodSync(preCommitFile, "755");
-    }
+  postSynthesize() {
+    chmodSync(this.path, "755");
   }
 }
 
@@ -55,7 +41,7 @@ class CustomTypescriptProject extends typescript.TypeScriptProject {
   constructor(opts) {
     super(opts);
 
-    new GitHooksComponent(this, opts);
+    new GitHooksPreCommitComponent(this);
 
     this.postSynthesize = this.postSynthesize.bind(this);
   }
@@ -126,9 +112,6 @@ const project = new CustomTypescriptProject({
   },
   gitignore: [".DS_Store"],
   releaseToNpm: true,
-  githooks: {
-    preCommit: ["npx -y lint-staged"],
-  },
 });
 
 const packageJson = project.tryFindObjectFile("package.json");
