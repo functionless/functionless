@@ -19,6 +19,8 @@ class GitHooksPreCommitComponent extends TextFile {
   }
 }
 
+const MIN_CDK_VERSION = "2.20.0";
+
 /**
  * Projen does not currently support a way to set `*` for deerDependency versions.
  * https://github.com/projen/projen/issues/1802
@@ -71,17 +73,35 @@ const project = new CustomTypescriptProject({
   name: "functionless",
   deps: ["fs-extra", "minimatch"],
   devDeps: [
+    `@aws-cdk/aws-appsync-alpha@${MIN_CDK_VERSION}-alpha.0`,
     "@types/fs-extra",
     "@types/minimatch",
+    "@types/uuid",
     "amplify-appsync-simulator",
     "prettier",
     "ts-node",
     "ts-patch",
+    /**
+     * For CDK Local Stack tests
+     */
+    `@aws-cdk/cloud-assembly-schema@${MIN_CDK_VERSION}`,
+    `@aws-cdk/cloudformation-diff@${MIN_CDK_VERSION}`,
+    `@aws-cdk/cx-api@${MIN_CDK_VERSION}`,
+    `aws-cdk@${MIN_CDK_VERSION}`,
+    `cdk-assets@${MIN_CDK_VERSION}`,
+    "promptly",
+    "proxy-agent",
+    /**
+     * End Local
+     */
   ],
+  scripts: {
+    localstack: "./scripts/localstack",
+  },
   peerDeps: [
-    "@aws-cdk/aws-appsync-alpha@^2.17.0-alpha.0",
-    "aws-cdk-lib@^2.17.0",
+    `aws-cdk-lib@^${MIN_CDK_VERSION}`,
     "constructs@^10.0.0",
+    "esbuild",
     "typesafe-dynamodb@^0.1.5",
     "typescript@^4.6.2",
   ],
@@ -108,6 +128,11 @@ const project = new CustomTypescriptProject({
   },
   gitignore: [".DS_Store"],
   releaseToNpm: true,
+  jestOptions: {
+    jestConfig: {
+      coveragePathIgnorePatterns: ["/test/", "/node_modules/"],
+    },
+  },
 });
 
 const packageJson = project.tryFindObjectFile("package.json");
@@ -124,6 +149,13 @@ project.testTask.prependExec(
   "cd ./test-app && yarn && yarn build && yarn synth"
 );
 project.testTask.prependExec("ts-patch install -s");
+project.testTask.prependExec("./scripts/localstack");
+project.testTask.exec("localstack stop");
+
+project.testTask.env("DEFAULT_REGION", "ap-northeast-1");
+project.testTask.env("AWS_ACCOUNT_ID", "000000000000");
+project.testTask.env("AWS_ACCESS_KEY_ID", "test");
+project.testTask.env("AWS_SECRET_ACCESS_KEY", "test");
 
 project.addPackageIgnore("/test-app");
 

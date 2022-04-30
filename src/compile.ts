@@ -221,7 +221,7 @@ export function compile(
       /**
        * Checks to see if a node is of type EventBus.
        * The node could be any kind of node that returns an event bus rule.
-       * 
+       *
        * Matches the patterns:
        *   * IEventBus
        */
@@ -232,10 +232,10 @@ export function compile(
       /**
        * Checks to see if a node is of type {@link EventBusRule}.
        * The node could be any kind of node that returns an event bus rule.
-       * 
+       *
        * Matches the patterns:
        *   * IEventBusRule
-      */
+       */
       function isEventBusRule(node: ts.Node) {
         return isFunctionlessClassOfKind(node, EventBusRule.FunctionlessType);
       }
@@ -243,7 +243,7 @@ export function compile(
       /**
        * Checks to see if a node is of type {@link EventBusTransform}.
        * The node could be any kind of node that returns an event bus rule.
-       * 
+       *
        * Matches the patterns:
        *   * IEventBusTransform
        */
