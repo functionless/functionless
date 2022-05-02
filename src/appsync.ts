@@ -158,15 +158,57 @@ export class AppsyncResolver<
       "typeName" | "fieldName" | "cachingConfig"
     >
   ): SynthesizedAppsyncResolver {
+    const fields = this.getResolvableFields(api);
+
+    return new SynthesizedAppsyncResolver(
+      api,
+      `${options.typeName}${options.fieldName}Resolver`,
+      {
+        ...options,
+        api,
+        templates: fields.templates,
+        dataSource: fields.dataSource,
+        requestMappingTemplate: fields.requestMappingTemplate,
+        responseMappingTemplate: fields.responseMappingTemplate,
+        pipelineConfig: fields.pipelineConfig,
+      }
+    );
+  }
+
+  /**
+   * Returns a resolvable field to use with AppSync CDK's Code field strategy.
+   */
+  public getField(
+    api: appsync.GraphqlApi,
+    returnType: appsync.GraphqlType,
+    options?: Omit<
+      appsync.ResolvableFieldOptions,
+      | "returnType"
+      | keyof ReturnType<
+          AppsyncResolver<Arguments, Result, Source>["getResolvableFields"]
+        >
+    >
+  ): appsync.ResolvableField {
+    const fields = this.getResolvableFields(api);
+
+    return new appsync.ResolvableField({
+      ...options,
+      returnType,
+      dataSource: fields.dataSource,
+      pipelineConfig: fields.pipelineConfig,
+      requestMappingTemplate: fields.requestMappingTemplate,
+      responseMappingTemplate: fields.responseMappingTemplate,
+    });
+  }
+
+  private getResolvableFields(api: appsync.GraphqlApi) {
     const resolverCount = countResolvers(this.decl);
-    const templates: string[] = [];
 
+    const [pipelineConfig, responseMappingTemplate, innerTemplates] =
+      synthesizeFunctions(api, this.decl);
+
+    // mock integration
     if (resolverCount === 0) {
-      // mock integration
-      const [pipelineConfig, responseMappingTemplate] = synthesizeFunctions(
-        this.decl
-      );
-
       if (pipelineConfig.length !== 0) {
         throw new Error(
           `expected 0 functions in pipelineConfig, but found ${pipelineConfig.length}`
@@ -174,73 +216,51 @@ export class AppsyncResolver<
       }
 
       const requestMappingTemplate = `{
-  "version": "2018-05-29",
-  "payload": null
-}`;
-      templates.push(requestMappingTemplate);
+    "version": "2018-05-29",
+    "payload": null
+  }`;
 
-      const resolver = new SynthesizedAppsyncResolver(
-        api,
-        `${options.typeName}${options.fieldName}Resolver`,
-        {
-          ...options,
-          api,
-          templates,
-          dataSource: singletonConstruct(
-            api,
-            "None",
-            (scope, id) =>
-              new appsync.NoneDataSource(scope, id, {
-                api,
-                name: "None",
-              })
-          ),
-          requestMappingTemplate: appsync.MappingTemplate.fromString(
-            requestMappingTemplate
-          ),
-          responseMappingTemplate: appsync.MappingTemplate.fromString(
-            responseMappingTemplate
-          ),
-        }
-      );
-
-      templates.push(responseMappingTemplate);
-      return resolver;
-      // } else if (resolverCount === 1) {
-      // single stage
+      return {
+        templates: [
+          requestMappingTemplate,
+          ...innerTemplates,
+          responseMappingTemplate,
+        ],
+        dataSource: singletonConstruct(api, "None", (scope, id) =>
+          scope.addNoneDataSource(id)
+        ),
+        requestMappingTemplate: appsync.MappingTemplate.fromString(
+          requestMappingTemplate
+        ),
+        responseMappingTemplate: appsync.MappingTemplate.fromString(
+          responseMappingTemplate
+        ),
+      };
     } else {
       // pipeline resolver
       const requestMappingTemplate = "{}";
-      templates.push(requestMappingTemplate);
 
-      const [pipelineConfig, responseMappingTemplate] = synthesizeFunctions(
-        this.decl
-      );
-
-      const resolver = new SynthesizedAppsyncResolver(
-        api,
-        `${options.typeName}${options.fieldName}Resolver`,
-        {
-          ...options,
-          api,
-          templates,
-          pipelineConfig,
-          requestMappingTemplate: appsync.MappingTemplate.fromString(
-            requestMappingTemplate
-          ),
-          responseMappingTemplate: appsync.MappingTemplate.fromString(
-            responseMappingTemplate
-          ),
-        }
-      );
-      templates.push(responseMappingTemplate);
-
-      return resolver;
+      return {
+        templates: [
+          requestMappingTemplate,
+          ...innerTemplates,
+          responseMappingTemplate,
+        ],
+        pipelineConfig,
+        requestMappingTemplate: appsync.MappingTemplate.fromString(
+          requestMappingTemplate
+        ),
+        responseMappingTemplate: appsync.MappingTemplate.fromString(
+          responseMappingTemplate
+        ),
+      };
     }
 
     function synthesizeFunctions(
+      api: appsync.GraphqlApi,
       decl: FunctionDecl<ResolverFunction<Arguments, Result, Source>>
     ) {
+      const templates: string[] = [];
       let template =
         resolverCount === 0 ? new VTL() : new VTL(VTL.CircuitBreaker);
       const functions = decl.body.statements
@@ -363,7 +383,10 @@ export class AppsyncResolver<
               templates.push(requestMappingTemplateString);
               templates.push(responseMappingTemplate);
               template = new VTL(VTL.CircuitBreaker);
-              const name = getUniqueName(api, integration.kind);
+              const name = getUniqueName(
+                api,
+                appsyncSafeName(integration.kind)
+              );
               return dataSource.createFunction({
                 name,
                 requestMappingTemplate: appsync.MappingTemplate.fromString(
@@ -393,7 +416,7 @@ export class AppsyncResolver<
           (func): func is Exclude<typeof func, undefined> => func !== undefined
         );
 
-      return [functions, template.toVTL()] as const;
+      return [functions, template.toVTL(), templates] as const;
     }
 
     function countResolvers(
@@ -717,6 +740,11 @@ export interface time {
     format: string,
     timezone: string
   ): string;
+}
+
+// [_A-Za-z][_0-9A-Za-z]*
+function appsyncSafeName(name: string) {
+  return name.replace(/\./g, "_");
 }
 
 const uniqueNamesSymbol = Symbol.for("functionless.UniqueNames");
