@@ -141,6 +141,18 @@ export class AppsyncResolver<
    *
    * const api = new appsync.GraphQLApi(..);
    *
+   * ```ts
+   * const getPerson = new AppsyncResolver<{id: string}, Person | undefined>(
+   *   ($context, id) => {
+   *     const person = table.get({
+   *       key: {
+   *         id: $util.toDynamoDB(id)
+   *       }
+   *     });
+   *     return person;
+   *   });
+   * ```
+   *
    * getPerson.createResolver(api, {
    *   typeName: "Query",
    *   fieldName: "getPerson"
@@ -176,7 +188,38 @@ export class AppsyncResolver<
   }
 
   /**
-   * Returns a resolvable field to use with AppSync CDK's Code field strategy.
+   * Generate a resolvable field to use with AppSync CDK's Code field strategy.
+   *
+   * ```ts
+   * import * as appsync from "@aws-cdk/aws-appsync-alpha";
+   *
+   * const api = new appsync.GraphQLApi(..);
+   *
+   * ```ts
+   * const getPerson = new AppsyncResolver<{id: string}, Person | undefined>(
+   *   ($context, id) => {
+   *     const person = table.get({
+   *       key: {
+   *         id: $util.toDynamoDB(id)
+   *       }
+   *     });
+   *     return person;
+   *   });
+   * ```
+   *
+   * // code first person type
+   * const personType = api.addType(appsync.ObjectType(...));
+   *
+   * api.addQuery("getPerson", getPerson.getField(api, personType))
+   * getPerson.createResolver(api, {
+   *   typeName: "Query",
+   *   fieldName: "getPerson"
+   * });
+   * ```
+   *
+   * @param api app sync API which the data sources construct will be added under.
+   * @param returnType the code-first graphql return type of this field
+   * @param options optional fields like arguments and directive to add to the schema
    */
   public getField(
     api: appsync.GraphqlApi,
