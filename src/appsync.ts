@@ -216,9 +216,9 @@ export class AppsyncResolver<
       }
 
       const requestMappingTemplate = `{
-    "version": "2018-05-29",
-    "payload": null
-  }`;
+  "version": "2018-05-29",
+  "payload": null
+}`;
 
       return {
         templates: [

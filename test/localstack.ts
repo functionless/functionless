@@ -47,8 +47,6 @@ export const deployStack = async (app: App, stack: Stack) => {
     cloudAssembly.getStackArtifact(stack.artifactId).manifest
   ) as cxapi.CloudFormationStackArtifact;
 
-  console.log(JSON.stringify(stackArtifact.template, null, 2));
-
   await cfn.deployStack({
     stack: stackArtifact,
     force: true,
@@ -106,7 +104,7 @@ export const localstackTestSuite = (
       if (output) {
         return Object.fromEntries(
           Object.entries(output.outputs).map(([key, value]) => {
-            new CfnOutput(construct, key, {
+            new CfnOutput(construct, `${key}_out}`, {
               exportName: construct.node.addr + key,
               value,
             });
