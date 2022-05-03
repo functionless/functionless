@@ -4,12 +4,12 @@ import {
   DockerImage,
   Tokenization,
 } from "aws-cdk-lib";
+import * as appsync from "@aws-cdk/aws-appsync-alpha";
 import { CallExpr, isVariableReference } from "./expression";
-import { VTL } from "./vtl";
 import { ASL } from "./asl";
 
 // @ts-ignore - imported for typedoc
-import type { AppsyncResolver } from "./appsync";
+import type { AppsyncResolver, AppSyncVtlIntegration } from "./appsync";
 import { NativeFunctionDecl, isNativeFunctionDecl } from "./declaration";
 import { Construct } from "constructs";
 import { AnyFunction } from "./util";
@@ -38,11 +38,15 @@ export interface IFunction<P, O> {
   >;
 }
 
-abstract class FunctionBase<P, O> implements IFunction<P, O>, Integration<FunctionBase<P, O>> {
+abstract class FunctionBase<P, O>
+  implements IFunction<P, O>, Integration<FunctionBase<P, O>>
+{
   readonly kind = "Function" as const;
   readonly native: NativeIntegration<FunctionBase<P, O>>;
   readonly functionlessKind = "Function";
   public static readonly FunctionlessType = "Function";
+
+  readonly appSyncVtl: AppSyncVtlIntegration;
 
   // @ts-ignore - this makes `F` easily available at compile time
   readonly __functionBrand: ConditionalFunction<P, O>;
@@ -84,16 +88,27 @@ abstract class FunctionBase<P, O> implements IFunction<P, O>, Integration<Functi
         preWarmContext.lambda();
       },
     };
-  }
 
-  public vtl(call: CallExpr, context: VTL) {
-    const payloadArg = call.getArgument("payload")?.expr;
-    const payload = payloadArg ? context.eval(payloadArg) : "$null";
+    this.appSyncVtl = {
+      dataSourceId: () => resource.node.addr,
+      dataSource(api, id) {
+        return new appsync.LambdaDataSource(api, id, {
+          api,
+          lambdaFunction: resource,
+        });
+      },
+      request(call, context) {
+        const payloadArg = call.getArgument("payload");
+        const payload = payloadArg?.expr
+          ? context.eval(payloadArg.expr)
+          : "$null";
 
-    const request = context.var(
-      `{"version": "2018-05-29", "operation": "Invoke", "payload": ${payload}}`
-    );
-    return context.json(request);
+        const request = context.var(
+          `{"version": "2018-05-29", "operation": "Invoke", "payload": ${payload}}`
+        );
+        return context.json(request);
+      },
+    };
   }
 
   public asl(call: CallExpr, context: ASL) {

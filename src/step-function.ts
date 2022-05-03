@@ -1,3 +1,4 @@
+import * as appsync from "@aws-cdk/aws-appsync-alpha";
 import { Construct } from "constructs";
 import {
   Arn,
@@ -36,6 +37,7 @@ import {
   EventBusRule,
 } from "./event-bridge";
 import { Integration, makeIntegration } from "./integration";
+import { AppSyncVtlIntegration } from "./appsync";
 
 export type AnyStepFunction =
   | ExpressStepFunction<any, any>
@@ -376,6 +378,8 @@ abstract class BaseStepFunction<P extends Record<string, any> | undefined, O>
   readonly decl: FunctionDecl<(arg: P) => O>;
   readonly resource: aws_stepfunctions.CfnStateMachine;
 
+  readonly appSyncVtl: AppSyncVtlIntegration;
+
   // @ts-ignore
   readonly __functionBrand: (arg: P) => O;
 
@@ -446,32 +450,33 @@ abstract class BaseStepFunction<P extends Record<string, any> | undefined, O>
 
     this.stateMachineName = this.resource.attrName;
     this.stateMachineArn = this.resource.attrArn;
-  }
 
-  vtl(call: CallExpr, context: VTL) {
-    const { name, input, traceHeader } = retrieveMachineArgs(call);
+    // Integration object for appsync vtl
+    this.appSyncVtl = this.appSyncIntegration({
+      request: (call, context) => {
+        const { name, input, traceHeader } = retrieveMachineArgs(call);
 
-    const inputObj = context.var("{}");
-    input &&
-      context.put(
-        inputObj,
-        context.str("input"),
-        `$util.toJson(${context.eval(input)})`
-      );
-    name && context.put(inputObj, context.str("name"), context.eval(name));
-    traceHeader &&
-      context.put(
-        inputObj,
-        context.str("traceHeader"),
-        context.eval(traceHeader)
-      );
-    context.put(
-      inputObj,
-      context.str("stateMachineArn"),
-      context.str(this.stateMachineArn)
-    );
+        const inputObj = context.var("{}");
+        input &&
+          context.put(
+            inputObj,
+            context.str("input"),
+            `$util.toJson(${context.eval(input)})`
+          );
+        name && context.put(inputObj, context.str("name"), context.eval(name));
+        traceHeader &&
+          context.put(
+            inputObj,
+            context.str("traceHeader"),
+            context.eval(traceHeader)
+          );
+        context.put(
+          inputObj,
+          context.str("stateMachineArn"),
+          context.str(this.stateMachineArn)
+        );
 
-    return `{
+        return `{
   "version": "2018-05-29",
   "method": "POST",
   "resourcePath": "/",
@@ -488,6 +493,74 @@ abstract class BaseStepFunction<P extends Record<string, any> | undefined, O>
     "body": $util.toJson(${inputObj})
   }
 }`;
+      },
+    });
+  }
+
+  appSyncIntegration(
+    integration: Pick<AppSyncVtlIntegration, "request">
+  ): AppSyncVtlIntegration {
+    return {
+      ...integration,
+      dataSourceId: () => this.resource.node.addr,
+      dataSource: (api, dataSourceId) => {
+        const ds = new appsync.HttpDataSource(api, dataSourceId, {
+          api,
+          endpoint: `https://${
+            this.getStepFunctionType() ===
+            aws_stepfunctions.StateMachineType.EXPRESS
+              ? "sync-states"
+              : "states"
+          }.${this.resource.stack.region}.amazonaws.com/`,
+          authorizationConfig: {
+            signingRegion: api.stack.region,
+            signingServiceName: "states",
+          },
+        });
+
+        this.grantRead(ds.grantPrincipal);
+        if (
+          this.getStepFunctionType() ===
+          aws_stepfunctions.StateMachineType.EXPRESS
+        ) {
+          this.grantStartSyncExecution(ds.grantPrincipal);
+        } else {
+          this.grantStartExecution(ds.grantPrincipal);
+        }
+        return ds;
+      },
+      result: (resultVariable) => {
+        const returnValName = "$sfn__result";
+
+        if (
+          this.getStepFunctionType() ===
+          aws_stepfunctions.StateMachineType.EXPRESS
+        ) {
+          return {
+            returnVariable: returnValName,
+            template: `#if(${resultVariable}.statusCode == 200)
+    #set(${returnValName} = $util.parseJson(${resultVariable}.body))
+    #if(${returnValName}.output == 'null')
+    $util.qr(${returnValName}.put("output", $null))
+    #else
+    #set(${returnValName}.output = $util.parseJson(${returnValName}.output))
+    #end
+    #else 
+    $util.error(${resultVariable}.body, "${resultVariable}.statusCode")
+    #end`,
+          };
+        } else {
+          return {
+            returnVariable: returnValName,
+            template: `#if(${resultVariable}.statusCode == 200)
+    #set(${returnValName} = $util.parseJson(${resultVariable}.body))
+    #else 
+    $util.error(${resultVariable}.body, "${resultVariable}.statusCode")
+    #end`,
+          };
+        }
+      },
+    };
   }
 
   asl(call: CallExpr, context: ASL) {
@@ -1147,22 +1220,15 @@ export class StepFunction<
     return aws_stepfunctions.StateMachineType.STANDARD;
   }
 
-  private getArgs(call: CallExpr) {
-    const executionArn = call.args[0]?.expr;
-    if (executionArn === undefined) {
-      throw new Error(`missing argument 'executionArn'`);
-    }
-    return executionArn;
-  }
-
   public describeExecution = makeIntegration<
     (executionArn: string) => AWS.StepFunctions.DescribeExecutionOutput,
     "StepFunction.describeExecution"
   >({
     kind: "StepFunction.describeExecution",
-    vtl: (call, context) => {
-      const executionArn = this.getArgs(call);
-      return `{
+    appSyncVtl: this.appSyncIntegration({
+      request(call, context) {
+        const executionArn = getArgs(call);
+        return `{
   "version": "2018-05-29",
   "method": "POST",
   "resourcePath": "/",
@@ -1176,7 +1242,8 @@ export class StepFunction<
     }
   }
 }`;
-    },
+      },
+    }),
     asl: (call, context) => {
       // need DescribeExecution
       this.grantRead(context.role);
@@ -1195,9 +1262,9 @@ export class StepFunction<
       };
       return task;
     },
-    unhandledContext: (name, context) => {
+    unhandledContext: (kind, contextKind) => {
       throw new Error(
-        `${name} is only available in the ${ASL.ContextName} and ${VTL.ContextName} context, but was used in ${context}.`
+        `${kind} is only available in the ${ASL.ContextName} and ${VTL.ContextName} context, but was used in ${contextKind}.`
       );
     },
   });
@@ -1205,4 +1272,12 @@ export class StepFunction<
 
 export interface StepFunction<P extends Record<string, any> | undefined, O> {
   (input: StepFunctionRequest<P>): AWS.StepFunctions.StartExecutionOutput;
+}
+
+function getArgs(call: CallExpr) {
+  const executionArn = call.args[0]?.expr;
+  if (executionArn === undefined) {
+    throw new Error(`missing argument 'executionArn'`);
+  }
+  return executionArn;
 }

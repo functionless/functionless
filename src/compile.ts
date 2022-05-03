@@ -69,6 +69,20 @@ export function compile(
         return sf;
       }
 
+      // TODO: this seems like a pattern, make a "public import context"
+      const functionlessContext = {
+        requireFunctionless: false,
+        requireAwsClient: false,
+        get functionless() {
+          this.requireFunctionless = true;
+          return functionless;
+        },
+        get awsClient() {
+          this.requireAwsClient = true;
+          return awsClient;
+        },
+      };
+
       const functionlessImport = ts.factory.createImportDeclaration(
         undefined,
         undefined,
@@ -93,12 +107,19 @@ export function compile(
         ts.factory.createStringLiteral("aws-sdk")
       );
 
+      const statements = sf.statements.map(
+        (stmt) => visitor(stmt) as ts.Statement
+      );
+
       return ts.factory.updateSourceFile(
         sf,
         [
-          functionlessImport,
-          awsImport,
-          ...(sf.statements.flatMap((stmt) => visitor(stmt)) as ts.Statement[]),
+          // only require functionless if it is used.
+          ...(functionlessContext.requireFunctionless
+            ? [functionlessImport]
+            : []),
+          ...(functionlessContext.requireAwsClient ? [awsImport] : []),
+          ...statements,
         ],
         sf.isDeclarationFile,
         sf.referencedFiles,
@@ -1252,7 +1273,10 @@ export function compile(
 
       function newExpr(type: FunctionlessNode["kind"], args: ts.Expression[]) {
         return ts.factory.createNewExpression(
-          ts.factory.createPropertyAccessExpression(functionless, type),
+          ts.factory.createPropertyAccessExpression(
+            functionlessContext.functionless,
+            type
+          ),
           undefined,
           args
         );

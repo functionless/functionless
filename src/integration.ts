@@ -4,16 +4,17 @@ import { FunctionlessNode } from "./node";
 import { VTL } from "./vtl";
 import { AnyFunction } from "./util";
 import { Function, NativeIntegration } from "./function";
+import { AppSyncVtlIntegration } from "./appsync";
 
 /**
  * All integration methods supported by functionless.
  */
 interface IntegrationMethods<F extends AnyFunction> {
   /**
-   * Integrate with VTL applications like AppAsync.
+   * Integrate with AppSync VTL applications.
    * @private
    */
-  vtl: (call: CallExpr, context: VTL) => string;
+  appSyncVtl: AppSyncVtlIntegration;
   /**
    * Integrate with ASL applications like StepFunctions.
    * @private
@@ -83,10 +84,12 @@ export interface Integration<
   readonly kind: K;
   /**
    * Optional method that allows overriding the {@link Error} thrown when a integration is not supported by a handler.
+   * @param kind - The Kind of the integration.
+   * @param contextKind - the Kind of the context attempting to use the integration.
    */
   readonly unhandledContext?: (
     kind: string,
-    context: CallContext["kind"]
+    contextKind: CallContext["kind"]
   ) => Error;
 }
 
@@ -104,18 +107,18 @@ export class IntegrationImpl<F extends AnyFunction = AnyFunction>
     this.kind = integration.kind;
   }
 
-  private unhandledContext<T>(context: CallContext["kind"]): T {
+  private unhandledContext<T>(contextKind: CallContext["kind"]): T {
     if (this.integration.unhandledContext) {
-      throw this.integration.unhandledContext(this.kind, context);
+      throw this.integration.unhandledContext(this.kind, contextKind);
     }
-    throw Error(`${this.kind} is not supported by context ${context}.`);
+    throw Error(`${this.kind} is not supported by context ${contextKind}.`);
   }
 
-  public vtl(call: CallExpr, context: VTL): string {
-    if (this.integration.vtl) {
-      return this.integration.vtl(call, context);
+  public get appSyncVtl(): AppSyncVtlIntegration {
+    if (this.integration.appSyncVtl) {
+      return this.integration.appSyncVtl;
     }
-    return this.unhandledContext(context.kind);
+    return this.unhandledContext("Velocity Template");
   }
 
   public asl(call: CallExpr, context: ASL): Omit<State, "Next"> {
@@ -149,7 +152,7 @@ export class IntegrationImpl<F extends AnyFunction = AnyFunction>
  * ```ts
  * MyIntegrations.callMe("some string");
  * ```
- * 
+ *
  * @private
  */
 export function makeIntegration<F extends AnyFunction, K extends string>(
@@ -180,3 +183,23 @@ export function findIntegration(call: CallExpr): IntegrationImpl | undefined {
 }
 
 export type CallContext = ASL | VTL | Function<any, any>;
+
+/**
+ * Dive until we find a integration object.
+ */
+export function findDeepIntegration(
+  expr: FunctionlessNode
+): IntegrationImpl | undefined {
+  if (expr.kind === "PropAccessExpr") {
+    return findDeepIntegration(expr.expr);
+  } else if (expr.kind === "CallExpr") {
+    return findIntegration(expr);
+  } else if (expr.kind === "VariableStmt" && expr.expr) {
+    return findDeepIntegration(expr.expr);
+  } else if (expr.kind === "ReturnStmt" && expr.expr) {
+    return findDeepIntegration(expr.expr);
+  } else if (expr.kind === "ExprStmt") {
+    return findDeepIntegration(expr.expr);
+  }
+  return undefined;
+}

@@ -1,20 +1,17 @@
 import * as appsync from "@aws-cdk/aws-appsync-alpha";
 import { AppSyncResolverEvent } from "aws-lambda";
-import { CanReference, CallExpr, Expr } from "./expression";
+import { CallExpr, Expr } from "./expression";
 import { VTL } from "./vtl";
-import { findService, toName } from "./util";
 import {
   ToAttributeMap,
   ToAttributeValue,
 } from "typesafe-dynamodb/lib/attribute-value";
 import { FunctionDecl, isFunctionDecl } from "./declaration";
 import { Literal } from "./literal";
-import { aws_stepfunctions } from "aws-cdk-lib";
 import { Construct } from "constructs";
 import { isErr } from "./error";
-import { isTable } from "./table";
-import { isFunction } from "./function";
-import { isStepFunction } from "./step-function";
+import { findDeepIntegration, IntegrationImpl } from "./integration";
+import { singletonConstruct } from "./util";
 
 /**
  * The shape of the AWS Appsync `$context` variable.
@@ -144,6 +141,18 @@ export class AppsyncResolver<
    *
    * const api = new appsync.GraphQLApi(..);
    *
+   * ```ts
+   * const getPerson = new AppsyncResolver<{id: string}, Person | undefined>(
+   *   ($context, id) => {
+   *     const person = table.get({
+   *       key: {
+   *         id: $util.toDynamoDB(id)
+   *       }
+   *     });
+   *     return person;
+   *   });
+   * ```
+   *
    * getPerson.createResolver(api, {
    *   typeName: "Query",
    *   fieldName: "getPerson"
@@ -161,15 +170,88 @@ export class AppsyncResolver<
       "typeName" | "fieldName" | "cachingConfig"
     >
   ): SynthesizedAppsyncResolver {
+    const fields = this.getResolvableFields(api);
+
+    return new SynthesizedAppsyncResolver(
+      api,
+      `${options.typeName}${options.fieldName}Resolver`,
+      {
+        ...options,
+        api,
+        templates: fields.templates,
+        dataSource: fields.dataSource,
+        requestMappingTemplate: fields.requestMappingTemplate,
+        responseMappingTemplate: fields.responseMappingTemplate,
+        pipelineConfig: fields.pipelineConfig,
+      }
+    );
+  }
+
+  /**
+   * Generate a resolvable field to use with AppSync CDK's Code field strategy.
+   *
+   * ```ts
+   * import * as appsync from "@aws-cdk/aws-appsync-alpha";
+   *
+   * const api = new appsync.GraphQLApi(..);
+   *
+   * ```ts
+   * const getPerson = new AppsyncResolver<{id: string}, Person | undefined>(
+   *   ($context, id) => {
+   *     const person = table.get({
+   *       key: {
+   *         id: $util.toDynamoDB(id)
+   *       }
+   *     });
+   *     return person;
+   *   });
+   * ```
+   *
+   * // code first person type
+   * const personType = api.addType(appsync.ObjectType(...));
+   *
+   * api.addQuery("getPerson", getPerson.getField(api, personType))
+   * getPerson.createResolver(api, {
+   *   typeName: "Query",
+   *   fieldName: "getPerson"
+   * });
+   * ```
+   *
+   * @param api app sync API which the data sources construct will be added under.
+   * @param returnType the code-first graphql return type of this field
+   * @param options optional fields like arguments and directive to add to the schema
+   */
+  public getField(
+    api: appsync.GraphqlApi,
+    returnType: appsync.GraphqlType,
+    options?: Omit<
+      appsync.ResolvableFieldOptions,
+      | "returnType"
+      | keyof ReturnType<
+          AppsyncResolver<Arguments, Result, Source>["getResolvableFields"]
+        >
+    >
+  ): appsync.ResolvableField {
+    const fields = this.getResolvableFields(api);
+
+    return new appsync.ResolvableField({
+      ...options,
+      returnType,
+      dataSource: fields.dataSource,
+      pipelineConfig: fields.pipelineConfig,
+      requestMappingTemplate: fields.requestMappingTemplate,
+      responseMappingTemplate: fields.responseMappingTemplate,
+    });
+  }
+
+  private getResolvableFields(api: appsync.GraphqlApi) {
     const resolverCount = countResolvers(this.decl);
-    const templates: string[] = [];
 
+    const [pipelineConfig, responseMappingTemplate, innerTemplates] =
+      synthesizeFunctions(api, this.decl);
+
+    // mock integration
     if (resolverCount === 0) {
-      // mock integration
-      const [pipelineConfig, responseMappingTemplate] = synthesizeFunctions(
-        this.decl
-      );
-
       if (pipelineConfig.length !== 0) {
         throw new Error(
           `expected 0 functions in pipelineConfig, but found ${pipelineConfig.length}`
@@ -180,169 +262,77 @@ export class AppsyncResolver<
   "version": "2018-05-29",
   "payload": null
 }`;
-      templates.push(requestMappingTemplate);
 
-      const resolver = new SynthesizedAppsyncResolver(
-        api,
-        `${options.typeName}${options.fieldName}Resolver`,
-        {
-          ...options,
-          api,
-          templates,
-          dataSource: getDataSource(
-            api,
-            null,
-            () =>
-              new appsync.NoneDataSource(api, "None", {
-                api,
-                name: "None",
-              })
-          ),
-          requestMappingTemplate: appsync.MappingTemplate.fromString(
-            requestMappingTemplate
-          ),
-          responseMappingTemplate: appsync.MappingTemplate.fromString(
-            responseMappingTemplate
-          ),
-        }
-      );
-
-      templates.push(responseMappingTemplate);
-      return resolver;
-      // } else if (resolverCount === 1) {
-      // single stage
+      return {
+        templates: [
+          requestMappingTemplate,
+          ...innerTemplates,
+          responseMappingTemplate,
+        ],
+        dataSource: singletonConstruct(api, "None", (scope, id) =>
+          scope.addNoneDataSource(id)
+        ),
+        requestMappingTemplate: appsync.MappingTemplate.fromString(
+          requestMappingTemplate
+        ),
+        responseMappingTemplate: appsync.MappingTemplate.fromString(
+          responseMappingTemplate
+        ),
+      };
     } else {
       // pipeline resolver
       const requestMappingTemplate = "{}";
-      templates.push(requestMappingTemplate);
 
-      const [pipelineConfig, responseMappingTemplate] = synthesizeFunctions(
-        this.decl
-      );
-
-      const resolver = new SynthesizedAppsyncResolver(
-        api,
-        `${options.typeName}${options.fieldName}Resolver`,
-        {
-          ...options,
-          api,
-          templates,
-          pipelineConfig,
-          requestMappingTemplate: appsync.MappingTemplate.fromString(
-            requestMappingTemplate
-          ),
-          responseMappingTemplate: appsync.MappingTemplate.fromString(
-            responseMappingTemplate
-          ),
-        }
-      );
-      templates.push(responseMappingTemplate);
-
-      return resolver;
+      return {
+        templates: [
+          requestMappingTemplate,
+          ...innerTemplates,
+          responseMappingTemplate,
+        ],
+        pipelineConfig,
+        requestMappingTemplate: appsync.MappingTemplate.fromString(
+          requestMappingTemplate
+        ),
+        responseMappingTemplate: appsync.MappingTemplate.fromString(
+          responseMappingTemplate
+        ),
+      };
     }
 
     function synthesizeFunctions(
+      api: appsync.GraphqlApi,
       decl: FunctionDecl<ResolverFunction<Arguments, Result, Source>>
     ) {
+      const templates: string[] = [];
       let template =
         resolverCount === 0 ? new VTL() : new VTL(VTL.CircuitBreaker);
       const functions = decl.body.statements
         .map((stmt, i) => {
           const isLastExpr = i + 1 === decl.body.statements.length;
-          const service = findService(stmt);
+          const service = findDeepIntegration(stmt);
           if (service) {
             // we must now render a resolver with request mapping template
-            const dataSource = getDataSource(api, service, () => {
-              if (isTable(service)) {
-                return new appsync.DynamoDbDataSource(
-                  api,
-                  service.resource.node.addr,
-                  {
-                    api,
-                    table: service.resource,
-                  }
-                );
-              } else if (isFunction(service)) {
-                return new appsync.LambdaDataSource(
-                  api,
-                  service.resource.node.addr,
-                  {
-                    api,
-                    lambdaFunction: service.resource,
-                  }
-                );
-              } else if (isStepFunction(service)) {
-                const ds = new appsync.HttpDataSource(
-                  api,
-                  service.resource.node.addr,
-                  {
-                    api,
-                    endpoint: `https://${
-                      service.getStepFunctionType() ===
-                      aws_stepfunctions.StateMachineType.EXPRESS
-                        ? "sync-states"
-                        : "states"
-                    }.${service.resource.stack.region}.amazonaws.com/`,
-                    authorizationConfig: {
-                      signingRegion: api.stack.region,
-                      signingServiceName: "states",
-                    },
-                  }
-                );
-                service.grantRead(ds.grantPrincipal);
-                if (
-                  service.getStepFunctionType() ===
-                  aws_stepfunctions.StateMachineType.EXPRESS
-                ) {
-                  service.grantStartSyncExecution(ds.grantPrincipal);
-                } else {
-                  service.grantStartExecution(ds.grantPrincipal);
-                }
-                return ds;
-              } else {
-                console.log(service);
-                // TODO: use HTTP resolvers for the AWS-SDK types.
-                throw new Error(
-                  `Reference cannot be used within an Appsync Resolver, please use an Appsync-compatible function`
-                );
-              }
-            });
+            const dataSource = singletonConstruct(
+              api,
+              service.appSyncVtl.dataSourceId(),
+              (scope, id) => service.appSyncVtl.dataSource(scope, id)
+            );
 
-            let returnValName = "$context.result";
-            let pre: string | undefined;
-            if (isStepFunction(service)) {
-              returnValName = "$sfn__result";
+            const resultValName = "$context.result";
 
-              if (
-                service.getStepFunctionType() ===
-                aws_stepfunctions.StateMachineType.EXPRESS
-              ) {
-                pre = `#if($context.result.statusCode == 200)
-  #set(${returnValName} = $util.parseJson($context.result.body))
-  #if(${returnValName}.output == 'null')
-    $util.qr(${returnValName}.put("output", $null))
-  #else
-    #set(${returnValName}.output = $util.parseJson(${returnValName}.output))
-  #end
-#else 
-  $util.error($context.result.body, "$context.result.statusCode")
-#end`;
-              } else {
-                pre = `#if($context.result.statusCode == 200)
-  #set(${returnValName} = $util.parseJson($context.result.body))
-#else 
-  $util.error($context.result.body, "$context.result.statusCode")
-#end`;
-              }
-            }
+            // The integration can optionally transform the result into a new variable.
+            const resultTemplate = service.appSyncVtl.result?.(resultValName);
+            const pre = resultTemplate?.template;
+            const returnValName =
+              resultTemplate?.returnVariable ?? resultValName;
 
             if (stmt.kind === "ExprStmt") {
               const call = findServiceCallExpr(stmt.expr);
               template.call(call);
-              return createStage(call, "{}");
+              return createStage(service, "{}");
             } else if (stmt.kind === "ReturnStmt") {
               return createStage(
-                findServiceCallExpr(stmt.expr),
+                service,
                 `${
                   pre ? `${pre}\n` : ""
                 }#set( $context.stash.return__flag = true )
@@ -354,7 +344,7 @@ export class AppsyncResolver<
               stmt.expr?.kind === "CallExpr"
             ) {
               return createStage(
-                findServiceCallExpr(stmt.expr),
+                service,
                 `${pre ? `${pre}\n` : ""}#set( $context.stash.${
                   stmt.name
                 } = ${getResult(stmt.expr)} )\n{}`
@@ -429,14 +419,17 @@ export class AppsyncResolver<
             }
 
             function createStage(
-              expr: CallExpr,
+              integration: IntegrationImpl,
               responseMappingTemplate: string
             ) {
               const requestMappingTemplateString = template.toVTL();
               templates.push(requestMappingTemplateString);
               templates.push(responseMappingTemplate);
               template = new VTL(VTL.CircuitBreaker);
-              const name = getUniqueName(api, toName(expr.expr));
+              const name = getUniqueName(
+                api,
+                appsyncSafeName(integration.kind)
+              );
               return dataSource.createFunction({
                 name,
                 requestMappingTemplate: appsync.MappingTemplate.fromString(
@@ -466,14 +459,14 @@ export class AppsyncResolver<
           (func): func is Exclude<typeof func, undefined> => func !== undefined
         );
 
-      return [functions, template.toVTL()] as const;
+      return [functions, template.toVTL(), templates] as const;
     }
 
     function countResolvers(
       decl: FunctionDecl<ResolverFunction<Arguments, Result, Source>>
     ): number {
       return decl.body.statements.filter(
-        (expr) => findService(expr) !== undefined
+        (expr) => findDeepIntegration(expr) !== undefined
       ).length;
     }
   }
@@ -792,6 +785,11 @@ export interface time {
   ): string;
 }
 
+// [_A-Za-z][_0-9A-Za-z]*
+function appsyncSafeName(name: string) {
+  return name.replace(/\./g, "_");
+}
+
 const uniqueNamesSymbol = Symbol.for("functionless.UniqueNames");
 
 const names: WeakMap<
@@ -817,33 +815,42 @@ function getUniqueName(api: appsync.GraphqlApi, name: string): string {
   }
 }
 
-const dataSourcesSymbol = Symbol.for("functionless.DataSources");
-
-const dataSources: WeakMap<
-  appsync.GraphqlApi,
-  WeakMap<any, appsync.BaseDataSource>
-> = ((global as any)[dataSourcesSymbol] ??= new WeakMap());
-
-function getDataSources(api: appsync.GraphqlApi) {
-  if (!dataSources.has(api)) {
-    dataSources.set(api, new WeakMap());
-  }
-  return dataSources.get(api)!;
-}
-
-const None = {
-  none: Symbol.for("functionless.None"),
-};
-
-function getDataSource(
-  api: appsync.GraphqlApi,
-  target: CanReference | null,
-  compute: () => appsync.BaseDataSource
-): appsync.BaseDataSource {
-  const ds = getDataSources(api);
-  const key = target ?? None;
-  if (!ds.has(key)) {
-    ds.set(key, compute());
-  }
-  return ds.get(key)!;
+/**
+ * Hooks used to create an app sync integration, implement using the {@link Integration} interface.
+ *
+ * 1. Get the AppSync data source
+ * 2. Create the VTL request template to make data source call.
+ * 3. Optionally post process the result of the data source call.
+ */
+export interface AppSyncVtlIntegration {
+  /**
+   * Retrieve the id of the date source to use for the integration.
+   *
+   * If the ID is unique to the current {@link appsync.GraphqlApi}, the `dataSource` will be called next with this id.
+   */
+  dataSourceId: () => string;
+  /**
+   * Retrieve a unique data source for the {@link appsync.GraphqlApi}.
+   * Use the dataSourceId hook to return a unique id.
+   * This method will only be called once per api or unique data source id.
+   *
+   * @param api - the api construct which should be the parent of the returned {@link appsync.BaseDataSource}
+   * @param dataSourceId - the ID given by the dataSourceId hook, should be used as the construct id for the new data source.
+   */
+  dataSource: (
+    api: appsync.GraphqlApi,
+    dataSourceId: string
+  ) => appsync.BaseDataSource;
+  /**
+   * Return a VTL template which builds a valid request to the integration's endpoint.
+   * Should reflect the contents of the CallExpr.
+   */
+  request: (call: CallExpr, context: VTL) => string;
+  /**
+   * Optionally transform the result of the API and place into a unique variable.
+   */
+  result?: (resultVariable: string) => {
+    returnVariable: string;
+    template: string;
+  };
 }

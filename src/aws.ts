@@ -290,9 +290,9 @@ export namespace $AWS {
             Parameters: ASL.toJson(input),
           };
         },
-        unhandledContext(kind, context) {
+        unhandledContext(kind, contextKind) {
           throw new Error(
-            `${kind} is only available within an '${ASL.ContextName}' context, but was called from within a '${context}' context.`
+            `${kind} is only available within an '${ASL.ContextName}' context, but was called from within a '${contextKind}' context.`
           );
         },
         ...integration,
@@ -354,9 +354,9 @@ export namespace $AWS {
           },
         };
       },
-      unhandledContext(kind, context) {
+      unhandledContext(kind, contextKind) {
         throw new Error(
-          `$AWS.${kind} is only available within an '${ASL.ContextName}' context, but was called from within a '${context}' context.`
+          `$AWS.${kind} is only available within an '${ASL.ContextName}' context, but was called from within a '${contextKind}' context.`
         );
       },
     });

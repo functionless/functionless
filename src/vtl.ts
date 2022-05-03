@@ -200,7 +200,7 @@ export class VTL {
       case "CallExpr": {
         const serviceCall = findIntegration(node);
         if (serviceCall) {
-          return serviceCall.vtl(node, this);
+          return serviceCall.appSyncVtl.request(node, this);
         } else if (
           // If the parent is a propAccessExpr
           node.expr.kind === "PropAccessExpr" &&
