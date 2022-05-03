@@ -376,11 +376,16 @@ export namespace $AWS {
       native: {
         // Access needs to be granted manually
         bootstrap: () => {},
+        /* istanbul ignore next */
         preWarm: (prewarmContext: NativePreWarmContext) => {
+          /* istanbul ignore next */
           prewarmContext.eventBridge();
         },
+        /* istanbul ignore next */
         call: async ([request], preWarmContext) => {
+          /* istanbul ignore next */
           const eventBridge = preWarmContext.eventBridge();
+          /* istanbul ignore next */
           return await eventBridge
             .putEvents({
               Entries: request.Entries.map((e) => ({

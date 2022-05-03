@@ -67,15 +67,22 @@ interface ResourceTest<
   name: string;
   resources: (parent: Construct) => ResourceReference<Outputs> | void;
   test: (context: Outputs) => Promise<void>;
+  skip: boolean;
 }
 
-type TestResource = <
-  Outputs extends Record<string, string> = Record<string, string>
->(
-  name: string,
-  resources: ResourceTest<Outputs>["resources"],
-  test: ResourceTest<Outputs>["test"]
-) => void;
+interface TestResource {
+  <Outputs extends Record<string, string> = Record<string, string>>(
+    name: string,
+    resources: ResourceTest<Outputs>["resources"],
+    test: ResourceTest<Outputs>["test"]
+  ): void;
+
+  skip: <Outputs extends Record<string, string> = Record<string, string>>(
+    name: string,
+    resources: ResourceTest<Outputs>["resources"],
+    test: ResourceTest<Outputs>["test"]
+  ) => void;
+}
 
 export const localstackTestSuite = (
   stackName: string,
@@ -98,21 +105,24 @@ export const localstackTestSuite = (
   let stackOutputs: CloudFormation.Outputs | undefined;
 
   beforeAll(async () => {
-    testContexts = tests.map(({ resources }, i) => {
+    testContexts = tests.map(({ resources, skip }, i) => {
+      // create the construct on skip to reduce output changes when moving between skip and not skip
       const construct = new Construct(stack, `parent${i}`);
-      const output = resources(construct);
-      // Place each output in a cfn output, encoded with the unique address of the construct
-      if (output) {
-        return Object.fromEntries(
-          Object.entries(output.outputs).map(([key, value]) => {
-            new CfnOutput(construct, `${key}_out}`, {
-              exportName: construct.node.addr + key,
-              value,
-            });
+      if (!skip) {
+        const output = resources(construct);
+        // Place each output in a cfn output, encoded with the unique address of the construct
+        if (output) {
+          return Object.fromEntries(
+            Object.entries(output.outputs).map(([key, value]) => {
+              new CfnOutput(construct, `${key}_out`, {
+                exportName: construct.node.addr + key,
+                value,
+              });
 
-            return [key, construct.node.addr + key];
-          })
-        );
+              return [key, construct.node.addr + key];
+            })
+          );
+        }
       }
       return {};
     });
@@ -124,27 +134,33 @@ export const localstackTestSuite = (
     ).Stacks?.[0].Outputs;
   });
 
-  // register tests
-  fn(
-    (name, resources, test) => {
-      tests.push({ name, resources, test: test as any });
-    },
-    stack,
-    app
-  );
+  // @ts-ignore
+  const testResource: TestResource = (name, resources, test) => {
+    tests.push({ name, resources, test: test as any, skip: false });
+  };
+  testResource.skip = (name, resources, test) => {
+    tests.push({ name, resources, test: test as any, skip: true });
+  };
 
-  tests.forEach(({ name, test: testFunc }, i) => {
-    test(name, () => {
-      const context = testContexts[i];
-      const resolvedContext = Object.fromEntries(
-        Object.entries(context).map(([key, value]) => {
-          return [
-            key,
-            stackOutputs?.find((o) => o.ExportName === value)?.OutputValue!,
-          ];
-        })
-      );
-      return testFunc(resolvedContext);
-    });
+  // register tests
+  fn(testResource, stack, app);
+
+  tests.forEach(({ name, test: testFunc, skip }, i) => {
+    if (!skip) {
+      test(name, () => {
+        const context = testContexts[i];
+        const resolvedContext = Object.fromEntries(
+          Object.entries(context).map(([key, value]) => {
+            return [
+              key,
+              stackOutputs?.find((o) => o.ExportName === value)?.OutputValue!,
+            ];
+          })
+        );
+        return testFunc(resolvedContext);
+      });
+    } else {
+      test.skip(name, () => {});
+    }
   });
 };

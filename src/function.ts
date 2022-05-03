@@ -301,9 +301,11 @@ export class CallbackLambdaCode extends aws_lambda.Code {
     const preWarmContext = new NativePreWarmContext();
     const func = this.func(preWarmContext);
 
+    /* istanbul ignore next */
     const result = await runtime.serializeFunction(
       // factory function allows us to prewarm the clients and other context.
       () => {
+        /* istanbul ignore next */
         integrationPrewarms.forEach((i) => i?.(preWarmContext));
         return func;
       },
@@ -405,6 +407,7 @@ export interface NativeIntegration<F extends AnyFunction> {
   preWarm?: (preWarmContext: NativePreWarmContext) => void;
 }
 
+/* istanbul ignore next */
 export class NativePreWarmContext {
   private readonly cache: Record<string, any>;
 

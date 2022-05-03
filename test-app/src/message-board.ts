@@ -18,7 +18,7 @@ import {
   EventBusRuleInput,
 } from "functionless";
 import * as appsync from "@aws-cdk/aws-appsync-alpha";
-import path from "path";
+import * as path from "path";
 
 export const app = new App();
 export const stack = new Stack(app, "message-board");
@@ -455,7 +455,8 @@ new Function(
         },
       ],
     });
-    console.log(`bus: ${result2}`);
+    console.log(`bus: ${JSON.stringify(result2)}`);
+    return "hi";
   },
   {
     timeout: Duration.minutes(1),

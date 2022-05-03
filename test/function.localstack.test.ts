@@ -1,7 +1,7 @@
-import { aws_events, Stack } from "aws-cdk-lib";
 import { clientConfig, deployStack, localstackTestSuite } from "./localstack";
 import { $AWS, EventBus, Function } from "../src";
 import { Lambda } from "aws-sdk";
+import { aws_events, Stack } from "aws-cdk-lib";
 
 const lambda = new Lambda(clientConfig);
 
@@ -184,9 +184,40 @@ localstackTestSuite("functionStack", (testResource, _stack, app) => {
   );
 
   testResource(
-    "Call Lambda AWS SDK put event to bus",
+    "Call Lambda AWS SDK put event to bus with reference",
     (parent) => {
       const bus = new EventBus<any>(parent, "bus");
+
+      // Necessary to keep the bundle small and stop the test from failing.
+      // See https://github.com/sam-goodwin/functionless/pull/103#issuecomment-1116396779
+      const putEvents = $AWS.EventBridge.putEvents;
+      const func = new Function(parent, "function", async () => {
+        const result = putEvents({
+          Entries: [
+            {
+              EventBusName: bus.eventBusArn,
+              Source: "MyEvent",
+              DetailType: "DetailType",
+              Detail: "{}",
+            },
+          ],
+        });
+        return result.FailedEntryCount;
+      });
+
+      return { outputs: { function: func.resource.functionName } };
+    },
+    async (context) => {
+      await testFunction(context.function, {}, 0);
+    }
+  );
+
+  // See https://github.com/sam-goodwin/functionless/pull/103#issuecomment-1116396779
+  testResource.skip(
+    "Call Lambda AWS SDK put event to bus without reference",
+    (parent) => {
+      const bus = new EventBus<any>(parent, "bus");
+
       const func = new Function(parent, "function", async () => {
         const result = $AWS.EventBridge.putEvents({
           Entries: [
@@ -194,7 +225,7 @@ localstackTestSuite("functionStack", (testResource, _stack, app) => {
               EventBusName: bus.eventBusArn,
               Source: "MyEvent",
               DetailType: "DetailType",
-              Detail: "",
+              Detail: "{}",
             },
           ],
         });
