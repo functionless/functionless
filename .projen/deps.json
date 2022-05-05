@@ -97,6 +97,10 @@
       "type": "build"
     },
     {
+      "name": "graphql-request",
+      "type": "build"
+    },
+    {
       "name": "jest-junit",
       "version": "^13",
       "type": "build"

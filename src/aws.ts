@@ -1,4 +1,3 @@
-import { Table } from "./table";
 import {
   UpdateItemInput,
   UpdateItemOutput,
@@ -20,11 +19,11 @@ import {
 } from "./expression";
 import { ASL } from "./asl";
 import { Function, isFunction } from "./function";
-import { isTable } from "./table";
+import { Table, isTable } from "./table";
 
 import type { DynamoDB as AWSDynamoDB } from "aws-sdk";
 import { Integration, makeIntegration } from "./integration";
-import { AnyFunction } from "./util";
+import type { AnyFunction } from "./util";
 
 type Item<T extends Table<any, any, any>> = T extends Table<infer I, any, any>
   ? I
@@ -65,192 +64,194 @@ export namespace $AWS {
     /**
      * @see https://docs.aws.amazon.com/step-functions/latest/dg/connect-ddb.html
      */
-    export const DeleteItem =
-      makeDynamoIntegration<
-        <
-          T extends Table<any, any, any>,
-          Key extends TableKey<
-            Item<T>,
-            PartitionKey<T>,
-            RangeKey<T>,
-            JsonFormat.AttributeValue
-          >,
-          ConditionExpression extends string | undefined,
-          ReturnValue extends AWSDynamoDB.ReturnValue = "NONE"
-        >(
-          input: { TableName: T } & Omit<
-            DeleteItemInput<
-              Item<T>,
-              PartitionKey<T>,
-              RangeKey<T>,
-              Key,
-              ConditionExpression,
-              ReturnValue,
-              JsonFormat.AttributeValue
-            >,
-            "TableName"
-          >
-        ) => DeleteItemOutput<Item<T>, ReturnValue, JsonFormat.AttributeValue>
-      >("deleteItem");
-
-    /**
-     * @see https://docs.aws.amazon.com/step-functions/latest/dg/connect-ddb.html
-     */
-    export const GetItem =
-      makeDynamoIntegration<
-        <
-          T extends Table<any, any, any>,
-          Key extends TableKey<
-            Item<T>,
-            PartitionKey<T>,
-            RangeKey<T>,
-            JsonFormat.AttributeValue
-          >,
-          AttributesToGet extends keyof Item<T> | undefined = undefined,
-          ProjectionExpression extends string | undefined = undefined
-        >(
-          input: { TableName: T } & Omit<
-            GetItemInput<
-              Item<T>,
-              PartitionKey<T>,
-              RangeKey<T>,
-              Key,
-              AttributesToGet,
-              ProjectionExpression,
-              JsonFormat.AttributeValue
-            >,
-            "TableName"
-          >
-        ) => GetItemOutput<
+    export const DeleteItem = makeDynamoIntegration<
+      <
+        T extends Table<any, any, any>,
+        Key extends TableKey<
           Item<T>,
           PartitionKey<T>,
           RangeKey<T>,
-          Key,
-          AttributesToGet,
-          ProjectionExpression,
           JsonFormat.AttributeValue
-        >
-      >("getItem");
-
-    /**
-     * @see https://docs.aws.amazon.com/step-functions/latest/dg/connect-ddb.html
-     */
-    export const UpdateItem =
-      makeDynamoIntegration<
-        <
-          T extends Table<any, any, any>,
-          Key extends TableKey<
+        >,
+        ConditionExpression extends string | undefined,
+        ReturnValue extends AWSDynamoDB.ReturnValue = "NONE"
+      >(
+        input: { TableName: T } & Omit<
+          DeleteItemInput<
             Item<T>,
             PartitionKey<T>,
             RangeKey<T>,
+            Key,
+            ConditionExpression,
+            ReturnValue,
             JsonFormat.AttributeValue
           >,
-          UpdateExpression extends string,
-          ConditionExpression extends string | undefined = undefined,
-          ReturnValue extends AWSDynamoDB.ReturnValue = "NONE"
-        >(
-          input: { TableName: T } & Omit<
-            UpdateItemInput<
-              Item<T>,
-              PartitionKey<T>,
-              RangeKey<T>,
-              Key,
-              UpdateExpression,
-              ConditionExpression,
-              ReturnValue,
-              JsonFormat.AttributeValue
-            >,
-            "TableName"
-          >
-        ) => UpdateItemOutput<
-          Item<T>,
-          PartitionKey<T>,
-          RangeKey<T>,
-          Key,
-          ReturnValue,
-          JsonFormat.AttributeValue
+          "TableName"
         >
-      >("updateItem");
+      ) => DeleteItemOutput<Item<T>, ReturnValue, JsonFormat.AttributeValue>,
+      "deleteItem"
+    >("deleteItem");
 
     /**
      * @see https://docs.aws.amazon.com/step-functions/latest/dg/connect-ddb.html
      */
-    export const PutItem =
-      makeDynamoIntegration<
-        <
-          T extends Table<any, any, any>,
-          I extends Item<T>,
-          ConditionExpression extends string | undefined = undefined,
-          ReturnValue extends AWSDynamoDB.ReturnValue = "NONE"
-        >(
-          input: { TableName: T } & Omit<
-            PutItemInput<
-              Item<T>,
-              ConditionExpression,
-              ReturnValue,
-              JsonFormat.AttributeValue
-            >,
-            "TableName"
-          >
-        ) => PutItemOutput<I, ReturnValue, JsonFormat.AttributeValue>
-      >("putItem");
+    export const GetItem = makeDynamoIntegration<
+      <
+        T extends Table<any, any, any>,
+        Key extends TableKey<
+          Item<T>,
+          PartitionKey<T>,
+          RangeKey<T>,
+          JsonFormat.AttributeValue
+        >,
+        AttributesToGet extends keyof Item<T> | undefined = undefined,
+        ProjectionExpression extends string | undefined = undefined
+      >(
+        input: { TableName: T } & Omit<
+          GetItemInput<
+            Item<T>,
+            PartitionKey<T>,
+            RangeKey<T>,
+            Key,
+            AttributesToGet,
+            ProjectionExpression,
+            JsonFormat.AttributeValue
+          >,
+          "TableName"
+        >
+      ) => GetItemOutput<
+        Item<T>,
+        PartitionKey<T>,
+        RangeKey<T>,
+        Key,
+        AttributesToGet,
+        ProjectionExpression,
+        JsonFormat.AttributeValue
+      >,
+      "getItem"
+    >("getItem");
 
-    export const Query =
-      makeDynamoIntegration<
-        <
-          T extends Table<any, any, any>,
-          KeyConditionExpression extends string,
-          FilterExpression extends string | undefined = undefined,
-          ProjectionExpression extends string | undefined = undefined,
-          AttributesToGet extends keyof Item<T> | undefined = undefined
-        >(
-          input: { TableName: T } & Omit<
-            QueryInput<
-              Item<T>,
-              KeyConditionExpression,
-              FilterExpression,
-              ProjectionExpression,
-              AttributesToGet,
-              JsonFormat.AttributeValue
-            >,
-            "TableName"
-          >
-        ) => QueryOutput<Item<T>, AttributesToGet, JsonFormat.AttributeValue>
-      >("query");
+    /**
+     * @see https://docs.aws.amazon.com/step-functions/latest/dg/connect-ddb.html
+     */
+    export const UpdateItem = makeDynamoIntegration<
+      <
+        T extends Table<any, any, any>,
+        Key extends TableKey<
+          Item<T>,
+          PartitionKey<T>,
+          RangeKey<T>,
+          JsonFormat.AttributeValue
+        >,
+        UpdateExpression extends string,
+        ConditionExpression extends string | undefined = undefined,
+        ReturnValue extends AWSDynamoDB.ReturnValue = "NONE"
+      >(
+        input: { TableName: T } & Omit<
+          UpdateItemInput<
+            Item<T>,
+            PartitionKey<T>,
+            RangeKey<T>,
+            Key,
+            UpdateExpression,
+            ConditionExpression,
+            ReturnValue,
+            JsonFormat.AttributeValue
+          >,
+          "TableName"
+        >
+      ) => UpdateItemOutput<
+        Item<T>,
+        PartitionKey<T>,
+        RangeKey<T>,
+        Key,
+        ReturnValue,
+        JsonFormat.AttributeValue
+      >,
+      "updateItem"
+    >("updateItem");
 
-    export const Scan =
-      makeDynamoIntegration<
-        <
-          T extends Table<any, any, any>,
-          FilterExpression extends string | undefined = undefined,
-          ProjectionExpression extends string | undefined = undefined,
-          AttributesToGet extends keyof Item<T> | undefined = undefined
-        >(
-          input: { TableName: T } & Omit<
-            ScanInput<
-              Item<T>,
-              FilterExpression,
-              ProjectionExpression,
-              AttributesToGet,
-              JsonFormat.AttributeValue
-            >,
-            "TableName"
-          >
-        ) => ScanOutput<Item<T>, AttributesToGet, JsonFormat.AttributeValue>
-      >("scan");
+    /**
+     * @see https://docs.aws.amazon.com/step-functions/latest/dg/connect-ddb.html
+     */
+    export const PutItem = makeDynamoIntegration<
+      <
+        T extends Table<any, any, any>,
+        I extends Item<T>,
+        ConditionExpression extends string | undefined = undefined,
+        ReturnValue extends AWSDynamoDB.ReturnValue = "NONE"
+      >(
+        input: { TableName: T } & Omit<
+          PutItemInput<
+            Item<T>,
+            ConditionExpression,
+            ReturnValue,
+            JsonFormat.AttributeValue
+          >,
+          "TableName"
+        >
+      ) => PutItemOutput<I, ReturnValue, JsonFormat.AttributeValue>,
+      "putItem"
+    >("putItem");
 
-    function makeDynamoIntegration<F extends AnyFunction>(
-      operationName:
-        | "deleteItem"
-        | "getItem"
-        | "putItem"
-        | "updateItem"
-        | "scan"
-        | "query",
-      integration?: Omit<Integration, "name">
-    ): F {
-      return makeIntegration<F>({
-        kind: `$AWS.${operationName}`,
+    export const Query = makeDynamoIntegration<
+      <
+        T extends Table<any, any, any>,
+        KeyConditionExpression extends string,
+        FilterExpression extends string | undefined = undefined,
+        ProjectionExpression extends string | undefined = undefined,
+        AttributesToGet extends keyof Item<T> | undefined = undefined
+      >(
+        input: { TableName: T } & Omit<
+          QueryInput<
+            Item<T>,
+            KeyConditionExpression,
+            FilterExpression,
+            ProjectionExpression,
+            AttributesToGet,
+            JsonFormat.AttributeValue
+          >,
+          "TableName"
+        >
+      ) => QueryOutput<Item<T>, AttributesToGet, JsonFormat.AttributeValue>,
+      "query"
+    >("query");
+
+    export const Scan = makeDynamoIntegration<
+      <
+        T extends Table<any, any, any>,
+        FilterExpression extends string | undefined = undefined,
+        ProjectionExpression extends string | undefined = undefined,
+        AttributesToGet extends keyof Item<T> | undefined = undefined
+      >(
+        input: { TableName: T } & Omit<
+          ScanInput<
+            Item<T>,
+            FilterExpression,
+            ProjectionExpression,
+            AttributesToGet,
+            JsonFormat.AttributeValue
+          >,
+          "TableName"
+        >
+      ) => ScanOutput<Item<T>, AttributesToGet, JsonFormat.AttributeValue>,
+      "scan"
+    >("scan");
+
+    type OperationName =
+      | "deleteItem"
+      | "getItem"
+      | "putItem"
+      | "updateItem"
+      | "scan"
+      | "query";
+
+    function makeDynamoIntegration<
+      F extends AnyFunction,
+      Op extends OperationName
+    >(operationName: Op, integration?: Omit<Integration, "kind">) {
+      return makeIntegration<F, `$AWS.DynamoDB.${Op}`>({
+        kind: `$AWS.DynamoDB.${operationName}`,
         asl(call, context) {
           const input = call.getArgument("input")?.expr;
           if (!isObjectLiteralExpr(input)) {
@@ -289,9 +290,9 @@ export namespace $AWS {
             Parameters: ASL.toJson(input),
           };
         },
-        unhandledContext(kind, context) {
+        unhandledContext(kind, contextKind) {
           throw new Error(
-            `${kind} is only available within an '${ASL.ContextName}' context, but was called from within a '${context.kind}' context.`
+            `${kind} is only available within an '${ASL.ContextName}' context, but was called from within a '${contextKind}' context.`
           );
         },
         ...integration,
@@ -314,7 +315,8 @@ export namespace $AWS {
         Qualifier?: string;
       }) => Omit<AWS.Lambda.InvocationResponse, "payload"> & {
         Payload: Output;
-      }
+      },
+      "Lambda.Invoke"
     >({
       kind: "Lambda.Invoke",
       asl(call) {
@@ -352,9 +354,9 @@ export namespace $AWS {
           },
         };
       },
-      unhandledContext(kind, context) {
+      unhandledContext(kind, contextKind) {
         throw new Error(
-          `$AWS.${kind} is only available within an '${ASL.ContextName}' context, but was called from within a '${context.kind}' context.`
+          `$AWS.${kind} is only available within an '${ASL.ContextName}' context, but was called from within a '${contextKind}' context.`
         );
       },
     });

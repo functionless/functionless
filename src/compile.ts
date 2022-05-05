@@ -45,6 +45,14 @@ export function compile(
   return (ctx) => {
     const functionless = ts.factory.createUniqueName("functionless");
     return (sf) => {
+      const functionlessContext = {
+        requireFunctionless: false,
+        get functionless() {
+          this.requireFunctionless = true;
+          return functionless;
+        },
+      };
+
       const functionlessImport = ts.factory.createImportDeclaration(
         undefined,
         undefined,
@@ -61,11 +69,18 @@ export function compile(
         return sf;
       }
 
+      const statements = sf.statements.map(
+        (stmt) => visitor(stmt) as ts.Statement
+      );
+
       return ts.factory.updateSourceFile(
         sf,
         [
-          functionlessImport,
-          ...sf.statements.map((stmt) => visitor(stmt) as ts.Statement),
+          // only require functionless if it is used.
+          ...(functionlessContext.requireFunctionless
+            ? [functionlessImport]
+            : []),
+          ...statements,
         ],
         sf.isDeclarationFile,
         sf.referencedFiles,
@@ -863,7 +878,10 @@ export function compile(
 
       function newExpr(type: FunctionlessNode["kind"], args: ts.Expression[]) {
         return ts.factory.createNewExpression(
-          ts.factory.createPropertyAccessExpression(functionless, type),
+          ts.factory.createPropertyAccessExpression(
+            functionlessContext.functionless,
+            type
+          ),
           undefined,
           args
         );

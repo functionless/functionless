@@ -1,10 +1,10 @@
+import * as appsync from "@aws-cdk/aws-appsync-alpha";
 import { aws_lambda } from "aws-cdk-lib";
 import { CallExpr, isVariableReference } from "./expression";
-import { VTL } from "./vtl";
 import { ASL } from "./asl";
 
 // @ts-ignore - imported for typedoc
-import type { AppsyncResolver } from "./appsync";
+import type { AppsyncResolver, AppSyncVtlIntegration } from "./appsync";
 import { Integration } from "./integration";
 
 export function isFunction<P = any, O = any>(a: any): a is Function<P, O> {
@@ -31,19 +31,33 @@ export type AnyLambda = Function<any, any>;
 export class Function<P, O> implements Integration {
   readonly kind = "Function" as const;
 
+  readonly appSyncVtl: AppSyncVtlIntegration;
+
   // @ts-ignore - this makes `F` easily available at compile time
   readonly __functionBrand: ConditionalFunction<P, O>;
 
-  constructor(readonly resource: aws_lambda.IFunction) {}
+  constructor(readonly resource: aws_lambda.IFunction) {
+    // Integration object for appsync VTL
+    this.appSyncVtl = {
+      dataSourceId: () => resource.node.addr,
+      dataSource(api, id) {
+        return new appsync.LambdaDataSource(api, id, {
+          api,
+          lambdaFunction: resource,
+        });
+      },
+      request(call, context) {
+        const payloadArg = call.getArgument("payload");
+        const payload = payloadArg?.expr
+          ? context.eval(payloadArg.expr)
+          : "$null";
 
-  public vtl(call: CallExpr, context: VTL) {
-    const payloadArg = call.getArgument("payload");
-    const payload = payloadArg?.expr ? context.eval(payloadArg.expr) : "$null";
-
-    const request = context.var(
-      `{"version": "2018-05-29", "operation": "Invoke", "payload": ${payload}}`
-    );
-    return context.json(request);
+        const request = context.var(
+          `{"version": "2018-05-29", "operation": "Invoke", "payload": ${payload}}`
+        );
+        return context.json(request);
+      },
+    };
   }
 
   public asl(call: CallExpr, context: ASL) {

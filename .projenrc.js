@@ -78,6 +78,7 @@ const project = new CustomTypescriptProject({
     "@types/minimatch",
     "@types/uuid",
     "amplify-appsync-simulator",
+    "graphql-request",
     "prettier",
     "ts-node",
     "ts-patch",
