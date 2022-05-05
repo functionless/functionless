@@ -430,6 +430,7 @@ new Function(
   stack,
   "testFunc",
   async () => {
+    const busbus = customDeleteBus;
     console.log(customDeleteBus.eventBusArn);
     console.log(busbusbus.eventBusArn);
     console.log("huh?!?!?!??!!");
@@ -437,6 +438,13 @@ new Function(
     const result = func();
     console.log(`function result: ${result}`);
     customDeleteBus({
+      "detail-type": "Delete-Post-Success",
+      source: "MessageDeleter",
+      detail: {
+        id: "from the test method!!",
+      },
+    });
+    busbus({
       "detail-type": "Delete-Post-Success",
       source: "MessageDeleter",
       detail: {

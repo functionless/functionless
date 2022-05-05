@@ -45,25 +45,7 @@ export function compile(
   const checker = program.getTypeChecker();
   return (ctx) => {
     const functionless = ts.factory.createUniqueName("functionless");
-    const awsClient = ts.factory.createUniqueName("aws");
     return (sf) => {
-      // const imports = sf.statements
-      //   .filter(
-      //     (
-      //       s
-      //     ): s is ts.ImportDeclaration & {
-      //       moduleSpecifier: ts.StringLiteral;
-      //     } =>
-      //       ts.isImportDeclaration(s) && ts.isStringLiteral(s.moduleSpecifier)
-      //   )
-      //   .reduce(
-      //     (acc: Record<string, ts.ImportDeclaration>, d) => ({
-      //       ...acc,
-      //       [d.moduleSpecifier.text]: d,
-      //     }),
-      //     {}
-      //   );
-
       // Do not transform any of the files matched by "exclude"
       if (excludeMatchers.some((matcher) => matcher.test(sf.fileName))) {
         return sf;
@@ -72,14 +54,9 @@ export function compile(
       // TODO: this seems like a pattern, make a "public import context"
       const functionlessContext = {
         requireFunctionless: false,
-        requireAwsClient: false,
         get functionless() {
           this.requireFunctionless = true;
           return functionless;
-        },
-        get awsClient() {
-          this.requireAwsClient = true;
-          return awsClient;
         },
       };
 
@@ -94,19 +71,6 @@ export function compile(
         ts.factory.createStringLiteral("functionless")
       );
 
-      // TODO: do this dynamically based on need.
-      // TODO: use aws sdk 3?
-      const awsImport = ts.factory.createImportDeclaration(
-        undefined,
-        undefined,
-        ts.factory.createImportClause(
-          false,
-          undefined,
-          ts.factory.createNamespaceImport(awsClient)
-        ),
-        ts.factory.createStringLiteral("aws-sdk")
-      );
-
       const statements = sf.statements.map(
         (stmt) => visitor(stmt) as ts.Statement
       );
@@ -118,7 +82,6 @@ export function compile(
           ...(functionlessContext.requireFunctionless
             ? [functionlessImport]
             : []),
-          ...(functionlessContext.requireAwsClient ? [awsImport] : []),
           ...statements,
         ],
         sf.isDeclarationFile,
@@ -530,34 +493,9 @@ export function compile(
 
       interface NativeExprContext {
         preWarmContext: ts.Identifier;
+        closureNode: TsFunctionParameter;
         registerIntegration: (node: ts.Expression) => void;
       }
-
-      /**
-       * const functionless_eventBusClient = new EventBridge();
-       * const MY_BUS = process.env["MY_BUS"];
-       * export const handler = async () => {
-       *  const events = events;
-       *  await functionless_eventBusClient.putEvents(events.map(event => ({ EventBusArn: MY_BUS, ... })));
-       * }
-       */
-
-      /**
-       * const bus = new bus();
-       * new Function(this, '', async () => {
-       *  const functionless_eventBusClient = new EventBridge();
-       *  const events = events;
-       *  await functionless_eventBusClient.putEvents(events.map(event => ({ EventBusArn: bus.eventBusArn, ... })));
-       * });
-       */
-      // class NativeContext {
-      //   getClientFor(type: "EventBridge", id: ts.Identifier): { clientId: ts.Identifier, resourceId: ts.Expression } {
-      //     return {
-      //       clientId: ts.factory.createIdentifier("functionless_eb"),
-      //       resourceId: ts.factory.createPropertyAccessExpression(id, "eventBusArn")
-      //     }
-      //   }
-      // }
 
       /**
        * Native Functions do not allow the creation of resources, CDK constructs or functionless.
@@ -589,6 +527,7 @@ export function compile(
 
         const nativeExprContext: NativeExprContext = {
           preWarmContext,
+          closureNode: impl,
           registerIntegration: (integ) => integrations.push(integ),
         };
 
@@ -646,8 +585,22 @@ export function compile(
         if (ts.isCallExpression(node)) {
           // Integration nodes have a static "kind" property.
           if (isIntegrationNode(node.expression)) {
+            const outOfScopeIntegrationReference = getOutOfScopeValueNode(
+              node.expression,
+              nativeExprContext.closureNode
+            );
+
+            if (!outOfScopeIntegrationReference) {
+              throw Error(
+                "Integration Variable must be defined out of scope: " +
+                  node.expression.getText()
+              );
+            }
+
             // add the function identifier to the integrations
-            nativeExprContext.registerIntegration(node.expression);
+            nativeExprContext.registerIntegration(
+              outOfScopeIntegrationReference
+            );
             // call the integration call function with the prewarm context and arguments
             // At this point, we know native will not be undefined
             // await integration.native.call(args, preWarmContext)
@@ -1249,6 +1202,47 @@ export function compile(
           }
         }
         return;
+      }
+
+      function getOutOfScopeValueNode(
+        expression: ts.Expression,
+        scope: ts.Node
+      ): ts.Expression | undefined {
+        const symbol = checker.getSymbolAtLocation(expression);
+        if (symbol) {
+          if (isSymbolOutOfScope(symbol, scope)) {
+            return expression;
+          }
+          if (
+            symbol.valueDeclaration &&
+            ts.isVariableDeclaration(symbol.valueDeclaration) &&
+            symbol.valueDeclaration.initializer
+          ) {
+            return getOutOfScopeValueNode(
+              symbol.valueDeclaration.initializer,
+              scope
+            );
+          }
+        }
+        return undefined;
+      }
+
+      function isSymbolOutOfScope(symbol: ts.Symbol, scope: ts.Node): boolean {
+        if (symbol) {
+          if (symbol.valueDeclaration) {
+            if (ts.isShorthandPropertyAssignment(symbol.valueDeclaration)) {
+              const updatedSymbol = checker.getShorthandAssignmentValueSymbol(
+                symbol.valueDeclaration
+              );
+              return updatedSymbol
+                ? isSymbolOutOfScope(updatedSymbol, scope)
+                : false;
+            } else if (ts.isVariableDeclaration(symbol.valueDeclaration)) {
+              return !hasParent(symbol.valueDeclaration, scope);
+            }
+          }
+        }
+        return false;
       }
 
       function exprToString(node: ts.Expression): string {

@@ -1,11 +1,11 @@
-import { clientConfig, deployStack, localstackTestSuite } from "./localstack";
-import { $AWS, EventBus, Function } from "../src";
+import { clientConfig, localstackTestSuite } from "./localstack";
+import { $AWS, EventBus, EventBusRuleInput, Function } from "../src";
 import { Lambda } from "aws-sdk";
 import { aws_events, Stack } from "aws-cdk-lib";
 
 const lambda = new Lambda(clientConfig);
 
-localstackTestSuite("functionStack", (testResource, _stack, app) => {
+localstackTestSuite("functionStack", (testResource, _stack, _app) => {
   testResource(
     "Call Lambda",
     (parent) => {
@@ -216,7 +216,7 @@ localstackTestSuite("functionStack", (testResource, _stack, app) => {
   testResource.skip(
     "Call Lambda AWS SDK put event to bus without reference",
     (parent) => {
-      const bus = new EventBus<any>(parent, "bus");
+      const bus = new EventBus<EventBusRuleInput>(parent, "bus");
 
       const func = new Function(parent, "function", async () => {
         const result = $AWS.EventBridge.putEvents({
@@ -239,32 +239,54 @@ localstackTestSuite("functionStack", (testResource, _stack, app) => {
     }
   );
 
+  // Function serialization breaks when assigning an integration/construct to a variable in the closure.
+  // TODO: what should happen here?
+  testResource.skip(
+    "Call Lambda AWS SDK put event to bus with in closure reference",
+    (parent) => {
+      const bus = new EventBus<EventBusRuleInput>(parent, "bus");
+      const func = new Function(parent, "function", async () => {
+        const busbus = bus;
+        busbus({
+          "detail-type": "anyDetail",
+          source: "anySource",
+          detail: {},
+        });
+      });
+
+      return { outputs: { function: func.resource.functionName } };
+    },
+    async (context) => {
+      await testFunction(context.function, {}, null);
+    }
+  );
+
   test("should not create new resources in lambda", async () => {
-    await expect(
+    expect(
       async () => {
         const stack = new Stack();
         new Function(stack, "function", async () => {
           const bus = new aws_events.EventBus(stack, "busbus");
           return bus.eventBusArn;
         });
-        await deployStack(app, stack);
+        await Promise.all(Function.promises);
       }
       // TODO: add error message
-    ).toThrow();
+    ).rejects.toThrow();
   });
 
   test("should not create new functionless resources in lambda", async () => {
-    await expect(
+    expect(
       async () => {
         const stack = new Stack();
         new Function(stack, "function", async () => {
           const bus = new EventBus(stack, "busbus");
           return bus.eventBusArn;
         });
-        await deployStack(app, stack);
+        await Promise.all(Function.promises);
       }
       // TODO: add error message
-    ).toThrow();
+    ).rejects.toThrow();
   });
 
   testResource(

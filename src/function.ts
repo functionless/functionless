@@ -112,7 +112,7 @@ abstract class FunctionBase<P, O>
   }
 
   public asl(call: CallExpr, context: ASL) {
-    const payloadArg = call.getArgument("payload");
+    const payloadArg = call.getArgument("payload")?.expr;
     this.resource.grantInvoke(context.role);
     return {
       Type: "Task" as const,
