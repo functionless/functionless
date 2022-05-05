@@ -115,6 +115,14 @@
         }
       ]
     },
+    "localstack": {
+      "name": "localstack",
+      "steps": [
+        {
+          "exec": "./scripts/localstack"
+        }
+      ]
+    },
     "package": {
       "name": "package",
       "description": "Creates the distribution package",
@@ -166,7 +174,16 @@
     "test": {
       "name": "test",
       "description": "Run tests",
+      "env": {
+        "DEFAULT_REGION": "ap-northeast-1",
+        "AWS_ACCOUNT_ID": "000000000000",
+        "AWS_ACCESS_KEY_ID": "test",
+        "AWS_SECRET_ACCESS_KEY": "test"
+      },
       "steps": [
+        {
+          "exec": "./scripts/localstack"
+        },
         {
           "exec": "ts-patch install -s"
         },
@@ -178,6 +195,9 @@
         },
         {
           "spawn": "eslint"
+        },
+        {
+          "exec": "localstack stop"
         }
       ]
     },
@@ -223,61 +243,28 @@
       },
       "steps": [
         {
-          "exec": "npm-check-updates --dep dev --upgrade --target=minor --reject='@aws-cdk/aws-appsync-alpha,aws-cdk-lib,constructs,typesafe-dynamodb,typescript,projen'"
+          "exec": "yarn upgrade npm-check-updates"
         },
         {
-          "exec": "npm-check-updates --dep optional --upgrade --target=minor --reject='@aws-cdk/aws-appsync-alpha,aws-cdk-lib,constructs,typesafe-dynamodb,typescript,projen'"
+          "exec": "npm-check-updates --dep dev --upgrade --target=minor --reject='@aws-cdk/aws-appsync-alpha,@aws-cdk/cloud-assembly-schema,@aws-cdk/cloudformation-diff,@aws-cdk/cx-api,aws-cdk-lib,aws-cdk,cdk-assets,constructs,typesafe-dynamodb,typescript'"
         },
         {
-          "exec": "npm-check-updates --dep peer --upgrade --target=minor --reject='@aws-cdk/aws-appsync-alpha,aws-cdk-lib,constructs,typesafe-dynamodb,typescript,projen'"
+          "exec": "npm-check-updates --dep optional --upgrade --target=minor --reject='@aws-cdk/aws-appsync-alpha,@aws-cdk/cloud-assembly-schema,@aws-cdk/cloudformation-diff,@aws-cdk/cx-api,aws-cdk-lib,aws-cdk,cdk-assets,constructs,typesafe-dynamodb,typescript'"
         },
         {
-          "exec": "npm-check-updates --dep prod --upgrade --target=minor --reject='@aws-cdk/aws-appsync-alpha,aws-cdk-lib,constructs,typesafe-dynamodb,typescript,projen'"
+          "exec": "npm-check-updates --dep peer --upgrade --target=minor --reject='@aws-cdk/aws-appsync-alpha,@aws-cdk/cloud-assembly-schema,@aws-cdk/cloudformation-diff,@aws-cdk/cx-api,aws-cdk-lib,aws-cdk,cdk-assets,constructs,typesafe-dynamodb,typescript'"
         },
         {
-          "exec": "npm-check-updates --dep bundle --upgrade --target=minor --reject='@aws-cdk/aws-appsync-alpha,aws-cdk-lib,constructs,typesafe-dynamodb,typescript,projen'"
+          "exec": "npm-check-updates --dep prod --upgrade --target=minor --reject='@aws-cdk/aws-appsync-alpha,@aws-cdk/cloud-assembly-schema,@aws-cdk/cloudformation-diff,@aws-cdk/cx-api,aws-cdk-lib,aws-cdk,cdk-assets,constructs,typesafe-dynamodb,typescript'"
         },
         {
-          "exec": "yarn install --check-files"
-        },
-        {
-          "exec": "yarn upgrade @aws-cdk/aws-appsync-alpha @types/fs-extra @types/jest @types/minimatch @types/node @typescript-eslint/eslint-plugin @typescript-eslint/parser aws-cdk-lib constructs eslint-import-resolver-node eslint-import-resolver-typescript eslint-plugin-import eslint jest jest-junit json-schema npm-check-updates standard-version ts-jest ts-node ts-patch typesafe-dynamodb typescript @aws-cdk/aws-appsync-alpha aws-cdk-lib constructs typesafe-dynamodb typescript fs-extra minimatch"
-        },
-        {
-          "exec": "npx projen"
-        },
-        {
-          "spawn": "post-upgrade"
-        }
-      ]
-    },
-    "upgrade-projen": {
-      "name": "upgrade-projen",
-      "description": "upgrade projen",
-      "env": {
-        "CI": "0"
-      },
-      "steps": [
-        {
-          "exec": "npm-check-updates --dep dev --upgrade --target=minor --filter='projen'"
-        },
-        {
-          "exec": "npm-check-updates --dep optional --upgrade --target=minor --filter='projen'"
-        },
-        {
-          "exec": "npm-check-updates --dep peer --upgrade --target=minor --filter='projen'"
-        },
-        {
-          "exec": "npm-check-updates --dep prod --upgrade --target=minor --filter='projen'"
-        },
-        {
-          "exec": "npm-check-updates --dep bundle --upgrade --target=minor --filter='projen'"
+          "exec": "npm-check-updates --dep bundle --upgrade --target=minor --reject='@aws-cdk/aws-appsync-alpha,@aws-cdk/cloud-assembly-schema,@aws-cdk/cloudformation-diff,@aws-cdk/cx-api,aws-cdk-lib,aws-cdk,cdk-assets,constructs,typesafe-dynamodb,typescript'"
         },
         {
           "exec": "yarn install --check-files"
         },
         {
-          "exec": "yarn upgrade projen"
+          "exec": "yarn upgrade"
         },
         {
           "exec": "npx projen"

@@ -1,11 +1,15 @@
 type Person {
   id: String!
   name: String!
-  children: [Person]
+}
+
+type ProcessedPerson {
+  id: String!
+  name: String!
   score: Int!
 }
 type Query {
-  getPerson(id: String!): Person
+  getPerson(id: String!): ProcessedPerson
 }
 input PersonInput {
   name: String!

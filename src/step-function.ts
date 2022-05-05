@@ -1,3 +1,4 @@
+import * as appsync from "@aws-cdk/aws-appsync-alpha";
 import { Construct } from "constructs";
 import {
   Arn,
@@ -13,25 +14,34 @@ import {
 import { FunctionDecl, isFunctionDecl } from "./declaration";
 import {
   ASL,
-  isASL,
   isMapOrForEach,
   MapTask,
-  ParallelTask,
   StateMachine,
   States,
   Task,
-  Wait,
 } from "./asl";
-import { isVTL } from "./vtl";
-import { makeCallable } from "./callable";
-import { CallExpr, isFunctionExpr, isVariableReference } from "./expression";
+import { VTL } from "./vtl";
+import {
+  CallExpr,
+  isComputedPropertyNameExpr,
+  isFunctionExpr,
+  isObjectLiteralExpr,
+  isSpreadAssignExpr,
+} from "./expression";
 import { AnyFunction, ensureItemOf } from "./util";
-import { CallContext } from "./context";
-import { assertNever } from "./assert";
+import { assertDefined, assertNodeKind } from "./assert";
+import { EventBusRuleInput } from "./event-bridge/types";
+import {
+  EventBus,
+  EventBusPredicateRuleBase,
+  EventBusRule,
+} from "./event-bridge";
+import { Integration, makeIntegration } from "./integration";
+import { AppSyncVtlIntegration } from "./appsync";
 
 export type AnyStepFunction =
-  | ExpressStepFunction<AnyFunction>
-  | StepFunction<AnyFunction>;
+  | ExpressStepFunction<any, any>
+  | StepFunction<any, any>;
 
 export namespace $SFN {
   export const kind = "SFN";
@@ -44,32 +54,29 @@ export namespace $SFN {
    *
    * @see https://docs.aws.amazon.com/step-functions/latest/dg/amazon-states-language-wait-state.html
    */
-  // @ts-ignore
-  export function waitFor(seconds: number): void;
+  export const waitFor = makeStepFunctionIntegration<
+    (seconds: number) => void,
+    "waitFor"
+  >("waitFor", {
+    asl(call) {
+      const seconds = call.args[0].expr;
+      if (seconds === undefined) {
+        throw new Error(`the 'seconds' argument is required`);
+      }
 
-  export function waitFor(call: CallExpr, context: CallContext): Wait {
-    if (context.kind !== ASL.ContextName) {
-      throw new Error(
-        `$SFN.wait is only available in the ${ASL.ContextName} context`
-      );
-    }
-    const seconds = call.args[0].expr;
-    if (seconds === undefined) {
-      throw new Error(`the 'seconds' argument is required`);
-    }
-
-    if (seconds.kind === "NumberLiteralExpr") {
-      return {
-        Type: "Wait",
-        Seconds: seconds.value,
-      };
-    } else {
-      return {
-        Type: "Wait",
-        SecondsPath: ASL.toJsonPath(seconds),
-      };
-    }
-  }
+      if (seconds.kind === "NumberLiteralExpr") {
+        return {
+          Type: "Wait" as const,
+          Seconds: seconds.value,
+        };
+      } else {
+        return {
+          Type: "Wait" as const,
+          SecondsPath: ASL.toJsonPath(seconds),
+        };
+      }
+    },
+  });
 
   /**
    * Wait until a {@link timestamp}.
@@ -80,137 +87,130 @@ export namespace $SFN {
    *
    * @see https://docs.aws.amazon.com/step-functions/latest/dg/amazon-states-language-wait-state.html
    */
-  // @ts-ignore
-  export function waitUntil(timestamp: string): void;
+  export const waitUntil = makeStepFunctionIntegration<
+    (timestamp: string) => void,
+    "waitUntil"
+  >("waitUntil", {
+    asl(call) {
+      const timestamp = call.args[0]?.expr;
+      if (timestamp === undefined) {
+        throw new Error(`the 'timestamp' argument is required`);
+      }
 
-  export function waitUntil(call: CallExpr, context: CallContext): Wait {
-    if (context.kind !== ASL.ContextName) {
-      throw new Error(
-        `$SFN.wait is only available in the ${ASL.ContextName} context`
-      );
-    }
-    const timestamp = call.args[0]?.expr;
-    if (timestamp === undefined) {
-      throw new Error(`the 'timestamp' argument is required`);
-    }
-
-    if (timestamp.kind === "StringLiteralExpr") {
-      return {
-        Type: "Wait",
-        Timestamp: timestamp.value,
-      };
-    } else {
-      return {
-        Type: "Wait",
-        TimestampPath: ASL.toJsonPath(timestamp),
-      };
-    }
-  }
-
-  /**
-   * Process each item in an {@link array} in parallel and run with the default maxConcurrency.
-   *
-   * Example:
-   * ```ts
-   * new ExpressStepFunction(this, "F", (items: string[]) => {
-   *   $SFN.forEach(items, item => task(item))
-   * });
-   * ```
-   *
-   * @param array the list of items to process
-   * @param props configure the maxConcurrency
-   * @param callbackfn function to process each item
-   */
-  // @ts-ignore
-  export function forEach<T>(
-    array: T[],
-    callbackfn: (item: T, index: number, array: T[]) => void
-  ): void;
-
-  /**
-   * Process each item in an {@link array} in parallel and run with the default maxConcurrency.
-   *
-   * Example:
-   * ```ts
-   * new ExpressStepFunction(this, "F"} (items: string[]) => {
-   *   $SFN.forEach(items, { maxConcurrency: 2 }, item => task(item));
-   * });
-   * ```
-   *
-   * @param array the list of items to process
-   * @param props configure the maxConcurrency
-   * @param callbackfn function to process each item
-   */
-  // @ts-ignore
-  export function forEach<T>(
-    array: T[],
-    props: {
-      maxConcurrency: number;
+      if (timestamp.kind === "StringLiteralExpr") {
+        return {
+          Type: "Wait",
+          Timestamp: timestamp.value,
+        };
+      } else {
+        return {
+          Type: "Wait",
+          TimestampPath: ASL.toJsonPath(timestamp),
+        };
+      }
     },
-    callbackfn: (item: T, index: number, array: T[]) => void
-  ): void;
+  });
 
-  export function forEach(call: CallExpr, context: CallContext): MapTask {
-    return mapOrForEach("forEach", call, context);
+  interface ForEach {
+    /**
+     * Process each item in an {@link array} in parallel and run with the default maxConcurrency.
+     *
+     * Example:
+     * ```ts
+     * new ExpressStepFunction(this, "F"} (items: string[]) => {
+     *   $SFN.forEach(items, { maxConcurrency: 2 }, item => task(item));
+     * });
+     * ```
+     *
+     * @param array the list of items to process
+     * @param callbackfn function to process each item
+     */
+    <T>(
+      array: T[],
+      callbackfn: (item: T, index: number, array: T[]) => void
+    ): void;
+    /**
+     * Process each item in an {@link array} in parallel and run with the default maxConcurrency.
+     *
+     * Example:
+     * ```ts
+     * new ExpressStepFunction(this, "F"} (items: string[]) => {
+     *   $SFN.forEach(items, { maxConcurrency: 2 }, item => task(item));
+     * });
+     * ```
+     *
+     * @param array the list of items to process
+     * @param props configure the maxConcurrency
+     * @param callbackfn function to process each item
+     */
+    <T>(
+      array: T[],
+      props: {
+        maxConcurrency: number;
+      },
+      callbackfn: (item: T, index: number, array: T[]) => void
+    ): void;
   }
 
-  /**
-   * Map over each item in an {@link array} in parallel and run with the default maxConcurrency.
-   *
-   * Example:
-   * ```ts
-   * new ExpressStepFunction(this, "F", (items: string[]) => {
-   *   return $SFN.map(items, item => task(item))
-   * });
-   * ```
-   *
-   * @param array the list of items to map over
-   * @param props configure the maxConcurrency
-   * @param callbackfn function to process each item
-   * @returns an array containing the result of each mapped item
-   */
-  // @ts-ignore
-  export function map<T, U>(
-    array: T[],
-    callbackfn: (item: T, index: number, array: T[]) => U
-  ): U[];
-
-  /**
-   * Map over each item in an {@link array} in parallel and run with a maxConcurrency of {@link props}.maxConcurrency
-   *
-   * Example:
-   * ```ts
-   * new ExpressStepFunction(this, "F",  (items: string[]) => {
-   *   return $SFN.map(items, { maxConcurrency: 2 }, item => task(item))
-   * });
-   * ```
-   *
-   * @param array the list of items to map over
-   * @param props configure the maxConcurrency
-   * @param callbackfn function to process each item
-   * @returns an array containing the result of each mapped item
-   */
-  export function map<T, U>(
-    array: T[],
-    props: {
-      maxConcurrency: number;
-    },
-    callbackfn: (item: T, index: number, array: T[]) => U
-  ): U[];
-
-  export function map(call: CallExpr, context: CallContext): MapTask {
-    return mapOrForEach("map", call, context);
-  }
-
-  function mapOrForEach(
-    kind: "map" | "forEach",
-    call: CallExpr,
-    context: CallContext
-  ): MapTask {
-    if (context.kind !== ASL.ContextName) {
-      throw new Error(`$SFN.${kind} is only supported by ${ASL.ContextName}`);
+  export const forEach = makeStepFunctionIntegration<ForEach, "forEach">(
+    "forEach",
+    {
+      asl(call, context) {
+        return mapOrForEach(call, context);
+      },
     }
+  );
 
+  interface Map {
+    /**
+     * Map over each item in an {@link array} in parallel and run with the default maxConcurrency.
+     *
+     * Example:
+     * ```ts
+     * new ExpressStepFunction(this, "F", (items: string[]) => {
+     *   return $SFN.map(items, item => task(item))
+     * });
+     * ```
+     *
+     * @param array the list of items to map over
+     * @param callbackfn function to process each item
+     * @returns an array containing the result of each mapped item
+     */
+    <T, U>(
+      array: T[],
+      callbackfn: (item: T, index: number, array: T[]) => U
+    ): U[];
+    /**
+     * Map over each item in an {@link array} in parallel and run with the default maxConcurrency.
+     *
+     * Example:
+     * ```ts
+     * new ExpressStepFunction(this, "F", (items: string[]) => {
+     *   return $SFN.map(items, item => task(item))
+     * });
+     * ```
+     *
+     * @param array the list of items to map over
+     * @param props configure the maxConcurrency
+     * @param callbackfn function to process each item
+     * @returns an array containing the result of each mapped item
+     */
+    <T, U>(
+      array: T[],
+      props: {
+        maxConcurrency: number;
+      },
+      callbackfn: (item: T, index: number, array: T[]) => U
+    ): U[];
+  }
+
+  export const map = makeStepFunctionIntegration<Map, "map">("map", {
+    asl(call, context) {
+      return mapOrForEach(call, context);
+    },
+  });
+
+  function mapOrForEach(call: CallExpr, context: ASL): MapTask {
     if (isMapOrForEach(call)) {
       const callbackfn = call.getArgument("callbackfn")?.expr;
       if (callbackfn === undefined || callbackfn.kind !== "FunctionExpr") {
@@ -285,53 +285,103 @@ export namespace $SFN {
    * ```
    * @param paths
    */
-  // @ts-ignore
-  export function parallel<Paths extends readonly (() => any)[]>(
-    ...paths: Paths
-  ): {
-    [i in keyof Paths]: i extends `${number}`
-      ? ReturnType<Extract<Paths[i], () => any>>
-      : Paths[i];
-  };
+  export const parallel = makeStepFunctionIntegration<
+    <Paths extends readonly (() => any)[]>(
+      ...paths: Paths
+    ) => {
+      [i in keyof Paths]: i extends `${number}`
+        ? ReturnType<Extract<Paths[i], () => any>>
+        : Paths[i];
+    },
+    "parallel"
+  >("parallel", {
+    asl(call, context) {
+      const paths = call.getArgument("paths")?.expr;
+      if (paths === undefined) {
+        throw new Error("missing required argument 'paths'");
+      }
+      if (paths.kind !== "ArrayLiteralExpr") {
+        throw new Error(`invalid arguments to $SFN.parallel`);
+      }
+      ensureItemOf(
+        paths.items,
+        isFunctionExpr,
+        `each parallel path must be an inline FunctionExpr`
+      );
 
-  export function parallel(call: CallExpr, context: CallContext): ParallelTask {
-    if (context.kind !== ASL.ContextName) {
-      throw new Error(`$SFN.${kind} is only supported by ${ASL.ContextName}`);
-    }
-    const paths = call.getArgument("paths")?.expr;
-    if (paths === undefined) {
-      throw new Error("missing required argument 'paths'");
-    }
-    if (paths.kind !== "ArrayLiteralExpr") {
-      throw new Error(`invalid arguments to $SFN.parallel`);
-    }
-    ensureItemOf(
-      paths.items,
-      isFunctionExpr,
-      `each parallel path must be an inline FunctionExpr`
-    );
-
-    return {
-      Type: "Parallel",
-      Branches: paths.items.map((func) => ({
-        StartAt: context.getStateName(func.body.step()!),
-        States: context.execute(func.body),
-      })),
-    };
-  }
+      return {
+        Type: "Parallel",
+        Branches: paths.items.map((func) => ({
+          StartAt: context.getStateName(func.body.step()!),
+          States: context.execute(func.body),
+        })),
+      };
+    },
+  });
 }
 
-abstract class BaseStepFunction<F extends AnyFunction>
+function makeStepFunctionIntegration<F extends AnyFunction, K extends string>(
+  methodName: K,
+  integration: Omit<Integration, "kind">
+): F {
+  return makeIntegration<F, `$SFN.${K}`>({
+    kind: `$SFN.${methodName}`,
+    unhandledContext(kind, context) {
+      throw new Error(
+        `${kind} is only allowed within a '${VTL.ContextName}' context, but was called within a '${context}' context.`
+      );
+    },
+    ...integration,
+  });
+}
+
+export function isStepFunction<P = any, O = any>(
+  a: any
+): a is StepFunction<P, O> | ExpressStepFunction<P, O> {
+  return a?.kind === "StepFunction";
+}
+
+/**
+ * {@see https://docs.aws.amazon.com/step-functions/latest/dg/cw-events.html}
+ */
+interface StepFunctionDetail {
+  executionArn: string;
+  stateMachineArn: string;
+  name: string;
+  status: "SUCCEEDED" | "RUNNING" | "FAILED" | "TIMED_OUT" | "ABORTED";
+  startDate: number;
+  stopDate: number | null;
+  input: string;
+  inputDetails: {
+    included: boolean;
+  };
+  output: null | string;
+  outputDetails: null | {
+    included: boolean;
+  };
+}
+
+interface StepFunctionStatusChangedEvent
+  extends EventBusRuleInput<
+    StepFunctionDetail,
+    "Step Functions Execution Status Change",
+    "aws.states"
+  > {}
+
+abstract class BaseStepFunction<P extends Record<string, any> | undefined, O>
   extends Resource
-  implements aws_stepfunctions.IStateMachine
+  implements aws_stepfunctions.IStateMachine, Integration
 {
   readonly kind = "StepFunction";
+  readonly functionlessKind = "StepFunction";
 
-  readonly decl: FunctionDecl<F>;
+  readonly decl: FunctionDecl<(arg: P) => O>;
   readonly resource: aws_stepfunctions.CfnStateMachine;
 
+  readonly appSyncVtl: AppSyncVtlIntegration;
+
   // @ts-ignore
-  readonly __functionBrand: F;
+  readonly __functionBrand: (arg: P) => O;
 
   readonly stateMachineName: string;
   readonly stateMachineArn: string;
@@ -343,18 +393,26 @@ abstract class BaseStepFunction<F extends AnyFunction>
    */
   readonly grantPrincipal;
 
-  constructor(scope: Construct, id: string, props: StepFunctionProps, func: F);
+  constructor(
+    scope: Construct,
+    id: string,
+    props: StepFunctionProps,
+    func: (arg: P) => O
+  );
 
-  constructor(scope: Construct, id: string, func: F);
+  constructor(scope: Construct, id: string, func: (arg: P) => O);
 
   constructor(
     scope: Construct,
     id: string,
     ...args:
-      | [props: StepFunctionProps, func: FunctionDecl<F>]
-      | [func: FunctionDecl<F>]
+      | [props: StepFunctionProps, func: (arg: P) => O]
+      | [func: (arg: P) => O]
   ) {
-    const props = isFunctionDecl(args[0]) ? undefined : args[0];
+    const props =
+      isFunctionDecl(args[0]) || typeof args[0] === "function"
+        ? undefined
+        : args[0];
     if (props?.stateMachineName !== undefined) {
       validateStateMachineName(props.stateMachineName);
     }
@@ -362,7 +420,9 @@ abstract class BaseStepFunction<F extends AnyFunction>
       ...props,
       physicalName: props?.stateMachineName,
     });
-    this.decl = isFunctionDecl(args[0]) ? args[0] : args[1]!;
+    this.decl = isFunctionDecl(args[0])
+      ? args[0]
+      : assertNodeKind<FunctionDecl>(args[1] as any, "FunctionDecl");
 
     this.role =
       props?.role ??
@@ -391,115 +451,292 @@ abstract class BaseStepFunction<F extends AnyFunction>
     this.stateMachineName = this.resource.attrName;
     this.stateMachineArn = this.resource.attrArn;
 
-    return makeCallable(this, (call: CallExpr, context: CallContext) => {
-      if (isASL(context)) {
-        // TODO
-        this.grantStartExecution(context.role);
+    // Integration object for appsync vtl
+    this.appSyncVtl = this.appSyncIntegration({
+      request: (call, context) => {
+        const { name, input, traceHeader } = retrieveMachineArgs(call);
+
+        const inputObj = context.var("{}");
+        input &&
+          context.put(
+            inputObj,
+            context.str("input"),
+            `$util.toJson(${context.eval(input)})`
+          );
+        name && context.put(inputObj, context.str("name"), context.eval(name));
+        traceHeader &&
+          context.put(
+            inputObj,
+            context.str("traceHeader"),
+            context.eval(traceHeader)
+          );
+        context.put(
+          inputObj,
+          context.str("stateMachineArn"),
+          context.str(this.stateMachineArn)
+        );
+
+        return `{
+  "version": "2018-05-29",
+  "method": "POST",
+  "resourcePath": "/",
+  "params": {
+    "headers": {
+      "content-type": "application/x-amz-json-1.0",
+      "x-amz-target": "${
+        this.getStepFunctionType() ===
+        aws_stepfunctions.StateMachineType.EXPRESS
+          ? "AWSStepFunctions.StartSyncExecution"
+          : "AWSStepFunctions.StartExecution"
+      }"
+    },
+    "body": $util.toJson(${inputObj})
+  }
+}`;
+      },
+    });
+  }
+
+  appSyncIntegration(
+    integration: Pick<AppSyncVtlIntegration, "request">
+  ): AppSyncVtlIntegration {
+    return {
+      ...integration,
+      dataSourceId: () => this.resource.node.addr,
+      dataSource: (api, dataSourceId) => {
+        const ds = new appsync.HttpDataSource(api, dataSourceId, {
+          api,
+          endpoint: `https://${
+            this.getStepFunctionType() ===
+            aws_stepfunctions.StateMachineType.EXPRESS
+              ? "sync-states"
+              : "states"
+          }.${this.resource.stack.region}.amazonaws.com/`,
+          authorizationConfig: {
+            signingRegion: api.stack.region,
+            signingServiceName: "states",
+          },
+        });
+
+        this.grantRead(ds.grantPrincipal);
         if (
           this.getStepFunctionType() ===
           aws_stepfunctions.StateMachineType.EXPRESS
         ) {
-          this.grantStartSyncExecution(context.role);
+          this.grantStartSyncExecution(ds.grantPrincipal);
+        } else {
+          this.grantStartExecution(ds.grantPrincipal);
         }
+        return ds;
+      },
+      result: (resultVariable) => {
+        const returnValName = "$sfn__result";
 
-        const task: Task = {
-          Type: "Task",
-          Resource: `arn:aws:states:::aws-sdk:sfn:${
-            this.getStepFunctionType() ===
-            aws_stepfunctions.StateMachineType.EXPRESS
-              ? "startSyncExecution"
-              : "startExecution"
-          }`,
-          Parameters: {
-            StateMachineArn: this.stateMachineArn,
-            Input: call.args.reduce(
-              (args, arg) => ({
-                ...args,
-                [`${arg.name!}${isVariableReference(arg.expr) ? ".$" : ""}`]:
-                  ASL.toJson(arg.expr),
-              }),
-              {}
-            ),
-          },
-        };
-        return task;
-      } else if (isVTL(context)) {
-        const args = context.var(
-          `{${call.args
-            .map((arg) => `"${arg.name}": ${context.eval(arg.expr)}`)
-            .join(",")}}`
-        );
-        return JSON.stringify(
-          {
-            version: "2018-05-29",
-            method: "POST",
-            resourcePath: "/",
-            params: {
-              headers: {
-                "content-type": "application/x-amz-json-1.0",
-                "x-amz-target":
-                  this.getStepFunctionType() ===
-                  aws_stepfunctions.StateMachineType.EXPRESS
-                    ? "AWSStepFunctions.StartSyncExecution"
-                    : "AWSStepFunctions.StartExecution",
-              },
-              body: {
-                stateMachineArn: this.stateMachineArn,
-                input: `$util.escapeJavaScript($util.toJson(${args}))`,
-              },
-            },
-          },
-          null,
-          2
-        );
-      }
-      return assertNever(context);
-    });
+        if (
+          this.getStepFunctionType() ===
+          aws_stepfunctions.StateMachineType.EXPRESS
+        ) {
+          return {
+            returnVariable: returnValName,
+            template: `#if(${resultVariable}.statusCode == 200)
+    #set(${returnValName} = $util.parseJson(${resultVariable}.body))
+    #if(${returnValName}.output == 'null')
+    $util.qr(${returnValName}.put("output", $null))
+    #else
+    #set(${returnValName}.output = $util.parseJson(${returnValName}.output))
+    #end
+    #else 
+    $util.error(${resultVariable}.body, "${resultVariable}.statusCode")
+    #end`,
+          };
+        } else {
+          return {
+            returnVariable: returnValName,
+            template: `#if(${resultVariable}.statusCode == 200)
+    #set(${returnValName} = $util.parseJson(${resultVariable}.body))
+    #else 
+    $util.error(${resultVariable}.body, "${resultVariable}.statusCode")
+    #end`,
+          };
+        }
+      },
+    };
   }
 
-  // @ts-ignore
-  public describeExecution(
-    executionArn: string
-  ): AWS.StepFunctions.DescribeExecutionOutput;
-
-  public describeExecution(call: CallExpr, context: CallContext): any {
-    const executionArn = call.args[0]?.expr;
-    if (executionArn === undefined) {
-      throw new Error(`missing argument 'executionArn'`);
+  asl(call: CallExpr, context: ASL) {
+    this.grantStartExecution(context.role);
+    if (
+      this.getStepFunctionType() === aws_stepfunctions.StateMachineType.EXPRESS
+    ) {
+      this.grantStartSyncExecution(context.role);
     }
-    if (isASL(context)) {
-      // need DescribeExecution
-      this.grantRead(context.role);
 
-      const task: Task = {
-        Type: "Task",
-        Resource: `arn:aws:states:::aws-sdk:sfn:describeExecution`,
-        Parameters: {
-          StateMachineArn: this.stateMachineArn,
+    const { name, input, traceHeader } = retrieveMachineArgs(call);
+
+    return {
+      Type: "Task" as const,
+      Resource: `arn:aws:states:::aws-sdk:sfn:${
+        this.getStepFunctionType() ===
+        aws_stepfunctions.StateMachineType.EXPRESS
+          ? "startSyncExecution"
+          : "startExecution"
+      }`,
+      Parameters: {
+        StateMachineArn: this.stateMachineArn,
+        ...(input ? ASL.toJsonAssignment("Input", input) : {}),
+        ...(name ? ASL.toJsonAssignment("Name", name) : {}),
+        ...(traceHeader
+          ? ASL.toJsonAssignment("TraceHeader", traceHeader)
+          : {}),
+      },
+    };
+  }
+
+  private statusChangeEventDocument() {
+    return {
+      doc: {
+        source: { value: "aws.states" },
+        "detail-type": { value: "Step Functions Execution Status Change" },
+        detail: {
+          doc: {
+            stateMachineArn: { value: this.stateMachineArn },
+          },
         },
-      };
-      return task;
-    } else if (isVTL(context)) {
-      return JSON.stringify(
-        {
-          version: "2018-05-29",
-          method: "POST",
-          resourcePath: "/",
-          params: {
-            headers: {
-              "content-type": "application/x-amz-json-1.0",
-              "x-amz-target": "AWSStepFunctions.DescribeExecution",
-            },
-            body: {
-              executionArn: context.eval(executionArn),
+      },
+    };
+  }
+
+  public onSucceeded(
+    scope: Construct,
+    id: string
+  ): EventBusRule<StepFunctionStatusChangedEvent> {
+    const bus = EventBus.default<StepFunctionStatusChangedEvent>(this);
+
+    return new EventBusPredicateRuleBase(
+      scope,
+      id,
+      bus,
+      this.statusChangeEventDocument(),
+      {
+        doc: {
+          detail: {
+            doc: {
+              status: { value: "SUCCEEDED" },
             },
           },
         },
-        null,
-        2
-      );
-    }
-    return assertNever(context);
+      }
+    );
+  }
+
+  public onFailed(
+    scope: Construct,
+    id: string
+  ): EventBusRule<StepFunctionStatusChangedEvent> {
+    const bus = EventBus.default<StepFunctionStatusChangedEvent>(this);
+
+    return new EventBusPredicateRuleBase(
+      scope,
+      id,
+      bus,
+      this.statusChangeEventDocument(),
+      {
+        doc: {
+          detail: {
+            doc: {
+              status: { value: "FAILED" },
+            },
+          },
+        },
+      }
+    );
+  }
+
+  public onStarted(
+    scope: Construct,
+    id: string
+  ): EventBusRule<StepFunctionStatusChangedEvent> {
+    const bus = EventBus.default<StepFunctionStatusChangedEvent>(this);
+
+    return new EventBusPredicateRuleBase(
+      scope,
+      id,
+      bus,
+      this.statusChangeEventDocument(),
+      {
+        doc: {
+          detail: {
+            doc: {
+              status: { value: "RUNNING" },
+            },
+          },
+        },
+      }
+    );
+  }
+
+  public onTimedOut(
+    scope: Construct,
+    id: string
+  ): EventBusRule<StepFunctionStatusChangedEvent> {
+    const bus = EventBus.default<StepFunctionStatusChangedEvent>(this);
+
+    return new EventBusPredicateRuleBase(
+      scope,
+      id,
+      bus,
+      this.statusChangeEventDocument(),
+      {
+        doc: {
+          detail: {
+            doc: {
+              status: { value: "TIMED_OUT" },
+            },
+          },
+        },
+      }
+    );
+  }
+
+  public onAborted(
+    scope: Construct,
+    id: string
+  ): EventBusRule<StepFunctionStatusChangedEvent> {
+    const bus = EventBus.default<StepFunctionStatusChangedEvent>(this);
+
+    return new EventBusPredicateRuleBase(
+      scope,
+      id,
+      bus,
+      this.statusChangeEventDocument(),
+      {
+        doc: {
+          detail: {
+            doc: {
+              status: { value: "ABORTED" },
+            },
+          },
+        },
+      }
+    );
+  }
+
+  /**
+   * Create event bus rule that matches any status change on this machine.
+   */
+  public onStatusChanged(
+    scope: Construct,
+    id: string
+  ): EventBusRule<StepFunctionStatusChangedEvent> {
+    const bus = EventBus.default<StepFunctionStatusChangedEvent>(this);
+
+    // We are not able to use the nice "when" function here because we don't compile
+    return new EventBusPredicateRuleBase(
+      scope,
+      id,
+      bus,
+      this.statusChangeEventDocument()
+    );
   }
 
   public abstract getStepFunctionType(): aws_stepfunctions.StateMachineType;
@@ -821,6 +1058,37 @@ abstract class BaseStepFunction<F extends AnyFunction>
   }
 }
 
+function retrieveMachineArgs(call: CallExpr) {
+  // object reference
+  // machine(inputObj) => inputObj: { name: "hi", input: ... }
+  // Inline Object
+  // machine({ input: { ... } })
+  // Inline with reference
+  // machine({ input: ref, name: "hi", traceHeader: "hi" })
+  const arg = call.args[0];
+
+  if (!arg.expr || !isObjectLiteralExpr(arg.expr)) {
+    throw Error(
+      "Step function invocation must use a single, inline object parameter. Variable references are not supported currently."
+    );
+  } else if (
+    arg.expr.properties.some(
+      (x) => isSpreadAssignExpr(x) || isComputedPropertyNameExpr(x.name)
+    )
+  ) {
+    throw Error(
+      "Step function invocation must use a single, inline object instantiated without computed or spread keys."
+    );
+  }
+
+  // we know the keys cannot be computed, so it is safe to use getProperty
+  return {
+    name: arg.expr.getProperty("name")?.expr,
+    traceHeader: arg.expr.getProperty("traceHeader")?.expr,
+    input: arg.expr.getProperty("input")?.expr,
+  };
+}
+
 function validateStateMachineName(stateMachineName: string) {
   if (!Token.isUnresolved(stateMachineName)) {
     if (stateMachineName.length < 1 || stateMachineName.length > 80) {
@@ -868,8 +1136,9 @@ export interface StepFunctionProps
  * ```
  */
 export class ExpressStepFunction<
-  F extends AnyFunction
-> extends BaseStepFunction<F> {
+  P extends Record<string, any> | undefined,
+  O
+> extends BaseStepFunction<P, O> {
   /**
    * This static property identifies this class as an ExpressStepFunction to the TypeScript plugin.
    */
@@ -914,17 +1183,34 @@ export type SyncExecutionResult<T> =
   | SyncExecutionFailedResult
   | SyncExecutionSuccessResult<T>;
 
-export interface ExpressStepFunction<F extends AnyFunction> {
-  (...args: Parameters<F>): SyncExecutionResult<ReturnType<F>>;
-  (
-    name: string,
-    traceHeader: string,
-    ...args: Parameters<F>
-  ): SyncExecutionResult<ReturnType<F>>;
-  (name: string, ...args: Parameters<F>): SyncExecutionResult<ReturnType<F>>;
+// do not support undefined values, arguments must be present or missing
+export type StepFunctionRequest<P extends Record<string, any> | undefined> =
+  (P extends undefined ? {} : { input: P }) &
+    (
+      | {
+          name: string;
+          traceHeader: string;
+        }
+      | {
+          name: string;
+        }
+      | {
+          traceHeader: string;
+        }
+      | {}
+    );
+
+export interface ExpressStepFunction<
+  P extends Record<string, any> | undefined,
+  O
+> {
+  (input: StepFunctionRequest<P>): SyncExecutionResult<O>;
 }
 
-export class StepFunction<F extends AnyFunction> extends BaseStepFunction<F> {
+export class StepFunction<
+  P extends Record<string, any> | undefined,
+  O
+> extends BaseStepFunction<P, O> {
   /**
    * This static property identifies this class as an StepFunction to the TypeScript plugin.
    */
@@ -933,17 +1219,65 @@ export class StepFunction<F extends AnyFunction> extends BaseStepFunction<F> {
   public getStepFunctionType(): aws_stepfunctions.StateMachineType.STANDARD {
     return aws_stepfunctions.StateMachineType.STANDARD;
   }
+
+  public describeExecution = makeIntegration<
+    (executionArn: string) => AWS.StepFunctions.DescribeExecutionOutput,
+    "StepFunction.describeExecution"
+  >({
+    kind: "StepFunction.describeExecution",
+    appSyncVtl: this.appSyncIntegration({
+      request(call, context) {
+        const executionArn = getArgs(call);
+        return `{
+  "version": "2018-05-29",
+  "method": "POST",
+  "resourcePath": "/",
+  "params": {
+    "headers": {
+      "content-type": "application/x-amz-json-1.0",
+      "x-amz-target": "AWSStepFunctions.DescribeExecution"
+    },
+    "body": {
+      "executionArn": ${context.json(context.eval(executionArn))}
+    }
+  }
+}`;
+      },
+    }),
+    asl: (call, context) => {
+      // need DescribeExecution
+      this.grantRead(context.role);
+
+      const executionArnExpr = assertDefined(
+        call.args[0].expr,
+        "Describe Execution requires a single string argument."
+      );
+
+      const argValue = ASL.toJsonAssignment("ExecutionArn", executionArnExpr);
+
+      const task: Task = {
+        Type: "Task",
+        Resource: `arn:aws:states:::aws-sdk:sfn:describeExecution`,
+        Parameters: argValue,
+      };
+      return task;
+    },
+    unhandledContext: (kind, contextKind) => {
+      throw new Error(
+        `${kind} is only available in the ${ASL.ContextName} and ${VTL.ContextName} context, but was used in ${contextKind}.`
+      );
+    },
+  });
 }
 
-export interface StepFunction<F extends AnyFunction> {
-  (
-    name: string,
-    ...args: Parameters<F>
-  ): AWS.StepFunctions.StartExecutionOutput;
-  (
-    name: string,
-    traceHeader: string,
-    ...args: Parameters<F>
-  ): AWS.StepFunctions.StartExecutionOutput;
-  (...args: Parameters<F>): AWS.StepFunctions.StartExecutionOutput;
+export interface StepFunction<P extends Record<string, any> | undefined, O> {
+  (input: StepFunctionRequest<P>): AWS.StepFunctions.StartExecutionOutput;
+}
+
+function getArgs(call: CallExpr) {
+  const executionArn = call.args[0]?.expr;
+  if (executionArn === undefined) {
+    throw new Error(`missing argument 'executionArn'`);
+  }
+  return executionArn;
 }

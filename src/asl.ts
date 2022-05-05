@@ -3,6 +3,7 @@ import { aws_iam, aws_stepfunctions } from "aws-cdk-lib";
 
 import { assertNever } from "./assert";
 import {
+  Argument,
   CallExpr,
   ElementAccessExpr,
   Expr,
@@ -34,10 +35,14 @@ import {
   VariableStmt,
   WhileStmt,
 } from "./statement";
-import { anyOf, findFunction } from "./util";
-import { FunctionDecl } from "./declaration";
+import { anyOf } from "./util";
+import { findIntegration } from "./integration";
+import { FunctionDecl, isParameterDecl, isFunctionDecl } from "./declaration";
 import { FunctionlessNode } from "./node";
 import { visitEachChild } from "./visit";
+import { isFunction } from "./function";
+import { isTable } from "./table";
+import { isStepFunction } from "./step-function";
 
 export function isASL(a: any): a is ASL {
   return (a as ASL | undefined)?.kind === ASL.ContextName;
@@ -377,7 +382,9 @@ export class ASL {
           });
 
           function isTask(node: FunctionlessNode): node is CallExpr {
-            return node.kind === "CallExpr" && findFunction(node) !== undefined;
+            return (
+              node.kind === "CallExpr" && findIntegration(node) !== undefined
+            );
           }
 
           if (nestedTasks.length > 0) {
@@ -681,13 +688,15 @@ export class ASL {
         throw new Error(`the expr of a ThrowStmt must be a NewExpr`);
       }
 
-      const error = (stmt.expr as NewExpr).args.reduce(
-        (args: any, arg) => ({
-          ...args,
-          [arg.name!]: ASL.toJson(arg.expr),
-        }),
-        {}
-      );
+      const error = (stmt.expr as NewExpr).args
+        .filter((arg): arg is Argument & { expr: Expr } => !!arg.expr)
+        .reduce(
+          (args: any, arg) => ({
+            ...args,
+            [arg.name!]: ASL.toJson(arg.expr),
+          }),
+          {}
+        );
 
       const throwTransition = this.throw(stmt);
       if (throwTransition === undefined) {
@@ -830,27 +839,27 @@ export class ASL {
       props.End = true;
     }
     if (expr.kind === "CallExpr") {
-      const serviceCall = findFunction(expr);
+      const serviceCall = findIntegration(expr);
       if (serviceCall) {
         if (
           expr.expr.kind === "PropAccessExpr" &&
           (expr.expr.name === "waitFor" || expr.expr.name === "waitUntil")
         ) {
           delete (props as any).ResultPath;
-          return {
-            ...(serviceCall as any)(expr, this),
+          return <State>{
+            ...serviceCall.asl(expr, this),
             ...props,
           };
         }
 
-        const taskState = {
-          ...serviceCall(expr, this),
+        const taskState = <State>{
+          ...serviceCall.asl(expr, this),
           ...props,
         };
 
         const throwOrPass = this.throw(expr);
         if (throwOrPass?.Next) {
-          return {
+          return <State>{
             ...taskState,
             Catch: [
               {
@@ -1192,7 +1201,7 @@ function analyzeFlow(node: FunctionlessNode): FlowResult {
     .reduce(
       (a, b) => ({ ...a, ...b }),
       (node.kind === "CallExpr" &&
-        (findFunction(node) !== undefined || isMapOrForEach(node))) ||
+        (findIntegration(node) !== undefined || isMapOrForEach(node))) ||
         node.kind === "ForInStmt" ||
         node.kind === "ForOfStmt"
         ? { hasTask: true }
@@ -1232,8 +1241,10 @@ function hasBreak(loop: ForInStmt | ForOfStmt | WhileStmt | DoStmt): boolean {
 }
 
 export namespace ASL {
-  export function toJson(expr: Expr): any {
-    if (expr.kind === "Argument") {
+  export function toJson(expr?: Expr): any {
+    if (!expr) {
+      return undefined;
+    } else if (expr.kind === "Argument") {
       return toJson(expr.expr);
     } else if (expr.kind === "CallExpr") {
       if (isSlice(expr)) {
@@ -1293,11 +1304,11 @@ export namespace ASL {
       return expr.value ?? null;
     } else if (expr.kind === "ReferenceExpr") {
       const ref = expr.ref();
-      if (ref.kind === "Function") {
+      if (isFunction(ref)) {
         return ref.resource.functionArn;
-      } else if (ref.kind === "StepFunction") {
+      } else if (isStepFunction(ref)) {
         return ref.stateMachineArn;
-      } else if (ref.kind === "Table") {
+      } else if (isTable(ref)) {
         return ref.resource.tableName;
       }
     } else if (expr.kind === "ElementAccessExpr") {
@@ -1325,6 +1336,13 @@ export namespace ASL {
         return filterToJsonPath(expr);
       }
     } else if (expr.kind === "Identifier") {
+      const ref = expr.lookup();
+      // If the identifier references a parameter expression and that parameter expression
+      // is in a FunctionDecl and that Function is at the top (no parent).
+      // This logic needs to be updated to support destructured inputs: https://github.com/sam-goodwin/functionless/issues/68
+      if (ref && isParameterDecl(ref) && isFunctionDecl(ref.parent)) {
+        return "$";
+      }
       return `$.${expr.name}`;
     } else if (expr.kind === "PropAccessExpr") {
       return `${toJsonPath(expr.expr)}.${expr.name}`;
@@ -1347,8 +1365,9 @@ export namespace ASL {
 
     const end = expr.getArgument("end")?.expr;
     if (
-      end?.kind !== "NullLiteralExpr" &&
-      end?.kind !== "UndefinedLiteralExpr"
+      !!end?.kind &&
+      end.kind !== "NullLiteralExpr" &&
+      end.kind !== "UndefinedLiteralExpr"
     ) {
       if (end?.kind !== "NumberLiteralExpr") {
         throw new Error(
@@ -1359,6 +1378,22 @@ export namespace ASL {
     } else {
       return `${toJsonPath(expr.expr.expr)}[${start.value}:]`;
     }
+  }
+
+  /**
+   * Returns a object with the key formatted based on the contents of the value.
+   * in ASL, object keys that reference json path values must have a suffix of ".$"
+   * { "input.$": "$.value" }
+   */
+  export function toJsonAssignment(
+    key: string,
+    expr: Expr
+  ): Record<string, any> {
+    const value = ASL.toJson(expr);
+
+    return {
+      [isVariableReference(expr) ? `${key}.$` : key]: value,
+    };
   }
 
   function filterToJsonPath(expr: CallExpr & { expr: PropAccessExpr }): string {
@@ -1416,7 +1451,7 @@ export namespace ASL {
           );
         }
       } else if (expr.kind === "StringLiteralExpr") {
-        return `'${expr.value.replace("'", "\\\\'")}'`;
+        return `'${expr.value.replace(/'/g, "\\\\'")}'`;
       } else if (
         expr.kind === "BooleanLiteralExpr" ||
         expr.kind === "NumberLiteralExpr" ||
@@ -1622,12 +1657,14 @@ export namespace ASL {
           isLiteralOrTypeOfExpr(expr.left) ||
           isLiteralOrTypeOfExpr(expr.right)
         ) {
-          const [literalOrTypeOf, val] =
-            isLiteralOrTypeOfExpr(expr.left) || isLiteralOrTypeOfExpr(expr.left)
-              ? [expr.left, expr.right]
-              : [expr.right, expr.left];
+          // typeof x === "string" -> left: typeOf, right: literal
+          // "string" === typeof x -> left: literal, right: typeOf
+          // x === 1 -> left: identifier, right: literal
+          const [literalExpr, val] = isLiteralExpr(expr.left)
+            ? [expr.left, expr.right]
+            : [expr.right, expr.left];
 
-          if (literalOrTypeOf.kind === "TypeOfExpr") {
+          if (val.kind === "TypeOfExpr") {
             const supportedTypeNames = [
               "undefined",
               "boolean",
@@ -1636,17 +1673,17 @@ export namespace ASL {
               "bigint",
             ] as const;
 
-            if (expr.right.kind !== "StringLiteralExpr") {
+            if (literalExpr.kind !== "StringLiteralExpr") {
               throw new Error(
                 `typeof expression can only be compared against a string literal, such as typeof x === "string"`
               );
             }
 
-            const type = expr.right.value as typeof supportedTypeNames[number];
+            const type = literalExpr.value as typeof supportedTypeNames[number];
             if (!supportedTypeNames.includes(type)) {
               throw new Error(`unsupported typeof comparison: "${type}"`);
             }
-            const Variable = toJsonPath(literalOrTypeOf.expr);
+            const Variable = toJsonPath(val.expr);
             if (expr.op === "==" || expr.op === "!=") {
               if (type === "undefined") {
                 return {
@@ -1678,8 +1715,8 @@ export namespace ASL {
               );
             }
           } else if (
-            literalOrTypeOf.kind === "NullLiteralExpr" ||
-            literalOrTypeOf.kind === "UndefinedLiteralExpr"
+            literalExpr.kind === "NullLiteralExpr" ||
+            literalExpr.kind === "UndefinedLiteralExpr"
           ) {
             if (expr.op === "!=") {
               return {
@@ -1708,10 +1745,10 @@ export namespace ASL {
                 ],
               };
             }
-          } else if (literalOrTypeOf.kind === "StringLiteralExpr") {
+          } else if (literalExpr.kind === "StringLiteralExpr") {
             const [variable, value] = [
               toJsonPath(val),
-              literalOrTypeOf.value,
+              literalExpr.value,
             ] as const;
             if (expr.op === "==") {
               return {
@@ -1746,10 +1783,10 @@ export namespace ASL {
                 StringGreaterThanEquals: value,
               };
             }
-          } else if (literalOrTypeOf.kind === "NumberLiteralExpr") {
+          } else if (literalExpr.kind === "NumberLiteralExpr") {
             const [variable, value] = [
               toJsonPath(val),
-              literalOrTypeOf.value,
+              literalExpr.value,
             ] as const;
             if (expr.op === "==") {
               return {
@@ -1851,8 +1888,10 @@ function toStateName(stmt: Stmt): string | undefined {
   }
 }
 
-function exprToString(expr: Expr): string {
-  if (expr.kind === "Argument") {
+function exprToString(expr?: Expr): string {
+  if (!expr) {
+    return "";
+  } else if (expr.kind === "Argument") {
     return exprToString(expr.expr);
   } else if (expr.kind === "ArrayLiteralExpr") {
     return `[${expr.items.map(exprToString).join(", ")}]`;
@@ -1864,8 +1903,10 @@ function exprToString(expr: Expr): string {
     return `${expr.kind === "NewExpr" ? "new " : ""}${exprToString(
       expr.expr
     )}(${expr.args
+      // Assume that undefined args are in order.
       .filter(
         (arg) =>
+          arg.expr &&
           !(arg.name === "thisArg" && arg.expr.kind === "UndefinedLiteralExpr")
       )
       .map((arg) => exprToString(arg.expr))

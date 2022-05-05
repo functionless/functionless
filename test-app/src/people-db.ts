@@ -16,15 +16,14 @@ import {
   ExpressStepFunction,
 } from "functionless";
 
-export interface Person {
-  id: string;
-  name: string;
-}
+import {
+  QueryResolvers,
+  MutationResolvers,
+  Person,
+  ProcessedPerson,
+} from "./generated-types";
 
-export interface ProcessedPerson extends Person {
-  score: number;
-}
-
+export { Person };
 export class PeopleDatabase extends Construct {
   readonly personTable;
   readonly computeScore;
@@ -70,7 +69,10 @@ export class PeopleDatabase extends Construct {
     });
 
     // a synchronous Express Step Function for getting a Person
-    this.getPersonMachine = new ExpressStepFunction(
+    this.getPersonMachine = new ExpressStepFunction<
+      { id: string },
+      undefined | ProcessedPerson
+    >(
       this,
       "GetPersonMachine",
       {
@@ -79,12 +81,12 @@ export class PeopleDatabase extends Construct {
           level: aws_stepfunctions.LogLevel.ALL,
         },
       },
-      (id: string) => {
+      (input) => {
         const person = $AWS.DynamoDB.GetItem({
           TableName: this.personTable,
           Key: {
             id: {
-              S: id,
+              S: input.id,
             },
           },
         });
@@ -107,12 +109,12 @@ export class PeopleDatabase extends Construct {
     );
 
     this.getPerson = new AppsyncResolver<
-      { id: string },
-      ProcessedPerson | undefined
+      QueryResolvers["getPerson"]["args"],
+      QueryResolvers["getPerson"]["result"]
     >(($context) => {
       let person;
       // example of integrating with an Express Step Function from Appsync
-      person = this.getPersonMachine($context.arguments.id);
+      person = this.getPersonMachine({ input: { id: $context.arguments.id } });
 
       if (person.status === "SUCCEEDED") {
         return person.output;
@@ -121,28 +123,29 @@ export class PeopleDatabase extends Construct {
       }
     });
 
-    this.addPerson = new AppsyncResolver<{ input: { name: string } }, Person>(
-      ($context) => {
-        const person = this.personTable.putItem({
-          key: {
-            id: {
-              S: $util.autoId(),
-            },
+    this.addPerson = new AppsyncResolver<
+      MutationResolvers["addPerson"]["args"],
+      MutationResolvers["addPerson"]["result"]
+    >(($context) => {
+      const person = this.personTable.putItem({
+        key: {
+          id: {
+            S: $util.autoId(),
           },
-          attributeValues: {
-            name: {
-              S: $context.arguments.input.name,
-            },
+        },
+        attributeValues: {
+          name: {
+            S: $context.arguments.input.name,
           },
-        });
+        },
+      });
 
-        return person;
-      }
-    );
+      return person;
+    });
 
     // example of inferring the TArguments and TResult from the function signature
     this.updateName = new AppsyncResolver(
-      ($context: AppsyncContext<{ id: string; name: string }>) =>
+      ($context: AppsyncContext<MutationResolvers["updateName"]["args"]>) =>
         this.personTable.updateItem({
           key: {
             id: $util.dynamodb.toDynamoDB($context.arguments.id),
@@ -160,13 +163,15 @@ export class PeopleDatabase extends Construct {
     );
 
     // example of explicitly specifying TArguments and TResult
-    this.deletePerson = new AppsyncResolver<{ id: string }, Person | undefined>(
-      ($context) =>
-        this.personTable.deleteItem({
-          key: {
-            id: $util.dynamodb.toDynamoDB($context.arguments.id),
-          },
-        })
+    this.deletePerson = new AppsyncResolver<
+      MutationResolvers["deletePerson"]["args"],
+      MutationResolvers["deletePerson"]["result"]
+    >(($context) =>
+      this.personTable.deleteItem({
+        key: {
+          id: $util.dynamodb.toDynamoDB($context.arguments.id),
+        },
+      })
     );
   }
 }

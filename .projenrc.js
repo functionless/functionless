@@ -1,23 +1,108 @@
-const { typescript } = require("projen");
-const project = new typescript.TypeScriptProject({
+const { readFileSync, writeFileSync, chmodSync } = require("fs");
+const { join } = require("path");
+const { typescript, TextFile } = require("projen");
+
+/**
+ * Adds githooks into the .git/hooks folder during projen synth.
+ *
+ * @see https://git-scm.com/docs/githooks
+ */
+class GitHooksPreCommitComponent extends TextFile {
+  constructor(project) {
+    super(project, ".git/hooks/pre-commit", {
+      lines: ["#!/bin/sh", "npx -y lint-staged"],
+    });
+  }
+
+  postSynthesize() {
+    chmodSync(this.path, "755");
+  }
+}
+
+const MIN_CDK_VERSION = "2.20.0";
+
+/**
+ * Projen does not currently support a way to set `*` for deerDependency versions.
+ * https://github.com/projen/projen/issues/1802
+ *
+ * Why do we need `*` for peer dependencies?
+ *
+ * @aws-cdk 2.0 uses pre-release version tags (ex: 2.17.0-alpha.0) for all experimental features.
+ * NPM/Semver does not allow version ranges for versions with pre-release tags (ex: 2.17.0-alpha.0)
+ *
+ * This means we cannot specify a peer version range for @aws-cdk/aws-appsync-alpha, pinning consumers to one CDK version
+ * or ignoring/overriding npm/yarn errors and warnings.
+ *
+ * TODO: Remove this hack once https://github.com/projen/projen/issues/1802 is resolved.
+ */
+class CustomTypescriptProject extends typescript.TypeScriptProject {
+  constructor(opts) {
+    super(opts);
+
+    new GitHooksPreCommitComponent(this);
+
+    this.postSynthesize = this.postSynthesize.bind(this);
+  }
+
+  postSynthesize() {
+    super.postSynthesize();
+
+    /**
+     * Hack to fix peer dep issue
+     */
+
+    const outdir = this.outdir;
+    const rootPackageJson = join(outdir, "package.json");
+
+    const packageJson = JSON.parse(readFileSync(rootPackageJson));
+
+    const updated = {
+      ...packageJson,
+      peerDependencies: {
+        ...packageJson.peerDependencies,
+        "@aws-cdk/aws-appsync-alpha": "*",
+      },
+    };
+
+    writeFileSync(rootPackageJson, `${JSON.stringify(updated, null, 2)}\n`);
+  }
+}
+
+const project = new CustomTypescriptProject({
   defaultReleaseBranch: "main",
   name: "functionless",
   deps: ["fs-extra", "minimatch"],
   devDeps: [
-    "@aws-cdk/aws-appsync-alpha",
+    `@aws-cdk/aws-appsync-alpha@${MIN_CDK_VERSION}-alpha.0`,
     "@types/fs-extra",
     "@types/minimatch",
-    "aws-cdk-lib",
-    "constructs",
+    "@types/uuid",
+    "amplify-appsync-simulator",
+    "graphql-request",
+    "prettier",
     "ts-node",
     "ts-patch",
-    "typesafe-dynamodb",
-    "typescript",
+    /**
+     * For CDK Local Stack tests
+     */
+    `@aws-cdk/cloud-assembly-schema@${MIN_CDK_VERSION}`,
+    `@aws-cdk/cloudformation-diff@${MIN_CDK_VERSION}`,
+    `@aws-cdk/cx-api@${MIN_CDK_VERSION}`,
+    `aws-cdk@${MIN_CDK_VERSION}`,
+    `cdk-assets@${MIN_CDK_VERSION}`,
+    "promptly",
+    "proxy-agent",
+    /**
+     * End Local
+     */
   ],
+  scripts: {
+    localstack: "./scripts/localstack",
+  },
   peerDeps: [
-    "@aws-cdk/aws-appsync-alpha@^2.17.0-alpha.0",
-    "aws-cdk-lib@^2.17.0",
+    `aws-cdk-lib@^${MIN_CDK_VERSION}`,
     "constructs@^10.0.0",
+    "esbuild",
     "typesafe-dynamodb@^0.1.5",
     "typescript@^4.6.2",
   ],
@@ -44,6 +129,17 @@ const project = new typescript.TypeScriptProject({
   },
   gitignore: [".DS_Store"],
   releaseToNpm: true,
+  jestOptions: {
+    jestConfig: {
+      coveragePathIgnorePatterns: ["/test/", "/node_modules/"],
+    },
+  },
+});
+
+const packageJson = project.tryFindObjectFile("package.json");
+
+packageJson.addOverride("lint-staged", {
+  "*.{ts,js,json}": "prettier --write",
 });
 
 project.compileTask.prependExec(
@@ -54,6 +150,13 @@ project.testTask.prependExec(
   "cd ./test-app && yarn && yarn build && yarn synth"
 );
 project.testTask.prependExec("ts-patch install -s");
+project.testTask.prependExec("./scripts/localstack");
+project.testTask.exec("localstack stop");
+
+project.testTask.env("DEFAULT_REGION", "ap-northeast-1");
+project.testTask.env("AWS_ACCOUNT_ID", "000000000000");
+project.testTask.env("AWS_ACCESS_KEY_ID", "test");
+project.testTask.env("AWS_SECRET_ACCESS_KEY", "test");
 
 project.addPackageIgnore("/test-app");
 

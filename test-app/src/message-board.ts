@@ -13,6 +13,8 @@ import {
   Function,
   StepFunction,
   Table,
+  EventBus,
+  EventBusRuleInput,
 } from "functionless";
 import * as appsync from "@aws-cdk/aws-appsync-alpha";
 import path from "path";
@@ -55,7 +57,7 @@ const api = new appsync.GraphqlApi(stack, "Api", {
   },
 });
 
-export const getPost = new AppsyncResolver<
+const getPostResolver = new AppsyncResolver<
   { postId: string },
   Post | undefined
 >(($context) => {
@@ -69,12 +71,14 @@ export const getPost = new AppsyncResolver<
       },
     },
   });
-}).addResolver(api, {
+});
+
+export const getPost = getPostResolver.addResolver(api, {
   typeName: "Query",
   fieldName: "getPost",
 });
 
-export const comments = new AppsyncResolver<
+const commentResolver = new AppsyncResolver<
   { nextToken?: string; limit?: number },
   CommentPage,
   Omit<Post, "comments">
@@ -107,7 +111,9 @@ export const comments = new AppsyncResolver<
   return {
     comments: [],
   };
-}).addResolver(api, {
+});
+
+export const comments = commentResolver.addResolver(api, {
   typeName: "Post",
   fieldName: "comments",
 });
@@ -154,26 +160,25 @@ export const validateComment = new Function<
   })
 );
 
-export const commentValidationWorkflow = new StepFunction(
-  stack,
-  "CommentValidationWorkflow",
-  (postId: string, commentId: string, commentText: string) => {
-    const status = validateComment({ commentText });
-    if (status === "bad") {
-      $AWS.DynamoDB.DeleteItem({
-        TableName: database,
-        Key: {
-          pk: {
-            S: `Post|${postId}`,
-          },
-          sk: {
-            S: `Comment|${commentId}`,
-          },
+export const commentValidationWorkflow = new StepFunction<
+  { postId: string; commentId: string; commentText: string },
+  void
+>(stack, "CommentValidationWorkflow", (input) => {
+  const status = validateComment({ commentText: input.commentText });
+  if (status === "bad") {
+    $AWS.DynamoDB.DeleteItem({
+      TableName: database,
+      Key: {
+        pk: {
+          S: `Post|${input.postId}`,
         },
-      });
-    }
+        sk: {
+          S: `Comment|${input.commentId}`,
+        },
+      },
+    });
   }
-);
+});
 
 export const addComment = new AppsyncResolver<
   { postId: string; commentText: string },
@@ -206,11 +211,7 @@ export const addComment = new AppsyncResolver<
   });
 
   // kick off a workflow to validate the comment
-  commentValidationWorkflow(
-    comment.postId,
-    comment.commentId,
-    comment.commentText
-  );
+  commentValidationWorkflow({ input: comment });
 
   return comment;
 }).addResolver(api, {
@@ -218,10 +219,29 @@ export const addComment = new AppsyncResolver<
   fieldName: "addComment",
 });
 
-export const deleteWorkflow = new StepFunction(
+interface MessageDeletedEvent
+  extends EventBusRuleInput<
+    { count: number },
+    "Delete-Message-Success",
+    "MessageDeleter"
+  > {}
+
+interface PostDeletedEvent
+  extends EventBusRuleInput<
+    { id: string },
+    "Delete-Post-Success",
+    "MessageDeleter"
+  > {}
+
+const customDeleteBus = new EventBus<MessageDeletedEvent | PostDeletedEvent>(
+  stack,
+  "deleteBus"
+);
+
+export const deleteWorkflow = new StepFunction<{ postId: string }, void>(
   stack,
   "DeletePostWorkflow",
-  (postId: string) => {
+  (input) => {
     while (true) {
       try {
         const comments = $AWS.DynamoDB.Query({
@@ -229,7 +249,7 @@ export const deleteWorkflow = new StepFunction(
           KeyConditionExpression: `pk = :pk`,
           ExpressionAttributeValues: {
             ":pk": {
-              S: `Post|${postId}`,
+              S: `Post|${input.postId}`,
             },
           },
         });
@@ -244,12 +264,20 @@ export const deleteWorkflow = new StepFunction(
               },
             })
           );
+
+          customDeleteBus({
+            "detail-type": "Delete-Message-Success",
+            source: "MessageDeleter",
+            detail: {
+              count: comments.Items.length,
+            },
+          });
         } else {
           $AWS.DynamoDB.DeleteItem({
             TableName: database,
             Key: {
               pk: {
-                S: `Post|${postId}`,
+                S: `Post|${input.postId}`,
               },
               sk: {
                 S: "Post",
@@ -257,9 +285,17 @@ export const deleteWorkflow = new StepFunction(
             },
           });
 
+          customDeleteBus({
+            "detail-type": "Delete-Post-Success",
+            source: "MessageDeleter",
+            detail: {
+              id: input.postId,
+            },
+          });
+
           return {
             status: "deleted",
-            postId,
+            postId: input.postId,
           };
         }
       } catch {
@@ -288,7 +324,7 @@ export const deletePost = new AppsyncResolver<
     return undefined;
   }
 
-  return deleteWorkflow($context.arguments.postId);
+  return deleteWorkflow({ input: { postId: $context.arguments.postId } });
 }).addResolver(api, {
   typeName: "Mutation",
   fieldName: "deletePost",
@@ -331,3 +367,154 @@ export interface CommentPage {
   nextToken?: string;
   comments: Comment[];
 }
+
+interface Notification {
+  message: string;
+}
+
+interface TestDeleteEvent
+  extends EventBusRuleInput<{ postId: string }, "Delete", "test"> {}
+
+const sendNotification = new Function<Notification, void>(
+  new aws_lambda.Function(stack, "sendNotification", {
+    code: aws_lambda.Code.fromInline(`
+exports.handler = async (event) => {
+    console.log('notification: ', event)
+  };
+`),
+    runtime: aws_lambda.Runtime.NODEJS_14_X,
+    handler: "index.handler",
+  })
+);
+
+const defaultBus = EventBus.default<TestDeleteEvent>(stack);
+
+deleteWorkflow
+  .onSucceeded(stack, "deleteSuccessfulEvent")
+  .map((event) => ({
+    message: `post deleted ${event.id} using ${deleteWorkflow.stateMachineName}`,
+  }))
+  .pipe(sendNotification);
+
+defaultBus
+  .when(stack, "testDelete", (event) => event.source === "test")
+  .map((event) => event.detail)
+  .pipe(deleteWorkflow);
+
+customDeleteBus
+  .when(
+    stack,
+    "Delete Message Rule",
+    (event) => event["detail-type"] === "Delete-Message-Success"
+  )
+  // TODO: the when should narrow the type
+  .map<Notification>((event) => ({
+    message: `Messages deleted: ${(<MessageDeletedEvent>event).detail.count}`,
+  }))
+  .pipe(sendNotification);
+
+customDeleteBus
+  .when(
+    stack,
+    "Delete Post Rule",
+    (event) => event["detail-type"] === "Delete-Post-Success"
+  )
+  // TODO: the when should narrow the type
+  .map<Notification>((event) => ({
+    message: `Post Deleted: ${(<PostDeletedEvent>event).detail.id}`,
+  }))
+  .pipe(sendNotification);
+
+/**
+ * GraphQL created with Code-First
+ */
+const api2 = new appsync.GraphqlApi(stack, "Api2", {
+  name: "MessageReader",
+});
+
+/*
+  type Query {
+    getPost(postId: string!): Post
+  } 
+
+ type Post {
+  postId: ID!
+  title: String!
+  comments(nextToken: String, limit: Int): CommentPage
+ }
+
+ type CommentPage {
+  nextToken: String
+  comments: [Comment]!
+ }
+
+ type Comment {
+  postId: ID!
+  commentId: ID!
+  commentText: String!
+  createdTime: String!
+ }
+ */
+
+const post = api2.addType(
+  new appsync.ObjectType("Post", {
+    definition: {
+      postId: appsync.GraphqlType.id({
+        isRequired: true,
+      }),
+      title: appsync.GraphqlType.string({
+        isRequired: true,
+      }),
+    },
+  })
+);
+
+const comment = api2.addType(
+  new appsync.ObjectType("Comment", {
+    definition: {
+      postId: appsync.GraphqlType.id({
+        isRequired: true,
+      }),
+      commentId: appsync.GraphqlType.id({
+        isRequired: true,
+      }),
+      commentText: appsync.GraphqlType.string({
+        isRequired: true,
+      }),
+      createdTime: appsync.GraphqlType.string({
+        isRequired: true,
+      }),
+    },
+  })
+);
+
+const commentPage = api2.addType(
+  new appsync.ObjectType("CommentPage", {
+    definition: {
+      nextToken: appsync.GraphqlType.string(),
+      comments: appsync.GraphqlType.intermediate({
+        intermediateType: comment,
+        isRequiredList: true,
+      }),
+    },
+  })
+);
+
+post.addField({
+  fieldName: "comments",
+  field: commentResolver.getField(api2, commentPage.attribute(), {
+    args: {
+      nextToken: appsync.GraphqlType.string(),
+      limit: appsync.GraphqlType.int(),
+    },
+  }),
+});
+
+api2.addQuery(
+  "getPost",
+  getPostResolver.getField(api2, post.attribute(), {
+    args: {
+      postId: appsync.GraphqlType.string({ isRequired: true }),
+    },
+  })
+);

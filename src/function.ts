@@ -1,13 +1,13 @@
+import * as appsync from "@aws-cdk/aws-appsync-alpha";
 import { aws_lambda } from "aws-cdk-lib";
 import { CallExpr, isVariableReference } from "./expression";
-import { isVTL, VTL } from "./vtl";
-import { ASL, isASL, Task } from "./asl";
+import { ASL } from "./asl";
 
 // @ts-ignore - imported for typedoc
-import type { AppsyncResolver } from "./appsync";
-import { makeCallable } from "./callable";
+import type { AppsyncResolver, AppSyncVtlIntegration } from "./appsync";
+import { Integration } from "./integration";
 
-export function isFunction(a: any): a is Function<any, any> {
+export function isFunction<P = any, O = any>(a: any): a is Function<P, O> {
   return a?.kind === "Function";
 }
 
@@ -28,42 +28,52 @@ export type AnyLambda = Function<any, any>;
  * })
  * ```
  */
-export class Function<P, O> {
+export class Function<P, O> implements Integration {
   readonly kind = "Function" as const;
+
+  readonly appSyncVtl: AppSyncVtlIntegration;
 
   // @ts-ignore - this makes `F` easily available at compile time
   readonly __functionBrand: ConditionalFunction<P, O>;
 
   constructor(readonly resource: aws_lambda.IFunction) {
-    return makeCallable(this, (call: CallExpr, context: VTL | ASL): any => {
-      const payloadArg = call.getArgument("payload");
-
-      if (isVTL(context)) {
-        const payload = payloadArg ? context.eval(payloadArg.expr) : "$null";
+    // Integration object for appsync VTL
+    this.appSyncVtl = {
+      dataSourceId: () => resource.node.addr,
+      dataSource(api, id) {
+        return new appsync.LambdaDataSource(api, id, {
+          api,
+          lambdaFunction: resource,
+        });
+      },
+      request(call, context) {
+        const payloadArg = call.getArgument("payload");
+        const payload = payloadArg?.expr
+          ? context.eval(payloadArg.expr)
+          : "$null";
 
         const request = context.var(
           `{"version": "2018-05-29", "operation": "Invoke", "payload": ${payload}}`
         );
         return context.json(request);
-      } else if (isASL(context)) {
-        this.resource.grantInvoke(context.role);
-        const task: Partial<Task> = {
-          Type: "Task",
-          Resource: "arn:aws:states:::lambda:invoke",
-          Parameters: {
-            FunctionName: this.resource.functionName,
-            [`Payload${
-              payloadArg && isVariableReference(payloadArg.expr) ? ".$" : ""
-            }`]: payloadArg ? ASL.toJson(payloadArg.expr) : null,
-          },
-          ResultSelector: "$.Payload",
-        };
-        return task;
-      } else {
-        console.error(`invalid Function call context`, context);
-        throw new Error(`invalid Function call context: ${context}`);
-      }
-    });
+      },
+    };
+  }
+
+  public asl(call: CallExpr, context: ASL) {
+    const payloadArg = call.getArgument("payload");
+    this.resource.grantInvoke(context.role);
+    return {
+      Type: "Task" as const,
+      Resource: "arn:aws:states:::lambda:invoke",
+      Parameters: {
+        FunctionName: this.resource.functionName,
+        [`Payload${
+          payloadArg?.expr && isVariableReference(payloadArg.expr) ? ".$" : ""
+        }`]: payloadArg ? ASL.toJson(payloadArg.expr) : null,
+      },
+      ResultSelector: "$.Payload",
+    };
   }
 }
 

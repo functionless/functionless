@@ -1,45 +1,8 @@
-import { CallExpr, CanReference } from "./expression";
 import { FunctionlessNode } from "./node";
-import { VTL } from "./vtl";
-import { ASL, Task } from "./asl";
+import ts from "typescript";
+import { Construct } from "constructs";
 
 export type AnyFunction = (...args: any[]) => any;
-
-export function findService(expr: FunctionlessNode): CanReference | undefined {
-  if (expr.kind === "ReferenceExpr") {
-    return expr.ref();
-  } else if (expr.kind === "PropAccessExpr") {
-    return findService(expr.expr);
-  } else if (expr.kind === "CallExpr") {
-    return findService(expr.expr);
-  } else if (expr.kind === "VariableStmt" && expr.expr) {
-    return findService(expr.expr);
-  } else if (expr.kind === "ReturnStmt" && expr.expr) {
-    return findService(expr.expr);
-  } else if (expr.kind === "ExprStmt") {
-    return findService(expr.expr);
-  }
-  return undefined;
-}
-
-// derives a name from an expression - this can be used to name infrastructure, such as an AppsyncResolver.
-// e.g. table.getItem(..) => "table_getItem"
-export function toName(expr: FunctionlessNode): string {
-  if (expr.kind === "Identifier") {
-    return expr.name;
-  } else if (expr.kind === "PropAccessExpr") {
-    return `${toName(expr.expr)}_${expr.name}`;
-  } else if (expr.kind === "ReferenceExpr") {
-    const ref = expr.ref();
-    if (ref.kind === "AWS") {
-      return "AWS";
-    } else {
-      return ref.resource.node.addr;
-    }
-  } else {
-    throw new Error(`invalid expression: '${expr.kind}'`);
-  }
-}
 
 export function isInTopLevelScope(expr: FunctionlessNode): boolean {
   if (expr.parent === undefined) {
@@ -56,31 +19,6 @@ export function isInTopLevelScope(expr: FunctionlessNode): boolean {
       return true;
     }
     return walk(expr.parent);
-  }
-}
-
-/**
- * @param call call expression that may reference a callable integration
- * @returns the reference to the callable function, e.g. a Lambda Function or method on a DynamoDB Table
- */
-export function findFunction(
-  call: CallExpr
-):
-  | (((call: CallExpr, context: VTL) => string) &
-      ((call: CallExpr, context: ASL) => Omit<Task, "Next">))
-  | undefined {
-  return find(call.expr);
-
-  function find(expr: FunctionlessNode): any {
-    if (expr.kind === "PropAccessExpr") {
-      return find(expr.expr)?.[expr.name];
-    } else if (expr.kind === "Identifier") {
-      return undefined;
-    } else if (expr.kind === "ReferenceExpr") {
-      return expr.ref();
-    } else {
-      return undefined;
-    }
   }
 }
 
@@ -129,3 +67,38 @@ export function flatten<T>(arr: AnyDepthArray<T>): T[] {
     return [arr];
   }
 }
+
+export function hasParent(node: ts.Node, parent: ts.Node): boolean {
+  if (!node.parent) {
+    return false;
+  } else if (node.parent === parent) {
+    return true;
+  }
+  return hasParent(node.parent, parent);
+}
+
+export type ConstantValue =
+  | PrimitiveValue
+  | { [key: string]: ConstantValue }
+  | ConstantValue[];
+
+export type PrimitiveValue = string | number | boolean | undefined | null;
+
+export const isPrimitive = (val: any): val is PrimitiveValue => {
+  return (
+    typeof val === "string" ||
+    typeof val === "number" ||
+    typeof val === "boolean" ||
+    typeof val === "undefined" ||
+    val === null
+  );
+};
+
+export const singletonConstruct = <T extends Construct, S extends Construct>(
+  scope: S,
+  id: string,
+  create: (scope: S, id: string) => T
+): T => {
+  const child = scope.node.tryFindChild(id);
+  return child ? (child as T) : create(scope, id);
+};

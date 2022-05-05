@@ -117,13 +117,18 @@ Files can be ignored by the transformer by using glob patterns in the `tsconfig.
 
 `functionless` makes configuring services like AWS Appsync as easy as writing TypeScript functions.
 
+- [App Sync](#App-Sync)
+- [Event Bridge](#Event-Bridge)
+
+### App Sync
+
 There are three aspects your need to learn before using Functionless in your CDK application:
 
 1. Appsync Integration interfaces for `Function` and `Table`.
 2. `AppsyncResolver` construct for defining Appsync Resolver with TypeScript syntax.
 3. Add Resolvers to an `@aws-cdk/aws-appsync-alpha.GraphQLApi`.
 
-### Appsync Integration interfaces for `Function` and `Table`
+#### Appsync Integration interfaces for `Function` and `Table`
 
 You must wrap your CDK L2 Constructs in the corresponding wrapper class provided by functionless. Currently, Lambda `Function` and DynamoDB `Table` are supported.
 
@@ -197,7 +202,7 @@ new AppsyncResolver(() => {
 });
 ```
 
-### `AppsyncResolver` construct for defining Appsync Resolver with TypeScript syntax
+#### `AppsyncResolver` construct for defining Appsync Resolver with TypeScript syntax
 
 After wrapping your Functions/Tables, you can then instantiate an `AppsyncResolver` and interact with them using standard TypeScript syntax.
 
@@ -250,9 +255,15 @@ for (const item in list) {
 }
 ```
 
-### Add Resolvers to an `@aws-cdk/aws-appsync-alpha.GraphQLApi`
+#### Add Resolvers to an `@aws-cdk/aws-appsync-alpha.GraphQLApi`
 
 When you create a `new AppsyncResolver`, it does not immediately generate an Appsync Resolver. `AppsyncResolver` is more like a template for creating resolvers and can be re-used across more than one API.
+
+Options:
+1. Add a resolver to a GraphQL Api with a pre-defined schema
+2. Add a field resolver to a GraphQL Api using CDK's CodeFirst schema
+
+##### Add a resolver to a GraphQL Api with a pre-defined schema
 
 To add to an API, use the `addResolver` utility on `AppsyncResolver`.
 
@@ -284,6 +295,301 @@ getPerson.addResolver(api, {
   typeName: "Query",
   fieldName: "getPerson",
 });
+```
+
+##### Add a field resolver to a GraphQL Api using CDK's CodeFirst schema
+
+To add to a CodeFirst GraphQL schema, use `getField` utility on the `AppsyncResolver`.
+
+```ts
+const app = new App();
+
+const stack = new Stack(app, "stack");
+
+const api = new appsync.GraphqlApi(stack, "Api", {
+  name: "demo",
+  authorizationConfig: {
+    defaultAuthorization: {
+      authorizationType: appsync.AuthorizationType.IAM,
+    },
+  },
+  xrayEnabled: true,
+});
+
+// create a template AppsyncResolver
+const getPerson = new AppsyncResolver(..);
+
+const personType = api.addType(appsync.ObjectType(...));
+
+// use it add resolvers to a GraphqlApi.
+api.addQuery("getPerson", getPerson.getField(api, personType));
+```
+
+### Event Bridge
+
+Functionless makes using Event Bridge easy by leveraging typescript instead of AWS Event Bridge's proprietary logic and transform configuration.
+
+Event Bridge can:
+
+- Create Rules (`EventBusRule`) on a Event Bus to match incoming events.
+- Transform the event before sending to some services like `Lambda` Functions.
+- Target other AWS services like Lambda and other Event Buses
+- Put events from other services
+
+Functionless uses a wrapped version of CDK's Event Bus, lets create a CDK event bus first.
+
+```ts
+// Create a new Event Bus using CDK.
+const bus = new functionless.EventBus(this, "myBus");
+
+// Functionless also supports using the default bus or importing an Event Bus.
+const awsBus = functionless.EventBus.fromBus(
+  new aws_events.EventBus(this, "awsBus")
+);
+const defaultBus = functionless.EventBus.fromBus(
+  aws_events.EventBus.fromEventBusName(this, "defaultBus", "default")
+);
+const importedBus = functionless.EventBus.fromBus(
+  aws_events.EventBus.fromEventBusArn(this, "defaultBus", arn)
+);
+```
+
+Functionless supports well typed events, lets add our event schema to Typescript.
+
+```ts
+interface UserDetails {
+  id?: string;
+  name: string;
+  age: number;
+  interests: string[];
+}
+
+interface UserEvent
+  extends functionless.EventBusRuleInput<
+    UserDetails,
+    // We can provide custom detail-types to match on
+    "Create" | "Update" | "Delete"
+  > {}
+```
+
+#### Create Rules (`EventBusRule`) on a Event Bus to match incoming events.
+
+Now that you have a wrapped `EventBus`, lets add some rules.
+
+Functionless lets you write logic in Typescript on the type safe event.
+
+Lets match all of the `Create` or `Update` events with one rule and another rule for `Delete`s.
+
+```ts
+const createOrUpdateEvents = bus.when(
+  this,
+  "createOrUpdateRule",
+  (event) =>
+    event["detail-type"] === "Create" || event["detail-type"] === "Update"
+);
+const deleteEvents = bus.when(
+  this,
+  "deleteRule",
+  (event) => event["detail-type"] === "Delete"
+);
+```
+
+We also want to do something special when we get a new cat lover who is between 18 and 30 years old, lets make another rule for those.
+
+```ts
+const catPeopleEvents = bus.when(
+  (event) =>
+    event["detail-type"] === "Create" &&
+    event.detail.interests.includes("CATS") &&
+    event.detail.age >= 18 &&
+    event.detail.age < 30
+);
+```
+
+Rules can be further refined by calling `when` on a Functionless `EventBusRule`.
+
+```ts
+// Cat people who are between 18 and 30 and do not also like dogs.
+catPeopleEvents.when(event => !event.detail.interests.includes("DOGS"))
+```
+
+#### Transform the event before sending to some services like `Lambda` Functions.
+
+We have two lambda functions to invoke, one for create or updates and another for deletes, lets make those.
+
+```ts
+const createOrUpdateFunction = new aws_lambda.Function(this, 'createOrUpdate', ...);
+const deleteFunction = new aws_lambda.Function(this, 'delete', ...);
+```
+
+and wrap them with Functionless's `Function` wrapper, including given them input types.
+
+```ts
+interface CreateOrUpdate {
+  id?: string;
+  name: string;
+  age: number;
+  operation: "Create" | "Update";
+  interests: string[];
+}
+
+interface Delete {
+  id: string;
+}
+
+const createOrUpdateOperation = functionless.Function<CreateOrUpdate, void>(
+  createOrUpdateFunction
+);
+const deleteOperation = functionless.Function<Delete, void>(deleteFunction);
+```
+
+The events from before do not match the formats from before, so lets transform them to the structures match.
+
+```ts
+const createOrUpdateEventsTransformed =
+  createOrUpdateEvents.map<CreateOrUpdate>((event) => ({
+    id: event.detail.id,
+    name: event.detail.name,
+    age: event.detail.age,
+    operation: event["detail-type"],
+    interests: event.detail.interests,
+  }));
+
+const deleteEventsTransformed = createOrUpdateEvents.map<Delete>((event) => ({
+  id: event.detail.id,
+}));
+```
+
+#### Target other AWS services like Lambda and other Event Buses
+
+Now that we have created rules on our event buses using `when` and transformed those matched events using `map`, we need to send the events somewhere.
+
+We can `pipe` the transformed events to the lambda functions we defined earlier.
+
+```ts
+createOrUpdateEventsTransformed.pipe(createOrUpdateOperation);
+deleteEventsTransformed.pipe(deleteOperation);
+```
+
+What about our young cat lovers? We want to forward those events to our sister team's event bus for processing.
+
+```ts
+const catPeopleBus = functionless.EventBus.fromBus(
+  aws_events.EventBus.fromEventBusArn(this, "catTeamBus", catTeamBusArn)
+);
+
+// Note: EventBridge does not support transforming events which target other event buses. These events are sent as is.
+catPeopleEvents.pipe(catPeopleBus);
+```
+
+#### Put Events from other sources
+
+Event Bridge Put Events API is one of the methods for putting new events on an event bus. We support some first party integrations between services and event bus.
+
+Support (See [issues](https://github.com/sam-goodwin/functionless/issues?q=is%3Aissue+is%3Aopen+label%3Aevent-bridge) for progress):
+
+- Step Functions
+- App Sync (coming soon)
+- API Gateway (coming soon)
+- More - Please create a new issue in the form `Event Bridge + [Service]`
+
+```ts
+bus = new EventBus(stack, "bus");
+new StepFunction<{ value: string }, void>((input) => {
+  bus({
+    detail: {
+      value: input.value,
+    },
+  });
+});
+```
+
+This will create a step function which sends an event. It is also possible to send multiple events and use other Step Function logic.
+
+> Limit: It is not currently possible to dynamically generate different numbers of events. All events sent must start from objects in the form `{ detail: ..., source: ... }` where all fields are optional.
+
+#### Summary
+
+Lets look at the above all together.
+
+```ts
+interface UserDetails {
+  id?: string;
+  name: string;
+  age: number;
+  interests: string[];
+}
+
+interface UserEvent
+  extends functionless.EventBusRuleInput<
+    UserDetails,
+    // We can provide custom detail-types to match on
+    "Create" | "Update" | "Delete"
+  > {}
+
+interface CreateOrUpdate {
+  id?: string;
+  name: string;
+  age: number;
+  operation: "Create" | "Update";
+  interests: string[];
+}
+
+interface Delete {
+  id: string;
+}
+
+const createOrUpdateFunction = new functionless.Function<CreateOrUpdate, void>(
+  new aws_lambda.Function(this, "createOrUpdate", { ... })
+);
+
+const deleteFunction = new functionless.Function<Delete, void>(
+  new aws_lambda.Function(this, "delete", { ... })
+);
+
+const bus = new functionless.EventBus<UserEvent>(this, "myBus");
+
+// Create and update events are sent to a specific lambda function.
+bus
+  .when(
+    this,
+    "createOrUpdateRule",
+    (event) =>
+      event["detail-type"] === "Create" || event["detail-type"] === "Update"
+  )
+  .map<CreateOrUpdate>((event) => ({
+    id: event.detail.id,
+    name: event.detail.name,
+    age: event.detail.age,
+    operation: event["detail-type"] as "Create" | "Update",
+    interests: event.detail.interests,
+  }))
+  .pipe(createOrUpdateFunction);
+
+// Delete events are sent to a specific lambda function.
+bus
+  .when(this, "deleteRule", (event) => event["detail-type"] === "Delete")
+  .map<Delete>((event) => ({
+    id: event.detail.id!,
+  }))
+  .pipe(deleteFunction);
+
+// New, young users interested in cat are forwarded to our sister team.
+bus
+  .when(
+    this,
+    "catLovers",
+    (event) =>
+      event["detail-type"] === "Create" &&
+      event.detail.interests.includes("CATS") &&
+      event.detail.age >= 18 &&
+      event.detail.age < 30
+  )
+  .pipe(
+    functionless.EventBus<UserEvent>.fromBus(
+      aws_events.EventBus.fromEventBusArn(this, "catTeamBus", catBusArn)
+    )
+  );
 ```
 
 ## TypeScript -> Velocity Template Logic
@@ -629,6 +935,330 @@ $util.qr($v1.put($b, true))
 
 </details>
 
+## Typescript -> Event patterns
+
+Event patterns are all predicates that filter on the incoming event. The pattern is modeled as a predicate on the bus, resulting in a rule that follows the logic in the predicate.
+
+https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-event-patterns.html
+
+```ts
+.when(event => event.detail.value === "something")
+```
+
+<details>
+<summary>Click to expand</summary>
+
+### Equals
+
+```ts
+.when(event => event.source === "lambda")
+```
+
+```json
+{
+  "source": ["lambda"]
+}
+```
+
+### Not Equals
+
+```ts
+.when(event => event.source !== "lambda")
+```
+
+```json
+{
+  "source": [{ "anything-but": "lambda" }]
+}
+```
+
+### Starts With
+
+```ts
+.when(event => event.source.startsWith("lambda"))
+```
+
+```json
+{
+  "source": [{ "prefix": "lambda" }]
+}
+```
+
+### Not Starts With
+
+```ts
+.when(event => !event.source.startsWith("lambda"))
+```
+
+```json
+{
+  "source": [{ "anything-but": { "prefix": "lambda" } }]
+}
+```
+
+> Limit: Anything-but Prefix cannot work with any other logic on the same field.
+
+### List Includes
+
+```ts
+.when(event => event.resources.includes("some arn"))
+```
+
+```json
+{
+  "resources": ["some arn"]
+}
+```
+
+> Limit: Event Bridge patterns only support includes logic for lists, exact match and order based logic is not supported.
+
+### Numbers
+
+```ts
+.when(event => event.detail.age > 30 && event.detail.age <= 60)
+```
+
+```json
+{
+  "detail": {
+    "age": [{ "numeric": [">", 30, ",<=", 60] }]
+  }
+}
+```
+
+Non-converging ranges
+
+```ts
+.when(event => event.detail.age < 30 || event.detail.age >= 60)
+```
+
+```json
+{
+  "detail": {
+    "age": [{ "numeric": [">", 30] }, { "numeric": [">=", 60] }]
+  }
+}
+```
+
+Inversion
+
+```ts
+.when(event => !(event.detail.age < 30 && event.detail.age >= 60))
+```
+
+```json
+{
+  "detail": {
+    "age": [{ "numeric": [">=", 30, "<", 60] }]
+  }
+}
+```
+
+Reduction
+
+```ts
+.when(event => (event.detail.age < 30 || event.detail.age >= 60) &&
+               (event.detail.age < 20 || event.detail.age >= 50) &&
+               event.detail.age > 0)
+```
+
+```json
+{
+  "detail": {
+    "age": [{ "numeric": [">", 0, "<", 20] }, { "numeric": [">=", 60] }]
+  }
+}
+```
+
+### Or Logic
+
+> Limit: Event Bridge patterns do not support OR logic between fields. The logic `event.source === "lambda" || event['detail-type'] === "LambdaLike"` is impossible within the same rule.
+
+```ts
+.when(event => event.source === "lambda" || event.source === "dynamo")
+```
+
+```json
+{
+  "source": ["lambda", "dynamo"]
+}
+```
+
+### And Logic
+
+> Limit: Except for the case of numeric ranges and a few others Event Bridge does not support AND logic within the same field. The logic `event.resources.includes("resource1") && event.resources.includes("resource2")` is impossible.
+
+```ts
+.when(event => event.source === "lambda" && event.id.startsWith("idPrefix"))
+```
+
+```json
+{
+  "source": ["lambda"],
+  "id": [{ "prefix": "isPrefix" }]
+}
+```
+
+### Presence
+
+Exists
+
+```ts
+.when(event => event.detail.optional !== undefined)
+.when(event => !!event.detail.optional)
+```
+
+```json
+{
+  "detail": {
+    "optional": { "exists": true }
+  }
+}
+```
+
+Does not Exist
+
+```ts
+.when(event => event.detail.optional === undefined)
+.when(event => !event.detail.optional)
+```
+
+```json
+{
+  "detail": {
+    "optional": { "exists": false }
+  }
+}
+```
+
+Simplification
+
+```ts
+.when(event => event.detail.optional && event.detail.optional === "value")
+```
+
+```json
+{
+  "detail": {
+    "optional": ["value"]
+  }
+}
+```
+
+</details>
+
+## Typescript -> Event Target Input Transformers
+
+Event input transformers are pure functions that transform the input json into a json object or string sent to the target. The transformer is modeled as a map function.
+
+https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-transform-target-input.html
+
+> Limit: Event Bridge does not support input transformation when sending data between buses.
+
+<details>
+<summary>Click to expand</summary>
+
+### Constant
+
+```ts
+.map(() => "got one!")
+```
+
+```json
+{
+  "input": "got one!"
+}
+```
+
+### String field
+
+```ts
+.map(event => event.source)
+```
+
+Simple inputs can use `eventPath`.
+
+```json
+{
+  "inputPath": "$.source"
+}
+```
+
+### Formatted String
+
+```ts
+.map(event => `the source is ${event.source}`)
+```
+
+```json
+{
+  "inputPathsMap": {
+    "source": "$.source"
+  },
+  "inputTemplate": "the source is <source>"
+}
+```
+
+### Whole Event
+
+```ts
+.map(event => event)
+```
+
+```json
+{
+  "inputPathsMap": {},
+  "inputTemplate": "<aws.events.event>"
+}
+```
+
+### Rule Name and Rule Arn
+
+```ts
+.map((event, $utils) => `name: ${$utils.context.ruleName} arn: ${$utils.context.ruleArn}`)
+```
+
+```json
+{
+  "inputPathsMap": {},
+  "inputTemplate": "name: <aws.events.rule-name> arn: <aws.events.rule-arn>"
+}
+```
+
+### Constant Objects
+
+```ts
+.map(event => event.detail)
+```
+
+```json
+{
+  "inputPath": "$.detail"
+}
+```
+
+### Objects
+
+```ts
+.map(event => ({
+  value: event.detail.field,
+  source: event.source,
+  constant: "hello"
+}))
+```
+
+```json
+{
+  "inputPathsMap": {
+    "field": "$.detail.field",
+    "source": "$.source"
+  },
+  "inputTemplate": "{ \"value\": <field>, \"source\": <source>, \"constant\": \"hello\" }"
+}
+```
+
+</details>
+
 ## How it Works
 
 When you compile your application with `tsc`, the [`functionless/lib/compile`](./src/compile.ts) transformer will replace the function declaration, `F`, in `new AppsyncResolver(F)` with its corresponding [Abstract Syntax Tree](./src/expression.ts) representation. This representation is then synthesized to Velocity Templates and AWS AppSync Resolver configurations, using the `@aws-cdk/aws-appsync-alpha` CDK Construct Library.
@@ -745,3 +1375,100 @@ See the following files to understand the structure of the Abstract Syntax Tree:
 3. [declaration.ts](./src/declaration.ts)
 
 For an example of an evaluator, see [vtl.ts](./src/vtl.ts).
+
+## Generating resolver types from the schema
+
+Functionless can be used together with [graphql code generator](https://www.graphql-code-generator.com/) to automatically generate types from the schema.
+
+Two plugins are necessary to generate resolver types:
+
+- [typescript](https://www.graphql-code-generator.com/plugins/typescript)
+- [typescript-resolver](https://www.graphql-code-generator.com/plugins/typescript-resolvers)
+
+Both of those plugins need to be configured by creating a [codegen.yml](./src/test-app/codegen.yml) file.
+
+```yaml
+overwrite: true
+schema:
+  # The path to your schema
+  - "schema.gql"
+generates:
+  # path to the file with the generated types
+  src/generated-types.ts:
+    plugins:
+      - "typescript"
+      - "typescript-resolvers"
+    config:
+      # Set to true in order to allow the Resolver type to be callable
+      makeResolverTypeCallable: true
+      # This will cause the generator to avoid using optionals (?), so all field resolvers must be implemented in order to avoid compilation errors
+      avoidOptionals: true
+      # custom type for the resolver makes it easy to reference arguments, source and result from the resolver
+      customResolverFn: "{ args: TArgs; context: TContext; result: TResult; source: TParent;}"
+      # appsync allows returnning undefined instead of null only when a type is optional
+      maybeValue: T | null | undefined
+      # typename is not really usefull for resolvers and can cause clashes in the case where a type extends another type but have different names
+      skipTypename: true
+```
+
+you can then use `npx graphql-codegen --config codegen.yml` to generate a [file containing the types](./src/test-app/generated-types.ts), you should re-generate them any time you update your schema.
+
+If you use the following schema
+
+```gql
+type Person {
+  id: String!
+  name: String!
+}
+
+type Query {
+  getPerson(id: String!): ProcessedPerson
+}
+```
+
+The generated types will include type definitions for all graphql types, inputs and resovlers. Those types can then be imported in your cdk app.
+
+```ts
+import { QueryResolvers, Person } from "./generated-types";
+import { $util, AppsyncResolver } from "functionless";
+
+export class PeopleDatabase extends Construct {
+  readonly personTable;
+  readonly getPerson;
+
+  constructor(scope: Construct, id: string) {
+    super(scope, id);
+    // Person type can be used to define your typesafe dynamodb table
+    this.personTable = new Table<Person, "id", undefined>(
+      new aws_dynamodb.Table(this, "table", {
+        partitionKey: {
+          name: "id",
+          type: aws_dynamodb.AttributeType.STRING,
+        },
+      })
+    );
+    // QueryResolvers type can be used to get parameters for AppsyncResolver
+    this.getPerson = new AppsyncResolver<
+      QueryResolvers["addPerson"]["args"],
+      QueryResolvers["addPerson"]["result"]
+    >(($context) => {
+      const person = this.personTable.putItem({
+        key: {
+          id: {
+            S: $util.autoId(),
+          },
+        },
+        attributeValues: {
+          name: {
+            S: $context.arguments.input.name,
+          },
+        },
+      });
+
+      return person;
+    });
+  }
+}
+```
+
+Check the [test-app](./src/test-app/people-db.ts) for a full working example.
