@@ -127,7 +127,7 @@ const project = new CustomTypescriptProject({
       ],
     },
   },
-  gitignore: [".DS_Store"],
+  gitignore: [".DS_Store", ".dccache"],
   releaseToNpm: true,
   jestOptions: {
     jestConfig: {
