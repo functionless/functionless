@@ -10,28 +10,27 @@ type FeatureItem = {
 
 const FeatureList: FeatureItem[] = [
   {
-    title: 'Just write TypeScript',
+    title: 'Familiar syntax and no boilerplate',
     Svg: require('@site/static/img/undraw_docusaurus_mountain.svg').default,
     description: (
       <>
-        Adopt powerful cloud-native "Functionless" and "Serverless" services without
-        the boilerplate and complexity of domain specific languages. Just write TypeScript.
+        Adopt powerful cloud-native services without
+        the boilerplate and complexity of domain specific languages.
       </>
     ),
   },
   {
-    title: 'Infer Infrastructure Configuration',
+    title: 'Secure by default',
     Svg: require('@site/static/img/undraw_docusaurus_tree.svg').default,
     description: (
       <>
-        Functionless removes the separation between Infrastructure and Business logic,
-        inferring common configuration such as IAM Policies and Environment Variables
-        from your business logic.
+        Functionless infers minimally permissive IAM Policies from your business logic,
+        ensuring that your IAM Roles only have access to the resources and operations they absolutely need.
       </>
     ),
   },
   {
-    title: 'Type-Safe Databases and Functions',
+    title: 'Type-safe databases and functions',
     Svg: require('@site/static/img/undraw_docusaurus_react.svg').default,
     description: (
       <>
