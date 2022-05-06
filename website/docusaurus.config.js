@@ -7,14 +7,27 @@ const darkCodeTheme = require("prism-react-renderer/themes/dracula");
 /** @type {import('@docusaurus/types').Config} */
 const config = {
   title: "Functionless",
-  tagline: "TODO - need a tagline",
-  url: "https://TODO.com",
+  tagline: "A TypeScript plugin for cloud configurations",
+  url: "https://functionless.org",
   baseUrl: "/",
   onBrokenLinks: "throw",
   onBrokenMarkdownLinks: "warn",
   favicon: "img/favicon.ico",
   organizationName: "functionless",
   projectName: "functionless",
+
+  // see: https://www.npmjs.com/package/docusaurus-plugin-typedoc
+  plugins: [
+    [
+      "docusaurus-plugin-typedoc",
+
+      // Plugin / TypeDoc options
+      {
+        entryPoints: ["../src/index.ts"],
+        tsconfig: "../tsconfig.json",
+      },
+    ],
+  ],
 
   presets: [
     [
@@ -100,7 +113,7 @@ const config = {
               },
               {
                 label: "GitHub",
-                href: "https://github.com/facebook/docusaurus",
+                href: "https://github.com/sam-goodwin/functionless",
               },
             ],
           },

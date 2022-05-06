@@ -260,6 +260,7 @@ for (const item in list) {
 When you create a `new AppsyncResolver`, it does not immediately generate an Appsync Resolver. `AppsyncResolver` is more like a template for creating resolvers and can be re-used across more than one API.
 
 Options:
+
 1. Add a resolver to a GraphQL Api with a pre-defined schema
 2. Add a field resolver to a GraphQL Api using CDK's CodeFirst schema
 
@@ -410,7 +411,7 @@ Rules can be further refined by calling `when` on a Functionless `EventBusRule`.
 
 ```ts
 // Cat people who are between 18 and 30 and do not also like dogs.
-catPeopleEvents.when(event => !event.detail.interests.includes("DOGS"))
+catPeopleEvents.when((event) => !event.detail.interests.includes("DOGS"));
 ```
 
 #### Transform the event before sending to some services like `Lambda` Functions.
@@ -596,7 +597,7 @@ bus
 
 In order to write effective VTL templates, it helps to understand how TypeScript syntax maps to Velocity Template Statements.
 
-An AppSync Request Mapping Template is synthesized by evaluating all [Expressions](./src/expression.ts) to a series of `#set`, `$util.qr`, `#foreach` and `#if` statements. The end result is an object containing the returned result of the function which can then be converted to JSON with `$util.toJson`.
+An AppSync Request Mapping Template is synthesized by evaluating all Expressions to a series of `#set`, `$util.qr`, `#foreach` and `#if` statements. The end result is an object containing the returned result of the function which can then be converted to JSON with `$util.toJson`.
 
 The following section provides a reference guide on how each of the supported TypeScript syntax is mapped to VTL.
 
@@ -1261,7 +1262,7 @@ Simple inputs can use `eventPath`.
 
 ## How it Works
 
-When you compile your application with `tsc`, the [`functionless/lib/compile`](./src/compile.ts) transformer will replace the function declaration, `F`, in `new AppsyncResolver(F)` with its corresponding [Abstract Syntax Tree](./src/expression.ts) representation. This representation is then synthesized to Velocity Templates and AWS AppSync Resolver configurations, using the `@aws-cdk/aws-appsync-alpha` CDK Construct Library.
+When you compile your application with `tsc`, the `functionless/lib/compile` transformer will replace the function declaration, `F`, in `new AppsyncResolver(F)` with its corresponding Abstract Syntax Tree representation. This representation is then synthesized to Velocity Templates and AWS AppSync Resolver configurations, using the `@aws-cdk/aws-appsync-alpha` CDK Construct Library.
 
 For example, this function declaration:
 
@@ -1343,7 +1344,7 @@ new AppsyncResolver(
 
 ## Writing your own interpreters
 
-Functionless converts TypeScript function syntax into a [`FunctionDecl`](./src/declaration.ts) AST data object. This object contains a total representation of the syntax contained within the Function and can then be processed within your CDK application.
+Functionless converts TypeScript function syntax into a `FunctionDecl` AST data object. This object contains a total representation of the syntax contained within the Function and can then be processed within your CDK application.
 
 To get a `FunctionDecl` for a function, use the `functionless.reflect` utility:
 
@@ -1368,14 +1369,6 @@ function processExpr(node: FunctionlessNode) {
 }
 ```
 
-See the following files to understand the structure of the Abstract Syntax Tree:
-
-1. [expression.ts](./src/expression.ts)
-2. [statement.ts](./src/statement.ts)
-3. [declaration.ts](./src/declaration.ts)
-
-For an example of an evaluator, see [vtl.ts](./src/vtl.ts).
-
 ## Generating resolver types from the schema
 
 Functionless can be used together with [graphql code generator](https://www.graphql-code-generator.com/) to automatically generate types from the schema.
@@ -1385,7 +1378,7 @@ Two plugins are necessary to generate resolver types:
 - [typescript](https://www.graphql-code-generator.com/plugins/typescript)
 - [typescript-resolver](https://www.graphql-code-generator.com/plugins/typescript-resolvers)
 
-Both of those plugins need to be configured by creating a [codegen.yml](./src/test-app/codegen.yml) file.
+Both of those plugins need to be configured by creating a `codegen.yml` file.
 
 ```yaml
 overwrite: true
@@ -1411,7 +1404,7 @@ generates:
       skipTypename: true
 ```
 
-you can then use `npx graphql-codegen --config codegen.yml` to generate a [file containing the types](./src/test-app/generated-types.ts), you should re-generate them any time you update your schema.
+you can then use `npx graphql-codegen --config codegen.yml` to generate a file containing the types, you should re-generate them any time you update your schema.
 
 If you use the following schema
 
@@ -1426,7 +1419,7 @@ type Query {
 }
 ```
 
-The generated types will include type definitions for all graphql types, inputs and resovlers. Those types can then be imported in your cdk app.
+The generated types will include type definitions for all graphql types, inputs and resolvers. Those types can then be imported in your cdk app.
 
 ```ts
 import { QueryResolvers, Person } from "./generated-types";
@@ -1471,4 +1464,4 @@ export class PeopleDatabase extends Construct {
 }
 ```
 
-Check the [test-app](./src/test-app/people-db.ts) for a full working example.
+Check the test-app for a full working example.
