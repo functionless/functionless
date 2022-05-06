@@ -98,6 +98,7 @@ const project = new CustomTypescriptProject({
   ],
   scripts: {
     localstack: "./scripts/localstack",
+    "build:website": "cd ./website && yarn && yarn build",
   },
   peerDeps: [
     `aws-cdk-lib@^${MIN_CDK_VERSION}`,
@@ -145,8 +146,6 @@ packageJson.addOverride("lint-staged", {
 project.compileTask.prependExec(
   "yarn link && cd ./test-app && yarn link functionless"
 );
-
-project.compileTask.exec("cd ./website && yarn build");
 
 project.testTask.prependExec(
   "cd ./test-app && yarn && yarn build && yarn synth"

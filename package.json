@@ -2,6 +2,7 @@
   "name": "functionless",
   "scripts": {
     "build": "npx projen build",
+    "build:website": "npx projen build:website",
     "bump": "npx projen bump",
     "clobber": "npx projen clobber",
     "compile": "npx projen compile",

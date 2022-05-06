@@ -24,6 +24,14 @@
         }
       ]
     },
+    "build:website": {
+      "name": "build:website",
+      "steps": [
+        {
+          "exec": "cd ./website && yarn && yarn build"
+        }
+      ]
+    },
     "bump": {
       "name": "bump",
       "description": "Bumps version based on latest git tag and generates a changelog entry",
@@ -82,9 +90,6 @@
         },
         {
           "exec": "tsc --build"
-        },
-        {
-          "exec": "cd ./website && yarn build"
         }
       ]
     },
