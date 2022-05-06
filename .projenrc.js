@@ -146,6 +146,8 @@ project.compileTask.prependExec(
   "yarn link && cd ./test-app && yarn link functionless"
 );
 
+project.compileTask.exec("cd ./website && yarn build");
+
 project.testTask.prependExec(
   "cd ./test-app && yarn && yarn build && yarn synth"
 );

@@ -82,6 +82,9 @@
         },
         {
           "exec": "tsc --build"
+        },
+        {
+          "exec": "cd ./website && yarn build"
         }
       ]
     },
