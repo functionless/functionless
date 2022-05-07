@@ -339,25 +339,6 @@ export const getDeletionStatus = new AppsyncResolver<
   fieldName: "getDeletionStatus",
 });
 
-export interface Post<PostID extends string = string> {
-  pk: `Post|${PostID}`;
-  sk: "Post";
-  postId: PostID;
-  title: string;
-}
-
-export interface Comment<
-  PostID extends string = string,
-  CommentID extends string = string
-> {
-  pk: `Post|${PostID}`;
-  sk: `Comment|${CommentID}`;
-  postId: PostID;
-  commentId: CommentID;
-  commentText: string;
-  createdTime: string;
-}
-
 export interface CommentPage {
   nextToken?: string;
   comments: Comment[];
@@ -430,8 +411,6 @@ new Function(
   stack,
   "testFunc",
   async () => {
-    // const busbus = customDeleteBus;
-    new aws_events.EventBus(stack, "b");
     console.log(customDeleteBus.eventBusArn);
     console.log(busbusbus.eventBusArn);
     console.log("huh?!?!?!??!!");
@@ -565,3 +544,22 @@ api2.addQuery(
     },
   })
 );
+
+export interface Post<PostID extends string = string> {
+  pk: `Post|${PostID}`;
+  sk: "Post";
+  postId: PostID;
+  title: string;
+}
+
+export interface Comment<
+  PostID extends string = string,
+  CommentID extends string = string
+> {
+  pk: `Post|${PostID}`;
+  sk: `Comment|${CommentID}`;
+  postId: PostID;
+  commentId: CommentID;
+  commentText: string;
+  createdTime: string;
+}

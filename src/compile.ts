@@ -659,7 +659,7 @@ export function compile(
             // FIXME: doesn't work without an array
             // TODO: Support both sync and async function invocations: https://github.com/sam-goodwin/functionless/issues/105
 
-            context.factory.createAwaitExpression(
+            return context.factory.createAwaitExpression(
               context.factory.createCallExpression(
                 context.factory.createPropertyAccessExpression(
                   context.factory.createPropertyAccessExpression(

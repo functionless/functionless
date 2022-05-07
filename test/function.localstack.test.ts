@@ -7,7 +7,7 @@ import {
   FunctionProps,
 } from "../src";
 import { Lambda } from "aws-sdk";
-import { aws_events, Stack } from "aws-cdk-lib";
+import { aws_events, Stack, Token } from "aws-cdk-lib";
 
 const lambda = new Lambda(clientConfig);
 
@@ -194,6 +194,44 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
         {},
         `${context.bus} ${context.busbus}`
       );
+    }
+  );
+
+  testResource(
+    "templated tokens",
+    (parent) => {
+      const token = Token.asString("hello");
+      const func = new Function(parent, "function", async () => {
+        return `${token} stuff`;
+      });
+
+      return {
+        outputs: {
+          function: func.resource.functionName,
+        },
+      };
+    },
+    async (context) => {
+      await testFunction(context.function, {}, `hello stuff`);
+    }
+  );
+
+  testResource(
+    "numeric tokens",
+    (parent) => {
+      const token = Token.asNumber(1);
+      const func = new Function(parent, "function", async () => {
+        return token;
+      });
+
+      return {
+        outputs: {
+          function: func.resource.functionName,
+        },
+      };
+    },
+    async (context) => {
+      await testFunction(context.function, {}, 1);
     }
   );
 

@@ -602,6 +602,8 @@ new Function(this, "myFunction", async (event) => {
 
 #### !!CAVEAT: Using Function Callbacks with `app.synth()`!!
 
+https://github.com/sam-goodwin/functionless/issues/128
+
 Normal use of the CDK through the CLI should work just fine without doing anything special.
 
 The problem comes when using the explicit `app.synth()` method. This is a common case if trying to test your CDK code through testing tooling like `jest`.

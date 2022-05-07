@@ -14,7 +14,12 @@ import {
   PropAssignExpr,
   StringLiteralExpr,
 } from "../expression";
-import { Function, NativeIntegration, NativePreWarmContext } from "../function";
+import {
+  Function,
+  NativeIntegration,
+  NativePreWarmContext,
+  PrewarmClients,
+} from "../function";
 import { Integration } from "../integration";
 import { EventBusRule, EventPredicateFunction } from "./rule";
 import { EventBusRuleInput } from "./types";
@@ -137,10 +142,12 @@ abstract class EventBusBase<E extends EventBusRuleInput>
         this.bus.grantPutEventsTo(context.resource);
       },
       preWarm: (prewarmContext: NativePreWarmContext) => {
-        prewarmContext.eventBridge();
+        prewarmContext.getOrInit(PrewarmClients.EVENT_BRIDGE);
       },
       call: async (args, preWarmContext) => {
-        const eventBridge = preWarmContext.eventBridge();
+        const eventBridge = preWarmContext.getOrInit(
+          PrewarmClients.EVENT_BRIDGE
+        );
         await eventBridge
           .putEvents({
             Entries: args.map((event) => ({

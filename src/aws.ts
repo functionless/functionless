@@ -18,7 +18,12 @@ import {
   ObjectLiteralExpr,
 } from "./expression";
 import { ASL } from "./asl";
-import { Function, isFunction, NativePreWarmContext } from "./function";
+import {
+  Function,
+  isFunction,
+  NativePreWarmContext,
+  PrewarmClients,
+} from "./function";
 import { Table, isTable } from "./table";
 
 import type { DynamoDB as AWSDynamoDB } from "aws-sdk";
@@ -376,16 +381,13 @@ export namespace $AWS {
       native: {
         // Access needs to be granted manually
         bootstrap: () => {},
-        /* istanbul ignore next */
         preWarm: (prewarmContext: NativePreWarmContext) => {
-          /* istanbul ignore next */
-          prewarmContext.eventBridge();
+          prewarmContext.getOrInit(PrewarmClients.EVENT_BRIDGE);
         },
-        /* istanbul ignore next */
         call: async ([request], preWarmContext) => {
-          /* istanbul ignore next */
-          const eventBridge = preWarmContext.eventBridge();
-          /* istanbul ignore next */
+          const eventBridge = preWarmContext.getOrInit(
+            PrewarmClients.EVENT_BRIDGE
+          );
           return await eventBridge
             .putEvents({
               Entries: request.Entries.map((e) => ({
