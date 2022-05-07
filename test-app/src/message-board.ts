@@ -431,6 +431,7 @@ new Function(
   "testFunc",
   async () => {
     // const busbus = customDeleteBus;
+    new aws_events.EventBus(stack, "b");
     console.log(customDeleteBus.eventBusArn);
     console.log(busbusbus.eventBusArn);
     console.log("huh?!?!?!??!!");

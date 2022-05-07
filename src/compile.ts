@@ -251,18 +251,6 @@ export function compile(
         );
       }
 
-      // function isEventBusPutCall(node: ts.Node): node is ts.CallExpression {
-      //   return ts.isCallExpression(node) && isEventBus(node.expression);
-      // }
-
-      // function isFunctionCall(node: ts.Node): node is ts.CallExpression {
-      //   return ts.isCallExpression(node) && isFunction(node.expression);
-      // }
-
-      // function isFunction(node: ts.Node) {
-      //   return isFunctionlessClassOfKind(node, Function.FunctionlessType);
-      // }
-
       /**
        * Checks to see if a node is of type EventBus.
        * The node could be any kind of node that returns an event bus rule.
@@ -314,25 +302,38 @@ export function compile(
         );
       }
 
-      // function isCDKConstruct(type: ts.Type): boolean {
-      //   const constructImport = imports["constructs"];
-      //   const constructSymbol = constructImport
-      //     ? checker.getSymbolAtLocation(constructImport.moduleSpecifier)
-      //     : undefined;
-      //   const constructExports = constructSymbol
-      //     ? checker.getExportsOfModule(constructSymbol)
-      //     : undefined;
-      //   const constructExportSymbol = constructExports?.find(
-      //     (s) => s.name === "Construct"
-      //   );
+      /**
+       * Heuristically evaluate the fqn of a symbol to be in a module and of a type name.
+       *
+       * /somePath/node_modules/{module}/somePath.{typeName}
+       *
+       * isInstanceOf(typeSymbol, "constructs", "Construct")
+       * ex: /home/sussmans/functionless/node_modules/constructs/lib/index.js
+       */
+      function isInstanceOf(
+        symbol: ts.Symbol,
+        module: string,
+        typeName: string
+      ) {
+        const find = /.*\/node_modules\/([^\/]*)\/.*\.(.*)$/g.exec(
+          checker.getFullyQualifiedName(symbol)
+        );
 
-      //   return (
-      //     (!constructExportSymbol ||
-      //       type.symbol === constructExportSymbol ||
-      //       type.getBaseTypes()?.some((t) => isCDKConstruct(t))) ??
-      //     false
-      //   );
-      // }
+        const [_, mod, type] = find ?? [];
+
+        return mod === module && type === typeName;
+      }
+
+      function isCDKConstruct(type: ts.Type): boolean {
+        const typeSymbol = type.getSymbol();
+
+        return (
+          ((typeSymbol &&
+            isInstanceOf(typeSymbol, "constructs", "Construct")) ||
+            type.getBaseTypes()?.some((t) => isCDKConstruct(t))) ??
+          false
+        );
+      }
 
       /**
        * Catches any errors and wraps them in a {@link Err} node.
@@ -498,7 +499,49 @@ export function compile(
       }
 
       /**
+       * A native function prepares a closure to be serialized,
+       * transforms functionless {@link Integrations} to be invoked at runtime,
+       * and extracts information needed to synthesize the Stack.
+       *
        * Native Functions do not allow the creation of resources, CDK constructs or functionless.
+       *
+       * 1. Extracts functionless {@link Integrations} from the closure
+       * 2. Wraps the closure in another arrow function which accepts a {@link NativePrewarmContext}.
+       *    1. During synthesize (ex:, in a lambda {@link Function}) a prewarm context is generated
+       *       and fed into the outer, generated closure.
+       *    2. The {@link NativePreWarmContext} is a client/object cache which can be used to run once
+       *       before the first invocation of a lambda function.
+       * 3. Rewrites all of the integrations to invoke `await integration.native.call(args)` instead of `integration(args)`
+       *    Also tries to simplify integration references to be outside of the closure.
+       *    This reduces the amount of code and data that Pulumi tries to serialize during synthesis.
+       * 4. Returns the {@link ParameterDecl}s for the closure
+       *
+       * @see Function for an example of how this is used.
+       *
+       * Input
+       *
+       * ```ts
+       * const bus = new EventBus() // an example of an Integration, could be any Integration
+       *
+       * (arg1: string) => {
+       *    bus({ source: "src" })
+       * }
+       * ```
+       *
+       * Output
+       *
+       * ```ts
+       * const bus = new EventBus()
+       * new NativeFunctionDecl(
+       *     [new ParameterDecl("arg1")], // parameters
+       *     (prewarmContext: NativePreWarmContext) =>
+       *        (arg1: string) => {
+       *            // call can make use of the cached clients in prewarmContext to avoid duplicate inline effect
+       *            await bus.native.call(prewarmContext, { source: "src" });
+       *        },
+       *     [bus] // integrations
+       * );
+       * ```
        */
       function toNativeFunction(
         impl: TsFunctionParameter,
@@ -520,14 +563,20 @@ export function compile(
           );
         }
 
+        // collection of integrations that are extracted from the closure
         const integrations: ts.Expression[] = [];
 
+        // a reference to a client/object cache which the integrations can use
         const preWarmContext =
           context.factory.createUniqueName("preWarmContext");
 
+        // Context object which is available which transforming the tree
         const nativeExprContext: NativeExprContext = {
+          // a reference to a prewarm context that will be passed into the closure during synthesis/runtime
           preWarmContext,
+          // the closure node used to determine if variables are inside or outside of the closure
           closureNode: impl,
+          // pass up integrations from inside of the closure
           registerIntegration: (integ) => integrations.push(integ),
         };
 
@@ -537,6 +586,7 @@ export function compile(
           nativeExprContext
         ) as ts.ConciseBody;
 
+        // rebuilt the closure with the updated body
         const closure = ts.factory.createArrowFunction(
           impl.modifiers,
           impl.typeParameters,
@@ -581,7 +631,7 @@ export function compile(
         node: ts.Node,
         context: ts.TransformationContext,
         nativeExprContext: NativeExprContext
-      ): ts.Node | ts.Node[] | undefined {
+      ): ts.Node | undefined {
         if (ts.isCallExpression(node)) {
           // Integration nodes have a static "kind" property.
           if (isIntegrationNode(node.expression)) {
@@ -591,6 +641,8 @@ export function compile(
             );
 
             if (!outOfScopeIntegrationReference) {
+              // integration variables can be CDK constructs which will fail serialization.
+              // TODO: can we relax this be determining if a integration reference will fail?
               throw Error(
                 "Integration Variable must be defined out of scope: " +
                   node.expression.getText()
@@ -606,27 +658,24 @@ export function compile(
             // await integration.native.call(args, preWarmContext)
             // FIXME: doesn't work without an array
             // TODO: Support both sync and async function invocations: https://github.com/sam-goodwin/functionless/issues/105
-            return [
-              context.factory.createAwaitExpression(
-                context.factory.createCallExpression(
+
+            context.factory.createAwaitExpression(
+              context.factory.createCallExpression(
+                context.factory.createPropertyAccessExpression(
                   context.factory.createPropertyAccessExpression(
-                    context.factory.createPropertyAccessExpression(
-                      node.expression,
-                      "native"
-                    ),
-                    "call"
+                    node.expression,
+                    "native"
                   ),
-                  undefined,
-                  [
-                    context.factory.createArrayLiteralExpression(
-                      node.arguments
-                    ),
-                    // TODO: determine if this is needed at all?
-                    nativeExprContext.preWarmContext,
-                  ]
-                )
-              ),
-            ];
+                  "call"
+                ),
+                undefined,
+                [
+                  context.factory.createArrayLiteralExpression(node.arguments),
+                  // TODO: determine if this is needed at all?
+                  nativeExprContext.preWarmContext,
+                ]
+              )
+            );
           }
         } else if (ts.isNewExpression(node)) {
           const newType = checker.getTypeAtLocation(node);
@@ -636,115 +685,11 @@ export function compile(
             throw Error(
               `Cannot initialize new resources in a native function, found ${functionlessKind}.`
             );
-          }
-          // TODO: check for CDK constructs
-          // const type = checker.getTypeAtLocation(node.expression);
-          // if (isCDKConstruct(type)) {
-          //   throw Error(
-          //     `Cannot initialize new resources in a native function, found ${type.symbol.name}.`
-          //   );
-          // }
-        } else if (ts.isReturnStatement(node)) {
-          const child = node.expression
-            ? toNativeExpr(node.expression, context, nativeExprContext)
-            : undefined;
-          if (!child) {
-            return node;
-          } else if (Array.isArray(child)) {
-            // if multiple nodes are returned, assume the last one is the value to assign and the rest should be injected as siblings.
-            const [last, ...rest] = child.reverse();
-            return [
-              ...rest.reverse(),
-              context.factory.updateReturnStatement(
-                node,
-                last as ts.Expression
-              ),
-            ];
-          } else {
-            return context.factory.updateReturnStatement(
-              node,
-              child as ts.Expression
-            );
-          }
-        } else if (ts.isVariableDeclarationList(node)) {
-          // bubble any extra nodes to the top of the variable declaration list.
-          const [extra, declarations] = node.declarations.reduce(
-            ([extra, declarations], decl) => {
-              const values = toNativeExpr(decl, context, nativeExprContext);
-              if (!values) {
-                return [extra, declarations];
-              } else if (Array.isArray(values)) {
-                const [decl, ...ext] = values.reverse();
-                return [
-                  [...extra, ...ext],
-                  [...declarations, decl as ts.VariableDeclaration],
-                ];
-              } else {
-                return [
-                  extra,
-                  [...declarations, decl as ts.VariableDeclaration],
-                ];
-              }
-            },
-            [[], []] as [ts.Node[], ts.VariableDeclaration[]]
-          );
-
-          return [
-            ...extra,
-            context.factory.updateVariableDeclarationList(node, declarations),
-          ];
-        } else if (ts.isVariableDeclaration(node)) {
-          const child = node.initializer
-            ? toNativeExpr(node.initializer, context, nativeExprContext)
-            : undefined;
-          if (!child) {
-            return node;
-          } else if (Array.isArray(child)) {
-            const newDecl = context.factory.updateVariableDeclaration(
-              node,
-              node.name,
-              node.exclamationToken,
-              node.type,
-              child.length > 0
-                ? (child[child.length - 1] as ts.Expression)
-                : undefined
-            );
-            return [
-              ...(child.length > 1 ? child.slice(0, child.length - 1) : []),
-              newDecl,
-            ];
-          } else {
-            return context.factory.updateVariableDeclaration(
-              node,
-              node.name,
-              node.exclamationToken,
-              node.type,
-              child as ts.Expression
-            );
-          }
-        } else if (ts.isVariableStatement(node)) {
-          const decls = toNativeExpr(
-            node.declarationList,
-            context,
-            nativeExprContext
-          );
-          if (!decls) {
-            return node;
-          } else if (Array.isArray(decls)) {
-            const [decl, ...extra] = decls.reverse();
-            return [
-              ...extra.reverse(),
-              context.factory.updateVariableStatement(
-                node,
-                node.modifiers,
-                decl as ts.VariableDeclarationList
-              ),
-            ];
-          } else {
-            return context.factory.updateVariableStatement(
-              node,
-              node.modifiers,
-              decls as ts.VariableDeclarationList
+          } else if (isCDKConstruct(newType)) {
+            throw Error(
+              `Cannot initialize new CDK resources in a native function, found ${
+                newType.getSymbol()?.name
+              }.`
             );
           }
         }

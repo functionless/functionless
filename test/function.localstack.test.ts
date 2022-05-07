@@ -231,7 +231,7 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
       const bus = new EventBus<any>(parent, "bus");
 
       // Necessary to keep the bundle small and stop the test from failing.
-      // See https://github.com/sam-goodwin/functionless/pull/103#issuecomment-1116396779
+      // See https://github.com/sam-goodwin/functionless/pull/122
       const putEvents = $AWS.EventBridge.putEvents;
       const func = new Function(
         parent,
