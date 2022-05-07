@@ -106,4 +106,4 @@ catPeopleEvents.pipe(catLambdaFunction);
 
 Behind the scenes, each of these services have their own proprietary configuration and DSL, Functionless makes it so you don't have to learn those details. Instead, you just write TypeScript code.
 
-See [Integrations](./02-integrations/00-integrations.md) for more information on each of these integration patterns.
+See [Integrations](./02-integrations/index.md) for more information on each of these integration patterns.
