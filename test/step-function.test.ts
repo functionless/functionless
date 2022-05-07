@@ -5129,6 +5129,37 @@ test("return task({ key: items.filter(*) })", () => {
   });
 });
 
+test("single quotes in StringLiteralExpr should be escaped in a JSON Path filter expression", () => {
+  const { stack, task } = initStepFunctionApp();
+  const definition = new ExpressStepFunction<
+    { items: { str: string; items: string[] }[] },
+    number | null
+  >(stack, "fn", (input) => {
+    return task({
+      escape: input.items.filter((item) => item.str === "hello'world"),
+    });
+  }).definition;
+
+  expect(definition).toEqual({
+    StartAt: "return task({escape: input.items.filter(function(item))})",
+    States: {
+      "return task({escape: input.items.filter(function(item))})": {
+        Type: "Task",
+        End: true,
+        Resource: "arn:aws:states:::lambda:invoke",
+        ResultSelector: "$.Payload",
+        Parameters: {
+          FunctionName: task.resource.functionName,
+          Payload: {
+            "escape.$": "$.items[?(@.str=='hello\\'world')]",
+          },
+        },
+        ResultPath: "$",
+      },
+    },
+  });
+});
+
 test("template literal strings", () => {
   const { stack, task } = initStepFunctionApp();
   const definition = new ExpressStepFunction<

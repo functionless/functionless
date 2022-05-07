@@ -1451,7 +1451,7 @@ export namespace ASL {
           );
         }
       } else if (expr.kind === "StringLiteralExpr") {
-        return `'${expr.value.replace("'", "\\\\'")}'`;
+        return `'${expr.value.replace(/'/g, "\\'")}'`;
       } else if (
         expr.kind === "BooleanLiteralExpr" ||
         expr.kind === "NumberLiteralExpr" ||
