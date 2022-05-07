@@ -4,18 +4,34 @@ sidebar_position: 3
 
 # Function
 
-The `Function` wrapper annotates an `aws_lambda.Function` with a TypeScript function signature that controls how it can be called.
+The `Function` Construct represents a Lambda Function. This includes the Function's type signature - both its input and return type.
+
+```ts
+const function: Function<Input, Output>;
+```
+
+For example, a Function that takes in a `string`, splits it by spaces and returns the list of words would have the following signature:
+
+```ts
+const stringSplit: Function<string, string[]>;
+```
+
+## Wrap an existing Function
+
+Functionless's `Function` primitive is compatible with existing Lambda Functions created with the vanilla AWS CDK. Use the `from` function to wrap and annotate the types for an `aws_lambda.Function`.
 
 ```ts
 import { aws_lambda } from "aws-cdk-lib";
 import { Function, StepFunction } from "functionless";
 
-const myFunc = new Function<{ name: string }, string>(
+const myFunc = Function.from<{ name: string }, string>(
   new aws_lambda.Function(this, "MyFunc", {
     ..
   })
 );
 ```
+
+## Create a new Function
 
 Within an AppsyncResolver, the `myFunc` function is integrated with an ordinary function call.
 

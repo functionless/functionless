@@ -1,8 +1,9 @@
 ---
 sidebar_position: 1
+label: Setup
 ---
 
-# Project Setup
+# Setup
 
 Install the `functionless` and `ts-patch` NPM packages.
 

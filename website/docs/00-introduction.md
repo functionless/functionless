@@ -4,10 +4,10 @@ sidebar_position: 0
 
 # What is Functionless?
 
-Functionless is a compiler plugin and Construct library that enhances your cloud programming experience with TypeScript and the AWS Cloud Development Kit (CDK). All of the tedious and error-prone boilerplate configurations are inferred directly from your application logic - including IAM Policies, environment variables and proprietary domain specific languages such as Amazon States Language, Velocity Templates and Event Bridge Pattern Documents. This makes it simple, easy and fun to configure AWS's powerful services without learning a new language or abstraction. Functionless always ensures that your IAM Policies are minimally secure and that there is no missing plumbing code, giving you can confidence that when your code compiles, then it also deploys and runs!
+Functionless is a compiler plugin and Construct library that enhances your cloud programming experience with TypeScript and the AWS Cloud Development Kit (CDK). All of the tedious and error-prone configurations are inferred directly from your application logic - including IAM Policies, environment variables and proprietary domain specific languages such as Amazon States Language, Velocity Templates and Event Bridge Pattern Documents. This makes it simple, easy and fun(!) to configure AWS's powerful services without learning a new language or abstraction. Functionless always ensures that your IAM Policies are minimally permissive and that there is no missing plumbing code, so you can be confident that when your code compiles - then it also deploys and runs!
 
 # Example 
-Let's illustrates with a simple example of calling `GetItem` on am AWS DynamoDB Table from an Express Step Function workflow.
+Let's illustrate with a simple example of calling `GetItem` on an AWS DynamoDB Table from an Express Step Function workflow.
 
 Notice how the Step Function's implementation of `getItem` is included in-line as a native TypScript function.
 
@@ -75,4 +75,35 @@ if (status === "FAILED") {
 // ..
 ```
 
-Functionless also supports deriving boilerplate configuration for AppSync GraphQL Velocity Template Resolvers, Event Bridge Rules and Lambda Functions. See [Integrations](./02-integrations/00-integrations.md) for a comprehensive list.
+Functionless also supports deriving boilerplate configuration for AppSync GraphQL Velocity Template Resolvers, Event Bridge Rules and Lambda Functions. The experience of configuring each of these services is the same in Functionless - just write functions:
+```ts
+const getCat = new AppsyncResolver(async ($context: AppsyncContext<{id: string}, Cat>) => {
+  return catTable.get($context.id);
+}).addResolver(api, {
+  typeName: "Query",
+  fieldName: "getCat"
+});
+
+const bus = new EventBus<CatEvent>(stack, "EventBus");
+
+// filter Events from the Event Bus based on some complex condition
+const catPeopleEvents = bus.when(stack, "CatPeopleEvents",
+  (event) =>
+    event["detail-type"] === "Create" &&
+    event.detail.interests.includes("CATS") &&
+    event.detail.age >= 18 &&
+    event.detail.age < 30
+);
+
+// create a Lambda Function and log out the CatEvent
+const catLambdaFunction = new Function(stack, "CatLambdaFunction", async (cat: CatEvent) => {
+  console.log(cat);
+});
+
+// pipe all CatEvents to the Lambda Function
+catPeopleEvents.pipe(catLambdaFunction);
+```
+
+Behind the scenes, each of these services have their own proprietary configuration and DSL, Functionless makes it so you don't have to learn those details. Instead, you just write TypeScript code.
+
+See [Integrations](./02-integrations/00-integrations.md) for more information on each of these integration patterns.
