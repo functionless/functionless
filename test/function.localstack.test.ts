@@ -1,9 +1,23 @@
 import { clientConfig, localstackTestSuite } from "./localstack";
-import { $AWS, EventBus, EventBusRuleInput, Function } from "../src";
+import {
+  $AWS,
+  EventBus,
+  EventBusRuleInput,
+  Function,
+  FunctionProps,
+} from "../src";
 import { Lambda } from "aws-sdk";
 import { aws_events, Stack } from "aws-cdk-lib";
 
 const lambda = new Lambda(clientConfig);
+
+// inject the localstack client config into the lambda clients
+// without this configuration, the functions will try to hit AWS proper
+const localstackClientConfig: FunctionProps = {
+  clientConfigRetriever: () => ({
+    endpoint: `http://${process.env.LOCALSTACK_HOSTNAME}:4566`,
+  }),
+};
 
 localstackTestSuite("functionStack", (testResource, _stack, _app) => {
   testResource(
@@ -158,7 +172,7 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
   );
 
   testResource(
-    "Call Lambda put event to bus",
+    "Call Lambda return arns",
     (parent) => {
       const bus = new EventBus(parent, "bus");
       const busbus = new aws_events.EventBus(parent, "busbus");
@@ -184,6 +198,34 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
   );
 
   testResource(
+    "Call Lambda put events",
+    (parent) => {
+      const bus = new EventBus(parent, "bus");
+      const func = new Function(
+        parent,
+        "function",
+        async () => {
+          bus({
+            "detail-type": "detail",
+            source: "lambda",
+            detail: {},
+          });
+        },
+        localstackClientConfig
+      );
+
+      return {
+        outputs: {
+          function: func.resource.functionName,
+        },
+      };
+    },
+    async (context) => {
+      await testFunction(context.function, {}, null);
+    }
+  );
+
+  testResource(
     "Call Lambda AWS SDK put event to bus with reference",
     (parent) => {
       const bus = new EventBus<any>(parent, "bus");
@@ -191,19 +233,26 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
       // Necessary to keep the bundle small and stop the test from failing.
       // See https://github.com/sam-goodwin/functionless/pull/103#issuecomment-1116396779
       const putEvents = $AWS.EventBridge.putEvents;
-      const func = new Function(parent, "function", async () => {
-        const result = putEvents({
-          Entries: [
-            {
-              EventBusName: bus.eventBusArn,
-              Source: "MyEvent",
-              DetailType: "DetailType",
-              Detail: "{}",
-            },
-          ],
-        });
-        return result.FailedEntryCount;
-      });
+      const func = new Function(
+        parent,
+        "function",
+        async () => {
+          const result = putEvents({
+            Entries: [
+              {
+                EventBusName: bus.eventBusArn,
+                Source: "MyEvent",
+                DetailType: "DetailType",
+                Detail: "{}",
+              },
+            ],
+          });
+          return result.FailedEntryCount;
+        },
+        localstackClientConfig
+      );
+
+      bus.bus.grantPutEventsTo(func.resource);
 
       return { outputs: { function: func.resource.functionName } };
     },
@@ -218,19 +267,24 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
     (parent) => {
       const bus = new EventBus<EventBusRuleInput>(parent, "bus");
 
-      const func = new Function(parent, "function", async () => {
-        const result = $AWS.EventBridge.putEvents({
-          Entries: [
-            {
-              EventBusName: bus.eventBusArn,
-              Source: "MyEvent",
-              DetailType: "DetailType",
-              Detail: "{}",
-            },
-          ],
-        });
-        return result.FailedEntryCount;
-      });
+      const func = new Function(
+        parent,
+        "function",
+        async () => {
+          const result = $AWS.EventBridge.putEvents({
+            Entries: [
+              {
+                EventBusName: bus.eventBusArn,
+                Source: "MyEvent",
+                DetailType: "DetailType",
+                Detail: "{}",
+              },
+            ],
+          });
+          return result.FailedEntryCount;
+        },
+        localstackClientConfig
+      );
 
       return { outputs: { function: func.resource.functionName } };
     },
@@ -245,16 +299,25 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
     "Call Lambda AWS SDK put event to bus with in closure reference",
     (parent) => {
       const bus = new EventBus<EventBusRuleInput>(parent, "bus");
-      const func = new Function(parent, "function", async () => {
-        const busbus = bus;
-        busbus({
-          "detail-type": "anyDetail",
-          source: "anySource",
-          detail: {},
-        });
-      });
+      const func = new Function(
+        parent,
+        "function",
+        async () => {
+          const busbus = bus;
+          busbus({
+            "detail-type": "anyDetail",
+            source: "anySource",
+            detail: {},
+          });
+        },
+        localstackClientConfig
+      );
 
-      return { outputs: { function: func.resource.functionName } };
+      return {
+        outputs: {
+          function: func.resource.functionName,
+        },
+      };
     },
     async (context) => {
       await testFunction(context.function, {}, null);
@@ -297,10 +360,15 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
         "func1",
         async () => "hi"
       );
-      const func2 = new Function(parent, "function", async () => {
-        // TODO should be awaited?
-        return func1();
-      });
+      const func2 = new Function(
+        parent,
+        "function",
+        async () => {
+          // TODO should be awaited?
+          return func1();
+        },
+        localstackClientConfig
+      );
 
       return {
         outputs: {

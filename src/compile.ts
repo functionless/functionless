@@ -1204,6 +1204,24 @@ export function compile(
         return;
       }
 
+      /**
+       * Attempts to find the a version of a reference that is outside of a certain scope.
+       *
+       * This is useful for finding variables that have been instantiated outside of a closure, but
+       * renamed inside of the closure.
+       *
+       * When serializing the lambda functions, we want references from outside of the closure if possible.
+       *
+       * ```ts
+       * const bus = new EventBus()
+       * new Function(() => {
+       *     const busbus = bus;
+       *     busbus(...)
+       * })
+       * ```
+       *
+       * The call to busbus can be resolved to bus if the scope is the array function.
+       */
       function getOutOfScopeValueNode(
         expression: ts.Expression,
         scope: ts.Node
@@ -1212,8 +1230,7 @@ export function compile(
         if (symbol) {
           if (isSymbolOutOfScope(symbol, scope)) {
             return expression;
-          }
-          if (
+          } else if (
             symbol.valueDeclaration &&
             ts.isVariableDeclaration(symbol.valueDeclaration) &&
             symbol.valueDeclaration.initializer
@@ -1228,18 +1245,16 @@ export function compile(
       }
 
       function isSymbolOutOfScope(symbol: ts.Symbol, scope: ts.Node): boolean {
-        if (symbol) {
-          if (symbol.valueDeclaration) {
-            if (ts.isShorthandPropertyAssignment(symbol.valueDeclaration)) {
-              const updatedSymbol = checker.getShorthandAssignmentValueSymbol(
-                symbol.valueDeclaration
-              );
-              return updatedSymbol
-                ? isSymbolOutOfScope(updatedSymbol, scope)
-                : false;
-            } else if (ts.isVariableDeclaration(symbol.valueDeclaration)) {
-              return !hasParent(symbol.valueDeclaration, scope);
-            }
+        if (symbol.valueDeclaration) {
+          if (ts.isShorthandPropertyAssignment(symbol.valueDeclaration)) {
+            const updatedSymbol = checker.getShorthandAssignmentValueSymbol(
+              symbol.valueDeclaration
+            );
+            return updatedSymbol
+              ? isSymbolOutOfScope(updatedSymbol, scope)
+              : false;
+          } else if (ts.isVariableDeclaration(symbol.valueDeclaration)) {
+            return !hasParent(symbol.valueDeclaration, scope);
           }
         }
         return false;

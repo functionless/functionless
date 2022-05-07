@@ -135,6 +135,22 @@ interface FunctionBase<P, O> {
 
 const PromisesSymbol = Symbol.for("functionless.Function.promises");
 
+export interface FunctionProps
+  extends Omit<aws_lambda.FunctionProps, "code" | "handler" | "runtime"> {
+  /**
+   * Method which allows runtime computation of AWS client configuration.
+   * ```ts
+   * new Lambda(clientConfigRetriever('LAMBDA'))
+   * ```
+   *
+   * @param clientName optionally return a different client config based on the {@link ClientName}.
+   *
+   */
+  clientConfigRetriever?: (
+    clientName: ClientName | string
+  ) => Omit<Lambda.ClientConfiguration, keyof Lambda.ClientApiVersions>;
+}
+
 /**
  * Wraps an {@link aws_lambda.Function} with a type-safe interface that can be
  * called from within an {@link AppsyncResolver}.
@@ -170,7 +186,7 @@ export class Function<P, O> extends FunctionBase<P, O> {
     scope: Construct,
     id: string,
     func: FunctionClosure<P, O>,
-    props?: Omit<aws_lambda.FunctionProps, "code" | "handler" | "runtime">
+    props?: FunctionProps
   );
   /**
    * @private
@@ -179,7 +195,7 @@ export class Function<P, O> extends FunctionBase<P, O> {
     scope: Construct,
     id: string,
     func: NativeFunctionDecl | Err,
-    props?: Omit<aws_lambda.FunctionProps, "code" | "handler" | "runtime">
+    props?: FunctionProps
   );
   /**
    * Wrap an existing lambda function with Functionless.
@@ -193,14 +209,16 @@ export class Function<P, O> extends FunctionBase<P, O> {
     resource: aws_lambda.IFunction | Construct,
     id?: string,
     func?: NativeFunctionDecl | Err | FunctionClosure<P, O>,
-    props?: Omit<aws_lambda.FunctionProps, "code" | "handler" | "runtime">
+    props?: FunctionProps
   ) {
     let _resource: aws_lambda.IFunction;
     let integrations: Integration[] = [];
     let callbackLambdaCode: CallbackLambdaCode | undefined = undefined;
     if (func && id) {
       if (isNativeFunctionDecl(func)) {
-        callbackLambdaCode = new CallbackLambdaCode(func.closure);
+        callbackLambdaCode = new CallbackLambdaCode(func.closure, {
+          clientConfigRetriever: props?.clientConfigRetriever,
+        });
         _resource = new aws_lambda.Function(resource, id, {
           ...props,
           runtime: aws_lambda.Runtime.NODEJS_14_X,
@@ -255,6 +273,10 @@ type ConditionalFunction<P, O> = P extends undefined
   ? (payload?: P) => O
   : (payload: P) => O;
 
+interface CallbackLambdaCodeProps {
+  clientConfigRetriever?: FunctionProps["clientConfigRetriever"];
+}
+
 /**
  * A special lambda code wrapper that serializes whatever closure it is given.
  *
@@ -272,7 +294,8 @@ export class CallbackLambdaCode extends aws_lambda.Code {
   private scope: Construct | undefined = undefined;
 
   constructor(
-    private func: (preWarmContext: NativePreWarmContext) => AnyFunction
+    private func: (preWarmContext: NativePreWarmContext) => AnyFunction,
+    private props?: CallbackLambdaCodeProps
   ) {
     super();
   }
@@ -298,7 +321,9 @@ export class CallbackLambdaCode extends aws_lambda.Code {
     }
     const scope = this.scope;
     let tokens: string[] = [];
-    const preWarmContext = new NativePreWarmContext();
+    const preWarmContext = new NativePreWarmContext(
+      this.props?.clientConfigRetriever
+    );
     const func = this.func(preWarmContext);
 
     /* istanbul ignore next */
@@ -407,20 +432,30 @@ export interface NativeIntegration<F extends AnyFunction> {
   preWarm?: (preWarmContext: NativePreWarmContext) => void;
 }
 
+export type ClientName = "LAMBDA" | "EVENT_BRIDGE";
+
 /* istanbul ignore next */
 export class NativePreWarmContext {
   private readonly cache: Record<string, any>;
 
-  constructor() {
+  constructor(
+    private clientConfigRetriever?: FunctionProps["clientConfigRetriever"]
+  ) {
     this.cache = {};
   }
 
   public lambda(): Lambda {
-    return this.getOrInit("LAMBDA", () => new Lambda());
+    return this.getOrInit(
+      "LAMBDA",
+      () => new Lambda(this.clientConfigRetriever?.("LAMBDA"))
+    );
   }
 
   public eventBridge(): EventBridge {
-    return this.getOrInit("EVENT_BRIDGE", () => new EventBridge());
+    return this.getOrInit(
+      "EVENT_BRIDGE",
+      () => new EventBridge(this.clientConfigRetriever?.("EVENT_BRIDGE"))
+    );
   }
 
   public registerCustom<T>(
@@ -440,14 +475,14 @@ export class NativePreWarmContext {
     return this.getOrFail<T>(key);
   }
 
-  private getOrInit<T>(key: string, create: () => T): T {
+  private getOrInit<T>(key: ClientName | string, create: () => T): T {
     if (!this.cache[key]) {
       this.cache[key] = create();
     }
     return this.cache[key];
   }
 
-  private getOrFail<T>(key: string): T {
+  private getOrFail<T>(key: ClientName | string): T {
     if (!this.cache[key]) {
       throw Error(
         `Prewarm Context key ${key} does not exist. Initialize it with context.registerCustom.`
