@@ -8,6 +8,7 @@ import {
 } from "../src";
 import { Lambda } from "aws-sdk";
 import { aws_events, Stack, Token } from "aws-cdk-lib";
+import { Construct } from "constructs";
 
 const lambda = new Lambda(clientConfig);
 
@@ -19,37 +20,84 @@ const localstackClientConfig: FunctionProps = {
   }),
 };
 
+interface TestFunctionResource {
+  <I, O, Outputs extends Record<string, string> = Record<string, string>>(
+    name: string,
+    func: (
+      parent: Construct
+    ) => Function<I, O> | { func: Function<I, O>; outputs: Outputs },
+    expected: O | ((context: Outputs) => O),
+    payload?: I | ((context: Outputs) => I)
+  ): void;
+
+  skip: <I, O, Outputs extends Record<string, string> = Record<string, string>>(
+    name: string,
+    func: (
+      parent: Construct
+    ) => Function<I, O> | { func: Function<I, O>; outputs: Outputs },
+    expected: O | ((context: Outputs) => O),
+    payload?: I | ((context: Outputs) => I)
+  ) => void;
+}
+
 localstackTestSuite("functionStack", (testResource, _stack, _app) => {
-  testResource(
+  const testFunctionResource: TestFunctionResource = (
+    name,
+    func,
+    expected,
+    payload
+  ) => {
+    testResource(
+      name,
+      (parent) => {
+        const res = func(parent);
+        const [funcRes, outputs] =
+          res instanceof Function ? [res, {}] : [res.func, res.outputs];
+        return {
+          outputs: {
+            function: funcRes.resource.functionName,
+            ...outputs,
+          },
+        };
+      },
+      async (context) => {
+        const exp =
+          // @ts-ignore
+          typeof expected === "function" ? expected(context) : expected;
+        // @ts-ignore
+        const pay = typeof payload === "function" ? payload(context) : payload;
+        await testFunction(context.function, pay, exp);
+      }
+    );
+  };
+
+  testFunctionResource.skip = (name, _func, _expected, _payload?) =>
+    testResource.skip(
+      name,
+      () => {},
+      async () => {}
+    );
+
+  testFunctionResource(
     "Call Lambda",
     (parent) => {
-      const func = new Function(parent, "func2", async (event) => event);
-
-      return {
-        outputs: {
-          functionName: func.resource.functionName,
-        },
-      };
+      return new Function(parent, "func2", async (event) => event);
     },
-    async (context) => {
-      await testFunction(context.functionName, {}, {});
-    }
+    {}
   );
 
-  testResource(
+  testFunctionResource(
     "Call Lambda from closure",
     (parent) => {
       const create = () =>
         new Function(parent, "function", async (event) => event);
 
-      return { outputs: { function: create().resource.functionName } };
+      return create();
     },
-    async (context) => {
-      await testFunction(context.function, {}, {});
-    }
+    {}
   );
 
-  testResource(
+  testFunctionResource(
     "Call Lambda from closure with variables",
     (parent) => {
       const create = () => {
@@ -57,48 +105,40 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
         return new Function(parent, "function", async () => val);
       };
 
-      return { outputs: { function: create().resource.functionName } };
+      return create();
     },
-    async (context) => {
-      await testFunction(context.function, {}, "a");
-    }
+    "a"
   );
 
-  testResource(
+  testFunctionResource(
     "Call Lambda from closure with parameter",
     (parent) => {
       const create = (val: string) => {
         return new Function(parent, "func5", async () => val);
       };
 
-      return { outputs: { function: create("b").resource.functionName } };
+      return create("b");
     },
-    async (context) => {
-      await testFunction(context.function, {}, "b");
-    }
+    "b"
   );
 
-  testResource(
-    "Call Lambda from closure with parameter multiple",
-    (parent) => {
-      const create = (id: string, val: string) => {
-        return new Function(parent, id, async () => val);
-      };
+  const create = (parent: Construct, id: string, val: string) => {
+    return new Function(parent, id, async () => val);
+  };
 
-      return {
-        outputs: {
-          function1: create("func6", "c").resource.functionName,
-          function2: create("func7", "d").resource.functionName,
-        },
-      };
-    },
-    async (context) => {
-      await testFunction(context.function1, {}, "c");
-      await testFunction(context.function2, {}, "d");
-    }
+  testFunctionResource(
+    "Call Lambda from closure with parameter multiple 1",
+    (parent) => create(parent, "func6", "c"),
+    "c"
   );
 
-  testResource(
+  testFunctionResource(
+    "Call Lambda from closure with parameter multiple 2",
+    (parent) => create(parent, "func7", "d"),
+    "d"
+  );
+
+  testFunctionResource(
     "Call Lambda with object",
     (parent) => {
       const create = () => {
@@ -106,72 +146,42 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
         return new Function(parent, "function", async () => obj.val);
       };
 
-      return { outputs: { function: create().resource.functionName } };
+      return create();
     },
-    async (context) => {
-      await testFunction(context.function, {}, 1);
-    }
+    1
   );
 
-  testResource(
+  testFunctionResource(
     "Call Lambda with math",
-    (parent) => {
-      const func = new Function(parent, "function", async () => {
+    (parent) =>
+      new Function(parent, "function", async () => {
         const v1 = 1 + 2; // 3
         const v2 = v1 * 3; // 9
         return v2 - 4; // 5
-      });
-
-      return {
-        outputs: { function: func.resource.functionName },
-      };
-    },
-    async (context) => {
-      await testFunction(context.function, {}, 5);
-    }
+      }),
+    5
   );
 
-  testResource(
+  testFunctionResource(
     "Call Lambda payload",
-    (parent) => {
-      const func = new Function(
-        parent,
-        "function",
-        async (event: { val: string }) => {
-          return `value: ${event.val}`;
-        }
-      );
-
-      return { outputs: { function: func.resource.functionName } };
-    },
-    async (context) => {
-      await testFunction(context.function, { val: "hi" }, "value: hi");
-    }
+    (parent) =>
+      new Function(parent, "function", async (event: { val: string }) => {
+        return `value: ${event.val}`;
+      }),
+    "value: hi",
+    { val: "hi" }
   );
 
-  testResource(
+  testFunctionResource(
     "Call Lambda throw error",
-    (parent) => {
-      const func = new Function(parent, "function", async () => {
+    (parent) =>
+      new Function(parent, "function", async () => {
         throw Error("AHHHHHHHHH");
-      });
-
-      return {
-        outputs: {
-          function: func.resource.functionName,
-        },
-      };
-    },
-    async (context) => {
-      await testFunction(
-        context.function,
-        {},
-        { errorMessage: "AHHHHHHHHH", errorType: "Error" }
-      );
-    }
+      }),
+    { errorMessage: "AHHHHHHHHH", errorType: "Error" }
   );
 
-  testResource(
+  testFunctionResource(
     "Call Lambda return arns",
     (parent) => {
       const bus = new EventBus(parent, "bus");
@@ -181,65 +191,43 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
       });
 
       return {
+        func,
         outputs: {
           bus: bus.eventBusArn,
           busbus: busbus.eventBusArn,
-          function: func.resource.functionName,
         },
       };
     },
-    async (context) => {
-      await testFunction(
-        context.function,
-        {},
-        `${context.bus} ${context.busbus}`
-      );
-    }
+    (context) => `${context.bus} ${context.busbus}`
   );
 
-  testResource(
+  testFunctionResource(
     "templated tokens",
     (parent) => {
       const token = Token.asString("hello");
-      const func = new Function(parent, "function", async () => {
+      return new Function(parent, "function", async () => {
         return `${token} stuff`;
       });
-
-      return {
-        outputs: {
-          function: func.resource.functionName,
-        },
-      };
     },
-    async (context) => {
-      await testFunction(context.function, {}, `hello stuff`);
-    }
+    "hello stuff"
   );
 
-  testResource(
+  testFunctionResource(
     "numeric tokens",
     (parent) => {
       const token = Token.asNumber(1);
-      const func = new Function(parent, "function", async () => {
+      return new Function(parent, "function", async () => {
         return token;
       });
-
-      return {
-        outputs: {
-          function: func.resource.functionName,
-        },
-      };
     },
-    async (context) => {
-      await testFunction(context.function, {}, 1);
-    }
+    1
   );
 
-  testResource(
+  testFunctionResource(
     "Call Lambda put events",
     (parent) => {
       const bus = new EventBus(parent, "bus");
-      const func = new Function(
+      return new Function(
         parent,
         "function",
         async () => {
@@ -251,19 +239,11 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
         },
         localstackClientConfig
       );
-
-      return {
-        outputs: {
-          function: func.resource.functionName,
-        },
-      };
     },
-    async (context) => {
-      await testFunction(context.function, {}, null);
-    }
+    null
   );
 
-  testResource(
+  testFunctionResource(
     "Call Lambda AWS SDK put event to bus with reference",
     (parent) => {
       const bus = new EventBus<any>(parent, "bus");
@@ -292,20 +272,18 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
 
       bus.bus.grantPutEventsTo(func.resource);
 
-      return { outputs: { function: func.resource.functionName } };
+      return func;
     },
-    async (context) => {
-      await testFunction(context.function, {}, 0);
-    }
+    0
   );
 
   // See https://github.com/sam-goodwin/functionless/pull/103#issuecomment-1116396779
-  testResource.skip(
+  testFunctionResource.skip(
     "Call Lambda AWS SDK put event to bus without reference",
     (parent) => {
       const bus = new EventBus<EventBusRuleInput>(parent, "bus");
 
-      const func = new Function(
+      return new Function(
         parent,
         "function",
         async () => {
@@ -323,21 +301,17 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
         },
         localstackClientConfig
       );
-
-      return { outputs: { function: func.resource.functionName } };
     },
-    async (context) => {
-      await testFunction(context.function, {}, 0);
-    }
+    0
   );
 
   // Function serialization breaks when assigning an integration/construct to a variable in the closure.
   // TODO: what should happen here?
-  testResource.skip(
+  testFunctionResource.skip(
     "Call Lambda AWS SDK put event to bus with in closure reference",
     (parent) => {
       const bus = new EventBus<EventBusRuleInput>(parent, "bus");
-      const func = new Function(
+      return new Function(
         parent,
         "function",
         async () => {
@@ -350,16 +324,8 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
         },
         localstackClientConfig
       );
-
-      return {
-        outputs: {
-          function: func.resource.functionName,
-        },
-      };
     },
-    async (context) => {
-      await testFunction(context.function, {}, null);
-    }
+    null
   );
 
   test("should not create new resources in lambda", async () => {
@@ -390,7 +356,7 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
     ).rejects.toThrow();
   });
 
-  testResource(
+  testFunctionResource(
     "Call Lambda invoke client",
     (parent) => {
       const func1 = new Function<undefined, string>(
@@ -398,7 +364,7 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
         "func1",
         async () => "hi"
       );
-      const func2 = new Function(
+      return new Function(
         parent,
         "function",
         async () => {
@@ -407,16 +373,8 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
         },
         localstackClientConfig
       );
-
-      return {
-        outputs: {
-          function: func2.resource.functionName,
-        },
-      };
     },
-    async (context) => {
-      await testFunction(context.function, {}, "hi");
-    }
+    "hi"
   );
 });
 
