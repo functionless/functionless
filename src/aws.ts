@@ -380,7 +380,7 @@ export namespace $AWS {
       kind: "EventBridge.putEvent",
       native: {
         // Access needs to be granted manually
-        bootstrap: () => {},
+        bind: () => {},
         preWarm: (prewarmContext: NativePreWarmContext) => {
           prewarmContext.getOrInit(PrewarmClients.EVENT_BRIDGE);
         },

@@ -277,7 +277,7 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
     0
   );
 
-  // See https://github.com/sam-goodwin/functionless/pull/103#issuecomment-1116396779
+  // See https://github.com/sam-goodwin/functionless/pull/122
   testFunctionResource.skip(
     "Call Lambda AWS SDK put event to bus without reference",
     (parent) => {

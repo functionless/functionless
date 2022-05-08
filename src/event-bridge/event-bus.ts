@@ -138,7 +138,7 @@ abstract class EventBusBase<E extends EventBusRuleInput>
     // Closure event bus base
     const eventBusName = this.eventBusName;
     this.native = <NativeIntegration<EventBusBase<E>>>{
-      bootstrap: (context: Function<any, any>) => {
+      bind: (context: Function<any, any>) => {
         this.bus.grantPutEventsTo(context.resource);
       },
       preWarm: (prewarmContext: NativePreWarmContext) => {

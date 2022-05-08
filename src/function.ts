@@ -60,7 +60,7 @@ abstract class FunctionBase<P, O>
       /**
        * Wire up permissions for this function to be called by the calling function
        */
-      bootstrap: (context: Function<any, any>) => {
+      bind: (context: Function<any, any>) => {
         this.resource.grantInvoke(context.resource);
       },
       /**
@@ -250,10 +250,10 @@ export class Function<P, O> extends FunctionBase<P, O> {
     }
     super(_resource);
 
-    // retrieve and bootstrap all found native integrations. Will fail if the integration does not support native integration.
+    // retrieve and bind all found native integrations. Will fail if the integration does not support native integration.
     const nativeIntegrationsPrewarm = integrations.flatMap((i) => {
       const integ = new IntegrationImpl(i).native;
-      integ.bootstrap(this);
+      integ.bind(this);
       return integ.preWarm ? [integ.preWarm] : [];
     });
 
@@ -431,7 +431,13 @@ export class CallbackLambdaCode extends aws_lambda.Code {
  * ```
  */
 export interface NativeIntegration<F extends AnyFunction> {
-  bootstrap: (context: Function<any, any>) => void;
+  /**
+   * Called by any {@link Function} that will invoke this integration during CDK Synthesis.
+   * Add permissions, create connecting resources, validate.
+   *
+   * @param context - The function invoking this function.
+   */
+  bind: (context: Function<any, any>) => void;
   /**
    * @param args The arguments passed to the integration function by the user.
    * @param preWarmContext contains singleton instances of client and other objects initialized outside of the native
