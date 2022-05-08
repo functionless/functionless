@@ -6,7 +6,7 @@ import { FunctionlessNode } from "./node";
 import { AppsyncResolver } from "./appsync";
 import { assertDefined } from "./assert";
 import { StepFunction, ExpressStepFunction } from "./step-function";
-import { hasParent } from "./util";
+import { anyOf, hasParent } from "./util";
 import minimatch from "minimatch";
 import { EventBus, EventBusRule } from "./event-bridge";
 import { EventBusTransform } from "./event-bridge/transform";
@@ -1165,6 +1165,30 @@ export function compile(
        * })
        * ```
        *
+       * Can also follow property access.
+       *
+       * ```ts
+       * const x = { y : () => {} };
+       *
+       * () => {
+       *    const z = x;
+       *    z.y() // x.y() is returned
+       * }
+       * ```
+       *
+       * getOutOfScopeValueNode(z.y) => x.y
+       *
+       * ```ts
+       * const x = () => {};
+       *
+       * () => {
+       *    const z = { y: x };
+       *    z.y()
+       * }
+       * ```
+       *
+       * getOutOfScopeValueNode(z.y) => x
+       *
        * The call to busbus can be resolved to bus if the scope is the array function.
        */
       function getOutOfScopeValueNode(
@@ -1175,20 +1199,91 @@ export function compile(
         if (symbol) {
           if (isSymbolOutOfScope(symbol, scope)) {
             return expression;
-          } else if (
-            symbol.valueDeclaration &&
-            ts.isVariableDeclaration(symbol.valueDeclaration) &&
-            symbol.valueDeclaration.initializer
-          ) {
-            return getOutOfScopeValueNode(
-              symbol.valueDeclaration.initializer,
-              scope
-            );
+          } else {
+            if (ts.isIdentifier(expression)) {
+              if (
+                symbol.valueDeclaration &&
+                ts.isVariableDeclaration(symbol.valueDeclaration) &&
+                symbol.valueDeclaration.initializer
+              ) {
+                return getOutOfScopeValueNode(
+                  symbol.valueDeclaration.initializer,
+                  scope
+                );
+              }
+            } else if (
+              ts.isPropertyAccessExpression(expression) ||
+              ts.isElementAccessExpression(expression)
+            ) {
+              if (symbol.valueDeclaration) {
+                if (
+                  ts.isPropertyAssignment(symbol.valueDeclaration) &&
+                  anyOf(
+                    ts.isIdentifier,
+                    ts.isPropertyAccessExpression,
+                    ts.isElementAccessExpression
+                  )(symbol.valueDeclaration.initializer)
+                ) {
+                  // this variable is assigned to by another variable, follow that node
+                  return getOutOfScopeValueNode(
+                    symbol.valueDeclaration.initializer,
+                    scope
+                  );
+                }
+              }
+              // this node is assigned a value, attempt to rewrite the parent
+              const outOfScope = getOutOfScopeValueNode(
+                expression.expression,
+                scope
+              );
+              return outOfScope
+                ? ts.isElementAccessExpression(expression)
+                  ? ts.factory.updateElementAccessExpression(
+                      expression,
+                      outOfScope,
+                      expression.argumentExpression
+                    )
+                  : ts.factory.updatePropertyAccessExpression(
+                      expression,
+                      outOfScope,
+                      expression.name
+                    )
+                : undefined;
+            }
           }
         }
         return undefined;
       }
 
+      /**
+       * Checks to see if a symbol is defined with the given scope.
+       *
+       * Any symbol that has no declaration or has a value declaration in the scope is considered to be in scope.
+       * Imports are considered out of scope.
+       *
+       * ```ts
+       * () => { // scope
+       *  const x = "y";
+       *  x // in scope
+       * }
+       * ```
+       *
+       * ```ts
+       * const x = "y"; // out of scope
+       * () => { // scope
+       *  x // in scope
+       * }
+       * ```
+       *
+       * ```ts
+       * import x from y;
+       *
+       * () => { // scope
+       *  x // out of scope
+       * }
+       * ```
+       *
+       */
       function isSymbolOutOfScope(symbol: ts.Symbol, scope: ts.Node): boolean {
         if (symbol.valueDeclaration) {
           if (ts.isShorthandPropertyAssignment(symbol.valueDeclaration)) {
@@ -1200,6 +1295,16 @@ export function compile(
               : false;
           } else if (ts.isVariableDeclaration(symbol.valueDeclaration)) {
             return !hasParent(symbol.valueDeclaration, scope);
+          }
+        } else if (symbol.declarations && symbol.declarations.length > 0) {
+          const [decl] = symbol.declarations;
+          // import x from y
+          if (
+            ts.isImportClause(decl) ||
+            ts.isImportSpecifier(decl) ||
+            ts.isNamespaceImport(decl)
+          ) {
+            return true;
           }
         }
         return false;

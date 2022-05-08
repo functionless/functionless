@@ -16,6 +16,7 @@ import {
   Table,
   EventBus,
   EventBusRuleInput,
+  ExpressStepFunction,
 } from "functionless";
 import * as appsync from "@aws-cdk/aws-appsync-alpha";
 import * as path from "path";
@@ -233,7 +234,7 @@ const customDeleteBus = new EventBus<MessageDeletedEvent | PostDeletedEvent>(
   "deleteBus"
 );
 
-export const deleteWorkflow = new StepFunction<{ postId: string }, void>(
+const deleteWorkflow = new StepFunction<{ postId: string }, void>(
   stack,
   "DeletePostWorkflow",
   (input) => {
@@ -407,6 +408,10 @@ const func = new Function<undefined, string>(stack, "testFunc2", async () => {
   return "hi";
 });
 
+const exprSfn = new ExpressStepFunction(stack, "exp", () => {
+  return "woo";
+});
+
 new Function(
   stack,
   "testFunc",
@@ -444,7 +449,14 @@ new Function(
       ],
     });
     console.log(`bus: ${JSON.stringify(result2)}`);
-    return "hi";
+    const exc = deleteWorkflow({
+      input: {
+        postId: "something",
+      },
+    });
+    console.log(deleteWorkflow.describeExecution(exc.executionArn));
+    return exprSfn({});
+    // return "hi";
   },
   {
     timeout: Duration.minutes(1),

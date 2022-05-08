@@ -3,8 +3,10 @@ import {
   $AWS,
   EventBus,
   EventBusRuleInput,
+  ExpressStepFunction,
   Function,
   FunctionProps,
+  StepFunction,
 } from "../src";
 import { Lambda } from "aws-sdk";
 import { aws_events, Stack, Token } from "aws-cdk-lib";
@@ -370,6 +372,83 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
         async () => {
           // TODO should be awaited?
           return func1();
+        },
+        localstackClientConfig
+      );
+    },
+    "hi"
+  );
+
+  testFunctionResource(
+    "step function integration",
+    (parent) => {
+      const func1 = new StepFunction<undefined, string>(
+        parent,
+        "func1",
+        () => "hi"
+      );
+      return new Function(
+        parent,
+        "function",
+        async () => {
+          // TODO should be awaited?
+          func1({});
+          return "started!";
+        },
+        localstackClientConfig
+      );
+    },
+    "started!"
+  );
+
+  testFunctionResource(
+    "step function integration and wait for completion",
+    (parent) => {
+      const func1 = new StepFunction<undefined, string>(
+        parent,
+        "func1",
+        () => "hi"
+      );
+      return new Function(
+        parent,
+        "function",
+        async () => {
+          // TODO should be awaited?
+          const result = func1({});
+          let status = "RUNNING";
+          while (true) {
+            const state = func1.describeExecution(result.executionArn);
+            status = state.status;
+            if (status !== "RUNNING") {
+              return state.output;
+            }
+            // wait for 100 ms
+            await new Promise((resolve) => setTimeout(resolve, 100));
+          }
+        },
+        localstackClientConfig
+      );
+    },
+    `"hi"`
+  );
+
+  // Localstack doesn't support start sync
+  // https://github.com/localstack/localstack/issues/5258
+  testFunctionResource.skip(
+    "express step function integration",
+    (parent) => {
+      const func1 = new ExpressStepFunction<undefined, string>(
+        parent,
+        "func1",
+        () => "hi"
+      );
+      return new Function(
+        parent,
+        "function",
+        async () => {
+          // TODO should be awaited?
+          const result = func1({});
+          return result.status === "SUCCEEDED" ? result.output : result.error;
         },
         localstackClientConfig
       );
