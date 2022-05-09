@@ -1,8 +1,8 @@
 ---
-sidebar_position: 3
+position: 5
 ---
 
-# Writing your own interpreters
+# Extend Functionless
 
 Functionless converts TypeScript function syntax into a [`FunctionDecl`](../../src/declaration.ts) AST data object. This object contains a total representation of the syntax contained within the Function and can then be processed within your CDK application.
 

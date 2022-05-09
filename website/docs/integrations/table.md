@@ -1,5 +1,6 @@
 ---
-sidebar_position: 2
+title: DynamoDB Table
+sidebar_position: 1
 ---
 
 # Table

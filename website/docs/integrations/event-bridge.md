@@ -1,5 +1,6 @@
 ---
-sidebar_position: 0
+label: Event Bridge
+sidebar_position: 6
 ---
 
 # Event Bridge

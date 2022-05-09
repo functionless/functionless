@@ -2,7 +2,7 @@
 sidebar_position: 1
 ---
 
-# TypeScript -> Velocity Template Logic
+# TypeScript → Velocity Template
 
 In order to write effective VTL templates, it helps to understand how TypeScript syntax maps to Velocity Template Statements.
 

@@ -1,0 +1,1 @@
+# Appsync Resolver

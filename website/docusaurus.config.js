@@ -17,6 +17,7 @@ const config = {
   projectName: "functionless",
 
   // see: https://www.npmjs.com/package/docusaurus-plugin-typedoc
+  // options: https://github.com/tgreyuk/typedoc-plugin-markdown/blob/master/packages/docusaurus-plugin-typedoc/src/options.ts#L3-L26
   plugins: [
     [
       "docusaurus-plugin-typedoc",
@@ -25,6 +26,10 @@ const config = {
       {
         entryPoints: ["../src/index.ts"],
         tsconfig: "../tsconfig.json",
+        sidebar: {
+          categoryLabel: "API Reference",
+          position: 10,
+        },
       },
     ],
   ],
@@ -63,7 +68,7 @@ const config = {
         items: [
           {
             type: "doc",
-            docId: "introduction",
+            docId: "getting-started/index",
             position: "left",
             label: "Documentation",
           },
@@ -83,7 +88,7 @@ const config = {
             items: [
               {
                 label: "Introduction",
-                to: "/docs/introduction",
+                to: "/docs/getting-started",
               },
             ],
           },

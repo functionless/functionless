@@ -1,10 +1,11 @@
 ---
-sidebar_position: 1
+title: AWS SDK
+sidebar_position: 7
 ---
 
 # $AWS
 
-The `$AWS` object provides integration functions for the AWS SDK that can be called from within a [Step Function](./05-stepfunctions/00-stepfunction.md).
+The `$AWS` object provides integration functions for the AWS SDK that can be called from within a [Step Function](./step-function).
 
 ```ts
 import { $AWS, Table } from "functionless";

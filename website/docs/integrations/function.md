@@ -1,5 +1,6 @@
 ---
-sidebar_position: 3
+title: Lambda Function
+sidebar_position: 0
 ---
 
 # Function

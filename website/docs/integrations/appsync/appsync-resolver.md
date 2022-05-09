@@ -1,8 +1,9 @@
 ---
+label: Appsync Resolver
 sidebar_position: 0
 ---
 
-# `AppsyncResolver`
+# AppsyncResolver
 
 An `AppsyncResolver` function is translated into an AWS AppSync Resolver Pipeline. It can call 0-10 integrations in sequence:
 
@@ -55,7 +56,7 @@ for (const item in list) {
 }
 ```
 
-No branching or parallel logic is supported. If you need more flexibility, consider calling a [Step Function](../stepfunctions/stepfunction):
+No branching or parallel logic is supported. If you need more flexibility, consider calling a [Step Function](../step-function):
 
 ```ts
 new ExpressStepFunction(this, "MyFunc", (items: string[]) => {
