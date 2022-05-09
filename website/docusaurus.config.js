@@ -59,6 +59,12 @@ const config = {
   themeConfig:
     /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
     ({
+      colorMode: {
+        defaultMode: "dark",
+      },
+      prism: {
+        additionalLanguages: ["graphql"],
+      },
       navbar: {
         title: "Functionless",
         logo: {

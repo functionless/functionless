@@ -4,7 +4,7 @@ sidebar_position: 0
 
 # Getting Started
 
-Functionless is a compiler plugin and Construct library that enhances your cloud programming experience with TypeScript and the AWS Cloud Development Kit (CDK). All of the tedious and error-prone configurations are inferred directly from your application logic - including IAM Policies, environment variables and proprietary domain specific languages such as Amazon States Language, Velocity Templates and Event Bridge Pattern Documents. This makes it simple, easy and fun(!) to configure AWS's powerful services without learning a new language or abstraction. Functionless always ensures that your IAM Policies are minimally permissive and that there is no missing plumbing code, so you can be confident that when your code compiles - then it also deploys and runs!
+Functionless is a compiler plugin and Construct library that enhances your cloud programming experience with TypeScript and the AWS Cloud Development Kit (CDK). Tedious and error-prone configurations are inferred directly from your application logic, including IAM Policies, environment variables and proprietary domain specific languages such as Amazon States Language, Velocity Templates and Event Bridge Pattern Documents. This makes it simple, easy and fun(!) to configure AWS's powerful services without learning a new language or abstraction. Functionless always ensures that your IAM Policies are minimally permissive and that there is no missing plumbing code, so you can be confident that when your code compiles - then it also deploys and runs!
 
 # Example 
 Let's illustrate with a simple example of calling `GetItem` on an AWS DynamoDB Table from an Express Step Function workflow.
@@ -68,6 +68,7 @@ Functionless solves this by deriving this configuration from the function implem
 $SFN.waitFor(x);
 
 const status = getStatus();
+
 if (status === "FAILED") {
   throw new Error("Failed");
 }
@@ -106,4 +107,4 @@ catPeopleEvents.pipe(catLambdaFunction);
 
 Behind the scenes, each of these services have their own proprietary configuration and DSL, Functionless makes it so you don't have to learn those details. Instead, you just write TypeScript code.
 
-See [Integrations](../integrations/function.md) for more information on each of these integration patterns.
+See [Integrations](../integrations/) for more information on each of these integration patterns.

@@ -1,9 +1,7 @@
 ---
-label: Event Bridge
-sidebar_position: 6
+sidebar_position: 2
 ---
-
-# Event Bridge
+# Event Bus
 
 Functionless makes using Event Bridge easy by leveraging typescript instead of AWS Event Bridge's proprietary logic and transform configuration.
 
@@ -12,6 +10,7 @@ Event Bridge can:
 - Create Rules (`EventBusRule`) on a Event Bus to match incoming events.
 - Transform the event before sending to some services like `Lambda` Functions.
 - Target other AWS services like Lambda and other Event Buses
+- Put events from other services
 
 Functionless uses a wrapped version of CDK's Event Bus, lets create a CDK event bus first.
 
@@ -83,6 +82,13 @@ const catPeopleEvents = bus.when(
 );
 ```
 
+Rules can be further refined by calling `when` on a Functionless `EventBusRule`.
+
+```ts
+// Cat people who are between 18 and 30 and do not also like dogs.
+catPeopleEvents.when((event) => !event.detail.interests.includes("DOGS"));
+```
+
 #### Transform the event before sending to some services like `Lambda` Functions.
 
 We have two lambda functions to invoke, one for create or updates and another for deletes, lets make those.
@@ -110,9 +116,7 @@ interface Delete {
 const createOrUpdateOperation = functionless.Function<CreateOrUpdate, void>(
   createOrUpdateFunction
 );
-const deleteOperation = functionless.Function<Delete, void>(
-  createOrUpdateFunction
-);
+const deleteOperation = functionless.Function<Delete, void>(deleteFunction);
 ```
 
 The events from before do not match the formats from before, so lets transform them to the structures match.
@@ -121,7 +125,7 @@ The events from before do not match the formats from before, so lets transform t
 const createOrUpdateEventsTransformed =
   createOrUpdateEvents.map<CreateOrUpdate>((event) => ({
     id: event.detail.id,
-    name: event.detai.name,
+    name: event.detail.name,
     age: event.detail.age,
     operation: event["detail-type"],
     interests: event.detail.interests,
@@ -153,6 +157,32 @@ const catPeopleBus = functionless.EventBus.fromBus(
 // Note: EventBridge does not support transforming events which target other event buses. These events are sent as is.
 catPeopleEvents.pipe(catPeopleBus);
 ```
+
+#### Put Events from other sources
+
+Event Bridge Put Events API is one of the methods for putting new events on an event bus. We support some first party integrations between services and event bus.
+
+Support (See [issues](https://github.com/sam-goodwin/functionless/issues?q=is%3Aissue+is%3Aopen+label%3Aevent-bridge) for progress):
+
+- Step Functions
+- App Sync (coming soon)
+- API Gateway (coming soon)
+- More - Please create a new issue in the form `Event Bridge + [Service]`
+
+```ts
+bus = new EventBus(stack, "bus");
+new StepFunction<{ value: string }, void>((input) => {
+  bus({
+    detail: {
+      value: input.value,
+    },
+  });
+});
+```
+
+This will create a step function which sends an event. It is also possible to send multiple events and use other Step Function logic.
+
+> Limit: It is not currently possible to dynamically generate different numbers of events. All events sent must start from objects in the form `{ detail: ..., source: ... }` where all fields are optional.
 
 #### Summary
 
@@ -195,7 +225,7 @@ const deleteFunction = new functionless.Function<Delete, void>(
 
 const bus = new functionless.EventBus<UserEvent>(this, "myBus");
 
-// Create and update events are sent to a spcific lambda function.
+// Create and update events are sent to a specific lambda function.
 bus
   .when(
     this,
@@ -212,7 +242,7 @@ bus
   }))
   .pipe(createOrUpdateFunction);
 
-// Delete events are sent to a spcific lambda function.
+// Delete events are sent to a specific lambda function.
 bus
   .when(this, "deleteRule", (event) => event["detail-type"] === "Delete")
   .map<Delete>((event) => ({

@@ -21,7 +21,7 @@ Functionless supports the following Integration patterns:
 * [Appsync Resolver](./appsync) - resolve fields in a GraphQL APi's Query, Mutation and Subscribe operations.
 * [Step Function](./step-function/standard.md) - orchestrate long-running asynchronous workflows with AWS Step Functions. 
 * [Express Step Function](./step-function/express.md) - short-running synchronous or asynchronous workflows. Express Step Functions can often be a great replacement for intermediate Lambda Functions in APIs.
-* [Event Bus Rule](./event-bridge.md) - filter events flowing through an AWS Event Bridge Bus, optionally transform them and finally route them to a downstream integration, e.g. a Lambda Function, Step Function, SQS Queue, etc.
+* [Event Bus Rule](./event-bridge/event-bus.md) - filter events flowing through an AWS Event Bridge Bus, optionally transform them and finally route them to a downstream integration, e.g. a Lambda Function, Step Function, SQS Queue, etc.
 
 
 

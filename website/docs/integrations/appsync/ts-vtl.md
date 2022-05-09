@@ -1,8 +1,8 @@
 ---
-sidebar_position: 1
+sidebar_position: 2
 ---
 
-# TypeScript → Velocity Template
+# Typescript → Velocity Template (VTL)
 
 In order to write effective VTL templates, it helps to understand how TypeScript syntax maps to Velocity Template Statements.
 
@@ -10,7 +10,7 @@ An AppSync Request Mapping Template is synthesized by evaluating all [Expression
 
 The following section provides a reference guide on how each of the supported TypeScript syntax is mapped to VTL.
 
-#### Parameter Reference
+## Parameter Reference
 
 A reference to the top-level Function Parameter is mapped to a `$context` in VTL:
 
@@ -24,7 +24,7 @@ new AppsyncResolver((c: AppsyncContext<{ arg: string }>) => {
 #return($context.arguments.arg)
 ```
 
-#### Variable Declaration
+## Variable Declaration
 
 If in the top-level scope, all Variables are stored in `$context.stash`.
 
@@ -40,7 +40,7 @@ new AppsyncResolver(() => {
 #set($context.stash.b = $context.stash.a)
 ```
 
-#### Variable Declaration in a nested scope
+## Variable Declaration in a nested scope
 
 If in a nested scope, then the local variable name is used. These variables will not be available across Resolver Pipeline stages - but this should not be a problem as they are contained within a nested scope in TypeScript also.
 
@@ -70,7 +70,7 @@ new AppsyncResolver(() => {
 #end
 ```
 
-#### Template Expressions (string interpolation)
+## Template Expressions (string interpolation)
 
 Template expressions translate almost 1:1 with VTL:
 
@@ -82,7 +82,7 @@ const a = `hello ${name}`;
 #set($context.stash.a = "hello ${name}")
 ```
 
-#### Property and Index Assignment
+## Property and Index Assignment
 
 ```ts
 a[0] = value;
@@ -98,7 +98,7 @@ $util.qr($a['prop'] = $value)
 $util.qr($a[$prop] = $value)
 ```
 
-#### ArrayLiteralExpr
+## ArrayLiteralExpr
 
 Array Literals can contain arbitrary expressions.
 
@@ -112,7 +112,7 @@ const b = ["hello", 1, util.toJson(a)];
 #set($b = ['hello', 1, $util.toJson($a)])
 ```
 
-#### SpreadElementExpr
+## SpreadElementExpr
 
 There is a special case when you use a `SpreadElementExpr` (e.g. `[...list]`) because there is no way to achieve this behavior in VTL without first assigning a list and then using `addAll` to copy the items in.
 
@@ -128,7 +128,7 @@ $util.qr($c.addAll($b))
 #set($c = $v1)
 ```
 
-#### ObjectLiteralExpr
+## ObjectLiteralExpr
 
 An `ObjectLiteralExpr` is first stored as an empty map `{}` in a temporary variable and subsequent statements are generated to add each of the elements in.
 
@@ -143,7 +143,7 @@ const a = {
 $util.qr($a.put('key', 'string'))
 ```
 
-#### SpreadAssignExpr
+## SpreadAssignExpr
 
 If you spread an object into another, a [`java.util.Map.putAll`](https://docs.oracle.com/javase/8/docs/api/java/util/HashMap.html#putAll-java.util.Map-) statement is generated to copy over each item in the source object into the destination object.
 
@@ -158,7 +158,7 @@ const a = {
 $util.qr($a.putAll($obj))
 ```
 
-#### CallExpr - $util
+## CallExpr - $util
 
 The `$util.*` utility functions are translated verbatim into a VTL expression.
 
@@ -172,7 +172,7 @@ $util.error('error')
 #set($a = $util.toJson($val))
 ```
 
-#### If Statement
+## If Statement
 
 An `if` statement translates to a series of `#if`, `#else` statements.
 
@@ -209,7 +209,7 @@ if (a === "hello") {
 #end
 ```
 
-#### Conditional Expressions
+## Conditional Expressions
 
 A conditional expression, i.e. `cond ? then : else` are translated into `#if` and `#else` statements that assign a shared variable with the result of their computation;
 
@@ -226,7 +226,7 @@ const a = condition ? "left" : "right;
 #set($a = $result)
 ```
 
-#### For-In-Statement
+## For-In-Statement
 
 A `for-in` statement iterates over the keys in an object using `java.util.Map.keySet()`.
 
@@ -242,7 +242,7 @@ for (const i in obj) {
 #end
 ```
 
-#### For-Of-Statement
+## For-Of-Statement
 
 A `for-of` statement iterates over the items in a `java.util.List`.
 
@@ -256,7 +256,7 @@ for (const item in list) {
 #end
 ```
 
-#### CallExpr - map
+## CallExpr - map
 
 When you map over a list, a new list is created and then `#foreach` is used to iterate over the source list, evaluate your function and add the result to the new list.
 
@@ -273,7 +273,7 @@ $util.qr($newList.add($i + 1))
 #end
 ```
 
-#### CallExpr - forEach
+## CallExpr - forEach
 
 `forEach` is similar to `map` except it does not produce a value. The (below) example emulates `map` with `forEach`.
 
@@ -291,7 +291,7 @@ $util.qr($newList.add($i + 1))
 #end
 ```
 
-#### CallExpr - reduce
+## CallExpr - reduce
 
 `reduce` has two variants: 1) with an `initialValue` and 2) without.
 
