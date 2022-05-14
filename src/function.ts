@@ -18,7 +18,7 @@ import path from "path";
 import fs from "fs";
 import { Err, isErr } from "./error";
 import { IntegrationImpl, Integration } from "./integration";
-import { Lambda, EventBridge, StepFunctions } from "aws-sdk";
+import { Lambda, EventBridge, StepFunctions, DynamoDB } from "aws-sdk";
 
 export function isFunction<P = any, O = any>(a: any): a is IFunction<P, O> {
   return a?.kind === "Function";
@@ -453,7 +453,11 @@ export interface NativeIntegration<F extends AnyFunction> {
   preWarm?: (preWarmContext: NativePreWarmContext) => void;
 }
 
-export type ClientName = "LAMBDA" | "EVENT_BRIDGE" | "STEP_FUNCTIONS";
+export type ClientName =
+  | "LAMBDA"
+  | "EVENT_BRIDGE"
+  | "STEP_FUNCTIONS"
+  | "DYNAMO";
 
 interface PrewarmProps {
   clientConfigRetriever?: FunctionProps["clientConfigRetriever"];
@@ -489,6 +493,10 @@ export const PrewarmClients = {
     key: "STEP_FUNCTIONS",
     init: (key, props) =>
       new StepFunctions(props?.clientConfigRetriever?.(key)),
+  },
+  DYNAMO: {
+    key: "DYNAMO",
+    init: (key, props) => new DynamoDB(props?.clientConfigRetriever?.(key)),
   },
 } as Record<ClientName, PrewarmClientInitializer<ClientName, any>>;
 
