@@ -7,7 +7,7 @@ sidebar_position: 1
 
 The `Function` Construct creates a new AWS Lambda Function.
 
-# Features
+## Features
 
 Functionless's `Function` primitive offers three features over and above the standard CDK Function Construct:
 
@@ -33,7 +33,7 @@ new StepFunction(scope, "S", async () => {
 });
 ```
 
-# Create a new Function
+## Create a new Function
 
 To create a new `Function`, simply instantiate the Construct and provide an implementation.
 
@@ -43,7 +43,7 @@ new Function(scope, "F", async () => {
 });
 ```
 
-# Configure Properties
+## Configure Properties
 
 To configure its properties, such as memory, timeout, runtime, etc. specify an object as the third argument:
 
@@ -62,7 +62,7 @@ new Function(
 );
 ```
 
-# Wrap an existing Function
+## Wrap an existing Function
 
 There are cases in which you want to integrate with an existing Lambda Function - perhaps you need to use a different runtime than NodeJS or you have existing Functions that you want to call from Functionless.
 
@@ -81,7 +81,7 @@ const myFunc = Function.from<{ name: string }, string>(
 
 A wrapped function annotates the type signature of the Function and makes it available to be called from Functionless Constructs.
 
-# Call from an Integration
+## Call from an Integration
 
 Lambda Functions can be called directly from any of Functionless's primitives, for example AppsyncResolvers, Step Functions and Lambda Functions.
 
@@ -103,7 +103,7 @@ Output from the Lambda Function is the raw JSON value returned by the Lambda Fun
 "hello sam"
 ```
 
-# Call and receive the entire API Response Envelope
+## Call and receive the entire API Response Envelope
 
 To get the entire AWS SDK response, use `$AWS.Lambda.Invoke`:
 
@@ -116,7 +116,7 @@ const response = $AWS.Lambda.Invoke({
 });
 ```
 
-# Forward Events from an EventBus to a Lambda Function
+## Forward Events from an EventBus to a Lambda Function
 
 Finally, you can route Events from an [Event Bus](./event-bridge/event-bus.md) to a Lambda Function, provided the Function's signature is compatible.
 

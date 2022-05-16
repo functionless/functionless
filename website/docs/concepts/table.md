@@ -7,7 +7,7 @@ sidebar_position: 1
 
 The `Table` Construct creates a new DynamoDB Table and exposes methods for reading and writing its data from [Integrations](./integration.md).
 
-# Create a new Table
+## Create a new Table
 
 To create a new `Table`, instantiate the Construct and provide the `aws_dynamodb.TableProps`.
 
@@ -23,7 +23,7 @@ new Table(scope, "Table", {
 });
 ```
 
-# Declare the type of data in your Table
+## Declare the type of data in your Table
 
 You can optionally use [`typesafe-dynamodb`](https://github.com/sam-goodwin/typesafe-dynamodb) to annotate the types of data in your Table for enhanced safety and IDE intellisense. This is considered best practice to avoid common and expensive bugs.
 
@@ -56,7 +56,7 @@ new Table<Item, "itemId", "timestamp">(..)
 
 See the [`typesafe-dynamodb`](https://github.com/sam-goodwin/typesafe-dynamodb) documentation for more information on how to use types to safely model data in a DynamoDB Table using TypeScript types.
 
-# Wrap an existing Table
+## Wrap an existing Table
 
 Use `Table.from` to wrap an existing Table Construct created with the vanilla AWS CDK.
 
@@ -76,7 +76,7 @@ The Range Key is an optional, third type argument.
 Table.from<Item, "itemId", "timestamp">(itemTable);
 ```
 
-# Call from an Integration
+## Call from an Integration
 
 Use the [`$AWS`](./aws.md) SDK's DynamoDB APIs to access the Table from within a Lambda [Function](./function.md) or [Step Function](./step-function/index.md).
 
@@ -95,7 +95,7 @@ new StepFunction(scope, "Function", (itemId: string) => {
 
 Remember: plumbing such as IAM Policies and Environment Variables are automatically inferred from the API calls. See [Integration](./integration.md) for more information.
 
-# Call from an Appsync Resolver
+## Call from an Appsync Resolver
 
 AWS Appsync has a purpose-built integration for DynamoDB that takes care of un-marshalling the Attribute Value JSON format to standard JSON for GraphQL compatibility. These integration methods are exposed as methods directly on the Table Construct.
 
@@ -111,7 +111,7 @@ new AppsyncResolver(($context) => {
 });
 ```
 
-# Pipe Events from Event Bus
+## Pipe Events from Event Bus
 
 Events can be directly routed from an [Event Bus](./event-bridge/event-bus.md) to DynamoDB using the `pipe` functionality.
 

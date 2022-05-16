@@ -5,6 +5,7 @@ sidebar_position: 0
 # Creating a new project
 
 To create a new project, run the following command.
+
 ```sh
 npx projen new --from functionless-projen
 ```
@@ -13,12 +14,14 @@ This will create a new folder containing a CDK application with Functionless ins
 
 # Deploy to AWS
 
-Functionless is a library that integrates directly into a standard CDK application. To deploy, first set up your AWS CLI and AWS account for CDK development (see the official [AWS CDK docs](TODO)), and then use the `cdk` CLI as usual: 
+Functionless is a library that integrates directly into a standard CDK application. To deploy, first set up your AWS CLI and AWS account for CDK development (see the official [AWS CDK docs](https://docs.aws.amazon.com/cdk/v2/guide/home.html)), and then use the `cdk` CLI as usual:
+
 ```bash
 cdk deploy
 ```
 
 For convenience, your new project comes with a `deploy` script:
+
 ```bash
 # if using yarn
 yarn deploy
