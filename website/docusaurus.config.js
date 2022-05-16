@@ -76,7 +76,7 @@ const config = {
         items: [
           {
             type: "doc",
-            docId: "getting-started/index",
+            docId: "what-is-functionless",
             position: "left",
             label: "Documentation",
           },
@@ -96,7 +96,7 @@ const config = {
             items: [
               {
                 label: "Introduction",
-                to: "/docs/getting-started",
+                to: "/docs/what-is-functionless",
               },
             ],
           },

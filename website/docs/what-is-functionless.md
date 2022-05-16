@@ -2,7 +2,7 @@
 sidebar_position: 0
 ---
 
-# Getting Started
+# What is Functionless?
 
 Functionless is a compiler plugin and Construct library that enhances your cloud programming experience with TypeScript and the AWS Cloud Development Kit (CDK). Tedious and error-prone configurations are inferred directly from your application logic, including IAM Policies, environment variables and proprietary domain specific languages such as Amazon States Language, Velocity Templates and Event Bridge Pattern Documents. This makes it simple, easy and fun(!) to configure AWS's powerful services without learning a new language or abstraction. Functionless always ensures that your IAM Policies are minimally permissive and that there is no missing plumbing code, so you can be confident that when your code compiles - then it also deploys and runs!
 
@@ -119,4 +119,4 @@ catPeopleEvents.pipe(catLambdaFunction);
 
 Behind the scenes, each of these services have their own proprietary configuration and DSL, Functionless makes it so you don't have to learn those details. Instead, you just write TypeScript code.
 
-See [Integrations](../concepts/integration.md) for more information on each of these integration patterns.
+See [Integrations](./concepts/integration.md) for more information on each of these integration patterns.
