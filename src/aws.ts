@@ -13,7 +13,10 @@ import {
 import { TableKey } from "typesafe-dynamodb/lib/key";
 import { JsonFormat } from "typesafe-dynamodb";
 import {
+  Argument,
   isObjectLiteralExpr,
+  isPropAssignExpr,
+  isReferenceExpr,
   isVariableReference,
   ObjectLiteralExpr,
 } from "./expression";
@@ -21,14 +24,16 @@ import { ASL } from "./asl";
 import {
   Function,
   isFunction,
+  NativeIntegration,
   NativePreWarmContext,
   PrewarmClients,
 } from "./function";
-import { Table, isTable } from "./table";
+import { Table, isTable, AnyTable } from "./table";
 
 import type { DynamoDB as AWSDynamoDB } from "aws-sdk";
 import { Integration, makeIntegration } from "./integration";
 import type { AnyFunction } from "./util";
+import { TypeSafeDynamoDBv2 } from "typesafe-dynamodb/lib/client-v2";
 
 type Item<T extends Table<any, any, any>> = T extends Table<infer I, any, any>
   ? I
@@ -95,7 +100,33 @@ export namespace $AWS {
         >
       ) => DeleteItemOutput<Item<T>, ReturnValue, JsonFormat.AttributeValue>,
       "deleteItem"
-    >("deleteItem");
+    >("deleteItem", {
+      native: {
+        bind: (context, table) => {
+          table.resource.grantWriteData(context.resource);
+        },
+        call: async (args, preWarmContext) => {
+          const dynamo = preWarmContext.getOrInit<
+            TypeSafeDynamoDBv2<
+              Item<AnyTable>,
+              PartitionKey<AnyTable>,
+              RangeKey<AnyTable>
+            >
+          >(PrewarmClients.DYNAMO);
+
+          const [input] = args;
+
+          const { TableName: table, ...rest } = input;
+
+          return await dynamo
+            .deleteItem({
+              ...rest,
+              TableName: input.TableName.resource.tableName,
+            })
+            .promise();
+        },
+      },
+    });
 
     /**
      * @see https://docs.aws.amazon.com/step-functions/latest/dg/connect-ddb.html
@@ -134,7 +165,51 @@ export namespace $AWS {
         JsonFormat.AttributeValue
       >,
       "getItem"
-    >("getItem");
+    >("getItem", {
+      native: {
+        bind: (context: Function<any, any>, table: AnyTable) => {
+          table.resource.grantReadData(context.resource);
+        },
+        call: async (
+          args: [
+            { TableName: AnyTable } & Omit<
+              GetItemInput<
+                Item<AnyTable>,
+                PartitionKey<AnyTable>,
+                RangeKey<AnyTable>,
+                any,
+                any,
+                any,
+                any
+              >,
+              "TableName"
+            >
+          ],
+          preWarmContext: NativePreWarmContext
+        ) => {
+          const dynamo = preWarmContext.getOrInit<
+            TypeSafeDynamoDBv2<
+              Item<AnyTable>,
+              PartitionKey<AnyTable>,
+              RangeKey<AnyTable>
+            >
+          >(PrewarmClients.DYNAMO);
+
+          const [input] = args;
+
+          const { TableName: table, AttributesToGet, ...rest } = input;
+
+          return await dynamo
+            .getItem({
+              ...rest,
+              AttributesToGet: AttributesToGet as any,
+              TableName: table.resource.tableName,
+            })
+            .promise();
+        },
+        // Typesafe DynamoDB was causing a "excessive depth error"
+      } as any,
+    });
 
     /**
      * @see https://docs.aws.amazon.com/step-functions/latest/dg/connect-ddb.html
@@ -174,7 +249,33 @@ export namespace $AWS {
         JsonFormat.AttributeValue
       >,
       "updateItem"
-    >("updateItem");
+    >("updateItem", {
+      native: {
+        bind: (context, table) => {
+          table.resource.grantReadWriteData(context.resource);
+        },
+        call: async (args, preWarmContext) => {
+          const dynamo = preWarmContext.getOrInit<
+            TypeSafeDynamoDBv2<
+              Item<AnyTable>,
+              PartitionKey<AnyTable>,
+              RangeKey<AnyTable>
+            >
+          >(PrewarmClients.DYNAMO);
+
+          const [input] = args;
+
+          const { TableName: table, ...rest } = input;
+
+          return await dynamo
+            .updateItem({
+              ...rest,
+              TableName: table.resource.tableName,
+            })
+            .promise();
+        },
+      },
+    });
 
     /**
      * @see https://docs.aws.amazon.com/step-functions/latest/dg/connect-ddb.html
@@ -197,7 +298,34 @@ export namespace $AWS {
         >
       ) => PutItemOutput<I, ReturnValue, JsonFormat.AttributeValue>,
       "putItem"
-    >("putItem");
+    >("putItem", {
+      native: {
+        bind: (context, table) => {
+          table.resource.grantReadData(context.resource);
+        },
+        call: async (args, preWarmContext) => {
+          const dynamo = preWarmContext.getOrInit<
+            TypeSafeDynamoDBv2<
+              Item<AnyTable>,
+              PartitionKey<AnyTable>,
+              RangeKey<AnyTable>
+            >
+          >(PrewarmClients.DYNAMO);
+
+          const [input] = args;
+
+          const { TableName: table, Item, ...rest } = input;
+
+          return await dynamo
+            .putItem({
+              ...rest,
+              Item: Item as any,
+              TableName: table.resource.tableName,
+            })
+            .promise();
+        },
+      },
+    });
 
     export const Query = makeDynamoIntegration<
       <
@@ -220,7 +348,34 @@ export namespace $AWS {
         >
       ) => QueryOutput<Item<T>, AttributesToGet, JsonFormat.AttributeValue>,
       "query"
-    >("query");
+    >("query", {
+      native: {
+        bind: (context, table) => {
+          table.resource.grantReadData(context.resource);
+        },
+        call: async (args, preWarmContext) => {
+          const dynamo = preWarmContext.getOrInit<
+            TypeSafeDynamoDBv2<
+              Item<AnyTable>,
+              PartitionKey<AnyTable>,
+              RangeKey<AnyTable>
+            >
+          >(PrewarmClients.DYNAMO);
+
+          const [input] = args;
+
+          const { TableName: table, AttributesToGet, ...rest } = input;
+
+          return await dynamo
+            .query({
+              ...rest,
+              AttributesToGet: AttributesToGet as any,
+              TableName: table.resource.tableName,
+            })
+            .promise();
+        },
+      },
+    });
 
     export const Scan = makeDynamoIntegration<
       <
@@ -241,7 +396,34 @@ export namespace $AWS {
         >
       ) => ScanOutput<Item<T>, AttributesToGet, JsonFormat.AttributeValue>,
       "scan"
-    >("scan");
+    >("scan", {
+      native: {
+        bind: (context, table) => {
+          table.resource.grantReadData(context.resource);
+        },
+        call: async (args, preWarmContext) => {
+          const dynamo = preWarmContext.getOrInit<
+            TypeSafeDynamoDBv2<
+              Item<AnyTable>,
+              PartitionKey<AnyTable>,
+              RangeKey<AnyTable>
+            >
+          >(PrewarmClients.DYNAMO);
+
+          const [input] = args;
+
+          const { TableName: table, AttributesToGet, ...rest } = input;
+
+          return await dynamo
+            .scan({
+              ...rest,
+              AttributesToGet: AttributesToGet as any,
+              TableName: table.resource.tableName,
+            })
+            .promise();
+        },
+      },
+    });
 
     type OperationName =
       | "deleteItem"
@@ -254,8 +436,19 @@ export namespace $AWS {
     function makeDynamoIntegration<
       F extends AnyFunction,
       Op extends OperationName
-    >(operationName: Op, integration?: Omit<Integration, "kind">) {
+    >(
+      operationName: Op,
+      integration: Omit<
+        Integration<F, `$AWS.DynamoDB.${Op}`>,
+        "kind" | "native"
+      > & {
+        native: Omit<NativeIntegration<F>, "preWarm" | "bind"> & {
+          bind: (context: Function<any, any>, table: AnyTable) => void;
+        };
+      }
+    ) {
       return makeIntegration<F, `$AWS.DynamoDB.${Op}`>({
+        ...integration,
         kind: `$AWS.DynamoDB.${operationName}`,
         asl(call, context) {
           const input = call.getArgument("input")?.expr;
@@ -295,13 +488,56 @@ export namespace $AWS {
             Parameters: ASL.toJson(input),
           };
         },
+        native: {
+          ...integration.native,
+          bind: (context, args) => {
+            const table = getTableArgument(args);
+            integration.native.bind(context, table);
+          },
+          preWarm(prewarmContext) {
+            prewarmContext.getOrInit(PrewarmClients.DYNAMO);
+          },
+        },
         unhandledContext(kind, contextKind) {
           throw new Error(
             `${kind} is only available within an '${ASL.ContextName}' context, but was called from within a '${contextKind}' context.`
           );
         },
-        ...integration,
       });
+
+      function getTableArgument(args: Argument[]) {
+        const [inputArgument] = args;
+        // integ(input: { TableName })
+        const inputExpr = inputArgument.expr;
+        if (!inputExpr || !isObjectLiteralExpr(inputExpr)) {
+          throw Error(
+            `First argument into deleteItem should be an input object.`
+          );
+        }
+
+        const tableProp = inputExpr.getProperty("TableName");
+
+        if (!tableProp || !isPropAssignExpr(tableProp)) {
+          throw Error(
+            `First argument into deleteItem should be an input with a property TableName that is a Table.`
+          );
+        }
+
+        const tableRef = tableProp.expr;
+
+        if (!isReferenceExpr(tableRef)) {
+          throw Error(
+            `First argument into deleteItem should be an input with a property TableName that is a Table.`
+          );
+        }
+
+        const table = tableRef.ref();
+        if (!isTable(table)) {
+          throw Error(`TableName argument should be a Table object.`);
+        }
+
+        return table;
+      }
     }
   }
 

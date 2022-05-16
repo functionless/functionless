@@ -19,8 +19,6 @@ import { JsonFormat } from "typesafe-dynamodb";
 import { assertNodeKind } from "./assert";
 import { Integration, makeIntegration } from "./integration";
 import { AnyFunction } from "./util";
-import { NativeIntegration, PrewarmClients } from "./function";
-import { TypeSafeDynamoDBv2 } from "typesafe-dynamodb/lib/client-v2";
 
 export function isTable(a: any): a is AnyTable {
   return a?.kind === "Table";
@@ -113,35 +111,6 @@ export class Table<
         return vtl.json(request);
       },
     },
-    native: {
-      bind: (context) => {
-        this.resource.grantReadData(context.resource);
-      },
-      call: async (args, preWarmContext) => {
-        const dynamo = preWarmContext.getOrInit<
-          TypeSafeDynamoDBv2<Item, PartitionKey, RangeKey>
-        >(PrewarmClients.DYNAMO);
-
-        const [input] = args;
-
-        const result = await dynamo
-          .getItem<typeof input.key>({
-            Key: input.key,
-            ConsistentRead: input.consistentRead,
-            // FIXME: cannot use this
-            TableName: this.resource.tableName,
-          })
-          .promise();
-
-        return result.Item as Narrow<
-          Item,
-          AttributeKeyToObject<
-            TableKey<Item, PartitionKey, RangeKey, JsonFormat.AttributeValue>
-          >,
-          JsonFormat.Document
-        >;
-      },
-    },
   });
 
   /**
@@ -190,32 +159,12 @@ export class Table<
         return vtl.json(request);
       },
     },
-    native: {
-      bind: (context) => {
-        this.resource.grantWriteData(context.resource);
-      },
-      call: async (args, preWarmContext) => {
-        const dynamo = preWarmContext.getOrInit<
-          TypeSafeDynamoDBv2<Item, PartitionKey, RangeKey>
-        >(PrewarmClients.DYNAMO);
-
-        const input = args[0];
-
-        await dynamo
-          .putItem({
-            Item: { ...input.attributeValues, ...input.key } as any,
-            TableName: this.resource.tableName,
-            ConditionExpression: input.condition?.expression,
-          })
-          .promise();
-
-        return { ...input.attributeValues, ...input.key } as any;
-      },
-    },
   });
 
   /**
    * @see https://docs.aws.amazon.com/appsync/latest/devguide/resolver-mapping-template-reference-dynamodb.html#aws-appsync-resolver-mapping-template-reference-dynamodb-updateitem
+   *
+   * @returns the updated the item
    */
   public updateItem = this.makeTableIntegration<
     <
@@ -254,33 +203,12 @@ export class Table<
         return vtl.json(request);
       },
     },
-    native: {
-      bind: (context) => {
-        this.resource.grantWriteData(context.resource);
-      },
-      call: async (args, preWarmContext) => {
-        const dynamo = preWarmContext.getOrInit<
-          TypeSafeDynamoDBv2<Item, PartitionKey, RangeKey>
-        >(PrewarmClients.DYNAMO);
-
-        const input = args[0];
-
-        const result = await dynamo
-          .updateItem({
-            Key: input.key,
-            UpdateExpression: input.update.expression!,
-            TableName: this.resource.tableName,
-            ConditionExpression: input.condition?.expression,
-          })
-          .promise();
-
-          return result.
-      },
-    },
   });
 
   /**
    * @see https://docs.aws.amazon.com/appsync/latest/devguide/resolver-mapping-template-reference-dynamodb.html#aws-appsync-resolver-mapping-template-reference-dynamodb-deleteitem
+   *
+   * @returns the previous item.
    */
   public deleteItem = this.makeTableIntegration<
     <
@@ -366,7 +294,6 @@ export class Table<
     methodName: K,
     integration: Omit<Integration<F, K>, "kind" | "appSyncVtl"> & {
       appSyncVtl: Omit<AppSyncVtlIntegration, "dataSource" | "dataSourceId">;
-      native: Omit<NativeIntegration<F>, "preWarm">;
     }
   ): F {
     return makeIntegration<F, `Table.${K}`>({
@@ -381,12 +308,6 @@ export class Table<
           });
         },
         ...integration.appSyncVtl,
-      },
-      native: {
-        ...integration.native,
-        preWarm(prewarmContext) {
-          prewarmContext.getOrInit(PrewarmClients.DYNAMO);
-        },
       },
       unhandledContext(kind, contextKind) {
         throw new Error(

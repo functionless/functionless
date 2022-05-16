@@ -495,7 +495,16 @@ export function compile(
       interface NativeExprContext {
         preWarmContext: ts.Identifier;
         closureNode: TsFunctionParameter;
-        registerIntegration: (node: ts.Expression) => void;
+        /**
+         * Register an {@link IntegrationInvocation} found when processing a native closure.
+         *
+         * @param node - should be an {@link Integration}
+         * @param args - should be an array of {@link Argument}
+         */
+        registerIntegration: (
+          node: ts.Expression,
+          args: ts.ArrayLiteralExpression
+        ) => void;
       }
 
       /**
@@ -564,7 +573,10 @@ export function compile(
         }
 
         // collection of integrations that are extracted from the closure
-        const integrations: ts.Expression[] = [];
+        const integrations: {
+          expr: ts.Expression;
+          args: ts.ArrayLiteralExpression;
+        }[] = [];
 
         // a reference to a client/object cache which the integrations can use
         const preWarmContext =
@@ -577,7 +589,8 @@ export function compile(
           // the closure node used to determine if variables are inside or outside of the closure
           closureNode: impl,
           // pass up integrations from inside of the closure
-          registerIntegration: (integ) => integrations.push(integ),
+          registerIntegration: (integ, args) =>
+            integrations.push({ expr: integ, args }),
         };
 
         const body = toNativeExpr(
@@ -623,7 +636,14 @@ export function compile(
             undefined,
             closure
           ),
-          context.factory.createArrayLiteralExpression(integrations),
+          context.factory.createArrayLiteralExpression(
+            integrations.map(({ expr, args }) =>
+              context.factory.createObjectLiteralExpression([
+                context.factory.createPropertyAssignment("integration", expr),
+                context.factory.createPropertyAssignment("args", args),
+              ])
+            )
+          ),
         ]);
       }
 
@@ -651,7 +671,13 @@ export function compile(
 
             // add the function identifier to the integrations
             nativeExprContext.registerIntegration(
-              outOfScopeIntegrationReference
+              outOfScopeIntegrationReference,
+              // try to capture the arguments into the integration to use during synth (integration.native.bind).
+              context.factory.createArrayLiteralExpression(
+                node.arguments.map((arg) =>
+                  toExpr(arg, nativeExprContext.closureNode)
+                )
+              )
             );
             // call the integration call function with the prewarm context and arguments
             // At this point, we know native will not be undefined

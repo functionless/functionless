@@ -5,12 +5,16 @@ import {
   Tokenization,
 } from "aws-cdk-lib";
 import * as appsync from "@aws-cdk/aws-appsync-alpha";
-import { CallExpr, isVariableReference } from "./expression";
+import { Argument, CallExpr, isVariableReference } from "./expression";
 import { ASL } from "./asl";
 
 // @ts-ignore - imported for typedoc
 import type { AppsyncResolver, AppSyncVtlIntegration } from "./appsync";
-import { NativeFunctionDecl, isNativeFunctionDecl } from "./declaration";
+import {
+  NativeFunctionDecl,
+  isNativeFunctionDecl,
+  IntegrationInvocation,
+} from "./declaration";
 import { Construct } from "constructs";
 import { AnyFunction } from "./util";
 import { runtime } from "@pulumi/pulumi";
@@ -223,7 +227,7 @@ export class Function<P, O> extends FunctionBase<P, O> {
     props?: FunctionProps
   ) {
     let _resource: aws_lambda.IFunction;
-    let integrations: Integration[] = [];
+    let integrations: IntegrationInvocation[] = [];
     let callbackLambdaCode: CallbackLambdaCode | undefined = undefined;
     if (func && id) {
       if (isNativeFunctionDecl(func)) {
@@ -251,11 +255,13 @@ export class Function<P, O> extends FunctionBase<P, O> {
     super(_resource);
 
     // retrieve and bind all found native integrations. Will fail if the integration does not support native integration.
-    const nativeIntegrationsPrewarm = integrations.flatMap((i) => {
-      const integ = new IntegrationImpl(i).native;
-      integ.bind(this);
-      return integ.preWarm ? [integ.preWarm] : [];
-    });
+    const nativeIntegrationsPrewarm = integrations.flatMap(
+      ({ integration, args }) => {
+        const integ = new IntegrationImpl(integration).native;
+        integ.bind(this, args);
+        return integ.preWarm ? [integ.preWarm] : [];
+      }
+    );
 
     // Start serializing process, add the callback to the promises so we can later ensure completion
     callbackLambdaCode &&
@@ -436,8 +442,9 @@ export interface NativeIntegration<F extends AnyFunction> {
    * Add permissions, create connecting resources, validate.
    *
    * @param context - The function invoking this function.
+   * @param args - The functionless encoded AST form of the arguments passed to the integration.
    */
-  bind: (context: Function<any, any>) => void;
+  bind: (context: Function<any, any>, args: Argument[]) => void;
   /**
    * @param args The arguments passed to the integration function by the user.
    * @param preWarmContext contains singleton instances of client and other objects initialized outside of the native
