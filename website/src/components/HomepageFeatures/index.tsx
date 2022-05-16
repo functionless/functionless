@@ -2,6 +2,10 @@ import React from 'react';
 import clsx from 'clsx';
 import styles from './styles.module.css';
 
+// see: https://www.npmjs.com/package/react-syntax-highlighter
+import SyntaxHighlighter from 'react-syntax-highlighter';
+import { a11yDark } from 'react-syntax-highlighter/dist/esm/styles/hljs';
+
 type FeatureItem = {
   title: string;
   Svg: React.ComponentType<React.ComponentProps<'svg'>>;
@@ -56,6 +60,32 @@ function Feature({title, Svg, description}: FeatureItem) {
   );
 }
 
+function Code(props: {code: string}) {
+  return (<SyntaxHighlighter
+    language="typescript"
+    style={a11yDark}
+    wrapLongLines={false}
+    >
+{props.code}
+    </SyntaxHighlighter>)
+}
+
+function CodePreview(props: {title: string, code: string}) {
+  return (
+    <div>
+      <div className="row">
+        <h3 style={{
+          textAlign:"center"
+        }}> {props.title}</h3>
+      </div>
+      <div className="row">
+        <p></p>
+        <Code code={props.code} />
+      </div>
+    </div>
+  );
+}
+
 export default function HomepageFeatures(): JSX.Element {
   return (
     <section className={styles.features}>
@@ -65,6 +95,24 @@ export default function HomepageFeatures(): JSX.Element {
             <Feature key={idx} {...props} />
           ))}
         </div>
+        <CodePreview 
+          title="Prevent errors with type-safe DynamoDB Tables" 
+          code={`const postTable = new Table<Post, "postId">(this, "PostTable", {
+  partitionKey: {
+    name: "postId",
+    type: aws_dynamodb.AttributeType.String,
+  },
+  billingMode: aws_dynamodb.BillingMode.PAY_PER_REQUEST,
+});`} />
+        <CodePreview 
+          title='Integrate a Lambda with Constructs'
+          code={`const getItem = new Function(this, "GetItem", async (itemId: string) => {
+  return postTable.getItem({
+    Key: {
+      itemId
+    }
+  });
+});`} />
       </div>
     </section>
   );

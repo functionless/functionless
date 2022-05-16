@@ -64,6 +64,8 @@ const config = {
       },
       prism: {
         additionalLanguages: ["graphql"],
+        theme: lightCodeTheme,
+        darkTheme: darkCodeTheme,
       },
       navbar: {
         title: "Functionless",
@@ -130,10 +132,6 @@ const config = {
           },
         ],
         copyright: `Copyright © ${new Date().getFullYear()} Functionless`,
-      },
-      prism: {
-        theme: lightCodeTheme,
-        darkTheme: darkCodeTheme,
       },
     }),
 };
