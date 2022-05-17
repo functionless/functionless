@@ -89,10 +89,10 @@ It can be invoked with the following JSON data:
 Any valid JSON value type (not just objects) is supported - for example, a `string`, `number`, `boolean` or `null`:
 
 ```ts
-async (input: string | number | boolean | null) => {};
+async (input: string | number | boolean | null | string[]) => {};
 ```
 
-Can properly handle one of the the following input JSON payload:
+This function can accept any of the the following input JSON payload:
 
 ```json
 null
@@ -101,23 +101,45 @@ false
 123
 123.456
 "hello world"
+["hello world"]
 ```
 
-Note the surrounding double-quotes (`"`) for strings.
+_Note the surrounding double-quotes (`"`) for strings._
 
 ## Response Payload
 
-The Function must return a `Promise`. Any data contained within the Promise is serialized to JSON and returned as the response payload.
-
-For example:
+The data returned from teh Function is serialized to JSON as the response payload.
 
 ```ts
-async () => ({
+() => ({
   key: "value",
 });
 ```
 
-Results in the following JSON response payload:
+This function results in the following JSON response payload:
+
+```json
+{
+  "key": "value"
+}
+```
+
+Functions can be both synchronous or asynchronous. If a Promise is returned, then the result of the asynchronous execution (value contained within the Promise) is returned as the Response.
+
+```ts
+// use async/await
+async () => ({
+  key: "value",
+});
+
+// or the Promise API
+() =>
+  Promise.resolve({
+    key: "value",
+  });
+```
+
+These two functions are equivalent and result in the same JSON response:
 
 ```json
 {
@@ -127,7 +149,7 @@ Results in the following JSON response payload:
 
 ## Call an Integration
 
-All of Functionless's integrations can be called from within a Lambda Function. Functionless will automatically infer the required IAM Policies, set any environment variables it needs (such as the ARN of a dependency) and instantiate any SDK clients when the Function is first invoked.
+Any of Functionless's integrations can be called from within a Lambda Function. Functionless will automatically infer the required IAM Policies, set any environment variables it needs (such as the ARN of a dependency) and instantiate any SDK clients when the Function is first invoked.
 
 ```ts
 const Table = new Table(scope, "Table");
@@ -144,7 +166,7 @@ new Function(scope, "foo", async (id: string) => {
 });
 ```
 
-This Function creates infers the following configuration and runtime code:
+This Function infers the following configuration and runtime code boilerplate from the function's implementation:
 
 1. an IAM Policy Statement allowing `GetItem` on the `Table`
 

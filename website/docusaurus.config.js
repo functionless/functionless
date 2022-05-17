@@ -43,6 +43,7 @@ const config = {
           sidebarPath: require.resolve("./sidebars.js"),
           editUrl:
             "https://github.com/sam-goodwin/functionless/edit/master/website/",
+          remarkPlugins: [require("mdx-mermaid")],
         },
         blog: {
           showReadingTime: true,
