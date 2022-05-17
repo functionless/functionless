@@ -284,7 +284,7 @@ new Function(scope, "foo", () => {
 
 You can write arbitrary code from within the Lambda Function but be aware that the function's body will run on EVERY invocation, so you should avoid writing expensive one-off computations inside.
 
-For example, loading a file into memory should probably be done once instead on each invocation:
+For example, loading a static file into memory should probably not be done within the function body.
 
 ```ts
 new Function(scope, "foo", async () => {
@@ -304,9 +304,13 @@ new Function(scope, "foo", async () => {
 
 **Warning**: By moving the value outside of the closure, the `allowList` value will be serialized as JSON into the bundle. This can also affect your performance by bloating the size of the bundle.
 
+**Warning**: The `allow-list.json` file will not be automatically included in your bundle. See [#135](https://github.com/sam-goodwin/functionless/issues/135)
+
 ## Limitations
 
-The bundler will not
+The bundler does not detect references to static files and include them by default.
+
+See: [#135](https://github.com/sam-goodwin/functionless/issues/135)
 
 ```ts
 let _allowList;
