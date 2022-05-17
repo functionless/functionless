@@ -674,9 +674,9 @@ export function compile(
               outOfScopeIntegrationReference,
               // try to capture the arguments into the integration to use during synth (integration.native.bind).
               context.factory.createArrayLiteralExpression(
-                node.arguments.map((arg) =>
-                  toExpr(arg, nativeExprContext.closureNode)
-                )
+                node.arguments.map((arg) => {
+                  return toExpr(arg, nativeExprContext.closureNode);
+                })
               )
             );
             // call the integration call function with the prewarm context and arguments

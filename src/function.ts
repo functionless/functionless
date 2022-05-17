@@ -2,10 +2,11 @@ import {
   AssetHashType,
   aws_lambda,
   DockerImage,
+  Lazy,
   Tokenization,
 } from "aws-cdk-lib";
 import * as appsync from "@aws-cdk/aws-appsync-alpha";
-import { Argument, CallExpr, isVariableReference } from "./expression";
+import { CallExpr, Expr, isVariableReference } from "./expression";
 import { ASL } from "./asl";
 
 // @ts-ignore - imported for typedoc
@@ -22,7 +23,7 @@ import path from "path";
 import fs from "fs";
 import { Err, isErr } from "./error";
 import { IntegrationImpl, Integration } from "./integration";
-import { Lambda, EventBridge, StepFunctions, DynamoDB } from "aws-sdk";
+import AWS from "aws-sdk";
 
 export function isFunction<P = any, O = any>(a: any): a is IFunction<P, O> {
   return a?.kind === "Function";
@@ -152,7 +153,7 @@ export interface FunctionProps
    */
   clientConfigRetriever?: (
     clientName: ClientName | string
-  ) => Omit<Lambda.ClientConfiguration, keyof Lambda.ClientApiVersions>;
+  ) => Omit<AWS.Lambda.ClientConfiguration, keyof AWS.Lambda.ClientApiVersions>;
 }
 
 /**
@@ -340,6 +341,8 @@ export class CallbackLambdaCode extends aws_lambda.Code {
     const preWarmContext = new NativePreWarmContext(this.props);
     const func = this.func(preWarmContext);
 
+    const collect: any[] = [];
+
     const result = await runtime.serializeFunction(
       // factory function allows us to prewarm the clients and other context.
       () => {
@@ -349,6 +352,7 @@ export class CallbackLambdaCode extends aws_lambda.Code {
       {
         isFactoryFunction: true,
         serialize: (obj) => {
+          collect.push(obj);
           if (typeof obj === "string") {
             const reversed =
               Tokenization.reverse(obj, { failConcat: false }) ??
@@ -359,6 +363,21 @@ export class CallbackLambdaCode extends aws_lambda.Code {
               } else {
                 tokens = [...tokens, reversed.toString()];
               }
+            }
+          } else if (typeof obj === "object") {
+            if (obj instanceof Lazy) {
+              return false;
+            }
+          } else if (typeof obj === "function") {
+            if (obj.name === "produce") {
+              console.log(
+                collect[collect.length - 1],
+                collect[collect.length - 2],
+                collect[collect.length - 3],
+                collect[collect.length - 4],
+                collect[collect.length - 5]
+              );
+              return false;
             }
           }
           return true;
@@ -444,7 +463,7 @@ export interface NativeIntegration<F extends AnyFunction> {
    * @param context - The function invoking this function.
    * @param args - The functionless encoded AST form of the arguments passed to the integration.
    */
-  bind: (context: Function<any, any>, args: Argument[]) => void;
+  bind: (context: Function<any, any>, args: Expr[]) => void;
   /**
    * @param args The arguments passed to the integration function by the user.
    * @param preWarmContext contains singleton instances of client and other objects initialized outside of the native
@@ -490,20 +509,27 @@ export interface PrewarmClientInitializer<T, O> {
 export const PrewarmClients = {
   LAMBDA: {
     key: "LAMBDA",
-    init: (key, props) => new Lambda(props?.clientConfigRetriever?.(key)),
+    init: (key, props) =>
+      new (require("aws-sdk").Lambda(props?.clientConfigRetriever?.(key)))(),
   },
   EVENT_BRIDGE: {
     key: "EVENT_BRIDGE",
-    init: (key, props) => new EventBridge(props?.clientConfigRetriever?.(key)),
+    init: (key, props) =>
+      new (require("aws-sdk").EventBridge(
+        props?.clientConfigRetriever?.(key)
+      ))(),
   },
   STEP_FUNCTIONS: {
     key: "STEP_FUNCTIONS",
     init: (key, props) =>
-      new StepFunctions(props?.clientConfigRetriever?.(key)),
+      new (require("aws-sdk").StepFunctions(
+        props?.clientConfigRetriever?.(key)
+      ))(),
   },
   DYNAMO: {
     key: "DYNAMO",
-    init: (key, props) => new DynamoDB(props?.clientConfigRetriever?.(key)),
+    init: (key, props) =>
+      new (require("aws-sdk").DynamoDB(props?.clientConfigRetriever?.(key)))(),
   },
 } as Record<ClientName, PrewarmClientInitializer<ClientName, any>>;
 

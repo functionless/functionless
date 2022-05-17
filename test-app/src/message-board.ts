@@ -455,6 +455,17 @@ new Function(
       },
     });
     console.log(deleteWorkflow.describeExecution(exc.executionArn));
+    $AWS.DynamoDB.GetItem({
+      TableName: database,
+      Key: {
+        pk: {
+          S: "Post|",
+        },
+        sk: {
+          S: "Post",
+        },
+      },
+    });
     return exprSfn({});
     // return "hi";
   },

@@ -13,7 +13,7 @@ import {
 import { TableKey } from "typesafe-dynamodb/lib/key";
 import { JsonFormat } from "typesafe-dynamodb";
 import {
-  Argument,
+  Expr,
   isObjectLiteralExpr,
   isPropAssignExpr,
   isReferenceExpr,
@@ -505,17 +505,16 @@ export namespace $AWS {
         },
       });
 
-      function getTableArgument(args: Argument[]) {
+      function getTableArgument(args: Expr[]) {
         const [inputArgument] = args;
         // integ(input: { TableName })
-        const inputExpr = inputArgument.expr;
-        if (!inputExpr || !isObjectLiteralExpr(inputExpr)) {
+        if (!inputArgument || !isObjectLiteralExpr(inputArgument)) {
           throw Error(
-            `First argument into deleteItem should be an input object.`
+            `First argument into deleteItem should be an input object, found ${inputArgument?.kind}`
           );
         }
 
-        const tableProp = inputExpr.getProperty("TableName");
+        const tableProp = inputArgument.getProperty("TableName");
 
         if (!tableProp || !isPropAssignExpr(tableProp)) {
           throw Error(

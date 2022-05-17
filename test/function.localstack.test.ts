@@ -7,9 +7,10 @@ import {
   Function,
   FunctionProps,
   StepFunction,
+  Table,
 } from "../src";
 import { Lambda } from "aws-sdk";
-import { aws_events, Stack, Token } from "aws-cdk-lib";
+import { aws_dynamodb, aws_events, Stack, Token } from "aws-cdk-lib";
 import { Construct } from "constructs";
 
 const lambda = new Lambda(clientConfig);
@@ -454,6 +455,43 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
       );
     },
     "hi"
+  );
+
+  testFunctionResource(
+    "dynamo integration get",
+    (parent) => {
+      const table = new Table<{ key: string }, "key">(
+        new aws_dynamodb.Table(parent, "table", {
+          partitionKey: { name: "id", type: aws_dynamodb.AttributeType.STRING },
+        })
+      );
+      const putItem = $AWS.DynamoDB.PutItem;
+      const getItem = $AWS.DynamoDB.GetItem;
+      return new Function(
+        parent,
+        "function",
+        async () => {
+          putItem({
+            TableName: table,
+            Item: {
+              key: { S: "key" },
+            },
+          });
+          const item = getItem({
+            TableName: table,
+            Key: {
+              key: {
+                S: "key",
+              },
+            },
+            ConsistentRead: true,
+          });
+          return item.Item?.key.S;
+        },
+        localstackClientConfig
+      );
+    },
+    "key"
   );
 });
 
