@@ -19,82 +19,6 @@ new Function(scope, "foo", async () => {
 
 Functionless is all about embedding the business logic within the infrastructure logic, so instead of referencing an external file containing the function implementation, it can be provided in-line as if it were an ordinary function.
 
-## Input Data
-
-Your Function must have 0 or 1 arguments. This argument contains the JSON data from the Invoke Lambda API Request payload.
-
-```ts
-// valid
-async (arg: string) => {};
-
-// invalid!!
-async (arg: string) => {};
-```
-
-For example, if you have a Function accepting input of `{key: string}`:
-
-```ts
-async (input: { key: string }) => {};
-```
-
-Then it can be invoked with the following JSON data:
-
-```json
-{
-  "key": "value"
-}
-```
-
-Functionless is flexible and can handle any valid JSON value type (not just objects) - for example, a `string`, `number`, `boolean` or `null`:
-
-```ts
-async (input: string | number | boolean | null) => {};
-```
-
-Can properly handle one of the the following input JSON payload:
-
-```json
-"hello world"
-123
-true
-false
-null
-```
-
-Note the surrounding double-quotes (`"`).
-
-## Return Data
-
-The Function must return a `Promise`. Any data contained within the Promise is serialized to JSON and returned as the response payload.
-
-For example:
-
-```ts
-async () => ({
-  key: "value",
-});
-```
-
-Results in the following JSON response payload:
-
-```json
-{
-  "key": "value"
-}
-```
-
-## Closure Serialization
-
-You can write arbitrary code from within the Lambda Function. Be aware that the function's body will run on any invocation, so you should avoid writing expensive one-off computations inside.
-
-## Call an Integration
-
-All of Functionless's integrations can be called from within a Lambda Function. Functionless will automatically infer the required IAM Policies, set any environment variables it needs (such as the ARN of a dependency) and instantiate any SDK clients when the Function is first invoked.
-
-```ts
-
-```
-
 ## Configure Properties
 
 To configure its properties, such as memory, timeout, runtime, etc. specify an object as the third argument:
@@ -114,7 +38,139 @@ new Function(
 );
 ```
 
+## Wrap an existing Function
+
+There are cases in which you want to integrate with an existing Lambda Function - perhaps you need to use a different runtime than NodeJS or you have existing Functions that you want to call from Functionless.
+
+To achieve this, use the `Function.from` utility to wrap an existing `aws_lambda.Function`.
+
+```ts
+import { aws_lambda } from "aws-cdk-lib";
+import { Function, StepFunction } from "functionless";
+
+const myFunc = Function.from<{ name: string }, string>(
+  new aws_lambda.Function(this, "MyFunc", {
+    ..
+  })
+);
+```
+
 A wrapped function annotates the type signature of the Function and makes it available to be called from Functionless Constructs.
+
+## Request Payload
+
+Your Function must have 0 or 1 arguments. This argument contains the JSON data from the Invoke Lambda API Request payload.
+
+```ts
+// valid
+async (arg: string) => {};
+
+// valid
+async () => {};
+
+// invalid - anotherArg will never have a value.
+async (arg: string, anotherArg: string) => {};
+```
+
+For example, if you have a Function accepting input of `{key: string}`:
+
+```ts
+async (input: { key: string }) => {};
+```
+
+It can be invoked with the following JSON data:
+
+```json
+{
+  "key": "value"
+}
+```
+
+Any valid JSON value type (not just objects) is supported - for example, a `string`, `number`, `boolean` or `null`:
+
+```ts
+async (input: string | number | boolean | null) => {};
+```
+
+Can properly handle one of the the following input JSON payload:
+
+```json
+null
+true
+false
+123
+123.456
+"hello world"
+```
+
+Note the surrounding double-quotes (`"`) for strings.
+
+## Response Payload
+
+The Function must return a `Promise`. Any data contained within the Promise is serialized to JSON and returned as the response payload.
+
+For example:
+
+```ts
+async () => ({
+  key: "value",
+});
+```
+
+Results in the following JSON response payload:
+
+```json
+{
+  "key": "value"
+}
+```
+
+## Call an Integration
+
+All of Functionless's integrations can be called from within a Lambda Function. Functionless will automatically infer the required IAM Policies, set any environment variables it needs (such as the ARN of a dependency) and instantiate any SDK clients when the Function is first invoked.
+
+```ts
+const Table = new Table(scope, "Table");
+
+new Function(scope, "foo", async (id: string) => {
+  return $AWS.DynamoDB.GetItem({
+    TableName: table,
+    Key: {
+      id: {
+        S: id,
+      },
+    },
+  });
+});
+```
+
+This Function creates infers the following configuration and runtime code:
+
+1. an IAM Policy Statement allowing `GetItem` on the `Table`
+
+```json
+{
+  "Action": ["dynamodb:GetItem"],
+  "Effect": "Allow",
+  "Resource": "arn:aws:dynamodb:<region>:<account-ud>:table/Table"
+}
+```
+
+2. an Environment Variable making the ARN of the DynamoDB `Table` available at runtime
+
+```json
+{
+  "EnvironmentVariables": {
+    "Ref": "Table"
+  }
+}
+```
+
+3. when your Lambda Function calls `$AWS.DynamoDB.GetItem`, underneath a client is being instantiated (once per container) and used for the request. This saves your from worrying about boilerplate plumbing code.
+
+```ts
+new AWS.DynamoDB();
+```
 
 ## Call from an Integration
 
@@ -161,19 +217,84 @@ bus
   .pipe(myFunc)
 ```
 
-## Wrap an existing Function
+## Closure Serialization
 
-There are cases in which you want to integrate with an existing Lambda Function - perhaps you need to use a different runtime than NodeJS or you have existing Functions that you want to call from Functionless.
+Functionless leverages [Pulumi's closure serializer](https://www.pulumi.com/docs/intro/concepts/function-serialization/) to serialize your function into a bundle that can be ran within the AWS Lambda Function.
 
-To achieve this, use the `Function.from` utility to wrap an existing `aws_lambda.Function`.
+The serializer captures all of your closure's state.
+
+1. referenced variables outside the function body
 
 ```ts
-import { aws_lambda } from "aws-cdk-lib";
-import { Function, StepFunction } from "functionless";
+const variable = "hello";
 
-const myFunc = Function.from<{ name: string }, string>(
-  new aws_lambda.Function(this, "MyFunc", {
-    ..
-  })
-);
+new Function(scope, "foo", () => {
+  // variable is captured and serialized into the bundle
+  return variable;
+});
+```
+
+2. calls to Constructs such as other Functions or a DynamoDB Table are re-written as client API calls
+
+```ts
+const table = new Table(..)
+
+new Function(scope, "foo", (key: string) => {
+  // re-written as a call to an AWS.DynamoDB.GetItem API call
+  return table.getItem({
+    key
+  });
+});
+```
+
+3. imported dependencies are included in the bundle as is, similarly to how esbuild performs bundling
+
+```ts
+import { v4 } from "uuid";
+
+new Function(scope, "foo", () => {
+  // v4 will be tree-shaken and included in your bundle
+  return v4();
+});
+```
+
+## Performance Considerations
+
+You can write arbitrary code from within the Lambda Function but be aware that the function's body will run on EVERY invocation, so you should avoid writing expensive one-off computations inside.
+
+For example, loading a file into memory should probably be done once instead on each invocation:
+
+```ts
+new Function(scope, "foo", async () => {
+  const allowList = await fs.promises.readFile("allow-list.json");
+});
+```
+
+Instead, move expensive initialization code outside of the closure.
+
+```ts
+const allowList = await fs.promises.readFile("allow-list.json");
+
+new Function(scope, "foo", async () => {
+  // reference the allowList here instead
+});
+```
+
+**Warning**: By moving the value outside of the closure, the `allowList` value will be serialized as JSON into the bundle. This can also affect your performance by bloating the size of the bundle.
+
+## Limitations
+
+The bundler will not
+
+```ts
+let _allowList;
+const loadAllowList = async () => {
+  return (_allowList =
+    _allowList ?? (await fs.promises.readFile("allow-list.json")));
+};
+
+new Function(scope, "foo", async () => {
+  // reference the allowList here instead
+  const list = await loadAllowList();
+});
 ```
