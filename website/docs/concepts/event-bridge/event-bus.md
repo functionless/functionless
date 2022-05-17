@@ -1,6 +1,7 @@
 ---
 sidebar_position: 2
 ---
+
 # Event Bus
 
 Functionless makes using Event Bridge easy by leveraging typescript instead of AWS Event Bridge's proprietary logic and transform configuration.

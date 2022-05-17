@@ -62,6 +62,7 @@ Files can be ignored by the transformer by using glob patterns in the `tsconfig.
 Functionless's Constructs slot right into your existing CDK application code. If you've just set up a new CDK application (hopefully using [projen](https://github.com/projen/projen)), you'll likely have a project with the following two files, `src/stack.ts` and `src/app.ts`.
 
 #### `src/stack.ts`
+
 ```ts
 import { Construct } from "constructs";
 import { Stack } from "aws-cdk-lib";
@@ -70,11 +71,13 @@ export class HelloWorldStack extends Stack {
   constructor(scope: Construct, id: string) {
     super(scope, id);
   }
-} 
+}
 ```
 
 This stack is then added to your App so it can be deployed:
+
 #### `src/app.ts`
+
 ```ts
 import { App } from "aws-cdk-lib";
 import { HelloWorldStack } from "./stack";
@@ -82,4 +85,3 @@ import { HelloWorldStack } from "./stack";
 const app = new App();
 const helloWorld = new HelloWorldStack(app, "HelloWorld");
 ```
-

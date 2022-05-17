@@ -6,10 +6,7 @@
     "experimentalDecorators": true,
     "inlineSourceMap": true,
     "inlineSources": true,
-    "lib": [
-      "dom",
-      "ES2019"
-    ],
+    "lib": ["dom", "ES2019"],
     "jsx": "react-jsx",
     "module": "CommonJS",
     "noEmitOnError": false,
@@ -27,11 +24,6 @@
     "target": "ES2019",
     "declarationMap": true
   },
-  "include": [
-    "src/**/*.ts",
-    "test/**/*.ts"
-  ],
-  "exclude": [
-    "node_modules"
-  ]
+  "include": ["src/**/*.ts", "test/**/*.ts"],
+  "exclude": ["node_modules"]
 }

@@ -28,6 +28,7 @@ export class HelloWorldStack extends Stack {
 ```
 
 Deploy with `cdk deploy` and invoke the Function from the AWS Console. You should hopefully see a message in your CloudWatch Logs:
+
 ```
 hello, world!
 ```

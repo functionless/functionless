@@ -83,4 +83,3 @@ new AppsyncResolver(
   )
 );
 ```
-
