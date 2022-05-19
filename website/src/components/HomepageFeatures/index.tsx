@@ -151,7 +151,7 @@ const tasks = new Table<Task, "taskId">(this, "Tasks", {
   },
   {
     title:
-      'Replace "serverless" with "functionless" by writing AWS Step Functions with pure TypeScript code.',
+      'Replace "serverless" with "functionless" by writing AWS Step Functions in pure TypeScript.',
     code: `new StepFunction(
   stack,
   "Validator",
