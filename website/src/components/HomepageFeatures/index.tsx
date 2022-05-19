@@ -11,16 +11,16 @@ export default function HomepageFeatures(): JSX.Element {
     <section className={styles.features}>
       <div className="container">
         <div className="row">
+          {FeatureList.map((props, idx) => (
+            <Feature key={idx} {...props} />
+          ))}
+        </div>
+        <div className="row">
           <div className="col col--6 col--offset-3">
             {CodeSnippets.map(({ title, code }) => (
               <CodePreview title={title} code={code} />
             ))}
           </div>
-        </div>
-        <div className="row">
-          {FeatureList.map((props, idx) => (
-            <Feature key={idx} {...props} />
-          ))}
         </div>
       </div>
     </section>
@@ -49,12 +49,12 @@ type FeatureItem = {
 
 const FeatureList: FeatureItem[] = [
   {
-    title: "Familiar syntax and no boilerplate",
+    title: "Familiar and friendly TypeScript syntax",
     Svg: require("@site/static/img/undraw_docusaurus_mountain.svg").default,
     description: (
       <>
-        Adopt powerful cloud-native services without the boilerplate and
-        complexity of domain specific languages.
+        Adopt powerful cloud-native services without boilerplate configurations
+        or the complexity of domain specific languages.
       </>
     ),
   },
@@ -63,20 +63,20 @@ const FeatureList: FeatureItem[] = [
     Svg: require("@site/static/img/undraw_docusaurus_tree.svg").default,
     description: (
       <>
-        Functionless infers minimally permissive IAM Policies from your business
-        logic, ensuring that your IAM Roles only have access to the resources
-        and operations they absolutely need.
+        Minimally permissive IAM Policies are inferred from your business logic,
+        ensuring that your IAM Roles only have access to the resources and
+        operations they absolutely need.
       </>
     ),
   },
   {
-    title: "Type-safe databases and functions",
+    title: "Typesafe cloud resources",
     Svg: require("@site/static/img/undraw_docusaurus_react.svg").default,
     description: (
       <>
-        Use types to describe the data stored in databases and the interfaces of
-        your cloud functions. Catch common errors at compile time instead of
-        waiting until deployment.
+        Use types to describe the interfaces of your cloud functions and the
+        structure of data in your databases. Catch common errors at compile time
+        instead of waiting until deployment.
       </>
     ),
   },
