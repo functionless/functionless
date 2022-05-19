@@ -6,9 +6,9 @@ const darkCodeTheme = require("prism-react-renderer/themes/dracula");
 
 /** @type {import('@docusaurus/types').Config} */
 const config = {
-  title: "Zero mess Serverless, just write code",
+  title: "Typesafe Serverless code, no mess",
   tagline:
-    "Functionless is an open source Infrastructure as Code library that generates complex cloud configurations from simple, type-safe code",
+    "Functionless is an open source Infrastructure as Code library that generates complex cloud configurations from simple TypeScript code",
   url: "https://functionless.org",
   baseUrl: "/",
   onBrokenLinks: "throw",
