@@ -1,7 +1,6 @@
 import clsx from "clsx";
 import Layout from "@theme/Layout";
 import Link from "@docusaurus/Link";
-import useDocusaurusContext from "@docusaurus/useDocusaurusContext";
 import styles from "./index.module.css";
 import HomepageFeatures from "../components/HomepageFeatures";
 
@@ -17,15 +16,18 @@ export default function Home(): JSX.Element {
 }
 
 function HomepageHeader() {
-  const { siteConfig } = useDocusaurusContext();
   return (
     <header className={clsx("hero hero--primary", styles.heroBanner)}>
       <div className="container">
-        <h1 className="hero__title">{siteConfig.title}</h1>
-        <p className="hero__subtitle">{siteConfig.tagline}</p>
+        <h1 className="hero__title">Simple and concise cloud programming</h1>
+        <p className="hero__subtitle">
+          Functionless simplifies your <b>Infrastructure as Code</b> by
+          inferring boilerplate configurations and domain specific languages
+          from TypeScript syntax.
+        </p>
         <p className="hero__subtitle">
           More powerful cloud components are made possible by unifying business
-          logic with infrastructure code.
+          logic and infrastructure code into one environment.
         </p>
         <div className="row">
           <div className="col col--2 col--offset-4 margin-top--md">

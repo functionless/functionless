@@ -6,9 +6,8 @@ const darkCodeTheme = require("prism-react-renderer/themes/dracula");
 
 /** @type {import('@docusaurus/types').Config} */
 const config = {
-  title: "Simple and concise cloud programming",
-  tagline:
-    "Functionless infers boilerplate configurations and domain specific languages for your favorite Infrastructure-as-Code TypeScript frameworks.",
+  title: "Functionless",
+  tagline: "Simple and concise cloud programming",
   url: "https://functionless.org",
   baseUrl: "/",
   onBrokenLinks: "throw",
