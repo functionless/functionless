@@ -6,9 +6,11 @@ sidebar_position: 1.1
 
 ## Function
 
-A `Function` can be called directly from an AppsyncResolver.
+A `Function` can be called directly from an [`AppsyncResolver`](./usage.md).
 
 ```ts
+const myFunc = new Function(scope, "id", (input: {name: string}) => { .. });
+
 new AppsyncResolver(() => {
   return myFunc({ name: "my name" });
 });
@@ -19,6 +21,105 @@ The first argument is passed to the Lambda Function as the Payload.
 ```json
 {
   "name": "my name"
+}
+```
+
+## Step Function
+
+A `StepFunction` can be called directly from an [`AppsyncResolver`](./usage.md#implement-a-resolver-for-a-field).
+
+```ts
+const myStepFunc = new StepFunction(scope, "id", (input: {name: string}) => { .. });
+
+new AppsyncResolver(() => {
+  return myStepFunc({ name: "my name" });
+});
+```
+
+The first argument is passed to the Step Function as the initial state.
+
+```json
+{
+  "name": "my name"
+}
+```
+
+### Standard Execution
+
+Executing a `StepFunction` returns a handle to the asynchronously running execution. This is because a `StepFunction` is a [Standard Step Function](../step-function/index.md#standard-step-function) and runs asynchronously, potentially taking up to a year, so its result cannot be returned synchronously.
+
+```ts
+const execution = myStepFunc({ name: "my name" });
+```
+
+Get the status of the execution by calling `describeExecution`:
+
+```ts
+const status = myStepFunc.describeExecution(execution.executionArn);
+```
+
+The `response` may be in one of five states, `ABORTED`, `RUNNING`, `SUCCEEDED`, `FAILED` or `TIMED_OUT`. Use the `status` field to handle each state gracefully.
+
+```ts
+const execution = myStepFunc({ name: "sam" });
+
+// describe the Step Function's execution
+const response = myStepFunc.describeExecution(execution.executionArn);
+
+// check the status
+if (response.status === "RUNNING") {
+  // the function is still running, do nothing
+} else if (response.status === "SUCCEEDED") {
+  // the output field is present when status is SUCCEEDED
+  return response.output; // "hello sam";
+} else if (
+  response.status === "FAILED" ||
+  response.status === "TIMED_OUT" ||
+  response.status === "ABORTED"
+) {
+  // the error and cause fields are present when status is ABORTED, FAILED or TIMED_OUT
+  if (response.error === "MY_ERROR") {
+    // check for the case when the error code is a known error and handle gracefully
+    throw new Error(response.cause);
+  } else {
+    throw new Error("generic error");
+  }
+}
+```
+
+### Express Execution
+
+Executing an `ExpressStepFunction` returns the result synchronously.
+
+```ts
+const myExpressFunc = new ExpressStepFunction(
+  scope,
+  "id",
+  (input: { name: string }) => {
+    return `hello ${input.name}`;
+  }
+);
+
+new AppsyncResolver(() => {
+  const response = myExpressFunc({ name: "my name" });
+});
+```
+
+The `response` may be in one of three states, `SUCCEEDED`, `FAILED` or `TIMED_OUT`. Use the `status` field to handle each state gracefully.
+
+```ts
+const response = myExpressFunc({ name: "sam" });
+if (response.status === "SUCCEEDED") {
+  // the output field is present when status is SUCCEEDED
+  return response.output; // "hello sam";
+} else if (response.status === "FAILED" || response.status === "TIMED_OUT") {
+  // the error and cause fields are present when status is FAILED or TIMED_OUT
+  if (response.error === "MY_ERROR") {
+    // check for the case when the error code is a known error and handle gracefully
+    throw new Error(response.cause);
+  } else {
+    throw new Error("generic error");
+  }
 }
 ```
 
@@ -77,6 +178,40 @@ table.deleteItem({
 
 It invokes `DynamoDB:PutItem` API using the [PutItem Appsync Resolver](https://docs.aws.amazon.com/appsync/latest/devguide/resolver-mapping-template-reference-dynamodb.html#aws-appsync-resolver-mapping-template-reference-dynamodb-putItem).
 
+```ts
+new AppsyncResolver(
+  ($context: AppsyncContext<{ id: string; text: string }>) => {
+    return table.putItem({
+      key: {
+        id: $util.dynamodb.toJson($context.arguments.id),
+      },
+      attributeValues: {
+        text: $util.dynamodb.toJson($context.arguments.text),
+      },
+    });
+  }
+);
+```
+
+The `condition` property enables you to write [DynamoDB ConditionExpressions](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Expressions.ConditionExpressions.html) so that the item is only update if some condition is true.
+
+```ts
+table.putItem({
+  key: {
+    id: $util.dynamodb.toJson($context.arguments.id),
+  },
+  attributeValues: {
+    text: $util.dynamodb.toJson($context.arguments.text),
+  },
+  condition: {
+    expression: "attribute_not_exists(id) OR version = :expectedVersion",
+    expressionValues: {
+      ":expectedVersion": $util.dynamodb.toDynamoDB($expectedVersion),
+    },
+  },
+});
+```
+
 ### updateItem
 
 `updateItem` updates a value in the database using an UpdateExpression. If no value already exists, then the expression runs against the empty value and may result in unexpected behavior or an error.
@@ -113,7 +248,7 @@ table.deleteItem({
 });
 ```
 
-### Query
+### query
 
 `query` efficiently queries records from the database using a [KeyConditionExpression](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Query.html#Query.KeyConditionExpressions).
 
@@ -170,4 +305,4 @@ const response = table.query(..);
 response.nextToken;
 ```
 
-**\*Not yet supported**: Querying an Index, see [#136](https://github.com/sam-goodwin/functionless/issues/136).
+**Not yet supported**: Querying an Index, see [#136](https://github.com/sam-goodwin/functionless/issues/136).

@@ -91,7 +91,11 @@ See the [reference documentation](https://docs.aws.amazon.com/cdk/api/v2/docs/aw
 
 ## Implement a Resolver for a Field
 
-After configuring your schema, the next step is to implement Resolvers for each of the type's fields in the schema. Functionless's `AppsyncResolver` Construct makes this simple by generating all of the VTL templates, IAM Policies and Resolver configurations from an ordinary TypeScript function.
+After configuring your schema, the next step is to implement Resolvers for each of the type's fields in the schema.
+
+### AppsyncResolver
+
+Functionless's `AppsyncResolver` Construct makes this simple by generating all of the VTL templates, IAM Policies and Resolver configurations from an ordinary TypeScript function.
 
 ```ts
 new AppsyncResolver(($context) => {
@@ -137,11 +141,39 @@ new AppsyncResolver<{ id: string }, Person | undefined>(($context) => {
 });
 ```
 
-`TSource` is only defined when the field being resolved is nested
+### Nested Resolvers and TSource
+
+`TSource` is only defined when the field being resolved is nested. For example, resolving a `Person`'s `children` field has a `TSource` of `Person`.
+
+```ts
+new AppsyncResolver<undefined, Person[], Person>(($context) => {
+  return db.query({
+    key: {
+      personId: {
+        // access the parent's personId
+        S: $context.source.personId,
+      },
+    },
+  }).Items;
+});
+```
+
+The following GraphQL query will now trigger this Resolver to fetch the `children` property.
+
+```graphql
+query {
+  getPerson(id: "personId") {
+    # resolve the Person's children by invoking the nested Resolver
+    children
+  }
+}
+```
 
 ## Add Resolvers to a GraphQLApi
 
 When you create a `new AppsyncResolver`, it does not immediately generate an Appsync Resolver. `AppsyncResolver` is more like a template for creating resolvers and can be re-used across more than one API.
+
+**Note**: this is subject to change, see [#137](https://github.com/sam-goodwin/functionless/issues/137) to track progress.
 
 Options:
 
@@ -178,6 +210,62 @@ api.addQuery("getPerson", getPerson.getField(api, personType));
 
 ## $util
 
-The `$util` object contains Appsync's intrinsic functions. See the [Resolver mapping template utility reference](https://docs.aws.amazon.com/appsync/latest/devguide/resolver-util-reference.html)
+The `$util` object contains Appsync's intrinsic functions.
+
+For example, it provides intrinsic functions for generating UUIDs, working with timestamps and transforming data from AWS DynamoDB.
+
+```ts
+new AppsyncResolver(() => {
+  // generate a unique UUID at runtime
+  const uuid = $util.autoUuid();
+  // get the current timestamp in ISO 8601 format
+  const now = $util.time.nowISO8601();
+  // convert the string timestamp to a DynamoDB Attribute Value
+  const attribute = $util.dynamodb.toDynamoDB(now);
+});
+```
+
+For a full list of all available utility functions, see the [API reference documentation for $util](../../api/interfaces/util.md) and [AWS's Resolver mapping template utility reference](https://docs.aws.amazon.com/appsync/latest/devguide/resolver-util-reference.html).
 
 **Warning**: not all of the utilities have been implemented. You can track progress here [#61](https://github.com/sam-goodwin/functionless/issues/61)
+
+## Limitations
+
+Calls to services such as Table or Function can only be performed at the top-level. See below for some examples of valid and invalid service calls.
+
+### Valid
+
+```ts
+// stash the result of the service call - the most common use-case
+const item = myTable.get();
+
+// calling the service but discarding the result is fine
+myTable.get();
+```
+
+### Invalid
+
+```ts
+// you cannot in-line a call as the if condition, store it as a variable first
+if (myTable.get()) {
+}
+
+if (condition) {
+  // it is not currently possible to conditionally call a service, but this will be supported at a later time
+  myTable.get();
+}
+
+for (const item in list) {
+  // resolvers cannot be contained within a loop
+  myTable.get();
+}
+```
+
+No branching or parallel logic is supported. If you need more flexibility, consider calling a [Step Function](../step-function/index.md):
+
+```ts
+new ExpressStepFunction(this, "MyFunc", (items: string[]) => {
+  // process each item in parallel, an operation not supported in AWS AppSync.
+  return items.map((item) => task(item));
+});
+```
