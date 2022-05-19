@@ -7,7 +7,7 @@ const darkCodeTheme = require("prism-react-renderer/themes/dracula");
 /** @type {import('@docusaurus/types').Config} */
 const config = {
   title: "Functionless",
-  tagline: "Simple and concise cloud programming",
+  tagline: "Programming the Cloud",
   url: "https://functionless.org",
   baseUrl: "/",
   onBrokenLinks: "throw",

@@ -131,10 +131,10 @@ Each of the methods on the `Table` Construct map 1:1 to the [DynamoDB Resolvers]
 
 AWS's DynamoDB Resolvers require all inputs to a request be marshalled into the [DynamoDB AttributeValue format](https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_AttributeValue.html), e.g. `{S: "hello"}` instead of `"hello"`.
 
-Use Appsync's `$util` to do the marshalling automatically.
+Use Appsync's `$util.dynamodb.toDynamoDB` to do the marshalling automatically.
 
 ```ts
-$util.dynamodb.toJson($context.arguments.id);
+$util.dynamodb.toDynamoDB($context.arguments.id);
 ```
 
 The Response from DynamoDB, however, comes already un-marshalled, e.g. `"hello` instead of `{S: "hello"}`.
