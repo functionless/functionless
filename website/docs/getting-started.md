@@ -1,8 +1,39 @@
 ---
+label: Getting Started
 sidebar_position: 1
 ---
 
-# Add to an existing CDK project
+# Getting Started
+
+## Projen Template
+
+To create a new project, run the following command.
+
+```sh
+npx projen new --from @functionless/projen
+```
+
+This will create a new folder containing a CDK application with Functionless installed using the [Projen](https://github.com/projen/projen) template tool.
+
+## Deploy to AWS
+
+Functionless is a library that integrates directly into a standard CDK application. To deploy, first set up your AWS CLI and AWS account for CDK development (see the official [AWS CDK docs](https://docs.aws.amazon.com/cdk/v2/guide/home.html)), and then use the `cdk` CLI as usual:
+
+```bash
+npx cdk deploy
+```
+
+For convenience, your new project comes with a `deploy` script:
+
+```bash
+# if using yarn
+yarn deploy
+
+# if using NPM
+npm run deploy
+```
+
+## Add to an existing CDK project
 
 Functionless relies on a TypeScript compiler plugin. Setting this up requires two packages, `functionless` and `ts-patch`, and some configuration added to your `tsconfig.json`.
 
@@ -57,7 +88,7 @@ Files can be ignored by the transformer by using glob patterns in the `tsconfig.
 }
 ```
 
-# Setup CDK Application
+## Setup CDK Application
 
 Functionless's Constructs slot right into your existing CDK application code. If you've just set up a new CDK application (hopefully using [projen](https://github.com/projen/projen)), you'll likely have a project with the following two files, `src/stack.ts` and `src/app.ts`.
 

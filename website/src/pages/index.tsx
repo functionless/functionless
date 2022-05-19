@@ -12,16 +12,26 @@ function HomepageHeader() {
       <div className="container">
         <h1 className="hero__title">{siteConfig.title}</h1>
         <p className="hero__subtitle">{siteConfig.tagline}</p>
-        <div className={styles.buttons}>
-          <Link
-            className="button button--secondary button--lg"
-            to="/docs/what-is-functionless"
-          >
-            Get Started
-          </Link>
+        <div className="row">
+          <div className="col col--2 col--offset-4 margin-top--md">
+            <HomeButton to="/docs/what-is-functionless" label="Learn More" />
+          </div>
+          <div className="col col--2 margin-top--md">
+            <HomeButton to="/docs/getting-started" label="Get Started" />
+          </div>
         </div>
       </div>
     </header>
+  );
+}
+
+function HomeButton(props: { to: string; label: string }) {
+  return (
+    <div className={styles.buttons}>
+      <Link className="button button--secondary button--lg" to={props.to}>
+        {props.label}
+      </Link>
+    </div>
   );
 }
 
