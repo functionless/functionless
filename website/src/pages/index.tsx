@@ -5,6 +5,17 @@ import useDocusaurusContext from "@docusaurus/useDocusaurusContext";
 import styles from "./index.module.css";
 import HomepageFeatures from "../components/HomepageFeatures";
 
+export default function Home(): JSX.Element {
+  return (
+    <Layout>
+      <HomepageHeader />
+      <main>
+        <HomepageFeatures />
+      </main>
+    </Layout>
+  );
+}
+
 function HomepageHeader() {
   const { siteConfig } = useDocusaurusContext();
   return (
@@ -32,16 +43,5 @@ function HomeButton(props: { to: string; label: string }) {
         {props.label}
       </Link>
     </div>
-  );
-}
-
-export default function Home(): JSX.Element {
-  return (
-    <Layout>
-      <HomepageHeader />
-      <main>
-        <HomepageFeatures />
-      </main>
-    </Layout>
   );
 }

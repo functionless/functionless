@@ -6,6 +6,41 @@ import styles from "./styles.module.css";
 import SyntaxHighlighter from "react-syntax-highlighter";
 import { a11yDark } from "react-syntax-highlighter/dist/esm/styles/hljs";
 
+export default function HomepageFeatures(): JSX.Element {
+  return (
+    <section className={styles.features}>
+      <div className="container">
+        <div className="row">
+          <div className="col col--6 col--offset-3">
+            {CodeSnippets.map(({ title, code }) => (
+              <CodePreview title={title} code={code} />
+            ))}
+          </div>
+        </div>
+        <div className="row">
+          {FeatureList.map((props, idx) => (
+            <Feature key={idx} {...props} />
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function Feature({ title, Svg, description }: FeatureItem) {
+  return (
+    <div className={clsx("col col--4")}>
+      <div className="text--center">
+        <Svg className={styles.featureSvg} role="img" />
+      </div>
+      <div className="text--center padding-horiz--md">
+        <h3>{title}</h3>
+        <p>{description}</p>
+      </div>
+    </div>
+  );
+}
+
 type FeatureItem = {
   title: string;
   Svg: React.ComponentType<React.ComponentProps<"svg">>;
@@ -47,15 +82,22 @@ const FeatureList: FeatureItem[] = [
   },
 ];
 
-function Feature({ title, Svg, description }: FeatureItem) {
+function CodePreview(props: { title: string; code: string }) {
   return (
-    <div className={clsx("col col--4")}>
-      <div className="text--center">
-        <Svg className={styles.featureSvg} role="img" />
+    <div className="row">
+      <div className="col col--12 padding-top--lg">
+        <h4
+          style={{
+            textAlign: "center",
+            width: "100%",
+          }}
+        >
+          {" "}
+          {props.title}
+        </h4>
       </div>
-      <div className="text--center padding-horiz--md">
-        <h3>{title}</h3>
-        <p>{description}</p>
+      <div className="col col--12">
+        <Code code={props.code} />
       </div>
     </div>
   );
@@ -74,61 +116,90 @@ function Code(props: { code: string }) {
   );
 }
 
-function CodePreview(props: { title: string; code: string }) {
-  return (
-    <div>
-      <div className="row">
-        <h3
-          style={{
-            textAlign: "center",
-            width: "100%",
-          }}
-        >
-          {" "}
-          {props.title}
-        </h3>
-      </div>
-      <div className="row">
-        <Code code={props.code} />
-      </div>
-    </div>
-  );
+interface CodeSnippet {
+  title: string;
+  code: string;
 }
 
-export default function HomepageFeatures(): JSX.Element {
-  return (
-    <section className={styles.features}>
-      <div className="container">
-        <div className="row">
-          {FeatureList.map((props, idx) => (
-            <Feature key={idx} {...props} />
-          ))}
-        </div>
-        <div className="row">
-          <div className="col col--6 col--offset-3">
-            <CodePreview
-              title="Prevent errors with type-safe DynamoDB Tables"
-              code={`const postTable = new Table<Post, "postId">(this, "PostTable", {
-  partitionKey: {
-    name: "postId",
-    type: aws_dynamodb.AttributeType.String,
+const CodeSnippets: CodeSnippet[] = [
+  {
+    title: "Write your application logic and infrastructure in one place.",
+    code: `const helloWorld = new Function(this, "HelloWorld", async () => {
+  console.log("hello world");
+});`,
   },
-  billingMode: aws_dynamodb.BillingMode.PAY_PER_REQUEST,
-});`}
-            />
-            <CodePreview
-              title="Integrate a Lambda with Constructs"
-              code={`const getItem = new Function(this, "GetItem", async (itemId: string) => {
-  return postTable.getItem({
-    Key: {
-      itemId
+  {
+    title:
+      "Safeguard the data in your Dynamo Tables using TypeScript's powerful type system.",
+    code: `const tasks = new Table<Task, "taskId">(this, "Tasks", {
+  billingMode: BillingMode.PAY_PER_REQUEST
+});`,
+  },
+  {
+    title:
+      "Integrate services with simple function calls. Never worry about IAM Policies, environment variables or other boilerplate.",
+    code: `const getTask = new Function(this, "GetTask", async (taskId: string) => {
+  return tasks.getItem({
+    taskId
+  });
+});`,
+  },
+  {
+    title:
+      'Replace "serverless" with "functionless" by writing AWS Step Functions with pure TypeScript code.',
+    code: `new StepFunction(
+  stack,
+  "Validator",
+  (input: ValidateRequest) => {
+    const status = validate({ commentText: input.commentText });
+    if (status === "bad") {
+      $AWS.DynamoDB.DeleteItem({
+        TableName: posts,
+        Key: {
+          pk: {
+            S: \`Post|\${input.postId}\`,
+          },
+          sk: {
+            S: \`Comment|\${input.commentId}\`,
+          },
+        },
+      });
+    }
+  });`,
+  },
+  {
+    title:
+      "Deploy a GraphQL API to AWS Appsync without ever touching a single line of Velocity Templates.",
+    code: `const addTask = new AppsyncResolver<{text: string}, Task>(($context) => {
+  return tasks.putItem({
+    key: {
+      taskId: {
+        S: $util.autoUuid())
+      }
+    },
+    attributeValues: {
+      text: $util.dynamodb.toDynamoDB($context.arguments.text),
+      createTime: {
+        S: $util.time.nowISO8601()
+      }
     }
   });
-});`}
-            />
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}
+});`,
+  },
+  {
+    title:
+      "Filter, transform and send Events from AWS Event Bridge to your cloud resources using fluent APIs.",
+    code: `const tasks = new EventBus<TaskCompleted | TaskDeleted>(this, "Tasks");
+
+tasks
+  .when(
+    this,
+    "OnTaskCompleted",
+    (event) => event["detail-type"].kind === "TaskCompleted"
+  )
+  .map(event => ({
+    ...event,
+  }))
+  .pipe(handleTaskCompletedWorkflow);`,
+  },
+];
