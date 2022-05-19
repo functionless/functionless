@@ -23,6 +23,10 @@ function HomepageHeader() {
       <div className="container">
         <h1 className="hero__title">{siteConfig.title}</h1>
         <p className="hero__subtitle">{siteConfig.tagline}</p>
+        <p className="hero__subtitle">
+          More powerful abstractions are made possible by unifying business
+          logic with infrastructure code.
+        </p>
         <div className="row">
           <div className="col col--2 col--offset-4 margin-top--md">
             <HomeButton to="/docs/what-is-functionless" label="Learn More" />

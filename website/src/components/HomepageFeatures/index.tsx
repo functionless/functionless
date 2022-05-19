@@ -124,14 +124,19 @@ interface CodeSnippet {
 const CodeSnippets: CodeSnippet[] = [
   {
     title: "Write your application logic and infrastructure in one place.",
-    code: `const helloWorld = new Function(this, "HelloWorld", async () => {
+    code: `const helloWorld = new Function(this, "HelloWorld", () => {
   console.log("hello world");
 });`,
   },
   {
     title:
       "Safeguard the data in your Dynamo Tables using TypeScript's powerful type system.",
-    code: `const tasks = new Table<Task, "taskId">(this, "Tasks", {
+    code: `interface Task {
+  taskId: string;
+  description: string;
+}
+
+const tasks = new Table<Task, "taskId">(this, "Tasks", {
   billingMode: BillingMode.PAY_PER_REQUEST
 });`,
   },

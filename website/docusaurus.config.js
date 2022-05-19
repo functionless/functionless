@@ -8,7 +8,7 @@ const darkCodeTheme = require("prism-react-renderer/themes/dracula");
 const config = {
   title: "Programming the cloud",
   tagline:
-    "Functionless eliminates messy configurations and domain specific languages from your Infrastructure as Code by inferring it from TypeScript.",
+    "Functionless eliminates boilerplate and domain specific languages from your favorite Infrastructure-as-Code (IaC) frameworks by inferring them from TypeScript.",
   url: "https://functionless.org",
   baseUrl: "/",
   onBrokenLinks: "throw",

@@ -218,6 +218,25 @@ table.putItem({
 
 It invokes `DynamoDB:UpdateItem` API using the [UpdateItem Appsync Resolver](https://docs.aws.amazon.com/appsync/latest/devguide/resolver-mapping-template-reference-dynamodb.html#aws-appsync-resolver-mapping-template-reference-dynamodb-updateitem).
 
+```ts
+new AppsyncResolver(($context: AppsyncContext<{ id: string }>) => {
+  return table.updateItem({
+    key: {
+      id: $util.dynamodb.toJson($context.arguments.id),
+    },
+    update: {
+      expression: "ADD #votefield :plusOne, version :plusOne",
+      expressionNames: {
+        "#votefield": "upvotes",
+      },
+      expressionValues: {
+        ":plusOne": { N: "1" },
+      },
+    },
+  });
+});
+```
+
 ### deleteItem
 
 It invokes `DynamoDB:DeleteItem` API using the [DeleteItem Appsync Resolver](https://docs.aws.amazon.com/appsync/latest/devguide/resolver-mapping-template-reference-dynamodb.html#aws-appsync-resolver-mapping-template-reference-dynamodb-deleteitem).
