@@ -24,7 +24,7 @@ function HomepageHeader() {
         <h1 className="hero__title">{siteConfig.title}</h1>
         <p className="hero__subtitle">{siteConfig.tagline}</p>
         <p className="hero__subtitle">
-          More powerful abstractions are made possible by unifying business
+          More powerful cloud components are made possible by unifying business
           logic with infrastructure code.
         </p>
         <div className="row">
