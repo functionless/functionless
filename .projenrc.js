@@ -146,6 +146,10 @@ project.compileTask.prependExec(
   "yarn link && cd ./test-app && yarn link functionless"
 );
 
+project.addTask("test:unit", {
+  steps: project.testTask.steps,
+});
+
 project.testTask.prependExec(
   "cd ./test-app && yarn && yarn build && yarn synth"
 );

@@ -1,3 +1,4 @@
+export * from "./api";
 export * from "./aws";
 export * from "./appsync";
 export * from "./declaration";

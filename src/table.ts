@@ -1,5 +1,6 @@
 import * as appsync from "@aws-cdk/aws-appsync-alpha";
 import { aws_dynamodb } from "aws-cdk-lib";
+import { JsonFormat } from "typesafe-dynamodb";
 import {
   NativeBinaryAttribute,
   ToAttributeMap,
@@ -8,17 +9,15 @@ import {
   ExpressionAttributeNames,
   ExpressionAttributeValues,
 } from "typesafe-dynamodb/lib/expression-attributes";
-import { Narrow } from "typesafe-dynamodb/lib/narrow";
-import { VTL } from "./vtl";
-import { ObjectLiteralExpr } from "./expression";
-
-// @ts-ignore - imported for typedoc
-import type { AppsyncResolver, AppSyncVtlIntegration } from "./appsync";
 import { TableKey } from "typesafe-dynamodb/lib/key";
-import { JsonFormat } from "typesafe-dynamodb";
+import { Narrow } from "typesafe-dynamodb/lib/narrow";
+// @ts-ignore - imported for typedoc
+import type { AppSyncVtlIntegration } from "./appsync";
 import { assertNodeKind } from "./assert";
+import { ObjectLiteralExpr } from "./expression";
 import { Integration, makeIntegration } from "./integration";
 import { AnyFunction } from "./util";
+import { VTL } from "./vtl";
 
 export function isTable(a: any): a is AnyTable {
   return a?.kind === "Table";
@@ -105,7 +104,7 @@ export class Table<
         const request = vtl.var(
           `{"operation": "GetItem", "version": "2018-05-29"}`
         );
-        vtl.qr(`${request}.put('key', ${input}.get('key'))`);
+        vtl.quiet(`${request}.put('key', ${input}.get('key'))`);
         addIfDefined(vtl, input, request, "consistentRead");
 
         return vtl.json(request);
@@ -149,8 +148,8 @@ export class Table<
         const request = vtl.var(
           `{"operation": "PutItem", "version": "2018-05-29"}`
         );
-        vtl.qr(`${request}.put('key', ${input}.get('key'))`);
-        vtl.qr(
+        vtl.quiet(`${request}.put('key', ${input}.get('key'))`);
+        vtl.quiet(
           `${request}.put('attributeValues', ${input}.get('attributeValues'))`
         );
         addIfDefined(vtl, input, request, "condition");
@@ -193,8 +192,8 @@ export class Table<
         const request = vtl.var(
           `{"operation": "UpdateItem", "version": "2018-05-29"}`
         );
-        vtl.qr(`${request}.put('key', ${input}.get('key'))`);
-        vtl.qr(`${request}.put('update', ${input}.get('update'))`);
+        vtl.quiet(`${request}.put('key', ${input}.get('key'))`);
+        vtl.quiet(`${request}.put('update', ${input}.get('update'))`);
         addIfDefined(vtl, input, request, "condition");
         addIfDefined(vtl, input, request, "_version");
 
@@ -233,7 +232,7 @@ export class Table<
         const request = vtl.var(
           `{"operation": "DeleteItem", "version": "2018-05-29"}`
         );
-        vtl.qr(`${request}.put('key', ${input}.get('key'))`);
+        vtl.quiet(`${request}.put('key', ${input}.get('key'))`);
         addIfDefined(vtl, input, request, "condition");
         addIfDefined(vtl, input, request, "_version");
 
@@ -273,7 +272,7 @@ export class Table<
         const request = vtl.var(
           `{"operation": "Query", "version": "2018-05-29"}`
         );
-        vtl.qr(`${request}.put('query', ${input}.get('query'))`);
+        vtl.quiet(`${request}.put('query', ${input}.get('query'))`);
         addIfDefined(vtl, input, request, "index");
         addIfDefined(vtl, input, request, "nextToken");
         addIfDefined(vtl, input, request, "limit");

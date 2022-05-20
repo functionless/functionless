@@ -2,7 +2,7 @@ import { App, aws_dynamodb, Stack } from "aws-cdk-lib";
 import "jest";
 import { $util, AppsyncContext, reflect } from "../src";
 import { Table } from "../src";
-import { VTL } from "../src/vtl";
+import { AppsyncVTL } from "../src/vtl";
 import { appsyncTestCase } from "./util";
 
 interface Item {
@@ -36,7 +36,7 @@ test("get item", () =>
     // pipeline's request mapping template
     "{}",
     // function's request mapping template
-    `${VTL.CircuitBreaker}
+    `${AppsyncVTL.CircuitBreaker}
 #set($v1 = {})
 #set($v2 = {})
 #set($v3 = {})
@@ -55,7 +55,7 @@ $util.toJson($v4)`,
 {}`,
     // response mapping template
     `#if($context.stash.return__flag)
-  #return($context.stash.return__val)
+#return($context.stash.return__val)
 #end`
   ));
 
@@ -74,7 +74,7 @@ test("get item and set consistentRead:true", () =>
     // pipeline's request mapping template
     "{}",
     // function's request mapping template
-    `${VTL.CircuitBreaker}
+    `${AppsyncVTL.CircuitBreaker}
 #set($v1 = {})
 #set($v2 = {})
 #set($v3 = {})
@@ -94,7 +94,7 @@ $util.toJson($v4)`,
 {}`,
     // pipeline's response mapping template
     `#if($context.stash.return__flag)
-  #return($context.stash.return__val)
+#return($context.stash.return__val)
 #end`
   ));
 
@@ -132,7 +132,7 @@ test("put item", () =>
     // pipeline's request mapping template
     "{}",
     // function's request mapping template
-    `${VTL.CircuitBreaker}
+    `${AppsyncVTL.CircuitBreaker}
 #set($v1 = {})
 #set($v2 = {})
 #set($v3 = {})
@@ -171,7 +171,7 @@ $util.toJson($v10)`,
 {}`,
     // pipeline's response mapping template
     `#if($context.stash.return__flag)
-  #return($context.stash.return__val)
+#return($context.stash.return__val)
 #end`
   ));
 
@@ -195,7 +195,7 @@ test("update item", () =>
     // pipeline's request mapping template
     "{}",
     // function's request mapping template
-    `${VTL.CircuitBreaker}
+    `${AppsyncVTL.CircuitBreaker}
 #set($v1 = {})
 #set($v2 = {})
 #set($v3 = {})
@@ -224,7 +224,7 @@ $util.toJson($v6)`,
 {}`,
     // pipeline's response mapping template
     `#if($context.stash.return__flag)
-  #return($context.stash.return__val)
+#return($context.stash.return__val)
 #end`
   ));
 
@@ -248,7 +248,7 @@ test("delete item", () =>
     // pipeline's request mapping template
     "{}",
     // function's request mapping template
-    `${VTL.CircuitBreaker}
+    `${AppsyncVTL.CircuitBreaker}
 #set($v1 = {})
 #set($v2 = {})
 #set($v3 = {})
@@ -276,7 +276,7 @@ $util.toJson($v6)`,
 {}`,
     // pipeline's response mapping template
     `#if($context.stash.return__flag)
-  #return($context.stash.return__val)
+#return($context.stash.return__val)
 #end`
   ));
 
@@ -299,7 +299,7 @@ test("query", () =>
     // pipeline's request mapping template
     "{}",
     // function's request mapping template
-    `${VTL.CircuitBreaker}
+    `${AppsyncVTL.CircuitBreaker}
 #set($v1 = {})
 #set($v2 = {})
 $util.qr($v2.put('expression', 'id = :id and #name = :val'))
@@ -338,6 +338,6 @@ $util.toJson($v5)`,
 {}`,
     // pipeline's response mapping template
     `#if($context.stash.return__flag)
-  #return($context.stash.return__val)
+#return($context.stash.return__val)
 #end`
   ));

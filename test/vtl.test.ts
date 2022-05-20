@@ -1,8 +1,7 @@
 import "jest";
-import { $util } from "../src";
-import { AppsyncContext } from "../src";
+import { $util, AppsyncContext } from "../src";
 import { reflect } from "../src/reflect";
-import { returnExpr, appsyncTestCase } from "./util";
+import { appsyncTestCase, returnExpr } from "./util";
 
 const payload = `{
   "version": "2018-05-29",
@@ -22,7 +21,10 @@ test("empty function returning an argument", () => {
 test("return literal object with values", () => {
   appsyncTestCase(
     reflect(
-      (context: AppsyncContext<{ arg: string; obj: Record<string, any> }>) => {
+      (
+        context: AppsyncContext<{ arg: string; obj: Record<string, any> }>,
+        _num: number
+      ) => {
         const arg = context.arguments.arg;
         const obj = context.arguments.obj;
         return {

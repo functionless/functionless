@@ -1,17 +1,17 @@
 import * as appsync from "@aws-cdk/aws-appsync-alpha";
 import { AppSyncResolverEvent } from "aws-lambda";
-import { CallExpr, Expr } from "./expression";
-import { VTL } from "./vtl";
+import { Construct } from "constructs";
 import {
   ToAttributeMap,
   ToAttributeValue,
 } from "typesafe-dynamodb/lib/attribute-value";
 import { FunctionDecl, isFunctionDecl } from "./declaration";
-import { Literal } from "./literal";
-import { Construct } from "constructs";
 import { isErr } from "./error";
+import { CallExpr, Expr } from "./expression";
 import { findDeepIntegration, IntegrationImpl } from "./integration";
+import { Literal } from "./literal";
 import { singletonConstruct } from "./util";
+import { AppsyncVTL, VTL } from "./vtl";
 
 /**
  * The shape of the AWS Appsync `$context` variable.
@@ -305,7 +305,9 @@ export class AppsyncResolver<
     ) {
       const templates: string[] = [];
       let template =
-        resolverCount === 0 ? new VTL() : new VTL(VTL.CircuitBreaker);
+        resolverCount === 0
+          ? new AppsyncVTL()
+          : new AppsyncVTL(AppsyncVTL.CircuitBreaker);
       const functions = decl.body.statements
         .map((stmt, i) => {
           const isLastExpr = i + 1 === decl.body.statements.length;
@@ -425,7 +427,7 @@ export class AppsyncResolver<
               const requestMappingTemplateString = template.toVTL();
               templates.push(requestMappingTemplateString);
               templates.push(responseMappingTemplate);
-              template = new VTL(VTL.CircuitBreaker);
+              template = new AppsyncVTL(AppsyncVTL.CircuitBreaker);
               const name = getUniqueName(
                 api,
                 appsyncSafeName(integration.kind)

@@ -1,15 +1,16 @@
-import ts from "typescript";
+import minimatch from "minimatch";
 import path from "path";
 import { PluginConfig, TransformerExtras } from "ts-patch";
-import { BinaryOp, CanReference } from "./expression";
-import { FunctionlessNode } from "./node";
+import ts from "typescript";
+import { ApiIntegration } from "./api";
 import { AppsyncResolver } from "./appsync";
 import { assertDefined } from "./assert";
-import { StepFunction, ExpressStepFunction } from "./step-function";
-import { hasParent } from "./util";
-import minimatch from "minimatch";
 import { EventBus, EventBusRule } from "./event-bridge";
 import { EventBusTransform } from "./event-bridge/transform";
+import { BinaryOp, CanReference } from "./expression";
+import { FunctionlessNode } from "./node";
+import { ExpressStepFunction, StepFunction } from "./step-function";
+import { hasParent } from "./util";
 
 export default compile;
 
@@ -93,6 +94,8 @@ export function compile(
         const visit = () => {
           if (isAppsyncResolver(node)) {
             return visitAppsyncResolver(node as ts.NewExpression);
+          } else if (isApiIntegration(node)) {
+            return visitApiIntegration(node as ts.NewExpression);
           } else if (isStepFunction(node)) {
             return visitStepFunction(node as ts.NewExpression);
           } else if (isReflectFunction(node)) {
@@ -136,6 +139,16 @@ export function compile(
           return isFunctionlessClassOfKind(
             node.expression,
             AppsyncResolver.FunctionlessType
+          );
+        }
+        return false;
+      }
+
+      function isApiIntegration(node: ts.Node): node is ts.NewExpression {
+        if (ts.isNewExpression(node)) {
+          return isFunctionlessClassOfKind(
+            node.expression,
+            ApiIntegration.FunctionlessType
           );
         }
         return false;
@@ -401,6 +414,23 @@ export function compile(
               call.expression,
               call.typeArguments,
               [errorBoundary(() => toFunction("FunctionDecl", impl, 1))]
+            );
+          }
+        }
+        return call;
+      }
+
+      // TODO: this is the same as above, combine them
+      // actually not quite, we don't drop args
+      function visitApiIntegration(call: ts.NewExpression): ts.Node {
+        if (call.arguments?.length === 1) {
+          const impl = call.arguments[0];
+          if (ts.isFunctionExpression(impl) || ts.isArrowFunction(impl)) {
+            return ts.factory.updateNewExpression(
+              call,
+              call.expression,
+              call.typeArguments,
+              [errorBoundary(() => toFunction("FunctionDecl", impl))]
             );
           }
         }

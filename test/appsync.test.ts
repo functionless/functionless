@@ -1,6 +1,6 @@
 import { Stack } from "aws-cdk-lib";
 import { AppsyncResolver, reflect, StepFunction } from "../src";
-import { VTL } from "../src/vtl";
+import { AppsyncVTL } from "../src/vtl";
 import {
   appsyncTestCase,
   appsyncVelocityJsonTestCase,
@@ -23,7 +23,7 @@ describe("step function integration", () => {
     appsyncTestCase(
       func,
       "{}",
-      `${VTL.CircuitBreaker}
+      `${AppsyncVTL.CircuitBreaker}
 #set($v1 = {})
 $util.qr($v1.put('stateMachineArn', '${machine.stateMachineArn}'))
 {
@@ -39,7 +39,7 @@ $util.qr($v1.put('stateMachineArn', '${machine.stateMachineArn}'))
   }
 }`,
       "{}",
-      VTL.CircuitBreaker
+      AppsyncVTL.CircuitBreaker
     );
 
     const templates = getAppSyncTemplates(func);
@@ -188,7 +188,7 @@ $util.qr($v1.put('stateMachineArn', '${machine.stateMachineArn}'))
     appsyncTestCase(
       func,
       "{}",
-      `${VTL.CircuitBreaker}
+      `${AppsyncVTL.CircuitBreaker}
 #set($context.stash.exec = 'exec1')
 {
   "version": "2018-05-29",
@@ -205,7 +205,7 @@ $util.qr($v1.put('stateMachineArn', '${machine.stateMachineArn}'))
   }
 }`,
       "{}",
-      VTL.CircuitBreaker
+      AppsyncVTL.CircuitBreaker
     );
 
     const templates = getAppSyncTemplates(func);
@@ -244,7 +244,7 @@ describe("step function describe execution", () => {
     appsyncTestCase(
       func,
       "{}",
-      `${VTL.CircuitBreaker}
+      `${AppsyncVTL.CircuitBreaker}
 {
   "version": "2018-05-29",
   "method": "POST",
@@ -260,7 +260,7 @@ describe("step function describe execution", () => {
   }
 }`,
       "{}",
-      VTL.CircuitBreaker
+      AppsyncVTL.CircuitBreaker
     );
 
     const templates = getAppSyncTemplates(func);

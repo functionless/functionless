@@ -1,9 +1,16 @@
-import { CallExpr, Expr, FunctionExpr } from "./expression";
-import { isInTopLevelScope } from "./util";
 import { assertNever, assertNodeKind } from "./assert";
+import {
+  CallExpr,
+  Expr,
+  FunctionExpr,
+  isBinaryExpr,
+  isIdentifier,
+  PropAccessExpr,
+} from "./expression";
+import { findIntegration } from "./integration";
 import { FunctionlessNode } from "./node";
 import { Stmt } from "./statement";
-import { findIntegration } from "./integration";
+import { isInTopLevelScope } from "./util";
 
 // https://velocity.apache.org/engine/devel/user-guide.html#conditionals
 // https://cwiki.apache.org/confluence/display/VELOCITY/CheckingForNull
@@ -13,13 +20,15 @@ export function isVTL(a: any): a is VTL {
   return (a as VTL | undefined)?.kind === VTL.ContextName;
 }
 
-export class VTL {
+interface EvalProps {
+  returnVar?: string;
+  continueVar?: boolean;
+}
+
+export abstract class VTL {
   static readonly ContextName = "Velocity Template";
 
   readonly kind = VTL.ContextName;
-  public static readonly CircuitBreaker = `#if($context.stash.return__flag)
-  #return($context.stash.return__val)
-#end`;
 
   private readonly statements: string[] = [];
 
@@ -28,6 +37,12 @@ export class VTL {
   constructor(...statements: string[]) {
     this.statements.push(...statements);
   }
+
+  public abstract stashVariable(name: string): string;
+  public abstract quiet(expr: string): void;
+  public abstract return(expr: string | Expr): void;
+  public abstract json(reference: string): string;
+  public abstract inputParamAccess(node: PropAccessExpr): string;
 
   public toVTL(): string {
     return this.statements.join("\n");
@@ -43,25 +58,6 @@ export class VTL {
 
   public str(value: string) {
     return `'${value}'`;
-  }
-
-  /**
-   * Converts a variable {@link reference} to JSON using the built-in `$util.toJson` intrinsic function.
-   *
-   * @param reference variable reference
-   * @returns VTL expression which yields a JSON string of the variable {@link reference}.
-   */
-  public json(reference: string): string {
-    return `$util.toJson(${reference})`;
-  }
-
-  /**
-   * Evaluates an {@link expr} with the `$util.qr` statement.
-   *
-   * @param expr expression string to evaluate quietly (i.e. without emitting to output) .
-   */
-  public qr(expr: string): void {
-    this.add(`$util.qr(${expr})`);
   }
 
   /**
@@ -99,11 +95,17 @@ export class VTL {
    * @param expr should be a quoted string or a variable that represents the value to set
    */
   public put(objVar: string, name: string, expr: string | Expr) {
-    this.qr(
-      `${objVar}.put(${name}, ${
-        typeof expr === "string" ? expr : this.eval(expr)
-      })`
-    );
+    let result;
+    if (typeof expr === "string") {
+      result = expr;
+    } else if (isBinaryExpr(expr)) {
+      // VTL has some weird behavior when using the `+` operator.
+      const tmp = this.var(expr);
+      result = tmp;
+    } else {
+      result = this.eval(expr);
+    }
+    this.quiet(`${objVar}.put(${name}, ${result})`);
   }
 
   /**
@@ -115,21 +117,7 @@ export class VTL {
    * @param expr should be a variable that represents an object to merge with the expression
    */
   public putAll(objVar: string, expr: Expr) {
-    this.qr(`${objVar}.putAll(${this.eval(expr)})`);
-  }
-
-  /**
-   * Evaluate and return an {@link expr}.
-   *
-   * @param expr expression to evaluate
-   * @returns a `#return` VTL expression.
-   */
-  public return(expr: string | Expr): void {
-    if (typeof expr === "string") {
-      this.add(`#return(${expr})`);
-    } else {
-      return this.return(this.eval(expr));
-    }
+    this.quiet(`${objVar}.putAll(${this.eval(expr)})`);
   }
 
   /**
@@ -157,9 +145,9 @@ export class VTL {
    * @param node the {@link Expr} or {@link Stmt} to evaluate.
    * @returns a variable reference to the evaluated value
    */
-  public eval(node?: Expr, returnVar?: string): string;
-  public eval(node: Stmt, returnVar?: string): void;
-  public eval(node?: FunctionlessNode, returnVar?: string): string | void {
+  public eval(node?: Expr, props?: EvalProps): string;
+  public eval(node: Stmt, props?: EvalProps): void;
+  public eval(node?: FunctionlessNode, props?: EvalProps): string | void {
     if (!node) {
       return "$null";
     }
@@ -175,11 +163,11 @@ export class VTL {
           const list = this.var("[]");
           for (const item of node.items) {
             if (item.kind === "SpreadElementExpr") {
-              this.qr(`${list}.addAll(${this.eval(item.expr)})`);
+              this.quiet(`${list}.addAll(${this.eval(item.expr)})`);
             } else {
               // we use addAll because `list.push(item)` is pared as `list.push(...[item])`
               // - i.e. the compiler passes us an ArrayLiteralExpr even if there is one arg
-              this.qr(`${list}.add(${this.eval(item)})`);
+              this.quiet(`${list}.add(${this.eval(item)})`);
             }
           }
           return list;
@@ -226,7 +214,7 @@ export class VTL {
               (firstVariable, list) => {
                 this.add(`#foreach(${firstVariable} in ${list})`);
               },
-              // If array is present, do not flatten the map, this option immediatly evaluates the next expression
+              // If array is present, do not flatten the map, this option immediately evaluates the next expression
               !!array
             );
 
@@ -242,7 +230,7 @@ export class VTL {
 
             // Add the final value to the array
             if (node.expr.name === "map") {
-              this.qr(`${newList}.add(${tmp})`);
+              this.quiet(`${newList}.add(${tmp})`);
             }
 
             this.add("#end");
@@ -272,7 +260,7 @@ export class VTL {
               : undefined;
 
             // create a new local variable name to hold the initial/previous value
-            // this is becaue previousValue may not be unique and isn't contained within the loop
+            // this is because previousValue may not be unique and isn't contained within the loop
             const previousTmp = this.newLocalVarName();
 
             const list = this.flattenListMapOperations(
@@ -291,7 +279,7 @@ export class VTL {
 
                 this.add(`#foreach(${firstVariable} in ${list})`);
               },
-              // If array is present, do not flatten maps before the reduce, this option immediatly evaluates the next expression
+              // If array is present, do not flatten maps before the reduce, this option immediately evaluates the next expression
               !!array
             );
 
@@ -307,7 +295,7 @@ export class VTL {
               this.set(previousValue, previousTmp);
               const tmp = this.newLocalVarName();
               for (const stmt of fn.body.statements) {
-                this.eval(stmt, tmp);
+                this.eval(stmt, { returnVar: tmp });
               }
               // set the previous temp to be used later
               this.set(previousTmp, `${tmp}`);
@@ -353,7 +341,7 @@ export class VTL {
         return undefined;
       }
       case "ExprStmt":
-        return this.qr(this.eval(node.expr));
+        return this.quiet(this.eval(node.expr));
       case "ForOfStmt":
       case "ForInStmt":
         this.add(
@@ -371,13 +359,7 @@ export class VTL {
       case "Identifier": {
         const ref = node.lookup();
         if (ref?.kind === "VariableStmt" && isInTopLevelScope(ref)) {
-          return `$context.stash.${node.name}`;
-        } else if (
-          ref?.kind === "ParameterDecl" &&
-          ref.parent?.kind === "FunctionDecl"
-        ) {
-          // regardless of the name of the first argument in the root FunctionDecl, it is always the intrinsic Appsync `$context`.
-          return "$context";
+          return this.stashVariable(node.name);
         }
         if (node.name.startsWith("$")) {
           return node.name;
@@ -394,7 +376,12 @@ export class VTL {
           // addAll because the var-args are converted to an ArrayLiteralExpr
           name = "addAll";
         }
-        return `${this.eval(node.expr)}.${name}`;
+
+        if (!props?.continueVar && descendedFromFunctionParameter(node)) {
+          return this.inputParamAccess(node);
+        }
+
+        return `${this.eval(node.expr, props)}.${name}`;
       }
       case "ElementAccessExpr":
         return `${this.eval(node.expr)}[${this.eval(node.element)}]`;
@@ -427,12 +414,15 @@ export class VTL {
       case "ReferenceExpr":
         throw new Error(`cannot evaluate Expr kind: '${node.kind}'`);
       case "ReturnStmt":
-        if (returnVar) {
-          this.set(returnVar, node.expr ?? "$null");
+        if (props?.returnVar) {
+          this.set(props.returnVar, node.expr ?? "$null");
         } else {
-          this.set("$context.stash.return__val", node.expr ?? "$null");
-          this.add("#set($context.stash.return__flag = true)");
-          this.add(`#return($context.stash.return__val)`);
+          this.set(this.stashVariable("return__val"), node.expr ?? "$null");
+          // this.set("$context.stash.return__val", node.expr ?? "$null");
+          this.add(`#set(${this.stashVariable("return__flag")} = true)`);
+          // this.add("#set($context.stash.return__flag = true)");
+          this.return(this.stashVariable("return__val"));
+          // this.add(`#return($context.stash.return__val)`);
         }
         return undefined;
       case "SpreadAssignExpr":
@@ -447,7 +437,7 @@ export class VTL {
             if (expr.kind === "StringLiteralExpr") {
               return expr.value;
             }
-            const text = this.eval(expr, returnVar);
+            const text = this.eval(expr, props);
             if (text.startsWith("$")) {
               return `\${${text.slice(1)}}`;
             } else {
@@ -460,7 +450,7 @@ export class VTL {
         return `${node.op} ${this.eval(node.expr)}`;
       case "VariableStmt":
         const varName = isInTopLevelScope(node)
-          ? `$context.stash.${node.name}`
+          ? this.stashVariable(node.name)
           : `$${node.name}`;
 
         if (node.expr) {
@@ -482,8 +472,6 @@ export class VTL {
       case "Argument":
         return this.eval(node.expr);
     }
-
-    return assertNever(node);
   }
 
   /**
@@ -522,14 +510,14 @@ export class VTL {
     const tmp = returnVariable ? returnVariable : this.newLocalVarName();
 
     for (const stmt of fn.body.statements) {
-      this.eval(stmt, tmp);
+      this.eval(stmt, { returnVar: tmp });
     }
 
     return tmp;
   }
 
   /**
-   * Recursively flattens map operations until a non-map or a map with `array` paremeter is found.
+   * Recursively flattens map operations until a non-map or a map with `array` parameter is found.
    * Evaluates the expression after the last map.
    *
    * @param before a method which executes once the
@@ -584,4 +572,82 @@ const getMapForEachArgs = (call: CallExpr) => {
     "FunctionExpr"
   );
   return fn.parameters.map((p) => (p.name ? `$${p.name}` : p.name));
+};
+
+export class AppsyncVTL extends VTL {
+  public static readonly CircuitBreaker = `#if($context.stash.return__flag)
+#return($context.stash.return__val)
+#end`;
+
+  public stashVariable(name: string): string {
+    return `$context.stash.${name}`;
+  }
+
+  public quiet(expr: string): void {
+    this.add(`$util.qr(${expr})`);
+  }
+
+  public return(expr: string | Expr): void {
+    if (typeof expr === "string") {
+      this.add(`#return(${expr})`);
+    } else {
+      return this.return(this.eval(expr));
+    }
+  }
+
+  public json(reference: string): string {
+    return `$util.toJson(${reference})`;
+  }
+
+  public inputParamAccess(_node: PropAccessExpr): string {
+    const x = this.eval(_node, { continueVar: true });
+
+    return `$context.${x.slice(x.indexOf(".") + 1)}`;
+  }
+}
+
+export class ApiGWVTL extends VTL {
+  public stashVariable(name: string): string {
+    return `$context.requestOverride.path.stash.${name}`;
+  }
+
+  public quiet(expr: string): void {
+    this.add(`#set($discard = ${expr})`);
+  }
+
+  public return(expr: string | Expr): void {
+    if (typeof expr === "string") {
+      this.add(expr);
+    } else {
+      return this.return(this.eval(expr));
+    }
+  }
+
+  public json(_reference: string): string {
+    throw new Error("Method not implemented.");
+  }
+
+  public inputParamAccess(node: PropAccessExpr): string {
+    const param = `$input.params('${node.name}')`;
+
+    // TODO: boolean too?
+    if (node.type === "number") {
+      return `$Integer.parseInt(${param})`;
+    }
+
+    return param;
+  }
+}
+
+const isFunctionParameter = (node: FunctionlessNode) => {
+  if (!isIdentifier(node)) return false;
+  const ref = node.lookup();
+  return ref?.kind === "ParameterDecl" && ref.parent?.kind === "FunctionDecl";
+};
+
+const descendedFromFunctionParameter = (node: PropAccessExpr): boolean => {
+  if (isFunctionParameter(node.expr)) return true;
+  if (node.expr.kind === "PropAccessExpr")
+    return descendedFromFunctionParameter(node.expr);
+  return false;
 };
