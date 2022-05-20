@@ -1,5 +1,5 @@
 ---
-sidebar_position: 3
+sidebar_position: 1
 ---
 
 # Usage
@@ -16,6 +16,16 @@ Instantiate the Construct and provide the implementation as a function.
 
 ```ts
 new StepFunction(scope, "StepFunction", () => {
+  return "hello world";
+});
+```
+
+## Input Argument
+
+The function can only accept a single argument and it must be an object (key-value pairs). It must be an object because the input is used as the initial state of the state machine.
+
+```ts
+new StepFunction(scope, "StepFunction", (input: { key: string }) => {
   return "hello world";
 });
 ```
@@ -52,19 +62,7 @@ This code is translated into an [Amazon States Language (ASL)](https://states-la
 }
 ```
 
-Due to limitations in ASL, only a subset of TypeScript syntax is supported - read the [Syntax](./syntax.md) documentation for a detailed guide on the allowed syntax and how it translates to ASL.
-
-## Input Argument
-
-The function can only accept a single argument and it must be an object (key-value pairs).
-
-```ts
-new StepFunction(scope, "StepFunction", (input: { key: string }) => {
-  return "hello world";
-});
-```
-
-It must be an object because the input is used as the initial state of the state machine.
+Due to limitations in ASL, only a subset of TypeScript syntax is supported. Read the [Syntax](./syntax.md) documentation for a detailed guide on the allowed syntax and how it translates to ASL.
 
 ## Intrinsic Functions
 
@@ -72,48 +70,13 @@ The `$SFN` object provides intrinsic functions that can be called from within a 
 
 ```ts
 import { $SFN } from "functionless";
+
+new StepFunction(scope, "WaitOneSecond", () => {
+  $SFN.waitFor(1);
+});
 ```
 
-### waitFor
-
-Wait for an amount of time in seconds.
-
-```ts
-$SFN.waitFor(100);
-$SFN.waitFor(seconds);
-```
-
-### waitUntil
-
-Wait until a specific timestamp.
-
-```ts
-$SFN.waitUntil("2022-01-01T00:00");
-$SFN.waitUntil(timestamp);
-```
-
-### map
-
-Map over an array of items with configurable parallelism.
-
-```ts
-$SFN.map(list, item => ..);
-$SFN.map(list, {
-  // configure maximum concurrently processing jobs
-  maxConcurrency: 2
-}, item => ..);
-```
-
-### parallel
-
-Run one or more parallel threads.
-
-```ts
-$SFN.parallel(
-  () => taskA(),
-  () => taskB()
-);
-```
+Refer to the [Intrinsic Functions](./intrinsic-functions.md) documentation for a detailed guide.
 
 ## AWS SDK Integrations
 
@@ -143,6 +106,8 @@ A `StepFunction` can be called directly from an [Integration](../integration.md)
 
 ### From a Function, StepFunction or AppsyncResolver
 
+Calling a Step Function from a Lambda `Function`, `StepFunction` or `AppsyncResolver` are all achieved with a simple function call.
+
 ```ts
 const myStepFunc = new StepFunction(scope, "id", (input: {name: string}) => { .. });
 
@@ -161,7 +126,7 @@ The first argument is passed to the Step Function as the initial state.
 
 ### Pipe Events from an EventBus
 
-Events from an [`EventBus`](../event-bridge/event-bus.md) can be `pipe`ed to a `StepFunction` using the `.pipe` function.
+Events from an [`EventBus`](../event-bridge/event-bus.md) can be `pipe`ed to a `StepFunction` using the `.pipe` function. Event Bus will trigger an asynchronous execution of the state machine for every event that matches the rule.
 
 ```ts
 const events = new EventBus<PersonEvent>(scope, "PersonEvents");

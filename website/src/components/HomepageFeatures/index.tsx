@@ -86,15 +86,14 @@ function CodePreview(props: { title: string; code: string }) {
   return (
     <div className="row">
       <div className="col col--12 padding-top--lg">
-        <h4
+        <h3
           style={{
             textAlign: "center",
             width: "100%",
           }}
         >
-          {" "}
           {props.title}
-        </h4>
+        </h3>
       </div>
       <div className="col col--12">
         <Code code={props.code} />
