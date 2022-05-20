@@ -1,35 +1,93 @@
 ---
-sidebar_position: 2
+sidebar_position: 1
 ---
 
 # Event Bus
 
-Functionless makes using Event Bridge easy by leveraging typescript instead of AWS Event Bridge's proprietary logic and transform configuration.
+An `EventBus` ingests and routes events throughout your application. Events can come from and be sent to any service, including AWS services or non-AWS SaaS such as Slack, Stripe, etc.
 
-Event Bridge can:
+## Create an EventBus
 
-- Create Rules (`EventBusRule`) on a Event Bus to match incoming events.
-- Transform the event before sending to some services like `Lambda` Functions.
-- Target other AWS services like Lambda and other Event Buses
-- Put events from other services
-
-Functionless uses a wrapped version of CDK's Event Bus, lets create a CDK event bus first.
+Import the `EventBus` Construct and instantiate it.
 
 ```ts
-// Create a new Event Bus using CDK.
-const bus = new functionless.EventBus(this, "myBus");
+import { EventBus } from "functionless";
 
-// Functionless also supports using the default bus or importing an Event Bus.
-const awsBus = functionless.EventBus.fromBus(
-  new aws_events.EventBus(this, "awsBus")
-);
-const defaultBus = functionless.EventBus.fromBus(
-  aws_events.EventBus.fromEventBusName(this, "defaultBus", "default")
-);
-const importedBus = functionless.EventBus.fromBus(
-  aws_events.EventBus.fromEventBusArn(this, "defaultBus", arn)
+const bus = new EventBus(scope, "Bus");
+```
+
+## Declare the types of Events
+
+It is recommended to declare types for each of the event types flowing through an `EventBus`.
+
+First, declare an `interface` representing an Event's payload.
+
+```ts
+interface UserDetails {
+  id?: string;
+  name: string;
+  age: number;
+  interests: string[];
+}
+```
+
+Then, declare an `interface` for the Event's envelope - i.e. the shape of the data
+
+```ts
+interface UserEvent
+  extends functionless.EventBusRuleInput<
+    UserDetails,
+    // We can provide custom detail-types to match on
+    "Create" | "Update" | "Delete"
+  > {}
+```
+
+## Filter Events with an EventBusRule
+
+An `EventBusRule` filters events flowing through an `EventBus` using some conditional expression.
+
+```ts
+const onSignUp = bus.when(
+  scope,
+  "OnSignUp",
+  (event) => event["detail-type"] === "SignUp"
 );
 ```
+
+See the [Syntax Guide for Event Patterns](./syntax.md#event-patterns) documentation for a detailed reference on the syntax supported within an `EventBusRule`.
+
+## Transform an Event
+
+The `map` function can be applied to an `EventBusRule` to transform the structure of the event before integration.
+
+```ts
+const onSignUpTransformed = onSignUp.map((event) => ({
+  type: "SignUp",
+  ...event,
+}));
+```
+
+See the [Syntax Guide for Event Transforms](./syntax.md#event-transforms) documentation for a detailed reference on the syntax supported within an `EventBusTransform`.
+
+## Pipe an Event to an Integration
+
+The `pipe` function can be applied to an `EventBusRule` or `EventBusTransform` to send events on to an Integration, such as a Lambda `Function`, `StepFunction` or another `EventBus`.
+
+```ts
+const processSignUpEvent = new Function(
+  scope,
+  "ProcessSignUp",
+  async (event: OnSignUp) => {
+    await table.putItem({
+      item: event,
+    });
+  }
+);
+
+onSignUp.pipe(processSignUpEvent);
+```
+
+## Declare an Event Type
 
 Functionless supports well typed events, lets add our event schema to Typescript.
 
@@ -49,7 +107,7 @@ interface UserEvent
   > {}
 ```
 
-#### Create Rules (`EventBusRule`) on a Event Bus to match incoming events.
+## Create an EventBusRule
 
 Now that you have a wrapped `EventBus`, lets add some rules.
 
@@ -90,7 +148,7 @@ Rules can be further refined by calling `when` on a Functionless `EventBusRule`.
 catPeopleEvents.when((event) => !event.detail.interests.includes("DOGS"));
 ```
 
-#### Transform the event before sending to some services like `Lambda` Functions.
+## Transform the event before sending to some services like `Lambda` Functions.
 
 We have two lambda functions to invoke, one for create or updates and another for deletes, lets make those.
 
@@ -137,7 +195,7 @@ const deleteEventsTransformed = createOrUpdateEvents.map<Delete>((event) => ({
 }));
 ```
 
-#### Target other AWS services like Lambda and other Event Buses
+## Target other AWS services like Lambda and other Event Buses
 
 Now that we have created rules on our event buses using `when` and transformed those matched events using `map`, we need to send the events somewhere.
 
@@ -159,7 +217,7 @@ const catPeopleBus = functionless.EventBus.fromBus(
 catPeopleEvents.pipe(catPeopleBus);
 ```
 
-#### Put Events from other sources
+## Put Events from other sources
 
 Event Bridge Put Events API is one of the methods for putting new events on an event bus. We support some first party integrations between services and event bus.
 
@@ -185,7 +243,7 @@ This will create a step function which sends an event. It is also possible to se
 
 > Limit: It is not currently possible to dynamically generate different numbers of events. All events sent must start from objects in the form `{ detail: ..., source: ... }` where all fields are optional.
 
-#### Summary
+## Summary
 
 Lets look at the above all together.
 
@@ -267,4 +325,24 @@ bus
       aws_events.EventBus.fromEventBusArn(this, "catTeamBus", catBusArn)
     )
   );
+```
+
+## Adapt a CDK aws_events.EventBus
+
+Functionless uses a wrapped version of CDK's Event Bus, lets create a CDK event bus first.
+
+```ts
+// Create a new Event Bus using CDK.
+const bus = new functionless.EventBus(this, "myBus");
+
+// Functionless also supports using the default bus or importing an Event Bus.
+const awsBus = functionless.EventBus.fromBus(
+  new aws_events.EventBus(this, "awsBus")
+);
+const defaultBus = functionless.EventBus.fromBus(
+  aws_events.EventBus.fromEventBusName(this, "defaultBus", "default")
+);
+const importedBus = functionless.EventBus.fromBus(
+  aws_events.EventBus.fromEventBusArn(this, "defaultBus", arn)
+);
 ```
