@@ -608,3 +608,15 @@ test("$util.time.nowISO8601", () =>
     payload,
     "#return($util.time.nowISO8601())"
   ));
+
+test("putting a BinaryExpr into an object creates a temp variable", () =>
+  appsyncTestCase(
+    reflect(() => {
+      return { x: 1 + 1 };
+    }),
+    payload,
+    `#set($v1 = {})
+#set($v2 = 1 + 1)
+$util.qr($v1.put('x', $v2))
+#return($v1)`
+  ));
