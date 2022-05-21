@@ -31,6 +31,7 @@ jspm_packages/
 .yarn-integrity
 .cache
 .DS_Store
+.dccache
 !/.projenrc.js
 /test-reports/
 junit.xml
