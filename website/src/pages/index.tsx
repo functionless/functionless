@@ -19,13 +19,12 @@ function HomepageHeader() {
   return (
     <header className={clsx("hero hero--primary", styles.heroBanner)}>
       <div className="container">
-        <h1 className="hero__title col col--6 col--offset-3">
-          The Typesafe Cloud
-        </h1>
+        <h1 className="hero__title">No-Ops Cloud Programming</h1>
 
         <p className="hero__subtitle col col--6 col--offset-3">
-          A library of strongly typed <b>Constructs</b> for building cloud
-          applications with minimal effort.
+          Functionless is a cloud compiler and library of typesafe{" "}
+          <b>Constructs</b> for building high scale serverless applications with
+          minimal operational responsibility.
         </p>
 
         <div className="row">

@@ -1,6 +1,6 @@
 # Event Bridge
 
-Functionless makes the development of Event Driven Architectures (EDA) simple with its typesafe fluent API for AWS Event Bridge.
+Functionless simplifies development of Event Driven Architectures (EDA) with a typesafe and fluent API for AWS Event Bridge.
 
 ```ts
 const bus = new EventBus<SignUpEvent, CheckoutEvent>();
@@ -22,7 +22,7 @@ To jump right into building, see the [`EventBus`](./event-bus.md) documentation.
 
 ## What is AWS Event Bridge?
 
-[AWS Event Bridge](https://aws.amazon.com/eventbridge/) is a fully managed pub-sub service capable of ingesting an arbitrary number of events from upstream services, (optionally) filtering and transforming them before (finally) forwarding them to downstream services. Event Bridge enables the development of more scalable systems by de-coupling the producer of an event from its consumers(s). It is a highly managed service, capable of arbitrary scale and is configured declaratively with pure JSON documents - so there is no runtime code for the developer to maintain.
+[AWS Event Bridge](https://aws.amazon.com/eventbridge/) is a fully managed pub-sub service capable of ingesting an arbitrary number of events from upstream services, (optionally) filtering and transforming them, before (finally) forwarding them to downstream services. Event Bridge enables the development of more scalable systems by de-coupling the producer of an event from its consumers(s). It is a highly managed service, capable of arbitrary scale and is configured declaratively with pure JSON documents - so there is no runtime code for the developer to maintain.
 
 ## How it works
 
