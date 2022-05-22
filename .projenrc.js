@@ -99,6 +99,7 @@ const project = new CustomTypescriptProject({
   ],
   scripts: {
     localstack: "./scripts/localstack",
+    "build:website": "cd ./website && yarn && yarn build",
   },
   peerDeps: [
     `aws-cdk-lib@^${MIN_CDK_VERSION}`,
@@ -128,7 +129,7 @@ const project = new CustomTypescriptProject({
       ],
     },
   },
-  gitignore: [".DS_Store"],
+  gitignore: [".DS_Store", ".dccache"],
   releaseToNpm: true,
   jestOptions: {
     jestConfig: {
@@ -140,7 +141,7 @@ const project = new CustomTypescriptProject({
 const packageJson = project.tryFindObjectFile("package.json");
 
 packageJson.addOverride("lint-staged", {
-  "*.{ts,js,json}": "prettier --write",
+  "*.{tsx,jsx,ts,js,json,md,css}": "prettier --write",
 });
 
 project.compileTask.prependExec(
