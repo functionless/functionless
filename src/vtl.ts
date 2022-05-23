@@ -1,4 +1,4 @@
-import { CallExpr, Expr, FunctionExpr } from "./expression";
+import { CallExpr, Expr, FunctionExpr, isBinaryExpr } from "./expression";
 import { isInTopLevelScope } from "./util";
 import { assertNever, assertNodeKind } from "./assert";
 import { FunctionlessNode } from "./node";
@@ -99,11 +99,19 @@ export class VTL {
    * @param expr should be a quoted string or a variable that represents the value to set
    */
   public put(objVar: string, name: string, expr: string | Expr) {
-    this.qr(
-      `${objVar}.put(${name}, ${
-        typeof expr === "string" ? expr : this.eval(expr)
-      })`
-    );
+    let result;
+    if (typeof expr === "string") {
+      result = expr;
+    } else if (isBinaryExpr(expr)) {
+      // VTL evaluation fails when putting a binary expression into a variable,
+      // e.g. $obj.put("name", 1 + 1)
+      // a workaround is to evaluate the binary to a temporary variable first
+      const tmp = this.var(expr);
+      result = tmp;
+    } else {
+      result = this.eval(expr);
+    }
+    this.qr(`${objVar}.put(${name}, ${result})`);
   }
 
   /**
