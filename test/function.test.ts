@@ -71,7 +71,8 @@ $util.toJson($v1)`,
     `#if($context.stash.return__flag)
   #return($context.stash.return__val)
 #end
-#if($context.stash.result.id == 'sam')
+#set($v1 = $context.stash.result.id == 'sam')
+#if($v1)
 #set($context.stash.return__val = true)
 #set($context.stash.return__flag = true)
 #return($context.stash.return__val)

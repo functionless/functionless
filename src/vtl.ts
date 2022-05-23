@@ -1,4 +1,4 @@
-import { CallExpr, Expr, FunctionExpr, isBinaryExpr } from "./expression";
+import { CallExpr, Expr, FunctionExpr } from "./expression";
 import { isInTopLevelScope } from "./util";
 import { assertNever, assertNodeKind } from "./assert";
 import { FunctionlessNode } from "./node";
@@ -99,19 +99,11 @@ export class VTL {
    * @param expr should be a quoted string or a variable that represents the value to set
    */
   public put(objVar: string, name: string, expr: string | Expr) {
-    let result;
-    if (typeof expr === "string") {
-      result = expr;
-    } else if (isBinaryExpr(expr)) {
-      // VTL evaluation fails when putting a binary expression into a variable,
-      // e.g. $obj.put("name", 1 + 1)
-      // a workaround is to evaluate the binary to a temporary variable first
-      const tmp = this.var(expr);
-      result = tmp;
-    } else {
-      result = this.eval(expr);
-    }
-    this.qr(`${objVar}.put(${name}, ${result})`);
+    this.qr(
+      `${objVar}.put(${name}, ${
+        typeof expr === "string" ? expr : this.eval(expr)
+      })`
+    );
   }
 
   /**
@@ -193,9 +185,12 @@ export class VTL {
           return list;
         }
       }
-      case "BinaryExpr": {
-        return `${this.eval(node.left)} ${node.op} ${this.eval(node.right)}`;
-      }
+      case "BinaryExpr":
+        // VTL fails to evaluate binary expressions inside an object put e.g. $obj.put('x', 1 + 1)
+        // a workaround is to use a temp variable.
+        return this.var(
+          `${this.eval(node.left)} ${node.op} ${this.eval(node.right)}`
+        );
       case "BlockStmt":
         for (const stmt of node.statements) {
           this.eval(stmt);
@@ -465,7 +460,15 @@ export class VTL {
           })
           .join("")}"`;
       case "UnaryExpr":
-        return `${node.op} ${this.eval(node.expr)}`;
+        // VTL fails to evaluate unary expressions inside an object put e.g. $obj.put('x', -$v1)
+        // a workaround is to use a temp variable.
+        // it also doesn't handle like - signs alone (e.g. - $v1) so we have to put a 0 in front
+        // no such problem with ! signs though
+        if (node.op === "-") {
+          return this.var(`0 - ${this.eval(node.expr)}`);
+        } else {
+          return this.var(`${node.op}${this.eval(node.expr)}`);
+        }
       case "VariableStmt":
         const varName = isInTopLevelScope(node)
           ? `$context.stash.${node.name}`

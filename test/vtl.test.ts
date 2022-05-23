@@ -71,11 +71,12 @@ test("computed property names", () => {
     ),
     payload,
     `#set($context.stash.name = $context.arguments.arg)
-#set($context.stash.value = $context.stash.name + '_test')
-#set($v1 = {})
-$util.qr($v1.put($context.stash.name, $context.arguments.arg))
-$util.qr($v1.put($context.stash.value, $context.arguments.arg))
-#return($v1)`
+#set($v1 = $context.stash.name + '_test')
+#set($context.stash.value = $v1)
+#set($v2 = {})
+$util.qr($v2.put($context.stash.name, $context.arguments.arg))
+$util.qr($v2.put($context.stash.value, $context.arguments.arg))
+#return($v2)`
   );
 });
 
@@ -207,7 +208,8 @@ test("if statement", () => {
       }
     }),
     payload,
-    `#if($context.arguments.list.length > 0)
+    `#set($v1 = $context.arguments.list.length > 0)
+#if($v1)
 ${returnExpr("true")}
 #else
 ${returnExpr("false")}
@@ -221,7 +223,8 @@ test("return conditional expression", () => {
       return context.arguments.list.length > 0 ? true : false;
     }),
     payload,
-    `#if($context.arguments.list.length > 0)
+    `#set($v2 = $context.arguments.list.length > 0)
+#if($v2)
 #set($v1 = true)
 #else
 #set($v1 = false)
@@ -239,7 +242,8 @@ test("property assignment of conditional expression", () => {
     }),
     payload,
     `#set($v1 = {})
-#if($context.arguments.list.length > 0)
+#set($v3 = $context.arguments.list.length > 0)
+#if($v3)
 #set($v2 = true)
 #else
 #set($v2 = false)
@@ -282,7 +286,8 @@ test("break from for-loop", () => {
     payload,
     `#set($context.stash.newList = [])
 #foreach($item in $context.arguments.list)
-#if($item == 'hello')
+#set($v1 = $item == 'hello')
+#if($v1)
 #break
 #end
 $util.qr($context.stash.newList.addAll([$item]))
@@ -349,7 +354,8 @@ test("conditional expression in template expression", () => {
       }`;
     }),
     payload,
-    `#if($context.arguments.a == 'hello')
+    `#set($v2 = $context.arguments.a == 'hello')
+#if($v2)
 #set($v1 = 'world')
 #else
 #set($v1 = $context.arguments.a)
@@ -445,11 +451,12 @@ test("chain map over list complex", () =>
 #foreach($item in $context.arguments.list)
 #set($i = $foreach.index)
 #set($arr = $context.arguments.list)
-#set($x = $i + 1)
+#set($v2 = $i + 1)
+#set($x = $v2)
 #set($item2 = "hello \${item} \${x} \${arr.length}")
 #set($ii = $foreach.index)
-#set($v2 = "hello \${item2} \${ii}")
-$util.qr($v1.add($v2))
+#set($v3 = "hello \${item2} \${ii}")
+$util.qr($v1.add($v3))
 #end
 #return($v1)`
   ));
@@ -609,14 +616,24 @@ test("$util.time.nowISO8601", () =>
     "#return($util.time.nowISO8601())"
   ));
 
-test("putting a BinaryExpr into an object creates a temp variable", () =>
+test("BinaryExpr and UnaryExpr are evaluated to temporary variables", () =>
   appsyncTestCase(
     reflect(() => {
-      return { x: 1 + 1 };
+      return {
+        x: -1,
+        y: -(1 + 1),
+        z: !(true && false),
+      };
     }),
     payload,
     `#set($v1 = {})
-#set($v2 = 1 + 1)
+#set($v2 = 0 - 1)
 $util.qr($v1.put('x', $v2))
+#set($v3 = 1 + 1)
+#set($v4 = 0 - $v3)
+$util.qr($v1.put('y', $v4))
+#set($v5 = true && false)
+#set($v6 = !$v5)
+$util.qr($v1.put('z', $v6))
 #return($v1)`
   ));
