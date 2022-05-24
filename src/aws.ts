@@ -199,13 +199,13 @@ export namespace $AWS {
 
           const { TableName: table, AttributesToGet, ...rest } = input;
 
-          return await dynamo
-            .getItem({
-              ...rest,
-              AttributesToGet: AttributesToGet as any,
-              TableName: table.resource.tableName,
-            })
-            .promise();
+          const payload = {
+            ...rest,
+            AttributesToGet: AttributesToGet as any,
+            TableName: table.resource.tableName,
+          };
+
+          return await dynamo.getItem(payload).promise();
         },
         // Typesafe DynamoDB was causing a "excessive depth error"
       } as any,
@@ -252,7 +252,7 @@ export namespace $AWS {
     >("updateItem", {
       native: {
         bind: (context, table) => {
-          table.resource.grantReadWriteData(context.resource);
+          table.resource.grantWriteData(context.resource);
         },
         call: async (args, preWarmContext) => {
           const dynamo = preWarmContext.getOrInit<
@@ -301,7 +301,7 @@ export namespace $AWS {
     >("putItem", {
       native: {
         bind: (context, table) => {
-          table.resource.grantReadData(context.resource);
+          table.resource.grantWriteData(context.resource);
         },
         call: async (args, preWarmContext) => {
           const dynamo = preWarmContext.getOrInit<

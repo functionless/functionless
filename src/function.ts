@@ -1,8 +1,12 @@
 import {
   AssetHashType,
+  aws_dynamodb,
   aws_lambda,
+  CfnResource,
   DockerImage,
-  Lazy,
+  Resource,
+  TagManager,
+  Token,
   Tokenization,
 } from "aws-cdk-lib";
 import * as appsync from "@aws-cdk/aws-appsync-alpha";
@@ -341,8 +345,6 @@ export class CallbackLambdaCode extends aws_lambda.Code {
     const preWarmContext = new NativePreWarmContext(this.props);
     const func = this.func(preWarmContext);
 
-    const collect: any[] = [];
-
     const result = await runtime.serializeFunction(
       // factory function allows us to prewarm the clients and other context.
       () => {
@@ -352,7 +354,6 @@ export class CallbackLambdaCode extends aws_lambda.Code {
       {
         isFactoryFunction: true,
         serialize: (obj) => {
-          collect.push(obj);
           if (typeof obj === "string") {
             const reversed =
               Tokenization.reverse(obj, { failConcat: false }) ??
@@ -365,20 +366,82 @@ export class CallbackLambdaCode extends aws_lambda.Code {
               }
             }
           } else if (typeof obj === "object") {
-            if (obj instanceof Lazy) {
-              return false;
-            }
-          } else if (typeof obj === "function") {
-            if (obj.name === "produce") {
-              console.log(
-                collect[collect.length - 1],
-                collect[collect.length - 2],
-                collect[collect.length - 3],
-                collect[collect.length - 4],
-                collect[collect.length - 5]
-              );
-              return false;
-            }
+            /**
+             * Remove unnecessary fields from {@link CfnResource} that bloat or fail the closure serialization.
+             */
+            const transformCfnResource = (o: unknown): any => {
+              if (Resource.isResource(o as any)) {
+                const { node, stack, env, ...rest } = o as unknown as Resource;
+                return rest;
+              } else if (CfnResource.isCfnResource(o as any)) {
+                const {
+                  stack,
+                  node,
+                  creationStack,
+                  // don't need to serialize at runtime
+                  _toCloudFormation,
+                  // @ts-ignore - private - adds the tag manager, which we don't need
+                  cfnProperties,
+                  ...rest
+                } = transformTable(o as CfnResource);
+                return transformTaggableResource(rest);
+              } else if (Token.isUnresolved(o)) {
+                const token = (<any>o).toString();
+                // add to tokens to be turned into env variables.
+                tokens = [...tokens, token];
+                return token;
+              }
+              return o;
+            };
+
+            /**
+             * Remove unnecessary fields from {@link CfnTable} that bloat or fail the closure serialization.
+             */
+            const transformTable = (o: CfnResource): CfnResource => {
+              if (
+                o.cfnResourceType ===
+                aws_dynamodb.CfnTable.CFN_RESOURCE_TYPE_NAME
+              ) {
+                const table = o as aws_dynamodb.CfnTable;
+                if (!table.streamSpecification) {
+                  const { attrStreamArn, ...rest } = table;
+
+                  return rest as unknown as CfnResource;
+                }
+              }
+
+              return o;
+            };
+
+            /**
+             * CDK Tag manager bundles in ~200kb of junk we don't need at runtime,
+             */
+            const transformTaggableResource = (o: any) => {
+              if (TagManager.isTaggable(o)) {
+                const { tags, ...rest } = o;
+                return rest;
+              }
+              return o;
+            };
+
+            /**
+             * Remove unnecessary fields from {@link CfnTable} that bloat or fail the closure serialization.
+             */
+            const transformIntegration = (o: unknown): any => {
+              if (o && typeof o === "object" && "kind" in o) {
+                const integ = o as Integration;
+                const {
+                  appSyncVtl,
+                  asl,
+                  native: { call, preWarm } = {},
+                  ...rest
+                } = integ;
+                return { ...rest, native: { call, preWarm } };
+              }
+              return o;
+            };
+
+            return transformIntegration(transformCfnResource(obj));
           }
           return true;
         },
@@ -386,7 +449,10 @@ export class CallbackLambdaCode extends aws_lambda.Code {
     );
 
     const tokenContext = tokens.map((t) => {
-      const id = /\${Token\[TOKEN\.([0-9]*)\]}/g.exec(t)?.[1];
+      const id = /\${Token\[.*\.([0-9]*)\]}/g.exec(t)?.[1];
+      if (!id) {
+        throw Error("Unrecognized token format, no id found: " + t);
+      }
       return {
         id,
         token: t,
@@ -395,11 +461,23 @@ export class CallbackLambdaCode extends aws_lambda.Code {
       };
     });
 
+    // replace all tokens in the form "${Token[{anything}.{id}]}" -> process.env.env__functionless{id}
+    // this doesn't solve for tokens like "arn:${Token[{anything}.{id}]}:something" -> "arn:" + process.env.env__functionless{id} + ":something"
     const resultText = tokenContext.reduce(
       // TODO: support templated strings
       (r, t) => r.split(`"${t.token}"`).join(`process.env.${t.env}`),
       result.text
     );
+
+    // // find any strings that contain tokens
+    // const stringsWithQuotes = /["'`].*\${Token\[.*\.[0-9]*\]}.*['`"]/g.exec(
+    //   resultText
+    // );
+
+    // stringsWithQuotes?.reduce(
+    //   (r, s) => r.replace(s, s.replace(/(^['"]|['"]$)/g, "`")),
+    //   resultText
+    // );
 
     const asset = aws_lambda.Code.fromAsset("", {
       assetHashType: AssetHashType.OUTPUT,
@@ -510,26 +588,24 @@ export const PrewarmClients = {
   LAMBDA: {
     key: "LAMBDA",
     init: (key, props) =>
-      new (require("aws-sdk").Lambda(props?.clientConfigRetriever?.(key)))(),
+      new (require("aws-sdk").Lambda)(props?.clientConfigRetriever?.(key)),
   },
   EVENT_BRIDGE: {
     key: "EVENT_BRIDGE",
     init: (key, props) =>
-      new (require("aws-sdk").EventBridge(
-        props?.clientConfigRetriever?.(key)
-      ))(),
+      new (require("aws-sdk").EventBridge)(props?.clientConfigRetriever?.(key)),
   },
   STEP_FUNCTIONS: {
     key: "STEP_FUNCTIONS",
     init: (key, props) =>
-      new (require("aws-sdk").StepFunctions(
+      new (require("aws-sdk").StepFunctions)(
         props?.clientConfigRetriever?.(key)
-      ))(),
+      ),
   },
   DYNAMO: {
     key: "DYNAMO",
     init: (key, props) =>
-      new (require("aws-sdk").DynamoDB(props?.clientConfigRetriever?.(key)))(),
+      new (require("aws-sdk").DynamoDB)(props?.clientConfigRetriever?.(key)),
   },
 } as Record<ClientName, PrewarmClientInitializer<ClientName, any>>;
 

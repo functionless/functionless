@@ -10,7 +10,13 @@ import {
   Table,
 } from "../src";
 import { Lambda } from "aws-sdk";
-import { aws_dynamodb, aws_events, Stack, Token } from "aws-cdk-lib";
+import {
+  aws_dynamodb,
+  aws_events,
+  RemovalPolicy,
+  Stack,
+  Token,
+} from "aws-cdk-lib";
 import { Construct } from "constructs";
 
 const lambda = new Lambda(clientConfig);
@@ -462,7 +468,11 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
     (parent) => {
       const table = new Table<{ key: string }, "key">(
         new aws_dynamodb.Table(parent, "table", {
-          partitionKey: { name: "id", type: aws_dynamodb.AttributeType.STRING },
+          partitionKey: {
+            name: "key",
+            type: aws_dynamodb.AttributeType.STRING,
+          },
+          removalPolicy: RemovalPolicy.DESTROY,
         })
       );
       const putItem = $AWS.DynamoDB.PutItem;

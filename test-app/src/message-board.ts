@@ -455,17 +455,23 @@ new Function(
       },
     });
     console.log(deleteWorkflow.describeExecution(exc.executionArn));
-    $AWS.DynamoDB.GetItem({
+    $AWS.DynamoDB.PutItem({
       TableName: database,
-      Key: {
-        pk: {
-          S: "Post|",
+      Item: {
+        pk: { S: "Post|1" },
+        sk: { S: "Post" },
+        postId: {
+          S: "1",
         },
-        sk: {
-          S: "Post",
-        },
+        title: { S: "myPost" },
       },
     });
+    const item = $AWS.DynamoDB.GetItem({
+      TableName: database,
+      ConsistentRead: true,
+      Key: { pk: { S: "Post|1" }, sk: { S: "Post" } },
+    });
+    console.log(item.Item?.pk?.S);
     return exprSfn({});
     // return "hi";
   },
