@@ -1,8 +1,7 @@
 import "jest";
-import { $util } from "../src";
-import { AppsyncContext } from "../src";
+import { $util, AppsyncContext } from "../src";
 import { reflect } from "../src/reflect";
-import { returnExpr, appsyncTestCase } from "./util";
+import { appsyncTestCase, returnExpr } from "./util";
 
 const payload = `{
   "version": "2018-05-29",

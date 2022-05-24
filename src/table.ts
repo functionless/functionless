@@ -105,7 +105,7 @@ export class Table<
         const request = vtl.var(
           `{"operation": "GetItem", "version": "2018-05-29"}`
         );
-        vtl.qr(`${request}.put('key', ${input}.get('key'))`);
+        vtl.quiet(`${request}.put('key', ${input}.get('key'))`);
         addIfDefined(vtl, input, request, "consistentRead");
 
         return vtl.json(request);
@@ -149,8 +149,8 @@ export class Table<
         const request = vtl.var(
           `{"operation": "PutItem", "version": "2018-05-29"}`
         );
-        vtl.qr(`${request}.put('key', ${input}.get('key'))`);
-        vtl.qr(
+        vtl.quiet(`${request}.put('key', ${input}.get('key'))`);
+        vtl.quiet(
           `${request}.put('attributeValues', ${input}.get('attributeValues'))`
         );
         addIfDefined(vtl, input, request, "condition");
@@ -193,8 +193,8 @@ export class Table<
         const request = vtl.var(
           `{"operation": "UpdateItem", "version": "2018-05-29"}`
         );
-        vtl.qr(`${request}.put('key', ${input}.get('key'))`);
-        vtl.qr(`${request}.put('update', ${input}.get('update'))`);
+        vtl.quiet(`${request}.put('key', ${input}.get('key'))`);
+        vtl.quiet(`${request}.put('update', ${input}.get('update'))`);
         addIfDefined(vtl, input, request, "condition");
         addIfDefined(vtl, input, request, "_version");
 
@@ -233,7 +233,7 @@ export class Table<
         const request = vtl.var(
           `{"operation": "DeleteItem", "version": "2018-05-29"}`
         );
-        vtl.qr(`${request}.put('key', ${input}.get('key'))`);
+        vtl.quiet(`${request}.put('key', ${input}.get('key'))`);
         addIfDefined(vtl, input, request, "condition");
         addIfDefined(vtl, input, request, "_version");
 
@@ -273,7 +273,7 @@ export class Table<
         const request = vtl.var(
           `{"operation": "Query", "version": "2018-05-29"}`
         );
-        vtl.qr(`${request}.put('query', ${input}.get('query'))`);
+        vtl.quiet(`${request}.put('query', ${input}.get('query'))`);
         addIfDefined(vtl, input, request, "index");
         addIfDefined(vtl, input, request, "nextToken");
         addIfDefined(vtl, input, request, "limit");

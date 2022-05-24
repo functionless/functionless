@@ -18,7 +18,7 @@
       "type": "node",
       "request": "launch",
       "runtimeExecutable": "node",
-      "runtimeArgs": ["--nolazy"],
+      "runtimeArgs": ["--nolazy", "--enable-source-maps"],
       "args": ["./lib/app.js"],
       "outFiles": [
         "${workspaceRoot}/lib/**/*.js",
