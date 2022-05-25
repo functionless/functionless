@@ -71,10 +71,9 @@ class CustomTypescriptProject extends typescript.TypeScriptProject {
 const project = new CustomTypescriptProject({
   defaultReleaseBranch: "main",
   name: "functionless",
-  deps: ["fs-extra", "minimatch"],
+  deps: ["fs-extra", "minimatch", "@functionless/nodejs-closure-serializer"],
   devDeps: [
     `@aws-cdk/aws-appsync-alpha@${MIN_CDK_VERSION}-alpha.0`,
-    "@pulumi/pulumi",
     "@types/fs-extra",
     "@types/minimatch",
     "@types/uuid",

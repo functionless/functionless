@@ -22,7 +22,7 @@ import {
 } from "./declaration";
 import { Construct } from "constructs";
 import { AnyFunction } from "./util";
-import { runtime } from "@pulumi/pulumi";
+import { serializeFunction } from "@functionless/nodejs-closure-serializer";
 import path from "path";
 import fs from "fs";
 import { Err, isErr } from "./error";
@@ -345,7 +345,7 @@ export class CallbackLambdaCode extends aws_lambda.Code {
     const preWarmContext = new NativePreWarmContext(this.props);
     const func = this.func(preWarmContext);
 
-    const result = await runtime.serializeFunction(
+    const result = await serializeFunction(
       // factory function allows us to prewarm the clients and other context.
       () => {
         integrationPrewarms.forEach((i) => i?.(preWarmContext));
