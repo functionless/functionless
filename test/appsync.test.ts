@@ -7,11 +7,12 @@ import {
   getAppSyncTemplates,
 } from "./util";
 
+let stack: Stack;
+beforeEach(() => {
+  stack = new Stack();
+});
+
 describe("step function integration", () => {
-  let stack: Stack;
-  beforeEach(() => {
-    stack = new Stack();
-  });
   test("machine with no parameters", () => {
     const machine = new StepFunction(stack, "machine", () => {});
 
@@ -230,7 +231,9 @@ $util.qr($v1.put('stateMachineArn', '${machine.stateMachineArn}'))
       }
     );
   });
+});
 
+describe("step function describe execution", () => {
   test("machine describe exec string", () => {
     const machine = new StepFunction(stack, "machine", () => {});
 

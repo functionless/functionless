@@ -29,7 +29,9 @@ export function validate(
     ) {
       // assignment statement
       // TODO: check if the assignment references an expression in an illegal scope
+      // @ts-ignore
       const variable = checker.getSymbolAtLocation(node.expression.left);
+      // @ts-ignore
       const value = checker.getSymbolAtLocation(node.expression.right);
     }
 

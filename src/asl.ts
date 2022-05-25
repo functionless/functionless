@@ -35,7 +35,8 @@ import {
   VariableStmt,
   WhileStmt,
 } from "./statement";
-import { anyOf, findFunction } from "./util";
+import { anyOf } from "./util";
+import { findIntegration } from "./integration";
 import { FunctionDecl, isParameterDecl, isFunctionDecl } from "./declaration";
 import { FunctionlessNode } from "./node";
 import { visitEachChild } from "./visit";
@@ -381,7 +382,9 @@ export class ASL {
           });
 
           function isTask(node: FunctionlessNode): node is CallExpr {
-            return node.kind === "CallExpr" && findFunction(node) !== undefined;
+            return (
+              node.kind === "CallExpr" && findIntegration(node) !== undefined
+            );
           }
 
           if (nestedTasks.length > 0) {
@@ -836,27 +839,27 @@ export class ASL {
       props.End = true;
     }
     if (expr.kind === "CallExpr") {
-      const serviceCall = findFunction(expr);
+      const serviceCall = findIntegration(expr);
       if (serviceCall) {
         if (
           expr.expr.kind === "PropAccessExpr" &&
           (expr.expr.name === "waitFor" || expr.expr.name === "waitUntil")
         ) {
           delete (props as any).ResultPath;
-          return {
-            ...(serviceCall as any)(expr, this),
+          return <State>{
+            ...serviceCall.asl(expr, this),
             ...props,
           };
         }
 
-        const taskState = {
-          ...serviceCall(expr, this),
+        const taskState = <State>{
+          ...serviceCall.asl(expr, this),
           ...props,
         };
 
         const throwOrPass = this.throw(expr);
         if (throwOrPass?.Next) {
-          return {
+          return <State>{
             ...taskState,
             Catch: [
               {
@@ -1198,7 +1201,7 @@ function analyzeFlow(node: FunctionlessNode): FlowResult {
     .reduce(
       (a, b) => ({ ...a, ...b }),
       (node.kind === "CallExpr" &&
-        (findFunction(node) !== undefined || isMapOrForEach(node))) ||
+        (findIntegration(node) !== undefined || isMapOrForEach(node))) ||
         node.kind === "ForInStmt" ||
         node.kind === "ForOfStmt"
         ? { hasTask: true }
@@ -1448,7 +1451,7 @@ export namespace ASL {
           );
         }
       } else if (expr.kind === "StringLiteralExpr") {
-        return `'${expr.value.replace("'", "\\\\'")}'`;
+        return `'${expr.value.replace(/'/g, "\\'")}'`;
       } else if (
         expr.kind === "BooleanLiteralExpr" ||
         expr.kind === "NumberLiteralExpr" ||

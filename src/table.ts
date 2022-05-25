@@ -1,3 +1,4 @@
+import * as appsync from "@aws-cdk/aws-appsync-alpha";
 import { aws_dynamodb } from "aws-cdk-lib";
 import {
   NativeBinaryAttribute,
@@ -8,15 +9,16 @@ import {
   ExpressionAttributeValues,
 } from "typesafe-dynamodb/lib/expression-attributes";
 import { Narrow } from "typesafe-dynamodb/lib/narrow";
-import { isVTL, VTL } from "./vtl";
-import { CallExpr, ObjectLiteralExpr } from "./expression";
+import { VTL } from "./vtl";
+import { ObjectLiteralExpr } from "./expression";
 
 // @ts-ignore - imported for typedoc
-import type { AppsyncResolver } from "./appsync";
+import type { AppsyncResolver, AppSyncVtlIntegration } from "./appsync";
 import { TableKey } from "typesafe-dynamodb/lib/key";
 import { JsonFormat } from "typesafe-dynamodb";
-import { CallContext } from "./context";
 import { assertNodeKind } from "./assert";
+import { Integration, makeIntegration } from "./integration";
+import { AnyFunction } from "./util";
 
 export function isTable(a: any): a is AnyTable {
   return a?.kind === "Table";
@@ -77,204 +79,238 @@ export class Table<
   /**
    * @see https://docs.aws.amazon.com/appsync/latest/devguide/resolver-mapping-template-reference-dynamodb.html#aws-appsync-resolver-mapping-template-reference-dynamodb-getitem
    */
-  // @ts-ignore
-  public getItem<
-    Key extends TableKey<
-      Item,
-      PartitionKey,
-      RangeKey,
-      JsonFormat.AttributeValue
-    >
-  >(input: {
-    key: Key;
-    consistentRead?: boolean;
-  }): Narrow<Item, AttributeKeyToObject<Key>, JsonFormat.Document>;
 
-  public getItem(call: CallExpr, vtl: CallContext): any {
-    assertIsVTLContext(vtl, "getItem");
+  public getItem = this.makeTableIntegration<
+    <
+      Key extends TableKey<
+        Item,
+        PartitionKey,
+        RangeKey,
+        JsonFormat.AttributeValue
+      >
+    >(input: {
+      key: Key;
+      consistentRead?: boolean;
+    }) => Narrow<Item, AttributeKeyToObject<Key>, JsonFormat.Document>,
+    "getItem"
+  >("getItem", {
+    appSyncVtl: {
+      request(call, vtl) {
+        const input = vtl.eval(
+          assertNodeKind<ObjectLiteralExpr>(
+            call.getArgument("input")?.expr,
+            "ObjectLiteralExpr"
+          )
+        );
+        const request = vtl.var(
+          `{"operation": "GetItem", "version": "2018-05-29"}`
+        );
+        vtl.qr(`${request}.put('key', ${input}.get('key'))`);
+        addIfDefined(vtl, input, request, "consistentRead");
 
-    const input = vtl.eval(
-      assertNodeKind<ObjectLiteralExpr>(
-        call.getArgument("input")?.expr,
-        "ObjectLiteralExpr"
-      )
-    );
-    const request = vtl.var(
-      `{"operation": "GetItem", "version": "2018-05-29"}`
-    );
-    vtl.qr(`${request}.put('key', ${input}.get('key'))`);
-    addIfDefined(vtl, input, request, "consistentRead");
-
-    return vtl.json(request);
-  }
+        return vtl.json(request);
+      },
+    },
+  });
 
   /**
    * @see https://docs.aws.amazon.com/appsync/latest/devguide/resolver-mapping-template-reference-dynamodb.html#aws-appsync-resolver-mapping-template-reference-dynamodb-putitem
    */
-  // @ts-ignore
-  public putItem<
-    Key extends TableKey<
-      Item,
-      PartitionKey,
-      RangeKey,
-      JsonFormat.AttributeValue
-    >,
-    ConditionExpression extends string | undefined = undefined
-  >(input: {
-    key: Key;
-    attributeValues: ToAttributeMap<
-      Omit<
-        Narrow<Item, AttributeKeyToObject<Key>, JsonFormat.Document>,
-        Exclude<PartitionKey | RangeKey, undefined>
-      >
-    >;
-    condition?: DynamoExpression<ConditionExpression>;
-    _version?: number;
-  }): Narrow<Item, AttributeKeyToObject<Key>, JsonFormat.Document>;
+  public putItem = this.makeTableIntegration<
+    <
+      Key extends TableKey<
+        Item,
+        PartitionKey,
+        RangeKey,
+        JsonFormat.AttributeValue
+      >,
+      ConditionExpression extends string | undefined = undefined
+    >(input: {
+      key: Key;
+      attributeValues: ToAttributeMap<
+        Omit<
+          Narrow<Item, AttributeKeyToObject<Key>, JsonFormat.Document>,
+          Exclude<PartitionKey | RangeKey, undefined>
+        >
+      >;
+      condition?: DynamoExpression<ConditionExpression>;
+      _version?: number;
+    }) => Narrow<Item, AttributeKeyToObject<Key>, JsonFormat.Document>,
+    "putItem"
+  >("putItem", {
+    appSyncVtl: {
+      request: (call, vtl) => {
+        const input = vtl.eval(
+          assertNodeKind<ObjectLiteralExpr>(
+            call.getArgument("input")?.expr,
+            "ObjectLiteralExpr"
+          )
+        );
+        const request = vtl.var(
+          `{"operation": "PutItem", "version": "2018-05-29"}`
+        );
+        vtl.qr(`${request}.put('key', ${input}.get('key'))`);
+        vtl.qr(
+          `${request}.put('attributeValues', ${input}.get('attributeValues'))`
+        );
+        addIfDefined(vtl, input, request, "condition");
+        addIfDefined(vtl, input, request, "_version");
 
-  public putItem(call: CallExpr, vtl: CallContext): any {
-    assertIsVTLContext(vtl, "putItem");
-    const input = vtl.eval(
-      assertNodeKind<ObjectLiteralExpr>(
-        call.getArgument("input")?.expr,
-        "ObjectLiteralExpr"
-      )
-    );
-    const request = vtl.var(
-      `{"operation": "PutItem", "version": "2018-05-29"}`
-    );
-    vtl.qr(`${request}.put('key', ${input}.get('key'))`);
-    vtl.qr(
-      `${request}.put('attributeValues', ${input}.get('attributeValues'))`
-    );
-    addIfDefined(vtl, input, request, "condition");
-    addIfDefined(vtl, input, request, "_version");
-
-    return vtl.json(request);
-  }
+        return vtl.json(request);
+      },
+    },
+  });
 
   /**
    * @see https://docs.aws.amazon.com/appsync/latest/devguide/resolver-mapping-template-reference-dynamodb.html#aws-appsync-resolver-mapping-template-reference-dynamodb-updateitem
    */
-  // @ts-ignore
-  public updateItem<
-    Key extends TableKey<
-      Item,
-      PartitionKey,
-      RangeKey,
-      JsonFormat.AttributeValue
-    >,
-    UpdateExpression extends string,
-    ConditionExpression extends string | undefined
-  >(input: {
-    key: Key;
-    update: DynamoExpression<UpdateExpression>;
-    condition?: DynamoExpression<ConditionExpression>;
-    _version?: number;
-  }): Narrow<Item, AttributeKeyToObject<Key>, JsonFormat.Document>;
+  public updateItem = this.makeTableIntegration<
+    <
+      Key extends TableKey<
+        Item,
+        PartitionKey,
+        RangeKey,
+        JsonFormat.AttributeValue
+      >,
+      UpdateExpression extends string,
+      ConditionExpression extends string | undefined
+    >(input: {
+      key: Key;
+      update: DynamoExpression<UpdateExpression>;
+      condition?: DynamoExpression<ConditionExpression>;
+      _version?: number;
+    }) => Narrow<Item, AttributeKeyToObject<Key>, JsonFormat.Document>,
+    "updateItem"
+  >("updateItem", {
+    appSyncVtl: {
+      request: (call, vtl) => {
+        const input = vtl.eval(
+          assertNodeKind<ObjectLiteralExpr>(
+            call.getArgument("input")?.expr,
+            "ObjectLiteralExpr"
+          )
+        );
+        const request = vtl.var(
+          `{"operation": "UpdateItem", "version": "2018-05-29"}`
+        );
+        vtl.qr(`${request}.put('key', ${input}.get('key'))`);
+        vtl.qr(`${request}.put('update', ${input}.get('update'))`);
+        addIfDefined(vtl, input, request, "condition");
+        addIfDefined(vtl, input, request, "_version");
 
-  public updateItem(call: CallExpr, vtl: CallContext): any {
-    assertIsVTLContext(vtl, "updateItem");
-
-    const input = vtl.eval(
-      assertNodeKind<ObjectLiteralExpr>(
-        call.getArgument("input")?.expr,
-        "ObjectLiteralExpr"
-      )
-    );
-    const request = vtl.var(
-      `{"operation": "UpdateItem", "version": "2018-05-29"}`
-    );
-    vtl.qr(`${request}.put('key', ${input}.get('key'))`);
-    vtl.qr(`${request}.put('update', ${input}.get('update'))`);
-    addIfDefined(vtl, input, request, "condition");
-    addIfDefined(vtl, input, request, "_version");
-
-    return vtl.json(request);
-  }
+        return vtl.json(request);
+      },
+    },
+  });
 
   /**
    * @see https://docs.aws.amazon.com/appsync/latest/devguide/resolver-mapping-template-reference-dynamodb.html#aws-appsync-resolver-mapping-template-reference-dynamodb-deleteitem
    */
-  // @ts-ignore
-  public deleteItem<
-    Key extends TableKey<
-      Item,
-      PartitionKey,
-      RangeKey,
-      JsonFormat.AttributeValue
-    >,
-    ConditionExpression extends string | undefined
-  >(input: {
-    key: Key;
-    condition?: DynamoExpression<ConditionExpression>;
-    _version?: number;
-  }): Narrow<Item, AttributeKeyToObject<Key>, JsonFormat.Document>;
+  public deleteItem = this.makeTableIntegration<
+    <
+      Key extends TableKey<
+        Item,
+        PartitionKey,
+        RangeKey,
+        JsonFormat.AttributeValue
+      >,
+      ConditionExpression extends string | undefined
+    >(input: {
+      key: Key;
+      condition?: DynamoExpression<ConditionExpression>;
+      _version?: number;
+    }) => Narrow<Item, AttributeKeyToObject<Key>, JsonFormat.Document>,
+    "deleteItem"
+  >("deleteItem", {
+    appSyncVtl: {
+      request: (call, vtl) => {
+        const input = vtl.eval(
+          assertNodeKind<ObjectLiteralExpr>(
+            call.getArgument("input")?.expr,
+            "ObjectLiteralExpr"
+          )
+        );
+        const request = vtl.var(
+          `{"operation": "DeleteItem", "version": "2018-05-29"}`
+        );
+        vtl.qr(`${request}.put('key', ${input}.get('key'))`);
+        addIfDefined(vtl, input, request, "condition");
+        addIfDefined(vtl, input, request, "_version");
 
-  public deleteItem(call: CallExpr, vtl: VTL): any {
-    const input = vtl.eval(
-      assertNodeKind<ObjectLiteralExpr>(
-        call.getArgument("input")?.expr,
-        "ObjectLiteralExpr"
-      )
-    );
-    const request = vtl.var(
-      `{"operation": "DeleteItem", "version": "2018-05-29"}`
-    );
-    vtl.qr(`${request}.put('key', ${input}.get('key'))`);
-    addIfDefined(vtl, input, request, "condition");
-    addIfDefined(vtl, input, request, "_version");
-
-    return vtl.json(request);
-  }
+        return vtl.json(request);
+      },
+    },
+  });
 
   /**
    * @see https://docs.aws.amazon.com/appsync/latest/devguide/resolver-mapping-template-reference-dynamodb.html#aws-appsync-resolver-mapping-template-reference-dynamodb-query
    */
-  // @ts-ignore
-  public query<Query extends string, Filter extends string | undefined>(input: {
-    query: DynamoExpression<Query>;
-    filter?: DynamoExpression<Filter>;
-    index?: string;
-    nextToken?: string;
-    limit?: number;
-    scanIndexForward?: boolean;
-    consistentRead?: boolean;
-    select?: "ALL_ATTRIBUTES" | "ALL_PROJECTED_ATTRIBUTES";
-  }): {
-    items: Item[];
-    nextToken: string;
-    scannedCount: number;
-  };
+  public query = this.makeTableIntegration<
+    <Query extends string, Filter extends string | undefined>(input: {
+      query: DynamoExpression<Query>;
+      filter?: DynamoExpression<Filter>;
+      index?: string;
+      nextToken?: string;
+      limit?: number;
+      scanIndexForward?: boolean;
+      consistentRead?: boolean;
+      select?: "ALL_ATTRIBUTES" | "ALL_PROJECTED_ATTRIBUTES";
+    }) => {
+      items: Item[];
+      nextToken: string;
+      scannedCount: number;
+    },
+    "query"
+  >("query", {
+    appSyncVtl: {
+      request: (call, vtl) => {
+        const input = vtl.eval(
+          assertNodeKind<ObjectLiteralExpr>(
+            call.getArgument("input")?.expr,
+            "ObjectLiteralExpr"
+          )
+        );
+        const request = vtl.var(
+          `{"operation": "Query", "version": "2018-05-29"}`
+        );
+        vtl.qr(`${request}.put('query', ${input}.get('query'))`);
+        addIfDefined(vtl, input, request, "index");
+        addIfDefined(vtl, input, request, "nextToken");
+        addIfDefined(vtl, input, request, "limit");
+        addIfDefined(vtl, input, request, "scanIndexForward");
+        addIfDefined(vtl, input, request, "consistentRead");
+        addIfDefined(vtl, input, request, "select");
 
-  public query(call: CallExpr, vtl: VTL): any {
-    const input = vtl.eval(
-      assertNodeKind<ObjectLiteralExpr>(
-        call.getArgument("input")?.expr,
-        "ObjectLiteralExpr"
-      )
-    );
-    const request = vtl.var(`{"operation": "Query", "version": "2018-05-29"}`);
-    vtl.qr(`${request}.put('query', ${input}.get('query'))`);
-    addIfDefined(vtl, input, request, "index");
-    addIfDefined(vtl, input, request, "nextToken");
-    addIfDefined(vtl, input, request, "limit");
-    addIfDefined(vtl, input, request, "scanIndexForward");
-    addIfDefined(vtl, input, request, "consistentRead");
-    addIfDefined(vtl, input, request, "select");
+        return vtl.json(request);
+      },
+    },
+  });
 
-    return vtl.json(request);
-  }
-}
-
-function assertIsVTLContext(
-  context: CallContext,
-  methodName: string
-): asserts context is VTL {
-  if (!isVTL(context)) {
-    throw new Error(
-      `Table.${methodName} is only allowed within a '${VTL.ContextName}' context, but was called within a '${context.kind}' context.`
-    );
+  makeTableIntegration<F extends AnyFunction, K extends string>(
+    methodName: K,
+    integration: Omit<Integration, "kind" | "appSyncVtl"> & {
+      appSyncVtl: Omit<AppSyncVtlIntegration, "dataSource" | "dataSourceId">;
+    }
+  ): F {
+    return makeIntegration<F, `Table.${K}`>({
+      ...integration,
+      kind: `Table.${methodName}`,
+      appSyncVtl: {
+        dataSourceId: () => this.resource.node.addr,
+        dataSource: (api, dataSourceId) => {
+          return new appsync.DynamoDbDataSource(api, dataSourceId, {
+            api,
+            table: this.resource,
+          });
+        },
+        ...integration.appSyncVtl,
+      },
+      unhandledContext(kind, contextKind) {
+        throw new Error(
+          `${kind} is only allowed within a '${VTL.ContextName}' context, but was called within a '${contextKind}' context.`
+        );
+      },
+    });
   }
 }
 

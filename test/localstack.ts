@@ -1,0 +1,145 @@
+import { App, CfnOutput, Stack } from "aws-cdk-lib";
+import * as cxapi from "@aws-cdk/cx-api";
+import { CloudFormationDeployments } from "aws-cdk/lib/api/cloudformation-deployments";
+import { SdkProvider } from "aws-cdk/lib/api/aws-auth";
+import { Construct } from "constructs";
+import { CloudFormation } from "aws-sdk";
+
+export const clientConfig = {
+  endpoint: "http://localhost:4566",
+  credentials: {
+    accessKeyId: "test",
+    secretAccessKey: "test",
+  },
+  region: "us-east-1",
+  sslEnabled: false,
+  s3ForcePathStyle: true,
+};
+
+const CF = new CloudFormation(clientConfig);
+
+export const deployStack = async (app: App, stack: Stack) => {
+  const cloudAssembly = app.synth();
+
+  const sdkProvider = await SdkProvider.withAwsCliCompatibleDefaults({
+    httpOptions: clientConfig as any,
+  });
+
+  // @ts-ignore
+  sdkProvider.sdkOptions = {
+    // @ts-ignore
+    ...sdkProvider.sdkOptions,
+    endpoint: clientConfig.endpoint,
+    s3ForcePathStyle: clientConfig.s3ForcePathStyle,
+    accessKeyId: clientConfig.credentials.accessKeyId,
+    secretAccessKey: clientConfig.credentials.secretAccessKey,
+    credentials: clientConfig.credentials,
+  };
+
+  const cfn = new CloudFormationDeployments({
+    sdkProvider,
+  });
+
+  const assembly = new cxapi.CloudAssembly(cloudAssembly.directory);
+  const stackArtifact = cxapi.CloudFormationStackArtifact.fromManifest(
+    assembly,
+    stack.artifactId,
+    cloudAssembly.getStackArtifact(stack.artifactId).manifest
+  ) as cxapi.CloudFormationStackArtifact;
+
+  await cfn.deployStack({
+    stack: stackArtifact,
+    force: true,
+  });
+};
+
+interface ResourceReference<Outputs extends Record<string, string>> {
+  /**
+   * CDK references like arns are placed into CfnOutputs and returned to the test function as strings.
+   */
+  outputs: Outputs;
+}
+
+interface ResourceTest<
+  Outputs extends Record<string, string> = Record<string, string>
+> {
+  name: string;
+  resources: (parent: Construct) => ResourceReference<Outputs> | void;
+  test: (context: Outputs) => Promise<void>;
+}
+
+type TestResource = <
+  Outputs extends Record<string, string> = Record<string, string>
+>(
+  name: string,
+  resources: ResourceTest<Outputs>["resources"],
+  test: ResourceTest<Outputs>["test"]
+) => void;
+
+export const localstackTestSuite = (
+  stackName: string,
+  fn: (testResource: TestResource, stack: Stack) => void
+) => {
+  jest.setTimeout(500000);
+
+  const tests: ResourceTest[] = [];
+  // will be set in the before all
+  let testContexts: any[];
+
+  const app = new App();
+  const stack = new Stack(app, stackName, {
+    env: {
+      account: "000000000000",
+      region: "us-east-1",
+    },
+  });
+
+  let stackOutputs: CloudFormation.Outputs | undefined;
+
+  beforeAll(async () => {
+    testContexts = tests.map(({ resources }, i) => {
+      const construct = new Construct(stack, `parent${i}`);
+      const output = resources(construct);
+      // Place each output in a cfn output, encoded with the unique address of the construct
+      if (output) {
+        return Object.fromEntries(
+          Object.entries(output.outputs).map(([key, value]) => {
+            new CfnOutput(construct, `${key}_out}`, {
+              exportName: construct.node.addr + key,
+              value,
+            });
+
+            return [key, construct.node.addr + key];
+          })
+        );
+      }
+      return {};
+    });
+
+    await deployStack(app, stack);
+
+    stackOutputs = (
+      await CF.describeStacks({ StackName: stack.stackName }).promise()
+    ).Stacks?.[0].Outputs;
+  });
+
+  // register tests
+  fn((name, resources, test) => {
+    tests.push({ name, resources, test: test as any });
+  }, stack);
+
+  tests.forEach(({ name, test: testFunc }, i) => {
+    test(name, () => {
+      const context = testContexts[i];
+      const resolvedContext = Object.fromEntries(
+        Object.entries(context).map(([key, value]) => {
+          return [
+            key,
+            stackOutputs?.find((o) => o.ExportName === value)?.OutputValue!,
+          ];
+        })
+      );
+      return testFunc(resolvedContext);
+    });
+  });
+};

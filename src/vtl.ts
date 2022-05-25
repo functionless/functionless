@@ -1,8 +1,9 @@
 import { CallExpr, Expr, FunctionExpr } from "./expression";
-import { findFunction, isInTopLevelScope } from "./util";
+import { isInTopLevelScope } from "./util";
 import { assertNever, assertNodeKind } from "./assert";
 import { FunctionlessNode } from "./node";
 import { Stmt } from "./statement";
+import { findIntegration } from "./integration";
 
 // https://velocity.apache.org/engine/devel/user-guide.html#conditionals
 // https://cwiki.apache.org/confluence/display/VELOCITY/CheckingForNull
@@ -184,9 +185,12 @@ export class VTL {
           return list;
         }
       }
-      case "BinaryExpr": {
-        return `${this.eval(node.left)} ${node.op} ${this.eval(node.right)}`;
-      }
+      case "BinaryExpr":
+        // VTL fails to evaluate binary expressions inside an object put e.g. $obj.put('x', 1 + 1)
+        // a workaround is to use a temp variable.
+        return this.var(
+          `${this.eval(node.left)} ${node.op} ${this.eval(node.right)}`
+        );
       case "BlockStmt":
         for (const stmt of node.statements) {
           this.eval(stmt);
@@ -197,9 +201,9 @@ export class VTL {
       case "BreakStmt":
         return this.add("#break");
       case "CallExpr": {
-        const serviceCall = findFunction(node);
+        const serviceCall = findIntegration(node);
         if (serviceCall) {
-          return serviceCall(node, this);
+          return serviceCall.appSyncVtl.request(node, this);
         } else if (
           // If the parent is a propAccessExpr
           node.expr.kind === "PropAccessExpr" &&
@@ -456,7 +460,15 @@ export class VTL {
           })
           .join("")}"`;
       case "UnaryExpr":
-        return `${node.op} ${this.eval(node.expr)}`;
+        // VTL fails to evaluate unary expressions inside an object put e.g. $obj.put('x', -$v1)
+        // a workaround is to use a temp variable.
+        // it also doesn't handle like - signs alone (e.g. - $v1) so we have to put a 0 in front
+        // no such problem with ! signs though
+        if (node.op === "-") {
+          return this.var(`0 - ${this.eval(node.expr)}`);
+        } else {
+          return this.var(`${node.op}${this.eval(node.expr)}`);
+        }
       case "VariableStmt":
         const varName = isInTopLevelScope(node)
           ? `$context.stash.${node.name}`

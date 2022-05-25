@@ -57,7 +57,7 @@ const api = new appsync.GraphqlApi(stack, "Api", {
   },
 });
 
-export const getPost = new AppsyncResolver<
+const getPostResolver = new AppsyncResolver<
   { postId: string },
   Post | undefined
 >(($context) => {
@@ -71,12 +71,14 @@ export const getPost = new AppsyncResolver<
       },
     },
   });
-}).addResolver(api, {
+});
+
+export const getPost = getPostResolver.addResolver(api, {
   typeName: "Query",
   fieldName: "getPost",
 });
 
-export const comments = new AppsyncResolver<
+const commentResolver = new AppsyncResolver<
   { nextToken?: string; limit?: number },
   CommentPage,
   Omit<Post, "comments">
@@ -109,7 +111,9 @@ export const comments = new AppsyncResolver<
   return {
     comments: [],
   };
-}).addResolver(api, {
+});
+
+export const comments = commentResolver.addResolver(api, {
   typeName: "Post",
   fieldName: "comments",
 });
@@ -420,3 +424,97 @@ customDeleteBus
     message: `Post Deleted: ${(<PostDeletedEvent>event).detail.id}`,
   }))
   .pipe(sendNotification);
+
+/**
+ * GraphQL created with Code-First
+ */
+const api2 = new appsync.GraphqlApi(stack, "Api2", {
+  name: "MessageReader",
+});
+
+/*
+  type Query {
+    getPost(postId: string!): Post
+  } 
+
+ type Post {
+  postId: ID!
+  title: String!
+  comments(nextToken: String, limit: Int): CommentPage
+ }
+
+ type CommentPage {
+  nextToken: String
+  comments: [Comment]!
+ }
+
+ type Comment {
+  postId: ID!
+  commentId: ID!
+  commentText: String!
+  createdTime: String!
+ }
+ */
+
+const post = api2.addType(
+  new appsync.ObjectType("Post", {
+    definition: {
+      postId: appsync.GraphqlType.id({
+        isRequired: true,
+      }),
+      title: appsync.GraphqlType.string({
+        isRequired: true,
+      }),
+    },
+  })
+);
+
+const comment = api2.addType(
+  new appsync.ObjectType("Comment", {
+    definition: {
+      postId: appsync.GraphqlType.id({
+        isRequired: true,
+      }),
+      commentId: appsync.GraphqlType.id({
+        isRequired: true,
+      }),
+      commentText: appsync.GraphqlType.string({
+        isRequired: true,
+      }),
+      createdTime: appsync.GraphqlType.string({
+        isRequired: true,
+      }),
+    },
+  })
+);
+
+const commentPage = api2.addType(
+  new appsync.ObjectType("CommentPage", {
+    definition: {
+      nextToken: appsync.GraphqlType.string(),
+      comments: appsync.GraphqlType.intermediate({
+        intermediateType: comment,
+        isRequiredList: true,
+      }),
+    },
+  })
+);
+
+post.addField({
+  fieldName: "comments",
+  field: commentResolver.getField(api2, commentPage.attribute(), {
+    args: {
+      nextToken: appsync.GraphqlType.string(),
+      limit: appsync.GraphqlType.int(),
+    },
+  }),
+});
+
+api2.addQuery(
+  "getPost",
+  getPostResolver.getField(api2, post.attribute(), {
+    args: {
+      postId: appsync.GraphqlType.string({ isRequired: true }),
+    },
+  })
+);
