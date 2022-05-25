@@ -1,15 +1,16 @@
-import ts from "typescript";
+import minimatch from "minimatch";
 import path from "path";
 import { PluginConfig, TransformerExtras } from "ts-patch";
-import { BinaryOp, CanReference } from "./expression";
-import { FunctionlessNode } from "./node";
+import ts from "typescript";
+import { ApiIntegration } from "./api";
 import { AppsyncResolver } from "./appsync";
 import { assertDefined } from "./assert";
-import { StepFunction, ExpressStepFunction } from "./step-function";
-import { hasParent } from "./util";
-import minimatch from "minimatch";
 import { EventBus, EventBusRule } from "./event-bridge";
 import { EventBusTransform } from "./event-bridge/transform";
+import { BinaryOp, CanReference } from "./expression";
+import { FunctionlessNode } from "./node";
+import { ExpressStepFunction, StepFunction } from "./step-function";
+import { hasParent } from "./util";
 
 export default compile;
 
@@ -107,6 +108,8 @@ export function compile(
             return visitEventBusRule(node);
           } else if (isNewEventBusTransform(node)) {
             return visitEventTransform(node);
+          } else if (isApiRequestTransformer(node)) {
+            return visitApiRequestTransformer(node);
           }
           return node;
         };
@@ -139,6 +142,25 @@ export function compile(
           );
         }
         return false;
+      }
+
+      function isApiRequestTransformer(
+        node: ts.Node
+      ): node is ApiRequestTransformerInterface {
+        const x =
+          ts.isCallExpression(node) &&
+          ts.isPropertyAccessExpression(node.expression) &&
+          node.expression.name.text === "transformRequest" &&
+          isApiIntegration(node.expression.expression);
+
+        return x;
+        // if (ts.isNewExpression(node)) {
+        //   return isFunctionlessClassOfKind(
+        //     node.expression,
+        //     ApiIntegration.FunctionlessType
+        //   );
+        // }
+        // return false;
       }
 
       function isStepFunction(node: ts.Node): node is ts.NewExpression & {
@@ -181,6 +203,10 @@ export function compile(
 
       type EventBusMapInterface = ts.CallExpression & {
         arguments: [TsFunctionParameter];
+      };
+
+      type ApiRequestTransformerInterface = ts.CallExpression & {
+        arguments: [any, any, TsFunctionParameter];
       };
 
       /**
@@ -269,6 +295,10 @@ export function compile(
         );
       }
 
+      function isApiIntegration(node: ts.Node) {
+        return isFunctionlessClassOfKind(node, ApiIntegration.FunctionlessType);
+      }
+
       /**
        * Catches any errors and wraps them in a {@link Err} node.
        */
@@ -309,6 +339,7 @@ export function compile(
       }
 
       function getFunctionlessTypeKind(type: ts.Type): string | undefined {
+        // TODO: this deosn't work
         const functionlessType = type.getProperty("FunctionlessType");
         const functionlessKind = type.getProperty("functionlessKind");
         const prop = functionlessType ?? functionlessKind;
@@ -405,6 +436,20 @@ export function compile(
           }
         }
         return call;
+      }
+
+      function visitApiRequestTransformer(
+        call: ApiRequestTransformerInterface
+      ): ts.Node {
+        const [impl] = call.arguments;
+
+        const after = ts.factory.updateCallExpression(
+          call,
+          call.expression,
+          call.typeArguments,
+          [errorBoundary(() => toFunction("FunctionDecl", impl))]
+        );
+        return after;
       }
 
       function toFunction(
