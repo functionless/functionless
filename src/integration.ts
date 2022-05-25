@@ -1,3 +1,4 @@
+import { ApiGatewayVtlIntegration } from "./api";
 import { AppSyncVtlIntegration } from "./appsync";
 import { ASL, State } from "./asl";
 import { CallExpr } from "./expression";
@@ -13,6 +14,7 @@ import { VTL } from "./vtl";
  */
 const INTEGRATION_TYPES: { [P in keyof IntegrationMethods<any>]: P } = {
   appSyncVtl: "appSyncVtl",
+  apiGWVtl: "apiGWVtl",
   asl: "asl",
   native: "native",
 };
@@ -28,6 +30,11 @@ interface IntegrationMethods<F extends AnyFunction> {
    * @private
    */
   appSyncVtl: AppSyncVtlIntegration;
+  /**
+   * Integrate with API Gateway VTL applications.
+   * @private
+   */
+  apiGWVtl: ApiGatewayVtlIntegration;
   /**
    * Integrate with ASL applications like StepFunctions.
    * @private
@@ -134,6 +141,14 @@ export class IntegrationImpl<F extends AnyFunction = AnyFunction>
     if (this.integration.appSyncVtl) {
       return this.integration.appSyncVtl;
     }
+    return this.unhandledContext("Velocity Template");
+  }
+
+  public get apiGWVtl(): ApiGatewayVtlIntegration {
+    if (this.integration.apiGWVtl) {
+      return this.integration.apiGWVtl;
+    }
+    // TODO: differentiate Velocity Template?
     return this.unhandledContext("Velocity Template");
   }
 

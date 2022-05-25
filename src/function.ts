@@ -4,6 +4,7 @@ import * as appsync from "@aws-cdk/aws-appsync-alpha";
 import { serializeFunction } from "@functionless/nodejs-closure-serializer";
 import {
   AssetHashType,
+  aws_apigateway,
   aws_dynamodb,
   aws_lambda,
   CfnResource,
@@ -17,18 +18,19 @@ import type { Context } from "aws-lambda";
 // eslint-disable-next-line import/no-extraneous-dependencies
 import AWS from "aws-sdk";
 import { Construct } from "constructs";
+import { ApiGatewayVtlIntegration } from "./api";
 import type { AppSyncVtlIntegration } from "./appsync";
 import { ASL } from "./asl";
 import {
-  NativeFunctionDecl,
-  isNativeFunctionDecl,
   IntegrationInvocation,
+  isNativeFunctionDecl,
+  NativeFunctionDecl,
 } from "./declaration";
 import { Err, isErr } from "./error";
 import { CallExpr, Expr, isVariableReference } from "./expression";
 import {
-  IntegrationImpl,
   Integration,
+  IntegrationImpl,
   INTEGRATION_TYPE_KEYS,
 } from "./integration";
 import { AnyFunction, anyOf } from "./util";
@@ -63,6 +65,7 @@ abstract class FunctionBase<P, O>
   public static readonly FunctionlessType = "Function";
 
   readonly appSyncVtl: AppSyncVtlIntegration;
+  readonly apiGWVtl: ApiGatewayVtlIntegration;
 
   // @ts-ignore - this makes `F` easily available at compile time
   readonly __functionBrand: ConditionalFunction<P, O>;
@@ -122,6 +125,26 @@ abstract class FunctionBase<P, O>
           `{"version": "2018-05-29", "operation": "Invoke", "payload": ${payload}}`
         );
         return context.json(request);
+      },
+    };
+
+    this.apiGWVtl = {
+      integration: (requestTemplate, responseTemplate) => {
+        return new aws_apigateway.LambdaIntegration(this.resource, {
+          proxy: false,
+          passthroughBehavior: aws_apigateway.PassthroughBehavior.NEVER,
+          requestTemplates: {
+            "application/json": requestTemplate,
+          },
+          integrationResponses: [
+            {
+              statusCode: "200",
+              responseTemplates: {
+                "application/json": `#set($inputRoot = $input.path('$'))\n${responseTemplate}`,
+              },
+            },
+          ],
+        });
       },
     };
   }
