@@ -2,6 +2,7 @@ import * as appsync from "@aws-cdk/aws-appsync-alpha";
 import {
   Arn,
   ArnFormat,
+  aws_apigateway,
   aws_cloudwatch,
   aws_iam,
   aws_stepfunctions,
@@ -12,6 +13,7 @@ import {
 // eslint-disable-next-line import/no-extraneous-dependencies
 import { StepFunctions } from "aws-sdk";
 import { Construct } from "constructs";
+import { ApiGatewayVtlIntegration } from "./api";
 import { AppSyncVtlIntegration } from "./appsync";
 import {
   ASL,
@@ -388,6 +390,7 @@ abstract class BaseStepFunction<
   readonly resource: aws_stepfunctions.CfnStateMachine;
 
   readonly appSyncVtl: AppSyncVtlIntegration;
+  readonly apiGWVtl: ApiGatewayVtlIntegration;
 
   // @ts-ignore
   readonly __functionBrand: (arg: P) => CallOut;
@@ -504,6 +507,58 @@ abstract class BaseStepFunction<
 }`;
       },
     });
+
+    // Integration object for api gateway vtl
+    this.apiGWVtl = {
+      integration: (requestTemplate, responseTemplate) => {
+        const credentialsRole = new aws_iam.Role(
+          this,
+          "ApiGatewayIntegrationRole",
+          {
+            assumedBy: new aws_iam.ServicePrincipal("apigateway.amazonaws.com"),
+          }
+        );
+
+        this.grantRead(credentialsRole);
+        if (
+          this.getStepFunctionType() ===
+          aws_stepfunctions.StateMachineType.EXPRESS
+        ) {
+          this.grantStartSyncExecution(credentialsRole);
+        } else {
+          this.grantStartExecution(credentialsRole);
+        }
+
+        const escapedInput = requestTemplate.replace(/\"/g, '\\"');
+        return new aws_apigateway.AwsIntegration({
+          service: "states",
+          action:
+            this.getStepFunctionType() ===
+            aws_stepfunctions.StateMachineType.EXPRESS
+              ? "StartSyncExecution"
+              : "StartExecution",
+          integrationHttpMethod: "POST",
+          options: {
+            credentialsRole,
+            passthroughBehavior: aws_apigateway.PassthroughBehavior.NEVER,
+            requestTemplates: {
+              "application/json": `{
+                "input": "${escapedInput}",
+                "stateMachineArn": "${this.stateMachineArn}"
+              }`,
+            },
+            integrationResponses: [
+              {
+                statusCode: "200",
+                responseTemplates: {
+                  "application/json": `#set($inputRoot = $util.parseJson($input.path('$.output')))\n${responseTemplate}`,
+                },
+              },
+            ],
+          },
+        });
+      },
+    };
   }
 
   appSyncIntegration(

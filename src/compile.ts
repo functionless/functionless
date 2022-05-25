@@ -4,6 +4,7 @@ import type { PluginConfig, TransformerExtras } from "ts-patch";
 import ts from "typescript";
 import { assertDefined } from "./assert";
 import {
+  ApiIntegrationsStaticMethodInterface,
   EventBusMapInterface,
   EventBusRuleInterface,
   EventBusTransformInterface,
@@ -114,6 +115,8 @@ export function compile(
             return visitEventTransform(node);
           } else if (checker.isNewFunctionlessFunction(node)) {
             return visitFunction(node, ctx);
+          } else if (checker.isApiIntegrationsStaticMethod(node)) {
+            return visitApiIntegrationsStaticMethod(node);
           }
           return node;
         };
@@ -523,6 +526,74 @@ export function compile(
           ),
           body,
         ]);
+      }
+
+      function visitApiIntegrationsStaticMethod(
+        node: ApiIntegrationsStaticMethodInterface
+      ): ts.CallExpression {
+        const [props] = node.arguments;
+
+        const updatedProps = ts.factory.updateObjectLiteralExpression(
+          props,
+          props.properties.map((prop) => {
+            if (ts.isPropertyAssignment(prop) && ts.isIdentifier(prop.name)) {
+              if (prop.name.text === "responses") {
+                return visitApiIntegrationResponsesProp(prop);
+              } else if (
+                prop.name.text === "request" ||
+                prop.name.text === "response"
+              ) {
+                return visitApiIntegrationMapperProp(prop);
+              }
+            }
+            return prop;
+          })
+        );
+
+        return ts.factory.updateCallExpression(
+          node,
+          node.expression,
+          node.typeArguments,
+          [updatedProps]
+        );
+      }
+
+      function visitApiIntegrationMapperProp(
+        prop: ts.PropertyAssignment
+      ): ts.PropertyAssignment {
+        const { initializer } = prop;
+        if (
+          !ts.isFunctionExpression(initializer) &&
+          !ts.isArrowFunction(initializer)
+        ) {
+          return prop;
+        }
+
+        return ts.factory.updatePropertyAssignment(
+          prop,
+          prop.name,
+          errorBoundary(() => toFunction("FunctionDecl", initializer))
+        );
+      }
+
+      function visitApiIntegrationResponsesProp(
+        prop: ts.PropertyAssignment
+      ): ts.PropertyAssignment {
+        const { initializer } = prop;
+        if (!ts.isObjectLiteralExpression(initializer)) {
+          return prop;
+        }
+
+        return ts.factory.updatePropertyAssignment(
+          prop,
+          prop.name,
+          ts.factory.updateObjectLiteralExpression(
+            initializer,
+            initializer.properties.map((p) =>
+              ts.isPropertyAssignment(p) ? visitApiIntegrationMapperProp(p) : p
+            )
+          )
+        );
       }
 
       function toExpr(

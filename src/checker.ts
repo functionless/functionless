@@ -55,6 +55,10 @@ export type FunctionInterface = ts.NewExpression & {
       ];
 };
 
+export type ApiIntegrationsStaticMethodInterface = ts.CallExpression & {
+  arguments: [ts.ObjectLiteralExpression];
+};
+
 export type FunctionlessChecker = ReturnType<typeof makeFunctionlessChecker>;
 
 export function makeFunctionlessChecker(
@@ -72,6 +76,7 @@ export function makeFunctionlessChecker(
     isReflectFunction,
     isStepFunction,
     isNewFunctionlessFunction,
+    isApiIntegrationsStaticMethod,
     isCDKConstruct,
     getFunctionlessTypeKind,
   };
@@ -209,6 +214,21 @@ export function makeFunctionlessChecker(
         ? ts.isArrowFunction(node.arguments[3])
         : false)
     );
+  }
+
+  function isApiIntegrationsStaticMethod(
+    node: ts.Node
+  ): node is ApiIntegrationsStaticMethodInterface {
+    const x =
+      ts.isCallExpression(node) &&
+      ts.isPropertyAccessExpression(node.expression) &&
+      (node.expression.name.text === "mock" ||
+        node.expression.name.text == "aws") &&
+      ts.isIdentifier(node.expression.expression) &&
+      // TODO: is this enough? should we grab the type and make sure it
+      // has FunctionlessKind?
+      node.expression.expression.text === "ApiIntegrations";
+    return x;
   }
 
   /**
