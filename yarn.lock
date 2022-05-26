@@ -1031,7 +1031,7 @@
     minimatch "^3.1.2"
     strip-json-comments "^3.1.1"
 
-"@functionless/nodejs-closure-serializer@^0.0.0":
+"@functionless/nodejs-closure-serializer@^0.0.1":
   version "0.0.1"
   resolved "https://registry.yarnpkg.com/@functionless/nodejs-closure-serializer/-/nodejs-closure-serializer-0.0.1.tgz#446f0724a888bd6acac4b9fef2b40fee78b2739e"
   integrity sha512-L7AJlQUH/bwjmhTRmtMrb4jjEflTGvKHUEMDWO7Cp0P2TZtCLa+ICCDDgqwHXEcOd4tajSM2LGTSV/2i9D0/Pw==
