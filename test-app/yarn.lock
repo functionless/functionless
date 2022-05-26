@@ -1155,8 +1155,10 @@
     ts-node "^9"
     tslib "^2"
 
-"@functionless/nodejs-closure-serializer@file:../../nodejs-closure-serializer":
-  version "0.0.0"
+"@functionless/nodejs-closure-serializer@^0.0.1":
+  version "0.0.1"
+  resolved "https://registry.yarnpkg.com/@functionless/nodejs-closure-serializer/-/nodejs-closure-serializer-0.0.1.tgz#446f0724a888bd6acac4b9fef2b40fee78b2739e"
+  integrity sha512-L7AJlQUH/bwjmhTRmtMrb4jjEflTGvKHUEMDWO7Cp0P2TZtCLa+ICCDDgqwHXEcOd4tajSM2LGTSV/2i9D0/Pw==
   dependencies:
     normalize-package-data "^4.0.0"
     read-package-tree "^5.3.1"
@@ -2687,7 +2689,7 @@ function.prototype.name@^1.1.5:
 "functionless@file:..":
   version "0.0.0"
   dependencies:
-    "@functionless/nodejs-closure-serializer" "file:../../.cache/yarn/v6/npm-functionless-0.0.0-47c63f1b-3556-421c-b3ba-c70257b94027-1653522367276/node_modules/nodejs-closure-serializer"
+    "@functionless/nodejs-closure-serializer" "^0.0.1"
     fs-extra "^10.1.0"
     minimatch "^5.0.1"
 
