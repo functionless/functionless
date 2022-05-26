@@ -110,6 +110,8 @@ export function compile(
             return visitEventTransform(node);
           } else if (isApiRequestTransformer(node)) {
             return visitApiRequestTransformer(node);
+          } else if (isApiResponseTransformer(node)) {
+            return visitApiResponseTransformer(node);
           }
           return node;
         };
@@ -161,6 +163,18 @@ export function compile(
         //   );
         // }
         // return false;
+      }
+
+      // TODO: do we need a ApiResponseTransformerInterface
+      function isApiResponseTransformer(
+        node: ts.Node
+      ): node is ApiRequestTransformerInterface {
+        const x =
+          ts.isCallExpression(node) &&
+          ts.isPropertyAccessExpression(node.expression) &&
+          node.expression.name.text === "handleResponse" &&
+          isApiIntegration(node.expression.expression);
+        return x;
       }
 
       function isStepFunction(node: ts.Node): node is ts.NewExpression & {
@@ -439,6 +453,21 @@ export function compile(
       }
 
       function visitApiRequestTransformer(
+        call: ApiRequestTransformerInterface
+      ): ts.Node {
+        const [impl] = call.arguments;
+
+        const after = ts.factory.updateCallExpression(
+          call,
+          call.expression,
+          call.typeArguments,
+          [errorBoundary(() => toFunction("FunctionDecl", impl))]
+        );
+        return after;
+      }
+
+      // TODO: do we need a ApiResponseTransformerInterface ?
+      function visitApiResponseTransformer(
         call: ApiRequestTransformerInterface
       ): ts.Node {
         const [impl] = call.arguments;
