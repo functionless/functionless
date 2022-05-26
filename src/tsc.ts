@@ -2,6 +2,7 @@ import path from "path";
 import fs from "fs-extra";
 import ts from "typescript";
 import { compile } from "./compile";
+import patch from "ts-patch";
 
 /**
  * Programmatically runs the typescript compiler.
@@ -41,6 +42,15 @@ export async function tsc(projectRoot: string = process.cwd()) {
     compilerHost
   );
 
+  const diagnostics: ts.Diagnostic[] = [];
+  const extras: patch.TransformerExtras = {
+    ts,
+    library: "typescript",
+    diagnostics,
+    addDiagnostic: (d) => diagnostics.push(d),
+    removeDiagnostic: (d) => diagnostics.splice(d),
+  };
+
   program.emit(
     undefined,
     async (fileName, data, _cancellationToken, onError) => {
@@ -57,11 +67,14 @@ export async function tsc(projectRoot: string = process.cwd()) {
     undefined,
     undefined,
     {
-      before: [compile(program)],
+      before: [compile(program, {}, extras)],
     }
   );
 
-  const semanticDiagnostics = program.getSemanticDiagnostics();
+  const semanticDiagnostics = [
+    ...program.getSemanticDiagnostics(),
+    ...diagnostics,
+  ];
 
   if (semanticDiagnostics.length > 0) {
     process.stderr.write(

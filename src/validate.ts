@@ -1,5 +1,7 @@
 import { FunctionlessChecker } from "./checker";
 
+import type * as typescript from "typescript";
+
 /**
  * Validates a TypeScript SourceFile containing Functionless primitives does not
  * unsupported syntax.
@@ -10,35 +12,57 @@ import { FunctionlessChecker } from "./checker";
  * @returns diagnostic errors for the file.
  */
 export function validate(
-  ts: typeof import("typescript/lib/tsserverlibrary"),
+  ts: typeof typescript,
   checker: FunctionlessChecker,
-  sf: import("typescript").SourceFile
-): ts.Diagnostic[] {
-  return (function visit(node: ts.Node): ts.Diagnostic[] {
+  sf: typescript.SourceFile,
+  logger?: {
+    info(message: string): void;
+  }
+): typescript.Diagnostic[] {
+  logger?.info(`Beginning validation of Functionless semantics`);
+
+  return (function visit(node: typescript.Node): typescript.Diagnostic[] {
     return [
       ...(checker.isStepFunction(node) ? validateStepFunctionNode(node) : []),
-      ...(ts.forEachChild(node, visit) ?? []),
+      ...(visitEachChild(node, visit) ?? []),
     ];
   })(sf);
 
-  function validateStepFunctionNode(node: ts.Node): ts.Diagnostic[] {
+  function validateStepFunctionNode(
+    node: typescript.Node
+  ): typescript.Diagnostic[] {
+    const children = visitEachChild(node, validateStepFunctionNode);
     if (
-      ts.isExpressionStatement(node) &&
-      ts.isBinaryExpression(node.expression) &&
-      node.expression.operatorToken.kind === ts.SyntaxKind.EqualsToken
+      ts.isBinaryExpression(node) &&
+      [ts.SyntaxKind.PlusToken, ts.SyntaxKind.MinusToken].includes(
+        node.operatorToken.kind
+      )
     ) {
-      // assignment statement
-      // TODO: check if the assignment references an expression in an illegal scope
-      // @ts-ignore
-      const variable = checker.getSymbolAtLocation(node.expression.left);
-      // @ts-ignore
-      const value = checker.getSymbolAtLocation(node.expression.right);
+      return [
+        <typescript.Diagnostic>{
+          category: ts.DiagnosticCategory.Error,
+          code: 100,
+          file: sf,
+          start: node.pos,
+          length: node.end - node.pos,
+          messageText: `arithmetic is not supported in a Step Function`,
+        },
+      ].concat(children);
     }
+    return children;
+  }
 
-    return descend();
-
-    function descend() {
-      return ts.forEachChild(node, validateStepFunctionNode) ?? [];
-    }
+  // ts.forEachChild terminates whenever a truth value is returned
+  // ts.visitEachChild requires a ts.TransformationContext, so we can't use that
+  // this wrapper uses a mutable array to collect the results
+  function visitEachChild<T>(
+    node: typescript.Node,
+    cb: (node: typescript.Node) => T[]
+  ): T[] {
+    const results: T[] = [];
+    ts.forEachChild(node, (child) => {
+      results.push(...cb(child));
+    });
+    return results;
   }
 }

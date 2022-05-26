@@ -14,6 +14,7 @@ import {
   makeFunctionlessChecker,
   TsFunctionParameter,
 } from "./checker";
+import { validate } from "./validate";
 
 export default compile;
 
@@ -39,8 +40,8 @@ export interface FunctionlessConfig extends PluginConfig {
  */
 export function compile(
   program: ts.Program,
-  _config?: FunctionlessConfig,
-  _extras?: TransformerExtras
+  _config: FunctionlessConfig,
+  extras: TransformerExtras
 ): ts.TransformerFactory<ts.SourceFile> {
   const excludeMatchers = _config?.exclude
     ? _config.exclude.map((pattern) => minimatch.makeRe(path.resolve(pattern)))
@@ -76,6 +77,11 @@ export function compile(
       const statements = sf.statements.map(
         (stmt) => visitor(stmt) as ts.Statement
       );
+
+      const diagnostics = validate(ts, checker, sf);
+      for (const diagnostic of diagnostics) {
+        extras.addDiagnostic(diagnostic);
+      }
 
       return ts.factory.updateSourceFile(
         sf,

@@ -1,4 +1,5 @@
 import * as ts from "typescript";
+import type * as tsserver from "typescript/lib/tsserverlibrary";
 import { AppsyncResolver } from "./appsync";
 import { EventBus, EventBusRule } from "./event-bridge";
 import { EventBusTransform } from "./event-bridge/transform";
@@ -31,10 +32,11 @@ export type EventBusMapInterface = ts.CallExpression & {
   arguments: [TsFunctionParameter];
 };
 
-export interface FunctionlessChecker
-  extends ReturnType<typeof makeFunctionlessChecker> {}
+export type FunctionlessChecker = ReturnType<typeof makeFunctionlessChecker>;
 
-export function makeFunctionlessChecker(checker: ts.TypeChecker) {
+export function makeFunctionlessChecker(
+  checker: ts.TypeChecker | tsserver.TypeChecker
+) {
   return {
     ...checker,
     isAppsyncResolver,
