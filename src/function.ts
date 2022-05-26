@@ -37,12 +37,7 @@ export class Function<P, O>
     Integration<
       ConditionalFunction<P, O>,
       "Function",
-      {
-        eventBus: EventBusTargetIntegration<
-          P,
-          FunctionEventBusTargetProps | undefined
-        >;
-      }
+      FunctionEventBusTargetProps | undefined
     >
 {
   readonly kind = "Function" as const;

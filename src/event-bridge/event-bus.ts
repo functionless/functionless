@@ -114,12 +114,7 @@ abstract class EventBusBase<E extends EventBusRuleInput>
     Integration<
       (event: Partial<E>, ...events: Partial<E>[]) => void,
       "EventBus",
-      {
-        eventBus: EventBusTargetIntegration<
-          E,
-          aws_events_targets.EventBusProps | undefined
-        >;
-      }
+      aws_events_targets.EventBusProps | undefined
     >
 {
   /**

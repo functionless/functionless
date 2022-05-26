@@ -288,7 +288,7 @@ export class Table<
 
   makeTableIntegration<F extends AnyFunction, K extends string>(
     methodName: K,
-    integration: Omit<Integration, "kind" | "appSyncVtl"> & {
+    integration: Omit<Integration<F>, "kind" | "appSyncVtl"> & {
       appSyncVtl: Omit<AppSyncVtlIntegration, "dataSource" | "dataSourceId">;
     }
   ): F {

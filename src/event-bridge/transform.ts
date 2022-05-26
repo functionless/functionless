@@ -3,7 +3,8 @@ import { FunctionDecl } from "../declaration";
 import { synthesizeEventBridgeTargets } from "./target-input";
 import { EventBusRuleInput } from "./types";
 import { IEventBusRule } from "./rule";
-import { DynamicProps, IntegrationWithEventBus, pipe } from "./event-bus";
+import { DynamicProps, pipe } from "./event-bus";
+import { EventBusTargetIntegration, Integration } from "..";
 
 /**
  * A function interface used by the {@link EventBusRule}'s map function.
@@ -57,14 +58,43 @@ export class EventBusTransform<T extends EventBusRuleInput, P> {
    *
    * @see EventBusRule.pipe for more details on pipe.
    */
-  pipe<
-    Props extends object | undefined,
-    X extends P,
-    I extends IntegrationWithEventBus<X, Props>
-  >(
-    integration: [P] extends [X] ? I : never,
+  pipe<Props extends object | undefined>(
+    integration: Integration<(p: P) => any, string, Props> & {
+      eventBus: EventBusTargetIntegration<P, Props>;
+    },
     ...props: Parameters<DynamicProps<Props>>
-  ): void {
+  ) {
     pipe(this.rule, integration, props[0] as Props, this.targetInput);
   }
+  // pipe: PipeFunction<
+  //   P,
+  //   {
+  //     eventBus: EventBusTargetIntegration<P, object | undefined>;
+  //   }
+  // > = (integration, ...props) => {
+  // return pipe<T, P, typeof props[0]>(
+  //   this.rule,
+  //   integration,
+  //   props[0],
+  //   this.targetInput
+  // );
+  // };
 }
+
+// type PipeFunction<
+//   P,
+//   I extends {
+//     eventBus: EventBusTargetIntegration<P, object | undefined>;
+//   }
+// > = I extends {
+//   eventBus: EventBusTargetIntegration<infer PP, infer Props>;
+// }
+//   ? P extends PP
+//     ? (
+//         integration: {
+//           eventBus: EventBusTargetIntegration<PP, Props>;
+//         },
+//         ...props: Parameters<DynamicProps<Props>>
+//       ) => void
+//     : never
+//   : never;

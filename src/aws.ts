@@ -249,7 +249,7 @@ export namespace $AWS {
     function makeDynamoIntegration<
       F extends AnyFunction,
       Op extends OperationName
-    >(operationName: Op, integration?: Omit<Integration, "kind">) {
+    >(operationName: Op, integration?: Omit<Integration<F>, "kind">) {
       return makeIntegration<F, `$AWS.DynamoDB.${Op}`>({
         kind: `$AWS.DynamoDB.${operationName}`,
         asl(call, context) {

@@ -9,7 +9,10 @@ import { EventBus, EventBusTargetIntegration } from "./event-bridge";
 /**
  * All integration methods supported by functionless.
  */
-interface IntegrationMethods<F extends AnyFunction> {
+interface IntegrationMethods<
+  F extends AnyFunction,
+  EventBusProps extends object | undefined = undefined
+> {
   /**
    * Integrate with AppSync VTL applications.
    * @private
@@ -20,7 +23,7 @@ interface IntegrationMethods<F extends AnyFunction> {
    * @private
    */
   asl: (call: CallExpr, context: ASL) => Omit<State, "Next">;
-  eventBus: EventBusTargetIntegration<Parameters<F>, any>;
+  eventBus: EventBusTargetIntegration<Parameters<F>, EventBusProps>;
 }
 
 /**
@@ -71,26 +74,25 @@ interface IntegrationMethods<F extends AnyFunction> {
  * Implement the unhandledContext function to customize the error message for unsupported contexts.
  * Otherwise the error will be: `${this.name} is not supported by context ${context.kind}.`
  */
-export type Integration<
+export interface Integration<
   F extends AnyFunction,
   K extends string = string,
-  I extends Partial<IntegrationMethods<F>> = Partial<IntegrationMethods<F>>
-> = F &
-  I & {
-    /**
-     * Integration Handler kind - for example StepFunction.describeExecution
-     */
-    readonly kind: K;
-    /**
-     * Optional method that allows overriding the {@link Error} thrown when a integration is not supported by a handler.
-     * @param kind - The Kind of the integration.
-     * @param contextKind - the Kind of the context attempting to use the integration.
-     */
-    readonly unhandledContext?: (
-      kind: string,
-      contextKind: CallContext["kind"]
-    ) => Error;
-  };
+  EventBusProps extends object | undefined = undefined
+> extends Partial<IntegrationMethods<F, EventBusProps>> {
+  /**
+   * Integration Handler kind - for example StepFunction.describeExecution
+   */
+  readonly kind: K;
+  /**
+   * Optional method that allows overriding the {@link Error} thrown when a integration is not supported by a handler.
+   * @param kind - The Kind of the integration.
+   * @param contextKind - the Kind of the context attempting to use the integration.
+   */
+  readonly unhandledContext?: (
+    kind: string,
+    contextKind: CallContext["kind"]
+  ) => Error;
+}
 
 /**
  * Internal wrapper class for Integration handlers that provides default error handling for unsupported integrations.
@@ -154,7 +156,7 @@ export class IntegrationImpl implements IntegrationMethods<any> {
  * @private
  */
 export function makeIntegration<F extends AnyFunction, K extends string>(
-  integration: Exclude<Integration<F, K>, F>
+  integration: Integration<F, K>
 ): { kind: K } & F {
   return integration as unknown as { kind: K } & F;
 }

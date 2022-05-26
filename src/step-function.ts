@@ -324,7 +324,7 @@ export namespace $SFN {
 
 function makeStepFunctionIntegration<F extends AnyFunction, K extends string>(
   methodName: K,
-  integration: Exclude<Omit<Integration<F>, "kind">, F>
+  integration: Omit<Integration<F>, "kind">
 ): F {
   return makeIntegration<F, `$SFN.${K}`>({
     kind: `$SFN.${methodName}`,
@@ -380,12 +380,7 @@ abstract class BaseStepFunction<P extends Record<string, any> | undefined, O>
     Integration<
       (arg: P) => O,
       "StepFunction",
-      {
-        eventBus: EventBusTargetIntegration<
-          P,
-          StepFunctionEventBusTargetProps | undefined
-        >;
-      }
+      StepFunctionEventBusTargetProps | undefined
     >
 {
   readonly kind = "StepFunction";
