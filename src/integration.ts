@@ -9,7 +9,7 @@ import { EventBus, EventBusTargetIntegration } from "./event-bridge";
 /**
  * All integration methods supported by functionless.
  */
-interface IntegrationMethods<
+export interface IntegrationMethods<
   F extends AnyFunction,
   EventBusProps extends object | undefined = undefined
 > {
@@ -79,6 +79,10 @@ export interface Integration<
   K extends string = string,
   EventBusProps extends object | undefined = undefined
 > extends Partial<IntegrationMethods<F, EventBusProps>> {
+  /**
+   * Brand the Function, F, into this type so that sub-typing rules apply to the function signature.
+   */
+  __functionBrand: F;
   /**
    * Integration Handler kind - for example StepFunction.describeExecution
    */
@@ -156,7 +160,7 @@ export class IntegrationImpl implements IntegrationMethods<any> {
  * @private
  */
 export function makeIntegration<F extends AnyFunction, K extends string>(
-  integration: Integration<F, K>
+  integration: Omit<Integration<F, K>, "__functionBrand">
 ): { kind: K } & F {
   return integration as unknown as { kind: K } & F;
 }

@@ -324,7 +324,7 @@ export namespace $SFN {
 
 function makeStepFunctionIntegration<F extends AnyFunction, K extends string>(
   methodName: K,
-  integration: Omit<Integration<F>, "kind">
+  integration: Omit<Integration<F>, "kind" | "__functionBrand">
 ): F {
   return makeIntegration<F, `$SFN.${K}`>({
     kind: `$SFN.${methodName}`,

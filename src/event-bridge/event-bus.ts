@@ -131,6 +131,12 @@ abstract class EventBusBase<E extends EventBusRuleInput>
     this.eventBusArn = bus.eventBusArn;
   }
 
+  // @ts-ignore - value does not exist, is only available at compile time
+  public readonly __functionBrand: (
+    event: Partial<E>,
+    ...events: Partial<E>[]
+  ) => void;
+
   asl(call: CallExpr, context: ASL) {
     this.bus.grantPutEventsTo(context.role);
 
