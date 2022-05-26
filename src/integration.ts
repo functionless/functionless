@@ -1,9 +1,10 @@
-import { CallExpr } from "./expression";
-import { ASL, State } from "./asl";
-import { FunctionlessNode } from "./node";
-import { VTL } from "./vtl";
-import { AnyFunction } from "./util";
+import { ApiGatewayVtlIntegration } from "./api";
 import { AppSyncVtlIntegration } from "./appsync";
+import { ASL, State } from "./asl";
+import { CallExpr } from "./expression";
+import { FunctionlessNode } from "./node";
+import { AnyFunction } from "./util";
+import { VTL } from "./vtl";
 
 /**
  * All integration methods supported by functionless.
@@ -14,6 +15,11 @@ interface IntegrationMethods {
    * @private
    */
   appSyncVtl: AppSyncVtlIntegration;
+  /**
+   * Integrate with API Gateway VTL applications.
+   * @private
+   */
+  apiGWVtl: ApiGatewayVtlIntegration;
   /**
    * Integrate with ASL applications like StepFunctions.
    * @private
@@ -109,6 +115,14 @@ export class IntegrationImpl implements IntegrationMethods {
     if (this.integration.appSyncVtl) {
       return this.integration.appSyncVtl;
     }
+    return this.unhandledContext("Velocity Template");
+  }
+
+  public get apiGWVtl(): ApiGatewayVtlIntegration {
+    if (this.integration.apiGWVtl) {
+      return this.integration.apiGWVtl;
+    }
+    // TODO: differentiate Velocity Template?
     return this.unhandledContext("Velocity Template");
   }
 

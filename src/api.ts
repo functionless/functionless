@@ -11,9 +11,9 @@ import { aws_apigateway } from "aws-cdk-lib";
 import { FunctionDecl, isFunctionDecl } from "./declaration";
 import { isErr } from "./error";
 import { isIdentifier, PropAccessExpr } from "./expression";
-import { Function, isFunction } from "./function";
+import { Function } from "./function";
 import { FunctionlessNode } from "./node";
-import { isTable, Table } from "./table";
+import { ExpressStepFunction } from "./step-function";
 
 type ParameterMap = Record<string, string | number | boolean>;
 
@@ -40,7 +40,8 @@ type ResponseTransformerFunction<IntegrationResponse, MethodResponse> = (
 
 type IntegrationTarget<IntegrationRequest, IntegrationResponse> =
   | Function<IntegrationRequest, IntegrationResponse>
-  | Table<any, any>;
+  | ExpressStepFunction<IntegrationRequest, IntegrationResponse>;
+// | Table<any, any>["getItem"];
 
 export class ApiIntegration<
   Request extends ApiRequestProps<any, any, any, any>,
@@ -135,10 +136,20 @@ export class ApiIntegration<
     >(this.requestTransformer, this.integration, responseTransformer);
   }
 
-  addMethod(path: string, api: aws_apigateway.RestApi): void {
-    const resource = api.root.addResource(path);
+  addMethod(resource: aws_apigateway.Resource): void {
+    // const resource = api.root.addResource(path);
 
     let apigwIntegration: aws_apigateway.Integration;
+
+    let requestTemplate: string | undefined;
+    if (this.requestTransformer) {
+      requestTemplate = toVTL(this.requestTransformer, "request");
+    }
+
+    let responseTemplate: string | undefined;
+    if (this.responseTransformer) {
+      responseTemplate = toVTL(this.responseTransformer, "response");
+    }
 
     if (!this.integration) {
       apigwIntegration = new aws_apigateway.MockIntegration({
@@ -146,44 +157,29 @@ export class ApiIntegration<
           "application/json": '{ "statusCode": 200 }',
         },
       });
-    } else if (isFunction(this.integration)) {
-      let requestTemplate: string | undefined;
-      if (this.requestTransformer) {
-        requestTemplate = toVTL(this.requestTransformer, "request");
-      }
-
-      let responseTemplate: string | undefined;
-      if (this.responseTransformer) {
-        responseTemplate = toVTL(this.responseTransformer, "response");
-      }
-
+    } else {
       // TODO: PASSTHROUGH BEHAVIOR
-      const integrationProps: aws_apigateway.LambdaIntegrationOptions = {
-        integrationResponses: [
-          {
-            statusCode: "200",
-            responseTemplates: {
-              // TODO: what if there is no response template?
-              "application/json": responseTemplate!,
-            },
-          },
-        ],
-        ...(requestTemplate
-          ? {
-              requestTemplates: { "application/json": requestTemplate },
-              proxy: false,
-            }
-          : { proxy: true }),
-      };
-      apigwIntegration = new aws_apigateway.LambdaIntegration(
-        this.integration.resource,
-        integrationProps
+      // const integrationProps: aws_apigateway.LambdaIntegrationOptions = {
+      //   integrationResponses: [
+      //     {
+      //       statusCode: "200",
+      //       responseTemplates: {
+      //         // TODO: what if there is no response template?
+      //         "application/json": responseTemplate!,
+      //       },
+      //     },
+      //   ],
+      //   ...(requestTemplate
+      //     ? {
+      //         requestTemplates: { "application/json": requestTemplate },
+      //         proxy: false,
+      //       }
+      //     : { proxy: true }),
+      // };
+      apigwIntegration = this.integration.apiGWVtl.integration(
+        requestTemplate!,
+        responseTemplate!
       );
-    } else if (isTable(this.integration)) {
-      this.integration.getItem();
-      apigwIntegration = new aws_apigateway.AwsIntegration({
-        service: "dynamodb",
-      });
     }
 
     resource.addMethod("GET", apigwIntegration, {
@@ -202,12 +198,14 @@ export class ApiIntegration<
 function toVTL(node: FunctionDecl, template: "request" | "response") {
   console.log(template);
 
-  const base = `#set($Integer = 0)
-#set($inputRoot = $input.path('$'))`;
+  //   const base = `#set($Integer = 0)
+  // #set($inputRoot = $input.path('$'))`;
 
   const statements = node.body.statements.map((stmt) => inner(stmt)).join("\n");
 
-  return `${base}\n${statements}`;
+  return statements;
+
+  // return `${base}\n${statements}`;
 
   function inner(node: FunctionlessNode): string {
     switch (node.kind) {
@@ -218,7 +216,8 @@ function toVTL(node: FunctionDecl, template: "request" | "response") {
         return `[${node.children.map(inner).join(",")}]`;
 
       case "BinaryExpr":
-        return `${inner(node.left)} ${node.op} ${inner(node.right)}`;
+        throw "TODO";
+      // return `${inner(node.left)} ${node.op} ${inner(node.right)}`;
 
       case "BooleanLiteralExpr":
         return node.value.toString();
@@ -232,12 +231,23 @@ function toVTL(node: FunctionDecl, template: "request" | "response") {
       case "PropAccessExpr":
         if (descendedFromFunctionParameter(node)) {
           if (template === "request") {
+            // guaranteed that node.expr is a PropAccessExpr by descentFromFunctionParameter
+            const location = (node.expr as PropAccessExpr).name;
+            // TODO: should we just rename these?
+            const location2 =
+              location === "pathParameters"
+                ? "path"
+                : location === "queryStringParameters"
+                ? "querystring"
+                : "header";
+
             // TODO: can't refer to $input.pathParameters directly, need casting
-            const param = `$input.params('${node.name}')`;
+            const param = `$input.params().${location2}.${node.name}`;
 
             // TODO: boolean too?
             if (node.type === "number") {
-              return `$Integer.parseInt(${param})`;
+              return param;
+              // return `$Integer.parseInt(${param})`;
             }
 
             return param;
@@ -248,9 +258,14 @@ function toVTL(node: FunctionDecl, template: "request" | "response") {
         return `${inner(node.expr)}.${node.name};`;
 
       case "PropAssignExpr":
-        const name = inner(node.name);
-        const x = inner(node.expr);
-        return `${name}: ${x}`;
+        // if (node.name.kind === "StringLiteralExpr") {
+        //   return `${node.name.value}: ${inner(node.expr)}`;
+        // } else if (node.name.kind === "Identifier") {
+        //   return `${node.name.name}: ${inner(node.expr)}`;
+        // } else {
+        //   throw "TODO";
+        // }
+        return `${inner(node.name)}: ${inner(node.expr)}`;
 
       case "ReturnStmt":
         return inner(node.expr);
@@ -289,21 +304,9 @@ const descendedFromFunctionParameter = (node: PropAccessExpr): boolean => {
 //   .call(fn)
 //   .handleResponse((n) => ({ bar: n.foo }));
 
-// type SynthesizedMethodProps = aws_apigateway.MethodProps;
-
-// export class SynthesizedMethod extends aws_apigateway.Method {
-//   /**
-//    * All of the Request and Response Mapping templates in the order they are executed by the AppSync service.
-//    */
-//   // readonly templates: string[];
-
-//   constructor(
-//     scope: Construct,
-//     id: string,
-//     props: SynthesizedMethodProps
-//   ) {
-//     super(scope, id, props);
-
-//     this.httpMethod
-//   }
-// }
+export interface ApiGatewayVtlIntegration {
+  integration: (
+    requestTemplate: string,
+    responseTemplate: string
+  ) => aws_apigateway.Integration;
+}

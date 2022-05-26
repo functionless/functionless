@@ -1,8 +1,8 @@
 import * as appsync from "@aws-cdk/aws-appsync-alpha";
-import { Construct } from "constructs";
 import {
   Arn,
   ArnFormat,
+  aws_apigateway,
   aws_cloudwatch,
   aws_iam,
   aws_stepfunctions,
@@ -10,8 +10,9 @@ import {
   Stack,
   Token,
 } from "aws-cdk-lib";
-
-import { FunctionDecl, isFunctionDecl } from "./declaration";
+import { Construct } from "constructs";
+import { ApiGatewayVtlIntegration } from "./api";
+import { AppSyncVtlIntegration } from "./appsync";
 import {
   ASL,
   isMapOrForEach,
@@ -20,7 +21,14 @@ import {
   States,
   Task,
 } from "./asl";
-import { VTL } from "./vtl";
+import { assertDefined, assertNodeKind } from "./assert";
+import { FunctionDecl, isFunctionDecl } from "./declaration";
+import {
+  EventBus,
+  EventBusPredicateRuleBase,
+  EventBusRule,
+} from "./event-bridge";
+import { EventBusRuleInput } from "./event-bridge/types";
 import {
   CallExpr,
   isComputedPropertyNameExpr,
@@ -28,16 +36,9 @@ import {
   isObjectLiteralExpr,
   isSpreadAssignExpr,
 } from "./expression";
-import { AnyFunction, ensureItemOf } from "./util";
-import { assertDefined, assertNodeKind } from "./assert";
-import { EventBusRuleInput } from "./event-bridge/types";
-import {
-  EventBus,
-  EventBusPredicateRuleBase,
-  EventBusRule,
-} from "./event-bridge";
 import { Integration, makeIntegration } from "./integration";
-import { AppSyncVtlIntegration } from "./appsync";
+import { AnyFunction, ensureItemOf } from "./util";
+import { VTL } from "./vtl";
 
 export type AnyStepFunction =
   | ExpressStepFunction<any, any>
@@ -379,6 +380,7 @@ abstract class BaseStepFunction<P extends Record<string, any> | undefined, O>
   readonly resource: aws_stepfunctions.CfnStateMachine;
 
   readonly appSyncVtl: AppSyncVtlIntegration;
+  readonly apiGWVtl: ApiGatewayVtlIntegration;
 
   // @ts-ignore
   readonly __functionBrand: (arg: P) => O;
@@ -495,6 +497,61 @@ abstract class BaseStepFunction<P extends Record<string, any> | undefined, O>
 }`;
       },
     });
+
+    // Integration object for api gateway vtl
+    this.apiGWVtl = {
+      integration: (requestTemplate, responseTemplate) => {
+        // TODO: is this the right scope?
+        const credentialsRole = new aws_iam.Role(
+          this,
+          "ApiGatewayIntegrationRole",
+          {
+            assumedBy: new aws_iam.ServicePrincipal("apigateway.amazonaws.com"),
+          }
+        );
+
+        this.grantRead(credentialsRole);
+        if (
+          this.getStepFunctionType() ===
+          aws_stepfunctions.StateMachineType.EXPRESS
+        ) {
+          this.grantStartSyncExecution(credentialsRole);
+        } else {
+          this.grantStartExecution(credentialsRole);
+        }
+
+        const escapedInput = requestTemplate.replace(/\"/g, '\\"');
+        return new aws_apigateway.AwsIntegration({
+          service: "states",
+          action:
+            this.getStepFunctionType() ===
+            aws_stepfunctions.StateMachineType.EXPRESS
+              ? "StartSyncExecution"
+              : "StartExecution",
+          integrationHttpMethod: "POST",
+          options: {
+            credentialsRole,
+            // TODO: confirm this
+            passthroughBehavior: aws_apigateway.PassthroughBehavior.NEVER,
+            // TODO: need to pass in the VTL
+            requestTemplates: {
+              "application/json": `{
+                "input": "${escapedInput}",
+                "stateMachineArn": "${this.stateMachineArn}"
+              }`,
+            },
+            integrationResponses: [
+              {
+                statusCode: "200",
+                responseTemplates: {
+                  "application/json": `#set($inputRoot = $util.parseJson($input.path('$.output')))\n${responseTemplate}`,
+                },
+              },
+            ],
+          },
+        });
+      },
+    };
   }
 
   appSyncIntegration(

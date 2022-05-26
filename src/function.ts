@@ -1,10 +1,10 @@
 import * as appsync from "@aws-cdk/aws-appsync-alpha";
-import { aws_lambda } from "aws-cdk-lib";
-import { CallExpr, isVariableReference } from "./expression";
-import { ASL } from "./asl";
-
+import { aws_apigateway, aws_lambda } from "aws-cdk-lib";
+import { ApiGatewayVtlIntegration } from "./api";
 // @ts-ignore - imported for typedoc
-import type { AppsyncResolver, AppSyncVtlIntegration } from "./appsync";
+import type { AppSyncVtlIntegration } from "./appsync";
+import { ASL } from "./asl";
+import { CallExpr, isVariableReference } from "./expression";
 import { Integration } from "./integration";
 
 export function isFunction<P = any, O = any>(a: any): a is Function<P, O> {
@@ -32,6 +32,7 @@ export class Function<P, O> implements Integration {
   readonly kind = "Function" as const;
 
   readonly appSyncVtl: AppSyncVtlIntegration;
+  readonly apiGWVtl: ApiGatewayVtlIntegration;
 
   // @ts-ignore - this makes `F` easily available at compile time
   readonly __functionBrand: ConditionalFunction<P, O>;
@@ -56,6 +57,27 @@ export class Function<P, O> implements Integration {
           `{"version": "2018-05-29", "operation": "Invoke", "payload": ${payload}}`
         );
         return context.json(request);
+      },
+    };
+
+    this.apiGWVtl = {
+      integration: (requestTemplate, responseTemplate) => {
+        // TODO: set proxy
+        // TODO: set passthrough behavior
+        return new aws_apigateway.LambdaIntegration(this.resource, {
+          proxy: false,
+          requestTemplates: {
+            "application/json": requestTemplate,
+          },
+          integrationResponses: [
+            {
+              statusCode: "200",
+              responseTemplates: {
+                "application/json": `#set($inputRoot = $input.path('$'))\n${responseTemplate}`,
+              },
+            },
+          ],
+        });
       },
     };
   }

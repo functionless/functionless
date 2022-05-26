@@ -1,16 +1,10 @@
-import {
-  App,
-  aws_apigateway,
-  aws_dynamodb,
-  aws_lambda,
-  Stack,
-} from "aws-cdk-lib";
+import { App, aws_apigateway, aws_lambda, aws_logs, Stack } from "aws-cdk-lib";
 // import * as appsync from "@aws-cdk/aws-appsync-alpha";
 // import path from "path";
 // import { PeopleDatabase, Person } from "./people-db";
 // import { EventBus, EventBusRuleInput } from "functionless";
 // import { PeopleEvents } from "./people-events";
-import { ApiIntegration, Function, Table } from "functionless";
+import { ApiIntegration, ExpressStepFunction, Function } from "functionless";
 
 export const app = new App();
 
@@ -31,34 +25,55 @@ const fn = new Function<{ num: number }, { foo: number }>(
   })
 );
 
+const fnResource = restApi.root.addResource("fn").addResource("{num}");
 new ApiIntegration<{ pathParameters: { num: number } }>()
   .transformRequest((n) => ({
-    num: n.pathParameters.num + 1,
+    num: n.pathParameters.num,
   }))
   .call(fn)
-  .handleResponse((n) => ({ bar: n.foo }))
-  .addMethod("{num}", restApi);
+  // .handleResponse((n) => ({ bar: n.foo }))
+  .addMethod(fnResource);
 
-const table = new Table<{ id: string }, "id">(
-  new aws_dynamodb.Table(stack, "fluent-table", {
-    partitionKey: { name: "id", type: aws_dynamodb.AttributeType.STRING },
+const sfn = new ExpressStepFunction(
+  stack,
+  "fluent-sfn",
+  {
+    logs: {
+      destination: new aws_logs.LogGroup(stack, "fluent-sfn-logs"),
+      includeExecutionData: true,
+    },
+  },
+  (req: { num: number }) => ({
+    foo: req.num,
   })
 );
 
+const sfnResource = restApi.root.addResource("sfn").addResource("{num}");
 new ApiIntegration<{ pathParameters: { num: number } }>()
-  .transformRequest((req) => ({
-    key: {
-      pk: {
-        S: `Post|${req.pathParameters.num}`,
-      },
-      sk: {
-        S: "Post",
-      },
-    },
+  .transformRequest((n) => ({
+    num: n.pathParameters.num,
   }))
-  .call(table)
-  .handleResponse((n) => ({ bar: n }))
-  .addMethod("{num2}", restApi);
+  .call(sfn)
+  .handleResponse((n) => ({ bar: n.foo }))
+  .addMethod(sfnResource);
+
+// const table = new Table<{ id: string }, "id">(
+//   new aws_dynamodb.Table(stack, "fluent-table", {
+//     partitionKey: { name: "id", type: aws_dynamodb.AttributeType.STRING },
+//   })
+// );
+
+// new ApiIntegration<{ pathParameters: { num: number } }>()
+//   .transformRequest((req) => ({
+//     key: {
+//       pk: {
+//         S: `Post|${req.pathParameters.num}`,
+//       },
+//     },
+//   }))
+//   .call(table.getItem)
+//   .handleResponse((n) => ({ bar: n }))
+//   .addMethod("{num2}", restApi);
 
 // const schema = new appsync.Schema({
 //   filePath: path.join(__dirname, "..", "schema.gql"),
