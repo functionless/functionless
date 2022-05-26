@@ -12,6 +12,7 @@ import {
 import * as appsync from "@aws-cdk/aws-appsync-alpha";
 import { CallExpr, Expr, isVariableReference } from "./expression";
 import { ASL } from "./asl";
+import { Context } from "aws-lambda";
 
 // @ts-ignore - imported for typedoc
 import type { AppsyncResolver, AppSyncVtlIntegration } from "./appsync";
@@ -35,7 +36,10 @@ export function isFunction<P = any, O = any>(a: any): a is IFunction<P, O> {
 
 export type AnyLambda = Function<any, any>;
 
-export type FunctionClosure<P, O> = (payload: P) => Promise<O>;
+export type FunctionClosure<P, O> = (
+  payload: P,
+  context: Context
+) => Promise<O>;
 
 export interface IFunction<P, O> {
   readonly functionlessKind: typeof Function.FunctionlessType;

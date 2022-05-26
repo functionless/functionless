@@ -193,6 +193,16 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
   testFunctionResource(
     "Call Lambda return arns",
     (parent) => {
+      return new Function(parent, "function", async (_, context) => {
+        return context.functionName;
+      });
+    },
+    (context) => context.function
+  );
+
+  testFunctionResource(
+    "Call Lambda return arns",
+    (parent) => {
       const bus = new EventBus(parent, "bus");
       const busbus = new aws_events.EventBus(parent, "busbus");
       const func = new Function(parent, "function", async () => {
