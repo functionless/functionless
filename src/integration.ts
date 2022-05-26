@@ -4,11 +4,12 @@ import { FunctionlessNode } from "./node";
 import { VTL } from "./vtl";
 import { AnyFunction } from "./util";
 import { AppSyncVtlIntegration } from "./appsync";
+import { EventBus, EventBusTargetIntegration } from "./event-bridge";
 
 /**
  * All integration methods supported by functionless.
  */
-interface IntegrationMethods {
+interface IntegrationMethods<F extends AnyFunction> {
   /**
    * Integrate with AppSync VTL applications.
    * @private
@@ -19,6 +20,7 @@ interface IntegrationMethods {
    * @private
    */
   asl: (call: CallExpr, context: ASL) => Omit<State, "Next">;
+  eventBus: EventBusTargetIntegration<Parameters<F>, any>;
 }
 
 /**
@@ -69,22 +71,26 @@ interface IntegrationMethods {
  * Implement the unhandledContext function to customize the error message for unsupported contexts.
  * Otherwise the error will be: `${this.name} is not supported by context ${context.kind}.`
  */
-export interface Integration<K extends string = string>
-  extends Partial<IntegrationMethods> {
-  /**
-   * Integration Handler kind - for example StepFunction.describeExecution
-   */
-  readonly kind: K;
-  /**
-   * Optional method that allows overriding the {@link Error} thrown when a integration is not supported by a handler.
-   * @param kind - The Kind of the integration.
-   * @param contextKind - the Kind of the context attempting to use the integration.
-   */
-  readonly unhandledContext?: (
-    kind: string,
-    contextKind: CallContext["kind"]
-  ) => Error;
-}
+export type Integration<
+  F extends AnyFunction,
+  K extends string = string,
+  I extends Partial<IntegrationMethods<F>> = Partial<IntegrationMethods<F>>
+> = F &
+  I & {
+    /**
+     * Integration Handler kind - for example StepFunction.describeExecution
+     */
+    readonly kind: K;
+    /**
+     * Optional method that allows overriding the {@link Error} thrown when a integration is not supported by a handler.
+     * @param kind - The Kind of the integration.
+     * @param contextKind - the Kind of the context attempting to use the integration.
+     */
+    readonly unhandledContext?: (
+      kind: string,
+      contextKind: CallContext["kind"]
+    ) => Error;
+  };
 
 /**
  * Internal wrapper class for Integration handlers that provides default error handling for unsupported integrations.
@@ -92,9 +98,9 @@ export interface Integration<K extends string = string>
  * Functionless wraps Integration at runtime with this class.
  * @private
  */
-export class IntegrationImpl implements IntegrationMethods {
+export class IntegrationImpl implements IntegrationMethods<any> {
   readonly kind: string;
-  constructor(readonly integration: Integration) {
+  constructor(readonly integration: Integration<any, any>) {
     this.kind = integration.kind;
   }
 
@@ -118,6 +124,14 @@ export class IntegrationImpl implements IntegrationMethods {
     }
     return this.unhandledContext(context.kind);
   }
+
+  public get eventBus(): EventBusTargetIntegration<any, any> {
+    if (this.integration.eventBus) {
+      return this.integration.eventBus;
+    }
+
+    return this.unhandledContext("EventBus");
+  }
 }
 
 /**
@@ -140,7 +154,7 @@ export class IntegrationImpl implements IntegrationMethods {
  * @private
  */
 export function makeIntegration<F extends AnyFunction, K extends string>(
-  integration: Integration<K>
+  integration: Exclude<Integration<F, K>, F>
 ): { kind: K } & F {
   return integration as unknown as { kind: K } & F;
 }
@@ -186,4 +200,4 @@ export function findDeepIntegration(
   return undefined;
 }
 
-export type CallContext = ASL | VTL;
+export type CallContext = ASL | VTL | EventBus<any>;

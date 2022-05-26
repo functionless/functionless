@@ -1,11 +1,9 @@
 import { aws_events } from "aws-cdk-lib";
 import { FunctionDecl } from "../declaration";
 import { synthesizeEventBridgeTargets } from "./target-input";
-import { Function } from "../function";
-import { LambdaTargetProps, pipe, StateMachineTargetProps } from "./target";
 import { EventBusRuleInput } from "./types";
 import { IEventBusRule } from "./rule";
-import { StepFunction, ExpressStepFunction } from "../step-function";
+import { DynamicProps, IntegrationWithEventBus, pipe } from "./event-bus";
 
 /**
  * A function interface used by the {@link EventBusRule}'s map function.
@@ -59,19 +57,14 @@ export class EventBusTransform<T extends EventBusRuleInput, P> {
    *
    * @see EventBusRule.pipe for more details on pipe.
    */
-  pipe(props: LambdaTargetProps<P>): void;
-  pipe(func: Function<P, any>): void;
-  pipe(props: StateMachineTargetProps<P>): void;
-  pipe(props: StepFunction<P, any>): void;
-  pipe(props: ExpressStepFunction<P, any>): void;
-  pipe(
-    resource:
-      | Function<P, any>
-      | LambdaTargetProps<P>
-      | StateMachineTargetProps<P>
-      | StepFunction<P, any>
-      | ExpressStepFunction<P, any>
+  pipe<
+    Props extends object | undefined,
+    X extends P,
+    I extends IntegrationWithEventBus<X, Props>
+  >(
+    integration: [P] extends [X] ? I : never,
+    ...props: Parameters<DynamicProps<Props>>
   ): void {
-    pipe(this.rule, resource as any, this.targetInput);
+    pipe(this.rule, integration, props[0] as Props, this.targetInput);
   }
 }

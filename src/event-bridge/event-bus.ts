@@ -1,4 +1,4 @@
-import { aws_events, Stack } from "aws-cdk-lib";
+import { aws_events, aws_events_targets, Stack } from "aws-cdk-lib";
 import { Construct } from "constructs";
 import { ASL } from "../asl";
 import {
@@ -14,8 +14,8 @@ import {
   PropAssignExpr,
   StringLiteralExpr,
 } from "../expression";
-import { Integration } from "../integration";
-import { EventBusRule, EventPredicateFunction } from "./rule";
+import { Integration, IntegrationImpl } from "../integration";
+import { EventBusRule, EventPredicateFunction, IEventBusRule } from "./rule";
 import { EventBusRuleInput } from "./types";
 
 export const isEventBus = <E extends EventBusRuleInput>(
@@ -109,7 +109,18 @@ export interface IEventBus<E extends EventBusRuleInput = EventBusRuleInput>
   (event: Partial<E>, ...events: Partial<E>[]): void;
 }
 abstract class EventBusBase<E extends EventBusRuleInput>
-  implements IEventBus<E>, Integration
+  implements
+    IEventBus<E>,
+    Integration<
+      (event: Partial<E>, ...events: Partial<E>[]) => void,
+      "EventBus",
+      {
+        eventBus: EventBusTargetIntegration<
+          E,
+          aws_events_targets.EventBusProps | undefined
+        >;
+      }
+    >
 {
   /**
    * This static properties identifies this class as an EventBus to the TypeScript plugin.
@@ -212,6 +223,22 @@ abstract class EventBusBase<E extends EventBusRuleInput>
       },
     };
   }
+
+  eventBus: EventBusTargetIntegration<
+    E,
+    aws_events_targets.EventBusProps | undefined
+  > = {
+    target: (props, targetInput?) => {
+      if (targetInput) {
+        throw new Error("Event bus rule target does not support target input.");
+      }
+
+      return new aws_events_targets.EventBus(this.bus, {
+        deadLetterQueue: props?.deadLetterQueue,
+        role: props?.role,
+      });
+    },
+  };
 
   /**
    * @inheritdoc
@@ -326,4 +353,45 @@ class ImportedEventBus<E extends EventBusRuleInput> extends EventBusBase<E> {
   constructor(bus: aws_events.IEventBus) {
     super(bus);
   }
+}
+
+export interface EventBusTargetIntegration<
+  // the payload type we expect to be transformed into before making this call.
+  _P,
+  Props extends object | undefined = undefined
+> {
+  target: (
+    props: Props,
+    targetInput?: aws_events.RuleTargetInput
+  ) => aws_events.IRuleTarget;
+}
+
+export interface IntegrationWithEventBus<
+  P,
+  Props extends object | undefined = undefined
+> {
+  eventBus: EventBusTargetIntegration<P, Props>;
+}
+
+export type DynamicProps<Props extends object | undefined> =
+  Props extends undefined ? (props?: Props) => void : (props: Props) => void;
+
+/**
+ * Add a target to the run based on the configuration given.
+ */
+export function pipe<
+  T extends EventBusRuleInput,
+  P,
+  Props extends object | undefined = undefined
+>(
+  rule: IEventBusRule<T>,
+  integration: IntegrationWithEventBus<P, Props>,
+  props: Props,
+  targetInput?: aws_events.RuleTargetInput
+) {
+  const target = new IntegrationImpl(integration as any).eventBus.target(
+    props,
+    targetInput
+  );
+  return rule.rule.addTarget(target);
 }

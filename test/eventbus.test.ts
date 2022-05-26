@@ -1,6 +1,11 @@
 import { aws_events, aws_lambda, Stack } from "aws-cdk-lib";
-import { ExpressStepFunction, StepFunction } from "../src";
-import { EventBus, EventBusRule, EventBusRuleInput } from "../src/event-bridge";
+import { ExpressStepFunction, Integration, StepFunction } from "../src";
+import {
+  EventBus,
+  EventBusRule,
+  EventBusRuleInput,
+  EventBusTargetIntegration,
+} from "../src/event-bridge";
 import { EventBusTransform } from "../src/event-bridge/transform";
 import { Function } from "../src/function";
 
@@ -207,7 +212,7 @@ test("new bus with when map pipe function props", () => {
   const rule = busBus
     .when(stack, "rule", () => true)
     .map((event) => event.source);
-  rule.pipe({ func, retryAttempts: 10 });
+  rule.pipe(func, { retryAttempts: 10 });
 
   expect(rule.targetInput.bind(rule.rule.rule)).toEqual({
     inputPath: "$.source",
@@ -270,7 +275,7 @@ test("map narrows type and pipe enforces", () => {
       "rule",
       (event): event is EventBusRuleInput<t1> => event.detail.type === "one"
     )
-    .map((event) => event.detail.one)
+    .map((event) => event.detail)
     // should fail compilation if the types don't match
     .pipe(lambda);
 });

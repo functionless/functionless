@@ -1,22 +1,19 @@
 import { aws_events } from "aws-cdk-lib";
 import { Construct } from "constructs";
-import { EventBus, IEventBus, IEventBusFilterable } from "./event-bus";
+import {
+  IEventBus,
+  IEventBusFilterable,
+  DynamicProps,
+  IntegrationWithEventBus,
+  pipe,
+} from "./event-bus";
 import {
   andDocuments,
   synthesizeEventPattern,
   synthesizePatternDocument,
 } from "./event-pattern";
-import { Function } from "../function";
 import { EventBusRuleInput } from "./types";
 import { EventTransformFunction, EventBusTransform } from "./transform";
-import {
-  EventBusTargetProps,
-  EventBusTargetResource,
-  LambdaTargetProps,
-  pipe,
-  StateMachineTargetProps,
-} from "./target";
-import { ExpressStepFunction, StepFunction } from "../step-function";
 import { PatternDocument } from "./event-pattern/pattern";
 
 /**
@@ -128,7 +125,7 @@ export interface IEventBusRule<T extends EventBusRuleInput> {
    * const awsFunc = aws_lambda.Function(this, 'awsTarget', { ... });
    * const myFunction = new Function<Payload, void>(awsFunc);
    * const myQueue = new aws_sqs.Queue(this, 'queue');
-   * bus.when(...).pipe({ func: myFunction, deadLetterQueue: myQueue, retryAttempts: 10 );
+   * bus.when(...).pipe(myFunction, { deadLetterQueue: myQueue, retryAttempts: 10 });
    * ```
    *
    * Send to event bus
@@ -138,13 +135,10 @@ export interface IEventBusRule<T extends EventBusRuleInput> {
    * bus.when(...).pipe(new EventBus(targetBus))
    * ```
    */
-  pipe(props: LambdaTargetProps<T>): void;
-  pipe(func: Function<T, any>): void;
-  pipe(bus: EventBus<T>): void;
-  pipe(props: EventBusTargetProps<T>): void;
-  pipe(props: StateMachineTargetProps<T>): void;
-  pipe(props: StepFunction<T, any>): void;
-  pipe(props: ExpressStepFunction<T, any>): void;
+  pipe<Props extends object | undefined>(
+    integration: IntegrationWithEventBus<T, Props>,
+    ...props: Parameters<DynamicProps<Props>>
+  ): void;
 }
 
 abstract class EventBusRuleBase<T extends EventBusRuleInput>
@@ -178,15 +172,11 @@ abstract class EventBusRuleBase<T extends EventBusRuleInput>
   /**
    * @inheritdoc
    */
-  pipe(props: LambdaTargetProps<T>): void;
-  pipe(func: Function<T, any>): void;
-  pipe(bus: IEventBus<T>): void;
-  pipe(props: EventBusTargetProps<T>): void;
-  pipe(props: StateMachineTargetProps<T>): void;
-  pipe(props: StepFunction<T, any>): void;
-  pipe(props: ExpressStepFunction<T, any>): void;
-  pipe(resource: EventBusTargetResource<T, T>): void {
-    pipe(this, resource as any);
+  pipe<Props extends object | undefined>(
+    integration: IntegrationWithEventBus<T, Props>,
+    ...props: Parameters<DynamicProps<Props>>
+  ): void {
+    pipe(this, integration, props[0] as Props);
   }
 }
 

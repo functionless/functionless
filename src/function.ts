@@ -1,17 +1,21 @@
 import * as appsync from "@aws-cdk/aws-appsync-alpha";
-import { aws_lambda } from "aws-cdk-lib";
+import { aws_events_targets, aws_lambda } from "aws-cdk-lib";
 import { CallExpr, isVariableReference } from "./expression";
 import { ASL } from "./asl";
 
 // @ts-ignore - imported for typedoc
 import type { AppsyncResolver, AppSyncVtlIntegration } from "./appsync";
 import { Integration } from "./integration";
+import { EventBusTargetIntegration } from "./event-bridge";
 
 export function isFunction<P = any, O = any>(a: any): a is Function<P, O> {
   return a?.kind === "Function";
 }
 
 export type AnyLambda = Function<any, any>;
+
+export interface FunctionEventBusTargetProps
+  extends Omit<aws_events_targets.LambdaFunctionProps, "event"> {}
 
 /**
  * Wraps an {@link aws_lambda.Function} with a type-safe interface that can be
@@ -28,7 +32,19 @@ export type AnyLambda = Function<any, any>;
  * })
  * ```
  */
-export class Function<P, O> implements Integration {
+export class Function<P, O>
+  implements
+    Integration<
+      ConditionalFunction<P, O>,
+      "Function",
+      {
+        eventBus: EventBusTargetIntegration<
+          P,
+          FunctionEventBusTargetProps | undefined
+        >;
+      }
+    >
+{
   readonly kind = "Function" as const;
 
   readonly appSyncVtl: AppSyncVtlIntegration;
@@ -75,6 +91,19 @@ export class Function<P, O> implements Integration {
       ResultSelector: "$.Payload",
     };
   }
+
+  public eventBus: EventBusTargetIntegration<
+    P,
+    FunctionEventBusTargetProps | undefined
+  > = {
+    target: (props, targetInput) =>
+      new aws_events_targets.LambdaFunction(this.resource, {
+        deadLetterQueue: props?.deadLetterQueue,
+        maxEventAge: props?.maxEventAge,
+        retryAttempts: props?.retryAttempts,
+        event: targetInput,
+      }),
+  };
 }
 
 type ConditionalFunction<P, O> = P extends undefined

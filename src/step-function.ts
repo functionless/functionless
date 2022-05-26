@@ -4,6 +4,7 @@ import {
   Arn,
   ArnFormat,
   aws_cloudwatch,
+  aws_events_targets,
   aws_iam,
   aws_stepfunctions,
   Resource,
@@ -38,6 +39,7 @@ import {
 } from "./event-bridge";
 import { Integration, makeIntegration } from "./integration";
 import { AppSyncVtlIntegration } from "./appsync";
+import { EventBusTargetIntegration } from "./event-bridge";
 
 export type AnyStepFunction =
   | ExpressStepFunction<any, any>
@@ -322,7 +324,7 @@ export namespace $SFN {
 
 function makeStepFunctionIntegration<F extends AnyFunction, K extends string>(
   methodName: K,
-  integration: Omit<Integration, "kind">
+  integration: Exclude<Omit<Integration<F>, "kind">, F>
 ): F {
   return makeIntegration<F, `$SFN.${K}`>({
     kind: `$SFN.${methodName}`,
@@ -368,9 +370,23 @@ interface StepFunctionStatusChangedEvent
     "aws.states"
   > {}
 
+interface StepFunctionEventBusTargetProps
+  extends Omit<aws_events_targets.SfnStateMachineProps, "input"> {}
+
 abstract class BaseStepFunction<P extends Record<string, any> | undefined, O>
   extends Resource
-  implements aws_stepfunctions.IStateMachine, Integration
+  implements
+    aws_stepfunctions.IStateMachine,
+    Integration<
+      (arg: P) => O,
+      "StepFunction",
+      {
+        eventBus: EventBusTargetIntegration<
+          P,
+          StepFunctionEventBusTargetProps | undefined
+        >;
+      }
+    >
 {
   readonly kind = "StepFunction";
   readonly functionlessKind = "StepFunction";
@@ -591,6 +607,18 @@ abstract class BaseStepFunction<P extends Record<string, any> | undefined, O>
       },
     };
   }
+
+  eventBus: EventBusTargetIntegration<
+    P,
+    aws_events_targets.EventBusProps | undefined
+  > = {
+    target: (props, targetInput) => {
+      return new aws_events_targets.SfnStateMachine(this, {
+        ...props,
+        input: targetInput,
+      });
+    },
+  };
 
   private statusChangeEventDocument() {
     return {
