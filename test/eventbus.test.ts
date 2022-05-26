@@ -1,6 +1,6 @@
 import { aws_events, aws_lambda, Stack } from "aws-cdk-lib";
 import { ExpressStepFunction, StepFunction } from "../src";
-import { EventBus, EventBusRule, EventBusRuleInput } from "../src/event-bridge";
+import { EventBus, Rule, EventBusRuleInput } from "../src/event-bridge";
 import { EventBusTransform } from "../src/event-bridge/transform";
 import { Function } from "../src/function";
 
@@ -23,7 +23,7 @@ test("new bus without wrapper", () => {
 test("new rule without when", () => {
   const bus = new EventBus(stack, "bus");
 
-  const rule = new EventBusRule(stack, "rule", bus, (_event) => true);
+  const rule = new Rule(stack, "rule", bus, (_event) => true);
 
   expect(rule.rule._renderEventPattern()).toEqual({ source: [{ prefix: "" }] });
 });
@@ -31,7 +31,7 @@ test("new rule without when", () => {
 test("new transform without map", () => {
   const bus = new EventBus(stack, "bus");
 
-  const rule = new EventBusRule(stack, "rule", bus, (_event) => true);
+  const rule = new Rule(stack, "rule", bus, (_event) => true);
   const transform = new EventBusTransform((event) => event.source, rule);
 
   expect(transform.targetInput.bind(rule.rule)).toEqual({
@@ -42,7 +42,7 @@ test("new transform without map", () => {
 test("rule from existing rule", () => {
   const awsRule = new aws_events.Rule(stack, "rule");
 
-  const rule = EventBusRule.fromRule(awsRule);
+  const rule = Rule.fromRule(awsRule);
   const transform = new EventBusTransform((event) => event.source, rule);
 
   expect(transform.targetInput.bind(rule.rule)).toEqual({

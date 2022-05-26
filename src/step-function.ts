@@ -31,11 +31,7 @@ import {
 import { AnyFunction, ensureItemOf } from "./util";
 import { assertDefined, assertNodeKind } from "./assert";
 import { EventBusRuleInput } from "./event-bridge/types";
-import {
-  EventBus,
-  EventBusPredicateRuleBase,
-  EventBusRule,
-} from "./event-bridge";
+import { EventBus, EventBusPredicateRuleBase, Rule } from "./event-bridge";
 import { Integration, makeIntegration } from "./integration";
 import { AppSyncVtlIntegration } from "./appsync";
 
@@ -609,7 +605,7 @@ abstract class BaseStepFunction<P extends Record<string, any> | undefined, O>
   public onSucceeded(
     scope: Construct,
     id: string
-  ): EventBusRule<StepFunctionStatusChangedEvent> {
+  ): Rule<StepFunctionStatusChangedEvent> {
     const bus = EventBus.default<StepFunctionStatusChangedEvent>(this);
 
     return new EventBusPredicateRuleBase(
@@ -632,7 +628,7 @@ abstract class BaseStepFunction<P extends Record<string, any> | undefined, O>
   public onFailed(
     scope: Construct,
     id: string
-  ): EventBusRule<StepFunctionStatusChangedEvent> {
+  ): Rule<StepFunctionStatusChangedEvent> {
     const bus = EventBus.default<StepFunctionStatusChangedEvent>(this);
 
     return new EventBusPredicateRuleBase(
@@ -655,7 +651,7 @@ abstract class BaseStepFunction<P extends Record<string, any> | undefined, O>
   public onStarted(
     scope: Construct,
     id: string
-  ): EventBusRule<StepFunctionStatusChangedEvent> {
+  ): Rule<StepFunctionStatusChangedEvent> {
     const bus = EventBus.default<StepFunctionStatusChangedEvent>(this);
 
     return new EventBusPredicateRuleBase(
@@ -678,7 +674,7 @@ abstract class BaseStepFunction<P extends Record<string, any> | undefined, O>
   public onTimedOut(
     scope: Construct,
     id: string
-  ): EventBusRule<StepFunctionStatusChangedEvent> {
+  ): Rule<StepFunctionStatusChangedEvent> {
     const bus = EventBus.default<StepFunctionStatusChangedEvent>(this);
 
     return new EventBusPredicateRuleBase(
@@ -701,7 +697,7 @@ abstract class BaseStepFunction<P extends Record<string, any> | undefined, O>
   public onAborted(
     scope: Construct,
     id: string
-  ): EventBusRule<StepFunctionStatusChangedEvent> {
+  ): Rule<StepFunctionStatusChangedEvent> {
     const bus = EventBus.default<StepFunctionStatusChangedEvent>(this);
 
     return new EventBusPredicateRuleBase(
@@ -724,10 +720,10 @@ abstract class BaseStepFunction<P extends Record<string, any> | undefined, O>
   /**
    * Create event bus rule that matches any status change on this machine.
    */
-  public onStatusChanged(
+  pubRuleChanged(
     scope: Construct,
     id: string
-  ): EventBusRule<StepFunctionStatusChangedEvent> {
+  ): Rule<StepFunctionStatusChangedEvent> {
     const bus = EventBus.default<StepFunctionStatusChangedEvent>(this);
 
     // We are not able to use the nice "when" function here because we don't compile
@@ -750,7 +746,7 @@ abstract class BaseStepFunction<P extends Record<string, any> | undefined, O>
 
   /**
    * Grant the given identity permissions to start an execution of this state
-   * machine.
+   * Rule
    */
   public grantStartExecution(identity: aws_iam.IGrantable): aws_iam.Grant {
     return aws_iam.Grant.addToPrincipal({

@@ -8,7 +8,7 @@ import { assertDefined } from "./assert";
 import { StepFunction, ExpressStepFunction } from "./step-function";
 import { hasParent } from "./util";
 import minimatch from "minimatch";
-import { EventBus, EventBusRule } from "./event-bridge";
+import { EventBus, Rule } from "./event-bridge";
 import { EventBusTransform } from "./event-bridge/transform";
 
 export default compile;
@@ -245,14 +245,14 @@ export function compile(
       }
 
       /**
-       * Checks to see if a node is of type {@link EventBusRule}.
+       * Checks to see if a node is of type {@link Rule}.
        * The node could be any kind of node that returns an event bus rule.
        *
        * Matches the patterns:
        *   * IEventBusRule
        */
       function isEventBusRule(node: ts.Node) {
-        return isFunctionlessClassOfKind(node, EventBusRule.FunctionlessType);
+        return isFunctionlessClassOfKind(node, Rule.FunctionlessType);
       }
 
       /**

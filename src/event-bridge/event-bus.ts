@@ -15,7 +15,7 @@ import {
   StringLiteralExpr,
 } from "../expression";
 import { Integration } from "../integration";
-import { EventBusRule, EventPredicateFunction } from "./rule";
+import { Rule, EventPredicateFunction } from "./rule";
 import { EventBusRuleInput } from "./types";
 
 export const isEventBus = <E extends EventBusRuleInput>(
@@ -89,7 +89,7 @@ export interface IEventBusFilterable<E extends EventBusRuleInput> {
     scope: Construct,
     id: string,
     predicate: EventPredicateFunction<E, O>
-  ): EventBusRule<E, O>;
+  ): Rule<E, O>;
 }
 
 export interface IEventBus<E extends EventBusRuleInput = EventBusRuleInput>
@@ -220,8 +220,8 @@ abstract class EventBusBase<E extends EventBusRuleInput>
     scope: Construct,
     id: string,
     predicate: EventPredicateFunction<E, O>
-  ): EventBusRule<E, O> {
-    return new EventBusRule<E, O>(scope, id, this as any, predicate);
+  ): Rule<E, O> {
+    return new Rule<E, O>(scope, id, this as any, predicate);
   }
 }
 

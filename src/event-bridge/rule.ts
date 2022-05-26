@@ -253,7 +253,7 @@ export class EventBusPredicateRuleBase<T extends EventBusRuleInput>
  *
  * @see EventBus.when for more details on filtering events.
  */
-export class EventBusRule<
+export class Rule<
   T extends EventBusRuleInput,
   O extends T = T
 > extends EventBusPredicateRuleBase<O> {
