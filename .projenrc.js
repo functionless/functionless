@@ -143,7 +143,8 @@ const project = new CustomTypescriptProject({
 const packageJson = project.tryFindObjectFile("package.json");
 
 packageJson.addOverride("lint-staged", {
-  "*.{tsx,jsx,ts,js,json,md,css}": "prettier --write",
+  "*.{tsx,jsx,ts,js}": ["eslint --fix"],
+  "*.{tsx,jsx,ts,js,json,md,css}": ["prettier --write"],
 });
 
 project.compileTask.prependExec(

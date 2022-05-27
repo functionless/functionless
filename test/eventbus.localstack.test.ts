@@ -117,7 +117,7 @@ localstackTestSuite("eventBusStack", (testResource) => {
       // 3 - 4s
       // 4 - 8s
       // 5 - 16s
-      const item = await getItem(5, 1000, 2);
+      const item = await getItem(5, 10000, 2);
 
       expect(item.Item).toBeDefined();
     }
