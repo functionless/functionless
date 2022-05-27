@@ -1,9 +1,10 @@
-import { App, CfnOutput, Stack } from "aws-cdk-lib";
 import * as cxapi from "@aws-cdk/cx-api";
-import { CloudFormationDeployments } from "aws-cdk/lib/api/cloudformation-deployments";
+import { App, CfnOutput, Stack } from "aws-cdk-lib";
 import { SdkProvider } from "aws-cdk/lib/api/aws-auth";
-import { Construct } from "constructs";
+import { CloudFormationDeployments } from "aws-cdk/lib/api/cloudformation-deployments";
+// eslint-disable-next-line import/no-extraneous-dependencies
 import { CloudFormation } from "aws-sdk";
+import { Construct } from "constructs";
 
 export const clientConfig = {
   endpoint: "http://localhost:4566",

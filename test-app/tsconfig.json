@@ -29,7 +29,7 @@
         "transform": "functionless/lib/compile"
       },
       {
-        "name": "functionless/lib/language-service-plugin"
+        "name": "@functionless/language-service"
       }
     ]
   },

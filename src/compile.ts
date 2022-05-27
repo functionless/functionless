@@ -1,11 +1,8 @@
-import ts from "typescript";
 import path from "path";
-import { PluginConfig, TransformerExtras } from "ts-patch";
-import { BinaryOp, CanReference } from "./expression";
-import { FunctionlessNode } from "./node";
-import { assertDefined } from "./assert";
-import { hasParent } from "./util";
 import minimatch from "minimatch";
+import type { PluginConfig, TransformerExtras } from "ts-patch";
+import ts from "typescript";
+import { assertDefined } from "./assert";
 import {
   EventBusMapInterface,
   EventBusRuleInterface,
@@ -14,7 +11,9 @@ import {
   makeFunctionlessChecker,
   TsFunctionParameter,
 } from "./checker";
-import { validate } from "./validate";
+import { BinaryOp, CanReference } from "./expression";
+import { FunctionlessNode } from "./node";
+import { hasParent } from "./util";
 
 export default compile;
 
@@ -40,8 +39,8 @@ export interface FunctionlessConfig extends PluginConfig {
  */
 export function compile(
   program: ts.Program,
-  _config: FunctionlessConfig,
-  extras: TransformerExtras
+  _config?: FunctionlessConfig,
+  _extras?: TransformerExtras
 ): ts.TransformerFactory<ts.SourceFile> {
   const excludeMatchers = _config?.exclude
     ? _config.exclude.map((pattern) => minimatch.makeRe(path.resolve(pattern)))
@@ -77,11 +76,6 @@ export function compile(
       const statements = sf.statements.map(
         (stmt) => visitor(stmt) as ts.Statement
       );
-
-      const diagnostics = validate(ts, checker, sf);
-      for (const diagnostic of diagnostics) {
-        extras.addDiagnostic(diagnostic);
-      }
 
       return ts.factory.updateSourceFile(
         sf,
@@ -295,7 +289,7 @@ export function compile(
               signature = signatures[0];
             } else {
               throw new Error(
-                `Lambda Functions with multiple signatures are not currently supported.`
+                "Lambda Functions with multiple signatures are not currently supported."
               );
             }
           } else {

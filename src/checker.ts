@@ -1,5 +1,5 @@
 import * as ts from "typescript";
-import type * as tsserver from "typescript/lib/tsserverlibrary";
+import * as tsserver from "typescript/lib/tsserverlibrary";
 import { AppsyncResolver } from "./appsync";
 import { EventBus, EventBusRule } from "./event-bridge";
 import { EventBusTransform } from "./event-bridge/transform";
@@ -32,9 +32,25 @@ export type EventBusMapInterface = ts.CallExpression & {
   arguments: [TsFunctionParameter];
 };
 
-export type FunctionlessChecker = ReturnType<typeof makeFunctionlessChecker>;
+export type FunctionlessChecker = ReturnType<typeof _makeFunctionlessChecker>;
+
+// cache a mapping of checker to functionless checker to avoid redundant computations
+// weak cache because we want to clear memory whenever it removes
+const weakCache = new WeakMap<
+  ts.TypeChecker | tsserver.TypeChecker,
+  FunctionlessChecker
+>();
 
 export function makeFunctionlessChecker(
+  checker: ts.TypeChecker | tsserver.TypeChecker
+): FunctionlessChecker {
+  if (!weakCache.has(checker)) {
+    weakCache.set(checker, _makeFunctionlessChecker(checker));
+  }
+  return weakCache.get(checker)!;
+}
+
+function _makeFunctionlessChecker(
   checker: ts.TypeChecker | tsserver.TypeChecker
 ) {
   return {

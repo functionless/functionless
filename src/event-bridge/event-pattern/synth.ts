@@ -1,4 +1,21 @@
+import {
+  BinaryOp,
+  isBinaryExpr,
+  isCallExpr,
+  isElementAccessExpr,
+  isNullLiteralExpr,
+  isPropAccessExpr,
+  isUnaryExpr,
+} from "../..";
+import {
+  assertDefined,
+  assertNever,
+  assertNumber,
+  assertPrimitive,
+  assertString,
+} from "../../assert";
 import { FunctionDecl, isFunctionDecl } from "../../declaration";
+import { Err, isErr } from "../../error";
 import {
   BinaryExpr,
   CallExpr,
@@ -9,12 +26,25 @@ import {
   PropAccessExpr,
   UnaryExpr,
 } from "../../expression";
+import * as functionless_event_bridge from "../types";
 import {
-  assertDefined,
-  assertNever,
-  assertNumber,
-  assertString,
-} from "../../assert";
+  assertValidEventReference,
+  EventReference,
+  flattenReturnEvent,
+  evalToConstant,
+  getPropertyAccessKey,
+  getReferencePath,
+  ReferencePath,
+} from "../utils";
+import {
+  intersectNumericRange,
+  reduceNumericAggregate,
+  unionNumericRange,
+  negateNumericRange,
+  intersectNumericAggregation,
+  intersectNumericAggregationWithRange,
+  createSingleNumericRange,
+} from "./numeric";
 import {
   PatternDocument,
   Pattern,
@@ -33,36 +63,6 @@ import {
   NumericRangePattern,
   NeverPattern,
 } from "./pattern";
-import * as functionless_event_bridge from "../types";
-import {
-  intersectNumericRange,
-  reduceNumericAggregate,
-  unionNumericRange,
-  negateNumericRange,
-  intersectNumericAggregation,
-  intersectNumericAggregationWithRange,
-  createSingleNumericRange,
-} from "./numeric";
-import {
-  BinaryOp,
-  isBinaryExpr,
-  isCallExpr,
-  isElementAccessExpr,
-  isNullLiteralExpr,
-  isPropAccessExpr,
-  isUnaryExpr,
-} from "../..";
-import {
-  assertValidEventReference,
-  EventReference,
-  flattenReturnEvent,
-  evalToConstant,
-  getPropertyAccessKey,
-  getReferencePath,
-  ReferencePath,
-} from "../utils";
-import { Err, isErr } from "../../error";
-import { assertPrimitive } from "../../assert";
 
 const OPERATIONS = { STARTS_WITH: "startsWith", INCLUDES: "includes" };
 const INCLUDES_SEARCH_ELEMENT = "searchElement";
@@ -70,9 +70,9 @@ const STARTS_WITH_SEARCH_STRING = "searchString";
 
 /**
  * Turns a pattern document into the Event Bridge Pattern format.
- * 
+ *
  * To transform from a {@link EventBusPredicateFunction}, first call {@link synthesizePatternDocument}.
- * 
+ *
  *  {
  *    doc: {
  *        source: {
@@ -80,9 +80,9 @@ const STARTS_WITH_SEARCH_STRING = "searchString";
  *        }
  *   }
  * }
- * 
+ *
  * becomes
- * 
+ *
  * {
  *    source: ["lambda"]
  * }
@@ -250,9 +250,8 @@ export const synthesizePatternDocument = (
           }
           // if both are exists: true or exists: false
           return pattern1;
-        }
-        // If one of the patterns are exists: true, return exists: true
-        else if (pattern1.isPresent) {
+          // If one of the patterns are exists: true, return exists: true
+        } else if (pattern1.isPresent) {
           return pattern1;
         }
       }
@@ -399,7 +398,7 @@ export const synthesizePatternDocument = (
             )
         ).length > 1
     ) {
-      throw new Error(`Includes only supports the searchElement argument`);
+      throw new Error("Includes only supports the searchElement argument");
     }
 
     // the property the call is on
@@ -853,14 +852,12 @@ const andMergePattern = (
             reason: "Field cannot both be present and not present.",
           };
         }
-      }
-      // If the pattern checks for presence, return other pattern, they should all imply the pattern is present.
-      else if (pattern1.isPresent) {
+      } else if (pattern1.isPresent) {
+        // If the pattern checks for presence, return other pattern, they should all imply the pattern is present.
         return pattern2;
-      }
-      // checks for not present
-      // take anything but, because !x && x !== "x" => !x
-      else if (isAnythingButPattern(pattern2)) {
+      } else if (isAnythingButPattern(pattern2)) {
+        // checks for not present
+        // take anything but, because !x && x !== "x" => !x
         return pattern1;
       }
       // cannot && exists: false and any other pattern as it would be impossible.
@@ -873,10 +870,9 @@ const andMergePattern = (
       // If the pattern checks for presence, return other pattern, they should all imply the pattern is present.
       if (pattern2.isPresent) {
         return pattern1;
-      }
-      // checks for not present
-      // take anything but, because !x && x !== "x" => !x
-      else if (isAnythingButPattern(pattern1)) {
+      } else if (isAnythingButPattern(pattern1)) {
+        // checks for not present
+        // take anything but, because !x && x !== "x" => !x
         return pattern2;
       }
       // cannot && exists: false and any other pattern as it would be impossible.
@@ -885,9 +881,8 @@ const andMergePattern = (
         reason:
           "Invalid comparison: pattern cannot both be not present as a positive value.",
       };
-    }
-    // AND (intersect) logic between two numeric aggregate ranges (unions), between a numeric aggregate and a single numeric range or between two numeric ranges
-    else if (isNumericAggregationPattern(pattern1)) {
+    } else if (isNumericAggregationPattern(pattern1)) {
+      // AND (intersect) logic between two numeric aggregate ranges (unions), between a numeric aggregate and a single numeric range or between two numeric ranges
       if (isNumericAggregationPattern(pattern2)) {
         return intersectNumericAggregation(pattern1, pattern2);
       } else if (isNumericRangePattern(pattern2)) {
@@ -902,9 +897,8 @@ const andMergePattern = (
       isNumericRangePattern(pattern2)
     ) {
       return intersectNumericRange(pattern1, pattern2);
-    }
-    // AND logic between anything but (not equals) patterns
-    else if (isAnythingButPattern(pattern1)) {
+    } else if (isAnythingButPattern(pattern1)) {
+      // AND logic between anything but (not equals) patterns
       if (isAnythingButPattern(pattern2)) {
         return {
           anythingBut: [...pattern1.anythingBut, ...pattern2.anythingBut],

@@ -1,6 +1,6 @@
-import { FunctionlessNode } from "./node";
-import ts from "typescript";
 import { Construct } from "constructs";
+import ts from "typescript";
+import { FunctionlessNode } from "./node";
 
 export type AnyFunction = (...args: any[]) => any;
 

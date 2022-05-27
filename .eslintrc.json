@@ -33,27 +33,23 @@
     }
   },
   "ignorePatterns": [
-    "**"
+    "*.js",
+    "!.projenrc.js",
+    "*.d.ts",
+    "node_modules/",
+    "*.generated.ts",
+    "coverage"
   ],
   "rules": {
     "indent": [
       "off"
     ],
-    "@typescript-eslint/indent": [
-      "error",
-      2
-    ],
+    "@typescript-eslint/indent": "off",
     "quotes": [
-      "error",
-      "single",
-      {
-        "avoidEscape": true
-      }
+      "warn",
+      "double"
     ],
-    "comma-dangle": [
-      "error",
-      "always-multiline"
-    ],
+    "comma-dangle": "off",
     "comma-spacing": [
       "error",
       {
@@ -95,13 +91,7 @@
     "keyword-spacing": [
       "error"
     ],
-    "brace-style": [
-      "error",
-      "1tbs",
-      {
-        "allowSingleLine": true
-      }
-    ],
+    "brace-style": "off",
     "space-before-blocks": [
       "error"
     ],
@@ -128,10 +118,7 @@
         "ignoreRegExpLiterals": true
       }
     ],
-    "quote-props": [
-      "error",
-      "consistent-as-needed"
-    ],
+    "quote-props": "off",
     "@typescript-eslint/no-require-imports": [
       "error"
     ],
@@ -168,9 +155,7 @@
     "no-shadow": [
       "off"
     ],
-    "@typescript-eslint/no-shadow": [
-      "error"
-    ],
+    "@typescript-eslint/no-shadow": "off",
     "key-spacing": [
       "error"
     ],
@@ -195,22 +180,7 @@
     "no-bitwise": [
       "error"
     ],
-    "@typescript-eslint/member-ordering": [
-      "error",
-      {
-        "default": [
-          "public-static-field",
-          "public-static-method",
-          "protected-static-field",
-          "protected-static-method",
-          "private-static-field",
-          "private-static-method",
-          "field",
-          "constructor",
-          "method"
-        ]
-      }
-    ]
+    "@typescript-eslint/member-ordering": "off"
   },
   "overrides": [
     {

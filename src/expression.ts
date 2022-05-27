@@ -1,4 +1,4 @@
-import { AnyStepFunction } from "./step-function";
+import { $AWS } from "./aws";
 import { ParameterDecl } from "./declaration";
 import { AnyLambda } from "./function";
 import { BaseNode, FunctionlessNode, isNode, typeGuard } from "./node";
@@ -8,8 +8,8 @@ import type {
   ReturnStmt,
   VariableStmt,
 } from "./statement";
+import { AnyStepFunction } from "./step-function";
 import { AnyTable } from "./table";
-import { $AWS } from "./aws";
 import { AnyFunction } from "./util";
 
 /**

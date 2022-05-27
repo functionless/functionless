@@ -1,5 +1,9 @@
 {
   "name": "functionless",
+  "bin": {
+    "functionless": "./bin/functionless.js",
+    "functionless.js": "bin/functionless.js"
+  },
   "scripts": {
     "build": "npx projen build",
     "build:website": "npx projen build:website",
