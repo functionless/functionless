@@ -7,7 +7,8 @@ import { FunctionlessChecker } from "./checker";
  *
  * @param ts a reference to the TypeScript Server.
  * @param checker the Program's {@link FunctionlessChecker}.
- * @param sf the TypeScript SourceFile.
+ * @param node the TypeScript AST Node to validate
+ * @param logger an optional object with methods for logging info
  * @returns diagnostic errors for the file.
  */
 export function validate(

@@ -42,7 +42,8 @@ describe("event pattern", () => {
     test("index access", () => {
       ebEventPatternTestCase(
         reflect<EventPredicateFunction<TestEvent>>(
-          (event) => event.source === "lambda"
+          // eslint-disable-next-line dot-notation
+          (event) => event["source"] === "lambda"
         ),
         {
           source: ["lambda"],

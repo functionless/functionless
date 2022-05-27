@@ -23,7 +23,8 @@ test("event path", () => {
 
 test("event path index access", () => {
   ebEventTargetTestCase<testEvent>(
-    reflect((event) => event.source),
+    // eslint-disable-next-line dot-notation
+    reflect((event) => event["source"]),
     aws_events.RuleTargetInput.fromEventPath("$.source")
   );
 });
