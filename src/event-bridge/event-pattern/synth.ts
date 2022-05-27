@@ -70,9 +70,9 @@ const STARTS_WITH_SEARCH_STRING = "searchString";
 
 /**
  * Turns a pattern document into the Event Bridge Pattern format.
- * 
+ *
  * To transform from a {@link EventBusPredicateFunction}, first call {@link synthesizePatternDocument}.
- * 
+ *
  *  {
  *    doc: {
  *        source: {
@@ -80,9 +80,9 @@ const STARTS_WITH_SEARCH_STRING = "searchString";
  *        }
  *   }
  * }
- * 
+ *
  * becomes
- * 
+ *
  * {
  *    source: ["lambda"]
  * }

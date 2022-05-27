@@ -1,7 +1,13 @@
-import { aws_events, aws_lambda, Stack } from "aws-cdk-lib";
+import { aws_events, aws_lambda, Duration, Stack } from "aws-cdk-lib";
 import { ExpressStepFunction, StepFunction } from "../src";
-import { EventBus, Rule, EventBusRuleInput } from "../src/event-bridge";
-import { EventBusTransform } from "../src/event-bridge/transform";
+import {
+  EventBus,
+  Rule,
+  EventBusRuleInput,
+  ScheduledEvent,
+} from "../src/event-bridge";
+import { synthesizeEventPattern } from "../src/event-bridge/event-pattern";
+import { EventTransform } from "../src/event-bridge/transform";
 import { Function } from "../src/function";
 
 let stack: Stack;
@@ -32,7 +38,7 @@ test("new transform without map", () => {
   const bus = new EventBus(stack, "bus");
 
   const rule = new Rule(stack, "rule", bus, (_event) => true);
-  const transform = new EventBusTransform((event) => event.source, rule);
+  const transform = new EventTransform((event) => event.source, rule);
 
   expect(transform.targetInput.bind(rule.rule)).toEqual({
     inputPath: "$.source",
@@ -43,7 +49,7 @@ test("rule from existing rule", () => {
   const awsRule = new aws_events.Rule(stack, "rule");
 
   const rule = Rule.fromRule(awsRule);
-  const transform = new EventBusTransform((event) => event.source, rule);
+  const transform = new EventTransform((event) => event.source, rule);
 
   expect(transform.targetInput.bind(rule.rule)).toEqual({
     inputPath: "$.source",
@@ -54,6 +60,21 @@ test("new bus with when", () => {
   const rule = new EventBus(stack, "bus").when(stack, "rule", () => true);
 
   expect(rule.rule._renderEventPattern()).toEqual({ source: [{ prefix: "" }] });
+});
+
+test("when using auto-source", () => {
+  const bus = new EventBus(stack, "bus");
+  bus.when("rule", () => true).pipe(bus);
+
+  expect(bus.bus.node.tryFindChild("rule")).not.toBeUndefined();
+});
+
+test("rule when using auto-source", () => {
+  const bus = new EventBus(stack, "bus");
+  const rule1 = bus.when("rule", () => true);
+  rule1.when("rule2", () => true).pipe(bus);
+
+  expect(bus.bus.node.tryFindChild("rule2")).not.toBeUndefined();
 });
 
 test("refine rule", () => {
@@ -273,4 +294,92 @@ test("map narrows type and pipe enforces", () => {
     .map((event) => event.detail.one)
     // should fail compilation if the types don't match
     .pipe(lambda);
+});
+
+test("a scheduled rule can be mapped and pipped", () => {
+  const lambda = new Function<string, void>(
+    aws_lambda.Function.fromFunctionArn(stack, "func", "")
+  );
+  const bus = EventBus.default<tt>(stack);
+
+  bus
+    .schedule(stack, "rule", aws_events.Schedule.rate(Duration.hours(1)))
+    .map((event) => event.id)
+    // should fail compilation if the types don't match
+    .pipe(lambda);
+});
+
+test("a scheduled rule can be pipped", () => {
+  const lambda = new Function<ScheduledEvent, void>(
+    aws_lambda.Function.fromFunctionArn(stack, "func", "")
+  );
+  const bus = EventBus.default<tt>(stack);
+
+  bus
+    .schedule(stack, "rule", aws_events.Schedule.rate(Duration.hours(1)))
+    .pipe(lambda);
+});
+
+test("when any", () => {
+  const lambda = new Function<string, void>(
+    aws_lambda.Function.fromFunctionArn(stack, "func", "")
+  );
+  const bus = EventBus.default<tt>(stack);
+
+  bus
+    .whenAny()
+    .map((event) => event.id)
+    // should fail compilation if the types don't match
+    .pipe(lambda);
+
+  const rule = bus.bus.node.tryFindChild("whenAny");
+  expect(rule).not.toBeUndefined();
+});
+
+test("when any pipe", () => {
+  const lambda = new Function<EventBusRuleInput, void>(
+    aws_lambda.Function.fromFunctionArn(stack, "func", "")
+  );
+  const bus = EventBus.default<tt>(stack);
+
+  bus.whenAny().pipe(lambda);
+
+  const rule = bus.bus.node.tryFindChild("whenAny");
+  expect(rule).not.toBeUndefined();
+});
+
+test("when any multiple times does not create new rules", () => {
+  const lambda = new Function<EventBusRuleInput, void>(
+    aws_lambda.Function.fromFunctionArn(stack, "func", "")
+  );
+  const bus = EventBus.default<tt>(stack);
+
+  bus.whenAny().pipe(lambda);
+  bus.whenAny().pipe(lambda);
+  bus.whenAny().pipe(lambda);
+
+  const rule = bus.bus.node.tryFindChild("whenAny");
+  expect(rule).not.toBeUndefined();
+});
+
+test("when any pipe", () => {
+  const lambda = new Function<EventBusRuleInput, void>(
+    aws_lambda.Function.fromFunctionArn(stack, "func", "")
+  );
+  const bus = EventBus.default<tt>(stack);
+
+  bus.whenAny(stack, "anyRule").pipe(lambda);
+
+  const rule = stack.node.tryFindChild("anyRule");
+  expect(rule).not.toBeUndefined();
+});
+
+test("when any when pipe", () => {
+  const bus = EventBus.default<tt>(stack);
+
+  const rule = bus
+    .whenAny(stack, "anyRule")
+    .when("rule1", (event) => event.id === "test");
+
+  expect(synthesizeEventPattern(rule.document)).toEqual({ id: ["test"] });
 });

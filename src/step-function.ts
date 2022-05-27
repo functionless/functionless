@@ -631,7 +631,7 @@ abstract class BaseStepFunction<P extends Record<string, any> | undefined, O>
   ): Rule<StepFunctionStatusChangedEvent> {
     const bus = EventBus.default<StepFunctionStatusChangedEvent>(this);
 
-    return new EventBusPredicateRuleBase(
+    return new EventBusPredicateRuleBase<StepFunctionStatusChangedEvent>(
       scope,
       id,
       bus,
@@ -654,7 +654,7 @@ abstract class BaseStepFunction<P extends Record<string, any> | undefined, O>
   ): Rule<StepFunctionStatusChangedEvent> {
     const bus = EventBus.default<StepFunctionStatusChangedEvent>(this);
 
-    return new EventBusPredicateRuleBase(
+    return new EventBusPredicateRuleBase<StepFunctionStatusChangedEvent>(
       scope,
       id,
       bus,
@@ -700,7 +700,7 @@ abstract class BaseStepFunction<P extends Record<string, any> | undefined, O>
   ): Rule<StepFunctionStatusChangedEvent> {
     const bus = EventBus.default<StepFunctionStatusChangedEvent>(this);
 
-    return new EventBusPredicateRuleBase(
+    return new EventBusPredicateRuleBase<StepFunctionStatusChangedEvent>(
       scope,
       id,
       bus,
@@ -720,14 +720,14 @@ abstract class BaseStepFunction<P extends Record<string, any> | undefined, O>
   /**
    * Create event bus rule that matches any status change on this machine.
    */
-  pubRuleChanged(
+  onStatusChanged(
     scope: Construct,
     id: string
   ): Rule<StepFunctionStatusChangedEvent> {
     const bus = EventBus.default<StepFunctionStatusChangedEvent>(this);
 
     // We are not able to use the nice "when" function here because we don't compile
-    return new EventBusPredicateRuleBase(
+    return new EventBusPredicateRuleBase<StepFunctionStatusChangedEvent>(
       scope,
       id,
       bus,

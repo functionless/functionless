@@ -9,7 +9,7 @@ import { StepFunction, ExpressStepFunction } from "./step-function";
 import { hasParent } from "./util";
 import minimatch from "minimatch";
 import { EventBus, Rule } from "./event-bridge";
-import { EventBusTransform } from "./event-bridge/transform";
+import { EventTransform } from "./event-bridge/transform";
 
 export default compile;
 
@@ -176,7 +176,7 @@ export function compile(
       };
 
       type EventBusWhenInterface = ts.CallExpression & {
-        arguments: [any, any, TsFunctionParameter];
+        arguments: [any, any, TsFunctionParameter] | [any, TsFunctionParameter];
       };
 
       type EventBusMapInterface = ts.CallExpression & {
@@ -256,17 +256,14 @@ export function compile(
       }
 
       /**
-       * Checks to see if a node is of type {@link EventBusTransform}.
+       * Checks to see if a node is of type {@link EventTransform}.
        * The node could be any kind of node that returns an event bus rule.
        *
        * Matches the patterns:
        *   * IEventBusTransform
        */
       function isEventBusTransform(node: ts.Node) {
-        return isFunctionlessClassOfKind(
-          node,
-          EventBusTransform.FunctionlessType
-        );
+        return isFunctionlessClassOfKind(node, EventTransform.FunctionlessType);
       }
 
       /**
@@ -371,14 +368,26 @@ export function compile(
       }
 
       function visitEventBusWhen(call: EventBusWhenInterface): ts.Node {
-        const [one, two, impl] = call.arguments;
+        // support the 2 or 3 parameter when.
+        if (call.arguments.length === 3) {
+          const [one, two, impl] = call.arguments;
 
-        return ts.factory.updateCallExpression(
-          call,
-          call.expression,
-          call.typeArguments,
-          [one, two, errorBoundary(() => toFunction("FunctionDecl", impl))]
-        );
+          return ts.factory.updateCallExpression(
+            call,
+            call.expression,
+            call.typeArguments,
+            [one, two, errorBoundary(() => toFunction("FunctionDecl", impl))]
+          );
+        } else {
+          const [one, impl] = call.arguments;
+
+          return ts.factory.updateCallExpression(
+            call,
+            call.expression,
+            call.typeArguments,
+            [one, errorBoundary(() => toFunction("FunctionDecl", impl))]
+          );
+        }
       }
 
       function visitEventBusMap(call: EventBusMapInterface): ts.Node {

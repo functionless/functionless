@@ -101,11 +101,11 @@ export const getPropertyAccessKey = (
  * Retrieves a string, number, boolean, undefined, or null constant from the given expression.
  * Wrap the value to not be ambiguous with the undefined value.
  * When one is not found, return undefined (not wrapped).
- * 
+ *
  * Use assertConstant or assertPrimitive to make type assertions of the constant returned.
  * Values from external string may be complex types like functions.
  * We choose to late evalute invalid values to support use cases like StepFunctions where it is both a function and has constant properties.
- * new StepFunction().stepFunctionArn 
+ * new StepFunction().stepFunctionArn
  *
  * "value" -> { value: "value" }
  * undefined -> { value: undefined }

@@ -15,7 +15,13 @@ import {
   StringLiteralExpr,
 } from "../expression";
 import { Integration } from "../integration";
-import { Rule, EventPredicateFunction } from "./rule";
+import {
+  Rule,
+  EventPredicateFunction,
+  ImportedRule,
+  ScheduledEvent,
+  EventBusPredicateRuleBase,
+} from "./rule";
 import { EventBusRuleInput } from "./types";
 
 export const isEventBus = <E extends EventBusRuleInput>(
@@ -73,6 +79,12 @@ export interface IEventBusFilterable<E extends EventBusRuleInput> {
    * when(this, 'rule', (event) => event.detail.list.includes("someValue"))
    * ```
    *
+   * Omitting the scope will use the bus as the scope.
+   *
+   * ```ts
+   * when('rule', ...)
+   * ```
+   *
    * Unsupported by Event Bridge
    * * OR Logic between multiple fields
    * * AND logic between most logic on a single field (except for numeric ranges.)
@@ -85,6 +97,10 @@ export interface IEventBusFilterable<E extends EventBusRuleInput> {
    * Unsupported by Functionless:
    * * Variables from outside of the function scope
    */
+  when<O extends E>(
+    id: string,
+    predicate: EventPredicateFunction<E, O>
+  ): Rule<E, O>;
   when<O extends E>(
     scope: Construct,
     id: string,
@@ -107,6 +123,29 @@ export interface IEventBus<E extends EventBusRuleInput = EventBusRuleInput>
    * Put one or more events on an Event Bus.
    */
   (event: Partial<E>, ...events: Partial<E>[]): void;
+
+  /**
+   * Creates a rule that matches all events on the bus.
+   *
+   * When no scope or id are given, the bus is used as the scope and the id will be `whenAny`.
+   * The rule created will be a singleton.
+   *
+   * When scope and id are given, a new rule will be created each time.
+   *
+   * Like all functionless, a rule is only created when the rule is used with `.pipe` or the rule is retrieved using `.rule`.
+   *
+   * ```ts
+   * const bus = new EventBus(scope, 'bus');
+   * const func = new Function(scope, 'func', async (payload: {id: string}) => console.log(payload.id));
+   *
+   * bus
+   *  .whenAny()
+   *  .map(event => ({id: event.id}))
+   *  .pipe(func);
+   * ```
+   */
+  whenAny(): EventBusPredicateRuleBase<E>;
+  whenAny(scope: Construct, id: string): EventBusPredicateRuleBase<E>;
 }
 abstract class EventBusBase<E extends EventBusRuleInput>
   implements IEventBus<E>, Integration
@@ -119,6 +158,10 @@ abstract class EventBusBase<E extends EventBusRuleInput>
   readonly kind = "EventBus";
   readonly eventBusName: string;
   readonly eventBusArn: string;
+
+  protected static singletonDefaultNode = "__DefaultBus";
+
+  private whenAnyRule: EventBusPredicateRuleBase<E> | undefined;
 
   constructor(readonly bus: aws_events.IEventBus) {
     this.eventBusName = bus.eventBusName;
@@ -217,11 +260,57 @@ abstract class EventBusBase<E extends EventBusRuleInput>
    * @inheritdoc
    */
   when<O extends E>(
+    id: string,
+    predicate: EventPredicateFunction<E, O>
+  ): Rule<E, O>;
+  when<O extends E>(
     scope: Construct,
     id: string,
     predicate: EventPredicateFunction<E, O>
+  ): Rule<E, O>;
+  when<O extends E>(
+    scope: Construct | string,
+    id?: string | EventPredicateFunction<E, O>,
+    predicate?: EventPredicateFunction<E, O>
   ): Rule<E, O> {
-    return new Rule<E, O>(scope, id, this as any, predicate);
+    if (predicate) {
+      return new Rule<E, O>(
+        scope as Construct,
+        id as string,
+        this as any,
+        predicate
+      );
+    } else {
+      return new Rule<E, O>(
+        this.bus,
+        scope as string,
+        this as any,
+        id as EventPredicateFunction<E, O>
+      );
+    }
+  }
+
+  /**
+   * @inheritdoc
+   */
+  whenAny(): EventBusPredicateRuleBase<E>;
+  whenAny(scope: Construct, id: string): EventBusPredicateRuleBase<E>;
+  whenAny(scope?: Construct, id?: string): EventBusPredicateRuleBase<E> {
+    if (!scope || !id) {
+      if (!this.whenAnyRule) {
+        this.whenAnyRule = new EventBusPredicateRuleBase<E>(
+          this.bus,
+          "whenAny",
+          this as IEventBus<any>,
+          // an empty doc will be converted to `{ source: [{ prefix: "" }]}`
+          { doc: {} }
+        );
+      }
+      return this.whenAnyRule;
+    }
+    return new EventBusPredicateRuleBase<E>(scope, id, this as IEventBus<any>, {
+      doc: {},
+    });
   }
 }
 
@@ -291,8 +380,6 @@ export class EventBus<E extends EventBusRuleInput> extends EventBusBase<E> {
     return new ImportedEventBus<E>(bus);
   }
 
-  static #singletonDefaultNode = "__DefaultBus";
-
   /**
    * Retrieves the default event bus as a singleton on the given stack or the stack of the given construct.
    *
@@ -302,23 +389,95 @@ export class EventBus<E extends EventBusRuleInput> extends EventBusBase<E> {
    * new functionless.EventBus.fromBus(awsBus);
    * ```
    */
-  static default<E extends EventBusRuleInput>(stack: Stack): IEventBus<E>;
-  static default<E extends EventBusRuleInput>(scope: Construct): IEventBus<E>;
+  static default<E extends EventBusRuleInput>(stack: Stack): DefaultEventBus<E>;
+  static default<E extends EventBusRuleInput>(
+    scope: Construct
+  ): DefaultEventBus<E>;
   static default<E extends EventBusRuleInput>(
     scope: Construct | Stack
-  ): IEventBus<E> {
+  ): DefaultEventBus<E> {
+    return new DefaultEventBus<E>(scope);
+  }
+
+  /**
+   * Creates a schedule based event bus rule on the default bus.
+   *
+   * Always sends the {@link ScheduledEvent} event.
+   *
+   * ```ts
+   * const bus = EventBus.default(scope);
+   * // every hour
+   * const everyHour = bus.schedule(scope, 'cron', aws_events.Schedule.rate(Duration.hours(1)));
+   *
+   * const func = new Function(scope, 'func', async (payload: {id: string}) => console.log(payload.id));
+   *
+   * everyHour
+   *    .map(event => ({id: event.id}))
+   *    .pipe(func);
+   * ```
+   */
+  static schedule(
+    scope: Construct,
+    id: string,
+    schedule: aws_events.Schedule,
+    props?: Omit<
+      aws_events.RuleProps,
+      "schedule" | "eventBus" | "eventPattern" | "targets"
+    >
+  ): ImportedRule<ScheduledEvent> {
+    return EventBus.default(scope).schedule(scope, id, schedule, props);
+  }
+}
+
+export class DefaultEventBus<
+  E extends EventBusRuleInput
+> extends EventBusBase<E> {
+  constructor(scope: Construct) {
     const stack = scope instanceof Stack ? scope : Stack.of(scope);
     const bus =
       (stack.node.tryFindChild(
-        EventBus.#singletonDefaultNode
+        EventBusBase.singletonDefaultNode
       ) as aws_events.IEventBus) ??
       aws_events.EventBus.fromEventBusName(
         stack,
-        EventBus.#singletonDefaultNode,
+        EventBusBase.singletonDefaultNode,
         "default"
       );
 
-    return EventBus.fromBus<E>(bus);
+    super(bus);
+  }
+
+  /**
+   * Creates a schedule based event bus rule on the default bus.
+   *
+   * Always sends the {@link ScheduledEvent} event.
+   *
+   * ```ts
+   * // every hour
+   * const everyHour = EventBus.schedule(scope, 'cron', aws_events.Schedule.rate(Duration.hours(1)));
+   *
+   * const func = new Function(scope, 'func', async (payload: {id: string}) => console.log(payload.id));
+   *
+   * everyHour
+   *    .map(event => ({id: event.id}))
+   *    .pipe(func);
+   * ```
+   */
+  schedule(
+    scope: Construct,
+    id: string,
+    schedule: aws_events.Schedule,
+    props?: Omit<
+      aws_events.RuleProps,
+      "schedule" | "eventBus" | "eventPattern" | "targets"
+    >
+  ): ImportedRule<ScheduledEvent> {
+    return new ImportedRule<ScheduledEvent>(
+      new aws_events.Rule(scope, id, {
+        ...props,
+        schedule,
+      })
+    );
   }
 }
 

@@ -8,7 +8,7 @@ import {
 } from "./event-pattern";
 import { Function } from "../function";
 import { EventBusRuleInput } from "./types";
-import { EventTransformFunction, EventBusTransform } from "./transform";
+import { EventTransformFunction, EventTransform } from "./transform";
 import {
   EventBusTargetProps,
   EventBusTargetResource,
@@ -104,10 +104,10 @@ export interface IEventBusRule<T extends EventBusRuleInput> {
    * Unsupported by Functionless:
    * * Variables from outside of the function scope
    */
-  map<P>(transform: EventTransformFunction<T, P>): EventBusTransform<T, P>;
+  map<P>(transform: EventTransformFunction<T, P>): EventTransform<T, P>;
 
   /**
-   * Defines a target of the {@link EventBusTransform}'s rule using this TargetInput.
+   * Defines a target of the {@link EventTransform}'s rule using this TargetInput.
    *
    * The event is sent to the target verbatim unless .map is used first.
    *
@@ -171,8 +171,8 @@ abstract class EventBusRuleBase<T extends EventBusRuleInput>
   /**
    * @inheritdoc
    */
-  map<P>(transform: EventTransformFunction<T, P>): EventBusTransform<T, P> {
-    return new EventBusTransform<T, P>(transform, this);
+  map<P>(transform: EventTransformFunction<T, P>): EventTransform<T, P> {
+    return new EventTransform<T, P>(transform, this);
   }
 
   /**
@@ -201,7 +201,7 @@ export class EventBusPredicateRuleBase<T extends EventBusRuleInput>
   constructor(
     scope: Construct,
     id: string,
-    private bus: IEventBus<any>,
+    private bus: IEventBus<T>,
     /**
      * Functionless Pattern Document representation of Event Bridge rules.
      */
@@ -230,20 +230,41 @@ export class EventBusPredicateRuleBase<T extends EventBusRuleInput>
   /**
    * @inheritdoc
    */
-  public when<O extends T>(
+  when<O extends T>(
+    id: string,
+    predicate: EventPredicateFunction<T, O>
+  ): EventBusPredicateRuleBase<O>;
+  when<O extends T>(
     scope: Construct,
     id: string,
     predicate: EventPredicateFunction<T, O>
+  ): EventBusPredicateRuleBase<O>;
+  when<O extends T>(
+    scope: Construct | string,
+    id?: string | EventPredicateFunction<T, O>,
+    predicate?: EventPredicateFunction<T, O>
   ): EventBusPredicateRuleBase<O> {
-    const document = synthesizePatternDocument(predicate as any);
+    if (predicate) {
+      const document = synthesizePatternDocument(predicate as any);
 
-    return new EventBusPredicateRuleBase<O>(
-      scope,
-      id,
-      this.bus,
-      this.document,
-      document
-    );
+      return new EventBusPredicateRuleBase<O>(
+        scope as Construct,
+        id as string,
+        this.bus as IEventBus<O>,
+        this.document,
+        document
+      );
+    } else {
+      const document = synthesizePatternDocument(id as any);
+
+      return new EventBusPredicateRuleBase<O>(
+        this.bus.bus,
+        scope as string,
+        this.bus as IEventBus<O>,
+        this.document,
+        document
+      );
+    }
   }
 }
 
@@ -260,12 +281,12 @@ export class Rule<
   constructor(
     scope: Construct,
     id: string,
-    bus: IEventBus,
+    bus: IEventBus<O>,
     predicate: EventPredicateFunction<T, O>
   ) {
     const document = synthesizePatternDocument(predicate as any);
 
-    super(scope, id, bus, document);
+    super(scope, id, bus as IEventBus<O>, document);
   }
 
   /**
@@ -274,11 +295,18 @@ export class Rule<
   public static fromRule<T extends EventBusRuleInput>(
     rule: aws_events.Rule
   ): IEventBusRule<T> {
-    return new ImportedEventBusRule<T>(rule);
+    return new ImportedRule<T>(rule);
   }
 }
 
-class ImportedEventBusRule<
+/**
+ * The event structure output for all scheduled events.
+ * @see https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-run-lambda-schedule.html#eb-schedule-create-rule
+ */
+export interface ScheduledEvent
+  extends EventBusRuleInput<{}, "Scheduled Event", "aws.events"> {}
+
+export class ImportedRule<
   T extends EventBusRuleInput
 > extends EventBusRuleBase<T> {
   constructor(rule: aws_events.Rule) {

@@ -3,7 +3,7 @@ import { FunctionDecl } from "../declaration";
 import { synthesizeEventBridgeTargets } from "./target-input";
 import { Function } from "../function";
 import { LambdaTargetProps, pipe, StateMachineTargetProps } from "./target";
-import { EventBusRuleInput } from "./types";
+import { EventBusRuleInput as EventBusEvent } from "./types";
 import { IEventBusRule } from "./rule";
 import { StepFunction, ExpressStepFunction } from "../step-function";
 
@@ -13,7 +13,7 @@ import { StepFunction, ExpressStepFunction } from "../step-function";
  * event is the event matched by the rule. This argument is optional.
  * $utils is a collection of built-in utilities wrapping EventBridge TargetInputs like contextual constants available to the transformer.
  */
-export type EventTransformFunction<E extends EventBusRuleInput, O = any> = (
+export type EventTransformFunction<E extends EventBusEvent, O = any> = (
   event: E,
   $utils: EventTransformUtils
 ) => O;
@@ -36,7 +36,7 @@ export interface EventTransformUtils {
  *
  * @see EventBusRule.map for more details on transforming event details.
  */
-export class EventBusTransform<T extends EventBusRuleInput, P> {
+export class EventTransform<T extends EventBusEvent, P> {
   readonly targetInput: aws_events.RuleTargetInput;
 
   /**
@@ -53,7 +53,7 @@ export class EventBusTransform<T extends EventBusRuleInput, P> {
   }
 
   /**
-   * Defines a target of the {@link EventBusTransform}'s rule using this TargetInput.
+   * Defines a target of the {@link EventTransform}'s rule using this TargetInput.
    *
    * EventBus is not a valid pipe target for transformed events.
    *
