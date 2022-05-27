@@ -21,16 +21,17 @@ export function validate(
   logger?.info("Beginning validation of Functionless semantics");
 
   return (function visit(node: typescript.Node): typescript.Diagnostic[] {
-    return [
-      ...(checker.isStepFunction(node) ? validateStepFunctionNode(node) : []),
-      ...(visitEachChild(node, visit) ?? []),
-    ];
+    if (checker.isStepFunction(node)) {
+      return validateStepFunctionNode(node);
+    } else {
+      return validateEachChild(node, visit);
+    }
   })(node);
 
   function validateStepFunctionNode(
     node: typescript.Node
   ): typescript.Diagnostic[] {
-    const children = visitEachChild(node, validateStepFunctionNode);
+    const children = validateEachChild(node, validateStepFunctionNode);
     if (ts.isBinaryExpression(node)) {
       if (
         [ts.SyntaxKind.PlusToken, ts.SyntaxKind.MinusToken].includes(
@@ -57,7 +58,7 @@ export function validate(
   // ts.forEachChild terminates whenever a truth value is returned
   // ts.visitEachChild requires a ts.TransformationContext, so we can't use that
   // this wrapper uses a mutable array to collect the results
-  function visitEachChild<T>(
+  function validateEachChild<T>(
     node: typescript.Node,
     cb: (node: typescript.Node) => T[]
   ): T[] {
