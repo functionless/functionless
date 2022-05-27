@@ -165,7 +165,7 @@ project.testTask.env("AWS_SECRET_ACCESS_KEY", "test");
 project.addPackageIgnore("/test-app");
 
 project.eslint.addRules({
-  quotes: ["warn", "double"],
+  quotes: "off",
   "comma-dangle": "off",
   "quote-props": "off",
   "@typescript-eslint/indent": "off",

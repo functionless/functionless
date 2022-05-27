@@ -45,10 +45,7 @@
       "off"
     ],
     "@typescript-eslint/indent": "off",
-    "quotes": [
-      "warn",
-      "double"
-    ],
+    "quotes": "off",
     "comma-dangle": "off",
     "comma-spacing": [
       "error",
