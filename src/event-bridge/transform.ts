@@ -66,35 +66,4 @@ export class EventBusTransform<T extends EventBusRuleInput, P> {
   ) {
     pipe(this.rule, integration, props[0] as Props, this.targetInput);
   }
-  // pipe: PipeFunction<
-  //   P,
-  //   {
-  //     eventBus: EventBusTargetIntegration<P, object | undefined>;
-  //   }
-  // > = (integration, ...props) => {
-  // return pipe<T, P, typeof props[0]>(
-  //   this.rule,
-  //   integration,
-  //   props[0],
-  //   this.targetInput
-  // );
-  // };
 }
-
-// type PipeFunction<
-//   P,
-//   I extends {
-//     eventBus: EventBusTargetIntegration<P, object | undefined>;
-//   }
-// > = I extends {
-//   eventBus: EventBusTargetIntegration<infer PP, infer Props>;
-// }
-//   ? P extends PP
-//     ? (
-//         integration: {
-//           eventBus: EventBusTargetIntegration<PP, Props>;
-//         },
-//         ...props: Parameters<DynamicProps<Props>>
-//       ) => void
-//     : never
-//   : never;

@@ -270,7 +270,7 @@ test("map narrows type and pipe enforces", () => {
       "rule",
       (event): event is EventBusRuleInput<t1> => event.detail.type === "one"
     )
-    .map((event) => event.detail)
+    .map((event) => event.detail.one)
     // should fail compilation if the types don't match
     .pipe(lambda);
 });
