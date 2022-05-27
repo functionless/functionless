@@ -19,14 +19,18 @@ const program = ts.createProgram(fileNames, tsconfig, compilerHost);
 
 const checker = makeFunctionlessChecker(program.getTypeChecker());
 
-for (const fileName of fileNames) {
-  test(path.basename(fileName), () => {
-    const diagnostics = validate(ts, checker, program.getSourceFile(fileName)!);
-    const errors = normalize(
-      formatDiagnosticsWithColorAndContext(diagnostics, compilerHost)
-    );
-    expect(errors).toMatchSnapshot();
-  });
+test("step-function.ts", () => runTest("step-function.ts"));
+
+function runTest(fileName: string) {
+  const diagnostics = validate(
+    ts,
+    checker,
+    program.getSourceFile(path.join(testFilesDir, fileName))!
+  );
+  const errors = normalize(
+    formatDiagnosticsWithColorAndContext(diagnostics, compilerHost)
+  );
+  expect(errors).toMatchSnapshot();
 }
 
 function normalize(str: string) {
