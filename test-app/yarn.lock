@@ -1148,11 +1148,6 @@
     ts-node "^9"
     tslib "^2"
 
-"@functionless/language-service@file:../../functionless-language-service":
-  version "0.0.0"
-  dependencies:
-    functionless "^0.6.18"
-
 "@graphql-codegen/cli@^2.6.2":
   version "2.6.2"
   resolved "https://registry.yarnpkg.com/@graphql-codegen/cli/-/cli-2.6.2.tgz#a9aa4656141ee0998cae8c7ad7d0bf9ca8e0c9ae"
@@ -2578,14 +2573,6 @@ function-bind@^1.1.1:
   version "1.1.1"
   resolved "https://registry.yarnpkg.com/function-bind/-/function-bind-1.1.1.tgz#a56899d3ea3c9bab874bb9773b7c5ede92f4895d"
   integrity sha512-yIovAzMX49sF8Yl58fSCWJ5svSLuaibPxXQJFLmBObTuCr0Mf1KiPopGM9NiFjiYBCbfaa2Fh6breQ6ANVTI0A==
-
-functionless@^0.6.18:
-  version "0.6.19"
-  resolved "https://registry.yarnpkg.com/functionless/-/functionless-0.6.19.tgz#73209b81442753215b1937194463bb89e3be49c7"
-  integrity sha512-3AxIgohC+/o3xfWD3I3AKANwuD76WQJs2E7UPaJ46ib15YMfxYlcaXyCsO8JvBH0aj2WrnQ/nobVezq82Xw1OQ==
-  dependencies:
-    fs-extra "^10.1.0"
-    minimatch "^5.0.1"
 
 "functionless@file:..":
   version "0.0.0"
