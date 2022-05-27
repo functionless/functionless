@@ -1,17 +1,17 @@
 import * as appsync from "@aws-cdk/aws-appsync-alpha";
-import { AppSyncResolverEvent } from "aws-lambda";
-import { CallExpr, Expr } from "./expression";
-import { VTL } from "./vtl";
+import type { AppSyncResolverEvent } from "aws-lambda";
+import { Construct } from "constructs";
 import {
   ToAttributeMap,
   ToAttributeValue,
 } from "typesafe-dynamodb/lib/attribute-value";
 import { FunctionDecl, isFunctionDecl } from "./declaration";
-import { Literal } from "./literal";
-import { Construct } from "constructs";
 import { isErr } from "./error";
+import { CallExpr, Expr } from "./expression";
 import { findDeepIntegration, IntegrationImpl } from "./integration";
+import { Literal } from "./literal";
 import { singletonConstruct } from "./util";
+import { VTL } from "./vtl";
 
 /**
  * The shape of the AWS Appsync `$context` variable.
@@ -351,7 +351,7 @@ export class AppsyncResolver<
               );
             } else {
               throw new Error(
-                `only a 'VariableDecl', 'Call' or 'Return' expression may call a service`
+                "only a 'VariableDecl', 'Call' or 'Return' expression may call a service"
               );
             }
 
@@ -382,7 +382,7 @@ export class AppsyncResolver<
               } else if (expr.kind === "CallExpr") {
                 return findServiceCallExpr(expr.expr);
               } else {
-                throw new Error(``);
+                throw new Error("");
               }
             }
 

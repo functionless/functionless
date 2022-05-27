@@ -3,7 +3,7 @@
   "private": true,
   "scripts": {
     "prepare": "ts-patch install -s",
-    "build": "tsc",
+    "build": "tsc && functionless",
     "watch": "tsc -w",
     "synth": "cdk synth",
     "deploy": "cdk deploy",

@@ -165,7 +165,7 @@ test("new bus with when map pipe step function", () => {
 
   expect(stack.resolve(rule.targetInput.bind(rule.rule.rule))).toEqual({
     inputPathsMap: { source: "$.source" },
-    inputTemplate: `{\"source\":<source>}`,
+    inputTemplate: '{"source":<source>}',
   } as aws_events.RuleTargetInputProperties);
   expect((rule.rule.rule as any).targets.length).toEqual(1);
   expect(
@@ -189,7 +189,7 @@ test("new bus with when map pipe express step function", () => {
 
   expect(stack.resolve(rule.targetInput.bind(rule.rule.rule))).toEqual({
     inputPathsMap: { source: "$.source" },
-    inputTemplate: `{\"source\":<source>}`,
+    inputTemplate: '{"source":<source>}',
   } as aws_events.RuleTargetInputProperties);
   expect((rule.rule.rule as any).targets.length).toEqual(1);
   expect(
