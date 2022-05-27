@@ -51,12 +51,12 @@
     "json-schema": "^0.4.0",
     "npm-check-updates": "^12",
     "prettier": "^2.6.2",
-    "projen": "^0.56.8",
+    "projen": "^0.56.33",
     "promptly": "^3.2.0",
     "proxy-agent": "^5.0.0",
     "standard-version": "^9",
     "ts-jest": "^27",
-    "ts-node": "^10.7.0",
+    "ts-node": "^10.8.0",
     "ts-patch": "^2.0.1",
     "typesafe-dynamodb": "0.1.5",
     "typescript": "4.6.2"
@@ -71,7 +71,7 @@
   },
   "dependencies": {
     "fs-extra": "^10.1.0",
-    "minimatch": "^5.0.1"
+    "minimatch": "^5.1.0"
   },
   "main": "lib/index.js",
   "license": "Apache-2.0",
