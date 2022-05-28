@@ -10,7 +10,7 @@ import type {
 } from "./statement";
 import { AnyStepFunction } from "./step-function";
 import { AnyTable } from "./table";
-import { AnyFunction } from "./util";
+import { AnyFunction, anyOf } from "./util";
 
 /**
  * An {@link Expr} (Expression) is a Node that will be interpreted to a value.
@@ -70,14 +70,26 @@ export function isExpr(a: any): a is Expr {
   );
 }
 
-export const isLiteralExpr = typeGuard(
-  "ArrayLiteralExpr",
-  "BooleanLiteralExpr",
-  "UndefinedLiteralExpr",
-  "NullLiteralExpr",
-  "NumberLiteralExpr",
-  "ObjectLiteralExpr",
-  "StringLiteralExpr"
+/**
+ * Check if an Expr is an UnaryExpr(NumberLiteralExpr), e.g. -1, -2, -3
+ */
+export function isNegativeNumberLiteralExpr(
+  a: any
+): a is UnaryExpr & { expr: NumberLiteralExpr; op: "-" } {
+  return isUnaryExpr(a) && a.op === "-" && isNumberLiteralExpr(a.expr);
+}
+
+export const isLiteralExpr = anyOf(
+  isNegativeNumberLiteralExpr,
+  typeGuard(
+    "ArrayLiteralExpr",
+    "BooleanLiteralExpr",
+    "UndefinedLiteralExpr",
+    "NullLiteralExpr",
+    "NumberLiteralExpr",
+    "ObjectLiteralExpr",
+    "StringLiteralExpr"
+  )
 );
 
 export const isLiteralPrimitiveExpr = typeGuard(
@@ -320,6 +332,7 @@ export type UnaryOp = "!" | "-";
 export class UnaryExpr extends BaseExpr<"UnaryExpr"> {
   constructor(readonly op: UnaryOp, readonly expr: Expr) {
     super("UnaryExpr");
+    // @ts-ignore
     expr.setParent(this);
   }
 

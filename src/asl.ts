@@ -9,6 +9,7 @@ import {
   ElementAccessExpr,
   Expr,
   Identifier,
+  isNegativeNumberLiteralExpr,
   isFunctionExpr,
   isLiteralExpr,
   isReferenceExpr,
@@ -16,8 +17,10 @@ import {
   isVariableReference,
   NewExpr,
   NullLiteralExpr,
+  NumberLiteralExpr,
   PropAccessExpr,
   StringLiteralExpr,
+  isNumberLiteralExpr,
 } from "./expression";
 import { isFunction } from "./function";
 import { findIntegration } from "./integration";
@@ -1300,6 +1303,8 @@ export namespace ASL {
         }
       }
       return payload;
+    } else if (isNegativeNumberLiteralExpr(expr)) {
+      return -expr.expr.value;
     } else if (isLiteralExpr(expr)) {
       return expr.value ?? null;
     } else if (expr.kind === "ReferenceExpr") {
@@ -1320,7 +1325,6 @@ export namespace ASL {
         .filter((e) => !isLiteralExpr(e))
         .map((e) => toJsonPath(e))})`;
     }
-    debugger;
     throw new Error(`cannot evaluate ${expr.kind} to JSON`);
   }
 
@@ -1356,27 +1360,37 @@ export namespace ASL {
   }
 
   function sliceToJsonPath(expr: CallExpr & { expr: PropAccessExpr }) {
-    const start = expr.getArgument("start")?.expr;
-    if (start?.kind !== "NumberLiteralExpr") {
-      throw new Error(
-        "the 'start' argument of slice must be a NumberLiteralExpr"
-      );
+    const start = getNumber(expr.getArgument("start")?.expr);
+    if (start === undefined) {
+      throw new Error("the 'start' argument of slice must be a literal number");
     }
 
-    const end = expr.getArgument("end")?.expr;
+    const endArg = expr.getArgument("end")?.expr;
     if (
-      !!end?.kind &&
-      end.kind !== "NullLiteralExpr" &&
-      end.kind !== "UndefinedLiteralExpr"
+      endArg &&
+      !(isNumberLiteralExpr(endArg) || isNegativeNumberLiteralExpr(endArg))
     ) {
-      if (end?.kind !== "NumberLiteralExpr") {
-        throw new Error(
-          "the 'end' argument of slice must be a NumberLiteralExpr"
-        );
-      }
-      return `${toJsonPath(expr.expr.expr)}[${start.value}:${end.value}]`;
+      throw new Error("the 'end' argument of slice must be a literal number");
+    }
+    const end = getNumber(endArg);
+    if (endArg !== undefined) {
+      return `${toJsonPath(expr.expr.expr)}[${start}:${end}]`;
     } else {
-      return `${toJsonPath(expr.expr.expr)}[${start.value}:]`;
+      return `${toJsonPath(expr.expr.expr)}[${start}:]`;
+    }
+
+    function getNumber(expr: Expr | undefined): number | undefined {
+      if (
+        expr?.kind === "NumberLiteralExpr" ||
+        (expr?.kind === "UnaryExpr" &&
+          expr.op === "-" &&
+          expr.expr.kind === "NumberLiteralExpr")
+      ) {
+        return expr.kind === "NumberLiteralExpr"
+          ? expr.value
+          : -(expr.expr as NumberLiteralExpr).value;
+      }
+      return undefined;
     }
   }
 
@@ -1515,6 +1529,8 @@ export namespace ASL {
       return `'${expr.value}'`;
     } else if (expr.kind === "NumberLiteralExpr") {
       return expr.value.toString(10);
+    } else if (isNegativeNumberLiteralExpr(expr)) {
+      return (-expr.expr.value).toString(10);
     }
 
     throw new Error(

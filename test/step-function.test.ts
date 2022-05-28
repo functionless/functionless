@@ -130,6 +130,52 @@ test("return items.slice(1)", () => {
   });
 });
 
+test("return items.slice(-1)", () => {
+  const { stack } = initStepFunctionApp();
+  const definition = new ExpressStepFunction<{ items: string[] }, string[]>(
+    stack,
+    "fn",
+    (input) => {
+      return input.items.slice(-1);
+    }
+  ).definition;
+
+  expect(definition).toEqual({
+    StartAt: "return input.items.slice(-1)",
+    States: {
+      "return input.items.slice(-1)": {
+        End: true,
+        InputPath: "$.items[-1:]",
+        ResultPath: "$",
+        Type: "Pass",
+      },
+    },
+  });
+});
+
+test("return items.slice(0, -1)", () => {
+  const { stack } = initStepFunctionApp();
+  const definition = new ExpressStepFunction<{ items: string[] }, string[]>(
+    stack,
+    "fn",
+    (input) => {
+      return input.items.slice(0, -1);
+    }
+  ).definition;
+
+  expect(definition).toEqual({
+    StartAt: "return input.items.slice(0, -1)",
+    States: {
+      "return input.items.slice(0, -1)": {
+        End: true,
+        InputPath: "$.items[0:-1]",
+        ResultPath: "$",
+        Type: "Pass",
+      },
+    },
+  });
+});
+
 test("return items.slice(1, 3)", () => {
   const { stack } = initStepFunctionApp();
   const definition = new ExpressStepFunction<{ items: string[] }, string[]>(
@@ -190,9 +236,11 @@ test("let and set", () => {
     a = true;
     a = false;
     a = 0;
+    a = -1;
     a = "hello";
     a = [null];
     a = [1];
+    a = [-1];
     a = [true];
     a = [
       {
@@ -216,14 +264,26 @@ test("let and set", () => {
         Type: "Pass",
       },
       "a = 0": {
-        Next: 'a = "hello"',
+        Next: "a = -1",
         Parameters: 0,
         ResultPath: "$.a",
         Type: "Pass",
       },
+      "a = -1": {
+        Next: 'a = "hello"',
+        Parameters: -1,
+        ResultPath: "$.a",
+        Type: "Pass",
+      },
       "a = [1]": {
-        Next: "a = [true]",
+        Next: "a = [-1]",
         Parameters: [1],
+        ResultPath: "$.a",
+        Type: "Pass",
+      },
+      "a = [-1]": {
+        Next: "a = [true]",
+        Parameters: [-1],
         ResultPath: "$.a",
         Type: "Pass",
       },
@@ -1032,6 +1092,62 @@ test("return a single Lambda Function call", () => {
           Payload: {
             "id.$": "$.id",
           },
+        },
+      },
+    },
+  });
+});
+
+test("task(-1)", () => {
+  const { stack, task } = initStepFunctionApp();
+  const definition = new ExpressStepFunction<{ id: string }, any>(
+    stack,
+    "fn",
+    () => {
+      return task(-1);
+    }
+  ).definition;
+
+  expect(definition).toEqual({
+    StartAt: "return task(-1)",
+    States: {
+      "return task(-1)": {
+        Type: "Task",
+        Resource: "arn:aws:states:::lambda:invoke",
+        End: true,
+        ResultPath: "$",
+        ResultSelector: "$.Payload",
+        Parameters: {
+          FunctionName: task.resource.functionName,
+          Payload: -1,
+        },
+      },
+    },
+  });
+});
+
+test("task(input.list[-1])", () => {
+  const { stack, task } = initStepFunctionApp();
+  const definition = new ExpressStepFunction(
+    stack,
+    "fn",
+    (input: { list: string[] }) => {
+      return task(input.list[-1]);
+    }
+  ).definition;
+
+  expect(definition).toEqual({
+    StartAt: "return task(input.list[-1])",
+    States: {
+      "return task(input.list[-1])": {
+        Type: "Task",
+        Resource: "arn:aws:states:::lambda:invoke",
+        End: true,
+        ResultPath: "$",
+        ResultSelector: "$.Payload",
+        Parameters: {
+          FunctionName: task.resource.functionName,
+          "Payload.$": "$.list[-1]",
         },
       },
     },
