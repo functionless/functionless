@@ -696,7 +696,7 @@ describe("not allowed", () => {
   });
 });
 
-// https://github.com/sam-goodwin/functionless/issues/68
+// https://github.com/functionless/functionless/issues/68
 describe.skip("destructure", () => {
   test("descture parameter", () => {
     ebEventTargetTestCase<testEvent>(

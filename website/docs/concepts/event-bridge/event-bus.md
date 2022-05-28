@@ -221,7 +221,7 @@ catPeopleEvents.pipe(catPeopleBus);
 
 Event Bridge Put Events API is one of the methods for putting new events on an event bus. We support some first party integrations between services and event bus.
 
-Support (See [issues](https://github.com/sam-goodwin/functionless/issues?q=is%3Aissue+is%3Aopen+label%3Aevent-bridge) for progress):
+Support (See [issues](https://github.com/functionless/functionless/issues?q=is%3Aissue+is%3Aopen+label%3Aevent-bridge) for progress):
 
 - Step Functions
 - App Sync (coming soon)

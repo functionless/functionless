@@ -24,8 +24,8 @@ new StepFunction(scope, "Func", (name: string) => {
 });
 ```
 
-For now, only hand-coded implementations exist for DynamoDB that also integrate with typesafe-dynamodb. To track the DynamoDB progress, see https://github.com/sam-goodwin/functionless/issues/3.
+For now, only hand-coded implementations exist for DynamoDB that also integrate with typesafe-dynamodb. To track the DynamoDB progress, see https://github.com/functionless/functionless/issues/3.
 
-Also review and contribute to this discussion https://github.com/sam-goodwin/functionless/issues/76.
+Also review and contribute to this discussion https://github.com/functionless/functionless/issues/76.
 
 See the [API Reference Documentation](../api/namespaces/AWS.md) for `$AWS`.

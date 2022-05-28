@@ -130,7 +130,7 @@ abstract class EventBusBase<E extends EventBusRuleInput>
 
     // Validate that the events are object literals.
     // Then normalize nested arrays of events into a single list of events.
-    // TODO Relax these restrictions: https://github.com/sam-goodwin/functionless/issues/101
+    // TODO Relax these restrictions: https://github.com/functionless/functionless/issues/101
     const eventObjs = call.args.reduce((events: ObjectLiteralExpr[], arg) => {
       if (isArrayLiteralExpr(arg.expr)) {
         if (!arg.expr.items.every(isObjectLiteralExpr)) {

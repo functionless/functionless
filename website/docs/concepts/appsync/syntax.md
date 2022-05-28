@@ -260,7 +260,7 @@ for (const item in list) {
 
 When you map over a list, a new list is created and then `#foreach` is used to iterate over the source list, evaluate your function and add the result to the new list.
 
-**Warning**: chains of `map`, `forEach` and `reduce` results in redundant `#foreach` loops, see https://github.com/sam-goodwin/functionless/issues/2
+**Warning**: chains of `map`, `forEach` and `reduce` results in redundant `#foreach` loops, see https://github.com/functionless/functionless/issues/2
 
 ```ts
 const newList = list.map((i) => i + 1);
@@ -277,7 +277,7 @@ $util.qr($newList.add($i + 1))
 
 `forEach` is similar to `map` except it does not produce a value. The (below) example emulates `map` with `forEach`.
 
-**Warning**: chains of `map`, `forEach` and `reduce` results in redundant `#foreach` loops, see https://github.com/sam-goodwin/functionless/issues/2
+**Warning**: chains of `map`, `forEach` and `reduce` results in redundant `#foreach` loops, see https://github.com/functionless/functionless/issues/2
 
 ```ts
 const newList = [];
@@ -295,7 +295,7 @@ $util.qr($newList.add($i + 1))
 
 `reduce` has two variants: 1) with an `initialValue` and 2) without.
 
-**Warning**: chains of `map`, `forEach` and `reduce` results in redundant `#foreach` loops, see https://github.com/sam-goodwin/functionless/issues/2
+**Warning**: chains of `map`, `forEach` and `reduce` results in redundant `#foreach` loops, see https://github.com/functionless/functionless/issues/2
 
 If there is no initial value, then the list cannot be empty - if an empty list is encountered an error will be raised with `$util.error`.
 
