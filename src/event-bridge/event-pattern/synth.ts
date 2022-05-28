@@ -116,7 +116,7 @@ export const synthesizeEventPattern = (
  *
  * Use {@link synthesizeEventPattern} to generate a Event Pattern usable by event bridge.
  *
- * https://github.com/sam-goodwin/functionless/issues/37#issuecomment-1066313146
+ * https://github.com/functionless/functionless/issues/37#issuecomment-1066313146
  */
 export const synthesizePatternDocument = (
   predicate: FunctionDecl | Err | unknown
@@ -223,7 +223,7 @@ export const synthesizePatternDocument = (
 
   /**
    * Logic to merge patterns on a single field.
-   * See table: https://github.com/sam-goodwin/functionless/issues/37#issuecomment-1066313146
+   * See table: https://github.com/functionless/functionless/issues/37#issuecomment-1066313146
    *
    * Is Present/Exists and Numers are special, for all else, return an aggregate with all patterns.
    */

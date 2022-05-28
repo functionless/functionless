@@ -173,7 +173,7 @@ query {
 
 When you create a `new AppsyncResolver`, it does not immediately generate an Appsync Resolver. `AppsyncResolver` is more like a template for creating resolvers and can be re-used across more than one API.
 
-**Note**: this is subject to change, see [#137](https://github.com/sam-goodwin/functionless/issues/137) to track progress.
+**Note**: this is subject to change, see [#137](https://github.com/functionless/functionless/issues/137) to track progress.
 
 Options:
 
@@ -227,7 +227,7 @@ new AppsyncResolver(() => {
 
 For a full list of all available utility functions, see the [API reference documentation for $util](../../api/interfaces/util.md) and [AWS's Resolver mapping template utility reference](https://docs.aws.amazon.com/appsync/latest/devguide/resolver-util-reference.html).
 
-**Warning**: not all of the utilities have been implemented. You can track progress here [#61](https://github.com/sam-goodwin/functionless/issues/61)
+**Warning**: not all of the utilities have been implemented. You can track progress here [#61](https://github.com/functionless/functionless/issues/61)
 
 ## Limitations
 
