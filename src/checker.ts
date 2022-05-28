@@ -235,7 +235,14 @@ export function isArithmeticToken(
  * Check if a TS node is a constant value that can be evaluated at compile time.
  */
 export function isConstantTsNode(node: ts.Node): boolean {
-  if (ts.isLiteralExpression(node)) {
+  if (
+    ts.isStringLiteral(node) ||
+    ts.isNumericLiteral(node) ||
+    node.kind === ts.SyntaxKind.TrueKeyword ||
+    node.kind === ts.SyntaxKind.FalseKeyword ||
+    node.kind === ts.SyntaxKind.NullKeyword ||
+    node.kind === ts.SyntaxKind.UndefinedKeyword
+  ) {
     return true;
   } else if (
     ts.isBinaryExpression(node) &&
