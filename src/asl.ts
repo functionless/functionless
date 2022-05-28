@@ -9,18 +9,19 @@ import {
   ElementAccessExpr,
   Expr,
   Identifier,
-  isNegativeNumberLiteralExpr,
+  isBinaryExpr,
+  isCallExpr,
   isFunctionExpr,
   isLiteralExpr,
+  isNullLiteralExpr,
   isReferenceExpr,
   isTypeOfExpr,
+  isUnaryExpr,
   isVariableReference,
   NewExpr,
   NullLiteralExpr,
-  NumberLiteralExpr,
   PropAccessExpr,
   StringLiteralExpr,
-  isNumberLiteralExpr,
 } from "./expression";
 import { isFunction } from "./function";
 import { findIntegration } from "./integration";
@@ -44,7 +45,7 @@ import {
 } from "./statement";
 import { isStepFunction } from "./step-function";
 import { isTable } from "./table";
-import { anyOf } from "./util";
+import { anyOf, evaluateToConstant } from "./util";
 import { visitEachChild } from "./visit";
 
 export function isASL(a: any): a is ASL {
@@ -966,7 +967,7 @@ export class ASL {
       expr.op === "=" &&
       isVariableReference(expr.left)
     ) {
-      if (expr.right.kind === "NullLiteralExpr") {
+      if (isNullLiteralExpr(expr.right)) {
         return {
           Type: "Pass",
           ...props,
@@ -984,14 +985,18 @@ export class ASL {
           InputPath: ASL.toJsonPath(expr.right),
           ResultPath: ASL.toJsonPath(expr.left),
         };
-      } else if (isLiteralExpr(expr.right)) {
+      } else if (
+        isLiteralExpr(expr.right) ||
+        isUnaryExpr(expr.right) ||
+        isBinaryExpr(expr.right)
+      ) {
         return {
           Type: "Pass",
           ...props,
           Parameters: ASL.toJson(expr.right),
           ResultPath: ASL.toJsonPath(expr.left),
         };
-      } else if (expr.right.kind === "CallExpr") {
+      } else if (isCallExpr(expr.right)) {
         return this.eval(expr.right, {
           ...props,
           ResultPath: ASL.toJsonPath(expr.left),
@@ -1245,10 +1250,16 @@ function hasBreak(loop: ForInStmt | ForOfStmt | WhileStmt | DoStmt): boolean {
 
 export namespace ASL {
   export function toJson(expr?: Expr): any {
-    if (!expr) {
+    if (expr === undefined) {
       return undefined;
+    }
+    const constant = evaluateToConstant(expr);
+    if (constant !== undefined) {
+      // if the constant is statically known
+      return constant;
     } else if (expr.kind === "Argument") {
       return toJson(expr.expr);
+    } else if (expr.kind === "BinaryExpr") {
     } else if (expr.kind === "CallExpr") {
       if (isSlice(expr)) {
         return sliceToJsonPath(expr);
@@ -1259,11 +1270,8 @@ export namespace ASL {
       return toJsonPath(expr);
     } else if (expr.kind === "PropAccessExpr") {
       return `${toJson(expr.expr)}.${expr.name}`;
-    } else if (
-      expr.kind === "ElementAccessExpr" &&
-      expr.element.kind === "NumberLiteralExpr"
-    ) {
-      return `${toJson(expr.expr)}[${expr.element.value}]`;
+    } else if (expr.kind === "ElementAccessExpr") {
+      return toJsonPath(expr);
     } else if (expr.kind === "ArrayLiteralExpr") {
       if (expr.items.find(isVariableReference) !== undefined) {
         return `States.Array(${expr.items
@@ -1303,8 +1311,6 @@ export namespace ASL {
         }
       }
       return payload;
-    } else if (isNegativeNumberLiteralExpr(expr)) {
-      return -expr.expr.value;
     } else if (isLiteralExpr(expr)) {
       return expr.value ?? null;
     } else if (expr.kind === "ReferenceExpr") {
@@ -1316,8 +1322,6 @@ export namespace ASL {
       } else if (isTable(ref)) {
         return ref.resource.tableName;
       }
-    } else if (expr.kind === "ElementAccessExpr") {
-      return toJsonPath(expr);
     } else if (expr.kind === "TemplateExpr") {
       return `States.Format('${expr.exprs
         .map((e) => (isLiteralExpr(e) ? toJson(e) : "{}"))
@@ -1325,6 +1329,7 @@ export namespace ASL {
         .filter((e) => !isLiteralExpr(e))
         .map((e) => toJsonPath(e))})`;
     }
+    debugger;
     throw new Error(`cannot evaluate ${expr.kind} to JSON`);
   }
 
@@ -1354,43 +1359,45 @@ export namespace ASL {
       return elementAccessExprToJsonPath(expr);
     }
 
+    debugger;
     throw new Error(
       `expression kind '${expr.kind}' cannot be evaluated to a JSON Path expression.`
     );
   }
 
   function sliceToJsonPath(expr: CallExpr & { expr: PropAccessExpr }) {
-    const start = getNumber(expr.getArgument("start")?.expr);
-    if (start === undefined) {
-      throw new Error("the 'start' argument of slice must be a literal number");
-    }
-
+    const startArg = expr.getArgument("start")?.expr;
     const endArg = expr.getArgument("end")?.expr;
-    if (
-      endArg &&
-      !(isNumberLiteralExpr(endArg) || isNegativeNumberLiteralExpr(endArg))
-    ) {
-      throw new Error("the 'end' argument of slice must be a literal number");
-    }
-    const end = getNumber(endArg);
-    if (endArg !== undefined) {
-      return `${toJsonPath(expr.expr.expr)}[${start}:${end}]`;
-    } else {
-      return `${toJsonPath(expr.expr.expr)}[${start}:]`;
-    }
-
-    function getNumber(expr: Expr | undefined): number | undefined {
-      if (
-        expr?.kind === "NumberLiteralExpr" ||
-        (expr?.kind === "UnaryExpr" &&
-          expr.op === "-" &&
-          expr.expr.kind === "NumberLiteralExpr")
-      ) {
-        return expr.kind === "NumberLiteralExpr"
-          ? expr.value
-          : -(expr.expr as NumberLiteralExpr).value;
+    if (startArg === undefined && endArg === undefined) {
+      // .slice()
+      return toJsonPath(expr.expr.expr);
+    } else if (startArg !== undefined) {
+      const startConst = evaluateToConstant(startArg);
+      if (startConst === undefined) {
+        throw new Error(
+          "the 'start' argument of slice must be a literal number"
+        );
       }
-      return undefined;
+      if (endArg === undefined) {
+        // slice(x)
+        return `${toJsonPath(expr.expr.expr)}[${startConst}:]`;
+      } else {
+        const endConst = evaluateToConstant(endArg);
+        if (endConst === undefined) {
+          throw new Error(
+            "the 'end' argument of slice must be a literal number"
+          );
+        }
+        return `${toJsonPath(expr.expr.expr)}[${startConst}:${endConst}]`;
+      }
+    } else if (endArg !== undefined) {
+      throw new Error(
+        `impossible expression, slice called with end defined without startArg`
+      );
+    } else {
+      throw new Error(
+        `impossible expression, slice called with unknown arguments`
+      );
     }
   }
 
@@ -1525,16 +1532,15 @@ export namespace ASL {
   }
 
   function elementToJsonPath(expr: Expr): string {
-    if (expr.kind === "StringLiteralExpr") {
-      return `'${expr.value}'`;
-    } else if (expr.kind === "NumberLiteralExpr") {
-      return expr.value.toString(10);
-    } else if (isNegativeNumberLiteralExpr(expr)) {
-      return (-expr.expr.value).toString(10);
+    const value = evaluateToConstant(expr);
+    if (typeof value === "string") {
+      return `'${value}'`;
+    } else if (typeof value === "number") {
+      return value.toString(10);
     }
 
     throw new Error(
-      `Expression kind '${expr.kind}' is not allowed as an element in a Step Function`
+      `an element in a Step Function must be a literal string or number`
     );
   }
 
@@ -1849,7 +1855,7 @@ export namespace ASL {
       }
     }
     debugger;
-    toCondition(expr);
+
     throw new Error(`cannot evaluate expression: '${expr.kind}`);
   }
 }

@@ -39,6 +39,7 @@ export function makeFunctionlessChecker(
 ) {
   return {
     ...checker,
+    isConstant: isConstantTsNode,
     isAppsyncResolver,
     isEventBusRuleMapFunction,
     isEventBusWhenFunction,
@@ -210,4 +211,42 @@ export function makeFunctionlessChecker(
     }
     return undefined;
   }
+}
+
+const ArithmeticOperators = [
+  ts.SyntaxKind.PlusToken,
+  ts.SyntaxKind.MinusToken,
+  ts.SyntaxKind.AsteriskEqualsToken,
+  ts.SyntaxKind.SlashToken,
+] as const;
+
+export type ArithmeticToken = typeof ArithmeticOperators[number];
+
+/**
+ * Check if a {@link token} is an {@link ArithmeticToken}: `+`, `-`, `*` or `/`.
+ */
+export function isArithmeticToken(
+  token: ts.SyntaxKind
+): token is ArithmeticToken {
+  return ArithmeticOperators.includes(token as ArithmeticToken);
+}
+
+/**
+ * Check if a TS node is a constant value that can be evaluated at compile time.
+ */
+export function isConstantTsNode(node: ts.Node): boolean {
+  if (ts.isLiteralExpression(node)) {
+    return true;
+  } else if (
+    ts.isBinaryExpression(node) &&
+    isArithmeticToken(node.operatorToken.kind)
+  ) {
+    return isConstantTsNode(node.left) && isConstantTsNode(node.right);
+  } else if (
+    ts.isPrefixUnaryExpression(node) &&
+    node.operator === ts.SyntaxKind.MinusToken
+  ) {
+    return isConstantTsNode(node.operand);
+  }
+  return false;
 }

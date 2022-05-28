@@ -1,5 +1,9 @@
 import type * as typescript from "typescript";
-import { FunctionlessChecker } from "./checker";
+import {
+  FunctionlessChecker,
+  isArithmeticToken,
+  isConstantTsNode,
+} from "./checker";
 
 /**
  * Validates a TypeScript SourceFile containing Functionless primitives does not
@@ -23,38 +27,11 @@ export function validate(
 
   return (function visit(node: typescript.Node): typescript.Diagnostic[] {
     if (checker.isStepFunction(node)) {
-      return validateStepFunctionNode(node);
+      return validateEachChildRecursive(node, validateStepFunctionNode);
     } else {
       return validateEachChild(node, visit);
     }
   })(node);
-
-  function validateStepFunctionNode(
-    node: typescript.Node
-  ): typescript.Diagnostic[] {
-    const children = validateEachChild(node, validateStepFunctionNode);
-    if (ts.isBinaryExpression(node)) {
-      if (
-        [ts.SyntaxKind.PlusToken, ts.SyntaxKind.MinusToken].includes(
-          node.operatorToken.kind
-        )
-      ) {
-        return [
-          <typescript.Diagnostic>{
-            source: "Functionless",
-            key: "Functionless",
-            category: ts.DiagnosticCategory.Error,
-            code: 100,
-            file: node.getSourceFile(),
-            start: node.pos,
-            length: node.end - node.pos,
-            messageText: "arithmetic is not supported in a Step Function",
-          },
-        ].concat(children);
-      }
-    }
-    return children;
-  }
 
   // ts.forEachChild terminates whenever a truth value is returned
   // ts.visitEachChild requires a ts.TransformationContext, so we can't use that
@@ -68,5 +45,51 @@ export function validate(
       results.push(...cb(child));
     });
     return results;
+  }
+
+  // apply the callback to all nodes in the tree
+  function validateEachChildRecursive<T>(
+    node: typescript.Node,
+    cb: (node: typescript.Node) => T[]
+  ): T[] {
+    return validateEachChild(node, (node) => [
+      ...cb(node),
+      ...validateEachChildRecursive(node, cb),
+    ]);
+  }
+
+  function validateStepFunctionNode(
+    node: typescript.Node
+  ): typescript.Diagnostic[] {
+    if (
+      (ts.isBinaryExpression(node) &&
+        isArithmeticToken(node.operatorToken.kind) &&
+        !isConstantTsNode(node)) ||
+      (ts.isPrefixUnaryExpression(node) && !isConstantTsNode(node))
+    ) {
+      return [
+        newError(
+          node,
+          100,
+          "Cannot perform arithmetic on variables in Step Function"
+        ),
+      ];
+    }
+    return [];
+  }
+  function newError(
+    invalidNode: typescript.Node,
+    code: number,
+    messageText: string
+  ): ts.Diagnostic {
+    return {
+      source: "Functionless",
+      code,
+      messageText,
+      category: ts.DiagnosticCategory.Error,
+      file: invalidNode.getSourceFile(),
+      start: invalidNode.pos,
+      length: invalidNode.end - invalidNode.pos,
+    };
   }
 }

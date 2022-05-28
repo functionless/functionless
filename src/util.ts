@@ -1,5 +1,6 @@
 import { Construct } from "constructs";
 import ts from "typescript";
+import { Expr } from "./expression";
 import { FunctionlessNode } from "./node";
 
 export type AnyFunction = (...args: any[]) => any;
@@ -102,3 +103,50 @@ export const singletonConstruct = <T extends Construct, S extends Construct>(
   const child = scope.node.tryFindChild(id);
   return child ? (child as T) : create(scope, id);
 };
+
+export type Constant = null | boolean | number | string;
+
+/**
+ * Evaluates an Expr to a constant value
+ *
+ * ```
+ * "hello" // "hello"
+ * "hello" + "world" // "helloworld"
+ * "hello" + 1 // "hello1"
+ * 1 + "hello" // "2hello"
+ * 1 // 1
+ * -1 // -1
+ * 1 + 2 // 3
+ * ```
+ *
+ * @returns the number if it is constant, otherwise undefined.
+ */
+export function evaluateToConstant(node: Expr): Constant | undefined {
+  if (
+    node.kind === "NumberLiteralExpr" ||
+    node.kind === "NullLiteralExpr" ||
+    node.kind === "BooleanLiteralExpr" ||
+    node.kind === "StringLiteralExpr"
+  ) {
+    return node.value;
+  } else if (node.kind === "UnaryExpr" && node.op === "-") {
+    // for negative numbers, collapse into a NumberLiteralExpr with the negative value
+    const expr = evaluateToConstant(node.expr);
+    if (typeof expr === "number") {
+      return -expr;
+    }
+  } else if (node.kind === "BinaryExpr") {
+    const left: any = evaluateToConstant(node.left);
+    const right: any = evaluateToConstant(node.right);
+    if (node.op === "+") {
+      return left + right;
+    } else if (node.op === "-") {
+      return left - right;
+    } else if (node.op === "*") {
+      return left * right;
+    } else if (node.op === "/") {
+      return left / right;
+    }
+  }
+  return undefined;
+}

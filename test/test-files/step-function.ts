@@ -6,5 +6,13 @@ const app = new App({
 });
 const stack = new Stack(app, "stack");
 
-// arithmetic is not supported by Amazon States Language
-new StepFunction(stack, "F", () => 1 + 2);
+// unsupported arithmetic
+new StepFunction(stack, "input.i + 2", (input: { i: number }) => input.i + 2);
+new StepFunction(stack, "input.i - 2", (input: { i: number }) => input.i - 2);
+new StepFunction(stack, "input.i * 2", (input: { i: number }) => input.i * 2);
+new StepFunction(stack, "input.i / 2", (input: { i: number }) => input.i / 2);
+new StepFunction(stack, "-input.i", (input: { i: number }) => -input.i);
+
+// supported arithmetic
+new StepFunction(stack, "1 + 2", () => 1 + 2);
+new StepFunction(stack, "-1", () => -1);
