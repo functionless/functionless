@@ -249,14 +249,14 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
       return new Function(
         parent,
         "function",
+        localstackClientConfig,
         async () => {
           bus({
             "detail-type": "detail",
             source: "lambda",
             detail: {},
           });
-        },
-        localstackClientConfig
+        }
       );
     },
     null
@@ -273,6 +273,7 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
       const func = new Function(
         parent,
         "function",
+        localstackClientConfig,
         async () => {
           const result = putEvents({
             Entries: [
@@ -285,8 +286,7 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
             ],
           });
           return result.FailedEntryCount;
-        },
-        localstackClientConfig
+        }
       );
 
       bus.bus.grantPutEventsTo(func.resource);
@@ -305,6 +305,7 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
       return new Function(
         parent,
         "function",
+        localstackClientConfig,
         async () => {
           const result = $AWS.EventBridge.putEvents({
             Entries: [
@@ -317,8 +318,7 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
             ],
           });
           return result.FailedEntryCount;
-        },
-        localstackClientConfig
+        }
       );
     },
     0
@@ -333,6 +333,7 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
       return new Function(
         parent,
         "function",
+        localstackClientConfig,
         async () => {
           const busbus = bus;
           busbus({
@@ -340,8 +341,7 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
             source: "anySource",
             detail: {},
           });
-        },
-        localstackClientConfig
+        }
       );
     },
     null
@@ -386,11 +386,11 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
       return new Function(
         parent,
         "function",
+        localstackClientConfig,
         async () => {
           // TODO should be awaited?
           return func1();
-        },
-        localstackClientConfig
+        }
       );
     },
     "hi"
@@ -407,12 +407,12 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
       return new Function(
         parent,
         "function",
+        localstackClientConfig,
         async () => {
           // TODO should be awaited?
           func1({});
           return "started!";
-        },
-        localstackClientConfig
+        }
       );
     },
     "started!"
@@ -429,6 +429,7 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
       return new Function(
         parent,
         "function",
+        localstackClientConfig,
         async () => {
           // TODO should be awaited?
           const result = func1({});
@@ -442,8 +443,7 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
             // wait for 100 ms
             await new Promise((resolve) => setTimeout(resolve, 100));
           }
-        },
-        localstackClientConfig
+        }
       );
     },
     `"hi"`
@@ -462,12 +462,12 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
       return new Function(
         parent,
         "function",
+        localstackClientConfig,
         async () => {
           // TODO should be awaited?
           const result = func1({});
           return result.status === "SUCCEEDED" ? result.output : result.error;
-        },
-        localstackClientConfig
+        }
       );
     },
     "hi"
@@ -490,6 +490,7 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
       return new Function(
         parent,
         "function",
+        localstackClientConfig,
         async () => {
           putItem({
             TableName: table,
@@ -507,8 +508,7 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
             ConsistentRead: true,
           });
           return item.Item?.key.S;
-        },
-        localstackClientConfig
+        }
       );
     },
     "key"

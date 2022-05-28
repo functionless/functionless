@@ -22,7 +22,7 @@ import {
   IntegrationInvocation,
 } from "./declaration";
 import { Construct } from "constructs";
-import { AnyFunction } from "./util";
+import { AnyFunction, anyOf } from "./util";
 import { serializeFunction } from "@functionless/nodejs-closure-serializer";
 import path from "path";
 import fs from "fs";
@@ -164,6 +164,8 @@ export interface FunctionProps
   ) => Omit<AWS.Lambda.ClientConfiguration, keyof AWS.Lambda.ClientApiVersions>;
 }
 
+const isNativeFunctionOrError = anyOf(isErr, isNativeFunctionDecl);
+
 /**
  * Wraps an {@link aws_lambda.Function} with a type-safe interface that can be
  * called from within an {@link AppsyncResolver}.
@@ -206,11 +208,12 @@ export class Function<P, O> extends FunctionBase<P, O> {
    * new Function<{ val: string }, string>(this, 'myFunction', async (event) => event.val);
    * ```
    */
+  constructor(scope: Construct, id: string, func: FunctionClosure<P, O>);
   constructor(
     scope: Construct,
     id: string,
-    func: FunctionClosure<P, O>,
-    props?: FunctionProps
+    props: FunctionProps,
+    func: FunctionClosure<P, O>
   );
   /**
    * @private
@@ -218,9 +221,13 @@ export class Function<P, O> extends FunctionBase<P, O> {
   constructor(
     scope: Construct,
     id: string,
-    func: NativeFunctionDecl | Err,
-    props?: FunctionProps
+    props: FunctionProps,
+    func: NativeFunctionDecl | Err
   );
+  /**
+   * @private
+   */
+  constructor(scope: Construct, id: string, func: NativeFunctionDecl | Err);
   /**
    * Wrap an existing lambda function with Functionless.
    * @deprecated use `Function.fromFunction()`
@@ -232,18 +239,33 @@ export class Function<P, O> extends FunctionBase<P, O> {
   constructor(
     resource: aws_lambda.IFunction | Construct,
     id?: string,
-    func?: NativeFunctionDecl | Err | FunctionClosure<P, O>,
-    props?: FunctionProps
+    propsOrFunc?:
+      | FunctionProps
+      | NativeFunctionDecl
+      | Err
+      | FunctionClosure<P, O>,
+    funcOrNothing?: NativeFunctionDecl | Err | FunctionClosure<P, O>
   ) {
     let _resource: aws_lambda.IFunction;
     let integrations: IntegrationInvocation[] = [];
     let callbackLambdaCode: CallbackLambdaCode | undefined = undefined;
-    if (func && id) {
-      if (isNativeFunctionDecl(func)) {
+    if (id && propsOrFunc) {
+      const func = isNativeFunctionOrError(propsOrFunc)
+        ? propsOrFunc
+        : isNativeFunctionOrError(funcOrNothing)
+        ? funcOrNothing
+        : undefined;
+      const props = isNativeFunctionOrError(propsOrFunc)
+        ? undefined
+        : (propsOrFunc as FunctionProps);
+
+      if (isErr(func)) {
+        throw func.error;
+      } else if (isNativeFunctionDecl(func)) {
         callbackLambdaCode = new CallbackLambdaCode(func.closure, {
           clientConfigRetriever: props?.clientConfigRetriever,
         });
-        _resource = new aws_lambda.Function(resource, id, {
+        _resource = new aws_lambda.Function(resource, id!, {
           ...props,
           runtime: aws_lambda.Runtime.NODEJS_14_X,
           handler: "index.handler",
@@ -251,8 +273,6 @@ export class Function<P, O> extends FunctionBase<P, O> {
         });
 
         integrations = func.integrations;
-      } else if (isErr(func)) {
-        throw func.error;
       } else {
         throw Error(
           "Expected lambda to be passed a compiled function closure or a aws_lambda.IFunction"
@@ -327,9 +347,9 @@ export class CallbackLambdaCode extends aws_lambda.Code {
   public bind(scope: Construct): aws_lambda.CodeConfig {
     this.scope = scope;
     // Lets give the function something lightweight while we process the closure.
-    // https://github.com/sam-goodwin/functionless/issues/128
+    // https://github.com/functionless/functionless/issues/128
     return aws_lambda.Code.fromInline(
-      "If you are seeing this in your lambda code, ensure generate is called, then consult the README, and see https://github.com/sam-goodwin/functionless/issues/128."
+      "If you are seeing this in your lambda code, ensure generate is called, then consult the README, and see https://github.com/functionless/functionless/issues/128."
     ).bind(scope);
   }
 

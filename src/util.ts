@@ -1,8 +1,5 @@
 import { FunctionlessNode } from "./node";
 import ts from "typescript";
-import { Function } from "./function";
-import { App } from "aws-cdk-lib";
-import { SynthesisOptions } from "aws-cdk-lib/core/lib/private/synthesis";
 import { Construct } from "constructs";
 
 export type AnyFunction = (...args: any[]) => any;
@@ -46,7 +43,7 @@ export function ensure<T>(
   }
 }
 
-type EnsureOr<T extends ((a: any) => a is any)[]> = T[number] extends (
+export type EnsureOr<T extends ((a: any) => a is any)[]> = T[number] extends (
   a: any
 ) => a is infer T
   ? T
@@ -104,14 +101,4 @@ export const singletonConstruct = <T extends Construct, S extends Construct>(
 ): T => {
   const child = scope.node.tryFindChild(id);
   return child ? (child as T) : create(scope, id);
-};
-
-/**
- * Experimental hack that waits for async code in CDK construct instantiation to complete before
- * calling app.synth().
- */
-export const asyncSynth = async (app: App, options?: SynthesisOptions) => {
-  await new Promise(setImmediate);
-  await Promise.all(Function.promises);
-  return app.synth(options);
 };

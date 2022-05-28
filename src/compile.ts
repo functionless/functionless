@@ -193,12 +193,25 @@ export function compile(
       };
 
       type FunctionInterface = ts.NewExpression & {
-        arguments: [
-          ts.Expression,
-          ts.Expression,
-          TsFunctionParameter,
-          ts.Expression | undefined
-        ];
+        arguments:
+          | [
+              // scope
+              ts.Expression,
+              // id
+              ts.Expression,
+              // props
+              ts.Expression,
+              // closure
+              TsFunctionParameter
+            ]
+          | [
+              // scope
+              ts.Expression,
+              // id
+              ts.Expression,
+              // closure
+              TsFunctionParameter
+            ];
       };
 
       /**
@@ -297,8 +310,11 @@ export function compile(
             Function.FunctionlessType
           ) &&
           // only take the form with the arrow function at the end.
-          (node.arguments?.length === 3 || node.arguments?.length === 4) &&
-          ts.isArrowFunction(node.arguments[2])
+          (node.arguments?.length === 3
+            ? ts.isArrowFunction(node.arguments[2])
+            : node.arguments?.length === 4
+            ? ts.isArrowFunction(node.arguments[3])
+            : false)
         );
       }
 
@@ -477,7 +493,15 @@ export function compile(
         func: FunctionInterface,
         context: ts.TransformationContext
       ): ts.Node {
-        const [_one, _two, funcDecl, _four] = func.arguments;
+        const [_one, _two, _three, funcDecl] =
+          func.arguments.length === 4
+            ? func.arguments
+            : [
+                func.arguments[0],
+                func.arguments[1],
+                undefined,
+                func.arguments[2],
+              ];
 
         return ts.factory.updateNewExpression(
           func,
@@ -486,8 +510,8 @@ export function compile(
           [
             _one,
             _two,
+            ...(_three ? [_three] : []),
             errorBoundary(() => toNativeFunction(funcDecl, context)),
-            ...(_four ? [_four] : []),
           ]
         );
       }

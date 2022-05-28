@@ -70,9 +70,9 @@ const STARTS_WITH_SEARCH_STRING = "searchString";
 
 /**
  * Turns a pattern document into the Event Bridge Pattern format.
- * 
+ *
  * To transform from a {@link EventBusPredicateFunction}, first call {@link synthesizePatternDocument}.
- * 
+ *
  *  {
  *    doc: {
  *        source: {
@@ -80,9 +80,9 @@ const STARTS_WITH_SEARCH_STRING = "searchString";
  *        }
  *   }
  * }
- * 
+ *
  * becomes
- * 
+ *
  * {
  *    source: ["lambda"]
  * }
@@ -688,7 +688,7 @@ const negateDocument = (classDocument: PatternDocument): PatternDocument => {
 
 const negateClassification = (pattern: Pattern): Pattern => {
   if (isAggregatePattern(pattern)) {
-    throw Error("Can only negate simple statments like boolean and equals.");
+    throw Error("Can only negate simple statements like boolean and equals.");
   } else if (isAnythingButPattern(pattern)) {
     return Array.isArray(pattern.anythingBut)
       ? pattern.anythingBut.length > 1
