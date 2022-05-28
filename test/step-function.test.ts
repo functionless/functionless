@@ -1131,7 +1131,7 @@ test("task(input.list[-1])", () => {
   const definition = new ExpressStepFunction(
     stack,
     "fn",
-    (input: { list: string[] }) => {
+    (input: { list: { [-1]: string } }) => {
       return task(input.list[-1]);
     }
   ).definition;
