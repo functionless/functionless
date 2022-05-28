@@ -51,7 +51,6 @@ export function compile(
         return sf;
       }
 
-      // TODO: this seems like a pattern, make a "public import context"
       const functionlessContext = {
         requireFunctionless: false,
         get functionless() {
@@ -546,7 +545,8 @@ export function compile(
        *       before the first invocation of a lambda function.
        * 3. Rewrites all of the integrations to invoke `await integration.native.call(args)` instead of `integration(args)`
        *    Also tries to simplify integration references to be outside of the closure.
-       *    This reduces the amount of code and data that Pulumi tries to serialize during synthesis.
+       *    This reduces the amount of code and data that @functionless/nodejs-closure-serializer (a Pulumi closure serializer fork)
+       *    tries to serialize during synthesis.
        * 4. Returns the {@link ParameterDecl}s for the closure
        *
        * @see Function for an example of how this is used.
@@ -606,7 +606,7 @@ export function compile(
         const preWarmContext =
           context.factory.createUniqueName("preWarmContext");
 
-        // Context object which is available which transforming the tree
+        // Context object which is available when transforming the tree
         const nativeExprContext: NativeExprContext = {
           // a reference to a prewarm context that will be passed into the closure during synthesis/runtime
           preWarmContext,
@@ -686,7 +686,6 @@ export function compile(
 
             if (!outOfScopeIntegrationReference) {
               // integration variables can be CDK constructs which will fail serialization.
-              // TODO: can we relax this be determining if a integration reference will fail?
               throw Error(
                 "Integration Variable must be defined out of scope: " +
                   node.expression.getText()
@@ -706,7 +705,6 @@ export function compile(
             // call the integration call function with the prewarm context and arguments
             // At this point, we know native will not be undefined
             // await integration.native.call(args, preWarmContext)
-            // FIXME: doesn't work without an array
             // TODO: Support both sync and async function invocations: https://github.com/sam-goodwin/functionless/issues/105
 
             return context.factory.createAwaitExpression(
@@ -721,7 +719,6 @@ export function compile(
                 undefined,
                 [
                   context.factory.createArrayLiteralExpression(node.arguments),
-                  // TODO: determine if this is needed at all?
                   nativeExprContext.preWarmContext,
                 ]
               )
@@ -1200,6 +1197,106 @@ export function compile(
       }
 
       /**
+       * Flattens {@link ts.BindingElement} (destructured assignments) to a series of
+       * {@link ts.ElementAccessExpression} or {@link ts.PropertyAccessExpression}
+       *
+       * Caveat: It is not possible to flatten a destructured ParameterDeclaration (({ a }) => {}).
+       *         Use {@link getDestructuredDeclaration} to determine if the {@link ts.BindingElement} is
+       *         {@link ts.VariableDeclaration} or a {@link ts.ParameterDeclaration}.
+       *
+       * given a
+       *
+       * { a } = b;
+       * -> b.a;
+       *
+       * { x: a } = b;
+       * -> b.x;
+       *
+       * { "x-x": a } = b;
+       * b["x-x"];
+       *
+       * { b: { a } } = c;
+       * -> c.b.a;
+       *
+       * [a] = l;
+       * -> l[0];
+       *
+       * [{ a }] = l;
+       * -> l[0].a;
+       *
+       * { a } = b.c;
+       * -> b.c.a;
+       *
+       * { [key]: a } = b;
+       * b[key];
+       */
+      function flattenDestructuredAssignment(
+        element: ts.BindingElement
+      ): ts.ElementAccessExpression | ts.PropertyAccessExpression {
+        // if the binding renames the property, get the original
+        // { a : x } -> a
+        // { a } -> a
+        // [a] -> 0
+        const name = ts.isArrayBindingPattern(element.parent)
+          ? element.pos
+          : // binding renames the property or is a nested binding pattern.
+          element.propertyName
+          ? element.propertyName
+          : // the "name" can be a binding pattern. In that case the propertyName will be set.
+            (element.name as ts.Identifier);
+
+        const getParent = () => {
+          // { a } = b;
+          if (ts.isVariableDeclaration(element.parent.parent)) {
+            if (!element.parent.parent.initializer) {
+              throw Error(
+                "Expected a initializer on a destructured assignment: " +
+                  element.getText()
+              );
+            }
+            return element.parent.parent.initializer;
+          } else if (ts.isBindingElement(element.parent.parent)) {
+            return flattenDestructuredAssignment(element.parent.parent);
+          } else {
+            throw Error(
+              "Cannot flatten destructured parameter: " + element.getText()
+            );
+          }
+        };
+
+        const parent = getParent();
+
+        // always use element access as this will work for all possible values.
+        // [parent][name]
+        return typeof name !== "number" && ts.isIdentifier(name)
+          ? ts.factory.createPropertyAccessExpression(parent, name)
+          : ts.factory.createElementAccessExpression(
+              parent,
+              typeof name !== "number" && ts.isComputedPropertyName(name)
+                ? name.expression
+                : name
+            );
+      }
+
+      /**
+       * Finds the top level declaration of a destructured binding element.
+       * Supports arbitrary nesting.
+       *
+       * const { a } = b; -> VariableDeclaration { initializer = b }
+       * const [a] = b; -> VariableDeclaration { initializer = b }
+       * ({ a }) => {} -> ParameterDeclaration { { a } }
+       * ([a]) => {} -> ParameterDeclaration { { a } }
+       */
+      function getDestructuredDeclaration(
+        element: ts.BindingElement
+      ): ts.VariableDeclaration | ts.ParameterDeclaration {
+        if (ts.isBindingElement(element.parent.parent)) {
+          return getDestructuredDeclaration(element.parent.parent);
+        }
+        return element.parent.parent;
+      }
+
+      /**
        * Attempts to find the a version of a reference that is outside of a certain scope.
        *
        * This is useful for finding variables that have been instantiated outside of a closure, but
@@ -1251,56 +1348,73 @@ export function compile(
             return expression;
           } else {
             if (ts.isIdentifier(expression)) {
-              if (
-                symbol.valueDeclaration &&
-                ts.isVariableDeclaration(symbol.valueDeclaration) &&
-                symbol.valueDeclaration.initializer
-              ) {
-                return getOutOfScopeValueNode(
-                  symbol.valueDeclaration.initializer,
-                  scope
-                );
-              }
-            } else if (
-              ts.isPropertyAccessExpression(expression) ||
-              ts.isElementAccessExpression(expression)
-            ) {
               if (symbol.valueDeclaration) {
                 if (
-                  ts.isPropertyAssignment(symbol.valueDeclaration) &&
-                  anyOf(
-                    ts.isIdentifier,
-                    ts.isPropertyAccessExpression,
-                    ts.isElementAccessExpression
-                  )(symbol.valueDeclaration.initializer)
+                  ts.isVariableDeclaration(symbol.valueDeclaration) &&
+                  symbol.valueDeclaration.initializer
                 ) {
-                  // this variable is assigned to by another variable, follow that node
                   return getOutOfScopeValueNode(
                     symbol.valueDeclaration.initializer,
                     scope
                   );
+                } else if (ts.isBindingElement(symbol.valueDeclaration)) {
+                  /* when we find an identifier that was created using a binding assignment
+                    flatten it and run the flattened form through again.
+                    const b = { a: 1 };
+                    () => { 
+                      const c = b;
+                      const { a } = c; 
+                    }
+                    -> b["a"];
+                  */
+                  const flattened = flattenDestructuredAssignment(
+                    symbol.valueDeclaration
+                  );
+                  console.log(ts.SyntaxKind[flattened.kind]);
+                  return getOutOfScopeValueNode(flattened, scope);
                 }
               }
-              // this node is assigned a value, attempt to rewrite the parent
-              const outOfScope = getOutOfScopeValueNode(
-                expression.expression,
-                scope
-              );
-              return outOfScope
-                ? ts.isElementAccessExpression(expression)
-                  ? ts.factory.updateElementAccessExpression(
-                      expression,
-                      outOfScope,
-                      expression.argumentExpression
-                    )
-                  : ts.factory.updatePropertyAccessExpression(
-                      expression,
-                      outOfScope,
-                      expression.name
-                    )
-                : undefined;
             }
           }
+        }
+        if (
+          ts.isPropertyAccessExpression(expression) ||
+          ts.isElementAccessExpression(expression)
+        ) {
+          if (symbol && symbol.valueDeclaration) {
+            if (
+              ts.isPropertyAssignment(symbol.valueDeclaration) &&
+              anyOf(
+                ts.isIdentifier,
+                ts.isPropertyAccessExpression,
+                ts.isElementAccessExpression
+              )(symbol.valueDeclaration.initializer)
+            ) {
+              // this variable is assigned to by another variable, follow that node
+              return getOutOfScopeValueNode(
+                symbol.valueDeclaration.initializer,
+                scope
+              );
+            }
+          }
+          // this node is assigned a value, attempt to rewrite the parent
+          const outOfScope = getOutOfScopeValueNode(
+            expression.expression,
+            scope
+          );
+          return outOfScope
+            ? ts.isElementAccessExpression(expression)
+              ? ts.factory.updateElementAccessExpression(
+                  expression,
+                  outOfScope,
+                  expression.argumentExpression
+                )
+              : ts.factory.updatePropertyAccessExpression(
+                  expression,
+                  outOfScope,
+                  expression.name
+                )
+            : undefined;
         }
         return undefined;
       }
@@ -1333,6 +1447,18 @@ export function compile(
        * }
        * ```
        *
+       * ```ts
+       * () => {
+       *    const { x } = y;
+       *    x // in scope
+       * }
+       * ```
+       *
+       * ```ts
+       * ({ x }) => {
+       *    x // in scope
+       * }
+       * ```
        */
       function isSymbolOutOfScope(symbol: ts.Symbol, scope: ts.Node): boolean {
         if (symbol.valueDeclaration) {
@@ -1345,6 +1471,26 @@ export function compile(
               : false;
           } else if (ts.isVariableDeclaration(symbol.valueDeclaration)) {
             return !hasParent(symbol.valueDeclaration, scope);
+          } else if (ts.isBindingElement(symbol.valueDeclaration)) {
+            /* 
+              check if the binding element's declaration is within the scope or not.
+
+              example: if the scope if func's body
+
+              ({ a }) => {
+                const { b } = a;
+                const func = ({ c }) => {
+                  const { d: { x, y } } = b;
+                }
+              }
+
+              // in scope: c, x, y
+              // out of scope: a, b
+            */
+            const declaration = getDestructuredDeclaration(
+              symbol.valueDeclaration
+            );
+            return !hasParent(declaration, scope);
           }
         } else if (symbol.declarations && symbol.declarations.length > 0) {
           const [decl] = symbol.declarations;

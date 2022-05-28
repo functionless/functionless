@@ -324,9 +324,7 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
     0
   );
 
-  // Function serialization breaks when assigning an integration/construct to a variable in the closure.
-  // TODO: what should happen here?
-  testFunctionResource.skip(
+  testFunctionResource(
     "Call Lambda AWS SDK put event to bus with in closure reference",
     (parent) => {
       const bus = new EventBus<EventBusRuleInput>(parent, "bus");
@@ -337,6 +335,27 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
         async () => {
           const busbus = bus;
           busbus({
+            "detail-type": "anyDetail",
+            source: "anySource",
+            detail: {},
+          });
+        }
+      );
+    },
+    null
+  );
+
+  testFunctionResource(
+    "Call Lambda AWS SDK integration from destructured object  aa",
+    (parent) => {
+      const buses = { bus: new EventBus<EventBusRuleInput>(parent, "bus") };
+      return new Function(
+        parent,
+        "function",
+        localstackClientConfig,
+        async () => {
+          const { bus } = buses;
+          bus({
             "detail-type": "anyDetail",
             source: "anySource",
             detail: {},

@@ -404,6 +404,8 @@ customDeleteBus
 
 const busbusbus = new aws_events.EventBus(stack, "busbus");
 
+const b = { bus: customDeleteBus };
+
 const func = new Function<undefined, string>(stack, "testFunc2", async () => {
   return "hi";
 });
@@ -415,6 +417,9 @@ const exprSfn = new ExpressStepFunction(stack, "exp", () => {
 new Function(
   stack,
   "testFunc",
+  {
+    timeout: Duration.minutes(1),
+  },
   async () => {
     console.log(customDeleteBus.eventBusArn);
     console.log(busbusbus.eventBusArn);
@@ -454,6 +459,12 @@ new Function(
         postId: "something",
       },
     });
+    const { bus } = b;
+    bus({
+      "detail-type": "Delete-Message-Success",
+      detail: { count: 0 },
+      source: "MessageDeleter",
+    });
     console.log(deleteWorkflow.describeExecution(exc.executionArn));
     $AWS.DynamoDB.PutItem({
       TableName: database,
@@ -474,9 +485,6 @@ new Function(
     console.log(item.Item?.pk?.S);
     return exprSfn({});
     // return "hi";
-  },
-  {
-    timeout: Duration.minutes(1),
   }
 );
 
