@@ -1,17 +1,20 @@
-import {
-  UpdateItemInput,
-  UpdateItemOutput,
-} from "typesafe-dynamodb/lib/update-item";
-import { PutItemInput, PutItemOutput } from "typesafe-dynamodb/lib/put-item";
-import { ScanInput, ScanOutput } from "typesafe-dynamodb/lib/scan";
-import { QueryInput, QueryOutput } from "typesafe-dynamodb/lib/query";
-import { GetItemInput, GetItemOutput } from "typesafe-dynamodb/lib/get-item";
+import type { DynamoDB as AWSDynamoDB, EventBridge } from "aws-sdk";
+import { JsonFormat } from "typesafe-dynamodb";
+import { TypeSafeDynamoDBv2 } from "typesafe-dynamodb/lib/client-v2";
 import {
   DeleteItemInput,
   DeleteItemOutput,
 } from "typesafe-dynamodb/lib/delete-item";
+import { GetItemInput, GetItemOutput } from "typesafe-dynamodb/lib/get-item";
 import { TableKey } from "typesafe-dynamodb/lib/key";
-import { JsonFormat } from "typesafe-dynamodb";
+import { PutItemInput, PutItemOutput } from "typesafe-dynamodb/lib/put-item";
+import { QueryInput, QueryOutput } from "typesafe-dynamodb/lib/query";
+import { ScanInput, ScanOutput } from "typesafe-dynamodb/lib/scan";
+import {
+  UpdateItemInput,
+  UpdateItemOutput,
+} from "typesafe-dynamodb/lib/update-item";
+import { ASL } from "./asl";
 import {
   Expr,
   isObjectLiteralExpr,
@@ -20,7 +23,6 @@ import {
   isVariableReference,
   ObjectLiteralExpr,
 } from "./expression";
-import { ASL } from "./asl";
 import {
   Function,
   isFunction,
@@ -28,12 +30,10 @@ import {
   NativePreWarmContext,
   PrewarmClients,
 } from "./function";
+import { Integration, makeIntegration } from "./integration";
 import { Table, isTable, AnyTable } from "./table";
 
-import type { DynamoDB as AWSDynamoDB } from "aws-sdk";
-import { Integration, makeIntegration } from "./integration";
 import type { AnyFunction } from "./util";
-import { TypeSafeDynamoDBv2 } from "typesafe-dynamodb/lib/client-v2";
 
 type Item<T extends Table<any, any, any>> = T extends Table<infer I, any, any>
   ? I
@@ -118,7 +118,7 @@ export namespace $AWS {
 
           const { TableName: table, ...rest } = input;
 
-          return await dynamo
+          return dynamo
             .deleteItem({
               ...rest,
               TableName: input.TableName.resource.tableName,
@@ -205,7 +205,7 @@ export namespace $AWS {
             TableName: table.resource.tableName,
           };
 
-          return await dynamo.getItem(payload).promise();
+          return dynamo.getItem(payload).promise();
         },
         // Typesafe DynamoDB was causing a "excessive depth error"
       } as any,
@@ -267,7 +267,7 @@ export namespace $AWS {
 
           const { TableName: table, ...rest } = input;
 
-          return await dynamo
+          return dynamo
             .updateItem({
               ...rest,
               TableName: table.resource.tableName,
@@ -316,7 +316,7 @@ export namespace $AWS {
 
           const { TableName: table, Item, ...rest } = input;
 
-          return await dynamo
+          return dynamo
             .putItem({
               ...rest,
               Item: Item as any,
@@ -366,7 +366,7 @@ export namespace $AWS {
 
           const { TableName: table, AttributesToGet, ...rest } = input;
 
-          return await dynamo
+          return dynamo
             .query({
               ...rest,
               AttributesToGet: AttributesToGet as any,
@@ -414,7 +414,7 @@ export namespace $AWS {
 
           const { TableName: table, AttributesToGet, ...rest } = input;
 
-          return await dynamo
+          return dynamo
             .scan({
               ...rest,
               AttributesToGet: AttributesToGet as any,
@@ -465,12 +465,12 @@ export namespace $AWS {
             tableProp?.kind !== "PropAssignExpr" ||
             tableProp.expr.kind !== "ReferenceExpr"
           ) {
-            throw new Error(``);
+            throw new Error("");
           }
 
           const table = tableProp.expr.ref();
           if (!isTable(table)) {
-            throw new Error(``);
+            throw new Error("");
           }
           if (
             operationName === "deleteItem" ||
@@ -562,27 +562,27 @@ export namespace $AWS {
       asl(call) {
         const input = call.args[0].expr;
         if (input === undefined) {
-          throw new Error(`missing argument 'input'`);
+          throw new Error("missing argument 'input'");
         } else if (input.kind !== "ObjectLiteralExpr") {
-          throw new Error(`argument 'input' must be an ObjectLiteralExpr`);
+          throw new Error("argument 'input' must be an ObjectLiteralExpr");
         }
         const functionName = input.getProperty("FunctionName")?.expr;
         if (functionName === undefined) {
-          throw new Error(`missing required property 'FunctionName'`);
+          throw new Error("missing required property 'FunctionName'");
         } else if (functionName.kind !== "ReferenceExpr") {
           throw new Error(
-            `property 'FunctionName' must reference a functionless.Function`
+            "property 'FunctionName' must reference a functionless.Function"
           );
         }
         const functionRef = functionName.ref();
         if (!isFunction(functionRef)) {
           throw new Error(
-            `property 'FunctionName' must reference a functionless.Function`
+            "property 'FunctionName' must reference a functionless.Function"
           );
         }
         const payload = input.getProperty("Payload")?.expr;
         if (payload === undefined) {
-          throw new Error(`missing property 'payload'`);
+          throw new Error("missing property 'payload'");
         }
         return {
           Type: "Task",
@@ -620,10 +620,10 @@ export namespace $AWS {
           prewarmContext.getOrInit(PrewarmClients.EVENT_BRIDGE);
         },
         call: async ([request], preWarmContext) => {
-          const eventBridge = preWarmContext.getOrInit(
+          const eventBridge = preWarmContext.getOrInit<EventBridge>(
             PrewarmClients.EVENT_BRIDGE
           );
-          return await eventBridge
+          return eventBridge
             .putEvents({
               Entries: request.Entries.map((e) => ({
                 ...e,

@@ -1,6 +1,7 @@
 const { readFileSync, writeFileSync, chmodSync } = require("fs");
 const { join } = require("path");
 const { typescript, TextFile } = require("projen");
+const { TypeScriptProject } = require("projen/lib/typescript");
 
 /**
  * Adds githooks into the .git/hooks folder during projen synth.
@@ -71,6 +72,9 @@ class CustomTypescriptProject extends typescript.TypeScriptProject {
 const project = new CustomTypescriptProject({
   defaultReleaseBranch: "main",
   name: "functionless",
+  bin: {
+    functionless: "./bin/functionless.js",
+  },
   deps: ["fs-extra", "minimatch", "@functionless/nodejs-closure-serializer"],
   devDeps: [
     `@aws-cdk/aws-appsync-alpha@${MIN_CDK_VERSION}-alpha.0`,
@@ -108,7 +112,6 @@ const project = new CustomTypescriptProject({
     "typescript@^4.6.2",
   ],
   eslintOptions: {
-    ignorePatterns: ["**"],
     lintProjenRc: true,
   },
   tsconfig: {
@@ -140,7 +143,7 @@ const project = new CustomTypescriptProject({
 const packageJson = project.tryFindObjectFile("package.json");
 
 packageJson.addOverride("lint-staged", {
-  "*.{tsx,jsx,ts,js,json,md,css}": "prettier --write",
+  "*.{tsx,jsx,ts,js,json,md,css}": ["eslint", "prettier --write"],
 });
 
 project.compileTask.prependExec(
@@ -160,5 +163,15 @@ project.testTask.env("AWS_ACCESS_KEY_ID", "test");
 project.testTask.env("AWS_SECRET_ACCESS_KEY", "test");
 
 project.addPackageIgnore("/test-app");
+
+project.eslint.addRules({
+  quotes: "off",
+  "comma-dangle": "off",
+  "quote-props": "off",
+  "@typescript-eslint/indent": "off",
+  "@typescript-eslint/no-shadow": "off",
+  "@typescript-eslint/member-ordering": "off",
+  "brace-style": "off",
+});
 
 project.synth();

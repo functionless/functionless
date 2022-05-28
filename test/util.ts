@@ -1,23 +1,5 @@
-import { App, aws_dynamodb, aws_events, aws_lambda, Stack } from "aws-cdk-lib";
-import {
-  AppsyncResolver,
-  FunctionDecl,
-  Table,
-  Function,
-  EventBusRuleInput,
-  FunctionlessEventPattern,
-} from "../src";
-
-import * as appsync from "@aws-cdk/aws-appsync-alpha";
 import path from "path";
-import { Rule } from "aws-cdk-lib/aws-events";
-import { Err, isErr } from "../src/error";
-import {
-  synthesizeEventPattern,
-  synthesizePatternDocument,
-} from "../src/event-bridge/event-pattern/synth";
-import { EventTransformFunction } from "../src/event-bridge/transform";
-import { synthesizeEventBridgeTargets } from "../src/event-bridge/target-input";
+import * as appsync from "@aws-cdk/aws-appsync-alpha";
 import {
   AmplifyAppSyncSimulator,
   AmplifyAppSyncSimulatorAuthenticationType,
@@ -27,6 +9,24 @@ import {
   AppSyncVTLRenderContext,
   VelocityTemplate,
 } from "amplify-appsync-simulator/lib/velocity";
+import { App, aws_dynamodb, aws_events, aws_lambda, Stack } from "aws-cdk-lib";
+import { Rule } from "aws-cdk-lib/aws-events";
+import {
+  AppsyncResolver,
+  FunctionDecl,
+  Table,
+  Function,
+  EventBusRuleInput,
+  FunctionlessEventPattern,
+} from "../src";
+
+import { Err, isErr } from "../src/error";
+import {
+  synthesizeEventPattern,
+  synthesizePatternDocument,
+} from "../src/event-bridge/event-pattern/synth";
+import { synthesizeEventBridgeTargets } from "../src/event-bridge/target-input";
+import { EventTransformFunction } from "../src/event-bridge/transform";
 
 // generates boilerplate for the circuit-breaker logic for implementing early return
 export function returnExpr(varName: string) {

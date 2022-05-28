@@ -1,6 +1,6 @@
-import { ebEventPatternTestCase, ebEventPatternTestCaseError } from "./util";
-import { EventBusRuleInput, EventPredicateFunction } from "../src/event-bridge";
 import { reflect } from "../src";
+import { EventBusRuleInput, EventPredicateFunction } from "../src/event-bridge";
+import { ebEventPatternTestCase, ebEventPatternTestCaseError } from "./util";
 
 type TestEvent = EventBusRuleInput<{
   num: number;
@@ -42,6 +42,7 @@ describe("event pattern", () => {
     test("index access", () => {
       ebEventPatternTestCase(
         reflect<EventPredicateFunction<TestEvent>>(
+          // eslint-disable-next-line dot-notation
           (event) => event["source"] === "lambda"
         ),
         {
@@ -278,7 +279,7 @@ describe("event pattern", () => {
         reflect<EventPredicateFunction<TestEvent>>((event) =>
           (<any>event.detail.num).startsWith("l")
         ),
-        `Starts With operation only supported on strings, found number.`
+        "Starts With operation only supported on strings, found number."
       );
     });
   });
@@ -1178,7 +1179,7 @@ describe("event pattern", () => {
         reflect<EventPredicateFunction<TestEvent>>(
           (event) => event.detail.str === "hello" || event.detail.num === 100
         ),
-        `Event bridge does not support OR logic between multiple fields, found str and num.`
+        "Event bridge does not support OR logic between multiple fields, found str and num."
       );
     });
 

@@ -1,9 +1,9 @@
-import { CallExpr, Expr, FunctionExpr } from "./expression";
-import { isInTopLevelScope } from "./util";
 import { assertNever, assertNodeKind } from "./assert";
+import { CallExpr, Expr, FunctionExpr } from "./expression";
+import { findIntegration } from "./integration";
 import { FunctionlessNode } from "./node";
 import { Stmt } from "./statement";
-import { findIntegration } from "./integration";
+import { isInTopLevelScope } from "./util";
 
 // https://velocity.apache.org/engine/devel/user-guide.html#conditionals
 // https://cwiki.apache.org/confluence/display/VELOCITY/CheckingForNull
@@ -217,7 +217,7 @@ export class VTL {
             // list.forEach(item => ..)
             // list.forEach((item, idx) => ..)
             const newList =
-              node.expr.name === "map" ? this.var(`[]`) : undefined;
+              node.expr.name === "map" ? this.var("[]") : undefined;
 
             const [value, index, array] = getMapForEachArgs(node);
 
@@ -249,7 +249,7 @@ export class VTL {
             }
 
             this.add("#end");
-            return newList ?? `$null`;
+            return newList ?? "$null";
           } else if (node.expr.name === "reduce") {
             // list.reduce((result: string[], next) => [...result, next], []);
             // list.reduce((result, next) => [...result, next]);
@@ -287,9 +287,9 @@ export class VTL {
                 } else {
                   this.add(`#if(${list}.isEmpty())`);
                   this.add(
-                    `$util.error('Reduce of empty array with no initial value')`
+                    "$util.error('Reduce of empty array with no initial value')"
                   );
-                  this.add(`#end`);
+                  this.add("#end");
                 }
 
                 this.add(`#foreach(${firstVariable} in ${list})`);
@@ -365,7 +365,7 @@ export class VTL {
           })`
         );
         this.eval(node.body);
-        this.add(`#end`);
+        this.add("#end");
         return undefined;
       case "FunctionDecl":
       case "NativeFunctionDecl":
@@ -390,7 +390,7 @@ export class VTL {
         }
       }
       case "NewExpr":
-        throw new Error(`NewExpr is not supported by Velocity Templates`);
+        throw new Error("NewExpr is not supported by Velocity Templates");
       case "PropAccessExpr": {
         let name = node.name;
         if (name === "push" && node.parent?.kind === "CallExpr") {
@@ -436,7 +436,7 @@ export class VTL {
         } else {
           this.set("$context.stash.return__val", node.expr ?? "$null");
           this.add("#set($context.stash.return__flag = true)");
-          this.add(`#return($context.stash.return__val)`);
+          this.add("#return($context.stash.return__val)");
         }
         return undefined;
       case "SpreadAssignExpr":

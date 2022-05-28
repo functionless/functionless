@@ -1,3 +1,7 @@
+import fs from "fs";
+import path from "path";
+import * as appsync from "@aws-cdk/aws-appsync-alpha";
+import { serializeFunction } from "@functionless/nodejs-closure-serializer";
 import {
   AssetHashType,
   aws_dynamodb,
@@ -9,26 +13,21 @@ import {
   Token,
   Tokenization,
 } from "aws-cdk-lib";
-import * as appsync from "@aws-cdk/aws-appsync-alpha";
-import { CallExpr, Expr, isVariableReference } from "./expression";
+import type { Context } from "aws-lambda";
+// eslint-disable-next-line import/no-extraneous-dependencies
+import AWS from "aws-sdk";
+import { Construct } from "constructs";
+import type { AppSyncVtlIntegration } from "./appsync";
 import { ASL } from "./asl";
-import { Context } from "aws-lambda";
-
-// @ts-ignore - imported for typedoc
-import type { AppsyncResolver, AppSyncVtlIntegration } from "./appsync";
 import {
   NativeFunctionDecl,
   isNativeFunctionDecl,
   IntegrationInvocation,
 } from "./declaration";
-import { Construct } from "constructs";
-import { AnyFunction, anyOf } from "./util";
-import { serializeFunction } from "@functionless/nodejs-closure-serializer";
-import path from "path";
-import fs from "fs";
 import { Err, isErr } from "./error";
+import { CallExpr, Expr, isVariableReference } from "./expression";
 import { IntegrationImpl, Integration } from "./integration";
-import AWS from "aws-sdk";
+import { AnyFunction, anyOf } from "./util";
 
 export function isFunction<P = any, O = any>(a: any): a is IFunction<P, O> {
   return a?.kind === "Function";
@@ -612,16 +611,19 @@ export const PrewarmClients = {
   LAMBDA: {
     key: "LAMBDA",
     init: (key, props) =>
+      // eslint-disable-next-line @typescript-eslint/no-require-imports, import/no-extraneous-dependencies
       new (require("aws-sdk").Lambda)(props?.clientConfigRetriever?.(key)),
   },
   EVENT_BRIDGE: {
     key: "EVENT_BRIDGE",
     init: (key, props) =>
+      // eslint-disable-next-line @typescript-eslint/no-require-imports, import/no-extraneous-dependencies
       new (require("aws-sdk").EventBridge)(props?.clientConfigRetriever?.(key)),
   },
   STEP_FUNCTIONS: {
     key: "STEP_FUNCTIONS",
     init: (key, props) =>
+      // eslint-disable-next-line @typescript-eslint/no-require-imports, import/no-extraneous-dependencies
       new (require("aws-sdk").StepFunctions)(
         props?.clientConfigRetriever?.(key)
       ),
@@ -629,6 +631,7 @@ export const PrewarmClients = {
   DYNAMO: {
     key: "DYNAMO",
     init: (key, props) =>
+      // eslint-disable-next-line @typescript-eslint/no-require-imports, import/no-extraneous-dependencies
       new (require("aws-sdk").DynamoDB)(props?.clientConfigRetriever?.(key)),
   },
 } as Record<ClientName, PrewarmClientInitializer<ClientName, any>>;

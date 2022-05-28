@@ -1,11 +1,11 @@
 import { aws_events } from "aws-cdk-lib";
 import { FunctionDecl } from "../declaration";
-import { synthesizeEventBridgeTargets } from "./target-input";
 import { IFunction } from "../function";
-import { LambdaTargetProps, pipe, StateMachineTargetProps } from "./target";
-import { EventBusRuleInput } from "./types";
-import { IEventBusRule } from "./rule";
 import { StepFunction, ExpressStepFunction } from "../step-function";
+import { IEventBusRule } from "./rule";
+import { LambdaTargetProps, pipe, StateMachineTargetProps } from "./target";
+import { synthesizeEventBridgeTargets } from "./target-input";
+import { EventBusRuleInput } from "./types";
 
 /**
  * A function interface used by the {@link EventBusRule}'s map function.

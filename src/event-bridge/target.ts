@@ -1,14 +1,14 @@
 import { aws_events, aws_events_targets } from "aws-cdk-lib";
-import { IEventBus, isEventBus } from "./event-bus";
+import { assertNever } from "../assert";
 import { IFunction, isFunction } from "../function";
-import { EventBusRuleInput } from "./types";
-import { IEventBusRule } from "./rule";
 import {
   ExpressStepFunction,
   isStepFunction,
   StepFunction,
 } from "../step-function";
-import { assertNever } from "../assert";
+import { IEventBus, isEventBus } from "./event-bus";
+import { IEventBusRule } from "./rule";
+import { EventBusRuleInput } from "./types";
 
 export type LambdaTargetProps<P> = {
   func: IFunction<P, any>;

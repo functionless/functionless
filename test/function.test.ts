@@ -1,7 +1,6 @@
 import { App, aws_lambda, Stack } from "aws-cdk-lib";
 import "jest";
-import { AppsyncContext, reflect } from "../src";
-import { Function } from "../src";
+import { Function, AppsyncContext, reflect } from "../src";
 import { VTL } from "../src/vtl";
 import { appsyncTestCase } from "./util";
 

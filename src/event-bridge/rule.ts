@@ -1,14 +1,14 @@
 import { aws_events } from "aws-cdk-lib";
 import { Construct } from "constructs";
+import { Function } from "../function";
+import { ExpressStepFunction, StepFunction } from "../step-function";
 import { EventBus, IEventBus, IEventBusFilterable } from "./event-bus";
 import {
   andDocuments,
   synthesizeEventPattern,
   synthesizePatternDocument,
 } from "./event-pattern";
-import { Function } from "../function";
-import { EventBusRuleInput } from "./types";
-import { EventTransformFunction, EventBusTransform } from "./transform";
+import { PatternDocument } from "./event-pattern/pattern";
 import {
   EventBusTargetProps,
   EventBusTargetResource,
@@ -16,8 +16,8 @@ import {
   pipe,
   StateMachineTargetProps,
 } from "./target";
-import { ExpressStepFunction, StepFunction } from "../step-function";
-import { PatternDocument } from "./event-pattern/pattern";
+import { EventTransformFunction, EventBusTransform } from "./transform";
+import { EventBusRuleInput } from "./types";
 
 /**
  * A function interface used by the {@link EventBus}'s when function to generate a rule.
