@@ -42,13 +42,13 @@ const config = {
         docs: {
           sidebarPath: require.resolve("./sidebars.js"),
           editUrl:
-            "https://github.com/sam-goodwin/functionless/edit/master/website/",
+            "https://github.com/functionless/functionless/edit/master/website/",
           remarkPlugins: [require("mdx-mermaid")],
         },
         blog: {
           showReadingTime: true,
           editUrl:
-            "https://github.com/sam-goodwin/functionless/edit/master/website/",
+            "https://github.com/functionless/functionless/edit/master/website/",
         },
         theme: {
           customCss: require.resolve("./src/css/custom.css"),
@@ -83,7 +83,7 @@ const config = {
           },
           { to: "/blog", label: "Blog", position: "left" },
           {
-            href: "https://github.com/sam-goodwin/functionless",
+            href: "https://github.com/functionless/functionless",
             label: "GitHub",
             position: "right",
           },
@@ -127,7 +127,7 @@ const config = {
               },
               {
                 label: "GitHub",
-                href: "https://github.com/sam-goodwin/functionless",
+                href: "https://github.com/functionless/functionless",
               },
             ],
           },
