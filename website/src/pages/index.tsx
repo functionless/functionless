@@ -19,7 +19,7 @@ function HomepageHeader() {
   return (
     <header className={clsx("hero hero--primary", styles.heroBanner)}>
       <div className="container">
-        <h1 className="hero__title">Serverless with benefits ...</h1>
+        <h1 className="hero__title">Typesafe Cloud Integrations</h1>
 
         <p className="hero__subtitle col col--6 col--offset-3">
           Functionless brings together the richness of AWS services with the
