@@ -436,7 +436,7 @@ export function compile(
             // call the integration call function with the prewarm context and arguments
             // At this point, we know native will not be undefined
             // await integration.native.call(args, preWarmContext)
-            // TODO: Support both sync and async function invocations: https://github.com/sam-goodwin/functionless/issues/105
+            // TODO: Support both sync and async function invocations: https://github.com/functionless/functionless/issues/105
 
             return context.factory.createAwaitExpression(
               context.factory.createCallExpression(

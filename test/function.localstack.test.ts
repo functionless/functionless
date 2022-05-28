@@ -1,4 +1,13 @@
-import { clientConfig, localstackTestSuite } from "./localstack";
+import {
+  aws_dynamodb,
+  aws_events,
+  RemovalPolicy,
+  Stack,
+  Token,
+} from "aws-cdk-lib";
+// eslint-disable-next-line import/no-extraneous-dependencies
+import { Lambda } from "aws-sdk";
+import { Construct } from "constructs";
 import {
   $AWS,
   EventBus,
@@ -9,16 +18,7 @@ import {
   StepFunction,
   Table,
 } from "../src";
-// eslint-disable-next-line import/no-extraneous-dependencies
-import { Lambda } from "aws-sdk";
-import {
-  aws_dynamodb,
-  aws_events,
-  RemovalPolicy,
-  Stack,
-  Token,
-} from "aws-cdk-lib";
-import { Construct } from "constructs";
+import { clientConfig, localstackTestSuite } from "./localstack";
 
 const lambda = new Lambda(clientConfig);
 
@@ -269,7 +269,7 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
       const bus = new EventBus<any>(parent, "bus");
 
       // Necessary to keep the bundle small and stop the test from failing.
-      // See https://github.com/sam-goodwin/functionless/pull/122
+      // See https://github.com/functionless/functionless/pull/122
       const putEvents = $AWS.EventBridge.putEvents;
       const func = new Function(
         parent,
@@ -297,7 +297,7 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
     0
   );
 
-  // See https://github.com/sam-goodwin/functionless/pull/122
+  // See https://github.com/functionless/functionless/pull/122
   testFunctionResource.skip(
     "Call Lambda AWS SDK put event to bus without reference",
     (parent) => {
