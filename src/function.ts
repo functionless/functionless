@@ -26,7 +26,11 @@ import {
 } from "./declaration";
 import { Err, isErr } from "./error";
 import { CallExpr, Expr, isVariableReference } from "./expression";
-import { IntegrationImpl, Integration } from "./integration";
+import {
+  IntegrationImpl,
+  Integration,
+  INTEGRATION_TYPE_KEYS,
+} from "./integration";
 import { AnyFunction, anyOf } from "./util";
 
 export function isFunction<P = any, O = any>(a: any): a is IFunction<P, O> {
@@ -88,7 +92,6 @@ abstract class FunctionBase<P, O>
       call: async (args, prewarmContext) => {
         const [payload] = args;
         const lambdaClient = prewarmContext.getOrInit(PrewarmClients.LAMBDA);
-        // TODO: what should the response type be?
         const response = (
           await lambdaClient
             .invoke({
@@ -292,10 +295,11 @@ export class Function<P, O> extends FunctionBase<P, O> {
     );
 
     // Start serializing process, add the callback to the promises so we can later ensure completion
-    callbackLambdaCode &&
+    if (callbackLambdaCode) {
       Function.promises.push(
         callbackLambdaCode.generate(nativeIntegrationsPrewarm)
       );
+    }
   }
 }
 
@@ -418,7 +422,8 @@ export class CallbackLambdaCode extends aws_lambda.Code {
             };
 
             /**
-             * Remove unnecessary fields from {@link CfnTable} that bloat or fail the closure serialization.
+             * When the StreamArn attribute is used in a Cfn template, but streamSpecification is
+             * undefined, then the deployment fails. Lets make sure that doesn't happen.
              */
             const transformTable = (o: CfnResource): CfnResource => {
               if (
@@ -453,13 +458,19 @@ export class CallbackLambdaCode extends aws_lambda.Code {
             const transformIntegration = (o: unknown): any => {
               if (o && typeof o === "object" && "kind" in o) {
                 const integ = o as Integration;
-                const {
-                  appSyncVtl,
-                  asl,
-                  native: { call, preWarm } = {},
-                  ...rest
-                } = integ;
-                return { ...rest, native: { call, preWarm } };
+                const copy = {
+                  ...integ,
+                  native: {
+                    call: integ?.native?.call,
+                    preWarm: integ?.native?.preWarm,
+                  },
+                };
+
+                INTEGRATION_TYPE_KEYS.filter((key) => key !== "native").forEach(
+                  (key) => delete copy[key]
+                );
+
+                return copy;
               }
               return o;
             };
@@ -491,16 +502,6 @@ export class CallbackLambdaCode extends aws_lambda.Code {
       (r, t) => r.split(`"${t.token}"`).join(`process.env.${t.env}`),
       result.text
     );
-
-    // // find any strings that contain tokens
-    // const stringsWithQuotes = /["'`].*\${Token\[.*\.[0-9]*\]}.*['`"]/g.exec(
-    //   resultText
-    // );
-
-    // stringsWithQuotes?.reduce(
-    //   (r, s) => r.replace(s, s.replace(/(^['"]|['"]$)/g, "`")),
-    //   resultText
-    // );
 
     const asset = aws_lambda.Code.fromAsset("", {
       assetHashType: AssetHashType.OUTPUT,

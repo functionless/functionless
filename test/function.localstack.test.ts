@@ -9,6 +9,7 @@ import {
   StepFunction,
   Table,
 } from "../src";
+// eslint-disable-next-line import/no-extraneous-dependencies
 import { Lambda } from "aws-sdk";
 import {
   aws_dynamodb,
@@ -136,13 +137,13 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
   };
 
   testFunctionResource(
-    "Call Lambda from closure with parameter multiple 1",
+    "Call Lambda from closure with parameter using the same method",
     (parent) => create(parent, "func6", "c"),
     "c"
   );
 
   testFunctionResource(
-    "Call Lambda from closure with parameter multiple 2",
+    "Call Lambda from closure with parameter using the same method part 2",
     (parent) => create(parent, "func7", "d"),
     "d"
   );
@@ -367,7 +368,7 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
   );
 
   test("should not create new resources in lambda", async () => {
-    expect(
+    await expect(
       async () => {
         const stack = new Stack();
         new Function(stack, "function", async () => {
@@ -381,7 +382,7 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
   });
 
   test("should not create new functionless resources in lambda", async () => {
-    expect(
+    await expect(
       async () => {
         const stack = new Stack();
         new Function(stack, "function", async () => {
@@ -413,6 +414,56 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
       );
     },
     "hi"
+  );
+
+  // https://github.com/functionless/functionless/issues/173
+  testFunctionResource.skip(
+    "Call Self",
+    (parent) => {
+      let func1: Function<number, string> | undefined;
+      func1 = new Function(
+        parent,
+        "function",
+        localstackClientConfig,
+        async (count) => {
+          if (count === 0) return "hi";
+          // TODO should be awaited?
+          return func1 ? func1(count - 1) : "huh";
+        }
+      );
+      return func1;
+    },
+    "hi",
+    2
+  );
+
+  // https://github.com/functionless/functionless/issues/173
+  testFunctionResource.skip(
+    "Call Self",
+    (parent) => {
+      let func1: Function<number, string> | undefined;
+      const func2 = new Function<number, string>(
+        parent,
+        "func2",
+        async (count) => {
+          if (!func1) throw Error();
+          return func1(count - 1);
+        }
+      );
+      func1 = new Function(
+        parent,
+        "function",
+        localstackClientConfig,
+        async (count) => {
+          if (count === 0) return "hi";
+          // TODO should be awaited?
+          return func2(count);
+        }
+      );
+      return func1;
+    },
+    "hi",
+    2
   );
 
   testFunctionResource(

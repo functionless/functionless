@@ -434,13 +434,6 @@ new Function(
         id: "from the test method!!",
       },
     });
-    // busbus({
-    //   "detail-type": "Delete-Post-Success",
-    //   source: "MessageDeleter",
-    //   detail: {
-    //     id: "from the test method!!",
-    //   },
-    // });
     const result2 = $AWS.EventBridge.putEvents({
       Entries: [
         {
@@ -498,7 +491,7 @@ const api2 = new appsync.GraphqlApi(stack, "Api2", {
 /*
   type Query {
     getPost(postId: string!): Post
-  } 
+  }
 
  type Post {
   postId: ID!

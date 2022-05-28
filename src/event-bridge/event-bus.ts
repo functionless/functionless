@@ -156,7 +156,10 @@ abstract class EventBusBase<E extends EventBusRuleInput>
               DetailType: event["detail-type"],
               Resources: event.resources,
               Source: event.source,
-              Time: event.time ? new Date(event.time) : undefined,
+              Time:
+                typeof event.time === "number"
+                  ? new Date(event.time)
+                  : undefined,
             })),
           })
           .promise();

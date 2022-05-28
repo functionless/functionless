@@ -1306,12 +1306,3 @@ const OperatorMappings: Record<number, BinaryOp> = {
   [ts.SyntaxKind.ExclamationEqualsEqualsToken]: "!=",
   [ts.SyntaxKind.InKeyword]: "in",
 } as const;
-
-// const isTsStatement = (node: ts.Node): node is ts.Statement =>
-//   "_statementBrand" in node;
-
-// const isTsExpression = (node: ts.Node): node is ts.Expression =>
-//   "_expressionBrand" in node;
-
-// const isTsDeclaration = (node: ts.Node): node is ts.Declaration =>
-//   "_declarationBrand" in node;
