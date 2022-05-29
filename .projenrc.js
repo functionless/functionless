@@ -174,4 +174,14 @@ project.eslint.addRules({
   "brace-style": "off",
 });
 
+/**
+ * ES Lint parser needs to know about all of the tsconfig files to use.
+ */
+project.eslint.addOverride({
+  files: ["*.ts", "*.tsx"],
+  parserOptions: {
+    project: ["./tsconfig.dev.json", "./test-app/tsconfig.json"],
+  },
+});
+
 project.synth();

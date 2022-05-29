@@ -2,13 +2,13 @@ import { aws_events } from "aws-cdk-lib";
 import { FunctionDecl } from "../declaration";
 import { Function } from "../function";
 import { StepFunction, ExpressStepFunction } from "../step-function";
-import { IEventBusRule } from "./rule";
+import { IRule } from "./rule";
 import { LambdaTargetProps, pipe, StateMachineTargetProps } from "./target";
 import { synthesizeEventBridgeTargets } from "./target-input";
-import { EventBusRuleInput as EventBusEvent } from "./types";
+import { EventBusEvent } from "./types";
 
 /**
- * A function interface used by the {@link EventBusRule}'s map function.
+ * A function interface used by the {@link Rule}'s map function.
  *
  * event is the event matched by the rule. This argument is optional.
  * $utils is a collection of built-in utilities wrapping EventBridge TargetInputs like contextual constants available to the transformer.
@@ -34,20 +34,17 @@ export interface EventTransformUtils {
  * Represents an event that has been transformed using Target Input Transformers.
  * https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-transform-target-input.html
  *
- * @see EventBusRule.map for more details on transforming event details.
+ * @see Rule.map for more details on transforming event details.
  */
 export class EventTransform<T extends EventBusEvent, P> {
   readonly targetInput: aws_events.RuleTargetInput;
 
   /**
-   * This static property identifies this class as an EventBusTransform to the TypeScript plugin.
+   * This static property identifies this class as an EventTransform to the TypeScript plugin.
    */
-  public static readonly FunctionlessType = "EventBusTransform";
+  public static readonly FunctionlessType = "EventTransform";
 
-  constructor(
-    func: EventTransformFunction<T, P>,
-    readonly rule: IEventBusRule<T>
-  ) {
+  constructor(func: EventTransformFunction<T, P>, readonly rule: IRule<T>) {
     const decl = func as unknown as FunctionDecl;
     this.targetInput = synthesizeEventBridgeTargets(decl);
   }
@@ -57,7 +54,7 @@ export class EventTransform<T extends EventBusEvent, P> {
    *
    * EventBus is not a valid pipe target for transformed events.
    *
-   * @see EventBusRule.pipe for more details on pipe.
+   * @see Rule.pipe for more details on pipe.
    */
   pipe(props: LambdaTargetProps<P>): void;
   pipe(func: Function<P, any>): void;

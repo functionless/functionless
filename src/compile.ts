@@ -5,8 +5,8 @@ import ts from "typescript";
 import { assertDefined } from "./assert";
 import {
   EventBusMapInterface,
-  EventBusRuleInterface,
-  EventBusTransformInterface,
+  RuleInterface,
+  EventTransformInterface,
   EventBusWhenInterface,
   makeFunctionlessChecker,
   TsFunctionParameter,
@@ -105,11 +105,11 @@ export function compile(
             );
           } else if (checker.isEventBusWhenFunction(node)) {
             return visitEventBusWhen(node);
-          } else if (checker.isEventBusRuleMapFunction(node)) {
+          } else if (checker.isRuleMapFunction(node)) {
             return visitEventBusMap(node);
-          } else if (checker.isNewEventBusRule(node)) {
-            return visitEventBusRule(node);
-          } else if (checker.isNewEventBusTransform(node)) {
+          } else if (checker.isNewRule(node)) {
+            return visitRule(node);
+          } else if (checker.isNewEventTransform(node)) {
             return visitEventTransform(node);
           }
           return node;
@@ -152,7 +152,7 @@ export function compile(
         );
       }
 
-      function visitEventBusRule(call: EventBusRuleInterface): ts.Node {
+      function visitRule(call: RuleInterface): ts.Node {
         const [one, two, three, impl] = call.arguments;
 
         return ts.factory.updateNewExpression(
@@ -168,7 +168,7 @@ export function compile(
         );
       }
 
-      function visitEventTransform(call: EventBusTransformInterface): ts.Node {
+      function visitEventTransform(call: EventTransformInterface): ts.Node {
         const [impl, ...rest] = call.arguments;
 
         return ts.factory.updateNewExpression(

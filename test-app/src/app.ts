@@ -1,8 +1,8 @@
-import { App, Stack } from "aws-cdk-lib";
-import * as appsync from "@aws-cdk/aws-appsync-alpha";
 import path from "path";
+import * as appsync from "@aws-cdk/aws-appsync-alpha";
+import { App, Stack } from "aws-cdk-lib";
+import { EventBus, EventBusEvent } from "functionless";
 import { PeopleDatabase, Person } from "./people-db";
-import { EventBus, EventBusRuleInput } from "functionless";
 import { PeopleEvents } from "./people-events";
 
 export const app = new App();
@@ -60,7 +60,7 @@ interface MyEventDetails {
   value: string;
 }
 
-interface MyEvent extends EventBusRuleInput<MyEventDetails> {}
+interface MyEvent extends EventBusEvent<MyEventDetails> {}
 
 new EventBus<MyEvent>(stack, "bus")
   .when(stack, "aRule", (event) => event.detail.value === "hello")

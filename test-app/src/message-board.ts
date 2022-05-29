@@ -1,3 +1,5 @@
+import path from "path";
+import * as appsync from "@aws-cdk/aws-appsync-alpha";
 import {
   App,
   aws_dynamodb,
@@ -14,10 +16,8 @@ import {
   StepFunction,
   Table,
   EventBus,
-  EventBusRuleInput,
+  EventBusEvent,
 } from "functionless";
-import * as appsync from "@aws-cdk/aws-appsync-alpha";
-import path from "path";
 
 export const app = new App();
 export const stack = new Stack(app, "message-board");
@@ -220,14 +220,14 @@ export const addComment = new AppsyncResolver<
 });
 
 interface MessageDeletedEvent
-  extends EventBusRuleInput<
+  extends EventBusEvent<
     { count: number },
     "Delete-Message-Success",
     "MessageDeleter"
   > {}
 
 interface PostDeletedEvent
-  extends EventBusRuleInput<
+  extends EventBusEvent<
     { id: string },
     "Delete-Post-Success",
     "MessageDeleter"
@@ -373,7 +373,7 @@ interface Notification {
 }
 
 interface TestDeleteEvent
-  extends EventBusRuleInput<{ postId: string }, "Delete", "test"> {}
+  extends EventBusEvent<{ postId: string }, "Delete", "test"> {}
 
 const sendNotification = new Function<Notification, void>(
   new aws_lambda.Function(stack, "sendNotification", {
@@ -435,7 +435,7 @@ const api2 = new appsync.GraphqlApi(stack, "Api2", {
 /*
   type Query {
     getPost(postId: string!): Post
-  } 
+  }
 
  type Post {
   postId: ID!

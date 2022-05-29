@@ -4,7 +4,7 @@ import {
   $AWS,
   $SFN,
   EventBus,
-  EventBusRuleInput,
+  EventBusEvent,
   ExpressStepFunction,
   StepFunction,
   SyncExecutionResult,
@@ -565,7 +565,7 @@ test("put an event bus event", () => {
   interface BusDetails {
     value: string;
   }
-  interface BusEvent extends EventBusRuleInput<BusDetails> {}
+  interface BusEvent extends EventBusEvent<BusDetails> {}
 
   const bus = new EventBus<BusEvent>(stack, "testBus2");
 
@@ -623,7 +623,7 @@ test("put multiple event bus events", () => {
     value: string;
     constant?: string;
   }
-  interface BusEvent extends EventBusRuleInput<BusDetails> {}
+  interface BusEvent extends EventBusEvent<BusDetails> {}
 
   const bus = new EventBus<BusEvent>(stack, "testBus");
 

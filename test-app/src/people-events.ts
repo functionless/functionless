@@ -1,6 +1,6 @@
-import * as functionless from "functionless";
 import { aws_lambda } from "aws-cdk-lib";
 import { Construct } from "constructs";
+import * as functionless from "functionless";
 
 interface UserDetails {
   id?: string;
@@ -10,7 +10,7 @@ interface UserDetails {
 }
 
 interface UserEvent
-  extends functionless.EventBusRuleInput<
+  extends functionless.EventBusEvent<
     UserDetails,
     // We can provide custom detail-types to match on
     "Create" | "Update" | "Delete"

@@ -22,9 +22,9 @@ import {
   ScheduledEvent,
   EventBusPredicateRuleBase,
 } from "./rule";
-import { EventBusRuleInput } from "./types";
+import { EventBusEvent } from "./types";
 
-export const isEventBus = <E extends EventBusRuleInput>(
+export const isEventBus = <E extends EventBusEvent>(
   v: any
 ): v is IEventBus<E> => {
   return (
@@ -33,7 +33,7 @@ export const isEventBus = <E extends EventBusRuleInput>(
   );
 };
 
-export interface IEventBusFilterable<E extends EventBusRuleInput> {
+export interface IEventBusFilterable<E extends EventBusEvent> {
   /**
    * EventBus Rules can filter events using Functionless predicate functions.
    *
@@ -108,7 +108,7 @@ export interface IEventBusFilterable<E extends EventBusRuleInput> {
   ): Rule<E, O>;
 }
 
-export interface IEventBus<E extends EventBusRuleInput = EventBusRuleInput>
+export interface IEventBus<E extends EventBusEvent = EventBusEvent>
   extends IEventBusFilterable<E> {
   readonly bus: aws_events.IEventBus;
   readonly eventBusArn: string;
@@ -147,7 +147,7 @@ export interface IEventBus<E extends EventBusRuleInput = EventBusRuleInput>
   all(): EventBusPredicateRuleBase<E>;
   all(scope: Construct, id: string): EventBusPredicateRuleBase<E>;
 }
-abstract class EventBusBase<E extends EventBusRuleInput>
+abstract class EventBusBase<E extends EventBusEvent>
   implements IEventBus<E>, Integration
 {
   /**
@@ -195,7 +195,7 @@ abstract class EventBusBase<E extends EventBusRuleInput>
       throw Error("Must provide at least one event.");
     }
 
-    const propertyMap: Record<keyof EventBusRuleInput, string> = {
+    const propertyMap: Record<keyof EventBusEvent, string> = {
       "detail-type": "DetailType",
       account: "Account",
       detail: "Detail",
@@ -314,7 +314,7 @@ abstract class EventBusBase<E extends EventBusRuleInput>
   }
 }
 
-interface EventBusBase<E extends EventBusRuleInput> {
+interface EventBusBase<E extends EventBusEvent> {
   (event: Partial<E>, ...events: Partial<E>[]): void;
 }
 
@@ -334,7 +334,7 @@ interface EventBusBase<E extends EventBusRuleInput> {
  * }
  *
  * // An event with the payload
- * interface myEvent extends EventBusRuleInput<Payload> {}
+ * interface myEvent extends EventBusEvent<Payload> {}
  *
  * const myAwsFunction = new aws_lambda.Function(this, 'myFunction', { ... });
  * // A function that expects the payload.
@@ -366,7 +366,7 @@ interface EventBusBase<E extends EventBusRuleInput> {
  *    .pipe(anotherEventBus);
  * ```
  */
-export class EventBus<E extends EventBusRuleInput> extends EventBusBase<E> {
+export class EventBus<E extends EventBusEvent> extends EventBusBase<E> {
   constructor(scope: Construct, id: string, props?: aws_events.EventBusProps) {
     super(new aws_events.EventBus(scope, id, props));
   }
@@ -374,7 +374,7 @@ export class EventBus<E extends EventBusRuleInput> extends EventBusBase<E> {
   /**
    * Import an {@link aws_events.IEventBus} wrapped with Functionless abilities.
    */
-  static fromBus<E extends EventBusRuleInput>(
+  static fromBus<E extends EventBusEvent>(
     bus: aws_events.IEventBus
   ): IEventBus<E> {
     return new ImportedEventBus<E>(bus);
@@ -389,11 +389,9 @@ export class EventBus<E extends EventBusRuleInput> extends EventBusBase<E> {
    * new functionless.EventBus.fromBus(awsBus);
    * ```
    */
-  static default<E extends EventBusRuleInput>(stack: Stack): DefaultEventBus<E>;
-  static default<E extends EventBusRuleInput>(
-    scope: Construct
-  ): DefaultEventBus<E>;
-  static default<E extends EventBusRuleInput>(
+  static default<E extends EventBusEvent>(stack: Stack): DefaultEventBus<E>;
+  static default<E extends EventBusEvent>(scope: Construct): DefaultEventBus<E>;
+  static default<E extends EventBusEvent>(
     scope: Construct | Stack
   ): DefaultEventBus<E> {
     return new DefaultEventBus<E>(scope);
@@ -429,9 +427,7 @@ export class EventBus<E extends EventBusRuleInput> extends EventBusBase<E> {
   }
 }
 
-export class DefaultEventBus<
-  E extends EventBusRuleInput
-> extends EventBusBase<E> {
+export class DefaultEventBus<E extends EventBusEvent> extends EventBusBase<E> {
   constructor(scope: Construct) {
     const stack = scope instanceof Stack ? scope : Stack.of(scope);
     const bus =
@@ -481,7 +477,7 @@ export class DefaultEventBus<
   }
 }
 
-class ImportedEventBus<E extends EventBusRuleInput> extends EventBusBase<E> {
+class ImportedEventBus<E extends EventBusEvent> extends EventBusBase<E> {
   constructor(bus: aws_events.IEventBus) {
     super(bus);
   }

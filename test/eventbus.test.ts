@@ -3,7 +3,7 @@ import { ExpressStepFunction, StepFunction } from "../src";
 import {
   EventBus,
   Rule,
-  EventBusRuleInput,
+  EventBusEvent,
   ScheduledEvent,
 } from "../src/event-bridge";
 import { synthesizeEventPattern } from "../src/event-bridge/event-pattern";
@@ -253,7 +253,7 @@ interface t2 {
   two: string;
 }
 
-interface tt extends EventBusRuleInput<t1 | t2> {}
+interface tt extends EventBusEvent<t1 | t2> {}
 
 test("when narrows type to map", () => {
   const bus = EventBus.default<tt>(stack);
@@ -262,7 +262,7 @@ test("when narrows type to map", () => {
     .when(
       stack,
       "rule",
-      (event): event is EventBusRuleInput<t1> => event.detail.type === "one"
+      (event): event is EventBusEvent<t1> => event.detail.type === "one"
     )
     .map((event) => event.detail.one);
 });
@@ -274,7 +274,7 @@ test("when narrows type to map", () => {
     .when(
       stack,
       "rule",
-      (event): event is EventBusRuleInput<t2> => event.detail.type === "two"
+      (event): event is EventBusEvent<t2> => event.detail.type === "two"
     )
     .when(stack, "rule2", (event) => event.detail.two === "something");
 });
@@ -289,7 +289,7 @@ test("map narrows type and pipe enforces", () => {
     .when(
       stack,
       "rule",
-      (event): event is EventBusRuleInput<t1> => event.detail.type === "one"
+      (event): event is EventBusEvent<t1> => event.detail.type === "one"
     )
     .map((event) => event.detail.one)
     // should fail compilation if the types don't match
@@ -337,7 +337,7 @@ test("when any", () => {
 });
 
 test("when any pipe", () => {
-  const lambda = new Function<EventBusRuleInput, void>(
+  const lambda = new Function<EventBusEvent, void>(
     aws_lambda.Function.fromFunctionArn(stack, "func", "")
   );
   const bus = EventBus.default<tt>(stack);
@@ -349,7 +349,7 @@ test("when any pipe", () => {
 });
 
 test("when any multiple times does not create new rules", () => {
-  const lambda = new Function<EventBusRuleInput, void>(
+  const lambda = new Function<EventBusEvent, void>(
     aws_lambda.Function.fromFunctionArn(stack, "func", "")
   );
   const bus = EventBus.default<tt>(stack);
@@ -363,7 +363,7 @@ test("when any multiple times does not create new rules", () => {
 });
 
 test("when any pipe", () => {
-  const lambda = new Function<EventBusRuleInput, void>(
+  const lambda = new Function<EventBusEvent, void>(
     aws_lambda.Function.fromFunctionArn(stack, "func", "")
   );
   const bus = EventBus.default<tt>(stack);

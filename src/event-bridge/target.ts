@@ -7,8 +7,8 @@ import {
   StepFunction,
 } from "../step-function";
 import { IEventBus, isEventBus } from "./event-bus";
-import { IEventBusRule } from "./rule";
-import { EventBusRuleInput } from "./types";
+import { IRule } from "./rule";
+import { EventBusEvent } from "./types";
 
 export type LambdaTargetProps<P> = {
   func: Function<P, any>;
@@ -18,11 +18,11 @@ const isLambdaTargetProps = <P>(props: any): props is LambdaTargetProps<P> => {
   return "func" in props;
 };
 
-export type EventBusTargetProps<P extends EventBusRuleInput> = {
+export type EventBusTargetProps<P extends EventBusEvent> = {
   bus: IEventBus<P>;
 } & aws_events_targets.EventBusProps;
 
-const isEventBusTargetProps = <P extends EventBusRuleInput>(
+const isEventBusTargetProps = <P extends EventBusEvent>(
   props: any
 ): props is EventBusTargetProps<P> => {
   return "bus" in props;
@@ -39,7 +39,7 @@ const isStateMachineTargetProps = <P>(
   return "machine" in props;
 };
 
-export type EventBusTargetResource<T extends EventBusRuleInput, P> =
+export type EventBusTargetResource<T extends EventBusEvent, P> =
   | Function<P, any>
   | LambdaTargetProps<P>
   | IEventBus<T>
@@ -51,8 +51,8 @@ export type EventBusTargetResource<T extends EventBusRuleInput, P> =
 /**
  * Add a target to the run based on the configuration given.
  */
-export function pipe<T extends EventBusRuleInput, P>(
-  rule: IEventBusRule<T>,
+export function pipe<T extends EventBusEvent, P>(
+  rule: IRule<T>,
   resource: EventBusTargetResource<T, P>,
   targetInput?: aws_events.RuleTargetInput
 ) {
