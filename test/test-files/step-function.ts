@@ -12,6 +12,14 @@ new StepFunction(stack, "input.i - 2", (input: { i: number }) => input.i - 2);
 new StepFunction(stack, "input.i * 2", (input: { i: number }) => input.i * 2);
 new StepFunction(stack, "input.i / 2", (input: { i: number }) => input.i / 2);
 new StepFunction(stack, "-input.i", (input: { i: number }) => -input.i);
+new StepFunction(
+  stack,
+  "const a = input.i + 1; return a;",
+  (input: { i: number }) => {
+    const a = input.i + 1;
+    return a;
+  }
+);
 
 // supported arithmetic
 new StepFunction(stack, "1 + 2", () => 1 + 2);
