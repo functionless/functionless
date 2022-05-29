@@ -93,10 +93,21 @@ export interface IEventBusFilterable<E extends EventBusRuleInput> {
 }
 
 export interface IEventBus<E extends EventBusRuleInput = EventBusRuleInput>
-  extends IEventBusFilterable<E> {
+  extends IEventBusFilterable<E>,
+    Integration<
+      (event: Partial<E>, ...events: Partial<E>[]) => void,
+      "EventBus",
+      aws_events_targets.EventBusProps | undefined
+    > {
   readonly bus: aws_events.IEventBus;
   readonly eventBusArn: string;
   readonly eventBusName: string;
+
+  // @ts-ignore - value does not exist, is only available at compile time
+  readonly __functionBrand: (
+    event: Partial<E>,
+    ...events: Partial<E>[]
+  ) => void;
 
   /**
    * This static property identifies this class as an EventBus to the TypeScript plugin.
@@ -107,6 +118,11 @@ export interface IEventBus<E extends EventBusRuleInput = EventBusRuleInput>
    * Put one or more events on an Event Bus.
    */
   (event: Partial<E>, ...events: Partial<E>[]): void;
+
+  eventBus: EventBusTargetIntegration<
+    E,
+    aws_events_targets.EventBusProps | undefined
+  >;
 }
 abstract class EventBusBase<E extends EventBusRuleInput>
   implements
@@ -132,7 +148,7 @@ abstract class EventBusBase<E extends EventBusRuleInput>
   }
 
   // @ts-ignore - value does not exist, is only available at compile time
-  public readonly __functionBrand: (
+  readonly __functionBrand: (
     event: Partial<E>,
     ...events: Partial<E>[]
   ) => void;
@@ -225,7 +241,10 @@ abstract class EventBusBase<E extends EventBusRuleInput>
     };
   }
 
-  eventBus: EventBusTargetIntegration<
+  /**
+   * @internal
+   */
+  public readonly eventBus: EventBusTargetIntegration<
     E,
     aws_events_targets.EventBusProps | undefined
   > = {
@@ -356,6 +375,22 @@ class ImportedEventBus<E extends EventBusRuleInput> extends EventBusBase<E> {
   }
 }
 
+/**
+ * Defines an integration that can be used in the `pipe` function of an {@link EventBus} (Rule or Transform).
+ *
+ * ```ts
+ * const myEbIntegration = { // an Integration
+ *    kind: 'myEbIntegration',
+ *    eventBus: {
+ *       target: (props, targetInput) => {
+ *           // return a RuleTarget
+ *       }
+ *    }
+ * }
+ *
+ * new EventBus().when(() => true).pipe(myEbIntegration);
+ * ```
+ */
 export interface EventBusTargetIntegration<
   // the payload type we expect to be transformed into before making this call.
   _P,
@@ -375,7 +410,7 @@ export interface IntegrationWithEventBus<
 }
 
 export type DynamicProps<Props extends object | undefined> =
-  Props extends undefined ? (props?: Props) => void : (props: Props) => void;
+  Props extends object ? (props: Props) => void : (props?: Props) => void;
 
 /**
  * Add a target to the run based on the configuration given.

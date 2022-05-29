@@ -271,6 +271,38 @@ test("map narrows type and pipe enforces", () => {
       (event): event is EventBusRuleInput<t1> => event.detail.type === "one"
     )
     .map((event) => event.detail.one)
-    // should fail compilation if the types don't match
     .pipe(lambda);
+});
+
+test("pipe typesafe", () => {
+  const lambda = new Function<string, void>(
+    aws_lambda.Function.fromFunctionArn(stack, "func", "")
+  );
+  const bus = EventBus.default<tt>(stack);
+
+  bus
+    .when(
+      stack,
+      "rule",
+      (event): event is EventBusRuleInput<t1> => event.detail.type === "one"
+    )
+    .map((event) => event.detail) // is object
+    // @ts-expect-error should fail compilation if the types don't match
+    .pipe(lambda); // expects strings
+});
+
+test("map cannot pipe to a bus", () => {
+  const bus = EventBus.default<tt>(stack);
+
+  expect(() =>
+    bus
+      .when(
+        stack,
+        "rule",
+        (event): event is EventBusRuleInput<t1> => event.detail.type === "one"
+      )
+      .map((event) => event)
+      // @ts-expect-error
+      .pipe(bus)
+  ).toThrow();
 });

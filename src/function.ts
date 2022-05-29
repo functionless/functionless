@@ -87,7 +87,10 @@ export class Function<P, O>
     };
   }
 
-  public eventBus: EventBusTargetIntegration<
+  /**
+   * @internal
+   */
+  public readonly eventBus: EventBusTargetIntegration<
     P,
     FunctionEventBusTargetProps | undefined
   > = {

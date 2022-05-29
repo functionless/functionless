@@ -1,6 +1,6 @@
 import { ebEventPatternTestCase, ebEventPatternTestCaseError } from "./util";
 import { EventBusRuleInput, EventPredicateFunction } from "../src/event-bridge";
-import { reflect } from "../src";
+import { reflect } from "../src/reflect";
 
 type TestEvent = EventBusRuleInput<{
   num: number;

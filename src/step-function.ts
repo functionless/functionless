@@ -603,7 +603,10 @@ abstract class BaseStepFunction<P extends Record<string, any> | undefined, O>
     };
   }
 
-  eventBus: EventBusTargetIntegration<
+  /**
+   * @internal
+   */
+  public readonly eventBus: EventBusTargetIntegration<
     P,
     aws_events_targets.EventBusProps | undefined
   > = {

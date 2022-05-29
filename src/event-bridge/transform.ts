@@ -3,7 +3,7 @@ import { FunctionDecl } from "../declaration";
 import { synthesizeEventBridgeTargets } from "./target-input";
 import { EventBusRuleInput } from "./types";
 import { IEventBusRule } from "./rule";
-import { DynamicProps, pipe } from "./event-bus";
+import { DynamicProps, IEventBus, pipe } from "./event-bus";
 import { EventBusTargetIntegration, Integration } from "..";
 
 /**
@@ -58,12 +58,21 @@ export class EventBusTransform<T extends EventBusRuleInput, P> {
    *
    * @see EventBusRule.pipe for more details on pipe.
    */
-  pipe<Props extends object | undefined>(
-    integration: Integration<(p: P) => any, string, Props> & {
+  pipe<
+    I extends Integration<(p: P) => any, string, Props> & {
       eventBus: EventBusTargetIntegration<P, Props>;
     },
+    Props extends object | undefined
+  >(
+    integration: NonEventBusIntegration<I>,
     ...props: Parameters<DynamicProps<Props>>
   ) {
     pipe(this.rule, integration, props[0] as Props, this.targetInput);
   }
 }
+
+/**
+ * EventBus to EventBus input transform is not allowed.
+ */
+export type NonEventBusIntegration<I extends Integration<any, any, any>> =
+  I extends IEventBus<any> ? never : I;
