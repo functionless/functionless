@@ -75,7 +75,7 @@ const project = new CustomTypescriptProject({
   bin: {
     functionless: "./bin/functionless.js",
   },
-  deps: ["fs-extra", "minimatch"],
+  deps: ["fs-extra", "minimatch", "@functionless/nodejs-closure-serializer"],
   devDeps: [
     `@aws-cdk/aws-appsync-alpha@${MIN_CDK_VERSION}-alpha.0`,
     "@types/fs-extra",

@@ -1,8 +1,8 @@
 import { aws_events } from "aws-cdk-lib";
 import { Construct } from "constructs";
-import { Function } from "../function";
+import { IFunction } from "../function";
 import { ExpressStepFunction, StepFunction } from "../step-function";
-import { EventBus, IEventBus, IEventBusFilterable } from "./event-bus";
+import { IEventBus, IEventBusFilterable } from "./event-bus";
 import {
   andDocuments,
   synthesizeEventPattern,
@@ -117,16 +117,14 @@ export interface IRule<T extends EventBusEvent> {
    * Send to lambda
    *
    * ```ts
-   * const awsFunc = aws_lambda.Function(this, 'awsTarget', { ... });
-   * const myFunction = new Function<Payload, void>(awsFunc);
+   * const myFunction = new Function<Payload, void>(this, 'awsTarget', ...);
    * bus.when(...).pipe(myFunction)
    * ```
    *
    * Send to event bus with DLQ and Retries
    *
    * ```ts
-   * const awsFunc = aws_lambda.Function(this, 'awsTarget', { ... });
-   * const myFunction = new Function<Payload, void>(awsFunc);
+   * const myFunction = new Function<Payload, void>(this, 'awsTarget', ...);
    * const myQueue = new aws_sqs.Queue(this, 'queue');
    * bus.when(...).pipe({ func: myFunction, deadLetterQueue: myQueue, retryAttempts: 10 );
    * ```
@@ -139,8 +137,8 @@ export interface IRule<T extends EventBusEvent> {
    * ```
    */
   pipe(props: LambdaTargetProps<T>): void;
-  pipe(func: Function<T, any>): void;
-  pipe(bus: EventBus<T>): void;
+  pipe(func: IFunction<T, any>): void;
+  pipe(bus: IEventBus<T>): void;
   pipe(props: EventBusTargetProps<T>): void;
   pipe(props: StateMachineTargetProps<T>): void;
   pipe(props: StepFunction<T, any>): void;
@@ -177,7 +175,7 @@ abstract class RuleBase<T extends EventBusEvent> implements IRule<T> {
    * @inheritdoc
    */
   pipe(props: LambdaTargetProps<T>): void;
-  pipe(func: Function<T, any>): void;
+  pipe(func: IFunction<T, any>): void;
   pipe(bus: IEventBus<T>): void;
   pipe(props: EventBusTargetProps<T>): void;
   pipe(props: StateMachineTargetProps<T>): void;

@@ -128,7 +128,7 @@ test("refined bus with when pipe event bus", () => {
 test("new bus with when map pipe function", () => {
   const busBus = new EventBus(stack, "bus");
 
-  const func = new Function(
+  const func = Function.fromFunction(
     aws_lambda.Function.fromFunctionArn(stack, "func", "")
   );
 

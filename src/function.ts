@@ -1,35 +1,66 @@
+import fs from "fs";
+import path from "path";
 import * as appsync from "@aws-cdk/aws-appsync-alpha";
-import { aws_lambda } from "aws-cdk-lib";
+import { serializeFunction } from "@functionless/nodejs-closure-serializer";
+import {
+  AssetHashType,
+  aws_dynamodb,
+  aws_lambda,
+  CfnResource,
+  DockerImage,
+  Resource,
+  TagManager,
+  Token,
+  Tokenization,
+} from "aws-cdk-lib";
+import type { Context } from "aws-lambda";
+// eslint-disable-next-line import/no-extraneous-dependencies
+import AWS from "aws-sdk";
+import { Construct } from "constructs";
 import type { AppSyncVtlIntegration } from "./appsync";
 import { ASL } from "./asl";
-import { CallExpr, isVariableReference } from "./expression";
+import {
+  NativeFunctionDecl,
+  isNativeFunctionDecl,
+  IntegrationInvocation,
+} from "./declaration";
+import { Err, isErr } from "./error";
+import { CallExpr, Expr, isVariableReference } from "./expression";
+import {
+  IntegrationImpl,
+  Integration,
+  INTEGRATION_TYPE_KEYS,
+} from "./integration";
+import { AnyFunction, anyOf } from "./util";
 
-// @ts-ignore - imported for typedoc
-import { Integration } from "./integration";
-
-export function isFunction<P = any, O = any>(a: any): a is Function<P, O> {
+export function isFunction<P = any, O = any>(a: any): a is IFunction<P, O> {
   return a?.kind === "Function";
 }
 
 export type AnyLambda = Function<any, any>;
 
-/**
- * Wraps an {@link aws_lambda.Function} with a type-safe interface that can be
- * called from within an {@link AppsyncResolver}.
- *
- * For example:
- * ```ts
- * const getPerson = new Function<string, Person>(
- *   new aws_lambda.Function(..)
- * );
- *
- * new AppsyncResolver(() => {
- *   return getPerson("value");
- * })
- * ```
- */
-export class Function<P, O> implements Integration {
+export type FunctionClosure<P, O> = (
+  payload: P,
+  context: Context
+) => Promise<O>;
+
+export interface IFunction<P, O> {
+  readonly functionlessKind: typeof Function.FunctionlessType;
+  readonly kind: typeof Function.FunctionlessType;
+  readonly resource: aws_lambda.IFunction;
+
+  (...args: Parameters<ConditionalFunction<P, O>>): ReturnType<
+    ConditionalFunction<P, O>
+  >;
+}
+
+abstract class FunctionBase<P, O>
+  implements IFunction<P, O>, Integration<FunctionBase<P, O>>
+{
   readonly kind = "Function" as const;
+  readonly native: NativeIntegration<FunctionBase<P, O>>;
+  readonly functionlessKind = "Function";
+  public static readonly FunctionlessType = "Function";
 
   readonly appSyncVtl: AppSyncVtlIntegration;
 
@@ -37,7 +68,42 @@ export class Function<P, O> implements Integration {
   readonly __functionBrand: ConditionalFunction<P, O>;
 
   constructor(readonly resource: aws_lambda.IFunction) {
-    // Integration object for appsync VTL
+    const functionName = this.resource.functionName;
+
+    // Native is used when this function is called from another lambda function's serialized closure.
+    // define this here to closure the functionName without using `this`
+    this.native = {
+      /**
+       * Wire up permissions for this function to be called by the calling function
+       */
+      bind: (context: Function<any, any>) => {
+        this.resource.grantInvoke(context.resource);
+      },
+      /**
+       * Code that runs once per lambda invocation
+       * The pre-warm client supports singleton invocation of clients (or other logic) across all integrations in the caller function.
+       */
+      preWarm: (preWarmContext: NativePreWarmContext) => {
+        preWarmContext.getOrInit(PrewarmClients.LAMBDA);
+      },
+      /**
+       * This method is called from the calling runtime lambda code (context) to invoke this lambda function.
+       */
+      call: async (args, prewarmContext) => {
+        const [payload] = args;
+        const lambdaClient = prewarmContext.getOrInit(PrewarmClients.LAMBDA);
+        const response = (
+          await lambdaClient
+            .invoke({
+              FunctionName: functionName,
+              ...(payload ? { Payload: JSON.stringify(payload) } : undefined),
+            })
+            .promise()
+        ).Payload?.toString();
+        return response ? JSON.parse(response) : undefined;
+      },
+    };
+
     this.appSyncVtl = {
       dataSourceId: () => resource.node.addr,
       dataSource(api, id) {
@@ -61,28 +127,561 @@ export class Function<P, O> implements Integration {
   }
 
   public asl(call: CallExpr, context: ASL) {
-    const payloadArg = call.getArgument("payload");
+    const payloadArg = call.getArgument("payload")?.expr;
     this.resource.grantInvoke(context.role);
     return {
       Type: "Task" as const,
       Resource: "arn:aws:states:::lambda:invoke",
       Parameters: {
         FunctionName: this.resource.functionName,
-        [`Payload${
-          payloadArg?.expr && isVariableReference(payloadArg.expr) ? ".$" : ""
-        }`]: payloadArg ? ASL.toJson(payloadArg.expr) : null,
+        [`Payload${payloadArg && isVariableReference(payloadArg) ? ".$" : ""}`]:
+          payloadArg ? ASL.toJson(payloadArg) : undefined,
       },
       ResultSelector: "$.Payload",
     };
   }
 }
 
-type ConditionalFunction<P, O> = P extends undefined
-  ? () => O
-  : (payload: P) => O;
-
-export interface Function<P, O> {
+interface FunctionBase<P, O> {
   (...args: Parameters<ConditionalFunction<P, O>>): ReturnType<
     ConditionalFunction<P, O>
   >;
+}
+
+const PromisesSymbol = Symbol.for("functionless.Function.promises");
+
+export interface FunctionProps
+  extends Omit<aws_lambda.FunctionProps, "code" | "handler" | "runtime"> {
+  /**
+   * Method which allows runtime computation of AWS client configuration.
+   * ```ts
+   * new Lambda(clientConfigRetriever('LAMBDA'))
+   * ```
+   *
+   * @param clientName optionally return a different client config based on the {@link ClientName}.
+   *
+   */
+  clientConfigRetriever?: (
+    clientName: ClientName | string
+  ) => Omit<AWS.Lambda.ClientConfiguration, keyof AWS.Lambda.ClientApiVersions>;
+}
+
+const isNativeFunctionOrError = anyOf(isErr, isNativeFunctionDecl);
+
+/**
+ * Wraps an {@link aws_lambda.Function} with a type-safe interface that can be
+ * called from within an {@link AppsyncResolver}.
+ *
+ * For example:
+ * ```ts
+ * const getPerson = Function.fromFunction<string, Person>(
+ *   new aws_lambda.Function(..)
+ * );
+ *
+ * new AppsyncResolver(() => {
+ *   return getPerson("value");
+ * })
+ * ```
+ */
+export class Function<P, O> extends FunctionBase<P, O> {
+  /**
+   * Dangling promises which are processing Function handler code from the function serializer.
+   * To correctly resolve these for CDK synthesis, either use `asyncSynth()` or use `cdk synth` in the CDK cli.
+   * https://twitter.com/samgoodwin89/status/1516887131108438016?s=20&t=7GRGOQ1Bp0h_cPsJgFk3Ww
+   */
+  public static readonly promises = ((global as any)[PromisesSymbol] =
+    (global as any)[PromisesSymbol] ?? []);
+
+  /**
+   * Wrap a {@link aws_lambda.Function} with Functionless.
+   *
+   * A wrapped function can be invoked, but the code is provided in the CDK Construct.
+   */
+  public static fromFunction<P, O>(
+    func: aws_lambda.IFunction
+  ): ImportedFunction<P, O> {
+    return new ImportedFunction<P, O>(func);
+  }
+
+  /**
+   * Create a lambda function using a native typescript closure.
+   *
+   * ```ts
+   * new Function<{ val: string }, string>(this, 'myFunction', async (event) => event.val);
+   * ```
+   */
+  constructor(scope: Construct, id: string, func: FunctionClosure<P, O>);
+  constructor(
+    scope: Construct,
+    id: string,
+    props: FunctionProps,
+    func: FunctionClosure<P, O>
+  );
+  /**
+   * @private
+   */
+  constructor(
+    scope: Construct,
+    id: string,
+    props: FunctionProps,
+    func: NativeFunctionDecl | Err
+  );
+  /**
+   * @private
+   */
+  constructor(scope: Construct, id: string, func: NativeFunctionDecl | Err);
+  /**
+   * Wrap an existing lambda function with Functionless.
+   * @deprecated use `Function.fromFunction()`
+   */
+  constructor(resource: aws_lambda.IFunction);
+  /**
+   * @private
+   */
+  constructor(
+    resource: aws_lambda.IFunction | Construct,
+    id?: string,
+    propsOrFunc?:
+      | FunctionProps
+      | NativeFunctionDecl
+      | Err
+      | FunctionClosure<P, O>,
+    funcOrNothing?: NativeFunctionDecl | Err | FunctionClosure<P, O>
+  ) {
+    let _resource: aws_lambda.IFunction;
+    let integrations: IntegrationInvocation[] = [];
+    let callbackLambdaCode: CallbackLambdaCode | undefined = undefined;
+    if (id && propsOrFunc) {
+      const func = isNativeFunctionOrError(propsOrFunc)
+        ? propsOrFunc
+        : isNativeFunctionOrError(funcOrNothing)
+        ? funcOrNothing
+        : undefined;
+      const props = isNativeFunctionOrError(propsOrFunc)
+        ? undefined
+        : (propsOrFunc as FunctionProps);
+
+      if (isErr(func)) {
+        throw func.error;
+      } else if (isNativeFunctionDecl(func)) {
+        callbackLambdaCode = new CallbackLambdaCode(func.closure, {
+          clientConfigRetriever: props?.clientConfigRetriever,
+        });
+        _resource = new aws_lambda.Function(resource, id!, {
+          ...props,
+          runtime: aws_lambda.Runtime.NODEJS_14_X,
+          handler: "index.handler",
+          code: callbackLambdaCode,
+        });
+
+        integrations = func.integrations;
+      } else {
+        throw Error(
+          "Expected lambda to be passed a compiled function closure or a aws_lambda.IFunction"
+        );
+      }
+    } else {
+      _resource = resource as aws_lambda.IFunction;
+    }
+    super(_resource);
+
+    // retrieve and bind all found native integrations. Will fail if the integration does not support native integration.
+    const nativeIntegrationsPrewarm = integrations.flatMap(
+      ({ integration, args }) => {
+        const integ = new IntegrationImpl(integration).native;
+        integ.bind(this, args);
+        return integ.preWarm ? [integ.preWarm] : [];
+      }
+    );
+
+    // Start serializing process, add the callback to the promises so we can later ensure completion
+    if (callbackLambdaCode) {
+      Function.promises.push(
+        callbackLambdaCode.generate(nativeIntegrationsPrewarm)
+      );
+    }
+  }
+}
+
+/**
+ * A {@link Function} which wraps a CDK function.
+ *
+ * An imported function can be invoked, but the code is provided in the CDK Construct.
+ */
+export class ImportedFunction<P, O> extends FunctionBase<P, O> {
+  /**
+   * Use {@link Function.fromFunction}
+   * @internal
+   */
+  constructor(func: aws_lambda.IFunction) {
+    return super(func) as unknown as ImportedFunction<P, O>;
+  }
+}
+
+type ConditionalFunction<P, O> = P extends undefined
+  ? (payload?: P) => O
+  : (payload: P) => O;
+
+interface CallbackLambdaCodeProps extends PrewarmProps {}
+
+/**
+ * A special lambda code wrapper that serializes whatever closure it is given.
+ *
+ * Caveat: Relies on async functions which may not finish when using CDK's app.synth()
+ *
+ * Ensure the generate function's promise is completed using something like Lambda.promises and the `asyncSynth` function.
+ *
+ * Use:
+ * * Initialize the {@link CallbackLambdaCode} `const code = new CallbackLambdaCode()`
+ * * First bind the code to a Function `new aws_lambda.Function(..., { code })`
+ * * Then call generate `const promise = code.generate(integrations)`
+ * *
+ */
+export class CallbackLambdaCode extends aws_lambda.Code {
+  private scope: Construct | undefined = undefined;
+
+  constructor(
+    private func: (preWarmContext: NativePreWarmContext) => AnyFunction,
+    private props?: CallbackLambdaCodeProps
+  ) {
+    super();
+  }
+
+  public bind(scope: Construct): aws_lambda.CodeConfig {
+    this.scope = scope;
+    // Lets give the function something lightweight while we process the closure.
+    // https://github.com/functionless/functionless/issues/128
+    return aws_lambda.Code.fromInline(
+      "If you are seeing this in your lambda code, ensure generate is called, then consult the README, and see https://github.com/functionless/functionless/issues/128."
+    ).bind(scope);
+  }
+
+  /**
+   * Thanks to cloudy for the help getting this to work.
+   * https://github.com/skyrpex/cloudy/blob/main/packages/cdk/src/aws-lambda/callback-function.ts#L518-L540
+   * https://twitter.com/samgoodwin89/status/1516887131108438016?s=20&t=7GRGOQ1Bp0h_cPsJgFk3Ww
+   */
+  public async generate(
+    integrationPrewarms: NativeIntegration<AnyFunction>["preWarm"][]
+  ) {
+    if (!this.scope) {
+      throw Error("Must first be bound to a Construct using .bind().");
+    }
+    const scope = this.scope;
+    let tokens: string[] = [];
+    const preWarmContext = new NativePreWarmContext(this.props);
+    const func = this.func(preWarmContext);
+
+    const result = await serializeFunction(
+      // factory function allows us to prewarm the clients and other context.
+      () => {
+        integrationPrewarms.forEach((i) => i?.(preWarmContext));
+        return func;
+      },
+      {
+        isFactoryFunction: true,
+        serialize: (obj) => {
+          if (typeof obj === "string") {
+            const reversed =
+              Tokenization.reverse(obj, { failConcat: false }) ??
+              Tokenization.reverseString(obj).tokens;
+            if (!Array.isArray(reversed) || reversed.length > 0) {
+              if (Array.isArray(reversed)) {
+                tokens = [...tokens, ...reversed.map((s) => s.toString())];
+              } else {
+                tokens = [...tokens, reversed.toString()];
+              }
+            }
+          } else if (typeof obj === "object") {
+            /**
+             * Remove unnecessary fields from {@link CfnResource} that bloat or fail the closure serialization.
+             */
+            const transformCfnResource = (o: unknown): any => {
+              if (Resource.isResource(o as any)) {
+                const { node, stack, env, ...rest } = o as unknown as Resource;
+                return rest;
+              } else if (CfnResource.isCfnResource(o as any)) {
+                const {
+                  stack,
+                  node,
+                  creationStack,
+                  // don't need to serialize at runtime
+                  _toCloudFormation,
+                  // @ts-ignore - private - adds the tag manager, which we don't need
+                  cfnProperties,
+                  ...rest
+                } = transformTable(o as CfnResource);
+                return transformTaggableResource(rest);
+              } else if (Token.isUnresolved(o)) {
+                const token = (<any>o).toString();
+                // add to tokens to be turned into env variables.
+                tokens = [...tokens, token];
+                return token;
+              }
+              return o;
+            };
+
+            /**
+             * When the StreamArn attribute is used in a Cfn template, but streamSpecification is
+             * undefined, then the deployment fails. Lets make sure that doesn't happen.
+             */
+            const transformTable = (o: CfnResource): CfnResource => {
+              if (
+                o.cfnResourceType ===
+                aws_dynamodb.CfnTable.CFN_RESOURCE_TYPE_NAME
+              ) {
+                const table = o as aws_dynamodb.CfnTable;
+                if (!table.streamSpecification) {
+                  const { attrStreamArn, ...rest } = table;
+
+                  return rest as unknown as CfnResource;
+                }
+              }
+
+              return o;
+            };
+
+            /**
+             * CDK Tag manager bundles in ~200kb of junk we don't need at runtime,
+             */
+            const transformTaggableResource = (o: any) => {
+              if (TagManager.isTaggable(o)) {
+                const { tags, ...rest } = o;
+                return rest;
+              }
+              return o;
+            };
+
+            /**
+             * Remove unnecessary fields from {@link CfnTable} that bloat or fail the closure serialization.
+             */
+            const transformIntegration = (o: unknown): any => {
+              if (o && typeof o === "object" && "kind" in o) {
+                const integ = o as Integration;
+                const copy = {
+                  ...integ,
+                  native: {
+                    call: integ?.native?.call,
+                    preWarm: integ?.native?.preWarm,
+                  },
+                };
+
+                INTEGRATION_TYPE_KEYS.filter((key) => key !== "native").forEach(
+                  (key) => delete copy[key]
+                );
+
+                return copy;
+              }
+              return o;
+            };
+
+            return transformIntegration(transformCfnResource(obj));
+          }
+          return true;
+        },
+      }
+    );
+
+    const tokenContext = tokens.map((t) => {
+      const id = /\${Token\[.*\.([0-9]*)\]}/g.exec(t)?.[1];
+      if (!id) {
+        throw Error("Unrecognized token format, no id found: " + t);
+      }
+      return {
+        id,
+        token: t,
+        // env variables must start with a alpha character
+        env: `env__functionless${id}`,
+      };
+    });
+
+    // replace all tokens in the form "${Token[{anything}.{id}]}" -> process.env.env__functionless{id}
+    // this doesn't solve for tokens like "arn:${Token[{anything}.{id}]}:something" -> "arn:" + process.env.env__functionless{id} + ":something"
+    const resultText = tokenContext.reduce(
+      // TODO: support templated strings
+      (r, t) => r.split(`"${t.token}"`).join(`process.env.${t.env}`),
+      result.text
+    );
+
+    const asset = aws_lambda.Code.fromAsset("", {
+      assetHashType: AssetHashType.OUTPUT,
+      bundling: {
+        image: DockerImage.fromRegistry("empty"),
+        // This forces the bundle directory and cache key to be unique. It does nothing else.
+        user: scope.node.addr,
+        local: {
+          tryBundle(outdir: string) {
+            fs.writeFileSync(path.resolve(outdir, "index.js"), resultText);
+            return true;
+          },
+        },
+      },
+    });
+
+    if (!(scope instanceof aws_lambda.Function)) {
+      throw new Error(
+        "CallbackLambdaCode can only be used on aws_lambda.Function"
+      );
+    }
+
+    tokenContext.forEach((t) => scope.addEnvironment(t.env, t.token));
+
+    const funcResource = scope.node.findChild(
+      "Resource"
+    ) as aws_lambda.CfnFunction;
+
+    const codeConfig = asset.bind(scope);
+
+    funcResource.code = {
+      s3Bucket: codeConfig.s3Location?.bucketName,
+      s3Key: codeConfig.s3Location?.objectKey,
+      s3ObjectVersion: codeConfig.s3Location?.objectVersion,
+      zipFile: codeConfig.inlineCode,
+      imageUri: codeConfig.image?.imageUri,
+    };
+
+    asset.bindToResource(funcResource);
+  }
+}
+
+/**
+ * Interface to consume to add an Integration to Native Lambda Functions.
+ *
+ * ```ts
+ * new Function(this, 'func', () => {
+ *    mySpecialIntegration()
+ * })
+ *
+ * const mySpecialIntegration = makeIntegration<() => void>({
+ *    native: {...} // an instance of NativeIntegration
+ * })
+ * ```
+ */
+export interface NativeIntegration<F extends AnyFunction> {
+  /**
+   * Called by any {@link Function} that will invoke this integration during CDK Synthesis.
+   * Add permissions, create connecting resources, validate.
+   *
+   * @param context - The function invoking this function.
+   * @param args - The functionless encoded AST form of the arguments passed to the integration.
+   */
+  bind: (context: Function<any, any>, args: Expr[]) => void;
+  /**
+   * @param args The arguments passed to the integration function by the user.
+   * @param preWarmContext contains singleton instances of client and other objects initialized outside of the native
+   *                       function handler.
+   */
+  call: (
+    args: Parameters<F>,
+    preWarmContext: NativePreWarmContext
+  ) => Promise<ReturnType<F>>;
+  /**
+   * Method called outside of the handler to initialize things like the PreWarmContext
+   */
+  preWarm?: (preWarmContext: NativePreWarmContext) => void;
+}
+
+export type ClientName =
+  | "LAMBDA"
+  | "EVENT_BRIDGE"
+  | "STEP_FUNCTIONS"
+  | "DYNAMO";
+
+interface PrewarmProps {
+  clientConfigRetriever?: FunctionProps["clientConfigRetriever"];
+}
+
+export interface PrewarmClientInitializer<T, O> {
+  key: T;
+  init: (key: string, props?: PrewarmProps) => O;
+}
+
+/**
+ * Known, shared clients to use.
+ *
+ * Any object can be used by using the {@link PrewarmClientInitializer} interface directly.
+ *
+ * ```ts
+ * context.getOrInit({
+ *   key: 'customClient',
+ *   init: () => new anyClient()
+ * })
+ * ```
+ */
+export const PrewarmClients = {
+  LAMBDA: {
+    key: "LAMBDA",
+    init: (key, props) =>
+      // eslint-disable-next-line @typescript-eslint/no-require-imports, import/no-extraneous-dependencies
+      new (require("aws-sdk").Lambda)(props?.clientConfigRetriever?.(key)),
+  },
+  EVENT_BRIDGE: {
+    key: "EVENT_BRIDGE",
+    init: (key, props) =>
+      // eslint-disable-next-line @typescript-eslint/no-require-imports, import/no-extraneous-dependencies
+      new (require("aws-sdk").EventBridge)(props?.clientConfigRetriever?.(key)),
+  },
+  STEP_FUNCTIONS: {
+    key: "STEP_FUNCTIONS",
+    init: (key, props) =>
+      // eslint-disable-next-line @typescript-eslint/no-require-imports, import/no-extraneous-dependencies
+      new (require("aws-sdk").StepFunctions)(
+        props?.clientConfigRetriever?.(key)
+      ),
+  },
+  DYNAMO: {
+    key: "DYNAMO",
+    init: (key, props) =>
+      // eslint-disable-next-line @typescript-eslint/no-require-imports, import/no-extraneous-dependencies
+      new (require("aws-sdk").DynamoDB)(props?.clientConfigRetriever?.(key)),
+  },
+} as Record<ClientName, PrewarmClientInitializer<ClientName, any>>;
+
+/**
+ * A client/object cache which Native Functions can use to
+ * initialize objects once and before the handler is invoked.
+ *
+ * The same instance will be passed to both the `.call` and `.prewarm` methods
+ * of a {@link NativeIntegration}. `prewarm` is called once when the function starts,
+ * before the handler.
+ *
+ * Register and initialize clients by using `getOrInit` with a key and a initializer.
+ *
+ * ```ts
+ * context.getOrInit(PrewarmClients.LAMBDA)
+ * ```
+ *
+ * or register anything by doing
+ *
+ * ```ts
+ * context.getOrInit({
+ *   key: 'customClient',
+ *   init: () => new anyClient()
+ * })
+ * ```
+ *
+ * To get without potentially initializing the client, use `get`:
+ *
+ * ```ts
+ * context.get("LAMBDA")
+ * context.get("customClient")
+ * ```
+ */
+export class NativePreWarmContext {
+  private readonly cache: Record<string, any>;
+
+  constructor(private props?: PrewarmProps) {
+    this.cache = {};
+  }
+
+  public get<T>(key: ClientName | string): T | undefined {
+    return this.cache[key];
+  }
+
+  public getOrInit<T>(client: PrewarmClientInitializer<any, T>): T {
+    if (!this.cache[client.key]) {
+      this.cache[client.key] = client.init(client.key, this.props);
+    }
+    return this.cache[client.key];
+  }
 }

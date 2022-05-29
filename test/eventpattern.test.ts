@@ -242,6 +242,7 @@ describe("event pattern", () => {
       test("array explicit equals error", () => {
         ebEventPatternTestCaseError(
           reflect<EventPredicateFunction<TestEvent>>(
+            // @ts-ignore
             (event) => event.detail.array === ["a", "b"]
           ),
           "Equivency must compare to a constant value."

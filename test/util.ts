@@ -115,35 +115,22 @@ export function initStepFunctionApp() {
   });
   const stack = new Stack(app, "stack");
 
-  const getPerson = new Function<{ id: string }, Person | undefined>(
-    new aws_lambda.Function(stack, "Func", {
-      code: aws_lambda.Code.fromInline(
-        "exports.handle = function() { return {id: 'id', name: 'name' }; }"
-      ),
-      handler: "index.handle",
-      runtime: aws_lambda.Runtime.NODEJS_14_X,
-    })
+  const lambda = new aws_lambda.Function(stack, "F", {
+    code: aws_lambda.Code.fromInline(
+      "exports.handler = function() { return null; }"
+    ),
+    handler: "index.handler",
+    runtime: aws_lambda.Runtime.NODEJS_14_X,
+  });
+
+  // These functions do not actually execute.
+  const getPerson = Function.fromFunction<{ id: string }, Person | undefined>(
+    lambda
   );
 
-  const task = new Function<any, number | null>(
-    new aws_lambda.Function(stack, "Task", {
-      code: aws_lambda.Code.fromInline(
-        "exports.handle = function() { return 1; }"
-      ),
-      handler: "index.handle",
-      runtime: aws_lambda.Runtime.NODEJS_14_X,
-    })
-  );
+  const task = Function.fromFunction<any, number | null>(lambda);
 
-  const computeScore = new Function<Person, number>(
-    new aws_lambda.Function(stack, "ComputeScore", {
-      code: aws_lambda.Code.fromInline(
-        "exports.handle = function() { return 1; }"
-      ),
-      handler: "index.handle",
-      runtime: aws_lambda.Runtime.NODEJS_14_X,
-    })
-  );
+  const computeScore = Function.fromFunction<Person, number>(lambda);
 
   const personTable = new Table<Person, "id">(
     new aws_dynamodb.Table(stack, "Table", {
