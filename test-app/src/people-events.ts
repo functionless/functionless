@@ -1,6 +1,5 @@
-import * as functionless from "functionless";
-import { aws_lambda } from "aws-cdk-lib";
 import { Construct } from "constructs";
+import * as functionless from "functionless";
 
 interface UserDetails {
   id?: string;
@@ -35,28 +34,16 @@ export class PeopleEvents extends Construct {
     const createOrUpdateFunction = new functionless.Function<
       CreateOrUpdate,
       void
-    >(
-      new aws_lambda.Function(this, "createOrUpdate", {
-        code: aws_lambda.Code.fromInline(`
-      exports.handler = async (event) => {
-          console.log('event: ', event)
-        };
-      `),
-        runtime: aws_lambda.Runtime.NODEJS_14_X,
-        handler: "index.handler",
-      })
-    );
+    >(this, "createOrUpdate", async (event) => {
+      console.log("event: ", event);
+    });
 
     const deleteFunction = new functionless.Function<Delete, void>(
-      new aws_lambda.Function(this, "delete", {
-        code: aws_lambda.Code.fromInline(`
-      exports.handler = async (event) => {
-          console.log('event: ', event)
-        };
-      `),
-        runtime: aws_lambda.Runtime.NODEJS_14_X,
-        handler: "index.handler",
-      })
+      this,
+      "delete",
+      async (event) => {
+        console.log("event: ", event);
+      }
     );
 
     const bus = new functionless.EventBus<UserEvent>(this, "myBus");
@@ -108,17 +95,9 @@ export class PeopleEvents extends Construct {
     catPeopleBus
       .when(this, "catSinkRule", () => true)
       .pipe(
-        new functionless.Function<Delete, void>(
-          new aws_lambda.Function(this, "cats", {
-            code: aws_lambda.Code.fromInline(`
-          exports.handler = async (event) => {
-              console.log('event: ', event)
-            };
-          `),
-            runtime: aws_lambda.Runtime.NODEJS_14_X,
-            handler: "index.handler",
-          })
-        )
+        new functionless.Function<Delete, void>(this, "cats", async (event) => {
+          console.log("event: ", event);
+        })
       );
   }
 }

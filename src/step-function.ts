@@ -9,8 +9,9 @@ import {
   Stack,
   Token,
 } from "aws-cdk-lib";
+// eslint-disable-next-line import/no-extraneous-dependencies
+import { StepFunctions } from "aws-sdk";
 import { Construct } from "constructs";
-
 import { AppSyncVtlIntegration } from "./appsync";
 import {
   ASL,
@@ -35,6 +36,7 @@ import {
   isObjectLiteralExpr,
   isSpreadAssignExpr,
 } from "./expression";
+import { NativeIntegration, PrewarmClients } from "./function";
 import { Integration, makeIntegration } from "./integration";
 import { AnyFunction, ensureItemOf } from "./util";
 import { VTL } from "./vtl";
@@ -368,9 +370,16 @@ interface StepFunctionStatusChangedEvent
     "aws.states"
   > {}
 
-abstract class BaseStepFunction<P extends Record<string, any> | undefined, O>
+abstract class BaseStepFunction<
+    P extends Record<string, any> | undefined,
+    O,
+    CallIn,
+    CallOut
+  >
   extends Resource
-  implements aws_stepfunctions.IStateMachine, Integration
+  implements
+    aws_stepfunctions.IStateMachine,
+    Integration<(input: CallIn) => CallOut>
 {
   readonly kind = "StepFunction";
   readonly functionlessKind = "StepFunction";
@@ -381,7 +390,7 @@ abstract class BaseStepFunction<P extends Record<string, any> | undefined, O>
   readonly appSyncVtl: AppSyncVtlIntegration;
 
   // @ts-ignore
-  readonly __functionBrand: (arg: P) => O;
+  readonly __functionBrand: (arg: P) => CallOut;
 
   readonly stateMachineName: string;
   readonly stateMachineArn: string;
@@ -1138,7 +1147,12 @@ export interface StepFunctionProps
 export class ExpressStepFunction<
   P extends Record<string, any> | undefined,
   O
-> extends BaseStepFunction<P, O> {
+> extends BaseStepFunction<
+  P,
+  O,
+  StepFunctionRequest<P>,
+  SyncExecutionResult<O>
+> {
   /**
    * This static property identifies this class as an ExpressStepFunction to the TypeScript plugin.
    */
@@ -1147,10 +1161,77 @@ export class ExpressStepFunction<
   public getStepFunctionType(): aws_stepfunctions.StateMachineType.EXPRESS {
     return aws_stepfunctions.StateMachineType.EXPRESS;
   }
+
+  readonly native: NativeIntegration<
+    (input: StepFunctionRequest<P>) => SyncExecutionResult<O>
+  >;
+
+  constructor(
+    scope: Construct,
+    id: string,
+    props: StepFunctionProps,
+    func: (arg: P) => O
+  );
+
+  constructor(scope: Construct, id: string, func: (arg: P) => O);
+
+  constructor(
+    scope: Construct,
+    id: string,
+    ...args:
+      | [props: StepFunctionProps, func: (arg: P) => O]
+      | [func: (arg: P) => O]
+  ) {
+    super(
+      scope,
+      id,
+      args[0] as any,
+      (args.length > 1 ? args[1] : undefined) as any
+    );
+
+    const stateMachineArn = this.stateMachineArn;
+
+    this.native = {
+      bind: (context) => {
+        this.grantStartSyncExecution(context.resource);
+      },
+      preWarm(preWarmContext) {
+        preWarmContext.getOrInit(PrewarmClients.STEP_FUNCTIONS);
+      },
+      call: async (args, prewarmContext) => {
+        const stepFunctionsClient = prewarmContext.getOrInit<StepFunctions>(
+          PrewarmClients.STEP_FUNCTIONS
+        );
+        const [payload] = args;
+        const result = await stepFunctionsClient
+          .startSyncExecution({
+            ...payload,
+            stateMachineArn: stateMachineArn,
+            input: payload.input ? JSON.stringify(payload.input) : undefined,
+          })
+          .promise();
+
+        return result.error
+          ? ({
+              ...result,
+              error: result.error,
+              status: result.status as "FAILED" | "TIMED_OUT",
+              startDate: result.startDate.getUTCMilliseconds(),
+              stopDate: result.stopDate.getUTCMilliseconds(),
+            } as SyncExecutionFailedResult)
+          : ({
+              ...result,
+              startDate: result.startDate.getUTCMilliseconds(),
+              stopDate: result.stopDate.getUTCMilliseconds(),
+              output: result.output ? JSON.parse(result.output) : undefined,
+            } as SyncExecutionSuccessResult<O>);
+      },
+    };
+  }
 }
 
 interface BaseSyncExecutionResult {
-  billingDetails: {
+  billingDetails?: {
     billedDurationInMilliseconds: number;
     billedMemoryUsedInMB: number;
   };
@@ -1185,7 +1266,7 @@ export type SyncExecutionResult<T> =
 
 // do not support undefined values, arguments must be present or missing
 export type StepFunctionRequest<P extends Record<string, any> | undefined> =
-  (P extends undefined ? {} : { input: P }) &
+  (P extends undefined ? { input?: P } : { input: P }) &
     (
       | {
           name: string;
@@ -1210,11 +1291,70 @@ export interface ExpressStepFunction<
 export class StepFunction<
   P extends Record<string, any> | undefined,
   O
-> extends BaseStepFunction<P, O> {
+> extends BaseStepFunction<
+  P,
+  O,
+  StepFunctionRequest<P>,
+  AWS.StepFunctions.StartExecutionOutput
+> {
   /**
    * This static property identifies this class as an StepFunction to the TypeScript plugin.
    */
   public static readonly FunctionlessType = "StepFunction";
+
+  readonly native: NativeIntegration<
+    (input: StepFunctionRequest<P>) => AWS.StepFunctions.StartExecutionOutput
+  >;
+
+  constructor(
+    scope: Construct,
+    id: string,
+    props: StepFunctionProps,
+    func: (arg: P) => O
+  );
+
+  constructor(scope: Construct, id: string, func: (arg: P) => O);
+
+  constructor(
+    scope: Construct,
+    id: string,
+    ...args:
+      | [props: StepFunctionProps, func: (arg: P) => O]
+      | [func: (arg: P) => O]
+  ) {
+    super(
+      scope,
+      id,
+      args[0] as any,
+      (args.length > 1 ? args[1] : undefined) as any
+    );
+
+    const stateMachineArn = this.stateMachineArn;
+
+    this.native = {
+      bind: (context) => {
+        this.grantStartExecution(context.resource);
+      },
+      preWarm(preWarmContext) {
+        preWarmContext.getOrInit(PrewarmClients.STEP_FUNCTIONS);
+      },
+      call: async (args, prewarmContext) => {
+        const stepFunctionsClient = prewarmContext.getOrInit<StepFunctions>(
+          PrewarmClients.STEP_FUNCTIONS
+        );
+        const [payload] = args;
+        const result = await stepFunctionsClient
+          .startExecution({
+            ...payload,
+            stateMachineArn: stateMachineArn,
+            input: payload.input ? JSON.stringify(payload.input) : undefined,
+          })
+          .promise();
+
+        return result;
+      },
+    };
+  }
 
   public getStepFunctionType(): aws_stepfunctions.StateMachineType.STANDARD {
     return aws_stepfunctions.StateMachineType.STANDARD;
@@ -1261,6 +1401,27 @@ export class StepFunction<
         Parameters: argValue,
       };
       return task;
+    },
+    native: {
+      bind: (context) => this.grantRead(context.resource),
+      preWarm(prewarmContext) {
+        prewarmContext.getOrInit(PrewarmClients.STEP_FUNCTIONS);
+      },
+      call: async (args, prewarmContext) => {
+        const stepFunctionClient = prewarmContext.getOrInit<StepFunctions>(
+          PrewarmClients.STEP_FUNCTIONS
+        );
+
+        const [arn] = args;
+
+        const result = await stepFunctionClient
+          .describeExecution({
+            executionArn: arn,
+          })
+          .promise();
+
+        return result;
+      },
     },
     unhandledContext: (kind, contextKind) => {
       throw new Error(

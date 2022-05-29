@@ -9,7 +9,7 @@
     "deploy": "cdk deploy",
     "codegen": "graphql-codegen --config codegen.yml"
   },
-  "devDependencies": {
+  "dependencies": {
     "@aws-cdk/aws-appsync-alpha": "2.20.0-alpha.0",
     "@graphql-codegen/cli": "^2.6.2",
     "@graphql-codegen/typescript": "^2.4.8",

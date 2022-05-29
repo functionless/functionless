@@ -1,6 +1,6 @@
 import { aws_events, aws_events_targets } from "aws-cdk-lib";
 import { assertNever } from "../assert";
-import { Function, isFunction } from "../function";
+import { IFunction, isFunction } from "../function";
 import {
   ExpressStepFunction,
   isStepFunction,
@@ -11,7 +11,7 @@ import { IEventBusRule } from "./rule";
 import { EventBusRuleInput } from "./types";
 
 export type LambdaTargetProps<P> = {
-  func: Function<P, any>;
+  func: IFunction<P, any>;
 } & Omit<aws_events_targets.LambdaFunctionProps, "event">;
 
 const isLambdaTargetProps = <P>(props: any): props is LambdaTargetProps<P> => {
@@ -40,7 +40,7 @@ const isStateMachineTargetProps = <P>(
 };
 
 export type EventBusTargetResource<T extends EventBusRuleInput, P> =
-  | Function<P, any>
+  | IFunction<P, any>
   | LambdaTargetProps<P>
   | IEventBus<T>
   | EventBusTargetProps<T>

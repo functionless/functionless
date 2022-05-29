@@ -14,6 +14,12 @@ import {
   PropAssignExpr,
   StringLiteralExpr,
 } from "../expression";
+import {
+  Function,
+  NativeIntegration,
+  NativePreWarmContext,
+  PrewarmClients,
+} from "../function";
 import { Integration } from "../integration";
 import { EventBusRule, EventPredicateFunction } from "./rule";
 import { EventBusRuleInput } from "./types";
@@ -106,7 +112,10 @@ export interface IEventBus<E extends EventBusRuleInput = EventBusRuleInput>
   /**
    * Put one or more events on an Event Bus.
    */
-  (event: Partial<E>, ...events: Partial<E>[]): void;
+  (
+    event: EventBusPutEventInput<E>,
+    ...events: EventBusPutEventInput<E>[]
+  ): void;
 }
 abstract class EventBusBase<E extends EventBusRuleInput>
   implements IEventBus<E>, Integration
@@ -120,9 +129,42 @@ abstract class EventBusBase<E extends EventBusRuleInput>
   readonly eventBusName: string;
   readonly eventBusArn: string;
 
+  readonly native: NativeIntegration<EventBusBase<E>>;
+
   constructor(readonly bus: aws_events.IEventBus) {
     this.eventBusName = bus.eventBusName;
     this.eventBusArn = bus.eventBusArn;
+
+    // Closure event bus base
+    const eventBusName = this.eventBusName;
+    this.native = <NativeIntegration<EventBusBase<E>>>{
+      bind: (context: Function<any, any>) => {
+        this.bus.grantPutEventsTo(context.resource);
+      },
+      preWarm: (prewarmContext: NativePreWarmContext) => {
+        prewarmContext.getOrInit(PrewarmClients.EVENT_BRIDGE);
+      },
+      call: async (args, preWarmContext) => {
+        const eventBridge = preWarmContext.getOrInit(
+          PrewarmClients.EVENT_BRIDGE
+        );
+        await eventBridge
+          .putEvents({
+            Entries: args.map((event) => ({
+              Detail: JSON.stringify(event.detail),
+              EventBusName: eventBusName,
+              DetailType: event["detail-type"],
+              Resources: event.resources,
+              Source: event.source,
+              Time:
+                typeof event.time === "number"
+                  ? new Date(event.time)
+                  : undefined,
+            })),
+          })
+          .promise();
+      },
+    };
   }
 
   asl(call: CallExpr, context: ASL) {
@@ -130,7 +172,7 @@ abstract class EventBusBase<E extends EventBusRuleInput>
 
     // Validate that the events are object literals.
     // Then normalize nested arrays of events into a single list of events.
-    // TODO Relax these restrictions: https://github.com/sam-goodwin/functionless/issues/101
+    // TODO Relax these restrictions: https://github.com/functionless/functionless/issues/101
     const eventObjs = call.args.reduce((events: ObjectLiteralExpr[], arg) => {
       if (isArrayLiteralExpr(arg.expr)) {
         if (!arg.expr.items.every(isObjectLiteralExpr)) {
@@ -225,8 +267,14 @@ abstract class EventBusBase<E extends EventBusRuleInput>
   }
 }
 
+export type EventBusPutEventInput<E extends EventBusRuleInput> = Partial<E> &
+  Pick<E, "detail" | "source" | "detail-type">;
+
 interface EventBusBase<E extends EventBusRuleInput> {
-  (event: Partial<E>, ...events: Partial<E>[]): void;
+  (
+    event: EventBusPutEventInput<E>,
+    ...events: EventBusPutEventInput<E>[]
+  ): void;
 }
 
 /**
@@ -247,9 +295,8 @@ interface EventBusBase<E extends EventBusRuleInput> {
  * // An event with the payload
  * interface myEvent extends EventBusRuleInput<Payload> {}
  *
- * const myAwsFunction = new aws_lambda.Function(this, 'myFunction', { ... });
  * // A function that expects the payload.
- * const myLambdaFunction = new functionless.Function<Payload, void>(myAwsFunction);
+ * const myLambdaFunction = new functionless.Function<Payload, void>(this, 'myFunction', ...);
  *
  * // instantiate an aws_events.EventBus Construct
  * const awsBus = new aws_events.EventBus(this, "mybus");

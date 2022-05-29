@@ -8,12 +8,13 @@ import {
   EventBusRuleInterface,
   EventBusTransformInterface,
   EventBusWhenInterface,
+  FunctionInterface,
   makeFunctionlessChecker,
   TsFunctionParameter,
 } from "./checker";
-import { BinaryOp, CanReference } from "./expression";
+import { BinaryOp } from "./expression";
 import { FunctionlessNode } from "./node";
-import { hasParent } from "./util";
+import { anyOf, hasParent } from "./util";
 
 export default compile;
 
@@ -49,6 +50,11 @@ export function compile(
   return (ctx) => {
     const functionless = ts.factory.createUniqueName("functionless");
     return (sf) => {
+      // Do not transform any of the files matched by "exclude"
+      if (excludeMatchers.some((matcher) => matcher.test(sf.fileName))) {
+        return sf;
+      }
+
       const functionlessContext = {
         requireFunctionless: false,
         get functionless() {
@@ -67,11 +73,6 @@ export function compile(
         ),
         ts.factory.createStringLiteral("functionless")
       );
-
-      // Do not transform any of the files matched by "exclude"
-      if (excludeMatchers.some((matcher) => matcher.test(sf.fileName))) {
-        return sf;
-      }
 
       const statements = sf.statements.map(
         (stmt) => visitor(stmt) as ts.Statement
@@ -93,7 +94,7 @@ export function compile(
         sf.libReferenceDirectives
       );
 
-      function visitor(node: ts.Node): ts.Node {
+      function visitor(node: ts.Node): ts.Node | ts.Node[] {
         const visit = () => {
           if (checker.isAppsyncResolver(node)) {
             return visitAppsyncResolver(node as ts.NewExpression);
@@ -111,6 +112,8 @@ export function compile(
             return visitEventBusRule(node);
           } else if (checker.isNewEventBusTransform(node)) {
             return visitEventTransform(node);
+          } else if (checker.isNewFunctionlessFunction(node)) {
+            return visitFunction(node, ctx);
           }
           return node;
         };
@@ -214,6 +217,267 @@ export function compile(
           }
         }
         return call;
+      }
+
+      function visitFunction(
+        func: FunctionInterface,
+        context: ts.TransformationContext
+      ): ts.Node {
+        const [_one, _two, _three, funcDecl] =
+          func.arguments.length === 4
+            ? func.arguments
+            : [
+                func.arguments[0],
+                func.arguments[1],
+                undefined,
+                func.arguments[2],
+              ];
+
+        return ts.factory.updateNewExpression(
+          func,
+          func.expression,
+          func.typeArguments,
+          [
+            _one,
+            _two,
+            ...(_three ? [_three] : []),
+            errorBoundary(() => toNativeFunction(funcDecl, context)),
+          ]
+        );
+      }
+
+      interface NativeExprContext {
+        preWarmContext: ts.Identifier;
+        closureNode: TsFunctionParameter;
+        /**
+         * Register an {@link IntegrationInvocation} found when processing a native closure.
+         *
+         * @param node - should be an {@link Integration}
+         * @param args - should be an array of {@link Argument}
+         */
+        registerIntegration: (
+          node: ts.Expression,
+          args: ts.ArrayLiteralExpression
+        ) => void;
+      }
+
+      /**
+       * A native function prepares a closure to be serialized,
+       * transforms functionless {@link Integrations} to be invoked at runtime,
+       * and extracts information needed to synthesize the Stack.
+       *
+       * Native Functions do not allow the creation of resources, CDK constructs or functionless.
+       *
+       * 1. Extracts functionless {@link Integrations} from the closure
+       * 2. Wraps the closure in another arrow function which accepts a {@link NativePrewarmContext}.
+       *    1. During synthesize (ex:, in a lambda {@link Function}) a prewarm context is generated
+       *       and fed into the outer, generated closure.
+       *    2. The {@link NativePreWarmContext} is a client/object cache which can be used to run once
+       *       before the first invocation of a lambda function.
+       * 3. Rewrites all of the integrations to invoke `await integration.native.call(args)` instead of `integration(args)`
+       *    Also tries to simplify integration references to be outside of the closure.
+       *    This reduces the amount of code and data that @functionless/nodejs-closure-serializer (a Pulumi closure serializer fork)
+       *    tries to serialize during synthesis.
+       * 4. Returns the {@link ParameterDecl}s for the closure
+       *
+       * @see Function for an example of how this is used.
+       *
+       * Input
+       *
+       * ```ts
+       * const bus = new EventBus() // an example of an Integration, could be any Integration
+       *
+       * (arg1: string) => {
+       *    bus({ source: "src" })
+       * }
+       * ```
+       *
+       * Output
+       *
+       * ```ts
+       * const bus = new EventBus()
+       * new NativeFunctionDecl(
+       *     [new ParameterDecl("arg1")], // parameters
+       *     (prewarmContext: NativePreWarmContext) =>
+       *        (arg1: string) => {
+       *            // call can make use of the cached clients in prewarmContext to avoid duplicate inline effect
+       *            await bus.native.call(prewarmContext, { source: "src" });
+       *        },
+       *     [bus] // integrations
+       * );
+       * ```
+       */
+      function toNativeFunction(
+        impl: TsFunctionParameter,
+        context: ts.TransformationContext
+      ): ts.NewExpression {
+        if (
+          !ts.isFunctionDeclaration(impl) &&
+          !ts.isArrowFunction(impl) &&
+          !ts.isFunctionExpression(impl)
+        ) {
+          throw new Error(
+            `Functionless reflection only supports function parameters with bodies, no signature only declarations or references. Found ${impl.getText()}.`
+          );
+        }
+
+        if (impl.body === undefined) {
+          throw new Error(
+            `cannot parse declaration-only function: ${impl.getText()}`
+          );
+        }
+
+        // collection of integrations that are extracted from the closure
+        const integrations: {
+          expr: ts.Expression;
+          args: ts.ArrayLiteralExpression;
+        }[] = [];
+
+        // a reference to a client/object cache which the integrations can use
+        const preWarmContext =
+          context.factory.createUniqueName("preWarmContext");
+
+        // Context object which is available when transforming the tree
+        const nativeExprContext: NativeExprContext = {
+          // a reference to a prewarm context that will be passed into the closure during synthesis/runtime
+          preWarmContext,
+          // the closure node used to determine if variables are inside or outside of the closure
+          closureNode: impl,
+          // pass up integrations from inside of the closure
+          registerIntegration: (integ, args) =>
+            integrations.push({ expr: integ, args }),
+        };
+
+        const body = toNativeExpr(
+          impl.body,
+          context,
+          nativeExprContext
+        ) as ts.ConciseBody;
+
+        // rebuilt the closure with the updated body
+        const closure = ts.factory.createArrowFunction(
+          impl.modifiers,
+          impl.typeParameters,
+          impl.parameters,
+          impl.type,
+          undefined,
+          body
+        );
+
+        return newExpr("NativeFunctionDecl", [
+          ts.factory.createArrayLiteralExpression(
+            impl.parameters
+              .map((param) => param.name.getText())
+              .map((arg) =>
+                newExpr("ParameterDecl", [ts.factory.createStringLiteral(arg)])
+              )
+          ),
+          // (prewarmContext) => closure;
+          context.factory.createArrowFunction(
+            undefined,
+            undefined,
+            [
+              context.factory.createParameterDeclaration(
+                undefined,
+                undefined,
+                undefined,
+                preWarmContext,
+                undefined,
+                undefined,
+                undefined
+              ),
+            ],
+            undefined,
+            undefined,
+            closure
+          ),
+          context.factory.createArrayLiteralExpression(
+            integrations.map(({ expr, args }) =>
+              context.factory.createObjectLiteralExpression([
+                context.factory.createPropertyAssignment("integration", expr),
+                context.factory.createPropertyAssignment("args", args),
+              ])
+            )
+          ),
+        ]);
+      }
+
+      function toNativeExpr(
+        node: ts.Node,
+        context: ts.TransformationContext,
+        nativeExprContext: NativeExprContext
+      ): ts.Node | undefined {
+        if (ts.isCallExpression(node)) {
+          // Integration nodes have a static "kind" property.
+          if (isIntegrationNode(node.expression)) {
+            const outOfScopeIntegrationReference = getOutOfScopeValueNode(
+              node.expression,
+              nativeExprContext.closureNode
+            );
+
+            if (!outOfScopeIntegrationReference) {
+              // integration variables can be CDK constructs which will fail serialization.
+              throw Error(
+                "Integration Variable must be defined out of scope: " +
+                  node.expression.getText()
+              );
+            }
+
+            // add the function identifier to the integrations
+            nativeExprContext.registerIntegration(
+              outOfScopeIntegrationReference,
+              // try to capture the arguments into the integration to use during synth (integration.native.bind).
+              context.factory.createArrayLiteralExpression(
+                node.arguments.map((arg) => {
+                  return toExpr(arg, nativeExprContext.closureNode);
+                })
+              )
+            );
+            // call the integration call function with the prewarm context and arguments
+            // At this point, we know native will not be undefined
+            // await integration.native.call(args, preWarmContext)
+            // TODO: Support both sync and async function invocations: https://github.com/functionless/functionless/issues/105
+
+            return context.factory.createAwaitExpression(
+              context.factory.createCallExpression(
+                context.factory.createPropertyAccessExpression(
+                  context.factory.createPropertyAccessExpression(
+                    node.expression,
+                    "native"
+                  ),
+                  "call"
+                ),
+                undefined,
+                [
+                  context.factory.createArrayLiteralExpression(node.arguments),
+                  nativeExprContext.preWarmContext,
+                ]
+              )
+            );
+          }
+        } else if (ts.isNewExpression(node)) {
+          const newType = checker.getTypeAtLocation(node);
+          // cannot create new resources in native runtime code.
+          const functionlessKind = checker.getFunctionlessTypeKind(newType);
+          if (checker.getFunctionlessTypeKind(newType)) {
+            throw Error(
+              `Cannot initialize new resources in a native function, found ${functionlessKind}.`
+            );
+          } else if (checker.isCDKConstruct(newType)) {
+            throw Error(
+              `Cannot initialize new CDK resources in a native function, found ${
+                newType.getSymbol()?.name
+              }.`
+            );
+          }
+        }
+
+        // let everything else fall through, process their children too
+        return ts.visitEachChild(
+          node,
+          (node) => toNativeExpr(node, context, nativeExprContext),
+          context
+        );
       }
 
       function toFunction(
@@ -341,8 +605,7 @@ export function compile(
           } else if (node.text === "null") {
             return newExpr("NullLiteralExpr", []);
           }
-          const kind = getKind(node);
-          if (kind !== undefined) {
+          if (isIntegrationNode(node)) {
             // if this is a reference to a Table or Lambda, retain it
             return ref(node);
           }
@@ -368,8 +631,7 @@ export function compile(
             ts.factory.createStringLiteral(node.text),
           ]);
         } else if (ts.isPropertyAccessExpression(node)) {
-          const kind = getKind(node);
-          if (kind !== undefined) {
+          if (isIntegrationNode(node)) {
             // if this is a reference to a Table or Lambda, retain it
             return ref(node);
           }
@@ -665,6 +927,315 @@ export function compile(
         return;
       }
 
+      /**
+       * Flattens {@link ts.BindingElement} (destructured assignments) to a series of
+       * {@link ts.ElementAccessExpression} or {@link ts.PropertyAccessExpression}
+       *
+       * Caveat: It is not possible to flatten a destructured ParameterDeclaration (({ a }) => {}).
+       *         Use {@link getDestructuredDeclaration} to determine if the {@link ts.BindingElement} is
+       *         {@link ts.VariableDeclaration} or a {@link ts.ParameterDeclaration}.
+       *
+       * given a
+       *
+       * { a } = b;
+       * -> b.a;
+       *
+       * { x: a } = b;
+       * -> b.x;
+       *
+       * { "x-x": a } = b;
+       * b["x-x"];
+       *
+       * { b: { a } } = c;
+       * -> c.b.a;
+       *
+       * [a] = l;
+       * -> l[0];
+       *
+       * [{ a }] = l;
+       * -> l[0].a;
+       *
+       * { a } = b.c;
+       * -> b.c.a;
+       *
+       * { [key]: a } = b;
+       * b[key];
+       */
+      function flattenDestructuredAssignment(
+        element: ts.BindingElement
+      ): ts.ElementAccessExpression | ts.PropertyAccessExpression {
+        // if the binding renames the property, get the original
+        // { a : x } -> a
+        // { a } -> a
+        // [a] -> 0
+        const name = ts.isArrayBindingPattern(element.parent)
+          ? element.pos
+          : // binding renames the property or is a nested binding pattern.
+          element.propertyName
+          ? element.propertyName
+          : // the "name" can be a binding pattern. In that case the propertyName will be set.
+            (element.name as ts.Identifier);
+
+        const getParent = () => {
+          // { a } = b;
+          if (ts.isVariableDeclaration(element.parent.parent)) {
+            if (!element.parent.parent.initializer) {
+              throw Error(
+                "Expected a initializer on a destructured assignment: " +
+                  element.getText()
+              );
+            }
+            return element.parent.parent.initializer;
+          } else if (ts.isBindingElement(element.parent.parent)) {
+            return flattenDestructuredAssignment(element.parent.parent);
+          } else {
+            throw Error(
+              "Cannot flatten destructured parameter: " + element.getText()
+            );
+          }
+        };
+
+        const parent = getParent();
+
+        // always use element access as this will work for all possible values.
+        // [parent][name]
+        return typeof name !== "number" && ts.isIdentifier(name)
+          ? ts.factory.createPropertyAccessExpression(parent, name)
+          : ts.factory.createElementAccessExpression(
+              parent,
+              typeof name !== "number" && ts.isComputedPropertyName(name)
+                ? name.expression
+                : name
+            );
+      }
+
+      /**
+       * Finds the top level declaration of a destructured binding element.
+       * Supports arbitrary nesting.
+       *
+       * const { a } = b; -> VariableDeclaration { initializer = b }
+       * const [a] = b; -> VariableDeclaration { initializer = b }
+       * ({ a }) => {} -> ParameterDeclaration { { a } }
+       * ([a]) => {} -> ParameterDeclaration { { a } }
+       */
+      function getDestructuredDeclaration(
+        element: ts.BindingElement
+      ): ts.VariableDeclaration | ts.ParameterDeclaration {
+        if (ts.isBindingElement(element.parent.parent)) {
+          return getDestructuredDeclaration(element.parent.parent);
+        }
+        return element.parent.parent;
+      }
+
+      /**
+       * Attempts to find the a version of a reference that is outside of a certain scope.
+       *
+       * This is useful for finding variables that have been instantiated outside of a closure, but
+       * renamed inside of the closure.
+       *
+       * When serializing the lambda functions, we want references from outside of the closure if possible.
+       *
+       * ```ts
+       * const bus = new EventBus()
+       * new Function(() => {
+       *     const busbus = bus;
+       *     busbus(...)
+       * })
+       * ```
+       *
+       * Can also follow property access.
+       *
+       * ```ts
+       * const x = { y : () => {} };
+       *
+       * () => {
+       *    const z = x;
+       *    z.y() // x.y() is returned
+       * }
+       * ```
+       *
+       * getOutOfScopeValueNode(z.y) => x.y
+       *
+       * ```ts
+       * const x = () => {};
+       *
+       * () => {
+       *    const z = { y: x };
+       *    z.y()
+       * }
+       * ```
+       *
+       * getOutOfScopeValueNode(z.y) => x
+       *
+       * The call to busbus can be resolved to bus if the scope is the array function.
+       */
+      function getOutOfScopeValueNode(
+        expression: ts.Expression,
+        scope: ts.Node
+      ): ts.Expression | undefined {
+        const symbol = checker.getSymbolAtLocation(expression);
+        if (symbol) {
+          if (isSymbolOutOfScope(symbol, scope)) {
+            return expression;
+          } else {
+            if (ts.isIdentifier(expression)) {
+              if (symbol.valueDeclaration) {
+                if (
+                  ts.isVariableDeclaration(symbol.valueDeclaration) &&
+                  symbol.valueDeclaration.initializer
+                ) {
+                  return getOutOfScopeValueNode(
+                    symbol.valueDeclaration.initializer,
+                    scope
+                  );
+                } else if (ts.isBindingElement(symbol.valueDeclaration)) {
+                  /* when we find an identifier that was created using a binding assignment
+                    flatten it and run the flattened form through again.
+                    const b = { a: 1 };
+                    () => {
+                      const c = b;
+                      const { a } = c;
+                    }
+                    -> b["a"];
+                  */
+                  const flattened = flattenDestructuredAssignment(
+                    symbol.valueDeclaration
+                  );
+                  return getOutOfScopeValueNode(flattened, scope);
+                }
+              }
+            }
+          }
+        }
+        if (
+          ts.isPropertyAccessExpression(expression) ||
+          ts.isElementAccessExpression(expression)
+        ) {
+          if (symbol && symbol.valueDeclaration) {
+            if (
+              ts.isPropertyAssignment(symbol.valueDeclaration) &&
+              anyOf(
+                ts.isIdentifier,
+                ts.isPropertyAccessExpression,
+                ts.isElementAccessExpression
+              )(symbol.valueDeclaration.initializer)
+            ) {
+              // this variable is assigned to by another variable, follow that node
+              return getOutOfScopeValueNode(
+                symbol.valueDeclaration.initializer,
+                scope
+              );
+            }
+          }
+          // this node is assigned a value, attempt to rewrite the parent
+          const outOfScope = getOutOfScopeValueNode(
+            expression.expression,
+            scope
+          );
+          return outOfScope
+            ? ts.isElementAccessExpression(expression)
+              ? ts.factory.updateElementAccessExpression(
+                  expression,
+                  outOfScope,
+                  expression.argumentExpression
+                )
+              : ts.factory.updatePropertyAccessExpression(
+                  expression,
+                  outOfScope,
+                  expression.name
+                )
+            : undefined;
+        }
+        return undefined;
+      }
+
+      /**
+       * Checks to see if a symbol is defined with the given scope.
+       *
+       * Any symbol that has no declaration or has a value declaration in the scope is considered to be in scope.
+       * Imports are considered out of scope.
+       *
+       * ```ts
+       * () => { // scope
+       *  const x = "y";
+       *  x // in scope
+       * }
+       * ```
+       *
+       * ```ts
+       * const x = "y"; // out of scope
+       * () => { // scope
+       *  x // in scope
+       * }
+       * ```
+       *
+       * ```ts
+       * import x from y;
+       *
+       * () => { // scope
+       *  x // out of scope
+       * }
+       * ```
+       *
+       * ```ts
+       * () => {
+       *    const { x } = y;
+       *    x // in scope
+       * }
+       * ```
+       *
+       * ```ts
+       * ({ x }) => {
+       *    x // in scope
+       * }
+       * ```
+       */
+      function isSymbolOutOfScope(symbol: ts.Symbol, scope: ts.Node): boolean {
+        if (symbol.valueDeclaration) {
+          if (ts.isShorthandPropertyAssignment(symbol.valueDeclaration)) {
+            const updatedSymbol = checker.getShorthandAssignmentValueSymbol(
+              symbol.valueDeclaration
+            );
+            return updatedSymbol
+              ? isSymbolOutOfScope(updatedSymbol, scope)
+              : false;
+          } else if (ts.isVariableDeclaration(symbol.valueDeclaration)) {
+            return !hasParent(symbol.valueDeclaration, scope);
+          } else if (ts.isBindingElement(symbol.valueDeclaration)) {
+            /*
+              check if the binding element's declaration is within the scope or not.
+
+              example: if the scope if func's body
+
+              ({ a }) => {
+                const { b } = a;
+                const func = ({ c }) => {
+                  const { d: { x, y } } = b;
+                }
+              }
+
+              // in scope: c, x, y
+              // out of scope: a, b
+            */
+            const declaration = getDestructuredDeclaration(
+              symbol.valueDeclaration
+            );
+            return !hasParent(declaration, scope);
+          }
+        } else if (symbol.declarations && symbol.declarations.length > 0) {
+          const [decl] = symbol.declarations;
+          // import x from y
+          if (
+            ts.isImportClause(decl) ||
+            ts.isImportSpecifier(decl) ||
+            ts.isNamespaceImport(decl)
+          ) {
+            return true;
+          }
+        }
+        return false;
+      }
+
       function exprToString(node: ts.Expression): string {
         if (ts.isIdentifier(node)) {
           return node.text;
@@ -696,9 +1267,7 @@ export function compile(
         );
       }
 
-      function getKind(
-        node: ts.Node
-      ): Extract<CanReference, "kind"> | undefined {
+      function isIntegrationNode(node: ts.Node): boolean {
         const exprType = checker.getTypeAtLocation(node);
         const exprKind = exprType.getProperty("kind");
         if (exprKind) {
@@ -706,11 +1275,9 @@ export function compile(
             exprKind,
             node
           );
-          if (exprKindType.isStringLiteral()) {
-            return exprKindType.value as any;
-          }
+          return exprKindType.isStringLiteral();
         }
-        return undefined;
+        return false;
       }
     };
   };

@@ -649,12 +649,15 @@ describe("not allowed", () => {
     );
   });
 
-  test("service call", () => {
-    const func = new Function<string, void>(null as any);
+  test("service call", async () => {
+    const stack = new Stack();
+
+    const func = new Function(stack, "func", async () => {});
     ebEventTargetTestCaseError<testEvent>(
       reflect(() => func("hello")),
       "Unsupported template expression of kind: CallExpr"
     );
+    await Promise.all(Function.promises);
   });
 
   test("math", () => {
@@ -696,7 +699,7 @@ describe("not allowed", () => {
   });
 });
 
-// https://github.com/sam-goodwin/functionless/issues/68
+// https://github.com/functionless/functionless/issues/68
 describe.skip("destructure", () => {
   test("descture parameter", () => {
     ebEventTargetTestCase<testEvent>(
