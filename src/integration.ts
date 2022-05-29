@@ -1,14 +1,28 @@
 import { AppSyncVtlIntegration } from "./appsync";
 import { ASL, State } from "./asl";
 import { CallExpr } from "./expression";
+import { Function, NativeIntegration } from "./function";
 import { FunctionlessNode } from "./node";
 import { AnyFunction } from "./util";
 import { VTL } from "./vtl";
 
 /**
+ * Maintain a typesafe runtime map of integration type keys to use elsewhere.
+ *
+ * For example, removing all but native integration from the {@link Function} closure.
+ */
+const INTEGRATION_TYPES: { [P in keyof IntegrationMethods<any>]: P } = {
+  appSyncVtl: "appSyncVtl",
+  asl: "asl",
+  native: "native",
+};
+
+export const INTEGRATION_TYPE_KEYS = Object.values(INTEGRATION_TYPES);
+
+/**
  * All integration methods supported by functionless.
  */
-interface IntegrationMethods {
+interface IntegrationMethods<F extends AnyFunction> {
   /**
    * Integrate with AppSync VTL applications.
    * @private
@@ -19,6 +33,10 @@ interface IntegrationMethods {
    * @private
    */
   asl: (call: CallExpr, context: ASL) => Omit<State, "Next">;
+  /**
+   * Native javascript code integrations that execute at runtime like Lambda.
+   */
+  native: NativeIntegration<F>;
 }
 
 /**
@@ -69,8 +87,10 @@ interface IntegrationMethods {
  * Implement the unhandledContext function to customize the error message for unsupported contexts.
  * Otherwise the error will be: `${this.name} is not supported by context ${context.kind}.`
  */
-export interface Integration<K extends string = string>
-  extends Partial<IntegrationMethods> {
+export interface Integration<
+  F extends AnyFunction = AnyFunction,
+  K extends string = string
+> extends Partial<IntegrationMethods<F>> {
   /**
    * Integration Handler kind - for example StepFunction.describeExecution
    */
@@ -92,9 +112,14 @@ export interface Integration<K extends string = string>
  * Functionless wraps Integration at runtime with this class.
  * @private
  */
-export class IntegrationImpl implements IntegrationMethods {
+export class IntegrationImpl<F extends AnyFunction = AnyFunction>
+  implements IntegrationMethods<F>
+{
   readonly kind: string;
   constructor(readonly integration: Integration) {
+    if (!integration) {
+      throw Error("Integrations cannot be undefined.");
+    }
     this.kind = integration.kind;
   }
 
@@ -118,6 +143,13 @@ export class IntegrationImpl implements IntegrationMethods {
     }
     return this.unhandledContext(context.kind);
   }
+
+  public get native(): NativeIntegration<F> {
+    if (this.integration.native) {
+      return this.integration.native;
+    }
+    return this.unhandledContext("Function");
+  }
 }
 
 /**
@@ -140,7 +172,7 @@ export class IntegrationImpl implements IntegrationMethods {
  * @private
  */
 export function makeIntegration<F extends AnyFunction, K extends string>(
-  integration: Integration<K>
+  integration: Integration<F, K>
 ): { kind: K } & F {
   return integration as unknown as { kind: K } & F;
 }
@@ -166,6 +198,8 @@ export function findIntegration(call: CallExpr): IntegrationImpl | undefined {
   }
 }
 
+export type CallContext = ASL | VTL | Function<any, any>;
+
 /**
  * Dive until we find a integration object.
  */
@@ -185,5 +219,3 @@ export function findDeepIntegration(
   }
   return undefined;
 }
-
-export type CallContext = ASL | VTL;

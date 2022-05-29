@@ -117,16 +117,14 @@ export interface IEventBusRule<T extends EventBusRuleInput> {
    * Send to lambda
    *
    * ```ts
-   * const awsFunc = aws_lambda.Function(this, 'awsTarget', { ... });
-   * const myFunction = new Function<Payload, void>(awsFunc);
+   * const myFunction = new Function<Payload, void>(this, 'awsTarget', ...);
    * bus.when(...).pipe(myFunction)
    * ```
    *
    * Send to event bus with DLQ and Retries
    *
    * ```ts
-   * const awsFunc = aws_lambda.Function(this, 'awsTarget', { ... });
-   * const myFunction = new Function<Payload, void>(awsFunc);
+   * const myFunction = new Function<Payload, void>(this, 'awsTarget', ...);
    * const myQueue = new aws_sqs.Queue(this, 'queue');
    * bus.when(...).pipe({ func: myFunction, deadLetterQueue: myQueue, retryAttempts: 10 );
    * ```

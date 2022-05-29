@@ -1,9 +1,10 @@
 import {
   App,
   aws_dynamodb,
-  aws_lambda,
   RemovalPolicy,
   Stack,
+  aws_events,
+  Duration,
 } from "aws-cdk-lib";
 import {
   $AWS,
@@ -15,9 +16,10 @@ import {
   Table,
   EventBus,
   EventBusRuleInput,
+  ExpressStepFunction,
 } from "functionless";
 import * as appsync from "@aws-cdk/aws-appsync-alpha";
-import path from "path";
+import * as path from "path";
 
 export const app = new App();
 export const stack = new Stack(app, "message-board");
@@ -150,15 +152,9 @@ export const createPost = new AppsyncResolver<{ title: string }, Post>(
 export const validateComment = new Function<
   { commentText: string },
   "ok" | "bad"
->(
-  new aws_lambda.Function(stack, "ValidateComment", {
-    code: aws_lambda.Code.fromInline(
-      `exports.handle = async function() { return 'ok'; }`
-    ),
-    handler: "index.handle",
-    runtime: aws_lambda.Runtime.NODEJS_14_X,
-  })
-);
+>(stack, "ValidateComment", async () => {
+  return "ok" as const;
+});
 
 export const commentValidationWorkflow = new StepFunction<
   { postId: string; commentId: string; commentText: string },
@@ -238,7 +234,7 @@ const customDeleteBus = new EventBus<MessageDeletedEvent | PostDeletedEvent>(
   "deleteBus"
 );
 
-export const deleteWorkflow = new StepFunction<{ postId: string }, void>(
+const deleteWorkflow = new StepFunction<{ postId: string }, void>(
   stack,
   "DeletePostWorkflow",
   (input) => {
@@ -344,25 +340,6 @@ export const getDeletionStatus = new AppsyncResolver<
   fieldName: "getDeletionStatus",
 });
 
-export interface Post<PostID extends string = string> {
-  pk: `Post|${PostID}`;
-  sk: "Post";
-  postId: PostID;
-  title: string;
-}
-
-export interface Comment<
-  PostID extends string = string,
-  CommentID extends string = string
-> {
-  pk: `Post|${PostID}`;
-  sk: `Comment|${CommentID}`;
-  postId: PostID;
-  commentId: CommentID;
-  commentText: string;
-  createdTime: string;
-}
-
 export interface CommentPage {
   nextToken?: string;
   comments: Comment[];
@@ -376,15 +353,11 @@ interface TestDeleteEvent
   extends EventBusRuleInput<{ postId: string }, "Delete", "test"> {}
 
 const sendNotification = new Function<Notification, void>(
-  new aws_lambda.Function(stack, "sendNotification", {
-    code: aws_lambda.Code.fromInline(`
-exports.handler = async (event) => {
-    console.log('notification: ', event)
-  };
-`),
-    runtime: aws_lambda.Runtime.NODEJS_14_X,
-    handler: "index.handler",
-  })
+  stack,
+  "sendNotification",
+  async (event) => {
+    console.log("notification: ", event);
+  }
 );
 
 const defaultBus = EventBus.default<TestDeleteEvent>(stack);
@@ -426,6 +399,89 @@ customDeleteBus
   .pipe(sendNotification);
 
 /**
+ * Native Function test
+ */
+
+const busbusbus = new aws_events.EventBus(stack, "busbus");
+
+const b = { bus: customDeleteBus };
+
+const func = new Function<undefined, string>(stack, "testFunc2", async () => {
+  return "hi";
+});
+
+const exprSfn = new ExpressStepFunction(stack, "exp", () => {
+  return "woo";
+});
+
+new Function(
+  stack,
+  "testFunc",
+  {
+    timeout: Duration.minutes(1),
+  },
+  async () => {
+    console.log(customDeleteBus.eventBusArn);
+    console.log(busbusbus.eventBusArn);
+    console.log("huh?!?!?!??!!");
+    console.log("strange");
+    const result = func();
+    console.log(`function result: ${result}`);
+    customDeleteBus({
+      "detail-type": "Delete-Post-Success",
+      source: "MessageDeleter",
+      detail: {
+        id: "from the test method!!",
+      },
+    });
+    const result2 = $AWS.EventBridge.putEvents({
+      Entries: [
+        {
+          EventBusName: customDeleteBus.eventBusArn,
+          Source: "MessageDeleter",
+          Detail: JSON.stringify({
+            id: "from the sdk put event method!",
+          }),
+          DetailType: "Delete-Post-Success",
+        },
+      ],
+    });
+    console.log(`bus: ${JSON.stringify(result2)}`);
+    const exc = deleteWorkflow({
+      input: {
+        postId: "something",
+      },
+    });
+    const { bus } = b;
+    bus({
+      "detail-type": "Delete-Message-Success",
+      detail: { count: 0 },
+      source: "MessageDeleter",
+    });
+    console.log(deleteWorkflow.describeExecution(exc.executionArn));
+    $AWS.DynamoDB.PutItem({
+      TableName: database,
+      Item: {
+        pk: { S: "Post|1" },
+        sk: { S: "Post" },
+        postId: {
+          S: "1",
+        },
+        title: { S: "myPost" },
+      },
+    });
+    const item = $AWS.DynamoDB.GetItem({
+      TableName: database,
+      ConsistentRead: true,
+      Key: { pk: { S: "Post|1" }, sk: { S: "Post" } },
+    });
+    console.log(item.Item?.pk?.S);
+    return exprSfn({});
+    // return "hi";
+  }
+);
+
+/**
  * GraphQL created with Code-First
  */
 const api2 = new appsync.GraphqlApi(stack, "Api2", {
@@ -435,7 +491,7 @@ const api2 = new appsync.GraphqlApi(stack, "Api2", {
 /*
   type Query {
     getPost(postId: string!): Post
-  } 
+  }
 
  type Post {
   postId: ID!
@@ -518,3 +574,22 @@ api2.addQuery(
     },
   })
 );
+
+export interface Post<PostID extends string = string> {
+  pk: `Post|${PostID}`;
+  sk: "Post";
+  postId: PostID;
+  title: string;
+}
+
+export interface Comment<
+  PostID extends string = string,
+  CommentID extends string = string
+> {
+  pk: `Post|${PostID}`;
+  sk: `Comment|${CommentID}`;
+  postId: PostID;
+  commentId: CommentID;
+  commentText: string;
+  createdTime: string;
+}

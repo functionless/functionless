@@ -1,7 +1,6 @@
 import { Construct } from "constructs";
 import {
   aws_dynamodb,
-  aws_lambda,
   aws_logs,
   aws_stepfunctions,
   RemovalPolicy,
@@ -48,13 +47,11 @@ export class PeopleDatabase extends Construct {
     this.personTable.resource.applyRemovalPolicy(RemovalPolicy.DESTROY);
 
     this.computeScore = new Function<Person, number>(
-      new aws_lambda.Function(this, "ComputeScore", {
-        code: aws_lambda.Code.fromInline(
-          "exports.handle = async function() {return 1;}"
-        ),
-        handler: "index.handle",
-        runtime: aws_lambda.Runtime.NODEJS_14_X,
-      })
+      this,
+      "ComputeScore",
+      async () => {
+        return 1;
+      }
     );
 
     this.testMachine = new ExpressStepFunction(this, "TestMachine", () => {

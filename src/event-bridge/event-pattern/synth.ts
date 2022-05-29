@@ -687,7 +687,7 @@ const negateDocument = (classDocument: PatternDocument): PatternDocument => {
 
 const negateClassification = (pattern: Pattern): Pattern => {
   if (isAggregatePattern(pattern)) {
-    throw Error("Can only negate simple statments like boolean and equals.");
+    throw Error("Can only negate simple statements like boolean and equals.");
   } else if (isAnythingButPattern(pattern)) {
     return Array.isArray(pattern.anythingBut)
       ? pattern.anythingBut.length > 1

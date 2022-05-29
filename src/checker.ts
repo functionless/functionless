@@ -3,6 +3,7 @@ import * as tsserver from "typescript/lib/tsserverlibrary";
 import { AppsyncResolver } from "./appsync";
 import { EventBus, EventBusRule } from "./event-bridge";
 import { EventBusTransform } from "./event-bridge/transform";
+import { Function } from "./function";
 import { ExpressStepFunction, StepFunction } from "./step-function";
 
 /**
@@ -32,6 +33,28 @@ export type EventBusMapInterface = ts.CallExpression & {
   arguments: [TsFunctionParameter];
 };
 
+export type FunctionInterface = ts.NewExpression & {
+  arguments:
+    | [
+        // scope
+        ts.Expression,
+        // id
+        ts.Expression,
+        // props
+        ts.Expression,
+        // closure
+        TsFunctionParameter
+      ]
+    | [
+        // scope
+        ts.Expression,
+        // id
+        ts.Expression,
+        // closure
+        TsFunctionParameter
+      ];
+};
+
 export type FunctionlessChecker = ReturnType<typeof makeFunctionlessChecker>;
 
 export function makeFunctionlessChecker(
@@ -47,6 +70,9 @@ export function makeFunctionlessChecker(
     isNewEventBusTransform,
     isReflectFunction,
     isStepFunction,
+    isNewFunctionlessFunction,
+    isCDKConstruct,
+    getFunctionlessTypeKind,
   };
 
   /**
@@ -169,6 +195,47 @@ export function makeFunctionlessChecker(
       );
     }
     return false;
+  }
+
+  function isNewFunctionlessFunction(node: ts.Node): node is FunctionInterface {
+    return (
+      ts.isNewExpression(node) &&
+      isFunctionlessClassOfKind(node.expression, Function.FunctionlessType) &&
+      // only take the form with the arrow function at the end.
+      (node.arguments?.length === 3
+        ? ts.isArrowFunction(node.arguments[2])
+        : node.arguments?.length === 4
+        ? ts.isArrowFunction(node.arguments[3])
+        : false)
+    );
+  }
+
+  /**
+   * Heuristically evaluate the fqn of a symbol to be in a module and of a type name.
+   *
+   * /somePath/node_modules/{module}/somePath.{typeName}
+   *
+   * isInstanceOf(typeSymbol, "constructs", "Construct")
+   * ex: /home/sussmans/functionless/node_modules/constructs/lib/index.js
+   */
+  function isInstanceOf(symbol: ts.Symbol, module: string, typeName: string) {
+    const find = /.*\/node_modules\/([^\/]*)\/.*\.(.*)$/g.exec(
+      checker.getFullyQualifiedName(symbol)
+    );
+
+    const [_, mod, type] = find ?? [];
+
+    return mod === module && type === typeName;
+  }
+
+  function isCDKConstruct(type: ts.Type): boolean {
+    const typeSymbol = type.getSymbol();
+
+    return (
+      ((typeSymbol && isInstanceOf(typeSymbol, "constructs", "Construct")) ||
+        type.getBaseTypes()?.some((t) => isCDKConstruct(t))) ??
+      false
+    );
   }
 
   /**

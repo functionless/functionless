@@ -43,7 +43,7 @@ export function ensure<T>(
   }
 }
 
-type EnsureOr<T extends ((a: any) => a is any)[]> = T[number] extends (
+export type EnsureOr<T extends ((a: any) => a is any)[]> = T[number] extends (
   a: any
 ) => a is infer T
   ? T

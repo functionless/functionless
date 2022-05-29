@@ -1,6 +1,6 @@
 import { aws_events } from "aws-cdk-lib";
 import { FunctionDecl } from "../declaration";
-import { Function } from "../function";
+import { IFunction } from "../function";
 import { StepFunction, ExpressStepFunction } from "../step-function";
 import { IEventBusRule } from "./rule";
 import { LambdaTargetProps, pipe, StateMachineTargetProps } from "./target";
@@ -60,13 +60,13 @@ export class EventBusTransform<T extends EventBusRuleInput, P> {
    * @see EventBusRule.pipe for more details on pipe.
    */
   pipe(props: LambdaTargetProps<P>): void;
-  pipe(func: Function<P, any>): void;
+  pipe(func: IFunction<P, any>): void;
   pipe(props: StateMachineTargetProps<P>): void;
   pipe(props: StepFunction<P, any>): void;
   pipe(props: ExpressStepFunction<P, any>): void;
   pipe(
     resource:
-      | Function<P, any>
+      | IFunction<P, any>
       | LambdaTargetProps<P>
       | StateMachineTargetProps<P>
       | StepFunction<P, any>
