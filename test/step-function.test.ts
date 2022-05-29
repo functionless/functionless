@@ -2646,7 +2646,7 @@ test("try, throw, catch, throw, finally, return", () => {
         Type: "Pass",
       },
       'throw new Error("little")': {
-        Next: `return "rock-star"`,
+        Next: 'return "rock-star"',
         Result: {
           message: "little",
         },

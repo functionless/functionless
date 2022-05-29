@@ -324,4 +324,4 @@ const response = table.query(..);
 response.nextToken;
 ```
 
-**Not yet supported**: Querying an Index, see [#136](https://github.com/sam-goodwin/functionless/issues/136).
+**Not yet supported**: Querying an Index, see [#136](https://github.com/functionless/functionless/issues/136).

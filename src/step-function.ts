@@ -1,5 +1,4 @@
 import * as appsync from "@aws-cdk/aws-appsync-alpha";
-import { Construct } from "constructs";
 import {
   Arn,
   ArnFormat,
@@ -11,8 +10,8 @@ import {
   Stack,
   Token,
 } from "aws-cdk-lib";
-
-import { FunctionDecl, isFunctionDecl } from "./declaration";
+import { Construct } from "constructs";
+import { AppSyncVtlIntegration } from "./appsync";
 import {
   ASL,
   isMapOrForEach,
@@ -21,7 +20,15 @@ import {
   States,
   Task,
 } from "./asl";
-import { VTL } from "./vtl";
+import { assertDefined, assertNodeKind } from "./assert";
+import { FunctionDecl, isFunctionDecl } from "./declaration";
+import {
+  EventBus,
+  EventBusPredicateRuleBase,
+  EventBusRule,
+  EventBusTargetIntegration,
+} from "./event-bridge";
+import { EventBusRuleInput } from "./event-bridge/types";
 import {
   CallExpr,
   isComputedPropertyNameExpr,
@@ -29,17 +36,9 @@ import {
   isObjectLiteralExpr,
   isSpreadAssignExpr,
 } from "./expression";
-import { AnyFunction, ensureItemOf } from "./util";
-import { assertDefined, assertNodeKind } from "./assert";
-import { EventBusRuleInput } from "./event-bridge/types";
-import {
-  EventBus,
-  EventBusPredicateRuleBase,
-  EventBusRule,
-} from "./event-bridge";
 import { Integration, makeIntegration } from "./integration";
-import { AppSyncVtlIntegration } from "./appsync";
-import { EventBusTargetIntegration } from "./event-bridge";
+import { AnyFunction, ensureItemOf } from "./util";
+import { VTL } from "./vtl";
 
 export type AnyStepFunction =
   | ExpressStepFunction<any, any>
@@ -63,7 +62,7 @@ export namespace $SFN {
     asl(call) {
       const seconds = call.args[0].expr;
       if (seconds === undefined) {
-        throw new Error(`the 'seconds' argument is required`);
+        throw new Error("the 'seconds' argument is required");
       }
 
       if (seconds.kind === "NumberLiteralExpr") {
@@ -96,7 +95,7 @@ export namespace $SFN {
     asl(call) {
       const timestamp = call.args[0]?.expr;
       if (timestamp === undefined) {
-        throw new Error(`the 'timestamp' argument is required`);
+        throw new Error("the 'timestamp' argument is required");
       }
 
       if (timestamp.kind === "StringLiteralExpr") {
@@ -216,7 +215,7 @@ export namespace $SFN {
     if (isMapOrForEach(call)) {
       const callbackfn = call.getArgument("callbackfn")?.expr;
       if (callbackfn === undefined || callbackfn.kind !== "FunctionExpr") {
-        throw new Error(`missing callbackfn in $SFN.map`);
+        throw new Error("missing callbackfn in $SFN.map");
       }
       const callbackStates = context.execute(callbackfn.body);
       const callbackStart = context.getStateName(callbackfn.body.step()!);
@@ -231,20 +230,20 @@ export namespace $SFN {
           ) {
             maxConcurrency = maxConcurrencyProp.expr.value;
             if (maxConcurrency <= 0) {
-              throw new Error(`maxConcurrency must be > 0`);
+              throw new Error("maxConcurrency must be > 0");
             }
           } else {
             throw new Error(
-              `property 'maxConcurrency' must be a NumberLiteralExpr`
+              "property 'maxConcurrency' must be a NumberLiteralExpr"
             );
           }
         } else {
-          throw new Error(`argument 'props' must be an ObjectLiteralExpr`);
+          throw new Error("argument 'props' must be an ObjectLiteralExpr");
         }
       }
       const array = call.getArgument("array")?.expr;
       if (array === undefined) {
-        throw new Error(`missing argument 'array'`);
+        throw new Error("missing argument 'array'");
       }
       const arrayPath = ASL.toJsonPath(array);
       return {
@@ -271,7 +270,7 @@ export namespace $SFN {
         ),
       };
     }
-    throw new Error(`invalid arguments to $SFN.map`);
+    throw new Error("invalid arguments to $SFN.map");
   }
 
   /**
@@ -303,12 +302,12 @@ export namespace $SFN {
         throw new Error("missing required argument 'paths'");
       }
       if (paths.kind !== "ArrayLiteralExpr") {
-        throw new Error(`invalid arguments to $SFN.parallel`);
+        throw new Error("invalid arguments to $SFN.parallel");
       }
       ensureItemOf(
         paths.items,
         isFunctionExpr,
-        `each parallel path must be an inline FunctionExpr`
+        "each parallel path must be an inline FunctionExpr"
       );
 
       return {
@@ -1283,7 +1282,7 @@ export class StepFunction<
 
       const task: Task = {
         Type: "Task",
-        Resource: `arn:aws:states:::aws-sdk:sfn:describeExecution`,
+        Resource: "arn:aws:states:::aws-sdk:sfn:describeExecution",
         Parameters: argValue,
       };
       return task;
@@ -1303,7 +1302,7 @@ export interface StepFunction<P extends Record<string, any> | undefined, O> {
 function getArgs(call: CallExpr) {
   const executionArn = call.args[0]?.expr;
   if (executionArn === undefined) {
-    throw new Error(`missing argument 'executionArn'`);
+    throw new Error("missing argument 'executionArn'");
   }
   return executionArn;
 }

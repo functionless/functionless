@@ -1,9 +1,9 @@
+import { aws_events, Stack } from "aws-cdk-lib";
+import { EventField } from "aws-cdk-lib/aws-events";
+import { Function, reflect, StepFunction } from "../src";
 import { EventBusRuleInput } from "../src/event-bridge";
 
-import { Function, reflect, StepFunction } from "../src";
-import { aws_events, Stack } from "aws-cdk-lib";
 import { ebEventTargetTestCase, ebEventTargetTestCaseError } from "./util";
-import { EventField } from "aws-cdk-lib/aws-events";
 
 type testEvent = EventBusRuleInput<{
   value: string;
@@ -23,6 +23,7 @@ test("event path", () => {
 
 test("event path index access", () => {
   ebEventTargetTestCase<testEvent>(
+    // eslint-disable-next-line dot-notation
     reflect((event) => event["source"]),
     aws_events.RuleTargetInput.fromEventPath("$.source")
   );
@@ -55,20 +56,20 @@ test("string formatting", () => {
 test("string formatting with constants", () => {
   ebEventTargetTestCase<testEvent>(
     reflect(() => `hello ${"hi?"}`),
-    aws_events.RuleTargetInput.fromText(`hello hi?`)
+    aws_events.RuleTargetInput.fromText("hello hi?")
   );
 });
 
 test("constant value", () => {
   ebEventTargetTestCase<testEvent>(
-    reflect(() => `hello`),
-    aws_events.RuleTargetInput.fromText(`hello`)
+    reflect(() => "hello"),
+    aws_events.RuleTargetInput.fromText("hello")
   );
 });
 
 test("string concat", () => {
   ebEventTargetTestCase<testEvent>(
-    reflect((event) => `hello ` + event.source),
+    reflect((event) => "hello " + event.source),
     aws_events.RuleTargetInput.fromText(
       `hello ${aws_events.EventField.fromPath("$.source")}`
     )
@@ -78,7 +79,7 @@ test("string concat", () => {
 test("optional assert", () => {
   ebEventTargetTestCase<testEvent>(
     reflect((event) => event.detail.optional!),
-    aws_events.RuleTargetInput.fromEventPath(`$.detail.optional`)
+    aws_events.RuleTargetInput.fromEventPath("$.detail.optional")
   );
 });
 
@@ -323,7 +324,7 @@ describe("predefined", () => {
       {
         bind: () => ({
           inputPathsMap: {},
-          inputTemplate: `{"evnt":<aws.events.event>}`,
+          inputTemplate: '{"evnt":<aws.events.event>}',
         }),
       }
     );
@@ -347,7 +348,7 @@ describe("predefined", () => {
       {
         bind: () => ({
           inputPathsMap: {},
-          inputTemplate: `{"value":<aws.events.rule-name>}`,
+          inputTemplate: '{"value":<aws.events.rule-name>}',
         }),
       }
     );
@@ -359,7 +360,7 @@ describe("predefined", () => {
       {
         bind: () => ({
           inputPathsMap: {},
-          inputTemplate: `{"value":<aws.events.rule-arn>}`,
+          inputTemplate: '{"value":<aws.events.rule-arn>}',
         }),
       }
     );
@@ -371,7 +372,7 @@ describe("predefined", () => {
       {
         bind: () => ({
           inputPathsMap: {},
-          inputTemplate: `{"value":<aws.events.event.json>}`,
+          inputTemplate: '{"value":<aws.events.event.json>}',
         }),
       }
     );
@@ -383,7 +384,7 @@ describe("predefined", () => {
       {
         bind: () => ({
           inputPathsMap: {},
-          inputTemplate: `{"value":<aws.events.ingestion-time>}`,
+          inputTemplate: '{"value":<aws.events.ingestion-time>}',
         }),
       }
     );
@@ -395,7 +396,7 @@ describe("predefined", () => {
       {
         bind: () => ({
           inputPathsMap: {},
-          inputTemplate: `{"value":<aws.events.rule-name>}`,
+          inputTemplate: '{"value":<aws.events.rule-name>}',
         }),
       }
     );
@@ -501,7 +502,7 @@ describe("referencing", () => {
       reflect(() => {
         const config = { value: "hi" };
 
-        return { val: config["value"] };
+        return { val: config.value };
       }),
       aws_events.RuleTargetInput.fromObject({
         val: "hi",
@@ -688,14 +689,14 @@ describe("not allowed", () => {
     ebEventTargetTestCaseError<testEvent>(
       reflect(() => {
         const obj = { val: "" } as any;
-        return { val: obj["blah"] };
+        return { val: obj.blah };
       }),
       "Cannot find property blah in Object with constant keys: val"
     );
   });
 });
 
-// https://github.com/sam-goodwin/functionless/issues/68
+// https://github.com/functionless/functionless/issues/68
 describe.skip("destructure", () => {
   test("descture parameter", () => {
     ebEventTargetTestCase<testEvent>(

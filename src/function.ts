@@ -1,12 +1,12 @@
 import * as appsync from "@aws-cdk/aws-appsync-alpha";
 import { aws_events_targets, aws_lambda } from "aws-cdk-lib";
-import { CallExpr, isVariableReference } from "./expression";
+import type { AppSyncVtlIntegration } from "./appsync";
 import { ASL } from "./asl";
 
 // @ts-ignore - imported for typedoc
-import type { AppsyncResolver, AppSyncVtlIntegration } from "./appsync";
-import { Integration } from "./integration";
 import { EventBusTargetIntegration } from "./event-bridge";
+import { CallExpr, isVariableReference } from "./expression";
+import { Integration } from "./integration";
 
 export function isFunction<P = any, O = any>(a: any): a is Function<P, O> {
   return a?.kind === "Function";

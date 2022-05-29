@@ -1,0 +1,9 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`step-function.ts 1`] = `
+"[96mtest/test-files/step-function.ts[0m:[93m10[0m:[93m35[0m - [91merror[0m[90m Functionless(100): [0marithmetic is not supported in a Step Function
+
+[7m10[0m new StepFunction(stack, \\"F\\", () => 1 + 2);
+[7m  [0m [91m                                  ~~~~~~[0m
+"
+`;

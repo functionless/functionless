@@ -1,7 +1,8 @@
-import { Construct } from "constructs";
 import { aws_iam, aws_stepfunctions } from "aws-cdk-lib";
+import { Construct } from "constructs";
 
 import { assertNever } from "./assert";
+import { FunctionDecl, isParameterDecl, isFunctionDecl } from "./declaration";
 import {
   Argument,
   CallExpr,
@@ -18,6 +19,9 @@ import {
   PropAccessExpr,
   StringLiteralExpr,
 } from "./expression";
+import { isFunction } from "./function";
+import { findIntegration } from "./integration";
+import { FunctionlessNode } from "./node";
 import {
   BlockStmt,
   DoStmt,
@@ -35,14 +39,10 @@ import {
   VariableStmt,
   WhileStmt,
 } from "./statement";
-import { anyOf } from "./util";
-import { findIntegration } from "./integration";
-import { FunctionDecl, isParameterDecl, isFunctionDecl } from "./declaration";
-import { FunctionlessNode } from "./node";
-import { visitEachChild } from "./visit";
-import { isFunction } from "./function";
-import { isTable } from "./table";
 import { isStepFunction } from "./step-function";
+import { isTable } from "./table";
+import { anyOf } from "./util";
+import { visitEachChild } from "./visit";
 
 export function isASL(a: any): a is ASL {
   return (a as ASL | undefined)?.kind === ASL.ContextName;
@@ -424,7 +424,7 @@ export class ASL {
 
     const start = this.transition(this.decl.body);
     if (start === undefined) {
-      throw new Error(`State Machine has no States`);
+      throw new Error("State Machine has no States");
     }
 
     this.definition = {
@@ -490,7 +490,7 @@ export class ASL {
         anyOf(isForOfStmt, isForInStmt, isWhileStmt, isDoStmt)
       );
       if (loop === undefined) {
-        throw new Error(`Stack Underflow`);
+        throw new Error("Stack Underflow");
       }
 
       return {
@@ -510,7 +510,7 @@ export class ASL {
         anyOf(isForOfStmt, isForInStmt, isWhileStmt, isDoStmt)
       );
       if (loop === undefined) {
-        throw new Error(`Stack Underflow`);
+        throw new Error("Stack Underflow");
       }
 
       return {
@@ -639,7 +639,7 @@ export class ASL {
       );
       if (parent?.kind === "ForInStmt" || parent?.kind === "ForOfStmt") {
         throw new Error(
-          `a 'return' statement is not allowed within a for loop`
+          "a 'return' statement is not allowed within a for loop"
         );
       }
 
@@ -685,7 +685,7 @@ export class ASL {
       };
     } else if (stmt.kind === "ThrowStmt") {
       if (stmt.expr.kind !== "NewExpr") {
-        throw new Error(`the expr of a ThrowStmt must be a NewExpr`);
+        throw new Error("the expr of a ThrowStmt must be a NewExpr");
       }
 
       const error = (stmt.expr as NewExpr).args
@@ -930,7 +930,7 @@ export class ASL {
               InputPath: ASL.toJsonPath(expr),
             };
           } catch {
-            throw new Error(`.filter with sub-tasks are not yet supported`);
+            throw new Error(".filter with sub-tasks are not yet supported");
           }
         }
       }
@@ -1087,7 +1087,7 @@ export class ASL {
    */
   private return(node: FunctionlessNode | undefined): string {
     if (node === undefined) {
-      throw new Error(`Stack Underflow`);
+      throw new Error("Stack Underflow");
     } else if (node.kind === "FunctionDecl" || node.kind === "FunctionExpr") {
       return this.getStateName(node.body.lastStmt!);
     } else if (node.kind === "ForInStmt" || node.kind === "ForOfStmt") {
@@ -1295,7 +1295,7 @@ export namespace ASL {
           ] = toJson(prop.expr);
         } else {
           throw new Error(
-            `computed name of PropAssignExpr is not supported in Amazon States Language`
+            "computed name of PropAssignExpr is not supported in Amazon States Language"
           );
         }
       }
@@ -1339,7 +1339,7 @@ export namespace ASL {
       const ref = expr.lookup();
       // If the identifier references a parameter expression and that parameter expression
       // is in a FunctionDecl and that Function is at the top (no parent).
-      // This logic needs to be updated to support destructured inputs: https://github.com/sam-goodwin/functionless/issues/68
+      // This logic needs to be updated to support destructured inputs: https://github.com/functionless/functionless/issues/68
       if (ref && isParameterDecl(ref) && isFunctionDecl(ref.parent)) {
         return "$";
       }
@@ -1359,7 +1359,7 @@ export namespace ASL {
     const start = expr.getArgument("start")?.expr;
     if (start?.kind !== "NumberLiteralExpr") {
       throw new Error(
-        `the 'start' argument of slice must be a NumberLiteralExpr`
+        "the 'start' argument of slice must be a NumberLiteralExpr"
       );
     }
 
@@ -1371,7 +1371,7 @@ export namespace ASL {
     ) {
       if (end?.kind !== "NumberLiteralExpr") {
         throw new Error(
-          `the 'end' argument of slice must be a NumberLiteralExpr`
+          "the 'end' argument of slice must be a NumberLiteralExpr"
         );
       }
       return `${toJsonPath(expr.expr.expr)}[${start.value}:${end.value}]`;
@@ -1400,7 +1400,7 @@ export namespace ASL {
     const predicate = expr.getArgument("predicate")?.expr;
     if (predicate?.kind !== "FunctionExpr") {
       throw new Error(
-        `the 'predicate' argument of slice must be a FunctionExpr`
+        "the 'predicate' argument of slice must be a FunctionExpr"
       );
     }
 
@@ -1411,7 +1411,7 @@ export namespace ASL {
       predicate.body.statements.length !== 1
     ) {
       throw new Error(
-        `a JSONPath filter expression only supports a single, in-line statement, e.g. .filter(a => a == "hello" || a === "world")`
+        'a JSONPath filter expression only supports a single, in-line statement, e.g. .filter(a => a == "hello" || a === "world")'
       );
     }
 
@@ -1431,23 +1431,23 @@ export namespace ASL {
         } else if (ref.kind === "ParameterDecl") {
           if (ref.parent !== predicate) {
             throw new Error(
-              `cannot reference a ParameterDecl other than those in .filter((item, index) =>) in a JSONPath filter expression`
+              "cannot reference a ParameterDecl other than those in .filter((item, index) =>) in a JSONPath filter expression"
             );
           }
           if (ref === ref.parent.parameters[0]) {
             return "@";
           } else if (ref === ref.parent.parameters[1]) {
             throw new Error(
-              `the 'index' parameter in a .filter expression is not supported`
+              "the 'index' parameter in a .filter expression is not supported"
             );
           } else {
             throw new Error(
-              `the 'array' parameter in a .filter expression is not supported`
+              "the 'array' parameter in a .filter expression is not supported"
             );
           }
         } else if (ref.kind === "VariableStmt") {
           throw new Error(
-            `cannot reference a VariableStmt within a JSONPath .filter expression`
+            "cannot reference a VariableStmt within a JSONPath .filter expression"
           );
         }
       } else if (expr.kind === "StringLiteralExpr") {
@@ -1503,7 +1503,7 @@ export namespace ASL {
         return `$.0_${element.name}`;
       } else {
         throw new Error(
-          `cannot use an Identifier to index an Array or Object except for an array in a for-in statement`
+          "cannot use an Identifier to index an Array or Object except for an array in a for-in statement"
         );
       }
     }
@@ -1652,7 +1652,7 @@ export namespace ASL {
         const isLiteralOrTypeOfExpr = anyOf(isLiteralExpr, isTypeOfExpr);
 
         if (isLiteralExpr(expr.left) && isLiteralExpr(expr.right)) {
-          throw new Error(`cannot compare two literal expressions`);
+          throw new Error("cannot compare two literal expressions");
         } else if (
           isLiteralOrTypeOfExpr(expr.left) ||
           isLiteralOrTypeOfExpr(expr.right)
@@ -1675,7 +1675,7 @@ export namespace ASL {
 
             if (literalExpr.kind !== "StringLiteralExpr") {
               throw new Error(
-                `typeof expression can only be compared against a string literal, such as typeof x === "string"`
+                'typeof expression can only be compared against a string literal, such as typeof x === "string"'
               );
             }
 
@@ -1867,12 +1867,12 @@ function toStateName(stmt: Stmt): string | undefined {
     if (stmt.expr) {
       return `return ${exprToString(stmt.expr)}`;
     } else {
-      return `return`;
+      return "return";
     }
   } else if (stmt.kind === "ThrowStmt") {
     return `throw ${exprToString(stmt.expr)}`;
   } else if (stmt.kind === "TryStmt") {
-    return `try`;
+    return "try";
   } else if (stmt.kind === "VariableStmt") {
     if (stmt.parent?.kind === "CatchClause") {
       return `catch(${stmt.name})`;
@@ -1922,7 +1922,7 @@ function exprToString(expr?: Expr): string {
   } else if (expr.kind === "Identifier") {
     return expr.name;
   } else if (expr.kind === "NullLiteralExpr") {
-    return `null`;
+    return "null";
   } else if (expr.kind === "NumberLiteralExpr") {
     return `${expr.value}`;
   } else if (expr.kind === "ObjectLiteralExpr") {

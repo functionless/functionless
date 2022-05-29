@@ -12,9 +12,9 @@ import {
   synthesizeEventPattern,
   synthesizePatternDocument,
 } from "./event-pattern";
-import { EventBusRuleInput } from "./types";
-import { EventTransformFunction, EventBusTransform } from "./transform";
 import { PatternDocument } from "./event-pattern/pattern";
+import { EventTransformFunction, EventBusTransform } from "./transform";
+import { EventBusRuleInput } from "./types";
 
 /**
  * A function interface used by the {@link EventBus}'s when function to generate a rule.

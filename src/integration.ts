@@ -1,10 +1,10 @@
-import { CallExpr } from "./expression";
-import { ASL, State } from "./asl";
-import { FunctionlessNode } from "./node";
-import { VTL } from "./vtl";
-import { AnyFunction } from "./util";
 import { AppSyncVtlIntegration } from "./appsync";
+import { ASL, State } from "./asl";
 import { EventBus, EventBusTargetIntegration } from "./event-bridge";
+import { CallExpr } from "./expression";
+import { FunctionlessNode } from "./node";
+import { AnyFunction } from "./util";
+import { VTL } from "./vtl";
 
 /**
  * All integration methods supported by functionless.

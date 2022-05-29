@@ -294,7 +294,7 @@ export const intersectNumericAggregation = (
   if (joinedRanges.length === 0) {
     return {
       never: true,
-      reason: `Zero intersection numeric ranges.`,
+      reason: "Zero intersection numeric ranges.",
     };
   }
 
@@ -319,7 +319,7 @@ export const intersectNumericAggregationWithRange = (
   if (joinedRanges.length === 0) {
     return {
       never: true,
-      reason: `Zero intersection numeric ranges.`,
+      reason: "Zero intersection numeric ranges.",
     };
   }
   return reduceNumericAggregate({ ranges: joinedRanges });

@@ -354,7 +354,7 @@ Then, the `ResultPath` of the `Catch` will write the error to a variable, e.g. `
 
 Two intermediate states, `catch(err)` and `0_catch(err)`, are created to parse the contents of the error. `catch(err)` first parses the JSON payload from the `Cause` and stores in a temporary variable, `$.err.0_ParsedError` and then `0_catch(err)` writes the error back to `$.err.
 
-_Track [#139](https://github.com/sam-goodwin/functionless/issues/139) for discussed improvements to this translation._
+_Track [#139](https://github.com/functionless/functionless/issues/139) for discussed improvements to this translation._
 
 ```json
 {
