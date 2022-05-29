@@ -127,7 +127,7 @@ export interface IEventBus<E extends EventBusRuleInput = EventBusRuleInput>
   /**
    * Creates a rule that matches all events on the bus.
    *
-   * When no scope or id are given, the bus is used as the scope and the id will be `whenAny`.
+   * When no scope or id are given, the bus is used as the scope and the id will be `all`.
    * The rule created will be a singleton.
    *
    * When scope and id are given, a new rule will be created each time.
@@ -139,13 +139,13 @@ export interface IEventBus<E extends EventBusRuleInput = EventBusRuleInput>
    * const func = new Function(scope, 'func', async (payload: {id: string}) => console.log(payload.id));
    *
    * bus
-   *  .whenAny()
+   *  .all()
    *  .map(event => ({id: event.id}))
    *  .pipe(func);
    * ```
    */
-  whenAny(): EventBusPredicateRuleBase<E>;
-  whenAny(scope: Construct, id: string): EventBusPredicateRuleBase<E>;
+  all(): EventBusPredicateRuleBase<E>;
+  all(scope: Construct, id: string): EventBusPredicateRuleBase<E>;
 }
 abstract class EventBusBase<E extends EventBusRuleInput>
   implements IEventBus<E>, Integration
@@ -161,7 +161,7 @@ abstract class EventBusBase<E extends EventBusRuleInput>
 
   protected static singletonDefaultNode = "__DefaultBus";
 
-  private whenAnyRule: EventBusPredicateRuleBase<E> | undefined;
+  private allRule: EventBusPredicateRuleBase<E> | undefined;
 
   constructor(readonly bus: aws_events.IEventBus) {
     this.eventBusName = bus.eventBusName;
@@ -293,20 +293,20 @@ abstract class EventBusBase<E extends EventBusRuleInput>
   /**
    * @inheritdoc
    */
-  whenAny(): EventBusPredicateRuleBase<E>;
-  whenAny(scope: Construct, id: string): EventBusPredicateRuleBase<E>;
-  whenAny(scope?: Construct, id?: string): EventBusPredicateRuleBase<E> {
+  all(): EventBusPredicateRuleBase<E>;
+  all(scope: Construct, id: string): EventBusPredicateRuleBase<E>;
+  all(scope?: Construct, id?: string): EventBusPredicateRuleBase<E> {
     if (!scope || !id) {
-      if (!this.whenAnyRule) {
-        this.whenAnyRule = new EventBusPredicateRuleBase<E>(
+      if (!this.allRule) {
+        this.allRule = new EventBusPredicateRuleBase<E>(
           this.bus,
-          "whenAny",
+          "all",
           this as IEventBus<any>,
           // an empty doc will be converted to `{ source: [{ prefix: "" }]}`
           { doc: {} }
         );
       }
-      return this.whenAnyRule;
+      return this.allRule;
     }
     return new EventBusPredicateRuleBase<E>(scope, id, this as IEventBus<any>, {
       doc: {},

@@ -327,12 +327,12 @@ test("when any", () => {
   const bus = EventBus.default<tt>(stack);
 
   bus
-    .whenAny()
+    .all()
     .map((event) => event.id)
     // should fail compilation if the types don't match
     .pipe(lambda);
 
-  const rule = bus.bus.node.tryFindChild("whenAny");
+  const rule = bus.bus.node.tryFindChild("all");
   expect(rule).not.toBeUndefined();
 });
 
@@ -342,9 +342,9 @@ test("when any pipe", () => {
   );
   const bus = EventBus.default<tt>(stack);
 
-  bus.whenAny().pipe(lambda);
+  bus.all().pipe(lambda);
 
-  const rule = bus.bus.node.tryFindChild("whenAny");
+  const rule = bus.bus.node.tryFindChild("all");
   expect(rule).not.toBeUndefined();
 });
 
@@ -354,11 +354,11 @@ test("when any multiple times does not create new rules", () => {
   );
   const bus = EventBus.default<tt>(stack);
 
-  bus.whenAny().pipe(lambda);
-  bus.whenAny().pipe(lambda);
-  bus.whenAny().pipe(lambda);
+  bus.all().pipe(lambda);
+  bus.all().pipe(lambda);
+  bus.all().pipe(lambda);
 
-  const rule = bus.bus.node.tryFindChild("whenAny");
+  const rule = bus.bus.node.tryFindChild("all");
   expect(rule).not.toBeUndefined();
 });
 
@@ -368,7 +368,7 @@ test("when any pipe", () => {
   );
   const bus = EventBus.default<tt>(stack);
 
-  bus.whenAny(stack, "anyRule").pipe(lambda);
+  bus.all(stack, "anyRule").pipe(lambda);
 
   const rule = stack.node.tryFindChild("anyRule");
   expect(rule).not.toBeUndefined();
@@ -378,7 +378,7 @@ test("when any when pipe", () => {
   const bus = EventBus.default<tt>(stack);
 
   const rule = bus
-    .whenAny(stack, "anyRule")
+    .all(stack, "anyRule")
     .when("rule1", (event) => event.id === "test");
 
   expect(synthesizeEventPattern(rule.document)).toEqual({ id: ["test"] });
