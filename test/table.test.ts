@@ -1,7 +1,6 @@
 import { App, aws_dynamodb, Stack } from "aws-cdk-lib";
 import "jest";
-import { $util, AppsyncContext, reflect } from "../src";
-import { Table } from "../src";
+import { Table, $util, AppsyncContext, reflect } from "../src";
 import { VTL } from "../src/vtl";
 import { appsyncTestCase } from "./util";
 

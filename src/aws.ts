@@ -1,28 +1,28 @@
-import {
-  UpdateItemInput,
-  UpdateItemOutput,
-} from "typesafe-dynamodb/lib/update-item";
-import { PutItemInput, PutItemOutput } from "typesafe-dynamodb/lib/put-item";
-import { ScanInput, ScanOutput } from "typesafe-dynamodb/lib/scan";
-import { QueryInput, QueryOutput } from "typesafe-dynamodb/lib/query";
-import { GetItemInput, GetItemOutput } from "typesafe-dynamodb/lib/get-item";
+import type { DynamoDB as AWSDynamoDB } from "aws-sdk";
+import { JsonFormat } from "typesafe-dynamodb";
 import {
   DeleteItemInput,
   DeleteItemOutput,
 } from "typesafe-dynamodb/lib/delete-item";
+import { GetItemInput, GetItemOutput } from "typesafe-dynamodb/lib/get-item";
 import { TableKey } from "typesafe-dynamodb/lib/key";
-import { JsonFormat } from "typesafe-dynamodb";
+import { PutItemInput, PutItemOutput } from "typesafe-dynamodb/lib/put-item";
+import { QueryInput, QueryOutput } from "typesafe-dynamodb/lib/query";
+import { ScanInput, ScanOutput } from "typesafe-dynamodb/lib/scan";
+import {
+  UpdateItemInput,
+  UpdateItemOutput,
+} from "typesafe-dynamodb/lib/update-item";
+import { ASL } from "./asl";
 import {
   isObjectLiteralExpr,
   isVariableReference,
   ObjectLiteralExpr,
 } from "./expression";
-import { ASL } from "./asl";
 import { Function, isFunction } from "./function";
+import { Integration, makeIntegration } from "./integration";
 import { Table, isTable } from "./table";
 
-import type { DynamoDB as AWSDynamoDB } from "aws-sdk";
-import { Integration, makeIntegration } from "./integration";
 import type { AnyFunction } from "./util";
 
 type Item<T extends Table<any, any, any>> = T extends Table<infer I, any, any>
@@ -267,12 +267,12 @@ export namespace $AWS {
             tableProp?.kind !== "PropAssignExpr" ||
             tableProp.expr.kind !== "ReferenceExpr"
           ) {
-            throw new Error(``);
+            throw new Error("");
           }
 
           const table = tableProp.expr.ref();
           if (!isTable(table)) {
-            throw new Error(``);
+            throw new Error("");
           }
           if (
             operationName === "deleteItem" ||
@@ -322,27 +322,27 @@ export namespace $AWS {
       asl(call) {
         const input = call.args[0].expr;
         if (input === undefined) {
-          throw new Error(`missing argument 'input'`);
+          throw new Error("missing argument 'input'");
         } else if (input.kind !== "ObjectLiteralExpr") {
-          throw new Error(`argument 'input' must be an ObjectLiteralExpr`);
+          throw new Error("argument 'input' must be an ObjectLiteralExpr");
         }
         const functionName = input.getProperty("FunctionName")?.expr;
         if (functionName === undefined) {
-          throw new Error(`missing required property 'FunctionName'`);
+          throw new Error("missing required property 'FunctionName'");
         } else if (functionName.kind !== "ReferenceExpr") {
           throw new Error(
-            `property 'FunctionName' must reference a functionless.Function`
+            "property 'FunctionName' must reference a functionless.Function"
           );
         }
         const functionRef = functionName.ref();
         if (!isFunction(functionRef)) {
           throw new Error(
-            `property 'FunctionName' must reference a functionless.Function`
+            "property 'FunctionName' must reference a functionless.Function"
           );
         }
         const payload = input.getProperty("Payload")?.expr;
         if (payload === undefined) {
-          throw new Error(`missing property 'payload'`);
+          throw new Error("missing property 'payload'");
         }
         return {
           Type: "Task",

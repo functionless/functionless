@@ -1148,6 +1148,11 @@
     ts-node "^9"
     tslib "^2"
 
+"@functionless/language-service@^0.0.1":
+  version "0.0.1"
+  resolved "https://registry.yarnpkg.com/@functionless/language-service/-/language-service-0.0.1.tgz#172b24b811860e5650c589f6ea45a96768d170dd"
+  integrity sha512-5p7Zth6XZymrByh2qbhZknkIy5m8jVbXAgmK6Wm1eonmazo6lOGsLNjdSX9yrbo3ZrxuiSRTx6SDMHqC+OTvmA==
+
 "@graphql-codegen/cli@^2.6.2":
   version "2.6.2"
   resolved "https://registry.yarnpkg.com/@graphql-codegen/cli/-/cli-2.6.2.tgz#a9aa4656141ee0998cae8c7ad7d0bf9ca8e0c9ae"

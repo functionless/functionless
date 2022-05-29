@@ -304,13 +304,13 @@ new Function(scope, "foo", async () => {
 
 **Warning**: By moving the value outside of the closure, the `allowList` value will be serialized as JSON into the bundle. This can also affect your performance by bloating the size of the bundle.
 
-**Warning**: The `allow-list.json` file will not be automatically included in your bundle. See [#135](https://github.com/sam-goodwin/functionless/issues/135)
+**Warning**: The `allow-list.json` file will not be automatically included in your bundle. See [#135](https://github.com/functionless/functionless/issues/135)
 
 ## Limitations
 
 The bundler does not detect references to static files and include them by default.
 
-See: [#135](https://github.com/sam-goodwin/functionless/issues/135)
+See: [#135](https://github.com/functionless/functionless/issues/135)
 
 ```ts
 let _allowList;

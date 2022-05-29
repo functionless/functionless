@@ -1,6 +1,5 @@
 import "jest";
-import { $util } from "../src";
-import { AppsyncContext } from "../src";
+import { $util, AppsyncContext } from "../src";
 import { reflect } from "../src/reflect";
 import { returnExpr, appsyncTestCase } from "./util";
 
@@ -182,7 +181,7 @@ test("push element to array is renamed to add", () => {
   );
 });
 
-// TODO https://github.com/sam-goodwin/functionless/issues/8
+// TODO https://github.com/functionless/functionless/issues/8
 // test("push multiple args is expanded to multiple add calls", () => {
 //   const template = reflect((context: AppsyncContext<{ list: string[] }>) => {
 //     list.push("hello", "world");

@@ -243,7 +243,7 @@ export const flattenExpression = (expr: Expr, scope: EventScope): Expr => {
         }
         return val.expr;
       }
-      throw Error(`Object access must be a string.`);
+      throw Error("Object access must be a string.");
     } else if (isArrayLiteralExpr(parent)) {
       if (typeof key === "number") {
         return parent.items[key];

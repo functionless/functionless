@@ -1,7 +1,8 @@
 import { aws_dynamodb, CfnOutput } from "aws-cdk-lib";
-import { clientConfig, localstackTestSuite } from "./localstack";
-import { $AWS, EventBus, EventBusRuleInput, StepFunction, Table } from "../src";
+// eslint-disable-next-line import/no-extraneous-dependencies
 import { EventBridge, DynamoDB } from "aws-sdk";
+import { $AWS, EventBus, EventBusRuleInput, StepFunction, Table } from "../src";
+import { clientConfig, localstackTestSuite } from "./localstack";
 
 const EB = new EventBridge(clientConfig);
 const DB = new DynamoDB(clientConfig);
@@ -105,7 +106,7 @@ localstackTestSuite("eventBusStack", (testResource) => {
         }).promise();
         if (!item.Item && attempts) {
           await new Promise((resolve) => setTimeout(resolve, waitMillis));
-          return await getItem(attempts - 1, waitMillis * factor, factor);
+          return getItem(attempts - 1, waitMillis * factor, factor);
         }
         return item;
       };
@@ -116,7 +117,7 @@ localstackTestSuite("eventBusStack", (testResource) => {
       // 3 - 4s
       // 4 - 8s
       // 5 - 16s
-      const item = await getItem(5, 1000, 2);
+      const item = await getItem(5, 10000, 2);
 
       expect(item.Item).toBeDefined();
     }

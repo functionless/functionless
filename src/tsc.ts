@@ -1,14 +1,36 @@
 import path from "path";
 import fs from "fs-extra";
+
 import ts from "typescript";
+import { makeFunctionlessChecker } from "./checker";
 import { compile } from "./compile";
+import { formatDiagnosticsWithColorAndContext } from "./format-error";
+import { validate } from "./validate";
+
+export interface TscProps {
+  /**
+   * Whether to emit .d.ts and .js files or only validate.
+   *
+   * @default true
+   */
+  emit?: boolean;
+  /**
+   * Whether to run TypeScript's default type checking.
+   *
+   * @default true
+   */
+  checkTsErrors?: boolean;
+}
 
 /**
  * Programmatically runs the typescript compiler.
  *
  * This is useful for debugging the transformer logic.
  */
-export async function tsc(projectRoot: string = process.cwd()) {
+export async function tsc(
+  projectRoot: string = process.cwd(),
+  props?: TscProps
+) {
   const tsConfigPath = path.join(projectRoot, "tsconfig.json");
   let tsConfig: {
     include: string[];
@@ -41,32 +63,43 @@ export async function tsc(projectRoot: string = process.cwd()) {
     compilerHost
   );
 
-  program.emit(
-    undefined,
-    async (fileName, data, _cancellationToken, onError) => {
-      try {
-        await fs.promises.mkdir(path.dirname(fileName), { recursive: true });
+  const checker = makeFunctionlessChecker(program.getTypeChecker());
 
-        await fs.promises.writeFile(fileName, data);
-      } catch (err) {
-        if (onError) {
-          onError((err as any).message);
+  if (props?.emit !== false) {
+    program.emit(
+      undefined,
+      async (fileName, data, _cancellationToken, onError) => {
+        try {
+          await fs.promises.mkdir(path.dirname(fileName), { recursive: true });
+
+          await fs.promises.writeFile(fileName, data);
+        } catch (err) {
+          if (onError) {
+            onError((err as any).message);
+          }
         }
+      },
+      undefined,
+      undefined,
+      {
+        before: [compile(program)],
       }
-    },
-    undefined,
-    undefined,
-    {
-      before: [compile(program)],
-    }
+    );
+  }
+
+  const tsDiagnostics =
+    props?.checkTsErrors !== false ? program.getSemanticDiagnostics() : [];
+  const functionlessDiagnostics = program
+    .getSourceFiles()
+    .flatMap((sf) => validate(ts, checker, sf));
+
+  const semanticDiagnostics = [...tsDiagnostics, ...functionlessDiagnostics];
+
+  process.stderr.write(
+    formatDiagnosticsWithColorAndContext(semanticDiagnostics, compilerHost)
   );
 
-  const semanticDiagnostics = program.getSemanticDiagnostics();
-
   if (semanticDiagnostics.length > 0) {
-    process.stderr.write(
-      ts.formatDiagnosticsWithColorAndContext(semanticDiagnostics, compilerHost)
-    );
     throw new Error(
       `Compilation Failed with ${semanticDiagnostics.length} diagnostic errors`
     );
