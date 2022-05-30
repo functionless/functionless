@@ -39,3 +39,13 @@ new StepFunction(
   () => "hello" + { place: "world" }
 );
 new StepFunction(stack, '("hello" + ["world"])', () => "hello" + ["world"]);
+
+const array = ["world"];
+new StepFunction(stack, '("hello" + ref)', () => "hello" + array);
+
+const object = { place: "world" };
+new StepFunction(
+  stack,
+  '("hello" + { place: "world" })',
+  () => "hello" + object
+);

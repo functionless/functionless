@@ -62,7 +62,7 @@ export function makeFunctionlessChecker(
 ) {
   return {
     ...checker,
-    isConstant: isConstantTsNode,
+    isConstant,
     isAppsyncResolver,
     isEventBusRuleMapFunction,
     isEventBusWhenFunction,
@@ -278,6 +278,67 @@ export function makeFunctionlessChecker(
     }
     return undefined;
   }
+
+  /**
+   * Check if a TS node is a constant value that can be evaluated at compile time.
+   */
+  function isConstant(node: ts.Node): boolean {
+    if (
+      ts.isStringLiteral(node) ||
+      ts.isNumericLiteral(node) ||
+      node.kind === ts.SyntaxKind.TrueKeyword ||
+      node.kind === ts.SyntaxKind.FalseKeyword ||
+      node.kind === ts.SyntaxKind.NullKeyword ||
+      node.kind === ts.SyntaxKind.UndefinedKeyword
+    ) {
+      return true;
+    } else if (ts.isIdentifier(node)) {
+      const sym = checker
+        .getSymbolsInScope(
+          node,
+          // eslint-disable-next-line no-bitwise
+          ts.SymbolFlags.BlockScopedVariable |
+            ts.SymbolFlags.FunctionScopedVariable
+        )
+        .find((sym) => sym.name === node.text);
+      if (sym?.valueDeclaration) {
+        return isConstant(sym.valueDeclaration);
+      }
+    } else if (ts.isVariableDeclaration(node) && node.initializer) {
+      return isConstant(node.initializer);
+    } else if (ts.isPropertyAccessExpression(node)) {
+      return isConstant(node.expression);
+    } else if (ts.isElementAccessExpression(node)) {
+      return isConstant(node.argumentExpression) && isConstant(node.expression);
+    } else if (ts.isArrayLiteralExpression(node)) {
+      return (
+        node.elements.length === 0 ||
+        node.elements.find((e) => !isConstant(e)) === undefined
+      );
+    } else if (ts.isSpreadElement(node)) {
+      return isConstant(node.expression);
+    } else if (ts.isObjectLiteralExpression(node)) {
+      return (
+        node.properties.length === 0 ||
+        node.properties.find((e) => !isConstant(e)) === undefined
+      );
+    } else if (ts.isPropertyAssignment(node)) {
+      return isConstant(node.initializer);
+    } else if (ts.isSpreadAssignment(node)) {
+      return isConstant(node.expression);
+    } else if (
+      ts.isBinaryExpression(node) &&
+      isArithmeticToken(node.operatorToken.kind)
+    ) {
+      return isConstant(node.left) && isConstant(node.right);
+    } else if (
+      ts.isPrefixUnaryExpression(node) &&
+      node.operator === ts.SyntaxKind.MinusToken
+    ) {
+      return isConstant(node.operand);
+    }
+    return false;
+  }
 }
 
 const ArithmeticOperators = [
@@ -296,31 +357,4 @@ export function isArithmeticToken(
   token: ts.SyntaxKind
 ): token is ArithmeticToken {
   return ArithmeticOperators.includes(token as ArithmeticToken);
-}
-
-/**
- * Check if a TS node is a constant value that can be evaluated at compile time.
- */
-export function isConstantTsNode(node: ts.Node): boolean {
-  if (
-    ts.isStringLiteral(node) ||
-    ts.isNumericLiteral(node) ||
-    node.kind === ts.SyntaxKind.TrueKeyword ||
-    node.kind === ts.SyntaxKind.FalseKeyword ||
-    node.kind === ts.SyntaxKind.NullKeyword ||
-    node.kind === ts.SyntaxKind.UndefinedKeyword
-  ) {
-    return true;
-  } else if (
-    ts.isBinaryExpression(node) &&
-    isArithmeticToken(node.operatorToken.kind)
-  ) {
-    return isConstantTsNode(node.left) && isConstantTsNode(node.right);
-  } else if (
-    ts.isPrefixUnaryExpression(node) &&
-    node.operator === ts.SyntaxKind.MinusToken
-  ) {
-    return isConstantTsNode(node.operand);
-  }
-  return false;
 }

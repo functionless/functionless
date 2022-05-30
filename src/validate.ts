@@ -1,9 +1,5 @@
 import type * as typescript from "typescript";
-import {
-  FunctionlessChecker,
-  isArithmeticToken,
-  isConstantTsNode,
-} from "./checker";
+import { FunctionlessChecker, isArithmeticToken } from "./checker";
 
 /**
  * Validates a TypeScript SourceFile containing Functionless primitives does not
@@ -64,8 +60,8 @@ export function validate(
     if (
       (ts.isBinaryExpression(node) &&
         isArithmeticToken(node.operatorToken.kind) &&
-        !isConstantTsNode(node)) ||
-      (ts.isPrefixUnaryExpression(node) && !isConstantTsNode(node))
+        !checker.isConstant(node)) ||
+      (ts.isPrefixUnaryExpression(node) && !checker.isConstant(node))
     ) {
       return [
         newError(
