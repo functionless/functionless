@@ -1,12 +1,3 @@
-/*
-new ApiIntegration<...>()
-  .transformRequest(req => ...) // transform input
-  .call(...) // call integration
-  .handleSuccess(...) // 200 response mapping template
-  .handleFailure("400", ...)  // 400 response mapping template
-  .handleFailure("500", ...);  // 500 response mapping template
-*/
-
 import { aws_apigateway } from "aws-cdk-lib";
 import { FunctionDecl, isFunctionDecl } from "./declaration";
 import { isErr } from "./error";
@@ -31,17 +22,20 @@ export interface ApiRequestProps<
 
 type RequestTransformerFunction<
   Request extends ApiRequestProps<any, any, any, any>,
-  IntegRes
-> = (req: Request) => IntegRes;
+  IntegrationRequest
+> = (req: Request) => IntegrationRequest;
 
 type ResponseTransformerFunction<IntegrationResponse, MethodResponse> = (
-  integRes: IntegrationResponse
+  resp: IntegrationResponse
 ) => MethodResponse;
 
+// @ts-ignore
 type IntegrationTarget<IntegrationRequest, IntegrationResponse> =
   | Function<IntegrationRequest, IntegrationResponse>
   | ExpressStepFunction<IntegrationRequest, IntegrationResponse>;
 // | Table<any, any>["getItem"];
+
+//#region
 
 export class ApiIntegration<
   Request extends ApiRequestProps<any, any, any, any>,
@@ -195,6 +189,197 @@ export class ApiIntegration<
   }
 }
 
+//#endregion
+
+export class ApiIntegrations {
+  public static mock<
+    Request extends ApiRequestProps<any, any, any, any>,
+    StatusCode extends number,
+    MethodResponses extends { [C in StatusCode]: any }
+  >(
+    props: MockIntegrationProps<Request, StatusCode, MethodResponses>
+  ): MockApiIntegration<typeof props> {
+    return new MockApiIntegration(props);
+  }
+
+  public static aws<
+    Request extends ApiRequestProps<any, any, any, any>,
+    IntegrationRequest,
+    IntegrationResponse,
+    MethodResponse
+  >(
+    props: AwsApiIntegrationProps<
+      Request,
+      IntegrationRequest,
+      IntegrationResponse,
+      MethodResponse
+    >
+  ): AwsApiIntegration<typeof props> {
+    return new AwsApiIntegration(props);
+  }
+}
+
+export interface MockIntegrationProps<
+  Request extends ApiRequestProps<any, any, any, any>,
+  StatusCode extends number,
+  MethodResponses extends { [C in StatusCode]: any }
+> {
+  request: (req: Request) => { statusCode: StatusCode };
+  responses: { [C in StatusCode]: (code: C) => MethodResponses[C] };
+}
+
+// https://devblogs.microsoft.com/typescript/announcing-typescript-4-7/#improved-function-inference-in-objects-and-methods
+// https://github.com/microsoft/TypeScript/pull/41712
+
+export class MockApiIntegration<
+  Props extends MockIntegrationProps<any, any, any>
+> {
+  /**
+   * This static property identifies this class as an AwsApiIntegration to the TypeScript plugin.
+   */
+  public static readonly FunctionlessType = "MockApiIntegration";
+
+  private readonly request: FunctionDecl;
+  private readonly responses: { [K in keyof Props["responses"]]: FunctionDecl };
+
+  public constructor(props: Props) {
+    this.request = this.validateTemplateFunc(props.request);
+    // @ts-ignore
+    this.responses = Object.fromEntries(
+      Object.entries(props.responses).map(([k, v]) => [
+        k,
+        this.validateTemplateFunc(v),
+      ])
+    );
+  }
+
+  private validateTemplateFunc(a: any): FunctionDecl {
+    if (isFunctionDecl(a)) {
+      return a;
+    } else if (isErr(a)) {
+      throw a.error;
+    } else {
+      // TODO: better error
+      throw Error("Unknown compiler error.");
+    }
+  }
+
+  addMethod(resource: aws_apigateway.Resource): void {
+    const requestTemplate = `#set($Integer = 0)\n${toVTL(
+      this.request,
+      "request"
+    )}`;
+
+    const x: [string, FunctionDecl][] = Object.entries(this.responses);
+
+    const integrationResponses: aws_apigateway.IntegrationResponse[] = x.map(
+      ([statusCode, fn]) => ({
+        statusCode,
+        responseTemplates: {
+          "application/json": `#set($Integer = 0)\n${toVTL(fn, "response")}`,
+        },
+        selectionPattern: `^${statusCode}$`,
+      })
+    );
+
+    const integration = new aws_apigateway.MockIntegration({
+      requestTemplates: {
+        "application/json": requestTemplate,
+      },
+      integrationResponses,
+    });
+
+    const methodResponses = Object.keys(this.responses).map((statusCode) => ({
+      statusCode,
+    }));
+
+    resource.addMethod("GET", integration, {
+      requestParameters: {
+        "method.request.path.num": true,
+      },
+      methodResponses,
+    });
+  }
+}
+
+export interface AwsApiIntegrationProps<
+  Request extends ApiRequestProps<any, any, any, any>,
+  IntegrationRequest,
+  IntegrationResponse,
+  MethodResponse
+> {
+  request: RequestTransformerFunction<Request, IntegrationRequest>;
+  integration: ExpressStepFunction<IntegrationRequest, IntegrationResponse>;
+  response: ResponseTransformerFunction<IntegrationResponse, MethodResponse>;
+
+  readonly __requestBrand?: Request;
+  readonly __integrationRequestBrand?: IntegrationRequest;
+  readonly __integrationResponseBrand?: IntegrationResponse;
+  readonly __methodResponseBrand?: MethodResponse;
+}
+
+// export class AwsApiIntegration<
+//   Request extends ApiRequestProps<any, any, any, any>,
+//   IntegrationRequest = any,
+//   IntegrationResponse = any,
+//   MethodResponse = any
+// > {
+export class AwsApiIntegration<
+  Props extends AwsApiIntegrationProps<any, any, any, any>
+> {
+  /**
+   * This static property identifies this class as an AwsApiIntegration to the TypeScript plugin.
+   */
+  public static readonly FunctionlessType = "AwsApiIntegration";
+
+  private readonly request: FunctionDecl;
+  private readonly response: FunctionDecl;
+  private readonly integration: ExpressStepFunction<
+    Props["__requestBrand"],
+    Props["__integrationResponseBrand"]
+  >;
+
+  constructor(props: Props) {
+    this.request = this.validateTemplateFunc(props.request);
+    this.response = this.validateTemplateFunc(props.response);
+    this.integration = props.integration;
+  }
+
+  private validateTemplateFunc(a: any): FunctionDecl {
+    if (isFunctionDecl(a)) {
+      return a;
+    } else if (isErr(a)) {
+      throw a.error;
+    } else {
+      // TODO: better error
+      throw Error("Unknown compiler error.");
+    }
+  }
+
+  addMethod(resource: aws_apigateway.Resource): void {
+    const requestTemplate = toVTL(this.request, "request");
+    const responseTemplate = toVTL(this.response, "response");
+
+    const apiGWIntegration = this.integration.apiGWVtl.integration(
+      requestTemplate,
+      responseTemplate
+    );
+
+    // TODO: pass in method
+    // TODO: pass in responses
+    resource.addMethod("GET", apiGWIntegration, {
+      requestParameters: {
+        "method.request.path.num": true,
+      },
+      methodResponses: [
+        {
+          statusCode: "200",
+        },
+      ],
+    });
+  }
+}
+
 function toVTL(node: FunctionDecl, template: "request" | "response") {
   console.log(template);
 
@@ -244,15 +429,18 @@ function toVTL(node: FunctionDecl, template: "request" | "response") {
             // TODO: can't refer to $input.pathParameters directly, need casting
             const param = `$input.params().${location2}.${node.name}`;
 
-            // TODO: boolean too?
-            if (node.type === "number") {
-              return param;
-              // return `$Integer.parseInt(${param})`;
+            // TODO: what about others?
+            if (node.type === "string") {
+              return `"${param}"`;
             }
 
             return param;
           } else {
-            return `$inputRoot.${node.name}`;
+            const param = `$inputRoot.${node.name}`;
+            if (node.type === "string") {
+              return `"${param}"`;
+            }
+            return param;
           }
         }
         return `${inner(node.expr)}.${node.name};`;

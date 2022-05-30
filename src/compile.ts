@@ -2,7 +2,7 @@ import minimatch from "minimatch";
 import path from "path";
 import { PluginConfig, TransformerExtras } from "ts-patch";
 import ts from "typescript";
-import { ApiIntegration } from "./api";
+import { ApiIntegration, AwsApiIntegration, MockApiIntegration } from "./api";
 import { AppsyncResolver } from "./appsync";
 import { assertDefined } from "./assert";
 import { EventBus, EventBusRule } from "./event-bridge";
@@ -112,6 +112,12 @@ export function compile(
             return visitApiRequestTransformer(node);
           } else if (isApiResponseTransformer(node)) {
             return visitApiResponseTransformer(node);
+          } else if (isAwsApiIntegration(node)) {
+            return visitAwsApiIntegration(node);
+          } else if (isMockApiIntegration(node)) {
+            return visitMockApiIntegration(node);
+          } else if (isApiIntegrationsStaticMethod(node)) {
+            return visitApiIntegrationsStaticMethod(node);
           }
           return node;
         };
@@ -146,6 +152,58 @@ export function compile(
         return false;
       }
 
+      function isAwsApiIntegration(node: ts.Node): node is ts.NewExpression & {
+        arguments: [ts.ObjectLiteralExpression];
+      } {
+        const x =
+          ts.isNewExpression(node) &&
+          isFunctionlessClassOfKind(
+            node.expression,
+            AwsApiIntegration.FunctionlessType
+          );
+        return x;
+      }
+
+      function isMockApiIntegration(node: ts.Node): node is ts.NewExpression & {
+        arguments: [ts.ObjectLiteralExpression];
+      } {
+        const x =
+          ts.isNewExpression(node) &&
+          isFunctionlessClassOfKind(
+            node.expression,
+            MockApiIntegration.FunctionlessType
+          );
+        return x;
+      }
+
+      function isApiIntegrationsStaticMethod(
+        node: ts.Node
+      ): node is ApiIntegrationsAwsMethodInterface {
+        const x =
+          ts.isCallExpression(node) &&
+          ts.isPropertyAccessExpression(node.expression) &&
+          (node.expression.name.text === "mock" ||
+            node.expression.name.text == "aws") &&
+          ts.isIdentifier(node.expression.expression) &&
+          node.expression.expression.text === "ApiIntegrations";
+        return x;
+      }
+
+      /*
+        function isEventBusWhenFunction(
+        node: ts.Node
+      ): node is EventBusWhenInterface {
+        return (
+          ts.isCallExpression(node) &&
+          ts.isPropertyAccessExpression(node.expression) &&
+          node.expression.name.text === "when" &&
+          (isEventBus(node.expression.expression) ||
+            isEventBusRule(node.expression.expression))
+        );
+      }
+
+      */
+
       function isApiRequestTransformer(
         node: ts.Node
       ): node is ApiRequestTransformerInterface {
@@ -156,13 +214,6 @@ export function compile(
           isApiIntegration(node.expression.expression);
 
         return x;
-        // if (ts.isNewExpression(node)) {
-        //   return isFunctionlessClassOfKind(
-        //     node.expression,
-        //     ApiIntegration.FunctionlessType
-        //   );
-        // }
-        // return false;
       }
 
       // TODO: do we need a ApiResponseTransformerInterface
@@ -180,6 +231,13 @@ export function compile(
       function isStepFunction(node: ts.Node): node is ts.NewExpression & {
         arguments: [TsFunctionParameter, ...ts.Expression[]];
       } {
+        // if (node.getText().startsWith("new Express")) {
+        //   console.log(node.getText());
+        //   console.log(ts.isNewExpression(node));
+        //   console.log(
+        //     isFunctionlessClassOfKind(node, StepFunction.FunctionlessType)
+        //   );
+        // }
         if (ts.isNewExpression(node)) {
           return (
             isFunctionlessClassOfKind(node, StepFunction.FunctionlessType) ||
@@ -221,6 +279,11 @@ export function compile(
 
       type ApiRequestTransformerInterface = ts.CallExpression & {
         arguments: [any, any, TsFunctionParameter];
+      };
+
+      type ApiIntegrationsAwsMethodInterface = ts.CallExpression & {
+        // TODO: further refine this?
+        arguments: [ts.ObjectLiteralExpression];
       };
 
       /**
@@ -376,15 +439,17 @@ export function compile(
       }
 
       function visitStepFunction(call: ts.NewExpression): ts.Node {
+        // if (1 === 1) throw Error("wtf");
         return ts.factory.updateNewExpression(
           call,
           call.expression,
           call.typeArguments,
-          call.arguments?.map((arg) =>
-            ts.isFunctionExpression(arg) || ts.isArrowFunction(arg)
+          call.arguments?.map((arg) => {
+            // if (1 === 1) throw Error("wtf");
+            return ts.isFunctionExpression(arg) || ts.isArrowFunction(arg)
               ? errorBoundary(() => toFunction("FunctionDecl", arg))
-              : arg
-          )
+              : arg;
+          })
         );
       }
 
@@ -450,6 +515,174 @@ export function compile(
           }
         }
         return call;
+      }
+
+      function visitApiIntegrationsStaticMethod(
+        node: ApiIntegrationsAwsMethodInterface
+      ): ts.CallExpression {
+        // @ts-ignore
+        const [props] = node.arguments;
+
+        const updatedProps = ts.factory.updateObjectLiteralExpression(
+          props,
+          props.properties.map((prop) => {
+            if (ts.isPropertyAssignment(prop)) {
+              if (
+                ts.isIdentifier(prop.name) &&
+                prop.name.text === "responses"
+              ) {
+                return ts.factory.updatePropertyAssignment(
+                  prop,
+                  prop.name,
+                  visitApiIntegrationResponses(
+                    prop.initializer as ts.ObjectLiteralExpression
+                  )
+                );
+              } else if (
+                ts.isIdentifier(prop.name) &&
+                (prop.name.text === "request" || prop.name.text === "response")
+              ) {
+                return ts.factory.updatePropertyAssignment(
+                  prop,
+                  prop.name,
+                  errorBoundary(() =>
+                    // TODO: what if it isn't?
+                    toFunction(
+                      "FunctionDecl",
+                      prop.initializer as ts.ArrowFunction
+                    )
+                  )
+                );
+              }
+            }
+            return prop;
+          })
+        );
+
+        return ts.factory.updateCallExpression(
+          node,
+          node.expression,
+          node.typeArguments,
+          [updatedProps]
+        );
+      }
+
+      function visitMockApiIntegration(
+        node: ts.NewExpression & {
+          arguments: [ts.ObjectLiteralExpression];
+        }
+      ): ts.Node {
+        // @ts-ignore
+        const [props] = node.arguments;
+
+        const updatedProps = ts.factory.updateObjectLiteralExpression(
+          props,
+          props.properties.map((prop) => {
+            if (ts.isPropertyAssignment(prop)) {
+              if (
+                ts.isIdentifier(prop.name) &&
+                prop.name.text === "responses"
+              ) {
+                return ts.factory.updatePropertyAssignment(
+                  prop,
+                  prop.name,
+                  visitApiIntegrationResponses(
+                    prop.initializer as ts.ObjectLiteralExpression
+                  )
+                );
+              } else if (
+                ts.isIdentifier(prop.name) &&
+                (prop.name.text === "request" || prop.name.text === "response")
+              ) {
+                return ts.factory.updatePropertyAssignment(
+                  prop,
+                  prop.name,
+                  errorBoundary(() =>
+                    // TODO: what if it isn't?
+                    toFunction(
+                      "FunctionDecl",
+                      prop.initializer as ts.ArrowFunction
+                    )
+                  )
+                );
+              }
+            }
+            return prop;
+          })
+        );
+
+        return ts.factory.updateNewExpression(
+          node,
+          node.expression,
+          node.typeArguments,
+          [updatedProps]
+        );
+      }
+
+      // 204: ObjectLiteralExpression
+      // 294: PropertyAssignment
+      function visitApiIntegrationResponses(
+        node: ts.ObjectLiteralExpression
+      ): ts.ObjectLiteralExpression {
+        return ts.factory.updateObjectLiteralExpression(
+          node,
+          node.properties.map((prop) => {
+            if (ts.isPropertyAssignment(prop)) {
+              return ts.factory.updatePropertyAssignment(
+                prop,
+                prop.name,
+                errorBoundary(() =>
+                  // TODO: what if it isn't?
+                  toFunction(
+                    "FunctionDecl",
+                    prop.initializer as ts.ArrowFunction
+                  )
+                )
+              );
+            }
+            return prop;
+          })
+        );
+      }
+
+      function visitAwsApiIntegration(
+        node: ts.NewExpression & {
+          arguments: [ts.ObjectLiteralExpression];
+        }
+      ): ts.Node {
+        const [props] = node.arguments;
+
+        const updatedProps = ts.factory.updateObjectLiteralExpression(
+          props,
+          props.properties.map((prop) => {
+            if (ts.isPropertyAssignment(prop)) {
+              if (
+                ts.isIdentifier(prop.name) &&
+                (prop.name.text === "request" || prop.name.text === "responses")
+              ) {
+                return ts.factory.updatePropertyAssignment(
+                  prop,
+                  prop.name,
+                  errorBoundary(() =>
+                    // TODO: what if it isn't?
+                    toFunction(
+                      "FunctionDecl",
+                      prop.initializer as ts.ArrowFunction
+                    )
+                  )
+                );
+              }
+            }
+            return prop;
+          })
+        );
+
+        return ts.factory.updateNewExpression(
+          node,
+          node.expression,
+          node.typeArguments,
+          [updatedProps]
+        );
       }
 
       function visitApiRequestTransformer(
