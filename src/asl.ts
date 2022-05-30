@@ -684,11 +684,13 @@ export class ASL {
         }),
       };
     } else if (stmt.kind === "ThrowStmt") {
-      if (stmt.expr.kind !== "NewExpr") {
-        throw new Error("the expr of a ThrowStmt must be a NewExpr");
+      if (stmt.expr.kind !== "NewExpr" && stmt.expr.kind !== "CallExpr") {
+        throw new Error(
+          "the expr of a ThrowStmt must be a NewExpr or CallExpr"
+        );
       }
 
-      const error = (stmt.expr as NewExpr).args
+      const error = (stmt.expr as NewExpr | CallExpr).args
         .filter((arg): arg is Argument & { expr: Expr } => !!arg.expr)
         .reduce(
           (args: any, arg) => ({

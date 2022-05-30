@@ -1528,6 +1528,25 @@ test("throw new Error", () => {
   });
 });
 
+test("throw Error", () => {
+  const { stack } = initStepFunctionApp();
+
+  const definition = new ExpressStepFunction(stack, "fn", () => {
+    throw Error("cause");
+  }).definition;
+
+  expect(definition).toEqual({
+    StartAt: 'throw Error("cause")',
+    States: {
+      'throw Error("cause")': {
+        Type: "Fail",
+        Error: "Error",
+        Cause: '{"message":"cause"}',
+      },
+    },
+  });
+});
+
 class CustomError {
   constructor(readonly property: string) {}
 }
@@ -1546,6 +1565,38 @@ test("throw new CustomError", () => {
         Type: "Fail",
         Error: "CustomError",
         Cause: '{"property":"cause"}',
+      },
+    },
+  });
+});
+
+test("try, throw Error('error'), empty catch", () => {
+  const { stack } = initStepFunctionApp();
+
+  const definition = new ExpressStepFunction(stack, "fn", () => {
+    try {
+      throw Error("cause");
+    } catch {}
+  }).definition;
+
+  expect(definition).toEqual({
+    StartAt: 'throw Error("cause")',
+    States: {
+      'throw Error("cause")': {
+        Next: "return null",
+        Result: {
+          message: "cause",
+        },
+        ResultPath: null,
+        Type: "Pass",
+      },
+      "return null": {
+        End: true,
+        OutputPath: "$.null",
+        Parameters: {
+          null: null,
+        },
+        Type: "Pass",
       },
     },
   });
@@ -1646,6 +1697,37 @@ test("catch and throw new Error", () => {
     StartAt: 'throw new Error("cause")',
     States: {
       'throw new Error("cause")': {
+        Type: "Pass",
+        Result: {
+          message: "cause",
+        },
+        ResultPath: "$.err",
+        Next: 'throw new CustomError("custom cause")',
+      },
+      'throw new CustomError("custom cause")': {
+        Type: "Fail",
+        Error: "CustomError",
+        Cause: '{"property":"custom cause"}',
+      },
+    },
+  });
+});
+
+test("catch and throw Error", () => {
+  const { stack } = initStepFunctionApp();
+
+  const definition = new ExpressStepFunction(stack, "fn", () => {
+    try {
+      throw Error("cause");
+    } catch (err: any) {
+      throw new CustomError("custom cause");
+    }
+  }).definition;
+
+  expect(definition).toEqual({
+    StartAt: 'throw Error("cause")',
+    States: {
+      'throw Error("cause")': {
         Type: "Pass",
         Result: {
           message: "cause",
@@ -2287,7 +2369,7 @@ test("try-catch, no variable, contains for-of, throw", () => {
   });
 });
 
-test("try-catch, err variable, contains for-of, throw", () => {
+test("try-catch, err variable, contains for-of, throw new Error", () => {
   const { stack } = initStepFunctionApp();
 
   const definition = new ExpressStepFunction<
@@ -2320,6 +2402,84 @@ test("try-catch, err variable, contains for-of, throw", () => {
           StartAt: 'throw new Error("err")',
           States: {
             'throw new Error("err")': {
+              Type: "Fail",
+              Error: "Error",
+              Cause: '{"message":"err"}',
+            },
+          },
+        },
+        MaxConcurrency: 1,
+        Next: "return null",
+        Parameters: {
+          "item.$": "$$.Map.Item.Value",
+        },
+        ResultPath: null,
+        Type: "Map",
+      },
+      "catch(err)": {
+        Next: "0_catch(err)",
+        Parameters: {
+          "0_ParsedError.$": "States.StringToJson($.err.Cause)",
+        },
+        ResultPath: "$.err",
+        Type: "Pass",
+      },
+      "0_catch(err)": {
+        InputPath: "$.err.0_ParsedError",
+        Next: "return err.message",
+        ResultPath: "$.err",
+        Type: "Pass",
+      },
+      "return err.message": {
+        End: true,
+        OutputPath: "$.err.message",
+        Type: "Pass",
+      },
+      "return null": {
+        End: true,
+        OutputPath: "$.null",
+        Parameters: {
+          null: null,
+        },
+        Type: "Pass",
+      },
+    },
+  });
+});
+
+test("try-catch, err variable, contains for-of, throw Error", () => {
+  const { stack } = initStepFunctionApp();
+
+  const definition = new ExpressStepFunction<
+    { items: string[] },
+    string | void
+  >(stack, "fn", (input): string | void => {
+    try {
+      // @ts-ignore
+      for (const item of input.items) {
+        throw Error("err");
+      }
+    } catch (err: any) {
+      return err.message;
+    }
+  }).definition;
+
+  expect(definition).toEqual({
+    StartAt: "for(item of input.items)",
+    States: {
+      "for(item of input.items)": {
+        Catch: [
+          {
+            ErrorEquals: ["States.ALL"],
+            ResultPath: "$.err",
+            Next: "catch(err)",
+          },
+        ],
+        ItemsPath: "$.items",
+        Iterator: {
+          StartAt: 'throw Error("err")',
+          States: {
+            'throw Error("err")': {
               Type: "Fail",
               Error: "Error",
               Cause: '{"message":"err"}',
