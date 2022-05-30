@@ -14,6 +14,7 @@ import {
   UpdateItemInput,
   UpdateItemOutput,
 } from "typesafe-dynamodb/lib/update-item";
+import { StepFunctionIntegration } from ".";
 import { ASL } from "./asl";
 import {
   Expr,
@@ -439,15 +440,18 @@ export namespace $AWS {
     >(
       operationName: Op,
       integration: Omit<
-        Integration<F, `$AWS.DynamoDB.${Op}`>,
+        Integration & NativeIntegration<F>,
         "kind" | "native" | "__functionBrand"
       > & {
-        native: Omit<NativeIntegration<F>, "preWarm" | "bind"> & {
+        native: Omit<NativeIntegration<F>["native"], "preWarm" | "bind"> & {
           bind: (context: Function<any, any>, table: AnyTable) => void;
         };
       }
     ) {
-      return makeIntegration<F, `$AWS.DynamoDB.${Op}`>({
+      return makeIntegration<
+        `$AWS.DynamoDB.${Op}`,
+        StepFunctionIntegration<F> & NativeIntegration<F>
+      >({
         ...integration,
         kind: `$AWS.DynamoDB.${operationName}`,
         asl(call, context) {
@@ -540,23 +544,25 @@ export namespace $AWS {
     }
   }
 
+  type InvokeCall = <Input, Output>(input: {
+    FunctionName: Function<Input, Output>;
+    Payload: Input;
+    ClientContext?: string;
+    InvocationType?: "Event" | "RequestResponse" | "DryRun";
+    LogType?: "None" | "Tail";
+    Qualifier?: string;
+  }) => Omit<AWS.Lambda.InvocationResponse, "payload"> & {
+    Payload: Output;
+  };
+
   export namespace Lambda {
     /**
      * @param input
      * @see https://docs.aws.amazon.com/lambda/latest/dg/API_Invoke.html
      */
     export const Invoke = makeIntegration<
-      <Input, Output>(input: {
-        FunctionName: Function<Input, Output>;
-        Payload: Input;
-        ClientContext?: string;
-        InvocationType?: "Event" | "RequestResponse" | "DryRun";
-        LogType?: "None" | "Tail";
-        Qualifier?: string;
-      }) => Omit<AWS.Lambda.InvocationResponse, "payload"> & {
-        Payload: Output;
-      },
-      "Lambda.Invoke"
+      "Lambda.Invoke",
+      StepFunctionIntegration<InvokeCall>
     >({
       kind: "Lambda.Invoke",
       asl(call) {
@@ -607,10 +613,12 @@ export namespace $AWS {
      * @see https://docs.aws.amazon.com/eventbridge/latest/APIReference/API_PutEvents.html
      */
     export const putEvents = makeIntegration<
-      (
-        request: AWS.EventBridge.Types.PutEventsRequest
-      ) => AWS.EventBridge.Types.PutEventsResponse,
-      "EventBridge.putEvent"
+      "EventBridge.putEvent",
+      NativeIntegration<
+        (
+          request: AWS.EventBridge.Types.PutEventsRequest
+        ) => AWS.EventBridge.Types.PutEventsResponse
+      >
     >({
       kind: "EventBridge.putEvent",
       native: {

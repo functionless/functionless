@@ -18,6 +18,7 @@ import {
   ASL,
   isMapOrForEach,
   MapTask,
+  State,
   StateMachine,
   States,
   Task,
@@ -40,7 +41,11 @@ import {
   isSpreadAssignExpr,
 } from "./expression";
 import { NativeIntegration, PrewarmClients } from "./function";
-import { Integration, makeIntegration } from "./integration";
+import {
+  CallableIntegration,
+  Integration,
+  makeIntegration,
+} from "./integration";
 import { AnyFunction, ensureItemOf } from "./util";
 import { VTL } from "./vtl";
 
@@ -327,9 +332,12 @@ export namespace $SFN {
 
 function makeStepFunctionIntegration<F extends AnyFunction, K extends string>(
   methodName: K,
-  integration: Omit<Integration<F>, "kind" | "__functionBrand">
+  integration: Omit<
+    Integration<`$SFN.${K}`> & StepFunctionIntegration<F>,
+    "kind" | "__functionBrand"
+  >
 ): F {
-  return makeIntegration<F, `$SFN.${K}`>({
+  return makeIntegration<`$SFN.${K}`, StepFunctionIntegration<F>>({
     kind: `$SFN.${methodName}`,
     unhandledContext(kind, context) {
       throw new Error(
@@ -376,6 +384,16 @@ interface StepFunctionStatusChangedEvent
 interface StepFunctionEventBusTargetProps
   extends Omit<aws_events_targets.SfnStateMachineProps, "input"> {}
 
+interface IStateMachine<
+  P extends Record<string, any> | undefined,
+  CallIn,
+  CallOut
+> extends aws_stepfunctions.IStateMachine,
+    Integration<"StepFunction">,
+    EventBusTargetIntegration<P, StepFunctionEventBusTargetProps | undefined>,
+    AppSyncVtlIntegration<(arg: CallIn) => CallOut>,
+    NativeIntegration<(arg: CallIn) => CallOut> {}
+
 abstract class BaseStepFunction<
     P extends Record<string, any> | undefined,
     O,
@@ -383,13 +401,7 @@ abstract class BaseStepFunction<
     CallOut
   >
   extends Resource
-  implements
-    aws_stepfunctions.IStateMachine,
-    Integration<
-      (input: CallIn) => CallOut,
-      "StepFunction",
-      EventBusTargetIntegration<P, StepFunctionEventBusTargetProps | undefined>
-    >
+  implements IStateMachine<P, CallIn, CallOut>
 {
   readonly kind = "StepFunction";
   readonly functionlessKind = "StepFunction";
@@ -397,10 +409,15 @@ abstract class BaseStepFunction<
   readonly decl: FunctionDecl<(arg: P) => O>;
   readonly resource: aws_stepfunctions.CfnStateMachine;
 
-  readonly appSyncVtl: AppSyncVtlIntegration;
+  readonly appSyncVtl: AppSyncVtlIntegration<
+    (arg: CallIn) => CallOut
+  >["appSyncVtl"];
+  abstract readonly native: NativeIntegration<
+    (arg: CallIn) => CallOut
+  >["native"];
 
   // @ts-ignore
-  readonly __functionBrand: (arg: CallIn) => CallOut;
+  public readonly __functionBrand: (arg: CallIn) => CallOut;
 
   readonly stateMachineName: string;
   readonly stateMachineArn: string;
@@ -517,8 +534,11 @@ abstract class BaseStepFunction<
   }
 
   appSyncIntegration(
-    integration: Pick<AppSyncVtlIntegration, "request">
-  ): AppSyncVtlIntegration {
+    integration: Pick<
+      AppSyncVtlIntegration<(arg: CallIn) => CallOut>["appSyncVtl"],
+      "request"
+    >
+  ): AppSyncVtlIntegration<(arg: CallIn) => CallOut>["appSyncVtl"] {
     return {
       ...integration,
       dataSourceId: () => this.resource.node.addr,
@@ -1092,6 +1112,15 @@ abstract class BaseStepFunction<
   }
 }
 
+interface BaseStepFunction<
+  P extends Record<string, any> | undefined,
+  O,
+  CallIn,
+  CallOut
+> {
+  (arg: CallIn): CallOut;
+}
+
 function retrieveMachineArgs(call: CallExpr) {
   // object reference
   // machine(inputObj) => inputObj: { name: "hi", input: ... }
@@ -1188,8 +1217,8 @@ export class ExpressStepFunction<
   }
 
   readonly native: NativeIntegration<
-    (input: StepFunctionRequest<P>) => SyncExecutionResult<O>
-  >;
+    (arg: StepFunctionRequest<P>) => SyncExecutionResult<O>
+  >["native"];
 
   constructor(
     scope: Construct,
@@ -1313,6 +1342,10 @@ export interface ExpressStepFunction<
   (input: StepFunctionRequest<P>): SyncExecutionResult<O>;
 }
 
+type DescribeExecutionCall = (
+  executionArn: string
+) => AWS.StepFunctions.DescribeExecutionOutput;
+
 export class StepFunction<
   P extends Record<string, any> | undefined,
   O
@@ -1329,7 +1362,7 @@ export class StepFunction<
 
   readonly native: NativeIntegration<
     (input: StepFunctionRequest<P>) => AWS.StepFunctions.StartExecutionOutput
-  >;
+  >["native"];
 
   constructor(
     scope: Construct,
@@ -1386,8 +1419,10 @@ export class StepFunction<
   }
 
   public describeExecution = makeIntegration<
-    (executionArn: string) => AWS.StepFunctions.DescribeExecutionOutput,
-    "StepFunction.describeExecution"
+    "StepFunction.describeExecution",
+    AppSyncVtlIntegration<DescribeExecutionCall> &
+      StepFunctionIntegration<DescribeExecutionCall> &
+      NativeIntegration<DescribeExecutionCall>
   >({
     kind: "StepFunction.describeExecution",
     appSyncVtl: this.appSyncIntegration({
@@ -1466,4 +1501,9 @@ function getArgs(call: CallExpr) {
     throw new Error("missing argument 'executionArn'");
   }
   return executionArn;
+}
+
+export interface StepFunctionIntegration<F extends AnyFunction>
+  extends CallableIntegration<F> {
+  asl: (call: CallExpr, context: ASL) => Omit<State, "Next">;
 }
