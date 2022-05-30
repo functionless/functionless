@@ -322,7 +322,6 @@ export type UnaryOp = "!" | "-";
 export class UnaryExpr extends BaseExpr<"UnaryExpr"> {
   constructor(readonly op: UnaryOp, readonly expr: Expr) {
     super("UnaryExpr");
-    // @ts-ignore
     expr.setParent(this);
   }
 

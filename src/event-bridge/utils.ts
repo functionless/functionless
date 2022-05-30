@@ -1,4 +1,4 @@
-import { assertNodeKind, assertNumber } from "../assert";
+import { assertNodeKind } from "../assert";
 import {
   ArrayLiteralExpr,
   BinaryExpr,
@@ -7,21 +7,16 @@ import {
   Identifier,
   isArrayLiteralExpr,
   isBinaryExpr,
-  isBooleanLiteral,
   isComputedPropertyNameExpr,
   isElementAccessExpr,
   isIdentifier,
-  isNullLiteralExpr,
-  isNumberLiteralExpr,
   isObjectLiteralExpr,
   isPropAccessExpr,
   isPropAssignExpr,
-  isReferenceExpr,
   isSpreadElementExpr,
   isStringLiteralExpr,
   isTemplateExpr,
   isUnaryExpr,
-  isUndefinedLiteralExpr,
   NumberLiteralExpr,
   ObjectLiteralExpr,
   PropAccessExpr,
@@ -31,6 +26,7 @@ import {
   UnaryExpr,
 } from "../expression";
 import { isReturn, isVariableStmt, Stmt, VariableStmt } from "../statement";
+import { Constant, evalToConstant } from "../util";
 
 /**
  * Returns a string array representing the property access starting from a named identity.
@@ -97,64 +93,6 @@ export const getPropertyAccessKey = (
   return key;
 };
 
-/**
- * Retrieves a string, number, boolean, undefined, or null constant from the given expression.
- * Wrap the value to not be ambiguous with the undefined value.
- * When one is not found, return undefined (not wrapped).
- *
- * Use assertConstant or assertPrimitive to make type assertions of the constant returned.
- * Values from external string may be complex types like functions.
- * We choose to late evalute invalid values to support use cases like StepFunctions where it is both a function and has constant properties.
- * new StepFunction().stepFunctionArn
- *
- * "value" -> { value: "value" }
- * undefined -> { value: undefined }
- * null -> { value: undefined }
- * call() -> undefined
- * true -> { value: true }
- * -10 -> { value: -10 }
- *
- * Note: constants that follow references must already be resolved to a simple constant by {@link flattenedExpression}.
- * const obj = { val: "hello" };
- * obj.val -> { value: "hello" }
- */
-export const evalToConstant = (expr: Expr): Constant | undefined => {
-  if (
-    isStringLiteralExpr(expr) ||
-    isNumberLiteralExpr(expr) ||
-    isBooleanLiteral(expr)
-  ) {
-    return { constant: expr.value };
-  } else if (isNullLiteralExpr(expr)) {
-    return { constant: null };
-  } else if (isUndefinedLiteralExpr(expr)) {
-    return { constant: undefined };
-  } else if (isUnaryExpr(expr) && expr.op === "-") {
-    const number = assertNumber(evalToConstant(expr.expr)?.constant);
-    return { constant: -number };
-  } else if (isPropAccessExpr(expr)) {
-    const obj = evalToConstant(expr.expr)?.constant as any;
-    if (obj && expr.name in obj) {
-      return { constant: obj[expr.name] };
-    }
-    return undefined;
-  } else if (isReferenceExpr(expr)) {
-    const value = expr.ref();
-    if (
-      typeof value === "string" ||
-      typeof value === "number" ||
-      typeof value === "boolean" ||
-      typeof value === "undefined" ||
-      value === null
-    ) {
-      return { constant: value };
-    } else {
-      return { constant: value as any };
-    }
-  }
-  return undefined;
-};
-
 export const isStringType = (expr: Expr) => {
   return (
     ((isPropAccessExpr(expr) || isElementAccessExpr(expr)) &&
@@ -162,14 +100,6 @@ export const isStringType = (expr: Expr) => {
     isStringLiteralExpr(expr) ||
     isTemplateExpr(expr)
   );
-};
-
-export interface Constant {
-  constant: unknown;
-}
-
-export const isConstant = (x: any): x is Constant => {
-  return "constant" in x;
 };
 
 export interface ReferencePath {

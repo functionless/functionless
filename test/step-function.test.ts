@@ -130,6 +130,29 @@ test("return items.slice(1)", () => {
   });
 });
 
+test("return items.slice(1, undefined)", () => {
+  const { stack } = initStepFunctionApp();
+  const definition = new ExpressStepFunction<{ items: string[] }, string[]>(
+    stack,
+    "fn",
+    (input) => {
+      return input.items.slice(1, undefined);
+    }
+  ).definition;
+
+  expect(definition).toEqual({
+    StartAt: "return input.items.slice(1, undefined)",
+    States: {
+      "return input.items.slice(1, undefined)": {
+        End: true,
+        InputPath: "$.items[1:]",
+        ResultPath: "$",
+        Type: "Pass",
+      },
+    },
+  });
+});
+
 test("return items.slice(-1)", () => {
   const { stack } = initStepFunctionApp();
   const definition = new ExpressStepFunction<{ items: string[] }, string[]>(

@@ -16,10 +16,10 @@ import {
   isTemplateExpr,
   ObjectLiteralExpr,
 } from "../expression";
+import { evalToConstant } from "../util";
 import {
   assertValidEventReference,
   flattenReturnEvent,
-  evalToConstant,
   getReferencePath,
   isStringType,
   ReferencePath,

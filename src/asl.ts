@@ -45,7 +45,7 @@ import {
 } from "./statement";
 import { isStepFunction } from "./step-function";
 import { isTable } from "./table";
-import { anyOf, evaluateToConstant } from "./util";
+import { anyOf, evalToConstant } from "./util";
 import { visitEachChild } from "./visit";
 
 export function isASL(a: any): a is ASL {
@@ -1253,10 +1253,10 @@ export namespace ASL {
     if (expr === undefined) {
       return undefined;
     }
-    const constant = evaluateToConstant(expr);
+    const constant = evalToConstant(expr);
     if (constant !== undefined) {
       // if the constant is statically known
-      return constant;
+      return constant.constant;
     } else if (expr.kind === "Argument") {
       return toJson(expr.expr);
     } else if (expr.kind === "BinaryExpr") {
@@ -1372,7 +1372,7 @@ export namespace ASL {
       // .slice()
       return toJsonPath(expr.expr.expr);
     } else if (startArg !== undefined) {
-      const startConst = evaluateToConstant(startArg);
+      const startConst = evalToConstant(startArg)?.constant;
       if (startConst === undefined) {
         throw new Error(
           "the 'start' argument of slice must be a literal number"
@@ -1382,13 +1382,22 @@ export namespace ASL {
         // slice(x)
         return `${toJsonPath(expr.expr.expr)}[${startConst}:]`;
       } else {
-        const endConst = evaluateToConstant(endArg);
-        if (endConst === undefined) {
+        const endConst = evalToConstant(endArg);
+        if (
+          endConst === undefined ||
+          (endConst.constant !== undefined &&
+            typeof endConst.constant !== "number")
+        ) {
           throw new Error(
             "the 'end' argument of slice must be a literal number"
           );
         }
-        return `${toJsonPath(expr.expr.expr)}[${startConst}:${endConst}]`;
+        if (endConst.constant === undefined) {
+          // explicit undefined passed to slice should be treated the same as not provided
+          return `${toJsonPath(expr.expr.expr)}[${startConst}:]`;
+        } else {
+          return `${toJsonPath(expr.expr.expr)}[${startConst}:${endConst}]`;
+        }
       }
     } else if (endArg !== undefined) {
       throw new Error(
@@ -1532,7 +1541,7 @@ export namespace ASL {
   }
 
   function elementToJsonPath(expr: Expr): string {
-    const value = evaluateToConstant(expr);
+    const value = evalToConstant(expr)?.constant;
     if (typeof value === "string") {
       return `'${value}'`;
     } else if (typeof value === "number") {

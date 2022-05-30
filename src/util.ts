@@ -1,6 +1,17 @@
 import { Construct } from "constructs";
 import ts from "typescript";
-import { Expr } from "./expression";
+import {
+  Expr,
+  isStringLiteralExpr,
+  isBinaryExpr,
+  isNumberLiteralExpr,
+  isBooleanLiteral,
+  isNullLiteralExpr,
+  isPropAccessExpr,
+  isUndefinedLiteralExpr,
+  isUnaryExpr,
+  isReferenceExpr,
+} from "./expression";
 import { FunctionlessNode } from "./node";
 
 export type AnyFunction = (...args: any[]) => any;
@@ -104,49 +115,93 @@ export const singletonConstruct = <T extends Construct, S extends Construct>(
   return child ? (child as T) : create(scope, id);
 };
 
-export type Constant = null | boolean | number | string;
+export interface Constant {
+  constant: unknown;
+}
+
+export function isConstant(x: any): x is Constant {
+  return "constant" in x;
+}
 
 /**
- * Evaluates an Expr to a constant value
+ * Retrieves a string, number, boolean, undefined, or null constant from the given expression.
+ * Wrap the value to not be ambiguous with the undefined value.
+ * When one is not found, return undefined (not wrapped).
  *
- * ```
- * "hello" // "hello"
- * "hello" + "world" // "helloworld"
- * "hello" + 1 // "hello1"
- * 1 + "hello" // "2hello"
- * 1 // 1
- * -1 // -1
- * 1 + 2 // 3
- * ```
+ * Use assertConstant or assertPrimitive to make type assertions of the constant returned.
+ * Values from external string may be complex types like functions.
+ * We choose to late evalute invalid values to support use cases like StepFunctions where it is both a function and has constant properties.
+ * new StepFunction().stepFunctionArn
  *
- * @returns the number if it is constant, otherwise undefined.
+ * "value" -> { constant: "value" }
+ * undefined -> { constant: undefined }
+ * null -> { constant: undefined }
+ * call() -> undefined
+ * true -> { constant: true }
+ * -10 -> { constant: -10 }
+ * "hello" -> { constant:  "hello" }
+ * "hello" + "world" -> { constant:  "helloworld" }
+ * "hello" + 1 -> { constant:  "hello1" }
+ * 1 + "hello" -> { constant:  "2hello" }
+ * 1 -> { constant:  1 }
+ * -1 -> { constant:  -1 }
+ * 1 + 2 -> { constant:  3 }
+ *
+ * Note: constants that follow references must already be resolved to a simple constant by {@link flattenedExpression}.
+ * const obj = { val: "hello" };
+ * obj.val -> { constant: "hello" }
  */
-export function evaluateToConstant(node: Expr): Constant | undefined {
+export const evalToConstant = (expr: Expr): Constant | undefined => {
   if (
-    node.kind === "NumberLiteralExpr" ||
-    node.kind === "NullLiteralExpr" ||
-    node.kind === "BooleanLiteralExpr" ||
-    node.kind === "StringLiteralExpr"
+    isStringLiteralExpr(expr) ||
+    isNumberLiteralExpr(expr) ||
+    isBooleanLiteral(expr) ||
+    isNullLiteralExpr(expr) ||
+    isUndefinedLiteralExpr(expr)
   ) {
-    return node.value;
-  } else if (node.kind === "UnaryExpr" && node.op === "-") {
-    // for negative numbers, collapse into a NumberLiteralExpr with the negative value
-    const expr = evaluateToConstant(node.expr);
-    if (typeof expr === "number") {
-      return -expr;
+    return { constant: expr.value };
+  } else if (isNullLiteralExpr(expr)) {
+    return { constant: null };
+  } else if (isUndefinedLiteralExpr(expr)) {
+    return { constant: undefined };
+  } else if (isUnaryExpr(expr) && expr.op === "-") {
+    const number = evalToConstant(expr.expr)?.constant;
+    if (typeof number === "number") {
+      return { constant: -number };
     }
-  } else if (node.kind === "BinaryExpr") {
-    const left: any = evaluateToConstant(node.left);
-    const right: any = evaluateToConstant(node.right);
-    if (node.op === "+") {
-      return left + right;
-    } else if (node.op === "-") {
-      return left - right;
-    } else if (node.op === "*") {
-      return left * right;
-    } else if (node.op === "/") {
-      return left / right;
+  } else if (isPropAccessExpr(expr)) {
+    const obj = evalToConstant(expr.expr)?.constant as any;
+    if (obj && expr.name in obj) {
+      return { constant: obj[expr.name] };
+    }
+    return undefined;
+  } else if (isReferenceExpr(expr)) {
+    const value = expr.ref();
+    if (
+      typeof value === "string" ||
+      typeof value === "number" ||
+      typeof value === "boolean" ||
+      typeof value === "undefined" ||
+      value === null
+    ) {
+      return { constant: value };
+    } else {
+      return { constant: value as any };
+    }
+  } else if (isBinaryExpr(expr)) {
+    const left: any = evalToConstant(expr.left);
+    const right: any = evalToConstant(expr.right);
+    if (left !== undefined && right !== undefined) {
+      if (expr.op === "+") {
+        return { constant: left.constant + right.constant };
+      } else if (expr.op === "-") {
+        return { constant: left.constant - right.constant };
+      } else if (expr.op === "*") {
+        return { constant: left.constant * right.constant };
+      } else if (expr.op === "/") {
+        return { constant: left.constant / right.constant };
+      }
     }
   }
   return undefined;
-}
+};

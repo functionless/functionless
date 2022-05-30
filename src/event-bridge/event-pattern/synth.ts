@@ -26,12 +26,12 @@ import {
   PropAccessExpr,
   UnaryExpr,
 } from "../../expression";
+import { evalToConstant } from "../../util";
 import * as functionless_event_bridge from "../types";
 import {
   assertValidEventReference,
   EventReference,
   flattenReturnEvent,
-  evalToConstant,
   getPropertyAccessKey,
   getReferencePath,
   ReferencePath,

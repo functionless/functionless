@@ -77,6 +77,7 @@ export function validate(
     }
     return [];
   }
+
   function newError(
     invalidNode: typescript.Node,
     code: number,
