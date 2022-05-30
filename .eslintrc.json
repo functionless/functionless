@@ -188,6 +188,18 @@
         "@typescript-eslint/no-require-imports": "off",
         "import/no-extraneous-dependencies": "off"
       }
+    },
+    {
+      "files": [
+        "*.ts",
+        "*.tsx"
+      ],
+      "parserOptions": {
+        "project": [
+          "./tsconfig.dev.json",
+          "./test-app/tsconfig.json"
+        ]
+      }
     }
   ]
 }

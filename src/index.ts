@@ -1,5 +1,6 @@
 export * from "./aws";
 export * from "./appsync";
+export * from "./async-synth";
 export * from "./declaration";
 export * from "./error";
 export * from "./event-bridge";

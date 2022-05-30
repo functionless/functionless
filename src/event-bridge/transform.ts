@@ -1,10 +1,10 @@
 import { aws_events } from "aws-cdk-lib";
+import { EventBusTargetIntegration, Integration } from "..";
 import { FunctionDecl } from "../declaration";
+import { DynamicProps, IEventBus, pipe } from "./event-bus";
+import { IEventBusRule } from "./rule";
 import { synthesizeEventBridgeTargets } from "./target-input";
 import { EventBusRuleInput } from "./types";
-import { IEventBusRule } from "./rule";
-import { DynamicProps, IEventBus, pipe } from "./event-bus";
-import { EventBusTargetIntegration, Integration } from "..";
 
 /**
  * A function interface used by the {@link EventBusRule}'s map function.
@@ -59,7 +59,7 @@ export class EventBusTransform<T extends EventBusRuleInput, P> {
    * @see EventBusRule.pipe for more details on pipe.
    */
   pipe<
-    I extends Integration<(p: P) => any, string, Props> & {
+    I extends Integration<any, string, EventBusTargetIntegration<P, Props>> & {
       eventBus: EventBusTargetIntegration<P, Props>;
     },
     Props extends object | undefined

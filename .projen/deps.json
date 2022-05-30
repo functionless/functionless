@@ -188,6 +188,10 @@
       "type": "peer"
     },
     {
+      "name": "@functionless/nodejs-closure-serializer",
+      "type": "runtime"
+    },
+    {
       "name": "fs-extra",
       "type": "runtime"
     },

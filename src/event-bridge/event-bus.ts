@@ -14,6 +14,12 @@ import {
   PropAssignExpr,
   StringLiteralExpr,
 } from "../expression";
+import {
+  Function,
+  NativeIntegration,
+  NativePreWarmContext,
+  PrewarmClients,
+} from "../function";
 import { Integration, IntegrationImpl } from "../integration";
 import { EventBusRule, EventPredicateFunction, IEventBusRule } from "./rule";
 import { EventBusRuleInput } from "./types";
@@ -95,9 +101,15 @@ export interface IEventBusFilterable<E extends EventBusRuleInput> {
 export interface IEventBus<E extends EventBusRuleInput = EventBusRuleInput>
   extends IEventBusFilterable<E>,
     Integration<
-      (event: Partial<E>, ...events: Partial<E>[]) => void,
+      (
+        event: EventBusPutEventInput<E>,
+        ...events: EventBusPutEventInput<E>[]
+      ) => void,
       "EventBus",
-      aws_events_targets.EventBusProps | undefined
+      EventBusTargetIntegration<
+        EventBusPutEventInput<E>,
+        aws_events_targets.EventBusProps | undefined
+      >
     > {
   readonly bus: aws_events.IEventBus;
   readonly eventBusArn: string;
@@ -105,8 +117,8 @@ export interface IEventBus<E extends EventBusRuleInput = EventBusRuleInput>
 
   // @ts-ignore - value does not exist, is only available at compile time
   readonly __functionBrand: (
-    event: Partial<E>,
-    ...events: Partial<E>[]
+    event: EventBusPutEventInput<E>,
+    ...events: EventBusPutEventInput<E>[]
   ) => void;
 
   /**
@@ -117,21 +129,19 @@ export interface IEventBus<E extends EventBusRuleInput = EventBusRuleInput>
   /**
    * Put one or more events on an Event Bus.
    */
-  (event: Partial<E>, ...events: Partial<E>[]): void;
+  (
+    event: EventBusPutEventInput<E>,
+    ...events: EventBusPutEventInput<E>[]
+  ): void;
 
   eventBus: EventBusTargetIntegration<
     E,
     aws_events_targets.EventBusProps | undefined
   >;
 }
+
 abstract class EventBusBase<E extends EventBusRuleInput>
-  implements
-    IEventBus<E>,
-    Integration<
-      (event: Partial<E>, ...events: Partial<E>[]) => void,
-      "EventBus",
-      aws_events_targets.EventBusProps | undefined
-    >
+  implements IEventBus<E>
 {
   /**
    * This static properties identifies this class as an EventBus to the TypeScript plugin.
@@ -142,15 +152,48 @@ abstract class EventBusBase<E extends EventBusRuleInput>
   readonly eventBusName: string;
   readonly eventBusArn: string;
 
+  readonly native: NativeIntegration<EventBusBase<E>>;
+
   constructor(readonly bus: aws_events.IEventBus) {
     this.eventBusName = bus.eventBusName;
     this.eventBusArn = bus.eventBusArn;
+
+    // Closure event bus base
+    const eventBusName = this.eventBusName;
+    this.native = <NativeIntegration<EventBusBase<E>>>{
+      bind: (context: Function<any, any>) => {
+        this.bus.grantPutEventsTo(context.resource);
+      },
+      preWarm: (prewarmContext: NativePreWarmContext) => {
+        prewarmContext.getOrInit(PrewarmClients.EVENT_BRIDGE);
+      },
+      call: async (args, preWarmContext) => {
+        const eventBridge = preWarmContext.getOrInit(
+          PrewarmClients.EVENT_BRIDGE
+        );
+        await eventBridge
+          .putEvents({
+            Entries: args.map((event) => ({
+              Detail: JSON.stringify(event.detail),
+              EventBusName: eventBusName,
+              DetailType: event["detail-type"],
+              Resources: event.resources,
+              Source: event.source,
+              Time:
+                typeof event.time === "number"
+                  ? new Date(event.time)
+                  : undefined,
+            })),
+          })
+          .promise();
+      },
+    };
   }
 
   // @ts-ignore - value does not exist, is only available at compile time
   readonly __functionBrand: (
-    event: Partial<E>,
-    ...events: Partial<E>[]
+    event: EventBusPutEventInput<E>,
+    ...events: EventBusPutEventInput<E>[]
   ) => void;
 
   asl(call: CallExpr, context: ASL) {
@@ -244,10 +287,10 @@ abstract class EventBusBase<E extends EventBusRuleInput>
   /**
    * @internal
    */
-  public readonly eventBus: EventBusTargetIntegration<
+  public readonly eventBus = makeEventBusIntegration<
     E,
     aws_events_targets.EventBusProps | undefined
-  > = {
+  >({
     target: (props, targetInput?) => {
       if (targetInput) {
         throw new Error("Event bus rule target does not support target input.");
@@ -258,7 +301,7 @@ abstract class EventBusBase<E extends EventBusRuleInput>
         role: props?.role,
       });
     },
-  };
+  });
 
   /**
    * @inheritdoc
@@ -272,8 +315,14 @@ abstract class EventBusBase<E extends EventBusRuleInput>
   }
 }
 
+export type EventBusPutEventInput<E extends EventBusRuleInput> = Partial<E> &
+  Pick<E, "detail" | "source" | "detail-type">;
+
 interface EventBusBase<E extends EventBusRuleInput> {
-  (event: Partial<E>, ...events: Partial<E>[]): void;
+  (
+    event: EventBusPutEventInput<E>,
+    ...events: EventBusPutEventInput<E>[]
+  ): void;
 }
 
 /**
@@ -294,9 +343,8 @@ interface EventBusBase<E extends EventBusRuleInput> {
  * // An event with the payload
  * interface myEvent extends EventBusRuleInput<Payload> {}
  *
- * const myAwsFunction = new aws_lambda.Function(this, 'myFunction', { ... });
  * // A function that expects the payload.
- * const myLambdaFunction = new functionless.Function<Payload, void>(myAwsFunction);
+ * const myLambdaFunction = new functionless.Function<Payload, void>(this, 'myFunction', ...);
  *
  * // instantiate an aws_events.EventBus Construct
  * const awsBus = new aws_events.EventBus(this, "mybus");
@@ -393,13 +441,22 @@ class ImportedEventBus<E extends EventBusRuleInput> extends EventBusBase<E> {
  */
 export interface EventBusTargetIntegration<
   // the payload type we expect to be transformed into before making this call.
-  _P,
+  P,
   Props extends object | undefined = undefined
 > {
+  __payloadBrand: P;
+
   target: (
     props: Props,
     targetInput?: aws_events.RuleTargetInput
   ) => aws_events.IRuleTarget;
+}
+
+export function makeEventBusIntegration<
+  P,
+  Props extends object | undefined = undefined
+>(integration: Omit<EventBusTargetIntegration<P, Props>, "__payloadBrand">) {
+  return integration as EventBusTargetIntegration<P, Props>;
 }
 
 export interface IntegrationWithEventBus<

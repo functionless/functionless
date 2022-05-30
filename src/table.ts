@@ -163,6 +163,8 @@ export class Table<
 
   /**
    * @see https://docs.aws.amazon.com/appsync/latest/devguide/resolver-mapping-template-reference-dynamodb.html#aws-appsync-resolver-mapping-template-reference-dynamodb-updateitem
+   *
+   * @returns the updated the item
    */
   public updateItem = this.makeTableIntegration<
     <
@@ -205,6 +207,8 @@ export class Table<
 
   /**
    * @see https://docs.aws.amazon.com/appsync/latest/devguide/resolver-mapping-template-reference-dynamodb.html#aws-appsync-resolver-mapping-template-reference-dynamodb-deleteitem
+   *
+   * @returns the previous item.
    */
   public deleteItem = this.makeTableIntegration<
     <

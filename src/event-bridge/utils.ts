@@ -104,7 +104,7 @@ export const getPropertyAccessKey = (
  *
  * Use assertConstant or assertPrimitive to make type assertions of the constant returned.
  * Values from external string may be complex types like functions.
- * We choose to late evalute invalid values to support use cases like StepFunctions where it is both a function and has constant properties.
+ * We choose to late evaluate invalid values to support use cases like StepFunctions where it is both a function and has constant properties.
  * new StepFunction().stepFunctionArn
  *
  * "value" -> { value: "value" }

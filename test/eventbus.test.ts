@@ -107,7 +107,7 @@ test("refined bus with when pipe event bus", () => {
 test("new bus with when map pipe function", () => {
   const busBus = new EventBus(stack, "bus");
 
-  const func = new Function(
+  const func = Function.fromFunction<string, void>(
     aws_lambda.Function.fromFunctionArn(stack, "func", "")
   );
 
@@ -126,7 +126,7 @@ test("new bus with when map pipe function", () => {
 });
 
 test("refined bus with when pipe function", () => {
-  const func = new Function(
+  const func = Function.fromFunction<string, void>(
     aws_lambda.Function.fromFunctionArn(stack, "func", "")
   );
   const rule = new EventBus(stack, "bus").when(
@@ -200,7 +200,7 @@ test("new bus with when map pipe express step function", () => {
 test("new bus with when map pipe function props", () => {
   const busBus = new EventBus(stack, "bus");
 
-  const func = new Function(
+  const func = Function.fromFunction<string, void>(
     aws_lambda.Function.fromFunctionArn(stack, "func", "")
   );
 
@@ -259,7 +259,7 @@ test("when narrows type to map", () => {
 });
 
 test("map narrows type and pipe enforces", () => {
-  const lambda = new Function<string, void>(
+  const lambda = Function.fromFunction<string, void>(
     aws_lambda.Function.fromFunctionArn(stack, "func", "")
   );
   const bus = EventBus.default<tt>(stack);
@@ -275,7 +275,7 @@ test("map narrows type and pipe enforces", () => {
 });
 
 test("pipe typesafe", () => {
-  const lambda = new Function<string, void>(
+  const lambda = Function.fromFunction<string, void>(
     aws_lambda.Function.fromFunctionArn(stack, "func", "")
   );
   const bus = EventBus.default<tt>(stack);
