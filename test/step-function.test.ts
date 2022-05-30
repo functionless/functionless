@@ -761,6 +761,40 @@ test("task(any)", () => {
   });
 });
 
+test("spread constant array and object", () => {
+  const array = [1, 2];
+  const object = { hello: "world" };
+
+  const definition = new StepFunction(stack, "fn", () => {
+    return {
+      array: [0, ...array, 3],
+      object: {
+        key: "value",
+        ...object,
+      },
+    };
+  }).definition;
+
+  expect(definition).toEqual({
+    StartAt:
+      'return {array: [0, ...array, 3], object: {key: "value", ...object}}',
+    States: {
+      'return {array: [0, ...array, 3], object: {key: "value", ...object}}': {
+        End: true,
+        Parameters: {
+          array: [0, 1, 2, 3],
+          object: {
+            hello: "world",
+            key: "value",
+          },
+        },
+        ResultPath: "$",
+        Type: "Pass",
+      },
+    },
+  });
+});
+
 test("return void", () => {
   const { stack } = initStepFunctionApp();
   const definition = new ExpressStepFunction(stack, "fn", () => {

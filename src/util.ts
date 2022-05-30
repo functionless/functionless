@@ -13,6 +13,8 @@ import {
   isPropAccessExpr,
   isPropAssignExpr,
   isReferenceExpr,
+  isSpreadAssignExpr,
+  isSpreadElementExpr,
   isStringLiteralExpr,
   isUnaryExpr,
   isUndefinedLiteralExpr,
@@ -168,11 +170,20 @@ export const evalToConstant = (expr: Expr): Constant | undefined => {
   } else if (isArrayLiteralExpr(expr)) {
     const array = [];
     for (const item of expr.items) {
-      const val = evalToConstant(item);
-      if (val === undefined) {
-        return undefined;
+      if (isSpreadElementExpr(item)) {
+        const val = evalToConstant(item.expr);
+        if (val === undefined) {
+          return undefined;
+        } else if (Array.isArray(val.constant)) {
+          array.push(...val.constant);
+        }
+      } else {
+        const val = evalToConstant(item);
+        if (val === undefined) {
+          return undefined;
+        }
+        array.push(val.constant);
       }
-      array.push(val.constant);
     }
     return { constant: array };
   } else if (isObjectLiteralExpr(expr)) {
@@ -200,7 +211,7 @@ export const evalToConstant = (expr: Expr): Constant | undefined => {
         } else {
           obj[name] = val.constant;
         }
-      } else {
+      } else if (isSpreadAssignExpr(prop)) {
         const spreadConst = evalToConstant(prop.expr);
         if (spreadConst === undefined) {
           return undefined;
