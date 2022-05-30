@@ -172,9 +172,6 @@ abstract class FunctionBase<P, O> implements IFunction<P, O> {
     };
   }
 
-  /**
-   * @internal
-   */
   public readonly eventBus = makeEventBusIntegration<
     P,
     FunctionEventBusTargetProps | undefined

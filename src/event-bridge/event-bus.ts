@@ -134,7 +134,7 @@ export interface IEventBus<E extends EventBusRuleInput = EventBusRuleInput>
     ...events: EventBusPutEventInput<E>[]
   ): void;
 
-  eventBus: EventBusTargetIntegration<
+  readonly eventBus: EventBusTargetIntegration<
     E,
     aws_events_targets.EventBusProps | undefined
   >;
@@ -284,9 +284,6 @@ abstract class EventBusBase<E extends EventBusRuleInput>
     };
   }
 
-  /**
-   * @internal
-   */
   public readonly eventBus = makeEventBusIntegration<
     E,
     aws_events_targets.EventBusProps | undefined
@@ -446,6 +443,12 @@ export interface EventBusTargetIntegration<
 > {
   __payloadBrand: P;
 
+  /**
+   * Method called when an integration is passed to EventBus's `.pipe` function.
+   *
+   * @returns a  IRuleTarget that makes use of the props and optional target input.
+   * @internal
+   */
   target: (
     props: Props,
     targetInput?: aws_events.RuleTargetInput

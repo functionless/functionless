@@ -291,6 +291,39 @@ test("pipe typesafe", () => {
     .pipe(lambda); // expects strings
 });
 
+test("pipe typesafe sfn", () => {
+  const sfn = new StepFunction(stack, "machine", (payload: { id: string }) => {
+    return payload.id;
+  });
+  const bus = EventBus.default<tt>(stack);
+
+  bus
+    .when(
+      stack,
+      "rule",
+      (event): event is EventBusRuleInput<t1> => event.detail.type === "one"
+    )
+    .map((event) => ({ id: event.detail.one })) // is object
+    .pipe(sfn); // expects strings
+});
+
+test("pipe typesafe error sfn", () => {
+  const sfn = new StepFunction(stack, "machine", (payload: { id: string }) => {
+    return payload.id;
+  });
+  const bus = EventBus.default<tt>(stack);
+
+  bus
+    .when(
+      stack,
+      "rule",
+      (event): event is EventBusRuleInput<t1> => event.detail.type === "one"
+    )
+    .map((event) => ({ id: event.detail })) // is object
+    // @ts-expect-error
+    .pipe(sfn); // expects strings
+});
+
 test("map cannot pipe to a bus", () => {
   const bus = EventBus.default<tt>(stack);
 

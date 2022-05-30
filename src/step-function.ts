@@ -611,9 +611,6 @@ abstract class BaseStepFunction<
     };
   }
 
-  /**
-   * @internal
-   */
   public readonly eventBus = makeEventBusIntegration<
     P,
     StepFunctionEventBusTargetProps | undefined
