@@ -1113,7 +1113,6 @@ export function compile(
                   const flattened = flattenDestructuredAssignment(
                     symbol.valueDeclaration
                   );
-                  console.log(ts.SyntaxKind[flattened.kind]);
                   return getOutOfScopeValueNode(flattened, scope);
                 }
               }

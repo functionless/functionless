@@ -619,7 +619,7 @@ describe("referencing", () => {
     );
   });
 
-  test("constant from outside into object", () => {
+  test("constant function from outside into object", () => {
     const value = () => {};
 
     ebEventTargetTestCaseError<testEvent>(
@@ -701,7 +701,7 @@ describe("not allowed", () => {
 
 // https://github.com/functionless/functionless/issues/68
 describe.skip("destructure", () => {
-  test("descture parameter", () => {
+  test("destructure parameter", () => {
     ebEventTargetTestCase<testEvent>(
       reflect(({ detail }) => {
         return { value: detail.value };
@@ -712,7 +712,7 @@ describe.skip("destructure", () => {
     );
   });
 
-  test("descture variable", () => {
+  test("destructure variable", () => {
     ebEventTargetTestCase<testEvent>(
       reflect((event) => {
         const { value } = event.detail;
@@ -725,7 +725,7 @@ describe.skip("destructure", () => {
     );
   });
 
-  test("descture multi-layer variable", () => {
+  test("destructure multi-layer variable", () => {
     ebEventTargetTestCase<testEvent>(
       reflect((event) => {
         const {
@@ -740,7 +740,7 @@ describe.skip("destructure", () => {
     );
   });
 
-  test("descture array doesn't work", () => {
+  test("destructure array doesn't work", () => {
     ebEventTargetTestCaseError<testEvent>(
       reflect((event) => {
         const [first] = event.detail.array;
@@ -750,7 +750,7 @@ describe.skip("destructure", () => {
     );
   });
 
-  test("descture parameter array doesn't work", () => {
+  test("destructure parameter array doesn't work", () => {
     ebEventTargetTestCase<testEvent>(
       reflect(
         ({
@@ -767,7 +767,7 @@ describe.skip("destructure", () => {
     );
   });
 
-  test("descture variable rename", () => {
+  test("destructure variable rename", () => {
     ebEventTargetTestCase<testEvent>(
       reflect((event) => {
         const { value: val } = event.detail;
@@ -780,7 +780,7 @@ describe.skip("destructure", () => {
     );
   });
 
-  test("descture parameter rename", () => {
+  test("destructure parameter rename", () => {
     ebEventTargetTestCase<testEvent>(
       reflect(({ source: src }) => {
         return { value: src };
