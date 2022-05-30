@@ -21,5 +21,13 @@ exports[`step-function.ts 1`] = `
 
 [7m19[0m     const a = input.i + 1;
 [7m  [0m [91m             ~~~~~~~~~~~~[0m
+[96mtest/test-files/step-function.ts[0m:[93m39[0m:[93m8[0m - [91merror[0m[90m Functionless(100): [0mCannot perform arithmetic on variables in Step Function
+
+[7m39[0m   () => \\"hello\\" + { place: \\"world\\" }
+[7m  [0m [91m       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+[96mtest/test-files/step-function.ts[0m:[93m41[0m:[93m55[0m - [91merror[0m[90m Functionless(100): [0mCannot perform arithmetic on variables in Step Function
+
+[7m41[0m new StepFunction(stack, '(\\"hello\\" + [\\"world\\"])', () => \\"hello\\" + [\\"world\\"]);
+[7m  [0m [91m                                                      ~~~~~~~~~~~~~~~~~~~~[0m
 "
 `;

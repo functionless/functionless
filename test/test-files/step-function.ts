@@ -33,3 +33,9 @@ new StepFunction(stack, '("hello" + true)', () => "hello" + true);
 new StepFunction(stack, '(false + "hello")', () => false + "hello");
 new StepFunction(stack, '(null + "hello")', () => null + "hello");
 new StepFunction(stack, '("hello" + null)', () => "hello" + null);
+new StepFunction(
+  stack,
+  '("hello" + { place: "world" })',
+  () => "hello" + { place: "world" }
+);
+new StepFunction(stack, '("hello" + ["world"])', () => "hello" + ["world"]);

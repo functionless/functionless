@@ -104,7 +104,10 @@ export const synthesizeEventBridgeTargets = (
   const exprToLiteral = (expr: Expr): LiteralType => {
     const constant = evalToConstant(expr);
 
-    if (constant) {
+    if (
+      constant &&
+      (constant.constant === null || typeof constant.constant !== "object")
+    ) {
       return {
         value: constant.constant,
         type: "string",

@@ -283,6 +283,8 @@ test("let and set", () => {
       key: "value",
     };
     a = a;
+    a = "hello" + { place: "world" };
+    a = "hello" + ["world"];
     return a;
   }).definition;
 
@@ -426,7 +428,19 @@ test("let and set", () => {
       },
       "a = a": {
         InputPath: "$.a",
+        Next: 'a = "hello" + {place: "world"}',
+        ResultPath: "$.a",
+        Type: "Pass",
+      },
+      'a = "hello" + {place: "world"}': {
+        Next: 'a = "hello" + ["world"]',
+        Parameters: "hello[object Object]",
+        ResultPath: "$.a",
+        Type: "Pass",
+      },
+      'a = "hello" + ["world"]': {
         Next: "return a",
+        Parameters: "helloworld",
         ResultPath: "$.a",
         Type: "Pass",
       },
@@ -469,6 +483,8 @@ test("task(any)", () => {
     task({
       key: "value",
     });
+    task("hello" + { place: "world" });
+    task("hello" + ["world"]);
   }).definition;
 
   expect(definition).toEqual({
@@ -707,12 +723,34 @@ test("task(any)", () => {
         Type: "Task",
       },
       'task({key: "value"})': {
-        Next: "return null",
+        Next: 'task("hello" + {place: "world"})',
         Parameters: {
           FunctionName: task.resource.functionName,
           Payload: {
             key: "value",
           },
+        },
+        Resource: "arn:aws:states:::lambda:invoke",
+        ResultPath: null,
+        ResultSelector: "$.Payload",
+        Type: "Task",
+      },
+      'task("hello" + {place: "world"})': {
+        Next: 'task("hello" + ["world"])',
+        Parameters: {
+          FunctionName: task.resource.functionName,
+          Payload: "hello[object Object]",
+        },
+        Resource: "arn:aws:states:::lambda:invoke",
+        ResultPath: null,
+        ResultSelector: "$.Payload",
+        Type: "Task",
+      },
+      'task("hello" + ["world"])': {
+        Next: "return null",
+        Parameters: {
+          FunctionName: task.resource.functionName,
+          Payload: "helloworld",
         },
         Resource: "arn:aws:states:::lambda:invoke",
         ResultPath: null,

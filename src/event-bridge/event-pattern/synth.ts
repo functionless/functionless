@@ -575,7 +575,7 @@ export const synthesizePatternDocument = (
 
     const constant = assertDefined(
       evalToConstant(other),
-      "Equivency must compare to a constant value."
+      "Equivalency must compare to a constant value."
     );
 
     const value = assertPrimitive(

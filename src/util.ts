@@ -2,15 +2,20 @@ import { Construct } from "constructs";
 import ts from "typescript";
 import {
   Expr,
-  isStringLiteralExpr,
+  isArrayLiteralExpr,
   isBinaryExpr,
-  isNumberLiteralExpr,
   isBooleanLiteral,
+  isComputedPropertyNameExpr,
+  isIdentifier,
   isNullLiteralExpr,
+  isNumberLiteralExpr,
+  isObjectLiteralExpr,
   isPropAccessExpr,
-  isUndefinedLiteralExpr,
-  isUnaryExpr,
+  isPropAssignExpr,
   isReferenceExpr,
+  isStringLiteralExpr,
+  isUnaryExpr,
+  isUndefinedLiteralExpr,
 } from "./expression";
 import { FunctionlessNode } from "./node";
 
@@ -130,7 +135,7 @@ export function isConstant(x: any): x is Constant {
  *
  * Use assertConstant or assertPrimitive to make type assertions of the constant returned.
  * Values from external string may be complex types like functions.
- * We choose to late evalute invalid values to support use cases like StepFunctions where it is both a function and has constant properties.
+ * We choose to late evaluate invalid values to support use cases like StepFunctions where it is both a function and has constant properties.
  * new StepFunction().stepFunctionArn
  *
  * "value" -> { constant: "value" }
@@ -160,6 +165,58 @@ export const evalToConstant = (expr: Expr): Constant | undefined => {
     isUndefinedLiteralExpr(expr)
   ) {
     return { constant: expr.value };
+  } else if (isArrayLiteralExpr(expr)) {
+    const array = [];
+    for (const item of expr.items) {
+      const val = evalToConstant(item);
+      if (val === undefined) {
+        return undefined;
+      }
+      array.push(val.constant);
+    }
+    return { constant: array };
+  } else if (isObjectLiteralExpr(expr)) {
+    const obj: any = {};
+    for (const prop of expr.properties) {
+      if (isPropAssignExpr(prop)) {
+        let name;
+        if (isComputedPropertyNameExpr(prop.name)) {
+          const nameConst = evalToConstant(prop.name);
+          if (
+            typeof nameConst?.constant === "string" ||
+            typeof nameConst?.constant === "number" ||
+            typeof nameConst?.constant === "symbol"
+          ) {
+            name = nameConst.constant;
+          } else {
+            return undefined;
+          }
+        } else {
+          name = isIdentifier(prop.name) ? prop.name.name : prop.name.value;
+        }
+        const val = evalToConstant(prop.expr);
+        if (val === undefined) {
+          return undefined;
+        } else {
+          obj[name] = val.constant;
+        }
+      } else {
+        const spreadConst = evalToConstant(prop.expr);
+        if (spreadConst === undefined) {
+          return undefined;
+        } else if (
+          spreadConst.constant === null ||
+          spreadConst.constant === undefined
+        ) {
+          // no-op, spreading null/undefined achieves nothing
+        } else if (typeof spreadConst.constant === "object") {
+          for (const [key, val] of Object.entries(spreadConst.constant)) {
+            obj[key] = val;
+          }
+        }
+      }
+    }
+    return { constant: obj };
   } else if (isUnaryExpr(expr) && expr.op === "-") {
     const number = evalToConstant(expr.expr)?.constant;
     if (typeof number === "number") {
