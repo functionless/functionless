@@ -242,10 +242,9 @@ describe("event pattern", () => {
       test("array explicit equals error", () => {
         ebEventPatternTestCaseError(
           reflect<EventPredicateFunction<TestEvent>>(
-            // @ts-ignore
             (event) => event.detail.array === ["a", "b"]
           ),
-          "Equivency must compare to a constant value."
+          "Event Patterns can only compare primitive values"
         );
       });
     });
@@ -637,7 +636,7 @@ describe("event pattern", () => {
           const myInternalContant = (() => "hi" + " " + "there")();
           return event.detail.str === myInternalContant;
         }),
-        "Equivency must compare to a constant value."
+        "Equivalency must compare to a constant value."
       );
     });
 
@@ -647,7 +646,7 @@ describe("event pattern", () => {
           const myMethod = () => "hi" + " " + "there";
           return event.detail.str === myMethod();
         }),
-        "Equivency must compare to a constant value."
+        "Equivalency must compare to a constant value."
       );
     });
   });

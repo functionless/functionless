@@ -1,3 +1,5 @@
+import * as path from "path";
+import * as appsync from "@aws-cdk/aws-appsync-alpha";
 import {
   App,
   aws_dynamodb,
@@ -18,8 +20,6 @@ import {
   EventBusRuleInput,
   ExpressStepFunction,
 } from "functionless";
-import * as appsync from "@aws-cdk/aws-appsync-alpha";
-import * as path from "path";
 
 export const app = new App();
 export const stack = new Stack(app, "message-board");
@@ -402,7 +402,7 @@ customDeleteBus
  * Native Function test
  */
 
-const busbusbus = new aws_events.EventBus(stack, "busbus");
+new aws_events.EventBus(stack, "busbus");
 
 const b = { bus: customDeleteBus };
 
@@ -421,10 +421,6 @@ new Function(
     timeout: Duration.minutes(1),
   },
   async () => {
-    console.log(customDeleteBus.eventBusArn);
-    console.log(busbusbus.eventBusArn);
-    console.log("huh?!?!?!??!!");
-    console.log("strange");
     const result = func();
     console.log(`function result: ${result}`);
     customDeleteBus({

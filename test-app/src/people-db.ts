@@ -1,10 +1,10 @@
-import { Construct } from "constructs";
 import {
   aws_dynamodb,
   aws_logs,
   aws_stepfunctions,
   RemovalPolicy,
 } from "aws-cdk-lib";
+import { Construct } from "constructs";
 import {
   $AWS,
   Table,

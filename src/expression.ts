@@ -281,6 +281,8 @@ export const isBinaryExpr = typeGuard("BinaryExpr");
 
 export type BinaryOp =
   | "="
+  | "/"
+  | "*"
   | "+"
   | "-"
   | "=="

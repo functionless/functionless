@@ -130,6 +130,75 @@ test("return items.slice(1)", () => {
   });
 });
 
+test("return items.slice(1, undefined)", () => {
+  const { stack } = initStepFunctionApp();
+  const definition = new ExpressStepFunction<{ items: string[] }, string[]>(
+    stack,
+    "fn",
+    (input) => {
+      return input.items.slice(1, undefined);
+    }
+  ).definition;
+
+  expect(definition).toEqual({
+    StartAt: "return input.items.slice(1, undefined)",
+    States: {
+      "return input.items.slice(1, undefined)": {
+        End: true,
+        InputPath: "$.items[1:]",
+        ResultPath: "$",
+        Type: "Pass",
+      },
+    },
+  });
+});
+
+test("return items.slice(-1)", () => {
+  const { stack } = initStepFunctionApp();
+  const definition = new ExpressStepFunction<{ items: string[] }, string[]>(
+    stack,
+    "fn",
+    (input) => {
+      return input.items.slice(-1);
+    }
+  ).definition;
+
+  expect(definition).toEqual({
+    StartAt: "return input.items.slice(-1)",
+    States: {
+      "return input.items.slice(-1)": {
+        End: true,
+        InputPath: "$.items[-1:]",
+        ResultPath: "$",
+        Type: "Pass",
+      },
+    },
+  });
+});
+
+test("return items.slice(0, -1)", () => {
+  const { stack } = initStepFunctionApp();
+  const definition = new ExpressStepFunction<{ items: string[] }, string[]>(
+    stack,
+    "fn",
+    (input) => {
+      return input.items.slice(0, -1);
+    }
+  ).definition;
+
+  expect(definition).toEqual({
+    StartAt: "return input.items.slice(0, -1)",
+    States: {
+      "return input.items.slice(0, -1)": {
+        End: true,
+        InputPath: "$.items[0:-1]",
+        ResultPath: "$",
+        Type: "Pass",
+      },
+    },
+  });
+});
+
 test("return items.slice(1, 3)", () => {
   const { stack } = initStepFunctionApp();
   const definition = new ExpressStepFunction<{ items: string[] }, string[]>(
@@ -190,9 +259,20 @@ test("let and set", () => {
     a = true;
     a = false;
     a = 0;
+    a = -1;
+    a = -100;
+    a = 1 + 2;
     a = "hello";
+    a = "hello" + " world";
+    a = "hello" + 1;
+    a = 1 + "hello";
+    a = "hello" + true;
+    a = false + "hello";
+    a = null + "hello";
+    a = "hello" + null;
     a = [null];
     a = [1];
+    a = [-1];
     a = [true];
     a = [
       {
@@ -203,33 +283,122 @@ test("let and set", () => {
       key: "value",
     };
     a = a;
+    a = "hello" + { place: "world" };
+    a = "hello" + ["world"];
     return a;
   }).definition;
 
   expect(definition).toEqual({
     StartAt: "a = null",
     States: {
-      'a = "hello"': {
-        Next: "a = [null]",
-        Parameters: "hello",
+      "a = null": {
+        Next: "a = true",
+        Parameters: {
+          "$.a": null,
+          "a.$": "$.a",
+        },
+        ResultPath: null,
+        Type: "Pass",
+      },
+      "a = true": {
+        Next: "a = false",
+        Parameters: true,
+        ResultPath: "$.a",
+        Type: "Pass",
+      },
+      "a = false": {
+        Next: "a = 0",
+        Parameters: false,
         ResultPath: "$.a",
         Type: "Pass",
       },
       "a = 0": {
-        Next: 'a = "hello"',
+        Next: "a = -1",
         Parameters: 0,
         ResultPath: "$.a",
         Type: "Pass",
       },
-      "a = [1]": {
-        Next: "a = [true]",
-        Parameters: [1],
+      "a = -1": {
+        Next: "a = -100",
+        Parameters: -1,
+        ResultPath: "$.a",
+        Type: "Pass",
+      },
+      "a = -100": {
+        Next: "a = 1 + 2",
+        Parameters: -100,
+        ResultPath: "$.a",
+        Type: "Pass",
+      },
+      "a = 1 + 2": {
+        Next: 'a = "hello"',
+        Parameters: 3,
+        ResultPath: "$.a",
+        Type: "Pass",
+      },
+      'a = "hello"': {
+        Next: 'a = "hello" + " world"',
+        Parameters: "hello",
+        ResultPath: "$.a",
+        Type: "Pass",
+      },
+      'a = "hello" + " world"': {
+        Next: 'a = "hello" + 1',
+        Parameters: "hello world",
+        ResultPath: "$.a",
+        Type: "Pass",
+      },
+      'a = "hello" + 1': {
+        Next: 'a = 1 + "hello"',
+        Parameters: "hello1",
+        ResultPath: "$.a",
+        Type: "Pass",
+      },
+      'a = 1 + "hello"': {
+        Next: 'a = "hello" + true',
+        Parameters: "1hello",
+        ResultPath: "$.a",
+        Type: "Pass",
+      },
+      'a = "hello" + true': {
+        Next: 'a = false + "hello"',
+        Parameters: "hellotrue",
+        ResultPath: "$.a",
+        Type: "Pass",
+      },
+      'a = false + "hello"': {
+        Next: 'a = null + "hello"',
+        Parameters: "falsehello",
+        ResultPath: "$.a",
+        Type: "Pass",
+      },
+      'a = null + "hello"': {
+        Next: 'a = "hello" + null',
+        Parameters: "nullhello",
+        ResultPath: "$.a",
+        Type: "Pass",
+      },
+      'a = "hello" + null': {
+        Next: "a = [null]",
+        Parameters: "hellonull",
         ResultPath: "$.a",
         Type: "Pass",
       },
       "a = [null]": {
         Next: "a = [1]",
         Parameters: [null],
+        ResultPath: "$.a",
+        Type: "Pass",
+      },
+      "a = [1]": {
+        Next: "a = [-1]",
+        Parameters: [1],
+        ResultPath: "$.a",
+        Type: "Pass",
+      },
+      "a = [-1]": {
+        Next: "a = [true]",
+        Parameters: [-1],
         ResultPath: "$.a",
         Type: "Pass",
       },
@@ -249,27 +418,6 @@ test("let and set", () => {
         ResultPath: "$.a",
         Type: "Pass",
       },
-      "a = false": {
-        Next: "a = 0",
-        Parameters: false,
-        ResultPath: "$.a",
-        Type: "Pass",
-      },
-      "a = null": {
-        Next: "a = true",
-        Parameters: {
-          "$.a": null,
-          "a.$": "$.a",
-        },
-        ResultPath: null,
-        Type: "Pass",
-      },
-      "a = true": {
-        Next: "a = false",
-        Parameters: true,
-        ResultPath: "$.a",
-        Type: "Pass",
-      },
       'a = {key: "value"}': {
         Next: "a = a",
         Parameters: {
@@ -279,14 +427,368 @@ test("let and set", () => {
         Type: "Pass",
       },
       "a = a": {
-        Next: "return a",
         InputPath: "$.a",
+        Next: 'a = "hello" + {place: "world"}',
+        ResultPath: "$.a",
+        Type: "Pass",
+      },
+      'a = "hello" + {place: "world"}': {
+        Next: 'a = "hello" + ["world"]',
+        Parameters: "hello[object Object]",
+        ResultPath: "$.a",
+        Type: "Pass",
+      },
+      'a = "hello" + ["world"]': {
+        Next: "return a",
+        Parameters: "helloworld",
         ResultPath: "$.a",
         Type: "Pass",
       },
       "return a": {
         End: true,
         OutputPath: "$.a",
+        Type: "Pass",
+      },
+    },
+  });
+});
+
+test("task(any)", () => {
+  const { stack, task } = initStepFunctionApp();
+  const definition = new ExpressStepFunction(stack, "fn", () => {
+    task(null);
+    task(true);
+    task(false);
+    task(0);
+    task(-1);
+    task(-100);
+    task(1 + 2);
+    task("hello");
+    task("hello" + " world");
+    task("hello" + 1);
+    task(1 + "hello");
+    task("hello" + true);
+    task(false + "hello");
+    task(null + "hello");
+    task("hello" + null);
+    task([null]);
+    task([1]);
+    task([-1]);
+    task([true]);
+    task([
+      {
+        key: "value",
+      },
+    ]);
+    task({
+      key: "value",
+    });
+    task("hello" + { place: "world" });
+    task("hello" + ["world"]);
+  }).definition;
+
+  expect(definition).toEqual({
+    StartAt: "task(null)",
+    States: {
+      "return null": {
+        End: true,
+        OutputPath: "$.null",
+        Parameters: {
+          null: null,
+        },
+        Type: "Pass",
+      },
+      'task("hello" + " world")': {
+        Next: 'task("hello" + 1)',
+        Parameters: {
+          FunctionName: task.resource.functionName,
+          Payload: "hello world",
+        },
+        Resource: "arn:aws:states:::lambda:invoke",
+        ResultPath: null,
+        ResultSelector: "$.Payload",
+        Type: "Task",
+      },
+      'task("hello" + 1)': {
+        Next: 'task(1 + "hello")',
+        Parameters: {
+          FunctionName: task.resource.functionName,
+          Payload: "hello1",
+        },
+        Resource: "arn:aws:states:::lambda:invoke",
+        ResultPath: null,
+        ResultSelector: "$.Payload",
+        Type: "Task",
+      },
+      'task("hello" + null)': {
+        Next: "task([null])",
+        Parameters: {
+          FunctionName: task.resource.functionName,
+          Payload: "hellonull",
+        },
+        Resource: "arn:aws:states:::lambda:invoke",
+        ResultPath: null,
+        ResultSelector: "$.Payload",
+        Type: "Task",
+      },
+      'task("hello" + true)': {
+        Next: 'task(false + "hello")',
+        Parameters: {
+          FunctionName: task.resource.functionName,
+          Payload: "hellotrue",
+        },
+        Resource: "arn:aws:states:::lambda:invoke",
+        ResultPath: null,
+        ResultSelector: "$.Payload",
+        Type: "Task",
+      },
+      'task("hello")': {
+        Next: 'task("hello" + " world")',
+        Parameters: {
+          FunctionName: task.resource.functionName,
+          Payload: "hello",
+        },
+        Resource: "arn:aws:states:::lambda:invoke",
+        ResultPath: null,
+        ResultSelector: "$.Payload",
+        Type: "Task",
+      },
+      "task(-1)": {
+        Next: "task(-100)",
+        Parameters: {
+          FunctionName: task.resource.functionName,
+          Payload: -1,
+        },
+        Resource: "arn:aws:states:::lambda:invoke",
+        ResultPath: null,
+        ResultSelector: "$.Payload",
+        Type: "Task",
+      },
+      "task(-100)": {
+        Next: "task(1 + 2)",
+        Parameters: {
+          FunctionName: task.resource.functionName,
+          Payload: -100,
+        },
+        Resource: "arn:aws:states:::lambda:invoke",
+        ResultPath: null,
+        ResultSelector: "$.Payload",
+        Type: "Task",
+      },
+      "task(0)": {
+        Next: "task(-1)",
+        Parameters: {
+          FunctionName: task.resource.functionName,
+          Payload: 0,
+        },
+        Resource: "arn:aws:states:::lambda:invoke",
+        ResultPath: null,
+        ResultSelector: "$.Payload",
+        Type: "Task",
+      },
+      'task(1 + "hello")': {
+        Next: 'task("hello" + true)',
+        Parameters: {
+          FunctionName: task.resource.functionName,
+          Payload: "1hello",
+        },
+        Resource: "arn:aws:states:::lambda:invoke",
+        ResultPath: null,
+        ResultSelector: "$.Payload",
+        Type: "Task",
+      },
+      "task(1 + 2)": {
+        Next: 'task("hello")',
+        Parameters: {
+          FunctionName: task.resource.functionName,
+          Payload: 3,
+        },
+        Resource: "arn:aws:states:::lambda:invoke",
+        ResultPath: null,
+        ResultSelector: "$.Payload",
+        Type: "Task",
+      },
+      "task([-1])": {
+        Next: "task([true])",
+        Parameters: {
+          FunctionName: task.resource.functionName,
+          Payload: [-1],
+        },
+        Resource: "arn:aws:states:::lambda:invoke",
+        ResultPath: null,
+        ResultSelector: "$.Payload",
+        Type: "Task",
+      },
+      "task([1])": {
+        Next: "task([-1])",
+        Parameters: {
+          FunctionName: task.resource.functionName,
+          Payload: [1],
+        },
+        Resource: "arn:aws:states:::lambda:invoke",
+        ResultPath: null,
+        ResultSelector: "$.Payload",
+        Type: "Task",
+      },
+      "task([null])": {
+        Next: "task([1])",
+        Parameters: {
+          FunctionName: task.resource.functionName,
+          Payload: [null],
+        },
+        Resource: "arn:aws:states:::lambda:invoke",
+        ResultPath: null,
+        ResultSelector: "$.Payload",
+        Type: "Task",
+      },
+      "task([true])": {
+        Next: 'task([{key: "value"}])',
+        Parameters: {
+          FunctionName: task.resource.functionName,
+          Payload: [true],
+        },
+        Resource: "arn:aws:states:::lambda:invoke",
+        ResultPath: null,
+        ResultSelector: "$.Payload",
+        Type: "Task",
+      },
+      'task([{key: "value"}])': {
+        Next: 'task({key: "value"})',
+        Parameters: {
+          FunctionName: task.resource.functionName,
+          Payload: [
+            {
+              key: "value",
+            },
+          ],
+        },
+        Resource: "arn:aws:states:::lambda:invoke",
+        ResultPath: null,
+        ResultSelector: "$.Payload",
+        Type: "Task",
+      },
+      'task(false + "hello")': {
+        Next: 'task(null + "hello")',
+        Parameters: {
+          FunctionName: task.resource.functionName,
+          Payload: "falsehello",
+        },
+        Resource: "arn:aws:states:::lambda:invoke",
+        ResultPath: null,
+        ResultSelector: "$.Payload",
+        Type: "Task",
+      },
+      "task(false)": {
+        Next: "task(0)",
+        Parameters: {
+          FunctionName: task.resource.functionName,
+          Payload: false,
+        },
+        Resource: "arn:aws:states:::lambda:invoke",
+        ResultPath: null,
+        ResultSelector: "$.Payload",
+        Type: "Task",
+      },
+      'task(null + "hello")': {
+        Next: 'task("hello" + null)',
+        Parameters: {
+          FunctionName: task.resource.functionName,
+          Payload: "nullhello",
+        },
+        Resource: "arn:aws:states:::lambda:invoke",
+        ResultPath: null,
+        ResultSelector: "$.Payload",
+        Type: "Task",
+      },
+      "task(null)": {
+        Next: "task(true)",
+        Parameters: {
+          FunctionName: task.resource.functionName,
+          Payload: null,
+        },
+        Resource: "arn:aws:states:::lambda:invoke",
+        ResultPath: null,
+        ResultSelector: "$.Payload",
+        Type: "Task",
+      },
+      "task(true)": {
+        Next: "task(false)",
+        Parameters: {
+          FunctionName: task.resource.functionName,
+          Payload: true,
+        },
+        Resource: "arn:aws:states:::lambda:invoke",
+        ResultPath: null,
+        ResultSelector: "$.Payload",
+        Type: "Task",
+      },
+      'task({key: "value"})': {
+        Next: 'task("hello" + {place: "world"})',
+        Parameters: {
+          FunctionName: task.resource.functionName,
+          Payload: {
+            key: "value",
+          },
+        },
+        Resource: "arn:aws:states:::lambda:invoke",
+        ResultPath: null,
+        ResultSelector: "$.Payload",
+        Type: "Task",
+      },
+      'task("hello" + {place: "world"})': {
+        Next: 'task("hello" + ["world"])',
+        Parameters: {
+          FunctionName: task.resource.functionName,
+          Payload: "hello[object Object]",
+        },
+        Resource: "arn:aws:states:::lambda:invoke",
+        ResultPath: null,
+        ResultSelector: "$.Payload",
+        Type: "Task",
+      },
+      'task("hello" + ["world"])': {
+        Next: "return null",
+        Parameters: {
+          FunctionName: task.resource.functionName,
+          Payload: "helloworld",
+        },
+        Resource: "arn:aws:states:::lambda:invoke",
+        ResultPath: null,
+        ResultSelector: "$.Payload",
+        Type: "Task",
+      },
+    },
+  });
+});
+
+test("spread constant array and object", () => {
+  const array = [1, 2];
+  const object = { hello: "world" };
+
+  const definition = new StepFunction(stack, "fn", () => {
+    return {
+      array: [0, ...array, 3],
+      object: {
+        key: "value",
+        ...object,
+      },
+    };
+  }).definition;
+
+  expect(definition).toEqual({
+    StartAt:
+      'return {array: [0, ...array, 3], object: {key: "value", ...object}}',
+    States: {
+      'return {array: [0, ...array, 3], object: {key: "value", ...object}}': {
+        End: true,
+        Parameters: {
+          array: [0, 1, 2, 3],
+          object: {
+            hello: "world",
+            key: "value",
+          },
+        },
+        ResultPath: "$",
         Type: "Pass",
       },
     },
@@ -1032,6 +1534,62 @@ test("return a single Lambda Function call", () => {
           Payload: {
             "id.$": "$.id",
           },
+        },
+      },
+    },
+  });
+});
+
+test("task(-1)", () => {
+  const { stack, task } = initStepFunctionApp();
+  const definition = new ExpressStepFunction<{ id: string }, any>(
+    stack,
+    "fn",
+    () => {
+      return task(-1);
+    }
+  ).definition;
+
+  expect(definition).toEqual({
+    StartAt: "return task(-1)",
+    States: {
+      "return task(-1)": {
+        Type: "Task",
+        Resource: "arn:aws:states:::lambda:invoke",
+        End: true,
+        ResultPath: "$",
+        ResultSelector: "$.Payload",
+        Parameters: {
+          FunctionName: task.resource.functionName,
+          Payload: -1,
+        },
+      },
+    },
+  });
+});
+
+test("task(input.list[-1])", () => {
+  const { stack, task } = initStepFunctionApp();
+  const definition = new ExpressStepFunction(
+    stack,
+    "fn",
+    (input: { list: { [-1]: string } }) => {
+      return task(input.list[-1]);
+    }
+  ).definition;
+
+  expect(definition).toEqual({
+    StartAt: "return task(input.list[-1])",
+    States: {
+      "return task(input.list[-1])": {
+        Type: "Task",
+        Resource: "arn:aws:states:::lambda:invoke",
+        End: true,
+        ResultPath: "$",
+        ResultSelector: "$.Payload",
+        Parameters: {
+          FunctionName: task.resource.functionName,
+          "Payload.$": "$.list[-1]",
         },
       },
     },

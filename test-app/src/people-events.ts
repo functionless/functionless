@@ -1,5 +1,5 @@
-import * as functionless from "functionless";
 import { Construct } from "constructs";
+import * as functionless from "functionless";
 
 interface UserDetails {
   id?: string;
