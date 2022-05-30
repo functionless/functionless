@@ -160,10 +160,6 @@ export const evalToConstant = (expr: Expr): Constant | undefined => {
     isUndefinedLiteralExpr(expr)
   ) {
     return { constant: expr.value };
-  } else if (isNullLiteralExpr(expr)) {
-    return { constant: null };
-  } else if (isUndefinedLiteralExpr(expr)) {
-    return { constant: undefined };
   } else if (isUnaryExpr(expr) && expr.op === "-") {
     const number = evalToConstant(expr.expr)?.constant;
     if (typeof number === "number") {

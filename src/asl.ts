@@ -1253,9 +1253,17 @@ export namespace ASL {
     if (expr === undefined) {
       return undefined;
     }
+
+    // check if the value resolves to a constant
     const constant = evalToConstant(expr);
     if (constant !== undefined) {
-      // if the constant is statically known
+      if (isFunction(constant.constant)) {
+        return constant.constant.resource.functionArn;
+      } else if (isStepFunction(constant.constant)) {
+        return constant.constant.stateMachineArn;
+      } else if (isTable(constant.constant)) {
+        return constant.constant.resource.tableName;
+      }
       return constant.constant;
     } else if (expr.kind === "Argument") {
       return toJson(expr.expr);
@@ -1313,15 +1321,6 @@ export namespace ASL {
       return payload;
     } else if (isLiteralExpr(expr)) {
       return expr.value ?? null;
-    } else if (expr.kind === "ReferenceExpr") {
-      const ref = expr.ref();
-      if (isFunction(ref)) {
-        return ref.resource.functionArn;
-      } else if (isStepFunction(ref)) {
-        return ref.stateMachineArn;
-      } else if (isTable(ref)) {
-        return ref.resource.tableName;
-      }
     } else if (expr.kind === "TemplateExpr") {
       return `States.Format('${expr.exprs
         .map((e) => (isLiteralExpr(e) ? toJson(e) : "{}"))
@@ -1396,7 +1395,9 @@ export namespace ASL {
           // explicit undefined passed to slice should be treated the same as not provided
           return `${toJsonPath(expr.expr.expr)}[${startConst}:]`;
         } else {
-          return `${toJsonPath(expr.expr.expr)}[${startConst}:${endConst}]`;
+          return `${toJsonPath(expr.expr.expr)}[${startConst}:${
+            endConst.constant
+          }]`;
         }
       }
     } else if (endArg !== undefined) {
