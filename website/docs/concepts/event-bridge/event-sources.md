@@ -19,19 +19,9 @@ Which is the same as doing:
 
 ```ts
 const sfn = new StepFunction(...);
-EventBus.default()
+EventBus.default(scope)
   .when(event => event.detail.status === "SUCCEEDED" && event.source === "aws.states" && event.detail.stateMachineArn === sfn.stateMachineArn)
   .map(...)
-  .pipe(...);
-```
-
-Event sources (and all rules) can also be refined:
-
-```ts
-const sfn = new StepFunction(...);
-const successEvents = sfn.onSucceeded(stack, 'successEvent')
-successEvents
-  .when(event => event.detail.output.includes("some output contents"))
   .pipe(...);
 ```
 

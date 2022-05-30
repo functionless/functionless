@@ -10,7 +10,7 @@ Functionless allows typescript to be used when defining a rule.
 
 ```ts
 const bus = new EventBus(stack, 'bus');
-const func = new Function<string, void>();
+const func = new Function<string, void>(stack, 'func', (input) => console.log(input));
 
 // an event bridge rule made with Functionless
 const lambdaEventsRule = bus
@@ -44,9 +44,9 @@ For more details on the supported schema for `Rule`s see [syntax](./syntax.md#ev
 
 ## Scheduled Rules
 
-Functionless supports a thin wrapper around the EventBus scheduled events.
+Functionless supports a thin wrapper around the `EventBus` scheduled events.
 
-EventBus only supports scheduled rules on the `default` bus.
+Event Bridge only supports scheduled rules on the `default` bus.
 
 ```ts
 EventBus.scheduled(
@@ -55,12 +55,12 @@ EventBus.scheduled(
   aws_events.Schedule.duration(Duration.hour(1))
 );
 // is the same as
-EventBus.default().scheduled(
+EventBus.default(stack).scheduled(
   stack,
   "myScheduledRule2",
   aws_events.Schedule.duration(Duration.hour(1))
 );
-// or
+// or in regular CDK:
 new aws_events.Rule(stack, "myScheduledRule", {
   schedule: aws_events.Schedule.duration(Duration.hour(1)),
 });
@@ -81,10 +81,10 @@ EventBus
 To create a rule that matches all events on a bus, use the `.all` helper on the `EventBus`
 
 ```ts
-const bus = new EventBus(stack, 'bus');
-const allEvents = bus.all('allBusEvents');
+const bus = new EventBus(stack, "bus");
+const allEvents = bus.all("allBusEvents");
 // or
-const allEventWhen = bus.when(()) => true);
+const allEventWhen = bus.when("allBusEvent", () => true);
 ```
 
 ## Refining Rules

@@ -23,7 +23,7 @@ import {
 } from "./asl";
 import { assertDefined, assertNodeKind } from "./assert";
 import { FunctionDecl, isFunctionDecl } from "./declaration";
-import { EventBus, EventBusPredicateRuleBase, Rule } from "./event-bridge";
+import { EventBus, PredicateRuleBase, Rule } from "./event-bridge";
 import { EventBusEvent } from "./event-bridge/types";
 import {
   CallExpr,
@@ -617,7 +617,7 @@ abstract class BaseStepFunction<
   ): Rule<StepFunctionStatusChangedEvent> {
     const bus = EventBus.default<StepFunctionStatusChangedEvent>(this);
 
-    return new EventBusPredicateRuleBase(
+    return new PredicateRuleBase(
       scope,
       id,
       bus,
@@ -640,7 +640,7 @@ abstract class BaseStepFunction<
   ): Rule<StepFunctionStatusChangedEvent> {
     const bus = EventBus.default<StepFunctionStatusChangedEvent>(this);
 
-    return new EventBusPredicateRuleBase<StepFunctionStatusChangedEvent>(
+    return new PredicateRuleBase<StepFunctionStatusChangedEvent>(
       scope,
       id,
       bus,
@@ -663,7 +663,7 @@ abstract class BaseStepFunction<
   ): Rule<StepFunctionStatusChangedEvent> {
     const bus = EventBus.default<StepFunctionStatusChangedEvent>(this);
 
-    return new EventBusPredicateRuleBase<StepFunctionStatusChangedEvent>(
+    return new PredicateRuleBase<StepFunctionStatusChangedEvent>(
       scope,
       id,
       bus,
@@ -686,7 +686,7 @@ abstract class BaseStepFunction<
   ): Rule<StepFunctionStatusChangedEvent> {
     const bus = EventBus.default<StepFunctionStatusChangedEvent>(this);
 
-    return new EventBusPredicateRuleBase(
+    return new PredicateRuleBase(
       scope,
       id,
       bus,
@@ -709,7 +709,7 @@ abstract class BaseStepFunction<
   ): Rule<StepFunctionStatusChangedEvent> {
     const bus = EventBus.default<StepFunctionStatusChangedEvent>(this);
 
-    return new EventBusPredicateRuleBase<StepFunctionStatusChangedEvent>(
+    return new PredicateRuleBase<StepFunctionStatusChangedEvent>(
       scope,
       id,
       bus,
@@ -736,7 +736,7 @@ abstract class BaseStepFunction<
     const bus = EventBus.default<StepFunctionStatusChangedEvent>(this);
 
     // We are not able to use the nice "when" function here because we don't compile
-    return new EventBusPredicateRuleBase<StepFunctionStatusChangedEvent>(
+    return new PredicateRuleBase<StepFunctionStatusChangedEvent>(
       scope,
       id,
       bus,

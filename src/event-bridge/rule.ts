@@ -24,7 +24,7 @@ import { EventBusEvent } from "./types";
  *
  * event is every event sent to the bus to be filtered. This argument is optional.
  */
-export type EventPredicateFunction<E, O extends E = E> =
+export type RulePredicateFunction<E, O extends E = E> =
   | ((event: E) => event is O)
   | ((event: E) => boolean);
 
@@ -32,7 +32,7 @@ export interface IRule<T extends EventBusEvent> {
   readonly rule: aws_events.Rule;
 
   /**
-   * This static property identifies this class as an Rule to the TypeScript plugin.
+   * This static property identifies this class as a Rule to the TypeScript plugin.
    */
   readonly functionlessKind: typeof RuleBase.FunctionlessType;
 
@@ -147,7 +147,7 @@ export interface IRule<T extends EventBusEvent> {
 
 abstract class RuleBase<T extends EventBusEvent> implements IRule<T> {
   /**
-   * This static properties identifies this class as an Rule to the TypeScript plugin.
+   * This static properties identifies this class as a Rule to the TypeScript plugin.
    */
   public static readonly FunctionlessType = "Rule";
   readonly functionlessKind = "Rule";
@@ -189,7 +189,7 @@ abstract class RuleBase<T extends EventBusEvent> implements IRule<T> {
 /**
  * Special base rule that supports some internal behaviors like joining (AND) compiled rules.
  */
-export class EventBusPredicateRuleBase<T extends EventBusEvent>
+export class PredicateRuleBase<T extends EventBusEvent>
   extends RuleBase<T>
   implements IEventBusFilterable<T>
 {
@@ -228,22 +228,22 @@ export class EventBusPredicateRuleBase<T extends EventBusEvent>
    */
   when<O extends T>(
     id: string,
-    predicate: EventPredicateFunction<T, O>
-  ): EventBusPredicateRuleBase<O>;
+    predicate: RulePredicateFunction<T, O>
+  ): PredicateRuleBase<O>;
   when<O extends T>(
     scope: Construct,
     id: string,
-    predicate: EventPredicateFunction<T, O>
-  ): EventBusPredicateRuleBase<O>;
+    predicate: RulePredicateFunction<T, O>
+  ): PredicateRuleBase<O>;
   when<O extends T>(
     scope: Construct | string,
-    id?: string | EventPredicateFunction<T, O>,
-    predicate?: EventPredicateFunction<T, O>
-  ): EventBusPredicateRuleBase<O> {
+    id?: string | RulePredicateFunction<T, O>,
+    predicate?: RulePredicateFunction<T, O>
+  ): PredicateRuleBase<O> {
     if (predicate) {
       const document = synthesizePatternDocument(predicate as any);
 
-      return new EventBusPredicateRuleBase<O>(
+      return new PredicateRuleBase<O>(
         scope as Construct,
         id as string,
         this.bus as IEventBus<O>,
@@ -253,7 +253,7 @@ export class EventBusPredicateRuleBase<T extends EventBusEvent>
     } else {
       const document = synthesizePatternDocument(id as any);
 
-      return new EventBusPredicateRuleBase<O>(
+      return new PredicateRuleBase<O>(
         this.bus.bus,
         scope as string,
         this.bus as IEventBus<O>,
@@ -273,12 +273,12 @@ export class EventBusPredicateRuleBase<T extends EventBusEvent>
 export class Rule<
   T extends EventBusEvent,
   O extends T = T
-> extends EventBusPredicateRuleBase<O> {
+> extends PredicateRuleBase<O> {
   constructor(
     scope: Construct,
     id: string,
     bus: IEventBus<O>,
-    predicate: EventPredicateFunction<T, O>
+    predicate: RulePredicateFunction<T, O>
   ) {
     const document = synthesizePatternDocument(predicate as any);
 

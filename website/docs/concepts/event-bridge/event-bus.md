@@ -24,8 +24,8 @@ There is a default Event Bus in every region of an AWS account. It contains even
 Functionless provides an easy way to work with the default bus.
 
 ```ts
-const defaultBus = EventBus.default();
-defaultBus.when((event) => event.source === "lambda");
+const defaultBus = EventBus.default(scope);
+defaultBus.when("lambdaRule", (event) => event.source === "lambda");
 ```
 
 ## Adopting CDK Resources
@@ -50,7 +50,7 @@ const bus = EventBus.fromBus(awsBus);
 
 ## Put Events to your bus from other Resources
 
-Event Bus integrates with other AWS Resources via functionless.
+Functionless supports `putEvents` integrations with other AWS Resources.
 
 - Step Functions
 - Lambda
@@ -70,21 +70,7 @@ const sfn = new StepFunction(stack, "sfn", () => {
 ```
 
 :::caution
-Caveat: Events passed to the bus in a step function must be one or more literal objects and may not use the spread (`...`) syntax.
-
-```ts
-const event = { source: "lambda", "detail-type": "type", detail: {} };
-bus(event); // error
-bus({ ...event }); // error
-bus(...[event]); // error
-bus({
-  // works
-  source: "lambda",
-  "detail-type": "type",
-  detail: {},
-});
-```
-
+Limitation: [Events passed to the bus in a step function must one or more literal objects](./integrations#Events_passed-to_the_bus_in_a_step_function_must_literal_objects) and may not use the spread (`...`) syntax.
 :::
 
 ### Lambda
@@ -112,7 +98,9 @@ See AWS's documentation for limitations with [cross-account](https://docs.aws.am
 const eventBus = new EventBus(stack, "bus1");
 const eventBus2 = new EventBus(stack, "bus2");
 // send lambda events from bus1 to bus2.
-eventBus.when((event) => event.source === "lambda").pipe(eventBus2);
+eventBus
+  .when("lambdaRule", (event) => event.source === "lambda")
+  .pipe(eventBus2);
 ```
 
 :::info

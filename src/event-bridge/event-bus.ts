@@ -23,10 +23,10 @@ import {
 import { Integration } from "../integration";
 import {
   Rule,
-  EventPredicateFunction,
+  RulePredicateFunction,
   ImportedRule,
   ScheduledEvent,
-  EventBusPredicateRuleBase,
+  PredicateRuleBase as PredicateRuleBase,
 } from "./rule";
 import { EventBusEvent } from "./types";
 
@@ -105,12 +105,12 @@ export interface IEventBusFilterable<E extends EventBusEvent> {
    */
   when<O extends E>(
     id: string,
-    predicate: EventPredicateFunction<E, O>
+    predicate: RulePredicateFunction<E, O>
   ): Rule<E, O>;
   when<O extends E>(
     scope: Construct,
     id: string,
-    predicate: EventPredicateFunction<E, O>
+    predicate: RulePredicateFunction<E, O>
   ): Rule<E, O>;
 }
 
@@ -153,8 +153,8 @@ export interface IEventBus<E extends EventBusEvent = EventBusEvent>
    *  .pipe(func);
    * ```
    */
-  all(): EventBusPredicateRuleBase<E>;
-  all(scope: Construct, id: string): EventBusPredicateRuleBase<E>;
+  all(): PredicateRuleBase<E>;
+  all(scope: Construct, id: string): PredicateRuleBase<E>;
 
   readonly native: NativeIntegration<EventBusBase<E>>;
 }
@@ -172,7 +172,7 @@ abstract class EventBusBase<E extends EventBusEvent>
 
   protected static singletonDefaultNode = "__DefaultBus";
 
-  private allRule: EventBusPredicateRuleBase<E> | undefined;
+  private allRule: PredicateRuleBase<E> | undefined;
   readonly native: NativeIntegration<EventBusBase<E>>;
 
   constructor(readonly bus: aws_events.IEventBus) {
@@ -299,22 +299,19 @@ abstract class EventBusBase<E extends EventBusEvent>
     };
   }
 
-  /**
-   * @inheritdoc
-   */
   when<O extends E>(
     id: string,
-    predicate: EventPredicateFunction<E, O>
+    predicate: RulePredicateFunction<E, O>
   ): Rule<E, O>;
   when<O extends E>(
     scope: Construct,
     id: string,
-    predicate: EventPredicateFunction<E, O>
+    predicate: RulePredicateFunction<E, O>
   ): Rule<E, O>;
   when<O extends E>(
     scope: Construct | string,
-    id?: string | EventPredicateFunction<E, O>,
-    predicate?: EventPredicateFunction<E, O>
+    id?: string | RulePredicateFunction<E, O>,
+    predicate?: RulePredicateFunction<E, O>
   ): Rule<E, O> {
     if (predicate) {
       return new Rule<E, O>(
@@ -328,20 +325,17 @@ abstract class EventBusBase<E extends EventBusEvent>
         this.bus,
         scope as string,
         this as any,
-        id as EventPredicateFunction<E, O>
+        id as RulePredicateFunction<E, O>
       );
     }
   }
 
-  /**
-   * @inheritdoc
-   */
-  all(): EventBusPredicateRuleBase<E>;
-  all(scope: Construct, id: string): EventBusPredicateRuleBase<E>;
-  all(scope?: Construct, id?: string): EventBusPredicateRuleBase<E> {
+  all(): PredicateRuleBase<E>;
+  all(scope: Construct, id: string): PredicateRuleBase<E>;
+  all(scope?: Construct, id?: string): PredicateRuleBase<E> {
     if (!scope || !id) {
       if (!this.allRule) {
-        this.allRule = new EventBusPredicateRuleBase<E>(
+        this.allRule = new PredicateRuleBase<E>(
           this.bus,
           "all",
           this as IEventBus<any>,
@@ -351,7 +345,7 @@ abstract class EventBusBase<E extends EventBusEvent>
       }
       return this.allRule;
     }
-    return new EventBusPredicateRuleBase<E>(scope, id, this as IEventBus<any>, {
+    return new PredicateRuleBase<E>(scope, id, this as IEventBus<any>, {
       doc: {},
     });
   }
@@ -451,9 +445,8 @@ export class EventBus<E extends EventBusEvent> extends EventBusBase<E> {
    * Always sends the {@link ScheduledEvent} event.
    *
    * ```ts
-   * const bus = EventBus.default(scope);
    * // every hour
-   * const everyHour = bus.schedule(scope, 'cron', aws_events.Schedule.rate(Duration.hours(1)));
+   * const everyHour = EventBus.schedule(scope, 'cron', aws_events.Schedule.rate(Duration.hours(1)));
    *
    * const func = new Function(scope, 'func', async (payload: {id: string}) => console.log(payload.id));
    *
@@ -497,8 +490,9 @@ export class DefaultEventBus<E extends EventBusEvent> extends EventBusBase<E> {
    * Always sends the {@link ScheduledEvent} event.
    *
    * ```ts
+   * const bus = EventBus.default(scope);
    * // every hour
-   * const everyHour = EventBus.schedule(scope, 'cron', aws_events.Schedule.rate(Duration.hours(1)));
+   * const everyHour = bus.schedule(scope, 'cron', aws_events.Schedule.rate(Duration.hours(1)));
    *
    * const func = new Function(scope, 'func', async (payload: {id: string}) => console.log(payload.id));
    *

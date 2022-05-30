@@ -12,7 +12,7 @@ import { Construct } from "constructs";
 import {
   $AWS,
   EventBus,
-  EventBusRuleInput,
+  EventBusEvent,
   ExpressStepFunction,
   Function,
   FunctionProps,
@@ -394,7 +394,7 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
   testFunctionResource.skip(
     "Call Lambda AWS SDK put event to bus without reference",
     (parent) => {
-      const bus = new EventBus<EventBusRuleInput>(parent, "bus");
+      const bus = new EventBus<EventBusEvent>(parent, "bus");
 
       return new Function(
         parent,
@@ -421,7 +421,7 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
   testFunctionResource(
     "Call Lambda AWS SDK put event to bus with in closure reference",
     (parent) => {
-      const bus = new EventBus<EventBusRuleInput>(parent, "bus");
+      const bus = new EventBus<EventBusEvent>(parent, "bus");
       return new Function(
         parent,
         "function",
@@ -442,7 +442,7 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
   testFunctionResource(
     "Call Lambda AWS SDK integration from destructured object  aa",
     (parent) => {
-      const buses = { bus: new EventBus<EventBusRuleInput>(parent, "bus") };
+      const buses = { bus: new EventBus<EventBusEvent>(parent, "bus") };
       return new Function(
         parent,
         "function",

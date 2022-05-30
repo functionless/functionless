@@ -28,7 +28,7 @@ An instance of an [`EventBus`](./event-bus.md) ingest events and routes them to 
 
 ## Declare an Event Type
 
-Functionless supports well typed events, lets add our event schema to Typescript.
+Functionless supports well typed events, lets define our event schema with Typescript.
 
 ```ts
 interface UserDetails {
@@ -46,7 +46,7 @@ interface UserEvent
   > {}
 ```
 
-## Create an Rule
+## Create a Rule
 
 Now that you have a wrapped `EventBus`, lets add some rules.
 
@@ -92,11 +92,9 @@ catPeopleEvents.when((event) => !event.detail.interests.includes("DOGS"));
 We have two lambda functions to invoke, one for create or updates and another for deletes, lets make those.
 
 ```ts
-const createOrUpdateFunction = new aws_lambda.Function(this, 'createOrUpdate', ...);
-const deleteFunction = new aws_lambda.Function(this, 'delete', ...);
+const createOrUpdateFunction = new Function(this, 'createOrUpdate', ...);
+const deleteFunction = new Function(this, 'delete', ...);
 ```
-
-and wrap them with Functionless's `Function` wrapper, including given them input types.
 
 ```ts
 interface CreateOrUpdate {
@@ -110,11 +108,6 @@ interface CreateOrUpdate {
 interface Delete {
   id: string;
 }
-
-const createOrUpdateOperation = functionless.Function<CreateOrUpdate, void>(
-  createOrUpdateFunction
-);
-const deleteOperation = functionless.Function<Delete, void>(deleteFunction);
 ```
 
 The events from before do not match the formats from before, so lets transform them to the structures match.
@@ -141,8 +134,8 @@ Now that we have created rules on our event buses using `when` and transformed t
 We can `pipe` the transformed events to the lambda functions we defined earlier.
 
 ```ts
-createOrUpdateEventsTransformed.pipe(createOrUpdateOperation);
-deleteEventsTransformed.pipe(deleteOperation);
+createOrUpdateEventsTransformed.pipe(createOrUpdateFunction);
+deleteEventsTransformed.pipe(deleteFunction);
 ```
 
 What about our young cat lovers? We want to forward those events to our sister team's event bus for processing.
@@ -155,32 +148,6 @@ const catPeopleBus = functionless.EventBus.fromBus(
 // Note: EventBridge does not support transforming events which target other event buses. These events are sent as is.
 catPeopleEvents.pipe(catPeopleBus);
 ```
-
-## Put Events from other sources
-
-Event Bridge Put Events API is one of the methods for putting new events on an event bus. We support some first party integrations between services and event bus.
-
-Support (See [issues](https://github.com/functionless/functionless/issues?q=is%3Aissue+is%3Aopen+label%3Aevent-bridge) for progress):
-
-- Step Functions
-- App Sync (coming soon)
-- API Gateway (coming soon)
-- More - Please create a new issue in the form `Event Bridge + [Service]`
-
-```ts
-bus = new EventBus(stack, "bus");
-new StepFunction<{ value: string }, void>((input) => {
-  bus({
-    detail: {
-      value: input.value,
-    },
-  });
-});
-```
-
-This will create a step function which sends an event. It is also possible to send multiple events and use other Step Function logic.
-
-> Limit: It is not currently possible to dynamically generate different numbers of events. All events sent must start from objects in the form `{ detail: ..., source: ... }` where all fields are optional.
 
 ## Putting it all together.
 
@@ -213,13 +180,9 @@ interface Delete {
   id: string;
 }
 
-const createOrUpdateFunction = new functionless.Function<CreateOrUpdate, void>(
-  new aws_lambda.Function(this, "createOrUpdate", { ... })
-);
+const createOrUpdateFunction = new functionless.Function<CreateOrUpdate, void>(this, "createOrUpdate", { ... });
 
-const deleteFunction = new functionless.Function<Delete, void>(
-  new aws_lambda.Function(this, "delete", { ... })
-);
+const deleteFunction = new functionless.Function<Delete, void>(new aws_lambda.Function(this, "delete", { ... });
 
 const bus = new functionless.EventBus<UserEvent>(this, "myBus");
 
@@ -266,22 +229,32 @@ bus
   );
 ```
 
-## Adapt a CDK aws_events.EventBus
+## Put Events from other sources
 
-Functionless uses a wrapped version of CDK's Event Bus, lets create a CDK event bus first.
+Functionless supports integrations between some AWS services and Event Bridge using the PutEvents API.
+
+Supported:
+
+- Step Functions
+- App Sync (coming soon)
+- API Gateway (coming soon)
+- See [issues](https://github.com/functionless/functionless/issues?q=is%3Aissue+is%3Aopen+label%3Aevent-bridge) for progress or create a new issue in the form `Event Bridge + [Service]`.
 
 ```ts
-// Create a new Event Bus using CDK.
-const bus = new functionless.EventBus(this, "myBus");
-
-// Functionless also supports using the default bus or importing an Event Bus.
-const awsBus = functionless.EventBus.fromBus(
-  new aws_events.EventBus(this, "awsBus")
-);
-const defaultBus = functionless.EventBus.fromBus(
-  aws_events.EventBus.fromEventBusName(this, "defaultBus", "default")
-);
-const importedBus = functionless.EventBus.fromBus(
-  aws_events.EventBus.fromEventBusArn(this, "defaultBus", arn)
-);
+const bus = new EventBus(stack, "bus");
+new StepFunction<{ value: string }, void>((input) => {
+  bus({
+    detail: {
+      value: input.value,
+    },
+    source: "mySource",
+    "detail-type": "myEventType",
+  });
+});
 ```
+
+This will create a step function which sends an event. It is also possible to send multiple events and use other Step Function logic.
+
+:::caution
+Limitation: [Events passed to the bus in a step function must one or more literal objects](./integrations#Events_passed-to_the_bus_in_a_step_function_must_literal_objects) and may not use the spread (`...`) syntax.
+:::
