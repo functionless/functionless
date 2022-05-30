@@ -1,5 +1,5 @@
 import { aws_events } from "aws-cdk-lib";
-import { EventBusTargetIntegration } from "..";
+import { EventBusTargetIntegration, Integration } from "..";
 import { FunctionDecl } from "../declaration";
 import { DynamicProps, IEventBus, pipe } from "./event-bus";
 import { IEventBusRule } from "./rule";
@@ -59,7 +59,9 @@ export class EventBusTransform<T extends EventBusRuleInput, P> {
    * @see EventBusRule.pipe for more details on pipe.
    */
   pipe<
-    I extends EventBusTargetIntegration<P, Props>,
+    I extends Integration<any, string, EventBusTargetIntegration<P, Props>> & {
+      eventBus: EventBusTargetIntegration<P, Props>;
+    },
     Props extends object | undefined
   >(
     integration: NonEventBusIntegration<I>,
@@ -72,6 +74,5 @@ export class EventBusTransform<T extends EventBusRuleInput, P> {
 /**
  * EventBus to EventBus input transform is not allowed.
  */
-export type NonEventBusIntegration<
-  I extends EventBusTargetIntegration<any, any>
-> = I extends IEventBus<any> ? never : I;
+export type NonEventBusIntegration<I extends Integration<any, any, any>> =
+  I extends IEventBus<any> ? never : I;

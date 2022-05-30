@@ -25,17 +25,16 @@ import { ASL } from "./asl";
 import {
   NativeFunctionDecl,
   isNativeFunctionDecl,
-  NativeIntegrationInvocation,
+  IntegrationInvocation,
 } from "./declaration";
 import { Err, isErr } from "./error";
 import { EventBusTargetIntegration } from "./event-bridge";
 import { makeEventBusIntegration } from "./event-bridge/event-bus";
 import { CallExpr, Expr, isVariableReference } from "./expression";
 import {
+  IntegrationImpl,
   Integration,
   INTEGRATION_TYPE_KEYS,
-  CallableIntegration,
-  IntegrationMethods,
 } from "./integration";
 import { AnyFunction, anyOf } from "./util";
 
@@ -69,28 +68,35 @@ export type FunctionClosure<P, O> = (
  * ```
  */
 export interface IFunction<P, O>
-  extends Integration<"Function">,
-    EventBusTargetIntegration<P, FunctionEventBusTargetProps | undefined>,
-    NativeIntegration<ConditionalFunction<P, O>>,
-    AppSyncVtlIntegration<ConditionalFunction<P, O>> {
+  extends Integration<
+    ConditionalFunction<P, O>,
+    "Function",
+    EventBusTargetIntegration<P, FunctionEventBusTargetProps | undefined>
+  > {
   readonly functionlessKind: typeof Function.FunctionlessType;
   readonly kind: typeof Function.FunctionlessType;
   readonly resource: aws_lambda.IFunction;
+
+  (...args: Parameters<ConditionalFunction<P, O>>): ReturnType<
+    ConditionalFunction<P, O>
+  >;
+
+  readonly eventBus: EventBusTargetIntegration<
+    P,
+    FunctionEventBusTargetProps | undefined
+  >;
 }
 
 abstract class FunctionBase<P, O> implements IFunction<P, O> {
   readonly kind = "Function" as const;
+  readonly native: NativeIntegration<ConditionalFunction<P, O>>;
   readonly functionlessKind = "Function";
   public static readonly FunctionlessType = "Function";
 
-  public readonly appSyncVtl: AppSyncVtlIntegration<
-    ConditionalFunction<P, O>
-  >["appSyncVtl"];
-  public readonly native: NativeIntegration<
-    ConditionalFunction<P, O>
-  >["native"];
-  // @ts-ignore
-  public readonly __functionBrand: ConditionalFunction<P, O>;
+  readonly appSyncVtl: AppSyncVtlIntegration;
+
+  // @ts-ignore - this makes `F` easily available at compile time
+  readonly __functionBrand: ConditionalFunction<P, O>;
 
   constructor(readonly resource: aws_lambda.IFunction) {
     const functionName = this.resource.functionName;
@@ -290,7 +296,7 @@ export class Function<P, O> extends FunctionBase<P, O> {
     funcOrNothing?: NativeFunctionDecl | Err | FunctionClosure<P, O>
   ) {
     let _resource: aws_lambda.IFunction;
-    let integrations: NativeIntegrationInvocation[] = [];
+    let integrations: IntegrationInvocation[] = [];
     let callbackLambdaCode: CallbackLambdaCode | undefined = undefined;
     if (id && propsOrFunc) {
       const func = isNativeFunctionOrError(propsOrFunc)
@@ -329,7 +335,7 @@ export class Function<P, O> extends FunctionBase<P, O> {
     // retrieve and bind all found native integrations. Will fail if the integration does not support native integration.
     const nativeIntegrationsPrewarm = integrations.flatMap(
       ({ integration, args }) => {
-        const integ = integration.native;
+        const integ = new IntegrationImpl(integration).native;
         integ.bind(this, args);
         return integ.preWarm ? [integ.preWarm] : [];
       }
@@ -403,7 +409,7 @@ export class CallbackLambdaCode extends aws_lambda.Code {
    * https://twitter.com/samgoodwin89/status/1516887131108438016?s=20&t=7GRGOQ1Bp0h_cPsJgFk3Ww
    */
   public async generate(
-    integrationPrewarms: NativeIntegration<AnyFunction>["native"]["preWarm"][]
+    integrationPrewarms: NativeIntegration<AnyFunction>["preWarm"][]
   ) {
     if (!this.scope) {
       throw Error("Must first be bound to a Construct using .bind().");
@@ -498,7 +504,7 @@ export class CallbackLambdaCode extends aws_lambda.Code {
              */
             const transformIntegration = (o: unknown): any => {
               if (o && typeof o === "object" && "kind" in o) {
-                const integ = o as Partial<IntegrationMethods>;
+                const integ = o as Integration<any>;
                 const copy = {
                   ...integ,
                   native: {
@@ -598,31 +604,28 @@ export class CallbackLambdaCode extends aws_lambda.Code {
  * })
  * ```
  */
-export interface NativeIntegration<F extends AnyFunction>
-  extends CallableIntegration<F> {
-  native: {
-    /**
-     * Called by any {@link Function} that will invoke this integration during CDK Synthesis.
-     * Add permissions, create connecting resources, validate.
-     *
-     * @param context - The function invoking this function.
-     * @param args - The functionless encoded AST form of the arguments passed to the integration.
-     */
-    bind: (context: Function<any, any>, args: Expr[]) => void;
-    /**
-     * @param args The arguments passed to the integration function by the user.
-     * @param preWarmContext contains singleton instances of client and other objects initialized outside of the native
-     *                       function handler.
-     */
-    call: (
-      args: Parameters<F>,
-      preWarmContext: NativePreWarmContext
-    ) => Promise<ReturnType<F>>;
-    /**
-     * Method called outside of the handler to initialize things like the PreWarmContext
-     */
-    preWarm?: (preWarmContext: NativePreWarmContext) => void;
-  };
+export interface NativeIntegration<F extends AnyFunction> {
+  /**
+   * Called by any {@link Function} that will invoke this integration during CDK Synthesis.
+   * Add permissions, create connecting resources, validate.
+   *
+   * @param context - The function invoking this function.
+   * @param args - The functionless encoded AST form of the arguments passed to the integration.
+   */
+  bind: (context: Function<any, any>, args: Expr[]) => void;
+  /**
+   * @param args The arguments passed to the integration function by the user.
+   * @param preWarmContext contains singleton instances of client and other objects initialized outside of the native
+   *                       function handler.
+   */
+  call: (
+    args: Parameters<F>,
+    preWarmContext: NativePreWarmContext
+  ) => Promise<ReturnType<F>>;
+  /**
+   * Method called outside of the handler to initialize things like the PreWarmContext
+   */
+  preWarm?: (preWarmContext: NativePreWarmContext) => void;
 }
 
 export type ClientName =

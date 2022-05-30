@@ -20,7 +20,7 @@ import {
   NativePreWarmContext,
   PrewarmClients,
 } from "../function";
-import { Integration } from "../integration";
+import { Integration, IntegrationImpl } from "../integration";
 import { EventBusRule, EventPredicateFunction, IEventBusRule } from "./rule";
 import { EventBusRuleInput } from "./types";
 
@@ -100,25 +100,44 @@ export interface IEventBusFilterable<E extends EventBusRuleInput> {
 
 export interface IEventBus<E extends EventBusRuleInput = EventBusRuleInput>
   extends IEventBusFilterable<E>,
-    Integration<"EventBus">,
-    EventBusTargetIntegration<
-      EventBusPutEventInput<E>,
-      aws_events_targets.EventBusProps | undefined
-    >,
-    NativeIntegration<
+    Integration<
       (
         event: EventBusPutEventInput<E>,
         ...events: EventBusPutEventInput<E>[]
-      ) => void
+      ) => void,
+      "EventBus",
+      EventBusTargetIntegration<
+        EventBusPutEventInput<E>,
+        aws_events_targets.EventBusProps | undefined
+      >
     > {
   readonly bus: aws_events.IEventBus;
   readonly eventBusArn: string;
   readonly eventBusName: string;
 
+  // @ts-ignore - value does not exist, is only available at compile time
+  readonly __functionBrand: (
+    event: EventBusPutEventInput<E>,
+    ...events: EventBusPutEventInput<E>[]
+  ) => void;
+
   /**
    * This static property identifies this class as an EventBus to the TypeScript plugin.
    */
   readonly functionlessKind: typeof EventBusBase.FunctionlessType;
+
+  /**
+   * Put one or more events on an Event Bus.
+   */
+  (
+    event: EventBusPutEventInput<E>,
+    ...events: EventBusPutEventInput<E>[]
+  ): void;
+
+  eventBus: EventBusTargetIntegration<
+    E,
+    aws_events_targets.EventBusProps | undefined
+  >;
 }
 
 abstract class EventBusBase<E extends EventBusRuleInput>
@@ -133,7 +152,7 @@ abstract class EventBusBase<E extends EventBusRuleInput>
   readonly eventBusName: string;
   readonly eventBusArn: string;
 
-  readonly native: NativeIntegration<EventBusBase<E>>["native"];
+  readonly native: NativeIntegration<EventBusBase<E>>;
 
   constructor(readonly bus: aws_events.IEventBus) {
     this.eventBusName = bus.eventBusName;
@@ -141,7 +160,7 @@ abstract class EventBusBase<E extends EventBusRuleInput>
 
     // Closure event bus base
     const eventBusName = this.eventBusName;
-    this.native = {
+    this.native = <NativeIntegration<EventBusBase<E>>>{
       bind: (context: Function<any, any>) => {
         this.bus.grantPutEventsTo(context.resource);
       },
@@ -425,26 +444,26 @@ export interface EventBusTargetIntegration<
   P,
   Props extends object | undefined = undefined
 > {
-  eventBus: {
-    __payloadBrand: P;
+  __payloadBrand: P;
 
-    target: (
-      props: Props,
-      targetInput?: aws_events.RuleTargetInput
-    ) => aws_events.IRuleTarget;
-  };
+  target: (
+    props: Props,
+    targetInput?: aws_events.RuleTargetInput
+  ) => aws_events.IRuleTarget;
 }
 
 export function makeEventBusIntegration<
   P,
   Props extends object | undefined = undefined
->(
-  integration: Omit<
-    EventBusTargetIntegration<P, Props>["eventBus"],
-    "__payloadBrand"
-  >
-) {
-  return integration as EventBusTargetIntegration<P, Props>["eventBus"];
+>(integration: Omit<EventBusTargetIntegration<P, Props>, "__payloadBrand">) {
+  return integration as EventBusTargetIntegration<P, Props>;
+}
+
+export interface IntegrationWithEventBus<
+  P,
+  Props extends object | undefined = undefined
+> {
+  eventBus: EventBusTargetIntegration<P, Props>;
 }
 
 export type DynamicProps<Props extends object | undefined> =
@@ -459,10 +478,13 @@ export function pipe<
   Props extends object | undefined = undefined
 >(
   rule: IEventBusRule<T>,
-  integration: EventBusTargetIntegration<P, Props>,
+  integration: IntegrationWithEventBus<P, Props>,
   props: Props,
   targetInput?: aws_events.RuleTargetInput
 ) {
-  const target = integration.eventBus.target(props, targetInput);
+  const target = new IntegrationImpl(integration as any).eventBus.target(
+    props,
+    targetInput
+  );
   return rule.rule.addTarget(target);
 }

@@ -4,8 +4,8 @@ import {
   IEventBus,
   IEventBusFilterable,
   DynamicProps,
+  IntegrationWithEventBus,
   pipe,
-  EventBusTargetIntegration,
 } from "./event-bus";
 import {
   andDocuments,
@@ -134,7 +134,7 @@ export interface IEventBusRule<T extends EventBusRuleInput> {
    * ```
    */
   pipe<Props extends object | undefined>(
-    integration: EventBusTargetIntegration<T, Props>,
+    integration: IntegrationWithEventBus<T, Props>,
     ...props: Parameters<DynamicProps<Props>>
   ): void;
 }
@@ -171,7 +171,7 @@ abstract class EventBusRuleBase<T extends EventBusRuleInput>
    * @inheritdoc
    */
   pipe<Props extends object | undefined>(
-    integration: EventBusTargetIntegration<T, Props>,
+    integration: IntegrationWithEventBus<T, Props>,
     ...props: Parameters<DynamicProps<Props>>
   ): void {
     pipe(this, integration, props[0] as Props);
