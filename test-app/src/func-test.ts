@@ -33,7 +33,7 @@ new Function(stack, "startworkflow", async () => {
   }
   console.log(result);
   // broadcast dynamic result message to all consumers
-  eventBus({
+  eventBus.putEvents({
     "detail-type": "workflowComplete",
     detail: {
       result,

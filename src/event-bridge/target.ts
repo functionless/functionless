@@ -1,5 +1,4 @@
 import { aws_events, aws_events_targets } from "aws-cdk-lib";
-import { assertNever } from "../assert";
 import { IFunction, isFunction } from "../function";
 import {
   ExpressStepFunction,
@@ -7,8 +6,8 @@ import {
   StepFunction,
 } from "../step-function";
 import { IEventBus, isEventBus } from "./event-bus";
-import { IEventBusRule } from "./rule";
-import { EventBusRuleInput } from "./types";
+import { IRule } from "./rule";
+import { Event } from "./types";
 
 export type LambdaTargetProps<P> = {
   func: IFunction<P, any>;
@@ -18,11 +17,11 @@ const isLambdaTargetProps = <P>(props: any): props is LambdaTargetProps<P> => {
   return "func" in props;
 };
 
-export type EventBusTargetProps<P extends EventBusRuleInput> = {
+export type EventBusTargetProps<P extends Event> = {
   bus: IEventBus<P>;
 } & aws_events_targets.EventBusProps;
 
-const isEventBusTargetProps = <P extends EventBusRuleInput>(
+const isEventBusTargetProps = <P extends Event>(
   props: any
 ): props is EventBusTargetProps<P> => {
   return "bus" in props;
@@ -39,20 +38,21 @@ const isStateMachineTargetProps = <P>(
   return "machine" in props;
 };
 
-export type EventBusTargetResource<T extends EventBusRuleInput, P> =
+export type EventBusTargetResource<T extends Event, P> =
   | IFunction<P, any>
   | LambdaTargetProps<P>
   | IEventBus<T>
   | EventBusTargetProps<T>
   | ExpressStepFunction<P, any>
   | StepFunction<P, any>
-  | StateMachineTargetProps<P>;
+  | StateMachineTargetProps<P>
+  | ((targetInput?: aws_events.RuleTargetInput) => aws_events.IRuleTarget);
 
 /**
  * Add a target to the run based on the configuration given.
  */
-export function pipe<T extends EventBusRuleInput, P>(
-  rule: IEventBusRule<T>,
+export function pipe<T extends Event, P>(
+  rule: IRule<T>,
   resource: EventBusTargetResource<T, P>,
   targetInput?: aws_events.RuleTargetInput
 ) {
@@ -98,7 +98,8 @@ export function pipe<T extends EventBusRuleInput, P>(
         input: targetInput,
       })
     );
+  } else {
+    const target = resource(targetInput);
+    return rule.rule.addTarget(target);
   }
-
-  assertNever(resource);
 }

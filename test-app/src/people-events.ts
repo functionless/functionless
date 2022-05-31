@@ -9,7 +9,7 @@ interface UserDetails {
 }
 
 interface UserEvent
-  extends functionless.EventBusRuleInput<
+  extends functionless.Event<
     UserDetails,
     // We can provide custom detail-types to match on
     "Create" | "Update" | "Delete"
