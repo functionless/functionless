@@ -13,6 +13,7 @@ import {
   Token,
   Tokenization,
 } from "aws-cdk-lib";
+import { EventBridgeDestination } from "aws-cdk-lib/aws-lambda-destinations";
 import type { Context } from "aws-lambda";
 // eslint-disable-next-line import/no-extraneous-dependencies
 import AWS from "aws-sdk";
@@ -25,6 +26,13 @@ import {
   IntegrationInvocation,
 } from "./declaration";
 import { Err, isErr } from "./error";
+import {
+  IEventBus,
+  isEventBus,
+  Event,
+  Rule,
+  PredicateRuleBase,
+} from "./event-bridge";
 import { CallExpr, Expr, isVariableReference } from "./expression";
 import {
   IntegrationImpl,
@@ -52,7 +60,67 @@ export interface IFunction<P, O> {
   (...args: Parameters<ConditionalFunction<P, O>>): ReturnType<
     ConditionalFunction<P, O>
   >;
+
+  onSuccess(
+    bus: IEventBus<AsyncResponseSuccessEvent<P, O>>,
+    id: string
+  ): Rule<AsyncResponseSuccessEvent<P, O>>;
+  onFailure(
+    bus: IEventBus<AsyncResponseFailureEvent<P>>,
+    id: string
+  ): Rule<AsyncResponseFailureEvent<P>>;
 }
+
+export interface AsyncResponseBase<P> {
+  version: "1.0";
+  /**
+   * ISO 8601
+   */
+  timestamp: string;
+  requestPayload: P;
+  responseContext: {
+    statusCode: number;
+    executedVersion: "$LATEST" | string;
+    functionError: string;
+  };
+}
+
+export interface AsyncResponseSuccess<P, O> extends AsyncResponseBase<P> {
+  responsePayload: O;
+  requestContext: {
+    requestId: string;
+    functionArn: string;
+    condition: "Success";
+    approximateInvokeCount: number;
+  };
+}
+
+export interface AsyncResponseFailure<P> extends AsyncResponseBase<P> {
+  requestContext: {
+    requestId: string;
+    functionArn: string;
+    condition: "RetriesExhausted" | "EventAgeExceeded" | string;
+    approximateInvokeCount: number;
+  };
+  responsePayload: {
+    errorMessage: string;
+    errorType: string;
+    stackTrace: string[];
+  };
+}
+
+export interface AsyncResponseSuccessEvent<P, O>
+  extends Event<
+    AsyncResponseSuccess<P, O>,
+    "Lambda Function Invocation Result - Success",
+    "lambda"
+  > {}
+export interface AsyncResponseFailureEvent<P>
+  extends Event<
+    AsyncResponseFailure<P>,
+    "Lambda Function Invocation Result - Failure",
+    "lambda"
+  > {}
 
 abstract class FunctionBase<P, O>
   implements IFunction<P, O>, Integration<FunctionBase<P, O>>
@@ -140,6 +208,56 @@ abstract class FunctionBase<P, O>
       ResultSelector: "$.Payload",
     };
   }
+
+  onSuccess(
+    bus: IEventBus<AsyncResponseSuccessEvent<P, O>>,
+    id: string
+  ): Rule<AsyncResponseSuccessEvent<P, O>> {
+    return new PredicateRuleBase<AsyncResponseSuccessEvent<P, O>>(
+      bus.bus,
+      id,
+      bus,
+      /**
+       * when(event => event.source === "lambda"
+       *    && event["detail-type"] === "Lambda Function Invocation Result - Success"
+       *      && event.resources.includes(this.resource.functionArn))
+       */
+      {
+        doc: {
+          source: { value: "lambda" },
+          "detail-type": {
+            value: "Lambda Function Invocation Result - Success",
+          },
+          resources: { value: this.resource.functionArn },
+        },
+      }
+    );
+  }
+
+  onFailure(
+    bus: IEventBus<AsyncResponseFailureEvent<P>>,
+    id: string
+  ): Rule<AsyncResponseFailureEvent<P>> {
+    return new PredicateRuleBase<AsyncResponseFailureEvent<P>>(
+      bus.bus,
+      id,
+      bus,
+      /**
+       * when(event => event.source === "lambda"
+       *    && event["detail-type"] === "Lambda Function Invocation Result - Failure"
+       *      && event.resources.includes(this.resource.functionArn))
+       */
+      {
+        doc: {
+          source: { value: "lambda" },
+          "detail-type": {
+            value: "Lambda Function Invocation Result - Failure",
+          },
+          resources: { value: this.resource.functionArn },
+        },
+      }
+    );
+  }
 }
 
 interface FunctionBase<P, O> {
@@ -150,8 +268,11 @@ interface FunctionBase<P, O> {
 
 const PromisesSymbol = Symbol.for("functionless.Function.promises");
 
-export interface FunctionProps
-  extends Omit<aws_lambda.FunctionProps, "code" | "handler" | "runtime"> {
+export interface FunctionProps<P = any, O = any>
+  extends Omit<
+    aws_lambda.FunctionProps,
+    "code" | "handler" | "runtime" | "onSuccess" | "onFailure"
+  > {
   /**
    * Method which allows runtime computation of AWS client configuration.
    * ```ts
@@ -164,6 +285,15 @@ export interface FunctionProps
   clientConfigRetriever?: (
     clientName: ClientName | string
   ) => Omit<AWS.Lambda.ClientConfiguration, keyof AWS.Lambda.ClientApiVersions>;
+
+  onSuccess?:
+    | aws_lambda.FunctionProps["onSuccess"]
+    | IEventBus<Event<AsyncResponseSuccess<P, O>>>
+    | IFunction<AsyncResponseSuccess<P, O>, any>;
+  onFailure?:
+    | aws_lambda.FunctionProps["onFailure"]
+    | IEventBus<Event<AsyncResponseFailure<P>>>
+    | IFunction<AsyncResponseFailure<P>, any>;
 }
 
 const isNativeFunctionOrError = anyOf(isErr, isNativeFunctionDecl);
@@ -197,7 +327,7 @@ export class Function<P, O> extends FunctionBase<P, O> {
    *
    * A wrapped function can be invoked, but the code is provided in the CDK Construct.
    */
-  public static fromFunction<P, O>(
+  public static fromFunction<P = any, O = any>(
     func: aws_lambda.IFunction
   ): ImportedFunction<P, O> {
     return new ImportedFunction<P, O>(func);
@@ -214,7 +344,7 @@ export class Function<P, O> extends FunctionBase<P, O> {
   constructor(
     scope: Construct,
     id: string,
-    props: FunctionProps,
+    props: FunctionProps<P, O>,
     func: FunctionClosure<P, O>
   );
   /**
@@ -223,7 +353,7 @@ export class Function<P, O> extends FunctionBase<P, O> {
   constructor(
     scope: Construct,
     id: string,
-    props: FunctionProps,
+    props: FunctionProps<P, O>,
     func: NativeFunctionDecl | Err
   );
   /**
@@ -242,7 +372,7 @@ export class Function<P, O> extends FunctionBase<P, O> {
     resource: aws_lambda.IFunction | Construct,
     id?: string,
     propsOrFunc?:
-      | FunctionProps
+      | FunctionProps<P, O>
       | NativeFunctionDecl
       | Err
       | FunctionClosure<P, O>,
@@ -259,7 +389,7 @@ export class Function<P, O> extends FunctionBase<P, O> {
         : undefined;
       const props = isNativeFunctionOrError(propsOrFunc)
         ? undefined
-        : (propsOrFunc as FunctionProps);
+        : (propsOrFunc as FunctionProps<P, O>);
 
       if (isErr(func)) {
         throw func.error;
@@ -267,11 +397,24 @@ export class Function<P, O> extends FunctionBase<P, O> {
         callbackLambdaCode = new CallbackLambdaCode(func.closure, {
           clientConfigRetriever: props?.clientConfigRetriever,
         });
+        const { onSuccess, onFailure, ...restProps } = props ?? {};
         _resource = new aws_lambda.Function(resource, id!, {
-          ...props,
+          ...restProps,
           runtime: aws_lambda.Runtime.NODEJS_14_X,
           handler: "index.handler",
           code: callbackLambdaCode,
+          onSuccess:
+            onSuccess === undefined
+              ? undefined
+              : isEventBus(onSuccess)
+              ? new EventBridgeDestination(onSuccess.bus)
+              : onSuccess,
+          onFailure:
+            onFailure === undefined
+              ? undefined
+              : isEventBus(onFailure)
+              ? new EventBridgeDestination(onFailure.bus)
+              : onFailure,
         });
 
         integrations = func.integrations;
