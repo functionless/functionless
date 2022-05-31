@@ -1,17 +1,27 @@
 import { aws_apigateway } from "aws-cdk-lib";
-import { isPropAccessExpr } from ".";
 import { FunctionDecl, isFunctionDecl } from "./declaration";
 import { isErr } from "./error";
-import { isIdentifier, PropAccessExpr } from "./expression";
+import {
+  isArrayLiteralExpr,
+  isBooleanLiteralExpr,
+  isIdentifier,
+  isNumberLiteralExpr,
+  isObjectLiteralExpr,
+  isPropAccessExpr,
+  isPropAssignExpr,
+  isStringLiteralExpr,
+  PropAccessExpr,
+} from "./expression";
 import { Function } from "./function";
 import { FunctionlessNode } from "./node";
+import { isReturnStmt } from "./statement";
 import { ExpressStepFunction } from "./step-function";
 
 /**
  * HTTP Methods that API Gateway supports.
  */
 export type HttpMethod =
-  | "HEAD"
+  | "ANY"
   | "GET"
   | "POST"
   | "PUT"
@@ -26,11 +36,11 @@ type ParameterMap = Record<string, string | number | boolean>;
  * the path, query string or headers, and the body is a JSON object.
  * None of these are required.
  */
-export interface ApiRequestProps<
-  PathParams extends ParameterMap | undefined,
-  Body extends object,
-  QueryParams extends ParameterMap | undefined,
-  HeaderParams extends ParameterMap | undefined
+export interface ApiRequest<
+  PathParams extends ParameterMap | undefined = undefined,
+  Body extends object | undefined = undefined,
+  QueryParams extends ParameterMap | undefined = undefined,
+  HeaderParams extends ParameterMap | undefined = undefined
 > {
   /**
    * Parameters in the path.
@@ -51,7 +61,7 @@ export interface ApiRequestProps<
 }
 
 type RequestTransformerFunction<
-  Request extends ApiRequestProps<any, any, any, any>,
+  Request extends ApiRequest<any, any, any, any>,
   IntegrationRequest
 > = (req: Request) => IntegrationRequest;
 
@@ -85,7 +95,7 @@ export class ApiIntegrations {
    * Create a {@link MockApiIntegration}.
    */
   public static mock<
-    Request extends ApiRequestProps<any, any, any, any>,
+    Request extends ApiRequest<any, any, any, any>,
     StatusCode extends number,
     MethodResponses extends { [C in StatusCode]: any }
   >(
@@ -98,7 +108,7 @@ export class ApiIntegrations {
    * Create a {@link AwsApiIntegration}.
    */
   public static aws<
-    Request extends ApiRequestProps<any, any, any, any>,
+    Request extends ApiRequest<any, any, any, any>,
     IntegrationRequest,
     IntegrationResponse,
     MethodResponse
@@ -115,7 +125,7 @@ export class ApiIntegrations {
 }
 
 export interface MockApiIntegrationProps<
-  Request extends ApiRequestProps<any, any, any, any>,
+  Request extends ApiRequest<any, any, any, any>,
   StatusCode extends number,
   MethodResponses extends { [C in StatusCode]: any }
 > {
@@ -168,7 +178,10 @@ export class MockApiIntegration<
     ) as { [K in keyof Props["responses"]]: FunctionDecl };
   }
 
-  addMethod(httpMethod: HttpMethod, resource: aws_apigateway.Resource): void {
+  public addMethod(
+    httpMethod: HttpMethod,
+    resource: aws_apigateway.Resource
+  ): void {
     const requestTemplate = toVTL(this.request, "request");
 
     const responseEntries: [string, FunctionDecl][] = Object.entries(
@@ -202,7 +215,7 @@ export class MockApiIntegration<
 }
 
 export interface AwsApiIntegrationProps<
-  Request extends ApiRequestProps<any, any, any, any>,
+  Request extends ApiRequest<any, any, any, any>,
   IntegrationRequest,
   IntegrationResponse,
   MethodResponse
@@ -255,7 +268,10 @@ export class AwsApiIntegration<
     this.integration = props.integration;
   }
 
-  addMethod(httpMethod: HttpMethod, resource: aws_apigateway.Resource): void {
+  public addMethod(
+    httpMethod: HttpMethod,
+    resource: aws_apigateway.Resource
+  ): void {
     const requestTemplate = toVTL(this.request, "request");
     const responseTemplate = toVTL(this.response, "response");
 
@@ -300,63 +316,58 @@ function toVTL(node: FunctionDecl, template: "request" | "response") {
   }
 
   function inner(node: FunctionlessNode): string {
-    switch (node.kind) {
-      case "ArrayLiteralExpr":
-        return `[${node.children.map(inner).join(",")}]`;
-
-      case "BooleanLiteralExpr":
-        return node.value.toString();
-
-      case "NumberLiteralExpr":
-        return node.value.toString();
-
-      case "ObjectLiteralExpr":
-        return `{${node.properties.map(inner).join(",")}}`;
-
-      case "PropAccessExpr":
-        if (descendedFromFunctionParameter(node)) {
-          let param;
-          if (template === "request") {
-            switch (node.expr.name) {
-              case "body":
-                param = `$inputRoot.${node.name}`;
-                break;
-              case "pathParameters":
-                param = `$input.params().path.${node.name}`;
-                break;
-              case "queryStringParameters":
-                param = `$input.params().querystring.${node.name}`;
-                break;
-              case "headers":
-                param = `$input.params().header.${node.name}`;
-                break;
-              default:
-                throw new Error("Unknown parameter type.");
-            }
-            if (node.type === "string") {
-              param = `"${param}"`;
-            }
-          } else {
-            param = `$inputRoot.${node.name}`;
-            if (node.type === "string") {
-              return `"${param}"`;
-            }
+    if (isBooleanLiteralExpr(node) || isNumberLiteralExpr(node)) {
+      return node.value.toString();
+    } else if (isStringLiteralExpr(node)) {
+      return wrapStr(node.value);
+    } else if (isArrayLiteralExpr(node)) {
+      return `[${node.children.map(inner).join(",")}]`;
+    } else if (isObjectLiteralExpr(node)) {
+      return `{${node.properties.map(inner).join(",")}}`;
+    } else if (isPropAccessExpr(node)) {
+      if (descendedFromFunctionParameter(node)) {
+        let param;
+        if (template === "request") {
+          switch (node.expr.name) {
+            case "body":
+              param = `$inputRoot.${node.name}`;
+              break;
+            case "pathParameters":
+              param = `$input.params().path.${node.name}`;
+              break;
+            case "queryStringParameters":
+              param = `$input.params().querystring.${node.name}`;
+              break;
+            case "headers":
+              param = `$input.params().header.${node.name}`;
+              break;
+            default:
+              throw new Error("Unknown parameter type.");
           }
-          return param;
+          if (node.type === "string") {
+            return wrapStr(param);
+          }
+        } else {
+          param = `$inputRoot.${node.name}`;
+          if (node.type === "string") {
+            return wrapStr(param);
+          }
         }
-        return `${inner(node.expr)}.${node.name};`;
-
-      case "PropAssignExpr":
-        return `${inner(node.name)}: ${inner(node.expr)}`;
-
-      case "ReturnStmt":
-        return inner(node.expr);
-
-      case "StringLiteralExpr":
-        return `"${node.value}"`;
+        return param;
+      }
+      return `${inner(node.expr)}.${node.name};`;
+    } else if (isPropAssignExpr(node)) {
+      return `${inner(node.name)}: ${inner(node.expr)}`;
+    } else if (isReturnStmt(node)) {
+      return inner(node.expr);
     }
+
     throw new Error(`Unsupported node type: ${node.kind}`);
   }
+}
+
+function wrapStr(str: string): string {
+  return `"${str}"`;
 }
 
 function validateFunctionDecl(a: any): FunctionDecl {
