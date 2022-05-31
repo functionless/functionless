@@ -21,7 +21,7 @@ import {
   CallExpr,
   ElementAccessExpr,
   Expr,
-  isBooleanLiteral,
+  isBooleanLiteralExpr,
   isUndefinedLiteralExpr,
   PropAccessExpr,
   UnaryExpr,
@@ -37,31 +37,31 @@ import {
   ReferencePath,
 } from "../utils";
 import {
-  intersectNumericRange,
-  reduceNumericAggregate,
-  unionNumericRange,
-  negateNumericRange,
+  createSingleNumericRange,
   intersectNumericAggregation,
   intersectNumericAggregationWithRange,
-  createSingleNumericRange,
+  intersectNumericRange,
+  negateNumericRange,
+  reduceNumericAggregate,
+  unionNumericRange,
 } from "./numeric";
 import {
-  PatternDocument,
-  Pattern,
-  isPatternDocument,
-  isNumericAggregationPattern,
-  isNumericRangePattern,
-  isPresentPattern,
   isAggregatePattern,
   isAnythingButPattern,
-  isExactMatchPattern,
-  isPrefixMatchPattern,
-  isEmptyPattern,
-  patternDocumentToEventPattern,
   isAnythingButPrefixPattern,
+  isEmptyPattern,
+  isExactMatchPattern,
   isNeverPattern,
-  NumericRangePattern,
+  isNumericAggregationPattern,
+  isNumericRangePattern,
+  isPatternDocument,
+  isPrefixMatchPattern,
+  isPresentPattern,
   NeverPattern,
+  NumericRangePattern,
+  Pattern,
+  PatternDocument,
+  patternDocumentToEventPattern,
 } from "./pattern";
 
 const OPERATIONS = { STARTS_WITH: "startsWith", INCLUDES: "includes" };
@@ -139,7 +139,7 @@ export const synthesizePatternDocument = (
       return evalUnaryExpression(expr);
     } else if (isCallExpr(expr)) {
       return evalCall(expr);
-    } else if (isBooleanLiteral(expr)) {
+    } else if (isBooleanLiteralExpr(expr)) {
       return { doc: {} };
     } else {
       throw new Error(`${expr.kind} is unsupported`);

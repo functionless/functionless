@@ -25,7 +25,7 @@ import {
   TemplateExpr,
   UnaryExpr,
 } from "../expression";
-import { isReturn, isVariableStmt, Stmt, VariableStmt } from "../statement";
+import { isReturnStmt, isVariableStmt, Stmt, VariableStmt } from "../statement";
 import { Constant, evalToConstant } from "../util";
 
 /**
@@ -306,7 +306,7 @@ export const flattenReturnEvent = (stmts: Stmt[]) => {
 
   const ret = stmts[stmts.length - 1];
 
-  if (!ret || !isReturn(ret)) {
+  if (!ret || !isReturnStmt(ret)) {
     throw Error("No return statement found in event bridge target function.");
   }
 

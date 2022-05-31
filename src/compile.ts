@@ -536,7 +536,10 @@ export function compile(
         const updatedProps = ts.factory.updateObjectLiteralExpression(
           props,
           props.properties.map((prop) => {
-            if (ts.isPropertyAssignment(prop) && ts.isIdentifier(prop.name)) {
+            if (
+              ts.isPropertyAssignment(prop) &&
+              (ts.isStringLiteral(prop.name) || ts.isIdentifier(prop.name))
+            ) {
               if (prop.name.text === "responses") {
                 return visitApiIntegrationResponsesProp(prop);
               } else if (
@@ -566,7 +569,9 @@ export function compile(
           !ts.isFunctionExpression(initializer) &&
           !ts.isArrowFunction(initializer)
         ) {
-          return prop;
+          throw new Error(
+            `Expected mapping property of an ApiIntegration to be a function. Found ${initializer.getText()}.`
+          );
         }
 
         return ts.factory.updatePropertyAssignment(
