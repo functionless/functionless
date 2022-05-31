@@ -62,12 +62,18 @@ export class EventTransform<T extends Event, P> {
   pipe(props: StepFunction<P, any>): void;
   pipe(props: ExpressStepFunction<P, any>): void;
   pipe(
+    callback: (
+      targetInput: aws_events.RuleTargetInput
+    ) => aws_events.IRuleTarget
+  ): void;
+  pipe(
     resource:
       | IFunction<P, any>
       | LambdaTargetProps<P>
       | StateMachineTargetProps<P>
       | StepFunction<P, any>
       | ExpressStepFunction<P, any>
+      | ((targetInput: aws_events.RuleTargetInput) => aws_events.IRuleTarget)
   ): void {
     pipe(this.rule, resource as any, this.targetInput);
   }

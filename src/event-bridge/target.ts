@@ -1,5 +1,4 @@
 import { aws_events, aws_events_targets } from "aws-cdk-lib";
-import { assertNever } from "../assert";
 import { IFunction, isFunction } from "../function";
 import {
   ExpressStepFunction,
@@ -46,7 +45,8 @@ export type EventBusTargetResource<T extends Event, P> =
   | EventBusTargetProps<T>
   | ExpressStepFunction<P, any>
   | StepFunction<P, any>
-  | StateMachineTargetProps<P>;
+  | StateMachineTargetProps<P>
+  | ((targetInput?: aws_events.RuleTargetInput) => aws_events.IRuleTarget);
 
 /**
  * Add a target to the run based on the configuration given.
@@ -98,7 +98,8 @@ export function pipe<T extends Event, P>(
         input: targetInput,
       })
     );
+  } else {
+    const target = resource(targetInput);
+    return rule.rule.addTarget(target);
   }
-
-  assertNever(resource);
 }

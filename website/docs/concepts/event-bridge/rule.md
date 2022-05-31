@@ -96,3 +96,24 @@ const lambdaEventsRule = bus
 // all lambda events with the detail type "some type"
 lambdaEventsRule.when((event) => event["detail-type"] === "some type");
 ```
+
+## Escape Hatches
+
+If the rule behavior desired isn't supported by Functionless, Functionless can wrap any valid CDK `aws_events.Rule`.
+
+```ts
+interface MyEvent extends Event<{}, "specialEvent", "mySource"> {}
+
+const wrappedRule = Rule.fromRule<MyEvent>(
+  new aws_events.Rule(stack, "rule", {
+    eventBus: aws_events.EventBus.fromEventBusName(stack, "myBus", "someBus"),
+    eventPattern: {
+      source: ["lambda"],
+    },
+  })
+);
+
+wrappedRule.pipe(new Function(stack, "func", (event) => console.log(event.id)));
+```
+
+Check [issues](https://github.com/functionless/functionless/issues?q=is%3Aissue+is%3Aopen+label%3Aevent-bridge) to see if your use case is known or create a new issue in the form `Event Bridge + [Use Case|Bug]`.

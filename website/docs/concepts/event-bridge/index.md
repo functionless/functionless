@@ -28,7 +28,7 @@ An instance of an [`EventBus`](./event-bus.md) ingest events and routes them to 
 
 ## Integrations
 
-Functionless supports integrations between some AWS services and Event Bridge. Send events to an `EventBus` using the `PutEvents` API and send events to other resources using the `.pipe` method.
+Functionless supports integrations between some AWS services and Event Bridge. Send events to an `EventBus` using the `putEvents` API and send events to other resources using the `.pipe` method.
 
 ### `Pipe` events from an `EventBus`.
 

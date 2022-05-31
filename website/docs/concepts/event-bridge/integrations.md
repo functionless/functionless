@@ -4,6 +4,8 @@ sidebar_position: 5
 
 # Integrations
 
+Functionless supports integrations between some AWS services and Event Bridge. Send events to an `EventBus` using the `putEvents` API and send events to other resources using the `.pipe` method.
+
 | Resource       | From `EventBus` | To `EventBus` |
 | -------------- | --------------- | ------------- |
 | _via_          | `pipe`          | `putEvents`   |
@@ -27,6 +29,32 @@ new EventBus(stack, "bus")
     })
   );
 ```
+
+### Escape Hatches
+
+If a target isn't supported by Functionless, `.pipe` supports [any target supported by EventBridge](https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_events_targets-readme.html).
+
+```ts
+const logGroup = new aws_logs.LogGroup(this, "MyLogGroup", {
+  logGroupName: "MyLogGroup",
+});
+
+// use the pipe callback escape hatch to pipe to a cloudwatch log group (which functionless doesn't natively support, yet)
+new EventBus()
+  .when((event) => event.source === "lambda")
+  .map((event) => `log me ${event.id}`)
+  .pipe(
+    (targetInput) =>
+      new targets.CloudWatchLogGroup(logGroup, { event: targetInput })
+  );
+
+// or without Functionless's transform
+new EventBus()
+  .when((event) => event.source === "lambda")
+  .pipe(() => new targets.CloudWatchLogGroup(logGroup));
+```
+
+See [issues](https://github.com/functionless/functionless/issues?q=is%3Aissue+is%3Aopen+label%3Aevent-bridge) for progress or create a new issue in the form `Event Bridge + [Service]`.
 
 ## To `EventBus`
 

@@ -143,6 +143,7 @@ export interface IRule<T extends Event> {
   pipe(props: StateMachineTargetProps<T>): void;
   pipe(props: StepFunction<T, any>): void;
   pipe(props: ExpressStepFunction<T, any>): void;
+  pipe(callback: () => aws_events.IRuleTarget): void;
 }
 
 abstract class RuleBase<T extends Event> implements IRule<T> {
@@ -181,7 +182,10 @@ abstract class RuleBase<T extends Event> implements IRule<T> {
   pipe(props: StateMachineTargetProps<T>): void;
   pipe(props: StepFunction<T, any>): void;
   pipe(props: ExpressStepFunction<T, any>): void;
-  pipe(resource: EventBusTargetResource<T, T>): void {
+  pipe(callback: () => aws_events.IRuleTarget): void;
+  pipe(
+    resource: EventBusTargetResource<T, T> | (() => aws_events.IRuleTarget)
+  ): void {
     pipe(this, resource as any);
   }
 }

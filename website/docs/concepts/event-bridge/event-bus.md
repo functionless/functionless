@@ -19,7 +19,7 @@ new EventBus(stack, "bus2", { eventBusName: "myBus" });
 
 ## Default Bus
 
-There is a default Event Bus in every region of an AWS account. It contains events emitted by your AWS Resources, such as when a Step Function execution completes, or when a scheduled trigger fires.
+There is a default Event Bus in every region of an AWS account. It contains events emitted by your AWS Resources, such as when a Step Function execution completes (see [Event Sources](./event-sources#resources-with-event-sources)), or when a scheduled trigger fires.
 
 Functionless provides an easy way to work with the default bus.
 
@@ -30,7 +30,7 @@ defaultBus.when("lambdaRule", (event) => event.source === "lambda");
 
 ## Adopting CDK Resources
 
-To turn a CDK Event bus into a Functionless EventBus using `EventBus.fromBus`.
+To turn a CDK `aws_events.EventBus` into a Functionless `EventBus` using `EventBus.fromBus`.
 
 ```ts
 const awsBus = new aws_events.EventBus(stack, "awsBus");
