@@ -1,5 +1,6 @@
 import * as ts from "typescript";
 import * as tsserver from "typescript/lib/tsserverlibrary";
+import { BaseApiIntegration } from "./api";
 import { AppsyncResolver } from "./appsync";
 import { EventBus, EventBusRule } from "./event-bridge";
 import { EventBusTransform } from "./event-bridge/transform";
@@ -59,6 +60,10 @@ export type ApiIntegrationsStaticMethodInterface = ts.CallExpression & {
   arguments: [ts.ObjectLiteralExpression];
 };
 
+export type ApiIntegrationInterface = ts.NewExpression & {
+  arguments: [ts.ObjectLiteralExpression];
+};
+
 export type FunctionlessChecker = ReturnType<typeof makeFunctionlessChecker>;
 
 export function makeFunctionlessChecker(
@@ -77,6 +82,7 @@ export function makeFunctionlessChecker(
     isStepFunction,
     isNewFunctionlessFunction,
     isApiIntegrationsStaticMethod,
+    isApiIntegration,
     isCDKConstruct,
     getFunctionlessTypeKind,
   };
@@ -229,6 +235,16 @@ export function makeFunctionlessChecker(
       // has FunctionlessKind?
       node.expression.expression.text === "ApiIntegrations";
     return x;
+  }
+
+  function isApiIntegration(node: ts.Node): node is ApiIntegrationInterface {
+    return (
+      ts.isNewExpression(node) &&
+      isFunctionlessClassOfKind(
+        node.expression,
+        BaseApiIntegration.FunctionlessType
+      )
+    );
   }
 
   /**

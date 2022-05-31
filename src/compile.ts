@@ -4,6 +4,7 @@ import type { PluginConfig, TransformerExtras } from "ts-patch";
 import ts from "typescript";
 import { assertDefined } from "./assert";
 import {
+  ApiIntegrationInterface,
   ApiIntegrationsStaticMethodInterface,
   EventBusMapInterface,
   EventBusRuleInterface,
@@ -117,6 +118,8 @@ export function compile(
             return visitFunction(node, ctx);
           } else if (checker.isApiIntegrationsStaticMethod(node)) {
             return visitApiIntegrationsStaticMethod(node);
+          } else if (checker.isApiIntegration(node)) {
+            return visitApiIntegration(node);
           }
           return node;
         };
@@ -533,7 +536,29 @@ export function compile(
       ): ts.CallExpression {
         const [props] = node.arguments;
 
-        const updatedProps = ts.factory.updateObjectLiteralExpression(
+        return ts.factory.updateCallExpression(
+          node,
+          node.expression,
+          node.typeArguments,
+          [visitApiIntegrationProps(props)]
+        );
+      }
+
+      function visitApiIntegration(node: ApiIntegrationInterface): ts.Node {
+        const [props] = node.arguments;
+
+        return ts.factory.updateNewExpression(
+          node,
+          node.expression,
+          node.typeArguments,
+          [visitApiIntegrationProps(props)]
+        );
+      }
+
+      function visitApiIntegrationProps(
+        props: ts.ObjectLiteralExpression
+      ): ts.ObjectLiteralExpression {
+        return ts.factory.updateObjectLiteralExpression(
           props,
           props.properties.map((prop) => {
             if (
@@ -551,13 +576,6 @@ export function compile(
             }
             return prop;
           })
-        );
-
-        return ts.factory.updateCallExpression(
-          node,
-          node.expression,
-          node.typeArguments,
-          [updatedProps]
         );
       }
 
