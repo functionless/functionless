@@ -10,10 +10,10 @@ Events passed to the bus in a step function must be one or more literal objects 
 
 ```ts
 const event = { source: "lambda", "detail-type": "type", detail: {} };
-bus(event); // error
-bus({ ...event }); // error
-bus(...[event]); // error
-bus({
+bus.putEvents(event); // error
+bus.putEvents({ ...event }); // error
+bus.putEvents(...[event]); // error
+bus.putEvents({
   // works
   source: "lambda",
   "detail-type": "type",

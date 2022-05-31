@@ -61,7 +61,7 @@ Functionless supports `putEvents` integrations with other AWS Resources.
 ```ts
 const bus = new EventBus();
 const sfn = new StepFunction(stack, "sfn", () => {
-  bus({
+  bus.putEvents({
     source: "myStepFunction",
     "detail-type": "someType",
     detail: {},
@@ -78,7 +78,7 @@ Limitation: [Events passed to the bus in a step function must one or more litera
 ```ts
 const bus = new EventBus();
 const sfn = new StepFunction(stack, "sfn", async () => {
-  bus({
+  bus.putEvents({
     source: "myStepFunction",
     "detail-type": "someType",
     detail: {},

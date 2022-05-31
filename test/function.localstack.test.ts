@@ -345,7 +345,7 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
         "function",
         localstackClientConfig,
         async () => {
-          bus({
+          bus.putEvents({
             "detail-type": "detail",
             source: "lambda",
             detail: {},
@@ -428,7 +428,7 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
         localstackClientConfig,
         async () => {
           const busbus = bus;
-          busbus({
+          busbus.putEvents({
             "detail-type": "anyDetail",
             source: "anySource",
             detail: {},
@@ -449,7 +449,7 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
         localstackClientConfig,
         async () => {
           const { bus } = buses;
-          bus({
+          bus.putEvents({
             "detail-type": "anyDetail",
             source: "anySource",
             detail: {},

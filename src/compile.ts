@@ -300,7 +300,7 @@ export function compile(
        * const bus = new EventBus() // an example of an Integration, could be any Integration
        *
        * (arg1: string) => {
-       *    bus({ source: "src" })
+       *    bus.putEvents({ source: "src" })
        * }
        * ```
        *
@@ -1051,7 +1051,7 @@ export function compile(
        * const bus = new EventBus()
        * new Function(() => {
        *     const busbus = bus;
-       *     busbus(...)
+       *     busbus.putEvents(...)
        * })
        * ```
        *

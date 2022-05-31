@@ -14,13 +14,8 @@ import {
   PropAssignExpr,
   StringLiteralExpr,
 } from "../expression";
-import {
-  Function,
-  NativeIntegration,
-  NativePreWarmContext,
-  PrewarmClients,
-} from "../function";
-import { Integration } from "../integration";
+import { Function, NativePreWarmContext, PrewarmClients } from "../function";
+import { Integration, IntegrationCall, makeIntegration } from "../integration";
 import {
   Rule,
   RulePredicateFunction,
@@ -128,7 +123,7 @@ export interface IEventBus<E extends EventBusEvent = EventBusEvent>
   /**
    * Put one or more events on an Event Bus.
    */
-  (
+  putEvents(
     event: EventBusPutEventInput<E>,
     ...events: EventBusPutEventInput<E>[]
   ): void;
@@ -155,9 +150,8 @@ export interface IEventBus<E extends EventBusEvent = EventBusEvent>
    */
   all(): PredicateRuleBase<E>;
   all(scope: Construct, id: string): PredicateRuleBase<E>;
-
-  readonly native: NativeIntegration<EventBusBase<E>>;
 }
+
 abstract class EventBusBase<E extends EventBusEvent>
   implements IEventBus<E>, Integration
 {
@@ -173,7 +167,11 @@ abstract class EventBusBase<E extends EventBusEvent>
   protected static singletonDefaultNode = "__DefaultBus";
 
   private allRule: PredicateRuleBase<E> | undefined;
-  readonly native: NativeIntegration<EventBusBase<E>>;
+
+  public readonly putEvents: IntegrationCall<
+    IEventBus<E>["putEvents"],
+    "EventBus.putEvents"
+  >;
 
   constructor(readonly bus: aws_events.IEventBus) {
     this.eventBusName = bus.eventBusName;
@@ -181,122 +179,131 @@ abstract class EventBusBase<E extends EventBusEvent>
 
     // Closure event bus base
     const eventBusName = this.eventBusName;
-    this.native = <NativeIntegration<EventBusBase<E>>>{
-      bind: (context: Function<any, any>) => {
-        this.bus.grantPutEventsTo(context.resource);
-      },
-      preWarm: (prewarmContext: NativePreWarmContext) => {
-        prewarmContext.getOrInit(PrewarmClients.EVENT_BRIDGE);
-      },
-      call: async (args, preWarmContext) => {
-        const eventBridge = preWarmContext.getOrInit(
-          PrewarmClients.EVENT_BRIDGE
+
+    this.putEvents = makeIntegration<
+      IEventBus<E>["putEvents"],
+      "EventBus.putEvents"
+    >({
+      kind: "EventBus.putEvents",
+      asl: (call: CallExpr, context: ASL) => {
+        this.bus.grantPutEventsTo(context.role);
+
+        // Validate that the events are object literals.
+        // Then normalize nested arrays of events into a single list of events.
+        // TODO Relax these restrictions: https://github.com/functionless/functionless/issues/101
+        const eventObjs = call.args.reduce(
+          (events: ObjectLiteralExpr[], arg) => {
+            if (isArrayLiteralExpr(arg.expr)) {
+              if (!arg.expr.items.every(isObjectLiteralExpr)) {
+                throw Error(
+                  "Event Bus put events must use inline object parameters. Variable references are not supported currently."
+                );
+              }
+              return [...events, ...arg.expr.items];
+            } else if (isObjectLiteralExpr(arg.expr)) {
+              return [...events, arg.expr];
+            }
+            throw Error(
+              "Event Bus put events must use inline object parameters. Variable references are not supported currently."
+            );
+          },
+          []
         );
-        await eventBridge
-          .putEvents({
-            Entries: args.map((event) => ({
-              Detail: JSON.stringify(event.detail),
-              EventBusName: eventBusName,
-              DetailType: event["detail-type"],
-              Resources: event.resources,
-              Source: event.source,
-              Time:
-                typeof event.time === "number"
-                  ? new Date(event.time)
-                  : undefined,
-            })),
-          })
-          .promise();
-      },
-    };
-  }
 
-  asl(call: CallExpr, context: ASL) {
-    this.bus.grantPutEventsTo(context.role);
-
-    // Validate that the events are object literals.
-    // Then normalize nested arrays of events into a single list of events.
-    // TODO Relax these restrictions: https://github.com/functionless/functionless/issues/101
-    const eventObjs = call.args.reduce((events: ObjectLiteralExpr[], arg) => {
-      if (isArrayLiteralExpr(arg.expr)) {
-        if (!arg.expr.items.every(isObjectLiteralExpr)) {
-          throw Error(
-            "Event Bus put events must use inline object parameters. Variable references are not supported currently."
-          );
+        // The interface should prevent this.
+        if (eventObjs.length === 0) {
+          throw Error("Must provide at least one event.");
         }
-        return [...events, ...arg.expr.items];
-      } else if (isObjectLiteralExpr(arg.expr)) {
-        return [...events, arg.expr];
-      }
-      throw Error(
-        "Event Bus put events must use inline object parameters. Variable references are not supported currently."
-      );
-    }, []);
 
-    // The interface should prevent this.
-    if (eventObjs.length === 0) {
-      throw Error("Must provide at least one event.");
-    }
+        const propertyMap: Record<keyof EventBusEvent, string> = {
+          "detail-type": "DetailType",
+          account: "Account",
+          detail: "Detail",
+          id: "Id",
+          region: "Region",
+          resources: "Resources",
+          source: "Source",
+          time: "Time",
+          version: "Version",
+        };
 
-    const propertyMap: Record<keyof EventBusEvent, string> = {
-      "detail-type": "DetailType",
-      account: "Account",
-      detail: "Detail",
-      id: "Id",
-      region: "Region",
-      resources: "Resources",
-      source: "Source",
-      time: "Time",
-      version: "Version",
-    };
+        const events = eventObjs.map((event) => {
+          const props = event.properties.filter(
+            (
+              e
+            ): e is PropAssignExpr & {
+              name: StringLiteralExpr | Identifier;
+            } => !(isSpreadAssignExpr(e) || isComputedPropertyNameExpr(e.name))
+          );
+          if (props.length < event.properties.length) {
+            throw Error(
+              "Event Bus put events must use inline objects instantiated without computed or spread keys."
+            );
+          }
+          return (
+            props
+              .map(
+                (prop) =>
+                  [
+                    isIdentifier(prop.name) ? prop.name.name : prop.name.value,
+                    prop.expr,
+                  ] as const
+              )
+              .filter(
+                (x): x is [keyof typeof propertyMap, Expr] =>
+                  x[0] in propertyMap && !!x[1]
+              )
+              /**
+               * Build the parameter payload for an event entry.
+               * All members must be in Pascal case.
+               */
+              .reduce(
+                (acc: Record<string, string>, [name, expr]) => ({
+                  ...acc,
+                  [propertyMap[name]]: ASL.toJson(expr),
+                }),
+                { EventBusName: this.bus.eventBusArn }
+              )
+          );
+        });
 
-    const events = eventObjs.map((event) => {
-      const props = event.properties.filter(
-        (
-          e
-        ): e is PropAssignExpr & {
-          name: StringLiteralExpr | Identifier;
-        } => !(isSpreadAssignExpr(e) || isComputedPropertyNameExpr(e.name))
-      );
-      if (props.length < event.properties.length) {
-        throw Error(
-          "Event Bus put events must use inline objects instantiated without computed or spread keys."
-        );
-      }
-      return (
-        props
-          .map(
-            (prop) =>
-              [
-                isIdentifier(prop.name) ? prop.name.name : prop.name.value,
-                prop.expr,
-              ] as const
-          )
-          .filter(
-            (x): x is [keyof typeof propertyMap, Expr] =>
-              x[0] in propertyMap && !!x[1]
-          )
-          /**
-           * Build the parameter payload for an event entry.
-           * All members must be in Pascal case.
-           */
-          .reduce(
-            (acc: Record<string, string>, [name, expr]) => ({
-              ...acc,
-              [propertyMap[name]]: ASL.toJson(expr),
-            }),
-            { EventBusName: this.bus.eventBusArn }
-          )
-      );
-    });
-
-    return {
-      Resource: "arn:aws:states:::events:putEvents",
-      Type: "Task" as const,
-      Parameters: {
-        Entries: events,
+        return {
+          Resource: "arn:aws:states:::events:putEvents",
+          Type: "Task" as const,
+          Parameters: {
+            Entries: events,
+          },
+        };
       },
-    };
+      native: {
+        bind: (context: Function<any, any>) => {
+          this.bus.grantPutEventsTo(context.resource);
+        },
+        preWarm: (prewarmContext: NativePreWarmContext) => {
+          prewarmContext.getOrInit(PrewarmClients.EVENT_BRIDGE);
+        },
+        call: async (args, preWarmContext) => {
+          const eventBridge = preWarmContext.getOrInit(
+            PrewarmClients.EVENT_BRIDGE
+          );
+          await eventBridge
+            .putEvents({
+              Entries: args.map((event) => ({
+                Detail: JSON.stringify(event.detail),
+                EventBusName: eventBusName,
+                DetailType: event["detail-type"],
+                Resources: event.resources,
+                Source: event.source,
+                Time:
+                  typeof event.time === "number"
+                    ? new Date(event.time)
+                    : undefined,
+              })),
+            })
+            .promise();
+        },
+      },
+    });
   }
 
   when<O extends E>(
@@ -353,13 +360,6 @@ abstract class EventBusBase<E extends EventBusEvent>
 
 export type EventBusPutEventInput<E extends EventBusEvent> = Partial<E> &
   Pick<E, "detail" | "source" | "detail-type">;
-
-interface EventBusBase<E extends EventBusEvent> {
-  (
-    event: EventBusPutEventInput<E>,
-    ...events: EventBusPutEventInput<E>[]
-  ): void;
-}
 
 /**
  * A Functionless wrapper for a AWS CDK {@link aws_events.EventBus}.

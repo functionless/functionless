@@ -261,7 +261,7 @@ const deleteWorkflow = new StepFunction<{ postId: string }, void>(
             })
           );
 
-          customDeleteBus({
+          customDeleteBus.putEvents({
             "detail-type": "Delete-Message-Success",
             source: "MessageDeleter",
             detail: {
@@ -281,7 +281,7 @@ const deleteWorkflow = new StepFunction<{ postId: string }, void>(
             },
           });
 
-          customDeleteBus({
+          customDeleteBus.putEvents({
             "detail-type": "Delete-Post-Success",
             source: "MessageDeleter",
             detail: {
@@ -423,7 +423,7 @@ new Function(
   async () => {
     const result = func();
     console.log(`function result: ${result}`);
-    customDeleteBus({
+    customDeleteBus.putEvents({
       "detail-type": "Delete-Post-Success",
       source: "MessageDeleter",
       detail: {
@@ -449,7 +449,7 @@ new Function(
       },
     });
     const { bus } = b;
-    bus({
+    bus.putEvents({
       "detail-type": "Delete-Message-Success",
       detail: { count: 0 },
       source: "MessageDeleter",

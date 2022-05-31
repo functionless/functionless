@@ -243,7 +243,7 @@ Supported:
 ```ts
 const bus = new EventBus(stack, "bus");
 new StepFunction<{ value: string }, void>((input) => {
-  bus({
+  bus.putEvents({
     detail: {
       value: input.value,
     },

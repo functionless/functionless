@@ -1075,7 +1075,7 @@ test("put an event bus event", () => {
     stack,
     "fn",
     (input) => {
-      bus({
+      bus.putEvents({
         "detail-type": "someEvent",
         source: "sfnTest",
         detail: {
@@ -1087,9 +1087,9 @@ test("put an event bus event", () => {
 
   expect(definition).toEqual({
     StartAt:
-      'bus({detail-type: "someEvent", source: "sfnTest", detail: {value: input.id}',
+      'bus.putEvents({detail-type: "someEvent", source: "sfnTest", detail: {value:',
     States: {
-      'bus({detail-type: "someEvent", source: "sfnTest", detail: {value: input.id}':
+      'bus.putEvents({detail-type: "someEvent", source: "sfnTest", detail: {value:':
         {
           Type: "Task",
           Resource: "arn:aws:states:::events:putEvents",
@@ -1133,7 +1133,7 @@ test("put multiple event bus events", () => {
     stack,
     "fn",
     (input) => {
-      bus(
+      bus.putEvents(
         {
           "detail-type": "someEvent",
           source: "sfnTest",
@@ -1155,9 +1155,9 @@ test("put multiple event bus events", () => {
 
   expect(definition).toEqual({
     StartAt:
-      'bus({detail-type: "someEvent", source: "sfnTest", detail: {value: input.id}',
+      'bus.putEvents({detail-type: "someEvent", source: "sfnTest", detail: {value:',
     States: {
-      'bus({detail-type: "someEvent", source: "sfnTest", detail: {value: input.id}':
+      'bus.putEvents({detail-type: "someEvent", source: "sfnTest", detail: {value:':
         {
           Type: "Task",
           Resource: "arn:aws:states:::events:putEvents",
