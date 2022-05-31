@@ -52,67 +52,17 @@ const bus = EventBus.fromBus(awsBus);
 
 Functionless supports `putEvents` integrations with other AWS Resources.
 
-- Step Functions
-- Lambda
-- Event Bus
-
-### Step Functions
+For a full list, see: [Integrations](./integrations#to-eventbus)
 
 ```ts
-const bus = new EventBus();
-const sfn = new StepFunction(stack, "sfn", () => {
+const bus = new EventBus(stack, "bus");
+new StepFunction<{ value: string }, void>((input) => {
   bus.putEvents({
-    source: "myStepFunction",
-    "detail-type": "someType",
-    detail: {},
+    detail: {
+      value: input.value,
+    },
+    source: "mySource",
+    "detail-type": "myEventType",
   });
 });
 ```
-
-:::caution
-Limitation: [Events passed to the bus in a step function must one or more literal objects](./integrations#Events_passed-to_the_bus_in_a_step_function_must_literal_objects) and may not use the spread (`...`) syntax.
-:::
-
-### Lambda
-
-```ts
-const bus = new EventBus();
-const sfn = new StepFunction(stack, "sfn", async () => {
-  bus.putEvents({
-    source: "myStepFunction",
-    "detail-type": "someType",
-    detail: {},
-  });
-});
-```
-
-### Event Bus
-
-Bus to bus sends events directly between two event buses.
-
-:::info
-See AWS's documentation for limitations with [cross-account](https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-bus-to-bus.html) and [cross-region](https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-bus-to-bus.html) bus to bus events.
-:::
-
-```ts
-const eventBus = new EventBus(stack, "bus1");
-const eventBus2 = new EventBus(stack, "bus2");
-// send lambda events from bus1 to bus2.
-eventBus
-  .when("lambdaRule", (event) => event.source === "lambda")
-  .pipe(eventBus2);
-```
-
-:::info
-Event Bridge does not support transforming events when sending between buses.
-
-```ts
-const bus = new EventBus();
-bus
-  .all()
-  .map((event) => event.id)
-  .pipe(bus); // fails
-bus.all().pipe(bus); // works
-```
-
-:::

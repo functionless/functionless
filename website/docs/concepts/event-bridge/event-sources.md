@@ -25,7 +25,7 @@ EventBus.default(scope)
   .pipe(...);
 ```
 
-## Resources with Event sources
+## Resources with Event Sources
 
 | Resource                                         | events                                                       |
 | ------------------------------------------------ | ------------------------------------------------------------ |

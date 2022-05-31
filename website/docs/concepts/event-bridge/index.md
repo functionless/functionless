@@ -26,6 +26,40 @@ bus
 
 An instance of an [`EventBus`](./event-bus.md) ingest events and routes them to downstream integrations according to Rules created by the user. Events are sent to downstream services such as Lambda Functions, Step Functions, or a third party (non-AWS) API. Sources of events include other AWS Resources or third party (non-AWS) SaaS products, e.g. a Slack webhook.
 
+## Integrations
+
+Functionless supports integrations between some AWS services and Event Bridge. Send events to an `EventBus` using the `PutEvents` API and send events to other resources using the `.pipe` method.
+
+### `Pipe` events from an `EventBus`.
+
+```ts
+new EventBus(stack, "bus")
+  .when("onSignUp", (event) => event.source === "lambda")
+  // send an event to a lambda
+  .pipe(
+    new Function(stack, "func", async (event) => {
+      console.log(event.id);
+    })
+  );
+```
+
+### `putEvent` to an `EventBus`
+
+```ts
+const bus = new EventBus(stack, "bus");
+new StepFunction<{ value: string }, void>((input) => {
+  bus.putEvents({
+    detail: {
+      value: input.value,
+    },
+    source: "mySource",
+    "detail-type": "myEventType",
+  });
+});
+```
+
+See [Integrations](./integrations) for more details.
+
 ## Declare an Event Type
 
 Functionless supports well typed events, lets define our event schema with Typescript.
@@ -46,9 +80,19 @@ interface UserEvent
   > {}
 ```
 
-## Create a Rule
+## Create or wrap an Event Bus
 
-Now that you have a wrapped `EventBus`, lets add some rules.
+To access Functionless features, create a Functionless `EventBus` or wrap a cdk `aws_events.EventBus`.
+
+```ts
+const bus = new EventBus<UserEvent>(stack, "bus");
+// or by adopting a aws CDK EventBus
+const busFromAws = EvnetBus.fromBus<UserEvent>(
+  new aws_events.EventBus(stack, "bus")
+);
+```
+
+## Create a Rule
 
 Functionless lets you write logic in Typescript on the type safe event.
 
@@ -92,11 +136,6 @@ catPeopleEvents.when((event) => !event.detail.interests.includes("DOGS"));
 We have two lambda functions to invoke, one for create or updates and another for deletes, lets make those.
 
 ```ts
-const createOrUpdateFunction = new Function(this, 'createOrUpdate', ...);
-const deleteFunction = new Function(this, 'delete', ...);
-```
-
-```ts
 interface CreateOrUpdate {
   id?: string;
   name: string;
@@ -108,6 +147,17 @@ interface CreateOrUpdate {
 interface Delete {
   id: string;
 }
+
+const createOrUpdateFunction = new Function(
+  this,
+  "createOrUpdate",
+  async (event: CreateOrUpdate) => {
+    /** implement me **/
+  }
+);
+const deleteFunction = new Function(this, "delete", async (event: Delete) => {
+  /** implement me **/
+});
 ```
 
 The events from before do not match the formats from before, so lets transform them to the structures match.
@@ -180,9 +230,8 @@ interface Delete {
   id: string;
 }
 
-const createOrUpdateFunction = new functionless.Function<CreateOrUpdate, void>(this, "createOrUpdate", { ... });
-
-const deleteFunction = new functionless.Function<Delete, void>(new aws_lambda.Function(this, "delete", { ... });
+const createOrUpdateFunction = new functionless.Function(this, 'createOrUpdate', async (event: CreateOrUpdate) => { /** implement me **/ });
+const deleteFunction = new functionless.Function(this, 'delete', async (event: Delete) => { /** implement me **/ });
 
 const bus = new functionless.EventBus<UserEvent>(this, "myBus");
 
@@ -228,33 +277,3 @@ bus
     )
   );
 ```
-
-## Put Events from other sources
-
-Functionless supports integrations between some AWS services and Event Bridge using the PutEvents API.
-
-Supported:
-
-- Step Functions
-- App Sync (coming soon)
-- API Gateway (coming soon)
-- See [issues](https://github.com/functionless/functionless/issues?q=is%3Aissue+is%3Aopen+label%3Aevent-bridge) for progress or create a new issue in the form `Event Bridge + [Service]`.
-
-```ts
-const bus = new EventBus(stack, "bus");
-new StepFunction<{ value: string }, void>((input) => {
-  bus.putEvents({
-    detail: {
-      value: input.value,
-    },
-    source: "mySource",
-    "detail-type": "myEventType",
-  });
-});
-```
-
-This will create a step function which sends an event. It is also possible to send multiple events and use other Step Function logic.
-
-:::caution
-Limitation: [Events passed to the bus in a step function must one or more literal objects](./integrations#Events_passed-to_the_bus_in_a_step_function_must_literal_objects) and may not use the spread (`...`) syntax.
-:::

@@ -10,14 +10,12 @@ Functionless allows typescript to be used when defining a rule.
 
 ```ts
 const bus = new EventBus(stack, 'bus');
-const func = new Function<string, void>(stack, 'func', (input) => console.log(input));
+const func = new Function<string, void>(stack, 'func', (event) => console.log(event.id));
 
 // an event bridge rule made with Functionless
 const lambdaEventsRule = bus
   // filters the events on the bus to only event from lambda (or with a source value of `lambda`).
   .when('lambdaEvents', event => event.source === "lambda");
-  // send only the `id` string to the target.
-  .map(event => event.id)
   // send all matched events to the given function.
   .pipe(func);
 ```
@@ -31,15 +29,11 @@ const lambdaEventsRule = aws_events.Rule(bus, "lambdaEvents", {
   eventBus: bus,
   eventPattern: { source: ["lambda"] },
 });
-lambdaEventsRule.addTarget(
-  new aws_event_targets.LambdaFunction(func, {
-    event: aws_events.RuleTargetInput.fromEventPath("$.id"),
-  })
-);
+lambdaEventsRule.addTarget(new aws_event_targets.LambdaFunction(func));
 ```
 
 :::info
-For more details on the supported schema for `Rule`s see [syntax](./syntax.md#event-patterns)
+For more details on the supported schema for `Rule`s see [syntax](./syntax#event-patterns)
 :::
 
 ## Scheduled Rules
