@@ -74,7 +74,13 @@ type IntegrationTarget<IntegrationRequest, IntegrationResponse> =
   | Function<IntegrationRequest, IntegrationResponse>
   | ExpressStepFunction<IntegrationRequest, IntegrationResponse>;
 
-interface BaseApiIntegration {
+export abstract class BaseApiIntegration {
+  /**
+   * Identify subclasses as API integrations to the Functionless plugin
+   */
+  public static readonly FunctionlessType = "ApiIntegration";
+  protected readonly functionlessKind = BaseApiIntegration.FunctionlessType;
+
   /**
    * Add this integration as a Method to an API Gateway resource.
    *
@@ -82,7 +88,10 @@ interface BaseApiIntegration {
    * is on the chopping block: https://github.com/functionless/functionless/issues/137
    * The 2 classes are conceptually similar so we should keep the DX in sync.
    */
-  addMethod(httpMethod: HttpMethod, resource: aws_apigateway.Resource): void;
+  public abstract addMethod(
+    httpMethod: HttpMethod,
+    resource: aws_apigateway.Resource
+  ): void;
 }
 
 /**
@@ -158,17 +167,12 @@ export interface MockApiIntegrationProps<
  */
 export class MockApiIntegration<
   Props extends MockApiIntegrationProps<any, any, any>
-> implements BaseApiIntegration
-{
-  /**
-   * This static property identifies this class as a MockApiIntegration to the Functionless plugin.
-   */
-  public static readonly FunctionlessType = "MockApiIntegration";
-
+> extends BaseApiIntegration {
   private readonly request: FunctionDecl;
   private readonly responses: { [K in keyof Props["responses"]]: FunctionDecl };
 
   public constructor(props: Props) {
+    super();
     this.request = validateFunctionDecl(props.request);
     this.responses = Object.fromEntries(
       Object.entries(props.responses).map(([k, v]) => [
@@ -251,18 +255,13 @@ export interface AwsApiIntegrationProps<
  */
 export class AwsApiIntegration<
   Props extends AwsApiIntegrationProps<any, any, any, any>
-> implements BaseApiIntegration
-{
-  /**
-   * This static property identifies this class as an AwsApiIntegration to the Functionless plugin.
-   */
-  public static readonly FunctionlessType = "AwsApiIntegration";
-
+> extends BaseApiIntegration {
   private readonly request: FunctionDecl;
   private readonly response: FunctionDecl;
   private readonly integration: Props["integration"];
 
   constructor(props: Props) {
+    super();
     this.request = validateFunctionDecl(props.request);
     this.response = validateFunctionDecl(props.response);
     this.integration = props.integration;
