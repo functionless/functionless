@@ -663,7 +663,7 @@ describe("not allowed", () => {
   test("math", () => {
     ebEventTargetTestCaseError<testEvent>(
       reflect((event) => event.detail.num + 1),
-      "Addition operator is only supported to concatinate at least one string to another value."
+      "Addition operator is only supported to concatenate at least one string to another value."
     );
   });
 
