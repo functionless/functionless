@@ -1,8 +1,8 @@
 import { reflect } from "../src";
-import { EventBusEvent, RulePredicateFunction } from "../src/event-bridge";
+import { Event, RulePredicateFunction } from "../src/event-bridge";
 import { ebEventPatternTestCase, ebEventPatternTestCaseError } from "./util";
 
-type TestEvent = EventBusEvent<{
+type TestEvent = Event<{
   num: number;
   str: string;
   optional?: string;

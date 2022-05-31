@@ -8,7 +8,7 @@ import {
 } from "../step-function";
 import { IEventBus, isEventBus } from "./event-bus";
 import { IRule } from "./rule";
-import { EventBusEvent } from "./types";
+import { Event } from "./types";
 
 export type LambdaTargetProps<P> = {
   func: IFunction<P, any>;
@@ -18,11 +18,11 @@ const isLambdaTargetProps = <P>(props: any): props is LambdaTargetProps<P> => {
   return "func" in props;
 };
 
-export type EventBusTargetProps<P extends EventBusEvent> = {
+export type EventBusTargetProps<P extends Event> = {
   bus: IEventBus<P>;
 } & aws_events_targets.EventBusProps;
 
-const isEventBusTargetProps = <P extends EventBusEvent>(
+const isEventBusTargetProps = <P extends Event>(
   props: any
 ): props is EventBusTargetProps<P> => {
   return "bus" in props;
@@ -39,7 +39,7 @@ const isStateMachineTargetProps = <P>(
   return "machine" in props;
 };
 
-export type EventBusTargetResource<T extends EventBusEvent, P> =
+export type EventBusTargetResource<T extends Event, P> =
   | IFunction<P, any>
   | LambdaTargetProps<P>
   | IEventBus<T>
@@ -51,7 +51,7 @@ export type EventBusTargetResource<T extends EventBusEvent, P> =
 /**
  * Add a target to the run based on the configuration given.
  */
-export function pipe<T extends EventBusEvent, P>(
+export function pipe<T extends Event, P>(
   rule: IRule<T>,
   resource: EventBusTargetResource<T, P>,
   targetInput?: aws_events.RuleTargetInput

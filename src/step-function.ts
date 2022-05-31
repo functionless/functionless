@@ -24,7 +24,7 @@ import {
 import { assertDefined, assertNodeKind } from "./assert";
 import { FunctionDecl, isFunctionDecl } from "./declaration";
 import { EventBus, PredicateRuleBase, Rule } from "./event-bridge";
-import { EventBusEvent } from "./event-bridge/types";
+import { Event } from "./event-bridge/types";
 import {
   CallExpr,
   isComputedPropertyNameExpr,
@@ -360,7 +360,7 @@ interface StepFunctionDetail {
 }
 
 interface StepFunctionStatusChangedEvent
-  extends EventBusEvent<
+  extends Event<
     StepFunctionDetail,
     "Step Functions Execution Status Change",
     "aws.states"

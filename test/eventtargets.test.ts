@@ -1,11 +1,11 @@
 import { aws_events, Stack } from "aws-cdk-lib";
 import { EventField } from "aws-cdk-lib/aws-events";
 import { Function, reflect, StepFunction } from "../src";
-import { EventBusEvent } from "../src/event-bridge";
+import { Event } from "../src/event-bridge";
 
 import { ebEventTargetTestCase, ebEventTargetTestCaseError } from "./util";
 
-type testEvent = EventBusEvent<{
+type testEvent = Event<{
   value: string;
   optional?: string;
   num: number;
@@ -251,7 +251,7 @@ test("object with bare undefined", () => {
 });
 
 type MyString = string;
-interface MyTest extends EventBusEvent<{ s: MyString }> {}
+interface MyTest extends Event<{ s: MyString }> {}
 
 test("non-string type", () => {
   ebEventTargetTestCase<MyTest>(

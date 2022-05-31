@@ -1,7 +1,7 @@
 import path from "path";
 import * as appsync from "@aws-cdk/aws-appsync-alpha";
 import { App, Stack } from "aws-cdk-lib";
-import { EventBus, EventBusEvent } from "functionless";
+import { EventBus, Event } from "functionless";
 import { PeopleDatabase, Person } from "./people-db";
 import { PeopleEvents } from "./people-events";
 
@@ -60,7 +60,7 @@ interface MyEventDetails {
   value: string;
 }
 
-interface MyEvent extends EventBusEvent<MyEventDetails> {}
+interface MyEvent extends Event<MyEventDetails> {}
 
 new EventBus<MyEvent>(stack, "bus")
   .when(stack, "aRule", (event) => event.detail.value === "hello")

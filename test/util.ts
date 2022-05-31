@@ -16,7 +16,7 @@ import {
   FunctionDecl,
   Table,
   Function,
-  EventBusEvent,
+  Event,
   FunctionlessEventPattern,
 } from "../src";
 
@@ -170,7 +170,7 @@ beforeEach(() => {
   stack = new Stack();
 });
 
-export function ebEventTargetTestCase<T extends EventBusEvent>(
+export function ebEventTargetTestCase<T extends Event>(
   decl: FunctionDecl<EventTransformFunction<T>> | Err,
   targetInput: aws_events.RuleTargetInput
 ) {
@@ -202,7 +202,7 @@ export function ebEventTargetTestCase<T extends EventBusEvent>(
   });
 }
 
-export function ebEventTargetTestCaseError<T extends EventBusEvent>(
+export function ebEventTargetTestCaseError<T extends Event>(
   decl: FunctionDecl<EventTransformFunction<T>> | Err,
   message?: string
 ) {

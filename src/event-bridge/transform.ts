@@ -5,7 +5,7 @@ import { StepFunction, ExpressStepFunction } from "../step-function";
 import { IRule } from "./rule";
 import { LambdaTargetProps, pipe, StateMachineTargetProps } from "./target";
 import { synthesizeEventBridgeTargets } from "./target-input";
-import { EventBusEvent } from "./types";
+import { Event } from "./types";
 
 /**
  * A function interface used by the {@link Rule}'s map function.
@@ -13,7 +13,7 @@ import { EventBusEvent } from "./types";
  * event is the event matched by the rule. This argument is optional.
  * $utils is a collection of built-in utilities wrapping EventBridge TargetInputs like contextual constants available to the transformer.
  */
-export type EventTransformFunction<E extends EventBusEvent, O = any> = (
+export type EventTransformFunction<E extends Event, O = any> = (
   event: E,
   $utils: EventTransformUtils
 ) => O;
@@ -36,7 +36,7 @@ export interface EventTransformUtils {
  *
  * @see Rule.map for more details on transforming event details.
  */
-export class EventTransform<T extends EventBusEvent, P> {
+export class EventTransform<T extends Event, P> {
   readonly targetInput: aws_events.RuleTargetInput;
 
   /**

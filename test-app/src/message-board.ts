@@ -17,7 +17,7 @@ import {
   StepFunction,
   Table,
   EventBus,
-  EventBusEvent,
+  Event,
   ExpressStepFunction,
 } from "functionless";
 
@@ -216,18 +216,14 @@ export const addComment = new AppsyncResolver<
 });
 
 interface MessageDeletedEvent
-  extends EventBusEvent<
+  extends Event<
     { count: number },
     "Delete-Message-Success",
     "MessageDeleter"
   > {}
 
 interface PostDeletedEvent
-  extends EventBusEvent<
-    { id: string },
-    "Delete-Post-Success",
-    "MessageDeleter"
-  > {}
+  extends Event<{ id: string }, "Delete-Post-Success", "MessageDeleter"> {}
 
 const customDeleteBus = new EventBus<MessageDeletedEvent | PostDeletedEvent>(
   stack,
@@ -349,8 +345,7 @@ interface Notification {
   message: string;
 }
 
-interface TestDeleteEvent
-  extends EventBusEvent<{ postId: string }, "Delete", "test"> {}
+interface TestDeleteEvent extends Event<{ postId: string }, "Delete", "test"> {}
 
 const sendNotification = new Function<Notification, void>(
   stack,

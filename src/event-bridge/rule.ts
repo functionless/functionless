@@ -17,7 +17,7 @@ import {
   StateMachineTargetProps,
 } from "./target";
 import { EventTransformFunction, EventTransform } from "./transform";
-import { EventBusEvent } from "./types";
+import { Event } from "./types";
 
 /**
  * A function interface used by the {@link EventBus}'s when function to generate a rule.
@@ -28,7 +28,7 @@ export type RulePredicateFunction<E, O extends E = E> =
   | ((event: E) => event is O)
   | ((event: E) => boolean);
 
-export interface IRule<T extends EventBusEvent> {
+export interface IRule<T extends Event> {
   readonly rule: aws_events.Rule;
 
   /**
@@ -145,7 +145,7 @@ export interface IRule<T extends EventBusEvent> {
   pipe(props: ExpressStepFunction<T, any>): void;
 }
 
-abstract class RuleBase<T extends EventBusEvent> implements IRule<T> {
+abstract class RuleBase<T extends Event> implements IRule<T> {
   /**
    * This static properties identifies this class as a Rule to the TypeScript plugin.
    */
@@ -189,7 +189,7 @@ abstract class RuleBase<T extends EventBusEvent> implements IRule<T> {
 /**
  * Special base rule that supports some internal behaviors like joining (AND) compiled rules.
  */
-export class PredicateRuleBase<T extends EventBusEvent>
+export class PredicateRuleBase<T extends Event>
   extends RuleBase<T>
   implements IEventBusFilterable<T>
 {
@@ -271,7 +271,7 @@ export class PredicateRuleBase<T extends EventBusEvent>
  * @see EventBus.when for more details on filtering events.
  */
 export class Rule<
-  T extends EventBusEvent,
+  T extends Event,
   O extends T = T
 > extends PredicateRuleBase<O> {
   constructor(
@@ -288,9 +288,7 @@ export class Rule<
   /**
    * Import an {@link aws_events.Rule} wrapped with Functionless abilities.
    */
-  public static fromRule<T extends EventBusEvent>(
-    rule: aws_events.Rule
-  ): IRule<T> {
+  public static fromRule<T extends Event>(rule: aws_events.Rule): IRule<T> {
     return new ImportedRule<T>(rule);
   }
 }
@@ -300,9 +298,9 @@ export class Rule<
  * @see https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-run-lambda-schedule.html#eb-schedule-create-rule
  */
 export interface ScheduledEvent
-  extends EventBusEvent<{}, "Scheduled Event", "aws.events"> {}
+  extends Event<{}, "Scheduled Event", "aws.events"> {}
 
-export class ImportedRule<T extends EventBusEvent> extends RuleBase<T> {
+export class ImportedRule<T extends Event> extends RuleBase<T> {
   constructor(rule: aws_events.Rule) {
     super(() => rule);
   }
