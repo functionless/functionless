@@ -87,7 +87,7 @@ To access Functionless features, create a Functionless `EventBus` or wrap a cdk 
 ```ts
 const bus = new EventBus<UserEvent>(stack, "bus");
 // or by adopting a aws CDK EventBus
-const busFromAws = EvnetBus.fromBus<UserEvent>(
+const busFromAws = EventBus.fromBus<UserEvent>(
   new aws_events.EventBus(stack, "bus")
 );
 ```
