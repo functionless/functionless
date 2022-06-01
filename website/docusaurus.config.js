@@ -3,6 +3,7 @@
 
 const lightCodeTheme = require("prism-react-renderer/themes/github");
 const darkCodeTheme = require("prism-react-renderer/themes/dracula");
+const path = require("path");
 
 /** @type {import('@docusaurus/types').Config} */
 const config = {
@@ -21,7 +22,6 @@ const config = {
   plugins: [
     [
       "docusaurus-plugin-typedoc",
-
       // Plugin / TypeDoc options
       {
         entryPoints: ["../src/index.ts"],
@@ -32,6 +32,19 @@ const config = {
         },
       },
     ],
+    function () {
+      return {
+        name: "functionless-error-code-docs",
+        loadContent: () =>
+          // run the compile-error-code-page CLI after typedoc is run by `docusaurus-plugin-typedoc`
+          require(path.join(
+            __dirname,
+            "..",
+            "scripts",
+            "compile-error-code-page"
+          )),
+      };
+    },
   ],
 
   presets: [
