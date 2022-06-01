@@ -107,7 +107,7 @@ export interface IEventBusFilterable<E extends Event> {
   ): Rule<E, O>;
 }
 
-export interface IEventBus<E extends Event = Event>
+export interface IEventBus<in E extends Event = Event>
   extends IEventBusFilterable<E> {
   readonly bus: aws_events.IEventBus;
   readonly eventBusArn: string;

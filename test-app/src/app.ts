@@ -64,10 +64,13 @@ interface MyEvent extends Event<MyEventDetails> {}
 
 new EventBus<MyEvent>(stack, "bus")
   .when(stack, "aRule", (event) => event.detail.value === "hello")
-  .map<Person>((event) => ({
-    id: event.source,
-    name: event.detail.value,
-  }))
+  .map(
+    (event) =>
+      <Person>{
+        id: event.source,
+        name: event.detail.value,
+      }
+  )
   .pipe(peopleDb.computeScore);
 
 new PeopleEvents(stack, "peopleEvents");

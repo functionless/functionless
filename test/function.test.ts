@@ -389,8 +389,30 @@ test("set on failure rule", () => {
     "bus3"
   );
   const func = new Function<string, void>(stack, "func3", async () => {});
-  const onFailure = func.onFailure(bus, "funcSuccess");
+  const onFailure = func.onFailure(bus, "funcFailure");
   onFailure.pipe(bus);
+
+  expect(onFailure.rule._renderEventPattern()).toEqual({
+    source: ["lambda"],
+    "detail-type": ["Lambda Function Invocation Result - Failure"],
+    resources: [func.resource.functionArn],
+  });
+});
+
+test("onFailure().pipe should type check", () => {
+  const bus = new EventBus<AsyncFunctionResponseEvent<string, void>>(
+    stack,
+    "bus3"
+  );
+  const func = new Function<number, void>(stack, "func3", async () => {});
+  // @ts-expect-error
+  const onFailure = func.onFailure(bus, "funcFailure");
+  // @ts-expect-error
+  const onSuccess = func.onSuccess(bus, "funcSuccess");
+  // @ts-expect-error
+  onFailure.pipe(bus);
+  // @ts-expect-error
+  onSuccess.pipe(bus);
 
   expect(onFailure.rule._renderEventPattern()).toEqual({
     source: ["lambda"],

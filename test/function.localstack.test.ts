@@ -242,6 +242,8 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
 
   testFunctionResource(
     "Call Lambda throw error",
+    // @ts-ignore - contra-variance on IEventBus<in T> makes Function<_, never> fail to type check because never can't be a super type
+    //              IEventBus is relevant because of Function.onSuccess takes in an IEventBus
     (parent) =>
       new Function(
         parent,
