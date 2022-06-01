@@ -13,7 +13,10 @@ import {
   Token,
   Tokenization,
 } from "aws-cdk-lib";
-import { EventBridgeDestination } from "aws-cdk-lib/aws-lambda-destinations";
+import {
+  EventBridgeDestination,
+  LambdaDestination,
+} from "aws-cdk-lib/aws-lambda-destinations";
 import type { Context } from "aws-lambda";
 // eslint-disable-next-line import/no-extraneous-dependencies
 import AWS from "aws-sdk";
@@ -62,17 +65,17 @@ export interface IFunction<P, O> {
   >;
 
   onSuccess(
-    bus: IEventBus<AsyncResponseSuccessEvent<P, O>>,
+    bus: IEventBus<any>,
     id: string
   ): Rule<AsyncResponseSuccessEvent<P, O>>;
   onFailure(
-    bus: IEventBus<AsyncResponseFailureEvent<P>>,
+    bus: IEventBus<any>,
     id: string
   ): Rule<AsyncResponseFailureEvent<P>>;
 }
 
 export interface AsyncResponseBase<P> {
-  version: "1.0";
+  version: string;
   /**
    * ISO 8601
    */
@@ -84,6 +87,10 @@ export interface AsyncResponseBase<P> {
     functionError: string;
   };
 }
+
+export type AsyncFunctionResponseEvent<P, O> =
+  | AsyncResponseSuccessEvent<P, O>
+  | AsyncResponseFailureEvent<P>;
 
 export interface AsyncResponseSuccess<P, O> extends AsyncResponseBase<P> {
   responsePayload: O;
@@ -210,7 +217,7 @@ abstract class FunctionBase<P, O>
   }
 
   onSuccess(
-    bus: IEventBus<AsyncResponseSuccessEvent<P, O>>,
+    bus: IEventBus<any>,
     id: string
   ): Rule<AsyncResponseSuccessEvent<P, O>> {
     return new PredicateRuleBase<AsyncResponseSuccessEvent<P, O>>(
@@ -235,7 +242,7 @@ abstract class FunctionBase<P, O>
   }
 
   onFailure(
-    bus: IEventBus<AsyncResponseFailureEvent<P>>,
+    bus: IEventBus<any>,
     id: string
   ): Rule<AsyncResponseFailureEvent<P>> {
     return new PredicateRuleBase<AsyncResponseFailureEvent<P>>(
@@ -288,11 +295,11 @@ export interface FunctionProps<P = any, O = any>
 
   onSuccess?:
     | aws_lambda.FunctionProps["onSuccess"]
-    | IEventBus<Event<AsyncResponseSuccess<P, O>>>
+    | IEventBus<any>
     | IFunction<AsyncResponseSuccess<P, O>, any>;
   onFailure?:
     | aws_lambda.FunctionProps["onFailure"]
-    | IEventBus<Event<AsyncResponseFailure<P>>>
+    | IEventBus<any>
     | IFunction<AsyncResponseFailure<P>, any>;
 }
 
@@ -406,14 +413,18 @@ export class Function<P, O> extends FunctionBase<P, O> {
           onSuccess:
             onSuccess === undefined
               ? undefined
-              : isEventBus(onSuccess)
+              : isEventBus<any>(onSuccess)
               ? new EventBridgeDestination(onSuccess.bus)
+              : isFunction(onSuccess)
+              ? new LambdaDestination(onSuccess.resource)
               : onSuccess,
           onFailure:
             onFailure === undefined
               ? undefined
-              : isEventBus(onFailure)
+              : isEventBus<any>(onFailure)
               ? new EventBridgeDestination(onFailure.bus)
+              : isFunction(onFailure)
+              ? new LambdaDestination(onFailure.resource)
               : onFailure,
         });
 
