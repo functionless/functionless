@@ -109,7 +109,7 @@ const project = new CustomTypescriptProject({
     "constructs@^10.0.0",
     "esbuild",
     "typesafe-dynamodb@^0.1.5",
-    "typescript@^4.6.2",
+    "typescript@^4.7.2",
   ],
   eslintOptions: {
     lintProjenRc: true,

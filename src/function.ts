@@ -75,7 +75,7 @@ export interface EventInvokeConfigOptions<P, O>
   onFailure?: FunctionAsyncOnFailureDestination<P>;
 }
 
-export interface IFunction<P, O> {
+export interface IFunction<in P, O> {
   readonly functionlessKind: typeof Function.FunctionlessType;
   readonly kind: typeof Function.FunctionlessType;
   readonly resource: aws_lambda.IFunction;
@@ -100,7 +100,7 @@ export interface IFunction<P, O> {
    *      && event.resources.includes(this.resource.functionArn))
    */
   onSuccess(
-    bus: IEventBus<any>,
+    bus: IEventBus<AsyncResponseSuccessEvent<P, O>>,
     id: string
   ): Rule<AsyncResponseSuccessEvent<P, O>>;
   /**
@@ -119,7 +119,7 @@ export interface IFunction<P, O> {
    *      && event.resources.includes(this.resource.functionArn))
    */
   onFailure(
-    bus: IEventBus<any>,
+    bus: IEventBus<AsyncResponseFailureEvent<P>>,
     id: string
   ): Rule<AsyncResponseFailureEvent<P>>;
 
@@ -189,7 +189,7 @@ export interface AsyncResponseFailureEvent<P>
     "lambda"
   > {}
 
-abstract class FunctionBase<P, O>
+abstract class FunctionBase<in P, O>
   implements IFunction<P, O>, Integration<FunctionBase<P, O>>
 {
   readonly kind = "Function" as const;
@@ -298,8 +298,8 @@ abstract class FunctionBase<P, O>
     });
   }
 
-  onSuccess(
-    bus: IEventBus<any>,
+  public onSuccess(
+    bus: IEventBus<AsyncResponseSuccessEvent<P, O>>,
     id: string
   ): Rule<AsyncResponseSuccessEvent<P, O>> {
     return new PredicateRuleBase<AsyncResponseSuccessEvent<P, O>>(
@@ -324,7 +324,7 @@ abstract class FunctionBase<P, O>
   }
 
   onFailure(
-    bus: IEventBus<any>,
+    bus: IEventBus<AsyncResponseFailureEvent<P>>,
     id: string
   ): Rule<AsyncResponseFailureEvent<P>> {
     return new PredicateRuleBase<AsyncResponseFailureEvent<P>>(

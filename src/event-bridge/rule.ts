@@ -28,7 +28,7 @@ export type RulePredicateFunction<E, O extends E = E> =
   | ((event: E) => event is O)
   | ((event: E) => boolean);
 
-export interface IRule<T extends Event> {
+export interface IRule<in T extends Event> {
   readonly rule: aws_events.Rule;
 
   /**
@@ -104,7 +104,7 @@ export interface IRule<T extends Event> {
    * Unsupported by Functionless:
    * * Variables from outside of the function scope
    */
-  map<P>(transform: EventTransformFunction<T, P>): EventTransform<T, P>;
+  map<E extends T, P>(transform: EventTransformFunction<E, P>): EventTransform<E, P>;
 
   /**
    * Defines a target of the {@link EventTransform}'s rule using this TargetInput.
@@ -138,7 +138,7 @@ export interface IRule<T extends Event> {
    */
   pipe(props: LambdaTargetProps<T>): void;
   pipe(func: IFunction<T, any>): void;
-  pipe(bus: IEventBus<any>): void;
+  pipe(bus: IEventBus<T>): void;
   pipe(props: EventBusTargetProps<any>): void;
   pipe(props: StateMachineTargetProps<T>): void;
   pipe(props: StepFunction<T, any>): void;
@@ -146,7 +146,7 @@ export interface IRule<T extends Event> {
   pipe(callback: () => aws_events.IRuleTarget): void;
 }
 
-abstract class RuleBase<T extends Event> implements IRule<T> {
+abstract class RuleBase<in T extends Event> implements IRule<T> {
   /**
    * This static properties identifies this class as a Rule to the TypeScript plugin.
    */
@@ -168,8 +168,8 @@ abstract class RuleBase<T extends Event> implements IRule<T> {
   /**
    * @inheritdoc
    */
-  map<P>(transform: EventTransformFunction<T, P>): EventTransform<T, P> {
-    return new EventTransform<T, P>(transform, this);
+  map<E extends T, P>(transform: EventTransformFunction<E, P>): EventTransform<E, P> {
+    return new EventTransform<E, P>(transform, this);
   }
 
   /**
@@ -177,7 +177,7 @@ abstract class RuleBase<T extends Event> implements IRule<T> {
    */
   pipe(props: LambdaTargetProps<T>): void;
   pipe(func: IFunction<T, any>): void;
-  pipe(bus: IEventBus<any>): void;
+  pipe(bus: IEventBus<T>): void;
   pipe(props: EventBusTargetProps<any>): void;
   pipe(props: StateMachineTargetProps<T>): void;
   pipe(props: StepFunction<T, any>): void;
@@ -193,7 +193,7 @@ abstract class RuleBase<T extends Event> implements IRule<T> {
 /**
  * Special base rule that supports some internal behaviors like joining (AND) compiled rules.
  */
-export class PredicateRuleBase<T extends Event>
+export class PredicateRuleBase<in T extends Event>
   extends RuleBase<T>
   implements IEventBusFilterable<T>
 {
