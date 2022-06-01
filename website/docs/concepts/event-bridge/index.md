@@ -43,7 +43,7 @@ new EventBus(stack, "bus")
   );
 ```
 
-### `putEvent` to an `EventBus`
+### `putEvents` to an `EventBus`
 
 ```ts
 const bus = new EventBus(stack, "bus");
@@ -62,7 +62,9 @@ See [Integrations](./integrations) for more details.
 
 ## Declare an Event Type
 
-Functionless supports well typed events, lets define our event schema with Typescript.
+Functionless supports typesafe events, [Rule](./rule.md), [Transforms](./transform.md) and [Integrations](#integrations). These types can be used to maintain type safety throughout your application, generate documentation, maintain a record of your schema in your code base, and use schemas/types provided by dependencies.
+
+Lets create some for this example.
 
 ```ts
 interface UserDetails {
