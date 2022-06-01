@@ -6,6 +6,8 @@ import {
   reflect,
   EventBus,
   AsyncFunctionResponseEvent,
+  AsyncResponseSuccess,
+  AsyncResponseFailure,
 } from "../src";
 import { VTL } from "../src/vtl";
 import { appsyncTestCase } from "./util";
@@ -247,6 +249,121 @@ test("set on failure bus", () => {
         ))?.destinationConfig
       ))?.onFailure
     )).destination
+  ).toEqual(bus.bus.eventBusArn);
+});
+
+test("set on success function", () => {
+  const onSuccessFunction = new Function<
+    AsyncResponseSuccess<string, void>,
+    void
+  >(stack, "func", async () => {});
+  const func = new Function<string, void>(
+    stack,
+    "func2",
+    {
+      onSuccess: onSuccessFunction,
+    },
+    async () => {}
+  );
+
+  expect(
+    (<aws_lambda.CfnEventInvokeConfig.OnSuccessProperty>(
+      (<aws_lambda.CfnEventInvokeConfig.DestinationConfigProperty>(
+        (<aws_lambda.CfnEventInvokeConfig>(
+          (<aws_lambda.EventInvokeConfig>(
+            func.resource.node.tryFindChild("EventInvokeConfig")
+          ))?.node?.tryFindChild("Resource")
+        ))?.destinationConfig
+      ))?.onSuccess
+    )).destination
+  ).toEqual(onSuccessFunction.resource.functionArn);
+});
+
+test("set on failure function", () => {
+  const onFailureFunction = new Function<AsyncResponseFailure<string>, void>(
+    stack,
+    "func",
+    async () => {}
+  );
+  const func = new Function<string, void>(
+    stack,
+    "func3",
+    {
+      onFailure: onFailureFunction,
+    },
+    async () => {}
+  );
+
+  expect(
+    (<aws_lambda.CfnEventInvokeConfig.OnFailureProperty>(
+      (<aws_lambda.CfnEventInvokeConfig.DestinationConfigProperty>(
+        (<aws_lambda.CfnEventInvokeConfig>(
+          (<aws_lambda.EventInvokeConfig>(
+            func.resource.node.tryFindChild("EventInvokeConfig")
+          ))?.node?.tryFindChild("Resource")
+        ))?.destinationConfig
+      ))?.onFailure
+    )).destination
+  ).toEqual(onFailureFunction.resource.functionArn);
+});
+
+test("configure async with functions", () => {
+  const handleAsyncFunction = new Function<
+    AsyncResponseFailure<string> | AsyncResponseSuccess<string, void>,
+    void
+  >(stack, "func", async () => {});
+  const func = new Function<string, void>(stack, "func3", async () => {});
+
+  func.configureAsyncInvoke({
+    onFailure: handleAsyncFunction,
+    onSuccess: handleAsyncFunction,
+  });
+
+  const config = <aws_lambda.CfnEventInvokeConfig.DestinationConfigProperty>(
+    (<aws_lambda.CfnEventInvokeConfig>(
+      (<aws_lambda.EventInvokeConfig>(
+        func.resource.node.tryFindChild("EventInvokeConfig")
+      ))?.node?.tryFindChild("Resource")
+    ))?.destinationConfig
+  );
+
+  expect(
+    (<aws_lambda.CfnEventInvokeConfig.OnFailureProperty>config?.onFailure)
+      .destination
+  ).toEqual(handleAsyncFunction.resource.functionArn);
+  expect(
+    (<aws_lambda.CfnEventInvokeConfig.OnFailureProperty>config?.onSuccess)
+      .destination
+  ).toEqual(handleAsyncFunction.resource.functionArn);
+});
+
+test("configure async with bus", () => {
+  const bus = new EventBus<AsyncFunctionResponseEvent<string, void>>(
+    stack,
+    "bus2"
+  );
+  const func = new Function<string, void>(stack, "func3", async () => {});
+
+  func.configureAsyncInvoke({
+    onFailure: bus,
+    onSuccess: bus,
+  });
+
+  const config = <aws_lambda.CfnEventInvokeConfig.DestinationConfigProperty>(
+    (<aws_lambda.CfnEventInvokeConfig>(
+      (<aws_lambda.EventInvokeConfig>(
+        func.resource.node.tryFindChild("EventInvokeConfig")
+      ))?.node?.tryFindChild("Resource")
+    ))?.destinationConfig
+  );
+
+  expect(
+    (<aws_lambda.CfnEventInvokeConfig.OnFailureProperty>config?.onFailure)
+      .destination
+  ).toEqual(bus.bus.eventBusArn);
+  expect(
+    (<aws_lambda.CfnEventInvokeConfig.OnFailureProperty>config?.onSuccess)
+      .destination
   ).toEqual(bus.bus.eventBusArn);
 });
 

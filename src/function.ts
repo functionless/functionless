@@ -55,6 +55,26 @@ export type FunctionClosure<P, O> = (
   context: Context
 ) => Promise<O>;
 
+type FunctionAsyncOnFailureDestination<P> =
+  | aws_lambda.FunctionProps["onFailure"]
+  | IEventBus<any>
+  | IFunction<AsyncResponseFailure<P>, any>;
+
+type FunctionAsyncOnSuccessDestination<P, O> =
+  | aws_lambda.FunctionProps["onSuccess"]
+  | IEventBus<any>
+  | IFunction<AsyncResponseSuccess<P, O>, any>;
+
+/**
+ * Wrapper around {@link aws_lambda.EventInvokeConfigOptions} which allows users to provide Functionless
+ * {@link EventBus} and {@link Function} for the onSuccess and onFailure async event destinations.
+ */
+export interface EventInvokeConfigOptions<P, O>
+  extends Omit<aws_lambda.EventInvokeConfigOptions, "onSuccess" | "onFailure"> {
+  onSuccess?: FunctionAsyncOnSuccessDestination<P, O>;
+  onFailure?: FunctionAsyncOnFailureDestination<P>;
+}
+
 export interface IFunction<P, O> {
   readonly functionlessKind: typeof Function.FunctionlessType;
   readonly kind: typeof Function.FunctionlessType;
@@ -72,6 +92,16 @@ export interface IFunction<P, O> {
     bus: IEventBus<any>,
     id: string
   ): Rule<AsyncResponseFailureEvent<P>>;
+
+  /**
+   * Set the async invocation options on a function. Can be use to set the onSuccess and onFailure destinations.
+   *
+   * Wraps the method provided by {@link aws_lambda.IFunction} to support Functionless resources directly.
+   *
+   * If onSuccess or onFailure were already set either through {@link FunctionProps} or {@link IFunction.configureAsyncInvoke}
+   * This method will fail.
+   */
+  configureAsyncInvoke(config: EventInvokeConfigOptions<P, O>): void;
 }
 
 export interface AsyncResponseBase<P> {
@@ -216,6 +246,28 @@ abstract class FunctionBase<P, O>
     };
   }
 
+  protected static normalizeAsyncDestination<P, O>(
+    destination:
+      | FunctionAsyncOnSuccessDestination<P, O>
+      | FunctionAsyncOnFailureDestination<P>
+  ) {
+    return destination === undefined
+      ? undefined
+      : isEventBus<any>(destination)
+      ? new EventBridgeDestination(destination.bus)
+      : isFunction(destination)
+      ? new LambdaDestination(destination.resource)
+      : destination;
+  }
+
+  configureAsyncInvoke(config: EventInvokeConfigOptions<P, O>): void {
+    this.resource.configureAsyncInvoke({
+      ...config,
+      onSuccess: FunctionBase.normalizeAsyncDestination<P, O>(config.onSuccess),
+      onFailure: FunctionBase.normalizeAsyncDestination<P, O>(config.onFailure),
+    });
+  }
+
   onSuccess(
     bus: IEventBus<any>,
     id: string
@@ -293,14 +345,8 @@ export interface FunctionProps<P = any, O = any>
     clientName: ClientName | string
   ) => Omit<AWS.Lambda.ClientConfiguration, keyof AWS.Lambda.ClientApiVersions>;
 
-  onSuccess?:
-    | aws_lambda.FunctionProps["onSuccess"]
-    | IEventBus<any>
-    | IFunction<AsyncResponseSuccess<P, O>, any>;
-  onFailure?:
-    | aws_lambda.FunctionProps["onFailure"]
-    | IEventBus<any>
-    | IFunction<AsyncResponseFailure<P>, any>;
+  onSuccess?: FunctionAsyncOnSuccessDestination<P, O>;
+  onFailure?: FunctionAsyncOnFailureDestination<P>;
 }
 
 const isNativeFunctionOrError = anyOf(isErr, isNativeFunctionDecl);
@@ -410,22 +456,8 @@ export class Function<P, O> extends FunctionBase<P, O> {
           runtime: aws_lambda.Runtime.NODEJS_14_X,
           handler: "index.handler",
           code: callbackLambdaCode,
-          onSuccess:
-            onSuccess === undefined
-              ? undefined
-              : isEventBus<any>(onSuccess)
-              ? new EventBridgeDestination(onSuccess.bus)
-              : isFunction(onSuccess)
-              ? new LambdaDestination(onSuccess.resource)
-              : onSuccess,
-          onFailure:
-            onFailure === undefined
-              ? undefined
-              : isEventBus<any>(onFailure)
-              ? new EventBridgeDestination(onFailure.bus)
-              : isFunction(onFailure)
-              ? new LambdaDestination(onFailure.resource)
-              : onFailure,
+          onSuccess: FunctionBase.normalizeAsyncDestination<P, O>(onSuccess),
+          onFailure: FunctionBase.normalizeAsyncDestination<P, O>(onFailure),
         });
 
         integrations = func.integrations;
