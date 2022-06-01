@@ -11,13 +11,13 @@ Event patterns are all predicates that filter on the incoming event. The pattern
 https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-event-patterns.html
 
 ```ts
-.when(event => event.detail.value === "something")
+.when("rule", event => event.detail.value === "something")
 ```
 
 ### Equals
 
 ```ts
-.when(event => event.source === "lambda")
+.when("rule", event => event.source === "lambda")
 ```
 
 ```json
@@ -29,7 +29,7 @@ https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-event-patterns.html
 ### Not Equals
 
 ```ts
-.when(event => event.source !== "lambda")
+.when("rule", event => event.source !== "lambda")
 ```
 
 ```json
@@ -41,7 +41,7 @@ https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-event-patterns.html
 ### Starts With
 
 ```ts
-.when(event => event.source.startsWith("lambda"))
+.when("rule", event => event.source.startsWith("lambda"))
 ```
 
 ```json
@@ -53,7 +53,7 @@ https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-event-patterns.html
 ### Not Starts With
 
 ```ts
-.when(event => !event.source.startsWith("lambda"))
+.when("rule", event => !event.source.startsWith("lambda"))
 ```
 
 ```json
@@ -67,7 +67,7 @@ https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-event-patterns.html
 ### List Includes
 
 ```ts
-.when(event => event.resources.includes("some arn"))
+.when("rule", event => event.resources.includes("some arn"))
 ```
 
 ```json
@@ -81,7 +81,7 @@ https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-event-patterns.html
 ### Numbers
 
 ```ts
-.when(event => event.detail.age > 30 && event.detail.age <= 60)
+.when("rule", event => event.detail.age > 30 && event.detail.age <= 60)
 ```
 
 ```json
@@ -95,7 +95,7 @@ https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-event-patterns.html
 Non-converging ranges
 
 ```ts
-.when(event => event.detail.age < 30 || event.detail.age >= 60)
+.when("rule", event => event.detail.age < 30 || event.detail.age >= 60)
 ```
 
 ```json
@@ -109,7 +109,7 @@ Non-converging ranges
 Inversion
 
 ```ts
-.when(event => !(event.detail.age < 30 && event.detail.age >= 60))
+.when("rule", event => !(event.detail.age < 30 && event.detail.age >= 60))
 ```
 
 ```json
@@ -123,7 +123,7 @@ Inversion
 Reduction
 
 ```ts
-.when(event => (event.detail.age < 30 || event.detail.age >= 60) &&
+.when("rule", event => (event.detail.age < 30 || event.detail.age >= 60) &&
                (event.detail.age < 20 || event.detail.age >= 50) &&
                event.detail.age > 0)
 ```
@@ -141,7 +141,7 @@ Reduction
 > Limit: Event Bridge patterns do not support OR logic between fields. The logic `event.source === "lambda" || event['detail-type'] === "LambdaLike"` is impossible within the same rule.
 
 ```ts
-.when(event => event.source === "lambda" || event.source === "dynamo")
+.when("rule", event => event.source === "lambda" || event.source === "dynamo")
 ```
 
 ```json
@@ -155,7 +155,7 @@ Reduction
 > Limit: Except for the case of numeric ranges and a few others Event Bridge does not support AND logic within the same field. The logic `event.resources.includes("resource1") && event.resources.includes("resource2")` is impossible.
 
 ```ts
-.when(event => event.source === "lambda" && event.id.startsWith("idPrefix"))
+.when("rule", event => event.source === "lambda" && event.id.startsWith("idPrefix"))
 ```
 
 ```json
@@ -170,8 +170,8 @@ Reduction
 Exists
 
 ```ts
-.when(event => event.detail.optional !== undefined)
-.when(event => !!event.detail.optional)
+.when("rule", event => event.detail.optional !== undefined)
+.when("rule", event => !!event.detail.optional)
 ```
 
 ```json
@@ -185,8 +185,8 @@ Exists
 Does not Exist
 
 ```ts
-.when(event => event.detail.optional === undefined)
-.when(event => !event.detail.optional)
+.when("rule", event => event.detail.optional === undefined)
+.when("rule", event => !event.detail.optional)
 ```
 
 ```json
@@ -200,7 +200,7 @@ Does not Exist
 Simplification
 
 ```ts
-.when(event => event.detail.optional && event.detail.optional === "value")
+.when("rule", event => event.detail.optional && event.detail.optional === "value")
 ```
 
 ```json
@@ -222,7 +222,7 @@ https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-transform-target-inp
 ## Constant
 
 ```ts
-.map(() => "got one!")
+.map("rule", () => "got one!")
 ```
 
 ```json
@@ -234,7 +234,7 @@ https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-transform-target-inp
 ## String field
 
 ```ts
-.map(event => event.source)
+.map("rule", event => event.source)
 ```
 
 Simple inputs can use `eventPath`.
@@ -248,7 +248,7 @@ Simple inputs can use `eventPath`.
 ## Formatted String
 
 ```ts
-.map(event => `the source is ${event.source}`)
+.map("rule", event => `the source is ${event.source}`)
 ```
 
 ```json
@@ -263,7 +263,7 @@ Simple inputs can use `eventPath`.
 ## Whole Event
 
 ```ts
-.map(event => event)
+.map("rule", event => event)
 ```
 
 ```json
@@ -276,7 +276,7 @@ Simple inputs can use `eventPath`.
 ## Rule Name and Rule Arn
 
 ```ts
-.map((event, $utils) => `name: ${$utils.context.ruleName} arn: ${$utils.context.ruleArn}`)
+.map("rule", (event, $utils) => `name: ${$utils.context.ruleName} arn: ${$utils.context.ruleArn}`)
 ```
 
 ```json
@@ -289,7 +289,7 @@ Simple inputs can use `eventPath`.
 ## Constant Objects
 
 ```ts
-.map(event => event.detail)
+.map("rule", event => event.detail)
 ```
 
 ```json
@@ -301,7 +301,7 @@ Simple inputs can use `eventPath`.
 ## Objects
 
 ```ts
-.map(event => ({
+.map("rule", event => ({
   value: event.detail.field,
   source: event.source,
   constant: "hello"

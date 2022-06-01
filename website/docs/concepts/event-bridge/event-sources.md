@@ -20,7 +20,9 @@ Which is the same as doing:
 ```ts
 const sfn = new StepFunction(...);
 EventBus.default(scope)
-  .when(event => event.detail.status === "SUCCEEDED" && event.source === "aws.states" && event.detail.stateMachineArn === sfn.stateMachineArn)
+  .when("sfnSuccessRule", (event) => event.detail.status === "SUCCEEDED"
+    && event.source === "aws.states"
+    && event.detail.stateMachineArn === sfn.stateMachineArn)
   .map(...)
   .pipe(...);
 ```

@@ -115,7 +115,7 @@ const deleteEvents = bus.when(
 We also want to do something special when we get a new cat lover who is between 18 and 30 years old, lets make another rule for those.
 
 ```ts
-const catPeopleEvents = bus.when(
+const catPeopleEvents = bus.when("catPeopleRule"
   (event) =>
     event["detail-type"] === "Create" &&
     event.detail.interests.includes("CATS") &&
@@ -128,7 +128,10 @@ Rules can be further refined by calling `when` on a Functionless `Rule`.
 
 ```ts
 // Cat people who are between 18 and 30 and do not also like dogs.
-catPeopleEvents.when((event) => !event.detail.interests.includes("DOGS"));
+catPeopleEvents.when(
+  "catAndNotDogPeopleRule",
+  (event) => !event.detail.interests.includes("DOGS")
+);
 ```
 
 ## Transform the event before sending to some services like `Lambda` Functions.
