@@ -84,10 +84,40 @@ export interface IFunction<P, O> {
     ConditionalFunction<P, O>
   >;
 
+  /**
+   * Event Source for the {@link Function} onSuccess async invocation destination.
+   *
+   * For Lambda, the onSuccess destination must first be configured via either
+   * the {@link Function} constructor or by using {@link IFunction.configureAsyncInvoke}
+   * and that destination must match the bus provided here.
+   *
+   * @see https://docs.aws.amazon.com/lambda/latest/dg/invocation-async.html#invocation-async-destinations
+   *
+   * The rule returned will contain the logic:
+   *
+   * when(id, event => event.source === "lambda"
+   *    && event["detail-type"] === "Lambda Function Invocation Result - Success"
+   *      && event.resources.includes(this.resource.functionArn))
+   */
   onSuccess(
     bus: IEventBus<any>,
     id: string
   ): Rule<AsyncResponseSuccessEvent<P, O>>;
+  /**
+   * Event Source for the {@link Function} onFailure async invocation destination.
+   *
+   * For Lambda, the onFailure destination must first be configured via either
+   * the {@link Function} constructor or by using {@link IFunction.configureAsyncInvoke}
+   * and that destination must match the bus provided here.
+   *
+   * @see https://docs.aws.amazon.com/lambda/latest/dg/invocation-async.html#invocation-async-destinations
+   *
+   * The rule returned will contain the logic:
+   *
+   * when(id, event => event.source === "lambda"
+   *    && event["detail-type"] === "Lambda Function Invocation Result - Success"
+   *      && event.resources.includes(this.resource.functionArn))
+   */
   onFailure(
     bus: IEventBus<any>,
     id: string
