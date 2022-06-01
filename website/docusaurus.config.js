@@ -7,7 +7,7 @@ const darkCodeTheme = require("prism-react-renderer/themes/dracula");
 /** @type {import('@docusaurus/types').Config} */
 const config = {
   title: "Functionless",
-  tagline: "Serverless with benefits",
+  tagline: "Unified Infrastructure and Application Code",
   url: "https://functionless.org",
   baseUrl: "/",
   onBrokenLinks: "throw",
@@ -71,8 +71,8 @@ const config = {
       navbar: {
         title: "Functionless",
         logo: {
-          alt: "My Site Logo",
-          src: "img/logo.svg",
+          alt: "λ<",
+          src: "img/logo.png",
         },
         items: [
           {
