@@ -94,7 +94,7 @@ const lambdaEventsRule = bus
   .when("lambdaEvents", (event) => event.source === "lambda");
 
 // all lambda events with the detail type "some type"
-lambdaEventsRule.when((event) => event["detail-type"] === "some type");
+lambdaEventsRule.when("rule1", (event) => event["detail-type"] === "some type");
 ```
 
 ## Escape Hatches

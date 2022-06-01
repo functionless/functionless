@@ -41,7 +41,7 @@ const logGroup = new aws_logs.LogGroup(this, "MyLogGroup", {
 
 // use the pipe callback escape hatch to pipe to a cloudwatch log group (which functionless doesn't natively support, yet)
 new EventBus()
-  .when((event) => event.source === "lambda")
+  .when("rule1", (event) => event.source === "lambda")
   .map((event) => `log me ${event.id}`)
   .pipe(
     (targetInput) =>
@@ -50,7 +50,7 @@ new EventBus()
 
 // or without Functionless's transform
 new EventBus()
-  .when((event) => event.source === "lambda")
+  .when("rule2", (event) => event.source === "lambda")
   .pipe(() => new targets.CloudWatchLogGroup(logGroup));
 ```
 
