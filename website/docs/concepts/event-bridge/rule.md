@@ -76,10 +76,20 @@ To create a rule that matches all events on a bus, use the `.all` helper on the 
 
 ```ts
 const bus = new EventBus(stack, "bus");
-const allEvents = bus.all("allBusEvents");
+const allEvents = bus.all();
 // or
 const allEventWhen = bus.when("allBusEvent", () => true);
 ```
+
+:::info
+By default the `.all()` overload uses a singleton rule with the name `"all"` and scope `EventBus`. To create a unique `.all` rule or put the rule on another `Stack`, use the `.all(scope, id)` overload;
+
+```ts
+declare const bus: EventBus;
+const allEvents = bus.all(anotherStackOrConstruct, "newAllRule");
+```
+
+:::
 
 ## Refining Rules
 

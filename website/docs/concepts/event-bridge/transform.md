@@ -4,9 +4,9 @@ sidebar_position: 3
 
 # Transform
 
-[Event Bus Input Transforms](https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-transform-target-input.html) transform events matched by [Rules](./rule).
+[Event Bus Input Transforms](https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-transform-target-input.html) transform events matched by [Rules](./rule). Transforms supports a loosely coupled application by allowing the rule to normalize an event before sending it to a target with it's own expected payload schema.
 
-Functionless allows typescript to be used when defining an input transform.
+Functionless allows Typescript to be used when defining an input transform. It transforms the closure given into Event Bridge's [Input Transform](https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-transform-target-input.html) JSON schema, while maintaining the contract provided by the [Typescript Syntax](./syntax#event-transforms).
 
 ```ts
 const bus = new EventBus(stack, 'bus');
@@ -29,11 +29,12 @@ declare const func: aws_lambda.IFunction;
 const bus = aws_events.EventBus(stack, "bus");
 const lambdaEventsRule = aws_events.Rule(bus, "lambdaEvents", {
   eventBus: bus,
-  // matches all events.
+  // matches all events. equivalent to .all() or .when(event => true)
   eventPattern: { source: [{ prefix: "" }] },
 });
 lambdaEventsRule.addTarget(
   new aws_event_targets.LambdaFunction(func, {
+    // equivalent to .map(event => event.id)
     event: aws_events.RuleTargetInput.fromEventPath("$.id"),
   })
 );
