@@ -102,7 +102,7 @@ const project = new CustomTypescriptProject({
   ],
   scripts: {
     localstack: "./scripts/localstack",
-    "build:website": "cd ./website && yarn && yarn build",
+    "build:website": "npx tsc && cd ./website && yarn && yarn build",
   },
   peerDeps: [
     `aws-cdk-lib@^${MIN_CDK_VERSION}`,

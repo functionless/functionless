@@ -50,6 +50,25 @@
       "env": {
         "TS_NODE_PROJECT": "${workspaceRoot}/test-app/tsconfig.json"
       }
+    },
+    {
+      "name": "compile error-codes.md",
+      "type": "node",
+      "request": "launch",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["--nolazy"],
+      "args": ["./scripts/compile-error-code-page.js"],
+      "outFiles": [
+        "${workspaceRoot}/lib/**/*.js",
+        "${workspaceRoot}/test-app/lib/**/*.js",
+        "!**/node_modules/**"
+      ],
+      "cwd": "${workspaceRoot}",
+      "internalConsoleOptions": "openOnSessionStart",
+      "skipFiles": ["<node_internals>/**", "node_modules/**"],
+      "env": {
+        "TS_NODE_PROJECT": "${workspaceRoot}/test-app/tsconfig.json"
+      }
     }
   ]
 }
