@@ -12,7 +12,7 @@ export namespace ErrorCodes {
    * new StepFunction(scope, id, () => 1 + 2);
    *
    * // illegal!
-   * new StepFunction(scope, id, (input: {num: number}) => input.number + 1);
+   * new StepFunction(scope, id, (input: { num: number }) => input.number + 1);
    * ```
    */
   export const Cannot_perform_arithmetic_on_variables_in_Step_Function: ErrorCode =
