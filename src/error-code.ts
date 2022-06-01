@@ -14,6 +14,16 @@ export namespace ErrorCodes {
    * // illegal!
    * new StepFunction(scope, id, (input: { num: number }) => input.number + 1);
    * ```
+   *
+   * To workaround, use a Lambda Function to implement the arithmetic expression. Be aware that this comes with added cost and operational risk.
+   *
+   * ```ts
+   * const add = new Function(scope, "add", (input: { a: number, b: number }) => input.a + input.b);
+   *
+   * new StepFunction(scope, id, async (input: { num: number }) => {
+   *   await add({a: input.number, b: 1});
+   * });
+   * ```
    */
   export const Cannot_perform_arithmetic_on_variables_in_Step_Function: ErrorCode =
     {
