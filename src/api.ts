@@ -1,6 +1,5 @@
 import { aws_apigateway } from "aws-cdk-lib";
 import { Construct } from "constructs";
-import { isTemplateExpr } from ".";
 import { FunctionDecl, isFunctionDecl } from "./declaration";
 import { isErr } from "./error";
 import {
@@ -15,6 +14,7 @@ import {
   isObjectLiteralExpr,
   isPropAccessExpr,
   isStringLiteralExpr,
+  isTemplateExpr,
   ObjectLiteralExpr,
   PropAccessExpr,
 } from "./expression";
@@ -212,14 +212,39 @@ export class MockApiIntegration<
   }
 }
 
-// TODO: comment
 export interface AwsApiIntegrationProps<
   Request extends ApiRequest<any, any, any, any>,
   IntegrationResponse,
   MethodResponse
 > {
+  /**
+   * Function that maps an API request to an integration request and calls an
+   * integration. This will be compiled to a VTL request mapping template and
+   * an API GW integration.
+   *
+   * At present the function body must be a single statement calling an integration
+   * with an object literal argument. E.g
+   *
+   * ```ts
+   *  (req) => fn({ id: req.body.id });
+   * ```
+   *
+   * The supported syntax will be expanded in the future.
+   */
   request: RequestTransformerFunction<Request, IntegrationResponse>;
+  /**
+   * Function that maps an integration response to a 200 method response. This
+   * is the happy path and is modeled explicitly so that the return type of the
+   * integration can be inferred. This will be compiled to a VTL template.
+   *
+   * At present the function body must be a single statement returning an object
+   * literal. The supported syntax will be expanded in the future.
+   */
   response: ResponseTransformerFunction<IntegrationResponse, MethodResponse>;
+  /**
+   * Map of status codes to a function defining the  response to return. This is used
+   * to configure the failure path method responses, for e.g. when an integration fails.
+   */
   errors: { [statusCode: number]: () => any };
 }
 
@@ -263,7 +288,6 @@ export class AwsApiIntegration<
     ).map(([statusCode, fn]) => {
       const [template] = toVTL(fn, "response");
       return {
-        // TODO
         statusCode: statusCode,
         selectionPattern: `^${statusCode}$`,
         responseTemplates: {
@@ -274,7 +298,6 @@ export class AwsApiIntegration<
 
     const integrationResponses: aws_apigateway.IntegrationResponse[] = [
       {
-        // TODO
         statusCode: "200",
         responseTemplates: {
           "application/json": responseTemplate,
