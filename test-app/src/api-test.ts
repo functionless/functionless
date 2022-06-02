@@ -21,6 +21,18 @@ const restApi = new aws_apigateway.RestApi(stack, "api", {
   restApiName: "api-test-app-api",
 });
 
+interface FnRequest {
+  pathParameters: {
+    num: number;
+  };
+  queryStringParameters: {
+    str: string;
+  };
+  body: {
+    bool: boolean;
+  };
+}
+
 const fn = new Function(
   stack,
   "fn",
@@ -93,18 +105,6 @@ const mock = ApiIntegrations.mock({
   },
 });
 mock.addMethod("GET", mockResource);
-
-interface FnRequest {
-  pathParameters: {
-    num: number;
-  };
-  queryStringParameters: {
-    str: string;
-  };
-  body: {
-    bool: boolean;
-  };
-}
 
 interface Item {
   id: number;

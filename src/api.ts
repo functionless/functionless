@@ -424,11 +424,11 @@ export function toVTL(
 
       if (path) {
         if (location === "response") {
-          const c: Ref = {
+          const ref: Ref = {
             __refType: node.type! as any,
             value: `$inputRoot.${path.join(".")}`,
           };
-          return c;
+          return ref;
         } else {
           const [paramLocation, ...rest] = path;
 
@@ -444,7 +444,7 @@ export function toVTL(
               prefix = "$input.params().querystring";
               break;
             case "headers":
-              prefix = "$input.params().headers";
+              prefix = "$input.params().header";
               break;
             default:
               throw new Error("Unknown parameter type.");
@@ -452,8 +452,8 @@ export function toVTL(
 
           const param = `${prefix}.${rest.join(".")}`;
 
-          const c: Ref = { __refType: node.type! as any, value: param };
-          return c;
+          const ref: Ref = { __refType: node.type! as any, value: param };
+          return ref;
         }
       }
       return `${inner(node.expr)}.${node.name};`;
@@ -466,6 +466,11 @@ export function toVTL(
   }
 }
 
+// These represent variable references and carry the type information.
+// stringify will serialize them to the appropriate VTL
+// e.g. if `request.pathParameters.id` is a number, we want to serialize
+// it as `$input.params().path.id`, not `"$input.params().path.id"` which
+// is what JSON.stringify would do
 type Ref =
   | { __refType: "string"; value: string }
   | { __refType: "number"; value: string }
@@ -514,6 +519,10 @@ function isFunctionParameter(node: FunctionlessNode): node is Identifier {
   return ref?.kind === "ParameterDecl" && ref.parent?.kind === "FunctionDecl";
 }
 
+/**
+ * path from a function parameter to this node, if one exists.
+ * e.g. `request.pathParameters.id` => ["request", "pathParameters", "id"]
+ */
 function pathFromFunctionParameter(node: PropAccessExpr): string[] | undefined {
   if (isFunctionParameter(node.expr)) {
     return [node.expr.name, node.name];
