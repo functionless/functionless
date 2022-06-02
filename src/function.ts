@@ -1,8 +1,6 @@
 import fs from "fs";
 import path from "path";
 import * as appsync from "@aws-cdk/aws-appsync-alpha";
-
-// @ts-ignore - imported for typedoc
 import { serializeFunction } from "@functionless/nodejs-closure-serializer";
 import {
   AssetHashType,

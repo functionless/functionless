@@ -595,6 +595,14 @@ export interface EventBusTargetIntegration<
   P,
   Props extends object | undefined = undefined
 > {
+  /**
+   * {@link EventBusTargetIntegration} does not make direct use of `P`. Typescript will ignore P when
+   * doing type checking. By making the interface look like there is a property which is of type P,
+   * typescript will consider P when type checking.
+   *
+   * This is useful for cases like {@link IRule.pipe} and {@link IEventTransform.pipe} which need to validate that
+   * an integration implements the right EventBus integration.
+   */
   __payloadBrand: P;
 
   /**
