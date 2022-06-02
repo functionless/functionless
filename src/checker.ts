@@ -1,8 +1,8 @@
 import * as ts from "typescript";
 import * as tsserver from "typescript/lib/tsserverlibrary";
 import { AppsyncResolver } from "./appsync";
-import { EventBus, EventBusRule } from "./event-bridge";
-import { EventBusTransform } from "./event-bridge/transform";
+import { EventBus, Rule } from "./event-bridge";
+import { EventTransform } from "./event-bridge/transform";
 import { Function } from "./function";
 import { ExpressStepFunction, StepFunction } from "./step-function";
 
@@ -17,11 +17,11 @@ export type TsFunctionParameter =
   | ts.ElementAccessExpression
   | ts.CallExpression;
 
-export type EventBusRuleInterface = ts.NewExpression & {
+export type RuleInterface = ts.NewExpression & {
   arguments: [any, any, any, TsFunctionParameter];
 };
 
-export type EventBusTransformInterface = ts.NewExpression & {
+export type EventTransformInterface = ts.NewExpression & {
   arguments: [TsFunctionParameter, any];
 };
 
@@ -62,12 +62,13 @@ export function makeFunctionlessChecker(
 ) {
   return {
     ...checker,
+    isConstant,
     isAppsyncResolver,
-    isEventBusRuleMapFunction,
+    isRuleMapFunction,
     isEventBusWhenFunction,
     isFunctionlessType,
-    isNewEventBusRule,
-    isNewEventBusTransform,
+    isNewRule,
+    isNewEventTransform,
     isReflectFunction,
     isStepFunction,
     isNewFunctionlessFunction,
@@ -77,26 +78,24 @@ export function makeFunctionlessChecker(
 
   /**
    * Matches the patterns:
-   *   * new EventBusRule()
+   *   * new Rule()
    */
-  function isNewEventBusRule(node: ts.Node): node is EventBusRuleInterface {
-    return ts.isNewExpression(node) && isEventBusRule(node.expression);
+  function isNewRule(node: ts.Node): node is RuleInterface {
+    return ts.isNewExpression(node) && isRule(node.expression);
   }
 
   /**
    * Matches the patterns:
-   *   * new EventBusTransform()
+   *   * new EventTransform()
    */
-  function isNewEventBusTransform(
-    node: ts.Node
-  ): node is EventBusTransformInterface {
-    return ts.isNewExpression(node) && isEventBusTransform(node.expression);
+  function isNewEventTransform(node: ts.Node): node is EventTransformInterface {
+    return ts.isNewExpression(node) && isEventTransform(node.expression);
   }
 
   /**
    * Matches the patterns:
    *   * IEventBus.when
-   *   * IEventBusRule.when
+   *   * IRule.when
    */
   function isEventBusWhenFunction(
     node: ts.Node
@@ -106,22 +105,20 @@ export function makeFunctionlessChecker(
       ts.isPropertyAccessExpression(node.expression) &&
       node.expression.name.text === "when" &&
       (isEventBus(node.expression.expression) ||
-        isEventBusRule(node.expression.expression))
+        isRule(node.expression.expression))
     );
   }
 
   /**
    * Matches the patterns:
-   *   * IEventBusRule.map()
+   *   * IRule.map()
    */
-  function isEventBusRuleMapFunction(
-    node: ts.Node
-  ): node is EventBusMapInterface {
+  function isRuleMapFunction(node: ts.Node): node is EventBusMapInterface {
     return (
       ts.isCallExpression(node) &&
       ts.isPropertyAccessExpression(node.expression) &&
       node.expression.name.text === "map" &&
-      isEventBusRule(node.expression.expression)
+      isRule(node.expression.expression)
     );
   }
 
@@ -137,25 +134,25 @@ export function makeFunctionlessChecker(
   }
 
   /**
-   * Checks to see if a node is of type {@link EventBusRule}.
+   * Checks to see if a node is of type {@link Rule}.
    * The node could be any kind of node that returns an event bus rule.
    *
    * Matches the patterns:
-   *   * IEventBusRule
+   *   * IRule
    */
-  function isEventBusRule(node: ts.Node) {
-    return isFunctionlessClassOfKind(node, EventBusRule.FunctionlessType);
+  function isRule(node: ts.Node) {
+    return isFunctionlessClassOfKind(node, Rule.FunctionlessType);
   }
 
   /**
-   * Checks to see if a node is of type {@link EventBusTransform}.
+   * Checks to see if a node is of type {@link EventTransform}.
    * The node could be any kind of node that returns an event bus rule.
    *
    * Matches the patterns:
-   *   * IEventBusTransform
+   *   * IEventTransform
    */
-  function isEventBusTransform(node: ts.Node) {
-    return isFunctionlessClassOfKind(node, EventBusTransform.FunctionlessType);
+  function isEventTransform(node: ts.Node) {
+    return isFunctionlessClassOfKind(node, EventTransform.FunctionlessType);
   }
 
   function isAppsyncResolver(node: ts.Node): node is ts.NewExpression & {
@@ -277,4 +274,83 @@ export function makeFunctionlessChecker(
     }
     return undefined;
   }
+
+  /**
+   * Check if a TS node is a constant value that can be evaluated at compile time.
+   */
+  function isConstant(node: ts.Node): boolean {
+    if (
+      ts.isStringLiteral(node) ||
+      ts.isNumericLiteral(node) ||
+      node.kind === ts.SyntaxKind.TrueKeyword ||
+      node.kind === ts.SyntaxKind.FalseKeyword ||
+      node.kind === ts.SyntaxKind.NullKeyword ||
+      node.kind === ts.SyntaxKind.UndefinedKeyword
+    ) {
+      return true;
+    } else if (ts.isIdentifier(node)) {
+      const sym = checker
+        .getSymbolsInScope(
+          node,
+          // eslint-disable-next-line no-bitwise
+          ts.SymbolFlags.BlockScopedVariable |
+            ts.SymbolFlags.FunctionScopedVariable
+        )
+        .find((sym) => sym.name === node.text);
+      if (sym?.valueDeclaration) {
+        return isConstant(sym.valueDeclaration);
+      }
+    } else if (ts.isVariableDeclaration(node) && node.initializer) {
+      return isConstant(node.initializer);
+    } else if (ts.isPropertyAccessExpression(node)) {
+      return isConstant(node.expression);
+    } else if (ts.isElementAccessExpression(node)) {
+      return isConstant(node.argumentExpression) && isConstant(node.expression);
+    } else if (ts.isArrayLiteralExpression(node)) {
+      return (
+        node.elements.length === 0 ||
+        node.elements.find((e) => !isConstant(e)) === undefined
+      );
+    } else if (ts.isSpreadElement(node)) {
+      return isConstant(node.expression);
+    } else if (ts.isObjectLiteralExpression(node)) {
+      return (
+        node.properties.length === 0 ||
+        node.properties.find((e) => !isConstant(e)) === undefined
+      );
+    } else if (ts.isPropertyAssignment(node)) {
+      return isConstant(node.initializer);
+    } else if (ts.isSpreadAssignment(node)) {
+      return isConstant(node.expression);
+    } else if (
+      ts.isBinaryExpression(node) &&
+      isArithmeticToken(node.operatorToken.kind)
+    ) {
+      return isConstant(node.left) && isConstant(node.right);
+    } else if (
+      ts.isPrefixUnaryExpression(node) &&
+      node.operator === ts.SyntaxKind.MinusToken
+    ) {
+      return isConstant(node.operand);
+    }
+    return false;
+  }
+}
+
+const ArithmeticOperators = [
+  ts.SyntaxKind.PlusToken,
+  ts.SyntaxKind.MinusToken,
+  ts.SyntaxKind.AsteriskEqualsToken,
+  ts.SyntaxKind.SlashToken,
+] as const;
+
+export type ArithmeticToken = typeof ArithmeticOperators[number];
+
+/**
+ * Check if a {@link token} is an {@link ArithmeticToken}: `+`, `-`, `*` or `/`.
+ */
+export function isArithmeticToken(
+  token: ts.SyntaxKind
+): token is ArithmeticToken {
+  return ArithmeticOperators.includes(token as ArithmeticToken);
 }

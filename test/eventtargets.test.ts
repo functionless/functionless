@@ -1,11 +1,11 @@
 import { aws_events, Stack } from "aws-cdk-lib";
 import { EventField } from "aws-cdk-lib/aws-events";
 import { Function, reflect, StepFunction } from "../src";
-import { EventBusRuleInput } from "../src/event-bridge";
+import { Event } from "../src/event-bridge";
 
 import { ebEventTargetTestCase, ebEventTargetTestCaseError } from "./util";
 
-type testEvent = EventBusRuleInput<{
+type testEvent = Event<{
   value: string;
   optional?: string;
   num: number;
@@ -251,7 +251,7 @@ test("object with bare undefined", () => {
 });
 
 type MyString = string;
-interface MyTest extends EventBusRuleInput<{ s: MyString }> {}
+interface MyTest extends Event<{ s: MyString }> {}
 
 test("non-string type", () => {
   ebEventTargetTestCase<MyTest>(
@@ -663,7 +663,7 @@ describe("not allowed", () => {
   test("math", () => {
     ebEventTargetTestCaseError<testEvent>(
       reflect((event) => event.detail.num + 1),
-      "Addition operator is only supported to concatinate at least one string to another value."
+      "Addition operator is only supported to concatenate at least one string to another value."
     );
   });
 
@@ -701,7 +701,7 @@ describe("not allowed", () => {
 
 // https://github.com/functionless/functionless/issues/68
 describe.skip("destructure", () => {
-  test("descture parameter", () => {
+  test("destructure parameter", () => {
     ebEventTargetTestCase<testEvent>(
       reflect(({ detail }) => {
         return { value: detail.value };
@@ -712,7 +712,7 @@ describe.skip("destructure", () => {
     );
   });
 
-  test("descture variable", () => {
+  test("destructure variable", () => {
     ebEventTargetTestCase<testEvent>(
       reflect((event) => {
         const { value } = event.detail;
@@ -725,7 +725,7 @@ describe.skip("destructure", () => {
     );
   });
 
-  test("descture multi-layer variable", () => {
+  test("destructure multi-layer variable", () => {
     ebEventTargetTestCase<testEvent>(
       reflect((event) => {
         const {
@@ -740,7 +740,7 @@ describe.skip("destructure", () => {
     );
   });
 
-  test("descture array doesn't work", () => {
+  test("destructure array doesn't work", () => {
     ebEventTargetTestCaseError<testEvent>(
       reflect((event) => {
         const [first] = event.detail.array;
@@ -750,7 +750,7 @@ describe.skip("destructure", () => {
     );
   });
 
-  test("descture parameter array doesn't work", () => {
+  test("destructure parameter array doesn't work", () => {
     ebEventTargetTestCase<testEvent>(
       reflect(
         ({
@@ -767,7 +767,7 @@ describe.skip("destructure", () => {
     );
   });
 
-  test("descture variable rename", () => {
+  test("destructure variable rename", () => {
     ebEventTargetTestCase<testEvent>(
       reflect((event) => {
         const { value: val } = event.detail;
@@ -780,7 +780,7 @@ describe.skip("destructure", () => {
     );
   });
 
-  test("descture parameter rename", () => {
+  test("destructure parameter rename", () => {
     ebEventTargetTestCase<testEvent>(
       reflect(({ source: src }) => {
         return { value: src };

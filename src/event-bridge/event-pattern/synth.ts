@@ -26,12 +26,12 @@ import {
   PropAccessExpr,
   UnaryExpr,
 } from "../../expression";
+import { evalToConstant } from "../../util";
 import * as functionless_event_bridge from "../types";
 import {
   assertValidEventReference,
   EventReference,
   flattenReturnEvent,
-  evalToConstant,
   getPropertyAccessKey,
   getReferencePath,
   ReferencePath,
@@ -575,7 +575,7 @@ export const synthesizePatternDocument = (
 
     const constant = assertDefined(
       evalToConstant(other),
-      "Equivency must compare to a constant value."
+      "Equivalency must compare to a constant value."
     );
 
     const value = assertPrimitive(

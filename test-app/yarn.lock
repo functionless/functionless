@@ -1155,15 +1155,15 @@
     ts-node "^9"
     tslib "^2"
 
-"@functionless/language-service@^0.0.1":
-  version "0.0.1"
-  resolved "https://registry.yarnpkg.com/@functionless/language-service/-/language-service-0.0.1.tgz#172b24b811860e5650c589f6ea45a96768d170dd"
-  integrity sha512-5p7Zth6XZymrByh2qbhZknkIy5m8jVbXAgmK6Wm1eonmazo6lOGsLNjdSX9yrbo3ZrxuiSRTx6SDMHqC+OTvmA==
+"@functionless/language-service@^0.0.3":
+  version "0.0.3"
+  resolved "https://registry.yarnpkg.com/@functionless/language-service/-/language-service-0.0.3.tgz#f6baedb5a684b70eeccfd64621de3fa95c380c08"
+  integrity sha512-TLGnXXx8p4NFMF2lP/GADGjWl6u/IxLF5M55ExddzilJB4nI7CB6LTM9YSzGeO7L3YK29OGyr4ffm7EpZIGsnQ==
 
-"@functionless/nodejs-closure-serializer@^0.0.1":
-  version "0.0.1"
-  resolved "https://registry.yarnpkg.com/@functionless/nodejs-closure-serializer/-/nodejs-closure-serializer-0.0.1.tgz#446f0724a888bd6acac4b9fef2b40fee78b2739e"
-  integrity sha512-L7AJlQUH/bwjmhTRmtMrb4jjEflTGvKHUEMDWO7Cp0P2TZtCLa+ICCDDgqwHXEcOd4tajSM2LGTSV/2i9D0/Pw==
+"@functionless/nodejs-closure-serializer@^0.0.2":
+  version "0.0.2"
+  resolved "https://registry.yarnpkg.com/@functionless/nodejs-closure-serializer/-/nodejs-closure-serializer-0.0.2.tgz#03afac171536401775816b039c79c8fd5d3d976b"
+  integrity sha512-r8mElTITDW0wEao0l+PNbtZb+xt5frOzu43HCc0D1qUvHOuJ3LOFySjvneTnF2QYbLrbchZKeofg8BP2GdJGZw==
   dependencies:
     normalize-package-data "^4.0.0"
     read-package-tree "^5.3.1"
@@ -2694,9 +2694,9 @@ function.prototype.name@^1.1.5:
 "functionless@file:..":
   version "0.0.0"
   dependencies:
-    "@functionless/nodejs-closure-serializer" "^0.0.1"
+    "@functionless/nodejs-closure-serializer" "^0.0.2"
     fs-extra "^10.1.0"
-    minimatch "^5.0.1"
+    minimatch "^5.1.0"
 
 functions-have-names@^1.2.2:
   version "1.2.3"
@@ -3647,10 +3647,10 @@ minimatch@^3.0.4, minimatch@^3.1.2:
   dependencies:
     brace-expansion "^1.1.7"
 
-minimatch@^5.0.1:
-  version "5.0.1"
-  resolved "https://registry.yarnpkg.com/minimatch/-/minimatch-5.0.1.tgz#fb9022f7528125187c92bd9e9b6366be1cf3415b"
-  integrity sha512-nLDxIFRyhDblz3qMuq+SoRZED4+miJ/G+tdDrjkkkRnjAsBexeGpgjLEQ0blJy7rHhR2b93rhQY4SvyWu9v03g==
+minimatch@^5.1.0:
+  version "5.1.0"
+  resolved "https://registry.yarnpkg.com/minimatch/-/minimatch-5.1.0.tgz#1717b464f4971b144f6aabe8f2d0b8e4511e09c7"
+  integrity sha512-9TPBGGak4nHfGZsPBohm9AWg6NoT7QTCehS3BIJABslyZbzxfV78QM2Y6+i741OPZIafFAaiiEMh5OyIrJPgtg==
   dependencies:
     brace-expansion "^2.0.1"
 

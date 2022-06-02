@@ -1,6 +1,7 @@
 import {
   aws_dynamodb,
   aws_events,
+  Duration,
   RemovalPolicy,
   Stack,
   Token,
@@ -11,7 +12,7 @@ import { Construct } from "constructs";
 import {
   $AWS,
   EventBus,
-  EventBusRuleInput,
+  Event,
   ExpressStepFunction,
   Function,
   FunctionProps,
@@ -25,6 +26,7 @@ const lambda = new Lambda(clientConfig);
 // inject the localstack client config into the lambda clients
 // without this configuration, the functions will try to hit AWS proper
 const localstackClientConfig: FunctionProps = {
+  timeout: Duration.seconds(20),
   clientConfigRetriever: () => ({
     endpoint: `http://${process.env.LOCALSTACK_HOSTNAME}:4566`,
   }),
@@ -91,7 +93,14 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
   testFunctionResource(
     "Call Lambda",
     (parent) => {
-      return new Function(parent, "func2", async (event) => event);
+      return new Function(
+        parent,
+        "func2",
+        {
+          timeout: Duration.seconds(20),
+        },
+        async (event) => event
+      );
     },
     {}
   );
@@ -100,7 +109,14 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
     "Call Lambda from closure",
     (parent) => {
       const create = () =>
-        new Function(parent, "function", async (event) => event);
+        new Function(
+          parent,
+          "function",
+          {
+            timeout: Duration.seconds(20),
+          },
+          async (event) => event
+        );
 
       return create();
     },
@@ -112,7 +128,14 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
     (parent) => {
       const create = () => {
         const val = "a";
-        return new Function(parent, "function", async () => val);
+        return new Function(
+          parent,
+          "function",
+          {
+            timeout: Duration.seconds(20),
+          },
+          async () => val
+        );
       };
 
       return create();
@@ -124,7 +147,14 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
     "Call Lambda from closure with parameter",
     (parent) => {
       const create = (val: string) => {
-        return new Function(parent, "func5", async () => val);
+        return new Function(
+          parent,
+          "func5",
+          {
+            timeout: Duration.seconds(20),
+          },
+          async () => val
+        );
       };
 
       return create("b");
@@ -133,7 +163,14 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
   );
 
   const create = (parent: Construct, id: string, val: string) => {
-    return new Function(parent, id, async () => val);
+    return new Function(
+      parent,
+      id,
+      {
+        timeout: Duration.seconds(20),
+      },
+      async () => val
+    );
   };
 
   testFunctionResource(
@@ -153,7 +190,14 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
     (parent) => {
       const create = () => {
         const obj = { val: 1 };
-        return new Function(parent, "function", async () => obj.val);
+        return new Function(
+          parent,
+          "function",
+          {
+            timeout: Duration.seconds(20),
+          },
+          async () => obj.val
+        );
       };
 
       return create();
@@ -164,20 +208,34 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
   testFunctionResource(
     "Call Lambda with math",
     (parent) =>
-      new Function(parent, "function", async () => {
-        const v1 = 1 + 2; // 3
-        const v2 = v1 * 3; // 9
-        return v2 - 4; // 5
-      }),
+      new Function(
+        parent,
+        "function",
+        {
+          timeout: Duration.seconds(20),
+        },
+        async () => {
+          const v1 = 1 + 2; // 3
+          const v2 = v1 * 3; // 9
+          return v2 - 4; // 5
+        }
+      ),
     5
   );
 
   testFunctionResource(
     "Call Lambda payload",
     (parent) =>
-      new Function(parent, "function", async (event: { val: string }) => {
-        return `value: ${event.val}`;
-      }),
+      new Function(
+        parent,
+        "function",
+        {
+          timeout: Duration.seconds(20),
+        },
+        async (event: { val: string }) => {
+          return `value: ${event.val}`;
+        }
+      ),
     "value: hi",
     { val: "hi" }
   );
@@ -185,18 +243,32 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
   testFunctionResource(
     "Call Lambda throw error",
     (parent) =>
-      new Function(parent, "function", async () => {
-        throw Error("AHHHHHHHHH");
-      }),
+      new Function(
+        parent,
+        "function",
+        {
+          timeout: Duration.seconds(20),
+        },
+        async () => {
+          throw Error("AHHHHHHHHH");
+        }
+      ),
     { errorMessage: "AHHHHHHHHH", errorType: "Error" }
   );
 
   testFunctionResource(
     "Call Lambda return arns",
     (parent) => {
-      return new Function(parent, "function", async (_, context) => {
-        return context.functionName;
-      });
+      return new Function(
+        parent,
+        "function",
+        {
+          timeout: Duration.seconds(20),
+        },
+        async (_, context) => {
+          return context.functionName;
+        }
+      );
     },
     (context) => context.function
   );
@@ -206,9 +278,16 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
     (parent) => {
       const bus = new EventBus(parent, "bus");
       const busbus = new aws_events.EventBus(parent, "busbus");
-      const func = new Function(parent, "function", async () => {
-        return `${bus.eventBusArn} ${busbus.eventBusArn}`;
-      });
+      const func = new Function(
+        parent,
+        "function",
+        {
+          timeout: Duration.seconds(20),
+        },
+        async () => {
+          return `${bus.eventBusArn} ${busbus.eventBusArn}`;
+        }
+      );
 
       return {
         func,
@@ -225,9 +304,16 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
     "templated tokens",
     (parent) => {
       const token = Token.asString("hello");
-      return new Function(parent, "function", async () => {
-        return `${token} stuff`;
-      });
+      return new Function(
+        parent,
+        "function",
+        {
+          timeout: Duration.seconds(20),
+        },
+        async () => {
+          return `${token} stuff`;
+        }
+      );
     },
     "hello stuff"
   );
@@ -236,9 +322,16 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
     "numeric tokens",
     (parent) => {
       const token = Token.asNumber(1);
-      return new Function(parent, "function", async () => {
-        return token;
-      });
+      return new Function(
+        parent,
+        "function",
+        {
+          timeout: Duration.seconds(20),
+        },
+        async () => {
+          return token;
+        }
+      );
     },
     1
   );
@@ -252,7 +345,7 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
         "function",
         localstackClientConfig,
         async () => {
-          bus({
+          bus.putEvents({
             "detail-type": "detail",
             source: "lambda",
             detail: {},
@@ -301,7 +394,7 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
   testFunctionResource.skip(
     "Call Lambda AWS SDK put event to bus without reference",
     (parent) => {
-      const bus = new EventBus<EventBusRuleInput>(parent, "bus");
+      const bus = new EventBus<Event>(parent, "bus");
 
       return new Function(
         parent,
@@ -328,14 +421,14 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
   testFunctionResource(
     "Call Lambda AWS SDK put event to bus with in closure reference",
     (parent) => {
-      const bus = new EventBus<EventBusRuleInput>(parent, "bus");
+      const bus = new EventBus<Event>(parent, "bus");
       return new Function(
         parent,
         "function",
         localstackClientConfig,
         async () => {
           const busbus = bus;
-          busbus({
+          busbus.putEvents({
             "detail-type": "anyDetail",
             source: "anySource",
             detail: {},
@@ -349,14 +442,14 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
   testFunctionResource(
     "Call Lambda AWS SDK integration from destructured object  aa",
     (parent) => {
-      const buses = { bus: new EventBus<EventBusRuleInput>(parent, "bus") };
+      const buses = { bus: new EventBus<Event>(parent, "bus") };
       return new Function(
         parent,
         "function",
         localstackClientConfig,
         async () => {
           const { bus } = buses;
-          bus({
+          bus.putEvents({
             "detail-type": "anyDetail",
             source: "anySource",
             detail: {},
@@ -371,10 +464,17 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
     await expect(
       async () => {
         const stack = new Stack();
-        new Function(stack, "function", async () => {
-          const bus = new aws_events.EventBus(stack, "busbus");
-          return bus.eventBusArn;
-        });
+        new Function(
+          stack,
+          "function",
+          {
+            timeout: Duration.seconds(20),
+          },
+          async () => {
+            const bus = new aws_events.EventBus(stack, "busbus");
+            return bus.eventBusArn;
+          }
+        );
         await Promise.all(Function.promises);
       }
       // TODO: add error message
@@ -385,10 +485,17 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
     await expect(
       async () => {
         const stack = new Stack();
-        new Function(stack, "function", async () => {
-          const bus = new EventBus(stack, "busbus");
-          return bus.eventBusArn;
-        });
+        new Function(
+          stack,
+          "function",
+          {
+            timeout: Duration.seconds(20),
+          },
+          async () => {
+            const bus = new EventBus(stack, "busbus");
+            return bus.eventBusArn;
+          }
+        );
         await Promise.all(Function.promises);
       }
       // TODO: add error message

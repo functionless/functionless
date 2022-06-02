@@ -7,6 +7,12 @@ import { FunctionlessNode } from "./node";
 import { AnyFunction } from "./util";
 import { VTL } from "./vtl";
 
+export const isIntegration = <
+  I extends Omit<Integration<AnyFunction>, "__functionBrand">
+>(
+  i: any
+): i is I => typeof i === "object" && "kind" in i;
+
 /**
  * Maintain a typesafe runtime map of integration type keys to use elsewhere.
  *
@@ -177,6 +183,11 @@ export class IntegrationImpl<F extends AnyFunction = AnyFunction>
   }
 }
 
+export type IntegrationCall<F extends AnyFunction, K extends string> = {
+  kind: K;
+  __functionBrand: F;
+} & F;
+
 /**
  * Helper method which masks an {@link Integration} object as a function of any form.
  *
@@ -198,8 +209,8 @@ export class IntegrationImpl<F extends AnyFunction = AnyFunction>
  */
 export function makeIntegration<F extends AnyFunction, K extends string>(
   integration: Omit<Integration<F, K>, "__functionBrand">
-): { kind: K } & F {
-  return integration as unknown as { kind: K; __functionBrand: F } & F;
+): IntegrationCall<F, K> {
+  return integration as unknown as IntegrationCall<F, K>;
 }
 
 /**

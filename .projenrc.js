@@ -102,7 +102,7 @@ const project = new CustomTypescriptProject({
   ],
   scripts: {
     localstack: "./scripts/localstack",
-    "build:website": "cd ./website && yarn && yarn build",
+    "build:website": "npx tsc && cd ./website && yarn && yarn build",
   },
   peerDeps: [
     `aws-cdk-lib@^${MIN_CDK_VERSION}`,
@@ -180,7 +180,11 @@ project.eslint.addRules({
 project.eslint.addOverride({
   files: ["*.ts", "*.tsx"],
   parserOptions: {
-    project: ["./tsconfig.dev.json", "./test-app/tsconfig.json"],
+    project: [
+      "./tsconfig.dev.json",
+      "./test-app/tsconfig.json",
+      "./website/tsconfig.json",
+    ],
   },
 });
 

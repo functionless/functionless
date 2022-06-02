@@ -16,10 +16,10 @@ import {
   isTemplateExpr,
   ObjectLiteralExpr,
 } from "../expression";
+import { evalToConstant } from "../util";
 import {
   assertValidEventReference,
   flattenReturnEvent,
-  evalToConstant,
   getReferencePath,
   isStringType,
   ReferencePath,
@@ -104,7 +104,10 @@ export const synthesizeEventBridgeTargets = (
   const exprToLiteral = (expr: Expr): LiteralType => {
     const constant = evalToConstant(expr);
 
-    if (constant) {
+    if (
+      constant &&
+      (constant.constant === null || typeof constant.constant !== "object")
+    ) {
       return {
         value: constant.constant,
         type: "string",
@@ -178,7 +181,7 @@ export const synthesizeEventBridgeTargets = (
           };
         }
         throw Error(
-          "Addition operator is only supported to concatinate at least one string to another value."
+          "Addition operator is only supported to concatenate at least one string to another value."
         );
       } else {
         throw Error(`Unsupported binary operator: ${expr.op}`);

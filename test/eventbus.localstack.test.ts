@@ -1,7 +1,7 @@
 import { aws_dynamodb, CfnOutput } from "aws-cdk-lib";
 // eslint-disable-next-line import/no-extraneous-dependencies
 import { EventBridge, DynamoDB } from "aws-sdk";
-import { $AWS, EventBus, EventBusRuleInput, StepFunction, Table } from "../src";
+import { $AWS, EventBus, Event, StepFunction, Table } from "../src";
 import { clientConfig, localstackTestSuite } from "./localstack";
 
 const EB = new EventBridge(clientConfig);
@@ -38,13 +38,9 @@ localstackTestSuite("eventBusStack", (testResource) => {
     "Bus event starts step function and writes to dynamo",
     (parent) => {
       const addr = new CfnOutput(parent, "out", { value: "" });
-      const bus = new EventBus<EventBusRuleInput<{ id: string }, "test">>(
-        parent,
-        "bus",
-        {
-          eventBusName: addr.node.addr,
-        }
-      );
+      const bus = new EventBus<Event<{ id: string }, "test">>(parent, "bus", {
+        eventBusName: addr.node.addr,
+      });
       const table = new Table<{ id: string }, "id">(
         new aws_dynamodb.Table(parent, "table", {
           tableName: addr.node.addr + "table",

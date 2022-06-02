@@ -14,26 +14,33 @@ import {
   PropAssignExpr,
   StringLiteralExpr,
 } from "../expression";
+import { Function, NativePreWarmContext, PrewarmClients } from "../function";
 import {
-  Function,
-  NativeIntegration,
-  NativePreWarmContext,
-  PrewarmClients,
-} from "../function";
-import { Integration, IntegrationImpl } from "../integration";
-import { EventBusRule, EventPredicateFunction, IEventBusRule } from "./rule";
-import { EventBusRuleInput } from "./types";
+  Integration,
+  IntegrationCall,
+  IntegrationImpl,
+  isIntegration,
+  makeIntegration,
+} from "../integration";
+import { AnyFunction } from "../util";
+import {
+  RulePredicateFunction,
+  Rule,
+  PredicateRuleBase,
+  ImportedRule,
+  ScheduledEvent,
+  IRule,
+} from "./rule";
+import type { Event } from "./types";
 
-export const isEventBus = <E extends EventBusRuleInput>(
-  v: any
-): v is IEventBus<E> => {
+export const isEventBus = <E extends Event>(v: any): v is IEventBus<E> => {
   return (
     "functionlessKind" in v &&
     v.functionlessKind === EventBusBase.FunctionlessType
   );
 };
 
-export interface IEventBusFilterable<E extends EventBusRuleInput> {
+export interface IEventBusFilterable<E extends Event> {
   /**
    * EventBus Rules can filter events using Functionless predicate functions.
    *
@@ -79,6 +86,12 @@ export interface IEventBusFilterable<E extends EventBusRuleInput> {
    * when(this, 'rule', (event) => event.detail.list.includes("someValue"))
    * ```
    *
+   * Omitting the scope will use the bus as the scope.
+   *
+   * ```ts
+   * when('rule', ...)
+   * ```
+   *
    * Unsupported by Event Bridge
    * * OR Logic between multiple fields
    * * AND logic between most logic on a single field (except for numeric ranges.)
@@ -92,13 +105,17 @@ export interface IEventBusFilterable<E extends EventBusRuleInput> {
    * * Variables from outside of the function scope
    */
   when<O extends E>(
+    id: string,
+    predicate: RulePredicateFunction<E, O>
+  ): Rule<E, O>;
+  when<O extends E>(
     scope: Construct,
     id: string,
-    predicate: EventPredicateFunction<E, O>
-  ): EventBusRule<E, O>;
+    predicate: RulePredicateFunction<E, O>
+  ): Rule<E, O>;
 }
 
-export interface IEventBus<E extends EventBusRuleInput = EventBusRuleInput>
+export interface IEventBus<E extends Event = Event>
   extends IEventBusFilterable<E>,
     Integration<
       (
@@ -129,7 +146,7 @@ export interface IEventBus<E extends EventBusRuleInput = EventBusRuleInput>
   /**
    * Put one or more events on an Event Bus.
    */
-  (
+  putEvents(
     event: EventBusPutEventInput<E>,
     ...events: EventBusPutEventInput<E>[]
   ): void;
@@ -138,11 +155,32 @@ export interface IEventBus<E extends EventBusRuleInput = EventBusRuleInput>
     E,
     aws_events_targets.EventBusProps | undefined
   >;
+
+  /**
+   * Creates a rule that matches all events on the bus.
+   *
+   * When no scope or id are given, the bus is used as the scope and the id will be `all`.
+   * The rule created will be a singleton.
+   *
+   * When scope and id are given, a new rule will be created each time.
+   *
+   * Like all functionless, a rule is only created when the rule is used with `.pipe` or the rule is retrieved using `.rule`.
+   *
+   * ```ts
+   * const bus = new EventBus(scope, 'bus');
+   * const func = new Function(scope, 'func', async (payload: {id: string}) => console.log(payload.id));
+   *
+   * bus
+   *  .all()
+   *  .map(event => ({id: event.id}))
+   *  .pipe(func);
+   * ```
+   */
+  all(): PredicateRuleBase<E>;
+  all(scope: Construct, id: string): PredicateRuleBase<E>;
 }
 
-abstract class EventBusBase<E extends EventBusRuleInput>
-  implements IEventBus<E>
-{
+abstract class EventBusBase<E extends Event> implements IEventBus<E> {
   /**
    * This static properties identifies this class as an EventBus to the TypeScript plugin.
    */
@@ -152,43 +190,14 @@ abstract class EventBusBase<E extends EventBusRuleInput>
   readonly eventBusName: string;
   readonly eventBusArn: string;
 
-  readonly native: NativeIntegration<EventBusBase<E>>;
+  protected static singletonDefaultNode = "__DefaultBus";
 
-  constructor(readonly bus: aws_events.IEventBus) {
-    this.eventBusName = bus.eventBusName;
-    this.eventBusArn = bus.eventBusArn;
+  private allRule: PredicateRuleBase<E> | undefined;
 
-    // Closure event bus base
-    const eventBusName = this.eventBusName;
-    this.native = <NativeIntegration<EventBusBase<E>>>{
-      bind: (context: Function<any, any>) => {
-        this.bus.grantPutEventsTo(context.resource);
-      },
-      preWarm: (prewarmContext: NativePreWarmContext) => {
-        prewarmContext.getOrInit(PrewarmClients.EVENT_BRIDGE);
-      },
-      call: async (args, preWarmContext) => {
-        const eventBridge = preWarmContext.getOrInit(
-          PrewarmClients.EVENT_BRIDGE
-        );
-        await eventBridge
-          .putEvents({
-            Entries: args.map((event) => ({
-              Detail: JSON.stringify(event.detail),
-              EventBusName: eventBusName,
-              DetailType: event["detail-type"],
-              Resources: event.resources,
-              Source: event.source,
-              Time:
-                typeof event.time === "number"
-                  ? new Date(event.time)
-                  : undefined,
-            })),
-          })
-          .promise();
-      },
-    };
-  }
+  public readonly putEvents: IntegrationCall<
+    IEventBus<E>["putEvents"],
+    "EventBus.putEvents"
+  >;
 
   // @ts-ignore - value does not exist, is only available at compile time
   readonly __functionBrand: (
@@ -196,92 +205,137 @@ abstract class EventBusBase<E extends EventBusRuleInput>
     ...events: EventBusPutEventInput<E>[]
   ) => void;
 
-  asl(call: CallExpr, context: ASL) {
-    this.bus.grantPutEventsTo(context.role);
+  constructor(readonly bus: aws_events.IEventBus) {
+    this.eventBusName = bus.eventBusName;
+    this.eventBusArn = bus.eventBusArn;
 
-    // Validate that the events are object literals.
-    // Then normalize nested arrays of events into a single list of events.
-    // TODO Relax these restrictions: https://github.com/functionless/functionless/issues/101
-    const eventObjs = call.args.reduce((events: ObjectLiteralExpr[], arg) => {
-      if (isArrayLiteralExpr(arg.expr)) {
-        if (!arg.expr.items.every(isObjectLiteralExpr)) {
-          throw Error(
-            "Event Bus put events must use inline object parameters. Variable references are not supported currently."
-          );
-        }
-        return [...events, ...arg.expr.items];
-      } else if (isObjectLiteralExpr(arg.expr)) {
-        return [...events, arg.expr];
-      }
-      throw Error(
-        "Event Bus put events must use inline object parameters. Variable references are not supported currently."
-      );
-    }, []);
+    // Closure event bus base
+    const eventBusName = this.eventBusName;
 
-    // The interface should prevent this.
-    if (eventObjs.length === 0) {
-      throw Error("Must provide at least one event.");
-    }
+    this.putEvents = makeIntegration<
+      IEventBus<E>["putEvents"],
+      "EventBus.putEvents"
+    >({
+      kind: "EventBus.putEvents",
+      asl: (call: CallExpr, context: ASL) => {
+        this.bus.grantPutEventsTo(context.role);
 
-    const propertyMap: Record<keyof EventBusRuleInput, string> = {
-      "detail-type": "DetailType",
-      account: "Account",
-      detail: "Detail",
-      id: "Id",
-      region: "Region",
-      resources: "Resources",
-      source: "Source",
-      time: "Time",
-      version: "Version",
-    };
-
-    const events = eventObjs.map((event) => {
-      const props = event.properties.filter(
-        (
-          e
-        ): e is PropAssignExpr & {
-          name: StringLiteralExpr | Identifier;
-        } => !(isSpreadAssignExpr(e) || isComputedPropertyNameExpr(e.name))
-      );
-      if (props.length < event.properties.length) {
-        throw Error(
-          "Event Bus put events must use inline objects instantiated without computed or spread keys."
+        // Validate that the events are object literals.
+        // Then normalize nested arrays of events into a single list of events.
+        // TODO Relax these restrictions: https://github.com/functionless/functionless/issues/101
+        const eventObjs = call.args.reduce(
+          (events: ObjectLiteralExpr[], arg) => {
+            if (isArrayLiteralExpr(arg.expr)) {
+              if (!arg.expr.items.every(isObjectLiteralExpr)) {
+                throw Error(
+                  "Event Bus put events must use inline object parameters. Variable references are not supported currently."
+                );
+              }
+              return [...events, ...arg.expr.items];
+            } else if (isObjectLiteralExpr(arg.expr)) {
+              return [...events, arg.expr];
+            }
+            throw Error(
+              "Event Bus put events must use inline object parameters. Variable references are not supported currently."
+            );
+          },
+          []
         );
-      }
-      return (
-        props
-          .map(
-            (prop) =>
-              [
-                isIdentifier(prop.name) ? prop.name.name : prop.name.value,
-                prop.expr,
-              ] as const
-          )
-          .filter(
-            (x): x is [keyof typeof propertyMap, Expr] =>
-              x[0] in propertyMap && !!x[1]
-          )
-          /**
-           * Build the parameter payload for an event entry.
-           * All members must be in Pascal case.
-           */
-          .reduce(
-            (acc: Record<string, string>, [name, expr]) => ({
-              ...acc,
-              [propertyMap[name]]: ASL.toJson(expr),
-            }),
-            { EventBusName: this.bus.eventBusArn }
-          )
-      );
-    });
 
-    return {
-      Resource: "arn:aws:states:::events:putEvents",
-      Type: "Task" as const,
-      Parameters: {
-        Entries: events,
+        // The interface should prevent this.
+        if (eventObjs.length === 0) {
+          throw Error("Must provide at least one event.");
+        }
+
+        const propertyMap: Record<keyof Event, string> = {
+          "detail-type": "DetailType",
+          account: "Account",
+          detail: "Detail",
+          id: "Id",
+          region: "Region",
+          resources: "Resources",
+          source: "Source",
+          time: "Time",
+          version: "Version",
+        };
+
+        const events = eventObjs.map((event) => {
+          const props = event.properties.filter(
+            (
+              e
+            ): e is PropAssignExpr & {
+              name: StringLiteralExpr | Identifier;
+            } => !(isSpreadAssignExpr(e) || isComputedPropertyNameExpr(e.name))
+          );
+          if (props.length < event.properties.length) {
+            throw Error(
+              "Event Bus put events must use inline objects instantiated without computed or spread keys."
+            );
+          }
+          return (
+            props
+              .map(
+                (prop) =>
+                  [
+                    isIdentifier(prop.name) ? prop.name.name : prop.name.value,
+                    prop.expr,
+                  ] as const
+              )
+              .filter(
+                (x): x is [keyof typeof propertyMap, Expr] =>
+                  x[0] in propertyMap && !!x[1]
+              )
+              /**
+               * Build the parameter payload for an event entry.
+               * All members must be in Pascal case.
+               */
+              .reduce(
+                (acc: Record<string, string>, [name, expr]) => ({
+                  ...acc,
+                  [propertyMap[name]]: ASL.toJson(expr),
+                }),
+                { EventBusName: this.bus.eventBusArn }
+              )
+          );
+        });
+
+        return {
+          Resource: "arn:aws:states:::events:putEvents",
+          Type: "Task" as const,
+          Parameters: {
+            Entries: events,
+          },
+        };
       },
-    };
+      native: {
+        bind: (context: Function<any, any>) => {
+          this.bus.grantPutEventsTo(context.resource);
+        },
+        preWarm: (prewarmContext: NativePreWarmContext) => {
+          prewarmContext.getOrInit(PrewarmClients.EVENT_BRIDGE);
+        },
+        call: async (args, preWarmContext) => {
+          const eventBridge = preWarmContext.getOrInit(
+            PrewarmClients.EVENT_BRIDGE
+          );
+          await eventBridge
+            .putEvents({
+              Entries: args.map((event) => ({
+                Detail: JSON.stringify(event.detail),
+                EventBusName: eventBusName,
+                DetailType: event["detail-type"],
+                Resources: event.resources,
+                Source: event.source,
+                Time:
+                  typeof event.time === "number"
+                    ? new Date(event.time)
+                    : undefined,
+              })),
+            })
+            .promise();
+        },
+      },
+    });
   }
 
   public readonly eventBus = makeEventBusIntegration<
@@ -304,23 +358,59 @@ abstract class EventBusBase<E extends EventBusRuleInput>
    * @inheritdoc
    */
   when<O extends E>(
+    id: string,
+    predicate: RulePredicateFunction<E, O>
+  ): Rule<E, O>;
+  when<O extends E>(
     scope: Construct,
     id: string,
-    predicate: EventPredicateFunction<E, O>
-  ): EventBusRule<E, O> {
-    return new EventBusRule<E, O>(scope, id, this as any, predicate);
+    predicate: RulePredicateFunction<E, O>
+  ): Rule<E, O>;
+  when<O extends E>(
+    scope: Construct | string,
+    id?: string | RulePredicateFunction<E, O>,
+    predicate?: RulePredicateFunction<E, O>
+  ): Rule<E, O> {
+    if (predicate) {
+      return new Rule<E, O>(
+        scope as Construct,
+        id as string,
+        this as any,
+        predicate
+      );
+    } else {
+      return new Rule<E, O>(
+        this.bus,
+        scope as string,
+        this as any,
+        id as RulePredicateFunction<E, O>
+      );
+    }
+  }
+
+  all(): PredicateRuleBase<E>;
+  all(scope: Construct, id: string): PredicateRuleBase<E>;
+  all(scope?: Construct, id?: string): PredicateRuleBase<E> {
+    if (!scope || !id) {
+      if (!this.allRule) {
+        this.allRule = new PredicateRuleBase<E>(
+          this.bus,
+          "all",
+          this as IEventBus<any>,
+          // an empty doc will be converted to `{ source: [{ prefix: "" }]}`
+          { doc: {} }
+        );
+      }
+      return this.allRule;
+    }
+    return new PredicateRuleBase<E>(scope, id, this as IEventBus<any>, {
+      doc: {},
+    });
   }
 }
 
-export type EventBusPutEventInput<E extends EventBusRuleInput> = Partial<E> &
+export type EventBusPutEventInput<E extends Event> = Partial<E> &
   Pick<E, "detail" | "source" | "detail-type">;
-
-interface EventBusBase<E extends EventBusRuleInput> {
-  (
-    event: EventBusPutEventInput<E>,
-    ...events: EventBusPutEventInput<E>[]
-  ): void;
-}
 
 /**
  * A Functionless wrapper for a AWS CDK {@link aws_events.EventBus}.
@@ -338,7 +428,7 @@ interface EventBusBase<E extends EventBusRuleInput> {
  * }
  *
  * // An event with the payload
- * interface myEvent extends EventBusRuleInput<Payload> {}
+ * interface myEvent extends Event<Payload> {}
  *
  * // A function that expects the payload.
  * const myLambdaFunction = new functionless.Function<Payload, void>(this, 'myFunction', ...);
@@ -369,7 +459,7 @@ interface EventBusBase<E extends EventBusRuleInput> {
  *    .pipe(anotherEventBus);
  * ```
  */
-export class EventBus<E extends EventBusRuleInput> extends EventBusBase<E> {
+export class EventBus<E extends Event> extends EventBusBase<E> {
   constructor(scope: Construct, id: string, props?: aws_events.EventBusProps) {
     super(new aws_events.EventBus(scope, id, props));
   }
@@ -377,13 +467,9 @@ export class EventBus<E extends EventBusRuleInput> extends EventBusBase<E> {
   /**
    * Import an {@link aws_events.IEventBus} wrapped with Functionless abilities.
    */
-  static fromBus<E extends EventBusRuleInput>(
-    bus: aws_events.IEventBus
-  ): IEventBus<E> {
+  static fromBus<E extends Event>(bus: aws_events.IEventBus): IEventBus<E> {
     return new ImportedEventBus<E>(bus);
   }
-
-  static #singletonDefaultNode = "__DefaultBus";
 
   /**
    * Retrieves the default event bus as a singleton on the given stack or the stack of the given construct.
@@ -394,27 +480,95 @@ export class EventBus<E extends EventBusRuleInput> extends EventBusBase<E> {
    * new functionless.EventBus.fromBus(awsBus);
    * ```
    */
-  static default<E extends EventBusRuleInput>(stack: Stack): IEventBus<E>;
-  static default<E extends EventBusRuleInput>(scope: Construct): IEventBus<E>;
-  static default<E extends EventBusRuleInput>(
+  static default<E extends Event>(stack: Stack): DefaultEventBus<E>;
+  static default<E extends Event>(scope: Construct): DefaultEventBus<E>;
+  static default<E extends Event>(
     scope: Construct | Stack
-  ): IEventBus<E> {
-    const stack = scope instanceof Stack ? scope : Stack.of(scope);
-    const bus =
-      (stack.node.tryFindChild(
-        EventBus.#singletonDefaultNode
-      ) as aws_events.IEventBus) ??
-      aws_events.EventBus.fromEventBusName(
-        stack,
-        EventBus.#singletonDefaultNode,
-        "default"
-      );
+  ): DefaultEventBus<E> {
+    return new DefaultEventBus<E>(scope);
+  }
 
-    return EventBus.fromBus<E>(bus);
+  /**
+   * Creates a schedule based event bus rule on the default bus.
+   *
+   * Always sends the {@link ScheduledEvent} event.
+   *
+   * ```ts
+   * // every hour
+   * const everyHour = EventBus.schedule(scope, 'cron', aws_events.Schedule.rate(Duration.hours(1)));
+   *
+   * const func = new Function(scope, 'func', async (payload: {id: string}) => console.log(payload.id));
+   *
+   * everyHour
+   *    .map(event => ({id: event.id}))
+   *    .pipe(func);
+   * ```
+   */
+  static schedule(
+    scope: Construct,
+    id: string,
+    schedule: aws_events.Schedule,
+    props?: Omit<
+      aws_events.RuleProps,
+      "schedule" | "eventBus" | "eventPattern" | "targets"
+    >
+  ): ImportedRule<ScheduledEvent> {
+    return EventBus.default(scope).schedule(scope, id, schedule, props);
   }
 }
 
-class ImportedEventBus<E extends EventBusRuleInput> extends EventBusBase<E> {
+export class DefaultEventBus<E extends Event> extends EventBusBase<E> {
+  constructor(scope: Construct) {
+    const stack = scope instanceof Stack ? scope : Stack.of(scope);
+    const bus =
+      (stack.node.tryFindChild(
+        EventBusBase.singletonDefaultNode
+      ) as aws_events.IEventBus) ??
+      aws_events.EventBus.fromEventBusName(
+        stack,
+        EventBusBase.singletonDefaultNode,
+        "default"
+      );
+
+    super(bus);
+  }
+
+  /**
+   * Creates a schedule based event bus rule on the default bus.
+   *
+   * Always sends the {@link ScheduledEvent} event.
+   *
+   * ```ts
+   * const bus = EventBus.default(scope);
+   * // every hour
+   * const everyHour = bus.schedule(scope, 'cron', aws_events.Schedule.rate(Duration.hours(1)));
+   *
+   * const func = new Function(scope, 'func', async (payload: {id: string}) => console.log(payload.id));
+   *
+   * everyHour
+   *    .map(event => ({id: event.id}))
+   *    .pipe(func);
+   * ```
+   */
+  schedule(
+    scope: Construct,
+    id: string,
+    schedule: aws_events.Schedule,
+    props?: Omit<
+      aws_events.RuleProps,
+      "schedule" | "eventBus" | "eventPattern" | "targets"
+    >
+  ): ImportedRule<ScheduledEvent> {
+    return new ImportedRule<ScheduledEvent>(
+      new aws_events.Rule(scope, id, {
+        ...props,
+        schedule,
+      })
+    );
+  }
+}
+
+class ImportedEventBus<E extends Event> extends EventBusBase<E> {
   constructor(bus: aws_events.IEventBus) {
     super(bus);
   }
@@ -455,18 +609,16 @@ export interface EventBusTargetIntegration<
   ) => aws_events.IRuleTarget;
 }
 
+export type IntegrationWithEventBus<
+  P,
+  Props extends object | undefined = undefined
+> = Integration<AnyFunction, string, EventBusTargetIntegration<P, Props>>;
+
 export function makeEventBusIntegration<
   P,
   Props extends object | undefined = undefined
 >(integration: Omit<EventBusTargetIntegration<P, Props>, "__payloadBrand">) {
   return integration as EventBusTargetIntegration<P, Props>;
-}
-
-export interface IntegrationWithEventBus<
-  P,
-  Props extends object | undefined = undefined
-> {
-  eventBus: EventBusTargetIntegration<P, Props>;
 }
 
 export type DynamicProps<Props extends object | undefined> =
@@ -476,18 +628,31 @@ export type DynamicProps<Props extends object | undefined> =
  * Add a target to the run based on the configuration given.
  */
 export function pipe<
-  T extends EventBusRuleInput,
+  T extends Event,
   P,
-  Props extends object | undefined = undefined
+  Props extends object | undefined = undefined,
+  Target extends aws_events.RuleTargetInput | undefined =
+    | aws_events.RuleTargetInput
+    | undefined
 >(
-  rule: IEventBusRule<T>,
-  integration: IntegrationWithEventBus<P, Props>,
+  rule: IRule<T>,
+  integration:
+    | Integration<AnyFunction, string, EventBusTargetIntegration<P, Props>>
+    | ((targetInput: Target) => aws_events.IRuleTarget),
   props: Props,
-  targetInput?: aws_events.RuleTargetInput
+  targetInput: Target
 ) {
-  const target = new IntegrationImpl(integration as any).eventBus.target(
-    props,
-    targetInput
-  );
-  return rule.rule.addTarget(target);
+  if (
+    isIntegration<
+      Integration<AnyFunction, string, EventBusTargetIntegration<P, Props>>
+    >(integration)
+  ) {
+    const target = new IntegrationImpl(integration).eventBus.target(
+      props,
+      targetInput
+    );
+    return rule.rule.addTarget(target);
+  } else {
+    return rule.rule.addTarget(integration(targetInput));
+  }
 }
