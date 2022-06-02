@@ -172,6 +172,26 @@ project.eslint.addRules({
   "@typescript-eslint/no-shadow": "off",
   "@typescript-eslint/member-ordering": "off",
   "brace-style": "off",
+  "@typescript-eslint/explicit-member-accessibility": "off",
+});
+
+project.eslint.addOverride({
+  files: ["*.ts", "*.mts", "*.cts", "*.tsx"],
+  rules: {
+    "@typescript-eslint/explicit-member-accessibility": [
+      "error",
+      {
+        accessibility: "explicit",
+        overrides: {
+          accessors: "explicit",
+          constructors: "no-public",
+          methods: "explicit",
+          properties: "off",
+          parameterProperties: "off",
+        },
+      },
+    ],
+  },
 });
 
 /**

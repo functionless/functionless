@@ -290,7 +290,7 @@ abstract class FunctionBase<in P, O>
       : destination;
   }
 
-  configureAsyncInvoke(config: EventInvokeConfigOptions<P, O>): void {
+  public configureAsyncInvoke(config: EventInvokeConfigOptions<P, O>): void {
     this.resource.configureAsyncInvoke({
       ...config,
       onSuccess: FunctionBase.normalizeAsyncDestination<P, O>(config.onSuccess),
@@ -323,7 +323,7 @@ abstract class FunctionBase<in P, O>
     );
   }
 
-  onFailure(
+  public onFailure(
     bus: IEventBus<AsyncResponseFailureEvent<P>>,
     id: string
   ): Rule<AsyncResponseFailureEvent<P>> {

@@ -177,7 +177,8 @@
     "no-bitwise": [
       "error"
     ],
-    "@typescript-eslint/member-ordering": "off"
+    "@typescript-eslint/member-ordering": "off",
+    "@typescript-eslint/explicit-member-accessibility": "off"
   },
   "overrides": [
     {
@@ -187,6 +188,29 @@
       "rules": {
         "@typescript-eslint/no-require-imports": "off",
         "import/no-extraneous-dependencies": "off"
+      }
+    },
+    {
+      "files": [
+        "*.ts",
+        "*.mts",
+        "*.cts",
+        "*.tsx"
+      ],
+      "rules": {
+        "@typescript-eslint/explicit-member-accessibility": [
+          "error",
+          {
+            "accessibility": "explicit",
+            "overrides": {
+              "accessors": "explicit",
+              "constructors": "no-public",
+              "methods": "explicit",
+              "properties": "off",
+              "parameterProperties": "off"
+            }
+          }
+        ]
       }
     },
     {
