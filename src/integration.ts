@@ -152,6 +152,10 @@ export class IntegrationImpl<F extends AnyFunction = AnyFunction>
   }
 }
 
+export type IntegrationCall<F extends AnyFunction, K extends string> = {
+  kind: K;
+} & F;
+
 /**
  * Helper method which masks an {@link Integration} object as a function of any form.
  *
@@ -173,8 +177,8 @@ export class IntegrationImpl<F extends AnyFunction = AnyFunction>
  */
 export function makeIntegration<F extends AnyFunction, K extends string>(
   integration: Integration<F, K>
-): { kind: K } & F {
-  return integration as unknown as { kind: K } & F;
+): IntegrationCall<F, K> {
+  return integration as unknown as IntegrationCall<F, K>;
 }
 
 /**

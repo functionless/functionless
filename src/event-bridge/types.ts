@@ -1,5 +1,5 @@
 import { aws_events as functionless_event_bridge } from "aws-cdk-lib";
-export interface EventBusRuleInput<
+export interface Event<
   T = any,
   DetailType extends string = string,
   Source extends string = string

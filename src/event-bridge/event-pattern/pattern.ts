@@ -2,7 +2,7 @@ import { assertNever } from "../../assert";
 import * as functionless_event_bridge from "../types";
 
 /**
- * These are simlified and better structured interfaces/types to make it easier to work with Event Bridge Patterns.
+ * These are simplified and better structured interfaces/types to make it easier to work with Event Bridge Patterns.
  * Use the {@link patternToEventBridgePattern} to generate a valid object for event bridge.
  *
  * All patterns are applied to a single field {@link PatternDocument}s provide AND logic on multiple fields.
@@ -99,7 +99,7 @@ export interface NumericRangeLimit {
 }
 
 /**
- * A range of values from a posible {@link Number.NEGATIVE_INFINITY} to {@link Number.POSITIVE_INFINITY}.
+ * A range of values from a possible {@link Number.NEGATIVE_INFINITY} to {@link Number.POSITIVE_INFINITY}.
  *
  * Use a Upper and Lower bound of a single value to represent a single value.
  * Exclusive on upper and lower represents a NOT on the value.
@@ -201,12 +201,12 @@ export const isNegativeSingleValueRange = (pattern: NumericRangePattern) =>
   !pattern.upper.inclusive;
 
 /**
- * Transforms the proprietary {@link PatternDocuemnt} into AWS's EventPattern schema.
+ * Transforms the proprietary {@link PatternDocument} into AWS's EventPattern schema.
  * https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-event-patterns.html
  *
  * For each field,
  *  if the field is a nested PatternDocument, recurse.
- *  if the field is a Pattern, output the pattern as a EvnetPattern.
+ *  if the field is a Pattern, output the pattern as a EventPattern.
  *
  * We will not maintain empty patterns or pattern documents.
  */
