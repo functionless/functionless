@@ -1,3 +1,12 @@
+/**
+ * Error to throw during synth failures
+ */
+export class SynthError extends Error {
+  constructor(readonly code: ErrorCode, message: string) {
+    super(message);
+  }
+}
+
 export interface ErrorCode {
   code: number;
   messageText: string;
@@ -30,4 +39,15 @@ export namespace ErrorCodes {
       code: 100,
       messageText: "Cannot perform arithmetic on variables in Step Function",
     };
+
+  /**
+   * During CDK synth a function was encountered which was not compiled by the Functionless compiler plugin.
+   * This suggests that the plugin was not correctly configured for this project.
+   *
+   * Ensure you follow the instructions at https://functionless.org/docs/getting-started.
+   */
+  export const FunctionDecl_not_compiled_by_Functionless: ErrorCode = {
+    code: 101,
+    messageText: "Function not compiled by Functionless plugin",
+  };
 }

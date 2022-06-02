@@ -1,3 +1,5 @@
+import { isErr } from "./error";
+import { ErrorCodes, SynthError } from "./error-code";
 import { Argument, FunctionExpr } from "./expression";
 import { NativePreWarmContext } from "./function";
 import { Integration } from "./integration";
@@ -84,5 +86,21 @@ export class ParameterDecl extends BaseDecl<
 
   public clone(): this {
     return new ParameterDecl(this.name) as this;
+  }
+}
+
+export function validateFunctionDecl(
+  a: any,
+  functionLocation: string
+): FunctionDecl {
+  if (isFunctionDecl(a)) {
+    return a;
+  } else if (isErr(a)) {
+    throw a.error;
+  } else {
+    throw new SynthError(
+      ErrorCodes.FunctionDecl_not_compiled_by_Functionless,
+      `Expected input function to ${functionLocation} to be compiled by Functionless. Make sure you have the Functionless compiler plugin configured correctly.`
+    );
   }
 }
