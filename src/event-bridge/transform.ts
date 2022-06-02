@@ -56,17 +56,17 @@ export class EventTransform<E extends Event, P> {
    *
    * @see Rule.pipe for more details on pipe.
    */
-  pipe(props: LambdaTargetProps<P>): void;
-  pipe(func: IFunction<P, any>): void;
-  pipe(props: StateMachineTargetProps<P>): void;
-  pipe(props: StepFunction<P, any>): void;
-  pipe(props: ExpressStepFunction<P, any>): void;
-  pipe(
+  public pipe(props: LambdaTargetProps<P>): void;
+  public pipe(func: IFunction<P, any>): void;
+  public pipe(props: StateMachineTargetProps<P>): void;
+  public pipe(props: StepFunction<P, any>): void;
+  public pipe(props: ExpressStepFunction<P, any>): void;
+  public pipe(
     callback: (
       targetInput: aws_events.RuleTargetInput
     ) => aws_events.IRuleTarget
   ): void;
-  pipe(
+  public pipe(
     resource:
       | IFunction<P, any>
       | LambdaTargetProps<P>

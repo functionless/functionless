@@ -33,12 +33,20 @@ const localstackClientConfig: FunctionProps = {
 };
 
 interface TestFunctionResource {
-  <I, O, Outputs extends Record<string, string> = Record<string, string>>(
+  <
+    I,
+    O,
+    // Forces typescript to infer O from the Function and not from the expect argument.
+    OO extends O | { errorMessage: string; errorType: string },
+    Outputs extends Record<string, string> = Record<string, string>
+  >(
     name: string,
     func: (
       parent: Construct
     ) => Function<I, O> | { func: Function<I, O>; outputs: Outputs },
-    expected: O | ((context: Outputs) => O),
+    expected: OO extends void
+      ? null
+      : OO | ((context: Outputs) => OO extends void ? null : O),
     payload?: I | ((context: Outputs) => I)
   ): void;
 
@@ -242,8 +250,6 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
 
   testFunctionResource(
     "Call Lambda throw error",
-    // @ts-ignore - contra-variance on IEventBus<in T> makes Function<_, never> fail to type check because never can't be a super type
-    //              IEventBus is relevant because of Function.onSuccess takes in an IEventBus
     (parent) =>
       new Function(
         parent,

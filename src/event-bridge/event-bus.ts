@@ -32,6 +32,11 @@ export const isEventBus = <E extends Event>(v: any): v is IEventBus<E> => {
   );
 };
 
+/**
+ * Returns the {@link Event} type on the {@link EventBus}.
+ */
+export type EventBusEvent<B extends IEventBus<any>> = [B] extends [IEventBus<infer E>] ? E : never;
+
 export interface IEventBusFilterable<E extends Event> {
   /**
    * EventBus Rules can filter events using Functionless predicate functions.
@@ -304,16 +309,16 @@ abstract class EventBusBase<E extends Event>
     });
   }
 
-  when<O extends E>(
+  public when<O extends E>(
     id: string,
     predicate: RulePredicateFunction<E, O>
   ): Rule<E, O>;
-  when<O extends E>(
+  public when<O extends E>(
     scope: Construct,
     id: string,
     predicate: RulePredicateFunction<E, O>
   ): Rule<E, O>;
-  when<O extends E>(
+  public when<O extends E>(
     scope: Construct | string,
     id?: string | RulePredicateFunction<E, O>,
     predicate?: RulePredicateFunction<E, O>
@@ -335,9 +340,9 @@ abstract class EventBusBase<E extends Event>
     }
   }
 
-  all(): PredicateRuleBase<E>;
-  all(scope: Construct, id: string): PredicateRuleBase<E>;
-  all(scope?: Construct, id?: string): PredicateRuleBase<E> {
+  public all(): PredicateRuleBase<E>;
+  public all(scope: Construct, id: string): PredicateRuleBase<E>;
+  public all(scope?: Construct, id?: string): PredicateRuleBase<E> {
     if (!scope || !id) {
       if (!this.allRule) {
         this.allRule = new PredicateRuleBase<E>(
@@ -414,7 +419,7 @@ export class EventBus<E extends Event> extends EventBusBase<E> {
   /**
    * Import an {@link aws_events.IEventBus} wrapped with Functionless abilities.
    */
-  static fromBus<E extends Event>(bus: aws_events.IEventBus): IEventBus<E> {
+  public static fromBus<E extends Event>(bus: aws_events.IEventBus): IEventBus<E> {
     return new ImportedEventBus<E>(bus);
   }
 
@@ -427,9 +432,9 @@ export class EventBus<E extends Event> extends EventBusBase<E> {
    * new functionless.EventBus.fromBus(awsBus);
    * ```
    */
-  static default<E extends Event>(stack: Stack): DefaultEventBus<E>;
-  static default<E extends Event>(scope: Construct): DefaultEventBus<E>;
-  static default<E extends Event>(
+  public static default<E extends Event>(stack: Stack): DefaultEventBus<E>;
+  public static default<E extends Event>(scope: Construct): DefaultEventBus<E>;
+  public static default<E extends Event>(
     scope: Construct | Stack
   ): DefaultEventBus<E> {
     return new DefaultEventBus<E>(scope);
@@ -451,7 +456,7 @@ export class EventBus<E extends Event> extends EventBusBase<E> {
    *    .pipe(func);
    * ```
    */
-  static schedule(
+  public static schedule(
     scope: Construct,
     id: string,
     schedule: aws_events.Schedule,
@@ -497,7 +502,7 @@ export class DefaultEventBus<E extends Event> extends EventBusBase<E> {
    *    .pipe(func);
    * ```
    */
-  schedule(
+  public schedule(
     scope: Construct,
     id: string,
     schedule: aws_events.Schedule,

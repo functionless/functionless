@@ -156,7 +156,7 @@ abstract class RuleBase<in T extends Event> implements IRule<T> {
   _rule: aws_events.Rule | undefined = undefined;
 
   // only generate the rule when needed
-  get rule() {
+  public get rule() {
     if (!this._rule) {
       this._rule = this.ruleGenerator();
     }
@@ -168,22 +168,22 @@ abstract class RuleBase<in T extends Event> implements IRule<T> {
   /**
    * @inheritdoc
    */
-  map<E extends T, P>(transform: EventTransformFunction<E, P>): EventTransform<E, P> {
+  public map<E extends T, P>(transform: EventTransformFunction<E, P>): EventTransform<E, P> {
     return new EventTransform<E, P>(transform, this);
   }
 
   /**
    * @inheritdoc
    */
-  pipe(props: LambdaTargetProps<T>): void;
-  pipe(func: IFunction<T, any>): void;
-  pipe(bus: IEventBus<T>): void;
-  pipe(props: EventBusTargetProps<any>): void;
-  pipe(props: StateMachineTargetProps<T>): void;
-  pipe(props: StepFunction<T, any>): void;
-  pipe(props: ExpressStepFunction<T, any>): void;
-  pipe(callback: () => aws_events.IRuleTarget): void;
-  pipe(
+  public pipe(props: LambdaTargetProps<T>): void;
+  public pipe(func: IFunction<T, any>): void;
+  public pipe(bus: IEventBus<T>): void;
+  public pipe(props: EventBusTargetProps<any>): void;
+  public pipe(props: StateMachineTargetProps<T>): void;
+  public pipe(props: StepFunction<T, any>): void;
+  public pipe(props: ExpressStepFunction<T, any>): void;
+  public pipe(callback: () => aws_events.IRuleTarget): void;
+  public pipe(
     resource: EventBusTargetResource<T, T> | (() => aws_events.IRuleTarget)
   ): void {
     pipe(this, resource as any);
@@ -230,16 +230,16 @@ export class PredicateRuleBase<in T extends Event>
   /**
    * @inheritdoc
    */
-  when<O extends T>(
+  public when<O extends T>(
     id: string,
     predicate: RulePredicateFunction<T, O>
   ): PredicateRuleBase<O>;
-  when<O extends T>(
+  public when<O extends T>(
     scope: Construct,
     id: string,
     predicate: RulePredicateFunction<T, O>
   ): PredicateRuleBase<O>;
-  when<O extends T>(
+  public when<O extends T>(
     scope: Construct | string,
     id?: string | RulePredicateFunction<T, O>,
     predicate?: RulePredicateFunction<T, O>

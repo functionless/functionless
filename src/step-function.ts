@@ -502,7 +502,7 @@ abstract class BaseStepFunction<
     });
   }
 
-  appSyncIntegration(
+  public appSyncIntegration(
     integration: Pick<AppSyncVtlIntegration, "request">
   ): AppSyncVtlIntegration {
     return {
@@ -568,7 +568,7 @@ abstract class BaseStepFunction<
     };
   }
 
-  asl(call: CallExpr, context: ASL) {
+  public asl(call: CallExpr, context: ASL) {
     this.grantStartExecution(context.role);
     if (
       this.getStepFunctionType() === aws_stepfunctions.StateMachineType.EXPRESS
@@ -729,7 +729,7 @@ abstract class BaseStepFunction<
   /**
    * Create event bus rule that matches any status change on this machine.
    */
-  onStatusChanged(
+  public onStatusChanged(
     scope: Construct,
     id: string
   ): Rule<StepFunctionStatusChangedEvent> {

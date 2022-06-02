@@ -13,6 +13,7 @@ import {
   Token,
   Tokenization,
 } from "aws-cdk-lib";
+import { IDestination } from "aws-cdk-lib/aws-lambda";
 import {
   EventBridgeDestination,
   LambdaDestination,
@@ -36,6 +37,7 @@ import {
   Rule,
   PredicateRuleBase,
 } from "./event-bridge";
+import { EventBusEvent } from "./event-bridge/event-bus";
 import { CallExpr, Expr, isVariableReference } from "./expression";
 import {
   IntegrationImpl,
@@ -55,14 +57,23 @@ export type FunctionClosure<P, O> = (
   context: Context
 ) => Promise<O>;
 
+/**
+ * Returns the payload type on the {@link IFunction}.
+ */
+export type FunctionPayload<F extends IFunction<any, any>> = [F] extends [IFunction<infer P, any>] ? P : never;
+/**
+ * Returns the output type on the {@link IFunction}.
+ */
+ export type FunctionOutput<F extends IFunction<any, any>> = [F] extends [IFunction<any, infer O>] ? O : never;
+
 type FunctionAsyncOnFailureDestination<P> =
   | aws_lambda.FunctionProps["onFailure"]
-  | IEventBus<any>
+  | IEventBus<AsyncResponseFailureEvent<P>>
   | IFunction<AsyncResponseFailure<P>, any>;
 
 type FunctionAsyncOnSuccessDestination<P, O> =
   | aws_lambda.FunctionProps["onSuccess"]
-  | IEventBus<any>
+  | IEventBus<AsyncResponseSuccessEvent<P, O>>
   | IFunction<AsyncResponseSuccess<P, O>, any>;
 
 /**
@@ -277,15 +288,17 @@ abstract class FunctionBase<in P, O>
   }
 
   protected static normalizeAsyncDestination<P, O>(
-    destination:
-      | FunctionAsyncOnSuccessDestination<P, O>
-      | FunctionAsyncOnFailureDestination<P>
-  ) {
+    destination: FunctionAsyncOnSuccessDestination<P, O>
+    | FunctionAsyncOnFailureDestination<P>
+  ): IDestination | undefined {
     return destination === undefined
       ? undefined
-      : isEventBus<any>(destination)
+      : isEventBus<EventBusEvent<Extract<typeof destination, IEventBus<any>>>>(destination)
       ? new EventBridgeDestination(destination.bus)
-      : isFunction(destination)
+      : isFunction<
+          FunctionPayload<Extract<typeof destination, IFunction<any, any>>>,
+          FunctionOutput<Extract<typeof destination, IFunction<any, any>>>
+        >(destination)
       ? new LambdaDestination(destination.resource)
       : destination;
   }
@@ -374,9 +387,24 @@ export interface FunctionProps<P = any, O = any>
   clientConfigRetriever?: (
     clientName: ClientName | string
   ) => Omit<AWS.Lambda.ClientConfiguration, keyof AWS.Lambda.ClientApiVersions>;
-
-  onSuccess?: FunctionAsyncOnSuccessDestination<P, O>;
-  onFailure?: FunctionAsyncOnFailureDestination<P>;
+    /**
+     * The destination for failed invocations.
+     *
+     * Supports use of Functionless {@link IEventBus} or {@link IFunction}.
+     *
+     * ```ts
+     * const bus = new EventBus<>
+     * ```
+     *
+     * @default - no destination
+     */
+     onSuccess?: FunctionAsyncOnSuccessDestination<P, O>;
+    /**
+     * The destination for successful invocations.
+     *
+     * @default - no destination
+     */
+     onFailure?: FunctionAsyncOnFailureDestination<P>;
 }
 
 const isNativeFunctionOrError = anyOf(isErr, isNativeFunctionDecl);
