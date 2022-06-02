@@ -7,8 +7,6 @@ import {
 } from "aws-cdk-lib";
 import {
   ApiIntegrations,
-  EventBus,
-  EventBusRuleInput,
   ExpressStepFunction,
   Function,
   SyncExecutionSuccessResult,
@@ -72,7 +70,6 @@ const sfn = new ExpressStepFunction(
   })
 );
 
-// interface SfnRequest {
 //   pathParameters: {
 //     num: number;
 //   };
@@ -168,39 +165,6 @@ const experimentalDynamoIntegration = ApiIntegrations.aws({
   },
 });
 experimentalDynamoIntegration.addMethod("GET", experimentalDynamoResource);
-
-interface ExperimentalEventBusRequest {
-  pathParameters: {
-    num: number;
-  };
-  body: {
-    nested: {
-      again: {
-        num: number;
-      };
-    };
-  };
-}
-
-const bus = new EventBus<EventBusRuleInput<{ id: number }>>(stack, "bus");
-
-const experimentalEventBusResource = restApi.root
-  .addResource("experimental-event-bus")
-  .addResource("{num}");
-const experimentalEventBusIntegration = ApiIntegrations.aws({
-  request: (req: ExperimentalEventBusRequest) =>
-    bus({
-      detail: { id: req.body.nested.again.num },
-      "detail-type": "test",
-      source: "test",
-    }),
-  response: () => ({ msg: "sent successfully" }),
-  errors: {
-    400: () => ({ message: "bad request" }),
-    500: () => ({ message: "internal error" }),
-  },
-});
-experimentalEventBusIntegration.addMethod("POST", experimentalEventBusResource);
 
 interface ExperimentalSfnRequest {
   pathParameters: {

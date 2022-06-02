@@ -309,24 +309,14 @@ export class Table<
         ...integration.appSyncVtl,
       },
       apiGWVtl: {
-        integration: (_x, _y) => {
-          throw "TODO";
-        },
-
-        experimentPrepareRequest: (obj) => {
-          // obj.addProperty(
-          //   new PropAssignExpr(
-          //     new StringLiteralExpr("tableName"),
-          //     new StringLiteralExpr(this.resource.node.addr)
-          //   )
-          // );
+        prepareRequest: (obj) => {
           return {
             ...obj,
             tableName: this.resource.node.addr,
           };
         },
 
-        experimentMakeIntegration: (api, template, integrationResponses) => {
+        makeIntegration: (api, template, integrationResponses) => {
           const credentialsRole = new aws_iam.Role(
             api,
             "ApiGatewayIntegrationRole",

@@ -285,7 +285,7 @@ export class AwsApiIntegration<
     // TODO: resource is not the right scope, prevents adding 2 methods to the resource
     // because of the IAM roles created
     // should `this` be a Method?
-    const apiGwIntegration = integration!.apiGWVtl.experimentMakeIntegration(
+    const apiGwIntegration = integration!.apiGWVtl.makeIntegration(
       resource,
       requestTemplate,
       integrationResponses
@@ -344,7 +344,7 @@ export function toVTL(
     const argObj = inner(call.args[0].expr! as ObjectLiteralExpr);
     const serviceCall = findIntegration(call);
 
-    const prepared = serviceCall!.apiGWVtl.experimentPrepareRequest(argObj);
+    const prepared = serviceCall!.apiGWVtl.prepareRequest(argObj);
 
     console.log(prepared);
 
@@ -552,14 +552,9 @@ function pathFromFunctionParameter(node: PropAccessExpr): string[] | undefined {
  * Hooks used to create API Gateway integrations.
  */
 export interface ApiGatewayVtlIntegration {
-  integration: (
-    requestTemplate: string,
-    responseTemplate: string
-  ) => aws_apigateway.Integration;
+  prepareRequest: (obj: object) => object;
 
-  experimentPrepareRequest: (obj: object) => object;
-
-  experimentMakeIntegration: (
+  makeIntegration: (
     scope: Construct,
     requestTemplate: string,
     responses: aws_apigateway.IntegrationResponse[]
