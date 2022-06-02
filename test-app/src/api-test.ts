@@ -38,33 +38,24 @@ const fn = new Function(
   })
 );
 
-// interface FnRequest {
-//   pathParameters: {
-//     num: number;
-//   };
-//   queryStringParameters: {
-//     str: string;
-//   };
-//   body: {
-//     bool: boolean;
-//   };
-// }
-
-// const fnResource = restApi.root.addResource("fn").addResource("{num}");
-// const fnIntegration = ApiIntegrations.aws({
-//   request: (req: FnRequest) => ({
-//     inNum: req.pathParameters.num,
-//     inStr: req.queryStringParameters.str,
-//     inBool: req.body.bool,
-//   }),
-//   integration: fn,
-//   response: (resp) => ({
-//     outNum: resp.fnNum,
-//     outStr: resp.fnStr,
-//     outBool: resp.fnBool,
-//   }),
-// });
-// fnIntegration.addMethod("POST", fnResource);
+const fnResource = restApi.root.addResource("fn").addResource("{num}");
+const fnIntegration = ApiIntegrations.aws({
+  request: (req: FnRequest) =>
+    fn({
+      inNum: req.pathParameters.num,
+      inStr: req.queryStringParameters.str,
+      inBool: req.body.bool,
+    }),
+  response: (resp) => ({
+    resultNum: resp.fnNum,
+    resultStr: resp.fnStr,
+    nested: resp.nested.again.num,
+  }),
+  errors: {
+    400: () => ({ msg: "400" }),
+  },
+});
+fnIntegration.addMethod("POST", fnResource);
 
 const sfn = new ExpressStepFunction(
   stack,
@@ -103,31 +94,31 @@ const sfn = new ExpressStepFunction(
 // });
 // sfnIntegration.addMethod("GET", sfnResource);
 
-// interface MockRequest {
-//   pathParameters: {
-//     num: 200 | 500;
-//   };
-// }
+interface MockRequest {
+  pathParameters: {
+    num: 200 | 500;
+  };
+}
 
-// const mockResource = restApi.root.addResource("mock").addResource("{num}");
-// const mock = ApiIntegrations.mock({
-//   request: (req: MockRequest) => ({
-//     statusCode: req.pathParameters.num,
-//   }),
-//   responses: {
-//     200: () => ({
-//       body: {
-//         num: 12345,
-//       },
-//     }),
-//     500: () => ({
-//       msg: "error",
-//     }),
-//   },
-// });
-// mock.addMethod("GET", mockResource);
+const mockResource = restApi.root.addResource("mock").addResource("{num}");
+const mock = ApiIntegrations.mock({
+  request: (req: MockRequest) => ({
+    statusCode: req.pathParameters.num,
+  }),
+  responses: {
+    200: () => ({
+      body: {
+        num: 12345,
+      },
+    }),
+    500: () => ({
+      msg: "error",
+    }),
+  },
+});
+mock.addMethod("GET", mockResource);
 
-interface ExperimentalFnRequest {
+interface FnRequest {
   pathParameters: {
     num: number;
   };
@@ -138,27 +129,6 @@ interface ExperimentalFnRequest {
     bool: boolean;
   };
 }
-
-const experimentalFnResource = restApi.root
-  .addResource("experimental-fn")
-  .addResource("{num}");
-const experimentalFnIntegration = ApiIntegrations.experimental({
-  request: (req: ExperimentalFnRequest) =>
-    fn({
-      inNum: req.pathParameters.num,
-      inStr: req.queryStringParameters.str,
-      inBool: req.body.bool,
-    }),
-  response: (resp) => ({
-    resultNum: resp.fnNum,
-    resultStr: resp.fnStr,
-    nested: resp.nested.again.num,
-  }),
-  errors: {
-    400: () => ({ msg: "400" }),
-  },
-});
-experimentalFnIntegration.addMethod("POST", experimentalFnResource);
 
 interface Item {
   id: number;
@@ -182,7 +152,7 @@ interface ExperimentalDynamoRequest {
 const experimentalDynamoResource = restApi.root
   .addResource("experimental-dynamo")
   .addResource("{num}");
-const experimentalDynamoIntegration = ApiIntegrations.experimental({
+const experimentalDynamoIntegration = ApiIntegrations.aws({
   request: (req: ExperimentalDynamoRequest) =>
     table.getItem({
       key: {
@@ -217,7 +187,7 @@ const bus = new EventBus<EventBusRuleInput<{ id: number }>>(stack, "bus");
 const experimentalEventBusResource = restApi.root
   .addResource("experimental-event-bus")
   .addResource("{num}");
-const experimentalEventBusIntegration = ApiIntegrations.experimental({
+const experimentalEventBusIntegration = ApiIntegrations.aws({
   request: (req: ExperimentalEventBusRequest) =>
     bus({
       detail: { id: req.body.nested.again.num },
@@ -244,7 +214,7 @@ interface ExperimentalSfnRequest {
 const experimentalSfnResource = restApi.root
   .addResource("experimental-sfn")
   .addResource("{num}");
-const experimentalSfnIntegration = ApiIntegrations.experimental({
+const experimentalSfnIntegration = ApiIntegrations.aws({
   // @ts-ignore TODO: output is only on success, need to support if stmt
   request: (req: ExperimentalSfnRequest) =>
     sfn({

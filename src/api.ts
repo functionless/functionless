@@ -17,7 +17,7 @@ import {
   ObjectLiteralExpr,
   PropAccessExpr,
 } from "./expression";
-import { findIntegration, Integration, IntegrationImpl } from "./integration";
+import { findIntegration, IntegrationImpl } from "./integration";
 import { FunctionlessNode } from "./node";
 import { isReturnStmt } from "./statement";
 
@@ -73,11 +73,6 @@ type ResponseTransformerFunction<IntegrationResponse, MethodResponse> = (
   resp: IntegrationResponse
 ) => MethodResponse;
 
-// TODO: support other types
-type IntegrationTarget<IntegrationRequest, IntegrationResponse> = Integration<
-  (req: IntegrationRequest) => IntegrationResponse
->;
-
 export abstract class BaseApiIntegration {
   /**
    * Identify subclasses as API integrations to the Functionless plugin
@@ -122,32 +117,12 @@ export class ApiIntegrations {
    */
   public static aws<
     Request extends ApiRequest<any, any, any, any>,
-    IntegrationRequest,
     IntegrationResponse,
     MethodResponse
   >(
-    props: AwsApiIntegrationProps<
-      Request,
-      IntegrationRequest,
-      IntegrationResponse,
-      MethodResponse
-    >
-  ): AwsApiIntegration<typeof props> {
-    return new AwsApiIntegration(props);
-  }
-
-  public static experimental<
-    Request extends ApiRequest<any, any, any, any>,
-    IntegrationResponse,
-    MethodResponse
-  >(
-    props: ExperimentalIntegrationProps<
-      Request,
-      IntegrationResponse,
-      MethodResponse
-    >
+    props: AwsApiIntegrationProps<Request, IntegrationResponse, MethodResponse>
   ) {
-    return new ExperimentalIntegration(props);
+    return new AwsApiIntegration(props);
   }
 }
 
@@ -237,7 +212,8 @@ export class MockApiIntegration<
   }
 }
 
-export interface ExperimentalIntegrationProps<
+// TODO: comment
+export interface AwsApiIntegrationProps<
   Request extends ApiRequest<any, any, any, any>,
   IntegrationResponse,
   MethodResponse
@@ -247,8 +223,22 @@ export interface ExperimentalIntegrationProps<
   errors: { [statusCode: number]: () => any };
 }
 
-export class ExperimentalIntegration<
-  Props extends ExperimentalIntegrationProps<any, any, any>
+/**
+ * An AWS API Gateway integration lets you integrate an API with an AWS service
+ * supported by Functionless. The request is transformed via VTL and sent to the
+ * service via API call, and the response is transformed via VTL and returned in
+ * the response.
+ *
+ * TODO: we need to support multiple responses
+ *
+ * Only `application/json` is supported.
+ *
+ * TODO: provide example usage after api is stabilized
+ *
+ * @see https://docs.aws.amazon.com/apigateway/latest/developerguide/api-gateway-api-integration-types.html
+ */
+export class AwsApiIntegration<
+  Props extends AwsApiIntegrationProps<any, any, any>
 > extends BaseApiIntegration {
   private readonly request: FunctionDecl;
   private readonly response: FunctionDecl;
@@ -310,78 +300,6 @@ export class ExperimentalIntegration<
 
     resource.addMethod(httpMethod, apiGwIntegration, {
       methodResponses,
-    });
-  }
-}
-
-export interface AwsApiIntegrationProps<
-  Request extends ApiRequest<any, any, any, any>,
-  IntegrationRequest,
-  IntegrationResponse,
-  MethodResponse
-> {
-  /**
-   * Map API request to an integration request.
-   */
-  request: RequestTransformerFunction<Request, IntegrationRequest>;
-  /**
-   * Integration target backing this API. The result of `request` will be sent.
-   */
-  integration: IntegrationTarget<IntegrationRequest, IntegrationResponse>;
-  /**
-   * Map integration response to a method response.
-   * TODO: we need to handle multiple responses
-   */
-  response: ResponseTransformerFunction<IntegrationResponse, MethodResponse>;
-}
-
-/**
- * An AWS API Gateway integration lets you integrate an API with an AWS service
- * supported by Functionless. The request is transformed via VTL and sent to the
- * service via API call, and the response is transformed via VTL and returned in
- * the response.
- *
- * TODO: we need to support multiple responses
- *
- * Only `application/json` is supported.
- *
- * TODO: provide example usage after api is stabilized
- *
- * @see https://docs.aws.amazon.com/apigateway/latest/developerguide/api-gateway-api-integration-types.html
- */
-export class AwsApiIntegration<
-  Props extends AwsApiIntegrationProps<any, any, any, any>
-> extends BaseApiIntegration {
-  private readonly request: FunctionDecl;
-  private readonly response: FunctionDecl;
-  private readonly integration: Props["integration"];
-
-  constructor(props: Props) {
-    super();
-    this.request = validateFunctionDecl(props.request);
-    this.response = validateFunctionDecl(props.response);
-    this.integration = props.integration;
-  }
-
-  public addMethod(
-    httpMethod: HttpMethod,
-    resource: aws_apigateway.Resource
-  ): void {
-    const [, requestTemplate] = toVTL(this.request, "request");
-    const [, responseTemplate] = toVTL(this.response, "response");
-
-    const apiGWIntegration = this.integration.apiGWVtl!.integration(
-      requestTemplate,
-      responseTemplate
-    );
-
-    // TODO: support requestParameters, authorizers, models and validators
-    resource.addMethod(httpMethod, apiGWIntegration, {
-      methodResponses: [
-        {
-          statusCode: "200",
-        },
-      ],
     });
   }
 }

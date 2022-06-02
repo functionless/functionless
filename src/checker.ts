@@ -229,8 +229,7 @@ export function makeFunctionlessChecker(
       ts.isCallExpression(node) &&
       ts.isPropertyAccessExpression(node.expression) &&
       (node.expression.name.text === "mock" ||
-        node.expression.name.text == "aws" ||
-        node.expression.name.text === "experimental") &&
+        node.expression.name.text == "aws") &&
       ts.isIdentifier(node.expression.expression) &&
       // TODO: is this enough? should we grab the type and make sure it
       // has FunctionlessKind?
