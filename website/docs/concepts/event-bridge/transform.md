@@ -6,7 +6,7 @@ sidebar_position: 3
 
 [Event Bus Input Transforms](https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-transform-target-input.html) transform events matched by [Rules](./rule). Transforms supports a loosely coupled application by allowing the rule to normalize an event before sending it to a target with it's own expected payload schema.
 
-Functionless allows Typescript to be used when defining an input transform. It transforms the closure given into Event Bridge's [Input Transform](https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-transform-target-input.html) JSON schema, while maintaining the contract provided by the [Typescript Syntax](./syntax#event-transforms).
+Functionless allows Typescript to be used when defining an input transform. It transforms the code given into Event Bridge's [Input Transform](https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-transform-target-input.html) JSON schema, while maintaining the contract provided by the [Typescript Syntax](./syntax#event-transforms).
 
 ```ts
 const bus = new EventBus(stack, 'bus');
@@ -39,6 +39,17 @@ lambdaEventsRule.addTarget(
   })
 );
 ```
+
+:::info
+Where does the `{ source: [{ prefix: "" }] }` syntax come from?
+
+Rules have no explicit way to send all events, this hack was proposed on [StackOverflow](https://stackoverflow.com/a/62407802/968011).
+
+Why does this work?
+
+- The `source` field is always required and is always a string.
+- `{ prefix: "" }` ([Prefix Matching](https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-event-patterns-content-based-filtering.html#eb-filtering-prefix-matching)) will match any string.
+  :::
 
 :::info
 For more details on the supported schema for `Transform`s see [syntax](./syntax#event-transforms)
