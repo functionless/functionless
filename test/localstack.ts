@@ -1,4 +1,3 @@
-import { performance, PerformanceObserver } from "node:perf_hooks";
 import * as cxapi from "@aws-cdk/cx-api";
 import { App, CfnOutput, Stack } from "aws-cdk-lib";
 import { SdkProvider } from "aws-cdk/lib/api/aws-auth";
@@ -22,10 +21,7 @@ export const clientConfig = {
 const CF = new CloudFormation(clientConfig);
 
 export const deployStack = async (app: App, stack: Stack) => {
-  performance.mark("AwaitSynth");
-  const cloudAssembly = await asyncSynth(app, {});
-  performance.measure("After await synth", "AwaitSynth");
-  performance.measure("Add resources", "InvokeResourceGetter");
+  const cloudAssembly = await asyncSynth(app);
 
   const sdkProvider = await SdkProvider.withAwsCliCompatibleDefaults({
     httpOptions: clientConfig as any,
@@ -42,29 +38,16 @@ export const deployStack = async (app: App, stack: Stack) => {
     credentials: clientConfig.credentials,
   };
 
-  performance.mark("CfnCompile");
-
   const cfn = new CloudFormationDeployments({
     sdkProvider,
   });
 
-  // const assembly = new cxapi.CloudAssembly(cloudAssembly.directory);
-  // const stackArtifact = cxapi.CloudFormationStackArtifact.fromManifest(
-  //   cloudAssembly,
-  //   stack.artifactId,
-  //   cloudAssembly.getStackArtifact(stack.artifactId).manifest
-  // ) as cxapi.CloudFormationStackArtifact;
-
-  performance.measure("Complete CfnCompile", "CfnCompile");
-
-  performance.mark("DeployStack");
   await cfn.deployStack({
     stack: cloudAssembly.getStackArtifact(
       stack.artifactId
     ) as unknown as cxapi.CloudFormationStackArtifact,
     force: true,
   });
-  performance.measure("Deploy Stack complete", "DeployStack");
 };
 
 interface ResourceReference<Outputs extends Record<string, string>> {
@@ -117,19 +100,7 @@ export const localstackTestSuite = (
 
   let stackOutputs: CloudFormation.Outputs | undefined;
 
-  const obs = new PerformanceObserver((items) => {
-    items
-      .getEntries()
-      .forEach(({ duration, startTime, name, entryType }) =>
-        console.log(entryType, name, startTime, duration)
-      );
-  });
-  obs.observe({ entryTypes: ["mark", "measure", "function"], buffered: true });
-  performance.measure("Start to Now");
-
   beforeAll(async () => {
-    performance.mark("Before");
-
     testContexts = tests.map(({ resources, skip }, i) => {
       // create the construct on skip to reduce output changes when moving between skip and not skip
       const construct = new Construct(stack, `parent${i}`);
@@ -152,18 +123,11 @@ export const localstackTestSuite = (
       return {};
     });
 
-    performance.mark("DeployStack");
-    await performance.timerify(deployStack)(app, stack);
-    performance.measure("After deploy stack", "DeployStack");
-
-    performance.mark("DescribeStacks");
+    await deployStack(app, stack);
 
     stackOutputs = (
       await CF.describeStacks({ StackName: stack.stackName }).promise()
     ).Stacks?.[0].Outputs;
-
-    performance.measure("After describe stacks", "DescribeStacks");
-    performance.mark("BeforeEnd");
   });
 
   // @ts-ignore
@@ -175,11 +139,8 @@ export const localstackTestSuite = (
   };
 
   // register tests
-  performance.mark("GetTests");
   fn(testResource, stack, app);
-  performance.measure("After getting tests", "GetTests");
 
-  performance.mark("InvokeResourceGetter");
   tests.forEach(({ name, test: testFunc, skip }, i) => {
     if (!skip) {
       test(name, () => {
@@ -198,6 +159,4 @@ export const localstackTestSuite = (
       test.skip(name, () => {});
     }
   });
-  performance.mark("SyncResource");
-  performance.measure("Sync resource time", "SyncResource");
 };
