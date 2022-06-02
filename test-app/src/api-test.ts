@@ -70,27 +70,6 @@ const sfn = new ExpressStepFunction(
   })
 );
 
-//   pathParameters: {
-//     num: number;
-//   };
-//   queryStringParameters: {
-//     str: string;
-//   };
-// }
-
-// const sfnResource = restApi.root.addResource("sfn").addResource("{num}");
-// const sfnIntegration = ApiIntegrations.aws({
-//   request: (req: SfnRequest) => ({
-//     input: {
-//       num: req.pathParameters.num,
-//       str: req.queryStringParameters.str,
-//     },
-//   }),
-//   integration: sfn,
-//   response: (resp) => ({ resultNum: resp.sfnNum, resultStr: resp.sfnStr }),
-// });
-// sfnIntegration.addMethod("GET", sfnResource);
-
 interface MockRequest {
   pathParameters: {
     num: 200 | 500;
@@ -140,17 +119,15 @@ const table = new Table<Item, "id">(
   })
 );
 
-interface ExperimentalDynamoRequest {
+interface DynamoRequest {
   pathParameters: {
     id: number;
   };
 }
 
-const experimentalDynamoResource = restApi.root
-  .addResource("experimental-dynamo")
-  .addResource("{num}");
-const experimentalDynamoIntegration = ApiIntegrations.aws({
-  request: (req: ExperimentalDynamoRequest) =>
+const dynamoResource = restApi.root.addResource("dynamo").addResource("{num}");
+const dynamoIntegration = ApiIntegrations.aws({
+  request: (req: DynamoRequest) =>
     table.getItem({
       key: {
         id: {
@@ -164,9 +141,9 @@ const experimentalDynamoIntegration = ApiIntegrations.aws({
     400: () => ({ msg: "400" }),
   },
 });
-experimentalDynamoIntegration.addMethod("GET", experimentalDynamoResource);
+dynamoIntegration.addMethod("GET", dynamoResource);
 
-interface ExperimentalSfnRequest {
+interface SfnRequest {
   pathParameters: {
     num: number;
   };
@@ -175,12 +152,10 @@ interface ExperimentalSfnRequest {
   };
 }
 
-const experimentalSfnResource = restApi.root
-  .addResource("experimental-sfn")
-  .addResource("{num}");
-const experimentalSfnIntegration = ApiIntegrations.aws({
+const sfnResource = restApi.root.addResource("sfn").addResource("{num}");
+const sfnIntegration = ApiIntegrations.aws({
   // @ts-ignore TODO: output is only on success, need to support if stmt
-  request: (req: ExperimentalSfnRequest) =>
+  request: (req: SfnRequest) =>
     sfn({
       input: {
         num: req.pathParameters.num,
@@ -194,4 +169,4 @@ const experimentalSfnIntegration = ApiIntegrations.aws({
   // TODO: make errors optional?
   errors: {},
 });
-experimentalSfnIntegration.addMethod("GET", experimentalSfnResource);
+sfnIntegration.addMethod("GET", sfnResource);

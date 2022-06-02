@@ -5,6 +5,7 @@ import { FunctionDecl, isFunctionDecl } from "./declaration";
 import { isErr } from "./error";
 import {
   Identifier,
+  isArgument,
   isArrayLiteralExpr,
   isBooleanLiteralExpr,
   isCallExpr,
@@ -179,24 +180,23 @@ export class MockApiIntegration<
     httpMethod: HttpMethod,
     resource: aws_apigateway.Resource
   ): void {
-    const requestTemplate = toVTL(this.request, "request");
+    const [requestTemplate] = toVTL(this.request, "request");
 
-    const responseEntries: [string, FunctionDecl][] = Object.entries(
-      this.responses
-    );
-    // @ts-ignore WTF???
     const integrationResponses: aws_apigateway.IntegrationResponse[] =
-      responseEntries.map(([statusCode, fn]) => ({
-        statusCode,
-        responseTemplates: {
-          "application/json": toVTL(fn, "response"),
-        },
-        selectionPattern: `^${statusCode}$`,
-      }));
+      Object.entries(this.responses).map(([statusCode, fn]) => {
+        const [template] = toVTL(fn, "response");
+        return {
+          statusCode,
+          responseTemplates: {
+            "application/json": template,
+          },
+          selectionPattern: `^${statusCode}$`,
+        };
+      });
 
     const integration = new aws_apigateway.MockIntegration({
       requestTemplates: {
-        "application/json": requestTemplate[1],
+        "application/json": requestTemplate,
       },
       integrationResponses,
     });
@@ -229,8 +229,6 @@ export interface AwsApiIntegrationProps<
  * service via API call, and the response is transformed via VTL and returned in
  * the response.
  *
- * TODO: we need to support multiple responses
- *
  * Only `application/json` is supported.
  *
  * TODO: provide example usage after api is stabilized
@@ -257,19 +255,22 @@ export class AwsApiIntegration<
     httpMethod: HttpMethod,
     resource: aws_apigateway.Resource
   ): void {
-    const [integration, requestTemplate] = toVTL(this.request, "request");
-    const [, responseTemplate] = toVTL(this.response, "response");
+    const [requestTemplate, integration] = toVTL(this.request, "request");
+    const [responseTemplate] = toVTL(this.response, "response");
 
     const errorResponses: aws_apigateway.IntegrationResponse[] = Object.entries(
       this.errors
-    ).map(([statusCode, fn]) => ({
-      // TODO
-      statusCode: statusCode,
-      selectionPattern: `^${statusCode}$`,
-      responseTemplates: {
-        "application/json": toVTL(fn, "response")[1],
-      },
-    }));
+    ).map(([statusCode, fn]) => {
+      const [template] = toVTL(fn, "response");
+      return {
+        // TODO
+        statusCode: statusCode,
+        selectionPattern: `^${statusCode}$`,
+        responseTemplates: {
+          "application/json": template,
+        },
+      };
+    });
 
     const integrationResponses: aws_apigateway.IntegrationResponse[] = [
       {
@@ -322,43 +323,52 @@ export class AwsApiIntegration<
 export function toVTL(
   node: FunctionDecl,
   location: "request" | "response"
-): [IntegrationImpl<any> | undefined, string] {
+): [string, IntegrationImpl<any> | undefined] {
+  // TODO: polish these error messages and put them into error-codes.ts
   if (node.body.statements.length !== 1) {
-    throw new Error(`Expected 1 statement in `);
+    throw new Error("Expected function body to be a single return statement");
   }
 
   const stmt = node.body.statements[0];
 
   if (!isReturnStmt(stmt)) {
-    throw new Error(`Expected return statement in `);
+    throw new Error("Expected function body to be a single return statement");
   }
 
-  const call = stmt.expr;
-
   if (location === "request") {
+    const call = stmt.expr;
     if (!isCallExpr(call)) {
-      throw new Error(`Expected call expression in `);
+      throw new Error(
+        "Expected request function body to return an integration call"
+      );
     }
 
-    // TODO: validate args
+    // TODO: validate args. also should it always be an object?
     const argObj = inner(call.args[0].expr! as ObjectLiteralExpr);
     const serviceCall = findIntegration(call);
 
-    const prepared = serviceCall!.apiGWVtl.prepareRequest(argObj);
+    if (!serviceCall) {
+      throw new Error(
+        "Expected request function body to return an integration call"
+      );
+    }
 
-    console.log(prepared);
-
-    const x = stringify(prepared);
-    const template = `#set($inputRoot = $input.path('$'))\n${x}`;
-    return [serviceCall, template];
+    const prepared = serviceCall.apiGWVtl.prepareRequest(argObj);
+    const template = `#set($inputRoot = $input.path('$'))\n${stringify(
+      prepared
+    )}`;
+    return [template, serviceCall];
   } else {
-    if (!isObjectLiteralExpr(call)) {
-      throw "TODO not an object";
+    const obj = stmt.expr;
+    if (!isObjectLiteralExpr(obj)) {
+      throw new Error(
+        "Expected response function body to return an object literal"
+      );
     }
     const template = `#set($inputRoot = $input.path('$'))\n${stringify(
-      inner(call)
+      inner(obj)
     )}`;
-    return [undefined, template];
+    return [template, undefined];
   }
 
   function inner(node: FunctionlessNode): any {
@@ -378,45 +388,50 @@ export function toVTL(
             case "PropAssignExpr":
               return [inner(prop.name), inner(prop.expr)];
             case "SpreadAssignExpr":
-              throw "TODO SpreadAssignExpr";
+              throw new Error("TODO: support SpreadAssignExpr");
           }
         })
       );
+    } else if (isArgument(node)) {
+      return inner(node);
     } else if (isPropAccessExpr(node)) {
-      const path = pathFromFunctionParameter(node);
-      console.log(path);
+      // ignore the function param name, we'll replace it with the VTL
+      // mapping template inputs
+      const path = pathFromFunctionParameter(node)?.slice(1);
 
       if (path) {
         if (location === "response") {
           const c: Ref = {
             __refType: node.type! as any,
-            value: `$inputRoot.${path.slice(1).join(".")}`,
+            value: `$inputRoot.${path.join(".")}`,
           };
           return c;
-        }
-        // we don't need the function param name
-        const [paramLocation, ...rest] = path.slice(1);
+        } else {
+          const [paramLocation, ...rest] = path;
 
-        let param;
-        switch (paramLocation) {
-          case "body":
-            param = `$inputRoot.${rest.join(".")}`;
-            break;
-          case "pathParameters":
-            param = `$input.params().path.${rest.join(".")}`;
-            break;
-          case "queryStringParameters":
-            param = `$input.params().querystring.${rest.join(".")}`;
-            break;
-          case "headers":
-            param = `$input.params().headers.${rest.join(".")}`;
-            break;
-          default:
-            throw new Error("Unknown parameter type.");
-        }
+          let prefix;
+          switch (paramLocation) {
+            case "body":
+              prefix = "$inputRoot";
+              break;
+            case "pathParameters":
+              prefix = "$input.params().path";
+              break;
+            case "queryStringParameters":
+              prefix = "$input.params().querystring";
+              break;
+            case "headers":
+              prefix = "$input.params().headers";
+              break;
+            default:
+              throw new Error("Unknown parameter type.");
+          }
 
-        const c: Ref = { __refType: node.type! as any, value: param };
-        return c;
+          const param = `${prefix}.${rest.join(".")}`;
+
+          const c: Ref = { __refType: node.type! as any, value: param };
+          return c;
+        }
       }
       return `${inner(node.expr)}.${node.name};`;
     } else if (isTemplateExpr(node)) {
@@ -424,97 +439,40 @@ export function toVTL(
       return inner(node.exprs[0]);
     }
 
-    throw new Error("Method not implemented.");
+    throw new Error(`Unsupported node type: ${node.kind}`);
+  }
+}
+
+type Ref =
+  | { __refType: "string"; value: string }
+  | { __refType: "number"; value: string }
+  | { __refType: "boolean"; value: string };
+
+const isRef = (x: any): x is Ref => x.__refType !== undefined;
+
+function stringify(obj: any): string {
+  if (isRef(obj)) {
+    switch (obj.__refType) {
+      case "string":
+        return `"${obj.value}"`;
+      case "number":
+        return obj.value;
+      case "boolean":
+        return obj.value;
+    }
+  }
+  if (typeof obj === "string") {
+    return `"${obj}"`;
+  } else if (typeof obj === "number" || typeof obj === "boolean") {
+    return obj.toString();
+  } else if (Array.isArray(obj)) {
+    return `[${obj.map(stringify).join(",")}]`;
+  } else if (typeof obj === "object") {
+    const props = Object.entries(obj).map(([k, v]) => `"${k}":${stringify(v)}`);
+    return `{${props.join(",")}}`;
   }
 
-  // const statements = node.body.statements.map((stmt) => inner(stmt)).join("\n");
-
-  // if (template === "request") {
-  //   return [integration, `#set($inputRoot = $input.path('$'))\n${statements}`];
-  // } else {
-  //   return [integration, statements];
-  // }
-
-  // function inner(node: FunctionlessNode): string {
-  //   if (isBooleanLiteralExpr(node) || isNumberLiteralExpr(node)) {
-  //     return node.value.toString();
-  //   } else if (isStringLiteralExpr(node)) {
-  //     return wrapStr(node.value);
-  //   } else if (isArrayLiteralExpr(node)) {
-  //     return `[${node.children.map(inner).join(",")}]`;
-  //   } else if (isObjectLiteralExpr(node)) {
-  //     return `{${node.properties.map(inner).join(",")}}`;
-  //   } else if (isArgument(node)) {
-  //     // TODO: handle undefined
-  //     return inner(node.expr!);
-  //   } else if (isCallExpr(node)) {
-  //     const serviceCall = findIntegration(node);
-  //     if (serviceCall) {
-  //       const x = node.children[1];
-  //       if (!isArgument(x)) {
-  //         throw "Not an argument";
-  //       }
-  //       if (!isObjectLiteralExpr(x.expr!)) {
-  //         throw "Not an object literal";
-  //       }
-
-  //       const y = serviceCall.apiGWVtl.experimentPrepareRequest(x.expr);
-
-  //       integration = serviceCall;
-
-  //       return inner(y as any);
-  //     } else {
-  //       throw "TODO";
-  //     }
-  //   } else if (isPropAccessExpr(node)) {
-  //     const path = pathFromFunctionParameter(node);
-  //     if (path) {
-  //       // we don't need the function param name
-  //       const [location, ...rest] = path.slice(1);
-
-  //       let param;
-  //       if (template === "request") {
-  //         switch (location) {
-  //           case "body":
-  //             param = `$inputRoot.${rest.join(".")}`;
-  //             break;
-  //           case "pathParameters":
-  //             param = `$inputRoot.${rest.join(".")}`;
-  //             break;
-  //           case "queryStringParameters":
-  //             param = `$inputRoot.${rest.join(".")}`;
-  //             break;
-  //           case "headers":
-  //             param = `$inputRoot.${rest.join(".")}`;
-  //             break;
-  //           default:
-  //             throw new Error("Unknown parameter type.");
-  //         }
-  //         if (node.type === "string") {
-  //           return wrapStr(param);
-  //         }
-  //       } else {
-  //         param = `$inputRoot.${node.name}`;
-  //         if (node.type === "string") {
-  //           return wrapStr(param);
-  //         }
-  //       }
-  //       return param;
-  //     }
-  //     return `${inner(node.expr)}.${node.name};`;
-  //   } else if (isPropAssignExpr(node)) {
-  //     return `${inner(node.name)}: ${inner(node.expr)}`;
-  //   } else if (isReturnStmt(node)) {
-  //     return inner(node.expr);
-  //   } else if (isTemplateExpr(node)) {
-  //     // TODO: not right, compare to vtl.ts
-  //     return inner(node.exprs[0]);
-  //   } else if (isIdentifier(node)) {
-  //     return node.name;
-  //   }
-
-  //   throw new Error(`Unsupported node type: ${node.kind}`);
-  // }
+  throw new Error(`Unsupported type: ${typeof obj}`);
 }
 
 function validateFunctionDecl(a: any): FunctionDecl {
@@ -552,43 +510,18 @@ function pathFromFunctionParameter(node: PropAccessExpr): string[] | undefined {
  * Hooks used to create API Gateway integrations.
  */
 export interface ApiGatewayVtlIntegration {
+  /**
+   * Prepare the request object for the integration. This can be used to inject
+   * properties into the object before serializing to VTL.
+   */
   prepareRequest: (obj: object) => object;
 
+  /**
+   * Construct an API GW integration.
+   */
   makeIntegration: (
     scope: Construct,
     requestTemplate: string,
     responses: aws_apigateway.IntegrationResponse[]
   ) => aws_apigateway.Integration;
-}
-
-type Ref =
-  | { __refType: "string"; value: string }
-  | { __refType: "number"; value: string }
-  | { __refType: "boolean"; value: string };
-
-const isRef = (x: any): x is Ref => x.__refType !== undefined;
-
-export function stringify(obj: any): string {
-  if (isRef(obj)) {
-    switch (obj.__refType) {
-      case "string":
-        return `"${obj.value}"`;
-      case "number":
-        return obj.value;
-      case "boolean":
-        return obj.value;
-    }
-  }
-  if (typeof obj === "string") {
-    return `"${obj}"`;
-  } else if (typeof obj === "number" || typeof obj === "boolean") {
-    return obj.toString();
-  } else if (Array.isArray(obj)) {
-    return `[${obj.map(stringify).join(",")}]`;
-  } else if (typeof obj === "object") {
-    const props = Object.entries(obj).map(([k, v]) => `"${k}":${stringify(v)}`);
-    return `{${props.join(",")}}`;
-  }
-
-  throw "GOOFED";
 }
