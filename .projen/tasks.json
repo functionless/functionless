@@ -28,7 +28,7 @@
       "name": "build:website",
       "steps": [
         {
-          "exec": "cd ./website && yarn && yarn build"
+          "exec": "npx tsc && cd ./website && yarn && yarn build"
         }
       ]
     },

@@ -1,5 +1,6 @@
 import type * as typescript from "typescript";
 import { FunctionlessChecker, isArithmeticToken } from "./checker";
+import { ErrorCode, ErrorCodes } from "./error-code";
 
 /**
  * Validates a TypeScript SourceFile containing Functionless primitives does not
@@ -66,8 +67,7 @@ export function validate(
       return [
         newError(
           node,
-          100,
-          "Cannot perform arithmetic on variables in Step Function"
+          ErrorCodes.Cannot_perform_arithmetic_on_variables_in_Step_Function
         ),
       ];
     }
@@ -76,13 +76,19 @@ export function validate(
 
   function newError(
     invalidNode: typescript.Node,
-    code: number,
-    messageText: string
+    error: ErrorCode,
+    messageText?: string
   ): ts.Diagnostic {
+    const baseUrl = process.env.FUNCTIONLESS_LOCAL
+      ? `http://localhost:3000`
+      : `https://functionless.org`;
+
     return {
       source: "Functionless",
-      code,
-      messageText,
+      code: error.code,
+      messageText: `${messageText ?? error.messageText}
+
+${baseUrl}/docs/error-codes#${error.messageText.replace(/ /g, "-")}"`,
       category: ts.DiagnosticCategory.Error,
       file: invalidNode.getSourceFile(),
       start: invalidNode.pos,
