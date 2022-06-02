@@ -40,8 +40,7 @@ class CustomTypescriptProject extends typescript.TypeScriptProject {
   constructor(opts) {
     super(opts);
 
-    // add me back!!
-    // new GitHooksPreCommitComponent(this);
+    new GitHooksPreCommitComponent(this);
 
     this.postSynthesize = this.postSynthesize.bind(this);
   }
@@ -143,10 +142,9 @@ const project = new CustomTypescriptProject({
 
 const packageJson = project.tryFindObjectFile("package.json");
 
-// add me back!!!
-// packageJson.addOverride("lint-staged", {
-//   "*.{tsx,jsx,ts,js,json,md,css}": ["eslint --fix", "prettier --write"],
-// });
+packageJson.addOverride("lint-staged", {
+  "*.{tsx,jsx,ts,js,json,md,css}": ["eslint --fix", "prettier --write"],
+});
 
 project.compileTask.prependExec(
   "yarn link && cd ./test-app && yarn link functionless"

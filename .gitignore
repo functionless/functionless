@@ -50,3 +50,4 @@ junit.xml
 /lib
 /dist/
 !/.eslintrc.json
+!/.git/hooks/pre-commit
