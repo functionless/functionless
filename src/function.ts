@@ -69,8 +69,8 @@ export type FunctionClosure<P, O> = (
  */
 export interface IFunction<P, O>
   extends Integration<
-    ConditionalFunction<P, O>,
     "Function",
+    ConditionalFunction<P, O>,
     EventBusTargetIntegration<P, FunctionEventBusTargetProps | undefined>
   > {
   readonly functionlessKind: typeof Function.FunctionlessType;

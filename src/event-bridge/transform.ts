@@ -1,7 +1,12 @@
 import { aws_events } from "aws-cdk-lib";
-import { EventBusTargetIntegration, Integration } from "..";
 import { FunctionDecl } from "../declaration";
-import { DynamicProps, IEventBus, pipe } from "./event-bus";
+import { Integration } from "../integration";
+import {
+  DynamicProps,
+  IEventBus,
+  IntegrationWithEventBus,
+  pipe,
+} from "./event-bus";
 import { IRule } from "./rule";
 import { synthesizeEventBridgeTargets } from "./target-input";
 import { Event } from "./types";
@@ -56,9 +61,7 @@ export class EventTransform<T extends Event, P> {
    * @see Rule.pipe for more details on pipe.
    */
   pipe<
-    I extends Integration<any, string, EventBusTargetIntegration<P, Props>> & {
-      eventBus: EventBusTargetIntegration<P, Props>;
-    },
+    I extends IntegrationWithEventBus<P, Props>,
     Props extends object | undefined
   >(
     integration: NonEventBusIntegration<I>,
@@ -70,9 +73,7 @@ export class EventTransform<T extends Event, P> {
     ) => aws_events.IRuleTarget
   ): void;
   pipe<
-    I extends Integration<any, string, EventBusTargetIntegration<P, Props>> & {
-      eventBus: EventBusTargetIntegration<P, Props>;
-    },
+    I extends IntegrationWithEventBus<P, Props>,
     Props extends object | undefined
   >(
     integration:

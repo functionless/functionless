@@ -40,7 +40,7 @@ import {
   isSpreadAssignExpr,
 } from "./expression";
 import { NativeIntegration, PrewarmClients } from "./function";
-import { Integration, makeIntegration } from "./integration";
+import { Integration, IntegrationInput, makeIntegration } from "./integration";
 import { AnyFunction, ensureItemOf } from "./util";
 import { VTL } from "./vtl";
 
@@ -60,8 +60,8 @@ export namespace $SFN {
    * @see https://docs.aws.amazon.com/step-functions/latest/dg/amazon-states-language-wait-state.html
    */
   export const waitFor = makeStepFunctionIntegration<
-    (seconds: number) => void,
-    "waitFor"
+    "waitFor",
+    (seconds: number) => void
   >("waitFor", {
     asl(call) {
       const seconds = call.args[0].expr;
@@ -93,8 +93,8 @@ export namespace $SFN {
    * @see https://docs.aws.amazon.com/step-functions/latest/dg/amazon-states-language-wait-state.html
    */
   export const waitUntil = makeStepFunctionIntegration<
-    (timestamp: string) => void,
-    "waitUntil"
+    "waitUntil",
+    (timestamp: string) => void
   >("waitUntil", {
     asl(call) {
       const timestamp = call.args[0]?.expr;
@@ -157,7 +157,7 @@ export namespace $SFN {
     ): void;
   }
 
-  export const forEach = makeStepFunctionIntegration<ForEach, "forEach">(
+  export const forEach = makeStepFunctionIntegration<"forEach", ForEach>(
     "forEach",
     {
       asl(call, context) {
@@ -209,7 +209,7 @@ export namespace $SFN {
     ): U[];
   }
 
-  export const map = makeStepFunctionIntegration<Map, "map">("map", {
+  export const map = makeStepFunctionIntegration<"map", Map>("map", {
     asl(call, context) {
       return mapOrForEach(call, context);
     },
@@ -291,14 +291,14 @@ export namespace $SFN {
    * @param paths
    */
   export const parallel = makeStepFunctionIntegration<
+    "parallel",
     <Paths extends readonly (() => any)[]>(
       ...paths: Paths
     ) => {
       [i in keyof Paths]: i extends `${number}`
         ? ReturnType<Extract<Paths[i], () => any>>
         : Paths[i];
-    },
-    "parallel"
+    }
   >("parallel", {
     asl(call, context) {
       const paths = call.getArgument("paths")?.expr;
@@ -325,11 +325,11 @@ export namespace $SFN {
   });
 }
 
-function makeStepFunctionIntegration<F extends AnyFunction, K extends string>(
+function makeStepFunctionIntegration<K extends string, F extends AnyFunction>(
   methodName: K,
-  integration: Omit<Integration<F>, "kind" | "__functionBrand">
+  integration: Omit<IntegrationInput<`$SFN.${K}`, F>, "kind">
 ): F {
-  return makeIntegration<F, `$SFN.${K}`>({
+  return makeIntegration<`$SFN.${K}`, F>({
     kind: `$SFN.${methodName}`,
     unhandledContext(kind, context) {
       throw new Error(
@@ -386,8 +386,8 @@ abstract class BaseStepFunction<
   implements
     aws_stepfunctions.IStateMachine,
     Integration<
-      (input: CallIn) => CallOut,
       "StepFunction",
+      (input: CallIn) => CallOut,
       EventBusTargetIntegration<P, StepFunctionEventBusTargetProps | undefined>
     >
 {
@@ -1383,8 +1383,8 @@ export class StepFunction<
   }
 
   public describeExecution = makeIntegration<
-    (executionArn: string) => AWS.StepFunctions.DescribeExecutionOutput,
-    "StepFunction.describeExecution"
+    "StepFunction.describeExecution",
+    (executionArn: string) => AWS.StepFunctions.DescribeExecutionOutput
   >({
     kind: "StepFunction.describeExecution",
     appSyncVtl: this.appSyncIntegration({

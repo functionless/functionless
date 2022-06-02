@@ -7,9 +7,7 @@ import { FunctionlessNode } from "./node";
 import { AnyFunction } from "./util";
 import { VTL } from "./vtl";
 
-export const isIntegration = <
-  I extends Omit<Integration<AnyFunction>, "__functionBrand">
->(
+export const isIntegration = <I extends IntegrationInput<string, AnyFunction>>(
   i: any
 ): i is I => typeof i === "object" && "kind" in i;
 
@@ -103,8 +101,8 @@ export interface IntegrationMethods<
  * Otherwise the error will be: `${this.name} is not supported by context ${context.kind}.`
  */
 export interface Integration<
-  F extends AnyFunction,
   K extends string = string,
+  F extends AnyFunction = AnyFunction,
   EventBus extends EventBusTargetIntegration<
     any,
     any
@@ -130,6 +128,14 @@ export interface Integration<
 }
 
 /**
+ * Alias that removes computed inputs from the integration interface
+ */
+export type IntegrationInput<
+  K extends string = string,
+  F extends AnyFunction = AnyFunction
+> = Omit<Integration<K, F>, "__functionBrand">;
+
+/**
  * Internal wrapper class for Integration handlers that provides default error handling for unsupported integrations.
  *
  * Functionless wraps Integration at runtime with this class.
@@ -139,7 +145,7 @@ export class IntegrationImpl<F extends AnyFunction = AnyFunction>
   implements IntegrationMethods<F>
 {
   readonly kind: string;
-  constructor(readonly integration: Integration<F>) {
+  constructor(readonly integration: Integration) {
     if (!integration) {
       throw Error("Integrations cannot be undefined.");
     }
@@ -183,7 +189,7 @@ export class IntegrationImpl<F extends AnyFunction = AnyFunction>
   }
 }
 
-export type IntegrationCall<F extends AnyFunction, K extends string> = {
+export type IntegrationCall<K extends string, F extends AnyFunction> = {
   kind: K;
   __functionBrand: F;
 } & F;
@@ -207,10 +213,10 @@ export type IntegrationCall<F extends AnyFunction, K extends string> = {
  *
  * @private
  */
-export function makeIntegration<F extends AnyFunction, K extends string>(
-  integration: Omit<Integration<F, K>, "__functionBrand">
-): IntegrationCall<F, K> {
-  return integration as unknown as IntegrationCall<F, K>;
+export function makeIntegration<K extends string, F extends AnyFunction>(
+  integration: IntegrationInput<K, F>
+): IntegrationCall<K, F> {
+  return integration as unknown as IntegrationCall<K, F>;
 }
 
 /**

@@ -30,7 +30,7 @@ import {
   NativePreWarmContext,
   PrewarmClients,
 } from "./function";
-import { Integration, makeIntegration } from "./integration";
+import { IntegrationInput, makeIntegration } from "./integration";
 import { Table, isTable, AnyTable } from "./table";
 
 import type { AnyFunction } from "./util";
@@ -75,6 +75,7 @@ export namespace $AWS {
      * @see https://docs.aws.amazon.com/step-functions/latest/dg/connect-ddb.html
      */
     export const DeleteItem = makeDynamoIntegration<
+      "deleteItem",
       <
         T extends Table<any, any, any>,
         Key extends TableKey<
@@ -98,8 +99,7 @@ export namespace $AWS {
           >,
           "TableName"
         >
-      ) => DeleteItemOutput<Item<T>, ReturnValue, JsonFormat.AttributeValue>,
-      "deleteItem"
+      ) => DeleteItemOutput<Item<T>, ReturnValue, JsonFormat.AttributeValue>
     >("deleteItem", {
       native: {
         bind: (context, table) => {
@@ -132,6 +132,7 @@ export namespace $AWS {
      * @see https://docs.aws.amazon.com/step-functions/latest/dg/connect-ddb.html
      */
     export const GetItem = makeDynamoIntegration<
+      "getItem",
       <
         T extends Table<any, any, any>,
         Key extends TableKey<
@@ -163,8 +164,7 @@ export namespace $AWS {
         AttributesToGet,
         ProjectionExpression,
         JsonFormat.AttributeValue
-      >,
-      "getItem"
+      >
     >("getItem", {
       native: {
         bind: (context: Function<any, any>, table: AnyTable) => {
@@ -215,6 +215,7 @@ export namespace $AWS {
      * @see https://docs.aws.amazon.com/step-functions/latest/dg/connect-ddb.html
      */
     export const UpdateItem = makeDynamoIntegration<
+      "updateItem",
       <
         T extends Table<any, any, any>,
         Key extends TableKey<
@@ -247,8 +248,7 @@ export namespace $AWS {
         Key,
         ReturnValue,
         JsonFormat.AttributeValue
-      >,
-      "updateItem"
+      >
     >("updateItem", {
       native: {
         bind: (context, table) => {
@@ -281,6 +281,7 @@ export namespace $AWS {
      * @see https://docs.aws.amazon.com/step-functions/latest/dg/connect-ddb.html
      */
     export const PutItem = makeDynamoIntegration<
+      "putItem",
       <
         T extends Table<any, any, any>,
         I extends Item<T>,
@@ -296,8 +297,7 @@ export namespace $AWS {
           >,
           "TableName"
         >
-      ) => PutItemOutput<I, ReturnValue, JsonFormat.AttributeValue>,
-      "putItem"
+      ) => PutItemOutput<I, ReturnValue, JsonFormat.AttributeValue>
     >("putItem", {
       native: {
         bind: (context, table) => {
@@ -328,6 +328,7 @@ export namespace $AWS {
     });
 
     export const Query = makeDynamoIntegration<
+      "query",
       <
         T extends Table<any, any, any>,
         KeyConditionExpression extends string,
@@ -346,8 +347,7 @@ export namespace $AWS {
           >,
           "TableName"
         >
-      ) => QueryOutput<Item<T>, AttributesToGet, JsonFormat.AttributeValue>,
-      "query"
+      ) => QueryOutput<Item<T>, AttributesToGet, JsonFormat.AttributeValue>
     >("query", {
       native: {
         bind: (context, table) => {
@@ -378,6 +378,7 @@ export namespace $AWS {
     });
 
     export const Scan = makeDynamoIntegration<
+      "scan",
       <
         T extends Table<any, any, any>,
         FilterExpression extends string | undefined = undefined,
@@ -394,8 +395,7 @@ export namespace $AWS {
           >,
           "TableName"
         >
-      ) => ScanOutput<Item<T>, AttributesToGet, JsonFormat.AttributeValue>,
-      "scan"
+      ) => ScanOutput<Item<T>, AttributesToGet, JsonFormat.AttributeValue>
     >("scan", {
       native: {
         bind: (context, table) => {
@@ -434,20 +434,20 @@ export namespace $AWS {
       | "query";
 
     function makeDynamoIntegration<
-      F extends AnyFunction,
-      Op extends OperationName
+      Op extends OperationName,
+      F extends AnyFunction
     >(
       operationName: Op,
       integration: Omit<
-        Integration<F, `$AWS.DynamoDB.${Op}`>,
-        "kind" | "native" | "__functionBrand"
+        IntegrationInput<`$AWS.DynamoDB.${Op}`, F>,
+        "kind" | "native"
       > & {
         native: Omit<NativeIntegration<F>, "preWarm" | "bind"> & {
           bind: (context: Function<any, any>, table: AnyTable) => void;
         };
       }
     ) {
-      return makeIntegration<F, `$AWS.DynamoDB.${Op}`>({
+      return makeIntegration<`$AWS.DynamoDB.${Op}`, F>({
         ...integration,
         kind: `$AWS.DynamoDB.${operationName}`,
         asl(call, context) {
@@ -546,6 +546,7 @@ export namespace $AWS {
      * @see https://docs.aws.amazon.com/lambda/latest/dg/API_Invoke.html
      */
     export const Invoke = makeIntegration<
+      "Lambda.Invoke",
       <Input, Output>(input: {
         FunctionName: Function<Input, Output>;
         Payload: Input;
@@ -555,8 +556,7 @@ export namespace $AWS {
         Qualifier?: string;
       }) => Omit<AWS.Lambda.InvocationResponse, "payload"> & {
         Payload: Output;
-      },
-      "Lambda.Invoke"
+      }
     >({
       kind: "Lambda.Invoke",
       asl(call) {
@@ -607,10 +607,10 @@ export namespace $AWS {
      * @see https://docs.aws.amazon.com/eventbridge/latest/APIReference/API_PutEvents.html
      */
     export const putEvents = makeIntegration<
+      "EventBridge.putEvent",
       (
         request: AWS.EventBridge.Types.PutEventsRequest
-      ) => AWS.EventBridge.Types.PutEventsResponse,
-      "EventBridge.putEvent"
+      ) => AWS.EventBridge.Types.PutEventsResponse
     >({
       kind: "EventBridge.putEvent",
       native: {

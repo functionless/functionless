@@ -118,11 +118,11 @@ export interface IEventBusFilterable<E extends Event> {
 export interface IEventBus<E extends Event = Event>
   extends IEventBusFilterable<E>,
     Integration<
+      "EventBus",
       (
         event: EventBusPutEventInput<E>,
         ...events: EventBusPutEventInput<E>[]
       ) => void,
-      "EventBus",
       EventBusTargetIntegration<
         EventBusPutEventInput<E>,
         aws_events_targets.EventBusProps | undefined
@@ -195,8 +195,8 @@ abstract class EventBusBase<E extends Event> implements IEventBus<E> {
   private allRule: PredicateRuleBase<E> | undefined;
 
   public readonly putEvents: IntegrationCall<
-    IEventBus<E>["putEvents"],
-    "EventBus.putEvents"
+    "EventBus.putEvents",
+    IEventBus<E>["putEvents"]
   >;
 
   // @ts-ignore - value does not exist, is only available at compile time
@@ -213,8 +213,8 @@ abstract class EventBusBase<E extends Event> implements IEventBus<E> {
     const eventBusName = this.eventBusName;
 
     this.putEvents = makeIntegration<
-      IEventBus<E>["putEvents"],
-      "EventBus.putEvents"
+      "EventBus.putEvents",
+      IEventBus<E>["putEvents"]
     >({
       kind: "EventBus.putEvents",
       asl: (call: CallExpr, context: ASL) => {
@@ -587,7 +587,7 @@ class ImportedEventBus<E extends Event> extends EventBusBase<E> {
  *    }
  * }
  *
- * new EventBus().when(() => true).pipe(myEbIntegration);
+ * new EventBus().when("rule", () => true).pipe(myEbIntegration);
  * ```
  */
 export interface EventBusTargetIntegration<
@@ -612,7 +612,7 @@ export interface EventBusTargetIntegration<
 export type IntegrationWithEventBus<
   P,
   Props extends object | undefined = undefined
-> = Integration<AnyFunction, string, EventBusTargetIntegration<P, Props>>;
+> = Integration<string, AnyFunction, EventBusTargetIntegration<P, Props>>;
 
 export function makeEventBusIntegration<
   P,
@@ -637,16 +637,12 @@ export function pipe<
 >(
   rule: IRule<T>,
   integration:
-    | Integration<AnyFunction, string, EventBusTargetIntegration<P, Props>>
+    | IntegrationWithEventBus<P, Props>
     | ((targetInput: Target) => aws_events.IRuleTarget),
   props: Props,
   targetInput: Target
 ) {
-  if (
-    isIntegration<
-      Integration<AnyFunction, string, EventBusTargetIntegration<P, Props>>
-    >(integration)
-  ) {
+  if (isIntegration<IntegrationWithEventBus<P, Props>>(integration)) {
     const target = new IntegrationImpl(integration).eventBus.target(
       props,
       targetInput
