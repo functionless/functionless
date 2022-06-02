@@ -20,6 +20,8 @@ export const clientConfig = {
 
 const CF = new CloudFormation(clientConfig);
 
+// Inspiration for the current approach: https://github.com/aws/aws-cdk/pull/18667#issuecomment-1075348390
+// Writeup on performance improvements: https://github.com/functionless/functionless/pull/184#issuecomment-1144767427
 export const deployStack = async (app: App, stack: Stack) => {
   const cloudAssembly = await asyncSynth(app);
 
@@ -42,15 +44,10 @@ export const deployStack = async (app: App, stack: Stack) => {
     sdkProvider,
   });
 
-  const assembly = new cxapi.CloudAssembly(cloudAssembly.directory);
-  const stackArtifact = cxapi.CloudFormationStackArtifact.fromManifest(
-    assembly,
-    stack.artifactId,
-    cloudAssembly.getStackArtifact(stack.artifactId).manifest
-  ) as cxapi.CloudFormationStackArtifact;
-
   await cfn.deployStack({
-    stack: stackArtifact,
+    stack: cloudAssembly.getStackArtifact(
+      stack.artifactId
+    ) as unknown as cxapi.CloudFormationStackArtifact,
     force: true,
   });
 };
