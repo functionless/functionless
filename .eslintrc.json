@@ -197,6 +197,13 @@
         "*.cts",
         "*.tsx"
       ],
+      "parserOptions": {
+        "project": [
+          "./tsconfig.dev.json",
+          "./test-app/tsconfig.json",
+          "./website/tsconfig.json"
+        ]
+      },
       "rules": {
         "@typescript-eslint/explicit-member-accessibility": [
           "error",
@@ -210,18 +217,6 @@
               "parameterProperties": "off"
             }
           }
-        ]
-      }
-    },
-    {
-      "files": [
-        "*.ts",
-        "*.tsx"
-      ],
-      "parserOptions": {
-        "project": [
-          "./tsconfig.dev.json",
-          "./test-app/tsconfig.json"
         ]
       }
     }

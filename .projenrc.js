@@ -40,7 +40,8 @@ class CustomTypescriptProject extends typescript.TypeScriptProject {
   constructor(opts) {
     super(opts);
 
-    new GitHooksPreCommitComponent(this);
+    // add me back!!
+    // new GitHooksPreCommitComponent(this);
 
     this.postSynthesize = this.postSynthesize.bind(this);
   }
@@ -102,7 +103,7 @@ const project = new CustomTypescriptProject({
   ],
   scripts: {
     localstack: "./scripts/localstack",
-    "build:website": "cd ./website && yarn && yarn build",
+    "build:website": "npx tsc && cd ./website && yarn && yarn build",
   },
   peerDeps: [
     `aws-cdk-lib@^${MIN_CDK_VERSION}`,
@@ -142,9 +143,10 @@ const project = new CustomTypescriptProject({
 
 const packageJson = project.tryFindObjectFile("package.json");
 
-packageJson.addOverride("lint-staged", {
-  "*.{tsx,jsx,ts,js,json,md,css}": ["eslint --fix", "prettier --write"],
-});
+// add me back!!!
+// packageJson.addOverride("lint-staged", {
+//   "*.{tsx,jsx,ts,js,json,md,css}": ["eslint --fix", "prettier --write"],
+// });
 
 project.compileTask.prependExec(
   "yarn link && cd ./test-app && yarn link functionless"
@@ -177,6 +179,13 @@ project.eslint.addRules({
 
 project.eslint.addOverride({
   files: ["*.ts", "*.mts", "*.cts", "*.tsx"],
+  parserOptions: {
+    project: [
+      "./tsconfig.dev.json",
+      "./test-app/tsconfig.json",
+      "./website/tsconfig.json",
+    ],
+  },
   rules: {
     "@typescript-eslint/explicit-member-accessibility": [
       "error",
@@ -191,16 +200,6 @@ project.eslint.addOverride({
         },
       },
     ],
-  },
-});
-
-/**
- * ES Lint parser needs to know about all of the tsconfig files to use.
- */
-project.eslint.addOverride({
-  files: ["*.ts", "*.tsx"],
-  parserOptions: {
-    project: ["./tsconfig.dev.json", "./test-app/tsconfig.json"],
   },
 });
 

@@ -139,7 +139,7 @@ export interface IRule<in T extends Event> {
   pipe(props: LambdaTargetProps<T>): void;
   pipe(func: IFunction<T, any>): void;
   pipe(bus: IEventBus<T>): void;
-  pipe(props: EventBusTargetProps<any>): void;
+  pipe(props: EventBusTargetProps<T>): void;
   pipe(props: StateMachineTargetProps<T>): void;
   pipe(props: StepFunction<T, any>): void;
   pipe(props: ExpressStepFunction<T, any>): void;
@@ -178,7 +178,7 @@ abstract class RuleBase<in T extends Event> implements IRule<T> {
   public pipe(props: LambdaTargetProps<T>): void;
   public pipe(func: IFunction<T, any>): void;
   public pipe(bus: IEventBus<T>): void;
-  public pipe(props: EventBusTargetProps<any>): void;
+  public pipe(props: EventBusTargetProps<T>): void;
   public pipe(props: StateMachineTargetProps<T>): void;
   public pipe(props: StepFunction<T, any>): void;
   public pipe(props: ExpressStepFunction<T, any>): void;

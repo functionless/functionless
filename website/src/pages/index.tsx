@@ -1,3 +1,4 @@
+/* eslint-disable import/no-unresolved */
 import clsx from "clsx";
 import Layout from "@theme/Layout";
 import Link from "@docusaurus/Link";
@@ -19,11 +20,14 @@ function HomepageHeader() {
   return (
     <header className={clsx("hero hero--primary", styles.heroBanner)}>
       <div className="container">
-        <h1 className="hero__title">Serverless with benefits ...</h1>
+        <h1 className="hero__title">
+          Unified Infrastructure and Application Code
+        </h1>
 
-        <p className="hero__subtitle col col--6 col--offset-3">
-          Functionless brings together the richness of AWS services with the
-          safety and ease of using TypeScript.
+        <p className="hero__subtitle">
+          Integrates with the AWS CDK, translates TypeScript application code to
+          cloud resources and domain specific languages, and infers optimal IAM
+          policies from business logic.
         </p>
 
         <div className="row">
