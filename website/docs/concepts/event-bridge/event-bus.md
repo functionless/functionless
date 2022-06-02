@@ -50,7 +50,7 @@ const bus = EventBus.fromBus(awsBus);
 
 ## Put Events to your bus from other Resources
 
-Functionless supports `putEvents` integrations with other AWS Resources.
+The `putEvents` integration allows other resources to easily send events to your `EventBus`. The integration is supported in [Lambda Functions](../function), [Step Functions](../step-function), and [AppSync Resolvers](../appsync).
 
 For a full list, see: [Integrations](./integrations#to-eventbus)
 
