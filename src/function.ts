@@ -129,21 +129,16 @@ abstract class FunctionBase<P, O>
     };
 
     this.apiGWVtl = {
-      integration: (requestTemplate, responseTemplate) => {
+      prepareRequest: (obj) => obj,
+
+      makeIntegration: (_scope, requestTemplate, integrationResponses) => {
         return new aws_apigateway.LambdaIntegration(this.resource, {
           proxy: false,
           passthroughBehavior: aws_apigateway.PassthroughBehavior.NEVER,
           requestTemplates: {
             "application/json": requestTemplate,
           },
-          integrationResponses: [
-            {
-              statusCode: "200",
-              responseTemplates: {
-                "application/json": `#set($inputRoot = $input.path('$'))\n${responseTemplate}`,
-              },
-            },
-          ],
+          integrationResponses,
         });
       },
     };

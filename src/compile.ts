@@ -565,7 +565,10 @@ export function compile(
               ts.isPropertyAssignment(prop) &&
               (ts.isStringLiteral(prop.name) || ts.isIdentifier(prop.name))
             ) {
-              if (prop.name.text === "responses") {
+              if (
+                prop.name.text === "responses" ||
+                prop.name.text === "errors"
+              ) {
                 return visitApiIntegrationResponsesProp(prop);
               } else if (
                 prop.name.text === "request" ||

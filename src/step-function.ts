@@ -510,9 +510,18 @@ abstract class BaseStepFunction<
 
     // Integration object for api gateway vtl
     this.apiGWVtl = {
-      integration: (requestTemplate, responseTemplate) => {
+      prepareRequest: (obj) => {
+        // TODO: this is currently broken. StepFunction interface requires a
+        // top level `input` key to be passed in but it shouldn't
+        return {
+          ...obj,
+          stateMachineArn: this.stateMachineArn,
+        };
+      },
+
+      makeIntegration: (scope, requestTemplate, integrationResponses) => {
         const credentialsRole = new aws_iam.Role(
-          this,
+          scope,
           "ApiGatewayIntegrationRole",
           {
             assumedBy: new aws_iam.ServicePrincipal("apigateway.amazonaws.com"),
@@ -529,7 +538,6 @@ abstract class BaseStepFunction<
           this.grantStartExecution(credentialsRole);
         }
 
-        const escapedInput = requestTemplate.replace(/\"/g, '\\"');
         return new aws_apigateway.AwsIntegration({
           service: "states",
           action:
@@ -542,19 +550,9 @@ abstract class BaseStepFunction<
             credentialsRole,
             passthroughBehavior: aws_apigateway.PassthroughBehavior.NEVER,
             requestTemplates: {
-              "application/json": `{
-                "input": "${escapedInput}",
-                "stateMachineArn": "${this.stateMachineArn}"
-              }`,
+              "application/json": requestTemplate,
             },
-            integrationResponses: [
-              {
-                statusCode: "200",
-                responseTemplates: {
-                  "application/json": `#set($inputRoot = $util.parseJson($input.path('$.output')))\n${responseTemplate}`,
-                },
-              },
-            ],
+            integrationResponses,
           },
         });
       },
