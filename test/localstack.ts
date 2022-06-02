@@ -20,6 +20,8 @@ export const clientConfig = {
 
 const CF = new CloudFormation(clientConfig);
 
+// Inspiration for the current approach: https://github.com/aws/aws-cdk/pull/18667#issuecomment-1075348390
+// Writeup on performance improvements: https://github.com/functionless/functionless/pull/184#issuecomment-1144767427
 export const deployStack = async (app: App, stack: Stack) => {
   const cloudAssembly = await asyncSynth(app);
 
