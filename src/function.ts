@@ -106,9 +106,11 @@ export interface IFunction<in P, O> {
    *
    * The rule returned will contain the logic:
    *
+   * ```ts
    * when(id, event => event.source === "lambda"
    *    && event["detail-type"] === "Lambda Function Invocation Result - Success"
    *      && event.resources.includes(this.resource.functionArn))
+   * ```
    */
   onSuccess(
     bus: IEventBus<AsyncResponseSuccessEvent<P, O>>,
@@ -125,9 +127,11 @@ export interface IFunction<in P, O> {
    *
    * The rule returned will contain the logic:
    *
+   * ```ts
    * when(id, event => event.source === "lambda"
    *    && event["detail-type"] === "Lambda Function Invocation Result - Success"
    *      && event.resources.includes(this.resource.functionArn))
+   * ```
    */
   onFailure(
     bus: IEventBus<AsyncResponseFailureEvent<P>>,
