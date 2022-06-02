@@ -146,6 +146,23 @@ abstract class FunctionBase<P, O>
           ],
         });
       },
+
+      experimentPrepareRequest: (obj) => obj,
+
+      experimentMakeIntegration: (
+        _stack,
+        requestTemplate,
+        integrationResponses
+      ) => {
+        return new aws_apigateway.LambdaIntegration(this.resource, {
+          proxy: false,
+          passthroughBehavior: aws_apigateway.PassthroughBehavior.NEVER,
+          requestTemplates: {
+            "application/json": requestTemplate,
+          },
+          integrationResponses,
+        });
+      },
     };
   }
 

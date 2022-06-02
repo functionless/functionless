@@ -1,5 +1,6 @@
-import { aws_events, Stack } from "aws-cdk-lib";
+import { aws_apigateway, aws_events, aws_iam, Stack } from "aws-cdk-lib";
 import { Construct } from "constructs";
+import { ApiGatewayVtlIntegration } from "..";
 import { ASL } from "../asl";
 import {
   CallExpr,
@@ -130,6 +131,7 @@ abstract class EventBusBase<E extends EventBusRuleInput>
   readonly eventBusArn: string;
 
   readonly native: NativeIntegration<EventBusBase<E>>;
+  readonly apiGWVtl: ApiGatewayVtlIntegration;
 
   constructor(readonly bus: aws_events.IEventBus) {
     this.eventBusName = bus.eventBusName;
@@ -163,6 +165,45 @@ abstract class EventBusBase<E extends EventBusRuleInput>
             })),
           })
           .promise();
+      },
+    };
+
+    this.apiGWVtl = {
+      integration: (_x, _y) => {
+        throw "TODO";
+      },
+
+      experimentPrepareRequest: (obj) => {
+        return obj;
+      },
+
+      experimentMakeIntegration: (
+        _stack,
+        requestTemplate,
+        integrationResponses
+      ) => {
+        const credentialsRole = new aws_iam.Role(
+          this.bus,
+          "ApiGatewayIntegrationRole",
+          {
+            assumedBy: new aws_iam.ServicePrincipal("apigateway.amazonaws.com"),
+          }
+        );
+
+        this.bus.grantPutEventsTo(credentialsRole);
+
+        return new aws_apigateway.AwsIntegration({
+          service: "events",
+          action: "PutEvents",
+          options: {
+            credentialsRole,
+            passthroughBehavior: aws_apigateway.PassthroughBehavior.NEVER,
+            requestTemplates: {
+              "application/json": requestTemplate,
+            },
+            integrationResponses,
+          },
+        });
       },
     };
   }

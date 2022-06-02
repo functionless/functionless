@@ -13,7 +13,7 @@ import {
 // eslint-disable-next-line import/no-extraneous-dependencies
 import { StepFunctions } from "aws-sdk";
 import { Construct } from "constructs";
-import { ApiGatewayVtlIntegration } from "./api";
+import { ApiGatewayVtlIntegration, stringify } from "./api";
 import { AppSyncVtlIntegration } from "./appsync";
 import {
   ASL,
@@ -555,6 +555,64 @@ abstract class BaseStepFunction<
                 },
               },
             ],
+          },
+        });
+      },
+
+      // TODO: fix this
+      experimentPrepareRequest: (obj) => {
+        // obj.addProperty(
+        //   new PropAssignExpr(
+        //     new StringLiteralExpr("stateMachineArn"),
+        //     new StringLiteralExpr(this.stateMachineArn)
+        //   )
+        // );
+        const stringifiedInput = stringify((obj as any).input);
+        return {
+          input: stringifiedInput,
+          stateMachineArn: this.stateMachineArn,
+        };
+      },
+
+      experimentMakeIntegration: (
+        scope,
+        requestTemplate,
+        integrationResponses
+      ) => {
+        const credentialsRole = new aws_iam.Role(
+          scope,
+          "ApiGatewayIntegrationRole",
+          {
+            assumedBy: new aws_iam.ServicePrincipal("apigateway.amazonaws.com"),
+          }
+        );
+
+        this.grantRead(credentialsRole);
+        if (
+          this.getStepFunctionType() ===
+          aws_stepfunctions.StateMachineType.EXPRESS
+        ) {
+          this.grantStartSyncExecution(credentialsRole);
+        } else {
+          this.grantStartExecution(credentialsRole);
+        }
+
+        // const escapedInput = requestTemplate.replace(/\"/g, '\\"');
+        return new aws_apigateway.AwsIntegration({
+          service: "states",
+          action:
+            this.getStepFunctionType() ===
+            aws_stepfunctions.StateMachineType.EXPRESS
+              ? "StartSyncExecution"
+              : "StartExecution",
+          integrationHttpMethod: "POST",
+          options: {
+            credentialsRole,
+            passthroughBehavior: aws_apigateway.PassthroughBehavior.NEVER,
+            requestTemplates: {
+              "application/json": requestTemplate,
+            },
+            integrationResponses,
           },
         });
       },

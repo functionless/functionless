@@ -1,5 +1,5 @@
 import * as appsync from "@aws-cdk/aws-appsync-alpha";
-import { aws_dynamodb } from "aws-cdk-lib";
+import { aws_apigateway, aws_dynamodb, aws_iam } from "aws-cdk-lib";
 import { JsonFormat } from "typesafe-dynamodb";
 import {
   NativeBinaryAttribute,
@@ -9,7 +9,6 @@ import {
   ExpressionAttributeNames,
   ExpressionAttributeValues,
 } from "typesafe-dynamodb/lib/expression-attributes";
-
 // @ts-ignore - imported for typedoc
 import { TableKey } from "typesafe-dynamodb/lib/key";
 import { Narrow } from "typesafe-dynamodb/lib/narrow";
@@ -308,6 +307,50 @@ export class Table<
           });
         },
         ...integration.appSyncVtl,
+      },
+      apiGWVtl: {
+        integration: (_x, _y) => {
+          throw "TODO";
+        },
+
+        experimentPrepareRequest: (obj) => {
+          // obj.addProperty(
+          //   new PropAssignExpr(
+          //     new StringLiteralExpr("tableName"),
+          //     new StringLiteralExpr(this.resource.node.addr)
+          //   )
+          // );
+          return {
+            ...obj,
+            tableName: this.resource.node.addr,
+          };
+        },
+
+        experimentMakeIntegration: (api, template, integrationResponses) => {
+          const credentialsRole = new aws_iam.Role(
+            api,
+            "ApiGatewayIntegrationRole",
+            {
+              assumedBy: new aws_iam.ServicePrincipal(
+                "apigateway.amazonaws.com"
+              ),
+            }
+          );
+
+          return new aws_apigateway.AwsIntegration({
+            service: "dynamodb",
+            action: methodName,
+            integrationHttpMethod: "POST",
+            options: {
+              credentialsRole,
+              passthroughBehavior: aws_apigateway.PassthroughBehavior.NEVER,
+              requestTemplates: {
+                "application/json": template,
+              },
+              integrationResponses,
+            },
+          });
+        },
       },
       unhandledContext(kind, contextKind) {
         throw new Error(

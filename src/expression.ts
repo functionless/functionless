@@ -442,6 +442,10 @@ export class ObjectLiteralExpr extends BaseExpr<"ObjectLiteralExpr"> {
       return false;
     });
   }
+  public addProperty(prop: ObjectElementExpr) {
+    prop.setParent(this);
+    this.properties.push(prop);
+  }
 }
 
 export const isPropAssignExpr = typeGuard("PropAssignExpr");

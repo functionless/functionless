@@ -1,21 +1,25 @@
 import { aws_apigateway } from "aws-cdk-lib";
+import { Construct } from "constructs";
+import { isTemplateExpr } from ".";
 import { FunctionDecl, isFunctionDecl } from "./declaration";
 import { isErr } from "./error";
 import {
+  Identifier,
   isArrayLiteralExpr,
   isBooleanLiteralExpr,
+  isCallExpr,
   isIdentifier,
+  isNullLiteralExpr,
   isNumberLiteralExpr,
   isObjectLiteralExpr,
   isPropAccessExpr,
-  isPropAssignExpr,
   isStringLiteralExpr,
+  ObjectLiteralExpr,
   PropAccessExpr,
 } from "./expression";
-import { Function } from "./function";
+import { findIntegration, Integration, IntegrationImpl } from "./integration";
 import { FunctionlessNode } from "./node";
 import { isReturnStmt } from "./statement";
-import { ExpressStepFunction } from "./step-function";
 
 /**
  * HTTP Methods that API Gateway supports.
@@ -70,9 +74,9 @@ type ResponseTransformerFunction<IntegrationResponse, MethodResponse> = (
 ) => MethodResponse;
 
 // TODO: support other types
-type IntegrationTarget<IntegrationRequest, IntegrationResponse> =
-  | Function<IntegrationRequest, IntegrationResponse>
-  | ExpressStepFunction<IntegrationRequest, IntegrationResponse>;
+type IntegrationTarget<IntegrationRequest, IntegrationResponse> = Integration<
+  (req: IntegrationRequest) => IntegrationResponse
+>;
 
 export abstract class BaseApiIntegration {
   /**
@@ -130,6 +134,20 @@ export class ApiIntegrations {
     >
   ): AwsApiIntegration<typeof props> {
     return new AwsApiIntegration(props);
+  }
+
+  public static experimental<
+    Request extends ApiRequest<any, any, any, any>,
+    IntegrationResponse,
+    MethodResponse
+  >(
+    props: ExperimentalIntegrationProps<
+      Request,
+      IntegrationResponse,
+      MethodResponse
+    >
+  ) {
+    return new ExperimentalIntegration(props);
   }
 }
 
@@ -191,6 +209,7 @@ export class MockApiIntegration<
     const responseEntries: [string, FunctionDecl][] = Object.entries(
       this.responses
     );
+    // @ts-ignore WTF???
     const integrationResponses: aws_apigateway.IntegrationResponse[] =
       responseEntries.map(([statusCode, fn]) => ({
         statusCode,
@@ -202,7 +221,7 @@ export class MockApiIntegration<
 
     const integration = new aws_apigateway.MockIntegration({
       requestTemplates: {
-        "application/json": requestTemplate,
+        "application/json": requestTemplate[1],
       },
       integrationResponses,
     });
@@ -213,6 +232,83 @@ export class MockApiIntegration<
 
     // TODO: support requestParameters, authorizers, models and validators
     resource.addMethod(httpMethod, integration, {
+      methodResponses,
+    });
+  }
+}
+
+export interface ExperimentalIntegrationProps<
+  Request extends ApiRequest<any, any, any, any>,
+  IntegrationResponse,
+  MethodResponse
+> {
+  request: RequestTransformerFunction<Request, IntegrationResponse>;
+  response: ResponseTransformerFunction<IntegrationResponse, MethodResponse>;
+  errors: { [statusCode: number]: () => any };
+}
+
+export class ExperimentalIntegration<
+  Props extends ExperimentalIntegrationProps<any, any, any>
+> extends BaseApiIntegration {
+  private readonly request: FunctionDecl;
+  private readonly response: FunctionDecl;
+  private readonly errors: { [statusCode: number]: FunctionDecl };
+
+  public constructor(props: Props) {
+    super();
+    this.request = validateFunctionDecl(props.request);
+    this.response = validateFunctionDecl(props.response);
+    this.errors = Object.fromEntries(
+      Object.entries(props.errors).map(([k, v]) => [k, validateFunctionDecl(v)])
+    );
+  }
+
+  public addMethod(
+    httpMethod: HttpMethod,
+    resource: aws_apigateway.Resource
+  ): void {
+    const [integration, requestTemplate] = toVTL(this.request, "request");
+    const [, responseTemplate] = toVTL(this.response, "response");
+
+    const errorResponses: aws_apigateway.IntegrationResponse[] = Object.entries(
+      this.errors
+    ).map(([statusCode, fn]) => ({
+      // TODO
+      statusCode: statusCode,
+      selectionPattern: `^${statusCode}$`,
+      responseTemplates: {
+        "application/json": toVTL(fn, "response")[1],
+      },
+    }));
+
+    const integrationResponses: aws_apigateway.IntegrationResponse[] = [
+      {
+        // TODO
+        statusCode: "200",
+        responseTemplates: {
+          "application/json": responseTemplate,
+        },
+      },
+      ...errorResponses,
+    ];
+
+    // TODO: resource is not the right scope, prevents adding 2 methods to the resource
+    // because of the IAM roles created
+    // should `this` be a Method?
+    const apiGwIntegration = integration!.apiGWVtl.experimentMakeIntegration(
+      resource,
+      requestTemplate,
+      integrationResponses
+    );
+
+    const methodResponses = [
+      { statusCode: "200" },
+      ...Object.keys(this.errors).map((statusCode) => ({
+        statusCode,
+      })),
+    ];
+
+    resource.addMethod(httpMethod, apiGwIntegration, {
       methodResponses,
     });
   }
@@ -271,10 +367,10 @@ export class AwsApiIntegration<
     httpMethod: HttpMethod,
     resource: aws_apigateway.Resource
   ): void {
-    const requestTemplate = toVTL(this.request, "request");
-    const responseTemplate = toVTL(this.response, "response");
+    const [, requestTemplate] = toVTL(this.request, "request");
+    const [, responseTemplate] = toVTL(this.response, "response");
 
-    const apiGWIntegration = this.integration.apiGWVtl.integration(
+    const apiGWIntegration = this.integration.apiGWVtl!.integration(
       requestTemplate,
       responseTemplate
     );
@@ -305,68 +401,202 @@ export class AwsApiIntegration<
  * @param node Function to interpret.
  * @param template Whether we are creating a request or response mapping template.
  */
-function toVTL(node: FunctionDecl, template: "request" | "response") {
-  const statements = node.body.statements.map((stmt) => inner(stmt)).join("\n");
-
-  if (template === "request") {
-    return `#set($inputRoot = $input.path('$'))${statements}`;
-  } else {
-    return statements;
+export function toVTL(
+  node: FunctionDecl,
+  location: "request" | "response"
+): [IntegrationImpl<any> | undefined, string] {
+  if (node.body.statements.length !== 1) {
+    throw new Error(`Expected 1 statement in `);
   }
 
-  function inner(node: FunctionlessNode): string {
-    if (isBooleanLiteralExpr(node) || isNumberLiteralExpr(node)) {
-      return node.value.toString();
-    } else if (isStringLiteralExpr(node)) {
-      return wrapStr(node.value);
-    } else if (isArrayLiteralExpr(node)) {
-      return `[${node.children.map(inner).join(",")}]`;
-    } else if (isObjectLiteralExpr(node)) {
-      return `{${node.properties.map(inner).join(",")}}`;
-    } else if (isPropAccessExpr(node)) {
-      if (descendedFromFunctionParameter(node)) {
-        let param;
-        if (template === "request") {
-          switch (node.expr.name) {
-            case "body":
-              param = `$inputRoot.${node.name}`;
-              break;
-            case "pathParameters":
-              param = `$input.params().path.${node.name}`;
-              break;
-            case "queryStringParameters":
-              param = `$input.params().querystring.${node.name}`;
-              break;
-            case "headers":
-              param = `$input.params().header.${node.name}`;
-              break;
-            default:
-              throw new Error("Unknown parameter type.");
-          }
-          if (node.type === "string") {
-            return wrapStr(param);
-          }
-        } else {
-          param = `$inputRoot.${node.name}`;
-          if (node.type === "string") {
-            return wrapStr(param);
-          }
-        }
-        return param;
-      }
-      return `${inner(node.expr)}.${node.name};`;
-    } else if (isPropAssignExpr(node)) {
-      return `${inner(node.name)}: ${inner(node.expr)}`;
-    } else if (isReturnStmt(node)) {
-      return inner(node.expr);
+  const stmt = node.body.statements[0];
+
+  if (!isReturnStmt(stmt)) {
+    throw new Error(`Expected return statement in `);
+  }
+
+  const call = stmt.expr;
+
+  if (location === "request") {
+    if (!isCallExpr(call)) {
+      throw new Error(`Expected call expression in `);
     }
 
-    throw new Error(`Unsupported node type: ${node.kind}`);
-  }
-}
+    // TODO: validate args
+    const argObj = inner(call.args[0].expr! as ObjectLiteralExpr);
+    const serviceCall = findIntegration(call);
 
-function wrapStr(str: string): string {
-  return `"${str}"`;
+    const prepared = serviceCall!.apiGWVtl.experimentPrepareRequest(argObj);
+
+    console.log(prepared);
+
+    const x = stringify(prepared);
+    const template = `#set($inputRoot = $input.path('$'))\n${x}`;
+    return [serviceCall, template];
+  } else {
+    if (!isObjectLiteralExpr(call)) {
+      throw "TODO not an object";
+    }
+    const template = `#set($inputRoot = $input.path('$'))\n${stringify(
+      inner(call)
+    )}`;
+    return [undefined, template];
+  }
+
+  function inner(node: FunctionlessNode): any {
+    if (
+      isBooleanLiteralExpr(node) ||
+      isNumberLiteralExpr(node) ||
+      isStringLiteralExpr(node) ||
+      isNullLiteralExpr(node)
+    ) {
+      return node.value;
+    } else if (isArrayLiteralExpr(node)) {
+      return node.children.map(inner);
+    } else if (isObjectLiteralExpr(node)) {
+      return Object.fromEntries(
+        node.properties.map((prop) => {
+          switch (prop.kind) {
+            case "PropAssignExpr":
+              return [inner(prop.name), inner(prop.expr)];
+            case "SpreadAssignExpr":
+              throw "TODO SpreadAssignExpr";
+          }
+        })
+      );
+    } else if (isPropAccessExpr(node)) {
+      const path = pathFromFunctionParameter(node);
+      console.log(path);
+
+      if (path) {
+        if (location === "response") {
+          const c: Ref = {
+            __refType: node.type! as any,
+            value: `$inputRoot.${path.slice(1).join(".")}`,
+          };
+          return c;
+        }
+        // we don't need the function param name
+        const [paramLocation, ...rest] = path.slice(1);
+
+        let param;
+        switch (paramLocation) {
+          case "body":
+            param = `$inputRoot.${rest.join(".")}`;
+            break;
+          case "pathParameters":
+            param = `$input.params().path.${rest.join(".")}`;
+            break;
+          case "queryStringParameters":
+            param = `$input.params().querystring.${rest.join(".")}`;
+            break;
+          case "headers":
+            param = `$input.params().headers.${rest.join(".")}`;
+            break;
+          default:
+            throw new Error("Unknown parameter type.");
+        }
+
+        const c: Ref = { __refType: node.type! as any, value: param };
+        return c;
+      }
+      return `${inner(node.expr)}.${node.name};`;
+    } else if (isTemplateExpr(node)) {
+      // TODO: not right, compare to vtl.ts
+      return inner(node.exprs[0]);
+    }
+
+    throw new Error("Method not implemented.");
+  }
+
+  // const statements = node.body.statements.map((stmt) => inner(stmt)).join("\n");
+
+  // if (template === "request") {
+  //   return [integration, `#set($inputRoot = $input.path('$'))\n${statements}`];
+  // } else {
+  //   return [integration, statements];
+  // }
+
+  // function inner(node: FunctionlessNode): string {
+  //   if (isBooleanLiteralExpr(node) || isNumberLiteralExpr(node)) {
+  //     return node.value.toString();
+  //   } else if (isStringLiteralExpr(node)) {
+  //     return wrapStr(node.value);
+  //   } else if (isArrayLiteralExpr(node)) {
+  //     return `[${node.children.map(inner).join(",")}]`;
+  //   } else if (isObjectLiteralExpr(node)) {
+  //     return `{${node.properties.map(inner).join(",")}}`;
+  //   } else if (isArgument(node)) {
+  //     // TODO: handle undefined
+  //     return inner(node.expr!);
+  //   } else if (isCallExpr(node)) {
+  //     const serviceCall = findIntegration(node);
+  //     if (serviceCall) {
+  //       const x = node.children[1];
+  //       if (!isArgument(x)) {
+  //         throw "Not an argument";
+  //       }
+  //       if (!isObjectLiteralExpr(x.expr!)) {
+  //         throw "Not an object literal";
+  //       }
+
+  //       const y = serviceCall.apiGWVtl.experimentPrepareRequest(x.expr);
+
+  //       integration = serviceCall;
+
+  //       return inner(y as any);
+  //     } else {
+  //       throw "TODO";
+  //     }
+  //   } else if (isPropAccessExpr(node)) {
+  //     const path = pathFromFunctionParameter(node);
+  //     if (path) {
+  //       // we don't need the function param name
+  //       const [location, ...rest] = path.slice(1);
+
+  //       let param;
+  //       if (template === "request") {
+  //         switch (location) {
+  //           case "body":
+  //             param = `$inputRoot.${rest.join(".")}`;
+  //             break;
+  //           case "pathParameters":
+  //             param = `$inputRoot.${rest.join(".")}`;
+  //             break;
+  //           case "queryStringParameters":
+  //             param = `$inputRoot.${rest.join(".")}`;
+  //             break;
+  //           case "headers":
+  //             param = `$inputRoot.${rest.join(".")}`;
+  //             break;
+  //           default:
+  //             throw new Error("Unknown parameter type.");
+  //         }
+  //         if (node.type === "string") {
+  //           return wrapStr(param);
+  //         }
+  //       } else {
+  //         param = `$inputRoot.${node.name}`;
+  //         if (node.type === "string") {
+  //           return wrapStr(param);
+  //         }
+  //       }
+  //       return param;
+  //     }
+  //     return `${inner(node.expr)}.${node.name};`;
+  //   } else if (isPropAssignExpr(node)) {
+  //     return `${inner(node.name)}: ${inner(node.expr)}`;
+  //   } else if (isReturnStmt(node)) {
+  //     return inner(node.expr);
+  //   } else if (isTemplateExpr(node)) {
+  //     // TODO: not right, compare to vtl.ts
+  //     return inner(node.exprs[0]);
+  //   } else if (isIdentifier(node)) {
+  //     return node.name;
+  //   }
+
+  //   throw new Error(`Unsupported node type: ${node.kind}`);
+  // }
 }
 
 function validateFunctionDecl(a: any): FunctionDecl {
@@ -379,20 +609,26 @@ function validateFunctionDecl(a: any): FunctionDecl {
   }
 }
 
-const isFunctionParameter = (node: FunctionlessNode) => {
+function isFunctionParameter(node: FunctionlessNode): node is Identifier {
   if (!isIdentifier(node)) return false;
   const ref = node.lookup();
   return ref?.kind === "ParameterDecl" && ref.parent?.kind === "FunctionDecl";
-};
+}
 
-const descendedFromFunctionParameter = (
-  node: PropAccessExpr
-): node is PropAccessExpr & { expr: PropAccessExpr } => {
-  if (isFunctionParameter(node.expr)) return true;
-  return (
-    isPropAccessExpr(node.expr) && descendedFromFunctionParameter(node.expr)
-  );
-};
+function pathFromFunctionParameter(node: PropAccessExpr): string[] | undefined {
+  if (isFunctionParameter(node.expr)) {
+    return [node.expr.name, node.name];
+  } else if (isPropAccessExpr(node.expr)) {
+    const path = pathFromFunctionParameter(node.expr);
+    if (path) {
+      return [...path, node.name];
+    } else {
+      return undefined;
+    }
+  } else {
+    return undefined;
+  }
+}
 
 /**
  * Hooks used to create API Gateway integrations.
@@ -402,4 +638,44 @@ export interface ApiGatewayVtlIntegration {
     requestTemplate: string,
     responseTemplate: string
   ) => aws_apigateway.Integration;
+
+  experimentPrepareRequest: (obj: object) => object;
+
+  experimentMakeIntegration: (
+    scope: Construct,
+    requestTemplate: string,
+    responses: aws_apigateway.IntegrationResponse[]
+  ) => aws_apigateway.Integration;
+}
+
+type Ref =
+  | { __refType: "string"; value: string }
+  | { __refType: "number"; value: string }
+  | { __refType: "boolean"; value: string };
+
+const isRef = (x: any): x is Ref => x.__refType !== undefined;
+
+export function stringify(obj: any): string {
+  if (isRef(obj)) {
+    switch (obj.__refType) {
+      case "string":
+        return `"${obj.value}"`;
+      case "number":
+        return obj.value;
+      case "boolean":
+        return obj.value;
+    }
+  }
+  if (typeof obj === "string") {
+    return `"${obj}"`;
+  } else if (typeof obj === "number" || typeof obj === "boolean") {
+    return obj.toString();
+  } else if (Array.isArray(obj)) {
+    return `[${obj.map(stringify).join(",")}]`;
+  } else if (typeof obj === "object") {
+    const props = Object.entries(obj).map(([k, v]) => `"${k}":${stringify(v)}`);
+    return `{${props.join(",")}}`;
+  }
+
+  throw "GOOFED";
 }
