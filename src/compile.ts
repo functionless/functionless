@@ -582,26 +582,6 @@ export function compile(
         );
       }
 
-      function visitApiIntegrationMapperProp(
-        prop: ts.PropertyAssignment
-      ): ts.PropertyAssignment {
-        const { initializer } = prop;
-        if (
-          !ts.isFunctionExpression(initializer) &&
-          !ts.isArrowFunction(initializer)
-        ) {
-          throw new Error(
-            `Expected mapping property of an ApiIntegration to be a function. Found ${initializer.getText()}.`
-          );
-        }
-
-        return ts.factory.updatePropertyAssignment(
-          prop,
-          prop.name,
-          errorBoundary(() => toFunction("FunctionDecl", initializer))
-        );
-      }
-
       function visitApiIntegrationResponsesProp(
         prop: ts.PropertyAssignment
       ): ts.PropertyAssignment {
@@ -620,6 +600,25 @@ export function compile(
             )
           )
         );
+      }
+
+      function visitApiIntegrationMapperProp(
+        prop: ts.PropertyAssignment
+      ): ts.PropertyAssignment {
+        const { initializer } = prop;
+        const toFunc = errorBoundary(() => {
+          if (
+            !ts.isFunctionExpression(initializer) &&
+            !ts.isArrowFunction(initializer)
+          ) {
+            throw new Error(
+              `Expected mapping property of an ApiIntegration to be a function. Found ${initializer.getText()}.`
+            );
+          }
+          return toFunction("FunctionDecl", initializer);
+        });
+
+        return ts.factory.updatePropertyAssignment(prop, prop.name, toFunc);
       }
 
       function toExpr(

@@ -1,6 +1,6 @@
 import * as ts from "typescript";
 import * as tsserver from "typescript/lib/tsserverlibrary";
-import { BaseApiIntegration } from "./api";
+import { ApiIntegrations, BaseApiIntegration } from "./api";
 import { AppsyncResolver } from "./appsync";
 import { EventBus, EventBusRule } from "./event-bridge";
 import { EventBusTransform } from "./event-bridge/transform";
@@ -225,16 +225,17 @@ export function makeFunctionlessChecker(
   function isApiIntegrationsStaticMethod(
     node: ts.Node
   ): node is ApiIntegrationsStaticMethodInterface {
-    const x =
+    return (
       ts.isCallExpression(node) &&
       ts.isPropertyAccessExpression(node.expression) &&
       (node.expression.name.text === "mock" ||
         node.expression.name.text == "aws") &&
       ts.isIdentifier(node.expression.expression) &&
-      // TODO: is this enough? should we grab the type and make sure it
-      // has FunctionlessKind?
-      node.expression.expression.text === "ApiIntegrations";
-    return x;
+      isFunctionlessClassOfKind(
+        node.expression.expression,
+        ApiIntegrations.FunctionlessType
+      )
+    );
   }
 
   function isApiIntegration(node: ts.Node): node is ApiIntegrationInterface {

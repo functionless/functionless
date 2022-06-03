@@ -1,5 +1,6 @@
 import { aws_apigateway } from "aws-cdk-lib";
 import { Construct } from "constructs";
+import { isParameterDecl } from ".";
 import { FunctionDecl, isFunctionDecl } from "./declaration";
 import { isErr } from "./error";
 import {
@@ -100,6 +101,11 @@ export abstract class BaseApiIntegration {
  * inference.
  */
 export class ApiIntegrations {
+  /**
+   * Identify subclasses as API integrations to the Functionless plugin
+   */
+  public static readonly FunctionlessType = "ApiIntegrations";
+
   /**
    * Create a {@link MockApiIntegration}.
    */
@@ -309,7 +315,7 @@ export class AwsApiIntegration<
     // TODO: resource is not the right scope, prevents adding 2 methods to the resource
     // because of the IAM roles created
     // should `this` be a Method?
-    const apiGwIntegration = integration!.apiGWVtl.makeIntegration(
+    const apiGwIntegration = integration!.apiGWVtl.createIntegration(
       resource,
       requestTemplate,
       integrationResponses
@@ -415,12 +421,12 @@ export function toVTL(
           }
         })
       );
-    } else if (isArgument(node)) {
-      return inner(node);
+    } else if (isArgument(node) && node.expr) {
+      return inner(node.expr);
     } else if (isPropAccessExpr(node)) {
       // ignore the function param name, we'll replace it with the VTL
       // mapping template inputs
-      const path = pathFromFunctionParameter(node)?.slice(1);
+      const [_, ...path] = pathFromFunctionParameter(node) ?? [];
 
       if (path) {
         if (location === "response") {
@@ -516,7 +522,7 @@ function validateFunctionDecl(a: any): FunctionDecl {
 function isFunctionParameter(node: FunctionlessNode): node is Identifier {
   if (!isIdentifier(node)) return false;
   const ref = node.lookup();
-  return ref?.kind === "ParameterDecl" && ref.parent?.kind === "FunctionDecl";
+  return isParameterDecl(ref) && isFunctionDecl(ref.parent);
 }
 
 /**
@@ -551,7 +557,7 @@ export interface ApiGatewayVtlIntegration {
   /**
    * Construct an API GW integration.
    */
-  makeIntegration: (
+  createIntegration: (
     scope: Construct,
     requestTemplate: string,
     responses: aws_apigateway.IntegrationResponse[]

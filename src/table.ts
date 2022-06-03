@@ -316,7 +316,7 @@ export class Table<
           };
         },
 
-        makeIntegration: (api, template, integrationResponses) => {
+        createIntegration: (api, template, integrationResponses) => {
           const credentialsRole = new aws_iam.Role(
             api,
             "ApiGatewayIntegrationRole",

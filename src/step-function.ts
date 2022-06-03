@@ -519,7 +519,7 @@ abstract class BaseStepFunction<
         };
       },
 
-      makeIntegration: (scope, requestTemplate, integrationResponses) => {
+      createIntegration: (scope, requestTemplate, integrationResponses) => {
         const credentialsRole = new aws_iam.Role(
           scope,
           "ApiGatewayIntegrationRole",

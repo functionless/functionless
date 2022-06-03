@@ -131,7 +131,7 @@ abstract class FunctionBase<P, O>
     this.apiGWVtl = {
       prepareRequest: (obj) => obj,
 
-      makeIntegration: (_scope, requestTemplate, integrationResponses) => {
+      createIntegration: (_scope, requestTemplate, integrationResponses) => {
         return new aws_apigateway.LambdaIntegration(this.resource, {
           proxy: false,
           passthroughBehavior: aws_apigateway.PassthroughBehavior.NEVER,
