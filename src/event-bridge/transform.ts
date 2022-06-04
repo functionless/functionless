@@ -1,9 +1,13 @@
 import { aws_events } from "aws-cdk-lib";
 import { FunctionDecl } from "../declaration";
-import { IFunction } from "../function";
-import { StepFunction, ExpressStepFunction } from "../step-function";
+import { Integration } from "../integration";
+import {
+  DynamicProps,
+  IEventBus,
+  IntegrationWithEventBus,
+  pipe,
+} from "./event-bus";
 import { IRule } from "./rule";
-import { LambdaTargetProps, pipe, StateMachineTargetProps } from "./target";
 import { synthesizeEventBridgeTargets } from "./target-input";
 import { Event } from "./types";
 
@@ -56,25 +60,33 @@ export class EventTransform<T extends Event, P> {
    *
    * @see Rule.pipe for more details on pipe.
    */
-  pipe(props: LambdaTargetProps<P>): void;
-  pipe(func: IFunction<P, any>): void;
-  pipe(props: StateMachineTargetProps<P>): void;
-  pipe(props: StepFunction<P, any>): void;
-  pipe(props: ExpressStepFunction<P, any>): void;
+  pipe<
+    I extends IntegrationWithEventBus<P, Props>,
+    Props extends object | undefined
+  >(
+    integration: NonEventBusIntegration<I>,
+    ...props: Parameters<DynamicProps<Props>>
+  ): void;
   pipe(
     callback: (
       targetInput: aws_events.RuleTargetInput
     ) => aws_events.IRuleTarget
   ): void;
-  pipe(
-    resource:
-      | IFunction<P, any>
-      | LambdaTargetProps<P>
-      | StateMachineTargetProps<P>
-      | StepFunction<P, any>
-      | ExpressStepFunction<P, any>
-      | ((targetInput: aws_events.RuleTargetInput) => aws_events.IRuleTarget)
+  pipe<
+    I extends IntegrationWithEventBus<P, Props>,
+    Props extends object | undefined
+  >(
+    integration:
+      | NonEventBusIntegration<I>
+      | ((targetInput: aws_events.RuleTargetInput) => aws_events.IRuleTarget),
+    ...props: Parameters<DynamicProps<Props>>
   ): void {
-    pipe(this.rule, resource as any, this.targetInput);
+    pipe(this.rule, integration, props[0] as Props, this.targetInput);
   }
 }
+
+/**
+ * EventBus to EventBus input transform is not allowed.
+ */
+export type NonEventBusIntegration<I extends Integration<any, any, any>> =
+  I extends IEventBus<any> ? never : I;

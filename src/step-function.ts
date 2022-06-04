@@ -3,6 +3,7 @@ import {
   Arn,
   ArnFormat,
   aws_cloudwatch,
+  aws_events_targets,
   aws_iam,
   aws_stepfunctions,
   Resource,
@@ -23,7 +24,13 @@ import {
 } from "./asl";
 import { assertDefined, assertNodeKind } from "./assert";
 import { FunctionDecl, isFunctionDecl } from "./declaration";
-import { EventBus, PredicateRuleBase, Rule } from "./event-bridge";
+import {
+  EventBus,
+  PredicateRuleBase,
+  Rule,
+  EventBusTargetIntegration,
+} from "./event-bridge";
+import { makeEventBusIntegration } from "./event-bridge/event-bus";
 import { Event } from "./event-bridge/types";
 import {
   CallExpr,
@@ -33,7 +40,7 @@ import {
   isSpreadAssignExpr,
 } from "./expression";
 import { NativeIntegration, PrewarmClients } from "./function";
-import { Integration, makeIntegration } from "./integration";
+import { Integration, IntegrationInput, makeIntegration } from "./integration";
 import { AnyFunction, ensureItemOf } from "./util";
 import { VTL } from "./vtl";
 
@@ -53,8 +60,8 @@ export namespace $SFN {
    * @see https://docs.aws.amazon.com/step-functions/latest/dg/amazon-states-language-wait-state.html
    */
   export const waitFor = makeStepFunctionIntegration<
-    (seconds: number) => void,
-    "waitFor"
+    "waitFor",
+    (seconds: number) => void
   >("waitFor", {
     asl(call) {
       const seconds = call.args[0].expr;
@@ -86,8 +93,8 @@ export namespace $SFN {
    * @see https://docs.aws.amazon.com/step-functions/latest/dg/amazon-states-language-wait-state.html
    */
   export const waitUntil = makeStepFunctionIntegration<
-    (timestamp: string) => void,
-    "waitUntil"
+    "waitUntil",
+    (timestamp: string) => void
   >("waitUntil", {
     asl(call) {
       const timestamp = call.args[0]?.expr;
@@ -150,7 +157,7 @@ export namespace $SFN {
     ): void;
   }
 
-  export const forEach = makeStepFunctionIntegration<ForEach, "forEach">(
+  export const forEach = makeStepFunctionIntegration<"forEach", ForEach>(
     "forEach",
     {
       asl(call, context) {
@@ -202,7 +209,7 @@ export namespace $SFN {
     ): U[];
   }
 
-  export const map = makeStepFunctionIntegration<Map, "map">("map", {
+  export const map = makeStepFunctionIntegration<"map", Map>("map", {
     asl(call, context) {
       return mapOrForEach(call, context);
     },
@@ -284,14 +291,14 @@ export namespace $SFN {
    * @param paths
    */
   export const parallel = makeStepFunctionIntegration<
+    "parallel",
     <Paths extends readonly (() => any)[]>(
       ...paths: Paths
     ) => {
       [i in keyof Paths]: i extends `${number}`
         ? ReturnType<Extract<Paths[i], () => any>>
         : Paths[i];
-    },
-    "parallel"
+    }
   >("parallel", {
     asl(call, context) {
       const paths = call.getArgument("paths")?.expr;
@@ -318,11 +325,11 @@ export namespace $SFN {
   });
 }
 
-function makeStepFunctionIntegration<F extends AnyFunction, K extends string>(
+function makeStepFunctionIntegration<K extends string, F extends AnyFunction>(
   methodName: K,
-  integration: Omit<Integration, "kind">
+  integration: Omit<IntegrationInput<`$SFN.${K}`, F>, "kind">
 ): F {
-  return makeIntegration<F, `$SFN.${K}`>({
+  return makeIntegration<`$SFN.${K}`, F>({
     kind: `$SFN.${methodName}`,
     unhandledContext(kind, context) {
       throw new Error(
@@ -366,6 +373,9 @@ interface StepFunctionStatusChangedEvent
     "aws.states"
   > {}
 
+interface StepFunctionEventBusTargetProps
+  extends Omit<aws_events_targets.SfnStateMachineProps, "input"> {}
+
 abstract class BaseStepFunction<
     P extends Record<string, any> | undefined,
     O,
@@ -375,7 +385,11 @@ abstract class BaseStepFunction<
   extends Resource
   implements
     aws_stepfunctions.IStateMachine,
-    Integration<(input: CallIn) => CallOut>
+    Integration<
+      "StepFunction",
+      (input: CallIn) => CallOut,
+      EventBusTargetIntegration<P, StepFunctionEventBusTargetProps | undefined>
+    >
 {
   readonly kind = "StepFunction";
   readonly functionlessKind = "StepFunction";
@@ -386,7 +400,7 @@ abstract class BaseStepFunction<
   readonly appSyncVtl: AppSyncVtlIntegration;
 
   // @ts-ignore
-  readonly __functionBrand: (arg: P) => CallOut;
+  readonly __functionBrand: (arg: CallIn) => CallOut;
 
   readonly stateMachineName: string;
   readonly stateMachineArn: string;
@@ -596,6 +610,18 @@ abstract class BaseStepFunction<
       },
     };
   }
+
+  public readonly eventBus = makeEventBusIntegration<
+    P,
+    StepFunctionEventBusTargetProps | undefined
+  >({
+    target: (props, targetInput) => {
+      return new aws_events_targets.SfnStateMachine(this, {
+        ...props,
+        input: targetInput,
+      });
+    },
+  });
 
   private statusChangeEventDocument() {
     return {
@@ -1357,8 +1383,8 @@ export class StepFunction<
   }
 
   public describeExecution = makeIntegration<
-    (executionArn: string) => AWS.StepFunctions.DescribeExecutionOutput,
-    "StepFunction.describeExecution"
+    "StepFunction.describeExecution",
+    (executionArn: string) => AWS.StepFunctions.DescribeExecutionOutput
   >({
     kind: "StepFunction.describeExecution",
     appSyncVtl: this.appSyncIntegration({

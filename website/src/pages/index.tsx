@@ -1,8 +1,9 @@
-import clsx from "clsx";
-import Layout from "@theme/Layout";
+/* eslint-disable import/no-unresolved */
 import Link from "@docusaurus/Link";
-import styles from "./index.module.css";
+import Layout from "@theme/Layout";
+import clsx from "clsx";
 import HomepageFeatures from "../components/HomepageFeatures";
+import styles from "./index.module.css";
 
 export default function Home(): JSX.Element {
   return (

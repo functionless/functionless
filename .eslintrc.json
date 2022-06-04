@@ -197,7 +197,8 @@
       "parserOptions": {
         "project": [
           "./tsconfig.dev.json",
-          "./test-app/tsconfig.json"
+          "./test-app/tsconfig.json",
+          "./website/tsconfig.json"
         ]
       }
     }
