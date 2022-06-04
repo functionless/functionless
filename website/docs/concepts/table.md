@@ -5,7 +5,7 @@ sidebar_position: 1
 
 # Table
 
-The `Table` Construct creates a new DynamoDB Table and exposes methods for reading and writing its data from [Integrations](./integration.md).
+The `Table` Construct creates a new DynamoDB Table and exposes methods for reading and writing its data from [Integrations](./integration).
 
 ## Create a new Table
 
@@ -93,7 +93,7 @@ new StepFunction(scope, "Function", (itemId: string) => {
 });
 ```
 
-Remember: plumbing such as IAM Policies and Environment Variables are automatically inferred from the API calls. See [Integration](./integration.md) for more information.
+Remember: plumbing such as IAM Policies and Environment Variables are automatically inferred from the API calls. See [Integration](./integration) for more information.
 
 ## Call from an Appsync Resolver
 

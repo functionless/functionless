@@ -1,7 +1,3 @@
----
-sidebar_position: 0
----
-
 # Integration
 
 An **Integration** is a connection between two services, for example an AWS Step Function calling a Lambda Function, or a Lambda Function writing to a DynamoDB Table, etc.

@@ -145,4 +145,4 @@ const catLambdaFunction = new Function(
 catPeopleEvents.pipe(catLambdaFunction);
 ```
 
-See [Integrations](./concepts/integration.md) for more information on each of these integration patterns.
+See [Integrations](./concepts/integration) for more information on each of these integration patterns.
