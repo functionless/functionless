@@ -28,7 +28,7 @@
       "name": "build:website",
       "steps": [
         {
-          "exec": "npx tsc && cd ./website && yarn && yarn build"
+          "exec": "NODE_OPTIONS=--max_old_space_size=4096 npx tsc && cd ./website && yarn && yarn build"
         }
       ]
     },
