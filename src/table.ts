@@ -16,7 +16,7 @@ import { Narrow } from "typesafe-dynamodb/lib/narrow";
 import type { AppSyncVtlIntegration } from "./appsync";
 import { assertNodeKind } from "./assert";
 import { ObjectLiteralExpr } from "./expression";
-import { Integration, makeIntegration } from "./integration";
+import { IntegrationInput, makeIntegration } from "./integration";
 import { AnyFunction } from "./util";
 import { VTL } from "./vtl";
 
@@ -81,6 +81,7 @@ export class Table<
    */
 
   public getItem = this.makeTableIntegration<
+    "getItem",
     <
       Key extends TableKey<
         Item,
@@ -91,8 +92,7 @@ export class Table<
     >(input: {
       key: Key;
       consistentRead?: boolean;
-    }) => Narrow<Item, AttributeKeyToObject<Key>, JsonFormat.Document>,
-    "getItem"
+    }) => Narrow<Item, AttributeKeyToObject<Key>, JsonFormat.Document>
   >("getItem", {
     appSyncVtl: {
       request(call, vtl) {
@@ -117,6 +117,7 @@ export class Table<
    * @see https://docs.aws.amazon.com/appsync/latest/devguide/resolver-mapping-template-reference-dynamodb.html#aws-appsync-resolver-mapping-template-reference-dynamodb-putitem
    */
   public putItem = this.makeTableIntegration<
+    "putItem",
     <
       Key extends TableKey<
         Item,
@@ -135,8 +136,7 @@ export class Table<
       >;
       condition?: DynamoExpression<ConditionExpression>;
       _version?: number;
-    }) => Narrow<Item, AttributeKeyToObject<Key>, JsonFormat.Document>,
-    "putItem"
+    }) => Narrow<Item, AttributeKeyToObject<Key>, JsonFormat.Document>
   >("putItem", {
     appSyncVtl: {
       request: (call, vtl) => {
@@ -167,6 +167,7 @@ export class Table<
    * @returns the updated the item
    */
   public updateItem = this.makeTableIntegration<
+    "updateItem",
     <
       Key extends TableKey<
         Item,
@@ -181,8 +182,7 @@ export class Table<
       update: DynamoExpression<UpdateExpression>;
       condition?: DynamoExpression<ConditionExpression>;
       _version?: number;
-    }) => Narrow<Item, AttributeKeyToObject<Key>, JsonFormat.Document>,
-    "updateItem"
+    }) => Narrow<Item, AttributeKeyToObject<Key>, JsonFormat.Document>
   >("updateItem", {
     appSyncVtl: {
       request: (call, vtl) => {
@@ -211,6 +211,7 @@ export class Table<
    * @returns the previous item.
    */
   public deleteItem = this.makeTableIntegration<
+    "deleteItem",
     <
       Key extends TableKey<
         Item,
@@ -223,8 +224,7 @@ export class Table<
       key: Key;
       condition?: DynamoExpression<ConditionExpression>;
       _version?: number;
-    }) => Narrow<Item, AttributeKeyToObject<Key>, JsonFormat.Document>,
-    "deleteItem"
+    }) => Narrow<Item, AttributeKeyToObject<Key>, JsonFormat.Document>
   >("deleteItem", {
     appSyncVtl: {
       request: (call, vtl) => {
@@ -250,6 +250,7 @@ export class Table<
    * @see https://docs.aws.amazon.com/appsync/latest/devguide/resolver-mapping-template-reference-dynamodb.html#aws-appsync-resolver-mapping-template-reference-dynamodb-query
    */
   public query = this.makeTableIntegration<
+    "query",
     <Query extends string, Filter extends string | undefined>(input: {
       query: DynamoExpression<Query>;
       filter?: DynamoExpression<Filter>;
@@ -263,8 +264,7 @@ export class Table<
       items: Item[];
       nextToken: string;
       scannedCount: number;
-    },
-    "query"
+    }
   >("query", {
     appSyncVtl: {
       request: (call, vtl) => {
@@ -290,13 +290,16 @@ export class Table<
     },
   });
 
-  makeTableIntegration<F extends AnyFunction, K extends string>(
+  makeTableIntegration<K extends string, F extends AnyFunction>(
     methodName: K,
-    integration: Omit<Integration<F, K>, "kind" | "appSyncVtl"> & {
+    integration: Omit<
+      IntegrationInput<`Table.${K}`, F>,
+      "kind" | "appSyncVtl"
+    > & {
       appSyncVtl: Omit<AppSyncVtlIntegration, "dataSource" | "dataSourceId">;
     }
   ): F {
-    return makeIntegration<F, `Table.${K}`>({
+    return makeIntegration<`Table.${K}`, F>({
       ...integration,
       kind: `Table.${methodName}`,
       appSyncVtl: {

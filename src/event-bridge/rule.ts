@@ -1,23 +1,20 @@
 import { aws_events } from "aws-cdk-lib";
 import { Construct } from "constructs";
-import { IFunction } from "../function";
-import { ExpressStepFunction, StepFunction } from "../step-function";
-import { IEventBus, IEventBusFilterable } from "./event-bus";
+import {
+  IEventBus,
+  IEventBusFilterable,
+  DynamicProps,
+  pipe,
+  IntegrationWithEventBus,
+} from "./event-bus";
 import {
   andDocuments,
   synthesizeEventPattern,
   synthesizePatternDocument,
 } from "./event-pattern";
 import { PatternDocument } from "./event-pattern/pattern";
-import {
-  EventBusTargetProps,
-  EventBusTargetResource,
-  LambdaTargetProps,
-  pipe,
-  StateMachineTargetProps,
-} from "./target";
 import { EventTransformFunction, EventTransform } from "./transform";
-import { Event } from "./types";
+import type { Event } from "./types";
 
 /**
  * A function interface used by the {@link EventBus}'s when function to generate a rule.
@@ -126,7 +123,7 @@ export interface IRule<T extends Event> {
    * ```ts
    * const myFunction = new Function<Payload, void>(this, 'awsTarget', ...);
    * const myQueue = new aws_sqs.Queue(this, 'queue');
-   * bus.when(...).pipe({ func: myFunction, deadLetterQueue: myQueue, retryAttempts: 10 );
+   * bus.when(...).pipe(myFunction, { deadLetterQueue: myQueue, retryAttempts: 10 });
    * ```
    *
    * Send to event bus
@@ -136,13 +133,10 @@ export interface IRule<T extends Event> {
    * bus.when(...).pipe(new EventBus(targetBus))
    * ```
    */
-  pipe(props: LambdaTargetProps<T>): void;
-  pipe(func: IFunction<T, any>): void;
-  pipe(bus: IEventBus<T>): void;
-  pipe(props: EventBusTargetProps<T>): void;
-  pipe(props: StateMachineTargetProps<T>): void;
-  pipe(props: StepFunction<T, any>): void;
-  pipe(props: ExpressStepFunction<T, any>): void;
+  pipe<Props extends object | undefined>(
+    integration: IntegrationWithEventBus<T, Props>,
+    ...props: Parameters<DynamicProps<Props>>
+  ): void;
   pipe(callback: () => aws_events.IRuleTarget): void;
 }
 
@@ -175,18 +169,18 @@ abstract class RuleBase<T extends Event> implements IRule<T> {
   /**
    * @inheritdoc
    */
-  pipe(props: LambdaTargetProps<T>): void;
-  pipe(func: IFunction<T, any>): void;
-  pipe(bus: IEventBus<T>): void;
-  pipe(props: EventBusTargetProps<T>): void;
-  pipe(props: StateMachineTargetProps<T>): void;
-  pipe(props: StepFunction<T, any>): void;
-  pipe(props: ExpressStepFunction<T, any>): void;
+  pipe<Props extends object | undefined>(
+    integration: IntegrationWithEventBus<T, Props>,
+    ...props: Parameters<DynamicProps<Props>>
+  ): void;
   pipe(callback: () => aws_events.IRuleTarget): void;
-  pipe(
-    resource: EventBusTargetResource<T, T> | (() => aws_events.IRuleTarget)
+  pipe<Props extends object | undefined>(
+    integration:
+      | IntegrationWithEventBus<T, Props>
+      | (() => aws_events.IRuleTarget),
+    ...props: Parameters<DynamicProps<Props>>
   ): void {
-    pipe(this, resource as any);
+    pipe(this, integration, props[0] as Props, undefined);
   }
 }
 
