@@ -86,6 +86,7 @@ const project = new CustomTypescriptProject({
     "prettier",
     "ts-node",
     "ts-patch",
+
     /**
      * For CDK Local Stack tests
      */
@@ -180,7 +181,11 @@ project.eslint.addRules({
 project.eslint.addOverride({
   files: ["*.ts", "*.tsx"],
   parserOptions: {
-    project: ["./tsconfig.dev.json", "./test-app/tsconfig.json"],
+    project: [
+      "./tsconfig.dev.json",
+      "./test-app/tsconfig.json",
+      "./website/tsconfig.json",
+    ],
   },
 });
 

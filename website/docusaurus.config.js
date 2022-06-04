@@ -85,7 +85,8 @@ const config = {
         title: "Functionless",
         logo: {
           alt: "λ<",
-          src: "img/logo.png",
+          src: "img/Logo.svg",
+          srcDark: "img/Logo-dark.svg",
         },
         items: [
           {
