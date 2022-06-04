@@ -42,6 +42,9 @@ export interface IntegrationMethods<
   appSyncVtl: AppSyncVtlIntegration;
   /**
    * Integrate with ASL applications like StepFunctions.
+   *
+   * TODO: Update to use an interface https://github.com/functionless/functionless/issues/197
+   *
    * @private
    */
   asl: (call: CallExpr, context: ASL) => Omit<State, "Next">;
@@ -152,40 +155,39 @@ export class IntegrationImpl<F extends AnyFunction = AnyFunction>
     this.kind = integration.kind;
   }
 
-  private unhandledContext<T>(contextKind: CallContext["kind"]): T {
-    if (this.integration.unhandledContext) {
+  private assertIntegrationDefined<I>(
+    contextKind: CallContext["kind"],
+    integration?: I
+  ): I {
+    if (integration) {
+      return integration;
+    } else if (this.integration.unhandledContext) {
       throw this.integration.unhandledContext(this.kind, contextKind);
     }
     throw Error(`${this.kind} is not supported by context ${contextKind}.`);
   }
 
   public get appSyncVtl(): AppSyncVtlIntegration {
-    if (this.integration.appSyncVtl) {
-      return this.integration.appSyncVtl;
-    }
-    return this.unhandledContext("Velocity Template");
+    return this.assertIntegrationDefined(
+      "Velocity Template",
+      this.integration.appSyncVtl
+    );
   }
 
+  // TODO: Update to use an interface https://github.com/functionless/functionless/issues/197
   public asl(call: CallExpr, context: ASL): Omit<State, "Next"> {
-    if (this.integration.asl) {
-      return this.integration.asl(call, context);
-    }
-    return this.unhandledContext(context.kind);
+    return this.assertIntegrationDefined(
+      context.kind,
+      this.integration.asl
+    ).bind(this.integration)(call, context);
   }
 
   public get eventBus(): EventBusTargetIntegration<any, any> {
-    if (this.integration.eventBus) {
-      return this.integration.eventBus;
-    }
-
-    return this.unhandledContext("EventBus");
+    return this.assertIntegrationDefined("EventBus", this.integration.eventBus);
   }
 
   public get native(): NativeIntegration<F> {
-    if (this.integration.native) {
-      return this.integration.native;
-    }
-    return this.unhandledContext("Function");
+    return this.assertIntegrationDefined("Function", this.integration.native);
   }
 }
 

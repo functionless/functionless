@@ -50,21 +50,6 @@ export type FunctionClosure<P, O> = (
   context: Context
 ) => Promise<O>;
 
-/**
- * Wraps an {@link aws_lambda.Function} with a type-safe interface that can be
- * called from within an {@link AppsyncResolver}.
- *
- * For example:
- * ```ts
- * const getPerson = new Function<string, Person>(
- *   new aws_lambda.Function(..)
- * );
- *
- * new AppsyncResolver(() => {
- *   return getPerson("value");
- * })
- * ```
- */
 export interface IFunction<P, O>
   extends Integration<
     "Function",
@@ -176,9 +161,7 @@ abstract class FunctionBase<P, O> implements IFunction<P, O> {
   >({
     target: (props, targetInput) =>
       new aws_events_targets.LambdaFunction(this.resource, {
-        deadLetterQueue: props?.deadLetterQueue,
-        maxEventAge: props?.maxEventAge,
-        retryAttempts: props?.retryAttempts,
+        ...props,
         event: targetInput,
       }),
   });
@@ -211,18 +194,27 @@ export interface FunctionProps
 const isNativeFunctionOrError = anyOf(isErr, isNativeFunctionDecl);
 
 /**
- * Wraps an {@link aws_lambda.Function} with a type-safe interface that can be
- * called from within an {@link AppsyncResolver}.
+ * A type-safe NodeJS Lambda Function generated from the closure provided.
+ *
+ * Can be called from within an {@link AppsyncResolver}.
  *
  * For example:
  * ```ts
- * const getPerson = Function.fromFunction<string, Person>(
- *   new aws_lambda.Function(..)
- * );
+ * const getPerson = new Function<string, Person>(stack, 'func', async () => {
+ *  // get person logic
+ * });
  *
  * new AppsyncResolver(() => {
  *   return getPerson("value");
  * })
+ * ```
+ *
+ * Can wrap an existing {@link aws_lambda.Function}.
+ *
+ * ```ts
+ * const getPerson = Function.fromFunction<string, Person>(
+ *   new aws_lambda.Function(..)
+ * );
  * ```
  */
 export class Function<P, O> extends FunctionBase<P, O> {

@@ -347,10 +347,7 @@ abstract class EventBusBase<E extends Event> implements IEventBus<E> {
         throw new Error("Event bus rule target does not support target input.");
       }
 
-      return new aws_events_targets.EventBus(this.bus, {
-        deadLetterQueue: props?.deadLetterQueue,
-        role: props?.role,
-      });
+      return new aws_events_targets.EventBus(this.bus, props);
     },
   });
 
