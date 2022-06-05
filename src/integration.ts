@@ -1,10 +1,15 @@
 import { AppSyncVtlIntegration } from "./appsync";
 import { ASL, State } from "./asl";
+import { EventBus, EventBusTargetIntegration } from "./event-bridge";
 import { CallExpr } from "./expression";
 import { Function, NativeIntegration } from "./function";
 import { FunctionlessNode } from "./node";
 import { AnyFunction } from "./util";
 import { VTL } from "./vtl";
+
+export const isIntegration = <I extends IntegrationInput<string, AnyFunction>>(
+  i: any
+): i is I => typeof i === "object" && "kind" in i;
 
 /**
  * Maintain a typesafe runtime map of integration type keys to use elsewhere.
@@ -15,6 +20,7 @@ const INTEGRATION_TYPES: { [P in keyof IntegrationMethods<any>]: P } = {
   appSyncVtl: "appSyncVtl",
   asl: "asl",
   native: "native",
+  eventBus: "eventBus",
 };
 
 export const INTEGRATION_TYPE_KEYS = Object.values(INTEGRATION_TYPES);
@@ -22,7 +28,13 @@ export const INTEGRATION_TYPE_KEYS = Object.values(INTEGRATION_TYPES);
 /**
  * All integration methods supported by functionless.
  */
-interface IntegrationMethods<F extends AnyFunction> {
+export interface IntegrationMethods<
+  F extends AnyFunction,
+  EventBusInteg extends EventBusTargetIntegration<
+    any,
+    any
+  > = EventBusTargetIntegration<any, any>
+> {
   /**
    * Integrate with AppSync VTL applications.
    * @private
@@ -30,9 +42,13 @@ interface IntegrationMethods<F extends AnyFunction> {
   appSyncVtl: AppSyncVtlIntegration;
   /**
    * Integrate with ASL applications like StepFunctions.
+   *
+   * TODO: Update to use an interface https://github.com/functionless/functionless/issues/197
+   *
    * @private
    */
   asl: (call: CallExpr, context: ASL) => Omit<State, "Next">;
+  eventBus: EventBusInteg;
   /**
    * Native javascript code integrations that execute at runtime like Lambda.
    */
@@ -88,9 +104,17 @@ interface IntegrationMethods<F extends AnyFunction> {
  * Otherwise the error will be: `${this.name} is not supported by context ${context.kind}.`
  */
 export interface Integration<
+  K extends string = string,
   F extends AnyFunction = AnyFunction,
-  K extends string = string
-> extends Partial<IntegrationMethods<F>> {
+  EventBus extends EventBusTargetIntegration<
+    any,
+    any
+  > = EventBusTargetIntegration<any, any>
+> extends Partial<IntegrationMethods<F, EventBus>> {
+  /**
+   * Brand the Function, F, into this type so that sub-typing rules apply to the function signature.
+   */
+  __functionBrand: F;
   /**
    * Integration Handler kind - for example StepFunction.describeExecution
    */
@@ -105,6 +129,14 @@ export interface Integration<
     contextKind: CallContext["kind"]
   ) => Error;
 }
+
+/**
+ * Alias that removes computed inputs from the integration interface
+ */
+export type IntegrationInput<
+  K extends string = string,
+  F extends AnyFunction = AnyFunction
+> = Omit<Integration<K, F>, "__functionBrand">;
 
 /**
  * Internal wrapper class for Integration handlers that provides default error handling for unsupported integrations.
@@ -123,37 +155,45 @@ export class IntegrationImpl<F extends AnyFunction = AnyFunction>
     this.kind = integration.kind;
   }
 
-  private unhandledContext<T>(contextKind: CallContext["kind"]): T {
-    if (this.integration.unhandledContext) {
+  private assertIntegrationDefined<I>(
+    contextKind: CallContext["kind"],
+    integration?: I
+  ): I {
+    if (integration) {
+      return integration;
+    } else if (this.integration.unhandledContext) {
       throw this.integration.unhandledContext(this.kind, contextKind);
     }
     throw Error(`${this.kind} is not supported by context ${contextKind}.`);
   }
 
   public get appSyncVtl(): AppSyncVtlIntegration {
-    if (this.integration.appSyncVtl) {
-      return this.integration.appSyncVtl;
-    }
-    return this.unhandledContext("Velocity Template");
+    return this.assertIntegrationDefined(
+      "Velocity Template",
+      this.integration.appSyncVtl
+    );
   }
 
+  // TODO: Update to use an interface https://github.com/functionless/functionless/issues/197
   public asl(call: CallExpr, context: ASL): Omit<State, "Next"> {
-    if (this.integration.asl) {
-      return this.integration.asl(call, context);
-    }
-    return this.unhandledContext(context.kind);
+    return this.assertIntegrationDefined(
+      context.kind,
+      this.integration.asl
+    ).bind(this.integration)(call, context);
+  }
+
+  public get eventBus(): EventBusTargetIntegration<any, any> {
+    return this.assertIntegrationDefined("EventBus", this.integration.eventBus);
   }
 
   public get native(): NativeIntegration<F> {
-    if (this.integration.native) {
-      return this.integration.native;
-    }
-    return this.unhandledContext("Function");
+    return this.assertIntegrationDefined("Function", this.integration.native);
   }
 }
 
-export type IntegrationCall<F extends AnyFunction, K extends string> = {
+export type IntegrationCall<K extends string, F extends AnyFunction> = {
   kind: K;
+  __functionBrand: F;
 } & F;
 
 /**
@@ -175,10 +215,10 @@ export type IntegrationCall<F extends AnyFunction, K extends string> = {
  *
  * @private
  */
-export function makeIntegration<F extends AnyFunction, K extends string>(
-  integration: Integration<F, K>
-): IntegrationCall<F, K> {
-  return integration as unknown as IntegrationCall<F, K>;
+export function makeIntegration<K extends string, F extends AnyFunction>(
+  integration: IntegrationInput<K, F>
+): IntegrationCall<K, F> {
+  return integration as unknown as IntegrationCall<K, F>;
 }
 
 /**
@@ -202,7 +242,7 @@ export function findIntegration(call: CallExpr): IntegrationImpl | undefined {
   }
 }
 
-export type CallContext = ASL | VTL | Function<any, any>;
+export type CallContext = ASL | VTL | Function<any, any> | EventBus<any>;
 
 /**
  * Dive until we find a integration object.

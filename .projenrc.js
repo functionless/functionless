@@ -40,7 +40,7 @@ class CustomTypescriptProject extends typescript.TypeScriptProject {
   constructor(opts) {
     super(opts);
 
-    new GitHooksPreCommitComponent(this);
+    // new GitHooksPreCommitComponent(this);
 
     this.postSynthesize = this.postSynthesize.bind(this);
   }

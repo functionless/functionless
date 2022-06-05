@@ -5,6 +5,7 @@ import { serializeFunction } from "@functionless/nodejs-closure-serializer";
 import {
   AssetHashType,
   aws_dynamodb,
+  aws_events_targets,
   aws_lambda,
   CfnResource,
   DockerImage,
@@ -37,7 +38,11 @@ import {
   Rule,
   PredicateRuleBase,
 } from "./event-bridge";
-import { EventBusEvent } from "./event-bridge/event-bus";
+import {
+  EventBusEvent,
+  EventBusTargetIntegration,
+  makeEventBusIntegration,
+} from "./event-bridge/event-bus";
 import { CallExpr, Expr, isVariableReference } from "./expression";
 import {
   IntegrationImpl,
@@ -52,6 +57,9 @@ export function isFunction<P = any, O = any>(a: any): a is IFunction<P, O> {
 
 export type AnyLambda = Function<any, any>;
 
+export interface FunctionEventBusTargetProps
+  extends Omit<aws_events_targets.LambdaFunctionProps, "event"> {}
+
 export type FunctionClosure<P, O> = (
   payload: P,
   context: Context
@@ -60,11 +68,19 @@ export type FunctionClosure<P, O> = (
 /**
  * Returns the payload type on the {@link IFunction}.
  */
-export type FunctionPayload<F extends IFunction<any, any>> = [F] extends [IFunction<infer P, any>] ? P : never;
+export type FunctionPayload<F extends IFunction<any, any>> = [F] extends [
+  IFunction<infer P, any>
+]
+  ? P
+  : never;
 /**
  * Returns the output type on the {@link IFunction}.
  */
- export type FunctionOutput<F extends IFunction<any, any>> = [F] extends [IFunction<any, infer O>] ? O : never;
+export type FunctionOutput<F extends IFunction<any, any>> = [F] extends [
+  IFunction<any, infer O>
+]
+  ? O
+  : never;
 
 type FunctionAsyncOnFailureDestination<P> =
   | aws_lambda.FunctionProps["onFailure"]
@@ -86,7 +102,12 @@ export interface EventInvokeConfigOptions<P, O>
   onFailure?: FunctionAsyncOnFailureDestination<P>;
 }
 
-export interface IFunction<in P, O> {
+export interface IFunction<P, O>
+  extends Integration<
+    "Function",
+    ConditionalFunction<P, O>,
+    EventBusTargetIntegration<P, FunctionEventBusTargetProps | undefined>
+  > {
   readonly functionlessKind: typeof Function.FunctionlessType;
   readonly kind: typeof Function.FunctionlessType;
   readonly resource: aws_lambda.IFunction;
@@ -147,6 +168,11 @@ export interface IFunction<in P, O> {
    * This method will fail.
    */
   configureAsyncInvoke(config: EventInvokeConfigOptions<P, O>): void;
+
+  readonly eventBus: EventBusTargetIntegration<
+    P,
+    FunctionEventBusTargetProps | undefined
+  >;
 }
 
 export interface AsyncResponseBase<P> {
@@ -205,10 +231,12 @@ export interface AsyncResponseFailureEvent<P>
   > {}
 
 abstract class FunctionBase<in P, O>
-  implements IFunction<P, O>, Integration<FunctionBase<P, O>>
+  implements
+    IFunction<P, O>,
+    Integration<"Function", ConditionalFunction<P, O>>
 {
   readonly kind = "Function" as const;
-  readonly native: NativeIntegration<FunctionBase<P, O>>;
+  readonly native: NativeIntegration<ConditionalFunction<P, O>>;
   readonly functionlessKind = "Function";
   public static readonly FunctionlessType = "Function";
 
@@ -292,12 +320,15 @@ abstract class FunctionBase<in P, O>
   }
 
   protected static normalizeAsyncDestination<P, O>(
-    destination: FunctionAsyncOnSuccessDestination<P, O>
-    | FunctionAsyncOnFailureDestination<P>
+    destination:
+      | FunctionAsyncOnSuccessDestination<P, O>
+      | FunctionAsyncOnFailureDestination<P>
   ): IDestination | undefined {
     return destination === undefined
       ? undefined
-      : isEventBus<EventBusEvent<Extract<typeof destination, IEventBus<any>>>>(destination)
+      : isEventBus<EventBusEvent<Extract<typeof destination, IEventBus<any>>>>(
+          destination
+        )
       ? new EventBridgeDestination(destination.bus)
       : isFunction<
           FunctionPayload<Extract<typeof destination, IFunction<any, any>>>,
@@ -364,9 +395,20 @@ abstract class FunctionBase<in P, O>
       }
     );
   }
+
+  public readonly eventBus = makeEventBusIntegration<
+    P,
+    FunctionEventBusTargetProps | undefined
+  >({
+    target: (props, targetInput) =>
+      new aws_events_targets.LambdaFunction(this.resource, {
+        ...props,
+        event: targetInput,
+      }),
+  });
 }
 
-interface FunctionBase<P, O> {
+interface FunctionBase<in P, O> {
   (...args: Parameters<ConditionalFunction<P, O>>): ReturnType<
     ConditionalFunction<P, O>
   >;
@@ -391,44 +433,53 @@ export interface FunctionProps<P = any, O = any>
   clientConfigRetriever?: (
     clientName: ClientName | string
   ) => Omit<AWS.Lambda.ClientConfiguration, keyof AWS.Lambda.ClientApiVersions>;
-    /**
-     * The destination for failed invocations.
-     *
-     * Supports use of Functionless {@link IEventBus} or {@link IFunction}.
-     *
-     * ```ts
-     * const bus = new EventBus<>
-     * ```
-     *
-     * @default - no destination
-     */
-     onSuccess?: FunctionAsyncOnSuccessDestination<P, O>;
-    /**
-     * The destination for successful invocations.
-     *
-     * @default - no destination
-     */
-     onFailure?: FunctionAsyncOnFailureDestination<P>;
+  /**
+   * The destination for failed invocations.
+   *
+   * Supports use of Functionless {@link IEventBus} or {@link IFunction}.
+   *
+   * ```ts
+   * const bus = new EventBus<>
+   * ```
+   *
+   * @default - no destination
+   */
+  onSuccess?: FunctionAsyncOnSuccessDestination<P, O>;
+  /**
+   * The destination for successful invocations.
+   *
+   * @default - no destination
+   */
+  onFailure?: FunctionAsyncOnFailureDestination<P>;
 }
 
 const isNativeFunctionOrError = anyOf(isErr, isNativeFunctionDecl);
 
 /**
- * Wraps an {@link aws_lambda.Function} with a type-safe interface that can be
- * called from within an {@link AppsyncResolver}.
+ * A type-safe NodeJS Lambda Function generated from the closure provided.
+ *
+ * Can be called from within an {@link AppsyncResolver}.
  *
  * For example:
  * ```ts
- * const getPerson = Function.fromFunction<string, Person>(
- *   new aws_lambda.Function(..)
- * );
+ * const getPerson = new Function<string, Person>(stack, 'func', async () => {
+ *  // get person logic
+ * });
  *
  * new AppsyncResolver(() => {
  *   return getPerson("value");
  * })
  * ```
+ *
+ * Can wrap an existing {@link aws_lambda.Function}.
+ *
+ * ```ts
+ * const getPerson = Function.fromFunction<string, Person>(
+ *   new aws_lambda.Function(..)
+ * );
+ * ```
  */
-export class Function<P, O> extends FunctionBase<P, O> {
+export class Function<in P, O> extends FunctionBase<P, O> {
   /**
    * Dangling promises which are processing Function handler code from the function serializer.
    * To correctly resolve these for CDK synthesis, either use `asyncSynth()` or use `cdk synth` in the CDK cli.
@@ -705,7 +756,7 @@ export class CallbackLambdaCode extends aws_lambda.Code {
              */
             const transformIntegration = (o: unknown): any => {
               if (o && typeof o === "object" && "kind" in o) {
-                const integ = o as Integration;
+                const integ = o as Integration<any>;
                 const copy = {
                   ...integ,
                   native: {

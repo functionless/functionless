@@ -129,7 +129,7 @@ test("refined bus with when pipe event bus", () => {
 test("new bus with when map pipe function", () => {
   const busBus = new EventBus(stack, "bus");
 
-  const func = Function.fromFunction(
+  const func = Function.fromFunction<string, void>(
     aws_lambda.Function.fromFunctionArn(stack, "func", "")
   );
 
@@ -148,7 +148,7 @@ test("new bus with when map pipe function", () => {
 });
 
 test("refined bus with when pipe function", () => {
-  const func = Function.fromFunction(
+  const func = Function.fromFunction<string, void>(
     aws_lambda.Function.fromFunctionArn(stack, "func", "")
   );
   const rule = new EventBus(stack, "bus").when(
@@ -222,14 +222,14 @@ test("new bus with when map pipe express step function", () => {
 test("new bus with when map pipe function props", () => {
   const busBus = new EventBus(stack, "bus");
 
-  const func = Function.fromFunction(
+  const func = Function.fromFunction<string, void>(
     aws_lambda.Function.fromFunctionArn(stack, "func", "")
   );
 
   const rule = busBus
     .when(stack, "rule", () => true)
     .map((event) => event.source);
-  rule.pipe({ func, retryAttempts: 10 });
+  rule.pipe(func, { retryAttempts: 10 });
 
   expect(rule.targetInput.bind(rule.rule.rule)).toEqual({
     inputPath: "$.source",
@@ -330,7 +330,6 @@ test("map narrows type and pipe enforces", () => {
       (event): event is Event<t1> => event.detail.type === "one"
     )
     .map((event) => event.detail.one)
-    // should fail compilation if the types don't match
     .pipe(lambda);
 });
 
@@ -341,6 +340,72 @@ test("a scheduled rule can be mapped and pipped", () => {
   const bus = EventBus.default<tt>(stack);
 
   bus
+    .when(
+      stack,
+      "rule",
+      (event): event is Event<t1> => event.detail.type === "one"
+    )
+    .map((event) => event.detail) // is object
+    // @ts-expect-error should fail compilation if the types don't match
+    .pipe(lambda); // expects strings
+});
+
+test("pipe typesafe sfn", () => {
+  const sfn = new StepFunction(stack, "machine", (payload: { id: string }) => {
+    return payload.id;
+  });
+  const bus = EventBus.default<tt>(stack);
+
+  bus
+    .when(
+      stack,
+      "rule",
+      (event): event is Event<t1> => event.detail.type === "one"
+    )
+    .map((event) => ({ id: event.detail.one })) // is object
+    .pipe(sfn); // expects strings
+});
+
+test("pipe typesafe error sfn", () => {
+  const sfn = new StepFunction(stack, "machine", (payload: { id: string }) => {
+    return payload.id;
+  });
+  const bus = EventBus.default<tt>(stack);
+
+  bus
+    .when(
+      stack,
+      "rule",
+      (event): event is Event<t1> => event.detail.type === "one"
+    )
+    .map((event) => ({ id: event.detail })) // is object
+    // @ts-expect-error
+    .pipe(sfn); // expects strings
+});
+
+test("map cannot pipe to a bus", () => {
+  const bus = EventBus.default<tt>(stack);
+
+  expect(() =>
+    bus
+      .when(
+        stack,
+        "rule",
+        (event): event is Event<t1> => event.detail.type === "one"
+      )
+      .map((event) => event)
+      // @ts-expect-error
+      .pipe(bus)
+  ).toThrow();
+});
+test("pipe typesafe", () => {
+  const lambda = Function.fromFunction<string, void>(
+    aws_lambda.Function.fromFunctionArn(stack, "func", "")
+  );
+  const bus = EventBus.default<tt>(stack);
+
+  bus
+
     .schedule(stack, "rule", aws_events.Schedule.rate(Duration.hours(1)))
     .map((event) => event.id)
     // should fail compilation if the types don't match
