@@ -9,6 +9,7 @@ import {
   isArrayLiteralExpr,
   isBooleanLiteralExpr,
   isCallExpr,
+  isComputedPropertyNameExpr,
   isIdentifier,
   isNullLiteralExpr,
   isNumberLiteralExpr,
@@ -21,7 +22,7 @@ import {
 } from "./expression";
 import { findIntegration, IntegrationImpl } from "./integration";
 import { FunctionlessNode } from "./node";
-import { isReturnStmt } from "./statement";
+import { isReturnStmt, isVariableStmt, ReturnStmt } from "./statement";
 
 /**
  * HTTP Methods that API Gateway supports.
@@ -83,7 +84,7 @@ export abstract class BaseApiIntegration {
   public abstract addMethod(
     httpMethod: HttpMethod,
     resource: aws_apigateway.Resource
-  ): void;
+  ): aws_apigateway.Method;
 }
 
 export interface MockApiIntegrationProps<
@@ -141,8 +142,8 @@ export class MockApiIntegration<
 
   public addMethod(
     httpMethod: HttpMethod,
-    resource: aws_apigateway.Resource
-  ): void {
+    resource: aws_apigateway.IResource
+  ): aws_apigateway.Method {
     const [requestTemplate] = toVTL(this.request, "request");
 
     const integrationResponses: aws_apigateway.IntegrationResponse[] =
@@ -169,7 +170,7 @@ export class MockApiIntegration<
     }));
 
     // TODO: support requestParameters, authorizers, models and validators
-    resource.addMethod(httpMethod, integration, {
+    return resource.addMethod(httpMethod, integration, {
       methodResponses,
     });
   }
@@ -246,10 +247,7 @@ export class AwsApiIntegration<
     );
   }
 
-  public addMethod(
-    httpMethod: HttpMethod,
-    resource: aws_apigateway.Resource
-  ): void {
+  public addMethod(httpMethod: HttpMethod, resource: aws_apigateway.IResource) {
     const [requestTemplate, integration] = toVTL(this.request, "request");
     const [responseTemplate] = toVTL(this.response, "response");
 
@@ -292,7 +290,7 @@ export class AwsApiIntegration<
       })),
     ];
 
-    resource.addMethod(httpMethod, apiGwIntegration, {
+    return resource.addMethod(httpMethod, apiGwIntegration, {
       methodResponses,
     });
   }
@@ -330,6 +328,11 @@ export function toVTL(
 
   if (location === "request") {
     const call = stmt.expr;
+
+    if (isObjectLiteralExpr(call)) {
+      return literal(stmt);
+    }
+
     if (!isCallExpr(call)) {
       throw new Error(
         "Expected request function body to return an integration call"
@@ -352,6 +355,12 @@ export function toVTL(
     )}`;
     return [template, serviceCall];
   } else {
+    return literal(stmt);
+  }
+
+  function literal(
+    stmt: ReturnStmt
+  ): [string, IntegrationImpl<any> | undefined] {
     const obj = stmt.expr;
     if (!isObjectLiteralExpr(obj)) {
       throw new Error(
@@ -365,7 +374,16 @@ export function toVTL(
   }
 
   function inner(node: FunctionlessNode): any {
-    if (
+    if (isIdentifier(node)) {
+      const ref = node.lookup();
+      if (isParameterDecl(ref)) {
+        return `$inputRoot`;
+      } else if (isVariableStmt(ref)) {
+        return `$${ref.name}`;
+      } else {
+        throw new Error(`Cannot find name: ${node.name}`);
+      }
+    } else if (
       isBooleanLiteralExpr(node) ||
       isNumberLiteralExpr(node) ||
       isStringLiteralExpr(node) ||
@@ -379,7 +397,14 @@ export function toVTL(
         node.properties.map((prop) => {
           switch (prop.kind) {
             case "PropAssignExpr":
-              return [inner(prop.name), inner(prop.expr)];
+              return [
+                isComputedPropertyNameExpr(prop.name)
+                  ? inner(prop.name)
+                  : isStringLiteralExpr(prop.name)
+                  ? prop.name.value
+                  : prop.name.name,
+                inner(prop.expr),
+              ];
             case "SpreadAssignExpr":
               throw new Error("TODO: support SpreadAssignExpr");
           }
