@@ -19,3 +19,28 @@ new StepFunction(scope, id, () => 1 + 2);
 // illegal!
 new StepFunction(scope, id, (input: { num: number }) => input.number + 1);
 ```
+
+To workaround, use a Lambda Function to implement the arithmetic expression. Be aware that this comes with added cost and operational risk.
+
+```ts
+const add = new Function(
+  scope,
+  "add",
+  (input: { a: number; b: number }) => input.a + input.b
+);
+
+new StepFunction(scope, id, async (input: { num: number }) => {
+  await add({ a: input.number, b: 1 });
+});
+```
+
+---
+
+### Function not compiled by Functionless plugin
+
+**Error Code**: Functionless(101)
+
+During CDK synth a function was encountered which was not compiled by the Functionless compiler plugin.
+This suggests that the plugin was not correctly configured for this project.
+
+Ensure you follow the instructions at https://functionless.org/docs/getting-started.

@@ -5,8 +5,7 @@ import {
   ToAttributeMap,
   ToAttributeValue,
 } from "typesafe-dynamodb/lib/attribute-value";
-import { FunctionDecl, isFunctionDecl } from "./declaration";
-import { isErr } from "./error";
+import { FunctionDecl, validateFunctionDecl } from "./declaration";
 import { CallExpr, Expr } from "./expression";
 import { findDeepIntegration, IntegrationImpl } from "./integration";
 import { Literal } from "./literal";
@@ -124,13 +123,7 @@ export class AppsyncResolver<
   >;
 
   constructor(fn: ResolverFunction<Arguments, Result, Source>) {
-    if (isFunctionDecl(fn)) {
-      this.decl = fn;
-    } else if (isErr(fn)) {
-      throw fn.error;
-    } else {
-      throw Error("Unknown compiler error.");
-    }
+    this.decl = validateFunctionDecl(fn, "AppsyncResolver");
   }
 
   /**

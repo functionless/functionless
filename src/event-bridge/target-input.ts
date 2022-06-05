@@ -1,8 +1,9 @@
 import { aws_events } from "aws-cdk-lib";
 import { RuleTargetInput } from "aws-cdk-lib/aws-events";
+import { validateFunctionDecl } from "..";
 import { assertConstantValue, assertString } from "../assert";
-import { FunctionDecl, isFunctionDecl } from "../declaration";
-import { Err, isErr } from "../error";
+import { FunctionDecl } from "../declaration";
+import { Err } from "../error";
 import {
   ArrayLiteralExpr,
   Expr,
@@ -45,15 +46,10 @@ type PREDEFINED = typeof PREDEFINED_VALUES[number];
  * https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-transform-target-input.html
  */
 export const synthesizeEventBridgeTargets = (
-  decl: FunctionDecl | Err | unknown
+  maybeDecl: FunctionDecl | Err | unknown
 ): aws_events.RuleTargetInput => {
-  if (isErr(decl)) {
-    throw decl.error;
-  } else if (!isFunctionDecl(decl)) {
-    throw Error(
-      "Expected parameter to synthesizeEventBridgeTargets to be compiled by functionless."
-    );
-  }
+  const decl = validateFunctionDecl(maybeDecl, "EventBridgeTarget");
+
   const [eventDecl = undefined, utilsDecl = undefined] = decl.parameters;
 
   const expression = flattenReturnEvent(decl.body.statements);
