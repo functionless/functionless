@@ -119,9 +119,23 @@ export interface IFunction<P, O>
   /**
    * Event Source for the {@link Function} onSuccess async invocation destination.
    *
-   * For Lambda, the onSuccess destination must first be configured via either
-   * the {@link Function} constructor or by using {@link IFunction.configureAsyncInvoke}
-   * and that destination must match the bus provided here.
+   * For Lambda, the onSuccess destination is not enabled by default. 
+   * It must first be configured via either the {@link Function} constructor 
+   * or by using {@link IFunction.configureAsyncInvoke} and that destination must match the bus provided here.
+   * 
+   * ```ts
+   * const bus = new EventBus(stack, 'bus');
+   * new Function(stack, 'func', { onSuccess: bus }, async () => {});
+   * ```
+   * 
+   * or
+   * 
+   * ```ts
+   * const bus = new EventBus(stack, 'bus');
+   * const func = new Function(stack, 'func', async () => {});
+   * // if onSuccess or onFailure is already set, this will fail.
+   * func.configureAsyncInvoke({ onSuccess: bus });
+   * ```
    *
    * @see https://docs.aws.amazon.com/lambda/latest/dg/invocation-async.html#invocation-async-destinations
    *
@@ -140,9 +154,23 @@ export interface IFunction<P, O>
   /**
    * Event Source for the {@link Function} onFailure async invocation destination.
    *
-   * For Lambda, the onFailure destination must first be configured via either
-   * the {@link Function} constructor or by using {@link IFunction.configureAsyncInvoke}
-   * and that destination must match the bus provided here.
+   * The onFailure destination is not enabled by default. 
+   * It must first be configured via either the {@link Function} constructor 
+   * or by using {@link IFunction.configureAsyncInvoke} and that destination must match the bus provided here.
+   * 
+   * ```ts
+   * const bus = new EventBus(stack, 'bus');
+   * new Function(stack, 'func', { onFailure: bus }, async () => {});
+   * ```
+   * 
+   * or
+   * 
+   * ```ts
+   * const bus = new EventBus(stack, 'bus');
+   * const func = new Function(stack, 'func', async () => {});
+   * // if onSuccess or onFailure is already set, this will fail.
+   * func.configureAsyncInvoke({ onFailure: bus });
+   * ```
    *
    * @see https://docs.aws.amazon.com/lambda/latest/dg/invocation-async.html#invocation-async-destinations
    *
@@ -150,7 +178,7 @@ export interface IFunction<P, O>
    *
    * ```ts
    * when(id, event => event.source === "lambda"
-   *    && event["detail-type"] === "Lambda Function Invocation Result - Success"
+   *    && event["detail-type"] === "Lambda Function Invocation Result - Failure"
    *      && event.resources.includes(this.resource.functionArn))
    * ```
    */
