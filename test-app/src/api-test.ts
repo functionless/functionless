@@ -6,7 +6,8 @@ import {
   Stack,
 } from "aws-cdk-lib";
 import {
-  ApiIntegrations,
+  AwsApiIntegration,
+  MockApiIntegration,
   ExpressStepFunction,
   Function,
   SyncExecutionSuccessResult,
@@ -49,7 +50,8 @@ const fn = new Function(
 );
 
 const fnResource = restApi.root.addResource("fn").addResource("{num}");
-const fnIntegration = ApiIntegrations.aws({
+
+const fnIntegration = new AwsApiIntegration({
   request: (req: FnRequest) =>
     fn({
       inNum: req.pathParameters.num,
@@ -89,7 +91,7 @@ interface MockRequest {
 }
 
 const mockResource = restApi.root.addResource("mock").addResource("{num}");
-const mock = ApiIntegrations.mock({
+const mock = new MockApiIntegration({
   request: (req: MockRequest) => ({
     statusCode: req.pathParameters.num,
   }),
@@ -107,7 +109,7 @@ const mock = ApiIntegrations.mock({
 mock.addMethod("GET", mockResource);
 
 interface Item {
-  id: number;
+  id: string;
   name: string;
 }
 const table = new Table<Item, "id">(
@@ -126,12 +128,12 @@ interface DynamoRequest {
 }
 
 const dynamoResource = restApi.root.addResource("dynamo").addResource("{num}");
-const dynamoIntegration = ApiIntegrations.aws({
+const dynamoIntegration = new AwsApiIntegration({
   request: (req: DynamoRequest) =>
     table.getItem({
       key: {
         id: {
-          N: `${req.pathParameters.id}`,
+          S: `${req.pathParameters.id}`,
         },
       },
     }),
@@ -153,7 +155,7 @@ interface SfnRequest {
 }
 
 const sfnResource = restApi.root.addResource("sfn").addResource("{num}");
-const sfnIntegration = ApiIntegrations.aws({
+const sfnIntegration = new AwsApiIntegration({
   // @ts-ignore TODO: output is only on success, need to support if stmt
   request: (req: SfnRequest) =>
     sfn({
@@ -162,6 +164,7 @@ const sfnIntegration = ApiIntegrations.aws({
         str: req.queryStringParameters.str,
       },
     }),
+  // TODO: we should not need to narrow this explicitly
   response: (resp: SyncExecutionSuccessResult<any>) => ({
     resultNum: resp.output.sfnNum,
     resultStr: resp.output.sfnStr,

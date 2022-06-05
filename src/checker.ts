@@ -1,6 +1,6 @@
 import * as ts from "typescript";
 import * as tsserver from "typescript/lib/tsserverlibrary";
-import { ApiIntegrations, BaseApiIntegration } from "./api";
+import { BaseApiIntegration } from "./api";
 import { AppsyncResolver } from "./appsync";
 import { EventBus, Rule } from "./event-bridge";
 import { EventTransform } from "./event-bridge/transform";
@@ -229,7 +229,7 @@ export function makeFunctionlessChecker(
       ts.isIdentifier(node.expression.expression) &&
       isFunctionlessClassOfKind(
         node.expression.expression,
-        ApiIntegrations.FunctionlessType
+        BaseApiIntegration.FunctionlessType
       )
     );
   }

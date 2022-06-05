@@ -66,15 +66,6 @@ export interface ApiRequest<
   headers?: HeaderParams;
 }
 
-type RequestTransformerFunction<
-  Request extends ApiRequest<any, any, any, any>,
-  IntegrationRequest
-> = (req: Request) => IntegrationRequest;
-
-type ResponseTransformerFunction<IntegrationResponse, MethodResponse> = (
-  resp: IntegrationResponse
-) => MethodResponse;
-
 export abstract class BaseApiIntegration {
   /**
    * Identify subclasses as API integrations to the Functionless plugin
@@ -95,44 +86,6 @@ export abstract class BaseApiIntegration {
   ): void;
 }
 
-/**
- * Static constructors for the supported API Gateway integrations.
- * These are the preferred entrypoints as they offer superior type
- * inference.
- */
-export class ApiIntegrations {
-  /**
-   * Identify subclasses as API integrations to the Functionless plugin
-   */
-  public static readonly FunctionlessType = "ApiIntegrations";
-
-  /**
-   * Create a {@link MockApiIntegration}.
-   */
-  public static mock<
-    Request extends ApiRequest<any, any, any, any>,
-    StatusCode extends number,
-    MethodResponses extends { [C in StatusCode]: any }
-  >(
-    props: MockApiIntegrationProps<Request, StatusCode, MethodResponses>
-  ): MockApiIntegration<typeof props> {
-    return new MockApiIntegration(props);
-  }
-
-  /**
-   * Create a {@link AwsApiIntegration}.
-   */
-  public static aws<
-    Request extends ApiRequest<any, any, any, any>,
-    IntegrationResponse,
-    MethodResponse
-  >(
-    props: AwsApiIntegrationProps<Request, IntegrationResponse, MethodResponse>
-  ) {
-    return new AwsApiIntegration(props);
-  }
-}
-
 export interface MockApiIntegrationProps<
   Request extends ApiRequest<any, any, any, any>,
   StatusCode extends number,
@@ -142,7 +95,7 @@ export interface MockApiIntegrationProps<
    * Map API request to a status code. This code will be used by API Gateway
    * to select the response to return.
    */
-  request: RequestTransformerFunction<Request, { statusCode: StatusCode }>;
+  request: (request: Request) => { statusCode: StatusCode };
   /**
    * Map of status codes to response to return.
    */
@@ -150,12 +103,12 @@ export interface MockApiIntegrationProps<
 }
 
 /**
- * A Mock integration lets you return preconfigured responses by status code.
+ * A Mock integration lets you return pre-configured responses by status code.
  * No backend service is invoked.
  *
  * To use you provide a `request` function that returns a status code from the
  * request and a `responses` object that maps a status code to a function
- * returning the preconfigured response for that status code. Functionless will
+ * returning the pre-configured response for that status code. Functionless will
  * convert these functions to VTL mapping templates and configure the necessary
  * method responses.
  *
@@ -166,12 +119,16 @@ export interface MockApiIntegrationProps<
  * @see https://docs.aws.amazon.com/apigateway/latest/developerguide/api-gateway-api-integration-types.html
  */
 export class MockApiIntegration<
-  Props extends MockApiIntegrationProps<any, any, any>
+  Request extends ApiRequest<any, any, any, any>,
+  StatusCode extends number,
+  MethodResponses extends { [C in StatusCode]: any }
 > extends BaseApiIntegration {
   private readonly request: FunctionDecl;
-  private readonly responses: { [K in keyof Props["responses"]]: FunctionDecl };
+  private readonly responses: { [K in keyof MethodResponses]: FunctionDecl };
 
-  public constructor(props: Props) {
+  public constructor(
+    props: MockApiIntegrationProps<Request, StatusCode, MethodResponses>
+  ) {
     super();
     this.request = validateFunctionDecl(props.request);
     this.responses = Object.fromEntries(
@@ -179,7 +136,7 @@ export class MockApiIntegration<
         k,
         validateFunctionDecl(v),
       ])
-    ) as { [K in keyof Props["responses"]]: FunctionDecl };
+    ) as { [K in keyof MethodResponses]: FunctionDecl };
   }
 
   public addMethod(
@@ -190,7 +147,7 @@ export class MockApiIntegration<
 
     const integrationResponses: aws_apigateway.IntegrationResponse[] =
       Object.entries(this.responses).map(([statusCode, fn]) => {
-        const [template] = toVTL(fn, "response");
+        const [template] = toVTL(fn as FunctionDecl, "response");
         return {
           statusCode,
           responseTemplates: {
@@ -237,7 +194,7 @@ export interface AwsApiIntegrationProps<
    *
    * The supported syntax will be expanded in the future.
    */
-  request: RequestTransformerFunction<Request, IntegrationResponse>;
+  request: (req: Request) => IntegrationResponse;
   /**
    * Function that maps an integration response to a 200 method response. This
    * is the happy path and is modeled explicitly so that the return type of the
@@ -246,7 +203,7 @@ export interface AwsApiIntegrationProps<
    * At present the function body must be a single statement returning an object
    * literal. The supported syntax will be expanded in the future.
    */
-  response: ResponseTransformerFunction<IntegrationResponse, MethodResponse>;
+  response: (response: IntegrationResponse) => MethodResponse;
   /**
    * Map of status codes to a function defining the  response to return. This is used
    * to configure the failure path method responses, for e.g. when an integration fails.
@@ -267,13 +224,17 @@ export interface AwsApiIntegrationProps<
  * @see https://docs.aws.amazon.com/apigateway/latest/developerguide/api-gateway-api-integration-types.html
  */
 export class AwsApiIntegration<
-  Props extends AwsApiIntegrationProps<any, any, any>
+  Request,
+  IntegrationResponse,
+  MethodResponse
 > extends BaseApiIntegration {
   private readonly request: FunctionDecl;
   private readonly response: FunctionDecl;
   private readonly errors: { [statusCode: number]: FunctionDecl };
 
-  public constructor(props: Props) {
+  public constructor(
+    props: AwsApiIntegrationProps<Request, IntegrationResponse, MethodResponse>
+  ) {
     super();
     this.request = validateFunctionDecl(props.request);
     this.response = validateFunctionDecl(props.response);
