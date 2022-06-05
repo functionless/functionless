@@ -208,7 +208,7 @@ export interface AwsApiIntegrationProps<
    * Map of status codes to a function defining the  response to return. This is used
    * to configure the failure path method responses, for e.g. when an integration fails.
    */
-  errors: { [statusCode: number]: () => any };
+  errors?: { [statusCode: number]: () => any };
 }
 
 /**
@@ -239,7 +239,10 @@ export class AwsApiIntegration<
     this.request = validateFunctionDecl(props.request);
     this.response = validateFunctionDecl(props.response);
     this.errors = Object.fromEntries(
-      Object.entries(props.errors).map(([k, v]) => [k, validateFunctionDecl(v)])
+      Object.entries(props.errors ?? {}).map(([k, v]) => [
+        k,
+        validateFunctionDecl(v),
+      ])
     );
   }
 
