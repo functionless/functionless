@@ -7,8 +7,8 @@ import {
   ApiIntegrationInterface,
   ApiIntegrationsStaticMethodInterface,
   EventBusMapInterface,
-  EventBusRuleInterface,
-  EventBusTransformInterface,
+  RuleInterface,
+  EventTransformInterface,
   EventBusWhenInterface,
   FunctionInterface,
   makeFunctionlessChecker,
@@ -108,11 +108,11 @@ export function compile(
             );
           } else if (checker.isEventBusWhenFunction(node)) {
             return visitEventBusWhen(node);
-          } else if (checker.isEventBusRuleMapFunction(node)) {
+          } else if (checker.isRuleMapFunction(node)) {
             return visitEventBusMap(node);
-          } else if (checker.isNewEventBusRule(node)) {
-            return visitEventBusRule(node);
-          } else if (checker.isNewEventBusTransform(node)) {
+          } else if (checker.isNewRule(node)) {
+            return visitRule(node);
+          } else if (checker.isNewEventTransform(node)) {
             return visitEventTransform(node);
           } else if (checker.isNewFunctionlessFunction(node)) {
             return visitFunction(node, ctx);
@@ -161,7 +161,7 @@ export function compile(
         );
       }
 
-      function visitEventBusRule(call: EventBusRuleInterface): ts.Node {
+      function visitRule(call: RuleInterface): ts.Node {
         const [one, two, three, impl] = call.arguments;
 
         return ts.factory.updateNewExpression(
@@ -177,7 +177,7 @@ export function compile(
         );
       }
 
-      function visitEventTransform(call: EventBusTransformInterface): ts.Node {
+      function visitEventTransform(call: EventTransformInterface): ts.Node {
         const [impl, ...rest] = call.arguments;
 
         return ts.factory.updateNewExpression(
@@ -189,14 +189,26 @@ export function compile(
       }
 
       function visitEventBusWhen(call: EventBusWhenInterface): ts.Node {
-        const [one, two, impl] = call.arguments;
+        // support the 2 or 3 parameter when.
+        if (call.arguments.length === 3) {
+          const [one, two, impl] = call.arguments;
 
-        return ts.factory.updateCallExpression(
-          call,
-          call.expression,
-          call.typeArguments,
-          [one, two, errorBoundary(() => toFunction("FunctionDecl", impl))]
-        );
+          return ts.factory.updateCallExpression(
+            call,
+            call.expression,
+            call.typeArguments,
+            [one, two, errorBoundary(() => toFunction("FunctionDecl", impl))]
+          );
+        } else {
+          const [one, impl] = call.arguments;
+
+          return ts.factory.updateCallExpression(
+            call,
+            call.expression,
+            call.typeArguments,
+            [one, errorBoundary(() => toFunction("FunctionDecl", impl))]
+          );
+        }
       }
 
       function visitEventBusMap(call: EventBusMapInterface): ts.Node {
@@ -294,7 +306,7 @@ export function compile(
        * const bus = new EventBus() // an example of an Integration, could be any Integration
        *
        * (arg1: string) => {
-       *    bus({ source: "src" })
+       *    bus.putEvents({ source: "src" })
        * }
        * ```
        *
@@ -1135,7 +1147,7 @@ export function compile(
        * const bus = new EventBus()
        * new Function(() => {
        *     const busbus = bus;
-       *     busbus(...)
+       *     busbus.putEvents(...)
        * })
        * ```
        *

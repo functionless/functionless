@@ -1,11 +1,11 @@
 import { aws_events, Stack } from "aws-cdk-lib";
 import { EventField } from "aws-cdk-lib/aws-events";
 import { Function, reflect, StepFunction } from "../src";
-import { EventBusRuleInput } from "../src/event-bridge";
+import { Event } from "../src/event-bridge";
 
 import { ebEventTargetTestCase, ebEventTargetTestCaseError } from "./util";
 
-type testEvent = EventBusRuleInput<{
+type testEvent = Event<{
   value: string;
   optional?: string;
   num: number;
@@ -251,7 +251,7 @@ test("object with bare undefined", () => {
 });
 
 type MyString = string;
-interface MyTest extends EventBusRuleInput<{ s: MyString }> {}
+interface MyTest extends Event<{ s: MyString }> {}
 
 test("non-string type", () => {
   ebEventTargetTestCase<MyTest>(
@@ -619,7 +619,7 @@ describe("referencing", () => {
     );
   });
 
-  test("constant function from outside into object", () => {
+  test("closure from outside into object", () => {
     const value = () => {};
 
     ebEventTargetTestCaseError<testEvent>(
@@ -663,7 +663,7 @@ describe("not allowed", () => {
   test("math", () => {
     ebEventTargetTestCaseError<testEvent>(
       reflect((event) => event.detail.num + 1),
-      "Addition operator is only supported to concatinate at least one string to another value."
+      "Addition operator is only supported to concatenate at least one string to another value."
     );
   });
 

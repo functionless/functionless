@@ -9,7 +9,7 @@ interface UserDetails {
 }
 
 interface UserEvent
-  extends functionless.EventBusRuleInput<
+  extends functionless.Event<
     UserDetails,
     // We can provide custom detail-types to match on
     "Create" | "Update" | "Delete"
@@ -95,9 +95,13 @@ export class PeopleEvents extends Construct {
     catPeopleBus
       .when(this, "catSinkRule", () => true)
       .pipe(
-        new functionless.Function<Delete, void>(this, "cats", async (event) => {
-          console.log("event: ", event);
-        })
+        new functionless.Function<UserEvent, void>(
+          this,
+          "cats",
+          async (event) => {
+            console.log("event: ", event);
+          }
+        )
       );
   }
 }

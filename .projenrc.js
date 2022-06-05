@@ -180,7 +180,11 @@ project.eslint.addRules({
 project.eslint.addOverride({
   files: ["*.ts", "*.tsx"],
   parserOptions: {
-    project: ["./tsconfig.dev.json", "./test-app/tsconfig.json"],
+    project: [
+      "./tsconfig.dev.json",
+      "./test-app/tsconfig.json",
+      "./website/tsconfig.json",
+    ],
   },
 });
 

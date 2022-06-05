@@ -181,7 +181,7 @@ export const synthesizeEventBridgeTargets = (
           };
         }
         throw Error(
-          "Addition operator is only supported to concatinate at least one string to another value."
+          "Addition operator is only supported to concatenate at least one string to another value."
         );
       } else {
         throw Error(`Unsupported binary operator: ${expr.op}`);

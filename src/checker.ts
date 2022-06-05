@@ -2,8 +2,8 @@ import * as ts from "typescript";
 import * as tsserver from "typescript/lib/tsserverlibrary";
 import { ApiIntegrations, BaseApiIntegration } from "./api";
 import { AppsyncResolver } from "./appsync";
-import { EventBus, EventBusRule } from "./event-bridge";
-import { EventBusTransform } from "./event-bridge/transform";
+import { EventBus, Rule } from "./event-bridge";
+import { EventTransform } from "./event-bridge/transform";
 import { Function } from "./function";
 import { ExpressStepFunction, StepFunction } from "./step-function";
 
@@ -18,11 +18,11 @@ export type TsFunctionParameter =
   | ts.ElementAccessExpression
   | ts.CallExpression;
 
-export type EventBusRuleInterface = ts.NewExpression & {
+export type RuleInterface = ts.NewExpression & {
   arguments: [any, any, any, TsFunctionParameter];
 };
 
-export type EventBusTransformInterface = ts.NewExpression & {
+export type EventTransformInterface = ts.NewExpression & {
   arguments: [TsFunctionParameter, any];
 };
 
@@ -73,11 +73,11 @@ export function makeFunctionlessChecker(
     ...checker,
     isConstant,
     isAppsyncResolver,
-    isEventBusRuleMapFunction,
+    isRuleMapFunction,
     isEventBusWhenFunction,
     isFunctionlessType,
-    isNewEventBusRule,
-    isNewEventBusTransform,
+    isNewRule,
+    isNewEventTransform,
     isReflectFunction,
     isStepFunction,
     isNewFunctionlessFunction,
@@ -89,26 +89,24 @@ export function makeFunctionlessChecker(
 
   /**
    * Matches the patterns:
-   *   * new EventBusRule()
+   *   * new Rule()
    */
-  function isNewEventBusRule(node: ts.Node): node is EventBusRuleInterface {
-    return ts.isNewExpression(node) && isEventBusRule(node.expression);
+  function isNewRule(node: ts.Node): node is RuleInterface {
+    return ts.isNewExpression(node) && isRule(node.expression);
   }
 
   /**
    * Matches the patterns:
-   *   * new EventBusTransform()
+   *   * new EventTransform()
    */
-  function isNewEventBusTransform(
-    node: ts.Node
-  ): node is EventBusTransformInterface {
-    return ts.isNewExpression(node) && isEventBusTransform(node.expression);
+  function isNewEventTransform(node: ts.Node): node is EventTransformInterface {
+    return ts.isNewExpression(node) && isEventTransform(node.expression);
   }
 
   /**
    * Matches the patterns:
    *   * IEventBus.when
-   *   * IEventBusRule.when
+   *   * IRule.when
    */
   function isEventBusWhenFunction(
     node: ts.Node
@@ -118,22 +116,20 @@ export function makeFunctionlessChecker(
       ts.isPropertyAccessExpression(node.expression) &&
       node.expression.name.text === "when" &&
       (isEventBus(node.expression.expression) ||
-        isEventBusRule(node.expression.expression))
+        isRule(node.expression.expression))
     );
   }
 
   /**
    * Matches the patterns:
-   *   * IEventBusRule.map()
+   *   * IRule.map()
    */
-  function isEventBusRuleMapFunction(
-    node: ts.Node
-  ): node is EventBusMapInterface {
+  function isRuleMapFunction(node: ts.Node): node is EventBusMapInterface {
     return (
       ts.isCallExpression(node) &&
       ts.isPropertyAccessExpression(node.expression) &&
       node.expression.name.text === "map" &&
-      isEventBusRule(node.expression.expression)
+      isRule(node.expression.expression)
     );
   }
 
@@ -149,25 +145,25 @@ export function makeFunctionlessChecker(
   }
 
   /**
-   * Checks to see if a node is of type {@link EventBusRule}.
+   * Checks to see if a node is of type {@link Rule}.
    * The node could be any kind of node that returns an event bus rule.
    *
    * Matches the patterns:
-   *   * IEventBusRule
+   *   * IRule
    */
-  function isEventBusRule(node: ts.Node) {
-    return isFunctionlessClassOfKind(node, EventBusRule.FunctionlessType);
+  function isRule(node: ts.Node) {
+    return isFunctionlessClassOfKind(node, Rule.FunctionlessType);
   }
 
   /**
-   * Checks to see if a node is of type {@link EventBusTransform}.
+   * Checks to see if a node is of type {@link EventTransform}.
    * The node could be any kind of node that returns an event bus rule.
    *
    * Matches the patterns:
-   *   * IEventBusTransform
+   *   * IEventTransform
    */
-  function isEventBusTransform(node: ts.Node) {
-    return isFunctionlessClassOfKind(node, EventBusTransform.FunctionlessType);
+  function isEventTransform(node: ts.Node) {
+    return isFunctionlessClassOfKind(node, EventTransform.FunctionlessType);
   }
 
   function isAppsyncResolver(node: ts.Node): node is ts.NewExpression & {

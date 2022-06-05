@@ -1,8 +1,8 @@
 import { reflect } from "../src";
-import { EventBusRuleInput, EventPredicateFunction } from "../src/event-bridge";
+import { Event, RulePredicateFunction } from "../src/event-bridge";
 import { ebEventPatternTestCase, ebEventPatternTestCaseError } from "./util";
 
-type TestEvent = EventBusRuleInput<{
+type TestEvent = Event<{
   num: number;
   str: string;
   optional?: string;
@@ -21,7 +21,7 @@ describe("event pattern", () => {
   describe("equals", () => {
     test("simple", () => {
       ebEventPatternTestCase(
-        reflect<EventPredicateFunction<TestEvent>>(
+        reflect<RulePredicateFunction<TestEvent>>(
           (event) => event.source === "lambda"
         ),
         {
@@ -32,7 +32,7 @@ describe("event pattern", () => {
 
     test("no event parameter", () => {
       ebEventPatternTestCase(
-        reflect<EventPredicateFunction<TestEvent>>(() => true),
+        reflect<RulePredicateFunction<TestEvent>>(() => true),
         {
           source: [{ prefix: "" }],
         }
@@ -41,7 +41,7 @@ describe("event pattern", () => {
 
     test("index access", () => {
       ebEventPatternTestCase(
-        reflect<EventPredicateFunction<TestEvent>>(
+        reflect<RulePredicateFunction<TestEvent>>(
           // eslint-disable-next-line dot-notation
           (event) => event["source"] === "lambda"
         ),
@@ -53,7 +53,7 @@ describe("event pattern", () => {
 
     test("double equals", () => {
       ebEventPatternTestCase(
-        reflect<EventPredicateFunction<TestEvent>>(
+        reflect<RulePredicateFunction<TestEvent>>(
           (event) => event.source == "lambda"
         ),
         {
@@ -64,7 +64,7 @@ describe("event pattern", () => {
 
     test("is null", () => {
       ebEventPatternTestCase(
-        reflect<EventPredicateFunction<TestEvent>>(
+        reflect<RulePredicateFunction<TestEvent>>(
           (event) => event.source === null
         ),
         {
@@ -75,7 +75,7 @@ describe("event pattern", () => {
 
     test("detail", () => {
       ebEventPatternTestCase(
-        reflect<EventPredicateFunction<TestEvent>>(
+        reflect<RulePredicateFunction<TestEvent>>(
           (event) => event.detail.str === "something"
         ),
         {
@@ -86,7 +86,7 @@ describe("event pattern", () => {
 
     test("detail deep", () => {
       ebEventPatternTestCase(
-        reflect<EventPredicateFunction<TestEvent>>(
+        reflect<RulePredicateFunction<TestEvent>>(
           (event) => event.detail.deep.value === "something"
         ),
         {
@@ -97,7 +97,7 @@ describe("event pattern", () => {
 
     test("detail index accessor", () => {
       ebEventPatternTestCase(
-        reflect<EventPredicateFunction<TestEvent>>(
+        reflect<RulePredicateFunction<TestEvent>>(
           (event) => event.detail["multi-part"] === "something"
         ),
         {
@@ -108,7 +108,7 @@ describe("event pattern", () => {
 
     test("numeric", () => {
       ebEventPatternTestCase(
-        reflect<EventPredicateFunction<TestEvent>>(
+        reflect<RulePredicateFunction<TestEvent>>(
           (event) => event.detail.num === 50
         ),
         {
@@ -119,7 +119,7 @@ describe("event pattern", () => {
 
     test("negative number", () => {
       ebEventPatternTestCase(
-        reflect<EventPredicateFunction<TestEvent>>(
+        reflect<RulePredicateFunction<TestEvent>>(
           (event) => event.detail.num === -50
         ),
         {
@@ -130,9 +130,7 @@ describe("event pattern", () => {
 
     test("boolean implicit", () => {
       ebEventPatternTestCase(
-        reflect<EventPredicateFunction<TestEvent>>(
-          (event) => event.detail.bool
-        ),
+        reflect<RulePredicateFunction<TestEvent>>((event) => event.detail.bool),
         {
           detail: { bool: [true] },
         }
@@ -141,7 +139,7 @@ describe("event pattern", () => {
 
     test("boolean implicit false", () => {
       ebEventPatternTestCase(
-        reflect<EventPredicateFunction<TestEvent>>(
+        reflect<RulePredicateFunction<TestEvent>>(
           (event) => !event.detail.bool
         ),
         {
@@ -152,7 +150,7 @@ describe("event pattern", () => {
 
     test("boolean explicit", () => {
       ebEventPatternTestCase(
-        reflect<EventPredicateFunction<TestEvent>>(
+        reflect<RulePredicateFunction<TestEvent>>(
           (event) => event.detail.bool === false
         ),
         {
@@ -164,7 +162,7 @@ describe("event pattern", () => {
     describe("array", () => {
       test("array", () => {
         ebEventPatternTestCase(
-          reflect<EventPredicateFunction<TestEvent>>((event) =>
+          reflect<RulePredicateFunction<TestEvent>>((event) =>
             event.detail.array.includes("something")
           ),
           {
@@ -175,7 +173,7 @@ describe("event pattern", () => {
 
       test("num array", () => {
         ebEventPatternTestCase(
-          reflect<EventPredicateFunction<TestEvent>>((event) =>
+          reflect<RulePredicateFunction<TestEvent>>((event) =>
             event.detail.numArray.includes(1)
           ),
           {
@@ -186,7 +184,7 @@ describe("event pattern", () => {
 
       test("num array", () => {
         ebEventPatternTestCase(
-          reflect<EventPredicateFunction<TestEvent>>((event) =>
+          reflect<RulePredicateFunction<TestEvent>>((event) =>
             event.detail.numArray.includes(-1)
           ),
           {
@@ -197,7 +195,7 @@ describe("event pattern", () => {
 
       test("bool array", () => {
         ebEventPatternTestCase(
-          reflect<EventPredicateFunction<TestEvent>>((event) =>
+          reflect<RulePredicateFunction<TestEvent>>((event) =>
             event.detail.boolArray.includes(true)
           ),
           {
@@ -208,7 +206,7 @@ describe("event pattern", () => {
 
       test("array not includes", () => {
         ebEventPatternTestCase(
-          reflect<EventPredicateFunction<TestEvent>>(
+          reflect<RulePredicateFunction<TestEvent>>(
             (event) => !event.detail.array.includes("something")
           ),
           {
@@ -219,7 +217,7 @@ describe("event pattern", () => {
 
       test("num array not includes", () => {
         ebEventPatternTestCase(
-          reflect<EventPredicateFunction<TestEvent>>(
+          reflect<RulePredicateFunction<TestEvent>>(
             (event) => !event.detail.numArray.includes(1)
           ),
           {
@@ -230,7 +228,7 @@ describe("event pattern", () => {
 
       test("bool array not includes", () => {
         ebEventPatternTestCase(
-          reflect<EventPredicateFunction<TestEvent>>(
+          reflect<RulePredicateFunction<TestEvent>>(
             (event) => !event.detail.boolArray.includes(true)
           ),
           {
@@ -241,7 +239,7 @@ describe("event pattern", () => {
 
       test("array explicit equals error", () => {
         ebEventPatternTestCaseError(
-          reflect<EventPredicateFunction<TestEvent>>(
+          reflect<RulePredicateFunction<TestEvent>>(
             (event) => event.detail.array === ["a", "b"]
           ),
           "Event Patterns can only compare primitive values"
@@ -253,7 +251,7 @@ describe("event pattern", () => {
   describe("prefix", () => {
     test("prefix", () => {
       ebEventPatternTestCase(
-        reflect<EventPredicateFunction<TestEvent>>((event) =>
+        reflect<RulePredicateFunction<TestEvent>>((event) =>
           event.source.startsWith("l")
         ),
         {
@@ -264,7 +262,7 @@ describe("event pattern", () => {
 
     test("not prefix", () => {
       ebEventPatternTestCase(
-        reflect<EventPredicateFunction<TestEvent>>(
+        reflect<RulePredicateFunction<TestEvent>>(
           (event) => !event.source.startsWith("l")
         ),
         {
@@ -275,7 +273,7 @@ describe("event pattern", () => {
 
     test("prefix non string", () => {
       ebEventPatternTestCaseError(
-        reflect<EventPredicateFunction<TestEvent>>((event) =>
+        reflect<RulePredicateFunction<TestEvent>>((event) =>
           (<any>event.detail.num).startsWith("l")
         ),
         "Starts With operation only supported on strings, found number."
@@ -286,7 +284,7 @@ describe("event pattern", () => {
   describe("numeric range single", () => {
     test("numeric range single", () => {
       ebEventPatternTestCase(
-        reflect<EventPredicateFunction<TestEvent>>(
+        reflect<RulePredicateFunction<TestEvent>>(
           (event) => event.detail.num < 100
         ),
         {
@@ -297,7 +295,7 @@ describe("event pattern", () => {
 
     test("numeric range greater than", () => {
       ebEventPatternTestCase(
-        reflect<EventPredicateFunction<TestEvent>>(
+        reflect<RulePredicateFunction<TestEvent>>(
           (event) => event.detail.num > 100
         ),
         {
@@ -308,7 +306,7 @@ describe("event pattern", () => {
 
     test("numeric range greater than equals", () => {
       ebEventPatternTestCase(
-        reflect<EventPredicateFunction<TestEvent>>(
+        reflect<RulePredicateFunction<TestEvent>>(
           (event) => event.detail.num >= 100
         ),
         {
@@ -319,7 +317,7 @@ describe("event pattern", () => {
 
     test("numeric range inverted", () => {
       ebEventPatternTestCase(
-        reflect<EventPredicateFunction<TestEvent>>(
+        reflect<RulePredicateFunction<TestEvent>>(
           (event) => 100 < event.detail.num
         ),
         {
@@ -330,7 +328,7 @@ describe("event pattern", () => {
 
     test("numeric range inverted", () => {
       ebEventPatternTestCase(
-        reflect<EventPredicateFunction<TestEvent>>(
+        reflect<RulePredicateFunction<TestEvent>>(
           (event) => 100 >= event.detail.num
         ),
         {
@@ -343,7 +341,7 @@ describe("event pattern", () => {
   describe("not", () => {
     test("string", () => {
       ebEventPatternTestCase(
-        reflect<EventPredicateFunction<TestEvent>>(
+        reflect<RulePredicateFunction<TestEvent>>(
           (event) => event.source !== "lambda"
         ),
         {
@@ -354,7 +352,7 @@ describe("event pattern", () => {
 
     test("not not prefix", () => {
       ebEventPatternTestCase(
-        reflect<EventPredicateFunction<TestEvent>>(
+        reflect<RulePredicateFunction<TestEvent>>(
           (event) => !!event.source.startsWith("lambda")
         ),
         {
@@ -365,7 +363,7 @@ describe("event pattern", () => {
 
     test("negate string equals", () => {
       ebEventPatternTestCase(
-        reflect<EventPredicateFunction<TestEvent>>(
+        reflect<RulePredicateFunction<TestEvent>>(
           (event) => !(event.source === "lambda")
         ),
         {
@@ -376,7 +374,7 @@ describe("event pattern", () => {
 
     test("negate not string equals", () => {
       ebEventPatternTestCase(
-        reflect<EventPredicateFunction<TestEvent>>(
+        reflect<RulePredicateFunction<TestEvent>>(
           (event) => !(event.source !== "lambda")
         ),
         {
@@ -387,7 +385,7 @@ describe("event pattern", () => {
 
     test("not bool true", () => {
       ebEventPatternTestCase(
-        reflect<EventPredicateFunction<TestEvent>>(
+        reflect<RulePredicateFunction<TestEvent>>(
           (event) => event.detail.bool !== true
         ),
         {
@@ -398,7 +396,7 @@ describe("event pattern", () => {
 
     test("negate not bool true", () => {
       ebEventPatternTestCase(
-        reflect<EventPredicateFunction<TestEvent>>(
+        reflect<RulePredicateFunction<TestEvent>>(
           (event) => !(event.detail.bool !== true)
         ),
         {
@@ -409,7 +407,7 @@ describe("event pattern", () => {
 
     test("negate bool true", () => {
       ebEventPatternTestCase(
-        reflect<EventPredicateFunction<TestEvent>>(
+        reflect<RulePredicateFunction<TestEvent>>(
           (event) => !(event.detail.bool === true)
         ),
         {
@@ -420,7 +418,7 @@ describe("event pattern", () => {
 
     test("string wrapped", () => {
       ebEventPatternTestCase(
-        reflect<EventPredicateFunction<TestEvent>>(
+        reflect<RulePredicateFunction<TestEvent>>(
           (event) => !(event.source === "lambda")
         ),
         {
@@ -431,7 +429,7 @@ describe("event pattern", () => {
 
     test("number", () => {
       ebEventPatternTestCase(
-        reflect<EventPredicateFunction<TestEvent>>(
+        reflect<RulePredicateFunction<TestEvent>>(
           (event) => event.detail.num !== 100
         ),
         {
@@ -442,7 +440,7 @@ describe("event pattern", () => {
 
     test("array", () => {
       ebEventPatternTestCase(
-        reflect<EventPredicateFunction<TestEvent>>(
+        reflect<RulePredicateFunction<TestEvent>>(
           (event) => !event.detail.array.includes("something")
         ),
         {
@@ -453,7 +451,7 @@ describe("event pattern", () => {
 
     test("string prefix", () => {
       ebEventPatternTestCase(
-        reflect<EventPredicateFunction<TestEvent>>(
+        reflect<RulePredicateFunction<TestEvent>>(
           (event) => !event.detail.str.startsWith("something")
         ),
         {
@@ -464,7 +462,7 @@ describe("event pattern", () => {
 
     test("negate multiple fields", () => {
       ebEventPatternTestCaseError(
-        reflect<EventPredicateFunction<TestEvent>>(
+        reflect<RulePredicateFunction<TestEvent>>(
           (event) => !(event.detail.str === "hello" && event.id === "there")
         ),
         "Can only negate simple statements like equals, doesn't equals, and prefix."
@@ -473,7 +471,7 @@ describe("event pattern", () => {
 
     test("negate multiple", () => {
       ebEventPatternTestCaseError(
-        reflect<EventPredicateFunction<TestEvent>>(
+        reflect<RulePredicateFunction<TestEvent>>(
           (event) => !(event.detail.str || !event.detail.str)
         ),
         "Impossible logic discovered."
@@ -482,7 +480,7 @@ describe("event pattern", () => {
 
     test("negate negate multiple", () => {
       ebEventPatternTestCase(
-        reflect<EventPredicateFunction<TestEvent>>(
+        reflect<RulePredicateFunction<TestEvent>>(
           (event) => !!(event.detail.str || !event.detail.str)
         ),
         { source: [{ prefix: "" }] }
@@ -491,7 +489,7 @@ describe("event pattern", () => {
 
     test("negate intrafield valid aggregate", () => {
       ebEventPatternTestCaseError(
-        reflect<EventPredicateFunction<TestEvent>>(
+        reflect<RulePredicateFunction<TestEvent>>(
           (event) =>
             !(event.detail.str.startsWith("hello") || event.detail.str === "hi")
         )
@@ -503,7 +501,7 @@ describe("event pattern", () => {
   describe("exists", () => {
     test("does", () => {
       ebEventPatternTestCase(
-        reflect<EventPredicateFunction<TestEvent>>(
+        reflect<RulePredicateFunction<TestEvent>>(
           (event) => event.detail.optional !== undefined
         ),
         {
@@ -514,7 +512,7 @@ describe("event pattern", () => {
 
     test("does in", () => {
       ebEventPatternTestCase(
-        reflect<EventPredicateFunction<TestEvent>>(
+        reflect<RulePredicateFunction<TestEvent>>(
           (event) => "optional" in event.detail
         ),
         {
@@ -525,7 +523,7 @@ describe("event pattern", () => {
 
     test("does exist lone value", () => {
       ebEventPatternTestCase(
-        reflect<EventPredicateFunction<TestEvent>>(
+        reflect<RulePredicateFunction<TestEvent>>(
           (event) => !!event.detail.optional
         ),
         {
@@ -536,7 +534,7 @@ describe("event pattern", () => {
 
     test("does not", () => {
       ebEventPatternTestCase(
-        reflect<EventPredicateFunction<TestEvent>>(
+        reflect<RulePredicateFunction<TestEvent>>(
           (event) => event.detail.optional === undefined
         ),
         {
@@ -547,7 +545,7 @@ describe("event pattern", () => {
 
     test("does not in", () => {
       ebEventPatternTestCase(
-        reflect<EventPredicateFunction<TestEvent>>(
+        reflect<RulePredicateFunction<TestEvent>>(
           (event) => !("optional" in event.detail)
         ),
         {
@@ -558,9 +556,7 @@ describe("event pattern", () => {
 
     test("exists at event level", () => {
       ebEventPatternTestCase(
-        reflect<EventPredicateFunction<TestEvent>>(
-          (event) => "source" in event
-        ),
+        reflect<RulePredicateFunction<TestEvent>>((event) => "source" in event),
         {
           source: [{ exists: true }],
         }
@@ -572,7 +568,7 @@ describe("event pattern", () => {
     const myConstant = "hello";
     test("external constant", () => {
       ebEventPatternTestCase(
-        reflect<EventPredicateFunction<TestEvent>>(
+        reflect<RulePredicateFunction<TestEvent>>(
           (event) => event.detail.str === myConstant
         ),
         {
@@ -585,7 +581,7 @@ describe("event pattern", () => {
 
     test("external constant", () => {
       ebEventPatternTestCase(
-        reflect<EventPredicateFunction<TestEvent>>(
+        reflect<RulePredicateFunction<TestEvent>>(
           (event) => event.detail.str === constantObj.value
         ),
         {
@@ -596,7 +592,7 @@ describe("event pattern", () => {
 
     test("internal constant", () => {
       ebEventPatternTestCase(
-        reflect<EventPredicateFunction<TestEvent>>((event) => {
+        reflect<RulePredicateFunction<TestEvent>>((event) => {
           const myInternalContant = "hi";
           return event.detail.str === myInternalContant;
         }),
@@ -608,7 +604,7 @@ describe("event pattern", () => {
 
     test("formatting", () => {
       ebEventPatternTestCase(
-        reflect<EventPredicateFunction<TestEvent>>((event) => {
+        reflect<RulePredicateFunction<TestEvent>>((event) => {
           const myInternalContant = "hi";
           return event.detail.str === `${myInternalContant} there`;
         }),
@@ -620,7 +616,7 @@ describe("event pattern", () => {
 
     test("internal property", () => {
       ebEventPatternTestCase(
-        reflect<EventPredicateFunction<TestEvent>>((event) => {
+        reflect<RulePredicateFunction<TestEvent>>((event) => {
           const myInternalContant = { value: "hi" };
           return event.detail.str === myInternalContant.value;
         }),
@@ -632,7 +628,7 @@ describe("event pattern", () => {
 
     test("constant function call", () => {
       ebEventPatternTestCaseError(
-        reflect<EventPredicateFunction<TestEvent>>((event) => {
+        reflect<RulePredicateFunction<TestEvent>>((event) => {
           const myInternalContant = (() => "hi" + " " + "there")();
           return event.detail.str === myInternalContant;
         }),
@@ -642,7 +638,7 @@ describe("event pattern", () => {
 
     test("constant function call", () => {
       ebEventPatternTestCaseError(
-        reflect<EventPredicateFunction<TestEvent>>((event) => {
+        reflect<RulePredicateFunction<TestEvent>>((event) => {
           const myMethod = () => "hi" + " " + "there";
           return event.detail.str === myMethod();
         }),
@@ -654,7 +650,7 @@ describe("event pattern", () => {
   describe("simple invalid", () => {
     test("error on raw event in predicate", () => {
       ebEventPatternTestCaseError(
-        reflect<EventPredicateFunction<TestEvent>>((event) => !!event),
+        reflect<RulePredicateFunction<TestEvent>>((event) => !!event),
         "Identifier is unsupported"
       );
     });
@@ -663,7 +659,7 @@ describe("event pattern", () => {
   describe("numeric aggregate", () => {
     test("numeric range aggregate", () => {
       ebEventPatternTestCase(
-        reflect<EventPredicateFunction<TestEvent>>(
+        reflect<RulePredicateFunction<TestEvent>>(
           (event) => event.detail.num >= 100 && event.detail.num < 1000
         ),
         {
@@ -674,7 +670,7 @@ describe("event pattern", () => {
 
     test("numeric range overlapping", () => {
       ebEventPatternTestCase(
-        reflect<EventPredicateFunction<TestEvent>>(
+        reflect<RulePredicateFunction<TestEvent>>(
           (event) =>
             event.detail.num >= 100 &&
             event.detail.num < 1000 &&
@@ -688,7 +684,7 @@ describe("event pattern", () => {
 
     test("numeric range negate", () => {
       ebEventPatternTestCase(
-        reflect<EventPredicateFunction<TestEvent>>(
+        reflect<RulePredicateFunction<TestEvent>>(
           (event) => !(event.detail.num >= 100 && event.detail.num < 1000)
         ),
         {
@@ -699,7 +695,7 @@ describe("event pattern", () => {
 
     test("numeric range overlapping", () => {
       ebEventPatternTestCase(
-        reflect<EventPredicateFunction<TestEvent>>(
+        reflect<RulePredicateFunction<TestEvent>>(
           (event) =>
             event.detail.num >= 100 &&
             event.detail.num < 1000 &&
@@ -713,7 +709,7 @@ describe("event pattern", () => {
 
     test("numeric range aggregate with other fields", () => {
       ebEventPatternTestCase(
-        reflect<EventPredicateFunction<TestEvent>>(
+        reflect<RulePredicateFunction<TestEvent>>(
           (event) =>
             event.detail.num >= 100 &&
             event.detail.num < 1000 &&
@@ -730,7 +726,7 @@ describe("event pattern", () => {
 
     test("numeric range or exclusive", () => {
       ebEventPatternTestCase(
-        reflect<EventPredicateFunction<TestEvent>>(
+        reflect<RulePredicateFunction<TestEvent>>(
           (event) => event.detail.num > 300 || event.detail.num < 200
         ),
         {
@@ -741,7 +737,7 @@ describe("event pattern", () => {
 
     test("numeric range or exclusive negate", () => {
       ebEventPatternTestCase(
-        reflect<EventPredicateFunction<TestEvent>>(
+        reflect<RulePredicateFunction<TestEvent>>(
           (event) => !(event.detail.num > 300 || event.detail.num < 200)
         ),
         {
@@ -753,7 +749,7 @@ describe("event pattern", () => {
     // the ranges represent infinity, so the clause is removed
     test("numeric range or aggregate empty", () => {
       ebEventPatternTestCase(
-        reflect<EventPredicateFunction<TestEvent>>(
+        reflect<RulePredicateFunction<TestEvent>>(
           (event) => event.detail.num < 300 || event.detail.num > 200
         ),
         {
@@ -764,7 +760,7 @@ describe("event pattern", () => {
 
     test("numeric range or aggregate", () => {
       ebEventPatternTestCase(
-        reflect<EventPredicateFunction<TestEvent>>(
+        reflect<RulePredicateFunction<TestEvent>>(
           (event) =>
             (event.detail.num > 300 && event.detail.num < 350) ||
             event.detail.num < 200
@@ -779,7 +775,7 @@ describe("event pattern", () => {
 
     test("numeric range or and AND", () => {
       ebEventPatternTestCase(
-        reflect<EventPredicateFunction<TestEvent>>(
+        reflect<RulePredicateFunction<TestEvent>>(
           (event) =>
             (event.detail.num > 300 || event.detail.num < 200) &&
             event.detail.num > 0
@@ -802,7 +798,7 @@ describe("event pattern", () => {
      */
     test("numeric range or and AND part reduced", () => {
       ebEventPatternTestCase(
-        reflect<EventPredicateFunction<TestEvent>>(
+        reflect<RulePredicateFunction<TestEvent>>(
           (event) =>
             (event.detail.num > 300 || event.detail.num < 200) &&
             (event.detail.num > 0 || event.detail.num < 500)
@@ -817,7 +813,7 @@ describe("event pattern", () => {
 
     test("numeric range or and AND part reduced inverted", () => {
       ebEventPatternTestCase(
-        reflect<EventPredicateFunction<TestEvent>>(
+        reflect<RulePredicateFunction<TestEvent>>(
           (event) =>
             (event.detail.num > 0 || event.detail.num < 500) &&
             (event.detail.num > 300 || event.detail.num < 200)
@@ -832,7 +828,7 @@ describe("event pattern", () => {
 
     test("numeric range or and AND part reduced both valid", () => {
       ebEventPatternTestCase(
-        reflect<EventPredicateFunction<TestEvent>>(
+        reflect<RulePredicateFunction<TestEvent>>(
           (event) =>
             (event.detail.num > 300 || event.detail.num < 200) &&
             (event.detail.num > 250 || event.detail.num < 100)
@@ -847,7 +843,7 @@ describe("event pattern", () => {
 
     test("numeric range or and AND part reduced both ranges", () => {
       ebEventPatternTestCase(
-        reflect<EventPredicateFunction<TestEvent>>(
+        reflect<RulePredicateFunction<TestEvent>>(
           (event) =>
             ((event.detail.num >= 10 && event.detail.num <= 20) ||
               (event.detail.num >= 30 && event.detail.num <= 40)) &&
@@ -864,7 +860,7 @@ describe("event pattern", () => {
 
     test("numeric range or and AND part reduced both losing some range", () => {
       ebEventPatternTestCase(
-        reflect<EventPredicateFunction<TestEvent>>(
+        reflect<RulePredicateFunction<TestEvent>>(
           (event) =>
             ((event.detail.num >= 10 && event.detail.num <= 20) ||
               (event.detail.num >= 30 && event.detail.num <= 40)) &&
@@ -881,7 +877,7 @@ describe("event pattern", () => {
 
     test("numeric range multiple distinct segments", () => {
       ebEventPatternTestCase(
-        reflect<EventPredicateFunction<TestEvent>>(
+        reflect<RulePredicateFunction<TestEvent>>(
           (event) =>
             (event.detail.num > 300 && event.detail.num < 400) ||
             (event.detail.num > 0 && event.detail.num < 200) ||
@@ -901,7 +897,7 @@ describe("event pattern", () => {
 
     test("numeric range multiple distinct segments overlapped", () => {
       ebEventPatternTestCase(
-        reflect<EventPredicateFunction<TestEvent>>(
+        reflect<RulePredicateFunction<TestEvent>>(
           (event) =>
             (event.detail.num > 300 && event.detail.num < 400) ||
             (event.detail.num > 0 && event.detail.num < 200) ||
@@ -918,7 +914,7 @@ describe("event pattern", () => {
 
     test("numeric range multiple distinct segments merged", () => {
       ebEventPatternTestCase(
-        reflect<EventPredicateFunction<TestEvent>>(
+        reflect<RulePredicateFunction<TestEvent>>(
           (event) =>
             (event.detail.num > 300 && event.detail.num < 400) ||
             (event.detail.num > 0 && event.detail.num < 200) ||
@@ -938,7 +934,7 @@ describe("event pattern", () => {
 
     test("numeric range or and AND dropped range", () => {
       ebEventPatternTestCase(
-        reflect<EventPredicateFunction<TestEvent>>(
+        reflect<RulePredicateFunction<TestEvent>>(
           (event) =>
             (event.detail.num > 300 || event.detail.num < 200) &&
             event.detail.num > 400
@@ -953,7 +949,7 @@ describe("event pattern", () => {
 
     test("numeric range nil range error upper", () => {
       ebEventPatternTestCaseError(
-        reflect<EventPredicateFunction<TestEvent>>(
+        reflect<RulePredicateFunction<TestEvent>>(
           (event) =>
             event.detail.num >= 100 &&
             event.detail.num < 1000 &&
@@ -965,7 +961,7 @@ describe("event pattern", () => {
 
     test("numeric range nil range OR valid range", () => {
       ebEventPatternTestCase(
-        reflect<EventPredicateFunction<TestEvent>>(
+        reflect<RulePredicateFunction<TestEvent>>(
           (event) =>
             event.detail.num === 10 ||
             (event.detail.num >= 100 &&
@@ -982,7 +978,7 @@ describe("event pattern", () => {
 
     test("numeric range nil range AND invalid range", () => {
       ebEventPatternTestCaseError(
-        reflect<EventPredicateFunction<TestEvent>>(
+        reflect<RulePredicateFunction<TestEvent>>(
           (event) =>
             event.detail.num >= 100 &&
             event.detail.num < 1000 &&
@@ -995,7 +991,7 @@ describe("event pattern", () => {
 
     test("numeric range nil range OR valid aggregate range", () => {
       ebEventPatternTestCase(
-        reflect<EventPredicateFunction<TestEvent>>(
+        reflect<RulePredicateFunction<TestEvent>>(
           (event) =>
             event.detail.num === 10 ||
             event.detail.num === 11 ||
@@ -1013,7 +1009,7 @@ describe("event pattern", () => {
 
     test("numeric range nil range error lower", () => {
       ebEventPatternTestCaseError(
-        reflect<EventPredicateFunction<TestEvent>>(
+        reflect<RulePredicateFunction<TestEvent>>(
           (event) =>
             event.detail.num >= 100 &&
             event.detail.num < 1000 &&
@@ -1024,7 +1020,7 @@ describe("event pattern", () => {
 
     test("numeric range nil range illogical", () => {
       ebEventPatternTestCaseError(
-        reflect<EventPredicateFunction<TestEvent>>(
+        reflect<RulePredicateFunction<TestEvent>>(
           (event) => event.detail.num >= 100 && event.detail.num < 50
         ),
         "Found zero range numeric range lower 100 inclusive: true, upper 50 inclusive: false"
@@ -1033,7 +1029,7 @@ describe("event pattern", () => {
 
     test("numeric range nil range illogical with override", () => {
       ebEventPatternTestCase(
-        reflect<EventPredicateFunction<TestEvent>>(
+        reflect<RulePredicateFunction<TestEvent>>(
           (event) =>
             event.detail.num === 10 ||
             (event.detail.num >= 100 && event.detail.num < 50)
@@ -1050,7 +1046,7 @@ describe("event pattern", () => {
   describe("aggregate", () => {
     test("test for optional", () => {
       ebEventPatternTestCase(
-        reflect<EventPredicateFunction<TestEvent>>(
+        reflect<RulePredicateFunction<TestEvent>>(
           (event) =>
             !!event.detail.optional && event.detail.optional === "value"
         ),
@@ -1064,7 +1060,7 @@ describe("event pattern", () => {
 
     test("test for optional number", () => {
       ebEventPatternTestCase(
-        reflect<EventPredicateFunction<TestEvent>>(
+        reflect<RulePredicateFunction<TestEvent>>(
           (event) =>
             !!event.detail.optionalNum &&
             event.detail.optionalNum > 10 &&
@@ -1080,7 +1076,7 @@ describe("event pattern", () => {
 
     test("number and string separate fields", () => {
       ebEventPatternTestCase(
-        reflect<EventPredicateFunction<TestEvent>>(
+        reflect<RulePredicateFunction<TestEvent>>(
           (event) => event.detail.num === 10 && event.detail.str === "hello"
         ),
         {
@@ -1094,7 +1090,7 @@ describe("event pattern", () => {
 
     test("same field AND string", () => {
       ebEventPatternTestCaseError(
-        reflect<EventPredicateFunction<TestEvent>>(
+        reflect<RulePredicateFunction<TestEvent>>(
           (event) =>
             event.detail.str === "hi" && <any>event.detail.str === "hello"
         ),
@@ -1104,7 +1100,7 @@ describe("event pattern", () => {
 
     test("same field AND string with OR", () => {
       ebEventPatternTestCase(
-        reflect<EventPredicateFunction<TestEvent>>(
+        reflect<RulePredicateFunction<TestEvent>>(
           (event) =>
             event.detail.str === "huh" ||
             (event.detail.str === "hi" && <any>event.detail.str === "hello")
@@ -1119,7 +1115,7 @@ describe("event pattern", () => {
 
     test("same field AND string identical", () => {
       ebEventPatternTestCase(
-        reflect<EventPredicateFunction<TestEvent>>(
+        reflect<RulePredicateFunction<TestEvent>>(
           (event) => event.detail.str === "hi" && event.detail.str === "hi"
         ),
         {
@@ -1132,7 +1128,7 @@ describe("event pattern", () => {
 
     test("same field OR string", () => {
       ebEventPatternTestCase(
-        reflect<EventPredicateFunction<TestEvent>>(
+        reflect<RulePredicateFunction<TestEvent>>(
           (event) => event.detail.str === "hi" || event.detail.str === "hello"
         ),
         {
@@ -1145,7 +1141,7 @@ describe("event pattern", () => {
 
     test("same field OR string and AND another field ", () => {
       ebEventPatternTestCase(
-        reflect<EventPredicateFunction<TestEvent>>(
+        reflect<RulePredicateFunction<TestEvent>>(
           (event) =>
             (event.detail.str === "hi" || event.detail.str === "hello") &&
             event.detail.num === 100
@@ -1161,7 +1157,7 @@ describe("event pattern", () => {
 
     test("same field AND another field ", () => {
       ebEventPatternTestCase(
-        reflect<EventPredicateFunction<TestEvent>>(
+        reflect<RulePredicateFunction<TestEvent>>(
           (event) => event.detail.str === "hello" && event.detail.num === 100
         ),
         {
@@ -1175,7 +1171,7 @@ describe("event pattern", () => {
 
     test("same field || another field ", () => {
       ebEventPatternTestCaseError(
-        reflect<EventPredicateFunction<TestEvent>>(
+        reflect<RulePredicateFunction<TestEvent>>(
           (event) => event.detail.str === "hello" || event.detail.num === 100
         ),
         "Event bridge does not support OR logic between multiple fields, found str and num."
@@ -1184,7 +1180,7 @@ describe("event pattern", () => {
 
     test("lots of AND", () => {
       ebEventPatternTestCase(
-        reflect<EventPredicateFunction<TestEvent>>(
+        reflect<RulePredicateFunction<TestEvent>>(
           (event) =>
             event.detail.str === "hi" &&
             event.detail.num === 100 &&
@@ -1206,7 +1202,7 @@ describe("event pattern", () => {
 
     test("AND prefix", () => {
       ebEventPatternTestCase(
-        reflect<EventPredicateFunction<TestEvent>>(
+        reflect<RulePredicateFunction<TestEvent>>(
           (event) =>
             event.detail.str.startsWith("hi") && event.detail.num === 100
         ),
@@ -1221,7 +1217,7 @@ describe("event pattern", () => {
 
     test("AND not prefix", () => {
       ebEventPatternTestCaseError(
-        reflect<EventPredicateFunction<TestEvent>>(
+        reflect<RulePredicateFunction<TestEvent>>(
           (event) =>
             !event.detail.str.startsWith("hi") && event.detail.str !== "hello"
         ),
@@ -1231,7 +1227,7 @@ describe("event pattern", () => {
 
     test("AND not prefix reverse", () => {
       ebEventPatternTestCaseError(
-        reflect<EventPredicateFunction<TestEvent>>(
+        reflect<RulePredicateFunction<TestEvent>>(
           (event) =>
             event.detail.str !== "hello" && !event.detail.str.startsWith("hi")
         ),
@@ -1241,7 +1237,7 @@ describe("event pattern", () => {
 
     test("AND not two prefix", () => {
       ebEventPatternTestCaseError(
-        reflect<EventPredicateFunction<TestEvent>>(
+        reflect<RulePredicateFunction<TestEvent>>(
           (event) =>
             !event.detail.str.startsWith("hello") &&
             !event.detail.str.startsWith("hi")
@@ -1252,7 +1248,7 @@ describe("event pattern", () => {
 
     test("AND list", () => {
       ebEventPatternTestCase(
-        reflect<EventPredicateFunction<TestEvent>>(
+        reflect<RulePredicateFunction<TestEvent>>(
           (event) =>
             event.detail.array.includes("hi") && event.detail.num === 100
         ),
@@ -1267,7 +1263,7 @@ describe("event pattern", () => {
 
     test("AND exists", () => {
       ebEventPatternTestCase(
-        reflect<EventPredicateFunction<TestEvent>>(
+        reflect<RulePredicateFunction<TestEvent>>(
           (event) => !!event.detail.optional && event.detail.num === 100
         ),
         {
@@ -1281,7 +1277,7 @@ describe("event pattern", () => {
 
     test("AND not exists", () => {
       ebEventPatternTestCase(
-        reflect<EventPredicateFunction<TestEvent>>(
+        reflect<RulePredicateFunction<TestEvent>>(
           (event) => !event.detail.optional && event.detail.num === 100
         ),
         {
@@ -1295,7 +1291,7 @@ describe("event pattern", () => {
 
     test("AND not equals", () => {
       ebEventPatternTestCase(
-        reflect<EventPredicateFunction<TestEvent>>(
+        reflect<RulePredicateFunction<TestEvent>>(
           (event) => event.detail.str !== "hi" && event.detail.str !== "hello"
         ),
         {
@@ -1308,7 +1304,7 @@ describe("event pattern", () => {
 
     test("AND not not equals", () => {
       ebEventPatternTestCase(
-        reflect<EventPredicateFunction<TestEvent>>(
+        reflect<RulePredicateFunction<TestEvent>>(
           // str === "hi" || str === "hello"
           (event) =>
             !(event.detail.str !== "hi" && event.detail.str !== "hello")
@@ -1323,7 +1319,7 @@ describe("event pattern", () => {
 
     test("AND not exists and exists impossible", () => {
       ebEventPatternTestCaseError(
-        reflect<EventPredicateFunction<TestEvent>>(
+        reflect<RulePredicateFunction<TestEvent>>(
           (event) => !event.detail.str && <any>event.detail.str
         ),
         "Field cannot both be present and not present."
@@ -1332,7 +1328,7 @@ describe("event pattern", () => {
 
     test("AND not exists and exists impossible", () => {
       ebEventPatternTestCase(
-        reflect<EventPredicateFunction<TestEvent>>(
+        reflect<RulePredicateFunction<TestEvent>>(
           (event) =>
             event.detail.str === "hi" ||
             (!event.detail.str && <any>event.detail.str)
@@ -1347,7 +1343,7 @@ describe("event pattern", () => {
 
     test("AND not exists and not equals", () => {
       ebEventPatternTestCase(
-        reflect<EventPredicateFunction<TestEvent>>(
+        reflect<RulePredicateFunction<TestEvent>>(
           (event) => !event.detail.str && event.detail.str !== "x"
         ),
         {
@@ -1360,7 +1356,7 @@ describe("event pattern", () => {
 
     test("AND not exists and value", () => {
       ebEventPatternTestCaseError(
-        reflect<EventPredicateFunction<TestEvent>>(
+        reflect<RulePredicateFunction<TestEvent>>(
           (event) => !event.detail.str && event.detail.str === "x"
         ),
         "Invalid comparison: pattern cannot both be not present as a positive value"
@@ -1369,7 +1365,7 @@ describe("event pattern", () => {
 
     test("AND not exists and value", () => {
       ebEventPatternTestCase(
-        reflect<EventPredicateFunction<TestEvent>>(
+        reflect<RulePredicateFunction<TestEvent>>(
           (event) =>
             event.detail.str === "hello" ||
             (!event.detail.str && event.detail.str === "x")
@@ -1384,7 +1380,7 @@ describe("event pattern", () => {
 
     test("AND not null and not value", () => {
       ebEventPatternTestCase(
-        reflect<EventPredicateFunction<TestEvent>>(
+        reflect<RulePredicateFunction<TestEvent>>(
           (event) => event.detail.str !== null && event.detail.str !== "x"
         ),
         {
@@ -1397,7 +1393,7 @@ describe("event pattern", () => {
 
     test("AND not not exists and not equals", () => {
       ebEventPatternTestCase(
-        reflect<EventPredicateFunction<TestEvent>>(
+        reflect<RulePredicateFunction<TestEvent>>(
           (event) => !(!event.detail.str && event.detail.str !== "x")
         ),
         {
@@ -1410,7 +1406,7 @@ describe("event pattern", () => {
 
     test("AND not exists and not equals", () => {
       ebEventPatternTestCase(
-        reflect<EventPredicateFunction<TestEvent>>(
+        reflect<RulePredicateFunction<TestEvent>>(
           (event) => event.detail.str !== "x" && !event.detail.str
         ),
         {
@@ -1423,7 +1419,7 @@ describe("event pattern", () => {
 
     test("OR not equals", () => {
       ebEventPatternTestCase(
-        reflect<EventPredicateFunction<TestEvent>>(
+        reflect<RulePredicateFunction<TestEvent>>(
           (event) =>
             event.detail.str !== "hi" || <any>event.detail.str !== "hello"
         ),
@@ -1433,7 +1429,7 @@ describe("event pattern", () => {
 
     test("AND not eq", () => {
       ebEventPatternTestCase(
-        reflect<EventPredicateFunction<TestEvent>>(
+        reflect<RulePredicateFunction<TestEvent>>(
           (event) => event.detail.str !== "hi" && event.detail.num === 100
         ),
         {
@@ -1447,7 +1443,7 @@ describe("event pattern", () => {
 
     test("OR not exists", () => {
       ebEventPatternTestCase(
-        reflect<EventPredicateFunction<TestEvent>>(
+        reflect<RulePredicateFunction<TestEvent>>(
           (event) =>
             !event.detail.optional || event.detail.optional === "cheese"
         ),
@@ -1461,7 +1457,7 @@ describe("event pattern", () => {
 
     test("OR not exists not eq", () => {
       ebEventPatternTestCase(
-        reflect<EventPredicateFunction<TestEvent>>(
+        reflect<RulePredicateFunction<TestEvent>>(
           (event) =>
             !event.detail.optional || event.detail.optional !== "cheese"
         ),
@@ -1475,7 +1471,7 @@ describe("event pattern", () => {
 
     test("OR not exists starts with", () => {
       ebEventPatternTestCase(
-        reflect<EventPredicateFunction<TestEvent>>(
+        reflect<RulePredicateFunction<TestEvent>>(
           (event) =>
             !event.detail.optional || event.detail.optional.startsWith("cheese")
         ),
@@ -1489,7 +1485,7 @@ describe("event pattern", () => {
 
     test("OR not exists not starts with", () => {
       ebEventPatternTestCase(
-        reflect<EventPredicateFunction<TestEvent>>(
+        reflect<RulePredicateFunction<TestEvent>>(
           (event) =>
             !event.detail.optional ||
             !event.detail.optional.startsWith("cheese")
@@ -1509,14 +1505,14 @@ describe("event pattern", () => {
   describe("error edge cases", () => {
     test("comparing non event values", () => {
       ebEventPatternTestCaseError(
-        reflect<EventPredicateFunction<TestEvent>>((_event) => "10" === "10"),
+        reflect<RulePredicateFunction<TestEvent>>((_event) => "10" === "10"),
         "Expected exactly one event reference, got zero."
       );
     });
 
     test("comparing two event values", () => {
       ebEventPatternTestCaseError(
-        reflect<EventPredicateFunction<TestEvent>>(
+        reflect<RulePredicateFunction<TestEvent>>(
           (event) => event.id === event.region
         ),
         "Expected exactly one event reference, got two."
@@ -1529,7 +1525,7 @@ describe("event pattern", () => {
 describe.skip("destructure", () => {
   test("destructure parameter", () => {
     ebEventPatternTestCase(
-      reflect<EventPredicateFunction<TestEvent>>(
+      reflect<RulePredicateFunction<TestEvent>>(
         ({ source }) => source === "lambda"
       ),
       {
@@ -1540,7 +1536,7 @@ describe.skip("destructure", () => {
 
   test("destructure variable", () => {
     ebEventPatternTestCase(
-      reflect<EventPredicateFunction<TestEvent>>((event) => {
+      reflect<RulePredicateFunction<TestEvent>>((event) => {
         const { source } = event;
         return source === "lambda";
       }),
@@ -1552,7 +1548,7 @@ describe.skip("destructure", () => {
 
   test("destructure multi-layer variable", () => {
     ebEventPatternTestCase(
-      reflect<EventPredicateFunction<TestEvent>>((event) => {
+      reflect<RulePredicateFunction<TestEvent>>((event) => {
         const {
           detail: { str },
         } = event;
@@ -1566,7 +1562,7 @@ describe.skip("destructure", () => {
 
   test("destructure array doesn't work", () => {
     ebEventPatternTestCaseError(
-      reflect<EventPredicateFunction<TestEvent>>((event) => {
+      reflect<RulePredicateFunction<TestEvent>>((event) => {
         const {
           detail: {
             array: [value],
@@ -1579,7 +1575,7 @@ describe.skip("destructure", () => {
 
   test("destructure parameter array doesn't work", () => {
     ebEventPatternTestCaseError(
-      reflect<EventPredicateFunction<TestEvent>>(
+      reflect<RulePredicateFunction<TestEvent>>(
         ({
           detail: {
             array: [value],
@@ -1591,7 +1587,7 @@ describe.skip("destructure", () => {
 
   test("descture variable rename", () => {
     ebEventPatternTestCase(
-      reflect<EventPredicateFunction<TestEvent>>((event) => {
+      reflect<RulePredicateFunction<TestEvent>>((event) => {
         const { source: src } = event;
         return src === "lambda";
       }),
@@ -1603,7 +1599,7 @@ describe.skip("destructure", () => {
 
   test("destructure parameter rename", () => {
     ebEventPatternTestCase(
-      reflect<EventPredicateFunction<TestEvent>>(
+      reflect<RulePredicateFunction<TestEvent>>(
         ({ source: src }) => src === "lambda"
       ),
       {
@@ -1617,7 +1613,7 @@ describe.skip("destructure", () => {
 describe.skip("list some", () => {
   test("list starts with", () => {
     ebEventPatternTestCase(
-      reflect<EventPredicateFunction<TestEvent>>((event) =>
+      reflect<RulePredicateFunction<TestEvent>>((event) =>
         event.resources.some((r) => r.startsWith("hi"))
       ),
       {
@@ -1628,7 +1624,7 @@ describe.skip("list some", () => {
 
   test("list starts with AND errors", () => {
     ebEventPatternTestCaseError(
-      reflect<EventPredicateFunction<TestEvent>>((event) =>
+      reflect<RulePredicateFunction<TestEvent>>((event) =>
         event.resources.some((r) => r.startsWith("hi") && r === "taco")
       )
     );
@@ -1636,7 +1632,7 @@ describe.skip("list some", () => {
 
   test("list starts with OR is fine", () => {
     ebEventPatternTestCase(
-      reflect<EventPredicateFunction<TestEvent>>((event) =>
+      reflect<RulePredicateFunction<TestEvent>>((event) =>
         event.resources.some(
           (r) => r.startsWith("hi") || r.startsWith("taco") || r === "cheddar"
         )
@@ -1649,7 +1645,7 @@ describe.skip("list some", () => {
 
   test("list some instead of includes", () => {
     ebEventPatternTestCase(
-      reflect<EventPredicateFunction<TestEvent>>((event) =>
+      reflect<RulePredicateFunction<TestEvent>>((event) =>
         event.resources.some((r) => r === "cheddar")
       ),
       {

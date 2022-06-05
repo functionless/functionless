@@ -12,7 +12,7 @@ import { Construct } from "constructs";
 import {
   $AWS,
   EventBus,
-  EventBusRuleInput,
+  Event,
   ExpressStepFunction,
   Function,
   FunctionProps,
@@ -345,7 +345,7 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
         "function",
         localstackClientConfig,
         async () => {
-          bus({
+          bus.putEvents({
             "detail-type": "detail",
             source: "lambda",
             detail: {},
@@ -394,7 +394,7 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
   testFunctionResource.skip(
     "Call Lambda AWS SDK put event to bus without reference",
     (parent) => {
-      const bus = new EventBus<EventBusRuleInput>(parent, "bus");
+      const bus = new EventBus<Event>(parent, "bus");
 
       return new Function(
         parent,
@@ -421,14 +421,14 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
   testFunctionResource(
     "Call Lambda AWS SDK put event to bus with in closure reference",
     (parent) => {
-      const bus = new EventBus<EventBusRuleInput>(parent, "bus");
+      const bus = new EventBus<Event>(parent, "bus");
       return new Function(
         parent,
         "function",
         localstackClientConfig,
         async () => {
           const busbus = bus;
-          busbus({
+          busbus.putEvents({
             "detail-type": "anyDetail",
             source: "anySource",
             detail: {},
@@ -442,14 +442,14 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
   testFunctionResource(
     "Call Lambda AWS SDK integration from destructured object  aa",
     (parent) => {
-      const buses = { bus: new EventBus<EventBusRuleInput>(parent, "bus") };
+      const buses = { bus: new EventBus<Event>(parent, "bus") };
       return new Function(
         parent,
         "function",
         localstackClientConfig,
         async () => {
           const { bus } = buses;
-          bus({
+          bus.putEvents({
             "detail-type": "anyDetail",
             source: "anySource",
             detail: {},

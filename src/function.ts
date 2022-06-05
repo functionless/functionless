@@ -6,6 +6,7 @@ import {
   AssetHashType,
   aws_apigateway,
   aws_dynamodb,
+  aws_events_targets,
   aws_lambda,
   CfnResource,
   DockerImage,
@@ -27,6 +28,8 @@ import {
   NativeFunctionDecl,
 } from "./declaration";
 import { Err, isErr } from "./error";
+import { EventBusTargetIntegration } from "./event-bridge";
+import { makeEventBusIntegration } from "./event-bridge/event-bus";
 import { CallExpr, Expr, isVariableReference } from "./expression";
 import {
   Integration,
@@ -41,12 +44,20 @@ export function isFunction<P = any, O = any>(a: any): a is IFunction<P, O> {
 
 export type AnyLambda = Function<any, any>;
 
+export interface FunctionEventBusTargetProps
+  extends Omit<aws_events_targets.LambdaFunctionProps, "event"> {}
+
 export type FunctionClosure<P, O> = (
   payload: P,
   context: Context
 ) => Promise<O>;
 
-export interface IFunction<P, O> {
+export interface IFunction<P, O>
+  extends Integration<
+    "Function",
+    ConditionalFunction<P, O>,
+    EventBusTargetIntegration<P, FunctionEventBusTargetProps | undefined>
+  > {
   readonly functionlessKind: typeof Function.FunctionlessType;
   readonly kind: typeof Function.FunctionlessType;
   readonly resource: aws_lambda.IFunction;
@@ -54,13 +65,16 @@ export interface IFunction<P, O> {
   (...args: Parameters<ConditionalFunction<P, O>>): ReturnType<
     ConditionalFunction<P, O>
   >;
+
+  readonly eventBus: EventBusTargetIntegration<
+    P,
+    FunctionEventBusTargetProps | undefined
+  >;
 }
 
-abstract class FunctionBase<P, O>
-  implements IFunction<P, O>, Integration<FunctionBase<P, O>>
-{
+abstract class FunctionBase<P, O> implements IFunction<P, O> {
   readonly kind = "Function" as const;
-  readonly native: NativeIntegration<FunctionBase<P, O>>;
+  readonly native: NativeIntegration<ConditionalFunction<P, O>>;
   readonly functionlessKind = "Function";
   public static readonly FunctionlessType = "Function";
 
@@ -158,6 +172,17 @@ abstract class FunctionBase<P, O>
       ResultSelector: "$.Payload",
     };
   }
+
+  public readonly eventBus = makeEventBusIntegration<
+    P,
+    FunctionEventBusTargetProps | undefined
+  >({
+    target: (props, targetInput) =>
+      new aws_events_targets.LambdaFunction(this.resource, {
+        ...props,
+        event: targetInput,
+      }),
+  });
 }
 
 interface FunctionBase<P, O> {
@@ -187,18 +212,27 @@ export interface FunctionProps
 const isNativeFunctionOrError = anyOf(isErr, isNativeFunctionDecl);
 
 /**
- * Wraps an {@link aws_lambda.Function} with a type-safe interface that can be
- * called from within an {@link AppsyncResolver}.
+ * A type-safe NodeJS Lambda Function generated from the closure provided.
+ *
+ * Can be called from within an {@link AppsyncResolver}.
  *
  * For example:
  * ```ts
- * const getPerson = Function.fromFunction<string, Person>(
- *   new aws_lambda.Function(..)
- * );
+ * const getPerson = new Function<string, Person>(stack, 'func', async () => {
+ *  // get person logic
+ * });
  *
  * new AppsyncResolver(() => {
  *   return getPerson("value");
  * })
+ * ```
+ *
+ * Can wrap an existing {@link aws_lambda.Function}.
+ *
+ * ```ts
+ * const getPerson = Function.fromFunction<string, Person>(
+ *   new aws_lambda.Function(..)
+ * );
  * ```
  */
 export class Function<P, O> extends FunctionBase<P, O> {
@@ -475,7 +509,7 @@ export class CallbackLambdaCode extends aws_lambda.Code {
              */
             const transformIntegration = (o: unknown): any => {
               if (o && typeof o === "object" && "kind" in o) {
-                const integ = o as Integration;
+                const integ = o as Integration<any>;
                 const copy = {
                   ...integ,
                   native: {

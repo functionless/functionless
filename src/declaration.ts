@@ -40,7 +40,7 @@ export class FunctionDecl<F extends AnyFunction = AnyFunction> extends BaseDecl<
 }
 
 export interface IntegrationInvocation {
-  integration: Integration;
+  integration: Integration<any>;
   args: Argument[];
 }
 
