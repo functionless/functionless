@@ -375,8 +375,7 @@ customDeleteBus
     "Delete Message Rule",
     (event) => event["detail-type"] === "Delete-Message-Success"
   )
-  // TODO: the when should narrow the type
-  .map<Notification>((event) => ({
+  .map((event) => ({
     message: `Messages deleted: ${(<MessageDeletedEvent>event).detail.count}`,
   }))
   .pipe(sendNotification);
@@ -387,8 +386,7 @@ customDeleteBus
     "Delete Post Rule",
     (event) => event["detail-type"] === "Delete-Post-Success"
   )
-  // TODO: the when should narrow the type
-  .map<Notification>((event) => ({
+  .map((event) => ({
     message: `Post Deleted: ${(<PostDeletedEvent>event).detail.id}`,
   }))
   .pipe(sendNotification);

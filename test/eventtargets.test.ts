@@ -619,7 +619,7 @@ describe("referencing", () => {
     );
   });
 
-  test("constant function from outside into object", () => {
+  test("closure from outside into object", () => {
     const value = () => {};
 
     ebEventTargetTestCaseError<testEvent>(
