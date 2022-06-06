@@ -241,8 +241,9 @@ export class Function<P, O> extends FunctionBase<P, O> {
    * To correctly resolve these for CDK synthesis, either use `asyncSynth()` or use `cdk synth` in the CDK cli.
    * https://twitter.com/samgoodwin89/status/1516887131108438016?s=20&t=7GRGOQ1Bp0h_cPsJgFk3Ww
    */
-  public static readonly promises = ((global as any)[PromisesSymbol] =
-    (global as any)[PromisesSymbol] ?? []);
+  public static readonly promises: Promise<any>[] = ((global as any)[
+    PromisesSymbol
+  ] = (global as any)[PromisesSymbol] ?? []);
 
   /**
    * Wrap a {@link aws_lambda.Function} with Functionless.

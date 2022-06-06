@@ -3,4 +3,7 @@ const { tsc } = require("../lib/tsc");
 
 (async function () {
   await tsc(path.join(__dirname, "..", "test-app"));
-})().catch((err) => process.exit(1));
+})().catch((err) => {
+  console.error(err);
+  process.exit(1);
+});

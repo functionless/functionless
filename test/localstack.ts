@@ -6,6 +6,7 @@ import { CloudFormationDeployments } from "aws-cdk/lib/api/cloudformation-deploy
 import { CloudFormation } from "aws-sdk";
 import { Construct } from "constructs";
 import { asyncSynth } from "../src/async-synth";
+import { Function } from "../src/function";
 
 export const clientConfig = {
   endpoint: "http://localhost:4566",
@@ -44,10 +45,11 @@ export const deployStack = async (app: App, stack: Stack) => {
     sdkProvider,
   });
 
+  const stackArtifact = cloudAssembly.getStackArtifact(
+    stack.artifactId
+  ) as unknown as cxapi.CloudFormationStackArtifact;
   await cfn.deployStack({
-    stack: cloudAssembly.getStackArtifact(
-      stack.artifactId
-    ) as unknown as cxapi.CloudFormationStackArtifact,
+    stack: stackArtifact,
     force: true,
   });
 };
@@ -124,6 +126,8 @@ export const localstackTestSuite = (
       }
       return {};
     });
+
+    await Promise.all(Function.promises);
 
     await deployStack(app, stack);
 

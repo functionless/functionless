@@ -1,7 +1,7 @@
 import { aws_apigateway } from "aws-cdk-lib";
+import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
 import { Construct } from "constructs";
-import { isParameterDecl } from ".";
-import { FunctionDecl, isFunctionDecl } from "./declaration";
+import { FunctionDecl, isFunctionDecl, isParameterDecl } from "./declaration";
 import { isErr } from "./error";
 import {
   Identifier,
@@ -20,6 +20,7 @@ import {
   ObjectLiteralExpr,
   PropAccessExpr,
 } from "./expression";
+import { Function } from "./function";
 import { findIntegration, IntegrationImpl } from "./integration";
 import { FunctionlessNode } from "./node";
 import { isReturnStmt, isVariableStmt, ReturnStmt } from "./statement";
@@ -83,7 +84,7 @@ export abstract class BaseApiIntegration {
    */
   public abstract addMethod(
     httpMethod: HttpMethod,
-    resource: aws_apigateway.Resource
+    resource: aws_apigateway.IResource
   ): aws_apigateway.Method;
 }
 
@@ -225,7 +226,7 @@ export interface AwsApiIntegrationProps<
  * @see https://docs.aws.amazon.com/apigateway/latest/developerguide/api-gateway-api-integration-types.html
  */
 export class AwsApiIntegration<
-  Request,
+  Request extends ApiRequest<any, any, any, any>,
   IntegrationResponse,
   MethodResponse
 > extends BaseApiIntegration {
@@ -552,4 +553,37 @@ export interface ApiGatewayVtlIntegration {
     requestTemplate: string,
     responses: aws_apigateway.IntegrationResponse[]
   ) => aws_apigateway.Integration;
+}
+
+export interface LambdaProxyApiIntegrationProps
+  extends Omit<
+    aws_apigateway.LambdaIntegrationOptions,
+    | "requestParameters"
+    | "requestTemplates"
+    | "integrationResponses"
+    | "passthroughBehavior"
+    | "proxy"
+  > {
+  function: Function<APIGatewayProxyEvent, APIGatewayProxyResult>;
+}
+
+export class LambdaProxyApiIntegration extends BaseApiIntegration {
+  readonly function;
+  constructor(private readonly props: LambdaProxyApiIntegrationProps) {
+    super();
+    this.function = props.function;
+  }
+
+  public addMethod(
+    httpMethod: HttpMethod,
+    resource: aws_apigateway.IResource
+  ): aws_apigateway.Method {
+    return resource.addMethod(
+      httpMethod,
+      new aws_apigateway.LambdaIntegration(this.function.resource, {
+        ...this.props,
+        proxy: true,
+      })
+    );
+  }
 }
