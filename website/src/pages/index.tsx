@@ -32,25 +32,13 @@ function HomepageHeader() {
 
         <div className="row">
           <div className="col col--2 col--offset-3 margin-top--md">
-            <HomeButton
-              to="/docs/what-is-functionless"
-              label="Learn More"
-              variant="primary"
-            />
+            <HomeButton to="/docs/what-is-functionless" label="Learn More" />
           </div>
           <div className="col col--2 margin-top--md">
-            <HomeButton
-              to="./sign-up"
-              label="Sign Up for Updates"
-              variant="info"
-            />
+            <HomeButton to="./sign-up" label="Sign Up for Updates" />
           </div>
           <div className="col col--2 margin-top--md">
-            <HomeButton
-              to="/docs/getting-started"
-              label="Get Started"
-              variant="primary"
-            />
+            <HomeButton to="/docs/getting-started" label="Get Started" />
           </div>
         </div>
       </div>
@@ -62,7 +50,9 @@ function HomeButton(props: { to: string; label: string; variant?: string }) {
   return (
     <div className={styles.buttons}>
       <Link
-        className={`button button--${props.variant ?? "secondary"} button--lg`}
+        className={`button button--active button--${
+          props.variant ?? "secondary"
+        } button--lg`}
         to={props.to}
       >
         {props.label}
