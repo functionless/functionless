@@ -102,7 +102,7 @@ new StepFunction(stack, "Func", (name: string) => {
 
 ## Start Execution
 
-A `StepFunction` can be called directly from an [Integration](../integration) such as [`Function`](../function.md), [`StepFunction`](./index.md), [`AppsyncResolver`](../appsync/index.md) or [`EventBus`](../event-bridge/event-bus.md).
+A `StepFunction` can be called directly from an [Integration](../integration) such as [`Function`](../function), [`StepFunction`](./index.md), [`AppsyncResolver`](../appsync/index.md) or [`EventBus`](../event-bridge/event-bus.md).
 
 ### From a Function, StepFunction or AppsyncResolver
 

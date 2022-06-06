@@ -4,7 +4,7 @@ sidebar_position: 0.1
 
 # Supported Integrations
 
-- [Function](../function.md) - the cloud's swiss army knife, an AWS Lambda Function. Functionless serializes in-line Function closures and automatically configures IAM Policies and Environment Variables, and initializes SDK clients (such as the AWS SDK) at runtime.
+- [Function](../function) - the cloud's swiss army knife, an AWS Lambda Function. Functionless serializes in-line Function closures and automatically configures IAM Policies and Environment Variables, and initializes SDK clients (such as the AWS SDK) at runtime.
 - [DynamoDB Table](../table.md) - a DynamoDB Table can be called from any functional integration, such as Function, Appsync Resolver, Step Function and Express Step Function.
 - [Appsync Resolver](../appsync) - resolve fields in a GraphQL APi's Query, Mutation and Subscribe operations.
 - [Step Function](../step-function/index.md#standard-step-function) - orchestrate long-running asynchronous workflows with AWS Step Functions.

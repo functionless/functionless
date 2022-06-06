@@ -8,9 +8,17 @@ This section goes into detail on how [Integrations](../concepts/integration/) wo
 
 ## Terms
 
-- Resource - Infrastructure and Business Logic which use an integration, generally modelled as some infrastructure like a [`Function`](../concepts/function/) or [`EventBus`](../concepts/event-bridge/).
-- [Integration](../concepts/integration/) - An object (may be a Resource) or function which can be used within a Resource.
-- [Integration Type](./integration-types.md) - A pattern that an integration implements to be used within one or more Resources.
+### **Resource**
+
+Infrastructure and Business Logic which use an integration, generally modelled as some infrastructure like a [`Function`](../concepts/function/) or [`EventBus`](../concepts/event-bridge/).
+
+### **[Integration](../concepts/integration/)**
+
+An object (may be a Resource) or function which can be used within a Resource.
+
+### **[Integration Type](./integration-types.md)**
+
+A pattern that an integration implements to be used within one or more Resources.
 
 ```mermaid
 graph LR;
@@ -20,7 +28,7 @@ graph LR;
   Integration--implements-->IntegrationType;
 ```
 
-A view of what a user sees of Integrations and Resources:
+How Integrations and Resources appear as a consumer of Functionless:
 
 ```ts
 // event bus is a Resource
@@ -37,26 +45,33 @@ const sfn = new StepFunction(this, sfn, (payload: { name: string }) => {
 });
 ```
 
-Partial view of `EventBus` and `putEvents` which supports the StepFunction Integration Type:
+The `EventBus` and `putEvents` source which supports the StepFunction Integration Type:
 
 ```ts
 class EventBus {
-
-  public readonly putEvents: IntegrationCall<
-    "EventBus.putEvents",
-    IEventBus<E>["putEvents"]
-  >;
-
   constructor(...) {
-    // the makeIntegration method helps generate the right object and type for all integrations
-    // also makes the property callable
     this.putEvents = makeIntegration<"EventBus.putEvents", IEventBus<E>["putEvents"]>({
-      // ASL in an IntegrationType that requests a method of the form (call: CallExpr, context: ASL) => Omit<State, "Next">;
       asl: (call: CallExpr, context: ASL) => {
-        // do things like grant permissions, generate ASL, and output a State object.
+        ...
       }
     })
   }
+}
+```
+
+The `makeIntegration` method helps generate the right object and type for all integrations as well as making the property callable
+
+```ts
+this.putEvents = makeIntegration<...>({
+```
+
+ASL is an [Integration Type](./integration-types.md) that requests a method of the form `(call: CallExpr, context: ASL) => Omit<State, "Next">`.
+
+This is where the integration prepares the ASL `State` which allows step functions to invoke the integration.
+
+```ts
+asl: (call: CallExpr, context: ASL) => {
+  ...
 }
 ```
 
@@ -116,18 +131,24 @@ new functionless_2.StepFunction(
 
 During synthesis, when StepFunctions finds a [CallExpr](../api/classes/CallExpr.md), it checks to see if the call is on an Integration.
 
-Instead of actually calling the Integration, it knows the implemented interface on the Integration and can call that instead.
-
 ```ts
 if (isCallExpr(expr)) {
-  // looks for a ReferenceExpr and returns the contents
-  const integration = findIntegration(expr);
-
-  // IntegrationImpl is a friendly wrapper around an integration that generates consistent failures.
-  const integ = new IntegrationImpl(integration);
-  // call the ASL method shown in the EventBus above.
-  const state = integ.asl(expr, this);
-
-  // add the state to the graph
-}
 ```
+
+Instead of actually calling the Integration, it knows the implemented interface on the Integration and can call that instead.
+
+It looks for a ReferenceExpr and returns the contents
+
+```ts
+const integration = findIntegration(expr);
+// IntegrationImpl is a friendly wrapper around an integration that generates consistent failures.
+const integ = new IntegrationImpl(integration);
+```
+
+Then it calls the ASL method shown in the EventBus above.
+
+```ts
+const state = integ.asl(expr, this);
+```
+
+And finally add the resulting `state` to the ASL graph.

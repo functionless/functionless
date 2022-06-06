@@ -23,7 +23,7 @@ See [issues](https://github.com/functionless/functionless/issues?q=is%3Aissue+is
 
 ## Call an Integration
 
-Most of Functionless's [integrations](./integration/) can be called from within a Lambda Function. Functionless will automatically infer the required IAM Policies, set any environment variables it needs (such as the ARN of a dependency) and instantiate any SDK clients when the Function is first invoked.
+Most of Functionless's [integrations](../integration/) can be called from within a Lambda Function. Functionless will automatically infer the required IAM Policies, set any environment variables it needs (such as the ARN of a dependency) and instantiate any SDK clients when the Function is first invoked.
 
 ```ts
 const Table = new Table(scope, "Table");
@@ -105,7 +105,7 @@ const response = $AWS.Lambda.Invoke({
 
 ## Forward Events from an EventBus to a Lambda Function
 
-Finally, you can route Events from an [Event Bus](./event-bridge/event-bus.md) to a Lambda Function, provided the Function's signature is compatible.
+Finally, you can route Events from an [Event Bus](../event-bridge/event-bus.md) to a Lambda Function, provided the Function's signature is compatible.
 
 ```ts
 bus

@@ -78,7 +78,7 @@ Table.from<Item, "itemId", "timestamp">(itemTable);
 
 ## Call from an Integration
 
-Use the [`$AWS`](./aws.md) SDK's DynamoDB APIs to access the Table from within a Lambda [Function](./function.md) or [Step Function](./step-function/index.md).
+Use the [`$AWS`](./aws.md) SDK's DynamoDB APIs to access the Table from within a Lambda [Function](./function) or [Step Function](./step-function/index.md).
 
 ```ts
 new StepFunction(scope, "Function", (itemId: string) => {
