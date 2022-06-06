@@ -4,7 +4,7 @@ import { MockApiIntegration } from "../src";
 import { localstackTestSuite } from "./localstack";
 
 localstackTestSuite("apiGatewayStack", (test, stack) => {
-  test(
+  test.skip(
     "mock integration",
     () => {
       const api = new aws_apigateway.RestApi(stack, "MockAPI");
