@@ -391,6 +391,19 @@ customDeleteBus
   }))
   .pipe(sendNotification);
 
+// event bus is a Resource
+const bus = new EventBus<Event<{ name: string }>>(stack, "bus");
+
+// StepFunction is a Resource
+new StepFunction(stack, "sfn", (payload: { name: string }) => {
+  // bus.putEvents is an Integration that supports the StepFunction ASL Integration Type
+  bus.putEvents({
+    source: "specialSource",
+    "detail-type": "UserNameEvent",
+    detail: payload,
+  });
+});
+
 /**
  * Native Function test
  */

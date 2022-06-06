@@ -2,7 +2,7 @@
 position: 5
 ---
 
-# Extend Functionless
+# Reflect
 
 Functionless converts TypeScript function syntax into a [`FunctionDecl`](/api/classes/FunctionDecl.md) AST data object. This object contains a total representation of the syntax contained within the Function and can then be processed within your CDK application.
 

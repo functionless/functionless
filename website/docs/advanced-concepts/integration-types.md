@@ -1,3 +1,7 @@
+---
+sidebar_position: 1
+---
+
 # Integration Types
 
 Integration Types are an interface which [Integrations](../concepts/integration/) implement to be used by some Resource.
@@ -67,3 +71,12 @@ this.appSynVtl =  {
   result: (call, context) => { return /** formatted VTL which transforms the output of the step function **/ }
 }
 ```
+
+## Integration Types
+
+| Name               | Key          | Description                                                                                                                                                                    | Implementing Resource(s)                                                                                            | Interface                                                                     |
+| ------------------ | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| App Sync VTL       | `appSyncVtl` | Provides velocity (VTL) and App Sync Pipeline Resolver used with AWS App Sync to invoke the `Integration`.                                                                     | [`AppsyncResolver`](../api/classes/AppsyncResolver.md)                                                              | [`AppSyncVtlIntegration`](../api/interfaces/AppSyncVtlIntegration.md)         |
+| EventBus           | `eventBus`   | Provides an [`aws_events.IRuleTarget`](https://docs.aws.amazon.com/cdk/api/v1/docs/@aws-cdk_aws-events.IRuleTarget.html) which is used to forward events to the `Integration`. | [`EventBus`](../api/classes/EventBus.md)                                                                            | [`EventBusTargetIntegration`](../api/interfaces/EventBusTargetIntegration.md) |
+| Native Function    | `native`     | Wires up permissions and a clients for Integrations to be invoked by a lambda Function.                                                                                        | [`Function`](../api/classes/Function.md)                                                                            | [`NativeIntegration`](../api/interfaces/NativeIntegration.md)                 |
+| Step Functions ASL | `asl`        | Provides a Task definition and in the Amazon States Language to invoke an execution.                                                                                           | [`StepFunction`](../api/classes/StepFunction.md) and [`ExpressStepFunction`](../api/classes/ExpressStepFunction.md) | [None](https://github.com/functionless/functionless/issues/197)               |
