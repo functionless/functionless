@@ -5,7 +5,6 @@ import ts from "typescript";
 import { assertDefined } from "./assert";
 import {
   ApiIntegrationInterface,
-  ApiIntegrationsStaticMethodInterface,
   EventBusMapInterface,
   RuleInterface,
   EventTransformInterface,
@@ -116,8 +115,6 @@ export function compile(
             return visitEventTransform(node);
           } else if (checker.isNewFunctionlessFunction(node)) {
             return visitFunction(node, ctx);
-          } else if (checker.isApiIntegrationsStaticMethod(node)) {
-            return visitApiIntegrationsStaticMethod(node);
           } else if (checker.isApiIntegration(node)) {
             return visitApiIntegration(node);
           }
@@ -541,19 +538,6 @@ export function compile(
           ),
           body,
         ]);
-      }
-
-      function visitApiIntegrationsStaticMethod(
-        node: ApiIntegrationsStaticMethodInterface
-      ): ts.CallExpression {
-        const [props] = node.arguments;
-
-        return ts.factory.updateCallExpression(
-          node,
-          node.expression,
-          node.typeArguments,
-          [visitApiIntegrationProps(props)]
-        );
       }
 
       function visitApiIntegration(node: ApiIntegrationInterface): ts.Node {

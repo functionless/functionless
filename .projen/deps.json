@@ -66,6 +66,10 @@
       "type": "build"
     },
     {
+      "name": "axios",
+      "type": "build"
+    },
+    {
       "name": "cdk-assets",
       "version": "2.20.0",
       "type": "build"

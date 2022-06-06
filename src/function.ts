@@ -328,6 +328,7 @@ export class Function<P, O> extends FunctionBase<P, O> {
 
         integrations = func.integrations;
       } else {
+        debugger;
         throw Error(
           "Expected lambda to be passed a compiled function closure or a aws_lambda.IFunction"
         );

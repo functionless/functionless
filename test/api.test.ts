@@ -6,19 +6,74 @@ let stack: Stack;
 let func: Function<any, any>;
 beforeEach(() => {
   stack = new Stack();
-  func = new Function(stack, "F", (p) => p);
+  func = new Function(stack, "F", (p) => {
+    return p;
+  });
 });
 
 test("mock integration with object literal", () => {
   const api = new aws_apigateway.RestApi(stack, "API");
 
+  interface MockRequest {
+    pathParameters: {
+      code: number;
+    };
+  }
+
   const method = getMethodTemplates(
     new MockApiIntegration({
-      request: (req: {
-        pathParameters: {
-          code: number;
-        };
-      }) => ({
+      request: (req: MockRequest) => ({
+        statusCode: req.pathParameters.code,
+      }),
+      responses: {
+        200: () => ({
+          response: "OK",
+        }),
+        500: () => ({
+          response: "BAD",
+        }),
+      },
+    }).addMethod("GET", api.root)
+  );
+
+  expect(method.httpMethod).toEqual("GET");
+  expect(method.integration.requestTemplates).toEqual({
+    "application/json": `#set($inputRoot = $input.path('$'))
+{"statusCode":$input.params().path.code}`,
+  });
+  expect(method.integration.integrationResponses).toEqual([
+    <IntegrationResponseProperty>{
+      statusCode: "200",
+      selectionPattern: "^200$",
+      responseTemplates: {
+        "application/json": `#set($inputRoot = $input.path('$'))
+{"response":"OK"}`,
+      },
+    },
+    <IntegrationResponseProperty>{
+      statusCode: "500",
+      selectionPattern: "^500$",
+      responseTemplates: {
+        "application/json": `#set($inputRoot = $input.path('$'))
+{"response":"BAD"}`,
+      },
+    },
+  ]);
+});
+
+test.skip("mock integration with object literal and literal type in pathParameters", () => {
+  const api = new aws_apigateway.RestApi(stack, "API");
+
+  interface MockRequest {
+    pathParameters: {
+      // TODO: this breaks the interpreter which expects a string | number
+      code: 200 | 500;
+    };
+  }
+
+  const method = getMethodTemplates(
+    new MockApiIntegration({
+      request: (req: MockRequest) => ({
         statusCode: req.pathParameters.code,
       }),
       responses: {

@@ -81,7 +81,6 @@ export function makeFunctionlessChecker(
     isReflectFunction,
     isStepFunction,
     isNewFunctionlessFunction,
-    isApiIntegrationsStaticMethod,
     isApiIntegration,
     isCDKConstruct,
     getFunctionlessTypeKind,
@@ -215,22 +214,6 @@ export function makeFunctionlessChecker(
         : node.arguments?.length === 4
         ? ts.isArrowFunction(node.arguments[3])
         : false)
-    );
-  }
-
-  function isApiIntegrationsStaticMethod(
-    node: ts.Node
-  ): node is ApiIntegrationsStaticMethodInterface {
-    return (
-      ts.isCallExpression(node) &&
-      ts.isPropertyAccessExpression(node.expression) &&
-      (node.expression.name.text === "mock" ||
-        node.expression.name.text == "aws") &&
-      ts.isIdentifier(node.expression.expression) &&
-      isFunctionlessClassOfKind(
-        node.expression.expression,
-        BaseApiIntegration.FunctionlessType
-      )
     );
   }
 

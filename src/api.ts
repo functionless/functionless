@@ -504,6 +504,7 @@ function validateFunctionDecl(a: any): FunctionDecl {
   } else if (isErr(a)) {
     throw a.error;
   } else {
+    debugger;
     throw Error("Unknown compiler error.");
   }
 }

@@ -86,7 +86,7 @@ const sfn = new ExpressStepFunction(
 
 interface MockRequest {
   pathParameters: {
-    num: 200 | 500;
+    num: number;
   };
 }
 
