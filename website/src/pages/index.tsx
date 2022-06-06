@@ -32,7 +32,11 @@ function HomepageHeader() {
 
         <div className="row">
           <div className="col col--2 col--offset-3 margin-top--md">
-            <HomeButton to="/docs/what-is-functionless" label="Learn More" />
+            <HomeButton
+              to="/docs/what-is-functionless"
+              label="Learn More"
+              variant="primary"
+            />
           </div>
           <div className="col col--2 margin-top--md">
             <HomeButton
@@ -42,7 +46,11 @@ function HomepageHeader() {
             />
           </div>
           <div className="col col--2 margin-top--md">
-            <HomeButton to="/docs/getting-started" label="Get Started" />
+            <HomeButton
+              to="/docs/getting-started"
+              label="Get Started"
+              variant="primary"
+            />
           </div>
         </div>
       </div>

@@ -2,17 +2,16 @@
 import { useColorMode } from "@docusaurus/theme-common";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
-import { FunctionlessHighlighter } from "../components/highlighter";
-import FormGroup from "@mui/material/FormGroup";
-import FormControlLabel from "@mui/material/FormControlLabel";
 import Checkbox from "@mui/material/Checkbox";
 import Container from "@mui/material/Container";
-import RadioGroup from "@mui/material/RadioGroup";
 import FormControl from "@mui/material/FormControl";
-import Radio from "@mui/material/Radio";
+import FormControlLabel from "@mui/material/FormControlLabel";
+import FormGroup from "@mui/material/FormGroup";
 import FormLabel from "@mui/material/FormLabel";
 import Grid from "@mui/material/Grid";
 import Paper from "@mui/material/Paper";
+import Radio from "@mui/material/Radio";
+import RadioGroup from "@mui/material/RadioGroup";
 import { ThemeProvider, createTheme } from "@mui/material/styles";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
@@ -21,6 +20,7 @@ import Logo from "@site/static/img/Logo.svg";
 import Layout from "@theme/Layout";
 import { useMemo, useState } from "react";
 import { Controller, useForm, Control } from "react-hook-form";
+import { FunctionlessHighlighter } from "../components/highlighter";
 
 // https://legacydocs.hubspot.com/docs/methods/forms/submit_form
 interface HubSpotFormSubmission {
@@ -289,17 +289,22 @@ interface InitialFormData {
   email: string;
 }
 
+// Hubspot internal value -> label
 const IaCOptions = {
-  CloudFormation: "CloudFormation",
+  "Azure Resource Manager": "Azure Resource Manager",
   "CDK (Cloud Development Kit)": "CDK (Cloud Development Kit)",
-  Terraform: "Terraform",
+  CloudFormation: "CloudFormation",
   Pulumi: "Pulumi",
+  "Serverless Stack": "Serverless Stack",
+  Terraform: "Terraform",
+  "Terraform CDK": "Terraform CDK",
   None: "None",
   "Something Else": "Other",
 } as const;
 
 type IaC = keyof typeof IaCOptions;
 
+// Hubspot internal value -> label
 const CompanySizes = {
   "1": "1",
   "2": "2-5",

@@ -75,6 +75,7 @@ const config = {
     ({
       colorMode: {
         defaultMode: "dark",
+        disableSwitch: true,
       },
       prism: {
         additionalLanguages: ["graphql"],

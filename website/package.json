@@ -37,8 +37,6 @@
     "@types/react": "^17.0.0",
     "@types/react-syntax-highlighter": "^15.5.1",
     "docusaurus-plugin-typedoc": "^0.17.4",
-    "install": "^0.13.0",
-    "npm": "^8.12.1",
     "react-hook-form": "^7.31.3",
     "typedoc": "^0.22.15",
     "typedoc-plugin-markdown": "^3.12.1",
