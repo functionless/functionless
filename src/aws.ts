@@ -32,8 +32,7 @@ import {
 } from "./function";
 import { IntegrationInput, makeIntegration } from "./integration";
 import { Table, isTable, AnyTable } from "./table";
-
-import type { AnyFunction } from "./util";
+import type { AnyAsyncFunction } from "./util";
 
 type Item<T extends Table<any, any, any>> = T extends Table<infer I, any, any>
   ? I
@@ -99,7 +98,9 @@ export namespace $AWS {
           >,
           "TableName"
         >
-      ) => DeleteItemOutput<Item<T>, ReturnValue, JsonFormat.AttributeValue>
+      ) => Promise<
+        DeleteItemOutput<Item<T>, ReturnValue, JsonFormat.AttributeValue>
+      >
     >("deleteItem", {
       native: {
         bind: (context, table) => {
@@ -156,14 +157,16 @@ export namespace $AWS {
           >,
           "TableName"
         >
-      ) => GetItemOutput<
-        Item<T>,
-        PartitionKey<T>,
-        RangeKey<T>,
-        Key,
-        AttributesToGet,
-        ProjectionExpression,
-        JsonFormat.AttributeValue
+      ) => Promise<
+        GetItemOutput<
+          Item<T>,
+          PartitionKey<T>,
+          RangeKey<T>,
+          Key,
+          AttributesToGet,
+          ProjectionExpression,
+          JsonFormat.AttributeValue
+        >
       >
     >("getItem", {
       native: {
@@ -241,13 +244,15 @@ export namespace $AWS {
           >,
           "TableName"
         >
-      ) => UpdateItemOutput<
-        Item<T>,
-        PartitionKey<T>,
-        RangeKey<T>,
-        Key,
-        ReturnValue,
-        JsonFormat.AttributeValue
+      ) => Promise<
+        UpdateItemOutput<
+          Item<T>,
+          PartitionKey<T>,
+          RangeKey<T>,
+          Key,
+          ReturnValue,
+          JsonFormat.AttributeValue
+        >
       >
     >("updateItem", {
       native: {
@@ -297,7 +302,7 @@ export namespace $AWS {
           >,
           "TableName"
         >
-      ) => PutItemOutput<I, ReturnValue, JsonFormat.AttributeValue>
+      ) => Promise<PutItemOutput<I, ReturnValue, JsonFormat.AttributeValue>>
     >("putItem", {
       native: {
         bind: (context, table) => {
@@ -347,7 +352,9 @@ export namespace $AWS {
           >,
           "TableName"
         >
-      ) => QueryOutput<Item<T>, AttributesToGet, JsonFormat.AttributeValue>
+      ) => Promise<
+        QueryOutput<Item<T>, AttributesToGet, JsonFormat.AttributeValue>
+      >
     >("query", {
       native: {
         bind: (context, table) => {
@@ -395,7 +402,9 @@ export namespace $AWS {
           >,
           "TableName"
         >
-      ) => ScanOutput<Item<T>, AttributesToGet, JsonFormat.AttributeValue>
+      ) => Promise<
+        ScanOutput<Item<T>, AttributesToGet, JsonFormat.AttributeValue>
+      >
     >("scan", {
       native: {
         bind: (context, table) => {
@@ -435,7 +444,7 @@ export namespace $AWS {
 
     function makeDynamoIntegration<
       Op extends OperationName,
-      F extends AnyFunction
+      F extends AnyAsyncFunction
     >(
       operationName: Op,
       integration: Omit<
@@ -610,7 +619,7 @@ export namespace $AWS {
       "EventBridge.putEvent",
       (
         request: AWS.EventBridge.Types.PutEventsRequest
-      ) => AWS.EventBridge.Types.PutEventsResponse
+      ) => Promise<AWS.EventBridge.Types.PutEventsResponse>
     >({
       kind: "EventBridge.putEvent",
       native: {

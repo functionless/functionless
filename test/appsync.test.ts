@@ -14,10 +14,10 @@ beforeEach(() => {
 
 describe("step function integration", () => {
   test("machine with no parameters", () => {
-    const machine = new StepFunction(stack, "machine", () => {});
+    const machine = new StepFunction(stack, "machine", async () => {});
 
-    const func = reflect(() => {
-      machine({});
+    const func = reflect(async () => {
+      await machine({});
     });
 
     appsyncTestCase(
@@ -70,12 +70,12 @@ $util.qr($v1.put('stateMachineArn', '${machine.stateMachineArn}'))
     const machine = new StepFunction<{ id: string }, void>(
       stack,
       "machine",
-      () => {}
+      async () => {}
     );
 
     const templates = getAppSyncTemplates(
-      reflect(() => {
-        machine({ input: { id: "1" } });
+      reflect(async () => {
+        await machine({ input: { id: "1" } });
       })
     );
 
@@ -106,12 +106,12 @@ $util.qr($v1.put('stateMachineArn', '${machine.stateMachineArn}'))
     const machine = new StepFunction<{ id: string }, void>(
       stack,
       "machine",
-      () => {}
+      async () => {}
     );
 
     const templates = getAppSyncTemplates(
-      reflect((context) => {
-        machine({ input: { id: context.arguments.id } });
+      reflect(async (context) => {
+        await machine({ input: { id: context.arguments.id } });
       })
     );
 
@@ -139,11 +139,11 @@ $util.qr($v1.put('stateMachineArn', '${machine.stateMachineArn}'))
   });
 
   test("machine with name", () => {
-    const machine = new StepFunction(stack, "machine", () => {});
+    const machine = new StepFunction(stack, "machine", async () => {});
 
     const templates = getAppSyncTemplates(
-      reflect((context) => {
-        machine({ name: context.arguments.id });
+      reflect(async (context) => {
+        await machine({ name: context.arguments.id });
       })
     );
 
@@ -171,18 +171,18 @@ $util.qr($v1.put('stateMachineArn', '${machine.stateMachineArn}'))
   });
 
   test("machine with trace header", () => {
-    const machine = new StepFunction(stack, "machine", () => {});
-    new AppsyncResolver<{ id: string }, void>((context) => {
-      machine({ traceHeader: context.arguments.id });
+    const machine = new StepFunction(stack, "machine", async () => {});
+    new AppsyncResolver<{ id: string }, void>(async (context) => {
+      await machine({ traceHeader: context.arguments.id });
     });
   });
 
   test("machine describe exec", () => {
-    const machine = new StepFunction(stack, "machine", () => {});
+    const machine = new StepFunction(stack, "machine", async () => {});
 
-    const func = reflect(() => {
+    const func = reflect(async () => {
       const exec = "exec1";
-      machine.describeExecution(exec);
+      await machine.describeExecution(exec);
     });
 
     appsyncTestCase(
@@ -235,10 +235,10 @@ $util.qr($v1.put('stateMachineArn', '${machine.stateMachineArn}'))
 
 describe("step function describe execution", () => {
   test("machine describe exec string", () => {
-    const machine = new StepFunction(stack, "machine", () => {});
+    const machine = new StepFunction(stack, "machine", async () => {});
 
-    const func = reflect(() => {
-      machine.describeExecution("exec1");
+    const func = reflect(async () => {
+      await machine.describeExecution("exec1");
     });
 
     appsyncTestCase(
@@ -288,9 +288,9 @@ describe("step function describe execution", () => {
   });
 
   test("machine with trace header", () => {
-    const machine = new StepFunction(stack, "machine", () => {});
-    new AppsyncResolver<{ id: string }, void>((context) => {
-      machine({ traceHeader: context.arguments.id });
+    const machine = new StepFunction(stack, "machine", async () => {});
+    new AppsyncResolver<{ id: string }, void>(async (context) => {
+      await machine({ traceHeader: context.arguments.id });
     });
   });
 });

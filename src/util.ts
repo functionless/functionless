@@ -22,6 +22,7 @@ import {
 import { FunctionlessNode } from "./node";
 
 export type AnyFunction = (...args: any[]) => any;
+export type AnyAsyncFunction = (...args: any[]) => Promise<any>;
 
 export function isInTopLevelScope(expr: FunctionlessNode): boolean {
   if (expr.parent === undefined) {

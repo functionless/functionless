@@ -50,6 +50,11 @@ export type AnyStepFunction =
   | ExpressStepFunction<any, any>
   | StepFunction<any, any>;
 
+export type StepFunctionClosure<
+  P extends Record<string, any> | undefined,
+  O
+> = (arg: P) => Promise<O> | O;
+
 export namespace $SFN {
   export const kind = "SFN";
   /**
@@ -134,8 +139,8 @@ export namespace $SFN {
      */
     <T>(
       array: T[],
-      callbackfn: (item: T, index: number, array: T[]) => void
-    ): void;
+      callbackfn: (item: T, index: number, array: T[]) => Promise<void>
+    ): Promise<void>;
     /**
      * Process each item in an {@link array} in parallel and run with the default maxConcurrency.
      *
@@ -155,8 +160,8 @@ export namespace $SFN {
       props: {
         maxConcurrency: number;
       },
-      callbackfn: (item: T, index: number, array: T[]) => void
-    ): void;
+      callbackfn: (item: T, index: number, array: T[]) => Promise<void> | void
+    ): Promise<void>;
   }
 
   export const forEach = makeStepFunctionIntegration<"forEach", ForEach>(
@@ -185,8 +190,8 @@ export namespace $SFN {
      */
     <T, U>(
       array: T[],
-      callbackfn: (item: T, index: number, array: T[]) => U
-    ): U[];
+      callbackfn: (item: T, index: number, array: T[]) => U | Promise<U>
+    ): Promise<U[]>;
     /**
      * Map over each item in an {@link array} in parallel and run with the default maxConcurrency.
      *
@@ -207,8 +212,8 @@ export namespace $SFN {
       props: {
         maxConcurrency: number;
       },
-      callbackfn: (item: T, index: number, array: T[]) => U
-    ): U[];
+      callbackfn: (item: T, index: number, array: T[]) => U | Promise<U>
+    ): Promise<U[]>;
   }
 
   export const map = makeStepFunctionIntegration<"map", Map>("map", {
@@ -389,7 +394,7 @@ abstract class BaseStepFunction<
     aws_stepfunctions.IStateMachine,
     Integration<
       "StepFunction",
-      (input: CallIn) => CallOut,
+      (input: CallIn) => Promise<CallOut>,
       EventBusTargetIntegration<P, StepFunctionEventBusTargetProps | undefined>
     >
 {
@@ -402,7 +407,7 @@ abstract class BaseStepFunction<
   readonly appSyncVtl: AppSyncVtlIntegration;
 
   // @ts-ignore
-  readonly __functionBrand: (arg: CallIn) => CallOut;
+  readonly __functionBrand: (input: CallIn) => Promise<CallOut>;
 
   readonly stateMachineName: string;
   readonly stateMachineArn: string;
@@ -418,17 +423,17 @@ abstract class BaseStepFunction<
     scope: Construct,
     id: string,
     props: StepFunctionProps,
-    func: (arg: P) => O
+    func: StepFunctionClosure<P, O>
   );
 
-  constructor(scope: Construct, id: string, func: (arg: P) => O);
+  constructor(scope: Construct, id: string, func: StepFunctionClosure<P, O>);
 
   constructor(
     scope: Construct,
     id: string,
     ...args:
-      | [props: StepFunctionProps, func: (arg: P) => O]
-      | [func: (arg: P) => O]
+      | [props: StepFunctionProps, func: StepFunctionClosure<P, O>]
+      | [func: StepFunctionClosure<P, O>]
   ) {
     const props =
       isFunctionDecl(args[0]) || typeof args[0] === "function"
@@ -1187,24 +1192,24 @@ export class ExpressStepFunction<
   }
 
   readonly native: NativeIntegration<
-    (input: StepFunctionRequest<P>) => SyncExecutionResult<O>
+    (input: StepFunctionRequest<P>) => Promise<SyncExecutionResult<O>>
   >;
 
   constructor(
     scope: Construct,
     id: string,
     props: StepFunctionProps,
-    func: (arg: P) => O
+    func: StepFunctionClosure<P, O>
   );
 
-  constructor(scope: Construct, id: string, func: (arg: P) => O);
+  constructor(scope: Construct, id: string, func: StepFunctionClosure<P, O>);
 
   constructor(
     scope: Construct,
     id: string,
     ...args:
-      | [props: StepFunctionProps, func: (arg: P) => O]
-      | [func: (arg: P) => O]
+      | [props: StepFunctionProps, func: StepFunctionClosure<P, O>]
+      | [func: StepFunctionClosure<P, O>]
   ) {
     super(
       scope,
@@ -1309,7 +1314,7 @@ export interface ExpressStepFunction<
   P extends Record<string, any> | undefined,
   O
 > {
-  (input: StepFunctionRequest<P>): SyncExecutionResult<O>;
+  (input: StepFunctionRequest<P>): Promise<SyncExecutionResult<O>>;
 }
 
 export class StepFunction<
@@ -1327,24 +1332,26 @@ export class StepFunction<
   public static readonly FunctionlessType = "StepFunction";
 
   readonly native: NativeIntegration<
-    (input: StepFunctionRequest<P>) => AWS.StepFunctions.StartExecutionOutput
+    (
+      input: StepFunctionRequest<P>
+    ) => Promise<AWS.StepFunctions.StartExecutionOutput>
   >;
 
   constructor(
     scope: Construct,
     id: string,
     props: StepFunctionProps,
-    func: (arg: P) => O
+    func: StepFunctionClosure<P, O>
   );
 
-  constructor(scope: Construct, id: string, func: (arg: P) => O);
+  constructor(scope: Construct, id: string, func: StepFunctionClosure<P, O>);
 
   constructor(
     scope: Construct,
     id: string,
     ...args:
-      | [props: StepFunctionProps, func: (arg: P) => O]
-      | [func: (arg: P) => O]
+      | [props: StepFunctionProps, func: StepFunctionClosure<P, O>]
+      | [func: StepFunctionClosure<P, O>]
   ) {
     super(
       scope,
@@ -1386,7 +1393,7 @@ export class StepFunction<
 
   public describeExecution = makeIntegration<
     "StepFunction.describeExecution",
-    (executionArn: string) => AWS.StepFunctions.DescribeExecutionOutput
+    (executionArn: string) => Promise<AWS.StepFunctions.DescribeExecutionOutput>
   >({
     kind: "StepFunction.describeExecution",
     appSyncVtl: this.appSyncIntegration({
@@ -1438,13 +1445,11 @@ export class StepFunction<
 
         const [arn] = args;
 
-        const result = await stepFunctionClient
+        return stepFunctionClient
           .describeExecution({
             executionArn: arn,
           })
           .promise();
-
-        return result;
       },
     },
     unhandledContext: (kind, contextKind) => {
@@ -1456,7 +1461,9 @@ export class StepFunction<
 }
 
 export interface StepFunction<P extends Record<string, any> | undefined, O> {
-  (input: StepFunctionRequest<P>): AWS.StepFunctions.StartExecutionOutput;
+  (
+    input: StepFunctionRequest<P>
+  ): Promise<AWS.StepFunctions.StartExecutionOutput>;
 }
 
 function getArgs(call: CallExpr) {

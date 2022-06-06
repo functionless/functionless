@@ -50,8 +50,8 @@ $util.toJson($v1)`,
 
 test("call function and conditional return", () =>
   appsyncTestCase(
-    reflect((context: AppsyncContext<{ arg: string }>) => {
-      const result = fn1(context.arguments);
+    reflect(async (context: AppsyncContext<{ arg: string }>) => {
+      const result = await fn1(context.arguments);
 
       if (result.id === "sam") {
         return true;

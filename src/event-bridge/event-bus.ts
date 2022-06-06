@@ -122,7 +122,7 @@ export interface IEventBus<E extends Event = Event>
       (
         event: EventBusPutEventInput<E>,
         ...events: EventBusPutEventInput<E>[]
-      ) => void,
+      ) => Promise<void>,
       EventBusTargetIntegration<
         EventBusPutEventInput<E>,
         aws_events_targets.EventBusProps | undefined
@@ -136,7 +136,7 @@ export interface IEventBus<E extends Event = Event>
   readonly __functionBrand: (
     event: EventBusPutEventInput<E>,
     ...events: EventBusPutEventInput<E>[]
-  ) => void;
+  ) => Promise<void>;
 
   /**
    * This static property identifies this class as an EventBus to the TypeScript plugin.
@@ -149,7 +149,7 @@ export interface IEventBus<E extends Event = Event>
   putEvents(
     event: EventBusPutEventInput<E>,
     ...events: EventBusPutEventInput<E>[]
-  ): void;
+  ): Promise<void>;
 
   readonly eventBus: EventBusTargetIntegration<
     E,
@@ -203,7 +203,7 @@ abstract class EventBusBase<E extends Event> implements IEventBus<E> {
   readonly __functionBrand: (
     event: EventBusPutEventInput<E>,
     ...events: EventBusPutEventInput<E>[]
-  ) => void;
+  ) => Promise<void>;
 
   constructor(readonly bus: aws_events.IEventBus) {
     this.eventBusName = bus.eventBusName;

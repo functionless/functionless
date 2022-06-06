@@ -103,9 +103,12 @@ abstract class FunctionBase<P, O> implements IFunction<P, O> {
       /**
        * This method is called from the calling runtime lambda code (context) to invoke this lambda function.
        */
+      // @ts-ignore - Typescript fails when comparing Promise<O> with ReturnType<ConditionalFunction<P, O>> though they should be the same.
       call: async (args, prewarmContext) => {
         const [payload] = args;
-        const lambdaClient = prewarmContext.getOrInit(PrewarmClients.LAMBDA);
+        const lambdaClient = prewarmContext.getOrInit<AWS.Lambda>(
+          PrewarmClients.LAMBDA
+        );
         const response = (
           await lambdaClient
             .invoke({
@@ -114,7 +117,7 @@ abstract class FunctionBase<P, O> implements IFunction<P, O> {
             })
             .promise()
         ).Payload?.toString();
-        return response ? JSON.parse(response) : undefined;
+        return (response ? JSON.parse(response) : undefined) as O;
       },
     };
 
@@ -353,8 +356,8 @@ export class ImportedFunction<P, O> extends FunctionBase<P, O> {
 }
 
 type ConditionalFunction<P, O> = P extends undefined
-  ? (payload?: P) => O
-  : (payload: P) => O;
+  ? (payload?: P) => Promise<O>
+  : (payload: P) => Promise<O>;
 
 interface CallbackLambdaCodeProps extends PrewarmProps {}
 
@@ -578,6 +581,10 @@ export class CallbackLambdaCode extends aws_lambda.Code {
   }
 }
 
+type _ReturnType<F extends AnyFunction> = F extends (p: any) => infer O
+  ? O
+  : never;
+
 /**
  * Interface to consume to add an Integration to Native Lambda Functions.
  *
@@ -608,7 +615,7 @@ export interface NativeIntegration<F extends AnyFunction> {
   call: (
     args: Parameters<F>,
     preWarmContext: NativePreWarmContext
-  ) => Promise<ReturnType<F>>;
+  ) => _ReturnType<F>;
   /**
    * Method called outside of the handler to initialize things like the PreWarmContext
    */

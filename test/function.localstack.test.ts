@@ -345,7 +345,7 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
         "function",
         localstackClientConfig,
         async () => {
-          bus.putEvents({
+          await bus.putEvents({
             "detail-type": "detail",
             source: "lambda",
             detail: {},
@@ -369,7 +369,7 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
         "function",
         localstackClientConfig,
         async () => {
-          const result = putEvents({
+          const result = await putEvents({
             Entries: [
               {
                 EventBusName: bus.eventBusArn,
@@ -401,7 +401,7 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
         "function",
         localstackClientConfig,
         async () => {
-          const result = $AWS.EventBridge.putEvents({
+          const result = await $AWS.EventBridge.putEvents({
             Entries: [
               {
                 EventBusName: bus.eventBusArn,
@@ -428,7 +428,7 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
         localstackClientConfig,
         async () => {
           const busbus = bus;
-          busbus.putEvents({
+          await busbus.putEvents({
             "detail-type": "anyDetail",
             source: "anySource",
             detail: {},
@@ -449,7 +449,7 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
         localstackClientConfig,
         async () => {
           const { bus } = buses;
-          bus.putEvents({
+          await bus.putEvents({
             "detail-type": "anyDetail",
             source: "anySource",
             detail: {},
@@ -587,7 +587,7 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
         localstackClientConfig,
         async () => {
           // TODO should be awaited?
-          func1({});
+          await func1({});
           return "started!";
         }
       );
@@ -609,10 +609,10 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
         localstackClientConfig,
         async () => {
           // TODO should be awaited?
-          const result = func1({});
+          const result = await func1({});
           let status = "RUNNING";
           while (true) {
-            const state = func1.describeExecution(result.executionArn);
+            const state = await func1.describeExecution(result.executionArn);
             status = state.status;
             if (status !== "RUNNING") {
               return state.output;
@@ -642,7 +642,7 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
         localstackClientConfig,
         async () => {
           // TODO should be awaited?
-          const result = func1({});
+          const result = await func1({});
           return result.status === "SUCCEEDED" ? result.output : result.error;
         }
       );
@@ -669,13 +669,13 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
         "function",
         localstackClientConfig,
         async () => {
-          putItem({
+          await putItem({
             TableName: table,
             Item: {
               key: { S: "key" },
             },
           });
-          const item = getItem({
+          const item = await getItem({
             TableName: table,
             Key: {
               key: {

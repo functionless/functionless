@@ -23,15 +23,19 @@ const table = new Table<Item, "id">(
 
 test("get item", () =>
   appsyncTestCase(
-    reflect((context: AppsyncContext<{ id: string }>): Item | undefined => {
-      return table.getItem({
-        key: {
-          id: {
-            S: context.arguments.id,
+    reflect(
+      async (
+        context: AppsyncContext<{ id: string }>
+      ): Promise<Item | undefined> => {
+        return table.getItem({
+          key: {
+            id: {
+              S: context.arguments.id,
+            },
           },
-        },
-      });
-    }),
+        });
+      }
+    ),
     // pipeline's request mapping template
     "{}",
     // function's request mapping template
@@ -60,16 +64,20 @@ $util.toJson($v4)`,
 
 test("get item and set consistentRead:true", () =>
   appsyncTestCase(
-    reflect((context: AppsyncContext<{ id: string }>): Item | undefined => {
-      return table.getItem({
-        key: {
-          id: {
-            S: context.arguments.id,
+    reflect(
+      async (
+        context: AppsyncContext<{ id: string }>
+      ): Promise<Item | undefined> => {
+        return table.getItem({
+          key: {
+            id: {
+              S: context.arguments.id,
+            },
           },
-        },
-        consistentRead: true,
-      });
-    }),
+          consistentRead: true,
+        });
+      }
+    ),
     // pipeline's request mapping template
     "{}",
     // function's request mapping template
@@ -100,9 +108,9 @@ $util.toJson($v4)`,
 test("put item", () =>
   appsyncTestCase(
     reflect(
-      (
+      async (
         context: AppsyncContext<{ id: string; name: number }>
-      ): Item | undefined => {
+      ): Promise<Item | undefined> => {
         return table.putItem({
           key: {
             id: {
@@ -176,21 +184,25 @@ $util.toJson($v10)`,
 
 test("update item", () =>
   appsyncTestCase(
-    reflect((context: AppsyncContext<{ id: string }>): Item | undefined => {
-      return table.updateItem({
-        key: {
-          id: {
-            S: context.arguments.id,
+    reflect(
+      async (
+        context: AppsyncContext<{ id: string }>
+      ): Promise<Item | undefined> => {
+        return table.updateItem({
+          key: {
+            id: {
+              S: context.arguments.id,
+            },
           },
-        },
-        update: {
-          expression: "#name = #name + 1",
-          expressionNames: {
-            "#name": "name",
+          update: {
+            expression: "#name = #name + 1",
+            expressionNames: {
+              "#name": "name",
+            },
           },
-        },
-      });
-    }),
+        });
+      }
+    ),
     // pipeline's request mapping template
     "{}",
     // function's request mapping template
@@ -229,21 +241,25 @@ $util.toJson($v6)`,
 
 test("delete item", () =>
   appsyncTestCase(
-    reflect((context: AppsyncContext<{ id: string }>): Item | undefined => {
-      return table.deleteItem({
-        key: {
-          id: {
-            S: context.arguments.id,
+    reflect(
+      async (
+        context: AppsyncContext<{ id: string }>
+      ): Promise<Item | undefined> => {
+        return table.deleteItem({
+          key: {
+            id: {
+              S: context.arguments.id,
+            },
           },
-        },
-        condition: {
-          expression: "#name = #name + 1",
-          expressionNames: {
-            "#name": "name",
+          condition: {
+            expression: "#name = #name + 1",
+            expressionNames: {
+              "#name": "name",
+            },
           },
-        },
-      });
-    }),
+        });
+      }
+    ),
     // pipeline's request mapping template
     "{}",
     // function's request mapping template
@@ -281,20 +297,26 @@ $util.toJson($v6)`,
 
 test("query", () =>
   appsyncTestCase(
-    reflect((context: AppsyncContext<{ id: string; sort: number }>): Item[] => {
-      return table.query({
-        query: {
-          expression: "id = :id and #name = :val",
-          expressionNames: {
-            "#name": "name",
-          },
-          expressionValues: {
-            ":id": $util.dynamodb.toDynamoDB(context.arguments.id),
-            ":val": $util.dynamodb.toDynamoDB(context.arguments.sort),
-          },
-        },
-      }).items;
-    }),
+    reflect(
+      async (
+        context: AppsyncContext<{ id: string; sort: number }>
+      ): Promise<Item[]> => {
+        return (
+          await table.query({
+            query: {
+              expression: "id = :id and #name = :val",
+              expressionNames: {
+                "#name": "name",
+              },
+              expressionValues: {
+                ":id": $util.dynamodb.toDynamoDB(context.arguments.id),
+                ":val": $util.dynamodb.toDynamoDB(context.arguments.sort),
+              },
+            },
+          })
+        ).items;
+      }
+    ),
     // pipeline's request mapping template
     "{}",
     // function's request mapping template

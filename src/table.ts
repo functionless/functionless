@@ -17,7 +17,7 @@ import type { AppSyncVtlIntegration } from "./appsync";
 import { assertNodeKind } from "./assert";
 import { ObjectLiteralExpr } from "./expression";
 import { IntegrationInput, makeIntegration } from "./integration";
-import { AnyFunction } from "./util";
+import { AnyAsyncFunction } from "./util";
 import { VTL } from "./vtl";
 
 export function isTable(a: any): a is AnyTable {
@@ -92,7 +92,7 @@ export class Table<
     >(input: {
       key: Key;
       consistentRead?: boolean;
-    }) => Narrow<Item, AttributeKeyToObject<Key>, JsonFormat.Document>
+    }) => Promise<Narrow<Item, AttributeKeyToObject<Key>, JsonFormat.Document>>
   >("getItem", {
     appSyncVtl: {
       request(call, vtl) {
@@ -136,7 +136,7 @@ export class Table<
       >;
       condition?: DynamoExpression<ConditionExpression>;
       _version?: number;
-    }) => Narrow<Item, AttributeKeyToObject<Key>, JsonFormat.Document>
+    }) => Promise<Narrow<Item, AttributeKeyToObject<Key>, JsonFormat.Document>>
   >("putItem", {
     appSyncVtl: {
       request: (call, vtl) => {
@@ -182,7 +182,7 @@ export class Table<
       update: DynamoExpression<UpdateExpression>;
       condition?: DynamoExpression<ConditionExpression>;
       _version?: number;
-    }) => Narrow<Item, AttributeKeyToObject<Key>, JsonFormat.Document>
+    }) => Promise<Narrow<Item, AttributeKeyToObject<Key>, JsonFormat.Document>>
   >("updateItem", {
     appSyncVtl: {
       request: (call, vtl) => {
@@ -224,7 +224,7 @@ export class Table<
       key: Key;
       condition?: DynamoExpression<ConditionExpression>;
       _version?: number;
-    }) => Narrow<Item, AttributeKeyToObject<Key>, JsonFormat.Document>
+    }) => Promise<Narrow<Item, AttributeKeyToObject<Key>, JsonFormat.Document>>
   >("deleteItem", {
     appSyncVtl: {
       request: (call, vtl) => {
@@ -260,11 +260,11 @@ export class Table<
       scanIndexForward?: boolean;
       consistentRead?: boolean;
       select?: "ALL_ATTRIBUTES" | "ALL_PROJECTED_ATTRIBUTES";
-    }) => {
+    }) => Promise<{
       items: Item[];
       nextToken: string;
       scannedCount: number;
-    }
+    }>
   >("query", {
     appSyncVtl: {
       request: (call, vtl) => {
@@ -290,7 +290,7 @@ export class Table<
     },
   });
 
-  makeTableIntegration<K extends string, F extends AnyFunction>(
+  makeTableIntegration<K extends string, F extends AnyAsyncFunction>(
     methodName: K,
     integration: Omit<
       IntegrationInput<`Table.${K}`, F>,
