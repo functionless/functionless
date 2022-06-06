@@ -33,3 +33,14 @@ new StepFunction(scope, id, async (input: { num: number }) => {
   await add({ a: input.number, b: 1 });
 });
 ```
+
+---
+
+### Function not compiled by Functionless plugin
+
+**Error Code**: Functionless(101)
+
+During CDK synth a function was encountered which was not compiled by the Functionless compiler plugin.
+This suggests that the plugin was not correctly configured for this project.
+
+Ensure you follow the instructions at https://functionless.org/docs/getting-started.
