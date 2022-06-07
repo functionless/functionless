@@ -85,8 +85,8 @@ const config = {
       image: "img/logo.png",
       metadata: [
         { property: "og:type", content: "article" },
-        { property: "og:image:width", content: "173" },
-        { property: "og:image:height", content: "149" },
+        { property: "og:image:width", content: "233" },
+        { property: "og:image:height", content: "200" },
         { property: "og:image:secure_url", content: `${url}/img/logo.png` },
       ],
       // light color mode disabled for now
