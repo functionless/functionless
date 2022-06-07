@@ -103,8 +103,7 @@ const project = new CustomTypescriptProject({
   ],
   scripts: {
     localstack: "./scripts/localstack",
-    "build:website":
-      "NODE_OPTIONS=--max_old_space_size=4096 npx tsc && cd ./website && yarn && yarn build",
+    "build:website": "npx tsc && cd ./website && yarn && yarn build",
   },
   peerDeps: [
     `aws-cdk-lib@^${MIN_CDK_VERSION}`,
