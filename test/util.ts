@@ -121,6 +121,7 @@ export function initStepFunctionApp() {
     ),
     handler: "index.handler",
     runtime: aws_lambda.Runtime.NODEJS_14_X,
+    functionName: "testFunction",
   });
 
   // These functions do not actually execute.
@@ -138,6 +139,7 @@ export function initStepFunctionApp() {
         name: "id",
         type: aws_dynamodb.AttributeType.STRING,
       },
+      tableName: "testTable",
     })
   );
 
