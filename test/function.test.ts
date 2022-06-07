@@ -420,3 +420,13 @@ test("onFailure().pipe should type check", () => {
     resources: [func.resource.functionArn],
   });
 });
+
+test("function inline arrow closure", () => {
+  new Function(stack, "inline", async (p: string) => p);
+});
+
+test("function block closure", () => {
+  new Function(stack, "block", async (p: string) => {
+    return p;
+  });
+});
