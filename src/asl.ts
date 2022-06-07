@@ -1007,6 +1007,7 @@ export class ASL {
       }
     } else if (expr.kind === "BinaryExpr") {
       // TODO
+    } else if (isAwaitExpr(expr)) {
     }
     debugger;
     throw new Error(`cannot eval expression kind '${expr.kind}'`);

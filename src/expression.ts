@@ -47,6 +47,7 @@ export function isExpr(a: any): a is Expr {
     isNode(a) &&
     (isArgument(a) ||
       isArrayLiteralExpr(a) ||
+      isAwaitExpr(a) ||
       isBinaryExpr(a) ||
       isBooleanLiteral(a) ||
       isCallExpr(a) ||
