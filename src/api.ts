@@ -479,11 +479,15 @@ export interface APIGatewayContext extends APIGatewayEventRequestContext {
    */
   readonly httpMethod: HttpMethod;
   /**
-   * The response received from AWS WAF: WAF_ALLOW or WAF_BLOCK. Will not be set if the stage is not associated with a web ACL. For more information, see Using AWS WAF to protect your APIs.
+   * The response received from AWS WAF: WAF_ALLOW or WAF_BLOCK. Will not be set if the
+   * stage is not associated with a web ACL. For more information, see Using AWS WAF to
+   * protect your APIs.
    */
   readonly wafResponseCode?: "WAF_ALLOW" | "WAF_BLOCK";
   /**
-   * The complete ARN of the web ACL that is used to decide whether to allow or block the request. Will not be set if the stage is not associated with a web ACL. For more information, see Using AWS WAF to protect your APIs.
+   * The complete ARN of the web ACL that is used to decide whether to allow or block
+   * the request. Will not be set if the stage is not associated with a web ACL. For
+   * more information, see Using AWS WAF to protect your APIs.
    */
   readonly webaclArn?: string;
   /**
@@ -498,7 +502,11 @@ export interface APIGatewayContext extends APIGatewayEventRequestContext {
 
 export interface APIGatewayError {
   /**
-   * A string containing an API Gateway error message. This variable can only be used for simple variable substitution in a GatewayResponse body-mapping template, which is not processed by the Velocity Template Language engine, and in access logging. For more information, see Monitoring WebSocket API execution with CloudWatch metrics and Setting up gateway responses to customize error responses.
+   * A string containing an API Gateway error message. This variable can only be used
+   * for simple variable substitution in a GatewayResponse body-mapping template, which
+   * is not processed by the Velocity Template Language engine, and in access logging.
+   * For more information, see Monitoring WebSocket API execution with CloudWatch
+   * metrics and Setting up gateway responses to customize error responses.
    */
   readonly message: string;
   /**
@@ -506,7 +514,11 @@ export interface APIGatewayError {
    */
   readonly messageString: string;
   /**
-   * A type of GatewayResponse. This variable can only be used for simple variable substitution in a GatewayResponse body-mapping template, which is not processed by the Velocity Template Language engine, and in access logging. For more information, see Monitoring WebSocket API execution with CloudWatch metrics and Setting up gateway responses to customize error responses.
+   * A type of GatewayResponse. This variable can only be used for simple variable
+   * substitution in a GatewayResponse body-mapping template, which is not processed
+   * by the Velocity Template Language engine, and in access logging. For more
+   * information, see Monitoring WebSocket API execution with CloudWatch metrics and
+   * Setting up gateway responses to customize error responses.
    */
   readonly responseType: string;
   /**
@@ -517,27 +529,37 @@ export interface APIGatewayError {
 
 export interface APIGatewayRequestOverride {
   /**
-   * The request header override. If this parameter is defined, it contains the headers to be used instead of the HTTP Headers that are defined in the Integration Request pane. For more information, see Use a mapping template to override an API's request and response parameters and status codes.
+   * The request header override. If this parameter is defined, it contains the headers
+   * to be used instead of the HTTP Headers that are defined in the Integration Request
+   * pane.
    */
   readonly header: Record<string, string>;
   /**
-   * The request path override. If this parameter is defined, it contains the request path to be used instead of the URL Path Parameters that are defined in the Integration Request pane. For more information, see Use a mapping template to override an API's request and response parameters and status codes.
+   * The request path override. If this parameter is defined, it contains the request
+   * path to be used instead of the URL Path Parameters that are defined in the
+   * Integration Request pane.
    */
   readonly path: Record<string, string>;
   /**
-   * The request query string override. If this parameter is defined, it contains the request query strings to be used instead of the URL Query String Parameters that are defined in the Integration Request pane. For more information, see Use a mapping template to override an API's request and response parameters and status codes.
+   * The request query string override. If this parameter is defined, it contains the
+   * request query strings to be used instead of the URL Query String Parameters that
+   * are defined in the Integration Request pane.
    */
   readonly querystring: Record<string, string>;
 }
 
 export interface APIGatewayResponseOverride {
   /**
-   * The response header override. If this parameter is defined, it contains the header to be returned instead of the Response header that is defined as the Default mapping in the Integration Response pane. For more information, see Use a mapping template to override an API's request and response parameters and status codes.
+   * The response header override. If this parameter is defined, it contains the header
+   * to be returned instead of the Response header that is defined as the Default mapping
+   * in the Integration Response pane.
    */
   readonly header: Record<string, string>;
 
   /**
-   * The response status code override. If this parameter is defined, it contains the status code to be returned instead of the Method response status that is defined as the Default mapping in the Integration Response pane. For more information, see Use a mapping template to override an API's request and response parameters and status codes.
+   * The response status code override. If this parameter is defined, it contains the
+   * status code to be returned instead of the Method response status that is defined
+   * as the Default mapping in the Integration Response pane.
    *
    * @see https://docs.aws.amazon.com/apigateway/latest/developerguide/apigateway-override-request-response-parameters.html
    */
