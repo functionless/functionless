@@ -14,7 +14,10 @@ import { initStepFunctionApp, Person } from "./util";
 
 const normalizeDefinition = (definition: StateMachine<States>): any => {
   return JSON.parse(
-    JSON.stringify(definition).replace(/\$\{Token\[.*\]\}/g, "__REPLACED_TOKEN")
+    JSON.stringify(definition).replace(
+      /\$\{Token\[[a-zA-Z0-9.]*\]\}/g,
+      "__REPLACED_TOKEN"
+    )
   );
 };
 
@@ -22,20 +25,7 @@ test("empty function", () => {
   const { stack } = initStepFunctionApp();
   const definition = new ExpressStepFunction(stack, "fn", () => {}).definition;
 
-  const expected: StateMachine<States> = {
-    StartAt: "return null",
-    States: {
-      "return null": {
-        Type: "Pass",
-        End: true,
-        Parameters: {
-          null: null,
-        },
-        OutputPath: "$.null",
-      },
-    },
-  };
-  expect(definition).toEqual(expected);
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
 test("return identifier", () => {
@@ -48,17 +38,7 @@ test("return identifier", () => {
     }
   ).definition;
 
-  const expected: StateMachine<States> = {
-    StartAt: "return input.id",
-    States: {
-      "return input.id": {
-        Type: "Pass",
-        End: true,
-        OutputPath: "$.id",
-      },
-    },
-  };
-  expect(definition).toEqual(expected);
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
 test("return PropAccessExpr", () => {
@@ -71,17 +51,7 @@ test("return PropAccessExpr", () => {
     }
   ).definition;
 
-  const expected: StateMachine<States> = {
-    StartAt: "return input.input.id",
-    States: {
-      "return input.input.id": {
-        Type: "Pass",
-        End: true,
-        OutputPath: "$.input.id",
-      },
-    },
-  };
-  expect(definition).toEqual(expected);
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
 test("return optional PropAccessExpr", () => {
@@ -93,24 +63,7 @@ test("return optional PropAccessExpr", () => {
     return input.input?.id;
   }).definition;
 
-  const expected: StateMachine<States> = {
-    StartAt: "return input.input.id",
-    States: {
-      "return input.input.id": {
-        Type: "Pass",
-        End: true,
-        // this can cause an error in Step Functions
-        // need to use Choice and isPresent to compute a temporary variable
-        // wish: step functions would default a missing reference to null
-        // or understand the concept of `undefined` and would delete the
-        // OutputPath if `$.input.id`
-        // see: https://twitter.com/samgoodwin89/status/1506170918216736771
-
-        OutputPath: "$.input.id",
-      },
-    },
-  };
-  expect(definition).toEqual(expected);
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
 test("return items.slice(1)", () => {
@@ -290,20 +243,7 @@ test("return void", () => {
     return;
   }).definition;
 
-  const expected: StateMachine<States> = {
-    StartAt: "return null",
-    States: {
-      "return null": {
-        Type: "Pass",
-        End: true,
-        Parameters: {
-          null: null,
-        },
-        OutputPath: "$.null",
-      },
-    },
-  };
-  expect(definition).toEqual(expected);
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
 test("conditionally return void", () => {
@@ -487,44 +427,7 @@ test("for-loop and do nothing", () => {
     }
   ).definition;
 
-  const expected: StateMachine<States> = {
-    StartAt: "for(item of input.items)",
-    States: {
-      "for(item of input.items)": {
-        ItemsPath: "$.items",
-        Iterator: {
-          StartAt: "a = item",
-          States: {
-            "a = item": {
-              End: true,
-              OutputPath: "$.result",
-              Parameters: {
-                "result.$": "$.item",
-              },
-              ResultPath: "$.a",
-              Type: "Pass",
-            },
-          },
-        },
-        MaxConcurrency: 1,
-        Next: "return null",
-        Parameters: {
-          "item.$": "$$.Map.Item.Value",
-        },
-        ResultPath: null,
-        Type: "Map",
-      },
-      "return null": {
-        Type: "Pass",
-        End: true,
-        Parameters: {
-          null: null,
-        },
-        OutputPath: "$.null",
-      },
-    },
-  };
-  expect(definition).toEqual(expected);
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
 test("for i in items, items[i]", () => {
@@ -619,65 +522,7 @@ test("return AWS.DynamoDB.GetItem", () => {
     };
   }).definition;
 
-  const expected: StateMachine<States> = {
-    StartAt:
-      "person = $AWS.DynamoDB.GetItem({TableName: personTable, Key: {id: {S: input",
-    States: {
-      "person = $AWS.DynamoDB.GetItem({TableName: personTable, Key: {id: {S: input":
-        {
-          Next: "if(person.Item == undefined)",
-          ResultPath: "$.person",
-          Resource: "arn:aws:states:::aws-sdk:dynamodb:getItem",
-          Parameters: {
-            TableName: personTable.resource.tableName,
-            Key: {
-              id: {
-                "S.$": "$.id",
-              },
-            },
-          },
-
-          Type: "Task",
-        },
-      "if(person.Item == undefined)": {
-        Choices: [
-          {
-            Or: [
-              {
-                Variable: "$.person.Item",
-                IsPresent: false,
-              },
-              {
-                Variable: "$.person.Item",
-                IsNull: true,
-              },
-            ],
-            Next: "return undefined",
-          },
-        ],
-        Default: "return {id: person.Item.id.S, name: person.Item.name.S}",
-        Type: "Choice",
-      },
-      "return undefined": {
-        Type: "Pass",
-        End: true,
-        Parameters: {
-          null: null,
-        },
-        OutputPath: "$.null",
-      },
-      "return {id: person.Item.id.S, name: person.Item.name.S}": {
-        End: true,
-        Parameters: {
-          "id.$": "$.person.Item.id.S",
-          "name.$": "$.person.Item.name.S",
-        },
-        ResultPath: "$",
-        Type: "Pass",
-      },
-    },
-  };
-  expect(definition).toEqual(expected);
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
 test("call AWS.DynamoDB.GetItem, then Lambda and return LiteralExpr", () => {
@@ -711,81 +556,7 @@ test("call AWS.DynamoDB.GetItem, then Lambda and return LiteralExpr", () => {
     };
   }).definition;
 
-  const expected: StateMachine<States> = {
-    StartAt:
-      "person = $AWS.DynamoDB.GetItem({TableName: personTable, Key: {id: {S: input",
-    States: {
-      "person = $AWS.DynamoDB.GetItem({TableName: personTable, Key: {id: {S: input":
-        {
-          Next: "if(person.Item == undefined)",
-          ResultPath: "$.person",
-          Parameters: {
-            Key: {
-              id: {
-                "S.$": "$.id",
-              },
-            },
-            TableName: personTable.resource.tableName,
-          },
-          Resource: "arn:aws:states:::aws-sdk:dynamodb:getItem",
-          Type: "Task",
-        },
-      "if(person.Item == undefined)": {
-        Choices: [
-          {
-            Or: [
-              {
-                Variable: "$.person.Item",
-                IsPresent: false,
-              },
-              {
-                Variable: "$.person.Item",
-                IsNull: true,
-              },
-            ],
-            Next: "return undefined",
-          },
-        ],
-        Default:
-          "score = computeScore({id: person.Item.id.S, name: person.Item.name.S})",
-        Type: "Choice",
-      },
-      "return undefined": {
-        Type: "Pass",
-        End: true,
-        Parameters: {
-          null: null,
-        },
-        OutputPath: "$.null",
-      },
-      "score = computeScore({id: person.Item.id.S, name: person.Item.name.S})":
-        {
-          Next: "return {id: person.Item.id.S, name: person.Item.name.S, score: score}",
-          ResultPath: "$.score",
-          ResultSelector: "$.Payload",
-          Parameters: {
-            FunctionName: computeScore.resource.functionName,
-            Payload: {
-              "id.$": "$.person.Item.id.S",
-              "name.$": "$.person.Item.name.S",
-            },
-          },
-          Resource: "arn:aws:states:::lambda:invoke",
-          Type: "Task",
-        },
-      "return {id: person.Item.id.S, name: person.Item.name.S, score: score}": {
-        End: true,
-        ResultPath: "$",
-        Parameters: {
-          "id.$": "$.person.Item.id.S",
-          "name.$": "$.person.Item.name.S",
-          "score.$": "$.score",
-        },
-        Type: "Pass",
-      },
-    },
-  };
-  expect(definition).toEqual(expected);
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
 test("for-loop over a list literal", () => {
@@ -804,55 +575,7 @@ test("for-loop over a list literal", () => {
     }
   ).definition;
 
-  const expected: StateMachine<States> = {
-    StartAt: 'people = ["sam", "brendan"]',
-    States: {
-      'people = ["sam", "brendan"]': {
-        Type: "Pass",
-        ResultPath: "$.people",
-        Result: ["sam", "brendan"],
-        Next: "for(name of people)",
-      },
-      "for(name of people)": {
-        Type: "Map",
-        ItemsPath: "$.people",
-        ResultPath: null,
-        MaxConcurrency: 1,
-        Next: "return null",
-        Parameters: {
-          "name.$": "$$.Map.Item.Value",
-        },
-        Iterator: {
-          StartAt: "computeScore({id: input.id, name: name})",
-          States: {
-            "computeScore({id: input.id, name: name})": {
-              Type: "Task",
-              ResultPath: null,
-              End: true,
-              ResultSelector: "$.Payload",
-              Parameters: {
-                FunctionName: computeScore.resource.functionName,
-                Payload: {
-                  "id.$": "$.id",
-                  "name.$": "$.name",
-                },
-              },
-              Resource: "arn:aws:states:::lambda:invoke",
-            },
-          },
-        },
-      },
-      "return null": {
-        Type: "Pass",
-        End: true,
-        Parameters: {
-          null: null,
-        },
-        OutputPath: "$.null",
-      },
-    },
-  };
-  expect(definition).toEqual(expected);
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
 test("conditionally call DynamoDB and then void", () => {
@@ -874,46 +597,7 @@ test("conditionally call DynamoDB and then void", () => {
     }
   ).definition;
 
-  const expected: StateMachine<States> = {
-    StartAt: 'if(input.id == "hello")',
-    States: {
-      'if(input.id == "hello")': {
-        Choices: [
-          {
-            Next: "$AWS.DynamoDB.GetItem({TableName: personTable, Key: {id: {S: input.id}}})",
-            StringEquals: "hello",
-            Variable: "$.id",
-          },
-        ],
-        Default: "return null",
-        Type: "Choice",
-      },
-      "$AWS.DynamoDB.GetItem({TableName: personTable, Key: {id: {S: input.id}}})":
-        {
-          Next: "return null",
-          Parameters: {
-            Key: {
-              id: {
-                "S.$": "$.id",
-              },
-            },
-            TableName: personTable.resource.tableName,
-          },
-          Resource: "arn:aws:states:::aws-sdk:dynamodb:getItem",
-          ResultPath: null,
-          Type: "Task",
-        },
-      "return null": {
-        Type: "Pass",
-        End: true,
-        Parameters: {
-          null: null,
-        },
-        OutputPath: "$.null",
-      },
-    },
-  };
-  expect(definition).toEqual(expected);
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
 test("waitFor literal number of seconds", () => {
