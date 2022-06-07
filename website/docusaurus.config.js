@@ -13,7 +13,7 @@ const config = {
   baseUrl: "/",
   onBrokenLinks: "throw",
   onBrokenMarkdownLinks: "warn",
-  favicon: "img/Logo.svg",
+  favicon: "img/Logo-fav.svg",
   organizationName: "functionless",
   projectName: "functionless",
 
@@ -73,6 +73,10 @@ const config = {
   themeConfig:
     /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
     ({
+      // default page image, override using frontMatter `image`
+      // https://docusaurus.io/docs/api/plugins/@docusaurus/plugin-content-docs#markdown-front-matter
+      image: "img/Logo-fav.svg",
+      // light color mode disabled for now
       colorMode: {
         defaultMode: "dark",
         disableSwitch: true,
