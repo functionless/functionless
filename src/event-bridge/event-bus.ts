@@ -599,7 +599,7 @@ export interface EventBusTargetIntegration<
    *
    * This is useful for cases like {@link IRule.pipe} and {@link IEventTransform.pipe} which need to validate that
    * an integration implements the right EventBus integration.
-   * 
+   *
    * We use a function interface in order to satisfy the covariant relationship that we expect the super-P in as opposed to
    * returning sub-P.
    */

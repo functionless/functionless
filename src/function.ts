@@ -119,17 +119,17 @@ export interface IFunction<P, O>
   /**
    * Event Source for the {@link Function} onSuccess async invocation destination.
    *
-   * For Lambda, the onSuccess destination is not enabled by default. 
-   * It must first be configured via either the {@link Function} constructor 
+   * For Lambda, the onSuccess destination is not enabled by default.
+   * It must first be configured via either the {@link Function} constructor
    * or by using {@link IFunction.configureAsyncInvoke} and that destination must match the bus provided here.
-   * 
+   *
    * ```ts
    * const bus = new EventBus(stack, 'bus');
    * new Function(stack, 'func', { onSuccess: bus }, async () => {});
    * ```
-   * 
+   *
    * or
-   * 
+   *
    * ```ts
    * const bus = new EventBus(stack, 'bus');
    * const func = new Function(stack, 'func', async () => {});
@@ -154,17 +154,17 @@ export interface IFunction<P, O>
   /**
    * Event Source for the {@link Function} onFailure async invocation destination.
    *
-   * The onFailure destination is not enabled by default. 
-   * It must first be configured via either the {@link Function} constructor 
+   * The onFailure destination is not enabled by default.
+   * It must first be configured via either the {@link Function} constructor
    * or by using {@link IFunction.configureAsyncInvoke} and that destination must match the bus provided here.
-   * 
+   *
    * ```ts
    * const bus = new EventBus(stack, 'bus');
    * new Function(stack, 'func', { onFailure: bus }, async () => {});
    * ```
-   * 
+   *
    * or
-   * 
+   *
    * ```ts
    * const bus = new EventBus(stack, 'bus');
    * const func = new Function(stack, 'func', async () => {});
