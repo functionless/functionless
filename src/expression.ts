@@ -543,7 +543,7 @@ export class TypeOfExpr extends BaseExpr<"TypeOfExpr"> {
   }
 }
 
-export const isAwaitExpr = typeGuard("TypeOfExpr");
+export const isAwaitExpr = typeGuard("AwaitExpr");
 
 export class AwaitExpr extends BaseExpr<"AwaitExpr"> {
   constructor(readonly expr: Expr) {

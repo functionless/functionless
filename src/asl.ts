@@ -9,6 +9,7 @@ import {
   ElementAccessExpr,
   Expr,
   Identifier,
+  isAwaitExpr,
   isBinaryExpr,
   isCallExpr,
   isFunctionExpr,
@@ -1993,6 +1994,8 @@ function exprToString(expr?: Expr): string {
     return `${expr.op}${exprToString(expr.expr)}`;
   } else if (expr.kind === "UndefinedLiteralExpr") {
     return "undefined";
+  } else if (isAwaitExpr(expr)) {
+    return `await ${exprToString(expr.expr)}`;
   } else {
     return assertNever(expr);
   }

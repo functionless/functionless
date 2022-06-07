@@ -488,6 +488,8 @@ export class VTL {
       case "DoStmt":
       case "TypeOfExpr":
       case "WhileStmt":
+      // todo support
+      case "AwaitExpr":
         throw new Error(`${node.kind} is not yet supported in VTL`);
       case "Err":
         throw node.error;

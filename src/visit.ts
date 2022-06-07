@@ -4,6 +4,7 @@ import { Err } from "./error";
 import {
   Argument,
   ArrayLiteralExpr,
+  AwaitExpr,
   BinaryExpr,
   BooleanLiteralExpr,
   CallExpr,
@@ -13,6 +14,7 @@ import {
   Expr,
   FunctionExpr,
   Identifier,
+  isAwaitExpr,
   isComputedPropertyNameExpr,
   isExpr,
   isIdentifier,
@@ -441,6 +443,10 @@ export function visitEachChild<T extends FunctionlessNode>(
     return new WhileStmt(condition, block) as T;
   } else if (node.kind === "NativeFunctionDecl") {
     throw Error(`${node.kind} are not supported.`);
+  } else if (isAwaitExpr(node)) {
+    const expr = visitor(node.expr);
+    ensure(expr, isExpr, "an AwaitExpr's expr property must be an Expr");
+    return new AwaitExpr(expr) as T;
   }
   return assertNever(node);
 }
