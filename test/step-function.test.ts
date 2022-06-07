@@ -9,9 +9,12 @@ import {
   StepFunction,
   SyncExecutionResult,
 } from "../src";
-import { StateMachine, States } from "../src/asl";
+import { StateMachine, States, Task } from "../src/asl";
 import { initStepFunctionApp, Person } from "./util";
 
+/**
+ * Removes randomized values (CDK token strings) form the definitions.
+ */
 const normalizeDefinition = (definition: StateMachine<States>): any => {
   return JSON.parse(
     JSON.stringify(definition).replace(
@@ -19,6 +22,30 @@ const normalizeDefinition = (definition: StateMachine<States>): any => {
       "__REPLACED_TOKEN"
     )
   );
+};
+
+/**
+ * Expect a task to match the given contents. Use Jest's `toMatchObject`.
+ * Selects the task to check using the first key in states or by finding the key using the taskNameMatcher.
+ */
+const expectTaskToMatch = (
+  definition: StateMachine<States>,
+  partialTask: Partial<Task>,
+  taskNameMatcher?: string | RegExp
+): any => {
+  const [key] = !taskNameMatcher
+    ? Object.keys(definition.States)
+    : Object.keys(definition.States).filter((k) =>
+        typeof taskNameMatcher === "string"
+          ? k.includes(taskNameMatcher)
+          : taskNameMatcher.test(k)
+      );
+
+  expect(key).toBeDefined();
+
+  const task = <Task>definition.States[key];
+
+  expect(task).toMatchObject(partialTask);
 };
 
 test("empty function", () => {
@@ -332,6 +359,14 @@ test("put an event bus event", () => {
     }
   ).definition;
 
+  expectTaskToMatch(
+    definition,
+    {
+      Parameters: { Entries: [{ EventBusName: bus.eventBusArn }] },
+    },
+    "bus.putEvents"
+  );
+
   expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
@@ -454,6 +489,12 @@ test("return a single Lambda Function call", () => {
   >(stack, "fn", (input) => {
     return getPerson({ id: input.id });
   }).definition;
+
+  expectTaskToMatch(definition, {
+    Parameters: {
+      FunctionName: getPerson.resource.functionName,
+    },
+  });
 
   expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
@@ -596,6 +637,16 @@ test("conditionally call DynamoDB and then void", () => {
       }
     }
   ).definition;
+
+  expectTaskToMatch(
+    definition,
+    {
+      Parameters: {
+        TableName: personTable.resource.tableName,
+      },
+    },
+    "$AWS.DynamoDB.GetItem"
+  );
 
   expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
@@ -1875,6 +1926,10 @@ test("call Step Function from another Step Function", () => {
     const result = machine1({});
     return result;
   }).definition;
+
+  expectTaskToMatch(definition, {
+    Parameters: { StateMachineArn: machine1.resource.attrArn },
+  });
 
   expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
