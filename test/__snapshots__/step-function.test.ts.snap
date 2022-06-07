@@ -276,6 +276,32 @@ Object {
 }
 `;
 
+exports[`call Lambda Function, store as variable, return promise variable 1`] = `
+Object {
+  "StartAt": "person = getPerson({id: input.id})",
+  "States": Object {
+    "person = getPerson({id: input.id})": Object {
+      "Next": "return person",
+      "Parameters": Object {
+        "FunctionName": "__REPLACED_TOKEN",
+        "Payload": Object {
+          "id.$": "$.id",
+        },
+      },
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "ResultPath": "$.person",
+      "ResultSelector": "$.Payload",
+      "Type": "Task",
+    },
+    "return person": Object {
+      "End": true,
+      "OutputPath": "$.person",
+      "Type": "Pass",
+    },
+  },
+}
+`;
+
 exports[`call Lambda Function, store as variable, return variable 1`] = `
 Object {
   "StartAt": "person = getPerson({id: input.id})",

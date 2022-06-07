@@ -26,7 +26,7 @@ import { assertDefined } from "./assert";
 import {
   validateFunctionDecl,
   FunctionDecl,
-  isFunctionDecl,
+  isFunctionDeclOrErr,
 } from "./declaration";
 import { EventBus, PredicateRuleBase, Rule } from "./event-bridge";
 import {
@@ -436,7 +436,7 @@ abstract class BaseStepFunction<
       | [func: StepFunctionClosure<P, O>]
   ) {
     const props =
-      isFunctionDecl(args[0]) || typeof args[0] === "function"
+      isFunctionDeclOrErr(args[0]) || typeof args[0] === "function"
         ? undefined
         : args[0];
     if (props?.stateMachineName !== undefined) {
@@ -446,9 +446,10 @@ abstract class BaseStepFunction<
       ...props,
       physicalName: props?.stateMachineName,
     });
-    this.decl = isFunctionDecl(args[0])
-      ? args[0]
-      : validateFunctionDecl(args[1], "StepFunction");
+    this.decl = validateFunctionDecl(
+      isFunctionDeclOrErr(args[0]) ? args[0] : args[1],
+      "StepFunction"
+    );
 
     this.role =
       props?.role ??
