@@ -9,7 +9,12 @@ const path = require("path");
 const config = {
   title: "Functionless",
   tagline: "Unified Infrastructure and Application Code",
-  url: "https://functionless.org",
+  url:
+    // use the deploy url when building for preview
+    // https://docs.netlify.com/configure-builds/environment-variables/#read-only-variables
+    process.env.CONTEXT === "deploy-preview"
+      ? process.env.DEPLOY_URL
+      : "https://functionless.org",
   baseUrl: "/",
   onBrokenLinks: "throw",
   onBrokenMarkdownLinks: "warn",
