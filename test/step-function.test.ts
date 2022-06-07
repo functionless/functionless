@@ -535,29 +535,7 @@ test("call Lambda Function, store as variable, return variable", () => {
     return person;
   }).definition;
 
-  expect(definition).toEqual({
-    StartAt: "person = getPerson({id: input.id})",
-    States: {
-      "person = getPerson({id: input.id})": {
-        Type: "Task",
-        Resource: "arn:aws:states:::lambda:invoke",
-        ResultPath: "$.person",
-        ResultSelector: "$.Payload",
-        Parameters: {
-          FunctionName: getPerson.resource.functionName,
-          Payload: {
-            "id.$": "$.id",
-          },
-        },
-        Next: "return person",
-      },
-      "return person": {
-        Type: "Pass",
-        OutputPath: "$.person",
-        End: true,
-      },
-    },
-  });
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
 test("call Lambda Function, store as variable, return promise variable", () => {
@@ -916,6 +894,34 @@ test("try-catch with optional task", () => {
   const { stack, computeScore } = initStepFunctionApp();
 
   const definition = new ExpressStepFunction<{ id: string }, string>(
+    stack,
+    "fn",
+    async (input) => {
+      try {
+        if (input.id === "hello") {
+          await computeScore({
+            id: input.id,
+            name: "sam",
+          });
+        }
+        return "hello world";
+      } catch (err: any) {
+        if (err.message === "cause") {
+          return "hello";
+        } else {
+          return "world";
+        }
+      }
+    }
+  ).definition;
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+});
+
+test("try-catch with optional return of task", () => {
+  const { stack, computeScore } = initStepFunctionApp();
+
+  const definition = new ExpressStepFunction<{ id: string }, string | number>(
     stack,
     "fn",
     async (input) => {
