@@ -878,6 +878,8 @@ export function compile(
         } else if (node.kind === ts.SyntaxKind.ThisKeyword) {
           // assuming that this is used in a valid location, create a closure around that instance.
           return ref(ts.factory.createIdentifier("this"));
+        } else if (ts.isAwaitExpression(node)) {
+          return newExpr("AwaitExpr", [toExpr(node.expression, scope)]);
         }
 
         throw new Error(

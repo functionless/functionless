@@ -18,6 +18,7 @@ import { AnyFunction } from "./util";
 export type Expr =
   | Argument
   | ArrayLiteralExpr
+  | AwaitExpr
   | BinaryExpr
   | BooleanLiteralExpr
   | CallExpr
@@ -539,5 +540,19 @@ export class TypeOfExpr extends BaseExpr<"TypeOfExpr"> {
 
   public clone(): this {
     return new TypeOfExpr(this.expr.clone()) as this;
+  }
+}
+
+export const isAwaitExpr = typeGuard("TypeOfExpr");
+
+export class AwaitExpr extends BaseExpr<"AwaitExpr"> {
+  constructor(readonly expr: Expr) {
+    super("AwaitExpr");
+
+    expr.setParent(this);
+  }
+
+  public clone(): this {
+    return new AwaitExpr(this.expr.clone()) as this;
   }
 }
