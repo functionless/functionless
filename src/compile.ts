@@ -497,7 +497,7 @@ export function compile(
 
       function toFunction(
         type: "FunctionDecl" | "FunctionExpr",
-        impl: TsFunctionParameter,
+        impl: ts.Expression,
         dropArgs?: number
       ): ts.Expression {
         if (
@@ -541,80 +541,38 @@ export function compile(
       }
 
       function visitApiIntegration(node: ApiIntegrationInterface): ts.Node {
-        const [props] = node.arguments;
+        const [props, request, response, errors] = node.arguments;
 
         return ts.factory.updateNewExpression(
           node,
           node.expression,
           node.typeArguments,
-          [visitApiIntegrationProps(props)]
+          [
+            props,
+            toFunction("FunctionDecl", request),
+            ts.isObjectLiteralExpression(response)
+              ? visitApiErrors(response)
+              : toFunction("FunctionDecl", response),
+            ...(errors && ts.isObjectLiteralExpression(errors)
+              ? [visitApiErrors(errors)]
+              : []),
+          ]
         );
       }
 
-      function visitApiIntegrationProps(
-        props: ts.ObjectLiteralExpression
-      ): ts.ObjectLiteralExpression {
+      function visitApiErrors(errors: ts.ObjectLiteralExpression) {
         return ts.factory.updateObjectLiteralExpression(
-          props,
-          props.properties.map((prop) => {
-            if (
-              ts.isPropertyAssignment(prop) &&
-              (ts.isStringLiteral(prop.name) || ts.isIdentifier(prop.name))
-            ) {
-              if (
-                prop.name.text === "responses" ||
-                prop.name.text === "errors"
-              ) {
-                return visitApiIntegrationResponsesProp(prop);
-              } else if (
-                prop.name.text === "request" ||
-                prop.name.text === "response"
-              ) {
-                return visitApiIntegrationMapperProp(prop);
-              }
-            }
-            return prop;
-          })
-        );
-      }
-
-      function visitApiIntegrationResponsesProp(
-        prop: ts.PropertyAssignment
-      ): ts.PropertyAssignment {
-        const { initializer } = prop;
-        if (!ts.isObjectLiteralExpression(initializer)) {
-          return prop;
-        }
-
-        return ts.factory.updatePropertyAssignment(
-          prop,
-          prop.name,
-          ts.factory.updateObjectLiteralExpression(
-            initializer,
-            initializer.properties.map((p) =>
-              ts.isPropertyAssignment(p) ? visitApiIntegrationMapperProp(p) : p
-            )
+          errors,
+          errors.properties.map((prop) =>
+            ts.isPropertyAssignment(prop)
+              ? ts.factory.updatePropertyAssignment(
+                  prop,
+                  prop.name,
+                  toFunction("FunctionDecl", prop.initializer)
+                )
+              : prop
           )
         );
-      }
-
-      function visitApiIntegrationMapperProp(
-        prop: ts.PropertyAssignment
-      ): ts.PropertyAssignment {
-        const { initializer } = prop;
-        const toFunc = errorBoundary(() => {
-          if (
-            !ts.isFunctionExpression(initializer) &&
-            !ts.isArrowFunction(initializer)
-          ) {
-            throw new Error(
-              `Expected mapping property of an ApiIntegration to be a function. Found ${initializer.getText()}.`
-            );
-          }
-          return toFunction("FunctionDecl", initializer);
-        });
-
-        return ts.factory.updatePropertyAssignment(prop, prop.name, toFunc);
       }
 
       function toExpr(

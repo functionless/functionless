@@ -19,7 +19,7 @@
       "request": "launch",
       "runtimeExecutable": "node",
       "runtimeArgs": ["--nolazy"],
-      "args": ["./lib/app.js"],
+      "args": ["./lib/api-test.js"],
       "outFiles": [
         "${workspaceRoot}/lib/**/*.js",
         "${workspaceRoot}/test-app/lib/**/*.js",

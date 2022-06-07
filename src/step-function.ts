@@ -520,13 +520,21 @@ abstract class BaseStepFunction<
 
     // Integration object for api gateway vtl
     this.apiGWVtl = {
-      prepareRequest: (obj) => {
-        // TODO: this is currently broken. StepFunction interface requires a
-        // top level `input` key to be passed in but it shouldn't
-        return {
-          ...obj,
-          stateMachineArn: this.stateMachineArn,
-        };
+      renderRequest: (call, context) => {
+        const { name, input, traceHeader } = retrieveMachineArgs(call);
+        if (input === undefined) {
+          debugger;
+          throw new Error(`missing input`);
+        }
+        const inputVar = context.var(input);
+        context.qr(`$${inputVar}.stateMachineArn = "${this.stateMachineArn}"`);
+        if (name) {
+          context.qr(`$${inputVar}.name = "${name}"`);
+        }
+        if (traceHeader) {
+          context.qr(`$${inputVar}.traceHeader = "${traceHeader}"`);
+        }
+        return context.json(inputVar);
       },
 
       createIntegration: (scope, requestTemplate, integrationResponses) => {

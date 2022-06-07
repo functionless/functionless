@@ -1,6 +1,12 @@
 import "jest";
 import { aws_apigateway, IResolvable, Stack } from "aws-cdk-lib";
-import { AwsApiIntegration, MockApiIntegration, Function } from "../src";
+import {
+  AwsApiIntegration,
+  MockApiIntegration,
+  Function,
+  BaseApiIntegration,
+  ExpressStepFunction,
+} from "../src";
 
 let stack: Stack;
 let func: Function<any, any>;
@@ -14,26 +20,24 @@ beforeEach(() => {
 test("mock integration with object literal", () => {
   const api = new aws_apigateway.RestApi(stack, "API");
 
-  interface MockRequest {
-    pathParameters: {
-      code: number;
-    };
-  }
-
-  const method = getMethodTemplates(
-    new MockApiIntegration({
-      request: (req: MockRequest) => ({
-        statusCode: req.pathParameters.code,
+  const method = getCfnMethod(
+    new MockApiIntegration(
+      {
+        httpMethod: "GET",
+        resource: api.root,
+      },
+      ($input) => ({
+        statusCode: $input.params("code") as number,
       }),
-      responses: {
+      {
         200: () => ({
           response: "OK",
         }),
         500: () => ({
           response: "BAD",
         }),
-      },
-    }).addMethod("GET", api.root)
+      }
+    )
   );
 
   expect(method.httpMethod).toEqual("GET");
@@ -64,27 +68,24 @@ test("mock integration with object literal", () => {
 test.skip("mock integration with object literal and literal type in pathParameters", () => {
   const api = new aws_apigateway.RestApi(stack, "API");
 
-  interface MockRequest {
-    pathParameters: {
-      // TODO: this breaks the interpreter which expects a string | number
-      code: 200 | 500;
-    };
-  }
-
-  const method = getMethodTemplates(
-    new MockApiIntegration({
-      request: (req: MockRequest) => ({
-        statusCode: req.pathParameters.code,
+  const method = getCfnMethod(
+    new MockApiIntegration(
+      {
+        httpMethod: "GET",
+        resource: api.root,
+      },
+      (req) => ({
+        statusCode: req.params("code") as number,
       }),
-      responses: {
+      {
         200: () => ({
           response: "OK",
         }),
         500: () => ({
           response: "BAD",
         }),
-      },
-    }).addMethod("GET", api.root)
+      }
+    )
   );
 
   expect(method.httpMethod).toEqual("GET");
@@ -115,23 +116,69 @@ test.skip("mock integration with object literal and literal type in pathParamete
 test("AWS integration with Function", () => {
   const api = new aws_apigateway.RestApi(stack, "API");
 
-  const method = getMethodTemplates(
-    new AwsApiIntegration({
-      request: (req: {
-        pathParameters: {
-          code: number;
-        };
-      }) => func(req),
-      response: (result) => ({
+  const method = getCfnMethod(
+    new AwsApiIntegration(
+      {
+        httpMethod: "GET",
+        resource: api.root,
+      },
+      ($input) => func($input.json("$")),
+      (result) => ({
         result,
-      }),
-    }).addMethod("GET", api.root)
+      })
+    )
   );
 
   expect(method.httpMethod).toEqual("GET");
   expect(method.integration.requestTemplates).toEqual({
     "application/json": `#set($inputRoot = $input.path('$'))
 "$inputRoot"`,
+  });
+  expect(method.integration.integrationResponses).toEqual([
+    <IntegrationResponseProperty>{
+      statusCode: "200",
+      responseTemplates: {
+        "application/json": `#set($inputRoot = $input.path('$'))
+{"result":"$inputRoot"}`,
+      },
+    },
+  ]);
+});
+
+test("AWS integration with Express Step Function", () => {
+  const api = new aws_apigateway.RestApi(stack, "API");
+  const sfn = new ExpressStepFunction(stack, "SFN", () => {
+    return "done";
+  });
+
+  const method = getCfnMethod(
+    new AwsApiIntegration(
+      {
+        httpMethod: "GET",
+        resource: api.root,
+      },
+      ($input) =>
+        sfn({
+          input: {
+            num: $input.params("num") as number,
+            str: $input.params("str") as string,
+          },
+        }),
+      (response, $context) => {
+        if (response.status === "SUCCEEDED") {
+          return response.output;
+        } else {
+          $context.responseOverride.status = 500;
+          return response.error;
+        }
+      }
+    )
+  );
+
+  expect(method.httpMethod).toEqual("GET");
+  expect(method.integration.requestTemplates).toEqual({
+    "application/json": `#set($inputRoot = $input.path('$'))
+{"input":{"num":"$input.pathParameters}}`,
   });
   expect(method.integration.integrationResponses).toEqual([
     <IntegrationResponseProperty>{
@@ -163,10 +210,8 @@ interface IntegrationResponseProperty {
   readonly statusCode: string;
 }
 
-function getMethodTemplates(
-  method: aws_apigateway.Method
-): aws_apigateway.CfnMethod & {
+function getCfnMethod(method: BaseApiIntegration): aws_apigateway.CfnMethod & {
   integration: CfnIntegration;
 } {
-  return method.node.findChild("Resource") as any;
+  return method.method.node.findChild("Resource") as any;
 }

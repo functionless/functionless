@@ -312,11 +312,14 @@ export class Table<
         ...integration.appSyncVtl,
       },
       apiGWVtl: {
-        prepareRequest: (obj) => {
-          return {
-            ...obj,
-            tableName: this.resource.node.addr,
-          };
+        renderRequest: (call, context) => {
+          const input = call.getArgument("input");
+          if (input === undefined) {
+            throw new Error(`missing input`);
+          }
+          const inputVar = context.var(input);
+          context.qr(`$${inputVar}.tableName = "${this.resource.tableName}"`);
+          return context.json(inputVar);
         },
 
         createIntegration: (api, template, integrationResponses) => {

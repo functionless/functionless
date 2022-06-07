@@ -10,7 +10,7 @@ import { isErr } from "./error";
 import { CallExpr, Expr } from "./expression";
 import { findDeepIntegration, IntegrationImpl } from "./integration";
 import { Literal } from "./literal";
-import { singletonConstruct } from "./util";
+import { AnyFunction, singletonConstruct } from "./util";
 import { VTL } from "./vtl";
 
 /**
@@ -71,6 +71,25 @@ export class SynthesizedAppsyncResolver extends appsync.Resolver {
   ) {
     super(scope, id, props);
     this.templates = props.templates;
+  }
+}
+
+export class AppsyncVTL extends VTL {
+  public static readonly CircuitBreaker = `#if($context.stash.return__flag)
+  #return($context.stash.return__val)
+#end`;
+
+  protected integrate(
+    target: IntegrationImpl<AnyFunction>,
+    call: CallExpr
+  ): string {
+    if (target.appSyncVtl) {
+      return target.appSyncVtl.request(call, this);
+    } else {
+      throw new Error(
+        `Integration ${target.kind} does not support Appsync Resolvers`
+      );
+    }
   }
 }
 
@@ -305,7 +324,9 @@ export class AppsyncResolver<
     ) {
       const templates: string[] = [];
       let template =
-        resolverCount === 0 ? new VTL() : new VTL(VTL.CircuitBreaker);
+        resolverCount === 0
+          ? new AppsyncVTL()
+          : new AppsyncVTL(AppsyncVTL.CircuitBreaker);
       const functions = decl.body.statements
         .map((stmt, i) => {
           const isLastExpr = i + 1 === decl.body.statements.length;
@@ -425,7 +446,7 @@ export class AppsyncResolver<
               const requestMappingTemplateString = template.toVTL();
               templates.push(requestMappingTemplateString);
               templates.push(responseMappingTemplate);
-              template = new VTL(VTL.CircuitBreaker);
+              template = new AppsyncVTL(AppsyncVTL.CircuitBreaker);
               const name = getUniqueName(
                 api,
                 appsyncSafeName(integration.kind)

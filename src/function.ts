@@ -143,7 +143,13 @@ abstract class FunctionBase<P, O> implements IFunction<P, O> {
     };
 
     this.apiGWVtl = {
-      prepareRequest: (obj) => obj,
+      renderRequest: (call, context) => {
+        const payloadArg = call.getArgument("payload");
+        const payload = payloadArg?.expr
+          ? context.eval(payloadArg.expr)
+          : "$null";
+        return context.json(payload);
+      },
 
       createIntegration: (_scope, requestTemplate, integrationResponses) => {
         return new aws_apigateway.LambdaIntegration(this.resource, {

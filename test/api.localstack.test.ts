@@ -4,7 +4,7 @@ import axios from "axios";
 import {
   AwsApiIntegration,
   Function,
-  LambdaProxyApiIntegration,
+  LambdaProxyApiMethod,
   MockApiIntegration,
 } from "../src";
 import { localstackTestSuite } from "./localstack";
@@ -16,6 +16,8 @@ localstackTestSuite("apiGatewayStack", (test, stack) => {
       const api = new aws_apigateway.RestApi(stack, "MockAPI");
       const code = api.root.addResource("{code}");
       new MockApiIntegration({
+        httpMethod: "GET",
+        resource: code,
         request: (req: {
           pathParameters: {
             code: number;
@@ -31,7 +33,7 @@ localstackTestSuite("apiGatewayStack", (test, stack) => {
             response: "BAD",
           }),
         },
-      }).addMethod("GET", code);
+      });
 
       return {
         outputs: {
@@ -56,6 +58,8 @@ localstackTestSuite("apiGatewayStack", (test, stack) => {
       });
 
       new AwsApiIntegration({
+        httpMethod: "GET",
+        resource: api.root,
         request: (req: {
           pathParameters: {
             code: number;
@@ -67,7 +71,7 @@ localstackTestSuite("apiGatewayStack", (test, stack) => {
         response: (result) => ({
           result: result.key,
         }),
-      }).addMethod("GET", api.root);
+      });
 
       return {
         outputs: {
@@ -82,7 +86,7 @@ localstackTestSuite("apiGatewayStack", (test, stack) => {
   );
 
   test(
-    "lambda proxy integration",
+    "lambda proxy method",
     () => {
       const api = new aws_apigateway.RestApi(stack, "LambdaAPI");
       const func = new Function<APIGatewayProxyEvent, APIGatewayProxyResult>(
@@ -99,9 +103,11 @@ localstackTestSuite("apiGatewayStack", (test, stack) => {
         }
       );
 
-      new LambdaProxyApiIntegration({
+      new LambdaProxyApiMethod({
+        httpMethod: "GET",
+        resource: api.root,
         function: func,
-      }).addMethod("GET", api.root);
+      });
 
       return {
         outputs: {

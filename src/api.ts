@@ -1,29 +1,18 @@
 import { aws_apigateway } from "aws-cdk-lib";
-import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
-import { Construct } from "constructs";
-import { FunctionDecl, isFunctionDecl, isParameterDecl } from "./declaration";
-import { isErr } from "./error";
 import {
-  Identifier,
-  isArgument,
-  isArrayLiteralExpr,
-  isBooleanLiteralExpr,
-  isCallExpr,
-  isComputedPropertyNameExpr,
-  isIdentifier,
-  isNullLiteralExpr,
-  isNumberLiteralExpr,
-  isObjectLiteralExpr,
-  isPropAccessExpr,
-  isStringLiteralExpr,
-  isTemplateExpr,
-  ObjectLiteralExpr,
-  PropAccessExpr,
-} from "./expression";
+  APIGatewayProxyEvent,
+  APIGatewayProxyResult,
+  APIGatewayEventRequestContext,
+} from "aws-lambda";
+import { Construct } from "constructs";
+import { FunctionDecl, isFunctionDecl } from "./declaration";
+import { isErr } from "./error";
+import { CallExpr, Expr } from "./expression";
 import { Function } from "./function";
-import { findIntegration, IntegrationImpl } from "./integration";
-import { FunctionlessNode } from "./node";
-import { isReturnStmt, isVariableStmt, ReturnStmt } from "./statement";
+import { IntegrationImpl } from "./integration";
+import { isReturnStmt, Stmt } from "./statement";
+import { AnyFunction } from "./util";
+import { VTL } from "./vtl";
 
 /**
  * HTTP Methods that API Gateway supports.
@@ -36,6 +25,11 @@ export type HttpMethod =
   | "DELETE"
   | "HEAD"
   | "OPTIONS";
+
+export interface MethodProps {
+  httpMethod: HttpMethod;
+  resource: aws_apigateway.IResource;
+}
 
 type ParameterMap = Record<string, string | number | boolean>;
 
@@ -75,33 +69,7 @@ export abstract class BaseApiIntegration {
   public static readonly FunctionlessType = "ApiIntegration";
   protected readonly functionlessKind = BaseApiIntegration.FunctionlessType;
 
-  /**
-   * Add this integration as a Method to an API Gateway resource.
-   *
-   * TODO: this mirrors the AppsyncResolver.addResolver method, but it
-   * is on the chopping block: https://github.com/functionless/functionless/issues/137
-   * The 2 classes are conceptually similar so we should keep the DX in sync.
-   */
-  public abstract addMethod(
-    httpMethod: HttpMethod,
-    resource: aws_apigateway.IResource
-  ): aws_apigateway.Method;
-}
-
-export interface MockApiIntegrationProps<
-  Request extends ApiRequest<any, any, any, any>,
-  StatusCode extends number,
-  MethodResponses extends { [C in StatusCode]: any }
-> {
-  /**
-   * Map API request to a status code. This code will be used by API Gateway
-   * to select the response to return.
-   */
-  request: (request: Request) => { statusCode: StatusCode };
-  /**
-   * Map of status codes to response to return.
-   */
-  responses: { [C in StatusCode]: (code: C) => MethodResponses[C] };
+  abstract readonly method: aws_apigateway.Method;
 }
 
 /**
@@ -121,39 +89,50 @@ export interface MockApiIntegrationProps<
  * @see https://docs.aws.amazon.com/apigateway/latest/developerguide/api-gateway-api-integration-types.html
  */
 export class MockApiIntegration<
-  Request extends ApiRequest<any, any, any, any>,
   StatusCode extends number,
   MethodResponses extends { [C in StatusCode]: any }
 > extends BaseApiIntegration {
   private readonly request: FunctionDecl;
   private readonly responses: { [K in keyof MethodResponses]: FunctionDecl };
+  readonly method;
 
   public constructor(
-    props: MockApiIntegrationProps<Request, StatusCode, MethodResponses>
+    props: MethodProps,
+    /**
+     * Map API request to a status code. This code will be used by API Gateway
+     * to select the response to return.
+     */
+    request: (
+      $input: APIGatewayInput,
+      $context: APIGatewayContext
+    ) => { statusCode: StatusCode },
+    /**
+     * Map of status codes to response to return.
+     */
+    responses: {
+      [C in StatusCode]: (
+        code: C,
+        $context: APIGatewayContext
+      ) => MethodResponses[C];
+    }
   ) {
     super();
-    this.request = validateFunctionDecl(props.request);
+    this.request = validateFunctionDecl(request);
     this.responses = Object.fromEntries(
-      Object.entries(props.responses).map(([k, v]) => [
-        k,
-        validateFunctionDecl(v),
-      ])
+      Object.entries(responses).map(([k, v]) => [k, validateFunctionDecl(v)])
     ) as { [K in keyof MethodResponses]: FunctionDecl };
-  }
 
-  public addMethod(
-    httpMethod: HttpMethod,
-    resource: aws_apigateway.IResource
-  ): aws_apigateway.Method {
-    const [requestTemplate] = toVTL(this.request, "request");
+    const requestTemplate = new APIGatewayVTL("request");
+    requestTemplate.eval(this.request.body);
 
     const integrationResponses: aws_apigateway.IntegrationResponse[] =
       Object.entries(this.responses).map(([statusCode, fn]) => {
-        const [template] = toVTL(fn as FunctionDecl, "response");
+        const responseTemplate = new APIGatewayVTL("response");
+        responseTemplate.eval((fn as FunctionDecl).body);
         return {
           statusCode,
           responseTemplates: {
-            "application/json": template,
+            "application/json": responseTemplate.toVTL(),
           },
           selectionPattern: `^${statusCode}$`,
         };
@@ -161,7 +140,7 @@ export class MockApiIntegration<
 
     const integration = new aws_apigateway.MockIntegration({
       requestTemplates: {
-        "application/json": requestTemplate,
+        "application/json": requestTemplate.toVTL(),
       },
       integrationResponses,
     });
@@ -171,46 +150,10 @@ export class MockApiIntegration<
     }));
 
     // TODO: support requestParameters, authorizers, models and validators
-    return resource.addMethod(httpMethod, integration, {
+    this.method = props.resource.addMethod(props.httpMethod, integration, {
       methodResponses,
     });
   }
-}
-
-export interface AwsApiIntegrationProps<
-  Request extends ApiRequest<any, any, any, any>,
-  IntegrationResponse,
-  MethodResponse
-> {
-  /**
-   * Function that maps an API request to an integration request and calls an
-   * integration. This will be compiled to a VTL request mapping template and
-   * an API GW integration.
-   *
-   * At present the function body must be a single statement calling an integration
-   * with an object literal argument. E.g
-   *
-   * ```ts
-   *  (req) => fn({ id: req.body.id });
-   * ```
-   *
-   * The supported syntax will be expanded in the future.
-   */
-  request: (req: Request) => IntegrationResponse;
-  /**
-   * Function that maps an integration response to a 200 method response. This
-   * is the happy path and is modeled explicitly so that the return type of the
-   * integration can be inferred. This will be compiled to a VTL template.
-   *
-   * At present the function body must be a single statement returning an object
-   * literal. The supported syntax will be expanded in the future.
-   */
-  response: (response: IntegrationResponse) => MethodResponse;
-  /**
-   * Map of status codes to a function defining the  response to return. This is used
-   * to configure the failure path method responses, for e.g. when an integration fails.
-   */
-  errors?: { [statusCode: number]: () => any };
 }
 
 /**
@@ -226,41 +169,81 @@ export interface AwsApiIntegrationProps<
  * @see https://docs.aws.amazon.com/apigateway/latest/developerguide/api-gateway-api-integration-types.html
  */
 export class AwsApiIntegration<
-  Request extends ApiRequest<any, any, any, any>,
-  IntegrationResponse,
-  MethodResponse
+  MethodResponse,
+  IntegrationResponse
 > extends BaseApiIntegration {
   private readonly request: FunctionDecl;
   private readonly response: FunctionDecl;
   private readonly errors: { [statusCode: number]: FunctionDecl };
-
+  readonly method;
   public constructor(
-    props: AwsApiIntegrationProps<Request, IntegrationResponse, MethodResponse>
+    readonly props: MethodProps,
+    /**
+     * Function that maps an API request to an integration request and calls an
+     * integration. This will be compiled to a VTL request mapping template and
+     * an API GW integration.
+     *
+     * At present the function body must be a single statement calling an integration
+     * with an object literal argument. E.g
+     *
+     * ```ts
+     *  (req) => fn({ id: req.body.id });
+     * ```
+     *
+     * The supported syntax will be expanded in the future.
+     */
+    request: (
+      $input: APIGatewayInput,
+      $context: APIGatewayContext
+    ) => IntegrationResponse,
+    /**
+     * Function that maps an integration response to a 200 method response. This
+     * is the happy path and is modeled explicitly so that the return type of the
+     * integration can be inferred. This will be compiled to a VTL template.
+     *
+     * At present the function body must be a single statement returning an object
+     * literal. The supported syntax will be expanded in the future.
+     */
+    response: (
+      response: IntegrationResponse,
+      $context: APIGatewayContext
+    ) => MethodResponse,
+    /**
+     * Map of status codes to a function defining the  response to return. This is used
+     * to configure the failure path method responses, for e.g. when an integration fails.
+     */
+    errors?: { [statusCode: number]: ($context: APIGatewayContext) => any }
   ) {
     super();
-    this.request = validateFunctionDecl(props.request);
-    this.response = validateFunctionDecl(props.response);
+    this.request = validateFunctionDecl(request);
+    this.response = validateFunctionDecl(response);
     this.errors = Object.fromEntries(
-      Object.entries(props.errors ?? {}).map(([k, v]) => [
-        k,
-        validateFunctionDecl(v),
-      ])
+      Object.entries(errors ?? {}).map(([k, v]) => [k, validateFunctionDecl(v)])
     );
-  }
 
-  public addMethod(httpMethod: HttpMethod, resource: aws_apigateway.IResource) {
-    const [requestTemplate, integration] = toVTL(this.request, "request");
-    const [responseTemplate] = toVTL(this.response, "response");
+    const responseTemplate = new APIGatewayVTL(
+      "response",
+      "#set($inputRoot = $input.path('$'))"
+    );
+    responseTemplate.eval(this.response.body);
+    const requestTemplate = new APIGatewayVTL(
+      "request",
+      "#set($inputRoot = $input.path('$'))"
+    );
+    requestTemplate.eval(this.request.body);
+
+    const integration = requestTemplate.integration;
 
     const errorResponses: aws_apigateway.IntegrationResponse[] = Object.entries(
       this.errors
     ).map(([statusCode, fn]) => {
-      const [template] = toVTL(fn, "response");
+      const errorTemplate = new APIGatewayVTL("response");
+      errorTemplate.eval(fn.body, "response");
       return {
         statusCode: statusCode,
         selectionPattern: `^${statusCode}$`,
         responseTemplates: {
-          "application/json": template,
+          "application/json": errorTemplate.toVTL(),
         },
       };
     });
@@ -269,7 +252,7 @@ export class AwsApiIntegration<
       {
         statusCode: "200",
         responseTemplates: {
-          "application/json": responseTemplate,
+          "application/json": responseTemplate.toVTL(),
         },
       },
       ...errorResponses,
@@ -279,8 +262,8 @@ export class AwsApiIntegration<
     // because of the IAM roles created
     // should `this` be a Method?
     const apiGwIntegration = integration!.apiGWVtl.createIntegration(
-      resource,
-      requestTemplate,
+      props.resource,
+      requestTemplate.toVTL(),
       integrationResponses
     );
 
@@ -291,247 +274,93 @@ export class AwsApiIntegration<
       })),
     ];
 
-    return resource.addMethod(httpMethod, apiGwIntegration, {
+    this.method = props.resource.addMethod(props.httpMethod, apiGwIntegration, {
       methodResponses,
     });
   }
 }
 
-/**
- * Simple VTL interpreter for a FunctionDecl. The interpreter in vtl.ts
- * is based on the AppSync VTL engine which has much more flexibility than
- * the API Gateway VTL engine. In particular it has a toJson utility function
- * which means the VTL can just create an object in memory and then toJson it
- * the end. Here we need to manually output the JSON which is how VTL is
- * typically meant to be used.
- *
- * For now, only Literals and references to the template input are supported.
- * It is definitely possible to support more, but we will start with just
- * small core and support more syntax carefully over time.
- *
- * @param node Function to interpret.
- * @param template Whether we are creating a request or response mapping template.
- */
-export function toVTL(
-  node: FunctionDecl,
-  location: "request" | "response"
-): [string, IntegrationImpl<any> | undefined] {
-  // TODO: polish these error messages and put them into error-codes.ts
-  if (node.body.statements.length !== 1) {
-    throw new Error("Expected function body to be a single return statement");
+export class APIGatewayVTL extends VTL {
+  public integration: IntegrationImpl<AnyFunction> | undefined;
+  constructor(
+    readonly location: "request" | "response",
+    ...statements: string[]
+  ) {
+    super(...statements);
   }
 
-  const stmt = node.body.statements[0];
-
-  if (!isReturnStmt(stmt)) {
-    throw new Error("Expected function body to be a single return statement");
-  }
-
-  if (location === "request") {
-    const call = stmt.expr;
-
-    if (isObjectLiteralExpr(call)) {
-      return literal(stmt);
-    }
-
-    if (!isCallExpr(call)) {
+  protected integrate(
+    target: IntegrationImpl<AnyFunction>,
+    call: CallExpr
+  ): string {
+    if (this.location === "response") {
       throw new Error(
-        "Expected request function body to return an integration call"
+        `Cannot call an integration from within a API Gateway Response Template`
       );
     }
-
-    // TODO: validate args. also should it always be an object?
-    const argObj = inner(call.args[0].expr! as ObjectLiteralExpr);
-    const serviceCall = findIntegration(call);
-
-    if (!serviceCall) {
+    if (target.apiGWVtl) {
+      // ew, mutation
+      // TODO: refactor to pure functions
+      this.integration = target;
+      return target.apiGWVtl.renderRequest(call, this);
+    } else {
       throw new Error(
-        "Expected request function body to return an integration call"
+        `Resource type ${target.kind} does not support API Gateway Integrations`
       );
     }
-
-    const prepared = serviceCall.apiGWVtl.prepareRequest(argObj);
-    const template = `#set($inputRoot = $input.path('$'))\n${stringify(
-      prepared
-    )}`;
-    return [template, serviceCall];
-  } else {
-    return literal(stmt);
   }
 
-  function literal(
-    stmt: ReturnStmt
-  ): [string, IntegrationImpl<any> | undefined] {
-    const obj = stmt.expr;
-    if (!isObjectLiteralExpr(obj)) {
-      throw new Error(
-        "Expected response function body to return an object literal"
-      );
+  public eval(node?: Expr, returnVar?: string): string;
+  public eval(node: Stmt, returnVar?: string): void;
+  public eval(node?: Expr | Stmt, returnVar?: string): string | void {
+    if (isReturnStmt(node)) {
+      return this.add(this.json(this.eval(node.expr)));
     }
-    const template = `#set($inputRoot = $input.path('$'))\n${stringify(
-      inner(obj)
-    )}`;
-    return [template, undefined];
+    return super.eval(node as any, returnVar);
   }
 
-  function inner(node: FunctionlessNode): any {
-    if (isIdentifier(node)) {
-      const ref = node.lookup();
-      if (isParameterDecl(ref)) {
-        return `$inputRoot`;
-      } else if (isVariableStmt(ref)) {
-        return `$${ref.name}`;
-      } else {
-        throw new Error(`Cannot find name: ${node.name}`);
-      }
-    } else if (
-      isBooleanLiteralExpr(node) ||
-      isNumberLiteralExpr(node) ||
-      isStringLiteralExpr(node) ||
-      isNullLiteralExpr(node)
-    ) {
-      return node.value;
-    } else if (isArrayLiteralExpr(node)) {
-      return node.children.map(inner);
-    } else if (isObjectLiteralExpr(node)) {
-      return Object.fromEntries(
-        node.properties.map((prop) => {
-          switch (prop.kind) {
-            case "PropAssignExpr":
-              return [
-                isComputedPropertyNameExpr(prop.name)
-                  ? inner(prop.name)
-                  : isStringLiteralExpr(prop.name)
-                  ? prop.name.value
-                  : prop.name.name,
-                inner(prop.expr),
-              ];
-            case "SpreadAssignExpr":
-              throw new Error("TODO: support SpreadAssignExpr");
-          }
-        })
-      );
-    } else if (isArgument(node) && node.expr) {
-      return inner(node.expr);
-    } else if (isPropAccessExpr(node)) {
-      // ignore the function param name, we'll replace it with the VTL
-      // mapping template inputs
-      const [_, ...path] = pathFromFunctionParameter(node) ?? [];
+  public json(reference: string): string {
+    return this.jsonStage(reference, 0);
+  }
 
-      if (path) {
-        if (location === "response") {
-          const ref: Ref = {
-            __refType: node.type! as any,
-            value: `$inputRoot.${path.join(".")}`,
-          };
-          return ref;
-        } else {
-          const [paramLocation, ...rest] = path;
-
-          let prefix;
-          switch (paramLocation) {
-            case "body":
-              prefix = "$inputRoot";
-              break;
-            case "pathParameters":
-              prefix = "$input.params().path";
-              break;
-            case "queryStringParameters":
-              prefix = "$input.params().querystring";
-              break;
-            case "headers":
-              prefix = "$input.params().header";
-              break;
-            default:
-              throw new Error("Unknown parameter type.");
-          }
-
-          const param = `${prefix}.${rest.join(".")}`;
-
-          const ref: Ref = { __refType: node.type! as any, value: param };
-          return ref;
-        }
-      }
-      return `${inner(node.expr)}.${node.name};`;
-    } else if (isTemplateExpr(node)) {
-      // TODO: not right, compare to vtl.ts
-      return inner(node.exprs[0]);
+  private jsonStage(varName: string, level: number): string {
+    if (level === 3) {
+      return "#stop";
     }
 
-    throw new Error(`Unsupported node type: ${node.kind}`);
+    const itemVarName = this.newLocalVarName();
+    return `#if(${varName}.class.name === 'java.lang.String')
+"${varName}"
+#elseif(${varName}.class.name === 'java.lang.Integer')
+${varName}
+#elseif(${varName}.class.name === 'java.lang.Double')
+${varName}
+#elseif(${varName}.class.name === 'java.lang.Boolean')
+${varName}
+#elseif(${varName}.class.name === 'java.lang.LinkedHashMap')
+{
+#foreach(${itemVarName} in ${varName}.keySet())
+"${itemVarName}": ${this.jsonStage(
+      itemVarName,
+      level + 1
+    )}#if($foreach.hasNext),#end
+#end
+}
+#elseif(${varName}.class.name === 'java.util.ArrayList')
+[
+#foreach(${itemVarName} in ${varName})
+${this.jsonStage(itemVarName, level + 1)}#if($foreach.hasNext),#end
+#end
+]`.replace(/\n/g, `${new Array(level * 2).join(" ")}\n`);
   }
 }
-
-// These represent variable references and carry the type information.
-// stringify will serialize them to the appropriate VTL
-// e.g. if `request.pathParameters.id` is a number, we want to serialize
-// it as `$input.params().path.id`, not `"$input.params().path.id"` which
-// is what JSON.stringify would do
-type Ref =
-  | { __refType: "string"; value: string }
-  | { __refType: "number"; value: string }
-  | { __refType: "boolean"; value: string };
-
-const isRef = (x: any): x is Ref => x.__refType !== undefined;
-
-function stringify(obj: any): string {
-  if (isRef(obj)) {
-    switch (obj.__refType) {
-      case "string":
-        return `"${obj.value}"`;
-      case "number":
-        return obj.value;
-      case "boolean":
-        return obj.value;
-    }
-  }
-  if (typeof obj === "string") {
-    return `"${obj}"`;
-  } else if (typeof obj === "number" || typeof obj === "boolean") {
-    return obj.toString();
-  } else if (Array.isArray(obj)) {
-    return `[${obj.map(stringify).join(",")}]`;
-  } else if (typeof obj === "object") {
-    const props = Object.entries(obj).map(([k, v]) => `"${k}":${stringify(v)}`);
-    return `{${props.join(",")}}`;
-  }
-
-  throw new Error(`Unsupported type: ${typeof obj}`);
-}
-
 function validateFunctionDecl(a: any): FunctionDecl {
   if (isFunctionDecl(a)) {
     return a;
   } else if (isErr(a)) {
     throw a.error;
   } else {
-    debugger;
     throw Error("Unknown compiler error.");
-  }
-}
-
-function isFunctionParameter(node: FunctionlessNode): node is Identifier {
-  if (!isIdentifier(node)) return false;
-  const ref = node.lookup();
-  return isParameterDecl(ref) && isFunctionDecl(ref.parent);
-}
-
-/**
- * path from a function parameter to this node, if one exists.
- * e.g. `request.pathParameters.id` => ["request", "pathParameters", "id"]
- */
-function pathFromFunctionParameter(node: PropAccessExpr): string[] | undefined {
-  if (isFunctionParameter(node.expr)) {
-    return [node.expr.name, node.name];
-  } else if (isPropAccessExpr(node.expr)) {
-    const path = pathFromFunctionParameter(node.expr);
-    if (path) {
-      return [...path, node.name];
-    } else {
-      return undefined;
-    }
-  } else {
-    return undefined;
   }
 }
 
@@ -540,10 +369,9 @@ function pathFromFunctionParameter(node: PropAccessExpr): string[] | undefined {
  */
 export interface ApiGatewayVtlIntegration {
   /**
-   * Prepare the request object for the integration. This can be used to inject
-   * properties into the object before serializing to VTL.
+   * Render the Request Payload as a VTL string.
    */
-  prepareRequest: (obj: object) => object;
+  renderRequest: (call: CallExpr, context: APIGatewayVTL) => string;
 
   /**
    * Construct an API GW integration.
@@ -565,25 +393,153 @@ export interface LambdaProxyApiIntegrationProps
     | "proxy"
   > {
   function: Function<APIGatewayProxyEvent, APIGatewayProxyResult>;
+  httpMethod: HttpMethod;
+  resource: aws_apigateway.IResource;
 }
 
-export class LambdaProxyApiIntegration extends BaseApiIntegration {
+export class LambdaProxyApiMethod extends BaseApiIntegration {
   readonly function;
+  readonly method;
+
   constructor(private readonly props: LambdaProxyApiIntegrationProps) {
     super();
     this.function = props.function;
-  }
 
-  public addMethod(
-    httpMethod: HttpMethod,
-    resource: aws_apigateway.IResource
-  ): aws_apigateway.Method {
-    return resource.addMethod(
-      httpMethod,
+    this.method = props.resource.addMethod(
+      props.httpMethod,
       new aws_apigateway.LambdaIntegration(this.function.resource, {
         ...this.props,
         proxy: true,
       })
     );
   }
+}
+
+/**
+ * The `$input` VTL variable containing all of the request data available in API Gateway's VTL engine.
+ *
+ * @see https://docs.aws.amazon.com/apigateway/latest/developerguide/api-gateway-mapping-template-reference.html#input-variable-reference
+ */
+export interface APIGatewayInput {
+  /**
+   * The raw request payload as a string.
+   */
+  readonly body: string;
+  /**
+   * This function evaluates a JSONPath expression and returns the results as a JSON string.
+   *
+   * For example, `$input.json('$.pets')` returns a JSON string representing the pets structure.
+   *
+   * @param jsonPath JSONPath expression to select data from the body.
+   * @see http://goessner.net/articles/JsonPath/
+   * @see https://github.com/jayway/JsonPath
+   */
+  json(jsonPath: string): any;
+
+  /**
+   * Returns a map of all the request parameters. We recommend that you use
+   * `$util.escapeJavaScript` to sanitize the result to avoid a potential
+   * injection attack. For full control of request sanitization, use a proxy
+   * integration without a template and handle request sanitization in your
+   * integration.
+   */
+  params(): Record<string, string>;
+
+  /**
+   * Returns the value of a method request parameter from the path, query string,
+   * or header value (searched in that order), given a parameter name string x.
+   * We recommend that you use $util.escapeJavaScript to sanitize the parameter
+   * to avoid a potential injection attack. For full control of parameter
+   * sanitization, use a proxy integration without a template and handle request
+   * sanitization in your integration.
+   *
+   * @param name name of the path.
+   */
+  params(name: string): string | number | undefined;
+
+  path(jsonPath: string): any;
+}
+
+/**
+ * Type of the `$context` variable available within Velocity Templates in API Gateway.
+ *
+ * @see https://docs.aws.amazon.com/apigateway/latest/developerguide/api-gateway-mapping-template-reference.html#context-variable-reference
+ */
+export interface APIGatewayContext extends APIGatewayEventRequestContext {
+  /**
+   * The AWS endpoint's request ID.
+   */
+  readonly awsEndpointRequestId: string;
+  /**
+   * API Gateway error information.
+   */
+  readonly error: APIGatewayError;
+  /**
+   * The HTTP method used.
+   */
+  readonly httpMethod: HttpMethod;
+  /**
+   * The response received from AWS WAF: WAF_ALLOW or WAF_BLOCK. Will not be set if the stage is not associated with a web ACL. For more information, see Using AWS WAF to protect your APIs.
+   */
+  readonly wafResponseCode?: "WAF_ALLOW" | "WAF_BLOCK";
+  /**
+   * The complete ARN of the web ACL that is used to decide whether to allow or block the request. Will not be set if the stage is not associated with a web ACL. For more information, see Using AWS WAF to protect your APIs.
+   */
+  readonly webaclArn?: string;
+  /**
+   * Request properties that can be overridden.
+   */
+  readonly requestOverride: APIGatewayRequestOverride;
+  /**
+   * Response properties that can be overridden.
+   */
+  readonly responseOverride: APIGatewayResponseOverride;
+}
+
+export interface APIGatewayError {
+  /**
+   * A string containing an API Gateway error message. This variable can only be used for simple variable substitution in a GatewayResponse body-mapping template, which is not processed by the Velocity Template Language engine, and in access logging. For more information, see Monitoring WebSocket API execution with CloudWatch metrics and Setting up gateway responses to customize error responses.
+   */
+  readonly message: string;
+  /**
+   * The quoted value of $context.error.message, namely "$context.error.message".
+   */
+  readonly messageString: string;
+  /**
+   * A type of GatewayResponse. This variable can only be used for simple variable substitution in a GatewayResponse body-mapping template, which is not processed by the Velocity Template Language engine, and in access logging. For more information, see Monitoring WebSocket API execution with CloudWatch metrics and Setting up gateway responses to customize error responses.
+   */
+  readonly responseType: string;
+  /**
+   * A string containing a detailed validation error message.
+   */
+  readonly validationErrorString: string;
+}
+
+export interface APIGatewayRequestOverride {
+  /**
+   * The request header override. If this parameter is defined, it contains the headers to be used instead of the HTTP Headers that are defined in the Integration Request pane. For more information, see Use a mapping template to override an API's request and response parameters and status codes.
+   */
+  readonly header: Record<string, string>;
+  /**
+   * The request path override. If this parameter is defined, it contains the request path to be used instead of the URL Path Parameters that are defined in the Integration Request pane. For more information, see Use a mapping template to override an API's request and response parameters and status codes.
+   */
+  readonly path: Record<string, string>;
+  /**
+   * The request query string override. If this parameter is defined, it contains the request query strings to be used instead of the URL Query String Parameters that are defined in the Integration Request pane. For more information, see Use a mapping template to override an API's request and response parameters and status codes.
+   */
+  readonly querystring: Record<string, string>;
+}
+
+export interface APIGatewayResponseOverride {
+  /**
+   * The response header override. If this parameter is defined, it contains the header to be returned instead of the Response header that is defined as the Default mapping in the Integration Response pane. For more information, see Use a mapping template to override an API's request and response parameters and status codes.
+   */
+  readonly header: Record<string, string>;
+
+  /**
+   * The response status code override. If this parameter is defined, it contains the status code to be returned instead of the Method response status that is defined as the Default mapping in the Integration Response pane. For more information, see Use a mapping template to override an API's request and response parameters and status codes.
+   *
+   * @see https://docs.aws.amazon.com/apigateway/latest/developerguide/apigateway-override-request-response-parameters.html
+   */
+  status: number;
 }

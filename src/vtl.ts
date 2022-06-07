@@ -1,9 +1,59 @@
 import { assertNever, assertNodeKind } from "./assert";
-import { CallExpr, Expr, FunctionExpr } from "./expression";
-import { findIntegration } from "./integration";
+import {
+  isFunctionDecl,
+  isNativeFunctionDecl,
+  isParameterDecl,
+} from "./declaration";
+import { isErr } from "./error";
+import {
+  CallExpr,
+  Expr,
+  FunctionExpr,
+  isArgument,
+  isArrayLiteralExpr,
+  isBinaryExpr,
+  isBooleanLiteralExpr,
+  isCallExpr,
+  isComputedPropertyNameExpr,
+  isConditionExpr,
+  isElementAccessExpr,
+  isFunctionExpr,
+  isIdentifier,
+  isNewExpr,
+  isNullLiteralExpr,
+  isNumberLiteralExpr,
+  isObjectLiteralExpr,
+  isPropAccessExpr,
+  isPropAssignExpr,
+  isReferenceExpr,
+  isSpreadAssignExpr,
+  isSpreadElementExpr,
+  isStringLiteralExpr,
+  isTemplateExpr,
+  isTypeOfExpr,
+  isUnaryExpr,
+  isUndefinedLiteralExpr,
+} from "./expression";
+import { findIntegration, IntegrationImpl } from "./integration";
 import { FunctionlessNode } from "./node";
-import { Stmt } from "./statement";
-import { isInTopLevelScope } from "./util";
+import {
+  isBlockStmt,
+  isBreakStmt,
+  isCatchClause,
+  isContinueStmt,
+  isDoStmt,
+  isExprStmt,
+  isForInStmt,
+  isForOfStmt,
+  isIfStmt,
+  isReturnStmt,
+  isThrowStmt,
+  isTryStmt,
+  isVariableStmt,
+  isWhileStmt,
+  Stmt,
+} from "./statement";
+import { AnyFunction, isInTopLevelScope } from "./util";
 
 // https://velocity.apache.org/engine/devel/user-guide.html#conditionals
 // https://cwiki.apache.org/confluence/display/VELOCITY/CheckingForNull
@@ -13,13 +63,10 @@ export function isVTL(a: any): a is VTL {
   return (a as VTL | undefined)?.kind === VTL.ContextName;
 }
 
-export class VTL {
+export abstract class VTL {
   static readonly ContextName = "Velocity Template";
 
   readonly kind = VTL.ContextName;
-  public static readonly CircuitBreaker = `#if($context.stash.return__flag)
-  #return($context.stash.return__val)
-#end`;
 
   private readonly statements: string[] = [];
 
@@ -37,7 +84,7 @@ export class VTL {
     this.statements.push(...statements);
   }
 
-  private newLocalVarName() {
+  protected newLocalVarName() {
     return `$v${(this.varIt += 1)}`;
   }
 
@@ -151,6 +198,16 @@ export class VTL {
   }
 
   /**
+   * Configure the integration between this VTL template and a target service.
+   * @param target the target service to integrate with.
+   * @param call the CallExpr representing the integration logic
+   */
+  protected abstract integrate(
+    target: IntegrationImpl<AnyFunction> | undefined,
+    call: CallExpr
+  ): string;
+
+  /**
    * Evaluate an {@link Expr} or {@link Stmt} by emitting statements to this VTL template and
    * return a variable reference to the evaluated value.
    *
@@ -163,339 +220,330 @@ export class VTL {
     if (!node) {
       return "$null";
     }
-    switch (node.kind) {
-      case "ArrayLiteralExpr": {
-        if (
-          node.items.find((item) => item.kind === "SpreadElementExpr") ===
-          undefined
-        ) {
-          return `[${node.items.map((item) => this.eval(item)).join(", ")}]`;
-        } else {
-          // contains a spread, e.g. [...i], so we will store in a variable
-          const list = this.var("[]");
-          for (const item of node.items) {
-            if (item.kind === "SpreadElementExpr") {
-              this.qr(`${list}.addAll(${this.eval(item.expr)})`);
-            } else {
-              // we use addAll because `list.push(item)` is pared as `list.push(...[item])`
-              // - i.e. the compiler passes us an ArrayLiteralExpr even if there is one arg
-              this.qr(`${list}.add(${this.eval(item)})`);
-            }
+    if (isArrayLiteralExpr(node)) {
+      if (
+        node.items.find((item) => item.kind === "SpreadElementExpr") ===
+        undefined
+      ) {
+        return `[${node.items.map((item) => this.eval(item)).join(", ")}]`;
+      } else {
+        // contains a spread, e.g. [...i], so we will store in a variable
+        const list = this.var("[]");
+        for (const item of node.items) {
+          if (item.kind === "SpreadElementExpr") {
+            this.qr(`${list}.addAll(${this.eval(item.expr)})`);
+          } else {
+            // we use addAll because `list.push(item)` is pared as `list.push(...[item])`
+            // - i.e. the compiler passes us an ArrayLiteralExpr even if there is one arg
+            this.qr(`${list}.add(${this.eval(item)})`);
           }
-          return list;
         }
+        return list;
       }
-      case "BinaryExpr":
-        // VTL fails to evaluate binary expressions inside an object put e.g. $obj.put('x', 1 + 1)
-        // a workaround is to use a temp variable.
-        return this.var(
-          `${this.eval(node.left)} ${node.op} ${this.eval(node.right)}`
-        );
-      case "BlockStmt":
-        for (const stmt of node.statements) {
-          this.eval(stmt);
-        }
-        return undefined;
-      case "BooleanLiteralExpr":
-        return `${node.value}`;
-      case "BreakStmt":
-        return this.add("#break");
-      case "CallExpr": {
-        const serviceCall = findIntegration(node);
-        if (serviceCall) {
-          return serviceCall.appSyncVtl.request(node, this);
-        } else if (
-          // If the parent is a propAccessExpr
-          node.expr.kind === "PropAccessExpr" &&
-          (node.expr.name === "map" ||
-            node.expr.name === "forEach" ||
-            node.expr.name === "reduce")
-        ) {
-          if (node.expr.name === "map" || node.expr.name == "forEach") {
-            // list.map(item => ..)
-            // list.map((item, idx) => ..)
-            // list.forEach(item => ..)
-            // list.forEach((item, idx) => ..)
-            const newList =
-              node.expr.name === "map" ? this.var("[]") : undefined;
+    } else if (isBinaryExpr(node)) {
+      // VTL fails to evaluate binary expressions inside an object put e.g. $obj.put('x', 1 + 1)
+      // a workaround is to use a temp variable.
+      return this.var(
+        `${this.eval(node.left)} ${node.op} ${this.eval(node.right)}`
+      );
+    } else if (isBlockStmt(node)) {
+      for (const stmt of node.statements) {
+        this.eval(stmt);
+      }
+      return undefined;
+    } else if (isBooleanLiteralExpr(node)) {
+      return `${node.value}`;
+    } else if (isBreakStmt(node)) {
+      return this.add("#break");
+    } else if (isCallExpr(node)) {
+      const serviceCall = findIntegration(node);
+      if (serviceCall) {
+        return this.integrate(serviceCall, node);
+      } else if (
+        // If the parent is a propAccessExpr
+        node.expr.kind === "PropAccessExpr" &&
+        (node.expr.name === "map" ||
+          node.expr.name === "forEach" ||
+          node.expr.name === "reduce")
+      ) {
+        if (node.expr.name === "map" || node.expr.name == "forEach") {
+          // list.map(item => ..)
+          // list.map((item, idx) => ..)
+          // list.forEach(item => ..)
+          // list.forEach((item, idx) => ..)
+          const newList = node.expr.name === "map" ? this.var("[]") : undefined;
 
-            const [value, index, array] = getMapForEachArgs(node);
+          const [value, index, array] = getMapForEachArgs(node);
 
-            // Try to flatten any maps before this operation
-            // returns the first variable to be used in the foreach of this operation (may be the `value`)
-            const list = this.flattenListMapOperations(
-              node.expr.expr,
-              value,
-              (firstVariable, list) => {
-                this.add(`#foreach(${firstVariable} in ${list})`);
-              },
-              // If array is present, do not flatten the map, this option immediatly evaluates the next expression
-              !!array
-            );
+          // Try to flatten any maps before this operation
+          // returns the first variable to be used in the foreach of this operation (may be the `value`)
+          const list = this.flattenListMapOperations(
+            node.expr.expr,
+            value,
+            (firstVariable, list) => {
+              this.add(`#foreach(${firstVariable} in ${list})`);
+            },
+            // If array is present, do not flatten the map, this option immediately evaluates the next expression
+            !!array
+          );
 
-            // Render the body
-            const tmp = this.renderMapOrForEachBody(
-              node,
-              list,
-              // the return location will be generated
-              undefined,
-              index,
-              array
-            );
+          // Render the body
+          const tmp = this.renderMapOrForEachBody(
+            node,
+            list,
+            // the return location will be generated
+            undefined,
+            index,
+            array
+          );
 
-            // Add the final value to the array
-            if (node.expr.name === "map") {
-              this.qr(`${newList}.add(${tmp})`);
+          // Add the final value to the array
+          if (node.expr.name === "map") {
+            this.qr(`${newList}.add(${tmp})`);
+          }
+
+          this.add("#end");
+          return newList ?? "$null";
+        } else if (node.expr.name === "reduce") {
+          // list.reduce((result: string[], next) => [...result, next], []);
+          // list.reduce((result, next) => [...result, next]);
+
+          const fn = assertNodeKind<FunctionExpr>(
+            node.getArgument("callbackfn")?.expr,
+            "FunctionExpr"
+          );
+          const initialValue = node.getArgument("initialValue")?.expr;
+
+          // (previousValue: string[], currentValue: string, currentIndex: number, array: string[])
+          const previousValue = fn.parameters[0]?.name
+            ? `$${fn.parameters[0].name}`
+            : this.newLocalVarName();
+          const currentValue = fn.parameters[1]?.name
+            ? `$${fn.parameters[1].name}`
+            : this.newLocalVarName();
+          const currentIndex = fn.parameters[2]?.name
+            ? `$${fn.parameters[2].name}`
+            : undefined;
+          const array = fn.parameters[3]?.name
+            ? `$${fn.parameters[3].name}`
+            : undefined;
+
+          // create a new local variable name to hold the initial/previous value
+          // this is because previousValue may not be unique and isn't contained within the loop
+          const previousTmp = this.newLocalVarName();
+
+          const list = this.flattenListMapOperations(
+            node.expr.expr,
+            currentValue,
+            (firstVariable, list) => {
+              if (initialValue !== undefined) {
+                this.set(previousTmp, initialValue);
+              } else {
+                this.add(`#if(${list}.isEmpty())`);
+                this.add(
+                  "$util.error('Reduce of empty array with no initial value')"
+                );
+                this.add("#end");
+              }
+
+              this.add(`#foreach(${firstVariable} in ${list})`);
+            },
+            // If array is present, do not flatten maps before the reduce, this option immediately evaluates the next expression
+            !!array
+          );
+
+          if (currentIndex) {
+            this.add(`#set(${currentIndex} = $foreach.index)`);
+          }
+          if (array) {
+            this.add(`#set(${array} = ${list})`);
+          }
+
+          const body = () => {
+            // set previousValue variable name to avoid remapping
+            this.set(previousValue, previousTmp);
+            const tmp = this.newLocalVarName();
+            for (const stmt of fn.body.statements) {
+              this.eval(stmt, tmp);
             }
+            // set the previous temp to be used later
+            this.set(previousTmp, `${tmp}`);
 
             this.add("#end");
-            return newList ?? "$null";
-          } else if (node.expr.name === "reduce") {
-            // list.reduce((result: string[], next) => [...result, next], []);
-            // list.reduce((result, next) => [...result, next]);
+          };
 
-            const fn = assertNodeKind<FunctionExpr>(
-              node.getArgument("callbackfn")?.expr,
-              "FunctionExpr"
-            );
-            const initialValue = node.getArgument("initialValue")?.expr;
-
-            // (previousValue: string[], currentValue: string, currentIndex: number, array: string[])
-            const previousValue = fn.parameters[0]?.name
-              ? `$${fn.parameters[0].name}`
-              : this.newLocalVarName();
-            const currentValue = fn.parameters[1]?.name
-              ? `$${fn.parameters[1].name}`
-              : this.newLocalVarName();
-            const currentIndex = fn.parameters[2]?.name
-              ? `$${fn.parameters[2].name}`
-              : undefined;
-            const array = fn.parameters[3]?.name
-              ? `$${fn.parameters[3].name}`
-              : undefined;
-
-            // create a new local variable name to hold the initial/previous value
-            // this is becaue previousValue may not be unique and isn't contained within the loop
-            const previousTmp = this.newLocalVarName();
-
-            const list = this.flattenListMapOperations(
-              node.expr.expr,
-              currentValue,
-              (firstVariable, list) => {
-                if (initialValue !== undefined) {
-                  this.set(previousTmp, initialValue);
-                } else {
-                  this.add(`#if(${list}.isEmpty())`);
-                  this.add(
-                    "$util.error('Reduce of empty array with no initial value')"
-                  );
-                  this.add("#end");
-                }
-
-                this.add(`#foreach(${firstVariable} in ${list})`);
-              },
-              // If array is present, do not flatten maps before the reduce, this option immediatly evaluates the next expression
-              !!array
-            );
-
-            if (currentIndex) {
-              this.add(`#set(${currentIndex} = $foreach.index)`);
-            }
-            if (array) {
-              this.add(`#set(${array} = ${list})`);
-            }
-
-            const body = () => {
-              // set previousValue variable name to avoid remapping
-              this.set(previousValue, previousTmp);
-              const tmp = this.newLocalVarName();
-              for (const stmt of fn.body.statements) {
-                this.eval(stmt, tmp);
-              }
-              // set the previous temp to be used later
-              this.set(previousTmp, `${tmp}`);
-
-              this.add("#end");
-            };
-
-            if (initialValue === undefined) {
-              this.add("#if($foreach.index == 0)");
-              this.set(previousTmp, currentValue);
-              this.add("#else");
-              body();
-              this.add("#end");
-            } else {
-              body();
-            }
-
-            return previousTmp;
-          }
-          // this is an array map, forEach, reduce call
-        }
-        return `${this.eval(node.expr)}(${Object.values(node.args)
-          .map((arg) => this.eval(arg))
-          .join(", ")})`;
-      }
-      case "ConditionExpr": {
-        const val = this.newLocalVarName();
-        this.add(`#if(${this.eval(node.when)})`);
-        this.set(val, node.then);
-        this.add("#else");
-        this.set(val, node._else);
-        this.add("#end");
-        return val;
-      }
-      case "IfStmt": {
-        this.add(`#if(${this.eval(node.when)})`);
-        this.eval(node.then);
-        if (node._else) {
-          this.add("#else");
-          this.eval(node._else);
-        }
-        this.add("#end");
-        return undefined;
-      }
-      case "ExprStmt":
-        return this.qr(this.eval(node.expr));
-      case "ForOfStmt":
-      case "ForInStmt":
-        this.add(
-          `#foreach($${node.variableDecl.name} in ${this.eval(node.expr)}${
-            node.kind === "ForInStmt" ? ".keySet()" : ""
-          })`
-        );
-        this.eval(node.body);
-        this.add("#end");
-        return undefined;
-      case "FunctionDecl":
-      case "NativeFunctionDecl":
-        throw new Error(`cannot evaluate Expr kind: '${node.kind}'`);
-      case "FunctionExpr":
-        return this.eval(node.body);
-      case "Identifier": {
-        const ref = node.lookup();
-        if (ref?.kind === "VariableStmt" && isInTopLevelScope(ref)) {
-          return `$context.stash.${node.name}`;
-        } else if (
-          ref?.kind === "ParameterDecl" &&
-          ref.parent?.kind === "FunctionDecl"
-        ) {
-          // regardless of the name of the first argument in the root FunctionDecl, it is always the intrinsic Appsync `$context`.
-          return "$context";
-        }
-        if (node.name.startsWith("$")) {
-          return node.name;
-        } else {
-          return `$${node.name}`;
-        }
-      }
-      case "NewExpr":
-        throw new Error("NewExpr is not supported by Velocity Templates");
-      case "PropAccessExpr": {
-        let name = node.name;
-        if (name === "push" && node.parent?.kind === "CallExpr") {
-          // this is a push to an array, rename to 'addAll'
-          // addAll because the var-args are converted to an ArrayLiteralExpr
-          name = "addAll";
-        }
-        return `${this.eval(node.expr)}.${name}`;
-      }
-      case "ElementAccessExpr":
-        return `${this.eval(node.expr)}[${this.eval(node.element)}]`;
-      case "NullLiteralExpr":
-      case "UndefinedLiteralExpr":
-        return "$null";
-      case "NumberLiteralExpr":
-        return node.value.toString(10);
-      case "ObjectLiteralExpr": {
-        const obj = this.var("{}");
-        for (const prop of node.properties) {
-          if (prop.kind === "PropAssignExpr") {
-            const name =
-              prop.name.kind === "Identifier"
-                ? this.str(prop.name.name)
-                : this.eval(prop.name);
-            this.put(obj, name, prop.expr);
-          } else if (prop.kind === "SpreadAssignExpr") {
-            this.putAll(obj, prop.expr);
+          if (initialValue === undefined) {
+            this.add("#if($foreach.index == 0)");
+            this.set(previousTmp, currentValue);
+            this.add("#else");
+            body();
+            this.add("#end");
           } else {
-            assertNever(prop);
+            body();
           }
+
+          return previousTmp;
         }
-        return obj;
+        // this is an array map, forEach, reduce call
       }
-      case "ComputedPropertyNameExpr":
-        return this.eval(node.expr);
-      case "ParameterDecl":
-      case "PropAssignExpr":
-      case "ReferenceExpr":
-        throw new Error(`cannot evaluate Expr kind: '${node.kind}'`);
-      case "ReturnStmt":
-        if (returnVar) {
-          this.set(returnVar, node.expr ?? "$null");
+      return `${this.eval(node.expr)}(${Object.values(node.args)
+        .map((arg) => this.eval(arg))
+        .join(", ")})`;
+    } else if (isConditionExpr(node)) {
+      const val = this.newLocalVarName();
+      this.add(`#if(${this.eval(node.when)})`);
+      this.set(val, node.then);
+      this.add("#else");
+      this.set(val, node._else);
+      this.add("#end");
+      return val;
+    } else if (isIfStmt(node)) {
+      this.add(`#if(${this.eval(node.when)})`);
+      this.eval(node.then);
+      if (node._else) {
+        this.add("#else");
+        this.eval(node._else);
+      }
+      this.add("#end");
+      return undefined;
+    } else if (isExprStmt(node)) {
+      return this.qr(this.eval(node.expr));
+    } else if (isForOfStmt(node)) {
+    } else if (isForInStmt(node)) {
+      this.add(
+        `#foreach($${node.variableDecl.name} in ${this.eval(node.expr)}${
+          node.kind === "ForInStmt" ? ".keySet()" : ""
+        })`
+      );
+      this.eval(node.body);
+      this.add("#end");
+      return undefined;
+    } else if (isFunctionDecl(node)) {
+    } else if (isNativeFunctionDecl(node)) {
+      throw new Error(`cannot evaluate Expr kind: '${node.kind}'`);
+    } else if (isFunctionExpr(node)) {
+      return this.eval(node.body);
+    } else if (isIdentifier(node)) {
+      const ref = node.lookup();
+      if (ref?.kind === "VariableStmt" && isInTopLevelScope(ref)) {
+        return `$context.stash.${node.name}`;
+      } else if (
+        ref?.kind === "ParameterDecl" &&
+        ref.parent?.kind === "FunctionDecl"
+      ) {
+        // regardless of the name of the first argument in the root FunctionDecl, it is always the intrinsic Appsync `$context`.
+        return "$context";
+      }
+      if (node.name.startsWith("$")) {
+        return node.name;
+      } else {
+        return `$${node.name}`;
+      }
+    } else if (isNewExpr(node)) {
+      throw new Error("NewExpr is not supported by Velocity Templates");
+    } else if (isPropAccessExpr(node)) {
+      let name = node.name;
+      if (name === "push" && node.parent?.kind === "CallExpr") {
+        // this is a push to an array, rename to 'addAll'
+        // addAll because the var-args are converted to an ArrayLiteralExpr
+        name = "addAll";
+      }
+      return `${this.eval(node.expr)}.${name}`;
+    } else if (isElementAccessExpr(node)) {
+      return `${this.eval(node.expr)}[${this.eval(node.element)}]`;
+    } else if (isNullLiteralExpr(node)) {
+    } else if (isUndefinedLiteralExpr(node)) {
+      return "$null";
+    } else if (isNumberLiteralExpr(node)) {
+      return node.value.toString(10);
+    } else if (isObjectLiteralExpr(node)) {
+      const obj = this.var("{}");
+      for (const prop of node.properties) {
+        if (prop.kind === "PropAssignExpr") {
+          const name =
+            prop.name.kind === "Identifier"
+              ? this.str(prop.name.name)
+              : this.eval(prop.name);
+          this.put(obj, name, prop.expr);
+        } else if (prop.kind === "SpreadAssignExpr") {
+          this.putAll(obj, prop.expr);
         } else {
-          this.set("$context.stash.return__val", node.expr ?? "$null");
-          this.add("#set($context.stash.return__flag = true)");
-          this.add("#return($context.stash.return__val)");
+          assertNever(prop);
         }
-        return undefined;
-      case "SpreadAssignExpr":
-      case "SpreadElementExpr":
-        throw new Error(`cannot evaluate Expr kind: '${node.kind}'`);
+      }
+      return obj;
+    } else if (isComputedPropertyNameExpr(node)) {
+      return this.eval(node.expr);
+    } else if (isParameterDecl(node)) {
+    } else if (isPropAssignExpr(node)) {
+    } else if (isReferenceExpr(node)) {
+      throw new Error(`cannot evaluate Expr kind: '${node.kind}'`);
+    } else if (isReturnStmt(node)) {
+      if (returnVar) {
+        this.set(returnVar, node.expr ?? "$null");
+      } else {
+        this.set("$context.stash.return__val", node.expr ?? "$null");
+        this.add("#set($context.stash.return__flag = true)");
+        this.add("#return($context.stash.return__val)");
+      }
+      return undefined;
+    } else if (isSpreadAssignExpr(node)) {
+    } else if (isSpreadElementExpr(node)) {
+      throw new Error(`cannot evaluate Expr kind: '${node.kind}'`);
       // handled as part of ObjectLiteral
-      case "StringLiteralExpr":
-        return this.str(node.value);
-      case "TemplateExpr":
-        return `"${node.exprs
-          .map((expr) => {
-            if (expr.kind === "StringLiteralExpr") {
-              return expr.value;
-            }
-            const text = this.eval(expr, returnVar);
-            if (text.startsWith("$")) {
-              return `\${${text.slice(1)}}`;
-            } else {
-              const varName = this.var(text);
-              return `\${${varName.slice(1)}}`;
-            }
-          })
-          .join("")}"`;
-      case "UnaryExpr":
-        // VTL fails to evaluate unary expressions inside an object put e.g. $obj.put('x', -$v1)
-        // a workaround is to use a temp variable.
-        // it also doesn't handle like - signs alone (e.g. - $v1) so we have to put a 0 in front
-        // no such problem with ! signs though
-        if (node.op === "-") {
-          return this.var(`0 - ${this.eval(node.expr)}`);
-        } else {
-          return this.var(`${node.op}${this.eval(node.expr)}`);
-        }
-      case "VariableStmt":
-        const varName = isInTopLevelScope(node)
-          ? `$context.stash.${node.name}`
-          : `$${node.name}`;
+    } else if (isStringLiteralExpr(node)) {
+      return this.str(node.value);
+    } else if (isTemplateExpr(node)) {
+      return `"${node.exprs
+        .map((expr) => {
+          if (expr.kind === "StringLiteralExpr") {
+            return expr.value;
+          }
+          const text = this.eval(expr, returnVar);
+          if (text.startsWith("$")) {
+            return `\${${text.slice(1)}}`;
+          } else {
+            const varName = this.var(text);
+            return `\${${varName.slice(1)}}`;
+          }
+        })
+        .join("")}"`;
+    } else if (isUnaryExpr(node)) {
+      // VTL fails to evaluate unary expressions inside an object put e.g. $obj.put('x', -$v1)
+      // a workaround is to use a temp variable.
+      // it also doesn't handle like - signs alone (e.g. - $v1) so we have to put a 0 in front
+      // no such problem with ! signs though
+      if (node.op === "-") {
+        return this.var(`0 - ${this.eval(node.expr)}`);
+      } else {
+        return this.var(`${node.op}${this.eval(node.expr)}`);
+      }
+    } else if (isVariableStmt(node)) {
+      const varName = isInTopLevelScope(node)
+        ? `$context.stash.${node.name}`
+        : `$${node.name}`;
 
-        if (node.expr) {
-          return this.set(varName, node.expr);
-        } else {
-          return varName;
-        }
-      case "ThrowStmt":
-        return `#throw(${this.eval(node.expr)})`;
-      case "TryStmt":
-      case "CatchClause":
-      case "ContinueStmt":
-      case "DoStmt":
-      case "TypeOfExpr":
-      case "WhileStmt":
-        throw new Error(`${node.kind} is not yet supported in VTL`);
-      case "Err":
-        throw node.error;
-      case "Argument":
-        return this.eval(node.expr);
+      if (node.expr) {
+        return this.set(varName, node.expr);
+      } else {
+        return varName;
+      }
+    } else if (isThrowStmt(node)) {
+      return `#throw(${this.eval(node.expr)})`;
+    } else if (isTryStmt(node)) {
+    } else if (isCatchClause(node)) {
+    } else if (isContinueStmt(node)) {
+    } else if (isDoStmt(node)) {
+    } else if (isTypeOfExpr(node)) {
+    } else if (isWhileStmt(node)) {
+      throw new Error(`${node.kind} is not yet supported in VTL`);
+    } else if (isErr(node)) {
+      throw node.error;
+    } else if (isArgument(node)) {
+      return this.eval(node.expr);
+    } else {
+      return assertNever(node);
     }
-
-    return assertNever(node);
   }
 
   /**
@@ -541,7 +589,7 @@ export class VTL {
   }
 
   /**
-   * Recursively flattens map operations until a non-map or a map with `array` paremeter is found.
+   * Recursively flattens map operations until a non-map or a map with `array` parameter is found.
    * Evaluates the expression after the last map.
    *
    * @param before a method which executes once the

@@ -10,8 +10,8 @@ import {
   MockApiIntegration,
   ExpressStepFunction,
   Function,
-  SyncExecutionSuccessResult,
   Table,
+  APIGatewayInput,
 } from "functionless";
 
 export const app = new App();
@@ -22,52 +22,44 @@ const restApi = new aws_apigateway.RestApi(stack, "api", {
   restApiName: "api-test-app-api",
 });
 
-interface FnRequest {
-  pathParameters: {
-    num: number;
-  };
-  queryStringParameters: {
-    str: string;
-  };
-  body: {
-    bool: boolean;
-  };
-}
-
 const fn = new Function(
   stack,
   "fn",
-  async (event: { inNum: number; inStr: string; inBool: boolean }) => ({
-    fnNum: event.inNum,
-    fnStr: event.inStr,
-    fnBool: event.inBool,
-    nested: {
-      again: {
-        num: 123,
+  async (event: { inNum: number; inStr: string; inBool: boolean }) => {
+    return {
+      fnNum: event.inNum,
+      fnStr: event.inStr,
+      nested: {
+        again: {
+          num: event.inNum,
+        },
       },
-    },
-  })
+    };
+  }
 );
 
 const fnResource = restApi.root.addResource("fn").addResource("{num}");
 
-const fnIntegration = new AwsApiIntegration({
-  request: (req: FnRequest) =>
+new AwsApiIntegration(
+  {
+    httpMethod: "POST",
+    resource: fnResource,
+  },
+  ($input: APIGatewayInput) =>
     fn({
-      inNum: req.pathParameters.num,
-      inStr: req.queryStringParameters.str,
-      inBool: req.body.bool,
+      inNum: $input.params("num") as number,
+      inStr: $input.params("str") as string,
+      inBool: $input.json("$.body"),
     }),
-  response: (resp) => ({
+  (resp) => ({
     resultNum: resp.fnNum,
     resultStr: resp.fnStr,
     nested: resp.nested.again.num,
   }),
-  errors: {
+  {
     400: () => ({ msg: "400" }),
-  },
-});
-fnIntegration.addMethod("POST", fnResource);
+  }
+);
 
 const sfn = new ExpressStepFunction(
   stack,
@@ -84,18 +76,16 @@ const sfn = new ExpressStepFunction(
   })
 );
 
-interface MockRequest {
-  pathParameters: {
-    num: number;
-  };
-}
-
 const mockResource = restApi.root.addResource("mock").addResource("{num}");
-const mock = new MockApiIntegration({
-  request: (req: MockRequest) => ({
-    statusCode: req.pathParameters.num,
+new MockApiIntegration(
+  {
+    httpMethod: "POST",
+    resource: mockResource,
+  },
+  ($input) => ({
+    statusCode: $input.params("num") as number,
   }),
-  responses: {
+  {
     200: () => ({
       body: {
         num: 12345,
@@ -104,9 +94,8 @@ const mock = new MockApiIntegration({
     500: () => ({
       msg: "error",
     }),
-  },
-});
-mock.addMethod("GET", mockResource);
+  }
+);
 
 interface Item {
   id: string;
@@ -121,55 +110,49 @@ const table = new Table<Item, "id">(
   })
 );
 
-interface DynamoRequest {
-  pathParameters: {
-    id: number;
-  };
-}
-
 const dynamoResource = restApi.root.addResource("dynamo").addResource("{num}");
-const dynamoIntegration = new AwsApiIntegration({
-  request: (req: DynamoRequest) =>
+new AwsApiIntegration(
+  {
+    httpMethod: "GET",
+    resource: dynamoResource,
+  },
+  ($input: APIGatewayInput) =>
     table.getItem({
       key: {
         id: {
-          S: `${req.pathParameters.id}`,
+          S: `${$input.params("id")}`,
         },
       },
     }),
-  // @ts-ignore TODO: resp is never for some reason
-  response: (resp) => ({ foo: resp.item.foo }),
-  errors: {
+  (resp) => ({ foo: resp.name }),
+  {
     400: () => ({ msg: "400" }),
-  },
-});
-dynamoIntegration.addMethod("GET", dynamoResource);
-
-interface SfnRequest {
-  pathParameters: {
-    num: number;
-  };
-  queryStringParameters: {
-    str: string;
-  };
-}
+  }
+);
 
 const sfnResource = restApi.root.addResource("sfn").addResource("{num}");
-const sfnIntegration = new AwsApiIntegration({
-  // @ts-ignore TODO: output is only on success, need to support if stmt
-  request: (req: SfnRequest) =>
+
+new AwsApiIntegration(
+  {
+    httpMethod: "GET",
+    resource: sfnResource,
+  },
+  ($input: APIGatewayInput) =>
     sfn({
       input: {
-        num: req.pathParameters.num,
-        str: req.queryStringParameters.str,
+        num: $input.params("num") as number,
+        str: $input.params("str") as string,
       },
     }),
-  // TODO: we should not need to narrow this explicitly
-  response: (resp: SyncExecutionSuccessResult<any>) => ({
-    resultNum: resp.output.sfnNum,
-    resultStr: resp.output.sfnStr,
-  }),
-  // TODO: make errors optional?
-  errors: {},
-});
-sfnIntegration.addMethod("GET", sfnResource);
+  (resp, $context) => {
+    if (resp.status === "SUCCEEDED") {
+      return {
+        resultNum: resp.output.sfnNum,
+        resultStr: resp.output.sfnStr,
+      };
+    } else {
+      $context.responseOverride.status = 500;
+      return resp.error;
+    }
+  }
+);
