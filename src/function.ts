@@ -545,7 +545,7 @@ export class Function<in P, O, OutP extends P = P> extends FunctionBase<P, O, Ou
   constructor(
     scope: Construct,
     id: string,
-    props: FunctionProps<P, O,OutP>,
+    props: FunctionProps<P, O, OutP>,
     func: FunctionClosure<P, O>
   );
   /**
@@ -554,7 +554,7 @@ export class Function<in P, O, OutP extends P = P> extends FunctionBase<P, O, Ou
   constructor(
     scope: Construct,
     id: string,
-    props: FunctionProps<P, O,OutP>,
+    props: FunctionProps<P, O, OutP>,
     func: NativeFunctionDecl | Err
   );
   /**
