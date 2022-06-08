@@ -1,5 +1,5 @@
 import * as appsync from "@aws-cdk/aws-appsync-alpha";
-import { aws_apigateway, aws_dynamodb, aws_iam } from "aws-cdk-lib";
+import { aws_dynamodb } from "aws-cdk-lib";
 import { JsonFormat } from "typesafe-dynamodb";
 import {
   NativeBinaryAttribute,
@@ -12,6 +12,7 @@ import {
 // @ts-ignore - imported for typedoc
 import { TableKey } from "typesafe-dynamodb/lib/key";
 import { Narrow } from "typesafe-dynamodb/lib/narrow";
+import { $AWS } from ".";
 import type { AppSyncVtlIntegration } from "./appsync";
 import { assertNodeKind } from "./assert";
 import { ObjectLiteralExpr } from "./expression";
@@ -23,7 +24,7 @@ export function isTable(a: any): a is AnyTable {
   return a?.kind === "Table";
 }
 
-export type AnyTable = Table<object, keyof object, keyof object | undefined>;
+export type AnyTable = Table<any, any, any>;
 
 /**
  * Wraps an {@link aws_dynamodb.Table} with a type-safe interface that can be
@@ -74,6 +75,13 @@ export class Table<
   readonly kind = "Table";
 
   constructor(readonly resource: aws_dynamodb.ITable) {}
+
+  get tableName() {
+    return this.resource.tableName;
+  }
+  get tableArn() {
+    return this.resource.tableArn;
+  }
 
   /**
    * @see https://docs.aws.amazon.com/appsync/latest/devguide/resolver-mapping-template-reference-dynamodb.html#aws-appsync-resolver-mapping-template-reference-dynamodb-getitem
@@ -289,16 +297,19 @@ export class Table<
     },
   });
 
-  makeTableIntegration<K extends string, F extends AnyFunction>(
-    methodName: K,
+  makeTableIntegration<
+    MethodName extends $AWS.DynamoDB.OperationName,
+    F extends AnyFunction
+  >(
+    methodName: MethodName,
     integration: Omit<
-      IntegrationInput<`Table.${K}`, F>,
+      IntegrationInput<`Table.${MethodName}`, F>,
       "kind" | "appSyncVtl"
     > & {
       appSyncVtl: Omit<AppSyncVtlIntegration, "dataSource" | "dataSourceId">;
     }
   ): F {
-    return makeIntegration<`Table.${K}`, F>({
+    return makeIntegration<`Table.${MethodName}`, F>({
       ...integration,
       kind: `Table.${methodName}`,
       appSyncVtl: {
@@ -310,43 +321,6 @@ export class Table<
           });
         },
         ...integration.appSyncVtl,
-      },
-      apiGWVtl: {
-        renderRequest: (call, context) => {
-          const input = call.getArgument("input");
-          if (input === undefined) {
-            throw new Error(`missing input`);
-          }
-          const inputVar = context.var(input);
-          context.qr(`$${inputVar}.tableName = "${this.resource.tableName}"`);
-          return context.json(inputVar);
-        },
-
-        createIntegration: (api, template, integrationResponses) => {
-          const credentialsRole = new aws_iam.Role(
-            api,
-            "ApiGatewayIntegrationRole",
-            {
-              assumedBy: new aws_iam.ServicePrincipal(
-                "apigateway.amazonaws.com"
-              ),
-            }
-          );
-
-          return new aws_apigateway.AwsIntegration({
-            service: "dynamodb",
-            action: methodName,
-            integrationHttpMethod: "POST",
-            options: {
-              credentialsRole,
-              passthroughBehavior: aws_apigateway.PassthroughBehavior.NEVER,
-              requestTemplates: {
-                "application/json": template,
-              },
-              integrationResponses,
-            },
-          });
-        },
       },
       unhandledContext(kind, contextKind) {
         throw new Error(

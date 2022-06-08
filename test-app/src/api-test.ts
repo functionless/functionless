@@ -11,7 +11,8 @@ import {
   ExpressStepFunction,
   Function,
   Table,
-  APIGatewayInput,
+  ApiGatewayInput,
+  $AWS,
 } from "functionless";
 
 export const app = new App();
@@ -45,16 +46,31 @@ new AwsApiIntegration(
     httpMethod: "POST",
     resource: fnResource,
   },
-  ($input: APIGatewayInput) =>
-    fn({
-      inNum: $input.params("num") as number,
-      inStr: $input.params("str") as string,
-      inBool: $input.json("$.body"),
-    }),
-  (resp) => ({
-    resultNum: resp.fnNum,
-    resultStr: resp.fnStr,
-    nested: resp.nested.again.num,
+  (
+    $input: ApiGatewayInput<{
+      path: {
+        num: number;
+      };
+      query: {
+        str: string;
+      };
+      body: {
+        isTrue: boolean;
+      };
+    }>
+  ) => {
+    return fn({
+      inNum: $input.params("num"),
+      inStr: $input.params("str"),
+      inBool: $input.data.isTrue,
+    });
+  },
+  ($input) => ({
+    resultNum: $input.data.fnNum,
+    resultStr: $input.data.fnStr,
+    nested: $input.data.nested.again.num,
+    numFromParams: $input.params("num"),
+    strFromParams: $input.params().str,
   }),
   {
     400: () => ({ msg: "400" }),
@@ -82,8 +98,15 @@ new MockApiIntegration(
     httpMethod: "POST",
     resource: mockResource,
   },
-  ($input) => ({
-    statusCode: $input.params("num") as number,
+  (
+    $input: ApiGatewayInput<{
+      path: { num: number };
+      body: {
+        name: string;
+      };
+    }>
+  ) => ({
+    statusCode: $input.params("num"),
   }),
   {
     200: () => ({
@@ -116,15 +139,16 @@ new AwsApiIntegration(
     httpMethod: "GET",
     resource: dynamoResource,
   },
-  ($input: APIGatewayInput) =>
-    table.getItem({
-      key: {
+  ($input) =>
+    $AWS.DynamoDB.GetItem({
+      TableName: table,
+      Key: {
         id: {
           S: `${$input.params("id")}`,
         },
       },
     }),
-  (resp) => ({ foo: resp.name }),
+  ($input) => ({ id: $input.data.Item?.id.S }),
   {
     400: () => ({ msg: "400" }),
   }
@@ -137,22 +161,22 @@ new AwsApiIntegration(
     httpMethod: "GET",
     resource: sfnResource,
   },
-  ($input: APIGatewayInput) =>
+  ($input) =>
     sfn({
       input: {
         num: $input.params("num") as number,
         str: $input.params("str") as string,
       },
     }),
-  (resp, $context) => {
-    if (resp.status === "SUCCEEDED") {
+  ($input, $context) => {
+    if ($input.data.status === "SUCCEEDED") {
       return {
-        resultNum: resp.output.sfnNum,
-        resultStr: resp.output.sfnStr,
+        resultNum: $input.data.output.sfnNum,
+        resultStr: $input.data.output.sfnStr,
       };
     } else {
       $context.responseOverride.status = 500;
-      return resp.error;
+      return $input.data.error;
     }
   }
 );

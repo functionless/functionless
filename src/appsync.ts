@@ -6,10 +6,10 @@ import {
   ToAttributeValue,
 } from "typesafe-dynamodb/lib/attribute-value";
 import { FunctionDecl, validateFunctionDecl } from "./declaration";
-import { CallExpr, Expr } from "./expression";
+import { CallExpr, Expr, Identifier } from "./expression";
 import { findDeepIntegration, IntegrationImpl } from "./integration";
 import { Literal } from "./literal";
-import { AnyFunction, singletonConstruct } from "./util";
+import { AnyFunction, isInTopLevelScope, singletonConstruct } from "./util";
 import { VTL } from "./vtl";
 
 /**
@@ -88,6 +88,24 @@ export class AppsyncVTL extends VTL {
       throw new Error(
         `Integration ${target.kind} does not support Appsync Resolvers`
       );
+    }
+  }
+
+  protected dereference(id: Identifier): string {
+    const ref = id.lookup();
+    if (ref?.kind === "VariableStmt" && isInTopLevelScope(ref)) {
+      return `$context.stash.${id.name}`;
+    } else if (
+      ref?.kind === "ParameterDecl" &&
+      ref.parent?.kind === "FunctionDecl"
+    ) {
+      // regardless of the name of the first argument in the root FunctionDecl, it is always the intrinsic Appsync `$context`.
+      return "$context";
+    }
+    if (id.name.startsWith("$")) {
+      return id.name;
+    } else {
+      return `$${id.name}`;
     }
   }
 }

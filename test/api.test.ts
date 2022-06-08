@@ -1,11 +1,14 @@
 import "jest";
-import { aws_apigateway, IResolvable, Stack } from "aws-cdk-lib";
+import { aws_apigateway, aws_dynamodb, IResolvable, Stack } from "aws-cdk-lib";
 import {
   AwsApiIntegration,
   MockApiIntegration,
   Function,
   BaseApiIntegration,
   ExpressStepFunction,
+  Table,
+  $AWS,
+  ApiGatewayInput,
 } from "../src";
 
 let stack: Stack;
@@ -147,7 +150,12 @@ test("AWS integration with Function", () => {
 
 test("AWS integration with Express Step Function", () => {
   const api = new aws_apigateway.RestApi(stack, "API");
-  const sfn = new ExpressStepFunction(stack, "SFN", () => {
+
+  type Request = {
+    num: number;
+    str: string;
+  };
+  const sfn = new ExpressStepFunction(stack, "SFN", (_input: Request) => {
     return "done";
   });
 
@@ -157,25 +165,93 @@ test("AWS integration with Express Step Function", () => {
         httpMethod: "GET",
         resource: api.root,
       },
-      ($input) =>
+      (
+        $input: ApiGatewayInput<{
+          query: Request;
+        }>
+      ) =>
         sfn({
           input: {
-            num: $input.params("num") as number,
-            str: $input.params("str") as string,
+            num: $input.params("num"),
+            str: $input.params("str"),
           },
         }),
-      (response, $context) => {
-        if (response.status === "SUCCEEDED") {
-          return response.output;
+      ($input, $context) => {
+        if ($input.data.status === "SUCCEEDED") {
+          return $input.data.output;
         } else {
           $context.responseOverride.status = 500;
-          return response.error;
+          return $input.data.error;
         }
       }
     )
   );
 
   expect(method.httpMethod).toEqual("GET");
+  expect(method.integration.requestTemplates).toEqual({
+    "application/json": `#set($inputRoot = $input.path('$'))
+{"input":{"num":"$input.pathParameters}}`,
+  });
+  expect(method.integration.integrationResponses).toEqual([
+    <IntegrationResponseProperty>{
+      statusCode: "200",
+      responseTemplates: {
+        "application/json": `#set($inputRoot = $input.path('$'))
+{"result":"$inputRoot"}`,
+      },
+    },
+  ]);
+});
+
+test("AWS integration with DynamoDB Table", () => {
+  const api = new aws_apigateway.RestApi(stack, "API");
+  const table = new Table(
+    new aws_dynamodb.Table(stack, "Table", {
+      partitionKey: {
+        name: "pk",
+        type: aws_dynamodb.AttributeType.STRING,
+      },
+    })
+  );
+
+  const method = getCfnMethod(
+    new AwsApiIntegration(
+      {
+        httpMethod: "POST",
+        resource: api.root,
+      },
+      (
+        $input: ApiGatewayInput<{
+          body: {
+            id: string;
+          };
+        }>
+      ) =>
+        $AWS.DynamoDB.GetItem({
+          TableName: table,
+          Key: {
+            pk: {
+              S: $input.data.id,
+            },
+          },
+        }),
+      ($input, $context) => {
+        if ($input.data.Item !== undefined) {
+          return {
+            data: $input.data.Item,
+          };
+        } else {
+          $context.responseOverride.status = 404;
+          return {
+            requestId: $context.requestId,
+            missing: true,
+          };
+        }
+      }
+    )
+  );
+
+  expect(method.httpMethod).toEqual("POST");
   expect(method.integration.requestTemplates).toEqual({
     "application/json": `#set($inputRoot = $input.path('$'))
 {"input":{"num":"$input.pathParameters}}`,

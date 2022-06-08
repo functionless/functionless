@@ -1,13 +1,12 @@
-import { aws_apigateway } from "aws-cdk-lib";
+import { aws_apigateway, aws_iam } from "aws-cdk-lib";
 import {
   APIGatewayProxyEvent,
   APIGatewayProxyResult,
   APIGatewayEventRequestContext,
 } from "aws-lambda";
-import { Construct } from "constructs";
 import { FunctionDecl, isFunctionDecl } from "./declaration";
 import { isErr } from "./error";
-import { CallExpr, Expr } from "./expression";
+import { CallExpr, Expr, Identifier } from "./expression";
 import { Function } from "./function";
 import { IntegrationImpl } from "./integration";
 import { isReturnStmt, Stmt } from "./statement";
@@ -31,7 +30,15 @@ export interface MethodProps {
   resource: aws_apigateway.IResource;
 }
 
-type ParameterMap = Record<string, string | number | boolean>;
+export type ApiParameter = undefined | null | boolean | number | string;
+export type ApiParameters = Record<string, ApiParameter>;
+
+export type ApiBody =
+  | ApiParameter
+  | ApiBody[]
+  | {
+      [propertyName in string]: ApiBody;
+    };
 
 /**
  * Request to an API Gateway method. Parameters can be passed in via
@@ -39,15 +46,15 @@ type ParameterMap = Record<string, string | number | boolean>;
  * None of these are required.
  */
 export interface ApiRequest<
-  PathParams extends ParameterMap | undefined = undefined,
-  Body extends object | undefined = undefined,
-  QueryParams extends ParameterMap | undefined = undefined,
-  HeaderParams extends ParameterMap | undefined = undefined
+  Path extends ApiParameters = ApiParameters,
+  Body extends ApiBody = any,
+  Query extends ApiParameters = ApiParameters,
+  Header extends ApiParameters = ApiParameters
 > {
   /**
    * Parameters in the path.
    */
-  pathParameters?: PathParams;
+  path?: Path;
   /**
    * Body of the request.
    */
@@ -55,11 +62,11 @@ export interface ApiRequest<
   /**
    * Parameters in the query string.
    */
-  queryStringParameters?: QueryParams;
+  query?: Query;
   /**
    * Parameters in the headers.
    */
-  headers?: HeaderParams;
+  headers?: Header;
 }
 
 export abstract class BaseApiIntegration {
@@ -89,6 +96,7 @@ export abstract class BaseApiIntegration {
  * @see https://docs.aws.amazon.com/apigateway/latest/developerguide/api-gateway-api-integration-types.html
  */
 export class MockApiIntegration<
+  Request extends ApiRequest,
   StatusCode extends number,
   MethodResponses extends { [C in StatusCode]: any }
 > extends BaseApiIntegration {
@@ -103,17 +111,14 @@ export class MockApiIntegration<
      * to select the response to return.
      */
     request: (
-      $input: APIGatewayInput,
-      $context: APIGatewayContext
+      $input: ApiGatewayInput<Request>,
+      $context: ApiGatewayContext
     ) => { statusCode: StatusCode },
     /**
      * Map of status codes to response to return.
      */
     responses: {
-      [C in StatusCode]: (
-        code: C,
-        $context: APIGatewayContext
-      ) => MethodResponses[C];
+      [C in StatusCode]: ($context: ApiGatewayContext) => MethodResponses[C];
     }
   ) {
     super();
@@ -122,12 +127,15 @@ export class MockApiIntegration<
       Object.entries(responses).map(([k, v]) => [k, validateFunctionDecl(v)])
     ) as { [K in keyof MethodResponses]: FunctionDecl };
 
-    const requestTemplate = new APIGatewayVTL("request");
+    const role = new aws_iam.Role(props.resource, `Role_${props.httpMethod}`, {
+      assumedBy: new aws_iam.ServicePrincipal("apigateway.amazonaws.com"),
+    });
+    const requestTemplate = new APIGatewayVTL(role, "request");
     requestTemplate.eval(this.request.body);
 
     const integrationResponses: aws_apigateway.IntegrationResponse[] =
       Object.entries(this.responses).map(([statusCode, fn]) => {
-        const responseTemplate = new APIGatewayVTL("response");
+        const responseTemplate = new APIGatewayVTL(role, "response");
         responseTemplate.eval((fn as FunctionDecl).body);
         return {
           statusCode,
@@ -169,6 +177,7 @@ export class MockApiIntegration<
  * @see https://docs.aws.amazon.com/apigateway/latest/developerguide/api-gateway-api-integration-types.html
  */
 export class AwsApiIntegration<
+  Request extends ApiRequest,
   MethodResponse,
   IntegrationResponse
 > extends BaseApiIntegration {
@@ -193,8 +202,8 @@ export class AwsApiIntegration<
      * The supported syntax will be expanded in the future.
      */
     request: (
-      $input: APIGatewayInput,
-      $context: APIGatewayContext
+      $input: ApiGatewayInput<Request>,
+      $context: ApiGatewayContext
     ) => IntegrationResponse,
     /**
      * Function that maps an integration response to a 200 method response. This
@@ -205,14 +214,16 @@ export class AwsApiIntegration<
      * literal. The supported syntax will be expanded in the future.
      */
     response: (
-      response: IntegrationResponse,
-      $context: APIGatewayContext
+      $input: ApiGatewayInput<
+        { body: IntegrationResponse } & Omit<Request, "body">
+      >,
+      $context: ApiGatewayContext
     ) => MethodResponse,
     /**
      * Map of status codes to a function defining the  response to return. This is used
      * to configure the failure path method responses, for e.g. when an integration fails.
      */
-    errors?: { [statusCode: number]: ($context: APIGatewayContext) => any }
+    errors?: { [statusCode: number]: ($context: ApiGatewayContext) => any }
   ) {
     super();
     this.request = validateFunctionDecl(request);
@@ -221,12 +232,18 @@ export class AwsApiIntegration<
       Object.entries(errors ?? {}).map(([k, v]) => [k, validateFunctionDecl(v)])
     );
 
+    const role = new aws_iam.Role(props.resource, `Role_${props.httpMethod}`, {
+      assumedBy: new aws_iam.ServicePrincipal("apigateway.amazonaws.com"),
+    });
+
     const responseTemplate = new APIGatewayVTL(
+      role,
       "response",
       "#set($inputRoot = $input.path('$'))"
     );
     responseTemplate.eval(this.response.body);
     const requestTemplate = new APIGatewayVTL(
+      role,
       "request",
       "#set($inputRoot = $input.path('$'))"
     );
@@ -237,7 +254,7 @@ export class AwsApiIntegration<
     const errorResponses: aws_apigateway.IntegrationResponse[] = Object.entries(
       this.errors
     ).map(([statusCode, fn]) => {
-      const errorTemplate = new APIGatewayVTL("response");
+      const errorTemplate = new APIGatewayVTL(role, "response");
       errorTemplate.eval(fn.body, "response");
       return {
         statusCode: statusCode,
@@ -261,11 +278,13 @@ export class AwsApiIntegration<
     // TODO: resource is not the right scope, prevents adding 2 methods to the resource
     // because of the IAM roles created
     // should `this` be a Method?
-    const apiGwIntegration = integration!.apiGWVtl.createIntegration(
-      props.resource,
-      requestTemplate.toVTL(),
-      integrationResponses
-    );
+    const apiGwIntegration = integration!.apiGWVtl.createIntegration({
+      credentialsRole: role,
+      requestTemplates: {
+        "application/json": requestTemplate.toVTL(),
+      },
+      integrationResponses,
+    });
 
     const methodResponses = [
       { statusCode: "200" },
@@ -283,6 +302,7 @@ export class AwsApiIntegration<
 export class APIGatewayVTL extends VTL {
   public integration: IntegrationImpl<AnyFunction> | undefined;
   constructor(
+    readonly role: aws_iam.IRole,
     readonly location: "request" | "response",
     ...statements: string[]
   ) {
@@ -317,6 +337,30 @@ export class APIGatewayVTL extends VTL {
       return this.add(this.json(this.eval(node.expr)));
     }
     return super.eval(node as any, returnVar);
+  }
+
+  protected dereference(id: Identifier): string {
+    const ref = id.lookup();
+    if (ref?.kind === "VariableStmt") {
+      return `$${id.name}`;
+    } else if (
+      ref?.kind === "ParameterDecl" &&
+      ref.parent?.kind === "FunctionDecl"
+    ) {
+      const paramIndex = ref.parent.parameters.indexOf(ref);
+      if (paramIndex === 0) {
+        return `$inputRoot`;
+      } else if (paramIndex === 1) {
+        return "$context";
+      } else {
+        throw new Error(`unknown argument`);
+      }
+    }
+    if (id.name.startsWith("$")) {
+      return id.name;
+    } else {
+      return `$${id.name}`;
+    }
   }
 
   public json(reference: string): string {
@@ -354,6 +398,7 @@ ${this.jsonStage(itemVarName, level + 1)}#if($foreach.hasNext),#end
 ]`.replace(/\n/g, `${new Array(level * 2).join(" ")}\n`);
   }
 }
+
 function validateFunctionDecl(a: any): FunctionDecl {
   if (isFunctionDecl(a)) {
     return a;
@@ -377,9 +422,9 @@ export interface ApiGatewayVtlIntegration {
    * Construct an API GW integration.
    */
   createIntegration: (
-    scope: Construct,
-    requestTemplate: string,
-    responses: aws_apigateway.IntegrationResponse[]
+    options: aws_apigateway.IntegrationOptions & {
+      credentialsRole: aws_iam.IRole;
+    }
   ) => aws_apigateway.Integration;
 }
 
@@ -415,18 +460,37 @@ export class LambdaProxyApiMethod extends BaseApiIntegration {
   }
 }
 
+export type ExcludeNullOrUndefined<T> = T extends undefined | null | infer X
+  ? X
+  : T;
+
+type IfNever<T, Default> = T extends never ? Default : T;
+
+export type Params<Request extends ApiRequest> = Exclude<
+  IfNever<
+    ExcludeNullOrUndefined<Request["path"]> &
+      ExcludeNullOrUndefined<Request["query"]>,
+    ApiParameters
+  >,
+  undefined
+>;
+
 /**
  * The `$input` VTL variable containing all of the request data available in API Gateway's VTL engine.
  *
  * @see https://docs.aws.amazon.com/apigateway/latest/developerguide/api-gateway-mapping-template-reference.html#input-variable-reference
  */
-export interface APIGatewayInput {
+export interface ApiGatewayInput<Request extends ApiRequest> {
+  /**
+   * Parsed form of the {@link body}
+   */
+  readonly data: Request["body"];
   /**
    * The raw request payload as a string.
    */
   readonly body: string;
   /**
-   * This function evaluates a JSONPath expression and returns the results as a JSON string.
+   * This function evaluates a JSONPath expression and returns the results as a JSON.
    *
    * For example, `$input.json('$.pets')` returns a JSON string representing the pets structure.
    *
@@ -435,7 +499,6 @@ export interface APIGatewayInput {
    * @see https://github.com/jayway/JsonPath
    */
   json(jsonPath: string): any;
-
   /**
    * Returns a map of all the request parameters. We recommend that you use
    * `$util.escapeJavaScript` to sanitize the result to avoid a potential
@@ -443,8 +506,7 @@ export interface APIGatewayInput {
    * integration without a template and handle request sanitization in your
    * integration.
    */
-  params(): Record<string, string>;
-
+  params(): Params<Request>;
   /**
    * Returns the value of a method request parameter from the path, query string,
    * or header value (searched in that order), given a parameter name string x.
@@ -455,8 +517,16 @@ export interface APIGatewayInput {
    *
    * @param name name of the path.
    */
-  params(name: string): string | number | undefined;
-
+  params<ParamName extends keyof Params<Request>>(
+    name: ParamName
+  ): Params<Request>[ParamName];
+  /**
+   * Takes a JSONPath expression string (x) and returns a JSON object representation
+   * of the result. This allows you to access and manipulate elements of the payload
+   * natively in Apache Velocity Template Language (VTL).
+   *
+   * @param jsonPath
+   */
   path(jsonPath: string): any;
 }
 
@@ -465,7 +535,7 @@ export interface APIGatewayInput {
  *
  * @see https://docs.aws.amazon.com/apigateway/latest/developerguide/api-gateway-mapping-template-reference.html#context-variable-reference
  */
-export interface APIGatewayContext extends APIGatewayEventRequestContext {
+export interface ApiGatewayContext extends APIGatewayEventRequestContext {
   /**
    * The AWS endpoint's request ID.
    */
@@ -497,7 +567,7 @@ export interface APIGatewayContext extends APIGatewayEventRequestContext {
   /**
    * Response properties that can be overridden.
    */
-  readonly responseOverride: APIGatewayResponseOverride;
+  readonly responseOverride: ApiGatewayResponseOverride;
 }
 
 export interface APIGatewayError {
@@ -548,7 +618,7 @@ export interface APIGatewayRequestOverride {
   readonly querystring: Record<string, string>;
 }
 
-export interface APIGatewayResponseOverride {
+export interface ApiGatewayResponseOverride {
   /**
    * The response header override. If this parameter is defined, it contains the header
    * to be returned instead of the Response header that is defined as the Default mapping

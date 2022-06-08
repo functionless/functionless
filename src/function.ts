@@ -151,14 +151,12 @@ abstract class FunctionBase<P, O> implements IFunction<P, O> {
         return context.json(payload);
       },
 
-      createIntegration: (_scope, requestTemplate, integrationResponses) => {
+      createIntegration: (options) => {
+        this.resource.grantInvoke(options.credentialsRole);
         return new aws_apigateway.LambdaIntegration(this.resource, {
+          ...options,
           proxy: false,
           passthroughBehavior: aws_apigateway.PassthroughBehavior.NEVER,
-          requestTemplates: {
-            "application/json": requestTemplate,
-          },
-          integrationResponses,
         });
       },
     };

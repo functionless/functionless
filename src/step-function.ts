@@ -539,14 +539,8 @@ abstract class BaseStepFunction<
         return context.json(inputVar);
       },
 
-      createIntegration: (scope, requestTemplate, integrationResponses) => {
-        const credentialsRole = new aws_iam.Role(
-          scope,
-          "ApiGatewayIntegrationRole",
-          {
-            assumedBy: new aws_iam.ServicePrincipal("apigateway.amazonaws.com"),
-          }
-        );
+      createIntegration: (options) => {
+        const credentialsRole = options.credentialsRole;
 
         this.grantRead(credentialsRole);
         if (
@@ -567,12 +561,9 @@ abstract class BaseStepFunction<
               : "StartExecution",
           integrationHttpMethod: "POST",
           options: {
+            ...options,
             credentialsRole,
             passthroughBehavior: aws_apigateway.PassthroughBehavior.NEVER,
-            requestTemplates: {
-              "application/json": requestTemplate,
-            },
-            integrationResponses,
           },
         });
       },

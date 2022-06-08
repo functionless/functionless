@@ -9,6 +9,7 @@ import {
   CallExpr,
   Expr,
   FunctionExpr,
+  Identifier,
   isArgument,
   isArrayLiteralExpr,
   isBinaryExpr,
@@ -206,6 +207,8 @@ export abstract class VTL {
     target: IntegrationImpl<AnyFunction> | undefined,
     call: CallExpr
   ): string;
+
+  protected abstract dereference(id: Identifier): string;
 
   /**
    * Evaluate an {@link Expr} or {@link Stmt} by emitting statements to this VTL template and
@@ -424,21 +427,7 @@ export abstract class VTL {
     } else if (isFunctionExpr(node)) {
       return this.eval(node.body);
     } else if (isIdentifier(node)) {
-      const ref = node.lookup();
-      if (ref?.kind === "VariableStmt" && isInTopLevelScope(ref)) {
-        return `$context.stash.${node.name}`;
-      } else if (
-        ref?.kind === "ParameterDecl" &&
-        ref.parent?.kind === "FunctionDecl"
-      ) {
-        // regardless of the name of the first argument in the root FunctionDecl, it is always the intrinsic Appsync `$context`.
-        return "$context";
-      }
-      if (node.name.startsWith("$")) {
-        return node.name;
-      } else {
-        return `$${node.name}`;
-      }
+      return this.dereference(node);
     } else if (isNewExpr(node)) {
       throw new Error("NewExpr is not supported by Velocity Templates");
     } else if (isPropAccessExpr(node)) {

@@ -1,3 +1,4 @@
+import { aws_apigateway, aws_iam } from "aws-cdk-lib";
 import type { DynamoDB as AWSDynamoDB, EventBridge } from "aws-sdk";
 import { JsonFormat } from "typesafe-dynamodb";
 import { TypeSafeDynamoDBv2 } from "typesafe-dynamodb/lib/client-v2";
@@ -21,7 +22,6 @@ import {
   isPropAssignExpr,
   isReferenceExpr,
   isVariableReference,
-  ObjectLiteralExpr,
 } from "./expression";
 import {
   Function,
@@ -425,7 +425,7 @@ export namespace $AWS {
       },
     });
 
-    type OperationName =
+    export type OperationName =
       | "deleteItem"
       | "getItem"
       | "putItem"
@@ -450,6 +450,27 @@ export namespace $AWS {
       return makeIntegration<`$AWS.DynamoDB.${Op}`, F>({
         ...integration,
         kind: `$AWS.DynamoDB.${operationName}`,
+        apiGWVtl: {
+          renderRequest(call, context) {
+            const table = getTableArgument(call.args);
+            grantTablePermissions(table, context.role, operationName);
+            return JSON.stringify({
+              TableName: table.tableName,
+              // TODO
+            });
+          },
+          createIntegration: (options) => {
+            return new aws_apigateway.AwsIntegration({
+              service: "dynamodb",
+              action: operationName,
+              integrationHttpMethod: "POST",
+              options: {
+                ...options,
+                passthroughBehavior: aws_apigateway.PassthroughBehavior.NEVER,
+              },
+            });
+          },
+        },
         asl(call, context) {
           const input = call.getArgument("input")?.expr;
           if (!isObjectLiteralExpr(input)) {
@@ -457,30 +478,8 @@ export namespace $AWS {
               `input parameter must be an ObjectLiteralExpr, but was ${input?.kind}`
             );
           }
-          const tableProp = (input as ObjectLiteralExpr).getProperty(
-            "TableName"
-          );
-
-          if (
-            tableProp?.kind !== "PropAssignExpr" ||
-            tableProp.expr.kind !== "ReferenceExpr"
-          ) {
-            throw new Error("");
-          }
-
-          const table = tableProp.expr.ref();
-          if (!isTable(table)) {
-            throw new Error("");
-          }
-          if (
-            operationName === "deleteItem" ||
-            operationName === "putItem" ||
-            operationName === "updateItem"
-          ) {
-            table.resource.grantWriteData(context.role);
-          } else {
-            table.resource.grantReadData(context.role);
-          }
+          const table = getTableArgument(call.args);
+          grantTablePermissions(table, context.role, operationName);
 
           return {
             Type: "Task",
@@ -504,39 +503,61 @@ export namespace $AWS {
           );
         },
       });
+    }
 
-      function getTableArgument(args: Expr[]) {
-        const [inputArgument] = args;
-        // integ(input: { TableName })
-        if (!inputArgument || !isObjectLiteralExpr(inputArgument)) {
-          throw Error(
-            `First argument into deleteItem should be an input object, found ${inputArgument?.kind}`
-          );
-        }
-
-        const tableProp = inputArgument.getProperty("TableName");
-
-        if (!tableProp || !isPropAssignExpr(tableProp)) {
-          throw Error(
-            `First argument into deleteItem should be an input with a property TableName that is a Table.`
-          );
-        }
-
-        const tableRef = tableProp.expr;
-
-        if (!isReferenceExpr(tableRef)) {
-          throw Error(
-            `First argument into deleteItem should be an input with a property TableName that is a Table.`
-          );
-        }
-
-        const table = tableRef.ref();
-        if (!isTable(table)) {
-          throw Error(`TableName argument should be a Table object.`);
-        }
-
-        return table;
+    /**
+     * @internal
+     */
+    export function grantTablePermissions(
+      table: AnyTable,
+      role: aws_iam.IRole,
+      operationName: OperationName
+    ) {
+      if (
+        operationName === "deleteItem" ||
+        operationName === "putItem" ||
+        operationName === "updateItem"
+      ) {
+        table.resource.grantWriteData(role);
+      } else {
+        table.resource.grantReadData(role);
       }
+    }
+
+    /**
+     * @internal
+     */
+    export function getTableArgument(args: Expr[]) {
+      const [inputArgument] = args;
+      // integ(input: { TableName })
+      if (!inputArgument || !isObjectLiteralExpr(inputArgument)) {
+        throw Error(
+          `First argument into deleteItem should be an input object, found ${inputArgument?.kind}`
+        );
+      }
+
+      const tableProp = inputArgument.getProperty("TableName");
+
+      if (!tableProp || !isPropAssignExpr(tableProp)) {
+        throw Error(
+          `First argument into deleteItem should be an input with a property TableName that is a Table.`
+        );
+      }
+
+      const tableRef = tableProp.expr;
+
+      if (!isReferenceExpr(tableRef)) {
+        throw Error(
+          `First argument into deleteItem should be an input with a property TableName that is a Table.`
+        );
+      }
+
+      const table = tableRef.ref();
+      if (!isTable(table)) {
+        throw Error(`TableName argument should be a Table object.`);
+      }
+
+      return table;
     }
   }
 

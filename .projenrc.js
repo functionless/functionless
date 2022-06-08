@@ -108,6 +108,7 @@ const project = new CustomTypescriptProject({
      */
   ],
   scripts: {
+    prepare: "ts-patch install -s",
     localstack: "./scripts/localstack",
     "build:website": "npx tsc && cd ./website && yarn && yarn build",
   },
@@ -116,7 +117,7 @@ const project = new CustomTypescriptProject({
     "constructs@^10.0.0",
     "esbuild",
     "typesafe-dynamodb@^0.1.5",
-    "typescript@^4.6.2",
+    "typescript@^4.7.2",
   ],
   eslintOptions: {
     lintProjenRc: true,
@@ -165,7 +166,6 @@ project.compileTask.prependExec(
 project.testTask.prependExec(
   "cd ./test-app && yarn && yarn build && yarn synth"
 );
-project.testTask.prependExec("ts-patch install -s");
 project.testTask.prependExec("./scripts/localstack");
 project.testTask.exec("localstack stop");
 
