@@ -131,12 +131,16 @@ export type CanReference =
   | unknown;
 
 export class ReferenceExpr extends BaseExpr<"ReferenceExpr"> {
-  constructor(readonly name: string, readonly ref: () => CanReference) {
+  constructor(
+    readonly name: string,
+    readonly ref: () => CanReference,
+    readonly isPromise: boolean = false
+  ) {
     super("ReferenceExpr");
   }
 
   public clone(): this {
-    return new ReferenceExpr(this.name, this.ref) as this;
+    return new ReferenceExpr(this.name, this.ref, this.isPromise) as this;
   }
 }
 

@@ -2012,11 +2012,10 @@ test("call Step Function from another Step Function with name and trace", () => 
   });
 
   const definition = new ExpressStepFunction(stack, "machine2", () => {
-    const result = machine1({
+    return machine1({
       name: "exec1",
       traceHeader: "1",
     });
-    return result;
   }).definition;
 
   expect(normalizeDefinition(definition)).toMatchSnapshot();
@@ -2032,11 +2031,10 @@ test("call Step Function from another Step Function with name and trace from var
     stack,
     "machine2",
     (input: { name: string; header: string }) => {
-      const result = machine1({
+      return machine1({
         name: input.name,
         traceHeader: input.header,
       });
-      return result;
     }
   ).definition;
 
@@ -2054,12 +2052,11 @@ test("call Step Function from another Step Function with input", () => {
   );
 
   const definition = new ExpressStepFunction(stack, "machine2", () => {
-    const result = machine1({
+    return machine1({
       input: {
         value: "hello",
       },
     });
-    return result;
   }).definition;
 
   expect(normalizeDefinition(definition)).toMatchSnapshot();
@@ -2079,12 +2076,11 @@ test("call Step Function from another Step Function with dynamic input", () => {
     { value1: string },
     SyncExecutionResult<string>
   >(stack, "machine2", (input) => {
-    const result = machine1({
+    return machine1({
       input: {
         value: input.value1,
       },
     });
-    return result;
   }).definition;
 
   expect(normalizeDefinition(definition)).toMatchSnapshot();
@@ -2104,10 +2100,9 @@ test("call Step Function from another Step Function with dynamic input field inp
     { value: string },
     SyncExecutionResult<string>
   >(stack, "machine2", (input) => {
-    const result = machine1({
+    return machine1({
       input: input,
     });
-    return result;
   }).definition;
 
   expect(normalizeDefinition(definition)).toMatchSnapshot();
@@ -2134,8 +2129,7 @@ test("call Step Function from another Step Function not supported with reference
               value: input.value1,
             },
           };
-          const result = machine1(_input);
-          return result;
+          return machine1(_input);
         }
       )
   ).toThrow(
@@ -2160,12 +2154,11 @@ test("call Step Function from another Step Function not supported with computed 
         "machine2",
         (input) => {
           const _inputStr = "input";
-          const result = machine1({
+          return machine1({
             [_inputStr]: {
               value: input.value1,
             },
           });
-          return result;
         }
       )
   ).toThrow(
@@ -2194,8 +2187,7 @@ test("call Step Function from another Step Function not supported with spread as
               value: input.value1,
             },
           };
-          const result = machine1({ ..._input });
-          return result;
+          return machine1({ ..._input });
         }
       )
   ).toThrow(

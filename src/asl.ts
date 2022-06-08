@@ -25,7 +25,7 @@ import {
   StringLiteralExpr,
 } from "./expression";
 import { isFunction } from "./function";
-import { findIntegration } from "./integration";
+import { Integration, IntegrationImpl, isIntegration } from "./integration";
 import { FunctionlessNode } from "./node";
 import {
   BlockStmt,
@@ -38,6 +38,7 @@ import {
   isDoStmt,
   isForInStmt,
   isForOfStmt,
+  isReturn,
   isWhileStmt,
   ReturnStmt,
   Stmt,
@@ -387,9 +388,7 @@ export class ASL {
           });
 
           function isTask(node: FunctionlessNode): node is CallExpr {
-            return (
-              node.kind === "CallExpr" && findIntegration(node) !== undefined
-            );
+            return node.kind === "CallExpr" && isReferenceExpr(node.expr);
           }
 
           if (nestedTasks.length > 0) {
@@ -846,38 +845,41 @@ export class ASL {
       props.End = true;
     }
     if (expr.kind === "CallExpr") {
-      const serviceCall = findIntegration(expr);
-      if (serviceCall) {
-        if (
-          expr.expr.kind === "PropAccessExpr" &&
-          (expr.expr.name === "waitFor" || expr.expr.name === "waitUntil")
-        ) {
-          delete (props as any).ResultPath;
-          return <State>{
+      if (isReferenceExpr(expr.expr)) {
+        const ref = expr.expr.ref();
+        if (isIntegration<Integration>(ref)) {
+          if (
+            expr.expr.isPromise &&
+            !(isAwaitExpr(expr.parent) || isReturn(expr.parent))
+          ) {
+            // TODO: make error code
+            throw new Error(
+              `Asynchronous Integrations (${ref.kind}) must be awaited or returned.`
+            );
+          }
+          const serviceCall = new IntegrationImpl(ref);
+          const taskState = <State>{
             ...serviceCall.asl(expr, this),
             ...props,
           };
-        }
 
-        const taskState = <State>{
-          ...serviceCall.asl(expr, this),
-          ...props,
-        };
-
-        const throwOrPass = this.throw(expr);
-        if (throwOrPass?.Next) {
-          return <State>{
-            ...taskState,
-            Catch: [
-              {
-                ErrorEquals: ["States.ALL"],
-                Next: throwOrPass.Next,
-                ResultPath: throwOrPass.ResultPath,
-              },
-            ],
-          };
+          const throwOrPass = this.throw(expr);
+          if (throwOrPass?.Next) {
+            return <State>{
+              ...taskState,
+              Catch: [
+                {
+                  ErrorEquals: ["States.ALL"],
+                  Next: throwOrPass.Next,
+                  ResultPath: throwOrPass.ResultPath,
+                },
+              ],
+            };
+          } else {
+            return taskState;
+          }
         } else {
-          return taskState;
+          throw Error("");
         }
       } else if (isMapOrForEach(expr)) {
         const throwTransition = this.throw(expr);
@@ -1008,6 +1010,7 @@ export class ASL {
     } else if (expr.kind === "BinaryExpr") {
       // TODO
     } else if (isAwaitExpr(expr)) {
+      return this.eval(expr.expr, props);
     }
     debugger;
     throw new Error(`cannot eval expression kind '${expr.kind}'`);
@@ -1213,7 +1216,7 @@ function analyzeFlow(node: FunctionlessNode): FlowResult {
     .reduce(
       (a, b) => ({ ...a, ...b }),
       (node.kind === "CallExpr" &&
-        (findIntegration(node) !== undefined || isMapOrForEach(node))) ||
+        (isReferenceExpr(node.expr) || isMapOrForEach(node))) ||
         node.kind === "ForInStmt" ||
         node.kind === "ForOfStmt"
         ? { hasTask: true }

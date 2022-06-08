@@ -74,6 +74,7 @@ export function makeFunctionlessChecker(
     isNewFunctionlessFunction,
     isCDKConstruct,
     getFunctionlessTypeKind,
+    isPromise,
   };
 
   /**
@@ -273,6 +274,10 @@ export function makeFunctionlessChecker(
       }
     }
     return undefined;
+  }
+
+  function isPromise(type: ts.Type): boolean {
+    return checker.getFullyQualifiedName(type.symbol) === "Promise";
   }
 
   /**

@@ -4612,6 +4612,91 @@ Object {
 }
 `;
 
+exports[`try-catch with optional return of task 2`] = `
+Object {
+  "StartAt": "if(input.id == \\"hello\\")",
+  "States": Object {
+    "0_catch(err)": Object {
+      "InputPath": "$.err.0_ParsedError",
+      "Next": "if(err.message == \\"cause\\")",
+      "ResultPath": "$.err",
+      "Type": "Pass",
+    },
+    "catch(err)": Object {
+      "Next": "0_catch(err)",
+      "Parameters": Object {
+        "0_ParsedError.$": "States.StringToJson($.err.Cause)",
+      },
+      "ResultPath": "$.err",
+      "Type": "Pass",
+    },
+    "if(err.message == \\"cause\\")": Object {
+      "Choices": Array [
+        Object {
+          "Next": "return \\"hello\\"",
+          "StringEquals": "cause",
+          "Variable": "$.err.message",
+        },
+      ],
+      "Default": "return \\"world\\"",
+      "Type": "Choice",
+    },
+    "if(input.id == \\"hello\\")": Object {
+      "Choices": Array [
+        Object {
+          "Next": "return await computeScore({id: input.id, name: \\"sam\\"})",
+          "StringEquals": "hello",
+          "Variable": "$.id",
+        },
+      ],
+      "Default": "return \\"hello world\\"",
+      "Type": "Choice",
+    },
+    "return \\"hello world\\"": Object {
+      "End": true,
+      "Result": "hello world",
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "return \\"hello\\"": Object {
+      "End": true,
+      "Result": "hello",
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "return \\"world\\"": Object {
+      "End": true,
+      "Result": "world",
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "return await computeScore({id: input.id, name: \\"sam\\"})": Object {
+      "Catch": Array [
+        Object {
+          "ErrorEquals": Array [
+            "States.ALL",
+          ],
+          "Next": "catch(err)",
+          "ResultPath": "$.err",
+        },
+      ],
+      "End": true,
+      "Parameters": Object {
+        "FunctionName": "__REPLACED_TOKEN",
+        "Payload": Object {
+          "id.$": "$.id",
+          "name": "sam",
+        },
+      },
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "ResultPath": "$",
+      "ResultSelector": "$.Payload",
+      "Type": "Task",
+    },
+  },
+}
+`;
+
 exports[`try-catch with optional task 1`] = `
 Object {
   "StartAt": "if(input.id == \\"hello\\")",

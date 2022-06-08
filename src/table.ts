@@ -298,7 +298,7 @@ export class Table<
     > & {
       appSyncVtl: Omit<AppSyncVtlIntegration, "dataSource" | "dataSourceId">;
     }
-  ): F {
+  ) {
     return makeIntegration<`Table.${K}`, F>({
       ...integration,
       kind: `Table.${methodName}`,

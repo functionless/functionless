@@ -898,6 +898,9 @@ export function compile(
             undefined,
             node
           ),
+          checker.isPromise(checker.getTypeAtLocation(node.parent))
+            ? ts.factory.createIdentifier("true")
+            : ts.factory.createIdentifier("false"),
         ]);
       }
 

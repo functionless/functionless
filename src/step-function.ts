@@ -335,7 +335,7 @@ export namespace $SFN {
 function makeStepFunctionIntegration<K extends string, F extends AnyFunction>(
   methodName: K,
   integration: Omit<IntegrationInput<`$SFN.${K}`, F>, "kind">
-): F {
+) {
   return makeIntegration<`$SFN.${K}`, F>({
     kind: `$SFN.${methodName}`,
     unhandledContext(kind, context) {

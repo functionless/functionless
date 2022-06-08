@@ -1,6 +1,6 @@
 import { assertNever, assertNodeKind } from "./assert";
-import { CallExpr, Expr, FunctionExpr } from "./expression";
-import { findIntegration } from "./integration";
+import { CallExpr, Expr, FunctionExpr, isReferenceExpr } from "./expression";
+import { IntegrationImpl, isIntegration, Integration } from "./integration";
 import { FunctionlessNode } from "./node";
 import { Stmt } from "./statement";
 import { isInTopLevelScope } from "./util";
@@ -201,9 +201,14 @@ export class VTL {
       case "BreakStmt":
         return this.add("#break");
       case "CallExpr": {
-        const serviceCall = findIntegration(node);
-        if (serviceCall) {
-          return serviceCall.appSyncVtl.request(node, this);
+        if (isReferenceExpr(node.expr)) {
+          const ref = node.expr.ref();
+          if (isIntegration<Integration>(ref)) {
+            const serviceCall = new IntegrationImpl(ref);
+            return serviceCall.appSyncVtl.request(node, this);
+          } else {
+            throw Error(`Found unsupported call.`);
+          }
         } else if (
           // If the parent is a propAccessExpr
           node.expr.kind === "PropAccessExpr" &&

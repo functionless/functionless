@@ -346,7 +346,7 @@ export function visitEachChild<T extends FunctionlessNode>(
     );
     return new PropAssignExpr(name, expr) as T;
   } else if (node.kind === "ReferenceExpr") {
-    return new ReferenceExpr(node.name, node.ref) as T;
+    return new ReferenceExpr(node.name, node.ref, node.isPromise) as T;
   } else if (node.kind === "ReturnStmt") {
     const expr = visitor(node.expr);
     ensure(expr, isExpr, "a ReturnStmt's expr must be an Expr node type");
