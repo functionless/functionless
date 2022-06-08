@@ -9,27 +9,50 @@ import {
   StepFunction,
   SyncExecutionResult,
 } from "../src";
-import { StateMachine, States } from "../src/asl";
+import { StateMachine, States, Task } from "../src/asl";
 import { initStepFunctionApp, Person } from "./util";
+
+/**
+ * Removes randomized values (CDK token strings) form the definitions.
+ */
+const normalizeDefinition = (definition: StateMachine<States>): any => {
+  return JSON.parse(
+    JSON.stringify(definition).replace(
+      /\$\{Token\[[a-zA-Z0-9.]*\]\}/g,
+      "__REPLACED_TOKEN"
+    )
+  );
+};
+
+/**
+ * Expect a task to match the given contents. Use Jest's `toMatchObject`.
+ * Selects the task to check using the first key in states or by finding the key using the taskNameMatcher.
+ */
+const expectTaskToMatch = (
+  definition: StateMachine<States>,
+  partialTask: Partial<Task>,
+  taskNameMatcher?: string | RegExp
+): any => {
+  const [key] = !taskNameMatcher
+    ? Object.keys(definition.States)
+    : Object.keys(definition.States).filter((k) =>
+        typeof taskNameMatcher === "string"
+          ? k.includes(taskNameMatcher)
+          : taskNameMatcher.test(k)
+      );
+
+  expect(key).toBeDefined();
+
+  const task = <Task>definition.States[key];
+
+  expect(task).toMatchObject(partialTask);
+};
 
 test("empty function", () => {
   const { stack } = initStepFunctionApp();
   const definition = new ExpressStepFunction(stack, "fn", () => {}).definition;
 
-  const expected: StateMachine<States> = {
-    StartAt: "return null",
-    States: {
-      "return null": {
-        Type: "Pass",
-        End: true,
-        Parameters: {
-          null: null,
-        },
-        OutputPath: "$.null",
-      },
-    },
-  };
-  expect(definition).toEqual(expected);
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
 test("return identifier", () => {
@@ -42,17 +65,7 @@ test("return identifier", () => {
     }
   ).definition;
 
-  const expected: StateMachine<States> = {
-    StartAt: "return input.id",
-    States: {
-      "return input.id": {
-        Type: "Pass",
-        End: true,
-        OutputPath: "$.id",
-      },
-    },
-  };
-  expect(definition).toEqual(expected);
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
 test("return PropAccessExpr", () => {
@@ -65,17 +78,7 @@ test("return PropAccessExpr", () => {
     }
   ).definition;
 
-  const expected: StateMachine<States> = {
-    StartAt: "return input.input.id",
-    States: {
-      "return input.input.id": {
-        Type: "Pass",
-        End: true,
-        OutputPath: "$.input.id",
-      },
-    },
-  };
-  expect(definition).toEqual(expected);
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
 test("return optional PropAccessExpr", () => {
@@ -87,24 +90,7 @@ test("return optional PropAccessExpr", () => {
     return input.input?.id;
   }).definition;
 
-  const expected: StateMachine<States> = {
-    StartAt: "return input.input.id",
-    States: {
-      "return input.input.id": {
-        Type: "Pass",
-        End: true,
-        // this can cause an error in Step Functions
-        // need to use Choice and isPresent to compute a temporary variable
-        // wish: step functions would default a missing reference to null
-        // or understand the concept of `undefined` and would delete the
-        // OutputPath if `$.input.id`
-        // see: https://twitter.com/samgoodwin89/status/1506170918216736771
-
-        OutputPath: "$.input.id",
-      },
-    },
-  };
-  expect(definition).toEqual(expected);
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
 test("return items.slice(1)", () => {
@@ -117,17 +103,7 @@ test("return items.slice(1)", () => {
     }
   ).definition;
 
-  expect(definition).toEqual({
-    StartAt: "return input.items.slice(1)",
-    States: {
-      "return input.items.slice(1)": {
-        End: true,
-        InputPath: "$.items[1:]",
-        ResultPath: "$",
-        Type: "Pass",
-      },
-    },
-  });
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
 test("return items.slice(1, undefined)", () => {
@@ -140,17 +116,7 @@ test("return items.slice(1, undefined)", () => {
     }
   ).definition;
 
-  expect(definition).toEqual({
-    StartAt: "return input.items.slice(1, undefined)",
-    States: {
-      "return input.items.slice(1, undefined)": {
-        End: true,
-        InputPath: "$.items[1:]",
-        ResultPath: "$",
-        Type: "Pass",
-      },
-    },
-  });
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
 test("return items.slice(-1)", () => {
@@ -163,17 +129,7 @@ test("return items.slice(-1)", () => {
     }
   ).definition;
 
-  expect(definition).toEqual({
-    StartAt: "return input.items.slice(-1)",
-    States: {
-      "return input.items.slice(-1)": {
-        End: true,
-        InputPath: "$.items[-1:]",
-        ResultPath: "$",
-        Type: "Pass",
-      },
-    },
-  });
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
 test("return items.slice(0, -1)", () => {
@@ -186,17 +142,7 @@ test("return items.slice(0, -1)", () => {
     }
   ).definition;
 
-  expect(definition).toEqual({
-    StartAt: "return input.items.slice(0, -1)",
-    States: {
-      "return input.items.slice(0, -1)": {
-        End: true,
-        InputPath: "$.items[0:-1]",
-        ResultPath: "$",
-        Type: "Pass",
-      },
-    },
-  });
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
 test("return items.slice(1, 3)", () => {
@@ -209,17 +155,7 @@ test("return items.slice(1, 3)", () => {
     }
   ).definition;
 
-  expect(definition).toEqual({
-    StartAt: "return input.items.slice(1, 3)",
-    States: {
-      "return input.items.slice(1, 3)": {
-        End: true,
-        InputPath: "$.items[1:3]",
-        ResultPath: "$",
-        Type: "Pass",
-      },
-    },
-  });
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
 test("return task({key: items.slice(1, 3)})", () => {
@@ -231,24 +167,7 @@ test("return task({key: items.slice(1, 3)})", () => {
     return task({ key: input.items.slice(1, 3) });
   }).definition;
 
-  expect(definition).toEqual({
-    StartAt: "return task({key: input.items.slice(1, 3)})",
-    States: {
-      "return task({key: input.items.slice(1, 3)})": {
-        Type: "Task",
-        End: true,
-        Resource: "arn:aws:states:::lambda:invoke",
-        ResultSelector: "$.Payload",
-        Parameters: {
-          FunctionName: task.resource.functionName,
-          Payload: {
-            "key.$": "$.items[1:3]",
-          },
-        },
-        ResultPath: "$",
-      },
-    },
-  });
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
 test("let and set", () => {
@@ -288,169 +207,7 @@ test("let and set", () => {
     return a;
   }).definition;
 
-  expect(definition).toEqual({
-    StartAt: "a = null",
-    States: {
-      "a = null": {
-        Next: "a = true",
-        Parameters: {
-          "$.a": null,
-          "a.$": "$.a",
-        },
-        ResultPath: null,
-        Type: "Pass",
-      },
-      "a = true": {
-        Next: "a = false",
-        Parameters: true,
-        ResultPath: "$.a",
-        Type: "Pass",
-      },
-      "a = false": {
-        Next: "a = 0",
-        Parameters: false,
-        ResultPath: "$.a",
-        Type: "Pass",
-      },
-      "a = 0": {
-        Next: "a = -1",
-        Parameters: 0,
-        ResultPath: "$.a",
-        Type: "Pass",
-      },
-      "a = -1": {
-        Next: "a = -100",
-        Parameters: -1,
-        ResultPath: "$.a",
-        Type: "Pass",
-      },
-      "a = -100": {
-        Next: "a = 1 + 2",
-        Parameters: -100,
-        ResultPath: "$.a",
-        Type: "Pass",
-      },
-      "a = 1 + 2": {
-        Next: 'a = "hello"',
-        Parameters: 3,
-        ResultPath: "$.a",
-        Type: "Pass",
-      },
-      'a = "hello"': {
-        Next: 'a = "hello" + " world"',
-        Parameters: "hello",
-        ResultPath: "$.a",
-        Type: "Pass",
-      },
-      'a = "hello" + " world"': {
-        Next: 'a = "hello" + 1',
-        Parameters: "hello world",
-        ResultPath: "$.a",
-        Type: "Pass",
-      },
-      'a = "hello" + 1': {
-        Next: 'a = 1 + "hello"',
-        Parameters: "hello1",
-        ResultPath: "$.a",
-        Type: "Pass",
-      },
-      'a = 1 + "hello"': {
-        Next: 'a = "hello" + true',
-        Parameters: "1hello",
-        ResultPath: "$.a",
-        Type: "Pass",
-      },
-      'a = "hello" + true': {
-        Next: 'a = false + "hello"',
-        Parameters: "hellotrue",
-        ResultPath: "$.a",
-        Type: "Pass",
-      },
-      'a = false + "hello"': {
-        Next: 'a = null + "hello"',
-        Parameters: "falsehello",
-        ResultPath: "$.a",
-        Type: "Pass",
-      },
-      'a = null + "hello"': {
-        Next: 'a = "hello" + null',
-        Parameters: "nullhello",
-        ResultPath: "$.a",
-        Type: "Pass",
-      },
-      'a = "hello" + null': {
-        Next: "a = [null]",
-        Parameters: "hellonull",
-        ResultPath: "$.a",
-        Type: "Pass",
-      },
-      "a = [null]": {
-        Next: "a = [1]",
-        Parameters: [null],
-        ResultPath: "$.a",
-        Type: "Pass",
-      },
-      "a = [1]": {
-        Next: "a = [-1]",
-        Parameters: [1],
-        ResultPath: "$.a",
-        Type: "Pass",
-      },
-      "a = [-1]": {
-        Next: "a = [true]",
-        Parameters: [-1],
-        ResultPath: "$.a",
-        Type: "Pass",
-      },
-      "a = [true]": {
-        Next: 'a = [{key: "value"}]',
-        Parameters: [true],
-        ResultPath: "$.a",
-        Type: "Pass",
-      },
-      'a = [{key: "value"}]': {
-        Next: 'a = {key: "value"}',
-        Parameters: [
-          {
-            key: "value",
-          },
-        ],
-        ResultPath: "$.a",
-        Type: "Pass",
-      },
-      'a = {key: "value"}': {
-        Next: "a = a",
-        Parameters: {
-          key: "value",
-        },
-        ResultPath: "$.a",
-        Type: "Pass",
-      },
-      "a = a": {
-        InputPath: "$.a",
-        Next: 'a = "hello" + {place: "world"}',
-        ResultPath: "$.a",
-        Type: "Pass",
-      },
-      'a = "hello" + {place: "world"}': {
-        Next: 'a = "hello" + ["world"]',
-        Parameters: "hello[object Object]",
-        ResultPath: "$.a",
-        Type: "Pass",
-      },
-      'a = "hello" + ["world"]': {
-        Next: "return a",
-        Parameters: "helloworld",
-        ResultPath: "$.a",
-        Type: "Pass",
-      },
-      "return a": {
-        End: true,
-        OutputPath: "$.a",
-        Type: "Pass",
-      },
-    },
-  });
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
 test("task(any)", () => {
@@ -487,278 +244,7 @@ test("task(any)", () => {
     task("hello" + ["world"]);
   }).definition;
 
-  expect(definition).toEqual({
-    StartAt: "task(null)",
-    States: {
-      "return null": {
-        End: true,
-        OutputPath: "$.null",
-        Parameters: {
-          null: null,
-        },
-        Type: "Pass",
-      },
-      'task("hello" + " world")': {
-        Next: 'task("hello" + 1)',
-        Parameters: {
-          FunctionName: task.resource.functionName,
-          Payload: "hello world",
-        },
-        Resource: "arn:aws:states:::lambda:invoke",
-        ResultPath: null,
-        ResultSelector: "$.Payload",
-        Type: "Task",
-      },
-      'task("hello" + 1)': {
-        Next: 'task(1 + "hello")',
-        Parameters: {
-          FunctionName: task.resource.functionName,
-          Payload: "hello1",
-        },
-        Resource: "arn:aws:states:::lambda:invoke",
-        ResultPath: null,
-        ResultSelector: "$.Payload",
-        Type: "Task",
-      },
-      'task("hello" + null)': {
-        Next: "task([null])",
-        Parameters: {
-          FunctionName: task.resource.functionName,
-          Payload: "hellonull",
-        },
-        Resource: "arn:aws:states:::lambda:invoke",
-        ResultPath: null,
-        ResultSelector: "$.Payload",
-        Type: "Task",
-      },
-      'task("hello" + true)': {
-        Next: 'task(false + "hello")',
-        Parameters: {
-          FunctionName: task.resource.functionName,
-          Payload: "hellotrue",
-        },
-        Resource: "arn:aws:states:::lambda:invoke",
-        ResultPath: null,
-        ResultSelector: "$.Payload",
-        Type: "Task",
-      },
-      'task("hello")': {
-        Next: 'task("hello" + " world")',
-        Parameters: {
-          FunctionName: task.resource.functionName,
-          Payload: "hello",
-        },
-        Resource: "arn:aws:states:::lambda:invoke",
-        ResultPath: null,
-        ResultSelector: "$.Payload",
-        Type: "Task",
-      },
-      "task(-1)": {
-        Next: "task(-100)",
-        Parameters: {
-          FunctionName: task.resource.functionName,
-          Payload: -1,
-        },
-        Resource: "arn:aws:states:::lambda:invoke",
-        ResultPath: null,
-        ResultSelector: "$.Payload",
-        Type: "Task",
-      },
-      "task(-100)": {
-        Next: "task(1 + 2)",
-        Parameters: {
-          FunctionName: task.resource.functionName,
-          Payload: -100,
-        },
-        Resource: "arn:aws:states:::lambda:invoke",
-        ResultPath: null,
-        ResultSelector: "$.Payload",
-        Type: "Task",
-      },
-      "task(0)": {
-        Next: "task(-1)",
-        Parameters: {
-          FunctionName: task.resource.functionName,
-          Payload: 0,
-        },
-        Resource: "arn:aws:states:::lambda:invoke",
-        ResultPath: null,
-        ResultSelector: "$.Payload",
-        Type: "Task",
-      },
-      'task(1 + "hello")': {
-        Next: 'task("hello" + true)',
-        Parameters: {
-          FunctionName: task.resource.functionName,
-          Payload: "1hello",
-        },
-        Resource: "arn:aws:states:::lambda:invoke",
-        ResultPath: null,
-        ResultSelector: "$.Payload",
-        Type: "Task",
-      },
-      "task(1 + 2)": {
-        Next: 'task("hello")',
-        Parameters: {
-          FunctionName: task.resource.functionName,
-          Payload: 3,
-        },
-        Resource: "arn:aws:states:::lambda:invoke",
-        ResultPath: null,
-        ResultSelector: "$.Payload",
-        Type: "Task",
-      },
-      "task([-1])": {
-        Next: "task([true])",
-        Parameters: {
-          FunctionName: task.resource.functionName,
-          Payload: [-1],
-        },
-        Resource: "arn:aws:states:::lambda:invoke",
-        ResultPath: null,
-        ResultSelector: "$.Payload",
-        Type: "Task",
-      },
-      "task([1])": {
-        Next: "task([-1])",
-        Parameters: {
-          FunctionName: task.resource.functionName,
-          Payload: [1],
-        },
-        Resource: "arn:aws:states:::lambda:invoke",
-        ResultPath: null,
-        ResultSelector: "$.Payload",
-        Type: "Task",
-      },
-      "task([null])": {
-        Next: "task([1])",
-        Parameters: {
-          FunctionName: task.resource.functionName,
-          Payload: [null],
-        },
-        Resource: "arn:aws:states:::lambda:invoke",
-        ResultPath: null,
-        ResultSelector: "$.Payload",
-        Type: "Task",
-      },
-      "task([true])": {
-        Next: 'task([{key: "value"}])',
-        Parameters: {
-          FunctionName: task.resource.functionName,
-          Payload: [true],
-        },
-        Resource: "arn:aws:states:::lambda:invoke",
-        ResultPath: null,
-        ResultSelector: "$.Payload",
-        Type: "Task",
-      },
-      'task([{key: "value"}])': {
-        Next: 'task({key: "value"})',
-        Parameters: {
-          FunctionName: task.resource.functionName,
-          Payload: [
-            {
-              key: "value",
-            },
-          ],
-        },
-        Resource: "arn:aws:states:::lambda:invoke",
-        ResultPath: null,
-        ResultSelector: "$.Payload",
-        Type: "Task",
-      },
-      'task(false + "hello")': {
-        Next: 'task(null + "hello")',
-        Parameters: {
-          FunctionName: task.resource.functionName,
-          Payload: "falsehello",
-        },
-        Resource: "arn:aws:states:::lambda:invoke",
-        ResultPath: null,
-        ResultSelector: "$.Payload",
-        Type: "Task",
-      },
-      "task(false)": {
-        Next: "task(0)",
-        Parameters: {
-          FunctionName: task.resource.functionName,
-          Payload: false,
-        },
-        Resource: "arn:aws:states:::lambda:invoke",
-        ResultPath: null,
-        ResultSelector: "$.Payload",
-        Type: "Task",
-      },
-      'task(null + "hello")': {
-        Next: 'task("hello" + null)',
-        Parameters: {
-          FunctionName: task.resource.functionName,
-          Payload: "nullhello",
-        },
-        Resource: "arn:aws:states:::lambda:invoke",
-        ResultPath: null,
-        ResultSelector: "$.Payload",
-        Type: "Task",
-      },
-      "task(null)": {
-        Next: "task(true)",
-        Parameters: {
-          FunctionName: task.resource.functionName,
-          Payload: null,
-        },
-        Resource: "arn:aws:states:::lambda:invoke",
-        ResultPath: null,
-        ResultSelector: "$.Payload",
-        Type: "Task",
-      },
-      "task(true)": {
-        Next: "task(false)",
-        Parameters: {
-          FunctionName: task.resource.functionName,
-          Payload: true,
-        },
-        Resource: "arn:aws:states:::lambda:invoke",
-        ResultPath: null,
-        ResultSelector: "$.Payload",
-        Type: "Task",
-      },
-      'task({key: "value"})': {
-        Next: 'task("hello" + {place: "world"})',
-        Parameters: {
-          FunctionName: task.resource.functionName,
-          Payload: {
-            key: "value",
-          },
-        },
-        Resource: "arn:aws:states:::lambda:invoke",
-        ResultPath: null,
-        ResultSelector: "$.Payload",
-        Type: "Task",
-      },
-      'task("hello" + {place: "world"})': {
-        Next: 'task("hello" + ["world"])',
-        Parameters: {
-          FunctionName: task.resource.functionName,
-          Payload: "hello[object Object]",
-        },
-        Resource: "arn:aws:states:::lambda:invoke",
-        ResultPath: null,
-        ResultSelector: "$.Payload",
-        Type: "Task",
-      },
-      'task("hello" + ["world"])': {
-        Next: "return null",
-        Parameters: {
-          FunctionName: task.resource.functionName,
-          Payload: "helloworld",
-        },
-        Resource: "arn:aws:states:::lambda:invoke",
-        ResultPath: null,
-        ResultSelector: "$.Payload",
-        Type: "Task",
-      },
-    },
-  });
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
 test("spread constant array and object", () => {
@@ -775,24 +261,7 @@ test("spread constant array and object", () => {
     };
   }).definition;
 
-  expect(definition).toEqual({
-    StartAt:
-      'return {array: [0, ...array, 3], object: {key: "value", ...object}}',
-    States: {
-      'return {array: [0, ...array, 3], object: {key: "value", ...object}}': {
-        End: true,
-        Parameters: {
-          array: [0, 1, 2, 3],
-          object: {
-            hello: "world",
-            key: "value",
-          },
-        },
-        ResultPath: "$",
-        Type: "Pass",
-      },
-    },
-  });
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
 test("return void", () => {
@@ -801,20 +270,7 @@ test("return void", () => {
     return;
   }).definition;
 
-  const expected: StateMachine<States> = {
-    StartAt: "return null",
-    States: {
-      "return null": {
-        Type: "Pass",
-        End: true,
-        Parameters: {
-          null: null,
-        },
-        OutputPath: "$.null",
-      },
-    },
-  };
-  expect(definition).toEqual(expected);
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
 test("conditionally return void", () => {
@@ -829,38 +285,7 @@ test("conditionally return void", () => {
     }
   ).definition;
 
-  expect(definition).toEqual({
-    StartAt: 'if(input.id == "hello")',
-    States: {
-      'if(input.id == "hello")': {
-        Choices: [
-          {
-            Next: "return null",
-            StringEquals: "hello",
-            Variable: "$.id",
-          },
-        ],
-        Default: "return null 1",
-        Type: "Choice",
-      },
-      "return null": {
-        End: true,
-        OutputPath: "$.null",
-        Parameters: {
-          null: null,
-        },
-        Type: "Pass",
-      },
-      "return null 1": {
-        End: true,
-        OutputPath: "$.null",
-        Parameters: {
-          null: null,
-        },
-        Type: "Pass",
-      },
-    },
-  });
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
 test("if-else", () => {
@@ -877,34 +302,7 @@ test("if-else", () => {
     }
   ).definition;
 
-  expect(definition).toEqual({
-    StartAt: 'if(input.id == "hello")',
-    States: {
-      'if(input.id == "hello")': {
-        Choices: [
-          {
-            Next: 'return "hello"',
-            StringEquals: "hello",
-            Variable: "$.id",
-          },
-        ],
-        Default: 'return "world"',
-        Type: "Choice",
-      },
-      'return "world"': {
-        End: true,
-        Result: "world",
-        ResultPath: "$",
-        Type: "Pass",
-      },
-      'return "hello"': {
-        End: true,
-        Result: "hello",
-        ResultPath: "$",
-        Type: "Pass",
-      },
-    },
-  });
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
 test("if (typeof x === ??)", () => {
@@ -930,131 +328,7 @@ test("if (typeof x === ??)", () => {
     }
   ).definition;
 
-  expect(definition).toEqual({
-    StartAt: "if(input.id == undefined)",
-    States: {
-      "if(input.id == undefined)": {
-        Choices: [
-          {
-            Next: 'return "null"',
-            Or: [
-              {
-                IsPresent: false,
-                Variable: "$.id",
-              },
-              {
-                IsNull: true,
-                Variable: "$.id",
-              },
-            ],
-          },
-          {
-            IsPresent: false,
-            Next: 'return "undefined"',
-            Variable: "$.id",
-          },
-          {
-            And: [
-              {
-                IsPresent: true,
-                Variable: "$.id",
-              },
-              {
-                IsString: true,
-                Variable: "$.id",
-              },
-            ],
-            Next: 'return "string"',
-          },
-          {
-            And: [
-              {
-                IsPresent: true,
-                Variable: "$.id",
-              },
-              {
-                IsBoolean: true,
-                Variable: "$.id",
-              },
-            ],
-            Next: 'return "boolean"',
-          },
-          {
-            And: [
-              {
-                IsPresent: true,
-                Variable: "$.id",
-              },
-              {
-                IsNumeric: true,
-                Variable: "$.id",
-              },
-            ],
-            Next: 'return "number"',
-          },
-          {
-            And: [
-              {
-                IsPresent: true,
-                Variable: "$.id",
-              },
-              {
-                IsNumeric: true,
-                Variable: "$.id",
-              },
-            ],
-            Next: 'return "bigint"',
-          },
-        ],
-        Default: "return null",
-        Type: "Choice",
-      },
-      'return "bigint"': {
-        End: true,
-        Result: "bigint",
-        ResultPath: "$",
-        Type: "Pass",
-      },
-      'return "boolean"': {
-        End: true,
-        Result: "boolean",
-        ResultPath: "$",
-        Type: "Pass",
-      },
-      'return "null"': {
-        End: true,
-        Result: "null",
-        ResultPath: "$",
-        Type: "Pass",
-      },
-      'return "number"': {
-        End: true,
-        Result: "number",
-        ResultPath: "$",
-        Type: "Pass",
-      },
-      'return "string"': {
-        End: true,
-        Result: "string",
-        ResultPath: "$",
-        Type: "Pass",
-      },
-      'return "undefined"': {
-        End: true,
-        Result: "undefined",
-        ResultPath: "$",
-        Type: "Pass",
-      },
-      "return null": {
-        End: true,
-        OutputPath: "$.null",
-        Parameters: {
-          null: null,
-        },
-        Type: "Pass",
-      },
-    },
-  });
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
 let stack: Stack;
@@ -1085,39 +359,15 @@ test("put an event bus event", () => {
     }
   ).definition;
 
-  expect(definition).toEqual({
-    StartAt:
-      'bus.putEvents({detail-type: "someEvent", source: "sfnTest", detail: {value:',
-    States: {
-      'bus.putEvents({detail-type: "someEvent", source: "sfnTest", detail: {value:':
-        {
-          Type: "Task",
-          Resource: "arn:aws:states:::events:putEvents",
-          Next: "return null",
-          Parameters: {
-            Entries: [
-              {
-                Detail: {
-                  "value.$": "$.id",
-                },
-                DetailType: "someEvent",
-                EventBusName: bus.bus.eventBusArn,
-                Source: "sfnTest",
-              },
-            ],
-          },
-          ResultPath: null,
-        },
-      "return null": {
-        End: true,
-        OutputPath: "$.null",
-        Parameters: {
-          null: null,
-        },
-        Type: "Pass",
-      },
+  expectTaskToMatch(
+    definition,
+    {
+      Parameters: { Entries: [{ EventBusName: bus.eventBusArn }] },
     },
-  });
+    "bus.putEvents"
+  );
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
 test("put multiple event bus events", () => {
@@ -1153,48 +403,7 @@ test("put multiple event bus events", () => {
     }
   ).definition;
 
-  expect(definition).toEqual({
-    StartAt:
-      'bus.putEvents({detail-type: "someEvent", source: "sfnTest", detail: {value:',
-    States: {
-      'bus.putEvents({detail-type: "someEvent", source: "sfnTest", detail: {value:':
-        {
-          Type: "Task",
-          Resource: "arn:aws:states:::events:putEvents",
-          Next: "return null",
-          Parameters: {
-            Entries: [
-              {
-                Detail: {
-                  "value.$": "$.id",
-                },
-                DetailType: "someEvent",
-                EventBusName: bus.bus.eventBusArn,
-                Source: "sfnTest",
-              },
-              {
-                Detail: {
-                  constant: "hi",
-                  "value.$": "$.id",
-                },
-                DetailType: "someOtherEvent",
-                EventBusName: bus.bus.eventBusArn,
-                Source: "sfnTest",
-              },
-            ],
-          },
-          ResultPath: null,
-        },
-      "return null": {
-        End: true,
-        OutputPath: "$.null",
-        Parameters: {
-          null: null,
-        },
-        Type: "Pass",
-      },
-    },
-  });
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
 test("if (typeof x !== ??)", () => {
@@ -1219,131 +428,7 @@ test("if (typeof x !== ??)", () => {
     }
   ).definition;
 
-  expect(definition).toEqual({
-    StartAt: "if(input.id != undefined)",
-    States: {
-      "if(input.id != undefined)": {
-        Choices: [
-          {
-            And: [
-              {
-                IsPresent: true,
-                Variable: "$.id",
-              },
-              {
-                IsNull: false,
-                Variable: "$.id",
-              },
-            ],
-            Next: 'return "null"',
-          },
-          {
-            IsPresent: true,
-            Next: 'return "undefined"',
-            Variable: "$.id",
-          },
-          {
-            Next: 'return "string"',
-            Or: [
-              {
-                IsPresent: false,
-                Variable: "$.id",
-              },
-              {
-                IsString: false,
-                Variable: "$.id",
-              },
-            ],
-          },
-          {
-            Next: 'return "boolean"',
-            Or: [
-              {
-                IsPresent: false,
-                Variable: "$.id",
-              },
-              {
-                IsBoolean: false,
-                Variable: "$.id",
-              },
-            ],
-          },
-          {
-            Next: 'return "number"',
-            Or: [
-              {
-                IsPresent: false,
-                Variable: "$.id",
-              },
-              {
-                IsNumeric: false,
-                Variable: "$.id",
-              },
-            ],
-          },
-          {
-            Next: 'return "bigint"',
-            Or: [
-              {
-                IsPresent: false,
-                Variable: "$.id",
-              },
-              {
-                IsNumeric: false,
-                Variable: "$.id",
-              },
-            ],
-          },
-        ],
-        Default: "return null",
-        Type: "Choice",
-      },
-      'return "bigint"': {
-        End: true,
-        Result: "bigint",
-        ResultPath: "$",
-        Type: "Pass",
-      },
-      'return "boolean"': {
-        End: true,
-        Result: "boolean",
-        ResultPath: "$",
-        Type: "Pass",
-      },
-      'return "null"': {
-        End: true,
-        Result: "null",
-        ResultPath: "$",
-        Type: "Pass",
-      },
-      'return "number"': {
-        End: true,
-        Result: "number",
-        ResultPath: "$",
-        Type: "Pass",
-      },
-      'return "string"': {
-        End: true,
-        Result: "string",
-        ResultPath: "$",
-        Type: "Pass",
-      },
-      'return "undefined"': {
-        End: true,
-        Result: "undefined",
-        ResultPath: "$",
-        Type: "Pass",
-      },
-      "return null": {
-        End: true,
-        OutputPath: "$.null",
-        Parameters: {
-          null: null,
-        },
-        Type: "Pass",
-      },
-    },
-  });
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
 test("if-else-if", () => {
@@ -1361,47 +446,7 @@ test("if-else-if", () => {
     }
   ).definition;
 
-  expect(definition).toEqual({
-    StartAt: 'if(input.id == "hello")',
-    States: {
-      'if(input.id == "hello")': {
-        Choices: [
-          {
-            Next: 'return "hello"',
-            StringEquals: "hello",
-            Variable: "$.id",
-          },
-          {
-            Next: 'return "world"',
-            StringEquals: "world",
-            Variable: "$.id",
-          },
-        ],
-        Default: "return null",
-        Type: "Choice",
-      },
-      'return "hello"': {
-        End: true,
-        Result: "hello",
-        ResultPath: "$",
-        Type: "Pass",
-      },
-      'return "world"': {
-        End: true,
-        Result: "world",
-        ResultPath: "$",
-        Type: "Pass",
-      },
-      "return null": {
-        Type: "Pass",
-        End: true,
-        Parameters: {
-          null: null,
-        },
-        OutputPath: "$.null",
-      },
-    },
-  });
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
 test("for-loop and do nothing", () => {
@@ -1417,44 +462,7 @@ test("for-loop and do nothing", () => {
     }
   ).definition;
 
-  const expected: StateMachine<States> = {
-    StartAt: "for(item of input.items)",
-    States: {
-      "for(item of input.items)": {
-        ItemsPath: "$.items",
-        Iterator: {
-          StartAt: "a = item",
-          States: {
-            "a = item": {
-              End: true,
-              OutputPath: "$.result",
-              Parameters: {
-                "result.$": "$.item",
-              },
-              ResultPath: "$.a",
-              Type: "Pass",
-            },
-          },
-        },
-        MaxConcurrency: 1,
-        Next: "return null",
-        Parameters: {
-          "item.$": "$$.Map.Item.Value",
-        },
-        ResultPath: null,
-        Type: "Map",
-      },
-      "return null": {
-        Type: "Pass",
-        End: true,
-        Parameters: {
-          null: null,
-        },
-        OutputPath: "$.null",
-      },
-    },
-  };
-  expect(definition).toEqual(expected);
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
 test("for i in items, items[i]", () => {
@@ -1470,45 +478,7 @@ test("for i in items, items[i]", () => {
     }
   ).definition;
 
-  expect(definition).toEqual({
-    StartAt: "for(i in input.items)",
-    States: {
-      "for(i in input.items)": {
-        ItemsPath: "$.items",
-        Iterator: {
-          StartAt: "a = items[i]",
-          States: {
-            "a = items[i]": {
-              End: true,
-              OutputPath: "$.result",
-              Parameters: {
-                "result.$": "$.0_i",
-              },
-              ResultPath: "$.a",
-              Type: "Pass",
-            },
-          },
-        },
-        MaxConcurrency: 1,
-        Next: "return null",
-        Parameters: {
-          // special prefixed value so that we can index the
-          "0_i.$": "$$.Map.Item.Value",
-          "i.$": "$$.Map.Item.Index",
-        },
-        ResultPath: null,
-        Type: "Map",
-      },
-      "return null": {
-        End: true,
-        OutputPath: "$.null",
-        Parameters: {
-          null: null,
-        },
-        Type: "Pass",
-      },
-    },
-  });
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
 test("return a single Lambda Function call", () => {
@@ -1520,24 +490,13 @@ test("return a single Lambda Function call", () => {
     return getPerson({ id: input.id });
   }).definition;
 
-  expect(definition).toEqual({
-    StartAt: "return getPerson({id: input.id})",
-    States: {
-      "return getPerson({id: input.id})": {
-        Type: "Task",
-        Resource: "arn:aws:states:::lambda:invoke",
-        End: true,
-        ResultPath: "$",
-        ResultSelector: "$.Payload",
-        Parameters: {
-          FunctionName: getPerson.resource.functionName,
-          Payload: {
-            "id.$": "$.id",
-          },
-        },
-      },
+  expectTaskToMatch(definition, {
+    Parameters: {
+      FunctionName: getPerson.resource.functionName,
     },
   });
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
 test("task(-1)", () => {
@@ -1550,22 +509,7 @@ test("task(-1)", () => {
     }
   ).definition;
 
-  expect(definition).toEqual({
-    StartAt: "return task(-1)",
-    States: {
-      "return task(-1)": {
-        Type: "Task",
-        Resource: "arn:aws:states:::lambda:invoke",
-        End: true,
-        ResultPath: "$",
-        ResultSelector: "$.Payload",
-        Parameters: {
-          FunctionName: task.resource.functionName,
-          Payload: -1,
-        },
-      },
-    },
-  });
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
 test("task(input.list[-1])", () => {
@@ -1578,22 +522,7 @@ test("task(input.list[-1])", () => {
     }
   ).definition;
 
-  expect(definition).toEqual({
-    StartAt: "return task(input.list[-1])",
-    States: {
-      "return task(input.list[-1])": {
-        Type: "Task",
-        Resource: "arn:aws:states:::lambda:invoke",
-        End: true,
-        ResultPath: "$",
-        ResultSelector: "$.Payload",
-        Parameters: {
-          FunctionName: task.resource.functionName,
-          "Payload.$": "$.list[-1]",
-        },
-      },
-    },
-  });
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
 test("call Lambda Function, store as variable, return variable", () => {
@@ -1606,29 +535,7 @@ test("call Lambda Function, store as variable, return variable", () => {
     return person;
   }).definition;
 
-  expect(definition).toEqual({
-    StartAt: "person = getPerson({id: input.id})",
-    States: {
-      "person = getPerson({id: input.id})": {
-        Type: "Task",
-        Resource: "arn:aws:states:::lambda:invoke",
-        ResultPath: "$.person",
-        ResultSelector: "$.Payload",
-        Parameters: {
-          FunctionName: getPerson.resource.functionName,
-          Payload: {
-            "id.$": "$.id",
-          },
-        },
-        Next: "return person",
-      },
-      "return person": {
-        Type: "Pass",
-        OutputPath: "$.person",
-        End: true,
-      },
-    },
-  });
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
 test("return AWS.DynamoDB.GetItem", () => {
@@ -1656,65 +563,7 @@ test("return AWS.DynamoDB.GetItem", () => {
     };
   }).definition;
 
-  const expected: StateMachine<States> = {
-    StartAt:
-      "person = $AWS.DynamoDB.GetItem({TableName: personTable, Key: {id: {S: input",
-    States: {
-      "person = $AWS.DynamoDB.GetItem({TableName: personTable, Key: {id: {S: input":
-        {
-          Next: "if(person.Item == undefined)",
-          ResultPath: "$.person",
-          Resource: "arn:aws:states:::aws-sdk:dynamodb:getItem",
-          Parameters: {
-            TableName: personTable.resource.tableName,
-            Key: {
-              id: {
-                "S.$": "$.id",
-              },
-            },
-          },
-
-          Type: "Task",
-        },
-      "if(person.Item == undefined)": {
-        Choices: [
-          {
-            Or: [
-              {
-                Variable: "$.person.Item",
-                IsPresent: false,
-              },
-              {
-                Variable: "$.person.Item",
-                IsNull: true,
-              },
-            ],
-            Next: "return undefined",
-          },
-        ],
-        Default: "return {id: person.Item.id.S, name: person.Item.name.S}",
-        Type: "Choice",
-      },
-      "return undefined": {
-        Type: "Pass",
-        End: true,
-        Parameters: {
-          null: null,
-        },
-        OutputPath: "$.null",
-      },
-      "return {id: person.Item.id.S, name: person.Item.name.S}": {
-        End: true,
-        Parameters: {
-          "id.$": "$.person.Item.id.S",
-          "name.$": "$.person.Item.name.S",
-        },
-        ResultPath: "$",
-        Type: "Pass",
-      },
-    },
-  };
-  expect(definition).toEqual(expected);
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
 test("call AWS.DynamoDB.GetItem, then Lambda and return LiteralExpr", () => {
@@ -1748,81 +597,7 @@ test("call AWS.DynamoDB.GetItem, then Lambda and return LiteralExpr", () => {
     };
   }).definition;
 
-  const expected: StateMachine<States> = {
-    StartAt:
-      "person = $AWS.DynamoDB.GetItem({TableName: personTable, Key: {id: {S: input",
-    States: {
-      "person = $AWS.DynamoDB.GetItem({TableName: personTable, Key: {id: {S: input":
-        {
-          Next: "if(person.Item == undefined)",
-          ResultPath: "$.person",
-          Parameters: {
-            Key: {
-              id: {
-                "S.$": "$.id",
-              },
-            },
-            TableName: personTable.resource.tableName,
-          },
-          Resource: "arn:aws:states:::aws-sdk:dynamodb:getItem",
-          Type: "Task",
-        },
-      "if(person.Item == undefined)": {
-        Choices: [
-          {
-            Or: [
-              {
-                Variable: "$.person.Item",
-                IsPresent: false,
-              },
-              {
-                Variable: "$.person.Item",
-                IsNull: true,
-              },
-            ],
-            Next: "return undefined",
-          },
-        ],
-        Default:
-          "score = computeScore({id: person.Item.id.S, name: person.Item.name.S})",
-        Type: "Choice",
-      },
-      "return undefined": {
-        Type: "Pass",
-        End: true,
-        Parameters: {
-          null: null,
-        },
-        OutputPath: "$.null",
-      },
-      "score = computeScore({id: person.Item.id.S, name: person.Item.name.S})":
-        {
-          Next: "return {id: person.Item.id.S, name: person.Item.name.S, score: score}",
-          ResultPath: "$.score",
-          ResultSelector: "$.Payload",
-          Parameters: {
-            FunctionName: computeScore.resource.functionName,
-            Payload: {
-              "id.$": "$.person.Item.id.S",
-              "name.$": "$.person.Item.name.S",
-            },
-          },
-          Resource: "arn:aws:states:::lambda:invoke",
-          Type: "Task",
-        },
-      "return {id: person.Item.id.S, name: person.Item.name.S, score: score}": {
-        End: true,
-        ResultPath: "$",
-        Parameters: {
-          "id.$": "$.person.Item.id.S",
-          "name.$": "$.person.Item.name.S",
-          "score.$": "$.score",
-        },
-        Type: "Pass",
-      },
-    },
-  };
-  expect(definition).toEqual(expected);
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
 test("for-loop over a list literal", () => {
@@ -1841,55 +616,7 @@ test("for-loop over a list literal", () => {
     }
   ).definition;
 
-  const expected: StateMachine<States> = {
-    StartAt: 'people = ["sam", "brendan"]',
-    States: {
-      'people = ["sam", "brendan"]': {
-        Type: "Pass",
-        ResultPath: "$.people",
-        Result: ["sam", "brendan"],
-        Next: "for(name of people)",
-      },
-      "for(name of people)": {
-        Type: "Map",
-        ItemsPath: "$.people",
-        ResultPath: null,
-        MaxConcurrency: 1,
-        Next: "return null",
-        Parameters: {
-          "name.$": "$$.Map.Item.Value",
-        },
-        Iterator: {
-          StartAt: "computeScore({id: input.id, name: name})",
-          States: {
-            "computeScore({id: input.id, name: name})": {
-              Type: "Task",
-              ResultPath: null,
-              End: true,
-              ResultSelector: "$.Payload",
-              Parameters: {
-                FunctionName: computeScore.resource.functionName,
-                Payload: {
-                  "id.$": "$.id",
-                  "name.$": "$.name",
-                },
-              },
-              Resource: "arn:aws:states:::lambda:invoke",
-            },
-          },
-        },
-      },
-      "return null": {
-        Type: "Pass",
-        End: true,
-        Parameters: {
-          null: null,
-        },
-        OutputPath: "$.null",
-      },
-    },
-  };
-  expect(definition).toEqual(expected);
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
 test("conditionally call DynamoDB and then void", () => {
@@ -1911,46 +638,17 @@ test("conditionally call DynamoDB and then void", () => {
     }
   ).definition;
 
-  const expected: StateMachine<States> = {
-    StartAt: 'if(input.id == "hello")',
-    States: {
-      'if(input.id == "hello")': {
-        Choices: [
-          {
-            Next: "$AWS.DynamoDB.GetItem({TableName: personTable, Key: {id: {S: input.id}}})",
-            StringEquals: "hello",
-            Variable: "$.id",
-          },
-        ],
-        Default: "return null",
-        Type: "Choice",
-      },
-      "$AWS.DynamoDB.GetItem({TableName: personTable, Key: {id: {S: input.id}}})":
-        {
-          Next: "return null",
-          Parameters: {
-            Key: {
-              id: {
-                "S.$": "$.id",
-              },
-            },
-            TableName: personTable.resource.tableName,
-          },
-          Resource: "arn:aws:states:::aws-sdk:dynamodb:getItem",
-          ResultPath: null,
-          Type: "Task",
-        },
-      "return null": {
-        Type: "Pass",
-        End: true,
-        Parameters: {
-          null: null,
-        },
-        OutputPath: "$.null",
+  expectTaskToMatch(
+    definition,
+    {
+      Parameters: {
+        TableName: personTable.resource.tableName,
       },
     },
-  };
-  expect(definition).toEqual(expected);
+    "$AWS.DynamoDB.GetItem"
+  );
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
 test("waitFor literal number of seconds", () => {
@@ -1960,24 +658,7 @@ test("waitFor literal number of seconds", () => {
     $SFN.waitFor(1);
   }).definition;
 
-  expect(definition).toEqual({
-    StartAt: "$SFN.waitFor(1)",
-    States: {
-      "$SFN.waitFor(1)": {
-        Next: "return null",
-        Seconds: 1,
-        Type: "Wait",
-      },
-      "return null": {
-        End: true,
-        OutputPath: "$.null",
-        Parameters: {
-          null: null,
-        },
-        Type: "Pass",
-      },
-    },
-  });
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
 test("waitFor reference number of seconds", () => {
@@ -1990,24 +671,7 @@ test("waitFor reference number of seconds", () => {
     $SFN.waitFor(input.seconds);
   }).definition;
 
-  expect(definition).toEqual({
-    StartAt: "$SFN.waitFor(input.seconds)",
-    States: {
-      "$SFN.waitFor(input.seconds)": {
-        Next: "return null",
-        SecondsPath: "$.seconds",
-        Type: "Wait",
-      },
-      "return null": {
-        End: true,
-        OutputPath: "$.null",
-        Parameters: {
-          null: null,
-        },
-        Type: "Pass",
-      },
-    },
-  });
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 test("waitFor literal timestamp", () => {
   const { stack } = initStepFunctionApp();
@@ -2016,24 +680,7 @@ test("waitFor literal timestamp", () => {
     $SFN.waitUntil("2022-08-01T00:00:00Z");
   }).definition;
 
-  expect(definition).toEqual({
-    StartAt: '$SFN.waitUntil("2022-08-01T00:00:00Z")',
-    States: {
-      '$SFN.waitUntil("2022-08-01T00:00:00Z")': {
-        Next: "return null",
-        Timestamp: "2022-08-01T00:00:00Z",
-        Type: "Wait",
-      },
-      "return null": {
-        End: true,
-        OutputPath: "$.null",
-        Parameters: {
-          null: null,
-        },
-        Type: "Pass",
-      },
-    },
-  });
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
 test("waitUntil reference timestamp", () => {
@@ -2047,24 +694,7 @@ test("waitUntil reference timestamp", () => {
     }
   ).definition;
 
-  expect(definition).toEqual({
-    StartAt: "$SFN.waitUntil(input.until)",
-    States: {
-      "$SFN.waitUntil(input.until)": {
-        Next: "return null",
-        TimestampPath: "$.until",
-        Type: "Wait",
-      },
-      "return null": {
-        End: true,
-        OutputPath: "$.null",
-        Parameters: {
-          null: null,
-        },
-        Type: "Pass",
-      },
-    },
-  });
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
 test("throw new Error", () => {
@@ -2074,16 +704,7 @@ test("throw new Error", () => {
     throw new Error("cause");
   }).definition;
 
-  expect(definition).toEqual({
-    StartAt: 'throw new Error("cause")',
-    States: {
-      'throw new Error("cause")': {
-        Type: "Fail",
-        Error: "Error",
-        Cause: '{"message":"cause"}',
-      },
-    },
-  });
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
 test("throw Error", () => {
@@ -2093,16 +714,7 @@ test("throw Error", () => {
     throw Error("cause");
   }).definition;
 
-  expect(definition).toEqual({
-    StartAt: 'throw Error("cause")',
-    States: {
-      'throw Error("cause")': {
-        Type: "Fail",
-        Error: "Error",
-        Cause: '{"message":"cause"}',
-      },
-    },
-  });
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
 class CustomError {
@@ -2116,16 +728,7 @@ test("throw new CustomError", () => {
     throw new CustomError("cause");
   }).definition;
 
-  expect(definition).toEqual({
-    StartAt: 'throw new CustomError("cause")',
-    States: {
-      'throw new CustomError("cause")': {
-        Type: "Fail",
-        Error: "CustomError",
-        Cause: '{"property":"cause"}',
-      },
-    },
-  });
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
 test("try, throw Error('error'), empty catch", () => {
@@ -2137,27 +740,7 @@ test("try, throw Error('error'), empty catch", () => {
     } catch {}
   }).definition;
 
-  expect(definition).toEqual({
-    StartAt: 'throw Error("cause")',
-    States: {
-      'throw Error("cause")': {
-        Next: "return null",
-        Result: {
-          message: "cause",
-        },
-        ResultPath: null,
-        Type: "Pass",
-      },
-      "return null": {
-        End: true,
-        OutputPath: "$.null",
-        Parameters: {
-          null: null,
-        },
-        Type: "Pass",
-      },
-    },
-  });
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
 test("try, throw, empty catch", () => {
@@ -2169,27 +752,7 @@ test("try, throw, empty catch", () => {
     } catch {}
   }).definition;
 
-  expect(definition).toEqual({
-    StartAt: 'throw new CustomError("cause")',
-    States: {
-      'throw new CustomError("cause")': {
-        Next: "return null",
-        Result: {
-          property: "cause",
-        },
-        ResultPath: null,
-        Type: "Pass",
-      },
-      "return null": {
-        End: true,
-        OutputPath: "$.null",
-        Parameters: {
-          null: null,
-        },
-        Type: "Pass",
-      },
-    },
-  });
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
 test("try, task, empty catch", () => {
@@ -2204,40 +767,7 @@ test("try, task, empty catch", () => {
     } catch {}
   }).definition;
 
-  expect(definition).toEqual({
-    StartAt: 'computeScore({id: "id", name: "name"})',
-    States: {
-      'computeScore({id: "id", name: "name"})': {
-        Catch: [
-          {
-            ErrorEquals: ["States.ALL"],
-            Next: "return null",
-            ResultPath: null,
-          },
-        ],
-        Next: "return null",
-        ResultSelector: "$.Payload",
-        Parameters: {
-          FunctionName: computeScore.resource.functionName,
-          Payload: {
-            id: "id",
-            name: "name",
-          },
-        },
-        Resource: "arn:aws:states:::lambda:invoke",
-        ResultPath: null,
-        Type: "Task",
-      },
-      "return null": {
-        End: true,
-        OutputPath: "$.null",
-        Parameters: {
-          null: null,
-        },
-        Type: "Pass",
-      },
-    },
-  });
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
 test("catch and throw new Error", () => {
@@ -2251,24 +781,7 @@ test("catch and throw new Error", () => {
     }
   }).definition;
 
-  expect(definition).toEqual({
-    StartAt: 'throw new Error("cause")',
-    States: {
-      'throw new Error("cause")': {
-        Type: "Pass",
-        Result: {
-          message: "cause",
-        },
-        ResultPath: "$.err",
-        Next: 'throw new CustomError("custom cause")',
-      },
-      'throw new CustomError("custom cause")': {
-        Type: "Fail",
-        Error: "CustomError",
-        Cause: '{"property":"custom cause"}',
-      },
-    },
-  });
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
 test("catch and throw Error", () => {
@@ -2282,24 +795,7 @@ test("catch and throw Error", () => {
     }
   }).definition;
 
-  expect(definition).toEqual({
-    StartAt: 'throw Error("cause")',
-    States: {
-      'throw Error("cause")': {
-        Type: "Pass",
-        Result: {
-          message: "cause",
-        },
-        ResultPath: "$.err",
-        Next: 'throw new CustomError("custom cause")',
-      },
-      'throw new CustomError("custom cause")': {
-        Type: "Fail",
-        Error: "CustomError",
-        Cause: '{"property":"custom cause"}',
-      },
-    },
-  });
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
 test("try-catch with inner return and no catch variable", () => {
@@ -2317,45 +813,7 @@ test("try-catch with inner return and no catch variable", () => {
     }
   }).definition;
 
-  expect(definition).toEqual({
-    StartAt: 'computeScore({id: "id", name: "name"})',
-    States: {
-      'computeScore({id: "id", name: "name"})': {
-        Type: "Task",
-
-        ResultSelector: "$.Payload",
-        Parameters: {
-          FunctionName: computeScore.resource.functionName,
-          Payload: {
-            id: "id",
-            name: "name",
-          },
-        },
-        Resource: "arn:aws:states:::lambda:invoke",
-        ResultPath: null,
-        Catch: [
-          {
-            ErrorEquals: ["States.ALL"],
-            Next: 'return "world"',
-            ResultPath: null,
-          },
-        ],
-        Next: 'return "hello"',
-      },
-      'return "hello"': {
-        End: true,
-        Result: "hello",
-        ResultPath: "$",
-        Type: "Pass",
-      },
-      'return "world"': {
-        End: true,
-        Result: "world",
-        ResultPath: "$",
-        Type: "Pass",
-      },
-    },
-  });
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
 test("try-catch with inner return and a catch variable", () => {
@@ -2373,57 +831,7 @@ test("try-catch with inner return and a catch variable", () => {
     }
   }).definition;
 
-  expect(definition).toEqual({
-    StartAt: 'computeScore({id: "id", name: "name"})',
-    States: {
-      'computeScore({id: "id", name: "name"})': {
-        Catch: [
-          {
-            ErrorEquals: ["States.ALL"],
-            Next: "catch(err)",
-            ResultPath: "$.err",
-          },
-        ],
-        Next: 'return "hello"',
-        ResultSelector: "$.Payload",
-        Parameters: {
-          FunctionName: computeScore.resource.functionName,
-          Payload: {
-            id: "id",
-            name: "name",
-          },
-        },
-        Resource: "arn:aws:states:::lambda:invoke",
-        ResultPath: null,
-        Type: "Task",
-      },
-      "catch(err)": {
-        Next: "0_catch(err)",
-        Parameters: {
-          "0_ParsedError.$": "States.StringToJson($.err.Cause)",
-        },
-        ResultPath: "$.err",
-        Type: "Pass",
-      },
-      "0_catch(err)": {
-        InputPath: "$.err.0_ParsedError",
-        Next: "return err.message",
-        ResultPath: "$.err",
-        Type: "Pass",
-      },
-      'return "hello"': {
-        End: true,
-        Result: "hello",
-        ResultPath: "$",
-        Type: "Pass",
-      },
-      "return err.message": {
-        End: true,
-        OutputPath: "$.err.message",
-        Type: "Pass",
-      },
-    },
-  });
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
 test("try-catch with guaranteed throw new Error", () => {
@@ -2441,42 +849,7 @@ test("try-catch with guaranteed throw new Error", () => {
     }
   }).definition;
 
-  expect(definition).toEqual({
-    StartAt: 'throw new Error("cause")',
-    States: {
-      'throw new Error("cause")': {
-        Type: "Pass",
-        Next: 'if(err.message == "cause")',
-        Result: {
-          message: "cause",
-        },
-        ResultPath: "$.err",
-      },
-      'if(err.message == "cause")': {
-        Choices: [
-          {
-            Next: 'return "hello"',
-            StringEquals: "cause",
-            Variable: "$.err.message",
-          },
-        ],
-        Default: 'return "world"',
-        Type: "Choice",
-      },
-      'return "hello"': {
-        End: true,
-        Result: "hello",
-        ResultPath: "$",
-        Type: "Pass",
-      },
-      'return "world"': {
-        End: true,
-        Result: "world",
-        ResultPath: "$",
-        Type: "Pass",
-      },
-    },
-  });
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
 test("try-catch with optional throw of an Error", () => {
@@ -2501,59 +874,7 @@ test("try-catch with optional throw of an Error", () => {
     }
   ).definition;
 
-  expect(definition).toEqual({
-    StartAt: 'if(input.id == "hello")',
-    States: {
-      'if(input.id == "hello")': {
-        Choices: [
-          {
-            Next: 'throw new Error("cause")',
-            StringEquals: "hello",
-            Variable: "$.id",
-          },
-        ],
-        Default: 'return "hello world"',
-        Type: "Choice",
-      },
-      'throw new Error("cause")': {
-        Next: 'if(err.message == "cause")',
-        Result: {
-          message: "cause",
-        },
-        ResultPath: "$.err",
-        Type: "Pass",
-      },
-      'if(err.message == "cause")': {
-        Choices: [
-          {
-            Next: 'return "hello"',
-            StringEquals: "cause",
-            Variable: "$.err.message",
-          },
-        ],
-        Default: 'return "world"',
-        Type: "Choice",
-      },
-      'return "hello world"': {
-        End: true,
-        Result: "hello world",
-        ResultPath: "$",
-        Type: "Pass",
-      },
-      'return "hello"': {
-        End: true,
-        Result: "hello",
-        ResultPath: "$",
-        Type: "Pass",
-      },
-      'return "world"': {
-        End: true,
-        Result: "world",
-        ResultPath: "$",
-        Type: "Pass",
-      },
-    },
-  });
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
 test("try-catch with optional task", () => {
@@ -2581,86 +902,7 @@ test("try-catch with optional task", () => {
     }
   ).definition;
 
-  expect(definition).toEqual({
-    StartAt: 'if(input.id == "hello")',
-    States: {
-      'if(input.id == "hello")': {
-        Choices: [
-          {
-            Next: 'computeScore({id: input.id, name: "sam"})',
-            StringEquals: "hello",
-            Variable: "$.id",
-          },
-        ],
-        Default: 'return "hello world"',
-        Type: "Choice",
-      },
-      'computeScore({id: input.id, name: "sam"})': {
-        Catch: [
-          {
-            ErrorEquals: ["States.ALL"],
-            Next: "catch(err)",
-            ResultPath: "$.err",
-          },
-        ],
-        Next: 'return "hello world"',
-        ResultSelector: "$.Payload",
-        Parameters: {
-          FunctionName: computeScore.resource.functionName,
-          Payload: {
-            "id.$": "$.id",
-            name: "sam",
-          },
-        },
-        Resource: "arn:aws:states:::lambda:invoke",
-        ResultPath: null,
-        Type: "Task",
-      },
-      'return "hello world"': {
-        End: true,
-        Result: "hello world",
-        ResultPath: "$",
-        Type: "Pass",
-      },
-      "catch(err)": {
-        Next: "0_catch(err)",
-        Parameters: {
-          "0_ParsedError.$": "States.StringToJson($.err.Cause)",
-        },
-        ResultPath: "$.err",
-        Type: "Pass",
-      },
-      "0_catch(err)": {
-        InputPath: "$.err.0_ParsedError",
-        Next: 'if(err.message == "cause")',
-        ResultPath: "$.err",
-        Type: "Pass",
-      },
-      'if(err.message == "cause")': {
-        Choices: [
-          {
-            Next: 'return "hello"',
-            StringEquals: "cause",
-            Variable: "$.err.message",
-          },
-        ],
-        Default: 'return "world"',
-        Type: "Choice",
-      },
-      'return "hello"': {
-        End: true,
-        Result: "hello",
-        ResultPath: "$",
-        Type: "Pass",
-      },
-      'return "world"': {
-        End: true,
-        Result: "world",
-        ResultPath: "$",
-        Type: "Pass",
-      },
-    },
-  });
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
 test("try-catch with optional return of task", () => {
@@ -2688,86 +930,7 @@ test("try-catch with optional return of task", () => {
     }
   ).definition;
 
-  expect(definition).toEqual({
-    StartAt: 'if(input.id == "hello")',
-    States: {
-      'if(input.id == "hello")': {
-        Choices: [
-          {
-            Next: 'return computeScore({id: input.id, name: "sam"})',
-            StringEquals: "hello",
-            Variable: "$.id",
-          },
-        ],
-        Default: 'return "hello world"',
-        Type: "Choice",
-      },
-      'return computeScore({id: input.id, name: "sam"})': {
-        Catch: [
-          {
-            ErrorEquals: ["States.ALL"],
-            Next: "catch(err)",
-            ResultPath: "$.err",
-          },
-        ],
-        End: true,
-        ResultSelector: "$.Payload",
-        Parameters: {
-          FunctionName: computeScore.resource.functionName,
-          Payload: {
-            "id.$": "$.id",
-            name: "sam",
-          },
-        },
-        Resource: "arn:aws:states:::lambda:invoke",
-        ResultPath: "$",
-        Type: "Task",
-      },
-      'return "hello world"': {
-        End: true,
-        Result: "hello world",
-        ResultPath: "$",
-        Type: "Pass",
-      },
-      "catch(err)": {
-        Next: "0_catch(err)",
-        Parameters: {
-          "0_ParsedError.$": "States.StringToJson($.err.Cause)",
-        },
-        ResultPath: "$.err",
-        Type: "Pass",
-      },
-      "0_catch(err)": {
-        InputPath: "$.err.0_ParsedError",
-        Next: 'if(err.message == "cause")',
-        ResultPath: "$.err",
-        Type: "Pass",
-      },
-      'if(err.message == "cause")': {
-        Choices: [
-          {
-            Next: 'return "hello"',
-            StringEquals: "cause",
-            Variable: "$.err.message",
-          },
-        ],
-        Default: 'return "world"',
-        Type: "Choice",
-      },
-      'return "hello"': {
-        End: true,
-        Result: "hello",
-        ResultPath: "$",
-        Type: "Pass",
-      },
-      'return "world"': {
-        End: true,
-        Result: "world",
-        ResultPath: "$",
-        Type: "Pass",
-      },
-    },
-  });
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
 test("nested try-catch", () => {
@@ -2785,32 +948,7 @@ test("nested try-catch", () => {
     }
   }).definition;
 
-  expect(definition).toEqual({
-    StartAt: 'throw new Error("error1")',
-    States: {
-      'throw new Error("error1")': {
-        Next: 'throw new Error("error2")',
-        Result: {
-          message: "error1",
-        },
-        ResultPath: null,
-        Type: "Pass",
-      },
-      'throw new Error("error2")': {
-        Next: 'throw new Error("error3")',
-        Result: {
-          message: "error2",
-        },
-        ResultPath: null,
-        Type: "Pass",
-      },
-      'throw new Error("error3")': {
-        Cause: '{"message":"error3"}',
-        Error: "Error",
-        Type: "Fail",
-      },
-    },
-  });
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
 test("throw in for-of", () => {
@@ -2827,39 +965,7 @@ test("throw in for-of", () => {
     }
   ).definition;
 
-  expect(definition).toEqual({
-    StartAt: "for(item of input.items)",
-    States: {
-      "for(item of input.items)": {
-        ItemsPath: "$.items",
-        Iterator: {
-          StartAt: 'throw new Error("err")',
-          States: {
-            'throw new Error("err")': {
-              Cause: '{"message":"err"}',
-              Error: "Error",
-              Type: "Fail",
-            },
-          },
-        },
-        MaxConcurrency: 1,
-        Next: "return null",
-        Parameters: {
-          "item.$": "$$.Map.Item.Value",
-        },
-        ResultPath: null,
-        Type: "Map",
-      },
-      "return null": {
-        End: true,
-        OutputPath: "$.null",
-        Parameters: {
-          null: null,
-        },
-        Type: "Pass",
-      },
-    },
-  });
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
 test("try-catch, no variable, contains for-of, throw", () => {
@@ -2879,52 +985,7 @@ test("try-catch, no variable, contains for-of, throw", () => {
     }
   }).definition;
 
-  expect(definition).toEqual({
-    StartAt: "for(item of input.items)",
-    States: {
-      "for(item of input.items)": {
-        Catch: [
-          {
-            ErrorEquals: ["States.ALL"],
-            ResultPath: null,
-            Next: 'return "hello"',
-          },
-        ],
-        ItemsPath: "$.items",
-        Iterator: {
-          StartAt: 'throw new Error("err")',
-          States: {
-            'throw new Error("err")': {
-              Type: "Fail",
-              Error: "Error",
-              Cause: '{"message":"err"}',
-            },
-          },
-        },
-        MaxConcurrency: 1,
-        Next: "return null",
-        Parameters: {
-          "item.$": "$$.Map.Item.Value",
-        },
-        ResultPath: null,
-        Type: "Map",
-      },
-      'return "hello"': {
-        End: true,
-        Result: "hello",
-        ResultPath: "$",
-        Type: "Pass",
-      },
-      "return null": {
-        End: true,
-        OutputPath: "$.null",
-        Parameters: {
-          null: null,
-        },
-        Type: "Pass",
-      },
-    },
-  });
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
 test("try-catch, err variable, contains for-of, throw new Error", () => {
@@ -2944,65 +1005,7 @@ test("try-catch, err variable, contains for-of, throw new Error", () => {
     }
   }).definition;
 
-  expect(definition).toEqual({
-    StartAt: "for(item of input.items)",
-    States: {
-      "for(item of input.items)": {
-        Catch: [
-          {
-            ErrorEquals: ["States.ALL"],
-            ResultPath: "$.err",
-            Next: "catch(err)",
-          },
-        ],
-        ItemsPath: "$.items",
-        Iterator: {
-          StartAt: 'throw new Error("err")',
-          States: {
-            'throw new Error("err")': {
-              Type: "Fail",
-              Error: "Error",
-              Cause: '{"message":"err"}',
-            },
-          },
-        },
-        MaxConcurrency: 1,
-        Next: "return null",
-        Parameters: {
-          "item.$": "$$.Map.Item.Value",
-        },
-        ResultPath: null,
-        Type: "Map",
-      },
-      "catch(err)": {
-        Next: "0_catch(err)",
-        Parameters: {
-          "0_ParsedError.$": "States.StringToJson($.err.Cause)",
-        },
-        ResultPath: "$.err",
-        Type: "Pass",
-      },
-      "0_catch(err)": {
-        InputPath: "$.err.0_ParsedError",
-        Next: "return err.message",
-        ResultPath: "$.err",
-        Type: "Pass",
-      },
-      "return err.message": {
-        End: true,
-        OutputPath: "$.err.message",
-        Type: "Pass",
-      },
-      "return null": {
-        End: true,
-        OutputPath: "$.null",
-        Parameters: {
-          null: null,
-        },
-        Type: "Pass",
-      },
-    },
-  });
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
 test("try-catch, err variable, contains for-of, throw Error", () => {
@@ -3022,65 +1025,7 @@ test("try-catch, err variable, contains for-of, throw Error", () => {
     }
   }).definition;
 
-  expect(definition).toEqual({
-    StartAt: "for(item of input.items)",
-    States: {
-      "for(item of input.items)": {
-        Catch: [
-          {
-            ErrorEquals: ["States.ALL"],
-            ResultPath: "$.err",
-            Next: "catch(err)",
-          },
-        ],
-        ItemsPath: "$.items",
-        Iterator: {
-          StartAt: 'throw Error("err")',
-          States: {
-            'throw Error("err")': {
-              Type: "Fail",
-              Error: "Error",
-              Cause: '{"message":"err"}',
-            },
-          },
-        },
-        MaxConcurrency: 1,
-        Next: "return null",
-        Parameters: {
-          "item.$": "$$.Map.Item.Value",
-        },
-        ResultPath: null,
-        Type: "Map",
-      },
-      "catch(err)": {
-        Next: "0_catch(err)",
-        Parameters: {
-          "0_ParsedError.$": "States.StringToJson($.err.Cause)",
-        },
-        ResultPath: "$.err",
-        Type: "Pass",
-      },
-      "0_catch(err)": {
-        InputPath: "$.err.0_ParsedError",
-        Next: "return err.message",
-        ResultPath: "$.err",
-        Type: "Pass",
-      },
-      "return err.message": {
-        End: true,
-        OutputPath: "$.err.message",
-        Type: "Pass",
-      },
-      "return null": {
-        End: true,
-        OutputPath: "$.null",
-        Parameters: {
-          null: null,
-        },
-        Type: "Pass",
-      },
-    },
-  });
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
 test("try-catch-finally", () => {
@@ -3098,38 +1043,7 @@ test("try-catch-finally", () => {
     }
   }).definition;
 
-  expect(definition).toEqual({
-    StartAt: 'computeScore({id: "id", name: "name"})',
-    States: {
-      'computeScore({id: "id", name: "name"})': {
-        Catch: [
-          {
-            ErrorEquals: ["States.ALL"],
-            Next: 'return "hello"',
-            ResultPath: null,
-          },
-        ],
-        Next: 'return "hello"',
-        ResultSelector: "$.Payload",
-        Parameters: {
-          FunctionName: computeScore.resource.functionName,
-          Payload: {
-            id: "id",
-            name: "name",
-          },
-        },
-        Resource: "arn:aws:states:::lambda:invoke",
-        ResultPath: null,
-        Type: "Task",
-      },
-      'return "hello"': {
-        End: true,
-        Result: "hello",
-        ResultPath: "$",
-        Type: "Pass",
-      },
-    },
-  });
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
 test("try { task } catch { throw } finally { task() }", () => {
@@ -3145,73 +1059,7 @@ test("try { task } catch { throw } finally { task() }", () => {
     }
   }).definition;
 
-  expect(definition).toEqual({
-    StartAt: "task()",
-    States: {
-      "task()": {
-        Catch: [
-          {
-            ErrorEquals: ["States.ALL"],
-            Next: 'throw new Error("cause")',
-            ResultPath: null,
-          },
-        ],
-        Next: 'task("recover")',
-        ResultSelector: "$.Payload",
-        Parameters: {
-          FunctionName: task.resource.functionName,
-          Payload: undefined,
-        },
-        Resource: "arn:aws:states:::lambda:invoke",
-        ResultPath: null,
-        Type: "Task",
-      },
-      'throw new Error("cause")': {
-        Next: 'task("recover")',
-        Result: {
-          message: "cause",
-        },
-        ResultPath: "$.0_tmp",
-        Type: "Pass",
-      },
-      'task("recover")': {
-        Next: "exit finally",
-        ResultSelector: "$.Payload",
-        Parameters: {
-          FunctionName: task.resource.functionName,
-          Payload: "recover",
-        },
-        Resource: "arn:aws:states:::lambda:invoke",
-        ResultPath: null,
-        Type: "Task",
-      },
-      "exit finally": {
-        Choices: [
-          {
-            IsPresent: true,
-            Next: "throw finally",
-            Variable: "$.0_tmp",
-          },
-        ],
-        Default: "return null",
-        Type: "Choice",
-      },
-      "throw finally": {
-        Cause:
-          "an error was re-thrown from a finally block which is unsupported by Step Functions",
-        Error: "ReThrowFromFinally",
-        Type: "Fail",
-      },
-      "return null": {
-        End: true,
-        OutputPath: "$.null",
-        Parameters: {
-          null: null,
-        },
-        Type: "Pass",
-      },
-    },
-  });
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
 test("try { task() } catch { task() } finally { task() }", () => {
@@ -3227,83 +1075,7 @@ test("try { task() } catch { task() } finally { task() }", () => {
     }
   }).definition;
 
-  expect(definition).toEqual({
-    StartAt: 'task("1")',
-    States: {
-      'task("1")': {
-        Catch: [
-          {
-            ErrorEquals: ["States.ALL"],
-            Next: 'task("2")',
-            ResultPath: null,
-          },
-        ],
-        Next: 'task("3")',
-        ResultSelector: "$.Payload",
-        Parameters: {
-          FunctionName: task.resource.functionName,
-          Payload: "1",
-        },
-        Resource: "arn:aws:states:::lambda:invoke",
-        ResultPath: null,
-        Type: "Task",
-      },
-      'task("2")': {
-        Catch: [
-          {
-            ErrorEquals: ["States.ALL"],
-            Next: 'task("3")',
-            ResultPath: "$.0_tmp",
-          },
-        ],
-        Next: 'task("3")',
-        ResultSelector: "$.Payload",
-        Parameters: {
-          FunctionName: task.resource.functionName,
-          Payload: "2",
-        },
-        Resource: "arn:aws:states:::lambda:invoke",
-        ResultPath: null,
-        Type: "Task",
-      },
-      'task("3")': {
-        Next: "exit finally",
-        ResultSelector: "$.Payload",
-        Parameters: {
-          FunctionName: task.resource.functionName,
-          Payload: "3",
-        },
-        Resource: "arn:aws:states:::lambda:invoke",
-        ResultPath: null,
-        Type: "Task",
-      },
-      "exit finally": {
-        Choices: [
-          {
-            IsPresent: true,
-            Next: "throw finally",
-            Variable: "$.0_tmp",
-          },
-        ],
-        Default: "return null",
-        Type: "Choice",
-      },
-      "throw finally": {
-        Cause:
-          "an error was re-thrown from a finally block which is unsupported by Step Functions",
-        Error: "ReThrowFromFinally",
-        Type: "Fail",
-      },
-      "return null": {
-        End: true,
-        OutputPath: "$.null",
-        Parameters: {
-          null: null,
-        },
-        Type: "Pass",
-      },
-    },
-  });
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
 test("try, throw, finally", () => {
@@ -3318,25 +1090,7 @@ test("try, throw, finally", () => {
     }
   }).definition;
 
-  expect(definition).toEqual({
-    StartAt: 'throw new Error("cause")',
-    States: {
-      'throw new Error("cause")': {
-        Next: 'return "hello"',
-        Result: {
-          message: "cause",
-        },
-        ResultPath: null,
-        Type: "Pass",
-      },
-      'return "hello"': {
-        End: true,
-        Result: "hello",
-        ResultPath: "$",
-        Type: "Pass",
-      },
-    },
-  });
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
 test("try, throw, catch, throw, finally, return", () => {
@@ -3352,33 +1106,7 @@ test("try, throw, catch, throw, finally, return", () => {
     }
   }).definition;
 
-  expect(definition).toEqual({
-    StartAt: 'throw new Error("go")',
-    States: {
-      'throw new Error("go")': {
-        Next: 'throw new Error("little")',
-        Result: {
-          message: "go",
-        },
-        ResultPath: null,
-        Type: "Pass",
-      },
-      'throw new Error("little")': {
-        Next: 'return "rock-star"',
-        Result: {
-          message: "little",
-        },
-        ResultPath: null,
-        Type: "Pass",
-      },
-      'return "rock-star"': {
-        End: true,
-        Result: "rock-star",
-        ResultPath: "$",
-        Type: "Pass",
-      },
-    },
-  });
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
 test("try { throw } catch { (maybe) throw } finally { task }", () => {
@@ -3402,74 +1130,7 @@ test("try { throw } catch { (maybe) throw } finally { task }", () => {
     }
   ).definition;
 
-  expect(definition).toEqual({
-    StartAt: 'throw new Error("go")',
-    States: {
-      'throw new Error("go")': {
-        Next: 'if(input.id == "sam")',
-        Result: {
-          message: "go",
-        },
-        ResultPath: null,
-        Type: "Pass",
-      },
-      'if(input.id == "sam")': {
-        Choices: [
-          {
-            Next: 'throw new Error("little")',
-            StringEquals: "sam",
-            Variable: "$.id",
-          },
-        ],
-        Default: "task()",
-        Type: "Choice",
-      },
-      'throw new Error("little")': {
-        Next: "task()",
-        Result: {
-          message: "little",
-        },
-        ResultPath: "$.0_tmp",
-        Type: "Pass",
-      },
-      "task()": {
-        Next: "exit finally",
-        ResultSelector: "$.Payload",
-        Parameters: {
-          FunctionName: task.resource.functionName,
-          Payload: undefined,
-        },
-        Resource: "arn:aws:states:::lambda:invoke",
-        ResultPath: null,
-        Type: "Task",
-      },
-      "exit finally": {
-        Choices: [
-          {
-            IsPresent: true,
-            Next: "throw finally",
-            Variable: "$.0_tmp",
-          },
-        ],
-        Default: "return null",
-        Type: "Choice",
-      },
-      "throw finally": {
-        Cause:
-          "an error was re-thrown from a finally block which is unsupported by Step Functions",
-        Error: "ReThrowFromFinally",
-        Type: "Fail",
-      },
-      "return null": {
-        End: true,
-        OutputPath: "$.null",
-        Parameters: {
-          null: null,
-        },
-        Type: "Pass",
-      },
-    },
-  });
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
 test("try { task() } catch { (maybe) throw } finally { task }", () => {
@@ -3493,84 +1154,7 @@ test("try { task() } catch { (maybe) throw } finally { task }", () => {
     }
   ).definition;
 
-  expect(definition).toEqual({
-    StartAt: 'task("1")',
-    States: {
-      'task("1")': {
-        Catch: [
-          {
-            ErrorEquals: ["States.ALL"],
-            Next: 'if(input.id == "sam")',
-            ResultPath: null,
-          },
-        ],
-        Next: 'task("2")',
-        ResultSelector: "$.Payload",
-        Parameters: {
-          FunctionName: task.resource.functionName,
-          Payload: "1",
-        },
-        Resource: "arn:aws:states:::lambda:invoke",
-        ResultPath: null,
-        Type: "Task",
-      },
-      'if(input.id == "sam")': {
-        Choices: [
-          {
-            Next: 'throw new Error("little")',
-            StringEquals: "sam",
-            Variable: "$.id",
-          },
-        ],
-        Default: 'task("2")',
-        Type: "Choice",
-      },
-      'throw new Error("little")': {
-        Next: 'task("2")',
-        Result: {
-          message: "little",
-        },
-        ResultPath: "$.0_tmp",
-        Type: "Pass",
-      },
-      'task("2")': {
-        Next: "exit finally",
-        ResultSelector: "$.Payload",
-        Parameters: {
-          FunctionName: task.resource.functionName,
-          Payload: "2",
-        },
-        Resource: "arn:aws:states:::lambda:invoke",
-        ResultPath: null,
-        Type: "Task",
-      },
-      "exit finally": {
-        Choices: [
-          {
-            IsPresent: true,
-            Next: "throw finally",
-            Variable: "$.0_tmp",
-          },
-        ],
-        Default: "return null",
-        Type: "Choice",
-      },
-      "throw finally": {
-        Cause:
-          "an error was re-thrown from a finally block which is unsupported by Step Functions",
-        Error: "ReThrowFromFinally",
-        Type: "Fail",
-      },
-      "return null": {
-        End: true,
-        OutputPath: "$.null",
-        Parameters: {
-          null: null,
-        },
-        Type: "Pass",
-      },
-    },
-  });
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
 test("try { task() } catch(err) { (maybe) throw } finally { task }", () => {
@@ -3590,98 +1174,7 @@ test("try { task() } catch(err) { (maybe) throw } finally { task }", () => {
     }
   }).definition;
 
-  expect(definition).toEqual({
-    StartAt: 'task("1")',
-    States: {
-      'task("1")': {
-        Catch: [
-          {
-            ErrorEquals: ["States.ALL"],
-            Next: "catch(err)",
-            ResultPath: "$.err",
-          },
-        ],
-        Next: 'task("2")',
-        ResultSelector: "$.Payload",
-        Parameters: {
-          FunctionName: task.resource.functionName,
-          Payload: "1",
-        },
-        Resource: "arn:aws:states:::lambda:invoke",
-        ResultPath: null,
-        Type: "Task",
-      },
-      "catch(err)": {
-        Next: "0_catch(err)",
-        Parameters: {
-          "0_ParsedError.$": "States.StringToJson($.err.Cause)",
-        },
-        ResultPath: "$.err",
-        Type: "Pass",
-      },
-      "0_catch(err)": {
-        InputPath: "$.err.0_ParsedError",
-        Next: 'if(err.message == "sam")',
-        ResultPath: "$.err",
-        Type: "Pass",
-      },
-      'if(err.message == "sam")': {
-        Choices: [
-          {
-            Next: 'throw new Error("little")',
-            StringEquals: "sam",
-            Variable: "$.err.message",
-          },
-        ],
-        Default: 'task("2")',
-        Type: "Choice",
-      },
-      'throw new Error("little")': {
-        Next: 'task("2")',
-        Result: {
-          message: "little",
-        },
-        ResultPath: "$.0_tmp",
-        Type: "Pass",
-      },
-      'task("2")': {
-        Next: "exit finally",
-        ResultSelector: "$.Payload",
-        Parameters: {
-          FunctionName: task.resource.functionName,
-          Payload: "2",
-        },
-        Resource: "arn:aws:states:::lambda:invoke",
-        ResultPath: null,
-        Type: "Task",
-      },
-      "exit finally": {
-        Choices: [
-          {
-            IsPresent: true,
-            Next: "throw finally",
-            Variable: "$.0_tmp",
-          },
-        ],
-        Default: "return null",
-        Type: "Choice",
-      },
-      "throw finally": {
-        Cause:
-          "an error was re-thrown from a finally block which is unsupported by Step Functions",
-        Error: "ReThrowFromFinally",
-        Type: "Fail",
-      },
-      "return null": {
-        End: true,
-        OutputPath: "$.null",
-        Parameters: {
-          null: null,
-        },
-        Type: "Pass",
-      },
-    },
-  });
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
 test("try { for-of } catch { (maybe) throw } finally { task }", () => {
@@ -3706,113 +1199,7 @@ test("try { for-of } catch { (maybe) throw } finally { task }", () => {
     }
   }).definition;
 
-  expect(definition).toEqual({
-    StartAt: "for(item of input.items)",
-    States: {
-      "for(item of input.items)": {
-        Catch: [
-          {
-            ErrorEquals: ["States.ALL"],
-            Next: "catch(err)",
-            ResultPath: "$.err",
-          },
-        ],
-        ItemsPath: "$.items",
-        Iterator: {
-          StartAt: "task(item)",
-          States: {
-            "task(item)": {
-              End: true,
-              ResultSelector: "$.Payload",
-              Parameters: {
-                FunctionName: task.resource.functionName,
-                "Payload.$": "$.item",
-              },
-              Resource: "arn:aws:states:::lambda:invoke",
-              ResultPath: null,
-              Type: "Task",
-            },
-          },
-        },
-        MaxConcurrency: 1,
-        Next: 'task("2")',
-        Parameters: {
-          "item.$": "$$.Map.Item.Value",
-        },
-        ResultPath: null,
-        Type: "Map",
-      },
-      "0_catch(err)": {
-        InputPath: "$.err.0_ParsedError",
-        Next: 'if(err.message == "you dun\' goofed")',
-        ResultPath: "$.err",
-        Type: "Pass",
-      },
-      "catch(err)": {
-        Next: "0_catch(err)",
-        Parameters: {
-          "0_ParsedError.$": "States.StringToJson($.err.Cause)",
-        },
-        ResultPath: "$.err",
-        Type: "Pass",
-      },
-      'if(err.message == "you dun\' goofed")': {
-        Choices: [
-          {
-            Next: 'throw new Error("little")',
-            StringEquals: "you dun' goofed",
-            Variable: "$.err.message",
-          },
-        ],
-        Default: 'task("2")',
-        Type: "Choice",
-      },
-      'throw new Error("little")': {
-        Next: 'task("2")',
-        Result: {
-          message: "little",
-        },
-        ResultPath: "$.0_tmp",
-        Type: "Pass",
-      },
-      "return null": {
-        End: true,
-        OutputPath: "$.null",
-        Parameters: {
-          null: null,
-        },
-        Type: "Pass",
-      },
-      'task("2")': {
-        Next: "exit finally",
-        ResultSelector: "$.Payload",
-        Parameters: {
-          FunctionName: task.resource.functionName,
-          Payload: "2",
-        },
-        Resource: "arn:aws:states:::lambda:invoke",
-        ResultPath: null,
-        Type: "Task",
-      },
-      "exit finally": {
-        Choices: [
-          {
-            IsPresent: true,
-            Next: "throw finally",
-            Variable: "$.0_tmp",
-          },
-        ],
-        Default: "return null",
-        Type: "Choice",
-      },
-      "throw finally": {
-        Cause:
-          "an error was re-thrown from a finally block which is unsupported by Step Functions",
-        Error: "ReThrowFromFinally",
-        Type: "Fail",
-      },
-    },
-  });
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
 test("for-of { try { task() } catch (err) { if(err) throw } finally { task() } }", () => {
@@ -3837,113 +1224,7 @@ test("for-of { try { task() } catch (err) { if(err) throw } finally { task() } }
     }
   }).definition;
 
-  expect(definition).toEqual({
-    StartAt: "for(item of input.items)",
-    States: {
-      "for(item of input.items)": {
-        ItemsPath: "$.items",
-        Iterator: {
-          StartAt: "task(item)",
-          States: {
-            "task(item)": {
-              Catch: [
-                {
-                  ErrorEquals: ["States.ALL"],
-                  Next: "catch(err)",
-                  ResultPath: "$.err",
-                },
-              ],
-              Next: 'task("2")',
-              ResultSelector: "$.Payload",
-              Parameters: {
-                FunctionName: task.resource.functionName,
-                "Payload.$": "$.item",
-              },
-              Resource: "arn:aws:states:::lambda:invoke",
-              ResultPath: null,
-              Type: "Task",
-            },
-            "0_catch(err)": {
-              InputPath: "$.err.0_ParsedError",
-              Next: 'if(err.message == "you dun\' goofed")',
-              ResultPath: "$.err",
-              Type: "Pass",
-            },
-            "catch(err)": {
-              Next: "0_catch(err)",
-              Parameters: {
-                "0_ParsedError.$": "States.StringToJson($.err.Cause)",
-              },
-              ResultPath: "$.err",
-              Type: "Pass",
-            },
-            'if(err.message == "you dun\' goofed")': {
-              Choices: [
-                {
-                  Next: 'throw new Error("little")',
-                  StringEquals: "you dun' goofed",
-                  Variable: "$.err.message",
-                },
-              ],
-              Default: 'task("2")',
-              Type: "Choice",
-            },
-            'throw new Error("little")': {
-              Next: 'task("2")',
-              Result: {
-                message: "little",
-              },
-              ResultPath: "$.0_tmp",
-              Type: "Pass",
-            },
-            'task("2")': {
-              Next: "exit finally",
-              ResultSelector: "$.Payload",
-              Parameters: {
-                FunctionName: task.resource.functionName,
-                Payload: "2",
-              },
-              Resource: "arn:aws:states:::lambda:invoke",
-              ResultPath: null,
-              Type: "Task",
-            },
-            "exit finally": {
-              Choices: [
-                {
-                  IsPresent: true,
-                  Next: "throw finally",
-                  Variable: "$.0_tmp",
-                },
-              ],
-              Default: "return null",
-              Type: "Choice",
-            },
-            "throw finally": {
-              Cause:
-                "an error was re-thrown from a finally block which is unsupported by Step Functions",
-              Error: "ReThrowFromFinally",
-              Type: "Fail",
-            },
-          },
-        },
-        MaxConcurrency: 1,
-        Next: "return null",
-        Parameters: {
-          "item.$": "$$.Map.Item.Value",
-        },
-        ResultPath: null,
-        Type: "Map",
-      },
-      "return null": {
-        End: true,
-        OutputPath: "$.null",
-        Parameters: {
-          null: null,
-        },
-        Type: "Pass",
-      },
-    },
-  });
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
 test("while (cond) { cond = task() }", () => {
@@ -3955,49 +1236,7 @@ test("while (cond) { cond = task() }", () => {
     }
   }).definition;
 
-  expect(definition).toEqual({
-    StartAt: "while (cond == undefined)",
-    States: {
-      "while (cond == undefined)": {
-        Choices: [
-          {
-            Next: "cond = task()",
-            Or: [
-              {
-                IsPresent: false,
-                Variable: "$.cond",
-              },
-              {
-                IsNull: true,
-                Variable: "$.cond",
-              },
-            ],
-          },
-        ],
-        Default: "return null",
-        Type: "Choice",
-      },
-      "cond = task()": {
-        Next: "while (cond == undefined)",
-        ResultSelector: "$.Payload",
-        Parameters: {
-          FunctionName: task.resource.functionName,
-          Payload: undefined,
-        },
-        Resource: "arn:aws:states:::lambda:invoke",
-        ResultPath: "$.cond",
-        Type: "Task",
-      },
-      "return null": {
-        End: true,
-        OutputPath: "$.null",
-        Parameters: {
-          null: null,
-        },
-        Type: "Pass",
-      },
-    },
-  });
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
 test("while (cond); cond = task()", () => {
@@ -4007,49 +1246,7 @@ test("while (cond); cond = task()", () => {
     while (cond === undefined) cond = task();
   }).definition;
 
-  expect(definition).toEqual({
-    StartAt: "while (cond == undefined)",
-    States: {
-      "while (cond == undefined)": {
-        Choices: [
-          {
-            Next: "cond = task()",
-            Or: [
-              {
-                IsPresent: false,
-                Variable: "$.cond",
-              },
-              {
-                IsNull: true,
-                Variable: "$.cond",
-              },
-            ],
-          },
-        ],
-        Default: "return null",
-        Type: "Choice",
-      },
-      "cond = task()": {
-        Next: "while (cond == undefined)",
-        ResultSelector: "$.Payload",
-        Parameters: {
-          FunctionName: task.resource.functionName,
-          Payload: undefined,
-        },
-        Resource: "arn:aws:states:::lambda:invoke",
-        ResultPath: "$.cond",
-        Type: "Task",
-      },
-      "return null": {
-        End: true,
-        OutputPath: "$.null",
-        Parameters: {
-          null: null,
-        },
-        Type: "Pass",
-      },
-    },
-  });
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
 test("let cond; do { cond = task() } while (cond)", () => {
@@ -4061,49 +1258,7 @@ test("let cond; do { cond = task() } while (cond)", () => {
     } while (cond === undefined);
   }).definition;
 
-  expect(definition).toEqual({
-    StartAt: "cond = task()",
-    States: {
-      "while (cond == undefined)": {
-        Choices: [
-          {
-            Next: "cond = task()",
-            Or: [
-              {
-                IsPresent: false,
-                Variable: "$.cond",
-              },
-              {
-                IsNull: true,
-                Variable: "$.cond",
-              },
-            ],
-          },
-        ],
-        Default: "return null",
-        Type: "Choice",
-      },
-      "cond = task()": {
-        Next: "while (cond == undefined)",
-        ResultSelector: "$.Payload",
-        Parameters: {
-          FunctionName: task.resource.functionName,
-          Payload: undefined,
-        },
-        Resource: "arn:aws:states:::lambda:invoke",
-        ResultPath: "$.cond",
-        Type: "Task",
-      },
-      "return null": {
-        End: true,
-        OutputPath: "$.null",
-        Parameters: {
-          null: null,
-        },
-        Type: "Pass",
-      },
-    },
-  });
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
 test("list.map(item => task(item))", () => {
@@ -4115,37 +1270,7 @@ test("list.map(item => task(item))", () => {
     return input.list.map((item) => task(item));
   }).definition;
 
-  expect(definition).toEqual({
-    StartAt: "return input.list.map(function(item))",
-    States: {
-      "return input.list.map(function(item))": {
-        End: true,
-        ItemsPath: "$.list",
-        Iterator: {
-          StartAt: "return task(item)",
-          States: {
-            "return task(item)": {
-              End: true,
-              ResultSelector: "$.Payload",
-              Parameters: {
-                FunctionName: task.resource.functionName,
-                "Payload.$": "$.item",
-              },
-              Resource: "arn:aws:states:::lambda:invoke",
-              ResultPath: "$",
-              Type: "Task",
-            },
-          },
-        },
-        MaxConcurrency: 1,
-        Parameters: {
-          "item.$": "$$.Map.Item.Value",
-        },
-        ResultPath: "$",
-        Type: "Map",
-      },
-    },
-  });
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
 test("list.map((item, i) => if (i == 0) task(item))", () => {
@@ -4163,57 +1288,7 @@ test("list.map((item, i) => if (i == 0) task(item))", () => {
     });
   }).definition;
 
-  expect(definition).toEqual({
-    StartAt: "return input.list.map(function(item, i))",
-    States: {
-      "return input.list.map(function(item, i))": {
-        Type: "Map",
-        End: true,
-        ItemsPath: "$.list",
-        MaxConcurrency: 1,
-        Parameters: {
-          "i.$": "$$.Map.Item.Index",
-          "item.$": "$$.Map.Item.Value",
-        },
-        ResultPath: "$",
-        Iterator: {
-          StartAt: "if(i == 0)",
-          States: {
-            "if(i == 0)": {
-              Choices: [
-                {
-                  Next: "return task(item)",
-                  NumericEquals: 0,
-                  Variable: "$.i",
-                },
-              ],
-              Default: "return null",
-              Type: "Choice",
-            },
-            "return task(item)": {
-              End: true,
-              ResultSelector: "$.Payload",
-              Parameters: {
-                FunctionName: task.resource.functionName,
-                "Payload.$": "$.item",
-              },
-              Resource: "arn:aws:states:::lambda:invoke",
-              ResultPath: "$",
-              Type: "Task",
-            },
-            "return null": {
-              End: true,
-              OutputPath: "$.null",
-              Parameters: {
-                null: null,
-              },
-              Type: "Pass",
-            },
-          },
-        },
-      },
-    },
-  });
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
 test("list.map((item, i, list) => if (i == 0) task(item) else task(list[0]))", () => {
@@ -4231,60 +1306,7 @@ test("list.map((item, i, list) => if (i == 0) task(item) else task(list[0]))", (
     });
   }).definition;
 
-  expect(definition).toEqual({
-    StartAt: "return input.list.map(function(item, i))",
-    States: {
-      "return input.list.map(function(item, i))": {
-        End: true,
-        ItemsPath: "$.list",
-        Iterator: {
-          StartAt: "if(i == 0)",
-          States: {
-            "if(i == 0)": {
-              Choices: [
-                {
-                  Next: "return task(item)",
-                  NumericEquals: 0,
-                  Variable: "$.i",
-                },
-              ],
-              Default: "return task(input.list[0])",
-              Type: "Choice",
-            },
-            "return task(item)": {
-              End: true,
-              ResultSelector: "$.Payload",
-              Parameters: {
-                FunctionName: task.resource.functionName,
-                "Payload.$": "$.item",
-              },
-              Resource: "arn:aws:states:::lambda:invoke",
-              ResultPath: "$",
-              Type: "Task",
-            },
-            "return task(input.list[0])": {
-              End: true,
-              ResultSelector: "$.Payload",
-              Parameters: {
-                FunctionName: task.resource.functionName,
-                "Payload.$": "$.list[0]",
-              },
-              Resource: "arn:aws:states:::lambda:invoke",
-              ResultPath: "$",
-              Type: "Task",
-            },
-          },
-        },
-        MaxConcurrency: 1,
-        Parameters: {
-          "i.$": "$$.Map.Item.Index",
-          "item.$": "$$.Map.Item.Value",
-        },
-        ResultPath: "$",
-        Type: "Map",
-      },
-    },
-  });
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
 test("try { list.map(item => task(item)) }", () => {
@@ -4300,52 +1322,7 @@ test("try { list.map(item => task(item)) }", () => {
     }
   }).definition;
 
-  expect(definition).toEqual({
-    StartAt: "return input.list.map(function(item))",
-    States: {
-      "return input.list.map(function(item))": {
-        Catch: [
-          {
-            ErrorEquals: ["States.ALL"],
-            Next: "return null",
-            ResultPath: null,
-          },
-        ],
-        End: true,
-        ItemsPath: "$.list",
-        Iterator: {
-          StartAt: "return task(item)",
-          States: {
-            "return task(item)": {
-              End: true,
-              ResultSelector: "$.Payload",
-              Parameters: {
-                FunctionName: task.resource.functionName,
-                "Payload.$": "$.item",
-              },
-              Resource: "arn:aws:states:::lambda:invoke",
-              ResultPath: "$",
-              Type: "Task",
-            },
-          },
-        },
-        MaxConcurrency: 1,
-        Parameters: {
-          "item.$": "$$.Map.Item.Value",
-        },
-        ResultPath: "$",
-        Type: "Map",
-      },
-      "return null": {
-        End: true,
-        OutputPath: "$.null",
-        Parameters: {
-          null: null,
-        },
-        Type: "Pass",
-      },
-    },
-  });
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
 test("try { list.map(item => task(item)) }", () => {
@@ -4363,52 +1340,7 @@ test("try { list.map(item => task(item)) }", () => {
     });
   }).definition;
 
-  expect(definition).toEqual({
-    StartAt: "return input.list.map(function(item))",
-    States: {
-      "return input.list.map(function(item))": {
-        End: true,
-        ItemsPath: "$.list",
-        Iterator: {
-          StartAt: "return task(item)",
-          States: {
-            "return task(item)": {
-              Catch: [
-                {
-                  ErrorEquals: ["States.ALL"],
-                  Next: "return null",
-                  ResultPath: null,
-                },
-              ],
-              End: true,
-              ResultSelector: "$.Payload",
-              Parameters: {
-                FunctionName: task.resource.functionName,
-                "Payload.$": "$.item",
-              },
-              Resource: "arn:aws:states:::lambda:invoke",
-              ResultPath: "$",
-              Type: "Task",
-            },
-            "return null": {
-              End: true,
-              OutputPath: "$.null",
-              Parameters: {
-                null: null,
-              },
-              Type: "Pass",
-            },
-          },
-        },
-        MaxConcurrency: 1,
-        Parameters: {
-          "item.$": "$$.Map.Item.Value",
-        },
-        ResultPath: "$",
-        Type: "Map",
-      },
-    },
-  });
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
 test("try { list.map(item => throw) }", () => {
@@ -4426,44 +1358,7 @@ test("try { list.map(item => throw) }", () => {
     }
   }).definition;
 
-  expect(definition).toEqual({
-    StartAt: "return input.list.map(function())",
-    States: {
-      "return input.list.map(function())": {
-        Catch: [
-          {
-            ErrorEquals: ["States.ALL"],
-            Next: "return null",
-            ResultPath: null,
-          },
-        ],
-        End: true,
-        ItemsPath: "$.list",
-        Iterator: {
-          StartAt: 'throw new Error("cause")',
-          States: {
-            'throw new Error("cause")': {
-              Type: "Fail",
-              Error: "Error",
-              Cause: '{"message":"cause"}',
-            },
-          },
-        },
-        MaxConcurrency: 1,
-        Parameters: {},
-        ResultPath: "$",
-        Type: "Map",
-      },
-      "return null": {
-        End: true,
-        OutputPath: "$.null",
-        Parameters: {
-          null: null,
-        },
-        Type: "Pass",
-      },
-    },
-  });
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
 test("try { list.map(item => throw) } catch (err)", () => {
@@ -4485,73 +1380,7 @@ test("try { list.map(item => throw) } catch (err)", () => {
     }
   }).definition;
 
-  expect(definition).toEqual({
-    StartAt: "return input.list.map(function())",
-    States: {
-      "return input.list.map(function())": {
-        Catch: [
-          {
-            ErrorEquals: ["States.ALL"],
-            Next: "catch(err)",
-            ResultPath: "$.err",
-          },
-        ],
-        End: true,
-        ItemsPath: "$.list",
-        Iterator: {
-          StartAt: 'throw new Error("cause")',
-          States: {
-            'throw new Error("cause")': {
-              Cause: '{"message":"cause"}',
-              Error: "Error",
-              Type: "Fail",
-            },
-          },
-        },
-        MaxConcurrency: 1,
-        Parameters: {},
-        ResultPath: "$",
-        Type: "Map",
-      },
-      "catch(err)": {
-        Next: "0_catch(err)",
-        Parameters: {
-          "0_ParsedError.$": "States.StringToJson($.err.Cause)",
-        },
-        ResultPath: "$.err",
-        Type: "Pass",
-      },
-      "0_catch(err)": {
-        InputPath: "$.err.0_ParsedError",
-        Next: 'if(err.message == "cause")',
-        ResultPath: "$.err",
-        Type: "Pass",
-      },
-      'if(err.message == "cause")': {
-        Choices: [
-          {
-            Next: "return 0",
-            StringEquals: "cause",
-            Variable: "$.err.message",
-          },
-        ],
-        Default: "return 1",
-        Type: "Choice",
-      },
-      "return 0": {
-        End: true,
-        Result: 0,
-        ResultPath: "$",
-        Type: "Pass",
-      },
-      "return 1": {
-        End: true,
-        Result: 1,
-        ResultPath: "$",
-        Type: "Pass",
-      },
-    },
-  });
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
 test("list.forEach(item => task(item))", () => {
@@ -4564,37 +1393,7 @@ test("list.forEach(item => task(item))", () => {
     }
   ).definition;
 
-  expect(definition).toEqual({
-    StartAt: "return input.list.forEach(function(item))",
-    States: {
-      "return input.list.forEach(function(item))": {
-        End: true,
-        ItemsPath: "$.list",
-        Iterator: {
-          StartAt: "return task(item)",
-          States: {
-            "return task(item)": {
-              End: true,
-              ResultSelector: "$.Payload",
-              Parameters: {
-                FunctionName: task.resource.functionName,
-                "Payload.$": "$.item",
-              },
-              Resource: "arn:aws:states:::lambda:invoke",
-              ResultPath: "$",
-              Type: "Task",
-            },
-          },
-        },
-        MaxConcurrency: 1,
-        Parameters: {
-          "item.$": "$$.Map.Item.Value",
-        },
-        ResultPath: "$",
-        Type: "Map",
-      },
-    },
-  });
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
 test("list.forEach((item, i) => if (i == 0) task(item))", () => {
@@ -4613,57 +1412,7 @@ test("list.forEach((item, i) => if (i == 0) task(item))", () => {
     }
   ).definition;
 
-  expect(definition).toEqual({
-    StartAt: "return input.list.forEach(function(item, i))",
-    States: {
-      "return input.list.forEach(function(item, i))": {
-        Type: "Map",
-        End: true,
-        ItemsPath: "$.list",
-        MaxConcurrency: 1,
-        Parameters: {
-          "i.$": "$$.Map.Item.Index",
-          "item.$": "$$.Map.Item.Value",
-        },
-        ResultPath: "$",
-        Iterator: {
-          StartAt: "if(i == 0)",
-          States: {
-            "if(i == 0)": {
-              Choices: [
-                {
-                  Next: "return task(item)",
-                  NumericEquals: 0,
-                  Variable: "$.i",
-                },
-              ],
-              Default: "return null",
-              Type: "Choice",
-            },
-            "return task(item)": {
-              End: true,
-              ResultSelector: "$.Payload",
-              Parameters: {
-                FunctionName: task.resource.functionName,
-                "Payload.$": "$.item",
-              },
-              Resource: "arn:aws:states:::lambda:invoke",
-              ResultPath: "$",
-              Type: "Task",
-            },
-            "return null": {
-              End: true,
-              OutputPath: "$.null",
-              Parameters: {
-                null: null,
-              },
-              Type: "Pass",
-            },
-          },
-        },
-      },
-    },
-  });
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
 test("list.forEach((item, i, list) => if (i == 0) task(item) else task(list[0]))", () => {
@@ -4682,60 +1431,7 @@ test("list.forEach((item, i, list) => if (i == 0) task(item) else task(list[0]))
     }
   ).definition;
 
-  expect(definition).toEqual({
-    StartAt: "return input.list.forEach(function(item, i))",
-    States: {
-      "return input.list.forEach(function(item, i))": {
-        End: true,
-        ItemsPath: "$.list",
-        Iterator: {
-          StartAt: "if(i == 0)",
-          States: {
-            "if(i == 0)": {
-              Choices: [
-                {
-                  Next: "return task(item)",
-                  NumericEquals: 0,
-                  Variable: "$.i",
-                },
-              ],
-              Default: "return task(input.list[0])",
-              Type: "Choice",
-            },
-            "return task(item)": {
-              End: true,
-              ResultSelector: "$.Payload",
-              Parameters: {
-                FunctionName: task.resource.functionName,
-                "Payload.$": "$.item",
-              },
-              Resource: "arn:aws:states:::lambda:invoke",
-              ResultPath: "$",
-              Type: "Task",
-            },
-            "return task(input.list[0])": {
-              End: true,
-              ResultSelector: "$.Payload",
-              Parameters: {
-                FunctionName: task.resource.functionName,
-                "Payload.$": "$.list[0]",
-              },
-              Resource: "arn:aws:states:::lambda:invoke",
-              ResultPath: "$",
-              Type: "Task",
-            },
-          },
-        },
-        MaxConcurrency: 1,
-        Parameters: {
-          "i.$": "$$.Map.Item.Index",
-          "item.$": "$$.Map.Item.Value",
-        },
-        ResultPath: "$",
-        Type: "Map",
-      },
-    },
-  });
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
 test("try { list.forEach(item => task(item)) }", () => {
@@ -4752,52 +1448,7 @@ test("try { list.forEach(item => task(item)) }", () => {
     }
   ).definition;
 
-  expect(definition).toEqual({
-    StartAt: "return input.list.forEach(function(item))",
-    States: {
-      "return input.list.forEach(function(item))": {
-        Catch: [
-          {
-            ErrorEquals: ["States.ALL"],
-            Next: "return null",
-            ResultPath: null,
-          },
-        ],
-        End: true,
-        ItemsPath: "$.list",
-        Iterator: {
-          StartAt: "return task(item)",
-          States: {
-            "return task(item)": {
-              End: true,
-              ResultSelector: "$.Payload",
-              Parameters: {
-                FunctionName: task.resource.functionName,
-                "Payload.$": "$.item",
-              },
-              Resource: "arn:aws:states:::lambda:invoke",
-              ResultPath: "$",
-              Type: "Task",
-            },
-          },
-        },
-        MaxConcurrency: 1,
-        Parameters: {
-          "item.$": "$$.Map.Item.Value",
-        },
-        ResultPath: "$",
-        Type: "Map",
-      },
-      "return null": {
-        End: true,
-        OutputPath: "$.null",
-        Parameters: {
-          null: null,
-        },
-        Type: "Pass",
-      },
-    },
-  });
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
 test("try { list.forEach(item => task(item)) }", () => {
@@ -4816,52 +1467,7 @@ test("try { list.forEach(item => task(item)) }", () => {
     }
   ).definition;
 
-  expect(definition).toEqual({
-    StartAt: "return input.list.forEach(function(item))",
-    States: {
-      "return input.list.forEach(function(item))": {
-        End: true,
-        ItemsPath: "$.list",
-        Iterator: {
-          StartAt: "return task(item)",
-          States: {
-            "return task(item)": {
-              Catch: [
-                {
-                  ErrorEquals: ["States.ALL"],
-                  Next: "return null",
-                  ResultPath: null,
-                },
-              ],
-              End: true,
-              ResultSelector: "$.Payload",
-              Parameters: {
-                FunctionName: task.resource.functionName,
-                "Payload.$": "$.item",
-              },
-              Resource: "arn:aws:states:::lambda:invoke",
-              ResultPath: "$",
-              Type: "Task",
-            },
-            "return null": {
-              End: true,
-              OutputPath: "$.null",
-              Parameters: {
-                null: null,
-              },
-              Type: "Pass",
-            },
-          },
-        },
-        MaxConcurrency: 1,
-        Parameters: {
-          "item.$": "$$.Map.Item.Value",
-        },
-        ResultPath: "$",
-        Type: "Map",
-      },
-    },
-  });
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
 test("try { list.forEach(item => throw) }", () => {
@@ -4880,44 +1486,7 @@ test("try { list.forEach(item => throw) }", () => {
     }
   ).definition;
 
-  expect(definition).toEqual({
-    StartAt: "return input.list.forEach(function())",
-    States: {
-      "return input.list.forEach(function())": {
-        Catch: [
-          {
-            ErrorEquals: ["States.ALL"],
-            Next: "return null",
-            ResultPath: null,
-          },
-        ],
-        End: true,
-        ItemsPath: "$.list",
-        Iterator: {
-          StartAt: 'throw new Error("cause")',
-          States: {
-            'throw new Error("cause")': {
-              Type: "Fail",
-              Error: "Error",
-              Cause: '{"message":"cause"}',
-            },
-          },
-        },
-        MaxConcurrency: 1,
-        Parameters: {},
-        ResultPath: "$",
-        Type: "Map",
-      },
-      "return null": {
-        End: true,
-        OutputPath: "$.null",
-        Parameters: {
-          null: null,
-        },
-        Type: "Pass",
-      },
-    },
-  });
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
 test("try { list.forEach(item => throw) } catch (err)", () => {
@@ -4940,73 +1509,7 @@ test("try { list.forEach(item => throw) } catch (err)", () => {
     }
   ).definition;
 
-  expect(definition).toEqual({
-    StartAt: "return input.list.forEach(function())",
-    States: {
-      "return input.list.forEach(function())": {
-        Catch: [
-          {
-            ErrorEquals: ["States.ALL"],
-            Next: "catch(err)",
-            ResultPath: "$.err",
-          },
-        ],
-        End: true,
-        ItemsPath: "$.list",
-        Iterator: {
-          StartAt: 'throw new Error("cause")',
-          States: {
-            'throw new Error("cause")': {
-              Cause: '{"message":"cause"}',
-              Error: "Error",
-              Type: "Fail",
-            },
-          },
-        },
-        MaxConcurrency: 1,
-        Parameters: {},
-        ResultPath: "$",
-        Type: "Map",
-      },
-      "catch(err)": {
-        Next: "0_catch(err)",
-        Parameters: {
-          "0_ParsedError.$": "States.StringToJson($.err.Cause)",
-        },
-        ResultPath: "$.err",
-        Type: "Pass",
-      },
-      "0_catch(err)": {
-        InputPath: "$.err.0_ParsedError",
-        Next: 'if(err.message == "cause")',
-        ResultPath: "$.err",
-        Type: "Pass",
-      },
-      'if(err.message == "cause")': {
-        Choices: [
-          {
-            Next: "return 0",
-            StringEquals: "cause",
-            Variable: "$.err.message",
-          },
-        ],
-        Default: "return 1",
-        Type: "Choice",
-      },
-      "return 0": {
-        End: true,
-        Result: 0,
-        ResultPath: "$",
-        Type: "Pass",
-      },
-      "return 1": {
-        End: true,
-        Result: 1,
-        ResultPath: "$",
-        Type: "Pass",
-      },
-    },
-  });
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
 test("return $SFN.map(list, (item) => task(item))", () => {
@@ -5018,36 +1521,7 @@ test("return $SFN.map(list, (item) => task(item))", () => {
     return $SFN.map(input.list, (item) => task(item));
   }).definition;
 
-  expect(definition).toEqual({
-    StartAt: "return $SFN.map(input.list, function(item))",
-    States: {
-      "return $SFN.map(input.list, function(item))": {
-        End: true,
-        ItemsPath: "$.list",
-        Iterator: {
-          StartAt: "return task(item)",
-          States: {
-            "return task(item)": {
-              End: true,
-              ResultSelector: "$.Payload",
-              Parameters: {
-                FunctionName: task.resource.functionName,
-                "Payload.$": "$.item",
-              },
-              Resource: "arn:aws:states:::lambda:invoke",
-              ResultPath: "$",
-              Type: "Task",
-            },
-          },
-        },
-        Parameters: {
-          "item.$": "$$.Map.Item.Value",
-        },
-        ResultPath: "$",
-        Type: "Map",
-      },
-    },
-  });
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
 test("return $SFN.map(list, {maxConcurrency: 2} (item) => task(item))", () => {
@@ -5059,37 +1533,7 @@ test("return $SFN.map(list, {maxConcurrency: 2} (item) => task(item))", () => {
     return $SFN.map(input.list, { maxConcurrency: 2 }, (item) => task(item));
   }).definition;
 
-  expect(definition).toEqual({
-    StartAt: "return $SFN.map(input.list, {maxConcurrency: 2}, function(item))",
-    States: {
-      "return $SFN.map(input.list, {maxConcurrency: 2}, function(item))": {
-        End: true,
-        ItemsPath: "$.list",
-        MaxConcurrency: 2,
-        Iterator: {
-          StartAt: "return task(item)",
-          States: {
-            "return task(item)": {
-              End: true,
-              ResultSelector: "$.Payload",
-              Parameters: {
-                FunctionName: task.resource.functionName,
-                "Payload.$": "$.item",
-              },
-              Resource: "arn:aws:states:::lambda:invoke",
-              ResultPath: "$",
-              Type: "Task",
-            },
-          },
-        },
-        Parameters: {
-          "item.$": "$$.Map.Item.Value",
-        },
-        ResultPath: "$",
-        Type: "Map",
-      },
-    },
-  });
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
 test("$SFN.map(list, (item) => task(item))", () => {
@@ -5102,44 +1546,7 @@ test("$SFN.map(list, (item) => task(item))", () => {
     }
   ).definition;
 
-  expect(definition).toEqual({
-    StartAt: "$SFN.map(input.list, function(item))",
-    States: {
-      "$SFN.map(input.list, function(item))": {
-        ItemsPath: "$.list",
-        Next: "return null",
-        Iterator: {
-          StartAt: "return task(item)",
-          States: {
-            "return task(item)": {
-              End: true,
-              ResultSelector: "$.Payload",
-              Parameters: {
-                FunctionName: task.resource.functionName,
-                "Payload.$": "$.item",
-              },
-              Resource: "arn:aws:states:::lambda:invoke",
-              ResultPath: "$",
-              Type: "Task",
-            },
-          },
-        },
-        Parameters: {
-          "item.$": "$$.Map.Item.Value",
-        },
-        ResultPath: null,
-        Type: "Map",
-      },
-      "return null": {
-        End: true,
-        OutputPath: "$.null",
-        Parameters: {
-          null: null,
-        },
-        Type: "Pass",
-      },
-    },
-  });
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
 test("result = $SFN.map(list, (item) => task(item))", () => {
@@ -5152,41 +1559,7 @@ test("result = $SFN.map(list, (item) => task(item))", () => {
     return result;
   }).definition;
 
-  expect(definition).toEqual({
-    StartAt: "result = $SFN.map(input.list, function(item))",
-    States: {
-      "result = $SFN.map(input.list, function(item))": {
-        ItemsPath: "$.list",
-        Iterator: {
-          StartAt: "return task(item)",
-          States: {
-            "return task(item)": {
-              End: true,
-              ResultSelector: "$.Payload",
-              Parameters: {
-                FunctionName: task.resource.functionName,
-                "Payload.$": "$.item",
-              },
-              Resource: "arn:aws:states:::lambda:invoke",
-              ResultPath: "$",
-              Type: "Task",
-            },
-          },
-        },
-        Next: "return result",
-        Parameters: {
-          "item.$": "$$.Map.Item.Value",
-        },
-        ResultPath: "$.result",
-        Type: "Map",
-      },
-      "return result": {
-        End: true,
-        OutputPath: "$.result",
-        Type: "Pass",
-      },
-    },
-  });
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
 test("return $SFN.map(list, (item) => try { task(item)) } catch { return null }", () => {
@@ -5204,51 +1577,7 @@ test("return $SFN.map(list, (item) => try { task(item)) } catch { return null }"
     });
   }).definition;
 
-  expect(definition).toEqual({
-    StartAt: "return $SFN.map(input.list, function(item))",
-    States: {
-      "return $SFN.map(input.list, function(item))": {
-        End: true,
-        ItemsPath: "$.list",
-        Iterator: {
-          StartAt: "return task(item)",
-          States: {
-            "return task(item)": {
-              Catch: [
-                {
-                  ErrorEquals: ["States.ALL"],
-                  Next: "return null",
-                  ResultPath: null,
-                },
-              ],
-              End: true,
-              ResultSelector: "$.Payload",
-              Parameters: {
-                FunctionName: task.resource.functionName,
-                "Payload.$": "$.item",
-              },
-              Resource: "arn:aws:states:::lambda:invoke",
-              ResultPath: "$",
-              Type: "Task",
-            },
-            "return null": {
-              End: true,
-              OutputPath: "$.null",
-              Parameters: {
-                null: null,
-              },
-              Type: "Pass",
-            },
-          },
-        },
-        Parameters: {
-          "item.$": "$$.Map.Item.Value",
-        },
-        ResultPath: "$",
-        Type: "Map",
-      },
-    },
-  });
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
 test("try { $SFN.map(list, (item) => task(item)) } catch { return null }", () => {
@@ -5264,51 +1593,7 @@ test("try { $SFN.map(list, (item) => task(item)) } catch { return null }", () =>
     }
   }).definition;
 
-  expect(definition).toEqual({
-    StartAt: "return $SFN.map(input.list, function(item))",
-    States: {
-      "return $SFN.map(input.list, function(item))": {
-        Catch: [
-          {
-            ErrorEquals: ["States.ALL"],
-            Next: "return null",
-            ResultPath: null,
-          },
-        ],
-        End: true,
-        ItemsPath: "$.list",
-        Iterator: {
-          StartAt: "return task(item)",
-          States: {
-            "return task(item)": {
-              End: true,
-              ResultSelector: "$.Payload",
-              Parameters: {
-                FunctionName: task.resource.functionName,
-                "Payload.$": "$.item",
-              },
-              Resource: "arn:aws:states:::lambda:invoke",
-              ResultPath: "$",
-              Type: "Task",
-            },
-          },
-        },
-        Parameters: {
-          "item.$": "$$.Map.Item.Value",
-        },
-        ResultPath: "$",
-        Type: "Map",
-      },
-      "return null": {
-        End: true,
-        OutputPath: "$.null",
-        Parameters: {
-          null: null,
-        },
-        Type: "Pass",
-      },
-    },
-  });
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
 test("return $SFN.forEach(list, (item) => task(item))", () => {
@@ -5321,36 +1606,7 @@ test("return $SFN.forEach(list, (item) => task(item))", () => {
     }
   ).definition;
 
-  expect(definition).toEqual({
-    StartAt: "return $SFN.forEach(input.list, function(item))",
-    States: {
-      "return $SFN.forEach(input.list, function(item))": {
-        End: true,
-        ItemsPath: "$.list",
-        Iterator: {
-          StartAt: "return task(item)",
-          States: {
-            "return task(item)": {
-              End: true,
-              ResultSelector: "$.Payload",
-              Parameters: {
-                FunctionName: task.resource.functionName,
-                "Payload.$": "$.item",
-              },
-              Resource: "arn:aws:states:::lambda:invoke",
-              ResultPath: "$",
-              Type: "Task",
-            },
-          },
-        },
-        Parameters: {
-          "item.$": "$$.Map.Item.Value",
-        },
-        ResultPath: "$",
-        Type: "Map",
-      },
-    },
-  });
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
 test("return $SFN.forEach(list, {maxConcurrency: 2} (item) => task(item))", () => {
@@ -5365,38 +1621,7 @@ test("return $SFN.forEach(list, {maxConcurrency: 2} (item) => task(item))", () =
     }
   ).definition;
 
-  expect(definition).toEqual({
-    StartAt:
-      "return $SFN.forEach(input.list, {maxConcurrency: 2}, function(item))",
-    States: {
-      "return $SFN.forEach(input.list, {maxConcurrency: 2}, function(item))": {
-        End: true,
-        ItemsPath: "$.list",
-        MaxConcurrency: 2,
-        Iterator: {
-          StartAt: "return task(item)",
-          States: {
-            "return task(item)": {
-              End: true,
-              ResultSelector: "$.Payload",
-              Parameters: {
-                FunctionName: task.resource.functionName,
-                "Payload.$": "$.item",
-              },
-              Resource: "arn:aws:states:::lambda:invoke",
-              ResultPath: "$",
-              Type: "Task",
-            },
-          },
-        },
-        Parameters: {
-          "item.$": "$$.Map.Item.Value",
-        },
-        ResultPath: "$",
-        Type: "Map",
-      },
-    },
-  });
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
 test("$SFN.forEach(list, (item) => task(item))", () => {
@@ -5409,44 +1634,7 @@ test("$SFN.forEach(list, (item) => task(item))", () => {
     }
   ).definition;
 
-  expect(definition).toEqual({
-    StartAt: "$SFN.forEach(input.list, function(item))",
-    States: {
-      "$SFN.forEach(input.list, function(item))": {
-        ItemsPath: "$.list",
-        Next: "return null",
-        Iterator: {
-          StartAt: "return task(item)",
-          States: {
-            "return task(item)": {
-              End: true,
-              ResultSelector: "$.Payload",
-              Parameters: {
-                FunctionName: task.resource.functionName,
-                "Payload.$": "$.item",
-              },
-              Resource: "arn:aws:states:::lambda:invoke",
-              ResultPath: "$",
-              Type: "Task",
-            },
-          },
-        },
-        Parameters: {
-          "item.$": "$$.Map.Item.Value",
-        },
-        ResultPath: null,
-        Type: "Map",
-      },
-      "return null": {
-        End: true,
-        OutputPath: "$.null",
-        Parameters: {
-          null: null,
-        },
-        Type: "Pass",
-      },
-    },
-  });
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
 test("result = $SFN.forEach(list, (item) => task(item))", () => {
@@ -5460,41 +1648,7 @@ test("result = $SFN.forEach(list, (item) => task(item))", () => {
     }
   ).definition;
 
-  expect(definition).toEqual({
-    StartAt: "result = $SFN.forEach(input.list, function(item))",
-    States: {
-      "result = $SFN.forEach(input.list, function(item))": {
-        ItemsPath: "$.list",
-        Iterator: {
-          StartAt: "return task(item)",
-          States: {
-            "return task(item)": {
-              End: true,
-              ResultSelector: "$.Payload",
-              Parameters: {
-                FunctionName: task.resource.functionName,
-                "Payload.$": "$.item",
-              },
-              Resource: "arn:aws:states:::lambda:invoke",
-              ResultPath: "$",
-              Type: "Task",
-            },
-          },
-        },
-        Next: "return result",
-        Parameters: {
-          "item.$": "$$.Map.Item.Value",
-        },
-        ResultPath: "$.result",
-        Type: "Map",
-      },
-      "return result": {
-        End: true,
-        OutputPath: "$.result",
-        Type: "Pass",
-      },
-    },
-  });
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
 test("return $SFN.forEach(list, (item) => try { task(item)) } catch { return null }", () => {
@@ -5513,51 +1667,7 @@ test("return $SFN.forEach(list, (item) => try { task(item)) } catch { return nul
     }
   ).definition;
 
-  expect(definition).toEqual({
-    StartAt: "return $SFN.forEach(input.list, function(item))",
-    States: {
-      "return $SFN.forEach(input.list, function(item))": {
-        End: true,
-        ItemsPath: "$.list",
-        Iterator: {
-          StartAt: "return task(item)",
-          States: {
-            "return task(item)": {
-              Catch: [
-                {
-                  ErrorEquals: ["States.ALL"],
-                  Next: "return null",
-                  ResultPath: null,
-                },
-              ],
-              End: true,
-              ResultSelector: "$.Payload",
-              Parameters: {
-                FunctionName: task.resource.functionName,
-                "Payload.$": "$.item",
-              },
-              Resource: "arn:aws:states:::lambda:invoke",
-              ResultPath: "$",
-              Type: "Task",
-            },
-            "return null": {
-              End: true,
-              OutputPath: "$.null",
-              Parameters: {
-                null: null,
-              },
-              Type: "Pass",
-            },
-          },
-        },
-        Parameters: {
-          "item.$": "$$.Map.Item.Value",
-        },
-        ResultPath: "$",
-        Type: "Map",
-      },
-    },
-  });
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
 test("try { $SFN.forEach(list, (item) => task(item)) } catch { return null }", () => {
@@ -5574,51 +1684,7 @@ test("try { $SFN.forEach(list, (item) => task(item)) } catch { return null }", (
     }
   ).definition;
 
-  expect(definition).toEqual({
-    StartAt: "return $SFN.forEach(input.list, function(item))",
-    States: {
-      "return $SFN.forEach(input.list, function(item))": {
-        Catch: [
-          {
-            ErrorEquals: ["States.ALL"],
-            Next: "return null",
-            ResultPath: null,
-          },
-        ],
-        End: true,
-        ItemsPath: "$.list",
-        Iterator: {
-          StartAt: "return task(item)",
-          States: {
-            "return task(item)": {
-              End: true,
-              ResultSelector: "$.Payload",
-              Parameters: {
-                FunctionName: task.resource.functionName,
-                "Payload.$": "$.item",
-              },
-              Resource: "arn:aws:states:::lambda:invoke",
-              ResultPath: "$",
-              Type: "Task",
-            },
-          },
-        },
-        Parameters: {
-          "item.$": "$$.Map.Item.Value",
-        },
-        ResultPath: "$",
-        Type: "Map",
-      },
-      "return null": {
-        End: true,
-        OutputPath: "$.null",
-        Parameters: {
-          null: null,
-        },
-        Type: "Pass",
-      },
-    },
-  });
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
 test('return $SFN.parallel(() => "hello", () => "world"))', () => {
@@ -5630,40 +1696,7 @@ test('return $SFN.parallel(() => "hello", () => "world"))', () => {
     );
   }).definition;
 
-  expect(definition).toEqual({
-    StartAt: "return $SFN.parallel([function(), function()])",
-    States: {
-      "return $SFN.parallel([function(), function()])": {
-        Branches: [
-          {
-            StartAt: 'return "hello"',
-            States: {
-              'return "hello"': {
-                End: true,
-                Result: "hello",
-                ResultPath: "$",
-                Type: "Pass",
-              },
-            },
-          },
-          {
-            StartAt: 'return "world"',
-            States: {
-              'return "world"': {
-                End: true,
-                Result: "world",
-                ResultPath: "$",
-                Type: "Pass",
-              },
-            },
-          },
-        ],
-        End: true,
-        ResultPath: "$",
-        Type: "Parallel",
-      },
-    },
-  });
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
 test('try { return $SFN.parallel(() => "hello", () => "world")) } catch { return null }', () => {
@@ -5679,55 +1712,7 @@ test('try { return $SFN.parallel(() => "hello", () => "world")) } catch { return
     }
   }).definition;
 
-  expect(definition).toEqual({
-    StartAt: "return $SFN.parallel([function(), function()])",
-    States: {
-      "return $SFN.parallel([function(), function()])": {
-        Branches: [
-          {
-            StartAt: 'return "hello"',
-            States: {
-              'return "hello"': {
-                End: true,
-                Result: "hello",
-                ResultPath: "$",
-                Type: "Pass",
-              },
-            },
-          },
-          {
-            StartAt: 'return "world"',
-            States: {
-              'return "world"': {
-                End: true,
-                Result: "world",
-                ResultPath: "$",
-                Type: "Pass",
-              },
-            },
-          },
-        ],
-        Catch: [
-          {
-            ErrorEquals: ["States.ALL"],
-            Next: "return null",
-            ResultPath: null,
-          },
-        ],
-        End: true,
-        ResultPath: "$",
-        Type: "Parallel",
-      },
-      "return null": {
-        Type: "Pass",
-        Parameters: {
-          null: null,
-        },
-        OutputPath: "$.null",
-        End: true,
-      },
-    },
-  });
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
 test("return $SFN.parallel(() => try { task() } catch { return null })) }", () => {
@@ -5746,64 +1731,7 @@ test("return $SFN.parallel(() => try { task() } catch { return null })) }", () =
     }
   }).definition;
 
-  expect(definition).toEqual({
-    StartAt: "return $SFN.parallel([function()])",
-    States: {
-      "return $SFN.parallel([function()])": {
-        Branches: [
-          {
-            StartAt: "return task()",
-            States: {
-              "return task()": {
-                Catch: [
-                  {
-                    ErrorEquals: ["States.ALL"],
-                    Next: "return null",
-                    ResultPath: null,
-                  },
-                ],
-                End: true,
-                ResultSelector: "$.Payload",
-                Parameters: {
-                  FunctionName: task.resource.functionName,
-                  Payload: undefined,
-                },
-                Resource: "arn:aws:states:::lambda:invoke",
-                ResultPath: "$",
-                Type: "Task",
-              },
-              "return null": {
-                End: true,
-                OutputPath: "$.null",
-                Parameters: {
-                  null: null,
-                },
-                Type: "Pass",
-              },
-            },
-          },
-        ],
-        Catch: [
-          {
-            ErrorEquals: ["States.ALL"],
-            Next: "return null 1",
-            ResultPath: null,
-          },
-        ],
-        End: true,
-        ResultPath: "$",
-        Type: "Parallel",
-      },
-      "return null 1": {
-        End: true,
-        OutputPath: "$.null",
-        Parameters: {
-          null: null,
-        },
-        Type: "Pass",
-      },
-    },
-  });
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
 test("return task({ key: items.filter(*) })", () => {
@@ -5823,28 +1751,7 @@ test("return task({ key: items.filter(*) })", () => {
     });
   }).definition;
 
-  expect(definition).toEqual({
-    StartAt:
-      "return task({equals: input.items.filter(function(item)), and: input.items.f",
-    States: {
-      "return task({equals: input.items.filter(function(item)), and: input.items.f":
-        {
-          Type: "Task",
-          End: true,
-          Resource: "arn:aws:states:::lambda:invoke",
-          ResultSelector: "$.Payload",
-          Parameters: {
-            FunctionName: task.resource.functionName,
-            Payload: {
-              "equals.$": "$.items[?(@.str=='hello')]",
-              "and.$": "$.items[?(@.str=='hello'&&@.items[0]=='hello')]",
-              "or.$": "$.items[?(@.str=='hello'||@.items[0]=='hello')]",
-            },
-          },
-          ResultPath: "$",
-        },
-    },
-  });
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
 test("single quotes in StringLiteralExpr should be escaped in a JSON Path filter expression", () => {
@@ -5858,24 +1765,7 @@ test("single quotes in StringLiteralExpr should be escaped in a JSON Path filter
     });
   }).definition;
 
-  expect(definition).toEqual({
-    StartAt: "return task({escape: input.items.filter(function(item))})",
-    States: {
-      "return task({escape: input.items.filter(function(item))})": {
-        Type: "Task",
-        End: true,
-        Resource: "arn:aws:states:::lambda:invoke",
-        ResultSelector: "$.Payload",
-        Parameters: {
-          FunctionName: task.resource.functionName,
-          Payload: {
-            "escape.$": "$.items[?(@.str=='hello\\'world')]",
-          },
-        },
-        ResultPath: "$",
-      },
-    },
-  });
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
 test("template literal strings", () => {
@@ -5889,24 +1779,7 @@ test("template literal strings", () => {
     });
   }).definition;
 
-  expect(definition).toEqual({
-    StartAt: "return task({key: `input.obj.str hello input.obj.items[0]`})",
-    States: {
-      "return task({key: `input.obj.str hello input.obj.items[0]`})": {
-        End: true,
-        ResultSelector: "$.Payload",
-        Parameters: {
-          FunctionName: task.resource.functionName,
-          Payload: {
-            "key.$": "States.Format('{} hello {}',$.obj.str,$.obj.items[0])",
-          },
-        },
-        Resource: "arn:aws:states:::lambda:invoke",
-        ResultPath: "$",
-        Type: "Task",
-      },
-    },
-  });
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
 test("break from for-loop", () => {
@@ -5923,60 +1796,7 @@ test("break from for-loop", () => {
     }
   ).definition;
 
-  expect(definition).toEqual({
-    StartAt: "for(item of input.items)",
-    States: {
-      "for(item of input.items)": {
-        Catch: [
-          {
-            ErrorEquals: ["Break"],
-            Next: "return null",
-            ResultPath: null,
-          },
-        ],
-        ItemsPath: "$.items",
-        Iterator: {
-          StartAt: 'if(item == "hello")',
-          States: {
-            'if(item == "hello")': {
-              Choices: [
-                {
-                  Next: "break",
-                  StringEquals: "hello",
-                  Variable: "$.item",
-                },
-              ],
-              Default: '0_empty_else_if(item == "hello")',
-              Type: "Choice",
-            },
-            '0_empty_else_if(item == "hello")': {
-              End: true,
-              Type: "Pass",
-            },
-            break: {
-              Type: "Fail",
-              Error: "Break",
-            },
-          },
-        },
-        MaxConcurrency: 1,
-        Next: "return null",
-        Parameters: {
-          "item.$": "$$.Map.Item.Value",
-        },
-        ResultPath: null,
-        Type: "Map",
-      },
-      "return null": {
-        End: true,
-        OutputPath: "$.null",
-        Parameters: {
-          null: null,
-        },
-        Type: "Pass",
-      },
-    },
-  });
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
 test("break from while-loop", () => {
@@ -5987,34 +1807,7 @@ test("break from while-loop", () => {
     }
   }).definition;
 
-  expect(definition).toEqual({
-    StartAt: "while (true)",
-    States: {
-      "while (true)": {
-        Choices: [
-          {
-            IsPresent: false,
-            Next: "break",
-            Variable: "$.0_true",
-          },
-        ],
-        Default: "return null",
-        Type: "Choice",
-      },
-      break: {
-        Next: "return null",
-        Type: "Pass",
-      },
-      "return null": {
-        End: true,
-        OutputPath: "$.null",
-        Parameters: {
-          null: null,
-        },
-        Type: "Pass",
-      },
-    },
-  });
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
 test("break from do-while-loop", () => {
@@ -6025,34 +1818,7 @@ test("break from do-while-loop", () => {
     } while (true);
   }).definition;
 
-  expect(definition).toEqual({
-    StartAt: "break",
-    States: {
-      "while (true)": {
-        Choices: [
-          {
-            IsPresent: false,
-            Next: "break",
-            Variable: "$.0_true",
-          },
-        ],
-        Default: "return null",
-        Type: "Choice",
-      },
-      break: {
-        Next: "return null",
-        Type: "Pass",
-      },
-      "return null": {
-        End: true,
-        OutputPath: "$.null",
-        Parameters: {
-          null: null,
-        },
-        Type: "Pass",
-      },
-    },
-  });
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
 test("continue in for loop", () => {
@@ -6069,54 +1835,7 @@ test("continue in for loop", () => {
     }
   ).definition;
 
-  expect(definition).toEqual({
-    StartAt: "for(item of input.items)",
-    States: {
-      "for(item of input.items)": {
-        ItemsPath: "$.items",
-        Iterator: {
-          StartAt: 'if(item == "hello")',
-          States: {
-            'if(item == "hello")': {
-              Choices: [
-                {
-                  Next: "continue",
-                  StringEquals: "hello",
-                  Variable: "$.item",
-                },
-              ],
-              Default: '0_empty_else_if(item == "hello")',
-              Type: "Choice",
-            },
-            continue: {
-              End: true,
-              ResultPath: null,
-              Type: "Pass",
-            },
-            '0_empty_else_if(item == "hello")': {
-              End: true,
-              Type: "Pass",
-            },
-          },
-        },
-        MaxConcurrency: 1,
-        Next: "return null",
-        Parameters: {
-          "item.$": "$$.Map.Item.Value",
-        },
-        ResultPath: null,
-        Type: "Map",
-      },
-      "return null": {
-        End: true,
-        OutputPath: "$.null",
-        Parameters: {
-          null: null,
-        },
-        Type: "Pass",
-      },
-    },
-  });
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
 test("continue in while loop", () => {
@@ -6134,57 +1853,7 @@ test("continue in while loop", () => {
     }
   ).definition;
 
-  expect(definition).toEqual({
-    StartAt: "while (true)",
-    States: {
-      "while (true)": {
-        Choices: [
-          {
-            IsPresent: false,
-            Next: 'if(input.key == "sam")',
-            Variable: "$.0_true",
-          },
-        ],
-        Default: "return null",
-        Type: "Choice",
-      },
-      'if(input.key == "sam")': {
-        Choices: [
-          {
-            Next: "continue",
-            StringEquals: "sam",
-            Variable: "$.key",
-          },
-        ],
-        Default: "task(input.key)",
-        Type: "Choice",
-      },
-      continue: {
-        Next: "while (true)",
-        ResultPath: null,
-        Type: "Pass",
-      },
-      "task(input.key)": {
-        Next: "while (true)",
-        ResultSelector: "$.Payload",
-        Parameters: {
-          FunctionName: task.resource.functionName,
-          "Payload.$": "$.key",
-        },
-        Resource: "arn:aws:states:::lambda:invoke",
-        ResultPath: null,
-        Type: "Task",
-      },
-      "return null": {
-        End: true,
-        OutputPath: "$.null",
-        Parameters: {
-          null: null,
-        },
-        Type: "Pass",
-      },
-    },
-  });
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
 test("continue in do..while loop", () => {
@@ -6202,57 +1871,7 @@ test("continue in do..while loop", () => {
     }
   ).definition;
 
-  expect(definition).toEqual({
-    StartAt: 'if(input.key == "sam")',
-    States: {
-      'if(input.key == "sam")': {
-        Choices: [
-          {
-            Next: "continue",
-            StringEquals: "sam",
-            Variable: "$.key",
-          },
-        ],
-        Default: "task(input.key)",
-        Type: "Choice",
-      },
-      continue: {
-        Next: 'if(input.key == "sam")',
-        ResultPath: null,
-        Type: "Pass",
-      },
-      "task(input.key)": {
-        Next: "while (true)",
-        ResultSelector: "$.Payload",
-        Parameters: {
-          FunctionName: task.resource.functionName,
-          "Payload.$": "$.key",
-        },
-        Resource: "arn:aws:states:::lambda:invoke",
-        ResultPath: null,
-        Type: "Task",
-      },
-      "while (true)": {
-        Choices: [
-          {
-            IsPresent: false,
-            Next: 'if(input.key == "sam")',
-            Variable: "$.0_true",
-          },
-        ],
-        Default: "return null",
-        Type: "Choice",
-      },
-      "return null": {
-        End: true,
-        OutputPath: "$.null",
-        Parameters: {
-          null: null,
-        },
-        Type: "Pass",
-      },
-    },
-  });
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
 test("return task(task())", () => {
@@ -6261,33 +1880,7 @@ test("return task(task())", () => {
     return task(task());
   }).definition;
 
-  expect(definition).toEqual({
-    StartAt: "0_tmp = task()",
-    States: {
-      "0_tmp = task()": {
-        Next: "return task(0_tmp)",
-        ResultSelector: "$.Payload",
-        Parameters: {
-          FunctionName: task.resource.functionName,
-          Payload: undefined,
-        },
-        Resource: "arn:aws:states:::lambda:invoke",
-        ResultPath: "$.0_tmp",
-        Type: "Task",
-      },
-      "return task(0_tmp)": {
-        End: true,
-        ResultSelector: "$.Payload",
-        Parameters: {
-          FunctionName: task.resource.functionName,
-          "Payload.$": "$.0_tmp",
-        },
-        Resource: "arn:aws:states:::lambda:invoke",
-        ResultPath: "$",
-        Type: "Task",
-      },
-    },
-  });
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
 // test("return cond ? task(1) : task(2))", () => {
@@ -6296,7 +1889,7 @@ test("return task(task())", () => {
 //     return cond ? task(1) : task(2);
 //   }).definition;
 
-//   expect(definition).toEqual({});
+//   expect(definition).toMatchSnapshot()
 // });
 
 // test("return task(1) ?? task(2))", () => {
@@ -6305,7 +1898,7 @@ test("return task(task())", () => {
 //     return task(1) ?? task(2);
 //   }).definition;
 
-//   expect(definition).toEqual({});
+//   expect(definition).toMatchSnapshot()
 // });
 
 test("while(true) { try { } catch { wait }", () => {
@@ -6320,53 +1913,7 @@ test("while(true) { try { } catch { wait }", () => {
     }
   }).definition;
 
-  expect(definition).toEqual({
-    StartAt: "while (true)",
-    States: {
-      "while (true)": {
-        Choices: [
-          {
-            IsPresent: false,
-            Next: "task()",
-            Variable: "$.0_true",
-          },
-        ],
-        Default: "return null",
-        Type: "Choice",
-      },
-      "task()": {
-        Catch: [
-          {
-            ErrorEquals: ["States.ALL"],
-            Next: "$SFN.waitFor(1)",
-            ResultPath: null,
-          },
-        ],
-        Next: "while (true)",
-        ResultSelector: "$.Payload",
-        Parameters: {
-          FunctionName: task.resource.functionName,
-          Payload: undefined,
-        },
-        Resource: "arn:aws:states:::lambda:invoke",
-        ResultPath: null,
-        Type: "Task",
-      },
-      "$SFN.waitFor(1)": {
-        Next: "while (true)",
-        Seconds: 1,
-        Type: "Wait",
-      },
-      "return null": {
-        End: true,
-        OutputPath: "$.null",
-        Parameters: {
-          null: null,
-        },
-        Type: "Pass",
-      },
-    },
-  });
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
 test("call Step Function from another Step Function", () => {
@@ -6380,25 +1927,11 @@ test("call Step Function from another Step Function", () => {
     return result;
   }).definition;
 
-  expect(definition).toEqual({
-    StartAt: "result = machine1({})",
-    States: {
-      "result = machine1({})": {
-        Next: "return result",
-        Parameters: {
-          StateMachineArn: machine1.stateMachineArn,
-        },
-        Resource: "arn:aws:states:::aws-sdk:sfn:startSyncExecution",
-        ResultPath: "$.result",
-        Type: "Task",
-      },
-      "return result": {
-        End: true,
-        OutputPath: "$.result",
-        Type: "Pass",
-      },
-    },
+  expectTaskToMatch(definition, {
+    Parameters: { StateMachineArn: machine1.resource.attrArn },
   });
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
 test("call Step Function from another Step Function with name and trace", () => {
@@ -6415,27 +1948,7 @@ test("call Step Function from another Step Function with name and trace", () => 
     return result;
   }).definition;
 
-  expect(definition).toEqual({
-    StartAt: 'result = machine1({name: "exec1", traceHeader: "1"})',
-    States: {
-      'result = machine1({name: "exec1", traceHeader: "1"})': {
-        Next: "return result",
-        Parameters: {
-          StateMachineArn: machine1.stateMachineArn,
-          Name: "exec1",
-          TraceHeader: "1",
-        },
-        Resource: "arn:aws:states:::aws-sdk:sfn:startSyncExecution",
-        ResultPath: "$.result",
-        Type: "Task",
-      },
-      "return result": {
-        End: true,
-        OutputPath: "$.result",
-        Type: "Pass",
-      },
-    },
-  });
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
 test("call Step Function from another Step Function with name and trace from variables", () => {
@@ -6456,27 +1969,7 @@ test("call Step Function from another Step Function with name and trace from var
     }
   ).definition;
 
-  expect(definition).toEqual({
-    StartAt: "result = machine1({name: input.name, traceHeader: input.header})",
-    States: {
-      "result = machine1({name: input.name, traceHeader: input.header})": {
-        Next: "return result",
-        Parameters: {
-          StateMachineArn: machine1.stateMachineArn,
-          "Name.$": "$.name",
-          "TraceHeader.$": "$.header",
-        },
-        Resource: "arn:aws:states:::aws-sdk:sfn:startSyncExecution",
-        ResultPath: "$.result",
-        Type: "Task",
-      },
-      "return result": {
-        End: true,
-        OutputPath: "$.result",
-        Type: "Pass",
-      },
-    },
-  });
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
 test("call Step Function from another Step Function with input", () => {
@@ -6498,28 +1991,7 @@ test("call Step Function from another Step Function with input", () => {
     return result;
   }).definition;
 
-  expect(definition).toEqual({
-    StartAt: 'result = machine1({input: {value: "hello"}})',
-    States: {
-      'result = machine1({input: {value: "hello"}})': {
-        Next: "return result",
-        Parameters: {
-          Input: {
-            value: "hello",
-          },
-          StateMachineArn: machine1.stateMachineArn,
-        },
-        Resource: "arn:aws:states:::aws-sdk:sfn:startSyncExecution",
-        ResultPath: "$.result",
-        Type: "Task",
-      },
-      "return result": {
-        End: true,
-        OutputPath: "$.result",
-        Type: "Pass",
-      },
-    },
-  });
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
 test("call Step Function from another Step Function with dynamic input", () => {
@@ -6544,28 +2016,7 @@ test("call Step Function from another Step Function with dynamic input", () => {
     return result;
   }).definition;
 
-  expect(definition).toEqual({
-    StartAt: "result = machine1({input: {value: input.value1}})",
-    States: {
-      "result = machine1({input: {value: input.value1}})": {
-        Next: "return result",
-        Parameters: {
-          Input: {
-            "value.$": "$.value1",
-          },
-          StateMachineArn: machine1.stateMachineArn,
-        },
-        Resource: "arn:aws:states:::aws-sdk:sfn:startSyncExecution",
-        ResultPath: "$.result",
-        Type: "Task",
-      },
-      "return result": {
-        End: true,
-        OutputPath: "$.result",
-        Type: "Pass",
-      },
-    },
-  });
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
 test("call Step Function from another Step Function with dynamic input field input", () => {
@@ -6588,26 +2039,7 @@ test("call Step Function from another Step Function with dynamic input field inp
     return result;
   }).definition;
 
-  expect(definition).toEqual({
-    StartAt: "result = machine1({input: input})",
-    States: {
-      "result = machine1({input: input})": {
-        Next: "return result",
-        Parameters: {
-          "Input.$": "$",
-          StateMachineArn: machine1.stateMachineArn,
-        },
-        Resource: "arn:aws:states:::aws-sdk:sfn:startSyncExecution",
-        ResultPath: "$.result",
-        Type: "Task",
-      },
-      "return result": {
-        End: true,
-        OutputPath: "$.result",
-        Type: "Pass",
-      },
-    },
-  });
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
 test("call Step Function from another Step Function not supported with reference argument", () => {
@@ -6715,25 +2147,7 @@ test("call Step Function describe from another Step Function", () => {
     return result;
   }).definition;
 
-  expect(definition).toEqual({
-    StartAt: 'result = machine1.describeExecution("hello")',
-    States: {
-      'result = machine1.describeExecution("hello")': {
-        Next: "return result",
-        Parameters: {
-          ExecutionArn: "hello",
-        },
-        Resource: "arn:aws:states:::aws-sdk:sfn:describeExecution",
-        ResultPath: "$.result",
-        Type: "Task",
-      },
-      "return result": {
-        End: true,
-        OutputPath: "$.result",
-        Type: "Pass",
-      },
-    },
-  });
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
 test("call Step Function describe from another Step Function from context", () => {
@@ -6755,25 +2169,7 @@ test("call Step Function describe from another Step Function from context", () =
     }
   ).definition;
 
-  expect(definition).toEqual({
-    StartAt: "result = machine1.describeExecution(input.id)",
-    States: {
-      "result = machine1.describeExecution(input.id)": {
-        Next: "return result",
-        Parameters: {
-          "ExecutionArn.$": "$.id",
-        },
-        Resource: "arn:aws:states:::aws-sdk:sfn:describeExecution",
-        ResultPath: "$.result",
-        Type: "Task",
-      },
-      "return result": {
-        End: true,
-        OutputPath: "$.result",
-        Type: "Pass",
-      },
-    },
-  });
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
 test("on success event", () => {
