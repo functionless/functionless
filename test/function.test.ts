@@ -314,7 +314,7 @@ test("configure async with functions", () => {
   >(stack, "func", async () => {});
   const func = new Function<string, void>(stack, "func3", async () => {});
 
-  func.configureAsyncInvoke({
+  func.enableAsyncInvoke({
     onFailure: handleAsyncFunction,
     onSuccess: handleAsyncFunction,
   });
@@ -344,7 +344,7 @@ test("configure async with bus", () => {
   );
   const func = new Function<string, void>(stack, "func3", async () => {});
 
-  func.configureAsyncInvoke({
+  func.enableAsyncInvoke({
     onFailure: bus,
     onSuccess: bus,
   });

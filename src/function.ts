@@ -128,7 +128,7 @@ export interface IFunction<in Payload, Output, OutPayload extends Payload = Payl
    *
    * For Lambda, the onSuccess destination is not enabled by default.
    * It must first be configured via either the {@link Function} constructor
-   * or by using {@link IFunction.configureAsyncInvoke} and that destination must match the bus provided here.
+   * or by using {@link IFunction.enableAsyncInvoke} and that destination must match the bus provided here.
    *
    * ```ts
    * const bus = new EventBus(stack, 'bus');
@@ -141,7 +141,7 @@ export interface IFunction<in Payload, Output, OutPayload extends Payload = Payl
    * const bus = new EventBus(stack, 'bus');
    * const func = new Function(stack, 'func', async () => {});
    * // if onSuccess or onFailure is already set, this will fail.
-   * func.configureAsyncInvoke({ onSuccess: bus });
+   * func.enableAsyncInvoke({ onSuccess: bus });
    * ```
    *
    * @see https://docs.aws.amazon.com/lambda/latest/dg/invocation-async.html#invocation-async-destinations
@@ -163,7 +163,7 @@ export interface IFunction<in Payload, Output, OutPayload extends Payload = Payl
    *
    * The onFailure destination is not enabled by default.
    * It must first be configured via either the {@link Function} constructor
-   * or by using {@link IFunction.configureAsyncInvoke} and that destination must match the bus provided here.
+   * or by using {@link IFunction.enableAsyncInvoke} and that destination must match the bus provided here.
    *
    * ```ts
    * const bus = new EventBus(stack, 'bus');
@@ -176,7 +176,7 @@ export interface IFunction<in Payload, Output, OutPayload extends Payload = Payl
    * const bus = new EventBus(stack, 'bus');
    * const func = new Function(stack, 'func', async () => {});
    * // if onSuccess or onFailure is already set, this will fail.
-   * func.configureAsyncInvoke({ onFailure: bus });
+   * func.enableAsyncInvoke({ onFailure: bus });
    * ```
    *
    * @see https://docs.aws.amazon.com/lambda/latest/dg/invocation-async.html#invocation-async-destinations
@@ -195,14 +195,14 @@ export interface IFunction<in Payload, Output, OutPayload extends Payload = Payl
   ): Rule<AsyncResponseFailureEvent<OutPayload>>;
 
   /**
-   * Set the async invocation options on a function. Can be use to set the onSuccess and onFailure destinations.
+   * Set the async invocation options on a function. Can be use to enable and set the onSuccess and onFailure destinations.
    *
-   * Wraps the method provided by {@link aws_lambda.IFunction} to support Functionless resources directly.
+   * Wraps {@link aws_lambda.IFunction.configureAsyncInvoke} provided by CDK to support Functionless resources directly.
    *
-   * If onSuccess or onFailure were already set either through {@link FunctionProps} or {@link IFunction.configureAsyncInvoke}
+   * If onSuccess or onFailure were already set either through {@link FunctionProps} or {@link IFunction.enableAsyncInvoke}
    * This method will fail.
    */
-  configureAsyncInvoke(config: EventInvokeConfigOptions<OutPayload, Output>): void;
+  enableAsyncInvoke(config: EventInvokeConfigOptions<OutPayload, Output>): void;
 
   readonly eventBus: EventBusTargetIntegration<
     Payload,
@@ -373,7 +373,7 @@ abstract class FunctionBase<in P, O, OutP extends P = P>
       : destination;
   }
 
-  public configureAsyncInvoke(config: EventInvokeConfigOptions<OutP, O>): void {
+  public enableAsyncInvoke(config: EventInvokeConfigOptions<OutP, O>): void {
     this.resource.configureAsyncInvoke({
       ...config,
       onSuccess: FunctionBase.normalizeAsyncDestination<OutP, O>(config.onSuccess),
