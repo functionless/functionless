@@ -1,7 +1,7 @@
 const { readFileSync, writeFileSync, chmodSync } = require("fs");
 const { join } = require("path");
 const { typescript, TextFile } = require("projen");
-const { TypeScriptProject } = require("projen/lib/typescript");
+const { GithubCredentials } = require("projen/lib/github");
 
 /**
  * Adds githooks into the .git/hooks folder during projen synth.
@@ -136,6 +136,11 @@ const project = new CustomTypescriptProject({
   jestOptions: {
     jestConfig: {
       coveragePathIgnorePatterns: ["/test/", "/node_modules/"],
+    },
+  },
+  depsUpgradeOptions: {
+    workflowOptions: {
+      projenCredentials: GithubCredentials.fromApp(),
     },
   },
 });
