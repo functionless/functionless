@@ -86,6 +86,7 @@ const project = new CustomTypescriptProject({
     "prettier",
     "ts-node",
     "ts-patch",
+
     /**
      * For CDK Local Stack tests
      */
