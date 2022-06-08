@@ -50,7 +50,7 @@ import {
 } from "./integration";
 import { AnyFunction, anyOf } from "./util";
 
-export function isFunction<P = any, O = any>(a: any): a is IFunction<P, O> {
+export function isFunction<Payload = any, Output = any>(a: any): a is IFunction<Payload, Output> {
   return a?.kind === "Function";
 }
 
@@ -59,15 +59,15 @@ export type AnyLambda = Function<any, any>;
 export interface FunctionEventBusTargetProps
   extends Omit<aws_events_targets.LambdaFunctionProps, "event"> {}
 
-export type FunctionClosure<P, O> = (
-  payload: P,
+export type FunctionClosure<in Payload, out Output> = (
+  payload: Payload,
   context: Context
-) => Promise<O>;
+) => Promise<Output>;
 
 /**
  * Returns the payload type on the {@link IFunction}.
  */
-export type FunctionPayloadType<F extends IFunction<any, any>> = [F] extends [
+export type FunctionPayloadType<Func extends IFunction<any, any>> = [Func] extends [
   IFunction<infer P, any>
 ]
   ? P
@@ -75,44 +75,52 @@ export type FunctionPayloadType<F extends IFunction<any, any>> = [F] extends [
 /**
  * Returns the output type on the {@link IFunction}.
  */
-export type FunctionOutputType<F extends IFunction<any, any>> = [F] extends [
+export type FunctionOutputType<Func extends IFunction<any, any>> = [Func] extends [
   IFunction<any, infer O>
 ]
   ? O
   : never;
 
-type FunctionAsyncOnFailureDestination<P> =
+type FunctionAsyncOnFailureDestination<Payload> =
   | aws_lambda.FunctionProps["onFailure"]
-  | IEventBus<AsyncResponseFailureEvent<P>, any>
-  | IFunction<AsyncResponseFailure<P>, any>;
+  | IEventBus<AsyncResponseFailureEvent<Payload>, any>
+  | IFunction<AsyncResponseFailure<Payload>, any>;
 
-type FunctionAsyncOnSuccessDestination<P, O> =
+type FunctionAsyncOnSuccessDestination<Payload, Output> =
   | aws_lambda.FunctionProps["onSuccess"]
-  | IEventBus<AsyncResponseSuccessEvent<P, O>, any>
-  | IFunction<AsyncResponseSuccess<P, O>, any>;
+  | IEventBus<AsyncResponseSuccessEvent<Payload, Output>, any>
+  | IFunction<AsyncResponseSuccess<Payload, Output>, any>;
 
 /**
  * Wrapper around {@link aws_lambda.EventInvokeConfigOptions} which allows users to provide Functionless
  * {@link EventBus} and {@link Function} for the onSuccess and onFailure async event destinations.
  */
-export interface EventInvokeConfigOptions<P, O>
+export interface EventInvokeConfigOptions<Payload, Output>
   extends Omit<aws_lambda.EventInvokeConfigOptions, "onSuccess" | "onFailure"> {
-  onSuccess?: FunctionAsyncOnSuccessDestination<P, O>;
-  onFailure?: FunctionAsyncOnFailureDestination<P>;
+  onSuccess?: FunctionAsyncOnSuccessDestination<Payload, Output>;
+  onFailure?: FunctionAsyncOnFailureDestination<Payload>;
 }
 
-export interface IFunction<in P, O, OutP extends P = P>
+/**
+ * @typeParam Payload - The super-set payload type of the function.
+ * @typeParam Output - The output type of the function.
+ * @typeParam OutPayload - The contravariant type of {@link Payload} used when the payload is output.
+ *                         For example when the Payload is sent to a {@link Function} or {@link EventBus}
+ *                         from onSuccess or onFailure event sources. This type parameter should be left
+ *                         empty to be inferred. ex: `Function<Payload1, Output1 | Output2>`.
+ */
+export interface IFunction<in Payload, Output, OutPayload extends Payload = Payload>
   extends Integration<
     "Function",
-    ConditionalFunction<P, O>,
-    EventBusTargetIntegration<P, FunctionEventBusTargetProps | undefined>
+    ConditionalFunction<Payload, Output>,
+    EventBusTargetIntegration<Payload, FunctionEventBusTargetProps | undefined>
   > {
   readonly functionlessKind: typeof Function.FunctionlessType;
   readonly kind: typeof Function.FunctionlessType;
   readonly resource: aws_lambda.IFunction;
 
-  (...args: Parameters<ConditionalFunction<P, O>>): ReturnType<
-    ConditionalFunction<P, O>
+  (...args: Parameters<ConditionalFunction<Payload, Output>>): ReturnType<
+    ConditionalFunction<Payload, Output>
   >;
 
   /**
@@ -147,9 +155,9 @@ export interface IFunction<in P, O, OutP extends P = P>
    * ```
    */
   onSuccess(
-    bus: IEventBus<AsyncResponseSuccessEvent<OutP, O>>,
+    bus: IEventBus<AsyncResponseSuccessEvent<OutPayload, Output>>,
     id: string
-  ): Rule<AsyncResponseSuccessEvent<OutP, O>>;
+  ): Rule<AsyncResponseSuccessEvent<OutPayload, Output>>;
   /**
    * Event Source for the {@link Function} onFailure async invocation destination.
    *
@@ -182,9 +190,9 @@ export interface IFunction<in P, O, OutP extends P = P>
    * ```
    */
   onFailure(
-    bus: IEventBus<AsyncResponseFailureEvent<OutP>>,
+    bus: IEventBus<AsyncResponseFailureEvent<OutPayload>>,
     id: string
-  ): Rule<AsyncResponseFailureEvent<OutP>>;
+  ): Rule<AsyncResponseFailureEvent<OutPayload>>;
 
   /**
    * Set the async invocation options on a function. Can be use to set the onSuccess and onFailure destinations.
@@ -194,10 +202,10 @@ export interface IFunction<in P, O, OutP extends P = P>
    * If onSuccess or onFailure were already set either through {@link FunctionProps} or {@link IFunction.configureAsyncInvoke}
    * This method will fail.
    */
-  configureAsyncInvoke(config: EventInvokeConfigOptions<OutP, O>): void;
+  configureAsyncInvoke(config: EventInvokeConfigOptions<OutPayload, Output>): void;
 
   readonly eventBus: EventBusTargetIntegration<
-    P,
+    Payload,
     FunctionEventBusTargetProps | undefined
   >;
 }
@@ -644,7 +652,7 @@ export class ImportedFunction<P, O> extends FunctionBase<P, O> {
   }
 }
 
-type ConditionalFunction<P, O> = P extends undefined
+type ConditionalFunction<P, O> = [P] extends [undefined]
   ? (payload?: P) => O
   : (payload: P) => O;
 
@@ -661,7 +669,7 @@ interface CallbackLambdaCodeProps extends PrewarmProps {}
  * * Initialize the {@link CallbackLambdaCode} `const code = new CallbackLambdaCode()`
  * * First bind the code to a Function `new aws_lambda.Function(..., { code })`
  * * Then call generate `const promise = code.generate(integrations)`
- * *
+ *
  */
 export class CallbackLambdaCode extends aws_lambda.Code {
   private scope: Construct | undefined = undefined;
@@ -883,7 +891,7 @@ export class CallbackLambdaCode extends aws_lambda.Code {
  * })
  * ```
  */
-export interface NativeIntegration<F extends AnyFunction> {
+export interface NativeIntegration<Func extends AnyFunction> {
   /**
    * Called by any {@link Function} that will invoke this integration during CDK Synthesis.
    * Add permissions, create connecting resources, validate.
@@ -898,9 +906,9 @@ export interface NativeIntegration<F extends AnyFunction> {
    *                       function handler.
    */
   call: (
-    args: Parameters<F>,
+    args: Parameters<Func>,
     preWarmContext: NativePreWarmContext
-  ) => Promise<ReturnType<F>>;
+  ) => Promise<ReturnType<Func>>;
   /**
    * Method called outside of the handler to initialize things like the PreWarmContext
    */

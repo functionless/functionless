@@ -430,3 +430,55 @@ test("function block closure", () => {
     return p;
   });
 });
+
+test("function accepts a superset of primitives", () => {
+  const func1 = new Function(stack, "superset", async (p: string | number) => {
+    return p;
+  });
+
+  new Function(
+    stack,
+    "subset",
+    async (p: { sn: string | number; b: boolean; bs: boolean | string }) => {
+      func1("hello");
+      func1(1);
+      func1(p.sn);
+      // @ts-expect-error - func1 accepts a string or number
+      func1(p.b);
+      if (typeof p.bs === "string") {
+        func1(p.bs);
+      }
+    }
+  );
+});
+
+test("function accepts a superset of objects", () => {
+  const func1 = new Function(
+    stack,
+    "superset",
+    async (p: { a: string } | { b: string }) => {
+      return p;
+    }
+  );
+
+  new Function(
+    stack,
+    "subset",
+    async (p: {
+      a: { a: string };
+      b: { b: string };
+      ab: { a: string } | { b: string };
+      aabb: { a: string; b: string };
+      c: { c: string };
+      ac: { a: string; c: string };
+    }) => {
+      func1(p.a);
+      func1(p.b);
+      func1(p.ab);
+      func1(p.aabb);
+      // @ts-expect-error - func1 requires a or b
+      func1(p.c);
+      func1(p.ac);
+    }
+  );
+});
