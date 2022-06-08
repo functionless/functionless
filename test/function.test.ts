@@ -170,3 +170,13 @@ $util.toJson($v1)`,
   #return($context.stash.return__val)
 #end`
   ));
+
+test("function inline arrow closure", () => {
+  new Function(stack, "inline", async (p: string) => p);
+});
+
+test("function block closure", () => {
+  new Function(stack, "block", async (p: string) => {
+    return p;
+  });
+});

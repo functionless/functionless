@@ -24,15 +24,17 @@ import {
   States,
   Task,
 } from "./asl";
-import { assertDefined, assertNodeKind } from "./assert";
-import { FunctionDecl, isFunctionDecl } from "./declaration";
+import { assertDefined } from "./assert";
 import {
-  EventBus,
-  PredicateRuleBase,
-  Rule,
+  validateFunctionDecl,
+  FunctionDecl,
+  isFunctionDecl,
+} from "./declaration";
+import { EventBus, PredicateRuleBase, Rule } from "./event-bridge";
+import {
   EventBusTargetIntegration,
-} from "./event-bridge";
-import { makeEventBusIntegration } from "./event-bridge/event-bus";
+  makeEventBusIntegration,
+} from "./event-bridge/event-bus";
 import { Event } from "./event-bridge/types";
 import {
   CallExpr,
@@ -444,7 +446,7 @@ abstract class BaseStepFunction<
     });
     this.decl = isFunctionDecl(args[0])
       ? args[0]
-      : assertNodeKind<FunctionDecl>(args[1] as any, "FunctionDecl");
+      : validateFunctionDecl(args[1], "StepFunction");
 
     this.role =
       props?.role ??
