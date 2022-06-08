@@ -104,7 +104,7 @@ export interface IRule<in Evnt extends Event, out OutEvnt extends Evnt> {
    *
    * Unsupported by Functionless:
    * * Variables from outside of the function scope
-   * 
+   *
    * @typeParam - NewEvnt - The type transformed to in the transform function.
    * @typeParam - InEvnt - `InEvnt` is the covariant of `OutEvnt`. This type parameter should be left
    *                       empty to be inferred. ex: `.map<NewType>(() => {})` or `.map(() => <NewType>{})`.
@@ -202,7 +202,7 @@ abstract class RuleBase<in Evnt extends Event, out OutEvnt extends Evnt = Evnt> 
 
 /**
  * Special base rule that supports some internal behaviors like joining (AND) compiled rules.
- * 
+ *
  * @typeParam - Evnt - The original event type from the {@link EventBus}.
  * @typeParam - OutEvnt - The narrowed event type after the predicate is applied.
  */
@@ -242,7 +242,7 @@ export class PredicateRuleBase<in Evnt extends Event, out OutEvnt extends Evnt =
 
   /**
    * @inheritdoc
-   * 
+   *
    * @typeParam InEvnt - The type the {@link Rule} matches. Covariant of output {@link OutEvnt}.
    * @typeParam NewEvnt - The type the predicate narrows to, a sub-type of {@link InEvnt}.
    */
@@ -289,7 +289,7 @@ export class PredicateRuleBase<in Evnt extends Event, out OutEvnt extends Evnt =
  * https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-event-patterns.html
  *
  * @see EventBus.when for more details on filtering events.
- * 
+ *
  * @typeParam - Evnt - The original event type from the {@link EventBus}.
  * @typeParam - OutEvnt - The narrowed event type after the predicate is applied.
  */

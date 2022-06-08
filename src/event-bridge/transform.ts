@@ -16,7 +16,7 @@ import { Event } from "./types";
  *
  * event is the event matched by the rule. This argument is optional.
  * $utils is a collection of built-in utilities wrapping EventBridge TargetInputs like contextual constants available to the transformer.
- * 
+ *
  * @typeParam - Evnt - The event type from the {@link Rule}.
  * @typeParam - OutEvnt - The narrowed event type after the transform is applied.
  */
@@ -42,7 +42,7 @@ export interface EventTransformUtils {
  * https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-transform-target-input.html
  *
  * @see Rule.map for more details on transforming event details.
- * 
+ *
  * @typeParam - Evnt - The event type from the {@link Rule}.
  * @typeParam - OutEvnt - The narrowed event type after the transform is applied.
  */

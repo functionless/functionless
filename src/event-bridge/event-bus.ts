@@ -108,7 +108,7 @@ export interface IEventBusFilterable<in Evnt extends Event, out OutEvnt extends 
    *
    * Unsupported by Functionless:
    * * Variables from outside of the function scope
-   * 
+   *
    * @typeParam InEvnt - The type the {@link Rule} matches. Covariant of output {@link OutEvnt}.
    * @typeParam NewEvnt - The type the predicate narrows to, a sub-type of {@link InEvnt}.
    */
@@ -378,7 +378,7 @@ abstract class EventBusBase<in Evnt extends Event, OutEvnt extends Evnt = Evnt> 
 
   /**
    * @inheritDoc
-   * 
+   *
    * @typeParam InEvnt - The type the {@link Rule} matches. Covariant of output {@link OutEvnt}.
    * @typeParam NewEvnt - The type the predicate narrows to, a sub-type of {@link InEvnt}.
    */
@@ -483,7 +483,7 @@ export type PutEventInput<Evnt extends Event> = Partial<Evnt> &
  *    // send verbatim to the other event bus
  *    .pipe(anotherEventBus);
  * ```
- * 
+ *
  * @typeParam Evnt - the union type of events that this EventBus can accept.
  *                   `Evnt` is the covariant version of `OutEvnt` in that
  *                   the bus will accept any of `Evnt` while the EventBus can
@@ -501,7 +501,7 @@ export class EventBus<in Evnt extends Event, out OutEvnt extends Evnt = Evnt> ex
 
   /**
    * Import an {@link aws_events.IEventBus} wrapped with Functionless abilities.
-   * 
+   *
    * @typeParam Evnt - the union of types which are expected on the default {@link EventBus}.
    */
   public static fromBus<Evnt extends Event>(bus: aws_events.IEventBus): IEventBus<Evnt> {
@@ -516,7 +516,7 @@ export class EventBus<in Evnt extends Event, out OutEvnt extends Evnt = Evnt> ex
    * const awsBus = aws_events.EventBus.fromEventBusName(Stack.of(scope), id, "default");
    * new functionless.EventBus.fromBus(awsBus);
    * ```
-   * 
+   *
    * @typeParam Evnt - the union of types which are expected on the default {@link EventBus}.
    */
   public static default<Evnt extends Event>(stack: Stack): DefaultEventBus<Evnt>;
@@ -650,7 +650,7 @@ class ImportedEventBus<in Evnt extends Event, out OutEvnt extends Evnt = Evnt> e
  *
  * new EventBus().when("rule", () => true).pipe(myEbIntegration);
  * ```
- * 
+ *
  * @typeParam - Payload - the type which the {@link Integration} expects as an input from {@link EventBus}.
  * @typeParam - Props - the optional properties the {@link Integration} accepts. Leave undefined to require no properties.
  */
