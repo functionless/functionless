@@ -40,7 +40,7 @@ export interface EventTransformUtils {
  *
  * @see Rule.map for more details on transforming event details.
  */
-export class EventTransform<Evnt extends Event, out Out> {
+export class EventTransform<in Evnt extends Event, out Out, out OutEvnt extends Evnt = Evnt> {
   readonly targetInput: aws_events.RuleTargetInput;
 
   /**
@@ -48,7 +48,7 @@ export class EventTransform<Evnt extends Event, out Out> {
    */
   public static readonly FunctionlessType = "EventTransform";
 
-  constructor(func: EventTransformFunction<Evnt, Out>, readonly rule: IRule<Evnt>) {
+  constructor(func: EventTransformFunction<Evnt, Out>, readonly rule: IRule<any, OutEvnt>) {
     const decl = func as unknown as FunctionDecl;
     this.targetInput = synthesizeEventBridgeTargets(decl);
   }

@@ -45,7 +45,7 @@ export const isEventBus = <EvntBus extends IEventBus<any>>(v: any): v is EvntBus
  */
 export type EventBusEvent<B extends IEventBus<any>> = [B] extends [IEventBus<infer E>] ? E : never;
 
-export interface IEventBusFilterable<in Evnt extends Event> {
+export interface IEventBusFilterable<in Evnt extends Event, out OutEvnt extends Event = Evnt> {
   /**
    * EventBus Rules can filter events using Functionless predicate functions.
    *
@@ -109,15 +109,15 @@ export interface IEventBusFilterable<in Evnt extends Event> {
    * Unsupported by Functionless:
    * * Variables from outside of the function scope
    */
-  when<OutEvnt extends Evnt>(
+  when<InEvent extends OutEvnt, NewEvnt extends InEvent>(
     id: string,
-    predicate: RulePredicateFunction<Evnt, OutEvnt>
-  ): Rule<Evnt, OutEvnt>;
-  when<OutEvnt extends Evnt>(
+    predicate: RulePredicateFunction<InEvent, NewEvnt>
+  ): Rule<InEvent, NewEvnt>;
+  when<InEvent extends OutEvnt, NewEvnt extends InEvent>(
     scope: Construct,
     id: string,
-    predicate: RulePredicateFunction<Evnt, OutEvnt>
-  ): Rule<Evnt, OutEvnt>;
+    predicate: RulePredicateFunction<InEvent, NewEvnt>
+  ): Rule<InEvent, NewEvnt>;
 }
 
 /**
@@ -214,7 +214,7 @@ abstract class EventBusBase<in Evnt extends Event, OutEvnt extends Evnt = Evnt> 
 
   protected static singletonDefaultNode = "__DefaultBus";
 
-  private allRule: PredicateRuleBase<OutEvnt> | undefined;
+  private allRule: PredicateRuleBase<Evnt, OutEvnt> | undefined;
 
   public readonly putEvents: IntegrationCall<
     "EventBus.putEvents",
@@ -376,53 +376,53 @@ abstract class EventBusBase<in Evnt extends Event, OutEvnt extends Evnt = Evnt> 
   /**
    * @inheritdoc
    */
-   public when<SubOutEvnt extends OutEvnt>(
+   public when<InEvnt extends OutEvnt, NewEvnt extends InEvnt>(
     id: string,
-    predicate: RulePredicateFunction<Evnt, SubOutEvnt>
-  ): Rule<OutEvnt, SubOutEvnt>;
-  public when<SubOutEvnt extends OutEvnt>(
+    predicate: RulePredicateFunction<InEvnt, NewEvnt>
+  ): Rule<InEvnt, NewEvnt>;
+  public when<InEvnt extends OutEvnt, NewEvnt extends InEvnt>(
     scope: Construct,
     id: string,
-    predicate: RulePredicateFunction<OutEvnt, SubOutEvnt>
-  ): Rule<OutEvnt, SubOutEvnt>;
-  public when<SubOutEvnt extends OutEvnt>(
+    predicate: RulePredicateFunction<InEvnt, NewEvnt>
+  ): Rule<InEvnt, NewEvnt>;
+  public when<InEvnt extends OutEvnt, NewEvnt extends InEvnt>(
     scope: Construct | string,
-    id?: string | RulePredicateFunction<OutEvnt, SubOutEvnt>,
-    predicate?: RulePredicateFunction<OutEvnt, SubOutEvnt>
-  ): Rule<OutEvnt, SubOutEvnt> {
+    id?: string | RulePredicateFunction<InEvnt, NewEvnt>,
+    predicate?: RulePredicateFunction<InEvnt, NewEvnt>
+  ): Rule<InEvnt, NewEvnt> {
     if (predicate) {
-      return new Rule<OutEvnt, SubOutEvnt>(
+      return new Rule<InEvnt, NewEvnt>(
         scope as Construct,
         id as string,
         this as any,
         predicate
       );
     } else {
-      return new Rule<OutEvnt, SubOutEvnt>(
+      return new Rule<InEvnt, NewEvnt>(
         this.bus,
         scope as string,
         this as any,
-        id as RulePredicateFunction<OutEvnt, SubOutEvnt>
+        id as RulePredicateFunction<InEvnt, NewEvnt>
       );
     }
   }
 
   public all(): PredicateRuleBase<Evnt, OutEvnt>;
   public all(scope: Construct, id: string): PredicateRuleBase<Evnt, OutEvnt>;
-  public all(scope?: Construct, id?: string): PredicateRuleBase<Evnt,OutEvnt> {
+  public all(scope?: Construct, id?: string): PredicateRuleBase<Evnt, OutEvnt> {
     if (!scope || !id) {
       if (!this.allRule) {
         this.allRule = new PredicateRuleBase<Evnt, OutEvnt>(
           this.bus,
           "all",
-          this as IEventBus<any>,
+          this as IEventBus<Evnt, OutEvnt>,
           // an empty doc will be converted to `{ source: [{ prefix: "" }]}`
           { doc: {} }
         );
       }
       return this.allRule;
     }
-    return new PredicateRuleBase<Evnt, OutEvnt>(scope, id, this as IEventBus<any>, {
+    return new PredicateRuleBase<Evnt, OutEvnt>(scope, id, this as IEventBus<Evnt, OutEvnt>, {
       doc: {},
     });
   }
@@ -622,7 +622,7 @@ class ImportedEventBus<in Evnt extends Event, out OutEvnt extends Evnt = Evnt> e
 export interface EventBusTargetIntegration<
   // the payload type we expect to be transformed into before making this call.
   in Payload,
-  Props extends object | undefined = undefined
+  in Props extends object | undefined = undefined
 > {
   /**
    * {@link EventBusTargetIntegration} does not make direct use of `P`. Typescript will ignore P when
@@ -675,7 +675,7 @@ export function pipe<
     | aws_events.RuleTargetInput
     | undefined
 >(
-  rule: IRule<Evnt>,
+  rule: IRule<any, Evnt>,
   integration:
     | IntegrationWithEventBus<Payload, Props>
     | ((targetInput: Target) => aws_events.IRuleTarget),
