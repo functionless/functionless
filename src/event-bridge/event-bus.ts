@@ -108,16 +108,19 @@ export interface IEventBusFilterable<in Evnt extends Event, out OutEvnt extends 
    *
    * Unsupported by Functionless:
    * * Variables from outside of the function scope
+   * 
+   * @typeParam InEvnt - The type the {@link Rule} matches. Covariant of output {@link OutEvnt}.
+   * @typeParam NewEvnt - The type the predicate narrows to, a sub-type of {@link InEvnt}.
    */
-  when<InEvent extends OutEvnt, NewEvnt extends InEvent>(
+  when<InEvnt extends OutEvnt, NewEvnt extends InEvnt>(
     id: string,
-    predicate: RulePredicateFunction<InEvent, NewEvnt>
-  ): Rule<InEvent, NewEvnt>;
-  when<InEvent extends OutEvnt, NewEvnt extends InEvent>(
+    predicate: RulePredicateFunction<InEvnt, NewEvnt>
+  ): Rule<InEvnt, NewEvnt>;
+  when<InEvnt extends OutEvnt, NewEvnt extends InEvnt>(
     scope: Construct,
     id: string,
-    predicate: RulePredicateFunction<InEvent, NewEvnt>
-  ): Rule<InEvent, NewEvnt>;
+    predicate: RulePredicateFunction<InEvnt, NewEvnt>
+  ): Rule<InEvnt, NewEvnt>;
 }
 
 /**
@@ -374,7 +377,10 @@ abstract class EventBusBase<in Evnt extends Event, OutEvnt extends Evnt = Evnt> 
   });
 
   /**
-   * @inheritdoc
+   * @inheritDoc
+   * 
+   * @typeParam InEvnt - The type the {@link Rule} matches. Covariant of output {@link OutEvnt}.
+   * @typeParam NewEvnt - The type the predicate narrows to, a sub-type of {@link InEvnt}.
    */
    public when<InEvnt extends OutEvnt, NewEvnt extends InEvnt>(
     id: string,
@@ -495,6 +501,8 @@ export class EventBus<in Evnt extends Event, out OutEvnt extends Evnt = Evnt> ex
 
   /**
    * Import an {@link aws_events.IEventBus} wrapped with Functionless abilities.
+   * 
+   * @typeParam Evnt - the union of types which are expected on the default {@link EventBus}.
    */
   public static fromBus<Evnt extends Event>(bus: aws_events.IEventBus): IEventBus<Evnt> {
     return new ImportedEventBus<Evnt>(bus);
@@ -508,6 +516,8 @@ export class EventBus<in Evnt extends Event, out OutEvnt extends Evnt = Evnt> ex
    * const awsBus = aws_events.EventBus.fromEventBusName(Stack.of(scope), id, "default");
    * new functionless.EventBus.fromBus(awsBus);
    * ```
+   * 
+   * @typeParam Evnt - the union of types which are expected on the default {@link EventBus}.
    */
   public static default<Evnt extends Event>(stack: Stack): DefaultEventBus<Evnt>;
   public static default<Evnt extends Event>(scope: Construct): DefaultEventBus<Evnt>;
@@ -546,6 +556,17 @@ export class EventBus<in Evnt extends Event, out OutEvnt extends Evnt = Evnt> ex
   }
 }
 
+/**
+ * @typeParam Evnt - the union type of events that this EventBus can accept.
+ *                   `Evnt` is the covariant version of `OutEvnt` in that
+ *                   the bus will accept any of `Evnt` while the EventBus can
+ *                   emit any of `OutEvnt`.
+ * @typeParam OutEvnt - the union type of events that this EventBus will emit through rules.
+ *                      `OutEvnt` is the contravariant version of `Evnt` in that
+ *                      the bus will emit any of `OutEvnt` while the EventBus can
+ *                      can accept any of `Evnt`. This type parameter should be left
+ *                      empty to be inferred. ex: `EventBus<Event<Detail1> | Event<Detail2>>`.
+ */
 export class DefaultEventBus<in Evnt extends Event, out OutEvnt extends Evnt = Evnt> extends EventBusBase<Evnt, OutEvnt> {
   constructor(scope: Construct) {
     const stack = scope instanceof Stack ? scope : Stack.of(scope);
@@ -597,6 +618,17 @@ export class DefaultEventBus<in Evnt extends Event, out OutEvnt extends Evnt = E
   }
 }
 
+/**
+ * @typeParam Evnt - the union type of events that this EventBus can accept.
+ *                   `Evnt` is the covariant version of `OutEvnt` in that
+ *                   the bus will accept any of `Evnt` while the EventBus can
+ *                   emit any of `OutEvnt`.
+ * @typeParam OutEvnt - the union type of events that this EventBus will emit through rules.
+ *                      `OutEvnt` is the contravariant version of `Evnt` in that
+ *                      the bus will emit any of `OutEvnt` while the EventBus can
+ *                      can accept any of `Evnt`. This type parameter should be left
+ *                      empty to be inferred. ex: `EventBus<Event<Detail1> | Event<Detail2>>`.
+ */
 class ImportedEventBus<in Evnt extends Event, out OutEvnt extends Evnt = Evnt> extends EventBusBase<Evnt, OutEvnt> {
   constructor(bus: aws_events.IEventBus) {
     super(bus);
@@ -618,6 +650,9 @@ class ImportedEventBus<in Evnt extends Event, out OutEvnt extends Evnt = Evnt> e
  *
  * new EventBus().when("rule", () => true).pipe(myEbIntegration);
  * ```
+ * 
+ * @typeParam - Payload - the type which the {@link Integration} expects as an input from {@link EventBus}.
+ * @typeParam - Props - the optional properties the {@link Integration} accepts. Leave undefined to require no properties.
  */
 export interface EventBusTargetIntegration<
   // the payload type we expect to be transformed into before making this call.
@@ -654,6 +689,10 @@ export type IntegrationWithEventBus<
   Props extends object | undefined = undefined
 > = Integration<string, AnyFunction, EventBusTargetIntegration<Payload, Props>>;
 
+/**
+ * @typeParam - Payload - the type which the {@link Integration} expects as an input from {@link EventBus}.
+ * @typeParam - Props - the optional properties the {@link Integration} accepts. Leave undefined to require no properties.
+ */
 export function makeEventBusIntegration<
   Payload,
   Props extends object | undefined = undefined
