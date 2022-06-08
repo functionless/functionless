@@ -21,11 +21,11 @@ import type { Event } from "./types";
  *
  * event is every event sent to the bus to be filtered. This argument is optional.
  */
-export type RulePredicateFunction<E, O extends E = E> =
-  | ((event: E) => event is O)
-  | ((event: E) => boolean);
+export type RulePredicateFunction<Evnt, OutEvnt extends Evnt = Evnt> =
+  | ((event: Evnt) => event is OutEvnt)
+  | ((event: Evnt) => boolean);
 
-export interface IRule<T extends Event> {
+export interface IRule<Evnt extends Event> {
   readonly rule: aws_events.Rule;
 
   /**
@@ -101,9 +101,9 @@ export interface IRule<T extends Event> {
    * Unsupported by Functionless:
    * * Variables from outside of the function scope
    */
-  map<E extends T, P>(
-    transform: EventTransformFunction<E, P>
-  ): EventTransform<E, P>;
+  map<OutEvnt>(
+    transform: EventTransformFunction<Evnt, OutEvnt>
+  ): EventTransform<Evnt, OutEvnt>;
 
   /**
    * Defines a target of the {@link EventTransform}'s rule using this TargetInput.
@@ -136,13 +136,13 @@ export interface IRule<T extends Event> {
    * ```
    */
   pipe<Props extends object | undefined>(
-    integration: IntegrationWithEventBus<T, Props>,
+    integration: IntegrationWithEventBus<Evnt, Props>,
     ...props: Parameters<DynamicProps<Props>>
   ): void;
   pipe(callback: () => aws_events.IRuleTarget): void;
 }
 
-abstract class RuleBase<T extends Event> implements IRule<T> {
+abstract class RuleBase<Evnt extends Event> implements IRule<Evnt> {
   /**
    * This static properties identifies this class as a Rule to the TypeScript plugin.
    */
@@ -164,23 +164,23 @@ abstract class RuleBase<T extends Event> implements IRule<T> {
   /**
    * @inheritdoc
    */
-  public map<E extends T, P>(
-    transform: EventTransformFunction<E, P>
-  ): EventTransform<E, P> {
-    return new EventTransform<E, P>(transform, this);
+  public map<OutEvent>(
+    transform: EventTransformFunction<Evnt, OutEvent>
+  ): EventTransform<Evnt, OutEvent> {
+    return new EventTransform<Evnt, OutEvent>(transform, this);
   }
 
   /**
    * @inheritdoc
    */
   public pipe<Props extends object | undefined>(
-    integration: IntegrationWithEventBus<T, Props>,
+    integration: IntegrationWithEventBus<Evnt, Props>,
     ...props: Parameters<DynamicProps<Props>>
   ): void;
   public pipe(callback: () => aws_events.IRuleTarget): void;
   public pipe<Props extends object | undefined>(
     integration:
-      | IntegrationWithEventBus<T, Props>
+      | IntegrationWithEventBus<Evnt, Props>
       | (() => aws_events.IRuleTarget),
     ...props: Parameters<DynamicProps<Props>>
   ): void {
@@ -191,15 +191,15 @@ abstract class RuleBase<T extends Event> implements IRule<T> {
 /**
  * Special base rule that supports some internal behaviors like joining (AND) compiled rules.
  */
-export class PredicateRuleBase<T extends Event>
-  extends RuleBase<T>
-  implements IEventBusFilterable<T>
+export class PredicateRuleBase<Evnt extends Event, OutEvnt extends Evnt = Evnt>
+  extends RuleBase<OutEvnt>
+  implements IEventBusFilterable<OutEvnt>
 {
   readonly document: PatternDocument;
   constructor(
     scope: Construct,
     id: string,
-    private bus: IEventBus<T>,
+    private bus: IEventBus<Evnt, OutEvnt>,
     /**
      * Functionless Pattern Document representation of Event Bridge rules.
      */
@@ -228,37 +228,37 @@ export class PredicateRuleBase<T extends Event>
   /**
    * @inheritdoc
    */
-  public when<O extends T>(
+  public when<NewEvnt extends OutEvnt>(
     id: string,
-    predicate: RulePredicateFunction<T, O>
-  ): PredicateRuleBase<O>;
-  public when<O extends T>(
+    predicate: RulePredicateFunction<OutEvnt, NewEvnt>
+  ): PredicateRuleBase<OutEvnt, NewEvnt>;
+  public when<NewEvnt extends OutEvnt>(
     scope: Construct,
     id: string,
-    predicate: RulePredicateFunction<T, O>
-  ): PredicateRuleBase<O>;
-  public when<O extends T>(
+    predicate: RulePredicateFunction<OutEvnt, NewEvnt>
+  ): PredicateRuleBase<OutEvnt, NewEvnt>;
+  public when<NewEvnt extends OutEvnt>(
     scope: Construct | string,
-    id?: string | RulePredicateFunction<T, O>,
-    predicate?: RulePredicateFunction<T, O>
-  ): PredicateRuleBase<O> {
+    id?: string | RulePredicateFunction<OutEvnt, NewEvnt>,
+    predicate?: RulePredicateFunction<OutEvnt, NewEvnt>
+  ): PredicateRuleBase<OutEvnt, NewEvnt> {
     if (predicate) {
       const document = synthesizePatternDocument(predicate as any);
 
-      return new PredicateRuleBase<O>(
+      return new PredicateRuleBase<OutEvnt, NewEvnt>(
         scope as Construct,
         id as string,
-        this.bus as IEventBus<O>,
+        this.bus as IEventBus<Evnt, NewEvnt>,
         this.document,
         document
       );
     } else {
       const document = synthesizePatternDocument(id as any);
 
-      return new PredicateRuleBase<O>(
+      return new PredicateRuleBase<OutEvnt, NewEvnt>(
         this.bus.bus,
         scope as string,
-        this.bus as IEventBus<O>,
+        this.bus as IEventBus<Evnt, NewEvnt>,
         this.document,
         document
       );

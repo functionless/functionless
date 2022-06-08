@@ -39,7 +39,6 @@ import {
   PredicateRuleBase,
 } from "./event-bridge";
 import {
-  EventBusEvent,
   EventBusTargetIntegration,
   makeEventBusIntegration,
 } from "./event-bridge/event-bus";
@@ -68,7 +67,7 @@ export type FunctionClosure<P, O> = (
 /**
  * Returns the payload type on the {@link IFunction}.
  */
-export type FunctionPayload<F extends IFunction<any, any>> = [F] extends [
+export type FunctionPayloadType<F extends IFunction<any, any>> = [F] extends [
   IFunction<infer P, any>
 ]
   ? P
@@ -76,7 +75,7 @@ export type FunctionPayload<F extends IFunction<any, any>> = [F] extends [
 /**
  * Returns the output type on the {@link IFunction}.
  */
-export type FunctionOutput<F extends IFunction<any, any>> = [F] extends [
+export type FunctionOutputType<F extends IFunction<any, any>> = [F] extends [
   IFunction<any, infer O>
 ]
   ? O
@@ -84,12 +83,12 @@ export type FunctionOutput<F extends IFunction<any, any>> = [F] extends [
 
 type FunctionAsyncOnFailureDestination<P> =
   | aws_lambda.FunctionProps["onFailure"]
-  | IEventBus<AsyncResponseFailureEvent<P>>
+  | IEventBus<AsyncResponseFailureEvent<P>, any>
   | IFunction<AsyncResponseFailure<P>, any>;
 
 type FunctionAsyncOnSuccessDestination<P, O> =
   | aws_lambda.FunctionProps["onSuccess"]
-  | IEventBus<AsyncResponseSuccessEvent<P, O>>
+  | IEventBus<AsyncResponseSuccessEvent<P, O>, any>
   | IFunction<AsyncResponseSuccess<P, O>, any>;
 
 /**
@@ -102,7 +101,7 @@ export interface EventInvokeConfigOptions<P, O>
   onFailure?: FunctionAsyncOnFailureDestination<P>;
 }
 
-export interface IFunction<P, O>
+export interface IFunction<in P, O, OutP extends P = P>
   extends Integration<
     "Function",
     ConditionalFunction<P, O>,
@@ -148,9 +147,9 @@ export interface IFunction<P, O>
    * ```
    */
   onSuccess(
-    bus: IEventBus<AsyncResponseSuccessEvent<P, O>>,
+    bus: IEventBus<AsyncResponseSuccessEvent<OutP, O>>,
     id: string
-  ): Rule<AsyncResponseSuccessEvent<P, O>>;
+  ): Rule<AsyncResponseSuccessEvent<OutP, O>>;
   /**
    * Event Source for the {@link Function} onFailure async invocation destination.
    *
@@ -183,9 +182,9 @@ export interface IFunction<P, O>
    * ```
    */
   onFailure(
-    bus: IEventBus<AsyncResponseFailureEvent<P>>,
+    bus: IEventBus<AsyncResponseFailureEvent<OutP>>,
     id: string
-  ): Rule<AsyncResponseFailureEvent<P>>;
+  ): Rule<AsyncResponseFailureEvent<OutP>>;
 
   /**
    * Set the async invocation options on a function. Can be use to set the onSuccess and onFailure destinations.
@@ -195,7 +194,7 @@ export interface IFunction<P, O>
    * If onSuccess or onFailure were already set either through {@link FunctionProps} or {@link IFunction.configureAsyncInvoke}
    * This method will fail.
    */
-  configureAsyncInvoke(config: EventInvokeConfigOptions<P, O>): void;
+  configureAsyncInvoke(config: EventInvokeConfigOptions<OutP, O>): void;
 
   readonly eventBus: EventBusTargetIntegration<
     P,
@@ -258,9 +257,9 @@ export interface AsyncResponseFailureEvent<P>
     "lambda"
   > {}
 
-abstract class FunctionBase<in P, O>
+abstract class FunctionBase<in P, O, OutP extends P = P>
   implements
-    IFunction<P, O>,
+    IFunction<P, O, OutP>,
     Integration<"Function", ConditionalFunction<P, O>>
 {
   readonly kind = "Function" as const;
@@ -354,31 +353,31 @@ abstract class FunctionBase<in P, O>
   ): IDestination | undefined {
     return destination === undefined
       ? undefined
-      : isEventBus<EventBusEvent<Extract<typeof destination, IEventBus<any>>>>(
+      : isEventBus<IEventBus<AsyncResponseSuccessEvent<P, O>, any> | IEventBus<AsyncResponseFailureEvent<P>, any>>(
           destination
         )
       ? new EventBridgeDestination(destination.bus)
       : isFunction<
-          FunctionPayload<Extract<typeof destination, IFunction<any, any>>>,
-          FunctionOutput<Extract<typeof destination, IFunction<any, any>>>
+          FunctionPayloadType<Extract<typeof destination, IFunction<any, any>>>,
+          FunctionOutputType<Extract<typeof destination, IFunction<any, any>>>
         >(destination)
       ? new LambdaDestination(destination.resource)
       : destination;
   }
 
-  public configureAsyncInvoke(config: EventInvokeConfigOptions<P, O>): void {
+  public configureAsyncInvoke(config: EventInvokeConfigOptions<OutP, O>): void {
     this.resource.configureAsyncInvoke({
       ...config,
-      onSuccess: FunctionBase.normalizeAsyncDestination<P, O>(config.onSuccess),
-      onFailure: FunctionBase.normalizeAsyncDestination<P, O>(config.onFailure),
+      onSuccess: FunctionBase.normalizeAsyncDestination<OutP, O>(config.onSuccess),
+      onFailure: FunctionBase.normalizeAsyncDestination<OutP, O>(config.onFailure),
     });
   }
 
   public onSuccess(
-    bus: IEventBus<AsyncResponseSuccessEvent<P, O>>,
+    bus: IEventBus<AsyncResponseSuccessEvent<OutP, O>, any>,
     id: string
-  ): Rule<AsyncResponseSuccessEvent<P, O>> {
-    return new PredicateRuleBase<AsyncResponseSuccessEvent<P, O>>(
+  ): Rule<AsyncResponseSuccessEvent<OutP, O>> {
+    return new PredicateRuleBase<AsyncResponseSuccessEvent<OutP, O>>(
       bus.bus,
       id,
       bus,
@@ -400,10 +399,10 @@ abstract class FunctionBase<in P, O>
   }
 
   public onFailure(
-    bus: IEventBus<AsyncResponseFailureEvent<P>>,
+    bus: IEventBus<AsyncResponseFailureEvent<OutP>, any>,
     id: string
-  ): Rule<AsyncResponseFailureEvent<P>> {
-    return new PredicateRuleBase<AsyncResponseFailureEvent<P>>(
+  ): Rule<AsyncResponseFailureEvent<OutP>> {
+    return new PredicateRuleBase<AsyncResponseFailureEvent<OutP>>(
       bus.bus,
       id,
       bus,
@@ -444,7 +443,7 @@ interface FunctionBase<in P, O> {
 
 const PromisesSymbol = Symbol.for("functionless.Function.promises");
 
-export interface FunctionProps<P = any, O = any>
+export interface FunctionProps<in P = any, O = any, OutP extends P = P>
   extends Omit<
     aws_lambda.FunctionProps,
     "code" | "handler" | "runtime" | "onSuccess" | "onFailure"
@@ -472,13 +471,13 @@ export interface FunctionProps<P = any, O = any>
    *
    * @default - no destination
    */
-  onSuccess?: FunctionAsyncOnSuccessDestination<P, O>;
+  onSuccess?: FunctionAsyncOnSuccessDestination<OutP, O>;
   /**
    * The destination for successful invocations.
    *
    * @default - no destination
    */
-  onFailure?: FunctionAsyncOnFailureDestination<P>;
+  onFailure?: FunctionAsyncOnFailureDestination<OutP>;
 }
 
 const isNativeFunctionOrError = anyOf(isErr, isNativeFunctionDecl);
@@ -507,7 +506,7 @@ const isNativeFunctionOrError = anyOf(isErr, isNativeFunctionDecl);
  * );
  * ```
  */
-export class Function<in P, O> extends FunctionBase<P, O> {
+export class Function<in P, O, OutP extends P = P> extends FunctionBase<P, O, OutP> {
   /**
    * Dangling promises which are processing Function handler code from the function serializer.
    * To correctly resolve these for CDK synthesis, either use `asyncSynth()` or use `cdk synth` in the CDK cli.
@@ -538,7 +537,7 @@ export class Function<in P, O> extends FunctionBase<P, O> {
   constructor(
     scope: Construct,
     id: string,
-    props: FunctionProps<P, O>,
+    props: FunctionProps<P, O,OutP>,
     func: FunctionClosure<P, O>
   );
   /**
@@ -547,7 +546,7 @@ export class Function<in P, O> extends FunctionBase<P, O> {
   constructor(
     scope: Construct,
     id: string,
-    props: FunctionProps<P, O>,
+    props: FunctionProps<P, O,OutP>,
     func: NativeFunctionDecl | Err
   );
   /**
@@ -566,7 +565,7 @@ export class Function<in P, O> extends FunctionBase<P, O> {
     resource: aws_lambda.IFunction | Construct,
     id?: string,
     propsOrFunc?:
-      | FunctionProps<P, O>
+      | FunctionProps<P, O, OutP>
       | NativeFunctionDecl
       | Err
       | FunctionClosure<P, O>,
@@ -583,7 +582,7 @@ export class Function<in P, O> extends FunctionBase<P, O> {
         : undefined;
       const props = isNativeFunctionOrError(propsOrFunc)
         ? undefined
-        : (propsOrFunc as FunctionProps<P, O>);
+        : (propsOrFunc as FunctionProps<P, O, OutP>);
 
       if (isErr(func)) {
         throw func.error;
@@ -597,8 +596,8 @@ export class Function<in P, O> extends FunctionBase<P, O> {
           runtime: aws_lambda.Runtime.NODEJS_14_X,
           handler: "index.handler",
           code: callbackLambdaCode,
-          onSuccess: FunctionBase.normalizeAsyncDestination<P, O>(onSuccess),
-          onFailure: FunctionBase.normalizeAsyncDestination<P, O>(onFailure),
+          onSuccess: FunctionBase.normalizeAsyncDestination<OutP, O>(onSuccess),
+          onFailure: FunctionBase.normalizeAsyncDestination<OutP, O>(onFailure),
         });
 
         integrations = func.integrations;

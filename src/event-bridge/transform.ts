@@ -17,7 +17,7 @@ import { Event } from "./types";
  * event is the event matched by the rule. This argument is optional.
  * $utils is a collection of built-in utilities wrapping EventBridge TargetInputs like contextual constants available to the transformer.
  */
-export type EventTransformFunction<E extends Event, O = any> = (
+export type EventTransformFunction<in E extends Event, out O = any> = (
   event: E,
   $utils: EventTransformUtils
 ) => O;
@@ -40,7 +40,7 @@ export interface EventTransformUtils {
  *
  * @see Rule.map for more details on transforming event details.
  */
-export class EventTransform<E extends Event, P> {
+export class EventTransform<Evnt extends Event, out Out> {
   readonly targetInput: aws_events.RuleTargetInput;
 
   /**
@@ -48,7 +48,7 @@ export class EventTransform<E extends Event, P> {
    */
   public static readonly FunctionlessType = "EventTransform";
 
-  constructor(func: EventTransformFunction<E, P>, readonly rule: IRule<E>) {
+  constructor(func: EventTransformFunction<Evnt, Out>, readonly rule: IRule<Evnt>) {
     const decl = func as unknown as FunctionDecl;
     this.targetInput = synthesizeEventBridgeTargets(decl);
   }
@@ -61,7 +61,7 @@ export class EventTransform<E extends Event, P> {
    * @see Rule.pipe for more details on pipe.
    */
   public pipe<
-    I extends IntegrationWithEventBus<P, Props>,
+    I extends IntegrationWithEventBus<Out, Props>,
     Props extends object | undefined
   >(
     integration: NonEventBusIntegration<I>,
@@ -73,7 +73,7 @@ export class EventTransform<E extends Event, P> {
     ) => aws_events.IRuleTarget
   ): void;
   public pipe<
-    I extends IntegrationWithEventBus<P, Props>,
+    I extends IntegrationWithEventBus<Out, Props>,
     Props extends object | undefined
   >(
     integration:
