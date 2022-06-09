@@ -77,23 +77,52 @@ export function getAppSyncTemplates(decl: FunctionDecl | Err): string[] {
  */
 export function appsyncTestCase(
   decl: FunctionDecl | Err,
-  executeTemplates?: {
-    index: number;
-    context?: AppSyncVTLRenderContext;
-    expected?: { match?: Record<string, any>; returned?: boolean };
-    requestContext?: AppSyncGraphQLExecutionContext;
-  }[]
+  config?: {
+    /**
+     * Template count is generally [total integrations] * 2 + 2
+     */
+    expectedTemplateCount?: number;
+    executeTemplates?: {
+      /**
+       * Index of the template to execute.
+       */
+      index: number;
+      /**
+       * Input and context data for VTL execution
+       *
+       * @default { arguments: {}, source: {} }
+       */
+      context?: AppSyncVTLRenderContext;
+      /**
+       * Partial object to match against the output using `expect().matchObject`
+       */
+      match?: Record<string, any>;
+      /**
+       * Assert true if the function returns, false if it shouldn't
+       *
+       * @default nothing
+       */
+      returned?: boolean;
+      /**
+       * Additional context data for VTL
+       */
+      requestContext?: AppSyncGraphQLExecutionContext;
+    }[];
+  }
 ) {
   const actual = getAppSyncTemplates(decl);
 
+  config?.expectedTemplateCount &&
+    expect(actual).toHaveLength(config.expectedTemplateCount);
+
   expect(normalizeCDKJson(actual)).toMatchSnapshot();
 
-  executeTemplates?.forEach((testCase) => {
+  config?.executeTemplates?.forEach((testCase) => {
     const vtl = actual[testCase.index];
     appsyncVelocityJsonTestCase(
       vtl,
       testCase.context,
-      testCase.expected,
+      { match: testCase.match, returned: testCase.returned },
       testCase.requestContext
     );
   });
