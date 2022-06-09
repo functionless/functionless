@@ -536,12 +536,11 @@ export interface LambdaProxyApiIntegrationProps
   resource: aws_apigateway.IResource;
 }
 
-export class LambdaProxyApiMethod extends BaseApiIntegration {
+export class LambdaProxyApiMethod {
   readonly function;
   readonly method;
 
   constructor(private readonly props: LambdaProxyApiIntegrationProps) {
-    super();
     this.function = props.function;
 
     this.method = props.resource.addMethod(

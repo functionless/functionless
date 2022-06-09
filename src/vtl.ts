@@ -419,19 +419,17 @@ export abstract class VTL {
         return this.add(this.eval(node.expr));
       }
       return this.qr(this.eval(node.expr));
-    } else if (isForOfStmt(node)) {
-    } else if (isForInStmt(node)) {
+    } else if (isForInStmt(node) || isForOfStmt(node)) {
       this.add(
         `#foreach($${node.variableDecl.name} in ${this.eval(node.expr)}${
-          node.kind === "ForInStmt" ? ".keySet()" : ""
+          isForInStmt(node) ? ".keySet()" : ""
         })`
       );
       this.eval(node.body);
       this.add("#end");
       return undefined;
-    } else if (isFunctionDecl(node)) {
-    } else if (isNativeFunctionDecl(node)) {
-      throw new Error(`cannot evaluate Expr kind: '${node.kind}'`);
+    } else if (isFunctionDecl(node) || isNativeFunctionDecl(node)) {
+      // there should never be nested functions
     } else if (isFunctionExpr(node)) {
       return this.eval(node.body);
     } else if (isIdentifier(node)) {
@@ -470,9 +468,11 @@ export abstract class VTL {
       return obj;
     } else if (isComputedPropertyNameExpr(node)) {
       return this.eval(node.expr);
-    } else if (isParameterDecl(node)) {
-    } else if (isPropAssignExpr(node)) {
-    } else if (isReferenceExpr(node)) {
+    } else if (
+      isParameterDecl(node) ||
+      isReferenceExpr(node) ||
+      isPropAssignExpr(node)
+    ) {
       throw new Error(`cannot evaluate Expr kind: '${node.kind}'`);
     } else if (isReturnStmt(node)) {
       if (returnVar) {
@@ -483,10 +483,8 @@ export abstract class VTL {
         this.add("#return($context.stash.return__val)");
       }
       return undefined;
-    } else if (isSpreadAssignExpr(node)) {
-    } else if (isSpreadElementExpr(node)) {
-      throw new Error(`cannot evaluate Expr kind: '${node.kind}'`);
-      // handled as part of ObjectLiteral
+    } else if (isSpreadAssignExpr(node) || isSpreadElementExpr(node)) {
+      // handled inside ObjectLiteralExpr
     } else if (isStringLiteralExpr(node)) {
       return this.str(node.value);
     } else if (isTemplateExpr(node)) {
@@ -532,7 +530,6 @@ export abstract class VTL {
     } else if (isDoStmt(node)) {
     } else if (isTypeOfExpr(node)) {
     } else if (isWhileStmt(node)) {
-      throw new Error(`${node.kind} is not yet supported in VTL`);
     } else if (isErr(node)) {
       throw node.error;
     } else if (isArgument(node)) {
@@ -540,6 +537,7 @@ export abstract class VTL {
     } else {
       return assertNever(node);
     }
+    throw new Error(`cannot evaluate Expr kind: '${node.kind}'`);
   }
 
   /**

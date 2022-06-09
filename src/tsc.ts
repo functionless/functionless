@@ -31,7 +31,7 @@ export async function tsc(
   projectRoot: string = process.cwd(),
   props?: TscProps
 ) {
-  const tsConfigPath = path.join(projectRoot, "tsconfig.dev.json");
+  const tsConfigPath = path.join(projectRoot, "tsconfig.json");
   let tsConfig: {
     include: string[];
     exclude?: string[];
