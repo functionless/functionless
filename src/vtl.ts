@@ -85,7 +85,7 @@ export abstract class VTL {
     this.statements.push(...statements);
   }
 
-  protected newLocalVarName() {
+  protected newLocalVarName(): `$v${string}` {
     return `$v${(this.varIt += 1)}`;
   }
 

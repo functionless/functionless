@@ -4,11 +4,27 @@ import {
   APIGatewayProxyResult,
   APIGatewayEventRequestContext,
 } from "aws-lambda";
-import { FunctionDecl, isFunctionDecl } from "./declaration";
+import { FunctionDecl, isFunctionDecl, isParameterDecl } from "./declaration";
 import { isErr } from "./error";
-import { CallExpr, Expr, Identifier } from "./expression";
+import {
+  CallExpr,
+  Expr,
+  Identifier,
+  isArgument,
+  isCallExpr,
+  isIdentifier,
+  isNullLiteralExpr,
+  isUndefinedLiteralExpr,
+  isNumberLiteralExpr,
+  isBooleanLiteralExpr,
+  isArrayLiteralExpr,
+  isObjectLiteralExpr,
+  isPropAccessExpr,
+  isPropAssignExpr,
+  isStringLiteralExpr,
+} from "./expression";
 import { Function } from "./function";
-import { IntegrationImpl } from "./integration";
+import { findIntegration, IntegrationImpl } from "./integration";
 import { isReturnStmt, Stmt } from "./statement";
 import { AnyFunction } from "./util";
 import { VTL } from "./vtl";
@@ -236,17 +252,9 @@ export class AwsApiIntegration<
       assumedBy: new aws_iam.ServicePrincipal("apigateway.amazonaws.com"),
     });
 
-    const responseTemplate = new APIGatewayVTL(
-      role,
-      "response",
-      "#set($inputRoot = $input.path('$'))"
-    );
+    const responseTemplate = new APIGatewayVTL(role, "response");
     responseTemplate.eval(this.response.body);
-    const requestTemplate = new APIGatewayVTL(
-      role,
-      "request",
-      "#set($inputRoot = $input.path('$'))"
-    );
+    const requestTemplate = new APIGatewayVTL(role, "request");
     requestTemplate.eval(this.request.body);
 
     const integration = requestTemplate.integration;
@@ -334,9 +342,121 @@ export class APIGatewayVTL extends VTL {
   public eval(node: Stmt, returnVar?: string): void;
   public eval(node?: Expr | Stmt, returnVar?: string): string | void {
     if (isReturnStmt(node)) {
-      return this.add(this.json(this.eval(node.expr)));
+      return this.add(this.exprToJson(node.expr));
     }
     return super.eval(node as any, returnVar);
+  }
+
+  /**
+   * Renders a VTL string that will emit a JSON String representation of the {@link expr} to the VTL output.
+   *
+   * @param expr the {@link Expr} to convert to JSON
+   * @returns a VTL string that emits the {@link expr} as JSON
+   */
+  public exprToJson(expr: Expr): string {
+    const context = this;
+    const jsonPath = toJsonPath(expr);
+    if (jsonPath) {
+      return `$input.json('${jsonPath}')`;
+    } else if (isNullLiteralExpr(expr) || isUndefinedLiteralExpr(expr)) {
+      // Undefined is not the same as null. In JSON terms, `undefined` is the absence of a value where-as `null` is a present null value.
+      return "null";
+    } else if (isBooleanLiteralExpr(expr)) {
+      return expr.value ? "true" : "false";
+    } else if (isNumberLiteralExpr(expr)) {
+      return expr.value.toString(10);
+    } else if (isStringLiteralExpr(expr)) {
+      return `"${expr.value}"`;
+    } else if (isArrayLiteralExpr(expr)) {
+      if (expr.items.length === 0) {
+        return "[]";
+      } else {
+        return `[
+  ${expr.items.map((item) => this.exprToJson(item)).join(",\n  ")}
+]`;
+      }
+    } else if (isArgument(expr)) {
+      if (expr.expr) {
+        return this.exprToJson(expr.expr);
+      }
+    } else if (isCallExpr(expr)) {
+      const integration = findIntegration(expr);
+      if (integration !== undefined) {
+        return this.integrate(integration, expr);
+      } else if (isPropAccessExpr(expr.expr) && expr.expr.name === "params") {
+        return this.json(`$input.params('${expr.expr.name}')`);
+      }
+    } else if (isObjectLiteralExpr(expr)) {
+      return `{\n  ${expr.properties
+        .map((prop) => {
+          if (isPropAssignExpr(prop)) {
+            if (isIdentifier(prop.name) || isStringLiteralExpr(prop.name)) {
+              return `"${
+                isIdentifier(prop.name) ? prop.name.name : prop.name.value
+              }":${this.exprToJson(prop.expr)}`;
+            }
+          } else {
+            const key = context.newLocalVarName();
+            const map = this.eval(prop.expr);
+            return `#foreach(${key} in ${map}.keySet())
+"${key}":${this.json(`${map}.get(${key})`)}#if($foreach.hasNext),#end
+#end`;
+          }
+          return "#stop";
+        })
+        .join(",\n  ")}\n}`;
+    } else {
+      // this Expr is a computation that cannot be expressed as JSON Path
+      // we must therefore evaluate it and use a brute force approach to convert it into JSON
+      // TODO: this will always throw an error because API Gateway does not have $util.toJson
+      return this.json(this.eval(expr));
+    }
+    throw new Error(`unsupported expression ${expr.kind}`);
+
+    /**
+     * Translates an {@link Expr} into JSON Path if this expression references values
+     * on the root `$input.body` object.
+     *
+     * @param expr the {@link Expr} to convert to JSON.
+     * @returns a JSON Path `string` if this {@link Expr} can be evaluated as a JSON Path from the `$input`, otherwise `undefined`.
+     */
+    function toJsonPath(expr: Expr): string | undefined {
+      if (isIdentifier(expr)) {
+        const ref = expr.lookup();
+        if (
+          isParameterDecl(ref) &&
+          isFunctionDecl(ref.parent) &&
+          ref.parent.parent === undefined
+        ) {
+          // is the input parameter, return root
+          return `$`;
+        } else {
+          // this is a reference to an intermediate value, cannot be expressed as JSON Path
+          return undefined;
+        }
+      } else if (isPropAccessExpr(expr)) {
+        const exprJsonPath = toJsonPath(expr.expr);
+        if (exprJsonPath !== undefined) {
+          if (exprJsonPath === "$" && expr.name === "data") {
+            return exprJsonPath;
+          }
+
+          return `${exprJsonPath}.${expr.name}`;
+        }
+      }
+      return undefined;
+    }
+  }
+
+  public json(reference: string): string {
+    return `#if(${reference}.class.name === 'java.lang.String') 
+\"${reference}\" 
+#elseif(${reference}.class.name === 'java.lang.Integer' || ${reference}.class.name === 'java.lang.Double' || ${reference}.class.name === 'java.lang.Boolean') 
+${reference} 
+#else
+$context.responseOverride.status = 500
+#stop
+#end`;
   }
 
   protected dereference(id: Identifier): string {
@@ -361,41 +481,6 @@ export class APIGatewayVTL extends VTL {
     } else {
       return `$${id.name}`;
     }
-  }
-
-  public json(reference: string): string {
-    return this.jsonStage(reference, 0);
-  }
-
-  private jsonStage(varName: string, level: number): string {
-    if (level === 3) {
-      return "#stop";
-    }
-
-    const itemVarName = this.newLocalVarName();
-    return `#if(${varName}.class.name === 'java.lang.String')
-"${varName}"
-#elseif(${varName}.class.name === 'java.lang.Integer')
-${varName}
-#elseif(${varName}.class.name === 'java.lang.Double')
-${varName}
-#elseif(${varName}.class.name === 'java.lang.Boolean')
-${varName}
-#elseif(${varName}.class.name === 'java.lang.LinkedHashMap')
-{
-#foreach(${itemVarName} in ${varName}.keySet())
-"${itemVarName}": ${this.jsonStage(
-      itemVarName,
-      level + 1
-    )}#if($foreach.hasNext),#end
-#end
-}
-#elseif(${varName}.class.name === 'java.util.ArrayList')
-[
-#foreach(${itemVarName} in ${varName})
-${this.jsonStage(itemVarName, level + 1)}#if($foreach.hasNext),#end
-#end
-]`.replace(/\n/g, `${new Array(level * 2).join(" ")}\n`);
   }
 }
 

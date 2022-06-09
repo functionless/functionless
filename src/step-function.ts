@@ -523,20 +523,17 @@ abstract class BaseStepFunction<
     // Integration object for api gateway vtl
     this.apiGWVtl = {
       renderRequest: (call, context) => {
-        const { name, input, traceHeader } = retrieveMachineArgs(call);
-        if (input === undefined) {
-          debugger;
-          throw new Error(`missing input`);
-        }
-        const inputVar = context.var(input);
-        context.qr(`$${inputVar}.stateMachineArn = "${this.stateMachineArn}"`);
-        if (name) {
-          context.qr(`$${inputVar}.name = "${name}"`);
-        }
-        if (traceHeader) {
-          context.qr(`$${inputVar}.traceHeader = "${traceHeader}"`);
-        }
-        return context.json(inputVar);
+        const args = retrieveMachineArgs(call);
+
+        return `{\n${Object.entries(args)
+          .filter(
+            (arg): arg is [typeof arg[0], Exclude<typeof arg[1], undefined>] =>
+              arg[1] !== undefined
+          )
+          .map(
+            ([argName, argVal]) => `"${argName}":${context.exprToJson(argVal)}`
+          )
+          .join(",\n  ")}\n}`;
       },
 
       createIntegration: (options) => {

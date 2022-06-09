@@ -145,10 +145,7 @@ abstract class FunctionBase<P, O> implements IFunction<P, O> {
     this.apiGWVtl = {
       renderRequest: (call, context) => {
         const payloadArg = call.getArgument("payload");
-        const payload = payloadArg?.expr
-          ? context.eval(payloadArg.expr)
-          : "$null";
-        return context.json(payload);
+        return payloadArg?.expr ? context.exprToJson(payloadArg.expr) : "$null";
       },
 
       createIntegration: (options) => {

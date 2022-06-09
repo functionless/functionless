@@ -45,30 +45,40 @@ test("mock integration with object literal", () => {
 
   expect(method.httpMethod).toEqual("GET");
   expect(method.integration.requestTemplates).toEqual({
-    "application/json": `#set($inputRoot = $input.path('$'))
-{"statusCode":$input.params().path.code}`,
+    "application/json": `{
+  "statusCode":#if($input.params('params').class.name === 'java.lang.String') 
+\"$input.params('params')\" 
+#elseif($input.params('params').class.name === 'java.lang.Integer' || $input.params('params').class.name === 'java.lang.Double' || $input.params('params').class.name === 'java.lang.Boolean') 
+$input.params('params') 
+#else
+$context.responseOverride.status = 500
+#stop
+#end
+}`,
   });
   expect(method.integration.integrationResponses).toEqual([
     <IntegrationResponseProperty>{
       statusCode: "200",
       selectionPattern: "^200$",
       responseTemplates: {
-        "application/json": `#set($inputRoot = $input.path('$'))
-{"response":"OK"}`,
+        "application/json": `{
+  "response":"OK"
+}`,
       },
     },
     <IntegrationResponseProperty>{
       statusCode: "500",
       selectionPattern: "^500$",
       responseTemplates: {
-        "application/json": `#set($inputRoot = $input.path('$'))
-{"response":"BAD"}`,
+        "application/json": `{
+  "response":"BAD"
+}`,
       },
     },
   ]);
 });
 
-test.skip("mock integration with object literal and literal type in pathParameters", () => {
+test("mock integration with object literal and literal type in pathParameters", () => {
   const api = new aws_apigateway.RestApi(stack, "API");
 
   const method = getCfnMethod(
@@ -77,8 +87,8 @@ test.skip("mock integration with object literal and literal type in pathParamete
         httpMethod: "GET",
         resource: api.root,
       },
-      (req) => ({
-        statusCode: req.params("code") as number,
+      ($input) => ({
+        statusCode: $input.params("code") as number,
       }),
       {
         200: () => ({
@@ -93,24 +103,34 @@ test.skip("mock integration with object literal and literal type in pathParamete
 
   expect(method.httpMethod).toEqual("GET");
   expect(method.integration.requestTemplates).toEqual({
-    "application/json": `#set($inputRoot = $input.path('$'))
-{"statusCode":$input.params().path.code}`,
+    "application/json": `{
+  \"statusCode\":#if($input.params('params').class.name === 'java.lang.String') 
+\"$input.params('params')\" 
+#elseif($input.params('params').class.name === 'java.lang.Integer' || $input.params('params').class.name === 'java.lang.Double' || $input.params('params').class.name === 'java.lang.Boolean') 
+$input.params('params') 
+#else
+$context.responseOverride.status = 500
+#stop
+#end
+}`,
   });
   expect(method.integration.integrationResponses).toEqual([
     <IntegrationResponseProperty>{
       statusCode: "200",
       selectionPattern: "^200$",
       responseTemplates: {
-        "application/json": `#set($inputRoot = $input.path('$'))
-{"response":"OK"}`,
+        "application/json": `{
+  "response":"OK"
+}`,
       },
     },
     <IntegrationResponseProperty>{
       statusCode: "500",
       selectionPattern: "^500$",
       responseTemplates: {
-        "application/json": `#set($inputRoot = $input.path('$'))
-{"response":"BAD"}`,
+        "application/json": `{
+  "response":"BAD"
+}`,
       },
     },
   ]);
@@ -125,7 +145,7 @@ test("AWS integration with Function", () => {
         httpMethod: "GET",
         resource: api.root,
       },
-      ($input) => func($input.json("$")),
+      ($input) => func($input.data.prop),
       (result) => ({
         result,
       })
@@ -134,15 +154,15 @@ test("AWS integration with Function", () => {
 
   expect(method.httpMethod).toEqual("GET");
   expect(method.integration.requestTemplates).toEqual({
-    "application/json": `#set($inputRoot = $input.path('$'))
-"$inputRoot"`,
+    "application/json": `$input.json('$.prop')`,
   });
   expect(method.integration.integrationResponses).toEqual([
     <IntegrationResponseProperty>{
       statusCode: "200",
       responseTemplates: {
-        "application/json": `#set($inputRoot = $input.path('$'))
-{"result":"$inputRoot"}`,
+        "application/json": `{
+  "result":$input.json('$')
+}`,
       },
     },
   ]);
@@ -189,15 +209,39 @@ test("AWS integration with Express Step Function", () => {
 
   expect(method.httpMethod).toEqual("GET");
   expect(method.integration.requestTemplates).toEqual({
-    "application/json": `#set($inputRoot = $input.path('$'))
-{"input":{"num":"$input.pathParameters}}`,
+    "application/json": `{
+\"input\":{
+  \"num\":#if($input.params('params').class.name === 'java.lang.String') 
+\"$input.params('params')\" 
+#elseif($input.params('params').class.name === 'java.lang.Integer' || $input.params('params').class.name === 'java.lang.Double' || $input.params('params').class.name === 'java.lang.Boolean') 
+$input.params('params') 
+#else
+$context.responseOverride.status = 500
+#stop
+#end,
+  \"str\":#if($input.params('params').class.name === 'java.lang.String') 
+\"$input.params('params')\" 
+#elseif($input.params('params').class.name === 'java.lang.Integer' || $input.params('params').class.name === 'java.lang.Double' || $input.params('params').class.name === 'java.lang.Boolean') 
+$input.params('params') 
+#else
+$context.responseOverride.status = 500
+#stop
+#end
+}
+}`,
   });
   expect(method.integration.integrationResponses).toEqual([
     <IntegrationResponseProperty>{
       statusCode: "200",
       responseTemplates: {
-        "application/json": `#set($inputRoot = $input.path('$'))
-{"result":"$inputRoot"}`,
+        "application/json": `#set($v1 = $inputRoot.data.status == 'SUCCEEDED')
+#if($v1)
+$input.json('$.output')
+#else
+#set($v2 = $context.responseOverride.status = 500)
+$util.qr($v2)
+$input.json('$.error')
+#end`,
       },
     },
   ]);
