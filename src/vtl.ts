@@ -448,8 +448,7 @@ export abstract class VTL {
       return `${this.eval(node.expr)}.${name}`;
     } else if (isElementAccessExpr(node)) {
       return `${this.eval(node.expr)}[${this.eval(node.element)}]`;
-    } else if (isNullLiteralExpr(node)) {
-    } else if (isUndefinedLiteralExpr(node)) {
+    } else if (isNullLiteralExpr(node) || isUndefinedLiteralExpr(node)) {
       return "$null";
     } else if (isNumberLiteralExpr(node)) {
       return node.value.toString(10);

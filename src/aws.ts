@@ -17,7 +17,9 @@ import {
 } from "typesafe-dynamodb/lib/update-item";
 import { ASL } from "./asl";
 import {
+  Argument,
   Expr,
+  isArgument,
   isIdentifier,
   isObjectLiteralExpr,
   isPropAssignExpr,
@@ -569,8 +571,13 @@ export namespace $AWS {
     /**
      * @internal
      */
-    export function getTableArgument(args: Expr[]) {
-      const [inputArgument] = args;
+    export function getTableArgument(args: Argument[] | Expr[]) {
+      let inputArgument;
+      if (isArgument(args[0])) {
+        inputArgument = args[0].expr;
+      } else {
+        inputArgument = args[0];
+      }
       // integ(input: { TableName })
       if (!inputArgument || !isObjectLiteralExpr(inputArgument)) {
         throw Error(
