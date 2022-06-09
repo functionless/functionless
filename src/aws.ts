@@ -18,9 +18,11 @@ import {
 import { ASL } from "./asl";
 import {
   Expr,
+  isIdentifier,
   isObjectLiteralExpr,
   isPropAssignExpr,
   isReferenceExpr,
+  isStringLiteralExpr,
   isVariableReference,
 } from "./expression";
 import {
@@ -452,12 +454,52 @@ export namespace $AWS {
         kind: `$AWS.DynamoDB.${operationName}`,
         apiGWVtl: {
           renderRequest(call, context) {
-            const table = getTableArgument(call.args);
+            const input = call.args[0].expr;
+            if (!isObjectLiteralExpr(input)) {
+              throw new Error(
+                `input to $AWS.DynamoDB.${operationName} must be an object literal`
+              );
+            }
+            const table = input
+              .getProperty("TableName")
+              ?.expr.as("ReferenceExpr")
+              .ref();
+            if (!isTable(table)) {
+              throw new Error(
+                `TableName must be a reference to a DynamoDB Table`
+              );
+            }
+
+            // const table = getTableArgument(call.args.map((arg) => arg.expr!));
             grantTablePermissions(table, context.role, operationName);
-            return JSON.stringify({
-              TableName: table.tableName,
-              // TODO
-            });
+            return `{
+  "TableName":"${table.tableName}",
+  ${input.properties
+    .flatMap((prop) => {
+      if (isPropAssignExpr(prop)) {
+        const name = isIdentifier(prop.name)
+          ? prop.name
+          : isStringLiteralExpr(prop.name)
+          ? prop.name.value
+          : undefined;
+
+        if (name === undefined) {
+          throw new Error(
+            `computer property names are not supported in API Gateway`
+          );
+        }
+        if (name === "TableName") {
+          return [];
+        }
+        return [`"${name}":${context.exprToJson(prop.expr, 1)}`];
+      } else {
+        throw new Error(
+          `object spread is not supported by AWS API Gateway Velocity Templates`
+        );
+      }
+    })
+    .join(",\n  ")}
+}`;
           },
           createIntegration: (options) => {
             return new aws_apigateway.AwsIntegration({

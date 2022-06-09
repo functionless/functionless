@@ -244,6 +244,11 @@ export abstract class VTL {
         return list;
       }
     } else if (isBinaryExpr(node)) {
+      if (node.op === "=") {
+        return `#set(${this.eval(node.left)} ${node.op} ${this.eval(
+          node.right
+        )})`;
+      }
       // VTL fails to evaluate binary expressions inside an object put e.g. $obj.put('x', 1 + 1)
       // a workaround is to use a temp variable.
       return this.var(
@@ -410,6 +415,9 @@ export abstract class VTL {
       this.add("#end");
       return undefined;
     } else if (isExprStmt(node)) {
+      if (isBinaryExpr(node.expr) && node.expr.op === "=") {
+        return this.add(this.eval(node.expr));
+      }
       return this.qr(this.eval(node.expr));
     } else if (isForOfStmt(node)) {
     } else if (isForInStmt(node)) {

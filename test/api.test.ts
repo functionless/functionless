@@ -51,7 +51,7 @@ test("mock integration with object literal", () => {
 #elseif($input.params('params').class.name === 'java.lang.Integer' || $input.params('params').class.name === 'java.lang.Double' || $input.params('params').class.name === 'java.lang.Boolean') 
 $input.params('params') 
 #else
-$context.responseOverride.status = 500
+#set($context.responseOverride.status = 500)
 #stop
 #end
 }`,
@@ -109,7 +109,7 @@ test("mock integration with object literal and literal type in pathParameters", 
 #elseif($input.params('params').class.name === 'java.lang.Integer' || $input.params('params').class.name === 'java.lang.Double' || $input.params('params').class.name === 'java.lang.Boolean') 
 $input.params('params') 
 #else
-$context.responseOverride.status = 500
+#set($context.responseOverride.status = 500)
 #stop
 #end
 }`,
@@ -216,7 +216,7 @@ test("AWS integration with Express Step Function", () => {
 #elseif($input.params('params').class.name === 'java.lang.Integer' || $input.params('params').class.name === 'java.lang.Double' || $input.params('params').class.name === 'java.lang.Boolean') 
 $input.params('params') 
 #else
-$context.responseOverride.status = 500
+#set($context.responseOverride.status = 500)
 #stop
 #end,
   \"str\":#if($input.params('params').class.name === 'java.lang.String') 
@@ -224,7 +224,7 @@ $context.responseOverride.status = 500
 #elseif($input.params('params').class.name === 'java.lang.Integer' || $input.params('params').class.name === 'java.lang.Double' || $input.params('params').class.name === 'java.lang.Boolean') 
 $input.params('params') 
 #else
-$context.responseOverride.status = 500
+#set($context.responseOverride.status = 500)
 #stop
 #end
 }
@@ -238,8 +238,7 @@ $context.responseOverride.status = 500
 #if($v1)
 $input.json('$.output')
 #else
-#set($v2 = $context.responseOverride.status = 500)
-$util.qr($v2)
+#set($context.responseOverride.status = 500)
 $input.json('$.error')
 #end`,
       },
@@ -297,15 +296,31 @@ test("AWS integration with DynamoDB Table", () => {
 
   expect(method.httpMethod).toEqual("POST");
   expect(method.integration.requestTemplates).toEqual({
-    "application/json": `#set($inputRoot = $input.path('$'))
-{"input":{"num":"$input.pathParameters}}`,
+    "application/json": `{
+  "TableName":"${table.resource.tableName}",
+  "Key":{
+    "pk":{
+      "S":$input.json('$.id')
+    }
+  }
+}`,
   });
   expect(method.integration.integrationResponses).toEqual([
     <IntegrationResponseProperty>{
       statusCode: "200",
       responseTemplates: {
-        "application/json": `#set($inputRoot = $input.path('$'))
-{"result":"$inputRoot"}`,
+        "application/json": `#set($v1 = $inputRoot.data.Item != $null)
+#if($v1)
+{
+  "data":$input.json('$.Item')
+}
+#else
+#set($context.responseOverride.status = 404)
+{
+  "requestId":$input.json('$.requestId'),
+  "missing":true
+}
+#end`,
       },
     },
   ]);

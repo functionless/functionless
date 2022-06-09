@@ -351,11 +351,14 @@ export class APIGatewayVTL extends VTL {
    * Renders a VTL string that will emit a JSON String representation of the {@link expr} to the VTL output.
    *
    * @param expr the {@link Expr} to convert to JSON
+   * @param depth indentation depth of object
    * @returns a VTL string that emits the {@link expr} as JSON
    */
-  public exprToJson(expr: Expr): string {
+  public exprToJson(expr: Expr, depth = 0): string {
     const context = this;
     const jsonPath = toJsonPath(expr);
+    const oneIndent = " ".repeat(depth * 2);
+    const twoIndent = " ".repeat((depth + 1) * 2);
     if (jsonPath) {
       return `$input.json('${jsonPath}')`;
     } else if (isNullLiteralExpr(expr) || isUndefinedLiteralExpr(expr)) {
@@ -372,8 +375,10 @@ export class APIGatewayVTL extends VTL {
         return "[]";
       } else {
         return `[
-  ${expr.items.map((item) => this.exprToJson(item)).join(",\n  ")}
-]`;
+${twoIndent}${expr.items
+          .map((item) => this.exprToJson(item, depth + 1))
+          .join(`,\n${twoIndent}`)}
+${oneIndent}]`;
       }
     } else if (isArgument(expr)) {
       if (expr.expr) {
@@ -387,13 +392,16 @@ export class APIGatewayVTL extends VTL {
         return this.json(`$input.params('${expr.expr.name}')`);
       }
     } else if (isObjectLiteralExpr(expr)) {
-      return `{\n  ${expr.properties
+      if (expr.properties.length === 0) {
+        return "{}";
+      }
+      return `{\n${twoIndent}${expr.properties
         .map((prop) => {
           if (isPropAssignExpr(prop)) {
             if (isIdentifier(prop.name) || isStringLiteralExpr(prop.name)) {
               return `"${
                 isIdentifier(prop.name) ? prop.name.name : prop.name.value
-              }":${this.exprToJson(prop.expr)}`;
+              }":${this.exprToJson(prop.expr, depth + 1)}`;
             }
           } else {
             const key = context.newLocalVarName();
@@ -404,7 +412,8 @@ export class APIGatewayVTL extends VTL {
           }
           return "#stop";
         })
-        .join(",\n  ")}\n}`;
+        .join(`,\n${twoIndent}`)}
+${oneIndent}}`;
     } else {
       // this Expr is a computation that cannot be expressed as JSON Path
       // we must therefore evaluate it and use a brute force approach to convert it into JSON
@@ -454,7 +463,7 @@ export class APIGatewayVTL extends VTL {
 #elseif(${reference}.class.name === 'java.lang.Integer' || ${reference}.class.name === 'java.lang.Double' || ${reference}.class.name === 'java.lang.Boolean') 
 ${reference} 
 #else
-$context.responseOverride.status = 500
+#set($context.responseOverride.status = 500)
 #stop
 #end`;
   }
