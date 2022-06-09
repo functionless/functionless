@@ -6,8 +6,8 @@ import {
   Stack,
 } from "aws-cdk-lib";
 import {
-  AwsApiIntegration,
-  MockApiIntegration,
+  AwsMethod,
+  MockMethod,
   ExpressStepFunction,
   Function,
   Table,
@@ -41,7 +41,7 @@ const fn = new Function(
 
 const fnResource = restApi.root.addResource("fn").addResource("{num}");
 
-new AwsApiIntegration(
+new AwsMethod(
   {
     httpMethod: "POST",
     resource: fnResource,
@@ -93,7 +93,7 @@ const sfn = new ExpressStepFunction(
 );
 
 const mockResource = restApi.root.addResource("mock").addResource("{num}");
-new MockApiIntegration(
+new MockMethod(
   {
     httpMethod: "POST",
     resource: mockResource,
@@ -134,7 +134,7 @@ const table = new Table<Item, "id">(
 );
 
 const dynamoResource = restApi.root.addResource("dynamo").addResource("{num}");
-new AwsApiIntegration(
+new AwsMethod(
   {
     httpMethod: "GET",
     resource: dynamoResource,
@@ -156,7 +156,7 @@ new AwsApiIntegration(
 
 const sfnResource = restApi.root.addResource("sfn").addResource("{num}");
 
-new AwsApiIntegration(
+new AwsMethod(
   {
     httpMethod: "GET",
     resource: sfnResource,

@@ -3,10 +3,10 @@ import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
 import axios from "axios";
 import {
   ApiGatewayInput,
-  AwsApiIntegration,
+  AwsMethod,
   Function,
   LambdaProxyApiMethod,
-  MockApiIntegration,
+  MockMethod,
 } from "../src";
 import { localstackTestSuite } from "./localstack";
 
@@ -16,7 +16,7 @@ localstackTestSuite("apiGatewayStack", (test, stack) => {
     () => {
       const api = new aws_apigateway.RestApi(stack, "MockAPI");
       const code = api.root.addResource("{code}");
-      new MockApiIntegration(
+      new MockMethod(
         {
           httpMethod: "GET",
           resource: code,
@@ -62,7 +62,7 @@ localstackTestSuite("apiGatewayStack", (test, stack) => {
         return { key: "hello" };
       });
 
-      new AwsApiIntegration(
+      new AwsMethod(
         {
           httpMethod: "GET",
           resource: api.root,

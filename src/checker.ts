@@ -1,6 +1,6 @@
 import * as ts from "typescript";
 import * as tsserver from "typescript/lib/tsserverlibrary";
-import { BaseApiIntegration } from "./api";
+import { ApiMethod } from "./api";
 import { AppsyncResolver } from "./appsync";
 import { EventBus, Rule } from "./event-bridge";
 import { EventTransform } from "./event-bridge/transform";
@@ -220,10 +220,7 @@ export function makeFunctionlessChecker(
   function isApiIntegration(node: ts.Node): node is ApiIntegrationInterface {
     return (
       ts.isNewExpression(node) &&
-      isFunctionlessClassOfKind(
-        node.expression,
-        BaseApiIntegration.FunctionlessType
-      )
+      isFunctionlessClassOfKind(node.expression, ApiMethod.FunctionlessType)
     );
   }
 

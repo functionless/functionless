@@ -4,8 +4,12 @@ import {
   APIGatewayProxyResult,
   APIGatewayEventRequestContext,
 } from "aws-lambda";
-import { FunctionDecl, isFunctionDecl, isParameterDecl } from "./declaration";
-import { isErr } from "./error";
+import {
+  FunctionDecl,
+  isFunctionDecl,
+  isParameterDecl,
+  validateFunctionDecl,
+} from "./declaration";
 import {
   CallExpr,
   Expr,
@@ -41,14 +45,49 @@ export type HttpMethod =
   | "HEAD"
   | "OPTIONS";
 
-export interface MethodProps {
+/**
+ * Properties for configuring an API Gateway Method Integration.
+ *
+ * Both the Method's properties and the underlying Integration are configured with these properties.
+ */
+export interface MethodProps
+  extends Omit<
+      aws_apigateway.IntegrationOptions,
+      "requestTemplates" | "integrationResponses" | "requestParameters"
+    >,
+    Omit<
+      aws_apigateway.MethodOptions,
+      "requestParameters" | "operationName" | "methodResponses"
+    > {
+  /**
+   * The HTTP Method of this API Method Integration.
+   */
   httpMethod: HttpMethod;
+  /**
+   * The API Gateway Resource this Method implements.
+   */
   resource: aws_apigateway.IResource;
+  /**
+   * The IAM Role to use for authorizing this Method's integration requests.
+   *
+   * @default - one is created for you.
+   */
+  credentialsRole?: aws_iam.IRole;
 }
 
+/**
+ * Data types allowed for an API path, query or header parameter.
+ */
 export type ApiParameter = undefined | null | boolean | number | string;
+
+/**
+ * A collection of {@link ApiParameter}s.
+ */
 export type ApiParameters = Record<string, ApiParameter>;
 
+/**
+ * Type of data allowed as the body in an API.
+ */
 export type ApiBody =
   | ApiParameter
   | ApiBody[]
@@ -85,14 +124,56 @@ export interface ApiRequest<
   headers?: Header;
 }
 
-export abstract class BaseApiIntegration {
+/**
+ * Base class of an AWS API Gateway Method.
+ *
+ * @see {@link MockMethod}
+ * @see {@link AwsMethod}
+ */
+export abstract class ApiMethod {
   /**
    * Identify subclasses as API integrations to the Functionless plugin
    */
   public static readonly FunctionlessType = "ApiIntegration";
-  protected readonly functionlessKind = BaseApiIntegration.FunctionlessType;
 
-  abstract readonly method: aws_apigateway.Method;
+  constructor(
+    /**
+     * The underlying Method Construct.
+     */
+    readonly method: aws_apigateway.Method
+  ) {}
+}
+
+/**
+ * Constructs the IAM Role to be used by an API Integration.
+ *
+ * The user can pass in their own IAM Role if they choose. If they do, it is their responsibility to
+ * ensure that Role can be assumed by the `apigateway.amazonaws.com` service principal.
+ *
+ * By default, a new Role is created
+ *
+ * @param props the {@link MethodProps} for this Method Integration.
+ * @returns the IAM Role used for authorizing the API Method Integration requests.
+ */
+function getRole(props: MethodProps) {
+  if (props.credentialsRole) {
+    // use the IAM Role passed in by the user.
+    // TODO: should we try our best to ensure that the passed in Role has the correct assumedBy policy or leave it up to the user?
+    //       -> if this is an IRole, we can't do anything
+    //       -> if this is a Role, we can check the underlying CfnResource's policy and update it
+    return props.credentialsRole;
+  }
+  // by default, create a Role for each Resource's HTTP Method
+  const roleResourceName = `Role_${props.httpMethod}`;
+  // the Method's Role is stored as a singleton on the HTTP Resource using the naming convention, `Role_<method>`, e.g. `Role_GET`.
+  const roleSingleton = props.resource.node.tryFindChild(roleResourceName);
+  if (roleSingleton) {
+    return roleSingleton as aws_iam.Role;
+  } else {
+    return new aws_iam.Role(props.resource, roleResourceName, {
+      assumedBy: new aws_iam.ServicePrincipal("apigateway.amazonaws.com"),
+    });
+  }
 }
 
 /**
@@ -105,21 +186,35 @@ export abstract class BaseApiIntegration {
  * convert these functions to VTL mapping templates and configure the necessary
  * method responses.
  *
- * Only `application/json` is supported.
+ * ```ts
+ * new MockApiIntegration(
+ *  {
+ *    httpMethod: "GET",
+ *    resource: api.root,
+ *  },
+ *  ($input) => ({
+ *    statusCode: $input.params("code") as number,
+ *  }),
+ *  {
+ *    200: () => ({
+ *      response: "OK",
+ *    }),
+ *    500: () => ({
+ *      response: "BAD",
+ *    }),
+ *  }
+ * );
+ * ```
  *
- * TODO: provide example usage after api is stabilized
+ * Only `application/json` is supported. To workaround this limitation, use the [API Gateway Construct Library](https://docs.aws.amazon.com/cdk/api/v1/docs/aws-apigateway-readme.html)
  *
  * @see https://docs.aws.amazon.com/apigateway/latest/developerguide/api-gateway-api-integration-types.html
  */
-export class MockApiIntegration<
+export class MockMethod<
   Request extends ApiRequest,
   StatusCode extends number,
   MethodResponses extends { [C in StatusCode]: any }
-> extends BaseApiIntegration {
-  private readonly request: FunctionDecl;
-  private readonly responses: { [K in keyof MethodResponses]: FunctionDecl };
-  readonly method;
-
+> extends ApiMethod {
   public constructor(
     props: MethodProps,
     /**
@@ -137,20 +232,20 @@ export class MockApiIntegration<
       [C in StatusCode]: ($context: ApiGatewayContext) => MethodResponses[C];
     }
   ) {
-    super();
-    this.request = validateFunctionDecl(request);
-    this.responses = Object.fromEntries(
-      Object.entries(responses).map(([k, v]) => [k, validateFunctionDecl(v)])
+    const requestDecl = validateFunctionDecl(request, "MockMethod Request");
+    const responseDecls = Object.fromEntries(
+      Object.entries(responses).map(([k, v]) => [
+        k,
+        validateFunctionDecl(v, `MockMethod Response ${k}`),
+      ])
     ) as { [K in keyof MethodResponses]: FunctionDecl };
 
-    const role = new aws_iam.Role(props.resource, `Role_${props.httpMethod}`, {
-      assumedBy: new aws_iam.ServicePrincipal("apigateway.amazonaws.com"),
-    });
+    const role = getRole(props);
     const requestTemplate = new APIGatewayVTL(role, "request");
-    requestTemplate.eval(this.request.body);
+    requestTemplate.eval(requestDecl.body);
 
     const integrationResponses: aws_apigateway.IntegrationResponse[] =
-      Object.entries(this.responses).map(([statusCode, fn]) => {
+      Object.entries(responseDecls).map(([statusCode, fn]) => {
         const responseTemplate = new APIGatewayVTL(role, "response");
         responseTemplate.eval((fn as FunctionDecl).body);
         return {
@@ -163,45 +258,123 @@ export class MockApiIntegration<
       });
 
     const integration = new aws_apigateway.MockIntegration({
+      ...props,
       requestTemplates: {
         "application/json": requestTemplate.toVTL(),
       },
       integrationResponses,
     });
 
-    const methodResponses = Object.keys(this.responses).map((statusCode) => ({
+    const methodResponses = Object.keys(responseDecls).map((statusCode) => ({
       statusCode,
     }));
 
-    // TODO: support requestParameters, authorizers, models and validators
-    this.method = props.resource.addMethod(props.httpMethod, integration, {
-      methodResponses,
-    });
+    super(
+      props.resource.addMethod(props.httpMethod, integration, {
+        methodResponses,
+      })
+    );
   }
 }
 
 /**
- * An AWS API Gateway integration lets you integrate an API with an AWS service
- * supported by Functionless. The request is transformed via VTL and sent to the
- * service via API call, and the response is transformed via VTL and returned in
- * the response.
+ * An AWS API Gateway Method that fulfils requests by invoking APIs on other AWS Resources.
  *
- * Only `application/json` is supported.
+ * Integration logic is written in pure TypeScript and transformed into Apache Velocity Templates
+ * that is then applied by the AWS API Gateway service to to transform requests and responses.
  *
- * TODO: provide example usage after api is stabilized
+ * ```ts
+ * new AwsApiIntegration(
+ *  {
+ *    httpMethod: "GET",
+ *    resource: api.root,
+ *  },
+ *  (
+ *    $input: ApiGatewayInput<{
+ *      query: Request;
+ *    }>
+ *  ) =>
+ *    sfn({
+ *      input: {
+ *        num: $input.params("num"),
+ *        str: $input.params("str"),
+ *      },
+ *    }),
+ *  ($input, $context) => {
+ *    if ($input.data.status === "SUCCEEDED") {
+ *      return $input.data.output;
+ *    } else {
+ *      $context.responseOverride.status = 500;
+ *      return $input.data.error;
+ *    }
+ *  },
+ *  {
+ *    404: () => ({
+ *      message: "Item not Found"
+ *    })
+ *  }
+ * );
+ * ```
+ *
+ * The second argument is a function that transforms the incoming request into a call to an integration.
+ * It must always end with a call to an Integration and no code can execute after the call.
+ *
+ * ```ts
+ *  (
+ *    $input: ApiGatewayInput<{
+ *      query: Request;
+ *    }>
+ *  ) =>
+ *    sfn({
+ *      input: {
+ *        num: $input.params("num"),
+ *        str: $input.params("str"),
+ *      },
+ *    }),
+ * ```
+ *
+ * The third argument is a function that transforms the response data from the downstream Integration
+ * into the final data sent to the API caller. This code runs when the integration responds with
+ * a 200 status code.
+ *
+ * ```ts
+ *  ($input, $context) => {
+ *    if ($input.data.status === "SUCCEEDED") {
+ *      return $input.data.output;
+ *    } else {
+ *      $context.responseOverride.status = 500;
+ *      return $input.data.error;
+ *    }
+ *  }
+ * ```
+ *
+ * The fourth argument is an optional object with mapping functions for error status codes. The corresponding
+ * callback will be executed when the downstream integration responds with that status code.
+ *
+ * ```ts
+ *  {
+ *    404: () => ({
+ *      message: "Item not Found"
+ *    })
+ *  }
+ * ```
+ *
+ * Only `application/json` is supported. To workaround this limitation, use the [API Gateway Construct Library](https://docs.aws.amazon.com/cdk/api/v1/docs/aws-apigateway-readme.html)
  *
  * @see https://docs.aws.amazon.com/apigateway/latest/developerguide/api-gateway-api-integration-types.html
+ * @tparam Request - an {@link ApiRequest} type that specifies the allowed path, query, header and body parameters and their types.
+ * @tparam MethodResponse - the type of data returned by the Integration. This is the type of data that will be processed by the response template.
+ * @tparam IntegrationResponse - the type of data returned by this API
  */
-export class AwsApiIntegration<
+export class AwsMethod<
   Request extends ApiRequest,
   MethodResponse,
   IntegrationResponse
-> extends BaseApiIntegration {
-  private readonly request: FunctionDecl;
-  private readonly response: FunctionDecl;
-  private readonly errors: { [statusCode: number]: FunctionDecl };
-  readonly method;
-  public constructor(
+> extends ApiMethod {
+  constructor(
+    /**
+     * The {@link MethodProps} for configuring how this method behaves at runtime.
+     */
     readonly props: MethodProps,
     /**
      * Function that maps an API request to an integration request and calls an
@@ -241,26 +414,24 @@ export class AwsApiIntegration<
      */
     errors?: { [statusCode: number]: ($context: ApiGatewayContext) => any }
   ) {
-    super();
-    this.request = validateFunctionDecl(request);
-    this.response = validateFunctionDecl(response);
-    this.errors = Object.fromEntries(
-      Object.entries(errors ?? {}).map(([k, v]) => [k, validateFunctionDecl(v)])
+    const requestDecl = validateFunctionDecl(request, "AwsMethod Request");
+    const responseDecl = validateFunctionDecl(response, "AwsMethod Response");
+    const errorDecls = Object.fromEntries(
+      Object.entries(errors ?? {}).map(([k, v]) => [
+        k,
+        validateFunctionDecl(v, `AwsMethod ${k}`),
+      ])
     );
-
-    const role = new aws_iam.Role(props.resource, `Role_${props.httpMethod}`, {
-      assumedBy: new aws_iam.ServicePrincipal("apigateway.amazonaws.com"),
-    });
-
+    const role = getRole(props);
     const responseTemplate = new APIGatewayVTL(role, "response");
-    responseTemplate.eval(this.response.body);
+    responseTemplate.eval(responseDecl.body);
     const requestTemplate = new APIGatewayVTL(role, "request");
-    requestTemplate.eval(this.request.body);
+    requestTemplate.eval(requestDecl.body);
 
     const integration = requestTemplate.integration;
 
     const errorResponses: aws_apigateway.IntegrationResponse[] = Object.entries(
-      this.errors
+      errorDecls
     ).map(([statusCode, fn]) => {
       const errorTemplate = new APIGatewayVTL(role, "response");
       errorTemplate.eval(fn.body, "response");
@@ -296,17 +467,23 @@ export class AwsApiIntegration<
 
     const methodResponses = [
       { statusCode: "200" },
-      ...Object.keys(this.errors).map((statusCode) => ({
+      ...Object.keys(errorDecls).map((statusCode) => ({
         statusCode,
       })),
     ];
 
-    this.method = props.resource.addMethod(props.httpMethod, apiGwIntegration, {
-      methodResponses,
-    });
+    super(
+      props.resource.addMethod(props.httpMethod, apiGwIntegration, {
+        methodResponses,
+      })
+    );
   }
 }
 
+/**
+ * API Gateway's VTL interpreter. API Gateway has limited VTL support and differing behavior to Appsync,
+ * so this class overrides its behavior while sharing as much as it can.
+ */
 export class APIGatewayVTL extends VTL {
   public integration: IntegrationImpl<AnyFunction> | undefined;
   constructor(
@@ -457,8 +634,28 @@ ${oneIndent}}`;
     }
   }
 
+  /**
+   * Renders VTL that will emit a JSON expression for a variable reference within VTL.
+   *
+   * API Gateway does not have a `$util.toJson` helper function, so we render a series of
+   * #if statements that check the class of the value and render the JSON value appropriately.
+   *
+   * We only support primitive types such as `null`, `boolean`, `number` and `string`. This is
+   * because it is not possible to implement recursive functions in VTL and API Gateway has a
+   * constraint of maximum 1000 foreach iterations and a maximum limit in VTL size.
+   *
+   * We could implement a brute-force heuristic that handles n-depth lists and objects, but this
+   * seems particularly fragile with catastrophic consequences for API implementors. So instead,
+   * we encourage developers to use `$input.json(<path>)` wherever possible as we can support
+   * any depth transformations this way.
+   *
+   * @param reference the name of the VTL variable to emit as JSON.
+   * @returns VTL that emits the JSON expression.
+   */
   public json(reference: string): string {
-    return `#if(${reference}.class.name === 'java.lang.String') 
+    return `#if(${reference} == $null)
+null
+#elseif(${reference}.class.name === 'java.lang.String') 
 \"${reference}\" 
 #elseif(${reference}.class.name === 'java.lang.Integer' || ${reference}.class.name === 'java.lang.Double' || ${reference}.class.name === 'java.lang.Boolean') 
 ${reference} 
@@ -468,7 +665,13 @@ ${reference}
 #end`;
   }
 
-  protected dereference(id: Identifier): string {
+  /**
+   * Dereferences an {@link Identifier} to a VTL string that points to the value at runtime.
+   *
+   * @param id the {@link Identifier} expression.
+   * @returns a VTL string that points to the value at runtime.
+   */
+  protected override dereference(id: Identifier): string {
     const ref = id.lookup();
     if (ref?.kind === "VariableStmt") {
       return `$${id.name}`;
@@ -478,7 +681,7 @@ ${reference}
     ) {
       const paramIndex = ref.parent.parameters.indexOf(ref);
       if (paramIndex === 0) {
-        return `$inputRoot`;
+        return `$input.path('$')`;
       } else if (paramIndex === 1) {
         return "$context";
       } else {
@@ -490,16 +693,6 @@ ${reference}
     } else {
       return `$${id.name}`;
     }
-  }
-}
-
-function validateFunctionDecl(a: any): FunctionDecl {
-  if (isFunctionDecl(a)) {
-    return a;
-  } else if (isErr(a)) {
-    throw a.error;
-  } else {
-    throw Error("Unknown compiler error.");
   }
 }
 

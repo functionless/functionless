@@ -1,10 +1,9 @@
 import "jest";
 import { aws_apigateway, aws_dynamodb, IResolvable, Stack } from "aws-cdk-lib";
 import {
-  AwsApiIntegration,
-  MockApiIntegration,
+  AwsMethod,
+  MockMethod,
   Function,
-  BaseApiIntegration,
   ExpressStepFunction,
   Table,
   $AWS,
@@ -24,7 +23,7 @@ test("mock integration with object literal", () => {
   const api = new aws_apigateway.RestApi(stack, "API");
 
   const method = getCfnMethod(
-    new MockApiIntegration(
+    new MockMethod(
       {
         httpMethod: "GET",
         resource: api.root,
@@ -82,7 +81,7 @@ test("mock integration with object literal and literal type in pathParameters", 
   const api = new aws_apigateway.RestApi(stack, "API");
 
   const method = getCfnMethod(
-    new MockApiIntegration(
+    new MockMethod(
       {
         httpMethod: "GET",
         resource: api.root,
@@ -140,7 +139,7 @@ test("AWS integration with Function", () => {
   const api = new aws_apigateway.RestApi(stack, "API");
 
   const method = getCfnMethod(
-    new AwsApiIntegration(
+    new AwsMethod(
       {
         httpMethod: "GET",
         resource: api.root,
@@ -180,7 +179,7 @@ test("AWS integration with Express Step Function", () => {
   });
 
   const method = getCfnMethod(
-    new AwsApiIntegration(
+    new AwsMethod(
       {
         httpMethod: "GET",
         resource: api.root,
@@ -258,7 +257,7 @@ test("AWS integration with DynamoDB Table", () => {
   );
 
   const method = getCfnMethod(
-    new AwsApiIntegration(
+    new AwsMethod(
       {
         httpMethod: "POST",
         resource: api.root,
@@ -345,8 +344,10 @@ interface IntegrationResponseProperty {
   readonly statusCode: string;
 }
 
-function getCfnMethod(method: BaseApiIntegration): aws_apigateway.CfnMethod & {
+function getCfnMethod(integration: {
+  method: aws_apigateway.Method;
+}): aws_apigateway.CfnMethod & {
   integration: CfnIntegration;
 } {
-  return method.method.node.findChild("Resource") as any;
+  return integration.method.node.findChild("Resource") as any;
 }
