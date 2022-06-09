@@ -2,6 +2,7 @@ import { aws_apigateway } from "aws-cdk-lib";
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
 import axios from "axios";
 import {
+  ApiGatewayInput,
   AwsApiIntegration,
   Function,
   LambdaProxyApiMethod,
@@ -15,25 +16,29 @@ localstackTestSuite("apiGatewayStack", (test, stack) => {
     () => {
       const api = new aws_apigateway.RestApi(stack, "MockAPI");
       const code = api.root.addResource("{code}");
-      new MockApiIntegration({
-        httpMethod: "GET",
-        resource: code,
-        request: (req: {
-          pathParameters: {
-            code: number;
-          };
-        }) => ({
-          statusCode: req.pathParameters.code,
+      new MockApiIntegration(
+        {
+          httpMethod: "GET",
+          resource: code,
+        },
+        (
+          req: ApiGatewayInput<{
+            path: {
+              code: number;
+            };
+          }>
+        ) => ({
+          statusCode: req.params("code"),
         }),
-        responses: {
+        {
           200: () => ({
             response: "OK",
           }),
           500: () => ({
             response: "BAD",
           }),
-        },
-      });
+        }
+      );
 
       return {
         outputs: {
@@ -57,21 +62,25 @@ localstackTestSuite("apiGatewayStack", (test, stack) => {
         return { key: "hello" };
       });
 
-      new AwsApiIntegration({
-        httpMethod: "GET",
-        resource: api.root,
-        request: (req: {
-          pathParameters: {
-            code: number;
-          };
-        }) =>
+      new AwsApiIntegration(
+        {
+          httpMethod: "GET",
+          resource: api.root,
+        },
+        (
+          req: ApiGatewayInput<{
+            path: {
+              code: number;
+            };
+          }>
+        ) =>
           func({
-            input: req.pathParameters.code,
+            input: req.params("code"),
           }),
-        response: (result) => ({
-          result: result.key,
-        }),
-      });
+        (result) => ({
+          result: result.data.key,
+        })
+      );
 
       return {
         outputs: {

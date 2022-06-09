@@ -1,7 +1,6 @@
 import { App, aws_dynamodb, Stack } from "aws-cdk-lib";
 import "jest";
-import { Table, $util, AppsyncContext, reflect } from "../src";
-import { VTL } from "../src/vtl";
+import { Table, $util, AppsyncContext, reflect, AppsyncVTL } from "../src";
 import { appsyncTestCase } from "./util";
 
 interface Item {
@@ -35,7 +34,7 @@ test("get item", () =>
     // pipeline's request mapping template
     "{}",
     // function's request mapping template
-    `${VTL.CircuitBreaker}
+    `${AppsyncVTL.CircuitBreaker}
 #set($v1 = {})
 #set($v2 = {})
 #set($v3 = {})
@@ -73,7 +72,7 @@ test("get item and set consistentRead:true", () =>
     // pipeline's request mapping template
     "{}",
     // function's request mapping template
-    `${VTL.CircuitBreaker}
+    `${AppsyncVTL.CircuitBreaker}
 #set($v1 = {})
 #set($v2 = {})
 #set($v3 = {})
@@ -131,7 +130,7 @@ test("put item", () =>
     // pipeline's request mapping template
     "{}",
     // function's request mapping template
-    `${VTL.CircuitBreaker}
+    `${AppsyncVTL.CircuitBreaker}
 #set($v1 = {})
 #set($v2 = {})
 #set($v3 = {})
@@ -194,7 +193,7 @@ test("update item", () =>
     // pipeline's request mapping template
     "{}",
     // function's request mapping template
-    `${VTL.CircuitBreaker}
+    `${AppsyncVTL.CircuitBreaker}
 #set($v1 = {})
 #set($v2 = {})
 #set($v3 = {})
@@ -247,7 +246,7 @@ test("delete item", () =>
     // pipeline's request mapping template
     "{}",
     // function's request mapping template
-    `${VTL.CircuitBreaker}
+    `${AppsyncVTL.CircuitBreaker}
 #set($v1 = {})
 #set($v2 = {})
 #set($v3 = {})
@@ -298,7 +297,7 @@ test("query", () =>
     // pipeline's request mapping template
     "{}",
     // function's request mapping template
-    `${VTL.CircuitBreaker}
+    `${AppsyncVTL.CircuitBreaker}
 #set($v1 = {})
 #set($v2 = {})
 $util.qr($v2.put('expression', 'id = :id and #name = :val'))

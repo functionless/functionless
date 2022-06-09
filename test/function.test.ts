@@ -1,7 +1,6 @@
 import { App, aws_lambda, Stack } from "aws-cdk-lib";
 import "jest";
-import { Function, AppsyncContext, reflect } from "../src";
-import { VTL } from "../src/vtl";
+import { Function, AppsyncContext, reflect, AppsyncVTL } from "../src";
 import { appsyncTestCase } from "./util";
 
 interface Item {
@@ -35,7 +34,7 @@ test("call function", () =>
     // pipeline's request mapping template
     "{}",
     // function's request mapping template
-    `${VTL.CircuitBreaker}
+    `${AppsyncVTL.CircuitBreaker}
 #set($v1 = {\"version\": \"2018-05-29\", \"operation\": \"Invoke\", \"payload\": $context.arguments})
 $util.toJson($v1)`,
     // function's response mapping template
@@ -62,7 +61,7 @@ test("call function and conditional return", () =>
     // pipeline's request mapping template
     "{}",
     // function's request mapping template
-    `${VTL.CircuitBreaker}
+    `${AppsyncVTL.CircuitBreaker}
 #set($v1 = {\"version\": \"2018-05-29\", \"operation\": \"Invoke\", \"payload\": $context.arguments})
 $util.toJson($v1)`,
     // function's response mapping template
@@ -92,7 +91,7 @@ test("call function omitting optional arg", () =>
     // pipeline's request mapping template
     "{}",
     // function's request mapping template
-    `${VTL.CircuitBreaker}
+    `${AppsyncVTL.CircuitBreaker}
 #set($v1 = {\"version\": \"2018-05-29\", \"operation\": \"Invoke\", \"payload\": $context.arguments})
 $util.toJson($v1)`,
     // function's response mapping template
@@ -113,7 +112,7 @@ test("call function including optional arg", () =>
     // pipeline's request mapping template
     "{}",
     // function's request mapping template
-    `${VTL.CircuitBreaker}
+    `${AppsyncVTL.CircuitBreaker}
 #set($v1 = {})
 $util.qr($v1.put('arg', $context.arguments.arg))
 $util.qr($v1.put('optional', 'hello'))
@@ -137,7 +136,7 @@ test("call function including with no parameters", () =>
     // pipeline's request mapping template
     "{}",
     // function's request mapping template
-    `${VTL.CircuitBreaker}
+    `${AppsyncVTL.CircuitBreaker}
 #set($v1 = {\"version\": \"2018-05-29\", \"operation\": \"Invoke\", \"payload\": $null})
 $util.toJson($v1)`,
     // function's response mapping template
@@ -158,7 +157,7 @@ test("call function including with void result", () =>
     // pipeline's request mapping template
     "{}",
     // function's request mapping template
-    `${VTL.CircuitBreaker}
+    `${AppsyncVTL.CircuitBreaker}
 #set($v1 = {\"version\": \"2018-05-29\", \"operation\": \"Invoke\", \"payload\": $context.arguments})
 $util.toJson($v1)`,
     // function's response mapping template
