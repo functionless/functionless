@@ -143,15 +143,16 @@ describe("step function describe execution", () => {
   test("machine describe exec string", () => {
     const machine = new StepFunction(stack, "machine", () => {});
 
-    const func = reflect(() => {
-      machine.describeExecution("exec1");
-    });
-
-    appsyncTestCase(func, [
-      {
-        index: 1,
-      },
-    ]);
+    appsyncTestCase(
+      reflect(() => {
+        machine.describeExecution("exec1");
+      }),
+      [
+        {
+          index: 1,
+        },
+      ]
+    );
   });
 
   test("machine with trace header", () => {
