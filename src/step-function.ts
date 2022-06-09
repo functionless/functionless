@@ -132,7 +132,7 @@ export namespace $SFN {
      */
     <T>(
       array: T[],
-      callbackfn: (item: T, index: number, array: T[]) => Promise<void>
+      callbackfn: (item: T, index: number, array: T[]) => void
     ): Promise<void>;
     /**
      * Process each item in an {@link array} in parallel and run with the default maxConcurrency.
@@ -153,7 +153,7 @@ export namespace $SFN {
       props: {
         maxConcurrency: number;
       },
-      callbackfn: (item: T, index: number, array: T[]) => Promise<void> | void
+      callbackfn: (item: T, index: number, array: T[]) => void
     ): Promise<void>;
   }
 

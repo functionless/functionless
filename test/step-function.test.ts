@@ -1777,9 +1777,7 @@ test("$SFN.forEach(list, (item) => task(item))", () => {
     stack,
     "fn",
     async (input) => {
-      await $SFN.forEach(input.list, async (item) => {
-        await task(item);
-      });
+      await $SFN.forEach(input.list, async (item) => task(item));
     }
   ).definition;
 
@@ -1792,9 +1790,7 @@ test("result = $SFN.forEach(list, (item) => task(item))", () => {
     stack,
     "fn",
     async (input) => {
-      return $SFN.forEach(input.list, async (item) => {
-        await task(item);
-      });
+      return $SFN.forEach(input.list, async (item) => task(item));
     }
   ).definition;
 
@@ -1827,9 +1823,7 @@ test("try { $SFN.forEach(list, (item) => task(item)) } catch { return null }", (
     "fn",
     (input) => {
       try {
-        return $SFN.forEach(input.list, async (item) => {
-          await task(item);
-        });
+        return $SFN.forEach(input.list, async (item) => task(item));
       } catch {
         return null;
       }

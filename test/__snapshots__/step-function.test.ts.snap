@@ -7,26 +7,18 @@ Object {
     "await $SFN.forEach(input.list, function(item))": Object {
       "ItemsPath": "$.list",
       "Iterator": Object {
-        "StartAt": "await task(item)",
+        "StartAt": "return await task(item)",
         "States": Object {
-          "await task(item)": Object {
-            "Next": "return null 1",
+          "return await task(item)": Object {
+            "End": true,
             "Parameters": Object {
               "FunctionName": "__REPLACED_TOKEN",
               "Payload.$": "$.item",
             },
             "Resource": "arn:aws:states:::lambda:invoke",
-            "ResultPath": null,
+            "ResultPath": "$",
             "ResultSelector": "$.Payload",
             "Type": "Task",
-          },
-          "return null 1": Object {
-            "End": true,
-            "OutputPath": "$.null",
-            "Parameters": Object {
-              "null": null,
-            },
-            "Type": "Pass",
           },
         },
       },
@@ -2038,16 +2030,16 @@ Object {
       "End": true,
       "ItemsPath": "$.list",
       "Iterator": Object {
-        "StartAt": "await task(item)",
+        "StartAt": "return await task(item)",
         "States": Object {
-          "await task(item)": Object {
+          "return await task(item)": Object {
             "End": true,
             "Parameters": Object {
               "FunctionName": "__REPLACED_TOKEN",
               "Payload.$": "$.item",
             },
             "Resource": "arn:aws:states:::lambda:invoke",
-            "ResultPath": null,
+            "ResultPath": "$",
             "ResultSelector": "$.Payload",
             "Type": "Task",
           },
@@ -2533,7 +2525,7 @@ Object {
   "StartAt": "0_tmp = await task()",
   "States": Object {
     "0_tmp = await task()": Object {
-      "Next": "return await task(0_tmp)",
+      "Next": "return task(0_tmp)",
       "Parameters": Object {
         "FunctionName": "__REPLACED_TOKEN",
       },
@@ -2542,7 +2534,7 @@ Object {
       "ResultSelector": "$.Payload",
       "Type": "Task",
     },
-    "return await task(0_tmp)": Object {
+    "return task(0_tmp)": Object {
       "End": true,
       "Parameters": Object {
         "FunctionName": "__REPLACED_TOKEN",
@@ -3222,16 +3214,16 @@ Object {
       "End": true,
       "ItemsPath": "$.list",
       "Iterator": Object {
-        "StartAt": "await task(item)",
+        "StartAt": "return await task(item)",
         "States": Object {
-          "await task(item)": Object {
+          "return await task(item)": Object {
             "End": true,
             "Parameters": Object {
               "FunctionName": "__REPLACED_TOKEN",
               "Payload.$": "$.item",
             },
             "Resource": "arn:aws:states:::lambda:invoke",
-            "ResultPath": null,
+            "ResultPath": "$",
             "ResultSelector": "$.Payload",
             "Type": "Task",
           },
