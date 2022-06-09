@@ -445,26 +445,23 @@ export function compile(
                 })
               )
             );
+
             // call the integration call function with the prewarm context and arguments
             // At this point, we know native will not be undefined
-            // await integration.native.call(args, preWarmContext)
-            // TODO: Support both sync and async function invocations: https://github.com/functionless/functionless/issues/105
-
-            return context.factory.createAwaitExpression(
-              context.factory.createCallExpression(
+            // integration.native.call(args, preWarmContext)
+            return context.factory.createCallExpression(
+              context.factory.createPropertyAccessExpression(
                 context.factory.createPropertyAccessExpression(
-                  context.factory.createPropertyAccessExpression(
-                    node.expression,
-                    "native"
-                  ),
-                  "call"
+                  node.expression,
+                  "native"
                 ),
-                undefined,
-                [
-                  context.factory.createArrayLiteralExpression(node.arguments),
-                  nativeExprContext.preWarmContext,
-                ]
-              )
+                "call"
+              ),
+              undefined,
+              [
+                context.factory.createArrayLiteralExpression(node.arguments),
+                nativeExprContext.preWarmContext,
+              ]
             );
           }
         } else if (ts.isNewExpression(node)) {
