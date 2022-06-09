@@ -495,6 +495,8 @@ export class VTL {
       case "WhileStmt":
       // todo support
       case "AwaitExpr":
+      case "PromiseExpr":
+      case "PromiseArrayExpr":
         throw new Error(`${node.kind} is not yet supported in VTL`);
       case "Err":
         throw node.error;

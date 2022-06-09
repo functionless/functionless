@@ -33,6 +33,8 @@ export type Expr =
   | ObjectLiteralExpr
   | PropAccessExpr
   | PropAssignExpr
+  | PromiseArrayExpr
+  | PromiseExpr
   | ReferenceExpr
   | SpreadAssignExpr
   | SpreadElementExpr
@@ -61,6 +63,8 @@ export function isExpr(a: any): a is Expr {
       isNullLiteralExpr(a) ||
       isNumberLiteralExpr(a) ||
       isObjectLiteralExpr(a) ||
+      isPromiseArrayExpr(a) ||
+      isPromiseExpr(a) ||
       isPropAccessExpr(a) ||
       isPropAssignExpr(a) ||
       isReferenceExpr(a) ||
@@ -131,16 +135,12 @@ export type CanReference =
   | unknown;
 
 export class ReferenceExpr extends BaseExpr<"ReferenceExpr"> {
-  constructor(
-    readonly name: string,
-    readonly ref: () => CanReference,
-    readonly isPromise: boolean = false
-  ) {
+  constructor(readonly name: string, readonly ref: () => CanReference) {
     super("ReferenceExpr");
   }
 
   public clone(): this {
-    return new ReferenceExpr(this.name, this.ref, this.isPromise) as this;
+    return new ReferenceExpr(this.name, this.ref) as this;
   }
 }
 
@@ -559,5 +559,33 @@ export class AwaitExpr extends BaseExpr<"AwaitExpr"> {
 
   public clone(): this {
     return new AwaitExpr(this.expr.clone()) as this;
+  }
+}
+
+export const isPromiseExpr = typeGuard("PromiseExpr");
+
+export class PromiseExpr extends BaseExpr<"PromiseExpr"> {
+  constructor(readonly expr: Expr) {
+    super("PromiseExpr");
+
+    expr.setParent(this);
+  }
+
+  public clone(): this {
+    return new PromiseExpr(this.expr.clone()) as this;
+  }
+}
+
+export const isPromiseArrayExpr = typeGuard("PromiseArrayExpr");
+
+export class PromiseArrayExpr extends BaseExpr<"PromiseArrayExpr"> {
+  constructor(readonly expr: Expr) {
+    super("PromiseArrayExpr");
+
+    expr.setParent(this);
+  }
+
+  public clone(): this {
+    return new PromiseArrayExpr(this.expr.clone()) as this;
   }
 }

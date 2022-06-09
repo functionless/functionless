@@ -35,6 +35,10 @@ import {
   TypeOfExpr,
   UnaryExpr,
   UndefinedLiteralExpr,
+  isPromiseArrayExpr,
+  isPromiseExpr,
+  PromiseArrayExpr,
+  PromiseExpr,
 } from "./expression";
 import { FunctionlessNode } from "./node";
 
@@ -346,7 +350,7 @@ export function visitEachChild<T extends FunctionlessNode>(
     );
     return new PropAssignExpr(name, expr) as T;
   } else if (node.kind === "ReferenceExpr") {
-    return new ReferenceExpr(node.name, node.ref, node.isPromise) as T;
+    return new ReferenceExpr(node.name, node.ref) as T;
   } else if (node.kind === "ReturnStmt") {
     const expr = visitor(node.expr);
     ensure(expr, isExpr, "a ReturnStmt's expr must be an Expr node type");
@@ -447,6 +451,14 @@ export function visitEachChild<T extends FunctionlessNode>(
     const expr = visitor(node.expr);
     ensure(expr, isExpr, "an AwaitExpr's expr property must be an Expr");
     return new AwaitExpr(expr) as T;
+  } else if (isPromiseExpr(node)) {
+    const expr = visitor(node.expr);
+    ensure(expr, isExpr, "a PromiseExpr's expr property must be an Expr");
+    return new PromiseExpr(expr) as T;
+  } else if (isPromiseArrayExpr(node)) {
+    const expr = visitor(node.expr);
+    ensure(expr, isExpr, "a PromiseArrayExpr's expr property must be an Expr");
+    return new PromiseArrayExpr(expr) as T;
   }
   return assertNever(node);
 }
