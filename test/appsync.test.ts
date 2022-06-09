@@ -15,10 +15,10 @@ describe("step function integration", () => {
       reflect(() => {
         machine({});
       }),
-      [
-        {
-          index: 1,
-          expected: {
+      {
+        executeTemplates: [
+          {
+            index: 1,
             match: {
               params: {
                 body: {
@@ -27,8 +27,8 @@ describe("step function integration", () => {
               },
             },
           },
-        },
-      ]
+        ],
+      }
     );
   });
 
@@ -43,10 +43,10 @@ describe("step function integration", () => {
       reflect(() => {
         machine({ input: { id: "1" } });
       }),
-      [
-        {
-          index: 1,
-          expected: {
+      {
+        executeTemplates: [
+          {
+            index: 1,
             match: {
               params: {
                 body: {
@@ -55,8 +55,8 @@ describe("step function integration", () => {
               },
             },
           },
-        },
-      ]
+        ],
+      }
     );
   });
 
@@ -71,11 +71,11 @@ describe("step function integration", () => {
       reflect((context) => {
         machine({ input: { id: context.arguments.id } });
       }),
-      [
-        {
-          index: 1,
-          context: { arguments: { id: "1" }, source: {} },
-          expected: {
+      {
+        executeTemplates: [
+          {
+            index: 1,
+            context: { arguments: { id: "1" }, source: {} },
             match: {
               params: {
                 body: {
@@ -84,8 +84,8 @@ describe("step function integration", () => {
               },
             },
           },
-        },
-      ]
+        ],
+      }
     );
   });
 
@@ -96,11 +96,11 @@ describe("step function integration", () => {
       reflect((context) => {
         machine({ name: context.arguments.id });
       }),
-      [
-        {
-          index: 1,
-          context: { arguments: { id: "1" }, source: {} },
-          expected: {
+      {
+        executeTemplates: [
+          {
+            index: 1,
+            context: { arguments: { id: "1" }, source: {} },
             match: {
               params: {
                 body: {
@@ -109,8 +109,8 @@ describe("step function integration", () => {
               },
             },
           },
-        },
-      ]
+        ],
+      }
     );
   });
 
@@ -130,11 +130,13 @@ describe("step function integration", () => {
         const exec = "exec1";
         machine.describeExecution(exec);
       }),
-      [
-        {
-          index: 1,
-        },
-      ]
+      {
+        executeTemplates: [
+          {
+            index: 1,
+          },
+        ],
+      }
     );
   });
 });
@@ -147,11 +149,14 @@ describe("step function describe execution", () => {
       reflect(() => {
         machine.describeExecution("exec1");
       }),
-      [
-        {
-          index: 1,
-        },
-      ]
+      {
+        expectedTemplateCount: 4,
+        executeTemplates: [
+          {
+            index: 1,
+          },
+        ],
+      }
     );
   });
 
@@ -161,4 +166,168 @@ describe("step function describe execution", () => {
       machine({ traceHeader: context.arguments.id });
     });
   });
+});
+
+test("multiple isolated integrations", () => {
+  const machine = new StepFunction(stack, "machine", () => {});
+
+  appsyncTestCase(
+    reflect(() => {
+      machine.describeExecution("exec1");
+      machine.describeExecution("exec2");
+      machine.describeExecution("exec3");
+      machine.describeExecution("exec4");
+    }),
+    {
+      expectedTemplateCount: 10,
+      executeTemplates: [
+        {
+          index: 1,
+        },
+      ],
+    }
+  );
+});
+
+test("multiple linked integrations", () => {
+  const machine = new StepFunction(stack, "machine", () => {});
+
+  appsyncTestCase(
+    reflect(() => {
+      const res1 = machine({ input: {} });
+      const res2 = machine({ input: res1 });
+      machine({ input: res2 });
+    }),
+    {
+      expectedTemplateCount: 8,
+      executeTemplates: [
+        {
+          index: 1,
+        },
+      ],
+    }
+  );
+});
+
+test("multiple linked integrations pre-compute", () => {
+  const machine = new StepFunction(stack, "machine", () => {});
+
+  appsyncTestCase(
+    reflect(() => {
+      const x = "y";
+      const res1 = machine({ input: { x } });
+      const res2 = machine({ input: res1 });
+      machine({ input: res2 });
+    }),
+    {
+      expectedTemplateCount: 8,
+      executeTemplates: [
+        {
+          index: 1,
+        },
+      ],
+    }
+  );
+});
+
+test("multiple linked integrations post-compute", () => {
+  const machine = new StepFunction(stack, "machine", () => {});
+
+  appsyncTestCase(
+    reflect(() => {
+      const res1 = machine({ input: {} });
+      const res2 = machine({ input: res1 });
+      const result = machine({ input: res2 });
+      return result.startDate;
+    }),
+    {
+      executeTemplates: [
+        {
+          index: 1,
+        },
+      ],
+    }
+  );
+});
+
+test("multiple linked integrations with props", () => {
+  const machine = new StepFunction(stack, "machine", () => {});
+
+  appsyncTestCase(
+    reflect(() => {
+      const res1 = machine.describeExecution("exec1");
+      const res2 = machine.describeExecution(res1.executionArn);
+      machine.describeExecution(res2.executionArn);
+    }),
+    {
+      expectedTemplateCount: 8,
+      executeTemplates: [
+        {
+          index: 1,
+        },
+      ],
+    }
+  );
+});
+
+// https://github.com/functionless/functionless/issues/212
+test.skip("multiple nested integrations", () => {
+  const machine = new StepFunction(stack, "machine", () => {});
+
+  appsyncTestCase(
+    reflect(() => {
+      machine({ input: machine({ input: machine({ input: {} }) }) });
+    }),
+    {
+      expectedTemplateCount: 8,
+      executeTemplates: [
+        {
+          index: 1,
+        },
+      ],
+    }
+  );
+});
+
+// https://github.com/functionless/functionless/issues/212
+test.skip("multiple nested integrations prop access", () => {
+  const machine = new StepFunction(stack, "machine", () => {});
+
+  appsyncTestCase(
+    reflect(() => {
+      machine.describeExecution(
+        machine.describeExecution(
+          machine.describeExecution("exec1").executionArn
+        ).executionArn
+      );
+    }),
+    {
+      expectedTemplateCount: 8,
+      executeTemplates: [
+        {
+          index: 1,
+        },
+      ],
+    }
+  );
+});
+
+test("multiple linked integrations with mutation", () => {
+  const machine = new StepFunction(stack, "machine", () => {});
+
+  appsyncTestCase(
+    reflect(() => {
+      const res1 = machine.describeExecution("exec1");
+      const formatted = `status: ${res1.status}`;
+      machine({ input: { x: formatted } });
+    }),
+    {
+      expectedTemplateCount: 6,
+      executeTemplates: [
+        {
+          index: 1,
+        },
+      ],
+    }
+  );
 });
