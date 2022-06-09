@@ -7,9 +7,9 @@ Object {
     "await $SFN.forEach(input.list, function(item))": Object {
       "ItemsPath": "$.list",
       "Iterator": Object {
-        "StartAt": "return await task(item)",
+        "StartAt": "return task(item)",
         "States": Object {
-          "return await task(item)": Object {
+          "return task(item)": Object {
             "End": true,
             "Parameters": Object {
               "FunctionName": "__REPLACED_TOKEN",
@@ -2030,9 +2030,9 @@ Object {
       "End": true,
       "ItemsPath": "$.list",
       "Iterator": Object {
-        "StartAt": "return await task(item)",
+        "StartAt": "return task(item)",
         "States": Object {
-          "return await task(item)": Object {
+          "return task(item)": Object {
             "End": true,
             "Parameters": Object {
               "FunctionName": "__REPLACED_TOKEN",
@@ -3214,9 +3214,9 @@ Object {
       "End": true,
       "ItemsPath": "$.list",
       "Iterator": Object {
-        "StartAt": "return await task(item)",
+        "StartAt": "return task(item)",
         "States": Object {
-          "return await task(item)": Object {
+          "return task(item)": Object {
             "End": true,
             "Parameters": Object {
               "FunctionName": "__REPLACED_TOKEN",
