@@ -10,18 +10,13 @@ import {
   SyncExecutionResult,
 } from "../src";
 import { StateMachine, States, Task } from "../src/asl";
-import { initStepFunctionApp, Person } from "./util";
+import { initStepFunctionApp, normalizeCDKJson, Person } from "./util";
 
 /**
  * Removes randomized values (CDK token strings) form the definitions.
  */
 const normalizeDefinition = (definition: StateMachine<States>): any => {
-  return JSON.parse(
-    JSON.stringify(definition).replace(
-      /\$\{Token\[[a-zA-Z0-9.]*\]\}/g,
-      "__REPLACED_TOKEN"
-    )
-  );
+  return normalizeCDKJson(definition);
 };
 
 /**

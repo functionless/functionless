@@ -1,0 +1,276 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`step function describe execution machine describe exec string 1`] = `
+Array [
+  "{}",
+  "#if($context.stash.return__flag)
+  #return($context.stash.return__val)
+#end
+{
+  \\"version\\": \\"2018-05-29\\",
+  \\"method\\": \\"POST\\",
+  \\"resourcePath\\": \\"/\\",
+  \\"params\\": {
+    \\"headers\\": {
+      \\"content-type\\": \\"application/x-amz-json-1.0\\",
+      \\"x-amz-target\\": \\"AWSStepFunctions.DescribeExecution\\"
+    },
+    \\"body\\": {
+      \\"executionArn\\": $util.toJson('exec1')
+    }
+  }
+}",
+  "{}",
+  "#if($context.stash.return__flag)
+  #return($context.stash.return__val)
+#end",
+]
+`;
+
+exports[`step function describe execution machine describe exec string 2`] = `
+Object {
+  "method": "POST",
+  "params": Object {
+    "body": Object {
+      "executionArn": "exec1",
+    },
+    "headers": Object {
+      "content-type": "application/x-amz-json-1.0",
+      "x-amz-target": "AWSStepFunctions.DescribeExecution",
+    },
+  },
+  "resourcePath": "/",
+  "version": "2018-05-29",
+}
+`;
+
+exports[`step function integration machine describe exec 1`] = `
+Array [
+  "{}",
+  "#if($context.stash.return__flag)
+  #return($context.stash.return__val)
+#end
+#set($context.stash.exec = 'exec1')
+{
+  \\"version\\": \\"2018-05-29\\",
+  \\"method\\": \\"POST\\",
+  \\"resourcePath\\": \\"/\\",
+  \\"params\\": {
+    \\"headers\\": {
+      \\"content-type\\": \\"application/x-amz-json-1.0\\",
+      \\"x-amz-target\\": \\"AWSStepFunctions.DescribeExecution\\"
+    },
+    \\"body\\": {
+      \\"executionArn\\": $util.toJson($context.stash.exec)
+    }
+  }
+}",
+  "{}",
+  "#if($context.stash.return__flag)
+  #return($context.stash.return__val)
+#end",
+]
+`;
+
+exports[`step function integration machine describe exec 2`] = `
+Object {
+  "method": "POST",
+  "params": Object {
+    "body": Object {
+      "executionArn": "exec1",
+    },
+    "headers": Object {
+      "content-type": "application/x-amz-json-1.0",
+      "x-amz-target": "AWSStepFunctions.DescribeExecution",
+    },
+  },
+  "resourcePath": "/",
+  "version": "2018-05-29",
+}
+`;
+
+exports[`step function integration machine with dynamic parameters 1`] = `
+Array [
+  "{}",
+  "#if($context.stash.return__flag)
+  #return($context.stash.return__val)
+#end
+#set($v1 = {})
+#set($v2 = {})
+$util.qr($v2.put('id', $context.arguments.id))
+$util.qr($v1.put('input', $util.toJson($v2)))
+$util.qr($v1.put('stateMachineArn', '__REPLACED_TOKEN'))
+{
+  \\"version\\": \\"2018-05-29\\",
+  \\"method\\": \\"POST\\",
+  \\"resourcePath\\": \\"/\\",
+  \\"params\\": {
+    \\"headers\\": {
+      \\"content-type\\": \\"application/x-amz-json-1.0\\",
+      \\"x-amz-target\\": \\"AWSStepFunctions.StartExecution\\"
+    },
+    \\"body\\": $util.toJson($v1)
+  }
+}",
+  "{}",
+  "#if($context.stash.return__flag)
+  #return($context.stash.return__val)
+#end",
+]
+`;
+
+exports[`step function integration machine with dynamic parameters 2`] = `
+Object {
+  "method": "POST",
+  "params": Object {
+    "body": Object {
+      "input": "{\\"id\\":\\"1\\"}",
+      "stateMachineArn": "__REPLACED_TOKEN",
+    },
+    "headers": Object {
+      "content-type": "application/x-amz-json-1.0",
+      "x-amz-target": "AWSStepFunctions.StartExecution",
+    },
+  },
+  "resourcePath": "/",
+  "version": "2018-05-29",
+}
+`;
+
+exports[`step function integration machine with name 1`] = `
+Array [
+  "{}",
+  "#if($context.stash.return__flag)
+  #return($context.stash.return__val)
+#end
+#set($v1 = {})
+$util.qr($v1.put('name', $context.arguments.id))
+$util.qr($v1.put('stateMachineArn', '__REPLACED_TOKEN'))
+{
+  \\"version\\": \\"2018-05-29\\",
+  \\"method\\": \\"POST\\",
+  \\"resourcePath\\": \\"/\\",
+  \\"params\\": {
+    \\"headers\\": {
+      \\"content-type\\": \\"application/x-amz-json-1.0\\",
+      \\"x-amz-target\\": \\"AWSStepFunctions.StartExecution\\"
+    },
+    \\"body\\": $util.toJson($v1)
+  }
+}",
+  "{}",
+  "#if($context.stash.return__flag)
+  #return($context.stash.return__val)
+#end",
+]
+`;
+
+exports[`step function integration machine with name 2`] = `
+Object {
+  "method": "POST",
+  "params": Object {
+    "body": Object {
+      "name": "1",
+      "stateMachineArn": "__REPLACED_TOKEN",
+    },
+    "headers": Object {
+      "content-type": "application/x-amz-json-1.0",
+      "x-amz-target": "AWSStepFunctions.StartExecution",
+    },
+  },
+  "resourcePath": "/",
+  "version": "2018-05-29",
+}
+`;
+
+exports[`step function integration machine with no parameters 1`] = `
+Array [
+  "{}",
+  "#if($context.stash.return__flag)
+  #return($context.stash.return__val)
+#end
+#set($v1 = {})
+$util.qr($v1.put('stateMachineArn', '__REPLACED_TOKEN'))
+{
+  \\"version\\": \\"2018-05-29\\",
+  \\"method\\": \\"POST\\",
+  \\"resourcePath\\": \\"/\\",
+  \\"params\\": {
+    \\"headers\\": {
+      \\"content-type\\": \\"application/x-amz-json-1.0\\",
+      \\"x-amz-target\\": \\"AWSStepFunctions.StartExecution\\"
+    },
+    \\"body\\": $util.toJson($v1)
+  }
+}",
+  "{}",
+  "#if($context.stash.return__flag)
+  #return($context.stash.return__val)
+#end",
+]
+`;
+
+exports[`step function integration machine with no parameters 2`] = `
+Object {
+  "method": "POST",
+  "params": Object {
+    "body": Object {
+      "stateMachineArn": "__REPLACED_TOKEN",
+    },
+    "headers": Object {
+      "content-type": "application/x-amz-json-1.0",
+      "x-amz-target": "AWSStepFunctions.StartExecution",
+    },
+  },
+  "resourcePath": "/",
+  "version": "2018-05-29",
+}
+`;
+
+exports[`step function integration machine with static parameters 1`] = `
+Array [
+  "{}",
+  "#if($context.stash.return__flag)
+  #return($context.stash.return__val)
+#end
+#set($v1 = {})
+#set($v2 = {})
+$util.qr($v2.put('id', '1'))
+$util.qr($v1.put('input', $util.toJson($v2)))
+$util.qr($v1.put('stateMachineArn', '__REPLACED_TOKEN'))
+{
+  \\"version\\": \\"2018-05-29\\",
+  \\"method\\": \\"POST\\",
+  \\"resourcePath\\": \\"/\\",
+  \\"params\\": {
+    \\"headers\\": {
+      \\"content-type\\": \\"application/x-amz-json-1.0\\",
+      \\"x-amz-target\\": \\"AWSStepFunctions.StartExecution\\"
+    },
+    \\"body\\": $util.toJson($v1)
+  }
+}",
+  "{}",
+  "#if($context.stash.return__flag)
+  #return($context.stash.return__val)
+#end",
+]
+`;
+
+exports[`step function integration machine with static parameters 2`] = `
+Object {
+  "method": "POST",
+  "params": Object {
+    "body": Object {
+      "input": "{\\"id\\":\\"1\\"}",
+      "stateMachineArn": "__REPLACED_TOKEN",
+    },
+    "headers": Object {
+      "content-type": "application/x-amz-json-1.0",
+      "x-amz-target": "AWSStepFunctions.StartExecution",
+    },
+  },
+  "resourcePath": "/",
+  "version": "2018-05-29",
+}
+`;

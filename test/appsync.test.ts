@@ -1,11 +1,6 @@
 import { Stack } from "aws-cdk-lib";
 import { AppsyncResolver, reflect, StepFunction } from "../src";
-import { VTL } from "../src/vtl";
-import {
-  appsyncTestCase,
-  appsyncVelocityJsonTestCase,
-  getAppSyncTemplates,
-} from "./util";
+import { appsyncTestCase } from "./util";
 
 let stack: Stack;
 beforeEach(() => {
@@ -16,53 +11,24 @@ describe("step function integration", () => {
   test("machine with no parameters", () => {
     const machine = new StepFunction(stack, "machine", async () => {});
 
-    const func = reflect(async () => {
-      await machine({});
-    });
-
     appsyncTestCase(
-      func,
-      "{}",
-      `${VTL.CircuitBreaker}
-#set($v1 = {})
-$util.qr($v1.put('stateMachineArn', '${machine.stateMachineArn}'))
-{
-  "version": "2018-05-29",
-  "method": "POST",
-  "resourcePath": "/",
-  "params": {
-    "headers": {
-      "content-type": "application/x-amz-json-1.0",
-      "x-amz-target": "AWSStepFunctions.StartExecution"
-    },
-    "body": $util.toJson($v1)
-  }
-}`,
-      "{}",
-      VTL.CircuitBreaker
-    );
-
-    const templates = getAppSyncTemplates(func);
-
-    appsyncVelocityJsonTestCase(
-      templates[1],
-      { arguments: {}, source: {} },
-      {
-        result: {
-          version: "2018-05-29",
-          method: "POST",
-          resourcePath: "/",
-          params: {
-            headers: {
-              "content-type": "application/x-amz-json-1.0",
-              "x-amz-target": "AWSStepFunctions.StartExecution",
-            },
-            body: {
-              stateMachineArn: machine.stateMachineArn,
+      reflect(async () => {
+        await machine({});
+      }),
+      [
+        {
+          index: 1,
+          expected: {
+            match: {
+              params: {
+                body: {
+                  stateMachineArn: machine.stateMachineArn,
+                },
+              },
             },
           },
         },
-      }
+      ]
     );
   });
 
@@ -73,32 +39,24 @@ $util.qr($v1.put('stateMachineArn', '${machine.stateMachineArn}'))
       async () => {}
     );
 
-    const templates = getAppSyncTemplates(
+    appsyncTestCase(
       reflect(async () => {
         await machine({ input: { id: "1" } });
-      })
-    );
-
-    appsyncVelocityJsonTestCase(
-      templates[1],
-      { arguments: {}, source: {} },
-      {
-        result: {
-          version: "2018-05-29",
-          method: "POST",
-          resourcePath: "/",
-          params: {
-            headers: {
-              "content-type": "application/x-amz-json-1.0",
-              "x-amz-target": "AWSStepFunctions.StartExecution",
-            },
-            body: {
-              stateMachineArn: machine.stateMachineArn,
-              input: JSON.stringify({ id: "1" }),
+      }),
+      [
+        {
+          index: 1,
+          expected: {
+            match: {
+              params: {
+                body: {
+                  stateMachineArn: machine.stateMachineArn,
+                },
+              },
             },
           },
         },
-      }
+      ]
     );
   });
 
@@ -109,69 +67,56 @@ $util.qr($v1.put('stateMachineArn', '${machine.stateMachineArn}'))
       async () => {}
     );
 
-    const templates = getAppSyncTemplates(
+    appsyncTestCase(
       reflect(async (context) => {
         await machine({ input: { id: context.arguments.id } });
-      })
-    );
-
-    appsyncVelocityJsonTestCase(
-      templates[1],
-      { arguments: { id: "1" }, source: {} },
-      {
-        result: {
-          version: "2018-05-29",
-          method: "POST",
-          resourcePath: "/",
-          params: {
-            headers: {
-              "content-type": "application/x-amz-json-1.0",
-              "x-amz-target": "AWSStepFunctions.StartExecution",
-            },
-            body: {
-              stateMachineArn: machine.stateMachineArn,
-              input: JSON.stringify({ id: "1" }),
+      }),
+      [
+        {
+          index: 1,
+          context: { arguments: { id: "1" }, source: {} },
+          expected: {
+            match: {
+              params: {
+                body: {
+                  stateMachineArn: machine.stateMachineArn,
+                },
+              },
             },
           },
         },
-      }
+      ]
     );
   });
 
   test("machine with name", () => {
     const machine = new StepFunction(stack, "machine", async () => {});
 
-    const templates = getAppSyncTemplates(
+    appsyncTestCase(
       reflect(async (context) => {
         await machine({ name: context.arguments.id });
-      })
-    );
-
-    appsyncVelocityJsonTestCase(
-      templates[1],
-      { arguments: { id: "1" }, source: {} },
-      {
-        result: {
-          version: "2018-05-29",
-          method: "POST",
-          resourcePath: "/",
-          params: {
-            headers: {
-              "content-type": "application/x-amz-json-1.0",
-              "x-amz-target": "AWSStepFunctions.StartExecution",
-            },
-            body: {
-              stateMachineArn: machine.stateMachineArn,
-              name: "1",
+      }),
+      [
+        {
+          index: 1,
+          context: { arguments: { id: "1" }, source: {} },
+          expected: {
+            match: {
+              params: {
+                body: {
+                  stateMachineArn: machine.stateMachineArn,
+                },
+              },
             },
           },
         },
-      }
+      ]
     );
   });
 
   test("machine with trace header", () => {
     const machine = new StepFunction(stack, "machine", async () => {});
+
     new AppsyncResolver<{ id: string }, void>(async (context) => {
       await machine({ traceHeader: context.arguments.id });
     });
@@ -180,55 +125,16 @@ $util.qr($v1.put('stateMachineArn', '${machine.stateMachineArn}'))
   test("machine describe exec", () => {
     const machine = new StepFunction(stack, "machine", async () => {});
 
-    const func = reflect(async () => {
-      const exec = "exec1";
-      await machine.describeExecution(exec);
-    });
-
     appsyncTestCase(
-      func,
-      "{}",
-      `${VTL.CircuitBreaker}
-#set($context.stash.exec = 'exec1')
-{
-  "version": "2018-05-29",
-  "method": "POST",
-  "resourcePath": "/",
-  "params": {
-    "headers": {
-      "content-type": "application/x-amz-json-1.0",
-      "x-amz-target": "AWSStepFunctions.DescribeExecution"
-    },
-    "body": {
-      "executionArn": $util.toJson($context.stash.exec)
-    }
-  }
-}`,
-      "{}",
-      VTL.CircuitBreaker
-    );
-
-    const templates = getAppSyncTemplates(func);
-
-    appsyncVelocityJsonTestCase(
-      templates[1],
-      { arguments: {}, source: {} },
-      {
-        result: {
-          version: "2018-05-29",
-          method: "POST",
-          resourcePath: "/",
-          params: {
-            headers: {
-              "content-type": "application/x-amz-json-1.0",
-              "x-amz-target": "AWSStepFunctions.DescribeExecution",
-            },
-            body: {
-              executionArn: "exec1",
-            },
-          },
+      reflect(async () => {
+        const exec = "exec1";
+        await machine.describeExecution(exec);
+      }),
+      [
+        {
+          index: 1,
         },
-      }
+      ]
     );
   });
 });
@@ -241,50 +147,11 @@ describe("step function describe execution", () => {
       await machine.describeExecution("exec1");
     });
 
-    appsyncTestCase(
-      func,
-      "{}",
-      `${VTL.CircuitBreaker}
-{
-  "version": "2018-05-29",
-  "method": "POST",
-  "resourcePath": "/",
-  "params": {
-    "headers": {
-      "content-type": "application/x-amz-json-1.0",
-      "x-amz-target": "AWSStepFunctions.DescribeExecution"
-    },
-    "body": {
-      "executionArn": $util.toJson('exec1')
-    }
-  }
-}`,
-      "{}",
-      VTL.CircuitBreaker
-    );
-
-    const templates = getAppSyncTemplates(func);
-
-    appsyncVelocityJsonTestCase(
-      templates[1],
-      { arguments: {}, source: {} },
+    appsyncTestCase(func, [
       {
-        result: {
-          version: "2018-05-29",
-          method: "POST",
-          resourcePath: "/",
-          params: {
-            headers: {
-              "content-type": "application/x-amz-json-1.0",
-              "x-amz-target": "AWSStepFunctions.DescribeExecution",
-            },
-            body: {
-              executionArn: "exec1",
-            },
-          },
-        },
-      }
-    );
+        index: 1,
+      },
+    ]);
   });
 
   test("machine with trace header", () => {

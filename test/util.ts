@@ -65,20 +65,45 @@ export function getAppSyncTemplates(decl: FunctionDecl | Err): string[] {
   }).templates;
 }
 
+/**
+ *
+ * @param decl
+ * @param executeTemplates an array of templates to execute using the {@link AmplifyAppSyncSimulator}
+ *                         `context` can be used to pass inputs
+ *                         a snapshot will be taken of the results
+ *                         to test specific contents like CDK Tokens (arns, attr, etc) use
+ *                         `expected.match` with a partial output.
+ *                         To assert that the template returns, pass `expected.returned: true`.
+ */
 export function appsyncTestCase(
   decl: FunctionDecl | Err,
-  ...expected: string[]
+  executeTemplates?: {
+    index: number;
+    context?: AppSyncVTLRenderContext;
+    expected?: { match?: Record<string, any>; returned?: boolean };
+    requestContext?: AppSyncGraphQLExecutionContext;
+  }[]
 ) {
   const actual = getAppSyncTemplates(decl);
 
-  expect(actual).toEqual(expected);
+  expect(normalizeCDKJson(actual)).toMatchSnapshot();
+
+  executeTemplates?.forEach((testCase) => {
+    const vtl = actual[testCase.index];
+    appsyncVelocityJsonTestCase(
+      vtl,
+      testCase.context,
+      testCase.expected,
+      testCase.requestContext
+    );
+  });
 }
 
 const simulator = new AmplifyAppSyncSimulator();
-export function appsyncVelocityJsonTestCase(
+function appsyncVelocityJsonTestCase(
   vtl: string,
-  context: AppSyncVTLRenderContext,
-  expected: { result: Record<string, any>; returned?: boolean },
+  context?: AppSyncVTLRenderContext,
+  expected?: { match?: Record<string, any>; returned?: boolean },
   requestContext?: AppSyncGraphQLExecutionContext
 ) {
   const template = new VelocityTemplate(
@@ -87,7 +112,7 @@ export function appsyncVelocityJsonTestCase(
   );
 
   const result = template.render(
-    context,
+    context ?? { arguments: {}, source: {} },
     requestContext ?? {
       headers: {},
       requestAuthorizationMode:
@@ -99,8 +124,11 @@ export function appsyncVelocityJsonTestCase(
 
   expect(result.errors).toHaveLength(0);
 
-  expect(JSON.parse(JSON.stringify(result.result))).toEqual(expected.result);
-  expected.returned !== undefined &&
+  const json = JSON.parse(JSON.stringify(result.result));
+
+  expect(normalizeCDKJson(json)).toMatchSnapshot();
+  expected?.match !== undefined && expect(json).toMatchObject(expected.match);
+  expected?.returned !== undefined &&
     expect(result.isReturn).toEqual(expected.returned);
 }
 
@@ -210,3 +238,12 @@ export function ebEventTargetTestCaseError<T extends Event>(
 ) {
   expect(() => synthesizeEventBridgeTargets(decl)).toThrow(message);
 }
+
+export const normalizeCDKJson = (json: object) => {
+  return JSON.parse(
+    JSON.stringify(json).replace(
+      /\$\{Token\[[a-zA-Z0-9.]*\]\}/g,
+      "__REPLACED_TOKEN"
+    )
+  );
+};
