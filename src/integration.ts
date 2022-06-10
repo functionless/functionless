@@ -1,7 +1,7 @@
 import { AppSyncVtlIntegration } from "./appsync";
 import { ASL, State } from "./asl";
 import { EventBus, EventBusTargetIntegration } from "./event-bridge";
-import { CallExpr } from "./expression";
+import { CallExpr, isReferenceExpr } from "./expression";
 import { Function, NativeIntegration } from "./function";
 import { FunctionlessNode } from "./node";
 import { AnyFunction } from "./util";
@@ -221,27 +221,6 @@ export function makeIntegration<K extends string, F extends AnyFunction>(
   return integration as unknown as IntegrationCall<K, F>;
 }
 
-/**
- * @param call call expression that may reference a callable integration
- * @returns the reference to the callable function, e.g. a Lambda Function or method on a DynamoDB Table
- */
-export function findIntegration(call: CallExpr): IntegrationImpl | undefined {
-  const integration = find(call.expr);
-  return integration ? new IntegrationImpl(integration) : undefined;
-
-  function find(expr: FunctionlessNode): any {
-    if (expr.kind === "PropAccessExpr") {
-      return find(expr.expr)?.[expr.name];
-    } else if (expr.kind === "Identifier") {
-      return undefined;
-    } else if (expr.kind === "ReferenceExpr") {
-      return expr.ref();
-    } else {
-      return undefined;
-    }
-  }
-}
-
 export type CallContext = ASL | VTL | Function<any, any> | EventBus<any>;
 
 /**
@@ -253,7 +232,13 @@ export function findDeepIntegration(
   if (expr.kind === "PropAccessExpr") {
     return findDeepIntegration(expr.expr);
   } else if (expr.kind === "CallExpr") {
-    return findIntegration(expr);
+    if (isReferenceExpr(expr.expr)) {
+      const ref = expr.expr.ref();
+      if (isIntegration<Integration>(ref)) {
+        return new IntegrationImpl(ref);
+      }
+    }
+    return undefined;
   } else if (expr.kind === "VariableStmt" && expr.expr) {
     return findDeepIntegration(expr.expr);
   } else if (expr.kind === "ReturnStmt" && expr.expr) {

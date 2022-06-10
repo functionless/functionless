@@ -48,7 +48,7 @@ export type ResolverFunction<
   Arguments extends ResolverArguments,
   Result,
   Source
-> = ($context: AppsyncContext<Arguments, Source>) => Result;
+> = ($context: AppsyncContext<Arguments, Source>) => Promise<Result> | Result;
 
 export interface SynthesizedAppsyncResolverProps extends appsync.ResolverProps {
   readonly templates: string[];

@@ -53,8 +53,8 @@ localstackTestSuite("eventBusStack", (testResource) => {
       const putMachine = new StepFunction<{ id: string }, void>(
         parent,
         "machine",
-        (event) => {
-          $AWS.DynamoDB.PutItem({
+        async (event) => {
+          await $AWS.DynamoDB.PutItem({
             Item: {
               id: { S: event.id },
             },

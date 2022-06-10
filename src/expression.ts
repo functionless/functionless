@@ -18,6 +18,7 @@ import { AnyFunction } from "./util";
 export type Expr =
   | Argument
   | ArrayLiteralExpr
+  | AwaitExpr
   | BinaryExpr
   | BooleanLiteralExpr
   | CallExpr
@@ -32,6 +33,8 @@ export type Expr =
   | ObjectLiteralExpr
   | PropAccessExpr
   | PropAssignExpr
+  | PromiseArrayExpr
+  | PromiseExpr
   | ReferenceExpr
   | SpreadAssignExpr
   | SpreadElementExpr
@@ -46,6 +49,7 @@ export function isExpr(a: any): a is Expr {
     isNode(a) &&
     (isArgument(a) ||
       isArrayLiteralExpr(a) ||
+      isAwaitExpr(a) ||
       isBinaryExpr(a) ||
       isBooleanLiteral(a) ||
       isCallExpr(a) ||
@@ -59,6 +63,8 @@ export function isExpr(a: any): a is Expr {
       isNullLiteralExpr(a) ||
       isNumberLiteralExpr(a) ||
       isObjectLiteralExpr(a) ||
+      isPromiseArrayExpr(a) ||
+      isPromiseExpr(a) ||
       isPropAccessExpr(a) ||
       isPropAssignExpr(a) ||
       isReferenceExpr(a) ||
@@ -539,5 +545,47 @@ export class TypeOfExpr extends BaseExpr<"TypeOfExpr"> {
 
   public clone(): this {
     return new TypeOfExpr(this.expr.clone()) as this;
+  }
+}
+
+export const isAwaitExpr = typeGuard("AwaitExpr");
+
+export class AwaitExpr extends BaseExpr<"AwaitExpr"> {
+  constructor(readonly expr: Expr) {
+    super("AwaitExpr");
+
+    expr.setParent(this);
+  }
+
+  public clone(): this {
+    return new AwaitExpr(this.expr.clone()) as this;
+  }
+}
+
+export const isPromiseExpr = typeGuard("PromiseExpr");
+
+export class PromiseExpr extends BaseExpr<"PromiseExpr"> {
+  constructor(readonly expr: Expr) {
+    super("PromiseExpr");
+
+    expr.setParent(this);
+  }
+
+  public clone(): this {
+    return new PromiseExpr(this.expr.clone()) as this;
+  }
+}
+
+export const isPromiseArrayExpr = typeGuard("PromiseArrayExpr");
+
+export class PromiseArrayExpr extends BaseExpr<"PromiseArrayExpr"> {
+  constructor(readonly expr: Expr) {
+    super("PromiseArrayExpr");
+
+    expr.setParent(this);
+  }
+
+  public clone(): this {
+    return new PromiseArrayExpr(this.expr.clone()) as this;
   }
 }

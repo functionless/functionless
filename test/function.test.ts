@@ -1,7 +1,6 @@
 import { App, aws_lambda, Stack } from "aws-cdk-lib";
 import "jest";
 import { Function, AppsyncContext, reflect } from "../src";
-import { VTL } from "../src/vtl";
 import { appsyncTestCase } from "./util";
 
 interface Item {
@@ -31,144 +30,48 @@ test("call function", () =>
   appsyncTestCase(
     reflect((context: AppsyncContext<{ arg: string }>) => {
       return fn1(context.arguments);
-    }),
-    // pipeline's request mapping template
-    "{}",
-    // function's request mapping template
-    `${VTL.CircuitBreaker}
-#set($v1 = {\"version\": \"2018-05-29\", \"operation\": \"Invoke\", \"payload\": $context.arguments})
-$util.toJson($v1)`,
-    // function's response mapping template
-    `#set( $context.stash.return__flag = true )
-#set( $context.stash.return__val = $context.result )
-{}`,
-    // response mapping template
-    `#if($context.stash.return__flag)
-  #return($context.stash.return__val)
-#end`
+    })
   ));
 
 test("call function and conditional return", () =>
   appsyncTestCase(
-    reflect((context: AppsyncContext<{ arg: string }>) => {
-      const result = fn1(context.arguments);
+    reflect(async (context: AppsyncContext<{ arg: string }>) => {
+      const result = await fn1(context.arguments);
 
       if (result.id === "sam") {
         return true;
       } else {
         return false;
       }
-    }),
-    // pipeline's request mapping template
-    "{}",
-    // function's request mapping template
-    `${VTL.CircuitBreaker}
-#set($v1 = {\"version\": \"2018-05-29\", \"operation\": \"Invoke\", \"payload\": $context.arguments})
-$util.toJson($v1)`,
-    // function's response mapping template
-    `#set( $context.stash.result = $context.result )
-{}`,
-    // response mapping template
-    `#if($context.stash.return__flag)
-  #return($context.stash.return__val)
-#end
-#set($v1 = $context.stash.result.id == 'sam')
-#if($v1)
-#set($context.stash.return__val = true)
-#set($context.stash.return__flag = true)
-#return($context.stash.return__val)
-#else
-#set($context.stash.return__val = false)
-#set($context.stash.return__flag = true)
-#return($context.stash.return__val)
-#end`
+    })
   ));
 
 test("call function omitting optional arg", () =>
   appsyncTestCase(
     reflect((context: AppsyncContext<{ arg: string }>) => {
       return fn2(context.arguments);
-    }),
-    // pipeline's request mapping template
-    "{}",
-    // function's request mapping template
-    `${VTL.CircuitBreaker}
-#set($v1 = {\"version\": \"2018-05-29\", \"operation\": \"Invoke\", \"payload\": $context.arguments})
-$util.toJson($v1)`,
-    // function's response mapping template
-    `#set( $context.stash.return__flag = true )
-#set( $context.stash.return__val = $context.result )
-{}`,
-    // response mapping template
-    `#if($context.stash.return__flag)
-  #return($context.stash.return__val)
-#end`
+    })
   ));
 
 test("call function including optional arg", () =>
   appsyncTestCase(
     reflect((context: AppsyncContext<{ arg: string }>) => {
       return fn2({ arg: context.arguments.arg, optional: "hello" });
-    }),
-    // pipeline's request mapping template
-    "{}",
-    // function's request mapping template
-    `${VTL.CircuitBreaker}
-#set($v1 = {})
-$util.qr($v1.put('arg', $context.arguments.arg))
-$util.qr($v1.put('optional', 'hello'))
-#set($v2 = {\"version\": \"2018-05-29\", \"operation\": \"Invoke\", \"payload\": $v1})
-$util.toJson($v2)`,
-    // function's response mapping template
-    `#set( $context.stash.return__flag = true )
-#set( $context.stash.return__val = $context.result )
-{}`,
-    // response mapping template
-    `#if($context.stash.return__flag)
-  #return($context.stash.return__val)
-#end`
+    })
   ));
 
 test("call function including with no parameters", () =>
   appsyncTestCase(
     reflect(() => {
       return fn3();
-    }),
-    // pipeline's request mapping template
-    "{}",
-    // function's request mapping template
-    `${VTL.CircuitBreaker}
-#set($v1 = {\"version\": \"2018-05-29\", \"operation\": \"Invoke\", \"payload\": $null})
-$util.toJson($v1)`,
-    // function's response mapping template
-    `#set( $context.stash.return__flag = true )
-#set( $context.stash.return__val = $context.result )
-{}`,
-    // response mapping template
-    `#if($context.stash.return__flag)
-  #return($context.stash.return__val)
-#end`
+    })
   ));
 
 test("call function including with void result", () =>
   appsyncTestCase(
     reflect((context: AppsyncContext<{ arg: string }>) => {
       return fn4(context.arguments);
-    }),
-    // pipeline's request mapping template
-    "{}",
-    // function's request mapping template
-    `${VTL.CircuitBreaker}
-#set($v1 = {\"version\": \"2018-05-29\", \"operation\": \"Invoke\", \"payload\": $context.arguments})
-$util.toJson($v1)`,
-    // function's response mapping template
-    `#set( $context.stash.return__flag = true )
-#set( $context.stash.return__val = $context.result )
-{}`,
-    // response mapping template
-    `#if($context.stash.return__flag)
-  #return($context.stash.return__val)
-#end`
+    })
   ));
 
 test("function inline arrow closure", () => {

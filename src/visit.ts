@@ -4,6 +4,7 @@ import { Err } from "./error";
 import {
   Argument,
   ArrayLiteralExpr,
+  AwaitExpr,
   BinaryExpr,
   BooleanLiteralExpr,
   CallExpr,
@@ -13,6 +14,7 @@ import {
   Expr,
   FunctionExpr,
   Identifier,
+  isAwaitExpr,
   isComputedPropertyNameExpr,
   isExpr,
   isIdentifier,
@@ -33,6 +35,10 @@ import {
   TypeOfExpr,
   UnaryExpr,
   UndefinedLiteralExpr,
+  isPromiseArrayExpr,
+  isPromiseExpr,
+  PromiseArrayExpr,
+  PromiseExpr,
 } from "./expression";
 import { FunctionlessNode } from "./node";
 
@@ -441,6 +447,18 @@ export function visitEachChild<T extends FunctionlessNode>(
     return new WhileStmt(condition, block) as T;
   } else if (node.kind === "NativeFunctionDecl") {
     throw Error(`${node.kind} are not supported.`);
+  } else if (isAwaitExpr(node)) {
+    const expr = visitor(node.expr);
+    ensure(expr, isExpr, "an AwaitExpr's expr property must be an Expr");
+    return new AwaitExpr(expr) as T;
+  } else if (isPromiseExpr(node)) {
+    const expr = visitor(node.expr);
+    ensure(expr, isExpr, "a PromiseExpr's expr property must be an Expr");
+    return new PromiseExpr(expr) as T;
+  } else if (isPromiseArrayExpr(node)) {
+    const expr = visitor(node.expr);
+    ensure(expr, isExpr, "a PromiseArrayExpr's expr property must be an Expr");
+    return new PromiseArrayExpr(expr) as T;
   }
   return assertNever(node);
 }

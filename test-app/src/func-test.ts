@@ -13,7 +13,7 @@ const eventBus = new EventBus(stack, "eventBus");
 const workflow = new StepFunction<undefined, { status: "SUCCESS" | "FAIL" }>(
   stack,
   "workflow",
-  () => {
+  async () => {
     // do a job
     // send an email
     return { status: "SUCCESS" };
@@ -21,11 +21,13 @@ const workflow = new StepFunction<undefined, { status: "SUCCESS" | "FAIL" }>(
 );
 
 new Function(stack, "startworkflow", async () => {
-  const execution = workflow({}); // start execution
+  const execution = await workflow({}); // start execution
   let result: string | undefined = undefined;
   while (!result) {
     await new Promise((resolve) => setTimeout(resolve, 100)); // sleep 100ms
-    const executionOut = workflow.describeExecution(execution.executionArn);
+    const executionOut = await workflow.describeExecution(
+      execution.executionArn
+    );
     if (executionOut.output) {
       // check if the execution is done
       result = JSON.parse(executionOut.output).status;
@@ -33,7 +35,7 @@ new Function(stack, "startworkflow", async () => {
   }
   console.log(result);
   // broadcast dynamic result message to all consumers
-  eventBus.putEvents({
+  await eventBus.putEvents({
     "detail-type": "workflowComplete",
     detail: {
       result,

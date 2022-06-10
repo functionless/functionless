@@ -69,6 +69,8 @@ export function makeFunctionlessChecker(
     isFunctionlessType,
     isNewRule,
     isNewEventTransform,
+    isPromiseArray,
+    isPromiseSymbol,
     isReflectFunction,
     isStepFunction,
     isNewFunctionlessFunction,
@@ -273,6 +275,41 @@ export function makeFunctionlessChecker(
       }
     }
     return undefined;
+  }
+
+  function typeMatch(
+    type: ts.Type,
+    predicate: (type: ts.Type) => boolean
+  ): boolean {
+    if (type.isUnionOrIntersection()) {
+      return predicate(type) || type.types.some((t) => typeMatch(t, predicate));
+    }
+    return predicate(type);
+  }
+
+  function isPromiseSymbol(symbol: ts.Symbol): boolean {
+    return checker.getFullyQualifiedName(symbol) === "Promise";
+  }
+
+  function isArraySymbol(symbol: ts.Symbol): boolean {
+    return checker.getFullyQualifiedName(symbol) === "Array";
+  }
+
+  function isPromiseArray(type: ts.Type): boolean {
+    const symbol = type.getSymbol();
+    if (!symbol) {
+      return false;
+    }
+    const typeParams = checker.getTypeArguments(type as ts.TypeReference);
+    if (isArraySymbol(symbol) && typeParams?.length === 1) {
+      const [param] = typeParams;
+      // the type contains any type, union or intersection which is a Promise
+      return typeMatch(param, (t) => {
+        const symbol = t.getSymbol();
+        return symbol ? isPromiseSymbol(symbol) : false;
+      });
+    }
+    return false;
   }
 
   /**

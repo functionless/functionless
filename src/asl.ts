@@ -1,6 +1,5 @@
 import { aws_iam, aws_stepfunctions } from "aws-cdk-lib";
 import { Construct } from "constructs";
-
 import { assertNever } from "./assert";
 import { FunctionDecl, isParameterDecl, isFunctionDecl } from "./declaration";
 import {
@@ -9,6 +8,7 @@ import {
   ElementAccessExpr,
   Expr,
   Identifier,
+  isAwaitExpr,
   isBinaryExpr,
   isCallExpr,
   isFunctionExpr,
@@ -22,9 +22,14 @@ import {
   NullLiteralExpr,
   PropAccessExpr,
   StringLiteralExpr,
+  isIdentifier,
+  isPromiseArrayExpr,
+  isPromiseExpr,
+  isPropAccessExpr,
+  isArgument,
 } from "./expression";
 import { isFunction } from "./function";
-import { findIntegration } from "./integration";
+import { Integration, IntegrationImpl, isIntegration } from "./integration";
 import { FunctionlessNode } from "./node";
 import {
   BlockStmt,
@@ -37,6 +42,7 @@ import {
   isDoStmt,
   isForInStmt,
   isForOfStmt,
+  isReturn,
   isWhileStmt,
   ReturnStmt,
   Stmt,
@@ -346,9 +352,68 @@ export class ASL {
       | FunctionlessNode
       | FunctionlessNode[] {
       if (
-        node.kind === "BlockStmt" &&
-        (node.parent?.kind === "FunctionExpr" ||
-          node.parent?.kind === "FunctionDecl")
+        node.kind === "ExprStmt" ||
+        node.kind === "VariableStmt" ||
+        node.kind === "ReturnStmt"
+      ) {
+        const nestedTasks: FunctionlessNode[] = [];
+        let hoistIndex = 0;
+        const updatedNode = visitEachChild(node, function extract(childNode) {
+          function isTask(node: FunctionlessNode): node is CallExpr {
+            return isCallExpr(node) && isReferenceExpr(node.expr);
+          }
+
+          function hoist(start: FunctionlessNode, end: Expr) {
+            const localHoistIndex = hoistIndex++;
+            const updated =
+              start === end
+                ? end
+                : (visitEachChild(start, function dive(n): FunctionlessNode {
+                    return n === end
+                      ? visitEachChild(n, extract)
+                      : visitEachChild(n, dive);
+                  }) as Expr);
+            // don't hoist the first one, just update it and return.
+            // nodes are explored depth first.
+            if (localHoistIndex > 0) {
+              const id = new Identifier(
+                self.getDeterministicGeneratedName(start)
+              );
+              nestedTasks.push(new VariableStmt(id.name, updated));
+              return id;
+            } else {
+              return updated;
+            }
+          }
+
+          if (isAwaitExpr(childNode)) {
+            // await task()
+            if (isTask(childNode.expr)) {
+              return hoist(childNode, childNode.expr);
+            }
+            // await <Promise>task()
+            else if (
+              isPromiseExpr(childNode.expr) &&
+              isTask(childNode.expr.expr)
+            ) {
+              return hoist(childNode, childNode.expr.expr);
+            }
+          } else if (isPromiseExpr(childNode) && isTask(childNode.expr)) {
+            return hoist(childNode, childNode.expr);
+          } else if (isTask(childNode)) {
+            return hoist(childNode, childNode);
+          } else if (isFunctionDecl(childNode)) {
+            return visitEachChild(childNode, normalizeAST);
+          }
+          return childNode;
+        });
+
+        return nestedTasks.length === 0
+          ? updatedNode
+          : [...nestedTasks, updatedNode];
+      } else if (
+        isBlockStmt(node) &&
+        (isFunctionDecl(node.parent) || isFunctionExpr(node.parent))
       ) {
         // re-write the AST to include explicit `ReturnStmt(NullLiteral())` statements
         // this simplifies the interpreter code by always having a node to chain onto, even when
@@ -363,62 +428,6 @@ export class ASL {
             ),
             new ReturnStmt(new NullLiteralExpr()),
           ]);
-        }
-      } else if (
-        node.kind === "ExprStmt" ||
-        node.kind === "VariableStmt" ||
-        node.kind === "ReturnStmt"
-      ) {
-        const expr = node.expr;
-        if (expr?.kind === "CallExpr") {
-          // reduce nested Tasks to individual Statements
-          const nestedTasks = expr.children.flatMap(function findTasks(
-            node: FunctionlessNode
-          ): CallExpr[] {
-            if (isTask(node)) {
-              return [node, ...node.collectChildren(findTasks)];
-            } else if (node.kind === "FunctionExpr") {
-              // do not recurse into FunctionExpr - they do not need to be hoisted
-              return [];
-            } else {
-              return node.collectChildren(findTasks);
-            }
-          });
-
-          function isTask(node: FunctionlessNode): node is CallExpr {
-            return (
-              node.kind === "CallExpr" && findIntegration(node) !== undefined
-            );
-          }
-
-          if (nestedTasks.length > 0) {
-            const nestedTaskSet = new Set<FunctionlessNode>(nestedTasks);
-
-            // walks through the tree and replaces nodes with an Identifier referencing the
-            // result of their pre-computed value - this normalizes the whole AST into
-            // a linear sequence of `variable = constant or computation` operations.
-            const replaced = (function replaceTasks(
-              node: FunctionlessNode
-            ): FunctionlessNode | FunctionlessNode[] {
-              if (nestedTaskSet.has(node)) {
-                return new Identifier(self.getDeterministicGeneratedName(node));
-              } else {
-                return visitEachChild(node, replaceTasks);
-              }
-            })(node);
-
-            return [
-              // hoist all nested calls to individual VariableStmt(CallExpr())
-              ...nestedTasks.map(
-                (task) =>
-                  new VariableStmt(
-                    self.getDeterministicGeneratedName(task),
-                    task.clone()
-                  )
-              ),
-              ...(Array.isArray(replaced) ? replaced : [replaced]),
-            ];
-          }
         }
       }
       return visitEachChild(node, normalizeAST);
@@ -844,39 +853,53 @@ export class ASL {
       delete props.Next;
       props.End = true;
     }
-    if (expr.kind === "CallExpr") {
-      const serviceCall = findIntegration(expr);
-      if (serviceCall) {
-        if (
-          expr.expr.kind === "PropAccessExpr" &&
-          (expr.expr.name === "waitFor" || expr.expr.name === "waitUntil")
-        ) {
-          delete (props as any).ResultPath;
-          return <State>{
+    if (isPromiseExpr(expr)) {
+      // if we find a promise, ensure it is wrapped in Await or returned then unwrap it
+      if (isAwaitExpr(expr.parent) || isReturn(expr.parent)) {
+        return this.eval(expr.expr, props);
+      }
+      throw new Error(`Promises must be immediately awaited or returned.`);
+    } else if (isPromiseArrayExpr(expr)) {
+      // if we find a promise array, ensure it is wrapped in a Promise.all then unwrap it
+      if (
+        isArgument(expr.parent) &&
+        isCallExpr(expr.parent.parent) &&
+        isPromiseAll(expr.parent.parent)
+      ) {
+        return this.eval(expr.expr, props);
+      }
+      debugger;
+      // TODO create error code
+      throw new Error(
+        "Expressions which return arrays of Promises must be wrapped in `Promise.all()`."
+      );
+    } else if (expr.kind === "CallExpr") {
+      if (isReferenceExpr(expr.expr)) {
+        const ref = expr.expr.ref();
+        if (isIntegration<Integration>(ref)) {
+          const serviceCall = new IntegrationImpl(ref);
+          const taskState = <State>{
             ...serviceCall.asl(expr, this),
             ...props,
           };
-        }
 
-        const taskState = <State>{
-          ...serviceCall.asl(expr, this),
-          ...props,
-        };
-
-        const throwOrPass = this.throw(expr);
-        if (throwOrPass?.Next) {
-          return <State>{
-            ...taskState,
-            Catch: [
-              {
-                ErrorEquals: ["States.ALL"],
-                Next: throwOrPass.Next,
-                ResultPath: throwOrPass.ResultPath,
-              },
-            ],
-          };
+          const throwOrPass = this.throw(expr);
+          if (throwOrPass?.Next) {
+            return <State>{
+              ...taskState,
+              Catch: [
+                {
+                  ErrorEquals: ["States.ALL"],
+                  Next: throwOrPass.Next,
+                  ResultPath: throwOrPass.ResultPath,
+                },
+              ],
+            };
+          } else {
+            return taskState;
+          }
         } else {
-          return taskState;
+          throw Error("");
         }
       } else if (isMapOrForEach(expr)) {
         const throwTransition = this.throw(expr);
@@ -939,6 +962,17 @@ export class ASL {
             throw new Error(".filter with sub-tasks are not yet supported");
           }
         }
+      } else if (isPromiseAll(expr)) {
+        const values = expr.getArgument("values");
+        // just validate Promise.all and continue, will validate the PromiseArray later.
+        if (values?.expr && isPromiseArrayExpr(values?.expr)) {
+          return this.eval(values.expr, props);
+        }
+        debugger;
+        // TODO create error code
+        throw Error(
+          "`Promise.all` must wrap an expression that returns an array of promises like `Array.map`"
+        );
       }
       throw new Error(
         `call must be a service call or list .slice, .map, .forEach or .filter, ${expr}`
@@ -967,7 +1001,7 @@ export class ASL {
     } else if (
       expr.kind === "BinaryExpr" &&
       expr.op === "=" &&
-      isVariableReference(expr.left)
+      (isVariableReference(expr.left) || isIdentifier(expr.left))
     ) {
       if (isNullLiteralExpr(expr.right)) {
         return {
@@ -998,7 +1032,7 @@ export class ASL {
           Parameters: ASL.toJson(expr.right),
           ResultPath: ASL.toJsonPath(expr.left),
         };
-      } else if (isCallExpr(expr.right)) {
+      } else if (isAwaitExpr(expr.right) || isCallExpr(expr.right)) {
         return this.eval(expr.right, {
           ...props,
           ResultPath: ASL.toJsonPath(expr.left),
@@ -1006,6 +1040,8 @@ export class ASL {
       }
     } else if (expr.kind === "BinaryExpr") {
       // TODO
+    } else if (isAwaitExpr(expr)) {
+      return this.eval(expr.expr, props);
     }
     debugger;
     throw new Error(`cannot eval expression kind '${expr.kind}'`);
@@ -1192,6 +1228,23 @@ function isFilter(expr: CallExpr): expr is CallExpr & {
   return expr.expr.kind === "PropAccessExpr" && expr.expr.name === "filter";
 }
 
+function isPromiseAll(expr: CallExpr): expr is CallExpr & {
+  expr: PropAccessExpr & {
+    name: "all";
+    parent: {
+      kind: "Identifier";
+      name: "Promise";
+    };
+  };
+} {
+  return (
+    isPropAccessExpr(expr.expr) &&
+    isIdentifier(expr.expr.expr) &&
+    expr.expr.name === "all" &&
+    expr.expr.expr.name === "Promise"
+  );
+}
+
 function canThrow(node: FunctionlessNode): boolean {
   const flow = analyzeFlow(node);
   return (flow.hasTask || flow.hasThrow) ?? false;
@@ -1211,7 +1264,7 @@ function analyzeFlow(node: FunctionlessNode): FlowResult {
     .reduce(
       (a, b) => ({ ...a, ...b }),
       (node.kind === "CallExpr" &&
-        (findIntegration(node) !== undefined || isMapOrForEach(node))) ||
+        (isReferenceExpr(node.expr) || isMapOrForEach(node))) ||
         node.kind === "ForInStmt" ||
         node.kind === "ForOfStmt"
         ? { hasTask: true }
@@ -1993,6 +2046,10 @@ function exprToString(expr?: Expr): string {
     return `${expr.op}${exprToString(expr.expr)}`;
   } else if (expr.kind === "UndefinedLiteralExpr") {
     return "undefined";
+  } else if (isAwaitExpr(expr)) {
+    return `await ${exprToString(expr.expr)}`;
+  } else if (isPromiseExpr(expr) || isPromiseArrayExpr(expr)) {
+    return exprToString(expr.expr);
   } else {
     return assertNever(expr);
   }

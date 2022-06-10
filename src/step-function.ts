@@ -14,19 +14,12 @@ import {
 import { StepFunctions } from "aws-sdk";
 import { Construct } from "constructs";
 import { AppSyncVtlIntegration } from "./appsync";
-import {
-  ASL,
-  isMapOrForEach,
-  MapTask,
-  StateMachine,
-  States,
-  Task,
-} from "./asl";
+import { ASL, MapTask, StateMachine, States, Task } from "./asl";
 import { assertDefined } from "./assert";
 import {
   validateFunctionDecl,
   FunctionDecl,
-  isFunctionDecl,
+  isFunctionDeclOrErr,
 } from "./declaration";
 import { EventBus, PredicateRuleBase, Rule } from "./event-bridge";
 import {
@@ -49,6 +42,11 @@ import { VTL } from "./vtl";
 export type AnyStepFunction =
   | ExpressStepFunction<any, any>
   | StepFunction<any, any>;
+
+export type StepFunctionClosure<
+  P extends Record<string, any> | undefined,
+  O
+> = (arg: P) => Promise<O> | O;
 
 export namespace $SFN {
   export const kind = "SFN";
@@ -135,7 +133,7 @@ export namespace $SFN {
     <T>(
       array: T[],
       callbackfn: (item: T, index: number, array: T[]) => void
-    ): void;
+    ): Promise<void>;
     /**
      * Process each item in an {@link array} in parallel and run with the default maxConcurrency.
      *
@@ -156,7 +154,7 @@ export namespace $SFN {
         maxConcurrency: number;
       },
       callbackfn: (item: T, index: number, array: T[]) => void
-    ): void;
+    ): Promise<void>;
   }
 
   export const forEach = makeStepFunctionIntegration<"forEach", ForEach>(
@@ -185,8 +183,8 @@ export namespace $SFN {
      */
     <T, U>(
       array: T[],
-      callbackfn: (item: T, index: number, array: T[]) => U
-    ): U[];
+      callbackfn: (item: T, index: number, array: T[]) => U | Promise<U>
+    ): Promise<U[]>;
     /**
      * Map over each item in an {@link array} in parallel and run with the default maxConcurrency.
      *
@@ -207,8 +205,8 @@ export namespace $SFN {
       props: {
         maxConcurrency: number;
       },
-      callbackfn: (item: T, index: number, array: T[]) => U
-    ): U[];
+      callbackfn: (item: T, index: number, array: T[]) => U | Promise<U>
+    ): Promise<U[]>;
   }
 
   export const map = makeStepFunctionIntegration<"map", Map>("map", {
@@ -218,65 +216,62 @@ export namespace $SFN {
   });
 
   function mapOrForEach(call: CallExpr, context: ASL): MapTask {
-    if (isMapOrForEach(call)) {
-      const callbackfn = call.getArgument("callbackfn")?.expr;
-      if (callbackfn === undefined || callbackfn.kind !== "FunctionExpr") {
-        throw new Error("missing callbackfn in $SFN.map");
-      }
-      const callbackStates = context.execute(callbackfn.body);
-      const callbackStart = context.getStateName(callbackfn.body.step()!);
-      const props = call.getArgument("props")?.expr;
-      let maxConcurrency: number | undefined;
-      if (props !== undefined) {
-        if (props.kind === "ObjectLiteralExpr") {
-          const maxConcurrencyProp = props.getProperty("maxConcurrency");
-          if (
-            maxConcurrencyProp?.kind === "PropAssignExpr" &&
-            maxConcurrencyProp.expr.kind === "NumberLiteralExpr"
-          ) {
-            maxConcurrency = maxConcurrencyProp.expr.value;
-            if (maxConcurrency <= 0) {
-              throw new Error("maxConcurrency must be > 0");
-            }
-          } else {
-            throw new Error(
-              "property 'maxConcurrency' must be a NumberLiteralExpr"
-            );
+    const callbackfn = call.getArgument("callbackfn")?.expr;
+    if (callbackfn === undefined || callbackfn.kind !== "FunctionExpr") {
+      throw new Error("missing callbackfn in $SFN.map");
+    }
+    const callbackStates = context.execute(callbackfn.body);
+    const callbackStart = context.getStateName(callbackfn.body.step()!);
+    const props = call.getArgument("props")?.expr;
+    let maxConcurrency: number | undefined;
+    if (props !== undefined) {
+      if (props.kind === "ObjectLiteralExpr") {
+        const maxConcurrencyProp = props.getProperty("maxConcurrency");
+        if (
+          maxConcurrencyProp?.kind === "PropAssignExpr" &&
+          maxConcurrencyProp.expr.kind === "NumberLiteralExpr"
+        ) {
+          maxConcurrency = maxConcurrencyProp.expr.value;
+          if (maxConcurrency <= 0) {
+            throw new Error("maxConcurrency must be > 0");
           }
         } else {
-          throw new Error("argument 'props' must be an ObjectLiteralExpr");
+          throw new Error(
+            "property 'maxConcurrency' must be a NumberLiteralExpr"
+          );
         }
+      } else {
+        throw new Error("argument 'props' must be an ObjectLiteralExpr");
       }
-      const array = call.getArgument("array")?.expr;
-      if (array === undefined) {
-        throw new Error("missing argument 'array'");
-      }
-      const arrayPath = ASL.toJsonPath(array);
-      return {
-        Type: "Map",
-        ...(maxConcurrency
-          ? {
-              MaxConcurrency: maxConcurrency,
-            }
-          : {}),
-        Iterator: {
-          States: callbackStates,
-          StartAt: callbackStart,
-        },
-        ItemsPath: arrayPath,
-        Parameters: Object.fromEntries(
-          callbackfn.parameters.map((param, i) => [
-            `${param.name}.$`,
-            i === 0
-              ? "$$.Map.Item.Value"
-              : i == 1
-              ? "$$.Map.Item.Index"
-              : arrayPath,
-          ])
-        ),
-      };
     }
-    throw new Error("invalid arguments to $SFN.map");
+    const array = call.getArgument("array")?.expr;
+    if (array === undefined) {
+      throw new Error("missing argument 'array'");
+    }
+    const arrayPath = ASL.toJsonPath(array);
+    return {
+      Type: "Map",
+      ...(maxConcurrency
+        ? {
+            MaxConcurrency: maxConcurrency,
+          }
+        : {}),
+      Iterator: {
+        States: callbackStates,
+        StartAt: callbackStart,
+      },
+      ItemsPath: arrayPath,
+      Parameters: Object.fromEntries(
+        callbackfn.parameters.map((param, i) => [
+          `${param.name}.$`,
+          i === 0
+            ? "$$.Map.Item.Value"
+            : i == 1
+            ? "$$.Map.Item.Index"
+            : arrayPath,
+        ])
+      ),
+    };
   }
 
   /**
@@ -330,7 +325,7 @@ export namespace $SFN {
 function makeStepFunctionIntegration<K extends string, F extends AnyFunction>(
   methodName: K,
   integration: Omit<IntegrationInput<`$SFN.${K}`, F>, "kind">
-): F {
+) {
   return makeIntegration<`$SFN.${K}`, F>({
     kind: `$SFN.${methodName}`,
     unhandledContext(kind, context) {
@@ -389,7 +384,7 @@ abstract class BaseStepFunction<
     aws_stepfunctions.IStateMachine,
     Integration<
       "StepFunction",
-      (input: CallIn) => CallOut,
+      (input: CallIn) => Promise<CallOut>,
       EventBusTargetIntegration<P, StepFunctionEventBusTargetProps | undefined>
     >
 {
@@ -402,7 +397,7 @@ abstract class BaseStepFunction<
   readonly appSyncVtl: AppSyncVtlIntegration;
 
   // @ts-ignore
-  readonly __functionBrand: (arg: CallIn) => CallOut;
+  readonly __functionBrand: (input: CallIn) => Promise<CallOut>;
 
   readonly stateMachineName: string;
   readonly stateMachineArn: string;
@@ -418,20 +413,20 @@ abstract class BaseStepFunction<
     scope: Construct,
     id: string,
     props: StepFunctionProps,
-    func: (arg: P) => O
+    func: StepFunctionClosure<P, O>
   );
 
-  constructor(scope: Construct, id: string, func: (arg: P) => O);
+  constructor(scope: Construct, id: string, func: StepFunctionClosure<P, O>);
 
   constructor(
     scope: Construct,
     id: string,
     ...args:
-      | [props: StepFunctionProps, func: (arg: P) => O]
-      | [func: (arg: P) => O]
+      | [props: StepFunctionProps, func: StepFunctionClosure<P, O>]
+      | [func: StepFunctionClosure<P, O>]
   ) {
     const props =
-      isFunctionDecl(args[0]) || typeof args[0] === "function"
+      isFunctionDeclOrErr(args[0]) || typeof args[0] === "function"
         ? undefined
         : args[0];
     if (props?.stateMachineName !== undefined) {
@@ -441,9 +436,10 @@ abstract class BaseStepFunction<
       ...props,
       physicalName: props?.stateMachineName,
     });
-    this.decl = isFunctionDecl(args[0])
-      ? args[0]
-      : validateFunctionDecl(args[1], "StepFunction");
+    this.decl = validateFunctionDecl(
+      isFunctionDeclOrErr(args[0]) ? args[0] : args[1],
+      "StepFunction"
+    );
 
     this.role =
       props?.role ??
@@ -1187,24 +1183,24 @@ export class ExpressStepFunction<
   }
 
   readonly native: NativeIntegration<
-    (input: StepFunctionRequest<P>) => SyncExecutionResult<O>
+    (input: StepFunctionRequest<P>) => Promise<SyncExecutionResult<O>>
   >;
 
   constructor(
     scope: Construct,
     id: string,
     props: StepFunctionProps,
-    func: (arg: P) => O
+    func: StepFunctionClosure<P, O>
   );
 
-  constructor(scope: Construct, id: string, func: (arg: P) => O);
+  constructor(scope: Construct, id: string, func: StepFunctionClosure<P, O>);
 
   constructor(
     scope: Construct,
     id: string,
     ...args:
-      | [props: StepFunctionProps, func: (arg: P) => O]
-      | [func: (arg: P) => O]
+      | [props: StepFunctionProps, func: StepFunctionClosure<P, O>]
+      | [func: StepFunctionClosure<P, O>]
   ) {
     super(
       scope,
@@ -1309,7 +1305,7 @@ export interface ExpressStepFunction<
   P extends Record<string, any> | undefined,
   O
 > {
-  (input: StepFunctionRequest<P>): SyncExecutionResult<O>;
+  (input: StepFunctionRequest<P>): Promise<SyncExecutionResult<O>>;
 }
 
 export class StepFunction<
@@ -1327,24 +1323,26 @@ export class StepFunction<
   public static readonly FunctionlessType = "StepFunction";
 
   readonly native: NativeIntegration<
-    (input: StepFunctionRequest<P>) => AWS.StepFunctions.StartExecutionOutput
+    (
+      input: StepFunctionRequest<P>
+    ) => Promise<AWS.StepFunctions.StartExecutionOutput>
   >;
 
   constructor(
     scope: Construct,
     id: string,
     props: StepFunctionProps,
-    func: (arg: P) => O
+    func: StepFunctionClosure<P, O>
   );
 
-  constructor(scope: Construct, id: string, func: (arg: P) => O);
+  constructor(scope: Construct, id: string, func: StepFunctionClosure<P, O>);
 
   constructor(
     scope: Construct,
     id: string,
     ...args:
-      | [props: StepFunctionProps, func: (arg: P) => O]
-      | [func: (arg: P) => O]
+      | [props: StepFunctionProps, func: StepFunctionClosure<P, O>]
+      | [func: StepFunctionClosure<P, O>]
   ) {
     super(
       scope,
@@ -1386,7 +1384,7 @@ export class StepFunction<
 
   public describeExecution = makeIntegration<
     "StepFunction.describeExecution",
-    (executionArn: string) => AWS.StepFunctions.DescribeExecutionOutput
+    (executionArn: string) => Promise<AWS.StepFunctions.DescribeExecutionOutput>
   >({
     kind: "StepFunction.describeExecution",
     appSyncVtl: this.appSyncIntegration({
@@ -1438,13 +1436,11 @@ export class StepFunction<
 
         const [arn] = args;
 
-        const result = await stepFunctionClient
+        return stepFunctionClient
           .describeExecution({
             executionArn: arn,
           })
           .promise();
-
-        return result;
       },
     },
     unhandledContext: (kind, contextKind) => {
@@ -1456,7 +1452,9 @@ export class StepFunction<
 }
 
 export interface StepFunction<P extends Record<string, any> | undefined, O> {
-  (input: StepFunctionRequest<P>): AWS.StepFunctions.StartExecutionOutput;
+  (
+    input: StepFunctionRequest<P>
+  ): Promise<AWS.StepFunctions.StartExecutionOutput>;
 }
 
 function getArgs(call: CallExpr) {

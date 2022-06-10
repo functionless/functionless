@@ -1,0 +1,966 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`multiple isolated integrations 1`] = `
+Array [
+  "{}",
+  "#if($context.stash.return__flag)
+  #return($context.stash.return__val)
+#end
+{
+  \\"version\\": \\"2018-05-29\\",
+  \\"method\\": \\"POST\\",
+  \\"resourcePath\\": \\"/\\",
+  \\"params\\": {
+    \\"headers\\": {
+      \\"content-type\\": \\"application/x-amz-json-1.0\\",
+      \\"x-amz-target\\": \\"AWSStepFunctions.DescribeExecution\\"
+    },
+    \\"body\\": {
+      \\"executionArn\\": $util.toJson('exec1')
+    }
+  }
+}",
+  "{}",
+  "#if($context.stash.return__flag)
+  #return($context.stash.return__val)
+#end
+{
+  \\"version\\": \\"2018-05-29\\",
+  \\"method\\": \\"POST\\",
+  \\"resourcePath\\": \\"/\\",
+  \\"params\\": {
+    \\"headers\\": {
+      \\"content-type\\": \\"application/x-amz-json-1.0\\",
+      \\"x-amz-target\\": \\"AWSStepFunctions.DescribeExecution\\"
+    },
+    \\"body\\": {
+      \\"executionArn\\": $util.toJson('exec2')
+    }
+  }
+}",
+  "{}",
+  "#if($context.stash.return__flag)
+  #return($context.stash.return__val)
+#end
+{
+  \\"version\\": \\"2018-05-29\\",
+  \\"method\\": \\"POST\\",
+  \\"resourcePath\\": \\"/\\",
+  \\"params\\": {
+    \\"headers\\": {
+      \\"content-type\\": \\"application/x-amz-json-1.0\\",
+      \\"x-amz-target\\": \\"AWSStepFunctions.DescribeExecution\\"
+    },
+    \\"body\\": {
+      \\"executionArn\\": $util.toJson('exec3')
+    }
+  }
+}",
+  "{}",
+  "#if($context.stash.return__flag)
+  #return($context.stash.return__val)
+#end
+{
+  \\"version\\": \\"2018-05-29\\",
+  \\"method\\": \\"POST\\",
+  \\"resourcePath\\": \\"/\\",
+  \\"params\\": {
+    \\"headers\\": {
+      \\"content-type\\": \\"application/x-amz-json-1.0\\",
+      \\"x-amz-target\\": \\"AWSStepFunctions.DescribeExecution\\"
+    },
+    \\"body\\": {
+      \\"executionArn\\": $util.toJson('exec4')
+    }
+  }
+}",
+  "{}",
+  "#if($context.stash.return__flag)
+  #return($context.stash.return__val)
+#end",
+]
+`;
+
+exports[`multiple isolated integrations 2`] = `
+Object {
+  "method": "POST",
+  "params": Object {
+    "body": Object {
+      "executionArn": "exec1",
+    },
+    "headers": Object {
+      "content-type": "application/x-amz-json-1.0",
+      "x-amz-target": "AWSStepFunctions.DescribeExecution",
+    },
+  },
+  "resourcePath": "/",
+  "version": "2018-05-29",
+}
+`;
+
+exports[`multiple linked integrations 1`] = `
+Array [
+  "{}",
+  "#if($context.stash.return__flag)
+  #return($context.stash.return__val)
+#end
+#set($v1 = {})
+#set($v2 = {})
+$util.qr($v1.put('input', $util.toJson($v2)))
+$util.qr($v1.put('stateMachineArn', '__REPLACED_TOKEN'))
+{
+  \\"version\\": \\"2018-05-29\\",
+  \\"method\\": \\"POST\\",
+  \\"resourcePath\\": \\"/\\",
+  \\"params\\": {
+    \\"headers\\": {
+      \\"content-type\\": \\"application/x-amz-json-1.0\\",
+      \\"x-amz-target\\": \\"AWSStepFunctions.StartExecution\\"
+    },
+    \\"body\\": $util.toJson($v1)
+  }
+}",
+  "#if($context.result.statusCode == 200)
+    #set($sfn__result = $util.parseJson($context.result.body))
+    #else 
+    $util.error($context.result.body, \\"$context.result.statusCode\\")
+    #end
+#set( $context.stash.res1 = $sfn__result )
+{}",
+  "#if($context.stash.return__flag)
+  #return($context.stash.return__val)
+#end
+#set($v1 = {})
+$util.qr($v1.put('input', $util.toJson($context.stash.res1)))
+$util.qr($v1.put('stateMachineArn', '__REPLACED_TOKEN'))
+{
+  \\"version\\": \\"2018-05-29\\",
+  \\"method\\": \\"POST\\",
+  \\"resourcePath\\": \\"/\\",
+  \\"params\\": {
+    \\"headers\\": {
+      \\"content-type\\": \\"application/x-amz-json-1.0\\",
+      \\"x-amz-target\\": \\"AWSStepFunctions.StartExecution\\"
+    },
+    \\"body\\": $util.toJson($v1)
+  }
+}",
+  "#if($context.result.statusCode == 200)
+    #set($sfn__result = $util.parseJson($context.result.body))
+    #else 
+    $util.error($context.result.body, \\"$context.result.statusCode\\")
+    #end
+#set( $context.stash.res2 = $sfn__result )
+{}",
+  "#if($context.stash.return__flag)
+  #return($context.stash.return__val)
+#end
+#set($v1 = {})
+$util.qr($v1.put('input', $util.toJson($context.stash.res2)))
+$util.qr($v1.put('stateMachineArn', '__REPLACED_TOKEN'))
+{
+  \\"version\\": \\"2018-05-29\\",
+  \\"method\\": \\"POST\\",
+  \\"resourcePath\\": \\"/\\",
+  \\"params\\": {
+    \\"headers\\": {
+      \\"content-type\\": \\"application/x-amz-json-1.0\\",
+      \\"x-amz-target\\": \\"AWSStepFunctions.StartExecution\\"
+    },
+    \\"body\\": $util.toJson($v1)
+  }
+}",
+  "{}",
+  "#if($context.stash.return__flag)
+  #return($context.stash.return__val)
+#end",
+]
+`;
+
+exports[`multiple linked integrations 2`] = `
+Object {
+  "method": "POST",
+  "params": Object {
+    "body": Object {
+      "input": "{}",
+      "stateMachineArn": "__REPLACED_TOKEN",
+    },
+    "headers": Object {
+      "content-type": "application/x-amz-json-1.0",
+      "x-amz-target": "AWSStepFunctions.StartExecution",
+    },
+  },
+  "resourcePath": "/",
+  "version": "2018-05-29",
+}
+`;
+
+exports[`multiple linked integrations post-compute 1`] = `
+Array [
+  "{}",
+  "#if($context.stash.return__flag)
+  #return($context.stash.return__val)
+#end
+#set($v1 = {})
+#set($v2 = {})
+$util.qr($v1.put('input', $util.toJson($v2)))
+$util.qr($v1.put('stateMachineArn', '__REPLACED_TOKEN'))
+{
+  \\"version\\": \\"2018-05-29\\",
+  \\"method\\": \\"POST\\",
+  \\"resourcePath\\": \\"/\\",
+  \\"params\\": {
+    \\"headers\\": {
+      \\"content-type\\": \\"application/x-amz-json-1.0\\",
+      \\"x-amz-target\\": \\"AWSStepFunctions.StartExecution\\"
+    },
+    \\"body\\": $util.toJson($v1)
+  }
+}",
+  "#if($context.result.statusCode == 200)
+    #set($sfn__result = $util.parseJson($context.result.body))
+    #else 
+    $util.error($context.result.body, \\"$context.result.statusCode\\")
+    #end
+#set( $context.stash.res1 = $sfn__result )
+{}",
+  "#if($context.stash.return__flag)
+  #return($context.stash.return__val)
+#end
+#set($v1 = {})
+$util.qr($v1.put('input', $util.toJson($context.stash.res1)))
+$util.qr($v1.put('stateMachineArn', '__REPLACED_TOKEN'))
+{
+  \\"version\\": \\"2018-05-29\\",
+  \\"method\\": \\"POST\\",
+  \\"resourcePath\\": \\"/\\",
+  \\"params\\": {
+    \\"headers\\": {
+      \\"content-type\\": \\"application/x-amz-json-1.0\\",
+      \\"x-amz-target\\": \\"AWSStepFunctions.StartExecution\\"
+    },
+    \\"body\\": $util.toJson($v1)
+  }
+}",
+  "#if($context.result.statusCode == 200)
+    #set($sfn__result = $util.parseJson($context.result.body))
+    #else 
+    $util.error($context.result.body, \\"$context.result.statusCode\\")
+    #end
+#set( $context.stash.res2 = $sfn__result )
+{}",
+  "#if($context.stash.return__flag)
+  #return($context.stash.return__val)
+#end
+#set($v1 = {})
+$util.qr($v1.put('input', $util.toJson($context.stash.res2)))
+$util.qr($v1.put('stateMachineArn', '__REPLACED_TOKEN'))
+{
+  \\"version\\": \\"2018-05-29\\",
+  \\"method\\": \\"POST\\",
+  \\"resourcePath\\": \\"/\\",
+  \\"params\\": {
+    \\"headers\\": {
+      \\"content-type\\": \\"application/x-amz-json-1.0\\",
+      \\"x-amz-target\\": \\"AWSStepFunctions.StartExecution\\"
+    },
+    \\"body\\": $util.toJson($v1)
+  }
+}",
+  "#if($context.result.statusCode == 200)
+    #set($sfn__result = $util.parseJson($context.result.body))
+    #else 
+    $util.error($context.result.body, \\"$context.result.statusCode\\")
+    #end
+#set( $context.stash.result = $sfn__result )
+{}",
+  "#if($context.stash.return__flag)
+  #return($context.stash.return__val)
+#end
+#return($context.stash.result.startDate)",
+]
+`;
+
+exports[`multiple linked integrations post-compute 2`] = `
+Object {
+  "method": "POST",
+  "params": Object {
+    "body": Object {
+      "input": "{}",
+      "stateMachineArn": "__REPLACED_TOKEN",
+    },
+    "headers": Object {
+      "content-type": "application/x-amz-json-1.0",
+      "x-amz-target": "AWSStepFunctions.StartExecution",
+    },
+  },
+  "resourcePath": "/",
+  "version": "2018-05-29",
+}
+`;
+
+exports[`multiple linked integrations pre-compute 1`] = `
+Array [
+  "{}",
+  "#if($context.stash.return__flag)
+  #return($context.stash.return__val)
+#end
+#set($context.stash.x = 'y')
+#set($v1 = {})
+#set($v2 = {})
+$util.qr($v2.put('x', $context.stash.x))
+$util.qr($v1.put('input', $util.toJson($v2)))
+$util.qr($v1.put('stateMachineArn', '__REPLACED_TOKEN'))
+{
+  \\"version\\": \\"2018-05-29\\",
+  \\"method\\": \\"POST\\",
+  \\"resourcePath\\": \\"/\\",
+  \\"params\\": {
+    \\"headers\\": {
+      \\"content-type\\": \\"application/x-amz-json-1.0\\",
+      \\"x-amz-target\\": \\"AWSStepFunctions.StartExecution\\"
+    },
+    \\"body\\": $util.toJson($v1)
+  }
+}",
+  "#if($context.result.statusCode == 200)
+    #set($sfn__result = $util.parseJson($context.result.body))
+    #else 
+    $util.error($context.result.body, \\"$context.result.statusCode\\")
+    #end
+#set( $context.stash.res1 = $sfn__result )
+{}",
+  "#if($context.stash.return__flag)
+  #return($context.stash.return__val)
+#end
+#set($v1 = {})
+$util.qr($v1.put('input', $util.toJson($context.stash.res1)))
+$util.qr($v1.put('stateMachineArn', '__REPLACED_TOKEN'))
+{
+  \\"version\\": \\"2018-05-29\\",
+  \\"method\\": \\"POST\\",
+  \\"resourcePath\\": \\"/\\",
+  \\"params\\": {
+    \\"headers\\": {
+      \\"content-type\\": \\"application/x-amz-json-1.0\\",
+      \\"x-amz-target\\": \\"AWSStepFunctions.StartExecution\\"
+    },
+    \\"body\\": $util.toJson($v1)
+  }
+}",
+  "#if($context.result.statusCode == 200)
+    #set($sfn__result = $util.parseJson($context.result.body))
+    #else 
+    $util.error($context.result.body, \\"$context.result.statusCode\\")
+    #end
+#set( $context.stash.res2 = $sfn__result )
+{}",
+  "#if($context.stash.return__flag)
+  #return($context.stash.return__val)
+#end
+#set($v1 = {})
+$util.qr($v1.put('input', $util.toJson($context.stash.res2)))
+$util.qr($v1.put('stateMachineArn', '__REPLACED_TOKEN'))
+{
+  \\"version\\": \\"2018-05-29\\",
+  \\"method\\": \\"POST\\",
+  \\"resourcePath\\": \\"/\\",
+  \\"params\\": {
+    \\"headers\\": {
+      \\"content-type\\": \\"application/x-amz-json-1.0\\",
+      \\"x-amz-target\\": \\"AWSStepFunctions.StartExecution\\"
+    },
+    \\"body\\": $util.toJson($v1)
+  }
+}",
+  "{}",
+  "#if($context.stash.return__flag)
+  #return($context.stash.return__val)
+#end",
+]
+`;
+
+exports[`multiple linked integrations pre-compute 2`] = `
+Object {
+  "method": "POST",
+  "params": Object {
+    "body": Object {
+      "input": "{\\"x\\":\\"y\\"}",
+      "stateMachineArn": "__REPLACED_TOKEN",
+    },
+    "headers": Object {
+      "content-type": "application/x-amz-json-1.0",
+      "x-amz-target": "AWSStepFunctions.StartExecution",
+    },
+  },
+  "resourcePath": "/",
+  "version": "2018-05-29",
+}
+`;
+
+exports[`multiple linked integrations with mutation 1`] = `
+Array [
+  "{}",
+  "#if($context.stash.return__flag)
+  #return($context.stash.return__val)
+#end
+{
+  \\"version\\": \\"2018-05-29\\",
+  \\"method\\": \\"POST\\",
+  \\"resourcePath\\": \\"/\\",
+  \\"params\\": {
+    \\"headers\\": {
+      \\"content-type\\": \\"application/x-amz-json-1.0\\",
+      \\"x-amz-target\\": \\"AWSStepFunctions.DescribeExecution\\"
+    },
+    \\"body\\": {
+      \\"executionArn\\": $util.toJson('exec1')
+    }
+  }
+}",
+  "#if($context.result.statusCode == 200)
+    #set($sfn__result = $util.parseJson($context.result.body))
+    #else 
+    $util.error($context.result.body, \\"$context.result.statusCode\\")
+    #end
+#set( $context.stash.res1 = $sfn__result )
+{}",
+  "#if($context.stash.return__flag)
+  #return($context.stash.return__val)
+#end
+#set($context.stash.formatted = \\"status: \${context.stash.res1.status}\\")
+#set($v1 = {})
+#set($v2 = {})
+$util.qr($v2.put('x', $context.stash.formatted))
+$util.qr($v1.put('input', $util.toJson($v2)))
+$util.qr($v1.put('stateMachineArn', '__REPLACED_TOKEN'))
+{
+  \\"version\\": \\"2018-05-29\\",
+  \\"method\\": \\"POST\\",
+  \\"resourcePath\\": \\"/\\",
+  \\"params\\": {
+    \\"headers\\": {
+      \\"content-type\\": \\"application/x-amz-json-1.0\\",
+      \\"x-amz-target\\": \\"AWSStepFunctions.StartExecution\\"
+    },
+    \\"body\\": $util.toJson($v1)
+  }
+}",
+  "{}",
+  "#if($context.stash.return__flag)
+  #return($context.stash.return__val)
+#end",
+]
+`;
+
+exports[`multiple linked integrations with mutation 2`] = `
+Object {
+  "method": "POST",
+  "params": Object {
+    "body": Object {
+      "executionArn": "exec1",
+    },
+    "headers": Object {
+      "content-type": "application/x-amz-json-1.0",
+      "x-amz-target": "AWSStepFunctions.DescribeExecution",
+    },
+  },
+  "resourcePath": "/",
+  "version": "2018-05-29",
+}
+`;
+
+exports[`multiple linked integrations with props 1`] = `
+Array [
+  "{}",
+  "#if($context.stash.return__flag)
+  #return($context.stash.return__val)
+#end
+{
+  \\"version\\": \\"2018-05-29\\",
+  \\"method\\": \\"POST\\",
+  \\"resourcePath\\": \\"/\\",
+  \\"params\\": {
+    \\"headers\\": {
+      \\"content-type\\": \\"application/x-amz-json-1.0\\",
+      \\"x-amz-target\\": \\"AWSStepFunctions.DescribeExecution\\"
+    },
+    \\"body\\": {
+      \\"executionArn\\": $util.toJson('exec1')
+    }
+  }
+}",
+  "#if($context.result.statusCode == 200)
+    #set($sfn__result = $util.parseJson($context.result.body))
+    #else 
+    $util.error($context.result.body, \\"$context.result.statusCode\\")
+    #end
+#set( $context.stash.res1 = $sfn__result )
+{}",
+  "#if($context.stash.return__flag)
+  #return($context.stash.return__val)
+#end
+{
+  \\"version\\": \\"2018-05-29\\",
+  \\"method\\": \\"POST\\",
+  \\"resourcePath\\": \\"/\\",
+  \\"params\\": {
+    \\"headers\\": {
+      \\"content-type\\": \\"application/x-amz-json-1.0\\",
+      \\"x-amz-target\\": \\"AWSStepFunctions.DescribeExecution\\"
+    },
+    \\"body\\": {
+      \\"executionArn\\": $util.toJson($context.stash.res1.executionArn)
+    }
+  }
+}",
+  "#if($context.result.statusCode == 200)
+    #set($sfn__result = $util.parseJson($context.result.body))
+    #else 
+    $util.error($context.result.body, \\"$context.result.statusCode\\")
+    #end
+#set( $context.stash.res2 = $sfn__result )
+{}",
+  "#if($context.stash.return__flag)
+  #return($context.stash.return__val)
+#end
+{
+  \\"version\\": \\"2018-05-29\\",
+  \\"method\\": \\"POST\\",
+  \\"resourcePath\\": \\"/\\",
+  \\"params\\": {
+    \\"headers\\": {
+      \\"content-type\\": \\"application/x-amz-json-1.0\\",
+      \\"x-amz-target\\": \\"AWSStepFunctions.DescribeExecution\\"
+    },
+    \\"body\\": {
+      \\"executionArn\\": $util.toJson($context.stash.res2.executionArn)
+    }
+  }
+}",
+  "{}",
+  "#if($context.stash.return__flag)
+  #return($context.stash.return__val)
+#end",
+]
+`;
+
+exports[`multiple linked integrations with props 2`] = `
+Object {
+  "method": "POST",
+  "params": Object {
+    "body": Object {
+      "executionArn": "exec1",
+    },
+    "headers": Object {
+      "content-type": "application/x-amz-json-1.0",
+      "x-amz-target": "AWSStepFunctions.DescribeExecution",
+    },
+  },
+  "resourcePath": "/",
+  "version": "2018-05-29",
+}
+`;
+
+exports[`multiple nested integrations 1`] = `
+Array [
+  "{}",
+  "#if($context.stash.return__flag)
+  #return($context.stash.return__val)
+#end
+#set($v1 = {})
+#set($v2 = {})
+#set($v3 = {})
+#set($v4 = {})
+$util.qr($v3.put('input', $util.toJson($v4)))
+$util.qr($v3.put('stateMachineArn', '__REPLACED_TOKEN'))
+$util.qr($v2.put('input', $util.toJson({
+  \\"version\\": \\"2018-05-29\\",
+  \\"method\\": \\"POST\\",
+  \\"resourcePath\\": \\"/\\",
+  \\"params\\": {
+    \\"headers\\": {
+      \\"content-type\\": \\"application/x-amz-json-1.0\\",
+      \\"x-amz-target\\": \\"AWSStepFunctions.StartExecution\\"
+    },
+    \\"body\\": $util.toJson($v3)
+  }
+})))
+$util.qr($v2.put('stateMachineArn', '__REPLACED_TOKEN'))
+$util.qr($v1.put('input', $util.toJson({
+  \\"version\\": \\"2018-05-29\\",
+  \\"method\\": \\"POST\\",
+  \\"resourcePath\\": \\"/\\",
+  \\"params\\": {
+    \\"headers\\": {
+      \\"content-type\\": \\"application/x-amz-json-1.0\\",
+      \\"x-amz-target\\": \\"AWSStepFunctions.StartExecution\\"
+    },
+    \\"body\\": $util.toJson($v2)
+  }
+})))
+$util.qr($v1.put('stateMachineArn', '__REPLACED_TOKEN'))
+{
+  \\"version\\": \\"2018-05-29\\",
+  \\"method\\": \\"POST\\",
+  \\"resourcePath\\": \\"/\\",
+  \\"params\\": {
+    \\"headers\\": {
+      \\"content-type\\": \\"application/x-amz-json-1.0\\",
+      \\"x-amz-target\\": \\"AWSStepFunctions.StartExecution\\"
+    },
+    \\"body\\": $util.toJson($v1)
+  }
+}",
+  "{}",
+  "#if($context.stash.return__flag)
+  #return($context.stash.return__val)
+#end",
+]
+`;
+
+exports[`multiple nested integrations 2`] = `
+Object {
+  "method": "POST",
+  "params": Object {
+    "body": Object {
+      "input": "{\\"version\\":\\"2018-05-29\\",\\"method\\":\\"POST\\",\\"resourcePath\\":\\"/\\",\\"params\\":{\\"headers\\":{\\"content-type\\":\\"application/x-amz-json-1.0\\",\\"x-amz-target\\":\\"AWSStepFunctions.StartExecution\\"},\\"body\\":\\"{\\\\\\"input\\\\\\":\\\\\\"{\\\\\\\\\\\\\\"version\\\\\\\\\\\\\\":\\\\\\\\\\\\\\"2018-05-29\\\\\\\\\\\\\\",\\\\\\\\\\\\\\"method\\\\\\\\\\\\\\":\\\\\\\\\\\\\\"POST\\\\\\\\\\\\\\",\\\\\\\\\\\\\\"resourcePath\\\\\\\\\\\\\\":\\\\\\\\\\\\\\"/\\\\\\\\\\\\\\",\\\\\\\\\\\\\\"params\\\\\\\\\\\\\\":{\\\\\\\\\\\\\\"headers\\\\\\\\\\\\\\":{\\\\\\\\\\\\\\"content-type\\\\\\\\\\\\\\":\\\\\\\\\\\\\\"application/x-amz-json-1.0\\\\\\\\\\\\\\",\\\\\\\\\\\\\\"x-amz-target\\\\\\\\\\\\\\":\\\\\\\\\\\\\\"AWSStepFunctions.StartExecution\\\\\\\\\\\\\\"},\\\\\\\\\\\\\\"body\\\\\\\\\\\\\\":\\\\\\\\\\\\\\"{\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"input\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\":\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"{}\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"stateMachineArn\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\":\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"__REPLACED_TOKEN\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"}\\\\\\\\\\\\\\"}}\\\\\\",\\\\\\"stateMachineArn\\\\\\":\\\\\\"__REPLACED_TOKEN\\\\\\"}\\"}}",
+      "stateMachineArn": "__REPLACED_TOKEN",
+    },
+    "headers": Object {
+      "content-type": "application/x-amz-json-1.0",
+      "x-amz-target": "AWSStepFunctions.StartExecution",
+    },
+  },
+  "resourcePath": "/",
+  "version": "2018-05-29",
+}
+`;
+
+exports[`multiple nested integrations prop access 1`] = `
+Array [
+  "{}",
+  "#if($context.stash.return__flag)
+  #return($context.stash.return__val)
+#end
+{
+  \\"version\\": \\"2018-05-29\\",
+  \\"method\\": \\"POST\\",
+  \\"resourcePath\\": \\"/\\",
+  \\"params\\": {
+    \\"headers\\": {
+      \\"content-type\\": \\"application/x-amz-json-1.0\\",
+      \\"x-amz-target\\": \\"AWSStepFunctions.DescribeExecution\\"
+    },
+    \\"body\\": {
+      \\"executionArn\\": $util.toJson({
+  \\"version\\": \\"2018-05-29\\",
+  \\"method\\": \\"POST\\",
+  \\"resourcePath\\": \\"/\\",
+  \\"params\\": {
+    \\"headers\\": {
+      \\"content-type\\": \\"application/x-amz-json-1.0\\",
+      \\"x-amz-target\\": \\"AWSStepFunctions.DescribeExecution\\"
+    },
+    \\"body\\": {
+      \\"executionArn\\": $util.toJson({
+  \\"version\\": \\"2018-05-29\\",
+  \\"method\\": \\"POST\\",
+  \\"resourcePath\\": \\"/\\",
+  \\"params\\": {
+    \\"headers\\": {
+      \\"content-type\\": \\"application/x-amz-json-1.0\\",
+      \\"x-amz-target\\": \\"AWSStepFunctions.DescribeExecution\\"
+    },
+    \\"body\\": {
+      \\"executionArn\\": $util.toJson('exec1')
+    }
+  }
+}.executionArn)
+    }
+  }
+}.executionArn)
+    }
+  }
+}",
+  "{}",
+  "#if($context.stash.return__flag)
+  #return($context.stash.return__val)
+#end",
+]
+`;
+
+exports[`step function describe execution machine describe exec string 1`] = `
+Array [
+  "{}",
+  "#if($context.stash.return__flag)
+  #return($context.stash.return__val)
+#end
+{
+  \\"version\\": \\"2018-05-29\\",
+  \\"method\\": \\"POST\\",
+  \\"resourcePath\\": \\"/\\",
+  \\"params\\": {
+    \\"headers\\": {
+      \\"content-type\\": \\"application/x-amz-json-1.0\\",
+      \\"x-amz-target\\": \\"AWSStepFunctions.DescribeExecution\\"
+    },
+    \\"body\\": {
+      \\"executionArn\\": $util.toJson('exec1')
+    }
+  }
+}",
+  "{}",
+  "#if($context.stash.return__flag)
+  #return($context.stash.return__val)
+#end",
+]
+`;
+
+exports[`step function describe execution machine describe exec string 2`] = `
+Object {
+  "method": "POST",
+  "params": Object {
+    "body": Object {
+      "executionArn": "exec1",
+    },
+    "headers": Object {
+      "content-type": "application/x-amz-json-1.0",
+      "x-amz-target": "AWSStepFunctions.DescribeExecution",
+    },
+  },
+  "resourcePath": "/",
+  "version": "2018-05-29",
+}
+`;
+
+exports[`step function integration machine describe exec 1`] = `
+Array [
+  "{}",
+  "#if($context.stash.return__flag)
+  #return($context.stash.return__val)
+#end
+#set($context.stash.exec = 'exec1')
+{
+  \\"version\\": \\"2018-05-29\\",
+  \\"method\\": \\"POST\\",
+  \\"resourcePath\\": \\"/\\",
+  \\"params\\": {
+    \\"headers\\": {
+      \\"content-type\\": \\"application/x-amz-json-1.0\\",
+      \\"x-amz-target\\": \\"AWSStepFunctions.DescribeExecution\\"
+    },
+    \\"body\\": {
+      \\"executionArn\\": $util.toJson($context.stash.exec)
+    }
+  }
+}",
+  "{}",
+  "#if($context.stash.return__flag)
+  #return($context.stash.return__val)
+#end",
+]
+`;
+
+exports[`step function integration machine describe exec 2`] = `
+Object {
+  "method": "POST",
+  "params": Object {
+    "body": Object {
+      "executionArn": "exec1",
+    },
+    "headers": Object {
+      "content-type": "application/x-amz-json-1.0",
+      "x-amz-target": "AWSStepFunctions.DescribeExecution",
+    },
+  },
+  "resourcePath": "/",
+  "version": "2018-05-29",
+}
+`;
+
+exports[`step function integration machine with dynamic parameters 1`] = `
+Array [
+  "{}",
+  "#if($context.stash.return__flag)
+  #return($context.stash.return__val)
+#end
+#set($v1 = {})
+#set($v2 = {})
+$util.qr($v2.put('id', $context.arguments.id))
+$util.qr($v1.put('input', $util.toJson($v2)))
+$util.qr($v1.put('stateMachineArn', '__REPLACED_TOKEN'))
+{
+  \\"version\\": \\"2018-05-29\\",
+  \\"method\\": \\"POST\\",
+  \\"resourcePath\\": \\"/\\",
+  \\"params\\": {
+    \\"headers\\": {
+      \\"content-type\\": \\"application/x-amz-json-1.0\\",
+      \\"x-amz-target\\": \\"AWSStepFunctions.StartExecution\\"
+    },
+    \\"body\\": $util.toJson($v1)
+  }
+}",
+  "{}",
+  "#if($context.stash.return__flag)
+  #return($context.stash.return__val)
+#end",
+]
+`;
+
+exports[`step function integration machine with dynamic parameters 2`] = `
+Object {
+  "method": "POST",
+  "params": Object {
+    "body": Object {
+      "input": "{\\"id\\":\\"1\\"}",
+      "stateMachineArn": "__REPLACED_TOKEN",
+    },
+    "headers": Object {
+      "content-type": "application/x-amz-json-1.0",
+      "x-amz-target": "AWSStepFunctions.StartExecution",
+    },
+  },
+  "resourcePath": "/",
+  "version": "2018-05-29",
+}
+`;
+
+exports[`step function integration machine with name 1`] = `
+Array [
+  "{}",
+  "#if($context.stash.return__flag)
+  #return($context.stash.return__val)
+#end
+#set($v1 = {})
+$util.qr($v1.put('name', $context.arguments.id))
+$util.qr($v1.put('stateMachineArn', '__REPLACED_TOKEN'))
+{
+  \\"version\\": \\"2018-05-29\\",
+  \\"method\\": \\"POST\\",
+  \\"resourcePath\\": \\"/\\",
+  \\"params\\": {
+    \\"headers\\": {
+      \\"content-type\\": \\"application/x-amz-json-1.0\\",
+      \\"x-amz-target\\": \\"AWSStepFunctions.StartExecution\\"
+    },
+    \\"body\\": $util.toJson($v1)
+  }
+}",
+  "{}",
+  "#if($context.stash.return__flag)
+  #return($context.stash.return__val)
+#end",
+]
+`;
+
+exports[`step function integration machine with name 2`] = `
+Object {
+  "method": "POST",
+  "params": Object {
+    "body": Object {
+      "name": "1",
+      "stateMachineArn": "__REPLACED_TOKEN",
+    },
+    "headers": Object {
+      "content-type": "application/x-amz-json-1.0",
+      "x-amz-target": "AWSStepFunctions.StartExecution",
+    },
+  },
+  "resourcePath": "/",
+  "version": "2018-05-29",
+}
+`;
+
+exports[`step function integration machine with no parameters 1`] = `
+Array [
+  "{}",
+  "#if($context.stash.return__flag)
+  #return($context.stash.return__val)
+#end
+#set($v1 = {})
+$util.qr($v1.put('stateMachineArn', '__REPLACED_TOKEN'))
+{
+  \\"version\\": \\"2018-05-29\\",
+  \\"method\\": \\"POST\\",
+  \\"resourcePath\\": \\"/\\",
+  \\"params\\": {
+    \\"headers\\": {
+      \\"content-type\\": \\"application/x-amz-json-1.0\\",
+      \\"x-amz-target\\": \\"AWSStepFunctions.StartExecution\\"
+    },
+    \\"body\\": $util.toJson($v1)
+  }
+}",
+  "{}",
+  "#if($context.stash.return__flag)
+  #return($context.stash.return__val)
+#end",
+]
+`;
+
+exports[`step function integration machine with no parameters 2`] = `
+Object {
+  "method": "POST",
+  "params": Object {
+    "body": Object {
+      "stateMachineArn": "__REPLACED_TOKEN",
+    },
+    "headers": Object {
+      "content-type": "application/x-amz-json-1.0",
+      "x-amz-target": "AWSStepFunctions.StartExecution",
+    },
+  },
+  "resourcePath": "/",
+  "version": "2018-05-29",
+}
+`;
+
+exports[`step function integration machine with static parameters 1`] = `
+Array [
+  "{}",
+  "#if($context.stash.return__flag)
+  #return($context.stash.return__val)
+#end
+#set($v1 = {})
+#set($v2 = {})
+$util.qr($v2.put('id', '1'))
+$util.qr($v1.put('input', $util.toJson($v2)))
+$util.qr($v1.put('stateMachineArn', '__REPLACED_TOKEN'))
+{
+  \\"version\\": \\"2018-05-29\\",
+  \\"method\\": \\"POST\\",
+  \\"resourcePath\\": \\"/\\",
+  \\"params\\": {
+    \\"headers\\": {
+      \\"content-type\\": \\"application/x-amz-json-1.0\\",
+      \\"x-amz-target\\": \\"AWSStepFunctions.StartExecution\\"
+    },
+    \\"body\\": $util.toJson($v1)
+  }
+}",
+  "{}",
+  "#if($context.stash.return__flag)
+  #return($context.stash.return__val)
+#end",
+]
+`;
+
+exports[`step function integration machine with static parameters 2`] = `
+Object {
+  "method": "POST",
+  "params": Object {
+    "body": Object {
+      "input": "{\\"id\\":\\"1\\"}",
+      "stateMachineArn": "__REPLACED_TOKEN",
+    },
+    "headers": Object {
+      "content-type": "application/x-amz-json-1.0",
+      "x-amz-target": "AWSStepFunctions.StartExecution",
+    },
+  },
+  "resourcePath": "/",
+  "version": "2018-05-29",
+}
+`;

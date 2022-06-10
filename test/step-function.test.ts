@@ -10,18 +10,13 @@ import {
   SyncExecutionResult,
 } from "../src";
 import { StateMachine, States, Task } from "../src/asl";
-import { initStepFunctionApp, Person } from "./util";
+import { initStepFunctionApp, normalizeCDKJson, Person } from "./util";
 
 /**
  * Removes randomized values (CDK token strings) form the definitions.
  */
 const normalizeDefinition = (definition: StateMachine<States>): any => {
-  return JSON.parse(
-    JSON.stringify(definition).replace(
-      /\$\{Token\[[a-zA-Z0-9.]*\]\}/g,
-      "__REPLACED_TOKEN"
-    )
-  );
+  return normalizeCDKJson(definition);
 };
 
 /**
@@ -163,7 +158,7 @@ test("return task({key: items.slice(1, 3)})", () => {
   const definition = new ExpressStepFunction<
     { items: string[] },
     number | null
-  >(stack, "fn", (input) => {
+  >(stack, "fn", async (input) => {
     return task({ key: input.items.slice(1, 3) });
   }).definition;
 
@@ -212,36 +207,36 @@ test("let and set", () => {
 
 test("task(any)", () => {
   const { stack, task } = initStepFunctionApp();
-  const definition = new ExpressStepFunction(stack, "fn", () => {
-    task(null);
-    task(true);
-    task(false);
-    task(0);
-    task(-1);
-    task(-100);
-    task(1 + 2);
-    task("hello");
-    task("hello" + " world");
-    task("hello" + 1);
-    task(1 + "hello");
-    task("hello" + true);
-    task(false + "hello");
-    task(null + "hello");
-    task("hello" + null);
-    task([null]);
-    task([1]);
-    task([-1]);
-    task([true]);
-    task([
+  const definition = new ExpressStepFunction(stack, "fn", async () => {
+    await task(null);
+    await task(true);
+    await task(false);
+    await task(0);
+    await task(-1);
+    await task(-100);
+    await task(1 + 2);
+    await task("hello");
+    await task("hello" + " world");
+    await task("hello" + 1);
+    await task(1 + "hello");
+    await task("hello" + true);
+    await task(false + "hello");
+    await task(null + "hello");
+    await task("hello" + null);
+    await task([null]);
+    await task([1]);
+    await task([-1]);
+    await task([true]);
+    await task([
       {
         key: "value",
       },
     ]);
-    task({
+    await task({
       key: "value",
     });
-    task("hello" + { place: "world" });
-    task("hello" + ["world"]);
+    await task("hello" + { place: "world" });
+    await task("hello" + ["world"]);
   }).definition;
 
   expect(normalizeDefinition(definition)).toMatchSnapshot();
@@ -348,8 +343,8 @@ test("put an event bus event", () => {
   const definition = new ExpressStepFunction<{ id: string }, void>(
     stack,
     "fn",
-    (input) => {
-      bus.putEvents({
+    async (input) => {
+      await bus.putEvents({
         "detail-type": "someEvent",
         source: "sfnTest",
         detail: {
@@ -382,8 +377,8 @@ test("put multiple event bus events", () => {
   const definition = new ExpressStepFunction<{ id: string }, void>(
     stack,
     "fn",
-    (input) => {
-      bus.putEvents(
+    async (input) => {
+      await bus.putEvents(
         {
           "detail-type": "someEvent",
           source: "sfnTest",
@@ -486,7 +481,7 @@ test("return a single Lambda Function call", () => {
   const definition = new ExpressStepFunction<
     { id: string },
     Person | undefined
-  >(stack, "fn", (input) => {
+  >(stack, "fn", async (input) => {
     return getPerson({ id: input.id });
   }).definition;
 
@@ -530,7 +525,21 @@ test("call Lambda Function, store as variable, return variable", () => {
   const definition = new ExpressStepFunction<
     { id: string },
     Person | undefined
-  >(stack, "fn", (input) => {
+  >(stack, "fn", async (input) => {
+    const person = await getPerson({ id: input.id });
+    return person;
+  }).definition;
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+});
+
+// TODO: support use case where promise is ultimately returned with no logic in between?
+test.skip("call Lambda Function, store as variable, return promise variable", () => {
+  const { stack, getPerson } = initStepFunctionApp();
+  const definition = new ExpressStepFunction<
+    { id: string },
+    Person | undefined
+  >(stack, "fn", async (input) => {
     const person = getPerson({ id: input.id });
     return person;
   }).definition;
@@ -543,8 +552,8 @@ test("return AWS.DynamoDB.GetItem", () => {
   const definition = new ExpressStepFunction<
     { id: string },
     Person | undefined
-  >(stack, "fn", (input) => {
-    const person = $AWS.DynamoDB.GetItem({
+  >(stack, "fn", async (input) => {
+    const person = await $AWS.DynamoDB.GetItem({
       TableName: personTable,
       Key: {
         id: {
@@ -571,8 +580,8 @@ test("call AWS.DynamoDB.GetItem, then Lambda and return LiteralExpr", () => {
   const definition = new ExpressStepFunction<
     { id: string },
     (Person & { score: number }) | undefined
-  >(stack, "fn", (input) => {
-    const person = $AWS.DynamoDB.GetItem({
+  >(stack, "fn", async (input) => {
+    const person = await $AWS.DynamoDB.GetItem({
       TableName: personTable,
       Key: {
         id: {
@@ -585,7 +594,7 @@ test("call AWS.DynamoDB.GetItem, then Lambda and return LiteralExpr", () => {
       return undefined;
     }
 
-    const score = computeScore({
+    const score = await computeScore({
       id: person.Item.id.S,
       name: person.Item.name.S,
     });
@@ -605,10 +614,10 @@ test("for-loop over a list literal", () => {
   const definition = new ExpressStepFunction<{ id: string }, void>(
     stack,
     "fn",
-    (input) => {
+    async (input) => {
       const people = ["sam", "brendan"];
       for (const name of people) {
-        computeScore({
+        await computeScore({
           id: input.id,
           name,
         });
@@ -624,9 +633,9 @@ test("conditionally call DynamoDB and then void", () => {
   const definition = new ExpressStepFunction<{ id: string }, void>(
     stack,
     "fn",
-    (input): void => {
+    async (input): Promise<void> => {
       if (input.id === "hello") {
-        $AWS.DynamoDB.GetItem({
+        await $AWS.DynamoDB.GetItem({
           TableName: personTable,
           Key: {
             id: {
@@ -758,9 +767,9 @@ test("try, throw, empty catch", () => {
 test("try, task, empty catch", () => {
   const { stack, computeScore } = initStepFunctionApp();
 
-  const definition = new ExpressStepFunction(stack, "fn", () => {
+  const definition = new ExpressStepFunction(stack, "fn", async () => {
     try {
-      computeScore({
+      await computeScore({
         id: "id",
         name: "name",
       });
@@ -801,9 +810,9 @@ test("catch and throw Error", () => {
 test("try-catch with inner return and no catch variable", () => {
   const { stack, computeScore } = initStepFunctionApp();
 
-  const definition = new ExpressStepFunction(stack, "fn", () => {
+  const definition = new ExpressStepFunction(stack, "fn", async () => {
     try {
-      computeScore({
+      await computeScore({
         id: "id",
         name: "name",
       });
@@ -819,9 +828,9 @@ test("try-catch with inner return and no catch variable", () => {
 test("try-catch with inner return and a catch variable", () => {
   const { stack, computeScore } = initStepFunctionApp();
 
-  const definition = new ExpressStepFunction(stack, "fn", () => {
+  const definition = new ExpressStepFunction(stack, "fn", async () => {
     try {
-      computeScore({
+      await computeScore({
         id: "id",
         name: "name",
       });
@@ -855,7 +864,7 @@ test("try-catch with guaranteed throw new Error", () => {
 test("try-catch with optional throw of an Error", () => {
   const { stack } = initStepFunctionApp();
 
-  const definition = new ExpressStepFunction<{ id: string }, void>(
+  const definition = new ExpressStepFunction<{ id: string }, string>(
     stack,
     "fn",
     (input) => {
@@ -883,10 +892,10 @@ test("try-catch with optional task", () => {
   const definition = new ExpressStepFunction<{ id: string }, string>(
     stack,
     "fn",
-    (input) => {
+    async (input) => {
       try {
         if (input.id === "hello") {
-          computeScore({
+          await computeScore({
             id: input.id,
             name: "sam",
           });
@@ -911,10 +920,38 @@ test("try-catch with optional return of task", () => {
   const definition = new ExpressStepFunction<{ id: string }, string | number>(
     stack,
     "fn",
-    (input) => {
+    async (input) => {
       try {
         if (input.id === "hello") {
-          return computeScore({
+          await computeScore({
+            id: input.id,
+            name: "sam",
+          });
+        }
+        return "hello world";
+      } catch (err: any) {
+        if (err.message === "cause") {
+          return "hello";
+        } else {
+          return "world";
+        }
+      }
+    }
+  ).definition;
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+});
+
+test("try-catch with optional return of task", () => {
+  const { stack, computeScore } = initStepFunctionApp();
+
+  const definition = new ExpressStepFunction<{ id: string }, string | number>(
+    stack,
+    "fn",
+    async (input) => {
+      try {
+        if (input.id === "hello") {
+          return await computeScore({
             id: input.id,
             name: "sam",
           });
@@ -1031,17 +1068,21 @@ test("try-catch, err variable, contains for-of, throw Error", () => {
 test("try-catch-finally", () => {
   const { stack, computeScore } = initStepFunctionApp();
 
-  const definition = new ExpressStepFunction(stack, "fn", (): string | void => {
-    try {
-      computeScore({
-        id: "id",
-        name: "name",
-      });
-    } catch {
-    } finally {
-      return "hello";
+  const definition = new ExpressStepFunction(
+    stack,
+    "fn",
+    async (): Promise<string | void> => {
+      try {
+        await computeScore({
+          id: "id",
+          name: "name",
+        });
+      } catch {
+      } finally {
+        return "hello";
+      }
     }
-  }).definition;
+  ).definition;
 
   expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
@@ -1049,15 +1090,19 @@ test("try-catch-finally", () => {
 test("try { task } catch { throw } finally { task() }", () => {
   const { stack, task } = initStepFunctionApp();
 
-  const definition = new ExpressStepFunction(stack, "fn", (): string | void => {
-    try {
-      task();
-    } catch {
-      throw new Error("cause");
-    } finally {
-      task("recover");
+  const definition = new ExpressStepFunction(
+    stack,
+    "fn",
+    async (): Promise<string | void> => {
+      try {
+        await task();
+      } catch {
+        throw new Error("cause");
+      } finally {
+        await task("recover");
+      }
     }
-  }).definition;
+  ).definition;
 
   expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
@@ -1065,15 +1110,19 @@ test("try { task } catch { throw } finally { task() }", () => {
 test("try { task() } catch { task() } finally { task() }", () => {
   const { stack, task } = initStepFunctionApp();
 
-  const definition = new ExpressStepFunction(stack, "fn", (): void => {
-    try {
-      task("1");
-    } catch {
-      task("2");
-    } finally {
-      task("3");
+  const definition = new ExpressStepFunction(
+    stack,
+    "fn",
+    async (): Promise<void> => {
+      try {
+        await task("1");
+      } catch {
+        await task("2");
+      } finally {
+        await task("3");
+      }
     }
-  }).definition;
+  ).definition;
 
   expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
@@ -1115,7 +1164,7 @@ test("try { throw } catch { (maybe) throw } finally { task }", () => {
   const definition = new ExpressStepFunction<{ id: string }, string | void>(
     stack,
     "fn",
-    (input) => {
+    async (input) => {
       try {
         throw new Error("go");
       } catch {
@@ -1125,7 +1174,7 @@ test("try { throw } catch { (maybe) throw } finally { task }", () => {
       } finally {
         // task should run after both throws
         // for second throw, an error should be re-thrown
-        task();
+        await task();
       }
     }
   ).definition;
@@ -1139,9 +1188,9 @@ test("try { task() } catch { (maybe) throw } finally { task }", () => {
   const definition = new ExpressStepFunction<{ id: string }, string | void>(
     stack,
     "fn",
-    (input) => {
+    async (input) => {
       try {
-        task("1");
+        await task("1");
       } catch {
         if (input.id === "sam") {
           throw new Error("little");
@@ -1149,7 +1198,7 @@ test("try { task() } catch { (maybe) throw } finally { task }", () => {
       } finally {
         // task should run after both throws
         // for second throw, an error should be re-thrown
-        task("2");
+        await task("2");
       }
     }
   ).definition;
@@ -1160,19 +1209,23 @@ test("try { task() } catch { (maybe) throw } finally { task }", () => {
 test("try { task() } catch(err) { (maybe) throw } finally { task }", () => {
   const { stack, task } = initStepFunctionApp();
 
-  const definition = new ExpressStepFunction(stack, "fn", (): string | void => {
-    try {
-      task("1");
-    } catch (err: any) {
-      if (err.message === "sam") {
-        throw new Error("little");
+  const definition = new ExpressStepFunction(
+    stack,
+    "fn",
+    async (): Promise<string | void> => {
+      try {
+        await task("1");
+      } catch (err: any) {
+        if (err.message === "sam") {
+          throw new Error("little");
+        }
+      } finally {
+        // task should run after both throws
+        // for second throw, an error should be re-thrown
+        await task("2");
       }
-    } finally {
-      // task should run after both throws
-      // for second throw, an error should be re-thrown
-      task("2");
     }
-  }).definition;
+  ).definition;
 
   expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
@@ -1183,10 +1236,10 @@ test("try { for-of } catch { (maybe) throw } finally { task }", () => {
   const definition = new ExpressStepFunction<
     { items: string[] },
     string | void
-  >(stack, "fn", (input): string | void => {
+  >(stack, "fn", async (input): Promise<string | void> => {
     try {
       for (const item of input.items) {
-        task(item);
+        await task(item);
       }
     } catch (err: any) {
       if (err.message === "you dun' goofed") {
@@ -1195,7 +1248,7 @@ test("try { for-of } catch { (maybe) throw } finally { task }", () => {
     } finally {
       // task should run after both throws
       // for second throw, an error should be re-thrown
-      task("2");
+      await task("2");
     }
   }).definition;
 
@@ -1208,10 +1261,10 @@ test("for-of { try { task() } catch (err) { if(err) throw } finally { task() } }
   const definition = new ExpressStepFunction<
     { items: string[] },
     string | void
-  >(stack, "fn", (input): string | void => {
+  >(stack, "fn", async (input): Promise<string | void> => {
     for (const item of input.items) {
       try {
-        task(item);
+        await task(item);
       } catch (err: any) {
         if (err.message === "you dun' goofed") {
           throw new Error("little");
@@ -1219,7 +1272,7 @@ test("for-of { try { task() } catch (err) { if(err) throw } finally { task() } }
       } finally {
         // task should run after both throws
         // for second throw, an error should be re-thrown
-        task("2");
+        await task("2");
       }
     }
   }).definition;
@@ -1229,10 +1282,10 @@ test("for-of { try { task() } catch (err) { if(err) throw } finally { task() } }
 
 test("while (cond) { cond = task() }", () => {
   const { stack, task } = initStepFunctionApp();
-  const definition = new ExpressStepFunction(stack, "fn", () => {
+  const definition = new ExpressStepFunction(stack, "fn", async () => {
     let cond;
     while (cond === undefined) {
-      cond = task();
+      cond = await task();
     }
   }).definition;
 
@@ -1241,9 +1294,9 @@ test("while (cond) { cond = task() }", () => {
 
 test("while (cond); cond = task()", () => {
   const { stack, task } = initStepFunctionApp();
-  const definition = new ExpressStepFunction(stack, "fn", () => {
+  const definition = new ExpressStepFunction(stack, "fn", async () => {
     let cond;
-    while (cond === undefined) cond = task();
+    while (cond === undefined) cond = await task();
   }).definition;
 
   expect(normalizeDefinition(definition)).toMatchSnapshot();
@@ -1251,10 +1304,10 @@ test("while (cond); cond = task()", () => {
 
 test("let cond; do { cond = task() } while (cond)", () => {
   const { stack, task } = initStepFunctionApp();
-  const definition = new ExpressStepFunction(stack, "fn", () => {
+  const definition = new ExpressStepFunction(stack, "fn", async () => {
     let cond;
     do {
-      cond = task();
+      cond = await task();
     } while (cond === undefined);
   }).definition;
 
@@ -1266,8 +1319,89 @@ test("list.map(item => task(item))", () => {
   const definition = new ExpressStepFunction<
     { list: string[] },
     (number | null)[]
-  >(stack, "fn", (input) => {
-    return input.list.map((item) => task(item));
+  >(stack, "fn", async (input) => {
+    return Promise.all(input.list.map((item) => task(item)));
+  }).definition;
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+});
+
+test("list.filter(item => item.length > 2).map(item => task(item))", () => {
+  const { stack, task } = initStepFunctionApp();
+  const definition = new ExpressStepFunction<
+    { list: string[] },
+    (number | null)[]
+  >(stack, "fn", async (input) => {
+    return Promise.all(
+      input.list.filter((item) => item.length > 2).map((item) => task(item))
+    );
+  }).definition;
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+});
+
+// https://github.com/functionless/functionless/issues/209
+test.skip("`template me ${input.value}`", () => {
+  const { stack } = initStepFunctionApp();
+  const definition = new ExpressStepFunction<{ value: string }, string>(
+    stack,
+    "fn",
+    (input) => {
+      return `template me ${input.value}`;
+    }
+  ).definition;
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+});
+
+// https://github.com/functionless/functionless/issues/209
+test.skip("`template me ${await task(input.value)}`", () => {
+  const { stack, task } = initStepFunctionApp();
+  const definition = new ExpressStepFunction<{ value: string }, string>(
+    stack,
+    "fn",
+    async (input) => {
+      return `template me ${await task(input.value)}`;
+    }
+  ).definition;
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+});
+
+test("list.filter(item => item.length > 2).map(item => item)", () => {
+  const { stack } = initStepFunctionApp();
+  const definition = new ExpressStepFunction<
+    { list: string[] },
+    (string | null)[]
+  >(stack, "fn", async (input) => {
+    return input.list.filter((item) => item.length > 2).map((item) => item);
+  }).definition;
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+});
+
+// https://github.com/functionless/functionless/issues/210
+test.skip("input.list.map((item) => item).filter((item) => item.length > 2)", () => {
+  const { stack } = initStepFunctionApp();
+  const definition = new ExpressStepFunction<
+    { list: string[] },
+    (string | null)[]
+  >(stack, "fn", async (input) => {
+    return input.list.map((item) => item).filter((item) => item.length > 2);
+  }).definition;
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+});
+
+test.skip("await Promise.all(input.list.map((item) => task(item)))).filter", () => {
+  const { stack, task } = initStepFunctionApp();
+  const definition = new ExpressStepFunction<
+    { list: string[] },
+    (number | null)[]
+  >(stack, "fn", async (input) => {
+    return (await Promise.all(input.list.map((item) => task(item)))).filter(
+      (item) => item !== null
+    );
   }).definition;
 
   expect(normalizeDefinition(definition)).toMatchSnapshot();
@@ -1278,14 +1412,16 @@ test("list.map((item, i) => if (i == 0) task(item))", () => {
   const definition = new ExpressStepFunction<
     { list: string[] },
     (number | null)[]
-  >(stack, "fn", (input) => {
-    return input.list.map((item, i) => {
-      if (i === 0) {
-        return task(item);
-      } else {
-        return null;
-      }
-    });
+  >(stack, "fn", async (input) => {
+    return Promise.all(
+      input.list.map(async (item, i) => {
+        if (i === 0) {
+          return task(item);
+        } else {
+          return null;
+        }
+      })
+    );
   }).definition;
 
   expect(normalizeDefinition(definition)).toMatchSnapshot();
@@ -1296,14 +1432,16 @@ test("list.map((item, i, list) => if (i == 0) task(item) else task(list[0]))", (
   const definition = new ExpressStepFunction<
     { list: string[] },
     (number | null)[]
-  >(stack, "fn", (input) => {
-    return input.list.map((item, i) => {
-      if (i === 0) {
-        return task(item);
-      } else {
-        return task(input.list[0]);
-      }
-    });
+  >(stack, "fn", async (input) => {
+    return Promise.all(
+      input.list.map((item, i) => {
+        if (i === 0) {
+          return task(item);
+        } else {
+          return task(input.list[0]);
+        }
+      })
+    );
   }).definition;
 
   expect(normalizeDefinition(definition)).toMatchSnapshot();
@@ -1314,9 +1452,9 @@ test("try { list.map(item => task(item)) }", () => {
   const definition = new ExpressStepFunction<
     { list: string[] },
     (null | number)[] | null
-  >(stack, "fn", (input) => {
+  >(stack, "fn", async (input) => {
     try {
-      return input.list.map((item) => task(item));
+      return await Promise.all(input.list.map((item) => task(item)));
     } catch {
       return null;
     }
@@ -1330,14 +1468,16 @@ test("try { list.map(item => task(item)) }", () => {
   const definition = new ExpressStepFunction<
     { list: string[] },
     (number | null)[]
-  >(stack, "fn", (input) => {
-    return input.list.map((item) => {
-      try {
-        return task(item);
-      } catch {
-        return null;
-      }
-    });
+  >(stack, "fn", async (input) => {
+    return Promise.all(
+      input.list.map((item) => {
+        try {
+          return task(item);
+        } catch {
+          return null;
+        }
+      })
+    );
   }).definition;
 
   expect(normalizeDefinition(definition)).toMatchSnapshot();
@@ -1541,8 +1681,8 @@ test("$SFN.map(list, (item) => task(item))", () => {
   const definition = new ExpressStepFunction<{ list: string[] }, void>(
     stack,
     "fn",
-    (input) => {
-      $SFN.map(input.list, (item) => task(item));
+    async (input) => {
+      await $SFN.map(input.list, async (item) => task(item));
     }
   ).definition;
 
@@ -1554,8 +1694,8 @@ test("result = $SFN.map(list, (item) => task(item))", () => {
   const definition = new ExpressStepFunction<
     { list: string[] },
     (number | null)[]
-  >(stack, "fn", (input) => {
-    const result = $SFN.map(input.list, (item) => task(item));
+  >(stack, "fn", async (input) => {
+    const result = await $SFN.map(input.list, (item) => task(item));
     return result;
   }).definition;
 
@@ -1602,7 +1742,9 @@ test("return $SFN.forEach(list, (item) => task(item))", () => {
     stack,
     "fn",
     (input) => {
-      return $SFN.forEach(input.list, (item) => task(item));
+      return $SFN.forEach(input.list, async (item) => {
+        await task(item);
+      });
     }
   ).definition;
 
@@ -1615,9 +1757,9 @@ test("return $SFN.forEach(list, {maxConcurrency: 2} (item) => task(item))", () =
     stack,
     "fn",
     (input) => {
-      return $SFN.forEach(input.list, { maxConcurrency: 2 }, (item) =>
-        task(item)
-      );
+      return $SFN.forEach(input.list, { maxConcurrency: 2 }, async (item) => {
+        await task(item);
+      });
     }
   ).definition;
 
@@ -1629,8 +1771,8 @@ test("$SFN.forEach(list, (item) => task(item))", () => {
   const definition = new ExpressStepFunction<{ list: string[] }, void>(
     stack,
     "fn",
-    (input) => {
-      $SFN.forEach(input.list, (item) => task(item));
+    async (input) => {
+      await $SFN.forEach(input.list, async (item) => task(item));
     }
   ).definition;
 
@@ -1642,9 +1784,8 @@ test("result = $SFN.forEach(list, (item) => task(item))", () => {
   const definition = new ExpressStepFunction<{ list: string[] }, void>(
     stack,
     "fn",
-    (input) => {
-      const result = $SFN.forEach(input.list, (item) => task(item));
-      return result;
+    async (input) => {
+      return $SFN.forEach(input.list, async (item) => task(item));
     }
   ).definition;
 
@@ -1657,11 +1798,11 @@ test("return $SFN.forEach(list, (item) => try { task(item)) } catch { return nul
     stack,
     "fn",
     (input) => {
-      return $SFN.forEach(input.list, (item) => {
+      return $SFN.forEach(input.list, async (item) => {
         try {
-          return task(item);
+          await task(item);
         } catch {
-          return null;
+          return;
         }
       });
     }
@@ -1677,7 +1818,7 @@ test("try { $SFN.forEach(list, (item) => task(item)) } catch { return null }", (
     "fn",
     (input) => {
       try {
-        return $SFN.forEach(input.list, (item) => task(item));
+        return $SFN.forEach(input.list, async (item) => task(item));
       } catch {
         return null;
       }
@@ -1843,12 +1984,12 @@ test("continue in while loop", () => {
   const definition = new ExpressStepFunction<{ key: string }, void>(
     stack,
     "fn",
-    (input) => {
+    async (input) => {
       while (true) {
         if (input.key === "sam") {
           continue;
         }
-        task(input.key);
+        await task(input.key);
       }
     }
   ).definition;
@@ -1861,12 +2002,12 @@ test("continue in do..while loop", () => {
   const definition = new ExpressStepFunction<{ key: string }, void>(
     stack,
     "fn",
-    (input) => {
+    async (input) => {
       do {
         if (input.key === "sam") {
           continue;
         }
-        task(input.key);
+        await task(input.key);
       } while (true);
     }
   ).definition;
@@ -1874,10 +2015,19 @@ test("continue in do..while loop", () => {
   expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
-test("return task(task())", () => {
+test("return task(await task())", () => {
   const { stack, task } = initStepFunctionApp();
-  const definition = new ExpressStepFunction(stack, "fn", () => {
-    return task(task());
+  const definition = new ExpressStepFunction(stack, "fn", async () => {
+    return task(await task());
+  }).definition;
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+});
+
+test("return await task(await task())", () => {
+  const { stack, task } = initStepFunctionApp();
+  const definition = new ExpressStepFunction(stack, "fn", async () => {
+    return task(await task());
   }).definition;
 
   expect(normalizeDefinition(definition)).toMatchSnapshot();
@@ -1903,10 +2053,10 @@ test("return task(task())", () => {
 
 test("while(true) { try { } catch { wait }", () => {
   const { stack, task } = initStepFunctionApp();
-  const definition = new ExpressStepFunction(stack, "fn", () => {
+  const definition = new ExpressStepFunction(stack, "fn", async () => {
     while (true) {
       try {
-        task();
+        await task();
       } catch {
         $SFN.waitFor(1);
       }
@@ -1923,8 +2073,7 @@ test("call Step Function from another Step Function", () => {
   });
 
   const definition = new ExpressStepFunction(stack, "machine2", () => {
-    const result = machine1({});
-    return result;
+    return machine1({});
   }).definition;
 
   expectTaskToMatch(definition, {
@@ -1941,11 +2090,10 @@ test("call Step Function from another Step Function with name and trace", () => 
   });
 
   const definition = new ExpressStepFunction(stack, "machine2", () => {
-    const result = machine1({
+    return machine1({
       name: "exec1",
       traceHeader: "1",
     });
-    return result;
   }).definition;
 
   expect(normalizeDefinition(definition)).toMatchSnapshot();
@@ -1961,11 +2109,10 @@ test("call Step Function from another Step Function with name and trace from var
     stack,
     "machine2",
     (input: { name: string; header: string }) => {
-      const result = machine1({
+      return machine1({
         name: input.name,
         traceHeader: input.header,
       });
-      return result;
     }
   ).definition;
 
@@ -1983,12 +2130,11 @@ test("call Step Function from another Step Function with input", () => {
   );
 
   const definition = new ExpressStepFunction(stack, "machine2", () => {
-    const result = machine1({
+    return machine1({
       input: {
         value: "hello",
       },
     });
-    return result;
   }).definition;
 
   expect(normalizeDefinition(definition)).toMatchSnapshot();
@@ -2008,12 +2154,11 @@ test("call Step Function from another Step Function with dynamic input", () => {
     { value1: string },
     SyncExecutionResult<string>
   >(stack, "machine2", (input) => {
-    const result = machine1({
+    return machine1({
       input: {
         value: input.value1,
       },
     });
-    return result;
   }).definition;
 
   expect(normalizeDefinition(definition)).toMatchSnapshot();
@@ -2033,10 +2178,9 @@ test("call Step Function from another Step Function with dynamic input field inp
     { value: string },
     SyncExecutionResult<string>
   >(stack, "machine2", (input) => {
-    const result = machine1({
+    return machine1({
       input: input,
     });
-    return result;
   }).definition;
 
   expect(normalizeDefinition(definition)).toMatchSnapshot();
@@ -2063,8 +2207,7 @@ test("call Step Function from another Step Function not supported with reference
               value: input.value1,
             },
           };
-          const result = machine1(_input);
-          return result;
+          return machine1(_input);
         }
       )
   ).toThrow(
@@ -2089,12 +2232,11 @@ test("call Step Function from another Step Function not supported with computed 
         "machine2",
         (input) => {
           const _inputStr = "input";
-          const result = machine1({
+          return machine1({
             [_inputStr]: {
               value: input.value1,
             },
           });
-          return result;
         }
       )
   ).toThrow(
@@ -2123,8 +2265,7 @@ test("call Step Function from another Step Function not supported with spread as
               value: input.value1,
             },
           };
-          const result = machine1({ ..._input });
-          return result;
+          return machine1({ ..._input });
         }
       )
   ).toThrow(
@@ -2143,8 +2284,7 @@ test("call Step Function describe from another Step Function", () => {
   );
 
   const definition = new ExpressStepFunction(stack, "machine2", () => {
-    const result = machine1.describeExecution("hello");
-    return result;
+    return machine1.describeExecution("hello");
   }).definition;
 
   expect(normalizeDefinition(definition)).toMatchSnapshot();
@@ -2164,8 +2304,7 @@ test("call Step Function describe from another Step Function from context", () =
     stack,
     "machine2",
     (input: { id: string }) => {
-      const result = machine1.describeExecution(input.id);
-      return result;
+      return machine1.describeExecution(input.id);
     }
   ).definition;
 

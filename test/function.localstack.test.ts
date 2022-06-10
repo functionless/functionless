@@ -333,7 +333,7 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
         "function",
         localstackClientConfig,
         async () => {
-          bus.putEvents({
+          await bus.putEvents({
             "detail-type": "detail",
             source: "lambda",
             detail: {},
@@ -355,7 +355,7 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
       "function",
       localstackClientConfig,
       async () => {
-        const result = putEvents({
+        const result = await putEvents({
           Entries: [
             {
               EventBusName: bus.eventBusArn,
@@ -383,7 +383,7 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
       "function",
       localstackClientConfig,
       async () => {
-        const result = $AWS.EventBridge.putEvents({
+        const result = await $AWS.EventBridge.putEvents({
           Entries: [
             {
               EventBusName: bus.eventBusArn,
@@ -408,7 +408,7 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
         localstackClientConfig,
         async () => {
           const busbus = bus;
-          busbus.putEvents({
+          await busbus.putEvents({
             "detail-type": "anyDetail",
             source: "anySource",
             detail: {},
@@ -420,7 +420,7 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
   );
 
   test(
-    "Call Lambda AWS SDK integration from destructured object  aa",
+    "Call Lambda AWS SDK integration from destructured object",
     (parent) => {
       const buses = { bus: new EventBus<Event>(parent, "bus") };
       return new Function(
@@ -429,7 +429,7 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
         localstackClientConfig,
         async () => {
           const { bus } = buses;
-          bus.putEvents({
+          await bus.putEvents({
             "detail-type": "anyDetail",
             source: "anySource",
             detail: {},
@@ -453,12 +453,56 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
         "function",
         localstackClientConfig,
         async () => {
-          // TODO should be awaited?
           return func1();
         }
       );
     },
     "hi"
+  );
+
+  test(
+    "Call Lambda invoke client with promise.all",
+    (parent) => {
+      const func1 = new Function<undefined, string>(
+        parent,
+        "func1",
+        async () => "hi"
+      );
+      return new Function(
+        parent,
+        "function",
+        localstackClientConfig,
+        async () => {
+          const promises = [func1(), func1(), func1()];
+          await Promise.all(promises);
+          return "DONE";
+        }
+      );
+    },
+    "DONE"
+  );
+
+  test(
+    "Call Lambda invoke client with chained promises",
+    (parent) => {
+      const func1 = new Function<undefined, string>(
+        parent,
+        "func1",
+        async () => "hi"
+      );
+      return new Function(
+        parent,
+        "function",
+        localstackClientConfig,
+        async () => {
+          await func1()
+            .then(() => func1())
+            .then(() => func1());
+          return "DONE";
+        }
+      );
+    },
+    "DONE"
   );
 
   // https://github.com/functionless/functionless/issues/173
@@ -472,7 +516,6 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
         localstackClientConfig,
         async (count) => {
           if (count === 0) return "hi";
-          // TODO should be awaited?
           return func1 ? func1(count - 1) : "huh";
         }
       );
@@ -501,7 +544,6 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
         localstackClientConfig,
         async (count) => {
           if (count === 0) return "hi";
-          // TODO should be awaited?
           return func2(count);
         }
       );
@@ -524,8 +566,7 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
         "function",
         localstackClientConfig,
         async () => {
-          // TODO should be awaited?
-          func1({});
+          await func1({});
           return "started!";
         }
       );
@@ -546,11 +587,10 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
         "function",
         localstackClientConfig,
         async () => {
-          // TODO should be awaited?
-          const result = func1({});
+          const result = await func1({});
           let status = "RUNNING";
           while (true) {
-            const state = func1.describeExecution(result.executionArn);
+            const state = await func1.describeExecution(result.executionArn);
             status = state.status;
             if (status !== "RUNNING") {
               return state.output;
@@ -579,8 +619,7 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
         "function",
         localstackClientConfig,
         async () => {
-          // TODO should be awaited?
-          const result = func1({});
+          const result = await func1({});
           return result.status === "SUCCEEDED" ? result.output : result.error;
         }
       );
@@ -607,13 +646,13 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
         "function",
         localstackClientConfig,
         async () => {
-          putItem({
+          await putItem({
             TableName: table,
             Item: {
               key: { S: "key" },
             },
           });
-          const item = getItem({
+          const item = await getItem({
             TableName: table,
             Key: {
               key: {
@@ -647,7 +686,7 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
         "function",
         localstackClientConfig,
         async () => {
-          getBus().putEvents({
+          await getBus().putEvents({
             "detail-type": "detail",
             source: "lambda",
             detail: {},
@@ -673,7 +712,7 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
         "function",
         localstackClientConfig,
         async () => {
-          callBus();
+          await callBus();
         }
       );
     },
@@ -696,8 +735,8 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
         "function",
         localstackClientConfig,
         async () => {
-          callBus(true);
-          callBus(false);
+          await callBus(true);
+          await callBus(false);
         }
       );
     },
@@ -720,7 +759,7 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
         "function",
         localstackClientConfig,
         async () => {
-          callBus(false);
+          await callBus(false);
         }
       );
     },
@@ -738,12 +777,12 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
         "function",
         localstackClientConfig,
         async () => {
-          getBus(false).putEvents({
+          await getBus(false).putEvents({
             "detail-type": "detail",
             source: "lambda",
             detail: {},
           });
-          getBus(true).putEvents({
+          await getBus(true).putEvents({
             "detail-type": "detail",
             source: "lambda",
             detail: {},
@@ -765,7 +804,7 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
         "function",
         localstackClientConfig,
         async () => {
-          getBus(false).putEvents({
+          await getBus(false).putEvents({
             "detail-type": "detail",
             source: "lambda",
             detail: {},
@@ -788,7 +827,7 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
         "function",
         localstackClientConfig,
         async () => {
-          getBus().putEvents({
+          await getBus().putEvents({
             "detail-type": "detail",
             source: "lambda",
             detail: {},
@@ -893,8 +932,8 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
           return "hello";
         }
       );
-      const callFunction = () => {
-        const helper = () => `formatted ${func()}`;
+      const callFunction = async () => {
+        const helper = async () => `formatted ${await func()}`;
         return helper();
       };
       return new Function(
@@ -919,11 +958,11 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
           return "hello";
         }
       );
-      const callFunction = (n: number): string => {
+      const callFunction = async (n: number): Promise<string> => {
         if (n === 0) {
           return `${n}`;
         }
-        return callFunction(n - 1) + func();
+        return callFunction(n - 1) + (await func());
       };
       return new Function(
         parent,
