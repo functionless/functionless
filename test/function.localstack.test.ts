@@ -765,7 +765,11 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
         "function",
         localstackClientConfig,
         async () => {
-          getBus(false);
+          getBus(false).putEvents({
+            "detail-type": "detail",
+            source: "lambda",
+            detail: {},
+          });
         }
       );
     },
@@ -853,7 +857,7 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
         return callMe(2, 3);
       }
     );
-  }, 12);
+  }, 7);
 
   test(
     "chained with integration",

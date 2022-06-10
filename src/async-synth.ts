@@ -8,6 +8,6 @@ import { Function } from "./function";
  */
 export const asyncSynth = async (app: App, options?: SynthesisOptions) => {
   await new Promise(setImmediate);
-  await Promise.all(Function.promises);
+  await Promise.allSettled(Function.promises);
   return app.synth(options);
 };

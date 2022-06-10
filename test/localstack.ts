@@ -90,7 +90,7 @@ export const localstackTestSuite = (
 
   const tests: ResourceTest[] = [];
   // will be set in the before all
-  let testContexts: any[];
+  let testContexts: ({ outputs?: Record<string, string> } | { error?: any })[];
 
   const app = new App();
   const stack = new Stack(app, stackName, {
@@ -107,20 +107,30 @@ export const localstackTestSuite = (
       // create the construct on skip to reduce output changes when moving between skip and not skip
       const construct = new Construct(stack, `parent${i}`);
       if (!skip) {
-        const output = resources(construct);
+        const outputOrError = () => {
+          try {
+            return { output: resources(construct) };
+          } catch (e) {
+            return { error: e };
+          }
+        };
+        const { output, error } = outputOrError();
         // Place each output in a cfn output, encoded with the unique address of the construct
         if (output) {
-          return Object.fromEntries(
-            Object.entries(output.outputs).map(([key, value]) => {
-              new CfnOutput(construct, `${key}_out`, {
-                exportName: construct.node.addr + key,
-                value,
-              });
+          return {
+            outputs: Object.fromEntries(
+              Object.entries(output.outputs).map(([key, value]) => {
+                new CfnOutput(construct, `${key}_out`, {
+                  exportName: construct.node.addr + key,
+                  value,
+                });
 
-              return [key, construct.node.addr + key];
-            })
-          );
+                return [key, construct.node.addr + key];
+              })
+            ),
+          };
         }
+        return { error };
       }
       return {};
     });
@@ -147,15 +157,23 @@ export const localstackTestSuite = (
     if (!skip) {
       test(name, () => {
         const context = testContexts[i];
-        const resolvedContext = Object.fromEntries(
-          Object.entries(context).map(([key, value]) => {
-            return [
-              key,
-              stackOutputs?.find((o) => o.ExportName === value)?.OutputValue!,
-            ];
-          })
-        );
-        return testFunc(resolvedContext);
+        if ("error" in context) {
+          throw context.error;
+        } else {
+          const resolvedContext =
+            "outputs" in context && context.outputs
+              ? Object.fromEntries(
+                  Object.entries(context.outputs).map(([key, value]) => {
+                    return [
+                      key,
+                      stackOutputs?.find((o) => o.ExportName === value)
+                        ?.OutputValue!,
+                    ];
+                  })
+                )
+              : {};
+          return testFunc(resolvedContext);
+        }
       });
     } else {
       test.skip(name, () => {});
