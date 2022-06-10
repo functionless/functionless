@@ -23,7 +23,7 @@ Object {
   ],
   "requestTemplates": Object {
     "application/json": "{
-  \\"TableName\\":\\"\${Token[TOKEN.484]}\\",
+  \\"TableName\\":\\"\${Token[TOKEN.491]}\\",
   \\"Key\\":{
     \\"pk\\":{
       \\"S\\":$input.json('$.id')
