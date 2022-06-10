@@ -1,5 +1,5 @@
 import "jest";
-import { aws_apigateway, aws_dynamodb, IResolvable, Stack } from "aws-cdk-lib";
+import { aws_apigateway, aws_dynamodb, Stack } from "aws-cdk-lib";
 import {
   AwsMethod,
   MockMethod,
@@ -22,149 +22,66 @@ beforeEach(() => {
 test("mock integration with object literal", () => {
   const api = new aws_apigateway.RestApi(stack, "API");
 
-  const method = getCfnMethod(
-    new MockMethod(
-      {
-        httpMethod: "GET",
-        resource: api.root,
-      },
-      ($input) => ({
-        statusCode: $input.params("code") as number,
+  const method = new MockMethod(
+    {
+      httpMethod: "GET",
+      resource: api.root,
+    },
+    ($input) => ({
+      statusCode: $input.params("code") as number,
+    }),
+    {
+      200: () => ({
+        response: "OK",
       }),
-      {
-        200: () => ({
-          response: "OK",
-        }),
-        500: () => ({
-          response: "BAD",
-        }),
-      }
-    )
+      500: () => ({
+        response: "BAD",
+      }),
+    }
   );
 
-  expect(method.httpMethod).toEqual("GET");
-  expect(method.integration.requestTemplates).toEqual({
-    "application/json": `{
-  "statusCode":#if($input.params('params').class.name === 'java.lang.String') 
-\"$input.params('params')\" 
-#elseif($input.params('params').class.name === 'java.lang.Integer' || $input.params('params').class.name === 'java.lang.Double' || $input.params('params').class.name === 'java.lang.Boolean') 
-$input.params('params') 
-#else
-#set($context.responseOverride.status = 500)
-#stop
-#end
-}`,
-  });
-  expect(method.integration.integrationResponses).toEqual([
-    <IntegrationResponseProperty>{
-      statusCode: "200",
-      selectionPattern: "^200$",
-      responseTemplates: {
-        "application/json": `{
-  "response":"OK"
-}`,
-      },
-    },
-    <IntegrationResponseProperty>{
-      statusCode: "500",
-      selectionPattern: "^500$",
-      responseTemplates: {
-        "application/json": `{
-  "response":"BAD"
-}`,
-      },
-    },
-  ]);
+  expect(getTemplates(method)).toMatchSnapshot();
 });
 
 test("mock integration with object literal and literal type in pathParameters", () => {
   const api = new aws_apigateway.RestApi(stack, "API");
 
-  const method = getCfnMethod(
-    new MockMethod(
-      {
-        httpMethod: "GET",
-        resource: api.root,
-      },
-      ($input) => ({
-        statusCode: $input.params("code") as number,
+  const method = new MockMethod(
+    {
+      httpMethod: "GET",
+      resource: api.root,
+    },
+    ($input) => ({
+      statusCode: $input.params("code") as number,
+    }),
+    {
+      200: () => ({
+        response: "OK",
       }),
-      {
-        200: () => ({
-          response: "OK",
-        }),
-        500: () => ({
-          response: "BAD",
-        }),
-      }
-    )
+      500: () => ({
+        response: "BAD",
+      }),
+    }
   );
 
-  expect(method.httpMethod).toEqual("GET");
-  expect(method.integration.requestTemplates).toEqual({
-    "application/json": `{
-  \"statusCode\":#if($input.params('params').class.name === 'java.lang.String') 
-\"$input.params('params')\" 
-#elseif($input.params('params').class.name === 'java.lang.Integer' || $input.params('params').class.name === 'java.lang.Double' || $input.params('params').class.name === 'java.lang.Boolean') 
-$input.params('params') 
-#else
-#set($context.responseOverride.status = 500)
-#stop
-#end
-}`,
-  });
-  expect(method.integration.integrationResponses).toEqual([
-    <IntegrationResponseProperty>{
-      statusCode: "200",
-      selectionPattern: "^200$",
-      responseTemplates: {
-        "application/json": `{
-  "response":"OK"
-}`,
-      },
-    },
-    <IntegrationResponseProperty>{
-      statusCode: "500",
-      selectionPattern: "^500$",
-      responseTemplates: {
-        "application/json": `{
-  "response":"BAD"
-}`,
-      },
-    },
-  ]);
+  expect(getTemplates(method)).toMatchSnapshot();
 });
 
 test("AWS integration with Function", () => {
   const api = new aws_apigateway.RestApi(stack, "API");
 
-  const method = getCfnMethod(
-    new AwsMethod(
-      {
-        httpMethod: "GET",
-        resource: api.root,
-      },
-      ($input) => func($input.data.prop),
-      (result) => ({
-        result,
-      })
-    )
+  const method = new AwsMethod(
+    {
+      httpMethod: "GET",
+      resource: api.root,
+    },
+    ($input) => func($input.data.prop),
+    (result) => ({
+      result,
+    })
   );
 
-  expect(method.httpMethod).toEqual("GET");
-  expect(method.integration.requestTemplates).toEqual({
-    "application/json": `$input.json('$.prop')`,
-  });
-  expect(method.integration.integrationResponses).toEqual([
-    <IntegrationResponseProperty>{
-      statusCode: "200",
-      responseTemplates: {
-        "application/json": `{
-  "result":$input.json('$')
-}`,
-      },
-    },
-  ]);
+  expect(getTemplates(method)).toMatchSnapshot();
 });
 
 test("AWS integration with Express Step Function", () => {
@@ -178,71 +95,33 @@ test("AWS integration with Express Step Function", () => {
     return "done";
   });
 
-  const method = getCfnMethod(
-    new AwsMethod(
-      {
-        httpMethod: "GET",
-        resource: api.root,
-      },
-      (
-        $input: ApiGatewayInput<{
-          query: Request;
-        }>
-      ) =>
-        sfn({
-          input: {
-            num: $input.params("num"),
-            str: $input.params("str"),
-          },
-        }),
-      ($input, $context) => {
-        if ($input.data.status === "SUCCEEDED") {
-          return $input.data.output;
-        } else {
-          $context.responseOverride.status = 500;
-          return $input.data.error;
-        }
+  const method = new AwsMethod(
+    {
+      httpMethod: "GET",
+      resource: api.root,
+    },
+    (
+      $input: ApiGatewayInput<{
+        query: Request;
+      }>
+    ) =>
+      sfn({
+        input: {
+          num: $input.params("num"),
+          str: $input.params("str"),
+        },
+      }),
+    ($input, $context) => {
+      if ($input.data.status === "SUCCEEDED") {
+        return $input.data.output;
+      } else {
+        $context.responseOverride.status = 500;
+        return $input.data.error;
       }
-    )
+    }
   );
 
-  expect(method.httpMethod).toEqual("GET");
-  expect(method.integration.requestTemplates).toEqual({
-    "application/json": `{
-\"input\":{
-  \"num\":#if($input.params('params').class.name === 'java.lang.String') 
-\"$input.params('params')\" 
-#elseif($input.params('params').class.name === 'java.lang.Integer' || $input.params('params').class.name === 'java.lang.Double' || $input.params('params').class.name === 'java.lang.Boolean') 
-$input.params('params') 
-#else
-#set($context.responseOverride.status = 500)
-#stop
-#end,
-  \"str\":#if($input.params('params').class.name === 'java.lang.String') 
-\"$input.params('params')\" 
-#elseif($input.params('params').class.name === 'java.lang.Integer' || $input.params('params').class.name === 'java.lang.Double' || $input.params('params').class.name === 'java.lang.Boolean') 
-$input.params('params') 
-#else
-#set($context.responseOverride.status = 500)
-#stop
-#end
-}
-}`,
-  });
-  expect(method.integration.integrationResponses).toEqual([
-    <IntegrationResponseProperty>{
-      statusCode: "200",
-      responseTemplates: {
-        "application/json": `#set($v1 = $inputRoot.data.status == 'SUCCEEDED')
-#if($v1)
-$input.json('$.output')
-#else
-#set($context.responseOverride.status = 500)
-$input.json('$.error')
-#end`,
-      },
-    },
-  ]);
+  expect(getTemplates(method)).toMatchSnapshot();
 });
 
 test("AWS integration with DynamoDB Table", () => {
@@ -256,98 +135,52 @@ test("AWS integration with DynamoDB Table", () => {
     })
   );
 
-  const method = getCfnMethod(
-    new AwsMethod(
-      {
-        httpMethod: "POST",
-        resource: api.root,
-      },
-      (
-        $input: ApiGatewayInput<{
-          body: {
-            id: string;
-          };
-        }>
-      ) =>
-        $AWS.DynamoDB.GetItem({
-          TableName: table,
-          Key: {
-            pk: {
-              S: $input.data.id,
-            },
+  const method = new AwsMethod(
+    {
+      httpMethod: "POST",
+      resource: api.root,
+    },
+    (
+      $input: ApiGatewayInput<{
+        body: {
+          id: string;
+        };
+      }>
+    ) =>
+      $AWS.DynamoDB.GetItem({
+        TableName: table,
+        Key: {
+          pk: {
+            S: $input.data.id,
           },
-        }),
-      ($input, $context) => {
-        if ($input.data.Item !== undefined) {
-          return {
-            data: $input.data.Item,
-          };
-        } else {
-          $context.responseOverride.status = 404;
-          return {
-            requestId: $context.requestId,
-            missing: true,
-          };
-        }
+        },
+      }),
+    ($input, $context) => {
+      if ($input.data.Item !== undefined) {
+        return {
+          data: $input.data.Item,
+        };
+      } else {
+        $context.responseOverride.status = 404;
+        return {
+          requestId: $context.requestId,
+          missing: true,
+        };
       }
-    )
+    }
   );
 
-  expect(method.httpMethod).toEqual("POST");
-  expect(method.integration.requestTemplates).toEqual({
-    "application/json": `{
-  "TableName":"${table.resource.tableName}",
-  "Key":{
-    "pk":{
-      "S":$input.json('$.id')
-    }
-  }
-}`,
-  });
-  expect(method.integration.integrationResponses).toEqual([
-    <IntegrationResponseProperty>{
-      statusCode: "200",
-      responseTemplates: {
-        "application/json": `#set($v1 = $inputRoot.data.Item != $null)
-#if($v1)
-{
-  "data":$input.json('$.Item')
-}
-#else
-#set($context.responseOverride.status = 404)
-{
-  "requestId":$input.json('$.requestId'),
-  "missing":true
-}
-#end`,
-      },
-    },
-  ]);
+  expect(getTemplates(method)).toMatchSnapshot();
 });
 
-type CfnIntegration = Exclude<
-  aws_apigateway.CfnMethod["integration"],
-  IResolvable | undefined
-> & {
-  integrationResponses: IntegrationResponseProperty[];
-};
-
-interface IntegrationResponseProperty {
-  readonly contentHandling?: string;
-  readonly responseParameters?: {
-    [key: string]: string;
+function getTemplates(integration: { method: aws_apigateway.Method }) {
+  const m = integration.method.node.findChild(
+    "Resource"
+  ) as aws_apigateway.CfnMethod & {
+    integration: aws_apigateway.CfnMethod.IntegrationProperty;
   };
-  readonly responseTemplates?: {
-    [key: string]: string;
+  return {
+    requestTemplates: m.integration.requestTemplates,
+    integrationResponses: m.integration.integrationResponses,
   };
-  readonly selectionPattern?: string;
-  readonly statusCode: string;
-}
-
-function getCfnMethod(integration: {
-  method: aws_apigateway.Method;
-}): aws_apigateway.CfnMethod & {
-  integration: CfnIntegration;
-} {
-  return integration.method.node.findChild("Resource") as any;
 }

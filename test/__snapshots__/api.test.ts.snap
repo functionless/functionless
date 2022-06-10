@@ -1,0 +1,176 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`AWS integration with DynamoDB Table 1`] = `
+Object {
+  "integrationResponses": Array [
+    Object {
+      "responseTemplates": Object {
+        "application/json": "#set($v1 = $input.path('$').data.Item != $null)
+#if($v1)
+{
+  \\"data\\":$input.json('$.Item')
+}
+#else
+#set($context.responseOverride.status = 404)
+{
+  \\"requestId\\":$input.json('$.requestId'),
+  \\"missing\\":true
+}
+#end",
+      },
+      "statusCode": "200",
+    },
+  ],
+  "requestTemplates": Object {
+    "application/json": "{
+  \\"TableName\\":\\"\${Token[TOKEN.484]}\\",
+  \\"Key\\":{
+    \\"pk\\":{
+      \\"S\\":$input.json('$.id')
+    }
+  }
+}",
+  },
+}
+`;
+
+exports[`AWS integration with Express Step Function 1`] = `
+Object {
+  "integrationResponses": Array [
+    Object {
+      "responseTemplates": Object {
+        "application/json": "#set($v1 = $input.path('$').data.status == 'SUCCEEDED')
+#if($v1)
+$input.json('$.output')
+#else
+#set($context.responseOverride.status = 500)
+$input.json('$.error')
+#end",
+      },
+      "statusCode": "200",
+    },
+  ],
+  "requestTemplates": Object {
+    "application/json": "{
+\\"input\\":{
+  \\"num\\":#if($input.params('params') == $null)
+null
+#elseif($input.params('params').class.name === 'java.lang.String') 
+\\"$input.params('params')\\" 
+#elseif($input.params('params').class.name === 'java.lang.Integer' || $input.params('params').class.name === 'java.lang.Double' || $input.params('params').class.name === 'java.lang.Boolean') 
+$input.params('params') 
+#else
+#set($context.responseOverride.status = 500)
+#stop
+#end,
+  \\"str\\":#if($input.params('params') == $null)
+null
+#elseif($input.params('params').class.name === 'java.lang.String') 
+\\"$input.params('params')\\" 
+#elseif($input.params('params').class.name === 'java.lang.Integer' || $input.params('params').class.name === 'java.lang.Double' || $input.params('params').class.name === 'java.lang.Boolean') 
+$input.params('params') 
+#else
+#set($context.responseOverride.status = 500)
+#stop
+#end
+}
+}",
+  },
+}
+`;
+
+exports[`AWS integration with Function 1`] = `
+Object {
+  "integrationResponses": Array [
+    Object {
+      "responseTemplates": Object {
+        "application/json": "{
+  \\"result\\":$input.json('$')
+}",
+      },
+      "statusCode": "200",
+    },
+  ],
+  "requestTemplates": Object {
+    "application/json": "$input.json('$.prop')",
+  },
+}
+`;
+
+exports[`mock integration with object literal 1`] = `
+Object {
+  "integrationResponses": Array [
+    Object {
+      "responseTemplates": Object {
+        "application/json": "{
+  \\"response\\":\\"OK\\"
+}",
+      },
+      "selectionPattern": "^200$",
+      "statusCode": "200",
+    },
+    Object {
+      "responseTemplates": Object {
+        "application/json": "{
+  \\"response\\":\\"BAD\\"
+}",
+      },
+      "selectionPattern": "^500$",
+      "statusCode": "500",
+    },
+  ],
+  "requestTemplates": Object {
+    "application/json": "{
+  \\"statusCode\\":#if($input.params('params') == $null)
+null
+#elseif($input.params('params').class.name === 'java.lang.String') 
+\\"$input.params('params')\\" 
+#elseif($input.params('params').class.name === 'java.lang.Integer' || $input.params('params').class.name === 'java.lang.Double' || $input.params('params').class.name === 'java.lang.Boolean') 
+$input.params('params') 
+#else
+#set($context.responseOverride.status = 500)
+#stop
+#end
+}",
+  },
+}
+`;
+
+exports[`mock integration with object literal and literal type in pathParameters 1`] = `
+Object {
+  "integrationResponses": Array [
+    Object {
+      "responseTemplates": Object {
+        "application/json": "{
+  \\"response\\":\\"OK\\"
+}",
+      },
+      "selectionPattern": "^200$",
+      "statusCode": "200",
+    },
+    Object {
+      "responseTemplates": Object {
+        "application/json": "{
+  \\"response\\":\\"BAD\\"
+}",
+      },
+      "selectionPattern": "^500$",
+      "statusCode": "500",
+    },
+  ],
+  "requestTemplates": Object {
+    "application/json": "{
+  \\"statusCode\\":#if($input.params('params') == $null)
+null
+#elseif($input.params('params').class.name === 'java.lang.String') 
+\\"$input.params('params')\\" 
+#elseif($input.params('params').class.name === 'java.lang.Integer' || $input.params('params').class.name === 'java.lang.Double' || $input.params('params').class.name === 'java.lang.Boolean') 
+$input.params('params') 
+#else
+#set($context.responseOverride.status = 500)
+#stop
+#end
+}",
+  },
+}
+`;
