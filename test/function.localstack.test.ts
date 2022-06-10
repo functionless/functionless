@@ -53,12 +53,8 @@ interface TestFunctionResource {
 }
 
 localstackTestSuite("functionStack", (testResource, _stack, _app) => {
-  const testFunctionResource: TestFunctionResource = (
-    name,
-    func,
-    expected,
-    payload
-  ) => {
+  // by naming this `test` the jest vscode extension gives the debug option
+  const test: TestFunctionResource = (name, func, expected, payload) => {
     testResource(
       name,
       (parent) => {
@@ -83,14 +79,14 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
     );
   };
 
-  testFunctionResource.skip = (name, _func, _expected, _payload?) =>
+  test.skip = (name, _func, _expected, _payload?) =>
     testResource.skip(
       name,
       () => {},
       async () => {}
     );
 
-  testFunctionResource(
+  test(
     "Call Lambda",
     (parent) => {
       return new Function(
@@ -105,7 +101,7 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
     {}
   );
 
-  testFunctionResource(
+  test(
     "Call Lambda from closure",
     (parent) => {
       const create = () =>
@@ -123,7 +119,7 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
     {}
   );
 
-  testFunctionResource(
+  test(
     "Call Lambda from closure with variables",
     (parent) => {
       const create = () => {
@@ -143,7 +139,7 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
     "a"
   );
 
-  testFunctionResource(
+  test(
     "Call Lambda from closure with parameter",
     (parent) => {
       const create = (val: string) => {
@@ -173,39 +169,35 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
     );
   };
 
-  testFunctionResource(
+  test(
     "Call Lambda from closure with parameter using the same method",
     (parent) => create(parent, "func6", "c"),
     "c"
   );
 
-  testFunctionResource(
+  test(
     "Call Lambda from closure with parameter using the same method part 2",
     (parent) => create(parent, "func7", "d"),
     "d"
   );
 
-  testFunctionResource(
-    "Call Lambda with object",
-    (parent) => {
-      const create = () => {
-        const obj = { val: 1 };
-        return new Function(
-          parent,
-          "function",
-          {
-            timeout: Duration.seconds(20),
-          },
-          async () => obj.val
-        );
-      };
+  test("Call Lambda with object", (parent) => {
+    const create = () => {
+      const obj = { val: 1 };
+      return new Function(
+        parent,
+        "function",
+        {
+          timeout: Duration.seconds(20),
+        },
+        async () => obj.val
+      );
+    };
 
-      return create();
-    },
-    1
-  );
+    return create();
+  }, 1);
 
-  testFunctionResource(
+  test(
     "Call Lambda with math",
     (parent) =>
       new Function(
@@ -223,7 +215,7 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
     5
   );
 
-  testFunctionResource(
+  test(
     "Call Lambda payload",
     (parent) =>
       new Function(
@@ -240,7 +232,7 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
     { val: "hi" }
   );
 
-  testFunctionResource(
+  test(
     "Call Lambda throw error",
     (parent) =>
       new Function(
@@ -256,7 +248,7 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
     { errorMessage: "AHHHHHHHHH", errorType: "Error" }
   );
 
-  testFunctionResource(
+  test(
     "Call Lambda return arns",
     (parent) => {
       return new Function(
@@ -273,7 +265,7 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
     (context) => context.function
   );
 
-  testFunctionResource(
+  test(
     "Call Lambda return arns",
     (parent) => {
       const bus = new EventBus(parent, "bus");
@@ -300,7 +292,7 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
     (context) => `${context.bus} ${context.busbus}`
   );
 
-  testFunctionResource(
+  test(
     "templated tokens",
     (parent) => {
       const token = Token.asString("hello");
@@ -318,25 +310,21 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
     "hello stuff"
   );
 
-  testFunctionResource(
-    "numeric tokens",
-    (parent) => {
-      const token = Token.asNumber(1);
-      return new Function(
-        parent,
-        "function",
-        {
-          timeout: Duration.seconds(20),
-        },
-        async () => {
-          return token;
-        }
-      );
-    },
-    1
-  );
+  test("numeric tokens", (parent) => {
+    const token = Token.asNumber(1);
+    return new Function(
+      parent,
+      "function",
+      {
+        timeout: Duration.seconds(20),
+      },
+      async () => {
+        return token;
+      }
+    );
+  }, 1);
 
-  testFunctionResource(
+  test(
     "Call Lambda put events",
     (parent) => {
       const bus = new EventBus(parent, "bus");
@@ -356,69 +344,61 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
     null
   );
 
-  testFunctionResource(
-    "Call Lambda AWS SDK put event to bus with reference",
-    (parent) => {
-      const bus = new EventBus<any>(parent, "bus");
+  test("Call Lambda AWS SDK put event to bus with reference", (parent) => {
+    const bus = new EventBus<any>(parent, "bus");
 
-      // Necessary to keep the bundle small and stop the test from failing.
-      // See https://github.com/functionless/functionless/pull/122
-      const putEvents = $AWS.EventBridge.putEvents;
-      const func = new Function(
-        parent,
-        "function",
-        localstackClientConfig,
-        async () => {
-          const result = putEvents({
-            Entries: [
-              {
-                EventBusName: bus.eventBusArn,
-                Source: "MyEvent",
-                DetailType: "DetailType",
-                Detail: "{}",
-              },
-            ],
-          });
-          return result.FailedEntryCount;
-        }
-      );
+    // Necessary to keep the bundle small and stop the test from failing.
+    // See https://github.com/functionless/functionless/pull/122
+    const putEvents = $AWS.EventBridge.putEvents;
+    const func = new Function(
+      parent,
+      "function",
+      localstackClientConfig,
+      async () => {
+        const result = putEvents({
+          Entries: [
+            {
+              EventBusName: bus.eventBusArn,
+              Source: "MyEvent",
+              DetailType: "DetailType",
+              Detail: "{}",
+            },
+          ],
+        });
+        return result.FailedEntryCount;
+      }
+    );
 
-      bus.bus.grantPutEventsTo(func.resource);
+    bus.bus.grantPutEventsTo(func.resource);
 
-      return func;
-    },
-    0
-  );
+    return func;
+  }, 0);
 
   // See https://github.com/functionless/functionless/pull/122
-  testFunctionResource.skip(
-    "Call Lambda AWS SDK put event to bus without reference",
-    (parent) => {
-      const bus = new EventBus<Event>(parent, "bus");
+  test.skip("Call Lambda AWS SDK put event to bus without reference", (parent) => {
+    const bus = new EventBus<Event>(parent, "bus");
 
-      return new Function(
-        parent,
-        "function",
-        localstackClientConfig,
-        async () => {
-          const result = $AWS.EventBridge.putEvents({
-            Entries: [
-              {
-                EventBusName: bus.eventBusArn,
-                Source: "MyEvent",
-                DetailType: "DetailType",
-                Detail: "{}",
-              },
-            ],
-          });
-          return result.FailedEntryCount;
-        }
-      );
-    },
-    0
-  );
+    return new Function(
+      parent,
+      "function",
+      localstackClientConfig,
+      async () => {
+        const result = $AWS.EventBridge.putEvents({
+          Entries: [
+            {
+              EventBusName: bus.eventBusArn,
+              Source: "MyEvent",
+              DetailType: "DetailType",
+              Detail: "{}",
+            },
+          ],
+        });
+        return result.FailedEntryCount;
+      }
+    );
+  }, 0);
 
-  testFunctionResource(
+  test(
     "Call Lambda AWS SDK put event to bus with in closure reference",
     (parent) => {
       const bus = new EventBus<Event>(parent, "bus");
@@ -439,7 +419,7 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
     null
   );
 
-  testFunctionResource(
+  test(
     "Call Lambda AWS SDK integration from destructured object  aa",
     (parent) => {
       const buses = { bus: new EventBus<Event>(parent, "bus") };
@@ -460,49 +440,7 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
     null
   );
 
-  test("should not create new resources in lambda", async () => {
-    await expect(
-      async () => {
-        const stack = new Stack();
-        new Function(
-          stack,
-          "function",
-          {
-            timeout: Duration.seconds(20),
-          },
-          async () => {
-            const bus = new aws_events.EventBus(stack, "busbus");
-            return bus.eventBusArn;
-          }
-        );
-        await Promise.all(Function.promises);
-      }
-      // TODO: add error message
-    ).rejects.toThrow();
-  });
-
-  test("should not create new functionless resources in lambda", async () => {
-    await expect(
-      async () => {
-        const stack = new Stack();
-        new Function(
-          stack,
-          "function",
-          {
-            timeout: Duration.seconds(20),
-          },
-          async () => {
-            const bus = new EventBus(stack, "busbus");
-            return bus.eventBusArn;
-          }
-        );
-        await Promise.all(Function.promises);
-      }
-      // TODO: add error message
-    ).rejects.toThrow();
-  });
-
-  testFunctionResource(
+  test(
     "Call Lambda invoke client",
     (parent) => {
       const func1 = new Function<undefined, string>(
@@ -524,7 +462,7 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
   );
 
   // https://github.com/functionless/functionless/issues/173
-  testFunctionResource.skip(
+  test.skip(
     "Call Self",
     (parent) => {
       let func1: Function<number, string> | undefined;
@@ -545,7 +483,7 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
   );
 
   // https://github.com/functionless/functionless/issues/173
-  testFunctionResource.skip(
+  test.skip(
     "Call Self",
     (parent) => {
       let func1: Function<number, string> | undefined;
@@ -573,7 +511,7 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
     2
   );
 
-  testFunctionResource(
+  test(
     "step function integration",
     (parent) => {
       const func1 = new StepFunction<undefined, string>(
@@ -595,7 +533,7 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
     "started!"
   );
 
-  testFunctionResource(
+  test(
     "step function integration and wait for completion",
     (parent) => {
       const func1 = new StepFunction<undefined, string>(
@@ -628,7 +566,7 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
 
   // Localstack doesn't support start sync
   // https://github.com/localstack/localstack/issues/5258
-  testFunctionResource.skip(
+  test.skip(
     "express step function integration",
     (parent) => {
       const func1 = new ExpressStepFunction<undefined, string>(
@@ -650,7 +588,7 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
     "hi"
   );
 
-  testFunctionResource(
+  test(
     "dynamo integration get",
     (parent) => {
       const table = new Table<{ key: string }, "key">(
@@ -690,6 +628,310 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
     },
     "key"
   );
+
+  /**
+   * Higher Order Function Tests
+   *
+   * Referencing integrations from methods outside of the closure.
+   *
+   * https://github.com/functionless/functionless/issues/148
+   */
+
+  test(
+    "use method with closure",
+    (parent) => {
+      const bus = new EventBus(parent, "bus");
+      const getBus = () => bus;
+      return new Function(
+        parent,
+        "function",
+        localstackClientConfig,
+        async () => {
+          getBus().putEvents({
+            "detail-type": "detail",
+            source: "lambda",
+            detail: {},
+          });
+        }
+      );
+    },
+    null
+  );
+
+  test(
+    "use method with call",
+    (parent) => {
+      const bus = new EventBus(parent, "bus");
+      const callBus = () =>
+        bus.putEvents({
+          "detail-type": "detail",
+          source: "lambda",
+          detail: {},
+        });
+      return new Function(
+        parent,
+        "function",
+        localstackClientConfig,
+        async () => {
+          callBus();
+        }
+      );
+    },
+    null
+  );
+
+  test(
+    "use dynamic method with call",
+    (parent) => {
+      const bus = new EventBus(parent, "bus");
+      const bus2 = new EventBus(parent, "bus2");
+      const callBus = (bool: boolean) =>
+        (bool ? bus : bus2).putEvents({
+          "detail-type": "detail",
+          source: "lambda",
+          detail: {},
+        });
+      return new Function(
+        parent,
+        "function",
+        localstackClientConfig,
+        async () => {
+          callBus(true);
+          callBus(false);
+        }
+      );
+    },
+    null
+  );
+
+  test(
+    "use dynamic method with call once",
+    (parent) => {
+      const bus = new EventBus(parent, "bus");
+      const bus2 = new EventBus(parent, "bus2");
+      const callBus = (bool: boolean) =>
+        (bool ? bus : bus2).putEvents({
+          "detail-type": "detail",
+          source: "lambda",
+          detail: {},
+        });
+      return new Function(
+        parent,
+        "function",
+        localstackClientConfig,
+        async () => {
+          callBus(false);
+        }
+      );
+    },
+    null
+  );
+
+  test(
+    "use dynamic method",
+    (parent) => {
+      const bus = new EventBus(parent, "bus");
+      const bus2 = new EventBus(parent, "bus2");
+      const getBus = (bool: boolean) => (bool ? bus : bus2);
+      return new Function(
+        parent,
+        "function",
+        localstackClientConfig,
+        async () => {
+          getBus(false).putEvents({
+            "detail-type": "detail",
+            source: "lambda",
+            detail: {},
+          });
+          getBus(true).putEvents({
+            "detail-type": "detail",
+            source: "lambda",
+            detail: {},
+          });
+        }
+      );
+    },
+    null
+  );
+
+  test(
+    "use dynamic method don't call",
+    (parent) => {
+      const bus = new EventBus(parent, "bus");
+      const bus2 = new EventBus(parent, "bus2");
+      const getBus = (bool: boolean) => (bool ? bus : bus2);
+      return new Function(
+        parent,
+        "function",
+        localstackClientConfig,
+        async () => {
+          getBus(false);
+        }
+      );
+    },
+    null
+  );
+
+  /**
+   * This should fail?
+   */
+  test(
+    "method with new ",
+    (parent) => {
+      const getBus = () => new EventBus(parent, "bus");
+      return new Function(
+        parent,
+        "function",
+        localstackClientConfig,
+        async () => {
+          getBus().putEvents({
+            "detail-type": "detail",
+            source: "lambda",
+            detail: {},
+          });
+        }
+      );
+    },
+    null
+  );
+
+  test("method with no integration ", (parent) => {
+    const mathStuff = (a: number, b: number) => a + b;
+    return new Function(
+      parent,
+      "function",
+      localstackClientConfig,
+      async () => {
+        return mathStuff(1, 2);
+      }
+    );
+  }, 3);
+
+  test("chained methods", (parent) => {
+    const mathStuff = (a: number, b: number) => a + b;
+    const mathStuff2 = (a: number, b: number) => a + mathStuff(a, b);
+    return new Function(
+      parent,
+      "function",
+      localstackClientConfig,
+      async () => {
+        return mathStuff2(1, 2);
+      }
+    );
+  }, 4);
+
+  test("recursion", (parent) => {
+    const mult = (a: number, b: number): number => {
+      if (b <= 0) {
+        return 1;
+      }
+      return a * mult(a, b - 1);
+    };
+    return new Function(
+      parent,
+      "function",
+      localstackClientConfig,
+      async () => {
+        return mult(2, 3);
+      }
+    );
+  }, 8);
+
+  test("nested closured methods", (parent) => {
+    const callMe = (a: number, b: number): number => {
+      const helper = () => {
+        return a * 2;
+      };
+
+      return helper() + b;
+    };
+    return new Function(
+      parent,
+      "function",
+      localstackClientConfig,
+      async () => {
+        return callMe(2, 3);
+      }
+    );
+  }, 12);
+
+  test(
+    "chained with integration",
+    (parent) => {
+      const func = new Function<undefined, string>(
+        parent,
+        "func2",
+        async () => {
+          return "hello";
+        }
+      );
+      const callFunction = () => func();
+      const callFunction2 = () => callFunction();
+      return new Function(
+        parent,
+        "function",
+        localstackClientConfig,
+        async () => {
+          return callFunction2();
+        }
+      );
+    },
+    "hello"
+  );
+
+  test(
+    "nested with integration",
+    (parent) => {
+      const func = new Function<undefined, string>(
+        parent,
+        "func2",
+        async () => {
+          return "hello";
+        }
+      );
+      const callFunction = () => {
+        const helper = () => `formatted ${func()}`;
+        return helper();
+      };
+      return new Function(
+        parent,
+        "function",
+        localstackClientConfig,
+        async () => {
+          return callFunction();
+        }
+      );
+    },
+    "formatted hello"
+  );
+
+  test(
+    "recursion with integration",
+    (parent) => {
+      const func = new Function<undefined, string>(
+        parent,
+        "func2",
+        async () => {
+          return "hello";
+        }
+      );
+      const callFunction = (n: number): string => {
+        if (n === 0) {
+          return `${n}`;
+        }
+        return callFunction(n - 1) + func();
+      };
+      return new Function(
+        parent,
+        "function",
+        localstackClientConfig,
+        async () => {
+          return callFunction(3);
+        }
+      );
+    },
+    "0hellohellohello"
+  );
 });
 
 const testFunction = async (
@@ -708,3 +950,45 @@ const testFunction = async (
     result.Payload ? JSON.parse(result.Payload.toString()) : undefined
   ).toEqual(expected);
 };
+
+test("should not create new resources in lambda", async () => {
+  await expect(
+    async () => {
+      const stack = new Stack();
+      new Function(
+        stack,
+        "function",
+        {
+          timeout: Duration.seconds(20),
+        },
+        async () => {
+          const bus = new aws_events.EventBus(stack, "busbus");
+          return bus.eventBusArn;
+        }
+      );
+      await Promise.all(Function.promises);
+    }
+    // TODO: add error message
+  ).rejects.toThrow();
+});
+
+test("should not create new functionless resources in lambda", async () => {
+  await expect(
+    async () => {
+      const stack = new Stack();
+      new Function(
+        stack,
+        "function",
+        {
+          timeout: Duration.seconds(20),
+        },
+        async () => {
+          const bus = new EventBus(stack, "busbus");
+          return bus.eventBusArn;
+        }
+      );
+      await Promise.all(Function.promises);
+    }
+    // TODO: add error message
+  ).rejects.toThrow();
+});
