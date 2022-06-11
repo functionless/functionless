@@ -3,14 +3,23 @@
  */
 export class SynthError extends Error {
   constructor(readonly code: ErrorCode, message: string) {
-    super(`${message} ${formatErrorUrl(code)}`);
+    super(formatErrorMessage(code, message));
   }
 }
+const baseUrl = process.env.FUNCTIONLESS_LOCAL
+  ? `http://localhost:3000`
+  : `https://functionless.org`;
+
+export const formatErrorMessage = (code: ErrorCode, messageText?: string) => `${
+  messageText ?? code.messageText
+}
+
+${formatErrorUrl(code)}`;
 
 const formatErrorUrl = (code: ErrorCode) => {
-  return `https://functionless.org/docs/error-codes/#${code.messageText
+  return `${baseUrl}/docs/error-codes#${code.messageText
     .toLowerCase()
-    .replace(/\s+/g, "-")}`;
+    .replace(/\s/g, "-")}`;
 };
 
 export interface ErrorCode {
