@@ -44,7 +44,8 @@ export interface EventTransformUtils {
  * @see Rule.map for more details on transforming event details.
  *
  * @typeParam - Evnt - The event type from the {@link Rule}.
- * @typeParam - OutEvnt - The narrowed event type after the transform is applied.
+ * @typeParam - Out - The narrowed event type after the transform is applied.
+ * @typeParam - OutEvnt - Covariant form of {@link Evnt}. Should be inferred.
  */
 export class EventTransform<in Evnt extends Event, out Out, out OutEvnt extends Evnt = Evnt> {
   readonly targetInput: aws_events.RuleTargetInput;
@@ -54,7 +55,7 @@ export class EventTransform<in Evnt extends Event, out Out, out OutEvnt extends 
    */
   public static readonly FunctionlessType = "EventTransform";
 
-  constructor(func: EventTransformFunction<Evnt, Out>, readonly rule: IRule<any, OutEvnt>) {
+  constructor(func: EventTransformFunction<Evnt, Out>, readonly rule: IRule<OutEvnt>) {
     const decl = func as unknown as FunctionDecl;
     this.targetInput = synthesizeEventBridgeTargets(decl);
   }

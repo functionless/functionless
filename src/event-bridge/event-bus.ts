@@ -125,11 +125,11 @@ export interface IEventBusFilterable<in Evnt extends Event, out OutEvnt extends 
 
 /**
  * @typeParam Evnt - the union type of events that this EventBus can accept.
- *                   `Evnt` is the covariant version of `OutEvnt` in that
+ *                   `Evnt` is the contravariant version of `OutEvnt` in that
  *                   the bus will accept any of `Evnt` while the EventBus can
  *                   emit any of `OutEvnt`.
  * @typeParam OutEvnt - the union type of events that this EventBus will emit through rules.
- *                      `OutEvnt` is the contravariant version of `Evnt` in that
+ *                      `OutEvnt` is the covariant version of `Evnt` in that
  *                      the bus will emit any of `OutEvnt` while the EventBus can
  *                      can accept any of `Evnt`. This type parameter should be left
  *                      empty to be inferred. ex: `EventBus<Event<Detail1> | Event<Detail2>>`.
@@ -196,11 +196,11 @@ export interface IEventBus<in Evnt extends Event = Event, OutEvnt extends Evnt =
 
 /**
  * @typeParam Evnt - the union type of events that this EventBus can accept.
- *                   `Evnt` is the covariant version of `OutEvnt` in that
+ *                   `Evnt` is the contravariant version of `OutEvnt` in that
  *                   the bus will accept any of `Evnt` while the EventBus can
  *                   emit any of `OutEvnt`.
  * @typeParam OutEvnt - the union type of events that this EventBus will emit through rules.
- *                      `OutEvnt` is the contravariant version of `Evnt` in that
+ *                      `OutEvnt` is the covariant version of `Evnt` in that
  *                      the bus will emit any of `OutEvnt` while the EventBus can
  *                      can accept any of `Evnt`. This type parameter should be left
  *                      empty to be inferred. ex: `EventBus<Event<Detail1> | Event<Detail2>>`.
@@ -485,11 +485,11 @@ export type PutEventInput<Evnt extends Event> = Partial<Evnt> &
  * ```
  *
  * @typeParam Evnt - the union type of events that this EventBus can accept.
- *                   `Evnt` is the covariant version of `OutEvnt` in that
+ *                   `Evnt` is the contravariant version of `OutEvnt` in that
  *                   the bus will accept any of `Evnt` while the EventBus can
  *                   emit any of `OutEvnt`.
  * @typeParam OutEvnt - the union type of events that this EventBus will emit through rules.
- *                      `OutEvnt` is the contravariant version of `Evnt` in that
+ *                      `OutEvnt` is the covariant version of `Evnt` in that
  *                      the bus will emit any of `OutEvnt` while the EventBus can
  *                      can accept any of `Evnt`. This type parameter should be left
  *                      empty to be inferred. ex: `EventBus<Event<Detail1> | Event<Detail2>>`.
@@ -558,11 +558,11 @@ export class EventBus<in Evnt extends Event, out OutEvnt extends Evnt = Evnt> ex
 
 /**
  * @typeParam Evnt - the union type of events that this EventBus can accept.
- *                   `Evnt` is the covariant version of `OutEvnt` in that
+ *                   `Evnt` is the contravariant version of `OutEvnt` in that
  *                   the bus will accept any of `Evnt` while the EventBus can
  *                   emit any of `OutEvnt`.
  * @typeParam OutEvnt - the union type of events that this EventBus will emit through rules.
- *                      `OutEvnt` is the contravariant version of `Evnt` in that
+ *                      `OutEvnt` is the covariant version of `Evnt` in that
  *                      the bus will emit any of `OutEvnt` while the EventBus can
  *                      can accept any of `Evnt`. This type parameter should be left
  *                      empty to be inferred. ex: `EventBus<Event<Detail1> | Event<Detail2>>`.
@@ -620,11 +620,11 @@ export class DefaultEventBus<in Evnt extends Event, out OutEvnt extends Evnt = E
 
 /**
  * @typeParam Evnt - the union type of events that this EventBus can accept.
- *                   `Evnt` is the covariant version of `OutEvnt` in that
+ *                   `Evnt` is the contravariant version of `OutEvnt` in that
  *                   the bus will accept any of `Evnt` while the EventBus can
  *                   emit any of `OutEvnt`.
  * @typeParam OutEvnt - the union type of events that this EventBus will emit through rules.
- *                      `OutEvnt` is the contravariant version of `Evnt` in that
+ *                      `OutEvnt` is the covariant version of `Evnt` in that
  *                      the bus will emit any of `OutEvnt` while the EventBus can
  *                      can accept any of `Evnt`. This type parameter should be left
  *                      empty to be inferred. ex: `EventBus<Event<Detail1> | Event<Detail2>>`.
@@ -714,7 +714,7 @@ export function pipe<
     | aws_events.RuleTargetInput
     | undefined
 >(
-  rule: IRule<any, Evnt>,
+  rule: IRule<Evnt>,
   integration:
     | IntegrationWithEventBus<Payload, Props>
     | ((targetInput: Target) => aws_events.IRuleTarget),

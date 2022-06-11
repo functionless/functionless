@@ -29,7 +29,7 @@ export type RulePredicateFunction<Evnt, OutEvnt extends Evnt = Evnt> =
  * @typeParam - Evnt - The original event type from the {@link EventBus}.
  * @typeParam - OutEvnt - The narrowed event type after the predicate is applied.
  */
-export interface IRule<in Evnt extends Event, out OutEvnt extends Evnt> {
+export interface IRule<out OutEvnt extends Event> {
   readonly rule: aws_events.Rule;
 
   /**
@@ -144,7 +144,7 @@ export interface IRule<in Evnt extends Event, out OutEvnt extends Evnt> {
    * ```
    */
   pipe<Props extends object | undefined>(
-    integration: IntegrationWithEventBus<Evnt, Props>,
+    integration: IntegrationWithEventBus<OutEvnt, Props>,
     ...props: Parameters<DynamicProps<Props>>
   ): void;
   pipe(callback: () => aws_events.IRuleTarget): void;
@@ -154,7 +154,7 @@ export interface IRule<in Evnt extends Event, out OutEvnt extends Evnt> {
  * @typeParam - Evnt - The original event type from the {@link EventBus}.
  * @typeParam - OutEvnt - The narrowed event type after the predicate is applied.
  */
-abstract class RuleBase<in Evnt extends Event, out OutEvnt extends Evnt = Evnt> implements IRule<Evnt, OutEvnt> {
+abstract class RuleBase<out OutEvnt extends Event> implements IRule<OutEvnt> {
   /**
    * This static properties identifies this class as a Rule to the TypeScript plugin.
    */
@@ -196,7 +196,7 @@ abstract class RuleBase<in Evnt extends Event, out OutEvnt extends Evnt = Evnt> 
       | (() => aws_events.IRuleTarget),
     ...props: Parameters<DynamicProps<Props>>
   ): void {
-    pipe(this as IRule<any, OutEvnt>, integration, props[0] as Props, undefined);
+    pipe(this as IRule<OutEvnt>, integration, props[0] as Props, undefined);
   }
 }
 
@@ -207,7 +207,7 @@ abstract class RuleBase<in Evnt extends Event, out OutEvnt extends Evnt = Evnt> 
  * @typeParam - OutEvnt - The narrowed event type after the predicate is applied.
  */
 export class PredicateRuleBase<in Evnt extends Event, out OutEvnt extends Evnt = Evnt>
-  extends RuleBase<Evnt, OutEvnt>
+  extends RuleBase<OutEvnt>
   implements IEventBusFilterable<Evnt>
 {
   readonly document: PatternDocument;
@@ -311,7 +311,7 @@ export class Rule<
   /**
    * Import an {@link aws_events.Rule} wrapped with Functionless abilities.
    */
-  public static fromRule<Evnt extends Event>(rule: aws_events.Rule): IRule<any, Evnt> {
+  public static fromRule<Evnt extends Event>(rule: aws_events.Rule): IRule<Evnt> {
     return new ImportedRule<Evnt>(rule);
   }
 }
@@ -323,7 +323,7 @@ export class Rule<
 export interface ScheduledEvent
   extends Event<{}, "Scheduled Event", "aws.events"> {}
 
-export class ImportedRule<out Evnt extends Event> extends RuleBase<any, Evnt> {
+export class ImportedRule<out Evnt extends Event> extends RuleBase<Evnt> {
   constructor(rule: aws_events.Rule) {
     super(() => rule);
   }

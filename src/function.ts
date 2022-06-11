@@ -104,7 +104,7 @@ export interface EventInvokeConfigOptions<Payload, Output>
 /**
  * @typeParam Payload - The super-set payload type of the function.
  * @typeParam Output - The output type of the function.
- * @typeParam OutPayload - The contravariant type of {@link Payload} used when the payload is output.
+ * @typeParam OutPayload - The covariant type of {@link Payload} used when the payload is output.
  *                         For example when the Payload is sent to a {@link Function} or {@link EventBus}
  *                         from onSuccess or onFailure event sources. This type parameter should be left
  *                         empty to be inferred. ex: `Function<Payload1, Output1 | Output2>`.
