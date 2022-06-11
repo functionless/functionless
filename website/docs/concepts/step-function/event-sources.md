@@ -1,6 +1,6 @@
 # Event Sources
 
-AWS Step Functions sends [Event Bus events](https://docs.aws.amazon.com/step-functions/latest/dg/cw-events.html) for each machine execution. Functionless provides easy access to them through Event Bus [Event Sources](../event-bridge/event-sources).
+AWS Step Functions sends [Event Bus events](https://docs.aws.amazon.com/step-functions/latest/dg/cw-events.html) for each machine execution. Functionless provides easy access to them through `EventBus` [Event Sources](../event-bridge/event-sources).
 
 ```ts
 const succeededExecutions =

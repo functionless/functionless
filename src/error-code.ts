@@ -1,11 +1,42 @@
+const BASE_URL = process.env.FUNCTIONLESS_LOCAL
+  ? `http://localhost:3000`
+  : `https://functionless.org`;
+
 /**
  * Error to throw during synth failures
  */
 export class SynthError extends Error {
   constructor(readonly code: ErrorCode, message: string) {
-    super(message);
+    super(formatErrorMessage(code, message));
   }
 }
+
+/**
+ * Formats an error message consistently across Functionless.
+ *
+ * Includes a deep link url to functionless.org's error code page.
+ *
+ * ```
+ * [messageText | code.MessageText]
+ *
+ * http://functionless.org/docs/error-codes/#[Anchor from Message Text]
+ * ```
+ */
+export const formatErrorMessage = (code: ErrorCode, messageText?: string) => `${
+  messageText ?? code.messageText
+}
+
+${formatErrorUrl(code)}`;
+
+/**
+ * Deep link to functionless.org's error code page.
+ *
+ * `http://functionless.org/docs/error-codes/#[Anchor from Message Text]`
+ */
+export const formatErrorUrl = (code: ErrorCode) =>
+  `${BASE_URL}/docs/error-codes#${code.messageText
+    .toLowerCase()
+    .replace(/\s/g, "-")}`;
 
 export interface ErrorCode {
   code: number;

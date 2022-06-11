@@ -79,7 +79,6 @@ export class Table<
   /**
    * @see https://docs.aws.amazon.com/appsync/latest/devguide/resolver-mapping-template-reference-dynamodb.html#aws-appsync-resolver-mapping-template-reference-dynamodb-getitem
    */
-
   public getItem = this.makeTableIntegration<
     "getItem",
     <
@@ -290,7 +289,7 @@ export class Table<
     },
   });
 
-  makeTableIntegration<K extends string, F extends AnyFunction>(
+  private makeTableIntegration<K extends string, F extends AnyFunction>(
     methodName: K,
     integration: Omit<
       IntegrationInput<`Table.${K}`, F>,
