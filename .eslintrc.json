@@ -177,7 +177,8 @@
     "no-bitwise": [
       "error"
     ],
-    "@typescript-eslint/member-ordering": "off"
+    "@typescript-eslint/member-ordering": "off",
+    "@typescript-eslint/explicit-member-accessibility": "off"
   },
   "overrides": [
     {
@@ -192,6 +193,8 @@
     {
       "files": [
         "*.ts",
+        "*.mts",
+        "*.cts",
         "*.tsx"
       ],
       "parserOptions": {
@@ -199,6 +202,21 @@
           "./tsconfig.dev.json",
           "./test-app/tsconfig.json",
           "./website/tsconfig.json"
+        ]
+      },
+      "rules": {
+        "@typescript-eslint/explicit-member-accessibility": [
+          "error",
+          {
+            "accessibility": "explicit",
+            "overrides": {
+              "accessors": "explicit",
+              "constructors": "no-public",
+              "methods": "explicit",
+              "properties": "off",
+              "parameterProperties": "off"
+            }
+          }
         ]
       }
     }
