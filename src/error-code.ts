@@ -3,9 +3,15 @@
  */
 export class SynthError extends Error {
   constructor(readonly code: ErrorCode, message: string) {
-    super(message);
+    super(`${message} ${formatErrorUrl(code)}`);
   }
 }
+
+const formatErrorUrl = (code: ErrorCode) => {
+  return `https://functionless.org/docs/error-codes/#${code.messageText
+    .toLowerCase()
+    .replace(/\s+/g, "-")}`;
+};
 
 export interface ErrorCode {
   code: number;
