@@ -214,7 +214,7 @@ export class PredicateRuleBase<in Evnt extends Event, out OutEvnt extends Evnt =
   constructor(
     scope: Construct,
     id: string,
-    private bus: IEventBus<Evnt, OutEvnt>,
+    private bus: IEventBus<Evnt>,
     /**
      * Functionless Pattern Document representation of Event Bridge rules.
      */
@@ -266,7 +266,7 @@ export class PredicateRuleBase<in Evnt extends Event, out OutEvnt extends Evnt =
       return new PredicateRuleBase<InEvent, NewEvnt>(
         scope as Construct,
         id as string,
-        this.bus as IEventBus<Evnt, NewEvnt>,
+        this.bus as IEventBus<Evnt>,
         this.document,
         document
       );
@@ -276,7 +276,7 @@ export class PredicateRuleBase<in Evnt extends Event, out OutEvnt extends Evnt =
       return new PredicateRuleBase<InEvent, NewEvnt>(
         this.bus.bus,
         scope as string,
-        this.bus as IEventBus<Evnt, NewEvnt>,
+        this.bus as IEventBus<Evnt>,
         this.document,
         document
       );
@@ -300,12 +300,12 @@ export class Rule<
   constructor(
     scope: Construct,
     id: string,
-    bus: IEventBus<Evnt, OutEvnt>,
+    bus: IEventBus<Evnt>,
     predicate: RulePredicateFunction<Evnt, OutEvnt>
   ) {
     const document = synthesizePatternDocument(predicate as any);
 
-    super(scope, id, bus as IEventBus<Evnt, OutEvnt>, document);
+    super(scope, id, bus as IEventBus<Evnt>, document);
   }
 
   /**

@@ -45,7 +45,7 @@ export const isEventBus = <EvntBus extends IEventBus<any>>(v: any): v is EvntBus
  */
 export type EventBusEvent<B extends IEventBus<any>> = [B] extends [IEventBus<infer E>] ? E : never;
 
-export interface IEventBusFilterable<in Evnt extends Event, out OutEvnt extends Event = Evnt> {
+export interface IEventBusFilterable<in Evnt extends Event> {
   /**
    * EventBus Rules can filter events using Functionless predicate functions.
    *
@@ -112,11 +112,11 @@ export interface IEventBusFilterable<in Evnt extends Event, out OutEvnt extends 
    * @typeParam InEvnt - The type the {@link Rule} matches. Covariant of output {@link OutEvnt}.
    * @typeParam NewEvnt - The type the predicate narrows to, a sub-type of {@link InEvnt}.
    */
-  when<InEvnt extends OutEvnt, NewEvnt extends InEvnt>(
+  when<InEvnt extends Evnt, NewEvnt extends InEvnt>(
     id: string,
     predicate: RulePredicateFunction<InEvnt, NewEvnt>
   ): Rule<InEvnt, NewEvnt>;
-  when<InEvnt extends OutEvnt, NewEvnt extends InEvnt>(
+  when<InEvnt extends Evnt, NewEvnt extends InEvnt>(
     scope: Construct,
     id: string,
     predicate: RulePredicateFunction<InEvnt, NewEvnt>
@@ -128,13 +128,8 @@ export interface IEventBusFilterable<in Evnt extends Event, out OutEvnt extends 
  *                   `Evnt` is the contravariant version of `OutEvnt` in that
  *                   the bus will accept any of `Evnt` while the EventBus can
  *                   emit any of `OutEvnt`.
- * @typeParam OutEvnt - the union type of events that this EventBus will emit through rules.
- *                      `OutEvnt` is the covariant version of `Evnt` in that
- *                      the bus will emit any of `OutEvnt` while the EventBus can
- *                      can accept any of `Evnt`. This type parameter should be left
- *                      empty to be inferred. ex: `EventBus<Event<Detail1> | Event<Detail2>>`.
  */
-export interface IEventBus<in Evnt extends Event = Event, OutEvnt extends Evnt = Evnt>
+export interface IEventBus<in Evnt extends Event = Event>
   extends IEventBusFilterable<Evnt>,
     Integration<
       "EventBus",
@@ -190,8 +185,8 @@ export interface IEventBus<in Evnt extends Event = Event, OutEvnt extends Evnt =
    *  .pipe(func);
    * ```
    */
-  all(): PredicateRuleBase<Evnt, OutEvnt>;
-  all(scope: Construct, id: string): PredicateRuleBase<Evnt, OutEvnt>;
+  all<OutEnvt extends Evnt>(): PredicateRuleBase<Evnt, OutEnvt>;
+  all<OutEnvt extends Evnt>(scope: Construct, id: string): PredicateRuleBase<Evnt, OutEnvt>;
 }
 
 /**
@@ -205,7 +200,7 @@ export interface IEventBus<in Evnt extends Event = Event, OutEvnt extends Evnt =
  *                      can accept any of `Evnt`. This type parameter should be left
  *                      empty to be inferred. ex: `EventBus<Event<Detail1> | Event<Detail2>>`.
  */
-abstract class EventBusBase<in Evnt extends Event, OutEvnt extends Evnt = Evnt> implements IEventBus<Evnt, OutEvnt> {
+abstract class EventBusBase<in Evnt extends Event, OutEvnt extends Evnt = Evnt> implements IEventBus<Evnt> {
   /**
    * This static properties identifies this class as an EventBus to the TypeScript plugin.
    */
@@ -421,14 +416,14 @@ abstract class EventBusBase<in Evnt extends Event, OutEvnt extends Evnt = Evnt> 
         this.allRule = new PredicateRuleBase<Evnt, OutEvnt>(
           this.bus,
           "all",
-          this as IEventBus<Evnt, OutEvnt>,
+          this as IEventBus<Evnt>,
           // an empty doc will be converted to `{ source: [{ prefix: "" }]}`
           { doc: {} }
         );
       }
       return this.allRule;
     }
-    return new PredicateRuleBase<Evnt, OutEvnt>(scope, id, this as IEventBus<Evnt, OutEvnt>, {
+    return new PredicateRuleBase<Evnt, OutEvnt>(scope, id, this as IEventBus<Evnt>, {
       doc: {},
     });
   }
