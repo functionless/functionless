@@ -127,7 +127,7 @@ const config = {
             href: "https://discord.gg/VRqHbjrbfC",
             position: "right",
             className: "navbar-community-menu",
-            "aria-label": "Slack Community",
+            "aria-label": "Discord Community",
           },
         ],
       },
