@@ -124,7 +124,7 @@ const config = {
             "aria-label": "GitHub Repository",
           },
           {
-            href: "https://join.slack.com/t/functionless/shared_invite/zt-1amts3yea-avnbPiNhszjjEp0NPkvg4Q",
+            href: "https://discord.gg/VRqHbjrbfC",
             position: "right",
             className: "navbar-community-menu",
             "aria-label": "Slack Community",
