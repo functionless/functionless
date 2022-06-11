@@ -6,6 +6,7 @@ import { CloudFormationDeployments } from "aws-cdk/lib/api/cloudformation-deploy
 import { CloudFormation } from "aws-sdk";
 import { Construct } from "constructs";
 import { asyncSynth } from "../src/async-synth";
+import { Function } from "../src/function";
 
 export const clientConfig = {
   endpoint: "http://localhost:4566",
@@ -90,7 +91,8 @@ export const localstackTestSuite = (
 
   const tests: ResourceTest[] = [];
   // will be set in the before all
-  let testContexts: ({ outputs?: Record<string, string> } | { error?: any })[];
+  let testContexts: ({ outputs?: Record<string, string> } | { error?: any })[] =
+    [];
 
   const app = new App();
   const stack = new Stack(app, stackName, {
@@ -103,38 +105,50 @@ export const localstackTestSuite = (
   let stackOutputs: CloudFormation.Outputs | undefined;
 
   beforeAll(async () => {
-    testContexts = tests.map(({ resources, skip }, i) => {
+    // run in series so we can await on a single tests's Function promises.
+    for (const i in tests) {
+      const { resources, skip } = tests[i];
       // create the construct on skip to reduce output changes when moving between skip and not skip
-      const construct = new Construct(stack, `parent${i}`);
-      if (!skip) {
-        const outputOrError = () => {
-          try {
-            return { output: resources(construct) };
-          } catch (e) {
-            return { error: e };
-          }
-        };
-        const { output, error } = outputOrError();
-        // Place each output in a cfn output, encoded with the unique address of the construct
-        if (output) {
-          return {
-            outputs: Object.fromEntries(
-              Object.entries(output.outputs).map(([key, value]) => {
-                new CfnOutput(construct, `${key}_out`, {
-                  exportName: construct.node.addr + key,
-                  value,
-                });
-
-                return [key, construct.node.addr + key];
-              })
-            ),
+      const createResources = async () => {
+        const construct = new Construct(stack, `parent${i}`);
+        if (!skip) {
+          const outputOrError = async () => {
+            try {
+              const outputs = resources(construct);
+              // resolve any promises started by resources before continuing.
+              await Promise.all(Function.promises);
+              return { output: outputs };
+            } catch (e) {
+              return { error: e };
+            }
           };
-        }
-        return { error };
-      }
-      return {};
-    });
+          // Clear all of the promises to ensure we don't error again.
+          Function.promises.splice(0, Function.promises.length);
+          const { output, error } = await outputOrError();
+          // Place each output in a cfn output, encoded with the unique address of the construct
+          if (output) {
+            return {
+              outputs: Object.fromEntries(
+                Object.entries(output.outputs).map(([key, value]) => {
+                  new CfnOutput(construct, `${key}_out`, {
+                    exportName: construct.node.addr + key,
+                    value,
+                  });
 
+                  return [key, construct.node.addr + key];
+                })
+              ),
+            };
+          }
+          return { error };
+        }
+        return {};
+      };
+      testContexts.push(await createResources());
+    }
+
+    Function.promises.splice(0, Function.promises.length);
+    console.log(Function.promises.length);
     await deployStack(app, stack);
 
     stackOutputs = (

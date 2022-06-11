@@ -446,23 +446,25 @@ export function compile(
               )
             );
 
-            // call the integration call function with the prewarm context and arguments
-            // At this point, we know native will not be undefined
-            // integration.native.call(args, preWarmContext)
-            return context.factory.createCallExpression(
-              context.factory.createPropertyAccessExpression(
-                context.factory.createPropertyAccessExpression(
-                  node.expression,
-                  "native"
-                ),
-                "call"
-              ),
-              undefined,
-              [
-                context.factory.createArrayLiteralExpression(node.arguments),
-                nativeExprContext.preWarmContext,
-              ]
-            );
+            // // call the integration call function with the prewarm context and arguments
+            // // At this point, we know native will not be undefined
+            // // integration.native.call(args, preWarmContext)
+            // return context.factory.createCallExpression(
+            //   context.factory.createPropertyAccessExpression(
+            //     context.factory.createPropertyAccessExpression(
+            //       node.expression,
+            //       "native"
+            //     ),
+            //     "call"
+            //   ),
+            //   undefined,
+            //   [
+            //     context.factory.createArrayLiteralExpression(node.arguments),
+            //     nativeExprContext.preWarmContext,
+            //   ]
+            // );
+
+            return node;
           }
         } else if (ts.isNewExpression(node)) {
           const newType = checker.getTypeAtLocation(node);

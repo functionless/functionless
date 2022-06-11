@@ -266,7 +266,7 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
   );
 
   test(
-    "Call Lambda return arns",
+    "Call Lambda return bus arns",
     (parent) => {
       const bus = new EventBus(parent, "bus");
       const busbus = new aws_events.EventBus(parent, "busbus");
@@ -1010,6 +1010,7 @@ test("should not create new resources in lambda", async () => {
         }
       );
       await Promise.all(Function.promises);
+      Function.promises.splice(0, Function.promises.length);
     }
     // TODO: add error message
   ).rejects.toThrow();
@@ -1031,6 +1032,7 @@ test("should not create new functionless resources in lambda", async () => {
         }
       );
       await Promise.all(Function.promises);
+      Function.promises.splice(0, Function.promises.length);
     }
     // TODO: add error message
   ).rejects.toThrow();

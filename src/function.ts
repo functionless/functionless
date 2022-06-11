@@ -32,6 +32,7 @@ import { CallExpr, Expr, isVariableReference } from "./expression";
 import {
   IntegrationImpl,
   Integration,
+  isIntegration,
   INTEGRATION_TYPE_KEYS,
 } from "./integration";
 import { AnyFunction, anyOf } from "./util";
@@ -226,8 +227,9 @@ export class Function<P, O> extends FunctionBase<P, O> {
    * To correctly resolve these for CDK synthesis, either use `asyncSynth()` or use `cdk synth` in the CDK cli.
    * https://twitter.com/samgoodwin89/status/1516887131108438016?s=20&t=7GRGOQ1Bp0h_cPsJgFk3Ww
    */
-  public static readonly promises = ((global as any)[PromisesSymbol] =
-    (global as any)[PromisesSymbol] ?? []);
+  public static readonly promises: Promise<any>[] = ((global as any)[
+    PromisesSymbol
+  ] = (global as any)[PromisesSymbol] ?? []);
 
   /**
    * Wrap a {@link aws_lambda.Function} with Functionless.
@@ -435,7 +437,8 @@ export class CallbackLambdaCode extends aws_lambda.Code {
              */
             const transformCfnResource = (o: unknown): any => {
               if (Resource.isResource(o as any)) {
-                const { node, stack, env, ...rest } = o as unknown as Resource;
+                const { node, stack, env, ...rest } =
+                  transformFunctionConstruct(o as unknown as Resource);
                 return rest;
               } else if (CfnResource.isCfnResource(o as any)) {
                 const {
@@ -447,13 +450,16 @@ export class CallbackLambdaCode extends aws_lambda.Code {
                   // @ts-ignore - private - adds the tag manager, which we don't need
                   cfnProperties,
                   ...rest
-                } = transformTable(o as CfnResource);
+                } = transformFunction(transformTable(o as CfnResource));
                 return transformTaggableResource(rest);
               } else if (Token.isUnresolved(o)) {
                 const token = (<any>o).toString();
-                // add to tokens to be turned into env variables.
-                tokens = [...tokens, token];
-                return token;
+                // some objects may match the pattern and not be unresolvable, make sure the result of toString is also a token.
+                if (Token.isUnresolved(token)) {
+                  // add to tokens to be turned into env variables.
+                  tokens = [...tokens, token];
+                  return token;
+                }
               }
               return o;
             };
@@ -478,6 +484,18 @@ export class CallbackLambdaCode extends aws_lambda.Code {
               return o;
             };
 
+            const transformFunction = (o: CfnResource): CfnResource => {
+              if (
+                o.cfnResourceType ===
+                aws_lambda.CfnFunction.CFN_RESOURCE_TYPE_NAME
+              ) {
+                const { code, role, ...rest } = o as aws_lambda.CfnFunction;
+
+                return rest as unknown as CfnResource;
+              }
+              return o;
+            };
+
             /**
              * CDK Tag manager bundles in ~200kb of junk we don't need at runtime,
              */
@@ -492,25 +510,53 @@ export class CallbackLambdaCode extends aws_lambda.Code {
             /**
              * Remove unnecessary fields from {@link CfnTable} that bloat or fail the closure serialization.
              */
-            const transformIntegration = (o: unknown): any => {
-              if (o && typeof o === "object" && "kind" in o) {
-                const integ = o as Integration<any>;
-                const copy = {
-                  ...integ,
-                  native: {
-                    call: integ?.native?.call,
-                    preWarm: integ?.native?.preWarm,
-                  },
-                };
+            const transformIntegration = (integ: unknown): any => {
+              if (integ && isIntegration(integ)) {
+                const c = integ.native?.call;
+                const call =
+                  typeof c !== "undefined"
+                    ? function (...args: any[]) {
+                        return c(args, preWarmContext);
+                      }
+                    : integ.unhandledContext
+                    ? function () {
+                        integ.unhandledContext!(integ.kind, "Function");
+                      }
+                    : function () {
+                        throw new Error();
+                      };
 
-                INTEGRATION_TYPE_KEYS.filter((key) => key !== "native").forEach(
-                  (key) => delete copy[key]
-                );
+                for (const prop in integ) {
+                  if (!INTEGRATION_TYPE_KEYS.includes(prop as any)) {
+                    // @ts-ignore
+                    call[prop] = integ[prop];
+                  }
+                }
 
-                return copy;
+                // const copy = {
+                //   ...integ,
+                //   native: {
+                //     call: integ?.native?.call,
+                //     preWarm: integ?.native?.preWarm,
+                //   },
+                // };
+
+                // INTEGRATION_TYPE_KEYS.filter((key) => key !== "native").forEach(
+                //   (key) => delete copy[key]
+                // );
+
+                return call;
+              }
+              return integ;
+            };
+
+            function transformFunctionConstruct(o: Resource): Resource {
+              if (o instanceof aws_lambda.Function) {
+                const { role, grantPrincipal, logGroup, ...rest } = o;
+                return rest as unknown as Resource;
               }
               return o;
-            };
+            }
 
             return transformIntegration(transformCfnResource(obj));
           }
