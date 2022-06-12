@@ -8,6 +8,7 @@ import {
   AsyncFunctionResponseEvent,
   AsyncResponseSuccess,
   AsyncResponseFailure,
+  asyncSynth,
 } from "../src";
 import { VTL } from "../src/vtl";
 import { appsyncTestCase } from "./util";
@@ -17,11 +18,12 @@ interface Item {
   name: number;
 }
 
+let app: App;
 let stack: Stack;
 let lambda: aws_lambda.Function;
 
 beforeEach(() => {
-  const app = new App({ autoSynth: false });
+  app = new App({ autoSynth: false });
   stack = new Stack(app, "stack");
 
   lambda = new aws_lambda.Function(stack, "F", {
@@ -481,4 +483,34 @@ test("function accepts a superset of objects", () => {
       func1(p.ac);
     }
   );
+});
+
+test("function fails to synth when compile promise is not complete", async () => {
+  expect(() => {
+    new Function(
+      stack,
+      "superset",
+      async (p: { a: string } | { b: string }) => {
+        return p;
+      }
+    );
+
+    app.synth();
+  }).toThrow("Function closure serialization was not allowed to complete");
+});
+
+test("synth succeeds with async synth", async () => {
+  new Function(stack, "superset", async (p: { a: string } | { b: string }) => {
+    return p;
+  });
+
+  await asyncSynth(app);
+});
+
+test("synth succeeds with function promises await", async () => {
+  new Function(stack, "superset", async (p: { a: string } | { b: string }) => {
+    return p;
+  });
+
+  await Promise.all(Function.promises);
 });
