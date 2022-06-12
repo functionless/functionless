@@ -514,6 +514,13 @@ export interface $util {
   readonly time: time;
 
   /**
+   * The $util.log variable contains log methods to help log info and error messages.
+   *
+   * @see https://docs.aws.amazon.com/appsync/latest/devguide/utility-helpers-in-util.html
+   */
+  readonly log: log;
+
+  /**
    * Returns the input string as a JavaScript escaped string.
    */
   escapeJavaScript(js: string): string;
@@ -706,6 +713,25 @@ export interface $util {
    * Returns a string describing the multi-auth type being used by a request, returning back either "IAM Authorization", "User Pool Authorization", "Open ID Connect Authorization", or "API Key Authorization".
    */
   authType(): string;
+}
+
+export interface log {
+  /**
+   * Logs the string representation of the provided object to the requested log stream when request-level and field-level CloudWatch logging is enabled with log level ALL on an API.
+   */
+  info(obj: any): void;
+  /**
+   * Logs the string representation of the provided objects to the requested log stream when request-level and field-level CloudWatch logging is enabled with log level ALL on an API. This utility will replace all variables indicated by "{}" in the first input format string with the string representation of the provided objects in order.
+   */
+  info(message: string, ...rest: any[]): void;
+  /**
+   * Logs the string representation of the provided object to the requested log stream when field-level CloudWatch logging is enabled with log level ERROR or log level ALL on an API.
+   */
+  error(obj: any): void;
+  /**
+   * Logs the string representation of the provided objects to the requested log stream when field-level CloudWatch logging is enabled with log level ERROR or log level ALL on an API. This utility will replace all variables indicated by "{}" in the first input format string with the string representation of the provided objects in order.
+   */
+  error(message: string, ...rest: any[]): void;
 }
 
 export interface time {

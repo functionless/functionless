@@ -359,6 +359,34 @@ test("$util.time.nowISO8601", () =>
     })
   ));
 
+test("$util.log.info(message)", () =>
+  appsyncTestCase(
+    reflect(() => {
+      return $util.log.info("hello world");
+    })
+  ));
+
+test("$util.log.info(message, ...Object)", () =>
+  appsyncTestCase(
+    reflect(() => {
+      return $util.log.info("hello world", { a: 1 }, { b: 2 });
+    })
+  ));
+
+test("$util.log.error(message)", () =>
+  appsyncTestCase(
+    reflect(() => {
+      return $util.log.error("hello world");
+    })
+  ));
+
+test("$util.log.error(message, ...Object)", () =>
+  appsyncTestCase(
+    reflect(() => {
+      return $util.log.error("hello world", { a: 1 }, { b: 2 });
+    })
+  ));
+
 test("BinaryExpr and UnaryExpr are evaluated to temporary variables", () =>
   appsyncTestCase(
     reflect(() => {
