@@ -81,4 +81,19 @@ export namespace ErrorCodes {
     code: 101,
     messageText: "Function not compiled by Functionless plugin",
   };
+
+  /**
+   * Lambda Function closure synthesis runs async, but CDK does not normally support async.
+   *
+   * In order for the synthesis to complete successfully
+   * 1. Use autoSynth `new App({ authSynth: true })` or `new App()` with the CDK Cli (`cdk synth`)
+   * 2. Use `await asyncSynth(app)` exported from Functionless in place of `app.synth()`
+   * 3. Manually await on the closure serializer promises `await Promise.all(Function.promises)`
+   *
+   * https://github.com/functionless/functionless/issues/128
+   */
+  export const Function_Closure_Serialization_Incomplete: ErrorCode = {
+    code: 102,
+    messageText: "Function closure serialization was not allowed to complete",
+  };
 }
