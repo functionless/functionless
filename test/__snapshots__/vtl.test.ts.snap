@@ -1,0 +1,531 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`$util.time.nowISO8601 1`] = `
+Array [
+  "{
+  \\"version\\": \\"2018-05-29\\",
+  \\"payload\\": null
+}",
+  "#return($util.time.nowISO8601())",
+]
+`;
+
+exports[`BinaryExpr and UnaryExpr are evaluated to temporary variables 1`] = `
+Array [
+  "{
+  \\"version\\": \\"2018-05-29\\",
+  \\"payload\\": null
+}",
+  "#set($v1 = {})
+#set($v2 = 0 - 1)
+$util.qr($v1.put('x', $v2))
+#set($v3 = 1 + 1)
+#set($v4 = 0 - $v3)
+$util.qr($v1.put('y', $v4))
+#set($v5 = true && false)
+#set($v6 = !$v5)
+$util.qr($v1.put('z', $v6))
+#return($v1)",
+]
+`;
+
+exports[`break from for-loop 1`] = `
+Array [
+  "{
+  \\"version\\": \\"2018-05-29\\",
+  \\"payload\\": null
+}",
+  "#set($context.stash.newList = [])
+#foreach($item in $context.arguments.list)
+#set($v1 = $item == 'hello')
+#if($v1)
+#break
+#end
+$util.qr($context.stash.newList.addAll([$item]))
+#end
+#return($context.stash.newList)",
+]
+`;
+
+exports[`call function and return its value 1`] = `
+Array [
+  "{
+  \\"version\\": \\"2018-05-29\\",
+  \\"payload\\": null
+}",
+  "#return($util.autoId())",
+]
+`;
+
+exports[`call function, assign to variable and return variable reference 1`] = `
+Array [
+  "{
+  \\"version\\": \\"2018-05-29\\",
+  \\"payload\\": null
+}",
+  "#set($context.stash.id = $util.autoId())
+#return($context.stash.id)",
+]
+`;
+
+exports[`chain map over list 1`] = `
+Array [
+  "{
+  \\"version\\": \\"2018-05-29\\",
+  \\"payload\\": null
+}",
+  "#set($v1 = [])
+#foreach($item in $context.arguments.list)
+#set($item = \\"hello \${item}\\")
+#set($v2 = \\"hello \${item}\\")
+$util.qr($v1.add($v2))
+#end
+#return($v1)",
+]
+`;
+
+exports[`chain map over list complex 1`] = `
+Array [
+  "{
+  \\"version\\": \\"2018-05-29\\",
+  \\"payload\\": null
+}",
+  "#set($v1 = [])
+#foreach($item in $context.arguments.list)
+#set($i = $foreach.index)
+#set($arr = $context.arguments.list)
+#set($v2 = $i + 1)
+#set($x = $v2)
+#set($item2 = \\"hello \${item} \${x} \${arr.length}\\")
+#set($ii = $foreach.index)
+#set($v3 = \\"hello \${item2} \${ii}\\")
+$util.qr($v1.add($v3))
+#end
+#return($v1)",
+]
+`;
+
+exports[`chain map over list multiple array 1`] = `
+Array [
+  "{
+  \\"version\\": \\"2018-05-29\\",
+  \\"payload\\": null
+}",
+  "#set($v1 = [])
+#set($v2 = [])
+#foreach($item in $context.arguments.list)
+#set($_i = $foreach.index)
+#set($_arr = $context.arguments.list)
+#set($v3 = \\"hello \${item}\\")
+$util.qr($v2.add($v3))
+#end
+#foreach($item in $v2)
+#set($_i = $foreach.index)
+#set($_arr = $v2)
+#set($v4 = \\"hello \${item}\\")
+$util.qr($v1.add($v4))
+#end
+#return($v1)",
+]
+`;
+
+exports[`computed property names 1`] = `
+Array [
+  "{
+  \\"version\\": \\"2018-05-29\\",
+  \\"payload\\": null
+}",
+  "#set($context.stash.name = $context.arguments.arg)
+#set($v1 = $context.stash.name + '_test')
+#set($context.stash.value = $v1)
+#set($v2 = {})
+$util.qr($v2.put($context.stash.name, $context.arguments.arg))
+$util.qr($v2.put($context.stash.value, $context.arguments.arg))
+#return($v2)",
+]
+`;
+
+exports[`conditional expression in template expression 1`] = `
+Array [
+  "{
+  \\"version\\": \\"2018-05-29\\",
+  \\"payload\\": null
+}",
+  "#set($v2 = $context.arguments.a == 'hello')
+#if($v2)
+#set($v1 = 'world')
+#else
+#set($v1 = $context.arguments.a)
+#end
+#return(\\"head \${v1}\\")",
+]
+`;
+
+exports[`empty function returning an argument 1`] = `
+Array [
+  "{
+  \\"version\\": \\"2018-05-29\\",
+  \\"payload\\": null
+}",
+  "#return($context.arguments.a)",
+]
+`;
+
+exports[`for-in loop and element access 1`] = `
+Array [
+  "{
+  \\"version\\": \\"2018-05-29\\",
+  \\"payload\\": null
+}",
+  "#set($context.stash.newList = [])
+#foreach($key in $context.arguments.record.keySet())
+$util.qr($context.stash.newList.addAll([$context.arguments.record[$key]]))
+#end
+#return($context.stash.newList)",
+]
+`;
+
+exports[`for-of loop 1`] = `
+Array [
+  "{
+  \\"version\\": \\"2018-05-29\\",
+  \\"payload\\": null
+}",
+  "#set($context.stash.newList = [])
+#foreach($item in $context.arguments.list)
+$util.qr($context.stash.newList.addAll([$item]))
+#end
+#return($context.stash.newList)",
+]
+`;
+
+exports[`forEach over list 1`] = `
+Array [
+  "{
+  \\"version\\": \\"2018-05-29\\",
+  \\"payload\\": null
+}",
+  "#foreach($item in $context.arguments.list)
+$util.qr($util.error($item))
+#end
+#return($null)",
+]
+`;
+
+exports[`if statement 1`] = `
+Array [
+  "{
+  \\"version\\": \\"2018-05-29\\",
+  \\"payload\\": null
+}",
+  "#set($v1 = $context.arguments.list.length > 0)
+#if($v1)
+#set($context.stash.return__val = true)
+#set($context.stash.return__flag = true)
+#return($context.stash.return__val)
+#else
+#set($context.stash.return__val = false)
+#set($context.stash.return__flag = true)
+#return($context.stash.return__val)
+#end",
+]
+`;
+
+exports[`local variable inside for-of loop is declared as a local variable 1`] = `
+Array [
+  "{
+  \\"version\\": \\"2018-05-29\\",
+  \\"payload\\": null
+}",
+  "#set($context.stash.newList = [])
+#foreach($item in $context.arguments.list)
+#set($i = $item)
+$util.qr($context.stash.newList.addAll([$i]))
+#end
+#return($context.stash.newList)",
+]
+`;
+
+exports[`map and reduce and map and reduce over list with initial value 1`] = `
+Array [
+  "{
+  \\"version\\": \\"2018-05-29\\",
+  \\"payload\\": null
+}",
+  "#set($v2 = [])
+#foreach($item in $context.arguments.list)
+#set($item = \\"hello \${item}\\")
+#set($newList = $v2)
+#set($v4 = [])
+$util.qr($v4.addAll($newList))
+$util.qr($v4.add($item))
+#set($v3 = $v4)
+#set($v2 = $v3)
+#end
+#set($v1 = [])
+#foreach($item in $v2)
+#set($item = \\"hello \${item}\\")
+#set($newList = $v1)
+#set($v6 = [])
+$util.qr($v6.addAll($newList))
+$util.qr($v6.add($item))
+#set($v5 = $v6)
+#set($v1 = $v5)
+#end
+#return($v1)",
+]
+`;
+
+exports[`map and reduce over list with initial value 1`] = `
+Array [
+  "{
+  \\"version\\": \\"2018-05-29\\",
+  \\"payload\\": null
+}",
+  "#set($v1 = [])
+#foreach($item in $context.arguments.list)
+#set($item = \\"hello \${item}\\")
+#set($newList = $v1)
+#set($v3 = [])
+$util.qr($v3.addAll($newList))
+$util.qr($v3.add($item))
+#set($v2 = $v3)
+#set($v1 = $v2)
+#end
+#return($v1)",
+]
+`;
+
+exports[`map and reduce with array over list with initial value 1`] = `
+Array [
+  "{
+  \\"version\\": \\"2018-05-29\\",
+  \\"payload\\": null
+}",
+  "#set($v2 = [])
+#foreach($item in $context.arguments.list)
+#set($v3 = \\"hello \${item}\\")
+$util.qr($v2.add($v3))
+#end
+#set($v1 = [])
+#foreach($item in $v2)
+#set($_i = $foreach.index)
+#set($_arr = $v2)
+#set($newList = $v1)
+#set($v5 = [])
+$util.qr($v5.addAll($newList))
+$util.qr($v5.add($item))
+#set($v4 = $v5)
+#set($v1 = $v4)
+#end
+#return($v1)",
+]
+`;
+
+exports[`map over list 1`] = `
+Array [
+  "{
+  \\"version\\": \\"2018-05-29\\",
+  \\"payload\\": null
+}",
+  "#set($v1 = [])
+#foreach($item in $context.arguments.list)
+#set($v2 = \\"hello \${item}\\")
+$util.qr($v1.add($v2))
+#end
+#return($v1)",
+]
+`;
+
+exports[`map over list with in-line return 1`] = `
+Array [
+  "{
+  \\"version\\": \\"2018-05-29\\",
+  \\"payload\\": null
+}",
+  "#set($v1 = [])
+#foreach($item in $context.arguments.list)
+#set($v2 = \\"hello \${item}\\")
+$util.qr($v1.add($v2))
+#end
+#return($v1)",
+]
+`;
+
+exports[`null and undefined 1`] = `
+Array [
+  "{
+  \\"version\\": \\"2018-05-29\\",
+  \\"payload\\": null
+}",
+  "#set($v1 = {})
+$util.qr($v1.put('name', $null))
+$util.qr($v1.put('value', $null))
+#return($v1)",
+]
+`;
+
+exports[`property assignment of conditional expression 1`] = `
+Array [
+  "{
+  \\"version\\": \\"2018-05-29\\",
+  \\"payload\\": null
+}",
+  "#set($v1 = {})
+#set($v3 = $context.arguments.list.length > 0)
+#if($v3)
+#set($v2 = true)
+#else
+#set($v2 = false)
+#end
+$util.qr($v1.put('prop', $v2))
+#return($v1)",
+]
+`;
+
+exports[`push element to array is renamed to add 1`] = `
+Array [
+  "{
+  \\"version\\": \\"2018-05-29\\",
+  \\"payload\\": null
+}",
+  "$util.qr($context.arguments.list.addAll(['hello']))
+#return($context.arguments.list)",
+]
+`;
+
+exports[`reduce over list with initial value 1`] = `
+Array [
+  "{
+  \\"version\\": \\"2018-05-29\\",
+  \\"payload\\": null
+}",
+  "#set($v1 = [])
+#foreach($item in $context.arguments.list)
+#set($newList = $v1)
+#set($v3 = [])
+$util.qr($v3.addAll($newList))
+$util.qr($v3.add($item))
+#set($v2 = $v3)
+#set($v1 = $v2)
+#end
+#return($v1)",
+]
+`;
+
+exports[`reduce over list without initial value 1`] = `
+Array [
+  "{
+  \\"version\\": \\"2018-05-29\\",
+  \\"payload\\": null
+}",
+  "#if($context.arguments.list.isEmpty())
+$util.error('Reduce of empty array with no initial value')
+#end
+#foreach($item in $context.arguments.list)
+#if($foreach.index == 0)
+#set($v1 = $item)
+#else
+#set($str = $v1)
+#set($v2 = \\"\${str}\${item}\\")
+#set($v1 = $v2)
+#end
+#end
+#return($v1)",
+]
+`;
+
+exports[`return conditional expression 1`] = `
+Array [
+  "{
+  \\"version\\": \\"2018-05-29\\",
+  \\"payload\\": null
+}",
+  "#set($v2 = $context.arguments.list.length > 0)
+#if($v2)
+#set($v1 = true)
+#else
+#set($v1 = false)
+#end
+#return($v1)",
+]
+`;
+
+exports[`return in-line list literal 1`] = `
+Array [
+  "{
+  \\"version\\": \\"2018-05-29\\",
+  \\"payload\\": null
+}",
+  "#return([$context.arguments.a, $context.arguments.b])",
+]
+`;
+
+exports[`return in-line spread object 1`] = `
+Array [
+  "{
+  \\"version\\": \\"2018-05-29\\",
+  \\"payload\\": null
+}",
+  "#set($v1 = {})
+$util.qr($v1.put('id', $util.autoId()))
+$util.qr($v1.putAll($context.arguments.obj))
+#return($v1)",
+]
+`;
+
+exports[`return list element 1`] = `
+Array [
+  "{
+  \\"version\\": \\"2018-05-29\\",
+  \\"payload\\": null
+}",
+  "#set($context.stash.list = [$context.arguments.a, $context.arguments.b])
+#return($context.stash.list[0])",
+]
+`;
+
+exports[`return list literal variable 1`] = `
+Array [
+  "{
+  \\"version\\": \\"2018-05-29\\",
+  \\"payload\\": null
+}",
+  "#set($context.stash.list = [$context.arguments.a, $context.arguments.b])
+#return($context.stash.list)",
+]
+`;
+
+exports[`return literal object with values 1`] = `
+Array [
+  "{
+  \\"version\\": \\"2018-05-29\\",
+  \\"payload\\": null
+}",
+  "#set($context.stash.arg = $context.arguments.arg)
+#set($context.stash.obj = $context.arguments.obj)
+#set($v1 = {})
+$util.qr($v1.put('null', $null))
+$util.qr($v1.put('undefined', $null))
+$util.qr($v1.put('string', 'hello'))
+$util.qr($v1.put('number', 1))
+$util.qr($v1.put('list', ['hello']))
+#set($v2 = {})
+$util.qr($v2.put('key', 'value'))
+$util.qr($v1.put('obj', $v2))
+$util.qr($v1.put('arg', $context.stash.arg))
+$util.qr($v1.putAll($context.stash.obj))
+#return($v1)",
+]
+`;
+
+exports[`template expression 1`] = `
+Array [
+  "{
+  \\"version\\": \\"2018-05-29\\",
+  \\"payload\\": null
+}",
+  "#set($context.stash.local = $context.arguments.a)
+#return(\\"head \${context.arguments.a} \${context.stash.local}\${context.arguments.a}\\")",
+]
+`;
