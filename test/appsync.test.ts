@@ -1,5 +1,10 @@
 import { Stack } from "aws-cdk-lib";
-import { AppsyncResolver, reflect, StepFunction } from "../src";
+import {
+  AppsyncResolver,
+  reflect,
+  ResolverFunction,
+  StepFunction,
+} from "../src";
 import { appsyncTestCase } from "./util";
 
 let stack: Stack;

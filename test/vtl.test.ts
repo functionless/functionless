@@ -1,5 +1,5 @@
 import "jest";
-import { $util, AppsyncContext } from "../src";
+import { $util, AppsyncContext, ResolverFunction } from "../src";
 import { reflect } from "../src/reflect";
 import { appsyncTestCase } from "./util";
 
@@ -369,3 +369,148 @@ test("BinaryExpr and UnaryExpr are evaluated to temporary variables", () =>
       };
     })
   ));
+
+test("binary expr in", () => {
+  appsyncTestCase(
+    reflect<
+      ResolverFunction<{ key: string } | { key2: string }, { out: string }, any>
+    >(($context) => {
+      if ("key" in $context.arguments) {
+        return { out: $context.arguments.key };
+      }
+      return { out: $context.arguments.key2 };
+    }),
+    {
+      executeTemplates: [
+        {
+          index: 1,
+          context: { arguments: { key: "hi" }, source: {} },
+          match: { out: "hi" },
+        },
+        {
+          index: 1,
+          context: { arguments: { key2: "hello" }, source: {} },
+          match: { out: "hello" },
+        },
+      ],
+    }
+  );
+});
+
+test("binary expr in array", () => {
+  appsyncTestCase(
+    reflect<ResolverFunction<{ arr: string[] }, { out: string }, any>>(
+      ($context) => {
+        if (1 in $context.arguments.arr) {
+          return { out: $context.arguments.arr[1] };
+        }
+        return { out: $context.arguments.arr[0] };
+      }
+    ),
+    {
+      executeTemplates: [
+        {
+          index: 1,
+          context: { arguments: { arr: ["1", "2"] }, source: {} },
+          match: { out: "2" },
+        },
+        {
+          index: 1,
+          context: { arguments: { arr: ["1"] }, source: {} },
+          match: { out: "1" },
+        },
+      ],
+    }
+  );
+});
+
+test("binary expr == in if statement", () => {
+  appsyncTestCase(
+    reflect<ResolverFunction<{ key: string }, { out: string }, any>>(
+      ($context) => {
+        if ($context.arguments.key == "hello") {
+          return { out: "ohh hi" };
+        }
+        return { out: "wot" };
+      }
+    ),
+    {
+      executeTemplates: [
+        {
+          index: 1,
+          context: { arguments: { key: "hello" }, source: {} },
+          match: { out: "ohh hi" },
+        },
+        {
+          index: 1,
+          context: { arguments: { key: "giddyup" }, source: {} },
+          match: { out: "wot" },
+        },
+      ],
+    }
+  );
+});
+
+test("binary expr =", () => {
+  appsyncTestCase(
+    reflect<ResolverFunction<{ key: string }, { out: string }, any>>(
+      ($context) => {
+        if ($context.arguments.key == "help me") {
+          $context.arguments.key = "hello";
+        }
+        if ($context.arguments.key == "hello") {
+          return { out: "ohh hi" };
+        }
+        return { out: "wot" };
+      }
+    ),
+    {
+      executeTemplates: [
+        {
+          index: 1,
+          context: { arguments: { key: "hello" }, source: {} },
+          match: { out: "ohh hi" },
+        },
+        {
+          index: 1,
+          context: { arguments: { key: "giddyup" }, source: {} },
+          match: { out: "wot" },
+        },
+        {
+          index: 1,
+          context: { arguments: { key: "help me" }, source: {} },
+          match: { out: "ohh hi" },
+        },
+      ],
+    }
+  );
+});
+
+// https://github.com/functionless/functionless/issues/232
+test.skip("binary expr +=", () => {
+  appsyncTestCase(
+    reflect<ResolverFunction<{ key: string }, { out: number }, any>>(
+      ($context) => {
+        var n = 0;
+        if ($context.arguments.key == "hello") {
+          n += 1;
+        }
+        return { out: n };
+      }
+    ),
+    {
+      executeTemplates: [
+        {
+          index: 1,
+          context: { arguments: { key: "hello" }, source: {} },
+          match: { out: 1 },
+        },
+        {
+          index: 1,
+          context: { arguments: { key: "giddyup" }, source: {} },
+          match: { out: 0 },
+        },
+      ],
+    }
+  );
+});

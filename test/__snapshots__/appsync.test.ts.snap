@@ -1,5 +1,37 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`in 1`] = `
+Array [
+  "{
+  \\"version\\": \\"2018-05-29\\",
+  \\"payload\\": null
+}",
+  "#set($v1 = !!$context.arguments['key'])
+#if($v1)
+#set($v2 = {})
+$util.qr($v2.put('out', $context.arguments.key))
+#set($context.stash.return__val = $v2)
+#set($context.stash.return__flag = true)
+#return($context.stash.return__val)
+#end
+#set($v3 = {})
+$util.qr($v3.put('out', $context.arguments.key2))
+#return($v3)",
+]
+`;
+
+exports[`in 2`] = `
+Object {
+  "out": "hi",
+}
+`;
+
+exports[`in 3`] = `
+Object {
+  "out": "hello",
+}
+`;
+
 exports[`multiple isolated integrations 1`] = `
 Array [
   "{}",

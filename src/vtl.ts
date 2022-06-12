@@ -188,6 +188,14 @@ export class VTL {
       case "BinaryExpr":
         // VTL fails to evaluate binary expressions inside an object put e.g. $obj.put('x', 1 + 1)
         // a workaround is to use a temp variable.
+        if (node.op === "in") {
+          // !! right[left]
+          return this.var(
+            `!!${this.eval(node.right)}[${this.eval(node.left)}]`
+          );
+        } else if (node.op === "=") {
+          return this.set(this.eval(node.left), this.eval(node.right));
+        }
         return this.var(
           `${this.eval(node.left)} ${node.op} ${this.eval(node.right)}`
         );
