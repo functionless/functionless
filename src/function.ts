@@ -749,7 +749,7 @@ export class CallbackLambdaCode extends aws_lambda.Code {
                 return transformTaggableResource(rest);
               } else if (Token.isUnresolved(o)) {
                 const resolved = Stack.of(scope).resolve(o);
-                if(resolved && !Token.isUnresolved(resolved)) {
+                if (resolved && !Token.isUnresolved(resolved)) {
                   return resolved;
                 }
                 const token = (<any>o).toString();
