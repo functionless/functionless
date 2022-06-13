@@ -200,7 +200,7 @@ export class VTL {
            * rewrite `in` to a conditional statement to support both arrays and maps
            * var v = left in right;
            *
-           * var v = right.class.name === "ArrayList" ?
+           * var v = right.class.name === "java.util.ArrayList" ?
            *    right.length >= left :
            *    right.containsKey(left);
            */
@@ -211,7 +211,7 @@ export class VTL {
                 "name"
               ),
               "==",
-              new StringLiteralExpr("ArrayList")
+              new StringLiteralExpr("java.util.ArrayList")
             ),
             new BinaryExpr(
               new PropAccessExpr(node.right, "length"),

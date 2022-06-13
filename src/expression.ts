@@ -281,12 +281,12 @@ export const isBinaryExpr = typeGuard("BinaryExpr");
 
 export type ValueComparisonBinaryOp = "==" | "!=" | "<" | "<=" | ">" | ">=";
 export type MathBinaryOp = "/" | "*" | "+" | "-";
-export type LogicBinaryOp = "&&" | "||";
+export type ComparatorOp = "&&" | "||";
 
 export type BinaryOp =
   | MathBinaryOp
   | ValueComparisonBinaryOp
-  | LogicBinaryOp
+  | ComparatorOp
   | "="
   | "in";
 

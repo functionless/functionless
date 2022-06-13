@@ -2,7 +2,7 @@ import "jest";
 import {
   $util,
   AppsyncContext,
-  LogicBinaryOp,
+  ComparatorOp,
   MathBinaryOp,
   ResolverFunction,
   ValueComparisonBinaryOp,
@@ -563,7 +563,7 @@ test("binary exprs logical", () => {
     reflect<
       ResolverFunction<
         { a: boolean; b: boolean },
-        Record<LogicBinaryOp, boolean>,
+        Record<ComparatorOp, boolean>,
         any
       >
     >(($context) => {
