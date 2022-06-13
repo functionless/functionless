@@ -403,13 +403,12 @@ test("function fails to synth when compile promise is not complete", async () =>
 });
 
 test("synth succeeds with async synth", async () => {
-  jest.setTimeout(10000);
   new Function(stack, "superset", async (p: { a: string } | { b: string }) => {
     return p;
   });
 
   await asyncSynth(app);
-});
+}, 100000);
 
 test("synth succeeds with function promises await", async () => {
   new Function(stack, "superset", async (p: { a: string } | { b: string }) => {
