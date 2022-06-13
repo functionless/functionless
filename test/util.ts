@@ -65,20 +65,74 @@ export function getAppSyncTemplates(decl: FunctionDecl | Err): string[] {
   }).templates;
 }
 
+/**
+ *
+ * @param decl
+ * @param executeTemplates an array of templates to execute using the {@link AmplifyAppSyncSimulator}
+ *                         `context` can be used to pass inputs
+ *                         a snapshot will be taken of the results
+ *                         to test specific contents like CDK Tokens (arns, attr, etc) use
+ *                         `expected.match` with a partial output.
+ *                         To assert that the template returns, pass `expected.returned: true`.
+ */
 export function appsyncTestCase(
   decl: FunctionDecl | Err,
-  ...expected: string[]
+  config?: {
+    /**
+     * Template count is generally [total integrations] * 2 + 2
+     */
+    expectedTemplateCount?: number;
+    executeTemplates?: {
+      /**
+       * Index of the template to execute.
+       */
+      index: number;
+      /**
+       * Input and context data for VTL execution
+       *
+       * @default { arguments: {}, source: {} }
+       */
+      context?: AppSyncVTLRenderContext;
+      /**
+       * Partial object to match against the output using `expect().matchObject`
+       */
+      match?: Record<string, any>;
+      /**
+       * Assert true if the function returns, false if it shouldn't
+       *
+       * @default nothing
+       */
+      returned?: boolean;
+      /**
+       * Additional context data for VTL
+       */
+      requestContext?: AppSyncGraphQLExecutionContext;
+    }[];
+  }
 ) {
   const actual = getAppSyncTemplates(decl);
 
-  expect(actual).toEqual(expected);
+  config?.expectedTemplateCount &&
+    expect(actual).toHaveLength(config.expectedTemplateCount);
+
+  expect(normalizeCDKJson(actual)).toMatchSnapshot();
+
+  config?.executeTemplates?.forEach((testCase) => {
+    const vtl = actual[testCase.index];
+    appsyncVelocityJsonTestCase(
+      vtl,
+      testCase.context,
+      { match: testCase.match, returned: testCase.returned },
+      testCase.requestContext
+    );
+  });
 }
 
 const simulator = new AmplifyAppSyncSimulator();
-export function appsyncVelocityJsonTestCase(
+function appsyncVelocityJsonTestCase(
   vtl: string,
-  context: AppSyncVTLRenderContext,
-  expected: { result: Record<string, any>; returned?: boolean },
+  context?: AppSyncVTLRenderContext,
+  expected?: { match?: Record<string, any>; returned?: boolean },
   requestContext?: AppSyncGraphQLExecutionContext
 ) {
   const template = new VelocityTemplate(
@@ -87,7 +141,7 @@ export function appsyncVelocityJsonTestCase(
   );
 
   const result = template.render(
-    context,
+    context ?? { arguments: {}, source: {} },
     requestContext ?? {
       headers: {},
       requestAuthorizationMode:
@@ -99,8 +153,11 @@ export function appsyncVelocityJsonTestCase(
 
   expect(result.errors).toHaveLength(0);
 
-  expect(JSON.parse(JSON.stringify(result.result))).toEqual(expected.result);
-  expected.returned !== undefined &&
+  const json = JSON.parse(JSON.stringify(result.result));
+
+  expect(normalizeCDKJson(json)).toMatchSnapshot();
+  expected?.match !== undefined && expect(json).toMatchObject(expected.match);
+  expected?.returned !== undefined &&
     expect(result.isReturn).toEqual(expected.returned);
 }
 
@@ -210,3 +267,12 @@ export function ebEventTargetTestCaseError<T extends Event>(
 ) {
   expect(() => synthesizeEventBridgeTargets(decl)).toThrow(message);
 }
+
+export const normalizeCDKJson = (json: object) => {
+  return JSON.parse(
+    JSON.stringify(json).replace(
+      /\$\{Token\[[a-zA-Z0-9.]*\]\}/g,
+      "__REPLACED_TOKEN"
+    )
+  );
+};
