@@ -35,7 +35,7 @@ beforeEach(() => {
 test("call function", () => {
   const fn1 = Function.fromFunction<{ arg: string }, Item>(lambda);
 
-  return appsyncTestCase(
+  appsyncTestCase(
     reflect((context: AppsyncContext<{ arg: string }>) => {
       return fn1(context.arguments);
     })
@@ -84,7 +84,7 @@ test("call function including optional arg", () => {
 test("call function including with no parameters", () => {
   const fn3 = Function.fromFunction<undefined, Item>(lambda);
 
-  return appsyncTestCase(
+  appsyncTestCase(
     reflect(() => {
       return fn3();
     })
@@ -94,7 +94,7 @@ test("call function including with no parameters", () => {
 test("call function including with void result", () => {
   const fn4 = Function.fromFunction<{ arg: string }, void>(lambda);
 
-  return appsyncTestCase(
+  appsyncTestCase(
     reflect((context: AppsyncContext<{ arg: string }>) => {
       return fn4(context.arguments);
     })
