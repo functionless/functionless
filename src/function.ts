@@ -10,6 +10,7 @@ import {
   CfnResource,
   DockerImage,
   Resource,
+  Stack,
   TagManager,
   Token,
   Tokenization,
@@ -747,6 +748,10 @@ export class CallbackLambdaCode extends aws_lambda.Code {
                 } = transformTable(o as CfnResource);
                 return transformTaggableResource(rest);
               } else if (Token.isUnresolved(o)) {
+                const resolved = Stack.of(scope).resolve(o);
+                if(resolved && !Token.isUnresolved(resolved)) {
+                  return resolved;
+                }
                 const token = (<any>o).toString();
                 // add to tokens to be turned into env variables.
                 tokens = [...tokens, token];
