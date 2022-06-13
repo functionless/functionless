@@ -2,12 +2,10 @@ import { assertNever, assertNodeKind } from "./assert";
 import {
   Argument,
   BinaryExpr,
-  BooleanLiteralExpr,
   CallExpr,
   ConditionExpr,
   Expr,
   FunctionExpr,
-  Identifier,
   PropAccessExpr,
   StringLiteralExpr,
 } from "./expression";
@@ -200,18 +198,11 @@ export class VTL {
         if (node.op === "in") {
           /**
            * rewrite `in` to a conditional statement to support both arrays and maps
-           */
-          const temp = this.newLocalVarName();
-          // strip off the `$`
-          const v = new Identifier(temp.substring(1));
-          this.set(temp, new BooleanLiteralExpr(false));
-          /**
-           * var v = false;
-           * if(left.class.name === "ArrayList") {
-           *    v = left.length >= right;
-           * } else {
-           *    v = left.containsKey(right);
-           * }
+           * var v = left in right;
+           *
+           * var v = right.class.name === "ArrayList" ?
+           *    right.length >= left :
+           *    right.containsKey(left);
            */
           const condition = new ConditionExpr(
             new BinaryExpr(
@@ -223,21 +214,13 @@ export class VTL {
               new StringLiteralExpr("ArrayList")
             ),
             new BinaryExpr(
-              v,
-              "=",
-              new BinaryExpr(
-                new PropAccessExpr(node.right, "length"),
-                ">=",
-                node.left
-              )
+              new PropAccessExpr(node.right, "length"),
+              ">=",
+              node.left
             ),
-            new BinaryExpr(
-              v,
-              "=",
-              new CallExpr(new PropAccessExpr(node.right, "containsKey"), [
-                new Argument(node.left),
-              ])
-            )
+            new CallExpr(new PropAccessExpr(node.right, "containsKey"), [
+              new Argument(node.left),
+            ])
           );
           condition.setParent(node);
 
