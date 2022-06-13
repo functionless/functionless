@@ -408,12 +408,5 @@ test("synth succeeds with async synth", async () => {
   });
 
   await asyncSynth(app);
-}, 100000);
-
-test("synth succeeds with function promises await", async () => {
-  new Function(stack, "superset", async (p: { a: string } | { b: string }) => {
-    return p;
-  });
-
-  await Promise.all(Function.promises);
-});
+  // synth is slow
+}, 500000);
