@@ -279,20 +279,15 @@ export class ConditionExpr extends BaseExpr<"ConditionExpr"> {
 
 export const isBinaryExpr = typeGuard("BinaryExpr");
 
+export type ValueComparisonBinaryOp = "==" | "!=" | "<" | "<=" | ">" | ">=";
+export type MathBinaryOp = "/" | "*" | "+" | "-";
+export type LogicBinaryOp = "&&" | "||";
+
 export type BinaryOp =
+  | MathBinaryOp
+  | ValueComparisonBinaryOp
+  | LogicBinaryOp
   | "="
-  | "/"
-  | "*"
-  | "+"
-  | "-"
-  | "=="
-  | "!="
-  | "<"
-  | "<="
-  | ">"
-  | ">="
-  | "&&"
-  | "||"
   | "in";
 
 export class BinaryExpr extends BaseExpr<"BinaryExpr"> {

@@ -72,35 +72,26 @@ Object {
 }
 `;
 
-exports[`binary expr == in if statement 1`] = `
+exports[`binary expr == 1`] = `
 Array [
   "{
   \\"version\\": \\"2018-05-29\\",
   \\"payload\\": null
 }",
-  "#set($v1 = $context.arguments.key == 'hello')
-#if($v1)
-#set($v2 = {})
-$util.qr($v2.put('out', 'ohh hi'))
-#set($context.stash.return__val = $v2)
-#set($context.stash.return__flag = true)
-#return($context.stash.return__val)
-#end
-#set($v3 = {})
-$util.qr($v3.put('out', 'wot'))
-#return($v3)",
+  "#set($v1 = {})
+#set($v2 = $context.arguments.key == 'key')
+#set($v3 = 'key' == $context.arguments.key)
+$util.qr($v1.put('out', [$v2, $v3]))
+#return($v1)",
 ]
 `;
 
-exports[`binary expr == in if statement 2`] = `
+exports[`binary expr == 2`] = `
 Object {
-  "out": "ohh hi",
-}
-`;
-
-exports[`binary expr == in if statement 3`] = `
-Object {
-  "out": "wot",
+  "out": Array [
+    true,
+    true,
+  ],
 }
 `;
 
@@ -110,17 +101,26 @@ Array [
   \\"version\\": \\"2018-05-29\\",
   \\"payload\\": null
 }",
-  "#set($v1 = !!$context.arguments['key'])
+  "#set($v1 = false)
+#set($v3 = $context.arguments.class.name == 'ArrayList')
+#if($v3)
+#set($v4 = $context.arguments.length >= 'key')
+#set($v1 = $v4)
+#set($v2 = $v1)
+#else
+#set($v1 = $context.arguments.containsKey('key'))
+#set($v2 = $v1)
+#end
 #if($v1)
-#set($v2 = {})
-$util.qr($v2.put('out', $context.arguments.key))
-#set($context.stash.return__val = $v2)
+#set($v5 = {})
+$util.qr($v5.put('out', $context.arguments.key))
+#set($context.stash.return__val = $v5)
 #set($context.stash.return__flag = true)
 #return($context.stash.return__val)
 #end
-#set($v3 = {})
-$util.qr($v3.put('out', $context.arguments.key2))
-#return($v3)",
+#set($v6 = {})
+$util.qr($v6.put('out', $context.arguments.key2))
+#return($v6)",
 ]
 `;
 
@@ -132,6 +132,12 @@ Object {
 
 exports[`binary expr in 3`] = `
 Object {
+  "out": "",
+}
+`;
+
+exports[`binary expr in 4`] = `
+Object {
   "out": "hello",
 }
 `;
@@ -142,29 +148,230 @@ Array [
   \\"version\\": \\"2018-05-29\\",
   \\"payload\\": null
 }",
-  "#set($v1 = !!$context.arguments.arr[1])
+  "#set($v1 = false)
+#set($v3 = $context.arguments.arr.class.name == 'ArrayList')
+#if($v3)
+#set($v4 = $context.arguments.arr.length >= 1)
+#set($v1 = $v4)
+#set($v2 = $v1)
+#else
+#set($v1 = $context.arguments.arr.containsKey(1))
+#set($v2 = $v1)
+#end
 #if($v1)
-#set($v2 = {})
-$util.qr($v2.put('out', $context.arguments.arr[1]))
-#set($context.stash.return__val = $v2)
+#set($v5 = {})
+$util.qr($v5.put('out', $context.arguments.arr[1]))
+#set($context.stash.return__val = $v5)
 #set($context.stash.return__flag = true)
 #return($context.stash.return__val)
 #end
-#set($v3 = {})
-$util.qr($v3.put('out', $context.arguments.arr[0]))
-#return($v3)",
+#set($v6 = {})
+$util.qr($v6.put('out', $context.arguments.arr[0]))
+#return($v6)",
 ]
 `;
 
 exports[`binary expr in array 2`] = `
 Object {
-  "out": "2",
+  "out": "1",
 }
 `;
 
 exports[`binary expr in array 3`] = `
 Object {
   "out": "1",
+}
+`;
+
+exports[`binary expr in map 1`] = `
+Array [
+  "{
+  \\"version\\": \\"2018-05-29\\",
+  \\"payload\\": null
+}",
+  "#set($v1 = {})
+$util.qr($v1.put('key', 'value'))
+$util.qr($v1.put('keyEmpty', ''))
+#set($context.stash.obj = $v1)
+#set($v2 = {})
+#set($v3 = false)
+#set($v5 = $context.stash.obj.class.name == 'ArrayList')
+#if($v5)
+#set($v6 = $context.stash.obj.length >= 'key')
+#set($v3 = $v6)
+#set($v4 = $v3)
+#else
+#set($v3 = $context.stash.obj.containsKey('key'))
+#set($v4 = $v3)
+#end
+$util.qr($v2.put('in', $v3))
+#set($v7 = false)
+#set($v9 = $context.stash.obj.class.name == 'ArrayList')
+#if($v9)
+#set($v10 = $context.stash.obj.length >= 'otherKey')
+#set($v7 = $v10)
+#set($v8 = $v7)
+#else
+#set($v7 = $context.stash.obj.containsKey('otherKey'))
+#set($v8 = $v7)
+#end
+$util.qr($v2.put('notIn', $v7))
+#set($v11 = false)
+#set($v13 = $context.stash.obj.class.name == 'ArrayList')
+#if($v13)
+#set($v14 = $context.stash.obj.length >= 'keyEmpty')
+#set($v11 = $v14)
+#set($v12 = $v11)
+#else
+#set($v11 = $context.stash.obj.containsKey('keyEmpty'))
+#set($v12 = $v11)
+#end
+$util.qr($v2.put('inEmpty', $v11))
+#return($v2)",
+]
+`;
+
+exports[`binary expr in map 2`] = `
+Object {
+  "in": true,
+  "inEmpty": true,
+  "notIn": false,
+}
+`;
+
+exports[`binary exprs logical 1`] = `
+Array [
+  "{
+  \\"version\\": \\"2018-05-29\\",
+  \\"payload\\": null
+}",
+  "#set($context.stash.a = $context.arguments.a)
+#set($context.stash.b = $context.arguments.b)
+#set($v1 = {})
+#set($v2 = $context.stash.a && $context.stash.b)
+$util.qr($v1.put('&&', $v2))
+#set($v3 = $context.stash.a || $context.stash.b)
+$util.qr($v1.put('||', $v3))
+#return($v1)",
+]
+`;
+
+exports[`binary exprs logical 2`] = `
+Object {
+  "&&": true,
+  "||": true,
+}
+`;
+
+exports[`binary exprs logical 3`] = `
+Object {
+  "&&": false,
+  "||": true,
+}
+`;
+
+exports[`binary exprs logical 4`] = `
+Object {
+  "&&": false,
+  "||": false,
+}
+`;
+
+exports[`binary exprs math 1`] = `
+Array [
+  "{
+  \\"version\\": \\"2018-05-29\\",
+  \\"payload\\": null
+}",
+  "#set($context.stash.a = $context.arguments.a)
+#set($context.stash.b = $context.arguments.b)
+#set($v1 = {})
+#set($v2 = $context.stash.a + $context.stash.b)
+$util.qr($v1.put('+', $v2))
+#set($v3 = $context.stash.a - $context.stash.b)
+$util.qr($v1.put('-', $v3))
+#set($v4 = $context.stash.a * $context.stash.b)
+$util.qr($v1.put('*', $v4))
+#set($v5 = $context.stash.a / $context.stash.b)
+$util.qr($v1.put('/', $v5))
+#return($v1)",
+]
+`;
+
+exports[`binary exprs math 2`] = `
+Object {
+  "*": 12,
+  "+": 8,
+  "-": 4,
+  "/": 3,
+}
+`;
+
+exports[`binary exprs value comparison 1`] = `
+Array [
+  "{
+  \\"version\\": \\"2018-05-29\\",
+  \\"payload\\": null
+}",
+  "#set($context.stash.a = $context.arguments.a)
+#set($context.stash.b = $context.arguments.b)
+#set($v1 = {})
+#set($v2 = $context.stash.a != $context.stash.b)
+$util.qr($v1.put('!=', $v2))
+#set($v3 = $context.stash.a && $context.stash.b)
+$util.qr($v1.put('&&', $v3))
+#set($v4 = $context.stash.a || $context.stash.b)
+$util.qr($v1.put('||', $v4))
+#set($v5 = $context.stash.a < $context.stash.b)
+$util.qr($v1.put('<', $v5))
+#set($v6 = $context.stash.a <= $context.stash.b)
+$util.qr($v1.put('<=', $v6))
+#set($v7 = $context.stash.a == $context.stash.b)
+$util.qr($v1.put('==', $v7))
+#set($v8 = $context.stash.a > $context.stash.b)
+$util.qr($v1.put('>', $v8))
+#set($v9 = $context.stash.a >= $context.stash.b)
+$util.qr($v1.put('>=', $v9))
+#return($v1)",
+]
+`;
+
+exports[`binary exprs value comparison 2`] = `
+Object {
+  "!=": true,
+  "&&": 2,
+  "<": true,
+  "<=": true,
+  "==": false,
+  ">": false,
+  ">=": false,
+  "||": 1,
+}
+`;
+
+exports[`binary exprs value comparison 3`] = `
+Object {
+  "!=": true,
+  "&&": 1,
+  "<": false,
+  "<=": false,
+  "==": false,
+  ">": true,
+  ">=": true,
+  "||": 2,
+}
+`;
+
+exports[`binary exprs value comparison 4`] = `
+Object {
+  "!=": false,
+  "&&": 1,
+  "<": false,
+  "<=": true,
+  "==": true,
+  ">": false,
+  ">=": true,
+  "||": 1,
 }
 `;
 

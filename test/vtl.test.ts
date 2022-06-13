@@ -1,7 +1,14 @@
 import "jest";
-import { $util, AppsyncContext, ResolverFunction } from "../src";
+import {
+  $util,
+  AppsyncContext,
+  LogicBinaryOp,
+  MathBinaryOp,
+  ResolverFunction,
+  ValueComparisonBinaryOp,
+} from "../src";
 import { reflect } from "../src/reflect";
-import { appsyncTestCase } from "./util";
+import { appsyncTestCase, testAppsyncVelocity } from "./util";
 
 test("empty function returning an argument", () => {
   appsyncTestCase(
@@ -242,41 +249,45 @@ test("conditional expression in template expression", () => {
   );
 });
 
-test("map over list", () =>
+test("map over list", () => {
   appsyncTestCase(
     reflect((context: AppsyncContext<{ list: string[] }>) => {
       return context.arguments.list.map((item) => {
         return `hello ${item}`;
       });
     })
-  ));
+  );
+});
 
-test("map over list with in-line return", () =>
+test("map over list with in-line return", () => {
   appsyncTestCase(
     reflect((context: AppsyncContext<{ list: string[] }>) => {
       return context.arguments.list.map((item) => `hello ${item}`);
     })
-  ));
+  );
+});
 
-test("chain map over list", () =>
+test("chain map over list", () => {
   appsyncTestCase(
     reflect((context: AppsyncContext<{ list: string[] }>) => {
       return context.arguments.list
         .map((item) => `hello ${item}`)
         .map((item) => `hello ${item}`);
     })
-  ));
+  );
+});
 
-test("chain map over list multiple array", () =>
+test("chain map over list multiple array", () => {
   appsyncTestCase(
     reflect((context: AppsyncContext<{ list: string[] }>) => {
       return context.arguments.list
         .map((item, _i, _arr) => `hello ${item}`)
         .map((item, _i, _arr) => `hello ${item}`);
     })
-  ));
+  );
+});
 
-test("chain map over list complex", () =>
+test("chain map over list complex", () => {
   appsyncTestCase(
     reflect((context: AppsyncContext<{ list: string[] }>) => {
       return context.arguments.list
@@ -286,36 +297,40 @@ test("chain map over list complex", () =>
         })
         .map((item2, ii) => `hello ${item2} ${ii}`);
     })
-  ));
+  );
+});
 
-test("forEach over list", () =>
+test("forEach over list", () => {
   appsyncTestCase(
     reflect((context: AppsyncContext<{ list: string[] }>) => {
       return context.arguments.list.forEach((item) => {
         $util.error(item);
       });
     })
-  ));
+  );
+});
 
-test("reduce over list with initial value", () =>
+test("reduce over list with initial value", () => {
   appsyncTestCase(
     reflect((context: AppsyncContext<{ list: string[] }>) => {
       return context.arguments.list.reduce((newList: string[], item) => {
         return [...newList, item];
       }, []);
     })
-  ));
+  );
+});
 
-test("reduce over list without initial value", () =>
+test("reduce over list without initial value", () => {
   appsyncTestCase(
     reflect((context: AppsyncContext<{ list: string[] }>) => {
       return context.arguments.list.reduce((str: string, item) => {
         return `${str}${item}`;
       });
     })
-  ));
+  );
+});
 
-test("map and reduce over list with initial value", () =>
+test("map and reduce over list with initial value", () => {
   appsyncTestCase(
     reflect((context: AppsyncContext<{ list: string[] }>) => {
       return context.arguments.list
@@ -324,9 +339,10 @@ test("map and reduce over list with initial value", () =>
           return [...newList, item];
         }, []);
     })
-  ));
+  );
+});
 
-test("map and reduce with array over list with initial value", () =>
+test("map and reduce with array over list with initial value", () => {
   appsyncTestCase(
     reflect((context: AppsyncContext<{ list: string[] }>) => {
       return context.arguments.list
@@ -335,9 +351,10 @@ test("map and reduce with array over list with initial value", () =>
           return [...newList, item];
         }, []);
     })
-  ));
+  );
+});
 
-test("map and reduce and map and reduce over list with initial value", () =>
+test("map and reduce and map and reduce over list with initial value", () => {
   appsyncTestCase(
     reflect((context: AppsyncContext<{ list: string[] }>) => {
       return context.arguments.list
@@ -350,16 +367,18 @@ test("map and reduce and map and reduce over list with initial value", () =>
           return [...newList, item];
         }, []);
     })
-  ));
+  );
+});
 
-test("$util.time.nowISO8601", () =>
+test("$util.time.nowISO8601", () => {
   appsyncTestCase(
     reflect(() => {
       return $util.time.nowISO8601();
     })
-  ));
+  );
+});
 
-test("BinaryExpr and UnaryExpr are evaluated to temporary variables", () =>
+test("BinaryExpr and UnaryExpr are evaluated to temporary variables", () => {
   appsyncTestCase(
     reflect(() => {
       return {
@@ -368,10 +387,11 @@ test("BinaryExpr and UnaryExpr are evaluated to temporary variables", () =>
         z: !(true && false),
       };
     })
-  ));
+  );
+});
 
 test("binary expr in", () => {
-  appsyncTestCase(
+  const templates = appsyncTestCase(
     reflect<
       ResolverFunction<{ key: string } | { key2: string }, { out: string }, any>
     >(($context) => {
@@ -379,26 +399,78 @@ test("binary expr in", () => {
         return { out: $context.arguments.key };
       }
       return { out: $context.arguments.key2 };
-    }),
-    {
-      executeTemplates: [
-        {
-          index: 1,
-          context: { arguments: { key: "hi" }, source: {} },
-          match: { out: "hi" },
-        },
-        {
-          index: 1,
-          context: { arguments: { key2: "hello" }, source: {} },
-          match: { out: "hello" },
-        },
-      ],
-    }
+    })
   );
+
+  testAppsyncVelocity(templates[1], {
+    arguments: { key: "hi" },
+    resultMatch: { out: "hi" },
+  });
+
+  // falsey value
+  testAppsyncVelocity(templates[1], {
+    arguments: { key: "" },
+    resultMatch: { out: "" },
+  });
+
+  testAppsyncVelocity(templates[1], {
+    arguments: { key2: "hello" },
+    resultMatch: { out: "hello" },
+  });
 });
 
-test("binary expr in array", () => {
-  appsyncTestCase(
+test("binary expr ==", () => {
+  const templates = appsyncTestCase(
+    reflect<ResolverFunction<{ key: string }, { out: boolean[] }, any>>(
+      ($context) => {
+        return {
+          out: [
+            $context.arguments.key == "key",
+            "key" == $context.arguments.key,
+          ],
+        };
+      }
+    )
+  );
+
+  testAppsyncVelocity(templates[1], {
+    arguments: { key: "key" },
+    resultMatch: { out: [true, true] },
+  });
+});
+
+test("binary expr in map", () => {
+  const templates = appsyncTestCase(
+    reflect<ResolverFunction<{}, { in: boolean; notIn: boolean }, any>>(() => {
+      const obj = {
+        key: "value",
+        // $null does not appear to work in amplify simulator
+        // keyNull: null,
+        keyEmpty: "",
+      };
+      return {
+        in: "key" in obj,
+        notIn: "otherKey" in obj,
+        // inNull: "keyNull" in obj,
+        inEmpty: "keyEmpty" in obj,
+      };
+    })
+  );
+
+  testAppsyncVelocity(templates[1], {
+    resultMatch: {
+      in: true,
+      notIn: false,
+      // inNull: true,
+      inEmpty: true,
+    },
+  });
+});
+
+// amplify simulator does not support .class
+// https://github.com/aws-amplify/amplify-cli/issues/10575
+test.skip("binary expr in array", () => {
+  const templates = appsyncTestCase(
     reflect<ResolverFunction<{ arr: string[] }, { out: string }, any>>(
       ($context) => {
         if (1 in $context.arguments.arr) {
@@ -406,53 +478,162 @@ test("binary expr in array", () => {
         }
         return { out: $context.arguments.arr[0] };
       }
-    ),
-    {
-      executeTemplates: [
-        {
-          index: 1,
-          context: { arguments: { arr: ["1", "2"] }, source: {} },
-          match: { out: "2" },
-        },
-        {
-          index: 1,
-          context: { arguments: { arr: ["1"] }, source: {} },
-          match: { out: "1" },
-        },
-      ],
-    }
+    )
   );
+
+  testAppsyncVelocity(templates[1], {
+    arguments: { arr: ["1", "2"] },
+    resultMatch: { out: "2" },
+  });
+
+  testAppsyncVelocity(templates[1], {
+    arguments: { arr: ["1", ""] },
+    resultMatch: { out: "" },
+  });
+
+  testAppsyncVelocity(templates[1], {
+    arguments: { arr: ["1"] },
+    resultMatch: { out: "1" },
+  });
 });
 
-test("binary expr == in if statement", () => {
-  appsyncTestCase(
-    reflect<ResolverFunction<{ key: string }, { out: string }, any>>(
-      ($context) => {
-        if ($context.arguments.key == "hello") {
-          return { out: "ohh hi" };
-        }
-        return { out: "wot" };
-      }
-    ),
-    {
-      executeTemplates: [
-        {
-          index: 1,
-          context: { arguments: { key: "hello" }, source: {} },
-          match: { out: "ohh hi" },
-        },
-        {
-          index: 1,
-          context: { arguments: { key: "giddyup" }, source: {} },
-          match: { out: "wot" },
-        },
-      ],
-    }
+test("binary exprs value comparison", () => {
+  const templates = appsyncTestCase(
+    reflect<
+      ResolverFunction<
+        { a: number; b: number },
+        Record<ValueComparisonBinaryOp, boolean>,
+        any
+      >
+    >(($context) => {
+      const a = $context.arguments.a;
+      const b = $context.arguments.b;
+      return {
+        "!=": a != b,
+        "&&": a && b,
+        "||": a || b,
+        "<": a < b,
+        "<=": a <= b,
+        "==": a == b,
+        ">": a > b,
+        ">=": a >= b,
+      };
+    })
   );
+
+  testAppsyncVelocity(templates[1], {
+    arguments: { a: 1, b: 2 },
+    resultMatch: {
+      "!=": true,
+      "<": true,
+      "<=": true,
+      "==": false,
+      ">": false,
+      ">=": false,
+    },
+  });
+
+  testAppsyncVelocity(templates[1], {
+    arguments: { a: 2, b: 1 },
+    resultMatch: {
+      "!=": true,
+      "<": false,
+      "<=": false,
+      "==": false,
+      ">": true,
+      ">=": true,
+    },
+  });
+
+  testAppsyncVelocity(templates[1], {
+    arguments: { a: 1, b: 1 },
+    resultMatch: {
+      "!=": false,
+      "<": false,
+      "<=": true,
+      "==": true,
+      ">": false,
+      ">=": true,
+    },
+  });
+});
+
+test("binary exprs logical", () => {
+  const templates = appsyncTestCase(
+    reflect<
+      ResolverFunction<
+        { a: boolean; b: boolean },
+        Record<LogicBinaryOp, boolean>,
+        any
+      >
+    >(($context) => {
+      const a = $context.arguments.a;
+      const b = $context.arguments.b;
+      return {
+        "&&": a && b,
+        "||": a || b,
+      };
+    })
+  );
+
+  testAppsyncVelocity(templates[1], {
+    arguments: { a: true, b: true },
+    resultMatch: {
+      "&&": true,
+      "||": true,
+    },
+  });
+
+  testAppsyncVelocity(templates[1], {
+    arguments: { a: true, b: false },
+    resultMatch: {
+      "&&": false,
+      "||": true,
+    },
+  });
+
+  testAppsyncVelocity(templates[1], {
+    arguments: { a: false, b: false },
+    resultMatch: {
+      "&&": false,
+      "||": false,
+    },
+  });
+});
+
+test("binary exprs math", () => {
+  const templates = appsyncTestCase(
+    reflect<
+      ResolverFunction<
+        { a: number; b: number },
+        Record<MathBinaryOp, number>,
+        any
+      >
+    >(($context) => {
+      const a = $context.arguments.a;
+      const b = $context.arguments.b;
+      return {
+        "+": a + b,
+        "-": a - b,
+        "*": a * b,
+        "/": a / b,
+      };
+    })
+  );
+
+  testAppsyncVelocity(templates[1], {
+    arguments: { a: 6, b: 2 },
+    resultMatch: {
+      "+": 8,
+      "-": 4,
+      "*": 12,
+      "/": 3,
+    },
+  });
 });
 
 test("binary expr =", () => {
-  appsyncTestCase(
+  const templates = appsyncTestCase(
     reflect<ResolverFunction<{ key: string }, { out: string }, any>>(
       ($context) => {
         if ($context.arguments.key == "help me") {
@@ -463,32 +644,28 @@ test("binary expr =", () => {
         }
         return { out: "wot" };
       }
-    ),
-    {
-      executeTemplates: [
-        {
-          index: 1,
-          context: { arguments: { key: "hello" }, source: {} },
-          match: { out: "ohh hi" },
-        },
-        {
-          index: 1,
-          context: { arguments: { key: "giddyup" }, source: {} },
-          match: { out: "wot" },
-        },
-        {
-          index: 1,
-          context: { arguments: { key: "help me" }, source: {} },
-          match: { out: "ohh hi" },
-        },
-      ],
-    }
+    )
   );
+
+  testAppsyncVelocity(templates[1], {
+    arguments: { key: "hello" },
+    resultMatch: { out: "ohh hi" },
+  });
+
+  testAppsyncVelocity(templates[1], {
+    arguments: { key: "giddyup" },
+    resultMatch: { out: "wot" },
+  });
+
+  testAppsyncVelocity(templates[1], {
+    arguments: { key: "help me" },
+    resultMatch: { out: "ohh hi" },
+  });
 });
 
 // https://github.com/functionless/functionless/issues/232
 test.skip("binary expr +=", () => {
-  appsyncTestCase(
+  const templates = appsyncTestCase(
     reflect<ResolverFunction<{ key: string }, { out: number }, any>>(
       ($context) => {
         var n = 0;
@@ -497,20 +674,16 @@ test.skip("binary expr +=", () => {
         }
         return { out: n };
       }
-    ),
-    {
-      executeTemplates: [
-        {
-          index: 1,
-          context: { arguments: { key: "hello" }, source: {} },
-          match: { out: 1 },
-        },
-        {
-          index: 1,
-          context: { arguments: { key: "giddyup" }, source: {} },
-          match: { out: 0 },
-        },
-      ],
-    }
+    )
   );
+
+  testAppsyncVelocity(templates[1], {
+    arguments: { key: "hello" },
+    resultMatch: { out: 1 },
+  });
+
+  testAppsyncVelocity(templates[1], {
+    arguments: { key: "giddyup" },
+    resultMatch: { out: 0 },
+  });
 });

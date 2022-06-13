@@ -1,5 +1,16 @@
 import { assertNever, assertNodeKind } from "./assert";
-import { CallExpr, Expr, FunctionExpr } from "./expression";
+import {
+  Argument,
+  BinaryExpr,
+  BooleanLiteralExpr,
+  CallExpr,
+  ConditionExpr,
+  Expr,
+  FunctionExpr,
+  Identifier,
+  PropAccessExpr,
+  StringLiteralExpr,
+} from "./expression";
 import { findIntegration } from "./integration";
 import { FunctionlessNode } from "./node";
 import { Stmt } from "./statement";
@@ -186,16 +197,56 @@ export class VTL {
         }
       }
       case "BinaryExpr":
-        // VTL fails to evaluate binary expressions inside an object put e.g. $obj.put('x', 1 + 1)
-        // a workaround is to use a temp variable.
         if (node.op === "in") {
-          // !! right[left]
-          return this.var(
-            `!!${this.eval(node.right)}[${this.eval(node.left)}]`
+          /**
+           * rewrite `in` to a conditional statement to support both arrays and maps
+           */
+          const temp = this.newLocalVarName();
+          // strip off the `$`
+          const v = new Identifier(temp.substring(1));
+          this.set(temp, new BooleanLiteralExpr(false));
+          /**
+           * var v = false;
+           * if(left.class.name === "ArrayList") {
+           *    v = left.length >= right;
+           * } else {
+           *    v = left.containsKey(right);
+           * }
+           */
+          const condition = new ConditionExpr(
+            new BinaryExpr(
+              new PropAccessExpr(
+                new PropAccessExpr(node.right, "class"),
+                "name"
+              ),
+              "==",
+              new StringLiteralExpr("ArrayList")
+            ),
+            new BinaryExpr(
+              v,
+              "=",
+              new BinaryExpr(
+                new PropAccessExpr(node.right, "length"),
+                ">=",
+                node.left
+              )
+            ),
+            new BinaryExpr(
+              v,
+              "=",
+              new CallExpr(new PropAccessExpr(node.right, "containsKey"), [
+                new Argument(node.left),
+              ])
+            )
           );
+          condition.setParent(node);
+
+          return this.eval(condition);
         } else if (node.op === "=") {
           return this.set(this.eval(node.left), this.eval(node.right));
         }
+        // VTL fails to evaluate binary expressions inside an object put e.g. $obj.put('x', 1 + 1)
+        // a workaround is to use a temp variable.
         return this.var(
           `${this.eval(node.left)} ${node.op} ${this.eval(node.right)}`
         );
