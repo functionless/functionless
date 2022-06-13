@@ -110,7 +110,7 @@ const project = new CustomTypescriptProject({
     "constructs@^10.0.0",
     "esbuild",
     "typesafe-dynamodb@^0.1.5",
-    "typescript@^4.6.2",
+    "typescript@^4.7.2",
   ],
   eslintOptions: {
     lintProjenRc: true,
@@ -178,18 +178,31 @@ project.eslint.addRules({
   "@typescript-eslint/no-shadow": "off",
   "@typescript-eslint/member-ordering": "off",
   "brace-style": "off",
+  "@typescript-eslint/explicit-member-accessibility": "off",
 });
 
-/**
- * ES Lint parser needs to know about all of the tsconfig files to use.
- */
 project.eslint.addOverride({
-  files: ["*.ts", "*.tsx"],
+  files: ["*.ts", "*.mts", "*.cts", "*.tsx"],
   parserOptions: {
     project: [
       "./tsconfig.dev.json",
       "./test-app/tsconfig.json",
       "./website/tsconfig.json",
+    ],
+  },
+  rules: {
+    "@typescript-eslint/explicit-member-accessibility": [
+      "error",
+      {
+        accessibility: "explicit",
+        overrides: {
+          accessors: "explicit",
+          constructors: "no-public",
+          methods: "explicit",
+          properties: "off",
+          parameterProperties: "off",
+        },
+      },
     ],
   },
 });

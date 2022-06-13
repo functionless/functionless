@@ -374,9 +374,14 @@ customDeleteBus
     "Delete Message Rule",
     (event) => event["detail-type"] === "Delete-Message-Success"
   )
-  .map((event) => ({
-    message: `Messages deleted: ${(<MessageDeletedEvent>event).detail.count}`,
-  }))
+  .map(
+    (event) =>
+      <Notification>{
+        message: `Messages deleted: ${
+          (<MessageDeletedEvent>event).detail.count
+        }`,
+      }
+  )
   .pipe(sendNotification);
 
 customDeleteBus
@@ -385,9 +390,12 @@ customDeleteBus
     "Delete Post Rule",
     (event) => event["detail-type"] === "Delete-Post-Success"
   )
-  .map((event) => ({
-    message: `Post Deleted: ${(<PostDeletedEvent>event).detail.id}`,
-  }))
+  .map(
+    (event) =>
+      <Notification>{
+        message: `Post Deleted: ${(<PostDeletedEvent>event).detail.id}`,
+      }
+  )
   .pipe(sendNotification);
 
 /**
