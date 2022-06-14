@@ -4,7 +4,6 @@ import type { PluginConfig, TransformerExtras } from "ts-patch";
 import ts from "typescript";
 import { assertDefined } from "./assert";
 import {
-  ApiIntegrationInterface,
   EventBusMapInterface,
   RuleInterface,
   EventTransformInterface,
@@ -540,8 +539,8 @@ export function compile(
         ]);
       }
 
-      function visitApiIntegration(node: ApiIntegrationInterface): ts.Node {
-        const [props, request, response, errors] = node.arguments;
+      function visitApiIntegration(node: ts.NewExpression): ts.Node {
+        const [props, request, response, errors] = node.arguments ?? [];
 
         return ts.factory.updateNewExpression(
           node,

@@ -1,3 +1,6 @@
+// @ts-ignore - imported for tsdoc
+import type { AwsMethod } from "./api";
+
 /**
  * Error to throw during synth failures
  */
@@ -50,4 +53,50 @@ export namespace ErrorCodes {
     code: 101,
     messageText: "Function not compiled by Functionless plugin",
   };
+
+  /**
+   * The argument must be an inline Function.
+   *
+   * ```ts
+   * // invalid - `func` must be an inline Function
+   * new Function(this, id, func);
+   * ```
+   *
+   * To fix, inline the `func` implementation.
+   *
+   * ```ts
+   * // option 1 - arrow function
+   * new Function(this, id, () => { .. });
+   *
+   * // option 2 - function
+   * new Function(this, id, function () { .. });
+   * ```
+   */
+  export const Argument_must_be_an_inline_Function: ErrorCode = {
+    code: 102,
+    messageText: `Argument must be an inline Function`,
+  };
+
+  /**
+   * When using the {@link AwsMethod}, the `request` argument must be a function
+   * with exactly one integration call.
+   *
+   * ```ts
+   * new AwsMethod(
+   *   {
+   *     httpMethod: "GET",
+   *     resource: api.root
+   *   },
+   *   ($input) => {
+   *     return $AWS.DynamoDB.GetItem({ .. });
+   *   },
+   *   // etc.
+   * )
+   * ```
+   */
+  export const AwsMethod_request_must_have_exactly_one_integration_call: ErrorCode =
+    {
+      code: 103,
+      messageText: `AwsMethod request must have exactly one integration call`,
+    };
 }

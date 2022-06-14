@@ -124,19 +124,29 @@ export interface ApiRequest<
   headers?: Header;
 }
 
+export type ApiMethodKind = "AwsMethod" | "MockMethod";
+
+export function isApiMethodKind(a: any): a is ApiMethodKind {
+  return a === "AwsMethod" || a === "MockMethod";
+}
+
 /**
  * Base class of an AWS API Gateway Method.
  *
  * @see {@link MockMethod}
  * @see {@link AwsMethod}
  */
-export abstract class ApiMethod {
+export abstract class ApiMethod<Kind extends ApiMethodKind> {
   /**
    * Identify subclasses as API integrations to the Functionless plugin
    */
   public static readonly FunctionlessType = "ApiIntegration";
 
   constructor(
+    /**
+     *
+     */
+    readonly kind: Kind,
     /**
      * The underlying Method Construct.
      */
@@ -214,7 +224,7 @@ export class MockMethod<
   Request extends ApiRequest,
   StatusCode extends number,
   MethodResponses extends { [C in StatusCode]: any }
-> extends ApiMethod {
+> extends ApiMethod<"MockMethod"> {
   public constructor(
     props: MethodProps,
     /**
@@ -270,6 +280,7 @@ export class MockMethod<
     }));
 
     super(
+      "MockMethod",
       props.resource.addMethod(props.httpMethod, integration, {
         methodResponses,
       })
@@ -370,7 +381,7 @@ export class AwsMethod<
   Request extends ApiRequest,
   MethodResponse,
   IntegrationResponse
-> extends ApiMethod {
+> extends ApiMethod<"AwsMethod"> {
   constructor(
     /**
      * The {@link MethodProps} for configuring how this method behaves at runtime.
@@ -381,14 +392,44 @@ export class AwsMethod<
      * integration. This will be compiled to a VTL request mapping template and
      * an API GW integration.
      *
-     * At present the function body must be a single statement calling an integration
-     * with an object literal argument. E.g
+     * There are limitations on what is allowed within this Function:
+     * 1. the integration call must be returned
      *
      * ```ts
-     *  (req) => fn({ id: req.body.id });
-     * ```
+     * () => {
+     *   // VALID
+     *   return lambda();
+     * }
      *
-     * The supported syntax will be expanded in the future.
+     * // VALID
+     * () => lambda();
+     *
+     * // INVALID - API Gateway always returns the integration response
+     * lambda();
+     *
+     * // INVALID
+     * const result = lambda()
+     * result... // the request mapping template terminates when the call is made
+     * ```
+     * 2. an integration must be at the top-level
+     *
+     * ```ts
+     * () => {
+     *   // valid
+     *   lambda();
+     *   return lambda();
+     *
+     *   if (condition) {
+     *     // INVALID - conditional integrations are not supported by AWS
+     *     lambda();
+     *   }
+     *
+     *   while (condition) {
+     *     // INVALID - API Gateway only supports one call per integration
+     *     lambda();
+     *   }
+     * }}
+     * ```
      */
     request: (
       $input: ApiGatewayInput<Request>,
@@ -473,6 +514,7 @@ export class AwsMethod<
     ];
 
     super(
+      "AwsMethod",
       props.resource.addMethod(props.httpMethod, apiGwIntegration, {
         methodResponses,
       })

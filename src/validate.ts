@@ -15,28 +15,27 @@ import { ErrorCode, ErrorCodes } from "./error-code";
 export function validate(
   ts: typeof typescript,
   checker: FunctionlessChecker,
-  node: typescript.Node,
+  node: ts.Node,
   logger?: {
     info(message: string): void;
   }
-): typescript.Diagnostic[] {
+): ts.Diagnostic[] {
   logger?.info("Beginning validation of Functionless semantics");
 
-  return (function visit(node: typescript.Node): typescript.Diagnostic[] {
+  return (function visit(node: ts.Node): ts.Diagnostic[] {
     if (checker.isStepFunction(node)) {
-      return validateEachChildRecursive(node, validateStepFunctionNode);
+      return collectEachChildRecursive(node, validateStepFunctionNode);
+    } else if (checker.isApiIntegration(node)) {
+      return validateApiRequest(node);
     } else {
-      return validateEachChild(node, visit);
+      return collectEachChild(node, visit);
     }
   })(node);
 
   // ts.forEachChild terminates whenever a truth value is returned
   // ts.visitEachChild requires a ts.TransformationContext, so we can't use that
   // this wrapper uses a mutable array to collect the results
-  function validateEachChild<T>(
-    node: typescript.Node,
-    cb: (node: typescript.Node) => T[]
-  ): T[] {
+  function collectEachChild<T>(node: ts.Node, cb: (node: ts.Node) => T[]): T[] {
     const results: T[] = [];
     ts.forEachChild(node, (child) => {
       results.push(...cb(child));
@@ -45,19 +44,17 @@ export function validate(
   }
 
   // apply the callback to all nodes in the tree
-  function validateEachChildRecursive<T>(
-    node: typescript.Node,
-    cb: (node: typescript.Node) => T[]
+  function collectEachChildRecursive<T>(
+    node: ts.Node,
+    cb: (node: ts.Node) => T[]
   ): T[] {
-    return validateEachChild(node, (node) => [
+    return collectEachChild(node, (node) => [
       ...cb(node),
-      ...validateEachChildRecursive(node, cb),
+      ...collectEachChildRecursive(node, cb),
     ]);
   }
 
-  function validateStepFunctionNode(
-    node: typescript.Node
-  ): typescript.Diagnostic[] {
+  function validateStepFunctionNode(node: ts.Node): ts.Diagnostic[] {
     if (
       (ts.isBinaryExpression(node) &&
         isArithmeticToken(node.operatorToken.kind) &&
@@ -74,8 +71,63 @@ export function validate(
     return [];
   }
 
+  function validateApiRequest(node: ts.NewExpression): ts.Diagnostic[] {
+    const kind = checker.getApiMethodKind(node);
+    if (kind === "AwsMethod") {
+      // @ts-ignore
+      const [props, request, responses, errors] = node.arguments ?? [];
+
+      if (request === undefined) {
+        // should be a standard type error - the request is missing
+      } else if (
+        (ts.isArrowFunction(request) ||
+          ts.isFunctionExpression(request) ||
+          ts.isFunctionDeclaration(request)) &&
+        request.body !== undefined
+      ) {
+        const numIntegrations = countIntegrationCalls(request);
+        if (numIntegrations === 0 || numIntegrations > 1) {
+          return [
+            newError(
+              request,
+              ErrorCodes.AwsMethod_request_must_have_exactly_one_integration_call
+            ),
+          ];
+        }
+      } else {
+        return [
+          newError(request, ErrorCodes.Argument_must_be_an_inline_Function),
+        ];
+      }
+    } else if (kind === "MockMethod") {
+      // @ts-ignore
+      const [props, request, responses] = node.arguments;
+    }
+    return [];
+  }
+
+  function countIntegrationCalls(node: ts.Node): number {
+    if (ts.isCallExpression(node)) {
+      const kind = checker.getFunctionlessTypeKind(
+        checker.getTypeAtLocation(node.expression)
+      );
+      if (kind) {
+        return 1 + descend();
+      }
+    }
+    return descend();
+
+    function descend(): number {
+      let count = 0;
+      ts.forEachChild(node, (node) => {
+        count += countIntegrationCalls(node);
+      });
+      return count;
+    }
+  }
+
   function newError(
-    invalidNode: typescript.Node,
+    invalidNode: ts.Node,
     error: ErrorCode,
     messageText?: string
   ): ts.Diagnostic {

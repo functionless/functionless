@@ -1,5 +1,21 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`api-gateway.ts 1`] = `
+"[96mtest/test-files/api-gateway.ts[0m:[93m32[0m:[93m5[0m - [91merror[0m[90m Functionless(103): [0mAwsMethod request must have exactly one integration call
+
+https://functionless.org/docs/error-codes#AwsMethod-request-must-have-exactly-one-integration-call\\"
+
+[7m32[0m   },
+[7m  [0m [91m    [0m
+[7m33[0m   ($input) => {
+[7m  [0m [91m~~~~~~~~~~~~~~~[0m
+[7m34[0m     return $input.data;
+[7m  [0m [91m~~~~~~~~~~~~~~~~~~~~~~~[0m
+[7m35[0m   },
+[7m  [0m [91m~~~[0m
+"
+`;
+
 exports[`step-function.ts 1`] = `
 "[96mtest/test-files/step-function.ts[0m:[93m10[0m:[93m65[0m - [91merror[0m[90m Functionless(100): [0mCannot perform arithmetic on variables in Step Function
 

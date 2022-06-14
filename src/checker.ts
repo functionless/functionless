@@ -1,6 +1,6 @@
 import * as ts from "typescript";
 import * as tsserver from "typescript/lib/tsserverlibrary";
-import { ApiMethod } from "./api";
+import { ApiMethod, ApiMethodKind, isApiMethodKind } from "./api";
 import { AppsyncResolver } from "./appsync";
 import { EventBus, Rule } from "./event-bridge";
 import { EventTransform } from "./event-bridge/transform";
@@ -60,10 +60,6 @@ export type ApiIntegrationsStaticMethodInterface = ts.CallExpression & {
   arguments: [ts.ObjectLiteralExpression];
 };
 
-export type ApiIntegrationInterface = ts.NewExpression & {
-  arguments: [ts.ObjectLiteralExpression];
-};
-
 export type FunctionlessChecker = ReturnType<typeof makeFunctionlessChecker>;
 
 export function makeFunctionlessChecker(
@@ -83,6 +79,7 @@ export function makeFunctionlessChecker(
     isNewFunctionlessFunction,
     isApiIntegration,
     isCDKConstruct,
+    getApiMethodKind,
     getFunctionlessTypeKind,
   };
 
@@ -217,11 +214,27 @@ export function makeFunctionlessChecker(
     );
   }
 
-  function isApiIntegration(node: ts.Node): node is ApiIntegrationInterface {
+  function isApiIntegration(node: ts.Node): node is ts.NewExpression {
     return (
       ts.isNewExpression(node) &&
       isFunctionlessClassOfKind(node.expression, ApiMethod.FunctionlessType)
     );
+  }
+
+  function getApiMethodKind(node: ts.NewExpression): ApiMethodKind | undefined {
+    if (isApiIntegration(node)) {
+      const type = checker.getTypeAtLocation(node);
+      const kind = type.getProperty("kind");
+      if (kind) {
+        const kindType = checker.getTypeOfSymbolAtLocation(kind, node);
+        if (kindType.isStringLiteral()) {
+          if (isApiMethodKind(kindType.value)) {
+            return kindType.value;
+          }
+        }
+      }
+    }
+    return undefined;
   }
 
   /**

@@ -19,6 +19,8 @@ const program = ts.createProgram(fileNames, tsconfig, compilerHost);
 
 const checker = makeFunctionlessChecker(program.getTypeChecker());
 
+test("api-gateway.ts", () => runTest("api-gateway.ts"));
+
 test("step-function.ts", () => runTest("step-function.ts"));
 
 function runTest(fileName: string) {
