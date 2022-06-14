@@ -5,10 +5,7 @@ import {
   AmplifyAppSyncSimulatorAuthenticationType,
   AppSyncGraphQLExecutionContext,
 } from "amplify-appsync-simulator";
-import {
-  AppSyncVTLRenderContext,
-  VelocityTemplate,
-} from "amplify-appsync-simulator/lib/velocity";
+import * as amplify from "amplify-appsync-simulator/lib/velocity";
 import { App, aws_dynamodb, aws_events, aws_lambda, Stack } from "aws-cdk-lib";
 import { Rule } from "aws-cdk-lib/aws-events";
 import {
@@ -18,6 +15,8 @@ import {
   Function,
   Event,
   FunctionlessEventPattern,
+  ResolverFunction,
+  ResolverArguments,
 } from "../src";
 
 import { Err, isErr } from "../src/error";
@@ -65,6 +64,18 @@ export function getAppSyncTemplates(decl: FunctionDecl | Err): string[] {
   }).templates;
 }
 
+export type DeepPartial<T extends object> = {
+  [k in keyof T]: T[k] extends object ? DeepPartial<T[k]> : T[k];
+};
+
+export interface AppSyncVTLRenderContext<
+  Arguments extends object = object,
+  Source extends object | undefined = undefined
+> extends Omit<amplify.AppSyncVTLRenderContext, "arguments" | "source"> {
+  arguments: Arguments;
+  source?: Source;
+}
+
 /**
  *
  * @param decl
@@ -75,39 +86,17 @@ export function getAppSyncTemplates(decl: FunctionDecl | Err): string[] {
  *                         `expected.match` with a partial output.
  *                         To assert that the template returns, pass `expected.returned: true`.
  */
-export function appsyncTestCase(
-  decl: FunctionDecl | Err,
+export function appsyncTestCase<
+  Arguments extends ResolverArguments,
+  Result,
+  Source extends object | undefined = undefined
+>(
+  decl: FunctionDecl<ResolverFunction<Arguments, Result, Source>> | Err,
   config?: {
     /**
      * Template count is generally [total integrations] * 2 + 2
      */
     expectedTemplateCount?: number;
-    executeTemplates?: {
-      /**
-       * Index of the template to execute.
-       */
-      index: number;
-      /**
-       * Input and context data for VTL execution
-       *
-       * @default { arguments: {}, source: {} }
-       */
-      context?: AppSyncVTLRenderContext;
-      /**
-       * Partial object to match against the output using `expect().matchObject`
-       */
-      match?: Record<string, any>;
-      /**
-       * Assert true if the function returns, false if it shouldn't
-       *
-       * @default nothing
-       */
-      returned?: boolean;
-      /**
-       * Additional context data for VTL
-       */
-      requestContext?: AppSyncGraphQLExecutionContext;
-    }[];
   }
 ) {
   const actual = getAppSyncTemplates(decl);
@@ -117,31 +106,53 @@ export function appsyncTestCase(
 
   expect(normalizeCDKJson(actual)).toMatchSnapshot();
 
-  config?.executeTemplates?.forEach((testCase) => {
-    const vtl = actual[testCase.index];
-    appsyncVelocityJsonTestCase(
-      vtl,
-      testCase.context,
-      { match: testCase.match, returned: testCase.returned },
-      testCase.requestContext
-    );
-  });
+  return actual;
 }
 
 const simulator = new AmplifyAppSyncSimulator();
-function appsyncVelocityJsonTestCase(
+export function testAppsyncVelocity<
+  Arguments extends ResolverArguments,
+  Source extends object | undefined = undefined
+>(
   vtl: string,
-  context?: AppSyncVTLRenderContext,
-  expected?: { match?: Record<string, any>; returned?: boolean },
-  requestContext?: AppSyncGraphQLExecutionContext
+  props?: Omit<AppSyncVTLRenderContext<Arguments, Source>, "arguments"> & {
+    /**
+     * Input and context data for VTL execution
+     *
+     * @default {}
+     */
+    arguments?: AppSyncVTLRenderContext<Arguments, Source>["arguments"];
+    /**
+     * Partial object to match against the output using `expect().matchObject`
+     */
+    resultMatch?: string | Record<string, any>;
+    /**
+     * Assert true if the function returns, false if it shouldn't
+     *
+     * @default nothing
+     */
+    returned?: boolean;
+    /**
+     * Additional context data for VTL
+     */
+    requestContext?: AppSyncGraphQLExecutionContext;
+  }
 ) {
-  const template = new VelocityTemplate(
+  const template = new amplify.VelocityTemplate(
     { content: vtl, path: "test.json" },
     simulator
   );
 
+  const {
+    arguments: args = {},
+    source = {},
+    resultMatch,
+    requestContext,
+    returned,
+  } = props ?? {};
+
   const result = template.render(
-    context ?? { arguments: {}, source: {} },
+    { arguments: args, source },
     requestContext ?? {
       headers: {},
       requestAuthorizationMode:
@@ -156,9 +167,8 @@ function appsyncVelocityJsonTestCase(
   const json = JSON.parse(JSON.stringify(result.result));
 
   expect(normalizeCDKJson(json)).toMatchSnapshot();
-  expected?.match !== undefined && expect(json).toMatchObject(expected.match);
-  expected?.returned !== undefined &&
-    expect(result.isReturn).toEqual(expected.returned);
+  resultMatch !== undefined && expect(json).toMatchObject(resultMatch);
+  returned !== undefined && expect(result.isReturn).toEqual(returned);
 }
 
 export interface Person {

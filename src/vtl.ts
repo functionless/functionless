@@ -1,4 +1,5 @@
 import { assertNever, assertNodeKind } from "./assert";
+import { ErrorCodes, SynthError } from "./error-code";
 import { CallExpr, Expr, FunctionExpr } from "./expression";
 import { findIntegration } from "./integration";
 import { FunctionlessNode } from "./node";
@@ -186,6 +187,14 @@ export class VTL {
         }
       }
       case "BinaryExpr":
+        if (node.op === "in") {
+          throw new SynthError(
+            ErrorCodes.Unexpected_Error,
+            "Expected the `in` binary operator to be re-written before this point"
+          );
+        } else if (node.op === "=") {
+          return this.set(this.eval(node.left), this.eval(node.right));
+        }
         // VTL fails to evaluate binary expressions inside an object put e.g. $obj.put('x', 1 + 1)
         // a workaround is to use a temp variable.
         return this.var(

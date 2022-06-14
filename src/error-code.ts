@@ -96,4 +96,12 @@ export namespace ErrorCodes {
     code: 102,
     messageText: "Function closure serialization was not allowed to complete",
   };
+
+  /**
+   * Generic error message to denote errors that should not happen and are not the fault of the Functionless library consumer.
+   */
+  export const Unexpected_Error: ErrorCode = {
+    code: 103,
+    messageText: "Unexpected Error, please report this issue",
+  };
 }
