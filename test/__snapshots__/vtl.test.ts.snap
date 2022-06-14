@@ -1,5 +1,53 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`$util.log.error(message) 1`] = `
+Array [
+  "{
+  \\"version\\": \\"2018-05-29\\",
+  \\"payload\\": null
+}",
+  "#return($util.log.error('hello world'))",
+]
+`;
+
+exports[`$util.log.error(message, ...Object) 1`] = `
+Array [
+  "{
+  \\"version\\": \\"2018-05-29\\",
+  \\"payload\\": null
+}",
+  "#set($v1 = {})
+$util.qr($v1.put('a', 1))
+#set($v2 = {})
+$util.qr($v2.put('b', 2))
+#return($util.log.error('hello world', [$v1, $v2]))",
+]
+`;
+
+exports[`$util.log.info(message) 1`] = `
+Array [
+  "{
+  \\"version\\": \\"2018-05-29\\",
+  \\"payload\\": null
+}",
+  "#return($util.log.info('hello world'))",
+]
+`;
+
+exports[`$util.log.info(message, ...Object) 1`] = `
+Array [
+  "{
+  \\"version\\": \\"2018-05-29\\",
+  \\"payload\\": null
+}",
+  "#set($v1 = {})
+$util.qr($v1.put('a', 1))
+#set($v2 = {})
+$util.qr($v2.put('b', 2))
+#return($util.log.info('hello world', [$v1, $v2]))",
+]
+`;
+
 exports[`$util.time.nowISO8601 1`] = `
 Array [
   "{
