@@ -15,7 +15,7 @@ To create a new `Table`, instantiate the Construct and provide the `aws_dynamodb
 import { aws_dynamodb } from "aws-cdk-lib";
 import { Table } from "functionless";
 
-new Table(scope, "Table", {
+Table.fromTable(scope, "Table", {
   partitionKey: {
     name: "itemId",
     type: aws_dynamodb.AttributeType.STRING,
@@ -45,13 +45,13 @@ type EcommerceDatabase = User | Cart | Order;
 Finally, create the `Table` and specify the data type, the name of the Partition Key and (optionally) the name of the Range Key.
 
 ```ts
-new Table<Item, "itemId">(..)
+Table.fromTable<Item, "itemId">(..)
 ```
 
 The Range Key is an optional, third type argument.
 
 ```ts
-new Table<Item, "itemId", "timestamp">(..)
+Table.fromTable<Item, "itemId", "timestamp">(..)
 ```
 
 See the [`typesafe-dynamodb`](https://github.com/sam-goodwin/typesafe-dynamodb) documentation for more information on how to use types to safely model data in a DynamoDB Table using TypeScript types.

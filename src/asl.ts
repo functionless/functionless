@@ -1262,7 +1262,7 @@ export namespace ASL {
       if (isFunction(constant.constant)) {
         return constant.constant.resource.functionArn;
       } else if (isStepFunction(constant.constant)) {
-        return constant.constant.stateMachineArn;
+        return constant.constant.resource.stateMachineArn;
       } else if (isTable(constant.constant)) {
         return constant.constant.resource.tableName;
       }

@@ -11,7 +11,7 @@ interface Item {
 const app = new App({ autoSynth: false });
 const stack = new Stack(app, "stack");
 
-const table = new Table<Item, "id">(
+const table = Table.fromTable<Item, "id">(
   new aws_dynamodb.Table(stack, "Table", {
     partitionKey: {
       name: "id",

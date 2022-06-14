@@ -65,7 +65,7 @@ export class PeopleDatabase extends Construct {
   constructor(scope: Construct, id: string) {
     super(scope, id);
     // Person type can be used to define your typesafe dynamodb table
-    this.personTable = new Table<Person, "id", undefined>(
+    this.personTable = Table.fromTable<Person, "id", undefined>(
       new aws_dynamodb.Table(this, "table", {
         partitionKey: {
           name: "id",

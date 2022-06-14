@@ -147,7 +147,7 @@ These two functions are equivalent and result in the same JSON response:
 Any of Functionless's integrations can be called from within a Lambda Function. Functionless will automatically infer the required IAM Policies, set any environment variables it needs (such as the ARN of a dependency) and instantiate any SDK clients when the Function is first invoked.
 
 ```ts
-const Table = new Table(scope, "Table");
+const Table = Table.fromTable(scope, "Table");
 
 new Function(scope, "foo", async (id: string) => {
   return $AWS.DynamoDB.GetItem({
@@ -254,7 +254,7 @@ new Function(scope, "foo", () => {
 2. calls to Constructs such as other Functions or a DynamoDB Table are re-written as client API calls
 
 ```ts
-const table = new Table(..)
+const table = Table.fromTable(..)
 
 new Function(scope, "foo", (key: string) => {
   // re-written as a call to an AWS.DynamoDB.GetItem API call

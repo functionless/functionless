@@ -41,7 +41,7 @@ export type AnyTable = Table<object, keyof object, keyof object | undefined>;
  *   age: number;
  * }
  *
- * const personTable = new Table<Person, "id">(
+ * const personTable = Table.fromTable<Person, "id">(
  *   new aws_dynamodb.Table(..)
  * );
  *
@@ -63,7 +63,7 @@ export type AnyTable = Table<object, keyof object, keyof object | undefined>;
  *
  * You can also specify the RangeKey:
  * ```ts
- * new Table<Person, "id", "age">(..)
+ * Table.fromTable<Person, "id", "age">(..)
  * ```
  * @see https://github.com/sam-goodwin/typesafe-dynamodb - for more information on how to model your DynamoDB table with TypeScript
  */
@@ -74,7 +74,20 @@ export class Table<
 > {
   readonly kind = "Table";
 
-  constructor(readonly resource: aws_dynamodb.ITable) {}
+  /**
+   * Wrap a {@link aws_dynamodb.Table} with Functionless.
+   *
+   * A wrapped {@link Table} provides common integrations like `getItem` and `query`.
+   */
+  public static fromTable<
+    Item extends object,
+    PartitionKey extends keyof Item,
+    RangeKey extends keyof Item | undefined = undefined
+  >(resource: aws_dynamodb.ITable) {
+    return new Table<Item, PartitionKey, RangeKey>(resource);
+  }
+
+  private constructor(readonly resource: aws_dynamodb.ITable) {}
 
   /**
    * @see https://docs.aws.amazon.com/appsync/latest/devguide/resolver-mapping-template-reference-dynamodb.html#aws-appsync-resolver-mapping-template-reference-dynamodb-getitem
