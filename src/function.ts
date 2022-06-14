@@ -31,6 +31,7 @@ import {
   IntegrationInvocation,
 } from "./declaration";
 import { Err, isErr } from "./error";
+import { ErrorCodes, formatErrorMessage } from "./error-code";
 import {
   IEventBus,
   isEventBus,
@@ -63,6 +64,8 @@ export type FunctionClosure<in Payload, out Output> = (
   payload: Payload,
   context: Context
 ) => Promise<Output>;
+
+const FUNCTION_CLOSURE_FLAG = "__functionlessClosure";
 
 /**
  * Returns the payload type on the {@link IFunction}.
@@ -608,6 +611,19 @@ export class Function<in Payload, Out, OutPayload extends Payload = Payload> ext
           onFailure: FunctionBase.normalizeAsyncDestination<OutPayload, Out>(onFailure),
         });
 
+        // Poison pill that forces Function synthesis to fail when the closure serialization has not completed.
+        // Closure synthesis runs async, but CDK does not normally support async.
+        // In order for the synthesis to complete successfully
+        // 1. Use autoSynth `new App({ autoSynth: true })` or `new App()` with the CDK Cli (`cdk synth`)
+        // 2. Use `await asyncSynth(app)` exported from Functionless in place of `app.synth()`
+        // 3. Manually await on the closure serializer promises `await Promise.all(Function.promises)`
+        // https://github.com/functionless/functionless/issues/128
+        _resource.node.addValidation({
+          validate: () => this.resource.node.metadata.find(m => m.type === FUNCTION_CLOSURE_FLAG)
+            ? []
+            : [formatErrorMessage(ErrorCodes.Function_Closure_Serialization_Incomplete)]
+        });
+
         integrations = func.integrations;
       } else {
         throw Error(
@@ -875,6 +891,9 @@ export class CallbackLambdaCode extends aws_lambda.Code {
     };
 
     asset.bindToResource(funcResource);
+
+    // Clear the poison pill that causes the Function to fail synthesis.
+    scope.node.addMetadata(FUNCTION_CLOSURE_FLAG, true);
   }
 }
 
