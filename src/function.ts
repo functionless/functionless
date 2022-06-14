@@ -51,7 +51,9 @@ import {
 } from "./integration";
 import { AnyFunction, anyOf } from "./util";
 
-export function isFunction<Payload = any, Output = any>(a: any): a is IFunction<Payload, Output> {
+export function isFunction<Payload = any, Output = any>(
+  a: any
+): a is IFunction<Payload, Output> {
   return a?.kind === "Function";
 }
 
@@ -70,17 +72,17 @@ const FUNCTION_CLOSURE_FLAG = "__functionlessClosure";
 /**
  * Returns the payload type on the {@link IFunction}.
  */
-export type FunctionPayloadType<Func extends IFunction<any, any>> = [Func] extends [
-  IFunction<infer P, any>
-]
+export type FunctionPayloadType<Func extends IFunction<any, any>> = [
+  Func
+] extends [IFunction<infer P, any>]
   ? P
   : never;
 /**
  * Returns the output type on the {@link IFunction}.
  */
-export type FunctionOutputType<Func extends IFunction<any, any>> = [Func] extends [
-  IFunction<any, infer O>
-]
+export type FunctionOutputType<Func extends IFunction<any, any>> = [
+  Func
+] extends [IFunction<any, infer O>]
   ? O
   : never;
 
@@ -205,7 +207,9 @@ export interface IFunction<in Payload, Output>
    * If onSuccess or onFailure were already set either through {@link FunctionProps} or {@link IFunction.enableAsyncInvoke}
    * This method will fail.
    */
-  enableAsyncInvoke<OutPayload extends Payload>(config: EventInvokeConfigOptions<OutPayload, Output>): void;
+  enableAsyncInvoke<OutPayload extends Payload>(
+    config: EventInvokeConfigOptions<OutPayload, Output>
+  ): void;
 
   readonly eventBus: EventBusTargetIntegration<
     Payload,
@@ -364,9 +368,10 @@ abstract class FunctionBase<in Payload, Out>
   ): IDestination | undefined {
     return destination === undefined
       ? undefined
-      : isEventBus<IEventBus<AsyncResponseSuccessEvent<P, O>> | IEventBus<AsyncResponseFailureEvent<P>>>(
-          destination
-        )
+      : isEventBus<
+          | IEventBus<AsyncResponseSuccessEvent<P, O>>
+          | IEventBus<AsyncResponseFailureEvent<P>>
+        >(destination)
       ? new EventBridgeDestination(destination.bus)
       : isFunction<
           FunctionPayloadType<Extract<typeof destination, IFunction<any, any>>>,
@@ -376,11 +381,17 @@ abstract class FunctionBase<in Payload, Out>
       : destination;
   }
 
-  public enableAsyncInvoke<OutPayload extends Payload>(config: EventInvokeConfigOptions<OutPayload, Out>): void {
+  public enableAsyncInvoke<OutPayload extends Payload>(
+    config: EventInvokeConfigOptions<OutPayload, Out>
+  ): void {
     this.resource.configureAsyncInvoke({
       ...config,
-      onSuccess: FunctionBase.normalizeAsyncDestination<OutPayload, Out>(config.onSuccess),
-      onFailure: FunctionBase.normalizeAsyncDestination<OutPayload, Out>(config.onFailure),
+      onSuccess: FunctionBase.normalizeAsyncDestination<OutPayload, Out>(
+        config.onSuccess
+      ),
+      onFailure: FunctionBase.normalizeAsyncDestination<OutPayload, Out>(
+        config.onFailure
+      ),
     });
   }
 
@@ -517,7 +528,11 @@ const isNativeFunctionOrError = anyOf(isErr, isNativeFunctionDecl);
  * );
  * ```
  */
-export class Function<in Payload, Out, OutPayload extends Payload = Payload> extends FunctionBase<Payload, Out> {
+export class Function<
+  in Payload,
+  Out,
+  OutPayload extends Payload = Payload
+> extends FunctionBase<Payload, Out> {
   /**
    * Dangling promises which are processing Function handler code from the function serializer.
    * To correctly resolve these for CDK synthesis, either use `asyncSynth()` or use `cdk synth` in the CDK cli.
@@ -544,7 +559,11 @@ export class Function<in Payload, Out, OutPayload extends Payload = Payload> ext
    * new Function<{ val: string }, string>(this, 'myFunction', async (event) => event.val);
    * ```
    */
-  constructor(scope: Construct, id: string, func: FunctionClosure<Payload, Out>);
+  constructor(
+    scope: Construct,
+    id: string,
+    func: FunctionClosure<Payload, Out>
+  );
   constructor(
     scope: Construct,
     id: string,
@@ -607,8 +626,12 @@ export class Function<in Payload, Out, OutPayload extends Payload = Payload> ext
           runtime: aws_lambda.Runtime.NODEJS_14_X,
           handler: "index.handler",
           code: callbackLambdaCode,
-          onSuccess: FunctionBase.normalizeAsyncDestination<OutPayload, Out>(onSuccess),
-          onFailure: FunctionBase.normalizeAsyncDestination<OutPayload, Out>(onFailure),
+          onSuccess: FunctionBase.normalizeAsyncDestination<OutPayload, Out>(
+            onSuccess
+          ),
+          onFailure: FunctionBase.normalizeAsyncDestination<OutPayload, Out>(
+            onFailure
+          ),
         });
 
         // Poison pill that forces Function synthesis to fail when the closure serialization has not completed.
@@ -619,9 +642,16 @@ export class Function<in Payload, Out, OutPayload extends Payload = Payload> ext
         // 3. Manually await on the closure serializer promises `await Promise.all(Function.promises)`
         // https://github.com/functionless/functionless/issues/128
         _resource.node.addValidation({
-          validate: () => this.resource.node.metadata.find(m => m.type === FUNCTION_CLOSURE_FLAG)
-            ? []
-            : [formatErrorMessage(ErrorCodes.Function_Closure_Serialization_Incomplete)]
+          validate: () =>
+            this.resource.node.metadata.find(
+              (m) => m.type === FUNCTION_CLOSURE_FLAG
+            )
+              ? []
+              : [
+                  formatErrorMessage(
+                    ErrorCodes.Function_Closure_Serialization_Incomplete
+                  ),
+                ],
         });
 
         integrations = func.integrations;

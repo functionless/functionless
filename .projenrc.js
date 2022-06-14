@@ -37,6 +37,9 @@ const MIN_CDK_VERSION = "2.20.0";
  * TODO: Remove this hack once https://github.com/projen/projen/issues/1802 is resolved.
  */
 class CustomTypescriptProject extends typescript.TypeScriptProject {
+  /**
+   * @param {typescript.TypeScriptProjectOptions} opts
+   */
   constructor(opts) {
     super(opts);
 
@@ -83,7 +86,6 @@ const project = new CustomTypescriptProject({
     "@types/uuid",
     "amplify-appsync-simulator",
     "graphql-request",
-    "prettier",
     "ts-node",
     "ts-patch",
 
@@ -144,12 +146,13 @@ const project = new CustomTypescriptProject({
       projenCredentials: GithubCredentials.fromApp(),
     },
   },
+  prettier: {},
 });
 
 const packageJson = project.tryFindObjectFile("package.json");
 
 packageJson.addOverride("lint-staged", {
-  "*.{tsx,jsx,ts,js,json,md,css}": ["eslint --fix", "prettier --write"],
+  "*.{tsx,jsx,ts,js,json,md,css}": ["eslint --fix"],
 });
 
 project.compileTask.prependExec(
@@ -206,5 +209,8 @@ project.eslint.addOverride({
     ],
   },
 });
+
+project.prettier.addIgnorePattern("coverage");
+project.prettier.addIgnorePattern("lib");
 
 project.synth();
