@@ -6,10 +6,21 @@ import {
   ToAttributeValue,
 } from "typesafe-dynamodb/lib/attribute-value";
 import { FunctionDecl, validateFunctionDecl } from "./declaration";
-import { CallExpr, Expr } from "./expression";
+import {
+  Argument,
+  BinaryExpr,
+  CallExpr,
+  ConditionExpr,
+  Expr,
+  isBinaryExpr,
+  PropAccessExpr,
+  StringLiteralExpr,
+} from "./expression";
 import { findDeepIntegration, IntegrationImpl } from "./integration";
 import { Literal } from "./literal";
+import { FunctionlessNode } from "./node";
 import { singletonConstruct } from "./util";
+import { visitEachChild } from "./visit";
 import { VTL } from "./vtl";
 
 /**
@@ -296,12 +307,58 @@ export class AppsyncResolver<
       api: appsync.GraphqlApi,
       decl: FunctionDecl<ResolverFunction<Arguments, Result, Source>>
     ) {
+      /**
+       * Update some nodes.
+       */
+      const updatedDecl = visitEachChild(
+        decl,
+        function visit(node): FunctionlessNode {
+          if (isBinaryExpr(node)) {
+            /**
+             * rewrite `in` to a conditional statement to support both arrays and maps
+             * var v = left in right;
+             *
+             * var v = right.class.name.startsWith("[L") || right.class.name.contains("ArrayList") ?
+             *    right.length >= left :
+             *    right.containsKey(left);
+             */
+            if (node.op === "in") {
+              const left = visitEachChild(node.left, visit);
+              const right = visitEachChild(node.right, visit);
+
+              const rightClassName = new PropAccessExpr(
+                new PropAccessExpr(right, "class"),
+                "name"
+              );
+
+              return new ConditionExpr(
+                new BinaryExpr(
+                  new CallExpr(
+                    new PropAccessExpr(rightClassName, "startsWith"),
+                    [new Argument(new StringLiteralExpr("[L"))]
+                  ),
+                  "||",
+                  new CallExpr(new PropAccessExpr(rightClassName, "contains"), [
+                    new Argument(new StringLiteralExpr("ArrayList")),
+                  ])
+                ),
+                new BinaryExpr(new PropAccessExpr(right, "length"), ">=", left),
+                new CallExpr(new PropAccessExpr(right, "containsKey"), [
+                  new Argument(left),
+                ])
+              );
+            }
+          }
+
+          return visitEachChild(node, visit);
+        }
+      );
       const templates: string[] = [];
       let template =
         resolverCount === 0 ? new VTL() : new VTL(VTL.CircuitBreaker);
-      const functions = decl.body.statements
+      const functions = updatedDecl.body.statements
         .map((stmt, i) => {
-          const isLastExpr = i + 1 === decl.body.statements.length;
+          const isLastExpr = i + 1 === updatedDecl.body.statements.length;
           const service = findDeepIntegration(stmt);
           if (service) {
             // we must now render a resolver with request mapping template

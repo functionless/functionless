@@ -1,14 +1,6 @@
 import { assertNever, assertNodeKind } from "./assert";
-import {
-  Argument,
-  BinaryExpr,
-  CallExpr,
-  ConditionExpr,
-  Expr,
-  FunctionExpr,
-  PropAccessExpr,
-  StringLiteralExpr,
-} from "./expression";
+import { ErrorCodes, SynthError } from "./error-code";
+import { CallExpr, Expr, FunctionExpr } from "./expression";
 import { findIntegration } from "./integration";
 import { FunctionlessNode } from "./node";
 import { Stmt } from "./statement";
@@ -196,35 +188,10 @@ export class VTL {
       }
       case "BinaryExpr":
         if (node.op === "in") {
-          /**
-           * rewrite `in` to a conditional statement to support both arrays and maps
-           * var v = left in right;
-           *
-           * var v = right.class.name === "java.util.ArrayList" ?
-           *    right.length >= left :
-           *    right.containsKey(left);
-           */
-          const condition = new ConditionExpr(
-            new BinaryExpr(
-              new PropAccessExpr(
-                new PropAccessExpr(node.right, "class"),
-                "name"
-              ),
-              "==",
-              new StringLiteralExpr("java.util.ArrayList")
-            ),
-            new BinaryExpr(
-              new PropAccessExpr(node.right, "length"),
-              ">=",
-              node.left
-            ),
-            new CallExpr(new PropAccessExpr(node.right, "containsKey"), [
-              new Argument(node.left),
-            ])
+          throw new SynthError(
+            ErrorCodes.Unexpected_Error,
+            "Expected the `in` binary operator to be re-written before this point"
           );
-          condition.setParent(node);
-
-          return this.eval(condition);
         } else if (node.op === "=") {
           return this.set(this.eval(node.left), this.eval(node.right));
         }
