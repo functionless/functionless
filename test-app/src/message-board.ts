@@ -360,7 +360,7 @@ const defaultBus = EventBus.default<TestDeleteEvent>(stack);
 deleteWorkflow
   .onSucceeded(stack, "deleteSuccessfulEvent")
   .map((event) => ({
-    message: `post deleted ${event.id} using ${deleteWorkflow.stateMachineName}`,
+    message: `post deleted ${event.id} using ${deleteWorkflow.resource.stateMachineName}`,
   }))
   .pipe(sendNotification);
 

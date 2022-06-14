@@ -171,6 +171,10 @@ project.testTask.env("AWS_ACCOUNT_ID", "000000000000");
 project.testTask.env("AWS_ACCESS_KEY_ID", "test");
 project.testTask.env("AWS_SECRET_ACCESS_KEY", "test");
 
+const testFast = project.addTask("test:fast");
+testFast.exec("ts-patch install -s");
+testFast.exec(`jest --testPathIgnorePatterns localstack --coverage false`);
+
 project.addPackageIgnore("/test-app");
 
 project.eslint.addRules({

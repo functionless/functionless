@@ -1923,7 +1923,7 @@ test("call Step Function from another Step Function", () => {
   }).definition;
 
   expectTaskToMatch(definition, {
-    Parameters: { StateMachineArn: machine1.resource.attrArn },
+    Parameters: { StateMachineArn: machine1.resource.stateMachineArn },
   });
 
   expect(normalizeDefinition(definition)).toMatchSnapshot();
@@ -2177,7 +2177,7 @@ test("on success event", () => {
     "detail-type": ["Step Functions Execution Status Change"],
     detail: {
       status: ["SUCCEEDED"],
-      stateMachineArn: [machine.stateMachineArn],
+      stateMachineArn: [machine.resource.stateMachineArn],
     },
   });
 });
@@ -2191,7 +2191,7 @@ test("on status change event", () => {
     source: ["aws.states"],
     "detail-type": ["Step Functions Execution Status Change"],
     detail: {
-      stateMachineArn: [machine.stateMachineArn],
+      stateMachineArn: [machine.resource.stateMachineArn],
     },
   });
 });
@@ -2208,7 +2208,25 @@ test("on status change event refine", () => {
     "detail-type": ["Step Functions Execution Status Change"],
     detail: {
       status: ["RUNNING"],
-      stateMachineArn: [machine.stateMachineArn],
+      stateMachineArn: [machine.resource.stateMachineArn],
+    },
+  });
+});
+
+test("import from state machine", () => {
+  const;
+  const machine = new StepFunction(stack, "machine", () => {});
+
+  const success = machine
+    .onStatusChanged(stack, "onStatus")
+    .when(stack, "onRunning", (event) => event.detail.status === "RUNNING");
+
+  expect(success.rule._renderEventPattern()).toEqual({
+    source: ["aws.states"],
+    "detail-type": ["Step Functions Execution Status Change"],
+    detail: {
+      status: ["RUNNING"],
+      stateMachineArn: [machine.resource.stateMachineArn],
     },
   });
 });

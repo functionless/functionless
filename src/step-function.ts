@@ -5,7 +5,14 @@ import { Pass } from "aws-cdk-lib/aws-stepfunctions";
 import { StepFunctions } from "aws-sdk";
 import { Construct } from "constructs";
 import { AppSyncVtlIntegration } from "./appsync";
-import { ASL, isMapOrForEach, MapTask, Task } from "./asl";
+import {
+  ASL,
+  isMapOrForEach,
+  MapTask,
+  StateMachine,
+  States,
+  Task,
+} from "./asl";
 import { assertDefined } from "./assert";
 import {
   validateFunctionDecl,
@@ -732,20 +739,28 @@ export interface StepFunctionProps
   > {}
 
 export interface IExpressStepFunction<
-  Payload extends Record<string, any>,
+  Payload extends Record<string, any> | undefined,
   Out
 > {
   (input: StepFunctionRequest<Payload>): SyncExecutionResult<Out>;
 }
 
 class BaseExpressStepFunction<
-  Payload extends Record<string, any> | undefined,
-  Out
-> extends BaseStepFunction<
-  Payload,
-  StepFunctionRequest<Payload>,
-  SyncExecutionResult<Out>
-> {
+    Payload extends Record<string, any> | undefined,
+    Out
+  >
+  extends BaseStepFunction<
+    Payload,
+    StepFunctionRequest<Payload>,
+    SyncExecutionResult<Out>
+  >
+  implements IExpressStepFunction<Payload, Out>
+{
+  /**
+   * This static property identifies this class as an ExpressStepFunction to the TypeScript plugin.
+   */
+  public static readonly FunctionlessType = "ExpressStepFunction";
+
   readonly native: NativeIntegration<
     (input: StepFunctionRequest<Payload>) => SyncExecutionResult<Out>
   >;
@@ -794,6 +809,13 @@ class BaseExpressStepFunction<
   }
 }
 
+interface BaseExpressStepFunction<
+  Payload extends Record<string, any> | undefined,
+  Out
+> {
+  (input: StepFunctionRequest<Payload>): SyncExecutionResult<Out>;
+}
+
 /**
  * An {@link ExpressStepFunction} is a callable Function which executes on the managed
  * AWS Step Function infrastructure. Like a Lambda Function, it runs within memory of
@@ -822,10 +844,16 @@ export class ExpressStepFunction<
   Payload extends Record<string, any> | undefined,
   Out
 > extends BaseExpressStepFunction<Payload, Out> {
-  /**
-   * This static property identifies this class as an ExpressStepFunction to the TypeScript plugin.
-   */
-  public static readonly FunctionlessType = "ExpressStepFunction";
+  readonly definition: StateMachine<States>;
+
+  public static fromStateMachine<
+    Payload extends Record<string, any> | undefined,
+    Out
+  >(
+    machine: aws_stepfunctions.StateMachine
+  ): IExpressStepFunction<Payload, Out> {
+    return new ImportedExpressStepFunction<Payload, Out>(machine);
+  }
 
   constructor(
     scope: Construct,
@@ -833,9 +861,7 @@ export class ExpressStepFunction<
     props: StepFunctionProps,
     func: (arg: Payload) => Out
   );
-
   constructor(scope: Construct, id: string, func: (arg: Payload) => Out);
-
   constructor(
     scope: Construct,
     id: string,
@@ -845,12 +871,29 @@ export class ExpressStepFunction<
   ) {
     const [props, func] = getStepFunctionArgs(...args);
 
-    super(
-      synthesizeStateMachine(scope, id, func, {
-        ...props,
-        stateMachineType: aws_stepfunctions.StateMachineType.EXPRESS,
-      })
-    );
+    const [definition, machine] = synthesizeStateMachine(scope, id, func, {
+      ...props,
+      stateMachineType: aws_stepfunctions.StateMachineType.EXPRESS,
+    });
+
+    super(machine);
+
+    this.definition = definition;
+  }
+}
+
+class ImportedExpressStepFunction<
+  Payload extends Record<string, any> | undefined,
+  Out
+> extends BaseExpressStepFunction<Payload, Out> {
+  constructor(machine: aws_stepfunctions.StateMachine) {
+    if (
+      machine.stateMachineType !== aws_stepfunctions.StateMachineType.EXPRESS
+    ) {
+      throw new SynthError(ErrorCodes.Incorrect_StateMachine_Import_Type);
+    }
+
+    super(machine);
   }
 }
 
@@ -939,6 +982,11 @@ class BaseStandardStepFunction<Payload extends Record<string, any> | undefined>
   >
   implements IStepFunction<Payload>
 {
+  /**
+   * This static property identifies this class as an StepFunction to the TypeScript plugin.
+   */
+  public static readonly FunctionlessType = "StepFunction";
+
   readonly native: NativeIntegration<
     (
       input: StepFunctionRequest<Payload>
@@ -1056,12 +1104,9 @@ export class StepFunction<Payload extends Record<string, any> | undefined, Out>
   extends BaseStandardStepFunction<Payload>
   implements IStepFunction<Payload>
 {
-  /**
-   * This static property identifies this class as an StepFunction to the TypeScript plugin.
-   */
-  public static readonly FunctionlessType = "StepFunction";
+  readonly definition: StateMachine<States>;
 
-  public static fromStepFunction<
+  public static fromStateMachine<
     Payload extends Record<string, any> | undefined
   >(machine: aws_stepfunctions.StateMachine): IStepFunction<Payload> {
     return new ImportedStepFunction<Payload>(machine);
@@ -1085,12 +1130,14 @@ export class StepFunction<Payload extends Record<string, any> | undefined, Out>
   ) {
     const [props, func] = getStepFunctionArgs(...args);
 
-    super(
-      synthesizeStateMachine(scope, id, func, {
-        ...props,
-        stateMachineType: aws_stepfunctions.StateMachineType.STANDARD,
-      })
-    );
+    const [definition, machine] = synthesizeStateMachine(scope, id, func, {
+      ...props,
+      stateMachineType: aws_stepfunctions.StateMachineType.STANDARD,
+    });
+
+    super(machine);
+
+    this.definition = definition;
   }
 }
 
@@ -1121,7 +1168,7 @@ function synthesizeStateMachine(
   props: StepFunctionProps & {
     stateMachineType: aws_stepfunctions.StateMachineType;
   }
-) {
+): [StateMachine<States>, aws_stepfunctions.StateMachine] {
   const machine = new aws_stepfunctions.StateMachine(scope, id, {
     ...props,
     definition: new Pass(scope, "dummy"),
@@ -1138,7 +1185,7 @@ function synthesizeStateMachine(
   // remove the dummy pass node because we don't need it.
   scope.node.tryRemoveChild("dummy");
 
-  return machine;
+  return [definition, machine];
 }
 
 class ImportedStepFunction<
