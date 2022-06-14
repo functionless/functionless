@@ -2,6 +2,7 @@ import {
   aws_dynamodb,
   aws_events,
   Duration,
+  Lazy,
   RemovalPolicy,
   Stack,
   Token,
@@ -50,12 +51,19 @@ interface TestFunctionResource {
     payload?: I | ((context: Outputs) => I)
   ): void;
 
-  skip: <I, O, Outputs extends Record<string, string> = Record<string, string>>(
+  skip: <
+    I,
+    O, // Forces typescript to infer O from the Function and not from the expect argument.
+    OO extends O | { errorMessage: string; errorType: string },
+    Outputs extends Record<string, string> = Record<string, string>
+  >(
     name: string,
     func: (
       parent: Construct
     ) => Function<I, O> | { func: Function<I, O>; outputs: Outputs },
-    expected: O | ((context: Outputs) => O),
+    expected: OO extends void
+      ? null
+      : OO | ((context: Outputs) => OO extends void ? null : O),
     payload?: I | ((context: Outputs) => I)
   ) => void;
 }
@@ -612,6 +620,54 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
       );
     },
     null
+  );
+
+  test(
+    "serialize token with nested string",
+    (parent) => {
+      const table = new aws_dynamodb.Table(parent, "table", {
+        partitionKey: {
+          name: "key",
+          type: aws_dynamodb.AttributeType.STRING,
+        },
+      });
+
+      const obj = { key: table.tableArn };
+      const token = Token.asAny(obj);
+
+      return {
+        func: new Function(
+          parent,
+          "function",
+          localstackClientConfig,
+          async () => {
+            return (token as unknown as typeof obj).key;
+          }
+        ),
+        outputs: { table: table.tableArn },
+      };
+    },
+    (outputs) => {
+      return outputs.table;
+    }
+  );
+
+  test(
+    "serialize token with lazy should fail",
+    (parent) => {
+      const obj = { key: Lazy.any({ produce: () => "value" }) };
+      const token = Token.asAny(obj);
+
+      return new Function(
+        parent,
+        "function",
+        localstackClientConfig,
+        async () => {
+          return (token as unknown as typeof obj).key;
+        }
+      );
+    },
+    { errorMessage: "", errorType: "" }
   );
 
   test(

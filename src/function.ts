@@ -5,12 +5,13 @@ import { serializeFunction } from "@functionless/nodejs-closure-serializer";
 import {
   AssetHashType,
   aws_dynamodb,
+  aws_events,
   aws_events_targets,
   aws_lambda,
   CfnResource,
   DockerImage,
+  Reference,
   Resource,
-  Stack,
   TagManager,
   Token,
   Tokenization,
@@ -745,17 +746,18 @@ export class CallbackLambdaCode extends aws_lambda.Code {
                   // @ts-ignore - private - adds the tag manager, which we don't need
                   cfnProperties,
                   ...rest
-                } = transformTable(o as CfnResource);
+                } = transformBus(transformTable(o as CfnResource));
                 return transformTaggableResource(rest);
               } else if (Token.isUnresolved(o)) {
-                const resolved = Stack.of(scope).resolve(o);
-                if(resolved && !Token.isUnresolved(resolved)) {
-                  return resolved;
+                const reversed = Tokenization.reverse(o)!;
+                if(Reference.isReference(reversed)) {
+                  tokens.push(reversed.toString());
+                  return reversed.toString();
+                } else if("value" in reversed) {
+                  return (reversed as unknown as {value: any}).value;
                 }
-                const token = (<any>o).toString();
-                // add to tokens to be turned into env variables.
-                tokens = [...tokens, token];
-                return token;
+                // TODO: fail at runtime and warn at compiler time when a token cannot be serialized
+                return {};
               }
               return o;
             };
@@ -775,6 +777,24 @@ export class CallbackLambdaCode extends aws_lambda.Code {
 
                   return rest as unknown as CfnResource;
                 }
+              }
+
+              return o;
+            };
+
+                        /**
+             * When the StreamArn attribute is used in a Cfn template, but streamSpecification is
+             * undefined, then the deployment fails. Lets make sure that doesn't happen.
+             */
+              const transformBus = (o: CfnResource): CfnResource => {
+              if (
+                o.cfnResourceType ===
+                aws_events.CfnEventBus.CFN_RESOURCE_TYPE_NAME
+              ) {
+                const bus = o as aws_events.CfnEventBus;
+                const { attrPolicy, ...rest } = bus;
+
+                return rest as unknown as CfnResource;
               }
 
               return o;
