@@ -11,8 +11,8 @@ interface Item {
 const app = new App({ autoSynth: false });
 const stack = new Stack(app, "stack");
 
-const table = Table.fromTable<Item, "id">(
-  new aws_dynamodb.Table(stack, "Table", {
+const fromTable = Table.fromTable<Item, "id">(
+  new aws_dynamodb.Table(stack, "FromTable", {
     partitionKey: {
       name: "id",
       type: aws_dynamodb.AttributeType.STRING,
@@ -20,7 +20,14 @@ const table = Table.fromTable<Item, "id">(
   })
 );
 
-test("get item", () => {
+const newTable = new Table<Item, "id">(stack, "NewTable", {
+  partitionKey: {
+    name: "id",
+    type: aws_dynamodb.AttributeType.STRING,
+  },
+});
+
+test.each([fromTable, newTable])("get item", (table) => {
   appsyncTestCase(
     reflect((context: AppsyncContext<{ id: string }>): Item | undefined => {
       return table.getItem({
@@ -34,22 +41,25 @@ test("get item", () => {
   );
 });
 
-test("get item and set consistentRead:true", () => {
-  appsyncTestCase(
-    reflect((context: AppsyncContext<{ id: string }>): Item | undefined => {
-      return table.getItem({
-        key: {
-          id: {
-            S: context.arguments.id,
+test.each([fromTable, newTable])(
+  "get item and set consistentRead:true",
+  (table) => {
+    appsyncTestCase(
+      reflect((context: AppsyncContext<{ id: string }>): Item | undefined => {
+        return table.getItem({
+          key: {
+            id: {
+              S: context.arguments.id,
+            },
           },
-        },
-        consistentRead: true,
-      });
-    })
-  );
-});
+          consistentRead: true,
+        });
+      })
+    );
+  }
+);
 
-test("put item", () => {
+test.each([fromTable, newTable])("put item", (table) => {
   appsyncTestCase(
     reflect(
       (
@@ -83,7 +93,7 @@ test("put item", () => {
   );
 });
 
-test("update item", () => {
+test.each([fromTable, newTable])("update item", (table) => {
   appsyncTestCase(
     reflect((context: AppsyncContext<{ id: string }>): Item | undefined => {
       return table.updateItem({
@@ -103,7 +113,7 @@ test("update item", () => {
   );
 });
 
-test("delete item", () => {
+test.each([fromTable, newTable])("delete item", (table) => {
   appsyncTestCase(
     reflect((context: AppsyncContext<{ id: string }>): Item | undefined => {
       return table.deleteItem({
@@ -123,7 +133,7 @@ test("delete item", () => {
   );
 });
 
-test("query", () => {
+test.each([fromTable, newTable])("query", (table) => {
   appsyncTestCase(
     reflect((context: AppsyncContext<{ id: string; sort: number }>): Item[] => {
       return table.query({
