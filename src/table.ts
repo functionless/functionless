@@ -30,12 +30,31 @@ export function isTable(a: any): a is AnyTable {
 export interface TableProps<
   PartitionKey extends string,
   RangeKey extends string | undefined = undefined
-> extends Omit<aws_dynamodb.TableProps, "partitionKey" | "sortKey"> {
-  partitionKey: {
+> extends Omit<
+    aws_dynamodb.TableProps,
+    "partitionKey" | "sortKey" | "tableName"
+  > {
+  /**
+   * Enforces a particular physical table name.
+   * @default generated
+   *
+   * [Internal Note] this property is copied because CDK tsdocs have a xml like tag
+   *                 around `generated` which breaks typedocs.
+   */
+  readonly tableName?: string;
+  /**
+   * Partition key attribute definition.
+   */
+  readonly partitionKey: {
     name: PartitionKey;
     type: aws_dynamodb.AttributeType;
   };
-  sortKey?: RangeKey extends undefined
+  /**
+   * Sort key attribute definition.
+   *
+   * @default no sort key
+   */
+  readonly sortKey?: RangeKey extends undefined
     ? { name: Exclude<RangeKey, undefined>; type: aws_dynamodb.AttributeType }
     : undefined;
 }
