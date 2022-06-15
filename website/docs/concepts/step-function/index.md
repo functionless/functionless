@@ -58,3 +58,35 @@ new StepFunction(scope, "F", (payload) => {
   }
 });
 ```
+
+## Wrap an existing State Machine
+
+There are cases in which you want to integrate with an existing State Machine.
+
+To achieve this, use the `StepFunction.fromStateMachine`  or `ExpressStepFunction.fromStateMachine` utilities to wrap existing `aws_stepfunctions.StateMachine`s.
+
+```ts
+import { aws_stepfunctions } from "aws-cdk-lib";
+import { StepFunction } from "functionless";
+
+const myMachine = StepFunction.fromStateMachine<{ name: string }, string>(
+  new aws_stepfunctions.StateMachine(this, "MyMachine", {
+    ...
+  })
+);
+
+const myExpressMachine = ExpressStepFunction.fromStateMachine<{ name: string }, string>(
+  new aws_stepfunctions.StateMachine(this, "MyMachine", {
+    stateMachineType: aws_stepfunctions.StateMachineType.EXPRESS,
+    ...
+  })
+);
+```
+
+A wrapped function annotates the type signature of the `StepFunction` and makes it available to be called from Functionless Constructs.
+
+:::warning
+[Incorrect State Machine (104)](../../error-codes.md#incorrect-state-machine-type-imported) will be thrown when the wrong StateMachineType is used with the wrong Functionless `StateMachine` or `ExpressStateMachine`.
+
+The invocation contracts for the types of state machines and permissions to grant are different so we have separated them.
+:::

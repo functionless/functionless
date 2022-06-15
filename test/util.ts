@@ -200,7 +200,7 @@ export function initStepFunctionApp() {
 
   const computeScore = Function.fromFunction<Person, number>(lambda);
 
-  const personTable = new Table<Person, "id">(
+  const personTable = Table.fromTable<Person, "id">(
     new aws_dynamodb.Table(stack, "Table", {
       partitionKey: {
         name: "id",

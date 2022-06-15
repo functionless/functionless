@@ -40,7 +40,9 @@ sidebar_position: 3`
   )
   .replace(/• `Const`.*\n/g, "")
   .replace(/\n\n\n/g, "\n\n")
-  .replace(/\n#### Defined in.*\n\n.*error.*\n/g, "");
+  .replace(/\n#### Defined in.*\n\n.*error.*\n/g, "")
+  // re-write generated urls from link statements.
+  .replace(/\.\.\//g, "api/");
 
 for (const [errorId, errorCode] of Object.entries(ErrorCodes)) {
   //### Cannot\_perform\_arithmetic\_on\_variables\_in\_Step\_Function

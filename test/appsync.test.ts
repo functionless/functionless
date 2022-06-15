@@ -21,7 +21,7 @@ describe("step function integration", () => {
       resultMatch: {
         params: {
           body: {
-            stateMachineArn: machine.stateMachineArn,
+            stateMachineArn: machine.resource.stateMachineArn,
           },
         },
       },
@@ -45,7 +45,7 @@ describe("step function integration", () => {
       resultMatch: {
         params: {
           body: {
-            stateMachineArn: machine.stateMachineArn,
+            stateMachineArn: machine.resource.stateMachineArn,
           },
         },
       },
@@ -70,7 +70,7 @@ describe("step function integration", () => {
       resultMatch: {
         params: {
           body: {
-            stateMachineArn: machine.stateMachineArn,
+            stateMachineArn: machine.resource.stateMachineArn,
           },
         },
       },
@@ -91,7 +91,7 @@ describe("step function integration", () => {
       resultMatch: {
         params: {
           body: {
-            stateMachineArn: machine.stateMachineArn,
+            stateMachineArn: machine.resource.stateMachineArn,
           },
         },
       },

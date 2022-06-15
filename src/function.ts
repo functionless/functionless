@@ -27,12 +27,8 @@ import AWS from "aws-sdk";
 import { Construct } from "constructs";
 import type { AppSyncVtlIntegration } from "./appsync";
 import { ASL } from "./asl";
-import {
-  NativeFunctionDecl,
-  isNativeFunctionDecl,
-  IntegrationInvocation,
-} from "./declaration";
-import { Err, isErr } from "./error";
+import { isNativeFunctionDecl, validateFunctionlessNode } from "./declaration";
+import { isErr } from "./error";
 import { ErrorCodes, formatErrorMessage } from "./error-code";
 import {
   IEventBus,
@@ -576,99 +572,67 @@ export class Function<
    * @private
    */
   constructor(
-    scope: Construct,
+    resource: Construct,
     id: string,
-    props: FunctionProps<Payload, Out, OutPayload>,
-    func: NativeFunctionDecl | Err
-  );
-  /**
-   * @private
-   */
-  constructor(scope: Construct, id: string, func: NativeFunctionDecl | Err);
-  /**
-   * Wrap an existing lambda function with Functionless.
-   * @deprecated use `Function.fromFunction()`
-   */
-  constructor(resource: aws_lambda.IFunction);
-  /**
-   * @private
-   */
-  constructor(
-    resource: aws_lambda.IFunction | Construct,
-    id?: string,
-    propsOrFunc?:
+    propsOrFunc:
       | FunctionProps<Payload, Out, OutPayload>
-      | NativeFunctionDecl
-      | Err
       | FunctionClosure<Payload, Out>,
-    funcOrNothing?: NativeFunctionDecl | Err | FunctionClosure<Payload, Out>
+    funcOrNothing?: FunctionClosure<Payload, Out>
   ) {
-    let _resource: aws_lambda.IFunction;
-    let integrations: IntegrationInvocation[] = [];
-    let callbackLambdaCode: CallbackLambdaCode | undefined = undefined;
-    if (id && propsOrFunc) {
-      const func = isNativeFunctionOrError(propsOrFunc)
+    const func = validateFunctionlessNode(
+      isNativeFunctionOrError(propsOrFunc)
         ? propsOrFunc
         : isNativeFunctionOrError(funcOrNothing)
         ? funcOrNothing
-        : undefined;
-      const props = isNativeFunctionOrError(propsOrFunc)
-        ? undefined
-        : (propsOrFunc as FunctionProps<Payload, Out, OutPayload>);
+        : undefined,
+      "Function",
+      isNativeFunctionDecl
+    );
+    const props = isNativeFunctionOrError(propsOrFunc)
+      ? undefined
+      : (propsOrFunc as FunctionProps<Payload, Out, OutPayload>);
 
-      if (isErr(func)) {
-        throw func.error;
-      } else if (isNativeFunctionDecl(func)) {
-        callbackLambdaCode = new CallbackLambdaCode(func.closure, {
-          clientConfigRetriever: props?.clientConfigRetriever,
-        });
-        const { onSuccess, onFailure, ...restProps } = props ?? {};
-        _resource = new aws_lambda.Function(resource, id!, {
-          ...restProps,
-          runtime: aws_lambda.Runtime.NODEJS_14_X,
-          handler: "index.handler",
-          code: callbackLambdaCode,
-          onSuccess: FunctionBase.normalizeAsyncDestination<OutPayload, Out>(
-            onSuccess
-          ),
-          onFailure: FunctionBase.normalizeAsyncDestination<OutPayload, Out>(
-            onFailure
-          ),
-        });
+    const callbackLambdaCode = new CallbackLambdaCode(func.closure, {
+      clientConfigRetriever: props?.clientConfigRetriever,
+    });
+    const { onSuccess, onFailure, ...restProps } = props ?? {};
+    const _resource = new aws_lambda.Function(resource, id!, {
+      ...restProps,
+      runtime: aws_lambda.Runtime.NODEJS_14_X,
+      handler: "index.handler",
+      code: callbackLambdaCode,
+      onSuccess: FunctionBase.normalizeAsyncDestination<OutPayload, Out>(
+        onSuccess
+      ),
+      onFailure: FunctionBase.normalizeAsyncDestination<OutPayload, Out>(
+        onFailure
+      ),
+    });
 
-        // Poison pill that forces Function synthesis to fail when the closure serialization has not completed.
-        // Closure synthesis runs async, but CDK does not normally support async.
-        // In order for the synthesis to complete successfully
-        // 1. Use autoSynth `new App({ autoSynth: true })` or `new App()` with the CDK Cli (`cdk synth`)
-        // 2. Use `await asyncSynth(app)` exported from Functionless in place of `app.synth()`
-        // 3. Manually await on the closure serializer promises `await Promise.all(Function.promises)`
-        // https://github.com/functionless/functionless/issues/128
-        _resource.node.addValidation({
-          validate: () =>
-            this.resource.node.metadata.find(
-              (m) => m.type === FUNCTION_CLOSURE_FLAG
-            )
-              ? []
-              : [
-                  formatErrorMessage(
-                    ErrorCodes.Function_Closure_Serialization_Incomplete
-                  ),
-                ],
-        });
+    // Poison pill that forces Function synthesis to fail when the closure serialization has not completed.
+    // Closure synthesis runs async, but CDK does not normally support async.
+    // In order for the synthesis to complete successfully
+    // 1. Use autoSynth `new App({ autoSynth: true })` or `new App()` with the CDK Cli (`cdk synth`)
+    // 2. Use `await asyncSynth(app)` exported from Functionless in place of `app.synth()`
+    // 3. Manually await on the closure serializer promises `await Promise.all(Function.promises)`
+    // https://github.com/functionless/functionless/issues/128
+    _resource.node.addValidation({
+      validate: () =>
+        this.resource.node.metadata.find(
+          (m) => m.type === FUNCTION_CLOSURE_FLAG
+        )
+          ? []
+          : [
+              formatErrorMessage(
+                ErrorCodes.Function_Closure_Serialization_Incomplete
+              ),
+            ],
+    });
 
-        integrations = func.integrations;
-      } else {
-        throw Error(
-          "Expected lambda to be passed a compiled function closure or a aws_lambda.IFunction"
-        );
-      }
-    } else {
-      _resource = resource as aws_lambda.IFunction;
-    }
     super(_resource);
 
     // retrieve and bind all found native integrations. Will fail if the integration does not support native integration.
-    const nativeIntegrationsPrewarm = integrations.flatMap(
+    const nativeIntegrationsPrewarm = func.integrations.flatMap(
       ({ integration, args }) => {
         const integ = new IntegrationImpl(integration).native;
         integ.bind(this, args);
@@ -677,11 +641,9 @@ export class Function<
     );
 
     // Start serializing process, add the callback to the promises so we can later ensure completion
-    if (callbackLambdaCode) {
-      Function.promises.push(
-        callbackLambdaCode.generate(nativeIntegrationsPrewarm)
-      );
-    }
+    Function.promises.push(
+      callbackLambdaCode.generate(nativeIntegrationsPrewarm)
+    );
   }
 }
 

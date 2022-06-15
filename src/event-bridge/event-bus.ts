@@ -22,7 +22,7 @@ import {
   isIntegration,
   makeIntegration,
 } from "../integration";
-import { AnyFunction } from "../util";
+import type { AnyFunction } from "../util";
 import {
   RulePredicateFunction,
   Rule,
