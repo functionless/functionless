@@ -12,6 +12,7 @@ import {
   DockerImage,
   Reference,
   Resource,
+  SecretValue,
   TagManager,
   Token,
   Tokenization,
@@ -761,7 +762,9 @@ export class CallbackLambdaCode extends aws_lambda.Code {
                 if (Reference.isReference(reversed)) {
                   tokens.push(reversed.toString());
                   return reversed.toString();
-                } else if ("value" in reversed) {
+                }
+                // TODO check for secret values
+                else if ("value" in reversed) {
                   return (reversed as unknown as { value: any }).value;
                 }
                 // TODO: fail at runtime and warn at compiler time when a token cannot be serialized
