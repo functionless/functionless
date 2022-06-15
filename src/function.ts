@@ -796,11 +796,11 @@ export class CallbackLambdaCode extends aws_lambda.Code {
                 return transformTaggableResource(rest);
               } else if (Token.isUnresolved(o)) {
                 const reversed = Tokenization.reverse(o)!;
-                if(Reference.isReference(reversed)) {
+                if (Reference.isReference(reversed)) {
                   tokens.push(reversed.toString());
                   return reversed.toString();
-                } else if("value" in reversed) {
-                  return (reversed as unknown as {value: any}).value;
+                } else if ("value" in reversed) {
+                  return (reversed as unknown as { value: any }).value;
                 }
                 // TODO: fail at runtime and warn at compiler time when a token cannot be serialized
                 return {};
@@ -828,11 +828,11 @@ export class CallbackLambdaCode extends aws_lambda.Code {
               return o;
             };
 
-                        /**
+            /**
              * When the StreamArn attribute is used in a Cfn template, but streamSpecification is
              * undefined, then the deployment fails. Lets make sure that doesn't happen.
              */
-              const transformBus = (o: CfnResource): CfnResource => {
+            const transformBus = (o: CfnResource): CfnResource => {
               if (
                 o.cfnResourceType ===
                 aws_events.CfnEventBus.CFN_RESOURCE_TYPE_NAME
