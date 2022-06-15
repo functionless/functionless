@@ -15,7 +15,7 @@ To create a new `Table`, instantiate the Construct and provide the `aws_dynamodb
 import { aws_dynamodb } from "aws-cdk-lib";
 import { Table } from "functionless";
 
-Table.fromTable(scope, "Table", {
+new Table(scope, "Table", {
   partitionKey: {
     name: "itemId",
     type: aws_dynamodb.AttributeType.STRING,
@@ -58,22 +58,22 @@ See the [`typesafe-dynamodb`](https://github.com/sam-goodwin/typesafe-dynamodb) 
 
 ## Wrap an existing Table
 
-Use `Table.from` to wrap an existing Table Construct created with the vanilla AWS CDK.
+Use `Table.fromTable` to wrap an existing Table Construct created with the vanilla AWS CDK.
 
 ```ts
-Table.from(itemTable);
+Table.fromTable(itemTable);
 ```
 
 Optionally provide the data type, partition key and range key as type arguments.
 
 ```ts
-Table.from<Item, "itemId">(itemTable);
+Table.fromTable<Item, "itemId">(itemTable);
 ```
 
 The Range Key is an optional, third type argument.
 
 ```ts
-Table.from<Item, "itemId", "timestamp">(itemTable);
+Table.fromTable<Item, "itemId", "timestamp">(itemTable);
 ```
 
 ## Call from an Integration

@@ -88,7 +88,11 @@ export interface ITable<
 > {
   readonly kind: "Table";
   readonly resource: aws_dynamodb.ITable;
-  getItem: IntegrationCall<
+
+  /**
+   * @see https://docs.aws.amazon.com/appsync/latest/devguide/resolver-mapping-template-reference-dynamodb.html#aws-appsync-resolver-mapping-template-reference-dynamodb-getitem
+   */
+  getItem: DynamoIntegrationCall<
     "getItem",
     <
       Key extends TableKey<
@@ -103,7 +107,10 @@ export interface ITable<
     }) => Narrow<Item, AttributeKeyToObject<Key>, JsonFormat.Document>
   >;
 
-  putItem: IntegrationCall<
+  /**
+   * @see https://docs.aws.amazon.com/appsync/latest/devguide/resolver-mapping-template-reference-dynamodb.html#aws-appsync-resolver-mapping-template-reference-dynamodb-putitem
+   */
+  putItem: DynamoIntegrationCall<
     "putItem",
     <
       Key extends TableKey<
@@ -126,7 +133,12 @@ export interface ITable<
     }) => Narrow<Item, AttributeKeyToObject<Key>, JsonFormat.Document>
   >;
 
-  updateItem: IntegrationCall<
+  /**
+   * @see https://docs.aws.amazon.com/appsync/latest/devguide/resolver-mapping-template-reference-dynamodb.html#aws-appsync-resolver-mapping-template-reference-dynamodb-updateitem
+   *
+   * @returns the updated the item
+   */
+  updateItem: DynamoIntegrationCall<
     "updateItem",
     <
       Key extends TableKey<
@@ -145,7 +157,12 @@ export interface ITable<
     }) => Narrow<Item, AttributeKeyToObject<Key>, JsonFormat.Document>
   >;
 
-  deleteItem: IntegrationCall<
+  /**
+   * @see https://docs.aws.amazon.com/appsync/latest/devguide/resolver-mapping-template-reference-dynamodb.html#aws-appsync-resolver-mapping-template-reference-dynamodb-deleteitem
+   *
+   * @returns the previous item.
+   */
+  deleteItem: DynamoIntegrationCall<
     "deleteItem",
     <
       Key extends TableKey<
@@ -162,7 +179,10 @@ export interface ITable<
     }) => Narrow<Item, AttributeKeyToObject<Key>, JsonFormat.Document>
   >;
 
-  query: IntegrationCall<
+  /**
+   * @see https://docs.aws.amazon.com/appsync/latest/devguide/resolver-mapping-template-reference-dynamodb.html#aws-appsync-resolver-mapping-template-reference-dynamodb-query
+   */
+  query: DynamoIntegrationCall<
     "query",
     <Query extends string, Filter extends string | undefined>(input: {
       query: DynamoExpression<Query>;
@@ -191,13 +211,7 @@ class BaseTable<
 
   constructor(readonly resource: aws_dynamodb.ITable) {}
 
-  /**
-   * @see https://docs.aws.amazon.com/appsync/latest/devguide/resolver-mapping-template-reference-dynamodb.html#aws-appsync-resolver-mapping-template-reference-dynamodb-getitem
-   */
-  public getItem = this.makeTableIntegration<
-    "getItem",
-    ITable<Item, PartitionKey, RangeKey>["getItem"]
-  >("getItem", {
+  public getItem = this.makeTableIntegration("getItem", {
     appSyncVtl: {
       request(call, vtl) {
         const input = vtl.eval(
@@ -217,13 +231,7 @@ class BaseTable<
     },
   });
 
-  /**
-   * @see https://docs.aws.amazon.com/appsync/latest/devguide/resolver-mapping-template-reference-dynamodb.html#aws-appsync-resolver-mapping-template-reference-dynamodb-putitem
-   */
-  public putItem = this.makeTableIntegration<
-    "putItem",
-    ITable<Item, PartitionKey, RangeKey>["putItem"]
-  >("putItem", {
+  public putItem = this.makeTableIntegration("putItem", {
     appSyncVtl: {
       request: (call, vtl) => {
         const input = vtl.eval(
@@ -247,15 +255,7 @@ class BaseTable<
     },
   });
 
-  /**
-   * @see https://docs.aws.amazon.com/appsync/latest/devguide/resolver-mapping-template-reference-dynamodb.html#aws-appsync-resolver-mapping-template-reference-dynamodb-updateitem
-   *
-   * @returns the updated the item
-   */
-  public updateItem = this.makeTableIntegration<
-    "updateItem",
-    ITable<Item, PartitionKey, RangeKey>["updateItem"]
-  >("updateItem", {
+  public updateItem = this.makeTableIntegration("updateItem", {
     appSyncVtl: {
       request: (call, vtl) => {
         const input = vtl.eval(
@@ -277,15 +277,7 @@ class BaseTable<
     },
   });
 
-  /**
-   * @see https://docs.aws.amazon.com/appsync/latest/devguide/resolver-mapping-template-reference-dynamodb.html#aws-appsync-resolver-mapping-template-reference-dynamodb-deleteitem
-   *
-   * @returns the previous item.
-   */
-  public deleteItem = this.makeTableIntegration<
-    "deleteItem",
-    ITable<Item, PartitionKey, RangeKey>["deleteItem"]
-  >("deleteItem", {
+  public deleteItem = this.makeTableIntegration("deleteItem", {
     appSyncVtl: {
       request: (call, vtl) => {
         const input = vtl.eval(
@@ -306,13 +298,7 @@ class BaseTable<
     },
   });
 
-  /**
-   * @see https://docs.aws.amazon.com/appsync/latest/devguide/resolver-mapping-template-reference-dynamodb.html#aws-appsync-resolver-mapping-template-reference-dynamodb-query
-   */
-  public query = this.makeTableIntegration<
-    "query",
-    ITable<Item, PartitionKey, RangeKey>["query"]
-  >("query", {
+  public query = this.makeTableIntegration("query", {
     appSyncVtl: {
       request: (call, vtl) => {
         const input = vtl.eval(
@@ -337,16 +323,24 @@ class BaseTable<
     },
   });
 
-  private makeTableIntegration<K extends string, F extends AnyFunction>(
+  private makeTableIntegration<
+    K extends Exclude<
+      keyof ITable<Item, PartitionKey, RangeKey>,
+      "kind" | "resource"
+    >
+  >(
     methodName: K,
     integration: Omit<
-      IntegrationInput<`Table.${K}`, F>,
+      IntegrationInput<K, ITable<Item, PartitionKey, RangeKey>[K]>,
       "kind" | "appSyncVtl"
     > & {
       appSyncVtl: Omit<AppSyncVtlIntegration, "dataSource" | "dataSourceId">;
     }
-  ): F {
-    return makeIntegration<`Table.${K}`, F>({
+  ): DynamoIntegrationCall<K, ITable<Item, PartitionKey, RangeKey>[K]> {
+    return makeIntegration<
+      `Table.${K}`,
+      ITable<Item, PartitionKey, RangeKey>[K]
+    >({
       ...integration,
       kind: `Table.${methodName}`,
       appSyncVtl: {
@@ -367,6 +361,11 @@ class BaseTable<
     });
   }
 }
+
+export type DynamoIntegrationCall<
+  Kind extends string,
+  F extends AnyFunction
+> = IntegrationCall<`Table.${Kind}`, F>;
 
 /**
  * Wraps an {@link aws_dynamodb.Table} with a type-safe interface that can be

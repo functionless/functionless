@@ -738,6 +738,30 @@ export interface StepFunctionProps
     "definition" | "stateMachineType"
   > {}
 
+/**
+ * An {@link ExpressStepFunction} is a callable Function which executes on the managed
+ * AWS Step Function infrastructure. Like a Lambda Function, it runs within memory of
+ * a single machine, except unlike Lambda, the entire environment is managed and operated
+ * by AWS. Meaning, there is no Operating System, Memory, CPU, Credentials or API Clients
+ * to manage. The entire workflow is configured at build-time via the Amazon State Language (ASL).
+ *
+ * With Functionless, the ASL is derived from type-safe TypeScript code instead of JSON.
+ *
+ * ```ts
+ * import * as f from "functionless";
+ *
+ * const table = new f.Table(this, "Table", { ... });
+ *
+ * const getItem = new ExpressStepFunction(this, "F", () => {
+ *   return f.$AWS.DynamoDB.GetItem({
+ *     TableName: table,
+ *     Key: {
+ *       ..
+ *     }
+ *   });
+ * });
+ * ```
+ */
 export interface IExpressStepFunction<
   Payload extends Record<string, any> | undefined,
   Out
@@ -828,7 +852,7 @@ interface BaseExpressStepFunction<
  * ```ts
  * import * as f from "functionless";
  *
- * const table = new f.Function<string, number>(new aws_lambda.Function(..))
+ * const table = new f.Table(this, "Table", { ... });
  *
  * const getItem = new ExpressStepFunction(this, "F", () => {
  *   return f.$AWS.DynamoDB.GetItem({
@@ -846,6 +870,21 @@ export class ExpressStepFunction<
 > extends BaseExpressStepFunction<Payload, Out> {
   readonly definition: StateMachine<States>;
 
+  /**
+   * Wrap a {@link aws_stepfunctions.StateMachine} with Functionless.
+   *
+   * A wrapped {@link StepFunction} provides common integrations like execute (`machine()`) and `describeExecution`.
+   *
+   * {@link ExpressStepFunction} should only be used to wrap a Express Step Function.
+   * Express Step Functions should use {@link StepFunction}.
+   *
+   * ```ts
+   * ExpressStepFunction.fromStateMachine(new aws_stepfunctions.StateMachine(this, "F", {
+   *    stateMachineType: aws_stepfunctions.StateMachineType.EXPRESS,
+   *    ...
+   * }));
+   * ```
+   */
   public static fromStateMachine<
     Payload extends Record<string, any> | undefined,
     Out
@@ -956,6 +995,28 @@ export interface ExpressStepFunction<
 }
 
 /**
+ * A {@link StepFunction} is a callable Function which executes on the managed
+ * AWS Step Function infrastructure. Like a Lambda Function, it runs within memory of
+ * a single machine, except unlike Lambda, the entire environment is managed and operated
+ * by AWS. Meaning, there is no Operating System, Memory, CPU, Credentials or API Clients
+ * to manage. The entire workflow is configured at build-time via the Amazon State Language (ASL).
+ *
+ * With Functionless, the ASL is derived from type-safe TypeScript code instead of JSON.
+ *
+ * ```ts
+ * import * as f from "functionless";
+ *
+ * const table = new f.Table(this, "Table", { ... });
+ *
+ * const getItem = new StepFunction(this, "F", () => {
+ *   return f.$AWS.DynamoDB.GetItem({
+ *     TableName: table,
+ *     Key: {
+ *       ..
+ *     }
+ *   });
+ * });
+ * ```
  *
  * @typeParam Payload - the object payload to the step function.
  * @typeParam Out - the type of object the step function outputs.
@@ -1112,12 +1173,54 @@ interface BaseStandardStepFunction<
   (input: StepFunctionRequest<Payload>): AWS.StepFunctions.StartExecutionOutput;
 }
 
+/**
+ * A {@link StepFunction} is a callable Function which executes on the managed
+ * AWS Step Function infrastructure. Like a Lambda Function, it runs within memory of
+ * a single machine, except unlike Lambda, the entire environment is managed and operated
+ * by AWS. Meaning, there is no Operating System, Memory, CPU, Credentials or API Clients
+ * to manage. The entire workflow is configured at build-time via the Amazon State Language (ASL).
+ *
+ * With Functionless, the ASL is derived from type-safe TypeScript code instead of JSON.
+ *
+ * ```ts
+ * import * as f from "functionless";
+ *
+ * const table = new f.Table(this, "Table", { ... });
+ *
+ * const getItem = new StepFunction(this, "F", () => {
+ *   return f.$AWS.DynamoDB.GetItem({
+ *     TableName: table,
+ *     Key: {
+ *       ..
+ *     }
+ *   });
+ * });
+ * ```
+ *
+ * @typeParam Payload - the object payload to the step function.
+ * @typeParam Out - the type of object the step function outputs.
+ *                  currently not used: https://github.com/functionless/functionless/issues/129
+ */
 export class StepFunction<Payload extends Record<string, any> | undefined, Out>
   extends BaseStandardStepFunction<Payload, Out>
   implements IStepFunction<Payload, Out>
 {
   readonly definition: StateMachine<States>;
 
+  /**
+   * Wrap a {@link aws_stepfunctions.StateMachine} with Functionless.
+   *
+   * A wrapped {@link StepFunction} provides common integrations like execute (`machine()`) and `describeExecution`.
+   *
+   * {@link StepFunction} should only be used to wrap a Standard Step Function.
+   * Express Step Functions should use {@link ExpressStepFunction}.
+   *
+   * ```ts
+   * StepFunction.fromStateMachine(new aws_stepfunctions.StateMachine(this, "F", {
+   *    ...
+   * }));
+   * ```
+   */
   public static fromStateMachine<
     Payload extends Record<string, any> | undefined,
     Out
