@@ -63,7 +63,7 @@ export type AnyTable = ITable<object, keyof object, keyof object | undefined>;
 
 /**
  * Wraps an {@link aws_dynamodb.Table} with a type-safe interface that can be
- * called from within an {@link AppsyncResolver}.
+ * called from within other {@link AppsyncResolver}.
  *
  * Its interface, e.g. `getItem`, `putItem`, is in 1:1 correspondence with the
  * AWS Appsync Resolver API https://docs.aws.amazon.com/appsync/latest/devguide/resolver-mapping-template-reference-dynamodb.html

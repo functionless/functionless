@@ -1104,18 +1104,18 @@ class BaseStandardStepFunction<
       request(call, context) {
         const executionArn = getArgs(call);
         return `{
-"version": "2018-05-29",
-"method": "POST",
-"resourcePath": "/",
-"params": {
-  "headers": {
-    "content-type": "application/x-amz-json-1.0",
-    "x-amz-target": "AWSStepFunctions.DescribeExecution"
-  },
-  "body": {
-    "executionArn": ${context.json(context.eval(executionArn))}
+  "version": "2018-05-29",
+  "method": "POST",
+  "resourcePath": "/",
+  "params": {
+    "headers": {
+      "content-type": "application/x-amz-json-1.0",
+      "x-amz-target": "AWSStepFunctions.DescribeExecution"
+    },
+    "body": {
+      "executionArn": ${context.json(context.eval(executionArn))}
+    }
   }
-}
 }`;
       },
     }),
