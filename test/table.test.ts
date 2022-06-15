@@ -20,7 +20,7 @@ const table = new Table<Item, "id">(
   })
 );
 
-test("get item", () =>
+test("get item", () => {
   appsyncTestCase(
     reflect((context: AppsyncContext<{ id: string }>): Item | undefined => {
       return table.getItem({
@@ -31,9 +31,10 @@ test("get item", () =>
         },
       });
     })
-  ));
+  );
+});
 
-test("get item and set consistentRead:true", () =>
+test("get item and set consistentRead:true", () => {
   appsyncTestCase(
     reflect((context: AppsyncContext<{ id: string }>): Item | undefined => {
       return table.getItem({
@@ -45,9 +46,10 @@ test("get item and set consistentRead:true", () =>
         consistentRead: true,
       });
     })
-  ));
+  );
+});
 
-test("put item", () =>
+test("put item", () => {
   appsyncTestCase(
     reflect(
       (
@@ -78,9 +80,10 @@ test("put item", () =>
         });
       }
     )
-  ));
+  );
+});
 
-test("update item", () =>
+test("update item", () => {
   appsyncTestCase(
     reflect((context: AppsyncContext<{ id: string }>): Item | undefined => {
       return table.updateItem({
@@ -97,9 +100,10 @@ test("update item", () =>
         },
       });
     })
-  ));
+  );
+});
 
-test("delete item", () =>
+test("delete item", () => {
   appsyncTestCase(
     reflect((context: AppsyncContext<{ id: string }>): Item | undefined => {
       return table.deleteItem({
@@ -116,9 +120,10 @@ test("delete item", () =>
         },
       });
     })
-  ));
+  );
+});
 
-test("query", () =>
+test("query", () => {
   appsyncTestCase(
     reflect((context: AppsyncContext<{ id: string; sort: number }>): Item[] => {
       return table.query({
@@ -134,4 +139,5 @@ test("query", () =>
         },
       }).items;
     })
-  ));
+  );
+});

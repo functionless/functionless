@@ -33,7 +33,9 @@ import {
 } from "./rule";
 import type { Event } from "./types";
 
-export const isEventBus = <EvntBus extends IEventBus<any>>(v: any): v is EvntBus => {
+export const isEventBus = <EvntBus extends IEventBus<any>>(
+  v: any
+): v is EvntBus => {
   return (
     "functionlessKind" in v &&
     v.functionlessKind === EventBusBase.FunctionlessType
@@ -43,7 +45,11 @@ export const isEventBus = <EvntBus extends IEventBus<any>>(v: any): v is EvntBus
 /**
  * Returns the {@link Event} type on the {@link EventBus}.
  */
-export type EventBusEvent<B extends IEventBus<any>> = [B] extends [IEventBus<infer E>] ? E : never;
+export type EventBusEvent<B extends IEventBus<any>> = [B] extends [
+  IEventBus<infer E>
+]
+  ? E
+  : never;
 
 export interface IEventBusFilterable<in Evnt extends Event> {
   /**
@@ -133,10 +139,7 @@ export interface IEventBus<in Evnt extends Event = Event>
   extends IEventBusFilterable<Evnt>,
     Integration<
       "EventBus",
-      (
-        event: PutEventInput<Evnt>,
-        ...events: PutEventInput<Evnt>[]
-      ) => void,
+      (event: PutEventInput<Evnt>, ...events: PutEventInput<Evnt>[]) => void,
       EventBusTargetIntegration<
         PutEventInput<Evnt>,
         aws_events_targets.EventBusProps | undefined
@@ -160,10 +163,7 @@ export interface IEventBus<in Evnt extends Event = Event>
   /**
    * Put one or more events on an Event Bus.
    */
-  putEvents(
-    event: PutEventInput<Evnt>,
-    ...events: PutEventInput<Evnt>[]
-  ): void;
+  putEvents(event: PutEventInput<Evnt>, ...events: PutEventInput<Evnt>[]): void;
 
   /**
    * Creates a rule that matches all events on the bus.
@@ -186,7 +186,10 @@ export interface IEventBus<in Evnt extends Event = Event>
    * ```
    */
   all<OutEnvt extends Evnt>(): PredicateRuleBase<Evnt, OutEnvt>;
-  all<OutEnvt extends Evnt>(scope: Construct, id: string): PredicateRuleBase<Evnt, OutEnvt>;
+  all<OutEnvt extends Evnt>(
+    scope: Construct,
+    id: string
+  ): PredicateRuleBase<Evnt, OutEnvt>;
 }
 
 /**
@@ -200,7 +203,9 @@ export interface IEventBus<in Evnt extends Event = Event>
  *                      can accept any of `Evnt`. This type parameter should be left
  *                      empty to be inferred. ex: `EventBus<Event<Detail1> | Event<Detail2>>`.
  */
-abstract class EventBusBase<in Evnt extends Event, OutEvnt extends Evnt = Evnt> implements IEventBus<Evnt> {
+abstract class EventBusBase<in Evnt extends Event, OutEvnt extends Evnt = Evnt>
+  implements IEventBus<Evnt>
+{
   /**
    * This static properties identifies this class as an EventBus to the TypeScript plugin.
    */
@@ -377,7 +382,7 @@ abstract class EventBusBase<in Evnt extends Event, OutEvnt extends Evnt = Evnt> 
    * @typeParam InEvnt - The type the {@link Rule} matches. Covariant of output {@link OutEvnt}.
    * @typeParam NewEvnt - The type the predicate narrows to, a sub-type of {@link InEvnt}.
    */
-   public when<InEvnt extends OutEvnt, NewEvnt extends InEvnt>(
+  public when<InEvnt extends OutEvnt, NewEvnt extends InEvnt>(
     id: string,
     predicate: RulePredicateFunction<InEvnt, NewEvnt>
   ): Rule<InEvnt, NewEvnt>;
@@ -423,9 +428,14 @@ abstract class EventBusBase<in Evnt extends Event, OutEvnt extends Evnt = Evnt> 
       }
       return this.allRule;
     }
-    return new PredicateRuleBase<Evnt, OutEvnt>(scope, id, this as IEventBus<Evnt>, {
-      doc: {},
-    });
+    return new PredicateRuleBase<Evnt, OutEvnt>(
+      scope,
+      id,
+      this as IEventBus<Evnt>,
+      {
+        doc: {},
+      }
+    );
   }
 }
 
@@ -489,7 +499,10 @@ export type PutEventInput<Evnt extends Event> = Partial<Evnt> &
  *                      can accept any of `Evnt`. This type parameter should be left
  *                      empty to be inferred. ex: `EventBus<Event<Detail1> | Event<Detail2>>`.
  */
-export class EventBus<in Evnt extends Event, out OutEvnt extends Evnt = Evnt> extends EventBusBase<Evnt, OutEvnt> {
+export class EventBus<
+  in Evnt extends Event,
+  out OutEvnt extends Evnt = Evnt
+> extends EventBusBase<Evnt, OutEvnt> {
   constructor(scope: Construct, id: string, props?: aws_events.EventBusProps) {
     super(new aws_events.EventBus(scope, id, props));
   }
@@ -499,7 +512,9 @@ export class EventBus<in Evnt extends Event, out OutEvnt extends Evnt = Evnt> ex
    *
    * @typeParam Evnt - the union of types which are expected on the default {@link EventBus}.
    */
-  public static fromBus<Evnt extends Event>(bus: aws_events.IEventBus): IEventBus<Evnt> {
+  public static fromBus<Evnt extends Event>(
+    bus: aws_events.IEventBus
+  ): IEventBus<Evnt> {
     return new ImportedEventBus<Evnt>(bus);
   }
 
@@ -514,8 +529,12 @@ export class EventBus<in Evnt extends Event, out OutEvnt extends Evnt = Evnt> ex
    *
    * @typeParam Evnt - the union of types which are expected on the default {@link EventBus}.
    */
-  public static default<Evnt extends Event>(stack: Stack): DefaultEventBus<Evnt>;
-  public static default<Evnt extends Event>(scope: Construct): DefaultEventBus<Evnt>;
+  public static default<Evnt extends Event>(
+    stack: Stack
+  ): DefaultEventBus<Evnt>;
+  public static default<Evnt extends Event>(
+    scope: Construct
+  ): DefaultEventBus<Evnt>;
   public static default<Evnt extends Event>(
     scope: Construct | Stack
   ): DefaultEventBus<Evnt> {
@@ -562,7 +581,10 @@ export class EventBus<in Evnt extends Event, out OutEvnt extends Evnt = Evnt> ex
  *                      can accept any of `Evnt`. This type parameter should be left
  *                      empty to be inferred. ex: `EventBus<Event<Detail1> | Event<Detail2>>`.
  */
-export class DefaultEventBus<in Evnt extends Event, out OutEvnt extends Evnt = Evnt> extends EventBusBase<Evnt, OutEvnt> {
+export class DefaultEventBus<
+  in Evnt extends Event,
+  out OutEvnt extends Evnt = Evnt
+> extends EventBusBase<Evnt, OutEvnt> {
   constructor(scope: Construct) {
     const stack = scope instanceof Stack ? scope : Stack.of(scope);
     const bus =
@@ -624,7 +646,10 @@ export class DefaultEventBus<in Evnt extends Event, out OutEvnt extends Evnt = E
  *                      can accept any of `Evnt`. This type parameter should be left
  *                      empty to be inferred. ex: `EventBus<Event<Detail1> | Event<Detail2>>`.
  */
-class ImportedEventBus<in Evnt extends Event, out OutEvnt extends Evnt = Evnt> extends EventBusBase<Evnt, OutEvnt> {
+class ImportedEventBus<
+  in Evnt extends Event,
+  out OutEvnt extends Evnt = Evnt
+> extends EventBusBase<Evnt, OutEvnt> {
   constructor(bus: aws_events.IEventBus) {
     super(bus);
   }
@@ -665,7 +690,7 @@ export interface EventBusTargetIntegration<
    * We use a function interface in order to satisfy the covariant relationship that we expect the super-P in as opposed to
    * returning sub-P.
    */
-  __payloadBrand: ((p: Payload) => void);
+  __payloadBrand: (p: Payload) => void;
 
   /**
    * Method called when an integration is passed to EventBus's `.pipe` function.
@@ -691,7 +716,9 @@ export type IntegrationWithEventBus<
 export function makeEventBusIntegration<
   Payload,
   Props extends object | undefined = undefined
->(integration: Omit<EventBusTargetIntegration<Payload, Props>, "__payloadBrand">) {
+>(
+  integration: Omit<EventBusTargetIntegration<Payload, Props>, "__payloadBrand">
+) {
   return integration as EventBusTargetIntegration<Payload, Props>;
 }
 

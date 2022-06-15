@@ -206,7 +206,10 @@ abstract class RuleBase<out OutEvnt extends Event> implements IRule<OutEvnt> {
  * @typeParam - Evnt - The original event type from the {@link EventBus}.
  * @typeParam - OutEvnt - The narrowed event type after the predicate is applied.
  */
-export class PredicateRuleBase<in Evnt extends Event, out OutEvnt extends Evnt = Evnt>
+export class PredicateRuleBase<
+    in Evnt extends Event,
+    out OutEvnt extends Evnt = Evnt
+  >
   extends RuleBase<OutEvnt>
   implements IEventBusFilterable<Evnt>
 {
@@ -311,7 +314,9 @@ export class Rule<
   /**
    * Import an {@link aws_events.Rule} wrapped with Functionless abilities.
    */
-  public static fromRule<Evnt extends Event>(rule: aws_events.Rule): IRule<Evnt> {
+  public static fromRule<Evnt extends Event>(
+    rule: aws_events.Rule
+  ): IRule<Evnt> {
     return new ImportedRule<Evnt>(rule);
   }
 }
