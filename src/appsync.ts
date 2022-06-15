@@ -89,7 +89,7 @@ export class SynthesizedAppsyncResolver extends appsync.Resolver {
  *
  * First, you must wrap a CDK L2 Construct in the corresponding Functionless type-safe interfaces.
  * ```ts
- * const table = new Table<Person, "id">(new aws_dynamodb.Table(scope, "id", props));
+ * const table = Table.fromTable<Person, "id">(new aws_dynamodb.Table(scope, "id", props));
  * ```
  *
  * Then, call the table from within the new AppsyncResolver:

@@ -6,7 +6,7 @@ const BASE_URL = process.env.FUNCTIONLESS_LOCAL
  * Error to throw during synth failures
  */
 export class SynthError extends Error {
-  constructor(readonly code: ErrorCode, message: string) {
+  constructor(readonly code: ErrorCode, message?: string) {
     super(formatErrorMessage(code, message));
   }
 }
@@ -103,5 +103,35 @@ export namespace ErrorCodes {
   export const Unexpected_Error: ErrorCode = {
     code: 103,
     messageText: "Unexpected Error, please report this issue",
+  };
+
+  /**
+   * Incorrect State Machine Type Imported
+   *
+   * Functionless {@link StepFunction}s are separated into {@link ExpressStepFunction} and {@link StepFunction}
+   * based on being {@link aws_stepfunctions.StateMachineType.EXPRESS} or {@link aws_stepfunctions.StateMachineType.STANDARD}
+   * respectively.
+   *
+   * In order to ensure correct function of Functionless integrations, the correct import statement must be used.
+   *
+   * ```ts
+   * const sfn = new aws_stepfunctions.StateMachine(scope, 'standardMachine', {...});
+   * // valid
+   * StateMachine.fromStepFunction(sfn);
+   * // invalid - not an express machine
+   * ExpressStateMachine.fromStepFunction(sfn);
+   *
+   * const exprSfn = new aws_stepfunctions.StateMachine(scope, 'standardMachine', {
+   *    stateMachineType: aws_stepfunctions.StateMachineType.EXPRESS,
+   * });
+   * // valid
+   * ExpressStateMachine.fromStepFunction(exprSfn);
+   * // invalid - not a standard machine
+   * StateMachine.fromStepFunction(exprSfn);
+   * ```
+   */
+  export const Incorrect_StateMachine_Import_Type = {
+    code: 104,
+    messageText: "Incorrect state machine type imported",
   };
 }

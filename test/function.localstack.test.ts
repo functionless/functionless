@@ -661,7 +661,7 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
   testFunctionResource(
     "dynamo integration get",
     (parent) => {
-      const table = new Table<{ key: string }, "key">(
+      const table = Table.fromTable<{ key: string }, "key">(
         new aws_dynamodb.Table(parent, "table", {
           partitionKey: {
             name: "key",

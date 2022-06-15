@@ -93,7 +93,15 @@ export function validateFunctionDecl(
   a: any,
   functionLocation: string
 ): FunctionDecl {
-  if (isFunctionDecl(a)) {
+  return validateFunctionlessNode(a, functionLocation, isFunctionDecl);
+}
+
+export function validateFunctionlessNode<E extends FunctionlessNode>(
+  a: any,
+  functionLocation: string,
+  validate: (e: FunctionlessNode) => e is E
+): E {
+  if (validate(a)) {
     return a;
   } else if (isErr(a)) {
     throw a.error;
