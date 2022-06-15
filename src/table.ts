@@ -1,5 +1,6 @@
 import * as appsync from "@aws-cdk/aws-appsync-alpha";
 import { aws_dynamodb } from "aws-cdk-lib";
+import { Construct } from "constructs";
 import { JsonFormat } from "typesafe-dynamodb";
 import {
   NativeBinaryAttribute,
@@ -9,14 +10,16 @@ import {
   ExpressionAttributeNames,
   ExpressionAttributeValues,
 } from "typesafe-dynamodb/lib/expression-attributes";
-
-// @ts-ignore - imported for typedoc
 import { TableKey } from "typesafe-dynamodb/lib/key";
 import { Narrow } from "typesafe-dynamodb/lib/narrow";
 import type { AppSyncVtlIntegration } from "./appsync";
 import { assertNodeKind } from "./assert";
 import { ObjectLiteralExpr } from "./expression";
-import { IntegrationInput, makeIntegration } from "./integration";
+import {
+  IntegrationCall,
+  IntegrationInput,
+  makeIntegration,
+} from "./integration";
 import { AnyFunction } from "./util";
 import { VTL } from "./vtl";
 
@@ -24,75 +27,29 @@ export function isTable(a: any): a is AnyTable {
   return a?.kind === "Table";
 }
 
-export type AnyTable = Table<object, keyof object, keyof object | undefined>;
+export interface TableProps<
+  PartitionKey extends string,
+  RangeKey extends string | undefined = undefined
+> extends Omit<aws_dynamodb.TableProps, "partitionKey" | "sortKey"> {
+  partitionKey: {
+    name: PartitionKey;
+    type: aws_dynamodb.AttributeType;
+  };
+  sortKey?: RangeKey extends undefined
+    ? { name: Exclude<RangeKey, undefined>; type: aws_dynamodb.AttributeType }
+    : undefined;
+}
 
-/**
- * Wraps an {@link aws_dynamodb.Table} with a type-safe interface that can be
- * called from within an {@link AppsyncResolver}.
- *
- * Its interface, e.g. `getItem`, `putItem`, is in 1:1 correspondence with the
- * AWS Appsync Resolver API https://docs.aws.amazon.com/appsync/latest/devguide/resolver-mapping-template-reference-dynamodb.html
- *
- * For example:
- * ```ts
- * interface Person {
- *   id: string;
- *   name: string;
- *   age: number;
- * }
- *
- * const personTable = Table.fromTable<Person, "id">(
- *   new aws_dynamodb.Table(..)
- * );
- *
- * const getPerson = new AppsyncResolver<
- *   (personId: string) => Person | undefined
- * >(($context, personId: string) => {
- *   const person = personTable.get({
- *     key: {
- *       id: $util.toDynamoDB(personId)
- *     }
- *   });
- *
- *   return person;
- * });
- * ```
- *
- * Note the type-signature of `Table<Person, "id">`. This declares a table whose contents
- * are of the shape, `Person`, and that the PartitionKey is the `id` field.
- *
- * You can also specify the RangeKey:
- * ```ts
- * Table.fromTable<Person, "id", "age">(..)
- * ```
- * @see https://github.com/sam-goodwin/typesafe-dynamodb - for more information on how to model your DynamoDB table with TypeScript
- */
-export class Table<
+export type AnyTable = ITable<object, keyof object, keyof object | undefined>;
+
+export interface ITable<
   Item extends object,
   PartitionKey extends keyof Item,
   RangeKey extends keyof Item | undefined = undefined
 > {
-  readonly kind = "Table";
-
-  /**
-   * Wrap a {@link aws_dynamodb.Table} with Functionless.
-   *
-   * A wrapped {@link Table} provides common integrations like `getItem` and `query`.
-   */
-  public static fromTable<
-    Item extends object,
-    PartitionKey extends keyof Item,
-    RangeKey extends keyof Item | undefined = undefined
-  >(resource: aws_dynamodb.ITable) {
-    return new Table<Item, PartitionKey, RangeKey>(resource);
-  }
-
-  private constructor(readonly resource: aws_dynamodb.ITable) {}
-
-  /**
-   * @see https://docs.aws.amazon.com/appsync/latest/devguide/resolver-mapping-template-reference-dynamodb.html#aws-appsync-resolver-mapping-template-reference-dynamodb-getitem
-   */
-  public getItem = this.makeTableIntegration<
+  readonly kind: "Table";
+  readonly resource: aws_dynamodb.ITable;
+  getItem: IntegrationCall<
     "getItem",
     <
       Key extends TableKey<
@@ -105,6 +62,102 @@ export class Table<
       key: Key;
       consistentRead?: boolean;
     }) => Narrow<Item, AttributeKeyToObject<Key>, JsonFormat.Document>
+  >;
+
+  putItem: IntegrationCall<
+    "putItem",
+    <
+      Key extends TableKey<
+        Item,
+        PartitionKey,
+        RangeKey,
+        JsonFormat.AttributeValue
+      >,
+      ConditionExpression extends string | undefined = undefined
+    >(input: {
+      key: Key;
+      attributeValues: ToAttributeMap<
+        Omit<
+          Narrow<Item, AttributeKeyToObject<Key>, JsonFormat.Document>,
+          Exclude<PartitionKey | RangeKey, undefined>
+        >
+      >;
+      condition?: DynamoExpression<ConditionExpression>;
+      _version?: number;
+    }) => Narrow<Item, AttributeKeyToObject<Key>, JsonFormat.Document>
+  >;
+
+  updateItem: IntegrationCall<
+    "updateItem",
+    <
+      Key extends TableKey<
+        Item,
+        PartitionKey,
+        RangeKey,
+        JsonFormat.AttributeValue
+      >,
+      UpdateExpression extends string,
+      ConditionExpression extends string | undefined
+    >(input: {
+      key: Key;
+      update: DynamoExpression<UpdateExpression>;
+      condition?: DynamoExpression<ConditionExpression>;
+      _version?: number;
+    }) => Narrow<Item, AttributeKeyToObject<Key>, JsonFormat.Document>
+  >;
+
+  deleteItem: IntegrationCall<
+    "deleteItem",
+    <
+      Key extends TableKey<
+        Item,
+        PartitionKey,
+        RangeKey,
+        JsonFormat.AttributeValue
+      >,
+      ConditionExpression extends string | undefined
+    >(input: {
+      key: Key;
+      condition?: DynamoExpression<ConditionExpression>;
+      _version?: number;
+    }) => Narrow<Item, AttributeKeyToObject<Key>, JsonFormat.Document>
+  >;
+
+  query: IntegrationCall<
+    "query",
+    <Query extends string, Filter extends string | undefined>(input: {
+      query: DynamoExpression<Query>;
+      filter?: DynamoExpression<Filter>;
+      index?: string;
+      nextToken?: string;
+      limit?: number;
+      scanIndexForward?: boolean;
+      consistentRead?: boolean;
+      select?: "ALL_ATTRIBUTES" | "ALL_PROJECTED_ATTRIBUTES";
+    }) => {
+      items: Item[];
+      nextToken: string;
+      scannedCount: number;
+    }
+  >;
+}
+
+class BaseTable<
+  Item extends object,
+  PartitionKey extends keyof Item,
+  RangeKey extends keyof Item | undefined = undefined
+> implements ITable<Item, PartitionKey, RangeKey>
+{
+  readonly kind = "Table";
+
+  constructor(readonly resource: aws_dynamodb.ITable) {}
+
+  /**
+   * @see https://docs.aws.amazon.com/appsync/latest/devguide/resolver-mapping-template-reference-dynamodb.html#aws-appsync-resolver-mapping-template-reference-dynamodb-getitem
+   */
+  public getItem = this.makeTableIntegration<
+    "getItem",
+    ITable<Item, PartitionKey, RangeKey>["getItem"]
   >("getItem", {
     appSyncVtl: {
       request(call, vtl) {
@@ -130,25 +183,7 @@ export class Table<
    */
   public putItem = this.makeTableIntegration<
     "putItem",
-    <
-      Key extends TableKey<
-        Item,
-        PartitionKey,
-        RangeKey,
-        JsonFormat.AttributeValue
-      >,
-      ConditionExpression extends string | undefined = undefined
-    >(input: {
-      key: Key;
-      attributeValues: ToAttributeMap<
-        Omit<
-          Narrow<Item, AttributeKeyToObject<Key>, JsonFormat.Document>,
-          Exclude<PartitionKey | RangeKey, undefined>
-        >
-      >;
-      condition?: DynamoExpression<ConditionExpression>;
-      _version?: number;
-    }) => Narrow<Item, AttributeKeyToObject<Key>, JsonFormat.Document>
+    ITable<Item, PartitionKey, RangeKey>["putItem"]
   >("putItem", {
     appSyncVtl: {
       request: (call, vtl) => {
@@ -180,21 +215,7 @@ export class Table<
    */
   public updateItem = this.makeTableIntegration<
     "updateItem",
-    <
-      Key extends TableKey<
-        Item,
-        PartitionKey,
-        RangeKey,
-        JsonFormat.AttributeValue
-      >,
-      UpdateExpression extends string,
-      ConditionExpression extends string | undefined
-    >(input: {
-      key: Key;
-      update: DynamoExpression<UpdateExpression>;
-      condition?: DynamoExpression<ConditionExpression>;
-      _version?: number;
-    }) => Narrow<Item, AttributeKeyToObject<Key>, JsonFormat.Document>
+    ITable<Item, PartitionKey, RangeKey>["updateItem"]
   >("updateItem", {
     appSyncVtl: {
       request: (call, vtl) => {
@@ -224,19 +245,7 @@ export class Table<
    */
   public deleteItem = this.makeTableIntegration<
     "deleteItem",
-    <
-      Key extends TableKey<
-        Item,
-        PartitionKey,
-        RangeKey,
-        JsonFormat.AttributeValue
-      >,
-      ConditionExpression extends string | undefined
-    >(input: {
-      key: Key;
-      condition?: DynamoExpression<ConditionExpression>;
-      _version?: number;
-    }) => Narrow<Item, AttributeKeyToObject<Key>, JsonFormat.Document>
+    ITable<Item, PartitionKey, RangeKey>["deleteItem"]
   >("deleteItem", {
     appSyncVtl: {
       request: (call, vtl) => {
@@ -263,20 +272,7 @@ export class Table<
    */
   public query = this.makeTableIntegration<
     "query",
-    <Query extends string, Filter extends string | undefined>(input: {
-      query: DynamoExpression<Query>;
-      filter?: DynamoExpression<Filter>;
-      index?: string;
-      nextToken?: string;
-      limit?: number;
-      scanIndexForward?: boolean;
-      consistentRead?: boolean;
-      select?: "ALL_ATTRIBUTES" | "ALL_PROJECTED_ATTRIBUTES";
-    }) => {
-      items: Item[];
-      nextToken: string;
-      scannedCount: number;
-    }
+    ITable<Item, PartitionKey, RangeKey>["query"]
   >("query", {
     appSyncVtl: {
       request: (call, vtl) => {
@@ -330,6 +326,77 @@ export class Table<
         );
       },
     });
+  }
+}
+
+/**
+ * Wraps an {@link aws_dynamodb.Table} with a type-safe interface that can be
+ * called from within an {@link AppsyncResolver}.
+ *
+ * Its interface, e.g. `getItem`, `putItem`, is in 1:1 correspondence with the
+ * AWS Appsync Resolver API https://docs.aws.amazon.com/appsync/latest/devguide/resolver-mapping-template-reference-dynamodb.html
+ *
+ * For example:
+ * ```ts
+ * interface Person {
+ *   id: string;
+ *   name: string;
+ *   age: number;
+ * }
+ *
+ * const personTable = Table.fromTable<Person, "id">(
+ *   new aws_dynamodb.Table(..)
+ * );
+ *
+ * const getPerson = new AppsyncResolver<
+ *   (personId: string) => Person | undefined
+ * >(($context, personId: string) => {
+ *   const person = personTable.get({
+ *     key: {
+ *       id: $util.toDynamoDB(personId)
+ *     }
+ *   });
+ *
+ *   return person;
+ * });
+ * ```
+ *
+ * Note the type-signature of `Table<Person, "id">`. This declares a table whose contents
+ * are of the shape, `Person`, and that the PartitionKey is the `id` field.
+ *
+ * You can also specify the RangeKey:
+ * ```ts
+ * Table.fromTable<Person, "id", "age">(..)
+ * ```
+ * @see https://github.com/sam-goodwin/typesafe-dynamodb - for more information on how to model your DynamoDB table with TypeScript
+ */
+export class Table<
+  Item extends object,
+  PartitionKey extends keyof Item,
+  RangeKey extends keyof Item | undefined = undefined
+> extends BaseTable<Item, PartitionKey, RangeKey> {
+  /**
+   * Wrap a {@link aws_dynamodb.Table} with Functionless.
+   *
+   * A wrapped {@link Table} provides common integrations like `getItem` and `query`.
+   */
+  public static fromTable<
+    Item extends object,
+    PartitionKey extends keyof Item,
+    RangeKey extends keyof Item | undefined = undefined
+  >(resource: aws_dynamodb.ITable): ITable<Item, PartitionKey, RangeKey> {
+    return new BaseTable<Item, PartitionKey, RangeKey>(resource);
+  }
+
+  constructor(
+    scope: Construct,
+    id: string,
+    props: TableProps<
+      Exclude<PartitionKey, number | Symbol>,
+      Exclude<RangeKey, number | Symbol>
+    >
+  ) {
+    super(new aws_dynamodb.Table(scope, id, props as aws_dynamodb.TableProps));
   }
 }
 

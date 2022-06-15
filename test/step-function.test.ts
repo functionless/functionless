@@ -1,4 +1,5 @@
-import { Stack } from "aws-cdk-lib";
+import { aws_stepfunctions, Stack } from "aws-cdk-lib";
+import { Pass } from "aws-cdk-lib/aws-stepfunctions";
 import "jest";
 import {
   $AWS,
@@ -8,8 +9,11 @@ import {
   ExpressStepFunction,
   StepFunction,
   SyncExecutionResult,
+  ErrorCodes,
+  SynthError,
 } from "../src";
 import { StateMachine, States, Task } from "../src/asl";
+import { Function } from "../src/function";
 import { initStepFunctionApp, normalizeCDKJson, Person } from "./util";
 
 /**
@@ -2214,19 +2218,117 @@ test("on status change event refine", () => {
 });
 
 test("import from state machine", () => {
-  const;
-  const machine = new StepFunction(stack, "machine", () => {});
-
-  const success = machine
-    .onStatusChanged(stack, "onStatus")
-    .when(stack, "onRunning", (event) => event.detail.status === "RUNNING");
-
-  expect(success.rule._renderEventPattern()).toEqual({
-    source: ["aws.states"],
-    "detail-type": ["Step Functions Execution Status Change"],
-    detail: {
-      status: ["RUNNING"],
-      stateMachineArn: [machine.resource.stateMachineArn],
-    },
+  const awsMachine = new aws_stepfunctions.StateMachine(stack, "m", {
+    definition: new Pass(stack, "p"),
   });
+  const machine = StepFunction.fromStateMachine<{ id: string }, string>(
+    awsMachine
+  );
+
+  new Function(stack, "func", async () => {
+    machine({
+      input: {
+        id: "hi",
+      },
+    });
+  });
+});
+
+test("import from state machine into state machine", () => {
+  const awsMachine = new aws_stepfunctions.StateMachine(stack, "m", {
+    definition: new Pass(stack, "p"),
+  });
+  const machine = StepFunction.fromStateMachine<{ id: string }, string>(
+    awsMachine
+  );
+
+  const definition = new StepFunction(stack, "func", () => {
+    machine({
+      input: {
+        id: "hi",
+      },
+    });
+  }).definition;
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+
+  expectTaskToMatch(
+    definition,
+    {
+      Parameters: {
+        StateMachineArn: awsMachine.stateMachineArn,
+      },
+    },
+    "machine"
+  );
+});
+
+test("import express from standard should fail", () => {
+  const awsMachine = new aws_stepfunctions.StateMachine(stack, "m", {
+    definition: new Pass(stack, "p"),
+    stateMachineType: aws_stepfunctions.StateMachineType.EXPRESS,
+  });
+
+  expect(() =>
+    StepFunction.fromStateMachine<{ id: string }, string>(awsMachine)
+  ).toThrow(new SynthError(ErrorCodes.Incorrect_StateMachine_Import_Type));
+});
+
+test("import from express state machine", () => {
+  const awsMachine = new aws_stepfunctions.StateMachine(stack, "m", {
+    definition: new Pass(stack, "p"),
+    stateMachineType: aws_stepfunctions.StateMachineType.EXPRESS,
+  });
+  const machine = ExpressStepFunction.fromStateMachine<{ id: string }, string>(
+    awsMachine
+  );
+
+  new Function(stack, "func", async () => {
+    machine({
+      input: {
+        id: "hi",
+      },
+    });
+  });
+});
+
+test("import from express state machine into machine", () => {
+  const awsMachine = new aws_stepfunctions.StateMachine(stack, "m", {
+    definition: new Pass(stack, "p"),
+    stateMachineType: aws_stepfunctions.StateMachineType.EXPRESS,
+  });
+  const machine = ExpressStepFunction.fromStateMachine<{ id: string }, string>(
+    awsMachine
+  );
+
+  const definition = new StepFunction(stack, "func", () => {
+    machine({
+      input: {
+        id: "hi",
+      },
+    });
+  }).definition;
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+
+  expectTaskToMatch(
+    definition,
+    {
+      Parameters: {
+        StateMachineArn: awsMachine.stateMachineArn,
+      },
+    },
+    "machine"
+  );
+});
+
+test("import standard from express should fail", () => {
+  const awsMachine = new aws_stepfunctions.StateMachine(stack, "m", {
+    definition: new Pass(stack, "p"),
+    stateMachineType: aws_stepfunctions.StateMachineType.STANDARD,
+  });
+
+  expect(() =>
+    ExpressStepFunction.fromStateMachine<{ id: string }, string>(awsMachine)
+  ).toThrow(new SynthError(ErrorCodes.Incorrect_StateMachine_Import_Type));
 });

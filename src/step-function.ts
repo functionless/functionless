@@ -955,8 +955,16 @@ export interface ExpressStepFunction<
   (input: StepFunctionRequest<Payload>): SyncExecutionResult<Out>;
 }
 
-export interface IStepFunction<Payload extends Record<string, any> | undefined>
-  extends Integration<
+/**
+ *
+ * @typeParam Payload - the object payload to the step function.
+ * @typeParam Out - the type of object the step function outputs.
+ *                  currently not used: https://github.com/functionless/functionless/issues/129
+ */
+export interface IStepFunction<
+  Payload extends Record<string, any> | undefined,
+  _Out
+> extends Integration<
     "StepFunction",
     (
       input: StepFunctionRequest<Payload>
@@ -974,13 +982,16 @@ export interface IStepFunction<Payload extends Record<string, any> | undefined>
   (input: StepFunctionRequest<Payload>): AWS.StepFunctions.StartExecutionOutput;
 }
 
-class BaseStandardStepFunction<Payload extends Record<string, any> | undefined>
+class BaseStandardStepFunction<
+    Payload extends Record<string, any> | undefined,
+    Out
+  >
   extends BaseStepFunction<
     Payload,
     StepFunctionRequest<Payload>,
     AWS.StepFunctions.StartExecutionOutput
   >
-  implements IStepFunction<Payload>
+  implements IStepFunction<Payload, Out>
 {
   /**
    * This static property identifies this class as an StepFunction to the TypeScript plugin.
@@ -1095,21 +1106,23 @@ class BaseStandardStepFunction<Payload extends Record<string, any> | undefined>
 }
 
 interface BaseStandardStepFunction<
-  Payload extends Record<string, any> | undefined
+  Payload extends Record<string, any> | undefined,
+  Out
 > {
   (input: StepFunctionRequest<Payload>): AWS.StepFunctions.StartExecutionOutput;
 }
 
 export class StepFunction<Payload extends Record<string, any> | undefined, Out>
-  extends BaseStandardStepFunction<Payload>
-  implements IStepFunction<Payload>
+  extends BaseStandardStepFunction<Payload, Out>
+  implements IStepFunction<Payload, Out>
 {
   readonly definition: StateMachine<States>;
 
   public static fromStateMachine<
-    Payload extends Record<string, any> | undefined
-  >(machine: aws_stepfunctions.StateMachine): IStepFunction<Payload> {
-    return new ImportedStepFunction<Payload>(machine);
+    Payload extends Record<string, any> | undefined,
+    Out
+  >(machine: aws_stepfunctions.StateMachine): IStepFunction<Payload, Out> {
+    return new ImportedStepFunction<Payload, Out>(machine);
   }
 
   constructor(
@@ -1189,8 +1202,9 @@ function synthesizeStateMachine(
 }
 
 class ImportedStepFunction<
-  Payload extends Record<string, any> | undefined
-> extends BaseStandardStepFunction<Payload> {
+  Payload extends Record<string, any> | undefined,
+  Out
+> extends BaseStandardStepFunction<Payload, Out> {
   constructor(machine: aws_stepfunctions.StateMachine) {
     if (
       machine.stateMachineType !== aws_stepfunctions.StateMachineType.STANDARD

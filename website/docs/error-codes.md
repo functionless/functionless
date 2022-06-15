@@ -39,3 +39,63 @@ During CDK synth a function was encountered which was not compiled by the Functi
 This suggests that the plugin was not correctly configured for this project.
 
 Ensure you follow the instructions at https://functionless.org/docs/getting-started.
+
+___
+
+### Function closure serialization was not allowed to complete
+
+__Error Code__: Functionless(102)
+
+Lambda Function closure synthesis runs async, but CDK does not normally support async.
+
+In order for the synthesis to complete successfully
+1. Use autoSynth `new App({ authSynth: true })` or `new App()` with the CDK Cli (`cdk synth`)
+2. Use `await asyncSynth(app)` exported from Functionless in place of `app.synth()`
+3. Manually await on the closure serializer promises `await Promise.all(Function.promises)`
+
+https://github.com/functionless/functionless/issues/128
+
+___
+
+### Incorrect state machine type imported
+
+__Error Code__: Functionless(104)
+
+Incorrect State Machine Type Imported
+
+Functionless [StepFunction](api/classes/StepFunction.md)s are separated into [ExpressStepFunction](api/classes/ExpressStepFunction.md) and [StepFunction](api/classes/StepFunction.md)
+based on being {@link aws_stepfunctions.StateMachineType.EXPRESS} or {@link aws_stepfunctions.StateMachineType.STANDARD}
+respectively.
+
+In order to ensure correct function of Functionless integrations, the correct import statement must be used.
+
+```ts
+const sfn = new aws_stepfunctions.StateMachine(scope, 'standardMachine', {...});
+// valid
+StateMachine.fromStepFunction(sfn);
+// invalid - not an express machine
+ExpressStateMachine.fromStepFunction(sfn);
+
+const exprSfn = new aws_stepfunctions.StateMachine(scope, 'standardMachine', {
+   stateMachineType: aws_stepfunctions.StateMachineType.EXPRESS,
+});
+// valid
+ExpressStateMachine.fromStepFunction(exprSfn);
+// invalid - not a standard machine
+StateMachine.fromStepFunction(exprSfn);
+```
+
+#### Type declaration
+
+| Name | Type |
+| :------ | :------ |
+| `code` | `number` |
+| `messageText` | `string` |
+
+___
+
+### Unexpected Error, please report this issue
+
+__Error Code__: Functionless(103)
+
+Generic error message to denote errors that should not happen and are not the fault of the Functionless library consumer.

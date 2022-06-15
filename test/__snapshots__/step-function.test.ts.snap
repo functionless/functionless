@@ -1359,6 +1359,62 @@ Object {
 }
 `;
 
+exports[`import from express state machine into machine 1`] = `
+Object {
+  "StartAt": "machine({input: {id: \\"hi\\"}})",
+  "States": Object {
+    "machine({input: {id: \\"hi\\"}})": Object {
+      "Next": "return null",
+      "Parameters": Object {
+        "Input": Object {
+          "id": "hi",
+        },
+        "StateMachineArn": "__REPLACED_TOKEN",
+      },
+      "Resource": "arn:aws:states:::aws-sdk:sfn:startSyncExecution",
+      "ResultPath": null,
+      "Type": "Task",
+    },
+    "return null": Object {
+      "End": true,
+      "OutputPath": "$.null",
+      "Parameters": Object {
+        "null": null,
+      },
+      "Type": "Pass",
+    },
+  },
+}
+`;
+
+exports[`import from state machine into state machine 1`] = `
+Object {
+  "StartAt": "machine({input: {id: \\"hi\\"}})",
+  "States": Object {
+    "machine({input: {id: \\"hi\\"}})": Object {
+      "Next": "return null",
+      "Parameters": Object {
+        "Input": Object {
+          "id": "hi",
+        },
+        "StateMachineArn": "__REPLACED_TOKEN",
+      },
+      "Resource": "arn:aws:states:::aws-sdk:sfn:startExecution",
+      "ResultPath": null,
+      "Type": "Task",
+    },
+    "return null": Object {
+      "End": true,
+      "OutputPath": "$.null",
+      "Parameters": Object {
+        "null": null,
+      },
+      "Type": "Pass",
+    },
+  },
+}
+`;
+
 exports[`let and set 1`] = `
 Object {
   "StartAt": "a = null",
