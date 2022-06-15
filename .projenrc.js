@@ -20,7 +20,7 @@ class GitHooksPreCommitComponent extends TextFile {
   }
 }
 
-const MIN_CDK_VERSION = "2.20.0";
+const MIN_CDK_VERSION = "2.28.0";
 
 /**
  * Projen does not currently support a way to set `*` for deerDependency versions.

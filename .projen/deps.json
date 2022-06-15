@@ -2,22 +2,22 @@
   "dependencies": [
     {
       "name": "@aws-cdk/aws-appsync-alpha",
-      "version": "2.20.0-alpha.0",
+      "version": "2.28.0-alpha.0",
       "type": "build"
     },
     {
       "name": "@aws-cdk/cloud-assembly-schema",
-      "version": "2.20.0",
+      "version": "2.28.0",
       "type": "build"
     },
     {
       "name": "@aws-cdk/cloudformation-diff",
-      "version": "2.20.0",
+      "version": "2.28.0",
       "type": "build"
     },
     {
       "name": "@aws-cdk/cx-api",
-      "version": "2.20.0",
+      "version": "2.28.0",
       "type": "build"
     },
     {
@@ -57,17 +57,17 @@
     },
     {
       "name": "aws-cdk-lib",
-      "version": "2.20.0",
+      "version": "2.28.0",
       "type": "build"
     },
     {
       "name": "aws-cdk",
-      "version": "2.20.0",
+      "version": "2.28.0",
       "type": "build"
     },
     {
       "name": "cdk-assets",
-      "version": "2.20.0",
+      "version": "2.28.0",
       "type": "build"
     },
     {
@@ -173,7 +173,7 @@
     },
     {
       "name": "aws-cdk-lib",
-      "version": "^2.20.0",
+      "version": "^2.28.0",
       "type": "peer"
     },
     {
