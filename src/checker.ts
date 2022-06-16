@@ -6,6 +6,7 @@ import { EventBus, Rule } from "./event-bridge";
 import { EventTransform } from "./event-bridge/transform";
 import { Function } from "./function";
 import { ExpressStepFunction, StepFunction } from "./step-function";
+import { Table } from "./table";
 
 /**
  * Various types that could be in a call argument position of a function parameter.
@@ -60,6 +61,12 @@ export type ApiIntegrationsStaticMethodInterface = ts.CallExpression & {
   arguments: [ts.ObjectLiteralExpression];
 };
 
+export type NewStepFunctionInterface = ts.NewExpression & {
+  arguments:
+    | [ts.Expression, ts.Expression, TsFunctionParameter]
+    | [ts.Expression, ts.Expression, ts.Expression, TsFunctionParameter];
+};
+
 export type FunctionlessChecker = ReturnType<typeof makeFunctionlessChecker>;
 
 export function makeFunctionlessChecker(
@@ -67,20 +74,24 @@ export function makeFunctionlessChecker(
 ) {
   return {
     ...checker,
-    isConstant,
-    isAppsyncResolver,
-    isRuleMapFunction,
-    isEventBusWhenFunction,
-    isFunctionlessType,
-    isNewRule,
-    isNewEventTransform,
-    isReflectFunction,
-    isStepFunction,
-    isNewFunctionlessFunction,
-    isApiIntegration,
-    isCDKConstruct,
     getApiMethodKind,
     getFunctionlessTypeKind,
+    isApiIntegration,
+    isAppsyncResolver,
+    isCDKConstruct,
+    isConstant,
+    isEventBus,
+    isEventBusWhenFunction,
+    isFunctionlessFunction,
+    isFunctionlessType,
+    isNewEventTransform,
+    isNewFunctionlessFunction,
+    isNewRule,
+    isNewStepFunction,
+    isReflectFunction,
+    isRuleMapFunction,
+    isStepFunction,
+    isTable,
   };
 
   /**
@@ -189,22 +200,32 @@ export function makeFunctionlessChecker(
     return false;
   }
 
-  function isStepFunction(node: ts.Node): node is ts.NewExpression & {
-    arguments: [TsFunctionParameter, ...ts.Expression[]];
-  } {
+  function isTable(node: ts.Node) {
+    return isFunctionlessClassOfKind(node, Table.FunctionlessType);
+  }
+
+  function isStepFunction(node: ts.Node) {
+    return (
+      isFunctionlessClassOfKind(node, StepFunction.FunctionlessType) ||
+      isFunctionlessClassOfKind(node, ExpressStepFunction.FunctionlessType)
+    );
+  }
+
+  function isNewStepFunction(node: ts.Node): node is NewStepFunctionInterface {
     if (ts.isNewExpression(node)) {
-      return (
-        isFunctionlessClassOfKind(node, StepFunction.FunctionlessType) ||
-        isFunctionlessClassOfKind(node, ExpressStepFunction.FunctionlessType)
-      );
+      return isStepFunction(node.expression);
     }
     return false;
+  }
+
+  function isFunctionlessFunction(node: ts.Node) {
+    return isFunctionlessClassOfKind(node, Function.FunctionlessType);
   }
 
   function isNewFunctionlessFunction(node: ts.Node): node is FunctionInterface {
     return (
       ts.isNewExpression(node) &&
-      isFunctionlessClassOfKind(node.expression, Function.FunctionlessType) &&
+      isFunctionlessFunction(node.expression) &&
       // only take the form with the arrow function at the end.
       (node.arguments?.length === 3
         ? ts.isArrowFunction(node.arguments[2])

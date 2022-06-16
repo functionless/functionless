@@ -47,5 +47,11 @@ https://functionless.org/docs/error-codes#cannot-perform-arithmetic-on-variables
 
 [7m19[0m     const a = input.i + 1;
 [7m  [0m [91m             ~~~~~~~~~~~~[0m
+[96mtest/test-files/step-function.ts[0m:[93m72[0m:[93m15[0m - [91merror[0m[90m Functionless(100): [0mCannot perform arithmetic on variables in Step Function
+
+https://functionless.org/docs/error-codes#cannot-perform-arithmetic-on-variables-in-step-function
+
+[7m72[0m         return input.i + 1;
+[7m  [0m [91m              ~~~~~~~~~~~~[0m
 "
 `;

@@ -10,7 +10,9 @@ import {
   aws_lambda,
   CfnResource,
   DockerImage,
+  Reference,
   Resource,
+  SecretValue,
   TagManager,
   Token,
   Tokenization,
@@ -29,7 +31,7 @@ import type { AppSyncVtlIntegration } from "./appsync";
 import { ASL } from "./asl";
 import { isNativeFunctionDecl, validateFunctionlessNode } from "./declaration";
 import { isErr } from "./error";
-import { ErrorCodes, formatErrorMessage } from "./error-code";
+import { ErrorCodes, formatErrorMessage, SynthError } from "./error-code";
 import {
   IEventBus,
   isEventBus,
@@ -44,7 +46,10 @@ import {
   Integration,
   IntegrationImpl,
   INTEGRATION_TYPE_KEYS,
+  isIntegration,
 } from "./integration";
+import { isStepFunction } from "./step-function";
+import { isTable } from "./table";
 import { AnyFunction, anyOf } from "./util";
 
 export function isFunction<Payload = any, Output = any>(
@@ -385,7 +390,7 @@ abstract class FunctionBase<in Payload, Out>
           | IEventBus<AsyncResponseSuccessEvent<P, O>>
           | IEventBus<AsyncResponseFailureEvent<P>>
         >(destination)
-      ? new EventBridgeDestination(destination.bus)
+      ? new EventBridgeDestination(destination.resource)
       : isFunction<
           FunctionPayloadType<Extract<typeof destination, IFunction<any, any>>>,
           FunctionOutputType<Extract<typeof destination, IFunction<any, any>>>
@@ -413,7 +418,7 @@ abstract class FunctionBase<in Payload, Out>
     id: string
   ): Rule<AsyncResponseSuccessEvent<OutPayload, Out>> {
     return new PredicateRuleBase<AsyncResponseSuccessEvent<OutPayload, Out>>(
-      bus.bus,
+      bus.resource,
       id,
       bus,
       /**
@@ -438,7 +443,7 @@ abstract class FunctionBase<in Payload, Out>
     id: string
   ): Rule<AsyncResponseFailureEvent<OutPayload>> {
     return new PredicateRuleBase<AsyncResponseFailureEvent<OutPayload>>(
-      bus.bus,
+      bus.resource,
       id,
       bus,
       /**
@@ -773,10 +778,20 @@ export class CallbackLambdaCode extends aws_lambda.Code {
                 } = transformTable(o as CfnResource);
                 return transformTaggableResource(rest);
               } else if (Token.isUnresolved(o)) {
-                const token = (<any>o).toString();
-                // add to tokens to be turned into env variables.
-                tokens = [...tokens, token];
-                return token;
+                const reversed = Tokenization.reverse(o)!;
+                if (Reference.isReference(reversed)) {
+                  tokens.push(reversed.toString());
+                  return reversed.toString();
+                } else if (SecretValue.isSecretValue(reversed)) {
+                  throw new SynthError(
+                    ErrorCodes.Unsafe_use_of_secrets,
+                    "Found unsafe use of SecretValue token in a Function."
+                  );
+                } else if ("value" in reversed) {
+                  return (reversed as unknown as { value: any }).value;
+                }
+                // TODO: fail at runtime and warn at compiler time when a token cannot be serialized
+                return {};
               }
               return o;
             };
@@ -815,9 +830,8 @@ export class CallbackLambdaCode extends aws_lambda.Code {
             /**
              * Remove unnecessary fields from {@link CfnTable} that bloat or fail the closure serialization.
              */
-            const transformIntegration = (o: unknown): any => {
-              if (o && typeof o === "object" && "kind" in o) {
-                const integ = o as Integration<any>;
+            const transformIntegration = (integ: unknown): any => {
+              if (integ && isIntegration(integ)) {
                 const copy = {
                   ...integ,
                   native: {
@@ -832,10 +846,31 @@ export class CallbackLambdaCode extends aws_lambda.Code {
 
                 return copy;
               }
-              return o;
+              return integ;
             };
 
-            return transformIntegration(transformCfnResource(obj));
+            /**
+             * TODO, make this configuration based.
+             * https://github.com/functionless/functionless/issues/239
+             */
+            const transformResource = (integ: unknown): any => {
+              if (
+                integ &&
+                (isFunction(integ) ||
+                  isTable(integ) ||
+                  isStepFunction(integ) ||
+                  isEventBus(integ))
+              ) {
+                const { resource, ...rest } = integ;
+
+                return rest;
+              }
+              return integ;
+            };
+
+            return transformIntegration(
+              transformResource(transformCfnResource(obj))
+            );
           }
           return true;
         },

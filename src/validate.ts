@@ -1,5 +1,10 @@
-import type * as typescript from "typescript";
-import { FunctionlessChecker, isArithmeticToken } from "./checker";
+import * as typescript from "typescript";
+import {
+  FunctionInterface,
+  FunctionlessChecker,
+  isArithmeticToken,
+  NewStepFunctionInterface,
+} from "./checker";
 import { ErrorCode, ErrorCodes, formatErrorMessage } from "./error-code";
 
 /**
@@ -22,15 +27,19 @@ export function validate(
 ): ts.Diagnostic[] {
   logger?.info("Beginning validation of Functionless semantics");
 
-  return (function visit(node: ts.Node): ts.Diagnostic[] {
-    if (checker.isStepFunction(node)) {
-      return collectEachChildRecursive(node, validateStepFunctionNode);
+  function visit(node: typescript.Node): typescript.Diagnostic[] {
+    if (checker.isNewStepFunction(node)) {
+      return validateNewStepFunctionNode(node);
     } else if (checker.isApiIntegration(node)) {
       return validateApiRequest(node);
+    } else if (checker.isNewFunctionlessFunction(node)) {
+      return validateFunctionNode(node);
     } else {
       return collectEachChild(node, visit);
     }
-  })(node);
+  }
+
+  return visit(node);
 
   // ts.forEachChild terminates whenever a truth value is returned
   // ts.visitEachChild requires a ts.TransformationContext, so we can't use that
@@ -54,7 +63,25 @@ export function validate(
     ]);
   }
 
-  function validateStepFunctionNode(node: ts.Node): ts.Diagnostic[] {
+  function validateNodes(nodes: typescript.Node[]) {
+    return nodes.flatMap((arg) => collectEachChild(arg, visit));
+  }
+
+  function validateNewStepFunctionNode(node: NewStepFunctionInterface) {
+    const func =
+      node.arguments.length === 4 ? node.arguments[3] : node.arguments[2];
+
+    return [
+      // visit all other arguments
+      ...validateNodes(node.arguments.filter((arg) => arg !== func)),
+      // process the function closure
+      ...collectEachChildRecursive(func, validateStepFunctionNode),
+    ];
+  }
+
+  function validateStepFunctionNode(
+    node: typescript.Node
+  ): typescript.Diagnostic[] {
     if (
       (ts.isBinaryExpression(node) &&
         isArithmeticToken(node.operatorToken.kind) &&
@@ -102,6 +129,41 @@ export function validate(
     } else if (kind === "MockMethod") {
       // @ts-ignore
       const [props, request, responses] = node.arguments;
+    }
+    return [];
+  }
+  function validateFunctionNode(node: FunctionInterface) {
+    const func =
+      node.arguments.length === 4 ? node.arguments[3] : node.arguments[2];
+
+    return [
+      // visit all other arguments
+      ...validateNodes(node.arguments.filter((arg) => arg !== func)),
+      // process the function closure
+      ...collectEachChildRecursive(func, validateFunctionClosureNode),
+    ];
+  }
+
+  function validateFunctionClosureNode(
+    node: typescript.Node
+  ): typescript.Diagnostic[] {
+    if (
+      checker.isStepFunction(node) ||
+      checker.isTable(node) ||
+      checker.isFunctionlessFunction(node) ||
+      checker.isEventBus(node)
+    ) {
+      if (
+        typescript.isPropertyAccessExpression(node.parent) &&
+        node.parent.name.text === "resource"
+      ) {
+        return [
+          newError(
+            node,
+            ErrorCodes.Cannot_use_infrastructure_Resource_in_Function_closure
+          ),
+        ];
+      }
     }
     return [];
   }

@@ -12,6 +12,7 @@ import {
   makeFunctionlessChecker,
   TsFunctionParameter,
 } from "./checker";
+import { ErrorCodes, SynthError } from "./error-code";
 import { BinaryOp } from "./expression";
 import { FunctionlessNode } from "./node";
 import { anyOf, hasParent } from "./util";
@@ -98,7 +99,7 @@ export function compile(
         const visit = () => {
           if (checker.isAppsyncResolver(node)) {
             return visitAppsyncResolver(node as ts.NewExpression);
-          } else if (checker.isStepFunction(node)) {
+          } else if (checker.isNewStepFunction(node)) {
             return visitStepFunction(node as ts.NewExpression);
           } else if (checker.isReflectFunction(node)) {
             return errorBoundary(() =>
@@ -474,11 +475,13 @@ export function compile(
           // cannot create new resources in native runtime code.
           const functionlessKind = checker.getFunctionlessTypeKind(newType);
           if (checker.getFunctionlessTypeKind(newType)) {
-            throw Error(
+            throw new SynthError(
+              ErrorCodes.Unsupported_initialization_of_resources_in_function,
               `Cannot initialize new resources in a native function, found ${functionlessKind}.`
             );
           } else if (checker.isCDKConstruct(newType)) {
-            throw Error(
+            throw new SynthError(
+              ErrorCodes.Unsupported_initialization_of_resources_in_function,
               `Cannot initialize new CDK resources in a native function, found ${
                 newType.getSymbol()?.name
               }.`

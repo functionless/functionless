@@ -189,6 +189,27 @@ This Function infers the following configuration and runtime code boilerplate fr
 new AWS.DynamoDB();
 ```
 
+:::warn
+[Cannot use Infrastructure resource in `Function` closure (107)](../../error-codes.md#cannot-use-infrastructure-resource-in-function-closure).
+
+`.resource` (`Function`, `StepFunction`, `Table`, `EventBus`) may not be used within a `Function`.
+
+```ts
+const table = new Table(this, 'table', { ... });
+new Function(this, 'func', async () => {
+   // valid use of a Table
+   const $AWS.DynamoDB.GetItem({
+       TableName: table,
+       ...
+   })
+   // invalid - .resource is not available
+   const index = table.resource.tableStreamArn;
+});
+```
+
+See [error](../../error-codes.md#cannot-use-infrastructure-resource-in-function-closure) for details and workarounds.
+:::
+
 ## Call from an Integration
 
 Lambda Functions can be called directly from any of Functionless's primitives, for example AppsyncResolvers, Step Functions and Lambda Functions.

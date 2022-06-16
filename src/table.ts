@@ -108,9 +108,17 @@ export interface ITable<
 > {
   readonly kind: "Table";
   /**
+   * This static property identifies this class as an EventBus to the TypeScript plugin.
+   */
+  readonly functionlessKind: typeof Table.FunctionlessType;
+
+  /**
    * The underlying {@link aws_dynamodb.ITable} Resource.
    */
   readonly resource: aws_dynamodb.ITable;
+
+  readonly tableName: string;
+  readonly tableArn: string;
 
   /**
    * Brands this type with easy-access to the type parameters, Item, PartitionKey and RangeKey
@@ -241,7 +249,11 @@ class BaseTable<
   RangeKey extends keyof Item | undefined = undefined
 > implements ITable<Item, PartitionKey, RangeKey>
 {
+  public static readonly FunctionlessType = "Table";
+  readonly functionlessKind = "Table";
   readonly kind = "Table";
+  readonly tableName: string;
+  readonly tableArn: string;
 
   readonly _brand?: {
     Item: Item;
@@ -249,7 +261,10 @@ class BaseTable<
     RangeKey: RangeKey;
   };
 
-  constructor(readonly resource: aws_dynamodb.ITable) {}
+  constructor(readonly resource: aws_dynamodb.ITable) {
+    this.tableName = resource.tableName;
+    this.tableArn = resource.tableArn;
+  }
 
   public getItem = this.makeTableIntegration("getItem", {
     appSyncVtl: {
@@ -366,7 +381,12 @@ class BaseTable<
   private makeTableIntegration<
     K extends Exclude<
       keyof ITable<Item, PartitionKey, RangeKey>,
-      "kind" | "resource" | "_brand"
+      | "kind"
+      | "resource"
+      | "_brand"
+      | "tableName"
+      | "tableArn"
+      | "functionlessKind"
     >
   >(
     methodName: K,

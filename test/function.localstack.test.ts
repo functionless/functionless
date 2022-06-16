@@ -1,8 +1,13 @@
 import {
   aws_dynamodb,
   aws_events,
+  CfnMapping,
+  CfnParameter,
   Duration,
+  Fn,
+  Lazy,
   RemovalPolicy,
+  SecretValue,
   Stack,
   Token,
 } from "aws-cdk-lib";
@@ -32,7 +37,7 @@ const localstackClientConfig: FunctionProps = {
   }),
 };
 
-interface TestFunctionResource {
+interface TestFunctionBase {
   <
     I,
     O,
@@ -49,25 +54,47 @@ interface TestFunctionResource {
       : OO | ((context: Outputs) => OO extends void ? null : O),
     payload?: I | ((context: Outputs) => I)
   ): void;
+}
 
-  skip: <I, O, Outputs extends Record<string, string> = Record<string, string>>(
+interface TestFunctionResource extends TestFunctionBase {
+  skip: <
+    I,
+    O, // Forces typescript to infer O from the Function and not from the expect argument.
+    OO extends O | { errorMessage: string; errorType: string },
+    Outputs extends Record<string, string> = Record<string, string>
+  >(
     name: string,
     func: (
       parent: Construct
     ) => Function<I, O> | { func: Function<I, O>; outputs: Outputs },
-    expected: O | ((context: Outputs) => O),
+    expected: OO extends void
+      ? null
+      : OO | ((context: Outputs) => OO extends void ? null : O),
+    payload?: I | ((context: Outputs) => I)
+  ) => void;
+
+  only: <
+    I,
+    O, // Forces typescript to infer O from the Function and not from the expect argument.
+    OO extends O | { errorMessage: string; errorType: string },
+    Outputs extends Record<string, string> = Record<string, string>
+  >(
+    name: string,
+    func: (
+      parent: Construct
+    ) => Function<I, O> | { func: Function<I, O>; outputs: Outputs },
+    expected: OO extends void
+      ? null
+      : OO | ((context: Outputs) => OO extends void ? null : O),
     payload?: I | ((context: Outputs) => I)
   ) => void;
 }
 
 localstackTestSuite("functionStack", (testResource, _stack, _app) => {
-  const testFunctionResource: TestFunctionResource = (
-    name,
-    func,
-    expected,
-    payload
-  ) => {
-    testResource(
+  const _testFunc: (
+    f: typeof testResource | typeof testResource.only
+  ) => TestFunctionBase = (f) => (name, func, expected, payload) => {
+    f(
       name,
       (parent) => {
         const res = func(parent);
@@ -91,14 +118,18 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
     );
   };
 
-  testFunctionResource.skip = (name, _func, _expected, _payload?) =>
+  const test = _testFunc(testResource) as TestFunctionResource;
+
+  test.skip = (name, _func, _expected, _payload?) =>
     testResource.skip(
       name,
       () => {},
       async () => {}
     );
 
-  testFunctionResource(
+  test.only = _testFunc(testResource.only);
+
+  test(
     "Call Lambda",
     (parent) => {
       return new Function(
@@ -113,7 +144,7 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
     {}
   );
 
-  testFunctionResource(
+  test(
     "Call Lambda from closure",
     (parent) => {
       const create = () =>
@@ -131,7 +162,7 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
     {}
   );
 
-  testFunctionResource(
+  test(
     "Call Lambda from closure with variables",
     (parent) => {
       const create = () => {
@@ -151,7 +182,7 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
     "a"
   );
 
-  testFunctionResource(
+  test(
     "Call Lambda from closure with parameter",
     (parent) => {
       const create = (val: string) => {
@@ -181,39 +212,35 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
     );
   };
 
-  testFunctionResource(
+  test(
     "Call Lambda from closure with parameter using the same method",
     (parent) => create(parent, "func6", "c"),
     "c"
   );
 
-  testFunctionResource(
+  test(
     "Call Lambda from closure with parameter using the same method part 2",
     (parent) => create(parent, "func7", "d"),
     "d"
   );
 
-  testFunctionResource(
-    "Call Lambda with object",
-    (parent) => {
-      const create = () => {
-        const obj = { val: 1 };
-        return new Function(
-          parent,
-          "function",
-          {
-            timeout: Duration.seconds(20),
-          },
-          async () => obj.val
-        );
-      };
+  test("Call Lambda with object", (parent) => {
+    const create = () => {
+      const obj = { val: 1 };
+      return new Function(
+        parent,
+        "function",
+        {
+          timeout: Duration.seconds(20),
+        },
+        async () => obj.val
+      );
+    };
 
-      return create();
-    },
-    1
-  );
+    return create();
+  }, 1);
 
-  testFunctionResource(
+  test(
     "Call Lambda with math",
     (parent) =>
       new Function(
@@ -231,7 +258,7 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
     5
   );
 
-  testFunctionResource(
+  test(
     "Call Lambda payload",
     (parent) =>
       new Function(
@@ -248,7 +275,7 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
     { val: "hi" }
   );
 
-  testFunctionResource(
+  test(
     "Call Lambda throw error",
     (parent) =>
       new Function(
@@ -264,7 +291,7 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
     { errorMessage: "AHHHHHHHHH", errorType: "Error" }
   );
 
-  testFunctionResource(
+  test(
     "Call Lambda return arns",
     (parent) => {
       return new Function(
@@ -281,7 +308,7 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
     (context) => context.function
   );
 
-  testFunctionResource(
+  test(
     "Call Lambda return arns",
     (parent) => {
       const bus = new EventBus(parent, "bus");
@@ -308,7 +335,7 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
     (context) => `${context.bus} ${context.busbus}`
   );
 
-  testFunctionResource(
+  test(
     "templated tokens",
     (parent) => {
       const token = Token.asString("hello");
@@ -326,25 +353,113 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
     "hello stuff"
   );
 
-  testFunctionResource(
-    "numeric tokens",
+  test("numeric tokens", (parent) => {
+    const token = Token.asNumber(1);
+    return new Function(
+      parent,
+      "function",
+      {
+        timeout: Duration.seconds(20),
+      },
+      async () => {
+        return token;
+      }
+    );
+  }, 1);
+
+  test(
+    "function tokens",
     (parent) => {
-      const token = Token.asNumber(1);
-      return new Function(
-        parent,
-        "function",
-        {
-          timeout: Duration.seconds(20),
+      const bus = new EventBus(parent, "bus");
+      const split = Fn.select(1, Fn.split(":", bus.eventBusArn));
+      const join = Fn.join("-", Fn.split(":", bus.eventBusArn, 6));
+      const base64 = Fn.base64("data");
+      const mapping = new CfnMapping(parent, "mapping", {
+        mapping: {
+          map1: { test: "value" },
         },
-        async () => {
-          return token;
-        }
-      );
+      });
+      const mapToken = Fn.findInMap(mapping.logicalId, "map1", "test");
+      const param = new CfnParameter(parent, "param", {
+        default: "paramValue",
+      });
+      const ref = Fn.ref(param.logicalId);
+      return {
+        func: new Function(
+          parent,
+          "function",
+          {
+            timeout: Duration.seconds(20),
+          },
+          async () => {
+            return {
+              split,
+              join,
+              base64,
+              mapToken,
+              ref,
+            };
+          }
+        ),
+        outputs: { bus: bus.eventBusArn },
+      };
     },
-    1
+    (output) => ({
+      split: "aws",
+      join: output.bus.split(":").join("-"),
+      base64: "ZGF0YQ==",
+      mapToken: "value",
+      ref: "paramValue",
+    })
   );
 
-  testFunctionResource(
+  test(
+    "function token strings",
+    (parent) => {
+      const bus = new EventBus(parent, "bus");
+      const split = Fn.select(1, Fn.split(":", bus.eventBusArn)).toString();
+      const join = Fn.join("-", Fn.split(":", bus.eventBusArn, 6)).toString();
+      const base64 = Fn.base64("data").toString();
+      const mapping = new CfnMapping(parent, "mapping", {
+        mapping: {
+          map1: { test: "value" },
+        },
+      });
+      const mapToken = Fn.findInMap(mapping.logicalId, "map1", "test");
+      const param = new CfnParameter(parent, "param", {
+        default: "paramValue",
+      });
+      const ref = Fn.ref(param.logicalId).toString();
+      return {
+        func: new Function(
+          parent,
+          "function",
+          {
+            timeout: Duration.seconds(20),
+          },
+          async () => {
+            return {
+              split,
+              join,
+              base64,
+              mapToken,
+              ref,
+            };
+          }
+        ),
+        outputs: { bus: bus.eventBusArn },
+      };
+    },
+    (output) => ({
+      split: "aws",
+      join: output.bus.split(":").join("-"),
+      base64: "ZGF0YQ==",
+      mapToken: "value",
+      ref: "paramValue",
+    })
+  );
+
+  test(
     "Call Lambda put events",
     (parent) => {
       const bus = new EventBus(parent, "bus");
@@ -364,69 +479,61 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
     null
   );
 
-  testFunctionResource(
-    "Call Lambda AWS SDK put event to bus with reference",
-    (parent) => {
-      const bus = new EventBus<any>(parent, "bus");
+  test("Call Lambda AWS SDK put event to bus with reference", (parent) => {
+    const bus = new EventBus<any>(parent, "bus");
 
-      // Necessary to keep the bundle small and stop the test from failing.
-      // See https://github.com/functionless/functionless/pull/122
-      const putEvents = $AWS.EventBridge.putEvents;
-      const func = new Function(
-        parent,
-        "function",
-        localstackClientConfig,
-        async () => {
-          const result = putEvents({
-            Entries: [
-              {
-                EventBusName: bus.eventBusArn,
-                Source: "MyEvent",
-                DetailType: "DetailType",
-                Detail: "{}",
-              },
-            ],
-          });
-          return result.FailedEntryCount;
-        }
-      );
+    // Necessary to keep the bundle small and stop the test from failing.
+    // See https://github.com/functionless/functionless/pull/122
+    const putEvents = $AWS.EventBridge.putEvents;
+    const func = new Function(
+      parent,
+      "function",
+      localstackClientConfig,
+      async () => {
+        const result = putEvents({
+          Entries: [
+            {
+              EventBusName: bus.eventBusArn,
+              Source: "MyEvent",
+              DetailType: "DetailType",
+              Detail: "{}",
+            },
+          ],
+        });
+        return result.FailedEntryCount;
+      }
+    );
 
-      bus.bus.grantPutEventsTo(func.resource);
+    bus.resource.grantPutEventsTo(func.resource);
 
-      return func;
-    },
-    0
-  );
+    return func;
+  }, 0);
 
   // See https://github.com/functionless/functionless/pull/122
-  testFunctionResource.skip(
-    "Call Lambda AWS SDK put event to bus without reference",
-    (parent) => {
-      const bus = new EventBus<Event>(parent, "bus");
+  test.skip("Call Lambda AWS SDK put event to bus without reference", (parent) => {
+    const bus = new EventBus<Event>(parent, "bus");
 
-      return new Function(
-        parent,
-        "function",
-        localstackClientConfig,
-        async () => {
-          const result = $AWS.EventBridge.putEvents({
-            Entries: [
-              {
-                EventBusName: bus.eventBusArn,
-                Source: "MyEvent",
-                DetailType: "DetailType",
-                Detail: "{}",
-              },
-            ],
-          });
-          return result.FailedEntryCount;
-        }
-      );
-    },
-    0
-  );
+    return new Function(
+      parent,
+      "function",
+      localstackClientConfig,
+      async () => {
+        const result = $AWS.EventBridge.putEvents({
+          Entries: [
+            {
+              EventBusName: bus.eventBusArn,
+              Source: "MyEvent",
+              DetailType: "DetailType",
+              Detail: "{}",
+            },
+          ],
+        });
+        return result.FailedEntryCount;
+      }
+    );
+  }, 0);
 
-  testFunctionResource(
+  test(
     "Call Lambda AWS SDK put event to bus with in closure reference",
     (parent) => {
       const bus = new EventBus<Event>(parent, "bus");
@@ -447,7 +554,7 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
     null
   );
 
-  testFunctionResource(
+  test(
     "Call Lambda AWS SDK integration from destructured object  aa",
     (parent) => {
       const buses = { bus: new EventBus<Event>(parent, "bus") };
@@ -468,49 +575,7 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
     null
   );
 
-  test("should not create new resources in lambda", async () => {
-    await expect(
-      async () => {
-        const stack = new Stack();
-        new Function(
-          stack,
-          "function",
-          {
-            timeout: Duration.seconds(20),
-          },
-          async () => {
-            const bus = new aws_events.EventBus(stack, "busbus");
-            return bus.eventBusArn;
-          }
-        );
-        await Promise.all(Function.promises);
-      }
-      // TODO: add error message
-    ).rejects.toThrow();
-  });
-
-  test("should not create new functionless resources in lambda", async () => {
-    await expect(
-      async () => {
-        const stack = new Stack();
-        new Function(
-          stack,
-          "function",
-          {
-            timeout: Duration.seconds(20),
-          },
-          async () => {
-            const bus = new EventBus(stack, "busbus");
-            return bus.eventBusArn;
-          }
-        );
-        await Promise.all(Function.promises);
-      }
-      // TODO: add error message
-    ).rejects.toThrow();
-  });
-
-  testFunctionResource(
+  test(
     "Call Lambda invoke client",
     (parent) => {
       const func1 = new Function<undefined, string>(
@@ -532,7 +597,7 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
   );
 
   // https://github.com/functionless/functionless/issues/173
-  testFunctionResource.skip(
+  test.skip(
     "Call Self",
     (parent) => {
       let func1: Function<number, string> | undefined;
@@ -553,7 +618,7 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
   );
 
   // https://github.com/functionless/functionless/issues/173
-  testFunctionResource.skip(
+  test.skip(
     "Call Self",
     (parent) => {
       let func1: Function<number, string> | undefined;
@@ -581,7 +646,7 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
     2
   );
 
-  testFunctionResource(
+  test(
     "step function integration",
     (parent) => {
       const func1 = new StepFunction<undefined, string>(
@@ -603,7 +668,152 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
     "started!"
   );
 
-  testFunctionResource(
+  test(
+    "tokens",
+    (parent) => {
+      const token = Token.asString("hello");
+      const obj = { iam: "object" };
+      const token2 = Token.asAny(obj);
+      const obj2 = { iam: Token.asString("token") };
+      const nestedToken = Token.asAny(obj2);
+      const numberToken = Token.asNumber(1);
+      const listToken = Token.asList(["1", "2"]);
+      const nestedListToken = Token.asList([Token.asString("hello")]);
+      return new Function(
+        parent,
+        "function",
+        localstackClientConfig,
+        async () => {
+          return {
+            string: token,
+            object: token2 as unknown as typeof obj,
+            nested: nestedToken as unknown as typeof obj2,
+            number: numberToken,
+            list: listToken,
+            nestedList: nestedListToken,
+          };
+        }
+      );
+    },
+    {
+      string: "hello",
+      object: { iam: "object" },
+      nested: { iam: "token" },
+      number: 1,
+      list: ["1", "2"],
+      nestedList: ["hello"],
+    }
+  );
+
+  test(
+    "serialize entire table",
+    (parent) => {
+      const table = new aws_dynamodb.Table(parent, "table", {
+        partitionKey: {
+          name: "key",
+          type: aws_dynamodb.AttributeType.STRING,
+        },
+      });
+      const get = $AWS.DynamoDB.GetItem;
+      table.addGlobalSecondaryIndex({
+        indexName: "testIndex",
+        partitionKey: {
+          name: "key",
+          type: aws_dynamodb.AttributeType.STRING,
+        },
+      });
+
+      const flTable = Table.fromTable(table);
+
+      return new Function(
+        parent,
+        "function",
+        localstackClientConfig,
+        async () => {
+          get({
+            TableName: flTable,
+            Key: {
+              key: { S: "hi" },
+            },
+          });
+        }
+      );
+    },
+    null
+  );
+
+  test(
+    "serialize entire function",
+    (parent) => {
+      const func = new Function<undefined, string>(parent, "func", async () => {
+        return "hello";
+      });
+
+      return new Function(
+        parent,
+        "function",
+        localstackClientConfig,
+        async () => {
+          const hello = func;
+          return hello();
+        }
+      );
+    },
+    "hello"
+  );
+
+  test(
+    "serialize token with nested string",
+    (parent) => {
+      const table = new aws_dynamodb.Table(parent, "table", {
+        partitionKey: {
+          name: "key",
+          type: aws_dynamodb.AttributeType.STRING,
+        },
+      });
+
+      const obj = { key: table.tableArn };
+      const token = Token.asAny(obj);
+
+      return {
+        func: new Function(
+          parent,
+          "function",
+          localstackClientConfig,
+          async () => {
+            return (token as unknown as typeof obj).key;
+          }
+        ),
+        outputs: { table: table.tableArn },
+      };
+    },
+    (outputs) => {
+      return outputs.table;
+    }
+  );
+
+  //
+  test.skip(
+    "serialize token with lazy should return",
+    (parent) => {
+      const obj = {
+        key: Lazy.any({ produce: () => "value" }) as unknown as string,
+      };
+      const token = Token.asAny(obj);
+
+      return new Function(
+        parent,
+        "function",
+        localstackClientConfig,
+        async () => {
+          return (token as unknown as typeof obj).key;
+        }
+      );
+    },
+    "value"
+  );
+
+  test(
     "step function integration and wait for completion",
     (parent) => {
       const func1 = new StepFunction<undefined, string>(
@@ -636,7 +846,7 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
 
   // Localstack doesn't support start sync
   // https://github.com/localstack/localstack/issues/5258
-  testFunctionResource.skip(
+  test.skip(
     "express step function integration",
     (parent) => {
       const func1 = new ExpressStepFunction<undefined, string>(
@@ -658,10 +868,10 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
     "hi"
   );
 
-  testFunctionResource(
-    "dynamo integration get",
+  test(
+    "dynamo integration aws dynamo functions",
     (parent) => {
-      const table = Table.fromTable<{ key: string }, "key">(
+      const table = Table.fromTable<{ key: string; value: string }, "key">(
         new aws_dynamodb.Table(parent, "table", {
           partitionKey: {
             name: "key",
@@ -670,20 +880,21 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
           removalPolicy: RemovalPolicy.DESTROY,
         })
       );
-      const putItem = $AWS.DynamoDB.PutItem;
-      const getItem = $AWS.DynamoDB.GetItem;
+      const { GetItem, DeleteItem, PutItem, Query, Scan, UpdateItem } =
+        $AWS.DynamoDB;
       return new Function(
         parent,
         "function",
         localstackClientConfig,
         async () => {
-          putItem({
+          PutItem({
             TableName: table,
             Item: {
               key: { S: "key" },
+              value: { S: "wee" },
             },
           });
-          const item = getItem({
+          const item = GetItem({
             TableName: table,
             Key: {
               key: {
@@ -691,6 +902,40 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
               },
             },
             ConsistentRead: true,
+          });
+          UpdateItem({
+            TableName: table,
+            Key: {
+              key: { S: "key" },
+            },
+            UpdateExpression: "set #value = :value",
+            ExpressionAttributeValues: {
+              ":value": { S: "value" },
+            },
+            ExpressionAttributeNames: {
+              "#value": "value",
+            },
+          });
+          DeleteItem({
+            TableName: table,
+            Key: {
+              key: {
+                S: "key",
+              },
+            },
+          });
+          Query({
+            TableName: table,
+            KeyConditionExpression: "#key = :key",
+            ExpressionAttributeValues: {
+              ":key": { S: "key" },
+            },
+            ExpressionAttributeNames: {
+              "#key": "key",
+            },
+          });
+          Scan({
+            TableName: table,
           });
           return item.Item?.key.S;
         }
@@ -712,7 +957,88 @@ const testFunction = async (
     })
     .promise();
 
-  expect(
-    result.Payload ? JSON.parse(result.Payload.toString()) : undefined
-  ).toEqual(expected);
+  try {
+    expect(
+      result.Payload ? JSON.parse(result.Payload.toString()) : undefined
+    ).toEqual(expected);
+  } catch (e) {
+    console.error(result);
+    throw e;
+  }
 };
+
+test("should not create new resources in lambda", async () => {
+  await expect(async () => {
+    const stack = new Stack();
+    new Function(
+      stack,
+      "function",
+      {
+        timeout: Duration.seconds(20),
+      },
+      async () => {
+        const bus = new aws_events.EventBus(stack, "busbus");
+        return bus.eventBusArn;
+      }
+    );
+    await Promise.all(Function.promises);
+  }).rejects.toThrow(
+    `Cannot initialize new CDK resources in a native function, found EventBus.`
+  );
+});
+
+test("should not create new functionless resources in lambda", async () => {
+  await expect(async () => {
+    const stack = new Stack();
+    new Function(
+      stack,
+      "function",
+      {
+        timeout: Duration.seconds(20),
+      },
+      async () => {
+        const bus = new EventBus(stack, "busbus");
+        return bus.eventBusArn;
+      }
+    );
+    await Promise.all(Function.promises);
+  }).rejects.toThrow(
+    "Cannot initialize new resources in a native function, found EventBus."
+  );
+});
+
+test("should not use SecretValues in lambda", async () => {
+  await expect(async () => {
+    const stack = new Stack();
+    const secret = SecretValue.unsafePlainText("sshhhhh");
+    new Function(
+      stack,
+      "function",
+      {
+        timeout: Duration.seconds(20),
+      },
+      async () => {
+        return secret;
+      }
+    );
+    await Promise.all(Function.promises);
+  }).rejects.toThrow(`Found unsafe use of SecretValue token in a Function.`);
+});
+
+test("should not use SecretValues as string in lambda", async () => {
+  await expect(async () => {
+    const stack = new Stack();
+    const secret = SecretValue.unsafePlainText("sshhhhh").toString();
+    new Function(
+      stack,
+      "function",
+      {
+        timeout: Duration.seconds(20),
+      },
+      async () => {
+        return secret;
+      }
+    );
+    await Promise.all(Function.promises);
+  }).rejects.toThrow(`Found unsafe use of SecretValue token in a Function.`);
+});
