@@ -12,6 +12,7 @@ import {
   makeFunctionlessChecker,
   TsFunctionParameter,
 } from "./checker";
+import { ErrorCodes, SynthError } from "./error-code";
 import { BinaryOp } from "./expression";
 import { FunctionlessNode } from "./node";
 import { anyOf, hasParent } from "./util";
@@ -472,11 +473,13 @@ export function compile(
           // cannot create new resources in native runtime code.
           const functionlessKind = checker.getFunctionlessTypeKind(newType);
           if (checker.getFunctionlessTypeKind(newType)) {
-            throw Error(
+            throw new SynthError(
+              ErrorCodes.Unsupported_initialization_of_resources_in_function,
               `Cannot initialize new resources in a native function, found ${functionlessKind}.`
             );
           } else if (checker.isCDKConstruct(newType)) {
-            throw Error(
+            throw new SynthError(
+              ErrorCodes.Unsupported_initialization_of_resources_in_function,
               `Cannot initialize new CDK resources in a native function, found ${
                 newType.getSymbol()?.name
               }.`

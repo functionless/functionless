@@ -1,9 +1,13 @@
 import {
   aws_dynamodb,
   aws_events,
+  CfnMapping,
+  CfnParameter,
   Duration,
+  Fn,
   Lazy,
   RemovalPolicy,
+  SecretValue,
   Stack,
   Token,
 } from "aws-cdk-lib";
@@ -33,7 +37,7 @@ const localstackClientConfig: FunctionProps = {
   }),
 };
 
-interface TestFunctionResource {
+interface TestFunctionBase {
   <
     I,
     O,
@@ -50,8 +54,26 @@ interface TestFunctionResource {
       : OO | ((context: Outputs) => OO extends void ? null : O),
     payload?: I | ((context: Outputs) => I)
   ): void;
+}
 
+interface TestFunctionResource extends TestFunctionBase {
   skip: <
+    I,
+    O, // Forces typescript to infer O from the Function and not from the expect argument.
+    OO extends O | { errorMessage: string; errorType: string },
+    Outputs extends Record<string, string> = Record<string, string>
+  >(
+    name: string,
+    func: (
+      parent: Construct
+    ) => Function<I, O> | { func: Function<I, O>; outputs: Outputs },
+    expected: OO extends void
+      ? null
+      : OO | ((context: Outputs) => OO extends void ? null : O),
+    payload?: I | ((context: Outputs) => I)
+  ) => void;
+
+  only: <
     I,
     O, // Forces typescript to infer O from the Function and not from the expect argument.
     OO extends O | { errorMessage: string; errorType: string },
@@ -69,8 +91,10 @@ interface TestFunctionResource {
 }
 
 localstackTestSuite("functionStack", (testResource, _stack, _app) => {
-  const test: TestFunctionResource = (name, func, expected, payload) => {
-    testResource(
+  const _testFunc: (
+    f: typeof testResource | typeof testResource.only
+  ) => TestFunctionBase = (f) => (name, func, expected, payload) => {
+    f(
       name,
       (parent) => {
         const res = func(parent);
@@ -94,12 +118,16 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
     );
   };
 
+  const test = _testFunc(testResource) as TestFunctionResource;
+
   test.skip = (name, _func, _expected, _payload?) =>
     testResource.skip(
       name,
       () => {},
       async () => {}
     );
+
+  test.only = _testFunc(testResource.only);
 
   test(
     "Call Lambda",
@@ -338,6 +366,98 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
       }
     );
   }, 1);
+
+  test(
+    "function tokens",
+    (parent) => {
+      const bus = new EventBus(parent, "bus");
+      const split = Fn.select(1, Fn.split(":", bus.eventBusArn));
+      const join = Fn.join("-", Fn.split(":", bus.eventBusArn, 6));
+      const base64 = Fn.base64("data");
+      const mapping = new CfnMapping(parent, "mapping", {
+        mapping: {
+          map1: { test: "value" },
+        },
+      });
+      const mapToken = Fn.findInMap(mapping.logicalId, "map1", "test");
+      const param = new CfnParameter(parent, "param", {
+        default: "paramValue",
+      });
+      const ref = Fn.ref(param.logicalId);
+      return {
+        func: new Function(
+          parent,
+          "function",
+          {
+            timeout: Duration.seconds(20),
+          },
+          async () => {
+            return {
+              split,
+              join,
+              base64,
+              mapToken,
+              ref,
+            };
+          }
+        ),
+        outputs: { bus: bus.eventBusArn },
+      };
+    },
+    (output) => ({
+      split: "aws",
+      join: output.bus.split(":").join("-"),
+      base64: "ZGF0YQ==",
+      mapToken: "value",
+      ref: "paramValue",
+    })
+  );
+
+  test(
+    "function token strings",
+    (parent) => {
+      const bus = new EventBus(parent, "bus");
+      const split = Fn.select(1, Fn.split(":", bus.eventBusArn)).toString();
+      const join = Fn.join("-", Fn.split(":", bus.eventBusArn, 6)).toString();
+      const base64 = Fn.base64("data").toString();
+      const mapping = new CfnMapping(parent, "mapping", {
+        mapping: {
+          map1: { test: "value" },
+        },
+      });
+      const mapToken = Fn.findInMap(mapping.logicalId, "map1", "test");
+      const param = new CfnParameter(parent, "param", {
+        default: "paramValue",
+      });
+      const ref = Fn.ref(param.logicalId).toString();
+      return {
+        func: new Function(
+          parent,
+          "function",
+          {
+            timeout: Duration.seconds(20),
+          },
+          async () => {
+            return {
+              split,
+              join,
+              base64,
+              mapToken,
+              ref,
+            };
+          }
+        ),
+        outputs: { bus: bus.eventBusArn },
+      };
+    },
+    (output) => ({
+      split: "aws",
+      join: output.bus.split(":").join("-"),
+      base64: "ZGF0YQ==",
+      mapToken: "value",
+      ref: "paramValue",
+    })
+  );
 
   test(
     "Call Lambda put events",
@@ -603,7 +723,7 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
         },
       });
 
-      const flTable = new Table(table);
+      const flTable = Table.fromTable(table);
 
       return new Function(
         parent,
@@ -620,6 +740,26 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
       );
     },
     null
+  );
+
+  test(
+    "serialize entire function",
+    (parent) => {
+      const func = new Function<undefined, string>(parent, "func", async () => {
+        return "hello";
+      });
+
+      return new Function(
+        parent,
+        "function",
+        localstackClientConfig,
+        async () => {
+          const hello = func;
+          return hello();
+        }
+      );
+    },
+    "hello"
   );
 
   test(
@@ -655,26 +795,6 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
   //
   test.skip(
     "serialize token with lazy should return",
-    (parent) => {
-      const obj = {
-        key: Lazy.any({ produce: () => "value" }) as unknown as string,
-      };
-      const token = Token.asAny(obj);
-
-      return new Function(
-        parent,
-        "function",
-        localstackClientConfig,
-        async () => {
-          return (token as unknown as typeof obj).key;
-        }
-      );
-    },
-    "value"
-  );
-
-  test(
-    "fail when secret value tokens are found",
     (parent) => {
       const obj = {
         key: Lazy.any({ produce: () => "value" }) as unknown as string,
@@ -813,43 +933,77 @@ const testFunction = async (
 };
 
 test("should not create new resources in lambda", async () => {
-  await expect(
-    async () => {
-      const stack = new Stack();
-      new Function(
-        stack,
-        "function",
-        {
-          timeout: Duration.seconds(20),
-        },
-        async () => {
-          const bus = new aws_events.EventBus(stack, "busbus");
-          return bus.eventBusArn;
-        }
-      );
-      await Promise.all(Function.promises);
-    }
-    // TODO: add error message
-  ).rejects.toThrow();
+  await expect(async () => {
+    const stack = new Stack();
+    new Function(
+      stack,
+      "function",
+      {
+        timeout: Duration.seconds(20),
+      },
+      async () => {
+        const bus = new aws_events.EventBus(stack, "busbus");
+        return bus.eventBusArn;
+      }
+    );
+    await Promise.all(Function.promises);
+  }).rejects.toThrow(
+    `Cannot initialize new CDK resources in a native function, found EventBus.`
+  );
 });
 
 test("should not create new functionless resources in lambda", async () => {
-  await expect(
-    async () => {
-      const stack = new Stack();
-      new Function(
-        stack,
-        "function",
-        {
-          timeout: Duration.seconds(20),
-        },
-        async () => {
-          const bus = new EventBus(stack, "busbus");
-          return bus.eventBusArn;
-        }
-      );
-      await Promise.all(Function.promises);
-    }
-    // TODO: add error message
-  ).rejects.toThrow();
+  await expect(async () => {
+    const stack = new Stack();
+    new Function(
+      stack,
+      "function",
+      {
+        timeout: Duration.seconds(20),
+      },
+      async () => {
+        const bus = new EventBus(stack, "busbus");
+        return bus.eventBusArn;
+      }
+    );
+    await Promise.all(Function.promises);
+  }).rejects.toThrow(
+    "Cannot initialize new resources in a native function, found EventBus."
+  );
+});
+
+test("should not use SecretValues in lambda", async () => {
+  await expect(async () => {
+    const stack = new Stack();
+    const secret = SecretValue.unsafePlainText("sshhhhh");
+    new Function(
+      stack,
+      "function",
+      {
+        timeout: Duration.seconds(20),
+      },
+      async () => {
+        return secret;
+      }
+    );
+    await Promise.all(Function.promises);
+  }).rejects.toThrow(`Found unsafe use of SecretValue token in a Function.`);
+});
+
+test("should not use SecretValues as string in lambda", async () => {
+  await expect(async () => {
+    const stack = new Stack();
+    const secret = SecretValue.unsafePlainText("sshhhhh").toString();
+    new Function(
+      stack,
+      "function",
+      {
+        timeout: Duration.seconds(20),
+      },
+      async () => {
+        return secret;
+      }
+    );
+    await Promise.all(Function.promises);
+  }).rejects.toThrow(`Found unsafe use of SecretValue token in a Function.`);
 });

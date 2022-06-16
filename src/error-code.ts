@@ -134,4 +134,61 @@ export namespace ErrorCodes {
     code: 104,
     messageText: "Incorrect state machine type imported",
   };
+
+  /**
+   * Unsafe usage of Secrets.
+   *
+   * The use of secrets is unsafe or not supported by Functionless.
+   *
+   * @see https://github.com/functionless/functionless/issues/252 to track supported secret patterns.
+   */
+  export const Unsafe_use_of_secrets = {
+    code: 105,
+    messageText: "Unsafe use of secrets",
+  };
+
+  /**
+   * Unsupported initialization of Resources in a Function closure
+   *
+   * #### Valid - EventBus resource is created outside of the closure.
+   * ```ts
+   * const bus = new EventBus(this, 'bus');
+   * const function = new Function(this, 'func', () => {
+   *    bus.putEvents(...);
+   * });
+   * ```
+   *
+   * #### Invalid - EventBus resource is created in the closure.
+   * ```ts
+   * const function = new Function(this, 'func', () => {
+   *    new EventBus(this, 'bus').putEvents(...);
+   * });
+   * ```
+   *
+   * #### Invalid - EventBus resource is created in a method called by the closure.
+   * ```ts
+   * function bus() {
+   *    return new EventBus(this, 'bus');
+   * }
+   * const function = new Function(this, 'func', () => {
+   *    bus().putEvents(...);
+   * });
+   * ```
+   *
+   * #### Valid - EventBus resource is created outside of the closure and called methods.
+   * ```ts
+   * const bus = new EventBus(this, 'bus');
+   * function bus() {
+   *    return bus;
+   * }
+   * const function = new Function(this, 'func', () => {
+   *    bus().putEvents(...);
+   * });
+   * ```
+   */
+  export const Unsupported_initialization_of_resources_in_function = {
+    code: 106,
+    messageText:
+      "Unsupported initialization of Resources in a Function closure",
+  };
 }

@@ -30,7 +30,7 @@ import type { AppSyncVtlIntegration } from "./appsync";
 import { ASL } from "./asl";
 import { isNativeFunctionDecl, validateFunctionlessNode } from "./declaration";
 import { isErr } from "./error";
-import { ErrorCodes, formatErrorMessage } from "./error-code";
+import { ErrorCodes, formatErrorMessage, SynthError } from "./error-code";
 import {
   IEventBus,
   isEventBus,
@@ -47,6 +47,7 @@ import {
   IntegrationImpl,
   Integration,
   INTEGRATION_TYPE_KEYS,
+  isIntegration,
 } from "./integration";
 import { AnyFunction, anyOf } from "./util";
 
@@ -762,9 +763,12 @@ export class CallbackLambdaCode extends aws_lambda.Code {
                 if (Reference.isReference(reversed)) {
                   tokens.push(reversed.toString());
                   return reversed.toString();
-                }
-                // TODO check for secret values
-                else if ("value" in reversed) {
+                } else if (SecretValue.isSecretValue(reversed)) {
+                  throw new SynthError(
+                    ErrorCodes.Unsafe_use_of_secrets,
+                    "Found unsafe use of SecretValue token in a Function."
+                  );
+                } else if ("value" in reversed) {
                   return (reversed as unknown as { value: any }).value;
                 }
                 // TODO: fail at runtime and warn at compiler time when a token cannot be serialized
@@ -825,9 +829,8 @@ export class CallbackLambdaCode extends aws_lambda.Code {
             /**
              * Remove unnecessary fields from {@link CfnTable} that bloat or fail the closure serialization.
              */
-            const transformIntegration = (o: unknown): any => {
-              if (o && typeof o === "object" && "kind" in o) {
-                const integ = o as Integration<any>;
+            const transformIntegration = (integ: unknown): any => {
+              if (integ && isIntegration(integ)) {
                 const copy = {
                   ...integ,
                   native: {
@@ -842,10 +845,21 @@ export class CallbackLambdaCode extends aws_lambda.Code {
 
                 return copy;
               }
-              return o;
+              return integ;
             };
 
-            return transformIntegration(transformCfnResource(obj));
+            const transformFunction = (integ: unknown): any => {
+              if (integ && isFunction(integ)) {
+                const { resource, ...rest } = integ;
+
+                return rest;
+              }
+              return integ;
+            };
+
+            return transformIntegration(
+              transformFunction(transformCfnResource(obj))
+            );
           }
           return true;
         },
