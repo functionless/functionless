@@ -99,7 +99,7 @@ export function compile(
         const visit = () => {
           if (checker.isAppsyncResolver(node)) {
             return visitAppsyncResolver(node as ts.NewExpression);
-          } else if (checker.isStepFunction(node)) {
+          } else if (checker.isNewStepFunction(node)) {
             return visitStepFunction(node as ts.NewExpression);
           } else if (checker.isReflectFunction(node)) {
             return errorBoundary(() =>

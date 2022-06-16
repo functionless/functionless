@@ -49,6 +49,8 @@ import {
   INTEGRATION_TYPE_KEYS,
   isIntegration,
 } from "./integration";
+import { isStepFunction } from "./step-function";
+import { isTable } from "./table";
 import { AnyFunction, anyOf } from "./util";
 
 export function isFunction<Payload = any, Output = any>(
@@ -848,9 +850,20 @@ export class CallbackLambdaCode extends aws_lambda.Code {
               return integ;
             };
 
-            const transformFunction = (integ: unknown): any => {
-              if (integ && isFunction(integ)) {
+            /**
+             * TODO, make this configuration based.
+             * https://github.com/functionless/functionless/issues/239
+             */
+            const transformResource = (integ: unknown): any => {
+              if (
+                integ &&
+                (isFunction(integ) || isTable(integ) || isStepFunction(integ))
+              ) {
                 const { resource, ...rest } = integ;
+
+                return rest;
+              } else if (integ && isEventBus(integ)) {
+                const { bus, ...rest } = integ;
 
                 return rest;
               }
@@ -858,7 +871,7 @@ export class CallbackLambdaCode extends aws_lambda.Code {
             };
 
             return transformIntegration(
-              transformFunction(transformCfnResource(obj))
+              transformResource(transformCfnResource(obj))
             );
           }
           return true;

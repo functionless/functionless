@@ -5,6 +5,7 @@ import { EventBus, Rule } from "./event-bridge";
 import { EventTransform } from "./event-bridge/transform";
 import { Function } from "./function";
 import { ExpressStepFunction, StepFunction } from "./step-function";
+import { Table } from "./table";
 
 /**
  * Various types that could be in a call argument position of a function parameter.
@@ -62,18 +63,22 @@ export function makeFunctionlessChecker(
 ) {
   return {
     ...checker,
-    isConstant,
+    getFunctionlessTypeKind,
     isAppsyncResolver,
+    isCDKConstruct,
+    isConstant,
+    isEventBus,
     isRuleMapFunction,
     isEventBusWhenFunction,
+    isFunctionlessFunction,
     isFunctionlessType,
-    isNewRule,
     isNewEventTransform,
+    isNewFunctionlessFunction,
+    isNewRule,
+    isNewStepFunction,
     isReflectFunction,
     isStepFunction,
-    isNewFunctionlessFunction,
-    isCDKConstruct,
-    getFunctionlessTypeKind,
+    isTable,
   };
 
   /**
@@ -182,22 +187,34 @@ export function makeFunctionlessChecker(
     return false;
   }
 
-  function isStepFunction(node: ts.Node): node is ts.NewExpression & {
+  function isTable(node: ts.Node) {
+    return isFunctionlessClassOfKind(node, Table.FunctionlessType);
+  }
+
+  function isStepFunction(node: ts.Node) {
+    return (
+      isFunctionlessClassOfKind(node, StepFunction.FunctionlessType) ||
+      isFunctionlessClassOfKind(node, ExpressStepFunction.FunctionlessType)
+    );
+  }
+
+  function isNewStepFunction(node: ts.Node): node is ts.NewExpression & {
     arguments: [TsFunctionParameter, ...ts.Expression[]];
   } {
     if (ts.isNewExpression(node)) {
-      return (
-        isFunctionlessClassOfKind(node, StepFunction.FunctionlessType) ||
-        isFunctionlessClassOfKind(node, ExpressStepFunction.FunctionlessType)
-      );
+      return isStepFunction(node.expression);
     }
     return false;
+  }
+
+  function isFunctionlessFunction(node: ts.Node) {
+    return isFunctionlessClassOfKind(node, Function.FunctionlessType);
   }
 
   function isNewFunctionlessFunction(node: ts.Node): node is FunctionInterface {
     return (
       ts.isNewExpression(node) &&
-      isFunctionlessClassOfKind(node.expression, Function.FunctionlessType) &&
+      isFunctionlessFunction(node.expression) &&
       // only take the form with the arrow function at the end.
       (node.arguments?.length === 3
         ? ts.isArrowFunction(node.arguments[2])

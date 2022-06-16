@@ -125,7 +125,7 @@ export namespace $AWS {
           return dynamo
             .deleteItem({
               ...rest,
-              TableName: input.TableName.resource.tableName,
+              TableName: input.TableName.tableName,
             })
             .promise();
         },
@@ -206,7 +206,7 @@ export namespace $AWS {
           const payload = {
             ...rest,
             AttributesToGet: AttributesToGet as any,
-            TableName: table.resource.tableName,
+            TableName: table.tableName,
           };
 
           return dynamo.getItem(payload).promise();
@@ -274,7 +274,7 @@ export namespace $AWS {
           return dynamo
             .updateItem({
               ...rest,
-              TableName: table.resource.tableName,
+              TableName: table.tableName,
             })
             .promise();
         },
@@ -324,7 +324,7 @@ export namespace $AWS {
             .putItem({
               ...rest,
               Item: Item as any,
-              TableName: table.resource.tableName,
+              TableName: table.tableName,
             })
             .promise();
         },
@@ -374,7 +374,7 @@ export namespace $AWS {
             .query({
               ...rest,
               AttributesToGet: AttributesToGet as any,
-              TableName: table.resource.tableName,
+              TableName: table.tableName,
             })
             .promise();
         },
@@ -422,7 +422,7 @@ export namespace $AWS {
             .scan({
               ...rest,
               AttributesToGet: AttributesToGet as any,
-              TableName: table.resource.tableName,
+              TableName: table.tableName,
             })
             .promise();
         },

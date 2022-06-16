@@ -191,4 +191,66 @@ export namespace ErrorCodes {
     messageText:
       "Unsupported initialization of Resources in a Function closure",
   };
+
+  /**
+   * Cannot use Infrastructure resource in Function closure.
+   *
+   * The `.resource` property of `Function`, `StepFunction`, `ExpressStepFunction`, and `Table` are not available
+   * in Native Function Closures. Likewise `.bus` is not available or `EventBus`es.
+   *
+   * ```ts
+   * const table = new Table(this, 'table', { ... });
+   * new Function(this, 'func', async () => {
+   *    // valid use of a Table
+   *    const $AWS.DynamoDB.GetItem({
+   *        TableName: table,
+   *        ...
+   *    })
+   *    // invalid - .resource is not available
+   *    const index = table.resource.tableStreamArn;
+   * });
+   * ```
+   *
+   * ### Workaround - Functionless Resource Properties
+   *
+   * In many cases, common properties are available on the Functionless Resource, for example:
+   *
+   * ```ts
+   * const table = new Table(this, 'table', { ... });
+   * new Function(this, 'func', async () => {
+   *    const tableArn = table.tableArn;
+   * });
+   * ```
+   *
+   * ### Workaround - Dereference
+   *
+   * For some properties, referencing to a variable outside of the closure will work.
+   *
+   * ```ts
+   * const table = new Table(this, 'table', { ... });
+   * const tableStreamArn = table.resource.tableStreamArn;
+   * new Function(this, 'func', async () => {
+   *    const tableStreamArn = tableStreamArn;
+   * });
+   * ```
+   *
+   * ### Workaround - Environment Variable
+   *
+   * Finally, if none of the above work, the lambda environment variables can be used.
+   *
+   * ```ts
+   * const table = new Table(this, 'table', { ... });
+   * new Function(this, 'func', {
+   *    environment: {
+   *       STREAM_ARN: table.resource.tableStreamArn
+   *    }
+   * }, async () => {
+   *    const tableStreamArn = process.env.STREAM_ARN;
+   * });
+   * ```
+   */
+  export const Cannot_Use_Infra_Resource_In_Function = {
+    code: 107,
+    messageText: "Cannot use Infrastructure resource in Function closure",
+  };
 }

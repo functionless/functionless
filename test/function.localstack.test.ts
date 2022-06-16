@@ -869,9 +869,9 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
   );
 
   test(
-    "dynamo integration get",
+    "dynamo integration aws dynamo functions",
     (parent) => {
-      const table = Table.fromTable<{ key: string }, "key">(
+      const table = Table.fromTable<{ key: string; value: string }, "key">(
         new aws_dynamodb.Table(parent, "table", {
           partitionKey: {
             name: "key",
@@ -880,20 +880,21 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
           removalPolicy: RemovalPolicy.DESTROY,
         })
       );
-      const putItem = $AWS.DynamoDB.PutItem;
-      const getItem = $AWS.DynamoDB.GetItem;
+      const { GetItem, DeleteItem, PutItem, Query, Scan, UpdateItem } =
+        $AWS.DynamoDB;
       return new Function(
         parent,
         "function",
         localstackClientConfig,
         async () => {
-          putItem({
+          PutItem({
             TableName: table,
             Item: {
               key: { S: "key" },
+              value: { S: "wee" },
             },
           });
-          const item = getItem({
+          const item = GetItem({
             TableName: table,
             Key: {
               key: {
@@ -901,6 +902,40 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
               },
             },
             ConsistentRead: true,
+          });
+          UpdateItem({
+            TableName: table,
+            Key: {
+              key: { S: "key" },
+            },
+            UpdateExpression: "set #value = :value",
+            ExpressionAttributeValues: {
+              ":value": { S: "value" },
+            },
+            ExpressionAttributeNames: {
+              "#value": "value",
+            },
+          });
+          DeleteItem({
+            TableName: table,
+            Key: {
+              key: {
+                S: "key",
+              },
+            },
+          });
+          Query({
+            TableName: table,
+            KeyConditionExpression: "#key = :key",
+            ExpressionAttributeValues: {
+              ":key": { S: "key" },
+            },
+            ExpressionAttributeNames: {
+              "#key": "key",
+            },
+          });
+          Scan({
+            TableName: table,
           });
           return item.Item?.key.S;
         }
