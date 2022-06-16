@@ -75,6 +75,8 @@ class CustomTypescriptProject extends typescript.TypeScriptProject {
 const project = new CustomTypescriptProject({
   defaultReleaseBranch: "main",
   name: "functionless",
+  description:
+    "Functionless, a TypeScript plugin and Construct library for the AWS CDK",
   bin: {
     functionless: "./bin/functionless.js",
   },
