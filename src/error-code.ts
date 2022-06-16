@@ -156,7 +156,7 @@ export namespace ErrorCodes {
    * @see https://github.com/functionless/functionless/issues/252 to track supported secret patterns.
    */
   export const Unsafe_use_of_secrets: ErrorCode = {
-    code: 105,
+    code: 10005,
     type: ErrorType.ERROR,
     messageText: "Unsafe use of secrets",
   };
@@ -202,7 +202,7 @@ export namespace ErrorCodes {
    */
   export const Unsupported_initialization_of_resources_in_function: ErrorCode =
     {
-      code: 106,
+      code: 10006,
       type: ErrorType.ERROR,
       messageText:
         "Unsupported initialization of Resources in a Function closure",
@@ -267,7 +267,7 @@ export namespace ErrorCodes {
    */
   export const Cannot_use_infrastructure_Resource_in_Function_closure: ErrorCode =
     {
-      code: 107,
+      code: 10007,
       type: ErrorType.ERROR,
       messageText: "Cannot use infrastructure Resource in Function closure",
     };
