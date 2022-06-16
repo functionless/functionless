@@ -146,7 +146,12 @@ const project = new CustomTypescriptProject({
       projenCredentials: GithubCredentials.fromApp(),
     },
   },
-  prettier: {},
+  prettier: {
+    trailingComma: "es5",
+    tabWidth: 2,
+    semi: true,
+    singleQuote: false,
+  },
 });
 
 const packageJson = project.tryFindObjectFile("package.json");
