@@ -5,6 +5,7 @@ import {
   aws_logs,
   Stack,
 } from "aws-cdk-lib";
+import type { APIGatewayProxyEvent } from "aws-lambda";
 import {
   AwsMethod,
   MockMethod,
@@ -13,6 +14,7 @@ import {
   Table,
   ApiGatewayInput,
   $AWS,
+  LambdaMethod,
 } from "functionless";
 
 export const app = new App();
@@ -39,7 +41,14 @@ const fn = new Function(
   }
 );
 
-const fnResource = restApi.root.addResource("fn").addResource("{num}");
+const fnResource = restApi.root.addResource("fn").addResource("{num}", {
+  defaultMethodOptions: {
+    requestParameters: {
+      num: true,
+      str: true,
+    },
+  },
+});
 
 new AwsMethod(
   {
@@ -178,3 +187,28 @@ new AwsMethod(
     }
   }
 );
+
+const proxyResource = restApi.root.addResource("proxy");
+
+const proxy = new Function(
+  stack,
+  "LambdaProxy",
+  async (request: APIGatewayProxyEvent) => {
+    return {
+      statusCode: 200,
+      body: JSON.stringify(request.body),
+    };
+  }
+);
+
+new LambdaMethod({
+  httpMethod: "GET",
+  resource: proxyResource,
+  function: proxy,
+});
+
+new LambdaMethod({
+  httpMethod: "POST",
+  resource: proxyResource,
+  function: proxy,
+});

@@ -5,7 +5,7 @@ import {
   ApiGatewayInput,
   AwsMethod,
   Function,
-  LambdaProxyApiMethod,
+  LambdaMethod,
   MockMethod,
 } from "../src";
 import { localstackTestSuite } from "./localstack";
@@ -112,7 +112,7 @@ localstackTestSuite("apiGatewayStack", (test, stack) => {
         }
       );
 
-      new LambdaProxyApiMethod({
+      new LambdaMethod({
         httpMethod: "GET",
         resource: api.root,
         function: func,

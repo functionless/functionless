@@ -536,6 +536,14 @@ export class APIGatewayVTL extends VTL {
     super(...statements);
   }
 
+  /**
+   * Called during VTL synthesis. This function will capture the API Gateway request's integration
+   * and return a string that will emit the request payload into the VTL template.
+   *
+   * @param target the integration
+   * @param call the {@link CallExpr} representing the integration instance.
+   * @returns
+   */
   protected integrate(
     target: IntegrationImpl<AnyFunction>,
     call: CallExpr
@@ -757,7 +765,10 @@ export interface ApiGatewayVtlIntegration {
   ) => aws_apigateway.Integration;
 }
 
-export interface LambdaProxyApiIntegrationProps
+/**
+ * Configuration properties for a {@link LambdaMethod}.
+ */
+export interface LambdaMethodProps
   extends Omit<
     aws_apigateway.LambdaIntegrationOptions,
     | "requestParameters"
@@ -766,16 +777,43 @@ export interface LambdaProxyApiIntegrationProps
     | "passthroughBehavior"
     | "proxy"
   > {
-  function: Function<APIGatewayProxyEvent, APIGatewayProxyResult>;
-  httpMethod: HttpMethod;
-  resource: aws_apigateway.IResource;
+  /**
+   * The {@link HttpMethod} this integration is for.
+   */
+  readonly httpMethod: HttpMethod;
+  /**
+   * The REST Resource ({@link aws_apigateway.IResource}) to implement the Method for.
+   */
+  readonly resource: aws_apigateway.IResource;
+  /**
+   * The {@link Function} to proxy the HTTP request to.
+   *
+   * This Function must accept a {@link APIGatewayProxyEvent} request payload and
+   * return a {@link APIGatewayProxyResult} response payload.
+   */
+  readonly function: Function<APIGatewayProxyEvent, APIGatewayProxyResult>;
 }
 
-export class LambdaProxyApiMethod {
+/**
+ * Creates a {@link api_gateway.Method} implemented by a {@link Function}.
+ *
+ * HTTP requests are proxied directly to a {@link Function}.
+ *
+ * @see {@link APIGatewayProxyEvent}
+ * @see {@link APIGatewayProxyResult}
+ */
+export class LambdaMethod {
+  /**
+   * The {@link Function} that will process the HTTP request.
+   */
   readonly function;
+
+  /**
+   * The underlying {@link aws_apigateway.Method} configuration.
+   */
   readonly method;
 
-  constructor(private readonly props: LambdaProxyApiIntegrationProps) {
+  constructor(private readonly props: LambdaMethodProps) {
     this.function = props.function;
 
     this.method = props.resource.addMethod(
@@ -788,13 +826,11 @@ export class LambdaProxyApiMethod {
   }
 }
 
-export type ExcludeNullOrUndefined<T> = T extends undefined | null | infer X
-  ? X
-  : T;
+type ExcludeNullOrUndefined<T> = T extends undefined | null | infer X ? X : T;
 
 type IfNever<T, Default> = T extends never ? Default : T;
 
-export type Params<Request extends ApiRequest> = Exclude<
+type Params<Request extends ApiRequest> = Exclude<
   IfNever<
     ExcludeNullOrUndefined<Request["path"]> &
       ExcludeNullOrUndefined<Request["query"]>,
