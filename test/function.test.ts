@@ -127,7 +127,7 @@ test("set on success bus", () => {
         ))?.destinationConfig
       ))?.onSuccess
     )).destination
-  ).toEqual(bus.bus.eventBusArn);
+  ).toEqual(bus.resource.eventBusArn);
 });
 
 test("set on failure bus", () => {
@@ -154,7 +154,7 @@ test("set on failure bus", () => {
         ))?.destinationConfig
       ))?.onFailure
     )).destination
-  ).toEqual(bus.bus.eventBusArn);
+  ).toEqual(bus.resource.eventBusArn);
 });
 
 test("set on success function", () => {
@@ -265,11 +265,11 @@ test("configure async with bus", () => {
   expect(
     (<aws_lambda.CfnEventInvokeConfig.OnFailureProperty>config?.onFailure)
       .destination
-  ).toEqual(bus.bus.eventBusArn);
+  ).toEqual(bus.resource.eventBusArn);
   expect(
     (<aws_lambda.CfnEventInvokeConfig.OnFailureProperty>config?.onSuccess)
       .destination
-  ).toEqual(bus.bus.eventBusArn);
+  ).toEqual(bus.resource.eventBusArn);
 });
 
 test("set on success rule", () => {
@@ -281,7 +281,7 @@ test("set on success rule", () => {
   const onSuccess = func.onSuccess(bus, "funcSuccess");
   onSuccess.pipe(bus);
 
-  expect(onSuccess.rule._renderEventPattern()).toEqual({
+  expect(onSuccess.resource._renderEventPattern()).toEqual({
     source: ["lambda"],
     "detail-type": ["Lambda Function Invocation Result - Success"],
     resources: [func.resource.functionArn],
@@ -297,7 +297,7 @@ test("set on failure rule", () => {
   const onFailure = func.onFailure(bus, "funcFailure");
   onFailure.pipe(bus);
 
-  expect(onFailure.rule._renderEventPattern()).toEqual({
+  expect(onFailure.resource._renderEventPattern()).toEqual({
     source: ["lambda"],
     "detail-type": ["Lambda Function Invocation Result - Failure"],
     resources: [func.resource.functionArn],
@@ -319,7 +319,7 @@ test("onFailure().pipe should type check", () => {
   // @ts-expect-error
   onSuccess.pipe(bus);
 
-  expect(onFailure.rule._renderEventPattern()).toEqual({
+  expect(onFailure.resource._renderEventPattern()).toEqual({
     source: ["lambda"],
     "detail-type": ["Lambda Function Invocation Result - Failure"],
     resources: [func.resource.functionArn],

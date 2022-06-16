@@ -134,4 +134,123 @@ export namespace ErrorCodes {
     code: 104,
     messageText: "Incorrect state machine type imported",
   };
+
+  /**
+   * Unsafe usage of Secrets.
+   *
+   * The use of secrets is unsafe or not supported by Functionless.
+   *
+   * @see https://github.com/functionless/functionless/issues/252 to track supported secret patterns.
+   */
+  export const Unsafe_use_of_secrets = {
+    code: 105,
+    messageText: "Unsafe use of secrets",
+  };
+
+  /**
+   * Unsupported initialization of Resources in a Function closure
+   *
+   * 1. Valid - EventBus resource is created outside of the closure.
+   * ```ts
+   * const bus = new EventBus(this, 'bus');
+   * const function = new Function(this, 'func', () => {
+   *    bus.putEvents(...);
+   * });
+   * ```
+   *
+   * 2. Invalid - EventBus resource is created in the closure.
+   * ```ts
+   * const function = new Function(this, 'func', () => {
+   *    new EventBus(this, 'bus').putEvents(...);
+   * });
+   * ```
+   *
+   * 3. Invalid - EventBus resource is created in a method called by the closure.
+   * ```ts
+   * function bus() {
+   *    return new EventBus(this, 'bus');
+   * }
+   * const function = new Function(this, 'func', () => {
+   *    bus().putEvents(...);
+   * });
+   * ```
+   *
+   * 4. Valid - EventBus resource is created outside of the closure and called methods.
+   * ```ts
+   * const bus = new EventBus(this, 'bus');
+   * function bus() {
+   *    return bus;
+   * }
+   * const function = new Function(this, 'func', () => {
+   *    bus().putEvents(...);
+   * });
+   * ```
+   */
+  export const Unsupported_initialization_of_resources_in_function = {
+    code: 106,
+    messageText:
+      "Unsupported initialization of Resources in a Function closure",
+  };
+
+  /**
+   * Cannot use Infrastructure resource in Function closure.
+   *
+   * The `.resource` property of `Function`, `StepFunction`, `ExpressStepFunction`, `EventBus`, and `Table` are not available
+   * in Native Function Closures.
+   *
+   * ```ts
+   * const table = new Table(this, 'table', { ... });
+   * new Function(this, 'func', async () => {
+   *    // valid use of a Table
+   *    const $AWS.DynamoDB.GetItem({
+   *        TableName: table,
+   *        ...
+   *    })
+   *    // invalid - .resource is not available
+   *    const index = table.resource.tableStreamArn;
+   * });
+   * ```
+   *
+   * ### Workaround - Functionless Resource Properties
+   *
+   * In many cases, common properties are available on the Functionless Resource, for example:
+   *
+   * ```ts
+   * const table = new Table(this, 'table', { ... });
+   * new Function(this, 'func', async () => {
+   *    const tableArn = table.tableArn;
+   * });
+   * ```
+   *
+   * ### Workaround - Dereference
+   *
+   * For some properties, referencing to a variable outside of the closure will work.
+   *
+   * ```ts
+   * const table = new Table(this, 'table', { ... });
+   * const tableStreamArn = table.resource.tableStreamArn;
+   * new Function(this, 'func', async () => {
+   *    const tableStreamArn = tableStreamArn;
+   * });
+   * ```
+   *
+   * ### Workaround - Environment Variable
+   *
+   * Finally, if none of the above work, the lambda environment variables can be used.
+   *
+   * ```ts
+   * const table = new Table(this, 'table', { ... });
+   * new Function(this, 'func', {
+   *    environment: {
+   *       STREAM_ARN: table.resource.tableStreamArn
+   *    }
+   * }, async () => {
+   *    const tableStreamArn = process.env.STREAM_ARN;
+   * });
+   * ```
+   */
+  export const Cannot_use_infrastructure_Resource_in_Function_closure = {
+    code: 107,
+    messageText: "Cannot use infrastructure Resource in Function closure",
+  };
 }

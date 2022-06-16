@@ -49,3 +49,28 @@ new StepFunction(
   '("hello" + { place: "world" })',
   () => "hello" + object
 );
+
+// Nested
+
+// Supported
+new StepFunction(
+  stack,
+  "test",
+  {
+    stateMachineName: `aNamedMachine${stack.region + 2}`,
+  },
+  () => {}
+);
+
+// Unsupported - the nested state machine should fail.
+new StepFunction(
+  stack,
+  "test",
+  {
+    stateMachineName:
+      new StepFunction(stack, "tested", (input: { i: number }) => {
+        return input.i + 1;
+      }).resource.stateMachineName + "-plus",
+  },
+  () => {}
+);
