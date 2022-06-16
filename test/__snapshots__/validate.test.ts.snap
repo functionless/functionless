@@ -1,38 +1,44 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`function.ts 1`] = `
-"[96mtest/test-files/function.ts[0m:[93m24[0m:[93m51[0m - [91merror[0m[90m Functionless(107): [0mCannot use Infrastructure resource in Function closure
+"[96mtest/test-files/function.ts[0m:[93m28[0m:[93m51[0m - [91merror[0m[90m Functionless(107): [0mCannot use infrastructure Resource in Function closure
 
 https://functionless.org/docs/error-codes#cannot-use-infrastructure-resource-in-function-closure
 
-[7m24[0m new Function(stack, \\"event bus bus\\", async () => {
+[7m28[0m new Function(stack, \\"event bus bus\\", async () => {
 [7m  [0m [91m                                                  [0m
-[7m25[0m   bus.bus.eventBusArn;
+[7m29[0m   bus.resource.eventBusArn;
 [7m  [0m [91m~~~~~[0m
-[96mtest/test-files/function.ts[0m:[93m28[0m:[93m50[0m - [91merror[0m[90m Functionless(107): [0mCannot use Infrastructure resource in Function closure
+[96mtest/test-files/function.ts[0m:[93m32[0m:[93m50[0m - [91merror[0m[90m Functionless(107): [0mCannot use infrastructure Resource in Function closure
 
 https://functionless.org/docs/error-codes#cannot-use-infrastructure-resource-in-function-closure
 
-[7m28[0m new Function(stack, \\"sfn resource\\", async () => {
+[7m32[0m new Function(stack, \\"sfn resource\\", async () => {
 [7m  [0m [91m                                                 [0m
-[7m29[0m   sfn.resource.stateMachineArn;
+[7m33[0m   sfn.resource.stateMachineArn;
 [7m  [0m [91m~~~~~[0m
-[96mtest/test-files/function.ts[0m:[93m32[0m:[93m51[0m - [91merror[0m[90m Functionless(107): [0mCannot use Infrastructure resource in Function closure
+[96mtest/test-files/function.ts[0m:[93m36[0m:[93m51[0m - [91merror[0m[90m Functionless(107): [0mCannot use infrastructure Resource in Function closure
 
 https://functionless.org/docs/error-codes#cannot-use-infrastructure-resource-in-function-closure
 
-[7m32[0m new Function(stack, \\"func resource\\", async () => {
+[7m36[0m new Function(stack, \\"func resource\\", async () => {
 [7m  [0m [91m                                                  [0m
-[7m33[0m   func.resource;
+[7m37[0m   func.resource;
 [7m  [0m [91m~~~~~~[0m
-[96mtest/test-files/function.ts[0m:[93m36[0m:[93m52[0m - [91merror[0m[90m Functionless(107): [0mCannot use Infrastructure resource in Function closure
+[96mtest/test-files/function.ts[0m:[93m40[0m:[93m52[0m - [91merror[0m[90m Functionless(107): [0mCannot use infrastructure Resource in Function closure
 
 https://functionless.org/docs/error-codes#cannot-use-infrastructure-resource-in-function-closure
 
-[7m36[0m new Function(stack, \\"table resource\\", async () => {
+[7m40[0m new Function(stack, \\"table resource\\", async () => {
 [7m  [0m [91m                                                   [0m
-[7m37[0m   table.resource;
+[7m41[0m   table.resource;
 [7m  [0m [91m~~~~~~~[0m
+[96mtest/test-files/function.ts[0m:[93m75[0m:[93m15[0m - [91merror[0m[90m Functionless(107): [0mCannot use infrastructure Resource in Function closure
+
+https://functionless.org/docs/error-codes#cannot-use-infrastructure-resource-in-function-closure
+
+[7m75[0m         return bus.resource;
+[7m  [0m [91m              ~~~~[0m
 "
 `;
 
@@ -67,5 +73,11 @@ https://functionless.org/docs/error-codes#cannot-perform-arithmetic-on-variables
 
 [7m19[0m     const a = input.i + 1;
 [7m  [0m [91m             ~~~~~~~~~~~~[0m
+[96mtest/test-files/step-function.ts[0m:[93m72[0m:[93m15[0m - [91merror[0m[90m Functionless(100): [0mCannot perform arithmetic on variables in Step Function
+
+https://functionless.org/docs/error-codes#cannot-perform-arithmetic-on-variables-in-step-function
+
+[7m72[0m         return input.i + 1;
+[7m  [0m [91m              ~~~~~~~~~~~~[0m
 "
 `;

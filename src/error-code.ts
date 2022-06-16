@@ -150,7 +150,7 @@ export namespace ErrorCodes {
   /**
    * Unsupported initialization of Resources in a Function closure
    *
-   * #### Valid - EventBus resource is created outside of the closure.
+   * 1. Valid - EventBus resource is created outside of the closure.
    * ```ts
    * const bus = new EventBus(this, 'bus');
    * const function = new Function(this, 'func', () => {
@@ -158,14 +158,14 @@ export namespace ErrorCodes {
    * });
    * ```
    *
-   * #### Invalid - EventBus resource is created in the closure.
+   * 2. Invalid - EventBus resource is created in the closure.
    * ```ts
    * const function = new Function(this, 'func', () => {
    *    new EventBus(this, 'bus').putEvents(...);
    * });
    * ```
    *
-   * #### Invalid - EventBus resource is created in a method called by the closure.
+   * 3. Invalid - EventBus resource is created in a method called by the closure.
    * ```ts
    * function bus() {
    *    return new EventBus(this, 'bus');
@@ -175,7 +175,7 @@ export namespace ErrorCodes {
    * });
    * ```
    *
-   * #### Valid - EventBus resource is created outside of the closure and called methods.
+   * 4. Valid - EventBus resource is created outside of the closure and called methods.
    * ```ts
    * const bus = new EventBus(this, 'bus');
    * function bus() {
@@ -195,8 +195,8 @@ export namespace ErrorCodes {
   /**
    * Cannot use Infrastructure resource in Function closure.
    *
-   * The `.resource` property of `Function`, `StepFunction`, `ExpressStepFunction`, and `Table` are not available
-   * in Native Function Closures. Likewise `.bus` is not available or `EventBus`es.
+   * The `.resource` property of `Function`, `StepFunction`, `ExpressStepFunction`, `EventBus`, and `Table` are not available
+   * in Native Function Closures.
    *
    * ```ts
    * const table = new Table(this, 'table', { ... });
@@ -249,8 +249,8 @@ export namespace ErrorCodes {
    * });
    * ```
    */
-  export const Cannot_Use_Infra_Resource_In_Function = {
+  export const Cannot_use_infrastructure_Resource_in_Function_closure = {
     code: 107,
-    messageText: "Cannot use Infrastructure resource in Function closure",
+    messageText: "Cannot use infrastructure Resource in Function closure",
   };
 }

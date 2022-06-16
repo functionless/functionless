@@ -192,7 +192,7 @@ new AWS.DynamoDB();
 :::warn
 [Cannot use Infrastructure resource in `Function` closure (107)](../../error-codes.md#cannot-use-infrastructure-resource-in-function-closure).
 
-`.resource` (`Function`, `StepFunction`, `Table`) and `.bus` (`EventBus`) may not be used within a `Function`.
+`.resource` (`Function`, `StepFunction`, `Table`, `EventBus`) may not be used within a `Function`.
 
 ```ts
 const table = new Table(this, 'table', { ... });

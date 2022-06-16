@@ -504,7 +504,7 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
       }
     );
 
-    bus.bus.grantPutEventsTo(func.resource);
+    bus.resource.grantPutEventsTo(func.resource);
 
     return func;
   }, 0);

@@ -2176,7 +2176,7 @@ test("on success event", () => {
 
   const success = machine.onSucceeded(stack, "onSuccess");
 
-  expect(success.rule._renderEventPattern()).toEqual({
+  expect(success.resource._renderEventPattern()).toEqual({
     source: ["aws.states"],
     "detail-type": ["Step Functions Execution Status Change"],
     detail: {
@@ -2191,7 +2191,7 @@ test("on status change event", () => {
 
   const statusChange = machine.onStatusChanged(stack, "onSuccess");
 
-  expect(statusChange.rule._renderEventPattern()).toEqual({
+  expect(statusChange.resource._renderEventPattern()).toEqual({
     source: ["aws.states"],
     "detail-type": ["Step Functions Execution Status Change"],
     detail: {
@@ -2207,7 +2207,7 @@ test("on status change event refine", () => {
     .onStatusChanged(stack, "onStatus")
     .when(stack, "onRunning", (event) => event.detail.status === "RUNNING");
 
-  expect(success.rule._renderEventPattern()).toEqual({
+  expect(success.resource._renderEventPattern()).toEqual({
     source: ["aws.states"],
     "detail-type": ["Step Functions Execution Status Change"],
     detail: {

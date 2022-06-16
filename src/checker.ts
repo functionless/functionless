@@ -56,6 +56,12 @@ export type FunctionInterface = ts.NewExpression & {
       ];
 };
 
+export type NewStepFunctionInterface = ts.NewExpression & {
+  arguments:
+    | [ts.Expression, ts.Expression, TsFunctionParameter]
+    | [ts.Expression, ts.Expression, ts.Expression, TsFunctionParameter];
+};
+
 export type FunctionlessChecker = ReturnType<typeof makeFunctionlessChecker>;
 
 export function makeFunctionlessChecker(
@@ -198,9 +204,7 @@ export function makeFunctionlessChecker(
     );
   }
 
-  function isNewStepFunction(node: ts.Node): node is ts.NewExpression & {
-    arguments: [TsFunctionParameter, ...ts.Expression[]];
-  } {
+  function isNewStepFunction(node: ts.Node): node is NewStepFunctionInterface {
     if (ts.isNewExpression(node)) {
       return isStepFunction(node.expression);
     }

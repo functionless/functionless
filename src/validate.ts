@@ -3,6 +3,7 @@ import {
   FunctionInterface,
   FunctionlessChecker,
   isArithmeticToken,
+  NewStepFunctionInterface,
 } from "./checker";
 import { ErrorCode, ErrorCodes, formatErrorMessage } from "./error-code";
 
@@ -28,7 +29,7 @@ export function validate(
 
   function visit(node: typescript.Node): typescript.Diagnostic[] {
     if (checker.isNewStepFunction(node)) {
-      return validateEachChildRecursive(node, validateStepFunctionNode);
+      return validateNewStepFunctionNode(node);
     } else if (checker.isNewFunctionlessFunction(node)) {
       return validateFunctionNode(node);
     } else {
@@ -63,6 +64,22 @@ export function validate(
     ]);
   }
 
+  function validateNodes(nodes: typescript.Node[]) {
+    return nodes.flatMap((arg) => validateEachChild(arg, visit));
+  }
+
+  function validateNewStepFunctionNode(node: NewStepFunctionInterface) {
+    const func =
+      node.arguments.length === 4 ? node.arguments[3] : node.arguments[2];
+
+    return [
+      // visit all other arguments
+      ...validateNodes(node.arguments.filter((arg) => arg !== func)),
+      // process the function closure
+      ...validateEachChildRecursive(func, validateStepFunctionNode),
+    ];
+  }
+
   function validateStepFunctionNode(
     node: typescript.Node
   ): typescript.Diagnostic[] {
@@ -88,9 +105,7 @@ export function validate(
 
     return [
       // visit all other arguments
-      ...node.arguments
-        .filter((arg) => arg !== func)
-        .flatMap((arg) => validateEachChildRecursive(arg, visit)),
+      ...validateNodes(node.arguments.filter((arg) => arg !== func)),
       // process the function closure
       ...validateEachChildRecursive(func, validateFunctionClosureNode),
     ];
@@ -102,23 +117,18 @@ export function validate(
     if (
       checker.isStepFunction(node) ||
       checker.isTable(node) ||
-      checker.isFunctionlessFunction(node)
+      checker.isFunctionlessFunction(node) ||
+      checker.isEventBus(node)
     ) {
       if (
         typescript.isPropertyAccessExpression(node.parent) &&
         node.parent.name.text === "resource"
       ) {
         return [
-          newError(node, ErrorCodes.Cannot_Use_Infra_Resource_In_Function),
-        ];
-      }
-    } else if (checker.isEventBus(node)) {
-      if (
-        typescript.isPropertyAccessExpression(node.parent) &&
-        node.parent.name.text === "bus"
-      ) {
-        return [
-          newError(node, ErrorCodes.Cannot_Use_Infra_Resource_In_Function),
+          newError(
+            node,
+            ErrorCodes.Cannot_use_infrastructure_Resource_in_Function_closure
+          ),
         ];
       }
     }

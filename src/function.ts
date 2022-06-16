@@ -5,7 +5,6 @@ import { serializeFunction } from "@functionless/nodejs-closure-serializer";
 import {
   AssetHashType,
   aws_dynamodb,
-  aws_events,
   aws_events_targets,
   aws_lambda,
   CfnResource,
@@ -374,7 +373,7 @@ abstract class FunctionBase<in Payload, Out>
           | IEventBus<AsyncResponseSuccessEvent<P, O>>
           | IEventBus<AsyncResponseFailureEvent<P>>
         >(destination)
-      ? new EventBridgeDestination(destination.bus)
+      ? new EventBridgeDestination(destination.resource)
       : isFunction<
           FunctionPayloadType<Extract<typeof destination, IFunction<any, any>>>,
           FunctionOutputType<Extract<typeof destination, IFunction<any, any>>>
@@ -402,7 +401,7 @@ abstract class FunctionBase<in Payload, Out>
     id: string
   ): Rule<AsyncResponseSuccessEvent<OutPayload, Out>> {
     return new PredicateRuleBase<AsyncResponseSuccessEvent<OutPayload, Out>>(
-      bus.bus,
+      bus.resource,
       id,
       bus,
       /**
@@ -427,7 +426,7 @@ abstract class FunctionBase<in Payload, Out>
     id: string
   ): Rule<AsyncResponseFailureEvent<OutPayload>> {
     return new PredicateRuleBase<AsyncResponseFailureEvent<OutPayload>>(
-      bus.bus,
+      bus.resource,
       id,
       bus,
       /**
@@ -758,7 +757,7 @@ export class CallbackLambdaCode extends aws_lambda.Code {
                   // @ts-ignore - private - adds the tag manager, which we don't need
                   cfnProperties,
                   ...rest
-                } = transformBus(transformTable(o as CfnResource));
+                } = transformTable(o as CfnResource);
                 return transformTaggableResource(rest);
               } else if (Token.isUnresolved(o)) {
                 const reversed = Tokenization.reverse(o)!;
@@ -794,24 +793,6 @@ export class CallbackLambdaCode extends aws_lambda.Code {
 
                   return rest as unknown as CfnResource;
                 }
-              }
-
-              return o;
-            };
-
-            /**
-             * When the StreamArn attribute is used in a Cfn template, but streamSpecification is
-             * undefined, then the deployment fails. Lets make sure that doesn't happen.
-             */
-            const transformBus = (o: CfnResource): CfnResource => {
-              if (
-                o.cfnResourceType ===
-                aws_events.CfnEventBus.CFN_RESOURCE_TYPE_NAME
-              ) {
-                const bus = o as aws_events.CfnEventBus;
-                const { attrPolicy, ...rest } = bus;
-
-                return rest as unknown as CfnResource;
               }
 
               return o;
@@ -857,13 +838,12 @@ export class CallbackLambdaCode extends aws_lambda.Code {
             const transformResource = (integ: unknown): any => {
               if (
                 integ &&
-                (isFunction(integ) || isTable(integ) || isStepFunction(integ))
+                (isFunction(integ) ||
+                  isTable(integ) ||
+                  isStepFunction(integ) ||
+                  isEventBus(integ))
               ) {
                 const { resource, ...rest } = integ;
-
-                return rest;
-              } else if (integ && isEventBus(integ)) {
-                const { bus, ...rest } = integ;
 
                 return rest;
               }

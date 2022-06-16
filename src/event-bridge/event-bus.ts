@@ -145,7 +145,7 @@ export interface IEventBus<in Evnt extends Event = Event>
         aws_events_targets.EventBusProps | undefined
       >
     > {
-  readonly bus: aws_events.IEventBus;
+  readonly resource: aws_events.IEventBus;
   readonly eventBusArn: string;
   readonly eventBusName: string;
 
@@ -230,9 +230,9 @@ abstract class EventBusBase<in Evnt extends Event, OutEvnt extends Evnt = Evnt>
     ...events: PutEventInput<Evnt>[]
   ) => void;
 
-  constructor(readonly bus: aws_events.IEventBus) {
-    this.eventBusName = bus.eventBusName;
-    this.eventBusArn = bus.eventBusArn;
+  constructor(readonly resource: aws_events.IEventBus) {
+    this.eventBusName = resource.eventBusName;
+    this.eventBusArn = resource.eventBusArn;
 
     // Closure event bus base
     const eventBusName = this.eventBusName;
@@ -243,7 +243,7 @@ abstract class EventBusBase<in Evnt extends Event, OutEvnt extends Evnt = Evnt>
     >({
       kind: "EventBus.putEvents",
       asl: (call: CallExpr, context: ASL) => {
-        this.bus.grantPutEventsTo(context.role);
+        this.resource.grantPutEventsTo(context.role);
 
         // Validate that the events are object literals.
         // Then normalize nested arrays of events into a single list of events.
@@ -319,7 +319,7 @@ abstract class EventBusBase<in Evnt extends Event, OutEvnt extends Evnt = Evnt>
                   ...acc,
                   [propertyMap[name]]: ASL.toJson(expr),
                 }),
-                { EventBusName: this.bus.eventBusArn }
+                { EventBusName: this.resource.eventBusArn }
               )
           );
         });
@@ -334,7 +334,7 @@ abstract class EventBusBase<in Evnt extends Event, OutEvnt extends Evnt = Evnt>
       },
       native: {
         bind: (context: Function<any, any>) => {
-          this.bus.grantPutEventsTo(context.resource);
+          this.resource.grantPutEventsTo(context.resource);
         },
         preWarm: (prewarmContext: NativePreWarmContext) => {
           prewarmContext.getOrInit(PrewarmClients.EVENT_BRIDGE);
@@ -372,7 +372,7 @@ abstract class EventBusBase<in Evnt extends Event, OutEvnt extends Evnt = Evnt>
         throw new Error("Event bus rule target does not support target input.");
       }
 
-      return new aws_events_targets.EventBus(this.bus, props);
+      return new aws_events_targets.EventBus(this.resource, props);
     },
   });
 
@@ -405,7 +405,7 @@ abstract class EventBusBase<in Evnt extends Event, OutEvnt extends Evnt = Evnt>
       );
     } else {
       return new Rule<InEvnt, NewEvnt>(
-        this.bus,
+        this.resource,
         scope as string,
         this as any,
         id as RulePredicateFunction<InEvnt, NewEvnt>
@@ -419,7 +419,7 @@ abstract class EventBusBase<in Evnt extends Event, OutEvnt extends Evnt = Evnt>
     if (!scope || !id) {
       if (!this.allRule) {
         this.allRule = new PredicateRuleBase<Evnt, OutEvnt>(
-          this.bus,
+          this.resource,
           "all",
           this as IEventBus<Evnt>,
           // an empty doc will be converted to `{ source: [{ prefix: "" }]}`
@@ -748,8 +748,8 @@ export function pipe<
       props,
       targetInput
     );
-    return rule.rule.addTarget(target);
+    return rule.resource.addTarget(target);
   } else {
-    return rule.rule.addTarget(integration(targetInput));
+    return rule.resource.addTarget(integration(targetInput));
   }
 }
