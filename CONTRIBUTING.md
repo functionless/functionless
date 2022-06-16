@@ -159,10 +159,10 @@ export const My_New_Error: ErrorCode {
 ```
 
 **type** - 
-* ERROR - Should fail validation, cli, will fail during compile, synth, or runtime
-* WARN - Should show warning during validation, cli, may fail during compile, synth, or runtime
-* INFO - Show info during validate. Will not fail during compile, synth, or runtime.
-* DEPRECATED - Errors or warnings that are no longer applicable. (We unblocked the use case, for example).
+* <span style="background-color: red; padding: 4px;">ERROR</span> - Should fail validation, cli. An error signifies that consumer logic will fail or during compile, synth, or runtime, generally due to an explicit error from Functionless.
+* <span style="background-color: yellow; color: black; padding: 4px;">WARN</span> - Should show warning during validation, cli. A warning signifies that consumer logic MAY fail or act in undefined ways during compile, synth, or runtime
+* <span style="background-color: blue; padding: 4px;">INFO</span> - Show info during validate. Will not fail during compile, synth, or runtime.
+* <span style="background-color: grey; padding: 4px;">DEPRECATED</span> - Errors or warnings that are no longer applicable. (We unblocked the use case, for example).
 
 **Message Text** - A short, single sentence with no punctuation describing what the error is. The title of the error on the Error Code page. The anchor created on the url. The error printed by default with a `SynthError`.
 
