@@ -225,7 +225,7 @@ export class MockMethod<
   StatusCode extends number,
   MethodResponses extends { [C in StatusCode]: any }
 > extends ApiMethod<"MockMethod"> {
-  public constructor(
+  constructor(
     props: MethodProps,
     /**
      * Map API request to a status code. This code will be used by API Gateway

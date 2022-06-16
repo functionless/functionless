@@ -5,10 +5,7 @@ import {
   AmplifyAppSyncSimulatorAuthenticationType,
   AppSyncGraphQLExecutionContext,
 } from "amplify-appsync-simulator";
-import {
-  AppSyncVTLRenderContext,
-  VelocityTemplate,
-} from "amplify-appsync-simulator/lib/velocity";
+import * as amplify from "amplify-appsync-simulator/lib/velocity";
 import { App, aws_dynamodb, aws_events, aws_lambda, Stack } from "aws-cdk-lib";
 import { Rule } from "aws-cdk-lib/aws-events";
 import {
@@ -18,6 +15,8 @@ import {
   Function,
   Event,
   FunctionlessEventPattern,
+  ResolverFunction,
+  ResolverArguments,
 } from "../src";
 
 import { Err, isErr } from "../src/error";
@@ -65,29 +64,95 @@ export function getAppSyncTemplates(decl: FunctionDecl | Err): string[] {
   }).templates;
 }
 
-export function appsyncTestCase(
-  decl: FunctionDecl | Err,
-  ...expected: string[]
+export type DeepPartial<T extends object> = {
+  [k in keyof T]: T[k] extends object ? DeepPartial<T[k]> : T[k];
+};
+
+export interface AppSyncVTLRenderContext<
+  Arguments extends object = object,
+  Source extends object | undefined = undefined
+> extends Omit<amplify.AppSyncVTLRenderContext, "arguments" | "source"> {
+  arguments: Arguments;
+  source?: Source;
+}
+
+/**
+ *
+ * @param decl
+ * @param executeTemplates an array of templates to execute using the {@link AmplifyAppSyncSimulator}
+ *                         `context` can be used to pass inputs
+ *                         a snapshot will be taken of the results
+ *                         to test specific contents like CDK Tokens (arns, attr, etc) use
+ *                         `expected.match` with a partial output.
+ *                         To assert that the template returns, pass `expected.returned: true`.
+ */
+export function appsyncTestCase<
+  Arguments extends ResolverArguments,
+  Result,
+  Source extends object | undefined = undefined
+>(
+  decl: FunctionDecl<ResolverFunction<Arguments, Result, Source>> | Err,
+  config?: {
+    /**
+     * Template count is generally [total integrations] * 2 + 2
+     */
+    expectedTemplateCount?: number;
+  }
 ) {
   const actual = getAppSyncTemplates(decl);
 
-  expect(actual).toEqual(expected);
+  config?.expectedTemplateCount &&
+    expect(actual).toHaveLength(config.expectedTemplateCount);
+
+  expect(normalizeCDKJson(actual)).toMatchSnapshot();
+
+  return actual;
 }
 
 const simulator = new AmplifyAppSyncSimulator();
-export function appsyncVelocityJsonTestCase(
+export function testAppsyncVelocity<
+  Arguments extends ResolverArguments,
+  Source extends object | undefined = undefined
+>(
   vtl: string,
-  context: AppSyncVTLRenderContext,
-  expected: { result: Record<string, any>; returned?: boolean },
-  requestContext?: AppSyncGraphQLExecutionContext
+  props?: Omit<AppSyncVTLRenderContext<Arguments, Source>, "arguments"> & {
+    /**
+     * Input and context data for VTL execution
+     *
+     * @default {}
+     */
+    arguments?: AppSyncVTLRenderContext<Arguments, Source>["arguments"];
+    /**
+     * Partial object to match against the output using `expect().matchObject`
+     */
+    resultMatch?: string | Record<string, any>;
+    /**
+     * Assert true if the function returns, false if it shouldn't
+     *
+     * @default nothing
+     */
+    returned?: boolean;
+    /**
+     * Additional context data for VTL
+     */
+    requestContext?: AppSyncGraphQLExecutionContext;
+  }
 ) {
-  const template = new VelocityTemplate(
+  const template = new amplify.VelocityTemplate(
     { content: vtl, path: "test.json" },
     simulator
   );
 
+  const {
+    arguments: args = {},
+    source = {},
+    resultMatch,
+    requestContext,
+    returned,
+  } = props ?? {};
+
   const result = template.render(
-    context,
+    { arguments: args, source },
     requestContext ?? {
       headers: {},
       requestAuthorizationMode:
@@ -99,9 +164,11 @@ export function appsyncVelocityJsonTestCase(
 
   expect(result.errors).toHaveLength(0);
 
-  expect(JSON.parse(JSON.stringify(result.result))).toEqual(expected.result);
-  expected.returned !== undefined &&
-    expect(result.isReturn).toEqual(expected.returned);
+  const json = JSON.parse(JSON.stringify(result.result));
+
+  expect(normalizeCDKJson(json)).toMatchSnapshot();
+  resultMatch !== undefined && expect(json).toMatchObject(resultMatch);
+  returned !== undefined && expect(result.isReturn).toEqual(returned);
 }
 
 export interface Person {
@@ -133,7 +200,7 @@ export function initStepFunctionApp() {
 
   const computeScore = Function.fromFunction<Person, number>(lambda);
 
-  const personTable = new Table<Person, "id">(
+  const personTable = Table.fromTable<Person, "id">(
     new aws_dynamodb.Table(stack, "Table", {
       partitionKey: {
         name: "id",
@@ -210,3 +277,12 @@ export function ebEventTargetTestCaseError<T extends Event>(
 ) {
   expect(() => synthesizeEventBridgeTargets(decl)).toThrow(message);
 }
+
+export const normalizeCDKJson = (json: object) => {
+  return JSON.parse(
+    JSON.stringify(json).replace(
+      /\$\{Token\[[a-zA-Z0-9.]*\]\}/g,
+      "__REPLACED_TOKEN"
+    )
+  );
+};

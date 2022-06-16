@@ -5,6 +5,7 @@ import {
   isParameterDecl,
 } from "./declaration";
 import { isErr } from "./error";
+import { ErrorCodes, SynthError } from "./error-code";
 import {
   CallExpr,
   Expr,
@@ -244,7 +245,12 @@ export abstract class VTL {
         return list;
       }
     } else if (isBinaryExpr(node)) {
-      if (node.op === "=") {
+      if (node.op === "in") {
+        throw new SynthError(
+          ErrorCodes.Unexpected_Error,
+          "Expected the `in` binary operator to be re-written before this point"
+        );
+      } else if (node.op === "=") {
         return `#set(${this.eval(node.left)} ${node.op} ${this.eval(
           node.right
         )})`;

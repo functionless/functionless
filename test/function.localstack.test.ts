@@ -33,12 +33,20 @@ const localstackClientConfig: FunctionProps = {
 };
 
 interface TestFunctionResource {
-  <I, O, Outputs extends Record<string, string> = Record<string, string>>(
+  <
+    I,
+    O,
+    // Forces typescript to infer O from the Function and not from the expect argument.
+    OO extends O | { errorMessage: string; errorType: string },
+    Outputs extends Record<string, string> = Record<string, string>
+  >(
     name: string,
     func: (
       parent: Construct
     ) => Function<I, O> | { func: Function<I, O>; outputs: Outputs },
-    expected: O | ((context: Outputs) => O),
+    expected: OO extends void
+      ? null
+      : OO | ((context: Outputs) => OO extends void ? null : O),
     payload?: I | ((context: Outputs) => I)
   ): void;
 
@@ -653,7 +661,7 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
   testFunctionResource(
     "dynamo integration get",
     (parent) => {
-      const table = new Table<{ key: string }, "key">(
+      const table = Table.fromTable<{ key: string }, "key">(
         new aws_dynamodb.Table(parent, "table", {
           partitionKey: {
             name: "key",

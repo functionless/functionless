@@ -1,6 +1,6 @@
 import type * as typescript from "typescript";
 import { FunctionlessChecker, isArithmeticToken } from "./checker";
-import { ErrorCode, ErrorCodes } from "./error-code";
+import { ErrorCode, ErrorCodes, formatErrorMessage } from "./error-code";
 
 /**
  * Validates a TypeScript SourceFile containing Functionless primitives does not
@@ -131,16 +131,10 @@ export function validate(
     error: ErrorCode,
     messageText?: string
   ): ts.Diagnostic {
-    const baseUrl = process.env.FUNCTIONLESS_LOCAL
-      ? `http://localhost:3000`
-      : `https://functionless.org`;
-
     return {
       source: "Functionless",
       code: error.code,
-      messageText: `${messageText ?? error.messageText}
-
-${baseUrl}/docs/error-codes#${error.messageText.replace(/ /g, "-")}"`,
+      messageText: formatErrorMessage(error, messageText),
       category: ts.DiagnosticCategory.Error,
       file: invalidNode.getSourceFile(),
       start: invalidNode.pos,

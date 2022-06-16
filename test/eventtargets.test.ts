@@ -611,10 +611,10 @@ describe("referencing", () => {
 
     ebEventTargetTestCase<testEvent>(
       reflect(() => {
-        return { sfn: sfn.stateMachineArn };
+        return { sfn: sfn.resource.stateMachineArn };
       }),
       aws_events.RuleTargetInput.fromObject({
-        sfn: sfn.stateMachineArn,
+        sfn: sfn.resource.stateMachineArn,
       })
     );
   });

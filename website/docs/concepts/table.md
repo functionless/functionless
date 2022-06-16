@@ -45,40 +45,40 @@ type EcommerceDatabase = User | Cart | Order;
 Finally, create the `Table` and specify the data type, the name of the Partition Key and (optionally) the name of the Range Key.
 
 ```ts
-new Table<Item, "itemId">(..)
+Table.fromTable<Item, "itemId">(..)
 ```
 
 The Range Key is an optional, third type argument.
 
 ```ts
-new Table<Item, "itemId", "timestamp">(..)
+Table.fromTable<Item, "itemId", "timestamp">(..)
 ```
 
 See the [`typesafe-dynamodb`](https://github.com/sam-goodwin/typesafe-dynamodb) documentation for more information on how to use types to safely model data in a DynamoDB Table using TypeScript types.
 
 ## Wrap an existing Table
 
-Use `Table.from` to wrap an existing Table Construct created with the vanilla AWS CDK.
+Use `Table.fromTable` to wrap an existing Table Construct created with the vanilla AWS CDK.
 
 ```ts
-Table.from(itemTable);
+Table.fromTable(itemTable);
 ```
 
 Optionally provide the data type, partition key and range key as type arguments.
 
 ```ts
-Table.from<Item, "itemId">(itemTable);
+Table.fromTable<Item, "itemId">(itemTable);
 ```
 
 The Range Key is an optional, third type argument.
 
 ```ts
-Table.from<Item, "itemId", "timestamp">(itemTable);
+Table.fromTable<Item, "itemId", "timestamp">(itemTable);
 ```
 
 ## Call from an Integration
 
-Use the [`$AWS`](./aws.md) SDK's DynamoDB APIs to access the Table from within a Lambda [Function](./function.md) or [Step Function](./step-function/index.md).
+Use the [`$AWS`](./aws.md) SDK's DynamoDB APIs to access the Table from within a Lambda [Function](./function) or [Step Function](./step-function/index.md).
 
 ```ts
 new StepFunction(scope, "Function", (itemId: string) => {

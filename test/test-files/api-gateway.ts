@@ -1,5 +1,5 @@
-import { App, aws_apigateway, Stack } from "aws-cdk-lib";
-import { AwsMethod, Function } from "../../src";
+import { App, aws_apigateway, aws_dynamodb, Stack } from "aws-cdk-lib";
+import { $AWS, AwsMethod, Function, Table } from "../../src";
 
 const app = new App({
   autoSynth: false,
@@ -8,6 +8,17 @@ const stack = new Stack(app, "stack");
 
 const func = new Function(stack, "func", async () => {
   return "hello";
+});
+
+interface Item {
+  id: string;
+  name: string;
+}
+const table = new Table<Item, "id">(stack, "table", {
+  partitionKey: {
+    name: "id",
+    type: aws_dynamodb.AttributeType.NUMBER,
+  },
 });
 
 const api = new aws_apigateway.RestApi(stack, "API");
@@ -21,6 +32,24 @@ new AwsMethod(
   ($input) => {
     return func($input.data);
   },
+  ($input) => $input.data
+);
+
+// VALID
+new AwsMethod(
+  {
+    httpMethod: "GET",
+    resource: api.root,
+  },
+  ($input) =>
+    $AWS.DynamoDB.GetItem({
+      TableName: table,
+      Key: {
+        id: {
+          S: $input.params("id") as string,
+        },
+      },
+    }),
   ($input) => $input.data
 );
 

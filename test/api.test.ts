@@ -9,6 +9,7 @@ import {
   $AWS,
   ApiGatewayInput,
 } from "../src";
+import { normalizeCDKJson } from "./util";
 
 let stack: Stack;
 let func: Function<any, any>;
@@ -126,7 +127,7 @@ test("AWS integration with Express Step Function", () => {
 
 test("AWS integration with DynamoDB Table", () => {
   const api = new aws_apigateway.RestApi(stack, "API");
-  const table = new Table(
+  const table = Table.fromTable(
     new aws_dynamodb.Table(stack, "Table", {
       partitionKey: {
         name: "pk",
@@ -179,8 +180,8 @@ function getTemplates(integration: { method: aws_apigateway.Method }) {
   ) as aws_apigateway.CfnMethod & {
     integration: aws_apigateway.CfnMethod.IntegrationProperty;
   };
-  return {
+  return normalizeCDKJson({
     requestTemplates: m.integration.requestTemplates,
     integrationResponses: m.integration.integrationResponses,
-  };
+  });
 }

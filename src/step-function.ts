@@ -1,15 +1,9 @@
 import * as appsync from "@aws-cdk/aws-appsync-alpha";
 import {
-  Arn,
-  ArnFormat,
   aws_apigateway,
-  aws_cloudwatch,
   aws_events_targets,
-  aws_iam,
   aws_stepfunctions,
-  Resource,
   Stack,
-  Token,
 } from "aws-cdk-lib";
 // eslint-disable-next-line import/no-extraneous-dependencies
 import { StepFunctions } from "aws-sdk";
@@ -30,6 +24,8 @@ import {
   FunctionDecl,
   isFunctionDecl,
 } from "./declaration";
+import { isErr } from "./error";
+import { ErrorCodes, SynthError } from "./error-code";
 import { EventBus, PredicateRuleBase, Rule } from "./event-bridge";
 import {
   EventBusTargetIntegration,
@@ -44,7 +40,12 @@ import {
   isSpreadAssignExpr,
 } from "./expression";
 import { NativeIntegration, PrewarmClients } from "./function";
-import { Integration, IntegrationInput, makeIntegration } from "./integration";
+import {
+  Integration,
+  IntegrationCall,
+  IntegrationInput,
+  makeIntegration,
+} from "./integration";
 import { AnyFunction, ensureItemOf } from "./util";
 import { VTL } from "./vtl";
 
@@ -370,7 +371,7 @@ interface StepFunctionDetail {
   };
 }
 
-interface StepFunctionStatusChangedEvent
+export interface StepFunctionStatusChangedEvent
   extends Event<
     StepFunctionDetail,
     "Step Functions Execution Status Change",
@@ -381,25 +382,21 @@ interface StepFunctionEventBusTargetProps
   extends Omit<aws_events_targets.SfnStateMachineProps, "input"> {}
 
 abstract class BaseStepFunction<
-    P extends Record<string, any> | undefined,
-    O,
-    CallIn,
-    CallOut
-  >
-  extends Resource
-  implements
-    aws_stepfunctions.IStateMachine,
+  Payload extends Record<string, any> | undefined,
+  CallIn,
+  CallOut
+> implements
     Integration<
       "StepFunction",
       (input: CallIn) => CallOut,
-      EventBusTargetIntegration<P, StepFunctionEventBusTargetProps | undefined>
+      EventBusTargetIntegration<
+        Payload,
+        StepFunctionEventBusTargetProps | undefined
+      >
     >
 {
   readonly kind = "StepFunction";
   readonly functionlessKind = "StepFunction";
-
-  readonly decl: FunctionDecl<(arg: P) => O>;
-  readonly resource: aws_stepfunctions.CfnStateMachine;
 
   readonly appSyncVtl: AppSyncVtlIntegration;
   readonly apiGWVtl: ApiGatewayVtlIntegration;
@@ -407,74 +404,7 @@ abstract class BaseStepFunction<
   // @ts-ignore
   readonly __functionBrand: (arg: CallIn) => CallOut;
 
-  readonly stateMachineName: string;
-  readonly stateMachineArn: string;
-  readonly role: aws_iam.IRole;
-  readonly definition: StateMachine<States>;
-
-  /**
-   * The principal this state machine is running as
-   */
-  readonly grantPrincipal;
-
-  constructor(
-    scope: Construct,
-    id: string,
-    props: StepFunctionProps,
-    func: (arg: P) => O
-  );
-
-  constructor(scope: Construct, id: string, func: (arg: P) => O);
-
-  constructor(
-    scope: Construct,
-    id: string,
-    ...args:
-      | [props: StepFunctionProps, func: (arg: P) => O]
-      | [func: (arg: P) => O]
-  ) {
-    const props =
-      isFunctionDecl(args[0]) || typeof args[0] === "function"
-        ? undefined
-        : args[0];
-    if (props?.stateMachineName !== undefined) {
-      validateStateMachineName(props.stateMachineName);
-    }
-    super(scope, id, {
-      ...props,
-      physicalName: props?.stateMachineName,
-    });
-    this.decl = isFunctionDecl(args[0])
-      ? args[0]
-      : validateFunctionDecl(args[1], "StepFunction");
-
-    this.role =
-      props?.role ??
-      new aws_iam.Role(this, "Role", {
-        assumedBy: new aws_iam.ServicePrincipal("states.amazonaws.com"),
-      });
-
-    this.grantPrincipal = this.role.grantPrincipal;
-
-    this.definition = new ASL(this, this.role, this.decl).definition;
-
-    this.resource = new aws_stepfunctions.CfnStateMachine(this, "Resource", {
-      roleArn: this.role.roleArn,
-      definitionString: JSON.stringify(this.definition),
-      stateMachineType: this.getStepFunctionType(),
-      loggingConfiguration: props?.logs
-        ? this.buildLoggingConfiguration(props?.logs)
-        : undefined,
-      tracingConfiguration: props?.tracingEnabled
-        ? this.buildTracingConfiguration()
-        : undefined,
-    });
-    // required or else adding logs can fail due invalid IAM policy
-    this.resource.node.addDependency(this.role);
-
-    this.stateMachineName = this.resource.attrName;
-    this.stateMachineArn = this.resource.attrArn;
-
+  constructor(readonly resource: aws_stepfunctions.StateMachine) {
     // Integration object for appsync vtl
     this.appSyncVtl = this.appSyncIntegration({
       request: (call, context) => {
@@ -497,7 +427,7 @@ abstract class BaseStepFunction<
         context.put(
           inputObj,
           context.str("stateMachineArn"),
-          context.str(this.stateMachineArn)
+          context.str(resource.stateMachineArn)
         );
 
         return `{
@@ -508,7 +438,7 @@ abstract class BaseStepFunction<
     "headers": {
       "content-type": "application/x-amz-json-1.0",
       "x-amz-target": "${
-        this.getStepFunctionType() ===
+        this.resource.stateMachineType ===
         aws_stepfunctions.StateMachineType.EXPRESS
           ? "AWSStepFunctions.StartSyncExecution"
           : "AWSStepFunctions.StartExecution"
@@ -539,20 +469,20 @@ abstract class BaseStepFunction<
       createIntegration: (options) => {
         const credentialsRole = options.credentialsRole;
 
-        this.grantRead(credentialsRole);
+        this.resource.grantRead(credentialsRole);
         if (
-          this.getStepFunctionType() ===
+          this.resource.stateMachineType ===
           aws_stepfunctions.StateMachineType.EXPRESS
         ) {
-          this.grantStartSyncExecution(credentialsRole);
+          this.resource.grantStartSyncExecution(credentialsRole);
         } else {
-          this.grantStartExecution(credentialsRole);
+          this.resource.grantStartExecution(credentialsRole);
         }
 
         return new aws_apigateway.AwsIntegration({
           service: "states",
           action:
-            this.getStepFunctionType() ===
+            this.resource.stateMachineType ===
             aws_stepfunctions.StateMachineType.EXPRESS
               ? "StartSyncExecution"
               : "StartExecution",
@@ -567,7 +497,7 @@ abstract class BaseStepFunction<
     };
   }
 
-  appSyncIntegration(
+  public appSyncIntegration(
     integration: Pick<AppSyncVtlIntegration, "request">
   ): AppSyncVtlIntegration {
     return {
@@ -577,7 +507,7 @@ abstract class BaseStepFunction<
         const ds = new appsync.HttpDataSource(api, dataSourceId, {
           api,
           endpoint: `https://${
-            this.getStepFunctionType() ===
+            this.resource.stateMachineType ===
             aws_stepfunctions.StateMachineType.EXPRESS
               ? "sync-states"
               : "states"
@@ -588,14 +518,14 @@ abstract class BaseStepFunction<
           },
         });
 
-        this.grantRead(ds.grantPrincipal);
+        this.resource.grantRead(ds.grantPrincipal);
         if (
-          this.getStepFunctionType() ===
+          this.resource.stateMachineType ===
           aws_stepfunctions.StateMachineType.EXPRESS
         ) {
-          this.grantStartSyncExecution(ds.grantPrincipal);
+          this.resource.grantStartSyncExecution(ds.grantPrincipal);
         } else {
-          this.grantStartExecution(ds.grantPrincipal);
+          this.resource.grantStartExecution(ds.grantPrincipal);
         }
         return ds;
       },
@@ -603,7 +533,7 @@ abstract class BaseStepFunction<
         const returnValName = "$sfn__result";
 
         if (
-          this.getStepFunctionType() ===
+          this.resource.stateMachineType ===
           aws_stepfunctions.StateMachineType.EXPRESS
         ) {
           return {
@@ -633,12 +563,13 @@ abstract class BaseStepFunction<
     };
   }
 
-  asl(call: CallExpr, context: ASL) {
-    this.grantStartExecution(context.role);
+  public asl(call: CallExpr, context: ASL) {
+    this.resource.grantStartExecution(context.role);
     if (
-      this.getStepFunctionType() === aws_stepfunctions.StateMachineType.EXPRESS
+      this.resource.stateMachineType ===
+      aws_stepfunctions.StateMachineType.EXPRESS
     ) {
-      this.grantStartSyncExecution(context.role);
+      this.resource.grantStartSyncExecution(context.role);
     }
 
     const { name, input, traceHeader } = retrieveMachineArgs(call);
@@ -646,13 +577,13 @@ abstract class BaseStepFunction<
     return {
       Type: "Task" as const,
       Resource: `arn:aws:states:::aws-sdk:sfn:${
-        this.getStepFunctionType() ===
+        this.resource.stateMachineType ===
         aws_stepfunctions.StateMachineType.EXPRESS
           ? "startSyncExecution"
           : "startExecution"
       }`,
       Parameters: {
-        StateMachineArn: this.stateMachineArn,
+        StateMachineArn: this.resource.stateMachineArn,
         ...(input ? ASL.toJsonAssignment("Input", input) : {}),
         ...(name ? ASL.toJsonAssignment("Name", name) : {}),
         ...(traceHeader
@@ -663,11 +594,11 @@ abstract class BaseStepFunction<
   }
 
   public readonly eventBus = makeEventBusIntegration<
-    P,
+    Payload,
     StepFunctionEventBusTargetProps | undefined
   >({
     target: (props, targetInput) => {
-      return new aws_events_targets.SfnStateMachine(this, {
+      return new aws_events_targets.SfnStateMachine(this.resource, {
         ...props,
         input: targetInput,
       });
@@ -681,7 +612,7 @@ abstract class BaseStepFunction<
         "detail-type": { value: "Step Functions Execution Status Change" },
         detail: {
           doc: {
-            stateMachineArn: { value: this.stateMachineArn },
+            stateMachineArn: { value: this.resource.stateMachineArn },
           },
         },
       },
@@ -692,7 +623,7 @@ abstract class BaseStepFunction<
     scope: Construct,
     id: string
   ): Rule<StepFunctionStatusChangedEvent> {
-    const bus = EventBus.default<StepFunctionStatusChangedEvent>(this);
+    const bus = EventBus.default<StepFunctionStatusChangedEvent>(this.resource);
 
     return new PredicateRuleBase(
       scope,
@@ -715,7 +646,7 @@ abstract class BaseStepFunction<
     scope: Construct,
     id: string
   ): Rule<StepFunctionStatusChangedEvent> {
-    const bus = EventBus.default<StepFunctionStatusChangedEvent>(this);
+    const bus = EventBus.default<StepFunctionStatusChangedEvent>(this.resource);
 
     return new PredicateRuleBase<StepFunctionStatusChangedEvent>(
       scope,
@@ -738,7 +669,7 @@ abstract class BaseStepFunction<
     scope: Construct,
     id: string
   ): Rule<StepFunctionStatusChangedEvent> {
-    const bus = EventBus.default<StepFunctionStatusChangedEvent>(this);
+    const bus = EventBus.default<StepFunctionStatusChangedEvent>(this.resource);
 
     return new PredicateRuleBase<StepFunctionStatusChangedEvent>(
       scope,
@@ -761,7 +692,7 @@ abstract class BaseStepFunction<
     scope: Construct,
     id: string
   ): Rule<StepFunctionStatusChangedEvent> {
-    const bus = EventBus.default<StepFunctionStatusChangedEvent>(this);
+    const bus = EventBus.default<StepFunctionStatusChangedEvent>(this.resource);
 
     return new PredicateRuleBase(
       scope,
@@ -784,7 +715,7 @@ abstract class BaseStepFunction<
     scope: Construct,
     id: string
   ): Rule<StepFunctionStatusChangedEvent> {
-    const bus = EventBus.default<StepFunctionStatusChangedEvent>(this);
+    const bus = EventBus.default<StepFunctionStatusChangedEvent>(this.resource);
 
     return new PredicateRuleBase<StepFunctionStatusChangedEvent>(
       scope,
@@ -806,11 +737,11 @@ abstract class BaseStepFunction<
   /**
    * Create event bus rule that matches any status change on this machine.
    */
-  onStatusChanged(
+  public onStatusChanged(
     scope: Construct,
     id: string
   ): Rule<StepFunctionStatusChangedEvent> {
-    const bus = EventBus.default<StepFunctionStatusChangedEvent>(this);
+    const bus = EventBus.default<StepFunctionStatusChangedEvent>(this.resource);
 
     // We are not able to use the nice "when" function here because we don't compile
     return new PredicateRuleBase<StepFunctionStatusChangedEvent>(
@@ -819,324 +750,6 @@ abstract class BaseStepFunction<
       bus,
       this.statusChangeEventDocument()
     );
-  }
-
-  public abstract getStepFunctionType(): aws_stepfunctions.StateMachineType;
-
-  /**
-   * Add the given statement to the role's policy
-   */
-  public addToRolePolicy(statement: aws_iam.PolicyStatement) {
-    this.role.addToPrincipalPolicy(statement);
-  }
-
-  /**
-   * Grant the given identity permissions to start an execution of this state
-   * Rule
-   */
-  public grantStartExecution(identity: aws_iam.IGrantable): aws_iam.Grant {
-    return aws_iam.Grant.addToPrincipal({
-      grantee: identity,
-      actions: ["states:StartExecution"],
-      resourceArns: [this.stateMachineArn],
-    });
-  }
-
-  /**
-   * Grant the given identity permissions to start a synchronous execution of
-   * this state machine.
-   */
-  public grantStartSyncExecution(identity: aws_iam.IGrantable): aws_iam.Grant {
-    return aws_iam.Grant.addToPrincipal({
-      grantee: identity,
-      actions: ["states:StartSyncExecution"],
-      resourceArns: [this.stateMachineArn],
-    });
-  }
-
-  /**
-   * Grant the given identity permissions to read results from state
-   * machine.
-   */
-  public grantRead(identity: aws_iam.IGrantable): aws_iam.Grant {
-    aws_iam.Grant.addToPrincipal({
-      grantee: identity,
-      actions: ["states:ListExecutions", "states:ListStateMachines"],
-      resourceArns: [this.stateMachineArn],
-    });
-    aws_iam.Grant.addToPrincipal({
-      grantee: identity,
-      actions: [
-        "states:DescribeExecution",
-        "states:DescribeStateMachineForExecution",
-        "states:GetExecutionHistory",
-      ],
-      resourceArns: [`${this.executionArn()}:*`],
-    });
-    return aws_iam.Grant.addToPrincipal({
-      grantee: identity,
-      actions: [
-        "states:ListActivities",
-        "states:DescribeStateMachine",
-        "states:DescribeActivity",
-      ],
-      resourceArns: ["*"],
-    });
-  }
-
-  /**
-   * Grant the given identity task response permissions on a state machine
-   */
-  public grantTaskResponse(identity: aws_iam.IGrantable): aws_iam.Grant {
-    return aws_iam.Grant.addToPrincipal({
-      grantee: identity,
-      actions: [
-        "states:SendTaskSuccess",
-        "states:SendTaskFailure",
-        "states:SendTaskHeartbeat",
-      ],
-      resourceArns: [this.stateMachineArn],
-    });
-  }
-
-  /**
-   * Grant the given identity permissions on all executions of the state machine
-   */
-  public grantExecution(identity: aws_iam.IGrantable, ...actions: string[]) {
-    return aws_iam.Grant.addToPrincipal({
-      grantee: identity,
-      actions,
-      resourceArns: [`${this.executionArn()}:*`],
-    });
-  }
-
-  /**
-   * Grant the given identity custom permissions
-   */
-  public grant(
-    identity: aws_iam.IGrantable,
-    ...actions: string[]
-  ): aws_iam.Grant {
-    return aws_iam.Grant.addToPrincipal({
-      grantee: identity,
-      actions,
-      resourceArns: [this.stateMachineArn],
-    });
-  }
-
-  /**
-   * Return the given named metric for this State Machine's executions
-   *
-   * @default - sum over 5 minutes
-   */
-  public metric(
-    metricName: string,
-    props?: aws_cloudwatch.MetricOptions
-  ): aws_cloudwatch.Metric {
-    return new aws_cloudwatch.Metric({
-      namespace: "AWS/States",
-      metricName,
-      dimensionsMap: { StateMachineArn: this.stateMachineArn },
-      statistic: "sum",
-      ...props,
-    }).attachTo(this);
-  }
-
-  /**
-   * Metric for the number of executions that failed
-   *
-   * @default - sum over 5 minutes
-   */
-  public metricFailed(
-    props?: aws_cloudwatch.MetricOptions
-  ): aws_cloudwatch.Metric {
-    return this.cannedMetric(
-      (dimensions) => ({
-        namespace: "AWS/States",
-        metricName: "ExecutionsFailed",
-        dimensionsMap: dimensions,
-        statistic: "Sum",
-      }),
-      props
-    );
-  }
-
-  /**
-   * Metric for the number of executions that were throttled
-   *
-   * @default - sum over 5 minutes
-   */
-  public metricThrottled(
-    props?: aws_cloudwatch.MetricOptions
-  ): aws_cloudwatch.Metric {
-    // There's a typo in the "canned" version of this
-    return this.metric("ExecutionThrottled", props);
-  }
-
-  /**
-   * Metric for the number of executions that were aborted
-   *
-   * @default - sum over 5 minutes
-   */
-  public metricAborted(
-    props?: aws_cloudwatch.MetricOptions
-  ): aws_cloudwatch.Metric {
-    return this.cannedMetric(
-      (dimensions) => ({
-        namespace: "AWS/States",
-        metricName: "ExecutionsAborted",
-        dimensionsMap: dimensions,
-        statistic: "Sum",
-      }),
-      props
-    );
-  }
-
-  /**
-   * Metric for the number of executions that succeeded
-   *
-   * @default - sum over 5 minutes
-   */
-  public metricSucceeded(
-    props?: aws_cloudwatch.MetricOptions
-  ): aws_cloudwatch.Metric {
-    return this.cannedMetric(
-      (dimensions) => ({
-        namespace: "AWS/States",
-        metricName: "ExecutionsSucceeded",
-        dimensionsMap: dimensions,
-        statistic: "Sum",
-      }),
-      props
-    );
-  }
-
-  /**
-   * Metric for the number of executions that timed out
-   *
-   * @default - sum over 5 minutes
-   */
-  public metricTimedOut(
-    props?: aws_cloudwatch.MetricOptions
-  ): aws_cloudwatch.Metric {
-    return this.cannedMetric(
-      (dimensions) => ({
-        namespace: "AWS/States",
-        metricName: "ExecutionsTimedOut",
-        dimensionsMap: dimensions,
-        statistic: "Sum",
-      }),
-      props
-    );
-  }
-
-  /**
-   * Metric for the number of executions that were started
-   *
-   * @default - sum over 5 minutes
-   */
-  public metricStarted(
-    props?: aws_cloudwatch.MetricOptions
-  ): aws_cloudwatch.Metric {
-    return this.metric("ExecutionsStarted", props);
-  }
-
-  /**
-   * Metric for the interval, in milliseconds, between the time the execution starts and the time it closes
-   *
-   * @default - average over 5 minutes
-   */
-  public metricTime(
-    props?: aws_cloudwatch.MetricOptions
-  ): aws_cloudwatch.Metric {
-    return this.cannedMetric(
-      (dimensions) => ({
-        namespace: "AWS/States",
-        metricName: "ExecutionTime",
-        dimensionsMap: dimensions,
-        statistic: "Average",
-      }),
-      props
-    );
-  }
-
-  /**
-   * Returns the pattern for the execution ARN's of the state machine
-   */
-  private executionArn(): string {
-    return Stack.of(this).formatArn({
-      resource: "execution",
-      service: "states",
-      resourceName: Arn.split(
-        this.stateMachineArn,
-        ArnFormat.COLON_RESOURCE_NAME
-      ).resourceName,
-      arnFormat: ArnFormat.COLON_RESOURCE_NAME,
-    });
-  }
-
-  private cannedMetric(
-    fn: (dims: { StateMachineArn: string }) => aws_cloudwatch.MetricProps,
-    props?: aws_cloudwatch.MetricOptions
-  ): aws_cloudwatch.Metric {
-    return new aws_cloudwatch.Metric({
-      ...fn({ StateMachineArn: this.stateMachineArn }),
-      ...props,
-    }).attachTo(this);
-  }
-
-  private buildLoggingConfiguration(
-    logOptions: aws_stepfunctions.LogOptions
-  ): aws_stepfunctions.CfnStateMachine.LoggingConfigurationProperty {
-    // https://docs.aws.amazon.com/step-functions/latest/dg/cw-logs.html#cloudwatch-iam-policy
-    this.addToRolePolicy(
-      new aws_iam.PolicyStatement({
-        effect: aws_iam.Effect.ALLOW,
-        actions: [
-          "logs:CreateLogDelivery",
-          "logs:GetLogDelivery",
-          "logs:UpdateLogDelivery",
-          "logs:DeleteLogDelivery",
-          "logs:ListLogDeliveries",
-          "logs:PutResourcePolicy",
-          "logs:DescribeResourcePolicies",
-          "logs:DescribeLogGroups",
-        ],
-        resources: ["*"],
-      })
-    );
-
-    return {
-      destinations: [
-        {
-          cloudWatchLogsLogGroup: {
-            logGroupArn: logOptions.destination.logGroupArn,
-          },
-        },
-      ],
-      includeExecutionData: logOptions.includeExecutionData,
-      level: logOptions.level || "ERROR",
-    };
-  }
-
-  private buildTracingConfiguration(): aws_stepfunctions.CfnStateMachine.TracingConfigurationProperty {
-    this.addToRolePolicy(
-      new aws_iam.PolicyStatement({
-        // https://docs.aws.amazon.com/xray/latest/devguide/security_iam_id-based-policy-examples.html#xray-permissions-resources
-        // https://docs.aws.amazon.com/step-functions/latest/dg/xray-iam.html
-        actions: [
-          "xray:PutTraceSegments",
-          "xray:PutTelemetryRecords",
-          "xray:GetSamplingRules",
-          "xray:GetSamplingTargets",
-        ],
-        resources: ["*"],
-      })
-    );
-
-    return {
-      enabled: true,
-    };
   }
 }
 
@@ -1171,22 +784,6 @@ function retrieveMachineArgs(call: CallExpr) {
   };
 }
 
-function validateStateMachineName(stateMachineName: string) {
-  if (!Token.isUnresolved(stateMachineName)) {
-    if (stateMachineName.length < 1 || stateMachineName.length > 80) {
-      throw new Error(
-        `State Machine name must be between 1 and 80 characters. Received: ${stateMachineName}`
-      );
-    }
-
-    if (!stateMachineName.match(/^[a-z0-9\+\!\@\.\(\)\-\=\_\']+$/i)) {
-      throw new Error(
-        `State Machine name must match "^[a-z0-9+!@.()-=_']+$/i". Received: ${stateMachineName}`
-      );
-    }
-  }
-}
-
 export interface StepFunctionProps
   extends Omit<
     aws_stepfunctions.StateMachineProps,
@@ -1205,7 +802,7 @@ export interface StepFunctionProps
  * ```ts
  * import * as f from "functionless";
  *
- * const table = new f.Function<string, number>(new aws_lambda.Function(..))
+ * const table = new f.Table(this, "Table", { ... });
  *
  * const getItem = new ExpressStepFunction(this, "F", () => {
  *   return f.$AWS.DynamoDB.GetItem({
@@ -1217,56 +814,41 @@ export interface StepFunctionProps
  * });
  * ```
  */
-export class ExpressStepFunction<
-  P extends Record<string, any> | undefined,
-  O
-> extends BaseStepFunction<
-  P,
-  O,
-  StepFunctionRequest<P>,
-  SyncExecutionResult<O>
+export interface IExpressStepFunction<
+  Payload extends Record<string, any> | undefined,
+  Out
 > {
+  (input: StepFunctionRequest<Payload>): SyncExecutionResult<Out>;
+}
+
+class BaseExpressStepFunction<
+    Payload extends Record<string, any> | undefined,
+    Out
+  >
+  extends BaseStepFunction<
+    Payload,
+    StepFunctionRequest<Payload>,
+    SyncExecutionResult<Out>
+  >
+  implements IExpressStepFunction<Payload, Out>
+{
   /**
    * This static property identifies this class as an ExpressStepFunction to the TypeScript plugin.
    */
   public static readonly FunctionlessType = "ExpressStepFunction";
 
-  public getStepFunctionType(): aws_stepfunctions.StateMachineType.EXPRESS {
-    return aws_stepfunctions.StateMachineType.EXPRESS;
-  }
-
   readonly native: NativeIntegration<
-    (input: StepFunctionRequest<P>) => SyncExecutionResult<O>
+    (input: StepFunctionRequest<Payload>) => SyncExecutionResult<Out>
   >;
 
-  constructor(
-    scope: Construct,
-    id: string,
-    props: StepFunctionProps,
-    func: (arg: P) => O
-  );
+  constructor(machine: aws_stepfunctions.StateMachine) {
+    super(machine);
 
-  constructor(scope: Construct, id: string, func: (arg: P) => O);
-
-  constructor(
-    scope: Construct,
-    id: string,
-    ...args:
-      | [props: StepFunctionProps, func: (arg: P) => O]
-      | [func: (arg: P) => O]
-  ) {
-    super(
-      scope,
-      id,
-      args[0] as any,
-      (args.length > 1 ? args[1] : undefined) as any
-    );
-
-    const stateMachineArn = this.stateMachineArn;
+    const stateMachineArn = this.resource.stateMachineArn;
 
     this.native = {
       bind: (context) => {
-        this.grantStartSyncExecution(context.resource);
+        this.resource.grantStartSyncExecution(context.resource);
       },
       preWarm(preWarmContext) {
         preWarmContext.getOrInit(PrewarmClients.STEP_FUNCTIONS);
@@ -1297,9 +879,112 @@ export class ExpressStepFunction<
               startDate: result.startDate.getUTCMilliseconds(),
               stopDate: result.stopDate.getUTCMilliseconds(),
               output: result.output ? JSON.parse(result.output) : undefined,
-            } as SyncExecutionSuccessResult<O>);
+            } as SyncExecutionSuccessResult<Out>);
       },
     };
+  }
+}
+
+interface BaseExpressStepFunction<
+  Payload extends Record<string, any> | undefined,
+  Out
+> {
+  (input: StepFunctionRequest<Payload>): SyncExecutionResult<Out>;
+}
+
+/**
+ * An {@link ExpressStepFunction} is a callable Function which executes on the managed
+ * AWS Step Function infrastructure. Like a Lambda Function, it runs within memory of
+ * a single machine, except unlike Lambda, the entire environment is managed and operated
+ * by AWS. Meaning, there is no Operating System, Memory, CPU, Credentials or API Clients
+ * to manage. The entire workflow is configured at build-time via the Amazon State Language (ASL).
+ *
+ * With Functionless, the ASL is derived from type-safe TypeScript code instead of JSON.
+ *
+ * ```ts
+ * import * as f from "functionless";
+ *
+ * const table = new f.Table(this, "Table", { ... });
+ *
+ * const getItem = new ExpressStepFunction(this, "F", () => {
+ *   return f.$AWS.DynamoDB.GetItem({
+ *     TableName: table,
+ *     Key: {
+ *       ..
+ *     }
+ *   });
+ * });
+ * ```
+ */
+export class ExpressStepFunction<
+  Payload extends Record<string, any> | undefined,
+  Out
+> extends BaseExpressStepFunction<Payload, Out> {
+  readonly definition: StateMachine<States>;
+
+  /**
+   * Wrap a {@link aws_stepfunctions.StateMachine} with Functionless.
+   *
+   * A wrapped {@link StepFunction} provides common integrations like execute (`machine()`) and `describeExecution`.
+   *
+   * {@link ExpressStepFunction} should only be used to wrap a Express Step Function.
+   * Express Step Functions should use {@link StepFunction}.
+   *
+   * ```ts
+   * ExpressStepFunction.fromStateMachine(new aws_stepfunctions.StateMachine(this, "F", {
+   *    stateMachineType: aws_stepfunctions.StateMachineType.EXPRESS,
+   *    ...
+   * }));
+   * ```
+   */
+  public static fromStateMachine<
+    Payload extends Record<string, any> | undefined,
+    Out
+  >(
+    machine: aws_stepfunctions.StateMachine
+  ): IExpressStepFunction<Payload, Out> {
+    return new ImportedExpressStepFunction<Payload, Out>(machine);
+  }
+
+  constructor(
+    scope: Construct,
+    id: string,
+    props: StepFunctionProps,
+    func: (arg: Payload) => Out
+  );
+  constructor(scope: Construct, id: string, func: (arg: Payload) => Out);
+  constructor(
+    scope: Construct,
+    id: string,
+    ...args:
+      | [props: StepFunctionProps, func: (arg: Payload) => Out]
+      | [func: (arg: Payload) => Out]
+  ) {
+    const [props, func] = getStepFunctionArgs(...args);
+
+    const [definition, machine] = synthesizeStateMachine(scope, id, func, {
+      ...props,
+      stateMachineType: aws_stepfunctions.StateMachineType.EXPRESS,
+    });
+
+    super(machine);
+
+    this.definition = definition;
+  }
+}
+
+class ImportedExpressStepFunction<
+  Payload extends Record<string, any> | undefined,
+  Out
+> extends BaseExpressStepFunction<Payload, Out> {
+  constructor(machine: aws_stepfunctions.StateMachine) {
+    if (
+      machine.stateMachineType !== aws_stepfunctions.StateMachineType.EXPRESS
+    ) {
+      throw new SynthError(ErrorCodes.Incorrect_StateMachine_Import_Type);
+    }
+
+    super(machine);
   }
 }
 
@@ -1355,58 +1040,91 @@ export type StepFunctionRequest<P extends Record<string, any> | undefined> =
     );
 
 export interface ExpressStepFunction<
-  P extends Record<string, any> | undefined,
-  O
+  Payload extends Record<string, any> | undefined,
+  Out
 > {
-  (input: StepFunctionRequest<P>): SyncExecutionResult<O>;
+  (input: StepFunctionRequest<Payload>): SyncExecutionResult<Out>;
 }
 
-export class StepFunction<
-  P extends Record<string, any> | undefined,
-  O
-> extends BaseStepFunction<
-  P,
-  O,
-  StepFunctionRequest<P>,
-  AWS.StepFunctions.StartExecutionOutput
-> {
+/**
+ * A {@link StepFunction} is a callable Function which executes on the managed
+ * AWS Step Function infrastructure. Like a Lambda Function, it runs within memory of
+ * a single machine, except unlike Lambda, the entire environment is managed and operated
+ * by AWS. Meaning, there is no Operating System, Memory, CPU, Credentials or API Clients
+ * to manage. The entire workflow is configured at build-time via the Amazon State Language (ASL).
+ *
+ * With Functionless, the ASL is derived from type-safe TypeScript code instead of JSON.
+ *
+ * ```ts
+ * import * as f from "functionless";
+ *
+ * const table = new f.Table(this, "Table", { ... });
+ *
+ * const getItem = new StepFunction(this, "F", () => {
+ *   return f.$AWS.DynamoDB.GetItem({
+ *     TableName: table,
+ *     Key: {
+ *       ..
+ *     }
+ *   });
+ * });
+ * ```
+ *
+ * @typeParam Payload - the object payload to the step function.
+ * @typeParam Out - the type of object the step function outputs.
+ *                  currently not used: https://github.com/functionless/functionless/issues/129
+ */
+export interface IStepFunction<
+  Payload extends Record<string, any> | undefined,
+  _Out
+> extends Integration<
+    "StepFunction",
+    (
+      input: StepFunctionRequest<Payload>
+    ) => AWS.StepFunctions.StartExecutionOutput,
+    EventBusTargetIntegration<
+      Payload,
+      StepFunctionEventBusTargetProps | undefined
+    >
+  > {
+  describeExecution: IntegrationCall<
+    "StepFunction.describeExecution",
+    (executionArn: string) => AWS.StepFunctions.DescribeExecutionOutput
+  >;
+
+  (input: StepFunctionRequest<Payload>): AWS.StepFunctions.StartExecutionOutput;
+}
+
+class BaseStandardStepFunction<
+    Payload extends Record<string, any> | undefined,
+    Out
+  >
+  extends BaseStepFunction<
+    Payload,
+    StepFunctionRequest<Payload>,
+    AWS.StepFunctions.StartExecutionOutput
+  >
+  implements IStepFunction<Payload, Out>
+{
   /**
    * This static property identifies this class as an StepFunction to the TypeScript plugin.
    */
   public static readonly FunctionlessType = "StepFunction";
 
   readonly native: NativeIntegration<
-    (input: StepFunctionRequest<P>) => AWS.StepFunctions.StartExecutionOutput
+    (
+      input: StepFunctionRequest<Payload>
+    ) => AWS.StepFunctions.StartExecutionOutput
   >;
 
-  constructor(
-    scope: Construct,
-    id: string,
-    props: StepFunctionProps,
-    func: (arg: P) => O
-  );
+  constructor(resource: aws_stepfunctions.StateMachine) {
+    super(resource);
 
-  constructor(scope: Construct, id: string, func: (arg: P) => O);
-
-  constructor(
-    scope: Construct,
-    id: string,
-    ...args:
-      | [props: StepFunctionProps, func: (arg: P) => O]
-      | [func: (arg: P) => O]
-  ) {
-    super(
-      scope,
-      id,
-      args[0] as any,
-      (args.length > 1 ? args[1] : undefined) as any
-    );
-
-    const stateMachineArn = this.stateMachineArn;
+    const stateMachineArn = this.resource.stateMachineArn;
 
     this.native = {
       bind: (context) => {
-        this.grantStartExecution(context.resource);
+        this.resource.grantStartExecution(context.resource);
       },
       preWarm(preWarmContext) {
         preWarmContext.getOrInit(PrewarmClients.STEP_FUNCTIONS);
@@ -1427,10 +1145,6 @@ export class StepFunction<
         return result;
       },
     };
-  }
-
-  public getStepFunctionType(): aws_stepfunctions.StateMachineType.STANDARD {
-    return aws_stepfunctions.StateMachineType.STANDARD;
   }
 
   public describeExecution = makeIntegration<
@@ -1459,7 +1173,7 @@ export class StepFunction<
     }),
     asl: (call, context) => {
       // need DescribeExecution
-      this.grantRead(context.role);
+      this.resource.grantRead(context.role);
 
       const executionArnExpr = assertDefined(
         call.args[0].expr,
@@ -1476,7 +1190,7 @@ export class StepFunction<
       return task;
     },
     native: {
-      bind: (context) => this.grantRead(context.resource),
+      bind: (context) => this.resource.grantRead(context.resource),
       preWarm(prewarmContext) {
         prewarmContext.getOrInit(PrewarmClients.STEP_FUNCTIONS);
       },
@@ -1504,8 +1218,157 @@ export class StepFunction<
   });
 }
 
-export interface StepFunction<P extends Record<string, any> | undefined, O> {
-  (input: StepFunctionRequest<P>): AWS.StepFunctions.StartExecutionOutput;
+interface BaseStandardStepFunction<
+  Payload extends Record<string, any> | undefined,
+  Out
+> {
+  (input: StepFunctionRequest<Payload>): AWS.StepFunctions.StartExecutionOutput;
+}
+
+/**
+ * A {@link StepFunction} is a callable Function which executes on the managed
+ * AWS Step Function infrastructure. Like a Lambda Function, it runs within memory of
+ * a single machine, except unlike Lambda, the entire environment is managed and operated
+ * by AWS. Meaning, there is no Operating System, Memory, CPU, Credentials or API Clients
+ * to manage. The entire workflow is configured at build-time via the Amazon State Language (ASL).
+ *
+ * With Functionless, the ASL is derived from type-safe TypeScript code instead of JSON.
+ *
+ * ```ts
+ * import * as f from "functionless";
+ *
+ * const table = new f.Table(this, "Table", { ... });
+ *
+ * const getItem = new StepFunction(this, "F", () => {
+ *   return f.$AWS.DynamoDB.GetItem({
+ *     TableName: table,
+ *     Key: {
+ *       ..
+ *     }
+ *   });
+ * });
+ * ```
+ *
+ * @typeParam Payload - the object payload to the step function.
+ * @typeParam Out - the type of object the step function outputs.
+ *                  currently not used: https://github.com/functionless/functionless/issues/129
+ */
+export class StepFunction<Payload extends Record<string, any> | undefined, Out>
+  extends BaseStandardStepFunction<Payload, Out>
+  implements IStepFunction<Payload, Out>
+{
+  readonly definition: StateMachine<States>;
+
+  /**
+   * Wrap a {@link aws_stepfunctions.StateMachine} with Functionless.
+   *
+   * A wrapped {@link StepFunction} provides common integrations like execute (`machine()`) and `describeExecution`.
+   *
+   * {@link StepFunction} should only be used to wrap a Standard Step Function.
+   * Express Step Functions should use {@link ExpressStepFunction}.
+   *
+   * ```ts
+   * StepFunction.fromStateMachine(new aws_stepfunctions.StateMachine(this, "F", {
+   *    ...
+   * }));
+   * ```
+   */
+  public static fromStateMachine<
+    Payload extends Record<string, any> | undefined,
+    Out
+  >(machine: aws_stepfunctions.StateMachine): IStepFunction<Payload, Out> {
+    return new ImportedStepFunction<Payload, Out>(machine);
+  }
+
+  constructor(
+    scope: Construct,
+    id: string,
+    props: StepFunctionProps,
+    func: (arg: Payload) => Out
+  );
+
+  constructor(scope: Construct, id: string, func: (arg: Payload) => Out);
+
+  constructor(
+    scope: Construct,
+    id: string,
+    ...args:
+      | [props: StepFunctionProps, func: (arg: Payload) => Out]
+      | [func: (arg: Payload) => Out]
+  ) {
+    const [props, func] = getStepFunctionArgs(...args);
+
+    const [definition, machine] = synthesizeStateMachine(scope, id, func, {
+      ...props,
+      stateMachineType: aws_stepfunctions.StateMachineType.STANDARD,
+    });
+
+    super(machine);
+
+    this.definition = definition;
+  }
+}
+
+function getStepFunctionArgs<
+  Payload extends Record<string, any> | undefined,
+  Out
+>(
+  ...args:
+    | [props: StepFunctionProps, func: (arg: Payload) => Out]
+    | [func: (arg: Payload) => Out]
+) {
+  const props =
+    isFunctionDecl(args[0]) || isErr(args[0])
+      ? {}
+      : (args[1] as StepFunctionProps);
+  const func = validateFunctionDecl(
+    args.length > 1 ? args[1] : args[0],
+    "StepFunction"
+  );
+
+  return [props, func] as const;
+}
+
+function synthesizeStateMachine(
+  scope: Construct,
+  id: string,
+  decl: FunctionDecl,
+  props: StepFunctionProps & {
+    stateMachineType: aws_stepfunctions.StateMachineType;
+  }
+): [StateMachine<States>, aws_stepfunctions.StateMachine] {
+  const machine = new aws_stepfunctions.StateMachine(scope, id, {
+    ...props,
+    definition: new aws_stepfunctions.Pass(scope, "dummy"),
+  });
+
+  const definition = new ASL(scope, machine.role, decl).definition;
+
+  const resource = machine.node.findChild(
+    "Resource"
+  ) as aws_stepfunctions.CfnStateMachine;
+
+  resource.definitionString = Stack.of(resource).toJsonString(definition);
+
+  // remove the dummy pass node because we don't need it.
+  scope.node.tryRemoveChild("dummy");
+
+  return [definition, machine];
+}
+
+class ImportedStepFunction<
+  Payload extends Record<string, any> | undefined,
+  Out
+> extends BaseStandardStepFunction<Payload, Out> {
+  constructor(machine: aws_stepfunctions.StateMachine) {
+    if (
+      machine.stateMachineType !== aws_stepfunctions.StateMachineType.STANDARD
+    ) {
+      throw new SynthError(ErrorCodes.Incorrect_StateMachine_Import_Type);
+    }
+
+    super(machine);
+  }
 }
 
 function getArgs(call: CallExpr) {

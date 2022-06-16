@@ -139,7 +139,7 @@ const CodeSnippets: CodeSnippet[] = [
   description: string;
 }
 
-const tasks = new Table<Task, "taskId">(this, "Tasks", {
+const tasks = Table.fromTable<Task, "taskId">(this, "Tasks", {
   billingMode: BillingMode.PAY_PER_REQUEST
 });`,
   },

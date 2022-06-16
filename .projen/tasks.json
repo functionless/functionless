@@ -214,6 +214,17 @@
         }
       ]
     },
+    "test:fast": {
+      "name": "test:fast",
+      "steps": [
+        {
+          "exec": "ts-patch install -s"
+        },
+        {
+          "exec": "jest --testPathIgnorePatterns localstack --coverage false"
+        }
+      ]
+    },
     "test:update": {
       "name": "test:update",
       "description": "Update jest snapshots",

@@ -1340,6 +1340,8 @@ const OperatorMappings: Record<number, BinaryOp> = {
   [ts.SyntaxKind.EqualsToken]: "=",
   [ts.SyntaxKind.PlusToken]: "+",
   [ts.SyntaxKind.MinusToken]: "-",
+  [ts.SyntaxKind.AsteriskToken]: "*",
+  [ts.SyntaxKind.SlashToken]: "/",
   [ts.SyntaxKind.AmpersandAmpersandToken]: "&&",
   [ts.SyntaxKind.BarBarToken]: "||",
   [ts.SyntaxKind.ExclamationEqualsToken]: "!=",

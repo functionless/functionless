@@ -1,10 +1,6 @@
 import { Stack } from "aws-cdk-lib";
-import { AppsyncResolver, AppsyncVTL, reflect, StepFunction } from "../src";
-import {
-  appsyncTestCase,
-  appsyncVelocityJsonTestCase,
-  getAppSyncTemplates,
-} from "./util";
+import { AppsyncContext, AppsyncResolver, reflect, StepFunction } from "../src";
+import { appsyncTestCase, testAppsyncVelocity } from "./util";
 
 let stack: Stack;
 beforeEach(() => {
@@ -15,54 +11,21 @@ describe("step function integration", () => {
   test("machine with no parameters", () => {
     const machine = new StepFunction(stack, "machine", () => {});
 
-    const func = reflect(() => {
-      machine({});
-    });
-
-    appsyncTestCase(
-      func,
-      "{}",
-      `${AppsyncVTL.CircuitBreaker}
-#set($v1 = {})
-$util.qr($v1.put('stateMachineArn', '${machine.stateMachineArn}'))
-{
-  "version": "2018-05-29",
-  "method": "POST",
-  "resourcePath": "/",
-  "params": {
-    "headers": {
-      "content-type": "application/x-amz-json-1.0",
-      "x-amz-target": "AWSStepFunctions.StartExecution"
-    },
-    "body": $util.toJson($v1)
-  }
-}`,
-      "{}",
-      AppsyncVTL.CircuitBreaker
+    const templates = appsyncTestCase(
+      reflect(() => {
+        machine({});
+      })
     );
 
-    const templates = getAppSyncTemplates(func);
-
-    appsyncVelocityJsonTestCase(
-      templates[1],
-      { arguments: {}, source: {} },
-      {
-        result: {
-          version: "2018-05-29",
-          method: "POST",
-          resourcePath: "/",
-          params: {
-            headers: {
-              "content-type": "application/x-amz-json-1.0",
-              "x-amz-target": "AWSStepFunctions.StartExecution",
-            },
-            body: {
-              stateMachineArn: machine.stateMachineArn,
-            },
+    testAppsyncVelocity(templates[1], {
+      resultMatch: {
+        params: {
+          body: {
+            stateMachineArn: machine.resource.stateMachineArn,
           },
         },
-      }
-    );
+      },
+    });
   });
 
   test("machine with static parameters", () => {
@@ -72,33 +35,21 @@ $util.qr($v1.put('stateMachineArn', '${machine.stateMachineArn}'))
       () => {}
     );
 
-    const templates = getAppSyncTemplates(
+    const templates = appsyncTestCase(
       reflect(() => {
         machine({ input: { id: "1" } });
       })
     );
 
-    appsyncVelocityJsonTestCase(
-      templates[1],
-      { arguments: {}, source: {} },
-      {
-        result: {
-          version: "2018-05-29",
-          method: "POST",
-          resourcePath: "/",
-          params: {
-            headers: {
-              "content-type": "application/x-amz-json-1.0",
-              "x-amz-target": "AWSStepFunctions.StartExecution",
-            },
-            body: {
-              stateMachineArn: machine.stateMachineArn,
-              input: JSON.stringify({ id: "1" }),
-            },
+    testAppsyncVelocity(templates[1], {
+      resultMatch: {
+        params: {
+          body: {
+            stateMachineArn: machine.resource.stateMachineArn,
           },
         },
-      }
-    );
+      },
+    });
   });
 
   test("machine with dynamic parameters", () => {
@@ -108,69 +59,48 @@ $util.qr($v1.put('stateMachineArn', '${machine.stateMachineArn}'))
       () => {}
     );
 
-    const templates = getAppSyncTemplates(
-      reflect((context) => {
+    const templates = appsyncTestCase(
+      reflect((context: AppsyncContext<{ id: string }>) => {
         machine({ input: { id: context.arguments.id } });
       })
     );
 
-    appsyncVelocityJsonTestCase(
-      templates[1],
-      { arguments: { id: "1" }, source: {} },
-      {
-        result: {
-          version: "2018-05-29",
-          method: "POST",
-          resourcePath: "/",
-          params: {
-            headers: {
-              "content-type": "application/x-amz-json-1.0",
-              "x-amz-target": "AWSStepFunctions.StartExecution",
-            },
-            body: {
-              stateMachineArn: machine.stateMachineArn,
-              input: JSON.stringify({ id: "1" }),
-            },
+    testAppsyncVelocity(templates[1], {
+      arguments: { id: "1" },
+      resultMatch: {
+        params: {
+          body: {
+            stateMachineArn: machine.resource.stateMachineArn,
           },
         },
-      }
-    );
+      },
+    });
   });
 
   test("machine with name", () => {
     const machine = new StepFunction(stack, "machine", () => {});
 
-    const templates = getAppSyncTemplates(
-      reflect((context) => {
+    const templates = appsyncTestCase(
+      reflect((context: AppsyncContext<{ id: string }>) => {
         machine({ name: context.arguments.id });
       })
     );
 
-    appsyncVelocityJsonTestCase(
-      templates[1],
-      { arguments: { id: "1" }, source: {} },
-      {
-        result: {
-          version: "2018-05-29",
-          method: "POST",
-          resourcePath: "/",
-          params: {
-            headers: {
-              "content-type": "application/x-amz-json-1.0",
-              "x-amz-target": "AWSStepFunctions.StartExecution",
-            },
-            body: {
-              stateMachineArn: machine.stateMachineArn,
-              name: "1",
-            },
+    testAppsyncVelocity(templates[1], {
+      arguments: { id: "1" },
+      resultMatch: {
+        params: {
+          body: {
+            stateMachineArn: machine.resource.stateMachineArn,
           },
         },
-      }
-    );
+      },
+    });
   });
 
   test("machine with trace header", () => {
     const machine = new StepFunction(stack, "machine", () => {});
+
     new AppsyncResolver<{ id: string }, void>((context) => {
       machine({ traceHeader: context.arguments.id });
     });
@@ -179,56 +109,14 @@ $util.qr($v1.put('stateMachineArn', '${machine.stateMachineArn}'))
   test("machine describe exec", () => {
     const machine = new StepFunction(stack, "machine", () => {});
 
-    const func = reflect(() => {
-      const exec = "exec1";
-      machine.describeExecution(exec);
-    });
-
-    appsyncTestCase(
-      func,
-      "{}",
-      `${AppsyncVTL.CircuitBreaker}
-#set($context.stash.exec = 'exec1')
-{
-  "version": "2018-05-29",
-  "method": "POST",
-  "resourcePath": "/",
-  "params": {
-    "headers": {
-      "content-type": "application/x-amz-json-1.0",
-      "x-amz-target": "AWSStepFunctions.DescribeExecution"
-    },
-    "body": {
-      "executionArn": $util.toJson($context.stash.exec)
-    }
-  }
-}`,
-      "{}",
-      AppsyncVTL.CircuitBreaker
+    const templates = appsyncTestCase(
+      reflect(() => {
+        const exec = "exec1";
+        machine.describeExecution(exec);
+      })
     );
 
-    const templates = getAppSyncTemplates(func);
-
-    appsyncVelocityJsonTestCase(
-      templates[1],
-      { arguments: {}, source: {} },
-      {
-        result: {
-          version: "2018-05-29",
-          method: "POST",
-          resourcePath: "/",
-          params: {
-            headers: {
-              "content-type": "application/x-amz-json-1.0",
-              "x-amz-target": "AWSStepFunctions.DescribeExecution",
-            },
-            body: {
-              executionArn: "exec1",
-            },
-          },
-        },
-      }
-    );
+    testAppsyncVelocity(templates[1]);
   });
 });
 
@@ -236,54 +124,13 @@ describe("step function describe execution", () => {
   test("machine describe exec string", () => {
     const machine = new StepFunction(stack, "machine", () => {});
 
-    const func = reflect(() => {
-      machine.describeExecution("exec1");
-    });
-
-    appsyncTestCase(
-      func,
-      "{}",
-      `${AppsyncVTL.CircuitBreaker}
-{
-  "version": "2018-05-29",
-  "method": "POST",
-  "resourcePath": "/",
-  "params": {
-    "headers": {
-      "content-type": "application/x-amz-json-1.0",
-      "x-amz-target": "AWSStepFunctions.DescribeExecution"
-    },
-    "body": {
-      "executionArn": $util.toJson('exec1')
-    }
-  }
-}`,
-      "{}",
-      AppsyncVTL.CircuitBreaker
+    const templates = appsyncTestCase(
+      reflect(() => {
+        machine.describeExecution("exec1");
+      })
     );
 
-    const templates = getAppSyncTemplates(func);
-
-    appsyncVelocityJsonTestCase(
-      templates[1],
-      { arguments: {}, source: {} },
-      {
-        result: {
-          version: "2018-05-29",
-          method: "POST",
-          resourcePath: "/",
-          params: {
-            headers: {
-              "content-type": "application/x-amz-json-1.0",
-              "x-amz-target": "AWSStepFunctions.DescribeExecution",
-            },
-            body: {
-              executionArn: "exec1",
-            },
-          },
-        },
-      }
-    );
+    testAppsyncVelocity(templates[1]);
   });
 
   test("machine with trace header", () => {
@@ -292,4 +139,136 @@ describe("step function describe execution", () => {
       machine({ traceHeader: context.arguments.id });
     });
   });
+});
+
+test("multiple isolated integrations", () => {
+  const machine = new StepFunction(stack, "machine", () => {});
+
+  const templates = appsyncTestCase(
+    reflect(() => {
+      machine.describeExecution("exec1");
+      machine.describeExecution("exec2");
+      machine.describeExecution("exec3");
+      machine.describeExecution("exec4");
+    }),
+    {
+      expectedTemplateCount: 10,
+    }
+  );
+
+  testAppsyncVelocity(templates[1]);
+});
+
+test("multiple linked integrations", () => {
+  const machine = new StepFunction(stack, "machine", () => {});
+
+  const templates = appsyncTestCase(
+    reflect(() => {
+      const res1 = machine({ input: {} });
+      const res2 = machine({ input: res1 });
+      machine({ input: res2 });
+    })
+  );
+
+  testAppsyncVelocity(templates[1]);
+});
+
+test("multiple linked integrations pre-compute", () => {
+  const machine = new StepFunction(stack, "machine", () => {});
+
+  const templates = appsyncTestCase(
+    reflect(() => {
+      const x = "y";
+      const res1 = machine({ input: { x } });
+      const res2 = machine({ input: res1 });
+      machine({ input: res2 });
+    }),
+    {
+      expectedTemplateCount: 8,
+    }
+  );
+
+  testAppsyncVelocity(templates[1]);
+});
+
+test("multiple linked integrations post-compute", () => {
+  const machine = new StepFunction(stack, "machine", () => {});
+
+  const templates = appsyncTestCase(
+    reflect(() => {
+      const res1 = machine({ input: {} });
+      const res2 = machine({ input: res1 });
+      const result = machine({ input: res2 });
+      return result.startDate;
+    })
+  );
+
+  testAppsyncVelocity(templates[1]);
+});
+
+test("multiple linked integrations with props", () => {
+  const machine = new StepFunction(stack, "machine", () => {});
+
+  const templates = appsyncTestCase(
+    reflect(() => {
+      const res1 = machine.describeExecution("exec1");
+      const res2 = machine.describeExecution(res1.executionArn);
+      machine.describeExecution(res2.executionArn);
+    }),
+    {
+      expectedTemplateCount: 8,
+    }
+  );
+
+  testAppsyncVelocity(templates[1]);
+});
+
+// https://github.com/functionless/functionless/issues/212
+test.skip("multiple nested integrations", () => {
+  const machine = new StepFunction(stack, "machine", () => {});
+
+  const templates = appsyncTestCase(
+    reflect(() => {
+      machine({ input: machine({ input: machine({ input: {} }) }) });
+    }),
+    {
+      expectedTemplateCount: 8,
+    }
+  );
+
+  testAppsyncVelocity(templates[1]);
+});
+
+// https://github.com/functionless/functionless/issues/212
+test.skip("multiple nested integrations prop access", () => {
+  const machine = new StepFunction(stack, "machine", () => {});
+
+  const templates = appsyncTestCase(
+    reflect(() => {
+      machine.describeExecution(
+        machine.describeExecution(
+          machine.describeExecution("exec1").executionArn
+        ).executionArn
+      );
+    }),
+    {
+      expectedTemplateCount: 8,
+    }
+  );
+
+  testAppsyncVelocity(templates[1]);
+});
+
+test("multiple linked integrations with mutation", () => {
+  const machine = new StepFunction(stack, "machine", () => {});
+
+  const templates = appsyncTestCase(
+    reflect(() => {
+      const res1 = machine.describeExecution("exec1");
+      const formatted = `status: ${res1.status}`;
+      machine({ input: { x: formatted } });
+    })
+  );
+
+  testAppsyncVelocity(templates[1]);
 });

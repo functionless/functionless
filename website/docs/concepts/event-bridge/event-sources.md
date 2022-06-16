@@ -32,3 +32,4 @@ EventBus.default(scope)
 | Resource                                         | events                                                       |
 | ------------------------------------------------ | ------------------------------------------------------------ |
 | [Step Functions](../step-function/event-sources) | succeeded, failed, statusChanged, aborted, started, timedOut |
+| [Function](../function/event-sources)            | success, failure                                             |

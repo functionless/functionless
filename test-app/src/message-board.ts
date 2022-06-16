@@ -24,7 +24,7 @@ import {
 export const app = new App();
 export const stack = new Stack(app, "message-board");
 
-const database = new Table<Post | Comment, "pk", "sk">(
+const database = Table.fromTable<Post | Comment, "pk", "sk">(
   new aws_dynamodb.Table(stack, "MessageBoard", {
     tableName: "MessageBoard",
     partitionKey: {
@@ -360,7 +360,7 @@ const defaultBus = EventBus.default<TestDeleteEvent>(stack);
 deleteWorkflow
   .onSucceeded(stack, "deleteSuccessfulEvent")
   .map((event) => ({
-    message: `post deleted ${event.id} using ${deleteWorkflow.stateMachineName}`,
+    message: `post deleted ${event.id} using ${deleteWorkflow.resource.stateMachineName}`,
   }))
   .pipe(sendNotification);
 
@@ -375,9 +375,14 @@ customDeleteBus
     "Delete Message Rule",
     (event) => event["detail-type"] === "Delete-Message-Success"
   )
-  .map((event) => ({
-    message: `Messages deleted: ${(<MessageDeletedEvent>event).detail.count}`,
-  }))
+  .map(
+    (event) =>
+      <Notification>{
+        message: `Messages deleted: ${
+          (<MessageDeletedEvent>event).detail.count
+        }`,
+      }
+  )
   .pipe(sendNotification);
 
 customDeleteBus
@@ -386,9 +391,12 @@ customDeleteBus
     "Delete Post Rule",
     (event) => event["detail-type"] === "Delete-Post-Success"
   )
-  .map((event) => ({
-    message: `Post Deleted: ${(<PostDeletedEvent>event).detail.id}`,
-  }))
+  .map(
+    (event) =>
+      <Notification>{
+        message: `Post Deleted: ${(<PostDeletedEvent>event).detail.id}`,
+      }
+  )
   .pipe(sendNotification);
 
 /**

@@ -124,14 +124,12 @@ interface Item {
   id: string;
   name: string;
 }
-const table = new Table<Item, "id">(
-  new aws_dynamodb.Table(stack, "table", {
-    partitionKey: {
-      name: "id",
-      type: aws_dynamodb.AttributeType.NUMBER,
-    },
-  })
-);
+const table = new Table<Item, "id">(stack, "table", {
+  partitionKey: {
+    name: "id",
+    type: aws_dynamodb.AttributeType.NUMBER,
+  },
+});
 
 const dynamoResource = restApi.root.addResource("dynamo").addResource("{num}");
 new AwsMethod(

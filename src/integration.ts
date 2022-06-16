@@ -207,6 +207,7 @@ export class IntegrationImpl<F extends AnyFunction = AnyFunction>
 }
 
 export type IntegrationCall<K extends string, F extends AnyFunction> = {
+  FunctionlessType: K;
   kind: K;
   __functionBrand: F;
 } & F;

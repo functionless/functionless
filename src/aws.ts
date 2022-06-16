@@ -34,16 +34,20 @@ import {
   NativePreWarmContext,
   PrewarmClients,
 } from "./function";
-import { IntegrationInput, makeIntegration } from "./integration";
-import { Table, isTable, AnyTable } from "./table";
+import {
+  IntegrationCall,
+  IntegrationInput,
+  makeIntegration,
+} from "./integration";
+import { isTable, AnyTable, ITable } from "./table";
 
 import type { AnyFunction } from "./util";
 
-type Item<T extends Table<any, any, any>> = T extends Table<infer I, any, any>
+type Item<T extends ITable<any, any, any>> = T extends ITable<infer I, any, any>
   ? I
   : never;
 
-type PartitionKey<T extends Table<any, any, any>> = T extends Table<
+type PartitionKey<T extends ITable<any, any, any>> = T extends ITable<
   any,
   infer PK,
   any
@@ -51,7 +55,7 @@ type PartitionKey<T extends Table<any, any, any>> = T extends Table<
   ? PK
   : never;
 
-type RangeKey<T extends Table<any, any, any>> = T extends Table<
+type RangeKey<T extends ITable<any, any, any>> = T extends ITable<
   any,
   any,
   infer SK
@@ -81,7 +85,7 @@ export namespace $AWS {
     export const DeleteItem = makeDynamoIntegration<
       "deleteItem",
       <
-        T extends Table<any, any, any>,
+        T extends ITable<any, any, any>,
         Key extends TableKey<
           Item<T>,
           PartitionKey<T>,
@@ -138,21 +142,23 @@ export namespace $AWS {
     export const GetItem = makeDynamoIntegration<
       "getItem",
       <
-        T extends Table<any, any, any>,
+        Item extends object,
+        PartitionKey extends keyof Item,
+        RangeKey extends keyof Item | undefined,
         Key extends TableKey<
-          Item<T>,
-          PartitionKey<T>,
-          RangeKey<T>,
+          Item,
+          PartitionKey,
+          RangeKey,
           JsonFormat.AttributeValue
         >,
-        AttributesToGet extends keyof Item<T> | undefined = undefined,
+        AttributesToGet extends keyof Item | undefined = undefined,
         ProjectionExpression extends string | undefined = undefined
       >(
-        input: { TableName: T } & Omit<
+        input: { TableName: ITable<Item, PartitionKey, RangeKey> } & Omit<
           GetItemInput<
-            Item<T>,
-            PartitionKey<T>,
-            RangeKey<T>,
+            Item,
+            PartitionKey,
+            RangeKey,
             Key,
             AttributesToGet,
             ProjectionExpression,
@@ -161,9 +167,9 @@ export namespace $AWS {
           "TableName"
         >
       ) => GetItemOutput<
-        Item<T>,
-        PartitionKey<T>,
-        RangeKey<T>,
+        Item,
+        PartitionKey,
+        RangeKey,
         Key,
         AttributesToGet,
         ProjectionExpression,
@@ -221,7 +227,7 @@ export namespace $AWS {
     export const UpdateItem = makeDynamoIntegration<
       "updateItem",
       <
-        T extends Table<any, any, any>,
+        T extends ITable<any, any, any>,
         Key extends TableKey<
           Item<T>,
           PartitionKey<T>,
@@ -287,7 +293,7 @@ export namespace $AWS {
     export const PutItem = makeDynamoIntegration<
       "putItem",
       <
-        T extends Table<any, any, any>,
+        T extends ITable<any, any, any>,
         I extends Item<T>,
         ConditionExpression extends string | undefined = undefined,
         ReturnValue extends AWSDynamoDB.ReturnValue = "NONE"
@@ -334,7 +340,7 @@ export namespace $AWS {
     export const Query = makeDynamoIntegration<
       "query",
       <
-        T extends Table<any, any, any>,
+        T extends ITable<any, any, any>,
         KeyConditionExpression extends string,
         FilterExpression extends string | undefined = undefined,
         ProjectionExpression extends string | undefined = undefined,
@@ -384,7 +390,7 @@ export namespace $AWS {
     export const Scan = makeDynamoIntegration<
       "scan",
       <
-        T extends Table<any, any, any>,
+        T extends ITable<any, any, any>,
         FilterExpression extends string | undefined = undefined,
         ProjectionExpression extends string | undefined = undefined,
         AttributesToGet extends keyof Item<T> | undefined = undefined
@@ -450,7 +456,7 @@ export namespace $AWS {
           bind: (context: Function<any, any>, table: AnyTable) => void;
         };
       }
-    ) {
+    ): IntegrationCall<`$AWS.DynamoDB.${Op}`, F> {
       return makeIntegration<`$AWS.DynamoDB.${Op}`, F>({
         ...integration,
         kind: `$AWS.DynamoDB.${operationName}`,
@@ -475,7 +481,7 @@ export namespace $AWS {
             // const table = getTableArgument(call.args.map((arg) => arg.expr!));
             grantTablePermissions(table, context.role, operationName);
             return `{
-  "TableName":"${table.tableName}",
+  "TableName":"${table.resource.tableName}",
   ${input.properties
     .flatMap((prop) => {
       if (isPropAssignExpr(prop)) {

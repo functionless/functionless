@@ -283,7 +283,9 @@ export function makeFunctionlessChecker(
     return isFunctionlessType(type, kind);
   }
 
-  function getFunctionlessTypeKind(type: ts.Type): string | undefined {
+  function getFunctionlessTypeKind(
+    type: ts.Type
+  ): ts.Type | string | undefined {
     const functionlessType = type.getProperty("FunctionlessType");
     const functionlessKind = type.getProperty("functionlessKind");
     const prop = functionlessType ?? functionlessKind;
@@ -299,6 +301,8 @@ export function makeFunctionlessChecker(
         const type = checker.getTypeAtLocation(prop.valueDeclaration);
         if (type.isStringLiteral()) {
           return type.value;
+        } else {
+          return type;
         }
       }
     }

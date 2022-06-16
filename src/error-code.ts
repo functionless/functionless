@@ -1,14 +1,44 @@
 // @ts-ignore - imported for tsdoc
 import type { AwsMethod } from "./api";
+const BASE_URL = process.env.FUNCTIONLESS_LOCAL
+  ? `http://localhost:3000`
+  : `https://functionless.org`;
 
 /**
  * Error to throw during synth failures
  */
 export class SynthError extends Error {
-  constructor(readonly code: ErrorCode, message: string) {
-    super(message);
+  constructor(readonly code: ErrorCode, message?: string) {
+    super(formatErrorMessage(code, message));
   }
 }
+
+/**
+ * Formats an error message consistently across Functionless.
+ *
+ * Includes a deep link url to functionless.org's error code page.
+ *
+ * ```
+ * [messageText | code.MessageText]
+ *
+ * http://functionless.org/docs/error-codes/#[Anchor from Message Text]
+ * ```
+ */
+export const formatErrorMessage = (code: ErrorCode, messageText?: string) => `${
+  messageText ?? code.messageText
+}
+
+${formatErrorUrl(code)}`;
+
+/**
+ * Deep link to functionless.org's error code page.
+ *
+ * `http://functionless.org/docs/error-codes/#[Anchor from Message Text]`
+ */
+export const formatErrorUrl = (code: ErrorCode) =>
+  `${BASE_URL}/docs/error-codes#${code.messageText
+    .toLowerCase()
+    .replace(/\s/g, "-")}`;
 
 export interface ErrorCode {
   code: number;
@@ -99,4 +129,57 @@ export namespace ErrorCodes {
       code: 103,
       messageText: `AwsMethod request must have exactly one integration call`,
     };
+
+  /**
+   * Lambda Function closure synthesis runs async, but CDK does not normally support async.
+   *
+   * In order for the synthesis to complete successfully
+   * 1. Use autoSynth `new App({ authSynth: true })` or `new App()` with the CDK Cli (`cdk synth`)
+   * 2. Use `await asyncSynth(app)` exported from Functionless in place of `app.synth()`
+   * 3. Manually await on the closure serializer promises `await Promise.all(Function.promises)`
+   *
+   * https://github.com/functionless/functionless/issues/128
+   */
+  export const Function_Closure_Serialization_Incomplete: ErrorCode = {
+    code: 102,
+    messageText: "Function closure serialization was not allowed to complete",
+  };
+
+  /**
+   * Generic error message to denote errors that should not happen and are not the fault of the Functionless library consumer.
+   */
+  export const Unexpected_Error: ErrorCode = {
+    code: 103,
+    messageText: "Unexpected Error, please report this issue",
+  };
+
+  /**
+   * Incorrect State Machine Type Imported
+   *
+   * Functionless {@link StepFunction}s are separated into {@link ExpressStepFunction} and {@link StepFunction}
+   * based on being {@link aws_stepfunctions.StateMachineType.EXPRESS} or {@link aws_stepfunctions.StateMachineType.STANDARD}
+   * respectively.
+   *
+   * In order to ensure correct function of Functionless integrations, the correct import statement must be used.
+   *
+   * ```ts
+   * const sfn = new aws_stepfunctions.StateMachine(scope, 'standardMachine', {...});
+   * // valid
+   * StateMachine.fromStepFunction(sfn);
+   * // invalid - not an express machine
+   * ExpressStateMachine.fromStepFunction(sfn);
+   *
+   * const exprSfn = new aws_stepfunctions.StateMachine(scope, 'standardMachine', {
+   *    stateMachineType: aws_stepfunctions.StateMachineType.EXPRESS,
+   * });
+   * // valid
+   * ExpressStateMachine.fromStepFunction(exprSfn);
+   * // invalid - not a standard machine
+   * StateMachine.fromStepFunction(exprSfn);
+   * ```
+   */
+  export const Incorrect_StateMachine_Import_Type = {
+    code: 104,
+    messageText: "Incorrect state machine type imported",
+  };
 }

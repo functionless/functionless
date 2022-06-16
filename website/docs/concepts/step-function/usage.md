@@ -85,7 +85,7 @@ Use the [$AWS SDK Integrations](../aws.md) to call other services from within a 
 ```ts
 import { $AWS, Table } from "functionless";
 
-const table = new Table<Item, "pk">(new aws_dynamodb.Table(..));
+const table = Table.fromTable<Item, "pk">(new aws_dynamodb.Table(..));
 
 new StepFunction(stack, "Func", (name: string) => {
   // call DynamoDB's DeleteItem API.
@@ -102,7 +102,7 @@ new StepFunction(stack, "Func", (name: string) => {
 
 ## Start Execution
 
-A `StepFunction` can be called directly from an [Integration](../integration.md) such as [`Function`](../function.md), [`StepFunction`](./index.md), [`AppsyncResolver`](../appsync/index.md) or [`EventBus`](../event-bridge/event-bus.md).
+A `StepFunction` can be called directly from an [Integration](../integration.md) such as [`Function`](../function), [`StepFunction`](./index.md), [`AppsyncResolver`](../appsync/index.md) or [`EventBus`](../event-bridge/event-bus.md).
 
 ### From a Function, StepFunction or AppsyncResolver
 
