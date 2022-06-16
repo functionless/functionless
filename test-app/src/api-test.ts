@@ -5,7 +5,7 @@ import {
   aws_logs,
   Stack,
 } from "aws-cdk-lib";
-import type { APIGatewayProxyEvent } from "aws-lambda";
+import type { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
 import {
   AwsMethod,
   MockMethod,
@@ -41,14 +41,10 @@ const fn = new Function(
   }
 );
 
-const fnResource = restApi.root.addResource("fn").addResource("{num}", {
-  defaultMethodOptions: {
-    requestParameters: {
-      num: true,
-      str: true,
-    },
-  },
-});
+const fnResource = restApi.root
+  .addResource("fn")
+  .addResource("{num}")
+  .addResource("{str}");
 
 new AwsMethod(
   {
@@ -58,7 +54,7 @@ new AwsMethod(
   (
     $input: ApiGatewayInput<{
       path: {
-        num: number;
+        num: string;
       };
       query: {
         str: string;
@@ -69,7 +65,7 @@ new AwsMethod(
     }>
   ) => {
     return fn({
-      inNum: $input.params("num"),
+      inNum: Number($input.params("num")),
       inStr: $input.params("str"),
       inBool: $input.data.isTrue,
     });
@@ -79,7 +75,7 @@ new AwsMethod(
     resultStr: $input.data.fnStr,
     nested: $input.data.nested.again.num,
     numFromParams: $input.params("num"),
-    strFromParams: $input.params().str,
+    strFromParams: $input.params("str"),
   }),
   {
     400: () => ({ msg: "400" }),
@@ -109,18 +105,18 @@ new MockMethod(
   },
   (
     $input: ApiGatewayInput<{
-      path: { num: number };
+      path: { num: string };
       body: {
         name: string;
       };
     }>
   ) => ({
-    statusCode: $input.params("num"),
+    statusCode: Number($input.params("num")),
   }),
   {
-    200: () => ({
+    200: ($input) => ({
       body: {
-        num: 12345,
+        num: Number($input.params("num")),
       },
     }),
     500: () => ({
@@ -171,7 +167,7 @@ new AwsMethod(
   ($input) =>
     sfn({
       input: {
-        num: $input.params("num") as number,
+        num: Number($input.params("num")),
         str: $input.params("str") as string,
       },
     }),
@@ -190,10 +186,10 @@ new AwsMethod(
 
 const proxyResource = restApi.root.addResource("proxy");
 
-const proxy = new Function(
+const proxy = new Function<APIGatewayProxyEvent, APIGatewayProxyResult>(
   stack,
   "LambdaProxy",
-  async (request: APIGatewayProxyEvent) => {
+  async (request) => {
     return {
       statusCode: 200,
       body: JSON.stringify(request.body),

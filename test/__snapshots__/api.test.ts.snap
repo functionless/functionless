@@ -53,26 +53,8 @@ $input.json('$.error')
   "requestTemplates": Object {
     "application/json": "{
 \\"input\\":{
-  \\"num\\":#if($input.params('params') == $null)
-null
-#elseif($input.params('params').class.name === 'java.lang.String') 
-\\"$input.params('params')\\" 
-#elseif($input.params('params').class.name === 'java.lang.Integer' || $input.params('params').class.name === 'java.lang.Double' || $input.params('params').class.name === 'java.lang.Boolean') 
-$input.params('params') 
-#else
-#set($context.responseOverride.status = 500)
-#stop
-#end,
-  \\"str\\":#if($input.params('params') == $null)
-null
-#elseif($input.params('params').class.name === 'java.lang.String') 
-\\"$input.params('params')\\" 
-#elseif($input.params('params').class.name === 'java.lang.Integer' || $input.params('params').class.name === 'java.lang.Double' || $input.params('params').class.name === 'java.lang.Boolean') 
-$input.params('params') 
-#else
-#set($context.responseOverride.status = 500)
-#stop
-#end
+  \\"num\\":$input.params('num'),
+  \\"str\\":\\"$input.params('str')\\"
 }
 }",
   },
@@ -121,16 +103,7 @@ Object {
   ],
   "requestTemplates": Object {
     "application/json": "{
-  \\"statusCode\\":#if($input.params('params') == $null)
-null
-#elseif($input.params('params').class.name === 'java.lang.String') 
-\\"$input.params('params')\\" 
-#elseif($input.params('params').class.name === 'java.lang.Integer' || $input.params('params').class.name === 'java.lang.Double' || $input.params('params').class.name === 'java.lang.Boolean') 
-$input.params('params') 
-#else
-#set($context.responseOverride.status = 500)
-#stop
-#end
+  \\"statusCode\\":$input.params('code')
 }",
   },
 }
@@ -160,16 +133,7 @@ Object {
   ],
   "requestTemplates": Object {
     "application/json": "{
-  \\"statusCode\\":#if($input.params('params') == $null)
-null
-#elseif($input.params('params').class.name === 'java.lang.String') 
-\\"$input.params('params')\\" 
-#elseif($input.params('params').class.name === 'java.lang.Integer' || $input.params('params').class.name === 'java.lang.Double' || $input.params('params').class.name === 'java.lang.Boolean') 
-$input.params('params') 
-#else
-#set($context.responseOverride.status = 500)
-#stop
-#end
+  \\"statusCode\\":$input.params('code')
 }",
   },
 }

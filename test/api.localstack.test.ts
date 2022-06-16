@@ -24,11 +24,11 @@ localstackTestSuite("apiGatewayStack", (test, stack) => {
         (
           req: ApiGatewayInput<{
             path: {
-              code: number;
+              code: string;
             };
           }>
         ) => ({
-          statusCode: req.params("code"),
+          statusCode: Number(req.params("code")),
         }),
         {
           200: () => ({
@@ -70,12 +70,12 @@ localstackTestSuite("apiGatewayStack", (test, stack) => {
         (
           req: ApiGatewayInput<{
             path: {
-              code: number;
+              code: string;
             };
           }>
         ) =>
           func({
-            input: req.params("code"),
+            input: Number(req.params("code")),
           }),
         (result) => ({
           result: result.data.key,

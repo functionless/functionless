@@ -83,7 +83,7 @@ export type ApiParameter = undefined | null | boolean | number | string;
 /**
  * A collection of {@link ApiParameter}s.
  */
-export type ApiParameters = Record<string, ApiParameter>;
+export type ApiParameters = Record<string, string>;
 
 /**
  * Type of data allowed as the body in an API.
@@ -222,8 +222,7 @@ function getRole(props: MethodProps) {
  */
 export class MockMethod<
   Request extends ApiRequest,
-  StatusCode extends number,
-  MethodResponses extends { [C in StatusCode]: any }
+  StatusCode extends number
 > extends ApiMethod<"MockMethod"> {
   constructor(
     props: MethodProps,
@@ -239,7 +238,10 @@ export class MockMethod<
      * Map of status codes to response to return.
      */
     responses: {
-      [C in StatusCode]: ($context: ApiGatewayContext) => MethodResponses[C];
+      [C: number]: (
+        $input: ApiGatewayInput<Request>,
+        $context: ApiGatewayContext
+      ) => any;
     }
   ) {
     const requestDecl = validateFunctionDecl(request, "MockMethod Request");
@@ -248,7 +250,7 @@ export class MockMethod<
         k,
         validateFunctionDecl(v, `MockMethod Response ${k}`),
       ])
-    ) as { [K in keyof MethodResponses]: FunctionDecl };
+    ) as { [K in 200]: FunctionDecl };
 
     const role = getRole(props);
     const requestTemplate = new APIGatewayVTL(role, "request");
@@ -453,7 +455,12 @@ export class AwsMethod<
      * Map of status codes to a function defining the  response to return. This is used
      * to configure the failure path method responses, for e.g. when an integration fails.
      */
-    errors?: { [statusCode: number]: ($context: ApiGatewayContext) => any }
+    errors?: {
+      [statusCode: number]: (
+        $input: ApiGatewayInput<Request>,
+        $context: ApiGatewayContext
+      ) => any;
+    }
   ) {
     const requestDecl = validateFunctionDecl(request, "AwsMethod Request");
     const responseDecl = validateFunctionDecl(response, "AwsMethod Response");
@@ -615,8 +622,41 @@ ${oneIndent}]`;
       const integration = findIntegration(expr);
       if (integration !== undefined) {
         return this.integrate(integration, expr);
+      } else if (isIdentifier(expr.expr) && expr.expr.name === "Number") {
+        return this.exprToJson(expr.args[0], depth);
       } else if (isPropAccessExpr(expr.expr) && expr.expr.name === "params") {
-        return this.json(`$input.params('${expr.expr.name}')`);
+        if (isIdentifier(expr.expr.expr)) {
+          const ref = expr.expr.expr.lookup();
+          if (
+            isParameterDecl(ref) &&
+            isFunctionDecl(ref.parent) &&
+            ref.parent.parent === undefined &&
+            ref.parent.parameters.findIndex((param) => param === ref) === 0
+          ) {
+            // the first argument of the FunctionDecl is the `$input`, regardless of what it is named
+            if (expr.args.length === 0 || expr.args[0]?.expr === undefined) {
+              const key = this.newLocalVarName();
+              return `{
+  #foreach(${key} in $input.params().keySet())
+  "${key}": "$input.params("${key}")"#if($foreach.hasNext),#end
+  #end
+}`;
+            } else if (expr.args.length === 1) {
+              const argName = expr.args[0].expr!;
+              if (isStringLiteralExpr(argName)) {
+                if (
+                  isArgument(expr.parent) &&
+                  isIdentifier(expr.parent.parent.expr) &&
+                  expr.parent.parent.expr.name === "Number"
+                ) {
+                  // this parameter is surrounded by a cast to Number, so omit the quotes
+                  return `$input.params('${argName.value}')`;
+                }
+                return `"$input.params('${argName.value}')"`;
+              }
+            }
+          }
+        }
       }
     } else if (isObjectLiteralExpr(expr)) {
       if (expr.properties.length === 0) {
@@ -706,7 +746,7 @@ ${oneIndent}}`;
     return `#if(${reference} == $null)
 null
 #elseif(${reference}.class.name === 'java.lang.String') 
-\"${reference}\" 
+\"$util.escapeJavaScript(${reference})\"
 #elseif(${reference}.class.name === 'java.lang.Integer' || ${reference}.class.name === 'java.lang.Double' || ${reference}.class.name === 'java.lang.Boolean') 
 ${reference} 
 #else
@@ -863,14 +903,6 @@ export interface ApiGatewayInput<Request extends ApiRequest> {
    * @see https://github.com/jayway/JsonPath
    */
   json(jsonPath: string): any;
-  /**
-   * Returns a map of all the request parameters. We recommend that you use
-   * `$util.escapeJavaScript` to sanitize the result to avoid a potential
-   * injection attack. For full control of request sanitization, use a proxy
-   * integration without a template and handle request sanitization in your
-   * integration.
-   */
-  params(): Params<Request>;
   /**
    * Returns the value of a method request parameter from the path, query string,
    * or header value (searched in that order), given a parameter name string x.

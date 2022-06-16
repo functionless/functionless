@@ -29,7 +29,7 @@ test("mock integration with object literal", () => {
       resource: api.root,
     },
     ($input) => ({
-      statusCode: $input.params("code") as number,
+      statusCode: Number($input.params("code")),
     }),
     {
       200: () => ({
@@ -53,7 +53,7 @@ test("mock integration with object literal and literal type in pathParameters", 
       resource: api.root,
     },
     ($input) => ({
-      statusCode: $input.params("code") as number,
+      statusCode: Number($input.params("code")),
     }),
     {
       200: () => ({
@@ -88,13 +88,13 @@ test("AWS integration with Function", () => {
 test("AWS integration with Express Step Function", () => {
   const api = new aws_apigateway.RestApi(stack, "API");
 
-  type Request = {
-    num: number;
-    str: string;
-  };
-  const sfn = new ExpressStepFunction(stack, "SFN", (_input: Request) => {
-    return "done";
-  });
+  const sfn = new ExpressStepFunction(
+    stack,
+    "SFN",
+    (_input: { num: number; str: string }) => {
+      return "done";
+    }
+  );
 
   const method = new AwsMethod(
     {
@@ -103,12 +103,15 @@ test("AWS integration with Express Step Function", () => {
     },
     (
       $input: ApiGatewayInput<{
-        query: Request;
+        query: {
+          num: string;
+          str: string;
+        };
       }>
     ) =>
       sfn({
         input: {
-          num: $input.params("num"),
+          num: Number($input.params("num")),
           str: $input.params("str"),
         },
       }),
