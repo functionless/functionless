@@ -27,7 +27,7 @@ A `Cloud Function` is exactly the same, except it has other data associated with
 
 ### Dependencies
 
-The `dependencies` are a list of all the service APIs the `Function` needs access to, for example - access to call `GetItem` on a specific DynamoDB `Table`, or `Invoke` another `Cloud Function`. This information is extracted by statically analyzing the Function's code with the TypeScript compiler and by (TODO) walking the `closureState` at synthesis time.
+The `dependencies` are a list of all the service APIs the `Function` needs access to, for example - to call `GetItem` on a specific DynamoDB `Table`, or `Invoke` another `Cloud Function`. This information is extracted by statically analyzing the Function's code with the TypeScript compiler and by (TODO) walking the `closureState` at synthesis time.
 
 Example: the below Function needs `DynamoDB::GetItem` access to the `Table`.
 
@@ -95,7 +95,7 @@ async function <Item>map(list: Item[], fn: Function<Item, string>) {
 }
 ```
 
-When calling this from within a `Cloud Function`, the `Lambda::Invoke` API dependency is detected statically (as previously described).
+When calling this from within a `Cloud Function`, the `Lambda::Invoke` API dependency is detected statically.
 
 ```ts
 const processVideo = new Function(
@@ -156,14 +156,11 @@ const processVideo = new Function(
 const mapList = new Function(
   scope,
   "Process",
-  async <In, Out>({
-    items,
-    process,
-  }: {
+  async <In, Out>(request: {
     items: In[];
     process: Function<In, Out>;
   }): Promise<Out> => {
-    return items.map(process);
+    return request.items.map(request.process);
   }
 );
 
@@ -172,7 +169,7 @@ new AwsMethod({
   request: ($input) =>
     mapList({
       items: $input.data.items,
-      // dependency for `mapList` to be able to call `processVideo` is captued here
+      // dependency for `mapList` to be able to call `processVideo` is captured here
       process: processVideo,
     }),
 });
