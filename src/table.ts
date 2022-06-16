@@ -60,7 +60,7 @@ export interface TableProps<
     : undefined;
 }
 
-export type AnyTable = ITable<object, keyof object, keyof object | undefined>;
+export type AnyTable = ITable<Record<string, any>, string, string | undefined>;
 
 /**
  * Wraps an {@link aws_dynamodb.Table} with a type-safe interface that can be
@@ -107,11 +107,21 @@ export interface ITable<
   RangeKey extends keyof Item | undefined = undefined
 > {
   readonly kind: "Table";
+  /**
+   * The underlying {@link aws_dynamodb.ITable} Resource.
+   */
   readonly resource: aws_dynamodb.ITable;
 
-  _item: Item;
-  _pk: PartitionKey;
-  _rk: RangeKey;
+  /**
+   * Brands this type with easy-access to the type parameters, Item, PartitionKey and RangeKey
+   *
+   * @note this value will never exist at runtime - it is purely compile-time information
+   */
+  readonly _brand?: {
+    Item: Item;
+    PartitionKey: PartitionKey;
+    RangeKey: RangeKey;
+  };
 
   /**
    * @see https://docs.aws.amazon.com/appsync/latest/devguide/resolver-mapping-template-reference-dynamodb.html#aws-appsync-resolver-mapping-template-reference-dynamodb-getitem
@@ -233,14 +243,13 @@ class BaseTable<
 {
   readonly kind = "Table";
 
-  constructor(readonly resource: aws_dynamodb.ITable) {}
+  readonly _brand?: {
+    Item: Item;
+    PartitionKey: PartitionKey;
+    RangeKey: RangeKey;
+  };
 
-  // @ts-expect-error - branding
-  _item: Item;
-  // @ts-expect-error - branding
-  _pk: PartitionKey;
-  // @ts-expect-error - branding
-  _rk: RangeKey;
+  constructor(readonly resource: aws_dynamodb.ITable) {}
 
   public getItem = this.makeTableIntegration("getItem", {
     appSyncVtl: {
@@ -357,7 +366,7 @@ class BaseTable<
   private makeTableIntegration<
     K extends Exclude<
       keyof ITable<Item, PartitionKey, RangeKey>,
-      "kind" | "resource" | `_${string}`
+      "kind" | "resource" | "_brand"
     >
   >(
     methodName: K,
