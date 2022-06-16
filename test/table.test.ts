@@ -1,6 +1,14 @@
 import { App, aws_dynamodb, Stack } from "aws-cdk-lib";
 import "jest";
-import { Table, $util, AppsyncContext, reflect } from "../src";
+import {
+  Table,
+  $util,
+  AppsyncContext,
+  reflect,
+  $AWS,
+  ITable,
+  AnyTable,
+} from "../src";
 import { appsyncTestCase } from "./util";
 
 interface Item {
@@ -26,6 +34,95 @@ const newTable = new Table<Item, "id">(stack, "NewTable", {
     type: aws_dynamodb.AttributeType.STRING,
   },
 });
+
+/**
+ * Enclose calls to $AWS.DynamoDB in a function so that they never run.
+ *
+ * The contents of this function are for type-level tests only.
+ *
+ * We use @ts-expect-error to validate that types are inferred properly.
+ */
+export function typeCheck() {
+  let t1: ITable<any, any, any> | undefined;
+  let t2: ITable<Item, "id"> | undefined;
+  let t3: AnyTable | undefined;
+
+  t1 = t2;
+  t1 = t3;
+
+  t2 = t1; // ITable<any, any, any> should short-circuit
+  // @ts-expect-error
+  t2 = t3; // ITable<Item, "id"> is a sub-type of AnyTable
+
+  t3 = t1;
+  t3 = t2;
+
+  // Test1: type checking should work for Table
+  $AWS.DynamoDB.GetItem({
+    TableName: newTable,
+    // @ts-expect-error - missing id prop
+    Key: {},
+  });
+  $AWS.DynamoDB.PutItem({
+    TableName: newTable,
+    Item: {
+      id: {
+        S: "",
+      },
+      name: {
+        N: `1`,
+      },
+      // @ts-expect-error
+      nonExistent: {
+        S: "",
+      },
+    },
+  });
+  $AWS.DynamoDB.DeleteItem({
+    TableName: newTable,
+    // @ts-expect-error - missing id prop
+    Key: {},
+  });
+  $AWS.DynamoDB.UpdateItem({
+    TableName: newTable,
+    // @ts-expect-error - missing id prop
+    Key: {},
+    UpdateExpression: "",
+  });
+
+  // Test2: type checking should work for ITable
+  $AWS.DynamoDB.GetItem({
+    TableName: fromTable,
+    // @ts-expect-error - missing id prop
+    Key: {},
+  });
+  $AWS.DynamoDB.PutItem({
+    TableName: fromTable,
+    Item: {
+      id: {
+        S: "",
+      },
+      name: {
+        N: `1`,
+      },
+      // @ts-expect-error
+      nonExistent: {
+        S: "",
+      },
+    },
+  });
+  $AWS.DynamoDB.DeleteItem({
+    TableName: fromTable,
+    // @ts-expect-error - missing id prop
+    Key: {},
+  });
+  $AWS.DynamoDB.UpdateItem({
+    TableName: fromTable,
+    // @ts-expect-error - missing id prop
+    Key: {},
+    UpdateExpression: "",
+  });
+}
 
 test.each([fromTable, newTable])("get item", (table) => {
   appsyncTestCase(
