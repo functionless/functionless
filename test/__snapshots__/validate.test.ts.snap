@@ -1,31 +1,31 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`step-function.ts 1`] = `
-"[96mtest/test-files/step-function.ts[0m:[93m10[0m:[93m65[0m - [91merror[0m[90m Functionless(100): [0mCannot perform arithmetic on variables in Step Function
+"[96mtest/test-files/step-function.ts[0m:[93m10[0m:[93m65[0m - [91merror[0m[90m Functionless(10000): [0mCannot perform arithmetic on variables in Step Function
 
 https://functionless.org/docs/error-codes#cannot-perform-arithmetic-on-variables-in-step-function
 
 [7m10[0m new StepFunction(stack, \\"input.i + 2\\", (input: { i: number }) => input.i + 2);
 [7m  [0m [91m                                                                ~~~~~~~~~~~~[0m
-[96mtest/test-files/step-function.ts[0m:[93m11[0m:[93m65[0m - [91merror[0m[90m Functionless(100): [0mCannot perform arithmetic on variables in Step Function
+[96mtest/test-files/step-function.ts[0m:[93m11[0m:[93m65[0m - [91merror[0m[90m Functionless(10000): [0mCannot perform arithmetic on variables in Step Function
 
 https://functionless.org/docs/error-codes#cannot-perform-arithmetic-on-variables-in-step-function
 
 [7m11[0m new StepFunction(stack, \\"input.i - 2\\", (input: { i: number }) => input.i - 2);
 [7m  [0m [91m                                                                ~~~~~~~~~~~~[0m
-[96mtest/test-files/step-function.ts[0m:[93m13[0m:[93m65[0m - [91merror[0m[90m Functionless(100): [0mCannot perform arithmetic on variables in Step Function
+[96mtest/test-files/step-function.ts[0m:[93m13[0m:[93m65[0m - [91merror[0m[90m Functionless(10000): [0mCannot perform arithmetic on variables in Step Function
 
 https://functionless.org/docs/error-codes#cannot-perform-arithmetic-on-variables-in-step-function
 
 [7m13[0m new StepFunction(stack, \\"input.i / 2\\", (input: { i: number }) => input.i / 2);
 [7m  [0m [91m                                                                ~~~~~~~~~~~~[0m
-[96mtest/test-files/step-function.ts[0m:[93m14[0m:[93m62[0m - [91merror[0m[90m Functionless(100): [0mCannot perform arithmetic on variables in Step Function
+[96mtest/test-files/step-function.ts[0m:[93m14[0m:[93m62[0m - [91merror[0m[90m Functionless(10000): [0mCannot perform arithmetic on variables in Step Function
 
 https://functionless.org/docs/error-codes#cannot-perform-arithmetic-on-variables-in-step-function
 
 [7m14[0m new StepFunction(stack, \\"-input.i\\", (input: { i: number }) => -input.i);
 [7m  [0m [91m                                                             ~~~~~~~~~[0m
-[96mtest/test-files/step-function.ts[0m:[93m19[0m:[93m14[0m - [91merror[0m[90m Functionless(100): [0mCannot perform arithmetic on variables in Step Function
+[96mtest/test-files/step-function.ts[0m:[93m19[0m:[93m14[0m - [91merror[0m[90m Functionless(10000): [0mCannot perform arithmetic on variables in Step Function
 
 https://functionless.org/docs/error-codes#cannot-perform-arithmetic-on-variables-in-step-function
 
