@@ -59,11 +59,7 @@ export interface TableProps<
     : undefined;
 }
 
-export type AnyTable = ITable<
-  Record<string | number | symbol, any>,
-  string | number | symbol,
-  string | number | symbol | undefined
->;
+export type AnyTable = ITable<Record<string, any>, string, string | undefined>;
 
 /**
  * Wraps an {@link aws_dynamodb.Table} with a type-safe interface that can be

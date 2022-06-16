@@ -45,13 +45,7 @@ const newTable = new Table<Item, "id">(stack, "NewTable", {
 export function typeCheck() {
   let t1: Table<any, any, any> | undefined;
   let t2: Table<Item, "id"> | undefined;
-  let t3:
-    | Table<
-        Record<string | number | symbol, any>,
-        string | number | symbol,
-        string | number | symbol | undefined
-      >
-    | undefined;
+  let t3: Table<Record<string, any>, string, string | undefined> | undefined;
 
   t1 = t2;
   t1 = t3;
