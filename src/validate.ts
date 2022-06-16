@@ -81,7 +81,7 @@ export function validate(
   ): ts.Diagnostic {
     return {
       source: "Functionless",
-      code: error.code,
+      code: Number(error.code),
       messageText: formatErrorMessage(error, messageText),
       category: ts.DiagnosticCategory.Error,
       file: invalidNode.getSourceFile(),

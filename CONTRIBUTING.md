@@ -1,4 +1,4 @@
-# <img src="website/static/img/logo.png" width=27 /> Contributing to Functionless <img src="website/static/img/logo.png" width=27 />
+# <img src="website/static/img/logo.png" width="27" /> Contributing to Functionless <img src="website/static/img/logo.png" width="27" />
 
 Thank you for your interest and contribution in Functionless.
 
@@ -6,13 +6,13 @@ Thank you for your interest and contribution in Functionless.
 
 Requirements:
 
-* Node 14+
-* Yarn
-* Docker 
-  * Used in the tests. Docker daemon must be running.
-* Localstack
-  * Used in the tests.
-* [AWS-CDK](https://docs.aws.amazon.com/cdk/v2/guide/cli.html) - 2.x
+- Node 14+
+- Yarn
+- Docker
+  - Used in the tests. Docker daemon must be running.
+- Localstack
+  - Used in the tests.
+- [AWS-CDK](https://docs.aws.amazon.com/cdk/v2/guide/cli.html) - 2.x
 
 Fork the repo and then run:
 
@@ -26,10 +26,10 @@ We do all of our work in [`VSCode`](https://code.visualstudio.com/) and include 
 
 ### Layout
 
-* `/` and `/src` - The Functionless Package - containing compiler (`src/compiler.ts`), transpilers (`src/vtl.ts`), and publicly exposed resources (`Function`, `StepFunction`, etc). Generates the [functionless](https://www.npmjs.com/package/functionless) NPM repo.
-* `/test` - Tests for the main repo, see [testing](#testing)
-* `/website` - Functionless.org code
-* `/test-app` - A series of test CDK applications which consume `functionless` via npm. We use this to test compilation of various "real world" scenarios and CDK synthesis.
+- `/` and `/src` - The Functionless Package - containing compiler (`src/compiler.ts`), transpilers (`src/vtl.ts`), and publicly exposed resources (`Function`, `StepFunction`, etc). Generates the [functionless](https://www.npmjs.com/package/functionless) NPM repo.
+- `/test` - Tests for the main repo, see [testing](#testing)
+- `/website` - Functionless.org code
+- `/test-app` - A series of test CDK applications which consume `functionless` via npm. We use this to test compilation of various "real world" scenarios and CDK synthesis.
 
 Functionless leverages the [typescript compiler api](https://github.com/microsoft/TypeScript/wiki/Using-the-Compiler-API). `compile.ts` runs over the ts of a consuming application, validating, transforming, and extracting necessary information.
 
@@ -46,10 +46,10 @@ $ yarn watch
 
 ### Guidelines
 
-* Every change or bug fix MUST come with one or more tests that would break before the change.
-* Errors MUST be documented as [Error Codes](#error-codes) with detailed descriptions.
-* Errors SHOULD be discovered via `/src/validate.ts`. `/src/validate.ts` runs with the `functionless` cli and the `@functionless/language-service` in the IDE to give early errors to consumers.
-* No/Minimal Magic - Core Functionless resources should improve the developer experience without introducing opinionated implementation. The goal is to translate typescript behavior into AWS services. The infrastructure created should be clear and logical. For example, `Step Functions` cannot perform arithmetic natively, we will not automatically create/call a lambda to do it. We will validate for arithmetic, throw an error, and show how a `Function` can be used as a workaround.
+- Every change or bug fix MUST come with one or more tests that would break before the change.
+- Errors MUST be documented as [Error Codes](#error-codes) with detailed descriptions.
+- Errors SHOULD be discovered via `/src/validate.ts`. `/src/validate.ts` runs with the `functionless` cli and the `@functionless/language-service` in the IDE to give early errors to consumers.
+- No/Minimal Magic - Core Functionless resources should improve the developer experience without introducing opinionated implementation. The goal is to translate typescript behavior into AWS services. The infrastructure created should be clear and logical. For example, `Step Functions` cannot perform arithmetic natively, we will not automatically create/call a lambda to do it. We will validate for arithmetic, throw an error, and show how a `Function` can be used as a workaround.
 
 ### Project Configuration Changes
 
@@ -62,18 +62,20 @@ The sub-packages (ex: website, test-app) do not currently use projen ([TODO: mon
 ### Testing
 
 Required:
-* Docker
-  * With the docker daemon running.
-* [Localstack](https://docs.localstack.cloud/get-started/#localstack-cli)
+
+- Docker
+  - With the docker daemon running.
+- [Localstack](https://docs.localstack.cloud/get-started/#localstack-cli)
 
 Commands:
-* `yarn test` - boots up localstack, runs all tests, stops localstack
-* `yarn test:fast` - runs all non-localstack tests
-* `yarn test:update` - runs all tests and updates snapshots
-* `yarn watch` - watches all tests
-* `vs-code jest plugin` - use the vs code jest plugin to run individual tests and debug
- 
-When using any method that does not invoke `yarn test`, `./script/localstack` may be used to start localstack (and boostrap CDK) manually. 
+
+- `yarn test` - boots up localstack, runs all tests, stops localstack
+- `yarn test:fast` - runs all non-localstack tests
+- `yarn test:update` - runs all tests and updates snapshots
+- `yarn watch` - watches all tests
+- `vs-code jest plugin` - use the vs code jest plugin to run individual tests and debug
+
+When using any method that does not invoke `yarn test`, `./script/localstack` may be used to start localstack (and boostrap CDK) manually.
 
 ### Testing compiler changes
 
@@ -93,9 +95,9 @@ test-app$ yarn watch
 
 The doc site contains marketing, documentation, and blogs on `Functionless.org`. It is built using [Docusaurus v2](https://docusaurus.io/).
 
-* `/website/docs/api/*` - Auto generated by [typedocs](https://www.npmjs.com/package/docusaurus-plugin-typedoc). Generation happens on `yarn start` or via netlify when a PR is pushed.
-* `/website/docs/error-codes.md` - Auto generated by [typedocs](https://www.npmjs.com/package/docusaurus-plugin-typedoc) and the `/scripts/compile-error-code-page.js` script. Generation happens on `yarn start` or via netlify when a PR is pushed.
-* `/website/docs/concepts` - Hand written documentation for functionless resources. Update as needed.
+- `/website/docs/api/*` - Auto generated by [typedocs](https://www.npmjs.com/package/docusaurus-plugin-typedoc). Generation happens on `yarn start` or via netlify when a PR is pushed.
+- `/website/docs/error-codes.md` - Auto generated by [typedocs](https://www.npmjs.com/package/docusaurus-plugin-typedoc) and the `/scripts/compile-error-code-page.js` script. Generation happens on `yarn start` or via netlify when a PR is pushed.
+- `/website/docs/concepts` - Hand written documentation for functionless resources. Update as needed.
 
 To watch during development:
 
@@ -104,7 +106,7 @@ $ cd website
 website$ yarn start
 ```
 
-To simulate the netlify build, run (at the root directory) 
+To simulate the netlify build, run (at the root directory)
 
 ```console
 $ yarn build:website
@@ -125,28 +127,28 @@ TLDR; keep it simple and follow Typescript/React
 1.  Error Codes - Start at 10000
 2.  Error Message/Title
 3.  Type - Error, Warning, Info, Deprecated
-  
+
 All errors should be functionless(code) - If the error pertains to a specific service, the message should include that. If an error code is no longer relevant, we do not re-use the code, change the type to deprecated and stop returning the error. At major version bumps, we will clean up the deprecated errors and re-evaluate.
 
 #### Add a new Error Code
 
 1. Add a new exported constant in the `src/error_codes.ts` file.
 
-```ts
+````ts
 /**
  * Error thrown when doing something bad.
  * ```ts
  * some code showing valid and invalid cases
  * ```
- * 
+ *
  * ### More context
- * 
+ *
  * This is why this error happens, tickets that may resolve the issue, context links, aws/cloud/cdk limitations.
- * 
+ *
  * ### Workaround
  *
  * As an alternative, do this
- *  
+ *
  * ```ts
  * // something that achieves the behavior or close to it
  * ```
@@ -155,14 +157,15 @@ export const My_New_Error: ErrorCode {
 	type: ErrorType.ERROR,
 	messageText: "my new error",
 	code: 19999
-} 
-```
+}
+````
 
-**type** - 
-* <span style="background-color: red; padding: 4px;">ERROR</span> - Should fail validation, cli. An error signifies that consumer logic will fail or during compile, synth, or runtime, generally due to an explicit error from Functionless.
-* <span style="background-color: yellow; color: black; padding: 4px;">WARN</span> - Should show warning during validation, cli. A warning signifies that consumer logic MAY fail or act in undefined ways during compile, synth, or runtime
-* <span style="background-color: blue; padding: 4px;">INFO</span> - Show info during validate. Will not fail during compile, synth, or runtime.
-* <span style="background-color: grey; padding: 4px;">DEPRECATED</span> - Errors or warnings that are no longer applicable. (We unblocked the use case, for example).
+**type** -
+
+- <span style="background-color: red; padding: 4px;">ERROR</span> - Should fail validation, cli. An error signifies that consumer logic will fail or during compile, synth, or runtime, generally due to an explicit error from Functionless.
+- <span style="background-color: yellow; color: black; padding: 4px;">WARN</span> - Should show warning during validation, cli. A warning signifies that consumer logic MAY fail or act in undefined ways during compile, synth, or runtime
+- <span style="background-color: blue; padding: 4px;">INFO</span> - Show info during validate. Will not fail during compile, synth, or runtime.
+- <span style="background-color: grey; padding: 4px;">DEPRECATED</span> - Errors or warnings that are no longer applicable. (We unblocked the use case, for example).
 
 **Message Text** - A short, single sentence with no punctuation describing what the error is. The title of the error on the Error Code page. The anchor created on the url. The error printed by default with a `SynthError`.
 
@@ -191,18 +194,16 @@ To declare a breaking change add:
 
 To the bottom of your PR description. When we merge the PR into `main`, the BREAKING_CHANGE will be retained in the squash commit message.
 
-> Note: PRs should not use force pushes, always push new commits to the PR branch, including periodic merges from live as `main` is updated. 
-
-
+> Note: PRs should not use force pushes, always push new commits to the PR branch, including periodic merges from live as `main` is updated.
 
 ## Troubleshooting
 
-### 
+###
 
 [Error 101 - Function not compiled]https://functionless.org/docs/error-codes#function-not-compiled-by-functionless-plugin
 
 The compiler plugin isn't patched or working.
 
 1. `npx ts-patch install -s`
-	1. `npx ts-patch check` can be used to this needs to be done. At least 1 item should be marked as Installed
+   1. `npx ts-patch check` can be used to this needs to be done. At least 1 item should be marked as Installed
 2. Check your typescript versions and match sure they all match through the code base.
