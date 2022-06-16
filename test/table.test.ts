@@ -43,19 +43,51 @@ const newTable = new Table<Item, "id">(stack, "NewTable", {
  * We use @ts-expect-error to validate that types are inferred properly.
  */
 export function typeCheck() {
-  let t1: ITable<any, any, any> | undefined;
-  let t2: ITable<Item, "id"> | undefined;
-  let t3: AnyTable | undefined;
+  let t1: Table<any, any, any> | undefined;
+  let t2: Table<Item, "id"> | undefined;
+  let t3:
+    | Table<
+        Record<string | number | symbol, any>,
+        string | number | symbol,
+        string | number | symbol | undefined
+      >
+    | undefined;
 
   t1 = t2;
   t1 = t3;
 
-  t2 = t1; // ITable<any, any, any> should short-circuit
-  // @ts-expect-error
-  t2 = t3; // ITable<Item, "id"> is a sub-type of AnyTable
+  // type checks because Table<any, any, any> short circuits
+  t2 = t1;
+  // @ts-expect-error - Table<Record<string | number | symbol, any>, string | number | symbol, string | number | symbol | undefined> | undefined' is not assignable to type 'Table<Item, "id", undefined> | undefined
+  t2 = t3;
 
   t3 = t1;
   t3 = t2;
+
+  let t4: ITable<any, any, any> | undefined;
+  let t5: ITable<Item, "id"> | undefined;
+  let t6: AnyTable | undefined;
+
+  t4 = t1;
+  t4 = t2;
+  t4 = t3;
+  t4 = t5;
+  t4 = t6;
+
+  // type checks because Table<any, any, any> short circuits
+  t5 = t2;
+  // @ts-expect-error - Table<Record<string | number | symbol, any>, string | number | symbol, string | number | symbol | undefined> | undefined' is not assignable to type 'ITable<Item, "id", undefined> | undefined
+  t5 = t3;
+  // type checks because ITable<any, any, any> short circuits
+  t5 = t4;
+  // @ts-expect-error - 'AnyTable | undefined' is not assignable to type 'ITable<Item, "id", undefined> | undefined'
+  t5 = t6;
+
+  t6 = t1;
+  t6 = t2;
+  t6 = t3;
+  t6 = t4;
+  t6 = t5;
 
   // Test1: type checking should work for Table
   $AWS.DynamoDB.GetItem({
