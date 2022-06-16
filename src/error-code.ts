@@ -11,12 +11,6 @@ export class SynthError extends Error {
   }
 }
 
-type Numeral = "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9";
-export type ErrorNumber = `${Exclude<
-  Numeral,
-  "0"
->}${Numeral}${Numeral}${Numeral}${Numeral}`;
-
 /**
  * Formats an error message consistently across Functionless.
  *
@@ -52,7 +46,7 @@ export enum ErrorType {
 }
 
 export interface ErrorCode {
-  readonly code: ErrorNumber;
+  readonly code: number;
   readonly type: ErrorType;
   readonly messageText: string;
 }
@@ -81,7 +75,7 @@ export namespace ErrorCodes {
    */
   export const Cannot_perform_arithmetic_on_variables_in_Step_Function: ErrorCode =
     {
-      code: "10000",
+      code: 10000,
       type: ErrorType.ERROR,
       messageText: "Cannot perform arithmetic on variables in Step Function",
     };
@@ -93,7 +87,7 @@ export namespace ErrorCodes {
    * Ensure you follow the instructions at https://functionless.org/docs/getting-started.
    */
   export const FunctionDecl_not_compiled_by_Functionless: ErrorCode = {
-    code: "10001",
+    code: 10001,
     type: ErrorType.ERROR,
     messageText: "Function not compiled by Functionless plugin",
   };
@@ -109,7 +103,7 @@ export namespace ErrorCodes {
    * https://github.com/functionless/functionless/issues/128
    */
   export const Function_Closure_Serialization_Incomplete: ErrorCode = {
-    code: "10002",
+    code: 10002,
     type: ErrorType.ERROR,
     messageText: "Function closure serialization was not allowed to complete",
   };
@@ -118,7 +112,7 @@ export namespace ErrorCodes {
    * Generic error message to denote errors that should not happen and are not the fault of the Functionless library consumer.
    */
   export const Unexpected_Error: ErrorCode = {
-    code: "10003",
+    code: 10003,
     type: ErrorType.ERROR,
     messageText: "Unexpected Error, please report this issue",
   };
@@ -149,7 +143,7 @@ export namespace ErrorCodes {
    * ```
    */
   export const Incorrect_StateMachine_Import_Type: ErrorCode = {
-    code: "10004",
+    code: 10004,
     type: ErrorType.ERROR,
     messageText: "Incorrect state machine type imported",
   };
