@@ -32,7 +32,9 @@ test("new rule without when", () => {
 
   const rule = new Rule(stack, "rule", bus, (_event) => true);
 
-  expect(rule.rule._renderEventPattern()).toEqual({ source: [{ prefix: "" }] });
+  expect(rule.resource._renderEventPattern()).toEqual({
+    source: [{ prefix: "" }],
+  });
 });
 
 test("new transform without map", () => {
@@ -41,7 +43,7 @@ test("new transform without map", () => {
   const rule = new Rule(stack, "rule", bus, (_event) => true);
   const transform = new EventTransform((event) => event.source, rule);
 
-  expect(transform.targetInput.bind(rule.rule)).toEqual({
+  expect(transform.targetInput.bind(rule.resource)).toEqual({
     inputPath: "$.source",
   } as aws_events.RuleTargetInputProperties);
 });
@@ -52,7 +54,7 @@ test("rule from existing rule", () => {
   const rule = Rule.fromRule(awsRule);
   const transform = new EventTransform((event) => event.source, rule);
 
-  expect(transform.targetInput.bind(rule.rule)).toEqual({
+  expect(transform.targetInput.bind(rule.resource)).toEqual({
     inputPath: "$.source",
   } as aws_events.RuleTargetInputProperties);
 });
@@ -60,14 +62,16 @@ test("rule from existing rule", () => {
 test("new bus with when", () => {
   const rule = new EventBus(stack, "bus").when(stack, "rule", () => true);
 
-  expect(rule.rule._renderEventPattern()).toEqual({ source: [{ prefix: "" }] });
+  expect(rule.resource._renderEventPattern()).toEqual({
+    source: [{ prefix: "" }],
+  });
 });
 
 test("when using auto-source", () => {
   const bus = new EventBus(stack, "bus");
   bus.when("rule", () => true).pipe(bus);
 
-  expect(bus.bus.node.tryFindChild("rule")).not.toBeUndefined();
+  expect(bus.resource.node.tryFindChild("rule")).not.toBeUndefined();
 });
 
 test("rule when using auto-source", () => {
@@ -75,7 +79,7 @@ test("rule when using auto-source", () => {
   const rule1 = bus.when("rule", () => true);
   rule1.when("rule2", () => true).pipe(bus);
 
-  expect(bus.bus.node.tryFindChild("rule2")).not.toBeUndefined();
+  expect(bus.resource.node.tryFindChild("rule2")).not.toBeUndefined();
 });
 
 test("refine rule", () => {
@@ -90,7 +94,7 @@ test("refine rule", () => {
     (event) => event["detail-type"] === "something"
   );
 
-  expect(rule2.rule._renderEventPattern()).toEqual({
+  expect(rule2.resource._renderEventPattern()).toEqual({
     source: ["lambda"],
     "detail-type": ["something"],
   });
@@ -102,9 +106,9 @@ test("new bus with when pipe event bus", () => {
   const rule = busBus.when(stack, "rule", () => true);
   rule.pipe(busBus);
 
-  expect((rule.rule as any).targets.length).toEqual(1);
+  expect((rule.resource as any).targets.length).toEqual(1);
   expect(
-    (rule.rule as any).targets[0] as aws_events.IRuleTarget
+    (rule.resource as any).targets[0] as aws_events.IRuleTarget
   ).toHaveProperty("arn");
 });
 
@@ -119,10 +123,10 @@ test("refined bus with when pipe event bus", () => {
   );
   rule2.pipe(busBus);
 
-  expect((rule.rule as any).targets.length).toEqual(0);
-  expect((rule2.rule as any).targets.length).toEqual(1);
+  expect((rule.resource as any).targets.length).toEqual(0);
+  expect((rule2.resource as any).targets.length).toEqual(1);
   expect(
-    (rule2.rule as any).targets[0] as aws_events.IRuleTarget
+    (rule2.resource as any).targets[0] as aws_events.IRuleTarget
   ).toHaveProperty("arn");
 });
 
@@ -138,12 +142,12 @@ test("new bus with when map pipe function", () => {
     .map((event) => event.source);
   rule.pipe(func);
 
-  expect(rule.targetInput.bind(rule.rule.rule)).toEqual({
+  expect(rule.targetInput.bind(rule.rule.resource)).toEqual({
     inputPath: "$.source",
   } as aws_events.RuleTargetInputProperties);
-  expect((rule.rule.rule as any).targets.length).toEqual(1);
+  expect((rule.rule.resource as any).targets.length).toEqual(1);
   expect(
-    (rule.rule.rule as any).targets[0] as aws_events.IRuleTarget
+    (rule.rule.resource as any).targets[0] as aws_events.IRuleTarget
   ).toHaveProperty("arn");
 });
 
@@ -164,10 +168,10 @@ test("refined bus with when pipe function", () => {
   const map = rule2.map((event) => event.source);
   map.pipe(func);
 
-  expect((rule.rule as any).targets.length).toEqual(0);
-  expect((rule2.rule as any).targets.length).toEqual(1);
+  expect((rule.resource as any).targets.length).toEqual(0);
+  expect((rule2.resource as any).targets.length).toEqual(1);
   expect(
-    (map.rule.rule as any).targets[0] as aws_events.IRuleTarget
+    (map.rule.resource as any).targets[0] as aws_events.IRuleTarget
   ).toHaveProperty("arn");
 });
 
@@ -185,13 +189,13 @@ test("new bus with when map pipe step function", () => {
     .map((event) => ({ source: event.source }));
   rule.pipe(func);
 
-  expect(stack.resolve(rule.targetInput.bind(rule.rule.rule))).toEqual({
+  expect(stack.resolve(rule.targetInput.bind(rule.rule.resource))).toEqual({
     inputPathsMap: { source: "$.source" },
     inputTemplate: '{"source":<source>}',
   } as aws_events.RuleTargetInputProperties);
-  expect((rule.rule.rule as any).targets.length).toEqual(1);
+  expect((rule.rule.resource as any).targets.length).toEqual(1);
   expect(
-    (rule.rule.rule as any).targets[0] as aws_events.IRuleTarget
+    (rule.rule.resource as any).targets[0] as aws_events.IRuleTarget
   ).toHaveProperty("arn");
 });
 
@@ -209,13 +213,13 @@ test("new bus with when map pipe express step function", () => {
     .map((event) => ({ source: event.source }));
   rule.pipe(func);
 
-  expect(stack.resolve(rule.targetInput.bind(rule.rule.rule))).toEqual({
+  expect(stack.resolve(rule.targetInput.bind(rule.rule.resource))).toEqual({
     inputPathsMap: { source: "$.source" },
     inputTemplate: '{"source":<source>}',
   } as aws_events.RuleTargetInputProperties);
-  expect((rule.rule.rule as any).targets.length).toEqual(1);
+  expect((rule.rule.resource as any).targets.length).toEqual(1);
   expect(
-    (rule.rule.rule as any).targets[0] as aws_events.IRuleTarget
+    (rule.rule.resource as any).targets[0] as aws_events.IRuleTarget
   ).toHaveProperty("arn");
 });
 
@@ -231,15 +235,15 @@ test("new bus with when map pipe function props", () => {
     .map((event) => event.source);
   rule.pipe(func, { retryAttempts: 10 });
 
-  expect(rule.targetInput.bind(rule.rule.rule)).toEqual({
+  expect(rule.targetInput.bind(rule.rule.resource)).toEqual({
     inputPath: "$.source",
   } as aws_events.RuleTargetInputProperties);
-  expect((rule.rule.rule as any).targets.length).toEqual(1);
+  expect((rule.rule.resource as any).targets.length).toEqual(1);
   expect(
-    (rule.rule.rule as any).targets[0] as aws_events.RuleTargetConfig
+    (rule.rule.resource as any).targets[0] as aws_events.RuleTargetConfig
   ).toHaveProperty("arn");
   expect(
-    ((rule.rule.rule as any).targets[0] as aws_events.RuleTargetConfig)
+    ((rule.rule.resource as any).targets[0] as aws_events.RuleTargetConfig)
       .retryPolicy?.maximumRetryAttempts
   ).toEqual(10);
 });
@@ -255,7 +259,7 @@ test("pipe escape hatch", () => {
   rule.pipe(() => new aws_events_targets.LambdaFunction(func.resource));
 
   expect(
-    (rule.rule as any).targets[0] as aws_events.RuleTargetConfig
+    (rule.resource as any).targets[0] as aws_events.RuleTargetConfig
   ).toHaveProperty("arn");
 });
 
@@ -277,7 +281,7 @@ test("pipe map escape hatch", () => {
   );
 
   expect(
-    (rule.rule.rule as any).targets[0] as aws_events.RuleTargetConfig
+    (rule.rule.resource as any).targets[0] as aws_events.RuleTargetConfig
   ).toHaveProperty("arn");
 });
 
@@ -435,7 +439,7 @@ test("when any", () => {
     // should fail compilation if the types don't match
     .pipe(lambda);
 
-  const rule = bus.bus.node.tryFindChild("all");
+  const rule = bus.resource.node.tryFindChild("all");
   expect(rule).not.toBeUndefined();
 });
 
@@ -447,7 +451,7 @@ test("when any pipe", () => {
 
   bus.all().pipe(lambda);
 
-  const rule = bus.bus.node.tryFindChild("all");
+  const rule = bus.resource.node.tryFindChild("all");
   expect(rule).not.toBeUndefined();
 });
 
@@ -461,7 +465,7 @@ test("when any multiple times does not create new rules", () => {
   bus.all().pipe(lambda);
   bus.all().pipe(lambda);
 
-  const rule = bus.bus.node.tryFindChild("all");
+  const rule = bus.resource.node.tryFindChild("all");
   expect(rule).not.toBeUndefined();
 });
 
