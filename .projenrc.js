@@ -117,7 +117,6 @@ const project = new CustomTypescriptProject({
     "build:website": "npx tsc && cd ./website && yarn && yarn build",
   },
   peerDeps: [
-    `@aws-cdk/aws-appsync-alpha@^${MIN_CDK_VERSION}-alpha.0`,
     `aws-cdk-lib@^${MIN_CDK_VERSION}`,
     "constructs@^10.0.0",
     "esbuild",
