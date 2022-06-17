@@ -52,10 +52,11 @@ $input.json('$.error')
   ],
   "requestTemplates": Object {
     "application/json": "{
-\\"input\\":{
-  \\"num\\":$input.params('num'),
-  \\"str\\":\\"$input.params('str')\\"
-}
+\\"stateMachineArn\\":\\"__REPLACED_TOKEN\\",
+\\"input\\":\\"{
+  \\\\\\"num\\\\\\":$input.params('num'),
+  \\\\\\"str\\\\\\":\\\\\\"$input.params('str')\\\\\\"
+}\\"
 }",
   },
 }
