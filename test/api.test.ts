@@ -225,3 +225,40 @@ test("return $input.data", () => {
 
   expect(getTemplates(method)).toMatchSnapshot();
 });
+
+test("return $input.data.list[0]", () => {
+  const api = new aws_apigateway.RestApi(stack, "API");
+  const table = Table.fromTable(
+    new aws_dynamodb.Table(stack, "Table", {
+      partitionKey: {
+        name: "pk",
+        type: aws_dynamodb.AttributeType.STRING,
+      },
+    })
+  );
+
+  const method = new AwsMethod(
+    {
+      httpMethod: "POST",
+      resource: api.root,
+    },
+    (
+      $input: ApiGatewayInput<{
+        body: {
+          list: string;
+        };
+      }>
+    ) =>
+      $AWS.DynamoDB.GetItem({
+        TableName: table,
+        Key: {
+          pk: {
+            S: $input.data.list[0],
+          },
+        },
+      }),
+    ($input) => $input.data
+  );
+
+  expect(getTemplates(method)).toMatchSnapshot();
+});

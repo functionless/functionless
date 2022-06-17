@@ -161,3 +161,26 @@ Object {
   },
 }
 `;
+
+exports[`return $input.data.list[0] 1`] = `
+Object {
+  "integrationResponses": Array [
+    Object {
+      "responseTemplates": Object {
+        "application/json": "$input.json('$')",
+      },
+      "statusCode": "200",
+    },
+  ],
+  "requestTemplates": Object {
+    "application/json": "{
+  \\"TableName\\":\\"__REPLACED_TOKEN\\",
+  \\"Key\\":{
+    \\"pk\\":{
+      \\"S\\":$input.json('$.list[0]')
+    }
+  }
+}",
+  },
+}
+`;

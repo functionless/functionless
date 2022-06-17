@@ -16,17 +16,18 @@ import {
   Expr,
   Identifier,
   isArgument,
+  isArrayLiteralExpr,
+  isBooleanLiteralExpr,
   isCallExpr,
+  isElementAccessExpr,
   isIdentifier,
   isNullLiteralExpr,
-  isUndefinedLiteralExpr,
   isNumberLiteralExpr,
-  isBooleanLiteralExpr,
-  isArrayLiteralExpr,
   isObjectLiteralExpr,
   isPropAccessExpr,
   isPropAssignExpr,
   isStringLiteralExpr,
+  isUndefinedLiteralExpr,
 } from "./expression";
 import { Function } from "./function";
 import { findIntegration, IntegrationImpl } from "./integration";
@@ -712,6 +713,13 @@ ${oneIndent}]`;
           }
         }
       }
+    } else if (isElementAccessExpr(expr)) {
+      const jsonPath = toJsonPath(expr);
+      if (jsonPath) {
+        return `$input.json('${jsonPath}')`;
+      } else {
+        toJsonPath(expr);
+      }
     } else if (isObjectLiteralExpr(expr)) {
       if (expr.properties.length === 0) {
         return "{}";
@@ -752,30 +760,42 @@ ${oneIndent}}`;
      * @returns a JSON Path `string` if this {@link Expr} can be evaluated as a JSON Path from the `$input`, otherwise `undefined`.
      */
     function toJsonPath(expr: Expr): string | undefined {
-      if (isIdentifier(expr)) {
-        const ref = expr.lookup();
-        if (
-          isParameterDecl(ref) &&
-          isFunctionDecl(ref.parent) &&
-          ref.parent.parent === undefined
-        ) {
-          // is the input parameter, return root
-          return `$`;
-        } else {
-          // this is a reference to an intermediate value, cannot be expressed as JSON Path
-          return undefined;
-        }
+      if (isInputBody(expr)) {
+        return "$";
+      } else if (isIdentifier(expr)) {
+        // this is a reference to an intermediate value, cannot be expressed as JSON Path
+        return undefined;
       } else if (isPropAccessExpr(expr)) {
+        if (expr.name === "data" && isInputBody(expr.expr)) {
+          return "$";
+        }
         const exprJsonPath = toJsonPath(expr.expr);
         if (exprJsonPath !== undefined) {
-          if (exprJsonPath === "$" && expr.name === "data") {
-            return exprJsonPath;
-          }
-
           return `${exprJsonPath}.${expr.name}`;
+        }
+      } else if (
+        isElementAccessExpr(expr) &&
+        isNumberLiteralExpr(expr.element)
+      ) {
+        const exprJsonPath = toJsonPath(expr.expr);
+        if (exprJsonPath !== undefined) {
+          return `${exprJsonPath}[${expr.element.value}]`;
         }
       }
       return undefined;
+
+      // checks if this is a reference to the `$input` argument
+      function isInputBody(expr: Expr): expr is Identifier {
+        if (isIdentifier(expr)) {
+          const ref = expr.lookup();
+          return (
+            isParameterDecl(ref) &&
+            isFunctionDecl(ref.parent) &&
+            ref.parent.parent === undefined
+          );
+        }
+        return false;
+      }
     }
   }
 
