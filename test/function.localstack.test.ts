@@ -11,6 +11,7 @@ import {
   Stack,
   Token,
 } from "aws-cdk-lib";
+import { AttributeType } from "aws-cdk-lib/aws-dynamodb";
 // eslint-disable-next-line import/no-extraneous-dependencies
 import { Lambda } from "aws-sdk";
 import { Construct } from "constructs";
@@ -25,6 +26,7 @@ import {
   Table,
 } from "../src";
 import { clientConfig, localstackTestSuite } from "./localstack";
+import { getAuth, IAccount } from "./util";
 
 const lambda = new Lambda(clientConfig);
 
@@ -811,6 +813,67 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
       );
     },
     "value"
+  );
+
+  test.only(
+    "authorizer",
+    (parent) => {
+      const table = new Table<IAccount, "Id">(parent, "table", {
+        partitionKey: {
+          name: "Id",
+          type: AttributeType.STRING,
+        },
+      });
+
+      (table.resource as aws_dynamodb.Table).addGlobalSecondaryIndex({
+        indexName: "GSI1",
+        partitionKey: {
+          name: "pk",
+          type: AttributeType.STRING,
+        },
+      });
+
+      const Query = $AWS.DynamoDB.Query;
+
+      return new Function(
+        parent,
+        "function",
+        localstackClientConfig,
+        async (c) => {
+          const apiKey = c.authorizationToken || "";
+          if (!apiKey) return getAuth(undefined, apiKey);
+
+          const res = Query({
+            TableName: table,
+            KeyConditionExpression: "pk = :pk",
+            ExpressionAttributeValues: {
+              ":pk": { S: `API#${apiKey}` },
+            },
+            IndexName: "GSI1",
+            Limit: 1,
+          });
+
+          const item = res.Items?.[0];
+          if (item) {
+            const account: IAccount = {
+              Id: item.Id.S,
+              pk: item.pk.S,
+              entityType: item.entityType?.S,
+            };
+
+            return getAuth(account, apiKey);
+          }
+
+          throw new Error("Nothing!");
+        }
+      );
+    },
+    {
+      isAuthorized: true,
+      resolverContext: {},
+      deniedFields: [],
+    },
+    {}
   );
 
   test(
