@@ -144,7 +144,7 @@ export namespace ErrorCodes {
    * https://github.com/functionless/functionless/issues/128
    */
   export const Function_Closure_Serialization_Incomplete: ErrorCode = {
-    code: 102,
+    code: 104,
     messageText: "Function closure serialization was not allowed to complete",
   };
 
@@ -152,7 +152,7 @@ export namespace ErrorCodes {
    * Generic error message to denote errors that should not happen and are not the fault of the Functionless library consumer.
    */
   export const Unexpected_Error: ErrorCode = {
-    code: 103,
+    code: 105,
     messageText: "Unexpected Error, please report this issue",
   };
 
@@ -182,7 +182,7 @@ export namespace ErrorCodes {
    * ```
    */
   export const Incorrect_StateMachine_Import_Type = {
-    code: 104,
+    code: 106,
     messageText: "Incorrect state machine type imported",
   };
 
@@ -194,7 +194,7 @@ export namespace ErrorCodes {
    * @see https://github.com/functionless/functionless/issues/252 to track supported secret patterns.
    */
   export const Unsafe_use_of_secrets = {
-    code: 105,
+    code: 107,
     messageText: "Unsafe use of secrets",
   };
 
@@ -238,7 +238,7 @@ export namespace ErrorCodes {
    * ```
    */
   export const Unsupported_initialization_of_resources_in_function = {
-    code: 106,
+    code: 108,
     messageText:
       "Unsupported initialization of Resources in a Function closure",
   };
@@ -302,7 +302,7 @@ export namespace ErrorCodes {
    */
   export const Cannot_use_infrastructure_Resource_in_Function_closure: ErrorCode =
     {
-      code: 107,
+      code: 109,
       messageText: "Cannot use infrastructure Resource in Function closure",
     };
 
@@ -324,7 +324,7 @@ export namespace ErrorCodes {
    */
   export const API_Gateway_does_not_support_computed_property_names: ErrorCode =
     {
-      code: 108,
+      code: 110,
       messageText: "API Gateway does not supported computed property names",
     };
 
@@ -356,7 +356,7 @@ export namespace ErrorCodes {
    */
   export const API_Gateway_does_not_support_spread_assignment_expressions: ErrorCode =
     {
-      code: 109,
+      code: 111,
       messageText: "API Gateway does not support spread assignment expressions",
     };
 
@@ -387,7 +387,7 @@ export namespace ErrorCodes {
    * ```
    */
   export const Expected_an_object_literal: ErrorCode = {
-    code: 110,
+    code: 112,
     messageText: "Expected_an_object_literal",
   };
 
@@ -413,7 +413,7 @@ export namespace ErrorCodes {
    */
   export const API_gateway_response_mapping_template_cannot_call_integration: ErrorCode =
     {
-      code: 111,
+      code: 113,
       messageText:
         "API gateway response mapping template cannot call integration",
     };

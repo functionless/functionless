@@ -13,7 +13,7 @@ https://functionless.org/docs/error-codes#awsmethod-request-must-have-exactly-on
 [7m  [0m [91m~~~~~~~~~~~~~~~~~~~~~~~[0m
 [7m64[0m   },
 [7m  [0m [91m~~~[0m
-[96mtest/test-files/api-gateway.ts[0m:[93m76[0m:[93m24[0m - [91merror[0m[90m Functionless(109): [0mAPI Gateway does not support spread assignment expressions
+[96mtest/test-files/api-gateway.ts[0m:[93m76[0m:[93m24[0m - [91merror[0m[90m Functionless(111): [0mAPI Gateway does not support spread assignment expressions
 
 https://functionless.org/docs/error-codes#api-gateway-does-not-support-spread-assignment-expressions
 
@@ -21,7 +21,7 @@ https://functionless.org/docs/error-codes#api-gateway-does-not-support-spread-as
 [7m  [0m [91m                       [0m
 [7m77[0m       ...$input.data,
 [7m  [0m [91m~~~~~~~~~~~~~~~~~~~~[0m
-[96mtest/test-files/api-gateway.ts[0m:[93m77[0m:[93m22[0m - [91merror[0m[90m Functionless(108): [0mAPI Gateway does not supported computed property names
+[96mtest/test-files/api-gateway.ts[0m:[93m77[0m:[93m22[0m - [91merror[0m[90m Functionless(110): [0mAPI Gateway does not supported computed property names
 
 https://functionless.org/docs/error-codes#api-gateway-does-not-supported-computed-property-names
 
@@ -29,7 +29,7 @@ https://functionless.org/docs/error-codes#api-gateway-does-not-supported-compute
 [7m  [0m [91m                     [0m
 [7m78[0m       [$input.params(\\"param\\")]: null,
 [7m  [0m [91m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
-[96mtest/test-files/api-gateway.ts[0m:[93m101[0m:[93m11[0m - [91merror[0m[90m Functionless(111): [0mAPI gateway response mapping template cannot call integration
+[96mtest/test-files/api-gateway.ts[0m:[93m101[0m:[93m11[0m - [91merror[0m[90m Functionless(113): [0mAPI gateway response mapping template cannot call integration
 
 https://functionless.org/docs/error-codes#api-gateway-response-mapping-template-cannot-call-integration
 
@@ -46,7 +46,7 @@ https://functionless.org/docs/error-codes#api-gateway-response-mapping-template-
 `;
 
 exports[`function.ts 1`] = `
-"[96mtest/test-files/function.ts[0m:[93m28[0m:[93m51[0m - [91merror[0m[90m Functionless(107): [0mCannot use infrastructure Resource in Function closure
+"[96mtest/test-files/function.ts[0m:[93m28[0m:[93m51[0m - [91merror[0m[90m Functionless(109): [0mCannot use infrastructure Resource in Function closure
 
 https://functionless.org/docs/error-codes#cannot-use-infrastructure-resource-in-function-closure
 
@@ -54,7 +54,7 @@ https://functionless.org/docs/error-codes#cannot-use-infrastructure-resource-in-
 [7m  [0m [91m                                                  [0m
 [7m29[0m   bus.resource.eventBusArn;
 [7m  [0m [91m~~~~~[0m
-[96mtest/test-files/function.ts[0m:[93m32[0m:[93m50[0m - [91merror[0m[90m Functionless(107): [0mCannot use infrastructure Resource in Function closure
+[96mtest/test-files/function.ts[0m:[93m32[0m:[93m50[0m - [91merror[0m[90m Functionless(109): [0mCannot use infrastructure Resource in Function closure
 
 https://functionless.org/docs/error-codes#cannot-use-infrastructure-resource-in-function-closure
 
@@ -62,7 +62,7 @@ https://functionless.org/docs/error-codes#cannot-use-infrastructure-resource-in-
 [7m  [0m [91m                                                 [0m
 [7m33[0m   sfn.resource.stateMachineArn;
 [7m  [0m [91m~~~~~[0m
-[96mtest/test-files/function.ts[0m:[93m36[0m:[93m51[0m - [91merror[0m[90m Functionless(107): [0mCannot use infrastructure Resource in Function closure
+[96mtest/test-files/function.ts[0m:[93m36[0m:[93m51[0m - [91merror[0m[90m Functionless(109): [0mCannot use infrastructure Resource in Function closure
 
 https://functionless.org/docs/error-codes#cannot-use-infrastructure-resource-in-function-closure
 
@@ -70,7 +70,7 @@ https://functionless.org/docs/error-codes#cannot-use-infrastructure-resource-in-
 [7m  [0m [91m                                                  [0m
 [7m37[0m   func.resource;
 [7m  [0m [91m~~~~~~[0m
-[96mtest/test-files/function.ts[0m:[93m40[0m:[93m52[0m - [91merror[0m[90m Functionless(107): [0mCannot use infrastructure Resource in Function closure
+[96mtest/test-files/function.ts[0m:[93m40[0m:[93m52[0m - [91merror[0m[90m Functionless(109): [0mCannot use infrastructure Resource in Function closure
 
 https://functionless.org/docs/error-codes#cannot-use-infrastructure-resource-in-function-closure
 
@@ -78,7 +78,7 @@ https://functionless.org/docs/error-codes#cannot-use-infrastructure-resource-in-
 [7m  [0m [91m                                                   [0m
 [7m41[0m   table.resource;
 [7m  [0m [91m~~~~~~~[0m
-[96mtest/test-files/function.ts[0m:[93m75[0m:[93m15[0m - [91merror[0m[90m Functionless(107): [0mCannot use infrastructure Resource in Function closure
+[96mtest/test-files/function.ts[0m:[93m75[0m:[93m15[0m - [91merror[0m[90m Functionless(109): [0mCannot use infrastructure Resource in Function closure
 
 https://functionless.org/docs/error-codes#cannot-use-infrastructure-resource-in-function-closure
 
