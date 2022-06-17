@@ -399,7 +399,6 @@ abstract class BaseStepFunction<
   readonly functionlessKind = "StepFunction";
 
   readonly appSyncVtl: AppSyncVtlIntegration;
-  readonly apiGWVtl: ApiGatewayVtlIntegration;
 
   // @ts-ignore
   readonly __functionBrand: (arg: CallIn) => CallOut;
@@ -449,52 +448,6 @@ abstract class BaseStepFunction<
 }`;
       },
     });
-
-    // Integration object for api gateway vtl
-    this.apiGWVtl = {
-      renderRequest: (call, context) => {
-        const args = retrieveMachineArgs(call);
-
-        return `{\n${Object.entries(args)
-          .filter(
-            (arg): arg is [typeof arg[0], Exclude<typeof arg[1], undefined>] =>
-              arg[1] !== undefined
-          )
-          .map(
-            ([argName, argVal]) => `"${argName}":${context.exprToJson(argVal)}`
-          )
-          .join(",\n  ")}\n}`;
-      },
-
-      createIntegration: (options) => {
-        const credentialsRole = options.credentialsRole;
-
-        this.resource.grantRead(credentialsRole);
-        if (
-          this.resource.stateMachineType ===
-          aws_stepfunctions.StateMachineType.EXPRESS
-        ) {
-          this.resource.grantStartSyncExecution(credentialsRole);
-        } else {
-          this.resource.grantStartExecution(credentialsRole);
-        }
-
-        return new aws_apigateway.AwsIntegration({
-          service: "states",
-          action:
-            this.resource.stateMachineType ===
-            aws_stepfunctions.StateMachineType.EXPRESS
-              ? "StartSyncExecution"
-              : "StartExecution",
-          integrationHttpMethod: "POST",
-          options: {
-            ...options,
-            credentialsRole,
-            passthroughBehavior: aws_apigateway.PassthroughBehavior.NEVER,
-          },
-        });
-      },
-    };
   }
 
   public appSyncIntegration(
@@ -921,6 +874,49 @@ export class ExpressStepFunction<
   Out
 > extends BaseExpressStepFunction<Payload, Out> {
   readonly definition: StateMachine<States>;
+
+  // Integration object for api gateway vtl
+  readonly apiGWVtl: ApiGatewayVtlIntegration = {
+    renderRequest: (call, context) => {
+      const args = retrieveMachineArgs(call);
+
+      return `{\n"stateMachineArn":"${
+        this.resource.stateMachineArn
+      }",\n${Object.entries(args)
+        .filter(
+          (arg): arg is [typeof arg[0], Exclude<typeof arg[1], undefined>] =>
+            arg[1] !== undefined
+        )
+        .map(([argName, argVal]) => {
+          if (argName === "input") {
+            // stringify the JSON input
+            const input = context.exprToJson(argVal).replace(/"/g, '\\"');
+            return `"${argName}":"${input}"`;
+          } else {
+            return `"${argName}":${context.exprToJson(argVal)}`;
+          }
+        })
+        .join(",")}\n}`;
+    },
+
+    createIntegration: (options) => {
+      const credentialsRole = options.credentialsRole;
+
+      this.resource.grantRead(credentialsRole);
+      this.resource.grantStartSyncExecution(credentialsRole);
+
+      return new aws_apigateway.AwsIntegration({
+        service: "states",
+        action: "StartSyncExecution",
+        integrationHttpMethod: "POST",
+        options: {
+          ...options,
+          credentialsRole,
+          passthroughBehavior: aws_apigateway.PassthroughBehavior.NEVER,
+        },
+      });
+    },
+  };
 
   /**
    * Wrap a {@link aws_stepfunctions.StateMachine} with Functionless.

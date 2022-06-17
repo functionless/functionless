@@ -82,21 +82,6 @@ new AwsMethod(
   }
 );
 
-const sfn = new ExpressStepFunction(
-  stack,
-  "express-sfn",
-  {
-    logs: {
-      destination: new aws_logs.LogGroup(stack, "express-sfn-logs"),
-      includeExecutionData: true,
-    },
-  },
-  (input: { num: number; str: string }) => ({
-    sfnNum: input.num,
-    sfnStr: input.str,
-  })
-);
-
 const mockResource = restApi.root.addResource("mock").addResource("{num}");
 new MockMethod(
   {
@@ -155,6 +140,21 @@ new AwsMethod(
   {
     400: () => ({ msg: "400" }),
   }
+);
+
+const sfn = new ExpressStepFunction(
+  stack,
+  "express-sfn",
+  {
+    logs: {
+      destination: new aws_logs.LogGroup(stack, "express-sfn-logs"),
+      includeExecutionData: true,
+    },
+  },
+  (input: { num: number; str: string }) => ({
+    sfnNum: input.num,
+    sfnStr: input.str,
+  })
 );
 
 const sfnResource = restApi.root.addResource("sfn").addResource("{num}");
