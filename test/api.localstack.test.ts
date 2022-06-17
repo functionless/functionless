@@ -11,6 +11,7 @@ import {
 import { localstackTestSuite } from "./localstack";
 
 localstackTestSuite("apiGatewayStack", (test, stack) => {
+  // skipped because local stack does not support mapping templates https://github.com/localstack/localstack/issues/5850
   test.skip(
     "mock integration",
     () => {
@@ -54,6 +55,7 @@ localstackTestSuite("apiGatewayStack", (test, stack) => {
     }
   );
 
+  // skipped because local stack does not support mapping templates https://github.com/localstack/localstack/issues/5850
   test.skip(
     "lambda function integration",
     () => {
