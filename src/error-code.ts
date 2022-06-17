@@ -25,7 +25,7 @@ export class SynthError extends Error {
  * ```
  */
 export const formatErrorMessage = (code: ErrorCode, messageText?: string) => `${
-  messageText ?? code.messageText
+  messageText ?? code.title
 }
 
 ${formatErrorUrl(code)}`;
@@ -36,7 +36,7 @@ ${formatErrorUrl(code)}`;
  * `http://functionless.org/docs/error-codes/#[Anchor from Message Text]`
  */
 export const formatErrorUrl = (code: ErrorCode) =>
-  `${BASE_URL}/docs/error-codes#${code.messageText
+  `${BASE_URL}/docs/error-codes#${code.title
     .toLowerCase()
     .replace(/\s/g, "-")}`;
 
@@ -48,9 +48,21 @@ export enum ErrorType {
 }
 
 export interface ErrorCode {
+  /**
+   * Error code, a unique number between 10000 and 99999.
+   *
+   * New error codes should be sequential.
+   */
   readonly code: number;
+  /**
+   * The type of the error, determine how the error is displayed in the language service and on the website.
+   */
   readonly type: ErrorType;
-  readonly messageText: string;
+  /**
+   * Title of the error which will appear on `https://functionless.org/docs/error-codes` and act as the deep link.
+   * (https://functionless.org/docs/error-codes#title-with-dashes)
+   */
+  readonly title: string;
 }
 
 export namespace ErrorCodes {
@@ -79,7 +91,7 @@ export namespace ErrorCodes {
     {
       code: 10000,
       type: ErrorType.ERROR,
-      messageText: "Cannot perform arithmetic on variables in Step Function",
+      title: "Cannot perform arithmetic on variables in Step Function",
     };
 
   /**
@@ -91,7 +103,7 @@ export namespace ErrorCodes {
   export const FunctionDecl_not_compiled_by_Functionless: ErrorCode = {
     code: 10001,
     type: ErrorType.ERROR,
-    messageText: "Function not compiled by Functionless plugin",
+    title: "Function not compiled by Functionless plugin",
   };
 
   /**
@@ -118,7 +130,7 @@ export namespace ErrorCodes {
   export const Argument_must_be_an_inline_Function: ErrorCode = {
     code: 10002,
     type: ErrorType.ERROR,
-    messageText: `Argument must be an inline Function`,
+    title: `Argument must be an inline Function`,
   };
 
   /**
@@ -142,7 +154,7 @@ export namespace ErrorCodes {
     {
       code: 10003,
       type: ErrorType.ERROR,
-      messageText: `AwsMethod request must have exactly one integration call`,
+      title: `AwsMethod request must have exactly one integration call`,
     };
 
   /**
@@ -158,7 +170,7 @@ export namespace ErrorCodes {
   export const Function_Closure_Serialization_Incomplete: ErrorCode = {
     code: 10004,
     type: ErrorType.ERROR,
-    messageText: "Function closure serialization was not allowed to complete",
+    title: "Function closure serialization was not allowed to complete",
   };
 
   /**
@@ -169,7 +181,7 @@ export namespace ErrorCodes {
   export const Unexpected_Error: ErrorCode = {
     code: 10005,
     type: ErrorType.ERROR,
-    messageText: "Unexpected Error, please report this issue",
+    title: "Unexpected Error, please report this issue",
   };
 
   /**
@@ -197,10 +209,10 @@ export namespace ErrorCodes {
    * StateMachine.fromStepFunction(exprSfn);
    * ```
    */
-  export const Incorrect_StateMachine_Import_Type = {
+  export const Incorrect_StateMachine_Import_Type: ErrorCode = {
     code: 10006,
     type: ErrorType.ERROR,
-    messageText: "Incorrect state machine type imported",
+    title: "Incorrect state machine type imported",
   };
 
   /**
@@ -210,10 +222,10 @@ export namespace ErrorCodes {
    *
    * @see https://github.com/functionless/functionless/issues/252 to track supported secret patterns.
    */
-  export const Unsafe_use_of_secrets = {
+  export const Unsafe_use_of_secrets: ErrorCode = {
     code: 10007,
     type: ErrorType.ERROR,
-    messageText: "Unsafe use of secrets",
+    title: "Unsafe use of secrets",
   };
 
   /**
@@ -255,12 +267,12 @@ export namespace ErrorCodes {
    * });
    * ```
    */
-  export const Unsupported_initialization_of_resources_in_function = {
-    code: 10008,
-    type: ErrorType.ERROR,
-    messageText:
-      "Unsupported initialization of Resources in a Function closure",
-  };
+  export const Unsupported_initialization_of_resources_in_function: ErrorCode =
+    {
+      code: 10008,
+      type: ErrorType.ERROR,
+      title: "Unsupported initialization of Resources in a Function closure",
+    };
 
   /**
    * Cannot use Infrastructure resource in Function closure.
@@ -323,7 +335,7 @@ export namespace ErrorCodes {
     {
       code: 10009,
       type: ErrorType.ERROR,
-      messageText: "Cannot use infrastructure Resource in Function closure",
+      title: "Cannot use infrastructure Resource in Function closure",
     };
 
   /**
@@ -346,7 +358,7 @@ export namespace ErrorCodes {
     {
       code: 10010,
       type: ErrorType.ERROR,
-      messageText: "API Gateway does not supported computed property names",
+      title: "API Gateway does not supported computed property names",
     };
 
   /**
@@ -379,7 +391,7 @@ export namespace ErrorCodes {
     {
       code: 10011,
       type: ErrorType.ERROR,
-      messageText: "API Gateway does not support spread assignment expressions",
+      title: "API Gateway does not support spread assignment expressions",
     };
 
   /**
@@ -411,7 +423,7 @@ export namespace ErrorCodes {
   export const Expected_an_object_literal: ErrorCode = {
     code: 10012,
     type: ErrorType.ERROR,
-    messageText: "Expected_an_object_literal",
+    title: "Expected_an_object_literal",
   };
 
   /**
@@ -438,7 +450,6 @@ export namespace ErrorCodes {
     {
       code: 10013,
       type: ErrorType.ERROR,
-      messageText:
-        "API gateway response mapping template cannot call integration",
+      title: "API gateway response mapping template cannot call integration",
     };
 }

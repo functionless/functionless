@@ -48,7 +48,7 @@ for (const [errorId, errorCode] of Object.entries(ErrorCodes)) {
   //### Cannot\_perform\_arithmetic\_on\_variables\_in\_Step\_Function
   errorCodeMarkdown = errorCodeMarkdown.replace(
     `### ${errorId.replace(/_/g, "\\_")}`,
-    `### ${errorCode.messageText}
+    `### ${errorCode.title}
 
 __Error Code__: Functionless(${errorCode.code})
 __Error Type__: ${
