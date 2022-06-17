@@ -1,7 +1,7 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`function.ts 1`] = `
-"[96mtest/test-files/function.ts[0m:[93m28[0m:[93m51[0m - [91merror[0m[90m Functionless(107): [0mCannot use infrastructure Resource in Function closure
+"[96mtest/test-files/function.ts[0m:[93m28[0m:[93m51[0m - [91merror[0m[90m Functionless(10007): [0mCannot use infrastructure Resource in Function closure
 
 https://functionless.org/docs/error-codes#cannot-use-infrastructure-resource-in-function-closure
 
@@ -9,7 +9,7 @@ https://functionless.org/docs/error-codes#cannot-use-infrastructure-resource-in-
 [7m  [0m [91m                                                  [0m
 [7m29[0m   bus.resource.eventBusArn;
 [7m  [0m [91m~~~~~[0m
-[96mtest/test-files/function.ts[0m:[93m32[0m:[93m50[0m - [91merror[0m[90m Functionless(107): [0mCannot use infrastructure Resource in Function closure
+[96mtest/test-files/function.ts[0m:[93m32[0m:[93m50[0m - [91merror[0m[90m Functionless(10007): [0mCannot use infrastructure Resource in Function closure
 
 https://functionless.org/docs/error-codes#cannot-use-infrastructure-resource-in-function-closure
 
@@ -17,7 +17,7 @@ https://functionless.org/docs/error-codes#cannot-use-infrastructure-resource-in-
 [7m  [0m [91m                                                 [0m
 [7m33[0m   sfn.resource.stateMachineArn;
 [7m  [0m [91m~~~~~[0m
-[96mtest/test-files/function.ts[0m:[93m36[0m:[93m51[0m - [91merror[0m[90m Functionless(107): [0mCannot use infrastructure Resource in Function closure
+[96mtest/test-files/function.ts[0m:[93m36[0m:[93m51[0m - [91merror[0m[90m Functionless(10007): [0mCannot use infrastructure Resource in Function closure
 
 https://functionless.org/docs/error-codes#cannot-use-infrastructure-resource-in-function-closure
 
@@ -25,7 +25,7 @@ https://functionless.org/docs/error-codes#cannot-use-infrastructure-resource-in-
 [7m  [0m [91m                                                  [0m
 [7m37[0m   func.resource;
 [7m  [0m [91m~~~~~~[0m
-[96mtest/test-files/function.ts[0m:[93m40[0m:[93m52[0m - [91merror[0m[90m Functionless(107): [0mCannot use infrastructure Resource in Function closure
+[96mtest/test-files/function.ts[0m:[93m40[0m:[93m52[0m - [91merror[0m[90m Functionless(10007): [0mCannot use infrastructure Resource in Function closure
 
 https://functionless.org/docs/error-codes#cannot-use-infrastructure-resource-in-function-closure
 
@@ -33,7 +33,7 @@ https://functionless.org/docs/error-codes#cannot-use-infrastructure-resource-in-
 [7m  [0m [91m                                                   [0m
 [7m41[0m   table.resource;
 [7m  [0m [91m~~~~~~~[0m
-[96mtest/test-files/function.ts[0m:[93m75[0m:[93m15[0m - [91merror[0m[90m Functionless(107): [0mCannot use infrastructure Resource in Function closure
+[96mtest/test-files/function.ts[0m:[93m75[0m:[93m15[0m - [91merror[0m[90m Functionless(10007): [0mCannot use infrastructure Resource in Function closure
 
 https://functionless.org/docs/error-codes#cannot-use-infrastructure-resource-in-function-closure
 
@@ -73,7 +73,7 @@ https://functionless.org/docs/error-codes#cannot-perform-arithmetic-on-variables
 
 [7m19[0m     const a = input.i + 1;
 [7m  [0m [91m             ~~~~~~~~~~~~[0m
-[96mtest/test-files/step-function.ts[0m:[93m72[0m:[93m15[0m - [91merror[0m[90m Functionless(100): [0mCannot perform arithmetic on variables in Step Function
+[96mtest/test-files/step-function.ts[0m:[93m72[0m:[93m15[0m - [91merror[0m[90m Functionless(10000): [0mCannot perform arithmetic on variables in Step Function
 
 https://functionless.org/docs/error-codes#cannot-perform-arithmetic-on-variables-in-step-function
 
