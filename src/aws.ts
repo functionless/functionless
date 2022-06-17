@@ -470,15 +470,7 @@ export namespace $AWS {
                 `input to $AWS.DynamoDB.${operationName} must be an object literal`
               );
             }
-            const table = input
-              .getProperty("TableName")
-              ?.expr.as("ReferenceExpr")
-              .ref();
-            if (!isTable(table)) {
-              throw new Error(
-                `TableName must be a reference to a DynamoDB Table`
-              );
-            }
+            const table = getTableArgument(operationName, call.args);
 
             // const table = getTableArgument(call.args.map((arg) => arg.expr!));
             grantTablePermissions(table, context.role, operationName);

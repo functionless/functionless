@@ -1039,10 +1039,14 @@ export interface ApiGatewayContext extends APIGatewayEventRequestContext {
   readonly webaclArn?: string;
   /**
    * Request properties that can be overridden.
+   *
+   * Overrides are final. An override may only be applied to each parameter once. Trying to override the same parameter multiple times will result in 5XX responses from Amazon API Gateway. If you must override the same parameter multiple times throughout the template, we recommend creating a variable and applying the override at the end of the template. Note that the template is applied only after the entire template is parsed.
    */
   readonly requestOverride: APIGatewayRequestOverride;
   /**
    * Response properties that can be overridden.
+   *
+   * Overrides are final. An override may only be applied to each parameter once. Trying to override the same parameter multiple times will result in 5XX responses from Amazon API Gateway. If you must override the same parameter multiple times throughout the template, we recommend creating a variable and applying the override at the end of the template. Note that the template is applied only after the entire template is parsed.
    */
   readonly responseOverride: ApiGatewayResponseOverride;
 }
