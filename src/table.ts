@@ -56,8 +56,8 @@ export interface TableProps<
    * @default no sort key
    */
   readonly sortKey?: RangeKey extends undefined
-    ? { name: Exclude<RangeKey, undefined>; type: aws_dynamodb.AttributeType }
-    : undefined;
+    ? undefined
+    : { name: Exclude<RangeKey, undefined>; type: aws_dynamodb.AttributeType };
 }
 
 export type AnyTable = ITable<Record<string, any>, string, string | undefined>;
