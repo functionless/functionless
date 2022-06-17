@@ -5,7 +5,7 @@ Object {
   "integrationResponses": Array [
     Object {
       "responseTemplates": Object {
-        "application/json": "#set($v1 = $input.path('$').data.Item != $null)
+        "application/json": "#set($v1 = $input.path('$').Item != $null)
 #if($v1)
 {
   \\"data\\":$input.json('$.Item')
@@ -39,7 +39,7 @@ Object {
   "integrationResponses": Array [
     Object {
       "responseTemplates": Object {
-        "application/json": "#set($v1 = $input.path('$').data.status == 'SUCCEEDED')
+        "application/json": "#set($v1 = $input.path('$').status == 'SUCCEEDED')
 #if($v1)
 $input.json('$.output')
 #else

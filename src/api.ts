@@ -632,6 +632,14 @@ export class APIGatewayVTL extends VTL {
   public eval(node?: Expr | Stmt, returnVar?: string): string | void {
     if (isReturnStmt(node)) {
       return this.add(this.exprToJson(node.expr));
+    } else if (
+      isPropAccessExpr(node) &&
+      isInputBody(node.expr) &&
+      node.name === "data"
+    ) {
+      // $input.data maps to `$input.path('$')`
+      // this returns a VTL object representing the root payload data
+      return `$input.path('$')`;
     }
     return super.eval(node as any, returnVar);
   }
@@ -783,19 +791,6 @@ ${oneIndent}}`;
         }
       }
       return undefined;
-
-      // checks if this is a reference to the `$input` argument
-      function isInputBody(expr: Expr): expr is Identifier {
-        if (isIdentifier(expr)) {
-          const ref = expr.lookup();
-          return (
-            isParameterDecl(ref) &&
-            isFunctionDecl(ref.parent) &&
-            ref.parent.parent === undefined
-          );
-        }
-        return false;
-      }
     }
   }
 
@@ -857,6 +852,19 @@ ${reference}
       return `$${id.name}`;
     }
   }
+}
+
+// checks if this is a reference to the `$input` argument
+function isInputBody(expr: Expr): expr is Identifier {
+  if (isIdentifier(expr)) {
+    const ref = expr.lookup();
+    return (
+      isParameterDecl(ref) &&
+      isFunctionDecl(ref.parent) &&
+      ref.parent.parent === undefined
+    );
+  }
+  return false;
 }
 
 /**
