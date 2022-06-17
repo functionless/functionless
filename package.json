@@ -76,7 +76,8 @@
     "constructs": "^10.0.0",
     "esbuild": "^0.14.44",
     "typesafe-dynamodb": "^0.1.5",
-    "typescript": "^4.7.2"
+    "typescript": "^4.7.2",
+    "@aws-cdk/aws-appsync-alpha": "*"
   },
   "dependencies": {
     "@functionless/nodejs-closure-serializer": "^0.0.2",
