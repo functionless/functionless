@@ -115,6 +115,8 @@ export function compile(
             return visitEventTransform(node);
           } else if (checker.isNewFunctionlessFunction(node)) {
             return visitFunction(node, ctx);
+          } else if (checker.isApiIntegration(node)) {
+            return visitApiIntegration(node);
           }
           return node;
         };
@@ -497,7 +499,7 @@ export function compile(
 
       function toFunction(
         type: "FunctionDecl" | "FunctionExpr",
-        impl: TsFunctionParameter,
+        impl: ts.Expression,
         dropArgs?: number
       ): ts.Expression {
         if (
@@ -538,6 +540,45 @@ export function compile(
           ),
           body,
         ]);
+      }
+
+      function visitApiIntegration(node: ts.NewExpression): ts.Node {
+        const [props, request, response, errors] = node.arguments ?? [];
+
+        return errorBoundary(() =>
+          ts.factory.updateNewExpression(
+            node,
+            node.expression,
+            node.typeArguments,
+            [
+              props,
+              toFunction("FunctionDecl", request),
+              ts.isObjectLiteralExpression(response)
+                ? visitApiErrors(response)
+                : toFunction("FunctionDecl", response),
+              ...(errors && ts.isObjectLiteralExpression(errors)
+                ? [visitApiErrors(errors)]
+                : []),
+            ]
+          )
+        );
+      }
+
+      function visitApiErrors(errors: ts.ObjectLiteralExpression) {
+        return errorBoundary(() =>
+          ts.factory.updateObjectLiteralExpression(
+            errors,
+            errors.properties.map((prop) =>
+              ts.isPropertyAssignment(prop)
+                ? ts.factory.updatePropertyAssignment(
+                    prop,
+                    prop.name,
+                    toFunction("FunctionDecl", prop.initializer)
+                  )
+                : prop
+            )
+          )
+        );
       }
 
       function toExpr(

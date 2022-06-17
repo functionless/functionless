@@ -80,13 +80,19 @@ const project = new CustomTypescriptProject({
   bin: {
     functionless: "./bin/functionless.js",
   },
-  deps: ["fs-extra", "minimatch", "@functionless/nodejs-closure-serializer"],
+  deps: [
+    "@types/aws-lambda",
+    "fs-extra",
+    "minimatch",
+    "@functionless/nodejs-closure-serializer",
+  ],
   devDeps: [
     `@aws-cdk/aws-appsync-alpha@${MIN_CDK_VERSION}-alpha.0`,
     "@types/fs-extra",
     "@types/minimatch",
     "@types/uuid",
     "amplify-appsync-simulator",
+    "axios",
     "graphql-request",
     "ts-node",
     "ts-patch",
@@ -106,6 +112,7 @@ const project = new CustomTypescriptProject({
      */
   ],
   scripts: {
+    prepare: "ts-patch install -s",
     localstack: "./scripts/localstack",
     "build:website": "npx tsc && cd ./website && yarn && yarn build",
   },
@@ -164,7 +171,6 @@ project.compileTask.prependExec(
 project.testTask.prependExec(
   "cd ./test-app && yarn && yarn build && yarn synth"
 );
-project.testTask.prependExec("ts-patch install -s");
 project.testTask.prependExec("./scripts/localstack");
 project.testTask.exec("localstack stop");
 

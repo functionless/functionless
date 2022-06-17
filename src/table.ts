@@ -12,7 +12,8 @@ import {
 } from "typesafe-dynamodb/lib/expression-attributes";
 import { TableKey } from "typesafe-dynamodb/lib/key";
 import { Narrow } from "typesafe-dynamodb/lib/narrow";
-import type { AppSyncVtlIntegration } from "./appsync";
+// @ts-expect-error - AppsyncResolver is imported for tsdoc
+import { AppsyncResolver, AppSyncVtlIntegration } from "./appsync";
 import { assertNodeKind } from "./assert";
 import { ObjectLiteralExpr } from "./expression";
 import {

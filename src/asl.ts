@@ -1514,7 +1514,7 @@ export namespace ASL {
    * 2. the value of `$$.Map.Item.Value` is stashed in `$.0_i`. Special `0_` prefix is impossible
    *    to produce with TypeScript syntax and is therefore safe to use a prefix to store the hidden value.
    *
-   * ```
+   * ```ts
    * for (const i in items) {
    *   const a = items[i]
    *   {

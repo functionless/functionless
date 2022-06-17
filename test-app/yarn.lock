@@ -1614,6 +1614,11 @@
   resolved "https://registry.yarnpkg.com/@types/aws-lambda/-/aws-lambda-8.10.93.tgz#3e2c80894122477040aabf29b7320556f5702a76"
   integrity sha512-Vsyi9ogDAY3REZDjYnXMRJJa62SDvxHXxJI5nGDQdZW058dDE+av/anynN2rLKbCKXDRNw3D/sQmqxVflZFi4A==
 
+"@types/aws-lambda@^8.10.98":
+  version "8.10.98"
+  resolved "https://registry.yarnpkg.com/@types/aws-lambda/-/aws-lambda-8.10.98.tgz#2936975c19529011b8b5c08850d42157711c690d"
+  integrity sha512-dJ/R9qamtI2nNpxhNwPBTwsfYwbcCWsYBJxhpgGyMLCD0HxKpORcMpPpSrFP/FIceNEYfnS3R5EfjSZJmX2oJg==
+
 "@types/js-yaml@^4.0.0":
   version "4.0.5"
   resolved "https://registry.yarnpkg.com/@types/js-yaml/-/js-yaml-4.0.5.tgz#738dd390a6ecc5442f35e7f03fa1431353f7e138"
@@ -2695,6 +2700,7 @@ function.prototype.name@^1.1.5:
   version "0.0.0"
   dependencies:
     "@functionless/nodejs-closure-serializer" "^0.0.2"
+    "@types/aws-lambda" "^8.10.98"
     fs-extra "^10.1.0"
     minimatch "^5.1.0"
 

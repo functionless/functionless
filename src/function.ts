@@ -4,6 +4,7 @@ import * as appsync from "@aws-cdk/aws-appsync-alpha";
 import { serializeFunction } from "@functionless/nodejs-closure-serializer";
 import {
   AssetHashType,
+  aws_apigateway,
   aws_dynamodb,
   aws_events_targets,
   aws_lambda,
@@ -25,6 +26,7 @@ import type { Context } from "aws-lambda";
 // eslint-disable-next-line import/no-extraneous-dependencies
 import AWS from "aws-sdk";
 import { Construct } from "constructs";
+import { ApiGatewayVtlIntegration } from "./api";
 import type { AppSyncVtlIntegration } from "./appsync";
 import { ASL } from "./asl";
 import { isNativeFunctionDecl, validateFunctionlessNode } from "./declaration";
@@ -34,17 +36,15 @@ import {
   IEventBus,
   isEventBus,
   Event,
+  EventBusTargetIntegration,
   Rule,
   PredicateRuleBase,
 } from "./event-bridge";
-import {
-  EventBusTargetIntegration,
-  makeEventBusIntegration,
-} from "./event-bridge/event-bus";
+import { makeEventBusIntegration } from "./event-bridge/event-bus";
 import { CallExpr, Expr, isVariableReference } from "./expression";
 import {
-  IntegrationImpl,
   Integration,
+  IntegrationImpl,
   INTEGRATION_TYPE_KEYS,
   isIntegration,
 } from "./integration";
@@ -284,6 +284,7 @@ abstract class FunctionBase<in Payload, Out>
   public static readonly FunctionlessType = "Function";
 
   readonly appSyncVtl: AppSyncVtlIntegration;
+  readonly apiGWVtl: ApiGatewayVtlIntegration;
 
   // @ts-ignore - this makes `F` easily available at compile time
   readonly __functionBrand: ConditionalFunction<Payload, Out>;
@@ -343,6 +344,22 @@ abstract class FunctionBase<in Payload, Out>
           `{"version": "2018-05-29", "operation": "Invoke", "payload": ${payload}}`
         );
         return context.json(request);
+      },
+    };
+
+    this.apiGWVtl = {
+      renderRequest: (call, context) => {
+        const payloadArg = call.getArgument("payload");
+        return payloadArg?.expr ? context.exprToJson(payloadArg.expr) : "$null";
+      },
+
+      createIntegration: (options) => {
+        this.resource.grantInvoke(options.credentialsRole);
+        return new aws_apigateway.LambdaIntegration(this.resource, {
+          ...options,
+          proxy: false,
+          passthroughBehavior: aws_apigateway.PassthroughBehavior.NEVER,
+        });
       },
     };
   }
@@ -539,8 +556,9 @@ export class Function<
    * To correctly resolve these for CDK synthesis, either use `asyncSynth()` or use `cdk synth` in the CDK cli.
    * https://twitter.com/samgoodwin89/status/1516887131108438016?s=20&t=7GRGOQ1Bp0h_cPsJgFk3Ww
    */
-  public static readonly promises = ((global as any)[PromisesSymbol] =
-    (global as any)[PromisesSymbol] ?? []);
+  public static readonly promises: Promise<any>[] = ((global as any)[
+    PromisesSymbol
+  ] = (global as any)[PromisesSymbol] ?? []);
 
   /**
    * Wrap a {@link aws_lambda.Function} with Functionless.

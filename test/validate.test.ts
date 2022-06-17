@@ -19,7 +19,11 @@ const program = ts.createProgram(fileNames, tsconfig, compilerHost);
 
 const checker = makeFunctionlessChecker(program.getTypeChecker());
 
-test.each(["step-function.ts", "function.ts"])("%s", (file) => runTest(file));
+test("api-gateway.ts", () => runTest("api-gateway.ts"));
+
+test("step-function.ts", () => runTest("step-function.ts"));
+
+test("function.ts", () => runTest("function.ts"));
 
 function runTest(fileName: string) {
   const diagnostics = validate(
