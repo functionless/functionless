@@ -104,7 +104,10 @@ export function validate(
       // @ts-ignore
       const [props, request, responses, errors] = node.arguments ?? [];
 
-      const diagnostics = collectEachChildRecursive(request, validateApiNode);
+      const diagnostics = [
+        ...collectEachChildRecursive(request, validateApiNode),
+        ...collectEachChildRecursive(responses, validateApiResponseNode),
+      ];
 
       if (request === undefined) {
         // should be a standard type error - the request is missing
@@ -130,9 +133,25 @@ export function validate(
           newError(request, ErrorCodes.Argument_must_be_an_inline_Function),
         ];
       }
+      return diagnostics;
     } else if (kind === "MockMethod") {
       // @ts-ignore
       const [props, request, responses] = node.arguments;
+    }
+    return [];
+  }
+
+  function validateApiResponseNode(node: ts.Node): ts.Diagnostic[] {
+    if (
+      ts.isCallExpression(node) &&
+      checker.isIntegrationNode(node.expression)
+    ) {
+      return [
+        newError(
+          node,
+          ErrorCodes.API_gateway_response_mapping_template_cannot_call_integration
+        ),
+      ];
     }
     return [];
   }

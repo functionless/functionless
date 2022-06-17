@@ -22,6 +22,7 @@ const checker = makeFunctionlessChecker(program.getTypeChecker());
 test("api-gateway.ts", () => runTest("api-gateway.ts"));
 
 test("step-function.ts", () => runTest("step-function.ts"));
+
 test("function.ts", () => runTest("function.ts"));
 
 function runTest(fileName: string) {

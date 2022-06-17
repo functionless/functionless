@@ -13,35 +13,35 @@ https://functionless.org/docs/error-codes#awsmethod-request-must-have-exactly-on
 [7m  [0m [91m~~~~~~~~~~~~~~~~~~~~~~~[0m
 [7m64[0m   },
 [7m  [0m [91m~~~[0m
-[96mtest/test-files/api-gateway.ts[0m:[93m75[0m:[93m13[0m - [91merror[0m[90m Functionless(109): [0mAPI Gateway does not support spread assignment expressions
+[96mtest/test-files/api-gateway.ts[0m:[93m76[0m:[93m24[0m - [91merror[0m[90m Functionless(109): [0mAPI Gateway does not support spread assignment expressions
 
 https://functionless.org/docs/error-codes#api-gateway-does-not-support-spread-assignment-expressions
 
-[7m75[0m     return {
-[7m  [0m [91m            [0m
-[7m76[0m       ...$input.data,
+[7m76[0m       TableName: table,
+[7m  [0m [91m                       [0m
+[7m77[0m       ...$input.data,
 [7m  [0m [91m~~~~~~~~~~~~~~~~~~~~[0m
-[96mtest/test-files/api-gateway.ts[0m:[93m76[0m:[93m22[0m - [91merror[0m[90m Functionless(108): [0mAPI Gateway does not supported computed property names
+[96mtest/test-files/api-gateway.ts[0m:[93m77[0m:[93m22[0m - [91merror[0m[90m Functionless(108): [0mAPI Gateway does not supported computed property names
 
 https://functionless.org/docs/error-codes#api-gateway-does-not-supported-computed-property-names
 
-[7m76[0m       ...$input.data,
+[7m77[0m       ...$input.data,
 [7m  [0m [91m                     [0m
-[7m77[0m       [$input.params(\\"param\\")]: null,
+[7m78[0m       [$input.params(\\"param\\")]: null,
 [7m  [0m [91m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
-[96mtest/test-files/api-gateway.ts[0m:[93m73[0m:[93m5[0m - [91merror[0m[90m Functionless(103): [0mAwsMethod request must have exactly one integration call
+[96mtest/test-files/api-gateway.ts[0m:[93m101[0m:[93m11[0m - [91merror[0m[90m Functionless(111): [0mAPI gateway response mapping template cannot call integration
 
-https://functionless.org/docs/error-codes#awsmethod-request-must-have-exactly-one-integration-call
+https://functionless.org/docs/error-codes#api-gateway-response-mapping-template-cannot-call-integration
 
-[7m 73[0m   },
-[7m   [0m [91m    [0m
-[7m 74[0m   ($input) => {
-[7m   [0m [91m~~~~~~~~~~~~~~~[0m
+[7m101[0m     return $AWS.DynamoDB.GetItem({
+[7m   [0m [91m          ~~~~~~~~~~~~~~~~~~~~~~~~[0m
+[7m102[0m       TableName: table,
+[7m   [0m [91m~~~~~~~~~~~~~~~~~~~~~~~[0m
 [7m...[0m 
-[7m 78[0m     };
+[7m107[0m       },
+[7m   [0m [91m~~~~~~~~[0m
+[7m108[0m     });
 [7m   [0m [91m~~~~~~[0m
-[7m 79[0m   },
-[7m   [0m [91m~~~[0m
 "
 `;
 

@@ -84,6 +84,7 @@ export function makeFunctionlessChecker(
     isEventBusWhenFunction,
     isFunctionlessFunction,
     isFunctionlessType,
+    isIntegrationNode,
     isNewEventTransform,
     isNewFunctionlessFunction,
     isNewRule,
@@ -387,6 +388,16 @@ export function makeFunctionlessChecker(
       node.operator === ts.SyntaxKind.MinusToken
     ) {
       return isConstant(node.operand);
+    }
+    return false;
+  }
+
+  function isIntegrationNode(node: ts.Node): boolean {
+    const exprType = checker.getTypeAtLocation(node);
+    const exprKind = exprType.getProperty("kind");
+    if (exprKind) {
+      const exprKindType = checker.getTypeOfSymbolAtLocation(exprKind, node);
+      return exprKindType.isStringLiteral();
     }
     return false;
   }

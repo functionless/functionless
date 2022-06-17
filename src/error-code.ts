@@ -390,4 +390,31 @@ export namespace ErrorCodes {
     code: 110,
     messageText: "Expected_an_object_literal",
   };
+
+  /**
+   * Code running within an API Gateway's response mapping template must not attempt
+   * to call any integration. It can only perform data transformation.
+   *
+   * ```ts
+   * new AwsMethod({
+   *   ...,
+   *
+   *   response: () => {
+   *     // INVALID! - you cannot call an integration from within a response mapping template
+   *     return $AWS.DynamoDB.GetItem({
+   *       TableName: table,
+   *       ...
+   *     });
+   *   }
+   * })
+   * ```
+   *
+   * To workaround, make sure to only call an integration from within the `request` mapping function.
+   */
+  export const API_gateway_response_mapping_template_cannot_call_integration: ErrorCode =
+    {
+      code: 111,
+      messageText:
+        "API gateway response mapping template cannot call integration",
+    };
 }

@@ -10,6 +10,7 @@ import {
   isParameterDecl,
   validateFunctionDecl,
 } from "./declaration";
+import { ErrorCodes, SynthError } from "./error-code";
 import {
   CallExpr,
   Expr,
@@ -229,6 +230,8 @@ export class MockMethod<
     /**
      * Map API request to a status code. This code will be used by API Gateway
      * to select the response to return.
+     *
+     * Functionless's API Gateway only supports JSON data at this time.
      */
     request: (
       $input: ApiGatewayInput<Request>,
@@ -236,6 +239,8 @@ export class MockMethod<
     ) => { statusCode: StatusCode },
     /**
      * Map of status codes to response to return.
+     *
+     * Functionless's API Gateway only supports JSON data at this time.
      */
     responses: {
       [C: number]: (
@@ -438,12 +443,36 @@ export class AwsMethod<
       $context: ApiGatewayContext
     ) => IntegrationResponse,
     /**
-     * Function that maps an integration response to a 200 method response. This
-     * is the happy path and is modeled explicitly so that the return type of the
-     * integration can be inferred. This will be compiled to a VTL template.
+     * Function that maps an integration response to a 200 method response.
      *
-     * At present the function body must be a single statement returning an object
-     * literal. The supported syntax will be expanded in the future.
+     * Example 1 - return the exact payload received from the integration
+     * ```ts
+     * ($input) => {
+     *   return $input.data;
+     * }
+     * ```
+     *
+     * Example 2 - modify the data returned
+     * ```ts
+     * ($input) => {
+     *   return {
+     *     status: "success"
+     *     name: $input.data.name
+     *   };
+     * }
+     * ```
+     *
+     * Example 3 - return a different payload based on a condition
+     *
+     * ```ts
+     * ($input) => {
+     *   if ($input.data.status === "SUCCESS") {
+     *     return $input.data;
+     *   } else {
+     *     return null;
+     *   }
+     * }
+     * ```
      */
     response: (
       $input: ApiGatewayInput<
@@ -454,6 +483,35 @@ export class AwsMethod<
     /**
      * Map of status codes to a function defining the  response to return. This is used
      * to configure the failure path method responses, for e.g. when an integration fails.
+     *
+     * Example 1 - return the exact payload received from the integration
+     * ```ts
+     * ($input) => {
+     *   return $input.data;
+     * }
+     * ```
+     *
+     * Example 2 - modify the data returned
+     * ```ts
+     * ($input) => {
+     *   return {
+     *     status: "success"
+     *     name: $input.data.name
+     *   };
+     * }
+     * ```
+     *
+     * Example 3 - return a different payload based on a condition
+     *
+     * ```ts
+     * ($input) => {
+     *   if ($input.data.status === "SUCCESS") {
+     *     return $input.data;
+     *   } else {
+     *     return null;
+     *   }
+     * }
+     * ```
      */
     errors?: {
       [statusCode: number]: (
@@ -556,20 +614,15 @@ export class APIGatewayVTL extends VTL {
     call: CallExpr
   ): string {
     if (this.location === "response") {
-      throw new Error(
-        `Cannot call an integration from within a API Gateway Response Template`
+      throw new SynthError(
+        ErrorCodes.API_gateway_response_mapping_template_cannot_call_integration
       );
     }
-    if (target.apiGWVtl) {
-      // ew, mutation
-      // TODO: refactor to pure functions
-      this.integration = target;
-      return target.apiGWVtl.renderRequest(call, this);
-    } else {
-      throw new Error(
-        `Resource type ${target.kind} does not support API Gateway Integrations`
-      );
-    }
+    const response = target.apiGWVtl.renderRequest(call, this);
+    // ew, mutation
+    // TODO: refactor to pure functions
+    this.integration = target;
+    return response;
   }
 
   public eval(node?: Expr, returnVar?: string): string;

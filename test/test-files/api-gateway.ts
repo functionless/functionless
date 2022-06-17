@@ -72,10 +72,39 @@ new AwsMethod(
     resource: api.root,
   },
   ($input) => {
-    return {
+    return $AWS.DynamoDB.GetItem({
+      TableName: table,
       ...$input.data,
       [$input.params("param")]: null,
-    };
+    });
   },
   ($input) => $input.data
+);
+
+// INVALID - calls an integration from within a response
+new AwsMethod(
+  {
+    httpMethod: "GET",
+    resource: api.root,
+  },
+  ($input) =>
+    $AWS.DynamoDB.GetItem({
+      TableName: table,
+      Key: {
+        id: {
+          S: $input.params("id") as string,
+        },
+      },
+    }),
+  ($input) => {
+    // this is not allowed
+    return $AWS.DynamoDB.GetItem({
+      TableName: table,
+      Key: {
+        id: {
+          S: $input.params("id") as string,
+        },
+      },
+    });
+  }
 );
