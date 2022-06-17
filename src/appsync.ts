@@ -12,6 +12,7 @@ import {
   CallExpr,
   ConditionExpr,
   Expr,
+  Identifier,
   isBinaryExpr,
   PropAccessExpr,
   StringLiteralExpr,
@@ -19,7 +20,7 @@ import {
 import { findDeepIntegration, IntegrationImpl } from "./integration";
 import { Literal } from "./literal";
 import { FunctionlessNode } from "./node";
-import { singletonConstruct } from "./util";
+import { AnyFunction, isInTopLevelScope, singletonConstruct } from "./util";
 import { visitEachChild } from "./visit";
 import { VTL } from "./vtl";
 
@@ -81,6 +82,43 @@ export class SynthesizedAppsyncResolver extends appsync.Resolver {
   ) {
     super(scope, id, props);
     this.templates = props.templates;
+  }
+}
+
+export class AppsyncVTL extends VTL {
+  public static readonly CircuitBreaker = `#if($context.stash.return__flag)
+  #return($context.stash.return__val)
+#end`;
+
+  protected integrate(
+    target: IntegrationImpl<AnyFunction>,
+    call: CallExpr
+  ): string {
+    if (target.appSyncVtl) {
+      return target.appSyncVtl.request(call, this);
+    } else {
+      throw new Error(
+        `Integration ${target.kind} does not support Appsync Resolvers`
+      );
+    }
+  }
+
+  protected dereference(id: Identifier): string {
+    const ref = id.lookup();
+    if (ref?.kind === "VariableStmt" && isInTopLevelScope(ref)) {
+      return `$context.stash.${id.name}`;
+    } else if (
+      ref?.kind === "ParameterDecl" &&
+      ref.parent?.kind === "FunctionDecl"
+    ) {
+      // regardless of the name of the first argument in the root FunctionDecl, it is always the intrinsic Appsync `$context`.
+      return "$context";
+    }
+    if (id.name.startsWith("$")) {
+      return id.name;
+    } else {
+      return `$${id.name}`;
+    }
   }
 }
 
@@ -355,7 +393,9 @@ export class AppsyncResolver<
       );
       const templates: string[] = [];
       let template =
-        resolverCount === 0 ? new VTL() : new VTL(VTL.CircuitBreaker);
+        resolverCount === 0
+          ? new AppsyncVTL()
+          : new AppsyncVTL(AppsyncVTL.CircuitBreaker);
       const functions = updatedDecl.body.statements
         .map((stmt, i) => {
           const isLastExpr = i + 1 === updatedDecl.body.statements.length;
@@ -475,7 +515,7 @@ export class AppsyncResolver<
               const requestMappingTemplateString = template.toVTL();
               templates.push(requestMappingTemplateString);
               templates.push(responseMappingTemplate);
-              template = new VTL(VTL.CircuitBreaker);
+              template = new AppsyncVTL(AppsyncVTL.CircuitBreaker);
               const name = getUniqueName(
                 api,
                 appsyncSafeName(integration.kind)

@@ -19,6 +19,7 @@
     "post-compile": "npx projen post-compile",
     "post-upgrade": "npx projen post-upgrade",
     "pre-compile": "npx projen pre-compile",
+    "prepare": "npx projen prepare",
     "release": "npx projen release",
     "test": "npx projen test",
     "test:fast": "npx projen test:fast",
@@ -44,6 +45,7 @@
     "amplify-appsync-simulator": "^2.4.1",
     "aws-cdk": "2.28.0",
     "aws-cdk-lib": "2.28.0",
+    "axios": "^0.27.2",
     "cdk-assets": "2.28.0",
     "constructs": "10.0.0",
     "esbuild": "0.14.45",
@@ -79,6 +81,7 @@
   },
   "dependencies": {
     "@functionless/nodejs-closure-serializer": "^0.0.2",
+    "@types/aws-lambda": "^8.10.98",
     "fs-extra": "^10.1.0",
     "minimatch": "^5.1.0"
   },

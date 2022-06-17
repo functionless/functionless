@@ -1,3 +1,5 @@
+// @ts-ignore - imported for tsdoc
+import type { AwsMethod } from "./api";
 const BASE_URL = process.env.FUNCTIONLESS_LOCAL
   ? `http://localhost:3000`
   : `https://functionless.org`;
@@ -83,6 +85,55 @@ export namespace ErrorCodes {
   };
 
   /**
+   * The argument must be an inline Function.
+   *
+   * ```ts
+   * const func = () => {
+   *   // ..
+   * }
+   * // invalid - `func` must be an inline Function
+   * new Function(this, id, func);
+   * ```
+   *
+   * To fix, inline the `func` implementation.
+   *
+   * ```ts
+   * // option 1 - arrow function
+   * new Function(this, id, async () => { .. });
+   *
+   * // option 2 - function
+   * new Function(this, id, async function () { .. });
+   * ```
+   */
+  export const Argument_must_be_an_inline_Function: ErrorCode = {
+    code: 102,
+    messageText: `Argument must be an inline Function`,
+  };
+
+  /**
+   * When using the {@link AwsMethod}, the `request` argument must be a function
+   * with exactly one integration call.
+   *
+   * ```ts
+   * new AwsMethod(
+   *   {
+   *     httpMethod: "GET",
+   *     resource: api.root
+   *   },
+   *   ($input) => {
+   *     return $AWS.DynamoDB.GetItem({ .. });
+   *   },
+   *   // etc.
+   * )
+   * ```
+   */
+  export const AwsMethod_request_must_have_exactly_one_integration_call: ErrorCode =
+    {
+      code: 103,
+      messageText: `AwsMethod request must have exactly one integration call`,
+    };
+
+  /**
    * Lambda Function closure synthesis runs async, but CDK does not normally support async.
    *
    * In order for the synthesis to complete successfully
@@ -93,7 +144,7 @@ export namespace ErrorCodes {
    * https://github.com/functionless/functionless/issues/128
    */
   export const Function_Closure_Serialization_Incomplete: ErrorCode = {
-    code: 102,
+    code: 104,
     messageText: "Function closure serialization was not allowed to complete",
   };
 
@@ -101,7 +152,7 @@ export namespace ErrorCodes {
    * Generic error message to denote errors that should not happen and are not the fault of the Functionless library consumer.
    */
   export const Unexpected_Error: ErrorCode = {
-    code: 103,
+    code: 105,
     messageText: "Unexpected Error, please report this issue",
   };
 
@@ -131,7 +182,7 @@ export namespace ErrorCodes {
    * ```
    */
   export const Incorrect_StateMachine_Import_Type = {
-    code: 104,
+    code: 106,
     messageText: "Incorrect state machine type imported",
   };
 
@@ -143,7 +194,7 @@ export namespace ErrorCodes {
    * @see https://github.com/functionless/functionless/issues/252 to track supported secret patterns.
    */
   export const Unsafe_use_of_secrets = {
-    code: 105,
+    code: 107,
     messageText: "Unsafe use of secrets",
   };
 
@@ -187,7 +238,7 @@ export namespace ErrorCodes {
    * ```
    */
   export const Unsupported_initialization_of_resources_in_function = {
-    code: 106,
+    code: 108,
     messageText:
       "Unsupported initialization of Resources in a Function closure",
   };
@@ -249,8 +300,121 @@ export namespace ErrorCodes {
    * });
    * ```
    */
-  export const Cannot_use_infrastructure_Resource_in_Function_closure = {
-    code: 107,
-    messageText: "Cannot use infrastructure Resource in Function closure",
+  export const Cannot_use_infrastructure_Resource_in_Function_closure: ErrorCode =
+    {
+      code: 109,
+      messageText: "Cannot use infrastructure Resource in Function closure",
+    };
+
+  /**
+   * Computed Property Names are not supported in API Gateway.
+   *
+   * For example:
+   * ```ts
+   * new AwsMethod({
+   *   request: ($input) => $AWS.DynamoDB.GetItem({
+   *     TableName: table,
+   *     // invalid, all property names must be literals
+   *     [computedProperty]: prop
+   *   })
+   * });
+   * ```
+   *
+   * To workaround, be sure to only use literal property names.
+   */
+  export const API_Gateway_does_not_support_computed_property_names: ErrorCode =
+    {
+      code: 110,
+      messageText: "API Gateway does not supported computed property names",
+    };
+
+  /**
+   * Due to limitations in API Gateway's VTL engine (no $util.toJson, for example)
+   * it is not possible to fully support spread expressions.
+   *
+   * For example:
+   * ```ts
+   * new AwsMethod({
+   *   response: ($input) => ({
+   *     hello: "world",
+   *     ...$input.data
+   *   })
+   * });
+   * ```
+   *
+   * To workaround the limitation, explicitly specify each property.
+   *
+   * ```ts
+   * new AwsMethod({
+   *   response: ($input) => ({
+   *     hello: "world",
+   *     propA: $input.data.propA,
+   *     propB: $input.data.propB,
+   *   })
+   * });
+   * ```
+   */
+  export const API_Gateway_does_not_support_spread_assignment_expressions: ErrorCode =
+    {
+      code: 111,
+      messageText: "API Gateway does not support spread assignment expressions",
+    };
+
+  /**
+   * Due to limitations in respective Functionless interpreters, it is often a
+   * requirement to specify an object literal instead of a variable reference.
+   *
+   * ```ts
+   * const input = {
+   *   TableName: table,
+   *   Key: {
+   *     // etc.
+   *   }
+   * };
+   * // invalid - input must be an object literal
+   * $AWS.DynamoDB.GetItem(input)
+   * ```
+   *
+   * To work around, ensure that you specify an object literal.
+   *
+   * ```ts
+   * $AWS.DynamoDB.GetItem({
+   *   TableName: table,
+   *   Key: {
+   *     // etc.
+   *   }
+   * })
+   * ```
+   */
+  export const Expected_an_object_literal: ErrorCode = {
+    code: 112,
+    messageText: "Expected_an_object_literal",
   };
+
+  /**
+   * Code running within an API Gateway's response mapping template must not attempt
+   * to call any integration. It can only perform data transformation.
+   *
+   * ```ts
+   * new AwsMethod({
+   *   ...,
+   *
+   *   response: () => {
+   *     // INVALID! - you cannot call an integration from within a response mapping template
+   *     return $AWS.DynamoDB.GetItem({
+   *       TableName: table,
+   *       ...
+   *     });
+   *   }
+   * })
+   * ```
+   *
+   * To workaround, make sure to only call an integration from within the `request` mapping function.
+   */
+  export const API_gateway_response_mapping_template_cannot_call_integration: ErrorCode =
+    {
+      code: 113,
+      messageText:
+        "API gateway response mapping template cannot call integration",
+    };
 }

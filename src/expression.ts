@@ -47,7 +47,7 @@ export function isExpr(a: any): a is Expr {
     (isArgument(a) ||
       isArrayLiteralExpr(a) ||
       isBinaryExpr(a) ||
-      isBooleanLiteral(a) ||
+      isBooleanLiteralExpr(a) ||
       isCallExpr(a) ||
       isConditionExpr(a) ||
       isComputedPropertyNameExpr(a) ||
@@ -354,7 +354,7 @@ export class UndefinedLiteralExpr extends BaseExpr<"UndefinedLiteralExpr"> {
   }
 }
 
-export const isBooleanLiteral = typeGuard("BooleanLiteralExpr");
+export const isBooleanLiteralExpr = typeGuard("BooleanLiteralExpr");
 
 export class BooleanLiteralExpr extends BaseExpr<"BooleanLiteralExpr"> {
   constructor(readonly value: boolean) {

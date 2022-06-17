@@ -4,7 +4,7 @@ import {
   Expr,
   isArrayLiteralExpr,
   isBinaryExpr,
-  isBooleanLiteral,
+  isBooleanLiteralExpr,
   isComputedPropertyNameExpr,
   isIdentifier,
   isNullLiteralExpr,
@@ -162,7 +162,7 @@ export const evalToConstant = (expr: Expr): Constant | undefined => {
   if (
     isStringLiteralExpr(expr) ||
     isNumberLiteralExpr(expr) ||
-    isBooleanLiteral(expr) ||
+    isBooleanLiteralExpr(expr) ||
     isNullLiteralExpr(expr) ||
     isUndefinedLiteralExpr(expr)
   ) {

@@ -86,7 +86,6 @@ Array [
   "#set($v1 = $context.arguments.key == 'help me')
 #if($v1)
 #set($context.arguments.key = 'hello')
-$util.qr($context.arguments.key)
 #end
 #set($v2 = $context.arguments.key == 'hello')
 #if($v2)
