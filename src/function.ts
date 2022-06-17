@@ -9,7 +9,9 @@ import {
   aws_lambda,
   CfnResource,
   DockerImage,
+  Reference,
   Resource,
+  SecretValue,
   TagManager,
   Token,
   Tokenization,
@@ -25,12 +27,9 @@ import AWS from "aws-sdk";
 import { Construct } from "constructs";
 import type { AppSyncVtlIntegration } from "./appsync";
 import { ASL } from "./asl";
-import {
-  NativeFunctionDecl,
-  isNativeFunctionDecl,
-  IntegrationInvocation,
-} from "./declaration";
-import { Err, isErr } from "./error";
+import { isNativeFunctionDecl, validateFunctionlessNode } from "./declaration";
+import { isErr } from "./error";
+import { ErrorCodes, formatErrorMessage, SynthError } from "./error-code";
 import {
   IEventBus,
   isEventBus,
@@ -47,10 +46,15 @@ import {
   IntegrationImpl,
   Integration,
   INTEGRATION_TYPE_KEYS,
+  isIntegration,
 } from "./integration";
+import { isStepFunction } from "./step-function";
+import { isTable } from "./table";
 import { AnyFunction, anyOf } from "./util";
 
-export function isFunction<Payload = any, Output = any>(a: any): a is IFunction<Payload, Output> {
+export function isFunction<Payload = any, Output = any>(
+  a: any
+): a is IFunction<Payload, Output> {
   return a?.kind === "Function";
 }
 
@@ -64,20 +68,22 @@ export type FunctionClosure<in Payload, out Output> = (
   context: Context
 ) => Promise<Output>;
 
+const FUNCTION_CLOSURE_FLAG = "__functionlessClosure";
+
 /**
  * Returns the payload type on the {@link IFunction}.
  */
-export type FunctionPayloadType<Func extends IFunction<any, any>> = [Func] extends [
-  IFunction<infer P, any>
-]
+export type FunctionPayloadType<Func extends IFunction<any, any>> = [
+  Func
+] extends [IFunction<infer P, any>]
   ? P
   : never;
 /**
  * Returns the output type on the {@link IFunction}.
  */
-export type FunctionOutputType<Func extends IFunction<any, any>> = [Func] extends [
-  IFunction<any, infer O>
-]
+export type FunctionOutputType<Func extends IFunction<any, any>> = [
+  Func
+] extends [IFunction<any, infer O>]
   ? O
   : never;
 
@@ -202,7 +208,9 @@ export interface IFunction<in Payload, Output>
    * If onSuccess or onFailure were already set either through {@link FunctionProps} or {@link IFunction.enableAsyncInvoke}
    * This method will fail.
    */
-  enableAsyncInvoke<OutPayload extends Payload>(config: EventInvokeConfigOptions<OutPayload, Output>): void;
+  enableAsyncInvoke<OutPayload extends Payload>(
+    config: EventInvokeConfigOptions<OutPayload, Output>
+  ): void;
 
   readonly eventBus: EventBusTargetIntegration<
     Payload,
@@ -364,10 +372,11 @@ abstract class FunctionBase<in Payload, Out>
   ): IDestination | undefined {
     return destination === undefined
       ? undefined
-      : isEventBus<IEventBus<AsyncResponseSuccessEvent<P, O>> | IEventBus<AsyncResponseFailureEvent<P>>>(
-          destination
-        )
-      ? new EventBridgeDestination(destination.bus)
+      : isEventBus<
+          | IEventBus<AsyncResponseSuccessEvent<P, O>>
+          | IEventBus<AsyncResponseFailureEvent<P>>
+        >(destination)
+      ? new EventBridgeDestination(destination.resource)
       : isFunction<
           FunctionPayloadType<Extract<typeof destination, IFunction<any, any>>>,
           FunctionOutputType<Extract<typeof destination, IFunction<any, any>>>
@@ -376,11 +385,17 @@ abstract class FunctionBase<in Payload, Out>
       : destination;
   }
 
-  public enableAsyncInvoke<OutPayload extends Payload>(config: EventInvokeConfigOptions<OutPayload, Out>): void {
+  public enableAsyncInvoke<OutPayload extends Payload>(
+    config: EventInvokeConfigOptions<OutPayload, Out>
+  ): void {
     this.resource.configureAsyncInvoke({
       ...config,
-      onSuccess: FunctionBase.normalizeAsyncDestination<OutPayload, Out>(config.onSuccess),
-      onFailure: FunctionBase.normalizeAsyncDestination<OutPayload, Out>(config.onFailure),
+      onSuccess: FunctionBase.normalizeAsyncDestination<OutPayload, Out>(
+        config.onSuccess
+      ),
+      onFailure: FunctionBase.normalizeAsyncDestination<OutPayload, Out>(
+        config.onFailure
+      ),
     });
   }
 
@@ -389,7 +404,7 @@ abstract class FunctionBase<in Payload, Out>
     id: string
   ): Rule<AsyncResponseSuccessEvent<OutPayload, Out>> {
     return new PredicateRuleBase<AsyncResponseSuccessEvent<OutPayload, Out>>(
-      bus.bus,
+      bus.resource,
       id,
       bus,
       /**
@@ -414,7 +429,7 @@ abstract class FunctionBase<in Payload, Out>
     id: string
   ): Rule<AsyncResponseFailureEvent<OutPayload>> {
     return new PredicateRuleBase<AsyncResponseFailureEvent<OutPayload>>(
-      bus.bus,
+      bus.resource,
       id,
       bus,
       /**
@@ -517,7 +532,11 @@ const isNativeFunctionOrError = anyOf(isErr, isNativeFunctionDecl);
  * );
  * ```
  */
-export class Function<in Payload, Out, OutPayload extends Payload = Payload> extends FunctionBase<Payload, Out> {
+export class Function<
+  in Payload,
+  Out,
+  OutPayload extends Payload = Payload
+> extends FunctionBase<Payload, Out> {
   /**
    * Dangling promises which are processing Function handler code from the function serializer.
    * To correctly resolve these for CDK synthesis, either use `asyncSynth()` or use `cdk synth` in the CDK cli.
@@ -544,7 +563,11 @@ export class Function<in Payload, Out, OutPayload extends Payload = Payload> ext
    * new Function<{ val: string }, string>(this, 'myFunction', async (event) => event.val);
    * ```
    */
-  constructor(scope: Construct, id: string, func: FunctionClosure<Payload, Out>);
+  constructor(
+    scope: Construct,
+    id: string,
+    func: FunctionClosure<Payload, Out>
+  );
   constructor(
     scope: Construct,
     id: string,
@@ -555,75 +578,67 @@ export class Function<in Payload, Out, OutPayload extends Payload = Payload> ext
    * @private
    */
   constructor(
-    scope: Construct,
+    resource: Construct,
     id: string,
-    props: FunctionProps<Payload, Out, OutPayload>,
-    func: NativeFunctionDecl | Err
-  );
-  /**
-   * @private
-   */
-  constructor(scope: Construct, id: string, func: NativeFunctionDecl | Err);
-  /**
-   * Wrap an existing lambda function with Functionless.
-   * @deprecated use `Function.fromFunction()`
-   */
-  constructor(resource: aws_lambda.IFunction);
-  /**
-   * @private
-   */
-  constructor(
-    resource: aws_lambda.IFunction | Construct,
-    id?: string,
-    propsOrFunc?:
+    propsOrFunc:
       | FunctionProps<Payload, Out, OutPayload>
-      | NativeFunctionDecl
-      | Err
       | FunctionClosure<Payload, Out>,
-    funcOrNothing?: NativeFunctionDecl | Err | FunctionClosure<Payload, Out>
+    funcOrNothing?: FunctionClosure<Payload, Out>
   ) {
-    let _resource: aws_lambda.IFunction;
-    let integrations: IntegrationInvocation[] = [];
-    let callbackLambdaCode: CallbackLambdaCode | undefined = undefined;
-    if (id && propsOrFunc) {
-      const func = isNativeFunctionOrError(propsOrFunc)
+    const func = validateFunctionlessNode(
+      isNativeFunctionOrError(propsOrFunc)
         ? propsOrFunc
         : isNativeFunctionOrError(funcOrNothing)
         ? funcOrNothing
-        : undefined;
-      const props = isNativeFunctionOrError(propsOrFunc)
-        ? undefined
-        : (propsOrFunc as FunctionProps<Payload, Out, OutPayload>);
+        : undefined,
+      "Function",
+      isNativeFunctionDecl
+    );
+    const props = isNativeFunctionOrError(propsOrFunc)
+      ? undefined
+      : (propsOrFunc as FunctionProps<Payload, Out, OutPayload>);
 
-      if (isErr(func)) {
-        throw func.error;
-      } else if (isNativeFunctionDecl(func)) {
-        callbackLambdaCode = new CallbackLambdaCode(func.closure, {
-          clientConfigRetriever: props?.clientConfigRetriever,
-        });
-        const { onSuccess, onFailure, ...restProps } = props ?? {};
-        _resource = new aws_lambda.Function(resource, id!, {
-          ...restProps,
-          runtime: aws_lambda.Runtime.NODEJS_14_X,
-          handler: "index.handler",
-          code: callbackLambdaCode,
-          onSuccess: FunctionBase.normalizeAsyncDestination<OutPayload, Out>(onSuccess),
-          onFailure: FunctionBase.normalizeAsyncDestination<OutPayload, Out>(onFailure),
-        });
+    const callbackLambdaCode = new CallbackLambdaCode(func.closure, {
+      clientConfigRetriever: props?.clientConfigRetriever,
+    });
+    const { onSuccess, onFailure, ...restProps } = props ?? {};
+    const _resource = new aws_lambda.Function(resource, id!, {
+      ...restProps,
+      runtime: aws_lambda.Runtime.NODEJS_14_X,
+      handler: "index.handler",
+      code: callbackLambdaCode,
+      onSuccess: FunctionBase.normalizeAsyncDestination<OutPayload, Out>(
+        onSuccess
+      ),
+      onFailure: FunctionBase.normalizeAsyncDestination<OutPayload, Out>(
+        onFailure
+      ),
+    });
 
-        integrations = func.integrations;
-      } else {
-        throw Error(
-          "Expected lambda to be passed a compiled function closure or a aws_lambda.IFunction"
-        );
-      }
-    } else {
-      _resource = resource as aws_lambda.IFunction;
-    }
+    // Poison pill that forces Function synthesis to fail when the closure serialization has not completed.
+    // Closure synthesis runs async, but CDK does not normally support async.
+    // In order for the synthesis to complete successfully
+    // 1. Use autoSynth `new App({ autoSynth: true })` or `new App()` with the CDK Cli (`cdk synth`)
+    // 2. Use `await asyncSynth(app)` exported from Functionless in place of `app.synth()`
+    // 3. Manually await on the closure serializer promises `await Promise.all(Function.promises)`
+    // https://github.com/functionless/functionless/issues/128
+    _resource.node.addValidation({
+      validate: () =>
+        this.resource.node.metadata.find(
+          (m) => m.type === FUNCTION_CLOSURE_FLAG
+        )
+          ? []
+          : [
+              formatErrorMessage(
+                ErrorCodes.Function_Closure_Serialization_Incomplete
+              ),
+            ],
+    });
+
     super(_resource);
 
     // retrieve and bind all found native integrations. Will fail if the integration does not support native integration.
-    const nativeIntegrationsPrewarm = integrations.flatMap(
+    const nativeIntegrationsPrewarm = func.integrations.flatMap(
       ({ integration, args }) => {
         const integ = new IntegrationImpl(integration).native;
         integ.bind(this, args);
@@ -632,11 +647,9 @@ export class Function<in Payload, Out, OutPayload extends Payload = Payload> ext
     );
 
     // Start serializing process, add the callback to the promises so we can later ensure completion
-    if (callbackLambdaCode) {
-      Function.promises.push(
-        callbackLambdaCode.generate(nativeIntegrationsPrewarm)
-      );
-    }
+    Function.promises.push(
+      callbackLambdaCode.generate(nativeIntegrationsPrewarm)
+    );
   }
 }
 
@@ -656,8 +669,8 @@ export class ImportedFunction<Payload, Out> extends FunctionBase<Payload, Out> {
 }
 
 type ConditionalFunction<Payload, Out> = [Payload] extends [undefined]
-? (payload?: Payload) => Promise<Out>
-: (payload: Payload) => Promise<Out>;
+  ? (payload?: Payload) => Promise<Out>
+  : (payload: Payload) => Promise<Out>;
 
 interface CallbackLambdaCodeProps extends PrewarmProps {}
 
@@ -750,10 +763,20 @@ export class CallbackLambdaCode extends aws_lambda.Code {
                 } = transformTable(o as CfnResource);
                 return transformTaggableResource(rest);
               } else if (Token.isUnresolved(o)) {
-                const token = (<any>o).toString();
-                // add to tokens to be turned into env variables.
-                tokens = [...tokens, token];
-                return token;
+                const reversed = Tokenization.reverse(o)!;
+                if (Reference.isReference(reversed)) {
+                  tokens.push(reversed.toString());
+                  return reversed.toString();
+                } else if (SecretValue.isSecretValue(reversed)) {
+                  throw new SynthError(
+                    ErrorCodes.Unsafe_use_of_secrets,
+                    "Found unsafe use of SecretValue token in a Function."
+                  );
+                } else if ("value" in reversed) {
+                  return (reversed as unknown as { value: any }).value;
+                }
+                // TODO: fail at runtime and warn at compiler time when a token cannot be serialized
+                return {};
               }
               return o;
             };
@@ -792,9 +815,8 @@ export class CallbackLambdaCode extends aws_lambda.Code {
             /**
              * Remove unnecessary fields from {@link CfnTable} that bloat or fail the closure serialization.
              */
-            const transformIntegration = (o: unknown): any => {
-              if (o && typeof o === "object" && "kind" in o) {
-                const integ = o as Integration<any>;
+            const transformIntegration = (integ: unknown): any => {
+              if (integ && isIntegration(integ)) {
                 const copy = {
                   ...integ,
                   native: {
@@ -809,10 +831,31 @@ export class CallbackLambdaCode extends aws_lambda.Code {
 
                 return copy;
               }
-              return o;
+              return integ;
             };
 
-            return transformIntegration(transformCfnResource(obj));
+            /**
+             * TODO, make this configuration based.
+             * https://github.com/functionless/functionless/issues/239
+             */
+            const transformResource = (integ: unknown): any => {
+              if (
+                integ &&
+                (isFunction(integ) ||
+                  isTable(integ) ||
+                  isStepFunction(integ) ||
+                  isEventBus(integ))
+              ) {
+                const { resource, ...rest } = integ;
+
+                return rest;
+              }
+              return integ;
+            };
+
+            return transformIntegration(
+              transformResource(transformCfnResource(obj))
+            );
           }
           return true;
         },
@@ -878,6 +921,9 @@ export class CallbackLambdaCode extends aws_lambda.Code {
     };
 
     asset.bindToResource(funcResource);
+
+    // Clear the poison pill that causes the Function to fail synthesis.
+    scope.node.addMetadata(FUNCTION_CLOSURE_FLAG, true);
   }
 }
 

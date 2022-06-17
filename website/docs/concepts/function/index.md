@@ -147,7 +147,7 @@ These two functions are equivalent and result in the same JSON response:
 Any of Functionless's integrations can be called from within a Lambda Function. Functionless will automatically infer the required IAM Policies, set any environment variables it needs (such as the ARN of a dependency) and instantiate any SDK clients when the Function is first invoked.
 
 ```ts
-const Table = new Table(scope, "Table");
+const Table = Table.fromTable(scope, "Table");
 
 new Function(scope, "foo", async (id: string) => {
   return $AWS.DynamoDB.GetItem({
@@ -188,6 +188,27 @@ This Function infers the following configuration and runtime code boilerplate fr
 ```ts
 new AWS.DynamoDB();
 ```
+
+:::warn
+[Cannot use Infrastructure resource in `Function` closure (107)](../../error-codes.md#cannot-use-infrastructure-resource-in-function-closure).
+
+`.resource` (`Function`, `StepFunction`, `Table`, `EventBus`) may not be used within a `Function`.
+
+```ts
+const table = new Table(this, 'table', { ... });
+new Function(this, 'func', async () => {
+   // valid use of a Table
+   const $AWS.DynamoDB.GetItem({
+       TableName: table,
+       ...
+   })
+   // invalid - .resource is not available
+   const index = table.resource.tableStreamArn;
+});
+```
+
+See [error](../../error-codes.md#cannot-use-infrastructure-resource-in-function-closure) for details and workarounds.
+:::
 
 ## Call from an Integration
 
@@ -254,7 +275,7 @@ new Function(scope, "foo", () => {
 2. calls to Constructs such as other Functions or a DynamoDB Table are re-written as client API calls
 
 ```ts
-const table = new Table(..)
+const table = Table.fromTable(..)
 
 new Function(scope, "foo", (key: string) => {
   // re-written as a call to an AWS.DynamoDB.GetItem API call

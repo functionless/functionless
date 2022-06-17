@@ -24,7 +24,7 @@ import {
 export const app = new App();
 export const stack = new Stack(app, "message-board");
 
-const database = new Table<Post | Comment, "pk", "sk">(
+const database = Table.fromTable<Post | Comment, "pk", "sk">(
   new aws_dynamodb.Table(stack, "MessageBoard", {
     tableName: "MessageBoard",
     partitionKey: {
@@ -359,7 +359,7 @@ const defaultBus = EventBus.default<TestDeleteEvent>(stack);
 deleteWorkflow
   .onSucceeded(stack, "deleteSuccessfulEvent")
   .map((event) => ({
-    message: `post deleted ${event.id} using ${deleteWorkflow.stateMachineName}`,
+    message: `post deleted ${event.id} using ${deleteWorkflow.resource.stateMachineName}`,
   }))
   .pipe(sendNotification);
 

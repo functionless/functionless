@@ -7,6 +7,7 @@ import {
   AsyncFunctionResponseEvent,
   AsyncResponseSuccess,
   AsyncResponseFailure,
+  asyncSynth,
 } from "../src";
 import { reflect } from "../src/reflect";
 import { appsyncTestCase } from "./util";
@@ -16,11 +17,12 @@ interface Item {
   name: number;
 }
 
+let app: App;
 let stack: Stack;
 let lambda: aws_lambda.Function;
 
 beforeEach(() => {
-  const app = new App({ autoSynth: false });
+  app = new App({ autoSynth: false });
   stack = new Stack(app, "stack");
 
   lambda = new aws_lambda.Function(stack, "F", {
@@ -35,7 +37,7 @@ beforeEach(() => {
 test("call function", () => {
   const fn1 = Function.fromFunction<{ arg: string }, Item>(lambda);
 
-  return appsyncTestCase(
+  appsyncTestCase(
     reflect((context: AppsyncContext<{ arg: string }>) => {
       return fn1(context.arguments);
     })
@@ -84,7 +86,7 @@ test("call function including optional arg", () => {
 test("call function including with no parameters", () => {
   const fn3 = Function.fromFunction<undefined, Item>(lambda);
 
-  return appsyncTestCase(
+  appsyncTestCase(
     reflect(() => {
       return fn3();
     })
@@ -94,7 +96,7 @@ test("call function including with no parameters", () => {
 test("call function including with void result", () => {
   const fn4 = Function.fromFunction<{ arg: string }, void>(lambda);
 
-  return appsyncTestCase(
+  appsyncTestCase(
     reflect((context: AppsyncContext<{ arg: string }>) => {
       return fn4(context.arguments);
     })
@@ -125,7 +127,7 @@ test("set on success bus", () => {
         ))?.destinationConfig
       ))?.onSuccess
     )).destination
-  ).toEqual(bus.bus.eventBusArn);
+  ).toEqual(bus.resource.eventBusArn);
 });
 
 test("set on failure bus", () => {
@@ -152,7 +154,7 @@ test("set on failure bus", () => {
         ))?.destinationConfig
       ))?.onFailure
     )).destination
-  ).toEqual(bus.bus.eventBusArn);
+  ).toEqual(bus.resource.eventBusArn);
 });
 
 test("set on success function", () => {
@@ -263,11 +265,11 @@ test("configure async with bus", () => {
   expect(
     (<aws_lambda.CfnEventInvokeConfig.OnFailureProperty>config?.onFailure)
       .destination
-  ).toEqual(bus.bus.eventBusArn);
+  ).toEqual(bus.resource.eventBusArn);
   expect(
     (<aws_lambda.CfnEventInvokeConfig.OnFailureProperty>config?.onSuccess)
       .destination
-  ).toEqual(bus.bus.eventBusArn);
+  ).toEqual(bus.resource.eventBusArn);
 });
 
 test("set on success rule", () => {
@@ -279,7 +281,7 @@ test("set on success rule", () => {
   const onSuccess = func.onSuccess(bus, "funcSuccess");
   onSuccess.pipe(bus);
 
-  expect(onSuccess.rule._renderEventPattern()).toEqual({
+  expect(onSuccess.resource._renderEventPattern()).toEqual({
     source: ["lambda"],
     "detail-type": ["Lambda Function Invocation Result - Success"],
     resources: [func.resource.functionArn],
@@ -295,7 +297,7 @@ test("set on failure rule", () => {
   const onFailure = func.onFailure(bus, "funcFailure");
   onFailure.pipe(bus);
 
-  expect(onFailure.rule._renderEventPattern()).toEqual({
+  expect(onFailure.resource._renderEventPattern()).toEqual({
     source: ["lambda"],
     "detail-type": ["Lambda Function Invocation Result - Failure"],
     resources: [func.resource.functionArn],
@@ -317,7 +319,7 @@ test("onFailure().pipe should type check", () => {
   // @ts-expect-error
   onSuccess.pipe(bus);
 
-  expect(onFailure.rule._renderEventPattern()).toEqual({
+  expect(onFailure.resource._renderEventPattern()).toEqual({
     source: ["lambda"],
     "detail-type": ["Lambda Function Invocation Result - Failure"],
     resources: [func.resource.functionArn],
@@ -385,3 +387,26 @@ test("function accepts a superset of objects", () => {
     }
   );
 });
+
+test("function fails to synth when compile promise is not complete", async () => {
+  expect(() => {
+    new Function(
+      stack,
+      "superset",
+      async (p: { a: string } | { b: string }) => {
+        return p;
+      }
+    );
+
+    app.synth();
+  }).toThrow("Function closure serialization was not allowed to complete");
+});
+
+test("synth succeeds with async synth", async () => {
+  new Function(stack, "superset", async (p: { a: string } | { b: string }) => {
+    return p;
+  });
+
+  await asyncSynth(app);
+  // synth is slow
+}, 500000);

@@ -20,7 +20,7 @@ class GitHooksPreCommitComponent extends TextFile {
   }
 }
 
-const MIN_CDK_VERSION = "2.20.0";
+const MIN_CDK_VERSION = "2.28.0";
 
 /**
  * Projen does not currently support a way to set `*` for deerDependency versions.
@@ -37,6 +37,9 @@ const MIN_CDK_VERSION = "2.20.0";
  * TODO: Remove this hack once https://github.com/projen/projen/issues/1802 is resolved.
  */
 class CustomTypescriptProject extends typescript.TypeScriptProject {
+  /**
+   * @param {typescript.TypeScriptProjectOptions} opts
+   */
   constructor(opts) {
     super(opts);
 
@@ -72,6 +75,8 @@ class CustomTypescriptProject extends typescript.TypeScriptProject {
 const project = new CustomTypescriptProject({
   defaultReleaseBranch: "main",
   name: "functionless",
+  description:
+    "Functionless, a TypeScript plugin and Construct library for the AWS CDK",
   bin: {
     functionless: "./bin/functionless.js",
   },
@@ -83,7 +88,6 @@ const project = new CustomTypescriptProject({
     "@types/uuid",
     "amplify-appsync-simulator",
     "graphql-request",
-    "prettier",
     "ts-node",
     "ts-patch",
 
@@ -144,12 +148,13 @@ const project = new CustomTypescriptProject({
       projenCredentials: GithubCredentials.fromApp(),
     },
   },
+  prettier: {},
 });
 
 const packageJson = project.tryFindObjectFile("package.json");
 
 packageJson.addOverride("lint-staged", {
-  "*.{tsx,jsx,ts,js,json,md,css}": ["eslint --fix", "prettier --write"],
+  "*.{tsx,jsx,ts,js,json,md,css}": ["eslint --fix"],
 });
 
 project.compileTask.prependExec(
@@ -167,6 +172,10 @@ project.testTask.env("DEFAULT_REGION", "ap-northeast-1");
 project.testTask.env("AWS_ACCOUNT_ID", "000000000000");
 project.testTask.env("AWS_ACCESS_KEY_ID", "test");
 project.testTask.env("AWS_SECRET_ACCESS_KEY", "test");
+
+const testFast = project.addTask("test:fast");
+testFast.exec("ts-patch install -s");
+testFast.exec(`jest --testPathIgnorePatterns localstack --coverage false`);
 
 project.addPackageIgnore("/test-app");
 
@@ -206,5 +215,8 @@ project.eslint.addOverride({
     ],
   },
 });
+
+project.prettier.addIgnorePattern("coverage");
+project.prettier.addIgnorePattern("lib");
 
 project.synth();

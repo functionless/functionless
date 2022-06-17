@@ -36,7 +36,7 @@ export class PeopleDatabase extends Construct {
   constructor(scope: Construct, id: string) {
     super(scope, id);
 
-    this.personTable = new Table<Person, "id", undefined>(
+    this.personTable = Table.fromTable<Person, "id", undefined>(
       new aws_dynamodb.Table(this, "table", {
         partitionKey: {
           name: "id",
