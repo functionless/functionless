@@ -7,15 +7,10 @@ Object {
       "responseTemplates": Object {
         "application/json": "#set($v1 = $input.path('$').Item != $null)
 #if($v1)
-{
-  \\"data\\":$input.json('$.Item')
-}
+{\\"data\\":$input.json('$.Item')}
 #else
 #set($context.responseOverride.status = 404)
-{
-  \\"requestId\\":$input.json('$.requestId'),
-  \\"missing\\":true
-}
+{\\"requestId\\":$input.json('$.requestId'),\\"missing\\":true}
 #end",
       },
       "statusCode": "200",
@@ -24,11 +19,7 @@ Object {
   "requestTemplates": Object {
     "application/json": "{
   \\"TableName\\":\\"__REPLACED_TOKEN\\",
-  \\"Key\\":{
-    \\"pk\\":{
-      \\"S\\":$input.json('$.id')
-    }
-  }
+  \\"Key\\":{\\"pk\\":{\\"S\\":$input.json('$.id')}}
 }",
   },
 }
@@ -53,10 +44,7 @@ $input.json('$.error')
   "requestTemplates": Object {
     "application/json": "{
 \\"stateMachineArn\\":\\"__REPLACED_TOKEN\\",
-\\"input\\":\\"{
-  \\\\\\"num\\\\\\":$input.params('num'),
-  \\\\\\"str\\\\\\":\\\\\\"$input.params('str')\\\\\\"
-}\\"
+\\"input\\":\\"{\\\\\\"num\\\\\\":$input.params('num'),\\\\\\"str\\\\\\":\\\\\\"$input.params('str')\\\\\\"}\\"
 }",
   },
 }
@@ -67,9 +55,7 @@ Object {
   "integrationResponses": Array [
     Object {
       "responseTemplates": Object {
-        "application/json": "{
-  \\"result\\":$input.json('$')
-}",
+        "application/json": "{\\"result\\":$input.json('$')}",
       },
       "statusCode": "200",
     },
@@ -85,27 +71,21 @@ Object {
   "integrationResponses": Array [
     Object {
       "responseTemplates": Object {
-        "application/json": "{
-  \\"response\\":\\"OK\\"
-}",
+        "application/json": "{\\"response\\":\\"OK\\"}",
       },
       "selectionPattern": "^200$",
       "statusCode": "200",
     },
     Object {
       "responseTemplates": Object {
-        "application/json": "{
-  \\"response\\":\\"BAD\\"
-}",
+        "application/json": "{\\"response\\":\\"BAD\\"}",
       },
       "selectionPattern": "^500$",
       "statusCode": "500",
     },
   ],
   "requestTemplates": Object {
-    "application/json": "{
-  \\"statusCode\\":$input.params('code')
-}",
+    "application/json": "{\\"statusCode\\":$input.params('code')}",
   },
 }
 `;
@@ -115,27 +95,21 @@ Object {
   "integrationResponses": Array [
     Object {
       "responseTemplates": Object {
-        "application/json": "{
-  \\"response\\":\\"OK\\"
-}",
+        "application/json": "{\\"response\\":\\"OK\\"}",
       },
       "selectionPattern": "^200$",
       "statusCode": "200",
     },
     Object {
       "responseTemplates": Object {
-        "application/json": "{
-  \\"response\\":\\"BAD\\"
-}",
+        "application/json": "{\\"response\\":\\"BAD\\"}",
       },
       "selectionPattern": "^500$",
       "statusCode": "500",
     },
   ],
   "requestTemplates": Object {
-    "application/json": "{
-  \\"statusCode\\":$input.params('code')
-}",
+    "application/json": "{\\"statusCode\\":$input.params('code')}",
   },
 }
 `;
@@ -153,11 +127,7 @@ Object {
   "requestTemplates": Object {
     "application/json": "{
   \\"TableName\\":\\"__REPLACED_TOKEN\\",
-  \\"Key\\":{
-    \\"pk\\":{
-      \\"S\\":$input.json('$.id')
-    }
-  }
+  \\"Key\\":{\\"pk\\":{\\"S\\":$input.json('$.id')}}
 }",
   },
 }
@@ -176,11 +146,7 @@ Object {
   "requestTemplates": Object {
     "application/json": "{
   \\"TableName\\":\\"__REPLACED_TOKEN\\",
-  \\"Key\\":{
-    \\"pk\\":{
-      \\"S\\":$input.json('$.list[0]')
-    }
-  }
+  \\"Key\\":{\\"pk\\":{\\"S\\":$input.json('$.list[0]')}}
 }",
   },
 }

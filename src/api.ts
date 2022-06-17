@@ -657,14 +657,11 @@ export class APIGatewayVTL extends VTL {
    * Renders a VTL string that will emit a JSON String representation of the {@link expr} to the VTL output.
    *
    * @param expr the {@link Expr} to convert to JSON
-   * @param depth indentation depth of object
    * @returns a VTL string that emits the {@link expr} as JSON
    */
-  public exprToJson(expr: Expr, depth = 0): string {
+  public exprToJson(expr: Expr): string {
     const context = this;
     const jsonPath = toJsonPath(expr);
-    const oneIndent = " ".repeat(depth * 2);
-    const twoIndent = " ".repeat((depth + 1) * 2);
     if (jsonPath) {
       return `$input.json('${jsonPath}')`;
     } else if (isNullLiteralExpr(expr) || isUndefinedLiteralExpr(expr)) {
@@ -680,11 +677,7 @@ export class APIGatewayVTL extends VTL {
       if (expr.items.length === 0) {
         return "[]";
       } else {
-        return `[
-${twoIndent}${expr.items
-          .map((item) => this.exprToJson(item, depth + 1))
-          .join(`,\n${twoIndent}`)}
-${oneIndent}]`;
+        return `[${expr.items.map((item) => this.exprToJson(item)).join(`,`)}]`;
       }
     } else if (isArgument(expr)) {
       if (expr.expr) {
@@ -695,7 +688,7 @@ ${oneIndent}]`;
       if (integration !== undefined) {
         return this.integrate(integration, expr);
       } else if (isIdentifier(expr.expr) && expr.expr.name === "Number") {
-        return this.exprToJson(expr.args[0], depth);
+        return this.exprToJson(expr.args[0]);
       } else if (isPropAccessExpr(expr.expr) && expr.expr.name === "params") {
         if (isIdentifier(expr.expr.expr)) {
           const ref = expr.expr.expr.lookup();
@@ -708,11 +701,7 @@ ${oneIndent}]`;
             // the first argument of the FunctionDecl is the `$input`, regardless of what it is named
             if (expr.args.length === 0 || expr.args[0]?.expr === undefined) {
               const key = this.newLocalVarName();
-              return `{
-  #foreach(${key} in $input.params().keySet())
-  "${key}": "$input.params("${key}")"#if($foreach.hasNext),#end
-  #end
-}`;
+              return `{#foreach(${key} in $input.params().keySet())"${key}": "$input.params("${key}")"#if($foreach.hasNext),#end#end}`;
             } else if (expr.args.length === 1) {
               const argName = expr.args[0].expr!;
               if (isStringLiteralExpr(argName)) {
@@ -741,25 +730,24 @@ ${oneIndent}]`;
       if (expr.properties.length === 0) {
         return "{}";
       }
-      return `{\n${twoIndent}${expr.properties
+      return `{${expr.properties
         .map((prop) => {
           if (isPropAssignExpr(prop)) {
             if (isIdentifier(prop.name) || isStringLiteralExpr(prop.name)) {
               return `"${
                 isIdentifier(prop.name) ? prop.name.name : prop.name.value
-              }":${this.exprToJson(prop.expr, depth + 1)}`;
+              }":${this.exprToJson(prop.expr)}`;
             }
           } else {
             const key = context.newLocalVarName();
             const map = this.eval(prop.expr);
-            return `#foreach(${key} in ${map}.keySet())
-"${key}":${this.json(`${map}.get(${key})`)}#if($foreach.hasNext),#end
-#end`;
+            return `#foreach(${key} in ${map}.keySet())"${key}":${this.json(
+              `${map}.get(${key})`
+            )}#if($foreach.hasNext),#end#end`;
           }
           return "#stop";
         })
-        .join(`,\n${twoIndent}`)}
-${oneIndent}}`;
+        .join(`,`)}}`;
     } else {
       // this Expr is a computation that cannot be expressed as JSON Path
       // we must therefore evaluate it and use a brute force approach to convert it into JSON

@@ -493,7 +493,7 @@ export namespace $AWS {
         if (name === "TableName") {
           return [];
         }
-        return [`"${name}":${context.exprToJson(prop.expr, 1)}`];
+        return [`"${name}":${context.exprToJson(prop.expr)}`];
       } else {
         throw new SynthError(
           ErrorCodes.API_Gateway_does_not_support_spread_assignment_expressions

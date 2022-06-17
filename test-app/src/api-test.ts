@@ -173,10 +173,7 @@ new AwsMethod(
     }),
   ($input, $context) => {
     if ($input.data.status === "SUCCEEDED") {
-      return {
-        resultNum: $input.data.output.sfnNum,
-        resultStr: $input.data.output.sfnStr,
-      };
+      return $input.data.output;
     } else {
       $context.responseOverride.status = 500;
       return $input.data.error;
