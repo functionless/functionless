@@ -110,11 +110,13 @@ export namespace ErrorCodes {
 
   /**
    * Generic error message to denote errors that should not happen and are not the fault of the Functionless library consumer.
+   *
+   * Please report this issue
    */
   export const Unexpected_Error: ErrorCode = {
     code: 10003,
     type: ErrorType.ERROR,
-    messageText: "Unexpected Error, please report this issue",
+    messageText: "Unexpected Error",
   };
 
   /**
