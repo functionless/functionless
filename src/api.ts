@@ -30,8 +30,8 @@ import {
 } from "./expression";
 import { Function } from "./function";
 import { findIntegration, IntegrationImpl } from "./integration";
-import { isReturnStmt, Stmt } from "./statement";
-import { AnyFunction } from "./util";
+import { isReturnStmt, isVariableStmt, Stmt } from "./statement";
+import { AnyFunction, singletonConstruct } from "./util";
 import { VTL } from "./vtl";
 
 /**
@@ -175,16 +175,17 @@ function getRole(props: MethodProps) {
     return props.credentialsRole;
   }
   // by default, create a Role for each Resource's HTTP Method
-  const roleResourceName = `Role_${props.httpMethod}`;
+
   // the Method's Role is stored as a singleton on the HTTP Resource using the naming convention, `Role_<method>`, e.g. `Role_GET`.
-  const roleSingleton = props.resource.node.tryFindChild(roleResourceName);
-  if (roleSingleton) {
-    return roleSingleton as aws_iam.Role;
-  } else {
-    return new aws_iam.Role(props.resource, roleResourceName, {
-      assumedBy: new aws_iam.ServicePrincipal("apigateway.amazonaws.com"),
-    });
-  }
+  const roleResourceName = `Role_${props.httpMethod}`;
+  return singletonConstruct(
+    props.resource,
+    roleResourceName,
+    (scope, id) =>
+      new aws_iam.Role(scope, id, {
+        assumedBy: new aws_iam.ServicePrincipal("apigateway.amazonaws.com"),
+      })
+  );
 }
 
 /**
@@ -805,6 +806,7 @@ null
 ${reference} 
 #else
 #set($context.responseOverride.status = 500)
+"Internal Server Error - can only primitives to JSON"
 #stop
 #end`;
   }
@@ -817,12 +819,9 @@ ${reference}
    */
   public override dereference(id: Identifier): string {
     const ref = id.lookup();
-    if (ref?.kind === "VariableStmt") {
+    if (isVariableStmt(ref)) {
       return `$${id.name}`;
-    } else if (
-      ref?.kind === "ParameterDecl" &&
-      ref.parent?.kind === "FunctionDecl"
-    ) {
+    } else if (isParameterDecl(ref) && isFunctionDecl(ref.parent)) {
       const paramIndex = ref.parent.parameters.indexOf(ref);
       if (paramIndex === 0) {
         return `$input.path('$')`;

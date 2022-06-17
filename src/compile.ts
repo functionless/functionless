@@ -545,34 +545,38 @@ export function compile(
       function visitApiIntegration(node: ts.NewExpression): ts.Node {
         const [props, request, response, errors] = node.arguments ?? [];
 
-        return ts.factory.updateNewExpression(
-          node,
-          node.expression,
-          node.typeArguments,
-          [
-            props,
-            toFunction("FunctionDecl", request),
-            ts.isObjectLiteralExpression(response)
-              ? visitApiErrors(response)
-              : toFunction("FunctionDecl", response),
-            ...(errors && ts.isObjectLiteralExpression(errors)
-              ? [visitApiErrors(errors)]
-              : []),
-          ]
+        return errorBoundary(() =>
+          ts.factory.updateNewExpression(
+            node,
+            node.expression,
+            node.typeArguments,
+            [
+              props,
+              toFunction("FunctionDecl", request),
+              ts.isObjectLiteralExpression(response)
+                ? visitApiErrors(response)
+                : toFunction("FunctionDecl", response),
+              ...(errors && ts.isObjectLiteralExpression(errors)
+                ? [visitApiErrors(errors)]
+                : []),
+            ]
+          )
         );
       }
 
       function visitApiErrors(errors: ts.ObjectLiteralExpression) {
-        return ts.factory.updateObjectLiteralExpression(
-          errors,
-          errors.properties.map((prop) =>
-            ts.isPropertyAssignment(prop)
-              ? ts.factory.updatePropertyAssignment(
-                  prop,
-                  prop.name,
-                  toFunction("FunctionDecl", prop.initializer)
-                )
-              : prop
+        return errorBoundary(() =>
+          ts.factory.updateObjectLiteralExpression(
+            errors,
+            errors.properties.map((prop) =>
+              ts.isPropertyAssignment(prop)
+                ? ts.factory.updatePropertyAssignment(
+                    prop,
+                    prop.name,
+                    toFunction("FunctionDecl", prop.initializer)
+                  )
+                : prop
+            )
           )
         );
       }
