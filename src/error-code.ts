@@ -88,6 +88,9 @@ export namespace ErrorCodes {
    * The argument must be an inline Function.
    *
    * ```ts
+   * const func = () => {
+   *   // ..
+   * }
    * // invalid - `func` must be an inline Function
    * new Function(this, id, func);
    * ```
@@ -96,10 +99,10 @@ export namespace ErrorCodes {
    *
    * ```ts
    * // option 1 - arrow function
-   * new Function(this, id, () => { .. });
+   * new Function(this, id, async () => { .. });
    *
    * // option 2 - function
-   * new Function(this, id, function () { .. });
+   * new Function(this, id, async function () { .. });
    * ```
    */
   export const Argument_must_be_an_inline_Function: ErrorCode = {
