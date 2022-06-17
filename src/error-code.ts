@@ -25,7 +25,7 @@ export class SynthError extends Error {
  * ```
  */
 export const formatErrorMessage = (code: ErrorCode, messageText?: string) => `${
-  messageText ?? code.messageText
+  messageText ?? code.title
 }
 
 ${formatErrorUrl(code)}`;
@@ -36,13 +36,33 @@ ${formatErrorUrl(code)}`;
  * `http://functionless.org/docs/error-codes/#[Anchor from Message Text]`
  */
 export const formatErrorUrl = (code: ErrorCode) =>
-  `${BASE_URL}/docs/error-codes#${code.messageText
+  `${BASE_URL}/docs/error-codes#${code.title
     .toLowerCase()
     .replace(/\s/g, "-")}`;
 
+export enum ErrorType {
+  "ERROR" = "ERROR",
+  "WARN" = "WARN",
+  "INFO" = "INFO",
+  "DEPRECATED" = "DEPRECATED",
+}
+
 export interface ErrorCode {
-  code: number;
-  messageText: string;
+  /**
+   * Error code, a unique number between 10000 and 99999.
+   *
+   * New error codes should be sequential.
+   */
+  readonly code: number;
+  /**
+   * The type of the error, determine how the error is displayed in the language service and on the website.
+   */
+  readonly type: ErrorType;
+  /**
+   * Title of the error which will appear on `https://functionless.org/docs/error-codes` and act as the deep link.
+   * (https://functionless.org/docs/error-codes#title-with-dashes)
+   */
+  readonly title: string;
 }
 
 export namespace ErrorCodes {
@@ -69,8 +89,9 @@ export namespace ErrorCodes {
    */
   export const Cannot_perform_arithmetic_on_variables_in_Step_Function: ErrorCode =
     {
-      code: 100,
-      messageText: "Cannot perform arithmetic on variables in Step Function",
+      code: 10000,
+      type: ErrorType.ERROR,
+      title: "Cannot perform arithmetic on variables in Step Function",
     };
 
   /**
@@ -80,8 +101,9 @@ export namespace ErrorCodes {
    * Ensure you follow the instructions at https://functionless.org/docs/getting-started.
    */
   export const FunctionDecl_not_compiled_by_Functionless: ErrorCode = {
-    code: 101,
-    messageText: "Function not compiled by Functionless plugin",
+    code: 10001,
+    type: ErrorType.ERROR,
+    title: "Function not compiled by Functionless plugin",
   };
 
   /**
@@ -106,8 +128,9 @@ export namespace ErrorCodes {
    * ```
    */
   export const Argument_must_be_an_inline_Function: ErrorCode = {
-    code: 102,
-    messageText: `Argument must be an inline Function`,
+    code: 10002,
+    type: ErrorType.ERROR,
+    title: `Argument must be an inline Function`,
   };
 
   /**
@@ -129,8 +152,9 @@ export namespace ErrorCodes {
    */
   export const AwsMethod_request_must_have_exactly_one_integration_call: ErrorCode =
     {
-      code: 103,
-      messageText: `AwsMethod request must have exactly one integration call`,
+      code: 10003,
+      type: ErrorType.ERROR,
+      title: `AwsMethod request must have exactly one integration call`,
     };
 
   /**
@@ -144,16 +168,20 @@ export namespace ErrorCodes {
    * https://github.com/functionless/functionless/issues/128
    */
   export const Function_Closure_Serialization_Incomplete: ErrorCode = {
-    code: 104,
-    messageText: "Function closure serialization was not allowed to complete",
+    code: 10004,
+    type: ErrorType.ERROR,
+    title: "Function closure serialization was not allowed to complete",
   };
 
   /**
    * Generic error message to denote errors that should not happen and are not the fault of the Functionless library consumer.
+   *
+   * Please report this issue
    */
   export const Unexpected_Error: ErrorCode = {
-    code: 105,
-    messageText: "Unexpected Error, please report this issue",
+    code: 10005,
+    type: ErrorType.ERROR,
+    title: "Unexpected Error, please report this issue",
   };
 
   /**
@@ -181,9 +209,10 @@ export namespace ErrorCodes {
    * StateMachine.fromStepFunction(exprSfn);
    * ```
    */
-  export const Incorrect_StateMachine_Import_Type = {
-    code: 106,
-    messageText: "Incorrect state machine type imported",
+  export const Incorrect_StateMachine_Import_Type: ErrorCode = {
+    code: 10006,
+    type: ErrorType.ERROR,
+    title: "Incorrect state machine type imported",
   };
 
   /**
@@ -193,9 +222,10 @@ export namespace ErrorCodes {
    *
    * @see https://github.com/functionless/functionless/issues/252 to track supported secret patterns.
    */
-  export const Unsafe_use_of_secrets = {
-    code: 107,
-    messageText: "Unsafe use of secrets",
+  export const Unsafe_use_of_secrets: ErrorCode = {
+    code: 10007,
+    type: ErrorType.ERROR,
+    title: "Unsafe use of secrets",
   };
 
   /**
@@ -237,11 +267,12 @@ export namespace ErrorCodes {
    * });
    * ```
    */
-  export const Unsupported_initialization_of_resources_in_function = {
-    code: 108,
-    messageText:
-      "Unsupported initialization of Resources in a Function closure",
-  };
+  export const Unsupported_initialization_of_resources_in_function: ErrorCode =
+    {
+      code: 10008,
+      type: ErrorType.ERROR,
+      title: "Unsupported initialization of Resources in a Function closure",
+    };
 
   /**
    * Cannot use Infrastructure resource in Function closure.
@@ -302,8 +333,9 @@ export namespace ErrorCodes {
    */
   export const Cannot_use_infrastructure_Resource_in_Function_closure: ErrorCode =
     {
-      code: 109,
-      messageText: "Cannot use infrastructure Resource in Function closure",
+      code: 10009,
+      type: ErrorType.ERROR,
+      title: "Cannot use infrastructure Resource in Function closure",
     };
 
   /**
@@ -324,8 +356,9 @@ export namespace ErrorCodes {
    */
   export const API_Gateway_does_not_support_computed_property_names: ErrorCode =
     {
-      code: 110,
-      messageText: "API Gateway does not supported computed property names",
+      code: 10010,
+      type: ErrorType.ERROR,
+      title: "API Gateway does not supported computed property names",
     };
 
   /**
@@ -356,8 +389,9 @@ export namespace ErrorCodes {
    */
   export const API_Gateway_does_not_support_spread_assignment_expressions: ErrorCode =
     {
-      code: 111,
-      messageText: "API Gateway does not support spread assignment expressions",
+      code: 10011,
+      type: ErrorType.ERROR,
+      title: "API Gateway does not support spread assignment expressions",
     };
 
   /**
@@ -387,8 +421,9 @@ export namespace ErrorCodes {
    * ```
    */
   export const Expected_an_object_literal: ErrorCode = {
-    code: 112,
-    messageText: "Expected_an_object_literal",
+    code: 10012,
+    type: ErrorType.ERROR,
+    title: "Expected_an_object_literal",
   };
 
   /**
@@ -413,8 +448,8 @@ export namespace ErrorCodes {
    */
   export const API_gateway_response_mapping_template_cannot_call_integration: ErrorCode =
     {
-      code: 113,
-      messageText:
-        "API gateway response mapping template cannot call integration",
+      code: 10013,
+      type: ErrorType.ERROR,
+      title: "API gateway response mapping template cannot call integration",
     };
 }
