@@ -64,3 +64,18 @@ new AwsMethod(
   },
   ($input) => $input.data
 );
+
+// INVALID - uses a spread and computed property name
+new AwsMethod(
+  {
+    httpMethod: "GET",
+    resource: api.root,
+  },
+  ($input) => {
+    return {
+      ...$input.data,
+      [$input.params("param")]: null,
+    };
+  },
+  ($input) => $input.data
+);

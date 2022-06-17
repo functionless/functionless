@@ -157,10 +157,10 @@ export abstract class ApiMethod<Kind extends ApiMethodKind> {
 /**
  * Constructs the IAM Role to be used by an API Integration.
  *
- * The user can pass in their own IAM Role if they choose. If they do, it is their responsibility to
+ * You can pass in their own IAM Role if they choose. If they do, it is their responsibility to
  * ensure that Role can be assumed by the `apigateway.amazonaws.com` service principal.
  *
- * By default, a new Role is created
+ * By default, a new Role is created for you.
  *
  * @param props the {@link MethodProps} for this Method Integration.
  * @returns the IAM Role used for authorizing the API Method Integration requests.
@@ -687,6 +687,7 @@ ${oneIndent}}`;
       // TODO: this will always throw an error because API Gateway does not have $util.toJson
       return this.json(this.eval(expr));
     }
+
     throw new Error(`unsupported expression ${expr.kind}`);
 
     /**
@@ -761,7 +762,7 @@ ${reference}
    * @param id the {@link Identifier} expression.
    * @returns a VTL string that points to the value at runtime.
    */
-  protected override dereference(id: Identifier): string {
+  public override dereference(id: Identifier): string {
     const ref = id.lookup();
     if (ref?.kind === "VariableStmt") {
       return `$${id.name}`;

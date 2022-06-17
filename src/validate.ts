@@ -31,7 +31,7 @@ export function validate(
     if (checker.isNewStepFunction(node)) {
       return validateNewStepFunctionNode(node);
     } else if (checker.isApiIntegration(node)) {
-      return validateApiRequest(node);
+      return validateApi(node);
     } else if (checker.isNewFunctionlessFunction(node)) {
       return validateFunctionNode(node);
     } else {
@@ -98,11 +98,13 @@ export function validate(
     return [];
   }
 
-  function validateApiRequest(node: ts.NewExpression): ts.Diagnostic[] {
+  function validateApi(node: ts.NewExpression): ts.Diagnostic[] {
     const kind = checker.getApiMethodKind(node);
     if (kind === "AwsMethod") {
       // @ts-ignore
       const [props, request, responses, errors] = node.arguments ?? [];
+
+      const diagnostics = collectEachChildRecursive(request, validateApiNode);
 
       if (request === undefined) {
         // should be a standard type error - the request is missing
@@ -115,6 +117,7 @@ export function validate(
         const numIntegrations = countIntegrationCalls(request);
         if (numIntegrations === 0 || numIntegrations > 1) {
           return [
+            ...diagnostics,
             newError(
               request,
               ErrorCodes.AwsMethod_request_must_have_exactly_one_integration_call
@@ -123,6 +126,7 @@ export function validate(
         }
       } else {
         return [
+          ...diagnostics,
           newError(request, ErrorCodes.Argument_must_be_an_inline_Function),
         ];
       }
@@ -132,6 +136,26 @@ export function validate(
     }
     return [];
   }
+
+  function validateApiNode(node: ts.Node): ts.Diagnostic[] {
+    if (ts.isComputedPropertyName(node)) {
+      return [
+        newError(
+          node,
+          ErrorCodes.API_Gateway_does_not_support_computed_property_names
+        ),
+      ];
+    } else if (ts.isSpreadAssignment(node)) {
+      return [
+        newError(
+          node,
+          ErrorCodes.API_Gateway_does_not_support_spread_assignment_expressions
+        ),
+      ];
+    }
+    return [];
+  }
+
   function validateFunctionNode(node: FunctionInterface) {
     const func =
       node.arguments.length === 4 ? node.arguments[3] : node.arguments[2];

@@ -16,6 +16,7 @@ import {
   UpdateItemOutput,
 } from "typesafe-dynamodb/lib/update-item";
 import { ASL } from "./asl";
+import { ErrorCodes, SynthError } from "./error-code";
 import {
   Argument,
   Expr,
@@ -464,7 +465,8 @@ export namespace $AWS {
           renderRequest(call, context) {
             const input = call.args[0].expr;
             if (!isObjectLiteralExpr(input)) {
-              throw new Error(
+              throw new SynthError(
+                ErrorCodes.Expected_an_object_literal,
                 `input to $AWS.DynamoDB.${operationName} must be an object literal`
               );
             }
@@ -492,8 +494,8 @@ export namespace $AWS {
           : undefined;
 
         if (name === undefined) {
-          throw new Error(
-            `computer property names are not supported in API Gateway`
+          throw new SynthError(
+            ErrorCodes.API_Gateway_does_not_support_computed_property_names
           );
         }
         if (name === "TableName") {
@@ -501,8 +503,8 @@ export namespace $AWS {
         }
         return [`"${name}":${context.exprToJson(prop.expr, 1)}`];
       } else {
-        throw new Error(
-          `object spread is not supported by AWS API Gateway Velocity Templates`
+        throw new SynthError(
+          ErrorCodes.API_Gateway_does_not_support_spread_assignment_expressions
         );
       }
     })
@@ -528,7 +530,7 @@ export namespace $AWS {
               `input parameter must be an ObjectLiteralExpr, but was ${input?.kind}`
             );
           }
-          const table = getTableArgument(call.args);
+          const table = getTableArgument(operationName, call.args);
           grantTablePermissions(table, context.role, operationName);
 
           return {
@@ -540,7 +542,7 @@ export namespace $AWS {
         native: {
           ...integration.native,
           bind: (context, args) => {
-            const table = getTableArgument(args);
+            const table = getTableArgument(operationName, args);
             integration.native.bind(context, table);
           },
           preWarm(prewarmContext) {
@@ -577,7 +579,7 @@ export namespace $AWS {
     /**
      * @internal
      */
-    export function getTableArgument(args: Argument[] | Expr[]) {
+    export function getTableArgument(op: string, args: Argument[] | Expr[]) {
       let inputArgument;
       if (isArgument(args[0])) {
         inputArgument = args[0].expr;
@@ -586,24 +588,27 @@ export namespace $AWS {
       }
       // integ(input: { TableName })
       if (!inputArgument || !isObjectLiteralExpr(inputArgument)) {
-        throw Error(
-          `First argument into deleteItem should be an input object, found ${inputArgument?.kind}`
+        throw new SynthError(
+          ErrorCodes.Expected_an_object_literal,
+          `First argument into ${op} should be an input object, found ${inputArgument?.kind}`
         );
       }
 
       const tableProp = inputArgument.getProperty("TableName");
 
       if (!tableProp || !isPropAssignExpr(tableProp)) {
-        throw Error(
-          `First argument into deleteItem should be an input with a property TableName that is a Table.`
+        throw new SynthError(
+          ErrorCodes.Expected_an_object_literal,
+          `First argument into ${op} should be an input with a property TableName that is a Table.`
         );
       }
 
       const tableRef = tableProp.expr;
 
       if (!isReferenceExpr(tableRef)) {
-        throw Error(
-          `First argument into deleteItem should be an input with a property TableName that is a Table.`
+        throw new SynthError(
+          ErrorCodes.Expected_an_object_literal,
+          `First argument into ${op} should be an input with a property TableName that is a Table.`
         );
       }
 

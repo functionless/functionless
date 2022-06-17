@@ -297,8 +297,94 @@ export namespace ErrorCodes {
    * });
    * ```
    */
-  export const Cannot_use_infrastructure_Resource_in_Function_closure = {
-    code: 107,
-    messageText: "Cannot use infrastructure Resource in Function closure",
+  export const Cannot_use_infrastructure_Resource_in_Function_closure: ErrorCode =
+    {
+      code: 107,
+      messageText: "Cannot use infrastructure Resource in Function closure",
+    };
+
+  /**
+   * Computed Property Names are not supported in API Gateway.
+   *
+   * For example:
+   * ```ts
+   * new AwsMethod({
+   *   request: ($input) => $AWS.DynamoDB.GetItem({
+   *     TableName: table,
+   *     // invalid, all property names must be literals
+   *     [computedProperty]: prop
+   *   })
+   * });
+   * ```
+   *
+   * To workaround, be sure to only use literal property names.
+   */
+  export const API_Gateway_does_not_support_computed_property_names: ErrorCode =
+    {
+      code: 108,
+      messageText: "API Gateway does not supported computed property names",
+    };
+
+  /**
+   * Due to limitations in API Gateway's VTL engine (no $util.toJson, for example)
+   * it is not possible to fully support spread expressions.
+   *
+   * For example:
+   * ```ts
+   * new AwsMethod({
+   *   response: ($input) => ({
+   *     hello: "world",
+   *     ...$input.data
+   *   })
+   * });
+   * ```
+   *
+   * To workaround the limitation, explicitly specify each property.
+   *
+   * ```ts
+   * new AwsMethod({
+   *   response: ($input) => ({
+   *     hello: "world",
+   *     propA: $input.data.propA,
+   *     propB: $input.data.propB,
+   *   })
+   * });
+   * ```
+   */
+  export const API_Gateway_does_not_support_spread_assignment_expressions: ErrorCode =
+    {
+      code: 109,
+      messageText: "API Gateway does not support spread assignment expressions",
+    };
+
+  /**
+   * Due to limitations in respective Functionless interpreters, it is often a
+   * requirement to specify an object literal instead of a variable reference.
+   *
+   * ```ts
+   * const input = {
+   *   TableName: table,
+   *   Key: {
+   *     // etc.
+   *   }
+   * };
+   * // invalid - input must be an object literal
+   * $AWS.DynamoDB.GetItem(input)
+   * ```
+   *
+   * To work around, ensure that you specify an object literal.
+   *
+   * ```ts
+   * $AWS.DynamoDB.GetItem({
+   *   TableName: table,
+   *   Key: {
+   *     // etc.
+   *   }
+   * })
+   * ```
+   */
+  export const Expected_an_object_literal: ErrorCode = {
+    code: 110,
+    messageText: "Expected_an_object_literal",
   };
 }
