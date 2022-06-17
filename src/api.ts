@@ -72,6 +72,15 @@ export interface MethodProps
   /**
    * The IAM Role to use for authorizing this Method's integration requests.
    *
+   * If you choose to pass an IAM Role, make sure it can be assumed by API
+   * Gateway's service principal - `"apigateway.amazonaws.com"`.
+   *
+   * ```ts
+   * new aws_iam.Role(scope, id, {
+   *   assumedBy: new aws_iam.ServicePrincipal("apigateway.amazonaws.com"),
+   * })
+   * ```
+   *
    * @default - one is created for you.
    */
   credentialsRole?: aws_iam.IRole;
