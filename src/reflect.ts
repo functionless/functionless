@@ -31,3 +31,6 @@ import { AnyFunction } from "./util";
 export declare function reflect<F extends AnyFunction>(
   func: F
 ): FunctionDecl<F> | Err;
+
+// to prevent the closure serializer from trying to import all of functionless.
+export const deploymentOnlyModule = true;

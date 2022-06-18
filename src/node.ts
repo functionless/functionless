@@ -352,3 +352,6 @@ export function typeGuard<Kind extends FunctionlessNode["kind"]>(
   return (a: any): a is Extract<FunctionlessNode, { kind: Kind }> =>
     kinds.find((kind) => a?.kind === kind) !== undefined;
 }
+
+// to prevent the closure serializer from trying to import all of functionless.
+export const deploymentOnlyModule = true;

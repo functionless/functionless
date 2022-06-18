@@ -24,8 +24,8 @@ import {
 } from "aws-cdk-lib/aws-lambda-destinations";
 import type { Context } from "aws-lambda";
 // eslint-disable-next-line import/no-extraneous-dependencies
-import AWS from "aws-sdk";
 import { Construct } from "constructs";
+import esbuild from "esbuild";
 import { ApiGatewayVtlIntegration } from "./api";
 import type { AppSyncVtlIntegration } from "./appsync";
 import { ASL } from "./asl";
@@ -42,6 +42,11 @@ import {
 } from "./event-bridge";
 import { makeEventBusIntegration } from "./event-bridge/event-bus";
 import { CallExpr, Expr, isVariableReference } from "./expression";
+import {
+  NativePreWarmContext,
+  PrewarmClients,
+  PrewarmProps,
+} from "./function-prewarm";
 import {
   Integration,
   IntegrationImpl,
@@ -497,9 +502,7 @@ export interface FunctionProps<in P = any, O = any, OutP extends P = P>
    * @param clientName optionally return a different client config based on the {@link ClientName}.
    *
    */
-  clientConfigRetriever?: (
-    clientName: ClientName | string
-  ) => Omit<AWS.Lambda.ClientConfiguration, keyof AWS.Lambda.ClientApiVersions>;
+  clientConfigRetriever?: PrewarmProps["clientConfigRetriever"];
   /**
    * The destination for failed invocations.
    *
@@ -898,6 +901,40 @@ export class CallbackLambdaCode extends aws_lambda.Code {
       result.text
     );
 
+    // const simplifyRequire = resultText.replace(
+    //   /require\(\"([^\/]*)\/*.*\"\)/g,
+    //   'require("$1")'
+    // );
+
+    // const value = await esbuild.build({
+    //   stdin: {
+    //     contents: simplifyRequire,
+    //     resolveDir: process.cwd(),
+    //   },
+    //   bundle: true,
+    //   write: false,
+    //   metafile: true,
+    // });
+
+    const value2 = await esbuild.build({
+      stdin: {
+        contents: resultText,
+        resolveDir: process.cwd(),
+      },
+      bundle: true,
+      write: false,
+      metafile: true,
+      platform: "node",
+      target: "node14",
+      external: ["aws-sdk", "aws-cdk-lib", "esbuild"],
+    });
+
+    // console.log(
+    //   value.outputFiles[0].text,
+    //   value2.outputFiles[0].text,
+    //   simplifyRequire
+    // );
+
     const asset = aws_lambda.Code.fromAsset("", {
       assetHashType: AssetHashType.OUTPUT,
       bundling: {
@@ -905,8 +942,11 @@ export class CallbackLambdaCode extends aws_lambda.Code {
         // This forces the bundle directory and cache key to be unique. It does nothing else.
         user: scope.node.addr,
         local: {
-          tryBundle(outdir: string) {
-            fs.writeFileSync(path.resolve(outdir, "index.js"), resultText);
+          tryBundle(outdir, _opts) {
+            fs.writeFileSync(
+              path.resolve(outdir, "index.js"),
+              value2.outputFiles[0].contents
+            );
             return true;
           },
         },
@@ -979,107 +1019,5 @@ export interface NativeIntegration<Func extends AnyFunction> {
   preWarm?: (preWarmContext: NativePreWarmContext) => void;
 }
 
-export type ClientName =
-  | "LAMBDA"
-  | "EVENT_BRIDGE"
-  | "STEP_FUNCTIONS"
-  | "DYNAMO";
-
-interface PrewarmProps {
-  clientConfigRetriever?: FunctionProps["clientConfigRetriever"];
-}
-
-export interface PrewarmClientInitializer<T, O> {
-  key: T;
-  init: (key: string, props?: PrewarmProps) => O;
-}
-
-/**
- * Known, shared clients to use.
- *
- * Any object can be used by using the {@link PrewarmClientInitializer} interface directly.
- *
- * ```ts
- * context.getOrInit({
- *   key: 'customClient',
- *   init: () => new anyClient()
- * })
- * ```
- */
-export const PrewarmClients = {
-  LAMBDA: {
-    key: "LAMBDA",
-    init: (key, props) =>
-      // eslint-disable-next-line @typescript-eslint/no-require-imports, import/no-extraneous-dependencies
-      new (require("aws-sdk").Lambda)(props?.clientConfigRetriever?.(key)),
-  },
-  EVENT_BRIDGE: {
-    key: "EVENT_BRIDGE",
-    init: (key, props) =>
-      // eslint-disable-next-line @typescript-eslint/no-require-imports, import/no-extraneous-dependencies
-      new (require("aws-sdk").EventBridge)(props?.clientConfigRetriever?.(key)),
-  },
-  STEP_FUNCTIONS: {
-    key: "STEP_FUNCTIONS",
-    init: (key, props) =>
-      // eslint-disable-next-line @typescript-eslint/no-require-imports, import/no-extraneous-dependencies
-      new (require("aws-sdk").StepFunctions)(
-        props?.clientConfigRetriever?.(key)
-      ),
-  },
-  DYNAMO: {
-    key: "DYNAMO",
-    init: (key, props) =>
-      // eslint-disable-next-line @typescript-eslint/no-require-imports, import/no-extraneous-dependencies
-      new (require("aws-sdk").DynamoDB)(props?.clientConfigRetriever?.(key)),
-  },
-} as Record<ClientName, PrewarmClientInitializer<ClientName, any>>;
-
-/**
- * A client/object cache which Native Functions can use to
- * initialize objects once and before the handler is invoked.
- *
- * The same instance will be passed to both the `.call` and `.prewarm` methods
- * of a {@link NativeIntegration}. `prewarm` is called once when the function starts,
- * before the handler.
- *
- * Register and initialize clients by using `getOrInit` with a key and a initializer.
- *
- * ```ts
- * context.getOrInit(PrewarmClients.LAMBDA)
- * ```
- *
- * or register anything by doing
- *
- * ```ts
- * context.getOrInit({
- *   key: 'customClient',
- *   init: () => new anyClient()
- * })
- * ```
- *
- * To get without potentially initializing the client, use `get`:
- *
- * ```ts
- * context.get("LAMBDA")
- * context.get("customClient")
- * ```
- */
-export class NativePreWarmContext {
-  private readonly cache: Record<string, any>;
-
-  constructor(private props?: PrewarmProps) {
-    this.cache = {};
-  }
-
-  public get<T>(key: ClientName | string): T | undefined {
-    return this.cache[key];
-  }
-
-  public getOrInit<T>(client: PrewarmClientInitializer<any, T>): T {
-    if (!this.cache[client.key]) {
-      this.cache[client.key] = client.init(client.key, this.props);
-    }
-    return this.cache[client.key];
-  }
-}
+// to prevent the closure serializer from trying to import all of functionless.
+export const deploymentOnlyModule = true;

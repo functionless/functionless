@@ -965,3 +965,6 @@ const andMergePattern = (
   // we don't know how to do this (yet?)
   throw new Error(`Patterns of key ${key} defined at different levels.`);
 };
+
+// to prevent the closure serializer from trying to import all of functionless.
+export const deploymentOnlyModule = true;

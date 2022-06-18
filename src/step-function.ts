@@ -39,7 +39,8 @@ import {
   isObjectLiteralExpr,
   isSpreadAssignExpr,
 } from "./expression";
-import { NativeIntegration, PrewarmClients } from "./function";
+import { NativeIntegration } from "./function";
+import { PrewarmClients } from "./function-prewarm";
 import {
   Integration,
   IntegrationCall,

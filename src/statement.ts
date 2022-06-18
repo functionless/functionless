@@ -352,3 +352,6 @@ export class DoStmt extends BaseStmt<"DoStmt"> {
     return new DoStmt(this.block.clone(), this.condition.clone()) as this;
   }
 }
+
+// to prevent the closure serializer from trying to import all of functionless.
+export const deploymentOnlyModule = true;

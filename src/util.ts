@@ -269,3 +269,6 @@ export const evalToConstant = (expr: Expr): Constant | undefined => {
   }
   return undefined;
 };
+
+// to prevent the closure serializer from trying to import all of functionless.
+export const deploymentOnlyModule = true;

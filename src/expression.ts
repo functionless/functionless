@@ -1,6 +1,4 @@
-import { $AWS } from "./aws";
 import { ParameterDecl } from "./declaration";
-import { AnyLambda } from "./function";
 import { BaseNode, FunctionlessNode, isNode, typeGuard } from "./node";
 import type {
   BlockStmt,
@@ -8,8 +6,6 @@ import type {
   ReturnStmt,
   VariableStmt,
 } from "./statement";
-import { AnyStepFunction } from "./step-function";
-import { AnyTable } from "./table";
 import { AnyFunction } from "./util";
 
 /**
@@ -121,15 +117,8 @@ export class FunctionExpr<
 
 export const isReferenceExpr = typeGuard("ReferenceExpr");
 
-export type CanReference =
-  | AnyTable
-  | AnyLambda
-  | AnyStepFunction
-  | typeof $AWS
-  | unknown;
-
 export class ReferenceExpr extends BaseExpr<"ReferenceExpr"> {
-  constructor(readonly name: string, readonly ref: () => CanReference) {
+  constructor(readonly name: string, readonly ref: () => unknown) {
     super("ReferenceExpr");
   }
 
@@ -536,3 +525,6 @@ export class TypeOfExpr extends BaseExpr<"TypeOfExpr"> {
     return new TypeOfExpr(this.expr.clone()) as this;
   }
 }
+
+// to prevent the closure serializer from trying to import all of functionless.
+export const deploymentOnlyModule = true;

@@ -413,11 +413,6 @@ class BaseTable<
         },
         ...integration.appSyncVtl,
       },
-      unhandledContext(kind, contextKind) {
-        throw new Error(
-          `${kind} is only allowed within a '${VTL.ContextName}' context, but was called within a '${contextKind}' context.`
-        );
-      },
     });
   }
 }

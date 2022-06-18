@@ -1,7 +1,7 @@
 import { isErr } from "./error";
 import { ErrorCodes, SynthError } from "./error-code";
 import { Argument, FunctionExpr } from "./expression";
-import { NativePreWarmContext } from "./function";
+import { NativePreWarmContext } from "./function-prewarm";
 import { Integration } from "./integration";
 import { BaseNode, FunctionlessNode, isNode, typeGuard } from "./node";
 import { BlockStmt } from "./statement";
@@ -113,3 +113,6 @@ export function validateFunctionlessNode<E extends FunctionlessNode>(
     );
   }
 }
+
+// to prevent the closure serializer from trying to import all of functionless.
+export const deploymentOnlyModule = true;
