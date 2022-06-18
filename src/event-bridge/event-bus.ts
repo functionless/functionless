@@ -5,17 +5,19 @@ import {
   CallExpr,
   Expr,
   Identifier,
-  isArrayLiteralExpr,
-  isComputedPropertyNameExpr,
-  isIdentifier,
-  isObjectLiteralExpr,
-  isSpreadAssignExpr,
   ObjectLiteralExpr,
   PropAssignExpr,
   StringLiteralExpr,
 } from "../expression";
 import { Function } from "../function";
 import { NativePreWarmContext, PrewarmClients } from "../function-prewarm";
+import {
+  isArrayLiteralExpr,
+  isComputedPropertyNameExpr,
+  isIdentifier,
+  isObjectLiteralExpr,
+  isSpreadAssignExpr,
+} from "../guards";
 import {
   Integration,
   IntegrationCall,

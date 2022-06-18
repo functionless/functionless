@@ -1,4 +1,4 @@
-const { ErrorCodes } = require("../lib/error-code");
+const { ErrorCodes, ErrorType } = require("../lib/error-code");
 
 const fs = require("fs");
 const path = require("path");
@@ -48,9 +48,18 @@ for (const [errorId, errorCode] of Object.entries(ErrorCodes)) {
   //### Cannot\_perform\_arithmetic\_on\_variables\_in\_Step\_Function
   errorCodeMarkdown = errorCodeMarkdown.replace(
     `### ${errorId.replace(/_/g, "\\_")}`,
-    `### ${errorCode.messageText}
+    `### ${errorCode.title}
 
-__Error Code__: Functionless(${errorCode.code})`
+__Error Code__: Functionless(${errorCode.code})
+__Error Type__: ${
+      errorCode.type === ErrorType.ERROR
+        ? `<span style={{ "background-color": "red", "padding": "4px" }}>ERROR</span>`
+        : errorCode.type === ErrorType.WARN
+        ? `<span style={{ "background-color": "yellow", "color": "black", "padding": "4px" }}>WARN</span>`
+        : errorCode.type === ErrorType.INFO
+        ? `<span style={{ "background-color": "blue", "padding": "4px" }}>INFO</span>`
+        : `<span style={{ "background-color": "grey", "padding": "4px" }}>DEPRECATED</span>`
+    }`
   );
 }
 

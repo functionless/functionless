@@ -29,8 +29,7 @@ import esbuild from "esbuild";
 import { ApiGatewayVtlIntegration } from "./api";
 import type { AppSyncVtlIntegration } from "./appsync";
 import { ASL } from "./asl";
-import { isNativeFunctionDecl, validateFunctionlessNode } from "./declaration";
-import { isErr } from "./error";
+import { validateFunctionlessNode } from "./declaration";
 import { ErrorCodes, formatErrorMessage, SynthError } from "./error-code";
 import {
   IEventBus,
@@ -47,6 +46,7 @@ import {
   PrewarmClients,
   PrewarmProps,
 } from "./function-prewarm";
+import { isErr, isNativeFunctionDecl } from "./guards";
 import {
   Integration,
   IntegrationImpl,

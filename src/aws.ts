@@ -21,19 +21,17 @@ import {
 } from "typesafe-dynamodb/lib/update-item";
 import { ASL } from "./asl";
 import { ErrorCodes, SynthError } from "./error-code";
+import { Argument, Expr, isVariableReference } from "./expression";
+import { Function, isFunction, NativeIntegration } from "./function";
+import { NativePreWarmContext, PrewarmClients } from "./function-prewarm";
 import {
-  Argument,
-  Expr,
   isArgument,
   isIdentifier,
   isObjectLiteralExpr,
   isPropAssignExpr,
   isReferenceExpr,
   isStringLiteralExpr,
-  isVariableReference,
-} from "./expression";
-import { Function, isFunction, NativeIntegration } from "./function";
-import { NativePreWarmContext, PrewarmClients } from "./function-prewarm";
+} from "./guards";
 import {
   IntegrationCall,
   IntegrationInput,

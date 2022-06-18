@@ -1,60 +1,54 @@
 import { assertNever, assertNodeKind } from "./assert";
-import {
-  isFunctionDecl,
-  isNativeFunctionDecl,
-  isParameterDecl,
-} from "./declaration";
-import { isErr } from "./error";
+import {} from "./error";
 import { ErrorCodes, SynthError } from "./error-code";
+import { CallExpr, Expr, FunctionExpr, Identifier } from "./expression";
 import {
-  CallExpr,
-  Expr,
-  FunctionExpr,
-  Identifier,
   isArgument,
   isArrayLiteralExpr,
   isBinaryExpr,
+  isBlockStmt,
   isBooleanLiteralExpr,
+  isBreakStmt,
   isCallExpr,
+  isCatchClause,
   isComputedPropertyNameExpr,
   isConditionExpr,
+  isContinueStmt,
+  isDoStmt,
   isElementAccessExpr,
+  isErr,
+  isExprStmt,
+  isForInStmt,
+  isForOfStmt,
+  isFunctionDecl,
   isFunctionExpr,
   isIdentifier,
+  isIfStmt,
+  isNativeFunctionDecl,
   isNewExpr,
   isNullLiteralExpr,
   isNumberLiteralExpr,
   isObjectLiteralExpr,
+  isParameterDecl,
   isPropAccessExpr,
   isPropAssignExpr,
   isReferenceExpr,
+  isReturnStmt,
   isSpreadAssignExpr,
   isSpreadElementExpr,
   isStringLiteralExpr,
   isTemplateExpr,
+  isThrowStmt,
+  isTryStmt,
   isTypeOfExpr,
   isUnaryExpr,
   isUndefinedLiteralExpr,
-} from "./expression";
-import { findIntegration, IntegrationImpl } from "./integration";
-import { FunctionlessNode } from "./node";
-import {
-  isBlockStmt,
-  isBreakStmt,
-  isCatchClause,
-  isContinueStmt,
-  isDoStmt,
-  isExprStmt,
-  isForInStmt,
-  isForOfStmt,
-  isIfStmt,
-  isReturnStmt,
-  isThrowStmt,
-  isTryStmt,
   isVariableStmt,
   isWhileStmt,
-  Stmt,
-} from "./statement";
+} from "./guards";
+import { findIntegration, IntegrationImpl } from "./integration";
+import { FunctionlessNode } from "./node";
+import { Stmt } from "./statement";
 import { AnyFunction, isInTopLevelScope } from "./util";
 
 // https://velocity.apache.org/engine/devel/user-guide.html#conditionals
@@ -225,16 +219,13 @@ export abstract class VTL {
       return "$null";
     }
     if (isArrayLiteralExpr(node)) {
-      if (
-        node.items.find((item) => item.kind === "SpreadElementExpr") ===
-        undefined
-      ) {
+      if (node.items.find(isSpreadElementExpr) === undefined) {
         return `[${node.items.map((item) => this.eval(item)).join(", ")}]`;
       } else {
         // contains a spread, e.g. [...i], so we will store in a variable
         const list = this.var("[]");
         for (const item of node.items) {
-          if (item.kind === "SpreadElementExpr") {
+          if (isSpreadElementExpr(item)) {
             this.qr(`${list}.addAll(${this.eval(item.expr)})`);
           } else {
             // we use addAll because `list.push(item)` is pared as `list.push(...[item])`
@@ -275,7 +266,7 @@ export abstract class VTL {
         return this.integrate(serviceCall, node);
       } else if (
         // If the parent is a propAccessExpr
-        node.expr.kind === "PropAccessExpr" &&
+        isPropAccessExpr(node.expr) &&
         (node.expr.name === "map" ||
           node.expr.name === "forEach" ||
           node.expr.name === "reduce")
@@ -444,7 +435,7 @@ export abstract class VTL {
       throw new Error("NewExpr is not supported by Velocity Templates");
     } else if (isPropAccessExpr(node)) {
       let name = node.name;
-      if (name === "push" && node.parent?.kind === "CallExpr") {
+      if (name === "push" && isCallExpr(node.parent)) {
         // this is a push to an array, rename to 'addAll'
         // addAll because the var-args are converted to an ArrayLiteralExpr
         name = "addAll";
@@ -459,13 +450,12 @@ export abstract class VTL {
     } else if (isObjectLiteralExpr(node)) {
       const obj = this.var("{}");
       for (const prop of node.properties) {
-        if (prop.kind === "PropAssignExpr") {
-          const name =
-            prop.name.kind === "Identifier"
-              ? this.str(prop.name.name)
-              : this.eval(prop.name);
+        if (isPropAssignExpr(prop)) {
+          const name = isIdentifier(prop.name)
+            ? this.str(prop.name.name)
+            : this.eval(prop.name);
           this.put(obj, name, prop.expr);
-        } else if (prop.kind === "SpreadAssignExpr") {
+        } else if (isSpreadAssignExpr(prop)) {
           this.putAll(obj, prop.expr);
         } else {
           assertNever(prop);
@@ -496,7 +486,7 @@ export abstract class VTL {
     } else if (isTemplateExpr(node)) {
       return `"${node.exprs
         .map((expr) => {
-          if (expr.kind === "StringLiteralExpr") {
+          if (isStringLiteralExpr(expr)) {
             return expr.value;
           }
           const text = this.eval(expr, returnVar);
@@ -604,8 +594,8 @@ export abstract class VTL {
   ): string {
     if (
       !alwaysEvaluate &&
-      expr.kind === "CallExpr" &&
-      expr.expr.kind === "PropAccessExpr" &&
+      isCallExpr(expr) &&
+      isPropAccessExpr(expr.expr) &&
       expr.expr.name === "map"
     ) {
       const [value, index, array] = getMapForEachArgs(expr);

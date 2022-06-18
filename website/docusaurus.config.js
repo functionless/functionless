@@ -6,7 +6,7 @@ const darkCodeTheme = require("prism-react-renderer/themes/dracula");
 const path = require("path");
 
 const url =
-  process.env.CONTEXT === "deploy-preview"
+  process.env.CONTEXT === "deploy-preview" && process.env.DEPLOY_PRIME_URL
     ? process.env.DEPLOY_PRIME_URL
     : "https://functionless.org";
 

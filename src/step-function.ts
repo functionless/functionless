@@ -19,12 +19,7 @@ import {
   Task,
 } from "./asl";
 import { assertDefined } from "./assert";
-import {
-  validateFunctionDecl,
-  FunctionDecl,
-  isFunctionDecl,
-} from "./declaration";
-import { isErr } from "./error";
+import { validateFunctionDecl, FunctionDecl } from "./declaration";
 import { ErrorCodes, SynthError } from "./error-code";
 import { EventBus, PredicateRuleBase, Rule } from "./event-bridge";
 import {
@@ -32,15 +27,20 @@ import {
   makeEventBusIntegration,
 } from "./event-bridge/event-bus";
 import { Event } from "./event-bridge/types";
-import {
-  CallExpr,
-  isComputedPropertyNameExpr,
-  isFunctionExpr,
-  isObjectLiteralExpr,
-  isSpreadAssignExpr,
-} from "./expression";
+import { CallExpr } from "./expression";
 import { NativeIntegration } from "./function";
 import { PrewarmClients } from "./function-prewarm";
+import {
+  isComputedPropertyNameExpr,
+  isErr,
+  isFunctionDecl,
+  isFunctionExpr,
+  isNumberLiteralExpr,
+  isObjectLiteralExpr,
+  isPropAssignExpr,
+  isSpreadAssignExpr,
+  isStringLiteralExpr,
+} from "./guards";
 import {
   Integration,
   IntegrationCall,
@@ -75,7 +75,7 @@ export namespace $SFN {
         throw new Error("the 'seconds' argument is required");
       }
 
-      if (seconds.kind === "NumberLiteralExpr") {
+      if (isNumberLiteralExpr(seconds)) {
         return {
           Type: "Wait" as const,
           Seconds: seconds.value,
@@ -108,7 +108,7 @@ export namespace $SFN {
         throw new Error("the 'timestamp' argument is required");
       }
 
-      if (timestamp.kind === "StringLiteralExpr") {
+      if (isStringLiteralExpr(timestamp)) {
         return {
           Type: "Wait",
           Timestamp: timestamp.value,
@@ -232,11 +232,11 @@ export namespace $SFN {
       const props = call.getArgument("props")?.expr;
       let maxConcurrency: number | undefined;
       if (props !== undefined) {
-        if (props.kind === "ObjectLiteralExpr") {
+        if (isObjectLiteralExpr(props)) {
           const maxConcurrencyProp = props.getProperty("maxConcurrency");
           if (
-            maxConcurrencyProp?.kind === "PropAssignExpr" &&
-            maxConcurrencyProp.expr.kind === "NumberLiteralExpr"
+            isPropAssignExpr(maxConcurrencyProp) &&
+            isNumberLiteralExpr(maxConcurrencyProp.expr)
           ) {
             maxConcurrency = maxConcurrencyProp.expr.value;
             if (maxConcurrency <= 0) {

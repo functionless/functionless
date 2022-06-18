@@ -13,10 +13,22 @@ import {
   ConditionExpr,
   Expr,
   Identifier,
-  isBinaryExpr,
   PropAccessExpr,
   StringLiteralExpr,
 } from "./expression";
+import {
+  isVariableStmt,
+  isParameterDecl,
+  isFunctionDecl,
+  isBinaryExpr,
+  isExprStmt,
+  isReturnStmt,
+  isCallExpr,
+  isReferenceExpr,
+  isPropAccessExpr,
+  isElementAccessExpr,
+  isIfStmt,
+} from "./guards";
 import { findDeepIntegration, IntegrationImpl } from "./integration";
 import { Literal } from "./literal";
 import { FunctionlessNode } from "./node";
@@ -105,12 +117,9 @@ export class AppsyncVTL extends VTL {
 
   protected dereference(id: Identifier): string {
     const ref = id.lookup();
-    if (ref?.kind === "VariableStmt" && isInTopLevelScope(ref)) {
+    if (isVariableStmt(ref) && isInTopLevelScope(ref)) {
       return `$context.stash.${id.name}`;
-    } else if (
-      ref?.kind === "ParameterDecl" &&
-      ref.parent?.kind === "FunctionDecl"
-    ) {
+    } else if (isParameterDecl(ref) && isFunctionDecl(ref.parent)) {
       // regardless of the name of the first argument in the root FunctionDecl, it is always the intrinsic Appsync `$context`.
       return "$context";
     }
@@ -416,11 +425,11 @@ export class AppsyncResolver<
             const returnValName =
               resultTemplate?.returnVariable ?? resultValName;
 
-            if (stmt.kind === "ExprStmt") {
+            if (isExprStmt(stmt)) {
               const call = findServiceCallExpr(stmt.expr);
               template.call(call);
               return createStage(service, "{}");
-            } else if (stmt.kind === "ReturnStmt") {
+            } else if (isReturnStmt(stmt)) {
               return createStage(
                 service,
                 `${
@@ -429,10 +438,7 @@ export class AppsyncResolver<
 #set( $context.stash.return__val = ${getResult(stmt.expr)} )
 {}`
               );
-            } else if (
-              stmt.kind === "VariableStmt" &&
-              stmt.expr?.kind === "CallExpr"
-            ) {
+            } else if (isVariableStmt(stmt) && isCallExpr(stmt.expr)) {
               return createStage(
                 service,
                 `${pre ? `${pre}\n` : ""}#set( $context.stash.${
@@ -453,10 +459,10 @@ export class AppsyncResolver<
              */
             function findServiceCallExpr(expr: Expr): CallExpr {
               if (
-                expr.kind === "CallExpr" &&
-                (expr.expr.kind === "ReferenceExpr" ||
-                  (expr.expr.kind === "PropAccessExpr" &&
-                    expr.expr.expr.kind === "ReferenceExpr"))
+                isCallExpr(expr) &&
+                (isReferenceExpr(expr.expr) ||
+                  (isPropAccessExpr(expr.expr) &&
+                    isReferenceExpr(expr.expr.expr)))
               ) {
                 // this catches specific cases:
                 // lambdaFunction()
@@ -467,9 +473,9 @@ export class AppsyncResolver<
                 // lambdaFunction().prop
                 // table.query().Items.size() //.size() is still a Call but not a call to a service.
                 return expr;
-              } else if (expr.kind === "PropAccessExpr") {
+              } else if (isPropAccessExpr(expr)) {
                 return findServiceCallExpr(expr.expr);
-              } else if (expr.kind === "CallExpr") {
+              } else if (isCallExpr(expr)) {
                 return findServiceCallExpr(expr.expr);
               } else {
                 throw new Error("");
@@ -494,12 +500,12 @@ export class AppsyncResolver<
              * @returns a VTL expression to be included in the Response Mapping Template to extract the contents from `$context.result`.
              */
             function getResult(expr: Expr): string {
-              if (expr.kind === "CallExpr") {
+              if (isCallExpr(expr)) {
                 template.call(expr);
                 return returnValName;
-              } else if (expr.kind === "PropAccessExpr") {
+              } else if (isPropAccessExpr(expr)) {
                 return `${getResult(expr.expr)}.${expr.name}`;
-              } else if (expr.kind === "ElementAccessExpr") {
+              } else if (isElementAccessExpr(expr)) {
                 return `${getResult(expr.expr)}[${getResult(expr.element)}]`;
               } else {
                 throw new Error(
@@ -531,9 +537,9 @@ export class AppsyncResolver<
               });
             }
           } else if (isLastExpr) {
-            if (stmt.kind === "ReturnStmt") {
+            if (isReturnStmt(stmt)) {
               template.return(stmt.expr);
-            } else if (stmt.kind === "IfStmt") {
+            } else if (isIfStmt(stmt)) {
               template.eval(stmt);
             } else {
               template.return("$null");
