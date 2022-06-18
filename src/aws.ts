@@ -41,26 +41,6 @@ import { isTable, AnyTable, ITable } from "./table";
 
 import type { AnyFunction } from "./util";
 
-type Item<T extends ITable<any, any, any>> = T extends ITable<infer I, any, any>
-  ? I
-  : never;
-
-type PartitionKey<T extends ITable<any, any, any>> = T extends ITable<
-  any,
-  infer PK,
-  any
->
-  ? PK
-  : never;
-
-type RangeKey<T extends ITable<any, any, any>> = T extends ITable<
-  any,
-  any,
-  infer SK
->
-  ? SK
-  : never;
-
 /**
  * @see https://docs.aws.amazon.com/step-functions/latest/dg/connect-ddb.html
  */
@@ -71,21 +51,23 @@ const DynamoDB = {
   DeleteItem: makeDynamoIntegration<
     "deleteItem",
     <
-      T extends ITable<any, any, any>,
+      Item extends object,
+      PartitionKey extends keyof Item,
+      RangeKey extends keyof Item | undefined,
       Key extends TableKey<
-        Item<T>,
-        PartitionKey<T>,
-        RangeKey<T>,
+        Item,
+        PartitionKey,
+        RangeKey,
         JsonFormat.AttributeValue
       >,
       ConditionExpression extends string | undefined,
       ReturnValue extends AWSDynamoDB.ReturnValue = "NONE"
     >(
-      input: { TableName: T } & Omit<
+      input: { TableName: ITable<Item, PartitionKey, RangeKey> } & Omit<
         DeleteItemInput<
-          Item<T>,
-          PartitionKey<T>,
-          RangeKey<T>,
+          Item,
+          PartitionKey,
+          RangeKey,
           Key,
           ConditionExpression,
           ReturnValue,
@@ -93,7 +75,7 @@ const DynamoDB = {
         >,
         "TableName"
       >
-    ) => DeleteItemOutput<Item<T>, ReturnValue, JsonFormat.AttributeValue>
+    ) => DeleteItemOutput<Item, ReturnValue, JsonFormat.AttributeValue>
   >("deleteItem", {
     native: {
       bind: (context, table) => {
@@ -101,11 +83,7 @@ const DynamoDB = {
       },
       call: async (args, preWarmContext) => {
         const dynamo = preWarmContext.getOrInit<
-          TypeSafeDynamoDBv2<
-            Item<AnyTable>,
-            PartitionKey<AnyTable>,
-            RangeKey<AnyTable>
-          >
+          TypeSafeDynamoDBv2<object, keyof object, any>
         >(PrewarmClients.DYNAMO);
 
         const [input] = args;
@@ -169,26 +147,14 @@ const DynamoDB = {
       call: async (
         args: [
           { TableName: AnyTable } & Omit<
-            GetItemInput<
-              Item<AnyTable>,
-              PartitionKey<AnyTable>,
-              RangeKey<AnyTable>,
-              any,
-              any,
-              any,
-              any
-            >,
+            GetItemInput<object, keyof object, any, any, any, any, any>,
             "TableName"
           >
         ],
         preWarmContext: NativePreWarmContext
       ) => {
         const dynamo = preWarmContext.getOrInit<
-          TypeSafeDynamoDBv2<
-            Item<AnyTable>,
-            PartitionKey<AnyTable>,
-            RangeKey<AnyTable>
-          >
+          TypeSafeDynamoDBv2<object, keyof object, any>
         >(PrewarmClients.DYNAMO);
 
         const [input] = args;
@@ -213,22 +179,24 @@ const DynamoDB = {
   UpdateItem: makeDynamoIntegration<
     "updateItem",
     <
-      T extends ITable<any, any, any>,
+      Item extends object,
+      PartitionKey extends keyof Item,
+      RangeKey extends keyof Item | undefined,
       Key extends TableKey<
-        Item<T>,
-        PartitionKey<T>,
-        RangeKey<T>,
+        Item,
+        PartitionKey,
+        RangeKey,
         JsonFormat.AttributeValue
       >,
       UpdateExpression extends string,
       ConditionExpression extends string | undefined = undefined,
       ReturnValue extends AWSDynamoDB.ReturnValue = "NONE"
     >(
-      input: { TableName: T } & Omit<
+      input: { TableName: ITable<Item, PartitionKey, RangeKey> } & Omit<
         UpdateItemInput<
-          Item<T>,
-          PartitionKey<T>,
-          RangeKey<T>,
+          Item,
+          PartitionKey,
+          RangeKey,
           Key,
           UpdateExpression,
           ConditionExpression,
@@ -238,9 +206,9 @@ const DynamoDB = {
         "TableName"
       >
     ) => UpdateItemOutput<
-      Item<T>,
-      PartitionKey<T>,
-      RangeKey<T>,
+      Item,
+      PartitionKey,
+      RangeKey,
       Key,
       ReturnValue,
       JsonFormat.AttributeValue
@@ -252,11 +220,7 @@ const DynamoDB = {
       },
       call: async (args, preWarmContext) => {
         const dynamo = preWarmContext.getOrInit<
-          TypeSafeDynamoDBv2<
-            Item<AnyTable>,
-            PartitionKey<AnyTable>,
-            RangeKey<AnyTable>
-          >
+          TypeSafeDynamoDBv2<object, keyof object, any>
         >(PrewarmClients.DYNAMO);
 
         const [input] = args;
@@ -279,21 +243,22 @@ const DynamoDB = {
   PutItem: makeDynamoIntegration<
     "putItem",
     <
-      T extends ITable<any, any, any>,
-      I extends Item<T>,
+      Item extends object,
+      PartitionKey extends keyof Item,
+      RangeKey extends keyof Item | undefined = undefined,
       ConditionExpression extends string | undefined = undefined,
       ReturnValue extends AWSDynamoDB.ReturnValue = "NONE"
     >(
-      input: { TableName: T } & Omit<
+      input: { TableName: ITable<Item, PartitionKey, RangeKey> } & Omit<
         PutItemInput<
-          Item<T>,
+          Item,
           ConditionExpression,
           ReturnValue,
           JsonFormat.AttributeValue
         >,
         "TableName"
       >
-    ) => PutItemOutput<I, ReturnValue, JsonFormat.AttributeValue>
+    ) => PutItemOutput<Item, ReturnValue, JsonFormat.AttributeValue>
   >("putItem", {
     native: {
       bind: (context, table) => {
@@ -301,11 +266,7 @@ const DynamoDB = {
       },
       call: async (args, preWarmContext) => {
         const dynamo = preWarmContext.getOrInit<
-          TypeSafeDynamoDBv2<
-            Item<AnyTable>,
-            PartitionKey<AnyTable>,
-            RangeKey<AnyTable>
-          >
+          TypeSafeDynamoDBv2<object, keyof object, any>
         >(PrewarmClients.DYNAMO);
 
         const [input] = args;
@@ -326,15 +287,17 @@ const DynamoDB = {
   Query: makeDynamoIntegration<
     "query",
     <
-      T extends ITable<any, any, any>,
+      Item extends object,
+      PartitionKey extends keyof Item,
       KeyConditionExpression extends string,
+      RangeKey extends keyof Item | undefined = undefined,
       FilterExpression extends string | undefined = undefined,
       ProjectionExpression extends string | undefined = undefined,
-      AttributesToGet extends keyof Item<T> | undefined = undefined
+      AttributesToGet extends keyof Item | undefined = undefined
     >(
-      input: { TableName: T } & Omit<
+      input: { TableName: ITable<Item, PartitionKey, RangeKey> } & Omit<
         QueryInput<
-          Item<T>,
+          Item,
           KeyConditionExpression,
           FilterExpression,
           ProjectionExpression,
@@ -343,7 +306,7 @@ const DynamoDB = {
         >,
         "TableName"
       >
-    ) => QueryOutput<Item<T>, AttributesToGet, JsonFormat.AttributeValue>
+    ) => QueryOutput<Item, AttributesToGet, JsonFormat.AttributeValue>
   >("query", {
     native: {
       bind: (context, table) => {
@@ -351,11 +314,7 @@ const DynamoDB = {
       },
       call: async (args, preWarmContext) => {
         const dynamo = preWarmContext.getOrInit<
-          TypeSafeDynamoDBv2<
-            Item<AnyTable>,
-            PartitionKey<AnyTable>,
-            RangeKey<AnyTable>
-          >
+          TypeSafeDynamoDBv2<object, keyof object, any>
         >(PrewarmClients.DYNAMO);
 
         const [input] = args;
@@ -375,14 +334,16 @@ const DynamoDB = {
   Scan: makeDynamoIntegration<
     "scan",
     <
-      T extends ITable<any, any, any>,
+      Item extends object,
+      PartitionKey extends keyof Item,
+      RangeKey extends keyof Item | undefined = undefined,
       FilterExpression extends string | undefined = undefined,
       ProjectionExpression extends string | undefined = undefined,
-      AttributesToGet extends keyof Item<T> | undefined = undefined
+      AttributesToGet extends keyof Item | undefined = undefined
     >(
-      input: { TableName: T } & Omit<
+      input: { TableName: ITable<Item, PartitionKey, RangeKey> } & Omit<
         ScanInput<
-          Item<T>,
+          Item,
           FilterExpression,
           ProjectionExpression,
           AttributesToGet,
@@ -390,7 +351,7 @@ const DynamoDB = {
         >,
         "TableName"
       >
-    ) => ScanOutput<Item<T>, AttributesToGet, JsonFormat.AttributeValue>
+    ) => ScanOutput<Item, AttributesToGet, JsonFormat.AttributeValue>
   >("scan", {
     native: {
       bind: (context, table) => {
@@ -398,11 +359,7 @@ const DynamoDB = {
       },
       call: async (args, preWarmContext) => {
         const dynamo = preWarmContext.getOrInit<
-          TypeSafeDynamoDBv2<
-            Item<AnyTable>,
-            PartitionKey<AnyTable>,
-            RangeKey<AnyTable>
-          >
+          TypeSafeDynamoDBv2<object, keyof object, any>
         >(PrewarmClients.DYNAMO);
 
         const [input] = args;

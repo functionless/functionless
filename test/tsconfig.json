@@ -8,7 +8,11 @@
       {
         "name": "@functionless/language-service"
       }
-    ]
+    ],
+    "paths": {
+      "@fnls": ["../lib/index"]
+    },
+    "baseUrl": "."
   },
   "exclude": ["node_modules"]
 }

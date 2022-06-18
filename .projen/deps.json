@@ -176,6 +176,10 @@
       "type": "build"
     },
     {
+      "name": "uuid",
+      "type": "build"
+    },
+    {
       "name": "aws-cdk-lib",
       "version": "^2.28.1",
       "type": "peer"
