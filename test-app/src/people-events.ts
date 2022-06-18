@@ -48,7 +48,7 @@ export class PeopleEvents extends Construct {
 
     const bus = new functionless.EventBus<UserEvent>(this, "myBus");
 
-    // Create and update events are sent to a spcific lambda function.
+    // Create and update events are sent to a specific lambda function.
     bus
       .when(
         this,

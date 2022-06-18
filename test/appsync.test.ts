@@ -1,10 +1,15 @@
+import { GraphqlApi } from "@aws-cdk/aws-appsync-alpha";
 import { Stack } from "aws-cdk-lib";
 import { AppsyncContext, AppsyncResolver, reflect, StepFunction } from "../src";
 import { appsyncTestCase, testAppsyncVelocity } from "./util";
 
 let stack: Stack;
+let api: GraphqlApi;
 beforeEach(() => {
   stack = new Stack();
+  api = new GraphqlApi(stack, "api", {
+    name: "api",
+  });
 });
 
 describe("step function integration", () => {
@@ -101,8 +106,13 @@ describe("step function integration", () => {
   test("machine with trace header", () => {
     const machine = new StepFunction(stack, "machine", () => {});
 
-    new AppsyncResolver<{ id: string }, void>((context) => {
-      machine({ traceHeader: context.arguments.id });
+    new AppsyncResolver<{ id: string }, void>(stack, "resolver", {
+      api,
+      fieldName: "field",
+      typeName: "type",
+      resolve: (context) => {
+        machine({ traceHeader: context.arguments.id });
+      },
     });
   });
 
@@ -135,8 +145,13 @@ describe("step function describe execution", () => {
 
   test("machine with trace header", () => {
     const machine = new StepFunction(stack, "machine", () => {});
-    new AppsyncResolver<{ id: string }, void>((context) => {
-      machine({ traceHeader: context.arguments.id });
+    new AppsyncResolver<{ id: string }, void>(stack, "resolver", {
+      api,
+      fieldName: "field",
+      typeName: "type",
+      resolve: (context) => {
+        machine({ traceHeader: context.arguments.id });
+      },
     });
   });
 });

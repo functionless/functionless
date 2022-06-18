@@ -58,11 +58,13 @@ export function getAppSyncTemplates(decl: FunctionDecl | Err): string[] {
     xrayEnabled: true,
   });
 
-  const appsyncFunction = new AppsyncResolver(decl as any);
-  return appsyncFunction.addResolver(api, {
+  const appsyncFunction = new AppsyncResolver(stack, "Resolver", {
+    api,
     typeName: "Query",
     fieldName: "getPerson",
-  }).templates;
+    resolve: decl as any,
+  });
+  return appsyncFunction.resolvers().templates;
 }
 
 export type DeepPartial<T extends object> = {
@@ -77,16 +79,6 @@ export interface AppSyncVTLRenderContext<
   source?: Source;
 }
 
-/**
- *
- * @param decl
- * @param executeTemplates an array of templates to execute using the {@link AmplifyAppSyncSimulator}
- *                         `context` can be used to pass inputs
- *                         a snapshot will be taken of the results
- *                         to test specific contents like CDK Tokens (arns, attr, etc) use
- *                         `expected.match` with a partial output.
- *                         To assert that the template returns, pass `expected.returned: true`.
- */
 export function appsyncTestCase<
   Arguments extends ResolverArguments,
   Result,

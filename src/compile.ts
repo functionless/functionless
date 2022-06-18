@@ -220,14 +220,45 @@ export function compile(
       }
 
       function visitAppsyncResolver(call: ts.NewExpression): ts.Node {
-        if (call.arguments?.length === 1) {
-          const impl = call.arguments[0];
-          if (ts.isFunctionExpression(impl) || ts.isArrowFunction(impl)) {
+        if (call.arguments?.length === 3) {
+          const [scope, id, props] = call.arguments;
+          if (ts.isObjectLiteralExpression(props)) {
             return ts.factory.updateNewExpression(
               call,
               call.expression,
               call.typeArguments,
-              [errorBoundary(() => toFunction("FunctionDecl", impl, 1))]
+              [
+                scope,
+                id,
+                ts.factory.updateObjectLiteralExpression(
+                  props,
+                  props.properties.map((prop) => {
+                    if (ts.isPropertyAssignment(prop)) {
+                      if (
+                        (ts.isIdentifier(prop.name) &&
+                          prop.name.text === "resolve") ||
+                        (ts.isStringLiteral(prop.name) &&
+                          prop.name.text === "resolve")
+                      ) {
+                        const impl = prop.initializer;
+                        if (
+                          ts.isFunctionExpression(impl) ||
+                          ts.isArrowFunction(impl)
+                        ) {
+                          return ts.factory.updatePropertyAssignment(
+                            prop,
+                            prop.name,
+                            errorBoundary(() =>
+                              toFunction("FunctionDecl", impl, 1)
+                            )
+                          );
+                        }
+                      }
+                    }
+                    return prop;
+                  })
+                ),
+              ]
             );
           }
         }

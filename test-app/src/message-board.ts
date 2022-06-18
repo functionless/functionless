@@ -59,95 +59,100 @@ const api = new appsync.GraphqlApi(stack, "Api", {
   },
 });
 
-const getPostResolver = new AppsyncResolver<
-  { postId: string },
-  Post | undefined
->(($context) => {
-  return database.getItem({
-    key: {
-      pk: {
-        S: `Post|${$context.arguments.postId}`,
-      },
-      sk: {
-        S: "Post",
-      },
+const getPost = new AppsyncResolver<{ postId: string }, Post | undefined>(
+  stack,
+  "getPost",
+  {
+    api,
+    typeName: "Query",
+    fieldName: "getPost",
+    resolve: ($context) => {
+      return database.getItem({
+        key: {
+          pk: {
+            S: `Post|${$context.arguments.postId}`,
+          },
+          sk: {
+            S: "Post",
+          },
+        },
+      });
     },
-  });
-});
+  }
+);
 
-export const getPost = getPostResolver.addResolver(api, {
-  typeName: "Query",
-  fieldName: "getPost",
-});
-
-const commentResolver = new AppsyncResolver<
+const comments = new AppsyncResolver<
   { nextToken?: string; limit?: number },
   CommentPage,
   Omit<Post, "comments">
->(($context) => {
-  const response = database.query({
-    query: {
-      expression: `pk = :pk and begins_with(#sk,:sk)`,
-      expressionValues: {
-        ":pk": {
-          S: $context.source.pk,
-        },
-        ":sk": {
-          S: "Comment|",
-        },
-      },
-      expressionNames: {
-        "#sk": "sk",
-      },
-    },
-    nextToken: $context.arguments.nextToken,
-    limit: $context.arguments.limit,
-  });
-
-  if (response.items !== undefined) {
-    return {
-      comments: response.items as Comment[],
-      nextToken: response.nextToken,
-    };
-  }
-  return {
-    comments: [],
-  };
-});
-
-export const comments = commentResolver.addResolver(api, {
+>(stack, "comments", {
+  api,
   typeName: "Post",
   fieldName: "comments",
+  resolve: ($context) => {
+    const response = database.query({
+      query: {
+        expression: `pk = :pk and begins_with(#sk,:sk)`,
+        expressionValues: {
+          ":pk": {
+            S: $context.source.pk,
+          },
+          ":sk": {
+            S: "Comment|",
+          },
+        },
+        expressionNames: {
+          "#sk": "sk",
+        },
+      },
+      nextToken: $context.arguments.nextToken,
+      limit: $context.arguments.limit,
+    });
+
+    if (response.items !== undefined) {
+      return {
+        comments: response.items as Comment[],
+        nextToken: response.nextToken,
+      };
+    }
+    return {
+      comments: [],
+    };
+  },
 });
 
 export const createPost = new AppsyncResolver<{ title: string }, Post>(
-  ($context) => {
-    const postId = $util.autoUlid();
-    const post = database.putItem({
-      key: {
-        pk: {
-          S: `Post|${postId}`,
+  stack,
+  "createPost",
+  {
+    api,
+    typeName: "Mutation",
+    fieldName: "createPost",
+    resolve: ($context) => {
+      const postId = $util.autoUlid();
+      const post = database.putItem({
+        key: {
+          pk: {
+            S: `Post|${postId}`,
+          },
+          sk: {
+            S: "Post",
+          },
         },
-        sk: {
-          S: "Post",
+        attributeValues: {
+          postId: {
+            S: postId,
+          },
+          title: {
+            S: $context.arguments.title,
+          },
         },
-      },
-      attributeValues: {
-        postId: {
-          S: postId,
-        },
-        title: {
-          S: $context.arguments.title,
-        },
-      },
-    });
+      });
 
-    return post;
+      return post;
+    },
   }
-).addResolver(api, {
-  typeName: "Mutation",
-  fieldName: "createPost",
-});
+);
 
 export const validateComment = new Function<
   { commentText: string },
@@ -179,40 +184,42 @@ export const commentValidationWorkflow = new StepFunction<
 export const addComment = new AppsyncResolver<
   { postId: string; commentText: string },
   Comment
->(($context) => {
-  const commentId = $util.autoUlid();
-  const comment = database.putItem({
-    key: {
-      pk: {
-        S: `Post|${$context.arguments.postId}`,
-      },
-      sk: {
-        S: `Comment|${commentId}`,
-      },
-    },
-    attributeValues: {
-      postId: {
-        S: $context.arguments.postId,
-      },
-      commentId: {
-        S: commentId,
-      },
-      commentText: {
-        S: $context.arguments.commentText,
-      },
-      createdTime: {
-        S: $util.time.nowISO8601(),
-      },
-    },
-  });
-
-  // kick off a workflow to validate the comment
-  commentValidationWorkflow({ input: comment });
-
-  return comment;
-}).addResolver(api, {
+>(stack, "addComment", {
+  api,
   typeName: "Mutation",
   fieldName: "addComment",
+  resolve: ($context) => {
+    const commentId = $util.autoUlid();
+    const comment = database.putItem({
+      key: {
+        pk: {
+          S: `Post|${$context.arguments.postId}`,
+        },
+        sk: {
+          S: `Comment|${commentId}`,
+        },
+      },
+      attributeValues: {
+        postId: {
+          S: $context.arguments.postId,
+        },
+        commentId: {
+          S: commentId,
+        },
+        commentText: {
+          S: $context.arguments.commentText,
+        },
+        createdTime: {
+          S: $util.time.nowISO8601(),
+        },
+      },
+    });
+
+    // kick off a workflow to validate the comment
+    commentValidationWorkflow({ input: comment });
+
+    return comment;
+  },
 });
 
 interface MessageDeletedEvent
@@ -300,40 +307,44 @@ const deleteWorkflow = new StepFunction<{ postId: string }, void>(
 export const deletePost = new AppsyncResolver<
   { postId: string },
   AWS.StepFunctions.StartExecutionOutput | undefined
->(($context) => {
-  const item = database.getItem({
-    key: {
-      pk: {
-        S: `Post|${$context.arguments.postId}`,
-      },
-      sk: {
-        S: "Post",
-      },
-    },
-  });
-
-  if (item === undefined) {
-    return undefined;
-  }
-
-  return deleteWorkflow({ input: { postId: $context.arguments.postId } });
-}).addResolver(api, {
+>(stack, "deletePost", {
+  api,
   typeName: "Mutation",
   fieldName: "deletePost",
+  resolve: ($context) => {
+    const item = database.getItem({
+      key: {
+        pk: {
+          S: `Post|${$context.arguments.postId}`,
+        },
+        sk: {
+          S: "Post",
+        },
+      },
+    });
+
+    if (item === undefined) {
+      return undefined;
+    }
+
+    return deleteWorkflow({ input: { postId: $context.arguments.postId } });
+  },
 });
 
 export const getDeletionStatus = new AppsyncResolver<
   { executionArn: string },
   string | undefined
->(($context) => {
-  const executionStatus = deleteWorkflow.describeExecution(
-    $context.arguments.executionArn
-  );
-
-  return executionStatus.status;
-}).addResolver(api, {
+>(stack, "getDeletionStatus", {
+  api,
   typeName: "Query",
   fieldName: "getDeletionStatus",
+  resolve: ($context) => {
+    const executionStatus = deleteWorkflow.describeExecution(
+      $context.arguments.executionArn
+    );
+
+    return executionStatus.status;
+  },
 });
 
 export interface CommentPage {
@@ -555,7 +566,7 @@ const commentPage = api2.addType(
 
 post.addField({
   fieldName: "comments",
-  field: commentResolver.getField(api2, commentPage.attribute(), {
+  field: comments.getField(api2, commentPage.attribute(), {
     args: {
       nextToken: appsync.GraphqlType.string(),
       limit: appsync.GraphqlType.int(),
@@ -565,7 +576,7 @@ post.addField({
 
 api2.addQuery(
   "getPost",
-  getPostResolver.getField(api2, post.attribute(), {
+  getPost.getField(api2, post.attribute(), {
     args: {
       postId: appsync.GraphqlType.string({ isRequired: true }),
     },

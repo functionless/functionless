@@ -1,4 +1,5 @@
 import * as appsync from "@aws-cdk/aws-appsync-alpha";
+import { aws_appsync, Lazy } from "aws-cdk-lib";
 import type { AppSyncResolverEvent } from "aws-lambda";
 import { Construct } from "constructs";
 import {
@@ -32,7 +33,12 @@ import {
 import { findDeepIntegration, IntegrationImpl } from "./integration";
 import { Literal } from "./literal";
 import { FunctionlessNode } from "./node";
-import { AnyFunction, isInTopLevelScope, singletonConstruct } from "./util";
+import {
+  AnyFunction,
+  isInTopLevelScope,
+  memoize,
+  singletonConstruct,
+} from "./util";
 import { visitEachChild } from "./visit";
 import { VTL } from "./vtl";
 
@@ -131,6 +137,18 @@ export class AppsyncVTL extends VTL {
   }
 }
 
+export interface AppsyncResolverProps<
+  Arguments extends ResolverArguments,
+  Result,
+  Source = undefined
+> extends Pick<
+    appsync.BaseResolverProps,
+    "typeName" | "fieldName" | "cachingConfig"
+  > {
+  readonly api: appsync.GraphqlApi;
+  readonly resolve: ResolverFunction<Arguments, Result, Source>;
+}
+
 /**
  * An AWS AppSync Resolver Function derived from TypeScript syntax.
  *
@@ -170,7 +188,7 @@ export class AppsyncResolver<
   Arguments extends ResolverArguments,
   Result,
   Source = undefined
-> {
+> extends Construct {
   /**
    * This static property identifies this class as an AppsyncResolver to the TypeScript plugin.
    */
@@ -180,62 +198,36 @@ export class AppsyncResolver<
     ResolverFunction<Arguments, Result, Source>
   >;
 
-  constructor(fn: ResolverFunction<Arguments, Result, Source>) {
-    this.decl = validateFunctionDecl(fn, "AppsyncResolver");
-  }
+  public readonly resource;
+  public readonly resolvers;
 
-  /**
-   * Generate and add an AWS Appsync Resolver to an AWS Appsync GraphQL API.
-   *
-   * ```ts
-   * import * as appsync from "@aws-cdk/aws-appsync-alpha";
-   *
-   * const api = new appsync.GraphQLApi(..);
-   *
-   * ```ts
-   * const getPerson = new AppsyncResolver<{id: string}, Person | undefined>(
-   *   ($context, id) => {
-   *     const person = table.get({
-   *       key: {
-   *         id: $util.toDynamoDB(id)
-   *       }
-   *     });
-   *     return person;
-   *   });
-   * ```
-   *
-   * getPerson.createResolver(api, {
-   *   typeName: "Query",
-   *   fieldName: "getPerson"
-   * });
-   * ```
-   *
-   * @param api the AWS Appsync API to add this Resolver to
-   * @param options typeName, fieldName and cachingConfig for this Resolver.
-   * @returns a reference to the generated {@link appsync.Resolver}.
-   */
-  public addResolver(
-    api: appsync.GraphqlApi,
-    options: Pick<
-      appsync.BaseResolverProps,
-      "typeName" | "fieldName" | "cachingConfig"
-    >
-  ): SynthesizedAppsyncResolver {
-    const fields = this.getResolvableFields(api);
+  constructor(
+    scope: Construct,
+    id: string,
+    props: AppsyncResolverProps<Arguments, Result, Source>
+  ) {
+    super(scope, id);
+    this.decl = validateFunctionDecl(props.resolve, "AppsyncResolver");
 
-    return new SynthesizedAppsyncResolver(
-      api,
-      `${options.typeName}${options.fieldName}Resolver`,
-      {
-        ...options,
-        api,
-        templates: fields.templates,
-        dataSource: fields.dataSource,
-        requestMappingTemplate: fields.requestMappingTemplate,
-        responseMappingTemplate: fields.responseMappingTemplate,
-        pipelineConfig: fields.pipelineConfig,
-      }
-    );
+    this.resolvers = memoize(() => this.synthResolvers(props.api));
+
+    this.resource = new aws_appsync.CfnResolver(this, "Resource", {
+      apiId: props.api.apiId,
+      typeName: props.typeName,
+      fieldName: props.fieldName,
+      requestMappingTemplate: Lazy.string({
+        produce: () => this.resolvers().requestMappingTemplate.renderTemplate(),
+      }),
+      pipelineConfig: {
+        functions: Lazy.list({
+          produce: () => this.resolvers().templates,
+        }),
+      },
+      responseMappingTemplate: Lazy.string({
+        produce: () =>
+          this.resolvers().responseMappingTemplate.renderTemplate(),
+      }),
+    });
   }
 
   /**
@@ -279,11 +271,11 @@ export class AppsyncResolver<
       appsync.ResolvableFieldOptions,
       | "returnType"
       | keyof ReturnType<
-          AppsyncResolver<Arguments, Result, Source>["getResolvableFields"]
+          AppsyncResolver<Arguments, Result, Source>["synthResolvers"]
         >
     >
   ): appsync.ResolvableField {
-    const fields = this.getResolvableFields(api);
+    const fields = this.synthResolvers(api);
 
     return new appsync.ResolvableField({
       ...options,
@@ -295,7 +287,7 @@ export class AppsyncResolver<
     });
   }
 
-  private getResolvableFields(api: appsync.GraphqlApi) {
+  private synthResolvers(api: appsync.GraphqlApi) {
     const resolverCount = countResolvers(this.decl);
 
     const [pipelineConfig, responseMappingTemplate, innerTemplates] =

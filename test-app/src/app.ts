@@ -28,32 +28,8 @@ const api = new appsync.GraphqlApi(stack, "Api", {
 });
 
 // @ts-ignore
-const peopleDb = new PeopleDatabase(stack, "PeopleDB");
-
-peopleDb.getPerson.addResolver(api, {
-  typeName: "Query",
-  fieldName: "getPerson",
-});
-
-peopleDb.addPerson.addResolver(api, {
-  typeName: "Mutation",
-  fieldName: "addPerson",
-});
-
-// add a duplicate addPerson API to test duplicates
-peopleDb.addPerson.addResolver(api, {
-  typeName: "Mutation",
-  fieldName: "addPerson2",
-});
-
-peopleDb.updateName.addResolver(api, {
-  typeName: "Mutation",
-  fieldName: "updateName",
-});
-
-peopleDb.deletePerson.addResolver(api, {
-  typeName: "Mutation",
-  fieldName: "deletePerson",
+const peopleDb = new PeopleDatabase(stack, "PeopleDB", {
+  api,
 });
 
 interface MyEventDetails {
