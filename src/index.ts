@@ -8,6 +8,7 @@ export * from "./error-code";
 export * from "./event-bridge";
 export * from "./expression";
 export * from "./function";
+export * from "./guards";
 export { Integration } from "./integration";
 export * from "./reflect";
 export * from "./statement";

@@ -1,31 +1,33 @@
 import {
-  BinaryOp,
-  isBinaryExpr,
-  isCallExpr,
-  isElementAccessExpr,
-  isNullLiteralExpr,
-  isPropAccessExpr,
-  isUnaryExpr,
-} from "../..";
-import {
   assertDefined,
   assertNever,
   assertNumber,
   assertPrimitive,
   assertString,
 } from "../../assert";
-import { FunctionDecl, isFunctionDecl } from "../../declaration";
-import { Err, isErr } from "../../error";
+import { FunctionDecl } from "../../declaration";
+import { Err } from "../../error";
 import {
+  BinaryOp,
   BinaryExpr,
   CallExpr,
   ElementAccessExpr,
   Expr,
-  isBooleanLiteralExpr,
-  isUndefinedLiteralExpr,
   PropAccessExpr,
   UnaryExpr,
 } from "../../expression";
+import {
+  isBinaryExpr,
+  isBooleanLiteralExpr,
+  isCallExpr,
+  isElementAccessExpr,
+  isErr,
+  isFunctionDecl,
+  isNullLiteralExpr,
+  isPropAccessExpr,
+  isUnaryExpr,
+  isUndefinedLiteralExpr,
+} from "../../guards";
 import { evalToConstant } from "../../util";
 import * as functionless_event_bridge from "../types";
 import {

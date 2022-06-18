@@ -4,6 +4,15 @@ import { ASL, State } from "./asl";
 import { EventBus, EventBusTargetIntegration } from "./event-bridge";
 import { CallExpr } from "./expression";
 import { Function, NativeIntegration } from "./function";
+import {
+  isCallExpr,
+  isExprStmt,
+  isIdentifier,
+  isPropAccessExpr,
+  isReferenceExpr,
+  isReturnStmt,
+  isVariableStmt,
+} from "./guards";
 import { FunctionlessNode } from "./node";
 import { AnyFunction } from "./util";
 import { VTL } from "./vtl";
@@ -246,11 +255,11 @@ export function findIntegration(call: CallExpr): IntegrationImpl | undefined {
   return integration ? new IntegrationImpl(integration) : undefined;
 
   function find(expr: FunctionlessNode): any {
-    if (expr.kind === "PropAccessExpr") {
+    if (isPropAccessExpr(expr)) {
       return find(expr.expr)?.[expr.name];
-    } else if (expr.kind === "Identifier") {
+    } else if (isIdentifier(expr)) {
       return undefined;
-    } else if (expr.kind === "ReferenceExpr") {
+    } else if (isReferenceExpr(expr)) {
       return expr.ref();
     } else {
       return undefined;
@@ -266,15 +275,15 @@ export type CallContext = ASL | VTL | Function<any, any> | EventBus<any>;
 export function findDeepIntegration(
   expr: FunctionlessNode
 ): IntegrationImpl | undefined {
-  if (expr.kind === "PropAccessExpr") {
+  if (isPropAccessExpr(expr)) {
     return findDeepIntegration(expr.expr);
-  } else if (expr.kind === "CallExpr") {
+  } else if (isCallExpr(expr)) {
     return findIntegration(expr);
-  } else if (expr.kind === "VariableStmt" && expr.expr) {
+  } else if (isVariableStmt(expr) && expr.expr) {
     return findDeepIntegration(expr.expr);
-  } else if (expr.kind === "ReturnStmt" && expr.expr) {
+  } else if (isReturnStmt(expr) && expr.expr) {
     return findDeepIntegration(expr.expr);
-  } else if (expr.kind === "ExprStmt") {
+  } else if (isExprStmt(expr)) {
     return findDeepIntegration(expr.expr);
   }
   return undefined;

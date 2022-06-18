@@ -4,9 +4,8 @@ import { validateFunctionDecl } from "..";
 import { assertConstantValue, assertString } from "../assert";
 import { FunctionDecl } from "../declaration";
 import { Err } from "../error";
+import { ArrayLiteralExpr, Expr, ObjectLiteralExpr } from "../expression";
 import {
-  ArrayLiteralExpr,
-  Expr,
   isArrayLiteralExpr,
   isBinaryExpr,
   isElementAccessExpr,
@@ -15,8 +14,7 @@ import {
   isPropAccessExpr,
   isPropAssignExpr,
   isTemplateExpr,
-  ObjectLiteralExpr,
-} from "../expression";
+} from "../guards";
 import { evalToConstant } from "../util";
 import {
   assertValidEventReference,
