@@ -1,6 +1,6 @@
 # Function
 
-The `Function` Construct creates a new AWS Lambda Function.
+`Function` is the cloud's swiss army knife - an AWS Lambda Function. Functionless serializes in-line Function closures, automatically configures IAM Policies, Environment Variables, and initializes SDK clients (such as the AWS SDK) at runtime.
 
 ## Declare a Function
 

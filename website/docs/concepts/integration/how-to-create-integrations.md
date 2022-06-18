@@ -2,62 +2,64 @@
 sidebar_position: 0
 ---
 
-# Integration - Advanced
+# How to create Integrations
 
-This section goes into detail on how [Integrations](../concepts/integration/) work. If you are just looking to use Functionless without extending it, this section can be skipped. If you have not read [Integrations](../concepts/integration/), do that first.
+This section goes into detail on how [Integrations](./concepts/integration/) work. If you are just looking to use Functionless without extending it, this section can be skipped. If you have not read [Integrations](./concepts/integration/), do that first.
 
-## Terms
+## Integration Interface
 
-### **Resource**
-
-Infrastructure and Business Logic which use an integration, generally modelled as some infrastructure like a [`Function`](../concepts/function/) or [`EventBus`](../concepts/event-bridge/).
-
-### **[Integration](../concepts/integration/)**
-
-An object (may be a Resource) or function which can be used within a Resource.
-
-### **[Integration Type](./integration-types.md)**
-
-A pattern that an integration implements to be used within one or more Resources.
-
-```mermaid
-graph LR;
-  IntegrationType(Integration Type)
-  Resource--uses-->Integration;
-  Resource--supports-->IntegrationType;
-  Integration--implements-->IntegrationType;
-```
-
-How Integrations and Resources appear as a consumer of Functionless:
+An Integration has the following interface. It is simplified for brevity.
 
 ```ts
-// event bus is a Resource
-const bus = new EventBus<Event<{ name: string }>>(this, "bus");
-
-// StepFunction is a Resource
-const sfn = new StepFunction(this, sfn, (payload: { name: string }) => {
-  // bus.putEvents is an Integration that supports the StepFunction ASL Integration Type
-  bus.putEvents({
-    source: "specialSource",
-    "detail-type": "UserNameEvent",
-    detail: payload,
-  });
-});
-```
-
-The `EventBus` and `putEvents` source which supports the StepFunction Integration Type:
-
-```ts
-class EventBus {
-  constructor(...) {
-    this.putEvents = makeIntegration<"EventBus.putEvents", IEventBus<E>["putEvents"]>({
-      asl: (call: CallExpr, context: ASL) => {
-        ...
-      }
-    })
-  }
+export interface Integration<
+  K extends string = string,
+  F extends AnyFunction = AnyFunction
+> {
+  readonly __functionBrand: F;
+  readonly kind: K;
+  readonly appSyncVtl: AppSyncVtlIntegration;
+  readonly apiGWVtl: ApiGatewayVtlIntegration;
+  readonly asl: (call: CallExpr, context: ASL) => Omit<State, "Next">;
+  readonly eventBus: EventBusInteg;
+  readonly native: NativeIntegration<F>;
 }
 ```
+
+Let's walk through this one by one.
+
+### \_\_functionBrand
+
+The `__functionBrand` property is a type-only property, meaning that it is not designed to be accessed at runtime. Its only purpose it to define the function signature of the integration (the way in which the integration can be called).
+
+### kind
+
+The `kind` property is a string literal that uniquely identifies the Integration kind. Think of it like the class name. It doesn't matter what it is, only that it is unique.
+
+### appSyncVtl
+
+As the name suggests, `appSyncVtl` implements the logic for connecting a Resource to an AWS Appsync Resolver Pipeline. It generates a Data Source and Velocity Templates (VTL) to satisfy the Integration requirements.
+
+See the [Appsync Integration](./concepts/appsync/index.md) for more information on how Appsync works.
+
+### apiGWVtl
+
+:::Warning: API GW is not mature or stable:::
+
+### asl
+
+The `asl` property defines how to generate Amazon States Language (ASL) for integrating a service into an AWS Step Function.
+
+See the [Step Function](./concepts/step-function/index.md) for more information on Step Functions.
+
+### eventBus
+
+AWS Event Bridge is a serverless service that inbound routes events to downstream services, via Integrations. THe `eventBus` property defines the Integration logic for [Event Bus Targets](./concepts/event-bridge/integrations.md).
+
+### native
+
+Finally, the `native` Integration is for an AWS Lambda Function. It is called `native` because it means it is running from "native" (aka. imperative) code. Its responsibility is to configure least-privilege IAM Policies, set Environment Variables with any identifiers (ARNs) it needs and then to initiate an SDK client when the Function is first invoked. By centralizing this logic within the Integration, consumers are freed from the boilerplate of manually configuring these details.
+
+## makeIntegration
 
 The `makeIntegration` method helps generate the right object and type for all integrations as well as making the property callable
 
