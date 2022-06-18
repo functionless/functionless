@@ -33,7 +33,7 @@ export function isStmt(a: any): a is Stmt {
       isForInStmt(a) ||
       isForOfStmt(a) ||
       isIfStmt(a) ||
-      isReturn(a) ||
+      isReturnStmt(a) ||
       isThrowStmt(a) ||
       isTryStmt(a) ||
       isVariableStmt(a))
@@ -149,7 +149,7 @@ export class BlockStmt extends BaseStmt<"BlockStmt", BlockStmtParent> {
   }
 }
 
-export const isReturn = typeGuard("ReturnStmt");
+export const isReturnStmt = typeGuard("ReturnStmt");
 
 export class ReturnStmt extends BaseStmt<"ReturnStmt"> {
   constructor(readonly expr: Expr) {

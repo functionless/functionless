@@ -1,8 +1,3 @@
----
-title: Function
-sidebar_position: 1
----
-
 # Function
 
 The `Function` Construct creates a new AWS Lambda Function.
@@ -154,7 +149,7 @@ These two functions are equivalent and result in the same JSON response:
 Most of Functionless's [integrations](../integration) can be called from within a Lambda Function. Functionless will automatically infer the required IAM Policies, set any environment variables it needs (such as the ARN of a dependency) and instantiate any SDK clients when the Function is first invoked.
 
 ```ts
-const Table = new Table(scope, "Table");
+const Table = Table.fromTable(scope, "Table");
 
 new Function(scope, "foo", async (id: string) => {
   return $AWS.DynamoDB.GetItem({
@@ -196,6 +191,27 @@ This Function infers the following configuration and runtime code boilerplate fr
 new AWS.DynamoDB();
 ```
 
+:::warn
+[Cannot use Infrastructure resource in `Function` closure (107)](../../error-codes.md#cannot-use-infrastructure-resource-in-function-closure).
+
+`.resource` (`Function`, `StepFunction`, `Table`, `EventBus`) may not be used within a `Function`.
+
+```ts
+const table = new Table(this, 'table', { ... });
+new Function(this, 'func', async () => {
+   // valid use of a Table
+   const $AWS.DynamoDB.GetItem({
+       TableName: table,
+       ...
+   })
+   // invalid - .resource is not available
+   const index = table.resource.tableStreamArn;
+});
+```
+
+See [error](../../error-codes.md#cannot-use-infrastructure-resource-in-function-closure) for details and workarounds.
+:::
+
 ## Call from an Integration
 
 Lambda Functions can be called directly from any of Functionless's primitives, for example AppsyncResolvers, Step Functions and Lambda Functions.
@@ -222,6 +238,29 @@ Output from the Lambda Function is the raw JSON value returned by the Lambda Fun
 For a list of all `Function` integrations and more integration options, see [Integrations](./integrations.md).
 :::
 
+## Call and receive the entire API Response Envelope
+
+To get the entire AWS SDK response, use `$AWS.Lambda.Invoke`:
+
+```ts
+const response = $AWS.Lambda.Invoke({
+  FunctionName: myFunc,
+  Payload: {
+    name,
+  },
+});
+```
+
+## Forward Events from an EventBus to a Lambda Function
+
+Finally, you can route Events from an [Event Bus](../event-bridge/event-bus.md) to a Lambda Function, provided the Function's signature is compatible.
+
+```ts
+bus
+  .when(..)
+  .pipe(myFunc)
+```
+
 ## Closure Serialization
 
 Functionless leverages [Pulumi's closure serializer](https://www.pulumi.com/docs/intro/concepts/function-serialization/) to serialize your function into a bundle that can be ran within the AWS Lambda Function.
@@ -242,7 +281,7 @@ new Function(scope, "foo", () => {
 2. calls to Constructs such as other Functions or a DynamoDB Table are re-written as client API calls
 
 ```ts
-const table = new Table(..)
+const table = Table.fromTable(..)
 
 new Function(scope, "foo", (key: string) => {
   // re-written as a call to an AWS.DynamoDB.GetItem API call
@@ -288,6 +327,79 @@ new Function(scope, "foo", async () => {
 **Warning**: By moving the value outside of the closure, the `allowList` value will be serialized as JSON into the bundle. This can also affect your performance by bloating the size of the bundle.
 
 **Warning**: The `allow-list.json` file will not be automatically included in your bundle. See [#135](https://github.com/functionless/functionless/issues/135)
+
+## Async Invocation
+
+Lambda [Async Invocation](https://docs.aws.amazon.com/lambda/latest/dg/invocation-async.html) allows a `Function` to be invoked from services that cannot handle the `Function`'s response. For example, a `Function` invoked by an [EventBus](../event-bridge) or by a SNS topic.
+
+```ts
+const bus = new EventBus<Event<string>>(stack, "bus");
+const func = new Function<Event<string>, string>(stack, "asyncFunc", () => {
+  return "hi";
+});
+// all events on the bus are piped to the function asynchronously.
+bus.all().pipe(func);
+```
+
+A common need to is to handle success or failure events from async invocations. Lambda supports sending `onSuccess` and `onFailure` events to [Destinations](https://docs.aws.amazon.com/lambda/latest/dg/invocation-async.html#invocation-async-destinations) (Event Bridge, SNS, Lambda, SQS). Functionless makes this easier by allowing `EventBus`es or `Functions` to be provided directly as `Destinations`.
+
+```ts
+const failureBus = new EventBus<AsyncResponseFailureEvent<void>>(
+  stack,
+  "failureBus"
+);
+const successFunction = new Function<AsyncResponseSuccess<void, string>>(
+  stack,
+  "successFunction",
+  async () => {
+    console.log("yay");
+  }
+);
+const func = new Function<void, string>(
+  stack,
+  "asyncFunc",
+  {
+    // success function will be invoked on each success
+    onSuccess: successFunction,
+    // failure bus will get an event for each failure on the bus
+    onFailure: failureBus,
+  },
+  async () => {
+    return "hi";
+  }
+);
+```
+
+When working with `EventBus` destinations, Functionless provides [Event Sources](./event-sources) to easily consume and filter events generated by the `Function`.
+
+```ts
+const failureBus = new EventBus<AsyncResponseFailureEvent<void>>(
+  stack,
+  "failureBus"
+);
+const func = new Function<void, string>(
+  stack,
+  "asyncFunc",
+  {
+    // failure bus will get an event for each failure on the bus
+    onFailure: failureBus,
+  },
+  async () => {
+    return "hi";
+  }
+);
+func
+  // for all failure events
+  .onFailure(failureBus, "failures")
+  // refine to just failure events caused by RetriesExhausted
+  .when((event) => event.detail.requestContext.condition === "RetriesExhausted")
+  // send to another function (or any EventBus integration)
+  .pipe(
+    new Function(stack, "retryOnlyFunction", async () =>
+      console.log("not enough retries!")
+    )
+  );
+```
 
 ## Limitations
 

@@ -93,11 +93,20 @@ export function validateFunctionDecl(
   a: any,
   functionLocation: string
 ): FunctionDecl {
-  if (isFunctionDecl(a)) {
+  return validateFunctionlessNode(a, functionLocation, isFunctionDecl);
+}
+
+export function validateFunctionlessNode<E extends FunctionlessNode>(
+  a: any,
+  functionLocation: string,
+  validate: (e: FunctionlessNode) => e is E
+): E {
+  if (validate(a)) {
     return a;
   } else if (isErr(a)) {
     throw a.error;
   } else {
+    debugger;
     throw new SynthError(
       ErrorCodes.FunctionDecl_not_compiled_by_Functionless,
       `Expected input function to ${functionLocation} to be compiled by Functionless. Make sure you have the Functionless compiler plugin configured correctly.`

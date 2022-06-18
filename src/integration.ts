@@ -1,3 +1,4 @@
+import { ApiGatewayVtlIntegration } from "./api";
 import { AppSyncVtlIntegration } from "./appsync";
 import { ASL, State } from "./asl";
 import { EventBus, EventBusTargetIntegration } from "./event-bridge";
@@ -18,6 +19,7 @@ export const isIntegration = <I extends IntegrationInput<string, AnyFunction>>(
  */
 const INTEGRATION_TYPES: { [P in keyof IntegrationMethods<any>]: P } = {
   appSyncVtl: "appSyncVtl",
+  apiGWVtl: "apiGWVtl",
   asl: "asl",
   native: "native",
   eventBus: "eventBus",
@@ -40,6 +42,11 @@ export interface IntegrationMethods<
    * @private
    */
   appSyncVtl: AppSyncVtlIntegration;
+  /**
+   * Integrate with API Gateway VTL applications.
+   * @private
+   */
+  apiGWVtl: ApiGatewayVtlIntegration;
   /**
    * Integrate with ASL applications like StepFunctions.
    *
@@ -174,6 +181,14 @@ export class IntegrationImpl<F extends AnyFunction = AnyFunction>
     );
   }
 
+  public get apiGWVtl(): ApiGatewayVtlIntegration {
+    return this.assertIntegrationDefined(
+      // TODO: differentiate Velocity Template?
+      "Velocity Template",
+      this.integration.apiGWVtl
+    );
+  }
+
   // TODO: Update to use an interface https://github.com/functionless/functionless/issues/197
   public asl(call: CallExpr, context: ASL): Omit<State, "Next"> {
     return this.assertIntegrationDefined(
@@ -192,6 +207,7 @@ export class IntegrationImpl<F extends AnyFunction = AnyFunction>
 }
 
 export type IntegrationCall<K extends string, F extends AnyFunction> = {
+  FunctionlessType: K;
   kind: K;
   __functionBrand: F;
 } & F;

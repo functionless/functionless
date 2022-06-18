@@ -1,10 +1,14 @@
-import React from "react";
+/* eslint-disable import/no-unresolved */
+import Mountain from "@site/static/img/undraw_docusaurus_mountain.svg";
+import Undraw from "@site/static/img/undraw_docusaurus_react.svg";
+import Tree from "@site/static/img/undraw_docusaurus_tree.svg";
 import clsx from "clsx";
-import styles from "./styles.module.css";
+import React from "react";
 
 // see: https://www.npmjs.com/package/react-syntax-highlighter
 import SyntaxHighlighter from "react-syntax-highlighter";
 import { a11yDark } from "react-syntax-highlighter/dist/esm/styles/hljs";
+import styles from "./styles.module.css";
 
 export default function HomepageFeatures(): JSX.Element {
   return (
@@ -17,8 +21,8 @@ export default function HomepageFeatures(): JSX.Element {
         </div>
         <div className="row">
           <div className="col col--6 col--offset-3">
-            {CodeSnippets.map(({ title, code }) => (
-              <CodePreview title={title} code={code} />
+            {CodeSnippets.map(({ title, code }, i) => (
+              <CodePreview key={i} title={title} code={code} />
             ))}
           </div>
         </div>
@@ -50,7 +54,7 @@ type FeatureItem = {
 const FeatureList: FeatureItem[] = [
   {
     title: "Familiar and friendly TypeScript syntax",
-    Svg: require("@site/static/img/undraw_docusaurus_mountain.svg").default,
+    Svg: Mountain,
     description: (
       <>
         Adopt powerful cloud-native services without boilerplate configurations
@@ -60,7 +64,7 @@ const FeatureList: FeatureItem[] = [
   },
   {
     title: "Secure by default",
-    Svg: require("@site/static/img/undraw_docusaurus_tree.svg").default,
+    Svg: Tree,
     description: (
       <>
         Minimally permissive IAM Policies are inferred from your business logic,
@@ -71,7 +75,7 @@ const FeatureList: FeatureItem[] = [
   },
   {
     title: "Typesafe cloud resources",
-    Svg: require("@site/static/img/undraw_docusaurus_react.svg").default,
+    Svg: Undraw,
     description: (
       <>
         Use types to describe the interfaces of your cloud functions and the
@@ -135,7 +139,7 @@ const CodeSnippets: CodeSnippet[] = [
   description: string;
 }
 
-const tasks = new Table<Task, "taskId">(this, "Tasks", {
+const tasks = Table.fromTable<Task, "taskId">(this, "Tasks", {
   billingMode: BillingMode.PAY_PER_REQUEST
 });`,
   },

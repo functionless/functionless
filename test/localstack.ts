@@ -6,6 +6,7 @@ import { CloudFormationDeployments } from "aws-cdk/lib/api/cloudformation-deploy
 import { CloudFormation } from "aws-sdk";
 import { Construct } from "constructs";
 import { asyncSynth } from "../src/async-synth";
+import { Function } from "../src/function";
 
 export const clientConfig = {
   endpoint: "http://localhost:4566",
@@ -44,10 +45,11 @@ export const deployStack = async (app: App, stack: Stack) => {
     sdkProvider,
   });
 
+  const stackArtifact = cloudAssembly.getStackArtifact(
+    stack.artifactId
+  ) as unknown as cxapi.CloudFormationStackArtifact;
   await cfn.deployStack({
-    stack: cloudAssembly.getStackArtifact(
-      stack.artifactId
-    ) as unknown as cxapi.CloudFormationStackArtifact,
+    stack: stackArtifact,
     force: true,
   });
 };
@@ -66,6 +68,7 @@ interface ResourceTest<
   resources: (parent: Construct) => ResourceReference<Outputs> | void;
   test: (context: Outputs) => Promise<void>;
   skip: boolean;
+  only: boolean;
 }
 
 interface TestResource {
@@ -76,6 +79,12 @@ interface TestResource {
   ): void;
 
   skip: <Outputs extends Record<string, string> = Record<string, string>>(
+    name: string,
+    resources: ResourceTest<Outputs>["resources"],
+    test: ResourceTest<Outputs>["test"]
+  ) => void;
+
+  only: <Outputs extends Record<string, string> = Record<string, string>>(
     name: string,
     resources: ResourceTest<Outputs>["resources"],
     test: ResourceTest<Outputs>["test"]
@@ -103,10 +112,11 @@ export const localstackTestSuite = (
   let stackOutputs: CloudFormation.Outputs | undefined;
 
   beforeAll(async () => {
-    testContexts = tests.map(({ resources, skip }, i) => {
+    const anyOnly = tests.some((t) => t.only);
+    testContexts = tests.map(({ resources, skip, only }, i) => {
       // create the construct on skip to reduce output changes when moving between skip and not skip
       const construct = new Construct(stack, `parent${i}`);
-      if (!skip) {
+      if (!skip && (!anyOnly || only)) {
         const output = resources(construct);
         // Place each output in a cfn output, encoded with the unique address of the construct
         if (output) {
@@ -125,6 +135,8 @@ export const localstackTestSuite = (
       return {};
     });
 
+    await Promise.all(Function.promises);
+
     await deployStack(app, stack);
 
     stackOutputs = (
@@ -134,18 +146,28 @@ export const localstackTestSuite = (
 
   // @ts-ignore
   const testResource: TestResource = (name, resources, test) => {
-    tests.push({ name, resources, test: test as any, skip: false });
+    tests.push({
+      name,
+      resources,
+      test: test as any,
+      skip: false,
+      only: false,
+    });
   };
   testResource.skip = (name, resources, test) => {
-    tests.push({ name, resources, test: test as any, skip: true });
+    tests.push({ name, resources, test: test as any, skip: true, only: false });
+  };
+  testResource.only = (name, resources, test) => {
+    tests.push({ name, resources, test: test as any, skip: false, only: true });
   };
 
   // register tests
   fn(testResource, stack, app);
 
-  tests.forEach(({ name, test: testFunc, skip }, i) => {
+  tests.forEach(({ name, test: testFunc, skip, only }, i) => {
     if (!skip) {
-      test(name, () => {
+      const t = only ? test.only : test;
+      t(name, () => {
         const context = testContexts[i];
         const resolvedContext = Object.fromEntries(
           Object.entries(context).map(([key, value]) => {

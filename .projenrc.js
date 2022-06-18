@@ -1,7 +1,7 @@
 const { readFileSync, writeFileSync, chmodSync } = require("fs");
 const { join } = require("path");
 const { typescript, TextFile } = require("projen");
-const { TypeScriptProject } = require("projen/lib/typescript");
+const { GithubCredentials } = require("projen/lib/github");
 
 /**
  * Adds githooks into the .git/hooks folder during projen synth.
@@ -20,7 +20,7 @@ class GitHooksPreCommitComponent extends TextFile {
   }
 }
 
-const MIN_CDK_VERSION = "2.20.0";
+const MIN_CDK_VERSION = "2.28.0";
 
 /**
  * Projen does not currently support a way to set `*` for deerDependency versions.
@@ -37,6 +37,9 @@ const MIN_CDK_VERSION = "2.20.0";
  * TODO: Remove this hack once https://github.com/projen/projen/issues/1802 is resolved.
  */
 class CustomTypescriptProject extends typescript.TypeScriptProject {
+  /**
+   * @param {typescript.TypeScriptProjectOptions} opts
+   */
   constructor(opts) {
     super(opts);
 
@@ -72,20 +75,28 @@ class CustomTypescriptProject extends typescript.TypeScriptProject {
 const project = new CustomTypescriptProject({
   defaultReleaseBranch: "main",
   name: "functionless",
+  description:
+    "Functionless, a TypeScript plugin and Construct library for the AWS CDK",
   bin: {
     functionless: "./bin/functionless.js",
   },
-  deps: ["fs-extra", "minimatch", "@functionless/nodejs-closure-serializer"],
+  deps: [
+    "@types/aws-lambda",
+    "fs-extra",
+    "minimatch",
+    "@functionless/nodejs-closure-serializer",
+  ],
   devDeps: [
     `@aws-cdk/aws-appsync-alpha@${MIN_CDK_VERSION}-alpha.0`,
     "@types/fs-extra",
     "@types/minimatch",
     "@types/uuid",
     "amplify-appsync-simulator",
+    "axios",
     "graphql-request",
-    "prettier",
     "ts-node",
     "ts-patch",
+
     /**
      * For CDK Local Stack tests
      */
@@ -101,6 +112,7 @@ const project = new CustomTypescriptProject({
      */
   ],
   scripts: {
+    prepare: "ts-patch install -s",
     localstack: "./scripts/localstack",
     "build:website": "npx tsc && cd ./website && yarn && yarn build",
   },
@@ -109,7 +121,7 @@ const project = new CustomTypescriptProject({
     "constructs@^10.0.0",
     "esbuild",
     "typesafe-dynamodb@^0.1.5",
-    "typescript@^4.6.2",
+    "typescript@^4.7.2",
   ],
   eslintOptions: {
     lintProjenRc: true,
@@ -138,12 +150,18 @@ const project = new CustomTypescriptProject({
       coveragePathIgnorePatterns: ["/test/", "/node_modules/"],
     },
   },
+  depsUpgradeOptions: {
+    workflowOptions: {
+      projenCredentials: GithubCredentials.fromApp(),
+    },
+  },
+  prettier: {},
 });
 
 const packageJson = project.tryFindObjectFile("package.json");
 
 packageJson.addOverride("lint-staged", {
-  "*.{tsx,jsx,ts,js,json,md,css}": ["eslint --fix", "prettier --write"],
+  "*.{tsx,jsx,ts,js,json,md,css}": ["eslint --fix"],
 });
 
 project.compileTask.prependExec(
@@ -153,7 +171,6 @@ project.compileTask.prependExec(
 project.testTask.prependExec(
   "cd ./test-app && yarn && yarn build && yarn synth"
 );
-project.testTask.prependExec("ts-patch install -s");
 project.testTask.prependExec("./scripts/localstack");
 project.testTask.exec("localstack stop");
 
@@ -161,6 +178,10 @@ project.testTask.env("DEFAULT_REGION", "ap-northeast-1");
 project.testTask.env("AWS_ACCOUNT_ID", "000000000000");
 project.testTask.env("AWS_ACCESS_KEY_ID", "test");
 project.testTask.env("AWS_SECRET_ACCESS_KEY", "test");
+
+const testFast = project.addTask("test:fast");
+testFast.exec("ts-patch install -s");
+testFast.exec(`jest --testPathIgnorePatterns localstack --coverage false`);
 
 project.addPackageIgnore("/test-app");
 
@@ -172,13 +193,11 @@ project.eslint.addRules({
   "@typescript-eslint/no-shadow": "off",
   "@typescript-eslint/member-ordering": "off",
   "brace-style": "off",
+  "@typescript-eslint/explicit-member-accessibility": "off",
 });
 
-/**
- * ES Lint parser needs to know about all of the tsconfig files to use.
- */
 project.eslint.addOverride({
-  files: ["*.ts", "*.tsx"],
+  files: ["*.ts", "*.mts", "*.cts", "*.tsx"],
   parserOptions: {
     project: [
       "./tsconfig.dev.json",
@@ -186,6 +205,24 @@ project.eslint.addOverride({
       "./website/tsconfig.json",
     ],
   },
+  rules: {
+    "@typescript-eslint/explicit-member-accessibility": [
+      "error",
+      {
+        accessibility: "explicit",
+        overrides: {
+          accessors: "explicit",
+          constructors: "no-public",
+          methods: "explicit",
+          properties: "off",
+          parameterProperties: "off",
+        },
+      },
+    ],
+  },
 });
+
+project.prettier.addIgnorePattern("coverage");
+project.prettier.addIgnorePattern("lib");
 
 project.synth();

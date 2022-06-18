@@ -5,15 +5,22 @@ const lightCodeTheme = require("prism-react-renderer/themes/github");
 const darkCodeTheme = require("prism-react-renderer/themes/dracula");
 const path = require("path");
 
+const url =
+  process.env.CONTEXT === "deploy-preview" && process.env.DEPLOY_PRIME_URL
+    ? process.env.DEPLOY_PRIME_URL
+    : "https://functionless.org";
+
 /** @type {import('@docusaurus/types').Config} */
 const config = {
   title: "Functionless",
   tagline: "Unified Infrastructure and Application Code",
-  url: "https://functionless.org",
+  // use the deploy url when building for preview
+  // https://docs.netlify.com/configure-builds/environment-variables/#read-only-variables
+  url,
   baseUrl: "/",
   onBrokenLinks: "throw",
   onBrokenMarkdownLinks: "warn",
-  favicon: "img/favicon.ico",
+  favicon: "img/Logo-fav.svg",
   organizationName: "functionless",
   projectName: "functionless",
 
@@ -55,13 +62,13 @@ const config = {
         docs: {
           sidebarPath: require.resolve("./sidebars.js"),
           editUrl:
-            "https://github.com/functionless/functionless/edit/master/website/",
+            "https://github.com/functionless/functionless/edit/main/website/",
           remarkPlugins: [require("mdx-mermaid")],
         },
         blog: {
           showReadingTime: true,
           editUrl:
-            "https://github.com/functionless/functionless/edit/master/website/",
+            "https://github.com/functionless/functionless/edit/main/website/",
         },
         theme: {
           customCss: require.resolve("./src/css/custom.css"),
@@ -69,12 +76,26 @@ const config = {
       }),
     ],
   ],
-
+  // https://buttons.github.io/
+  scripts: [
+    { src: "https://buttons.github.io/buttons.js", async: true, defer: true },
+  ],
   themeConfig:
     /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
     ({
+      // default page image, override using frontMatter `image`
+      // https://docusaurus.io/docs/api/plugins/@docusaurus/plugin-content-docs#markdown-front-matter
+      image: "img/logo.png",
+      metadata: [
+        { property: "og:type", content: "article" },
+        { property: "og:image:width", content: "233" },
+        { property: "og:image:height", content: "200" },
+        { property: "og:image:secure_url", content: `${url}/img/logo.png` },
+      ],
+      // light color mode disabled for now
       colorMode: {
         defaultMode: "dark",
+        disableSwitch: true,
       },
       prism: {
         additionalLanguages: ["graphql"],
@@ -85,7 +106,8 @@ const config = {
         title: "Functionless",
         logo: {
           alt: "λ<",
-          src: "img/logo.png",
+          src: "img/Logo.svg",
+          srcDark: "img/Logo-dark.svg",
         },
         items: [
           {
@@ -97,8 +119,15 @@ const config = {
           { to: "/blog", label: "Blog", position: "left" },
           {
             href: "https://github.com/functionless/functionless",
-            label: "GitHub",
             position: "right",
+            className: "header-github-link",
+            "aria-label": "GitHub Repository",
+          },
+          {
+            href: "https://discord.gg/VRqHbjrbfC",
+            position: "right",
+            className: "navbar-community-menu",
+            "aria-label": "Discord Community",
           },
         ],
       },

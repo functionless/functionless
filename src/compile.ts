@@ -12,6 +12,7 @@ import {
   makeFunctionlessChecker,
   TsFunctionParameter,
 } from "./checker";
+import { ErrorCodes, SynthError } from "./error-code";
 import { BinaryOp } from "./expression";
 import { FunctionlessNode } from "./node";
 import { anyOf, hasParent } from "./util";
@@ -98,7 +99,7 @@ export function compile(
         const visit = () => {
           if (checker.isAppsyncResolver(node)) {
             return visitAppsyncResolver(node as ts.NewExpression);
-          } else if (checker.isStepFunction(node)) {
+          } else if (checker.isNewStepFunction(node)) {
             return visitStepFunction(node as ts.NewExpression);
           } else if (checker.isReflectFunction(node)) {
             return errorBoundary(() =>
@@ -114,6 +115,8 @@ export function compile(
             return visitEventTransform(node);
           } else if (checker.isNewFunctionlessFunction(node)) {
             return visitFunction(node, ctx);
+          } else if (checker.isApiIntegration(node)) {
+            return visitApiIntegration(node);
           }
           return node;
         };
@@ -472,11 +475,13 @@ export function compile(
           // cannot create new resources in native runtime code.
           const functionlessKind = checker.getFunctionlessTypeKind(newType);
           if (checker.getFunctionlessTypeKind(newType)) {
-            throw Error(
+            throw new SynthError(
+              ErrorCodes.Unsupported_initialization_of_resources_in_function,
               `Cannot initialize new resources in a native function, found ${functionlessKind}.`
             );
           } else if (checker.isCDKConstruct(newType)) {
-            throw Error(
+            throw new SynthError(
+              ErrorCodes.Unsupported_initialization_of_resources_in_function,
               `Cannot initialize new CDK resources in a native function, found ${
                 newType.getSymbol()?.name
               }.`
@@ -494,7 +499,7 @@ export function compile(
 
       function toFunction(
         type: "FunctionDecl" | "FunctionExpr",
-        impl: TsFunctionParameter,
+        impl: ts.Expression,
         dropArgs?: number
       ): ts.Expression {
         if (
@@ -535,6 +540,45 @@ export function compile(
           ),
           body,
         ]);
+      }
+
+      function visitApiIntegration(node: ts.NewExpression): ts.Node {
+        const [props, request, response, errors] = node.arguments ?? [];
+
+        return errorBoundary(() =>
+          ts.factory.updateNewExpression(
+            node,
+            node.expression,
+            node.typeArguments,
+            [
+              props,
+              toFunction("FunctionDecl", request),
+              ts.isObjectLiteralExpression(response)
+                ? visitApiErrors(response)
+                : toFunction("FunctionDecl", response),
+              ...(errors && ts.isObjectLiteralExpression(errors)
+                ? [visitApiErrors(errors)]
+                : []),
+            ]
+          )
+        );
+      }
+
+      function visitApiErrors(errors: ts.ObjectLiteralExpression) {
+        return errorBoundary(() =>
+          ts.factory.updateObjectLiteralExpression(
+            errors,
+            errors.properties.map((prop) =>
+              ts.isPropertyAssignment(prop)
+                ? ts.factory.updatePropertyAssignment(
+                    prop,
+                    prop.name,
+                    toFunction("FunctionDecl", prop.initializer)
+                  )
+                : prop
+            )
+          )
+        );
       }
 
       function toExpr(
@@ -1303,6 +1347,8 @@ const OperatorMappings: Record<number, BinaryOp> = {
   [ts.SyntaxKind.EqualsToken]: "=",
   [ts.SyntaxKind.PlusToken]: "+",
   [ts.SyntaxKind.MinusToken]: "-",
+  [ts.SyntaxKind.AsteriskToken]: "*",
+  [ts.SyntaxKind.SlashToken]: "/",
   [ts.SyntaxKind.AmpersandAmpersandToken]: "&&",
   [ts.SyntaxKind.BarBarToken]: "||",
   [ts.SyntaxKind.ExclamationEqualsToken]: "!=",

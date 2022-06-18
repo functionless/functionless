@@ -1,5 +1,6 @@
 ---
 sidebar_position: 0
+description: Functionless is a TypeScript compiler plugin and Construct library that enhances your cloud programming experience with the AWS Cloud Development Kit (CDK).
 ---
 
 # What is Functionless?

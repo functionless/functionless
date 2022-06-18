@@ -19,7 +19,7 @@
       "request": "launch",
       "runtimeExecutable": "node",
       "runtimeArgs": ["--nolazy"],
-      "args": ["./lib/app.js"],
+      "args": ["./lib/api-test.js"],
       "outFiles": [
         "${workspaceRoot}/lib/**/*.js",
         "${workspaceRoot}/test-app/lib/**/*.js",
@@ -69,6 +69,25 @@
       "env": {
         "TS_NODE_PROJECT": "${workspaceRoot}/test-app/tsconfig.json"
       }
+    },
+    {
+      "type": "node",
+      "name": "vscode-jest-tests.v2",
+      "request": "launch",
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "disableOptimisticBPs": true,
+      "program": "${workspaceFolder}/node_modules/.bin/jest",
+      "cwd": "${workspaceFolder}",
+      "args": [
+        "--runInBand",
+        "--watchAll=false",
+        "--testNamePattern",
+        "${jest.testNamePattern}",
+        "--runTestsByPath",
+        "${jest.testFile}",
+        "--coverage=false"
+      ]
     }
   ]
 }

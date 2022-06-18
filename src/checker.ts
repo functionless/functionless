@@ -1,10 +1,12 @@
 import * as ts from "typescript";
 import * as tsserver from "typescript/lib/tsserverlibrary";
+import { ApiMethod, ApiMethodKind, isApiMethodKind } from "./api";
 import { AppsyncResolver } from "./appsync";
 import { EventBus, Rule } from "./event-bridge";
 import { EventTransform } from "./event-bridge/transform";
 import { Function } from "./function";
 import { ExpressStepFunction, StepFunction } from "./step-function";
+import { Table } from "./table";
 
 /**
  * Various types that could be in a call argument position of a function parameter.
@@ -55,6 +57,16 @@ export type FunctionInterface = ts.NewExpression & {
       ];
 };
 
+export type ApiIntegrationsStaticMethodInterface = ts.CallExpression & {
+  arguments: [ts.ObjectLiteralExpression];
+};
+
+export type NewStepFunctionInterface = ts.NewExpression & {
+  arguments:
+    | [ts.Expression, ts.Expression, TsFunctionParameter]
+    | [ts.Expression, ts.Expression, ts.Expression, TsFunctionParameter];
+};
+
 export type FunctionlessChecker = ReturnType<typeof makeFunctionlessChecker>;
 
 export function makeFunctionlessChecker(
@@ -62,18 +74,25 @@ export function makeFunctionlessChecker(
 ) {
   return {
     ...checker,
-    isConstant,
-    isAppsyncResolver,
-    isRuleMapFunction,
-    isEventBusWhenFunction,
-    isFunctionlessType,
-    isNewRule,
-    isNewEventTransform,
-    isReflectFunction,
-    isStepFunction,
-    isNewFunctionlessFunction,
-    isCDKConstruct,
+    getApiMethodKind,
     getFunctionlessTypeKind,
+    isApiIntegration,
+    isAppsyncResolver,
+    isCDKConstruct,
+    isConstant,
+    isEventBus,
+    isEventBusWhenFunction,
+    isFunctionlessFunction,
+    isFunctionlessType,
+    isIntegrationNode,
+    isNewEventTransform,
+    isNewFunctionlessFunction,
+    isNewRule,
+    isNewStepFunction,
+    isReflectFunction,
+    isRuleMapFunction,
+    isStepFunction,
+    isTable,
   };
 
   /**
@@ -182,22 +201,32 @@ export function makeFunctionlessChecker(
     return false;
   }
 
-  function isStepFunction(node: ts.Node): node is ts.NewExpression & {
-    arguments: [TsFunctionParameter, ...ts.Expression[]];
-  } {
+  function isTable(node: ts.Node) {
+    return isFunctionlessClassOfKind(node, Table.FunctionlessType);
+  }
+
+  function isStepFunction(node: ts.Node) {
+    return (
+      isFunctionlessClassOfKind(node, StepFunction.FunctionlessType) ||
+      isFunctionlessClassOfKind(node, ExpressStepFunction.FunctionlessType)
+    );
+  }
+
+  function isNewStepFunction(node: ts.Node): node is NewStepFunctionInterface {
     if (ts.isNewExpression(node)) {
-      return (
-        isFunctionlessClassOfKind(node, StepFunction.FunctionlessType) ||
-        isFunctionlessClassOfKind(node, ExpressStepFunction.FunctionlessType)
-      );
+      return isStepFunction(node.expression);
     }
     return false;
+  }
+
+  function isFunctionlessFunction(node: ts.Node) {
+    return isFunctionlessClassOfKind(node, Function.FunctionlessType);
   }
 
   function isNewFunctionlessFunction(node: ts.Node): node is FunctionInterface {
     return (
       ts.isNewExpression(node) &&
-      isFunctionlessClassOfKind(node.expression, Function.FunctionlessType) &&
+      isFunctionlessFunction(node.expression) &&
       // only take the form with the arrow function at the end.
       (node.arguments?.length === 3
         ? ts.isArrowFunction(node.arguments[2])
@@ -205,6 +234,29 @@ export function makeFunctionlessChecker(
         ? ts.isArrowFunction(node.arguments[3])
         : false)
     );
+  }
+
+  function isApiIntegration(node: ts.Node): node is ts.NewExpression {
+    return (
+      ts.isNewExpression(node) &&
+      isFunctionlessClassOfKind(node.expression, ApiMethod.FunctionlessType)
+    );
+  }
+
+  function getApiMethodKind(node: ts.NewExpression): ApiMethodKind | undefined {
+    if (isApiIntegration(node)) {
+      const type = checker.getTypeAtLocation(node);
+      const kind = type.getProperty("kind");
+      if (kind) {
+        const kindType = checker.getTypeOfSymbolAtLocation(kind, node);
+        if (kindType.isStringLiteral()) {
+          if (isApiMethodKind(kindType.value)) {
+            return kindType.value;
+          }
+        }
+      }
+    }
+    return undefined;
   }
 
   /**
@@ -253,7 +305,9 @@ export function makeFunctionlessChecker(
     return isFunctionlessType(type, kind);
   }
 
-  function getFunctionlessTypeKind(type: ts.Type): string | undefined {
+  function getFunctionlessTypeKind(
+    type: ts.Type
+  ): ts.Type | string | undefined {
     const functionlessType = type.getProperty("FunctionlessType");
     const functionlessKind = type.getProperty("functionlessKind");
     const prop = functionlessType ?? functionlessKind;
@@ -269,6 +323,8 @@ export function makeFunctionlessChecker(
         const type = checker.getTypeAtLocation(prop.valueDeclaration);
         if (type.isStringLiteral()) {
           return type.value;
+        } else {
+          return type;
         }
       }
     }
@@ -332,6 +388,16 @@ export function makeFunctionlessChecker(
       node.operator === ts.SyntaxKind.MinusToken
     ) {
       return isConstant(node.operand);
+    }
+    return false;
+  }
+
+  function isIntegrationNode(node: ts.Node): boolean {
+    const exprType = checker.getTypeAtLocation(node);
+    const exprKind = exprType.getProperty("kind");
+    if (exprKind) {
+      const exprKindType = checker.getTypeOfSymbolAtLocation(exprKind, node);
+      return exprKindType.isStringLiteral();
     }
     return false;
   }
