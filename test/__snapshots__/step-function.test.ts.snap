@@ -1347,9 +1347,9 @@ Object {
 
 exports[`import from express state machine into machine 1`] = `
 Object {
-  "StartAt": "machine({input: {id: \\"hi\\"}})",
+  "StartAt": "await machine({input: {id: \\"hi\\"}})",
   "States": Object {
-    "machine({input: {id: \\"hi\\"}})": Object {
+    "await machine({input: {id: \\"hi\\"}})": Object {
       "Next": "return null",
       "Parameters": Object {
         "Input": Object {
@@ -1375,9 +1375,9 @@ Object {
 
 exports[`import from state machine into state machine 1`] = `
 Object {
-  "StartAt": "machine({input: {id: \\"hi\\"}})",
+  "StartAt": "await machine({input: {id: \\"hi\\"}})",
   "States": Object {
-    "machine({input: {id: \\"hi\\"}})": Object {
+    "await machine({input: {id: \\"hi\\"}})": Object {
       "Next": "return null",
       "Parameters": Object {
         "Input": Object {

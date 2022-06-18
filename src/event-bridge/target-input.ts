@@ -1,20 +1,25 @@
 import { aws_events } from "aws-cdk-lib";
 import { RuleTargetInput } from "aws-cdk-lib/aws-events";
-import { validateFunctionDecl } from "..";
 import { assertConstantValue, assertString } from "../assert";
-import { FunctionDecl } from "../declaration";
+import { FunctionDecl, validateFunctionDecl } from "../declaration";
 import { Err } from "../error";
+import { ErrorCodes, SynthError } from "../error-code";
 import { ArrayLiteralExpr, Expr, ObjectLiteralExpr } from "../expression";
 import {
   isArrayLiteralExpr,
+  isAwaitExpr,
   isBinaryExpr,
+  isCallExpr,
   isElementAccessExpr,
   isIdentifier,
   isObjectLiteralExpr,
   isPropAccessExpr,
   isPropAssignExpr,
+  isReferenceExpr,
+  isPromiseExpr,
   isTemplateExpr,
 } from "../guards";
+import { isIntegration } from "../integration";
 import { evalToConstant } from "../util";
 import {
   assertValidEventReference,
@@ -189,6 +194,18 @@ export const synthesizeEventBridgeTargets = (
       return exprToObject(expr);
     } else if (isIdentifier(expr)) {
       throw Error("Unsupported direct use of the event parameter.");
+    } else if (isPromiseExpr(expr) || isAwaitExpr(expr)) {
+      // pass
+      return exprToLiteral(expr.expr);
+    } else if (isCallExpr(expr)) {
+      if (isReferenceExpr(expr.expr)) {
+        const ref = expr.expr.ref();
+        if (isIntegration(ref)) {
+          throw new SynthError(
+            ErrorCodes.EventBus_Input_Transformers_do_not_support_Integrations
+          );
+        }
+      }
     }
 
     throw Error(`Unsupported template expression of kind: ${expr.kind}`);

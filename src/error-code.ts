@@ -452,4 +452,36 @@ export namespace ErrorCodes {
       type: ErrorType.ERROR,
       title: "API gateway response mapping template cannot call integration",
     };
+
+  /**
+   * {@link EventBus} Input Transformers do not support Integrations.
+   *
+   * ```ts
+   * const func = new Function<string, string>(stack, 'func', async (input) => {
+   *    return axios.get(input);
+   * })
+   *
+   * // invalid
+   * new EventBus(stack, 'bus').all().map(async event => { html: await func(event.detail.url) });
+   * ```
+   *
+   * ### Workaround - Send the event to a function.
+   *
+   * ```ts
+   * const func = new Function<string, string>(stack, 'func', async (input) => {
+   *    return `transform${input}`;
+   * })
+   *
+   * // valid
+   * new EventBus(stack, 'bus').all().pipe(new Function(stack, 'webpuller', async (event) => ({
+   *    html: await func(event.detail.url)
+   * })));
+   * ```
+   */
+  export const EventBus_Input_Transformers_do_not_support_Integrations: ErrorCode =
+    {
+      code: 10014,
+      type: ErrorType.ERROR,
+      title: "EventBus Input Transformers do not support integrations",
+    };
 }
