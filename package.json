@@ -81,7 +81,7 @@
   },
   "dependencies": {
     "@functionless/nodejs-closure-serializer": "^0.0.2",
-    "@types/aws-lambda": "^8.10.98",
+    "@types/aws-lambda": "^8.10.100",
     "fs-extra": "^10.1.0",
     "minimatch": "^5.1.0"
   },
