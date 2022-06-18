@@ -10,7 +10,7 @@ function __f0() {
     with({ axios_1: __axios_1 }) {
 
 return async () => {
-            return await axios_1.default.get(\\"https://functionless.org\\");
+            return axios_1.default.get(\\"https://functionless.org\\");
         };
 
     }
@@ -12360,7 +12360,7 @@ function __f0() {
   return function() {
     with ({ axios_1: __axios_1 }) {
       return async () => {
-        return await axios_1.default.get(\\"https://functionless.org\\");
+        return axios_1.default.get(\\"https://functionless.org\\");
       };
     }
   }.apply(void 0, void 0).apply(this, arguments);
