@@ -245,7 +245,7 @@ export class MockMethod<
     request: (
       $input: ApiGatewayInput<Request>,
       $context: ApiGatewayContext
-    ) => { statusCode: StatusCode },
+    ) => Promise<{ statusCode: StatusCode }> | { statusCode: StatusCode },
     /**
      * Map of status codes to response to return.
      *
@@ -255,7 +255,7 @@ export class MockMethod<
       [C: number]: (
         $input: ApiGatewayInput<Request>,
         $context: ApiGatewayContext
-      ) => any;
+      ) => Promise<any> | any;
     }
   ) {
     const requestDecl = validateFunctionDecl(request, "MockMethod Request");
@@ -450,7 +450,7 @@ export class AwsMethod<
     request: (
       $input: ApiGatewayInput<Request>,
       $context: ApiGatewayContext
-    ) => IntegrationResponse,
+    ) => Promise<IntegrationResponse> | IntegrationResponse,
     /**
      * Function that maps an integration response to a 200 method response.
      *
@@ -488,7 +488,7 @@ export class AwsMethod<
         { body: IntegrationResponse } & Omit<Request, "body">
       >,
       $context: ApiGatewayContext
-    ) => MethodResponse,
+    ) => Promise<MethodResponse> | MethodResponse,
     /**
      * Map of status codes to a function defining the  response to return. This is used
      * to configure the failure path method responses, for e.g. when an integration fails.
