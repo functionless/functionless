@@ -1,8 +1,16 @@
+import { ApiGatewayVtlIntegration } from "./api";
 import { AppSyncVtlIntegration } from "./appsync";
 import { ASL, State } from "./asl";
 import { EventBus, EventBusTargetIntegration } from "./event-bridge";
-import { CallExpr, isReferenceExpr } from "./expression";
+import { CallExpr } from "./expression";
 import { Function, NativeIntegration } from "./function";
+import {
+  isCallExpr,
+  isExprStmt,
+  isPropAccessExpr,
+  isReferenceExpr,
+  isReturnStmt,
+} from "./guards";
 import { FunctionlessNode } from "./node";
 import { AnyFunction } from "./util";
 import { VTL } from "./vtl";
@@ -18,6 +26,7 @@ export const isIntegration = <I extends IntegrationInput<string, AnyFunction>>(
  */
 const INTEGRATION_TYPES: { [P in keyof IntegrationMethods<any>]: P } = {
   appSyncVtl: "appSyncVtl",
+  apiGWVtl: "apiGWVtl",
   asl: "asl",
   native: "native",
   eventBus: "eventBus",
@@ -40,6 +49,11 @@ export interface IntegrationMethods<
    * @private
    */
   appSyncVtl: AppSyncVtlIntegration;
+  /**
+   * Integrate with API Gateway VTL applications.
+   * @private
+   */
+  apiGWVtl: ApiGatewayVtlIntegration;
   /**
    * Integrate with ASL applications like StepFunctions.
    *
@@ -174,6 +188,14 @@ export class IntegrationImpl<F extends AnyFunction = AnyFunction>
     );
   }
 
+  public get apiGWVtl(): ApiGatewayVtlIntegration {
+    return this.assertIntegrationDefined(
+      // TODO: differentiate Velocity Template?
+      "Velocity Template",
+      this.integration.apiGWVtl
+    );
+  }
+
   // TODO: Update to use an interface https://github.com/functionless/functionless/issues/197
   public asl(call: CallExpr, context: ASL): Omit<State, "Next"> {
     return this.assertIntegrationDefined(
@@ -192,6 +214,7 @@ export class IntegrationImpl<F extends AnyFunction = AnyFunction>
 }
 
 export type IntegrationCall<K extends string, F extends AnyFunction> = {
+  FunctionlessType: K;
   kind: K;
   __functionBrand: F;
 } & F;
@@ -229,9 +252,9 @@ export type CallContext = ASL | VTL | Function<any, any> | EventBus<any>;
 export function findDeepIntegration(
   expr: FunctionlessNode
 ): IntegrationImpl | undefined {
-  if (expr.kind === "PropAccessExpr") {
+  if (isPropAccessExpr(expr)) {
     return findDeepIntegration(expr.expr);
-  } else if (expr.kind === "CallExpr") {
+  } else if (isCallExpr(expr)) {
     if (isReferenceExpr(expr.expr)) {
       const ref = expr.expr.ref();
       if (isIntegration<Integration>(ref)) {
@@ -241,9 +264,9 @@ export function findDeepIntegration(
     return undefined;
   } else if (expr.kind === "VariableStmt" && expr.expr) {
     return findDeepIntegration(expr.expr);
-  } else if (expr.kind === "ReturnStmt" && expr.expr) {
+  } else if (isReturnStmt(expr) && expr.expr) {
     return findDeepIntegration(expr.expr);
-  } else if (expr.kind === "ExprStmt") {
+  } else if (isExprStmt(expr)) {
     return findDeepIntegration(expr.expr);
   }
   return undefined;

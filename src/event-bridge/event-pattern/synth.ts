@@ -1,31 +1,33 @@
 import {
-  BinaryOp,
-  isBinaryExpr,
-  isCallExpr,
-  isElementAccessExpr,
-  isNullLiteralExpr,
-  isPropAccessExpr,
-  isUnaryExpr,
-} from "../..";
-import {
   assertDefined,
   assertNever,
   assertNumber,
   assertPrimitive,
   assertString,
 } from "../../assert";
-import { FunctionDecl, isFunctionDecl } from "../../declaration";
-import { Err, isErr } from "../../error";
+import { FunctionDecl } from "../../declaration";
+import { Err } from "../../error";
 import {
+  BinaryOp,
   BinaryExpr,
   CallExpr,
   ElementAccessExpr,
   Expr,
-  isBooleanLiteral,
-  isUndefinedLiteralExpr,
   PropAccessExpr,
   UnaryExpr,
 } from "../../expression";
+import {
+  isBinaryExpr,
+  isBooleanLiteralExpr,
+  isCallExpr,
+  isElementAccessExpr,
+  isErr,
+  isFunctionDecl,
+  isNullLiteralExpr,
+  isPropAccessExpr,
+  isUnaryExpr,
+  isUndefinedLiteralExpr,
+} from "../../guards";
 import { evalToConstant } from "../../util";
 import * as functionless_event_bridge from "../types";
 import {
@@ -37,31 +39,31 @@ import {
   ReferencePath,
 } from "../utils";
 import {
-  intersectNumericRange,
-  reduceNumericAggregate,
-  unionNumericRange,
-  negateNumericRange,
+  createSingleNumericRange,
   intersectNumericAggregation,
   intersectNumericAggregationWithRange,
-  createSingleNumericRange,
+  intersectNumericRange,
+  negateNumericRange,
+  reduceNumericAggregate,
+  unionNumericRange,
 } from "./numeric";
 import {
-  PatternDocument,
-  Pattern,
-  isPatternDocument,
-  isNumericAggregationPattern,
-  isNumericRangePattern,
-  isPresentPattern,
   isAggregatePattern,
   isAnythingButPattern,
-  isExactMatchPattern,
-  isPrefixMatchPattern,
-  isEmptyPattern,
-  patternDocumentToEventPattern,
   isAnythingButPrefixPattern,
+  isEmptyPattern,
+  isExactMatchPattern,
   isNeverPattern,
-  NumericRangePattern,
+  isNumericAggregationPattern,
+  isNumericRangePattern,
+  isPatternDocument,
+  isPrefixMatchPattern,
+  isPresentPattern,
   NeverPattern,
+  NumericRangePattern,
+  Pattern,
+  PatternDocument,
+  patternDocumentToEventPattern,
 } from "./pattern";
 
 const OPERATIONS = { STARTS_WITH: "startsWith", INCLUDES: "includes" };
@@ -139,7 +141,7 @@ export const synthesizePatternDocument = (
       return evalUnaryExpression(expr);
     } else if (isCallExpr(expr)) {
       return evalCall(expr);
-    } else if (isBooleanLiteral(expr)) {
+    } else if (isBooleanLiteralExpr(expr)) {
       return { doc: {} };
     } else {
       throw new Error(`${expr.kind} is unsupported`);

@@ -1,9 +1,14 @@
 {
   "extends": "../tsconfig.json",
-  "include": ["./**/*.ts", "../test-app/src/people-db.ts"],
+  "include": ["./**/*.ts"],
   "compilerOptions": {
     "rootDir": "..",
-    "noEmit": true
+    "noEmit": true,
+    "plugins": [
+      {
+        "name": "@functionless/language-service"
+      }
+    ]
   },
   "exclude": ["node_modules"]
 }

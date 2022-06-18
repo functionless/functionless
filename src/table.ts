@@ -12,7 +12,8 @@ import {
 } from "typesafe-dynamodb/lib/expression-attributes";
 import { TableKey } from "typesafe-dynamodb/lib/key";
 import { Narrow } from "typesafe-dynamodb/lib/narrow";
-import type { AppSyncVtlIntegration } from "./appsync";
+// @ts-expect-error - AppsyncResolver is imported for tsdoc
+import { AppsyncResolver, AppSyncVtlIntegration } from "./appsync";
 import { assertNodeKind } from "./assert";
 import { ObjectLiteralExpr } from "./expression";
 import {
@@ -55,8 +56,8 @@ export interface TableProps<
    * @default no sort key
    */
   readonly sortKey?: RangeKey extends undefined
-    ? { name: Exclude<RangeKey, undefined>; type: aws_dynamodb.AttributeType }
-    : undefined;
+    ? undefined
+    : { name: Exclude<RangeKey, undefined>; type: aws_dynamodb.AttributeType };
 }
 
 export type AnyTable = ITable<Record<string, any>, string, string | undefined>;

@@ -1,18 +1,18 @@
 import * as appsync from "@aws-cdk/aws-appsync-alpha";
-import { aws_events_targets, aws_stepfunctions, Stack } from "aws-cdk-lib";
-import { Pass } from "aws-cdk-lib/aws-stepfunctions";
+import {
+  aws_apigateway,
+  aws_events_targets,
+  aws_stepfunctions,
+  Stack,
+} from "aws-cdk-lib";
 // eslint-disable-next-line import/no-extraneous-dependencies
 import { StepFunctions } from "aws-sdk";
 import { Construct } from "constructs";
+import { ApiGatewayVtlIntegration } from "./api";
 import { AppSyncVtlIntegration } from "./appsync";
 import { ASL, MapTask, StateMachine, States, Task } from "./asl";
 import { assertDefined } from "./assert";
-import {
-  validateFunctionDecl,
-  FunctionDecl,
-  isFunctionDecl,
-} from "./declaration";
-import { isErr } from "./error";
+import { validateFunctionDecl, FunctionDecl } from "./declaration";
 import { ErrorCodes, SynthError } from "./error-code";
 import { EventBus, PredicateRuleBase, Rule } from "./event-bridge";
 import {
@@ -20,14 +20,19 @@ import {
   makeEventBusIntegration,
 } from "./event-bridge/event-bus";
 import { Event } from "./event-bridge/types";
-import {
-  CallExpr,
-  isComputedPropertyNameExpr,
-  isFunctionExpr,
-  isObjectLiteralExpr,
-  isSpreadAssignExpr,
-} from "./expression";
+import { CallExpr } from "./expression";
 import { NativeIntegration, PrewarmClients } from "./function";
+import {
+  isComputedPropertyNameExpr,
+  isErr,
+  isFunctionDecl,
+  isFunctionExpr,
+  isNumberLiteralExpr,
+  isObjectLiteralExpr,
+  isPropAssignExpr,
+  isSpreadAssignExpr,
+  isStringLiteralExpr,
+} from "./guards";
 import {
   Integration,
   IntegrationCall,
@@ -67,7 +72,7 @@ export namespace $SFN {
         throw new Error("the 'seconds' argument is required");
       }
 
-      if (seconds.kind === "NumberLiteralExpr") {
+      if (isNumberLiteralExpr(seconds)) {
         return {
           Type: "Wait" as const,
           Seconds: seconds.value,
@@ -100,7 +105,7 @@ export namespace $SFN {
         throw new Error("the 'timestamp' argument is required");
       }
 
-      if (timestamp.kind === "StringLiteralExpr") {
+      if (isStringLiteralExpr(timestamp)) {
         return {
           Type: "Wait",
           Timestamp: timestamp.value,
@@ -223,11 +228,11 @@ export namespace $SFN {
     const props = call.getArgument("props")?.expr;
     let maxConcurrency: number | undefined;
     if (props !== undefined) {
-      if (props.kind === "ObjectLiteralExpr") {
+      if (isObjectLiteralExpr(props)) {
         const maxConcurrencyProp = props.getProperty("maxConcurrency");
         if (
-          maxConcurrencyProp?.kind === "PropAssignExpr" &&
-          maxConcurrencyProp.expr.kind === "NumberLiteralExpr"
+          isPropAssignExpr(maxConcurrencyProp) &&
+          isNumberLiteralExpr(maxConcurrencyProp.expr)
         ) {
           maxConcurrency = maxConcurrencyProp.expr.value;
           if (maxConcurrency <= 0) {
@@ -865,6 +870,49 @@ export class ExpressStepFunction<
 > extends BaseExpressStepFunction<Payload, Out> {
   readonly definition: StateMachine<States>;
 
+  // Integration object for api gateway vtl
+  readonly apiGWVtl: ApiGatewayVtlIntegration = {
+    renderRequest: (call, context) => {
+      const args = retrieveMachineArgs(call);
+
+      return `{\n"stateMachineArn":"${
+        this.resource.stateMachineArn
+      }",\n${Object.entries(args)
+        .filter(
+          (arg): arg is [typeof arg[0], Exclude<typeof arg[1], undefined>] =>
+            arg[1] !== undefined
+        )
+        .map(([argName, argVal]) => {
+          if (argName === "input") {
+            // stringify the JSON input
+            const input = context.exprToJson(argVal).replace(/"/g, '\\"');
+            return `"${argName}":"${input}"`;
+          } else {
+            return `"${argName}":${context.exprToJson(argVal)}`;
+          }
+        })
+        .join(",")}\n}`;
+    },
+
+    createIntegration: (options) => {
+      const credentialsRole = options.credentialsRole;
+
+      this.resource.grantRead(credentialsRole);
+      this.resource.grantStartSyncExecution(credentialsRole);
+
+      return new aws_apigateway.AwsIntegration({
+        service: "states",
+        action: "StartSyncExecution",
+        integrationHttpMethod: "POST",
+        options: {
+          ...options,
+          credentialsRole,
+          passthroughBehavior: aws_apigateway.PassthroughBehavior.NEVER,
+        },
+      });
+    },
+  };
+
   /**
    * Wrap a {@link aws_stepfunctions.StateMachine} with Functionless.
    *
@@ -1292,7 +1340,7 @@ function synthesizeStateMachine(
 ): [StateMachine<States>, aws_stepfunctions.StateMachine] {
   const machine = new aws_stepfunctions.StateMachine(scope, id, {
     ...props,
-    definition: new Pass(scope, "dummy"),
+    definition: new aws_stepfunctions.Pass(scope, "dummy"),
   });
 
   const definition = new ASL(scope, machine.role, decl).definition;

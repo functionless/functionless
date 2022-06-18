@@ -1,13 +1,24 @@
-import type { Decl, ParameterDecl } from "./declaration";
+import { Decl, ParameterDecl } from "./declaration";
 import type { Err } from "./error";
-import type { Expr } from "./expression";
-import type { BlockStmt, CatchClause, Stmt, VariableStmt } from "./statement";
+import { Expr } from "./expression";
+import {
+  isBlockStmt,
+  isTryStmt,
+  isVariableStmt,
+  isDoStmt,
+  isWhileStmt,
+  isFunctionExpr,
+  isFunctionDecl,
+  isForInStmt,
+  isForOfStmt,
+  isReturnStmt,
+  isThrowStmt,
+  isIfStmt,
+  isCatchClause,
+} from "./guards";
+import { BlockStmt, CatchClause, Stmt, VariableStmt } from "./statement";
 
 export type FunctionlessNode = Decl | Expr | Stmt | Err;
-
-export function isNode(a: any): a is FunctionlessNode {
-  return typeof a?.kind === "string";
-}
 
 export interface HasParent<Parent extends FunctionlessNode> {
   get parent(): Parent;
@@ -82,21 +93,18 @@ export abstract class BaseNode<
    * Finds the {@link CatchClause} that this Node should throw to.
    */
   public findCatchClause(): CatchClause | undefined {
-    if (
-      this.kind === "BlockStmt" &&
-      (this as unknown as BlockStmt).isFinallyBlock()
-    ) {
+    if (isBlockStmt(this) && (this as unknown as BlockStmt).isFinallyBlock()) {
       return this.parent!.findCatchClause();
     }
     const scope = this.parent;
     if (scope === undefined) {
       return undefined;
-    } else if (scope.kind === "TryStmt") {
+    } else if (isTryStmt(scope)) {
       return scope.catchClause;
-    } else if (scope.kind === "CatchClause") {
+    } else if (isCatchClause(scope)) {
       // skip the try-block
       return scope.parent.findCatchClause();
-    } else if (scope.kind === "BlockStmt" && scope.isFinallyBlock()) {
+    } else if (isBlockStmt(scope) && scope.isFinallyBlock()) {
       // skip the finally block
       return scope.parent.findCatchClause();
     } else {
@@ -137,27 +145,27 @@ export abstract class BaseNode<
   public step(): Stmt | undefined {
     const self = this as unknown as FunctionlessNode;
 
-    if (self.kind === "TryStmt") {
+    if (isTryStmt(self)) {
       return self.tryBlock.step();
-    } else if (self.kind === "BlockStmt") {
+    } else if (isBlockStmt(self)) {
       if (self.isEmpty()) {
         return self.exit();
       } else {
         return self.firstStmt?.step();
       }
-    } else if (self.kind === "CatchClause") {
+    } else if (isCatchClause(self)) {
       if (self.variableDecl) {
         return self.variableDecl.step();
       } else {
         return self.block.step();
       }
-    } else if (self.kind === "VariableStmt" && self.expr === undefined) {
+    } else if (isVariableStmt(self) && self.expr === undefined) {
       if (self.next) {
         return self.next.step();
       } else {
         return self.exit();
       }
-    } else if (self.kind === "DoStmt") {
+    } else if (isDoStmt(self)) {
       return self.block.step();
     } else if (self.nodeKind === "Stmt") {
       return self;
@@ -178,9 +186,9 @@ export abstract class BaseNode<
     const scope = node.parent;
     if (scope === undefined) {
       return undefined;
-    } else if (scope.kind === "WhileStmt") {
+    } else if (isWhileStmt(scope)) {
       return scope;
-    } else if (scope.kind === "TryStmt") {
+    } else if (isTryStmt(scope)) {
       if (scope.tryBlock === node || scope.catchClause === node) {
         if (scope.finallyBlock) {
           return scope.finallyBlock.step();
@@ -195,7 +203,7 @@ export abstract class BaseNode<
           return scope.exit();
         }
       }
-    } else if (scope.kind === "CatchClause") {
+    } else if (isCatchClause(scope)) {
       if (scope.parent.finallyBlock) {
         return scope.parent.finallyBlock.step();
       } else {
@@ -217,10 +225,7 @@ export abstract class BaseNode<
     const catchClause = this.findCatchClause();
 
     // CatchClause that contains the Node that is raising the error
-    const surroundingCatch = this.findParent(
-      // inside the catchClause
-      (p): p is CatchClause => p.kind === "CatchClause"
-    );
+    const surroundingCatch = this.findParent(isCatchClause);
 
     if (catchClause) {
       if (
@@ -292,16 +297,16 @@ export abstract class BaseNode<
     function getNames(node: FunctionlessNode | undefined): Binding[] {
       if (node === undefined) {
         return [];
-      } else if (node.kind === "VariableStmt") {
+      } else if (isVariableStmt(node)) {
         return [[node.name, node]];
-      } else if (node.kind === "FunctionExpr" || node.kind === "FunctionDecl") {
+      } else if (isFunctionExpr(node) || isFunctionDecl(node)) {
         return node.parameters.reduce(
           (bindings: Binding[], param) => [...bindings, [param.name, param]],
           []
         );
-      } else if (node.kind === "ForInStmt" || node.kind === "ForOfStmt") {
+      } else if (isForInStmt(node) || isForOfStmt(node)) {
         return [[node.variableDecl.name, node.variableDecl]];
-      } else if (node.kind === "CatchClause" && node.variableDecl?.name) {
+      } else if (isCatchClause(node) && node.variableDecl?.name) {
         return [[node.variableDecl.name, node.variableDecl]];
       } else {
         return [];
@@ -314,9 +319,9 @@ export abstract class BaseNode<
    */
   public isTerminal(): boolean {
     const stmt: FunctionlessNode = this as any;
-    if (stmt.kind === "ReturnStmt" || stmt.kind === "ThrowStmt") {
+    if (isReturnStmt(stmt) || isThrowStmt(stmt)) {
       return true;
-    } else if (stmt.kind === "TryStmt") {
+    } else if (isTryStmt(stmt)) {
       if (stmt.finallyBlock) {
         return (
           stmt.finallyBlock.isTerminal() ||
@@ -327,13 +332,13 @@ export abstract class BaseNode<
           stmt.tryBlock.isTerminal() && stmt.catchClause.block.isTerminal()
         );
       }
-    } else if (stmt.kind === "BlockStmt") {
+    } else if (isBlockStmt(stmt)) {
       if (stmt.isEmpty()) {
         return false;
       } else {
         return stmt.lastStmt!.isTerminal();
       }
-    } else if (stmt.kind === "IfStmt") {
+    } else if (isIfStmt(stmt)) {
       return (
         stmt.then.isTerminal() &&
         stmt._else !== undefined &&
@@ -343,12 +348,4 @@ export abstract class BaseNode<
       return false;
     }
   }
-}
-
-// generates type guards
-export function typeGuard<Kind extends FunctionlessNode["kind"]>(
-  ...kinds: Kind[]
-): (a: any) => a is Extract<FunctionlessNode, { kind: Kind }> {
-  return (a: any): a is Extract<FunctionlessNode, { kind: Kind }> =>
-    kinds.find((kind) => a?.kind === kind) !== undefined;
 }

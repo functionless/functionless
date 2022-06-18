@@ -19,11 +19,11 @@ const functionDecl = reflect((arg: string) => {
 Then, write a recursive function to process the representation:
 
 ```ts
-import { FunctionlessNode } from "functionless";
+import { FunctionlessNode, isFunctionDecl } from "functionless";
 
 function processExpr(node: FunctionlessNode) {
   // do work
-  if (node.kind === "FunctionDecl") {
+  if (isFunctionDecl(node)) {
     // blah
   }
 }

@@ -66,6 +66,10 @@
       "type": "build"
     },
     {
+      "name": "axios",
+      "type": "build"
+    },
+    {
       "name": "cdk-assets",
       "version": "2.28.0",
       "type": "build"
@@ -197,6 +201,10 @@
     },
     {
       "name": "@functionless/nodejs-closure-serializer",
+      "type": "runtime"
+    },
+    {
+      "name": "@types/aws-lambda",
       "type": "runtime"
     },
     {

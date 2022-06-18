@@ -1,11 +1,15 @@
 import { Construct } from "constructs";
 import ts from "typescript";
+import { Expr } from "./expression";
 import {
-  Expr,
   isArrayLiteralExpr,
   isBinaryExpr,
-  isBooleanLiteral,
+  isBooleanLiteralExpr,
   isComputedPropertyNameExpr,
+  isForInStmt,
+  isForOfStmt,
+  isFunctionDecl,
+  isFunctionExpr,
   isIdentifier,
   isNullLiteralExpr,
   isNumberLiteralExpr,
@@ -18,7 +22,7 @@ import {
   isStringLiteralExpr,
   isUnaryExpr,
   isUndefinedLiteralExpr,
-} from "./expression";
+} from "./guards";
 import { FunctionlessNode } from "./node";
 
 export type AnyFunction = (...args: any[]) => any;
@@ -31,9 +35,9 @@ export function isInTopLevelScope(expr: FunctionlessNode): boolean {
   return walk(expr.parent);
 
   function walk(expr: FunctionlessNode): boolean {
-    if (expr.kind === "FunctionDecl" || expr.kind === "FunctionExpr") {
+    if (isFunctionDecl(expr) || isFunctionExpr(expr)) {
       return expr.parent === undefined;
-    } else if (expr.kind === "ForInStmt" || expr.kind === "ForOfStmt") {
+    } else if (isForInStmt(expr) || isForOfStmt(expr)) {
       return false;
     } else if (expr.parent === undefined) {
       return true;
@@ -163,7 +167,7 @@ export const evalToConstant = (expr: Expr): Constant | undefined => {
   if (
     isStringLiteralExpr(expr) ||
     isNumberLiteralExpr(expr) ||
-    isBooleanLiteral(expr) ||
+    isBooleanLiteralExpr(expr) ||
     isNullLiteralExpr(expr) ||
     isUndefinedLiteralExpr(expr)
   ) {

@@ -1,3 +1,4 @@
+import { aws_apigateway, aws_iam } from "aws-cdk-lib";
 import type { DynamoDB as AWSDynamoDB, EventBridge } from "aws-sdk";
 import { JsonFormat } from "typesafe-dynamodb";
 import { TypeSafeDynamoDBv2 } from "typesafe-dynamodb/lib/client-v2";
@@ -15,14 +16,8 @@ import {
   UpdateItemOutput,
 } from "typesafe-dynamodb/lib/update-item";
 import { ASL } from "./asl";
-import {
-  Expr,
-  isObjectLiteralExpr,
-  isPropAssignExpr,
-  isReferenceExpr,
-  isVariableReference,
-  ObjectLiteralExpr,
-} from "./expression";
+import { ErrorCodes, SynthError } from "./error-code";
+import { Argument, Expr, isVariableReference } from "./expression";
 import {
   Function,
   isFunction,
@@ -30,6 +25,14 @@ import {
   NativePreWarmContext,
   PrewarmClients,
 } from "./function";
+import {
+  isArgument,
+  isIdentifier,
+  isObjectLiteralExpr,
+  isPropAssignExpr,
+  isReferenceExpr,
+  isStringLiteralExpr,
+} from "./guards";
 import {
   IntegrationCall,
   IntegrationInput,
@@ -139,21 +142,23 @@ export namespace $AWS {
     export const GetItem = makeDynamoIntegration<
       "getItem",
       <
-        T extends ITable<any, any, any>,
+        Item extends object,
+        PartitionKey extends keyof Item,
+        RangeKey extends keyof Item | undefined,
         Key extends TableKey<
-          Item<T>,
-          PartitionKey<T>,
-          RangeKey<T>,
+          Item,
+          PartitionKey,
+          RangeKey,
           JsonFormat.AttributeValue
         >,
-        AttributesToGet extends keyof Item<T> | undefined = undefined,
+        AttributesToGet extends keyof Item | undefined = undefined,
         ProjectionExpression extends string | undefined = undefined
       >(
-        input: { TableName: T } & Omit<
+        input: { TableName: ITable<Item, PartitionKey, RangeKey> } & Omit<
           GetItemInput<
-            Item<T>,
-            PartitionKey<T>,
-            RangeKey<T>,
+            Item,
+            PartitionKey,
+            RangeKey,
             Key,
             AttributesToGet,
             ProjectionExpression,
@@ -163,9 +168,9 @@ export namespace $AWS {
         >
       ) => Promise<
         GetItemOutput<
-          Item<T>,
-          PartitionKey<T>,
-          RangeKey<T>,
+          Item,
+          PartitionKey,
+          RangeKey,
           Key,
           AttributesToGet,
           ProjectionExpression,
@@ -438,7 +443,7 @@ export namespace $AWS {
       },
     });
 
-    type OperationName =
+    export type OperationName =
       | "deleteItem"
       | "getItem"
       | "putItem"
@@ -463,6 +468,60 @@ export namespace $AWS {
       return makeIntegration<`$AWS.DynamoDB.${Op}`, F>({
         ...integration,
         kind: `$AWS.DynamoDB.${operationName}`,
+        apiGWVtl: {
+          renderRequest(call, context) {
+            const input = call.args[0].expr;
+            if (!isObjectLiteralExpr(input)) {
+              throw new SynthError(
+                ErrorCodes.Expected_an_object_literal,
+                `input to $AWS.DynamoDB.${operationName} must be an object literal`
+              );
+            }
+            const table = getTableArgument(operationName, call.args);
+
+            // const table = getTableArgument(call.args.map((arg) => arg.expr!));
+            grantTablePermissions(table, context.role, operationName);
+            return `{
+  "TableName":"${table.resource.tableName}",
+  ${input.properties
+    .flatMap((prop) => {
+      if (isPropAssignExpr(prop)) {
+        const name = isIdentifier(prop.name)
+          ? prop.name
+          : isStringLiteralExpr(prop.name)
+          ? prop.name.value
+          : undefined;
+
+        if (name === undefined) {
+          throw new SynthError(
+            ErrorCodes.API_Gateway_does_not_support_computed_property_names
+          );
+        }
+        if (name === "TableName") {
+          return [];
+        }
+        return [`"${name}":${context.exprToJson(prop.expr)}`];
+      } else {
+        throw new SynthError(
+          ErrorCodes.API_Gateway_does_not_support_spread_assignment_expressions
+        );
+      }
+    })
+    .join(",\n  ")}
+}`;
+          },
+          createIntegration: (options) => {
+            return new aws_apigateway.AwsIntegration({
+              service: "dynamodb",
+              action: operationName,
+              integrationHttpMethod: "POST",
+              options: {
+                ...options,
+                passthroughBehavior: aws_apigateway.PassthroughBehavior.NEVER,
+              },
+            });
+          },
+        },
         asl(call, context) {
           const input = call.getArgument("input")?.expr;
           if (!isObjectLiteralExpr(input)) {
@@ -470,30 +529,8 @@ export namespace $AWS {
               `input parameter must be an ObjectLiteralExpr, but was ${input?.kind}`
             );
           }
-          const tableProp = (input as ObjectLiteralExpr).getProperty(
-            "TableName"
-          );
-
-          if (
-            tableProp?.kind !== "PropAssignExpr" ||
-            tableProp.expr.kind !== "ReferenceExpr"
-          ) {
-            throw new Error("");
-          }
-
-          const table = tableProp.expr.ref();
-          if (!isTable(table)) {
-            throw new Error("");
-          }
-          if (
-            operationName === "deleteItem" ||
-            operationName === "putItem" ||
-            operationName === "updateItem"
-          ) {
-            table.resource.grantWriteData(context.role);
-          } else {
-            table.resource.grantReadData(context.role);
-          }
+          const table = getTableArgument(operationName, call.args);
+          grantTablePermissions(table, context.role, operationName);
 
           return {
             Type: "Task",
@@ -504,7 +541,7 @@ export namespace $AWS {
         native: {
           ...integration.native,
           bind: (context, args) => {
-            const table = getTableArgument(args);
+            const table = getTableArgument(operationName, args);
             integration.native.bind(context, table);
           },
           preWarm(prewarmContext) {
@@ -517,39 +554,69 @@ export namespace $AWS {
           );
         },
       });
+    }
 
-      function getTableArgument(args: Expr[]) {
-        const [inputArgument] = args;
-        // integ(input: { TableName })
-        if (!inputArgument || !isObjectLiteralExpr(inputArgument)) {
-          throw Error(
-            `First argument into deleteItem should be an input object, found ${inputArgument?.kind}`
-          );
-        }
-
-        const tableProp = inputArgument.getProperty("TableName");
-
-        if (!tableProp || !isPropAssignExpr(tableProp)) {
-          throw Error(
-            `First argument into deleteItem should be an input with a property TableName that is a Table.`
-          );
-        }
-
-        const tableRef = tableProp.expr;
-
-        if (!isReferenceExpr(tableRef)) {
-          throw Error(
-            `First argument into deleteItem should be an input with a property TableName that is a Table.`
-          );
-        }
-
-        const table = tableRef.ref();
-        if (!isTable(table)) {
-          throw Error(`TableName argument should be a Table object.`);
-        }
-
-        return table;
+    /**
+     * @internal
+     */
+    export function grantTablePermissions(
+      table: AnyTable,
+      role: aws_iam.IRole,
+      operationName: OperationName
+    ) {
+      if (
+        operationName === "deleteItem" ||
+        operationName === "putItem" ||
+        operationName === "updateItem"
+      ) {
+        table.resource.grantWriteData(role);
+      } else {
+        table.resource.grantReadData(role);
       }
+    }
+
+    /**
+     * @internal
+     */
+    export function getTableArgument(op: string, args: Argument[] | Expr[]) {
+      let inputArgument;
+      if (isArgument(args[0])) {
+        inputArgument = args[0].expr;
+      } else {
+        inputArgument = args[0];
+      }
+      // integ(input: { TableName })
+      if (!inputArgument || !isObjectLiteralExpr(inputArgument)) {
+        throw new SynthError(
+          ErrorCodes.Expected_an_object_literal,
+          `First argument into ${op} should be an input object, found ${inputArgument?.kind}`
+        );
+      }
+
+      const tableProp = inputArgument.getProperty("TableName");
+
+      if (!tableProp || !isPropAssignExpr(tableProp)) {
+        throw new SynthError(
+          ErrorCodes.Expected_an_object_literal,
+          `First argument into ${op} should be an input with a property TableName that is a Table.`
+        );
+      }
+
+      const tableRef = tableProp.expr;
+
+      if (!isReferenceExpr(tableRef)) {
+        throw new SynthError(
+          ErrorCodes.Expected_an_object_literal,
+          `First argument into ${op} should be an input with a property TableName that is a Table.`
+        );
+      }
+
+      const table = tableRef.ref();
+      if (!isTable(table)) {
+        throw Error(`TableName argument should be a Table object.`);
+      }
+
+      return table;
     }
   }
 

@@ -1,3 +1,5 @@
+// @ts-ignore - imported for tsdoc
+import type { AwsMethod } from "./api";
 const BASE_URL = process.env.FUNCTIONLESS_LOCAL
   ? `http://localhost:3000`
   : `https://functionless.org`;
@@ -23,7 +25,7 @@ export class SynthError extends Error {
  * ```
  */
 export const formatErrorMessage = (code: ErrorCode, messageText?: string) => `${
-  messageText ?? code.messageText
+  messageText ?? code.title
 }
 
 ${formatErrorUrl(code)}`;
@@ -34,13 +36,33 @@ ${formatErrorUrl(code)}`;
  * `http://functionless.org/docs/error-codes/#[Anchor from Message Text]`
  */
 export const formatErrorUrl = (code: ErrorCode) =>
-  `${BASE_URL}/docs/error-codes#${code.messageText
+  `${BASE_URL}/docs/error-codes#${code.title
     .toLowerCase()
     .replace(/\s/g, "-")}`;
 
+export enum ErrorType {
+  "ERROR" = "ERROR",
+  "WARN" = "WARN",
+  "INFO" = "INFO",
+  "DEPRECATED" = "DEPRECATED",
+}
+
 export interface ErrorCode {
-  code: number;
-  messageText: string;
+  /**
+   * Error code, a unique number between 10000 and 99999.
+   *
+   * New error codes should be sequential.
+   */
+  readonly code: number;
+  /**
+   * The type of the error, determine how the error is displayed in the language service and on the website.
+   */
+  readonly type: ErrorType;
+  /**
+   * Title of the error which will appear on `https://functionless.org/docs/error-codes` and act as the deep link.
+   * (https://functionless.org/docs/error-codes#title-with-dashes)
+   */
+  readonly title: string;
 }
 
 export namespace ErrorCodes {
@@ -67,8 +89,9 @@ export namespace ErrorCodes {
    */
   export const Cannot_perform_arithmetic_on_variables_in_Step_Function: ErrorCode =
     {
-      code: 100,
-      messageText: "Cannot perform arithmetic on variables in Step Function",
+      code: 10000,
+      type: ErrorType.ERROR,
+      title: "Cannot perform arithmetic on variables in Step Function",
     };
 
   /**
@@ -78,9 +101,61 @@ export namespace ErrorCodes {
    * Ensure you follow the instructions at https://functionless.org/docs/getting-started.
    */
   export const FunctionDecl_not_compiled_by_Functionless: ErrorCode = {
-    code: 101,
-    messageText: "Function not compiled by Functionless plugin",
+    code: 10001,
+    type: ErrorType.ERROR,
+    title: "Function not compiled by Functionless plugin",
   };
+
+  /**
+   * The argument must be an inline Function.
+   *
+   * ```ts
+   * const func = () => {
+   *   // ..
+   * }
+   * // invalid - `func` must be an inline Function
+   * new Function(this, id, func);
+   * ```
+   *
+   * To fix, inline the `func` implementation.
+   *
+   * ```ts
+   * // option 1 - arrow function
+   * new Function(this, id, async () => { .. });
+   *
+   * // option 2 - function
+   * new Function(this, id, async function () { .. });
+   * ```
+   */
+  export const Argument_must_be_an_inline_Function: ErrorCode = {
+    code: 10002,
+    type: ErrorType.ERROR,
+    title: `Argument must be an inline Function`,
+  };
+
+  /**
+   * When using the {@link AwsMethod}, the `request` argument must be a function
+   * with exactly one integration call.
+   *
+   * ```ts
+   * new AwsMethod(
+   *   {
+   *     httpMethod: "GET",
+   *     resource: api.root
+   *   },
+   *   ($input) => {
+   *     return $AWS.DynamoDB.GetItem({ .. });
+   *   },
+   *   // etc.
+   * )
+   * ```
+   */
+  export const AwsMethod_request_must_have_exactly_one_integration_call: ErrorCode =
+    {
+      code: 10003,
+      type: ErrorType.ERROR,
+      title: `AwsMethod request must have exactly one integration call`,
+    };
 
   /**
    * Lambda Function closure synthesis runs async, but CDK does not normally support async.
@@ -93,16 +168,20 @@ export namespace ErrorCodes {
    * https://github.com/functionless/functionless/issues/128
    */
   export const Function_Closure_Serialization_Incomplete: ErrorCode = {
-    code: 102,
-    messageText: "Function closure serialization was not allowed to complete",
+    code: 10004,
+    type: ErrorType.ERROR,
+    title: "Function closure serialization was not allowed to complete",
   };
 
   /**
    * Generic error message to denote errors that should not happen and are not the fault of the Functionless library consumer.
+   *
+   * Please report this issue
    */
   export const Unexpected_Error: ErrorCode = {
-    code: 103,
-    messageText: "Unexpected Error, please report this issue",
+    code: 10005,
+    type: ErrorType.ERROR,
+    title: "Unexpected Error, please report this issue",
   };
 
   /**
@@ -130,9 +209,10 @@ export namespace ErrorCodes {
    * StateMachine.fromStepFunction(exprSfn);
    * ```
    */
-  export const Incorrect_StateMachine_Import_Type = {
-    code: 104,
-    messageText: "Incorrect state machine type imported",
+  export const Incorrect_StateMachine_Import_Type: ErrorCode = {
+    code: 10006,
+    type: ErrorType.ERROR,
+    title: "Incorrect state machine type imported",
   };
 
   /**
@@ -142,9 +222,10 @@ export namespace ErrorCodes {
    *
    * @see https://github.com/functionless/functionless/issues/252 to track supported secret patterns.
    */
-  export const Unsafe_use_of_secrets = {
-    code: 105,
-    messageText: "Unsafe use of secrets",
+  export const Unsafe_use_of_secrets: ErrorCode = {
+    code: 10007,
+    type: ErrorType.ERROR,
+    title: "Unsafe use of secrets",
   };
 
   /**
@@ -186,11 +267,12 @@ export namespace ErrorCodes {
    * });
    * ```
    */
-  export const Unsupported_initialization_of_resources_in_function = {
-    code: 106,
-    messageText:
-      "Unsupported initialization of Resources in a Function closure",
-  };
+  export const Unsupported_initialization_of_resources_in_function: ErrorCode =
+    {
+      code: 10008,
+      type: ErrorType.ERROR,
+      title: "Unsupported initialization of Resources in a Function closure",
+    };
 
   /**
    * Cannot use Infrastructure resource in Function closure.
@@ -249,8 +331,125 @@ export namespace ErrorCodes {
    * });
    * ```
    */
-  export const Cannot_use_infrastructure_Resource_in_Function_closure = {
-    code: 107,
-    messageText: "Cannot use infrastructure Resource in Function closure",
+  export const Cannot_use_infrastructure_Resource_in_Function_closure: ErrorCode =
+    {
+      code: 10009,
+      type: ErrorType.ERROR,
+      title: "Cannot use infrastructure Resource in Function closure",
+    };
+
+  /**
+   * Computed Property Names are not supported in API Gateway.
+   *
+   * For example:
+   * ```ts
+   * new AwsMethod({
+   *   request: ($input) => $AWS.DynamoDB.GetItem({
+   *     TableName: table,
+   *     // invalid, all property names must be literals
+   *     [computedProperty]: prop
+   *   })
+   * });
+   * ```
+   *
+   * To workaround, be sure to only use literal property names.
+   */
+  export const API_Gateway_does_not_support_computed_property_names: ErrorCode =
+    {
+      code: 10010,
+      type: ErrorType.ERROR,
+      title: "API Gateway does not supported computed property names",
+    };
+
+  /**
+   * Due to limitations in API Gateway's VTL engine (no $util.toJson, for example)
+   * it is not possible to fully support spread expressions.
+   *
+   * For example:
+   * ```ts
+   * new AwsMethod({
+   *   response: ($input) => ({
+   *     hello: "world",
+   *     ...$input.data
+   *   })
+   * });
+   * ```
+   *
+   * To workaround the limitation, explicitly specify each property.
+   *
+   * ```ts
+   * new AwsMethod({
+   *   response: ($input) => ({
+   *     hello: "world",
+   *     propA: $input.data.propA,
+   *     propB: $input.data.propB,
+   *   })
+   * });
+   * ```
+   */
+  export const API_Gateway_does_not_support_spread_assignment_expressions: ErrorCode =
+    {
+      code: 10011,
+      type: ErrorType.ERROR,
+      title: "API Gateway does not support spread assignment expressions",
+    };
+
+  /**
+   * Due to limitations in respective Functionless interpreters, it is often a
+   * requirement to specify an object literal instead of a variable reference.
+   *
+   * ```ts
+   * const input = {
+   *   TableName: table,
+   *   Key: {
+   *     // etc.
+   *   }
+   * };
+   * // invalid - input must be an object literal
+   * $AWS.DynamoDB.GetItem(input)
+   * ```
+   *
+   * To work around, ensure that you specify an object literal.
+   *
+   * ```ts
+   * $AWS.DynamoDB.GetItem({
+   *   TableName: table,
+   *   Key: {
+   *     // etc.
+   *   }
+   * })
+   * ```
+   */
+  export const Expected_an_object_literal: ErrorCode = {
+    code: 10012,
+    type: ErrorType.ERROR,
+    title: "Expected_an_object_literal",
   };
+
+  /**
+   * Code running within an API Gateway's response mapping template must not attempt
+   * to call any integration. It can only perform data transformation.
+   *
+   * ```ts
+   * new AwsMethod({
+   *   ...,
+   *
+   *   response: () => {
+   *     // INVALID! - you cannot call an integration from within a response mapping template
+   *     return $AWS.DynamoDB.GetItem({
+   *       TableName: table,
+   *       ...
+   *     });
+   *   }
+   * })
+   * ```
+   *
+   * To workaround, make sure to only call an integration from within the `request` mapping function.
+   */
+  export const API_gateway_response_mapping_template_cannot_call_integration: ErrorCode =
+    {
+      code: 10013,
+      type: ErrorType.ERROR,
+      title: "API gateway response mapping template cannot call integration",
+    };
 }
