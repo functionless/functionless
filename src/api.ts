@@ -27,6 +27,8 @@ import {
   isVariableStmt,
   isIdentifier,
   isReferenceExpr,
+  isAwaitExpr,
+  isPromiseExpr,
 } from "./guards";
 import { Integration, IntegrationImpl, isIntegration } from "./integration";
 import { Stmt } from "./statement";
@@ -751,6 +753,17 @@ export class APIGatewayVTL extends VTL {
           return "#stop";
         })
         .join(`,`)}}`;
+    } else if (isPromiseExpr(expr)) {
+      // if we find a promise, ensure it is wrapped in Await or returned then unwrap it
+      if (isAwaitExpr(expr.parent) || isReturnStmt(expr.parent)) {
+        return this.exprToJson(expr.expr);
+      }
+      throw new SynthError(
+        ErrorCodes.Integration_must_be_immediately_awaited_or_returned
+      );
+    } else if (isAwaitExpr(expr)) {
+      // just pass these through
+      return this.exprToJson(expr.expr);
     } else {
       // this Expr is a computation that cannot be expressed as JSON Path
       // we must therefore evaluate it and use a brute force approach to convert it into JSON

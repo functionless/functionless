@@ -2,6 +2,7 @@ import { aws_iam, aws_stepfunctions } from "aws-cdk-lib";
 import { Construct } from "constructs";
 import { assertNever } from "./assert";
 import { FunctionDecl } from "./declaration";
+import { SynthError, ErrorCodes } from "./error-code";
 import {
   Argument,
   CallExpr,
@@ -876,7 +877,9 @@ export class ASL {
       if (isAwaitExpr(expr.parent) || isReturnStmt(expr.parent)) {
         return this.eval(expr.expr, props);
       }
-      throw new Error(`Promises must be immediately awaited or returned.`);
+      throw new SynthError(
+        ErrorCodes.Integration_must_be_immediately_awaited_or_returned
+      );
     } else if (isPromiseArrayExpr(expr)) {
       // if we find a promise array, ensure it is wrapped in a Promise.all then unwrap it
       if (
@@ -888,8 +891,8 @@ export class ASL {
       }
       debugger;
       // TODO create error code
-      throw new Error(
-        "Expressions which return arrays of Promises must be wrapped in `Promise.all()`."
+      throw new SynthError(
+        ErrorCodes.Arrays_of_Integration_must_be_immediately_wrapped_in_Promise_all
       );
     } else if (isCallExpr(expr)) {
       if (isReferenceExpr(expr.expr)) {

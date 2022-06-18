@@ -195,7 +195,7 @@ export const synthesizeEventBridgeTargets = (
     } else if (isIdentifier(expr)) {
       throw Error("Unsupported direct use of the event parameter.");
     } else if (isPromiseExpr(expr) || isAwaitExpr(expr)) {
-      // pass
+      // pass these through, most promises will fail later, await could be benign
       return exprToLiteral(expr.expr);
     } else if (isCallExpr(expr)) {
       if (isReferenceExpr(expr.expr)) {
