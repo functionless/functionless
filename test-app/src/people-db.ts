@@ -114,11 +114,15 @@ export class PeopleDatabase extends Construct {
     this.getPerson = new AppsyncResolver<
       QueryResolvers["getPerson"]["args"],
       QueryResolvers["getPerson"]["result"]
-    >(this, "getPerson", {
-      api,
-      typeName: "Query",
-      fieldName: "getPerson",
-      resolve: ($context) => {
+    >(
+      this,
+      "getPerson",
+      {
+        api,
+        typeName: "Query",
+        fieldName: "getPerson",
+      },
+      ($context) => {
         let person;
         // example of integrating with an Express Step Function from Appsync
         person = this.getPersonMachine({
@@ -130,17 +134,21 @@ export class PeopleDatabase extends Construct {
         } else {
           $util.error(person.cause, person.error);
         }
-      },
-    });
+      }
+    );
 
     this.addPerson = new AppsyncResolver<
       MutationResolvers["addPerson"]["args"],
       MutationResolvers["addPerson"]["result"]
-    >(this, "addPerson", {
-      api,
-      typeName: "Query",
-      fieldName: "addPerson",
-      resolve: ($context) => {
+    >(
+      this,
+      "addPerson",
+      {
+        api,
+        typeName: "Query",
+        fieldName: "addPerson",
+      },
+      ($context) => {
         const person = this.personTable.putItem({
           key: {
             id: {
@@ -155,17 +163,19 @@ export class PeopleDatabase extends Construct {
         });
 
         return person;
-      },
-    });
+      }
+    );
 
     // example of inferring the TArguments and TResult from the function signature
-    this.updateName = new AppsyncResolver(this, "updateName", {
-      api,
-      typeName: "Mutation",
-      fieldName: "updateName",
-      resolve: (
-        $context: AppsyncContext<MutationResolvers["updateName"]["args"]>
-      ) =>
+    this.updateName = new AppsyncResolver(
+      this,
+      "updateName",
+      {
+        api,
+        typeName: "Mutation",
+        fieldName: "updateName",
+      },
+      ($context: AppsyncContext<MutationResolvers["updateName"]["args"]>) =>
         this.personTable.updateItem({
           key: {
             id: $util.dynamodb.toDynamoDB($context.arguments.id),
@@ -179,23 +189,27 @@ export class PeopleDatabase extends Construct {
               ":name": $util.dynamodb.toDynamoDB($context.arguments.name),
             },
           },
-        }),
-    });
+        })
+    );
 
     // example of explicitly specifying TArguments and TResult
     this.deletePerson = new AppsyncResolver<
       MutationResolvers["deletePerson"]["args"],
       MutationResolvers["deletePerson"]["result"]
-    >(this, "deletePerson", {
-      api,
-      typeName: "Mutation",
-      fieldName: "deletePerson",
-      resolve: ($context) =>
+    >(
+      this,
+      "deletePerson",
+      {
+        api,
+        typeName: "Mutation",
+        fieldName: "deletePerson",
+      },
+      ($context) =>
         this.personTable.deleteItem({
           key: {
             id: $util.dynamodb.toDynamoDB($context.arguments.id),
           },
-        }),
-    });
+        })
+    );
   }
 }

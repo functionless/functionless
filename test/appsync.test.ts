@@ -106,14 +106,18 @@ describe("step function integration", () => {
   test("machine with trace header", () => {
     const machine = new StepFunction(stack, "machine", () => {});
 
-    new AppsyncResolver<{ id: string }, void>(stack, "resolver", {
-      api,
-      fieldName: "field",
-      typeName: "type",
-      resolve: (context) => {
-        machine({ traceHeader: context.arguments.id });
+    new AppsyncResolver<{ id: string }, void>(
+      stack,
+      "resolver",
+      {
+        api,
+        fieldName: "field",
+        typeName: "type",
       },
-    });
+      (context) => {
+        machine({ traceHeader: context.arguments.id });
+      }
+    );
   });
 
   test("machine describe exec", () => {
@@ -145,14 +149,18 @@ describe("step function describe execution", () => {
 
   test("machine with trace header", () => {
     const machine = new StepFunction(stack, "machine", () => {});
-    new AppsyncResolver<{ id: string }, void>(stack, "resolver", {
-      api,
-      fieldName: "field",
-      typeName: "type",
-      resolve: (context) => {
-        machine({ traceHeader: context.arguments.id });
+    new AppsyncResolver<{ id: string }, void>(
+      stack,
+      "resolver",
+      {
+        api,
+        fieldName: "field",
+        typeName: "type",
       },
-    });
+      (context) => {
+        machine({ traceHeader: context.arguments.id });
+      }
+    );
   });
 });
 

@@ -58,12 +58,16 @@ export function getAppSyncTemplates(decl: FunctionDecl | Err): string[] {
     xrayEnabled: true,
   });
 
-  const appsyncFunction = new AppsyncResolver(stack, "Resolver", {
-    api,
-    typeName: "Query",
-    fieldName: "getPerson",
-    resolve: decl as any,
-  });
+  const appsyncFunction = new AppsyncResolver(
+    stack,
+    "Resolver",
+    {
+      api,
+      typeName: "Query",
+      fieldName: "getPerson",
+    },
+    decl as any
+  );
   return appsyncFunction.resolvers().templates;
 }
 
