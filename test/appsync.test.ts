@@ -308,7 +308,7 @@ test("integrations separated by in", () => {
       return false;
     }),
     {
-      expectedTemplateCount: 8,
+      expectedTemplateCount: 6,
     }
   );
 
