@@ -11,7 +11,7 @@ A `Function` can be called directly from an [`AppsyncResolver`](./usage.md).
 ```ts
 const myFunc = new Function(scope, "id", (input: {name: string}) => { .. });
 
-new AppsyncResolver(() => {
+new AppsyncResolver(scope, id, props, () => {
   return myFunc({ name: "my name" });
 });
 ```
@@ -31,7 +31,7 @@ A `StepFunction` can be called directly from an [`AppsyncResolver`](./usage.md#i
 ```ts
 const myStepFunc = new StepFunction(scope, "id", (input: {name: string}) => { .. });
 
-new AppsyncResolver(() => {
+new AppsyncResolver(scope, id, props, () => {
   return myStepFunc({ name: "my name" });
 });
 ```
@@ -100,7 +100,7 @@ const myExpressFunc = new ExpressStepFunction(
   }
 );
 
-new AppsyncResolver(() => {
+new AppsyncResolver(scope, id, props, () => {
   const response = myExpressFunc({ name: "my name" });
 });
 ```

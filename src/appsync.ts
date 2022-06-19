@@ -147,14 +147,13 @@ export interface AppsyncResolverProps<>extends Pick<
 /**
  * An AWS AppSync Resolver Function derived from TypeScript syntax.
  *
- * First, you must wrap a CDK L2 Construct in the corresponding Functionless type-safe interfaces.
- * ```ts
- * const table = Table.fromTable<Person, "id">(new aws_dynamodb.Table(scope, "id", props));
- * ```
- *
- * Then, call the table from within the new AppsyncResolver:
  * ```ts
  * const getPerson = new AppsyncResolver<{id: string}, Person | undefined>(
+ *   scope, id, {
+ *      api,
+ *      typeName: "Query",
+ *      fieldName: "getPerson"
+ *   },
  *   ($context, id) => {
  *     const person = table.get({
  *       key: {
@@ -163,18 +162,6 @@ export interface AppsyncResolverProps<>extends Pick<
  *     });
  *     return person;
  *   });
- * ```
- *
- * Finally, the `getPerson` function can be used to create resolvers on a GraphQL API
- * ```ts
- * import * as appsync from "@aws-cdk/aws-appsync-alpha";
- *
- * const api = new appsync.GraphQLApi(..);
- *
- * getPerson.createResolver(api, {
- *   typeName: "Query",
- *   fieldName: "getPerson"
- * });
  * ```
  *
  * @functionless AppsyncFunction
@@ -259,7 +246,14 @@ export interface AppsyncFieldOptions
  * const api = new appsync.GraphQLApi(..);
  *
  * ```ts
- * const getPerson = new AppsyncResolver<{id: string}, Person | undefined>(
+ * const getPersonField = new AppsyncField<{id: string}, Person | undefined>(
+ *   {
+ *     api,
+ *     returnType: appsync.Field.string(),
+ *     args: {
+ *       argName: appsync.Field.string()
+ *     }
+ *   },
  *   ($context, id) => {
  *     const person = table.get({
  *       key: {
@@ -273,11 +267,7 @@ export interface AppsyncFieldOptions
  * // code first person type
  * const personType = api.addType(appsync.ObjectType(...));
  *
- * api.addQuery("getPerson", getPerson.getField(api, personType))
- * getPerson.createResolver(api, {
- *   typeName: "Query",
- *   fieldName: "getPerson"
- * });
+ * api.addQuery("getPerson", getPersonField)
  * ```
  *
  * @param api app sync API which the data sources construct will be added under.
