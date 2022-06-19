@@ -165,6 +165,7 @@ export function visitEachChild<T extends FunctionlessNode>(
         } else if (isStmt(result)) {
           return [...stmts, result];
         } else {
+          debugger;
           throw new Error(
             "visitEachChild of a BlockStmt's child statements must return a Stmt"
           );
@@ -196,7 +197,9 @@ export function visitEachChild<T extends FunctionlessNode>(
       );
       return new Argument(expr, arg.name);
     });
-    return new (isCallExpr(node) ? CallExpr : NewExpr)(expr, args) as T;
+    return (
+      isCallExpr(node) ? new CallExpr(expr, args) : new NewExpr(expr, args)
+    ) as T;
   } else if (isCatchClause(node)) {
     const variableDecl = node.variableDecl
       ? visitor(node.variableDecl)
@@ -282,10 +285,10 @@ export function visitEachChild<T extends FunctionlessNode>(
       ensure(body, isBlockStmt, `Body in ${node.kind} must be a BlockStmt`);
     }
 
-    return new (isForInStmt(node) ? ForInStmt : ForOfStmt)(
-      variableDecl,
-      expr,
-      body
+    return (
+      isForInStmt(node)
+        ? new ForInStmt(variableDecl, expr, body)
+        : new ForOfStmt(variableDecl, expr, body)
     ) as T;
   } else if (isFunctionDecl(node) || isFunctionExpr(node)) {
     const parameters = node.parameters.reduce(
@@ -313,9 +316,10 @@ export function visitEachChild<T extends FunctionlessNode>(
 
     const body = visitor(node.body);
     ensure(body, isBlockStmt, `a ${node.kind}'s body must be a BlockStmt`);
-    return new (isFunctionDecl(node) ? FunctionDecl : FunctionExpr)(
-      parameters,
-      body
+    return (
+      isFunctionDecl(node)
+        ? new FunctionDecl(parameters, body)
+        : new FunctionExpr(parameters, body)
     ) as T;
   } else if (isIdentifier(node)) {
     return new Identifier(node.name) as T;
@@ -499,19 +503,10 @@ export function visitBlock(
 ): BlockStmt {
   return visitEachChild(block, (stmt) => {
     const nestedTasks: FunctionlessNode[] = [];
-    let hoistIndex = 0;
     function hoist(expr: Expr): Expr {
-      const localHoistIndex = hoistIndex++;
-
-      // don't hoist the first one, just update it and return.
-      // nodes are explored depth first.
-      if (localHoistIndex > 0) {
-        const id = new Identifier(nameGenerator.generateOrGet(expr));
-        nestedTasks.push(new VariableStmt(id.name, expr));
-        return id;
-      } else {
-        return expr;
-      }
+      const id = new Identifier(nameGenerator.generateOrGet(expr));
+      nestedTasks.push(new VariableStmt(id.name, expr));
+      return id;
     }
 
     const updatedNode = cb(stmt as Stmt, hoist);

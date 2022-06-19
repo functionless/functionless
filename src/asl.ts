@@ -56,6 +56,7 @@ import {
   isForOfStmt,
   isWhileStmt,
   isReferenceExpr,
+  isStmt,
 } from "./guards";
 import {
   Integration,
@@ -374,55 +375,44 @@ export class ASL {
     decl: FunctionDecl
   ) {
     const self = this;
-    this.decl = visitEachChild(decl, function normalizeAST(node):
-      | FunctionlessNode
-      | FunctionlessNode[] {
-      if (
-        isBlockStmt(node) &&
-        (isFunctionDecl(node.parent) || isFunctionExpr(node.parent))
-      ) {
-        // re-write the AST to include explicit `ReturnStmt(NullLiteral())` statements
-        // this simplifies the interpreter code by always having a node to chain onto, even when
-        // the AST has no final `ReturnStmt` (i.e. when the function is a void function)
-        // without this, chains that should return null will actually include the entire state as their output
-        if (node.lastStmt === undefined) {
-          return new BlockStmt([new ReturnStmt(new NullLiteralExpr())]);
-        } else if (!node.lastStmt.isTerminal()) {
+    this.decl = visitEachChild(
+      decl,
+      function normalizeAST(
+        node,
+        hoist?: (expr: Expr) => Expr
+      ): FunctionlessNode | FunctionlessNode[] {
+        if (isBlockStmt(node)) {
           return new BlockStmt([
             // for each block statement
             ...visitBlock(
               node,
               function normalizeBlock(stmt, hoist) {
-                // if the statement contains an expression
-                if (
-                  isExprStmt(stmt) ||
-                  isVariableStmt(stmt) ||
-                  isReturnStmt(stmt)
-                ) {
-                  // check to see if we need to hoist anything
-                  return visitEachChild(stmt, function extract(childNode) {
-                    if (isIntegrationCall(childNode)) {
-                      // when we find an integration call, hoist it up (create variable, add above, replace expr with variable)
-                      return hoist(childNode);
-                    } else if (isFunctionDecl(childNode)) {
-                      // dive into nested blocks inside nested function declarations
-                      return visitEachChild(childNode, normalizeAST);
-                    }
-                    return childNode;
-                  });
-                }
-
-                // other statements may contain blocks.
-                return visitEachChild(stmt, normalizeAST);
+                return visitEachChild(stmt, (expr) =>
+                  normalizeAST(expr, hoist)
+                );
               },
               self.generatedNames
             ).statements,
-            new ReturnStmt(new NullLiteralExpr()),
+            // re-write the AST to include explicit `ReturnStmt(NullLiteral())` statements
+            // this simplifies the interpreter code by always having a node to chain onto, even when
+            // the AST has no final `ReturnStmt` (i.e. when the function is a void function)
+            // without this, chains that should return null will actually include the entire state as their output
+            ...((isFunctionDecl(node.parent) || isFunctionExpr(node.parent)) &&
+            (!node.lastStmt || !node.lastStmt.isTerminal())
+              ? [new ReturnStmt(new NullLiteralExpr())]
+              : []),
           ]);
+        } else if (hoist && self.doHoist(node)) {
+          const updatedChild = visitEachChild(node, (expr) =>
+            normalizeAST(expr, hoist)
+          );
+          // when we find an integration call,
+          // if it is nested, hoist it up (create variable, add above, replace expr with variable)
+          return hoist(updatedChild);
         }
+        return visitEachChild(node, (expr) => normalizeAST(expr, hoist));
       }
-      return visitEachChild(node, normalizeAST);
-    });
+    );
 
     const states = this.execute(this.decl.body);
 
@@ -435,6 +425,24 @@ export class ASL {
       StartAt: start,
       States: states,
     };
+  }
+
+  /**
+   * Determines of an expression should be hoisted
+   * Hoisted - Add new variable to the current block above the
+   */
+  private doHoist(node: FunctionlessNode): node is CallExpr {
+    const parent = node.parent;
+    return (
+      isIntegrationCall(node) &&
+      // const v = task()
+      (!isStmt(parent) ||
+        // for(const i in task())
+        isForInStmt(parent) ||
+        isForOfStmt(parent)) &&
+      // v = task()
+      !(isBinaryExpr(parent) && parent.op === "=")
+    );
   }
 
   /**
