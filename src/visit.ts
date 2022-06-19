@@ -95,7 +95,13 @@ import {
   VariableStmt,
   WhileStmt,
 } from "./statement";
-import { anyOf, ensure, ensureItemOf, flatten } from "./util";
+import {
+  anyOf,
+  DeterministicNameGenerator,
+  ensure,
+  ensureItemOf,
+  flatten,
+} from "./util";
 
 /**
  * Visits each child of a Node using the supplied visitor, possibly returning a new Node of the same kind in its place.
@@ -479,4 +485,39 @@ export function visitEachChild<T extends FunctionlessNode>(
     throw Error(`${node.kind} are not supported.`);
   }
   return assertNever(node);
+}
+
+/**
+ * Like {@link visitEachChild} but it only visits the statements of a block.
+ *
+ * Provides the hoist function that allows hoisting expressions into variable statements above the current statement.
+ */
+export function visitBlock(
+  block: BlockStmt,
+  cb: (stmt: Stmt, hoist: (expr: Expr) => Expr) => Stmt,
+  nameGenerator: DeterministicNameGenerator
+): BlockStmt {
+  return visitEachChild(block, (stmt) => {
+    const nestedTasks: FunctionlessNode[] = [];
+    let hoistIndex = 0;
+    function hoist(expr: Expr): Expr {
+      const localHoistIndex = hoistIndex++;
+
+      // don't hoist the first one, just update it and return.
+      // nodes are explored depth first.
+      if (localHoistIndex > 0) {
+        const id = new Identifier(nameGenerator.generateOrGet(expr));
+        nestedTasks.push(new VariableStmt(id.name, expr));
+        return id;
+      } else {
+        return expr;
+      }
+    }
+
+    const updatedNode = cb(stmt as Stmt, hoist);
+
+    return nestedTasks.length === 0
+      ? updatedNode
+      : [...nestedTasks, updatedNode];
+  });
 }

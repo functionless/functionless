@@ -273,3 +273,22 @@ export const evalToConstant = (expr: Expr): Constant | undefined => {
   }
   return undefined;
 };
+
+export class DeterministicNameGenerator {
+  private readonly generatedNames = new Map<FunctionlessNode, string>();
+
+  /**
+   * Generate a deterministic and unique variable name for a node.
+   *
+   * The value is cached so that the same node reference always has the same name.
+   *
+   * @param node the node to generate a name for
+   * @returns a unique variable name that can be used in JSON Path
+   */
+  public generateOrGet(node: FunctionlessNode): string {
+    if (!this.generatedNames.has(node)) {
+      this.generatedNames.set(node, `${this.generatedNames.size}_tmp`);
+    }
+    return this.generatedNames.get(node)!;
+  }
+}

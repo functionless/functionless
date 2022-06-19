@@ -5005,6 +5005,7 @@ Object {
   "States": Object {
     "$SFN.waitFor(1)": Object {
       "Next": "return null",
+      "ResultPath": null,
       "Seconds": 1,
       "Type": "Wait",
     },
@@ -5026,6 +5027,7 @@ Object {
   "States": Object {
     "$SFN.waitUntil(\\"2022-08-01T00:00:00Z\\")": Object {
       "Next": "return null",
+      "ResultPath": null,
       "Timestamp": "2022-08-01T00:00:00Z",
       "Type": "Wait",
     },
@@ -5047,6 +5049,7 @@ Object {
   "States": Object {
     "$SFN.waitFor(input.seconds)": Object {
       "Next": "return null",
+      "ResultPath": null,
       "SecondsPath": "$.seconds",
       "Type": "Wait",
     },
@@ -5068,6 +5071,7 @@ Object {
   "States": Object {
     "$SFN.waitUntil(input.until)": Object {
       "Next": "return null",
+      "ResultPath": null,
       "TimestampPath": "$.until",
       "Type": "Wait",
     },
@@ -5179,6 +5183,7 @@ Object {
   "States": Object {
     "$SFN.waitFor(1)": Object {
       "Next": "while (true)",
+      "ResultPath": null,
       "Seconds": 1,
       "Type": "Wait",
     },

@@ -1,6 +1,5 @@
 import { aws_iam, aws_stepfunctions } from "aws-cdk-lib";
 import { Construct } from "constructs";
-
 import { assertNever } from "./assert";
 import { FunctionDecl } from "./declaration";
 import {
@@ -8,7 +7,6 @@ import {
   CallExpr,
   ElementAccessExpr,
   Expr,
-  Identifier,
   isVariableReference,
   NewExpr,
   NullLiteralExpr,
@@ -25,9 +23,7 @@ import {
   isReturnStmt,
   isCallExpr,
   isBreakStmt,
-  isForOfStmt,
   isForInStmt,
-  isWhileStmt,
   isDoStmt,
   isContinueStmt,
   isIfStmt,
@@ -47,7 +43,6 @@ import {
   isPropAssignExpr,
   isComputedPropertyNameExpr,
   isStringLiteralExpr,
-  isReferenceExpr,
   isTemplateExpr,
   isParameterDecl,
   isBooleanLiteralExpr,
@@ -58,8 +53,16 @@ import {
   isSpreadElementExpr,
   isCatchClause,
   isIdentifier,
+  isForOfStmt,
+  isWhileStmt,
+  isReferenceExpr,
 } from "./guards";
-import { findIntegration } from "./integration";
+import {
+  Integration,
+  IntegrationImpl,
+  isIntegration,
+  isIntegrationCall,
+} from "./integration";
 import { FunctionlessNode } from "./node";
 import {
   BlockStmt,
@@ -70,13 +73,12 @@ import {
   IfStmt,
   ReturnStmt,
   Stmt,
-  VariableStmt,
   WhileStmt,
 } from "./statement";
 import { isStepFunction } from "./step-function";
 import { isTable } from "./table";
-import { anyOf, evalToConstant } from "./util";
-import { visitEachChild } from "./visit";
+import { anyOf, DeterministicNameGenerator, evalToConstant } from "./util";
+import { visitBlock, visitEachChild } from "./visit";
 
 export function isASL(a: any): a is ASL {
   return (a as ASL | undefined)?.kind === ASL.ContextName;
@@ -364,7 +366,7 @@ export class ASL {
    */
   private readonly stateNames = new Map<Stmt, string>();
   private readonly stateNamesCount = new Map<string, number>();
-  private readonly generatedNames = new Map<FunctionlessNode, string>();
+  private readonly generatedNames = new DeterministicNameGenerator();
 
   constructor(
     readonly scope: Construct,
@@ -377,7 +379,7 @@ export class ASL {
       | FunctionlessNode[] {
       if (
         isBlockStmt(node) &&
-        (isFunctionExpr(node.parent) || isFunctionDecl(node.parent))
+        (isFunctionDecl(node.parent) || isFunctionExpr(node.parent))
       ) {
         // re-write the AST to include explicit `ReturnStmt(NullLiteral())` statements
         // this simplifies the interpreter code by always having a node to chain onto, even when
@@ -387,65 +389,36 @@ export class ASL {
           return new BlockStmt([new ReturnStmt(new NullLiteralExpr())]);
         } else if (!node.lastStmt.isTerminal()) {
           return new BlockStmt([
-            ...node.statements.map((stmt) =>
-              visitEachChild(stmt, normalizeAST)
-            ),
+            // for each block statement
+            ...visitBlock(
+              node,
+              function normalizeBlock(stmt, hoist) {
+                // if the statement contains an expression
+                if (
+                  isExprStmt(stmt) ||
+                  isVariableStmt(stmt) ||
+                  isReturnStmt(stmt)
+                ) {
+                  // check to see if we need to hoist anything
+                  return visitEachChild(stmt, function extract(childNode) {
+                    if (isIntegrationCall(childNode)) {
+                      // when we find an integration call, hoist it up (create variable, add above, replace expr with variable)
+                      return hoist(childNode);
+                    } else if (isFunctionDecl(childNode)) {
+                      // dive into nested blocks inside nested function declarations
+                      return visitEachChild(childNode, normalizeAST);
+                    }
+                    return childNode;
+                  });
+                }
+
+                // other statements may contain blocks.
+                return visitEachChild(stmt, normalizeAST);
+              },
+              self.generatedNames
+            ).statements,
             new ReturnStmt(new NullLiteralExpr()),
           ]);
-        }
-      } else if (
-        isExprStmt(node) ||
-        isVariableStmt(node) ||
-        isReturnStmt(node)
-      ) {
-        const expr = node.expr;
-        if (isCallExpr(expr)) {
-          // reduce nested Tasks to individual Statements
-          const nestedTasks = expr.children.flatMap(function findTasks(
-            node: FunctionlessNode
-          ): CallExpr[] {
-            if (isTask(node)) {
-              return [node, ...node.collectChildren(findTasks)];
-            } else if (isFunctionExpr(node)) {
-              // do not recurse into FunctionExpr - they do not need to be hoisted
-              return [];
-            } else {
-              return node.collectChildren(findTasks);
-            }
-          });
-
-          function isTask(node: FunctionlessNode): node is CallExpr {
-            return isCallExpr(node) && findIntegration(node) !== undefined;
-          }
-
-          if (nestedTasks.length > 0) {
-            const nestedTaskSet = new Set<FunctionlessNode>(nestedTasks);
-
-            // walks through the tree and replaces nodes with an Identifier referencing the
-            // result of their pre-computed value - this normalizes the whole AST into
-            // a linear sequence of `variable = constant or computation` operations.
-            const replaced = (function replaceTasks(
-              node: FunctionlessNode
-            ): FunctionlessNode | FunctionlessNode[] {
-              if (nestedTaskSet.has(node)) {
-                return new Identifier(self.getDeterministicGeneratedName(node));
-              } else {
-                return visitEachChild(node, replaceTasks);
-              }
-            })(node);
-
-            return [
-              // hoist all nested calls to individual VariableStmt(CallExpr())
-              ...nestedTasks.map(
-                (task) =>
-                  new VariableStmt(
-                    self.getDeterministicGeneratedName(task),
-                    task.clone()
-                  )
-              ),
-              ...(Array.isArray(replaced) ? replaced : [replaced]),
-            ];
-          }
         }
       }
       return visitEachChild(node, normalizeAST);
@@ -462,21 +435,6 @@ export class ASL {
       StartAt: start,
       States: states,
     };
-  }
-
-  /**
-   * Generate a deterministic and unique variable name for a node.
-   *
-   * The value is cached so that the same node reference always has the same name.
-   *
-   * @param node the node to generate a name for
-   * @returns a unique variable name that can be used in JSON Path
-   */
-  private getDeterministicGeneratedName(node: FunctionlessNode): string {
-    if (!this.generatedNames.has(node)) {
-      this.generatedNames.set(node, `${this.generatedNames.size}_tmp`);
-    }
-    return this.generatedNames.get(node)!;
   }
 
   /**
@@ -792,7 +750,7 @@ export class ASL {
                         Choices: [
                           {
                             // errors thrown from the catch block will be directed to this special variable for the `finally` block
-                            Variable: `$.${this.getDeterministicGeneratedName(
+                            Variable: `$.${this.generatedNames.generateOrGet(
                               stmt.finallyBlock
                             )}`,
                             IsPresent: true,
@@ -868,38 +826,32 @@ export class ASL {
       props.End = true;
     }
     if (isCallExpr(expr)) {
-      const serviceCall = findIntegration(expr);
-      if (serviceCall) {
-        if (
-          isPropAccessExpr(expr.expr) &&
-          (expr.expr.name === "waitFor" || expr.expr.name === "waitUntil")
-        ) {
-          delete (props as any).ResultPath;
-          return <State>{
+      if (isReferenceExpr(expr.expr)) {
+        const ref = expr.expr.ref();
+        if (isIntegration<Integration>(ref)) {
+          const serviceCall = new IntegrationImpl(ref);
+          const taskState = <State>{
             ...serviceCall.asl(expr, this),
             ...props,
           };
-        }
 
-        const taskState = <State>{
-          ...serviceCall.asl(expr, this),
-          ...props,
-        };
-
-        const throwOrPass = this.throw(expr);
-        if (throwOrPass?.Next) {
-          return <State>{
-            ...taskState,
-            Catch: [
-              {
-                ErrorEquals: ["States.ALL"],
-                Next: throwOrPass.Next,
-                ResultPath: throwOrPass.ResultPath,
-              },
-            ],
-          };
+          const throwOrPass = this.throw(expr);
+          if (throwOrPass?.Next) {
+            return <State>{
+              ...taskState,
+              Catch: [
+                {
+                  ErrorEquals: ["States.ALL"],
+                  Next: throwOrPass.Next,
+                  ResultPath: throwOrPass.ResultPath,
+                },
+              ],
+            };
+          } else {
+            return taskState;
+          }
         } else {
-          return taskState;
+          throw Error("");
         }
       } else if (isMapOrForEach(expr)) {
         const throwTransition = this.throw(expr);
@@ -990,7 +942,7 @@ export class ASL {
     } else if (
       isBinaryExpr(expr) &&
       expr.op === "=" &&
-      isVariableReference(expr.left)
+      (isVariableReference(expr.left) || isIdentifier(expr.left))
     ) {
       if (isNullLiteralExpr(expr.right)) {
         return {
@@ -1178,7 +1130,7 @@ export class ASL {
               // by terminal, we mean that every branch returns a value - meaning that the re-throw
               // behavior of a finally will never be triggered - the return within the finally intercepts it
               !catchOrFinally.isTerminal()
-            ? `$.${this.getDeterministicGeneratedName(catchOrFinally)}`
+            ? `$.${this.generatedNames.generateOrGet(catchOrFinally)}`
             : null,
       };
     } else {
@@ -1234,7 +1186,7 @@ function analyzeFlow(node: FunctionlessNode): FlowResult {
     .reduce(
       (a, b) => ({ ...a, ...b }),
       (isCallExpr(node) &&
-        (findIntegration(node) !== undefined || isMapOrForEach(node))) ||
+        (isReferenceExpr(node.expr) || isMapOrForEach(node))) ||
         isForInStmt(node) ||
         isForOfStmt(node)
         ? { hasTask: true }
