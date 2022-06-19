@@ -798,7 +798,7 @@ Object {
       "Type": "Task",
     },
     "for(i in [0_tmp])": Object {
-      "ItemsPath": "\${Token[States.Array....0_tmp...3308]}",
+      "ItemsPath": "\${Token[States.Array....0_tmp...3307]}",
       "Iterator": Object {
         "StartAt": "1_tmp = task(i)",
         "States": Object {
@@ -863,7 +863,7 @@ Object {
       "Type": "Task",
     },
     "for(i of [0_tmp])": Object {
-      "ItemsPath": "\${Token[States.Array....0_tmp...3354]}",
+      "ItemsPath": "\${Token[States.Array....0_tmp...3353]}",
       "Iterator": Object {
         "StartAt": "1_tmp = task(i)",
         "States": Object {
