@@ -1,5 +1,109 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`machine describe exec return 1`] = `
+Array [
+  "{}",
+  "#if($context.stash.return__flag)
+  #return($context.stash.return__val)
+#end
+#set($context.stash.exec = 'exec1')
+{
+  \\"version\\": \\"2018-05-29\\",
+  \\"method\\": \\"POST\\",
+  \\"resourcePath\\": \\"/\\",
+  \\"params\\": {
+    \\"headers\\": {
+      \\"content-type\\": \\"application/x-amz-json-1.0\\",
+      \\"x-amz-target\\": \\"AWSStepFunctions.DescribeExecution\\"
+    },
+    \\"body\\": {
+      \\"executionArn\\": $util.toJson($context.stash.exec)
+    }
+  }
+}",
+  "#if($context.result.statusCode == 200)
+    #set($sfn__result = $util.parseJson($context.result.body))
+    #else 
+    $util.error($context.result.body, \\"$context.result.statusCode\\")
+    #end
+#set( $context.stash.return__flag = true )
+#set( $context.stash.return__val = $sfn__result )
+{}",
+  "#if($context.stash.return__flag)
+  #return($context.stash.return__val)
+#end",
+]
+`;
+
+exports[`machine describe exec return 2`] = `
+Object {
+  "method": "POST",
+  "params": Object {
+    "body": Object {
+      "executionArn": "exec1",
+    },
+    "headers": Object {
+      "content-type": "application/x-amz-json-1.0",
+      "x-amz-target": "AWSStepFunctions.DescribeExecution",
+    },
+  },
+  "resourcePath": "/",
+  "version": "2018-05-29",
+}
+`;
+
+exports[`machine describe exec var 1`] = `
+Array [
+  "{}",
+  "#if($context.stash.return__flag)
+  #return($context.stash.return__val)
+#end
+#set($context.stash.exec = 'exec1')
+{
+  \\"version\\": \\"2018-05-29\\",
+  \\"method\\": \\"POST\\",
+  \\"resourcePath\\": \\"/\\",
+  \\"params\\": {
+    \\"headers\\": {
+      \\"content-type\\": \\"application/x-amz-json-1.0\\",
+      \\"x-amz-target\\": \\"AWSStepFunctions.DescribeExecution\\"
+    },
+    \\"body\\": {
+      \\"executionArn\\": $util.toJson($context.stash.exec)
+    }
+  }
+}",
+  "#if($context.result.statusCode == 200)
+    #set($sfn__result = $util.parseJson($context.result.body))
+    #else 
+    $util.error($context.result.body, \\"$context.result.statusCode\\")
+    #end
+#set( $context.stash.v = $sfn__result )
+{}",
+  "#if($context.stash.return__flag)
+  #return($context.stash.return__val)
+#end
+#return($context.stash.v)",
+]
+`;
+
+exports[`machine describe exec var 2`] = `
+Object {
+  "method": "POST",
+  "params": Object {
+    "body": Object {
+      "executionArn": "exec1",
+    },
+    "headers": Object {
+      "content-type": "application/x-amz-json-1.0",
+      "x-amz-target": "AWSStepFunctions.DescribeExecution",
+    },
+  },
+  "resourcePath": "/",
+  "version": "2018-05-29",
+}
+`;
+
 exports[`multiple isolated integrations 1`] = `
 Array [
   "{}",

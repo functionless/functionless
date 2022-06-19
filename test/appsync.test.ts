@@ -120,6 +120,33 @@ describe("step function integration", () => {
   });
 });
 
+test("machine describe exec return", () => {
+  const machine = new StepFunction(stack, "machine", () => {});
+
+  const templates = appsyncTestCase(
+    reflect(() => {
+      const exec = "exec1";
+      return machine.describeExecution(exec);
+    })
+  );
+
+  testAppsyncVelocity(templates[1]);
+});
+
+test("machine describe exec var", () => {
+  const machine = new StepFunction(stack, "machine", () => {});
+
+  const templates = appsyncTestCase(
+    reflect(() => {
+      const exec = "exec1";
+      const v = machine.describeExecution(exec);
+      return v;
+    })
+  );
+
+  testAppsyncVelocity(templates[1]);
+});
+
 describe("step function describe execution", () => {
   test("machine describe exec string", () => {
     const machine = new StepFunction(stack, "machine", () => {});
