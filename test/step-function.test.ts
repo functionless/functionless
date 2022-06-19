@@ -1415,6 +1415,19 @@ test("throw task(task())", () => {
   expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
+test.skip("input.b ? task() : task(input)", () => {
+  const { stack, task } = initStepFunctionApp();
+  const definition = new ExpressStepFunction<{ b: boolean }, null | number>(
+    stack,
+    "fn",
+    (input) => {
+      return input.b ? task() : task(input);
+    }
+  ).definition;
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+});
+
 test("for (const i in [task(input)])", () => {
   const { stack, task } = initStepFunctionApp();
   const definition = new ExpressStepFunction<{ str: string }, any | null>(
