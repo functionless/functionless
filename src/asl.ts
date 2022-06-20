@@ -85,7 +85,12 @@ import {
 } from "./statement";
 import { isStepFunction } from "./step-function";
 import { isTable } from "./table";
-import { anyOf, DeterministicNameGenerator, evalToConstant } from "./util";
+import {
+  anyOf,
+  DeterministicNameGenerator,
+  evalToConstant,
+  isPromiseAll,
+} from "./util";
 import { visitBlock, visitEachChild, visitSpecificChildren } from "./visit";
 
 export function isASL(a: any): a is ASL {
@@ -1261,23 +1266,6 @@ function isFilter(expr: CallExpr): expr is CallExpr & {
   };
 } {
   return isPropAccessExpr(expr.expr) && expr.expr.name === "filter";
-}
-
-function isPromiseAll(expr: CallExpr): expr is CallExpr & {
-  expr: PropAccessExpr & {
-    name: "all";
-    parent: {
-      kind: "Identifier";
-      name: "Promise";
-    };
-  };
-} {
-  return (
-    isPropAccessExpr(expr.expr) &&
-    isIdentifier(expr.expr.expr) &&
-    expr.expr.name === "all" &&
-    expr.expr.expr.name === "Promise"
-  );
 }
 
 function canThrow(node: FunctionlessNode): boolean {

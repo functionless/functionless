@@ -1,6 +1,6 @@
 import { Construct } from "constructs";
 import ts from "typescript";
-import { Expr } from "./expression";
+import { CallExpr, Expr, PropAccessExpr } from "./expression";
 import {
   isArrayLiteralExpr,
   isBinaryExpr,
@@ -117,6 +117,23 @@ export const isPrimitive = (val: any): val is PrimitiveValue => {
     val === null
   );
 };
+
+export function isPromiseAll(expr: CallExpr): expr is CallExpr & {
+  expr: PropAccessExpr & {
+    name: "all";
+    parent: {
+      kind: "Identifier";
+      name: "Promise";
+    };
+  };
+} {
+  return (
+    isPropAccessExpr(expr.expr) &&
+    isIdentifier(expr.expr.expr) &&
+    expr.expr.name === "all" &&
+    expr.expr.expr.name === "Promise"
+  );
+}
 
 export const singletonConstruct = <T extends Construct, S extends Construct>(
   scope: S,

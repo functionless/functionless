@@ -6,6 +6,7 @@ import {
   ToAttributeValue,
 } from "typesafe-dynamodb/lib/attribute-value";
 import { FunctionDecl, validateFunctionDecl } from "./declaration";
+import { ErrorCodes, SynthError } from "./error-code";
 import {
   Argument,
   BinaryExpr,
@@ -24,7 +25,6 @@ import {
   isExprStmt,
   isReturnStmt,
   isCallExpr,
-  isReferenceExpr,
   isPropAccessExpr,
   isElementAccessExpr,
   isIfStmt,
@@ -32,11 +32,16 @@ import {
   isStmt,
   isForInStmt,
   isForOfStmt,
+  isAwaitExpr,
+  isPromiseExpr,
 } from "./guards";
 import {
-  findDeepIntegration,
+  findDeepIntegrations,
+  Integration,
   IntegrationImpl,
+  isIntegration,
   isIntegrationCallExpr,
+  isIntegrationCallPattern,
 } from "./integration";
 import { Literal } from "./literal";
 import { FunctionlessNode } from "./node";
@@ -47,7 +52,7 @@ import {
   isInTopLevelScope,
   singletonConstruct,
 } from "./util";
-import { visitBlock, visitEachChild } from "./visit";
+import { visitBlock, visitEachChild, visitSpecificChildren } from "./visit";
 import { VTL } from "./vtl";
 
 /**
@@ -326,9 +331,6 @@ export class AppsyncResolver<
         node,
         hoist?: (expr: Expr) => Expr
       ): FunctionlessNode | FunctionlessNode[] {
-        if (isIntegrationCallExpr(node)) {
-          resolverCount++;
-        }
         // just counting, don'r do anything
         if (isBlockStmt(node)) {
           return new BlockStmt([
@@ -343,13 +345,38 @@ export class AppsyncResolver<
               self.generatedNames
             ).statements,
           ]);
-        } else if (hoist && self.doHoist(node)) {
-          const updatedChild = visitEachChild(node, (expr) =>
+        } else if (isIntegrationCallPattern(node)) {
+          resolverCount++;
+          const end = (() => {
+            if (isAwaitExpr(node)) {
+              // await task()
+              if (isIntegrationCallExpr(node.expr)) {
+                return node.expr;
+              }
+              // await <Promise>task()
+              else if (
+                isPromiseExpr(node.expr) &&
+                isIntegrationCallExpr(node.expr.expr)
+              ) {
+                return node.expr.expr;
+              }
+            } else if (
+              isPromiseExpr(node) &&
+              isIntegrationCallExpr(node.expr)
+            ) {
+              return node.expr;
+            }
+            return node;
+          })();
+
+          const updatedChild = visitSpecificChildren(node, [end], (expr) =>
             normalizeAST(expr, hoist)
           );
           // when we find an integration call,
           // if it is nested, hoist it up (create variable, add above, replace expr with variable)
-          return hoist(updatedChild);
+          return hoist && self.doHoist(node)
+            ? hoist(updatedChild)
+            : updatedChild;
         } else if (isBinaryExpr(node)) {
           /**
            * rewrite `in` to a conditional statement to support both arrays and maps
@@ -402,8 +429,22 @@ export class AppsyncResolver<
     const functions = updatedDecl.body.statements
       .map((stmt, i) => {
         const isLastExpr = i + 1 === updatedDecl.body.statements.length;
-        const service = findDeepIntegration(stmt);
-        if (service) {
+        const integrations = findDeepIntegrations(stmt);
+        if (integrations.length > 1) {
+          throw new SynthError(
+            ErrorCodes.Unexpected_Error,
+            "Expected a single integration call in a statement."
+          );
+        } else if (integrations.length === 1) {
+          const integrationCall = integrations[0];
+          const ref = integrationCall.expr.ref();
+          if (!isIntegration<Integration>(ref)) {
+            throw new SynthError(
+              ErrorCodes.Unexpected_Error,
+              "Expected called reference to be an integration"
+            );
+          }
+          const service = new IntegrationImpl(ref);
           // we must now render a resolver with request mapping template
           const dataSource = singletonConstruct(
             api,
@@ -419,8 +460,7 @@ export class AppsyncResolver<
           const returnValName = resultTemplate?.returnVariable ?? resultValName;
 
           if (isExprStmt(stmt)) {
-            const call = findServiceCallExpr(stmt.expr);
-            template.call(call);
+            template.call(integrationCall);
             return createStage(service, "{}");
           } else if (isReturnStmt(stmt)) {
             return createStage(
@@ -431,7 +471,11 @@ export class AppsyncResolver<
 #set( $context.stash.return__val = ${getResult(stmt.expr)} )
 {}`
             );
-          } else if (isVariableStmt(stmt) && isCallExpr(stmt.expr)) {
+          } else if (
+            isVariableStmt(stmt) &&
+            stmt.expr &&
+            isIntegrationCallPattern(stmt.expr)
+          ) {
             return createStage(
               service,
               `${pre ? `${pre}\n` : ""}#set( $context.stash.${
@@ -442,37 +486,6 @@ export class AppsyncResolver<
             throw new Error(
               "only a 'VariableDecl', 'Call' or 'Return' expression may call a service"
             );
-          }
-
-          /**
-           * Recursively resolve the {@link expr} to the {@link CallExpr} that is calling the service.
-           *
-           * @param expr an Expression that contains (somewhere nested within) a {@link CallExpr} to an external service.
-           * @returns the {@link CallExpr} that
-           */
-          function findServiceCallExpr(expr: Expr): CallExpr {
-            if (
-              isCallExpr(expr) &&
-              (isReferenceExpr(expr.expr) ||
-                (isPropAccessExpr(expr.expr) &&
-                  isReferenceExpr(expr.expr.expr)))
-            ) {
-              // this catches specific cases:
-              // lambdaFunction()
-              // table.get()
-              // table.<method-name>()
-
-              // all other Calls or PropAccessExpr are considered "after" the service call, e.g.
-              // lambdaFunction().prop
-              // table.query().Items.size() //.size() is still a Call but not a call to a service.
-              return expr;
-            } else if (isPropAccessExpr(expr)) {
-              return findServiceCallExpr(expr.expr);
-            } else if (isCallExpr(expr)) {
-              return findServiceCallExpr(expr.expr);
-            } else {
-              throw new Error("");
-            }
           }
 
           /**
@@ -500,6 +513,10 @@ export class AppsyncResolver<
               return `${getResult(expr.expr)}.${expr.name}`;
             } else if (isElementAccessExpr(expr)) {
               return `${getResult(expr.expr)}[${getResult(expr.element)}]`;
+            } else if (isPromiseExpr(expr)) {
+              return getResult(expr.expr);
+            } else if (isAwaitExpr(expr)) {
+              return getResult(expr.expr);
             } else {
               throw new Error(
                 `invalid Expression in-lined with Service Call: ${expr.kind}`
@@ -555,7 +572,6 @@ export class AppsyncResolver<
   private doHoist(node: FunctionlessNode): node is CallExpr {
     const parent = node.parent;
     return (
-      isIntegrationCallExpr(node) &&
       // const v = task()
       (!isStmt(parent) ||
         // for(const i in task())

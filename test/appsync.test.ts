@@ -307,8 +307,8 @@ test("integrations separated by in", () => {
   });
 
   const templates = appsyncTestCase(
-    reflect(() => {
-      if (func({}) in func2({})) {
+    reflect(async () => {
+      if ((await func({})) in (await func2({}))) {
         return true;
       }
       return false;

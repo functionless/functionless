@@ -52,7 +52,7 @@ import {
 import { Integration, IntegrationImpl, isIntegration } from "./integration";
 import { FunctionlessNode } from "./node";
 import { Stmt } from "./statement";
-import { AnyFunction, isInTopLevelScope } from "./util";
+import { AnyFunction, isInTopLevelScope, isPromiseAll } from "./util";
 
 // https://velocity.apache.org/engine/devel/user-guide.html#conditionals
 // https://cwiki.apache.org/confluence/display/VELOCITY/CheckingForNull
@@ -535,8 +535,31 @@ export abstract class VTL {
     } else if (isTypeOfExpr(node)) {
     } else if (isWhileStmt(node)) {
     } else if (isAwaitExpr(node)) {
+      // we will check for awaits on the PromiseExpr
+      return this.eval(node.expr);
     } else if (isPromiseExpr(node)) {
+      // if we find a promise, ensure it is wrapped in Await or returned then unwrap it
+      if (isAwaitExpr(node.parent) || isReturnStmt(node.parent)) {
+        return this.eval(node.expr);
+      }
+      debugger;
+      throw new SynthError(
+        ErrorCodes.Integration_must_be_immediately_awaited_or_returned
+      );
     } else if (isPromiseArrayExpr(node)) {
+      // if we find a promise array, ensure it is wrapped in a Promise.all then unwrap it
+      if (
+        isArgument(node.parent) &&
+        isCallExpr(node.parent.parent) &&
+        isPromiseAll(node.parent.parent)
+      ) {
+        return this.eval(node.expr);
+      }
+      debugger;
+      // TODO create error code
+      throw new SynthError(
+        ErrorCodes.Arrays_of_Integration_must_be_immediately_wrapped_in_Promise_all
+      );
     } else if (isErr(node)) {
       throw node.error;
     } else if (isArgument(node)) {

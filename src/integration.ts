@@ -7,14 +7,12 @@ import { Function, NativeIntegration } from "./function";
 import {
   isAwaitExpr,
   isCallExpr,
-  isExprStmt,
   isPromiseExpr,
-  isPropAccessExpr,
   isReferenceExpr,
-  isReturnStmt,
 } from "./guards";
 import { FunctionlessNode } from "./node";
 import { AnyFunction } from "./util";
+import { visitEachChild } from "./visit";
 import { VTL } from "./vtl";
 
 export const isIntegration = <I extends IntegrationInput<string, AnyFunction>>(
@@ -276,25 +274,15 @@ export type CallContext = ASL | VTL | Function<any, any> | EventBus<any>;
 /**
  * Dive until we find a integration object.
  */
-export function findDeepIntegration(
+export function findDeepIntegrations(
   expr: FunctionlessNode
-): IntegrationImpl | undefined {
-  if (isPropAccessExpr(expr)) {
-    return findDeepIntegration(expr.expr);
-  } else if (isCallExpr(expr)) {
-    if (isReferenceExpr(expr.expr)) {
-      const ref = expr.expr.ref();
-      if (isIntegration<Integration>(ref)) {
-        return new IntegrationImpl(ref);
-      }
+): IntegrationCallExpr[] {
+  const integrations: IntegrationCallExpr[] = [];
+  visitEachChild(expr, function find(node: FunctionlessNode): FunctionlessNode {
+    if (isIntegrationCallExpr(node)) {
+      integrations.push(node);
     }
-    return undefined;
-  } else if (expr.kind === "VariableStmt" && expr.expr) {
-    return findDeepIntegration(expr.expr);
-  } else if (isReturnStmt(expr) && expr.expr) {
-    return findDeepIntegration(expr.expr);
-  } else if (isExprStmt(expr)) {
-    return findDeepIntegration(expr.expr);
-  }
-  return undefined;
+    return visitEachChild(node, find);
+  });
+  return integrations;
 }
