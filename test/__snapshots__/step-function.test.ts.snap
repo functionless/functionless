@@ -784,7 +784,7 @@ Object {
       "Type": "Task",
     },
     "for(i in [0_tmp])": Object {
-      "ItemsPath": "\${Token[States.Array....0_tmp...3437]}",
+      "ItemsPath": "__REPLACED_TOKEN",
       "Iterator": Object {
         "StartAt": "1_tmp = await task(i)",
         "States": Object {
@@ -849,7 +849,15 @@ Object {
       "Type": "Task",
     },
     "for(i of [0_tmp])": Object {
+<<<<<<< HEAD
       "ItemsPath": "\${Token[States.Array....0_tmp...3483]}",
+=======
+<<<<<<< HEAD
+      "ItemsPath": "__REPLACED_TOKEN",
+=======
+      "ItemsPath": "\${Token[States.Array....0_tmp...3356]}",
+>>>>>>> b784d750f5bbeadb47cf4d9a493130d70f9cf9e5
+>>>>>>> appsync_visit
       "Iterator": Object {
         "StartAt": "1_tmp = await task(i)",
         "States": Object {
