@@ -1,6 +1,7 @@
 import { FunctionDecl } from "./declaration";
 import { Expr, FunctionExpr } from "./expression";
-import { BaseNode, FunctionlessNode, isNode, typeGuard } from "./node";
+import { isTryStmt } from "./guards";
+import { BaseNode, FunctionlessNode } from "./node";
 
 /**
  * A {@link Stmt} (Statement) is unit of execution that does not yield any value. They are translated
@@ -22,24 +23,6 @@ export type Stmt =
   | VariableStmt
   | WhileStmt;
 
-export function isStmt(a: any): a is Stmt {
-  return (
-    isNode(a) &&
-    (isBreakStmt(a) ||
-      isBlockStmt(a) ||
-      isCatchClause(a) ||
-      isContinueStmt(a) ||
-      isExprStmt(a) ||
-      isForInStmt(a) ||
-      isForOfStmt(a) ||
-      isIfStmt(a) ||
-      isReturnStmt(a) ||
-      isThrowStmt(a) ||
-      isTryStmt(a) ||
-      isVariableStmt(a))
-  );
-}
-
 export abstract class BaseStmt<
   Kind extends FunctionlessNode["kind"],
   Parent extends FunctionlessNode | undefined = BlockStmt | IfStmt
@@ -56,8 +39,6 @@ export abstract class BaseStmt<
   next: Stmt | undefined;
 }
 
-export const isExprStmt = typeGuard("ExprStmt");
-
 export class ExprStmt extends BaseStmt<"ExprStmt"> {
   constructor(readonly expr: Expr) {
     super("ExprStmt");
@@ -68,8 +49,6 @@ export class ExprStmt extends BaseStmt<"ExprStmt"> {
     return new ExprStmt(this.expr.clone()) as this;
   }
 }
-
-export const isVariableStmt = typeGuard("VariableStmt");
 
 export type VariableStmtParent =
   | ForInStmt
@@ -92,8 +71,6 @@ export class VariableStmt<
     return new VariableStmt(this.name, this.expr?.clone()) as this;
   }
 }
-
-export const isBlockStmt = typeGuard("BlockStmt");
 
 export type BlockStmtParent =
   | CatchClause
@@ -121,7 +98,7 @@ export class BlockStmt extends BaseStmt<"BlockStmt", BlockStmtParent> {
   }
 
   public isFinallyBlock(): this is FinallyBlock {
-    return this.parent.kind === "TryStmt" && this.parent.finallyBlock === this;
+    return isTryStmt(this.parent) && this.parent.finallyBlock === this;
   }
 
   public isEmpty(): this is {
@@ -149,8 +126,6 @@ export class BlockStmt extends BaseStmt<"BlockStmt", BlockStmtParent> {
   }
 }
 
-export const isReturnStmt = typeGuard("ReturnStmt");
-
 export class ReturnStmt extends BaseStmt<"ReturnStmt"> {
   constructor(readonly expr: Expr) {
     super("ReturnStmt");
@@ -161,8 +136,6 @@ export class ReturnStmt extends BaseStmt<"ReturnStmt"> {
     return new ReturnStmt(this.expr.clone()) as this;
   }
 }
-
-export const isIfStmt = typeGuard("IfStmt");
 
 export class IfStmt extends BaseStmt<"IfStmt"> {
   constructor(
@@ -187,8 +160,6 @@ export class IfStmt extends BaseStmt<"IfStmt"> {
   }
 }
 
-export const isForOfStmt = typeGuard("ForOfStmt");
-
 export class ForOfStmt extends BaseStmt<"ForOfStmt"> {
   constructor(
     readonly variableDecl: VariableStmt,
@@ -209,8 +180,6 @@ export class ForOfStmt extends BaseStmt<"ForOfStmt"> {
     ) as this;
   }
 }
-
-export const isForInStmt = typeGuard("ForInStmt");
 
 export class ForInStmt extends BaseStmt<"ForInStmt"> {
   constructor(
@@ -233,8 +202,6 @@ export class ForInStmt extends BaseStmt<"ForInStmt"> {
   }
 }
 
-export const isBreakStmt = typeGuard("BreakStmt");
-
 export class BreakStmt extends BaseStmt<"BreakStmt"> {
   constructor() {
     super("BreakStmt");
@@ -244,8 +211,6 @@ export class BreakStmt extends BaseStmt<"BreakStmt"> {
     return new BreakStmt() as this;
   }
 }
-
-export const isContinueStmt = typeGuard("ContinueStmt");
 
 export class ContinueStmt extends BaseStmt<"ContinueStmt"> {
   constructor() {
@@ -262,8 +227,6 @@ export interface FinallyBlock extends BlockStmt {
     finallyBlock: FinallyBlock;
   };
 }
-
-export const isTryStmt = typeGuard("TryStmt");
 
 export class TryStmt extends BaseStmt<"TryStmt"> {
   constructor(
@@ -290,8 +253,6 @@ export class TryStmt extends BaseStmt<"TryStmt"> {
   }
 }
 
-export const isCatchClause = typeGuard("CatchClause");
-
 export class CatchClause extends BaseStmt<"CatchClause", TryStmt> {
   constructor(
     readonly variableDecl: VariableStmt | undefined,
@@ -312,8 +273,6 @@ export class CatchClause extends BaseStmt<"CatchClause", TryStmt> {
   }
 }
 
-export const isThrowStmt = typeGuard("ThrowStmt");
-
 export class ThrowStmt extends BaseStmt<"ThrowStmt"> {
   constructor(readonly expr: Expr) {
     super("ThrowStmt");
@@ -324,8 +283,6 @@ export class ThrowStmt extends BaseStmt<"ThrowStmt"> {
     return new ThrowStmt(this.expr.clone()) as this;
   }
 }
-
-export const isWhileStmt = typeGuard("WhileStmt");
 
 export class WhileStmt extends BaseStmt<"WhileStmt"> {
   constructor(readonly condition: Expr, readonly block: BlockStmt) {
@@ -338,8 +295,6 @@ export class WhileStmt extends BaseStmt<"WhileStmt"> {
     return new WhileStmt(this.condition.clone(), this.block.clone()) as this;
   }
 }
-
-export const isDoStmt = typeGuard("DoStmt");
 
 export class DoStmt extends BaseStmt<"DoStmt"> {
   constructor(readonly block: BlockStmt, readonly condition: Expr) {

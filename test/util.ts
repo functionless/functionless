@@ -19,13 +19,14 @@ import {
   ResolverArguments,
 } from "../src";
 
-import { Err, isErr } from "../src/error";
+import { Err } from "../src/error";
 import {
   synthesizeEventPattern,
   synthesizePatternDocument,
 } from "../src/event-bridge/event-pattern/synth";
 import { synthesizeEventBridgeTargets } from "../src/event-bridge/target-input";
 import { EventTransformFunction } from "../src/event-bridge/transform";
+import { isErr } from "../src/guards";
 
 // generates boilerplate for the circuit-breaker logic for implementing early return
 export function returnExpr(varName: string) {

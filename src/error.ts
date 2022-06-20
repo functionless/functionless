@@ -1,6 +1,4 @@
-import { BaseNode, typeGuard } from "./node";
-
-export const isErr = typeGuard("Err");
+import { BaseNode } from "./node";
 
 export class Err extends BaseNode<"Err"> {
   readonly nodeKind: "Err" = "Err";

@@ -5,18 +5,6 @@ import {
   ElementAccessExpr,
   Expr,
   Identifier,
-  isArrayLiteralExpr,
-  isBinaryExpr,
-  isComputedPropertyNameExpr,
-  isElementAccessExpr,
-  isIdentifier,
-  isObjectLiteralExpr,
-  isPropAccessExpr,
-  isPropAssignExpr,
-  isSpreadElementExpr,
-  isStringLiteralExpr,
-  isTemplateExpr,
-  isUnaryExpr,
   NumberLiteralExpr,
   ObjectLiteralExpr,
   PropAccessExpr,
@@ -25,7 +13,23 @@ import {
   TemplateExpr,
   UnaryExpr,
 } from "../expression";
-import { isReturnStmt, isVariableStmt, Stmt, VariableStmt } from "../statement";
+import {
+  isArrayLiteralExpr,
+  isBinaryExpr,
+  isComputedPropertyNameExpr,
+  isElementAccessExpr,
+  isIdentifier,
+  isObjectLiteralExpr,
+  isPropAccessExpr,
+  isPropAssignExpr,
+  isReturnStmt,
+  isSpreadElementExpr,
+  isStringLiteralExpr,
+  isTemplateExpr,
+  isUnaryExpr,
+  isVariableStmt,
+} from "../guards";
+import { Stmt, VariableStmt } from "../statement";
 import { Constant, evalToConstant } from "../util";
 
 /**

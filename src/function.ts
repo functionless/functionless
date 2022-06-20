@@ -29,8 +29,7 @@ import { Construct } from "constructs";
 import { ApiGatewayVtlIntegration } from "./api";
 import type { AppSyncVtlIntegration } from "./appsync";
 import { ASL } from "./asl";
-import { isNativeFunctionDecl, validateFunctionlessNode } from "./declaration";
-import { isErr } from "./error";
+import { validateFunctionlessNode } from "./declaration";
 import { ErrorCodes, formatErrorMessage, SynthError } from "./error-code";
 import {
   IEventBus,
@@ -42,6 +41,7 @@ import {
 } from "./event-bridge";
 import { makeEventBusIntegration } from "./event-bridge/event-bus";
 import { CallExpr, Expr, isVariableReference } from "./expression";
+import { isErr, isNativeFunctionDecl } from "./guards";
 import {
   Integration,
   IntegrationImpl,

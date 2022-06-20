@@ -4,34 +4,31 @@ import {
   APIGatewayProxyResult,
   APIGatewayEventRequestContext,
 } from "aws-lambda";
-import {
-  FunctionDecl,
-  isFunctionDecl,
-  isParameterDecl,
-  validateFunctionDecl,
-} from "./declaration";
+import { FunctionDecl, validateFunctionDecl } from "./declaration";
 import { ErrorCodes, SynthError } from "./error-code";
-import {
-  CallExpr,
-  Expr,
-  Identifier,
-  isArgument,
-  isArrayLiteralExpr,
-  isBooleanLiteralExpr,
-  isCallExpr,
-  isElementAccessExpr,
-  isIdentifier,
-  isNullLiteralExpr,
-  isNumberLiteralExpr,
-  isObjectLiteralExpr,
-  isPropAccessExpr,
-  isPropAssignExpr,
-  isStringLiteralExpr,
-  isUndefinedLiteralExpr,
-} from "./expression";
+import { CallExpr, Expr, Identifier } from "./expression";
 import { Function } from "./function";
+import {
+  isReturnStmt,
+  isPropAccessExpr,
+  isNullLiteralExpr,
+  isUndefinedLiteralExpr,
+  isBooleanLiteralExpr,
+  isNumberLiteralExpr,
+  isStringLiteralExpr,
+  isArrayLiteralExpr,
+  isArgument,
+  isCallExpr,
+  isParameterDecl,
+  isFunctionDecl,
+  isElementAccessExpr,
+  isObjectLiteralExpr,
+  isPropAssignExpr,
+  isVariableStmt,
+  isIdentifier,
+} from "./guards";
 import { findIntegration, IntegrationImpl } from "./integration";
-import { isReturnStmt, isVariableStmt, Stmt } from "./statement";
+import { Stmt } from "./statement";
 import { AnyFunction, singletonConstruct } from "./util";
 import { VTL } from "./vtl";
 

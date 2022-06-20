@@ -1,5 +1,5 @@
 import { assertNever } from "./assert";
-import { FunctionDecl, isParameterDecl, ParameterDecl } from "./declaration";
+import { FunctionDecl, ParameterDecl } from "./declaration";
 import { Err } from "./error";
 import {
   Argument,
@@ -13,11 +13,6 @@ import {
   Expr,
   FunctionExpr,
   Identifier,
-  isComputedPropertyNameExpr,
-  isExpr,
-  isIdentifier,
-  isObjectElementExpr,
-  isStringLiteralExpr,
   NewExpr,
   NullLiteralExpr,
   NumberLiteralExpr,
@@ -34,6 +29,52 @@ import {
   UnaryExpr,
   UndefinedLiteralExpr,
 } from "./expression";
+import {
+  isArgument,
+  isArrayLiteralExpr,
+  isBinaryExpr,
+  isBlockStmt,
+  isBooleanLiteralExpr,
+  isBreakStmt,
+  isCallExpr,
+  isCatchClause,
+  isComputedPropertyNameExpr,
+  isConditionExpr,
+  isContinueStmt,
+  isDoStmt,
+  isErr,
+  isExpr,
+  isExprStmt,
+  isForInStmt,
+  isForOfStmt,
+  isFunctionDecl,
+  isFunctionExpr,
+  isIdentifier,
+  isIfStmt,
+  isNativeFunctionDecl,
+  isNewExpr,
+  isNullLiteralExpr,
+  isNumberLiteralExpr,
+  isObjectElementExpr,
+  isObjectLiteralExpr,
+  isParameterDecl,
+  isPropAccessExpr,
+  isPropAssignExpr,
+  isReferenceExpr,
+  isReturnStmt,
+  isSpreadAssignExpr,
+  isSpreadElementExpr,
+  isStmt,
+  isStringLiteralExpr,
+  isTemplateExpr,
+  isThrowStmt,
+  isTryStmt,
+  isTypeOfExpr,
+  isUnaryExpr,
+  isUndefinedLiteralExpr,
+  isVariableStmt,
+  isWhileStmt,
+} from "./guards";
 import { FunctionlessNode } from "./node";
 
 import {
@@ -47,11 +88,6 @@ import {
   ForInStmt,
   ForOfStmt,
   IfStmt,
-  isBlockStmt,
-  isCatchClause,
-  isIfStmt,
-  isStmt,
-  isVariableStmt,
   ReturnStmt,
   Stmt,
   ThrowStmt,
@@ -74,14 +110,14 @@ export function visitEachChild<T extends FunctionlessNode>(
     node: FunctionlessNode
   ) => FunctionlessNode | FunctionlessNode[] | undefined
 ): T {
-  if (node.kind === "Argument") {
+  if (isArgument(node)) {
     if (!node.expr) {
       return node.clone() as T;
     }
     const expr = visitor(node.expr);
     ensure(expr, isExpr, "an Argument's expr must be an Expr");
     return new Argument(expr, node.name) as T;
-  } else if (node.kind === "ArrayLiteralExpr") {
+  } else if (isArrayLiteralExpr(node)) {
     return new ArrayLiteralExpr(
       node.items.reduce((items: Expr[], item) => {
         let result = visitor(item);
@@ -98,7 +134,7 @@ export function visitEachChild<T extends FunctionlessNode>(
         }
       }, [])
     ) as T;
-  } else if (node.kind === "BinaryExpr") {
+  } else if (isBinaryExpr(node)) {
     const left = visitor(node.left);
     const right = visitor(node.right);
     if (isExpr(left) && isExpr(right)) {
@@ -108,7 +144,7 @@ export function visitEachChild<T extends FunctionlessNode>(
         "visitEachChild of BinaryExpr must return an Expr for both the left and right operands"
       );
     }
-  } else if (node.kind === "BlockStmt") {
+  } else if (isBlockStmt(node)) {
     return new BlockStmt(
       node.statements.reduce((stmts: Stmt[], stmt) => {
         let result = visitor(stmt);
@@ -129,13 +165,13 @@ export function visitEachChild<T extends FunctionlessNode>(
         }
       }, [])
     ) as T;
-  } else if (node.kind === "BooleanLiteralExpr") {
+  } else if (isBooleanLiteralExpr(node)) {
     return new BooleanLiteralExpr(node.value) as T;
-  } else if (node.kind === "BreakStmt") {
+  } else if (isBreakStmt(node)) {
     return new BreakStmt() as T;
-  } else if (node.kind === "ContinueStmt") {
+  } else if (isContinueStmt(node)) {
     return new ContinueStmt() as T;
-  } else if (node.kind === "CallExpr" || node.kind === "NewExpr") {
+  } else if (isCallExpr(node) || isNewExpr(node)) {
     const expr = visitor(node.expr);
     ensure(
       expr,
@@ -154,8 +190,8 @@ export function visitEachChild<T extends FunctionlessNode>(
       );
       return new Argument(expr, arg.name);
     });
-    return new (node.kind === "CallExpr" ? CallExpr : NewExpr)(expr, args) as T;
-  } else if (node.kind === "CatchClause") {
+    return new (isCallExpr(node) ? CallExpr : NewExpr)(expr, args) as T;
+  } else if (isCatchClause(node)) {
     const variableDecl = node.variableDecl
       ? visitor(node.variableDecl)
       : undefined;
@@ -180,7 +216,7 @@ export function visitEachChild<T extends FunctionlessNode>(
     }
 
     return new CatchClause(variableDecl, block) as T;
-  } else if (node.kind === "ComputedPropertyNameExpr") {
+  } else if (isComputedPropertyNameExpr(node)) {
     const expr = visitor(node.expr);
     ensure(
       expr,
@@ -188,7 +224,7 @@ export function visitEachChild<T extends FunctionlessNode>(
       "a ComputedPropertyNameExpr's expr property must be an Expr"
     );
     return new ComputedPropertyNameExpr(expr) as T;
-  } else if (node.kind === "ConditionExpr") {
+  } else if (isConditionExpr(node)) {
     const when = visitor(node.when);
     const then = visitor(node.then);
     const _else = visitor(node._else);
@@ -198,13 +234,13 @@ export function visitEachChild<T extends FunctionlessNode>(
     ensure(_else, isExpr, "ConditionExpr's else must be an Expr");
 
     return new ConditionExpr(when, then, _else) as T;
-  } else if (node.kind === "DoStmt") {
+  } else if (isDoStmt(node)) {
     const block = visitor(node.block);
     ensure(block, isBlockStmt, "a DoStmt's block must be a BlockStmt");
     const condition = visitor(node.condition);
     ensure(condition, isExpr, "a DoStmt's condition must be an Expr");
     return new DoStmt(block, condition) as T;
-  } else if (node.kind === "Err") {
+  } else if (isErr(node)) {
     return new Err(node.error) as T;
   } else if (node.kind == "ElementAccessExpr") {
     const expr = visitor(node.expr);
@@ -216,11 +252,11 @@ export function visitEachChild<T extends FunctionlessNode>(
       "ElementAccessExpr's element property must be an Expr"
     );
     return new ElementAccessExpr(expr, element) as T;
-  } else if (node.kind === "ExprStmt") {
+  } else if (isExprStmt(node)) {
     const expr = visitor(node.expr);
     ensure(expr, isExpr, "The Expr in an ExprStmt must be an Expr");
     return new ExprStmt(expr) as T;
-  } else if (node.kind === "ForInStmt" || node.kind === "ForOfStmt") {
+  } else if (isForInStmt(node) || isForOfStmt(node)) {
     const variableDecl = visitor(node.variableDecl);
     ensure(
       variableDecl,
@@ -240,12 +276,12 @@ export function visitEachChild<T extends FunctionlessNode>(
       ensure(body, isBlockStmt, `Body in ${node.kind} must be a BlockStmt`);
     }
 
-    return new (node.kind === "ForInStmt" ? ForInStmt : ForOfStmt)(
+    return new (isForInStmt(node) ? ForInStmt : ForOfStmt)(
       variableDecl,
       expr,
       body
     ) as T;
-  } else if (node.kind === "FunctionDecl" || node.kind === "FunctionExpr") {
+  } else if (isFunctionDecl(node) || isFunctionExpr(node)) {
     const parameters = node.parameters.reduce(
       (params: ParameterDecl[], parameter) => {
         let p = visitor(parameter);
@@ -271,13 +307,13 @@ export function visitEachChild<T extends FunctionlessNode>(
 
     const body = visitor(node.body);
     ensure(body, isBlockStmt, `a ${node.kind}'s body must be a BlockStmt`);
-    return new (node.kind === "FunctionDecl" ? FunctionDecl : FunctionExpr)(
+    return new (isFunctionDecl(node) ? FunctionDecl : FunctionExpr)(
       parameters,
       body
     ) as T;
-  } else if (node.kind === "Identifier") {
+  } else if (isIdentifier(node)) {
     return new Identifier(node.name) as T;
-  } else if (node.kind === "IfStmt") {
+  } else if (isIfStmt(node)) {
     const when = visitor(node.when);
     const then = visitor(node.then);
     const _else = node._else ? visitor(node._else) : undefined;
@@ -293,11 +329,11 @@ export function visitEachChild<T extends FunctionlessNode>(
     }
 
     return new IfStmt(when, then, _else) as T;
-  } else if (node.kind === "NullLiteralExpr") {
+  } else if (isNullLiteralExpr(node)) {
     return new NullLiteralExpr() as T;
-  } else if (node.kind === "NumberLiteralExpr") {
+  } else if (isNumberLiteralExpr(node)) {
     return new NumberLiteralExpr(node.value) as T;
-  } else if (node.kind === "ObjectLiteralExpr") {
+  } else if (isObjectLiteralExpr(node)) {
     return new ObjectLiteralExpr(
       node.properties.reduce((props: ObjectElementExpr[], prop) => {
         let p = visitor(prop);
@@ -319,9 +355,9 @@ export function visitEachChild<T extends FunctionlessNode>(
         }
       }, [])
     ) as T;
-  } else if (node.kind === "ParameterDecl") {
+  } else if (isParameterDecl(node)) {
     return new ParameterDecl(node.name) as T;
-  } else if (node.kind === "PropAccessExpr") {
+  } else if (isPropAccessExpr(node)) {
     const expr = visitor(node.expr);
     ensure(
       expr,
@@ -329,7 +365,7 @@ export function visitEachChild<T extends FunctionlessNode>(
       "a PropAccessExpr's expr property must be an Expr node type"
     );
     return new PropAccessExpr(expr, node.name) as T;
-  } else if (node.kind === "PropAssignExpr") {
+  } else if (isPropAssignExpr(node)) {
     const name = visitor(node.name);
     const expr = visitor(node.expr);
     ensure(
@@ -343,17 +379,17 @@ export function visitEachChild<T extends FunctionlessNode>(
       "a PropAssignExpr's expr property must be an Expr node type"
     );
     return new PropAssignExpr(name, expr) as T;
-  } else if (node.kind === "ReferenceExpr") {
+  } else if (isReferenceExpr(node)) {
     return new ReferenceExpr(node.name, node.ref) as T;
-  } else if (node.kind === "ReturnStmt") {
+  } else if (isReturnStmt(node)) {
     const expr = visitor(node.expr);
     ensure(expr, isExpr, "a ReturnStmt's expr must be an Expr node type");
     return new ReturnStmt(expr) as T;
-  } else if (node.kind === "SpreadAssignExpr") {
+  } else if (isSpreadAssignExpr(node)) {
     const expr = visitor(node.expr);
     ensure(expr, isExpr, "a SpreadAssignExpr's expr must be an Expr node type");
     return new SpreadAssignExpr(expr) as T;
-  } else if (node.kind === "SpreadElementExpr") {
+  } else if (isSpreadElementExpr(node)) {
     const expr = visitor(node.expr);
     ensure(
       expr,
@@ -361,9 +397,9 @@ export function visitEachChild<T extends FunctionlessNode>(
       "a SpreadElementExpr's expr must be an Expr node type"
     );
     return new SpreadElementExpr(expr) as T;
-  } else if (node.kind === "StringLiteralExpr") {
+  } else if (isStringLiteralExpr(node)) {
     return new StringLiteralExpr(node.value) as T;
-  } else if (node.kind === "TemplateExpr") {
+  } else if (isTemplateExpr(node)) {
     return new TemplateExpr(
       node.exprs.reduce((exprs: Expr[], expr) => {
         let e = visitor(expr);
@@ -387,11 +423,11 @@ export function visitEachChild<T extends FunctionlessNode>(
         }
       }, [])
     ) as T;
-  } else if (node.kind === "ThrowStmt") {
+  } else if (isThrowStmt(node)) {
     const expr = visitor(node.expr);
     ensure(expr, isExpr, "a ThrowStmt's expr must be an Expr node type");
     return new ThrowStmt(expr) as T;
-  } else if (node.kind === "TryStmt") {
+  } else if (isTryStmt(node)) {
     const tryBlock = visitor(node.tryBlock);
     ensure(tryBlock, isBlockStmt, "a TryStmt's tryBlock must be a BlockStmt");
 
@@ -417,29 +453,29 @@ export function visitEachChild<T extends FunctionlessNode>(
       catchClause,
       finallyBlock as FinallyBlock
     ) as T;
-  } else if (node.kind === "TypeOfExpr") {
+  } else if (isTypeOfExpr(node)) {
     const expr = visitor(node.expr);
     ensure(expr, isExpr, "a TypeOfExpr's expr property must be an Expr");
     return new TypeOfExpr(expr) as T;
-  } else if (node.kind === "UnaryExpr") {
+  } else if (isUnaryExpr(node)) {
     const expr = visitor(node.expr);
     ensure(expr, isExpr, "a UnaryExpr's expr property must be an Expr");
     return new UnaryExpr(node.op, expr) as T;
-  } else if (node.kind === "UndefinedLiteralExpr") {
+  } else if (isUndefinedLiteralExpr(node)) {
     return new UndefinedLiteralExpr() as T;
-  } else if (node.kind === "VariableStmt") {
+  } else if (isVariableStmt(node)) {
     const expr = node.expr ? visitor(node.expr) : undefined;
     if (expr) {
       ensure(expr, isExpr, "a VariableStmt's expr property must be an Expr");
     }
     return new VariableStmt(node.name, expr) as T;
-  } else if (node.kind === "WhileStmt") {
+  } else if (isWhileStmt(node)) {
     const condition = visitor(node.condition);
     ensure(condition, isExpr, "a WhileStmt's condition must be an Expr");
     const block = visitor(node.block);
     ensure(block, isBlockStmt, "a WhileStmt's block must be a BlockStmt");
     return new WhileStmt(condition, block) as T;
-  } else if (node.kind === "NativeFunctionDecl") {
+  } else if (isNativeFunctionDecl(node)) {
     throw Error(`${node.kind} are not supported.`);
   }
   return assertNever(node);
