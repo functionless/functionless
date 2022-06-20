@@ -2,7 +2,7 @@ import { aws_iam, aws_stepfunctions } from "aws-cdk-lib";
 import { Construct } from "constructs";
 import { assertNever } from "./assert";
 import { FunctionDecl } from "./declaration";
-import { SynthError, ErrorCodes } from "./error-code";
+import { ErrorCodes, SynthError } from "./error-code";
 import {
   Argument,
   AwaitExpr,
@@ -931,7 +931,10 @@ export class ASL {
             return taskState;
           }
         } else {
-          throw Error("");
+          throw new SynthError(
+            ErrorCodes.Unexpected_Error,
+            "Called references are expected to be an integration."
+          );
         }
       } else if (isMapOrForEach(expr)) {
         const throwTransition = this.throw(expr);

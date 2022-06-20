@@ -521,7 +521,7 @@ export function visitBlock(
 ): BlockStmt {
   return visitEachChild(block, (stmt) => {
     const nestedTasks: FunctionlessNode[] = [];
-    function hoist(expr: Expr): Expr {
+    function hoist(expr: Expr): Identifier {
       const id = new Identifier(nameGenerator.generateOrGet(expr));
       nestedTasks.push(new VariableStmt(id.name, expr));
       return id;
