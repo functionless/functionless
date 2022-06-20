@@ -67,7 +67,7 @@ The Functionless Transformer is a process that runs when you compile your TypeSc
 
 ## Abstract Syntax Tree (AST)
 
-The Functionless AST is a data model representing a program's syntax. It is injected by the [Functionless Transformer](#typescript-transformer) and evaluated by an [Interpreter](#interpreter) during [Synthesis Time](#synthesis-time) to automatically configure infrastructure. See [How Integrations Work](../advanced-concepts/how-integrations-work.md) for more information.
+The Functionless AST is a data model representing a program's syntax. It is injected by the [Functionless Transformer](#typescript-transformer) and evaluated by an [Interpreter](#interpreter) during [Synthesis Time](#synthesis-time) to automatically configure infrastructure. See [How Integrations Work](../advanced-concepts/how-integrations-work.md#functionless-ast) for more information.
 
 ## Interpreter
 
