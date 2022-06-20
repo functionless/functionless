@@ -10,14 +10,7 @@ import { StepFunctions } from "aws-sdk";
 import { Construct } from "constructs";
 import { ApiGatewayVtlIntegration } from "./api";
 import { AppSyncVtlIntegration } from "./appsync";
-import {
-  ASL,
-  isMapOrForEach,
-  MapTask,
-  StateMachine,
-  States,
-  Task,
-} from "./asl";
+import { ASL, MapTask, StateMachine, States, Task } from "./asl";
 import { assertDefined } from "./assert";
 import { validateFunctionDecl, FunctionDecl } from "./declaration";
 import { ErrorCodes, SynthError } from "./error-code";
@@ -221,65 +214,62 @@ export namespace $SFN {
   });
 
   function mapOrForEach(call: CallExpr, context: ASL): MapTask {
-    if (isMapOrForEach(call)) {
-      const callbackfn = call.getArgument("callbackfn")?.expr;
-      if (callbackfn === undefined || callbackfn.kind !== "FunctionExpr") {
-        throw new Error("missing callbackfn in $SFN.map");
-      }
-      const callbackStates = context.execute(callbackfn.body);
-      const callbackStart = context.getStateName(callbackfn.body.step()!);
-      const props = call.getArgument("props")?.expr;
-      let maxConcurrency: number | undefined;
-      if (props !== undefined) {
-        if (isObjectLiteralExpr(props)) {
-          const maxConcurrencyProp = props.getProperty("maxConcurrency");
-          if (
-            isPropAssignExpr(maxConcurrencyProp) &&
-            isNumberLiteralExpr(maxConcurrencyProp.expr)
-          ) {
-            maxConcurrency = maxConcurrencyProp.expr.value;
-            if (maxConcurrency <= 0) {
-              throw new Error("maxConcurrency must be > 0");
-            }
-          } else {
-            throw new Error(
-              "property 'maxConcurrency' must be a NumberLiteralExpr"
-            );
+    const callbackfn = call.getArgument("callbackfn")?.expr;
+    if (callbackfn === undefined || callbackfn.kind !== "FunctionExpr") {
+      throw new Error("missing callbackfn in $SFN.map");
+    }
+    const callbackStates = context.execute(callbackfn.body);
+    const callbackStart = context.getStateName(callbackfn.body.step()!);
+    const props = call.getArgument("props")?.expr;
+    let maxConcurrency: number | undefined;
+    if (props !== undefined) {
+      if (isObjectLiteralExpr(props)) {
+        const maxConcurrencyProp = props.getProperty("maxConcurrency");
+        if (
+          isPropAssignExpr(maxConcurrencyProp) &&
+          isNumberLiteralExpr(maxConcurrencyProp.expr)
+        ) {
+          maxConcurrency = maxConcurrencyProp.expr.value;
+          if (maxConcurrency <= 0) {
+            throw new Error("maxConcurrency must be > 0");
           }
         } else {
-          throw new Error("argument 'props' must be an ObjectLiteralExpr");
+          throw new Error(
+            "property 'maxConcurrency' must be a NumberLiteralExpr"
+          );
         }
+      } else {
+        throw new Error("argument 'props' must be an ObjectLiteralExpr");
       }
-      const array = call.getArgument("array")?.expr;
-      if (array === undefined) {
-        throw new Error("missing argument 'array'");
-      }
-      const arrayPath = ASL.toJsonPath(array);
-      return {
-        Type: "Map",
-        ...(maxConcurrency
-          ? {
-              MaxConcurrency: maxConcurrency,
-            }
-          : {}),
-        Iterator: {
-          States: callbackStates,
-          StartAt: callbackStart,
-        },
-        ItemsPath: arrayPath,
-        Parameters: Object.fromEntries(
-          callbackfn.parameters.map((param, i) => [
-            `${param.name}.$`,
-            i === 0
-              ? "$$.Map.Item.Value"
-              : i == 1
-              ? "$$.Map.Item.Index"
-              : arrayPath,
-          ])
-        ),
-      };
     }
-    throw new Error("invalid arguments to $SFN.map");
+    const array = call.getArgument("array")?.expr;
+    if (array === undefined) {
+      throw new Error("missing argument 'array'");
+    }
+    const arrayPath = ASL.toJsonPath(array);
+    return {
+      Type: "Map",
+      ...(maxConcurrency
+        ? {
+            MaxConcurrency: maxConcurrency,
+          }
+        : {}),
+      Iterator: {
+        States: callbackStates,
+        StartAt: callbackStart,
+      },
+      ItemsPath: arrayPath,
+      Parameters: Object.fromEntries(
+        callbackfn.parameters.map((param, i) => [
+          `${param.name}.$`,
+          i === 0
+            ? "$$.Map.Item.Value"
+            : i == 1
+            ? "$$.Map.Item.Index"
+            : arrayPath,
+        ])
+      ),
+    };
   }
 
   /**
@@ -333,7 +323,7 @@ export namespace $SFN {
 function makeStepFunctionIntegration<K extends string, F extends AnyFunction>(
   methodName: K,
   integration: Omit<IntegrationInput<`$SFN.${K}`, F>, "kind">
-): F {
+) {
   return makeIntegration<`$SFN.${K}`, F>({
     kind: `$SFN.${methodName}`,
     unhandledContext(kind, context) {

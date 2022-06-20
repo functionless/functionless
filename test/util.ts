@@ -278,7 +278,7 @@ export function ebEventTargetTestCaseError<T extends Event>(
 export const normalizeCDKJson = (json: object) => {
   return JSON.parse(
     JSON.stringify(json).replace(
-      /\$\{Token\[[a-zA-Z0-9.]*\]\}/g,
+      /\$\{Token\[[a-zA-Z0-9.-_]*\]\}/g,
       "__REPLACED_TOKEN"
     )
   );
