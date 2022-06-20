@@ -77,22 +77,30 @@ export class PeopleDatabase extends Construct {
     this.getPerson = new AppsyncResolver<
       QueryResolvers["addPerson"]["args"],
       QueryResolvers["addPerson"]["result"]
-    >(($context) => {
-      const person = this.personTable.putItem({
-        key: {
-          id: {
-            S: $util.autoId(),
+    >(
+      scope,
+      id,
+      {
+        typeName: "Query",
+        fieldName: "addPerson",
+      },
+      ($context) => {
+        const person = this.personTable.putItem({
+          key: {
+            id: {
+              S: $util.autoId(),
+            },
           },
-        },
-        attributeValues: {
-          name: {
-            S: $context.arguments.input.name,
+          attributeValues: {
+            name: {
+              S: $context.arguments.input.name,
+            },
           },
-        },
-      });
+        });
 
-      return person;
-    });
+        return person;
+      }
+    );
   }
 }
 ```

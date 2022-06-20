@@ -27,6 +27,24 @@ import { FunctionlessNode } from "./node";
 
 export type AnyFunction = (...args: any[]) => any;
 
+/**
+ * Create a memoized function.
+ *
+ * @param f the function that produces the value
+ * @returns a function that computes a value on demand at most once.
+ */
+export function memoize<T>(f: () => T): () => T {
+  let isComputed = false;
+  let t: T;
+  return () => {
+    if (!isComputed) {
+      t = f();
+      isComputed = true;
+    }
+    return t!;
+  };
+}
+
 export function isInTopLevelScope(expr: FunctionlessNode): boolean {
   if (expr.parent === undefined) {
     return true;
