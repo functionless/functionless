@@ -180,7 +180,7 @@ export class AppsyncResolver<
   Arguments extends ResolverArguments,
   Result,
   Source = undefined
-> extends Construct {
+> {
   /**
    * This static property identifies this class as an AppsyncResolver to the TypeScript plugin.
    */
@@ -238,14 +238,13 @@ export class AppsyncResolver<
         }),
     resolve: ResolverFunction<Arguments, Result, Source>
   ) {
-    super(scope, id);
     this.decl = validateFunctionDecl(resolve, "AppsyncResolver");
 
     const api = props.api ?? (scope as unknown as appsync.GraphqlApi);
 
     this.resolvers = memoize(() => synthResolvers(api, this.decl));
 
-    this.resource = new aws_appsync.CfnResolver(this, "Resource", {
+    this.resource = new aws_appsync.CfnResolver(scope, id, {
       apiId: api.apiId,
       typeName: props.typeName,
       fieldName: props.fieldName,
