@@ -1,7 +1,7 @@
 import * as ts from "typescript";
 import * as tsserver from "typescript/lib/tsserverlibrary";
 import { ApiMethod, ApiMethodKind, isApiMethodKind } from "./api";
-import { AppsyncResolver } from "./appsync";
+import { AppsyncField, AppsyncResolver } from "./appsync";
 import { EventBus, Rule } from "./event-bridge";
 import { EventTransform } from "./event-bridge/transform";
 import { Function } from "./function";
@@ -77,6 +77,7 @@ export function makeFunctionlessChecker(
     getApiMethodKind,
     getFunctionlessTypeKind,
     isApiIntegration,
+    isAppsyncField,
     isAppsyncResolver,
     isCDKConstruct,
     isConstant,
@@ -175,12 +176,34 @@ export function makeFunctionlessChecker(
   }
 
   function isAppsyncResolver(node: ts.Node): node is ts.NewExpression & {
-    arguments: [TsFunctionParameter, ...ts.Expression[]];
+    arguments: [
+      ts.Expression,
+      ts.Expression,
+      ts.Expression,
+      // the inline function
+      TsFunctionParameter
+    ];
   } {
     if (ts.isNewExpression(node)) {
       return isFunctionlessClassOfKind(
         node.expression,
         AppsyncResolver.FunctionlessType
+      );
+    }
+    return false;
+  }
+
+  function isAppsyncField(node: ts.Node): node is ts.NewExpression & {
+    arguments: [
+      ts.Expression,
+      // the inline function
+      TsFunctionParameter
+    ];
+  } {
+    if (ts.isNewExpression(node)) {
+      return isFunctionlessClassOfKind(
+        node.expression,
+        AppsyncField.FunctionlessType
       );
     }
     return false;

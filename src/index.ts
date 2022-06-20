@@ -1,4 +1,5 @@
 export * from "./api";
+export * from "./asl";
 export * from "./appsync";
 export * from "./async-synth";
 export * from "./aws";

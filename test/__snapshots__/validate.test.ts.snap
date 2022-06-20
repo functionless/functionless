@@ -45,6 +45,33 @@ https://functionless.org/docs/error-codes#api-gateway-response-mapping-template-
 "
 `;
 
+exports[`appsync.ts 1`] = `
+"[96mtest/test-files/appsync.ts[0m:[93m48[0m:[93m5[0m - [91merror[0m[90m Functionless(10002): [0mArgument must be an inline Function
+
+https://functionless.org/docs/error-codes#argument-must-be-an-inline-function
+
+[7m48[0m   },
+[7m  [0m [91m    [0m
+[7m49[0m   // invalid - must be an inline function
+[7m  [0m [91m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+[7m50[0m   f
+[7m  [0m [91m~~~[0m
+[96mtest/test-files/appsync.ts[0m:[93m60[0m:[93m5[0m - [91merror[0m[90m Functionless(10002): [0mArgument must be an inline Function
+
+https://functionless.org/docs/error-codes#argument-must-be-an-inline-function
+
+[7m 60[0m   },
+[7m   [0m [91m    [0m
+[7m 61[0m   // invalid - must be an inline function
+[7m   [0m [91m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+[7m...[0m 
+[7m 64[0m       null
+[7m   [0m [91m~~~~~~~~~~[0m
+[7m 65[0m   )()
+[7m   [0m [91m~~~~~[0m
+"
+`;
+
 exports[`function.ts 1`] = `
 "[96mtest/test-files/function.ts[0m:[93m28[0m:[93m51[0m - [91merror[0m[90m Functionless(10009): [0mCannot use infrastructure Resource in Function closure
 

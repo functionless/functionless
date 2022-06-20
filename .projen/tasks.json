@@ -201,7 +201,7 @@
           "exec": "./scripts/localstack"
         },
         {
-          "exec": "cd ./test-app && yarn && yarn build && yarn synth"
+          "exec": "cd ./test-app && yarn && yarn build && yarn synth --quiet"
         },
         {
           "exec": "jest --passWithNoTests --all --updateSnapshot"

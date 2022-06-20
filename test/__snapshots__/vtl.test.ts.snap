@@ -3,8 +3,8 @@
 exports[`$util.log.error(message) 1`] = `
 Array [
   "{
-  \\"version\\": \\"2018-05-29\\",
-  \\"payload\\": null
+\\"version\\": \\"2018-05-29\\",
+\\"payload\\": null
 }",
   "#return($util.log.error('hello world'))",
 ]
@@ -13,8 +13,8 @@ Array [
 exports[`$util.log.error(message, ...Object) 1`] = `
 Array [
   "{
-  \\"version\\": \\"2018-05-29\\",
-  \\"payload\\": null
+\\"version\\": \\"2018-05-29\\",
+\\"payload\\": null
 }",
   "#set($v1 = {})
 $util.qr($v1.put('a', 1))
@@ -27,8 +27,8 @@ $util.qr($v2.put('b', 2))
 exports[`$util.log.info(message) 1`] = `
 Array [
   "{
-  \\"version\\": \\"2018-05-29\\",
-  \\"payload\\": null
+\\"version\\": \\"2018-05-29\\",
+\\"payload\\": null
 }",
   "#return($util.log.info('hello world'))",
 ]
@@ -37,8 +37,8 @@ Array [
 exports[`$util.log.info(message, ...Object) 1`] = `
 Array [
   "{
-  \\"version\\": \\"2018-05-29\\",
-  \\"payload\\": null
+\\"version\\": \\"2018-05-29\\",
+\\"payload\\": null
 }",
   "#set($v1 = {})
 $util.qr($v1.put('a', 1))
@@ -51,8 +51,8 @@ $util.qr($v2.put('b', 2))
 exports[`$util.time.nowISO8601 1`] = `
 Array [
   "{
-  \\"version\\": \\"2018-05-29\\",
-  \\"payload\\": null
+\\"version\\": \\"2018-05-29\\",
+\\"payload\\": null
 }",
   "#return($util.time.nowISO8601())",
 ]
@@ -61,8 +61,8 @@ Array [
 exports[`BinaryExpr and UnaryExpr are evaluated to temporary variables 1`] = `
 Array [
   "{
-  \\"version\\": \\"2018-05-29\\",
-  \\"payload\\": null
+\\"version\\": \\"2018-05-29\\",
+\\"payload\\": null
 }",
   "#set($v1 = {})
 #set($v2 = 0 - 1)
@@ -80,8 +80,8 @@ $util.qr($v1.put('z', $v6))
 exports[`binary expr = 1`] = `
 Array [
   "{
-  \\"version\\": \\"2018-05-29\\",
-  \\"payload\\": null
+\\"version\\": \\"2018-05-29\\",
+\\"payload\\": null
 }",
   "#set($v1 = $context.arguments.key == 'help me')
 #if($v1)
@@ -122,8 +122,8 @@ Object {
 exports[`binary expr == 1`] = `
 Array [
   "{
-  \\"version\\": \\"2018-05-29\\",
-  \\"payload\\": null
+\\"version\\": \\"2018-05-29\\",
+\\"payload\\": null
 }",
   "#set($v1 = {})
 #set($v2 = $context.arguments.key == 'key')
@@ -145,8 +145,8 @@ Object {
 exports[`binary expr in 1`] = `
 Array [
   "{
-  \\"version\\": \\"2018-05-29\\",
-  \\"payload\\": null
+\\"version\\": \\"2018-05-29\\",
+\\"payload\\": null
 }",
   "#set($v2 = $context.arguments.class.name.startsWith('[L') || $context.arguments.class.name.contains('ArrayList'))
 #if($v2)
@@ -230,8 +230,8 @@ Object {
 exports[`binary expr in map 1`] = `
 Array [
   "{
-  \\"version\\": \\"2018-05-29\\",
-  \\"payload\\": null
+\\"version\\": \\"2018-05-29\\",
+\\"payload\\": null
 }",
   "#set($v1 = {})
 $util.qr($v1.put('key', 'value'))
@@ -277,8 +277,8 @@ Object {
 exports[`binary exprs logical 1`] = `
 Array [
   "{
-  \\"version\\": \\"2018-05-29\\",
-  \\"payload\\": null
+\\"version\\": \\"2018-05-29\\",
+\\"payload\\": null
 }",
   "#set($context.stash.a = $context.arguments.a)
 #set($context.stash.b = $context.arguments.b)
@@ -315,8 +315,8 @@ Object {
 exports[`binary exprs math 1`] = `
 Array [
   "{
-  \\"version\\": \\"2018-05-29\\",
-  \\"payload\\": null
+\\"version\\": \\"2018-05-29\\",
+\\"payload\\": null
 }",
   "#set($context.stash.a = $context.arguments.a)
 #set($context.stash.b = $context.arguments.b)
@@ -345,8 +345,8 @@ Object {
 exports[`binary exprs value comparison 1`] = `
 Array [
   "{
-  \\"version\\": \\"2018-05-29\\",
-  \\"payload\\": null
+\\"version\\": \\"2018-05-29\\",
+\\"payload\\": null
 }",
   "#set($context.stash.a = $context.arguments.a)
 #set($context.stash.b = $context.arguments.b)
@@ -413,8 +413,8 @@ Object {
 exports[`break from for-loop 1`] = `
 Array [
   "{
-  \\"version\\": \\"2018-05-29\\",
-  \\"payload\\": null
+\\"version\\": \\"2018-05-29\\",
+\\"payload\\": null
 }",
   "#set($context.stash.newList = [])
 #foreach($item in $context.arguments.list)
@@ -431,8 +431,8 @@ $util.qr($context.stash.newList.addAll([$item]))
 exports[`call function and return its value 1`] = `
 Array [
   "{
-  \\"version\\": \\"2018-05-29\\",
-  \\"payload\\": null
+\\"version\\": \\"2018-05-29\\",
+\\"payload\\": null
 }",
   "#return($util.autoId())",
 ]
@@ -441,8 +441,8 @@ Array [
 exports[`call function, assign to variable and return variable reference 1`] = `
 Array [
   "{
-  \\"version\\": \\"2018-05-29\\",
-  \\"payload\\": null
+\\"version\\": \\"2018-05-29\\",
+\\"payload\\": null
 }",
   "#set($context.stash.id = $util.autoId())
 #return($context.stash.id)",
@@ -452,8 +452,8 @@ Array [
 exports[`chain map over list 1`] = `
 Array [
   "{
-  \\"version\\": \\"2018-05-29\\",
-  \\"payload\\": null
+\\"version\\": \\"2018-05-29\\",
+\\"payload\\": null
 }",
   "#set($v1 = [])
 #foreach($item in $context.arguments.list)
@@ -468,8 +468,8 @@ $util.qr($v1.add($v2))
 exports[`chain map over list complex 1`] = `
 Array [
   "{
-  \\"version\\": \\"2018-05-29\\",
-  \\"payload\\": null
+\\"version\\": \\"2018-05-29\\",
+\\"payload\\": null
 }",
   "#set($v1 = [])
 #foreach($item in $context.arguments.list)
@@ -489,8 +489,8 @@ $util.qr($v1.add($v3))
 exports[`chain map over list multiple array 1`] = `
 Array [
   "{
-  \\"version\\": \\"2018-05-29\\",
-  \\"payload\\": null
+\\"version\\": \\"2018-05-29\\",
+\\"payload\\": null
 }",
   "#set($v1 = [])
 #set($v2 = [])
@@ -513,8 +513,8 @@ $util.qr($v1.add($v4))
 exports[`computed property names 1`] = `
 Array [
   "{
-  \\"version\\": \\"2018-05-29\\",
-  \\"payload\\": null
+\\"version\\": \\"2018-05-29\\",
+\\"payload\\": null
 }",
   "#set($context.stash.name = $context.arguments.arg)
 #set($v1 = $context.stash.name + '_test')
@@ -529,8 +529,8 @@ $util.qr($v2.put($context.stash.value, $context.arguments.arg))
 exports[`conditional expression in template expression 1`] = `
 Array [
   "{
-  \\"version\\": \\"2018-05-29\\",
-  \\"payload\\": null
+\\"version\\": \\"2018-05-29\\",
+\\"payload\\": null
 }",
   "#set($v2 = $context.arguments.a == 'hello')
 #if($v2)
@@ -545,8 +545,8 @@ Array [
 exports[`empty function returning an argument 1`] = `
 Array [
   "{
-  \\"version\\": \\"2018-05-29\\",
-  \\"payload\\": null
+\\"version\\": \\"2018-05-29\\",
+\\"payload\\": null
 }",
   "#return($context.arguments.a)",
 ]
@@ -555,8 +555,8 @@ Array [
 exports[`for-in loop and element access 1`] = `
 Array [
   "{
-  \\"version\\": \\"2018-05-29\\",
-  \\"payload\\": null
+\\"version\\": \\"2018-05-29\\",
+\\"payload\\": null
 }",
   "#set($context.stash.newList = [])
 #foreach($key in $context.arguments.record.keySet())
@@ -569,8 +569,8 @@ $util.qr($context.stash.newList.addAll([$context.arguments.record[$key]]))
 exports[`for-of loop 1`] = `
 Array [
   "{
-  \\"version\\": \\"2018-05-29\\",
-  \\"payload\\": null
+\\"version\\": \\"2018-05-29\\",
+\\"payload\\": null
 }",
   "#set($context.stash.newList = [])
 #foreach($item in $context.arguments.list)
@@ -583,8 +583,8 @@ $util.qr($context.stash.newList.addAll([$item]))
 exports[`forEach over list 1`] = `
 Array [
   "{
-  \\"version\\": \\"2018-05-29\\",
-  \\"payload\\": null
+\\"version\\": \\"2018-05-29\\",
+\\"payload\\": null
 }",
   "#foreach($item in $context.arguments.list)
 $util.qr($util.error($item))
@@ -596,8 +596,8 @@ $util.qr($util.error($item))
 exports[`if statement 1`] = `
 Array [
   "{
-  \\"version\\": \\"2018-05-29\\",
-  \\"payload\\": null
+\\"version\\": \\"2018-05-29\\",
+\\"payload\\": null
 }",
   "#set($v1 = $context.arguments.list.length > 0)
 #if($v1)
@@ -615,8 +615,8 @@ Array [
 exports[`local variable inside for-of loop is declared as a local variable 1`] = `
 Array [
   "{
-  \\"version\\": \\"2018-05-29\\",
-  \\"payload\\": null
+\\"version\\": \\"2018-05-29\\",
+\\"payload\\": null
 }",
   "#set($context.stash.newList = [])
 #foreach($item in $context.arguments.list)
@@ -630,8 +630,8 @@ $util.qr($context.stash.newList.addAll([$i]))
 exports[`map and reduce and map and reduce over list with initial value 1`] = `
 Array [
   "{
-  \\"version\\": \\"2018-05-29\\",
-  \\"payload\\": null
+\\"version\\": \\"2018-05-29\\",
+\\"payload\\": null
 }",
   "#set($v2 = [])
 #foreach($item in $context.arguments.list)
@@ -660,8 +660,8 @@ $util.qr($v6.add($item))
 exports[`map and reduce over list with initial value 1`] = `
 Array [
   "{
-  \\"version\\": \\"2018-05-29\\",
-  \\"payload\\": null
+\\"version\\": \\"2018-05-29\\",
+\\"payload\\": null
 }",
   "#set($v1 = [])
 #foreach($item in $context.arguments.list)
@@ -680,8 +680,8 @@ $util.qr($v3.add($item))
 exports[`map and reduce with array over list with initial value 1`] = `
 Array [
   "{
-  \\"version\\": \\"2018-05-29\\",
-  \\"payload\\": null
+\\"version\\": \\"2018-05-29\\",
+\\"payload\\": null
 }",
   "#set($v2 = [])
 #foreach($item in $context.arguments.list)
@@ -706,8 +706,8 @@ $util.qr($v5.add($item))
 exports[`map over list 1`] = `
 Array [
   "{
-  \\"version\\": \\"2018-05-29\\",
-  \\"payload\\": null
+\\"version\\": \\"2018-05-29\\",
+\\"payload\\": null
 }",
   "#set($v1 = [])
 #foreach($item in $context.arguments.list)
@@ -721,8 +721,8 @@ $util.qr($v1.add($v2))
 exports[`map over list with in-line return 1`] = `
 Array [
   "{
-  \\"version\\": \\"2018-05-29\\",
-  \\"payload\\": null
+\\"version\\": \\"2018-05-29\\",
+\\"payload\\": null
 }",
   "#set($v1 = [])
 #foreach($item in $context.arguments.list)
@@ -736,8 +736,8 @@ $util.qr($v1.add($v2))
 exports[`null and undefined 1`] = `
 Array [
   "{
-  \\"version\\": \\"2018-05-29\\",
-  \\"payload\\": null
+\\"version\\": \\"2018-05-29\\",
+\\"payload\\": null
 }",
   "#set($v1 = {})
 $util.qr($v1.put('name', $null))
@@ -749,8 +749,8 @@ $util.qr($v1.put('value', $null))
 exports[`property assignment of conditional expression 1`] = `
 Array [
   "{
-  \\"version\\": \\"2018-05-29\\",
-  \\"payload\\": null
+\\"version\\": \\"2018-05-29\\",
+\\"payload\\": null
 }",
   "#set($v1 = {})
 #set($v3 = $context.arguments.list.length > 0)
@@ -767,8 +767,8 @@ $util.qr($v1.put('prop', $v2))
 exports[`push element to array is renamed to add 1`] = `
 Array [
   "{
-  \\"version\\": \\"2018-05-29\\",
-  \\"payload\\": null
+\\"version\\": \\"2018-05-29\\",
+\\"payload\\": null
 }",
   "$util.qr($context.arguments.list.addAll(['hello']))
 #return($context.arguments.list)",
@@ -778,8 +778,8 @@ Array [
 exports[`reduce over list with initial value 1`] = `
 Array [
   "{
-  \\"version\\": \\"2018-05-29\\",
-  \\"payload\\": null
+\\"version\\": \\"2018-05-29\\",
+\\"payload\\": null
 }",
   "#set($v1 = [])
 #foreach($item in $context.arguments.list)
@@ -797,8 +797,8 @@ $util.qr($v3.add($item))
 exports[`reduce over list without initial value 1`] = `
 Array [
   "{
-  \\"version\\": \\"2018-05-29\\",
-  \\"payload\\": null
+\\"version\\": \\"2018-05-29\\",
+\\"payload\\": null
 }",
   "#if($context.arguments.list.isEmpty())
 $util.error('Reduce of empty array with no initial value')
@@ -819,8 +819,8 @@ $util.error('Reduce of empty array with no initial value')
 exports[`return conditional expression 1`] = `
 Array [
   "{
-  \\"version\\": \\"2018-05-29\\",
-  \\"payload\\": null
+\\"version\\": \\"2018-05-29\\",
+\\"payload\\": null
 }",
   "#set($v2 = $context.arguments.list.length > 0)
 #if($v2)
@@ -835,8 +835,8 @@ Array [
 exports[`return in-line list literal 1`] = `
 Array [
   "{
-  \\"version\\": \\"2018-05-29\\",
-  \\"payload\\": null
+\\"version\\": \\"2018-05-29\\",
+\\"payload\\": null
 }",
   "#return([$context.arguments.a, $context.arguments.b])",
 ]
@@ -845,8 +845,8 @@ Array [
 exports[`return in-line spread object 1`] = `
 Array [
   "{
-  \\"version\\": \\"2018-05-29\\",
-  \\"payload\\": null
+\\"version\\": \\"2018-05-29\\",
+\\"payload\\": null
 }",
   "#set($v1 = {})
 $util.qr($v1.put('id', $util.autoId()))
@@ -858,8 +858,8 @@ $util.qr($v1.putAll($context.arguments.obj))
 exports[`return list element 1`] = `
 Array [
   "{
-  \\"version\\": \\"2018-05-29\\",
-  \\"payload\\": null
+\\"version\\": \\"2018-05-29\\",
+\\"payload\\": null
 }",
   "#set($context.stash.list = [$context.arguments.a, $context.arguments.b])
 #return($context.stash.list[0])",
@@ -869,8 +869,8 @@ Array [
 exports[`return list literal variable 1`] = `
 Array [
   "{
-  \\"version\\": \\"2018-05-29\\",
-  \\"payload\\": null
+\\"version\\": \\"2018-05-29\\",
+\\"payload\\": null
 }",
   "#set($context.stash.list = [$context.arguments.a, $context.arguments.b])
 #return($context.stash.list)",
@@ -880,8 +880,8 @@ Array [
 exports[`return literal object with values 1`] = `
 Array [
   "{
-  \\"version\\": \\"2018-05-29\\",
-  \\"payload\\": null
+\\"version\\": \\"2018-05-29\\",
+\\"payload\\": null
 }",
   "#set($context.stash.arg = $context.arguments.arg)
 #set($context.stash.obj = $context.arguments.obj)
@@ -903,8 +903,8 @@ $util.qr($v1.putAll($context.stash.obj))
 exports[`template expression 1`] = `
 Array [
   "{
-  \\"version\\": \\"2018-05-29\\",
-  \\"payload\\": null
+\\"version\\": \\"2018-05-29\\",
+\\"payload\\": null
 }",
   "#set($context.stash.local = $context.arguments.a)
 #return(\\"head \${context.arguments.a} \${context.stash.local}\${context.arguments.a}\\")",

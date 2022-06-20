@@ -12,8 +12,9 @@ import {
   makeFunctionlessChecker,
   TsFunctionParameter,
 } from "./checker";
+import type { FunctionDecl } from "./declaration";
 import { ErrorCodes, SynthError } from "./error-code";
-import { BinaryOp } from "./expression";
+import type { FunctionExpr, BinaryOp } from "./expression";
 import { FunctionlessNode } from "./node";
 import { anyOf, hasParent } from "./util";
 
@@ -98,9 +99,11 @@ export function compile(
       function visitor(node: ts.Node): ts.Node | ts.Node[] {
         const visit = () => {
           if (checker.isAppsyncResolver(node)) {
-            return visitAppsyncResolver(node as ts.NewExpression);
+            return visitAppsyncResolver(node);
+          } else if (checker.isAppsyncField(node)) {
+            return visitAppsyncField(node);
           } else if (checker.isNewStepFunction(node)) {
-            return visitStepFunction(node as ts.NewExpression);
+            return visitStepFunction(node);
           } else if (checker.isReflectFunction(node)) {
             return errorBoundary(() =>
               toFunction("FunctionDecl", node.arguments[0])
@@ -220,14 +223,45 @@ export function compile(
       }
 
       function visitAppsyncResolver(call: ts.NewExpression): ts.Node {
-        if (call.arguments?.length === 1) {
-          const impl = call.arguments[0];
-          if (ts.isFunctionExpression(impl) || ts.isArrowFunction(impl)) {
+        if (call.arguments?.length === 4) {
+          const [scope, id, props, resolver] = call.arguments;
+
+          if (
+            ts.isArrowFunction(resolver) ||
+            ts.isFunctionExpression(resolver)
+          ) {
             return ts.factory.updateNewExpression(
               call,
               call.expression,
               call.typeArguments,
-              [errorBoundary(() => toFunction("FunctionDecl", impl, 1))]
+              [
+                scope,
+                id,
+                props,
+                errorBoundary(() => toFunction("FunctionDecl", resolver)),
+              ]
+            );
+          }
+        }
+        return call;
+      }
+
+      function visitAppsyncField(call: ts.NewExpression): ts.Node {
+        if (call.arguments?.length === 2) {
+          const [options, resolver] = call.arguments;
+
+          if (
+            ts.isArrowFunction(resolver) ||
+            ts.isFunctionExpression(resolver)
+          ) {
+            return ts.factory.updateNewExpression(
+              call,
+              call.expression,
+              call.typeArguments,
+              [
+                options,
+                errorBoundary(() => toFunction("FunctionDecl", resolver, 1)),
+              ]
             );
           }
         }
@@ -498,7 +532,7 @@ export function compile(
       }
 
       function toFunction(
-        type: "FunctionDecl" | "FunctionExpr",
+        type: FunctionDecl["kind"] | FunctionExpr["kind"],
         impl: ts.Expression,
         dropArgs?: number
       ): ts.Expression {
