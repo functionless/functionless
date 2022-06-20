@@ -1805,6 +1805,34 @@ Object {
 }
 `;
 
+exports[`list.filter(item => item.length > 2).map(item => item) 3`] = `
+Object {
+  "StartAt": "return input.list.filter(function(item)).map(function(item))",
+  "States": Object {
+    "return input.list.filter(function(item)).map(function(item))": Object {
+      "End": true,
+      "ItemsPath": "$.list[?(@.length>2)]",
+      "Iterator": Object {
+        "StartAt": "return item",
+        "States": Object {
+          "return item": Object {
+            "End": true,
+            "OutputPath": "$.item",
+            "Type": "Pass",
+          },
+        },
+      },
+      "MaxConcurrency": 1,
+      "Parameters": Object {
+        "item.$": "$$.Map.Item.Value",
+      },
+      "ResultPath": "$",
+      "Type": "Map",
+    },
+  },
+}
+`;
+
 exports[`list.filter(item => item.length > 2).map(item => task(item)) 1`] = `
 Object {
   "StartAt": "return Promise.all(input.list.filter(function(item)).map(function(item)))",
@@ -1844,6 +1872,40 @@ Object {
   "StartAt": "return Promise.all(input.list.filter(function(item)).map(function(item)))",
   "States": Object {
     "return Promise.all(input.list.filter(function(item)).map(function(item)))": Object {
+      "End": true,
+      "ItemsPath": "$.list[?(@.length>2)]",
+      "Iterator": Object {
+        "StartAt": "return task(item)",
+        "States": Object {
+          "return task(item)": Object {
+            "End": true,
+            "Parameters": Object {
+              "FunctionName": "__REPLACED_TOKEN",
+              "Payload.$": "$.item",
+            },
+            "Resource": "arn:aws:states:::lambda:invoke",
+            "ResultPath": "$",
+            "ResultSelector": "$.Payload",
+            "Type": "Task",
+          },
+        },
+      },
+      "MaxConcurrency": 1,
+      "Parameters": Object {
+        "item.$": "$$.Map.Item.Value",
+      },
+      "ResultPath": "$",
+      "Type": "Map",
+    },
+  },
+}
+`;
+
+exports[`list.filter(item => item.length > 2).map(item => task(item)) 3`] = `
+Object {
+  "StartAt": "return await Promise.all(input.list.filter(function(item)).map(function(ite",
+  "States": Object {
+    "return await Promise.all(input.list.filter(function(item)).map(function(ite": Object {
       "End": true,
       "ItemsPath": "$.list[?(@.length>2)]",
       "Iterator": Object {
