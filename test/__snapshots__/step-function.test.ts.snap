@@ -863,7 +863,11 @@ Object {
       "Type": "Task",
     },
     "for(i of [0_tmp])": Object {
+<<<<<<< HEAD
       "ItemsPath": "__REPLACED_TOKEN",
+=======
+      "ItemsPath": "\${Token[States.Array....0_tmp...3356]}",
+>>>>>>> b784d750f5bbeadb47cf4d9a493130d70f9cf9e5
       "Iterator": Object {
         "StartAt": "1_tmp = task(i)",
         "States": Object {
