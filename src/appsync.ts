@@ -176,12 +176,47 @@ export class AppsyncResolver<
    */
   public static readonly FunctionlessType = "AppsyncResolver";
 
+  /**
+   * The AST form of this resolver.
+   */
   public readonly decl: FunctionDecl<
     ResolverFunction<Arguments, Result, Source>
   >;
 
+  /**
+   * The underlying {@link aws_appsync.CfnResolver}.
+   */
   public readonly resource;
+
+  /**
+   * A memoized function that computes the Appsync Resolvers.
+   *
+   * This function will be called from within a {@link Lazy} during CDK synthesis. It should not be
+   * called directly except during tests.
+   */
   public readonly resolvers;
+
+  /**
+   * Create a new AppsyncResolver and use the {@link scope} as the GraphQL API.
+   *
+   * If {@link props}.api exists, then it will be use as the API instead.
+   */
+  constructor(
+    scope: appsync.GraphqlApi,
+    id: string,
+    props: Omit<AppsyncResolverProps, "api">,
+    resolve: ResolverFunction<Arguments, Result, Source>
+  );
+
+  /**
+   * Create a new AppsyncResolver and use {@link props}.api as the GraphQL API.
+   */
+  constructor(
+    scope: Construct,
+    id: string,
+    props: AppsyncResolverProps,
+    resolve: ResolverFunction<Arguments, Result, Source>
+  );
 
   constructor(
     scope: Construct,
@@ -192,10 +227,12 @@ export class AppsyncResolver<
     super(scope, id);
     this.decl = validateFunctionDecl(resolve, "AppsyncResolver");
 
+    const api = props.api ?? (scope as unknown as appsync.GraphqlApi);
+
     this.resolvers = memoize(() => synthResolvers(props.api, this.decl));
 
     this.resource = new aws_appsync.CfnResolver(this, "Resource", {
-      apiId: props.api.apiId,
+      apiId: api.apiId,
       typeName: props.typeName,
       fieldName: props.fieldName,
       kind: Lazy.string({
@@ -229,12 +266,18 @@ export class AppsyncResolver<
   }
 }
 
+/**
+ * Properties for a new {@link AppsyncField}.
+ */
 export interface AppsyncFieldOptions
   extends Omit<
     appsync.ResolvableFieldOptions,
     keyof ReturnType<typeof synthResolvers>
   > {
-  api: appsync.GraphqlApi;
+  /**
+   * The API this {@link AppsyncField} should be added to.
+   */
+  readonly api: appsync.GraphqlApi;
 }
 
 /**

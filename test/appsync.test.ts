@@ -134,6 +134,22 @@ describe("step function integration", () => {
   });
 });
 
+test("if first argument is a GraphQLApi, then api can be omitted from the props", () => {
+  const machine = new StepFunction(stack, "machine", () => {});
+
+  new AppsyncResolver<{ id: string }, void>(
+    api,
+    "resolver",
+    {
+      fieldName: "field",
+      typeName: "type",
+    },
+    (context) => {
+      machine({ traceHeader: context.arguments.id });
+    }
+  );
+});
+
 describe("step function describe execution", () => {
   test("machine describe exec string", () => {
     const machine = new StepFunction(stack, "machine", () => {});
