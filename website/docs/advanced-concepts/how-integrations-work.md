@@ -17,11 +17,11 @@ export interface Integration<
 > {
   readonly __functionBrand: F;
   readonly kind: K;
-  readonly appSyncVtl: AppSyncVtlIntegration;
-  readonly apiGWVtl: ApiGatewayVtlIntegration;
-  readonly asl: (call: CallExpr, context: ASL) => Omit<State, "Next">;
-  readonly eventBus: EventBusInteg;
-  readonly native: NativeIntegration<F>;
+  readonly appSyncVtl?: AppSyncVtlIntegration;
+  readonly apiGWVtl?: ApiGatewayVtlIntegration;
+  readonly asl?: (call: CallExpr, context: ASL) => Omit<State, "Next">;
+  readonly eventBus?: EventBusInteg;
+  readonly native?: NativeIntegration<F>;
 }
 ```
 
