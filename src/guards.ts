@@ -97,6 +97,7 @@ export function isStmt(a: any): a is Stmt {
       isBlockStmt(a) ||
       isCatchClause(a) ||
       isContinueStmt(a) ||
+      isDoStmt(a) ||
       isExprStmt(a) ||
       isForInStmt(a) ||
       isForOfStmt(a) ||
@@ -104,7 +105,8 @@ export function isStmt(a: any): a is Stmt {
       isReturnStmt(a) ||
       isThrowStmt(a) ||
       isTryStmt(a) ||
-      isVariableStmt(a))
+      isVariableStmt(a) ||
+      isWhileStmt(a))
   );
 }
 export const isExprStmt = typeGuard("ExprStmt");

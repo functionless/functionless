@@ -28,12 +28,26 @@ import {
   isPropAccessExpr,
   isElementAccessExpr,
   isIfStmt,
+  isBlockStmt,
+  isStmt,
+  isForInStmt,
+  isForOfStmt,
 } from "./guards";
-import { findDeepIntegration, IntegrationImpl } from "./integration";
+import {
+  findDeepIntegration,
+  IntegrationImpl,
+  isIntegrationCallExpr,
+} from "./integration";
 import { Literal } from "./literal";
 import { FunctionlessNode } from "./node";
-import { AnyFunction, isInTopLevelScope, singletonConstruct } from "./util";
-import { visitEachChild } from "./visit";
+import { BlockStmt } from "./statement";
+import {
+  AnyFunction,
+  DeterministicNameGenerator,
+  isInTopLevelScope,
+  singletonConstruct,
+} from "./util";
+import { visitBlock, visitEachChild } from "./visit";
 import { VTL } from "./vtl";
 
 /**
@@ -180,6 +194,8 @@ export class AppsyncResolver<
     ResolverFunction<Arguments, Result, Source>
   >;
 
+  private generatedNames = new DeterministicNameGenerator();
+
   constructor(fn: ResolverFunction<Arguments, Result, Source>) {
     this.decl = validateFunctionDecl(fn, "AppsyncResolver");
   }
@@ -295,20 +311,267 @@ export class AppsyncResolver<
     });
   }
 
-  private getResolvableFields(api: appsync.GraphqlApi) {
-    const resolverCount = countResolvers(this.decl);
+  private synthesizeFunctions(
+    api: appsync.GraphqlApi,
+    decl: FunctionDecl<ResolverFunction<Arguments, Result, Source>>
+  ) {
+    const self = this;
+    let resolverCount = 0;
+    /**
+     * Update some nodes.
+     */
+    const updatedDecl = visitEachChild(
+      decl,
+      function normalizeAST(
+        node,
+        hoist?: (expr: Expr) => Expr
+      ): FunctionlessNode | FunctionlessNode[] {
+        if (isIntegrationCallExpr(node)) {
+          resolverCount++;
+        }
+        // just counting, don'r do anything
+        if (isBlockStmt(node)) {
+          return new BlockStmt([
+            // for each block statement
+            ...visitBlock(
+              node,
+              function normalizeBlock(stmt, hoist) {
+                return visitEachChild(stmt, (expr) =>
+                  normalizeAST(expr, hoist)
+                );
+              },
+              self.generatedNames
+            ).statements,
+          ]);
+        } else if (hoist && self.doHoist(node)) {
+          const updatedChild = visitEachChild(node, (expr) =>
+            normalizeAST(expr, hoist)
+          );
+          // when we find an integration call,
+          // if it is nested, hoist it up (create variable, add above, replace expr with variable)
+          return hoist(updatedChild);
+        } else if (isBinaryExpr(node)) {
+          /**
+           * rewrite `in` to a conditional statement to support both arrays and maps
+           * var v = left in right;
+           *
+           * var v = right.class.name.startsWith("[L") || right.class.name.contains("ArrayList") ?
+           *    right.length >= left :
+           *    right.containsKey(left);
+           */
+          if (node.op === "in") {
+            const updatedNode = visitEachChild(node, (expr) =>
+              normalizeAST(expr, hoist)
+            );
 
+            const rightClassName = new PropAccessExpr(
+              new PropAccessExpr(updatedNode.right, "class"),
+              "name"
+            );
+
+            return new ConditionExpr(
+              new BinaryExpr(
+                new CallExpr(new PropAccessExpr(rightClassName, "startsWith"), [
+                  new Argument(new StringLiteralExpr("[L")),
+                ]),
+                "||",
+                new CallExpr(new PropAccessExpr(rightClassName, "contains"), [
+                  new Argument(new StringLiteralExpr("ArrayList")),
+                ])
+              ),
+              new BinaryExpr(
+                new PropAccessExpr(updatedNode.right, "length"),
+                ">=",
+                updatedNode.left
+              ),
+              new CallExpr(
+                new PropAccessExpr(updatedNode.right, "containsKey"),
+                [new Argument(updatedNode.left)]
+              )
+            );
+          }
+        }
+        return visitEachChild(node, (expr) => normalizeAST(expr, hoist));
+      }
+    );
+    const templates: string[] = [];
+    let template =
+      resolverCount === 0
+        ? new AppsyncVTL()
+        : new AppsyncVTL(AppsyncVTL.CircuitBreaker);
+    const functions = updatedDecl.body.statements
+      .map((stmt, i) => {
+        const isLastExpr = i + 1 === updatedDecl.body.statements.length;
+        const service = findDeepIntegration(stmt);
+        if (service) {
+          // we must now render a resolver with request mapping template
+          const dataSource = singletonConstruct(
+            api,
+            service.appSyncVtl.dataSourceId(),
+            (scope, id) => service.appSyncVtl.dataSource(scope, id)
+          );
+
+          const resultValName = "$context.result";
+
+          // The integration can optionally transform the result into a new variable.
+          const resultTemplate = service.appSyncVtl.result?.(resultValName);
+          const pre = resultTemplate?.template;
+          const returnValName = resultTemplate?.returnVariable ?? resultValName;
+
+          if (isExprStmt(stmt)) {
+            const call = findServiceCallExpr(stmt.expr);
+            template.call(call);
+            return createStage(service, "{}");
+          } else if (isReturnStmt(stmt)) {
+            return createStage(
+              service,
+              `${
+                pre ? `${pre}\n` : ""
+              }#set( $context.stash.return__flag = true )
+#set( $context.stash.return__val = ${getResult(stmt.expr)} )
+{}`
+            );
+          } else if (isVariableStmt(stmt) && isCallExpr(stmt.expr)) {
+            return createStage(
+              service,
+              `${pre ? `${pre}\n` : ""}#set( $context.stash.${
+                stmt.name
+              } = ${getResult(stmt.expr)} )\n{}`
+            );
+          } else {
+            throw new Error(
+              "only a 'VariableDecl', 'Call' or 'Return' expression may call a service"
+            );
+          }
+
+          /**
+           * Recursively resolve the {@link expr} to the {@link CallExpr} that is calling the service.
+           *
+           * @param expr an Expression that contains (somewhere nested within) a {@link CallExpr} to an external service.
+           * @returns the {@link CallExpr} that
+           */
+          function findServiceCallExpr(expr: Expr): CallExpr {
+            if (
+              isCallExpr(expr) &&
+              (isReferenceExpr(expr.expr) ||
+                (isPropAccessExpr(expr.expr) &&
+                  isReferenceExpr(expr.expr.expr)))
+            ) {
+              // this catches specific cases:
+              // lambdaFunction()
+              // table.get()
+              // table.<method-name>()
+
+              // all other Calls or PropAccessExpr are considered "after" the service call, e.g.
+              // lambdaFunction().prop
+              // table.query().Items.size() //.size() is still a Call but not a call to a service.
+              return expr;
+            } else if (isPropAccessExpr(expr)) {
+              return findServiceCallExpr(expr.expr);
+            } else if (isCallExpr(expr)) {
+              return findServiceCallExpr(expr.expr);
+            } else {
+              throw new Error("");
+            }
+          }
+
+          /**
+           * Resolve a VTL expression that applies in-line expressions such as PropAccessExpr to
+           * the result from `$context.result` in a Response Mapping template.
+           *
+           * Example:
+           * ```ts
+           * const items = table.query().items
+           * ```
+           *
+           * The Response Mapping Template will include:
+           * ```
+           * #set($context.stash.items = $context.result.items)
+           * ```
+           *
+           * @param expr the {@link Expr} which is triggering a call to an external service, such as a Table or Function.
+           * @returns a VTL expression to be included in the Response Mapping Template to extract the contents from `$context.result`.
+           */
+          function getResult(expr: Expr): string {
+            if (isCallExpr(expr)) {
+              template.call(expr);
+              return returnValName;
+            } else if (isPropAccessExpr(expr)) {
+              return `${getResult(expr.expr)}.${expr.name}`;
+            } else if (isElementAccessExpr(expr)) {
+              return `${getResult(expr.expr)}[${getResult(expr.element)}]`;
+            } else {
+              throw new Error(
+                `invalid Expression in-lined with Service Call: ${expr.kind}`
+              );
+            }
+          }
+
+          function createStage(
+            integration: IntegrationImpl,
+            responseMappingTemplate: string
+          ) {
+            const requestMappingTemplateString = template.toVTL();
+            templates.push(requestMappingTemplateString);
+            templates.push(responseMappingTemplate);
+            template = new AppsyncVTL(AppsyncVTL.CircuitBreaker);
+            const name = getUniqueName(api, appsyncSafeName(integration.kind));
+            return dataSource.createFunction({
+              name,
+              requestMappingTemplate: appsync.MappingTemplate.fromString(
+                requestMappingTemplateString
+              ),
+              responseMappingTemplate: appsync.MappingTemplate.fromString(
+                responseMappingTemplate
+              ),
+            });
+          }
+        } else if (isLastExpr) {
+          if (isReturnStmt(stmt)) {
+            template.return(stmt.expr);
+          } else if (isIfStmt(stmt)) {
+            template.eval(stmt);
+          } else {
+            template.return("$null");
+          }
+        } else {
+          // this expression should be appended to the current mapping template
+          template.eval(stmt);
+        }
+
+        return undefined;
+      })
+      .filter(
+        (func): func is Exclude<typeof func, undefined> => func !== undefined
+      );
+
+    return [functions, template.toVTL(), templates] as const;
+  }
+
+  /**
+   * Determines of an expression should be hoisted
+   * Hoisted - Add new variable to the current block above the
+   */
+  private doHoist(node: FunctionlessNode): node is CallExpr {
+    const parent = node.parent;
+    return (
+      isIntegrationCallExpr(node) &&
+      // const v = task()
+      (!isStmt(parent) ||
+        // for(const i in task())
+        isForInStmt(parent) ||
+        isForOfStmt(parent)) &&
+      // v = task()
+      !(isBinaryExpr(parent) && parent.op === "=")
+    );
+  }
+
+  private getResolvableFields(api: appsync.GraphqlApi) {
     const [pipelineConfig, responseMappingTemplate, innerTemplates] =
-      synthesizeFunctions(api, this.decl);
+      this.synthesizeFunctions(api, this.decl);
 
     // mock integration
-    if (resolverCount === 0) {
-      if (pipelineConfig.length !== 0) {
-        throw new Error(
-          `expected 0 functions in pipelineConfig, but found ${pipelineConfig.length}`
-        );
-      }
-
+    if (pipelineConfig.length === 0) {
       const requestMappingTemplate = `{
   "version": "2018-05-29",
   "payload": null
@@ -348,222 +611,6 @@ export class AppsyncResolver<
           responseMappingTemplate
         ),
       };
-    }
-
-    function synthesizeFunctions(
-      api: appsync.GraphqlApi,
-      decl: FunctionDecl<ResolverFunction<Arguments, Result, Source>>
-    ) {
-      /**
-       * Update some nodes.
-       */
-      const updatedDecl = visitEachChild(
-        decl,
-        function visit(node): FunctionlessNode {
-          if (isBinaryExpr(node)) {
-            /**
-             * rewrite `in` to a conditional statement to support both arrays and maps
-             * var v = left in right;
-             *
-             * var v = right.class.name.startsWith("[L") || right.class.name.contains("ArrayList") ?
-             *    right.length >= left :
-             *    right.containsKey(left);
-             */
-            if (node.op === "in") {
-              const left = visitEachChild(node.left, visit);
-              const right = visitEachChild(node.right, visit);
-
-              const rightClassName = new PropAccessExpr(
-                new PropAccessExpr(right, "class"),
-                "name"
-              );
-
-              return new ConditionExpr(
-                new BinaryExpr(
-                  new CallExpr(
-                    new PropAccessExpr(rightClassName, "startsWith"),
-                    [new Argument(new StringLiteralExpr("[L"))]
-                  ),
-                  "||",
-                  new CallExpr(new PropAccessExpr(rightClassName, "contains"), [
-                    new Argument(new StringLiteralExpr("ArrayList")),
-                  ])
-                ),
-                new BinaryExpr(new PropAccessExpr(right, "length"), ">=", left),
-                new CallExpr(new PropAccessExpr(right, "containsKey"), [
-                  new Argument(left),
-                ])
-              );
-            }
-          }
-
-          return visitEachChild(node, visit);
-        }
-      );
-      const templates: string[] = [];
-      let template =
-        resolverCount === 0
-          ? new AppsyncVTL()
-          : new AppsyncVTL(AppsyncVTL.CircuitBreaker);
-      const functions = updatedDecl.body.statements
-        .map((stmt, i) => {
-          const isLastExpr = i + 1 === updatedDecl.body.statements.length;
-          const service = findDeepIntegration(stmt);
-          if (service) {
-            // we must now render a resolver with request mapping template
-            const dataSource = singletonConstruct(
-              api,
-              service.appSyncVtl.dataSourceId(),
-              (scope, id) => service.appSyncVtl.dataSource(scope, id)
-            );
-
-            const resultValName = "$context.result";
-
-            // The integration can optionally transform the result into a new variable.
-            const resultTemplate = service.appSyncVtl.result?.(resultValName);
-            const pre = resultTemplate?.template;
-            const returnValName =
-              resultTemplate?.returnVariable ?? resultValName;
-
-            if (isExprStmt(stmt)) {
-              const call = findServiceCallExpr(stmt.expr);
-              template.call(call);
-              return createStage(service, "{}");
-            } else if (isReturnStmt(stmt)) {
-              return createStage(
-                service,
-                `${
-                  pre ? `${pre}\n` : ""
-                }#set( $context.stash.return__flag = true )
-#set( $context.stash.return__val = ${getResult(stmt.expr)} )
-{}`
-              );
-            } else if (isVariableStmt(stmt) && isCallExpr(stmt.expr)) {
-              return createStage(
-                service,
-                `${pre ? `${pre}\n` : ""}#set( $context.stash.${
-                  stmt.name
-                } = ${getResult(stmt.expr)} )\n{}`
-              );
-            } else {
-              throw new Error(
-                "only a 'VariableDecl', 'Call' or 'Return' expression may call a service"
-              );
-            }
-
-            /**
-             * Recursively resolve the {@link expr} to the {@link CallExpr} that is calling the service.
-             *
-             * @param expr an Expression that contains (somewhere nested within) a {@link CallExpr} to an external service.
-             * @returns the {@link CallExpr} that
-             */
-            function findServiceCallExpr(expr: Expr): CallExpr {
-              if (
-                isCallExpr(expr) &&
-                (isReferenceExpr(expr.expr) ||
-                  (isPropAccessExpr(expr.expr) &&
-                    isReferenceExpr(expr.expr.expr)))
-              ) {
-                // this catches specific cases:
-                // lambdaFunction()
-                // table.get()
-                // table.<method-name>()
-
-                // all other Calls or PropAccessExpr are considered "after" the service call, e.g.
-                // lambdaFunction().prop
-                // table.query().Items.size() //.size() is still a Call but not a call to a service.
-                return expr;
-              } else if (isPropAccessExpr(expr)) {
-                return findServiceCallExpr(expr.expr);
-              } else if (isCallExpr(expr)) {
-                return findServiceCallExpr(expr.expr);
-              } else {
-                throw new Error("");
-              }
-            }
-
-            /**
-             * Resolve a VTL expression that applies in-line expressions such as PropAccessExpr to
-             * the result from `$context.result` in a Response Mapping template.
-             *
-             * Example:
-             * ```ts
-             * const items = table.query().items
-             * ```
-             *
-             * The Response Mapping Template will include:
-             * ```
-             * #set($context.stash.items = $context.result.items)
-             * ```
-             *
-             * @param expr the {@link Expr} which is triggering a call to an external service, such as a Table or Function.
-             * @returns a VTL expression to be included in the Response Mapping Template to extract the contents from `$context.result`.
-             */
-            function getResult(expr: Expr): string {
-              if (isCallExpr(expr)) {
-                template.call(expr);
-                return returnValName;
-              } else if (isPropAccessExpr(expr)) {
-                return `${getResult(expr.expr)}.${expr.name}`;
-              } else if (isElementAccessExpr(expr)) {
-                return `${getResult(expr.expr)}[${getResult(expr.element)}]`;
-              } else {
-                throw new Error(
-                  `invalid Expression in-lined with Service Call: ${expr.kind}`
-                );
-              }
-            }
-
-            function createStage(
-              integration: IntegrationImpl,
-              responseMappingTemplate: string
-            ) {
-              const requestMappingTemplateString = template.toVTL();
-              templates.push(requestMappingTemplateString);
-              templates.push(responseMappingTemplate);
-              template = new AppsyncVTL(AppsyncVTL.CircuitBreaker);
-              const name = getUniqueName(
-                api,
-                appsyncSafeName(integration.kind)
-              );
-              return dataSource.createFunction({
-                name,
-                requestMappingTemplate: appsync.MappingTemplate.fromString(
-                  requestMappingTemplateString
-                ),
-                responseMappingTemplate: appsync.MappingTemplate.fromString(
-                  responseMappingTemplate
-                ),
-              });
-            }
-          } else if (isLastExpr) {
-            if (isReturnStmt(stmt)) {
-              template.return(stmt.expr);
-            } else if (isIfStmt(stmt)) {
-              template.eval(stmt);
-            } else {
-              template.return("$null");
-            }
-          } else {
-            // this expression should be appended to the current mapping template
-            template.eval(stmt);
-          }
-
-          return undefined;
-        })
-        .filter(
-          (func): func is Exclude<typeof func, undefined> => func !== undefined
-        );
-
-      return [functions, template.toVTL(), templates] as const;
-    }
-
-    function countResolvers(
-      decl: FunctionDecl<ResolverFunction<Arguments, Result, Source>>
-    ): number {
-      return decl.body.statements.filter(
-        (expr) => findDeepIntegration(expr) !== undefined
-      ).length;
     }
   }
 }

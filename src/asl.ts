@@ -5,13 +5,14 @@ import { FunctionDecl } from "./declaration";
 import { SynthError, ErrorCodes } from "./error-code";
 import {
   Argument,
+  AwaitExpr,
   CallExpr,
   ElementAccessExpr,
   Expr,
-  Identifier,
   isVariableReference,
   NewExpr,
   NullLiteralExpr,
+  PromiseExpr,
   PropAccessExpr,
   StringLiteralExpr,
 } from "./expression";
@@ -61,8 +62,15 @@ import {
   isPromiseExpr,
   isWhileStmt,
   isReferenceExpr,
+  isStmt,
 } from "./guards";
-import { Integration, IntegrationImpl, isIntegration } from "./integration";
+import {
+  Integration,
+  IntegrationImpl,
+  isIntegration,
+  isIntegrationCallExpr,
+  isIntegrationCallPattern,
+} from "./integration";
 import { FunctionlessNode } from "./node";
 import {
   BlockStmt,
@@ -73,13 +81,12 @@ import {
   IfStmt,
   ReturnStmt,
   Stmt,
-  VariableStmt,
   WhileStmt,
 } from "./statement";
 import { isStepFunction } from "./step-function";
 import { isTable } from "./table";
-import { anyOf, evalToConstant } from "./util";
-import { visitEachChild } from "./visit";
+import { anyOf, DeterministicNameGenerator, evalToConstant } from "./util";
+import { visitBlock, visitEachChild, visitSpecificChildren } from "./visit";
 
 export function isASL(a: any): a is ASL {
   return (a as ASL | undefined)?.kind === ASL.ContextName;
@@ -367,7 +374,7 @@ export class ASL {
    */
   private readonly stateNames = new Map<Stmt, string>();
   private readonly stateNamesCount = new Map<string, number>();
-  private readonly generatedNames = new Map<FunctionlessNode, string>();
+  private readonly generatedNames = new DeterministicNameGenerator();
 
   constructor(
     readonly scope: Construct,
@@ -375,86 +382,68 @@ export class ASL {
     decl: FunctionDecl
   ) {
     const self = this;
-    this.decl = visitEachChild(decl, function normalizeAST(node):
-      | FunctionlessNode
-      | FunctionlessNode[] {
-      if (isExprStmt(node) || isVariableStmt(node) || isReturnStmt(node)) {
-        const nestedTasks: FunctionlessNode[] = [];
-        let hoistIndex = 0;
-        const updatedNode = visitEachChild(node, function extract(childNode) {
-          function isTask(node: FunctionlessNode): node is CallExpr {
-            return isCallExpr(node) && isReferenceExpr(node.expr);
-          }
-
-          function hoist(start: FunctionlessNode, end: Expr) {
-            const localHoistIndex = hoistIndex++;
-            const updated =
-              start === end
-                ? end
-                : (visitEachChild(start, function dive(n): FunctionlessNode {
-                    return n === end
-                      ? visitEachChild(n, extract)
-                      : visitEachChild(n, dive);
-                  }) as Expr);
-            // don't hoist the first one, just update it and return.
-            // nodes are explored depth first.
-            if (localHoistIndex > 0) {
-              const id = new Identifier(
-                self.getDeterministicGeneratedName(start)
-              );
-              nestedTasks.push(new VariableStmt(id.name, updated));
-              return id;
-            } else {
-              return updated;
-            }
-          }
-
-          if (isAwaitExpr(childNode)) {
-            // await task()
-            if (isTask(childNode.expr)) {
-              return hoist(childNode, childNode.expr);
-            }
-            // await <Promise>task()
-            else if (
-              isPromiseExpr(childNode.expr) &&
-              isTask(childNode.expr.expr)
-            ) {
-              return hoist(childNode, childNode.expr.expr);
-            }
-          } else if (isPromiseExpr(childNode) && isTask(childNode.expr)) {
-            return hoist(childNode, childNode.expr);
-          } else if (isTask(childNode)) {
-            return hoist(childNode, childNode);
-          } else if (isFunctionDecl(childNode)) {
-            return visitEachChild(childNode, normalizeAST);
-          }
-          return childNode;
-        });
-
-        return nestedTasks.length === 0
-          ? updatedNode
-          : [...nestedTasks, updatedNode];
-      } else if (
-        isBlockStmt(node) &&
-        (isFunctionDecl(node.parent) || isFunctionExpr(node.parent))
-      ) {
-        // re-write the AST to include explicit `ReturnStmt(NullLiteral())` statements
-        // this simplifies the interpreter code by always having a node to chain onto, even when
-        // the AST has no final `ReturnStmt` (i.e. when the function is a void function)
-        // without this, chains that should return null will actually include the entire state as their output
-        if (node.lastStmt === undefined) {
-          return new BlockStmt([new ReturnStmt(new NullLiteralExpr())]);
-        } else if (!node.lastStmt.isTerminal()) {
+    this.decl = visitEachChild(
+      decl,
+      function normalizeAST(
+        node,
+        hoist?: (expr: Expr) => Expr
+      ): FunctionlessNode | FunctionlessNode[] {
+        if (isBlockStmt(node)) {
           return new BlockStmt([
-            ...node.statements.map((stmt) =>
-              visitEachChild(stmt, normalizeAST)
-            ),
-            new ReturnStmt(new NullLiteralExpr()),
+            // for each block statement
+            ...visitBlock(
+              node,
+              function normalizeBlock(stmt, hoist) {
+                return visitEachChild(stmt, (expr) =>
+                  normalizeAST(expr, hoist)
+                );
+              },
+              self.generatedNames
+            ).statements,
+            // re-write the AST to include explicit `ReturnStmt(NullLiteral())` statements
+            // this simplifies the interpreter code by always having a node to chain onto, even when
+            // the AST has no final `ReturnStmt` (i.e. when the function is a void function)
+            // without this, chains that should return null will actually include the entire state as their output
+            ...((isFunctionDecl(node.parent) || isFunctionExpr(node.parent)) &&
+            (!node.lastStmt || !node.lastStmt.isTerminal())
+              ? [new ReturnStmt(new NullLiteralExpr())]
+              : []),
           ]);
+        } else if (isIntegrationCallPattern(node)) {
+          const end = (() => {
+            if (isAwaitExpr(node)) {
+              // await task()
+              if (isIntegrationCallExpr(node.expr)) {
+                return node.expr;
+              }
+              // await <Promise>task()
+              else if (
+                isPromiseExpr(node.expr) &&
+                isIntegrationCallExpr(node.expr.expr)
+              ) {
+                return node.expr.expr;
+              }
+            } else if (
+              isPromiseExpr(node) &&
+              isIntegrationCallExpr(node.expr)
+            ) {
+              return node.expr;
+            }
+            return node;
+          })();
+
+          const updatedChild = visitSpecificChildren(node, [end], (expr) =>
+            normalizeAST(expr, hoist)
+          );
+          // when we find an integration call,
+          // if it is nested, hoist it up (create variable, add above, replace expr with variable)
+          return hoist && self.doHoist(node)
+            ? hoist(updatedChild)
+            : updatedChild;
         }
+        return visitEachChild(node, (expr) => normalizeAST(expr, hoist));
       }
-      return visitEachChild(node, normalizeAST);
-    });
+    );
 
     const states = this.execute(this.decl.body);
 
@@ -470,18 +459,23 @@ export class ASL {
   }
 
   /**
-   * Generate a deterministic and unique variable name for a node.
-   *
-   * The value is cached so that the same node reference always has the same name.
-   *
-   * @param node the node to generate a name for
-   * @returns a unique variable name that can be used in JSON Path
+   * Determines of an expression should be hoisted
+   * Hoisted - Add new variable to the current block above the
    */
-  private getDeterministicGeneratedName(node: FunctionlessNode): string {
-    if (!this.generatedNames.has(node)) {
-      this.generatedNames.set(node, `${this.generatedNames.size}_tmp`);
-    }
-    return this.generatedNames.get(node)!;
+  private doHoist(
+    node: FunctionlessNode
+  ): node is CallExpr | AwaitExpr | PromiseExpr {
+    const parent = node.parent;
+
+    return (
+      // const v = task()
+      (!isStmt(parent) ||
+        // for(const i in task())
+        isForInStmt(parent) ||
+        isForOfStmt(parent)) &&
+      // v = task()
+      !(isBinaryExpr(parent) && parent.op === "=")
+    );
   }
 
   /**
@@ -716,13 +710,29 @@ export class ASL {
         }),
       };
     } else if (isThrowStmt(stmt)) {
-      if (!isNewExpr(stmt.expr) && !isCallExpr(stmt.expr)) {
+      if (
+        !(
+          isNewExpr(stmt.expr) ||
+          isCallExpr(stmt.expr) ||
+          isIntegrationCallPattern(stmt.expr)
+        )
+      ) {
         throw new Error(
           "the expr of a ThrowStmt must be a NewExpr or CallExpr"
         );
       }
 
-      const error = (stmt.expr as NewExpr | CallExpr).args
+      const updated = (
+        isNewExpr(stmt.expr) || isCallExpr(stmt.expr)
+          ? stmt.expr
+          : isAwaitExpr(stmt.expr) && isPromiseExpr(stmt.expr.expr)
+          ? stmt.expr.expr.expr
+          : isPromiseExpr(stmt.expr)
+          ? stmt.expr.expr
+          : stmt.expr.expr
+      ) as CallExpr | NewExpr;
+
+      const error = updated.args
         .filter((arg): arg is Argument & { expr: Expr } => !!arg.expr)
         .reduce(
           (args: any, arg) => ({
@@ -797,7 +807,7 @@ export class ASL {
                         Choices: [
                           {
                             // errors thrown from the catch block will be directed to this special variable for the `finally` block
-                            Variable: `$.${this.getDeterministicGeneratedName(
+                            Variable: `$.${this.generatedNames.generateOrGet(
                               stmt.finallyBlock
                             )}`,
                             IsPresent: true,
@@ -877,6 +887,7 @@ export class ASL {
       if (isAwaitExpr(expr.parent) || isReturnStmt(expr.parent)) {
         return this.eval(expr.expr, props);
       }
+      debugger;
       throw new SynthError(
         ErrorCodes.Integration_must_be_immediately_awaited_or_returned
       );
@@ -1212,7 +1223,7 @@ export class ASL {
               // by terminal, we mean that every branch returns a value - meaning that the re-throw
               // behavior of a finally will never be triggered - the return within the finally intercepts it
               !catchOrFinally.isTerminal()
-            ? `$.${this.getDeterministicGeneratedName(catchOrFinally)}`
+            ? `$.${this.generatedNames.generateOrGet(catchOrFinally)}`
             : null,
       };
     } else {

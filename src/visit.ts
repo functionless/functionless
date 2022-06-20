@@ -101,7 +101,13 @@ import {
   VariableStmt,
   WhileStmt,
 } from "./statement";
-import { anyOf, ensure, ensureItemOf, flatten } from "./util";
+import {
+  anyOf,
+  DeterministicNameGenerator,
+  ensure,
+  ensureItemOf,
+  flatten,
+} from "./util";
 
 /**
  * Visits each child of a Node using the supplied visitor, possibly returning a new Node of the same kind in its place.
@@ -165,6 +171,7 @@ export function visitEachChild<T extends FunctionlessNode>(
         } else if (isStmt(result)) {
           return [...stmts, result];
         } else {
+          debugger;
           throw new Error(
             "visitEachChild of a BlockStmt's child statements must return a Stmt"
           );
@@ -196,7 +203,9 @@ export function visitEachChild<T extends FunctionlessNode>(
       );
       return new Argument(expr, arg.name);
     });
-    return new (isCallExpr(node) ? CallExpr : NewExpr)(expr, args) as T;
+    return (
+      isCallExpr(node) ? new CallExpr(expr, args) : new NewExpr(expr, args)
+    ) as T;
   } else if (isCatchClause(node)) {
     const variableDecl = node.variableDecl
       ? visitor(node.variableDecl)
@@ -282,10 +291,10 @@ export function visitEachChild<T extends FunctionlessNode>(
       ensure(body, isBlockStmt, `Body in ${node.kind} must be a BlockStmt`);
     }
 
-    return new (isForInStmt(node) ? ForInStmt : ForOfStmt)(
-      variableDecl,
-      expr,
-      body
+    return (
+      isForInStmt(node)
+        ? new ForInStmt(variableDecl, expr, body)
+        : new ForOfStmt(variableDecl, expr, body)
     ) as T;
   } else if (isFunctionDecl(node) || isFunctionExpr(node)) {
     const parameters = node.parameters.reduce(
@@ -313,9 +322,10 @@ export function visitEachChild<T extends FunctionlessNode>(
 
     const body = visitor(node.body);
     ensure(body, isBlockStmt, `a ${node.kind}'s body must be a BlockStmt`);
-    return new (isFunctionDecl(node) ? FunctionDecl : FunctionExpr)(
-      parameters,
-      body
+    return (
+      isFunctionDecl(node)
+        ? new FunctionDecl(parameters, body)
+        : new FunctionExpr(parameters, body)
     ) as T;
   } else if (isIdentifier(node)) {
     return new Identifier(node.name) as T;
@@ -497,4 +507,52 @@ export function visitEachChild<T extends FunctionlessNode>(
     return new PromiseArrayExpr(expr) as T;
   }
   return assertNever(node);
+}
+
+/**
+ * Like {@link visitEachChild} but it only visits the statements of a block.
+ *
+ * Provides the hoist function that allows hoisting expressions into variable statements above the current statement.
+ */
+export function visitBlock(
+  block: BlockStmt,
+  cb: (stmt: Stmt, hoist: (expr: Expr) => Expr) => Stmt,
+  nameGenerator: DeterministicNameGenerator
+): BlockStmt {
+  return visitEachChild(block, (stmt) => {
+    const nestedTasks: FunctionlessNode[] = [];
+    function hoist(expr: Expr): Expr {
+      const id = new Identifier(nameGenerator.generateOrGet(expr));
+      nestedTasks.push(new VariableStmt(id.name, expr));
+      return id;
+    }
+
+    const updatedNode = cb(stmt as Stmt, hoist);
+
+    return nestedTasks.length === 0
+      ? updatedNode
+      : [...nestedTasks, updatedNode];
+  });
+}
+
+/**
+ * Starting at the root, explore the children without processing until one or more start nodes are found.
+ *
+ * For each Start nodes, apply {@link visitEachChild} to it with the given callback.
+ */
+export function visitSpecificChildren<T extends FunctionlessNode>(
+  root: T,
+  starts: Expr[],
+  cb: (
+    node: FunctionlessNode
+  ) => FunctionlessNode | FunctionlessNode[] | undefined
+): T {
+  return visitEachChild(root, function dive(expr: FunctionlessNode):
+    | FunctionlessNode
+    | FunctionlessNode[]
+    | undefined {
+    return starts.includes(expr as Expr)
+      ? visitEachChild(expr, cb)
+      : visitEachChild(expr, dive);
+  });
 }

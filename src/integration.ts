@@ -2,11 +2,13 @@ import { ApiGatewayVtlIntegration } from "./api";
 import { AppSyncVtlIntegration } from "./appsync";
 import { ASL, State } from "./asl";
 import { EventBus, EventBusTargetIntegration } from "./event-bridge";
-import { CallExpr } from "./expression";
+import { AwaitExpr, CallExpr, PromiseExpr, ReferenceExpr } from "./expression";
 import { Function, NativeIntegration } from "./function";
 import {
+  isAwaitExpr,
   isCallExpr,
   isExprStmt,
+  isPromiseExpr,
   isPropAccessExpr,
   isReferenceExpr,
   isReturnStmt,
@@ -18,6 +20,31 @@ import { VTL } from "./vtl";
 export const isIntegration = <I extends IntegrationInput<string, AnyFunction>>(
   i: any
 ): i is I => typeof i === "object" && "kind" in i;
+
+export type IntegrationCallExpr = CallExpr & { expr: ReferenceExpr };
+
+export function isIntegrationCallExpr(
+  node: FunctionlessNode
+): node is IntegrationCallExpr {
+  return isCallExpr(node) && isReferenceExpr(node.expr);
+}
+
+export function isIntegrationCallPattern(
+  node: FunctionlessNode
+): node is
+  | IntegrationCallExpr
+  | (AwaitExpr & { expr: IntegrationCallExpr })
+  | (PromiseExpr & { expr: IntegrationCallExpr })
+  | (AwaitExpr & { expr: PromiseExpr & { expr: IntegrationCallExpr } }) {
+  return (
+    (isAwaitExpr(node) &&
+      isPromiseExpr(node.expr) &&
+      isIntegrationCallExpr(node.expr.expr)) ||
+    (isAwaitExpr(node) && isIntegrationCallExpr(node.expr)) ||
+    (isPromiseExpr(node) && isIntegrationCallExpr(node.expr)) ||
+    isIntegrationCallExpr(node)
+  );
+}
 
 /**
  * Maintain a typesafe runtime map of integration type keys to use elsewhere.

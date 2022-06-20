@@ -1,5 +1,11 @@
 import { Stack } from "aws-cdk-lib";
-import { AppsyncContext, AppsyncResolver, reflect, StepFunction } from "../src";
+import {
+  AppsyncContext,
+  AppsyncResolver,
+  reflect,
+  StepFunction,
+  Function,
+} from "../src";
 import { appsyncTestCase, testAppsyncVelocity } from "./util";
 
 let stack: Stack;
@@ -120,6 +126,33 @@ describe("step function integration", () => {
   });
 });
 
+test("machine describe exec return", () => {
+  const machine = new StepFunction(stack, "machine", () => {});
+
+  const templates = appsyncTestCase(
+    reflect(() => {
+      const exec = "exec1";
+      return machine.describeExecution(exec);
+    })
+  );
+
+  testAppsyncVelocity(templates[1]);
+});
+
+test("machine describe exec var", () => {
+  const machine = new StepFunction(stack, "machine", () => {});
+
+  const templates = appsyncTestCase(
+    reflect(() => {
+      const exec = "exec1";
+      const v = machine.describeExecution(exec);
+      return v;
+    })
+  );
+
+  testAppsyncVelocity(templates[1]);
+});
+
 describe("step function describe execution", () => {
   test("machine describe exec string", () => {
     const machine = new StepFunction(stack, "machine", async () => {});
@@ -224,7 +257,7 @@ test("multiple linked integrations with props", () => {
 });
 
 // https://github.com/functionless/functionless/issues/212
-test.skip("multiple nested integrations", () => {
+test("multiple nested integrations", () => {
   const machine = new StepFunction(stack, "machine", () => {});
 
   const templates = appsyncTestCase(
@@ -242,7 +275,7 @@ test.skip("multiple nested integrations", () => {
 });
 
 // https://github.com/functionless/functionless/issues/212
-test.skip("multiple nested integrations prop access", () => {
+test("multiple nested integrations prop access", () => {
   const machine = new StepFunction(stack, "machine", () => {});
 
   const templates = appsyncTestCase(
@@ -259,6 +292,29 @@ test.skip("multiple nested integrations prop access", () => {
     }),
     {
       expectedTemplateCount: 8,
+    }
+  );
+
+  testAppsyncVelocity(templates[1]);
+});
+
+test("integrations separated by in", () => {
+  const func = new Function(stack, "func1", async () => {
+    return "key";
+  });
+  const func2 = new Function(stack, "func2", async () => {
+    return { key: "value" };
+  });
+
+  const templates = appsyncTestCase(
+    reflect(() => {
+      if (func({}) in func2({})) {
+        return true;
+      }
+      return false;
+    }),
+    {
+      expectedTemplateCount: 6,
     }
   );
 
