@@ -1,13 +1,12 @@
-// 500k arbitrary max bundle size. Some functions may need more.
-
 import { Stack } from "aws-cdk-lib";
 import { AttributeType } from "aws-cdk-lib/aws-dynamodb";
 import axios from "axios";
 import { v4 } from "uuid";
 import { serialize, bundle, $AWS, Table } from "@fnls";
 
+// 50k arbitrary max bundle size. Some functions may need more.
 // In that case increase explicitly.
-const BUNDLED_MAX_SIZE = 500 * 1024;
+const BUNDLED_MAX_SIZE = 50 * 1024;
 
 interface CustomMatchers<R = unknown> {
   toHaveLengthLessThan(length: number): R;
@@ -82,6 +81,27 @@ describe("serialize", () => {
       const [srlz] = await serialize(
         () => () => {
           return $AWS.DynamoDB.GetItem({
+            TableName: table,
+            Key: {
+              id: { S: "id" },
+            },
+          });
+        },
+        []
+      );
+      expect(srlz).toMatchSnapshot();
+
+      const bundled = await bundle(srlz);
+      expect(bundled.text).toMatchSnapshot();
+      expect(bundled.text).toHaveLengthLessThan(BUNDLED_MAX_SIZE);
+    });
+
+    const { GetItem } = $AWS.DynamoDB;
+
+    test("get referenced", async () => {
+      const [srlz] = await serialize(
+        () => () => {
+          return GetItem({
             TableName: table,
             Key: {
               id: { S: "id" },
@@ -216,7 +236,8 @@ describe("serialize", () => {
 
     const bundled = await bundle(srlz);
     expect(bundled.text).toMatchSnapshot();
-    expect(bundled.text).toHaveLengthLessThan(BUNDLED_MAX_SIZE);
+    // 300k after bundling
+    expect(bundled.text).toHaveLengthLessThan(BUNDLED_MAX_SIZE * 10);
   });
 
   test("uuid", async () => {
