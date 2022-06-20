@@ -2,7 +2,7 @@ import { aws_iam, aws_stepfunctions } from "aws-cdk-lib";
 import { Construct } from "constructs";
 import { assertNever } from "./assert";
 import { FunctionDecl } from "./declaration";
-import { ErrorCodes, SyncError } from "./error-code";
+import { ErrorCodes, SynthError } from "./error-code";
 import {
   Argument,
   CallExpr,
@@ -860,7 +860,7 @@ export class ASL {
             return taskState;
           }
         } else {
-          throw new SyncError(
+          throw new SynthError(
             ErrorCodes.Unexpected_Error,
             "Called references are expected to be an integration."
           );
