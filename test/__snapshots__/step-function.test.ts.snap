@@ -1903,9 +1903,9 @@ Object {
 
 exports[`list.filter(item => item.length > 2).map(item => task(item)) 3`] = `
 Object {
-  "StartAt": "return await Promise.all(input.list.filter(function(item)).map(function(ite",
+  "StartAt": "return Promise.all(input.list.filter(function(item)).map(function(item)))",
   "States": Object {
-    "return await Promise.all(input.list.filter(function(item)).map(function(ite": Object {
+    "return Promise.all(input.list.filter(function(item)).map(function(item)))": Object {
       "End": true,
       "ItemsPath": "$.list[?(@.length>2)]",
       "Iterator": Object {
