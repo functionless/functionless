@@ -1,6 +1,6 @@
 # Function
 
-The `Function` Construct creates a new AWS Lambda Function.
+`Function` is the cloud's swiss army knife - an AWS Lambda Function. Functionless serializes in-line Function closures, automatically configures IAM Policies, Environment Variables, and initializes SDK clients (such as the AWS SDK) at runtime.
 
 ## Declare a Function
 
@@ -54,7 +54,9 @@ A wrapped function annotates the type signature of the Function and makes it ava
 
 ## Request Payload
 
-Your Function must have 0 or 1 arguments. This argument contains the JSON data from the Invoke Lambda API Request payload.
+The callback ([`FunctionClosure`](../../api/modules.md#functionclosure)) matches the interface supported by a [NodeJS Lambda function handler](https://docs.aws.amazon.com/lambda/latest/dg/nodejs-handler.html).
+
+Your Function must have 0, 1, or 2 arguments. The first argument contains the JSON data from the Invoke Lambda API Request payload. The second parameter is the [Lambda Context Object](https://docs.aws.amazon.com/lambda/latest/dg/nodejs-handler.html).
 
 ```ts
 // valid
@@ -63,8 +65,8 @@ async (arg: string) => {};
 // valid
 async () => {};
 
-// invalid - anotherArg will never have a value.
-async (arg: string, anotherArg: string) => {};
+// valid
+async (arg: string, context: Context) => {};
 ```
 
 For example, if you have a Function accepting input of `{key: string}`:
@@ -144,7 +146,7 @@ These two functions are equivalent and result in the same JSON response:
 
 ## Call an Integration
 
-Any of Functionless's integrations can be called from within a Lambda Function. Functionless will automatically infer the required IAM Policies, set any environment variables it needs (such as the ARN of a dependency) and instantiate any SDK clients when the Function is first invoked.
+Most of Functionless's [integrations](../integration) can be called from within a Lambda Function. Functionless will automatically infer the required IAM Policies, set any environment variables it needs (such as the ARN of a dependency) and instantiate any SDK clients when the Function is first invoked.
 
 ```ts
 const Table = Table.fromTable(scope, "Table");
@@ -231,6 +233,10 @@ Output from the Lambda Function is the raw JSON value returned by the Lambda Fun
 ```json
 "hello sam"
 ```
+
+:::info
+For a list of all `Function` integrations and more integration options, see [Integrations](./integrations.md).
+:::
 
 ## Call and receive the entire API Response Envelope
 
