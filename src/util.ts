@@ -27,6 +27,24 @@ import { FunctionlessNode } from "./node";
 
 export type AnyFunction = (...args: any[]) => any;
 
+/**
+ * Create a memoized function.
+ *
+ * @param f the function that produces the value
+ * @returns a function that computes a value on demand at most once.
+ */
+export function memoize<T>(f: () => T): () => T {
+  let isComputed = false;
+  let t: T;
+  return () => {
+    if (!isComputed) {
+      t = f();
+      isComputed = true;
+    }
+    return t!;
+  };
+}
+
 export function isInTopLevelScope(expr: FunctionlessNode): boolean {
   if (expr.parent === undefined) {
     return true;
@@ -273,3 +291,22 @@ export const evalToConstant = (expr: Expr): Constant | undefined => {
   }
   return undefined;
 };
+
+export class DeterministicNameGenerator {
+  private readonly generatedNames = new Map<FunctionlessNode, string>();
+
+  /**
+   * Generate a deterministic and unique variable name for a node.
+   *
+   * The value is cached so that the same node reference always has the same name.
+   *
+   * @param node the node to generate a name for
+   * @returns a unique variable name that can be used in JSON Path
+   */
+  public generateOrGet(node: FunctionlessNode): string {
+    if (!this.generatedNames.has(node)) {
+      this.generatedNames.set(node, `${this.generatedNames.size}_tmp`);
+    }
+    return this.generatedNames.get(node)!;
+  }
+}

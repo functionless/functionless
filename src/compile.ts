@@ -12,8 +12,9 @@ import {
   makeFunctionlessChecker,
   TsFunctionParameter,
 } from "./checker";
+import type { FunctionDecl } from "./declaration";
 import { ErrorCodes, SynthError } from "./error-code";
-import { BinaryOp } from "./expression";
+import type { FunctionExpr, BinaryOp } from "./expression";
 import { FunctionlessNode } from "./node";
 import { anyOf, hasParent } from "./util";
 
@@ -98,9 +99,11 @@ export function compile(
       function visitor(node: ts.Node): ts.Node | ts.Node[] {
         const visit = () => {
           if (checker.isAppsyncResolver(node)) {
-            return visitAppsyncResolver(node as ts.NewExpression);
+            return visitAppsyncResolver(node);
+          } else if (checker.isAppsyncField(node)) {
+            return visitAppsyncField(node);
           } else if (checker.isNewStepFunction(node)) {
-            return visitStepFunction(node as ts.NewExpression);
+            return visitStepFunction(node);
           } else if (checker.isReflectFunction(node)) {
             return errorBoundary(() =>
               toFunction("FunctionDecl", node.arguments[0])
@@ -220,14 +223,45 @@ export function compile(
       }
 
       function visitAppsyncResolver(call: ts.NewExpression): ts.Node {
-        if (call.arguments?.length === 1) {
-          const impl = call.arguments[0];
-          if (ts.isFunctionExpression(impl) || ts.isArrowFunction(impl)) {
+        if (call.arguments?.length === 4) {
+          const [scope, id, props, resolver] = call.arguments;
+
+          if (
+            ts.isArrowFunction(resolver) ||
+            ts.isFunctionExpression(resolver)
+          ) {
             return ts.factory.updateNewExpression(
               call,
               call.expression,
               call.typeArguments,
-              [errorBoundary(() => toFunction("FunctionDecl", impl, 1))]
+              [
+                scope,
+                id,
+                props,
+                errorBoundary(() => toFunction("FunctionDecl", resolver)),
+              ]
+            );
+          }
+        }
+        return call;
+      }
+
+      function visitAppsyncField(call: ts.NewExpression): ts.Node {
+        if (call.arguments?.length === 2) {
+          const [options, resolver] = call.arguments;
+
+          if (
+            ts.isArrowFunction(resolver) ||
+            ts.isFunctionExpression(resolver)
+          ) {
+            return ts.factory.updateNewExpression(
+              call,
+              call.expression,
+              call.typeArguments,
+              [
+                options,
+                errorBoundary(() => toFunction("FunctionDecl", resolver, 1)),
+              ]
             );
           }
         }
@@ -498,7 +532,7 @@ export function compile(
       }
 
       function toFunction(
-        type: "FunctionDecl" | "FunctionExpr",
+        type: FunctionDecl["kind"] | FunctionExpr["kind"],
         impl: ts.Expression,
         dropArgs?: number
       ): ts.Expression {
@@ -592,63 +626,69 @@ export function compile(
         } else if (ts.isExpressionStatement(node)) {
           return newExpr("ExprStmt", [toExpr(node.expression, scope)]);
         } else if (ts.isCallExpression(node) || ts.isNewExpression(node)) {
-          const exprType = checker.getTypeAtLocation(node.expression);
-          const functionBrand = exprType.getProperty("__functionBrand");
-          let signature: ts.Signature | undefined;
-          if (functionBrand !== undefined) {
-            const functionType = checker.getTypeOfSymbolAtLocation(
-              functionBrand,
-              node.expression
-            );
-            const signatures = checker.getSignaturesOfType(
-              functionType,
-              ts.SignatureKind.Call
-            );
-
-            if (signatures.length === 1) {
-              signature = signatures[0];
-            } else {
-              throw new Error(
-                "Lambda Functions with multiple signatures are not currently supported."
+          const getCall = () => {
+            const exprType = checker.getTypeAtLocation(node.expression);
+            const functionBrand = exprType.getProperty("__functionBrand");
+            let signature: ts.Signature | undefined;
+            if (functionBrand !== undefined) {
+              const functionType = checker.getTypeOfSymbolAtLocation(
+                functionBrand,
+                node.expression
               );
+              const signatures = checker.getSignaturesOfType(
+                functionType,
+                ts.SignatureKind.Call
+              );
+
+              if (signatures.length === 1) {
+                signature = signatures[0];
+              } else {
+                // If the function brand has multiple signatures, try the resolved signature.
+                signature = checker.getResolvedSignature(node);
+              }
+            } else {
+              signature = checker.getResolvedSignature(node);
             }
-          } else {
-            signature = checker.getResolvedSignature(node);
-          }
-          if (signature && signature.parameters.length > 0) {
-            return newExpr(ts.isCallExpression(node) ? "CallExpr" : "NewExpr", [
-              toExpr(node.expression, scope),
-              ts.factory.createArrayLiteralExpression(
-                signature.parameters.map((parameter, i) =>
-                  newExpr("Argument", [
-                    (parameter.declarations?.[0] as ts.ParameterDeclaration)
-                      ?.dotDotDotToken
-                      ? newExpr("ArrayLiteralExpr", [
-                          ts.factory.createArrayLiteralExpression(
-                            node.arguments
-                              ?.slice(i)
-                              .map((x) => toExpr(x, scope)) ?? []
-                          ),
-                        ])
-                      : toExpr(node.arguments?.[i], scope),
-                    ts.factory.createStringLiteral(parameter.name),
-                  ])
-                )
-              ),
-            ]);
-          } else {
-            return newExpr("CallExpr", [
-              toExpr(node.expression, scope),
-              ts.factory.createArrayLiteralExpression(
-                node.arguments?.map((arg) =>
-                  newExpr("Argument", [
-                    toExpr(arg, scope),
-                    ts.factory.createIdentifier("undefined"),
-                  ])
-                ) ?? []
-              ),
-            ]);
-          }
+            if (signature && signature.parameters.length > 0) {
+              return newExpr(
+                ts.isCallExpression(node) ? "CallExpr" : "NewExpr",
+                [
+                  toExpr(node.expression, scope),
+                  ts.factory.createArrayLiteralExpression(
+                    signature.parameters.map((parameter, i) =>
+                      newExpr("Argument", [
+                        (parameter.declarations?.[0] as ts.ParameterDeclaration)
+                          ?.dotDotDotToken
+                          ? newExpr("ArrayLiteralExpr", [
+                              ts.factory.createArrayLiteralExpression(
+                                node.arguments
+                                  ?.slice(i)
+                                  .map((x) => toExpr(x, scope)) ?? []
+                              ),
+                            ])
+                          : toExpr(node.arguments?.[i], scope),
+                        ts.factory.createStringLiteral(parameter.name),
+                      ])
+                    )
+                  ),
+                ]
+              );
+            } else {
+              return newExpr("CallExpr", [
+                toExpr(node.expression, scope),
+                ts.factory.createArrayLiteralExpression(
+                  node.arguments?.map((arg) =>
+                    newExpr("Argument", [
+                      toExpr(arg, scope),
+                      ts.factory.createIdentifier("undefined"),
+                    ])
+                  ) ?? []
+                ),
+              ]);
+            }
+          };
+
+          return getCall();
         } else if (ts.isBlock(node)) {
           return newExpr("BlockStmt", [
             ts.factory.createArrayLiteralExpression(

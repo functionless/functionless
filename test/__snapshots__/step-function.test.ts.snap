@@ -782,6 +782,135 @@ Object {
 }
 `;
 
+exports[`for (const i in [task(input)]) 1`] = `
+Object {
+  "StartAt": "0_tmp = task(input)",
+  "States": Object {
+    "0_tmp = task(input)": Object {
+      "Next": "for(i in [0_tmp])",
+      "Parameters": Object {
+        "FunctionName": "__REPLACED_TOKEN",
+        "Payload.$": "$",
+      },
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "ResultPath": "$.0_tmp",
+      "ResultSelector": "$.Payload",
+      "Type": "Task",
+    },
+    "for(i in [0_tmp])": Object {
+      "ItemsPath": "__REPLACED_TOKEN",
+      "Iterator": Object {
+        "StartAt": "1_tmp = task(i)",
+        "States": Object {
+          "1_tmp = task(i)": Object {
+            "Next": "task(1_tmp)",
+            "Parameters": Object {
+              "FunctionName": "__REPLACED_TOKEN",
+              "Payload.$": "$.i",
+            },
+            "Resource": "arn:aws:states:::lambda:invoke",
+            "ResultPath": "$.1_tmp",
+            "ResultSelector": "$.Payload",
+            "Type": "Task",
+          },
+          "task(1_tmp)": Object {
+            "End": true,
+            "Parameters": Object {
+              "FunctionName": "__REPLACED_TOKEN",
+              "Payload.$": "$.1_tmp",
+            },
+            "Resource": "arn:aws:states:::lambda:invoke",
+            "ResultPath": null,
+            "ResultSelector": "$.Payload",
+            "Type": "Task",
+          },
+        },
+      },
+      "MaxConcurrency": 1,
+      "Next": "return null",
+      "Parameters": Object {
+        "0_i.$": "$$.Map.Item.Value",
+        "i.$": "$$.Map.Item.Index",
+      },
+      "ResultPath": null,
+      "Type": "Map",
+    },
+    "return null": Object {
+      "End": true,
+      "OutputPath": "$.null",
+      "Parameters": Object {
+        "null": null,
+      },
+      "Type": "Pass",
+    },
+  },
+}
+`;
+
+exports[`for (const i of [task(input)]) 1`] = `
+Object {
+  "StartAt": "0_tmp = task(input)",
+  "States": Object {
+    "0_tmp = task(input)": Object {
+      "Next": "for(i of [0_tmp])",
+      "Parameters": Object {
+        "FunctionName": "__REPLACED_TOKEN",
+        "Payload.$": "$",
+      },
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "ResultPath": "$.0_tmp",
+      "ResultSelector": "$.Payload",
+      "Type": "Task",
+    },
+    "for(i of [0_tmp])": Object {
+      "ItemsPath": "__REPLACED_TOKEN",
+      "Iterator": Object {
+        "StartAt": "1_tmp = task(i)",
+        "States": Object {
+          "1_tmp = task(i)": Object {
+            "Next": "task(1_tmp)",
+            "Parameters": Object {
+              "FunctionName": "__REPLACED_TOKEN",
+              "Payload.$": "$.i",
+            },
+            "Resource": "arn:aws:states:::lambda:invoke",
+            "ResultPath": "$.1_tmp",
+            "ResultSelector": "$.Payload",
+            "Type": "Task",
+          },
+          "task(1_tmp)": Object {
+            "End": true,
+            "Parameters": Object {
+              "FunctionName": "__REPLACED_TOKEN",
+              "Payload.$": "$.1_tmp",
+            },
+            "Resource": "arn:aws:states:::lambda:invoke",
+            "ResultPath": null,
+            "ResultSelector": "$.Payload",
+            "Type": "Task",
+          },
+        },
+      },
+      "MaxConcurrency": 1,
+      "Next": "return null",
+      "Parameters": Object {
+        "i.$": "$$.Map.Item.Value",
+      },
+      "ResultPath": null,
+      "Type": "Map",
+    },
+    "return null": Object {
+      "End": true,
+      "OutputPath": "$.null",
+      "Parameters": Object {
+        "null": null,
+      },
+      "Type": "Pass",
+    },
+  },
+}
+`;
+
 exports[`for i in items, items[i] 1`] = `
 Object {
   "StartAt": "for(i in input.items)",
@@ -1629,6 +1758,68 @@ Object {
       ],
       "Default": "return null",
       "Type": "Choice",
+    },
+  },
+}
+`;
+
+exports[`list.filter(item => item.length > 2).map(item => item) 1`] = `
+Object {
+  "StartAt": "return input.list.filter(function(item)).map(function(item))",
+  "States": Object {
+    "return input.list.filter(function(item)).map(function(item))": Object {
+      "End": true,
+      "ItemsPath": "$.list[?(@.length>2)]",
+      "Iterator": Object {
+        "StartAt": "return item",
+        "States": Object {
+          "return item": Object {
+            "End": true,
+            "OutputPath": "$.item",
+            "Type": "Pass",
+          },
+        },
+      },
+      "MaxConcurrency": 1,
+      "Parameters": Object {
+        "item.$": "$$.Map.Item.Value",
+      },
+      "ResultPath": "$",
+      "Type": "Map",
+    },
+  },
+}
+`;
+
+exports[`list.filter(item => item.length > 2).map(item => task(item)) 1`] = `
+Object {
+  "StartAt": "return input.list.filter(function(item)).map(function(item))",
+  "States": Object {
+    "return input.list.filter(function(item)).map(function(item))": Object {
+      "End": true,
+      "ItemsPath": "$.list[?(@.length>2)]",
+      "Iterator": Object {
+        "StartAt": "return task(item)",
+        "States": Object {
+          "return task(item)": Object {
+            "End": true,
+            "Parameters": Object {
+              "FunctionName": "__REPLACED_TOKEN",
+              "Payload.$": "$.item",
+            },
+            "Resource": "arn:aws:states:::lambda:invoke",
+            "ResultPath": "$",
+            "ResultSelector": "$.Payload",
+            "Type": "Task",
+          },
+        },
+      },
+      "MaxConcurrency": 1,
+      "Parameters": Object {
+        "item.$": "$$.Map.Item.Value",
+      },
+      "ResultPath": "$",
+      "Type": "Map",
     },
   },
 }
@@ -3175,6 +3366,30 @@ Object {
     "throw new Error(\\"cause\\")": Object {
       "Cause": "{\\"message\\":\\"cause\\"}",
       "Error": "Error",
+      "Type": "Fail",
+    },
+  },
+}
+`;
+
+exports[`throw task(task()) 1`] = `
+Object {
+  "StartAt": "0_tmp = task(input)",
+  "States": Object {
+    "0_tmp = task(input)": Object {
+      "Next": "throw task(0_tmp)",
+      "Parameters": Object {
+        "FunctionName": "__REPLACED_TOKEN",
+        "Payload.$": "$",
+      },
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "ResultPath": "$.0_tmp",
+      "ResultSelector": "$.Payload",
+      "Type": "Task",
+    },
+    "throw task(0_tmp)": Object {
+      "Cause": "{\\"payload\\":\\"$.0_tmp\\"}",
+      "Error": "task",
       "Type": "Fail",
     },
   },
@@ -5005,6 +5220,7 @@ Object {
   "States": Object {
     "$SFN.waitFor(1)": Object {
       "Next": "return null",
+      "ResultPath": null,
       "Seconds": 1,
       "Type": "Wait",
     },
@@ -5026,6 +5242,7 @@ Object {
   "States": Object {
     "$SFN.waitUntil(\\"2022-08-01T00:00:00Z\\")": Object {
       "Next": "return null",
+      "ResultPath": null,
       "Timestamp": "2022-08-01T00:00:00Z",
       "Type": "Wait",
     },
@@ -5047,6 +5264,7 @@ Object {
   "States": Object {
     "$SFN.waitFor(input.seconds)": Object {
       "Next": "return null",
+      "ResultPath": null,
       "SecondsPath": "$.seconds",
       "Type": "Wait",
     },
@@ -5068,6 +5286,7 @@ Object {
   "States": Object {
     "$SFN.waitUntil(input.until)": Object {
       "Next": "return null",
+      "ResultPath": null,
       "TimestampPath": "$.until",
       "Type": "Wait",
     },
@@ -5179,6 +5398,7 @@ Object {
   "States": Object {
     "$SFN.waitFor(1)": Object {
       "Next": "while (true)",
+      "ResultPath": null,
       "Seconds": 1,
       "Type": "Wait",
     },

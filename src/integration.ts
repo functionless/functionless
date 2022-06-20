@@ -21,6 +21,10 @@ export const isIntegration = <I extends IntegrationInput<string, AnyFunction>>(
   i: any
 ): i is I => typeof i === "object" && "kind" in i;
 
+export function isIntegrationCall(node: FunctionlessNode): node is CallExpr {
+  return isCallExpr(node) && isReferenceExpr(node.expr);
+}
+
 /**
  * Maintain a typesafe runtime map of integration type keys to use elsewhere.
  *

@@ -1,5 +1,7 @@
 /* eslint-disable import/no-unresolved */
 import Link from "@docusaurus/Link";
+import Container from "@mui/material/Container";
+import Grid from "@mui/material/Grid";
 import Layout from "@theme/Layout";
 import clsx from "clsx";
 import HomepageFeatures from "../components/HomepageFeatures";
@@ -30,17 +32,43 @@ function HomepageHeader() {
           policies from business logic.
         </p>
 
-        <div className="row">
-          <div className="col col--2 col--offset-3 margin-top--md">
-            <HomeButton to="/docs/what-is-functionless" label="Learn More" />
-          </div>
-          <div className="col col--2 margin-top--md">
-            <HomeButton to="./sign-up" label="Sign Up for Updates" />
-          </div>
-          <div className="col col--2 margin-top--md">
-            <HomeButton to="/docs/getting-started" label="Get Started" />
-          </div>
-        </div>
+        <Container component="main" maxWidth="xl">
+          <Grid container>
+            <Grid container>
+              <Grid item lg={1} md={0} xs={0} />
+              <Grid
+                item
+                lg={3}
+                md={4}
+                xs={12}
+                sx={{ margin: { xs: 1, md: 0 } }}
+              >
+                <HomeButton
+                  to="/docs/what-is-functionless"
+                  label="Learn More"
+                />
+              </Grid>
+              <Grid
+                item
+                lg={4}
+                md={4}
+                xs={12}
+                sx={{ margin: { xs: 1, md: 0 } }}
+              >
+                <HomeButton to="./sign-up" label="Sign Up for Updates" />
+              </Grid>
+              <Grid
+                item
+                lg={3}
+                md={4}
+                xs={12}
+                sx={{ margin: { xs: 1, md: 0 } }}
+              >
+                <HomeButton to="/docs/getting-started" label="Get Started" />
+              </Grid>
+            </Grid>
+          </Grid>
+        </Container>
       </div>
     </header>
   );

@@ -170,7 +170,7 @@ project.compileTask.prependExec(
 );
 
 project.testTask.prependExec(
-  "cd ./test-app && yarn && yarn build && yarn synth"
+  "cd ./test-app && yarn && yarn build && yarn synth --quiet"
 );
 project.testTask.prependExec("./scripts/localstack");
 project.testTask.exec("localstack stop");
