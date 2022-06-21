@@ -174,7 +174,7 @@ export const commentValidationWorkflow = new StepFunction<
   const status = validateComment({ commentText: input.commentText });
   if (status === "bad") {
     $AWS.DynamoDB.DeleteItem({
-      TableName: database,
+      Table: database,
       Key: {
         pk: {
           S: `Post|${input.postId}`,
@@ -254,7 +254,7 @@ const deleteWorkflow = new StepFunction<{ postId: string }, void>(
     while (true) {
       try {
         const comments = $AWS.DynamoDB.Query({
-          TableName: database,
+          Table: database,
           KeyConditionExpression: `pk = :pk`,
           ExpressionAttributeValues: {
             ":pk": {
@@ -266,7 +266,7 @@ const deleteWorkflow = new StepFunction<{ postId: string }, void>(
         if (comments.Items?.[0] !== undefined) {
           $SFN.forEach(comments.Items, (comment) =>
             $AWS.DynamoDB.DeleteItem({
-              TableName: database,
+              Table: database,
               Key: {
                 pk: comment.pk,
                 sk: comment.sk,
@@ -275,7 +275,7 @@ const deleteWorkflow = new StepFunction<{ postId: string }, void>(
           );
         } else {
           $AWS.DynamoDB.DeleteItem({
-            TableName: database,
+            Table: database,
             Key: {
               pk: {
                 S: `Post|${input.postId}`,
@@ -483,7 +483,7 @@ new Function(
     });
     console.log(deleteWorkflow.describeExecution(exc.executionArn));
     $AWS.DynamoDB.PutItem({
-      TableName: database,
+      Table: database,
       Item: {
         pk: { S: "Post|1" },
         sk: { S: "Post" },
@@ -494,7 +494,7 @@ new Function(
       },
     });
     const item = $AWS.DynamoDB.GetItem({
-      TableName: database,
+      Table: database,
       ConsistentRead: true,
       Key: { pk: { S: "Post|1" }, sk: { S: "Post" } },
     });

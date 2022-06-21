@@ -162,7 +162,7 @@ const tasks = Table.fromTable<Task, "taskId">(this, "Tasks", {
     const status = validate({ commentText: input.commentText });
     if (status === "bad") {
       $AWS.DynamoDB.DeleteItem({
-        TableName: posts,
+        Table: posts,
         Key: {
           pk: {
             S: \`Post|\${input.postId}\`,

@@ -58,7 +58,7 @@ localstackTestSuite("eventBusStack", (testResource) => {
             Item: {
               id: { S: event.id },
             },
-            TableName: table,
+            Table: table,
           });
         }
       );

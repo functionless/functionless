@@ -113,12 +113,12 @@ export function typeCheck() {
 
   // Test1: type checking should work for Table
   $AWS.DynamoDB.GetItem({
-    TableName: newTable,
+    Table: newTable,
     // @ts-expect-error - missing id prop
     Key: {},
   });
   $AWS.DynamoDB.PutItem({
-    TableName: newTable,
+    Table: newTable,
     Item: {
       id: {
         S: "",
@@ -133,12 +133,12 @@ export function typeCheck() {
     },
   });
   $AWS.DynamoDB.DeleteItem({
-    TableName: newTable,
+    Table: newTable,
     // @ts-expect-error - missing id prop
     Key: {},
   });
   $AWS.DynamoDB.UpdateItem({
-    TableName: newTable,
+    Table: newTable,
     // @ts-expect-error - missing id prop
     Key: {},
     UpdateExpression: "",
@@ -146,12 +146,12 @@ export function typeCheck() {
 
   // Test2: type checking should work for ITable
   $AWS.DynamoDB.GetItem({
-    TableName: fromTable,
+    Table: fromTable,
     // @ts-expect-error - missing id prop
     Key: {},
   });
   $AWS.DynamoDB.PutItem({
-    TableName: fromTable,
+    Table: fromTable,
     Item: {
       id: {
         S: "",
@@ -166,12 +166,12 @@ export function typeCheck() {
     },
   });
   $AWS.DynamoDB.DeleteItem({
-    TableName: fromTable,
+    Table: fromTable,
     // @ts-expect-error - missing id prop
     Key: {},
   });
   $AWS.DynamoDB.UpdateItem({
-    TableName: fromTable,
+    Table: fromTable,
     // @ts-expect-error - missing id prop
     Key: {},
     UpdateExpression: "",
@@ -228,12 +228,12 @@ export function typeCheckSortKey() {
 
   // Test1: type checking should work for Table
   $AWS.DynamoDB.GetItem({
-    TableName: newTable,
+    Table: newTable,
     // @ts-expect-error - missing id prop
     Key: {},
   });
   $AWS.DynamoDB.PutItem({
-    TableName: newTable,
+    Table: newTable,
     Item: {
       id: {
         S: "",
@@ -248,12 +248,12 @@ export function typeCheckSortKey() {
     },
   });
   $AWS.DynamoDB.DeleteItem({
-    TableName: newTable,
+    Table: newTable,
     // @ts-expect-error - missing id prop
     Key: {},
   });
   $AWS.DynamoDB.UpdateItem({
-    TableName: newTable,
+    Table: newTable,
     // @ts-expect-error - missing id prop
     Key: {},
     UpdateExpression: "",
@@ -261,12 +261,12 @@ export function typeCheckSortKey() {
 
   // Test2: type checking should work for ITable
   $AWS.DynamoDB.GetItem({
-    TableName: fromTable,
+    Table: fromTable,
     // @ts-expect-error - missing id prop
     Key: {},
   });
   $AWS.DynamoDB.PutItem({
-    TableName: fromTable,
+    Table: fromTable,
     Item: {
       id: {
         S: "",
@@ -281,12 +281,12 @@ export function typeCheckSortKey() {
     },
   });
   $AWS.DynamoDB.DeleteItem({
-    TableName: fromTable,
+    Table: fromTable,
     // @ts-expect-error - missing id prop
     Key: {},
   });
   $AWS.DynamoDB.UpdateItem({
-    TableName: fromTable,
+    Table: fromTable,
     // @ts-expect-error - missing id prop
     Key: {},
     UpdateExpression: "",

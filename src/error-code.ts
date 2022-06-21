@@ -285,7 +285,7 @@ export namespace ErrorCodes {
    * new Function(this, 'func', async () => {
    *    // valid use of a Table
    *    const $AWS.DynamoDB.GetItem({
-   *        TableName: table,
+   *        Table: table,
    *        ...
    *    })
    *    // invalid - .resource is not available
@@ -345,7 +345,7 @@ export namespace ErrorCodes {
    * ```ts
    * new AwsMethod({
    *   request: ($input) => $AWS.DynamoDB.GetItem({
-   *     TableName: table,
+   *     Table: table,
    *     // invalid, all property names must be literals
    *     [computedProperty]: prop
    *   })
@@ -400,7 +400,7 @@ export namespace ErrorCodes {
    *
    * ```ts
    * const input = {
-   *   TableName: table,
+   *   Table: table,
    *   Key: {
    *     // etc.
    *   }
@@ -413,7 +413,7 @@ export namespace ErrorCodes {
    *
    * ```ts
    * $AWS.DynamoDB.GetItem({
-   *   TableName: table,
+   *   Table: table,
    *   Key: {
    *     // etc.
    *   }
@@ -437,7 +437,7 @@ export namespace ErrorCodes {
    *   response: () => {
    *     // INVALID! - you cannot call an integration from within a response mapping template
    *     return $AWS.DynamoDB.GetItem({
-   *       TableName: table,
+   *       Table: table,
    *       ...
    *     });
    *   }
