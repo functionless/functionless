@@ -201,7 +201,7 @@ const getPerson = new AppsyncField({
     argName: appsync.Field.string()
   }
 }, ($context) => {
-  return table.getItem({
+  return table.appsync.getItem({
     key: {
       id: {
         S: $context.arguments.id
@@ -256,17 +256,17 @@ myTable.get();
 
 ```ts
 // you cannot in-line a call as the if condition, store it as a variable first
-if (myTable.get()) {
+if (myTable.appsync.getItem(..)) {
 }
 
 if (condition) {
   // it is not currently possible to conditionally call a service, but this will be supported at a later time
-  myTable.get();
+  myTable.appsync.getItem(..);
 }
 
 for (const item in list) {
   // resolvers cannot be contained within a loop
-  myTable.get();
+  myTable.appsync.getItem(..);
 }
 ```
 

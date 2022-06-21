@@ -149,7 +149,7 @@ export class PeopleDatabase extends Construct {
         fieldName: "addPerson",
       },
       ($context) => {
-        const person = this.personTable.putItem({
+        const person = this.personTable.appsync.putItem({
           key: {
             id: {
               S: $util.autoId(),
@@ -176,7 +176,7 @@ export class PeopleDatabase extends Construct {
         fieldName: "updateName",
       },
       ($context: AppsyncContext<MutationResolvers["updateName"]["args"]>) =>
-        this.personTable.updateItem({
+        this.personTable.appsync.updateItem({
           key: {
             id: $util.dynamodb.toDynamoDB($context.arguments.id),
           },
@@ -205,7 +205,7 @@ export class PeopleDatabase extends Construct {
         fieldName: "deletePerson",
       },
       ($context) =>
-        this.personTable.deleteItem({
+        this.personTable.appsync.deleteItem({
           key: {
             id: $util.dynamodb.toDynamoDB($context.arguments.id),
           },

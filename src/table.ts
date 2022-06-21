@@ -12,8 +12,13 @@ import {
 } from "typesafe-dynamodb/lib/expression-attributes";
 import { TableKey } from "typesafe-dynamodb/lib/key";
 import { Narrow } from "typesafe-dynamodb/lib/narrow";
-// @ts-expect-error - AppsyncResolver is imported for tsdoc
-import { AppsyncResolver, AppSyncVtlIntegration } from "./appsync";
+import {
+  // @ts-expect-error - AppsyncResolver is imported for tsdoc
+  AppsyncResolver,
+  // @ts-expect-error - AppsyncField is imported for tsdoc
+  AppsyncField,
+  AppSyncVtlIntegration,
+} from "./appsync";
 import { assertNodeKind } from "./assert";
 import { ObjectLiteralExpr } from "./expression";
 import {
@@ -82,7 +87,7 @@ export type AnyTable = ITable<Record<string, any>, string, string | undefined>;
  * const getPerson = new AppsyncResolver<
  *   (personId: string) => Person | undefined
  * >(($context, personId: string) => {
- *   const person = personTable.get({
+ *   const person = personTable.appsync.get({
  *     key: {
  *       id: $util.toDynamoDB(personId)
  *     }
@@ -132,115 +137,124 @@ export interface ITable<
   };
 
   /**
-   * @see https://docs.aws.amazon.com/appsync/latest/devguide/resolver-mapping-template-reference-dynamodb.html#aws-appsync-resolver-mapping-template-reference-dynamodb-getitem
+   * Contains Integration implementations specific to the AWS Appsync service.
+   *
+   * These integrations should only be called from within the {@link AppsyncResolver} and {@link AppsyncField} Integration Contexts.
+   *
+   * @see https://docs.aws.amazon.com/appsync/latest/devguide/resolver-mapping-template-reference-dynamodb.html
    */
-  getItem: DynamoIntegrationCall<
-    "getItem",
-    <
-      Key extends TableKey<
-        Item,
-        PartitionKey,
-        RangeKey,
-        JsonFormat.AttributeValue
-      >
-    >(input: {
-      key: Key;
-      consistentRead?: boolean;
-    }) => Narrow<Item, AttributeKeyToObject<Key>, JsonFormat.Document>
-  >;
-
-  /**
-   * @see https://docs.aws.amazon.com/appsync/latest/devguide/resolver-mapping-template-reference-dynamodb.html#aws-appsync-resolver-mapping-template-reference-dynamodb-putitem
-   */
-  putItem: DynamoIntegrationCall<
-    "putItem",
-    <
-      Key extends TableKey<
-        Item,
-        PartitionKey,
-        RangeKey,
-        JsonFormat.AttributeValue
-      >,
-      ConditionExpression extends string | undefined = undefined
-    >(input: {
-      key: Key;
-      attributeValues: ToAttributeMap<
-        Omit<
-          Narrow<Item, AttributeKeyToObject<Key>, JsonFormat.Document>,
-          Exclude<PartitionKey | RangeKey, undefined>
+  readonly appsync: {
+    /**
+     * @see https://docs.aws.amazon.com/appsync/latest/devguide/resolver-mapping-template-reference-dynamodb.html#aws-appsync-resolver-mapping-template-reference-dynamodb-getitem
+     */
+    getItem: DynamoIntegrationCall<
+      "getItem",
+      <
+        Key extends TableKey<
+          Item,
+          PartitionKey,
+          RangeKey,
+          JsonFormat.AttributeValue
         >
-      >;
-      condition?: DynamoExpression<ConditionExpression>;
-      _version?: number;
-    }) => Narrow<Item, AttributeKeyToObject<Key>, JsonFormat.Document>
-  >;
+      >(input: {
+        key: Key;
+        consistentRead?: boolean;
+      }) => Narrow<Item, AttributeKeyToObject<Key>, JsonFormat.Document>
+    >;
 
-  /**
-   * @see https://docs.aws.amazon.com/appsync/latest/devguide/resolver-mapping-template-reference-dynamodb.html#aws-appsync-resolver-mapping-template-reference-dynamodb-updateitem
-   *
-   * @returns the updated the item
-   */
-  updateItem: DynamoIntegrationCall<
-    "updateItem",
-    <
-      Key extends TableKey<
-        Item,
-        PartitionKey,
-        RangeKey,
-        JsonFormat.AttributeValue
-      >,
-      UpdateExpression extends string,
-      ConditionExpression extends string | undefined
-    >(input: {
-      key: Key;
-      update: DynamoExpression<UpdateExpression>;
-      condition?: DynamoExpression<ConditionExpression>;
-      _version?: number;
-    }) => Narrow<Item, AttributeKeyToObject<Key>, JsonFormat.Document>
-  >;
+    /**
+     * @see https://docs.aws.amazon.com/appsync/latest/devguide/resolver-mapping-template-reference-dynamodb.html#aws-appsync-resolver-mapping-template-reference-dynamodb-putitem
+     */
+    putItem: DynamoIntegrationCall<
+      "putItem",
+      <
+        Key extends TableKey<
+          Item,
+          PartitionKey,
+          RangeKey,
+          JsonFormat.AttributeValue
+        >,
+        ConditionExpression extends string | undefined = undefined
+      >(input: {
+        key: Key;
+        attributeValues: ToAttributeMap<
+          Omit<
+            Narrow<Item, AttributeKeyToObject<Key>, JsonFormat.Document>,
+            Exclude<PartitionKey | RangeKey, undefined>
+          >
+        >;
+        condition?: DynamoExpression<ConditionExpression>;
+        _version?: number;
+      }) => Narrow<Item, AttributeKeyToObject<Key>, JsonFormat.Document>
+    >;
 
-  /**
-   * @see https://docs.aws.amazon.com/appsync/latest/devguide/resolver-mapping-template-reference-dynamodb.html#aws-appsync-resolver-mapping-template-reference-dynamodb-deleteitem
-   *
-   * @returns the previous item.
-   */
-  deleteItem: DynamoIntegrationCall<
-    "deleteItem",
-    <
-      Key extends TableKey<
-        Item,
-        PartitionKey,
-        RangeKey,
-        JsonFormat.AttributeValue
-      >,
-      ConditionExpression extends string | undefined
-    >(input: {
-      key: Key;
-      condition?: DynamoExpression<ConditionExpression>;
-      _version?: number;
-    }) => Narrow<Item, AttributeKeyToObject<Key>, JsonFormat.Document>
-  >;
+    /**
+     * @see https://docs.aws.amazon.com/appsync/latest/devguide/resolver-mapping-template-reference-dynamodb.html#aws-appsync-resolver-mapping-template-reference-dynamodb-updateitem
+     *
+     * @returns the updated the item
+     */
+    updateItem: DynamoIntegrationCall<
+      "updateItem",
+      <
+        Key extends TableKey<
+          Item,
+          PartitionKey,
+          RangeKey,
+          JsonFormat.AttributeValue
+        >,
+        UpdateExpression extends string,
+        ConditionExpression extends string | undefined
+      >(input: {
+        key: Key;
+        update: DynamoExpression<UpdateExpression>;
+        condition?: DynamoExpression<ConditionExpression>;
+        _version?: number;
+      }) => Narrow<Item, AttributeKeyToObject<Key>, JsonFormat.Document>
+    >;
 
-  /**
-   * @see https://docs.aws.amazon.com/appsync/latest/devguide/resolver-mapping-template-reference-dynamodb.html#aws-appsync-resolver-mapping-template-reference-dynamodb-query
-   */
-  query: DynamoIntegrationCall<
-    "query",
-    <Query extends string, Filter extends string | undefined>(input: {
-      query: DynamoExpression<Query>;
-      filter?: DynamoExpression<Filter>;
-      index?: string;
-      nextToken?: string;
-      limit?: number;
-      scanIndexForward?: boolean;
-      consistentRead?: boolean;
-      select?: "ALL_ATTRIBUTES" | "ALL_PROJECTED_ATTRIBUTES";
-    }) => {
-      items: Item[];
-      nextToken: string;
-      scannedCount: number;
-    }
-  >;
+    /**
+     * @see https://docs.aws.amazon.com/appsync/latest/devguide/resolver-mapping-template-reference-dynamodb.html#aws-appsync-resolver-mapping-template-reference-dynamodb-deleteitem
+     *
+     * @returns the previous item.
+     */
+    deleteItem: DynamoIntegrationCall<
+      "deleteItem",
+      <
+        Key extends TableKey<
+          Item,
+          PartitionKey,
+          RangeKey,
+          JsonFormat.AttributeValue
+        >,
+        ConditionExpression extends string | undefined
+      >(input: {
+        key: Key;
+        condition?: DynamoExpression<ConditionExpression>;
+        _version?: number;
+      }) => Narrow<Item, AttributeKeyToObject<Key>, JsonFormat.Document>
+    >;
+
+    /**
+     * @see https://docs.aws.amazon.com/appsync/latest/devguide/resolver-mapping-template-reference-dynamodb.html#aws-appsync-resolver-mapping-template-reference-dynamodb-query
+     */
+    query: DynamoIntegrationCall<
+      "query",
+      <Query extends string, Filter extends string | undefined>(input: {
+        query: DynamoExpression<Query>;
+        filter?: DynamoExpression<Filter>;
+        index?: string;
+        nextToken?: string;
+        limit?: number;
+        scanIndexForward?: boolean;
+        consistentRead?: boolean;
+        select?: "ALL_ATTRIBUTES" | "ALL_PROJECTED_ATTRIBUTES";
+      }) => {
+        items: Item[];
+        nextToken: string;
+        scannedCount: number;
+      }
+    >;
+  };
 }
 
 class BaseTable<
@@ -261,145 +275,144 @@ class BaseTable<
     RangeKey: RangeKey;
   };
 
+  public readonly appsync;
+
   constructor(readonly resource: aws_dynamodb.ITable) {
     this.tableName = resource.tableName;
     this.tableArn = resource.tableArn;
+
+    this.appsync = {
+      getItem: this.makeTableIntegration("getItem", {
+        appSyncVtl: {
+          request(call, vtl) {
+            const input = vtl.eval(
+              assertNodeKind<ObjectLiteralExpr>(
+                call.getArgument("input")?.expr,
+                "ObjectLiteralExpr"
+              )
+            );
+            const request = vtl.var(
+              '{"operation": "GetItem", "version": "2018-05-29"}'
+            );
+            vtl.qr(`${request}.put('key', ${input}.get('key'))`);
+            addIfDefined(vtl, input, request, "consistentRead");
+
+            return vtl.json(request);
+          },
+        },
+      }),
+
+      putItem: this.makeTableIntegration("putItem", {
+        appSyncVtl: {
+          request: (call, vtl) => {
+            const input = vtl.eval(
+              assertNodeKind<ObjectLiteralExpr>(
+                call.getArgument("input")?.expr,
+                "ObjectLiteralExpr"
+              )
+            );
+            const request = vtl.var(
+              '{"operation": "PutItem", "version": "2018-05-29"}'
+            );
+            vtl.qr(`${request}.put('key', ${input}.get('key'))`);
+            vtl.qr(
+              `${request}.put('attributeValues', ${input}.get('attributeValues'))`
+            );
+            addIfDefined(vtl, input, request, "condition");
+            addIfDefined(vtl, input, request, "_version");
+
+            return vtl.json(request);
+          },
+        },
+      }),
+
+      updateItem: this.makeTableIntegration("updateItem", {
+        appSyncVtl: {
+          request: (call, vtl) => {
+            const input = vtl.eval(
+              assertNodeKind<ObjectLiteralExpr>(
+                call.getArgument("input")?.expr,
+                "ObjectLiteralExpr"
+              )
+            );
+            const request = vtl.var(
+              '{"operation": "UpdateItem", "version": "2018-05-29"}'
+            );
+            vtl.qr(`${request}.put('key', ${input}.get('key'))`);
+            vtl.qr(`${request}.put('update', ${input}.get('update'))`);
+            addIfDefined(vtl, input, request, "condition");
+            addIfDefined(vtl, input, request, "_version");
+
+            return vtl.json(request);
+          },
+        },
+      }),
+
+      deleteItem: this.makeTableIntegration("deleteItem", {
+        appSyncVtl: {
+          request: (call, vtl) => {
+            const input = vtl.eval(
+              assertNodeKind<ObjectLiteralExpr>(
+                call.getArgument("input")?.expr,
+                "ObjectLiteralExpr"
+              )
+            );
+            const request = vtl.var(
+              '{"operation": "DeleteItem", "version": "2018-05-29"}'
+            );
+            vtl.qr(`${request}.put('key', ${input}.get('key'))`);
+            addIfDefined(vtl, input, request, "condition");
+            addIfDefined(vtl, input, request, "_version");
+
+            return vtl.json(request);
+          },
+        },
+      }),
+
+      query: this.makeTableIntegration("query", {
+        appSyncVtl: {
+          request: (call, vtl) => {
+            const input = vtl.eval(
+              assertNodeKind<ObjectLiteralExpr>(
+                call.getArgument("input")?.expr,
+                "ObjectLiteralExpr"
+              )
+            );
+            const request = vtl.var(
+              '{"operation": "Query", "version": "2018-05-29"}'
+            );
+            vtl.qr(`${request}.put('query', ${input}.get('query'))`);
+            addIfDefined(vtl, input, request, "index");
+            addIfDefined(vtl, input, request, "nextToken");
+            addIfDefined(vtl, input, request, "limit");
+            addIfDefined(vtl, input, request, "scanIndexForward");
+            addIfDefined(vtl, input, request, "consistentRead");
+            addIfDefined(vtl, input, request, "select");
+
+            return vtl.json(request);
+          },
+        },
+      }),
+    } as const;
   }
 
-  public getItem = this.makeTableIntegration("getItem", {
-    appSyncVtl: {
-      request(call, vtl) {
-        const input = vtl.eval(
-          assertNodeKind<ObjectLiteralExpr>(
-            call.getArgument("input")?.expr,
-            "ObjectLiteralExpr"
-          )
-        );
-        const request = vtl.var(
-          '{"operation": "GetItem", "version": "2018-05-29"}'
-        );
-        vtl.qr(`${request}.put('key', ${input}.get('key'))`);
-        addIfDefined(vtl, input, request, "consistentRead");
-
-        return vtl.json(request);
-      },
-    },
-  });
-
-  public putItem = this.makeTableIntegration("putItem", {
-    appSyncVtl: {
-      request: (call, vtl) => {
-        const input = vtl.eval(
-          assertNodeKind<ObjectLiteralExpr>(
-            call.getArgument("input")?.expr,
-            "ObjectLiteralExpr"
-          )
-        );
-        const request = vtl.var(
-          '{"operation": "PutItem", "version": "2018-05-29"}'
-        );
-        vtl.qr(`${request}.put('key', ${input}.get('key'))`);
-        vtl.qr(
-          `${request}.put('attributeValues', ${input}.get('attributeValues'))`
-        );
-        addIfDefined(vtl, input, request, "condition");
-        addIfDefined(vtl, input, request, "_version");
-
-        return vtl.json(request);
-      },
-    },
-  });
-
-  public updateItem = this.makeTableIntegration("updateItem", {
-    appSyncVtl: {
-      request: (call, vtl) => {
-        const input = vtl.eval(
-          assertNodeKind<ObjectLiteralExpr>(
-            call.getArgument("input")?.expr,
-            "ObjectLiteralExpr"
-          )
-        );
-        const request = vtl.var(
-          '{"operation": "UpdateItem", "version": "2018-05-29"}'
-        );
-        vtl.qr(`${request}.put('key', ${input}.get('key'))`);
-        vtl.qr(`${request}.put('update', ${input}.get('update'))`);
-        addIfDefined(vtl, input, request, "condition");
-        addIfDefined(vtl, input, request, "_version");
-
-        return vtl.json(request);
-      },
-    },
-  });
-
-  public deleteItem = this.makeTableIntegration("deleteItem", {
-    appSyncVtl: {
-      request: (call, vtl) => {
-        const input = vtl.eval(
-          assertNodeKind<ObjectLiteralExpr>(
-            call.getArgument("input")?.expr,
-            "ObjectLiteralExpr"
-          )
-        );
-        const request = vtl.var(
-          '{"operation": "DeleteItem", "version": "2018-05-29"}'
-        );
-        vtl.qr(`${request}.put('key', ${input}.get('key'))`);
-        addIfDefined(vtl, input, request, "condition");
-        addIfDefined(vtl, input, request, "_version");
-
-        return vtl.json(request);
-      },
-    },
-  });
-
-  public query = this.makeTableIntegration("query", {
-    appSyncVtl: {
-      request: (call, vtl) => {
-        const input = vtl.eval(
-          assertNodeKind<ObjectLiteralExpr>(
-            call.getArgument("input")?.expr,
-            "ObjectLiteralExpr"
-          )
-        );
-        const request = vtl.var(
-          '{"operation": "Query", "version": "2018-05-29"}'
-        );
-        vtl.qr(`${request}.put('query', ${input}.get('query'))`);
-        addIfDefined(vtl, input, request, "index");
-        addIfDefined(vtl, input, request, "nextToken");
-        addIfDefined(vtl, input, request, "limit");
-        addIfDefined(vtl, input, request, "scanIndexForward");
-        addIfDefined(vtl, input, request, "consistentRead");
-        addIfDefined(vtl, input, request, "select");
-
-        return vtl.json(request);
-      },
-    },
-  });
-
   private makeTableIntegration<
-    K extends Exclude<
-      keyof ITable<Item, PartitionKey, RangeKey>,
-      | "kind"
-      | "resource"
-      | "_brand"
-      | "tableName"
-      | "tableArn"
-      | "functionlessKind"
-    >
+    K extends keyof ITable<Item, PartitionKey, RangeKey>["appsync"]
   >(
     methodName: K,
     integration: Omit<
-      IntegrationInput<K, ITable<Item, PartitionKey, RangeKey>[K]>,
+      IntegrationInput<K, ITable<Item, PartitionKey, RangeKey>["appsync"][K]>,
       "kind" | "appSyncVtl"
     > & {
       appSyncVtl: Omit<AppSyncVtlIntegration, "dataSource" | "dataSourceId">;
     }
-  ): DynamoIntegrationCall<K, ITable<Item, PartitionKey, RangeKey>[K]> {
+  ): DynamoIntegrationCall<
+    K,
+    ITable<Item, PartitionKey, RangeKey>["appsync"][K]
+  > {
     return makeIntegration<
       `Table.${K}`,
-      ITable<Item, PartitionKey, RangeKey>[K]
+      ITable<Item, PartitionKey, RangeKey>["appsync"][K]
     >({
       ...integration,
       kind: `Table.${methodName}`,

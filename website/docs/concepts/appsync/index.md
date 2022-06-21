@@ -32,7 +32,7 @@ Functionless enables you to automatically generate the Resolver configurations (
 ```ts
 const getItem = new AppsyncResolver(
   ($context: AppsyncContext<{ key: string }>, key) => {
-    const item = myTable.get({
+    const item = myTable.appsync.get({
       key: {
         S: key,
       },
