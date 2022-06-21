@@ -149,13 +149,13 @@ This is useful so that you don't have to do work to convert the AttributeValue f
 
 ### getItem
 
-`getItem` gets a value from the database by its key and returns `undefined` if it does not exist.
+`appsync.getItem` gets a value from the database by its key and returns `undefined` if it does not exist.
 
 It invokes `DynamoDB:GetItem` API using the [GetItem Appsync Resolver](https://docs.aws.amazon.com/appsync/latest/devguide/resolver-mapping-template-reference-dynamodb.html#aws-appsync-resolver-mapping-template-reference-dynamodb-getitem).
 
 ```ts
 new AppsyncResolver(($context: AppsyncContext<{ id: string }>) => {
-  return table.getItem({
+  return table.appsync.getItem({
     key: {
       id: $util.dynamodb.toJson($context.arguments.id),
     },
@@ -174,14 +174,14 @@ table.deleteItem({
 
 ### putItem
 
-`putItem` writes a value into the database and overwrites the existing value if one already exists.
+`appsync.putItem` writes a value into the database and overwrites the existing value if one already exists.
 
 It invokes `DynamoDB:PutItem` API using the [PutItem Appsync Resolver](https://docs.aws.amazon.com/appsync/latest/devguide/resolver-mapping-template-reference-dynamodb.html#aws-appsync-resolver-mapping-template-reference-dynamodb-putItem).
 
 ```ts
 new AppsyncResolver(
   ($context: AppsyncContext<{ id: string; text: string }>) => {
-    return table.putItem({
+    return table.appsync.putItem({
       key: {
         id: $util.dynamodb.toJson($context.arguments.id),
       },
@@ -196,7 +196,7 @@ new AppsyncResolver(
 The `condition` property enables you to write [DynamoDB ConditionExpressions](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Expressions.ConditionExpressions.html) so that the item is only update if some condition is true.
 
 ```ts
-table.putItem({
+table.appsync.putItem({
   key: {
     id: $util.dynamodb.toJson($context.arguments.id),
   },
@@ -214,13 +214,13 @@ table.putItem({
 
 ### updateItem
 
-`updateItem` updates a value in the database using an UpdateExpression. If no value already exists, then the expression runs against the empty value and may result in unexpected behavior or an error.
+`appsync.updateItem` updates a value in the database using an UpdateExpression. If no value already exists, then the expression runs against the empty value and may result in unexpected behavior or an error.
 
 It invokes `DynamoDB:UpdateItem` API using the [UpdateItem Appsync Resolver](https://docs.aws.amazon.com/appsync/latest/devguide/resolver-mapping-template-reference-dynamodb.html#aws-appsync-resolver-mapping-template-reference-dynamodb-updateitem).
 
 ```ts
 new AppsyncResolver(($context: AppsyncContext<{ id: string }>) => {
-  return table.updateItem({
+  return table.appsync.updateItem({
     key: {
       id: $util.dynamodb.toJson($context.arguments.id),
     },
@@ -243,7 +243,7 @@ It invokes `DynamoDB:DeleteItem` API using the [DeleteItem Appsync Resolver](htt
 
 ```ts
 new AppsyncResolver(($context: AppsyncContext<{ id: string }>) => {
-  return table.deleteItem({
+  return table.appsync.deleteItem({
     key: {
       id: $util.dynamodb.toJson($context.arguments.id),
     },
@@ -254,7 +254,7 @@ new AppsyncResolver(($context: AppsyncContext<{ id: string }>) => {
 The `condition` property enables you to write [DynamoDB ConditionExpressions](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Expressions.ConditionExpressions.html) so that the item is only deleted if some condition is true.
 
 ```ts
-table.deleteItem({
+table.appsync.deleteItem({
   key: {
     id: $util.dynamodb.toJson($context.arguments.id),
   },
@@ -279,7 +279,7 @@ The `query` property contains a KeyConditionExpression that will apply a conditi
 
 ```ts
 new AppsyncResolver(($context: AppsyncContext<{ id: string }>) => {
-  return table.query({
+  return table.appsync.query({
     query: {
       expression: "ownerId = :ownerId",
       expressionValues: {
@@ -295,7 +295,7 @@ new AppsyncResolver(($context: AppsyncContext<{ id: string }>) => {
 The KeyConditionExpression is limited to only operating on the Partition and Range Key properties. To further filter the returned items from your query, use a FilterExpression.
 
 ```ts
-table.query({
+table.appsync.query({
   filter: {
     expression: "Price > :p",
     expressionValues: {
@@ -312,7 +312,7 @@ table.query({
 To paginate through results, use the `nextToken` field.
 
 ```ts
-table.query({
+table.appsync.query({
   nextToken: paginationToken,
 });
 ```
@@ -320,7 +320,7 @@ table.query({
 This token is made available in the query's response payload.
 
 ```ts
-const response = table.query(..);
+const response = table.appsync.query(..);
 response.nextToken;
 ```
 
