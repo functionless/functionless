@@ -589,11 +589,6 @@ function makeDynamoIntegration<
         prewarmContext.getOrInit(PrewarmClients.DYNAMO);
       },
     },
-    unhandledContext(kind, contextKind) {
-      throw new Error(
-        `${kind} is only available within an '${ASL.ContextName}' context, but was called from within a '${contextKind}' context.`
-      );
-    },
   });
 }
 

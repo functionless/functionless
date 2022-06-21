@@ -12473,6 +12473,23 @@ __fnls_1_AWS.EventBridge = __fnls_1_AWS_EventBridge;
 var __m = Object.create(Object.getPrototypeOf(global[\\"ts-jest\\"]));
 Object.defineProperty(__m, \\"__esModule\\", { value: true });
 __m[\\"$AWS\\"] = __fnls_1_AWS;
+__m.grantTablePermissions = __grantTablePermissions;
+var __kinds = [\\"Argument\\"];
+var __0_kinds = [\\"ObjectLiteralExpr\\"];
+var __1_kinds = [\\"PropAssignExpr\\"];
+var __2_kinds = [\\"ReferenceExpr\\"];
+var __guards_1 = {isArgument: __f18, isObjectLiteralExpr: __f19, isPropAssignExpr: __f20, isReferenceExpr: __f21};
+var __error_code_1 = {};
+Object.setPrototypeOf(__f22, global.Error);
+__error_code_1.SynthError = __f22;
+__error_code_1.formatErrorMessage = __f23;
+__error_code_1.formatErrorUrl = __f24;
+var __error_code_1_ErrorCodes = {};
+var __error_code_1_ErrorCodes_Expected_an_object_literal = {code: 10012, type: \\"ERROR\\", title: \\"Expected_an_object_literal\\"};
+__error_code_1_ErrorCodes.Expected_an_object_literal = __error_code_1_ErrorCodes_Expected_an_object_literal;
+__error_code_1.ErrorCodes = __error_code_1_ErrorCodes;
+var __table_1 = {isTable: __isTable};
+__m.getTableArgument = __getTableArgument;
 __m.deploymentOnlyModule = true;
 Object.defineProperty(__fnls_1, \\"$AWS\\", { enumerable: true, get: __f17 });
 var __table = {};
@@ -12755,6 +12772,149 @@ function __f16(__0) {
 return (prewarmContext) => {
                     prewarmContext.getOrInit(function_prewarm_1.PrewarmClients.EVENT_BRIDGE);
                 };
+
+    }
+  }).apply(undefined, undefined).apply(this, arguments);
+}
+
+function __grantTablePermissions(__0, __1, __2) {
+  return (function() {
+    with({ grantTablePermissions: __grantTablePermissions }) {
+
+return function /*grantTablePermissions*/(table, role, operationName) {
+    if (operationName === \\"deleteItem\\" ||
+        operationName === \\"putItem\\" ||
+        operationName === \\"updateItem\\") {
+        table.resource.grantWriteData(role);
+    }
+    else {
+        table.resource.grantReadData(role);
+    }
+};
+
+    }
+  }).apply(undefined, undefined).apply(this, arguments);
+}
+
+function __f18(__0) {
+  return (function() {
+    with({ kinds: __kinds }) {
+
+return (a) => kinds.find((kind) => (a === null || a === void 0 ? void 0 : a.kind) === kind) !== undefined;
+
+    }
+  }).apply(undefined, undefined).apply(this, arguments);
+}
+
+function __f19(__0) {
+  return (function() {
+    with({ kinds: __0_kinds }) {
+
+return (a) => kinds.find((kind) => (a === null || a === void 0 ? void 0 : a.kind) === kind) !== undefined;
+
+    }
+  }).apply(undefined, undefined).apply(this, arguments);
+}
+
+function __f20(__0) {
+  return (function() {
+    with({ kinds: __1_kinds }) {
+
+return (a) => kinds.find((kind) => (a === null || a === void 0 ? void 0 : a.kind) === kind) !== undefined;
+
+    }
+  }).apply(undefined, undefined).apply(this, arguments);
+}
+
+function __f21(__0) {
+  return (function() {
+    with({ kinds: __2_kinds }) {
+
+return (a) => kinds.find((kind) => (a === null || a === void 0 ? void 0 : a.kind) === kind) !== undefined;
+
+    }
+  }).apply(undefined, undefined).apply(this, arguments);
+}
+
+function __f22(__0, __1) {
+  return (function() {
+    with({ exports: __error_code_1, __super: global.Error }) {
+
+return function /*constructor*/(code, message) {
+    __super.call(this, (0, exports.formatErrorMessage)(code, message));
+    this.code = code;
+};
+
+    }
+  }).apply(undefined, undefined).apply(this, arguments);
+}
+
+function __f23(__0, __1) {
+  return (function() {
+    with({ exports: __error_code_1 }) {
+
+return (code, messageText) => \`\${messageText !== null && messageText !== void 0 ? messageText : code.title}
+
+\${(0, exports.formatErrorUrl)(code)}\`;
+
+    }
+  }).apply(undefined, undefined).apply(this, arguments);
+}
+
+function __f24(__0) {
+  return (function() {
+    with({ BASE_URL: \\"https://functionless.org\\" }) {
+
+return (code) => \`\${BASE_URL}/docs/error-codes#\${code.title
+    .toLowerCase()
+    .replace(/\\\\s/g, \\"-\\")}\`;
+
+    }
+  }).apply(undefined, undefined).apply(this, arguments);
+}
+
+function __isTable(__0) {
+  return (function() {
+    with({ isTable: __isTable }) {
+
+return function /*isTable*/(a) {
+    return (a === null || a === void 0 ? void 0 : a.kind) === \\"Table\\";
+};
+
+    }
+  }).apply(undefined, undefined).apply(this, arguments);
+}
+
+function __getTableArgument(__0, __1) {
+  return (function() {
+    with({ guards_1: __guards_1, error_code_1: __error_code_1, table_1: __table_1, getTableArgument: __getTableArgument }) {
+
+return function /*getTableArgument*/(op, args) {
+    let inputArgument;
+    if ((0, guards_1.isArgument)(args[0])) {
+        inputArgument = args[0].expr;
+    }
+    else {
+        inputArgument = args[0];
+    }
+    // integ(input: { TableName })
+    if (!inputArgument || !(0, guards_1.isObjectLiteralExpr)(inputArgument)) {
+        throw new error_code_1.SynthError(error_code_1.ErrorCodes.Expected_an_object_literal, \`First argument into \${op} should be an input object, found \${inputArgument === null || inputArgument === void 0 ? void 0 : inputArgument.kind}\`);
+    }
+    const tableProp = inputArgument.getProperty(\\"TableName\\");
+    if (!tableProp || !(0, guards_1.isPropAssignExpr)(tableProp)) {
+        throw new error_code_1.SynthError(error_code_1.ErrorCodes.Expected_an_object_literal, \`First argument into \${op} should be an input with a property TableName that is a Table.\`);
+    }
+    const tableRef = tableProp.expr;
+    if (!(0, guards_1.isReferenceExpr)(tableRef)) {
+        throw new error_code_1.SynthError(error_code_1.ErrorCodes.Expected_an_object_literal, \`First argument into \${op} should be an input with a property TableName that is a Table.\`);
+    }
+    const table = tableRef.ref();
+    if (!(0, table_1.isTable)(table)) {
+        throw Error(\`TableName argument should be a Table object.\`);
+    }
+    return table;
+};
 
     }
   }).apply(undefined, undefined).apply(this, arguments);
@@ -12852,6 +13012,23 @@ __fnls_1_AWS.EventBridge = __fnls_1_AWS_EventBridge;
 var __m = Object.create(Object.getPrototypeOf(global[\\"ts-jest\\"]));
 Object.defineProperty(__m, \\"__esModule\\", { value: true });
 __m[\\"$AWS\\"] = __fnls_1_AWS;
+__m.grantTablePermissions = __grantTablePermissions;
+var __kinds = [\\"Argument\\"];
+var __0_kinds = [\\"ObjectLiteralExpr\\"];
+var __1_kinds = [\\"PropAssignExpr\\"];
+var __2_kinds = [\\"ReferenceExpr\\"];
+var __guards_1 = { isArgument: __f18, isObjectLiteralExpr: __f19, isPropAssignExpr: __f20, isReferenceExpr: __f21 };
+var __error_code_1 = {};
+Object.setPrototypeOf(__f22, global.Error);
+__error_code_1.SynthError = __f22;
+__error_code_1.formatErrorMessage = __f23;
+__error_code_1.formatErrorUrl = __f24;
+var __error_code_1_ErrorCodes = {};
+var __error_code_1_ErrorCodes_Expected_an_object_literal = { code: 10012, type: \\"ERROR\\", title: \\"Expected_an_object_literal\\" };
+__error_code_1_ErrorCodes.Expected_an_object_literal = __error_code_1_ErrorCodes_Expected_an_object_literal;
+__error_code_1.ErrorCodes = __error_code_1_ErrorCodes;
+var __table_1 = { isTable: __isTable };
+__m.getTableArgument = __getTableArgument;
 __m.deploymentOnlyModule = true;
 Object.defineProperty(__fnls_1, \\"$AWS\\", { enumerable: true, get: __f17 });
 var __table = {};
@@ -13080,6 +13257,112 @@ function __f16(__0) {
     }
   }.apply(void 0, void 0).apply(this, arguments);
 }
+function __grantTablePermissions(__0, __1, __2) {
+  return function() {
+    with ({ grantTablePermissions: __grantTablePermissions }) {
+      return function(table2, role, operationName) {
+        if (operationName === \\"deleteItem\\" || operationName === \\"putItem\\" || operationName === \\"updateItem\\") {
+          table2.resource.grantWriteData(role);
+        } else {
+          table2.resource.grantReadData(role);
+        }
+      };
+    }
+  }.apply(void 0, void 0).apply(this, arguments);
+}
+function __f18(__0) {
+  return function() {
+    with ({ kinds: __kinds }) {
+      return (a) => kinds.find((kind) => (a === null || a === void 0 ? void 0 : a.kind) === kind) !== undefined;
+    }
+  }.apply(void 0, void 0).apply(this, arguments);
+}
+function __f19(__0) {
+  return function() {
+    with ({ kinds: __0_kinds }) {
+      return (a) => kinds.find((kind) => (a === null || a === void 0 ? void 0 : a.kind) === kind) !== undefined;
+    }
+  }.apply(void 0, void 0).apply(this, arguments);
+}
+function __f20(__0) {
+  return function() {
+    with ({ kinds: __1_kinds }) {
+      return (a) => kinds.find((kind) => (a === null || a === void 0 ? void 0 : a.kind) === kind) !== undefined;
+    }
+  }.apply(void 0, void 0).apply(this, arguments);
+}
+function __f21(__0) {
+  return function() {
+    with ({ kinds: __2_kinds }) {
+      return (a) => kinds.find((kind) => (a === null || a === void 0 ? void 0 : a.kind) === kind) !== undefined;
+    }
+  }.apply(void 0, void 0).apply(this, arguments);
+}
+function __f22(__0, __1) {
+  return function() {
+    with ({ exports: __error_code_1, __super: global.Error }) {
+      return function(code, message) {
+        __super.call(this, (0, exports.formatErrorMessage)(code, message));
+        this.code = code;
+      };
+    }
+  }.apply(void 0, void 0).apply(this, arguments);
+}
+function __f23(__0, __1) {
+  return function() {
+    with ({ exports: __error_code_1 }) {
+      return (code, messageText) => \`\${messageText !== null && messageText !== void 0 ? messageText : code.title}
+
+\${(0, exports.formatErrorUrl)(code)}\`;
+    }
+  }.apply(void 0, void 0).apply(this, arguments);
+}
+function __f24(__0) {
+  return function() {
+    with ({ BASE_URL: \\"https://functionless.org\\" }) {
+      return (code) => \`\${BASE_URL}/docs/error-codes#\${code.title.toLowerCase().replace(/\\\\s/g, \\"-\\")}\`;
+    }
+  }.apply(void 0, void 0).apply(this, arguments);
+}
+function __isTable(__0) {
+  return function() {
+    with ({ isTable: __isTable }) {
+      return function(a) {
+        return (a === null || a === void 0 ? void 0 : a.kind) === \\"Table\\";
+      };
+    }
+  }.apply(void 0, void 0).apply(this, arguments);
+}
+function __getTableArgument(__0, __1) {
+  return function() {
+    with ({ guards_1: __guards_1, error_code_1: __error_code_1, table_1: __table_1, getTableArgument: __getTableArgument }) {
+      return function(op, args) {
+        let inputArgument;
+        if ((0, guards_1.isArgument)(args[0])) {
+          inputArgument = args[0].expr;
+        } else {
+          inputArgument = args[0];
+        }
+        if (!inputArgument || !(0, guards_1.isObjectLiteralExpr)(inputArgument)) {
+          throw new error_code_1.SynthError(error_code_1.ErrorCodes.Expected_an_object_literal, \`First argument into \${op} should be an input object, found \${inputArgument === null || inputArgument === void 0 ? void 0 : inputArgument.kind}\`);
+        }
+        const tableProp = inputArgument.getProperty(\\"TableName\\");
+        if (!tableProp || !(0, guards_1.isPropAssignExpr)(tableProp)) {
+          throw new error_code_1.SynthError(error_code_1.ErrorCodes.Expected_an_object_literal, \`First argument into \${op} should be an input with a property TableName that is a Table.\`);
+        }
+        const tableRef = tableProp.expr;
+        if (!(0, guards_1.isReferenceExpr)(tableRef)) {
+          throw new error_code_1.SynthError(error_code_1.ErrorCodes.Expected_an_object_literal, \`First argument into \${op} should be an input with a property TableName that is a Table.\`);
+        }
+        const table2 = tableRef.ref();
+        if (!(0, table_1.isTable)(table2)) {
+          throw Error(\`TableName argument should be a Table object.\`);
+        }
+        return table2;
+      };
+    }
+  }.apply(void 0, void 0).apply(this, arguments);
+}
 function __f17() {
   return function() {
     with ({ m: __m, k: \\"$AWS\\" }) {
@@ -13169,6 +13452,23 @@ __fnls_1_AWS.EventBridge = __fnls_1_AWS_EventBridge;
 var __m = Object.create(Object.getPrototypeOf(global[\\"ts-jest\\"]));
 Object.defineProperty(__m, \\"__esModule\\", { value: true });
 __m[\\"$AWS\\"] = __fnls_1_AWS;
+__m.grantTablePermissions = __grantTablePermissions;
+var __kinds = [\\"Argument\\"];
+var __0_kinds = [\\"ObjectLiteralExpr\\"];
+var __1_kinds = [\\"PropAssignExpr\\"];
+var __2_kinds = [\\"ReferenceExpr\\"];
+var __guards_1 = {isArgument: __f18, isObjectLiteralExpr: __f19, isPropAssignExpr: __f20, isReferenceExpr: __f21};
+var __error_code_1 = {};
+Object.setPrototypeOf(__f22, global.Error);
+__error_code_1.SynthError = __f22;
+__error_code_1.formatErrorMessage = __f23;
+__error_code_1.formatErrorUrl = __f24;
+var __error_code_1_ErrorCodes = {};
+var __error_code_1_ErrorCodes_Expected_an_object_literal = {code: 10012, type: \\"ERROR\\", title: \\"Expected_an_object_literal\\"};
+__error_code_1_ErrorCodes.Expected_an_object_literal = __error_code_1_ErrorCodes_Expected_an_object_literal;
+__error_code_1.ErrorCodes = __error_code_1_ErrorCodes;
+var __table_1 = {isTable: __isTable};
+__m.getTableArgument = __getTableArgument;
 __m.deploymentOnlyModule = true;
 Object.defineProperty(__fnls_1, \\"$AWS\\", { enumerable: true, get: __f17 });
 var __table = {};
@@ -13456,6 +13756,149 @@ return (prewarmContext) => {
   }).apply(undefined, undefined).apply(this, arguments);
 }
 
+function __grantTablePermissions(__0, __1, __2) {
+  return (function() {
+    with({ grantTablePermissions: __grantTablePermissions }) {
+
+return function /*grantTablePermissions*/(table, role, operationName) {
+    if (operationName === \\"deleteItem\\" ||
+        operationName === \\"putItem\\" ||
+        operationName === \\"updateItem\\") {
+        table.resource.grantWriteData(role);
+    }
+    else {
+        table.resource.grantReadData(role);
+    }
+};
+
+    }
+  }).apply(undefined, undefined).apply(this, arguments);
+}
+
+function __f18(__0) {
+  return (function() {
+    with({ kinds: __kinds }) {
+
+return (a) => kinds.find((kind) => (a === null || a === void 0 ? void 0 : a.kind) === kind) !== undefined;
+
+    }
+  }).apply(undefined, undefined).apply(this, arguments);
+}
+
+function __f19(__0) {
+  return (function() {
+    with({ kinds: __0_kinds }) {
+
+return (a) => kinds.find((kind) => (a === null || a === void 0 ? void 0 : a.kind) === kind) !== undefined;
+
+    }
+  }).apply(undefined, undefined).apply(this, arguments);
+}
+
+function __f20(__0) {
+  return (function() {
+    with({ kinds: __1_kinds }) {
+
+return (a) => kinds.find((kind) => (a === null || a === void 0 ? void 0 : a.kind) === kind) !== undefined;
+
+    }
+  }).apply(undefined, undefined).apply(this, arguments);
+}
+
+function __f21(__0) {
+  return (function() {
+    with({ kinds: __2_kinds }) {
+
+return (a) => kinds.find((kind) => (a === null || a === void 0 ? void 0 : a.kind) === kind) !== undefined;
+
+    }
+  }).apply(undefined, undefined).apply(this, arguments);
+}
+
+function __f22(__0, __1) {
+  return (function() {
+    with({ exports: __error_code_1, __super: global.Error }) {
+
+return function /*constructor*/(code, message) {
+    __super.call(this, (0, exports.formatErrorMessage)(code, message));
+    this.code = code;
+};
+
+    }
+  }).apply(undefined, undefined).apply(this, arguments);
+}
+
+function __f23(__0, __1) {
+  return (function() {
+    with({ exports: __error_code_1 }) {
+
+return (code, messageText) => \`\${messageText !== null && messageText !== void 0 ? messageText : code.title}
+
+\${(0, exports.formatErrorUrl)(code)}\`;
+
+    }
+  }).apply(undefined, undefined).apply(this, arguments);
+}
+
+function __f24(__0) {
+  return (function() {
+    with({ BASE_URL: \\"https://functionless.org\\" }) {
+
+return (code) => \`\${BASE_URL}/docs/error-codes#\${code.title
+    .toLowerCase()
+    .replace(/\\\\s/g, \\"-\\")}\`;
+
+    }
+  }).apply(undefined, undefined).apply(this, arguments);
+}
+
+function __isTable(__0) {
+  return (function() {
+    with({ isTable: __isTable }) {
+
+return function /*isTable*/(a) {
+    return (a === null || a === void 0 ? void 0 : a.kind) === \\"Table\\";
+};
+
+    }
+  }).apply(undefined, undefined).apply(this, arguments);
+}
+
+function __getTableArgument(__0, __1) {
+  return (function() {
+    with({ guards_1: __guards_1, error_code_1: __error_code_1, table_1: __table_1, getTableArgument: __getTableArgument }) {
+
+return function /*getTableArgument*/(op, args) {
+    let inputArgument;
+    if ((0, guards_1.isArgument)(args[0])) {
+        inputArgument = args[0].expr;
+    }
+    else {
+        inputArgument = args[0];
+    }
+    // integ(input: { TableName })
+    if (!inputArgument || !(0, guards_1.isObjectLiteralExpr)(inputArgument)) {
+        throw new error_code_1.SynthError(error_code_1.ErrorCodes.Expected_an_object_literal, \`First argument into \${op} should be an input object, found \${inputArgument === null || inputArgument === void 0 ? void 0 : inputArgument.kind}\`);
+    }
+    const tableProp = inputArgument.getProperty(\\"TableName\\");
+    if (!tableProp || !(0, guards_1.isPropAssignExpr)(tableProp)) {
+        throw new error_code_1.SynthError(error_code_1.ErrorCodes.Expected_an_object_literal, \`First argument into \${op} should be an input with a property TableName that is a Table.\`);
+    }
+    const tableRef = tableProp.expr;
+    if (!(0, guards_1.isReferenceExpr)(tableRef)) {
+        throw new error_code_1.SynthError(error_code_1.ErrorCodes.Expected_an_object_literal, \`First argument into \${op} should be an input with a property TableName that is a Table.\`);
+    }
+    const table = tableRef.ref();
+    if (!(0, table_1.isTable)(table)) {
+        throw Error(\`TableName argument should be a Table object.\`);
+    }
+    return table;
+};
+
+    }
+  }).apply(undefined, undefined).apply(this, arguments);
+}
+
 function __f17() {
   return (function() {
     with({ m: __m, k: \\"$AWS\\" }) {
@@ -13546,6 +13989,23 @@ __fnls_1_AWS.EventBridge = __fnls_1_AWS_EventBridge;
 var __m = Object.create(Object.getPrototypeOf(global[\\"ts-jest\\"]));
 Object.defineProperty(__m, \\"__esModule\\", { value: true });
 __m[\\"$AWS\\"] = __fnls_1_AWS;
+__m.grantTablePermissions = __grantTablePermissions;
+var __kinds = [\\"Argument\\"];
+var __0_kinds = [\\"ObjectLiteralExpr\\"];
+var __1_kinds = [\\"PropAssignExpr\\"];
+var __2_kinds = [\\"ReferenceExpr\\"];
+var __guards_1 = { isArgument: __f18, isObjectLiteralExpr: __f19, isPropAssignExpr: __f20, isReferenceExpr: __f21 };
+var __error_code_1 = {};
+Object.setPrototypeOf(__f22, global.Error);
+__error_code_1.SynthError = __f22;
+__error_code_1.formatErrorMessage = __f23;
+__error_code_1.formatErrorUrl = __f24;
+var __error_code_1_ErrorCodes = {};
+var __error_code_1_ErrorCodes_Expected_an_object_literal = { code: 10012, type: \\"ERROR\\", title: \\"Expected_an_object_literal\\" };
+__error_code_1_ErrorCodes.Expected_an_object_literal = __error_code_1_ErrorCodes_Expected_an_object_literal;
+__error_code_1.ErrorCodes = __error_code_1_ErrorCodes;
+var __table_1 = { isTable: __isTable };
+__m.getTableArgument = __getTableArgument;
 __m.deploymentOnlyModule = true;
 Object.defineProperty(__fnls_1, \\"$AWS\\", { enumerable: true, get: __f17 });
 var __table = {};
@@ -13770,6 +14230,112 @@ function __f16(__0) {
     with ({ function_prewarm_1: __function_prewarm_1 }) {
       return (prewarmContext) => {
         prewarmContext.getOrInit(function_prewarm_1.PrewarmClients.EVENT_BRIDGE);
+      };
+    }
+  }.apply(void 0, void 0).apply(this, arguments);
+}
+function __grantTablePermissions(__0, __1, __2) {
+  return function() {
+    with ({ grantTablePermissions: __grantTablePermissions }) {
+      return function(table2, role, operationName) {
+        if (operationName === \\"deleteItem\\" || operationName === \\"putItem\\" || operationName === \\"updateItem\\") {
+          table2.resource.grantWriteData(role);
+        } else {
+          table2.resource.grantReadData(role);
+        }
+      };
+    }
+  }.apply(void 0, void 0).apply(this, arguments);
+}
+function __f18(__0) {
+  return function() {
+    with ({ kinds: __kinds }) {
+      return (a) => kinds.find((kind) => (a === null || a === void 0 ? void 0 : a.kind) === kind) !== undefined;
+    }
+  }.apply(void 0, void 0).apply(this, arguments);
+}
+function __f19(__0) {
+  return function() {
+    with ({ kinds: __0_kinds }) {
+      return (a) => kinds.find((kind) => (a === null || a === void 0 ? void 0 : a.kind) === kind) !== undefined;
+    }
+  }.apply(void 0, void 0).apply(this, arguments);
+}
+function __f20(__0) {
+  return function() {
+    with ({ kinds: __1_kinds }) {
+      return (a) => kinds.find((kind) => (a === null || a === void 0 ? void 0 : a.kind) === kind) !== undefined;
+    }
+  }.apply(void 0, void 0).apply(this, arguments);
+}
+function __f21(__0) {
+  return function() {
+    with ({ kinds: __2_kinds }) {
+      return (a) => kinds.find((kind) => (a === null || a === void 0 ? void 0 : a.kind) === kind) !== undefined;
+    }
+  }.apply(void 0, void 0).apply(this, arguments);
+}
+function __f22(__0, __1) {
+  return function() {
+    with ({ exports: __error_code_1, __super: global.Error }) {
+      return function(code, message) {
+        __super.call(this, (0, exports.formatErrorMessage)(code, message));
+        this.code = code;
+      };
+    }
+  }.apply(void 0, void 0).apply(this, arguments);
+}
+function __f23(__0, __1) {
+  return function() {
+    with ({ exports: __error_code_1 }) {
+      return (code, messageText) => \`\${messageText !== null && messageText !== void 0 ? messageText : code.title}
+
+\${(0, exports.formatErrorUrl)(code)}\`;
+    }
+  }.apply(void 0, void 0).apply(this, arguments);
+}
+function __f24(__0) {
+  return function() {
+    with ({ BASE_URL: \\"https://functionless.org\\" }) {
+      return (code) => \`\${BASE_URL}/docs/error-codes#\${code.title.toLowerCase().replace(/\\\\s/g, \\"-\\")}\`;
+    }
+  }.apply(void 0, void 0).apply(this, arguments);
+}
+function __isTable(__0) {
+  return function() {
+    with ({ isTable: __isTable }) {
+      return function(a) {
+        return (a === null || a === void 0 ? void 0 : a.kind) === \\"Table\\";
+      };
+    }
+  }.apply(void 0, void 0).apply(this, arguments);
+}
+function __getTableArgument(__0, __1) {
+  return function() {
+    with ({ guards_1: __guards_1, error_code_1: __error_code_1, table_1: __table_1, getTableArgument: __getTableArgument }) {
+      return function(op, args) {
+        let inputArgument;
+        if ((0, guards_1.isArgument)(args[0])) {
+          inputArgument = args[0].expr;
+        } else {
+          inputArgument = args[0];
+        }
+        if (!inputArgument || !(0, guards_1.isObjectLiteralExpr)(inputArgument)) {
+          throw new error_code_1.SynthError(error_code_1.ErrorCodes.Expected_an_object_literal, \`First argument into \${op} should be an input object, found \${inputArgument === null || inputArgument === void 0 ? void 0 : inputArgument.kind}\`);
+        }
+        const tableProp = inputArgument.getProperty(\\"TableName\\");
+        if (!tableProp || !(0, guards_1.isPropAssignExpr)(tableProp)) {
+          throw new error_code_1.SynthError(error_code_1.ErrorCodes.Expected_an_object_literal, \`First argument into \${op} should be an input with a property TableName that is a Table.\`);
+        }
+        const tableRef = tableProp.expr;
+        if (!(0, guards_1.isReferenceExpr)(tableRef)) {
+          throw new error_code_1.SynthError(error_code_1.ErrorCodes.Expected_an_object_literal, \`First argument into \${op} should be an input with a property TableName that is a Table.\`);
+        }
+        const table2 = tableRef.ref();
+        if (!(0, table_1.isTable)(table2)) {
+          throw Error(\`TableName argument should be a Table object.\`);
+        }
+        return table2;
       };
     }
   }.apply(void 0, void 0).apply(this, arguments);
@@ -14070,6 +14636,23 @@ __fnls_1_AWS.EventBridge = __fnls_1_AWS_EventBridge;
 var __m = Object.create(Object.getPrototypeOf(global[\\"ts-jest\\"]));
 Object.defineProperty(__m, \\"__esModule\\", { value: true });
 __m[\\"$AWS\\"] = __fnls_1_AWS;
+__m.grantTablePermissions = __grantTablePermissions;
+var __kinds = [\\"Argument\\"];
+var __0_kinds = [\\"ObjectLiteralExpr\\"];
+var __1_kinds = [\\"PropAssignExpr\\"];
+var __2_kinds = [\\"ReferenceExpr\\"];
+var __guards_1 = {isArgument: __f18, isObjectLiteralExpr: __f19, isPropAssignExpr: __f20, isReferenceExpr: __f21};
+var __error_code_1 = {};
+Object.setPrototypeOf(__f22, global.Error);
+__error_code_1.SynthError = __f22;
+__error_code_1.formatErrorMessage = __f23;
+__error_code_1.formatErrorUrl = __f24;
+var __error_code_1_ErrorCodes = {};
+var __error_code_1_ErrorCodes_Expected_an_object_literal = {code: 10012, type: \\"ERROR\\", title: \\"Expected_an_object_literal\\"};
+__error_code_1_ErrorCodes.Expected_an_object_literal = __error_code_1_ErrorCodes_Expected_an_object_literal;
+__error_code_1.ErrorCodes = __error_code_1_ErrorCodes;
+var __table_1 = {isTable: __isTable};
+__m.getTableArgument = __getTableArgument;
 __m.deploymentOnlyModule = true;
 Object.defineProperty(__fnls_1, \\"$AWS\\", { enumerable: true, get: __f17 });
 var __table = {};
@@ -14357,6 +14940,149 @@ return (prewarmContext) => {
   }).apply(undefined, undefined).apply(this, arguments);
 }
 
+function __grantTablePermissions(__0, __1, __2) {
+  return (function() {
+    with({ grantTablePermissions: __grantTablePermissions }) {
+
+return function /*grantTablePermissions*/(table, role, operationName) {
+    if (operationName === \\"deleteItem\\" ||
+        operationName === \\"putItem\\" ||
+        operationName === \\"updateItem\\") {
+        table.resource.grantWriteData(role);
+    }
+    else {
+        table.resource.grantReadData(role);
+    }
+};
+
+    }
+  }).apply(undefined, undefined).apply(this, arguments);
+}
+
+function __f18(__0) {
+  return (function() {
+    with({ kinds: __kinds }) {
+
+return (a) => kinds.find((kind) => (a === null || a === void 0 ? void 0 : a.kind) === kind) !== undefined;
+
+    }
+  }).apply(undefined, undefined).apply(this, arguments);
+}
+
+function __f19(__0) {
+  return (function() {
+    with({ kinds: __0_kinds }) {
+
+return (a) => kinds.find((kind) => (a === null || a === void 0 ? void 0 : a.kind) === kind) !== undefined;
+
+    }
+  }).apply(undefined, undefined).apply(this, arguments);
+}
+
+function __f20(__0) {
+  return (function() {
+    with({ kinds: __1_kinds }) {
+
+return (a) => kinds.find((kind) => (a === null || a === void 0 ? void 0 : a.kind) === kind) !== undefined;
+
+    }
+  }).apply(undefined, undefined).apply(this, arguments);
+}
+
+function __f21(__0) {
+  return (function() {
+    with({ kinds: __2_kinds }) {
+
+return (a) => kinds.find((kind) => (a === null || a === void 0 ? void 0 : a.kind) === kind) !== undefined;
+
+    }
+  }).apply(undefined, undefined).apply(this, arguments);
+}
+
+function __f22(__0, __1) {
+  return (function() {
+    with({ exports: __error_code_1, __super: global.Error }) {
+
+return function /*constructor*/(code, message) {
+    __super.call(this, (0, exports.formatErrorMessage)(code, message));
+    this.code = code;
+};
+
+    }
+  }).apply(undefined, undefined).apply(this, arguments);
+}
+
+function __f23(__0, __1) {
+  return (function() {
+    with({ exports: __error_code_1 }) {
+
+return (code, messageText) => \`\${messageText !== null && messageText !== void 0 ? messageText : code.title}
+
+\${(0, exports.formatErrorUrl)(code)}\`;
+
+    }
+  }).apply(undefined, undefined).apply(this, arguments);
+}
+
+function __f24(__0) {
+  return (function() {
+    with({ BASE_URL: \\"https://functionless.org\\" }) {
+
+return (code) => \`\${BASE_URL}/docs/error-codes#\${code.title
+    .toLowerCase()
+    .replace(/\\\\s/g, \\"-\\")}\`;
+
+    }
+  }).apply(undefined, undefined).apply(this, arguments);
+}
+
+function __isTable(__0) {
+  return (function() {
+    with({ isTable: __isTable }) {
+
+return function /*isTable*/(a) {
+    return (a === null || a === void 0 ? void 0 : a.kind) === \\"Table\\";
+};
+
+    }
+  }).apply(undefined, undefined).apply(this, arguments);
+}
+
+function __getTableArgument(__0, __1) {
+  return (function() {
+    with({ guards_1: __guards_1, error_code_1: __error_code_1, table_1: __table_1, getTableArgument: __getTableArgument }) {
+
+return function /*getTableArgument*/(op, args) {
+    let inputArgument;
+    if ((0, guards_1.isArgument)(args[0])) {
+        inputArgument = args[0].expr;
+    }
+    else {
+        inputArgument = args[0];
+    }
+    // integ(input: { TableName })
+    if (!inputArgument || !(0, guards_1.isObjectLiteralExpr)(inputArgument)) {
+        throw new error_code_1.SynthError(error_code_1.ErrorCodes.Expected_an_object_literal, \`First argument into \${op} should be an input object, found \${inputArgument === null || inputArgument === void 0 ? void 0 : inputArgument.kind}\`);
+    }
+    const tableProp = inputArgument.getProperty(\\"TableName\\");
+    if (!tableProp || !(0, guards_1.isPropAssignExpr)(tableProp)) {
+        throw new error_code_1.SynthError(error_code_1.ErrorCodes.Expected_an_object_literal, \`First argument into \${op} should be an input with a property TableName that is a Table.\`);
+    }
+    const tableRef = tableProp.expr;
+    if (!(0, guards_1.isReferenceExpr)(tableRef)) {
+        throw new error_code_1.SynthError(error_code_1.ErrorCodes.Expected_an_object_literal, \`First argument into \${op} should be an input with a property TableName that is a Table.\`);
+    }
+    const table = tableRef.ref();
+    if (!(0, table_1.isTable)(table)) {
+        throw Error(\`TableName argument should be a Table object.\`);
+    }
+    return table;
+};
+
+    }
+  }).apply(undefined, undefined).apply(this, arguments);
+}
+
 function __f17() {
   return (function() {
     with({ m: __m, k: \\"$AWS\\" }) {
@@ -14447,6 +15173,23 @@ __fnls_1_AWS.EventBridge = __fnls_1_AWS_EventBridge;
 var __m = Object.create(Object.getPrototypeOf(global[\\"ts-jest\\"]));
 Object.defineProperty(__m, \\"__esModule\\", { value: true });
 __m[\\"$AWS\\"] = __fnls_1_AWS;
+__m.grantTablePermissions = __grantTablePermissions;
+var __kinds = [\\"Argument\\"];
+var __0_kinds = [\\"ObjectLiteralExpr\\"];
+var __1_kinds = [\\"PropAssignExpr\\"];
+var __2_kinds = [\\"ReferenceExpr\\"];
+var __guards_1 = { isArgument: __f18, isObjectLiteralExpr: __f19, isPropAssignExpr: __f20, isReferenceExpr: __f21 };
+var __error_code_1 = {};
+Object.setPrototypeOf(__f22, global.Error);
+__error_code_1.SynthError = __f22;
+__error_code_1.formatErrorMessage = __f23;
+__error_code_1.formatErrorUrl = __f24;
+var __error_code_1_ErrorCodes = {};
+var __error_code_1_ErrorCodes_Expected_an_object_literal = { code: 10012, type: \\"ERROR\\", title: \\"Expected_an_object_literal\\" };
+__error_code_1_ErrorCodes.Expected_an_object_literal = __error_code_1_ErrorCodes_Expected_an_object_literal;
+__error_code_1.ErrorCodes = __error_code_1_ErrorCodes;
+var __table_1 = { isTable: __isTable };
+__m.getTableArgument = __getTableArgument;
 __m.deploymentOnlyModule = true;
 Object.defineProperty(__fnls_1, \\"$AWS\\", { enumerable: true, get: __f17 });
 var __table = {};
@@ -14675,6 +15418,112 @@ function __f16(__0) {
     }
   }.apply(void 0, void 0).apply(this, arguments);
 }
+function __grantTablePermissions(__0, __1, __2) {
+  return function() {
+    with ({ grantTablePermissions: __grantTablePermissions }) {
+      return function(table2, role, operationName) {
+        if (operationName === \\"deleteItem\\" || operationName === \\"putItem\\" || operationName === \\"updateItem\\") {
+          table2.resource.grantWriteData(role);
+        } else {
+          table2.resource.grantReadData(role);
+        }
+      };
+    }
+  }.apply(void 0, void 0).apply(this, arguments);
+}
+function __f18(__0) {
+  return function() {
+    with ({ kinds: __kinds }) {
+      return (a) => kinds.find((kind) => (a === null || a === void 0 ? void 0 : a.kind) === kind) !== undefined;
+    }
+  }.apply(void 0, void 0).apply(this, arguments);
+}
+function __f19(__0) {
+  return function() {
+    with ({ kinds: __0_kinds }) {
+      return (a) => kinds.find((kind) => (a === null || a === void 0 ? void 0 : a.kind) === kind) !== undefined;
+    }
+  }.apply(void 0, void 0).apply(this, arguments);
+}
+function __f20(__0) {
+  return function() {
+    with ({ kinds: __1_kinds }) {
+      return (a) => kinds.find((kind) => (a === null || a === void 0 ? void 0 : a.kind) === kind) !== undefined;
+    }
+  }.apply(void 0, void 0).apply(this, arguments);
+}
+function __f21(__0) {
+  return function() {
+    with ({ kinds: __2_kinds }) {
+      return (a) => kinds.find((kind) => (a === null || a === void 0 ? void 0 : a.kind) === kind) !== undefined;
+    }
+  }.apply(void 0, void 0).apply(this, arguments);
+}
+function __f22(__0, __1) {
+  return function() {
+    with ({ exports: __error_code_1, __super: global.Error }) {
+      return function(code, message) {
+        __super.call(this, (0, exports.formatErrorMessage)(code, message));
+        this.code = code;
+      };
+    }
+  }.apply(void 0, void 0).apply(this, arguments);
+}
+function __f23(__0, __1) {
+  return function() {
+    with ({ exports: __error_code_1 }) {
+      return (code, messageText) => \`\${messageText !== null && messageText !== void 0 ? messageText : code.title}
+
+\${(0, exports.formatErrorUrl)(code)}\`;
+    }
+  }.apply(void 0, void 0).apply(this, arguments);
+}
+function __f24(__0) {
+  return function() {
+    with ({ BASE_URL: \\"https://functionless.org\\" }) {
+      return (code) => \`\${BASE_URL}/docs/error-codes#\${code.title.toLowerCase().replace(/\\\\s/g, \\"-\\")}\`;
+    }
+  }.apply(void 0, void 0).apply(this, arguments);
+}
+function __isTable(__0) {
+  return function() {
+    with ({ isTable: __isTable }) {
+      return function(a) {
+        return (a === null || a === void 0 ? void 0 : a.kind) === \\"Table\\";
+      };
+    }
+  }.apply(void 0, void 0).apply(this, arguments);
+}
+function __getTableArgument(__0, __1) {
+  return function() {
+    with ({ guards_1: __guards_1, error_code_1: __error_code_1, table_1: __table_1, getTableArgument: __getTableArgument }) {
+      return function(op, args) {
+        let inputArgument;
+        if ((0, guards_1.isArgument)(args[0])) {
+          inputArgument = args[0].expr;
+        } else {
+          inputArgument = args[0];
+        }
+        if (!inputArgument || !(0, guards_1.isObjectLiteralExpr)(inputArgument)) {
+          throw new error_code_1.SynthError(error_code_1.ErrorCodes.Expected_an_object_literal, \`First argument into \${op} should be an input object, found \${inputArgument === null || inputArgument === void 0 ? void 0 : inputArgument.kind}\`);
+        }
+        const tableProp = inputArgument.getProperty(\\"TableName\\");
+        if (!tableProp || !(0, guards_1.isPropAssignExpr)(tableProp)) {
+          throw new error_code_1.SynthError(error_code_1.ErrorCodes.Expected_an_object_literal, \`First argument into \${op} should be an input with a property TableName that is a Table.\`);
+        }
+        const tableRef = tableProp.expr;
+        if (!(0, guards_1.isReferenceExpr)(tableRef)) {
+          throw new error_code_1.SynthError(error_code_1.ErrorCodes.Expected_an_object_literal, \`First argument into \${op} should be an input with a property TableName that is a Table.\`);
+        }
+        const table2 = tableRef.ref();
+        if (!(0, table_1.isTable)(table2)) {
+          throw Error(\`TableName argument should be a Table object.\`);
+        }
+        return table2;
+      };
+    }
+  }.apply(void 0, void 0).apply(this, arguments);
+}
 function __f17() {
   return function() {
     with ({ m: __m, k: \\"$AWS\\" }) {
@@ -14762,6 +15611,23 @@ __fnls_1_AWS.EventBridge = __fnls_1_AWS_EventBridge;
 var __m = Object.create(Object.getPrototypeOf(global[\\"ts-jest\\"]));
 Object.defineProperty(__m, \\"__esModule\\", { value: true });
 __m[\\"$AWS\\"] = __fnls_1_AWS;
+__m.grantTablePermissions = __grantTablePermissions;
+var __kinds = [\\"Argument\\"];
+var __0_kinds = [\\"ObjectLiteralExpr\\"];
+var __1_kinds = [\\"PropAssignExpr\\"];
+var __2_kinds = [\\"ReferenceExpr\\"];
+var __guards_1 = {isArgument: __f18, isObjectLiteralExpr: __f19, isPropAssignExpr: __f20, isReferenceExpr: __f21};
+var __error_code_1 = {};
+Object.setPrototypeOf(__f22, global.Error);
+__error_code_1.SynthError = __f22;
+__error_code_1.formatErrorMessage = __f23;
+__error_code_1.formatErrorUrl = __f24;
+var __error_code_1_ErrorCodes = {};
+var __error_code_1_ErrorCodes_Expected_an_object_literal = {code: 10012, type: \\"ERROR\\", title: \\"Expected_an_object_literal\\"};
+__error_code_1_ErrorCodes.Expected_an_object_literal = __error_code_1_ErrorCodes_Expected_an_object_literal;
+__error_code_1.ErrorCodes = __error_code_1_ErrorCodes;
+var __table_1 = {isTable: __isTable};
+__m.getTableArgument = __getTableArgument;
 __m.deploymentOnlyModule = true;
 Object.defineProperty(__fnls_1, \\"$AWS\\", { enumerable: true, get: __f17 });
 var __table = {};
@@ -15044,6 +15910,149 @@ function __f16(__0) {
 return (prewarmContext) => {
                     prewarmContext.getOrInit(function_prewarm_1.PrewarmClients.EVENT_BRIDGE);
                 };
+
+    }
+  }).apply(undefined, undefined).apply(this, arguments);
+}
+
+function __grantTablePermissions(__0, __1, __2) {
+  return (function() {
+    with({ grantTablePermissions: __grantTablePermissions }) {
+
+return function /*grantTablePermissions*/(table, role, operationName) {
+    if (operationName === \\"deleteItem\\" ||
+        operationName === \\"putItem\\" ||
+        operationName === \\"updateItem\\") {
+        table.resource.grantWriteData(role);
+    }
+    else {
+        table.resource.grantReadData(role);
+    }
+};
+
+    }
+  }).apply(undefined, undefined).apply(this, arguments);
+}
+
+function __f18(__0) {
+  return (function() {
+    with({ kinds: __kinds }) {
+
+return (a) => kinds.find((kind) => (a === null || a === void 0 ? void 0 : a.kind) === kind) !== undefined;
+
+    }
+  }).apply(undefined, undefined).apply(this, arguments);
+}
+
+function __f19(__0) {
+  return (function() {
+    with({ kinds: __0_kinds }) {
+
+return (a) => kinds.find((kind) => (a === null || a === void 0 ? void 0 : a.kind) === kind) !== undefined;
+
+    }
+  }).apply(undefined, undefined).apply(this, arguments);
+}
+
+function __f20(__0) {
+  return (function() {
+    with({ kinds: __1_kinds }) {
+
+return (a) => kinds.find((kind) => (a === null || a === void 0 ? void 0 : a.kind) === kind) !== undefined;
+
+    }
+  }).apply(undefined, undefined).apply(this, arguments);
+}
+
+function __f21(__0) {
+  return (function() {
+    with({ kinds: __2_kinds }) {
+
+return (a) => kinds.find((kind) => (a === null || a === void 0 ? void 0 : a.kind) === kind) !== undefined;
+
+    }
+  }).apply(undefined, undefined).apply(this, arguments);
+}
+
+function __f22(__0, __1) {
+  return (function() {
+    with({ exports: __error_code_1, __super: global.Error }) {
+
+return function /*constructor*/(code, message) {
+    __super.call(this, (0, exports.formatErrorMessage)(code, message));
+    this.code = code;
+};
+
+    }
+  }).apply(undefined, undefined).apply(this, arguments);
+}
+
+function __f23(__0, __1) {
+  return (function() {
+    with({ exports: __error_code_1 }) {
+
+return (code, messageText) => \`\${messageText !== null && messageText !== void 0 ? messageText : code.title}
+
+\${(0, exports.formatErrorUrl)(code)}\`;
+
+    }
+  }).apply(undefined, undefined).apply(this, arguments);
+}
+
+function __f24(__0) {
+  return (function() {
+    with({ BASE_URL: \\"https://functionless.org\\" }) {
+
+return (code) => \`\${BASE_URL}/docs/error-codes#\${code.title
+    .toLowerCase()
+    .replace(/\\\\s/g, \\"-\\")}\`;
+
+    }
+  }).apply(undefined, undefined).apply(this, arguments);
+}
+
+function __isTable(__0) {
+  return (function() {
+    with({ isTable: __isTable }) {
+
+return function /*isTable*/(a) {
+    return (a === null || a === void 0 ? void 0 : a.kind) === \\"Table\\";
+};
+
+    }
+  }).apply(undefined, undefined).apply(this, arguments);
+}
+
+function __getTableArgument(__0, __1) {
+  return (function() {
+    with({ guards_1: __guards_1, error_code_1: __error_code_1, table_1: __table_1, getTableArgument: __getTableArgument }) {
+
+return function /*getTableArgument*/(op, args) {
+    let inputArgument;
+    if ((0, guards_1.isArgument)(args[0])) {
+        inputArgument = args[0].expr;
+    }
+    else {
+        inputArgument = args[0];
+    }
+    // integ(input: { TableName })
+    if (!inputArgument || !(0, guards_1.isObjectLiteralExpr)(inputArgument)) {
+        throw new error_code_1.SynthError(error_code_1.ErrorCodes.Expected_an_object_literal, \`First argument into \${op} should be an input object, found \${inputArgument === null || inputArgument === void 0 ? void 0 : inputArgument.kind}\`);
+    }
+    const tableProp = inputArgument.getProperty(\\"TableName\\");
+    if (!tableProp || !(0, guards_1.isPropAssignExpr)(tableProp)) {
+        throw new error_code_1.SynthError(error_code_1.ErrorCodes.Expected_an_object_literal, \`First argument into \${op} should be an input with a property TableName that is a Table.\`);
+    }
+    const tableRef = tableProp.expr;
+    if (!(0, guards_1.isReferenceExpr)(tableRef)) {
+        throw new error_code_1.SynthError(error_code_1.ErrorCodes.Expected_an_object_literal, \`First argument into \${op} should be an input with a property TableName that is a Table.\`);
+    }
+    const table = tableRef.ref();
+    if (!(0, table_1.isTable)(table)) {
+        throw Error(\`TableName argument should be a Table object.\`);
+    }
+    return table;
+};
 
     }
   }).apply(undefined, undefined).apply(this, arguments);
@@ -15146,6 +16155,23 @@ __fnls_1_AWS.EventBridge = __fnls_1_AWS_EventBridge;
 var __m = Object.create(Object.getPrototypeOf(global[\\"ts-jest\\"]));
 Object.defineProperty(__m, \\"__esModule\\", { value: true });
 __m[\\"$AWS\\"] = __fnls_1_AWS;
+__m.grantTablePermissions = __grantTablePermissions;
+var __kinds = [\\"Argument\\"];
+var __0_kinds = [\\"ObjectLiteralExpr\\"];
+var __1_kinds = [\\"PropAssignExpr\\"];
+var __2_kinds = [\\"ReferenceExpr\\"];
+var __guards_1 = { isArgument: __f18, isObjectLiteralExpr: __f19, isPropAssignExpr: __f20, isReferenceExpr: __f21 };
+var __error_code_1 = {};
+Object.setPrototypeOf(__f22, global.Error);
+__error_code_1.SynthError = __f22;
+__error_code_1.formatErrorMessage = __f23;
+__error_code_1.formatErrorUrl = __f24;
+var __error_code_1_ErrorCodes = {};
+var __error_code_1_ErrorCodes_Expected_an_object_literal = { code: 10012, type: \\"ERROR\\", title: \\"Expected_an_object_literal\\" };
+__error_code_1_ErrorCodes.Expected_an_object_literal = __error_code_1_ErrorCodes_Expected_an_object_literal;
+__error_code_1.ErrorCodes = __error_code_1_ErrorCodes;
+var __table_1 = { isTable: __isTable };
+__m.getTableArgument = __getTableArgument;
 __m.deploymentOnlyModule = true;
 Object.defineProperty(__fnls_1, \\"$AWS\\", { enumerable: true, get: __f17 });
 var __table = {};
@@ -15374,6 +16400,112 @@ function __f16(__0) {
     }
   }.apply(void 0, void 0).apply(this, arguments);
 }
+function __grantTablePermissions(__0, __1, __2) {
+  return function() {
+    with ({ grantTablePermissions: __grantTablePermissions }) {
+      return function(table2, role, operationName) {
+        if (operationName === \\"deleteItem\\" || operationName === \\"putItem\\" || operationName === \\"updateItem\\") {
+          table2.resource.grantWriteData(role);
+        } else {
+          table2.resource.grantReadData(role);
+        }
+      };
+    }
+  }.apply(void 0, void 0).apply(this, arguments);
+}
+function __f18(__0) {
+  return function() {
+    with ({ kinds: __kinds }) {
+      return (a) => kinds.find((kind) => (a === null || a === void 0 ? void 0 : a.kind) === kind) !== undefined;
+    }
+  }.apply(void 0, void 0).apply(this, arguments);
+}
+function __f19(__0) {
+  return function() {
+    with ({ kinds: __0_kinds }) {
+      return (a) => kinds.find((kind) => (a === null || a === void 0 ? void 0 : a.kind) === kind) !== undefined;
+    }
+  }.apply(void 0, void 0).apply(this, arguments);
+}
+function __f20(__0) {
+  return function() {
+    with ({ kinds: __1_kinds }) {
+      return (a) => kinds.find((kind) => (a === null || a === void 0 ? void 0 : a.kind) === kind) !== undefined;
+    }
+  }.apply(void 0, void 0).apply(this, arguments);
+}
+function __f21(__0) {
+  return function() {
+    with ({ kinds: __2_kinds }) {
+      return (a) => kinds.find((kind) => (a === null || a === void 0 ? void 0 : a.kind) === kind) !== undefined;
+    }
+  }.apply(void 0, void 0).apply(this, arguments);
+}
+function __f22(__0, __1) {
+  return function() {
+    with ({ exports: __error_code_1, __super: global.Error }) {
+      return function(code, message) {
+        __super.call(this, (0, exports.formatErrorMessage)(code, message));
+        this.code = code;
+      };
+    }
+  }.apply(void 0, void 0).apply(this, arguments);
+}
+function __f23(__0, __1) {
+  return function() {
+    with ({ exports: __error_code_1 }) {
+      return (code, messageText) => \`\${messageText !== null && messageText !== void 0 ? messageText : code.title}
+
+\${(0, exports.formatErrorUrl)(code)}\`;
+    }
+  }.apply(void 0, void 0).apply(this, arguments);
+}
+function __f24(__0) {
+  return function() {
+    with ({ BASE_URL: \\"https://functionless.org\\" }) {
+      return (code) => \`\${BASE_URL}/docs/error-codes#\${code.title.toLowerCase().replace(/\\\\s/g, \\"-\\")}\`;
+    }
+  }.apply(void 0, void 0).apply(this, arguments);
+}
+function __isTable(__0) {
+  return function() {
+    with ({ isTable: __isTable }) {
+      return function(a) {
+        return (a === null || a === void 0 ? void 0 : a.kind) === \\"Table\\";
+      };
+    }
+  }.apply(void 0, void 0).apply(this, arguments);
+}
+function __getTableArgument(__0, __1) {
+  return function() {
+    with ({ guards_1: __guards_1, error_code_1: __error_code_1, table_1: __table_1, getTableArgument: __getTableArgument }) {
+      return function(op, args) {
+        let inputArgument;
+        if ((0, guards_1.isArgument)(args[0])) {
+          inputArgument = args[0].expr;
+        } else {
+          inputArgument = args[0];
+        }
+        if (!inputArgument || !(0, guards_1.isObjectLiteralExpr)(inputArgument)) {
+          throw new error_code_1.SynthError(error_code_1.ErrorCodes.Expected_an_object_literal, \`First argument into \${op} should be an input object, found \${inputArgument === null || inputArgument === void 0 ? void 0 : inputArgument.kind}\`);
+        }
+        const tableProp = inputArgument.getProperty(\\"TableName\\");
+        if (!tableProp || !(0, guards_1.isPropAssignExpr)(tableProp)) {
+          throw new error_code_1.SynthError(error_code_1.ErrorCodes.Expected_an_object_literal, \`First argument into \${op} should be an input with a property TableName that is a Table.\`);
+        }
+        const tableRef = tableProp.expr;
+        if (!(0, guards_1.isReferenceExpr)(tableRef)) {
+          throw new error_code_1.SynthError(error_code_1.ErrorCodes.Expected_an_object_literal, \`First argument into \${op} should be an input with a property TableName that is a Table.\`);
+        }
+        const table2 = tableRef.ref();
+        if (!(0, table_1.isTable)(table2)) {
+          throw Error(\`TableName argument should be a Table object.\`);
+        }
+        return table2;
+      };
+    }
+  }.apply(void 0, void 0).apply(this, arguments);
+}
 function __f17() {
   return function() {
     with ({ m: __m, k: \\"$AWS\\" }) {
@@ -15468,6 +16600,23 @@ __fnls_1_AWS.EventBridge = __fnls_1_AWS_EventBridge;
 var __m = Object.create(Object.getPrototypeOf(global[\\"ts-jest\\"]));
 Object.defineProperty(__m, \\"__esModule\\", { value: true });
 __m[\\"$AWS\\"] = __fnls_1_AWS;
+__m.grantTablePermissions = __grantTablePermissions;
+var __kinds = [\\"Argument\\"];
+var __0_kinds = [\\"ObjectLiteralExpr\\"];
+var __1_kinds = [\\"PropAssignExpr\\"];
+var __2_kinds = [\\"ReferenceExpr\\"];
+var __guards_1 = {isArgument: __f18, isObjectLiteralExpr: __f19, isPropAssignExpr: __f20, isReferenceExpr: __f21};
+var __error_code_1 = {};
+Object.setPrototypeOf(__f22, global.Error);
+__error_code_1.SynthError = __f22;
+__error_code_1.formatErrorMessage = __f23;
+__error_code_1.formatErrorUrl = __f24;
+var __error_code_1_ErrorCodes = {};
+var __error_code_1_ErrorCodes_Expected_an_object_literal = {code: 10012, type: \\"ERROR\\", title: \\"Expected_an_object_literal\\"};
+__error_code_1_ErrorCodes.Expected_an_object_literal = __error_code_1_ErrorCodes_Expected_an_object_literal;
+__error_code_1.ErrorCodes = __error_code_1_ErrorCodes;
+var __table_1 = {isTable: __isTable};
+__m.getTableArgument = __getTableArgument;
 __m.deploymentOnlyModule = true;
 Object.defineProperty(__fnls_1, \\"$AWS\\", { enumerable: true, get: __f17 });
 var __table = {};
@@ -15750,6 +16899,149 @@ function __f16(__0) {
 return (prewarmContext) => {
                     prewarmContext.getOrInit(function_prewarm_1.PrewarmClients.EVENT_BRIDGE);
                 };
+
+    }
+  }).apply(undefined, undefined).apply(this, arguments);
+}
+
+function __grantTablePermissions(__0, __1, __2) {
+  return (function() {
+    with({ grantTablePermissions: __grantTablePermissions }) {
+
+return function /*grantTablePermissions*/(table, role, operationName) {
+    if (operationName === \\"deleteItem\\" ||
+        operationName === \\"putItem\\" ||
+        operationName === \\"updateItem\\") {
+        table.resource.grantWriteData(role);
+    }
+    else {
+        table.resource.grantReadData(role);
+    }
+};
+
+    }
+  }).apply(undefined, undefined).apply(this, arguments);
+}
+
+function __f18(__0) {
+  return (function() {
+    with({ kinds: __kinds }) {
+
+return (a) => kinds.find((kind) => (a === null || a === void 0 ? void 0 : a.kind) === kind) !== undefined;
+
+    }
+  }).apply(undefined, undefined).apply(this, arguments);
+}
+
+function __f19(__0) {
+  return (function() {
+    with({ kinds: __0_kinds }) {
+
+return (a) => kinds.find((kind) => (a === null || a === void 0 ? void 0 : a.kind) === kind) !== undefined;
+
+    }
+  }).apply(undefined, undefined).apply(this, arguments);
+}
+
+function __f20(__0) {
+  return (function() {
+    with({ kinds: __1_kinds }) {
+
+return (a) => kinds.find((kind) => (a === null || a === void 0 ? void 0 : a.kind) === kind) !== undefined;
+
+    }
+  }).apply(undefined, undefined).apply(this, arguments);
+}
+
+function __f21(__0) {
+  return (function() {
+    with({ kinds: __2_kinds }) {
+
+return (a) => kinds.find((kind) => (a === null || a === void 0 ? void 0 : a.kind) === kind) !== undefined;
+
+    }
+  }).apply(undefined, undefined).apply(this, arguments);
+}
+
+function __f22(__0, __1) {
+  return (function() {
+    with({ exports: __error_code_1, __super: global.Error }) {
+
+return function /*constructor*/(code, message) {
+    __super.call(this, (0, exports.formatErrorMessage)(code, message));
+    this.code = code;
+};
+
+    }
+  }).apply(undefined, undefined).apply(this, arguments);
+}
+
+function __f23(__0, __1) {
+  return (function() {
+    with({ exports: __error_code_1 }) {
+
+return (code, messageText) => \`\${messageText !== null && messageText !== void 0 ? messageText : code.title}
+
+\${(0, exports.formatErrorUrl)(code)}\`;
+
+    }
+  }).apply(undefined, undefined).apply(this, arguments);
+}
+
+function __f24(__0) {
+  return (function() {
+    with({ BASE_URL: \\"https://functionless.org\\" }) {
+
+return (code) => \`\${BASE_URL}/docs/error-codes#\${code.title
+    .toLowerCase()
+    .replace(/\\\\s/g, \\"-\\")}\`;
+
+    }
+  }).apply(undefined, undefined).apply(this, arguments);
+}
+
+function __isTable(__0) {
+  return (function() {
+    with({ isTable: __isTable }) {
+
+return function /*isTable*/(a) {
+    return (a === null || a === void 0 ? void 0 : a.kind) === \\"Table\\";
+};
+
+    }
+  }).apply(undefined, undefined).apply(this, arguments);
+}
+
+function __getTableArgument(__0, __1) {
+  return (function() {
+    with({ guards_1: __guards_1, error_code_1: __error_code_1, table_1: __table_1, getTableArgument: __getTableArgument }) {
+
+return function /*getTableArgument*/(op, args) {
+    let inputArgument;
+    if ((0, guards_1.isArgument)(args[0])) {
+        inputArgument = args[0].expr;
+    }
+    else {
+        inputArgument = args[0];
+    }
+    // integ(input: { TableName })
+    if (!inputArgument || !(0, guards_1.isObjectLiteralExpr)(inputArgument)) {
+        throw new error_code_1.SynthError(error_code_1.ErrorCodes.Expected_an_object_literal, \`First argument into \${op} should be an input object, found \${inputArgument === null || inputArgument === void 0 ? void 0 : inputArgument.kind}\`);
+    }
+    const tableProp = inputArgument.getProperty(\\"TableName\\");
+    if (!tableProp || !(0, guards_1.isPropAssignExpr)(tableProp)) {
+        throw new error_code_1.SynthError(error_code_1.ErrorCodes.Expected_an_object_literal, \`First argument into \${op} should be an input with a property TableName that is a Table.\`);
+    }
+    const tableRef = tableProp.expr;
+    if (!(0, guards_1.isReferenceExpr)(tableRef)) {
+        throw new error_code_1.SynthError(error_code_1.ErrorCodes.Expected_an_object_literal, \`First argument into \${op} should be an input with a property TableName that is a Table.\`);
+    }
+    const table = tableRef.ref();
+    if (!(0, table_1.isTable)(table)) {
+        throw Error(\`TableName argument should be a Table object.\`);
+    }
+    return table;
+};
 
     }
   }).apply(undefined, undefined).apply(this, arguments);
@@ -15849,6 +17141,23 @@ __fnls_1_AWS.EventBridge = __fnls_1_AWS_EventBridge;
 var __m = Object.create(Object.getPrototypeOf(global[\\"ts-jest\\"]));
 Object.defineProperty(__m, \\"__esModule\\", { value: true });
 __m[\\"$AWS\\"] = __fnls_1_AWS;
+__m.grantTablePermissions = __grantTablePermissions;
+var __kinds = [\\"Argument\\"];
+var __0_kinds = [\\"ObjectLiteralExpr\\"];
+var __1_kinds = [\\"PropAssignExpr\\"];
+var __2_kinds = [\\"ReferenceExpr\\"];
+var __guards_1 = { isArgument: __f18, isObjectLiteralExpr: __f19, isPropAssignExpr: __f20, isReferenceExpr: __f21 };
+var __error_code_1 = {};
+Object.setPrototypeOf(__f22, global.Error);
+__error_code_1.SynthError = __f22;
+__error_code_1.formatErrorMessage = __f23;
+__error_code_1.formatErrorUrl = __f24;
+var __error_code_1_ErrorCodes = {};
+var __error_code_1_ErrorCodes_Expected_an_object_literal = { code: 10012, type: \\"ERROR\\", title: \\"Expected_an_object_literal\\" };
+__error_code_1_ErrorCodes.Expected_an_object_literal = __error_code_1_ErrorCodes_Expected_an_object_literal;
+__error_code_1.ErrorCodes = __error_code_1_ErrorCodes;
+var __table_1 = { isTable: __isTable };
+__m.getTableArgument = __getTableArgument;
 __m.deploymentOnlyModule = true;
 Object.defineProperty(__fnls_1, \\"$AWS\\", { enumerable: true, get: __f17 });
 var __table = {};
@@ -16077,6 +17386,112 @@ function __f16(__0) {
     }
   }.apply(void 0, void 0).apply(this, arguments);
 }
+function __grantTablePermissions(__0, __1, __2) {
+  return function() {
+    with ({ grantTablePermissions: __grantTablePermissions }) {
+      return function(table2, role, operationName) {
+        if (operationName === \\"deleteItem\\" || operationName === \\"putItem\\" || operationName === \\"updateItem\\") {
+          table2.resource.grantWriteData(role);
+        } else {
+          table2.resource.grantReadData(role);
+        }
+      };
+    }
+  }.apply(void 0, void 0).apply(this, arguments);
+}
+function __f18(__0) {
+  return function() {
+    with ({ kinds: __kinds }) {
+      return (a) => kinds.find((kind) => (a === null || a === void 0 ? void 0 : a.kind) === kind) !== undefined;
+    }
+  }.apply(void 0, void 0).apply(this, arguments);
+}
+function __f19(__0) {
+  return function() {
+    with ({ kinds: __0_kinds }) {
+      return (a) => kinds.find((kind) => (a === null || a === void 0 ? void 0 : a.kind) === kind) !== undefined;
+    }
+  }.apply(void 0, void 0).apply(this, arguments);
+}
+function __f20(__0) {
+  return function() {
+    with ({ kinds: __1_kinds }) {
+      return (a) => kinds.find((kind) => (a === null || a === void 0 ? void 0 : a.kind) === kind) !== undefined;
+    }
+  }.apply(void 0, void 0).apply(this, arguments);
+}
+function __f21(__0) {
+  return function() {
+    with ({ kinds: __2_kinds }) {
+      return (a) => kinds.find((kind) => (a === null || a === void 0 ? void 0 : a.kind) === kind) !== undefined;
+    }
+  }.apply(void 0, void 0).apply(this, arguments);
+}
+function __f22(__0, __1) {
+  return function() {
+    with ({ exports: __error_code_1, __super: global.Error }) {
+      return function(code, message) {
+        __super.call(this, (0, exports.formatErrorMessage)(code, message));
+        this.code = code;
+      };
+    }
+  }.apply(void 0, void 0).apply(this, arguments);
+}
+function __f23(__0, __1) {
+  return function() {
+    with ({ exports: __error_code_1 }) {
+      return (code, messageText) => \`\${messageText !== null && messageText !== void 0 ? messageText : code.title}
+
+\${(0, exports.formatErrorUrl)(code)}\`;
+    }
+  }.apply(void 0, void 0).apply(this, arguments);
+}
+function __f24(__0) {
+  return function() {
+    with ({ BASE_URL: \\"https://functionless.org\\" }) {
+      return (code) => \`\${BASE_URL}/docs/error-codes#\${code.title.toLowerCase().replace(/\\\\s/g, \\"-\\")}\`;
+    }
+  }.apply(void 0, void 0).apply(this, arguments);
+}
+function __isTable(__0) {
+  return function() {
+    with ({ isTable: __isTable }) {
+      return function(a) {
+        return (a === null || a === void 0 ? void 0 : a.kind) === \\"Table\\";
+      };
+    }
+  }.apply(void 0, void 0).apply(this, arguments);
+}
+function __getTableArgument(__0, __1) {
+  return function() {
+    with ({ guards_1: __guards_1, error_code_1: __error_code_1, table_1: __table_1, getTableArgument: __getTableArgument }) {
+      return function(op, args) {
+        let inputArgument;
+        if ((0, guards_1.isArgument)(args[0])) {
+          inputArgument = args[0].expr;
+        } else {
+          inputArgument = args[0];
+        }
+        if (!inputArgument || !(0, guards_1.isObjectLiteralExpr)(inputArgument)) {
+          throw new error_code_1.SynthError(error_code_1.ErrorCodes.Expected_an_object_literal, \`First argument into \${op} should be an input object, found \${inputArgument === null || inputArgument === void 0 ? void 0 : inputArgument.kind}\`);
+        }
+        const tableProp = inputArgument.getProperty(\\"TableName\\");
+        if (!tableProp || !(0, guards_1.isPropAssignExpr)(tableProp)) {
+          throw new error_code_1.SynthError(error_code_1.ErrorCodes.Expected_an_object_literal, \`First argument into \${op} should be an input with a property TableName that is a Table.\`);
+        }
+        const tableRef = tableProp.expr;
+        if (!(0, guards_1.isReferenceExpr)(tableRef)) {
+          throw new error_code_1.SynthError(error_code_1.ErrorCodes.Expected_an_object_literal, \`First argument into \${op} should be an input with a property TableName that is a Table.\`);
+        }
+        const table2 = tableRef.ref();
+        if (!(0, table_1.isTable)(table2)) {
+          throw Error(\`TableName argument should be a Table object.\`);
+        }
+        return table2;
+      };
+    }
+  }.apply(void 0, void 0).apply(this, arguments);
+}
 function __f17() {
   return function() {
     with ({ m: __m, k: \\"$AWS\\" }) {
@@ -16168,6 +17583,23 @@ __fnls_1_AWS.EventBridge = __fnls_1_AWS_EventBridge;
 var __m = Object.create(Object.getPrototypeOf(global[\\"ts-jest\\"]));
 Object.defineProperty(__m, \\"__esModule\\", { value: true });
 __m[\\"$AWS\\"] = __fnls_1_AWS;
+__m.grantTablePermissions = __grantTablePermissions;
+var __kinds = [\\"Argument\\"];
+var __0_kinds = [\\"ObjectLiteralExpr\\"];
+var __1_kinds = [\\"PropAssignExpr\\"];
+var __2_kinds = [\\"ReferenceExpr\\"];
+var __guards_1 = {isArgument: __f18, isObjectLiteralExpr: __f19, isPropAssignExpr: __f20, isReferenceExpr: __f21};
+var __error_code_1 = {};
+Object.setPrototypeOf(__f22, global.Error);
+__error_code_1.SynthError = __f22;
+__error_code_1.formatErrorMessage = __f23;
+__error_code_1.formatErrorUrl = __f24;
+var __error_code_1_ErrorCodes = {};
+var __error_code_1_ErrorCodes_Expected_an_object_literal = {code: 10012, type: \\"ERROR\\", title: \\"Expected_an_object_literal\\"};
+__error_code_1_ErrorCodes.Expected_an_object_literal = __error_code_1_ErrorCodes_Expected_an_object_literal;
+__error_code_1.ErrorCodes = __error_code_1_ErrorCodes;
+var __table_1 = {isTable: __isTable};
+__m.getTableArgument = __getTableArgument;
 __m.deploymentOnlyModule = true;
 Object.defineProperty(__fnls_1, \\"$AWS\\", { enumerable: true, get: __f17 });
 var __table = {};
@@ -16455,6 +17887,149 @@ return (prewarmContext) => {
   }).apply(undefined, undefined).apply(this, arguments);
 }
 
+function __grantTablePermissions(__0, __1, __2) {
+  return (function() {
+    with({ grantTablePermissions: __grantTablePermissions }) {
+
+return function /*grantTablePermissions*/(table, role, operationName) {
+    if (operationName === \\"deleteItem\\" ||
+        operationName === \\"putItem\\" ||
+        operationName === \\"updateItem\\") {
+        table.resource.grantWriteData(role);
+    }
+    else {
+        table.resource.grantReadData(role);
+    }
+};
+
+    }
+  }).apply(undefined, undefined).apply(this, arguments);
+}
+
+function __f18(__0) {
+  return (function() {
+    with({ kinds: __kinds }) {
+
+return (a) => kinds.find((kind) => (a === null || a === void 0 ? void 0 : a.kind) === kind) !== undefined;
+
+    }
+  }).apply(undefined, undefined).apply(this, arguments);
+}
+
+function __f19(__0) {
+  return (function() {
+    with({ kinds: __0_kinds }) {
+
+return (a) => kinds.find((kind) => (a === null || a === void 0 ? void 0 : a.kind) === kind) !== undefined;
+
+    }
+  }).apply(undefined, undefined).apply(this, arguments);
+}
+
+function __f20(__0) {
+  return (function() {
+    with({ kinds: __1_kinds }) {
+
+return (a) => kinds.find((kind) => (a === null || a === void 0 ? void 0 : a.kind) === kind) !== undefined;
+
+    }
+  }).apply(undefined, undefined).apply(this, arguments);
+}
+
+function __f21(__0) {
+  return (function() {
+    with({ kinds: __2_kinds }) {
+
+return (a) => kinds.find((kind) => (a === null || a === void 0 ? void 0 : a.kind) === kind) !== undefined;
+
+    }
+  }).apply(undefined, undefined).apply(this, arguments);
+}
+
+function __f22(__0, __1) {
+  return (function() {
+    with({ exports: __error_code_1, __super: global.Error }) {
+
+return function /*constructor*/(code, message) {
+    __super.call(this, (0, exports.formatErrorMessage)(code, message));
+    this.code = code;
+};
+
+    }
+  }).apply(undefined, undefined).apply(this, arguments);
+}
+
+function __f23(__0, __1) {
+  return (function() {
+    with({ exports: __error_code_1 }) {
+
+return (code, messageText) => \`\${messageText !== null && messageText !== void 0 ? messageText : code.title}
+
+\${(0, exports.formatErrorUrl)(code)}\`;
+
+    }
+  }).apply(undefined, undefined).apply(this, arguments);
+}
+
+function __f24(__0) {
+  return (function() {
+    with({ BASE_URL: \\"https://functionless.org\\" }) {
+
+return (code) => \`\${BASE_URL}/docs/error-codes#\${code.title
+    .toLowerCase()
+    .replace(/\\\\s/g, \\"-\\")}\`;
+
+    }
+  }).apply(undefined, undefined).apply(this, arguments);
+}
+
+function __isTable(__0) {
+  return (function() {
+    with({ isTable: __isTable }) {
+
+return function /*isTable*/(a) {
+    return (a === null || a === void 0 ? void 0 : a.kind) === \\"Table\\";
+};
+
+    }
+  }).apply(undefined, undefined).apply(this, arguments);
+}
+
+function __getTableArgument(__0, __1) {
+  return (function() {
+    with({ guards_1: __guards_1, error_code_1: __error_code_1, table_1: __table_1, getTableArgument: __getTableArgument }) {
+
+return function /*getTableArgument*/(op, args) {
+    let inputArgument;
+    if ((0, guards_1.isArgument)(args[0])) {
+        inputArgument = args[0].expr;
+    }
+    else {
+        inputArgument = args[0];
+    }
+    // integ(input: { TableName })
+    if (!inputArgument || !(0, guards_1.isObjectLiteralExpr)(inputArgument)) {
+        throw new error_code_1.SynthError(error_code_1.ErrorCodes.Expected_an_object_literal, \`First argument into \${op} should be an input object, found \${inputArgument === null || inputArgument === void 0 ? void 0 : inputArgument.kind}\`);
+    }
+    const tableProp = inputArgument.getProperty(\\"TableName\\");
+    if (!tableProp || !(0, guards_1.isPropAssignExpr)(tableProp)) {
+        throw new error_code_1.SynthError(error_code_1.ErrorCodes.Expected_an_object_literal, \`First argument into \${op} should be an input with a property TableName that is a Table.\`);
+    }
+    const tableRef = tableProp.expr;
+    if (!(0, guards_1.isReferenceExpr)(tableRef)) {
+        throw new error_code_1.SynthError(error_code_1.ErrorCodes.Expected_an_object_literal, \`First argument into \${op} should be an input with a property TableName that is a Table.\`);
+    }
+    const table = tableRef.ref();
+    if (!(0, table_1.isTable)(table)) {
+        throw Error(\`TableName argument should be a Table object.\`);
+    }
+    return table;
+};
+
+    }
+  }).apply(undefined, undefined).apply(this, arguments);
+}
+
 function __f17() {
   return (function() {
     with({ m: __m, k: \\"$AWS\\" }) {
@@ -16542,6 +18117,23 @@ __fnls_1_AWS.EventBridge = __fnls_1_AWS_EventBridge;
 var __m = Object.create(Object.getPrototypeOf(global[\\"ts-jest\\"]));
 Object.defineProperty(__m, \\"__esModule\\", { value: true });
 __m[\\"$AWS\\"] = __fnls_1_AWS;
+__m.grantTablePermissions = __grantTablePermissions;
+var __kinds = [\\"Argument\\"];
+var __0_kinds = [\\"ObjectLiteralExpr\\"];
+var __1_kinds = [\\"PropAssignExpr\\"];
+var __2_kinds = [\\"ReferenceExpr\\"];
+var __guards_1 = { isArgument: __f18, isObjectLiteralExpr: __f19, isPropAssignExpr: __f20, isReferenceExpr: __f21 };
+var __error_code_1 = {};
+Object.setPrototypeOf(__f22, global.Error);
+__error_code_1.SynthError = __f22;
+__error_code_1.formatErrorMessage = __f23;
+__error_code_1.formatErrorUrl = __f24;
+var __error_code_1_ErrorCodes = {};
+var __error_code_1_ErrorCodes_Expected_an_object_literal = { code: 10012, type: \\"ERROR\\", title: \\"Expected_an_object_literal\\" };
+__error_code_1_ErrorCodes.Expected_an_object_literal = __error_code_1_ErrorCodes_Expected_an_object_literal;
+__error_code_1.ErrorCodes = __error_code_1_ErrorCodes;
+var __table_1 = { isTable: __isTable };
+__m.getTableArgument = __getTableArgument;
 __m.deploymentOnlyModule = true;
 Object.defineProperty(__fnls_1, \\"$AWS\\", { enumerable: true, get: __f17 });
 var __table = {};
@@ -16766,6 +18358,112 @@ function __f16(__0) {
     with ({ function_prewarm_1: __function_prewarm_1 }) {
       return (prewarmContext) => {
         prewarmContext.getOrInit(function_prewarm_1.PrewarmClients.EVENT_BRIDGE);
+      };
+    }
+  }.apply(void 0, void 0).apply(this, arguments);
+}
+function __grantTablePermissions(__0, __1, __2) {
+  return function() {
+    with ({ grantTablePermissions: __grantTablePermissions }) {
+      return function(table2, role, operationName) {
+        if (operationName === \\"deleteItem\\" || operationName === \\"putItem\\" || operationName === \\"updateItem\\") {
+          table2.resource.grantWriteData(role);
+        } else {
+          table2.resource.grantReadData(role);
+        }
+      };
+    }
+  }.apply(void 0, void 0).apply(this, arguments);
+}
+function __f18(__0) {
+  return function() {
+    with ({ kinds: __kinds }) {
+      return (a) => kinds.find((kind) => (a === null || a === void 0 ? void 0 : a.kind) === kind) !== undefined;
+    }
+  }.apply(void 0, void 0).apply(this, arguments);
+}
+function __f19(__0) {
+  return function() {
+    with ({ kinds: __0_kinds }) {
+      return (a) => kinds.find((kind) => (a === null || a === void 0 ? void 0 : a.kind) === kind) !== undefined;
+    }
+  }.apply(void 0, void 0).apply(this, arguments);
+}
+function __f20(__0) {
+  return function() {
+    with ({ kinds: __1_kinds }) {
+      return (a) => kinds.find((kind) => (a === null || a === void 0 ? void 0 : a.kind) === kind) !== undefined;
+    }
+  }.apply(void 0, void 0).apply(this, arguments);
+}
+function __f21(__0) {
+  return function() {
+    with ({ kinds: __2_kinds }) {
+      return (a) => kinds.find((kind) => (a === null || a === void 0 ? void 0 : a.kind) === kind) !== undefined;
+    }
+  }.apply(void 0, void 0).apply(this, arguments);
+}
+function __f22(__0, __1) {
+  return function() {
+    with ({ exports: __error_code_1, __super: global.Error }) {
+      return function(code, message) {
+        __super.call(this, (0, exports.formatErrorMessage)(code, message));
+        this.code = code;
+      };
+    }
+  }.apply(void 0, void 0).apply(this, arguments);
+}
+function __f23(__0, __1) {
+  return function() {
+    with ({ exports: __error_code_1 }) {
+      return (code, messageText) => \`\${messageText !== null && messageText !== void 0 ? messageText : code.title}
+
+\${(0, exports.formatErrorUrl)(code)}\`;
+    }
+  }.apply(void 0, void 0).apply(this, arguments);
+}
+function __f24(__0) {
+  return function() {
+    with ({ BASE_URL: \\"https://functionless.org\\" }) {
+      return (code) => \`\${BASE_URL}/docs/error-codes#\${code.title.toLowerCase().replace(/\\\\s/g, \\"-\\")}\`;
+    }
+  }.apply(void 0, void 0).apply(this, arguments);
+}
+function __isTable(__0) {
+  return function() {
+    with ({ isTable: __isTable }) {
+      return function(a) {
+        return (a === null || a === void 0 ? void 0 : a.kind) === \\"Table\\";
+      };
+    }
+  }.apply(void 0, void 0).apply(this, arguments);
+}
+function __getTableArgument(__0, __1) {
+  return function() {
+    with ({ guards_1: __guards_1, error_code_1: __error_code_1, table_1: __table_1, getTableArgument: __getTableArgument }) {
+      return function(op, args) {
+        let inputArgument;
+        if ((0, guards_1.isArgument)(args[0])) {
+          inputArgument = args[0].expr;
+        } else {
+          inputArgument = args[0];
+        }
+        if (!inputArgument || !(0, guards_1.isObjectLiteralExpr)(inputArgument)) {
+          throw new error_code_1.SynthError(error_code_1.ErrorCodes.Expected_an_object_literal, \`First argument into \${op} should be an input object, found \${inputArgument === null || inputArgument === void 0 ? void 0 : inputArgument.kind}\`);
+        }
+        const tableProp = inputArgument.getProperty(\\"TableName\\");
+        if (!tableProp || !(0, guards_1.isPropAssignExpr)(tableProp)) {
+          throw new error_code_1.SynthError(error_code_1.ErrorCodes.Expected_an_object_literal, \`First argument into \${op} should be an input with a property TableName that is a Table.\`);
+        }
+        const tableRef = tableProp.expr;
+        if (!(0, guards_1.isReferenceExpr)(tableRef)) {
+          throw new error_code_1.SynthError(error_code_1.ErrorCodes.Expected_an_object_literal, \`First argument into \${op} should be an input with a property TableName that is a Table.\`);
+        }
+        const table2 = tableRef.ref();
+        if (!(0, table_1.isTable)(table2)) {
+          throw Error(\`TableName argument should be a Table object.\`);
+        }
+        return table2;
       };
     }
   }.apply(void 0, void 0).apply(this, arguments);
