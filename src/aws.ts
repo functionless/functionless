@@ -39,7 +39,7 @@ import {
 } from "./integration";
 import { isTable, AnyTable, ITable } from "./table";
 
-import type { AnyFunction } from "./util";
+import { AnyFunction, renameObjectProperties } from "./util";
 
 /**
  * The `AWS` namespace exports functions that map to AWS Step Functions AWS-SDK Integrations.
@@ -70,7 +70,7 @@ export namespace $AWS {
         ConditionExpression extends string | undefined,
         ReturnValue extends AWSDynamoDB.ReturnValue = "NONE"
       >(
-        input: { TableName: ITable<Item, PartitionKey, RangeKey> } & Omit<
+        input: { Table: ITable<Item, PartitionKey, RangeKey> } & Omit<
           DeleteItemInput<
             Item,
             PartitionKey,
@@ -95,12 +95,12 @@ export namespace $AWS {
 
           const [input] = args;
 
-          const { TableName: table, ...rest } = input;
+          const { Table: table, ...rest } = input;
 
           return dynamo
             .deleteItem({
               ...rest,
-              TableName: input.TableName.tableName,
+              TableName: input.Table.tableName,
             })
             .promise();
         },
@@ -125,7 +125,7 @@ export namespace $AWS {
         AttributesToGet extends keyof Item | undefined = undefined,
         ProjectionExpression extends string | undefined = undefined
       >(
-        input: { TableName: ITable<Item, PartitionKey, RangeKey> } & Omit<
+        input: { Table: ITable<Item, PartitionKey, RangeKey> } & Omit<
           GetItemInput<
             Item,
             PartitionKey,
@@ -153,7 +153,7 @@ export namespace $AWS {
         },
         call: async (
           args: [
-            { TableName: AnyTable } & Omit<
+            { Table: AnyTable } & Omit<
               GetItemInput<object, keyof object, any, any, any, any, any>,
               "TableName"
             >
@@ -166,7 +166,7 @@ export namespace $AWS {
 
           const [input] = args;
 
-          const { TableName: table, AttributesToGet, ...rest } = input;
+          const { Table: table, AttributesToGet, ...rest } = input;
 
           const payload = {
             ...rest,
@@ -199,7 +199,7 @@ export namespace $AWS {
         ConditionExpression extends string | undefined = undefined,
         ReturnValue extends AWSDynamoDB.ReturnValue = "NONE"
       >(
-        input: { TableName: ITable<Item, PartitionKey, RangeKey> } & Omit<
+        input: { Table: ITable<Item, PartitionKey, RangeKey> } & Omit<
           UpdateItemInput<
             Item,
             PartitionKey,
@@ -232,7 +232,7 @@ export namespace $AWS {
 
           const [input] = args;
 
-          const { TableName: table, ...rest } = input;
+          const { Table: table, ...rest } = input;
 
           return dynamo
             .updateItem({
@@ -256,7 +256,7 @@ export namespace $AWS {
         ConditionExpression extends string | undefined = undefined,
         ReturnValue extends AWSDynamoDB.ReturnValue = "NONE"
       >(
-        input: { TableName: ITable<Item, PartitionKey, RangeKey> } & Omit<
+        input: { Table: ITable<Item, PartitionKey, RangeKey> } & Omit<
           PutItemInput<
             Item,
             ConditionExpression,
@@ -278,7 +278,7 @@ export namespace $AWS {
 
           const [input] = args;
 
-          const { TableName: table, Item, ...rest } = input;
+          const { Table: table, Item, ...rest } = input;
 
           return dynamo
             .putItem({
@@ -302,7 +302,7 @@ export namespace $AWS {
         ProjectionExpression extends string | undefined = undefined,
         AttributesToGet extends keyof Item | undefined = undefined
       >(
-        input: { TableName: ITable<Item, PartitionKey, RangeKey> } & Omit<
+        input: { Table: ITable<Item, PartitionKey, RangeKey> } & Omit<
           QueryInput<
             Item,
             KeyConditionExpression,
@@ -326,7 +326,7 @@ export namespace $AWS {
 
           const [input] = args;
 
-          const { TableName: table, AttributesToGet, ...rest } = input;
+          const { Table: table, AttributesToGet, ...rest } = input;
 
           return dynamo
             .query({
@@ -349,7 +349,7 @@ export namespace $AWS {
         ProjectionExpression extends string | undefined = undefined,
         AttributesToGet extends keyof Item | undefined = undefined
       >(
-        input: { TableName: ITable<Item, PartitionKey, RangeKey> } & Omit<
+        input: { Table: ITable<Item, PartitionKey, RangeKey> } & Omit<
           ScanInput<
             Item,
             FilterExpression,
@@ -372,7 +372,7 @@ export namespace $AWS {
 
           const [input] = args;
 
-          const { TableName: table, AttributesToGet, ...rest } = input;
+          const { Table: table, AttributesToGet, ...rest } = input;
 
           return dynamo
             .scan({
@@ -394,7 +394,7 @@ export namespace $AWS {
     export const Invoke = makeIntegration<
       "Lambda.Invoke",
       <Input, Output>(input: {
-        FunctionName: Function<Input, Output>;
+        Function: Function<Input, Output>;
         Payload: Input;
         ClientContext?: string;
         InvocationType?: "Event" | "RequestResponse" | "DryRun";
@@ -528,7 +528,7 @@ function makeDynamoIntegration<Op extends OperationName, F extends AnyFunction>(
             ErrorCodes.API_Gateway_does_not_support_computed_property_names
           );
         }
-        if (name === "TableName") {
+        if (name === "Table") {
           return [];
         }
         return [`"${name}":${context.exprToJson(prop.expr)}`];
@@ -566,7 +566,11 @@ function makeDynamoIntegration<Op extends OperationName, F extends AnyFunction>(
       return {
         Type: "Task",
         Resource: `arn:aws:states:::aws-sdk:dynamodb:${operationName}`,
-        Parameters: ASL.toJson(input),
+        Parameters: ASL.toJson(
+          renameObjectProperties(input, {
+            Table: "TableName",
+          })
+        ),
       };
     },
     native: {
@@ -611,7 +615,7 @@ function getTableArgument(op: string, args: Argument[] | Expr[]) {
   } else {
     inputArgument = args[0];
   }
-  // integ(input: { TableName })
+  // integ(input: { Table })
   if (!inputArgument || !isObjectLiteralExpr(inputArgument)) {
     throw new SynthError(
       ErrorCodes.Expected_an_object_literal,
@@ -619,12 +623,12 @@ function getTableArgument(op: string, args: Argument[] | Expr[]) {
     );
   }
 
-  const tableProp = inputArgument.getProperty("TableName");
+  const tableProp = inputArgument.getProperty("Table");
 
   if (!tableProp || !isPropAssignExpr(tableProp)) {
     throw new SynthError(
       ErrorCodes.Expected_an_object_literal,
-      `First argument into ${op} should be an input with a property TableName that is a Table.`
+      `First argument into ${op} should be an input with a property 'Table' that is a Table.`
     );
   }
 
@@ -633,13 +637,13 @@ function getTableArgument(op: string, args: Argument[] | Expr[]) {
   if (!isReferenceExpr(tableRef)) {
     throw new SynthError(
       ErrorCodes.Expected_an_object_literal,
-      `First argument into ${op} should be an input with a property TableName that is a Table.`
+      `First argument into ${op} should be an input with a property 'Table' that is a Table.`
     );
   }
 
   const table = tableRef.ref();
   if (!isTable(table)) {
-    throw Error(`TableName argument should be a Table object.`);
+    throw Error(`'Table' argument should be a Table object.`);
   }
 
   return table;

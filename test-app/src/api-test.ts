@@ -129,7 +129,7 @@ new AwsMethod(
   },
   ($input) =>
     $AWS.DynamoDB.GetItem({
-      TableName: table,
+      Table: table,
       Key: {
         id: {
           S: `${$input.params("id")}`,

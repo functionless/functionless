@@ -86,7 +86,7 @@ export class PeopleDatabase extends Construct {
       },
       (input) => {
         const person = $AWS.DynamoDB.GetItem({
-          TableName: this.personTable,
+          Table: this.personTable,
           Key: {
             id: {
               S: input.id,

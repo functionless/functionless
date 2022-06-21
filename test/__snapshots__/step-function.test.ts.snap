@@ -205,7 +205,7 @@ Object {
 
 exports[`call AWS.DynamoDB.GetItem, then Lambda and return LiteralExpr 1`] = `
 Object {
-  "StartAt": "person = $AWS.DynamoDB.GetItem({TableName: personTable, Key: {id: {S: input",
+  "StartAt": "person = $AWS.DynamoDB.GetItem({Table: personTable, Key: {id: {S: input.id}",
   "States": Object {
     "if(person.Item == undefined)": Object {
       "Choices": Array [
@@ -226,7 +226,7 @@ Object {
       "Default": "score = computeScore({id: person.Item.id.S, name: person.Item.name.S})",
       "Type": "Choice",
     },
-    "person = $AWS.DynamoDB.GetItem({TableName: personTable, Key: {id: {S: input": Object {
+    "person = $AWS.DynamoDB.GetItem({Table: personTable, Key: {id: {S: input.id}": Object {
       "Next": "if(person.Item == undefined)",
       "Parameters": Object {
         "Key": Object {
@@ -535,7 +535,7 @@ exports[`conditionally call DynamoDB and then void 1`] = `
 Object {
   "StartAt": "if(input.id == \\"hello\\")",
   "States": Object {
-    "$AWS.DynamoDB.GetItem({TableName: personTable, Key: {id: {S: input.id}}})": Object {
+    "$AWS.DynamoDB.GetItem({Table: personTable, Key: {id: {S: input.id}}})": Object {
       "Next": "return null",
       "Parameters": Object {
         "Key": Object {
@@ -552,7 +552,7 @@ Object {
     "if(input.id == \\"hello\\")": Object {
       "Choices": Array [
         Object {
-          "Next": "$AWS.DynamoDB.GetItem({TableName: personTable, Key: {id: {S: input.id}}})",
+          "Next": "$AWS.DynamoDB.GetItem({Table: personTable, Key: {id: {S: input.id}}})",
           "StringEquals": "hello",
           "Variable": "$.id",
         },
@@ -2634,7 +2634,7 @@ Object {
 
 exports[`return AWS.DynamoDB.GetItem 1`] = `
 Object {
-  "StartAt": "person = $AWS.DynamoDB.GetItem({TableName: personTable, Key: {id: {S: input",
+  "StartAt": "person = $AWS.DynamoDB.GetItem({Table: personTable, Key: {id: {S: input.id}",
   "States": Object {
     "if(person.Item == undefined)": Object {
       "Choices": Array [
@@ -2655,7 +2655,7 @@ Object {
       "Default": "return {id: person.Item.id.S, name: person.Item.name.S}",
       "Type": "Choice",
     },
-    "person = $AWS.DynamoDB.GetItem({TableName: personTable, Key: {id: {S: input": Object {
+    "person = $AWS.DynamoDB.GetItem({Table: personTable, Key: {id: {S: input.id}": Object {
       "Next": "if(person.Item == undefined)",
       "Parameters": Object {
         "Key": Object {

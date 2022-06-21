@@ -13,12 +13,12 @@ https://functionless.org/docs/error-codes#awsmethod-request-must-have-exactly-on
 [7m  [0m [91m~~~~~~~~~~~~~~~~~~~~~~~[0m
 [7m64[0m   },
 [7m  [0m [91m~~~[0m
-[96mtest/test-files/api-gateway.ts[0m:[93m76[0m:[93m24[0m - [91merror[0m[90m Functionless(10011): [0mAPI Gateway does not support spread assignment expressions
+[96mtest/test-files/api-gateway.ts[0m:[93m76[0m:[93m20[0m - [91merror[0m[90m Functionless(10011): [0mAPI Gateway does not support spread assignment expressions
 
 https://functionless.org/docs/error-codes#api-gateway-does-not-support-spread-assignment-expressions
 
-[7m76[0m       TableName: table,
-[7m  [0m [91m                       [0m
+[7m76[0m       Table: table,
+[7m  [0m [91m                   [0m
 [7m77[0m       ...$input.data,
 [7m  [0m [91m~~~~~~~~~~~~~~~~~~~~[0m
 [96mtest/test-files/api-gateway.ts[0m:[93m77[0m:[93m22[0m - [91merror[0m[90m Functionless(10010): [0mAPI Gateway does not supported computed property names
@@ -35,8 +35,8 @@ https://functionless.org/docs/error-codes#api-gateway-response-mapping-template-
 
 [7m101[0m     return $AWS.DynamoDB.GetItem({
 [7m   [0m [91m          ~~~~~~~~~~~~~~~~~~~~~~~~[0m
-[7m102[0m       TableName: table,
-[7m   [0m [91m~~~~~~~~~~~~~~~~~~~~~~~[0m
+[7m102[0m       Table: table,
+[7m   [0m [91m~~~~~~~~~~~~~~~~~~~[0m
 [7m...[0m 
 [7m107[0m       },
 [7m   [0m [91m~~~~~~~~[0m

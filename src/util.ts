@@ -1,6 +1,11 @@
 import { Construct } from "constructs";
 import ts from "typescript";
-import { Expr } from "./expression";
+import {
+  Expr,
+  Identifier,
+  ObjectLiteralExpr,
+  PropAssignExpr,
+} from "./expression";
 import {
   isArrayLiteralExpr,
   isBinaryExpr,
@@ -24,6 +29,7 @@ import {
   isUndefinedLiteralExpr,
 } from "./guards";
 import { FunctionlessNode } from "./node";
+import { visitEachChild } from "./visit";
 
 export type AnyFunction = (...args: any[]) => any;
 
@@ -309,6 +315,32 @@ export class DeterministicNameGenerator {
     }
     return this.generatedNames.get(node)!;
   }
+}
+
+/**
+ * Rename all {@link PropAssignExpr} expressions within the {@link obj} where the
+ * name is statically known and matches a property in the {@link rename} map.
+ */
+export function renameObjectProperties(
+  obj: ObjectLiteralExpr,
+  rename: Record<string, string>
+) {
+  const newObj = visitEachChild(obj, (node) => {
+    if (isPropAssignExpr(node)) {
+      const propName = node.tryGetName();
+      if (propName !== undefined && propName in rename) {
+        const substituteName = rename[propName];
+
+        return new PropAssignExpr(
+          new Identifier(substituteName),
+          node.expr.clone()
+        );
+      }
+    }
+    return node;
+  });
+  newObj.parent = obj.parent;
+  return newObj;
 }
 
 // to prevent the closure serializer from trying to import all of functionless.

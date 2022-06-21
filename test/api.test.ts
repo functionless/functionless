@@ -152,7 +152,7 @@ test("AWS integration with DynamoDB Table", () => {
       }>
     ) =>
       $AWS.DynamoDB.GetItem({
-        TableName: table,
+        Table: table,
         Key: {
           pk: {
             S: $input.data.id,
@@ -213,7 +213,7 @@ test("return $input.data", () => {
       }>
     ) =>
       $AWS.DynamoDB.GetItem({
-        TableName: table,
+        Table: table,
         Key: {
           pk: {
             S: $input.data.id,
@@ -250,7 +250,7 @@ test("return $input.data.list[0]", () => {
       }>
     ) =>
       $AWS.DynamoDB.GetItem({
-        TableName: table,
+        Table: table,
         Key: {
           pk: {
             S: $input.data.list[0],

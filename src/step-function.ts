@@ -750,7 +750,7 @@ export interface StepFunctionProps
  *
  * const getItem = new ExpressStepFunction(this, "F", () => {
  *   return f.$AWS.DynamoDB.GetItem({
- *     TableName: table,
+ *     Table: table,
  *     Key: {
  *       ..
  *     }
@@ -852,7 +852,7 @@ interface BaseExpressStepFunction<
  *
  * const getItem = new ExpressStepFunction(this, "F", () => {
  *   return f.$AWS.DynamoDB.GetItem({
- *     TableName: table,
+ *     Table: table,
  *     Key: {
  *       ..
  *     }
@@ -1049,7 +1049,7 @@ export interface ExpressStepFunction<
  *
  * const getItem = new StepFunction(this, "F", () => {
  *   return f.$AWS.DynamoDB.GetItem({
- *     TableName: table,
+ *     Table: table,
  *     Key: {
  *       ..
  *     }
@@ -1228,7 +1228,7 @@ interface BaseStandardStepFunction<
  *
  * const getItem = new StepFunction(this, "F", () => {
  *   return f.$AWS.DynamoDB.GetItem({
- *     TableName: table,
+ *     Table: table,
  *     Key: {
  *       ..
  *     }

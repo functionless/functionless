@@ -12541,11 +12541,11 @@ function __f1(__0, __1) {
 return async (args, preWarmContext) => {
                     const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
                     const [input] = args;
-                    const { TableName: table, ...rest } = input;
+                    const { Table: table, ...rest } = input;
                     return dynamo
                         .deleteItem({
                         ...rest,
-                        TableName: input.TableName.tableName,
+                        TableName: input.Table.tableName,
                     })
                         .promise();
                 };
@@ -12573,7 +12573,7 @@ function __f5(__0, __1) {
 return async (args, preWarmContext) => {
                     const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
                     const [input] = args;
-                    const { TableName: table, AttributesToGet, ...rest } = input;
+                    const { Table: table, AttributesToGet, ...rest } = input;
                     const payload = {
                         ...rest,
                         AttributesToGet: AttributesToGet,
@@ -12605,7 +12605,7 @@ function __f7(__0, __1) {
 return async (args, preWarmContext) => {
                     const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
                     const [input] = args;
-                    const { TableName: table, ...rest } = input;
+                    const { Table: table, ...rest } = input;
                     return dynamo
                         .updateItem({
                         ...rest,
@@ -12637,7 +12637,7 @@ function __f9(__0, __1) {
 return async (args, preWarmContext) => {
                     const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
                     const [input] = args;
-                    const { TableName: table, Item, ...rest } = input;
+                    const { Table: table, Item, ...rest } = input;
                     return dynamo
                         .putItem({
                         ...rest,
@@ -12670,7 +12670,7 @@ function __f11(__0, __1) {
 return async (args, preWarmContext) => {
                     const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
                     const [input] = args;
-                    const { TableName: table, AttributesToGet, ...rest } = input;
+                    const { Table: table, AttributesToGet, ...rest } = input;
                     return dynamo
                         .query({
                         ...rest,
@@ -12703,7 +12703,7 @@ function __f13(__0, __1) {
 return async (args, preWarmContext) => {
                     const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
                     const [input] = args;
-                    const { TableName: table, AttributesToGet, ...rest } = input;
+                    const { Table: table, AttributesToGet, ...rest } = input;
                     return dynamo
                         .scan({
                         ...rest,
@@ -12776,7 +12776,7 @@ function __f0() {
 
 return () => {
                 return _fnls_1.$AWS.DynamoDB.DeleteItem({
-                    TableName: table,
+                    Table: table,
                     Key: {
                         id: {
                             S: \\"key\\",
@@ -12914,10 +12914,10 @@ function __f1(__0, __1) {
       return async (args, preWarmContext) => {
         const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
         const [input] = args;
-        const { TableName: table2, ...rest } = input;
+        const { Table: table2, ...rest } = input;
         return dynamo.deleteItem({
           ...rest,
-          TableName: input.TableName.tableName
+          TableName: input.Table.tableName
         }).promise();
       };
     }
@@ -12938,7 +12938,7 @@ function __f5(__0, __1) {
       return async (args, preWarmContext) => {
         const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
         const [input] = args;
-        const { TableName: table2, AttributesToGet, ...rest } = input;
+        const { Table: table2, AttributesToGet, ...rest } = input;
         const payload = {
           ...rest,
           AttributesToGet,
@@ -12964,7 +12964,7 @@ function __f7(__0, __1) {
       return async (args, preWarmContext) => {
         const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
         const [input] = args;
-        const { TableName: table2, ...rest } = input;
+        const { Table: table2, ...rest } = input;
         return dynamo.updateItem({
           ...rest,
           TableName: table2.tableName
@@ -12988,7 +12988,7 @@ function __f9(__0, __1) {
       return async (args, preWarmContext) => {
         const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
         const [input] = args;
-        const { TableName: table2, Item, ...rest } = input;
+        const { Table: table2, Item, ...rest } = input;
         return dynamo.putItem({
           ...rest,
           Item,
@@ -13013,7 +13013,7 @@ function __f11(__0, __1) {
       return async (args, preWarmContext) => {
         const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
         const [input] = args;
-        const { TableName: table2, AttributesToGet, ...rest } = input;
+        const { Table: table2, AttributesToGet, ...rest } = input;
         return dynamo.query({
           ...rest,
           AttributesToGet,
@@ -13038,7 +13038,7 @@ function __f13(__0, __1) {
       return async (args, preWarmContext) => {
         const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
         const [input] = args;
-        const { TableName: table2, AttributesToGet, ...rest } = input;
+        const { Table: table2, AttributesToGet, ...rest } = input;
         return dynamo.scan({
           ...rest,
           AttributesToGet,
@@ -13094,7 +13094,7 @@ function __f0() {
     with ({ _fnls_1: __fnls_1, table: __table }) {
       return () => {
         return _fnls_1.$AWS.DynamoDB.DeleteItem({
-          TableName: table,
+          Table: table,
           Key: {
             id: {
               S: \\"key\\"
@@ -13237,11 +13237,11 @@ function __f1(__0, __1) {
 return async (args, preWarmContext) => {
                     const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
                     const [input] = args;
-                    const { TableName: table, ...rest } = input;
+                    const { Table: table, ...rest } = input;
                     return dynamo
                         .deleteItem({
                         ...rest,
-                        TableName: input.TableName.tableName,
+                        TableName: input.Table.tableName,
                     })
                         .promise();
                 };
@@ -13269,7 +13269,7 @@ function __f5(__0, __1) {
 return async (args, preWarmContext) => {
                     const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
                     const [input] = args;
-                    const { TableName: table, AttributesToGet, ...rest } = input;
+                    const { Table: table, AttributesToGet, ...rest } = input;
                     const payload = {
                         ...rest,
                         AttributesToGet: AttributesToGet,
@@ -13301,7 +13301,7 @@ function __f7(__0, __1) {
 return async (args, preWarmContext) => {
                     const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
                     const [input] = args;
-                    const { TableName: table, ...rest } = input;
+                    const { Table: table, ...rest } = input;
                     return dynamo
                         .updateItem({
                         ...rest,
@@ -13333,7 +13333,7 @@ function __f9(__0, __1) {
 return async (args, preWarmContext) => {
                     const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
                     const [input] = args;
-                    const { TableName: table, Item, ...rest } = input;
+                    const { Table: table, Item, ...rest } = input;
                     return dynamo
                         .putItem({
                         ...rest,
@@ -13366,7 +13366,7 @@ function __f11(__0, __1) {
 return async (args, preWarmContext) => {
                     const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
                     const [input] = args;
-                    const { TableName: table, AttributesToGet, ...rest } = input;
+                    const { Table: table, AttributesToGet, ...rest } = input;
                     return dynamo
                         .query({
                         ...rest,
@@ -13399,7 +13399,7 @@ function __f13(__0, __1) {
 return async (args, preWarmContext) => {
                     const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
                     const [input] = args;
-                    const { TableName: table, AttributesToGet, ...rest } = input;
+                    const { Table: table, AttributesToGet, ...rest } = input;
                     return dynamo
                         .scan({
                         ...rest,
@@ -13472,7 +13472,7 @@ function __f0() {
 
 return () => {
                 return _fnls_1.$AWS.DynamoDB.GetItem({
-                    TableName: table,
+                    Table: table,
                     Key: {
                         id: { S: \\"id\\" },
                     },
@@ -13608,10 +13608,10 @@ function __f1(__0, __1) {
       return async (args, preWarmContext) => {
         const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
         const [input] = args;
-        const { TableName: table2, ...rest } = input;
+        const { Table: table2, ...rest } = input;
         return dynamo.deleteItem({
           ...rest,
-          TableName: input.TableName.tableName
+          TableName: input.Table.tableName
         }).promise();
       };
     }
@@ -13632,7 +13632,7 @@ function __f5(__0, __1) {
       return async (args, preWarmContext) => {
         const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
         const [input] = args;
-        const { TableName: table2, AttributesToGet, ...rest } = input;
+        const { Table: table2, AttributesToGet, ...rest } = input;
         const payload = {
           ...rest,
           AttributesToGet,
@@ -13658,7 +13658,7 @@ function __f7(__0, __1) {
       return async (args, preWarmContext) => {
         const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
         const [input] = args;
-        const { TableName: table2, ...rest } = input;
+        const { Table: table2, ...rest } = input;
         return dynamo.updateItem({
           ...rest,
           TableName: table2.tableName
@@ -13682,7 +13682,7 @@ function __f9(__0, __1) {
       return async (args, preWarmContext) => {
         const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
         const [input] = args;
-        const { TableName: table2, Item, ...rest } = input;
+        const { Table: table2, Item, ...rest } = input;
         return dynamo.putItem({
           ...rest,
           Item,
@@ -13707,7 +13707,7 @@ function __f11(__0, __1) {
       return async (args, preWarmContext) => {
         const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
         const [input] = args;
-        const { TableName: table2, AttributesToGet, ...rest } = input;
+        const { Table: table2, AttributesToGet, ...rest } = input;
         return dynamo.query({
           ...rest,
           AttributesToGet,
@@ -13732,7 +13732,7 @@ function __f13(__0, __1) {
       return async (args, preWarmContext) => {
         const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
         const [input] = args;
-        const { TableName: table2, AttributesToGet, ...rest } = input;
+        const { Table: table2, AttributesToGet, ...rest } = input;
         return dynamo.scan({
           ...rest,
           AttributesToGet,
@@ -13788,7 +13788,7 @@ function __f0() {
     with ({ _fnls_1: __fnls_1, table: __table }) {
       return () => {
         return _fnls_1.$AWS.DynamoDB.GetItem({
-          TableName: table,
+          Table: table,
           Key: {
             id: { S: \\"id\\" }
           }
@@ -13866,7 +13866,7 @@ function __f1(__0, __1) {
 return async (args, preWarmContext) => {
                     const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
                     const [input] = args;
-                    const { TableName: table, AttributesToGet, ...rest } = input;
+                    const { Table: table, AttributesToGet, ...rest } = input;
                     const payload = {
                         ...rest,
                         AttributesToGet: AttributesToGet,
@@ -13897,7 +13897,7 @@ function __f0() {
 
 return () => {
                 return GetItem({
-                    TableName: table,
+                    Table: table,
                     Key: {
                         id: { S: \\"id\\" },
                     },
@@ -13972,7 +13972,7 @@ function __f1(__0, __1) {
       return async (args, preWarmContext) => {
         const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
         const [input] = args;
-        const { TableName: table2, AttributesToGet, ...rest } = input;
+        const { Table: table2, AttributesToGet, ...rest } = input;
         const payload = {
           ...rest,
           AttributesToGet,
@@ -13997,7 +13997,7 @@ function __f0() {
     with ({ GetItem: __GetItem, table: __table }) {
       return () => {
         return GetItem({
-          TableName: table,
+          Table: table,
           Key: {
             id: { S: \\"id\\" }
           }
@@ -14138,11 +14138,11 @@ function __f1(__0, __1) {
 return async (args, preWarmContext) => {
                     const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
                     const [input] = args;
-                    const { TableName: table, ...rest } = input;
+                    const { Table: table, ...rest } = input;
                     return dynamo
                         .deleteItem({
                         ...rest,
-                        TableName: input.TableName.tableName,
+                        TableName: input.Table.tableName,
                     })
                         .promise();
                 };
@@ -14170,7 +14170,7 @@ function __f5(__0, __1) {
 return async (args, preWarmContext) => {
                     const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
                     const [input] = args;
-                    const { TableName: table, AttributesToGet, ...rest } = input;
+                    const { Table: table, AttributesToGet, ...rest } = input;
                     const payload = {
                         ...rest,
                         AttributesToGet: AttributesToGet,
@@ -14202,7 +14202,7 @@ function __f7(__0, __1) {
 return async (args, preWarmContext) => {
                     const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
                     const [input] = args;
-                    const { TableName: table, ...rest } = input;
+                    const { Table: table, ...rest } = input;
                     return dynamo
                         .updateItem({
                         ...rest,
@@ -14234,7 +14234,7 @@ function __f9(__0, __1) {
 return async (args, preWarmContext) => {
                     const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
                     const [input] = args;
-                    const { TableName: table, Item, ...rest } = input;
+                    const { Table: table, Item, ...rest } = input;
                     return dynamo
                         .putItem({
                         ...rest,
@@ -14267,7 +14267,7 @@ function __f11(__0, __1) {
 return async (args, preWarmContext) => {
                     const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
                     const [input] = args;
-                    const { TableName: table, AttributesToGet, ...rest } = input;
+                    const { Table: table, AttributesToGet, ...rest } = input;
                     return dynamo
                         .query({
                         ...rest,
@@ -14300,7 +14300,7 @@ function __f13(__0, __1) {
 return async (args, preWarmContext) => {
                     const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
                     const [input] = args;
-                    const { TableName: table, AttributesToGet, ...rest } = input;
+                    const { Table: table, AttributesToGet, ...rest } = input;
                     return dynamo
                         .scan({
                         ...rest,
@@ -14373,7 +14373,7 @@ function __f0() {
 
 return () => {
                 return _fnls_1.$AWS.DynamoDB.PutItem({
-                    TableName: table,
+                    Table: table,
                     Item: {
                         id: { S: \\"key\\" },
                     },
@@ -14509,10 +14509,10 @@ function __f1(__0, __1) {
       return async (args, preWarmContext) => {
         const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
         const [input] = args;
-        const { TableName: table2, ...rest } = input;
+        const { Table: table2, ...rest } = input;
         return dynamo.deleteItem({
           ...rest,
-          TableName: input.TableName.tableName
+          TableName: input.Table.tableName
         }).promise();
       };
     }
@@ -14533,7 +14533,7 @@ function __f5(__0, __1) {
       return async (args, preWarmContext) => {
         const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
         const [input] = args;
-        const { TableName: table2, AttributesToGet, ...rest } = input;
+        const { Table: table2, AttributesToGet, ...rest } = input;
         const payload = {
           ...rest,
           AttributesToGet,
@@ -14559,7 +14559,7 @@ function __f7(__0, __1) {
       return async (args, preWarmContext) => {
         const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
         const [input] = args;
-        const { TableName: table2, ...rest } = input;
+        const { Table: table2, ...rest } = input;
         return dynamo.updateItem({
           ...rest,
           TableName: table2.tableName
@@ -14583,7 +14583,7 @@ function __f9(__0, __1) {
       return async (args, preWarmContext) => {
         const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
         const [input] = args;
-        const { TableName: table2, Item, ...rest } = input;
+        const { Table: table2, Item, ...rest } = input;
         return dynamo.putItem({
           ...rest,
           Item,
@@ -14608,7 +14608,7 @@ function __f11(__0, __1) {
       return async (args, preWarmContext) => {
         const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
         const [input] = args;
-        const { TableName: table2, AttributesToGet, ...rest } = input;
+        const { Table: table2, AttributesToGet, ...rest } = input;
         return dynamo.query({
           ...rest,
           AttributesToGet,
@@ -14633,7 +14633,7 @@ function __f13(__0, __1) {
       return async (args, preWarmContext) => {
         const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
         const [input] = args;
-        const { TableName: table2, AttributesToGet, ...rest } = input;
+        const { Table: table2, AttributesToGet, ...rest } = input;
         return dynamo.scan({
           ...rest,
           AttributesToGet,
@@ -14689,7 +14689,7 @@ function __f0() {
     with ({ _fnls_1: __fnls_1, table: __table }) {
       return () => {
         return _fnls_1.$AWS.DynamoDB.PutItem({
-          TableName: table,
+          Table: table,
           Item: {
             id: { S: \\"key\\" }
           }
@@ -14830,11 +14830,11 @@ function __f1(__0, __1) {
 return async (args, preWarmContext) => {
                     const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
                     const [input] = args;
-                    const { TableName: table, ...rest } = input;
+                    const { Table: table, ...rest } = input;
                     return dynamo
                         .deleteItem({
                         ...rest,
-                        TableName: input.TableName.tableName,
+                        TableName: input.Table.tableName,
                     })
                         .promise();
                 };
@@ -14862,7 +14862,7 @@ function __f5(__0, __1) {
 return async (args, preWarmContext) => {
                     const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
                     const [input] = args;
-                    const { TableName: table, AttributesToGet, ...rest } = input;
+                    const { Table: table, AttributesToGet, ...rest } = input;
                     const payload = {
                         ...rest,
                         AttributesToGet: AttributesToGet,
@@ -14894,7 +14894,7 @@ function __f7(__0, __1) {
 return async (args, preWarmContext) => {
                     const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
                     const [input] = args;
-                    const { TableName: table, ...rest } = input;
+                    const { Table: table, ...rest } = input;
                     return dynamo
                         .updateItem({
                         ...rest,
@@ -14926,7 +14926,7 @@ function __f9(__0, __1) {
 return async (args, preWarmContext) => {
                     const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
                     const [input] = args;
-                    const { TableName: table, Item, ...rest } = input;
+                    const { Table: table, Item, ...rest } = input;
                     return dynamo
                         .putItem({
                         ...rest,
@@ -14959,7 +14959,7 @@ function __f11(__0, __1) {
 return async (args, preWarmContext) => {
                     const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
                     const [input] = args;
-                    const { TableName: table, AttributesToGet, ...rest } = input;
+                    const { Table: table, AttributesToGet, ...rest } = input;
                     return dynamo
                         .query({
                         ...rest,
@@ -14992,7 +14992,7 @@ function __f13(__0, __1) {
 return async (args, preWarmContext) => {
                     const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
                     const [input] = args;
-                    const { TableName: table, AttributesToGet, ...rest } = input;
+                    const { Table: table, AttributesToGet, ...rest } = input;
                     return dynamo
                         .scan({
                         ...rest,
@@ -15065,7 +15065,7 @@ function __f0() {
 
 return () => {
                 return _fnls_1.$AWS.DynamoDB.UpdateItem({
-                    TableName: table,
+                    Table: table,
                     Key: {
                         id: { S: \\"key\\" },
                     },
@@ -15208,10 +15208,10 @@ function __f1(__0, __1) {
       return async (args, preWarmContext) => {
         const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
         const [input] = args;
-        const { TableName: table2, ...rest } = input;
+        const { Table: table2, ...rest } = input;
         return dynamo.deleteItem({
           ...rest,
-          TableName: input.TableName.tableName
+          TableName: input.Table.tableName
         }).promise();
       };
     }
@@ -15232,7 +15232,7 @@ function __f5(__0, __1) {
       return async (args, preWarmContext) => {
         const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
         const [input] = args;
-        const { TableName: table2, AttributesToGet, ...rest } = input;
+        const { Table: table2, AttributesToGet, ...rest } = input;
         const payload = {
           ...rest,
           AttributesToGet,
@@ -15258,7 +15258,7 @@ function __f7(__0, __1) {
       return async (args, preWarmContext) => {
         const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
         const [input] = args;
-        const { TableName: table2, ...rest } = input;
+        const { Table: table2, ...rest } = input;
         return dynamo.updateItem({
           ...rest,
           TableName: table2.tableName
@@ -15282,7 +15282,7 @@ function __f9(__0, __1) {
       return async (args, preWarmContext) => {
         const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
         const [input] = args;
-        const { TableName: table2, Item, ...rest } = input;
+        const { Table: table2, Item, ...rest } = input;
         return dynamo.putItem({
           ...rest,
           Item,
@@ -15307,7 +15307,7 @@ function __f11(__0, __1) {
       return async (args, preWarmContext) => {
         const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
         const [input] = args;
-        const { TableName: table2, AttributesToGet, ...rest } = input;
+        const { Table: table2, AttributesToGet, ...rest } = input;
         return dynamo.query({
           ...rest,
           AttributesToGet,
@@ -15332,7 +15332,7 @@ function __f13(__0, __1) {
       return async (args, preWarmContext) => {
         const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
         const [input] = args;
-        const { TableName: table2, AttributesToGet, ...rest } = input;
+        const { Table: table2, AttributesToGet, ...rest } = input;
         return dynamo.scan({
           ...rest,
           AttributesToGet,
@@ -15388,7 +15388,7 @@ function __f0() {
     with ({ _fnls_1: __fnls_1, table: __table }) {
       return () => {
         return _fnls_1.$AWS.DynamoDB.UpdateItem({
-          TableName: table,
+          Table: table,
           Key: {
             id: { S: \\"key\\" }
           },
@@ -15536,11 +15536,11 @@ function __f1(__0, __1) {
 return async (args, preWarmContext) => {
                     const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
                     const [input] = args;
-                    const { TableName: table, ...rest } = input;
+                    const { Table: table, ...rest } = input;
                     return dynamo
                         .deleteItem({
                         ...rest,
-                        TableName: input.TableName.tableName,
+                        TableName: input.Table.tableName,
                     })
                         .promise();
                 };
@@ -15568,7 +15568,7 @@ function __f5(__0, __1) {
 return async (args, preWarmContext) => {
                     const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
                     const [input] = args;
-                    const { TableName: table, AttributesToGet, ...rest } = input;
+                    const { Table: table, AttributesToGet, ...rest } = input;
                     const payload = {
                         ...rest,
                         AttributesToGet: AttributesToGet,
@@ -15600,7 +15600,7 @@ function __f7(__0, __1) {
 return async (args, preWarmContext) => {
                     const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
                     const [input] = args;
-                    const { TableName: table, ...rest } = input;
+                    const { Table: table, ...rest } = input;
                     return dynamo
                         .updateItem({
                         ...rest,
@@ -15632,7 +15632,7 @@ function __f9(__0, __1) {
 return async (args, preWarmContext) => {
                     const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
                     const [input] = args;
-                    const { TableName: table, Item, ...rest } = input;
+                    const { Table: table, Item, ...rest } = input;
                     return dynamo
                         .putItem({
                         ...rest,
@@ -15665,7 +15665,7 @@ function __f11(__0, __1) {
 return async (args, preWarmContext) => {
                     const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
                     const [input] = args;
-                    const { TableName: table, AttributesToGet, ...rest } = input;
+                    const { Table: table, AttributesToGet, ...rest } = input;
                     return dynamo
                         .query({
                         ...rest,
@@ -15698,7 +15698,7 @@ function __f13(__0, __1) {
 return async (args, preWarmContext) => {
                     const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
                     const [input] = args;
-                    const { TableName: table, AttributesToGet, ...rest } = input;
+                    const { Table: table, AttributesToGet, ...rest } = input;
                     return dynamo
                         .scan({
                         ...rest,
@@ -15771,7 +15771,7 @@ function __f0() {
 
 return () => {
                 return _fnls_1.$AWS.DynamoDB.Query({
-                    TableName: table,
+                    Table: table,
                     KeyConditionExpression: \\"#key = :key\\",
                     ExpressionAttributeValues: {
                         \\":key\\": { S: \\"key\\" },
@@ -15911,10 +15911,10 @@ function __f1(__0, __1) {
       return async (args, preWarmContext) => {
         const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
         const [input] = args;
-        const { TableName: table2, ...rest } = input;
+        const { Table: table2, ...rest } = input;
         return dynamo.deleteItem({
           ...rest,
-          TableName: input.TableName.tableName
+          TableName: input.Table.tableName
         }).promise();
       };
     }
@@ -15935,7 +15935,7 @@ function __f5(__0, __1) {
       return async (args, preWarmContext) => {
         const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
         const [input] = args;
-        const { TableName: table2, AttributesToGet, ...rest } = input;
+        const { Table: table2, AttributesToGet, ...rest } = input;
         const payload = {
           ...rest,
           AttributesToGet,
@@ -15961,7 +15961,7 @@ function __f7(__0, __1) {
       return async (args, preWarmContext) => {
         const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
         const [input] = args;
-        const { TableName: table2, ...rest } = input;
+        const { Table: table2, ...rest } = input;
         return dynamo.updateItem({
           ...rest,
           TableName: table2.tableName
@@ -15985,7 +15985,7 @@ function __f9(__0, __1) {
       return async (args, preWarmContext) => {
         const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
         const [input] = args;
-        const { TableName: table2, Item, ...rest } = input;
+        const { Table: table2, Item, ...rest } = input;
         return dynamo.putItem({
           ...rest,
           Item,
@@ -16010,7 +16010,7 @@ function __f11(__0, __1) {
       return async (args, preWarmContext) => {
         const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
         const [input] = args;
-        const { TableName: table2, AttributesToGet, ...rest } = input;
+        const { Table: table2, AttributesToGet, ...rest } = input;
         return dynamo.query({
           ...rest,
           AttributesToGet,
@@ -16035,7 +16035,7 @@ function __f13(__0, __1) {
       return async (args, preWarmContext) => {
         const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
         const [input] = args;
-        const { TableName: table2, AttributesToGet, ...rest } = input;
+        const { Table: table2, AttributesToGet, ...rest } = input;
         return dynamo.scan({
           ...rest,
           AttributesToGet,
@@ -16091,7 +16091,7 @@ function __f0() {
     with ({ _fnls_1: __fnls_1, table: __table }) {
       return () => {
         return _fnls_1.$AWS.DynamoDB.Query({
-          TableName: table,
+          Table: table,
           KeyConditionExpression: \\"#key = :key\\",
           ExpressionAttributeValues: {
             \\":key\\": { S: \\"key\\" }
@@ -16236,11 +16236,11 @@ function __f1(__0, __1) {
 return async (args, preWarmContext) => {
                     const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
                     const [input] = args;
-                    const { TableName: table, ...rest } = input;
+                    const { Table: table, ...rest } = input;
                     return dynamo
                         .deleteItem({
                         ...rest,
-                        TableName: input.TableName.tableName,
+                        TableName: input.Table.tableName,
                     })
                         .promise();
                 };
@@ -16268,7 +16268,7 @@ function __f5(__0, __1) {
 return async (args, preWarmContext) => {
                     const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
                     const [input] = args;
-                    const { TableName: table, AttributesToGet, ...rest } = input;
+                    const { Table: table, AttributesToGet, ...rest } = input;
                     const payload = {
                         ...rest,
                         AttributesToGet: AttributesToGet,
@@ -16300,7 +16300,7 @@ function __f7(__0, __1) {
 return async (args, preWarmContext) => {
                     const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
                     const [input] = args;
-                    const { TableName: table, ...rest } = input;
+                    const { Table: table, ...rest } = input;
                     return dynamo
                         .updateItem({
                         ...rest,
@@ -16332,7 +16332,7 @@ function __f9(__0, __1) {
 return async (args, preWarmContext) => {
                     const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
                     const [input] = args;
-                    const { TableName: table, Item, ...rest } = input;
+                    const { Table: table, Item, ...rest } = input;
                     return dynamo
                         .putItem({
                         ...rest,
@@ -16365,7 +16365,7 @@ function __f11(__0, __1) {
 return async (args, preWarmContext) => {
                     const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
                     const [input] = args;
-                    const { TableName: table, AttributesToGet, ...rest } = input;
+                    const { Table: table, AttributesToGet, ...rest } = input;
                     return dynamo
                         .query({
                         ...rest,
@@ -16398,7 +16398,7 @@ function __f13(__0, __1) {
 return async (args, preWarmContext) => {
                     const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
                     const [input] = args;
-                    const { TableName: table, AttributesToGet, ...rest } = input;
+                    const { Table: table, AttributesToGet, ...rest } = input;
                     return dynamo
                         .scan({
                         ...rest,
@@ -16471,7 +16471,7 @@ function __f0() {
 
 return () => {
                 return _fnls_1.$AWS.DynamoDB.Scan({
-                    TableName: table,
+                    Table: table,
                 });
             };
 
@@ -16604,10 +16604,10 @@ function __f1(__0, __1) {
       return async (args, preWarmContext) => {
         const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
         const [input] = args;
-        const { TableName: table2, ...rest } = input;
+        const { Table: table2, ...rest } = input;
         return dynamo.deleteItem({
           ...rest,
-          TableName: input.TableName.tableName
+          TableName: input.Table.tableName
         }).promise();
       };
     }
@@ -16628,7 +16628,7 @@ function __f5(__0, __1) {
       return async (args, preWarmContext) => {
         const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
         const [input] = args;
-        const { TableName: table2, AttributesToGet, ...rest } = input;
+        const { Table: table2, AttributesToGet, ...rest } = input;
         const payload = {
           ...rest,
           AttributesToGet,
@@ -16654,7 +16654,7 @@ function __f7(__0, __1) {
       return async (args, preWarmContext) => {
         const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
         const [input] = args;
-        const { TableName: table2, ...rest } = input;
+        const { Table: table2, ...rest } = input;
         return dynamo.updateItem({
           ...rest,
           TableName: table2.tableName
@@ -16678,7 +16678,7 @@ function __f9(__0, __1) {
       return async (args, preWarmContext) => {
         const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
         const [input] = args;
-        const { TableName: table2, Item, ...rest } = input;
+        const { Table: table2, Item, ...rest } = input;
         return dynamo.putItem({
           ...rest,
           Item,
@@ -16703,7 +16703,7 @@ function __f11(__0, __1) {
       return async (args, preWarmContext) => {
         const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
         const [input] = args;
-        const { TableName: table2, AttributesToGet, ...rest } = input;
+        const { Table: table2, AttributesToGet, ...rest } = input;
         return dynamo.query({
           ...rest,
           AttributesToGet,
@@ -16728,7 +16728,7 @@ function __f13(__0, __1) {
       return async (args, preWarmContext) => {
         const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
         const [input] = args;
-        const { TableName: table2, AttributesToGet, ...rest } = input;
+        const { Table: table2, AttributesToGet, ...rest } = input;
         return dynamo.scan({
           ...rest,
           AttributesToGet,
@@ -16784,7 +16784,7 @@ function __f0() {
     with ({ _fnls_1: __fnls_1, table: __table }) {
       return () => {
         return _fnls_1.$AWS.DynamoDB.Scan({
-          TableName: table
+          Table: table
         });
       };
     }
