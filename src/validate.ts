@@ -34,6 +34,8 @@ export function validate(
       return validateApi(node);
     } else if (checker.isNewFunctionlessFunction(node)) {
       return validateFunctionNode(node);
+    } else if (checker.isAppsyncResolver(node)) {
+      return validateAppsync(node);
     } else {
       return collectEachChild(node, visit);
     }
@@ -94,6 +96,20 @@ export function validate(
           ErrorCodes.Cannot_perform_arithmetic_on_variables_in_Step_Function
         ),
       ];
+    }
+    return [];
+  }
+
+  function validateAppsync(node: ts.NewExpression): ts.Diagnostic[] {
+    if (node.arguments) {
+      const [, , , resolver] = node.arguments;
+      if (
+        !(ts.isArrowFunction(resolver) || ts.isFunctionExpression(resolver))
+      ) {
+        return [
+          newError(resolver, ErrorCodes.Argument_must_be_an_inline_Function),
+        ];
+      }
     }
     return [];
   }
@@ -247,3 +263,6 @@ export function validate(
     };
   }
 }
+
+// to prevent the closure serializer from trying to import all of functionless.
+export const deploymentOnlyModule = true;

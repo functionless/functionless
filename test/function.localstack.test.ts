@@ -13,6 +13,7 @@ import {
 } from "aws-cdk-lib";
 // eslint-disable-next-line import/no-extraneous-dependencies
 import { Lambda } from "aws-sdk";
+import axios from "axios";
 import { Construct } from "constructs";
 import {
   $AWS,
@@ -883,6 +884,18 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
     },
     `"hi"`
   );
+
+  test.only("import", (parent) => {
+    return new Function(
+      parent,
+      "function",
+      localstackClientConfig,
+      async () => {
+        console.log("hi");
+        return (await axios.get("https://google.com")).status;
+      }
+    );
+  }, 200);
 
   // Localstack doesn't support start sync
   // https://github.com/localstack/localstack/issues/5258

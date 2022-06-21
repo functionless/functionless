@@ -104,3 +104,6 @@ export class EventTransform<
  */
 export type NonEventBusIntegration<I extends Integration<any, any, any>> =
   I extends IEventBus<any> ? never : I;
+
+// to prevent the closure serializer from trying to import all of functionless.
+export const deploymentOnlyModule = true;

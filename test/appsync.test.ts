@@ -1,3 +1,4 @@
+import { GraphqlApi } from "@aws-cdk/aws-appsync-alpha";
 import { Stack } from "aws-cdk-lib";
 import {
   AppsyncContext,
@@ -9,8 +10,12 @@ import {
 import { appsyncTestCase, testAppsyncVelocity } from "./util";
 
 let stack: Stack;
+let api: GraphqlApi;
 beforeEach(() => {
   stack = new Stack();
+  api = new GraphqlApi(stack, "api", {
+    name: "api",
+  });
 });
 
 describe("step function integration", () => {
@@ -107,9 +112,18 @@ describe("step function integration", () => {
   test("machine with trace header", () => {
     const machine = new StepFunction(stack, "machine", async () => {});
 
-    new AppsyncResolver<{ id: string }, void>(async (context) => {
-      await machine({ traceHeader: context.arguments.id });
-    });
+    new AppsyncResolver<{ id: string }, void>(
+      stack,
+      "resolver",
+      {
+        api,
+        fieldName: "field",
+        typeName: "type",
+      },
+      async (context) => {
+        await machine({ traceHeader: context.arguments.id });
+      }
+    );
   });
 
   test("machine describe exec", () => {
@@ -124,6 +138,22 @@ describe("step function integration", () => {
 
     testAppsyncVelocity(templates[1]);
   });
+});
+
+test("if first argument is a GraphQLApi, then api can be omitted from the props", () => {
+  const machine = new StepFunction(stack, "machine", () => {});
+
+  new AppsyncResolver<{ id: string }, void>(
+    api,
+    "resolver",
+    {
+      fieldName: "field",
+      typeName: "type",
+    },
+    async (context) => {
+      await machine({ traceHeader: context.arguments.id });
+    }
+  );
 });
 
 test("machine describe exec return", () => {
@@ -167,10 +197,19 @@ describe("step function describe execution", () => {
   });
 
   test("machine with trace header", () => {
-    const machine = new StepFunction(stack, "machine", async () => {});
-    new AppsyncResolver<{ id: string }, void>(async (context) => {
-      await machine({ traceHeader: context.arguments.id });
-    });
+    const machine = new StepFunction(stack, "machine", () => {});
+    new AppsyncResolver<{ id: string }, void>(
+      stack,
+      "resolver",
+      {
+        api,
+        fieldName: "field",
+        typeName: "type",
+      },
+      async (context) => {
+        await machine({ traceHeader: context.arguments.id });
+      }
+    );
   });
 });
 

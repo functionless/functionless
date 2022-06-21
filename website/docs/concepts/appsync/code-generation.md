@@ -65,34 +65,40 @@ export class PeopleDatabase extends Construct {
   constructor(scope: Construct, id: string) {
     super(scope, id);
     // Person type can be used to define your typesafe dynamodb table
-    this.personTable = Table.fromTable<Person, "id", undefined>(
-      new aws_dynamodb.Table(this, "table", {
-        partitionKey: {
-          name: "id",
-          type: aws_dynamodb.AttributeType.STRING,
-        },
-      })
-    );
+    this.personTable = Table.fromTable<Person, "id", undefined>(this, "table", {
+      partitionKey: {
+        name: "id",
+        type: aws_dynamodb.AttributeType.STRING,
+      },
+    });
     // QueryResolvers type can be used to get parameters for AppsyncResolver
     this.getPerson = new AppsyncResolver<
       QueryResolvers["addPerson"]["args"],
       QueryResolvers["addPerson"]["result"]
-    >(($context) => {
-      const person = this.personTable.putItem({
-        key: {
-          id: {
-            S: $util.autoId(),
+    >(
+      scope,
+      id,
+      {
+        typeName: "Query",
+        fieldName: "addPerson",
+      },
+      ($context) => {
+        const person = this.personTable.appsync.putItem({
+          key: {
+            id: {
+              S: $util.autoId(),
+            },
           },
-        },
-        attributeValues: {
-          name: {
-            S: $context.arguments.input.name,
+          attributeValues: {
+            name: {
+              S: $context.arguments.input.name,
+            },
           },
-        },
-      });
+        });
 
-      return person;
-    });
+        return person;
+      }
+    );
   }
 }
 ```

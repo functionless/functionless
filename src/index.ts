@@ -1,4 +1,5 @@
 export * from "./api";
+export * from "./asl";
 export * from "./appsync";
 export * from "./async-synth";
 export * from "./aws";
@@ -15,3 +16,5 @@ export * from "./statement";
 export * from "./step-function";
 export * from "./table";
 export * from "./util";
+// to prevent the closure serializer from trying to import all of functionless.
+export const deploymentOnlyModule = true;

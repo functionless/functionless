@@ -20,7 +20,7 @@ class GitHooksPreCommitComponent extends TextFile {
   }
 }
 
-const MIN_CDK_VERSION = "2.28.0";
+const MIN_CDK_VERSION = "2.28.1";
 
 /**
  * Projen does not currently support a way to set `*` for deerDependency versions.
@@ -110,6 +110,8 @@ const project = new CustomTypescriptProject({
     /**
      * End Local
      */
+    // for serializer testing
+    "uuid",
   ],
   scripts: {
     prepare: "ts-patch install -s",
@@ -141,13 +143,20 @@ const project = new CustomTypescriptProject({
           exclude: ["./src/{,**}/*"],
         },
       ],
+      paths: {
+        "@fnls": ["lib/index"],
+      },
+      baseUrl: ".",
     },
   },
   gitignore: [".DS_Store", ".dccache"],
   releaseToNpm: true,
   jestOptions: {
     jestConfig: {
-      coveragePathIgnorePatterns: ["/test/", "/node_modules/"],
+      coveragePathIgnorePatterns: ["/test/", "/node_modules/", "/lib"],
+      moduleNameMapper: {
+        "^@fnls$": "<rootDir>/lib/index",
+      },
     },
   },
   depsUpgradeOptions: {
@@ -169,7 +178,7 @@ project.compileTask.prependExec(
 );
 
 project.testTask.prependExec(
-  "cd ./test-app && yarn && yarn build && yarn synth"
+  "cd ./test-app && yarn && yarn build && yarn synth --quiet"
 );
 project.testTask.prependExec("./scripts/localstack");
 project.testTask.exec("localstack stop");

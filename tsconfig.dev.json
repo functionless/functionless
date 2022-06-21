@@ -32,7 +32,13 @@
           "./src/{,**}/*"
         ]
       }
-    ]
+    ],
+    "paths": {
+      "@fnls": [
+        "lib/index"
+      ]
+    },
+    "baseUrl": "."
   },
   "include": [
     ".projenrc.js",

@@ -1,11 +1,11 @@
 ---
 title: Table
-sidebar_position: 1
+sidebar_position: 5
 ---
 
 # Table
 
-The `Table` Construct creates a new DynamoDB Table and exposes methods for reading and writing its data from [Integrations](./integration.md).
+The `Table` Construct creates a new DynamoDB Table and exposes methods for reading and writing its data from [Integrations](./integration).
 
 ## Create a new Table
 
@@ -93,17 +93,15 @@ new StepFunction(scope, "Function", (itemId: string) => {
 });
 ```
 
-Remember: plumbing such as IAM Policies and Environment Variables are automatically inferred from the API calls. See [Integration](./integration.md) for more information.
+Remember: plumbing such as IAM Policies and Environment Variables are automatically inferred from the API calls. See [Integration](./integration) for more information.
 
 ## Call from an Appsync Resolver
 
-AWS Appsync has a purpose-built integration for DynamoDB that takes care of un-marshalling the Attribute Value JSON format to standard JSON for GraphQL compatibility. These integration methods are exposed as methods directly on the Table Construct.
-
-**TODO**: This is subject to change, see [Issue XYZ](https://github.com/functionless/functionless/issues/33).
+AWS Appsync has a purpose-built integration for DynamoDB that takes care of un-marshalling the Attribute Value JSON format to standard JSON for GraphQL compatibility. These integration methods are exposed as methods on the `Table.appsync` property.
 
 ```ts
 new AppsyncResolver(($context) => {
-  return table.get({
+  return table.appsync.get({
     itemId: {
       S: $context.itemId,
     },

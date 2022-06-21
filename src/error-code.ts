@@ -293,7 +293,7 @@ export namespace ErrorCodes {
    * });
    * ```
    *
-   * ### Workaround - Functionless Resource Properties
+   * Workaround 1 - Functionless Resource Properties
    *
    * In many cases, common properties are available on the Functionless Resource, for example:
    *
@@ -304,7 +304,7 @@ export namespace ErrorCodes {
    * });
    * ```
    *
-   * ### Workaround - Dereference
+   * Workaround 2 - Dereference
    *
    * For some properties, referencing to a variable outside of the closure will work.
    *
@@ -316,7 +316,7 @@ export namespace ErrorCodes {
    * });
    * ```
    *
-   * ### Workaround - Environment Variable
+   * Workaround 3 - Environment Variable
    *
    * Finally, if none of the above work, the lambda environment variables can be used.
    *
@@ -586,3 +586,6 @@ export namespace ErrorCodes {
       title: "Arrays of Integration must be immediately wrapped in Promise.all",
     };
 }
+
+// to prevent the closure serializer from trying to import all of functionless.
+export const deploymentOnlyModule = true;

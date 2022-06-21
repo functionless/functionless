@@ -1,6 +1,4 @@
-import { $AWS } from "./aws";
 import { ParameterDecl } from "./declaration";
-import { AnyLambda } from "./function";
 import {
   isElementAccessExpr,
   isIdentifier,
@@ -15,8 +13,6 @@ import type {
   ReturnStmt,
   VariableStmt,
 } from "./statement";
-import { AnyStepFunction } from "./step-function";
-import { AnyTable } from "./table";
 import { AnyFunction } from "./util";
 
 /**
@@ -81,15 +77,8 @@ export class FunctionExpr<
   }
 }
 
-export type CanReference =
-  | AnyTable
-  | AnyLambda
-  | AnyStepFunction
-  | typeof $AWS
-  | unknown;
-
 export class ReferenceExpr extends BaseExpr<"ReferenceExpr"> {
-  constructor(readonly name: string, readonly ref: () => CanReference) {
+  constructor(readonly name: string, readonly ref: () => unknown) {
     super("ReferenceExpr");
   }
 
@@ -483,3 +472,6 @@ export class PromiseArrayExpr extends BaseExpr<"PromiseArrayExpr"> {
     return new PromiseArrayExpr(this.expr.clone()) as this;
   }
 }
+
+// to prevent the closure serializer from trying to import all of functionless.
+export const deploymentOnlyModule = true;

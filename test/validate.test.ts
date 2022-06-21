@@ -25,6 +25,8 @@ test("step-function.ts", () => runTest("step-function.ts"));
 
 test("function.ts", () => runTest("function.ts"));
 
+test("appsync.ts", () => runTest("appsync.ts"));
+
 function runTest(fileName: string) {
   const diagnostics = validate(
     ts,
