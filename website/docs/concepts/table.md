@@ -97,13 +97,11 @@ Remember: plumbing such as IAM Policies and Environment Variables are automatica
 
 ## Call from an Appsync Resolver
 
-AWS Appsync has a purpose-built integration for DynamoDB that takes care of un-marshalling the Attribute Value JSON format to standard JSON for GraphQL compatibility. These integration methods are exposed as methods directly on the Table Construct.
-
-**TODO**: This is subject to change, see [Issue XYZ](https://github.com/functionless/functionless/issues/33).
+AWS Appsync has a purpose-built integration for DynamoDB that takes care of un-marshalling the Attribute Value JSON format to standard JSON for GraphQL compatibility. These integration methods are exposed as methods on the `Table.appsync` property.
 
 ```ts
 new AppsyncResolver(($context) => {
-  return table.get({
+  return table.appsync.get({
     itemId: {
       S: $context.itemId,
     },

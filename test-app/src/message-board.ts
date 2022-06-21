@@ -70,7 +70,7 @@ new AppsyncResolver<{ postId: string }, Post | undefined>(
     fieldName: "getPost",
   },
   ($context) => {
-    return database.getItem({
+    return database.appsync.getItem({
       key: {
         pk: {
           S: `Post|${$context.arguments.postId}`,
@@ -96,7 +96,7 @@ new AppsyncResolver<
     fieldName: "comments",
   },
   ($context) => {
-    const response = database.query({
+    const response = database.appsync.query({
       query: {
         expression: `pk = :pk and begins_with(#sk,:sk)`,
         expressionValues: {
@@ -137,7 +137,7 @@ export const createPost = new AppsyncResolver<{ title: string }, Post>(
   },
   ($context) => {
     const postId = $util.autoUlid();
-    const post = database.putItem({
+    const post = database.appsync.putItem({
       key: {
         pk: {
           S: `Post|${postId}`,
@@ -200,7 +200,7 @@ export const addComment = new AppsyncResolver<
   },
   ($context) => {
     const commentId = $util.autoUlid();
-    const comment = database.putItem({
+    const comment = database.appsync.putItem({
       key: {
         pk: {
           S: `Post|${$context.arguments.postId}`,
@@ -318,7 +318,7 @@ export const deletePost = new AppsyncResolver<
     fieldName: "deletePost",
   },
   ($context) => {
-    const item = database.getItem({
+    const item = database.appsync.getItem({
       key: {
         pk: {
           S: `Post|${$context.arguments.postId}`,
@@ -596,7 +596,7 @@ post.addField({
         Omit<Post, "comments">
       >
     ): CommentPage => {
-      const response = database.query({
+      const response = database.appsync.query({
         query: {
           expression: `pk = :pk and begins_with(#sk,:sk)`,
           expressionValues: {
@@ -639,7 +639,7 @@ api2.addQuery(
       },
     },
     ($context) => {
-      return database.getItem({
+      return database.appsync.getItem({
         key: {
           pk: {
             S: `Post|${$context.arguments.postId}`,
