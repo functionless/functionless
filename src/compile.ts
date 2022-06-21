@@ -1403,3 +1403,6 @@ const OperatorMappings: Record<number, BinaryOp> = {
   [ts.SyntaxKind.ExclamationEqualsEqualsToken]: "!=",
   [ts.SyntaxKind.InKeyword]: "in",
 } as const;
+
+// to prevent the closure serializer from trying to import all of functionless.
+export const deploymentOnlyModule = true;

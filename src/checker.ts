@@ -443,3 +443,6 @@ export function isArithmeticToken(
 ): token is ArithmeticToken {
   return ArithmeticOperators.includes(token as ArithmeticToken);
 }
+
+// to prevent the closure serializer from trying to import all of functionless.
+export const deploymentOnlyModule = true;

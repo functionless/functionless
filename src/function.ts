@@ -24,8 +24,8 @@ import {
 } from "aws-cdk-lib/aws-lambda-destinations";
 import type { Context } from "aws-lambda";
 // eslint-disable-next-line import/no-extraneous-dependencies
-import AWS from "aws-sdk";
 import { Construct } from "constructs";
+import esbuild from "esbuild";
 import { ApiGatewayVtlIntegration } from "./api";
 import type { AppSyncVtlIntegration } from "./appsync";
 import { ASL } from "./asl";
@@ -41,6 +41,11 @@ import {
 } from "./event-bridge";
 import { makeEventBusIntegration } from "./event-bridge/event-bus";
 import { CallExpr, Expr, isVariableReference } from "./expression";
+import {
+  NativePreWarmContext,
+  PrewarmClients,
+  PrewarmProps,
+} from "./function-prewarm";
 import { isErr, isNativeFunctionDecl } from "./guards";
 import {
   Integration,
@@ -497,9 +502,7 @@ export interface FunctionProps<in P = any, O = any, OutP extends P = P>
    * @param clientName optionally return a different client config based on the {@link ClientName}.
    *
    */
-  clientConfigRetriever?: (
-    clientName: ClientName | string
-  ) => Omit<AWS.Lambda.ClientConfiguration, keyof AWS.Lambda.ClientApiVersions>;
+  clientConfigRetriever?: PrewarmProps["clientConfigRetriever"];
   /**
    * The destination for failed invocations.
    *
@@ -730,173 +733,27 @@ export class CallbackLambdaCode extends aws_lambda.Code {
     integrationPrewarms: NativeIntegration<AnyFunction>["preWarm"][]
   ) {
     if (!this.scope) {
-      throw Error("Must first be bound to a Construct using .bind().");
+      throw new SynthError(
+        ErrorCodes.Unexpected_Error,
+        "Must first be bound to a Construct using .bind()."
+      );
     }
+
     const scope = this.scope;
-    let tokens: string[] = [];
-    const preWarmContext = new NativePreWarmContext(this.props);
-    const func = this.func(preWarmContext);
 
-    const result = await serializeFunction(
-      // factory function allows us to prewarm the clients and other context.
-      () => {
-        integrationPrewarms.forEach((i) => i?.(preWarmContext));
-        return func;
-      },
-      {
-        isFactoryFunction: true,
-        serialize: (obj) => {
-          if (typeof obj === "string") {
-            const reversed =
-              Tokenization.reverse(obj, { failConcat: false }) ??
-              Tokenization.reverseString(obj).tokens;
-            if (!Array.isArray(reversed) || reversed.length > 0) {
-              if (Array.isArray(reversed)) {
-                tokens = [...tokens, ...reversed.map((s) => s.toString())];
-              } else {
-                tokens = [...tokens, reversed.toString()];
-              }
-            }
-          } else if (typeof obj === "object") {
-            /**
-             * Remove unnecessary fields from {@link CfnResource} that bloat or fail the closure serialization.
-             */
-            const transformCfnResource = (o: unknown): any => {
-              if (Resource.isResource(o as any)) {
-                const { node, stack, env, ...rest } = o as unknown as Resource;
-                return rest;
-              } else if (CfnResource.isCfnResource(o as any)) {
-                const {
-                  stack,
-                  node,
-                  creationStack,
-                  // don't need to serialize at runtime
-                  _toCloudFormation,
-                  // @ts-ignore - private - adds the tag manager, which we don't need
-                  cfnProperties,
-                  ...rest
-                } = transformTable(o as CfnResource);
-                return transformTaggableResource(rest);
-              } else if (Token.isUnresolved(o)) {
-                const reversed = Tokenization.reverse(o)!;
-                if (Reference.isReference(reversed)) {
-                  tokens.push(reversed.toString());
-                  return reversed.toString();
-                } else if (SecretValue.isSecretValue(reversed)) {
-                  throw new SynthError(
-                    ErrorCodes.Unsafe_use_of_secrets,
-                    "Found unsafe use of SecretValue token in a Function."
-                  );
-                } else if ("value" in reversed) {
-                  return (reversed as unknown as { value: any }).value;
-                }
-                // TODO: fail at runtime and warn at compiler time when a token cannot be serialized
-                return {};
-              }
-              return o;
-            };
+    if (!(scope instanceof aws_lambda.Function)) {
+      throw new SynthError(
+        ErrorCodes.Unexpected_Error,
+        "CallbackLambdaCode can only be used on aws_lambda.Function"
+      );
+    }
 
-            /**
-             * When the StreamArn attribute is used in a Cfn template, but streamSpecification is
-             * undefined, then the deployment fails. Lets make sure that doesn't happen.
-             */
-            const transformTable = (o: CfnResource): CfnResource => {
-              if (
-                o.cfnResourceType ===
-                aws_dynamodb.CfnTable.CFN_RESOURCE_TYPE_NAME
-              ) {
-                const table = o as aws_dynamodb.CfnTable;
-                if (!table.streamSpecification) {
-                  const { attrStreamArn, ...rest } = table;
-
-                  return rest as unknown as CfnResource;
-                }
-              }
-
-              return o;
-            };
-
-            /**
-             * CDK Tag manager bundles in ~200kb of junk we don't need at runtime,
-             */
-            const transformTaggableResource = (o: any) => {
-              if (TagManager.isTaggable(o)) {
-                const { tags, ...rest } = o;
-                return rest;
-              }
-              return o;
-            };
-
-            /**
-             * Remove unnecessary fields from {@link CfnTable} that bloat or fail the closure serialization.
-             */
-            const transformIntegration = (integ: unknown): any => {
-              if (integ && isIntegration(integ)) {
-                const copy = {
-                  ...integ,
-                  native: {
-                    call: integ?.native?.call,
-                    preWarm: integ?.native?.preWarm,
-                  },
-                };
-
-                INTEGRATION_TYPE_KEYS.filter((key) => key !== "native").forEach(
-                  (key) => delete copy[key]
-                );
-
-                return copy;
-              }
-              return integ;
-            };
-
-            /**
-             * TODO, make this configuration based.
-             * https://github.com/functionless/functionless/issues/239
-             */
-            const transformResource = (integ: unknown): any => {
-              if (
-                integ &&
-                (isFunction(integ) ||
-                  isTable(integ) ||
-                  isStepFunction(integ) ||
-                  isEventBus(integ))
-              ) {
-                const { resource, ...rest } = integ;
-
-                return rest;
-              }
-              return integ;
-            };
-
-            return transformIntegration(
-              transformResource(transformCfnResource(obj))
-            );
-          }
-          return true;
-        },
-      }
+    const [serialized, tokens] = await serialize(
+      this.func,
+      integrationPrewarms,
+      this.props
     );
-
-    const tokenContext = tokens.map((t) => {
-      const id = /\${Token\[.*\.([0-9]*)\]}/g.exec(t)?.[1];
-      if (!id) {
-        throw Error("Unrecognized token format, no id found: " + t);
-      }
-      return {
-        id,
-        token: t,
-        // env variables must start with a alpha character
-        env: `env__functionless${id}`,
-      };
-    });
-
-    // replace all tokens in the form "${Token[{anything}.{id}]}" -> process.env.env__functionless{id}
-    // this doesn't solve for tokens like "arn:${Token[{anything}.{id}]}:something" -> "arn:" + process.env.env__functionless{id} + ":something"
-    const resultText = tokenContext.reduce(
-      // TODO: support templated strings
-      (r, t) => r.split(`"${t.token}"`).join(`process.env.${t.env}`),
-      result.text
-    );
+    const bundled = await bundle(serialized);
 
     const asset = aws_lambda.Code.fromAsset("", {
       assetHashType: AssetHashType.OUTPUT,
@@ -905,21 +762,18 @@ export class CallbackLambdaCode extends aws_lambda.Code {
         // This forces the bundle directory and cache key to be unique. It does nothing else.
         user: scope.node.addr,
         local: {
-          tryBundle(outdir: string) {
-            fs.writeFileSync(path.resolve(outdir, "index.js"), resultText);
+          tryBundle(outdir, _opts) {
+            fs.writeFileSync(
+              path.resolve(outdir, "index.js"),
+              bundled.contents
+            );
             return true;
           },
         },
       },
     });
 
-    if (!(scope instanceof aws_lambda.Function)) {
-      throw new Error(
-        "CallbackLambdaCode can only be used on aws_lambda.Function"
-      );
-    }
-
-    tokenContext.forEach((t) => scope.addEnvironment(t.env, t.token));
+    tokens.forEach((t) => scope.addEnvironment(t.env, t.token));
 
     const funcResource = scope.node.findChild(
       "Resource"
@@ -979,107 +833,220 @@ export interface NativeIntegration<Func extends AnyFunction> {
   preWarm?: (preWarmContext: NativePreWarmContext) => void;
 }
 
-export type ClientName =
-  | "LAMBDA"
-  | "EVENT_BRIDGE"
-  | "STEP_FUNCTIONS"
-  | "DYNAMO";
-
-interface PrewarmProps {
-  clientConfigRetriever?: FunctionProps["clientConfigRetriever"];
-}
-
-export interface PrewarmClientInitializer<T, O> {
-  key: T;
-  init: (key: string, props?: PrewarmProps) => O;
+interface TokenContext {
+  token: string;
+  // env variables must start with a alpha character
+  env: `env__functionless${string}`;
 }
 
 /**
- * Known, shared clients to use.
- *
- * Any object can be used by using the {@link PrewarmClientInitializer} interface directly.
- *
- * ```ts
- * context.getOrInit({
- *   key: 'customClient',
- *   init: () => new anyClient()
- * })
- * ```
+ * Serializes a function to a string, extracting tokens and replacing some objects with a simpler form.
  */
-export const PrewarmClients = {
-  LAMBDA: {
-    key: "LAMBDA",
-    init: (key, props) =>
-      // eslint-disable-next-line @typescript-eslint/no-require-imports, import/no-extraneous-dependencies
-      new (require("aws-sdk").Lambda)(props?.clientConfigRetriever?.(key)),
-  },
-  EVENT_BRIDGE: {
-    key: "EVENT_BRIDGE",
-    init: (key, props) =>
-      // eslint-disable-next-line @typescript-eslint/no-require-imports, import/no-extraneous-dependencies
-      new (require("aws-sdk").EventBridge)(props?.clientConfigRetriever?.(key)),
-  },
-  STEP_FUNCTIONS: {
-    key: "STEP_FUNCTIONS",
-    init: (key, props) =>
-      // eslint-disable-next-line @typescript-eslint/no-require-imports, import/no-extraneous-dependencies
-      new (require("aws-sdk").StepFunctions)(
-        props?.clientConfigRetriever?.(key)
-      ),
-  },
-  DYNAMO: {
-    key: "DYNAMO",
-    init: (key, props) =>
-      // eslint-disable-next-line @typescript-eslint/no-require-imports, import/no-extraneous-dependencies
-      new (require("aws-sdk").DynamoDB)(props?.clientConfigRetriever?.(key)),
-  },
-} as Record<ClientName, PrewarmClientInitializer<ClientName, any>>;
+export async function serialize(
+  func: (preWarmContext: NativePreWarmContext) => AnyFunction,
+  integrationPrewarms: NativeIntegration<AnyFunction>["preWarm"][],
+  props?: PrewarmProps
+): Promise<[string, TokenContext[]]> {
+  let tokens: string[] = [];
+  const preWarmContext = new NativePreWarmContext(props);
+  const closuredFunc = func(preWarmContext);
 
-/**
- * A client/object cache which Native Functions can use to
- * initialize objects once and before the handler is invoked.
- *
- * The same instance will be passed to both the `.call` and `.prewarm` methods
- * of a {@link NativeIntegration}. `prewarm` is called once when the function starts,
- * before the handler.
- *
- * Register and initialize clients by using `getOrInit` with a key and a initializer.
- *
- * ```ts
- * context.getOrInit(PrewarmClients.LAMBDA)
- * ```
- *
- * or register anything by doing
- *
- * ```ts
- * context.getOrInit({
- *   key: 'customClient',
- *   init: () => new anyClient()
- * })
- * ```
- *
- * To get without potentially initializing the client, use `get`:
- *
- * ```ts
- * context.get("LAMBDA")
- * context.get("customClient")
- * ```
- */
-export class NativePreWarmContext {
-  private readonly cache: Record<string, any>;
+  const result = await serializeFunction(
+    // factory function allows us to prewarm the clients and other context.
+    integrationPrewarms.length > 0
+      ? () => {
+          integrationPrewarms.forEach((i) => i?.(preWarmContext));
+          return closuredFunc;
+        }
+      : closuredFunc,
+    {
+      isFactoryFunction: integrationPrewarms.length > 0,
+      serialize: (obj) => {
+        if (typeof obj === "string") {
+          const reversed =
+            Tokenization.reverse(obj, { failConcat: false }) ??
+            Tokenization.reverseString(obj).tokens;
+          if (!Array.isArray(reversed) || reversed.length > 0) {
+            if (Array.isArray(reversed)) {
+              tokens = [...tokens, ...reversed.map((s) => s.toString())];
+            } else {
+              tokens = [...tokens, reversed.toString()];
+            }
+          }
+        } else if (typeof obj === "object") {
+          /**
+           * Remove unnecessary fields from {@link CfnResource} that bloat or fail the closure serialization.
+           */
+          const transformCfnResource = (o: unknown): any => {
+            if (Resource.isResource(o as any)) {
+              const { node, stack, env, ...rest } = o as unknown as Resource;
+              return rest;
+            } else if (CfnResource.isCfnResource(o as any)) {
+              const {
+                stack,
+                node,
+                creationStack,
+                // don't need to serialize at runtime
+                _toCloudFormation,
+                // @ts-ignore - private - adds the tag manager, which we don't need
+                cfnProperties,
+                ...rest
+              } = transformTable(o as CfnResource);
+              return transformTaggableResource(rest);
+            } else if (Token.isUnresolved(o)) {
+              const reversed = Tokenization.reverse(o)!;
+              if (Reference.isReference(reversed)) {
+                tokens.push(reversed.toString());
+                return reversed.toString();
+              } else if (SecretValue.isSecretValue(reversed)) {
+                throw new SynthError(
+                  ErrorCodes.Unsafe_use_of_secrets,
+                  "Found unsafe use of SecretValue token in a Function."
+                );
+              } else if ("value" in reversed) {
+                return (reversed as unknown as { value: any }).value;
+              }
+              // TODO: fail at runtime and warn at compiler time when a token cannot be serialized
+              return {};
+            }
+            return o;
+          };
 
-  constructor(private props?: PrewarmProps) {
-    this.cache = {};
-  }
+          /**
+           * When the StreamArn attribute is used in a Cfn template, but streamSpecification is
+           * undefined, then the deployment fails. Lets make sure that doesn't happen.
+           */
+          const transformTable = (o: CfnResource): CfnResource => {
+            if (
+              o.cfnResourceType === aws_dynamodb.CfnTable.CFN_RESOURCE_TYPE_NAME
+            ) {
+              const table = o as aws_dynamodb.CfnTable;
+              if (!table.streamSpecification) {
+                const { attrStreamArn, ...rest } = table;
 
-  public get<T>(key: ClientName | string): T | undefined {
-    return this.cache[key];
-  }
+                return rest as unknown as CfnResource;
+              }
+            }
 
-  public getOrInit<T>(client: PrewarmClientInitializer<any, T>): T {
-    if (!this.cache[client.key]) {
-      this.cache[client.key] = client.init(client.key, this.props);
+            return o;
+          };
+
+          /**
+           * CDK Tag manager bundles in ~200kb of junk we don't need at runtime,
+           */
+          const transformTaggableResource = (o: any) => {
+            if (TagManager.isTaggable(o)) {
+              const { tags, ...rest } = o;
+              return rest;
+            }
+            return o;
+          };
+
+          /**
+           * Remove unnecessary fields from {@link CfnTable} that bloat or fail the closure serialization.
+           */
+          const transformIntegration = (integ: unknown): any => {
+            if (integ && isIntegration(integ)) {
+              const copy = {
+                ...integ,
+                native: {
+                  call: integ?.native?.call,
+                  preWarm: integ?.native?.preWarm,
+                },
+              };
+
+              INTEGRATION_TYPE_KEYS.filter((key) => key !== "native").forEach(
+                (key) => delete copy[key]
+              );
+
+              return copy;
+            }
+            return integ;
+          };
+
+          /**
+           * TODO, make this configuration based.
+           * https://github.com/functionless/functionless/issues/239
+           */
+          const transformResource = (integ: unknown): any => {
+            if (
+              integ &&
+              (isFunction(integ) ||
+                isTable(integ) ||
+                isStepFunction(integ) ||
+                isEventBus(integ))
+            ) {
+              const { resource, ...rest } = integ;
+
+              return rest;
+            }
+            return integ;
+          };
+
+          return transformIntegration(
+            transformResource(transformCfnResource(obj))
+          );
+        }
+        return true;
+      },
     }
-    return this.cache[client.key];
-  }
+  );
+
+  /**
+   * A map of token id to unique index.
+   * Keeps the serialized function rom changing when the token IDs change.
+   */
+  const tokenIdLookup = new Map<string, number>();
+
+  const tokenContext: TokenContext[] = tokens.map((t, i) => {
+    const id = /\${Token\[.*\.([0-9]*)\]}/g.exec(t)?.[1];
+    if (!id) {
+      throw Error("Unrecognized token format, no id found: " + t);
+    }
+
+    const envId =
+      id in tokenIdLookup
+        ? tokenIdLookup.get(id)
+        : tokenIdLookup.set(id, i).get(id);
+
+    return {
+      token: t,
+      // env variables must start with a alpha character
+      env: `env__functionless${envId}`,
+    };
+  });
+
+  // replace all tokens in the form "${Token[{anything}.{id}]}" -> process.env.env__functionless{id}
+  // this doesn't solve for tokens like "arn:${Token[{anything}.{id}]}:something" -> "arn:" + process.env.env__functionless{id} + ":something"
+  const resultText = tokenContext.reduce(
+    // TODO: support templated strings
+    (r, t) => r.split(`"${t.token}"`).join(`process.env.${t.env}`),
+    result.text
+  );
+
+  return [resultText, tokenContext];
 }
+
+/**
+ * Bundles a serialized function with esbuild.
+ */
+export async function bundle(text: string): Promise<esbuild.OutputFile> {
+  const bundle = await esbuild.build({
+    stdin: {
+      contents: text,
+      resolveDir: process.cwd(),
+    },
+    bundle: true,
+    write: false,
+    metafile: true,
+    platform: "node",
+    target: "node14",
+    external: ["aws-sdk", "aws-cdk-lib", "esbuild"],
+  });
+
+  // a bundled output will be one file
+  return bundle.outputFiles[0];
+}
+
+// to prevent the closure serializer from trying to import all of functionless.
+export const deploymentOnlyModule = true;

@@ -9,7 +9,8 @@ import {
   PropAssignExpr,
   StringLiteralExpr,
 } from "../expression";
-import { Function, NativePreWarmContext, PrewarmClients } from "../function";
+import { Function } from "../function";
+import { NativePreWarmContext, PrewarmClients } from "../function-prewarm";
 import {
   isArrayLiteralExpr,
   isComputedPropertyNameExpr,
@@ -755,3 +756,6 @@ export function pipe<
     return rule.resource.addTarget(integration(targetInput));
   }
 }
+
+// to prevent the closure serializer from trying to import all of functionless.
+export const deploymentOnlyModule = true;

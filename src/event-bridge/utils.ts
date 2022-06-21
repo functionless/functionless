@@ -316,3 +316,6 @@ export const flattenReturnEvent = (stmts: Stmt[]) => {
 
   return flattenExpression(ret.expr, scope);
 };
+
+// to prevent the closure serializer from trying to import all of functionless.
+export const deploymentOnlyModule = true;
