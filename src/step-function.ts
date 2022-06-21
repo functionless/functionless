@@ -21,7 +21,8 @@ import {
 } from "./event-bridge/event-bus";
 import { Event } from "./event-bridge/types";
 import { CallExpr } from "./expression";
-import { NativeIntegration, PrewarmClients } from "./function";
+import { NativeIntegration } from "./function";
+import { PrewarmClients } from "./function-prewarm";
 import {
   isComputedPropertyNameExpr,
   isErr,
