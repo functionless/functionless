@@ -983,9 +983,9 @@ export async function serialize(
             return integ;
           };
 
-          return transformIntegration(
-            transformResource(transformCfnResource(obj))
-          );
+          return obj
+            ? transformIntegration(transformResource(transformCfnResource(obj)))
+            : obj;
         }
         return true;
       },
