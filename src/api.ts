@@ -690,7 +690,10 @@ export class APIGatewayVTL extends VTL {
           const serviceCall = new IntegrationImpl(ref);
           return this.integrate(serviceCall, expr);
         } else {
-          throw Error(`Found unsupported call.`);
+          throw new SynthError(
+            ErrorCodes.Unexpected_Error,
+            "Called references are expected to be an integration."
+          );
         }
       } else if (isIdentifier(expr.expr) && expr.expr.name === "Number") {
         return this.exprToJson(expr.args[0]);

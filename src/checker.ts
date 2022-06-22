@@ -28,7 +28,7 @@ export type EventTransformInterface = ts.NewExpression & {
 };
 
 export type EventBusWhenInterface = ts.CallExpression & {
-  arguments: [any, any, TsFunctionParameter];
+  arguments: [any, TsFunctionParameter] | [any, any, TsFunctionParameter];
 };
 
 export type EventBusMapInterface = ts.CallExpression & {
@@ -67,6 +67,24 @@ export type NewStepFunctionInterface = ts.NewExpression & {
     | [ts.Expression, ts.Expression, ts.Expression, TsFunctionParameter];
 };
 
+export type NewAppsyncResolverInterface = ts.NewExpression & {
+  arguments: [
+    ts.Expression,
+    ts.Expression,
+    ts.Expression,
+    // the inline function
+    TsFunctionParameter
+  ];
+};
+
+export type NewAppsyncFieldInterface = ts.NewExpression & {
+  arguments: [
+    ts.Expression,
+    // the inline function
+    TsFunctionParameter
+  ];
+};
+
 export type FunctionlessChecker = ReturnType<typeof makeFunctionlessChecker>;
 
 export function makeFunctionlessChecker(
@@ -91,6 +109,7 @@ export function makeFunctionlessChecker(
     isNewRule,
     isNewStepFunction,
     isPromiseArray,
+    isPromiseAllCall,
     isPromiseSymbol,
     isReflectFunction,
     isRuleMapFunction,
@@ -177,15 +196,9 @@ export function makeFunctionlessChecker(
     return isFunctionlessClassOfKind(node, EventTransform.FunctionlessType);
   }
 
-  function isAppsyncResolver(node: ts.Node): node is ts.NewExpression & {
-    arguments: [
-      ts.Expression,
-      ts.Expression,
-      ts.Expression,
-      // the inline function
-      TsFunctionParameter
-    ];
-  } {
+  function isAppsyncResolver(
+    node: ts.Node
+  ): node is NewAppsyncResolverInterface {
     if (ts.isNewExpression(node)) {
       return isFunctionlessClassOfKind(
         node.expression,
@@ -195,13 +208,7 @@ export function makeFunctionlessChecker(
     return false;
   }
 
-  function isAppsyncField(node: ts.Node): node is ts.NewExpression & {
-    arguments: [
-      ts.Expression,
-      // the inline function
-      TsFunctionParameter
-    ];
-  } {
+  function isAppsyncField(node: ts.Node): node is NewAppsyncFieldInterface {
     if (ts.isNewExpression(node)) {
       return isFunctionlessClassOfKind(
         node.expression,
@@ -389,6 +396,16 @@ export function makeFunctionlessChecker(
       });
     }
     return false;
+  }
+
+  function isPromiseAllCall(node: ts.Node): boolean {
+    return (
+      ts.isCallExpression(node) &&
+      ts.isPropertyAccessExpression(node.expression) &&
+      node.expression.name.text === "all" &&
+      ts.isIdentifier(node.expression.expression) &&
+      node.expression.expression.text === "Promise"
+    );
   }
 
   /**

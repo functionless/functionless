@@ -1,5 +1,5 @@
 import { App, Stack } from "aws-cdk-lib";
-import { StepFunction } from "../../src";
+import { StepFunction, Function } from "../../src";
 
 const app = new App({
   autoSynth: false,
@@ -74,3 +74,46 @@ new StepFunction(
   },
   () => {}
 );
+
+// Unsupported - non-awaited promise
+
+const func = new Function<undefined, string>(stack, "func", async () => {
+  return "hello";
+});
+
+new StepFunction(stack, "no await", async () => {
+  const c = func();
+  return c;
+});
+
+new StepFunction(stack, "deferred await", async () => {
+  const c = func();
+  const cc = await c;
+  return cc;
+});
+
+// Supported - Await
+
+new StepFunction(stack, "await", async () => {
+  const c = await func();
+  return c;
+});
+
+new StepFunction(stack, "await return", async () => {
+  return func();
+});
+
+new StepFunction(stack, "return", async () => {
+  return func();
+});
+
+// Unsupported - async map without promise all
+
+new StepFunction(stack, "no promise all", async () => {
+  return [1, 2].map(async () => func());
+});
+
+new StepFunction(stack, "no promise all await", async () => {
+  const c = Promise.all([1, 2].map(async () => func()));
+  return c;
+});

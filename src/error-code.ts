@@ -466,7 +466,7 @@ export namespace ErrorCodes {
    * new EventBus(stack, 'bus').all().map(async event => { html: await func(event.detail.url) });
    * ```
    *
-   * ### Workaround - Send the event to a function.
+   * Workaround - Send the event to a function.
    *
    * ```ts
    * const func = new Function<string, string>(stack, 'func', async (input) => {
@@ -485,6 +485,35 @@ export namespace ErrorCodes {
       type: ErrorType.ERROR,
       title: "EventBus Input Transformers do not support integrations",
     };
+
+  /**
+   * {@link EventBus} Rules do not support Integrations.
+   *
+   * ```ts
+   * const validate = new Function<string, string>(stack, 'validate', async (input) => {
+   *    return axios.get(`https://mydomain/validate/${input}`);
+   * })
+   *
+   * // invalid
+   * new EventBus(stack, 'bus').when(async (event) => await validate(input.detail.value)).pipe(...);
+   * ```
+   *
+   * Workaround - Send the event to a function.
+   *
+   * ```ts
+   * // valid
+   * new EventBus(stack, 'bus').all().pipe(new Function(stack, 'webpuller', async (event) => {
+   *    if(await validate(event.source)) {
+   *       ...
+   *    }
+   * });
+   * ```
+   */
+  export const EventBus_Rules_do_not_support_Integrations: ErrorCode = {
+    code: 10015,
+    type: ErrorType.ERROR,
+    title: "EventBus Rules do not support integrations",
+  };
 
   /**
    * Integrations within {@link StepFunction}, {@link ExpressStepFunction}, {@link AppsyncResolver}, and {@link AwsMethod} must be immediately awaited or returned.
@@ -543,7 +572,7 @@ export namespace ErrorCodes {
    */
   export const Integration_must_be_immediately_awaited_or_returned: ErrorCode =
     {
-      code: 10015,
+      code: 10016,
       type: ErrorType.ERROR,
       title: "Integration must be immediately awaited or returned",
     };
@@ -581,7 +610,7 @@ export namespace ErrorCodes {
    */
   export const Arrays_of_Integration_must_be_immediately_wrapped_in_Promise_all: ErrorCode =
     {
-      code: 10016,
+      code: 10017,
       type: ErrorType.ERROR,
       title: "Arrays of Integration must be immediately wrapped in Promise.all",
     };

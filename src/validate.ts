@@ -1,9 +1,15 @@
 import * as typescript from "typescript";
 import {
+  EventBusMapInterface,
+  EventBusWhenInterface,
+  EventTransformInterface,
   FunctionInterface,
   FunctionlessChecker,
   isArithmeticToken,
+  NewAppsyncFieldInterface,
+  NewAppsyncResolverInterface,
   NewStepFunctionInterface,
+  RuleInterface,
 } from "./checker";
 import { ErrorCode, ErrorCodes, formatErrorMessage } from "./error-code";
 
@@ -35,7 +41,17 @@ export function validate(
     } else if (checker.isNewFunctionlessFunction(node)) {
       return validateFunctionNode(node);
     } else if (checker.isAppsyncResolver(node)) {
-      return validateAppsync(node);
+      return validateNewAppsyncResolverNode(node);
+    } else if (checker.isAppsyncField(node)) {
+      return validateNewAppsyncFieldNode(node);
+    } else if (checker.isEventBusWhenFunction(node)) {
+      return validateEventBusWhen(node);
+    } else if (checker.isRuleMapFunction(node)) {
+      return validateEventBusMap(node);
+    } else if (checker.isNewRule(node)) {
+      return validateRule(node);
+    } else if (checker.isNewEventTransform(node)) {
+      return validateEventTransform(node);
     } else {
       return collectEachChild(node, visit);
     }
@@ -97,21 +113,91 @@ export function validate(
         ),
       ];
     }
+    if (ts.isCallExpression(node)) {
+      return validatePromiseCalls(node);
+    } else return [];
+  }
+
+  function validatePromiseCalls(node: ts.CallExpression): ts.Diagnostic[] {
+    const type = checker.getTypeAtLocation(node);
+    const typeSymbol = type.getSymbol();
+    if (
+      ts.isCallExpression(node) &&
+      typeSymbol &&
+      checker.isPromiseSymbol(typeSymbol) &&
+      !(ts.isAwaitExpression(node.parent) || ts.isReturnStatement(node.parent))
+    ) {
+      return [
+        newError(
+          node,
+          ErrorCodes.Integration_must_be_immediately_awaited_or_returned
+        ),
+      ];
+    } else if (
+      checker.isPromiseArray(type) &&
+      !checker.isPromiseAllCall(node.parent)
+    ) {
+      return [
+        newError(
+          node,
+          ErrorCodes.Arrays_of_Integration_must_be_immediately_wrapped_in_Promise_all
+        ),
+      ];
+    }
     return [];
   }
 
-  function validateAppsync(node: ts.NewExpression): ts.Diagnostic[] {
-    if (node.arguments) {
-      const [, , , resolver] = node.arguments;
-      if (
-        !(ts.isArrowFunction(resolver) || ts.isFunctionExpression(resolver))
-      ) {
-        return [
-          newError(resolver, ErrorCodes.Argument_must_be_an_inline_Function),
-        ];
-      }
+  function validateNewAppsyncResolverNode(
+    node: NewAppsyncResolverInterface
+  ): ts.Diagnostic[] {
+    const func = node.arguments[3];
+    const [resolver, errors] = validateInlineFunctionArgument(func);
+    if (!resolver) {
+      return errors;
     }
+
+    return [
+      ...validateNodes(node.arguments.filter((n) => n !== resolver)),
+      ...collectEachChildRecursive(resolver, validateAppsync),
+    ];
+  }
+
+  function validateNewAppsyncFieldNode(
+    node: NewAppsyncFieldInterface
+  ): ts.Diagnostic[] {
+    const func = node.arguments[1];
+    const [resolver, errors] = validateInlineFunctionArgument(func);
+    if (!resolver) {
+      return errors;
+    }
+
+    return [
+      ...validateNodes(node.arguments.filter((n) => n !== resolver)),
+      ...collectEachChildRecursive(resolver, validateAppsync),
+    ];
+  }
+
+  function validateAppsync(node: ts.Node) {
+    if (ts.isCallExpression(node)) {
+      return validatePromiseCalls(node);
+    }
+
     return [];
+  }
+
+  function validateInlineFunctionArgument(
+    node: ts.Node
+  ):
+    | [undefined, ts.Diagnostic[]]
+    | [ts.ArrowFunction | ts.FunctionExpression, []] {
+    if (!(ts.isArrowFunction(node) || ts.isFunctionExpression(node))) {
+      return [
+        undefined,
+        [newError(node, ErrorCodes.Argument_must_be_an_inline_Function)],
+      ];
+    }
+
+    return [node, []];
   }
 
   function validateApi(node: ts.NewExpression): ts.Diagnostic[] {
@@ -245,6 +331,83 @@ export function validate(
       });
       return count;
     }
+  }
+
+  function validateEventBusWhen(
+    node: EventBusWhenInterface
+  ): typescript.Diagnostic[] {
+    const func =
+      node.arguments.length === 3 ? node.arguments[2] : node.arguments[1];
+
+    return [
+      // visit all other arguments
+      ...validateNodes(node.arguments.filter((arg) => arg !== func)),
+      // process the function closure
+      ...collectEachChildRecursive(func, validateRulePredicate),
+    ];
+  }
+
+  function validateRule(node: RuleInterface): typescript.Diagnostic[] {
+    const func = node.arguments[3];
+
+    return [
+      // visit all other arguments
+      ...validateNodes(node.arguments.filter((arg) => arg !== func)),
+      // process the function closure
+      ...collectEachChildRecursive(func, validateRulePredicate),
+    ];
+  }
+
+  function validateRulePredicate(node: ts.Node): ts.Diagnostic[] {
+    if (
+      ts.isCallExpression(node) &&
+      checker.isIntegrationNode(node.expression)
+    ) {
+      return [
+        newError(node, ErrorCodes.EventBus_Rules_do_not_support_Integrations),
+      ];
+    }
+
+    return [];
+  }
+
+  function validateEventTransform(
+    node: EventTransformInterface
+  ): typescript.Diagnostic[] {
+    const func = node.arguments[1];
+
+    return [
+      // visit all other arguments
+      ...validateNodes(node.arguments.filter((arg) => arg !== func)),
+      // process the function closure
+      ...collectEachChildRecursive(func, validateMapTransformer),
+    ];
+  }
+
+  function validateEventBusMap(
+    node: EventBusMapInterface
+  ): typescript.Diagnostic[] {
+    const func = node.arguments[0];
+
+    return [
+      // visit all other arguments
+      ...validateNodes(node.arguments.filter((arg) => arg !== func)),
+      // process the function closure
+      ...collectEachChildRecursive(func, validateMapTransformer),
+    ];
+  }
+
+  function validateMapTransformer(node: ts.Node): ts.Diagnostic[] {
+    if (
+      ts.isCallExpression(node) &&
+      checker.isIntegrationNode(node.expression)
+    ) {
+      return [
+        newError(node, ErrorCodes.EventBus_Rules_do_not_support_Integrations),
+      ];
+    }
+
+    return [];
   }
 
   function newError(

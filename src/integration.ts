@@ -44,10 +44,6 @@ export function isIntegrationCallPattern(
   );
 }
 
-export function isIntegrationCall(node: FunctionlessNode): node is CallExpr {
-  return isCallExpr(node) && isReferenceExpr(node.expr);
-}
-
 /**
  * Maintain a typesafe runtime map of integration type keys to use elsewhere.
  *

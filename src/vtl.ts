@@ -270,7 +270,10 @@ export abstract class VTL {
           const serviceCall = new IntegrationImpl(ref);
           return this.integrate(serviceCall, node);
         } else {
-          throw Error(`Found unsupported call.`);
+          throw new SynthError(
+            ErrorCodes.Unexpected_Error,
+            "Called references are expected to be an integration."
+          );
         }
       } else if (
         // If the parent is a propAccessExpr
