@@ -12,9 +12,9 @@ import {
   EventBus,
 } from "@fnls";
 
-// 50k arbitrary max bundle size. Some functions may need more.
+// 15k arbitrary max bundle size. Some functions may need more.
 // In that case increase explicitly.
-const BUNDLED_MAX_SIZE = 50 * 1024;
+const BUNDLED_MAX_SIZE = 20 * 1024;
 
 interface CustomMatchers<R = unknown> {
   toHaveLengthLessThan(length: number): R;
@@ -343,7 +343,7 @@ describe("serialize", () => {
     const bundled = await bundle(srlz);
     expect(bundled.text).toMatchSnapshot();
     // 300k after bundling
-    expect(bundled.text).toHaveLengthLessThan(BUNDLED_MAX_SIZE * 10);
+    expect(bundled.text).toHaveLengthLessThan(BUNDLED_MAX_SIZE * 30);
   });
 
   test("uuid", async () => {
