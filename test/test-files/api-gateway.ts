@@ -43,7 +43,7 @@ new AwsMethod(
   },
   ($input) =>
     $AWS.DynamoDB.GetItem({
-      TableName: table,
+      Table: table,
       Key: {
         id: {
           S: $input.params("id") as string,
@@ -73,7 +73,7 @@ new AwsMethod(
   },
   ($input) => {
     return $AWS.DynamoDB.GetItem({
-      TableName: table,
+      Table: table,
       ...$input.data,
       [$input.params("param")]: null,
     });
@@ -89,7 +89,7 @@ new AwsMethod(
   },
   ($input) =>
     $AWS.DynamoDB.GetItem({
-      TableName: table,
+      Table: table,
       Key: {
         id: {
           S: $input.params("id") as string,
@@ -99,7 +99,7 @@ new AwsMethod(
   ($input) => {
     // this is not allowed
     return $AWS.DynamoDB.GetItem({
-      TableName: table,
+      Table: table,
       Key: {
         id: {
           S: $input.params("id") as string,

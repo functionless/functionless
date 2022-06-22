@@ -81,7 +81,7 @@ describe("serialize", () => {
       const [srlz] = await serialize(
         () => () => {
           return $AWS.DynamoDB.GetItem({
-            TableName: table,
+            Table: table,
             Key: {
               id: { S: "id" },
             },
@@ -102,7 +102,7 @@ describe("serialize", () => {
       const [srlz] = await serialize(
         () => () => {
           return GetItem({
-            TableName: table,
+            Table: table,
             Key: {
               id: { S: "id" },
             },
@@ -121,7 +121,7 @@ describe("serialize", () => {
       const [srlz] = await serialize(
         () => () => {
           return $AWS.DynamoDB.PutItem({
-            TableName: table,
+            Table: table,
             Item: {
               id: { S: "key" },
             },
@@ -140,7 +140,7 @@ describe("serialize", () => {
       const [srlz] = await serialize(
         () => () => {
           return $AWS.DynamoDB.UpdateItem({
-            TableName: table,
+            Table: table,
             Key: {
               id: { S: "key" },
             },
@@ -166,7 +166,7 @@ describe("serialize", () => {
       const [srlz] = await serialize(
         () => () => {
           return $AWS.DynamoDB.DeleteItem({
-            TableName: table,
+            Table: table,
             Key: {
               id: {
                 S: "key",
@@ -187,7 +187,7 @@ describe("serialize", () => {
       const [srlz] = await serialize(
         () => () => {
           return $AWS.DynamoDB.Query({
-            TableName: table,
+            Table: table,
             KeyConditionExpression: "#key = :key",
             ExpressionAttributeValues: {
               ":key": { S: "key" },
@@ -210,7 +210,7 @@ describe("serialize", () => {
       const [srlz] = await serialize(
         () => () => {
           return $AWS.DynamoDB.Scan({
-            TableName: table,
+            Table: table,
           });
         },
         []

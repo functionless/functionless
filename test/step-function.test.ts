@@ -558,7 +558,7 @@ test("return AWS.DynamoDB.GetItem", () => {
     Person | undefined
   >(stack, "fn", async (input) => {
     const person = await $AWS.DynamoDB.GetItem({
-      TableName: personTable,
+      Table: personTable,
       Key: {
         id: {
           S: input.id,
@@ -586,7 +586,7 @@ test("call AWS.DynamoDB.GetItem, then Lambda and return LiteralExpr", () => {
     (Person & { score: number }) | undefined
   >(stack, "fn", async (input) => {
     const person = await $AWS.DynamoDB.GetItem({
-      TableName: personTable,
+      Table: personTable,
       Key: {
         id: {
           S: input.id,
@@ -640,7 +640,7 @@ test("conditionally call DynamoDB and then void", () => {
     async (input): Promise<void> => {
       if (input.id === "hello") {
         await $AWS.DynamoDB.GetItem({
-          TableName: personTable,
+          Table: personTable,
           Key: {
             id: {
               S: input.id,

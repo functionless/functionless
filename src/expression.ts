@@ -13,7 +13,7 @@ import type {
   ReturnStmt,
   VariableStmt,
 } from "./statement";
-import { AnyFunction } from "./util";
+import type { AnyFunction } from "./util";
 
 /**
  * An {@link Expr} (Expression) is a Node that will be interpreted to a value.
@@ -362,6 +362,18 @@ export class PropAssignExpr extends BaseExpr<
     super("PropAssignExpr");
     name.setParent(this);
     expr.setParent(this);
+  }
+
+  /**
+   * @returns the name of this property if it is statically known (an Identifier or StringLiteralExpr).
+   */
+  public tryGetName(): string | undefined {
+    if (isIdentifier(this.name)) {
+      return this.name.name;
+    } else if (isStringLiteralExpr(this.name)) {
+      return this.name.value;
+    }
+    return undefined;
   }
 
   public clone(): this {

@@ -83,7 +83,7 @@ Use the [`$AWS`](./aws.md) SDK's DynamoDB APIs to access the Table from within a
 ```ts
 new StepFunction(scope, "Function", (itemId: string) => {
   return $AWS.DynamoDB.GetItem({
-    TableName: items,
+    Table: items,
     Key: {
       itemId: {
         S: itemId,

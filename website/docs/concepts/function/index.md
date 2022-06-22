@@ -153,7 +153,7 @@ const Table = Table.fromTable(scope, "Table");
 
 new Function(scope, "foo", async (id: string) => {
   return $AWS.DynamoDB.GetItem({
-    TableName: table,
+    Table: table,
     Key: {
       id: {
         S: id,
@@ -201,7 +201,7 @@ const table = new Table(this, 'table', { ... });
 new Function(this, 'func', async () => {
    // valid use of a Table
    const $AWS.DynamoDB.GetItem({
-       TableName: table,
+       Table: table,
        ...
    })
    // invalid - .resource is not available

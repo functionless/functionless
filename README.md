@@ -57,7 +57,7 @@ const validatePostWorkflow = new StepFunction(
     const validationResult = validatePost(post);
     if (validationResult.status === "Not Cool") {
       $AWS.DynamoDB.DeleteItem({
-        TableName: postTable,
+        Table: postTable,
         Key: {
           postId: {
             S: post.postId,

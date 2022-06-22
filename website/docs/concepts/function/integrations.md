@@ -30,7 +30,7 @@ const Table = new Table(scope, "Table");
 
 new Function(scope, "foo", async (id: string) => {
   return $AWS.DynamoDB.GetItem({
-    TableName: table,
+    Table: table,
     Key: {
       id: {
         S: id,

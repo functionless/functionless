@@ -174,7 +174,7 @@ export const commentValidationWorkflow = new StepFunction<
   const status = await validateComment({ commentText: input.commentText });
   if (status === "bad") {
     await $AWS.DynamoDB.DeleteItem({
-      TableName: database,
+      Table: database,
       Key: {
         pk: {
           S: `Post|${input.postId}`,
@@ -247,63 +247,59 @@ const customDeleteBus = new EventBus<MessageDeletedEvent | PostDeletedEvent>(
   "deleteBus"
 );
 
-const deleteWorkflow = new StepFunction<
-  { postId: string },
-  { status: string; postId: string }
->(stack, "DeletePostWorkflow", async (input) => {
-  while (true) {
-    try {
-      const comments = await $AWS.DynamoDB.Query({
-        TableName: database,
-        KeyConditionExpression: `pk = :pk`,
-        ExpressionAttributeValues: {
-          ":pk": {
-            S: `Post|${input.postId}`,
-          },
-        },
-      });
-
-      if (comments.Items?.[0] !== undefined) {
-        await $SFN.forEach(comments.Items, async (comment) =>
-          $AWS.DynamoDB.DeleteItem({
-            TableName: database,
-            Key: {
-              pk: comment.pk,
-              sk: comment.sk,
-            },
-          })
-        );
-      } else {
-        await $AWS.DynamoDB.DeleteItem({
-          TableName: database,
-          Key: {
-            pk: {
+const deleteWorkflow = new StepFunction<{ postId: string }, void>(
+  stack,
+  "DeletePostWorkflow",
+  async (input) => {
+    while (true) {
+      try {
+        const comments = await $AWS.DynamoDB.Query({
+          Table: database,
+          KeyConditionExpression: `pk = :pk`,
+          ExpressionAttributeValues: {
+            ":pk": {
               S: `Post|${input.postId}`,
             },
-            sk: {
-              S: "Post",
+          },
+        });
+
+        if (comments.Items?.[0] !== undefined) {
+          await $SFN.forEach(comments.Items, async (comment) =>
+            $AWS.DynamoDB.DeleteItem({
+              Table: database,
+              Key: {
+                pk: comment.pk,
+                sk: comment.sk,
+              },
+            })
+          );
+        } else {
+          await $AWS.DynamoDB.DeleteItem({
+            Table: database,
+            Key: {
+              pk: {
+                S: `Post|${input.postId}`,
+              },
+              sk: {
+                S: "Post",
+              },
             },
-          },
-        });
+          });
 
-        await customDeleteBus.putEvents({
-          "detail-type": "Delete-Post-Success",
-          source: "MessageDeleter",
-          detail: {
-            id: input.postId,
-          },
-        });
-
-        return {
-          status: "deleted",
-          postId: input.postId,
-        };
+          await customDeleteBus.putEvents({
+            "detail-type": "Delete-Post-Success",
+            source: "MessageDeleter",
+            detail: {
+              id: input.postId,
+            },
+          });
+        }
+      } catch {
+        $SFN.waitFor(10);
       }
-    } catch {
-      $SFN.waitFor(10);
     }
   }
-});
+);
 
 export const deletePost = new AppsyncResolver<
   { postId: string },
@@ -482,7 +478,7 @@ new Function(
     });
     console.log(deleteWorkflow.describeExecution(exc.executionArn));
     await $AWS.DynamoDB.PutItem({
-      TableName: database,
+      Table: database,
       Item: {
         pk: { S: "Post|1" },
         sk: { S: "Post" },
@@ -493,7 +489,7 @@ new Function(
       },
     });
     const item = await $AWS.DynamoDB.GetItem({
-      TableName: database,
+      Table: database,
       ConsistentRead: true,
       Key: { pk: { S: "Post|1" }, sk: { S: "Post" } },
     });

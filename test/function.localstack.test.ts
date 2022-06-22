@@ -773,7 +773,7 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
         localstackClientConfig,
         async () => {
           await get({
-            TableName: flTable,
+            Table: flTable,
             Key: {
               key: { S: "hi" },
             },
@@ -940,14 +940,14 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
         localstackClientConfig,
         async () => {
           await PutItem({
-            TableName: table,
+            Table: table,
             Item: {
               key: { S: "key" },
               value: { S: "wee" },
             },
           });
           const item = await GetItem({
-            TableName: table,
+            Table: table,
             Key: {
               key: {
                 S: "key",
@@ -956,7 +956,7 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
             ConsistentRead: true,
           });
           await UpdateItem({
-            TableName: table,
+            Table: table,
             Key: {
               key: { S: "key" },
             },
@@ -969,7 +969,7 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
             },
           });
           await DeleteItem({
-            TableName: table,
+            Table: table,
             Key: {
               key: {
                 S: "key",
@@ -977,7 +977,7 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
             },
           });
           await Query({
-            TableName: table,
+            Table: table,
             KeyConditionExpression: "#key = :key",
             ExpressionAttributeValues: {
               ":key": { S: "key" },
@@ -987,7 +987,7 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
             },
           });
           await Scan({
-            TableName: table,
+            Table: table,
           });
           return item.Item?.key.S;
         }

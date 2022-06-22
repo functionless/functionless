@@ -90,7 +90,7 @@ const table = Table.fromTable<Item, "pk">(new aws_dynamodb.Table(..));
 new StepFunction(stack, "Func", (name: string) => {
   // call DynamoDB's DeleteItem API.
   $AWS.DynamoDB.DeleteItem({
-    TableName: table,
+    Table: table,
     Key: {
       name: {
         S: name
