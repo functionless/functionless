@@ -1160,10 +1160,10 @@
   resolved "https://registry.yarnpkg.com/@functionless/language-service/-/language-service-0.0.3.tgz#f6baedb5a684b70eeccfd64621de3fa95c380c08"
   integrity sha512-TLGnXXx8p4NFMF2lP/GADGjWl6u/IxLF5M55ExddzilJB4nI7CB6LTM9YSzGeO7L3YK29OGyr4ffm7EpZIGsnQ==
 
-"@functionless/nodejs-closure-serializer@^0.0.2":
-  version "0.0.2"
-  resolved "https://registry.yarnpkg.com/@functionless/nodejs-closure-serializer/-/nodejs-closure-serializer-0.0.2.tgz#03afac171536401775816b039c79c8fd5d3d976b"
-  integrity sha512-r8mElTITDW0wEao0l+PNbtZb+xt5frOzu43HCc0D1qUvHOuJ3LOFySjvneTnF2QYbLrbchZKeofg8BP2GdJGZw==
+"@functionless/nodejs-closure-serializer@^0.0.4":
+  version "0.0.4"
+  resolved "https://registry.yarnpkg.com/@functionless/nodejs-closure-serializer/-/nodejs-closure-serializer-0.0.4.tgz#63fb7f1e905d72b827a7aefaaf0131a5a2fba9df"
+  integrity sha512-EM+Q4wThdDvdfECSjmCBsHDIiyPIOpzJJkYC7p8x/qlBIis7O6A4TgCThp7XGzIz9Ht2bypypZFWbN76p3FAvw==
   dependencies:
     normalize-package-data "^4.0.0"
     read-package-tree "^5.3.1"
@@ -2699,7 +2699,7 @@ function.prototype.name@^1.1.5:
 "functionless@file:..":
   version "0.0.0"
   dependencies:
-    "@functionless/nodejs-closure-serializer" "^0.0.2"
+    "@functionless/nodejs-closure-serializer" "^0.0.4"
     "@types/aws-lambda" "^8.10.100"
     fs-extra "^10.1.0"
     minimatch "^5.1.0"
