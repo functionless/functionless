@@ -99,8 +99,7 @@ export const localstackTestSuite = (
 
   const tests: ResourceTest[] = [];
   // will be set in the before all
-  let testContexts: ({ outputs?: Record<string, string> } | { error?: any })[] =
-    [];
+  let testContexts: any[];
 
   const app = new App();
   const stack = new Stack(app, stackName, {
@@ -114,49 +113,30 @@ export const localstackTestSuite = (
 
   beforeAll(async () => {
     const anyOnly = tests.some((t) => t.only);
-    // run in series so we can await on a single tests's Function promises.
-    for (const i in tests) {
-      const { resources, skip, only } = tests[i];
+    testContexts = tests.map(({ resources, skip, only }, i) => {
       // create the construct on skip to reduce output changes when moving between skip and not skip
-      const createResources = async () => {
-        const construct = new Construct(stack, `parent${i}`);
-        if (!skip && (!anyOnly || only)) {
-          const outputOrError = async () => {
-            try {
-              const outputs = resources(construct);
-              // resolve any promises started by resources before continuing.
-              await Promise.all(Function.promises);
-              return { output: outputs };
-            } catch (e) {
-              return { error: e };
-            }
-          };
-          // Clear all of the promises to ensure we don't error again.
-          Function.promises.splice(0, Function.promises.length);
-          const { output, error } = await outputOrError();
-          // Place each output in a cfn output, encoded with the unique address of the construct
-          if (output) {
-            return {
-              outputs: Object.fromEntries(
-                Object.entries(output.outputs).map(([key, value]) => {
-                  new CfnOutput(construct, `${key}_out`, {
-                    exportName: construct.node.addr + key,
-                    value,
-                  });
+      const construct = new Construct(stack, `parent${i}`);
+      if (!skip && (!anyOnly || only)) {
+        const output = resources(construct);
+        // Place each output in a cfn output, encoded with the unique address of the construct
+        if (output) {
+          return Object.fromEntries(
+            Object.entries(output.outputs).map(([key, value]) => {
+              new CfnOutput(construct, `${key}_out`, {
+                exportName: construct.node.addr + key,
+                value,
+              });
 
-                  return [key, construct.node.addr + key];
-                })
-              ),
-            };
-          }
-          return { error };
+              return [key, construct.node.addr + key];
+            })
+          );
         }
-        return {};
-      };
-      testContexts.push(await createResources());
-    }
+      }
+      return {};
+    });
 
-    Function.promises.splice(0, Function.promises.length);
+    await Promise.all(Function.promises);
+
     await deployStack(app, stack);
 
     stackOutputs = (
@@ -190,23 +170,15 @@ export const localstackTestSuite = (
       const t = only ? test.only : test;
       t(name, () => {
         const context = testContexts[i];
-        if ("error" in context) {
-          throw context.error;
-        } else {
-          const resolvedContext =
-            "outputs" in context && context.outputs
-              ? Object.fromEntries(
-                  Object.entries(context.outputs).map(([key, value]) => {
-                    return [
-                      key,
-                      stackOutputs?.find((o) => o.ExportName === value)
-                        ?.OutputValue!,
-                    ];
-                  })
-                )
-              : {};
-          return testFunc(resolvedContext);
-        }
+        const resolvedContext = Object.fromEntries(
+          Object.entries(context).map(([key, value]) => {
+            return [
+              key,
+              stackOutputs?.find((o) => o.ExportName === value)?.OutputValue!,
+            ];
+          })
+        );
+        return testFunc(resolvedContext);
       });
     } else {
       test.skip(name, () => {});
