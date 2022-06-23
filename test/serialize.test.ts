@@ -2,11 +2,19 @@ import { Stack } from "aws-cdk-lib";
 import { AttributeType } from "aws-cdk-lib/aws-dynamodb";
 import axios from "axios";
 import { v4 } from "uuid";
-import { serialize, bundle, $AWS, Table } from "@fnls";
+import {
+  serialize,
+  bundle,
+  $AWS,
+  Table,
+  StepFunction,
+  Function,
+  EventBus,
+} from "@fnls";
 
-// 50k arbitrary max bundle size. Some functions may need more.
+// 15k arbitrary max bundle size. Some functions may need more.
 // In that case increase explicitly.
-const BUNDLED_MAX_SIZE = 50 * 1024;
+const BUNDLED_MAX_SIZE = 20 * 1024;
 
 interface CustomMatchers<R = unknown> {
   toHaveLengthLessThan(length: number): R;
@@ -224,6 +232,104 @@ describe("serialize", () => {
     });
   });
 
+  describe("sfn", () => {
+    const stack = new Stack();
+    const sfn = new StepFunction(stack, "id", () => {});
+
+    test("sfn", async () => {
+      const [srlz] = await serialize(
+        () => () => {
+          return sfn({ input: {} });
+        },
+        []
+      );
+      expect(srlz).toMatchSnapshot();
+
+      const bundled = await bundle(srlz);
+      expect(bundled.text).toMatchSnapshot();
+      expect(bundled.text).toHaveLengthLessThan(BUNDLED_MAX_SIZE);
+    });
+  });
+
+  describe("lambda", () => {
+    const stack = new Stack();
+    const func = new Function<undefined, void>(stack, "id", async () => {});
+
+    test("func", async () => {
+      const [srlz] = await serialize(
+        () => () => {
+          return func();
+        },
+        []
+      );
+      expect(srlz).toMatchSnapshot();
+
+      const bundled = await bundle(srlz);
+      expect(bundled.text).toMatchSnapshot();
+      expect(bundled.text).toHaveLengthLessThan(BUNDLED_MAX_SIZE);
+    });
+
+    test("invoke func", async () => {
+      const [srlz] = await serialize(
+        () => () => {
+          return $AWS.Lambda.Invoke({
+            Function: func,
+            Payload: undefined,
+          });
+        },
+        []
+      );
+      expect(srlz).toMatchSnapshot();
+
+      const bundled = await bundle(srlz);
+      expect(bundled.text).toMatchSnapshot();
+      expect(bundled.text).toHaveLengthLessThan(BUNDLED_MAX_SIZE);
+    });
+  });
+
+  describe("event bridge", () => {
+    const stack = new Stack();
+    const bus = new EventBus(stack, "id");
+
+    test("put events", async () => {
+      const [srlz] = await serialize(
+        () => () => {
+          return bus.putEvents({
+            "detail-type": "test",
+            detail: {},
+            source: "",
+          });
+        },
+        []
+      );
+      expect(srlz).toMatchSnapshot();
+
+      const bundled = await bundle(srlz);
+      expect(bundled.text).toMatchSnapshot();
+      expect(bundled.text).toHaveLengthLessThan(BUNDLED_MAX_SIZE);
+    });
+
+    test("aws put events", async () => {
+      const [srlz] = await serialize(
+        () => () => {
+          return $AWS.EventBridge.putEvents({
+            Entries: [
+              {
+                EventBusName: bus.eventBusName,
+              },
+            ],
+          });
+        },
+        []
+      );
+      expect(srlz).toMatchSnapshot();
+
+      const bundled = await bundle(srlz);
+      expect(bundled.text).toMatchSnapshot();
+      expect(bundled.text).toHaveLengthLessThan(BUNDLED_MAX_SIZE);
+    });
+  });
+
   test("axios import", async () => {
     const [srlz] = await serialize(
       () => async () => {
@@ -237,7 +343,7 @@ describe("serialize", () => {
     const bundled = await bundle(srlz);
     expect(bundled.text).toMatchSnapshot();
     // 300k after bundling
-    expect(bundled.text).toHaveLengthLessThan(BUNDLED_MAX_SIZE * 10);
+    expect(bundled.text).toHaveLengthLessThan(BUNDLED_MAX_SIZE * 30);
   });
 
   test("uuid", async () => {
