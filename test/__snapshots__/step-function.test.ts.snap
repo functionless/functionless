@@ -328,7 +328,7 @@ Object {
 }
 `;
 
-exports[`call Lambda Function, store as variable, return variable 2`] = `
+exports[`call Lambda Function, store as variable, return variable no block 1`] = `
 Object {
   "StartAt": "return getPerson({id: input.id})",
   "States": Object {
