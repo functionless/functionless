@@ -118,6 +118,27 @@ export function validate(
     } else return [];
   }
 
+  /**
+   * Validates that calls which return promises are immediately awaited and that calls
+   * which return arrays fo promises are wrapped in `Promise.all`
+   *
+   * ```ts
+   * const func = new Function(...);
+   * new StepFunction(stack, id, async () => {
+   *    // invalid
+   *    const v = func();
+   *    // valid
+   *    const v = await func();
+   *    // valid
+   *    return func();
+   *
+   *    // invalid
+   *    [1,2].map(() => func());
+   *    // valid
+   *    await Promise.all([1,2].map(() => func()));
+   * })
+   * ```
+   */
   function validatePromiseCalls(node: ts.CallExpression): ts.Diagnostic[] {
     const type = checker.getTypeAtLocation(node);
     const typeSymbol = type.getSymbol();
@@ -147,6 +168,12 @@ export function validate(
           ErrorCodes.Arrays_of_Integration_must_be_immediately_wrapped_in_Promise_all
         ),
       ];
+    } else if (
+      checker.isPromiseAllCall(node) &&
+      (node.arguments.length < 1 ||
+        !checker.isPromiseArray(checker.getTypeAtLocation(node.arguments[0])))
+    ) {
+      return [newError(node, ErrorCodes.Unsupported_Use_of_Promises)];
     }
     return [];
   }
@@ -183,7 +210,28 @@ export function validate(
 
   function validateAppsync(node: ts.Node) {
     if (ts.isCallExpression(node)) {
+      if (
+        ts.isPropertyAccessExpression(node.expression) &&
+        ts.isIdentifier(node.expression.expression) &&
+        node.expression.expression.text === "Promise"
+      ) {
+        return [
+          newError(
+            node,
+            ErrorCodes.Unsupported_Use_of_Promises,
+            "Appsync does not support concurrent integration invocation or methods on the `Promise` api."
+          ),
+        ];
+      }
       return validatePromiseCalls(node);
+    } else if (checker.isPromiseArray(checker.getTypeAtLocation(node))) {
+      return [
+        newError(
+          node,
+          ErrorCodes.Unsupported_Use_of_Promises,
+          "Appsync does not support concurrent integration invocation."
+        ),
+      ];
     }
 
     return [];

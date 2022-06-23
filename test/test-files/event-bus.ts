@@ -31,10 +31,10 @@ new EventTransform(async () => {
  * Invalid integrations in rules
  */
 
-bus.when("rule1", (event): event is any => {
+bus.when("rule1", () => {
   return (func() as any) === "x";
 });
 
-new Rule(stack, "rule2", bus, (event): event is any => {
+new Rule(stack, "rule2", bus, () => {
   return (func() as any) === "x";
 });

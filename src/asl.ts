@@ -65,10 +65,10 @@ import {
   isStmt,
 } from "./guards";
 import {
+  getIntegrationExprFromIntegrationCallPattern,
   Integration,
   IntegrationImpl,
   isIntegration,
-  isIntegrationCallExpr,
   isIntegrationCallPattern,
 } from "./integration";
 import { FunctionlessNode } from "./node";
@@ -415,27 +415,10 @@ export class ASL {
               : []),
           ]);
         } else if (isIntegrationCallPattern(node)) {
-          const end = (() => {
-            if (isAwaitExpr(node)) {
-              // await task()
-              if (isIntegrationCallExpr(node.expr)) {
-                return node.expr;
-              }
-              // await <Promise>task()
-              else if (
-                isPromiseExpr(node.expr) &&
-                isIntegrationCallExpr(node.expr.expr)
-              ) {
-                return node.expr.expr;
-              }
-            } else if (
-              isPromiseExpr(node) &&
-              isIntegrationCallExpr(node.expr)
-            ) {
-              return node.expr;
-            }
-            return node;
-          })();
+          // we find the range of nodes to hoist so that we avoid visiting the middle nodes.
+          // The start node is the first node in the integration pattern (integ, await, or promise)
+          // The end is always the integration.
+          const end = getIntegrationExprFromIntegrationCallPattern(node);
 
           const updatedChild = visitSpecificChildren(node, [end], (expr) =>
             normalizeAST(expr, hoist)
@@ -727,15 +710,14 @@ export class ASL {
         );
       }
 
-      const updated = (
+      const updated =
         isNewExpr(stmt.expr) || isCallExpr(stmt.expr)
           ? stmt.expr
-          : isAwaitExpr(stmt.expr) && isPromiseExpr(stmt.expr.expr)
-          ? stmt.expr.expr.expr
-          : isPromiseExpr(stmt.expr)
-          ? stmt.expr.expr
-          : stmt.expr.expr
-      ) as CallExpr | NewExpr;
+          : isAwaitExpr(stmt.expr)
+          ? isPromiseExpr(stmt.expr.expr)
+            ? stmt.expr.expr.expr
+            : stmt.expr.expr
+          : stmt.expr.expr;
 
       const error = updated.args
         .filter((arg): arg is Argument & { expr: Expr } => !!arg.expr)
@@ -906,7 +888,6 @@ export class ASL {
         return this.eval(expr.expr, props);
       }
       debugger;
-      // TODO create error code
       throw new SynthError(
         ErrorCodes.Arrays_of_Integration_must_be_immediately_wrapped_in_Promise_all
       );
@@ -1009,10 +990,7 @@ export class ASL {
           return this.eval(values.expr, props);
         }
         debugger;
-        // TODO create error code
-        throw Error(
-          "`Promise.all` must wrap an expression that returns an array of promises like `Array.map`"
-        );
+        throw new SynthError(ErrorCodes.Unsupported_Use_of_Promises);
       }
       throw new Error(
         `call must be a service call or list .slice, .map, .forEach or .filter, ${expr}`

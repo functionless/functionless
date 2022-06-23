@@ -92,6 +92,14 @@ new StepFunction(stack, "deferred await", async () => {
   return cc;
 });
 
+new StepFunction(stack, "promise then", async () => {
+  return func().then((x) => x);
+});
+
+new StepFunction(stack, "promise catch", async () => {
+  return func().catch((x) => x);
+});
+
 // Supported - Await
 
 new StepFunction(stack, "await", async () => {
@@ -118,4 +126,9 @@ new StepFunction(stack, "no promise all", async () => {
 new StepFunction(stack, "no promise all await", async () => {
   const c = Promise.all([1, 2].map(async () => func()));
   return c;
+});
+
+new StepFunction(stack, "promise all only on promise array", async () => {
+  const c = [1, 2];
+  return Promise.all(c);
 });
