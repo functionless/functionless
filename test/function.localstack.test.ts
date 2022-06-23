@@ -1291,7 +1291,7 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
         if (n === 0) {
           return `${n}`;
         }
-        return callFunction(n - 1) + (await func());
+        return (await callFunction(n - 1)) + (await func());
       };
       return new Function(
         parent,

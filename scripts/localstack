@@ -3,8 +3,7 @@
 # Installs and runs localstack
 
 # install LocalStack cli and awslocal
-# TODO: remove pinned version - https://github.com/localstack/localstack/issues/6334
-pip install localstack==0.14.3.3 awscli-local[ver1]
+pip install localstack --upgrade awscli-local[ver1]
 # install CDK Local
 npm install -g aws-cdk-local aws-cdk
 # Make sure to pull the latest version of the image

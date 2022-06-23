@@ -562,7 +562,7 @@ export class Function<
    * To correctly resolve these for CDK synthesis, either use `asyncSynth()` or use `cdk synth` in the CDK cli.
    * https://twitter.com/samgoodwin89/status/1516887131108438016?s=20&t=7GRGOQ1Bp0h_cPsJgFk3Ww
    */
-  public static readonly promises: Promise<any>[] = ((global as any)[
+  public static readonly promises: Promise<void>[] = ((global as any)[
     PromisesSymbol
   ] = (global as any)[PromisesSymbol] ?? []);
 
@@ -669,7 +669,23 @@ export class Function<
 
     // Start serializing process, add the callback to the promises so we can later ensure completion
     Function.promises.push(
-      callbackLambdaCode.generate(nativeIntegrationsPrewarm)
+      (async () => {
+        try {
+          await callbackLambdaCode.generate(nativeIntegrationsPrewarm);
+        } catch (e) {
+          if (e instanceof SynthError) {
+            throw new SynthError(
+              e.code,
+              `While serializing ${_resource.node.path}:\n\n${e.message}`
+            );
+          } else if (e instanceof Error) {
+            throw Error(
+              `While serializing ${_resource.node.path}:\n\n${e.message}`
+            );
+          }
+        }
+        return;
+      })()
     );
   }
 }
@@ -950,19 +966,28 @@ export async function serialize(
            */
           const transformIntegration = (integ: unknown): any => {
             if (integ && isIntegration(integ)) {
-              const copy = {
-                ...integ,
-                native: {
-                  call: integ?.native?.call,
-                  preWarm: integ?.native?.preWarm,
-                },
-              };
+              const c = integ.native?.call;
+              const call =
+                typeof c !== "undefined"
+                  ? function (...args: any[]) {
+                      return c(args, preWarmContext);
+                    }
+                  : integ.unhandledContext
+                  ? function () {
+                      integ.unhandledContext!(integ.kind, "Function");
+                    }
+                  : function () {
+                      throw new Error();
+                    };
 
-              INTEGRATION_TYPE_KEYS.filter((key) => key !== "native").forEach(
-                (key) => delete copy[key]
-              );
+              for (const prop in integ) {
+                if (!INTEGRATION_TYPE_KEYS.includes(prop as any)) {
+                  // @ts-ignore
+                  call[prop] = integ[prop];
+                }
+              }
 
-              return copy;
+              return call;
             }
             return integ;
           };

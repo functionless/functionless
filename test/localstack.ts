@@ -99,7 +99,7 @@ export const localstackTestSuite = (
 
   const tests: ResourceTest[] = [];
   // will be set in the before all
-  let testContexts: any[];
+  let testContexts: ({ error?: Error } | { output?: any })[];
 
   const app = new App();
   const stack = new Stack(app, stackName, {
@@ -117,19 +117,27 @@ export const localstackTestSuite = (
       // create the construct on skip to reduce output changes when moving between skip and not skip
       const construct = new Construct(stack, `parent${i}`);
       if (!skip && (!anyOnly || only)) {
-        const output = resources(construct);
-        // Place each output in a cfn output, encoded with the unique address of the construct
-        if (output) {
-          return Object.fromEntries(
-            Object.entries(output.outputs).map(([key, value]) => {
-              new CfnOutput(construct, `${key}_out`, {
-                exportName: construct.node.addr + key,
-                value,
-              });
+        try {
+          const output = resources(construct);
+          // Place each output in a cfn output, encoded with the unique address of the construct
+          if (output) {
+            return {
+              output: Object.fromEntries(
+                Object.entries(output.outputs).map(([key, value]) => {
+                  new CfnOutput(construct, `${key}_out`, {
+                    exportName: construct.node.addr + key,
+                    value,
+                  });
 
-              return [key, construct.node.addr + key];
-            })
-          );
+                  return [key, construct.node.addr + key];
+                })
+              ),
+            };
+          }
+        } catch (e) {
+          return {
+            error: e,
+          };
         }
       }
       return {};
@@ -168,17 +176,21 @@ export const localstackTestSuite = (
     if (!skip) {
       // eslint-disable-next-line no-only-tests/no-only-tests
       const t = only ? test.only : test;
-      t(name, () => {
+      t(name, async () => {
         const context = testContexts[i];
-        const resolvedContext = Object.fromEntries(
-          Object.entries(context).map(([key, value]) => {
-            return [
-              key,
-              stackOutputs?.find((o) => o.ExportName === value)?.OutputValue!,
-            ];
-          })
-        );
-        return testFunc(resolvedContext);
+        if ("error" in context) {
+          throw context.error;
+        } else if ("output" in context) {
+          const resolvedContext = Object.fromEntries(
+            Object.entries(context.output).map(([key, value]) => {
+              return [
+                key,
+                stackOutputs?.find((o) => o.ExportName === value)?.OutputValue!,
+              ];
+            })
+          );
+          return testFunc(resolvedContext);
+        }
       });
     } else {
       test.skip(name, () => {});
