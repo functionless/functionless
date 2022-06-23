@@ -128,6 +128,7 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
       async () => {}
     );
 
+  // eslint-disable-next-line no-only-tests/no-only-tests
   test.only = _testFunc(testResource.only);
 
   test(

@@ -133,11 +133,15 @@
         "*.cts",
         "*.tsx"
       ],
+      "plugins": [
+        "no-only-tests"
+      ],
       "parserOptions": {
         "project": [
           "./tsconfig.dev.json",
           "./test-app/tsconfig.json",
-          "./website/tsconfig.json"
+          "./website/tsconfig.json",
+          "./test/tsconfig.json"
         ]
       },
       "rules": {
@@ -152,6 +156,15 @@
               "properties": "off",
               "parameterProperties": "off"
             }
+          }
+        ],
+        "no-only-tests/no-only-tests": [
+          "error",
+          {
+            "fix": true,
+            "block": [
+              "test."
+            ]
           }
         ]
       }
