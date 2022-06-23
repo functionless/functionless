@@ -600,7 +600,7 @@ function makeDynamoIntegration<
 /**
  * @internal
  */
-export function grantTablePermissions(
+function grantTablePermissions(
   table: AnyTable,
   role: aws_iam.IRole,
   operationName: OperationName
@@ -619,7 +619,7 @@ export function grantTablePermissions(
 /**
  * @internal
  */
-export function getTableArgument(op: string, args: Argument[] | Expr[]) {
+function getTableArgument(op: string, args: Argument[] | Expr[]) {
   let inputArgument;
   if (isArgument(args[0])) {
     inputArgument = args[0].expr;
