@@ -14,7 +14,7 @@ import {
 
 // 15k arbitrary max bundle size. Some functions may need more.
 // In that case increase explicitly.
-const BUNDLED_MAX_SIZE = 20 * 1024;
+const BUNDLED_MAX_SIZE = 15 * 1024;
 
 interface CustomMatchers<R = unknown> {
   toHaveLengthLessThan(length: number): R;
@@ -64,12 +64,9 @@ actual: ${received.length}`,
 
 describe("serialize", () => {
   test("simple", async () => {
-    const [srlz] = await serialize(
-      () => () => {
-        return "hello";
-      },
-      []
-    );
+    const [srlz] = await serialize(async () => {
+      return "hello";
+    }, []);
     expect(srlz).toMatchSnapshot();
 
     const bundled = await bundle(srlz);
@@ -86,17 +83,14 @@ describe("serialize", () => {
     });
 
     test("get", async () => {
-      const [srlz] = await serialize(
-        () => () => {
-          return $AWS.DynamoDB.GetItem({
-            Table: table,
-            Key: {
-              id: { S: "id" },
-            },
-          });
-        },
-        []
-      );
+      const [srlz] = await serialize(() => {
+        return $AWS.DynamoDB.GetItem({
+          Table: table,
+          Key: {
+            id: { S: "id" },
+          },
+        });
+      }, []);
       expect(srlz).toMatchSnapshot();
 
       const bundled = await bundle(srlz);
@@ -107,17 +101,14 @@ describe("serialize", () => {
     const { GetItem } = $AWS.DynamoDB;
 
     test("get referenced", async () => {
-      const [srlz] = await serialize(
-        () => () => {
-          return GetItem({
-            Table: table,
-            Key: {
-              id: { S: "id" },
-            },
-          });
-        },
-        []
-      );
+      const [srlz] = await serialize(async () => {
+        return GetItem({
+          Table: table,
+          Key: {
+            id: { S: "id" },
+          },
+        });
+      }, []);
       expect(srlz).toMatchSnapshot();
 
       const bundled = await bundle(srlz);
@@ -126,17 +117,14 @@ describe("serialize", () => {
     });
 
     test("put", async () => {
-      const [srlz] = await serialize(
-        () => () => {
-          return $AWS.DynamoDB.PutItem({
-            Table: table,
-            Item: {
-              id: { S: "key" },
-            },
-          });
-        },
-        []
-      );
+      const [srlz] = await serialize(async () => {
+        return $AWS.DynamoDB.PutItem({
+          Table: table,
+          Item: {
+            id: { S: "key" },
+          },
+        });
+      }, []);
       expect(srlz).toMatchSnapshot();
 
       const bundled = await bundle(srlz);
@@ -145,24 +133,21 @@ describe("serialize", () => {
     });
 
     test("put", async () => {
-      const [srlz] = await serialize(
-        () => () => {
-          return $AWS.DynamoDB.UpdateItem({
-            Table: table,
-            Key: {
-              id: { S: "key" },
-            },
-            UpdateExpression: "set #value = :value",
-            ExpressionAttributeValues: {
-              ":value": { S: "value" },
-            },
-            ExpressionAttributeNames: {
-              "#value": "value",
-            },
-          });
-        },
-        []
-      );
+      const [srlz] = await serialize(async () => {
+        return $AWS.DynamoDB.UpdateItem({
+          Table: table,
+          Key: {
+            id: { S: "key" },
+          },
+          UpdateExpression: "set #value = :value",
+          ExpressionAttributeValues: {
+            ":value": { S: "value" },
+          },
+          ExpressionAttributeNames: {
+            "#value": "value",
+          },
+        });
+      }, []);
       expect(srlz).toMatchSnapshot();
 
       const bundled = await bundle(srlz);
@@ -171,19 +156,16 @@ describe("serialize", () => {
     });
 
     test("delete", async () => {
-      const [srlz] = await serialize(
-        () => () => {
-          return $AWS.DynamoDB.DeleteItem({
-            Table: table,
-            Key: {
-              id: {
-                S: "key",
-              },
+      const [srlz] = await serialize(async () => {
+        return $AWS.DynamoDB.DeleteItem({
+          Table: table,
+          Key: {
+            id: {
+              S: "key",
             },
-          });
-        },
-        []
-      );
+          },
+        });
+      }, []);
       expect(srlz).toMatchSnapshot();
 
       const bundled = await bundle(srlz);
@@ -192,21 +174,18 @@ describe("serialize", () => {
     });
 
     test("query", async () => {
-      const [srlz] = await serialize(
-        () => () => {
-          return $AWS.DynamoDB.Query({
-            Table: table,
-            KeyConditionExpression: "#key = :key",
-            ExpressionAttributeValues: {
-              ":key": { S: "key" },
-            },
-            ExpressionAttributeNames: {
-              "#key": "key",
-            },
-          });
-        },
-        []
-      );
+      const [srlz] = await serialize(async () => {
+        return $AWS.DynamoDB.Query({
+          Table: table,
+          KeyConditionExpression: "#key = :key",
+          ExpressionAttributeValues: {
+            ":key": { S: "key" },
+          },
+          ExpressionAttributeNames: {
+            "#key": "key",
+          },
+        });
+      }, []);
       expect(srlz).toMatchSnapshot();
 
       const bundled = await bundle(srlz);
@@ -215,14 +194,11 @@ describe("serialize", () => {
     });
 
     test("scan", async () => {
-      const [srlz] = await serialize(
-        () => () => {
-          return $AWS.DynamoDB.Scan({
-            Table: table,
-          });
-        },
-        []
-      );
+      const [srlz] = await serialize(async () => {
+        return $AWS.DynamoDB.Scan({
+          Table: table,
+        });
+      }, []);
 
       expect(srlz).toMatchSnapshot();
 
@@ -237,12 +213,9 @@ describe("serialize", () => {
     const sfn = new StepFunction(stack, "id", () => {});
 
     test("sfn", async () => {
-      const [srlz] = await serialize(
-        () => () => {
-          return sfn({ input: {} });
-        },
-        []
-      );
+      const [srlz] = await serialize(async () => {
+        return sfn({ input: {} });
+      }, []);
       expect(srlz).toMatchSnapshot();
 
       const bundled = await bundle(srlz);
@@ -256,12 +229,9 @@ describe("serialize", () => {
     const func = new Function<undefined, void>(stack, "id", async () => {});
 
     test("func", async () => {
-      const [srlz] = await serialize(
-        () => () => {
-          return func();
-        },
-        []
-      );
+      const [srlz] = await serialize(() => {
+        return func();
+      }, []);
       expect(srlz).toMatchSnapshot();
 
       const bundled = await bundle(srlz);
@@ -270,15 +240,12 @@ describe("serialize", () => {
     });
 
     test("invoke func", async () => {
-      const [srlz] = await serialize(
-        () => () => {
-          return $AWS.Lambda.Invoke({
-            Function: func,
-            Payload: undefined,
-          });
-        },
-        []
-      );
+      const [srlz] = await serialize(() => {
+        return $AWS.Lambda.Invoke({
+          Function: func,
+          Payload: undefined,
+        });
+      }, []);
       expect(srlz).toMatchSnapshot();
 
       const bundled = await bundle(srlz);
@@ -292,16 +259,13 @@ describe("serialize", () => {
     const bus = new EventBus(stack, "id");
 
     test("put events", async () => {
-      const [srlz] = await serialize(
-        () => () => {
-          return bus.putEvents({
-            "detail-type": "test",
-            detail: {},
-            source: "",
-          });
-        },
-        []
-      );
+      const [srlz] = await serialize(() => {
+        return bus.putEvents({
+          "detail-type": "test",
+          detail: {},
+          source: "",
+        });
+      }, []);
       expect(srlz).toMatchSnapshot();
 
       const bundled = await bundle(srlz);
@@ -310,18 +274,15 @@ describe("serialize", () => {
     });
 
     test("aws put events", async () => {
-      const [srlz] = await serialize(
-        () => () => {
-          return $AWS.EventBridge.putEvents({
-            Entries: [
-              {
-                EventBusName: bus.eventBusName,
-              },
-            ],
-          });
-        },
-        []
-      );
+      const [srlz] = await serialize(() => {
+        return $AWS.EventBridge.putEvents({
+          Entries: [
+            {
+              EventBusName: bus.eventBusName,
+            },
+          ],
+        });
+      }, []);
       expect(srlz).toMatchSnapshot();
 
       const bundled = await bundle(srlz);
@@ -331,12 +292,9 @@ describe("serialize", () => {
   });
 
   test("axios import", async () => {
-    const [srlz] = await serialize(
-      () => async () => {
-        return axios.get("https://functionless.org");
-      },
-      []
-    );
+    const [srlz] = await serialize(async () => {
+      return axios.get("https://functionless.org");
+    }, []);
 
     expect(srlz).toMatchSnapshot();
 
@@ -347,17 +305,14 @@ describe("serialize", () => {
   });
 
   test("uuid", async () => {
-    const [srlz] = await serialize(
-      () => async () => {
-        return v4();
-      },
-      []
-    );
+    const [srlz] = await serialize(async () => {
+      return v4();
+    }, []);
 
     expect(srlz).toMatchSnapshot();
 
     const bundled = await bundle(srlz);
     expect(bundled.text).toMatchSnapshot();
-    expect(bundled.text).toHaveLengthLessThan(BUNDLED_MAX_SIZE);
+    expect(bundled.text).toHaveLengthLessThan(BUNDLED_MAX_SIZE * 1.5);
   });
 });

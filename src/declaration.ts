@@ -1,11 +1,10 @@
 import { ErrorCodes, SynthError } from "./error-code";
 import { Argument, FunctionExpr } from "./expression";
-import { NativePreWarmContext } from "./function-prewarm";
 import { isErr, isFunctionDecl, isNode, isParameterDecl } from "./guards";
 import { Integration } from "./integration";
 import { BaseNode, FunctionlessNode } from "./node";
 import { BlockStmt } from "./statement";
-import { AnyFunction, anyOf } from "./util";
+import { AnyAsyncFunction, AnyFunction, anyOf } from "./util";
 
 export type Decl = FunctionDecl | ParameterDecl | NativeFunctionDecl;
 
@@ -54,7 +53,7 @@ export class NativeFunctionDecl<
   constructor(
     readonly parameters: ParameterDecl[],
     // Compiler generates a closure that can inject in the preWarm context.
-    readonly closure: (preWarmContext: NativePreWarmContext) => AnyFunction,
+    readonly closure: AnyAsyncFunction,
     readonly integrations: IntegrationInvocation[]
   ) {
     super("NativeFunctionDecl");

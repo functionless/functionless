@@ -55,7 +55,7 @@ import {
 } from "./integration";
 import { isStepFunction } from "./step-function";
 import { isTable } from "./table";
-import { AnyFunction, anyOf } from "./util";
+import { AnyAsyncFunction, AnyFunction, anyOf } from "./util";
 
 export function isFunction<Payload = any, Output = any>(
   a: any
@@ -728,7 +728,7 @@ export class CallbackLambdaCode extends aws_lambda.Code {
   private scope: Construct | undefined = undefined;
 
   constructor(
-    private func: (preWarmContext: NativePreWarmContext) => AnyFunction,
+    private func: AnyAsyncFunction,
     private props?: CallbackLambdaCodeProps
   ) {
     super();
@@ -862,22 +862,21 @@ interface TokenContext {
  * Serializes a function to a string, extracting tokens and replacing some objects with a simpler form.
  */
 export async function serialize(
-  func: (preWarmContext: NativePreWarmContext) => AnyFunction,
+  func: AnyAsyncFunction,
   integrationPrewarms: NativeIntegration<AnyFunction>["preWarm"][],
   props?: PrewarmProps
 ): Promise<[string, TokenContext[]]> {
   let tokens: string[] = [];
   const preWarmContext = new NativePreWarmContext(props);
-  const closuredFunc = func(preWarmContext);
 
   const result = await serializeFunction(
     // factory function allows us to prewarm the clients and other context.
     integrationPrewarms.length > 0
       ? () => {
           integrationPrewarms.forEach((i) => i?.(preWarmContext));
-          return closuredFunc;
+          return func;
         }
-      : closuredFunc,
+      : func,
     {
       isFactoryFunction: integrationPrewarms.length > 0,
       serialize: (obj) => {

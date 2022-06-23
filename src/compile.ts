@@ -381,10 +381,6 @@ export function compile(
           args: ts.ArrayLiteralExpression;
         }[] = [];
 
-        // a reference to a client/object cache which the integrations can use
-        const preWarmContext =
-          context.factory.createUniqueName("preWarmContext");
-
         // Context object which is available when transforming the tree
         const nativeExprContext: NativeExprContext = {
           // the closure node used to determine if variables are inside or outside of the closure
@@ -418,25 +414,7 @@ export function compile(
                 newExpr("ParameterDecl", [ts.factory.createStringLiteral(arg)])
               )
           ),
-          // (prewarmContext) => closure;
-          context.factory.createArrowFunction(
-            undefined,
-            undefined,
-            [
-              context.factory.createParameterDeclaration(
-                undefined,
-                undefined,
-                undefined,
-                preWarmContext,
-                undefined,
-                undefined,
-                undefined
-              ),
-            ],
-            undefined,
-            undefined,
-            closure
-          ),
+          closure,
           context.factory.createArrayLiteralExpression(
             integrations.map(({ expr, args }) =>
               context.factory.createObjectLiteralExpression([
@@ -479,24 +457,6 @@ export function compile(
                 })
               )
             );
-
-            // // call the integration call function with the prewarm context and arguments
-            // // At this point, we know native will not be undefined
-            // // integration.native.call(args, preWarmContext)
-            // return context.factory.createCallExpression(
-            //   context.factory.createPropertyAccessExpression(
-            //     context.factory.createPropertyAccessExpression(
-            //       node.expression,
-            //       "native"
-            //     ),
-            //     "call"
-            //   ),
-            //   undefined,
-            //   [
-            //     context.factory.createArrayLiteralExpression(node.arguments),
-            //     nativeExprContext.preWarmContext,
-            //   ]
-            // );
 
             return node;
           }
