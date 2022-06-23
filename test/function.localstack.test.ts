@@ -885,7 +885,7 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
     `"hi"`
   );
 
-  test.only("import", (parent) => {
+  test("import", (parent) => {
     return new Function(
       parent,
       "function",

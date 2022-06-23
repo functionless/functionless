@@ -296,7 +296,6 @@ export function compile(
       }
 
       interface NativeExprContext {
-        preWarmContext: ts.Identifier;
         closureNode: TsFunctionParameter;
         /**
          * Register an {@link IntegrationInvocation} found when processing a native closure.
@@ -388,8 +387,6 @@ export function compile(
 
         // Context object which is available when transforming the tree
         const nativeExprContext: NativeExprContext = {
-          // a reference to a prewarm context that will be passed into the closure during synthesis/runtime
-          preWarmContext,
           // the closure node used to determine if variables are inside or outside of the closure
           closureNode: impl,
           // pass up integrations from inside of the closure
