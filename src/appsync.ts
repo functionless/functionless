@@ -169,8 +169,8 @@ export interface AppsyncResolverProps<>extends Pick<
  *      typeName: "Query",
  *      fieldName: "getPerson"
  *   },
- *   ($context, id) => {
- *     const person = table.get({
+ *   async ($context, id) => {
+ *     const person = await table.appsync.get({
  *       key: {
  *         id: $util.toDynamoDB(id)
  *       }
@@ -315,8 +315,8 @@ export interface AppsyncFieldOptions
  *       argName: appsync.Field.string()
  *     }
  *   },
- *   ($context, id) => {
- *     const person = table.get({
+ *   async ($context, id) => {
+ *     const person = await table.appsync.get({
  *       key: {
  *         id: $util.toDynamoDB(id)
  *       }

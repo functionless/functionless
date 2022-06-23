@@ -130,10 +130,10 @@ export interface IntegrationMethods<
  *
  * const func1 = new Function(...);
  * // uses the ASL
- * new StepFunction(..., () => {
- *    func1("some string");
+ * new StepFunction(..., async () => {
+ *    await func1("some string");
  *    // Calling our special method in a step function closure
- *    func1.specialPayload();
+ *    await func1.specialPayload();
  * })
  * ```
  *

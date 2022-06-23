@@ -52,6 +52,11 @@ export type StepFunctionClosure<
   Out
 > = (arg: Payload) => Promise<Out> | Out;
 
+type ParallelFunction<T> = () => Promise<T> | T;
+
+type ParallelFunctionReturnType<T extends ParallelFunction<T>> =
+  T extends ParallelFunction<infer P> ? P : never;
+
 export namespace $SFN {
   export const kind = "SFN";
   /**
@@ -126,8 +131,8 @@ export namespace $SFN {
      *
      * Example:
      * ```ts
-     * new ExpressStepFunction(this, "F"} (items: string[]) => {
-     *   $SFN.forEach(items, { maxConcurrency: 2 }, item => task(item));
+     * new ExpressStepFunction(this, "F", async (items: string[]) => {
+     *   await $SFN.forEach(items, { maxConcurrency: 2 }, item => task(item));
      * });
      * ```
      *
@@ -143,8 +148,8 @@ export namespace $SFN {
      *
      * Example:
      * ```ts
-     * new ExpressStepFunction(this, "F"} (items: string[]) => {
-     *   $SFN.forEach(items, { maxConcurrency: 2 }, item => task(item));
+     * new ExpressStepFunction(this, "F", async (items: string[]) => {
+     *   await $SFN.forEach(items, { maxConcurrency: 2 }, item => task(item));
      * });
      * ```
      *
@@ -293,13 +298,13 @@ export namespace $SFN {
    */
   export const parallel = makeStepFunctionIntegration<
     "parallel",
-    <Paths extends readonly (() => any)[]>(
+    <Paths extends readonly ParallelFunction<any>[]>(
       ...paths: Paths
-    ) => {
+    ) => Promise<{
       [i in keyof Paths]: i extends `${number}`
-        ? ReturnType<Extract<Paths[i], () => any>>
+        ? ParallelFunctionReturnType<Paths[i]>
         : Paths[i];
-    }
+    }>
   >("parallel", {
     asl(call, context) {
       const paths = call.getArgument("paths")?.expr;

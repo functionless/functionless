@@ -86,8 +86,8 @@ export type AnyTable = ITable<Record<string, any>, string, string | undefined>;
  *
  * const getPerson = new AppsyncResolver<
  *   (personId: string) => Person | undefined
- * >(($context, personId: string) => {
- *   const person = personTable.appsync.get({
+ * >(async ($context, personId: string) => {
+ *   const person = await personTable.appsync.get({
  *     key: {
  *       id: $util.toDynamoDB(personId)
  *     }
@@ -464,8 +464,8 @@ export type DynamoIntegrationCall<
  *
  * const getPerson = new AppsyncResolver<
  *   (personId: string) => Person | undefined
- * >(($context, personId: string) => {
- *   const person = personTable.get({
+ * >(async ($context, personId: string) => {
+ *   const person = await personTable.appsync.get({
  *     key: {
  *       id: $util.toDynamoDB(personId)
  *     }

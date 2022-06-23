@@ -4253,6 +4253,82 @@ Object {
 }
 `;
 
+exports[`try { return $SFN.parallel(() => "hello", async () => { await task(); await task(); })) } catch { return null } 1`] = `
+Object {
+  "StartAt": "return $SFN.parallel([function(), function()])",
+  "States": Object {
+    "return $SFN.parallel([function(), function()])": Object {
+      "Branches": Array [
+        Object {
+          "StartAt": "return \\"hello\\"",
+          "States": Object {
+            "return \\"hello\\"": Object {
+              "End": true,
+              "Result": "hello",
+              "ResultPath": "$",
+              "Type": "Pass",
+            },
+          },
+        },
+        Object {
+          "StartAt": "await task()",
+          "States": Object {
+            "await task()": Object {
+              "Next": "await task() 1",
+              "Parameters": Object {
+                "FunctionName": "__REPLACED_TOKEN",
+              },
+              "Resource": "arn:aws:states:::lambda:invoke",
+              "ResultPath": null,
+              "ResultSelector": "$.Payload",
+              "Type": "Task",
+            },
+            "await task() 1": Object {
+              "Next": "return null",
+              "Parameters": Object {
+                "FunctionName": "__REPLACED_TOKEN",
+              },
+              "Resource": "arn:aws:states:::lambda:invoke",
+              "ResultPath": null,
+              "ResultSelector": "$.Payload",
+              "Type": "Task",
+            },
+            "return null": Object {
+              "End": true,
+              "OutputPath": "$.null",
+              "Parameters": Object {
+                "null": null,
+              },
+              "Type": "Pass",
+            },
+          },
+        },
+      ],
+      "Catch": Array [
+        Object {
+          "ErrorEquals": Array [
+            "States.ALL",
+          ],
+          "Next": "return null 1",
+          "ResultPath": null,
+        },
+      ],
+      "End": true,
+      "ResultPath": "$",
+      "Type": "Parallel",
+    },
+    "return null 1": Object {
+      "End": true,
+      "OutputPath": "$.null",
+      "Parameters": Object {
+        "null": null,
+      },
+      "Type": "Pass",
+    },
+  },
+}
+`;
+
 exports[`try { task } catch { throw } finally { task() } 1`] = `
 Object {
   "StartAt": "await task()",

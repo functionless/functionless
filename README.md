@@ -53,10 +53,10 @@ const validatePost = new Function(this, "ValidatePost", async (post: Post) => {
 const validatePostWorkflow = new StepFunction(
   this,
   "ValidatePostWorkflow",
-  (post: Post) => {
-    const validationResult = validatePost(post);
+  async (post: Post) => {
+    const validationResult = await validatePost(post);
     if (validationResult.status === "Not Cool") {
-      $AWS.DynamoDB.DeleteItem({
+      await $AWS.DynamoDB.DeleteItem({
         Table: postTable,
         Key: {
           postId: {

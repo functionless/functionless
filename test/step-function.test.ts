@@ -2079,6 +2079,25 @@ test('try { return $SFN.parallel(() => "hello", () => "world")) } catch { return
   expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
+test('try { return $SFN.parallel(() => "hello", async () => { await task(); await task(); })) } catch { return null }', () => {
+  const { stack, task } = initStepFunctionApp();
+  const definition = new ExpressStepFunction(stack, "fn", () => {
+    try {
+      return $SFN.parallel(
+        () => "hello",
+        async () => {
+          await task();
+          await task();
+        }
+      );
+    } catch {
+      return null;
+    }
+  }).definition;
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+});
+
 test("return $SFN.parallel(() => try { task() } catch { return null })) }", () => {
   const { stack, task } = initStepFunctionApp();
   const definition = new ExpressStepFunction(stack, "fn", () => {
