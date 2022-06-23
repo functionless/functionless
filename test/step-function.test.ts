@@ -1,4 +1,5 @@
-import { Stack } from "aws-cdk-lib";
+import { aws_stepfunctions, Stack } from "aws-cdk-lib";
+import { Pass } from "aws-cdk-lib/aws-stepfunctions";
 import "jest";
 import {
   $AWS,
@@ -8,8 +9,11 @@ import {
   ExpressStepFunction,
   StepFunction,
   SyncExecutionResult,
+  ErrorCodes,
+  SynthError,
 } from "../src";
 import { StateMachine, States, Task } from "../src/asl";
+import { Function } from "../src/function";
 import { initStepFunctionApp, normalizeCDKJson, Person } from "./util";
 
 /**
@@ -533,6 +537,16 @@ test("call Lambda Function, store as variable, return variable", () => {
   expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
+test("call Lambda Function, store as variable, return variable no block", () => {
+  const { stack, getPerson } = initStepFunctionApp();
+  const definition = new ExpressStepFunction<
+    { id: string },
+    Person | undefined
+  >(stack, "fn", async (input) => getPerson({ id: input.id })).definition;
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+});
+
 // TODO: support use case where promise is ultimately returned with no logic in between?
 test.skip("call Lambda Function, store as variable, return promise variable", () => {
   const { stack, getPerson } = initStepFunctionApp();
@@ -554,7 +568,7 @@ test("return AWS.DynamoDB.GetItem", () => {
     Person | undefined
   >(stack, "fn", async (input) => {
     const person = await $AWS.DynamoDB.GetItem({
-      TableName: personTable,
+      Table: personTable,
       Key: {
         id: {
           S: input.id,
@@ -582,7 +596,7 @@ test("call AWS.DynamoDB.GetItem, then Lambda and return LiteralExpr", () => {
     (Person & { score: number }) | undefined
   >(stack, "fn", async (input) => {
     const person = await $AWS.DynamoDB.GetItem({
-      TableName: personTable,
+      Table: personTable,
       Key: {
         id: {
           S: input.id,
@@ -636,7 +650,7 @@ test("conditionally call DynamoDB and then void", () => {
     async (input): Promise<void> => {
       if (input.id === "hello") {
         await $AWS.DynamoDB.GetItem({
-          TableName: personTable,
+          Table: personTable,
           Key: {
             id: {
               S: input.id,
@@ -1407,6 +1421,168 @@ test.skip("await Promise.all(input.list.map((item) => task(item)))).filter", () 
   expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
+test("list.filter(item => item.length > 2).map(item => task(item))", () => {
+  const { stack, task } = initStepFunctionApp();
+  const definition = new ExpressStepFunction<
+    { list: string[] },
+    (number | null)[]
+  >(stack, "fn", async (input) => {
+    return Promise.all(
+      input.list.filter((item) => item.length > 2).map((item) => task(item))
+    );
+  }).definition;
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+});
+
+// https://github.com/functionless/functionless/issues/209
+test.skip("`template me ${input.value}`", () => {
+  const { stack } = initStepFunctionApp();
+  const definition = new ExpressStepFunction<{ value: string }, string>(
+    stack,
+    "fn",
+    (input) => {
+      return `template me ${input.value}`;
+    }
+  ).definition;
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+});
+
+// https://github.com/functionless/functionless/issues/209
+test.skip("`template me ${await task(input.value)}`", () => {
+  const { stack, task } = initStepFunctionApp();
+  const definition = new ExpressStepFunction<{ value: string }, string>(
+    stack,
+    "fn",
+    (input) => {
+      return `template me ${task(input.value)}`;
+    }
+  ).definition;
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+});
+
+test("list.filter(item => item.length > 2).map(item => item)", () => {
+  const { stack } = initStepFunctionApp();
+  const definition = new ExpressStepFunction<
+    { list: string[] },
+    (string | null)[]
+  >(stack, "fn", (input) => {
+    return input.list.filter((item) => item.length > 2).map((item) => item);
+  }).definition;
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+});
+
+// https://github.com/functionless/functionless/issues/210
+test.skip("input.list.map((item) => item).filter((item) => item.length > 2)", () => {
+  const { stack } = initStepFunctionApp();
+  const definition = new ExpressStepFunction<
+    { list: string[] },
+    (string | null)[]
+  >(stack, "fn", (input) => {
+    return input.list.map((item) => item).filter((item) => item.length > 2);
+  }).definition;
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+});
+
+test.skip("await Promise.all(input.list.map((item) => task(item)))).filter", () => {
+  const { stack, task } = initStepFunctionApp();
+  const definition = new ExpressStepFunction<
+    { list: string[] },
+    (number | null)[]
+  >(stack, "fn", async (input) => {
+    return (await Promise.all(input.list.map((item) => task(item)))).filter(
+      (item) => item !== null
+    );
+  }).definition;
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+});
+
+test("list.filter(item => item.length > 2).map(item => task(item))", () => {
+  const { stack, task } = initStepFunctionApp();
+  const definition = new ExpressStepFunction<
+    { list: string[] },
+    (number | null)[]
+  >(stack, "fn", async (input) => {
+    return Promise.all(
+      input.list.filter((item) => item.length > 2).map((item) => task(item))
+    );
+  }).definition;
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+});
+
+// https://github.com/functionless/functionless/issues/209
+test.skip("`template me ${input.value}`", () => {
+  const { stack } = initStepFunctionApp();
+  const definition = new ExpressStepFunction<{ value: string }, string>(
+    stack,
+    "fn",
+    (input) => {
+      return `template me ${input.value}`;
+    }
+  ).definition;
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+});
+
+// https://github.com/functionless/functionless/issues/209
+test.skip("`template me ${await task(input.value)}`", () => {
+  const { stack, task } = initStepFunctionApp();
+  const definition = new ExpressStepFunction<{ value: string }, string>(
+    stack,
+    "fn",
+    (input) => {
+      return `template me ${task(input.value)}`;
+    }
+  ).definition;
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+});
+
+test("list.filter(item => item.length > 2).map(item => item)", () => {
+  const { stack } = initStepFunctionApp();
+  const definition = new ExpressStepFunction<
+    { list: string[] },
+    (string | null)[]
+  >(stack, "fn", (input) => {
+    return input.list.filter((item) => item.length > 2).map((item) => item);
+  }).definition;
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+});
+
+// https://github.com/functionless/functionless/issues/210
+test.skip("input.list.map((item) => item).filter((item) => item.length > 2)", () => {
+  const { stack } = initStepFunctionApp();
+  const definition = new ExpressStepFunction<
+    { list: string[] },
+    (string | null)[]
+  >(stack, "fn", (input) => {
+    return input.list.map((item) => item).filter((item) => item.length > 2);
+  }).definition;
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+});
+
+test.skip("await Promise.all(input.list.map((item) => task(item)))).filter", () => {
+  const { stack, task } = initStepFunctionApp();
+  const definition = new ExpressStepFunction<
+    { list: string[] },
+    (number | null)[]
+  >(stack, "fn", async (input) => {
+    return (await Promise.all(input.list.map((item) => task(item)))).filter(
+      (item) => item !== null
+    );
+  }).definition;
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+});
+
 test("list.map((item, i) => if (i == 0) task(item))", () => {
   const { stack, task } = initStepFunctionApp();
   const definition = new ExpressStepFunction<
@@ -1459,6 +1635,63 @@ test("try { list.map(item => task(item)) }", () => {
       return null;
     }
   }).definition;
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+});
+
+test("throw task(task())", () => {
+  const { stack, task } = initStepFunctionApp();
+  const definition = new ExpressStepFunction<
+    { list: string[] },
+    (null | number)[] | null
+  >(stack, "fn", async (input) => {
+    throw await task(await task(input));
+  }).definition;
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+});
+
+test.skip("input.b ? task() : task(input)", () => {
+  const { stack, task } = initStepFunctionApp();
+  const definition = new ExpressStepFunction<{ b: boolean }, null | number>(
+    stack,
+    "fn",
+    (input) => {
+      return input.b ? task() : task(input);
+    }
+  ).definition;
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+});
+
+test("for (const i in [task(input)])", () => {
+  const { stack, task } = initStepFunctionApp();
+  const definition = new ExpressStepFunction<{ str: string }, any | null>(
+    stack,
+    "fn",
+    async (input) => {
+      for (const i in [await task(input)]) {
+        await task(await task(i));
+      }
+      return null;
+    }
+  ).definition;
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+});
+
+test("for (const i of [task(input)])", () => {
+  const { stack, task } = initStepFunctionApp();
+  const definition = new ExpressStepFunction<{ list: string }, any | null>(
+    stack,
+    "fn",
+    async (input) => {
+      for (const i of [await task(input)]) {
+        await task(await task(i));
+      }
+      return null;
+    }
+  ).definition;
 
   expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
@@ -1856,6 +2089,25 @@ test('try { return $SFN.parallel(() => "hello", () => "world")) } catch { return
   expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
+test('try { return $SFN.parallel(() => "hello", async () => { await task(); await task(); })) } catch { return null }', () => {
+  const { stack, task } = initStepFunctionApp();
+  const definition = new ExpressStepFunction(stack, "fn", () => {
+    try {
+      return $SFN.parallel(
+        () => "hello",
+        async () => {
+          await task();
+          await task();
+        }
+      );
+    } catch {
+      return null;
+    }
+  }).definition;
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+});
+
 test("return $SFN.parallel(() => try { task() } catch { return null })) }", () => {
   const { stack, task } = initStepFunctionApp();
   const definition = new ExpressStepFunction(stack, "fn", () => {
@@ -2077,7 +2329,7 @@ test("call Step Function from another Step Function", () => {
   }).definition;
 
   expectTaskToMatch(definition, {
-    Parameters: { StateMachineArn: machine1.resource.attrArn },
+    Parameters: { StateMachineArn: machine1.resource.stateMachineArn },
   });
 
   expect(normalizeDefinition(definition)).toMatchSnapshot();
@@ -2316,12 +2568,12 @@ test("on success event", () => {
 
   const success = machine.onSucceeded(stack, "onSuccess");
 
-  expect(success.rule._renderEventPattern()).toEqual({
+  expect(success.resource._renderEventPattern()).toEqual({
     source: ["aws.states"],
     "detail-type": ["Step Functions Execution Status Change"],
     detail: {
       status: ["SUCCEEDED"],
-      stateMachineArn: [machine.stateMachineArn],
+      stateMachineArn: [machine.resource.stateMachineArn],
     },
   });
 });
@@ -2331,11 +2583,11 @@ test("on status change event", () => {
 
   const statusChange = machine.onStatusChanged(stack, "onSuccess");
 
-  expect(statusChange.rule._renderEventPattern()).toEqual({
+  expect(statusChange.resource._renderEventPattern()).toEqual({
     source: ["aws.states"],
     "detail-type": ["Step Functions Execution Status Change"],
     detail: {
-      stateMachineArn: [machine.stateMachineArn],
+      stateMachineArn: [machine.resource.stateMachineArn],
     },
   });
 });
@@ -2347,12 +2599,128 @@ test("on status change event refine", () => {
     .onStatusChanged(stack, "onStatus")
     .when(stack, "onRunning", (event) => event.detail.status === "RUNNING");
 
-  expect(success.rule._renderEventPattern()).toEqual({
+  expect(success.resource._renderEventPattern()).toEqual({
     source: ["aws.states"],
     "detail-type": ["Step Functions Execution Status Change"],
     detail: {
       status: ["RUNNING"],
-      stateMachineArn: [machine.stateMachineArn],
+      stateMachineArn: [machine.resource.stateMachineArn],
     },
   });
+});
+
+test("import from state machine", () => {
+  const awsMachine = new aws_stepfunctions.StateMachine(stack, "m", {
+    definition: new Pass(stack, "p"),
+  });
+  const machine = StepFunction.fromStateMachine<{ id: string }, string>(
+    awsMachine
+  );
+
+  new Function(stack, "func", async () => {
+    await machine({
+      input: {
+        id: "hi",
+      },
+    });
+  });
+});
+
+test("import from state machine into state machine", () => {
+  const awsMachine = new aws_stepfunctions.StateMachine(stack, "m", {
+    definition: new Pass(stack, "p"),
+  });
+  const machine = StepFunction.fromStateMachine<{ id: string }, string>(
+    awsMachine
+  );
+
+  const definition = new StepFunction(stack, "func", async () => {
+    await machine({
+      input: {
+        id: "hi",
+      },
+    });
+  }).definition;
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+
+  expectTaskToMatch(
+    definition,
+    {
+      Parameters: {
+        StateMachineArn: awsMachine.stateMachineArn,
+      },
+    },
+    "machine"
+  );
+});
+
+test("import express from standard should fail", () => {
+  const awsMachine = new aws_stepfunctions.StateMachine(stack, "m", {
+    definition: new Pass(stack, "p"),
+    stateMachineType: aws_stepfunctions.StateMachineType.EXPRESS,
+  });
+
+  expect(() =>
+    StepFunction.fromStateMachine<{ id: string }, string>(awsMachine)
+  ).toThrow(new SynthError(ErrorCodes.Incorrect_StateMachine_Import_Type));
+});
+
+test("import from express state machine", () => {
+  const awsMachine = new aws_stepfunctions.StateMachine(stack, "m", {
+    definition: new Pass(stack, "p"),
+    stateMachineType: aws_stepfunctions.StateMachineType.EXPRESS,
+  });
+  const machine = ExpressStepFunction.fromStateMachine<{ id: string }, string>(
+    awsMachine
+  );
+
+  new Function(stack, "func", async () => {
+    await machine({
+      input: {
+        id: "hi",
+      },
+    });
+  });
+});
+
+test("import from express state machine into machine", () => {
+  const awsMachine = new aws_stepfunctions.StateMachine(stack, "m", {
+    definition: new Pass(stack, "p"),
+    stateMachineType: aws_stepfunctions.StateMachineType.EXPRESS,
+  });
+  const machine = ExpressStepFunction.fromStateMachine<{ id: string }, string>(
+    awsMachine
+  );
+
+  const definition = new StepFunction(stack, "func", async () => {
+    await machine({
+      input: {
+        id: "hi",
+      },
+    });
+  }).definition;
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+
+  expectTaskToMatch(
+    definition,
+    {
+      Parameters: {
+        StateMachineArn: awsMachine.stateMachineArn,
+      },
+    },
+    "machine"
+  );
+});
+
+test("import standard from express should fail", () => {
+  const awsMachine = new aws_stepfunctions.StateMachine(stack, "m", {
+    definition: new Pass(stack, "p"),
+    stateMachineType: aws_stepfunctions.StateMachineType.STANDARD,
+  });
+
+  expect(() =>
+    ExpressStepFunction.fromStateMachine<{ id: string }, string>(awsMachine)
+  ).toThrow(new SynthError(ErrorCodes.Incorrect_StateMachine_Import_Type));
 });

@@ -1,6 +1,12 @@
 import { aws_events, Stack } from "aws-cdk-lib";
 import { EventField } from "aws-cdk-lib/aws-events";
-import { Function, reflect, StepFunction } from "../src";
+import {
+  ErrorCodes,
+  formatErrorMessage,
+  Function,
+  reflect,
+  StepFunction,
+} from "../src";
 import { Event } from "../src/event-bridge";
 
 import { ebEventTargetTestCase, ebEventTargetTestCaseError } from "./util";
@@ -611,10 +617,10 @@ describe("referencing", () => {
 
     ebEventTargetTestCase<testEvent>(
       reflect(() => {
-        return { sfn: sfn.stateMachineArn };
+        return { sfn: sfn.resource.stateMachineArn };
       }),
       aws_events.RuleTargetInput.fromObject({
-        sfn: sfn.stateMachineArn,
+        sfn: sfn.resource.stateMachineArn,
       })
     );
   });
@@ -655,7 +661,9 @@ describe("not allowed", () => {
     const func = new Function(stack, "func", async () => {});
     ebEventTargetTestCaseError<testEvent>(
       reflect(() => func("hello")),
-      "Unsupported template expression of kind: CallExpr"
+      formatErrorMessage(
+        ErrorCodes.EventBus_Input_Transformers_do_not_support_Integrations
+      )
     );
     await Promise.all(Function.promises);
   });

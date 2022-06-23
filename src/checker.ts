@@ -1,10 +1,12 @@
 import * as ts from "typescript";
 import * as tsserver from "typescript/lib/tsserverlibrary";
-import { AppsyncResolver } from "./appsync";
+import { ApiMethod, ApiMethodKind, isApiMethodKind } from "./api";
+import { AppsyncField, AppsyncResolver } from "./appsync";
 import { EventBus, Rule } from "./event-bridge";
 import { EventTransform } from "./event-bridge/transform";
 import { Function } from "./function";
 import { ExpressStepFunction, StepFunction } from "./step-function";
+import { Table } from "./table";
 
 /**
  * Various types that could be in a call argument position of a function parameter.
@@ -26,7 +28,7 @@ export type EventTransformInterface = ts.NewExpression & {
 };
 
 export type EventBusWhenInterface = ts.CallExpression & {
-  arguments: [any, any, TsFunctionParameter];
+  arguments: [any, TsFunctionParameter] | [any, any, TsFunctionParameter];
 };
 
 export type EventBusMapInterface = ts.CallExpression & {
@@ -55,6 +57,34 @@ export type FunctionInterface = ts.NewExpression & {
       ];
 };
 
+export type ApiIntegrationsStaticMethodInterface = ts.CallExpression & {
+  arguments: [ts.ObjectLiteralExpression];
+};
+
+export type NewStepFunctionInterface = ts.NewExpression & {
+  arguments:
+    | [ts.Expression, ts.Expression, TsFunctionParameter]
+    | [ts.Expression, ts.Expression, ts.Expression, TsFunctionParameter];
+};
+
+export type NewAppsyncResolverInterface = ts.NewExpression & {
+  arguments: [
+    ts.Expression,
+    ts.Expression,
+    ts.Expression,
+    // the inline function
+    TsFunctionParameter
+  ];
+};
+
+export type NewAppsyncFieldInterface = ts.NewExpression & {
+  arguments: [
+    ts.Expression,
+    // the inline function
+    TsFunctionParameter
+  ];
+};
+
 export type FunctionlessChecker = ReturnType<typeof makeFunctionlessChecker>;
 
 export function makeFunctionlessChecker(
@@ -62,20 +92,29 @@ export function makeFunctionlessChecker(
 ) {
   return {
     ...checker,
-    isConstant,
+    getApiMethodKind,
+    getFunctionlessTypeKind,
+    isApiIntegration,
+    isAppsyncField,
     isAppsyncResolver,
-    isRuleMapFunction,
+    isCDKConstruct,
+    isConstant,
+    isEventBus,
     isEventBusWhenFunction,
+    isFunctionlessFunction,
     isFunctionlessType,
-    isNewRule,
+    isIntegrationNode,
     isNewEventTransform,
+    isNewFunctionlessFunction,
+    isNewRule,
+    isNewStepFunction,
     isPromiseArray,
+    isPromiseAllCall,
     isPromiseSymbol,
     isReflectFunction,
+    isRuleMapFunction,
     isStepFunction,
-    isNewFunctionlessFunction,
-    isCDKConstruct,
-    getFunctionlessTypeKind,
+    isTable,
   };
 
   /**
@@ -157,13 +196,23 @@ export function makeFunctionlessChecker(
     return isFunctionlessClassOfKind(node, EventTransform.FunctionlessType);
   }
 
-  function isAppsyncResolver(node: ts.Node): node is ts.NewExpression & {
-    arguments: [TsFunctionParameter, ...ts.Expression[]];
-  } {
+  function isAppsyncResolver(
+    node: ts.Node
+  ): node is NewAppsyncResolverInterface {
     if (ts.isNewExpression(node)) {
       return isFunctionlessClassOfKind(
         node.expression,
         AppsyncResolver.FunctionlessType
+      );
+    }
+    return false;
+  }
+
+  function isAppsyncField(node: ts.Node): node is NewAppsyncFieldInterface {
+    if (ts.isNewExpression(node)) {
+      return isFunctionlessClassOfKind(
+        node.expression,
+        AppsyncField.FunctionlessType
       );
     }
     return false;
@@ -184,22 +233,32 @@ export function makeFunctionlessChecker(
     return false;
   }
 
-  function isStepFunction(node: ts.Node): node is ts.NewExpression & {
-    arguments: [TsFunctionParameter, ...ts.Expression[]];
-  } {
+  function isTable(node: ts.Node) {
+    return isFunctionlessClassOfKind(node, Table.FunctionlessType);
+  }
+
+  function isStepFunction(node: ts.Node) {
+    return (
+      isFunctionlessClassOfKind(node, StepFunction.FunctionlessType) ||
+      isFunctionlessClassOfKind(node, ExpressStepFunction.FunctionlessType)
+    );
+  }
+
+  function isNewStepFunction(node: ts.Node): node is NewStepFunctionInterface {
     if (ts.isNewExpression(node)) {
-      return (
-        isFunctionlessClassOfKind(node, StepFunction.FunctionlessType) ||
-        isFunctionlessClassOfKind(node, ExpressStepFunction.FunctionlessType)
-      );
+      return isStepFunction(node.expression);
     }
     return false;
+  }
+
+  function isFunctionlessFunction(node: ts.Node) {
+    return isFunctionlessClassOfKind(node, Function.FunctionlessType);
   }
 
   function isNewFunctionlessFunction(node: ts.Node): node is FunctionInterface {
     return (
       ts.isNewExpression(node) &&
-      isFunctionlessClassOfKind(node.expression, Function.FunctionlessType) &&
+      isFunctionlessFunction(node.expression) &&
       // only take the form with the arrow function at the end.
       (node.arguments?.length === 3
         ? ts.isArrowFunction(node.arguments[2])
@@ -207,6 +266,29 @@ export function makeFunctionlessChecker(
         ? ts.isArrowFunction(node.arguments[3])
         : false)
     );
+  }
+
+  function isApiIntegration(node: ts.Node): node is ts.NewExpression {
+    return (
+      ts.isNewExpression(node) &&
+      isFunctionlessClassOfKind(node.expression, ApiMethod.FunctionlessType)
+    );
+  }
+
+  function getApiMethodKind(node: ts.NewExpression): ApiMethodKind | undefined {
+    if (isApiIntegration(node)) {
+      const type = checker.getTypeAtLocation(node);
+      const kind = type.getProperty("kind");
+      if (kind) {
+        const kindType = checker.getTypeOfSymbolAtLocation(kind, node);
+        if (kindType.isStringLiteral()) {
+          if (isApiMethodKind(kindType.value)) {
+            return kindType.value;
+          }
+        }
+      }
+    }
+    return undefined;
   }
 
   /**
@@ -255,7 +337,9 @@ export function makeFunctionlessChecker(
     return isFunctionlessType(type, kind);
   }
 
-  function getFunctionlessTypeKind(type: ts.Type): string | undefined {
+  function getFunctionlessTypeKind(
+    type: ts.Type
+  ): ts.Type | string | undefined {
     const functionlessType = type.getProperty("FunctionlessType");
     const functionlessKind = type.getProperty("functionlessKind");
     const prop = functionlessType ?? functionlessKind;
@@ -271,6 +355,8 @@ export function makeFunctionlessChecker(
         const type = checker.getTypeAtLocation(prop.valueDeclaration);
         if (type.isStringLiteral()) {
           return type.value;
+        } else {
+          return type;
         }
       }
     }
@@ -310,6 +396,16 @@ export function makeFunctionlessChecker(
       });
     }
     return false;
+  }
+
+  function isPromiseAllCall(node: ts.Node): boolean {
+    return (
+      ts.isCallExpression(node) &&
+      ts.isPropertyAccessExpression(node.expression) &&
+      node.expression.name.text === "all" &&
+      ts.isIdentifier(node.expression.expression) &&
+      node.expression.expression.text === "Promise"
+    );
   }
 
   /**
@@ -372,6 +468,16 @@ export function makeFunctionlessChecker(
     }
     return false;
   }
+
+  function isIntegrationNode(node: ts.Node): boolean {
+    const exprType = checker.getTypeAtLocation(node);
+    const exprKind = exprType.getProperty("kind");
+    if (exprKind) {
+      const exprKindType = checker.getTypeOfSymbolAtLocation(exprKind, node);
+      return exprKindType.isStringLiteral();
+    }
+    return false;
+  }
 }
 
 const ArithmeticOperators = [
@@ -391,3 +497,6 @@ export function isArithmeticToken(
 ): token is ArithmeticToken {
   return ArithmeticOperators.includes(token as ArithmeticToken);
 }
+
+// to prevent the closure serializer from trying to import all of functionless.
+export const deploymentOnlyModule = true;

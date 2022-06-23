@@ -19,12 +19,14 @@ import {
   EventBus,
   Event,
   ExpressStepFunction,
+  AppsyncField,
+  AppsyncContext,
 } from "functionless";
 
 export const app = new App();
 export const stack = new Stack(app, "message-board");
 
-const database = new Table<Post | Comment, "pk", "sk">(
+const database = Table.fromTable<Post | Comment, "pk", "sk">(
   new aws_dynamodb.Table(stack, "MessageBoard", {
     tableName: "MessageBoard",
     partitionKey: {
@@ -59,71 +61,83 @@ const api = new appsync.GraphqlApi(stack, "Api", {
   },
 });
 
-const getPostResolver = new AppsyncResolver<
-  { postId: string },
-  Post | undefined
->(($context) => {
-  return database.getItem({
-    key: {
-      pk: {
-        S: `Post|${$context.arguments.postId}`,
+new AppsyncResolver<{ postId: string }, Post | undefined>(
+  stack,
+  "getPost",
+  {
+    api,
+    typeName: "Query",
+    fieldName: "getPost",
+  },
+  ($context) => {
+    return database.appsync.getItem({
+      key: {
+        pk: {
+          S: `Post|${$context.arguments.postId}`,
+        },
+        sk: {
+          S: "Post",
+        },
       },
-      sk: {
-        S: "Post",
-      },
-    },
-  });
-});
+    });
+  }
+);
 
-export const getPost = getPostResolver.addResolver(api, {
-  typeName: "Query",
-  fieldName: "getPost",
-});
-
-const commentResolver = new AppsyncResolver<
+new AppsyncResolver<
   { nextToken?: string; limit?: number },
   CommentPage,
   Omit<Post, "comments">
->(async ($context) => {
-  const response = await database.query({
-    query: {
-      expression: `pk = :pk and begins_with(#sk,:sk)`,
-      expressionValues: {
-        ":pk": {
-          S: $context.source.pk,
+>(
+  stack,
+  "comments",
+  {
+    api,
+    typeName: "Post",
+    fieldName: "comments",
+  },
+  async ($context) => {
+    const response = await database.appsync.query({
+      query: {
+        expression: `pk = :pk and begins_with(#sk,:sk)`,
+        expressionValues: {
+          ":pk": {
+            S: $context.source.pk,
+          },
+          ":sk": {
+            S: "Comment|",
+          },
         },
-        ":sk": {
-          S: "Comment|",
+        expressionNames: {
+          "#sk": "sk",
         },
       },
-      expressionNames: {
-        "#sk": "sk",
-      },
-    },
-    nextToken: $context.arguments.nextToken,
-    limit: $context.arguments.limit,
-  });
+      nextToken: $context.arguments.nextToken,
+      limit: $context.arguments.limit,
+    });
 
-  if (response.items !== undefined) {
+    if (response.items !== undefined) {
+      return {
+        comments: response.items as Comment[],
+        nextToken: response.nextToken,
+      };
+    }
     return {
-      comments: response.items as Comment[],
-      nextToken: response.nextToken,
+      comments: [],
     };
   }
-  return {
-    comments: [],
-  };
-});
-
-export const comments = commentResolver.addResolver(api, {
-  typeName: "Post",
-  fieldName: "comments",
-});
+);
 
 export const createPost = new AppsyncResolver<{ title: string }, Post>(
-  ($context) => {
+  stack,
+  "createPost",
+  {
+    api,
+    typeName: "Mutation",
+    fieldName: "createPost",
+  },
+  async ($context) => {
     const postId = $util.autoUlid();
-    const post = database.putItem({
+    const post = await database.appsync.putItem({
       key: {
         pk: {
           S: `Post|${postId}`,
@@ -144,10 +158,7 @@ export const createPost = new AppsyncResolver<{ title: string }, Post>(
 
     return post;
   }
-).addResolver(api, {
-  typeName: "Mutation",
-  fieldName: "createPost",
-});
+);
 
 export const validateComment = new Function<
   { commentText: string },
@@ -163,7 +174,7 @@ export const commentValidationWorkflow = new StepFunction<
   const status = await validateComment({ commentText: input.commentText });
   if (status === "bad") {
     await $AWS.DynamoDB.DeleteItem({
-      TableName: database,
+      Table: database,
       Key: {
         pk: {
           S: `Post|${input.postId}`,
@@ -179,41 +190,47 @@ export const commentValidationWorkflow = new StepFunction<
 export const addComment = new AppsyncResolver<
   { postId: string; commentText: string },
   Comment
->(async ($context) => {
-  const commentId = $util.autoUlid();
-  const comment = await database.putItem({
-    key: {
-      pk: {
-        S: `Post|${$context.arguments.postId}`,
+>(
+  stack,
+  "addComment",
+  {
+    api,
+    typeName: "Mutation",
+    fieldName: "addComment",
+  },
+  async ($context) => {
+    const commentId = $util.autoUlid();
+    const comment = await database.appsync.putItem({
+      key: {
+        pk: {
+          S: `Post|${$context.arguments.postId}`,
+        },
+        sk: {
+          S: `Comment|${commentId}`,
+        },
       },
-      sk: {
-        S: `Comment|${commentId}`,
+      attributeValues: {
+        postId: {
+          S: $context.arguments.postId,
+        },
+        commentId: {
+          S: commentId,
+        },
+        commentText: {
+          S: $context.arguments.commentText,
+        },
+        createdTime: {
+          S: $util.time.nowISO8601(),
+        },
       },
-    },
-    attributeValues: {
-      postId: {
-        S: $context.arguments.postId,
-      },
-      commentId: {
-        S: commentId,
-      },
-      commentText: {
-        S: $context.arguments.commentText,
-      },
-      createdTime: {
-        S: $util.time.nowISO8601(),
-      },
-    },
-  });
+    });
 
-  // kick off a workflow to validate the comment
-  await commentValidationWorkflow({ input: comment });
+    // kick off a workflow to validate the comment
+    await commentValidationWorkflow({ input: comment });
 
-  return comment;
-}).addResolver(api, {
-  typeName: "Mutation",
-  fieldName: "addComment",
-});
+    return comment;
+  }
+);
 
 interface MessageDeletedEvent
   extends Event<
@@ -230,110 +247,115 @@ const customDeleteBus = new EventBus<MessageDeletedEvent | PostDeletedEvent>(
   "deleteBus"
 );
 
-const deleteWorkflow = new StepFunction<
-  { postId: string },
-  { status: string; postId: string }
->(stack, "DeletePostWorkflow", async (input) => {
-  while (true) {
-    try {
-      const comments = await $AWS.DynamoDB.Query({
-        TableName: database,
-        KeyConditionExpression: `pk = :pk`,
-        ExpressionAttributeValues: {
-          ":pk": {
-            S: `Post|${input.postId}`,
-          },
-        },
-      });
-
-      if (comments.Items?.[0] !== undefined) {
-        await $SFN.forEach(comments.Items, async (comment) => {
-          await $AWS.DynamoDB.DeleteItem({
-            TableName: database,
-            Key: {
-              pk: comment.pk,
-              sk: comment.sk,
-            },
-          });
-        });
-
-        await customDeleteBus.putEvents({
-          "detail-type": "Delete-Message-Success",
-          source: "MessageDeleter",
-          detail: {
-            count: comments.Items.length,
-          },
-        });
-      } else {
-        await $AWS.DynamoDB.DeleteItem({
-          TableName: database,
-          Key: {
-            pk: {
+const deleteWorkflow = new StepFunction<{ postId: string }, void>(
+  stack,
+  "DeletePostWorkflow",
+  async (input) => {
+    while (true) {
+      try {
+        const comments = await $AWS.DynamoDB.Query({
+          Table: database,
+          KeyConditionExpression: `pk = :pk`,
+          ExpressionAttributeValues: {
+            ":pk": {
               S: `Post|${input.postId}`,
             },
-            sk: {
-              S: "Post",
+          },
+        });
+
+        if (comments.Items?.[0] !== undefined) {
+          await $SFN.forEach(comments.Items, async (comment) =>
+            $AWS.DynamoDB.DeleteItem({
+              Table: database,
+              Key: {
+                pk: comment.pk,
+                sk: comment.sk,
+              },
+            })
+          );
+        } else {
+          await $AWS.DynamoDB.DeleteItem({
+            Table: database,
+            Key: {
+              pk: {
+                S: `Post|${input.postId}`,
+              },
+              sk: {
+                S: "Post",
+              },
             },
-          },
-        });
+          });
 
-        await customDeleteBus.putEvents({
-          "detail-type": "Delete-Post-Success",
-          source: "MessageDeleter",
-          detail: {
-            id: input.postId,
-          },
-        });
-
-        return {
-          status: "deleted",
-          postId: input.postId,
-        };
+          await customDeleteBus.putEvents({
+            "detail-type": "Delete-Post-Success",
+            source: "MessageDeleter",
+            detail: {
+              id: input.postId,
+            },
+          });
+        }
+      } catch {
+        $SFN.waitFor(10);
       }
-    } catch {
-      $SFN.waitFor(10);
     }
   }
-});
+);
 
 export const deletePost = new AppsyncResolver<
   { postId: string },
   AWS.StepFunctions.StartExecutionOutput | undefined
->(async ($context) => {
-  const item = await database.getItem({
-    key: {
-      pk: {
-        S: `Post|${$context.arguments.postId}`,
+>(
+  stack,
+  "deletePost",
+  {
+    api,
+    typeName: "Mutation",
+    fieldName: "deletePost",
+  },
+  async ($context) => {
+    const item = await database.appsync.getItem({
+      key: {
+        pk: {
+          S: `Post|${$context.arguments.postId}`,
+        },
+        sk: {
+          S: "Post",
+        },
       },
-      sk: {
-        S: "Post",
-      },
-    },
-  });
+    });
 
-  if (item === undefined) {
-    return undefined;
+    if (item === undefined) {
+      $util.log.info("Item was undefined");
+      return undefined;
+    }
+
+    return deleteWorkflow({
+      input: {
+        postId: $context.arguments.postId,
+      },
+    });
   }
-
-  return deleteWorkflow({ input: { postId: $context.arguments.postId } });
-}).addResolver(api, {
-  typeName: "Mutation",
-  fieldName: "deletePost",
-});
+);
 
 export const getDeletionStatus = new AppsyncResolver<
   { executionArn: string },
   string | undefined
->(async ($context) => {
-  const executionStatus = await deleteWorkflow.describeExecution(
-    $context.arguments.executionArn
-  );
+>(
+  stack,
+  "getDeletionStatus",
+  {
+    api,
+    typeName: "Query",
+    fieldName: "getDeletionStatus",
+  },
+  async ($context) => {
+    const executionStatus = await deleteWorkflow.describeExecution(
+      $context.arguments.executionArn
+    );
 
-  return executionStatus.status;
-}).addResolver(api, {
-  typeName: "Query",
-  fieldName: "getDeletionStatus",
-});
+    return executionStatus.status;
+  }
+);
 
 export interface CommentPage {
   nextToken?: string;
@@ -359,7 +381,7 @@ const defaultBus = EventBus.default<TestDeleteEvent>(stack);
 deleteWorkflow
   .onSucceeded(stack, "deleteSuccessfulEvent")
   .map((event) => ({
-    message: `post deleted ${event.id} using ${deleteWorkflow.stateMachineName}`,
+    message: `post deleted ${event.id} using ${deleteWorkflow.resource.stateMachineName}`,
   }))
   .pipe(sendNotification);
 
@@ -374,9 +396,14 @@ customDeleteBus
     "Delete Message Rule",
     (event) => event["detail-type"] === "Delete-Message-Success"
   )
-  .map((event) => ({
-    message: `Messages deleted: ${(<MessageDeletedEvent>event).detail.count}`,
-  }))
+  .map(
+    (event) =>
+      <Notification>{
+        message: `Messages deleted: ${
+          (<MessageDeletedEvent>event).detail.count
+        }`,
+      }
+  )
   .pipe(sendNotification);
 
 customDeleteBus
@@ -385,9 +412,12 @@ customDeleteBus
     "Delete Post Rule",
     (event) => event["detail-type"] === "Delete-Post-Success"
   )
-  .map((event) => ({
-    message: `Post Deleted: ${(<PostDeletedEvent>event).detail.id}`,
-  }))
+  .map(
+    (event) =>
+      <Notification>{
+        message: `Post Deleted: ${(<PostDeletedEvent>event).detail.id}`,
+      }
+  )
   .pipe(sendNotification);
 
 /**
@@ -448,7 +478,7 @@ new Function(
     });
     console.log(deleteWorkflow.describeExecution(exc.executionArn));
     await $AWS.DynamoDB.PutItem({
-      TableName: database,
+      Table: database,
       Item: {
         pk: { S: "Post|1" },
         sk: { S: "Post" },
@@ -459,7 +489,7 @@ new Function(
       },
     });
     const item = await $AWS.DynamoDB.GetItem({
-      TableName: database,
+      Table: database,
       ConsistentRead: true,
       Key: { pk: { S: "Post|1" }, sk: { S: "Post" } },
     });
@@ -546,21 +576,76 @@ const commentPage = api2.addType(
 
 post.addField({
   fieldName: "comments",
-  field: commentResolver.getField(api2, commentPage.attribute(), {
-    args: {
-      nextToken: appsync.GraphqlType.string(),
-      limit: appsync.GraphqlType.int(),
+  field: new AppsyncField(
+    {
+      api: api2,
+      returnType: commentPage.attribute(),
+      args: {
+        nextToken: appsync.GraphqlType.string(),
+        limit: appsync.GraphqlType.int(),
+      },
     },
-  }),
+    async (
+      $context: AppsyncContext<
+        { nextToken?: string; limit?: number },
+        Omit<Post, "comments">
+      >
+    ): Promise<CommentPage> => {
+      const response = await database.appsync.query({
+        query: {
+          expression: `pk = :pk and begins_with(#sk,:sk)`,
+          expressionValues: {
+            ":pk": {
+              S: $context.source.pk,
+            },
+            ":sk": {
+              S: "Comment|",
+            },
+          },
+          expressionNames: {
+            "#sk": "sk",
+          },
+        },
+        nextToken: $context.arguments.nextToken,
+        limit: $context.arguments.limit,
+      });
+
+      if (response.items !== undefined) {
+        return {
+          comments: response.items as Comment[],
+          nextToken: response.nextToken,
+        };
+      }
+      return {
+        comments: [],
+      };
+    }
+  ),
 });
 
 api2.addQuery(
   "getPost",
-  getPostResolver.getField(api2, post.attribute(), {
-    args: {
-      postId: appsync.GraphqlType.string({ isRequired: true }),
+  new AppsyncField(
+    {
+      api: api2,
+      returnType: post.attribute(),
+      args: {
+        postId: appsync.GraphqlType.string({ isRequired: true }),
+      },
     },
-  })
+    ($context) => {
+      return database.appsync.getItem({
+        key: {
+          pk: {
+            S: `Post|${$context.arguments.postId}`,
+          },
+          sk: {
+            S: "Post",
+          },
+        },
+      });
+    }
+  )
 );
 
 export interface Post<PostID extends string = string> {

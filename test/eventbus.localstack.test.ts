@@ -41,7 +41,7 @@ localstackTestSuite("eventBusStack", (testResource) => {
       const bus = new EventBus<Event<{ id: string }, "test">>(parent, "bus", {
         eventBusName: addr.node.addr,
       });
-      const table = new Table<{ id: string }, "id">(
+      const table = Table.fromTable<{ id: string }, "id">(
         new aws_dynamodb.Table(parent, "table", {
           tableName: addr.node.addr + "table",
           partitionKey: {
@@ -58,7 +58,7 @@ localstackTestSuite("eventBusStack", (testResource) => {
             Item: {
               id: { S: event.id },
             },
-            TableName: table,
+            Table: table,
           });
         }
       );

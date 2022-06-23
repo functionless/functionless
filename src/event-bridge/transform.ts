@@ -16,11 +16,14 @@ import { Event } from "./types";
  *
  * event is the event matched by the rule. This argument is optional.
  * $utils is a collection of built-in utilities wrapping EventBridge TargetInputs like contextual constants available to the transformer.
+ *
+ * @typeParam - Evnt - The event type from the {@link Rule}.
+ * @typeParam - OutEvnt - The narrowed event type after the transform is applied.
  */
-export type EventTransformFunction<E extends Event, O = any> = (
-  event: E,
+export type EventTransformFunction<in Evnt extends Event, out OutEvnt = any> = (
+  event: Evnt,
   $utils: EventTransformUtils
-) => O;
+) => OutEvnt;
 
 /**
  * https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-transform-target-input.html#eb-transform-input-predefined
@@ -39,8 +42,16 @@ export interface EventTransformUtils {
  * https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-transform-target-input.html
  *
  * @see Rule.map for more details on transforming event details.
+ *
+ * @typeParam - Evnt - The event type from the {@link Rule}.
+ * @typeParam - Out - The narrowed event type after the transform is applied.
+ * @typeParam - OutEvnt - Covariant form of {@link Evnt}. Should be inferred.
  */
-export class EventTransform<T extends Event, P> {
+export class EventTransform<
+  in Evnt extends Event,
+  out Out,
+  out OutEvnt extends Evnt = Evnt
+> {
   readonly targetInput: aws_events.RuleTargetInput;
 
   /**
@@ -48,7 +59,10 @@ export class EventTransform<T extends Event, P> {
    */
   public static readonly FunctionlessType = "EventTransform";
 
-  constructor(func: EventTransformFunction<T, P>, readonly rule: IRule<T>) {
+  constructor(
+    func: EventTransformFunction<Evnt, Out>,
+    readonly rule: IRule<OutEvnt>
+  ) {
     const decl = func as unknown as FunctionDecl;
     this.targetInput = synthesizeEventBridgeTargets(decl);
   }
@@ -60,20 +74,20 @@ export class EventTransform<T extends Event, P> {
    *
    * @see Rule.pipe for more details on pipe.
    */
-  pipe<
-    I extends IntegrationWithEventBus<P, Props>,
+  public pipe<
+    I extends IntegrationWithEventBus<Out, Props>,
     Props extends object | undefined
   >(
     integration: NonEventBusIntegration<I>,
     ...props: Parameters<DynamicProps<Props>>
   ): void;
-  pipe(
+  public pipe(
     callback: (
       targetInput: aws_events.RuleTargetInput
     ) => aws_events.IRuleTarget
   ): void;
-  pipe<
-    I extends IntegrationWithEventBus<P, Props>,
+  public pipe<
+    I extends IntegrationWithEventBus<Out, Props>,
     Props extends object | undefined
   >(
     integration:
@@ -90,3 +104,6 @@ export class EventTransform<T extends Event, P> {
  */
 export type NonEventBusIntegration<I extends Integration<any, any, any>> =
   I extends IEventBus<any> ? never : I;
+
+// to prevent the closure serializer from trying to import all of functionless.
+export const deploymentOnlyModule = true;

@@ -1,11 +1,15 @@
 import { Construct } from "constructs";
 import ts from "typescript";
+import { CallExpr, Expr, PropAccessExpr } from "./expression";
 import {
-  Expr,
   isArrayLiteralExpr,
   isBinaryExpr,
-  isBooleanLiteral,
+  isBooleanLiteralExpr,
   isComputedPropertyNameExpr,
+  isForInStmt,
+  isForOfStmt,
+  isFunctionDecl,
+  isFunctionExpr,
   isIdentifier,
   isNullLiteralExpr,
   isNumberLiteralExpr,
@@ -18,11 +22,29 @@ import {
   isStringLiteralExpr,
   isUnaryExpr,
   isUndefinedLiteralExpr,
-} from "./expression";
+} from "./guards";
 import { FunctionlessNode } from "./node";
 
 export type AnyFunction = (...args: any[]) => any;
 export type AnyAsyncFunction = (...args: any[]) => Promise<any>;
+
+/**
+ * Create a memoized function.
+ *
+ * @param f the function that produces the value
+ * @returns a function that computes a value on demand at most once.
+ */
+export function memoize<T>(f: () => T): () => T {
+  let isComputed = false;
+  let t: T;
+  return () => {
+    if (!isComputed) {
+      t = f();
+      isComputed = true;
+    }
+    return t!;
+  };
+}
 
 export function isInTopLevelScope(expr: FunctionlessNode): boolean {
   if (expr.parent === undefined) {
@@ -31,9 +53,9 @@ export function isInTopLevelScope(expr: FunctionlessNode): boolean {
   return walk(expr.parent);
 
   function walk(expr: FunctionlessNode): boolean {
-    if (expr.kind === "FunctionDecl" || expr.kind === "FunctionExpr") {
+    if (isFunctionDecl(expr) || isFunctionExpr(expr)) {
       return expr.parent === undefined;
-    } else if (expr.kind === "ForInStmt" || expr.kind === "ForOfStmt") {
+    } else if (isForInStmt(expr) || isForOfStmt(expr)) {
       return false;
     } else if (expr.parent === undefined) {
       return true;
@@ -114,6 +136,23 @@ export const isPrimitive = (val: any): val is PrimitiveValue => {
   );
 };
 
+export function isPromiseAll(expr: CallExpr): expr is CallExpr & {
+  expr: PropAccessExpr & {
+    name: "all";
+    parent: {
+      kind: "Identifier";
+      name: "Promise";
+    };
+  };
+} {
+  return (
+    isPropAccessExpr(expr.expr) &&
+    isIdentifier(expr.expr.expr) &&
+    expr.expr.name === "all" &&
+    expr.expr.expr.name === "Promise"
+  );
+}
+
 export const singletonConstruct = <T extends Construct, S extends Construct>(
   scope: S,
   id: string,
@@ -163,7 +202,7 @@ export const evalToConstant = (expr: Expr): Constant | undefined => {
   if (
     isStringLiteralExpr(expr) ||
     isNumberLiteralExpr(expr) ||
-    isBooleanLiteral(expr) ||
+    isBooleanLiteralExpr(expr) ||
     isNullLiteralExpr(expr) ||
     isUndefinedLiteralExpr(expr)
   ) {
@@ -270,3 +309,25 @@ export const evalToConstant = (expr: Expr): Constant | undefined => {
   }
   return undefined;
 };
+
+export class DeterministicNameGenerator {
+  private readonly generatedNames = new Map<FunctionlessNode, string>();
+
+  /**
+   * Generate a deterministic and unique variable name for a node.
+   *
+   * The value is cached so that the same node reference always has the same name.
+   *
+   * @param node the node to generate a name for
+   * @returns a unique variable name that can be used in JSON Path
+   */
+  public generateOrGet(node: FunctionlessNode): string {
+    if (!this.generatedNames.has(node)) {
+      this.generatedNames.set(node, `${this.generatedNames.size}_tmp`);
+    }
+    return this.generatedNames.get(node)!;
+  }
+}
+
+// to prevent the closure serializer from trying to import all of functionless.
+export const deploymentOnlyModule = true;

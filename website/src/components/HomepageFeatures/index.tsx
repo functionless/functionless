@@ -139,7 +139,7 @@ const CodeSnippets: CodeSnippet[] = [
   description: string;
 }
 
-const tasks = new Table<Task, "taskId">(this, "Tasks", {
+const tasks = Table.fromTable<Task, "taskId">(this, "Tasks", {
   billingMode: BillingMode.PAY_PER_REQUEST
 });`,
   },
@@ -158,11 +158,11 @@ const tasks = new Table<Task, "taskId">(this, "Tasks", {
     code: `new StepFunction(
   stack,
   "Validator",
-  (input: ValidateRequest) => {
+  async (input: ValidateRequest) => {
     const status = validate({ commentText: input.commentText });
     if (status === "bad") {
-      $AWS.DynamoDB.DeleteItem({
-        TableName: posts,
+      await $AWS.DynamoDB.DeleteItem({
+        Table: posts,
         Key: {
           pk: {
             S: \`Post|\${input.postId}\`,
@@ -179,7 +179,7 @@ const tasks = new Table<Task, "taskId">(this, "Tasks", {
     title:
       "Deploy a GraphQL API to AWS Appsync without ever touching a single line of Velocity Templates.",
     code: `const addTask = new AppsyncResolver<{text: string}, Task>(($context) => {
-  return tasks.putItem({
+  return tasks.appsync.putItem({
     key: {
       taskId: {
         S: $util.autoUuid())

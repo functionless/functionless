@@ -3,9 +3,9 @@
 AWS's Step Function service offers a powerful primitive for building long-running and short-running state machine workflows in the cloud without managing complex infrastructure.
 
 ```ts
-new StepFunction(scope, "F", (payload) => {
+new StepFunction(scope, "F", async (payload) => {
   if (payload.property) {
-    serviceCall(payload);
+    await serviceCall(payload);
   } else {
     throw new Error("missing property");
   }
@@ -50,11 +50,43 @@ These State Machines have many use-cases, such as long-running workflows involvi
 Functionless automatically generates the ASL (and any IAM Policies) directly from your TypeScript code, enabling you to leverage the operational benefits of Step Functions using ordinary control-flow such as `if-else`, `for`, `while`, etc.
 
 ```ts
-new StepFunction(scope, "F", (payload) => {
+new StepFunction(scope, "F", async (payload) => {
   if (payload.property) {
-    serviceCall(payload);
+    await serviceCall(payload);
   } else {
     throw new Error("missing property");
   }
 });
 ```
+
+## Wrap an existing State Machine
+
+There are cases in which you want to integrate with an existing State Machine.
+
+To achieve this, use the `StepFunction.fromStateMachine`  or `ExpressStepFunction.fromStateMachine` utilities to wrap existing `aws_stepfunctions.StateMachine`s.
+
+```ts
+import { aws_stepfunctions } from "aws-cdk-lib";
+import { StepFunction } from "functionless";
+
+const myMachine = StepFunction.fromStateMachine<{ name: string }, string>(
+  new aws_stepfunctions.StateMachine(this, "MyMachine", {
+    ...
+  })
+);
+
+const myExpressMachine = ExpressStepFunction.fromStateMachine<{ name: string }, string>(
+  new aws_stepfunctions.StateMachine(this, "MyMachine", {
+    stateMachineType: aws_stepfunctions.StateMachineType.EXPRESS,
+    ...
+  })
+);
+```
+
+A wrapped function annotates the type signature of the `StepFunction` and makes it available to be called from Functionless Constructs.
+
+:::warning
+[Incorrect State Machine (104)](../../error-codes.md#incorrect-state-machine-type-imported) will be thrown when the wrong StateMachineType is used with the wrong Functionless `StateMachine` or `ExpressStateMachine`.
+
+The invocation contracts for the types of state machines and permissions to grant are different so we have separated them.
+:::

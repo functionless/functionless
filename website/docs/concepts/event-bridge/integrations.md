@@ -6,14 +6,15 @@ sidebar_position: 5
 
 Functionless supports integrations between some AWS services and Event Bridge. Send events to an `EventBus` using the `putEvents` API and send events to other resources using the `.pipe` method.
 
-| Resource       | From `EventBus` | To `EventBus` |
-| -------------- | --------------- | ------------- |
-| _via_          | `pipe`          | `putEvents`   |
-| Lambda         | &#x2705;        | &#x2705;      |
-| Step Functions | &#x2705;        | &#x2705;      |
-| EventBus       | &#x2705;        | &#x2705;      |
-| App Sync       |                 | Coming Soon   |
-| API Gateway    |                 | Coming Soon   |
+| Resource       | From `EventBus` | To `EventBus` | To `EventBus`                          |
+| -------------- | --------------- | ------------- | -------------------------------------- |
+| _via_          | `pipe`          | `putEvents`   | [`$AWS.EventBridge.Invoke`](../aws.md) |
+| Lambda         | &#x2705;        | &#x2705;      |                                        |
+| Step Functions | &#x2705;        | &#x2705;      |                                        |
+| EventBus       | &#x2705;        | &#x2705;      | &#x2705;                               |
+| Table          |                 |               |                                        |
+| App Sync       |                 | Coming Soon   |                                        |
+| API Gateway    |                 | Coming Soon   |                                        |
 
 See [issues](https://github.com/functionless/functionless/issues?q=is%3Aissue+is%3Aopen+label%3Aevent-bridge) for progress or create a new issue in the form `Event Bridge + [Service]`.
 
@@ -63,7 +64,7 @@ See [issues](https://github.com/functionless/functionless/issues?q=is%3Aissue+is
 ```ts
 const bus = new EventBus();
 = new StepFunction(stack, "sfn", () => {
-  bus.putEvents({
+  await bus.putEvents({
     source: "myStepFunction",
     "detail-type": "someType",
     detail: {},

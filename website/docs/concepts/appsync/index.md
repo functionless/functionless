@@ -31,14 +31,14 @@ Functionless enables you to automatically generate the Resolver configurations (
 
 ```ts
 const getItem = new AppsyncResolver(
-  ($context: AppsyncContext<{ key: string }>, key) => {
-    const item = myTable.get({
+  async ($context: AppsyncContext<{ key: string }>, key) => {
+    const item = await myTable.appsync.get({
       key: {
         S: key,
       },
     });
 
-    const processedName = myFunc(item.key);
+    const processedName = await myFunc(item.key);
 
     return {
       ...item,

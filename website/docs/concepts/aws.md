@@ -9,12 +9,12 @@ The `$AWS` object contains specialized implementations of each AWS API that do n
 ```ts
 import { $AWS, Table } from "functionless";
 
-const table = new Table<Item, "pk">(..);
+const table = Table.fromTable<Item, "pk">(..);
 
-new StepFunction(scope, "Func", (name: string) => {
+new StepFunction(scope, "Func", async (name: string) => {
   // call DynamoDB's DeleteItem API.
-  $AWS.DynamoDB.DeleteItem({
-    TableName: table,
+  await $AWS.DynamoDB.DeleteItem({
+    Table: table,
     Key: {
       name: {
         S: name

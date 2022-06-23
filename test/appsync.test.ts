@@ -1,35 +1,42 @@
+import { GraphqlApi } from "@aws-cdk/aws-appsync-alpha";
 import { Stack } from "aws-cdk-lib";
-import { AppsyncResolver, reflect, StepFunction } from "../src";
-import { appsyncTestCase } from "./util";
+import {
+  AppsyncContext,
+  AppsyncResolver,
+  reflect,
+  StepFunction,
+  Function,
+} from "../src";
+import { appsyncTestCase, testAppsyncVelocity } from "./util";
 
 let stack: Stack;
+let api: GraphqlApi;
 beforeEach(() => {
   stack = new Stack();
+  api = new GraphqlApi(stack, "api", {
+    name: "api",
+  });
 });
 
 describe("step function integration", () => {
   test("machine with no parameters", () => {
     const machine = new StepFunction(stack, "machine", async () => {});
 
-    appsyncTestCase(
+    const templates = appsyncTestCase(
       reflect(async () => {
         await machine({});
-      }),
-      {
-        executeTemplates: [
-          {
-            index: 1,
-            match: {
-              params: {
-                body: {
-                  stateMachineArn: machine.stateMachineArn,
-                },
-              },
-            },
-          },
-        ],
-      }
+      })
     );
+
+    testAppsyncVelocity(templates[1], {
+      resultMatch: {
+        params: {
+          body: {
+            stateMachineArn: machine.resource.stateMachineArn,
+          },
+        },
+      },
+    });
   });
 
   test("machine with static parameters", () => {
@@ -39,25 +46,21 @@ describe("step function integration", () => {
       async () => {}
     );
 
-    appsyncTestCase(
+    const templates = appsyncTestCase(
       reflect(async () => {
         await machine({ input: { id: "1" } });
-      }),
-      {
-        executeTemplates: [
-          {
-            index: 1,
-            match: {
-              params: {
-                body: {
-                  stateMachineArn: machine.stateMachineArn,
-                },
-              },
-            },
-          },
-        ],
-      }
+      })
     );
+
+    testAppsyncVelocity(templates[1], {
+      resultMatch: {
+        params: {
+          body: {
+            stateMachineArn: machine.resource.stateMachineArn,
+          },
+        },
+      },
+    });
   });
 
   test("machine with dynamic parameters", () => {
@@ -67,111 +70,153 @@ describe("step function integration", () => {
       async () => {}
     );
 
-    appsyncTestCase(
-      reflect(async (context) => {
+    const templates = appsyncTestCase(
+      reflect(async (context: AppsyncContext<{ id: string }>) => {
         await machine({ input: { id: context.arguments.id } });
-      }),
-      {
-        executeTemplates: [
-          {
-            index: 1,
-            context: { arguments: { id: "1" }, source: {} },
-            match: {
-              params: {
-                body: {
-                  stateMachineArn: machine.stateMachineArn,
-                },
-              },
-            },
-          },
-        ],
-      }
+      })
     );
+
+    testAppsyncVelocity(templates[1], {
+      arguments: { id: "1" },
+      resultMatch: {
+        params: {
+          body: {
+            stateMachineArn: machine.resource.stateMachineArn,
+          },
+        },
+      },
+    });
   });
 
   test("machine with name", () => {
     const machine = new StepFunction(stack, "machine", async () => {});
 
-    appsyncTestCase(
-      reflect(async (context) => {
+    const templates = appsyncTestCase(
+      reflect(async (context: AppsyncContext<{ id: string }>) => {
         await machine({ name: context.arguments.id });
-      }),
-      {
-        executeTemplates: [
-          {
-            index: 1,
-            context: { arguments: { id: "1" }, source: {} },
-            match: {
-              params: {
-                body: {
-                  stateMachineArn: machine.stateMachineArn,
-                },
-              },
-            },
-          },
-        ],
-      }
+      })
     );
+
+    testAppsyncVelocity(templates[1], {
+      arguments: { id: "1" },
+      resultMatch: {
+        params: {
+          body: {
+            stateMachineArn: machine.resource.stateMachineArn,
+          },
+        },
+      },
+    });
   });
 
   test("machine with trace header", () => {
     const machine = new StepFunction(stack, "machine", async () => {});
 
-    new AppsyncResolver<{ id: string }, void>(async (context) => {
-      await machine({ traceHeader: context.arguments.id });
-    });
+    new AppsyncResolver<{ id: string }, void>(
+      stack,
+      "resolver",
+      {
+        api,
+        fieldName: "field",
+        typeName: "type",
+      },
+      async (context) => {
+        await machine({ traceHeader: context.arguments.id });
+      }
+    );
   });
 
   test("machine describe exec", () => {
     const machine = new StepFunction(stack, "machine", async () => {});
 
-    appsyncTestCase(
+    const templates = appsyncTestCase(
       reflect(async () => {
         const exec = "exec1";
         await machine.describeExecution(exec);
-      }),
-      {
-        executeTemplates: [
-          {
-            index: 1,
-          },
-        ],
-      }
+      })
     );
+
+    testAppsyncVelocity(templates[1]);
   });
+});
+
+test("if first argument is a GraphQLApi, then api can be omitted from the props", () => {
+  const machine = new StepFunction(stack, "machine", () => {});
+
+  new AppsyncResolver<{ id: string }, void>(
+    api,
+    "resolver",
+    {
+      fieldName: "field",
+      typeName: "type",
+    },
+    async (context) => {
+      await machine({ traceHeader: context.arguments.id });
+    }
+  );
+});
+
+test("machine describe exec return", () => {
+  const machine = new StepFunction(stack, "machine", () => {});
+
+  const templates = appsyncTestCase(
+    reflect(() => {
+      const exec = "exec1";
+      return machine.describeExecution(exec);
+    })
+  );
+
+  testAppsyncVelocity(templates[1]);
+});
+
+test("machine describe exec var", () => {
+  const machine = new StepFunction(stack, "machine", () => {});
+
+  const templates = appsyncTestCase(
+    reflect(() => {
+      const exec = "exec1";
+      const v = machine.describeExecution(exec);
+      return v;
+    })
+  );
+
+  testAppsyncVelocity(templates[1]);
 });
 
 describe("step function describe execution", () => {
   test("machine describe exec string", () => {
     const machine = new StepFunction(stack, "machine", async () => {});
 
-    appsyncTestCase(
+    const templates = appsyncTestCase(
       reflect(async () => {
         await machine.describeExecution("exec1");
-      }),
-      {
-        expectedTemplateCount: 4,
-        executeTemplates: [
-          {
-            index: 1,
-          },
-        ],
-      }
+      })
     );
+
+    testAppsyncVelocity(templates[1]);
   });
 
   test("machine with trace header", () => {
-    const machine = new StepFunction(stack, "machine", async () => {});
-    new AppsyncResolver<{ id: string }, void>(async (context) => {
-      await machine({ traceHeader: context.arguments.id });
-    });
+    const machine = new StepFunction(stack, "machine", () => {});
+    new AppsyncResolver<{ id: string }, void>(
+      stack,
+      "resolver",
+      {
+        api,
+        fieldName: "field",
+        typeName: "type",
+      },
+      async (context) => {
+        await machine({ traceHeader: context.arguments.id });
+      }
+    );
   });
 });
 
 test("multiple isolated integrations", () => {
   const machine = new StepFunction(stack, "machine", () => {});
 
-  appsyncTestCase(
+  const templates = appsyncTestCase(
     reflect(async () => {
       await machine.describeExecution("exec1");
       await machine.describeExecution("exec2");
@@ -180,39 +225,30 @@ test("multiple isolated integrations", () => {
     }),
     {
       expectedTemplateCount: 10,
-      executeTemplates: [
-        {
-          index: 1,
-        },
-      ],
     }
   );
+
+  testAppsyncVelocity(templates[1]);
 });
 
 test("multiple linked integrations", () => {
   const machine = new StepFunction(stack, "machine", () => {});
 
-  appsyncTestCase(
+  const templates = appsyncTestCase(
     reflect(async () => {
       const res1 = await machine({ input: {} });
       const res2 = await machine({ input: res1 });
       await machine({ input: res2 });
-    }),
-    {
-      expectedTemplateCount: 8,
-      executeTemplates: [
-        {
-          index: 1,
-        },
-      ],
-    }
+    })
   );
+
+  testAppsyncVelocity(templates[1]);
 });
 
 test("multiple linked integrations pre-compute", () => {
   const machine = new StepFunction(stack, "machine", () => {});
 
-  appsyncTestCase(
+  const templates = appsyncTestCase(
     reflect(async () => {
       const x = "y";
       const res1 = await machine({ input: { x } });
@@ -221,39 +257,31 @@ test("multiple linked integrations pre-compute", () => {
     }),
     {
       expectedTemplateCount: 8,
-      executeTemplates: [
-        {
-          index: 1,
-        },
-      ],
     }
   );
+
+  testAppsyncVelocity(templates[1]);
 });
 
 test("multiple linked integrations post-compute", () => {
   const machine = new StepFunction(stack, "machine", () => {});
 
-  appsyncTestCase(
+  const templates = appsyncTestCase(
     reflect(async () => {
       const res1 = await machine({ input: {} });
       const res2 = await machine({ input: res1 });
       const result = await machine({ input: res2 });
       return result.startDate;
-    }),
-    {
-      executeTemplates: [
-        {
-          index: 1,
-        },
-      ],
-    }
+    })
   );
+
+  testAppsyncVelocity(templates[1]);
 });
 
 test("multiple linked integrations with props", () => {
   const machine = new StepFunction(stack, "machine", () => {});
 
-  appsyncTestCase(
+  const templates = appsyncTestCase(
     reflect(async () => {
       const res1 = await machine.describeExecution("exec1");
       const res2 = await machine.describeExecution(res1.executionArn);
@@ -261,20 +289,17 @@ test("multiple linked integrations with props", () => {
     }),
     {
       expectedTemplateCount: 8,
-      executeTemplates: [
-        {
-          index: 1,
-        },
-      ],
     }
   );
+
+  testAppsyncVelocity(templates[1]);
 });
 
 // https://github.com/functionless/functionless/issues/212
-test.skip("multiple nested integrations", () => {
+test("multiple nested integrations", () => {
   const machine = new StepFunction(stack, "machine", () => {});
 
-  appsyncTestCase(
+  const templates = appsyncTestCase(
     reflect(async () => {
       await machine({
         input: await machine({ input: await machine({ input: {} }) }),
@@ -282,20 +307,17 @@ test.skip("multiple nested integrations", () => {
     }),
     {
       expectedTemplateCount: 8,
-      executeTemplates: [
-        {
-          index: 1,
-        },
-      ],
     }
   );
+
+  testAppsyncVelocity(templates[1]);
 });
 
 // https://github.com/functionless/functionless/issues/212
-test.skip("multiple nested integrations prop access", () => {
+test("multiple nested integrations prop access", () => {
   const machine = new StepFunction(stack, "machine", () => {});
 
-  appsyncTestCase(
+  const templates = appsyncTestCase(
     reflect(async () => {
       await machine.describeExecution(
         (
@@ -309,31 +331,45 @@ test.skip("multiple nested integrations prop access", () => {
     }),
     {
       expectedTemplateCount: 8,
-      executeTemplates: [
-        {
-          index: 1,
-        },
-      ],
     }
   );
+
+  testAppsyncVelocity(templates[1]);
+});
+
+test("integrations separated by in", () => {
+  const func = new Function(stack, "func1", async () => {
+    return "key";
+  });
+  const func2 = new Function(stack, "func2", async () => {
+    return { key: "value" };
+  });
+
+  const templates = appsyncTestCase(
+    reflect(async () => {
+      if ((await func({})) in (await func2({}))) {
+        return true;
+      }
+      return false;
+    }),
+    {
+      expectedTemplateCount: 6,
+    }
+  );
+
+  testAppsyncVelocity(templates[1]);
 });
 
 test("multiple linked integrations with mutation", () => {
   const machine = new StepFunction(stack, "machine", () => {});
 
-  appsyncTestCase(
+  const templates = appsyncTestCase(
     reflect(async () => {
       const res1 = await machine.describeExecution("exec1");
       const formatted = `status: ${res1.status}`;
       await machine({ input: { x: formatted } });
-    }),
-    {
-      expectedTemplateCount: 6,
-      executeTemplates: [
-        {
-          index: 1,
-        },
-      ],
-    }
+    })
   );
+
+  testAppsyncVelocity(templates[1]);
 });

@@ -1,13 +1,19 @@
 import {
   aws_dynamodb,
   aws_events,
+  CfnMapping,
+  CfnParameter,
   Duration,
+  Fn,
+  Lazy,
   RemovalPolicy,
+  SecretValue,
   Stack,
   Token,
 } from "aws-cdk-lib";
 // eslint-disable-next-line import/no-extraneous-dependencies
 import { Lambda } from "aws-sdk";
+import axios from "axios";
 import { Construct } from "constructs";
 import {
   $AWS,
@@ -32,30 +38,64 @@ const localstackClientConfig: FunctionProps = {
   }),
 };
 
-interface TestFunctionResource {
-  <I, O, Outputs extends Record<string, string> = Record<string, string>>(
+interface TestFunctionBase {
+  <
+    I,
+    O,
+    // Forces typescript to infer O from the Function and not from the expect argument.
+    OO extends O | { errorMessage: string; errorType: string },
+    Outputs extends Record<string, string> = Record<string, string>
+  >(
     name: string,
     func: (
       parent: Construct
     ) => Function<I, O> | { func: Function<I, O>; outputs: Outputs },
-    expected: O | ((context: Outputs) => O),
+    expected: OO extends void
+      ? null
+      : OO | ((context: Outputs) => OO extends void ? null : O),
     payload?: I | ((context: Outputs) => I)
   ): void;
+}
 
-  skip: <I, O, Outputs extends Record<string, string> = Record<string, string>>(
+interface TestFunctionResource extends TestFunctionBase {
+  skip: <
+    I,
+    O, // Forces typescript to infer O from the Function and not from the expect argument.
+    OO extends O | { errorMessage: string; errorType: string },
+    Outputs extends Record<string, string> = Record<string, string>
+  >(
     name: string,
     func: (
       parent: Construct
     ) => Function<I, O> | { func: Function<I, O>; outputs: Outputs },
-    expected: O | ((context: Outputs) => O),
+    expected: OO extends void
+      ? null
+      : OO | ((context: Outputs) => OO extends void ? null : O),
+    payload?: I | ((context: Outputs) => I)
+  ) => void;
+
+  only: <
+    I,
+    O, // Forces typescript to infer O from the Function and not from the expect argument.
+    OO extends O | { errorMessage: string; errorType: string },
+    Outputs extends Record<string, string> = Record<string, string>
+  >(
+    name: string,
+    func: (
+      parent: Construct
+    ) => Function<I, O> | { func: Function<I, O>; outputs: Outputs },
+    expected: OO extends void
+      ? null
+      : OO | ((context: Outputs) => OO extends void ? null : O),
     payload?: I | ((context: Outputs) => I)
   ) => void;
 }
 
 localstackTestSuite("functionStack", (testResource, _stack, _app) => {
-  // by naming this `test` the jest vscode extension gives the debug option
-  const test: TestFunctionResource = (name, func, expected, payload) => {
-    testResource(
+  const _testFunc: (
+    f: typeof testResource | typeof testResource.only
+  ) => TestFunctionBase = (f) => (name, func, expected, payload) => {
+    f(
       name,
       (parent) => {
         const res = func(parent);
@@ -79,12 +119,16 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
     );
   };
 
+  const test = _testFunc(testResource) as TestFunctionResource;
+
   test.skip = (name, _func, _expected, _payload?) =>
     testResource.skip(
       name,
       () => {},
       async () => {}
     );
+
+  test.only = _testFunc(testResource.only);
 
   test(
     "Call Lambda",
@@ -325,6 +369,98 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
   }, 1);
 
   test(
+    "function tokens",
+    (parent) => {
+      const bus = new EventBus(parent, "bus");
+      const split = Fn.select(1, Fn.split(":", bus.eventBusArn));
+      const join = Fn.join("-", Fn.split(":", bus.eventBusArn, 6));
+      const base64 = Fn.base64("data");
+      const mapping = new CfnMapping(parent, "mapping", {
+        mapping: {
+          map1: { test: "value" },
+        },
+      });
+      const mapToken = Fn.findInMap(mapping.logicalId, "map1", "test");
+      const param = new CfnParameter(parent, "param", {
+        default: "paramValue",
+      });
+      const ref = Fn.ref(param.logicalId);
+      return {
+        func: new Function(
+          parent,
+          "function",
+          {
+            timeout: Duration.seconds(20),
+          },
+          async () => {
+            return {
+              split,
+              join,
+              base64,
+              mapToken,
+              ref,
+            };
+          }
+        ),
+        outputs: { bus: bus.eventBusArn },
+      };
+    },
+    (output) => ({
+      split: "aws",
+      join: output.bus.split(":").join("-"),
+      base64: "ZGF0YQ==",
+      mapToken: "value",
+      ref: "paramValue",
+    })
+  );
+
+  test(
+    "function token strings",
+    (parent) => {
+      const bus = new EventBus(parent, "bus");
+      const split = Fn.select(1, Fn.split(":", bus.eventBusArn)).toString();
+      const join = Fn.join("-", Fn.split(":", bus.eventBusArn, 6)).toString();
+      const base64 = Fn.base64("data").toString();
+      const mapping = new CfnMapping(parent, "mapping", {
+        mapping: {
+          map1: { test: "value" },
+        },
+      });
+      const mapToken = Fn.findInMap(mapping.logicalId, "map1", "test");
+      const param = new CfnParameter(parent, "param", {
+        default: "paramValue",
+      });
+      const ref = Fn.ref(param.logicalId).toString();
+      return {
+        func: new Function(
+          parent,
+          "function",
+          {
+            timeout: Duration.seconds(20),
+          },
+          async () => {
+            return {
+              split,
+              join,
+              base64,
+              mapToken,
+              ref,
+            };
+          }
+        ),
+        outputs: { bus: bus.eventBusArn },
+      };
+    },
+    (output) => ({
+      split: "aws",
+      join: output.bus.split(":").join("-"),
+      base64: "ZGF0YQ==",
+      mapToken: "value",
+      ref: "paramValue",
+    })
+  );
+
+  test(
     "Call Lambda put events",
     (parent) => {
       const bus = new EventBus(parent, "bus");
@@ -369,7 +505,7 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
       }
     );
 
-    bus.bus.grantPutEventsTo(func.resource);
+    bus.resource.grantPutEventsTo(func.resource);
 
     return func;
   }, 0);
@@ -575,6 +711,151 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
   );
 
   test(
+    "tokens",
+    (parent) => {
+      const token = Token.asString("hello");
+      const obj = { iam: "object" };
+      const token2 = Token.asAny(obj);
+      const obj2 = { iam: Token.asString("token") };
+      const nestedToken = Token.asAny(obj2);
+      const numberToken = Token.asNumber(1);
+      const listToken = Token.asList(["1", "2"]);
+      const nestedListToken = Token.asList([Token.asString("hello")]);
+      return new Function(
+        parent,
+        "function",
+        localstackClientConfig,
+        async () => {
+          return {
+            string: token,
+            object: token2 as unknown as typeof obj,
+            nested: nestedToken as unknown as typeof obj2,
+            number: numberToken,
+            list: listToken,
+            nestedList: nestedListToken,
+          };
+        }
+      );
+    },
+    {
+      string: "hello",
+      object: { iam: "object" },
+      nested: { iam: "token" },
+      number: 1,
+      list: ["1", "2"],
+      nestedList: ["hello"],
+    }
+  );
+
+  test(
+    "serialize entire table",
+    (parent) => {
+      const table = new aws_dynamodb.Table(parent, "table", {
+        partitionKey: {
+          name: "key",
+          type: aws_dynamodb.AttributeType.STRING,
+        },
+      });
+      const get = $AWS.DynamoDB.GetItem;
+      table.addGlobalSecondaryIndex({
+        indexName: "testIndex",
+        partitionKey: {
+          name: "key",
+          type: aws_dynamodb.AttributeType.STRING,
+        },
+      });
+
+      const flTable = Table.fromTable(table);
+
+      return new Function(
+        parent,
+        "function",
+        localstackClientConfig,
+        async () => {
+          await get({
+            Table: flTable,
+            Key: {
+              key: { S: "hi" },
+            },
+          });
+        }
+      );
+    },
+    null
+  );
+
+  test(
+    "serialize entire function",
+    (parent) => {
+      const func = new Function<undefined, string>(parent, "func", async () => {
+        return "hello";
+      });
+
+      return new Function(
+        parent,
+        "function",
+        localstackClientConfig,
+        async () => {
+          const hello = func;
+          return hello();
+        }
+      );
+    },
+    "hello"
+  );
+
+  test(
+    "serialize token with nested string",
+    (parent) => {
+      const table = new aws_dynamodb.Table(parent, "table", {
+        partitionKey: {
+          name: "key",
+          type: aws_dynamodb.AttributeType.STRING,
+        },
+      });
+
+      const obj = { key: table.tableArn };
+      const token = Token.asAny(obj);
+
+      return {
+        func: new Function(
+          parent,
+          "function",
+          localstackClientConfig,
+          async () => {
+            return (token as unknown as typeof obj).key;
+          }
+        ),
+        outputs: { table: table.tableArn },
+      };
+    },
+    (outputs) => {
+      return outputs.table;
+    }
+  );
+
+  //
+  test.skip(
+    "serialize token with lazy should return",
+    (parent) => {
+      const obj = {
+        key: Lazy.any({ produce: () => "value" }) as unknown as string,
+      };
+      const token = Token.asAny(obj);
+
+      return new Function(
+        parent,
+        "function",
+        localstackClientConfig,
+        async () => {
+          return (token as unknown as typeof obj).key;
+        }
+      );
+    },
+    "value"
+  );
+
+  test(
     "step function integration and wait for completion",
     (parent) => {
       const func1 = new StepFunction<undefined, string>(
@@ -604,6 +885,18 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
     `"hi"`
   );
 
+  test.only("import", (parent) => {
+    return new Function(
+      parent,
+      "function",
+      localstackClientConfig,
+      async () => {
+        console.log("hi");
+        return (await axios.get("https://google.com")).status;
+      }
+    );
+  }, 200);
+
   // Localstack doesn't support start sync
   // https://github.com/localstack/localstack/issues/5258
   test.skip(
@@ -628,9 +921,9 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
   );
 
   test(
-    "dynamo integration get",
+    "dynamo integration aws dynamo functions",
     (parent) => {
-      const table = new Table<{ key: string }, "key">(
+      const table = Table.fromTable<{ key: string; value: string }, "key">(
         new aws_dynamodb.Table(parent, "table", {
           partitionKey: {
             name: "key",
@@ -639,27 +932,62 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
           removalPolicy: RemovalPolicy.DESTROY,
         })
       );
-      const putItem = $AWS.DynamoDB.PutItem;
-      const getItem = $AWS.DynamoDB.GetItem;
+      const { GetItem, DeleteItem, PutItem, Query, Scan, UpdateItem } =
+        $AWS.DynamoDB;
       return new Function(
         parent,
         "function",
         localstackClientConfig,
         async () => {
-          await putItem({
-            TableName: table,
+          await PutItem({
+            Table: table,
             Item: {
               key: { S: "key" },
+              value: { S: "wee" },
             },
           });
-          const item = await getItem({
-            TableName: table,
+          const item = await GetItem({
+            Table: table,
             Key: {
               key: {
                 S: "key",
               },
             },
             ConsistentRead: true,
+          });
+          await UpdateItem({
+            Table: table,
+            Key: {
+              key: { S: "key" },
+            },
+            UpdateExpression: "set #value = :value",
+            ExpressionAttributeValues: {
+              ":value": { S: "value" },
+            },
+            ExpressionAttributeNames: {
+              "#value": "value",
+            },
+          });
+          await DeleteItem({
+            Table: table,
+            Key: {
+              key: {
+                S: "key",
+              },
+            },
+          });
+          await Query({
+            Table: table,
+            KeyConditionExpression: "#key = :key",
+            ExpressionAttributeValues: {
+              ":key": { S: "key" },
+            },
+            ExpressionAttributeNames: {
+              "#key": "key",
+            },
+          });
+          await Scan({
+            Table: table,
           });
           return item.Item?.key.S;
         }
@@ -989,51 +1317,88 @@ const testFunction = async (
     })
     .promise();
 
-  expect(
-    result.Payload ? JSON.parse(result.Payload.toString()) : undefined
-  ).toEqual(expected);
+  try {
+    expect(
+      result.Payload ? JSON.parse(result.Payload.toString()) : undefined
+    ).toEqual(expected);
+  } catch (e) {
+    console.error(result);
+    throw e;
+  }
 };
 
 test("should not create new resources in lambda", async () => {
-  await expect(
-    async () => {
-      const stack = new Stack();
-      new Function(
-        stack,
-        "function",
-        {
-          timeout: Duration.seconds(20),
-        },
-        async () => {
-          const bus = new aws_events.EventBus(stack, "busbus");
-          return bus.eventBusArn;
-        }
-      );
-      await Promise.all(Function.promises);
-      Function.promises.splice(0, Function.promises.length);
-    }
-    // TODO: add error message
-  ).rejects.toThrow();
+  await expect(async () => {
+    const stack = new Stack();
+    new Function(
+      stack,
+      "function",
+      {
+        timeout: Duration.seconds(20),
+      },
+      async () => {
+        const bus = new aws_events.EventBus(stack, "busbus");
+        return bus.eventBusArn;
+      }
+    );
+    await Promise.all(Function.promises);
+  }).rejects.toThrow(
+    `Cannot initialize new CDK resources in a native function, found EventBus.`
+  );
 });
 
 test("should not create new functionless resources in lambda", async () => {
-  await expect(
-    async () => {
-      const stack = new Stack();
-      new Function(
-        stack,
-        "function",
-        {
-          timeout: Duration.seconds(20),
-        },
-        async () => {
-          const bus = new EventBus(stack, "busbus");
-          return bus.eventBusArn;
-        }
-      );
-      await Promise.all(Function.promises);
-      Function.promises.splice(0, Function.promises.length);
-    }
-    // TODO: add error message
-  ).rejects.toThrow();
+  await expect(async () => {
+    const stack = new Stack();
+    new Function(
+      stack,
+      "function",
+      {
+        timeout: Duration.seconds(20),
+      },
+      async () => {
+        const bus = new EventBus(stack, "busbus");
+        return bus.eventBusArn;
+      }
+    );
+    await Promise.all(Function.promises);
+  }).rejects.toThrow(
+    "Cannot initialize new resources in a native function, found EventBus."
+  );
+});
+
+test("should not use SecretValues in lambda", async () => {
+  await expect(async () => {
+    const stack = new Stack();
+    const secret = SecretValue.unsafePlainText("sshhhhh");
+    new Function(
+      stack,
+      "function",
+      {
+        timeout: Duration.seconds(20),
+      },
+      async () => {
+        return secret;
+      }
+    );
+    await Promise.all(Function.promises);
+  }).rejects.toThrow(`Found unsafe use of SecretValue token in a Function.`);
+});
+
+test("should not use SecretValues as string in lambda", async () => {
+  await expect(async () => {
+    const stack = new Stack();
+    const secret = SecretValue.unsafePlainText("sshhhhh").toString();
+    new Function(
+      stack,
+      "function",
+      {
+        timeout: Duration.seconds(20),
+      },
+      async () => {
+        return secret;
+      }
+    );
+    await Promise.all(Function.promises);
+  }).rejects.toThrow(`Found unsafe use of SecretValue token in a Function.`);
 });

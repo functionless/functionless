@@ -1,3 +1,4 @@
+import { GraphqlApi } from "@aws-cdk/aws-appsync-alpha";
 import {
   aws_dynamodb,
   aws_logs,
@@ -23,6 +24,11 @@ import {
 } from "./generated-types";
 
 export { Person };
+
+export interface PeopleDatabaseProps {
+  api: GraphqlApi;
+}
+
 export class PeopleDatabase extends Construct {
   readonly personTable;
   readonly computeScore;
@@ -33,10 +39,10 @@ export class PeopleDatabase extends Construct {
   readonly getPersonMachine;
   readonly testMachine;
 
-  constructor(scope: Construct, id: string) {
+  constructor(scope: Construct, id: string, { api }: PeopleDatabaseProps) {
     super(scope, id);
 
-    this.personTable = new Table<Person, "id", undefined>(
+    this.personTable = Table.fromTable<Person, "id", undefined>(
       new aws_dynamodb.Table(this, "table", {
         partitionKey: {
           name: "id",
@@ -84,7 +90,7 @@ export class PeopleDatabase extends Construct {
       },
       async (input) => {
         const person = await $AWS.DynamoDB.GetItem({
-          TableName: this.personTable,
+          Table: this.personTable,
           Key: {
             id: {
               S: input.id,
@@ -112,44 +118,69 @@ export class PeopleDatabase extends Construct {
     this.getPerson = new AppsyncResolver<
       QueryResolvers["getPerson"]["args"],
       QueryResolvers["getPerson"]["result"]
-    >(async ($context) => {
-      let person;
-      // example of integrating with an Express Step Function from Appsync
-      person = await this.getPersonMachine({
-        input: { id: $context.arguments.id },
-      });
+    >(
+      this,
+      "getPerson",
+      {
+        api,
+        typeName: "Query",
+        fieldName: "getPerson",
+      },
+      async ($context) => {
+        let person;
+        // example of integrating with an Express Step Function from Appsync
+        person = await this.getPersonMachine({
+          input: { id: $context.arguments.id },
+        });
 
-      if (person.status === "SUCCEEDED") {
-        return person.output;
-      } else {
-        $util.error(person.cause, person.error);
+        if (person.status === "SUCCEEDED") {
+          return person.output;
+        } else {
+          $util.error(person.cause, person.error);
+        }
       }
-    });
+    );
 
     this.addPerson = new AppsyncResolver<
       MutationResolvers["addPerson"]["args"],
       MutationResolvers["addPerson"]["result"]
-    >(($context) => {
-      const person = this.personTable.putItem({
-        key: {
-          id: {
-            S: $util.autoId(),
+    >(
+      this,
+      "addPerson",
+      {
+        api,
+        typeName: "Query",
+        fieldName: "addPerson",
+      },
+      async ($context) => {
+        const person = await this.personTable.appsync.putItem({
+          key: {
+            id: {
+              S: $util.autoId(),
+            },
           },
-        },
-        attributeValues: {
-          name: {
-            S: $context.arguments.input.name,
+          attributeValues: {
+            name: {
+              S: $context.arguments.input.name,
+            },
           },
-        },
-      });
+        });
 
-      return person;
-    });
+        return person;
+      }
+    );
 
     // example of inferring the TArguments and TResult from the function signature
     this.updateName = new AppsyncResolver(
+      this,
+      "updateName",
+      {
+        api,
+        typeName: "Mutation",
+        fieldName: "updateName",
+      },
       ($context: AppsyncContext<MutationResolvers["updateName"]["args"]>) =>
-        this.personTable.updateItem({
+        this.personTable.appsync.updateItem({
           key: {
             id: $util.dynamodb.toDynamoDB($context.arguments.id),
           },
@@ -169,12 +200,20 @@ export class PeopleDatabase extends Construct {
     this.deletePerson = new AppsyncResolver<
       MutationResolvers["deletePerson"]["args"],
       MutationResolvers["deletePerson"]["result"]
-    >(($context) =>
-      this.personTable.deleteItem({
-        key: {
-          id: $util.dynamodb.toDynamoDB($context.arguments.id),
-        },
-      })
+    >(
+      this,
+      "deletePerson",
+      {
+        api,
+        typeName: "Mutation",
+        fieldName: "deletePerson",
+      },
+      ($context) =>
+        this.personTable.appsync.deleteItem({
+          key: {
+            id: $util.dynamodb.toDynamoDB($context.arguments.id),
+          },
+        })
     );
   }
 }

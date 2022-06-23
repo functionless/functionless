@@ -98,11 +98,20 @@ After configuring your schema, the next step is to implement Resolvers for each 
 Functionless's `AppsyncResolver` Construct makes this simple by generating all of the VTL templates, IAM Policies and Resolver configurations from an ordinary TypeScript function.
 
 ```ts
-new AppsyncResolver(($context) => {
-  return table.get({
-    id: $context.arguments.id,
-  });
-});
+new AppsyncResolver(
+  scope,
+  id,
+  {
+    api,
+    typeName: "Query",
+    fieldName: "getItem",
+  },
+  ($context) => {
+    return table.get({
+      id: $context.arguments.id,
+    });
+  }
+);
 ```
 
 ### Type Arguments
@@ -125,6 +134,9 @@ We can define an `AppsyncResolver` for the `getPerson` field like so:
 
 ```ts
 new AppsyncResolver<{ id: string }, Person | undefined, undefined>(
+  scope,
+  id,
+  props,
   ($context) => {
     // ..
   }
@@ -146,16 +158,22 @@ new AppsyncResolver<{ id: string }, Person | undefined>(($context) => {
 `TSource` is only defined when the field being resolved is nested. For example, resolving a `Person`'s `children` field has a `TSource` of `Person`.
 
 ```ts
-new AppsyncResolver<undefined, Person[], Person>(($context) => {
-  return db.query({
-    key: {
-      personId: {
-        // access the parent's personId
-        S: $context.source.personId,
+new AppsyncResolver<undefined, Person[], Person>(
+  scope,
+  id,
+  props,
+  async ($context) => {
+    const result = await db.query({
+      key: {
+        personId: {
+          // access the parent's personId
+          S: $context.source.personId,
+        },
       },
-    },
-  }).Items;
-});
+    });
+    return result.Items;
+  }
+);
 ```
 
 The following GraphQL query will now trigger this Resolver to fetch the `children` property.
@@ -169,43 +187,34 @@ query {
 }
 ```
 
-## Add Resolvers to a GraphQLApi
-
-When you create a `new AppsyncResolver`, it does not immediately generate an Appsync Resolver. `AppsyncResolver` is more like a template for creating resolvers and can be re-used across more than one API.
-
-**Note**: this is subject to change, see [#137](https://github.com/functionless/functionless/issues/137) to track progress.
-
-Options:
-
-1. Add a resolver to a GraphQL Api with a pre-defined schema
-2. Add a field resolver to a GraphQL Api using CDK's CodeFirst schema
-
-### Add a resolver to a GraphQL Api with a pre-defined schema
-
-To add to an API, use the `addResolver` utility on `AppsyncResolver`.
-
-```ts
-const getPerson = new AppsyncResolver(..);
-
-// use it add resolvers to a GraphqlApi.
-getPerson.addResolver(api, {
-  typeName: "Query",
-  fieldName: "getPerson",
-});
-```
-
 ### Add a field resolver to a GraphQL Api using CDK's CodeFirst schema
 
 To add to a CodeFirst GraphQL schema, use `getField` utility on the `AppsyncResolver`.
 
 ```ts
-const getPerson = new AppsyncResolver(..);
+import * as appsync from "@aws-cdk/aws-appsync-alpha";
+
+const getPerson = new AppsyncField({
+  api,
+  returnType: appsync.Field.string(),
+  args: {
+    argName: appsync.Field.string()
+  }
+}, ($context) => {
+  return table.appsync.getItem({
+    key: {
+      id: {
+        S: $context.arguments.id
+      }
+    }
+  })
+});
 
 // define the type in code
 const personType = api.addType(appsync.ObjectType(...));
 
 // use it add resolvers to a GraphqlApi.
-api.addQuery("getPerson", getPerson.getField(api, personType));
+api.addQuery("getPerson", getPerson);
 ```
 
 ## $util
@@ -215,7 +224,7 @@ The `$util` object contains Appsync's intrinsic functions.
 For example, it provides intrinsic functions for generating UUIDs, working with timestamps and transforming data from AWS DynamoDB.
 
 ```ts
-new AppsyncResolver(() => {
+new AppsyncResolver(scope, id, props, () => {
   // generate a unique UUID at runtime
   const uuid = $util.autoUuid();
   // get the current timestamp in ISO 8601 format
@@ -247,25 +256,25 @@ myTable.get();
 
 ```ts
 // you cannot in-line a call as the if condition, store it as a variable first
-if (myTable.get()) {
+if (myTable.appsync.getItem(..)) {
 }
 
 if (condition) {
   // it is not currently possible to conditionally call a service, but this will be supported at a later time
-  myTable.get();
+  myTable.appsync.getItem(..);
 }
 
 for (const item in list) {
   // resolvers cannot be contained within a loop
-  myTable.get();
+  myTable.appsync.getItem(..);
 }
 ```
 
 No branching or parallel logic is supported. If you need more flexibility, consider calling a [Step Function](../step-function/index.md):
 
 ```ts
-new ExpressStepFunction(this, "MyFunc", (items: string[]) => {
+new ExpressStepFunction(this, "MyFunc", async (items: string[]) => {
   // process each item in parallel, an operation not supported in AWS AppSync.
-  return items.map((item) => task(item));
+  return Promise.all(items.map((item) => task(item)));
 });
 ```

@@ -12,7 +12,9 @@ import {
   makeFunctionlessChecker,
   TsFunctionParameter,
 } from "./checker";
-import { BinaryOp } from "./expression";
+import type { FunctionDecl } from "./declaration";
+import { ErrorCodes, SynthError } from "./error-code";
+import type { FunctionExpr, BinaryOp } from "./expression";
 import { FunctionlessNode } from "./node";
 import { anyOf, hasParent } from "./util";
 
@@ -97,9 +99,11 @@ export function compile(
       function visitor(node: ts.Node): ts.Node | ts.Node[] {
         const visit = () => {
           if (checker.isAppsyncResolver(node)) {
-            return visitAppsyncResolver(node as ts.NewExpression);
-          } else if (checker.isStepFunction(node)) {
-            return visitStepFunction(node as ts.NewExpression);
+            return visitAppsyncResolver(node);
+          } else if (checker.isAppsyncField(node)) {
+            return visitAppsyncField(node);
+          } else if (checker.isNewStepFunction(node)) {
+            return visitStepFunction(node);
           } else if (checker.isReflectFunction(node)) {
             return errorBoundary(() =>
               toFunction("FunctionDecl", node.arguments[0])
@@ -114,6 +118,8 @@ export function compile(
             return visitEventTransform(node);
           } else if (checker.isNewFunctionlessFunction(node)) {
             return visitFunction(node, ctx);
+          } else if (checker.isApiIntegration(node)) {
+            return visitApiIntegration(node);
           }
           return node;
         };
@@ -217,14 +223,45 @@ export function compile(
       }
 
       function visitAppsyncResolver(call: ts.NewExpression): ts.Node {
-        if (call.arguments?.length === 1) {
-          const impl = call.arguments[0];
-          if (ts.isFunctionExpression(impl) || ts.isArrowFunction(impl)) {
+        if (call.arguments?.length === 4) {
+          const [scope, id, props, resolver] = call.arguments;
+
+          if (
+            ts.isArrowFunction(resolver) ||
+            ts.isFunctionExpression(resolver)
+          ) {
             return ts.factory.updateNewExpression(
               call,
               call.expression,
               call.typeArguments,
-              [errorBoundary(() => toFunction("FunctionDecl", impl, 1))]
+              [
+                scope,
+                id,
+                props,
+                errorBoundary(() => toFunction("FunctionDecl", resolver)),
+              ]
+            );
+          }
+        }
+        return call;
+      }
+
+      function visitAppsyncField(call: ts.NewExpression): ts.Node {
+        if (call.arguments?.length === 2) {
+          const [options, resolver] = call.arguments;
+
+          if (
+            ts.isArrowFunction(resolver) ||
+            ts.isFunctionExpression(resolver)
+          ) {
+            return ts.factory.updateNewExpression(
+              call,
+              call.expression,
+              call.typeArguments,
+              [
+                options,
+                errorBoundary(() => toFunction("FunctionDecl", resolver, 1)),
+              ]
             );
           }
         }
@@ -471,11 +508,13 @@ export function compile(
           // cannot create new resources in native runtime code.
           const functionlessKind = checker.getFunctionlessTypeKind(newType);
           if (checker.getFunctionlessTypeKind(newType)) {
-            throw Error(
+            throw new SynthError(
+              ErrorCodes.Unsupported_initialization_of_resources_in_function,
               `Cannot initialize new resources in a native function, found ${functionlessKind}.`
             );
           } else if (checker.isCDKConstruct(newType)) {
-            throw Error(
+            throw new SynthError(
+              ErrorCodes.Unsupported_initialization_of_resources_in_function,
               `Cannot initialize new CDK resources in a native function, found ${
                 newType.getSymbol()?.name
               }.`
@@ -492,8 +531,8 @@ export function compile(
       }
 
       function toFunction(
-        type: "FunctionDecl" | "FunctionExpr",
-        impl: TsFunctionParameter,
+        type: FunctionDecl["kind"] | FunctionExpr["kind"],
+        impl: ts.Expression,
         dropArgs?: number
       ): ts.Expression {
         if (
@@ -534,6 +573,45 @@ export function compile(
           ),
           body,
         ]);
+      }
+
+      function visitApiIntegration(node: ts.NewExpression): ts.Node {
+        const [props, request, response, errors] = node.arguments ?? [];
+
+        return errorBoundary(() =>
+          ts.factory.updateNewExpression(
+            node,
+            node.expression,
+            node.typeArguments,
+            [
+              props,
+              toFunction("FunctionDecl", request),
+              ts.isObjectLiteralExpression(response)
+                ? visitApiErrors(response)
+                : toFunction("FunctionDecl", response),
+              ...(errors && ts.isObjectLiteralExpression(errors)
+                ? [visitApiErrors(errors)]
+                : []),
+            ]
+          )
+        );
+      }
+
+      function visitApiErrors(errors: ts.ObjectLiteralExpression) {
+        return errorBoundary(() =>
+          ts.factory.updateObjectLiteralExpression(
+            errors,
+            errors.properties.map((prop) =>
+              ts.isPropertyAssignment(prop)
+                ? ts.factory.updatePropertyAssignment(
+                    prop,
+                    prop.name,
+                    toFunction("FunctionDecl", prop.initializer)
+                  )
+                : prop
+            )
+          )
+        );
       }
 
       function toExpr(
@@ -1318,6 +1396,8 @@ const OperatorMappings: Record<number, BinaryOp> = {
   [ts.SyntaxKind.EqualsToken]: "=",
   [ts.SyntaxKind.PlusToken]: "+",
   [ts.SyntaxKind.MinusToken]: "-",
+  [ts.SyntaxKind.AsteriskToken]: "*",
+  [ts.SyntaxKind.SlashToken]: "/",
   [ts.SyntaxKind.AmpersandAmpersandToken]: "&&",
   [ts.SyntaxKind.BarBarToken]: "||",
   [ts.SyntaxKind.ExclamationEqualsToken]: "!=",
@@ -1332,3 +1412,6 @@ const OperatorMappings: Record<number, BinaryOp> = {
   [ts.SyntaxKind.ExclamationEqualsEqualsToken]: "!=",
   [ts.SyntaxKind.InKeyword]: "in",
 } as const;
+
+// to prevent the closure serializer from trying to import all of functionless.
+export const deploymentOnlyModule = true;

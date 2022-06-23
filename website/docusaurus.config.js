@@ -6,7 +6,7 @@ const darkCodeTheme = require("prism-react-renderer/themes/dracula");
 const path = require("path");
 
 const url =
-  process.env.CONTEXT === "deploy-preview"
+  process.env.CONTEXT === "deploy-preview" && process.env.DEPLOY_PRIME_URL
     ? process.env.DEPLOY_PRIME_URL
     : "https://functionless.org";
 
@@ -62,13 +62,13 @@ const config = {
         docs: {
           sidebarPath: require.resolve("./sidebars.js"),
           editUrl:
-            "https://github.com/functionless/functionless/edit/master/website/",
+            "https://github.com/functionless/functionless/edit/main/website/",
           remarkPlugins: [require("mdx-mermaid")],
         },
         blog: {
           showReadingTime: true,
           editUrl:
-            "https://github.com/functionless/functionless/edit/master/website/",
+            "https://github.com/functionless/functionless/edit/main/website/",
         },
         theme: {
           customCss: require.resolve("./src/css/custom.css"),
@@ -76,7 +76,10 @@ const config = {
       }),
     ],
   ],
-
+  // https://buttons.github.io/
+  scripts: [
+    { src: "https://buttons.github.io/buttons.js", async: true, defer: true },
+  ],
   themeConfig:
     /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
     ({
@@ -116,8 +119,15 @@ const config = {
           { to: "/blog", label: "Blog", position: "left" },
           {
             href: "https://github.com/functionless/functionless",
-            label: "GitHub",
             position: "right",
+            className: "header-github-link",
+            "aria-label": "GitHub Repository",
+          },
+          {
+            href: "https://discord.gg/VRqHbjrbfC",
+            position: "right",
+            className: "navbar-community-menu",
+            "aria-label": "Discord Community",
           },
         ],
       },

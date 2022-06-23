@@ -1,6 +1,4 @@
-import { BaseNode, typeGuard } from "./node";
-
-export const isErr = typeGuard("Err");
+import { BaseNode } from "./node";
 
 export class Err extends BaseNode<"Err"> {
   readonly nodeKind: "Err" = "Err";
@@ -13,3 +11,6 @@ export class Err extends BaseNode<"Err"> {
     return new Err(this.error) as this;
   }
 }
+
+// to prevent the closure serializer from trying to import all of functionless.
+export const deploymentOnlyModule = true;

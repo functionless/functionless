@@ -44,7 +44,7 @@ If the right-hand expression is a function call, then a `Task` State is used.
 
 ## function call
 
-Function calls are supported, but only for [intrinsic functions](#intrinsic-functions) and [integrations](../integration.md).
+Function calls are supported, but only for [intrinsic functions](#intrinsic-functions) and [integrations](../integration).
 
 ```ts
 $SFN.waitFor(10);

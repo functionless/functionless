@@ -1,11 +1,11 @@
 ---
 title: Table
-sidebar_position: 1
+sidebar_position: 5
 ---
 
 # Table
 
-The `Table` Construct creates a new DynamoDB Table and exposes methods for reading and writing its data from [Integrations](./integration.md).
+The `Table` Construct creates a new DynamoDB Table and exposes methods for reading and writing its data from [Integrations](./integration).
 
 ## Create a new Table
 
@@ -45,45 +45,45 @@ type EcommerceDatabase = User | Cart | Order;
 Finally, create the `Table` and specify the data type, the name of the Partition Key and (optionally) the name of the Range Key.
 
 ```ts
-new Table<Item, "itemId">(..)
+Table.fromTable<Item, "itemId">(..)
 ```
 
 The Range Key is an optional, third type argument.
 
 ```ts
-new Table<Item, "itemId", "timestamp">(..)
+Table.fromTable<Item, "itemId", "timestamp">(..)
 ```
 
 See the [`typesafe-dynamodb`](https://github.com/sam-goodwin/typesafe-dynamodb) documentation for more information on how to use types to safely model data in a DynamoDB Table using TypeScript types.
 
 ## Wrap an existing Table
 
-Use `Table.from` to wrap an existing Table Construct created with the vanilla AWS CDK.
+Use `Table.fromTable` to wrap an existing Table Construct created with the vanilla AWS CDK.
 
 ```ts
-Table.from(itemTable);
+Table.fromTable(itemTable);
 ```
 
 Optionally provide the data type, partition key and range key as type arguments.
 
 ```ts
-Table.from<Item, "itemId">(itemTable);
+Table.fromTable<Item, "itemId">(itemTable);
 ```
 
 The Range Key is an optional, third type argument.
 
 ```ts
-Table.from<Item, "itemId", "timestamp">(itemTable);
+Table.fromTable<Item, "itemId", "timestamp">(itemTable);
 ```
 
 ## Call from an Integration
 
-Use the [`$AWS`](./aws.md) SDK's DynamoDB APIs to access the Table from within a Lambda [Function](./function.md) or [Step Function](./step-function/index.md).
+Use the [`$AWS`](./aws.md) SDK's DynamoDB APIs to access the Table from within a Lambda [Function](./function) or [Step Function](./step-function/index.md).
 
 ```ts
 new StepFunction(scope, "Function", (itemId: string) => {
   return $AWS.DynamoDB.GetItem({
-    TableName: items,
+    Table: items,
     Key: {
       itemId: {
         S: itemId,
@@ -93,17 +93,15 @@ new StepFunction(scope, "Function", (itemId: string) => {
 });
 ```
 
-Remember: plumbing such as IAM Policies and Environment Variables are automatically inferred from the API calls. See [Integration](./integration.md) for more information.
+Remember: plumbing such as IAM Policies and Environment Variables are automatically inferred from the API calls. See [Integration](./integration) for more information.
 
 ## Call from an Appsync Resolver
 
-AWS Appsync has a purpose-built integration for DynamoDB that takes care of un-marshalling the Attribute Value JSON format to standard JSON for GraphQL compatibility. These integration methods are exposed as methods directly on the Table Construct.
-
-**TODO**: This is subject to change, see [Issue XYZ](https://github.com/functionless/functionless/issues/33).
+AWS Appsync has a purpose-built integration for DynamoDB that takes care of un-marshalling the Attribute Value JSON format to standard JSON for GraphQL compatibility. These integration methods are exposed as methods on the `Table.appsync` property.
 
 ```ts
 new AppsyncResolver(($context) => {
-  return table.get({
+  return table.appsync.get({
     itemId: {
       S: $context.itemId,
     },

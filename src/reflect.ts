@@ -31,3 +31,6 @@ import { AnyAsyncFunction, AnyFunction } from "./util";
 export declare function reflect<F extends AnyFunction | AnyAsyncFunction>(
   func: F
 ): FunctionDecl<F> | Err;
+
+// to prevent the closure serializer from trying to import all of functionless.
+export const deploymentOnlyModule = true;

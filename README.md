@@ -1,6 +1,6 @@
 # Functionless `λ<`
 
-[![npm version](https://badge.fury.io/js/functionless.svg)](https://badge.fury.io/js/functionless)
+[![npm version](https://badge.fury.io/js/functionless.svg)](https://badge.fury.io/js/functionless) [![Discord](https://img.shields.io/discord/985291961885949973?label=discord)](https://discord.gg/VRqHbjrbfC)
 
 **Functionless** is a compiler plugin and Construct library that enhances your cloud programming experience with TypeScript and the AWS Cloud Development Kit (CDK). Tedious and error-prone configurations are inferred directly from your application logic, including IAM Policies, environment variables and proprietary domain specific languages such as Amazon States Language, Velocity Templates and Event Bridge Pattern Documents. This makes it simple, easy and fun(!) to configure AWS's powerful services without learning a new language or abstraction. Functionless always ensures that your IAM Policies are minimally permissive and that there is no missing plumbing code, so you can be confident that when your code compiles - then it also deploys, runs and is secure!
 
@@ -53,11 +53,11 @@ const validatePost = new Function(this, "ValidatePost", async (post: Post) => {
 const validatePostWorkflow = new StepFunction(
   this,
   "ValidatePostWorkflow",
-  (post: Post) => {
-    const validationResult = validatePost(post);
+  async (post: Post) => {
+    const validationResult = await validatePost(post);
     if (validationResult.status === "Not Cool") {
-      $AWS.DynamoDB.DeleteItem({
-        TableName: postTable,
+      await $AWS.DynamoDB.DeleteItem({
+        Table: postTable,
         Key: {
           postId: {
             S: post.postId,

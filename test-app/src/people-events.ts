@@ -48,7 +48,7 @@ export class PeopleEvents extends Construct {
 
     const bus = new functionless.EventBus<UserEvent>(this, "myBus");
 
-    // Create and update events are sent to a spcific lambda function.
+    // Create and update events are sent to a specific lambda function.
     bus
       .when(
         this,
@@ -56,21 +56,27 @@ export class PeopleEvents extends Construct {
         (event) =>
           event["detail-type"] === "Create" || event["detail-type"] === "Update"
       )
-      .map<CreateOrUpdate>((event) => ({
-        id: event.detail.id,
-        name: event.detail.name,
-        age: event.detail.age,
-        operation: event["detail-type"] as "Create" | "Update",
-        interests: event.detail.interests,
-      }))
+      .map(
+        (event) =>
+          <CreateOrUpdate>{
+            id: event.detail.id,
+            name: event.detail.name,
+            age: event.detail.age,
+            operation: event["detail-type"] as "Create" | "Update",
+            interests: event.detail.interests,
+          }
+      )
       .pipe(createOrUpdateFunction);
 
     // Delete events are sent to a spcific lambda function.
     bus
       .when(this, "deleteRule", (event) => event["detail-type"] === "Delete")
-      .map<Delete>((event) => ({
-        id: event.detail.id!,
-      }))
+      .map(
+        (event) =>
+          <Delete>{
+            id: event.detail.id!,
+          }
+      )
       .pipe(deleteFunction);
 
     const catPeopleBus = new functionless.EventBus<UserEvent>(

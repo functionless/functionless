@@ -1,35 +1,248 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`step-function.ts 1`] = `
-"[96mtest/test-files/step-function.ts[0m:[93m10[0m:[93m65[0m - [91merror[0m[90m Functionless(100): [0mCannot perform arithmetic on variables in Step Function
+exports[`api-gateway.ts 1`] = `
+"[96mtest/test-files/api-gateway.ts[0m:[93m61[0m:[93m5[0m - [91merror[0m[90m Functionless(10003): [0mAwsMethod request must have exactly one integration call
 
-https://functionless.org/docs/error-codes#Cannot-perform-arithmetic-on-variables-in-Step-Function\\"
+https://functionless.org/docs/error-codes#awsmethod-request-must-have-exactly-one-integration-call
+
+[7m61[0m   },
+[7m  [0m [91m    [0m
+[7m62[0m   ($input) => {
+[7m  [0m [91m~~~~~~~~~~~~~~~[0m
+[7m63[0m     return $input.data;
+[7m  [0m [91m~~~~~~~~~~~~~~~~~~~~~~~[0m
+[7m64[0m   },
+[7m  [0m [91m~~~[0m
+[96mtest/test-files/api-gateway.ts[0m:[93m76[0m:[93m20[0m - [91merror[0m[90m Functionless(10011): [0mAPI Gateway does not support spread assignment expressions
+
+https://functionless.org/docs/error-codes#api-gateway-does-not-support-spread-assignment-expressions
+
+[7m76[0m       Table: table,
+[7m  [0m [91m                   [0m
+[7m77[0m       ...$input.data,
+[7m  [0m [91m~~~~~~~~~~~~~~~~~~~~[0m
+[96mtest/test-files/api-gateway.ts[0m:[93m77[0m:[93m22[0m - [91merror[0m[90m Functionless(10010): [0mAPI Gateway does not supported computed property names
+
+https://functionless.org/docs/error-codes#api-gateway-does-not-supported-computed-property-names
+
+[7m77[0m       ...$input.data,
+[7m  [0m [91m                     [0m
+[7m78[0m       [$input.params(\\"param\\")]: null,
+[7m  [0m [91m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+[96mtest/test-files/api-gateway.ts[0m:[93m101[0m:[93m11[0m - [91merror[0m[90m Functionless(10013): [0mAPI gateway response mapping template cannot call integration
+
+https://functionless.org/docs/error-codes#api-gateway-response-mapping-template-cannot-call-integration
+
+[7m101[0m     return $AWS.DynamoDB.GetItem({
+[7m   [0m [91m          ~~~~~~~~~~~~~~~~~~~~~~~~[0m
+[7m102[0m       Table: table,
+[7m   [0m [91m~~~~~~~~~~~~~~~~~~~[0m
+[7m...[0m 
+[7m107[0m       },
+[7m   [0m [91m~~~~~~~~[0m
+[7m108[0m     });
+[7m   [0m [91m~~~~~~[0m
+"
+`;
+
+exports[`appsync.ts 1`] = `
+"[96mtest/test-files/appsync.ts[0m:[93m48[0m:[93m5[0m - [91merror[0m[90m Functionless(10002): [0mArgument must be an inline Function
+
+https://functionless.org/docs/error-codes#argument-must-be-an-inline-function
+
+[7m48[0m   },
+[7m  [0m [91m    [0m
+[7m49[0m   // invalid - must be an inline function
+[7m  [0m [91m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+[7m50[0m   f
+[7m  [0m [91m~~~[0m
+[96mtest/test-files/appsync.ts[0m:[93m60[0m:[93m5[0m - [91merror[0m[90m Functionless(10002): [0mArgument must be an inline Function
+
+https://functionless.org/docs/error-codes#argument-must-be-an-inline-function
+
+[7m 60[0m   },
+[7m   [0m [91m    [0m
+[7m 61[0m   // invalid - must be an inline function
+[7m   [0m [91m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+[7m...[0m 
+[7m 64[0m       null
+[7m   [0m [91m~~~~~~~~~~[0m
+[7m 65[0m   )()
+[7m   [0m [91m~~~~~[0m
+[96mtest/test-files/appsync.ts[0m:[93m81[0m:[93m58[0m - [91merror[0m[90m Functionless(10002): [0mArgument must be an inline Function
+
+https://functionless.org/docs/error-codes#argument-must-be-an-inline-function
+
+[7m 81[0m         { api, typeName: \\"Query\\", fieldName: \\"getPost\\" },
+[7m   [0m [91m                                                         [0m
+[7m 82[0m         // invalid - must be an inline function
+[7m   [0m [91m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+[7m...[0m 
+[7m 85[0m             null
+[7m   [0m [91m~~~~~~~~~~~~~~~~[0m
+[7m 86[0m         )()
+[7m   [0m [91m~~~~~~~~~~~[0m
+[96mtest/test-files/appsync.ts[0m:[93m107[0m:[93m14[0m - [91merror[0m[90m Functionless(10016): [0mIntegration must be immediately awaited or returned
+
+https://functionless.org/docs/error-codes#integration-must-be-immediately-awaited-or-returned
+
+[7m107[0m     const c = func();
+[7m   [0m [91m             ~~~~~~~[0m
+[96mtest/test-files/appsync.ts[0m:[93m120[0m:[93m14[0m - [91merror[0m[90m Functionless(10016): [0mIntegration must be immediately awaited or returned
+
+https://functionless.org/docs/error-codes#integration-must-be-immediately-awaited-or-returned
+
+[7m120[0m     const c = func();
+[7m   [0m [91m             ~~~~~~~[0m
+[96mtest/test-files/appsync.ts[0m:[93m175[0m:[93m11[0m - [91merror[0m[90m Functionless(10017): [0mArrays of Integration must be immediately wrapped in Promise.all
+
+https://functionless.org/docs/error-codes#arrays-of-integration-must-be-immediately-wrapped-in-promise.all
+
+[7m175[0m     return [1, 2].map(async () => func());
+[7m   [0m [91m          ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+[96mtest/test-files/appsync.ts[0m:[93m187[0m:[93m14[0m - [91merror[0m[90m Functionless(10016): [0mIntegration must be immediately awaited or returned
+
+https://functionless.org/docs/error-codes#integration-must-be-immediately-awaited-or-returned
+
+[7m187[0m     const c = Promise.all([1, 2].map(async () => func()));
+[7m   [0m [91m             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+"
+`;
+
+exports[`event-bus.ts 1`] = `
+"[96mtest/test-files/event-bus.ts[0m:[93m16[0m:[93m22[0m - [91merror[0m[90m Functionless(10015): [0mEventBus Rules do not support integrations
+
+https://functionless.org/docs/error-codes#eventbus-rules-do-not-support-integrations
+
+[7m16[0m bus.all().map(() => {
+[7m  [0m [91m                     [0m
+[7m17[0m   // eslint-disable-next-line @typescript-eslint/no-floating-promises
+[7m  [0m [91m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+[7m18[0m   bus.putEvents({ \\"detail-type\\": \\"detail\\", detail: {}, source: \\"\\" });
+[7m  [0m [91m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+[96mtest/test-files/event-bus.ts[0m:[93m23[0m:[93m9[0m - [91merror[0m[90m Functionless(10015): [0mEventBus Rules do not support integrations
+
+https://functionless.org/docs/error-codes#eventbus-rules-do-not-support-integrations
+
+[7m23[0m   return func();
+[7m  [0m [91m        ~~~~~~~[0m
+[96mtest/test-files/event-bus.ts[0m:[93m35[0m:[93m11[0m - [91merror[0m[90m Functionless(10015): [0mEventBus Rules do not support integrations
+
+https://functionless.org/docs/error-codes#eventbus-rules-do-not-support-integrations
+
+[7m35[0m   return (func() as any) === \\"x\\";
+[7m  [0m [91m          ~~~~~~[0m
+[96mtest/test-files/event-bus.ts[0m:[93m39[0m:[93m11[0m - [91merror[0m[90m Functionless(10015): [0mEventBus Rules do not support integrations
+
+https://functionless.org/docs/error-codes#eventbus-rules-do-not-support-integrations
+
+[7m39[0m   return (func() as any) === \\"x\\";
+[7m  [0m [91m          ~~~~~~[0m
+"
+`;
+
+exports[`function.ts 1`] = `
+"[96mtest/test-files/function.ts[0m:[93m28[0m:[93m51[0m - [91merror[0m[90m Functionless(10009): [0mCannot use infrastructure Resource in Function closure
+
+https://functionless.org/docs/error-codes#cannot-use-infrastructure-resource-in-function-closure
+
+[7m28[0m new Function(stack, \\"event bus bus\\", async () => {
+[7m  [0m [91m                                                  [0m
+[7m29[0m   bus.resource.eventBusArn;
+[7m  [0m [91m~~~~~[0m
+[96mtest/test-files/function.ts[0m:[93m32[0m:[93m50[0m - [91merror[0m[90m Functionless(10009): [0mCannot use infrastructure Resource in Function closure
+
+https://functionless.org/docs/error-codes#cannot-use-infrastructure-resource-in-function-closure
+
+[7m32[0m new Function(stack, \\"sfn resource\\", async () => {
+[7m  [0m [91m                                                 [0m
+[7m33[0m   sfn.resource.stateMachineArn;
+[7m  [0m [91m~~~~~[0m
+[96mtest/test-files/function.ts[0m:[93m36[0m:[93m51[0m - [91merror[0m[90m Functionless(10009): [0mCannot use infrastructure Resource in Function closure
+
+https://functionless.org/docs/error-codes#cannot-use-infrastructure-resource-in-function-closure
+
+[7m36[0m new Function(stack, \\"func resource\\", async () => {
+[7m  [0m [91m                                                  [0m
+[7m37[0m   func.resource;
+[7m  [0m [91m~~~~~~[0m
+[96mtest/test-files/function.ts[0m:[93m40[0m:[93m52[0m - [91merror[0m[90m Functionless(10009): [0mCannot use infrastructure Resource in Function closure
+
+https://functionless.org/docs/error-codes#cannot-use-infrastructure-resource-in-function-closure
+
+[7m40[0m new Function(stack, \\"table resource\\", async () => {
+[7m  [0m [91m                                                   [0m
+[7m41[0m   table.resource;
+[7m  [0m [91m~~~~~~~[0m
+[96mtest/test-files/function.ts[0m:[93m75[0m:[93m15[0m - [91merror[0m[90m Functionless(10009): [0mCannot use infrastructure Resource in Function closure
+
+https://functionless.org/docs/error-codes#cannot-use-infrastructure-resource-in-function-closure
+
+[7m75[0m         return bus.resource;
+[7m  [0m [91m              ~~~~[0m
+"
+`;
+
+exports[`step-function.ts 1`] = `
+"[96mtest/test-files/step-function.ts[0m:[93m10[0m:[93m65[0m - [91merror[0m[90m Functionless(10000): [0mCannot perform arithmetic on variables in Step Function
+
+https://functionless.org/docs/error-codes#cannot-perform-arithmetic-on-variables-in-step-function
 
 [7m10[0m new StepFunction(stack, \\"input.i + 2\\", (input: { i: number }) => input.i + 2);
 [7m  [0m [91m                                                                ~~~~~~~~~~~~[0m
-[96mtest/test-files/step-function.ts[0m:[93m11[0m:[93m65[0m - [91merror[0m[90m Functionless(100): [0mCannot perform arithmetic on variables in Step Function
+[96mtest/test-files/step-function.ts[0m:[93m11[0m:[93m65[0m - [91merror[0m[90m Functionless(10000): [0mCannot perform arithmetic on variables in Step Function
 
-https://functionless.org/docs/error-codes#Cannot-perform-arithmetic-on-variables-in-Step-Function\\"
+https://functionless.org/docs/error-codes#cannot-perform-arithmetic-on-variables-in-step-function
 
 [7m11[0m new StepFunction(stack, \\"input.i - 2\\", (input: { i: number }) => input.i - 2);
 [7m  [0m [91m                                                                ~~~~~~~~~~~~[0m
-[96mtest/test-files/step-function.ts[0m:[93m13[0m:[93m65[0m - [91merror[0m[90m Functionless(100): [0mCannot perform arithmetic on variables in Step Function
+[96mtest/test-files/step-function.ts[0m:[93m13[0m:[93m65[0m - [91merror[0m[90m Functionless(10000): [0mCannot perform arithmetic on variables in Step Function
 
-https://functionless.org/docs/error-codes#Cannot-perform-arithmetic-on-variables-in-Step-Function\\"
+https://functionless.org/docs/error-codes#cannot-perform-arithmetic-on-variables-in-step-function
 
 [7m13[0m new StepFunction(stack, \\"input.i / 2\\", (input: { i: number }) => input.i / 2);
 [7m  [0m [91m                                                                ~~~~~~~~~~~~[0m
-[96mtest/test-files/step-function.ts[0m:[93m14[0m:[93m62[0m - [91merror[0m[90m Functionless(100): [0mCannot perform arithmetic on variables in Step Function
+[96mtest/test-files/step-function.ts[0m:[93m14[0m:[93m62[0m - [91merror[0m[90m Functionless(10000): [0mCannot perform arithmetic on variables in Step Function
 
-https://functionless.org/docs/error-codes#Cannot-perform-arithmetic-on-variables-in-Step-Function\\"
+https://functionless.org/docs/error-codes#cannot-perform-arithmetic-on-variables-in-step-function
 
 [7m14[0m new StepFunction(stack, \\"-input.i\\", (input: { i: number }) => -input.i);
 [7m  [0m [91m                                                             ~~~~~~~~~[0m
-[96mtest/test-files/step-function.ts[0m:[93m19[0m:[93m14[0m - [91merror[0m[90m Functionless(100): [0mCannot perform arithmetic on variables in Step Function
+[96mtest/test-files/step-function.ts[0m:[93m19[0m:[93m14[0m - [91merror[0m[90m Functionless(10000): [0mCannot perform arithmetic on variables in Step Function
 
-https://functionless.org/docs/error-codes#Cannot-perform-arithmetic-on-variables-in-Step-Function\\"
+https://functionless.org/docs/error-codes#cannot-perform-arithmetic-on-variables-in-step-function
 
 [7m19[0m     const a = input.i + 1;
 [7m  [0m [91m             ~~~~~~~~~~~~[0m
+[96mtest/test-files/step-function.ts[0m:[93m72[0m:[93m15[0m - [91merror[0m[90m Functionless(10000): [0mCannot perform arithmetic on variables in Step Function
+
+https://functionless.org/docs/error-codes#cannot-perform-arithmetic-on-variables-in-step-function
+
+[7m72[0m         return input.i + 1;
+[7m  [0m [91m              ~~~~~~~~~~~~[0m
+[96mtest/test-files/step-function.ts[0m:[93m85[0m:[93m12[0m - [91merror[0m[90m Functionless(10016): [0mIntegration must be immediately awaited or returned
+
+https://functionless.org/docs/error-codes#integration-must-be-immediately-awaited-or-returned
+
+[7m85[0m   const c = func();
+[7m  [0m [91m           ~~~~~~~[0m
+[96mtest/test-files/step-function.ts[0m:[93m90[0m:[93m12[0m - [91merror[0m[90m Functionless(10016): [0mIntegration must be immediately awaited or returned
+
+https://functionless.org/docs/error-codes#integration-must-be-immediately-awaited-or-returned
+
+[7m90[0m   const c = func();
+[7m  [0m [91m           ~~~~~~~[0m
+[96mtest/test-files/step-function.ts[0m:[93m115[0m:[93m9[0m - [91merror[0m[90m Functionless(10017): [0mArrays of Integration must be immediately wrapped in Promise.all
+
+https://functionless.org/docs/error-codes#arrays-of-integration-must-be-immediately-wrapped-in-promise.all
+
+[7m115[0m   return [1, 2].map(async () => func());
+[7m   [0m [91m        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+[96mtest/test-files/step-function.ts[0m:[93m119[0m:[93m12[0m - [91merror[0m[90m Functionless(10016): [0mIntegration must be immediately awaited or returned
+
+https://functionless.org/docs/error-codes#integration-must-be-immediately-awaited-or-returned
+
+[7m119[0m   const c = Promise.all([1, 2].map(async () => func()));
+[7m   [0m [91m           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
 "
 `;

@@ -1,9 +1,9 @@
-import { isErr } from "./error";
 import { ErrorCodes, SynthError } from "./error-code";
 import { Argument, FunctionExpr } from "./expression";
-import { NativePreWarmContext } from "./function";
+import { NativePreWarmContext } from "./function-prewarm";
+import { isErr, isFunctionDecl, isNode, isParameterDecl } from "./guards";
 import { Integration } from "./integration";
-import { BaseNode, FunctionlessNode, isNode, typeGuard } from "./node";
+import { BaseNode, FunctionlessNode } from "./node";
 import { BlockStmt } from "./statement";
 import { AnyFunction, anyOf } from "./util";
 
@@ -12,8 +12,6 @@ export type Decl = FunctionDecl | ParameterDecl | NativeFunctionDecl;
 export function isDecl(a: any): a is Decl {
   return isNode(a) && (isFunctionDecl(a) || isParameterDecl(a));
 }
-
-export const isFunctionDecl = typeGuard("FunctionDecl");
 
 abstract class BaseDecl<
   Kind extends FunctionlessNode["kind"],
@@ -46,8 +44,6 @@ export interface IntegrationInvocation {
   args: Argument[];
 }
 
-export const isNativeFunctionDecl = typeGuard("NativeFunctionDecl");
-
 /**
  * A function declaration which contains the original closure instead of Functionless expressions.
  */
@@ -74,8 +70,6 @@ export class NativeFunctionDecl<
   }
 }
 
-export const isParameterDecl = typeGuard("ParameterDecl");
-
 export class ParameterDecl extends BaseDecl<
   "ParameterDecl",
   FunctionDecl | FunctionExpr
@@ -95,14 +89,26 @@ export function validateFunctionDecl(
   a: any,
   functionLocation: string
 ): FunctionDecl {
-  if (isFunctionDecl(a)) {
+  return validateFunctionlessNode(a, functionLocation, isFunctionDecl);
+}
+
+export function validateFunctionlessNode<E extends FunctionlessNode>(
+  a: any,
+  functionLocation: string,
+  validate: (e: FunctionlessNode) => e is E
+): E {
+  if (validate(a)) {
     return a;
   } else if (isErr(a)) {
     throw a.error;
   } else {
+    debugger;
     throw new SynthError(
       ErrorCodes.FunctionDecl_not_compiled_by_Functionless,
       `Expected input function to ${functionLocation} to be compiled by Functionless. Make sure you have the Functionless compiler plugin configured correctly.`
     );
   }
 }
+
+// to prevent the closure serializer from trying to import all of functionless.
+export const deploymentOnlyModule = true;

@@ -27,7 +27,13 @@
         "transform": "./lib/compile",
         "exclude": ["./src/{,**}/*"]
       }
-    ]
+    ],
+    "paths": {
+      "@fnls": [
+        "lib/index"
+      ]
+    },
+    "baseUrl": "."
   },
   "include": [".projenrc.js", "src/**/*.ts", "test/**/*.ts"],
   "exclude": ["node_modules"],

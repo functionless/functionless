@@ -1,15 +1,48 @@
+import { ApiGatewayVtlIntegration } from "./api";
 import { AppSyncVtlIntegration } from "./appsync";
 import { ASL, State } from "./asl";
 import { EventBus, EventBusTargetIntegration } from "./event-bridge";
-import { CallExpr, isReferenceExpr } from "./expression";
+import { AwaitExpr, CallExpr, PromiseExpr, ReferenceExpr } from "./expression";
 import { Function, NativeIntegration } from "./function";
+import {
+  isAwaitExpr,
+  isCallExpr,
+  isPromiseExpr,
+  isReferenceExpr,
+} from "./guards";
 import { FunctionlessNode } from "./node";
 import { AnyFunction } from "./util";
+import { visitEachChild } from "./visit";
 import { VTL } from "./vtl";
 
 export const isIntegration = <I extends IntegrationInput<string, AnyFunction>>(
   i: any
 ): i is I => typeof i === "object" && "kind" in i;
+
+export type IntegrationCallExpr = CallExpr & { expr: ReferenceExpr };
+
+export function isIntegrationCallExpr(
+  node: FunctionlessNode
+): node is IntegrationCallExpr {
+  return isCallExpr(node) && isReferenceExpr(node.expr);
+}
+
+export function isIntegrationCallPattern(
+  node: FunctionlessNode
+): node is
+  | IntegrationCallExpr
+  | (AwaitExpr & { expr: IntegrationCallExpr })
+  | (PromiseExpr & { expr: IntegrationCallExpr })
+  | (AwaitExpr & { expr: PromiseExpr & { expr: IntegrationCallExpr } }) {
+  return (
+    (isAwaitExpr(node) &&
+      isPromiseExpr(node.expr) &&
+      isIntegrationCallExpr(node.expr.expr)) ||
+    (isAwaitExpr(node) && isIntegrationCallExpr(node.expr)) ||
+    (isPromiseExpr(node) && isIntegrationCallExpr(node.expr)) ||
+    isIntegrationCallExpr(node)
+  );
+}
 
 /**
  * Maintain a typesafe runtime map of integration type keys to use elsewhere.
@@ -18,6 +51,7 @@ export const isIntegration = <I extends IntegrationInput<string, AnyFunction>>(
  */
 const INTEGRATION_TYPES: { [P in keyof IntegrationMethods<any>]: P } = {
   appSyncVtl: "appSyncVtl",
+  apiGWVtl: "apiGWVtl",
   asl: "asl",
   native: "native",
   eventBus: "eventBus",
@@ -40,6 +74,11 @@ export interface IntegrationMethods<
    * @private
    */
   appSyncVtl: AppSyncVtlIntegration;
+  /**
+   * Integrate with API Gateway VTL applications.
+   * @private
+   */
+  apiGWVtl: ApiGatewayVtlIntegration;
   /**
    * Integrate with ASL applications like StepFunctions.
    *
@@ -91,10 +130,10 @@ export interface IntegrationMethods<
  *
  * const func1 = new Function(...);
  * // uses the ASL
- * new StepFunction(..., () => {
- *    func1("some string");
+ * new StepFunction(..., async () => {
+ *    await func1("some string");
  *    // Calling our special method in a step function closure
- *    func1.specialPayload();
+ *    await func1.specialPayload();
  * })
  * ```
  *
@@ -174,6 +213,14 @@ export class IntegrationImpl<F extends AnyFunction = AnyFunction>
     );
   }
 
+  public get apiGWVtl(): ApiGatewayVtlIntegration {
+    return this.assertIntegrationDefined(
+      // TODO: differentiate Velocity Template?
+      "Velocity Template",
+      this.integration.apiGWVtl
+    );
+  }
+
   // TODO: Update to use an interface https://github.com/functionless/functionless/issues/197
   public asl(call: CallExpr, context: ASL): Omit<State, "Next"> {
     return this.assertIntegrationDefined(
@@ -192,6 +239,7 @@ export class IntegrationImpl<F extends AnyFunction = AnyFunction>
 }
 
 export type IntegrationCall<K extends string, F extends AnyFunction> = {
+  FunctionlessType: K;
   kind: K;
   __functionBrand: F;
 } & F;
@@ -226,25 +274,18 @@ export type CallContext = ASL | VTL | Function<any, any> | EventBus<any>;
 /**
  * Dive until we find a integration object.
  */
-export function findDeepIntegration(
+export function findDeepIntegrations(
   expr: FunctionlessNode
-): IntegrationImpl | undefined {
-  if (expr.kind === "PropAccessExpr") {
-    return findDeepIntegration(expr.expr);
-  } else if (expr.kind === "CallExpr") {
-    if (isReferenceExpr(expr.expr)) {
-      const ref = expr.expr.ref();
-      if (isIntegration<Integration>(ref)) {
-        return new IntegrationImpl(ref);
-      }
+): IntegrationCallExpr[] {
+  const integrations: IntegrationCallExpr[] = [];
+  visitEachChild(expr, function find(node: FunctionlessNode): FunctionlessNode {
+    if (isIntegrationCallExpr(node)) {
+      integrations.push(node);
     }
-    return undefined;
-  } else if (expr.kind === "VariableStmt" && expr.expr) {
-    return findDeepIntegration(expr.expr);
-  } else if (expr.kind === "ReturnStmt" && expr.expr) {
-    return findDeepIntegration(expr.expr);
-  } else if (expr.kind === "ExprStmt") {
-    return findDeepIntegration(expr.expr);
-  }
-  return undefined;
+    return visitEachChild(node, find);
+  });
+  return integrations;
 }
+
+// to prevent the closure serializer from trying to import all of functionless.
+export const deploymentOnlyModule = true;

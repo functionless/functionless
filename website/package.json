@@ -15,9 +15,10 @@
     "typecheck": "tsc"
   },
   "dependencies": {
-    "@docusaurus/core": "2.0.0-beta.20",
-    "@docusaurus/preset-classic": "2.0.0-beta.20",
+    "@docusaurus/core": "^2.0.0-beta.21",
+    "@docusaurus/preset-classic": "^2.0.0-beta.21",
     "@mdx-js/react": "^1.6.22",
+    "@mui/material": "^5.8.2",
     "clsx": "^1.1.1",
     "mdx-mermaid": "^1.2.2",
     "mermaid": "^9.1.1",
@@ -28,11 +29,10 @@
   },
   "devDependencies": {
     "@algolia/client-search": "^4.9.1",
-    "@docusaurus/module-type-aliases": "2.0.0-beta.20",
+    "@docusaurus/module-type-aliases": "^2.0.0-beta.21",
     "@emotion/react": "^11.9.0",
     "@emotion/styled": "^11.8.1",
     "@mui/icons-material": "^5.8.2",
-    "@mui/material": "^5.8.2",
     "@tsconfig/docusaurus": "^1.0.5",
     "@types/react": "^17.0.0",
     "@types/react-syntax-highlighter": "^15.5.1",
