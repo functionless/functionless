@@ -181,7 +181,7 @@ test("new bus with when map pipe step function", () => {
   const func = new StepFunction<{ source: string }, void>(
     stack,
     "sfn",
-    () => {}
+    async () => {}
   );
 
   const rule = busBus
@@ -205,7 +205,7 @@ test("new bus with when map pipe express step function", () => {
   const func = new ExpressStepFunction<{ source: string }, void>(
     stack,
     "sfn",
-    () => {}
+    async () => {}
   );
 
   const rule = busBus

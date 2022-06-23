@@ -13,7 +13,7 @@ Let's illustrate with a simple example of an Express Step Function workflow. Not
 const getItem = new ExpressStepFunction(stack, "Function", async () => {
   $SFN.waitFor(10);
 
-  const status = $AWS.DynamoDB.GetItem({
+  const status = await $AWS.DynamoDB.GetItem({
     Table,
     Key: {
       id: {
@@ -112,8 +112,8 @@ Functionless isn't just for Step Functions! Also supported are AppSync GraphQL V
 
 ```ts
 const getCat = new AppsyncResolver(
-  async ($context: AppsyncContext<{ id: string }, Cat>) => {
-    return catTable.get($context.id);
+  ($context: AppsyncContext<{ id: string }, Cat>) => {
+    return catTable.appsync.get($context.id);
   }
 ).addResolver(api, {
   typeName: "Query",

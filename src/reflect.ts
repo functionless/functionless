@@ -1,6 +1,6 @@
 import { FunctionDecl } from "./declaration";
 import { Err } from "./error";
-import { AnyFunction } from "./util";
+import { AnyAsyncFunction, AnyFunction } from "./util";
 
 /**
  * A macro (compile-time) function that converts an ArrowFunction or FunctionExpression to a {@link FunctionDecl}.
@@ -28,7 +28,7 @@ import { AnyFunction } from "./util";
  * @param func an in-line ArrowFunction or FunctionExpression. It must be in-line and cannot reference
  *             a variable or a computed function/closure.
  */
-export declare function reflect<F extends AnyFunction>(
+export declare function reflect<F extends AnyFunction | AnyAsyncFunction>(
   func: F
 ): FunctionDecl<F> | Err;
 

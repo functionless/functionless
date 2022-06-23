@@ -20,11 +20,11 @@ beforeEach(() => {
 
 describe("step function integration", () => {
   test("machine with no parameters", () => {
-    const machine = new StepFunction(stack, "machine", () => {});
+    const machine = new StepFunction(stack, "machine", async () => {});
 
     const templates = appsyncTestCase(
-      reflect(() => {
-        machine({});
+      reflect(async () => {
+        await machine({});
       })
     );
 
@@ -43,12 +43,12 @@ describe("step function integration", () => {
     const machine = new StepFunction<{ id: string }, void>(
       stack,
       "machine",
-      () => {}
+      async () => {}
     );
 
     const templates = appsyncTestCase(
-      reflect(() => {
-        machine({ input: { id: "1" } });
+      reflect(async () => {
+        await machine({ input: { id: "1" } });
       })
     );
 
@@ -67,12 +67,12 @@ describe("step function integration", () => {
     const machine = new StepFunction<{ id: string }, void>(
       stack,
       "machine",
-      () => {}
+      async () => {}
     );
 
     const templates = appsyncTestCase(
-      reflect((context: AppsyncContext<{ id: string }>) => {
-        machine({ input: { id: context.arguments.id } });
+      reflect(async (context: AppsyncContext<{ id: string }>) => {
+        await machine({ input: { id: context.arguments.id } });
       })
     );
 
@@ -89,11 +89,11 @@ describe("step function integration", () => {
   });
 
   test("machine with name", () => {
-    const machine = new StepFunction(stack, "machine", () => {});
+    const machine = new StepFunction(stack, "machine", async () => {});
 
     const templates = appsyncTestCase(
-      reflect((context: AppsyncContext<{ id: string }>) => {
-        machine({ name: context.arguments.id });
+      reflect(async (context: AppsyncContext<{ id: string }>) => {
+        await machine({ name: context.arguments.id });
       })
     );
 
@@ -110,7 +110,7 @@ describe("step function integration", () => {
   });
 
   test("machine with trace header", () => {
-    const machine = new StepFunction(stack, "machine", () => {});
+    const machine = new StepFunction(stack, "machine", async () => {});
 
     new AppsyncResolver<{ id: string }, void>(
       stack,
@@ -120,19 +120,19 @@ describe("step function integration", () => {
         fieldName: "field",
         typeName: "type",
       },
-      (context) => {
-        machine({ traceHeader: context.arguments.id });
+      async (context) => {
+        await machine({ traceHeader: context.arguments.id });
       }
     );
   });
 
   test("machine describe exec", () => {
-    const machine = new StepFunction(stack, "machine", () => {});
+    const machine = new StepFunction(stack, "machine", async () => {});
 
     const templates = appsyncTestCase(
-      reflect(() => {
+      reflect(async () => {
         const exec = "exec1";
-        machine.describeExecution(exec);
+        await machine.describeExecution(exec);
       })
     );
 
@@ -150,8 +150,8 @@ test("if first argument is a GraphQLApi, then api can be omitted from the props"
       fieldName: "field",
       typeName: "type",
     },
-    (context) => {
-      machine({ traceHeader: context.arguments.id });
+    async (context) => {
+      await machine({ traceHeader: context.arguments.id });
     }
   );
 });
@@ -185,11 +185,11 @@ test("machine describe exec var", () => {
 
 describe("step function describe execution", () => {
   test("machine describe exec string", () => {
-    const machine = new StepFunction(stack, "machine", () => {});
+    const machine = new StepFunction(stack, "machine", async () => {});
 
     const templates = appsyncTestCase(
-      reflect(() => {
-        machine.describeExecution("exec1");
+      reflect(async () => {
+        await machine.describeExecution("exec1");
       })
     );
 
@@ -206,8 +206,8 @@ describe("step function describe execution", () => {
         fieldName: "field",
         typeName: "type",
       },
-      (context) => {
-        machine({ traceHeader: context.arguments.id });
+      async (context) => {
+        await machine({ traceHeader: context.arguments.id });
       }
     );
   });
@@ -217,11 +217,11 @@ test("multiple isolated integrations", () => {
   const machine = new StepFunction(stack, "machine", () => {});
 
   const templates = appsyncTestCase(
-    reflect(() => {
-      machine.describeExecution("exec1");
-      machine.describeExecution("exec2");
-      machine.describeExecution("exec3");
-      machine.describeExecution("exec4");
+    reflect(async () => {
+      await machine.describeExecution("exec1");
+      await machine.describeExecution("exec2");
+      await machine.describeExecution("exec3");
+      await machine.describeExecution("exec4");
     }),
     {
       expectedTemplateCount: 10,
@@ -235,10 +235,10 @@ test("multiple linked integrations", () => {
   const machine = new StepFunction(stack, "machine", () => {});
 
   const templates = appsyncTestCase(
-    reflect(() => {
-      const res1 = machine({ input: {} });
-      const res2 = machine({ input: res1 });
-      machine({ input: res2 });
+    reflect(async () => {
+      const res1 = await machine({ input: {} });
+      const res2 = await machine({ input: res1 });
+      await machine({ input: res2 });
     })
   );
 
@@ -249,11 +249,11 @@ test("multiple linked integrations pre-compute", () => {
   const machine = new StepFunction(stack, "machine", () => {});
 
   const templates = appsyncTestCase(
-    reflect(() => {
+    reflect(async () => {
       const x = "y";
-      const res1 = machine({ input: { x } });
-      const res2 = machine({ input: res1 });
-      machine({ input: res2 });
+      const res1 = await machine({ input: { x } });
+      const res2 = await machine({ input: res1 });
+      await machine({ input: res2 });
     }),
     {
       expectedTemplateCount: 8,
@@ -267,10 +267,10 @@ test("multiple linked integrations post-compute", () => {
   const machine = new StepFunction(stack, "machine", () => {});
 
   const templates = appsyncTestCase(
-    reflect(() => {
-      const res1 = machine({ input: {} });
-      const res2 = machine({ input: res1 });
-      const result = machine({ input: res2 });
+    reflect(async () => {
+      const res1 = await machine({ input: {} });
+      const res2 = await machine({ input: res1 });
+      const result = await machine({ input: res2 });
       return result.startDate;
     })
   );
@@ -282,10 +282,10 @@ test("multiple linked integrations with props", () => {
   const machine = new StepFunction(stack, "machine", () => {});
 
   const templates = appsyncTestCase(
-    reflect(() => {
-      const res1 = machine.describeExecution("exec1");
-      const res2 = machine.describeExecution(res1.executionArn);
-      machine.describeExecution(res2.executionArn);
+    reflect(async () => {
+      const res1 = await machine.describeExecution("exec1");
+      const res2 = await machine.describeExecution(res1.executionArn);
+      await machine.describeExecution(res2.executionArn);
     }),
     {
       expectedTemplateCount: 8,
@@ -300,8 +300,10 @@ test("multiple nested integrations", () => {
   const machine = new StepFunction(stack, "machine", () => {});
 
   const templates = appsyncTestCase(
-    reflect(() => {
-      machine({ input: machine({ input: machine({ input: {} }) }) });
+    reflect(async () => {
+      await machine({
+        input: await machine({ input: await machine({ input: {} }) }),
+      });
     }),
     {
       expectedTemplateCount: 8,
@@ -316,10 +318,14 @@ test("multiple nested integrations prop access", () => {
   const machine = new StepFunction(stack, "machine", () => {});
 
   const templates = appsyncTestCase(
-    reflect(() => {
-      machine.describeExecution(
-        machine.describeExecution(
-          machine.describeExecution("exec1").executionArn
+    reflect(async () => {
+      await machine.describeExecution(
+        (
+          await machine.describeExecution(
+            (
+              await machine.describeExecution("exec1")
+            ).executionArn
+          )
         ).executionArn
       );
     }),
@@ -340,8 +346,8 @@ test("integrations separated by in", () => {
   });
 
   const templates = appsyncTestCase(
-    reflect(() => {
-      if (func({}) in func2({})) {
+    reflect(async () => {
+      if ((await func({})) in (await func2({}))) {
         return true;
       }
       return false;
@@ -358,10 +364,10 @@ test("multiple linked integrations with mutation", () => {
   const machine = new StepFunction(stack, "machine", () => {});
 
   const templates = appsyncTestCase(
-    reflect(() => {
-      const res1 = machine.describeExecution("exec1");
+    reflect(async () => {
+      const res1 = await machine.describeExecution("exec1");
       const formatted = `status: ${res1.status}`;
-      machine({ input: { x: formatted } });
+      await machine({ input: { x: formatted } });
     })
   );
 

@@ -26,7 +26,7 @@ import {
   IntegrationInput,
   makeIntegration,
 } from "./integration";
-import { AnyFunction } from "./util";
+import { AnyAsyncFunction } from "./util";
 import { VTL } from "./vtl";
 
 export function isTable(a: any): a is AnyTable {
@@ -86,8 +86,8 @@ export type AnyTable = ITable<Record<string, any>, string, string | undefined>;
  *
  * const getPerson = new AppsyncResolver<
  *   (personId: string) => Person | undefined
- * >(($context, personId: string) => {
- *   const person = personTable.appsync.get({
+ * >(async ($context, personId: string) => {
+ *   const person = await personTable.appsync.get({
  *     key: {
  *       id: $util.toDynamoDB(personId)
  *     }
@@ -159,7 +159,9 @@ export interface ITable<
       >(input: {
         key: Key;
         consistentRead?: boolean;
-      }) => Narrow<Item, AttributeKeyToObject<Key>, JsonFormat.Document>
+      }) => Promise<
+        Narrow<Item, AttributeKeyToObject<Key>, JsonFormat.Document>
+      >
     >;
 
     /**
@@ -185,7 +187,9 @@ export interface ITable<
         >;
         condition?: DynamoExpression<ConditionExpression>;
         _version?: number;
-      }) => Narrow<Item, AttributeKeyToObject<Key>, JsonFormat.Document>
+      }) => Promise<
+        Narrow<Item, AttributeKeyToObject<Key>, JsonFormat.Document>
+      >
     >;
 
     /**
@@ -209,7 +213,9 @@ export interface ITable<
         update: DynamoExpression<UpdateExpression>;
         condition?: DynamoExpression<ConditionExpression>;
         _version?: number;
-      }) => Narrow<Item, AttributeKeyToObject<Key>, JsonFormat.Document>
+      }) => Promise<
+        Narrow<Item, AttributeKeyToObject<Key>, JsonFormat.Document>
+      >
     >;
 
     /**
@@ -231,7 +237,9 @@ export interface ITable<
         key: Key;
         condition?: DynamoExpression<ConditionExpression>;
         _version?: number;
-      }) => Narrow<Item, AttributeKeyToObject<Key>, JsonFormat.Document>
+      }) => Promise<
+        Narrow<Item, AttributeKeyToObject<Key>, JsonFormat.Document>
+      >
     >;
 
     /**
@@ -248,11 +256,11 @@ export interface ITable<
         scanIndexForward?: boolean;
         consistentRead?: boolean;
         select?: "ALL_ATTRIBUTES" | "ALL_PROJECTED_ATTRIBUTES";
-      }) => {
+      }) => Promise<{
         items: Item[];
         nextToken: string;
         scannedCount: number;
-      }
+      }>
     >;
   };
 }
@@ -432,7 +440,7 @@ class BaseTable<
 
 export type DynamoIntegrationCall<
   Kind extends string,
-  F extends AnyFunction
+  F extends AnyAsyncFunction
 > = IntegrationCall<`Table.${Kind}`, F>;
 
 /**
@@ -456,8 +464,8 @@ export type DynamoIntegrationCall<
  *
  * const getPerson = new AppsyncResolver<
  *   (personId: string) => Person | undefined
- * >(($context, personId: string) => {
- *   const person = personTable.get({
+ * >(async ($context, personId: string) => {
+ *   const person = await personTable.appsync.get({
  *     key: {
  *       id: $util.toDynamoDB(personId)
  *     }

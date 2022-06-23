@@ -48,8 +48,8 @@ test("call function and conditional return", () => {
   const fn1 = Function.fromFunction<{ arg: string }, Item>(lambda);
 
   appsyncTestCase(
-    reflect((context: AppsyncContext<{ arg: string }>) => {
-      const result = fn1(context.arguments);
+    reflect(async (context: AppsyncContext<{ arg: string }>) => {
+      const result = await fn1(context.arguments);
 
       if (result.id === "sam") {
         return true;
@@ -345,13 +345,13 @@ test("function accepts a superset of primitives", () => {
     stack,
     "subset",
     async (p: { sn: string | number; b: boolean; bs: boolean | string }) => {
-      func1("hello");
-      func1(1);
-      func1(p.sn);
+      await func1("hello");
+      await func1(1);
+      await func1(p.sn);
       // @ts-expect-error - func1 accepts a string or number
-      func1(p.b);
+      await func1(p.b);
       if (typeof p.bs === "string") {
-        func1(p.bs);
+        await func1(p.bs);
       }
     }
   );
@@ -377,13 +377,13 @@ test("function accepts a superset of objects", () => {
       c: { c: string };
       ac: { a: string; c: string };
     }) => {
-      func1(p.a);
-      func1(p.b);
-      func1(p.ab);
-      func1(p.aabb);
+      await func1(p.a);
+      await func1(p.b);
+      await func1(p.ab);
+      await func1(p.aabb);
       // @ts-expect-error - func1 requires a or b
-      func1(p.c);
-      func1(p.ac);
+      await func1(p.c);
+      await func1(p.ac);
     }
   );
 });

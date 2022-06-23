@@ -47,8 +47,8 @@ new EventBus(stack, "bus")
 
 ```ts
 const bus = new EventBus(stack, "bus");
-new StepFunction<{ value: string }, void>((input) => {
-  bus.putEvents({
+new StepFunction<{ value: string }, void>(async (input) => {
+  await bus.putEvents({
     detail: {
       value: input.value,
     },

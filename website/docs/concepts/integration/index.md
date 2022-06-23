@@ -15,7 +15,7 @@ const split = new Function(this, "SplitString", (text: string) =>
   text.split(",")
 );
 
-new StepFunction(this, "Integration", (sentence: string) => {
+new StepFunction(this, "Integration", async (sentence: string) => {
   const words = await split(sentence);
   for (const word of words) {
     // etc.

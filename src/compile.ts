@@ -482,26 +482,23 @@ export function compile(
                 })
               )
             );
+
             // call the integration call function with the prewarm context and arguments
             // At this point, we know native will not be undefined
-            // await integration.native.call(args, preWarmContext)
-            // TODO: Support both sync and async function invocations: https://github.com/functionless/functionless/issues/105
-
-            return context.factory.createAwaitExpression(
-              context.factory.createCallExpression(
+            // integration.native.call(args, preWarmContext)
+            return context.factory.createCallExpression(
+              context.factory.createPropertyAccessExpression(
                 context.factory.createPropertyAccessExpression(
-                  context.factory.createPropertyAccessExpression(
-                    node.expression,
-                    "native"
-                  ),
-                  "call"
+                  node.expression,
+                  "native"
                 ),
-                undefined,
-                [
-                  context.factory.createArrayLiteralExpression(node.arguments),
-                  nativeExprContext.preWarmContext,
-                ]
-              )
+                "call"
+              ),
+              undefined,
+              [
+                context.factory.createArrayLiteralExpression(node.arguments),
+                nativeExprContext.preWarmContext,
+              ]
             );
           }
         } else if (ts.isNewExpression(node)) {
@@ -688,7 +685,15 @@ export function compile(
             }
           };
 
-          return getCall();
+          const call = getCall();
+
+          const type = checker.getTypeAtLocation(node);
+          const typeSymbol = type.getSymbol();
+          return typeSymbol && checker.isPromiseSymbol(typeSymbol)
+            ? newExpr("PromiseExpr", [call])
+            : checker.isPromiseArray(type)
+            ? newExpr("PromiseArrayExpr", [call])
+            : call;
         } else if (ts.isBlock(node)) {
           return newExpr("BlockStmt", [
             ts.factory.createArrayLiteralExpression(
@@ -962,6 +967,8 @@ export function compile(
         } else if (node.kind === ts.SyntaxKind.ThisKeyword) {
           // assuming that this is used in a valid location, create a closure around that instance.
           return ref(ts.factory.createIdentifier("this"));
+        } else if (ts.isAwaitExpression(node)) {
+          return newExpr("AwaitExpr", [toExpr(node.expression, scope)]);
         }
 
         throw new Error(

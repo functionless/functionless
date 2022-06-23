@@ -26,8 +26,11 @@ import {
   isPropAssignExpr,
   isVariableStmt,
   isIdentifier,
+  isReferenceExpr,
+  isAwaitExpr,
+  isPromiseExpr,
 } from "./guards";
-import { findIntegration, IntegrationImpl } from "./integration";
+import { Integration, IntegrationImpl, isIntegration } from "./integration";
 import { Stmt } from "./statement";
 import { AnyFunction, singletonConstruct } from "./util";
 import { VTL } from "./vtl";
@@ -244,7 +247,7 @@ export class MockMethod<
     request: (
       $input: ApiGatewayInput<Request>,
       $context: ApiGatewayContext
-    ) => { statusCode: StatusCode },
+    ) => Promise<{ statusCode: StatusCode }> | { statusCode: StatusCode },
     /**
      * Map of status codes to response to return.
      *
@@ -254,7 +257,7 @@ export class MockMethod<
       [C: number]: (
         $input: ApiGatewayInput<Request>,
         $context: ApiGatewayContext
-      ) => any;
+      ) => Promise<any> | any;
     }
   ) {
     const requestDecl = validateFunctionDecl(request, "MockMethod Request");
@@ -449,7 +452,7 @@ export class AwsMethod<
     request: (
       $input: ApiGatewayInput<Request>,
       $context: ApiGatewayContext
-    ) => IntegrationResponse,
+    ) => Promise<IntegrationResponse> | IntegrationResponse,
     /**
      * Function that maps an integration response to a 200 method response.
      *
@@ -487,7 +490,7 @@ export class AwsMethod<
         { body: IntegrationResponse } & Omit<Request, "body">
       >,
       $context: ApiGatewayContext
-    ) => MethodResponse,
+    ) => Promise<MethodResponse> | MethodResponse,
     /**
      * Map of status codes to a function defining the  response to return. This is used
      * to configure the failure path method responses, for e.g. when an integration fails.
@@ -681,9 +684,17 @@ export class APIGatewayVTL extends VTL {
         return this.exprToJson(expr.expr);
       }
     } else if (isCallExpr(expr)) {
-      const integration = findIntegration(expr);
-      if (integration !== undefined) {
-        return this.integrate(integration, expr);
+      if (isReferenceExpr(expr.expr)) {
+        const ref = expr.expr.ref();
+        if (isIntegration<Integration>(ref)) {
+          const serviceCall = new IntegrationImpl(ref);
+          return this.integrate(serviceCall, expr);
+        } else {
+          throw new SynthError(
+            ErrorCodes.Unexpected_Error,
+            "Called references are expected to be an integration."
+          );
+        }
       } else if (isIdentifier(expr.expr) && expr.expr.name === "Number") {
         return this.exprToJson(expr.args[0]);
       } else if (isPropAccessExpr(expr.expr) && expr.expr.name === "params") {
@@ -745,6 +756,17 @@ export class APIGatewayVTL extends VTL {
           return "#stop";
         })
         .join(`,`)}}`;
+    } else if (isPromiseExpr(expr)) {
+      // if we find a promise, ensure it is wrapped in Await or returned then unwrap it
+      if (isAwaitExpr(expr.parent) || isReturnStmt(expr.parent)) {
+        return this.exprToJson(expr.expr);
+      }
+      throw new SynthError(
+        ErrorCodes.Integration_must_be_immediately_awaited_or_returned
+      );
+    } else if (isAwaitExpr(expr)) {
+      // just pass these through
+      return this.exprToJson(expr.expr);
     } else {
       // this Expr is a computation that cannot be expressed as JSON Path
       // we must therefore evaluate it and use a brute force approach to convert it into JSON

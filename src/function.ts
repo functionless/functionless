@@ -316,9 +316,12 @@ abstract class FunctionBase<in Payload, Out>
       /**
        * This method is called from the calling runtime lambda code (context) to invoke this lambda function.
        */
+      // @ts-ignore - Typescript fails when comparing Promise<O> with ReturnType<ConditionalFunction<P, O>> though they should be the same.
       call: async (args, prewarmContext) => {
         const [payload] = args;
-        const lambdaClient = prewarmContext.getOrInit(PrewarmClients.LAMBDA);
+        const lambdaClient = prewarmContext.getOrInit<AWS.Lambda>(
+          PrewarmClients.LAMBDA
+        );
         const response = (
           await lambdaClient
             .invoke({
@@ -327,7 +330,7 @@ abstract class FunctionBase<in Payload, Out>
             })
             .promise()
         ).Payload?.toString();
-        return response ? JSON.parse(response) : undefined;
+        return (response ? JSON.parse(response) : undefined) as Out;
       },
     };
 
@@ -687,8 +690,8 @@ export class ImportedFunction<Payload, Out> extends FunctionBase<Payload, Out> {
 }
 
 type ConditionalFunction<Payload, Out> = [Payload] extends [undefined]
-  ? (payload?: Payload) => Out
-  : (payload: Payload) => Out;
+  ? (payload?: Payload) => Promise<Out>
+  : (payload: Payload) => Promise<Out>;
 
 interface CallbackLambdaCodeProps extends PrewarmProps {}
 
@@ -826,7 +829,7 @@ export interface NativeIntegration<Func extends AnyFunction> {
   call: (
     args: Parameters<Func>,
     preWarmContext: NativePreWarmContext
-  ) => Promise<ReturnType<Func>>;
+  ) => ReturnType<Func>;
   /**
    * Method called outside of the handler to initialize things like the PreWarmContext
    */

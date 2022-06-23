@@ -37,9 +37,9 @@ import {
   IntegrationInput,
   makeIntegration,
 } from "./integration";
-import { isTable, AnyTable, ITable } from "./table";
-
-import { AnyFunction, renameObjectProperties } from "./util";
+import { AnyTable, isTable, ITable } from "./table";
+import type { AnyAsyncFunction } from "./util";
+import { renameObjectProperties } from "./visit";
 
 /**
  * The `AWS` namespace exports functions that map to AWS Step Functions AWS-SDK Integrations.
@@ -82,7 +82,9 @@ export namespace $AWS {
           >,
           "TableName"
         >
-      ) => DeleteItemOutput<Item, ReturnValue, JsonFormat.AttributeValue>
+      ) => Promise<
+        DeleteItemOutput<Item, ReturnValue, JsonFormat.AttributeValue>
+      >
     >("deleteItem", {
       native: {
         bind: (context, table) => {
@@ -137,14 +139,16 @@ export namespace $AWS {
           >,
           "TableName"
         >
-      ) => GetItemOutput<
-        Item,
-        PartitionKey,
-        RangeKey,
-        Key,
-        AttributesToGet,
-        ProjectionExpression,
-        JsonFormat.AttributeValue
+      ) => Promise<
+        GetItemOutput<
+          Item,
+          PartitionKey,
+          RangeKey,
+          Key,
+          AttributesToGet,
+          ProjectionExpression,
+          JsonFormat.AttributeValue
+        >
       >
     >("getItem", {
       native: {
@@ -212,13 +216,15 @@ export namespace $AWS {
           >,
           "TableName"
         >
-      ) => UpdateItemOutput<
-        Item,
-        PartitionKey,
-        RangeKey,
-        Key,
-        ReturnValue,
-        JsonFormat.AttributeValue
+      ) => Promise<
+        UpdateItemOutput<
+          Item,
+          PartitionKey,
+          RangeKey,
+          Key,
+          ReturnValue,
+          JsonFormat.AttributeValue
+        >
       >
     >("updateItem", {
       native: {
@@ -265,7 +271,7 @@ export namespace $AWS {
           >,
           "TableName"
         >
-      ) => PutItemOutput<Item, ReturnValue, JsonFormat.AttributeValue>
+      ) => Promise<PutItemOutput<Item, ReturnValue, JsonFormat.AttributeValue>>
     >("putItem", {
       native: {
         bind: (context, table) => {
@@ -313,7 +319,9 @@ export namespace $AWS {
           >,
           "TableName"
         >
-      ) => QueryOutput<Item, AttributesToGet, JsonFormat.AttributeValue>
+      ) => Promise<
+        QueryOutput<Item, AttributesToGet, JsonFormat.AttributeValue>
+      >
     >("query", {
       native: {
         bind: (context, table) => {
@@ -359,7 +367,7 @@ export namespace $AWS {
           >,
           "TableName"
         >
-      ) => ScanOutput<Item, AttributesToGet, JsonFormat.AttributeValue>
+      ) => Promise<ScanOutput<Item, AttributesToGet, JsonFormat.AttributeValue>>
     >("scan", {
       native: {
         bind: (context, table) => {
@@ -450,8 +458,8 @@ export namespace $AWS {
     export const putEvents = makeIntegration<
       "EventBridge.putEvent",
       (
-        request: AWSEventBridge.Types.PutEventsRequest
-      ) => AWSEventBridge.Types.PutEventsResponse
+        request: AWS.EventBridge.Types.PutEventsRequest
+      ) => Promise<AWS.EventBridge.Types.PutEventsResponse>
     >({
       kind: "EventBridge.putEvent",
       native: {
@@ -485,7 +493,10 @@ export type OperationName =
   | "scan"
   | "query";
 
-function makeDynamoIntegration<Op extends OperationName, F extends AnyFunction>(
+function makeDynamoIntegration<
+  Op extends OperationName,
+  F extends AnyAsyncFunction
+>(
   operationName: Op,
   integration: Omit<
     IntegrationInput<`$AWS.DynamoDB.${Op}`, F>,
@@ -589,7 +600,7 @@ function makeDynamoIntegration<Op extends OperationName, F extends AnyFunction>(
 /**
  * @internal
  */
-function grantTablePermissions(
+export function grantTablePermissions(
   table: AnyTable,
   role: aws_iam.IRole,
   operationName: OperationName
@@ -608,7 +619,7 @@ function grantTablePermissions(
 /**
  * @internal
  */
-function getTableArgument(op: string, args: Argument[] | Expr[]) {
+export function getTableArgument(op: string, args: Argument[] | Expr[]) {
   let inputArgument;
   if (isArgument(args[0])) {
     inputArgument = args[0].expr;

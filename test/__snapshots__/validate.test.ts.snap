@@ -69,6 +69,93 @@ https://functionless.org/docs/error-codes#argument-must-be-an-inline-function
 [7m   [0m [91m~~~~~~~~~~[0m
 [7m 65[0m   )()
 [7m   [0m [91m~~~~~[0m
+[96mtest/test-files/appsync.ts[0m:[93m81[0m:[93m58[0m - [91merror[0m[90m Functionless(10002): [0mArgument must be an inline Function
+
+https://functionless.org/docs/error-codes#argument-must-be-an-inline-function
+
+[7m 81[0m         { api, typeName: \\"Query\\", fieldName: \\"getPost\\" },
+[7m   [0m [91m                                                         [0m
+[7m 82[0m         // invalid - must be an inline function
+[7m   [0m [91m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+[7m...[0m 
+[7m 85[0m             null
+[7m   [0m [91m~~~~~~~~~~~~~~~~[0m
+[7m 86[0m         )()
+[7m   [0m [91m~~~~~~~~~~~[0m
+[96mtest/test-files/appsync.ts[0m:[93m107[0m:[93m14[0m - [91merror[0m[90m Functionless(10016): [0mIntegration must be immediately awaited or returned
+
+https://functionless.org/docs/error-codes#integration-must-be-immediately-awaited-or-returned
+
+[7m107[0m     const c = func();
+[7m   [0m [91m             ~~~~~~~[0m
+[96mtest/test-files/appsync.ts[0m:[93m120[0m:[93m14[0m - [91merror[0m[90m Functionless(10016): [0mIntegration must be immediately awaited or returned
+
+https://functionless.org/docs/error-codes#integration-must-be-immediately-awaited-or-returned
+
+[7m120[0m     const c = func();
+[7m   [0m [91m             ~~~~~~~[0m
+[96mtest/test-files/appsync.ts[0m:[93m134[0m:[93m11[0m - [91merror[0m[90m Functionless(10016): [0mIntegration must be immediately awaited or returned
+
+https://functionless.org/docs/error-codes#integration-must-be-immediately-awaited-or-returned
+
+[7m134[0m     return func().then((x) => x);
+[7m   [0m [91m          ~~~~~~~[0m
+[96mtest/test-files/appsync.ts[0m:[93m146[0m:[93m11[0m - [91merror[0m[90m Functionless(10016): [0mIntegration must be immediately awaited or returned
+
+https://functionless.org/docs/error-codes#integration-must-be-immediately-awaited-or-returned
+
+[7m146[0m     return func().catch((x) => x);
+[7m   [0m [91m          ~~~~~~~[0m
+[96mtest/test-files/appsync.ts[0m:[93m199[0m:[93m11[0m - [91merror[0m[90m Functionless(10017): [0mArrays of Integration must be immediately wrapped in Promise.all
+
+https://functionless.org/docs/error-codes#arrays-of-integration-must-be-immediately-wrapped-in-promise.all
+
+[7m199[0m     return [1, 2].map(async () => func());
+[7m   [0m [91m          ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+[96mtest/test-files/appsync.ts[0m:[93m211[0m:[93m14[0m - [91merror[0m[90m Functionless(10018): [0mAppsync does not support concurrent integration invocation or methods on the \`Promise\` api.
+
+https://functionless.org/docs/error-codes#unsupported-use-of-promises
+
+[7m211[0m     const c = Promise.all([1, 2].map(async () => func()));
+[7m   [0m [91m             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+[96mtest/test-files/appsync.ts[0m:[93m225[0m:[93m11[0m - [91merror[0m[90m Functionless(10018): [0mAppsync does not support concurrent integration invocation or methods on the \`Promise\` api.
+
+https://functionless.org/docs/error-codes#unsupported-use-of-promises
+
+[7m225[0m     return Promise.all(c);
+[7m   [0m [91m          ~~~~~~~~~~~~~~~[0m
+"
+`;
+
+exports[`event-bus.ts 1`] = `
+"[96mtest/test-files/event-bus.ts[0m:[93m16[0m:[93m22[0m - [91merror[0m[90m Functionless(10015): [0mEventBus Rules do not support integrations
+
+https://functionless.org/docs/error-codes#eventbus-rules-do-not-support-integrations
+
+[7m16[0m bus.all().map(() => {
+[7m  [0m [91m                     [0m
+[7m17[0m   // eslint-disable-next-line @typescript-eslint/no-floating-promises
+[7m  [0m [91m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+[7m18[0m   bus.putEvents({ \\"detail-type\\": \\"detail\\", detail: {}, source: \\"\\" });
+[7m  [0m [91m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+[96mtest/test-files/event-bus.ts[0m:[93m23[0m:[93m9[0m - [91merror[0m[90m Functionless(10015): [0mEventBus Rules do not support integrations
+
+https://functionless.org/docs/error-codes#eventbus-rules-do-not-support-integrations
+
+[7m23[0m   return func();
+[7m  [0m [91m        ~~~~~~~[0m
+[96mtest/test-files/event-bus.ts[0m:[93m35[0m:[93m11[0m - [91merror[0m[90m Functionless(10015): [0mEventBus Rules do not support integrations
+
+https://functionless.org/docs/error-codes#eventbus-rules-do-not-support-integrations
+
+[7m35[0m   return (func() as any) === \\"x\\";
+[7m  [0m [91m          ~~~~~~[0m
+[96mtest/test-files/event-bus.ts[0m:[93m39[0m:[93m11[0m - [91merror[0m[90m Functionless(10015): [0mEventBus Rules do not support integrations
+
+https://functionless.org/docs/error-codes#eventbus-rules-do-not-support-integrations
+
+[7m39[0m   return (func() as any) === \\"x\\";
+[7m  [0m [91m          ~~~~~~[0m
 "
 `;
 
@@ -151,5 +238,47 @@ https://functionless.org/docs/error-codes#cannot-perform-arithmetic-on-variables
 
 [7m72[0m         return input.i + 1;
 [7m  [0m [91m              ~~~~~~~~~~~~[0m
+[96mtest/test-files/step-function.ts[0m:[93m85[0m:[93m12[0m - [91merror[0m[90m Functionless(10016): [0mIntegration must be immediately awaited or returned
+
+https://functionless.org/docs/error-codes#integration-must-be-immediately-awaited-or-returned
+
+[7m85[0m   const c = func();
+[7m  [0m [91m           ~~~~~~~[0m
+[96mtest/test-files/step-function.ts[0m:[93m90[0m:[93m12[0m - [91merror[0m[90m Functionless(10016): [0mIntegration must be immediately awaited or returned
+
+https://functionless.org/docs/error-codes#integration-must-be-immediately-awaited-or-returned
+
+[7m90[0m   const c = func();
+[7m  [0m [91m           ~~~~~~~[0m
+[96mtest/test-files/step-function.ts[0m:[93m96[0m:[93m9[0m - [91merror[0m[90m Functionless(10016): [0mIntegration must be immediately awaited or returned
+
+https://functionless.org/docs/error-codes#integration-must-be-immediately-awaited-or-returned
+
+[7m96[0m   return func().then((x) => x);
+[7m  [0m [91m        ~~~~~~~[0m
+[96mtest/test-files/step-function.ts[0m:[93m100[0m:[93m9[0m - [91merror[0m[90m Functionless(10016): [0mIntegration must be immediately awaited or returned
+
+https://functionless.org/docs/error-codes#integration-must-be-immediately-awaited-or-returned
+
+[7m100[0m   return func().catch((x) => x);
+[7m   [0m [91m        ~~~~~~~[0m
+[96mtest/test-files/step-function.ts[0m:[93m123[0m:[93m9[0m - [91merror[0m[90m Functionless(10017): [0mArrays of Integration must be immediately wrapped in Promise.all
+
+https://functionless.org/docs/error-codes#arrays-of-integration-must-be-immediately-wrapped-in-promise.all
+
+[7m123[0m   return [1, 2].map(async () => func());
+[7m   [0m [91m        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+[96mtest/test-files/step-function.ts[0m:[93m127[0m:[93m12[0m - [91merror[0m[90m Functionless(10016): [0mIntegration must be immediately awaited or returned
+
+https://functionless.org/docs/error-codes#integration-must-be-immediately-awaited-or-returned
+
+[7m127[0m   const c = Promise.all([1, 2].map(async () => func()));
+[7m   [0m [91m           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+[96mtest/test-files/step-function.ts[0m:[93m133[0m:[93m9[0m - [91merror[0m[90m Functionless(10018): [0mUnsupported use of Promises
+
+https://functionless.org/docs/error-codes#unsupported-use-of-promises
+
+[7m133[0m   return Promise.all(c);
+[7m   [0m [91m        ~~~~~~~~~~~~~~~[0m
 "
 `;

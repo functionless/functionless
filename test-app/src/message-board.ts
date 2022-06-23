@@ -95,8 +95,8 @@ new AppsyncResolver<
     typeName: "Post",
     fieldName: "comments",
   },
-  ($context) => {
-    const response = database.appsync.query({
+  async ($context) => {
+    const response = await database.appsync.query({
       query: {
         expression: `pk = :pk and begins_with(#sk,:sk)`,
         expressionValues: {
@@ -135,9 +135,9 @@ export const createPost = new AppsyncResolver<{ title: string }, Post>(
     typeName: "Mutation",
     fieldName: "createPost",
   },
-  ($context) => {
+  async ($context) => {
     const postId = $util.autoUlid();
-    const post = database.appsync.putItem({
+    const post = await database.appsync.putItem({
       key: {
         pk: {
           S: `Post|${postId}`,
@@ -170,10 +170,10 @@ export const validateComment = new Function<
 export const commentValidationWorkflow = new StepFunction<
   { postId: string; commentId: string; commentText: string },
   void
->(stack, "CommentValidationWorkflow", (input) => {
-  const status = validateComment({ commentText: input.commentText });
+>(stack, "CommentValidationWorkflow", async (input) => {
+  const status = await validateComment({ commentText: input.commentText });
   if (status === "bad") {
-    $AWS.DynamoDB.DeleteItem({
+    await $AWS.DynamoDB.DeleteItem({
       Table: database,
       Key: {
         pk: {
@@ -198,9 +198,9 @@ export const addComment = new AppsyncResolver<
     typeName: "Mutation",
     fieldName: "addComment",
   },
-  ($context) => {
+  async ($context) => {
     const commentId = $util.autoUlid();
-    const comment = database.appsync.putItem({
+    const comment = await database.appsync.putItem({
       key: {
         pk: {
           S: `Post|${$context.arguments.postId}`,
@@ -226,7 +226,7 @@ export const addComment = new AppsyncResolver<
     });
 
     // kick off a workflow to validate the comment
-    commentValidationWorkflow({ input: comment });
+    await commentValidationWorkflow({ input: comment });
 
     return comment;
   }
@@ -250,10 +250,10 @@ const customDeleteBus = new EventBus<MessageDeletedEvent | PostDeletedEvent>(
 const deleteWorkflow = new StepFunction<{ postId: string }, void>(
   stack,
   "DeletePostWorkflow",
-  (input) => {
+  async (input) => {
     while (true) {
       try {
-        const comments = $AWS.DynamoDB.Query({
+        const comments = await $AWS.DynamoDB.Query({
           Table: database,
           KeyConditionExpression: `pk = :pk`,
           ExpressionAttributeValues: {
@@ -264,7 +264,7 @@ const deleteWorkflow = new StepFunction<{ postId: string }, void>(
         });
 
         if (comments.Items?.[0] !== undefined) {
-          $SFN.forEach(comments.Items, (comment) =>
+          await $SFN.forEach(comments.Items, async (comment) =>
             $AWS.DynamoDB.DeleteItem({
               Table: database,
               Key: {
@@ -274,7 +274,7 @@ const deleteWorkflow = new StepFunction<{ postId: string }, void>(
             })
           );
         } else {
-          $AWS.DynamoDB.DeleteItem({
+          await $AWS.DynamoDB.DeleteItem({
             Table: database,
             Key: {
               pk: {
@@ -286,18 +286,13 @@ const deleteWorkflow = new StepFunction<{ postId: string }, void>(
             },
           });
 
-          customDeleteBus.putEvents({
+          await customDeleteBus.putEvents({
             "detail-type": "Delete-Post-Success",
             source: "MessageDeleter",
             detail: {
               id: input.postId,
             },
           });
-
-          return {
-            status: "deleted",
-            postId: input.postId,
-          };
         }
       } catch {
         $SFN.waitFor(10);
@@ -317,8 +312,8 @@ export const deletePost = new AppsyncResolver<
     typeName: "Mutation",
     fieldName: "deletePost",
   },
-  ($context) => {
-    const item = database.appsync.getItem({
+  async ($context) => {
+    const item = await database.appsync.getItem({
       key: {
         pk: {
           S: `Post|${$context.arguments.postId}`,
@@ -353,8 +348,8 @@ export const getDeletionStatus = new AppsyncResolver<
     typeName: "Query",
     fieldName: "getDeletionStatus",
   },
-  ($context) => {
-    const executionStatus = deleteWorkflow.describeExecution(
+  async ($context) => {
+    const executionStatus = await deleteWorkflow.describeExecution(
       $context.arguments.executionArn
     );
 
@@ -450,14 +445,14 @@ new Function(
   async () => {
     const result = func();
     console.log(`function result: ${result}`);
-    customDeleteBus.putEvents({
+    await customDeleteBus.putEvents({
       "detail-type": "Delete-Post-Success",
       source: "MessageDeleter",
       detail: {
         id: "from the test method!!",
       },
     });
-    const result2 = $AWS.EventBridge.putEvents({
+    const result2 = await $AWS.EventBridge.putEvents({
       Entries: [
         {
           EventBusName: customDeleteBus.eventBusArn,
@@ -470,19 +465,19 @@ new Function(
       ],
     });
     console.log(`bus: ${JSON.stringify(result2)}`);
-    const exc = deleteWorkflow({
+    const exc = await deleteWorkflow({
       input: {
         postId: "something",
       },
     });
     const { bus } = b;
-    bus.putEvents({
+    await bus.putEvents({
       "detail-type": "Delete-Message-Success",
       detail: { count: 0 },
       source: "MessageDeleter",
     });
     console.log(deleteWorkflow.describeExecution(exc.executionArn));
-    $AWS.DynamoDB.PutItem({
+    await $AWS.DynamoDB.PutItem({
       Table: database,
       Item: {
         pk: { S: "Post|1" },
@@ -493,7 +488,7 @@ new Function(
         title: { S: "myPost" },
       },
     });
-    const item = $AWS.DynamoDB.GetItem({
+    const item = await $AWS.DynamoDB.GetItem({
       Table: database,
       ConsistentRead: true,
       Key: { pk: { S: "Post|1" }, sk: { S: "Post" } },
@@ -590,13 +585,13 @@ post.addField({
         limit: appsync.GraphqlType.int(),
       },
     },
-    (
+    async (
       $context: AppsyncContext<
         { nextToken?: string; limit?: number },
         Omit<Post, "comments">
       >
-    ): CommentPage => {
-      const response = database.appsync.query({
+    ): Promise<CommentPage> => {
+      const response = await database.appsync.query({
         query: {
           expression: `pk = :pk and begins_with(#sk,:sk)`,
           expressionValues: {

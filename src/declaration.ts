@@ -5,7 +5,7 @@ import { isErr, isFunctionDecl, isNode, isParameterDecl } from "./guards";
 import { Integration } from "./integration";
 import { BaseNode, FunctionlessNode } from "./node";
 import { BlockStmt } from "./statement";
-import { AnyFunction } from "./util";
+import { AnyFunction, anyOf } from "./util";
 
 export type Decl = FunctionDecl | ParameterDecl | NativeFunctionDecl;
 
@@ -82,6 +82,8 @@ export class ParameterDecl extends BaseDecl<
     return new ParameterDecl(this.name) as this;
   }
 }
+
+export const isFunctionDeclOrErr = anyOf(isFunctionDecl, isErr);
 
 export function validateFunctionDecl(
   a: any,
