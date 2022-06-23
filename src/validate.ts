@@ -168,6 +168,12 @@ export function validate(
           ErrorCodes.Arrays_of_Integration_must_be_immediately_wrapped_in_Promise_all
         ),
       ];
+    } else if (
+      checker.isPromiseAllCall(node) &&
+      (node.arguments.length < 1 ||
+        !checker.isPromiseArray(checker.getTypeAtLocation(node.arguments[0])))
+    ) {
+      return [newError(node, ErrorCodes.Unsupported_Use_of_Promises)];
     }
     return [];
   }
@@ -204,7 +210,28 @@ export function validate(
 
   function validateAppsync(node: ts.Node) {
     if (ts.isCallExpression(node)) {
+      if (
+        ts.isPropertyAccessExpression(node.expression) &&
+        ts.isIdentifier(node.expression.expression) &&
+        node.expression.expression.text === "Promise"
+      ) {
+        return [
+          newError(
+            node,
+            ErrorCodes.Unsupported_Use_of_Promises,
+            "Appsync does not support concurrent integration invocation or methods on the `Promise` api."
+          ),
+        ];
+      }
       return validatePromiseCalls(node);
+    } else if (checker.isPromiseArray(checker.getTypeAtLocation(node))) {
+      return [
+        newError(
+          node,
+          ErrorCodes.Unsupported_Use_of_Promises,
+          "Appsync does not support concurrent integration invocation."
+        ),
+      ];
     }
 
     return [];

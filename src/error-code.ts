@@ -614,6 +614,45 @@ export namespace ErrorCodes {
       type: ErrorType.ERROR,
       title: "Arrays of Integration must be immediately wrapped in Promise.all",
     };
+
+  /**
+   * Unsupported use of Promises
+   *
+   * In {@link StepFunction} and {@link ExpressStepFunction}, `Promise.all` can be used to turn an array of promises into a single promise. However, it must directly wrap a method which returns an array of promises.
+   *
+   * ```ts
+   * const func = new Function(stack, id, async () => {});
+   *
+   * new StepFunction(stack, id, async () => {
+   *    const c = [1,2];
+   *    // invalid
+   *    const p = await Promise.all(c);
+   *    // valid
+   *    const t = await Promise.all([1,2].map(i => func()));
+   * });
+   * ```
+   *
+   * {@link AppsyncResolver} and {@link AppsyncField} do not support `Promise.all` or arrays of `Promises`. AWS App Sync does not support concurrent or dynamic invocation of integrations.
+   *
+   * ```ts
+   * const func = new Function(stack, id, async () => {});
+   *
+   * new AppsyncResolver(..., async ($context) => {
+   *     // valid - series of integration invocations
+   *     const t = await func();
+   *     const tt = await func();
+   *     // invalid - concurrent invocation
+   *     const arr = await Promise.all([1,2].map(() => func()));
+   *     // invalid - dynamic invocation
+   *     const arr = await Promise.all($context.arguments.arr.map(() => func()));
+   * });
+   * ```
+   */
+  export const Unsupported_Use_of_Promises: ErrorCode = {
+    code: 10018,
+    type: ErrorType.ERROR,
+    title: "Unsupported use of Promises",
+  };
 }
 
 // to prevent the closure serializer from trying to import all of functionless.

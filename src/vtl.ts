@@ -52,7 +52,7 @@ import {
 import { Integration, IntegrationImpl, isIntegration } from "./integration";
 import { FunctionlessNode } from "./node";
 import { Stmt } from "./statement";
-import { AnyFunction, isInTopLevelScope, isPromiseAll } from "./util";
+import { AnyFunction, isInTopLevelScope } from "./util";
 
 // https://velocity.apache.org/engine/devel/user-guide.html#conditionals
 // https://cwiki.apache.org/confluence/display/VELOCITY/CheckingForNull
@@ -399,6 +399,15 @@ export abstract class VTL {
           }
 
           return previousTmp;
+        } else if (
+          isIdentifier(node.expr.expr) &&
+          node.expr.expr.name === "Promise"
+        ) {
+          debugger;
+          throw new SynthError(
+            ErrorCodes.Unsupported_Use_of_Promises,
+            "Appsync does not support concurrent integration invocation or methods on the `Promise` api."
+          );
         }
         // this is an array map, forEach, reduce call
       }
@@ -550,18 +559,10 @@ export abstract class VTL {
         ErrorCodes.Integration_must_be_immediately_awaited_or_returned
       );
     } else if (isPromiseArrayExpr(node)) {
-      // if we find a promise array, ensure it is wrapped in a Promise.all then unwrap it
-      if (
-        isArgument(node.parent) &&
-        isCallExpr(node.parent.parent) &&
-        isPromiseAll(node.parent.parent)
-      ) {
-        return this.eval(node.expr);
-      }
       debugger;
-      // TODO create error code
       throw new SynthError(
-        ErrorCodes.Arrays_of_Integration_must_be_immediately_wrapped_in_Promise_all
+        ErrorCodes.Unsupported_Use_of_Promises,
+        "Appsync does not support concurrent integration invocation."
       );
     } else if (isErr(node)) {
       throw node.error;

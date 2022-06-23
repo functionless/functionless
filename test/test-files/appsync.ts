@@ -123,6 +123,30 @@ new AppsyncResolver(
   }
 );
 
+new AppsyncResolver(
+  api,
+  "then",
+  {
+    fieldName: "field",
+    typeName: "type",
+  },
+  async () => {
+    return func().then((x) => x);
+  }
+);
+
+new AppsyncResolver(
+  api,
+  "catch",
+  {
+    fieldName: "field",
+    typeName: "type",
+  },
+  async () => {
+    return func().catch((x) => x);
+  }
+);
+
 // Supported - Await
 
 new AppsyncResolver(
@@ -166,7 +190,7 @@ new AppsyncResolver(
 
 new AppsyncResolver(
   api,
-  "no promise all",
+  "no promise array",
   {
     fieldName: "field",
     typeName: "type",
@@ -178,7 +202,7 @@ new AppsyncResolver(
 
 new AppsyncResolver(
   api,
-  "no promise all await",
+  "no promise all",
   {
     fieldName: "field",
     typeName: "type",
@@ -186,5 +210,18 @@ new AppsyncResolver(
   async () => {
     const c = Promise.all([1, 2].map(async () => func()));
     return c;
+  }
+);
+
+new AppsyncResolver(
+  api,
+  "no promise all await",
+  {
+    fieldName: "field",
+    typeName: "type",
+  },
+  async () => {
+    const c = [1, 2];
+    return Promise.all(c);
   }
 );

@@ -710,15 +710,14 @@ export class ASL {
         );
       }
 
-      const updated = (
+      const updated =
         isNewExpr(stmt.expr) || isCallExpr(stmt.expr)
           ? stmt.expr
-          : isAwaitExpr(stmt.expr) && isPromiseExpr(stmt.expr.expr)
-          ? stmt.expr.expr.expr
-          : isPromiseExpr(stmt.expr)
-          ? stmt.expr.expr
-          : stmt.expr.expr
-      ) as CallExpr | NewExpr;
+          : isAwaitExpr(stmt.expr)
+          ? isPromiseExpr(stmt.expr.expr)
+            ? stmt.expr.expr.expr
+            : stmt.expr.expr
+          : stmt.expr.expr;
 
       const error = updated.args
         .filter((arg): arg is Argument & { expr: Expr } => !!arg.expr)
@@ -889,7 +888,6 @@ export class ASL {
         return this.eval(expr.expr, props);
       }
       debugger;
-      // TODO create error code
       throw new SynthError(
         ErrorCodes.Arrays_of_Integration_must_be_immediately_wrapped_in_Promise_all
       );
@@ -992,9 +990,7 @@ export class ASL {
           return this.eval(values.expr, props);
         }
         debugger;
-        throw new SynthError(
-          ErrorCodes.Arrays_of_Integration_must_be_immediately_wrapped_in_Promise_all
-        );
+        throw new SynthError(ErrorCodes.Unsupported_Use_of_Promises);
       }
       throw new Error(
         `call must be a service call or list .slice, .map, .forEach or .filter, ${expr}`
