@@ -49,9 +49,9 @@ All Integrations look the same - they are just function calls. The only differen
 const bus = new EventBus<Event<{ name: string }>>(this, "bus");
 
 // StepFunction is a Resource
-const sfn = new StepFunction(this, sfn, (payload: { name: string }) => {
+const sfn = new StepFunction(this, sfn, async (payload: { name: string }) => {
   // bus.putEvents is an Integration that supports the StepFunction ASL Integration Type
-  bus.putEvents({
+  await bus.putEvents({
     source: "specialSource",
     "detail-type": "UserNameEvent",
     detail: payload,

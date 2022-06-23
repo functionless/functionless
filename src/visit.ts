@@ -4,6 +4,7 @@ import { Err } from "./error";
 import {
   Argument,
   ArrayLiteralExpr,
+  AwaitExpr,
   BinaryExpr,
   BooleanLiteralExpr,
   CallExpr,
@@ -28,10 +29,13 @@ import {
   TypeOfExpr,
   UnaryExpr,
   UndefinedLiteralExpr,
+  PromiseArrayExpr,
+  PromiseExpr,
 } from "./expression";
 import {
   isArgument,
   isArrayLiteralExpr,
+  isAwaitExpr,
   isBinaryExpr,
   isBlockStmt,
   isBooleanLiteralExpr,
@@ -58,6 +62,8 @@ import {
   isObjectElementExpr,
   isObjectLiteralExpr,
   isParameterDecl,
+  isPromiseArrayExpr,
+  isPromiseExpr,
   isPropAccessExpr,
   isPropAssignExpr,
   isReferenceExpr,
@@ -487,6 +493,18 @@ export function visitEachChild<T extends FunctionlessNode>(
     return new WhileStmt(condition, block) as T;
   } else if (isNativeFunctionDecl(node)) {
     throw Error(`${node.kind} are not supported.`);
+  } else if (isAwaitExpr(node)) {
+    const expr = visitor(node.expr);
+    ensure(expr, isExpr, "an AwaitExpr's expr property must be an Expr");
+    return new AwaitExpr(expr) as T;
+  } else if (isPromiseExpr(node)) {
+    const expr = visitor(node.expr);
+    ensure(expr, isExpr, "a PromiseExpr's expr property must be an Expr");
+    return new PromiseExpr(expr) as T;
+  } else if (isPromiseArrayExpr(node)) {
+    const expr = visitor(node.expr);
+    ensure(expr, isExpr, "a PromiseArrayExpr's expr property must be an Expr");
+    return new PromiseArrayExpr(expr) as T;
   }
   return assertNever(node);
 }
@@ -515,6 +533,54 @@ export function visitBlock(
       ? updatedNode
       : [...nestedTasks, updatedNode];
   });
+}
+
+/**
+ * Starting at the root, explore the children without processing until one or more start nodes are found.
+ *
+ * For each Start nodes, apply {@link visitEachChild} to it with the given callback.
+ */
+export function visitSpecificChildren<T extends FunctionlessNode>(
+  root: T,
+  starts: Expr[],
+  cb: (
+    node: FunctionlessNode
+  ) => FunctionlessNode | FunctionlessNode[] | undefined
+): T {
+  return visitEachChild(root, function dive(expr: FunctionlessNode):
+    | FunctionlessNode
+    | FunctionlessNode[]
+    | undefined {
+    return starts.includes(expr as Expr)
+      ? visitEachChild(expr, cb)
+      : visitEachChild(expr, dive);
+  });
+}
+
+/**
+ * Rename all {@link PropAssignExpr} expressions within the {@link obj} where the
+ * name is statically known and matches a property in the {@link rename} map.
+ */
+export function renameObjectProperties(
+  obj: ObjectLiteralExpr,
+  rename: Record<string, string>
+) {
+  const newObj = visitEachChild(obj, (node) => {
+    if (isPropAssignExpr(node)) {
+      const propName = node.tryGetName();
+      if (propName !== undefined && propName in rename) {
+        const substituteName = rename[propName];
+
+        return new PropAssignExpr(
+          new Identifier(substituteName),
+          node.expr.clone()
+        );
+      }
+    }
+    return node;
+  });
+  newObj.parent = obj.parent;
+  return newObj;
 }
 
 // to prevent the closure serializer from trying to import all of functionless.

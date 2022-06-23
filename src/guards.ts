@@ -13,6 +13,7 @@ export function isExpr(a: any): a is Expr {
     isNode(a) &&
     (isArgument(a) ||
       isArrayLiteralExpr(a) ||
+      isAwaitExpr(a) ||
       isBinaryExpr(a) ||
       isBooleanLiteralExpr(a) ||
       isCallExpr(a) ||
@@ -26,6 +27,8 @@ export function isExpr(a: any): a is Expr {
       isNullLiteralExpr(a) ||
       isNumberLiteralExpr(a) ||
       isObjectLiteralExpr(a) ||
+      isPromiseArrayExpr(a) ||
+      isPromiseExpr(a) ||
       isPropAccessExpr(a) ||
       isPropAssignExpr(a) ||
       isReferenceExpr(a) ||
@@ -61,6 +64,9 @@ export const isSpreadAssignExpr = typeGuard("SpreadAssignExpr");
 export const isSpreadElementExpr = typeGuard("SpreadElementExpr");
 export const isTemplateExpr = typeGuard("TemplateExpr");
 export const isTypeOfExpr = typeGuard("TypeOfExpr");
+export const isPromiseExpr = typeGuard("PromiseExpr");
+export const isPromiseArrayExpr = typeGuard("PromiseArrayExpr");
+export const isAwaitExpr = typeGuard("AwaitExpr");
 
 export const isObjectElementExpr = typeGuard(
   "PropAssignExpr",

@@ -100,8 +100,8 @@ const myExpressFunc = new ExpressStepFunction(
   }
 );
 
-new AppsyncResolver(scope, id, props, () => {
-  const response = myExpressFunc({ name: "my name" });
+new AppsyncResolver(scope, id, props, async () => {
+  const response = await myExpressFunc({ name: "my name" });
 });
 ```
 
@@ -154,7 +154,7 @@ This is useful so that you don't have to do work to convert the AttributeValue f
 It invokes `DynamoDB:GetItem` API using the [GetItem Appsync Resolver](https://docs.aws.amazon.com/appsync/latest/devguide/resolver-mapping-template-reference-dynamodb.html#aws-appsync-resolver-mapping-template-reference-dynamodb-getitem).
 
 ```ts
-new AppsyncResolver(($context: AppsyncContext<{ id: string }>) => {
+new AppsyncResolver(async ($context: AppsyncContext<{ id: string }>) => {
   return table.appsync.getItem({
     key: {
       id: $util.dynamodb.toJson($context.arguments.id),

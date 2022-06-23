@@ -5,12 +5,14 @@ import { FunctionDecl } from "./declaration";
 import { ErrorCodes, SynthError } from "./error-code";
 import {
   Argument,
+  AwaitExpr,
   CallExpr,
   ElementAccessExpr,
   Expr,
   isVariableReference,
   NewExpr,
   NullLiteralExpr,
+  PromiseExpr,
   PropAccessExpr,
   StringLiteralExpr,
 } from "./expression";
@@ -54,16 +56,20 @@ import {
   isSpreadElementExpr,
   isCatchClause,
   isIdentifier,
+  isAwaitExpr,
   isForOfStmt,
+  isPromiseArrayExpr,
+  isPromiseExpr,
   isWhileStmt,
   isReferenceExpr,
   isStmt,
 } from "./guards";
 import {
+  getIntegrationExprFromIntegrationCallPattern,
   Integration,
   IntegrationImpl,
   isIntegration,
-  isIntegrationCall,
+  isIntegrationCallPattern,
 } from "./integration";
 import { FunctionlessNode } from "./node";
 import {
@@ -79,8 +85,13 @@ import {
 } from "./statement";
 import { isStepFunction } from "./step-function";
 import { isTable } from "./table";
-import { anyOf, DeterministicNameGenerator, evalToConstant } from "./util";
-import { visitBlock, visitEachChild } from "./visit";
+import {
+  anyOf,
+  DeterministicNameGenerator,
+  evalToConstant,
+  isPromiseAll,
+} from "./util";
+import { visitBlock, visitEachChild, visitSpecificChildren } from "./visit";
 
 export function isASL(a: any): a is ASL {
   return (a as ASL | undefined)?.kind === ASL.ContextName;
@@ -403,13 +414,20 @@ export class ASL {
               ? [new ReturnStmt(new NullLiteralExpr())]
               : []),
           ]);
-        } else if (hoist && self.doHoist(node)) {
-          const updatedChild = visitEachChild(node, (expr) =>
+        } else if (isIntegrationCallPattern(node)) {
+          // we find the range of nodes to hoist so that we avoid visiting the middle nodes.
+          // The start node is the first node in the integration pattern (integ, await, or promise)
+          // The end is always the integration.
+          const end = getIntegrationExprFromIntegrationCallPattern(node);
+
+          const updatedChild = visitSpecificChildren(node, [end], (expr) =>
             normalizeAST(expr, hoist)
           );
           // when we find an integration call,
           // if it is nested, hoist it up (create variable, add above, replace expr with variable)
-          return hoist(updatedChild);
+          return hoist && self.doHoist(node)
+            ? hoist(updatedChild)
+            : updatedChild;
         }
         return visitEachChild(node, (expr) => normalizeAST(expr, hoist));
       }
@@ -432,10 +450,12 @@ export class ASL {
    * Determines of an expression should be hoisted
    * Hoisted - Add new variable to the current block above the
    */
-  private doHoist(node: FunctionlessNode): node is CallExpr {
+  private doHoist(
+    node: FunctionlessNode
+  ): node is CallExpr | AwaitExpr | PromiseExpr {
     const parent = node.parent;
+
     return (
-      isIntegrationCall(node) &&
       // const v = task()
       (!isStmt(parent) ||
         // for(const i in task())
@@ -678,13 +698,28 @@ export class ASL {
         }),
       };
     } else if (isThrowStmt(stmt)) {
-      if (!isNewExpr(stmt.expr) && !isCallExpr(stmt.expr)) {
+      if (
+        !(
+          isNewExpr(stmt.expr) ||
+          isCallExpr(stmt.expr) ||
+          isIntegrationCallPattern(stmt.expr)
+        )
+      ) {
         throw new Error(
           "the expr of a ThrowStmt must be a NewExpr or CallExpr"
         );
       }
 
-      const error = (stmt.expr as NewExpr | CallExpr).args
+      const updated =
+        isNewExpr(stmt.expr) || isCallExpr(stmt.expr)
+          ? stmt.expr
+          : isAwaitExpr(stmt.expr)
+          ? isPromiseExpr(stmt.expr.expr)
+            ? stmt.expr.expr.expr
+            : stmt.expr.expr
+          : stmt.expr.expr;
+
+      const error = updated.args
         .filter((arg): arg is Argument & { expr: Expr } => !!arg.expr)
         .reduce(
           (args: any, arg) => ({
@@ -834,7 +869,29 @@ export class ASL {
       delete props.Next;
       props.End = true;
     }
-    if (isCallExpr(expr)) {
+    if (isPromiseExpr(expr)) {
+      // if we find a promise, ensure it is wrapped in Await or returned then unwrap it
+      if (isAwaitExpr(expr.parent) || isReturnStmt(expr.parent)) {
+        return this.eval(expr.expr, props);
+      }
+      debugger;
+      throw new SynthError(
+        ErrorCodes.Integration_must_be_immediately_awaited_or_returned
+      );
+    } else if (isPromiseArrayExpr(expr)) {
+      // if we find a promise array, ensure it is wrapped in a Promise.all then unwrap it
+      if (
+        isArgument(expr.parent) &&
+        isCallExpr(expr.parent.parent) &&
+        isPromiseAll(expr.parent.parent)
+      ) {
+        return this.eval(expr.expr, props);
+      }
+      debugger;
+      throw new SynthError(
+        ErrorCodes.Arrays_of_Integration_must_be_immediately_wrapped_in_Promise_all
+      );
+    } else if (isCallExpr(expr)) {
       if (isReferenceExpr(expr.expr)) {
         const ref = expr.expr.ref();
         if (isIntegration<Integration>(ref)) {
@@ -926,6 +983,14 @@ export class ASL {
             throw new Error(".filter with sub-tasks are not yet supported");
           }
         }
+      } else if (isPromiseAll(expr)) {
+        const values = expr.getArgument("values");
+        // just validate Promise.all and continue, will validate the PromiseArray later.
+        if (values?.expr && isPromiseArrayExpr(values?.expr)) {
+          return this.eval(values.expr, props);
+        }
+        debugger;
+        throw new SynthError(ErrorCodes.Unsupported_Use_of_Promises);
       }
       throw new Error(
         `call must be a service call or list .slice, .map, .forEach or .filter, ${expr}`
@@ -985,7 +1050,7 @@ export class ASL {
           Parameters: ASL.toJson(expr.right),
           ResultPath: ASL.toJsonPath(expr.left),
         };
-      } else if (isCallExpr(expr.right)) {
+      } else if (isAwaitExpr(expr.right) || isCallExpr(expr.right)) {
         return this.eval(expr.right, {
           ...props,
           ResultPath: ASL.toJsonPath(expr.left),
@@ -993,6 +1058,8 @@ export class ASL {
       }
     } else if (isBinaryExpr(expr)) {
       // TODO
+    } else if (isAwaitExpr(expr)) {
+      return this.eval(expr.expr, props);
     }
     debugger;
     throw new Error(`cannot eval expression kind '${expr.kind}'`);
@@ -1977,6 +2044,10 @@ function exprToString(expr?: Expr): string {
     return `${expr.op}${exprToString(expr.expr)}`;
   } else if (isUndefinedLiteralExpr(expr)) {
     return "undefined";
+  } else if (isAwaitExpr(expr)) {
+    return `await ${exprToString(expr.expr)}`;
+  } else if (isPromiseExpr(expr) || isPromiseArrayExpr(expr)) {
+    return exprToString(expr.expr);
   } else {
     return assertNever(expr);
   }

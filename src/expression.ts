@@ -13,7 +13,7 @@ import type {
   ReturnStmt,
   VariableStmt,
 } from "./statement";
-import { AnyFunction } from "./util";
+import type { AnyFunction } from "./util";
 
 /**
  * An {@link Expr} (Expression) is a Node that will be interpreted to a value.
@@ -21,6 +21,7 @@ import { AnyFunction } from "./util";
 export type Expr =
   | Argument
   | ArrayLiteralExpr
+  | AwaitExpr
   | BinaryExpr
   | BooleanLiteralExpr
   | CallExpr
@@ -35,6 +36,8 @@ export type Expr =
   | ObjectLiteralExpr
   | PropAccessExpr
   | PropAssignExpr
+  | PromiseArrayExpr
+  | PromiseExpr
   | ReferenceExpr
   | SpreadAssignExpr
   | SpreadElementExpr
@@ -443,6 +446,42 @@ export class TypeOfExpr extends BaseExpr<"TypeOfExpr"> {
 
   public clone(): this {
     return new TypeOfExpr(this.expr.clone()) as this;
+  }
+}
+
+export class AwaitExpr extends BaseExpr<"AwaitExpr"> {
+  constructor(readonly expr: Expr) {
+    super("AwaitExpr");
+
+    expr.setParent(this);
+  }
+
+  public clone(): this {
+    return new AwaitExpr(this.expr.clone()) as this;
+  }
+}
+
+export class PromiseExpr extends BaseExpr<"PromiseExpr"> {
+  constructor(readonly expr: Expr) {
+    super("PromiseExpr");
+
+    expr.setParent(this);
+  }
+
+  public clone(): this {
+    return new PromiseExpr(this.expr.clone()) as this;
+  }
+}
+
+export class PromiseArrayExpr extends BaseExpr<"PromiseArrayExpr"> {
+  constructor(readonly expr: Expr) {
+    super("PromiseArrayExpr");
+
+    expr.setParent(this);
+  }
+
+  public clone(): this {
+    return new PromiseArrayExpr(this.expr.clone()) as this;
   }
 }
 

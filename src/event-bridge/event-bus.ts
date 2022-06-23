@@ -142,7 +142,10 @@ export interface IEventBus<in Evnt extends Event = Event>
   extends IEventBusFilterable<Evnt>,
     Integration<
       "EventBus",
-      (event: PutEventInput<Evnt>, ...events: PutEventInput<Evnt>[]) => void,
+      (
+        event: PutEventInput<Evnt>,
+        ...events: PutEventInput<Evnt>[]
+      ) => Promise<void>,
       EventBusTargetIntegration<
         PutEventInput<Evnt>,
         aws_events_targets.EventBusProps | undefined
@@ -156,7 +159,7 @@ export interface IEventBus<in Evnt extends Event = Event>
   readonly __functionBrand: (
     event: PutEventInput<Evnt>,
     ...events: PutEventInput<Evnt>[]
-  ) => void;
+  ) => Promise<void>;
 
   /**
    * This static property identifies this class as an EventBus to the TypeScript plugin.
@@ -166,7 +169,10 @@ export interface IEventBus<in Evnt extends Event = Event>
   /**
    * Put one or more events on an Event Bus.
    */
-  putEvents(event: PutEventInput<Evnt>, ...events: PutEventInput<Evnt>[]): void;
+  putEvents(
+    event: PutEventInput<Evnt>,
+    ...events: PutEventInput<Evnt>[]
+  ): Promise<void>;
 
   /**
    * Creates a rule that matches all events on the bus.
@@ -231,7 +237,7 @@ abstract class EventBusBase<in Evnt extends Event, OutEvnt extends Evnt = Evnt>
   readonly __functionBrand: (
     event: PutEventInput<Evnt>,
     ...events: PutEventInput<Evnt>[]
-  ) => void;
+  ) => Promise<void>;
 
   constructor(readonly resource: aws_events.IEventBus) {
     this.eventBusName = resource.eventBusName;

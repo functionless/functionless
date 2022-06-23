@@ -60,16 +60,20 @@ export class PeopleDatabase extends Construct {
       }
     );
 
-    this.testMachine = new ExpressStepFunction(this, "TestMachine", () => {
-      const names = ["sam", "brendan"];
+    this.testMachine = new ExpressStepFunction(
+      this,
+      "TestMachine",
+      async () => {
+        const names = ["sam g", "sam s"];
 
-      for (const i in names) {
-        this.computeScore({
-          id: "id",
-          name: names[i],
-        });
+        for (const i in names) {
+          await this.computeScore({
+            id: "id",
+            name: names[i],
+          });
+        }
       }
-    });
+    );
 
     // a synchronous Express Step Function for getting a Person
     this.getPersonMachine = new ExpressStepFunction<
@@ -84,8 +88,8 @@ export class PeopleDatabase extends Construct {
           level: aws_stepfunctions.LogLevel.ALL,
         },
       },
-      (input) => {
-        const person = $AWS.DynamoDB.GetItem({
+      async (input) => {
+        const person = await $AWS.DynamoDB.GetItem({
           Table: this.personTable,
           Key: {
             id: {
@@ -98,7 +102,7 @@ export class PeopleDatabase extends Construct {
           return undefined;
         }
 
-        const score = this.computeScore({
+        const score = await this.computeScore({
           id: person.Item.id.S,
           name: person.Item.name.S,
         });
@@ -122,10 +126,10 @@ export class PeopleDatabase extends Construct {
         typeName: "Query",
         fieldName: "getPerson",
       },
-      ($context) => {
+      async ($context) => {
         let person;
         // example of integrating with an Express Step Function from Appsync
-        person = this.getPersonMachine({
+        person = await this.getPersonMachine({
           input: { id: $context.arguments.id },
         });
 
@@ -148,8 +152,8 @@ export class PeopleDatabase extends Construct {
         typeName: "Query",
         fieldName: "addPerson",
       },
-      ($context) => {
-        const person = this.personTable.appsync.putItem({
+      async ($context) => {
+        const person = await this.personTable.appsync.putItem({
           key: {
             id: {
               S: $util.autoId(),

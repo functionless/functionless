@@ -1,20 +1,58 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <!-- Creator: CorelDRAW -->
-<svg xmlns="http://www.w3.org/2000/svg" xml:space="preserve" 
-width="1.80296in" height="1.5475701in" version="1.1" style="shape-rendering:geometricPrecision; text-rendering:geometricPrecision; image-rendering:optimizeQuality; fill-rule:evenodd; clip-rule:evenodd"
+
+<svg
+   xml:space="preserve"
+   width="1.80296in"
+   height="1.5475701in"
+   version="1.1"
+   style="shape-rendering:geometricPrecision; text-rendering:geometricPrecision; image-rendering:optimizeQuality; fill-rule:evenodd; clip-rule:evenodd"
    viewBox="0 0 1802.96 1547.5701"
- xmlns:xlink="http://www.w3.org/1999/xlink">
- <defs>
-  <style type="text/css">
+   id="svg11"
+   sodipodi:docname="Logo.svg"
+   inkscape:export-filename="\\wsl.localhost\Ubuntu\home\sussmans\functionless\website\static\img\logo.png"
+   inkscape:export-xdpi="129.23486"
+   inkscape:export-ydpi="129.23486"
+   inkscape:version="1.1 (c68e22c387, 2021-05-23)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg"><sodipodi:namedview
+   id="namedview13"
+   pagecolor="#ffffff"
+   bordercolor="#666666"
+   borderopacity="1.0"
+   inkscape:pageshadow="2"
+   inkscape:pageopacity="0.0"
+   inkscape:pagecheckerboard="0"
+   inkscape:document-units="in"
+   showgrid="false"
+   inkscape:zoom="5.0684295"
+   inkscape:cx="43.110001"
+   inkscape:cy="74.382015"
+   inkscape:window-width="2880"
+   inkscape:window-height="1796"
+   inkscape:window-x="-12"
+   inkscape:window-y="-12"
+   inkscape:window-maximized="1"
+   inkscape:current-layer="svg11" />
+ <defs
+   id="defs4">
+  <style
+   type="text/css"
+   id="style2">
    <![CDATA[
     .fil0 {fill:black}
     .fil2 {fill:#3ecc5f}
    ]]>
   </style>
  </defs>
- <g id="Layer_x0020_1" transform="translate(-1.8049)">
-  <g id="_3WF" transform="translate(-1979.1651)">
+ <g
+   id="Layer_x0020_1"
+   transform="translate(-1.8049)">
+  <g
+   id="_3WF"
+   transform="translate(-1979.1651)">
    <path
    class="fil2"
    d="M 3284.83,793.64 3126.64,492.4 c 31.54,-59.69 63.07,-119.38 94.57,-179.09 l 67.46,-127.86 h 102.89 l -89.87,170.33 c -24.05,45.59 -48.13,91.17 -72.2,136.75 52.7,100.37 167.4135,324.27517 220.1235,424.64517 l -102.7818,-2e-5 z"

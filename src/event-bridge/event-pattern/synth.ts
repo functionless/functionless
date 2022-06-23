@@ -7,6 +7,7 @@ import {
 } from "../../assert";
 import { FunctionDecl } from "../../declaration";
 import { Err } from "../../error";
+import { ErrorCodes, SynthError } from "../../error-code";
 import {
   BinaryOp,
   BinaryExpr,
@@ -28,6 +29,7 @@ import {
   isUnaryExpr,
   isUndefinedLiteralExpr,
 } from "../../guards";
+import { isIntegrationCallPattern } from "../../integration";
 import { evalToConstant } from "../../util";
 import * as functionless_event_bridge from "../types";
 import {
@@ -139,6 +141,10 @@ export const synthesizePatternDocument = (
       return evalPropAccess(expr);
     } else if (isUnaryExpr(expr)) {
       return evalUnaryExpression(expr);
+    } else if (isIntegrationCallPattern(expr)) {
+      throw new SynthError(
+        ErrorCodes.EventBus_Rules_do_not_support_Integrations
+      );
     } else if (isCallExpr(expr)) {
       return evalCall(expr);
     } else if (isBooleanLiteralExpr(expr)) {

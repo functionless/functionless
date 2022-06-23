@@ -28,7 +28,7 @@ export type EventTransformInterface = ts.NewExpression & {
 };
 
 export type EventBusWhenInterface = ts.CallExpression & {
-  arguments: [any, any, TsFunctionParameter];
+  arguments: [any, TsFunctionParameter] | [any, any, TsFunctionParameter];
 };
 
 export type EventBusMapInterface = ts.CallExpression & {
@@ -67,6 +67,24 @@ export type NewStepFunctionInterface = ts.NewExpression & {
     | [ts.Expression, ts.Expression, ts.Expression, TsFunctionParameter];
 };
 
+export type NewAppsyncResolverInterface = ts.NewExpression & {
+  arguments: [
+    ts.Expression,
+    ts.Expression,
+    ts.Expression,
+    // the inline function
+    TsFunctionParameter
+  ];
+};
+
+export type NewAppsyncFieldInterface = ts.NewExpression & {
+  arguments: [
+    ts.Expression,
+    // the inline function
+    TsFunctionParameter
+  ];
+};
+
 export type FunctionlessChecker = ReturnType<typeof makeFunctionlessChecker>;
 
 export function makeFunctionlessChecker(
@@ -90,6 +108,9 @@ export function makeFunctionlessChecker(
     isNewFunctionlessFunction,
     isNewRule,
     isNewStepFunction,
+    isPromiseArray,
+    isPromiseAllCall,
+    isPromiseSymbol,
     isReflectFunction,
     isRuleMapFunction,
     isStepFunction,
@@ -175,15 +196,9 @@ export function makeFunctionlessChecker(
     return isFunctionlessClassOfKind(node, EventTransform.FunctionlessType);
   }
 
-  function isAppsyncResolver(node: ts.Node): node is ts.NewExpression & {
-    arguments: [
-      ts.Expression,
-      ts.Expression,
-      ts.Expression,
-      // the inline function
-      TsFunctionParameter
-    ];
-  } {
+  function isAppsyncResolver(
+    node: ts.Node
+  ): node is NewAppsyncResolverInterface {
     if (ts.isNewExpression(node)) {
       return isFunctionlessClassOfKind(
         node.expression,
@@ -193,13 +208,7 @@ export function makeFunctionlessChecker(
     return false;
   }
 
-  function isAppsyncField(node: ts.Node): node is ts.NewExpression & {
-    arguments: [
-      ts.Expression,
-      // the inline function
-      TsFunctionParameter
-    ];
-  } {
+  function isAppsyncField(node: ts.Node): node is NewAppsyncFieldInterface {
     if (ts.isNewExpression(node)) {
       return isFunctionlessClassOfKind(
         node.expression,
@@ -352,6 +361,54 @@ export function makeFunctionlessChecker(
       }
     }
     return undefined;
+  }
+
+  function typeMatch(
+    type: ts.Type,
+    predicate: (type: ts.Type) => boolean
+  ): boolean {
+    if (type.isUnionOrIntersection()) {
+      return predicate(type) || type.types.some((t) => typeMatch(t, predicate));
+    }
+    return predicate(type);
+  }
+
+  function isPromiseSymbol(symbol: ts.Symbol): boolean {
+    return checker.getFullyQualifiedName(symbol) === "Promise";
+  }
+
+  function isArraySymbol(symbol: ts.Symbol): boolean {
+    return checker.getFullyQualifiedName(symbol) === "Array";
+  }
+
+  function isPromiseArray(type: ts.Type): boolean {
+    const symbol = type.getSymbol();
+    if (!symbol) {
+      return false;
+    }
+    const typeParams = checker.getTypeArguments(type as ts.TypeReference);
+    if (isArraySymbol(symbol) && typeParams?.length === 1) {
+      const [param] = typeParams;
+      // the type contains any type, union or intersection which is a Promise
+      return typeMatch(param, (t) => {
+        const symbol = t.getSymbol();
+        return symbol ? isPromiseSymbol(symbol) : false;
+      });
+    }
+    return false;
+  }
+
+  /**
+   * Checks for typescript in the form `Promise.all(...)`
+   */
+  function isPromiseAllCall(node: ts.Node): boolean {
+    return (
+      ts.isCallExpression(node) &&
+      ts.isPropertyAccessExpression(node.expression) &&
+      node.expression.name.text === "all" &&
+      ts.isIdentifier(node.expression.expression) &&
+      node.expression.expression.text === "Promise"
+    );
   }
 
   /**

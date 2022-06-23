@@ -1,11 +1,6 @@
 import { Construct } from "constructs";
 import ts from "typescript";
-import {
-  Expr,
-  Identifier,
-  ObjectLiteralExpr,
-  PropAssignExpr,
-} from "./expression";
+import { CallExpr, Expr, PropAccessExpr } from "./expression";
 import {
   isArrayLiteralExpr,
   isBinaryExpr,
@@ -29,9 +24,9 @@ import {
   isUndefinedLiteralExpr,
 } from "./guards";
 import { FunctionlessNode } from "./node";
-import { visitEachChild } from "./visit";
 
 export type AnyFunction = (...args: any[]) => any;
+export type AnyAsyncFunction = (...args: any[]) => Promise<any>;
 
 /**
  * Create a memoized function.
@@ -140,6 +135,26 @@ export const isPrimitive = (val: any): val is PrimitiveValue => {
     val === null
   );
 };
+
+/**
+ * Determines if a node looks like `Promise.all()`
+ */
+export function isPromiseAll(expr: CallExpr): expr is CallExpr & {
+  expr: PropAccessExpr & {
+    name: "all";
+    parent: {
+      kind: "Identifier";
+      name: "Promise";
+    };
+  };
+} {
+  return (
+    isPropAccessExpr(expr.expr) &&
+    isIdentifier(expr.expr.expr) &&
+    expr.expr.name === "all" &&
+    expr.expr.expr.name === "Promise"
+  );
+}
 
 export const singletonConstruct = <T extends Construct, S extends Construct>(
   scope: S,
@@ -315,32 +330,6 @@ export class DeterministicNameGenerator {
     }
     return this.generatedNames.get(node)!;
   }
-}
-
-/**
- * Rename all {@link PropAssignExpr} expressions within the {@link obj} where the
- * name is statically known and matches a property in the {@link rename} map.
- */
-export function renameObjectProperties(
-  obj: ObjectLiteralExpr,
-  rename: Record<string, string>
-) {
-  const newObj = visitEachChild(obj, (node) => {
-    if (isPropAssignExpr(node)) {
-      const propName = node.tryGetName();
-      if (propName !== undefined && propName in rename) {
-        const substituteName = rename[propName];
-
-        return new PropAssignExpr(
-          new Identifier(substituteName),
-          node.expr.clone()
-        );
-      }
-    }
-    return node;
-  });
-  newObj.parent = obj.parent;
-  return newObj;
 }
 
 // to prevent the closure serializer from trying to import all of functionless.

@@ -88,22 +88,24 @@ When you compile your application with `tsc`, the [`functionless/lib/compile`](.
 For example, this function declaration:
 
 ```ts
-new AppsyncResolver<(input: { name: string }) => Person>((_$context, input) => {
-  const person = this.personTable.putItem({
-    key: {
-      id: {
-        S: $util.autoId(),
+new AppsyncResolver<(input: { name: string }) => Person>(
+  async (_$context, input) => {
+    const person = await this.personTable.appsync.putItem({
+      key: {
+        id: {
+          S: $util.autoId(),
+        },
       },
-    },
-    attributeValues: {
-      name: {
-        S: input.name,
+      attributeValues: {
+        name: {
+          S: input.name,
+        },
       },
-    },
-  });
+    });
 
-  return person;
-});
+    return person;
+  }
+);
 ```
 
 Is replaced with the following AST data structure:

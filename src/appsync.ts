@@ -7,6 +7,7 @@ import {
   ToAttributeValue,
 } from "typesafe-dynamodb/lib/attribute-value";
 import { FunctionDecl, validateFunctionDecl } from "./declaration";
+import { ErrorCodes, SynthError } from "./error-code";
 import {
   Argument,
   BinaryExpr,
@@ -25,7 +26,6 @@ import {
   isExprStmt,
   isReturnStmt,
   isCallExpr,
-  isReferenceExpr,
   isPropAccessExpr,
   isElementAccessExpr,
   isIfStmt,
@@ -33,11 +33,16 @@ import {
   isStmt,
   isForInStmt,
   isForOfStmt,
+  isAwaitExpr,
+  isPromiseExpr,
 } from "./guards";
 import {
-  findDeepIntegration,
+  findDeepIntegrations,
+  getIntegrationExprFromIntegrationCallPattern,
+  Integration,
   IntegrationImpl,
-  isIntegrationCall,
+  isIntegration,
+  isIntegrationCallPattern,
 } from "./integration";
 import { Literal } from "./literal";
 import { FunctionlessNode } from "./node";
@@ -49,7 +54,7 @@ import {
   memoize,
   singletonConstruct,
 } from "./util";
-import { visitBlock, visitEachChild } from "./visit";
+import { visitBlock, visitEachChild, visitSpecificChildren } from "./visit";
 import { VTL } from "./vtl";
 
 /**
@@ -88,7 +93,7 @@ export type ResolverFunction<
   Arguments extends ResolverArguments,
   Result,
   Source
-> = ($context: AppsyncContext<Arguments, Source>) => Result;
+> = ($context: AppsyncContext<Arguments, Source>) => Promise<Result> | Result;
 
 export interface SynthesizedAppsyncResolverProps extends appsync.ResolverProps {
   readonly templates: string[];
@@ -164,8 +169,8 @@ export interface AppsyncResolverProps<>extends Pick<
  *      typeName: "Query",
  *      fieldName: "getPerson"
  *   },
- *   ($context, id) => {
- *     const person = table.get({
+ *   async ($context, id) => {
+ *     const person = await table.appsync.get({
  *       key: {
  *         id: $util.toDynamoDB(id)
  *       }
@@ -310,8 +315,8 @@ export interface AppsyncFieldOptions
  *       argName: appsync.Field.string()
  *     }
  *   },
- *   ($context, id) => {
- *     const person = table.get({
+ *   async ($context, id) => {
+ *     const person = await table.appsync.get({
  *       key: {
  *         id: $util.toDynamoDB(id)
  *       }
@@ -418,9 +423,6 @@ function synthesizeFunctions(api: appsync.GraphqlApi, decl: FunctionDecl) {
       node,
       hoist?: (expr: Expr) => Expr
     ): FunctionlessNode | FunctionlessNode[] {
-      if (isIntegrationCall(node)) {
-        resolverCount++;
-      }
       // just counting, don'r do anything
       if (isBlockStmt(node)) {
         return new BlockStmt([
@@ -433,13 +435,19 @@ function synthesizeFunctions(api: appsync.GraphqlApi, decl: FunctionDecl) {
             generatedNames
           ).statements,
         ]);
-      } else if (hoist && doHoist(node)) {
-        const updatedChild = visitEachChild(node, (expr) =>
+      } else if (isIntegrationCallPattern(node)) {
+        resolverCount++;
+        // we find the range of nodes to hoist so that we avoid visiting the middle nodes.
+        // The start node is the first node in the integration pattern (integ, await, or promise)
+        // The end is always the integration.
+        const end = getIntegrationExprFromIntegrationCallPattern(node);
+
+        const updatedChild = visitSpecificChildren(node, [end], (expr) =>
           normalizeAST(expr, hoist)
         );
         // when we find an integration call,
         // if it is nested, hoist it up (create variable, add above, replace expr with variable)
-        return hoist(updatedChild);
+        return hoist && doHoist(node) ? hoist(updatedChild) : updatedChild;
       } else if (isBinaryExpr(node)) {
         /**
          * rewrite `in` to a conditional statement to support both arrays and maps
@@ -489,12 +497,25 @@ function synthesizeFunctions(api: appsync.GraphqlApi, decl: FunctionDecl) {
     resolverCount === 0
       ? new AppsyncVTL()
       : new AppsyncVTL(AppsyncVTL.CircuitBreaker);
-
   const functions = updatedDecl.body.statements
     .map((stmt, i) => {
       const isLastExpr = i + 1 === updatedDecl.body.statements.length;
-      const service = findDeepIntegration(stmt);
-      if (service) {
+      const integrations = findDeepIntegrations(stmt);
+      if (integrations.length > 1) {
+        throw new SynthError(
+          ErrorCodes.Unexpected_Error,
+          "Expected a single integration call in a statement."
+        );
+      } else if (integrations.length === 1) {
+        const integrationCall = integrations[0];
+        const ref = integrationCall.expr.ref();
+        if (!isIntegration<Integration>(ref)) {
+          throw new SynthError(
+            ErrorCodes.Unexpected_Error,
+            "Expected called reference to be an integration"
+          );
+        }
+        const service = new IntegrationImpl(ref);
         // we must now render a resolver with request mapping template
         const dataSource = singletonConstruct(
           api,
@@ -510,8 +531,7 @@ function synthesizeFunctions(api: appsync.GraphqlApi, decl: FunctionDecl) {
         const returnValName = resultTemplate?.returnVariable ?? resultValName;
 
         if (isExprStmt(stmt)) {
-          const call = findServiceCallExpr(stmt.expr);
-          template.call(call);
+          template.call(integrationCall);
           return createStage(service, "{}");
         } else if (isReturnStmt(stmt)) {
           return createStage(
@@ -520,7 +540,11 @@ function synthesizeFunctions(api: appsync.GraphqlApi, decl: FunctionDecl) {
 #set( $context.stash.return__val = ${getResult(stmt.expr)} )
 {}`
           );
-        } else if (isVariableStmt(stmt) && isCallExpr(stmt.expr)) {
+        } else if (
+          isVariableStmt(stmt) &&
+          stmt.expr &&
+          isIntegrationCallPattern(stmt.expr)
+        ) {
           return createStage(
             service,
             `${pre ? `${pre}\n` : ""}#set( $context.stash.${
@@ -531,36 +555,6 @@ function synthesizeFunctions(api: appsync.GraphqlApi, decl: FunctionDecl) {
           throw new Error(
             "only a 'VariableDecl', 'Call' or 'Return' expression may call a service"
           );
-        }
-
-        /**
-         * Recursively resolve the {@link expr} to the {@link CallExpr} that is calling the service.
-         *
-         * @param expr an Expression that contains (somewhere nested within) a {@link CallExpr} to an external service.
-         * @returns the {@link CallExpr} that
-         */
-        function findServiceCallExpr(expr: Expr): CallExpr {
-          if (
-            isCallExpr(expr) &&
-            (isReferenceExpr(expr.expr) ||
-              (isPropAccessExpr(expr.expr) && isReferenceExpr(expr.expr.expr)))
-          ) {
-            // this catches specific cases:
-            // lambdaFunction()
-            // table.get()
-            // table.<method-name>()
-
-            // all other Calls or PropAccessExpr are considered "after" the service call, e.g.
-            // lambdaFunction().prop
-            // table.query().Items.size() //.size() is still a Call but not a call to a service.
-            return expr;
-          } else if (isPropAccessExpr(expr)) {
-            return findServiceCallExpr(expr.expr);
-          } else if (isCallExpr(expr)) {
-            return findServiceCallExpr(expr.expr);
-          } else {
-            throw new Error("");
-          }
         }
 
         /**
@@ -588,6 +582,10 @@ function synthesizeFunctions(api: appsync.GraphqlApi, decl: FunctionDecl) {
             return `${getResult(expr.expr)}.${expr.name}`;
           } else if (isElementAccessExpr(expr)) {
             return `${getResult(expr.expr)}[${getResult(expr.element)}]`;
+          } else if (isPromiseExpr(expr)) {
+            return getResult(expr.expr);
+          } else if (isAwaitExpr(expr)) {
+            return getResult(expr.expr);
           } else {
             throw new Error(
               `invalid Expression in-lined with Service Call: ${expr.kind}`
@@ -626,7 +624,6 @@ function synthesizeFunctions(api: appsync.GraphqlApi, decl: FunctionDecl) {
         // this expression should be appended to the current mapping template
         template.eval(stmt);
       }
-
       return undefined;
     })
     .filter(
@@ -640,10 +637,9 @@ function synthesizeFunctions(api: appsync.GraphqlApi, decl: FunctionDecl) {
  * Determines of an expression should be hoisted
  * Hoisted - Add new variable to the current block above the
  */
-function doHoist(node: FunctionlessNode): node is CallExpr {
+function doHoist(node: FunctionlessNode): boolean {
   const parent = node.parent;
   return (
-    isIntegrationCall(node) &&
     // const v = task()
     (!isStmt(parent) ||
       // for(const i in task())

@@ -343,13 +343,13 @@ export namespace ErrorCodes {
    *
    * For example:
    * ```ts
-   * new AwsMethod({
-   *   request: ($input) => $AWS.DynamoDB.GetItem({
+   * new AwsMethod(
+   *   ($input) => $AWS.DynamoDB.GetItem({
    *     Table: table,
    *     // invalid, all property names must be literals
    *     [computedProperty]: prop
    *   })
-   * });
+   * );
    * ```
    *
    * To workaround, be sure to only use literal property names.
@@ -367,24 +367,26 @@ export namespace ErrorCodes {
    *
    * For example:
    * ```ts
-   * new AwsMethod({
-   *   response: ($input) => ({
+   * new AwsMethod(
+   *   () => {},
+   *   ($input) => ({
    *     hello: "world",
    *     ...$input.data
    *   })
-   * });
+   * );
    * ```
    *
    * To workaround the limitation, explicitly specify each property.
    *
    * ```ts
-   * new AwsMethod({
-   *   response: ($input) => ({
+   * new AwsMethod(
+   *   () => {},
+   *   ($input) => ({
    *     hello: "world",
    *     propA: $input.data.propA,
    *     propB: $input.data.propB,
    *   })
-   * });
+   * );
    * ```
    */
   export const API_Gateway_does_not_support_spread_assignment_expressions: ErrorCode =
@@ -431,17 +433,16 @@ export namespace ErrorCodes {
    * to call any integration. It can only perform data transformation.
    *
    * ```ts
-   * new AwsMethod({
+   * new AwsMethod(
    *   ...,
-   *
-   *   response: () => {
+   *   () => {
    *     // INVALID! - you cannot call an integration from within a response mapping template
    *     return $AWS.DynamoDB.GetItem({
    *       Table: table,
    *       ...
    *     });
    *   }
-   * })
+   * )
    * ```
    *
    * To workaround, make sure to only call an integration from within the `request` mapping function.
@@ -452,6 +453,206 @@ export namespace ErrorCodes {
       type: ErrorType.ERROR,
       title: "API gateway response mapping template cannot call integration",
     };
+
+  /**
+   * {@link EventBus} Input Transformers do not support Integrations.
+   *
+   * ```ts
+   * const func = new Function<string, string>(stack, 'func', async (input) => {
+   *    return axios.get(input);
+   * })
+   *
+   * // invalid
+   * new EventBus(stack, 'bus').all().map(async event => ({ html: await func(event.detail.url) }));
+   * ```
+   *
+   * Workaround - Send the event to a function.
+   *
+   * ```ts
+   * const func = new Function<string, string>(stack, 'func', async (input) => {
+   *    return `transform${input}`;
+   * })
+   *
+   * // valid
+   * new EventBus(stack, 'bus').all().pipe(new Function(stack, 'webpuller', async (event) => ({
+   *    html: await func(event.detail.url)
+   * })));
+   * ```
+   */
+  export const EventBus_Input_Transformers_do_not_support_Integrations: ErrorCode =
+    {
+      code: 10014,
+      type: ErrorType.ERROR,
+      title: "EventBus Input Transformers do not support integrations",
+    };
+
+  /**
+   * {@link EventBus} Rules do not support Integrations.
+   *
+   * ```ts
+   * const validate = new Function<string, string>(stack, 'validate', async (input) => {
+   *    return axios.get(`https://mydomain/validate/${input}`);
+   * })
+   *
+   * // invalid
+   * new EventBus(stack, 'bus').when(async (event) => await validate(input.detail.value)).pipe(...);
+   * ```
+   *
+   * Workaround - Send the event to a function.
+   *
+   * ```ts
+   * // valid
+   * new EventBus(stack, 'bus').all().pipe(new Function(stack, 'webpuller', async (event) => {
+   *    if(await validate(event.source)) {
+   *       ...
+   *    }
+   * });
+   * ```
+   */
+  export const EventBus_Rules_do_not_support_Integrations: ErrorCode = {
+    code: 10015,
+    type: ErrorType.ERROR,
+    title: "EventBus Rules do not support integrations",
+  };
+
+  /**
+   * Integrations within {@link StepFunction}, {@link ExpressStepFunction}, {@link AppsyncResolver}, and {@link AwsMethod} must be immediately awaited or returned.
+   *
+   * These services do not support references to asynchronous operations. In order to model an asynchronous call being handled synchronously, all integrations that return promises must be awaited or returned.
+   *
+   * ```ts
+   * const func = new Function<string, string>(stack, 'func', async (input) => { return "hi" });
+   *
+   * new StepFunction(stack, 'sfn', async () => {
+   *    // invalid
+   *    const f = func();
+   *    // valid
+   *    const ff = await func();
+   *    // valid
+   *    return func();
+   * });
+   *
+   * new AppsyncResolver(stack, 'resolver', async () => {
+   *    // invalid
+   *    const f = func();
+   *    // valid
+   *    const ff = await func();
+   *    // valid
+   *    return func();
+   * })
+   *
+   * new AwsMethod(
+   *    ...,
+   *    async () => {
+   *       // invalid
+   *       const f = func();
+   *       // valid
+   *       const ff = await func();
+   *       // valid
+   *       return func();
+   *    }
+   * );
+   * ```
+   *
+   * Some Resources like {@link Function} support synchronous or asynchronous handing of Integrations.
+   *
+   * ```ts
+   * new Function(stack, 'func2' , async () => {
+   *    // valid
+   *    const f = func();
+   *    // valid
+   *    const ff = await func();
+   *    const fDone = await f;
+   *    // valid
+   *    return func();
+   * });
+   * ```
+   *
+   * > In the case of {@link Function}, any valid NodeJS `Promise` feature is supported.
+   */
+  export const Integration_must_be_immediately_awaited_or_returned: ErrorCode =
+    {
+      code: 10016,
+      type: ErrorType.ERROR,
+      title: "Integration must be immediately awaited or returned",
+    };
+
+  /**
+   * Arrays of integrations within {@link StepFunction}, {@link ExpressStepFunction} must be immediately wrapped in Promise.all.
+   *
+   * These services support concurrent invocation, but do not support manipulation of the references.
+   *
+   * ```ts
+   * const func = new Function<string, string>(stack, 'func', async (input) => { return "hi" });
+   *
+   * new StepFunction(stack, 'sfn, async () => {
+   *    // invalid
+   *    const f = [1,2].map(await () => func());
+   *    // valid
+   *    const ff = await Promise.all([1,2].map(await () => func()));
+   *    // valid
+   *    return Promise.all([1,2].map(await () => func()));
+   * });
+   * ```
+   *
+   * Some Resources like {@link Function} support synchronous or asynchronous handing of Integrations.
+   *
+   * ```ts
+   * new Function(stack, 'func2', async () => {
+   *    // valid
+   *    const f = [1,2].map(await () => func())
+   *    const f2 = [1,2].map(await () => func());;
+   *    return Promise.all([...f, ...f2]);
+   * });
+   * ```
+   *
+   * > In the case of {@link Function}, any valid NodeJS `Promise` feature is supported.
+   */
+  export const Arrays_of_Integration_must_be_immediately_wrapped_in_Promise_all: ErrorCode =
+    {
+      code: 10017,
+      type: ErrorType.ERROR,
+      title: "Arrays of Integration must be immediately wrapped in Promise.all",
+    };
+
+  /**
+   * Unsupported use of Promises
+   *
+   * In {@link StepFunction} and {@link ExpressStepFunction}, `Promise.all` can be used to turn an array of promises into a single promise. However, it must directly wrap a method which returns an array of promises.
+   *
+   * ```ts
+   * const func = new Function(stack, id, async () => {});
+   *
+   * new StepFunction(stack, id, async () => {
+   *    const c = [1,2];
+   *    // invalid
+   *    const p = await Promise.all(c);
+   *    // valid
+   *    const t = await Promise.all([1,2].map(i => func()));
+   * });
+   * ```
+   *
+   * {@link AppsyncResolver} and {@link AppsyncField} do not support `Promise.all` or arrays of `Promises`. AWS App Sync does not support concurrent or dynamic invocation of integrations.
+   *
+   * ```ts
+   * const func = new Function(stack, id, async () => {});
+   *
+   * new AppsyncResolver(..., async ($context) => {
+   *     // valid - series of integration invocations
+   *     const t = await func();
+   *     const tt = await func();
+   *     // invalid - concurrent invocation
+   *     const arr = await Promise.all([1,2].map(() => func()));
+   *     // invalid - dynamic invocation
+   *     const arr = await Promise.all($context.arguments.arr.map(() => func()));
+   * });
+   * ```
+   */
+  export const Unsupported_Use_of_Promises: ErrorCode = {
+    code: 10018,
+    type: ErrorType.ERROR,
+    title: "Unsupported use of Promises",
+  };
 }
 
 // to prevent the closure serializer from trying to import all of functionless.

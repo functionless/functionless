@@ -5,6 +5,7 @@ import { CallExpr, Expr, FunctionExpr, Identifier } from "./expression";
 import {
   isArgument,
   isArrayLiteralExpr,
+  isAwaitExpr,
   isBinaryExpr,
   isBlockStmt,
   isBooleanLiteralExpr,
@@ -30,6 +31,8 @@ import {
   isNumberLiteralExpr,
   isObjectLiteralExpr,
   isParameterDecl,
+  isPromiseArrayExpr,
+  isPromiseExpr,
   isPropAccessExpr,
   isPropAssignExpr,
   isReferenceExpr,
@@ -46,7 +49,7 @@ import {
   isVariableStmt,
   isWhileStmt,
 } from "./guards";
-import { findIntegration, IntegrationImpl } from "./integration";
+import { Integration, IntegrationImpl, isIntegration } from "./integration";
 import { FunctionlessNode } from "./node";
 import { Stmt } from "./statement";
 import { AnyFunction, isInTopLevelScope } from "./util";
@@ -261,9 +264,17 @@ export abstract class VTL {
     } else if (isBreakStmt(node)) {
       return this.add("#break");
     } else if (isCallExpr(node)) {
-      const serviceCall = findIntegration(node);
-      if (serviceCall) {
-        return this.integrate(serviceCall, node);
+      if (isReferenceExpr(node.expr)) {
+        const ref = node.expr.ref();
+        if (isIntegration<Integration>(ref)) {
+          const serviceCall = new IntegrationImpl(ref);
+          return this.integrate(serviceCall, node);
+        } else {
+          throw new SynthError(
+            ErrorCodes.Unexpected_Error,
+            "Called references are expected to be an integration."
+          );
+        }
       } else if (
         // If the parent is a propAccessExpr
         isPropAccessExpr(node.expr) &&
@@ -388,6 +399,15 @@ export abstract class VTL {
           }
 
           return previousTmp;
+        } else if (
+          isIdentifier(node.expr.expr) &&
+          node.expr.expr.name === "Promise"
+        ) {
+          debugger;
+          throw new SynthError(
+            ErrorCodes.Unsupported_Use_of_Promises,
+            "Appsync does not support concurrent integration invocation or methods on the `Promise` api."
+          );
         }
         // this is an array map, forEach, reduce call
       }
@@ -526,6 +546,24 @@ export abstract class VTL {
     } else if (isDoStmt(node)) {
     } else if (isTypeOfExpr(node)) {
     } else if (isWhileStmt(node)) {
+    } else if (isAwaitExpr(node)) {
+      // we will check for awaits on the PromiseExpr
+      return this.eval(node.expr);
+    } else if (isPromiseExpr(node)) {
+      // if we find a promise, ensure it is wrapped in Await or returned then unwrap it
+      if (isAwaitExpr(node.parent) || isReturnStmt(node.parent)) {
+        return this.eval(node.expr);
+      }
+      debugger;
+      throw new SynthError(
+        ErrorCodes.Integration_must_be_immediately_awaited_or_returned
+      );
+    } else if (isPromiseArrayExpr(node)) {
+      debugger;
+      throw new SynthError(
+        ErrorCodes.Unsupported_Use_of_Promises,
+        "Appsync does not support concurrent integration invocation."
+      );
     } else if (isErr(node)) {
       throw node.error;
     } else if (isArgument(node)) {

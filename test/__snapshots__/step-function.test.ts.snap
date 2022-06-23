@@ -2,9 +2,9 @@
 
 exports[`$SFN.forEach(list, (item) => task(item)) 1`] = `
 Object {
-  "StartAt": "$SFN.forEach(input.list, function(item))",
+  "StartAt": "await $SFN.forEach(input.list, function(item))",
   "States": Object {
-    "$SFN.forEach(input.list, function(item))": Object {
+    "await $SFN.forEach(input.list, function(item))": Object {
       "ItemsPath": "$.list",
       "Iterator": Object {
         "StartAt": "return task(item)",
@@ -43,9 +43,9 @@ Object {
 
 exports[`$SFN.map(list, (item) => task(item)) 1`] = `
 Object {
-  "StartAt": "$SFN.map(input.list, function(item))",
+  "StartAt": "await $SFN.map(input.list, function(item))",
   "States": Object {
-    "$SFN.map(input.list, function(item))": Object {
+    "await $SFN.map(input.list, function(item))": Object {
       "ItemsPath": "$.list",
       "Iterator": Object {
         "StartAt": "return task(item)",
@@ -205,7 +205,7 @@ Object {
 
 exports[`call AWS.DynamoDB.GetItem, then Lambda and return LiteralExpr 1`] = `
 Object {
-  "StartAt": "person = $AWS.DynamoDB.GetItem({Table: personTable, Key: {id: {S: input.id}",
+  "StartAt": "person = await $AWS.DynamoDB.GetItem({Table: personTable, Key: {id: {S: inp",
   "States": Object {
     "if(person.Item == undefined)": Object {
       "Choices": Array [
@@ -223,10 +223,10 @@ Object {
           ],
         },
       ],
-      "Default": "score = computeScore({id: person.Item.id.S, name: person.Item.name.S})",
+      "Default": "score = await computeScore({id: person.Item.id.S, name: person.Item.name.S}",
       "Type": "Choice",
     },
-    "person = $AWS.DynamoDB.GetItem({Table: personTable, Key: {id: {S: input.id}": Object {
+    "person = await $AWS.DynamoDB.GetItem({Table: personTable, Key: {id: {S: inp": Object {
       "Next": "if(person.Item == undefined)",
       "Parameters": Object {
         "Key": Object {
@@ -258,7 +258,7 @@ Object {
       "ResultPath": "$",
       "Type": "Pass",
     },
-    "score = computeScore({id: person.Item.id.S, name: person.Item.name.S})": Object {
+    "score = await computeScore({id: person.Item.id.S, name: person.Item.name.S}": Object {
       "Next": "return {id: person.Item.id.S, name: person.Item.name.S, score: score}",
       "Parameters": Object {
         "FunctionName": "__REPLACED_TOKEN",
@@ -276,7 +276,7 @@ Object {
 }
 `;
 
-exports[`call Lambda Function, store as variable, return variable 1`] = `
+exports[`call Lambda Function, store as variable, return promise variable 1`] = `
 Object {
   "StartAt": "person = getPerson({id: input.id})",
   "States": Object {
@@ -302,23 +302,65 @@ Object {
 }
 `;
 
+exports[`call Lambda Function, store as variable, return variable 1`] = `
+Object {
+  "StartAt": "person = await getPerson({id: input.id})",
+  "States": Object {
+    "person = await getPerson({id: input.id})": Object {
+      "Next": "return person",
+      "Parameters": Object {
+        "FunctionName": "__REPLACED_TOKEN",
+        "Payload": Object {
+          "id.$": "$.id",
+        },
+      },
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "ResultPath": "$.person",
+      "ResultSelector": "$.Payload",
+      "Type": "Task",
+    },
+    "return person": Object {
+      "End": true,
+      "OutputPath": "$.person",
+      "Type": "Pass",
+    },
+  },
+}
+`;
+
+exports[`call Lambda Function, store as variable, return variable no block 1`] = `
+Object {
+  "StartAt": "return getPerson({id: input.id})",
+  "States": Object {
+    "return getPerson({id: input.id})": Object {
+      "End": true,
+      "Parameters": Object {
+        "FunctionName": "__REPLACED_TOKEN",
+        "Payload": Object {
+          "id.$": "$.id",
+        },
+      },
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "ResultPath": "$",
+      "ResultSelector": "$.Payload",
+      "Type": "Task",
+    },
+  },
+}
+`;
+
 exports[`call Step Function describe from another Step Function 1`] = `
 Object {
-  "StartAt": "result = machine1.describeExecution(\\"hello\\")",
+  "StartAt": "return machine1.describeExecution(\\"hello\\")",
   "States": Object {
-    "result = machine1.describeExecution(\\"hello\\")": Object {
-      "Next": "return result",
+    "return machine1.describeExecution(\\"hello\\")": Object {
+      "End": true,
       "Parameters": Object {
         "ExecutionArn": "hello",
       },
       "Resource": "arn:aws:states:::aws-sdk:sfn:describeExecution",
-      "ResultPath": "$.result",
+      "ResultPath": "$",
       "Type": "Task",
-    },
-    "return result": Object {
-      "End": true,
-      "OutputPath": "$.result",
-      "Type": "Pass",
     },
   },
 }
@@ -326,21 +368,16 @@ Object {
 
 exports[`call Step Function describe from another Step Function from context 1`] = `
 Object {
-  "StartAt": "result = machine1.describeExecution(input.id)",
+  "StartAt": "return machine1.describeExecution(input.id)",
   "States": Object {
-    "result = machine1.describeExecution(input.id)": Object {
-      "Next": "return result",
+    "return machine1.describeExecution(input.id)": Object {
+      "End": true,
       "Parameters": Object {
         "ExecutionArn.$": "$.id",
       },
       "Resource": "arn:aws:states:::aws-sdk:sfn:describeExecution",
-      "ResultPath": "$.result",
+      "ResultPath": "$",
       "Type": "Task",
-    },
-    "return result": Object {
-      "End": true,
-      "OutputPath": "$.result",
-      "Type": "Pass",
     },
   },
 }
@@ -348,21 +385,16 @@ Object {
 
 exports[`call Step Function from another Step Function 1`] = `
 Object {
-  "StartAt": "result = machine1({})",
+  "StartAt": "return machine1({})",
   "States": Object {
-    "result = machine1({})": Object {
-      "Next": "return result",
+    "return machine1({})": Object {
+      "End": true,
       "Parameters": Object {
         "StateMachineArn": "__REPLACED_TOKEN",
       },
       "Resource": "arn:aws:states:::aws-sdk:sfn:startSyncExecution",
-      "ResultPath": "$.result",
+      "ResultPath": "$",
       "Type": "Task",
-    },
-    "return result": Object {
-      "End": true,
-      "OutputPath": "$.result",
-      "Type": "Pass",
     },
   },
 }
@@ -370,10 +402,10 @@ Object {
 
 exports[`call Step Function from another Step Function with dynamic input 1`] = `
 Object {
-  "StartAt": "result = machine1({input: {value: input.value1}})",
+  "StartAt": "return machine1({input: {value: input.value1}})",
   "States": Object {
-    "result = machine1({input: {value: input.value1}})": Object {
-      "Next": "return result",
+    "return machine1({input: {value: input.value1}})": Object {
+      "End": true,
       "Parameters": Object {
         "Input": Object {
           "value.$": "$.value1",
@@ -381,13 +413,8 @@ Object {
         "StateMachineArn": "__REPLACED_TOKEN",
       },
       "Resource": "arn:aws:states:::aws-sdk:sfn:startSyncExecution",
-      "ResultPath": "$.result",
+      "ResultPath": "$",
       "Type": "Task",
-    },
-    "return result": Object {
-      "End": true,
-      "OutputPath": "$.result",
-      "Type": "Pass",
     },
   },
 }
@@ -395,22 +422,17 @@ Object {
 
 exports[`call Step Function from another Step Function with dynamic input field input 1`] = `
 Object {
-  "StartAt": "result = machine1({input: input})",
+  "StartAt": "return machine1({input: input})",
   "States": Object {
-    "result = machine1({input: input})": Object {
-      "Next": "return result",
+    "return machine1({input: input})": Object {
+      "End": true,
       "Parameters": Object {
         "Input.$": "$",
         "StateMachineArn": "__REPLACED_TOKEN",
       },
       "Resource": "arn:aws:states:::aws-sdk:sfn:startSyncExecution",
-      "ResultPath": "$.result",
+      "ResultPath": "$",
       "Type": "Task",
-    },
-    "return result": Object {
-      "End": true,
-      "OutputPath": "$.result",
-      "Type": "Pass",
     },
   },
 }
@@ -418,10 +440,10 @@ Object {
 
 exports[`call Step Function from another Step Function with input 1`] = `
 Object {
-  "StartAt": "result = machine1({input: {value: \\"hello\\"}})",
+  "StartAt": "return machine1({input: {value: \\"hello\\"}})",
   "States": Object {
-    "result = machine1({input: {value: \\"hello\\"}})": Object {
-      "Next": "return result",
+    "return machine1({input: {value: \\"hello\\"}})": Object {
+      "End": true,
       "Parameters": Object {
         "Input": Object {
           "value": "hello",
@@ -429,13 +451,8 @@ Object {
         "StateMachineArn": "__REPLACED_TOKEN",
       },
       "Resource": "arn:aws:states:::aws-sdk:sfn:startSyncExecution",
-      "ResultPath": "$.result",
+      "ResultPath": "$",
       "Type": "Task",
-    },
-    "return result": Object {
-      "End": true,
-      "OutputPath": "$.result",
-      "Type": "Pass",
     },
   },
 }
@@ -443,23 +460,18 @@ Object {
 
 exports[`call Step Function from another Step Function with name and trace 1`] = `
 Object {
-  "StartAt": "result = machine1({name: \\"exec1\\", traceHeader: \\"1\\"})",
+  "StartAt": "return machine1({name: \\"exec1\\", traceHeader: \\"1\\"})",
   "States": Object {
-    "result = machine1({name: \\"exec1\\", traceHeader: \\"1\\"})": Object {
-      "Next": "return result",
+    "return machine1({name: \\"exec1\\", traceHeader: \\"1\\"})": Object {
+      "End": true,
       "Parameters": Object {
         "Name": "exec1",
         "StateMachineArn": "__REPLACED_TOKEN",
         "TraceHeader": "1",
       },
       "Resource": "arn:aws:states:::aws-sdk:sfn:startSyncExecution",
-      "ResultPath": "$.result",
+      "ResultPath": "$",
       "Type": "Task",
-    },
-    "return result": Object {
-      "End": true,
-      "OutputPath": "$.result",
-      "Type": "Pass",
     },
   },
 }
@@ -467,23 +479,18 @@ Object {
 
 exports[`call Step Function from another Step Function with name and trace from variables 1`] = `
 Object {
-  "StartAt": "result = machine1({name: input.name, traceHeader: input.header})",
+  "StartAt": "return machine1({name: input.name, traceHeader: input.header})",
   "States": Object {
-    "result = machine1({name: input.name, traceHeader: input.header})": Object {
-      "Next": "return result",
+    "return machine1({name: input.name, traceHeader: input.header})": Object {
+      "End": true,
       "Parameters": Object {
         "Name.$": "$.name",
         "StateMachineArn": "__REPLACED_TOKEN",
         "TraceHeader.$": "$.header",
       },
       "Resource": "arn:aws:states:::aws-sdk:sfn:startSyncExecution",
-      "ResultPath": "$.result",
+      "ResultPath": "$",
       "Type": "Task",
-    },
-    "return result": Object {
-      "End": true,
-      "OutputPath": "$.result",
-      "Type": "Pass",
     },
   },
 }
@@ -535,7 +542,7 @@ exports[`conditionally call DynamoDB and then void 1`] = `
 Object {
   "StartAt": "if(input.id == \\"hello\\")",
   "States": Object {
-    "$AWS.DynamoDB.GetItem({Table: personTable, Key: {id: {S: input.id}}})": Object {
+    "await $AWS.DynamoDB.GetItem({Table: personTable, Key: {id: {S: input.id}}})": Object {
       "Next": "return null",
       "Parameters": Object {
         "Key": Object {
@@ -552,7 +559,7 @@ Object {
     "if(input.id == \\"hello\\")": Object {
       "Choices": Array [
         Object {
-          "Next": "$AWS.DynamoDB.GetItem({Table: personTable, Key: {id: {S: input.id}}})",
+          "Next": "await $AWS.DynamoDB.GetItem({Table: personTable, Key: {id: {S: input.id}}})",
           "StringEquals": "hello",
           "Variable": "$.id",
         },
@@ -611,6 +618,17 @@ exports[`continue in do..while loop 1`] = `
 Object {
   "StartAt": "if(input.key == \\"sam\\")",
   "States": Object {
+    "await task(input.key)": Object {
+      "Next": "while (true)",
+      "Parameters": Object {
+        "FunctionName": "__REPLACED_TOKEN",
+        "Payload.$": "$.key",
+      },
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "ResultPath": null,
+      "ResultSelector": "$.Payload",
+      "Type": "Task",
+    },
     "continue": Object {
       "Next": "if(input.key == \\"sam\\")",
       "ResultPath": null,
@@ -624,7 +642,7 @@ Object {
           "Variable": "$.key",
         },
       ],
-      "Default": "task(input.key)",
+      "Default": "await task(input.key)",
       "Type": "Choice",
     },
     "return null": Object {
@@ -634,17 +652,6 @@ Object {
         "null": null,
       },
       "Type": "Pass",
-    },
-    "task(input.key)": Object {
-      "Next": "while (true)",
-      "Parameters": Object {
-        "FunctionName": "__REPLACED_TOKEN",
-        "Payload.$": "$.key",
-      },
-      "Resource": "arn:aws:states:::lambda:invoke",
-      "ResultPath": null,
-      "ResultSelector": "$.Payload",
-      "Type": "Task",
     },
     "while (true)": Object {
       "Choices": Array [
@@ -716,6 +723,17 @@ exports[`continue in while loop 1`] = `
 Object {
   "StartAt": "while (true)",
   "States": Object {
+    "await task(input.key)": Object {
+      "Next": "while (true)",
+      "Parameters": Object {
+        "FunctionName": "__REPLACED_TOKEN",
+        "Payload.$": "$.key",
+      },
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "ResultPath": null,
+      "ResultSelector": "$.Payload",
+      "Type": "Task",
+    },
     "continue": Object {
       "Next": "while (true)",
       "ResultPath": null,
@@ -729,7 +747,7 @@ Object {
           "Variable": "$.key",
         },
       ],
-      "Default": "task(input.key)",
+      "Default": "await task(input.key)",
       "Type": "Choice",
     },
     "return null": Object {
@@ -739,17 +757,6 @@ Object {
         "null": null,
       },
       "Type": "Pass",
-    },
-    "task(input.key)": Object {
-      "Next": "while (true)",
-      "Parameters": Object {
-        "FunctionName": "__REPLACED_TOKEN",
-        "Payload.$": "$.key",
-      },
-      "Resource": "arn:aws:states:::lambda:invoke",
-      "ResultPath": null,
-      "ResultSelector": "$.Payload",
-      "Type": "Task",
     },
     "while (true)": Object {
       "Choices": Array [
@@ -784,9 +791,9 @@ Object {
 
 exports[`for (const i in [task(input)]) 1`] = `
 Object {
-  "StartAt": "0_tmp = task(input)",
+  "StartAt": "0_tmp = await task(input)",
   "States": Object {
-    "0_tmp = task(input)": Object {
+    "0_tmp = await task(input)": Object {
       "Next": "for(i in [0_tmp])",
       "Parameters": Object {
         "FunctionName": "__REPLACED_TOKEN",
@@ -800,10 +807,10 @@ Object {
     "for(i in [0_tmp])": Object {
       "ItemsPath": "__REPLACED_TOKEN",
       "Iterator": Object {
-        "StartAt": "1_tmp = task(i)",
+        "StartAt": "1_tmp = await task(i)",
         "States": Object {
-          "1_tmp = task(i)": Object {
-            "Next": "task(1_tmp)",
+          "1_tmp = await task(i)": Object {
+            "Next": "await task(1_tmp)",
             "Parameters": Object {
               "FunctionName": "__REPLACED_TOKEN",
               "Payload.$": "$.i",
@@ -813,7 +820,7 @@ Object {
             "ResultSelector": "$.Payload",
             "Type": "Task",
           },
-          "task(1_tmp)": Object {
+          "await task(1_tmp)": Object {
             "End": true,
             "Parameters": Object {
               "FunctionName": "__REPLACED_TOKEN",
@@ -849,9 +856,9 @@ Object {
 
 exports[`for (const i of [task(input)]) 1`] = `
 Object {
-  "StartAt": "0_tmp = task(input)",
+  "StartAt": "0_tmp = await task(input)",
   "States": Object {
-    "0_tmp = task(input)": Object {
+    "0_tmp = await task(input)": Object {
       "Next": "for(i of [0_tmp])",
       "Parameters": Object {
         "FunctionName": "__REPLACED_TOKEN",
@@ -865,10 +872,10 @@ Object {
     "for(i of [0_tmp])": Object {
       "ItemsPath": "__REPLACED_TOKEN",
       "Iterator": Object {
-        "StartAt": "1_tmp = task(i)",
+        "StartAt": "1_tmp = await task(i)",
         "States": Object {
-          "1_tmp = task(i)": Object {
-            "Next": "task(1_tmp)",
+          "1_tmp = await task(i)": Object {
+            "Next": "await task(1_tmp)",
             "Parameters": Object {
               "FunctionName": "__REPLACED_TOKEN",
               "Payload.$": "$.i",
@@ -878,7 +885,7 @@ Object {
             "ResultSelector": "$.Payload",
             "Type": "Task",
           },
-          "task(1_tmp)": Object {
+          "await task(1_tmp)": Object {
             "End": true,
             "Parameters": Object {
               "FunctionName": "__REPLACED_TOKEN",
@@ -999,9 +1006,9 @@ Object {
     "for(name of people)": Object {
       "ItemsPath": "$.people",
       "Iterator": Object {
-        "StartAt": "computeScore({id: input.id, name: name})",
+        "StartAt": "await computeScore({id: input.id, name: name})",
         "States": Object {
-          "computeScore({id: input.id, name: name})": Object {
+          "await computeScore({id: input.id, name: name})": Object {
             "End": true,
             "Parameters": Object {
               "FunctionName": "__REPLACED_TOKEN",
@@ -1053,13 +1060,44 @@ Object {
     "for(item of input.items)": Object {
       "ItemsPath": "$.items",
       "Iterator": Object {
-        "StartAt": "task(item)",
+        "StartAt": "await task(item)",
         "States": Object {
           "0_catch(err)": Object {
             "InputPath": "$.err.0_ParsedError",
             "Next": "if(err.message == \\"you dun' goofed\\")",
             "ResultPath": "$.err",
             "Type": "Pass",
+          },
+          "await task(\\"2\\")": Object {
+            "Next": "exit finally",
+            "Parameters": Object {
+              "FunctionName": "__REPLACED_TOKEN",
+              "Payload": "2",
+            },
+            "Resource": "arn:aws:states:::lambda:invoke",
+            "ResultPath": null,
+            "ResultSelector": "$.Payload",
+            "Type": "Task",
+          },
+          "await task(item)": Object {
+            "Catch": Array [
+              Object {
+                "ErrorEquals": Array [
+                  "States.ALL",
+                ],
+                "Next": "catch(err)",
+                "ResultPath": "$.err",
+              },
+            ],
+            "Next": "await task(\\"2\\")",
+            "Parameters": Object {
+              "FunctionName": "__REPLACED_TOKEN",
+              "Payload.$": "$.item",
+            },
+            "Resource": "arn:aws:states:::lambda:invoke",
+            "ResultPath": null,
+            "ResultSelector": "$.Payload",
+            "Type": "Task",
           },
           "catch(err)": Object {
             "Next": "0_catch(err)",
@@ -1088,39 +1126,8 @@ Object {
                 "Variable": "$.err.message",
               },
             ],
-            "Default": "task(\\"2\\")",
+            "Default": "await task(\\"2\\")",
             "Type": "Choice",
-          },
-          "task(\\"2\\")": Object {
-            "Next": "exit finally",
-            "Parameters": Object {
-              "FunctionName": "__REPLACED_TOKEN",
-              "Payload": "2",
-            },
-            "Resource": "arn:aws:states:::lambda:invoke",
-            "ResultPath": null,
-            "ResultSelector": "$.Payload",
-            "Type": "Task",
-          },
-          "task(item)": Object {
-            "Catch": Array [
-              Object {
-                "ErrorEquals": Array [
-                  "States.ALL",
-                ],
-                "Next": "catch(err)",
-                "ResultPath": "$.err",
-              },
-            ],
-            "Next": "task(\\"2\\")",
-            "Parameters": Object {
-              "FunctionName": "__REPLACED_TOKEN",
-              "Payload.$": "$.item",
-            },
-            "Resource": "arn:aws:states:::lambda:invoke",
-            "ResultPath": null,
-            "ResultSelector": "$.Payload",
-            "Type": "Task",
           },
           "throw finally": Object {
             "Cause": "an error was re-thrown from a finally block which is unsupported by Step Functions",
@@ -1128,7 +1135,7 @@ Object {
             "Type": "Fail",
           },
           "throw new Error(\\"little\\")": Object {
-            "Next": "task(\\"2\\")",
+            "Next": "await task(\\"2\\")",
             "Result": Object {
               "message": "little",
             },
@@ -1490,9 +1497,9 @@ Object {
 
 exports[`import from express state machine into machine 1`] = `
 Object {
-  "StartAt": "machine({input: {id: \\"hi\\"}})",
+  "StartAt": "await machine({input: {id: \\"hi\\"}})",
   "States": Object {
-    "machine({input: {id: \\"hi\\"}})": Object {
+    "await machine({input: {id: \\"hi\\"}})": Object {
       "Next": "return null",
       "Parameters": Object {
         "Input": Object {
@@ -1518,9 +1525,9 @@ Object {
 
 exports[`import from state machine into state machine 1`] = `
 Object {
-  "StartAt": "machine({input: {id: \\"hi\\"}})",
+  "StartAt": "await machine({input: {id: \\"hi\\"}})",
   "States": Object {
-    "machine({input: {id: \\"hi\\"}})": Object {
+    "await machine({input: {id: \\"hi\\"}})": Object {
       "Next": "return null",
       "Parameters": Object {
         "Input": Object {
@@ -1720,9 +1727,9 @@ Object {
 
 exports[`let cond; do { cond = task() } while (cond) 1`] = `
 Object {
-  "StartAt": "cond = task()",
+  "StartAt": "cond = await task()",
   "States": Object {
-    "cond = task()": Object {
+    "cond = await task()": Object {
       "Next": "while (cond == undefined)",
       "Parameters": Object {
         "FunctionName": "__REPLACED_TOKEN",
@@ -1743,7 +1750,7 @@ Object {
     "while (cond == undefined)": Object {
       "Choices": Array [
         Object {
-          "Next": "cond = task()",
+          "Next": "cond = await task()",
           "Or": Array [
             Object {
               "IsPresent": false,
@@ -1791,11 +1798,135 @@ Object {
 }
 `;
 
-exports[`list.filter(item => item.length > 2).map(item => task(item)) 1`] = `
+exports[`list.filter(item => item.length > 2).map(item => item) 2`] = `
 Object {
   "StartAt": "return input.list.filter(function(item)).map(function(item))",
   "States": Object {
     "return input.list.filter(function(item)).map(function(item))": Object {
+      "End": true,
+      "ItemsPath": "$.list[?(@.length>2)]",
+      "Iterator": Object {
+        "StartAt": "return item",
+        "States": Object {
+          "return item": Object {
+            "End": true,
+            "OutputPath": "$.item",
+            "Type": "Pass",
+          },
+        },
+      },
+      "MaxConcurrency": 1,
+      "Parameters": Object {
+        "item.$": "$$.Map.Item.Value",
+      },
+      "ResultPath": "$",
+      "Type": "Map",
+    },
+  },
+}
+`;
+
+exports[`list.filter(item => item.length > 2).map(item => item) 3`] = `
+Object {
+  "StartAt": "return input.list.filter(function(item)).map(function(item))",
+  "States": Object {
+    "return input.list.filter(function(item)).map(function(item))": Object {
+      "End": true,
+      "ItemsPath": "$.list[?(@.length>2)]",
+      "Iterator": Object {
+        "StartAt": "return item",
+        "States": Object {
+          "return item": Object {
+            "End": true,
+            "OutputPath": "$.item",
+            "Type": "Pass",
+          },
+        },
+      },
+      "MaxConcurrency": 1,
+      "Parameters": Object {
+        "item.$": "$$.Map.Item.Value",
+      },
+      "ResultPath": "$",
+      "Type": "Map",
+    },
+  },
+}
+`;
+
+exports[`list.filter(item => item.length > 2).map(item => task(item)) 1`] = `
+Object {
+  "StartAt": "return Promise.all(input.list.filter(function(item)).map(function(item)))",
+  "States": Object {
+    "return Promise.all(input.list.filter(function(item)).map(function(item)))": Object {
+      "End": true,
+      "ItemsPath": "$.list[?(@.length>2)]",
+      "Iterator": Object {
+        "StartAt": "return task(item)",
+        "States": Object {
+          "return task(item)": Object {
+            "End": true,
+            "Parameters": Object {
+              "FunctionName": "__REPLACED_TOKEN",
+              "Payload.$": "$.item",
+            },
+            "Resource": "arn:aws:states:::lambda:invoke",
+            "ResultPath": "$",
+            "ResultSelector": "$.Payload",
+            "Type": "Task",
+          },
+        },
+      },
+      "MaxConcurrency": 1,
+      "Parameters": Object {
+        "item.$": "$$.Map.Item.Value",
+      },
+      "ResultPath": "$",
+      "Type": "Map",
+    },
+  },
+}
+`;
+
+exports[`list.filter(item => item.length > 2).map(item => task(item)) 2`] = `
+Object {
+  "StartAt": "return Promise.all(input.list.filter(function(item)).map(function(item)))",
+  "States": Object {
+    "return Promise.all(input.list.filter(function(item)).map(function(item)))": Object {
+      "End": true,
+      "ItemsPath": "$.list[?(@.length>2)]",
+      "Iterator": Object {
+        "StartAt": "return task(item)",
+        "States": Object {
+          "return task(item)": Object {
+            "End": true,
+            "Parameters": Object {
+              "FunctionName": "__REPLACED_TOKEN",
+              "Payload.$": "$.item",
+            },
+            "Resource": "arn:aws:states:::lambda:invoke",
+            "ResultPath": "$",
+            "ResultSelector": "$.Payload",
+            "Type": "Task",
+          },
+        },
+      },
+      "MaxConcurrency": 1,
+      "Parameters": Object {
+        "item.$": "$$.Map.Item.Value",
+      },
+      "ResultPath": "$",
+      "Type": "Map",
+    },
+  },
+}
+`;
+
+exports[`list.filter(item => item.length > 2).map(item => task(item)) 3`] = `
+Object {
+  "StartAt": "return Promise.all(input.list.filter(function(item)).map(function(item)))",
+  "States": Object {
+    "return Promise.all(input.list.filter(function(item)).map(function(item)))": Object {
       "End": true,
       "ItemsPath": "$.list[?(@.length>2)]",
       "Iterator": Object {
@@ -1972,9 +2103,9 @@ Object {
 
 exports[`list.map((item, i) => if (i == 0) task(item)) 1`] = `
 Object {
-  "StartAt": "return input.list.map(function(item, i))",
+  "StartAt": "return Promise.all(input.list.map(function(item, i)))",
   "States": Object {
-    "return input.list.map(function(item, i))": Object {
+    "return Promise.all(input.list.map(function(item, i)))": Object {
       "End": true,
       "ItemsPath": "$.list",
       "Iterator": Object {
@@ -2026,9 +2157,9 @@ Object {
 
 exports[`list.map((item, i, list) => if (i == 0) task(item) else task(list[0])) 1`] = `
 Object {
-  "StartAt": "return input.list.map(function(item, i))",
+  "StartAt": "return Promise.all(input.list.map(function(item, i)))",
   "States": Object {
-    "return input.list.map(function(item, i))": Object {
+    "return Promise.all(input.list.map(function(item, i)))": Object {
       "End": true,
       "ItemsPath": "$.list",
       "Iterator": Object {
@@ -2083,9 +2214,9 @@ Object {
 
 exports[`list.map(item => task(item)) 1`] = `
 Object {
-  "StartAt": "return input.list.map(function(item))",
+  "StartAt": "return Promise.all(input.list.map(function(item)))",
   "States": Object {
-    "return input.list.map(function(item))": Object {
+    "return Promise.all(input.list.map(function(item)))": Object {
       "End": true,
       "ItemsPath": "$.list",
       "Iterator": Object {
@@ -2146,9 +2277,9 @@ Object {
 
 exports[`put an event bus event 1`] = `
 Object {
-  "StartAt": "bus.putEvents({detail-type: \\"someEvent\\", source: \\"sfnTest\\", detail: {value:",
+  "StartAt": "await bus.putEvents({detail-type: \\"someEvent\\", source: \\"sfnTest\\", detail: {",
   "States": Object {
-    "bus.putEvents({detail-type: \\"someEvent\\", source: \\"sfnTest\\", detail: {value:": Object {
+    "await bus.putEvents({detail-type: \\"someEvent\\", source: \\"sfnTest\\", detail: {": Object {
       "Next": "return null",
       "Parameters": Object {
         "Entries": Array [
@@ -2180,9 +2311,9 @@ Object {
 
 exports[`put multiple event bus events 1`] = `
 Object {
-  "StartAt": "bus.putEvents({detail-type: \\"someEvent\\", source: \\"sfnTest\\", detail: {value:",
+  "StartAt": "await bus.putEvents({detail-type: \\"someEvent\\", source: \\"sfnTest\\", detail: {",
   "States": Object {
-    "bus.putEvents({detail-type: \\"someEvent\\", source: \\"sfnTest\\", detail: {value:": Object {
+    "await bus.putEvents({detail-type: \\"someEvent\\", source: \\"sfnTest\\", detail: {": Object {
       "Next": "return null",
       "Parameters": Object {
         "Entries": Array [
@@ -2223,9 +2354,10 @@ Object {
 
 exports[`result = $SFN.forEach(list, (item) => task(item)) 1`] = `
 Object {
-  "StartAt": "result = $SFN.forEach(input.list, function(item))",
+  "StartAt": "return $SFN.forEach(input.list, function(item))",
   "States": Object {
-    "result = $SFN.forEach(input.list, function(item))": Object {
+    "return $SFN.forEach(input.list, function(item))": Object {
+      "End": true,
       "ItemsPath": "$.list",
       "Iterator": Object {
         "StartAt": "return task(item)",
@@ -2243,17 +2375,11 @@ Object {
           },
         },
       },
-      "Next": "return result",
       "Parameters": Object {
         "item.$": "$$.Map.Item.Value",
       },
-      "ResultPath": "$.result",
+      "ResultPath": "$",
       "Type": "Map",
-    },
-    "return result": Object {
-      "End": true,
-      "OutputPath": "$.result",
-      "Type": "Pass",
     },
   },
 }
@@ -2261,9 +2387,9 @@ Object {
 
 exports[`result = $SFN.map(list, (item) => task(item)) 1`] = `
 Object {
-  "StartAt": "result = $SFN.map(input.list, function(item))",
+  "StartAt": "result = await $SFN.map(input.list, function(item))",
   "States": Object {
-    "result = $SFN.map(input.list, function(item))": Object {
+    "result = await $SFN.map(input.list, function(item))": Object {
       "ItemsPath": "$.list",
       "Iterator": Object {
         "StartAt": "return task(item)",
@@ -2305,18 +2431,26 @@ Object {
       "End": true,
       "ItemsPath": "$.list",
       "Iterator": Object {
-        "StartAt": "return task(item)",
+        "StartAt": "await task(item)",
         "States": Object {
-          "return task(item)": Object {
-            "End": true,
+          "await task(item)": Object {
+            "Next": "return null",
             "Parameters": Object {
               "FunctionName": "__REPLACED_TOKEN",
               "Payload.$": "$.item",
             },
             "Resource": "arn:aws:states:::lambda:invoke",
-            "ResultPath": "$",
+            "ResultPath": null,
             "ResultSelector": "$.Payload",
             "Type": "Task",
+          },
+          "return null": Object {
+            "End": true,
+            "OutputPath": "$.null",
+            "Parameters": Object {
+              "null": null,
+            },
+            "Type": "Pass",
           },
         },
       },
@@ -2338,8 +2472,28 @@ Object {
       "End": true,
       "ItemsPath": "$.list",
       "Iterator": Object {
-        "StartAt": "return task(item)",
+        "StartAt": "await task(item)",
         "States": Object {
+          "await task(item)": Object {
+            "Catch": Array [
+              Object {
+                "ErrorEquals": Array [
+                  "States.ALL",
+                ],
+                "Next": "return null 1",
+                "ResultPath": null,
+              },
+            ],
+            "Next": "return null",
+            "Parameters": Object {
+              "FunctionName": "__REPLACED_TOKEN",
+              "Payload.$": "$.item",
+            },
+            "Resource": "arn:aws:states:::lambda:invoke",
+            "ResultPath": null,
+            "ResultSelector": "$.Payload",
+            "Type": "Task",
+          },
           "return null": Object {
             "End": true,
             "OutputPath": "$.null",
@@ -2348,25 +2502,13 @@ Object {
             },
             "Type": "Pass",
           },
-          "return task(item)": Object {
-            "Catch": Array [
-              Object {
-                "ErrorEquals": Array [
-                  "States.ALL",
-                ],
-                "Next": "return null",
-                "ResultPath": null,
-              },
-            ],
+          "return null 1": Object {
             "End": true,
+            "OutputPath": "$.null",
             "Parameters": Object {
-              "FunctionName": "__REPLACED_TOKEN",
-              "Payload.$": "$.item",
+              "null": null,
             },
-            "Resource": "arn:aws:states:::lambda:invoke",
-            "ResultPath": "$",
-            "ResultSelector": "$.Payload",
-            "Type": "Task",
+            "Type": "Pass",
           },
         },
       },
@@ -2388,18 +2530,26 @@ Object {
       "End": true,
       "ItemsPath": "$.list",
       "Iterator": Object {
-        "StartAt": "return task(item)",
+        "StartAt": "await task(item)",
         "States": Object {
-          "return task(item)": Object {
-            "End": true,
+          "await task(item)": Object {
+            "Next": "return null",
             "Parameters": Object {
               "FunctionName": "__REPLACED_TOKEN",
               "Payload.$": "$.item",
             },
             "Resource": "arn:aws:states:::lambda:invoke",
-            "ResultPath": "$",
+            "ResultPath": null,
             "ResultSelector": "$.Payload",
             "Type": "Task",
+          },
+          "return null": Object {
+            "End": true,
+            "OutputPath": "$.null",
+            "Parameters": Object {
+              "null": null,
+            },
+            "Type": "Pass",
           },
         },
       },
@@ -2634,7 +2784,7 @@ Object {
 
 exports[`return AWS.DynamoDB.GetItem 1`] = `
 Object {
-  "StartAt": "person = $AWS.DynamoDB.GetItem({Table: personTable, Key: {id: {S: input.id}",
+  "StartAt": "person = await $AWS.DynamoDB.GetItem({Table: personTable, Key: {id: {S: inp",
   "States": Object {
     "if(person.Item == undefined)": Object {
       "Choices": Array [
@@ -2655,7 +2805,7 @@ Object {
       "Default": "return {id: person.Item.id.S, name: person.Item.name.S}",
       "Type": "Choice",
     },
-    "person = $AWS.DynamoDB.GetItem({Table: personTable, Key: {id: {S: input.id}": Object {
+    "person = await $AWS.DynamoDB.GetItem({Table: personTable, Key: {id: {S: inp": Object {
       "Next": "if(person.Item == undefined)",
       "Parameters": Object {
         "Key": Object {
@@ -2714,6 +2864,35 @@ Object {
         "Payload": Object {
           "id.$": "$.id",
         },
+      },
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "ResultPath": "$",
+      "ResultSelector": "$.Payload",
+      "Type": "Task",
+    },
+  },
+}
+`;
+
+exports[`return await task(await task()) 1`] = `
+Object {
+  "StartAt": "0_tmp = await task()",
+  "States": Object {
+    "0_tmp = await task()": Object {
+      "Next": "return task(0_tmp)",
+      "Parameters": Object {
+        "FunctionName": "__REPLACED_TOKEN",
+      },
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "ResultPath": "$.0_tmp",
+      "ResultSelector": "$.Payload",
+      "Type": "Task",
+    },
+    "return task(0_tmp)": Object {
+      "End": true,
+      "Parameters": Object {
+        "FunctionName": "__REPLACED_TOKEN",
+        "Payload.$": "$.0_tmp",
       },
       "Resource": "arn:aws:states:::lambda:invoke",
       "ResultPath": "$",
@@ -2864,11 +3043,11 @@ Object {
 }
 `;
 
-exports[`return task(task()) 1`] = `
+exports[`return task(await task()) 1`] = `
 Object {
-  "StartAt": "0_tmp = task()",
+  "StartAt": "0_tmp = await task()",
   "States": Object {
-    "0_tmp = task()": Object {
+    "0_tmp = await task()": Object {
       "Next": "return task(0_tmp)",
       "Parameters": Object {
         "FunctionName": "__REPLACED_TOKEN",
@@ -2976,18 +3155,10 @@ Object {
 
 exports[`task(any) 1`] = `
 Object {
-  "StartAt": "task(null)",
+  "StartAt": "await task(null)",
   "States": Object {
-    "return null": Object {
-      "End": true,
-      "OutputPath": "$.null",
-      "Parameters": Object {
-        "null": null,
-      },
-      "Type": "Pass",
-    },
-    "task(\\"hello\\" + \\" world\\")": Object {
-      "Next": "task(\\"hello\\" + 1)",
+    "await task(\\"hello\\" + \\" world\\")": Object {
+      "Next": "await task(\\"hello\\" + 1)",
       "Parameters": Object {
         "FunctionName": "__REPLACED_TOKEN",
         "Payload": "hello world",
@@ -2997,8 +3168,8 @@ Object {
       "ResultSelector": "$.Payload",
       "Type": "Task",
     },
-    "task(\\"hello\\" + 1)": Object {
-      "Next": "task(1 + \\"hello\\")",
+    "await task(\\"hello\\" + 1)": Object {
+      "Next": "await task(1 + \\"hello\\")",
       "Parameters": Object {
         "FunctionName": "__REPLACED_TOKEN",
         "Payload": "hello1",
@@ -3008,7 +3179,7 @@ Object {
       "ResultSelector": "$.Payload",
       "Type": "Task",
     },
-    "task(\\"hello\\" + [\\"world\\"])": Object {
+    "await task(\\"hello\\" + [\\"world\\"])": Object {
       "Next": "return null",
       "Parameters": Object {
         "FunctionName": "__REPLACED_TOKEN",
@@ -3019,8 +3190,8 @@ Object {
       "ResultSelector": "$.Payload",
       "Type": "Task",
     },
-    "task(\\"hello\\" + null)": Object {
-      "Next": "task([null])",
+    "await task(\\"hello\\" + null)": Object {
+      "Next": "await task([null])",
       "Parameters": Object {
         "FunctionName": "__REPLACED_TOKEN",
         "Payload": "hellonull",
@@ -3030,8 +3201,8 @@ Object {
       "ResultSelector": "$.Payload",
       "Type": "Task",
     },
-    "task(\\"hello\\" + true)": Object {
-      "Next": "task(false + \\"hello\\")",
+    "await task(\\"hello\\" + true)": Object {
+      "Next": "await task(false + \\"hello\\")",
       "Parameters": Object {
         "FunctionName": "__REPLACED_TOKEN",
         "Payload": "hellotrue",
@@ -3041,8 +3212,8 @@ Object {
       "ResultSelector": "$.Payload",
       "Type": "Task",
     },
-    "task(\\"hello\\" + {place: \\"world\\"})": Object {
-      "Next": "task(\\"hello\\" + [\\"world\\"])",
+    "await task(\\"hello\\" + {place: \\"world\\"})": Object {
+      "Next": "await task(\\"hello\\" + [\\"world\\"])",
       "Parameters": Object {
         "FunctionName": "__REPLACED_TOKEN",
         "Payload": "hello[object Object]",
@@ -3052,8 +3223,8 @@ Object {
       "ResultSelector": "$.Payload",
       "Type": "Task",
     },
-    "task(\\"hello\\")": Object {
-      "Next": "task(\\"hello\\" + \\" world\\")",
+    "await task(\\"hello\\")": Object {
+      "Next": "await task(\\"hello\\" + \\" world\\")",
       "Parameters": Object {
         "FunctionName": "__REPLACED_TOKEN",
         "Payload": "hello",
@@ -3063,8 +3234,8 @@ Object {
       "ResultSelector": "$.Payload",
       "Type": "Task",
     },
-    "task(-1)": Object {
-      "Next": "task(-100)",
+    "await task(-1)": Object {
+      "Next": "await task(-100)",
       "Parameters": Object {
         "FunctionName": "__REPLACED_TOKEN",
         "Payload": -1,
@@ -3074,8 +3245,8 @@ Object {
       "ResultSelector": "$.Payload",
       "Type": "Task",
     },
-    "task(-100)": Object {
-      "Next": "task(1 + 2)",
+    "await task(-100)": Object {
+      "Next": "await task(1 + 2)",
       "Parameters": Object {
         "FunctionName": "__REPLACED_TOKEN",
         "Payload": -100,
@@ -3085,8 +3256,8 @@ Object {
       "ResultSelector": "$.Payload",
       "Type": "Task",
     },
-    "task(0)": Object {
-      "Next": "task(-1)",
+    "await task(0)": Object {
+      "Next": "await task(-1)",
       "Parameters": Object {
         "FunctionName": "__REPLACED_TOKEN",
         "Payload": 0,
@@ -3096,8 +3267,8 @@ Object {
       "ResultSelector": "$.Payload",
       "Type": "Task",
     },
-    "task(1 + \\"hello\\")": Object {
-      "Next": "task(\\"hello\\" + true)",
+    "await task(1 + \\"hello\\")": Object {
+      "Next": "await task(\\"hello\\" + true)",
       "Parameters": Object {
         "FunctionName": "__REPLACED_TOKEN",
         "Payload": "1hello",
@@ -3107,8 +3278,8 @@ Object {
       "ResultSelector": "$.Payload",
       "Type": "Task",
     },
-    "task(1 + 2)": Object {
-      "Next": "task(\\"hello\\")",
+    "await task(1 + 2)": Object {
+      "Next": "await task(\\"hello\\")",
       "Parameters": Object {
         "FunctionName": "__REPLACED_TOKEN",
         "Payload": 3,
@@ -3118,8 +3289,8 @@ Object {
       "ResultSelector": "$.Payload",
       "Type": "Task",
     },
-    "task([-1])": Object {
-      "Next": "task([true])",
+    "await task([-1])": Object {
+      "Next": "await task([true])",
       "Parameters": Object {
         "FunctionName": "__REPLACED_TOKEN",
         "Payload": Array [
@@ -3131,8 +3302,8 @@ Object {
       "ResultSelector": "$.Payload",
       "Type": "Task",
     },
-    "task([1])": Object {
-      "Next": "task([-1])",
+    "await task([1])": Object {
+      "Next": "await task([-1])",
       "Parameters": Object {
         "FunctionName": "__REPLACED_TOKEN",
         "Payload": Array [
@@ -3144,8 +3315,8 @@ Object {
       "ResultSelector": "$.Payload",
       "Type": "Task",
     },
-    "task([null])": Object {
-      "Next": "task([1])",
+    "await task([null])": Object {
+      "Next": "await task([1])",
       "Parameters": Object {
         "FunctionName": "__REPLACED_TOKEN",
         "Payload": Array [
@@ -3157,8 +3328,8 @@ Object {
       "ResultSelector": "$.Payload",
       "Type": "Task",
     },
-    "task([true])": Object {
-      "Next": "task([{key: \\"value\\"}])",
+    "await task([true])": Object {
+      "Next": "await task([{key: \\"value\\"}])",
       "Parameters": Object {
         "FunctionName": "__REPLACED_TOKEN",
         "Payload": Array [
@@ -3170,8 +3341,8 @@ Object {
       "ResultSelector": "$.Payload",
       "Type": "Task",
     },
-    "task([{key: \\"value\\"}])": Object {
-      "Next": "task({key: \\"value\\"})",
+    "await task([{key: \\"value\\"}])": Object {
+      "Next": "await task({key: \\"value\\"})",
       "Parameters": Object {
         "FunctionName": "__REPLACED_TOKEN",
         "Payload": Array [
@@ -3185,8 +3356,8 @@ Object {
       "ResultSelector": "$.Payload",
       "Type": "Task",
     },
-    "task(false + \\"hello\\")": Object {
-      "Next": "task(null + \\"hello\\")",
+    "await task(false + \\"hello\\")": Object {
+      "Next": "await task(null + \\"hello\\")",
       "Parameters": Object {
         "FunctionName": "__REPLACED_TOKEN",
         "Payload": "falsehello",
@@ -3196,8 +3367,8 @@ Object {
       "ResultSelector": "$.Payload",
       "Type": "Task",
     },
-    "task(false)": Object {
-      "Next": "task(0)",
+    "await task(false)": Object {
+      "Next": "await task(0)",
       "Parameters": Object {
         "FunctionName": "__REPLACED_TOKEN",
         "Payload": false,
@@ -3207,8 +3378,8 @@ Object {
       "ResultSelector": "$.Payload",
       "Type": "Task",
     },
-    "task(null + \\"hello\\")": Object {
-      "Next": "task(\\"hello\\" + null)",
+    "await task(null + \\"hello\\")": Object {
+      "Next": "await task(\\"hello\\" + null)",
       "Parameters": Object {
         "FunctionName": "__REPLACED_TOKEN",
         "Payload": "nullhello",
@@ -3218,8 +3389,8 @@ Object {
       "ResultSelector": "$.Payload",
       "Type": "Task",
     },
-    "task(null)": Object {
-      "Next": "task(true)",
+    "await task(null)": Object {
+      "Next": "await task(true)",
       "Parameters": Object {
         "FunctionName": "__REPLACED_TOKEN",
         "Payload": null,
@@ -3229,8 +3400,8 @@ Object {
       "ResultSelector": "$.Payload",
       "Type": "Task",
     },
-    "task(true)": Object {
-      "Next": "task(false)",
+    "await task(true)": Object {
+      "Next": "await task(false)",
       "Parameters": Object {
         "FunctionName": "__REPLACED_TOKEN",
         "Payload": true,
@@ -3240,8 +3411,8 @@ Object {
       "ResultSelector": "$.Payload",
       "Type": "Task",
     },
-    "task({key: \\"value\\"})": Object {
-      "Next": "task(\\"hello\\" + {place: \\"world\\"})",
+    "await task({key: \\"value\\"})": Object {
+      "Next": "await task(\\"hello\\" + {place: \\"world\\"})",
       "Parameters": Object {
         "FunctionName": "__REPLACED_TOKEN",
         "Payload": Object {
@@ -3252,6 +3423,14 @@ Object {
       "ResultPath": null,
       "ResultSelector": "$.Payload",
       "Type": "Task",
+    },
+    "return null": Object {
+      "End": true,
+      "OutputPath": "$.null",
+      "Parameters": Object {
+        "null": null,
+      },
+      "Type": "Pass",
     },
   },
 }
@@ -3374,10 +3553,10 @@ Object {
 
 exports[`throw task(task()) 1`] = `
 Object {
-  "StartAt": "0_tmp = task(input)",
+  "StartAt": "0_tmp = await task(input)",
   "States": Object {
-    "0_tmp = task(input)": Object {
-      "Next": "throw task(0_tmp)",
+    "0_tmp = await task(input)": Object {
+      "Next": "throw await task(0_tmp)",
       "Parameters": Object {
         "FunctionName": "__REPLACED_TOKEN",
         "Payload.$": "$",
@@ -3387,9 +3566,9 @@ Object {
       "ResultSelector": "$.Payload",
       "Type": "Task",
     },
-    "throw task(0_tmp)": Object {
+    "throw await task(0_tmp)": Object {
       "Cause": "{\\"payload\\":\\"$.0_tmp\\"}",
-      "Error": "task",
+      "Error": "task(0_tmp)",
       "Type": "Fail",
     },
   },
@@ -3506,6 +3685,17 @@ Object {
       "ResultPath": "$.err",
       "Type": "Pass",
     },
+    "await task(\\"2\\")": Object {
+      "Next": "exit finally",
+      "Parameters": Object {
+        "FunctionName": "__REPLACED_TOKEN",
+        "Payload": "2",
+      },
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "ResultPath": null,
+      "ResultSelector": "$.Payload",
+      "Type": "Task",
+    },
     "catch(err)": Object {
       "Next": "0_catch(err)",
       "Parameters": Object {
@@ -3537,9 +3727,9 @@ Object {
       ],
       "ItemsPath": "$.items",
       "Iterator": Object {
-        "StartAt": "task(item)",
+        "StartAt": "await task(item)",
         "States": Object {
-          "task(item)": Object {
+          "await task(item)": Object {
             "End": true,
             "Parameters": Object {
               "FunctionName": "__REPLACED_TOKEN",
@@ -3553,7 +3743,7 @@ Object {
         },
       },
       "MaxConcurrency": 1,
-      "Next": "task(\\"2\\")",
+      "Next": "await task(\\"2\\")",
       "Parameters": Object {
         "item.$": "$$.Map.Item.Value",
       },
@@ -3568,7 +3758,7 @@ Object {
           "Variable": "$.err.message",
         },
       ],
-      "Default": "task(\\"2\\")",
+      "Default": "await task(\\"2\\")",
       "Type": "Choice",
     },
     "return null": Object {
@@ -3579,24 +3769,13 @@ Object {
       },
       "Type": "Pass",
     },
-    "task(\\"2\\")": Object {
-      "Next": "exit finally",
-      "Parameters": Object {
-        "FunctionName": "__REPLACED_TOKEN",
-        "Payload": "2",
-      },
-      "Resource": "arn:aws:states:::lambda:invoke",
-      "ResultPath": null,
-      "ResultSelector": "$.Payload",
-      "Type": "Task",
-    },
     "throw finally": Object {
       "Cause": "an error was re-thrown from a finally block which is unsupported by Step Functions",
       "Error": "ReThrowFromFinally",
       "Type": "Fail",
     },
     "throw new Error(\\"little\\")": Object {
-      "Next": "task(\\"2\\")",
+      "Next": "await task(\\"2\\")",
       "Result": Object {
         "message": "little",
       },
@@ -3826,9 +4005,9 @@ Object {
 
 exports[`try { list.map(item => task(item)) } 1`] = `
 Object {
-  "StartAt": "return input.list.map(function(item))",
+  "StartAt": "return await Promise.all(input.list.map(function(item)))",
   "States": Object {
-    "return input.list.map(function(item))": Object {
+    "return await Promise.all(input.list.map(function(item)))": Object {
       "Catch": Array [
         Object {
           "ErrorEquals": Array [
@@ -3877,9 +4056,9 @@ Object {
 
 exports[`try { list.map(item => task(item)) } 2`] = `
 Object {
-  "StartAt": "return input.list.map(function(item))",
+  "StartAt": "return Promise.all(input.list.map(function(item)))",
   "States": Object {
-    "return input.list.map(function(item))": Object {
+    "return Promise.all(input.list.map(function(item)))": Object {
       "End": true,
       "ItemsPath": "$.list",
       "Iterator": Object {
@@ -4095,10 +4274,116 @@ Object {
 }
 `;
 
+exports[`try { return $SFN.parallel(() => "hello", async () => { await task(); await task(); })) } catch { return null } 1`] = `
+Object {
+  "StartAt": "return $SFN.parallel([function(), function()])",
+  "States": Object {
+    "return $SFN.parallel([function(), function()])": Object {
+      "Branches": Array [
+        Object {
+          "StartAt": "return \\"hello\\"",
+          "States": Object {
+            "return \\"hello\\"": Object {
+              "End": true,
+              "Result": "hello",
+              "ResultPath": "$",
+              "Type": "Pass",
+            },
+          },
+        },
+        Object {
+          "StartAt": "await task()",
+          "States": Object {
+            "await task()": Object {
+              "Next": "await task() 1",
+              "Parameters": Object {
+                "FunctionName": "__REPLACED_TOKEN",
+              },
+              "Resource": "arn:aws:states:::lambda:invoke",
+              "ResultPath": null,
+              "ResultSelector": "$.Payload",
+              "Type": "Task",
+            },
+            "await task() 1": Object {
+              "Next": "return null",
+              "Parameters": Object {
+                "FunctionName": "__REPLACED_TOKEN",
+              },
+              "Resource": "arn:aws:states:::lambda:invoke",
+              "ResultPath": null,
+              "ResultSelector": "$.Payload",
+              "Type": "Task",
+            },
+            "return null": Object {
+              "End": true,
+              "OutputPath": "$.null",
+              "Parameters": Object {
+                "null": null,
+              },
+              "Type": "Pass",
+            },
+          },
+        },
+      ],
+      "Catch": Array [
+        Object {
+          "ErrorEquals": Array [
+            "States.ALL",
+          ],
+          "Next": "return null 1",
+          "ResultPath": null,
+        },
+      ],
+      "End": true,
+      "ResultPath": "$",
+      "Type": "Parallel",
+    },
+    "return null 1": Object {
+      "End": true,
+      "OutputPath": "$.null",
+      "Parameters": Object {
+        "null": null,
+      },
+      "Type": "Pass",
+    },
+  },
+}
+`;
+
 exports[`try { task } catch { throw } finally { task() } 1`] = `
 Object {
-  "StartAt": "task()",
+  "StartAt": "await task()",
   "States": Object {
+    "await task(\\"recover\\")": Object {
+      "Next": "exit finally",
+      "Parameters": Object {
+        "FunctionName": "__REPLACED_TOKEN",
+        "Payload": "recover",
+      },
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "ResultPath": null,
+      "ResultSelector": "$.Payload",
+      "Type": "Task",
+    },
+    "await task()": Object {
+      "Catch": Array [
+        Object {
+          "ErrorEquals": Array [
+            "States.ALL",
+          ],
+          "Next": "throw new Error(\\"cause\\")",
+          "ResultPath": null,
+        },
+      ],
+      "Next": "await task(\\"recover\\")",
+      "Parameters": Object {
+        "FunctionName": "__REPLACED_TOKEN",
+      },
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "ResultPath": null,
+      "ResultSelector": "$.Payload",
+      "Type": "Task",
+    },
     "exit finally": Object {
       "Choices": Array [
         Object {
@@ -4118,43 +4403,13 @@ Object {
       },
       "Type": "Pass",
     },
-    "task(\\"recover\\")": Object {
-      "Next": "exit finally",
-      "Parameters": Object {
-        "FunctionName": "__REPLACED_TOKEN",
-        "Payload": "recover",
-      },
-      "Resource": "arn:aws:states:::lambda:invoke",
-      "ResultPath": null,
-      "ResultSelector": "$.Payload",
-      "Type": "Task",
-    },
-    "task()": Object {
-      "Catch": Array [
-        Object {
-          "ErrorEquals": Array [
-            "States.ALL",
-          ],
-          "Next": "throw new Error(\\"cause\\")",
-          "ResultPath": null,
-        },
-      ],
-      "Next": "task(\\"recover\\")",
-      "Parameters": Object {
-        "FunctionName": "__REPLACED_TOKEN",
-      },
-      "Resource": "arn:aws:states:::lambda:invoke",
-      "ResultPath": null,
-      "ResultSelector": "$.Payload",
-      "Type": "Task",
-    },
     "throw finally": Object {
       "Cause": "an error was re-thrown from a finally block which is unsupported by Step Functions",
       "Error": "ReThrowFromFinally",
       "Type": "Fail",
     },
     "throw new Error(\\"cause\\")": Object {
-      "Next": "task(\\"recover\\")",
+      "Next": "await task(\\"recover\\")",
       "Result": Object {
         "message": "cause",
       },
@@ -4167,8 +4422,39 @@ Object {
 
 exports[`try { task() } catch { (maybe) throw } finally { task } 1`] = `
 Object {
-  "StartAt": "task(\\"1\\")",
+  "StartAt": "await task(\\"1\\")",
   "States": Object {
+    "await task(\\"1\\")": Object {
+      "Catch": Array [
+        Object {
+          "ErrorEquals": Array [
+            "States.ALL",
+          ],
+          "Next": "if(input.id == \\"sam\\")",
+          "ResultPath": null,
+        },
+      ],
+      "Next": "await task(\\"2\\")",
+      "Parameters": Object {
+        "FunctionName": "__REPLACED_TOKEN",
+        "Payload": "1",
+      },
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "ResultPath": null,
+      "ResultSelector": "$.Payload",
+      "Type": "Task",
+    },
+    "await task(\\"2\\")": Object {
+      "Next": "exit finally",
+      "Parameters": Object {
+        "FunctionName": "__REPLACED_TOKEN",
+        "Payload": "2",
+      },
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "ResultPath": null,
+      "ResultSelector": "$.Payload",
+      "Type": "Task",
+    },
     "exit finally": Object {
       "Choices": Array [
         Object {
@@ -4188,7 +4474,7 @@ Object {
           "Variable": "$.id",
         },
       ],
-      "Default": "task(\\"2\\")",
+      "Default": "await task(\\"2\\")",
       "Type": "Choice",
     },
     "return null": Object {
@@ -4199,44 +4485,13 @@ Object {
       },
       "Type": "Pass",
     },
-    "task(\\"1\\")": Object {
-      "Catch": Array [
-        Object {
-          "ErrorEquals": Array [
-            "States.ALL",
-          ],
-          "Next": "if(input.id == \\"sam\\")",
-          "ResultPath": null,
-        },
-      ],
-      "Next": "task(\\"2\\")",
-      "Parameters": Object {
-        "FunctionName": "__REPLACED_TOKEN",
-        "Payload": "1",
-      },
-      "Resource": "arn:aws:states:::lambda:invoke",
-      "ResultPath": null,
-      "ResultSelector": "$.Payload",
-      "Type": "Task",
-    },
-    "task(\\"2\\")": Object {
-      "Next": "exit finally",
-      "Parameters": Object {
-        "FunctionName": "__REPLACED_TOKEN",
-        "Payload": "2",
-      },
-      "Resource": "arn:aws:states:::lambda:invoke",
-      "ResultPath": null,
-      "ResultSelector": "$.Payload",
-      "Type": "Task",
-    },
     "throw finally": Object {
       "Cause": "an error was re-thrown from a finally block which is unsupported by Step Functions",
       "Error": "ReThrowFromFinally",
       "Type": "Fail",
     },
     "throw new Error(\\"little\\")": Object {
-      "Next": "task(\\"2\\")",
+      "Next": "await task(\\"2\\")",
       "Result": Object {
         "message": "little",
       },
@@ -4249,8 +4504,59 @@ Object {
 
 exports[`try { task() } catch { task() } finally { task() } 1`] = `
 Object {
-  "StartAt": "task(\\"1\\")",
+  "StartAt": "await task(\\"1\\")",
   "States": Object {
+    "await task(\\"1\\")": Object {
+      "Catch": Array [
+        Object {
+          "ErrorEquals": Array [
+            "States.ALL",
+          ],
+          "Next": "await task(\\"2\\")",
+          "ResultPath": null,
+        },
+      ],
+      "Next": "await task(\\"3\\")",
+      "Parameters": Object {
+        "FunctionName": "__REPLACED_TOKEN",
+        "Payload": "1",
+      },
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "ResultPath": null,
+      "ResultSelector": "$.Payload",
+      "Type": "Task",
+    },
+    "await task(\\"2\\")": Object {
+      "Catch": Array [
+        Object {
+          "ErrorEquals": Array [
+            "States.ALL",
+          ],
+          "Next": "await task(\\"3\\")",
+          "ResultPath": "$.0_tmp",
+        },
+      ],
+      "Next": "await task(\\"3\\")",
+      "Parameters": Object {
+        "FunctionName": "__REPLACED_TOKEN",
+        "Payload": "2",
+      },
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "ResultPath": null,
+      "ResultSelector": "$.Payload",
+      "Type": "Task",
+    },
+    "await task(\\"3\\")": Object {
+      "Next": "exit finally",
+      "Parameters": Object {
+        "FunctionName": "__REPLACED_TOKEN",
+        "Payload": "3",
+      },
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "ResultPath": null,
+      "ResultSelector": "$.Payload",
+      "Type": "Task",
+    },
     "exit finally": Object {
       "Choices": Array [
         Object {
@@ -4270,57 +4576,6 @@ Object {
       },
       "Type": "Pass",
     },
-    "task(\\"1\\")": Object {
-      "Catch": Array [
-        Object {
-          "ErrorEquals": Array [
-            "States.ALL",
-          ],
-          "Next": "task(\\"2\\")",
-          "ResultPath": null,
-        },
-      ],
-      "Next": "task(\\"3\\")",
-      "Parameters": Object {
-        "FunctionName": "__REPLACED_TOKEN",
-        "Payload": "1",
-      },
-      "Resource": "arn:aws:states:::lambda:invoke",
-      "ResultPath": null,
-      "ResultSelector": "$.Payload",
-      "Type": "Task",
-    },
-    "task(\\"2\\")": Object {
-      "Catch": Array [
-        Object {
-          "ErrorEquals": Array [
-            "States.ALL",
-          ],
-          "Next": "task(\\"3\\")",
-          "ResultPath": "$.0_tmp",
-        },
-      ],
-      "Next": "task(\\"3\\")",
-      "Parameters": Object {
-        "FunctionName": "__REPLACED_TOKEN",
-        "Payload": "2",
-      },
-      "Resource": "arn:aws:states:::lambda:invoke",
-      "ResultPath": null,
-      "ResultSelector": "$.Payload",
-      "Type": "Task",
-    },
-    "task(\\"3\\")": Object {
-      "Next": "exit finally",
-      "Parameters": Object {
-        "FunctionName": "__REPLACED_TOKEN",
-        "Payload": "3",
-      },
-      "Resource": "arn:aws:states:::lambda:invoke",
-      "ResultPath": null,
-      "ResultSelector": "$.Payload",
-      "Type": "Task",
-    },
     "throw finally": Object {
       "Cause": "an error was re-thrown from a finally block which is unsupported by Step Functions",
       "Error": "ReThrowFromFinally",
@@ -4332,13 +4587,44 @@ Object {
 
 exports[`try { task() } catch(err) { (maybe) throw } finally { task } 1`] = `
 Object {
-  "StartAt": "task(\\"1\\")",
+  "StartAt": "await task(\\"1\\")",
   "States": Object {
     "0_catch(err)": Object {
       "InputPath": "$.err.0_ParsedError",
       "Next": "if(err.message == \\"sam\\")",
       "ResultPath": "$.err",
       "Type": "Pass",
+    },
+    "await task(\\"1\\")": Object {
+      "Catch": Array [
+        Object {
+          "ErrorEquals": Array [
+            "States.ALL",
+          ],
+          "Next": "catch(err)",
+          "ResultPath": "$.err",
+        },
+      ],
+      "Next": "await task(\\"2\\")",
+      "Parameters": Object {
+        "FunctionName": "__REPLACED_TOKEN",
+        "Payload": "1",
+      },
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "ResultPath": null,
+      "ResultSelector": "$.Payload",
+      "Type": "Task",
+    },
+    "await task(\\"2\\")": Object {
+      "Next": "exit finally",
+      "Parameters": Object {
+        "FunctionName": "__REPLACED_TOKEN",
+        "Payload": "2",
+      },
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "ResultPath": null,
+      "ResultSelector": "$.Payload",
+      "Type": "Task",
     },
     "catch(err)": Object {
       "Next": "0_catch(err)",
@@ -4367,7 +4653,7 @@ Object {
           "Variable": "$.err.message",
         },
       ],
-      "Default": "task(\\"2\\")",
+      "Default": "await task(\\"2\\")",
       "Type": "Choice",
     },
     "return null": Object {
@@ -4378,44 +4664,13 @@ Object {
       },
       "Type": "Pass",
     },
-    "task(\\"1\\")": Object {
-      "Catch": Array [
-        Object {
-          "ErrorEquals": Array [
-            "States.ALL",
-          ],
-          "Next": "catch(err)",
-          "ResultPath": "$.err",
-        },
-      ],
-      "Next": "task(\\"2\\")",
-      "Parameters": Object {
-        "FunctionName": "__REPLACED_TOKEN",
-        "Payload": "1",
-      },
-      "Resource": "arn:aws:states:::lambda:invoke",
-      "ResultPath": null,
-      "ResultSelector": "$.Payload",
-      "Type": "Task",
-    },
-    "task(\\"2\\")": Object {
-      "Next": "exit finally",
-      "Parameters": Object {
-        "FunctionName": "__REPLACED_TOKEN",
-        "Payload": "2",
-      },
-      "Resource": "arn:aws:states:::lambda:invoke",
-      "ResultPath": null,
-      "ResultSelector": "$.Payload",
-      "Type": "Task",
-    },
     "throw finally": Object {
       "Cause": "an error was re-thrown from a finally block which is unsupported by Step Functions",
       "Error": "ReThrowFromFinally",
       "Type": "Fail",
     },
     "throw new Error(\\"little\\")": Object {
-      "Next": "task(\\"2\\")",
+      "Next": "await task(\\"2\\")",
       "Result": Object {
         "message": "little",
       },
@@ -4430,6 +4685,16 @@ exports[`try { throw } catch { (maybe) throw } finally { task } 1`] = `
 Object {
   "StartAt": "throw new Error(\\"go\\")",
   "States": Object {
+    "await task()": Object {
+      "Next": "exit finally",
+      "Parameters": Object {
+        "FunctionName": "__REPLACED_TOKEN",
+      },
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "ResultPath": null,
+      "ResultSelector": "$.Payload",
+      "Type": "Task",
+    },
     "exit finally": Object {
       "Choices": Array [
         Object {
@@ -4449,7 +4714,7 @@ Object {
           "Variable": "$.id",
         },
       ],
-      "Default": "task()",
+      "Default": "await task()",
       "Type": "Choice",
     },
     "return null": Object {
@@ -4459,16 +4724,6 @@ Object {
         "null": null,
       },
       "Type": "Pass",
-    },
-    "task()": Object {
-      "Next": "exit finally",
-      "Parameters": Object {
-        "FunctionName": "__REPLACED_TOKEN",
-      },
-      "Resource": "arn:aws:states:::lambda:invoke",
-      "ResultPath": null,
-      "ResultSelector": "$.Payload",
-      "Type": "Task",
     },
     "throw finally": Object {
       "Cause": "an error was re-thrown from a finally block which is unsupported by Step Functions",
@@ -4484,7 +4739,7 @@ Object {
       "Type": "Pass",
     },
     "throw new Error(\\"little\\")": Object {
-      "Next": "task()",
+      "Next": "await task()",
       "Result": Object {
         "message": "little",
       },
@@ -4497,9 +4752,9 @@ Object {
 
 exports[`try, task, empty catch 1`] = `
 Object {
-  "StartAt": "computeScore({id: \\"id\\", name: \\"name\\"})",
+  "StartAt": "await computeScore({id: \\"id\\", name: \\"name\\"})",
   "States": Object {
-    "computeScore({id: \\"id\\", name: \\"name\\"})": Object {
+    "await computeScore({id: \\"id\\", name: \\"name\\"})": Object {
       "Catch": Array [
         Object {
           "ErrorEquals": Array [
@@ -4675,7 +4930,7 @@ Object {
 
 exports[`try-catch with inner return and a catch variable 1`] = `
 Object {
-  "StartAt": "computeScore({id: \\"id\\", name: \\"name\\"})",
+  "StartAt": "await computeScore({id: \\"id\\", name: \\"name\\"})",
   "States": Object {
     "0_catch(err)": Object {
       "InputPath": "$.err.0_ParsedError",
@@ -4683,15 +4938,7 @@ Object {
       "ResultPath": "$.err",
       "Type": "Pass",
     },
-    "catch(err)": Object {
-      "Next": "0_catch(err)",
-      "Parameters": Object {
-        "0_ParsedError.$": "States.StringToJson($.err.Cause)",
-      },
-      "ResultPath": "$.err",
-      "Type": "Pass",
-    },
-    "computeScore({id: \\"id\\", name: \\"name\\"})": Object {
+    "await computeScore({id: \\"id\\", name: \\"name\\"})": Object {
       "Catch": Array [
         Object {
           "ErrorEquals": Array [
@@ -4714,6 +4961,14 @@ Object {
       "ResultSelector": "$.Payload",
       "Type": "Task",
     },
+    "catch(err)": Object {
+      "Next": "0_catch(err)",
+      "Parameters": Object {
+        "0_ParsedError.$": "States.StringToJson($.err.Cause)",
+      },
+      "ResultPath": "$.err",
+      "Type": "Pass",
+    },
     "return \\"hello\\"": Object {
       "End": true,
       "Result": "hello",
@@ -4731,9 +4986,9 @@ Object {
 
 exports[`try-catch with inner return and no catch variable 1`] = `
 Object {
-  "StartAt": "computeScore({id: \\"id\\", name: \\"name\\"})",
+  "StartAt": "await computeScore({id: \\"id\\", name: \\"name\\"})",
   "States": Object {
-    "computeScore({id: \\"id\\", name: \\"name\\"})": Object {
+    "await computeScore({id: \\"id\\", name: \\"name\\"})": Object {
       "Catch": Array [
         Object {
           "ErrorEquals": Array [
@@ -4782,6 +5037,29 @@ Object {
       "ResultPath": "$.err",
       "Type": "Pass",
     },
+    "await computeScore({id: input.id, name: \\"sam\\"})": Object {
+      "Catch": Array [
+        Object {
+          "ErrorEquals": Array [
+            "States.ALL",
+          ],
+          "Next": "catch(err)",
+          "ResultPath": "$.err",
+        },
+      ],
+      "Next": "return \\"hello world\\"",
+      "Parameters": Object {
+        "FunctionName": "__REPLACED_TOKEN",
+        "Payload": Object {
+          "id.$": "$.id",
+          "name": "sam",
+        },
+      },
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "ResultPath": null,
+      "ResultSelector": "$.Payload",
+      "Type": "Task",
+    },
     "catch(err)": Object {
       "Next": "0_catch(err)",
       "Parameters": Object {
@@ -4804,7 +5082,7 @@ Object {
     "if(input.id == \\"hello\\")": Object {
       "Choices": Array [
         Object {
-          "Next": "return computeScore({id: input.id, name: \\"sam\\"})",
+          "Next": "await computeScore({id: input.id, name: \\"sam\\"})",
           "StringEquals": "hello",
           "Variable": "$.id",
         },
@@ -4830,7 +5108,69 @@ Object {
       "ResultPath": "$",
       "Type": "Pass",
     },
-    "return computeScore({id: input.id, name: \\"sam\\"})": Object {
+  },
+}
+`;
+
+exports[`try-catch with optional return of task 2`] = `
+Object {
+  "StartAt": "if(input.id == \\"hello\\")",
+  "States": Object {
+    "0_catch(err)": Object {
+      "InputPath": "$.err.0_ParsedError",
+      "Next": "if(err.message == \\"cause\\")",
+      "ResultPath": "$.err",
+      "Type": "Pass",
+    },
+    "catch(err)": Object {
+      "Next": "0_catch(err)",
+      "Parameters": Object {
+        "0_ParsedError.$": "States.StringToJson($.err.Cause)",
+      },
+      "ResultPath": "$.err",
+      "Type": "Pass",
+    },
+    "if(err.message == \\"cause\\")": Object {
+      "Choices": Array [
+        Object {
+          "Next": "return \\"hello\\"",
+          "StringEquals": "cause",
+          "Variable": "$.err.message",
+        },
+      ],
+      "Default": "return \\"world\\"",
+      "Type": "Choice",
+    },
+    "if(input.id == \\"hello\\")": Object {
+      "Choices": Array [
+        Object {
+          "Next": "return await computeScore({id: input.id, name: \\"sam\\"})",
+          "StringEquals": "hello",
+          "Variable": "$.id",
+        },
+      ],
+      "Default": "return \\"hello world\\"",
+      "Type": "Choice",
+    },
+    "return \\"hello world\\"": Object {
+      "End": true,
+      "Result": "hello world",
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "return \\"hello\\"": Object {
+      "End": true,
+      "Result": "hello",
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "return \\"world\\"": Object {
+      "End": true,
+      "Result": "world",
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "return await computeScore({id: input.id, name: \\"sam\\"})": Object {
       "Catch": Array [
         Object {
           "ErrorEquals": Array [
@@ -4867,15 +5207,7 @@ Object {
       "ResultPath": "$.err",
       "Type": "Pass",
     },
-    "catch(err)": Object {
-      "Next": "0_catch(err)",
-      "Parameters": Object {
-        "0_ParsedError.$": "States.StringToJson($.err.Cause)",
-      },
-      "ResultPath": "$.err",
-      "Type": "Pass",
-    },
-    "computeScore({id: input.id, name: \\"sam\\"})": Object {
+    "await computeScore({id: input.id, name: \\"sam\\"})": Object {
       "Catch": Array [
         Object {
           "ErrorEquals": Array [
@@ -4898,6 +5230,14 @@ Object {
       "ResultSelector": "$.Payload",
       "Type": "Task",
     },
+    "catch(err)": Object {
+      "Next": "0_catch(err)",
+      "Parameters": Object {
+        "0_ParsedError.$": "States.StringToJson($.err.Cause)",
+      },
+      "ResultPath": "$.err",
+      "Type": "Pass",
+    },
     "if(err.message == \\"cause\\")": Object {
       "Choices": Array [
         Object {
@@ -4912,7 +5252,7 @@ Object {
     "if(input.id == \\"hello\\")": Object {
       "Choices": Array [
         Object {
-          "Next": "computeScore({id: input.id, name: \\"sam\\"})",
+          "Next": "await computeScore({id: input.id, name: \\"sam\\"})",
           "StringEquals": "hello",
           "Variable": "$.id",
         },
@@ -5179,9 +5519,9 @@ Object {
 
 exports[`try-catch-finally 1`] = `
 Object {
-  "StartAt": "computeScore({id: \\"id\\", name: \\"name\\"})",
+  "StartAt": "await computeScore({id: \\"id\\", name: \\"name\\"})",
   "States": Object {
-    "computeScore({id: \\"id\\", name: \\"name\\"})": Object {
+    "await computeScore({id: \\"id\\", name: \\"name\\"})": Object {
       "Catch": Array [
         Object {
           "ErrorEquals": Array [
@@ -5306,7 +5646,7 @@ exports[`while (cond) { cond = task() } 1`] = `
 Object {
   "StartAt": "while (cond == undefined)",
   "States": Object {
-    "cond = task()": Object {
+    "cond = await task()": Object {
       "Next": "while (cond == undefined)",
       "Parameters": Object {
         "FunctionName": "__REPLACED_TOKEN",
@@ -5327,7 +5667,7 @@ Object {
     "while (cond == undefined)": Object {
       "Choices": Array [
         Object {
-          "Next": "cond = task()",
+          "Next": "cond = await task()",
           "Or": Array [
             Object {
               "IsPresent": false,
@@ -5351,7 +5691,7 @@ exports[`while (cond); cond = task() 1`] = `
 Object {
   "StartAt": "while (cond == undefined)",
   "States": Object {
-    "cond = task()": Object {
+    "cond = await task()": Object {
       "Next": "while (cond == undefined)",
       "Parameters": Object {
         "FunctionName": "__REPLACED_TOKEN",
@@ -5372,7 +5712,7 @@ Object {
     "while (cond == undefined)": Object {
       "Choices": Array [
         Object {
-          "Next": "cond = task()",
+          "Next": "cond = await task()",
           "Or": Array [
             Object {
               "IsPresent": false,
@@ -5402,15 +5742,7 @@ Object {
       "Seconds": 1,
       "Type": "Wait",
     },
-    "return null": Object {
-      "End": true,
-      "OutputPath": "$.null",
-      "Parameters": Object {
-        "null": null,
-      },
-      "Type": "Pass",
-    },
-    "task()": Object {
+    "await task()": Object {
       "Catch": Array [
         Object {
           "ErrorEquals": Array [
@@ -5429,11 +5761,19 @@ Object {
       "ResultSelector": "$.Payload",
       "Type": "Task",
     },
+    "return null": Object {
+      "End": true,
+      "OutputPath": "$.null",
+      "Parameters": Object {
+        "null": null,
+      },
+      "Type": "Pass",
+    },
     "while (true)": Object {
       "Choices": Array [
         Object {
           "IsPresent": false,
-          "Next": "task()",
+          "Next": "await task()",
           "Variable": "$.0_true",
         },
       ],

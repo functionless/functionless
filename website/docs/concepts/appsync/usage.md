@@ -162,8 +162,8 @@ new AppsyncResolver<undefined, Person[], Person>(
   scope,
   id,
   props,
-  ($context) => {
-    const result = db.query({
+  async ($context) => {
+    const result = await db.query({
       key: {
         personId: {
           // access the parent's personId
@@ -273,8 +273,8 @@ for (const item in list) {
 No branching or parallel logic is supported. If you need more flexibility, consider calling a [Step Function](../step-function/index.md):
 
 ```ts
-new ExpressStepFunction(this, "MyFunc", (items: string[]) => {
+new ExpressStepFunction(this, "MyFunc", async (items: string[]) => {
   // process each item in parallel, an operation not supported in AWS AppSync.
-  return items.map((item) => task(item));
+  return Promise.all(items.map((item) => task(item)));
 });
 ```

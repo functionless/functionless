@@ -443,11 +443,11 @@ const validateName = new Function<string, boolean>(this, 'validateName', async (
   return result.status === 200;
 });
 
-const sfn = new StepFunction(this, 'sfn', (props: {name: string}) => {
+const sfn = new StepFunction(this, 'sfn', async (props: {name: string}) => {
   // if name is valid
   if(validateName(name)) {
     // send a notification to the event bus.
-    bus.putEvents({
+    await bus.putEvents({
       source: 'magicApplication',
       'detail-type': 'form-submit',
       detail: {

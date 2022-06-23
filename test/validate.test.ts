@@ -27,6 +27,8 @@ test("function.ts", () => runTest("function.ts"));
 
 test("appsync.ts", () => runTest("appsync.ts"));
 
+test("event-bus.ts", () => runTest("event-bus.ts"));
+
 function runTest(fileName: string) {
   const diagnostics = validate(
     ts,

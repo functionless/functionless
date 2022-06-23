@@ -64,7 +64,7 @@ See [issues](https://github.com/functionless/functionless/issues?q=is%3Aissue+is
 ```ts
 const bus = new EventBus();
 = new StepFunction(stack, "sfn", () => {
-  bus.putEvents({
+  await bus.putEvents({
     source: "myStepFunction",
     "detail-type": "someType",
     detail: {},

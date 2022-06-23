@@ -9,12 +9,12 @@ sidebar_position: 99
 Events passed to the bus in a step function must be one or more literal objects and may not use the spread (`...`) syntax.
 
 ```ts
-const sfn = new StepFunction(stack, "sfn", () => {
+const sfn = new StepFunction(stack, "sfn", async () => {
   const event = { source: "lambda", "detail-type": "type", detail: {} };
-  bus.putEvents(event); // error
-  bus.putEvents({ ...event }); // error
-  bus.putEvents(...[event]); // error
-  bus.putEvents({
+  await bus.putEvents(event); // error
+  await bus.putEvents({ ...event }); // error
+  await bus.putEvents(...[event]); // error
+  await bus.putEvents({
     // works
     source: "lambda",
     "detail-type": "type",
@@ -30,10 +30,10 @@ Lambda can be used to generate dynamic event collections.
 ```ts
 const sender = new Function(stack, "sender", async (event) => {
   const event = { source: "lambda", "detail-type": "type", detail: {} };
-  bus.putEvents(event); // valid
-  bus.putEvents({ ...event }); // valid
-  bus.putEvents(...[event]); // valid
-  bus.putEvents({
+  await bus.putEvents(event); // valid
+  await bus.putEvents({ ...event }); // valid
+  await bus.putEvents(...[event]); // valid
+  await bus.putEvents({
     // works
     source: "lambda",
     "detail-type": "type",
@@ -41,9 +41,9 @@ const sender = new Function(stack, "sender", async (event) => {
   });
 });
 
-const sfn = new StepFunction(stack, "sfn", () => {
+const sfn = new StepFunction(stack, "sfn", async () => {
   const event = { source: "lambda", "detail-type": "type", detail: {} };
-  sender(event);
+  await sender(event);
 });
 ```
 

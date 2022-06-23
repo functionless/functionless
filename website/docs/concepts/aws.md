@@ -11,9 +11,9 @@ import { $AWS, Table } from "functionless";
 
 const table = Table.fromTable<Item, "pk">(..);
 
-new StepFunction(scope, "Func", (name: string) => {
+new StepFunction(scope, "Func", async (name: string) => {
   // call DynamoDB's DeleteItem API.
-  $AWS.DynamoDB.DeleteItem({
+  await $AWS.DynamoDB.DeleteItem({
     Table: table,
     Key: {
       name: {
