@@ -125,7 +125,11 @@ export function validate(
       ts.isCallExpression(node) &&
       typeSymbol &&
       checker.isPromiseSymbol(typeSymbol) &&
-      !(ts.isAwaitExpression(node.parent) || ts.isReturnStatement(node.parent))
+      !(
+        ts.isAwaitExpression(node.parent) ||
+        ts.isReturnStatement(node.parent) ||
+        ts.isArrowFunction(node.parent)
+      )
     ) {
       return [
         newError(

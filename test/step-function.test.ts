@@ -537,6 +537,16 @@ test("call Lambda Function, store as variable, return variable", () => {
   expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
+test("call Lambda Function, store as variable, return variable no block", () => {
+  const { stack, getPerson } = initStepFunctionApp();
+  const definition = new ExpressStepFunction<
+    { id: string },
+    Person | undefined
+  >(stack, "fn", async (input) => getPerson({ id: input.id })).definition;
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+});
+
 // TODO: support use case where promise is ultimately returned with no logic in between?
 test.skip("call Lambda Function, store as variable, return promise variable", () => {
   const { stack, getPerson } = initStepFunctionApp();

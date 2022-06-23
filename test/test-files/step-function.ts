@@ -107,6 +107,8 @@ new StepFunction(stack, "return", async () => {
   return func();
 });
 
+new StepFunction(stack, "return", async () => func());
+
 // Unsupported - async map without promise all
 
 new StepFunction(stack, "no promise all", async () => {

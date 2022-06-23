@@ -328,6 +328,27 @@ Object {
 }
 `;
 
+exports[`call Lambda Function, store as variable, return variable 2`] = `
+Object {
+  "StartAt": "return getPerson({id: input.id})",
+  "States": Object {
+    "return getPerson({id: input.id})": Object {
+      "End": true,
+      "Parameters": Object {
+        "FunctionName": "__REPLACED_TOKEN",
+        "Payload": Object {
+          "id.$": "$.id",
+        },
+      },
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "ResultPath": "$",
+      "ResultSelector": "$.Payload",
+      "Type": "Task",
+    },
+  },
+}
+`;
+
 exports[`call Step Function describe from another Step Function 1`] = `
 Object {
   "StartAt": "return machine1.describeExecution(\\"hello\\")",

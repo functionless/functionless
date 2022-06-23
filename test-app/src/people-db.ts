@@ -152,8 +152,8 @@ export class PeopleDatabase extends Construct {
         typeName: "Query",
         fieldName: "addPerson",
       },
-      ($context) => {
-        const person = this.personTable.appsync.putItem({
+      async ($context) => {
+        const person = await this.personTable.appsync.putItem({
           key: {
             id: {
               S: $util.autoId(),
