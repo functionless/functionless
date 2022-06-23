@@ -38,10 +38,10 @@ import {
 } from "./guards";
 import {
   findDeepIntegrations,
+  getIntegrationExprFromIntegrationCallPattern,
   Integration,
   IntegrationImpl,
   isIntegration,
-  isIntegrationCallExpr,
   isIntegrationCallPattern,
 } from "./integration";
 import { Literal } from "./literal";
@@ -437,24 +437,10 @@ function synthesizeFunctions(api: appsync.GraphqlApi, decl: FunctionDecl) {
         ]);
       } else if (isIntegrationCallPattern(node)) {
         resolverCount++;
-        const end = (() => {
-          if (isAwaitExpr(node)) {
-            // await task()
-            if (isIntegrationCallExpr(node.expr)) {
-              return node.expr;
-            }
-            // await <Promise>task()
-            else if (
-              isPromiseExpr(node.expr) &&
-              isIntegrationCallExpr(node.expr.expr)
-            ) {
-              return node.expr.expr;
-            }
-          } else if (isPromiseExpr(node) && isIntegrationCallExpr(node.expr)) {
-            return node.expr;
-          }
-          return node;
-        })();
+        // we find the range of nodes to hoist so that we avoid visiting the middle nodes.
+        // The start node is the first node in the integration pattern (integ, await, or promise)
+        // The end is always the integration.
+        const end = getIntegrationExprFromIntegrationCallPattern(node);
 
         const updatedChild = visitSpecificChildren(node, [end], (expr) =>
           normalizeAST(expr, hoist)

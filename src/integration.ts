@@ -27,13 +27,15 @@ export function isIntegrationCallExpr(
   return isCallExpr(node) && isReferenceExpr(node.expr);
 }
 
-export function isIntegrationCallPattern(
-  node: FunctionlessNode
-): node is
+export type IntegrationCallPattern =
   | IntegrationCallExpr
   | (AwaitExpr & { expr: IntegrationCallExpr })
   | (PromiseExpr & { expr: IntegrationCallExpr })
-  | (AwaitExpr & { expr: PromiseExpr & { expr: IntegrationCallExpr } }) {
+  | (AwaitExpr & { expr: PromiseExpr & { expr: IntegrationCallExpr } });
+
+export function isIntegrationCallPattern(
+  node: FunctionlessNode
+): node is IntegrationCallPattern {
   return (
     (isAwaitExpr(node) &&
       isPromiseExpr(node.expr) &&
@@ -42,6 +44,27 @@ export function isIntegrationCallPattern(
     (isPromiseExpr(node) && isIntegrationCallExpr(node.expr)) ||
     isIntegrationCallExpr(node)
   );
+}
+
+/**
+ * Give the possible ways to define an integration, return just the call(ref) of the integration.
+ */
+export function getIntegrationExprFromIntegrationCallPattern(
+  pattern: IntegrationCallPattern
+): IntegrationCallExpr {
+  if (isAwaitExpr(pattern)) {
+    if (isIntegrationCallExpr(pattern.expr)) {
+      return pattern.expr;
+    } else if (
+      isPromiseExpr(pattern.expr) &&
+      isIntegrationCallExpr(pattern.expr.expr)
+    ) {
+      return pattern.expr.expr;
+    }
+  } else if (isPromiseExpr(pattern) && isIntegrationCallExpr(pattern.expr)) {
+    return pattern.expr;
+  }
+  return pattern as IntegrationCallExpr;
 }
 
 /**

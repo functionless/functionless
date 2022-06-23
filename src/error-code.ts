@@ -345,7 +345,7 @@ export namespace ErrorCodes {
    * ```ts
    * new AwsMethod(
    *   ($input) => $AWS.DynamoDB.GetItem({
-   *     TableName: table,
+   *     Table: table,
    *     // invalid, all property names must be literals
    *     [computedProperty]: prop
    *   })
@@ -463,7 +463,7 @@ export namespace ErrorCodes {
    * })
    *
    * // invalid
-   * new EventBus(stack, 'bus').all().map(async event => { html: await func(event.detail.url) });
+   * new EventBus(stack, 'bus').all().map(async event => ({ html: await func(event.detail.url) }));
    * ```
    *
    * Workaround - Send the event to a function.

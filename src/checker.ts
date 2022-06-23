@@ -398,6 +398,9 @@ export function makeFunctionlessChecker(
     return false;
   }
 
+  /**
+   * Checks for typescript in the form `Promise.all(...)`
+   */
   function isPromiseAllCall(node: ts.Node): boolean {
     return (
       ts.isCallExpression(node) &&

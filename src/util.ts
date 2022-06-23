@@ -136,6 +136,9 @@ export const isPrimitive = (val: any): val is PrimitiveValue => {
   );
 };
 
+/**
+ * Determines if a node looks like `Promise.all()`
+ */
 export function isPromiseAll(expr: CallExpr): expr is CallExpr & {
   expr: PropAccessExpr & {
     name: "all";

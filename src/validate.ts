@@ -118,6 +118,27 @@ export function validate(
     } else return [];
   }
 
+  /**
+   * Validates that calls which return promises are immediately awaited and that calls
+   * which return arrays fo promises are wrapped in `Promise.all`
+   *
+   * ```ts
+   * const func = new Function(...);
+   * new StepFunction(stack, id, async () => {
+   *    // invalid
+   *    const v = func();
+   *    // valid
+   *    const v = await func();
+   *    // valid
+   *    return func();
+   *
+   *    // invalid
+   *    [1,2].map(() => func());
+   *    // valid
+   *    await Promise.all([1,2].map(() => func()));
+   * })
+   * ```
+   */
   function validatePromiseCalls(node: ts.CallExpression): ts.Diagnostic[] {
     const type = checker.getTypeAtLocation(node);
     const typeSymbol = type.getSymbol();
