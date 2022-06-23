@@ -1029,10 +1029,10 @@
     minimatch "^3.1.2"
     strip-json-comments "^3.1.1"
 
-"@functionless/nodejs-closure-serializer@^0.0.2":
-  version "0.0.2"
-  resolved "https://registry.yarnpkg.com/@functionless/nodejs-closure-serializer/-/nodejs-closure-serializer-0.0.2.tgz#03afac171536401775816b039c79c8fd5d3d976b"
-  integrity sha512-r8mElTITDW0wEao0l+PNbtZb+xt5frOzu43HCc0D1qUvHOuJ3LOFySjvneTnF2QYbLrbchZKeofg8BP2GdJGZw==
+"@functionless/nodejs-closure-serializer@^0.0.4":
+  version "0.0.4"
+  resolved "https://registry.yarnpkg.com/@functionless/nodejs-closure-serializer/-/nodejs-closure-serializer-0.0.4.tgz#63fb7f1e905d72b827a7aefaaf0131a5a2fba9df"
+  integrity sha512-EM+Q4wThdDvdfECSjmCBsHDIiyPIOpzJJkYC7p8x/qlBIis7O6A4TgCThp7XGzIz9Ht2bypypZFWbN76p3FAvw==
   dependencies:
     normalize-package-data "^4.0.0"
     read-package-tree "^5.3.1"
