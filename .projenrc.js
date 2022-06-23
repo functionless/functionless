@@ -93,10 +93,10 @@ const project = new CustomTypescriptProject({
     "@types/uuid",
     "amplify-appsync-simulator",
     "axios",
+    "eslint-plugin-no-only-tests",
     "graphql-request",
     "ts-node",
     "ts-patch",
-
     /**
      * For CDK Local Stack tests
      */
@@ -207,11 +207,13 @@ project.eslint.addRules({
 
 project.eslint.addOverride({
   files: ["*.ts", "*.mts", "*.cts", "*.tsx"],
+  plugins: ["no-only-tests"],
   parserOptions: {
     project: [
       "./tsconfig.dev.json",
       "./test-app/tsconfig.json",
       "./website/tsconfig.json",
+      "./test/tsconfig.json",
     ],
   },
   rules: {
@@ -228,6 +230,7 @@ project.eslint.addOverride({
         },
       },
     ],
+    "no-only-tests/no-only-tests": ["error", { fix: true }],
   },
 });
 

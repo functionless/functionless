@@ -157,6 +157,7 @@ export const localstackTestSuite = (
   testResource.skip = (name, resources, test) => {
     tests.push({ name, resources, test: test as any, skip: true, only: false });
   };
+  // eslint-disable-next-line no-only-tests/no-only-tests
   testResource.only = (name, resources, test) => {
     tests.push({ name, resources, test: test as any, skip: false, only: true });
   };
@@ -166,6 +167,7 @@ export const localstackTestSuite = (
 
   tests.forEach(({ name, test: testFunc, skip, only }, i) => {
     if (!skip) {
+      // eslint-disable-next-line no-only-tests/no-only-tests
       const t = only ? test.only : test;
       t(name, () => {
         const context = testContexts[i];
