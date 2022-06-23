@@ -161,7 +161,10 @@
         "no-only-tests/no-only-tests": [
           "error",
           {
-            "fix": true
+            "fix": true,
+            "block": [
+              "test."
+            ]
           }
         ]
       }

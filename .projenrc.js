@@ -230,7 +230,7 @@ project.eslint.addOverride({
         },
       },
     ],
-    "no-only-tests/no-only-tests": ["error", { fix: true }],
+    "no-only-tests/no-only-tests": ["error", { fix: true, block: ["test."] }],
   },
 });
 

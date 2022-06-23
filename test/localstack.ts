@@ -157,7 +157,6 @@ export const localstackTestSuite = (
   testResource.skip = (name, resources, test) => {
     tests.push({ name, resources, test: test as any, skip: true, only: false });
   };
-  // eslint-disable-next-line no-only-tests/no-only-tests
   testResource.only = (name, resources, test) => {
     tests.push({ name, resources, test: test as any, skip: false, only: true });
   };
