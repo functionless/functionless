@@ -150,6 +150,78 @@ $util.toJson($v7)",
 ]
 `;
 
+exports[`delete item a 1`] = `
+Array [
+  "{}",
+  "#if($context.stash.return__flag)
+  #return($context.stash.return__val)
+#end
+#set($v1 = {})
+#set($v2 = {})
+#set($v3 = {})
+$util.qr($v3.put('S', $context.arguments.id))
+$util.qr($v2.put('id', $v3))
+$util.qr($v1.put('key', $v2))
+#set($v4 = {})
+$util.qr($v4.put('expression', '#name = #name + 1'))
+#set($v5 = {})
+$util.qr($v5.put('#name', 'name'))
+$util.qr($v4.put('expressionNames', $v5))
+$util.qr($v1.put('condition', $v4))
+#set($v6 = {\\"operation\\": \\"DeleteItem\\", \\"version\\": \\"2018-05-29\\"})
+$util.qr($v6.put('key', $v1.get('key')))
+#if($v1.containsKey('condition'))
+$util.qr($v6.put('condition', $v1.get('condition')))
+#end
+#if($v1.containsKey('_version'))
+$util.qr($v6.put('_version', $v1.get('_version')))
+#end
+$util.toJson($v6)",
+  "#set( $context.stash.return__flag = true )
+#set( $context.stash.return__val = $context.result )
+{}",
+  "#if($context.stash.return__flag)
+  #return($context.stash.return__val)
+#end",
+]
+`;
+
+exports[`delete item a 2`] = `
+Array [
+  "{}",
+  "#if($context.stash.return__flag)
+  #return($context.stash.return__val)
+#end
+#set($v1 = {})
+#set($v2 = {})
+#set($v3 = {})
+$util.qr($v3.put('S', $context.arguments.id))
+$util.qr($v2.put('id', $v3))
+$util.qr($v1.put('key', $v2))
+#set($v4 = {})
+$util.qr($v4.put('expression', '#name = #name + 1'))
+#set($v5 = {})
+$util.qr($v5.put('#name', 'name'))
+$util.qr($v4.put('expressionNames', $v5))
+$util.qr($v1.put('condition', $v4))
+#set($v6 = {\\"operation\\": \\"DeleteItem\\", \\"version\\": \\"2018-05-29\\"})
+$util.qr($v6.put('key', $v1.get('key')))
+#if($v1.containsKey('condition'))
+$util.qr($v6.put('condition', $v1.get('condition')))
+#end
+#if($v1.containsKey('_version'))
+$util.qr($v6.put('_version', $v1.get('_version')))
+#end
+$util.toJson($v6)",
+  "#set( $context.stash.return__flag = true )
+#set( $context.stash.return__val = $context.result )
+{}",
+  "#if($context.stash.return__flag)
+  #return($context.stash.return__val)
+#end",
+]
+`;
+
 exports[`get item 1`] = `
 Array [
   "{}",

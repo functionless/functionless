@@ -267,12 +267,11 @@ export namespace ErrorCodes {
    * });
    * ```
    */
-  export const Unsupported_initialization_of_resources_in_function: ErrorCode =
-    {
-      code: 10008,
-      type: ErrorType.ERROR,
-      title: "Unsupported initialization of Resources in a Function closure",
-    };
+  export const Unsupported_initialization_of_resources: ErrorCode = {
+    code: 10008,
+    type: ErrorType.ERROR,
+    title: "Unsupported initialization of Resources in a runtime closure",
+  };
 
   /**
    * Cannot use Infrastructure resource in Function closure.

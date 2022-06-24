@@ -387,6 +387,25 @@ export function compile(
         } else if (ts.isExpressionStatement(node)) {
           return newExpr("ExprStmt", [toExpr(node.expression, scope)]);
         } else if (ts.isCallExpression(node) || ts.isNewExpression(node)) {
+          if (ts.isNewExpression(node)) {
+            const newType = checker.getTypeAtLocation(node);
+            // cannot create new resources in native runtime code.
+            const functionlessKind = checker.getFunctionlessTypeKind(newType);
+            if (checker.getFunctionlessTypeKind(newType)) {
+              throw new SynthError(
+                ErrorCodes.Unsupported_initialization_of_resources,
+                `Cannot initialize new resources in a runtime function, found ${functionlessKind}.`
+              );
+            } else if (checker.isCDKConstruct(newType)) {
+              throw new SynthError(
+                ErrorCodes.Unsupported_initialization_of_resources,
+                `Cannot initialize new CDK resources in a runtime function, found ${
+                  newType.getSymbol()?.name
+                }.`
+              );
+            }
+          }
+
           const getCall = () => {
             const exprType = checker.getTypeAtLocation(node.expression);
             const functionBrand = exprType.getProperty("__functionBrand");
@@ -987,8 +1006,21 @@ export function compile(
                     symbol.valueDeclaration
                   );
                   return getOutOfScopeValueNode(flattened, scope);
+                } else if (ts.isIdentifier(symbol.valueDeclaration)) {
+                  return symbol.valueDeclaration;
+                } else if (ts.isParameter(symbol.valueDeclaration)) {
+                  /**
+                   * Cases like parameter
+                   *
+                   * (table) => {
+                   *    new StepFunction(async () => { return table.appsync.getItem(...) });
+                   * }
+                   */
+                  return ts.factory.createIdentifier(symbol.name);
                 }
+                debugger;
               }
+              debugger;
             }
           }
         }

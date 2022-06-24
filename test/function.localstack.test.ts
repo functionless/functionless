@@ -1344,7 +1344,7 @@ test("should not create new resources in lambda", async () => {
     );
     await Promise.all(Function.promises);
   }).rejects.toThrow(
-    `Cannot initialize new CDK resources in a native function, found EventBus.`
+    `Cannot initialize new CDK resources in a runtime function, found EventBus.`
   );
 });
 
@@ -1364,7 +1364,7 @@ test("should not create new functionless resources in lambda", async () => {
     );
     await Promise.all(Function.promises);
   }).rejects.toThrow(
-    "Cannot initialize new resources in a native function, found EventBus."
+    "Cannot initialize new resources in a runtime function, found EventBus."
   );
 });
 
