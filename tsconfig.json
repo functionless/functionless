@@ -10,8 +10,7 @@
     "inlineSources": true,
     "lib": [
       "dom",
-      "ES2020",
-      "ES2020.Promise"
+      "ES2019"
     ],
     "module": "CommonJS",
     "noEmitOnError": false,

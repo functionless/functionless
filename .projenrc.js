@@ -131,7 +131,7 @@ const project = new CustomTypescriptProject({
   tsconfig: {
     compilerOptions: {
       declarationMap: true,
-      lib: ["dom", "ES2020", "ES2020.Promise"],
+      lib: ["dom", "ES2019"],
     },
   },
   tsconfigDev: {

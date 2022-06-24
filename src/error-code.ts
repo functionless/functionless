@@ -176,7 +176,7 @@ export namespace ErrorCodes {
   /**
    * Generic error message to denote errors that should not happen and are not the fault of the Functionless library consumer.
    *
-   * Please report this issue.
+   * Please [report this issue](https://github.com/functionless/functionless/issues).
    */
   export const Unexpected_Error: ErrorCode = {
     code: 10005,
@@ -654,7 +654,7 @@ export namespace ErrorCodes {
   };
 
   /**
-   * Unable to fund reference out of application function.
+   * Unable to find reference out of application function.
    *
    * Functionless processes your application code to find infrastructure references, wire up permissions, build clients, and more.
    * All infrastructure must be created outside of your application logic closures.
@@ -678,7 +678,7 @@ export namespace ErrorCodes {
    *
    * Functionless attempts to handle all valid typescript referencing scenarios, but some may be missed.
    *
-   * If this error is thrown and the reference should be valid, please cut a ticket.
+   * If this error is thrown and the reference should be valid, please [create an issue](https://github.com/functionless/functionless/issues).
    */
   export const Unable_to_find_reference_out_of_application_function: ErrorCode =
     {
