@@ -70,6 +70,17 @@ export function validate(
     return results;
   }
 
+  function collectEachBlockChild<T>(
+    node: ts.Block,
+    cb: (node: ts.Statement) => T[]
+  ): T[] {
+    const results: T[] = [];
+    ts.forEachChild(node, (child) => {
+      results.push(...cb(child as ts.Statement));
+    });
+    return results;
+  }
+
   // apply the callback to all nodes in the tree
   function collectEachChildRecursive<T>(
     node: ts.Node,
@@ -225,7 +236,9 @@ export function validate(
 
     return [
       ...validateNodes(node.arguments.filter((n) => n !== resolver)),
-      ...collectEachChildRecursive(resolver, validateAppsync),
+      ...(ts.isBlock(resolver.body)
+        ? collectEachBlockChild(resolver.body, validateAppsyncRootStatement)
+        : collectEachChildRecursive(resolver.body, validateAppsync)),
     ];
   }
 
@@ -240,11 +253,26 @@ export function validate(
 
     return [
       ...validateNodes(node.arguments.filter((n) => n !== resolver)),
-      ...collectEachChildRecursive(resolver, validateAppsync),
+      ...(ts.isBlock(resolver.body)
+        ? collectEachBlockChild(resolver.body, validateAppsyncRootStatement)
+        : collectEachChildRecursive(resolver.body, validateAppsync)),
     ];
   }
 
-  function validateAppsync(node: ts.Node) {
+  function validateAppsyncRootStatement(node: ts.Statement): ts.Diagnostic[] {
+    const diag = validateApiNode(node);
+
+    const childDiags = collectEachChildRecursive(node, (n) =>
+      validateAppsync(n, node)
+    );
+
+    return [...diag, ...childDiags];
+  }
+
+  function validateAppsync(
+    node: ts.Node,
+    rootStatement?: ts.Statement
+  ): ts.Diagnostic[] {
     if (ts.isCallExpression(node)) {
       if (
         ts.isPropertyAccessExpression(node.expression) &&
@@ -258,6 +286,35 @@ export function validate(
             "Appsync does not support concurrent integration invocation or methods on the `Promise` api."
           ),
         ];
+      } else if (checker.isIntegrationNode(node.expression)) {
+        /**
+         * If this is an integration node, app sync does not support integrations outside of the main function body.
+         *
+         * We check to see if the root statement (the one in the function body), if deterministic
+         * variable - const v = func()
+         * expression - await func()
+         * return - return await func()
+         *
+         * Also ensure that we are not inside an inline conditional statement.
+         *
+         * const v = x ? await func() : await func2()
+         */
+        if (
+          rootStatement &&
+          (!checker.isDeterministicStatement(rootStatement) ||
+            checker.findParent(
+              node.expression,
+              ts.isConditionalExpression,
+              rootStatement
+            ))
+        ) {
+          return [
+            newError(
+              node,
+              ErrorCodes.Appsync_Integration_invocations_must_be_deterministic
+            ),
+          ];
+        }
       }
       return validatePromiseCalls(node);
     } else if (checker.isPromiseArray(checker.getTypeAtLocation(node))) {

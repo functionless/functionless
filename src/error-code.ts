@@ -531,7 +531,7 @@ export namespace ErrorCodes {
    *    return func();
    * });
    *
-   * new AppsyncResolver(stack, 'resolver', async () => {
+   * new AppsyncResolver(..., async () => {
    *    // invalid
    *    const f = func();
    *    // valid
@@ -685,6 +685,63 @@ export namespace ErrorCodes {
       code: 10019,
       type: ErrorType.ERROR,
       title: "Unable to find reference out of application function",
+    };
+
+  /**
+   * Appsync Integration invocations must be deterministic.
+   *
+   * As stated in the [AppSync Pipeline Resolvers Documents](https://docs.aws.amazon.com/appsync/latest/devguide/pipeline-resolvers.html):
+   *
+   * > Pipeline resolver execution flow is unidirectional and defined statically on the resolver.
+   *
+   * ```ts
+   * const func = new Function(stack, 'id', async () => {});
+   *
+   * new AppsyncResolver(..., async ($context) => {
+   *    // valid
+   *    const f = await func();
+   *    // valid
+   *    await func();
+   *    if($context.arguments.value) {
+   *       // invalid - non-deterministic
+   *       await func();
+   *    }
+   *    while($context.arguments.value) {
+   *       // invalid
+   *       await func();
+   *    }
+   *    // valid
+   *    return func();
+   * });
+   * ```
+   *
+   * Workaround:
+   *
+   * One workaround would be to invoke a lambda function which handles the non-deterministic parts of the workflow.
+   *
+   * The result of this example would be to call the `conditionalFunc` deterministically and call `func` conditionally.
+   *
+   * ```ts
+   * const func = new Function(stack, 'id', async () => {});
+   *
+   * const conditionalFunc = new Function(stack, 'id', async (value) => {
+   *    if(value) {
+   *       return func();
+   *    }
+   *    return null;
+   * })
+   *
+   * new AppsyncResolver(..., async ($context) => {
+   *    const conditionalResult = await conditionalFunc();
+   *    return conditionalResult;
+   * });
+   * ```
+   */
+  export const Appsync_Integration_invocations_must_be_deterministic: ErrorCode =
+    {
+      code: 10020,
+      type: ErrorType.ERROR,
+      title: "Appsync Integration invocations must be deterministic",
     };
 }
 

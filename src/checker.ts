@@ -7,6 +7,7 @@ import { EventTransform } from "./event-bridge/transform";
 import { Function } from "./function";
 import { ExpressStepFunction, StepFunction } from "./step-function";
 import { Table } from "./table";
+import { anyOf } from "./util";
 
 /**
  * Various types that could be in a call argument position of a function parameter.
@@ -90,8 +91,43 @@ export type FunctionlessChecker = ReturnType<typeof makeFunctionlessChecker>;
 export function makeFunctionlessChecker(
   checker: ts.TypeChecker | tsserver.TypeChecker
 ) {
+  const isStatement = anyOf(
+    ts.isVariableStatement,
+    ts.isEmptyStatement,
+    ts.isExpressionStatement,
+    ts.isIfStatement,
+    ts.isDoStatement,
+    ts.isWhileStatement,
+    ts.isForStatement,
+    ts.isForInStatement,
+    ts.isForOfStatement,
+    ts.isContinueStatement,
+    ts.isBreakStatement,
+    ts.isReturnStatement,
+    ts.isWithStatement,
+    ts.isSwitchStatement,
+    ts.isLabeledStatement,
+    ts.isThrowStatement,
+    ts.isTryStatement,
+    ts.isDebuggerStatement
+  );
+
+  /**
+   * Used by AppSync to determine of a root statement is deterministic or now.
+   *
+   * func();
+   * const v = func();
+   * return func();
+   */
+  const isDeterministicStatement = anyOf(
+    ts.isExpressionStatement,
+    ts.isReturnStatement,
+    ts.isVariableStatement
+  );
+
   return {
     ...checker,
+    findParent,
     getApiMethodKind,
     getFunctionlessTypeKind,
     isApiIntegration,
@@ -99,6 +135,7 @@ export function makeFunctionlessChecker(
     isAppsyncResolver,
     isCDKConstruct,
     isConstant,
+    isDeterministicStatement,
     isEventBus,
     isEventBusWhenFunction,
     isFunctionlessFunction,
@@ -113,6 +150,7 @@ export function makeFunctionlessChecker(
     isPromiseSymbol,
     isReflectFunction,
     isRuleMapFunction,
+    isStatement,
     isStepFunction,
     isTable,
   };
@@ -398,6 +436,28 @@ export function makeFunctionlessChecker(
       });
     }
     return false;
+  }
+
+  /**
+   * Invokes a predicate on the ancestors of the given node until:
+   * * the predicate is true
+   * * there is no parent
+   * * or the limit parameter is hit
+   *
+   * @param limit - An upper bound node to stop processing at.
+   */
+  function findParent<T extends ts.Node>(
+    node: ts.Node,
+    predicate: (node: ts.Node) => node is T,
+    limit?: ts.Node
+  ): T | undefined {
+    if (!node.parent || (limit && limit === node.parent)) {
+      return undefined;
+    } else if (predicate(node.parent)) {
+      return node.parent;
+    } else {
+      return findParent(node.parent, predicate);
+    }
   }
 
   /**

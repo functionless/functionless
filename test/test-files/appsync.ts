@@ -297,3 +297,65 @@ new AppsyncResolver(
     new aws_events.EventBus(stack, "");
   }
 );
+
+/**
+ * Unsupported - non-deterministic invocations
+ */
+
+new AppsyncResolver<{ bool: boolean }, string>(
+  api,
+  "new aws bus",
+  {
+    fieldName: "field",
+    typeName: "type",
+  },
+  async ($context) => {
+    if ($context.arguments.bool) {
+      await func();
+    }
+    return "hi";
+  }
+);
+
+new AppsyncResolver<{ bool: boolean }, string>(
+  api,
+  "new aws bus",
+  {
+    fieldName: "field",
+    typeName: "type",
+  },
+  async ($context) => {
+    while ($context.arguments.bool) {
+      await func();
+    }
+    return "hi";
+  }
+);
+
+new AppsyncResolver<{ bool: boolean }, string>(
+  api,
+  "new aws bus",
+  {
+    fieldName: "field",
+    typeName: "type",
+  },
+  async ($context) => {
+    do {
+      await func();
+    } while ($context.arguments.bool);
+    return "hi";
+  }
+);
+
+new AppsyncResolver<{ bool: boolean }, string>(
+  api,
+  "new aws bus",
+  {
+    fieldName: "field",
+    typeName: "type",
+  },
+  async ($context) => {
+    const c = $context.arguments.bool ? await func() : "x";
+    return c;
+  }
+);

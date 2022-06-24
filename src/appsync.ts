@@ -552,8 +552,9 @@ function synthesizeFunctions(api: appsync.GraphqlApi, decl: FunctionDecl) {
             } = ${getResult(stmt.expr)} )\n{}`
           );
         } else {
-          throw new Error(
-            "only a 'VariableDecl', 'Call' or 'Return' expression may call a service"
+          debugger;
+          throw new SynthError(
+            ErrorCodes.Appsync_Integration_invocations_must_be_deterministic
           );
         }
 

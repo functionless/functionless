@@ -393,27 +393,25 @@ test("return error", () => {
     }
   );
 
-  const templates = appsyncTestCase<
-    { num: number },
-    { pk: string; sk: string }
-  >(
-    // source https://github.com/functionless/functionless/issues/266
-    reflect(async ($context) => {
-      const identity = $context.identity;
+  expect(() => {
+    appsyncTestCase<{ num: number }, { pk: string; sk: string }>(
+      // source https://github.com/functionless/functionless/issues/266
+      reflect(async ($context) => {
+        const identity = $context.identity;
 
-      if (identity && "resolverContext" in identity) {
-        const { accountId } = identity.resolverContext;
-        return table.appsync.getItem({
-          key: {
-            pk: { S: `ACCOUNT#${accountId}` },
-            sk: { S: `ACCOUNT#${accountId}` },
-          },
-        });
-      }
+        if (identity && "resolverContext" in identity) {
+          const { accountId } = identity.resolverContext;
+          return table.appsync.getItem({
+            key: {
+              pk: { S: `ACCOUNT#${accountId}` },
+              sk: { S: `ACCOUNT#${accountId}` },
+            },
+          });
+        }
 
-      return $util.error("Cannot find account.");
-    })
-  );
-
-  testAppsyncVelocity(templates[1]);
+        return $util.error("Cannot find account.");
+      })
+    );
+    // TODO put error here.
+  }).toThrow("Appsync Integration invocations must be deterministic");
 });
