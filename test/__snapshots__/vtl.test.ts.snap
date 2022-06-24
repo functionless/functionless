@@ -77,6 +77,20 @@ $util.qr($v1.put('z', $v6))
 ]
 `;
 
+exports[`assignment in object 1`] = `
+Array [
+  "{
+\\"version\\": \\"2018-05-29\\",
+\\"payload\\": null
+}",
+  "#set($context.stash.y = 1)
+#set($v1 = {})
+$util.qr($v1.put('x', #set($context.stash.y = 2)))
+$util.qr($v1.put('y', $context.stash.y))
+#return($v1)",
+]
+`;
+
 exports[`binary expr = 1`] = `
 Array [
   "{
@@ -410,6 +424,28 @@ Object {
 }
 `;
 
+exports[`blockless if 1`] = `
+Array [
+  "{
+\\"version\\": \\"2018-05-29\\",
+\\"payload\\": null
+}",
+  "#set($v1 = 1 == $context.arguments.num)
+#if($v1)
+#set($context.stash.return__val = $null)
+#set($context.stash.return__flag = true)
+#return($context.stash.return__val)
+#end
+#set($v2 = 1 == $context.arguments.num)
+#if($v2)
+#else
+#set($context.stash.return__val = $null)
+#set($context.stash.return__flag = true)
+#return($context.stash.return__val)
+#end",
+]
+`;
+
 exports[`break from for-loop 1`] = `
 Array [
   "{
@@ -539,6 +575,18 @@ Array [
 #set($v1 = $context.arguments.a)
 #end
 #return(\\"head \${v1}\\")",
+]
+`;
+
+exports[`deconstruct 1`] = `
+Array [
+  "{
+\\"version\\": \\"2018-05-29\\",
+\\"payload\\": null
+}",
+  "#set($context.stash.{ a, b } = $context.arguments)
+#set($v1 = $a + $b)
+#return($v1)",
 ]
 `;
 
@@ -909,4 +957,95 @@ Array [
   "#set($context.stash.local = $context.arguments.a)
 #return(\\"head \${context.arguments.a} \${context.stash.local}\${context.arguments.a}\\")",
 ]
+`;
+
+exports[`unary 1`] = `
+Array [
+  "{
+\\"version\\": \\"2018-05-29\\",
+\\"payload\\": null
+}",
+  "#set($v1 = {})
+#set($v2 = !false)
+$util.qr($v1.put('!', $v2))
+#set($v3 = 0 - 10)
+$util.qr($v1.put('-', $v3))
+#set($v4 = 0 - 10)
+#set($v5 = 0 - $v4)
+$util.qr($v1.put('-(-)', $v5))
+#return($v1)",
+]
+`;
+
+exports[`unary 2`] = `
+Object {
+  "!": true,
+  "-": -10,
+  "-(-)": 10,
+}
+`;
+
+exports[`var args push 1`] = `
+Array [
+  "{
+\\"version\\": \\"2018-05-29\\",
+\\"payload\\": null
+}",
+  "#set($context.stash.y1 = [])
+#set($context.stash.y2 = [])
+#set($context.stash.y3 = [])
+#set($context.stash.y4 = [])
+#set($context.stash.x = [1, 2, 3])
+#set($v1 = [])
+$util.qr($v1.addAll($context.stash.x))
+$util.qr($context.stash.y1.addAll($v1))
+#set($v2 = [])
+$util.qr($v2.addAll($context.stash.x))
+$util.qr($v2.add(4))
+$util.qr($context.stash.y2.addAll($v2))
+#set($v3 = [])
+$util.qr($v3.add(0))
+$util.qr($v3.addAll($context.stash.x))
+$util.qr($context.stash.y3.addAll($v3))
+#set($v4 = [])
+$util.qr($v4.add(0))
+$util.qr($v4.addAll($context.stash.x))
+$util.qr($v4.add(4))
+$util.qr($context.stash.y4.addAll($v4))
+#set($v5 = {})
+$util.qr($v5.put('y1', $context.stash.y1))
+$util.qr($v5.put('y2', $context.stash.y2))
+$util.qr($v5.put('y3', $context.stash.y3))
+$util.qr($v5.put('y4', $context.stash.y4))
+#return($v5)",
+]
+`;
+
+exports[`var args push 2`] = `
+Object {
+  "y1": Array [
+    1,
+    2,
+    3,
+  ],
+  "y2": Array [
+    1,
+    2,
+    3,
+    4,
+  ],
+  "y3": Array [
+    0,
+    1,
+    2,
+    3,
+  ],
+  "y4": Array [
+    0,
+    1,
+    2,
+    3,
+    4,
+  ],
+}
 `;

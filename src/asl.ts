@@ -78,7 +78,6 @@ import {
   FinallyBlock,
   ForInStmt,
   ForOfStmt,
-  IfStmt,
   ReturnStmt,
   Stmt,
   WhileStmt,
@@ -615,12 +614,12 @@ export class ASL {
       const states: States = {};
       const choices: Branch[] = [];
 
-      let curr: IfStmt | BlockStmt | undefined = stmt;
+      let curr: Stmt | undefined = stmt;
       while (isIfStmt(curr)) {
         Object.assign(states, this.execute(curr.then));
 
         choices.push({
-          Next: this.getStateName(curr.then.statements[0]),
+          Next: this.getStateName(curr.then),
           ...ASL.toCondition(curr.when),
         });
         curr = curr._else;
@@ -632,7 +631,7 @@ export class ASL {
         curr === undefined
           ? this.next(stmt)
           : // there was an else
-            this.getStateName(curr.statements[0]);
+            this.getStateName(curr);
 
       return {
         [this.getStateName(stmt)]: {
@@ -1932,7 +1931,9 @@ function toStateName(stmt: Stmt): string | undefined {
     if (stmt.isFinallyBlock()) {
       return "finally";
     } else {
-      return undefined;
+      return stmt.statements.length > 0
+        ? toStateName(stmt.statements[0])
+        : undefined;
     }
   } else if (isBreakStmt(stmt)) {
     return "break";

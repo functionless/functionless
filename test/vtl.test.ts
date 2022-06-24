@@ -160,6 +160,19 @@ test("if statement", () => {
   );
 });
 
+test("blockless if", () => {
+  appsyncTestCase<{ num: number }, void>(
+    reflect(async ($context) => {
+      if (1 === $context.arguments.num) return;
+      if (1 === $context.arguments.num) {
+      } else return;
+    })
+  );
+
+  // https://github.com/aws-amplify/amplify-category-api/issues/592
+  // testAppsyncVelocity(templates[1]);
+});
+
 test("return conditional expression", () => {
   appsyncTestCase(
     reflect((context: AppsyncContext<{ list: string[] }>) => {
@@ -459,6 +472,8 @@ test("binary expr ==", () => {
           out: [
             $context.arguments.key == "key",
             "key" == $context.arguments.key,
+            $context.arguments.key === "key",
+            "key" === $context.arguments.key,
           ],
         };
       }
@@ -467,7 +482,7 @@ test("binary expr ==", () => {
 
   testAppsyncVelocity(templates[1], {
     arguments: { key: "key" },
-    resultMatch: { out: [true, true] },
+    resultMatch: { out: [true, true, true, true] },
   });
 });
 
@@ -590,6 +605,28 @@ test("binary exprs value comparison", () => {
   });
 });
 
+test("null coalescing", () => {
+  const templates = appsyncTestCase(
+    reflect(() => {
+      return {
+        "??": null ?? "a",
+        "not ??": "a" ?? "b",
+        neither: null ?? null,
+        undefined: undefined ?? "a",
+      };
+    })
+  );
+
+  testAppsyncVelocity(templates[1], {
+    resultMatch: {
+      "??": null ?? "a",
+      "not ??": "a" ?? "b",
+      neither: null ?? null,
+      undefined: undefined ?? "a",
+    },
+  });
+});
+
 test("binary exprs logical", () => {
   const templates = appsyncTestCase(
     reflect<
@@ -649,6 +686,7 @@ test("binary exprs math", () => {
         "-": a - b,
         "*": a * b,
         "/": a / b,
+        "%": a % b,
       };
     })
   );
@@ -660,6 +698,7 @@ test("binary exprs math", () => {
       "-": 4,
       "*": 12,
       "/": 3,
+      "%": 0,
     },
   });
 });
@@ -696,26 +735,140 @@ test("binary expr =", () => {
 });
 
 // https://github.com/functionless/functionless/issues/232
-test.skip("binary expr +=", () => {
+test("binary mutation", () => {
   const templates = appsyncTestCase(
-    reflect<ResolverFunction<{ key: string }, { out: number }, any>>(
-      ($context) => {
-        var n = 0;
-        if ($context.arguments.key == "hello") {
-          n += 1;
-        }
-        return { out: n };
-      }
-    )
+    reflect(() => {
+      var n = 9;
+      const plus_n = (n += 1);
+      const minus_n = (n -= 1);
+      const multi_n = (n *= 2);
+      const div_n = (n /= 3);
+      const mod_n = n % 2;
+      return {
+        "+=": plus_n,
+        "-=": minus_n,
+        "*=": multi_n,
+        "/=": div_n,
+        "%=": mod_n,
+      };
+    })
   );
 
   testAppsyncVelocity(templates[1], {
-    arguments: { key: "hello" },
-    resultMatch: { out: 1 },
+    resultMatch: {
+      "+=": 10,
+      "-=": 8,
+      "*=": 18,
+      "/=": 3,
+      "%=": 1,
+    },
   });
+});
+
+// https://github.com/functionless/functionless/issues/232
+test("unary mutation", () => {
+  const templates = appsyncTestCase(
+    reflect(() => {
+      var n = 9;
+      return {
+        "post--": n--,
+        "--pre": --n,
+        "post++": n++,
+        "++pre": ++n,
+      };
+    })
+  );
 
   testAppsyncVelocity(templates[1], {
-    arguments: { key: "giddyup" },
-    resultMatch: { out: 0 },
+    resultMatch: {
+      "post--": 9, // 8
+      "--pre": 7, // 7
+      "post++": 7, // 8
+      "++pre": 9, //9
+    },
+  });
+});
+
+// https://github.com/functionless/functionless/issues/232
+test("unary", () => {
+  const templates = appsyncTestCase(
+    reflect(() => {
+      return {
+        "!": !false,
+        "-": -10,
+        "-(-)": -(-10),
+      };
+    })
+  );
+
+  testAppsyncVelocity(templates[1], {
+    resultMatch: {
+      "!": true,
+      "-": -10,
+      "-(-)": 10,
+    },
+  });
+});
+
+// https://github.com/functionless/functionless/issues/150
+test("assignment in object", () => {
+  const templates = appsyncTestCase(
+    reflect(() => {
+      let y = 1;
+      return { x: (y = 2), y };
+    })
+  );
+
+  testAppsyncVelocity(templates[1], {
+    resultMatch: {
+      x: 2,
+      y: 2,
+    },
+  });
+});
+
+// https://github.com/functionless/functionless/issues/150
+test("var args push", () => {
+  const templates = appsyncTestCase(
+    reflect(() => {
+      const y1 = [];
+      const y2 = [];
+      const y3 = [];
+      const y4 = [];
+      const x = [1, 2, 3];
+      y1.push(...x);
+      y2.push(...x, 4);
+      y3.push(0, ...x);
+      y4.push(0, ...x, 4);
+      return { y1, y2, y3, y4 };
+    })
+  );
+
+  testAppsyncVelocity(templates[1], {
+    resultMatch: {
+      y1: [1, 2, 3],
+      y2: [1, 2, 3, 4],
+      y3: [0, 1, 2, 3],
+      y4: [0, 1, 2, 3, 4],
+    },
+  });
+});
+
+// https://github.com/functionless/functionless/issues/150
+test("deconstruct", () => {
+  const templates = appsyncTestCase<
+    { a: string; b: string; arr: string[] },
+    string
+  >(
+    reflect(($context) => {
+      const { a, b } = $context.arguments;
+      const [c, d] = $context.arguments.arr;
+      return a + b + c + d;
+    })
+  );
+
+  testAppsyncVelocity(templates[1], {
+    arguments: { a: "hello", b: "world", arr: ["what", "up"] },
+    resultMatch: "helloworldwhatup",
   });
 });

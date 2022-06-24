@@ -138,11 +138,7 @@ export class ReturnStmt extends BaseStmt<"ReturnStmt"> {
 }
 
 export class IfStmt extends BaseStmt<"IfStmt"> {
-  constructor(
-    readonly when: Expr,
-    readonly then: BlockStmt,
-    readonly _else?: IfStmt | BlockStmt
-  ) {
+  constructor(readonly when: Expr, readonly then: Stmt, readonly _else?: Stmt) {
     super("IfStmt");
     when.setParent(this as never);
     then.setParent(this);

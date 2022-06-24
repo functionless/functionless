@@ -334,13 +334,9 @@ export function visitEachChild<T extends FunctionlessNode>(
     const _else = node._else ? visitor(node._else) : undefined;
 
     ensure(when, isExpr, "a IfStmt's when must be an Expr");
-    ensure(then, isBlockStmt, "a IfStmt's then must be a BlockStmt");
+    ensure(then, isStmt, "a IfStmt's then must be a BlockStmt");
     if (_else) {
-      ensure(
-        _else,
-        anyOf(isIfStmt, isBlockStmt),
-        "a IfStmt's else must be an IfStmt or BlockStmt"
-      );
+      ensure(_else, isStmt, "a IfStmt's else must be an IfStmt or BlockStmt");
     }
 
     return new IfStmt(when, then, _else) as T;

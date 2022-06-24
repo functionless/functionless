@@ -1,11 +1,14 @@
 import { GraphqlApi } from "@aws-cdk/aws-appsync-alpha";
 import { Stack } from "aws-cdk-lib";
+import { AttributeType } from "aws-cdk-lib/aws-dynamodb";
 import {
   AppsyncContext,
   AppsyncResolver,
   reflect,
   StepFunction,
   Function,
+  Table,
+  $util,
 } from "../src";
 import { appsyncTestCase, testAppsyncVelocity } from "./util";
 
@@ -374,10 +377,41 @@ test("multiple linked integrations with mutation", () => {
   testAppsyncVelocity(templates[1]);
 });
 
-test("blockless if", () => {
-  const templates = appsyncTestCase<{ num: number }, void>(
+test("return error", () => {
+  const table = new Table<{ pk: string; sk: string }, "pk", "sk">(
+    stack,
+    "table",
+    {
+      partitionKey: {
+        name: "pk",
+        type: AttributeType.STRING,
+      },
+      sortKey: {
+        name: "sk",
+        type: AttributeType.STRING,
+      },
+    }
+  );
+
+  const templates = appsyncTestCase<
+    { num: number },
+    { pk: string; sk: string }
+  >(
+    // source https://github.com/functionless/functionless/issues/266
     reflect(async ($context) => {
-      if (1 === $context.arguments.num) return;
+      const identity = $context.identity;
+
+      if (identity && "resolverContext" in identity) {
+        const { accountId } = identity.resolverContext;
+        return table.appsync.getItem({
+          key: {
+            pk: { S: `ACCOUNT#${accountId}` },
+            sk: { S: `ACCOUNT#${accountId}` },
+          },
+        });
+      }
+
+      return $util.error("Cannot find account.");
     })
   );
 
