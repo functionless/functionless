@@ -25,7 +25,6 @@ import {
   isFunctionExpr,
   isIdentifier,
   isIfStmt,
-  isNativeFunctionDecl,
   isNewExpr,
   isNullLiteralExpr,
   isNumberLiteralExpr,
@@ -445,7 +444,7 @@ export abstract class VTL {
       this.eval(node.body);
       this.add("#end");
       return undefined;
-    } else if (isFunctionDecl(node) || isNativeFunctionDecl(node)) {
+    } else if (isFunctionDecl(node)) {
       // there should never be nested functions
     } else if (isFunctionExpr(node)) {
       return this.eval(node.body);

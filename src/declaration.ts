@@ -4,9 +4,9 @@ import { isErr, isFunctionDecl, isNode, isParameterDecl } from "./guards";
 import { Integration } from "./integration";
 import { BaseNode, FunctionlessNode } from "./node";
 import { BlockStmt } from "./statement";
-import { AnyAsyncFunction, AnyFunction, anyOf } from "./util";
+import { AnyFunction, anyOf } from "./util";
 
-export type Decl = FunctionDecl | ParameterDecl | NativeFunctionDecl;
+export type Decl = FunctionDecl | ParameterDecl;
 
 export function isDecl(a: any): a is Decl {
   return isNode(a) && (isFunctionDecl(a) || isParameterDecl(a));
@@ -41,32 +41,6 @@ export class FunctionDecl<F extends AnyFunction = AnyFunction> extends BaseDecl<
 export interface IntegrationInvocation {
   integration: Integration<any>;
   args: Argument[];
-}
-
-/**
- * A function declaration which contains the original closure instead of Functionless expressions.
- */
-export class NativeFunctionDecl<
-  F extends AnyFunction = AnyFunction
-> extends BaseDecl<"NativeFunctionDecl", undefined> {
-  readonly _functionBrand?: F;
-  constructor(
-    readonly parameters: ParameterDecl[],
-    // Compiler generates a closure that can inject in the preWarm context.
-    readonly closure: AnyAsyncFunction,
-    readonly integrations: IntegrationInvocation[]
-  ) {
-    super("NativeFunctionDecl");
-    parameters.forEach((param) => param.setParent(this));
-  }
-
-  public clone(): this {
-    return new NativeFunctionDecl(
-      this.parameters.map((param) => param.clone()),
-      this.closure,
-      this.integrations
-    ) as this;
-  }
 }
 
 export class ParameterDecl extends BaseDecl<

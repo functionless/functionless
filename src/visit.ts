@@ -55,7 +55,6 @@ import {
   isFunctionExpr,
   isIdentifier,
   isIfStmt,
-  isNativeFunctionDecl,
   isNewExpr,
   isNullLiteralExpr,
   isNumberLiteralExpr,
@@ -491,8 +490,6 @@ export function visitEachChild<T extends FunctionlessNode>(
     const block = visitor(node.block);
     ensure(block, isBlockStmt, "a WhileStmt's block must be a BlockStmt");
     return new WhileStmt(condition, block) as T;
-  } else if (isNativeFunctionDecl(node)) {
-    throw Error(`${node.kind} are not supported.`);
   } else if (isAwaitExpr(node)) {
     const expr = visitor(node.expr);
     ensure(expr, isExpr, "an AwaitExpr's expr property must be an Expr");

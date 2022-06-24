@@ -50,7 +50,7 @@ import {
   PrewarmClients,
   PrewarmProps,
 } from "./function-prewarm";
-import { isErr, isFunctionDecl, isNativeFunctionDecl } from "./guards";
+import { isFunctionDecl } from "./guards";
 import {
   Integration,
   IntegrationCallExpr,
@@ -62,7 +62,7 @@ import {
 import { FunctionlessNode } from "./node";
 import { isStepFunction } from "./step-function";
 import { isTable } from "./table";
-import { AnyAsyncFunction, AnyFunction, anyOf } from "./util";
+import { AnyAsyncFunction, AnyFunction } from "./util";
 import { visitEachChild } from "./visit";
 
 export function isFunction<Payload = any, Output = any>(
@@ -534,8 +534,6 @@ export interface FunctionProps<in P = any, O = any, OutP extends P = P>
   onFailure?: FunctionAsyncOnFailureDestination<OutP>;
 }
 
-const isNativeFunctionOrError = anyOf(isErr, isNativeFunctionDecl);
-
 /**
  * A type-safe NodeJS Lambda Function generated from the closure provided.
  *
@@ -615,15 +613,15 @@ export class Function<
     funcOrNothing?: FunctionClosure<Payload, Out>,
     magic?: any
   ) {
-    const func = validateFunctionlessNode(
-      isNativeFunctionOrError(propsOrFunc)
-        ? propsOrFunc
-        : isNativeFunctionOrError(funcOrNothing)
-        ? funcOrNothing
-        : undefined,
-      "Function",
-      isNativeFunctionDecl
-    );
+    const func =
+      typeof propsOrFunc === "function" ? propsOrFunc : funcOrNothing;
+
+    if (!func) {
+      throw new SynthError(
+        ErrorCodes.Unexpected_Error,
+        "Unexpected error: expected a function closure."
+      );
+    }
 
     const ast = validateFunctionlessNode(
       magic ? magic : funcOrNothing,
@@ -631,11 +629,12 @@ export class Function<
       isFunctionDecl
     );
 
-    const props = isNativeFunctionOrError(propsOrFunc)
-      ? undefined
-      : (propsOrFunc as FunctionProps<Payload, Out, OutPayload>);
+    const props =
+      typeof propsOrFunc === "function"
+        ? undefined
+        : (propsOrFunc as FunctionProps<Payload, Out, OutPayload>);
 
-    const callbackLambdaCode = new CallbackLambdaCode(func.closure, {
+    const callbackLambdaCode = new CallbackLambdaCode(func, {
       clientConfigRetriever: props?.clientConfigRetriever,
     });
     const { onSuccess, onFailure, ...restProps } = props ?? {};
