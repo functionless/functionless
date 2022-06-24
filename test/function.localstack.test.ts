@@ -1005,7 +1005,7 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
    * https://github.com/functionless/functionless/issues/148
    */
 
-  test(
+  test.skip(
     "use method with closure",
     (parent) => {
       const bus = new EventBus(parent, "bus");
@@ -1026,7 +1026,7 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
     null
   );
 
-  test(
+  test.skip(
     "use method with call",
     (parent) => {
       const bus = new EventBus(parent, "bus");
@@ -1048,7 +1048,7 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
     null
   );
 
-  test(
+  test.skip(
     "use dynamic method with call",
     (parent) => {
       const bus = new EventBus(parent, "bus");
@@ -1072,7 +1072,7 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
     null
   );
 
-  test(
+  test.skip(
     "use dynamic method with call once",
     (parent) => {
       const bus = new EventBus(parent, "bus");
@@ -1095,7 +1095,7 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
     null
   );
 
-  test(
+  test.skip(
     "use dynamic method",
     (parent) => {
       const bus = new EventBus(parent, "bus");
@@ -1122,7 +1122,7 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
     null
   );
 
-  test(
+  test.skip(
     "use dynamic method don't call",
     (parent) => {
       const bus = new EventBus(parent, "bus");
@@ -1147,7 +1147,7 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
   /**
    * This should fail?
    */
-  test(
+  test.skip(
     "method with new ",
     (parent) => {
       const getBus = () => new EventBus(parent, "bus");
@@ -1167,7 +1167,7 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
     null
   );
 
-  test("method with no integration ", (parent) => {
+  test.skip("method with no integration ", (parent) => {
     const mathStuff = (a: number, b: number) => a + b;
     return new Function(
       parent,
@@ -1179,7 +1179,7 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
     );
   }, 3);
 
-  test("chained methods", (parent) => {
+  test.skip("chained methods", (parent) => {
     const mathStuff = (a: number, b: number) => a + b;
     const mathStuff2 = (a: number, b: number) => a + mathStuff(a, b);
     return new Function(
@@ -1192,7 +1192,7 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
     );
   }, 4);
 
-  test("recursion", (parent) => {
+  test.skip("recursion", (parent) => {
     const mult = (a: number, b: number): number => {
       if (b <= 0) {
         return 1;
@@ -1209,7 +1209,7 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
     );
   }, 8);
 
-  test("nested closured methods", (parent) => {
+  test.skip("nested closured methods", (parent) => {
     const callMe = (a: number, b: number): number => {
       const helper = () => {
         return a * 2;
@@ -1227,7 +1227,7 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
     );
   }, 7);
 
-  test(
+  test.skip(
     "chained with integration",
     (parent) => {
       const func = new Function<undefined, string>(
@@ -1251,7 +1251,7 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
     "hello"
   );
 
-  test(
+  test.skip(
     "nested with integration",
     (parent) => {
       const func = new Function<undefined, string>(
@@ -1277,7 +1277,7 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
     "formatted hello"
   );
 
-  test(
+  test.skip(
     "recursion with integration",
     (parent) => {
       const func = new Function<undefined, string>(

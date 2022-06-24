@@ -291,6 +291,7 @@ export function compile(
             _two,
             ...(_three ? [_three] : []),
             errorBoundary(() => toNativeFunction(funcDecl, context)),
+            errorBoundary(() => toFunction("FunctionDecl", funcDecl)),
           ]
         );
       }
@@ -667,7 +668,16 @@ export function compile(
           }
           if (isIntegrationNode(node)) {
             // if this is a reference to a Table or Lambda, retain it
-            return ref(node);
+            const _ref = getOutOfScopeValueNode(node, scope);
+            if (_ref) {
+              return ref(_ref);
+            } else {
+              // TODO: make a better error
+              throw new SynthError(
+                ErrorCodes.Unexpected_Error,
+                "no out of scope ref"
+              );
+            }
           }
 
           const symbol = checker.getSymbolAtLocation(node);
@@ -693,7 +703,16 @@ export function compile(
         } else if (ts.isPropertyAccessExpression(node)) {
           if (isIntegrationNode(node)) {
             // if this is a reference to a Table or Lambda, retain it
-            return ref(node);
+            const _ref = getOutOfScopeValueNode(node, scope);
+            if (_ref) {
+              return ref(_ref);
+            } else {
+              // TODO: make a better error
+              throw new SynthError(
+                ErrorCodes.Unexpected_Error,
+                "no out of scope ref"
+              );
+            }
           }
           const type = checker.getTypeAtLocation(node.name);
           return newExpr("PropAccessExpr", [

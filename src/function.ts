@@ -29,7 +29,11 @@ import esbuild from "esbuild";
 import { ApiGatewayVtlIntegration } from "./api";
 import type { AppSyncVtlIntegration } from "./appsync";
 import { ASL } from "./asl";
-import { validateFunctionlessNode } from "./declaration";
+import {
+  FunctionDecl,
+  IntegrationInvocation,
+  validateFunctionlessNode,
+} from "./declaration";
 import { ErrorCodes, formatErrorMessage, SynthError } from "./error-code";
 import {
   IEventBus,
@@ -46,16 +50,20 @@ import {
   PrewarmClients,
   PrewarmProps,
 } from "./function-prewarm";
-import { isErr, isNativeFunctionDecl } from "./guards";
+import { isErr, isFunctionDecl, isNativeFunctionDecl } from "./guards";
 import {
   Integration,
+  IntegrationCallExpr,
   IntegrationImpl,
   INTEGRATION_TYPE_KEYS,
   isIntegration,
+  isIntegrationCallExpr,
 } from "./integration";
+import { FunctionlessNode } from "./node";
 import { isStepFunction } from "./step-function";
 import { isTable } from "./table";
 import { AnyAsyncFunction, AnyFunction, anyOf } from "./util";
+import { visitEachChild } from "./visit";
 
 export function isFunction<Payload = any, Output = any>(
   a: any
@@ -604,7 +612,8 @@ export class Function<
     propsOrFunc:
       | FunctionProps<Payload, Out, OutPayload>
       | FunctionClosure<Payload, Out>,
-    funcOrNothing?: FunctionClosure<Payload, Out>
+    funcOrNothing?: FunctionClosure<Payload, Out>,
+    magic?: any
   ) {
     const func = validateFunctionlessNode(
       isNativeFunctionOrError(propsOrFunc)
@@ -615,6 +624,13 @@ export class Function<
       "Function",
       isNativeFunctionDecl
     );
+
+    const ast = validateFunctionlessNode(
+      magic ? magic : funcOrNothing,
+      "Function",
+      isFunctionDecl
+    );
+
     const props = isNativeFunctionOrError(propsOrFunc)
       ? undefined
       : (propsOrFunc as FunctionProps<Payload, Out, OutPayload>);
@@ -636,13 +652,42 @@ export class Function<
       ),
     });
 
-    // Poison pill that forces Function synthesis to fail when the closure serialization has not completed.
-    // Closure synthesis runs async, but CDK does not normally support async.
-    // In order for the synthesis to complete successfully
-    // 1. Use autoSynth `new App({ autoSynth: true })` or `new App()` with the CDK Cli (`cdk synth`)
-    // 2. Use `await asyncSynth(app)` exported from Functionless in place of `app.synth()`
-    // 3. Manually await on the closure serializer promises `await Promise.all(Function.promises)`
-    // https://github.com/functionless/functionless/issues/128
+    super(_resource);
+
+    const integrations: IntegrationInvocation[] = getInvokedIntegrations(
+      ast
+    ).map((i) => {
+      const integ = i.expr.ref();
+      if (!isIntegration<Integration>(integ)) {
+        // TODO: create specific error.
+        throw new SynthError(ErrorCodes.Unexpected_Error);
+      }
+      return {
+        args: i.args,
+        integration: integ,
+      };
+    });
+
+    // retrieve and bind all found native integrations. Will fail if the integration does not support native integration.
+    const nativeIntegrationsPrewarm = integrations.flatMap(
+      ({ integration, args }) => {
+        const integ = new IntegrationImpl(integration).native;
+        integ.bind(this, args);
+        return integ.preWarm ? [integ.preWarm] : [];
+      }
+    );
+
+    /**
+     * Poison pill that forces Function synthesis to fail when the closure serialization has not completed.
+     * Closure synthesis runs async, but CDK does not normally support async.
+     * In order for the synthesis to complete successfully
+     * 1. Use autoSynth `new App({ autoSynth: true })` or `new App()` with the CDK Cli (`cdk synth`)
+     * 2. Use `await asyncSynth(app)` exported from Functionless in place of `app.synth()`
+     * 3. Manually await on the closure serializer promises `await Promise.all(Function.promises)`
+     * https://github.com/functionless/functionless/issues/128
+     * NOTE: This operation should happen immediately before the `generate` promise is started.
+     *       Any operation between adding the validation and starting `generate` will always trigger the poison pill
+     */
     _resource.node.addValidation({
       validate: () =>
         this.resource.node.metadata.find(
@@ -655,17 +700,6 @@ export class Function<
               ),
             ],
     });
-
-    super(_resource);
-
-    // retrieve and bind all found native integrations. Will fail if the integration does not support native integration.
-    const nativeIntegrationsPrewarm = func.integrations.flatMap(
-      ({ integration, args }) => {
-        const integ = new IntegrationImpl(integration).native;
-        integ.bind(this, args);
-        return integ.preWarm ? [integ.preWarm] : [];
-      }
-    );
 
     // Start serializing process, add the callback to the promises so we can later ensure completion
     Function.promises.push(
@@ -688,6 +722,19 @@ export class Function<
       })()
     );
   }
+}
+
+function getInvokedIntegrations(ast: FunctionDecl): IntegrationCallExpr[] {
+  const nodes: IntegrationCallExpr[] = [];
+  visitEachChild(ast, function visit(node: FunctionlessNode): FunctionlessNode {
+    if (isIntegrationCallExpr(node)) {
+      nodes.push(node);
+    }
+
+    return visitEachChild(node, visit);
+  });
+
+  return nodes;
 }
 
 /**
