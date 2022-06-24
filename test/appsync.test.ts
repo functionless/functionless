@@ -373,3 +373,13 @@ test("multiple linked integrations with mutation", () => {
 
   testAppsyncVelocity(templates[1]);
 });
+
+test("blockless if", () => {
+  const templates = appsyncTestCase<{ num: number }, void>(
+    reflect(async ($context) => {
+      if (1 === $context.arguments.num) return;
+    })
+  );
+
+  testAppsyncVelocity(templates[1]);
+});
