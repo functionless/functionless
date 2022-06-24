@@ -10,7 +10,6 @@ import {
   EventBusWhenInterface,
   FunctionInterface,
   makeFunctionlessChecker,
-  TsFunctionParameter,
 } from "./checker";
 import type { FunctionDecl } from "./declaration";
 import { ErrorCodes, SynthError } from "./error-code";
@@ -117,7 +116,7 @@ export function compile(
           } else if (checker.isNewEventTransform(node)) {
             return visitEventTransform(node);
           } else if (checker.isNewFunctionlessFunction(node)) {
-            return visitFunction(node, ctx);
+            return visitFunction(node);
           } else if (checker.isApiIntegration(node)) {
             return visitApiIntegration(node);
           }
@@ -268,10 +267,7 @@ export function compile(
         return call;
       }
 
-      function visitFunction(
-        func: FunctionInterface,
-        context: ts.TransformationContext
-      ): ts.Node {
+      function visitFunction(func: FunctionInterface): ts.Node {
         const [_one, _two, _three, funcDecl] =
           func.arguments.length === 4
             ? func.arguments
@@ -290,241 +286,9 @@ export function compile(
             _one,
             _two,
             ...(_three ? [_three] : []),
-            errorBoundary(() => toNativeFunction(funcDecl, context)),
+            funcDecl,
+            errorBoundary(() => toFunction("FunctionDecl", funcDecl)),
           ]
-        );
-      }
-
-      interface NativeExprContext {
-        preWarmContext: ts.Identifier;
-        closureNode: TsFunctionParameter;
-        /**
-         * Register an {@link IntegrationInvocation} found when processing a native closure.
-         *
-         * @param node - should be an {@link Integration}
-         * @param args - should be an array of {@link Argument}
-         */
-        registerIntegration: (
-          node: ts.Expression,
-          args: ts.ArrayLiteralExpression
-        ) => void;
-      }
-
-      /**
-       * A native function prepares a closure to be serialized,
-       * transforms functionless {@link Integrations} to be invoked at runtime,
-       * and extracts information needed to synthesize the Stack.
-       *
-       * Native Functions do not allow the creation of resources, CDK constructs or functionless.
-       *
-       * 1. Extracts functionless {@link Integrations} from the closure
-       * 2. Wraps the closure in another arrow function which accepts a {@link NativePrewarmContext}.
-       *    1. During synthesize (ex:, in a lambda {@link Function}) a prewarm context is generated
-       *       and fed into the outer, generated closure.
-       *    2. The {@link NativePreWarmContext} is a client/object cache which can be used to run once
-       *       before the first invocation of a lambda function.
-       * 3. Rewrites all of the integrations to invoke `await integration.native.call(args)` instead of `integration(args)`
-       *    Also tries to simplify integration references to be outside of the closure.
-       *    This reduces the amount of code and data that @functionless/nodejs-closure-serializer (a Pulumi closure serializer fork)
-       *    tries to serialize during synthesis.
-       * 4. Returns the {@link ParameterDecl}s for the closure
-       *
-       * @see Function for an example of how this is used.
-       *
-       * Input
-       *
-       * ```ts
-       * const bus = new EventBus() // an example of an Integration, could be any Integration
-       *
-       * (arg1: string) => {
-       *    bus.putEvents({ source: "src" })
-       * }
-       * ```
-       *
-       * Output
-       *
-       * ```ts
-       * const bus = new EventBus()
-       * new NativeFunctionDecl(
-       *     [new ParameterDecl("arg1")], // parameters
-       *     (prewarmContext: NativePreWarmContext) =>
-       *        (arg1: string) => {
-       *            // call can make use of the cached clients in prewarmContext to avoid duplicate inline effect
-       *            await bus.native.call(prewarmContext, { source: "src" });
-       *        },
-       *     [bus] // integrations
-       * );
-       * ```
-       */
-      function toNativeFunction(
-        impl: TsFunctionParameter,
-        context: ts.TransformationContext
-      ): ts.NewExpression {
-        if (
-          !ts.isFunctionDeclaration(impl) &&
-          !ts.isArrowFunction(impl) &&
-          !ts.isFunctionExpression(impl)
-        ) {
-          throw new Error(
-            `Functionless reflection only supports function parameters with bodies, no signature only declarations or references. Found ${impl.getText()}.`
-          );
-        }
-
-        if (impl.body === undefined) {
-          throw new Error(
-            `cannot parse declaration-only function: ${impl.getText()}`
-          );
-        }
-
-        // collection of integrations that are extracted from the closure
-        const integrations: {
-          expr: ts.Expression;
-          args: ts.ArrayLiteralExpression;
-        }[] = [];
-
-        // a reference to a client/object cache which the integrations can use
-        const preWarmContext =
-          context.factory.createUniqueName("preWarmContext");
-
-        // Context object which is available when transforming the tree
-        const nativeExprContext: NativeExprContext = {
-          // a reference to a prewarm context that will be passed into the closure during synthesis/runtime
-          preWarmContext,
-          // the closure node used to determine if variables are inside or outside of the closure
-          closureNode: impl,
-          // pass up integrations from inside of the closure
-          registerIntegration: (integ, args) =>
-            integrations.push({ expr: integ, args }),
-        };
-
-        const body = toNativeExpr(
-          impl.body,
-          context,
-          nativeExprContext
-        ) as ts.ConciseBody;
-
-        // rebuilt the closure with the updated body
-        const closure = ts.factory.createArrowFunction(
-          impl.modifiers,
-          impl.typeParameters,
-          impl.parameters,
-          impl.type,
-          undefined,
-          body
-        );
-
-        return newExpr("NativeFunctionDecl", [
-          ts.factory.createArrayLiteralExpression(
-            impl.parameters
-              .map((param) => param.name.getText())
-              .map((arg) =>
-                newExpr("ParameterDecl", [ts.factory.createStringLiteral(arg)])
-              )
-          ),
-          // (prewarmContext) => closure;
-          context.factory.createArrowFunction(
-            undefined,
-            undefined,
-            [
-              context.factory.createParameterDeclaration(
-                undefined,
-                undefined,
-                undefined,
-                preWarmContext,
-                undefined,
-                undefined,
-                undefined
-              ),
-            ],
-            undefined,
-            undefined,
-            closure
-          ),
-          context.factory.createArrayLiteralExpression(
-            integrations.map(({ expr, args }) =>
-              context.factory.createObjectLiteralExpression([
-                context.factory.createPropertyAssignment("integration", expr),
-                context.factory.createPropertyAssignment("args", args),
-              ])
-            )
-          ),
-        ]);
-      }
-
-      function toNativeExpr(
-        node: ts.Node,
-        context: ts.TransformationContext,
-        nativeExprContext: NativeExprContext
-      ): ts.Node | undefined {
-        if (ts.isCallExpression(node)) {
-          // Integration nodes have a static "kind" property.
-          if (isIntegrationNode(node.expression)) {
-            const outOfScopeIntegrationReference = getOutOfScopeValueNode(
-              node.expression,
-              nativeExprContext.closureNode
-            );
-
-            if (!outOfScopeIntegrationReference) {
-              // integration variables can be CDK constructs which will fail serialization.
-              throw Error(
-                "Integration Variable must be defined out of scope: " +
-                  node.expression.getText()
-              );
-            }
-
-            // add the function identifier to the integrations
-            nativeExprContext.registerIntegration(
-              outOfScopeIntegrationReference,
-              // try to capture the arguments into the integration to use during synth (integration.native.bind).
-              context.factory.createArrayLiteralExpression(
-                node.arguments.map((arg) => {
-                  return toExpr(arg, nativeExprContext.closureNode);
-                })
-              )
-            );
-
-            // call the integration call function with the prewarm context and arguments
-            // At this point, we know native will not be undefined
-            // integration.native.call(args, preWarmContext)
-            return context.factory.createCallExpression(
-              context.factory.createPropertyAccessExpression(
-                context.factory.createPropertyAccessExpression(
-                  node.expression,
-                  "native"
-                ),
-                "call"
-              ),
-              undefined,
-              [
-                context.factory.createArrayLiteralExpression(node.arguments),
-                nativeExprContext.preWarmContext,
-              ]
-            );
-          }
-        } else if (ts.isNewExpression(node)) {
-          const newType = checker.getTypeAtLocation(node);
-          // cannot create new resources in native runtime code.
-          const functionlessKind = checker.getFunctionlessTypeKind(newType);
-          if (checker.getFunctionlessTypeKind(newType)) {
-            throw new SynthError(
-              ErrorCodes.Unsupported_initialization_of_resources_in_function,
-              `Cannot initialize new resources in a native function, found ${functionlessKind}.`
-            );
-          } else if (checker.isCDKConstruct(newType)) {
-            throw new SynthError(
-              ErrorCodes.Unsupported_initialization_of_resources_in_function,
-              `Cannot initialize new CDK resources in a native function, found ${
-                newType.getSymbol()?.name
-              }.`
-            );
-          }
-        }
-
-        // let everything else fall through, process their children too
-        return ts.visitEachChild(
-          node,
-          (node) => toNativeExpr(node, context, nativeExprContext),
-          context
         );
       }
 
@@ -623,6 +387,25 @@ export function compile(
         } else if (ts.isExpressionStatement(node)) {
           return newExpr("ExprStmt", [toExpr(node.expression, scope)]);
         } else if (ts.isCallExpression(node) || ts.isNewExpression(node)) {
+          if (ts.isNewExpression(node)) {
+            const newType = checker.getTypeAtLocation(node);
+            // cannot create new resources in native runtime code.
+            const functionlessKind = checker.getFunctionlessTypeKind(newType);
+            if (checker.getFunctionlessTypeKind(newType)) {
+              throw new SynthError(
+                ErrorCodes.Unsupported_initialization_of_resources,
+                `Cannot initialize new resources in a runtime function, found ${functionlessKind}.`
+              );
+            } else if (checker.isCDKConstruct(newType)) {
+              throw new SynthError(
+                ErrorCodes.Unsupported_initialization_of_resources,
+                `Cannot initialize new CDK resources in a runtime function, found ${
+                  newType.getSymbol()?.name
+                }.`
+              );
+            }
+          }
+
           const getCall = () => {
             const exprType = checker.getTypeAtLocation(node.expression);
             const functionBrand = exprType.getProperty("__functionBrand");
@@ -708,7 +491,14 @@ export function compile(
           }
           if (isIntegrationNode(node)) {
             // if this is a reference to a Table or Lambda, retain it
-            return ref(node);
+            const _ref = getOutOfScopeValueNode(node, scope);
+            if (_ref) {
+              return ref(_ref);
+            } else {
+              throw new SynthError(
+                ErrorCodes.Unable_to_find_reference_out_of_application_function
+              );
+            }
           }
 
           const symbol = checker.getSymbolAtLocation(node);
@@ -734,7 +524,14 @@ export function compile(
         } else if (ts.isPropertyAccessExpression(node)) {
           if (isIntegrationNode(node)) {
             // if this is a reference to a Table or Lambda, retain it
-            return ref(node);
+            const _ref = getOutOfScopeValueNode(node, scope);
+            if (_ref) {
+              return ref(_ref);
+            } else {
+              throw new SynthError(
+                ErrorCodes.Unable_to_find_reference_out_of_application_function
+              );
+            }
           }
           const type = checker.getTypeAtLocation(node.name);
           return newExpr("PropAccessExpr", [
@@ -1205,8 +1002,21 @@ export function compile(
                     symbol.valueDeclaration
                   );
                   return getOutOfScopeValueNode(flattened, scope);
+                } else if (ts.isIdentifier(symbol.valueDeclaration)) {
+                  return symbol.valueDeclaration;
+                } else if (ts.isParameter(symbol.valueDeclaration)) {
+                  /**
+                   * Cases like parameter
+                   *
+                   * (table) => {
+                   *    new StepFunction(async () => { return table.appsync.getItem(...) });
+                   * }
+                   */
+                  return ts.factory.createIdentifier(symbol.name);
                 }
+                debugger;
               }
+              debugger;
             }
           }
         }

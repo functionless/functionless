@@ -311,7 +311,7 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
   );
 
   test(
-    "Call Lambda return arns",
+    "Call Lambda return bus arns",
     (parent) => {
       const bus = new EventBus(parent, "bus");
       const busbus = new aws_events.EventBus(parent, "busbus");
@@ -996,6 +996,314 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
     },
     "key"
   );
+
+  /**
+   * Higher Order Function Tests
+   *
+   * Referencing integrations from methods outside of the closure.
+   *
+   * https://github.com/functionless/functionless/issues/148
+   */
+
+  test.skip(
+    "use method with closure",
+    (parent) => {
+      const bus = new EventBus(parent, "bus");
+      const getBus = () => bus;
+      return new Function(
+        parent,
+        "function",
+        localstackClientConfig,
+        async () => {
+          await getBus().putEvents({
+            "detail-type": "detail",
+            source: "lambda",
+            detail: {},
+          });
+        }
+      );
+    },
+    null
+  );
+
+  test.skip(
+    "use method with call",
+    (parent) => {
+      const bus = new EventBus(parent, "bus");
+      const callBus = () =>
+        bus.putEvents({
+          "detail-type": "detail",
+          source: "lambda",
+          detail: {},
+        });
+      return new Function(
+        parent,
+        "function",
+        localstackClientConfig,
+        async () => {
+          await callBus();
+        }
+      );
+    },
+    null
+  );
+
+  test.skip(
+    "use dynamic method with call",
+    (parent) => {
+      const bus = new EventBus(parent, "bus");
+      const bus2 = new EventBus(parent, "bus2");
+      const callBus = (bool: boolean) =>
+        (bool ? bus : bus2).putEvents({
+          "detail-type": "detail",
+          source: "lambda",
+          detail: {},
+        });
+      return new Function(
+        parent,
+        "function",
+        localstackClientConfig,
+        async () => {
+          await callBus(true);
+          await callBus(false);
+        }
+      );
+    },
+    null
+  );
+
+  test.skip(
+    "use dynamic method with call once",
+    (parent) => {
+      const bus = new EventBus(parent, "bus");
+      const bus2 = new EventBus(parent, "bus2");
+      const callBus = (bool: boolean) =>
+        (bool ? bus : bus2).putEvents({
+          "detail-type": "detail",
+          source: "lambda",
+          detail: {},
+        });
+      return new Function(
+        parent,
+        "function",
+        localstackClientConfig,
+        async () => {
+          await callBus(false);
+        }
+      );
+    },
+    null
+  );
+
+  test.skip(
+    "use dynamic method",
+    (parent) => {
+      const bus = new EventBus(parent, "bus");
+      const bus2 = new EventBus(parent, "bus2");
+      const getBus = (bool: boolean) => (bool ? bus : bus2);
+      return new Function(
+        parent,
+        "function",
+        localstackClientConfig,
+        async () => {
+          await getBus(false).putEvents({
+            "detail-type": "detail",
+            source: "lambda",
+            detail: {},
+          });
+          await getBus(true).putEvents({
+            "detail-type": "detail",
+            source: "lambda",
+            detail: {},
+          });
+        }
+      );
+    },
+    null
+  );
+
+  test.skip(
+    "use dynamic method don't call",
+    (parent) => {
+      const bus = new EventBus(parent, "bus");
+      const bus2 = new EventBus(parent, "bus2");
+      const getBus = (bool: boolean) => (bool ? bus : bus2);
+      return new Function(
+        parent,
+        "function",
+        localstackClientConfig,
+        async () => {
+          await getBus(false).putEvents({
+            "detail-type": "detail",
+            source: "lambda",
+            detail: {},
+          });
+        }
+      );
+    },
+    null
+  );
+
+  /**
+   * This should fail?
+   */
+  test.skip(
+    "method with new ",
+    (parent) => {
+      const getBus = () => new EventBus(parent, "bus");
+      return new Function(
+        parent,
+        "function",
+        localstackClientConfig,
+        async () => {
+          await getBus().putEvents({
+            "detail-type": "detail",
+            source: "lambda",
+            detail: {},
+          });
+        }
+      );
+    },
+    null
+  );
+
+  test.skip("method with no integration ", (parent) => {
+    const mathStuff = (a: number, b: number) => a + b;
+    return new Function(
+      parent,
+      "function",
+      localstackClientConfig,
+      async () => {
+        return mathStuff(1, 2);
+      }
+    );
+  }, 3);
+
+  test.skip("chained methods", (parent) => {
+    const mathStuff = (a: number, b: number) => a + b;
+    const mathStuff2 = (a: number, b: number) => a + mathStuff(a, b);
+    return new Function(
+      parent,
+      "function",
+      localstackClientConfig,
+      async () => {
+        return mathStuff2(1, 2);
+      }
+    );
+  }, 4);
+
+  test.skip("recursion", (parent) => {
+    const mult = (a: number, b: number): number => {
+      if (b <= 0) {
+        return 1;
+      }
+      return a * mult(a, b - 1);
+    };
+    return new Function(
+      parent,
+      "function",
+      localstackClientConfig,
+      async () => {
+        return mult(2, 3);
+      }
+    );
+  }, 8);
+
+  test.skip("nested closured methods", (parent) => {
+    const callMe = (a: number, b: number): number => {
+      const helper = () => {
+        return a * 2;
+      };
+
+      return helper() + b;
+    };
+    return new Function(
+      parent,
+      "function",
+      localstackClientConfig,
+      async () => {
+        return callMe(2, 3);
+      }
+    );
+  }, 7);
+
+  test.skip(
+    "chained with integration",
+    (parent) => {
+      const func = new Function<undefined, string>(
+        parent,
+        "func2",
+        async () => {
+          return "hello";
+        }
+      );
+      const callFunction = () => func();
+      const callFunction2 = () => callFunction();
+      return new Function(
+        parent,
+        "function",
+        localstackClientConfig,
+        async () => {
+          return callFunction2();
+        }
+      );
+    },
+    "hello"
+  );
+
+  test.skip(
+    "nested with integration",
+    (parent) => {
+      const func = new Function<undefined, string>(
+        parent,
+        "func2",
+        async () => {
+          return "hello";
+        }
+      );
+      const callFunction = async () => {
+        const helper = async () => `formatted ${await func()}`;
+        return helper();
+      };
+      return new Function(
+        parent,
+        "function",
+        localstackClientConfig,
+        async () => {
+          return callFunction();
+        }
+      );
+    },
+    "formatted hello"
+  );
+
+  test.skip(
+    "recursion with integration",
+    (parent) => {
+      const func = new Function<undefined, string>(
+        parent,
+        "func2",
+        async () => {
+          return "hello";
+        }
+      );
+      const callFunction = async (n: number): Promise<string> => {
+        if (n === 0) {
+          return `${n}`;
+        }
+        return (await callFunction(n - 1)) + (await func());
+      };
+      return new Function(
+        parent,
+        "function",
+        localstackClientConfig,
+        async () => {
+          return callFunction(3);
+        }
+      );
+    },
+    "0hellohellohello"
+  );
 });
 
 const testFunction = async (
@@ -1036,7 +1344,7 @@ test("should not create new resources in lambda", async () => {
     );
     await Promise.all(Function.promises);
   }).rejects.toThrow(
-    `Cannot initialize new CDK resources in a native function, found EventBus.`
+    `Cannot initialize new CDK resources in a runtime function, found EventBus.`
   );
 });
 
@@ -1056,7 +1364,7 @@ test("should not create new functionless resources in lambda", async () => {
     );
     await Promise.all(Function.promises);
   }).rejects.toThrow(
-    "Cannot initialize new resources in a native function, found EventBus."
+    "Cannot initialize new resources in a runtime function, found EventBus."
   );
 });
 
