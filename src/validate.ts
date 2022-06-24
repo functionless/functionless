@@ -112,10 +112,13 @@ export function validate(
           ErrorCodes.Cannot_perform_arithmetic_on_variables_in_Step_Function
         ),
       ];
-    }
-    if (ts.isCallExpression(node)) {
+    } else if (ts.isCallExpression(node)) {
       return validatePromiseCalls(node);
-    } else return [];
+    } else if (ts.isNewExpression(node)) {
+      const [, diagnostic] = validateNewIntegration(node);
+      return diagnostic;
+    }
+    return [];
   }
 
   /**
@@ -178,6 +181,39 @@ export function validate(
     return [];
   }
 
+  function validateNewIntegration(
+    node: ts.NewExpression
+  ): [undefined, ts.Diagnostic[]] | [ts.NewExpression, []] {
+    const newType = checker.getTypeAtLocation(node.expression);
+    const functionlessKind = checker.getFunctionlessTypeKind(newType);
+    if (checker.getFunctionlessTypeKind(newType)) {
+      return [
+        undefined,
+        [
+          newError(
+            node,
+            ErrorCodes.Unsupported_initialization_of_resources,
+            `Cannot initialize new resources in a runtime function, found ${functionlessKind}.`
+          ),
+        ],
+      ];
+    } else if (checker.isCDKConstruct(newType)) {
+      return [
+        undefined,
+        [
+          newError(
+            node,
+            ErrorCodes.Unsupported_initialization_of_resources,
+            `Cannot initialize new CDK resources in a runtime function, found ${
+              newType.getSymbol()?.name
+            }.`
+          ),
+        ],
+      ];
+    }
+    return [node, []];
+  }
+
   function validateNewAppsyncResolverNode(
     node: NewAppsyncResolverInterface
   ): ts.Diagnostic[] {
@@ -232,6 +268,9 @@ export function validate(
           "Appsync does not support concurrent integration invocation."
         ),
       ];
+    } else if (ts.isNewExpression(node)) {
+      const [, diagnostic] = validateNewIntegration(node);
+      return diagnostic;
     }
 
     return [];
@@ -306,6 +345,9 @@ export function validate(
           ErrorCodes.API_gateway_response_mapping_template_cannot_call_integration
         ),
       ];
+    } else if (ts.isNewExpression(node)) {
+      const [, diagnostic] = validateNewIntegration(node);
+      return diagnostic;
     }
     return [];
   }
@@ -325,6 +367,9 @@ export function validate(
           ErrorCodes.API_Gateway_does_not_support_spread_assignment_expressions
         ),
       ];
+    } else if (ts.isNewExpression(node)) {
+      const [, diagnostic] = validateNewIntegration(node);
+      return diagnostic;
     }
     return [];
   }
@@ -361,6 +406,9 @@ export function validate(
           ),
         ];
       }
+    } else if (ts.isNewExpression(node)) {
+      const [, diagnostic] = validateNewIntegration(node);
+      return diagnostic;
     }
     return [];
   }

@@ -1,5 +1,6 @@
-import { App, Stack } from "aws-cdk-lib";
-import { StepFunction, Function } from "../../src";
+import { GraphqlApi } from "@aws-cdk/aws-appsync-alpha";
+import { App, aws_events, Stack } from "aws-cdk-lib";
+import { StepFunction, Function, EventBus, AppsyncResolver } from "../../src";
 
 const app = new App({
   autoSynth: false,
@@ -131,4 +132,35 @@ new StepFunction(stack, "no promise all await", async () => {
 new StepFunction(stack, "promise all only on promise array", async () => {
   const c = [1, 2];
   return Promise.all(c);
+});
+
+// unsupported - new resources in closure
+
+new StepFunction(stack, "new step function", async () => {
+  new StepFunction(stack, "", () => {});
+});
+
+new StepFunction(stack, "new function", async () => {
+  new Function(stack, "", async () => {});
+});
+
+new StepFunction(stack, "new bus", async () => {
+  new EventBus(stack, "");
+});
+
+new StepFunction(stack, "new resolver", async () => {
+  new AppsyncResolver(
+    stack,
+    "",
+    {
+      api: new GraphqlApi(stack, "", { name: "api" }),
+      typeName: "type",
+      fieldName: "field",
+    },
+    () => {}
+  );
+});
+
+new StepFunction(stack, "cdk resource", () => {
+  new aws_events.EventBus(stack, "");
 });

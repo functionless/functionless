@@ -408,9 +408,11 @@ export namespace $AWS {
         InvocationType?: "Event" | "RequestResponse" | "DryRun";
         LogType?: "None" | "Tail";
         Qualifier?: string;
-      }) => Omit<AWSLambda.InvocationResponse, "payload"> & {
-        Payload: Output;
-      }
+      }) => Promise<
+        Omit<AWSLambda.InvocationResponse, "payload"> & {
+          Payload: Output;
+        }
+      >
     >({
       kind: "Lambda.Invoke",
       asl(call) {

@@ -29,7 +29,11 @@ import esbuild from "esbuild";
 import { ApiGatewayVtlIntegration } from "./api";
 import type { AppSyncVtlIntegration } from "./appsync";
 import { ASL } from "./asl";
-import { validateFunctionlessNode } from "./declaration";
+import {
+  FunctionDecl,
+  IntegrationInvocation,
+  validateFunctionlessNode,
+} from "./declaration";
 import { ErrorCodes, formatErrorMessage, SynthError } from "./error-code";
 import {
   IEventBus,
@@ -46,16 +50,20 @@ import {
   PrewarmClients,
   PrewarmProps,
 } from "./function-prewarm";
-import { isErr, isNativeFunctionDecl } from "./guards";
+import { isFunctionDecl } from "./guards";
 import {
   Integration,
+  IntegrationCallExpr,
   IntegrationImpl,
   INTEGRATION_TYPE_KEYS,
   isIntegration,
+  isIntegrationCallExpr,
 } from "./integration";
+import { FunctionlessNode } from "./node";
 import { isStepFunction } from "./step-function";
 import { isTable } from "./table";
-import { AnyFunction, anyOf } from "./util";
+import { AnyAsyncFunction, AnyFunction } from "./util";
+import { visitEachChild } from "./visit";
 
 export function isFunction<Payload = any, Output = any>(
   a: any
@@ -526,8 +534,6 @@ export interface FunctionProps<in P = any, O = any, OutP extends P = P>
   onFailure?: FunctionAsyncOnFailureDestination<OutP>;
 }
 
-const isNativeFunctionOrError = anyOf(isErr, isNativeFunctionDecl);
-
 /**
  * A type-safe NodeJS Lambda Function generated from the closure provided.
  *
@@ -562,7 +568,7 @@ export class Function<
    * To correctly resolve these for CDK synthesis, either use `asyncSynth()` or use `cdk synth` in the CDK cli.
    * https://twitter.com/samgoodwin89/status/1516887131108438016?s=20&t=7GRGOQ1Bp0h_cPsJgFk3Ww
    */
-  public static readonly promises: Promise<any>[] = ((global as any)[
+  public static readonly promises: Promise<void>[] = ((global as any)[
     PromisesSymbol
   ] = (global as any)[PromisesSymbol] ?? []);
 
@@ -604,22 +610,31 @@ export class Function<
     propsOrFunc:
       | FunctionProps<Payload, Out, OutPayload>
       | FunctionClosure<Payload, Out>,
-    funcOrNothing?: FunctionClosure<Payload, Out>
+    funcOrNothing?: FunctionClosure<Payload, Out>,
+    magic?: any
   ) {
-    const func = validateFunctionlessNode(
-      isNativeFunctionOrError(propsOrFunc)
-        ? propsOrFunc
-        : isNativeFunctionOrError(funcOrNothing)
-        ? funcOrNothing
-        : undefined,
-      "Function",
-      isNativeFunctionDecl
-    );
-    const props = isNativeFunctionOrError(propsOrFunc)
-      ? undefined
-      : (propsOrFunc as FunctionProps<Payload, Out, OutPayload>);
+    const func =
+      typeof propsOrFunc === "function" ? propsOrFunc : funcOrNothing;
 
-    const callbackLambdaCode = new CallbackLambdaCode(func.closure, {
+    if (!func) {
+      throw new SynthError(
+        ErrorCodes.Unexpected_Error,
+        "Unexpected error: expected a function closure."
+      );
+    }
+
+    const ast = validateFunctionlessNode(
+      magic ? magic : funcOrNothing,
+      "Function",
+      isFunctionDecl
+    );
+
+    const props =
+      typeof propsOrFunc === "function"
+        ? undefined
+        : (propsOrFunc as FunctionProps<Payload, Out, OutPayload>);
+
+    const callbackLambdaCode = new CallbackLambdaCode(func, {
       clientConfigRetriever: props?.clientConfigRetriever,
     });
     const { onSuccess, onFailure, ...restProps } = props ?? {};
@@ -636,13 +651,42 @@ export class Function<
       ),
     });
 
-    // Poison pill that forces Function synthesis to fail when the closure serialization has not completed.
-    // Closure synthesis runs async, but CDK does not normally support async.
-    // In order for the synthesis to complete successfully
-    // 1. Use autoSynth `new App({ autoSynth: true })` or `new App()` with the CDK Cli (`cdk synth`)
-    // 2. Use `await asyncSynth(app)` exported from Functionless in place of `app.synth()`
-    // 3. Manually await on the closure serializer promises `await Promise.all(Function.promises)`
-    // https://github.com/functionless/functionless/issues/128
+    super(_resource);
+
+    const integrations: IntegrationInvocation[] = getInvokedIntegrations(
+      ast
+    ).map((i) => {
+      const integ = i.expr.ref();
+      if (!isIntegration<Integration>(integ)) {
+        // TODO: create specific error.
+        throw new SynthError(ErrorCodes.Unexpected_Error);
+      }
+      return {
+        args: i.args,
+        integration: integ,
+      };
+    });
+
+    // retrieve and bind all found native integrations. Will fail if the integration does not support native integration.
+    const nativeIntegrationsPrewarm = integrations.flatMap(
+      ({ integration, args }) => {
+        const integ = new IntegrationImpl(integration).native;
+        integ.bind(this, args);
+        return integ.preWarm ? [integ.preWarm] : [];
+      }
+    );
+
+    /**
+     * Poison pill that forces Function synthesis to fail when the closure serialization has not completed.
+     * Closure synthesis runs async, but CDK does not normally support async.
+     * In order for the synthesis to complete successfully
+     * 1. Use autoSynth `new App({ autoSynth: true })` or `new App()` with the CDK Cli (`cdk synth`)
+     * 2. Use `await asyncSynth(app)` exported from Functionless in place of `app.synth()`
+     * 3. Manually await on the closure serializer promises `await Promise.all(Function.promises)`
+     * https://github.com/functionless/functionless/issues/128
+     * NOTE: This operation should happen immediately before the `generate` promise is started.
+     *       Any operation between adding the validation and starting `generate` will always trigger the poison pill
+     */
     _resource.node.addValidation({
       validate: () =>
         this.resource.node.metadata.find(
@@ -656,22 +700,40 @@ export class Function<
             ],
     });
 
-    super(_resource);
-
-    // retrieve and bind all found native integrations. Will fail if the integration does not support native integration.
-    const nativeIntegrationsPrewarm = func.integrations.flatMap(
-      ({ integration, args }) => {
-        const integ = new IntegrationImpl(integration).native;
-        integ.bind(this, args);
-        return integ.preWarm ? [integ.preWarm] : [];
-      }
-    );
-
     // Start serializing process, add the callback to the promises so we can later ensure completion
     Function.promises.push(
-      callbackLambdaCode.generate(nativeIntegrationsPrewarm)
+      (async () => {
+        try {
+          await callbackLambdaCode.generate(nativeIntegrationsPrewarm);
+        } catch (e) {
+          if (e instanceof SynthError) {
+            throw new SynthError(
+              e.code,
+              `While serializing ${_resource.node.path}:\n\n${e.message}`
+            );
+          } else if (e instanceof Error) {
+            throw Error(
+              `While serializing ${_resource.node.path}:\n\n${e.message}`
+            );
+          }
+        }
+        return;
+      })()
     );
   }
+}
+
+function getInvokedIntegrations(ast: FunctionDecl): IntegrationCallExpr[] {
+  const nodes: IntegrationCallExpr[] = [];
+  visitEachChild(ast, function visit(node: FunctionlessNode): FunctionlessNode {
+    if (isIntegrationCallExpr(node)) {
+      nodes.push(node);
+    }
+
+    return visitEachChild(node, visit);
+  });
+
+  return nodes;
 }
 
 /**
@@ -712,7 +774,7 @@ export class CallbackLambdaCode extends aws_lambda.Code {
   private scope: Construct | undefined = undefined;
 
   constructor(
-    private func: (preWarmContext: NativePreWarmContext) => AnyFunction,
+    private func: AnyAsyncFunction,
     private props?: CallbackLambdaCodeProps
   ) {
     super();
@@ -846,22 +908,21 @@ interface TokenContext {
  * Serializes a function to a string, extracting tokens and replacing some objects with a simpler form.
  */
 export async function serialize(
-  func: (preWarmContext: NativePreWarmContext) => AnyFunction,
+  func: AnyAsyncFunction,
   integrationPrewarms: NativeIntegration<AnyFunction>["preWarm"][],
   props?: PrewarmProps
 ): Promise<[string, TokenContext[]]> {
   let tokens: string[] = [];
   const preWarmContext = new NativePreWarmContext(props);
-  const closuredFunc = func(preWarmContext);
 
   const result = await serializeFunction(
     // factory function allows us to prewarm the clients and other context.
     integrationPrewarms.length > 0
       ? () => {
           integrationPrewarms.forEach((i) => i?.(preWarmContext));
-          return closuredFunc;
+          return func;
         }
-      : closuredFunc,
+      : func,
     {
       isFactoryFunction: integrationPrewarms.length > 0,
       serialize: (obj) => {
@@ -950,19 +1011,28 @@ export async function serialize(
            */
           const transformIntegration = (integ: unknown): any => {
             if (integ && isIntegration(integ)) {
-              const copy = {
-                ...integ,
-                native: {
-                  call: integ?.native?.call,
-                  preWarm: integ?.native?.preWarm,
-                },
-              };
+              const c = integ.native?.call;
+              const call =
+                typeof c !== "undefined"
+                  ? function (...args: any[]) {
+                      return c(args, preWarmContext);
+                    }
+                  : integ.unhandledContext
+                  ? function () {
+                      integ.unhandledContext!(integ.kind, "Function");
+                    }
+                  : function () {
+                      throw new Error();
+                    };
 
-              INTEGRATION_TYPE_KEYS.filter((key) => key !== "native").forEach(
-                (key) => delete copy[key]
-              );
+              for (const prop in integ) {
+                if (!INTEGRATION_TYPE_KEYS.includes(prop as any)) {
+                  // @ts-ignore
+                  call[prop] = integ[prop];
+                }
+              }
 
-              return copy;
+              return call;
             }
             return integ;
           };

@@ -125,7 +125,6 @@ export const isWhileStmt = typeGuard("WhileStmt");
 export const isDoStmt = typeGuard("DoStmt");
 
 export const isFunctionDecl = typeGuard("FunctionDecl");
-export const isNativeFunctionDecl = typeGuard("NativeFunctionDecl");
 export const isParameterDecl = typeGuard("ParameterDecl");
 
 // generates type guards

@@ -1,6 +1,7 @@
 import * as appsync from "@aws-cdk/aws-appsync-alpha";
-import { App, Stack } from "aws-cdk-lib";
-import { AppsyncResolver, Function } from "../../src";
+import { GraphqlApi } from "@aws-cdk/aws-appsync-alpha";
+import { App, aws_events, Stack } from "aws-cdk-lib";
+import { AppsyncResolver, EventBus, Function, StepFunction } from "../../src";
 
 const app = new App({
   autoSynth: false,
@@ -223,5 +224,76 @@ new AppsyncResolver(
   async () => {
     const c = [1, 2];
     return Promise.all(c);
+  }
+);
+
+// unsupported - new resources in closure
+
+new AppsyncResolver(
+  api,
+  "new sfn",
+  {
+    fieldName: "field",
+    typeName: "type",
+  },
+  async () => {
+    new StepFunction(stack, "", () => {});
+  }
+);
+
+new AppsyncResolver(
+  api,
+  "new func",
+  {
+    fieldName: "field",
+    typeName: "type",
+  },
+  async () => {
+    new Function(stack, "", async () => {});
+  }
+);
+
+new AppsyncResolver(
+  api,
+  "new bus",
+  {
+    fieldName: "field",
+    typeName: "type",
+  },
+  async () => {
+    new EventBus(stack, "");
+  }
+);
+
+new AppsyncResolver(
+  api,
+  "new resolver",
+  {
+    fieldName: "field",
+    typeName: "type",
+  },
+  async () => {
+    new AppsyncResolver(
+      stack,
+      "",
+      {
+        api: new GraphqlApi(stack, "", { name: "api" }),
+        typeName: "type",
+        fieldName: "field",
+      },
+      () => {}
+    );
+  }
+);
+
+new AppsyncResolver(
+  api,
+  "new aws bus",
+  {
+    fieldName: "field",
+    typeName: "type",
+  },
+  async () => {
+    new aws_events.EventBus(stack, "");
   }
 );
