@@ -1,5 +1,18 @@
-import { App, aws_apigateway, aws_dynamodb, Stack } from "aws-cdk-lib";
-import { $AWS, AwsMethod, Function, Table } from "../../src";
+import {
+  App,
+  aws_apigateway,
+  aws_dynamodb,
+  aws_events,
+  Stack,
+} from "aws-cdk-lib";
+import {
+  $AWS,
+  AwsMethod,
+  EventBus,
+  Function,
+  StepFunction,
+  Table,
+} from "../../src";
 
 const app = new App({
   autoSynth: false,
@@ -106,5 +119,51 @@ new AwsMethod(
         },
       },
     });
+  }
+);
+
+// unsupported - new resources in closure
+
+new AwsMethod(
+  { httpMethod: "ANY", resource: api.root },
+  async () => {
+    const sfn = new StepFunction(stack, "", () => {});
+    return sfn({});
+  },
+  () => {
+    new StepFunction(stack, "", () => {});
+  }
+);
+
+new AwsMethod(
+  { httpMethod: "ANY", resource: api.root },
+  async () => {
+    const func = new Function<undefined, void>(stack, "", async () => {});
+    return func();
+  },
+  () => {
+    new Function(stack, "", async () => {});
+  }
+);
+
+new AwsMethod(
+  { httpMethod: "ANY", resource: api.root },
+  async () => {
+    const bus = new EventBus(stack, "");
+    return bus.putEvents({ "detail-type": "", source: "", detail: {} });
+  },
+  () => {
+    new EventBus(stack, "");
+  }
+);
+
+new AwsMethod(
+  { httpMethod: "ANY", resource: api.root },
+  async () => {
+    new aws_events.EventBus(stack, "");
+    return func(null);
+  },
+  () => {
+    new aws_events.EventBus(stack, "");
   }
 );

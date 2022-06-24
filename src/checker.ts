@@ -314,7 +314,9 @@ export function makeFunctionlessChecker(
 
     return (
       ((typeSymbol && isInstanceOf(typeSymbol, "constructs", "Construct")) ||
-        type.getBaseTypes()?.some((t) => isCDKConstruct(t))) ??
+        checker
+          .getBaseTypes(type as ts.InterfaceType)
+          ?.some((t) => isCDKConstruct(t))) ??
       false
     );
   }

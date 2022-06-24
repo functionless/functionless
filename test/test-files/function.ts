@@ -1,10 +1,17 @@
-import { App, Stack } from "aws-cdk-lib";
+import { GraphqlApi } from "@aws-cdk/aws-appsync-alpha";
+import { App, aws_events, Stack } from "aws-cdk-lib";
 import { AttributeType } from "aws-cdk-lib/aws-dynamodb";
 import {
   EventBridgeDestination,
   LambdaDestination,
 } from "aws-cdk-lib/aws-lambda-destinations";
-import { EventBus, Function, StepFunction, Table } from "../../src";
+import {
+  AppsyncResolver,
+  EventBus,
+  Function,
+  StepFunction,
+  Table,
+} from "../../src";
 
 const app = new App({
   autoSynth: false,
@@ -80,3 +87,34 @@ new Function(
     return "";
   }
 );
+
+// unsupported - new resources in closure
+
+new Function(stack, "new step function", async () => {
+  new StepFunction(stack, "", () => {});
+});
+
+new Function(stack, "new function", async () => {
+  new Function(stack, "", async () => {});
+});
+
+new Function(stack, "new bus", async () => {
+  new EventBus(stack, "");
+});
+
+new Function(stack, "new resolver", async () => {
+  new AppsyncResolver(
+    stack,
+    "",
+    {
+      api: new GraphqlApi(stack, "", { name: "api" }),
+      typeName: "type",
+      fieldName: "field",
+    },
+    () => {}
+  );
+});
+
+new Function(stack, "cdk resource", async () => {
+  new aws_events.EventBus(stack, "");
+});
