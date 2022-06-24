@@ -176,12 +176,12 @@ export namespace ErrorCodes {
   /**
    * Generic error message to denote errors that should not happen and are not the fault of the Functionless library consumer.
    *
-   * Please report this issue
+   * Please report this issue.
    */
   export const Unexpected_Error: ErrorCode = {
     code: 10005,
     type: ErrorType.ERROR,
-    title: "Unexpected Error, please report this issue",
+    title: "Unexpected Error",
   };
 
   /**
@@ -652,6 +652,40 @@ export namespace ErrorCodes {
     type: ErrorType.ERROR,
     title: "Unsupported use of Promises",
   };
+
+  /**
+   * Unable to fund reference out of application function.
+   *
+   * Functionless processes your application code to find infrastructure references, wire up permissions, build clients, and more.
+   * All infrastructure must be created outside of your application logic closures.
+   * References to those resources (Integrations) must be traceable back to their location outside of your application functions.
+   *
+   * ```ts
+   * const func = new Function(...);
+   *
+   * new Function(stack, 'id', {
+   *    // valid
+   *    func();
+   *    const f = func();
+   *    // valid
+   *    f();
+   *    const a = { f };
+   *    // valid
+   *    a.f();
+   *    // and more
+   * })
+   * ```
+   *
+   * Functionless attempts to handle all valid typescript referencing scenarios, but some may be missed.
+   *
+   * If this error is thrown and the reference should be valid, please cut a ticket.
+   */
+  export const Unable_to_find_reference_out_of_application_function: ErrorCode =
+    {
+      code: 10019,
+      type: ErrorType.ERROR,
+      title: "Unable to find reference out of application function",
+    };
 }
 
 // to prevent the closure serializer from trying to import all of functionless.

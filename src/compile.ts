@@ -495,10 +495,8 @@ export function compile(
             if (_ref) {
               return ref(_ref);
             } else {
-              // TODO: make a better error
               throw new SynthError(
-                ErrorCodes.Unexpected_Error,
-                "no out of scope ref"
+                ErrorCodes.Unable_to_find_reference_out_of_application_function
               );
             }
           }
@@ -530,10 +528,8 @@ export function compile(
             if (_ref) {
               return ref(_ref);
             } else {
-              // TODO: make a better error
               throw new SynthError(
-                ErrorCodes.Unexpected_Error,
-                "no out of scope ref"
+                ErrorCodes.Unable_to_find_reference_out_of_application_function
               );
             }
           }
