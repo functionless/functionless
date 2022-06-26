@@ -80,7 +80,6 @@ export function ensure<T>(
   message: string
 ): asserts a is T {
   if (!is(a)) {
-    debugger;
     throw new Error(message);
   }
 }
