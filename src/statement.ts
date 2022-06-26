@@ -1,4 +1,4 @@
-import { FunctionDecl } from "./declaration";
+import { BindingPattern, FunctionDecl } from "./declaration";
 import { Expr, FunctionExpr } from "./expression";
 import { isTryStmt } from "./guards";
 import { BaseNode, FunctionlessNode } from "./node";
@@ -60,7 +60,7 @@ export type VariableStmtParent =
 export class VariableStmt<
   E extends Expr | undefined = Expr | undefined
 > extends BaseStmt<"VariableStmt", VariableStmtParent> {
-  constructor(readonly name: string, readonly expr: E) {
+  constructor(readonly name: string | BindingPattern, readonly expr: E) {
     super("VariableStmt");
     if (expr) {
       expr.setParent(this);

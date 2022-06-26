@@ -743,6 +743,19 @@ export namespace ErrorCodes {
       type: ErrorType.ERROR,
       title: "Appsync Integration invocations must be deterministic",
     };
+
+  /**
+   * Unsupported Feature
+   *
+   * Generic error for unsupported features.
+   *
+   * See error message provided for more details.
+   */
+  export const Unsupported_Feature: ErrorCode = {
+    code: 10021,
+    type: ErrorType.ERROR,
+    title: "Unsupported feature",
+  };
 }
 
 // to prevent the closure serializer from trying to import all of functionless.

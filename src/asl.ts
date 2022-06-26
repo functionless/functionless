@@ -63,6 +63,7 @@ import {
   isWhileStmt,
   isReferenceExpr,
   isStmt,
+  isUnaryPostfixExpr,
 } from "./guards";
 import {
   getIntegrationExprFromIntegrationCallPattern,
@@ -2043,6 +2044,8 @@ function exprToString(expr?: Expr): string {
     return `typeof ${exprToString(expr.expr)}`;
   } else if (isUnaryExpr(expr)) {
     return `${expr.op}${exprToString(expr.expr)}`;
+  } else if (isUnaryPostfixExpr(expr)) {
+    return `${exprToString(expr.expr)}${expr.op}`;
   } else if (isUndefinedLiteralExpr(expr)) {
     return "undefined";
   } else if (isAwaitExpr(expr)) {

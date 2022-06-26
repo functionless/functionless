@@ -556,10 +556,24 @@ export function compile(
         ) {
           return toExpr(node.declarationList.declarations[0], scope);
         } else if (ts.isVariableDeclaration(node)) {
-          return newExpr("VariableStmt", [
-            ts.factory.createStringLiteral(node.name.getText()),
-            ...(node.initializer ? [toExpr(node.initializer, scope)] : []),
-          ]);
+          if (ts.isIdentifier(node.name)) {
+            return newExpr("VariableStmt", [
+              ts.factory.createStringLiteral(node.name.getText()),
+              ...(node.initializer ? [toExpr(node.initializer, scope)] : []),
+            ]);
+          } else {
+            if (!node.initializer) {
+              throw new SynthError(
+                ErrorCodes.Unexpected_Error,
+                "Variable statements with binding should have initializer"
+              );
+            }
+
+            return newExpr("VariableStmt", [
+              toExpr(node.name, scope),
+              toExpr(node.initializer, scope),
+            ]);
+          }
         } else if (ts.isIfStatement(node)) {
           return newExpr("IfStmt", [
             // when
@@ -568,6 +582,31 @@ export function compile(
             toExpr(node.thenStatement, scope),
             // else
             ...(node.elseStatement ? [toExpr(node.elseStatement, scope)] : []),
+          ]);
+        } else if (ts.isObjectBindingPattern(node)) {
+          return newExpr("ObjectBinding", [
+            ts.factory.createArrayLiteralExpression(
+              node.elements.map((e) => toExpr(e, scope))
+            ),
+          ]);
+        } else if (ts.isArrayBindingPattern(node)) {
+          return newExpr("ArrayBinding", [
+            ts.factory.createArrayLiteralExpression(
+              node.elements.map((e) =>
+                ts.isOmittedExpression(e)
+                  ? ts.factory.createIdentifier("undefined")
+                  : toExpr(e, scope)
+              )
+            ),
+          ]);
+        } else if (ts.isBindingElement(node)) {
+          return newExpr("BindingElem", [
+            toExpr(node.name, scope),
+            node.dotDotDotToken
+              ? ts.factory.createTrue()
+              : ts.factory.createFalse(),
+            toExpr(node.propertyName, scope),
+            toExpr(node.initializer, scope),
           ]);
         } else if (ts.isConditionalExpression(node)) {
           return newExpr("ConditionExpr", [
@@ -593,13 +632,25 @@ export function compile(
         } else if (ts.isPrefixUnaryExpression(node)) {
           if (
             node.operator !== ts.SyntaxKind.ExclamationToken &&
-            node.operator !== ts.SyntaxKind.MinusToken
+            node.operator !== ts.SyntaxKind.MinusToken &&
+            node.operator !== ts.SyntaxKind.MinusMinusToken &&
+            node.operator !== ts.SyntaxKind.PlusPlusToken
           ) {
             throw new Error(
               `invalid Unary Operator: ${ts.tokenToString(node.operator)}`
             );
           }
           return newExpr("UnaryExpr", [
+            ts.factory.createStringLiteral(
+              assertDefined(
+                ts.tokenToString(node.operator),
+                `Unary operator token cannot be stringified: ${node.operator}`
+              )
+            ),
+            toExpr(node.operand, scope),
+          ]);
+        } else if (ts.isPostfixUnaryExpression(node)) {
+          return newExpr("UnaryPostfixExpr", [
             ts.factory.createStringLiteral(
               assertDefined(
                 ts.tokenToString(node.operator),
@@ -828,6 +879,61 @@ export function compile(
       }
 
       /**
+       * Flattens a {@link ts.BindingPattern} into variable assignments.
+       *
+       * { a } = b;
+       * =>
+       * const a = b.a;
+       *
+       * { a, c } = b;
+       * =>
+       * const a = b.a;
+       * const c = b.c;
+       *
+       * { a: { c } } = b;
+       * =>
+       * const c = b.a.c;
+       *
+       * { a, ...rest } = b;
+       * =>
+       * const a = b.a;
+       * const rest = {}
+       * for(key in b)
+       *   rest[key] = b[key]
+       *
+       * { a: c } = b;
+       * =>
+       * const c = b.a;
+       *
+       * { a: [c] } = b;
+       * =>
+       * const c = b.a[0];
+       *
+       * [a] = b;
+       * =>
+       * b[0]
+       *
+       * [ a, c ] = b;
+       * =>
+       * const a = b[0]
+       * const c = b[1]
+       *
+       * [ a, ...rest ] = b;
+       * =>
+       * const a = b[0]
+       * const rest = []
+       * for(key in b)
+       *    if(key > 0)
+       *      rest.push(b[key])
+       *
+       * [ a: { c } ] = b;
+       * =>
+       * const c = b[0].c;
+       *
+       * TODO: Support assignment defaults;
+       */
+
+      /**
        * Flattens {@link ts.BindingElement} (destructured assignments) to a series of
        * {@link ts.ElementAccessExpression} or {@link ts.PropertyAccessExpression}
        *
@@ -861,7 +967,7 @@ export function compile(
        * { [key]: a } = b;
        * b[key];
        */
-      function flattenDestructuredAssignment(
+      function flattenBindingElement(
         element: ts.BindingElement
       ): ts.ElementAccessExpression | ts.PropertyAccessExpression {
         // if the binding renames the property, get the original
@@ -887,7 +993,7 @@ export function compile(
             }
             return element.parent.parent.initializer;
           } else if (ts.isBindingElement(element.parent.parent)) {
-            return flattenDestructuredAssignment(element.parent.parent);
+            return flattenBindingElement(element.parent.parent);
           } else {
             throw Error(
               "Cannot flatten destructured parameter: " + element.getText()
@@ -998,7 +1104,7 @@ export function compile(
                     }
                     -> b["a"];
                   */
-                  const flattened = flattenDestructuredAssignment(
+                  const flattened = flattenBindingElement(
                     symbol.valueDeclaration
                   );
                   return getOutOfScopeValueNode(flattened, scope);
@@ -1206,6 +1312,7 @@ const OperatorMappings: Record<number, BinaryOp> = {
   [ts.SyntaxKind.MinusToken]: "-",
   [ts.SyntaxKind.AsteriskToken]: "*",
   [ts.SyntaxKind.SlashToken]: "/",
+  [ts.SyntaxKind.PercentToken]: "%",
   [ts.SyntaxKind.AmpersandAmpersandToken]: "&&",
   [ts.SyntaxKind.BarBarToken]: "||",
   [ts.SyntaxKind.ExclamationEqualsToken]: "!=",
@@ -1219,6 +1326,12 @@ const OperatorMappings: Record<number, BinaryOp> = {
   [ts.SyntaxKind.ExclamationEqualsToken]: "!=",
   [ts.SyntaxKind.ExclamationEqualsEqualsToken]: "!=",
   [ts.SyntaxKind.InKeyword]: "in",
+  [ts.SyntaxKind.QuestionQuestionToken]: "??",
+  [ts.SyntaxKind.PlusEqualsToken]: "+=",
+  [ts.SyntaxKind.MinusEqualsToken]: "-=",
+  [ts.SyntaxKind.AsteriskEqualsToken]: "*=",
+  [ts.SyntaxKind.SlashEqualsToken]: "/=",
+  [ts.SyntaxKind.PercentEqualsToken]: "%=",
 } as const;
 
 // to prevent the closure serializer from trying to import all of functionless.

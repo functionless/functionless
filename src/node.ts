@@ -1,4 +1,9 @@
-import { Decl, ParameterDecl } from "./declaration";
+import {
+  BindingElem,
+  BindingPattern,
+  Decl,
+  ParameterDecl,
+} from "./declaration";
 import type { Err } from "./error";
 import { Expr } from "./expression";
 import {
@@ -15,10 +20,13 @@ import {
   isThrowStmt,
   isIfStmt,
   isCatchClause,
+  isBindingPattern,
+  isBindingElem,
+  isIdentifier,
 } from "./guards";
 import { BlockStmt, CatchClause, Stmt, VariableStmt } from "./statement";
 
-export type FunctionlessNode = Decl | Expr | Stmt | Err;
+export type FunctionlessNode = Decl | Expr | Stmt | Err | BindingPattern;
 
 export interface HasParent<Parent extends FunctionlessNode> {
   get parent(): Parent;
@@ -29,7 +37,7 @@ export abstract class BaseNode<
   Kind extends FunctionlessNode["kind"],
   Parent extends FunctionlessNode | undefined = FunctionlessNode | undefined
 > {
-  abstract readonly nodeKind: "Err" | "Expr" | "Stmt" | "Decl";
+  abstract readonly nodeKind: "Err" | "Expr" | "Stmt" | "Decl" | "Node";
 
   // @ts-ignore
   parent: Parent;
@@ -280,10 +288,13 @@ export abstract class BaseNode<
   /**
    * @returns a mapping of name to the node visible in this node's scope.
    */
-  public getLexicalScope(): Map<string, VariableStmt | ParameterDecl> {
+  public getLexicalScope(): Map<
+    string,
+    VariableStmt | ParameterDecl | BindingElem
+  > {
     return new Map(getLexicalScope(this as unknown as FunctionlessNode));
 
-    type Binding = [string, VariableStmt | ParameterDecl];
+    type Binding = [string, VariableStmt | ParameterDecl | BindingElem];
 
     function getLexicalScope(node: FunctionlessNode | undefined): Binding[] {
       if (node === undefined) {
@@ -298,16 +309,26 @@ export abstract class BaseNode<
       if (node === undefined) {
         return [];
       } else if (isVariableStmt(node)) {
+        if (isBindingPattern(node.name)) {
+          return getNames(node.name);
+        }
         return [[node.name, node]];
+      } else if (isBindingElem(node)) {
+        if (isIdentifier(node.name)) {
+          return [[node.name.name, node]];
+        }
+        return getNames(node.name);
+      } else if (isBindingPattern(node)) {
+        return node.bindings.flatMap((b) => getNames(b));
       } else if (isFunctionExpr(node) || isFunctionDecl(node)) {
         return node.parameters.reduce(
           (bindings: Binding[], param) => [...bindings, [param.name, param]],
           []
         );
       } else if (isForInStmt(node) || isForOfStmt(node)) {
-        return [[node.variableDecl.name, node.variableDecl]];
+        return getNames(node.variableDecl);
       } else if (isCatchClause(node) && node.variableDecl?.name) {
-        return [[node.variableDecl.name, node.variableDecl]];
+        return getNames(node.variableDecl);
       } else {
         return [];
       }

@@ -1,12 +1,19 @@
 import { ErrorCodes, SynthError } from "./error-code";
-import { Argument, FunctionExpr } from "./expression";
+import {
+  Argument,
+  ComputedPropertyNameExpr,
+  Expr,
+  FunctionExpr,
+  Identifier,
+  StringLiteralExpr,
+} from "./expression";
 import { isErr, isFunctionDecl, isNode, isParameterDecl } from "./guards";
 import { Integration } from "./integration";
 import { BaseNode, FunctionlessNode } from "./node";
 import { BlockStmt } from "./statement";
 import { AnyFunction, anyOf } from "./util";
 
-export type Decl = FunctionDecl | ParameterDecl;
+export type Decl = FunctionDecl | ParameterDecl | BindingElem;
 
 export function isDecl(a: any): a is Decl {
   return isNode(a) && (isFunctionDecl(a) || isParameterDecl(a));
@@ -80,6 +87,60 @@ export function validateFunctionlessNode<E extends FunctionlessNode>(
       ErrorCodes.FunctionDecl_not_compiled_by_Functionless,
       `Expected input function to ${functionLocation} to be compiled by Functionless. Make sure you have the Functionless compiler plugin configured correctly.`
     );
+  }
+}
+
+export type BindingPattern = ObjectBinding | ArrayBinding;
+
+export class BindingElem extends BaseDecl<"BindingElem", BindingPattern> {
+  constructor(
+    readonly name: Identifier | BindingPattern,
+    readonly rest: boolean,
+    readonly propertyName?:
+      | Identifier
+      | ComputedPropertyNameExpr
+      | StringLiteralExpr,
+    readonly initializer?: Expr
+  ) {
+    super("BindingElem");
+    name.setParent(this);
+    propertyName?.setParent(this);
+    initializer?.setParent(this);
+  }
+
+  public clone(): this {
+    return new BindingElem(
+      this.name,
+      this.rest,
+      this.propertyName,
+      this.initializer
+    ) as this;
+  }
+}
+
+export class ObjectBinding extends BaseNode<"ObjectBinding"> {
+  readonly nodeKind: "Node" = "Node";
+
+  constructor(readonly bindings: BindingElem[]) {
+    super("ObjectBinding");
+    bindings.forEach((b) => b.setParent(this));
+  }
+
+  public clone(): this {
+    return new ObjectBinding(this.bindings.map((b) => b.clone())) as this;
+  }
+}
+
+export class ArrayBinding extends BaseNode<"ArrayBinding"> {
+  readonly nodeKind: "Node" = "Node";
+
+  constructor(readonly bindings: (BindingElem | undefined)[]) {
+    super("ArrayBinding");
+    bindings.forEach((b) => b?.setParent(this));
+  }
+
+  public clone(): this {
+    return new ArrayBinding(this.bindings.map((b) => b?.clone())) as this;
   }
 }
 

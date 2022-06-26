@@ -1,12 +1,16 @@
 import { assertNever, assertNodeKind } from "./assert";
+import { BindingPattern } from "./declaration";
 import {} from "./error";
 import { ErrorCodes, SynthError } from "./error-code";
 import { CallExpr, Expr, FunctionExpr, Identifier } from "./expression";
 import {
   isArgument,
+  isArrayBinding,
   isArrayLiteralExpr,
   isAwaitExpr,
   isBinaryExpr,
+  isBindingElem,
+  isBindingPattern,
   isBlockStmt,
   isBooleanLiteralExpr,
   isBreakStmt,
@@ -38,12 +42,14 @@ import {
   isReturnStmt,
   isSpreadAssignExpr,
   isSpreadElementExpr,
+  isStmt,
   isStringLiteralExpr,
   isTemplateExpr,
   isThrowStmt,
   isTryStmt,
   isTypeOfExpr,
   isUnaryExpr,
+  isUnaryPostfixExpr,
   isUndefinedLiteralExpr,
   isVariableStmt,
   isWhileStmt,
@@ -177,6 +183,45 @@ export abstract class VTL {
     }
   }
 
+  public printExpr(val: string | Expr) {
+    return typeof val === "string" ? val : this.eval(val);
+  }
+
+  public printBody(body: string | Stmt | (() => void)) {
+    if (isStmt(body)) {
+      this.eval(body);
+    } else if (typeof body === "string") {
+      this.add(body);
+    } else {
+      body();
+    }
+  }
+
+  public ifStmt(
+    condition: string | Expr,
+    body: string | Stmt | (() => void),
+    elseBody?: string | Stmt | (() => void),
+    _returnVariable?: string
+  ) {
+    this.add(`#if(${this.printExpr(condition)})`);
+    this.printBody(body);
+    if (elseBody) {
+      this.add("#else");
+      this.printBody(elseBody);
+    }
+    this.add("#end");
+  }
+
+  public foreach(
+    iterVar: string | Expr,
+    iterValue: string | Expr,
+    body: string | Stmt | (() => void)
+  ) {
+    this.add(`#foreach(${iterVar} in ${this.printExpr(iterValue)})`);
+    this.printBody(body);
+    this.add("#end");
+  }
+
   /**
    * Call a service API. The Call expression will be evaluated and JSON will be rendered
    * to the Velocity Template output. This JSON payload will be passed to the
@@ -244,9 +289,27 @@ export abstract class VTL {
           "Expected the `in` binary operator to be re-written before this point"
         );
       } else if (node.op === "=") {
-        return `#set(${this.eval(node.left)} ${node.op} ${this.eval(
-          node.right
-        )})`;
+        const v = this.eval(node.left);
+        this.set(v, this.eval(node.right));
+        return v;
+      } else if (node.op === "??") {
+        const v = this.newLocalVarName();
+        const left = this.var(node.left);
+        this.ifStmt(
+          left,
+          () => {
+            this.set(v, left);
+          },
+          () => {
+            this.set(v, node.right);
+          }
+        );
+        return v;
+      } else if (["+=", "-=", "*=", "/=", "%="].includes(node.op)) {
+        return this.set(
+          this.eval(node.left),
+          `${this.eval(node.left)} ${node.op[0]} ${this.eval(node.right)}`
+        );
       }
       // VTL fails to evaluate binary expressions inside an object put e.g. $obj.put('x', 1 + 1)
       // a workaround is to use a temp variable.
@@ -354,11 +417,10 @@ export abstract class VTL {
               if (initialValue !== undefined) {
                 this.set(previousTmp, initialValue);
               } else {
-                this.add(`#if(${list}.isEmpty())`);
-                this.add(
+                this.ifStmt(
+                  `${list}.isEmpty()`,
                   "$util.error('Reduce of empty array with no initial value')"
                 );
-                this.add("#end");
               }
 
               this.add(`#foreach(${firstVariable} in ${list})`);
@@ -388,11 +450,13 @@ export abstract class VTL {
           };
 
           if (initialValue === undefined) {
-            this.add("#if($foreach.index == 0)");
-            this.set(previousTmp, currentValue);
-            this.add("#else");
-            body();
-            this.add("#end");
+            this.ifStmt(
+              "$foreach.index == 0",
+              () => {
+                this.set(previousTmp, currentValue);
+              },
+              body
+            );
           } else {
             body();
           }
@@ -415,34 +479,26 @@ export abstract class VTL {
         .join(", ")})`;
     } else if (isConditionExpr(node)) {
       const val = this.newLocalVarName();
-      this.add(`#if(${this.eval(node.when)})`);
-      this.set(val, node.then);
-      this.add("#else");
-      this.set(val, node._else);
-      this.add("#end");
+      this.ifStmt(
+        node.when,
+        () => {
+          this.set(val, node.then);
+        },
+        () => {
+          this.set(val, node._else);
+        }
+      );
       return val;
     } else if (isIfStmt(node)) {
-      this.add(`#if(${this.eval(node.when)})`);
-      this.eval(node.then);
-      if (node._else) {
-        this.add("#else");
-        this.eval(node._else);
-      }
-      this.add("#end");
-      return undefined;
+      return this.ifStmt(node.when, node.then, node._else);
     } else if (isExprStmt(node)) {
-      if (isBinaryExpr(node.expr) && node.expr.op === "=") {
-        return this.add(this.eval(node.expr));
-      }
       return this.qr(this.eval(node.expr));
     } else if (isForInStmt(node) || isForOfStmt(node)) {
-      this.add(
-        `#foreach($${node.variableDecl.name} in ${this.eval(node.expr)}${
-          isForInStmt(node) ? ".keySet()" : ""
-        })`
+      this.foreach(
+        `$${node.variableDecl.name}`,
+        `${this.eval(node.expr)}${isForInStmt(node) ? ".keySet()" : ""})`,
+        node.body
       );
-      this.eval(node.body);
-      this.add("#end");
       return undefined;
     } else if (isFunctionDecl(node)) {
       // there should never be nested functions
@@ -522,20 +578,45 @@ export abstract class VTL {
       // a workaround is to use a temp variable.
       // it also doesn't handle like - signs alone (e.g. - $v1) so we have to put a 0 in front
       // no such problem with ! signs though
-      if (node.op === "-") {
+      if (node.op === "++" || node.op === "--") {
+        this.set(
+          this.eval(node.expr),
+          `${this.eval(node.expr)} ${node.op === "++" ? "+" : "-"} 1`
+        );
+        return this.eval(node.expr);
+      } else if (node.op === "-") {
         return this.var(`0 - ${this.eval(node.expr)}`);
       } else {
         return this.var(`${node.op}${this.eval(node.expr)}`);
       }
+    } else if (isUnaryPostfixExpr(node)) {
+      const temp = this.var(node.expr);
+      this.set(
+        this.eval(node.expr),
+        `${this.eval(node.expr)} ${node.op === "++" ? "+" : "-"} 1`
+      );
+      return temp;
     } else if (isVariableStmt(node)) {
-      const varName = isInTopLevelScope(node)
-        ? `$context.stash.${node.name}`
-        : `$${node.name}`;
-
-      if (node.expr) {
-        return this.set(varName, node.expr);
+      const variablePrefix = isInTopLevelScope(node) ? `$context.stash.` : `$`;
+      if (isBindingPattern(node.name)) {
+        if (!node.expr) {
+          throw new SynthError(
+            ErrorCodes.Unexpected_Error,
+            "Expected an initializer for a binding pattern assignment"
+          );
+        }
+        const right = this.var(node.expr);
+        this.evaluateBindingPattern(node.name, right, variablePrefix);
+        // may generate may variables, return nothing.
+        return undefined;
       } else {
-        return varName;
+        const varName = `${variablePrefix}${node.name}`;
+
+        if (node.expr) {
+          return this.set(varName, node.expr);
+        } else {
+          return varName;
+        }
       }
     } else if (isThrowStmt(node)) {
       return `#throw(${this.eval(node.expr)})`;
@@ -567,10 +648,135 @@ export abstract class VTL {
       throw node.error;
     } else if (isArgument(node)) {
       return this.eval(node.expr);
+    } else if (isBindingElem(node) || isBindingPattern(node)) {
+      throw new SynthError(
+        ErrorCodes.Unexpected_Error,
+        "BindingElm and BindingPatterns should be handled locally (ex: VariableStmt)"
+      );
     } else {
       return assertNever(node);
     }
+    debugger;
     throw new Error(`cannot evaluate Expr kind: '${node.kind}'`);
+  }
+
+  /**
+   * const { a } = b;
+   *         ^ name ^ right side of var stmt
+   * => a = b.a
+   * const { a : b } = c;
+   *        ^prop ^name ^ right side of var stmt
+   * => b = b.c
+   * const { a: { b } } = c;
+   *         ^parent prop name
+   *              ^ name  ^ right side of var statement
+   * => b = c.a.b
+   * const { a: { b = 1 } = {} } = c;
+   * => temp1 = c.a ? c.a : {}
+   *    b = temp1.b ? temp1.b : 1
+   *
+   */
+  private evaluateBindingPattern(
+    pattern: BindingPattern,
+    target: string,
+    variablePrefix: string = "$"
+  ) {
+    const rest = pattern.bindings.find((binding) => binding?.rest);
+    const properties = pattern.bindings.map((binding, i) => {
+      /**
+       * OmitElement for ArrayBinding, skip
+       */
+      if (!binding || binding === rest) {
+        return;
+      }
+
+      const accessor: string | undefined = isArrayBinding(pattern)
+        ? `[${i}]`
+        : binding.propertyName
+        ? isIdentifier(binding.propertyName)
+          ? `.${binding.propertyName.name}`
+          : isStringLiteralExpr(binding.propertyName)
+          ? `[${this.str(binding.propertyName.value)}]`
+          : `[${this.eval(binding.propertyName)}]`
+        : isIdentifier(binding.name)
+        ? `.${binding.name.name}`
+        : undefined;
+
+      if (!accessor) {
+        // This shouldn't happen, but lets error if it does!
+        // when the name is a bindingPattern, the propName should be present.
+        // when the name is an identifier, the propertyName is optional
+        debugger;
+        throw new SynthError(
+          ErrorCodes.Unexpected_Error,
+          "Could not find property name for binding element."
+        );
+      }
+
+      const next = (() => {
+        if (binding.initializer) {
+          const temp = this.var(`${target}${accessor}`);
+          this.ifStmt(`!${temp}`, () => {
+            this.set(temp, this.eval(binding.initializer));
+          });
+          return temp;
+        }
+        return `${target}${accessor}`;
+      })();
+
+      if (isBindingPattern(binding.name)) {
+        this.evaluateBindingPattern(binding.name, next, variablePrefix);
+      } else {
+        this.set(`${variablePrefix}${binding.name.name}`, next);
+      }
+
+      return accessor;
+    });
+
+    if (rest) {
+      // temp variable to write the new array or object in.
+      // If the rest is another binding pattern, this variable is used as the new target.
+      const restTemp = this.newLocalVarName();
+      if (isArrayBinding(pattern)) {
+        // take the sublist of the target array that was not in the binding pattern
+        // #set($rest = $list.subList([binding count - 1], $list.size()))
+        this.set(
+          restTemp,
+          `${target}.subList(${pattern.bindings.length - 1}, ${target}.size())`
+        );
+      } else {
+        // compute an array of the properties bound from the object
+        const userProps = properties
+          .filter((p): p is string => !!p)
+          .map((p) =>
+            // strip off the accessor patterns
+            p.startsWith(".") ? p.slice(1) : p.slice(1, p.length - 1)
+          );
+        // create a new object
+        this.set(restTemp, `{}`);
+        // create a new variable to use in the loop
+        const keyVar = this.newLocalVarName();
+        // create an array with all of the used properties
+        const keys = this.var(`[${userProps.map(this.str).join(",")}]`);
+        // copy all properties not in the keys array into the new object
+        this.foreach(keyVar, `${target}.keySet()`, () => {
+          this.ifStmt(`!${keys}.contains(${keyVar})`, () => {
+            this.set(`${restTemp}[${keyVar}]`, `${target}[${keyVar}]`);
+          });
+        });
+      }
+
+      // rest pattern supports a named rest variable
+      // const { ... rest }
+      // or another binding pattern
+      // const { ... { a, b } }
+      // weird, right?
+      if (isIdentifier(rest.name)) {
+        this.set(this.eval(rest.name), restTemp);
+      } else {
+        this.evaluateBindingPattern(rest.name, restTemp);
+      }
+    }
   }
 
   /**

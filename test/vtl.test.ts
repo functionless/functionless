@@ -621,7 +621,8 @@ test("null coalescing", () => {
     resultMatch: {
       "??": null ?? "a",
       "not ??": "a" ?? "b",
-      neither: null ?? null,
+      // nulls keys are not added to maps
+      // neither: null ?? null,
       undefined: undefined ?? "a",
     },
   });
@@ -641,6 +642,7 @@ test("binary exprs logical", () => {
       return {
         "&&": a && b,
         "||": a || b,
+        "??": a ?? b,
       };
     })
   );
@@ -650,6 +652,7 @@ test("binary exprs logical", () => {
     resultMatch: {
       "&&": true,
       "||": true,
+      "??": true,
     },
   });
 
@@ -658,6 +661,7 @@ test("binary exprs logical", () => {
     resultMatch: {
       "&&": false,
       "||": true,
+      "??": true,
     },
   });
 
@@ -666,6 +670,7 @@ test("binary exprs logical", () => {
     resultMatch: {
       "&&": false,
       "||": false,
+      "??": false,
     },
   });
 });
@@ -743,13 +748,14 @@ test("binary mutation", () => {
       const minus_n = (n -= 1);
       const multi_n = (n *= 2);
       const div_n = (n /= 3);
-      const mod_n = n % 2;
+      const mod_n = (n %= 2);
       return {
         "+=": plus_n,
         "-=": minus_n,
         "*=": multi_n,
         "/=": div_n,
         "%=": mod_n,
+        n,
       };
     })
   );
@@ -757,10 +763,11 @@ test("binary mutation", () => {
   testAppsyncVelocity(templates[1], {
     resultMatch: {
       "+=": 10,
-      "-=": 8,
+      "-=": 9,
       "*=": 18,
-      "/=": 3,
-      "%=": 1,
+      "/=": 6,
+      "%=": 0,
+      n: 0,
     },
   });
 });
@@ -855,20 +862,67 @@ test("var args push", () => {
 });
 
 // https://github.com/functionless/functionless/issues/150
-test("deconstruct", () => {
+test("deconstruct variable", () => {
   const templates = appsyncTestCase<
-    { a: string; b: string; arr: string[] },
+    {
+      a: string;
+      bb: { value: string; [key: string]: string };
+      c?: string;
+      arr: string[];
+      d: string;
+    },
     string
   >(
     reflect(($context) => {
-      const { a, b } = $context.arguments;
-      const [c, d] = $context.arguments.arr;
-      return a + b + c + d;
+      const {
+        a,
+        bb: { ["value"]: b, ["a" + "b"]: z },
+        c = "what",
+        arr: [d, , e, f = "sir", ...arrRest],
+        ...objRest
+      } = $context.arguments;
+      return a + b + c + d + e + f + objRest.d + arrRest[0] + z;
     })
   );
 
   testAppsyncVelocity(templates[1], {
-    arguments: { a: "hello", b: "world", arr: ["what", "up"] },
-    resultMatch: "helloworldwhatup",
+    arguments: {
+      a: "hello",
+      bb: { value: "world", ab: "dynamic" },
+      d: "endofobj",
+      arr: ["is", "skipme", "up", undefined, "endofarray"],
+    },
+    resultMatch: "helloworldwhatisupsirendofobjendofarraydynamic",
+  });
+});
+
+test("deconstruct parameter", () => {
+  const templates = appsyncTestCase<
+    { a: string; bb: { value: string }; c?: string; arr: string[]; d: string },
+    string
+  >(
+    reflect(
+      ({
+        arguments: {
+          a,
+          bb: { value: b },
+          c = "what",
+          arr: [d, , e, f = "sir", ...ar],
+          ...or
+        },
+      }) => {
+        return a + b + c + d + e + f + or.d, ar[0];
+      }
+    )
+  );
+
+  testAppsyncVelocity(templates[1], {
+    arguments: {
+      a: "hello",
+      bb: { value: "world" },
+      d: "endofobj",
+      arr: ["is", "skipme", "up", undefined, "endofarray"],
+    },
+    resultMatch: "helloworldwhatisupsirendofobjendofarray",
   });
 });

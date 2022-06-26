@@ -1,4 +1,5 @@
 import { assertNodeKind } from "../assert";
+import { ErrorCodes, SynthError } from "../error-code";
 import {
   ArrayLiteralExpr,
   BinaryExpr,
@@ -16,6 +17,7 @@ import {
 import {
   isArrayLiteralExpr,
   isBinaryExpr,
+  isBindingPattern,
   isComputedPropertyNameExpr,
   isElementAccessExpr,
   isIdentifier,
@@ -266,6 +268,13 @@ export const flattenStatementsScope = (
     const flattened = stmt.expr
       ? flattenExpression(stmt.expr, scope)
       : undefined;
+
+    if (isBindingPattern(stmt.name)) {
+      throw new SynthError(
+        ErrorCodes.Unsupported_Feature,
+        "Binding variable assignment is not currently supported in Event Bridge rules and input transforms. https://github.com/functionless/functionless/issues/302"
+      );
+    }
 
     return {
       ...scope,

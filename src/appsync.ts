@@ -35,6 +35,7 @@ import {
   isForOfStmt,
   isAwaitExpr,
   isPromiseExpr,
+  isBindingElem,
 } from "./guards";
 import {
   findDeepIntegrations,
@@ -138,7 +139,7 @@ export class AppsyncVTL extends VTL {
 
   protected dereference(id: Identifier): string {
     const ref = id.lookup();
-    if (isVariableStmt(ref) && isInTopLevelScope(ref)) {
+    if ((isVariableStmt(ref) || isBindingElem(ref)) && isInTopLevelScope(ref)) {
       return `$context.stash.${id.name}`;
     } else if (isParameterDecl(ref) && isFunctionDecl(ref.parent)) {
       // regardless of the name of the first argument in the root FunctionDecl, it is always the intrinsic Appsync `$context`.

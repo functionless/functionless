@@ -1,4 +1,4 @@
-import { ParameterDecl } from "./declaration";
+import { BindingElem, ParameterDecl } from "./declaration";
 import {
   isElementAccessExpr,
   isIdentifier,
@@ -45,6 +45,7 @@ export type Expr =
   | TemplateExpr
   | TypeOfExpr
   | UnaryExpr
+  | UnaryPostfixExpr
   | UndefinedLiteralExpr;
 
 export abstract class BaseExpr<
@@ -104,7 +105,7 @@ export class Identifier extends BaseExpr<"Identifier"> {
     return new Identifier(this.name) as this;
   }
 
-  public lookup(): VariableStmt | ParameterDecl | undefined {
+  public lookup(): VariableStmt | ParameterDecl | BindingElem | undefined {
     return this.getLexicalScope().get(this.name);
   }
 }
@@ -213,11 +214,13 @@ export class ConditionExpr extends BaseExpr<"ConditionExpr"> {
 }
 
 export type ValueComparisonBinaryOp = "==" | "!=" | "<" | "<=" | ">" | ">=";
-export type MathBinaryOp = "/" | "*" | "+" | "-";
-export type ComparatorOp = "&&" | "||";
+export type MathBinaryOp = "/" | "*" | "+" | "-" | "%";
+export type MutationMathBinaryOp = "+=" | "*=" | "-=" | "/=" | "%=";
+export type ComparatorOp = "&&" | "||" | "??";
 
 export type BinaryOp =
   | MathBinaryOp
+  | MutationMathBinaryOp
   | ValueComparisonBinaryOp
   | ComparatorOp
   | "="
@@ -243,7 +246,8 @@ export class BinaryExpr extends BaseExpr<"BinaryExpr"> {
   }
 }
 
-export type UnaryOp = "!" | "-";
+export type UnaryPostfixOp = "--" | "++";
+export type UnaryOp = "!" | "-" | UnaryPostfixOp;
 
 export class UnaryExpr extends BaseExpr<"UnaryExpr"> {
   constructor(readonly op: UnaryOp, readonly expr: Expr) {
@@ -253,6 +257,17 @@ export class UnaryExpr extends BaseExpr<"UnaryExpr"> {
 
   public clone(): this {
     return new UnaryExpr(this.op, this.expr.clone()) as this;
+  }
+}
+
+export class UnaryPostfixExpr extends BaseExpr<"UnaryPostfixExpr"> {
+  constructor(readonly op: UnaryPostfixOp, readonly expr: Expr) {
+    super("UnaryPostfixExpr");
+    expr.setParent(this);
+  }
+
+  public clone(): this {
+    return new UnaryPostfixExpr(this.op, this.expr.clone()) as this;
   }
 }
 

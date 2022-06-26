@@ -1,5 +1,11 @@
 import { assertNever } from "./assert";
-import { FunctionDecl, ParameterDecl } from "./declaration";
+import {
+  ArrayBinding,
+  BindingElem,
+  FunctionDecl,
+  ObjectBinding,
+  ParameterDecl,
+} from "./declaration";
 import { Err } from "./error";
 import {
   Argument,
@@ -31,12 +37,15 @@ import {
   UndefinedLiteralExpr,
   PromiseArrayExpr,
   PromiseExpr,
+  UnaryPostfixExpr,
 } from "./expression";
 import {
   isArgument,
   isArrayLiteralExpr,
   isAwaitExpr,
   isBinaryExpr,
+  isBindingElem,
+  isBindingPattern,
   isBlockStmt,
   isBooleanLiteralExpr,
   isBreakStmt,
@@ -58,6 +67,7 @@ import {
   isNewExpr,
   isNullLiteralExpr,
   isNumberLiteralExpr,
+  isObjectBinding,
   isObjectElementExpr,
   isObjectLiteralExpr,
   isParameterDecl,
@@ -76,6 +86,7 @@ import {
   isTryStmt,
   isTypeOfExpr,
   isUnaryExpr,
+  isUnaryPostfixExpr,
   isUndefinedLiteralExpr,
   isVariableStmt,
   isWhileStmt,
@@ -472,6 +483,10 @@ export function visitEachChild<T extends FunctionlessNode>(
     const expr = visitor(node.expr);
     ensure(expr, isExpr, "a UnaryExpr's expr property must be an Expr");
     return new UnaryExpr(node.op, expr) as T;
+  } else if (isUnaryPostfixExpr(node)) {
+    const expr = visitor(node.expr);
+    ensure(expr, isExpr, "a UnaryPostfixExpr's expr property must be an Expr");
+    return new UnaryPostfixExpr(node.op, expr) as T;
   } else if (isUndefinedLiteralExpr(node)) {
     return new UndefinedLiteralExpr() as T;
   } else if (isVariableStmt(node)) {
@@ -498,6 +513,52 @@ export function visitEachChild<T extends FunctionlessNode>(
     const expr = visitor(node.expr);
     ensure(expr, isExpr, "a PromiseArrayExpr's expr property must be an Expr");
     return new PromiseArrayExpr(expr) as T;
+  } else if (isBindingElem(node)) {
+    const name = visitor(node.name);
+    ensure(
+      name,
+      anyOf(isIdentifier, isBindingPattern),
+      "A BindingElm's name property must be an Identifier or a Binding Pattern"
+    );
+    const property = node.propertyName ? visitor(node.propertyName) : undefined;
+    property &&
+      ensure(
+        property,
+        anyOf(isComputedPropertyNameExpr, isIdentifier, isStringLiteralExpr),
+        "A BindingElm's propertyName property must be an Identifier, Computed, String, or undefined"
+      );
+    const initializer = node.initializer
+      ? visitor(node.initializer)
+      : undefined;
+    initializer &&
+      ensure(
+        initializer,
+        isExpr,
+        "A BindingElm's initializer property must be an Expr or undefined"
+      );
+    return new BindingElem(
+      name,
+      node.rest,
+      property as BindingElem["propertyName"],
+      initializer as BindingElem["initializer"]
+    ) as T;
+  } else if (isBindingPattern(node)) {
+    const bindings = node.bindings.map((b) => {
+      const binding = b ? visitor(b) : undefined;
+      binding &&
+        ensure(
+          binding,
+          isBindingElem,
+          "Bindings property on BindingPatterns must be a BindingElm or undefined"
+        );
+      return binding;
+    });
+
+    if (isObjectBinding(node)) {
+      return new ObjectBinding(bindings as ObjectBinding["bindings"]) as T;
+    } else {
+      return new ArrayBinding(bindings as ArrayBinding["bindings"]) as T;
+    }
   }
   return assertNever(node);
 }

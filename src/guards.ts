@@ -1,3 +1,4 @@
+import { BindingPattern } from "./declaration";
 import type { Expr } from "./expression";
 import type { FunctionlessNode } from "./node";
 import type { Stmt } from "./statement";
@@ -36,6 +37,7 @@ export function isExpr(a: any): a is Expr {
       isTemplateExpr(a) ||
       isTypeOfExpr(a) ||
       isUnaryExpr(a) ||
+      isUnaryPostfixExpr(a) ||
       isUndefinedLiteralExpr(a))
   );
 }
@@ -51,6 +53,7 @@ export const isNewExpr = typeGuard("NewExpr");
 export const isConditionExpr = typeGuard("ConditionExpr");
 export const isBinaryExpr = typeGuard("BinaryExpr");
 export const isUnaryExpr = typeGuard("UnaryExpr");
+export const isUnaryPostfixExpr = typeGuard("UnaryPostfixExpr");
 export const isNullLiteralExpr = typeGuard("NullLiteralExpr");
 export const isUndefinedLiteralExpr = typeGuard("UndefinedLiteralExpr");
 export const isBooleanLiteralExpr = typeGuard("BooleanLiteralExpr");
@@ -126,6 +129,13 @@ export const isDoStmt = typeGuard("DoStmt");
 
 export const isFunctionDecl = typeGuard("FunctionDecl");
 export const isParameterDecl = typeGuard("ParameterDecl");
+export const isBindingElem = typeGuard("BindingElem");
+
+export const isObjectBinding = typeGuard("ObjectBinding");
+export const isArrayBinding = typeGuard("ArrayBinding");
+
+export const isBindingPattern = (a: any): a is BindingPattern =>
+  isNode(a) && (isObjectBinding(a) || isArrayBinding(a));
 
 // generates type guards
 export function typeGuard<Kind extends FunctionlessNode["kind"]>(
