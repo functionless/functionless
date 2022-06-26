@@ -667,7 +667,6 @@ export abstract class VTL {
     } else {
       return assertNever(node);
     }
-    debugger;
     throw new Error(`cannot evaluate Expr kind: '${node.kind}'`);
   }
 
@@ -774,7 +773,6 @@ export abstract class VTL {
         // This shouldn't happen, but lets error if it does!
         // when the name is a bindingPattern, the propName should be present.
         // when the name is an identifier, the propertyName is optional
-        debugger;
         throw new SynthError(
           ErrorCodes.Unexpected_Error,
           "Could not find property name for binding element."

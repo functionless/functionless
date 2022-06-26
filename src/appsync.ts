@@ -566,7 +566,6 @@ function synthesizeFunctions(api: appsync.GraphqlApi, decl: FunctionDecl) {
             } = ${getResult(stmt.expr)} )\n{}`
           );
         } else {
-          debugger;
           throw new SynthError(
             ErrorCodes.Appsync_Integration_invocations_must_be_deterministic
           );

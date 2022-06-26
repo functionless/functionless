@@ -615,7 +615,6 @@ export function compile(
         } else if (ts.isBinaryExpression(node)) {
           const op = getOperator(node.operatorToken);
           if (op === undefined) {
-            debugger;
             throw new Error(
               `invalid Binary Operator: ${node.operatorToken.getText()}`
             );
