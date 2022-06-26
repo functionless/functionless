@@ -28,7 +28,7 @@ import { Construct } from "constructs";
 import esbuild from "esbuild";
 import { ApiGatewayVtlIntegration } from "./api";
 import type { AppSyncVtlIntegration } from "./appsync";
-import { ASL } from "./asl";
+import { ASL, Task } from "./asl";
 import {
   FunctionDecl,
   IntegrationInvocation,
@@ -44,13 +44,17 @@ import {
   PredicateRuleBase,
 } from "./event-bridge";
 import { makeEventBusIntegration } from "./event-bridge/event-bus";
-import { CallExpr, Expr, isVariableReference } from "./expression";
+import { CallExpr, Expr } from "./expression";
 import {
   NativePreWarmContext,
   PrewarmClients,
   PrewarmProps,
 } from "./function-prewarm";
-import { isFunctionDecl } from "./guards";
+import {
+  isFunctionDecl,
+  isStringLiteralExpr,
+  isVariableReference,
+} from "./guards";
 import {
   Integration,
   IntegrationCallExpr,
@@ -383,15 +387,30 @@ abstract class FunctionBase<in Payload, Out>
   public asl(call: CallExpr, context: ASL) {
     const payloadArg = call.getArgument("payload")?.expr;
     this.resource.grantInvoke(context.role);
+    // TODO generalize this?
+    const props = ((): Partial<Task> => {
+      if (!payloadArg) {
+        return {
+          Parameters: undefined,
+        };
+      } else if (isVariableReference(payloadArg)) {
+        return {
+          InputPath: ASL.toJsonPath(payloadArg),
+        };
+      } else if (isStringLiteralExpr(payloadArg)) {
+        return {
+          Parameters: payloadArg.value,
+        };
+      } else {
+        return {
+          Parameters: ASL.toJson(payloadArg),
+        };
+      }
+    })();
     return {
       Type: "Task" as const,
-      Resource: "arn:aws:states:::lambda:invoke",
-      Parameters: {
-        FunctionName: this.resource.functionName,
-        [`Payload${payloadArg && isVariableReference(payloadArg) ? ".$" : ""}`]:
-          payloadArg ? ASL.toJson(payloadArg) : undefined,
-      },
-      ResultSelector: "$.Payload",
+      Resource: this.resource.functionArn,
+      ...props,
     };
   }
 

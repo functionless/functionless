@@ -1,5 +1,5 @@
 import { BindingPattern } from "./declaration";
-import type { Expr } from "./expression";
+import type { Expr, VariableReference } from "./expression";
 import type { FunctionlessNode } from "./node";
 import type { Stmt } from "./statement";
 
@@ -143,4 +143,10 @@ export function typeGuard<Kind extends FunctionlessNode["kind"]>(
 ): (a: any) => a is Extract<FunctionlessNode, { kind: Kind }> {
   return (a: any): a is Extract<FunctionlessNode, { kind: Kind }> =>
     kinds.find((kind) => a?.kind === kind) !== undefined;
+}
+
+export function isVariableReference(expr: Expr): expr is VariableReference {
+  return (
+    isIdentifier(expr) || isPropAccessExpr(expr) || isElementAccessExpr(expr)
+  );
 }
