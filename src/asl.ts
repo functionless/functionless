@@ -475,7 +475,10 @@ export class ASL {
    */
   public getStateName(stmt: Stmt): string {
     if (!this.stateNames.has(stmt)) {
-      let stateName = toStateName(stmt);
+      let [stateName, updatedStatement] = toStateName(stmt);
+      if (updatedStatement && this.stateNames.has(updatedStatement)) {
+        return this.stateNames.get(updatedStatement)!;
+      }
       if (stateName === undefined) {
         throw new Error(`cannot transition to ${stmt.kind}`);
       }
@@ -489,7 +492,7 @@ export class ASL {
       } else {
         this.stateNamesCount.set(stateName, 1);
       }
-      this.stateNames.set(stmt, stateName);
+      this.stateNames.set(updatedStatement ?? stmt, stateName);
     }
     return this.stateNames.get(stmt)!;
   }
@@ -1923,56 +1926,71 @@ export namespace ASL {
   }
 }
 
-function toStateName(stmt: Stmt): string | undefined {
-  if (isIfStmt(stmt)) {
-    return `if(${exprToString(stmt.when)})`;
-  } else if (isExprStmt(stmt)) {
-    return exprToString(stmt.expr);
-  } else if (isBlockStmt(stmt)) {
+/**
+ * Formats a stateName given a statement.
+ *
+ * If a different node is used to supply the name (ex: a block uses it's first statement) then that node is returned.
+ *
+ * @returns [state name, optionally updated cache key (node)]
+ */
+function toStateName(stmt: Stmt): [string | undefined, Stmt | undefined] {
+  /**
+   * Special case that updates the statement used (cache key)
+   */
+  if (isBlockStmt(stmt)) {
     if (stmt.isFinallyBlock()) {
-      return "finally";
+      return ["finally", undefined];
     } else {
       return stmt.statements.length > 0
-        ? toStateName(stmt.statements[0])
-        : undefined;
+        ? [toStateName(stmt.statements[0])[0], stmt.statements[0]]
+        : [undefined, undefined];
     }
-  } else if (isBreakStmt(stmt)) {
-    return "break";
-  } else if (isContinueStmt(stmt)) {
-    return "continue";
-  } else if (isCatchClause(stmt)) {
-    return `catch${
-      stmt.variableDecl?.name ? `(${stmt.variableDecl?.name})` : ""
-    }`;
-  } else if (isDoStmt(stmt)) {
-    return `while (${exprToString(stmt.condition)})`;
-  } else if (isForInStmt(stmt)) {
-    return `for(${stmt.variableDecl.name} in ${exprToString(stmt.expr)})`;
-  } else if (isForOfStmt(stmt)) {
-    return `for(${stmt.variableDecl.name} of ${exprToString(stmt.expr)})`;
-  } else if (isReturnStmt(stmt)) {
-    if (stmt.expr) {
-      return `return ${exprToString(stmt.expr)}`;
-    } else {
-      return "return";
-    }
-  } else if (isThrowStmt(stmt)) {
-    return `throw ${exprToString(stmt.expr)}`;
-  } else if (isTryStmt(stmt)) {
-    return "try";
-  } else if (isVariableStmt(stmt)) {
-    if (isCatchClause(stmt.parent)) {
-      return `catch(${stmt.name})`;
-    } else {
-      return `${stmt.name} = ${
-        stmt.expr ? exprToString(stmt.expr) : "undefined"
-      }`;
-    }
-  } else if (isWhileStmt(stmt)) {
-    return `while (${exprToString(stmt.condition)})`;
-  } else {
-    return assertNever(stmt);
   }
+  const name = (() => {
+    if (isIfStmt(stmt)) {
+      return `if(${exprToString(stmt.when)})`;
+    } else if (isExprStmt(stmt)) {
+      return exprToString(stmt.expr);
+    } else if (isBreakStmt(stmt)) {
+      return "break";
+    } else if (isContinueStmt(stmt)) {
+      return "continue";
+    } else if (isCatchClause(stmt)) {
+      return `catch${
+        stmt.variableDecl?.name ? `(${stmt.variableDecl?.name})` : ""
+      }`;
+    } else if (isDoStmt(stmt)) {
+      return `while (${exprToString(stmt.condition)})`;
+    } else if (isForInStmt(stmt)) {
+      return `for(${stmt.variableDecl.name} in ${exprToString(stmt.expr)})`;
+    } else if (isForOfStmt(stmt)) {
+      return `for(${stmt.variableDecl.name} of ${exprToString(stmt.expr)})`;
+    } else if (isReturnStmt(stmt)) {
+      if (stmt.expr) {
+        return `return ${exprToString(stmt.expr)}`;
+      } else {
+        return "return";
+      }
+    } else if (isThrowStmt(stmt)) {
+      return `throw ${exprToString(stmt.expr)}`;
+    } else if (isTryStmt(stmt)) {
+      return "try";
+    } else if (isVariableStmt(stmt)) {
+      if (isCatchClause(stmt.parent)) {
+        return `catch(${stmt.name})`;
+      } else {
+        return `${stmt.name} = ${
+          stmt.expr ? exprToString(stmt.expr) : "undefined"
+        }`;
+      }
+    } else if (isWhileStmt(stmt)) {
+      return `while (${exprToString(stmt.condition)})`;
+    } else {
+      return assertNever(stmt);
+    }
+  })();
+
+  return [name, undefined];
 }
 
 function exprToString(expr?: Expr): string {

@@ -879,61 +879,6 @@ export function compile(
       }
 
       /**
-       * Flattens a {@link ts.BindingPattern} into variable assignments.
-       *
-       * { a } = b;
-       * =>
-       * const a = b.a;
-       *
-       * { a, c } = b;
-       * =>
-       * const a = b.a;
-       * const c = b.c;
-       *
-       * { a: { c } } = b;
-       * =>
-       * const c = b.a.c;
-       *
-       * { a, ...rest } = b;
-       * =>
-       * const a = b.a;
-       * const rest = {}
-       * for(key in b)
-       *   rest[key] = b[key]
-       *
-       * { a: c } = b;
-       * =>
-       * const c = b.a;
-       *
-       * { a: [c] } = b;
-       * =>
-       * const c = b.a[0];
-       *
-       * [a] = b;
-       * =>
-       * b[0]
-       *
-       * [ a, c ] = b;
-       * =>
-       * const a = b[0]
-       * const c = b[1]
-       *
-       * [ a, ...rest ] = b;
-       * =>
-       * const a = b[0]
-       * const rest = []
-       * for(key in b)
-       *    if(key > 0)
-       *      rest.push(b[key])
-       *
-       * [ a: { c } ] = b;
-       * =>
-       * const c = b[0].c;
-       *
-       * TODO: Support assignment defaults;
-       */
-
-      /**
        * Flattens {@link ts.BindingElement} (destructured assignments) to a series of
        * {@link ts.ElementAccessExpression} or {@link ts.PropertyAccessExpression}
        *

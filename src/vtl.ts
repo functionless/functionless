@@ -675,6 +675,11 @@ export abstract class VTL {
   }
 
   /**
+   * Expands a destructure/binding declaration to separate variable declarations in velocity
+   *
+   * Applies default values.
+   * Supports "rest" destructure expressions.
+   *
    * const { a } = b;
    *         ^ name ^ right side of var stmt
    * => a = b.a
@@ -689,6 +694,58 @@ export abstract class VTL {
    * => temp1 = c.a ? c.a : {}
    *    b = temp1.b ? temp1.b : 1
    *
+   * { a } = b;
+   * =>
+   * const a = b.a;
+   *
+   * { a, c } = b;
+   * =>
+   * const a = b.a;
+   * const c = b.c;
+   *
+   * { a: { c } } = b;
+   * =>
+   * const c = b.a.c;
+   *
+   * { a, ...rest } = b;
+   * =>
+   * const a = b.a;
+   * const rest = {}
+   * for(key in b)
+   *   rest[key] = b[key]
+   *
+   * { a: c } = b;
+   * =>
+   * const c = b.a;
+   *
+   * { a: [c] } = b;
+   * =>
+   * const c = b.a[0];
+   *
+   * [a] = b;
+   * =>
+   * b[0]
+   *
+   * [ a, c ] = b;
+   * =>
+   * const a = b[0]
+   * const c = b[1]
+   *
+   * [ a, ...rest ] = b;
+   * =>
+   * const a = b[0]
+   * const rest = []
+   * for(key in b)
+   *    if(key > 0)
+   *      rest.push(b[key])
+   *
+   * [ a: { c } ] = b;
+   * =>
+   * const c = b[0].c;
+   *
+   * [a, ...rest] = b
+   * const a = b[0]
+   * const rest = b[1..]
    */
   public evaluateBindingPattern(
     pattern: BindingPattern,

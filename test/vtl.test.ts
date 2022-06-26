@@ -834,7 +834,6 @@ test("assignment in object", () => {
   });
 });
 
-// https://github.com/functionless/functionless/issues/150
 test("var args push", () => {
   const templates = appsyncTestCase(
     reflect(() => {
