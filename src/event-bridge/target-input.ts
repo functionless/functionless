@@ -117,7 +117,7 @@ export const synthesizeEventBridgeTargets = (
       isIdentifier(expr)
     ) {
       const ref = getReferencePath(expr);
-      assertValidEventReference(ref, eventDecl?.name, utilsDecl?.name);
+      assertValidEventReference(ref, eventDecl, utilsDecl);
       // If the event parameter is used directly, replace it with the predefined <aws.events.event> reference.
       if (
         eventDecl &&

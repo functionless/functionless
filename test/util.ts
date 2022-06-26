@@ -136,7 +136,7 @@ export function testAppsyncVelocity<
   }
 ) {
   const template = new amplify.VelocityTemplate(
-    { content: vtl, path: "test.json" },
+    { content: vtl.replace(/\$null/g, "$___nil"), path: "test.json" },
     simulator
   );
 
@@ -164,7 +164,11 @@ export function testAppsyncVelocity<
   const json = JSON.parse(JSON.stringify(result.result));
 
   expect(normalizeCDKJson(json)).toMatchSnapshot();
-  resultMatch !== undefined && expect(json).toMatchObject(resultMatch);
+  if (typeof resultMatch === "string") {
+    expect(json).toEqual(resultMatch);
+  } else if (typeof resultMatch === "object") {
+    expect(json).toMatchObject(resultMatch);
+  }
   returned !== undefined && expect(result.isReturn).toEqual(returned);
 }
 

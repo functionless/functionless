@@ -10,6 +10,7 @@ Object {
 {\\"data\\":$input.json('$.Item')}
 #else
 #set($context.responseOverride.status = 404)
+$util.qr($context.responseOverride.status)
 {\\"requestId\\":$input.json('$.requestId'),\\"missing\\":true}
 #end",
       },
@@ -35,6 +36,7 @@ Object {
 $input.json('$.output')
 #else
 #set($context.responseOverride.status = 500)
+$util.qr($context.responseOverride.status)
 $input.json('$.error')
 #end",
       },

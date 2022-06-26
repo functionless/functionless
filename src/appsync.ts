@@ -35,6 +35,8 @@ import {
   isForOfStmt,
   isAwaitExpr,
   isPromiseExpr,
+  isBindingElem,
+  isBindingPattern,
 } from "./guards";
 import {
   findDeepIntegrations,
@@ -138,7 +140,7 @@ export class AppsyncVTL extends VTL {
 
   protected dereference(id: Identifier): string {
     const ref = id.lookup();
-    if (isVariableStmt(ref) && isInTopLevelScope(ref)) {
+    if ((isVariableStmt(ref) || isBindingElem(ref)) && isInTopLevelScope(ref)) {
       return `$context.stash.${id.name}`;
     } else if (isParameterDecl(ref) && isFunctionDecl(ref.parent)) {
       // regardless of the name of the first argument in the root FunctionDecl, it is always the intrinsic Appsync `$context`.
@@ -497,6 +499,18 @@ function synthesizeFunctions(api: appsync.GraphqlApi, decl: FunctionDecl) {
     resolverCount === 0
       ? new AppsyncVTL()
       : new AppsyncVTL(AppsyncVTL.CircuitBreaker);
+
+  if (
+    updatedDecl.parameters.length > 0 &&
+    isBindingPattern(updatedDecl.parameters[0].name)
+  ) {
+    template.evaluateBindingPattern(
+      updatedDecl.parameters[0].name,
+      "$context",
+      "$context.stash."
+    );
+  }
+
   const functions = updatedDecl.body.statements
     .map((stmt, i) => {
       const isLastExpr = i + 1 === updatedDecl.body.statements.length;
@@ -552,8 +566,8 @@ function synthesizeFunctions(api: appsync.GraphqlApi, decl: FunctionDecl) {
             } = ${getResult(stmt.expr)} )\n{}`
           );
         } else {
-          throw new Error(
-            "only a 'VariableDecl', 'Call' or 'Return' expression may call a service"
+          throw new SynthError(
+            ErrorCodes.Appsync_Integration_invocations_must_be_unidirectional_and_defined_statically
           );
         }
 

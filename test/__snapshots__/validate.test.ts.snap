@@ -233,6 +233,30 @@ https://functionless.org/docs/error-codes#unsupported-initialization-of-resource
 [7m   [0m [91m               [0m
 [7m297[0m     new aws_events.EventBus(stack, \\"\\");
 [7m   [0m [91m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+[96mtest/test-files/appsync.ts[0m:[93m314[0m:[93m12[0m - [91merror[0m[90m Functionless(10020): [0mAppsync Integration invocations must be unidirectional and defined statically
+
+https://functionless.org/docs/error-codes#appsync-integration-invocations-must-be-unidirectional-and-defined-statically
+
+[7m314[0m       await func();
+[7m   [0m [91m           ~~~~~~~[0m
+[96mtest/test-files/appsync.ts[0m:[93m329[0m:[93m12[0m - [91merror[0m[90m Functionless(10020): [0mAppsync Integration invocations must be unidirectional and defined statically
+
+https://functionless.org/docs/error-codes#appsync-integration-invocations-must-be-unidirectional-and-defined-statically
+
+[7m329[0m       await func();
+[7m   [0m [91m           ~~~~~~~[0m
+[96mtest/test-files/appsync.ts[0m:[93m344[0m:[93m12[0m - [91merror[0m[90m Functionless(10020): [0mAppsync Integration invocations must be unidirectional and defined statically
+
+https://functionless.org/docs/error-codes#appsync-integration-invocations-must-be-unidirectional-and-defined-statically
+
+[7m344[0m       await func();
+[7m   [0m [91m           ~~~~~~~[0m
+[96mtest/test-files/appsync.ts[0m:[93m358[0m:[93m46[0m - [91merror[0m[90m Functionless(10020): [0mAppsync Integration invocations must be unidirectional and defined statically
+
+https://functionless.org/docs/error-codes#appsync-integration-invocations-must-be-unidirectional-and-defined-statically
+
+[7m358[0m     const c = $context.arguments.bool ? await func() : \\"x\\";
+[7m   [0m [91m                                             ~~~~~~~[0m
 "
 `;
 

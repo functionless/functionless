@@ -13,7 +13,12 @@ import {
 } from "./checker";
 import type { FunctionDecl } from "./declaration";
 import { ErrorCodes, SynthError } from "./error-code";
-import type { FunctionExpr, BinaryOp } from "./expression";
+import type {
+  FunctionExpr,
+  BinaryOp,
+  UnaryOp,
+  PostfixUnaryOp,
+} from "./expression";
 import { FunctionlessNode } from "./node";
 import { anyOf, hasParent } from "./util";
 
@@ -327,11 +332,13 @@ export function compile(
 
         return newExpr(type, [
           ts.factory.createArrayLiteralExpression(
-            params
-              .map((param) => param.name.getText())
-              .map((arg) =>
-                newExpr("ParameterDecl", [ts.factory.createStringLiteral(arg)])
-              )
+            params.map((param) =>
+              newExpr("ParameterDecl", [
+                ts.isIdentifier(param.name)
+                  ? ts.factory.createStringLiteral(param.name.text)
+                  : toExpr(param.name, impl),
+              ])
+            )
           ),
           body,
         ]);
@@ -556,10 +563,17 @@ export function compile(
         ) {
           return toExpr(node.declarationList.declarations[0], scope);
         } else if (ts.isVariableDeclaration(node)) {
-          return newExpr("VariableStmt", [
-            ts.factory.createStringLiteral(node.name.getText()),
-            ...(node.initializer ? [toExpr(node.initializer, scope)] : []),
-          ]);
+          if (ts.isIdentifier(node.name)) {
+            return newExpr("VariableStmt", [
+              ts.factory.createStringLiteral(node.name.getText()),
+              ...(node.initializer ? [toExpr(node.initializer, scope)] : []),
+            ]);
+          } else {
+            return newExpr("VariableStmt", [
+              toExpr(node.name, scope),
+              toExpr(node.initializer, scope),
+            ]);
+          }
         } else if (ts.isIfStatement(node)) {
           return newExpr("IfStmt", [
             // when
@@ -568,6 +582,31 @@ export function compile(
             toExpr(node.thenStatement, scope),
             // else
             ...(node.elseStatement ? [toExpr(node.elseStatement, scope)] : []),
+          ]);
+        } else if (ts.isObjectBindingPattern(node)) {
+          return newExpr("ObjectBinding", [
+            ts.factory.createArrayLiteralExpression(
+              node.elements.map((e) => toExpr(e, scope))
+            ),
+          ]);
+        } else if (ts.isArrayBindingPattern(node)) {
+          return newExpr("ArrayBinding", [
+            ts.factory.createArrayLiteralExpression(
+              node.elements.map((e) =>
+                ts.isOmittedExpression(e)
+                  ? ts.factory.createIdentifier("undefined")
+                  : toExpr(e, scope)
+              )
+            ),
+          ]);
+        } else if (ts.isBindingElement(node)) {
+          return newExpr("BindingElem", [
+            toExpr(node.name, scope),
+            node.dotDotDotToken
+              ? ts.factory.createTrue()
+              : ts.factory.createFalse(),
+            toExpr(node.propertyName, scope),
+            toExpr(node.initializer, scope),
           ]);
         } else if (ts.isConditionalExpression(node)) {
           return newExpr("ConditionExpr", [
@@ -579,30 +618,31 @@ export function compile(
             toExpr(node.whenFalse, scope),
           ]);
         } else if (ts.isBinaryExpression(node)) {
-          const op = getOperator(node.operatorToken);
-          if (op === undefined) {
-            throw new Error(
-              `invalid Binary Operator: ${node.operatorToken.getText()}`
-            );
-          }
           return newExpr("BinaryExpr", [
             toExpr(node.left, scope),
-            ts.factory.createStringLiteral(op),
+            ts.factory.createStringLiteral(
+              assertDefined(
+                getBinaryOperator(node.operatorToken),
+                `Binary operator token cannot be stringified: ${node.operatorToken.kind}`
+              )
+            ),
             toExpr(node.right, scope),
           ]);
         } else if (ts.isPrefixUnaryExpression(node)) {
-          if (
-            node.operator !== ts.SyntaxKind.ExclamationToken &&
-            node.operator !== ts.SyntaxKind.MinusToken
-          ) {
-            throw new Error(
-              `invalid Unary Operator: ${ts.tokenToString(node.operator)}`
-            );
-          }
           return newExpr("UnaryExpr", [
             ts.factory.createStringLiteral(
               assertDefined(
-                ts.tokenToString(node.operator),
+                getPrefixUnaryOperator(node.operator),
+                `Unary operator token cannot be stringified: ${node.operator}`
+              )
+            ),
+            toExpr(node.operand, scope),
+          ]);
+        } else if (ts.isPostfixUnaryExpression(node)) {
+          return newExpr("PostfixUnaryExpr", [
+            ts.factory.createStringLiteral(
+              assertDefined(
+                getPostfixUnaryOperator(node.operator),
                 `Unary operator token cannot be stringified: ${node.operator}`
               )
             ),
@@ -675,21 +715,25 @@ export function compile(
           if (ts.isVariableDeclarationList(node.initializer)) {
             if (node.initializer.declarations.length === 1) {
               const varDecl = node.initializer.declarations[0];
-              if (ts.isIdentifier(varDecl.name)) {
-                // for (const i in list)
-                return newExpr(
-                  ts.isForOfStatement(node) ? "ForOfStmt" : "ForInStmt",
-                  [
-                    toExpr(varDecl, scope),
-                    toExpr(node.expression, scope),
-                    toExpr(node.statement, scope),
-                  ]
-                );
-              } else if (ts.isArrayBindingPattern(varDecl.name)) {
-                // for (const [a, b] in list)
-              }
+              return newExpr(
+                ts.isForOfStatement(node) ? "ForOfStmt" : "ForInStmt",
+                [
+                  toExpr(varDecl, scope),
+                  toExpr(node.expression, scope),
+                  toExpr(node.statement, scope),
+                ]
+              );
             }
           }
+          throw new SynthError(
+            ErrorCodes.Unsupported_Feature,
+            "For in/of loops with expression initializers are not currently supported. https://github.com/functionless/functionless/issues/305"
+          );
+        } else if (ts.isForStatement(node)) {
+          throw new SynthError(
+            ErrorCodes.Unsupported_Feature,
+            "Condition based for loops (for(;;)) are not currently supported. For in and for of loops may be supported based on the use case. https://github.com/functionless/functionless/issues/303"
+          );
         } else if (ts.isTemplateExpression(node)) {
           const exprs = [];
           if (node.head.text) {
@@ -861,7 +905,7 @@ export function compile(
        * { [key]: a } = b;
        * b[key];
        */
-      function flattenDestructuredAssignment(
+      function flattenBindingElement(
         element: ts.BindingElement
       ): ts.ElementAccessExpression | ts.PropertyAccessExpression {
         // if the binding renames the property, get the original
@@ -887,7 +931,7 @@ export function compile(
             }
             return element.parent.parent.initializer;
           } else if (ts.isBindingElement(element.parent.parent)) {
-            return flattenDestructuredAssignment(element.parent.parent);
+            return flattenBindingElement(element.parent.parent);
           } else {
             throw Error(
               "Cannot flatten destructured parameter: " + element.getText()
@@ -998,7 +1042,7 @@ export function compile(
                     }
                     -> b["a"];
                   */
-                  const flattened = flattenDestructuredAssignment(
+                  const flattened = flattenBindingElement(
                     symbol.valueDeclaration
                   );
                   return getOutOfScopeValueNode(flattened, scope);
@@ -1194,29 +1238,29 @@ export function compile(
   };
 }
 
-function getOperator(op: ts.BinaryOperatorToken): BinaryOp | undefined {
-  return OperatorMappings[op.kind as keyof typeof OperatorMappings];
+function getBinaryOperator(op: ts.BinaryOperatorToken): BinaryOp | undefined {
+  return (
+    BinaryOperatorRemappings[
+      op.kind as keyof typeof BinaryOperatorRemappings
+    ] ?? (ts.tokenToString(op.kind) as BinaryOp)
+  );
 }
 
-const OperatorMappings: Record<number, BinaryOp> = {
-  [ts.SyntaxKind.EqualsToken]: "=",
-  [ts.SyntaxKind.PlusToken]: "+",
-  [ts.SyntaxKind.MinusToken]: "-",
-  [ts.SyntaxKind.AsteriskToken]: "*",
-  [ts.SyntaxKind.SlashToken]: "/",
-  [ts.SyntaxKind.AmpersandAmpersandToken]: "&&",
-  [ts.SyntaxKind.BarBarToken]: "||",
-  [ts.SyntaxKind.ExclamationEqualsToken]: "!=",
-  [ts.SyntaxKind.ExclamationEqualsEqualsToken]: "!=",
-  [ts.SyntaxKind.EqualsEqualsToken]: "==",
+function getPrefixUnaryOperator(
+  op: ts.PrefixUnaryOperator
+): UnaryOp | undefined {
+  return ts.tokenToString(op) as UnaryOp | undefined;
+}
+
+function getPostfixUnaryOperator(
+  op: ts.PostfixUnaryOperator
+): PostfixUnaryOp | undefined {
+  return ts.tokenToString(op) as PostfixUnaryOp | undefined;
+}
+
+const BinaryOperatorRemappings: Record<number, BinaryOp> = {
   [ts.SyntaxKind.EqualsEqualsEqualsToken]: "==",
-  [ts.SyntaxKind.LessThanEqualsToken]: "<=",
-  [ts.SyntaxKind.LessThanToken]: "<",
-  [ts.SyntaxKind.GreaterThanEqualsToken]: ">=",
-  [ts.SyntaxKind.GreaterThanToken]: ">",
-  [ts.SyntaxKind.ExclamationEqualsToken]: "!=",
   [ts.SyntaxKind.ExclamationEqualsEqualsToken]: "!=",
-  [ts.SyntaxKind.InKeyword]: "in",
 } as const;
 
 // to prevent the closure serializer from trying to import all of functionless.

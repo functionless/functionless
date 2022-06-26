@@ -3,6 +3,7 @@ import {
   EventBusMapInterface,
   EventBusWhenInterface,
   EventTransformInterface,
+  findParent,
   FunctionInterface,
   FunctionlessChecker,
   isArithmeticToken,
@@ -12,6 +13,7 @@ import {
   RuleInterface,
 } from "./checker";
 import { ErrorCode, ErrorCodes, formatErrorMessage } from "./error-code";
+import { anyOf } from "./util";
 
 /**
  * Validates a TypeScript SourceFile containing Functionless primitives does not
@@ -68,6 +70,13 @@ export function validate(
       results.push(...cb(child));
     });
     return results;
+  }
+
+  function collectEachBlockChild<T>(
+    node: ts.Block,
+    cb: (node: ts.Statement) => T[]
+  ): T[] {
+    return collectEachChild(node, cb as unknown as (node: ts.Node) => T[]);
   }
 
   // apply the callback to all nodes in the tree
@@ -225,7 +234,9 @@ export function validate(
 
     return [
       ...validateNodes(node.arguments.filter((n) => n !== resolver)),
-      ...collectEachChildRecursive(resolver, validateAppsync),
+      ...(ts.isBlock(resolver.body)
+        ? collectEachBlockChild(resolver.body, validateAppsyncRootStatement)
+        : collectEachChildRecursive(resolver.body, validateAppsync)),
     ];
   }
 
@@ -240,11 +251,26 @@ export function validate(
 
     return [
       ...validateNodes(node.arguments.filter((n) => n !== resolver)),
-      ...collectEachChildRecursive(resolver, validateAppsync),
+      ...(ts.isBlock(resolver.body)
+        ? collectEachBlockChild(resolver.body, validateAppsyncRootStatement)
+        : collectEachChildRecursive(resolver.body, validateAppsync)),
     ];
   }
 
-  function validateAppsync(node: ts.Node) {
+  function validateAppsyncRootStatement(node: ts.Statement): ts.Diagnostic[] {
+    const diag = validateApiNode(node);
+
+    const childDiags = collectEachChildRecursive(node, (n) =>
+      validateAppsync(n, node)
+    );
+
+    return [...diag, ...childDiags];
+  }
+
+  function validateAppsync(
+    node: ts.Node,
+    rootStatement?: ts.Statement
+  ): ts.Diagnostic[] {
     if (ts.isCallExpression(node)) {
       if (
         ts.isPropertyAccessExpression(node.expression) &&
@@ -258,6 +284,51 @@ export function validate(
             "Appsync does not support concurrent integration invocation or methods on the `Promise` api."
           ),
         ];
+      } else if (checker.isIntegrationNode(node.expression)) {
+        /**
+         * Used by AppSync to determine of a root statement can be statically analyzed.
+         */
+        const isControlFlowStatement = anyOf(
+          ts.isEmptyStatement,
+          ts.isIfStatement,
+          ts.isDoStatement,
+          ts.isWhileStatement,
+          ts.isForStatement,
+          ts.isForInStatement,
+          ts.isForOfStatement,
+          ts.isSwitchStatement,
+          ts.isLabeledStatement,
+          ts.isTryStatement
+        );
+
+        /**
+         * If this is an integration node, app sync does not support integrations outside of the main function body.
+         *
+         * We check to see if the root statement (the one in the function body), is a conditional statement, an example of support statements:
+         * variable - const v = func()
+         * expression - await func()
+         * return - return await func()
+         *
+         * Also ensure that we are not inside an inline conditional statement.
+         *
+         * const v = x ? await func() : await func2()
+         */
+        if (
+          rootStatement &&
+          (isControlFlowStatement(rootStatement) ||
+            findParent(
+              node.expression,
+              ts.isConditionalExpression,
+              rootStatement
+            ))
+        ) {
+          return [
+            newError(
+              node,
+              ErrorCodes.Appsync_Integration_invocations_must_be_unidirectional_and_defined_statically
+            ),
+          ];
+        }
       }
       return validatePromiseCalls(node);
     } else if (checker.isPromiseArray(checker.getTypeAtLocation(node))) {

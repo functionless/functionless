@@ -1,11 +1,14 @@
 import { GraphqlApi } from "@aws-cdk/aws-appsync-alpha";
 import { Stack } from "aws-cdk-lib";
+import { AttributeType } from "aws-cdk-lib/aws-dynamodb";
 import {
   AppsyncContext,
   AppsyncResolver,
   reflect,
   StepFunction,
   Function,
+  Table,
+  $util,
 } from "../src";
 import { appsyncTestCase, testAppsyncVelocity } from "./util";
 
@@ -372,4 +375,44 @@ test("multiple linked integrations with mutation", () => {
   );
 
   testAppsyncVelocity(templates[1]);
+});
+
+test("return error", () => {
+  const table = new Table<{ pk: string; sk: string }, "pk", "sk">(
+    stack,
+    "table",
+    {
+      partitionKey: {
+        name: "pk",
+        type: AttributeType.STRING,
+      },
+      sortKey: {
+        name: "sk",
+        type: AttributeType.STRING,
+      },
+    }
+  );
+
+  expect(() => {
+    appsyncTestCase<{ num: number }, { pk: string; sk: string }>(
+      // source https://github.com/functionless/functionless/issues/266
+      reflect(async ($context) => {
+        const identity = $context.identity;
+
+        if (identity && "resolverContext" in identity) {
+          const { accountId } = identity.resolverContext;
+          return table.appsync.getItem({
+            key: {
+              pk: { S: `ACCOUNT#${accountId}` },
+              sk: { S: `ACCOUNT#${accountId}` },
+            },
+          });
+        }
+
+        return $util.error("Cannot find account.");
+      })
+    );
+  }).toThrow(
+    "Appsync Integration invocations must be unidirectional and defined statically"
+  );
 });

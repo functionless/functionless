@@ -338,7 +338,7 @@ export const synthesizePatternDocument = (
 
     const value = assertNumber(evalToConstant(other)?.constant);
 
-    assertValidEventReference(eventReference, eventDecl?.name);
+    assertValidEventReference(eventReference, eventDecl);
     const range = createSingleNumericRange(value, op);
     if (range) {
       return eventReferenceToPatternDocument(eventReference, range);
@@ -420,7 +420,7 @@ export const synthesizePatternDocument = (
       isPropAccessExpr(expr.expr.expr) ||
       isElementAccessExpr(expr.expr.expr)
     ) {
-      assertValidEventReference(eventReference, eventDecl?.name);
+      assertValidEventReference(eventReference, eventDecl);
       if (expr.expr.expr.type === "number[]") {
         const num = assertNumber(searchElement);
         return eventReferenceToPatternDocument(eventReference, {
@@ -493,7 +493,7 @@ export const synthesizePatternDocument = (
       isElementAccessExpr(expr.expr.expr)
     ) {
       if (expr.expr.expr.type === "string") {
-        assertValidEventReference(eventReference, eventDecl?.name);
+        assertValidEventReference(eventReference, eventDecl);
         return eventReferenceToPatternDocument(eventReference, {
           prefix: searchString,
         });
@@ -538,7 +538,7 @@ export const synthesizePatternDocument = (
       reference: [...eventReference.reference, value],
     };
 
-    assertValidEventReference(updateEventReference, eventDecl?.name);
+    assertValidEventReference(updateEventReference, eventDecl);
 
     return eventReferenceToPatternDocument(updateEventReference, {
       isPresent: true,
@@ -556,7 +556,7 @@ export const synthesizePatternDocument = (
       throw Error("Expected lone property reference to reference the event.");
     }
 
-    assertValidEventReference(eventReference, eventDecl?.name);
+    assertValidEventReference(eventReference, eventDecl);
 
     return eventReferenceToPatternDocument(
       eventReference,
@@ -632,7 +632,7 @@ export const synthesizePatternDocument = (
     if (leftExpr !== undefined && rightExpr !== undefined) {
       throw new Error("Expected exactly one event reference, got two.");
     } else if (leftExpr !== undefined) {
-      assertValidEventReference(leftExpr, eventDecl?.name);
+      assertValidEventReference(leftExpr, eventDecl);
       return {
         eventReference: leftExpr,
         eventExpr: left as PropAccessExpr | ElementAccessExpr,
@@ -640,7 +640,7 @@ export const synthesizePatternDocument = (
         op,
       };
     } else if (rightExpr !== undefined) {
-      assertValidEventReference(rightExpr, eventDecl?.name);
+      assertValidEventReference(rightExpr, eventDecl);
       return {
         eventReference: rightExpr,
         eventExpr: right as PropAccessExpr | ElementAccessExpr,

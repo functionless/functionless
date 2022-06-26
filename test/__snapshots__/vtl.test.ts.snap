@@ -77,6 +77,28 @@ $util.qr($v1.put('z', $v6))
 ]
 `;
 
+exports[`assignment in object 1`] = `
+Array [
+  "{
+\\"version\\": \\"2018-05-29\\",
+\\"payload\\": null
+}",
+  "#set($context.stash.y = 1)
+#set($v1 = {})
+#set($context.stash.y = 2)
+$util.qr($v1.put('x', $context.stash.y))
+$util.qr($v1.put('y', $context.stash.y))
+#return($v1)",
+]
+`;
+
+exports[`assignment in object 2`] = `
+Object {
+  "x": 2,
+  "y": 2,
+}
+`;
+
 exports[`binary expr = 1`] = `
 Array [
   "{
@@ -86,6 +108,7 @@ Array [
   "#set($v1 = $context.arguments.key == 'help me')
 #if($v1)
 #set($context.arguments.key = 'hello')
+$util.qr($context.arguments.key)
 #end
 #set($v2 = $context.arguments.key == 'hello')
 #if($v2)
@@ -128,7 +151,9 @@ Array [
   "#set($v1 = {})
 #set($v2 = $context.arguments.key == 'key')
 #set($v3 = 'key' == $context.arguments.key)
-$util.qr($v1.put('out', [$v2, $v3]))
+#set($v4 = $context.arguments.key == 'key')
+#set($v5 = 'key' == $context.arguments.key)
+$util.qr($v1.put('out', [$v2, $v3, $v4, $v5]))
 #return($v1)",
 ]
 `;
@@ -136,6 +161,8 @@ $util.qr($v1.put('out', [$v2, $v3]))
 exports[`binary expr == 2`] = `
 Object {
   "out": Array [
+    true,
+    true,
     true,
     true,
   ],
@@ -287,6 +314,13 @@ Array [
 $util.qr($v1.put('&&', $v2))
 #set($v3 = $context.stash.a || $context.stash.b)
 $util.qr($v1.put('||', $v3))
+#set($v5 = $context.stash.a)
+#if($v5)
+#set($v4 = $v5)
+#else
+#set($v4 = $context.stash.b)
+#end
+$util.qr($v1.put('??', $v4))
 #return($v1)",
 ]
 `;
@@ -294,6 +328,7 @@ $util.qr($v1.put('||', $v3))
 exports[`binary exprs logical 2`] = `
 Object {
   "&&": true,
+  "??": true,
   "||": true,
 }
 `;
@@ -301,6 +336,7 @@ Object {
 exports[`binary exprs logical 3`] = `
 Object {
   "&&": false,
+  "??": true,
   "||": true,
 }
 `;
@@ -308,6 +344,7 @@ Object {
 exports[`binary exprs logical 4`] = `
 Object {
   "&&": false,
+  "??": false,
   "||": false,
 }
 `;
@@ -329,12 +366,15 @@ $util.qr($v1.put('-', $v3))
 $util.qr($v1.put('*', $v4))
 #set($v5 = $context.stash.a / $context.stash.b)
 $util.qr($v1.put('/', $v5))
+#set($v6 = $context.stash.a % $context.stash.b)
+$util.qr($v1.put('%', $v6))
 #return($v1)",
 ]
 `;
 
 exports[`binary exprs math 2`] = `
 Object {
+  "%": 0,
   "*": 12,
   "+": 8,
   "-": 4,
@@ -408,6 +448,67 @@ Object {
   ">=": true,
   "||": 1,
 }
+`;
+
+exports[`binary mutation 1`] = `
+Array [
+  "{
+\\"version\\": \\"2018-05-29\\",
+\\"payload\\": null
+}",
+  "#set($context.stash.n = 9)
+#set($context.stash.n = $context.stash.n + 1)
+#set($context.stash.plus_n = $context.stash.n)
+#set($context.stash.n = $context.stash.n - 1)
+#set($context.stash.minus_n = $context.stash.n)
+#set($context.stash.n = $context.stash.n * 2)
+#set($context.stash.multi_n = $context.stash.n)
+#set($context.stash.n = $context.stash.n / 3)
+#set($context.stash.div_n = $context.stash.n)
+#set($context.stash.n = $context.stash.n % 2)
+#set($context.stash.mod_n = $context.stash.n)
+#set($v1 = {})
+$util.qr($v1.put('+=', $context.stash.plus_n))
+$util.qr($v1.put('-=', $context.stash.minus_n))
+$util.qr($v1.put('*=', $context.stash.multi_n))
+$util.qr($v1.put('/=', $context.stash.div_n))
+$util.qr($v1.put('%=', $context.stash.mod_n))
+$util.qr($v1.put('n', $context.stash.n))
+#return($v1)",
+]
+`;
+
+exports[`binary mutation 2`] = `
+Object {
+  "%=": 0,
+  "*=": 18,
+  "+=": 10,
+  "-=": 9,
+  "/=": 6,
+  "n": 0,
+}
+`;
+
+exports[`blockless if 1`] = `
+Array [
+  "{
+\\"version\\": \\"2018-05-29\\",
+\\"payload\\": null
+}",
+  "#set($v1 = 1 == $context.arguments.num)
+#if($v1)
+#set($context.stash.return__val = $null)
+#set($context.stash.return__flag = true)
+#return($context.stash.return__val)
+#end
+#set($v2 = 1 == $context.arguments.num)
+#if($v2)
+#else
+#set($context.stash.return__val = $null)
+#set($context.stash.return__flag = true)
+#return($context.stash.return__val)
+#end",
+]
 `;
 
 exports[`break from for-loop 1`] = `
@@ -541,6 +642,144 @@ Array [
 #return(\\"head \${v1}\\")",
 ]
 `;
+
+exports[`deconstruct for of 1`] = `
+Array [
+  "{
+\\"version\\": \\"2018-05-29\\",
+\\"payload\\": null
+}",
+  "#foreach($v1 in $context.arguments.items)
+#set($a = $v1.a)
+#set($b = $v1.bb.value)
+#set($v2 = $v1.c)
+#if(!$v2)
+#set($v2 = 'what')
+#end
+#set($c = $v2)
+#set($d = $v1.arr[0])
+#set($e = $v1.arr[2])
+#set($v3 = $v1.arr[3])
+#if(!$v3)
+#set($v3 = 'sir')
+#end
+#set($f = $v3)
+#set($v4 = $v1.arr.subList(4, $v1.arr.size()))
+#set($arrRest = $v4)
+#set($v5 = {})
+#set($v7 = ['a','bb','c','arr'])
+#foreach($v6 in $v1.keySet())
+#if(!$v7.contains($v6))
+#set($v5[$v6] = $v1[$v6])
+#end
+#end
+#set($objRest = $v5)
+#set($v8 = $a + $b)
+#set($v9 = $v8 + $c)
+#set($v10 = $v9 + $d)
+#set($v11 = $v10 + $e)
+#set($v12 = $v11 + $f)
+#set($v13 = $v12 + $objRest.d)
+#set($v14 = $v13 + $arrRest[0])
+#set($context.stash.return__val = $v14)
+#set($context.stash.return__flag = true)
+#return($context.stash.return__val)
+#end
+#return('')",
+]
+`;
+
+exports[`deconstruct for of 2`] = `"helloworldwhatisupsirendofobjendofarray"`;
+
+exports[`deconstruct parameter 1`] = `
+Array [
+  "{
+\\"version\\": \\"2018-05-29\\",
+\\"payload\\": null
+}",
+  "#set($context.stash.a = $context.arguments.a)
+#set($context.stash.b = $context.arguments.bb.value)
+#set($v1 = $context.arguments.c)
+#if(!$v1)
+#set($v1 = 'what')
+#end
+#set($context.stash.c = $v1)
+#set($context.stash.d = $context.arguments.arr[0])
+#set($context.stash.e = $context.arguments.arr[2])
+#set($v2 = $context.arguments.arr[3])
+#if(!$v2)
+#set($v2 = 'sir')
+#end
+#set($context.stash.f = $v2)
+#set($v3 = $context.arguments.arr.subList(4, $context.arguments.arr.size()))
+#set($context.stash.arrRest = $v3)
+#set($v4 = {})
+#set($v6 = ['a','bb','c','arr'])
+#foreach($v5 in $context.arguments.keySet())
+#if(!$v6.contains($v5))
+#set($v4[$v5] = $context.arguments[$v5])
+#end
+#end
+#set($context.stash.objRest = $v4)
+#set($v7 = $context.stash.a + $context.stash.b)
+#set($v8 = $v7 + $context.stash.c)
+#set($v9 = $v8 + $context.stash.d)
+#set($v10 = $v9 + $context.stash.e)
+#set($v11 = $v10 + $context.stash.f)
+#set($v12 = $v11 + $context.stash.objRest.d)
+#set($v13 = $v12 + $context.stash.arrRest[0])
+#return($v13)",
+]
+`;
+
+exports[`deconstruct parameter 2`] = `"helloworldwhatisupsirendofobjendofarray"`;
+
+exports[`deconstruct variable 1`] = `
+Array [
+  "{
+\\"version\\": \\"2018-05-29\\",
+\\"payload\\": null
+}",
+  "#set($v1 = $context.arguments)
+#set($context.stash.a = $v1.a)
+#set($context.stash.b = $v1.bb['value'])
+#set($v2 = 'a' + 'b')
+#set($context.stash.z = $v1.bb[$v2])
+#set($v3 = $v1.c)
+#if(!$v3)
+#set($v3 = 'what')
+#end
+#set($context.stash.c = $v3)
+#set($context.stash.d = $v1.arr[0])
+#set($context.stash.e = $v1.arr[2])
+#set($v4 = $v1.arr[3])
+#if(!$v4)
+#set($v4 = 'sir')
+#end
+#set($context.stash.f = $v4)
+#set($v5 = $v1.arr.subList(4, $v1.arr.size()))
+#set($context.stash.arrRest = $v5)
+#set($v6 = {})
+#set($v8 = ['a','bb','c','arr'])
+#foreach($v7 in $v1.keySet())
+#if(!$v8.contains($v7))
+#set($v6[$v7] = $v1[$v7])
+#end
+#end
+#set($context.stash.objRest = $v6)
+#set($v9 = $context.stash.a + $context.stash.b)
+#set($v10 = $v9 + $context.stash.c)
+#set($v11 = $v10 + $context.stash.d)
+#set($v12 = $v11 + $context.stash.e)
+#set($v13 = $v12 + $context.stash.f)
+#set($v14 = $v13 + $context.stash.objRest.d)
+#set($v15 = $v14 + $context.stash.arrRest[0])
+#set($v16 = $v15 + $context.stash.z)
+#return($v16)",
+]
+`;
+
+exports[`deconstruct variable 2`] = `"helloworldwhatisupsirendofobjendofarraydynamic"`;
 
 exports[`empty function returning an argument 1`] = `
 Array [
@@ -746,6 +985,53 @@ $util.qr($v1.put('value', $null))
 ]
 `;
 
+exports[`null coalescing 1`] = `
+Array [
+  "{
+\\"version\\": \\"2018-05-29\\",
+\\"payload\\": null
+}",
+  "#set($v1 = {})
+#set($v3 = $null)
+#if($v3)
+#set($v2 = $v3)
+#else
+#set($v2 = 'a')
+#end
+$util.qr($v1.put('??', $v2))
+#set($v5 = 'a')
+#if($v5)
+#set($v4 = $v5)
+#else
+#set($v4 = 'b')
+#end
+$util.qr($v1.put('not ??', $v4))
+#set($v7 = $null)
+#if($v7)
+#set($v6 = $v7)
+#else
+#set($v6 = $null)
+#end
+$util.qr($v1.put('neither', $v6))
+#set($v9 = $null)
+#if($v9)
+#set($v8 = $v9)
+#else
+#set($v8 = 'a')
+#end
+$util.qr($v1.put('undefined', $v8))
+#return($v1)",
+]
+`;
+
+exports[`null coalescing 2`] = `
+Object {
+  "??": "a",
+  "not ??": "a",
+  "undefined": "a",
+}
+`;
+
 exports[`property assignment of conditional expression 1`] = `
 Array [
   "{
@@ -909,4 +1195,126 @@ Array [
   "#set($context.stash.local = $context.arguments.a)
 #return(\\"head \${context.arguments.a} \${context.stash.local}\${context.arguments.a}\\")",
 ]
+`;
+
+exports[`unary 1`] = `
+Array [
+  "{
+\\"version\\": \\"2018-05-29\\",
+\\"payload\\": null
+}",
+  "#set($v1 = {})
+#set($v2 = !false)
+$util.qr($v1.put('!', $v2))
+#set($v3 = 0 - 10)
+$util.qr($v1.put('-', $v3))
+#set($v4 = 0 - 10)
+#set($v5 = 0 - $v4)
+$util.qr($v1.put('-(-)', $v5))
+#return($v1)",
+]
+`;
+
+exports[`unary 2`] = `
+Object {
+  "!": true,
+  "-": -10,
+  "-(-)": 10,
+}
+`;
+
+exports[`unary mutation 1`] = `
+Array [
+  "{
+\\"version\\": \\"2018-05-29\\",
+\\"payload\\": null
+}",
+  "#set($context.stash.n = 9)
+#set($v1 = {})
+#set($v2 = $context.stash.n)
+#set($context.stash.n = $context.stash.n - 1)
+$util.qr($v1.put('post--', $v2))
+#set($context.stash.n = $context.stash.n - 1)
+$util.qr($v1.put('--pre', $context.stash.n))
+#set($v3 = $context.stash.n)
+#set($context.stash.n = $context.stash.n + 1)
+$util.qr($v1.put('post++', $v3))
+#set($context.stash.n = $context.stash.n + 1)
+$util.qr($v1.put('++pre', $context.stash.n))
+#return($v1)",
+]
+`;
+
+exports[`unary mutation 2`] = `
+Object {
+  "++pre": 9,
+  "--pre": 7,
+  "post++": 7,
+  "post--": 9,
+}
+`;
+
+exports[`var args push 1`] = `
+Array [
+  "{
+\\"version\\": \\"2018-05-29\\",
+\\"payload\\": null
+}",
+  "#set($context.stash.y1 = [])
+#set($context.stash.y2 = [])
+#set($context.stash.y3 = [])
+#set($context.stash.y4 = [])
+#set($context.stash.x = [1, 2, 3])
+#set($v1 = [])
+$util.qr($v1.addAll($context.stash.x))
+$util.qr($context.stash.y1.addAll($v1))
+#set($v2 = [])
+$util.qr($v2.addAll($context.stash.x))
+$util.qr($v2.add(4))
+$util.qr($context.stash.y2.addAll($v2))
+#set($v3 = [])
+$util.qr($v3.add(0))
+$util.qr($v3.addAll($context.stash.x))
+$util.qr($context.stash.y3.addAll($v3))
+#set($v4 = [])
+$util.qr($v4.add(0))
+$util.qr($v4.addAll($context.stash.x))
+$util.qr($v4.add(4))
+$util.qr($context.stash.y4.addAll($v4))
+#set($v5 = {})
+$util.qr($v5.put('y1', $context.stash.y1))
+$util.qr($v5.put('y2', $context.stash.y2))
+$util.qr($v5.put('y3', $context.stash.y3))
+$util.qr($v5.put('y4', $context.stash.y4))
+#return($v5)",
+]
+`;
+
+exports[`var args push 2`] = `
+Object {
+  "y1": Array [
+    1,
+    2,
+    3,
+  ],
+  "y2": Array [
+    1,
+    2,
+    3,
+    4,
+  ],
+  "y3": Array [
+    0,
+    1,
+    2,
+    3,
+  ],
+  "y4": Array [
+    0,
+    1,
+    2,
+    3,
+    4,
+  ],
+}
 `;

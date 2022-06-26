@@ -503,5 +503,27 @@ export function isArithmeticToken(
   return ArithmeticOperators.includes(token as ArithmeticToken);
 }
 
+/**
+ * Invokes a predicate on the ancestors of the given node until:
+ * * the predicate is true
+ * * there is no parent
+ * * or the limit parameter is hit
+ *
+ * @param limit - An upper bound node to stop processing at.
+ */
+export function findParent<T extends ts.Node>(
+  node: ts.Node,
+  predicate: (node: ts.Node) => node is T,
+  limit?: ts.Node
+): T | undefined {
+  if (!node.parent || (limit && limit === node.parent)) {
+    return undefined;
+  } else if (predicate(node.parent)) {
+    return node.parent;
+  } else {
+    return findParent(node.parent, predicate);
+  }
+}
+
 // to prevent the closure serializer from trying to import all of functionless.
 export const deploymentOnlyModule = true;

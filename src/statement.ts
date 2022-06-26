@@ -1,6 +1,6 @@
-import { FunctionDecl } from "./declaration";
+import { BindingPattern, FunctionDecl } from "./declaration";
 import { Expr, FunctionExpr } from "./expression";
-import { isTryStmt } from "./guards";
+import { isBindingPattern, isTryStmt } from "./guards";
 import { BaseNode, FunctionlessNode } from "./node";
 
 /**
@@ -60,8 +60,11 @@ export type VariableStmtParent =
 export class VariableStmt<
   E extends Expr | undefined = Expr | undefined
 > extends BaseStmt<"VariableStmt", VariableStmtParent> {
-  constructor(readonly name: string, readonly expr: E) {
+  constructor(readonly name: string | BindingPattern, readonly expr: E) {
     super("VariableStmt");
+    if (isBindingPattern(name)) {
+      name.setParent(this);
+    }
     if (expr) {
       expr.setParent(this);
     }
@@ -138,11 +141,7 @@ export class ReturnStmt extends BaseStmt<"ReturnStmt"> {
 }
 
 export class IfStmt extends BaseStmt<"IfStmt"> {
-  constructor(
-    readonly when: Expr,
-    readonly then: BlockStmt,
-    readonly _else?: IfStmt | BlockStmt
-  ) {
+  constructor(readonly when: Expr, readonly then: Stmt, readonly _else?: Stmt) {
     super("IfStmt");
     when.setParent(this as never);
     then.setParent(this);
