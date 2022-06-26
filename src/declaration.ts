@@ -91,6 +91,38 @@ export function validateFunctionlessNode<E extends FunctionlessNode>(
 
 export type BindingPattern = ObjectBinding | ArrayBinding;
 
+/**
+ * A binding element declares new variable or acts as the root to a nested {@link BindingPattern}
+ * when destructuring an object or an array.
+ *
+ * @see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Destructuring_assignment
+ *
+ * It represents a single named element in a {@link BindingPattern}.
+ *
+ * ```ts
+ * const { a } = right;
+ *      // ^ BindingElm
+ * const [ a ] = right;
+ *      // ^ BindingElm
+ * ```
+ *
+ * * `a` - creates a variable called a with the value of the right side (`const a = right.a`).
+ * * `a: b` - creates a variable called b with the value of the right side (`const b = right.b`).
+ * * `a = "value"` - creates a variable called a with the value of the right side or "value" when the right side is undefined (`const a = right.a ?? "value"`)
+ * * `a: { b }` - creates a variable called b with the value of the right side's a value. (`const b = right.a.b`)
+ * * `...rest`- creates a variable called rest with all of the unused keys in the right side
+ *
+ * > Note: for {@link ArrayBinding}, the accessor will be a numeric index instead of a named property
+ * > `const a = right[0]`
+ *
+ * Rest (`...rest`) example:
+ *
+ * ```ts
+ * const val = { a: 1, b:2 };
+ * const { a, ...rest } = val;
+ *             // ^ { b: 2 }
+ * ```
+ */
 export class BindingElem extends BaseDecl<"BindingElem", BindingPattern> {
   constructor(
     readonly name: Identifier | BindingPattern,
@@ -117,6 +149,27 @@ export class BindingElem extends BaseDecl<"BindingElem", BindingPattern> {
   }
 }
 
+/**
+ * Extract properties or sub-objects out of an object.
+ *
+ * @see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Destructuring_assignment
+ *
+ * Container of {@link BindingElem}.
+ *
+ * ```ts
+ * const { a: { b = "value" }, ...rest } = obj;
+ * ```
+ *
+ * is the same as
+ *
+ * ```ts
+ * const b = obj.a.b ?? "value"
+ * const rest = { ...obj };
+ * delete rest.a;
+ * ```
+ *
+ * @see BindingElm for more details.
+ */
 export class ObjectBinding extends BaseNode<"ObjectBinding"> {
   readonly nodeKind: "Node" = "Node";
 
@@ -130,6 +183,26 @@ export class ObjectBinding extends BaseNode<"ObjectBinding"> {
   }
 }
 
+/**
+ * Extract properties or sub-objects out of an array.
+ *
+ * @see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Destructuring_assignment
+ *
+ * Container of {@link BindingElem}.
+ *
+ * ```ts
+ * const [ a: [ b = "value" ], ...rest ] = arr;
+ * ```
+ *
+ * is the same as
+ *
+ * ```ts
+ * const b = arr[0][0] ?? "value";
+ * const rest = arr.slice(1);
+ * ```
+ *
+ * @see BindingElm for more details.
+ */
 export class ArrayBinding extends BaseNode<"ArrayBinding"> {
   readonly nodeKind: "Node" = "Node";
 

@@ -567,7 +567,7 @@ function synthesizeFunctions(api: appsync.GraphqlApi, decl: FunctionDecl) {
           );
         } else {
           throw new SynthError(
-            ErrorCodes.Appsync_Integration_invocations_must_be_deterministic
+            ErrorCodes.Appsync_Integration_invocations_must_be_unidirectional_and_defined_statically
           );
         }
 

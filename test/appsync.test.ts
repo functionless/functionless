@@ -412,6 +412,7 @@ test("return error", () => {
         return $util.error("Cannot find account.");
       })
     );
-    // TODO put error here.
-  }).toThrow("Appsync Integration invocations must be deterministic");
+  }).toThrow(
+    "Appsync Integration invocations must be unidirectional and defined statically"
+  );
 });

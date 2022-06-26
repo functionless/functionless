@@ -49,7 +49,7 @@ import {
   isTryStmt,
   isTypeOfExpr,
   isUnaryExpr,
-  isUnaryPostfixExpr,
+  isPostfixUnaryExpr,
   isUndefinedLiteralExpr,
   isVariableStmt,
   isWhileStmt,
@@ -602,7 +602,7 @@ export abstract class VTL {
       } else {
         return this.var(`${node.op}${this.eval(node.expr)}`);
       }
-    } else if (isUnaryPostfixExpr(node)) {
+    } else if (isPostfixUnaryExpr(node)) {
       const temp = this.var(node.expr);
       this.set(
         this.eval(node.expr),

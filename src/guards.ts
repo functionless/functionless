@@ -37,7 +37,7 @@ export function isExpr(a: any): a is Expr {
       isTemplateExpr(a) ||
       isTypeOfExpr(a) ||
       isUnaryExpr(a) ||
-      isUnaryPostfixExpr(a) ||
+      isPostfixUnaryExpr(a) ||
       isUndefinedLiteralExpr(a))
   );
 }
@@ -53,7 +53,7 @@ export const isNewExpr = typeGuard("NewExpr");
 export const isConditionExpr = typeGuard("ConditionExpr");
 export const isBinaryExpr = typeGuard("BinaryExpr");
 export const isUnaryExpr = typeGuard("UnaryExpr");
-export const isUnaryPostfixExpr = typeGuard("UnaryPostfixExpr");
+export const isPostfixUnaryExpr = typeGuard("PostfixUnaryExpr");
 export const isNullLiteralExpr = typeGuard("NullLiteralExpr");
 export const isUndefinedLiteralExpr = typeGuard("UndefinedLiteralExpr");
 export const isBooleanLiteralExpr = typeGuard("BooleanLiteralExpr");

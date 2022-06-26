@@ -45,7 +45,7 @@ export type Expr =
   | TemplateExpr
   | TypeOfExpr
   | UnaryExpr
-  | UnaryPostfixExpr
+  | PostfixUnaryExpr
   | UndefinedLiteralExpr;
 
 export abstract class BaseExpr<
@@ -246,8 +246,8 @@ export class BinaryExpr extends BaseExpr<"BinaryExpr"> {
   }
 }
 
-export type UnaryPostfixOp = "--" | "++";
-export type UnaryOp = "!" | "-" | UnaryPostfixOp;
+export type PostfixUnaryOp = "--" | "++";
+export type UnaryOp = "!" | "-" | PostfixUnaryOp;
 
 export class UnaryExpr extends BaseExpr<"UnaryExpr"> {
   constructor(readonly op: UnaryOp, readonly expr: Expr) {
@@ -260,14 +260,14 @@ export class UnaryExpr extends BaseExpr<"UnaryExpr"> {
   }
 }
 
-export class UnaryPostfixExpr extends BaseExpr<"UnaryPostfixExpr"> {
-  constructor(readonly op: UnaryPostfixOp, readonly expr: Expr) {
-    super("UnaryPostfixExpr");
+export class PostfixUnaryExpr extends BaseExpr<"PostfixUnaryExpr"> {
+  constructor(readonly op: PostfixUnaryOp, readonly expr: Expr) {
+    super("PostfixUnaryExpr");
     expr.setParent(this);
   }
 
   public clone(): this {
-    return new UnaryPostfixExpr(this.op, this.expr.clone()) as this;
+    return new PostfixUnaryExpr(this.op, this.expr.clone()) as this;
   }
 }
 

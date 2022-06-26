@@ -37,7 +37,7 @@ import {
   UndefinedLiteralExpr,
   PromiseArrayExpr,
   PromiseExpr,
-  UnaryPostfixExpr,
+  PostfixUnaryExpr,
 } from "./expression";
 import {
   isArgument,
@@ -86,7 +86,7 @@ import {
   isTryStmt,
   isTypeOfExpr,
   isUnaryExpr,
-  isUnaryPostfixExpr,
+  isPostfixUnaryExpr,
   isUndefinedLiteralExpr,
   isVariableStmt,
   isWhileStmt,
@@ -344,9 +344,9 @@ export function visitEachChild<T extends FunctionlessNode>(
     const _else = node._else ? visitor(node._else) : undefined;
 
     ensure(when, isExpr, "a IfStmt's when must be an Expr");
-    ensure(then, isStmt, "a IfStmt's then must be a BlockStmt");
+    ensure(then, isStmt, "a IfStmt's then must be a Stmt");
     if (_else) {
-      ensure(_else, isStmt, "a IfStmt's else must be an IfStmt or BlockStmt");
+      ensure(_else, isStmt, "a IfStmt's else must be a Stmt");
     }
 
     return new IfStmt(when, then, _else) as T;
@@ -482,10 +482,10 @@ export function visitEachChild<T extends FunctionlessNode>(
     const expr = visitor(node.expr);
     ensure(expr, isExpr, "a UnaryExpr's expr property must be an Expr");
     return new UnaryExpr(node.op, expr) as T;
-  } else if (isUnaryPostfixExpr(node)) {
+  } else if (isPostfixUnaryExpr(node)) {
     const expr = visitor(node.expr);
     ensure(expr, isExpr, "a UnaryPostfixExpr's expr property must be an Expr");
-    return new UnaryPostfixExpr(node.op, expr) as T;
+    return new PostfixUnaryExpr(node.op, expr) as T;
   } else if (isUndefinedLiteralExpr(node)) {
     return new UndefinedLiteralExpr() as T;
   } else if (isVariableStmt(node)) {

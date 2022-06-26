@@ -1,5 +1,8 @@
 // @ts-ignore - imported for tsdoc
 import type { AwsMethod } from "./api";
+// @ts-ignore - imported for tsdoc
+import { ExpressStepFunction } from "./step-function";
+
 const BASE_URL = process.env.FUNCTIONLESS_LOCAL
   ? `http://localhost:3000`
   : `https://functionless.org`;
@@ -688,7 +691,7 @@ export namespace ErrorCodes {
     };
 
   /**
-   * Appsync Integration invocations must be deterministic.
+   * Appsync Integration invocations must be unidirectional and defined statically.
    *
    * As stated in the [AppSync Pipeline Resolvers Documents](https://docs.aws.amazon.com/appsync/latest/devguide/pipeline-resolvers.html):
    *
@@ -703,7 +706,7 @@ export namespace ErrorCodes {
    *    // valid
    *    await func();
    *    if($context.arguments.value) {
-   *       // invalid - non-deterministic
+   *       // invalid - not statically defined
    *       await func();
    *    }
    *    while($context.arguments.value) {
@@ -717,9 +720,9 @@ export namespace ErrorCodes {
    *
    * Workaround:
    *
-   * One workaround would be to invoke a lambda function which handles the non-deterministic parts of the workflow.
+   * One workaround would be to invoke a lambda function (or {@link ExpressStepFunction}) which handles the conditional parts of the workflow.
    *
-   * The result of this example would be to call the `conditionalFunc` deterministically and call `func` conditionally.
+   * The result of this example would be to call the `conditionalFunc` statically and call `func` conditionally.
    *
    * ```ts
    * const func = new Function(stack, 'id', async () => {});
@@ -737,11 +740,12 @@ export namespace ErrorCodes {
    * });
    * ```
    */
-  export const Appsync_Integration_invocations_must_be_deterministic: ErrorCode =
+  export const Appsync_Integration_invocations_must_be_unidirectional_and_defined_statically: ErrorCode =
     {
       code: 10020,
       type: ErrorType.ERROR,
-      title: "Appsync Integration invocations must be deterministic",
+      title:
+        "Appsync Integration invocations must be unidirectional and defined statically",
     };
 
   /**

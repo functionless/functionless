@@ -299,7 +299,7 @@ new AppsyncResolver(
 );
 
 /**
- * Unsupported - non-deterministic invocations
+ * Unsupported - invocations must be defined statically
  */
 
 new AppsyncResolver<{ bool: boolean }, string>(

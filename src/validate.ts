@@ -3,6 +3,7 @@ import {
   EventBusMapInterface,
   EventBusWhenInterface,
   EventTransformInterface,
+  findParent,
   FunctionInterface,
   FunctionlessChecker,
   isArithmeticToken,
@@ -12,6 +13,7 @@ import {
   RuleInterface,
 } from "./checker";
 import { ErrorCode, ErrorCodes, formatErrorMessage } from "./error-code";
+import { anyOf } from "./util";
 
 /**
  * Validates a TypeScript SourceFile containing Functionless primitives does not
@@ -74,11 +76,7 @@ export function validate(
     node: ts.Block,
     cb: (node: ts.Statement) => T[]
   ): T[] {
-    const results: T[] = [];
-    ts.forEachChild(node, (child) => {
-      results.push(...cb(child as ts.Statement));
-    });
-    return results;
+    return collectEachChild(node, cb as unknown as (node: ts.Node) => T[]);
   }
 
   // apply the callback to all nodes in the tree
@@ -288,9 +286,25 @@ export function validate(
         ];
       } else if (checker.isIntegrationNode(node.expression)) {
         /**
+         * Used by AppSync to determine of a root statement can be statically analyzed.
+         */
+        const isControlFlowStatement = anyOf(
+          ts.isEmptyStatement,
+          ts.isIfStatement,
+          ts.isDoStatement,
+          ts.isWhileStatement,
+          ts.isForStatement,
+          ts.isForInStatement,
+          ts.isForOfStatement,
+          ts.isSwitchStatement,
+          ts.isLabeledStatement,
+          ts.isTryStatement
+        );
+
+        /**
          * If this is an integration node, app sync does not support integrations outside of the main function body.
          *
-         * We check to see if the root statement (the one in the function body), if deterministic
+         * We check to see if the root statement (the one in the function body), is a conditional statement, an example of support statements:
          * variable - const v = func()
          * expression - await func()
          * return - return await func()
@@ -301,8 +315,8 @@ export function validate(
          */
         if (
           rootStatement &&
-          (!checker.isDeterministicStatement(rootStatement) ||
-            checker.findParent(
+          (isControlFlowStatement(rootStatement) ||
+            findParent(
               node.expression,
               ts.isConditionalExpression,
               rootStatement
@@ -311,7 +325,7 @@ export function validate(
           return [
             newError(
               node,
-              ErrorCodes.Appsync_Integration_invocations_must_be_deterministic
+              ErrorCodes.Appsync_Integration_invocations_must_be_unidirectional_and_defined_statically
             ),
           ];
         }
