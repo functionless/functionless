@@ -181,7 +181,6 @@ export function visitEachChild<T extends FunctionlessNode>(
         } else if (isStmt(result)) {
           return [...stmts, result];
         } else {
-          debugger;
           throw new Error(
             "visitEachChild of a BlockStmt's child statements must return a Stmt"
           );

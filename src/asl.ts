@@ -877,7 +877,6 @@ export class ASL {
       if (isAwaitExpr(expr.parent) || isReturnStmt(expr.parent)) {
         return this.eval(expr.expr, props);
       }
-      debugger;
       throw new SynthError(
         ErrorCodes.Integration_must_be_immediately_awaited_or_returned
       );
@@ -890,7 +889,6 @@ export class ASL {
       ) {
         return this.eval(expr.expr, props);
       }
-      debugger;
       throw new SynthError(
         ErrorCodes.Arrays_of_Integration_must_be_immediately_wrapped_in_Promise_all
       );
@@ -992,7 +990,6 @@ export class ASL {
         if (values?.expr && isPromiseArrayExpr(values?.expr)) {
           return this.eval(values.expr, props);
         }
-        debugger;
         throw new SynthError(ErrorCodes.Unsupported_Use_of_Promises);
       }
       throw new Error(
@@ -1064,7 +1061,6 @@ export class ASL {
     } else if (isAwaitExpr(expr)) {
       return this.eval(expr.expr, props);
     }
-    debugger;
     throw new Error(`cannot eval expression kind '${expr.kind}'`);
   }
 
@@ -1387,7 +1383,6 @@ export namespace ASL {
         .filter((e) => !isLiteralExpr(e))
         .map((e) => toJsonPath(e))})`;
     }
-    debugger;
     throw new Error(`cannot evaluate ${expr.kind} to JSON`);
   }
 
@@ -1417,7 +1412,6 @@ export namespace ASL {
       return elementAccessExprToJsonPath(expr);
     }
 
-    debugger;
     throw new Error(
       `expression kind '${expr.kind}' cannot be evaluated to a JSON Path expression.`
     );
@@ -1920,8 +1914,6 @@ export namespace ASL {
         // return aws_stepfunctions.Condition.str
       }
     }
-    debugger;
-
     throw new Error(`cannot evaluate expression: '${expr.kind}`);
   }
 }

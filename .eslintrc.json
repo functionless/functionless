@@ -114,7 +114,8 @@
     "quote-props": "off",
     "@typescript-eslint/indent": "off",
     "brace-style": "off",
-    "@typescript-eslint/explicit-member-accessibility": "off"
+    "@typescript-eslint/explicit-member-accessibility": "off",
+    "no-debugger": "error"
   },
   "overrides": [
     {

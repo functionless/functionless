@@ -480,7 +480,6 @@ export abstract class VTL {
           isIdentifier(node.expr.expr) &&
           node.expr.expr.name === "Promise"
         ) {
-          debugger;
           throw new SynthError(
             ErrorCodes.Unsupported_Use_of_Promises,
             "Appsync does not support concurrent integration invocation or methods on the `Promise` api."
@@ -648,12 +647,10 @@ export abstract class VTL {
       if (isAwaitExpr(node.parent) || isReturnStmt(node.parent)) {
         return this.eval(node.expr);
       }
-      debugger;
       throw new SynthError(
         ErrorCodes.Integration_must_be_immediately_awaited_or_returned
       );
     } else if (isPromiseArrayExpr(node)) {
-      debugger;
       throw new SynthError(
         ErrorCodes.Unsupported_Use_of_Promises,
         "Appsync does not support concurrent integration invocation."

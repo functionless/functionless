@@ -82,7 +82,6 @@ export function validateFunctionlessNode<E extends FunctionlessNode>(
   } else if (isErr(a)) {
     throw a.error;
   } else {
-    debugger;
     throw new SynthError(
       ErrorCodes.FunctionDecl_not_compiled_by_Functionless,
       `Expected input function to ${functionLocation} to be compiled by Functionless. Make sure you have the Functionless compiler plugin configured correctly.`
