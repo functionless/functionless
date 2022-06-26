@@ -1014,9 +1014,7 @@ export function compile(
                    */
                   return ts.factory.createIdentifier(symbol.name);
                 }
-                debugger;
               }
-              debugger;
             }
           }
         }

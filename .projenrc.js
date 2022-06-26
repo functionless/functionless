@@ -203,6 +203,7 @@ project.eslint.addRules({
   "@typescript-eslint/member-ordering": "off",
   "brace-style": "off",
   "@typescript-eslint/explicit-member-accessibility": "off",
+  "no-debugger": "error",
 });
 
 project.eslint.addOverride({
