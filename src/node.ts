@@ -321,9 +321,10 @@ export abstract class BaseNode<
       } else if (isBindingPattern(node)) {
         return node.bindings.flatMap((b) => getNames(b));
       } else if (isFunctionExpr(node) || isFunctionDecl(node)) {
-        return node.parameters.reduce(
-          (bindings: Binding[], param) => [...bindings, [param.name, param]],
-          []
+        return node.parameters.flatMap((param) =>
+          typeof param.name === "string"
+            ? [[param.name, param]]
+            : getNames(param.name)
         );
       } else if (isForInStmt(node) || isForOfStmt(node)) {
         return getNames(node.variableDecl);

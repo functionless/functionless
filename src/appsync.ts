@@ -36,6 +36,7 @@ import {
   isAwaitExpr,
   isPromiseExpr,
   isBindingElem,
+  isBindingPattern,
 } from "./guards";
 import {
   findDeepIntegrations,
@@ -498,6 +499,18 @@ function synthesizeFunctions(api: appsync.GraphqlApi, decl: FunctionDecl) {
     resolverCount === 0
       ? new AppsyncVTL()
       : new AppsyncVTL(AppsyncVTL.CircuitBreaker);
+
+  if (
+    updatedDecl.parameters.length > 0 &&
+    isBindingPattern(updatedDecl.parameters[0].name)
+  ) {
+    template.evaluateBindingPattern(
+      updatedDecl.parameters[0].name,
+      "$context",
+      "$context.stash."
+    );
+  }
+
   const functions = updatedDecl.body.statements
     .map((stmt, i) => {
       const isLastExpr = i + 1 === updatedDecl.body.statements.length;

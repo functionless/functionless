@@ -54,7 +54,7 @@ export class ParameterDecl extends BaseDecl<
   "ParameterDecl",
   FunctionDecl | FunctionExpr
 > {
-  constructor(readonly name: string) {
+  constructor(readonly name: string | BindingPattern) {
     super("ParameterDecl");
   }
 

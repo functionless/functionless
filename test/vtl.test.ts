@@ -907,11 +907,11 @@ test("deconstruct parameter", () => {
           a,
           bb: { value: b },
           c = "what",
-          arr: [d, , e, f = "sir", ...ar],
-          ...or
+          arr: [d, , e, f = "sir", ...arrRest],
+          ...objRest
         },
       }) => {
-        return a + b + c + d + e + f + or.d, ar[0];
+        return a + b + c + d + e + f + objRest.d + arrRest[0];
       }
     )
   );
@@ -922,6 +922,48 @@ test("deconstruct parameter", () => {
       bb: { value: "world" },
       d: "endofobj",
       arr: ["is", "skipme", "up", undefined, "endofarray"],
+    },
+    resultMatch: "helloworldwhatisupsirendofobjendofarray",
+  });
+});
+
+test("deconstruct for of", () => {
+  const templates = appsyncTestCase<
+    {
+      items: {
+        a: string;
+        bb: { value: string };
+        c?: string;
+        arr: string[];
+        d: string;
+      }[];
+    },
+    string
+  >(
+    reflect(($context) => {
+      for (const {
+        a,
+        bb: { value: b },
+        c = "what",
+        arr: [d, , e, f = "sir", ...arrRest],
+        ...objRest
+      } of $context.arguments.items) {
+        return a + b + c + d + e + f + objRest.d + arrRest[0];
+      }
+      return "";
+    })
+  );
+
+  testAppsyncVelocity(templates[1], {
+    arguments: {
+      items: [
+        {
+          a: "hello",
+          bb: { value: "world" },
+          d: "endofobj",
+          arr: ["is", "skipme", "up", undefined, "endofarray"],
+        },
+      ],
     },
     resultMatch: "helloworldwhatisupsirendofobjendofarray",
   });

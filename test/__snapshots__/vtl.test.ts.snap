@@ -643,20 +643,96 @@ Array [
 ]
 `;
 
+exports[`deconstruct for of 1`] = `
+Array [
+  "{
+\\"version\\": \\"2018-05-29\\",
+\\"payload\\": null
+}",
+  "#foreach($v1 in $context.arguments.items)
+#set($a = $v1.a)
+#set($b = $v1.bb.value)
+#set($v2 = $v1.c)
+#if(!$v2)
+#set($v2 = 'what')
+#end
+#set($c = $v2)
+#set($d = $v1.arr[0])
+#set($e = $v1.arr[2])
+#set($v3 = $v1.arr[3])
+#if(!$v3)
+#set($v3 = 'sir')
+#end
+#set($f = $v3)
+#set($v4 = $v1.arr.subList(4, $v1.arr.size()))
+#set($arrRest = $v4)
+#set($v5 = {})
+#set($v7 = ['a','bb','c','arr'])
+#foreach($v6 in $v1.keySet())
+#if(!$v7.contains($v6))
+#set($v5[$v6] = $v1[$v6])
+#end
+#end
+#set($objRest = $v5)
+#set($v8 = $a + $b)
+#set($v9 = $v8 + $c)
+#set($v10 = $v9 + $d)
+#set($v11 = $v10 + $e)
+#set($v12 = $v11 + $f)
+#set($v13 = $v12 + $objRest.d)
+#set($v14 = $v13 + $arrRest[0])
+#set($context.stash.return__val = $v14)
+#set($context.stash.return__flag = true)
+#return($context.stash.return__val)
+#end
+#return('')",
+]
+`;
+
+exports[`deconstruct for of 2`] = `"helloworldwhatisupsirendofobjendofarray"`;
+
 exports[`deconstruct parameter 1`] = `
 Array [
   "{
 \\"version\\": \\"2018-05-29\\",
 \\"payload\\": null
 }",
-  "#set($v1 = $a + $b)
-#set($v2 = $v1 + $c)
-#set($v3 = $v2 + $d)
-#return($v3)",
+  "#set($context.stash.a = $context.arguments.a)
+#set($context.stash.b = $context.arguments.bb.value)
+#set($v1 = $context.arguments.c)
+#if(!$v1)
+#set($v1 = 'what')
+#end
+#set($context.stash.c = $v1)
+#set($context.stash.d = $context.arguments.arr[0])
+#set($context.stash.e = $context.arguments.arr[2])
+#set($v2 = $context.arguments.arr[3])
+#if(!$v2)
+#set($v2 = 'sir')
+#end
+#set($context.stash.f = $v2)
+#set($v3 = $context.arguments.arr.subList(4, $context.arguments.arr.size()))
+#set($context.stash.arrRest = $v3)
+#set($v4 = {})
+#set($v6 = ['a','bb','c','arr'])
+#foreach($v5 in $context.arguments.keySet())
+#if(!$v6.contains($v5))
+#set($v4[$v5] = $context.arguments[$v5])
+#end
+#end
+#set($context.stash.objRest = $v4)
+#set($v7 = $context.stash.a + $context.stash.b)
+#set($v8 = $v7 + $context.stash.c)
+#set($v9 = $v8 + $context.stash.d)
+#set($v10 = $v9 + $context.stash.e)
+#set($v11 = $v10 + $context.stash.f)
+#set($v12 = $v11 + $context.stash.objRest.d)
+#set($v13 = $v12 + $context.stash.arrRest[0])
+#return($v13)",
 ]
 `;
 
-exports[`deconstruct parameter 2`] = `null`;
+exports[`deconstruct parameter 2`] = `"helloworldwhatisupsirendofobjendofarray"`;
 
 exports[`deconstruct variable 1`] = `
 Array [

@@ -327,11 +327,13 @@ export function compile(
 
         return newExpr(type, [
           ts.factory.createArrayLiteralExpression(
-            params
-              .map((param) => param.name.getText())
-              .map((arg) =>
-                newExpr("ParameterDecl", [ts.factory.createStringLiteral(arg)])
-              )
+            params.map((param) =>
+              newExpr("ParameterDecl", [
+                ts.isIdentifier(param.name)
+                  ? ts.factory.createStringLiteral(param.name.text)
+                  : toExpr(param.name, impl),
+              ])
+            )
           ),
           body,
         ]);
@@ -562,13 +564,6 @@ export function compile(
               ...(node.initializer ? [toExpr(node.initializer, scope)] : []),
             ]);
           } else {
-            if (!node.initializer) {
-              throw new SynthError(
-                ErrorCodes.Unexpected_Error,
-                "Variable statements with binding should have initializer"
-              );
-            }
-
             return newExpr("VariableStmt", [
               toExpr(node.name, scope),
               toExpr(node.initializer, scope),
@@ -620,6 +615,7 @@ export function compile(
         } else if (ts.isBinaryExpression(node)) {
           const op = getOperator(node.operatorToken);
           if (op === undefined) {
+            debugger;
             throw new Error(
               `invalid Binary Operator: ${node.operatorToken.getText()}`
             );
@@ -726,21 +722,25 @@ export function compile(
           if (ts.isVariableDeclarationList(node.initializer)) {
             if (node.initializer.declarations.length === 1) {
               const varDecl = node.initializer.declarations[0];
-              if (ts.isIdentifier(varDecl.name)) {
-                // for (const i in list)
-                return newExpr(
-                  ts.isForOfStatement(node) ? "ForOfStmt" : "ForInStmt",
-                  [
-                    toExpr(varDecl, scope),
-                    toExpr(node.expression, scope),
-                    toExpr(node.statement, scope),
-                  ]
-                );
-              } else if (ts.isArrayBindingPattern(varDecl.name)) {
-                // for (const [a, b] in list)
-              }
+              return newExpr(
+                ts.isForOfStatement(node) ? "ForOfStmt" : "ForInStmt",
+                [
+                  toExpr(varDecl, scope),
+                  toExpr(node.expression, scope),
+                  toExpr(node.statement, scope),
+                ]
+              );
             }
           }
+          throw new SynthError(
+            ErrorCodes.Unsupported_Feature,
+            "For in/of loops with expression initializers are not currently supported."
+          );
+        } else if (ts.isForStatement(node)) {
+          throw new SynthError(
+            ErrorCodes.Unsupported_Feature,
+            "For loops are not currently supported. https://github.com/functionless/functionless/issues/303"
+          );
         } else if (ts.isTemplateExpression(node)) {
           const exprs = [];
           if (node.head.text) {

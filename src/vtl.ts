@@ -56,7 +56,7 @@ import {
 } from "./guards";
 import { Integration, IntegrationImpl, isIntegration } from "./integration";
 import { FunctionlessNode } from "./node";
-import { Stmt } from "./statement";
+import { Stmt, VariableStmt } from "./statement";
 import { AnyFunction, isInTopLevelScope } from "./util";
 
 // https://velocity.apache.org/engine/devel/user-guide.html#conditionals
@@ -213,11 +213,25 @@ export abstract class VTL {
   }
 
   public foreach(
-    iterVar: string | Expr,
+    iterVar: string | Expr | VariableStmt,
     iterValue: string | Expr,
     body: string | Stmt | (() => void)
   ) {
-    this.add(`#foreach(${iterVar} in ${this.printExpr(iterValue)})`);
+    if (isVariableStmt(iterVar)) {
+      if (isBindingPattern(iterVar.name)) {
+        // iterate into a temp variable
+        const tempVar = this.newLocalVarName();
+        this.add(`#foreach(${tempVar} in ${this.printExpr(iterValue)})`);
+        // deconstruct from the temp variable
+        this.evaluateBindingPattern(iterVar.name, tempVar);
+      } else {
+        this.add(`#foreach($${iterVar.name} in ${this.printExpr(iterValue)})`);
+      }
+    } else {
+      this.add(
+        `#foreach(${this.printExpr(iterVar)} in ${this.printExpr(iterValue)})`
+      );
+    }
     this.printBody(body);
     this.add("#end");
   }
@@ -495,8 +509,8 @@ export abstract class VTL {
       return this.qr(this.eval(node.expr));
     } else if (isForInStmt(node) || isForOfStmt(node)) {
       this.foreach(
-        `$${node.variableDecl.name}`,
-        `${this.eval(node.expr)}${isForInStmt(node) ? ".keySet()" : ""})`,
+        node.variableDecl,
+        `${this.eval(node.expr)}${isForInStmt(node) ? ".keySet()" : ""}`,
         node.body
       );
       return undefined;
@@ -676,7 +690,7 @@ export abstract class VTL {
    *    b = temp1.b ? temp1.b : 1
    *
    */
-  private evaluateBindingPattern(
+  public evaluateBindingPattern(
     pattern: BindingPattern,
     target: string,
     variablePrefix: string = "$"

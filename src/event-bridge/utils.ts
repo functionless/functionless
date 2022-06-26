@@ -1,4 +1,5 @@
 import { assertNodeKind } from "../assert";
+import { ParameterDecl } from "../declaration";
 import { ErrorCodes, SynthError } from "../error-code";
 import {
   ArrayLiteralExpr,
@@ -290,13 +291,24 @@ export type EventReference = ReferencePath & {
 // TODO: validate again object schema?
 export function assertValidEventReference(
   eventReference?: ReferencePath,
-  eventName?: string,
-  utilsName?: string
+  eventName?: ParameterDecl,
+  utilsName?: ParameterDecl
 ): asserts eventReference is EventReference {
   if (!eventReference) {
     throw Error("Valid event reference was not provided.");
   }
-  if (eventReference.identity === eventName) {
+  if (
+    (eventName && isBindingPattern(eventName.name)) ||
+    (utilsName && isBindingPattern(utilsName.name))
+  ) {
+    throw new SynthError(
+      ErrorCodes.Unsupported_Feature,
+      "Binding parameter assignment is not currently supported in Event Bridge rules and input transforms. https://github.com/functionless/functionless/issues/302"
+    );
+  }
+  const eName = eventName?.name;
+  const uName = utilsName?.name;
+  if (eventReference.identity === eName) {
     if (eventReference.reference.length > 1) {
       const [first] = eventReference.reference;
       if (first !== "detail") {
@@ -305,7 +317,7 @@ export function assertValidEventReference(
         )}`;
       }
     }
-  } else if (!utilsName || eventReference.identity !== utilsName) {
+  } else if (!utilsName || eventReference.identity !== uName) {
     throw Error(
       `Unresolved references can only reference the event parameter (${eventName}) or the $utils parameter (${utilsName}), but found ${eventReference.identity}`
     );
