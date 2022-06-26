@@ -2,8 +2,16 @@
 
 exports[`$SFN.forEach(list, (item) => task(item)) 1`] = `
 Object {
-  "StartAt": "await $SFN.forEach(input.list, function(item))",
+  "StartAt": "__fnl_constants",
   "States": Object {
+    "__fnl_constants": Object {
+      "Next": "await $SFN.forEach(input.list, function(item))",
+      "Parameters": Object {
+        "null": null,
+      },
+      "ResultPath": "$.__fnl_constants",
+      "Type": "Pass",
+    },
     "await $SFN.forEach(input.list, function(item))": Object {
       "ItemsPath": "$.list",
       "Iterator": Object {
@@ -39,8 +47,16 @@ Object {
 
 exports[`$SFN.map(list, (item) => task(item)) 1`] = `
 Object {
-  "StartAt": "await $SFN.map(input.list, function(item))",
+  "StartAt": "__fnl_constants",
   "States": Object {
+    "__fnl_constants": Object {
+      "Next": "await $SFN.map(input.list, function(item))",
+      "Parameters": Object {
+        "null": null,
+      },
+      "ResultPath": "$.__fnl_constants",
+      "Type": "Pass",
+    },
     "await $SFN.map(input.list, function(item))": Object {
       "ItemsPath": "$.list",
       "Iterator": Object {
@@ -74,10 +90,560 @@ Object {
 }
 `;
 
+exports[`boolean logic 1`] = `
+Object {
+  "StartAt": "__fnl_constants",
+  "States": Object {
+    "0_tmp = input.a && input.b": Object {
+      "Choices": Array [
+        Object {
+          "And": Array [
+            Object {
+              "And": Array [
+                Object {
+                  "IsPresent": true,
+                  "Variable": "$.a",
+                },
+                Object {
+                  "IsNull": false,
+                  "Variable": "$.a",
+                },
+                Object {
+                  "Or": Array [
+                    Object {
+                      "And": Array [
+                        Object {
+                          "IsString": true,
+                          "Variable": "$.a",
+                        },
+                        Object {
+                          "Not": Object {
+                            "And": Array [
+                              Object {
+                                "IsString": true,
+                                "Variable": "$.a",
+                              },
+                              Object {
+                                "StringEquals": "",
+                                "Variable": "$.a",
+                              },
+                            ],
+                          },
+                        },
+                      ],
+                    },
+                    Object {
+                      "And": Array [
+                        Object {
+                          "IsNumeric": true,
+                          "Variable": "$.a",
+                        },
+                        Object {
+                          "Not": Object {
+                            "And": Array [
+                              Object {
+                                "IsNumeric": true,
+                                "Variable": "$.a",
+                              },
+                              Object {
+                                "NumericEquals": 0,
+                                "Variable": "$.a",
+                              },
+                            ],
+                          },
+                        },
+                      ],
+                    },
+                    Object {
+                      "And": Array [
+                        Object {
+                          "IsBoolean": true,
+                          "Variable": "$.a",
+                        },
+                        Object {
+                          "BooleanEquals": true,
+                          "Variable": "$.a",
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+            Object {
+              "And": Array [
+                Object {
+                  "IsPresent": true,
+                  "Variable": "$.b",
+                },
+                Object {
+                  "IsNull": false,
+                  "Variable": "$.b",
+                },
+                Object {
+                  "Or": Array [
+                    Object {
+                      "And": Array [
+                        Object {
+                          "IsString": true,
+                          "Variable": "$.b",
+                        },
+                        Object {
+                          "Not": Object {
+                            "And": Array [
+                              Object {
+                                "IsString": true,
+                                "Variable": "$.b",
+                              },
+                              Object {
+                                "StringEquals": "",
+                                "Variable": "$.b",
+                              },
+                            ],
+                          },
+                        },
+                      ],
+                    },
+                    Object {
+                      "And": Array [
+                        Object {
+                          "IsNumeric": true,
+                          "Variable": "$.b",
+                        },
+                        Object {
+                          "Not": Object {
+                            "And": Array [
+                              Object {
+                                "IsNumeric": true,
+                                "Variable": "$.b",
+                              },
+                              Object {
+                                "NumericEquals": 0,
+                                "Variable": "$.b",
+                              },
+                            ],
+                          },
+                        },
+                      ],
+                    },
+                    Object {
+                      "And": Array [
+                        Object {
+                          "IsBoolean": true,
+                          "Variable": "$.b",
+                        },
+                        Object {
+                          "BooleanEquals": true,
+                          "Variable": "$.b",
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+          "Next": "assignTrue__0_tmp = input.a && input.b",
+        },
+      ],
+      "Default": "assignFalse__0_tmp = input.a && input.b",
+      "Type": "Choice",
+    },
+    "1_tmp = input.a || input.b": Object {
+      "Choices": Array [
+        Object {
+          "Next": "assignTrue__1_tmp = input.a || input.b",
+          "Or": Array [
+            Object {
+              "And": Array [
+                Object {
+                  "IsPresent": true,
+                  "Variable": "$.a",
+                },
+                Object {
+                  "IsNull": false,
+                  "Variable": "$.a",
+                },
+                Object {
+                  "Or": Array [
+                    Object {
+                      "And": Array [
+                        Object {
+                          "IsString": true,
+                          "Variable": "$.a",
+                        },
+                        Object {
+                          "Not": Object {
+                            "And": Array [
+                              Object {
+                                "IsString": true,
+                                "Variable": "$.a",
+                              },
+                              Object {
+                                "StringEquals": "",
+                                "Variable": "$.a",
+                              },
+                            ],
+                          },
+                        },
+                      ],
+                    },
+                    Object {
+                      "And": Array [
+                        Object {
+                          "IsNumeric": true,
+                          "Variable": "$.a",
+                        },
+                        Object {
+                          "Not": Object {
+                            "And": Array [
+                              Object {
+                                "IsNumeric": true,
+                                "Variable": "$.a",
+                              },
+                              Object {
+                                "NumericEquals": 0,
+                                "Variable": "$.a",
+                              },
+                            ],
+                          },
+                        },
+                      ],
+                    },
+                    Object {
+                      "And": Array [
+                        Object {
+                          "IsBoolean": true,
+                          "Variable": "$.a",
+                        },
+                        Object {
+                          "BooleanEquals": true,
+                          "Variable": "$.a",
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+            Object {
+              "And": Array [
+                Object {
+                  "IsPresent": true,
+                  "Variable": "$.b",
+                },
+                Object {
+                  "IsNull": false,
+                  "Variable": "$.b",
+                },
+                Object {
+                  "Or": Array [
+                    Object {
+                      "And": Array [
+                        Object {
+                          "IsString": true,
+                          "Variable": "$.b",
+                        },
+                        Object {
+                          "Not": Object {
+                            "And": Array [
+                              Object {
+                                "IsString": true,
+                                "Variable": "$.b",
+                              },
+                              Object {
+                                "StringEquals": "",
+                                "Variable": "$.b",
+                              },
+                            ],
+                          },
+                        },
+                      ],
+                    },
+                    Object {
+                      "And": Array [
+                        Object {
+                          "IsNumeric": true,
+                          "Variable": "$.b",
+                        },
+                        Object {
+                          "Not": Object {
+                            "And": Array [
+                              Object {
+                                "IsNumeric": true,
+                                "Variable": "$.b",
+                              },
+                              Object {
+                                "NumericEquals": 0,
+                                "Variable": "$.b",
+                              },
+                            ],
+                          },
+                        },
+                      ],
+                    },
+                    Object {
+                      "And": Array [
+                        Object {
+                          "IsBoolean": true,
+                          "Variable": "$.b",
+                        },
+                        Object {
+                          "BooleanEquals": true,
+                          "Variable": "$.b",
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+      "Default": "assignFalse__1_tmp = input.a || input.b",
+      "Type": "Choice",
+    },
+    "__fnl_constants": Object {
+      "Next": "0_tmp = input.a && input.b",
+      "Parameters": Object {
+        "null": null,
+      },
+      "ResultPath": "$.__fnl_constants",
+      "Type": "Pass",
+    },
+    "assignFalse__0_tmp = input.a && input.b": Object {
+      "Next": "1_tmp = input.a || input.b",
+      "Result": false,
+      "ResultPath": "$.0_tmp",
+      "Type": "Pass",
+    },
+    "assignFalse__1_tmp = input.a || input.b": Object {
+      "Next": "return {and: 0_tmp, or: 1_tmp}",
+      "Result": false,
+      "ResultPath": "$.1_tmp",
+      "Type": "Pass",
+    },
+    "assignTrue__0_tmp = input.a && input.b": Object {
+      "Next": "1_tmp = input.a || input.b",
+      "Result": true,
+      "ResultPath": "$.0_tmp",
+      "Type": "Pass",
+    },
+    "assignTrue__1_tmp = input.a || input.b": Object {
+      "Next": "return {and: 0_tmp, or: 1_tmp}",
+      "Result": true,
+      "ResultPath": "$.1_tmp",
+      "Type": "Pass",
+    },
+    "return {and: 0_tmp, or: 1_tmp}": Object {
+      "End": true,
+      "Parameters": Object {
+        "and.$": "$.0_tmp",
+        "or.$": "$.1_tmp",
+      },
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+  },
+}
+`;
+
+exports[`boolean return 1`] = `
+Object {
+  "StartAt": "__fnl_constants",
+  "States": Object {
+    "__fnl_constants": Object {
+      "Next": "return input.a && input.b",
+      "Parameters": Object {
+        "null": null,
+      },
+      "ResultPath": "$.__fnl_constants",
+      "Type": "Pass",
+    },
+    "assignFalse__return input.a && input.b": Object {
+      "End": true,
+      "Result": false,
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "assignTrue__return input.a && input.b": Object {
+      "End": true,
+      "Result": true,
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "return input.a && input.b": Object {
+      "Choices": Array [
+        Object {
+          "And": Array [
+            Object {
+              "And": Array [
+                Object {
+                  "IsPresent": true,
+                  "Variable": "$.a",
+                },
+                Object {
+                  "IsNull": false,
+                  "Variable": "$.a",
+                },
+                Object {
+                  "Or": Array [
+                    Object {
+                      "And": Array [
+                        Object {
+                          "IsString": true,
+                          "Variable": "$.a",
+                        },
+                        Object {
+                          "Not": Object {
+                            "And": Array [
+                              Object {
+                                "IsString": true,
+                                "Variable": "$.a",
+                              },
+                              Object {
+                                "StringEquals": "",
+                                "Variable": "$.a",
+                              },
+                            ],
+                          },
+                        },
+                      ],
+                    },
+                    Object {
+                      "And": Array [
+                        Object {
+                          "IsNumeric": true,
+                          "Variable": "$.a",
+                        },
+                        Object {
+                          "Not": Object {
+                            "And": Array [
+                              Object {
+                                "IsNumeric": true,
+                                "Variable": "$.a",
+                              },
+                              Object {
+                                "NumericEquals": 0,
+                                "Variable": "$.a",
+                              },
+                            ],
+                          },
+                        },
+                      ],
+                    },
+                    Object {
+                      "And": Array [
+                        Object {
+                          "IsBoolean": true,
+                          "Variable": "$.a",
+                        },
+                        Object {
+                          "BooleanEquals": true,
+                          "Variable": "$.a",
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+            Object {
+              "And": Array [
+                Object {
+                  "IsPresent": true,
+                  "Variable": "$.b",
+                },
+                Object {
+                  "IsNull": false,
+                  "Variable": "$.b",
+                },
+                Object {
+                  "Or": Array [
+                    Object {
+                      "And": Array [
+                        Object {
+                          "IsString": true,
+                          "Variable": "$.b",
+                        },
+                        Object {
+                          "Not": Object {
+                            "And": Array [
+                              Object {
+                                "IsString": true,
+                                "Variable": "$.b",
+                              },
+                              Object {
+                                "StringEquals": "",
+                                "Variable": "$.b",
+                              },
+                            ],
+                          },
+                        },
+                      ],
+                    },
+                    Object {
+                      "And": Array [
+                        Object {
+                          "IsNumeric": true,
+                          "Variable": "$.b",
+                        },
+                        Object {
+                          "Not": Object {
+                            "And": Array [
+                              Object {
+                                "IsNumeric": true,
+                                "Variable": "$.b",
+                              },
+                              Object {
+                                "NumericEquals": 0,
+                                "Variable": "$.b",
+                              },
+                            ],
+                          },
+                        },
+                      ],
+                    },
+                    Object {
+                      "And": Array [
+                        Object {
+                          "IsBoolean": true,
+                          "Variable": "$.b",
+                        },
+                        Object {
+                          "BooleanEquals": true,
+                          "Variable": "$.b",
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+          "Next": "assignTrue__return input.a && input.b",
+        },
+      ],
+      "Default": "assignFalse__return input.a && input.b",
+      "Type": "Choice",
+    },
+  },
+}
+`;
+
 exports[`break from do-while-loop 1`] = `
 Object {
-  "StartAt": "break",
+  "StartAt": "__fnl_constants",
   "States": Object {
+    "__fnl_constants": Object {
+      "Next": "break",
+      "Parameters": Object {
+        "null": null,
+      },
+      "ResultPath": "$.__fnl_constants",
+      "Type": "Pass",
+    },
     "break": Object {
       "Next": "return null",
       "Type": "Pass",
@@ -107,8 +673,16 @@ Object {
 
 exports[`break from for-loop 1`] = `
 Object {
-  "StartAt": "for(item of input.items)",
+  "StartAt": "__fnl_constants",
   "States": Object {
+    "__fnl_constants": Object {
+      "Next": "for(item of input.items)",
+      "Parameters": Object {
+        "null": null,
+      },
+      "ResultPath": "$.__fnl_constants",
+      "Type": "Pass",
+    },
     "for(item of input.items)": Object {
       "Catch": Array [
         Object {
@@ -166,8 +740,16 @@ Object {
 
 exports[`break from while-loop 1`] = `
 Object {
-  "StartAt": "while (true)",
+  "StartAt": "__fnl_constants",
   "States": Object {
+    "__fnl_constants": Object {
+      "Next": "while (true)",
+      "Parameters": Object {
+        "null": null,
+      },
+      "ResultPath": "$.__fnl_constants",
+      "Type": "Pass",
+    },
     "break": Object {
       "Next": "return null",
       "Type": "Pass",
@@ -197,8 +779,16 @@ Object {
 
 exports[`call AWS.DynamoDB.GetItem, then Lambda and return LiteralExpr 1`] = `
 Object {
-  "StartAt": "person = await $AWS.DynamoDB.GetItem({Table: personTable, Key: {id: {S: inp",
+  "StartAt": "__fnl_constants",
   "States": Object {
+    "__fnl_constants": Object {
+      "Next": "person = await $AWS.DynamoDB.GetItem({Table: personTable, Key: {id: {S: inp",
+      "Parameters": Object {
+        "null": null,
+      },
+      "ResultPath": "$.__fnl_constants",
+      "Type": "Pass",
+    },
     "if(person.Item == undefined)": Object {
       "Choices": Array [
         Object {
@@ -292,8 +882,16 @@ Object {
 
 exports[`call Lambda Function, store as variable, return variable 1`] = `
 Object {
-  "StartAt": "person = await getPerson({id: input.id})",
+  "StartAt": "__fnl_constants",
   "States": Object {
+    "__fnl_constants": Object {
+      "Next": "person = await getPerson({id: input.id})",
+      "Parameters": Object {
+        "null": null,
+      },
+      "ResultPath": "$.__fnl_constants",
+      "Type": "Pass",
+    },
     "person = await getPerson({id: input.id})": Object {
       "Next": "return person",
       "Parameters": Object {
@@ -314,8 +912,16 @@ Object {
 
 exports[`call Lambda Function, store as variable, return variable no block 1`] = `
 Object {
-  "StartAt": "return getPerson({id: input.id})",
+  "StartAt": "__fnl_constants",
   "States": Object {
+    "__fnl_constants": Object {
+      "Next": "return getPerson({id: input.id})",
+      "Parameters": Object {
+        "null": null,
+      },
+      "ResultPath": "$.__fnl_constants",
+      "Type": "Pass",
+    },
     "return getPerson({id: input.id})": Object {
       "End": true,
       "Parameters": Object {
@@ -331,8 +937,16 @@ Object {
 
 exports[`call Step Function describe from another Step Function 1`] = `
 Object {
-  "StartAt": "return machine1.describeExecution(\\"hello\\")",
+  "StartAt": "__fnl_constants",
   "States": Object {
+    "__fnl_constants": Object {
+      "Next": "return machine1.describeExecution(\\"hello\\")",
+      "Parameters": Object {
+        "null": null,
+      },
+      "ResultPath": "$.__fnl_constants",
+      "Type": "Pass",
+    },
     "return machine1.describeExecution(\\"hello\\")": Object {
       "End": true,
       "Parameters": Object {
@@ -348,8 +962,16 @@ Object {
 
 exports[`call Step Function describe from another Step Function from context 1`] = `
 Object {
-  "StartAt": "return machine1.describeExecution(input.id)",
+  "StartAt": "__fnl_constants",
   "States": Object {
+    "__fnl_constants": Object {
+      "Next": "return machine1.describeExecution(input.id)",
+      "Parameters": Object {
+        "null": null,
+      },
+      "ResultPath": "$.__fnl_constants",
+      "Type": "Pass",
+    },
     "return machine1.describeExecution(input.id)": Object {
       "End": true,
       "Parameters": Object {
@@ -382,8 +1004,16 @@ Object {
 
 exports[`call Step Function from another Step Function with dynamic input 1`] = `
 Object {
-  "StartAt": "return machine1({input: {value: input.value1}})",
+  "StartAt": "__fnl_constants",
   "States": Object {
+    "__fnl_constants": Object {
+      "Next": "return machine1({input: {value: input.value1}})",
+      "Parameters": Object {
+        "null": null,
+      },
+      "ResultPath": "$.__fnl_constants",
+      "Type": "Pass",
+    },
     "return machine1({input: {value: input.value1}})": Object {
       "End": true,
       "Parameters": Object {
@@ -402,8 +1032,16 @@ Object {
 
 exports[`call Step Function from another Step Function with dynamic input field input 1`] = `
 Object {
-  "StartAt": "return machine1({input: input})",
+  "StartAt": "__fnl_constants",
   "States": Object {
+    "__fnl_constants": Object {
+      "Next": "return machine1({input: input})",
+      "Parameters": Object {
+        "null": null,
+      },
+      "ResultPath": "$.__fnl_constants",
+      "Type": "Pass",
+    },
     "return machine1({input: input})": Object {
       "End": true,
       "Parameters": Object {
@@ -420,8 +1058,16 @@ Object {
 
 exports[`call Step Function from another Step Function with input 1`] = `
 Object {
-  "StartAt": "return machine1({input: {value: \\"hello\\"}})",
+  "StartAt": "__fnl_constants",
   "States": Object {
+    "__fnl_constants": Object {
+      "Next": "return machine1({input: {value: \\"hello\\"}})",
+      "Parameters": Object {
+        "null": null,
+      },
+      "ResultPath": "$.__fnl_constants",
+      "Type": "Pass",
+    },
     "return machine1({input: {value: \\"hello\\"}})": Object {
       "End": true,
       "Parameters": Object {
@@ -440,8 +1086,16 @@ Object {
 
 exports[`call Step Function from another Step Function with name and trace 1`] = `
 Object {
-  "StartAt": "return machine1({name: \\"exec1\\", traceHeader: \\"1\\"})",
+  "StartAt": "__fnl_constants",
   "States": Object {
+    "__fnl_constants": Object {
+      "Next": "return machine1({name: \\"exec1\\", traceHeader: \\"1\\"})",
+      "Parameters": Object {
+        "null": null,
+      },
+      "ResultPath": "$.__fnl_constants",
+      "Type": "Pass",
+    },
     "return machine1({name: \\"exec1\\", traceHeader: \\"1\\"})": Object {
       "End": true,
       "Parameters": Object {
@@ -459,8 +1113,16 @@ Object {
 
 exports[`call Step Function from another Step Function with name and trace from variables 1`] = `
 Object {
-  "StartAt": "return machine1({name: input.name, traceHeader: input.header})",
+  "StartAt": "__fnl_constants",
   "States": Object {
+    "__fnl_constants": Object {
+      "Next": "return machine1({name: input.name, traceHeader: input.header})",
+      "Parameters": Object {
+        "null": null,
+      },
+      "ResultPath": "$.__fnl_constants",
+      "Type": "Pass",
+    },
     "return machine1({name: input.name, traceHeader: input.header})": Object {
       "End": true,
       "Parameters": Object {
@@ -478,8 +1140,16 @@ Object {
 
 exports[`catch and throw Error 1`] = `
 Object {
-  "StartAt": "throw Error(\\"cause\\")",
+  "StartAt": "__fnl_constants",
   "States": Object {
+    "__fnl_constants": Object {
+      "Next": "throw Error(\\"cause\\")",
+      "Parameters": Object {
+        "null": null,
+      },
+      "ResultPath": "$.__fnl_constants",
+      "Type": "Pass",
+    },
     "throw Error(\\"cause\\")": Object {
       "Next": "throw new CustomError(\\"custom cause\\")",
       "Result": Object {
@@ -499,8 +1169,16 @@ Object {
 
 exports[`catch and throw new Error 1`] = `
 Object {
-  "StartAt": "throw new Error(\\"cause\\")",
+  "StartAt": "__fnl_constants",
   "States": Object {
+    "__fnl_constants": Object {
+      "Next": "throw new Error(\\"cause\\")",
+      "Parameters": Object {
+        "null": null,
+      },
+      "ResultPath": "$.__fnl_constants",
+      "Type": "Pass",
+    },
     "throw new CustomError(\\"custom cause\\")": Object {
       "Cause": "{\\"property\\":\\"custom cause\\"}",
       "Error": "CustomError",
@@ -520,8 +1198,16 @@ Object {
 
 exports[`conditionally call DynamoDB and then void 1`] = `
 Object {
-  "StartAt": "if(input.id == \\"hello\\")",
+  "StartAt": "__fnl_constants",
   "States": Object {
+    "__fnl_constants": Object {
+      "Next": "if(input.id == \\"hello\\")",
+      "Parameters": Object {
+        "null": null,
+      },
+      "ResultPath": "$.__fnl_constants",
+      "Type": "Pass",
+    },
     "await $AWS.DynamoDB.GetItem({Table: personTable, Key: {id: {S: input.id}}})": Object {
       "Next": "return null",
       "Parameters": Object {
@@ -561,8 +1247,16 @@ Object {
 
 exports[`conditionally return void 1`] = `
 Object {
-  "StartAt": "if(input.id == \\"hello\\")",
+  "StartAt": "__fnl_constants",
   "States": Object {
+    "__fnl_constants": Object {
+      "Next": "if(input.id == \\"hello\\")",
+      "Parameters": Object {
+        "null": null,
+      },
+      "ResultPath": "$.__fnl_constants",
+      "Type": "Pass",
+    },
     "if(input.id == \\"hello\\")": Object {
       "Choices": Array [
         Object {
@@ -596,8 +1290,16 @@ Object {
 
 exports[`continue in do..while loop 1`] = `
 Object {
-  "StartAt": "if(input.key == \\"sam\\")",
+  "StartAt": "__fnl_constants",
   "States": Object {
+    "__fnl_constants": Object {
+      "Next": "if(input.key == \\"sam\\")",
+      "Parameters": Object {
+        "null": null,
+      },
+      "ResultPath": "$.__fnl_constants",
+      "Type": "Pass",
+    },
     "await task(input.key)": Object {
       "InputPath": "$.key",
       "Next": "while (true)",
@@ -646,8 +1348,16 @@ Object {
 
 exports[`continue in for loop 1`] = `
 Object {
-  "StartAt": "for(item of input.items)",
+  "StartAt": "__fnl_constants",
   "States": Object {
+    "__fnl_constants": Object {
+      "Next": "for(item of input.items)",
+      "Parameters": Object {
+        "null": null,
+      },
+      "ResultPath": "$.__fnl_constants",
+      "Type": "Pass",
+    },
     "for(item of input.items)": Object {
       "ItemsPath": "$.items",
       "Iterator": Object {
@@ -697,8 +1407,16 @@ Object {
 
 exports[`continue in while loop 1`] = `
 Object {
-  "StartAt": "while (true)",
+  "StartAt": "__fnl_constants",
   "States": Object {
+    "__fnl_constants": Object {
+      "Next": "while (true)",
+      "Parameters": Object {
+        "null": null,
+      },
+      "ResultPath": "$.__fnl_constants",
+      "Type": "Pass",
+    },
     "await task(input.key)": Object {
       "InputPath": "$.key",
       "Next": "while (true)",
@@ -747,8 +1465,16 @@ Object {
 
 exports[`empty function 1`] = `
 Object {
-  "StartAt": "return null",
+  "StartAt": "__fnl_constants",
   "States": Object {
+    "__fnl_constants": Object {
+      "Next": "return null",
+      "Parameters": Object {
+        "null": null,
+      },
+      "ResultPath": "$.__fnl_constants",
+      "Type": "Pass",
+    },
     "return null": Object {
       "End": true,
       "OutputPath": "$.null",
@@ -763,30 +1489,44 @@ Object {
 
 exports[`for (const i in [task(input)]) 1`] = `
 Object {
-  "StartAt": "0_tmp = await task(input)",
+  "StartAt": "__fnl_constants",
   "States": Object {
     "0_tmp = await task(input)": Object {
       "InputPath": "$",
-      "Next": "for(i in [0_tmp])",
+      "Next": "1_tmp = [0_tmp]",
       "Resource": "__REPLACED_TOKEN",
       "ResultPath": "$.0_tmp",
       "Type": "Task",
     },
-    "for(i in [0_tmp])": Object {
-      "ItemsPath": "__REPLACED_TOKEN",
+    "1_tmp = [0_tmp]": Object {
+      "Next": "for(i in 1_tmp)",
+      "Result": "States.Array($.0_tmp)",
+      "ResultPath": "$.1_tmp",
+      "Type": "Pass",
+    },
+    "__fnl_constants": Object {
+      "Next": "0_tmp = await task(input)",
+      "Parameters": Object {
+        "null": null,
+      },
+      "ResultPath": "$.__fnl_constants",
+      "Type": "Pass",
+    },
+    "for(i in 1_tmp)": Object {
+      "ItemsPath": "$.1_tmp",
       "Iterator": Object {
-        "StartAt": "1_tmp = await task(i)",
+        "StartAt": "2_tmp = await task(i)",
         "States": Object {
-          "1_tmp = await task(i)": Object {
+          "2_tmp = await task(i)": Object {
             "InputPath": "$.i",
-            "Next": "await task(1_tmp)",
+            "Next": "await task(2_tmp)",
             "Resource": "__REPLACED_TOKEN",
-            "ResultPath": "$.1_tmp",
+            "ResultPath": "$.2_tmp",
             "Type": "Task",
           },
-          "await task(1_tmp)": Object {
+          "await task(2_tmp)": Object {
             "End": true,
-            "InputPath": "$.1_tmp",
+            "InputPath": "$.2_tmp",
             "Resource": "__REPLACED_TOKEN",
             "ResultPath": null,
             "Type": "Task",
@@ -816,30 +1556,44 @@ Object {
 
 exports[`for (const i of [task(input)]) 1`] = `
 Object {
-  "StartAt": "0_tmp = await task(input)",
+  "StartAt": "__fnl_constants",
   "States": Object {
     "0_tmp = await task(input)": Object {
       "InputPath": "$",
-      "Next": "for(i of [0_tmp])",
+      "Next": "1_tmp = [0_tmp]",
       "Resource": "__REPLACED_TOKEN",
       "ResultPath": "$.0_tmp",
       "Type": "Task",
     },
-    "for(i of [0_tmp])": Object {
-      "ItemsPath": "__REPLACED_TOKEN",
+    "1_tmp = [0_tmp]": Object {
+      "Next": "for(i of 1_tmp)",
+      "Result": "States.Array($.0_tmp)",
+      "ResultPath": "$.1_tmp",
+      "Type": "Pass",
+    },
+    "__fnl_constants": Object {
+      "Next": "0_tmp = await task(input)",
+      "Parameters": Object {
+        "null": null,
+      },
+      "ResultPath": "$.__fnl_constants",
+      "Type": "Pass",
+    },
+    "for(i of 1_tmp)": Object {
+      "ItemsPath": "$.1_tmp",
       "Iterator": Object {
-        "StartAt": "1_tmp = await task(i)",
+        "StartAt": "2_tmp = await task(i)",
         "States": Object {
-          "1_tmp = await task(i)": Object {
+          "2_tmp = await task(i)": Object {
             "InputPath": "$.i",
-            "Next": "await task(1_tmp)",
+            "Next": "await task(2_tmp)",
             "Resource": "__REPLACED_TOKEN",
-            "ResultPath": "$.1_tmp",
+            "ResultPath": "$.2_tmp",
             "Type": "Task",
           },
-          "await task(1_tmp)": Object {
+          "await task(2_tmp)": Object {
             "End": true,
-            "InputPath": "$.1_tmp",
+            "InputPath": "$.2_tmp",
             "Resource": "__REPLACED_TOKEN",
             "ResultPath": null,
             "Type": "Task",
@@ -868,8 +1622,16 @@ Object {
 
 exports[`for i in items, items[i] 1`] = `
 Object {
-  "StartAt": "for(i in input.items)",
+  "StartAt": "__fnl_constants",
   "States": Object {
+    "__fnl_constants": Object {
+      "Next": "for(i in input.items)",
+      "Parameters": Object {
+        "null": null,
+      },
+      "ResultPath": "$.__fnl_constants",
+      "Type": "Pass",
+    },
     "for(i in input.items)": Object {
       "ItemsPath": "$.items",
       "Iterator": Object {
@@ -909,8 +1671,16 @@ Object {
 
 exports[`for-loop and do nothing 1`] = `
 Object {
-  "StartAt": "for(item of input.items)",
+  "StartAt": "__fnl_constants",
   "States": Object {
+    "__fnl_constants": Object {
+      "Next": "for(item of input.items)",
+      "Parameters": Object {
+        "null": null,
+      },
+      "ResultPath": "$.__fnl_constants",
+      "Type": "Pass",
+    },
     "for(item of input.items)": Object {
       "ItemsPath": "$.items",
       "Iterator": Object {
@@ -949,8 +1719,16 @@ Object {
 
 exports[`for-loop over a list literal 1`] = `
 Object {
-  "StartAt": "people = [\\"sam\\", \\"brendan\\"]",
+  "StartAt": "__fnl_constants",
   "States": Object {
+    "__fnl_constants": Object {
+      "Next": "people = [\\"sam\\", \\"brendan\\"]",
+      "Parameters": Object {
+        "null": null,
+      },
+      "ResultPath": "$.__fnl_constants",
+      "Type": "Pass",
+    },
     "for(name of people)": Object {
       "ItemsPath": "$.people",
       "Iterator": Object {
@@ -999,8 +1777,16 @@ Object {
 
 exports[`for-of { try { task() } catch (err) { if(err) throw } finally { task() } } 1`] = `
 Object {
-  "StartAt": "for(item of input.items)",
+  "StartAt": "__fnl_constants",
   "States": Object {
+    "__fnl_constants": Object {
+      "Next": "for(item of input.items)",
+      "Parameters": Object {
+        "null": null,
+      },
+      "ResultPath": "$.__fnl_constants",
+      "Type": "Pass",
+    },
     "for(item of input.items)": Object {
       "ItemsPath": "$.items",
       "Iterator": Object {
@@ -1102,8 +1888,16 @@ Object {
 
 exports[`if (typeof x !== ??) 1`] = `
 Object {
-  "StartAt": "if(input.id != undefined)",
+  "StartAt": "__fnl_constants",
   "States": Object {
+    "__fnl_constants": Object {
+      "Next": "if(input.id != undefined)",
+      "Parameters": Object {
+        "null": null,
+      },
+      "ResultPath": "$.__fnl_constants",
+      "Type": "Pass",
+    },
     "if(input.id != undefined)": Object {
       "Choices": Array [
         Object {
@@ -1230,8 +2024,16 @@ Object {
 
 exports[`if (typeof x === ??) 1`] = `
 Object {
-  "StartAt": "if(input.id == undefined)",
+  "StartAt": "__fnl_constants",
   "States": Object {
+    "__fnl_constants": Object {
+      "Next": "if(input.id == undefined)",
+      "Parameters": Object {
+        "null": null,
+      },
+      "ResultPath": "$.__fnl_constants",
+      "Type": "Pass",
+    },
     "if(input.id == undefined)": Object {
       "Choices": Array [
         Object {
@@ -1358,8 +2160,16 @@ Object {
 
 exports[`if-else 1`] = `
 Object {
-  "StartAt": "if(input.id == \\"hello\\")",
+  "StartAt": "__fnl_constants",
   "States": Object {
+    "__fnl_constants": Object {
+      "Next": "if(input.id == \\"hello\\")",
+      "Parameters": Object {
+        "null": null,
+      },
+      "ResultPath": "$.__fnl_constants",
+      "Type": "Pass",
+    },
     "if(input.id == \\"hello\\")": Object {
       "Choices": Array [
         Object {
@@ -1389,8 +2199,16 @@ Object {
 
 exports[`if-else-if 1`] = `
 Object {
-  "StartAt": "if(input.id == \\"hello\\")",
+  "StartAt": "__fnl_constants",
   "States": Object {
+    "__fnl_constants": Object {
+      "Next": "if(input.id == \\"hello\\")",
+      "Parameters": Object {
+        "null": null,
+      },
+      "ResultPath": "$.__fnl_constants",
+      "Type": "Pass",
+    },
     "if(input.id == \\"hello\\")": Object {
       "Choices": Array [
         Object {
@@ -1433,8 +2251,16 @@ Object {
 
 exports[`import from express state machine into machine 1`] = `
 Object {
-  "StartAt": "await machine({input: {id: \\"hi\\"}})",
+  "StartAt": "__fnl_constants",
   "States": Object {
+    "__fnl_constants": Object {
+      "Next": "await machine({input: {id: \\"hi\\"}})",
+      "Parameters": Object {
+        "null": null,
+      },
+      "ResultPath": "$.__fnl_constants",
+      "Type": "Pass",
+    },
     "await machine({input: {id: \\"hi\\"}})": Object {
       "Next": "return null",
       "Parameters": Object {
@@ -1461,8 +2287,16 @@ Object {
 
 exports[`import from state machine into state machine 1`] = `
 Object {
-  "StartAt": "await machine({input: {id: \\"hi\\"}})",
+  "StartAt": "__fnl_constants",
   "States": Object {
+    "__fnl_constants": Object {
+      "Next": "await machine({input: {id: \\"hi\\"}})",
+      "Parameters": Object {
+        "null": null,
+      },
+      "ResultPath": "$.__fnl_constants",
+      "Type": "Pass",
+    },
     "await machine({input: {id: \\"hi\\"}})": Object {
       "Next": "return null",
       "Parameters": Object {
@@ -1663,8 +2497,16 @@ Object {
 
 exports[`let cond; do { cond = task() } while (cond) 1`] = `
 Object {
-  "StartAt": "cond = await task()",
+  "StartAt": "__fnl_constants",
   "States": Object {
+    "__fnl_constants": Object {
+      "Next": "cond = await task()",
+      "Parameters": Object {
+        "null": null,
+      },
+      "ResultPath": "$.__fnl_constants",
+      "Type": "Pass",
+    },
     "cond = await task()": Object {
       "Next": "while (cond == undefined)",
       "Resource": "__REPLACED_TOKEN",
@@ -1704,8 +2546,16 @@ Object {
 
 exports[`list.filter(item => item.length > 2).map(item => item) 1`] = `
 Object {
-  "StartAt": "return input.list.filter(function(item)).map(function(item))",
+  "StartAt": "__fnl_constants",
   "States": Object {
+    "__fnl_constants": Object {
+      "Next": "return input.list.filter(function(item)).map(function(item))",
+      "Parameters": Object {
+        "null": null,
+      },
+      "ResultPath": "$.__fnl_constants",
+      "Type": "Pass",
+    },
     "return input.list.filter(function(item)).map(function(item))": Object {
       "End": true,
       "ItemsPath": "$.list[?(@.length>2)]",
@@ -1732,8 +2582,16 @@ Object {
 
 exports[`list.filter(item => item.length > 2).map(item => item) 2`] = `
 Object {
-  "StartAt": "return input.list.filter(function(item)).map(function(item))",
+  "StartAt": "__fnl_constants",
   "States": Object {
+    "__fnl_constants": Object {
+      "Next": "return input.list.filter(function(item)).map(function(item))",
+      "Parameters": Object {
+        "null": null,
+      },
+      "ResultPath": "$.__fnl_constants",
+      "Type": "Pass",
+    },
     "return input.list.filter(function(item)).map(function(item))": Object {
       "End": true,
       "ItemsPath": "$.list[?(@.length>2)]",
@@ -1760,8 +2618,16 @@ Object {
 
 exports[`list.filter(item => item.length > 2).map(item => item) 3`] = `
 Object {
-  "StartAt": "return input.list.filter(function(item)).map(function(item))",
+  "StartAt": "__fnl_constants",
   "States": Object {
+    "__fnl_constants": Object {
+      "Next": "return input.list.filter(function(item)).map(function(item))",
+      "Parameters": Object {
+        "null": null,
+      },
+      "ResultPath": "$.__fnl_constants",
+      "Type": "Pass",
+    },
     "return input.list.filter(function(item)).map(function(item))": Object {
       "End": true,
       "ItemsPath": "$.list[?(@.length>2)]",
@@ -1788,8 +2654,16 @@ Object {
 
 exports[`list.filter(item => item.length > 2).map(item => task(item)) 1`] = `
 Object {
-  "StartAt": "return Promise.all(input.list.filter(function(item)).map(function(item)))",
+  "StartAt": "__fnl_constants",
   "States": Object {
+    "__fnl_constants": Object {
+      "Next": "return Promise.all(input.list.filter(function(item)).map(function(item)))",
+      "Parameters": Object {
+        "null": null,
+      },
+      "ResultPath": "$.__fnl_constants",
+      "Type": "Pass",
+    },
     "return Promise.all(input.list.filter(function(item)).map(function(item)))": Object {
       "End": true,
       "ItemsPath": "$.list[?(@.length>2)]",
@@ -1818,8 +2692,16 @@ Object {
 
 exports[`list.filter(item => item.length > 2).map(item => task(item)) 2`] = `
 Object {
-  "StartAt": "return Promise.all(input.list.filter(function(item)).map(function(item)))",
+  "StartAt": "__fnl_constants",
   "States": Object {
+    "__fnl_constants": Object {
+      "Next": "return Promise.all(input.list.filter(function(item)).map(function(item)))",
+      "Parameters": Object {
+        "null": null,
+      },
+      "ResultPath": "$.__fnl_constants",
+      "Type": "Pass",
+    },
     "return Promise.all(input.list.filter(function(item)).map(function(item)))": Object {
       "End": true,
       "ItemsPath": "$.list[?(@.length>2)]",
@@ -1848,8 +2730,16 @@ Object {
 
 exports[`list.filter(item => item.length > 2).map(item => task(item)) 3`] = `
 Object {
-  "StartAt": "return Promise.all(input.list.filter(function(item)).map(function(item)))",
+  "StartAt": "__fnl_constants",
   "States": Object {
+    "__fnl_constants": Object {
+      "Next": "return Promise.all(input.list.filter(function(item)).map(function(item)))",
+      "Parameters": Object {
+        "null": null,
+      },
+      "ResultPath": "$.__fnl_constants",
+      "Type": "Pass",
+    },
     "return Promise.all(input.list.filter(function(item)).map(function(item)))": Object {
       "End": true,
       "ItemsPath": "$.list[?(@.length>2)]",
@@ -1878,8 +2768,16 @@ Object {
 
 exports[`list.forEach((item, i) => if (i == 0) task(item)) 1`] = `
 Object {
-  "StartAt": "return input.list.forEach(function(item, i))",
+  "StartAt": "__fnl_constants",
   "States": Object {
+    "__fnl_constants": Object {
+      "Next": "return input.list.forEach(function(item, i))",
+      "Parameters": Object {
+        "null": null,
+      },
+      "ResultPath": "$.__fnl_constants",
+      "Type": "Pass",
+    },
     "return input.list.forEach(function(item, i))": Object {
       "End": true,
       "ItemsPath": "$.list",
@@ -1928,8 +2826,16 @@ Object {
 
 exports[`list.forEach((item, i, list) => if (i == 0) task(item) else task(list[0])) 1`] = `
 Object {
-  "StartAt": "return input.list.forEach(function(item, i))",
+  "StartAt": "__fnl_constants",
   "States": Object {
+    "__fnl_constants": Object {
+      "Next": "return input.list.forEach(function(item, i))",
+      "Parameters": Object {
+        "null": null,
+      },
+      "ResultPath": "$.__fnl_constants",
+      "Type": "Pass",
+    },
     "return input.list.forEach(function(item, i))": Object {
       "End": true,
       "ItemsPath": "$.list",
@@ -1977,8 +2883,16 @@ Object {
 
 exports[`list.forEach(item => task(item)) 1`] = `
 Object {
-  "StartAt": "return input.list.forEach(function(item))",
+  "StartAt": "__fnl_constants",
   "States": Object {
+    "__fnl_constants": Object {
+      "Next": "return input.list.forEach(function(item))",
+      "Parameters": Object {
+        "null": null,
+      },
+      "ResultPath": "$.__fnl_constants",
+      "Type": "Pass",
+    },
     "return input.list.forEach(function(item))": Object {
       "End": true,
       "ItemsPath": "$.list",
@@ -2007,8 +2921,16 @@ Object {
 
 exports[`list.map((item, i) => if (i == 0) task(item)) 1`] = `
 Object {
-  "StartAt": "return Promise.all(input.list.map(function(item, i)))",
+  "StartAt": "__fnl_constants",
   "States": Object {
+    "__fnl_constants": Object {
+      "Next": "return Promise.all(input.list.map(function(item, i)))",
+      "Parameters": Object {
+        "null": null,
+      },
+      "ResultPath": "$.__fnl_constants",
+      "Type": "Pass",
+    },
     "return Promise.all(input.list.map(function(item, i)))": Object {
       "End": true,
       "ItemsPath": "$.list",
@@ -2057,8 +2979,16 @@ Object {
 
 exports[`list.map((item, i, list) => if (i == 0) task(item) else task(list[0])) 1`] = `
 Object {
-  "StartAt": "return Promise.all(input.list.map(function(item, i)))",
+  "StartAt": "__fnl_constants",
   "States": Object {
+    "__fnl_constants": Object {
+      "Next": "return Promise.all(input.list.map(function(item, i)))",
+      "Parameters": Object {
+        "null": null,
+      },
+      "ResultPath": "$.__fnl_constants",
+      "Type": "Pass",
+    },
     "return Promise.all(input.list.map(function(item, i)))": Object {
       "End": true,
       "ItemsPath": "$.list",
@@ -2106,8 +3036,16 @@ Object {
 
 exports[`list.map(item => task(item)) 1`] = `
 Object {
-  "StartAt": "return Promise.all(input.list.map(function(item)))",
+  "StartAt": "__fnl_constants",
   "States": Object {
+    "__fnl_constants": Object {
+      "Next": "return Promise.all(input.list.map(function(item)))",
+      "Parameters": Object {
+        "null": null,
+      },
+      "ResultPath": "$.__fnl_constants",
+      "Type": "Pass",
+    },
     "return Promise.all(input.list.map(function(item)))": Object {
       "End": true,
       "ItemsPath": "$.list",
@@ -2136,8 +3074,16 @@ Object {
 
 exports[`nested try-catch 1`] = `
 Object {
-  "StartAt": "throw new Error(\\"error1\\")",
+  "StartAt": "__fnl_constants",
   "States": Object {
+    "__fnl_constants": Object {
+      "Next": "throw new Error(\\"error1\\")",
+      "Parameters": Object {
+        "null": null,
+      },
+      "ResultPath": "$.__fnl_constants",
+      "Type": "Pass",
+    },
     "throw new Error(\\"error1\\")": Object {
       "Next": "throw new Error(\\"error2\\")",
       "Result": Object {
@@ -2158,6 +3104,61 @@ Object {
       "Cause": "{\\"message\\":\\"error3\\"}",
       "Error": "Error",
       "Type": "Fail",
+    },
+  },
+}
+`;
+
+exports[`null coalesce logic 1`] = `
+Object {
+  "StartAt": "__fnl_constants",
+  "States": Object {
+    "0_tmp = input.a ?? input.b": Object {
+      "Choices": Array [
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.a",
+            },
+            Object {
+              "IsNull": false,
+              "Variable": "$.a",
+            },
+          ],
+          "Next": "takeLeft__0_tmp = input.a ?? input.b",
+        },
+      ],
+      "Default": "takeRight__0_tmp = input.a ?? input.b",
+      "Type": "Choice",
+    },
+    "__fnl_constants": Object {
+      "Next": "0_tmp = input.a ?? input.b",
+      "Parameters": Object {
+        "null": null,
+      },
+      "ResultPath": "$.__fnl_constants",
+      "Type": "Pass",
+    },
+    "return {null: 0_tmp}": Object {
+      "End": true,
+      "Parameters": Object {
+        "null.$": "$.0_tmp",
+      },
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "takeLeft__0_tmp = input.a ?? input.b": Object {
+      "InputPath": "$.a",
+      "Next": "return {null: 0_tmp}",
+      "ResultPath": "$.0_tmp",
+      "Type": "Pass",
+    },
+    "takeRight__0_tmp = input.a ?? input.b": Object {
+      "InputPath": "$.b",
+      "Next": "return {null: 0_tmp}",
+      "ResultPath": "$.0_tmp",
+      "Type": "Pass",
     },
   },
 }
@@ -2242,8 +3243,16 @@ Object {
 
 exports[`result = $SFN.forEach(list, (item) => task(item)) 1`] = `
 Object {
-  "StartAt": "return $SFN.forEach(input.list, function(item))",
+  "StartAt": "__fnl_constants",
   "States": Object {
+    "__fnl_constants": Object {
+      "Next": "return $SFN.forEach(input.list, function(item))",
+      "Parameters": Object {
+        "null": null,
+      },
+      "ResultPath": "$.__fnl_constants",
+      "Type": "Pass",
+    },
     "return $SFN.forEach(input.list, function(item))": Object {
       "End": true,
       "ItemsPath": "$.list",
@@ -2271,8 +3280,16 @@ Object {
 
 exports[`result = $SFN.map(list, (item) => task(item)) 1`] = `
 Object {
-  "StartAt": "result = await $SFN.map(input.list, function(item))",
+  "StartAt": "__fnl_constants",
   "States": Object {
+    "__fnl_constants": Object {
+      "Next": "result = await $SFN.map(input.list, function(item))",
+      "Parameters": Object {
+        "null": null,
+      },
+      "ResultPath": "$.__fnl_constants",
+      "Type": "Pass",
+    },
     "result = await $SFN.map(input.list, function(item))": Object {
       "ItemsPath": "$.list",
       "Iterator": Object {
@@ -2305,8 +3322,16 @@ Object {
 
 exports[`return $SFN.forEach(list, (item) => task(item)) 1`] = `
 Object {
-  "StartAt": "return $SFN.forEach(input.list, function(item))",
+  "StartAt": "__fnl_constants",
   "States": Object {
+    "__fnl_constants": Object {
+      "Next": "return $SFN.forEach(input.list, function(item))",
+      "Parameters": Object {
+        "null": null,
+      },
+      "ResultPath": "$.__fnl_constants",
+      "Type": "Pass",
+    },
     "return $SFN.forEach(input.list, function(item))": Object {
       "End": true,
       "ItemsPath": "$.list",
@@ -2342,8 +3367,16 @@ Object {
 
 exports[`return $SFN.forEach(list, (item) => try { task(item)) } catch { return null } 1`] = `
 Object {
-  "StartAt": "return $SFN.forEach(input.list, function(item))",
+  "StartAt": "__fnl_constants",
   "States": Object {
+    "__fnl_constants": Object {
+      "Next": "return $SFN.forEach(input.list, function(item))",
+      "Parameters": Object {
+        "null": null,
+      },
+      "ResultPath": "$.__fnl_constants",
+      "Type": "Pass",
+    },
     "return $SFN.forEach(input.list, function(item))": Object {
       "End": true,
       "ItemsPath": "$.list",
@@ -2396,8 +3429,16 @@ Object {
 
 exports[`return $SFN.forEach(list, {maxConcurrency: 2} (item) => task(item)) 1`] = `
 Object {
-  "StartAt": "return $SFN.forEach(input.list, {maxConcurrency: 2}, function(item))",
+  "StartAt": "__fnl_constants",
   "States": Object {
+    "__fnl_constants": Object {
+      "Next": "return $SFN.forEach(input.list, {maxConcurrency: 2}, function(item))",
+      "Parameters": Object {
+        "null": null,
+      },
+      "ResultPath": "$.__fnl_constants",
+      "Type": "Pass",
+    },
     "return $SFN.forEach(input.list, {maxConcurrency: 2}, function(item))": Object {
       "End": true,
       "ItemsPath": "$.list",
@@ -2434,8 +3475,16 @@ Object {
 
 exports[`return $SFN.map(list, (item) => task(item)) 1`] = `
 Object {
-  "StartAt": "return $SFN.map(input.list, function(item))",
+  "StartAt": "__fnl_constants",
   "States": Object {
+    "__fnl_constants": Object {
+      "Next": "return $SFN.map(input.list, function(item))",
+      "Parameters": Object {
+        "null": null,
+      },
+      "ResultPath": "$.__fnl_constants",
+      "Type": "Pass",
+    },
     "return $SFN.map(input.list, function(item))": Object {
       "End": true,
       "ItemsPath": "$.list",
@@ -2463,8 +3512,16 @@ Object {
 
 exports[`return $SFN.map(list, (item) => try { task(item)) } catch { return null } 1`] = `
 Object {
-  "StartAt": "return $SFN.map(input.list, function(item))",
+  "StartAt": "__fnl_constants",
   "States": Object {
+    "__fnl_constants": Object {
+      "Next": "return $SFN.map(input.list, function(item))",
+      "Parameters": Object {
+        "null": null,
+      },
+      "ResultPath": "$.__fnl_constants",
+      "Type": "Pass",
+    },
     "return $SFN.map(input.list, function(item))": Object {
       "End": true,
       "ItemsPath": "$.list",
@@ -2509,8 +3566,16 @@ Object {
 
 exports[`return $SFN.map(list, {maxConcurrency: 2} (item) => task(item)) 1`] = `
 Object {
-  "StartAt": "return $SFN.map(input.list, {maxConcurrency: 2}, function(item))",
+  "StartAt": "__fnl_constants",
   "States": Object {
+    "__fnl_constants": Object {
+      "Next": "return $SFN.map(input.list, {maxConcurrency: 2}, function(item))",
+      "Parameters": Object {
+        "null": null,
+      },
+      "ResultPath": "$.__fnl_constants",
+      "Type": "Pass",
+    },
     "return $SFN.map(input.list, {maxConcurrency: 2}, function(item))": Object {
       "End": true,
       "ItemsPath": "$.list",
@@ -2636,8 +3701,16 @@ Object {
 
 exports[`return AWS.DynamoDB.GetItem 1`] = `
 Object {
-  "StartAt": "person = await $AWS.DynamoDB.GetItem({Table: personTable, Key: {id: {S: inp",
+  "StartAt": "__fnl_constants",
   "States": Object {
+    "__fnl_constants": Object {
+      "Next": "person = await $AWS.DynamoDB.GetItem({Table: personTable, Key: {id: {S: inp",
+      "Parameters": Object {
+        "null": null,
+      },
+      "ResultPath": "$.__fnl_constants",
+      "Type": "Pass",
+    },
     "if(person.Item == undefined)": Object {
       "Choices": Array [
         Object {
@@ -2694,8 +3767,16 @@ Object {
 
 exports[`return PropAccessExpr 1`] = `
 Object {
-  "StartAt": "return input.input.id",
+  "StartAt": "__fnl_constants",
   "States": Object {
+    "__fnl_constants": Object {
+      "Next": "return input.input.id",
+      "Parameters": Object {
+        "null": null,
+      },
+      "ResultPath": "$.__fnl_constants",
+      "Type": "Pass",
+    },
     "return input.input.id": Object {
       "End": true,
       "OutputPath": "$.input.id",
@@ -2724,13 +3805,21 @@ Object {
 
 exports[`return await task(await task()) 1`] = `
 Object {
-  "StartAt": "0_tmp = await task()",
+  "StartAt": "__fnl_constants",
   "States": Object {
     "0_tmp = await task()": Object {
       "Next": "return task(0_tmp)",
       "Resource": "__REPLACED_TOKEN",
       "ResultPath": "$.0_tmp",
       "Type": "Task",
+    },
+    "__fnl_constants": Object {
+      "Next": "0_tmp = await task()",
+      "Parameters": Object {
+        "null": null,
+      },
+      "ResultPath": "$.__fnl_constants",
+      "Type": "Pass",
     },
     "return task(0_tmp)": Object {
       "End": true,
@@ -2745,8 +3834,16 @@ Object {
 
 exports[`return identifier 1`] = `
 Object {
-  "StartAt": "return input.id",
+  "StartAt": "__fnl_constants",
   "States": Object {
+    "__fnl_constants": Object {
+      "Next": "return input.id",
+      "Parameters": Object {
+        "null": null,
+      },
+      "ResultPath": "$.__fnl_constants",
+      "Type": "Pass",
+    },
     "return input.id": Object {
       "End": true,
       "OutputPath": "$.id",
@@ -2758,8 +3855,16 @@ Object {
 
 exports[`return items.slice(-1) 1`] = `
 Object {
-  "StartAt": "return input.items.slice(-1)",
+  "StartAt": "__fnl_constants",
   "States": Object {
+    "__fnl_constants": Object {
+      "Next": "return input.items.slice(-1)",
+      "Parameters": Object {
+        "null": null,
+      },
+      "ResultPath": "$.__fnl_constants",
+      "Type": "Pass",
+    },
     "return input.items.slice(-1)": Object {
       "End": true,
       "InputPath": "$.items[-1:]",
@@ -2772,8 +3877,16 @@ Object {
 
 exports[`return items.slice(0, -1) 1`] = `
 Object {
-  "StartAt": "return input.items.slice(0, -1)",
+  "StartAt": "__fnl_constants",
   "States": Object {
+    "__fnl_constants": Object {
+      "Next": "return input.items.slice(0, -1)",
+      "Parameters": Object {
+        "null": null,
+      },
+      "ResultPath": "$.__fnl_constants",
+      "Type": "Pass",
+    },
     "return input.items.slice(0, -1)": Object {
       "End": true,
       "InputPath": "$.items[0:-1]",
@@ -2786,8 +3899,16 @@ Object {
 
 exports[`return items.slice(1) 1`] = `
 Object {
-  "StartAt": "return input.items.slice(1)",
+  "StartAt": "__fnl_constants",
   "States": Object {
+    "__fnl_constants": Object {
+      "Next": "return input.items.slice(1)",
+      "Parameters": Object {
+        "null": null,
+      },
+      "ResultPath": "$.__fnl_constants",
+      "Type": "Pass",
+    },
     "return input.items.slice(1)": Object {
       "End": true,
       "InputPath": "$.items[1:]",
@@ -2800,8 +3921,16 @@ Object {
 
 exports[`return items.slice(1, 3) 1`] = `
 Object {
-  "StartAt": "return input.items.slice(1, 3)",
+  "StartAt": "__fnl_constants",
   "States": Object {
+    "__fnl_constants": Object {
+      "Next": "return input.items.slice(1, 3)",
+      "Parameters": Object {
+        "null": null,
+      },
+      "ResultPath": "$.__fnl_constants",
+      "Type": "Pass",
+    },
     "return input.items.slice(1, 3)": Object {
       "End": true,
       "InputPath": "$.items[1:3]",
@@ -2814,8 +3943,16 @@ Object {
 
 exports[`return items.slice(1, undefined) 1`] = `
 Object {
-  "StartAt": "return input.items.slice(1, undefined)",
+  "StartAt": "__fnl_constants",
   "States": Object {
+    "__fnl_constants": Object {
+      "Next": "return input.items.slice(1, undefined)",
+      "Parameters": Object {
+        "null": null,
+      },
+      "ResultPath": "$.__fnl_constants",
+      "Type": "Pass",
+    },
     "return input.items.slice(1, undefined)": Object {
       "End": true,
       "InputPath": "$.items[1:]",
@@ -2828,8 +3965,16 @@ Object {
 
 exports[`return optional PropAccessExpr 1`] = `
 Object {
-  "StartAt": "return input.input.id",
+  "StartAt": "__fnl_constants",
   "States": Object {
+    "__fnl_constants": Object {
+      "Next": "return input.input.id",
+      "Parameters": Object {
+        "null": null,
+      },
+      "ResultPath": "$.__fnl_constants",
+      "Type": "Pass",
+    },
     "return input.input.id": Object {
       "End": true,
       "OutputPath": "$.input.id",
@@ -2860,8 +4005,16 @@ Object {
 
 exports[`return task({key: items.slice(1, 3)}) 1`] = `
 Object {
-  "StartAt": "return task({key: input.items.slice(1, 3)})",
+  "StartAt": "__fnl_constants",
   "States": Object {
+    "__fnl_constants": Object {
+      "Next": "return task({key: input.items.slice(1, 3)})",
+      "Parameters": Object {
+        "null": null,
+      },
+      "ResultPath": "$.__fnl_constants",
+      "Type": "Pass",
+    },
     "return task({key: input.items.slice(1, 3)})": Object {
       "End": true,
       "Parameters": Object {
@@ -2877,13 +4030,21 @@ Object {
 
 exports[`return task(await task()) 1`] = `
 Object {
-  "StartAt": "0_tmp = await task()",
+  "StartAt": "__fnl_constants",
   "States": Object {
     "0_tmp = await task()": Object {
       "Next": "return task(0_tmp)",
       "Resource": "__REPLACED_TOKEN",
       "ResultPath": "$.0_tmp",
       "Type": "Task",
+    },
+    "__fnl_constants": Object {
+      "Next": "0_tmp = await task()",
+      "Parameters": Object {
+        "null": null,
+      },
+      "ResultPath": "$.__fnl_constants",
+      "Type": "Pass",
     },
     "return task(0_tmp)": Object {
       "End": true,
@@ -2898,8 +4059,16 @@ Object {
 
 exports[`return void 1`] = `
 Object {
-  "StartAt": "return null",
+  "StartAt": "__fnl_constants",
   "States": Object {
+    "__fnl_constants": Object {
+      "Next": "return null",
+      "Parameters": Object {
+        "null": null,
+      },
+      "ResultPath": "$.__fnl_constants",
+      "Type": "Pass",
+    },
     "return null": Object {
       "End": true,
       "OutputPath": "$.null",
@@ -2914,8 +4083,16 @@ Object {
 
 exports[`single quotes in StringLiteralExpr should be escaped in a JSON Path filter expression 1`] = `
 Object {
-  "StartAt": "return task({escape: input.items.filter(function(item))})",
+  "StartAt": "__fnl_constants",
   "States": Object {
+    "__fnl_constants": Object {
+      "Next": "return task({escape: input.items.filter(function(item))})",
+      "Parameters": Object {
+        "null": null,
+      },
+      "ResultPath": "$.__fnl_constants",
+      "Type": "Pass",
+    },
     "return task({escape: input.items.filter(function(item))})": Object {
       "End": true,
       "Parameters": Object {
@@ -2931,17 +4108,31 @@ Object {
 
 exports[`spread constant array and object 1`] = `
 Object {
-  "StartAt": "return {array: [0, ...array, 3], object: {key: \\"value\\", ...object}}",
+  "StartAt": "__fnl_constants",
   "States": Object {
-    "return {array: [0, ...array, 3], object: {key: \\"value\\", ...object}}": Object {
+    "0_tmp = [0, ...array, 3]": Object {
+      "Next": "return {array: 0_tmp, object: {key: \\"value\\", ...object}}",
+      "Result": Array [
+        0,
+        1,
+        2,
+        3,
+      ],
+      "ResultPath": "$.0_tmp",
+      "Type": "Pass",
+    },
+    "__fnl_constants": Object {
+      "Next": "0_tmp = [0, ...array, 3]",
+      "Parameters": Object {
+        "null": null,
+      },
+      "ResultPath": "$.__fnl_constants",
+      "Type": "Pass",
+    },
+    "return {array: 0_tmp, object: {key: \\"value\\", ...object}}": Object {
       "End": true,
       "Parameters": Object {
-        "array": Array [
-          0,
-          1,
-          2,
-          3,
-        ],
+        "array.$": "$.0_tmp",
         "object": Object {
           "hello": "world",
           "key": "value",
@@ -2956,8 +4147,16 @@ Object {
 
 exports[`task(-1) 1`] = `
 Object {
-  "StartAt": "return task(-1)",
+  "StartAt": "__fnl_constants",
   "States": Object {
+    "__fnl_constants": Object {
+      "Next": "return task(-1)",
+      "Parameters": Object {
+        "null": null,
+      },
+      "ResultPath": "$.__fnl_constants",
+      "Type": "Pass",
+    },
     "return task(-1)": Object {
       "End": true,
       "Parameters": -1,
@@ -3162,8 +4361,16 @@ Object {
 
 exports[`task(input.list[-1]) 1`] = `
 Object {
-  "StartAt": "return task(input.list[-1])",
+  "StartAt": "__fnl_constants",
   "States": Object {
+    "__fnl_constants": Object {
+      "Next": "return task(input.list[-1])",
+      "Parameters": Object {
+        "null": null,
+      },
+      "ResultPath": "$.__fnl_constants",
+      "Type": "Pass",
+    },
     "return task(input.list[-1])": Object {
       "End": true,
       "InputPath": "$.list[-1]",
@@ -3177,8 +4384,16 @@ Object {
 
 exports[`template literal strings 1`] = `
 Object {
-  "StartAt": "return task({key: \`input.obj.str hello input.obj.items[0]\`})",
+  "StartAt": "__fnl_constants",
   "States": Object {
+    "__fnl_constants": Object {
+      "Next": "return task({key: \`input.obj.str hello input.obj.items[0]\`})",
+      "Parameters": Object {
+        "null": null,
+      },
+      "ResultPath": "$.__fnl_constants",
+      "Type": "Pass",
+    },
     "return task({key: \`input.obj.str hello input.obj.items[0]\`})": Object {
       "End": true,
       "Parameters": Object {
@@ -3194,8 +4409,16 @@ Object {
 
 exports[`throw Error 1`] = `
 Object {
-  "StartAt": "throw Error(\\"cause\\")",
+  "StartAt": "__fnl_constants",
   "States": Object {
+    "__fnl_constants": Object {
+      "Next": "throw Error(\\"cause\\")",
+      "Parameters": Object {
+        "null": null,
+      },
+      "ResultPath": "$.__fnl_constants",
+      "Type": "Pass",
+    },
     "throw Error(\\"cause\\")": Object {
       "Cause": "{\\"message\\":\\"cause\\"}",
       "Error": "Error",
@@ -3207,8 +4430,16 @@ Object {
 
 exports[`throw in for-of 1`] = `
 Object {
-  "StartAt": "for(item of input.items)",
+  "StartAt": "__fnl_constants",
   "States": Object {
+    "__fnl_constants": Object {
+      "Next": "for(item of input.items)",
+      "Parameters": Object {
+        "null": null,
+      },
+      "ResultPath": "$.__fnl_constants",
+      "Type": "Pass",
+    },
     "for(item of input.items)": Object {
       "ItemsPath": "$.items",
       "Iterator": Object {
@@ -3243,8 +4474,16 @@ Object {
 
 exports[`throw new CustomError 1`] = `
 Object {
-  "StartAt": "throw new CustomError(\\"cause\\")",
+  "StartAt": "__fnl_constants",
   "States": Object {
+    "__fnl_constants": Object {
+      "Next": "throw new CustomError(\\"cause\\")",
+      "Parameters": Object {
+        "null": null,
+      },
+      "ResultPath": "$.__fnl_constants",
+      "Type": "Pass",
+    },
     "throw new CustomError(\\"cause\\")": Object {
       "Cause": "{\\"property\\":\\"cause\\"}",
       "Error": "CustomError",
@@ -3256,8 +4495,16 @@ Object {
 
 exports[`throw new Error 1`] = `
 Object {
-  "StartAt": "throw new Error(\\"cause\\")",
+  "StartAt": "__fnl_constants",
   "States": Object {
+    "__fnl_constants": Object {
+      "Next": "throw new Error(\\"cause\\")",
+      "Parameters": Object {
+        "null": null,
+      },
+      "ResultPath": "$.__fnl_constants",
+      "Type": "Pass",
+    },
     "throw new Error(\\"cause\\")": Object {
       "Cause": "{\\"message\\":\\"cause\\"}",
       "Error": "Error",
@@ -3269,7 +4516,7 @@ Object {
 
 exports[`throw task(task()) 1`] = `
 Object {
-  "StartAt": "0_tmp = await task(input)",
+  "StartAt": "__fnl_constants",
   "States": Object {
     "0_tmp = await task(input)": Object {
       "InputPath": "$",
@@ -3277,6 +4524,14 @@ Object {
       "Resource": "__REPLACED_TOKEN",
       "ResultPath": "$.0_tmp",
       "Type": "Task",
+    },
+    "__fnl_constants": Object {
+      "Next": "0_tmp = await task(input)",
+      "Parameters": Object {
+        "null": null,
+      },
+      "ResultPath": "$.__fnl_constants",
+      "Type": "Pass",
     },
     "throw await task(0_tmp)": Object {
       "Cause": "{\\"payload\\":\\"$.0_tmp\\"}",
@@ -3289,8 +4544,16 @@ Object {
 
 exports[`try { $SFN.forEach(list, (item) => task(item)) } catch { return null } 1`] = `
 Object {
-  "StartAt": "return $SFN.forEach(input.list, function(item))",
+  "StartAt": "__fnl_constants",
   "States": Object {
+    "__fnl_constants": Object {
+      "Next": "return $SFN.forEach(input.list, function(item))",
+      "Parameters": Object {
+        "null": null,
+      },
+      "ResultPath": "$.__fnl_constants",
+      "Type": "Pass",
+    },
     "return $SFN.forEach(input.list, function(item))": Object {
       "Catch": Array [
         Object {
@@ -3335,8 +4598,16 @@ Object {
 
 exports[`try { $SFN.map(list, (item) => task(item)) } catch { return null } 1`] = `
 Object {
-  "StartAt": "return $SFN.map(input.list, function(item))",
+  "StartAt": "__fnl_constants",
   "States": Object {
+    "__fnl_constants": Object {
+      "Next": "return $SFN.map(input.list, function(item))",
+      "Parameters": Object {
+        "null": null,
+      },
+      "ResultPath": "$.__fnl_constants",
+      "Type": "Pass",
+    },
     "return $SFN.map(input.list, function(item))": Object {
       "Catch": Array [
         Object {
@@ -3381,12 +4652,20 @@ Object {
 
 exports[`try { for-of } catch { (maybe) throw } finally { task } 1`] = `
 Object {
-  "StartAt": "for(item of input.items)",
+  "StartAt": "__fnl_constants",
   "States": Object {
     "0_catch(err)": Object {
       "InputPath": "$.err.0_ParsedError",
       "Next": "if(err.message == \\"you dun' goofed\\")",
       "ResultPath": "$.err",
+      "Type": "Pass",
+    },
+    "__fnl_constants": Object {
+      "Next": "for(item of input.items)",
+      "Parameters": Object {
+        "null": null,
+      },
+      "ResultPath": "$.__fnl_constants",
       "Type": "Pass",
     },
     "await task(\\"2\\")": Object {
@@ -3484,8 +4763,16 @@ Object {
 
 exports[`try { list.forEach(item => task(item)) } 1`] = `
 Object {
-  "StartAt": "return input.list.forEach(function(item))",
+  "StartAt": "__fnl_constants",
   "States": Object {
+    "__fnl_constants": Object {
+      "Next": "return input.list.forEach(function(item))",
+      "Parameters": Object {
+        "null": null,
+      },
+      "ResultPath": "$.__fnl_constants",
+      "Type": "Pass",
+    },
     "return input.list.forEach(function(item))": Object {
       "Catch": Array [
         Object {
@@ -3531,8 +4818,16 @@ Object {
 
 exports[`try { list.forEach(item => task(item)) } 2`] = `
 Object {
-  "StartAt": "return input.list.forEach(function(item))",
+  "StartAt": "__fnl_constants",
   "States": Object {
+    "__fnl_constants": Object {
+      "Next": "return input.list.forEach(function(item))",
+      "Parameters": Object {
+        "null": null,
+      },
+      "ResultPath": "$.__fnl_constants",
+      "Type": "Pass",
+    },
     "return input.list.forEach(function(item))": Object {
       "End": true,
       "ItemsPath": "$.list",
@@ -3578,8 +4873,16 @@ Object {
 
 exports[`try { list.forEach(item => throw) } 1`] = `
 Object {
-  "StartAt": "return input.list.forEach(function())",
+  "StartAt": "__fnl_constants",
   "States": Object {
+    "__fnl_constants": Object {
+      "Next": "return input.list.forEach(function())",
+      "Parameters": Object {
+        "null": null,
+      },
+      "ResultPath": "$.__fnl_constants",
+      "Type": "Pass",
+    },
     "return input.list.forEach(function())": Object {
       "Catch": Array [
         Object {
@@ -3621,12 +4924,20 @@ Object {
 
 exports[`try { list.forEach(item => throw) } catch (err) 1`] = `
 Object {
-  "StartAt": "return input.list.forEach(function())",
+  "StartAt": "__fnl_constants",
   "States": Object {
     "0_catch(err)": Object {
       "InputPath": "$.err.0_ParsedError",
       "Next": "if(err.message == \\"cause\\")",
       "ResultPath": "$.err",
+      "Type": "Pass",
+    },
+    "__fnl_constants": Object {
+      "Next": "return input.list.forEach(function())",
+      "Parameters": Object {
+        "null": null,
+      },
+      "ResultPath": "$.__fnl_constants",
       "Type": "Pass",
     },
     "catch(err)": Object {
@@ -3693,8 +5004,16 @@ Object {
 
 exports[`try { list.map(item => task(item)) } 1`] = `
 Object {
-  "StartAt": "return await Promise.all(input.list.map(function(item)))",
+  "StartAt": "__fnl_constants",
   "States": Object {
+    "__fnl_constants": Object {
+      "Next": "return await Promise.all(input.list.map(function(item)))",
+      "Parameters": Object {
+        "null": null,
+      },
+      "ResultPath": "$.__fnl_constants",
+      "Type": "Pass",
+    },
     "return await Promise.all(input.list.map(function(item)))": Object {
       "Catch": Array [
         Object {
@@ -3740,8 +5059,16 @@ Object {
 
 exports[`try { list.map(item => task(item)) } 2`] = `
 Object {
-  "StartAt": "return Promise.all(input.list.map(function(item)))",
+  "StartAt": "__fnl_constants",
   "States": Object {
+    "__fnl_constants": Object {
+      "Next": "return Promise.all(input.list.map(function(item)))",
+      "Parameters": Object {
+        "null": null,
+      },
+      "ResultPath": "$.__fnl_constants",
+      "Type": "Pass",
+    },
     "return Promise.all(input.list.map(function(item)))": Object {
       "End": true,
       "ItemsPath": "$.list",
@@ -3787,8 +5114,16 @@ Object {
 
 exports[`try { list.map(item => throw) } 1`] = `
 Object {
-  "StartAt": "return input.list.map(function())",
+  "StartAt": "__fnl_constants",
   "States": Object {
+    "__fnl_constants": Object {
+      "Next": "return input.list.map(function())",
+      "Parameters": Object {
+        "null": null,
+      },
+      "ResultPath": "$.__fnl_constants",
+      "Type": "Pass",
+    },
     "return input.list.map(function())": Object {
       "Catch": Array [
         Object {
@@ -3830,12 +5165,20 @@ Object {
 
 exports[`try { list.map(item => throw) } catch (err) 1`] = `
 Object {
-  "StartAt": "return input.list.map(function())",
+  "StartAt": "__fnl_constants",
   "States": Object {
     "0_catch(err)": Object {
       "InputPath": "$.err.0_ParsedError",
       "Next": "if(err.message == \\"cause\\")",
       "ResultPath": "$.err",
+      "Type": "Pass",
+    },
+    "__fnl_constants": Object {
+      "Next": "return input.list.map(function())",
+      "Parameters": Object {
+        "null": null,
+      },
+      "ResultPath": "$.__fnl_constants",
       "Type": "Pass",
     },
     "catch(err)": Object {
@@ -4024,8 +5367,16 @@ Object {
 
 exports[`try { task } catch { throw } finally { task() } 1`] = `
 Object {
-  "StartAt": "await task()",
+  "StartAt": "__fnl_constants",
   "States": Object {
+    "__fnl_constants": Object {
+      "Next": "await task()",
+      "Parameters": Object {
+        "null": null,
+      },
+      "ResultPath": "$.__fnl_constants",
+      "Type": "Pass",
+    },
     "await task(\\"recover\\")": Object {
       "Next": "exit finally",
       "Parameters": "recover",
@@ -4086,8 +5437,16 @@ Object {
 
 exports[`try { task() } catch { (maybe) throw } finally { task } 1`] = `
 Object {
-  "StartAt": "await task(\\"1\\")",
+  "StartAt": "__fnl_constants",
   "States": Object {
+    "__fnl_constants": Object {
+      "Next": "await task(\\"1\\")",
+      "Parameters": Object {
+        "null": null,
+      },
+      "ResultPath": "$.__fnl_constants",
+      "Type": "Pass",
+    },
     "await task(\\"1\\")": Object {
       "Catch": Array [
         Object {
@@ -4160,8 +5519,16 @@ Object {
 
 exports[`try { task() } catch { task() } finally { task() } 1`] = `
 Object {
-  "StartAt": "await task(\\"1\\")",
+  "StartAt": "__fnl_constants",
   "States": Object {
+    "__fnl_constants": Object {
+      "Next": "await task(\\"1\\")",
+      "Parameters": Object {
+        "null": null,
+      },
+      "ResultPath": "$.__fnl_constants",
+      "Type": "Pass",
+    },
     "await task(\\"1\\")": Object {
       "Catch": Array [
         Object {
@@ -4231,12 +5598,20 @@ Object {
 
 exports[`try { task() } catch(err) { (maybe) throw } finally { task } 1`] = `
 Object {
-  "StartAt": "await task(\\"1\\")",
+  "StartAt": "__fnl_constants",
   "States": Object {
     "0_catch(err)": Object {
       "InputPath": "$.err.0_ParsedError",
       "Next": "if(err.message == \\"sam\\")",
       "ResultPath": "$.err",
+      "Type": "Pass",
+    },
+    "__fnl_constants": Object {
+      "Next": "await task(\\"1\\")",
+      "Parameters": Object {
+        "null": null,
+      },
+      "ResultPath": "$.__fnl_constants",
       "Type": "Pass",
     },
     "await task(\\"1\\")": Object {
@@ -4319,8 +5694,16 @@ Object {
 
 exports[`try { throw } catch { (maybe) throw } finally { task } 1`] = `
 Object {
-  "StartAt": "throw new Error(\\"go\\")",
+  "StartAt": "__fnl_constants",
   "States": Object {
+    "__fnl_constants": Object {
+      "Next": "throw new Error(\\"go\\")",
+      "Parameters": Object {
+        "null": null,
+      },
+      "ResultPath": "$.__fnl_constants",
+      "Type": "Pass",
+    },
     "await task()": Object {
       "Next": "exit finally",
       "Resource": "__REPLACED_TOKEN",
@@ -4384,8 +5767,16 @@ Object {
 
 exports[`try, task, empty catch 1`] = `
 Object {
-  "StartAt": "await computeScore({id: \\"id\\", name: \\"name\\"})",
+  "StartAt": "__fnl_constants",
   "States": Object {
+    "__fnl_constants": Object {
+      "Next": "await computeScore({id: \\"id\\", name: \\"name\\"})",
+      "Parameters": Object {
+        "null": null,
+      },
+      "ResultPath": "$.__fnl_constants",
+      "Type": "Pass",
+    },
     "await computeScore({id: \\"id\\", name: \\"name\\"})": Object {
       "Catch": Array [
         Object {
@@ -4419,8 +5810,16 @@ Object {
 
 exports[`try, throw Error('error'), empty catch 1`] = `
 Object {
-  "StartAt": "throw Error(\\"cause\\")",
+  "StartAt": "__fnl_constants",
   "States": Object {
+    "__fnl_constants": Object {
+      "Next": "throw Error(\\"cause\\")",
+      "Parameters": Object {
+        "null": null,
+      },
+      "ResultPath": "$.__fnl_constants",
+      "Type": "Pass",
+    },
     "return null": Object {
       "End": true,
       "OutputPath": "$.null",
@@ -4443,8 +5842,16 @@ Object {
 
 exports[`try, throw, catch, throw, finally, return 1`] = `
 Object {
-  "StartAt": "throw new Error(\\"go\\")",
+  "StartAt": "__fnl_constants",
   "States": Object {
+    "__fnl_constants": Object {
+      "Next": "throw new Error(\\"go\\")",
+      "Parameters": Object {
+        "null": null,
+      },
+      "ResultPath": "$.__fnl_constants",
+      "Type": "Pass",
+    },
     "return \\"rock-star\\"": Object {
       "End": true,
       "Result": "rock-star",
@@ -4473,8 +5880,16 @@ Object {
 
 exports[`try, throw, empty catch 1`] = `
 Object {
-  "StartAt": "throw new CustomError(\\"cause\\")",
+  "StartAt": "__fnl_constants",
   "States": Object {
+    "__fnl_constants": Object {
+      "Next": "throw new CustomError(\\"cause\\")",
+      "Parameters": Object {
+        "null": null,
+      },
+      "ResultPath": "$.__fnl_constants",
+      "Type": "Pass",
+    },
     "return null": Object {
       "End": true,
       "OutputPath": "$.null",
@@ -4497,8 +5912,16 @@ Object {
 
 exports[`try, throw, finally 1`] = `
 Object {
-  "StartAt": "throw new Error(\\"cause\\")",
+  "StartAt": "__fnl_constants",
   "States": Object {
+    "__fnl_constants": Object {
+      "Next": "throw new Error(\\"cause\\")",
+      "Parameters": Object {
+        "null": null,
+      },
+      "ResultPath": "$.__fnl_constants",
+      "Type": "Pass",
+    },
     "return \\"hello\\"": Object {
       "End": true,
       "Result": "hello",
@@ -4519,8 +5942,16 @@ Object {
 
 exports[`try-catch with guaranteed throw new Error 1`] = `
 Object {
-  "StartAt": "throw new Error(\\"cause\\")",
+  "StartAt": "__fnl_constants",
   "States": Object {
+    "__fnl_constants": Object {
+      "Next": "throw new Error(\\"cause\\")",
+      "Parameters": Object {
+        "null": null,
+      },
+      "ResultPath": "$.__fnl_constants",
+      "Type": "Pass",
+    },
     "if(err.message == \\"cause\\")": Object {
       "Choices": Array [
         Object {
@@ -4558,12 +5989,20 @@ Object {
 
 exports[`try-catch with inner return and a catch variable 1`] = `
 Object {
-  "StartAt": "await computeScore({id: \\"id\\", name: \\"name\\"})",
+  "StartAt": "__fnl_constants",
   "States": Object {
     "0_catch(err)": Object {
       "InputPath": "$.err.0_ParsedError",
       "Next": "return err.message",
       "ResultPath": "$.err",
+      "Type": "Pass",
+    },
+    "__fnl_constants": Object {
+      "Next": "await computeScore({id: \\"id\\", name: \\"name\\"})",
+      "Parameters": Object {
+        "null": null,
+      },
+      "ResultPath": "$.__fnl_constants",
       "Type": "Pass",
     },
     "await computeScore({id: \\"id\\", name: \\"name\\"})": Object {
@@ -4610,8 +6049,16 @@ Object {
 
 exports[`try-catch with inner return and no catch variable 1`] = `
 Object {
-  "StartAt": "await computeScore({id: \\"id\\", name: \\"name\\"})",
+  "StartAt": "__fnl_constants",
   "States": Object {
+    "__fnl_constants": Object {
+      "Next": "await computeScore({id: \\"id\\", name: \\"name\\"})",
+      "Parameters": Object {
+        "null": null,
+      },
+      "ResultPath": "$.__fnl_constants",
+      "Type": "Pass",
+    },
     "await computeScore({id: \\"id\\", name: \\"name\\"})": Object {
       "Catch": Array [
         Object {
@@ -4649,12 +6096,20 @@ Object {
 
 exports[`try-catch with optional return of task 1`] = `
 Object {
-  "StartAt": "if(input.id == \\"hello\\")",
+  "StartAt": "__fnl_constants",
   "States": Object {
     "0_catch(err)": Object {
       "InputPath": "$.err.0_ParsedError",
       "Next": "if(err.message == \\"cause\\")",
       "ResultPath": "$.err",
+      "Type": "Pass",
+    },
+    "__fnl_constants": Object {
+      "Next": "if(input.id == \\"hello\\")",
+      "Parameters": Object {
+        "null": null,
+      },
+      "ResultPath": "$.__fnl_constants",
       "Type": "Pass",
     },
     "await computeScore({id: input.id, name: \\"sam\\"})": Object {
@@ -4730,12 +6185,20 @@ Object {
 
 exports[`try-catch with optional return of task 2`] = `
 Object {
-  "StartAt": "if(input.id == \\"hello\\")",
+  "StartAt": "__fnl_constants",
   "States": Object {
     "0_catch(err)": Object {
       "InputPath": "$.err.0_ParsedError",
       "Next": "if(err.message == \\"cause\\")",
       "ResultPath": "$.err",
+      "Type": "Pass",
+    },
+    "__fnl_constants": Object {
+      "Next": "if(input.id == \\"hello\\")",
+      "Parameters": Object {
+        "null": null,
+      },
+      "ResultPath": "$.__fnl_constants",
       "Type": "Pass",
     },
     "catch(err)": Object {
@@ -4811,12 +6274,20 @@ Object {
 
 exports[`try-catch with optional task 1`] = `
 Object {
-  "StartAt": "if(input.id == \\"hello\\")",
+  "StartAt": "__fnl_constants",
   "States": Object {
     "0_catch(err)": Object {
       "InputPath": "$.err.0_ParsedError",
       "Next": "if(err.message == \\"cause\\")",
       "ResultPath": "$.err",
+      "Type": "Pass",
+    },
+    "__fnl_constants": Object {
+      "Next": "if(input.id == \\"hello\\")",
+      "Parameters": Object {
+        "null": null,
+      },
+      "ResultPath": "$.__fnl_constants",
       "Type": "Pass",
     },
     "await computeScore({id: input.id, name: \\"sam\\"})": Object {
@@ -4892,8 +6363,16 @@ Object {
 
 exports[`try-catch with optional throw of an Error 1`] = `
 Object {
-  "StartAt": "if(input.id == \\"hello\\")",
+  "StartAt": "__fnl_constants",
   "States": Object {
+    "__fnl_constants": Object {
+      "Next": "if(input.id == \\"hello\\")",
+      "Parameters": Object {
+        "null": null,
+      },
+      "ResultPath": "$.__fnl_constants",
+      "Type": "Pass",
+    },
     "if(err.message == \\"cause\\")": Object {
       "Choices": Array [
         Object {
@@ -4948,12 +6427,20 @@ Object {
 
 exports[`try-catch, err variable, contains for-of, throw Error 1`] = `
 Object {
-  "StartAt": "for(item of input.items)",
+  "StartAt": "__fnl_constants",
   "States": Object {
     "0_catch(err)": Object {
       "InputPath": "$.err.0_ParsedError",
       "Next": "return err.message",
       "ResultPath": "$.err",
+      "Type": "Pass",
+    },
+    "__fnl_constants": Object {
+      "Next": "for(item of input.items)",
+      "Parameters": Object {
+        "null": null,
+      },
+      "ResultPath": "$.__fnl_constants",
       "Type": "Pass",
     },
     "catch(err)": Object {
@@ -5012,12 +6499,20 @@ Object {
 
 exports[`try-catch, err variable, contains for-of, throw new Error 1`] = `
 Object {
-  "StartAt": "for(item of input.items)",
+  "StartAt": "__fnl_constants",
   "States": Object {
     "0_catch(err)": Object {
       "InputPath": "$.err.0_ParsedError",
       "Next": "return err.message",
       "ResultPath": "$.err",
+      "Type": "Pass",
+    },
+    "__fnl_constants": Object {
+      "Next": "for(item of input.items)",
+      "Parameters": Object {
+        "null": null,
+      },
+      "ResultPath": "$.__fnl_constants",
       "Type": "Pass",
     },
     "catch(err)": Object {
@@ -5076,8 +6571,16 @@ Object {
 
 exports[`try-catch, no variable, contains for-of, throw 1`] = `
 Object {
-  "StartAt": "for(item of input.items)",
+  "StartAt": "__fnl_constants",
   "States": Object {
+    "__fnl_constants": Object {
+      "Next": "for(item of input.items)",
+      "Parameters": Object {
+        "null": null,
+      },
+      "ResultPath": "$.__fnl_constants",
+      "Type": "Pass",
+    },
     "for(item of input.items)": Object {
       "Catch": Array [
         Object {
@@ -5127,8 +6630,16 @@ Object {
 
 exports[`try-catch-finally 1`] = `
 Object {
-  "StartAt": "await computeScore({id: \\"id\\", name: \\"name\\"})",
+  "StartAt": "__fnl_constants",
   "States": Object {
+    "__fnl_constants": Object {
+      "Next": "await computeScore({id: \\"id\\", name: \\"name\\"})",
+      "Parameters": Object {
+        "null": null,
+      },
+      "ResultPath": "$.__fnl_constants",
+      "Type": "Pass",
+    },
     "await computeScore({id: \\"id\\", name: \\"name\\"})": Object {
       "Catch": Array [
         Object {
@@ -5160,12 +6671,20 @@ Object {
 
 exports[`waitFor literal number of seconds 1`] = `
 Object {
-  "StartAt": "$SFN.waitFor(1)",
+  "StartAt": "__fnl_constants",
   "States": Object {
     "$SFN.waitFor(1)": Object {
       "Next": "return null",
       "Seconds": 1,
       "Type": "Wait",
+    },
+    "__fnl_constants": Object {
+      "Next": "$SFN.waitFor(1)",
+      "Parameters": Object {
+        "null": null,
+      },
+      "ResultPath": "$.__fnl_constants",
+      "Type": "Pass",
     },
     "return null": Object {
       "End": true,
@@ -5181,12 +6700,20 @@ Object {
 
 exports[`waitFor literal timestamp 1`] = `
 Object {
-  "StartAt": "$SFN.waitUntil(\\"2022-08-01T00:00:00Z\\")",
+  "StartAt": "__fnl_constants",
   "States": Object {
     "$SFN.waitUntil(\\"2022-08-01T00:00:00Z\\")": Object {
       "Next": "return null",
       "Timestamp": "2022-08-01T00:00:00Z",
       "Type": "Wait",
+    },
+    "__fnl_constants": Object {
+      "Next": "$SFN.waitUntil(\\"2022-08-01T00:00:00Z\\")",
+      "Parameters": Object {
+        "null": null,
+      },
+      "ResultPath": "$.__fnl_constants",
+      "Type": "Pass",
     },
     "return null": Object {
       "End": true,
@@ -5202,12 +6729,20 @@ Object {
 
 exports[`waitFor reference number of seconds 1`] = `
 Object {
-  "StartAt": "$SFN.waitFor(input.seconds)",
+  "StartAt": "__fnl_constants",
   "States": Object {
     "$SFN.waitFor(input.seconds)": Object {
       "Next": "return null",
       "SecondsPath": "$.seconds",
       "Type": "Wait",
+    },
+    "__fnl_constants": Object {
+      "Next": "$SFN.waitFor(input.seconds)",
+      "Parameters": Object {
+        "null": null,
+      },
+      "ResultPath": "$.__fnl_constants",
+      "Type": "Pass",
     },
     "return null": Object {
       "End": true,
@@ -5223,12 +6758,20 @@ Object {
 
 exports[`waitUntil reference timestamp 1`] = `
 Object {
-  "StartAt": "$SFN.waitUntil(input.until)",
+  "StartAt": "__fnl_constants",
   "States": Object {
     "$SFN.waitUntil(input.until)": Object {
       "Next": "return null",
       "TimestampPath": "$.until",
       "Type": "Wait",
+    },
+    "__fnl_constants": Object {
+      "Next": "$SFN.waitUntil(input.until)",
+      "Parameters": Object {
+        "null": null,
+      },
+      "ResultPath": "$.__fnl_constants",
+      "Type": "Pass",
     },
     "return null": Object {
       "End": true,
@@ -5244,8 +6787,16 @@ Object {
 
 exports[`while (cond) { cond = task() } 1`] = `
 Object {
-  "StartAt": "while (cond == undefined)",
+  "StartAt": "__fnl_constants",
   "States": Object {
+    "__fnl_constants": Object {
+      "Next": "while (cond == undefined)",
+      "Parameters": Object {
+        "null": null,
+      },
+      "ResultPath": "$.__fnl_constants",
+      "Type": "Pass",
+    },
     "cond = await task()": Object {
       "Next": "while (cond == undefined)",
       "Resource": "__REPLACED_TOKEN",
@@ -5285,8 +6836,16 @@ Object {
 
 exports[`while (cond); cond = task() 1`] = `
 Object {
-  "StartAt": "while (cond == undefined)",
+  "StartAt": "__fnl_constants",
   "States": Object {
+    "__fnl_constants": Object {
+      "Next": "while (cond == undefined)",
+      "Parameters": Object {
+        "null": null,
+      },
+      "ResultPath": "$.__fnl_constants",
+      "Type": "Pass",
+    },
     "cond = await task()": Object {
       "Next": "while (cond == undefined)",
       "Resource": "__REPLACED_TOKEN",
@@ -5326,12 +6885,20 @@ Object {
 
 exports[`while(true) { try { } catch { wait } 1`] = `
 Object {
-  "StartAt": "while (true)",
+  "StartAt": "__fnl_constants",
   "States": Object {
     "$SFN.waitFor(1)": Object {
       "Next": "while (true)",
       "Seconds": 1,
       "Type": "Wait",
+    },
+    "__fnl_constants": Object {
+      "Next": "while (true)",
+      "Parameters": Object {
+        "null": null,
+      },
+      "ResultPath": "$.__fnl_constants",
+      "Type": "Pass",
     },
     "await task()": Object {
       "Catch": Array [

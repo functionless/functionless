@@ -287,6 +287,47 @@ test("conditionally return void", () => {
   expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
+test("boolean logic", () => {
+  const { stack } = initStepFunctionApp();
+  const definition = new ExpressStepFunction<
+    { a: boolean; b: boolean },
+    { and: boolean; or: boolean }
+  >(stack, "fn", (input) => {
+    return {
+      and: input.a && input.b,
+      or: input.a || input.b,
+    };
+  }).definition;
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+});
+
+test("boolean return", () => {
+  const { stack } = initStepFunctionApp();
+  const definition = new ExpressStepFunction<
+    { a: boolean; b: boolean },
+    boolean
+  >(stack, "fn", (input) => {
+    return input.a && input.b;
+  }).definition;
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+});
+
+test("null coalesce logic", () => {
+  const { stack } = initStepFunctionApp();
+  const definition = new ExpressStepFunction<
+    { a?: boolean; b: boolean },
+    { null: boolean }
+  >(stack, "fn", (input) => {
+    return {
+      null: input.a ?? input.b,
+    };
+  }).definition;
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+});
+
 test("if-else", () => {
   const { stack } = initStepFunctionApp();
   const definition = new ExpressStepFunction<{ id: string }, string>(

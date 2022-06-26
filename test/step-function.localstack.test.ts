@@ -191,6 +191,39 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
     "hello world"
   );
 
+  test("call lambda with array parameter", (parent) => {
+    const func = new Function<number[], number>(
+      parent,
+      "func",
+      {
+        timeout: Duration.seconds(20),
+      },
+      async (event) => {
+        return event.length;
+      }
+    );
+    return new StepFunction(parent, "sfn2", async () => {
+      return func([1, 2]);
+    });
+  }, 2);
+
+  test("call lambda with array ref", (parent) => {
+    const func = new Function<number[], number>(
+      parent,
+      "func",
+      {
+        timeout: Duration.seconds(20),
+      },
+      async (event) => {
+        return event.length;
+      }
+    );
+    return new StepFunction(parent, "sfn2", async () => {
+      const arr = [1, 2, 3];
+      return func(arr);
+    });
+  }, 3);
+
   test(
     "call lambda $AWS invoke",
     (parent) => {
@@ -231,13 +264,13 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
     "call lambda $SFN map",
     (parent) => {
       return new StepFunction(parent, "sfn2", async (input) => {
-        return $SFN.map(input, (n) => {
+        return $SFN.map(input.arr, (n) => {
           return n;
         });
       });
     },
     [1, 2],
-    [1, 2]
+    { arr: [1, 2] }
   );
 
   test(
@@ -254,11 +287,11 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
         }
       );
       return new StepFunction(parent, "sfn2", async (input) => {
-        await $SFN.forEach(input, (n) => func(n));
+        await $SFN.forEach(input.arr, (n) => func(n));
       });
     },
     null,
-    [1, 2]
+    { arr: [1, 2] }
   );
 
   test(
@@ -272,5 +305,89 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
       });
     },
     [1, 2]
+  );
+
+  test(
+    "binaryOps logic",
+    (parent) => {
+      return new StepFunction(parent, "sfn2", async (input) => {
+        const c = input.a && input.b;
+        return {
+          andVar: c,
+          and: input.a && input.b,
+          or: input.a || input.b,
+          nullCoal: input.v ?? input.nv,
+          invNullCoal: input.nv ?? input.v,
+          nullNull: input.nv ?? null,
+          nullVal: null ?? input.v,
+        };
+      });
+    },
+    {
+      andVar: false,
+      and: false,
+      or: true,
+      nullCoal: "val",
+      invNullCoal: "val",
+      nullNull: null,
+      nullVal: "val",
+    },
+    { a: true, b: false, v: "val", nv: undefined }
+  );
+
+  // localstack sends and empty object to lambda instead of boolean/numbers
+  // https://github.com/localstack/localstack/issues/6362
+  test.skip(
+    "binaryOps logic with calls passed boolean",
+    (parent) => {
+      const func = new Function<boolean, boolean>(
+        parent,
+        "func",
+        {
+          timeout: Duration.seconds(20),
+        },
+        async (event) => {
+          console.log(typeof event);
+          console.log(event);
+          return !event;
+        }
+      );
+      return new StepFunction(parent, "sfn2", async () => {
+        return {
+          and: true && (await func(false)),
+          or: false || (await func(false)),
+        };
+      });
+    },
+    {
+      and: true,
+      or: true,
+    }
+  );
+
+  test(
+    "binaryOps logic with calls",
+    (parent) => {
+      const func = new Function<undefined, boolean>(
+        parent,
+        "func",
+        {
+          timeout: Duration.seconds(20),
+        },
+        async () => {
+          return true;
+        }
+      );
+      return new StepFunction(parent, "sfn2", async () => {
+        return {
+          and: true && (await func()),
+          or: false || (await func()),
+        };
+      });
+    },
+    {
+      and: true,
+      or: true,
+    }
   );
 });

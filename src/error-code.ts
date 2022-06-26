@@ -760,6 +760,96 @@ export namespace ErrorCodes {
     type: ErrorType.ERROR,
     title: "Unsupported feature",
   };
+
+  /**
+   * Step Functions does not support undefined assignment
+   *
+   * In Step Functions, a property cannot be undefined when assigned to an object or passed into a state.
+   *
+   * ```ts
+   * const func = new Function(stack, 'func', () => { return undefined; })
+   * new StepFunction<{ val: string | undefined }, undefined>(stack, 'sfn', async (input) => {
+   *    const v = {
+   *       // invalid - could be undefined
+   *       val: input.val
+   *    }
+   *
+   *    // invalid, function outputs undefined.
+   *    const output = await func();
+   *
+   *    // invalid - could be undefined
+   *    return input.val;
+   * });
+   * ```
+   *
+   * 1. Workaround - use null instead of undefined
+   *
+   *    * ```ts
+   * const func = new Function(stack, 'func', () => { return null; })
+   * new StepFunction<{ val: string | null }, null>(stack, 'sfn', async () => {
+   *    const v = {
+   *       // valid
+   *       val: null
+   *    }
+   *
+   *    // valid, function outputs undefined.
+   *    const output = await func();
+   *
+   *    // valid
+   *    return null;
+   * });
+   * ```
+   *
+   * 2. Workaround - resolve undefined to null or a value before assignment
+   *
+   *    * ```ts
+   * const func = new Function(stack, 'func', () => { return undefined; })
+   * new StepFunction<{ val: string | undefined }, null>(stack, 'sfn', async (undefined) => {
+   *    const v = {
+   *       // valid - could replace null with any defined value
+   *       val: input.val ?? null
+   *    }
+   *
+   *    // valid - could replace null with any defined value
+   *    const output = (await func()) ?? null;
+   *
+   *    // valid - could replace null with any defined value
+   *    return input.val ?? null;
+   * });
+   * ```
+   *
+   * 3. Workaround - check for undefined
+   *
+   * ```ts
+   * const func = new Function(stack, 'func', () => { return { val: undefined }; })
+   * new StepFunction<{ val: string | undefined }, null>(stack, 'sfn', async (undefined) => {
+   *    let v;
+   *    if(input.val) {
+   *        v = {
+   *           val: input.val
+   *        }
+   *    } else {
+   *        v = {}
+   *    }
+   *
+   *    // valid - could replace null with any defined value
+   *    const output = await func();
+   *    const val = output ? output : null;
+   *
+   *    // valid - could replace null with any defined value
+   *    if(input.val) {
+   *       return input.val;
+   *    }
+   *    return null;
+   * });
+   * ```
+   */
+  export const Step_Functions_does_not_support_undefined_assignment: ErrorCode =
+    {
+      code: 10022,
+      type: ErrorType.ERROR,
+      title: "Step Functions does not support undefined assignment",
+    };
 }
 
 // to prevent the closure serializer from trying to import all of functionless.

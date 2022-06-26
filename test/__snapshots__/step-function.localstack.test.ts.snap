@@ -1,8 +1,1113 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`binaryOps logic 1`] = `
+Object {
+  "StartAt": "__fnl_context",
+  "States": Object {
+    "0_tmp = input.a && input.b": Object {
+      "Choices": Array [
+        Object {
+          "And": Array [
+            Object {
+              "And": Array [
+                Object {
+                  "IsPresent": true,
+                  "Variable": "$.__fnl.input.a",
+                },
+                Object {
+                  "IsNull": false,
+                  "Variable": "$.__fnl.input.a",
+                },
+                Object {
+                  "Or": Array [
+                    Object {
+                      "And": Array [
+                        Object {
+                          "IsString": true,
+                          "Variable": "$.__fnl.input.a",
+                        },
+                        Object {
+                          "Not": Object {
+                            "And": Array [
+                              Object {
+                                "IsString": true,
+                                "Variable": "$.__fnl.input.a",
+                              },
+                              Object {
+                                "StringEquals": "",
+                                "Variable": "$.__fnl.input.a",
+                              },
+                            ],
+                          },
+                        },
+                      ],
+                    },
+                    Object {
+                      "And": Array [
+                        Object {
+                          "IsNumeric": true,
+                          "Variable": "$.__fnl.input.a",
+                        },
+                        Object {
+                          "Not": Object {
+                            "And": Array [
+                              Object {
+                                "IsNumeric": true,
+                                "Variable": "$.__fnl.input.a",
+                              },
+                              Object {
+                                "NumericEquals": 0,
+                                "Variable": "$.__fnl.input.a",
+                              },
+                            ],
+                          },
+                        },
+                      ],
+                    },
+                    Object {
+                      "And": Array [
+                        Object {
+                          "IsBoolean": true,
+                          "Variable": "$.__fnl.input.a",
+                        },
+                        Object {
+                          "BooleanEquals": true,
+                          "Variable": "$.__fnl.input.a",
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+            Object {
+              "And": Array [
+                Object {
+                  "IsPresent": true,
+                  "Variable": "$.__fnl.input.b",
+                },
+                Object {
+                  "IsNull": false,
+                  "Variable": "$.__fnl.input.b",
+                },
+                Object {
+                  "Or": Array [
+                    Object {
+                      "And": Array [
+                        Object {
+                          "IsString": true,
+                          "Variable": "$.__fnl.input.b",
+                        },
+                        Object {
+                          "Not": Object {
+                            "And": Array [
+                              Object {
+                                "IsString": true,
+                                "Variable": "$.__fnl.input.b",
+                              },
+                              Object {
+                                "StringEquals": "",
+                                "Variable": "$.__fnl.input.b",
+                              },
+                            ],
+                          },
+                        },
+                      ],
+                    },
+                    Object {
+                      "And": Array [
+                        Object {
+                          "IsNumeric": true,
+                          "Variable": "$.__fnl.input.b",
+                        },
+                        Object {
+                          "Not": Object {
+                            "And": Array [
+                              Object {
+                                "IsNumeric": true,
+                                "Variable": "$.__fnl.input.b",
+                              },
+                              Object {
+                                "NumericEquals": 0,
+                                "Variable": "$.__fnl.input.b",
+                              },
+                            ],
+                          },
+                        },
+                      ],
+                    },
+                    Object {
+                      "And": Array [
+                        Object {
+                          "IsBoolean": true,
+                          "Variable": "$.__fnl.input.b",
+                        },
+                        Object {
+                          "BooleanEquals": true,
+                          "Variable": "$.__fnl.input.b",
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+          "Next": "assignTrue__0_tmp = input.a && input.b",
+        },
+      ],
+      "Default": "assignFalse__0_tmp = input.a && input.b",
+      "Type": "Choice",
+    },
+    "1_tmp = input.a || input.b": Object {
+      "Choices": Array [
+        Object {
+          "Next": "assignTrue__1_tmp = input.a || input.b",
+          "Or": Array [
+            Object {
+              "And": Array [
+                Object {
+                  "IsPresent": true,
+                  "Variable": "$.__fnl.input.a",
+                },
+                Object {
+                  "IsNull": false,
+                  "Variable": "$.__fnl.input.a",
+                },
+                Object {
+                  "Or": Array [
+                    Object {
+                      "And": Array [
+                        Object {
+                          "IsString": true,
+                          "Variable": "$.__fnl.input.a",
+                        },
+                        Object {
+                          "Not": Object {
+                            "And": Array [
+                              Object {
+                                "IsString": true,
+                                "Variable": "$.__fnl.input.a",
+                              },
+                              Object {
+                                "StringEquals": "",
+                                "Variable": "$.__fnl.input.a",
+                              },
+                            ],
+                          },
+                        },
+                      ],
+                    },
+                    Object {
+                      "And": Array [
+                        Object {
+                          "IsNumeric": true,
+                          "Variable": "$.__fnl.input.a",
+                        },
+                        Object {
+                          "Not": Object {
+                            "And": Array [
+                              Object {
+                                "IsNumeric": true,
+                                "Variable": "$.__fnl.input.a",
+                              },
+                              Object {
+                                "NumericEquals": 0,
+                                "Variable": "$.__fnl.input.a",
+                              },
+                            ],
+                          },
+                        },
+                      ],
+                    },
+                    Object {
+                      "And": Array [
+                        Object {
+                          "IsBoolean": true,
+                          "Variable": "$.__fnl.input.a",
+                        },
+                        Object {
+                          "BooleanEquals": true,
+                          "Variable": "$.__fnl.input.a",
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+            Object {
+              "And": Array [
+                Object {
+                  "IsPresent": true,
+                  "Variable": "$.__fnl.input.b",
+                },
+                Object {
+                  "IsNull": false,
+                  "Variable": "$.__fnl.input.b",
+                },
+                Object {
+                  "Or": Array [
+                    Object {
+                      "And": Array [
+                        Object {
+                          "IsString": true,
+                          "Variable": "$.__fnl.input.b",
+                        },
+                        Object {
+                          "Not": Object {
+                            "And": Array [
+                              Object {
+                                "IsString": true,
+                                "Variable": "$.__fnl.input.b",
+                              },
+                              Object {
+                                "StringEquals": "",
+                                "Variable": "$.__fnl.input.b",
+                              },
+                            ],
+                          },
+                        },
+                      ],
+                    },
+                    Object {
+                      "And": Array [
+                        Object {
+                          "IsNumeric": true,
+                          "Variable": "$.__fnl.input.b",
+                        },
+                        Object {
+                          "Not": Object {
+                            "And": Array [
+                              Object {
+                                "IsNumeric": true,
+                                "Variable": "$.__fnl.input.b",
+                              },
+                              Object {
+                                "NumericEquals": 0,
+                                "Variable": "$.__fnl.input.b",
+                              },
+                            ],
+                          },
+                        },
+                      ],
+                    },
+                    Object {
+                      "And": Array [
+                        Object {
+                          "IsBoolean": true,
+                          "Variable": "$.__fnl.input.b",
+                        },
+                        Object {
+                          "BooleanEquals": true,
+                          "Variable": "$.__fnl.input.b",
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+      "Default": "assignFalse__1_tmp = input.a || input.b",
+      "Type": "Choice",
+    },
+    "2_tmp = input.v ?? input.nv": Object {
+      "Choices": Array [
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.__fnl.input.v",
+            },
+            Object {
+              "IsNull": false,
+              "Variable": "$.__fnl.input.v",
+            },
+          ],
+          "Next": "takeLeft__2_tmp = input.v ?? input.nv",
+        },
+      ],
+      "Default": "takeRight__2_tmp = input.v ?? input.nv",
+      "Type": "Choice",
+    },
+    "3_tmp = input.nv ?? input.v": Object {
+      "Choices": Array [
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.__fnl.input.nv",
+            },
+            Object {
+              "IsNull": false,
+              "Variable": "$.__fnl.input.nv",
+            },
+          ],
+          "Next": "takeLeft__3_tmp = input.nv ?? input.v",
+        },
+      ],
+      "Default": "takeRight__3_tmp = input.nv ?? input.v",
+      "Type": "Choice",
+    },
+    "4_tmp = input.nv ?? null": Object {
+      "Choices": Array [
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.__fnl.input.nv",
+            },
+            Object {
+              "IsNull": false,
+              "Variable": "$.__fnl.input.nv",
+            },
+          ],
+          "Next": "takeLeft__4_tmp = input.nv ?? null",
+        },
+      ],
+      "Default": "takeRight__4_tmp = input.nv ?? null",
+      "Type": "Choice",
+    },
+    "5_tmp = null ?? input.v": Object {
+      "InputPath": "$.__fnl.input.v",
+      "Next": "return {andVar: c, and: 0_tmp, or: 1_tmp, nullCoal: 2_tmp, invNullCoal: 3_t",
+      "ResultPath": "$.5_tmp",
+      "Type": "Pass",
+    },
+    "__fnl_context": Object {
+      "Next": "c = input.a && input.b",
+      "Parameters": Object {
+        "input.$": "$",
+        "null": null,
+      },
+      "ResultPath": "$.__fnl",
+      "Type": "Pass",
+    },
+    "assignFalse__0_tmp = input.a && input.b": Object {
+      "Next": "1_tmp = input.a || input.b",
+      "Result": false,
+      "ResultPath": "$.0_tmp",
+      "Type": "Pass",
+    },
+    "assignFalse__1_tmp = input.a || input.b": Object {
+      "Next": "2_tmp = input.v ?? input.nv",
+      "Result": false,
+      "ResultPath": "$.1_tmp",
+      "Type": "Pass",
+    },
+    "assignFalse__c = input.a && input.b": Object {
+      "Next": "0_tmp = input.a && input.b",
+      "Result": false,
+      "ResultPath": "$.c",
+      "Type": "Pass",
+    },
+    "assignTrue__0_tmp = input.a && input.b": Object {
+      "Next": "1_tmp = input.a || input.b",
+      "Result": true,
+      "ResultPath": "$.0_tmp",
+      "Type": "Pass",
+    },
+    "assignTrue__1_tmp = input.a || input.b": Object {
+      "Next": "2_tmp = input.v ?? input.nv",
+      "Result": true,
+      "ResultPath": "$.1_tmp",
+      "Type": "Pass",
+    },
+    "assignTrue__c = input.a && input.b": Object {
+      "Next": "0_tmp = input.a && input.b",
+      "Result": true,
+      "ResultPath": "$.c",
+      "Type": "Pass",
+    },
+    "c = input.a && input.b": Object {
+      "Choices": Array [
+        Object {
+          "And": Array [
+            Object {
+              "And": Array [
+                Object {
+                  "IsPresent": true,
+                  "Variable": "$.__fnl.input.a",
+                },
+                Object {
+                  "IsNull": false,
+                  "Variable": "$.__fnl.input.a",
+                },
+                Object {
+                  "Or": Array [
+                    Object {
+                      "And": Array [
+                        Object {
+                          "IsString": true,
+                          "Variable": "$.__fnl.input.a",
+                        },
+                        Object {
+                          "Not": Object {
+                            "And": Array [
+                              Object {
+                                "IsString": true,
+                                "Variable": "$.__fnl.input.a",
+                              },
+                              Object {
+                                "StringEquals": "",
+                                "Variable": "$.__fnl.input.a",
+                              },
+                            ],
+                          },
+                        },
+                      ],
+                    },
+                    Object {
+                      "And": Array [
+                        Object {
+                          "IsNumeric": true,
+                          "Variable": "$.__fnl.input.a",
+                        },
+                        Object {
+                          "Not": Object {
+                            "And": Array [
+                              Object {
+                                "IsNumeric": true,
+                                "Variable": "$.__fnl.input.a",
+                              },
+                              Object {
+                                "NumericEquals": 0,
+                                "Variable": "$.__fnl.input.a",
+                              },
+                            ],
+                          },
+                        },
+                      ],
+                    },
+                    Object {
+                      "And": Array [
+                        Object {
+                          "IsBoolean": true,
+                          "Variable": "$.__fnl.input.a",
+                        },
+                        Object {
+                          "BooleanEquals": true,
+                          "Variable": "$.__fnl.input.a",
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+            Object {
+              "And": Array [
+                Object {
+                  "IsPresent": true,
+                  "Variable": "$.__fnl.input.b",
+                },
+                Object {
+                  "IsNull": false,
+                  "Variable": "$.__fnl.input.b",
+                },
+                Object {
+                  "Or": Array [
+                    Object {
+                      "And": Array [
+                        Object {
+                          "IsString": true,
+                          "Variable": "$.__fnl.input.b",
+                        },
+                        Object {
+                          "Not": Object {
+                            "And": Array [
+                              Object {
+                                "IsString": true,
+                                "Variable": "$.__fnl.input.b",
+                              },
+                              Object {
+                                "StringEquals": "",
+                                "Variable": "$.__fnl.input.b",
+                              },
+                            ],
+                          },
+                        },
+                      ],
+                    },
+                    Object {
+                      "And": Array [
+                        Object {
+                          "IsNumeric": true,
+                          "Variable": "$.__fnl.input.b",
+                        },
+                        Object {
+                          "Not": Object {
+                            "And": Array [
+                              Object {
+                                "IsNumeric": true,
+                                "Variable": "$.__fnl.input.b",
+                              },
+                              Object {
+                                "NumericEquals": 0,
+                                "Variable": "$.__fnl.input.b",
+                              },
+                            ],
+                          },
+                        },
+                      ],
+                    },
+                    Object {
+                      "And": Array [
+                        Object {
+                          "IsBoolean": true,
+                          "Variable": "$.__fnl.input.b",
+                        },
+                        Object {
+                          "BooleanEquals": true,
+                          "Variable": "$.__fnl.input.b",
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+          "Next": "assignTrue__c = input.a && input.b",
+        },
+      ],
+      "Default": "assignFalse__c = input.a && input.b",
+      "Type": "Choice",
+    },
+    "return {andVar: c, and: 0_tmp, or: 1_tmp, nullCoal: 2_tmp, invNullCoal: 3_t": Object {
+      "End": true,
+      "Parameters": Object {
+        "and.$": "$.0_tmp",
+        "andVar.$": "$.c",
+        "invNullCoal.$": "$.3_tmp",
+        "nullCoal.$": "$.2_tmp",
+        "nullNull.$": "$.4_tmp",
+        "nullVal.$": "$.5_tmp",
+        "or.$": "$.1_tmp",
+      },
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "takeLeft__2_tmp = input.v ?? input.nv": Object {
+      "InputPath": "$.__fnl.input.v",
+      "Next": "3_tmp = input.nv ?? input.v",
+      "ResultPath": "$.2_tmp",
+      "Type": "Pass",
+    },
+    "takeLeft__3_tmp = input.nv ?? input.v": Object {
+      "InputPath": "$.__fnl.input.nv",
+      "Next": "4_tmp = input.nv ?? null",
+      "ResultPath": "$.3_tmp",
+      "Type": "Pass",
+    },
+    "takeLeft__4_tmp = input.nv ?? null": Object {
+      "InputPath": "$.__fnl.input.nv",
+      "Next": "5_tmp = null ?? input.v",
+      "ResultPath": "$.4_tmp",
+      "Type": "Pass",
+    },
+    "takeRight__2_tmp = input.v ?? input.nv": Object {
+      "InputPath": "$.__fnl.input.nv",
+      "Next": "3_tmp = input.nv ?? input.v",
+      "ResultPath": "$.2_tmp",
+      "Type": "Pass",
+    },
+    "takeRight__3_tmp = input.nv ?? input.v": Object {
+      "InputPath": "$.__fnl.input.v",
+      "Next": "4_tmp = input.nv ?? null",
+      "ResultPath": "$.3_tmp",
+      "Type": "Pass",
+    },
+    "takeRight__4_tmp = input.nv ?? null": Object {
+      "InputPath": "$.__fnl.null",
+      "Next": "5_tmp = null ?? input.v",
+      "ResultPath": "$.4_tmp",
+      "Type": "Pass",
+    },
+  },
+}
+`;
+
+exports[`binaryOps logic with calls 1`] = `
+Object {
+  "StartAt": "__fnl_context",
+  "States": Object {
+    "0_tmp = await func()": Object {
+      "Next": "1_tmp = true && 0_tmp",
+      "Resource": "__REPLACED_TOKEN",
+      "ResultPath": "$.0_tmp",
+      "Type": "Task",
+    },
+    "1_tmp = true && 0_tmp": Object {
+      "Choices": Array [
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": false,
+              "Variable": "$.0_true",
+            },
+            Object {
+              "And": Array [
+                Object {
+                  "IsPresent": true,
+                  "Variable": "$.0_tmp",
+                },
+                Object {
+                  "IsNull": false,
+                  "Variable": "$.0_tmp",
+                },
+                Object {
+                  "Or": Array [
+                    Object {
+                      "And": Array [
+                        Object {
+                          "IsString": true,
+                          "Variable": "$.0_tmp",
+                        },
+                        Object {
+                          "Not": Object {
+                            "And": Array [
+                              Object {
+                                "IsString": true,
+                                "Variable": "$.0_tmp",
+                              },
+                              Object {
+                                "StringEquals": "",
+                                "Variable": "$.0_tmp",
+                              },
+                            ],
+                          },
+                        },
+                      ],
+                    },
+                    Object {
+                      "And": Array [
+                        Object {
+                          "IsNumeric": true,
+                          "Variable": "$.0_tmp",
+                        },
+                        Object {
+                          "Not": Object {
+                            "And": Array [
+                              Object {
+                                "IsNumeric": true,
+                                "Variable": "$.0_tmp",
+                              },
+                              Object {
+                                "NumericEquals": 0,
+                                "Variable": "$.0_tmp",
+                              },
+                            ],
+                          },
+                        },
+                      ],
+                    },
+                    Object {
+                      "And": Array [
+                        Object {
+                          "IsBoolean": true,
+                          "Variable": "$.0_tmp",
+                        },
+                        Object {
+                          "BooleanEquals": true,
+                          "Variable": "$.0_tmp",
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+          "Next": "assignTrue__1_tmp = true && 0_tmp",
+        },
+      ],
+      "Default": "assignFalse__1_tmp = true && 0_tmp",
+      "Type": "Choice",
+    },
+    "2_tmp = await func()": Object {
+      "Next": "3_tmp = false || 2_tmp",
+      "Resource": "__REPLACED_TOKEN",
+      "ResultPath": "$.2_tmp",
+      "Type": "Task",
+    },
+    "3_tmp = false || 2_tmp": Object {
+      "Choices": Array [
+        Object {
+          "Next": "assignTrue__3_tmp = false || 2_tmp",
+          "Or": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.0_false",
+            },
+            Object {
+              "And": Array [
+                Object {
+                  "IsPresent": true,
+                  "Variable": "$.2_tmp",
+                },
+                Object {
+                  "IsNull": false,
+                  "Variable": "$.2_tmp",
+                },
+                Object {
+                  "Or": Array [
+                    Object {
+                      "And": Array [
+                        Object {
+                          "IsString": true,
+                          "Variable": "$.2_tmp",
+                        },
+                        Object {
+                          "Not": Object {
+                            "And": Array [
+                              Object {
+                                "IsString": true,
+                                "Variable": "$.2_tmp",
+                              },
+                              Object {
+                                "StringEquals": "",
+                                "Variable": "$.2_tmp",
+                              },
+                            ],
+                          },
+                        },
+                      ],
+                    },
+                    Object {
+                      "And": Array [
+                        Object {
+                          "IsNumeric": true,
+                          "Variable": "$.2_tmp",
+                        },
+                        Object {
+                          "Not": Object {
+                            "And": Array [
+                              Object {
+                                "IsNumeric": true,
+                                "Variable": "$.2_tmp",
+                              },
+                              Object {
+                                "NumericEquals": 0,
+                                "Variable": "$.2_tmp",
+                              },
+                            ],
+                          },
+                        },
+                      ],
+                    },
+                    Object {
+                      "And": Array [
+                        Object {
+                          "IsBoolean": true,
+                          "Variable": "$.2_tmp",
+                        },
+                        Object {
+                          "BooleanEquals": true,
+                          "Variable": "$.2_tmp",
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+      "Default": "assignFalse__3_tmp = false || 2_tmp",
+      "Type": "Choice",
+    },
+    "__fnl_context": Object {
+      "Next": "0_tmp = await func()",
+      "Parameters": Object {
+        "input.$": "$",
+        "null": null,
+      },
+      "ResultPath": "$.__fnl",
+      "Type": "Pass",
+    },
+    "assignFalse__1_tmp = true && 0_tmp": Object {
+      "Next": "2_tmp = await func()",
+      "Result": false,
+      "ResultPath": "$.1_tmp",
+      "Type": "Pass",
+    },
+    "assignFalse__3_tmp = false || 2_tmp": Object {
+      "Next": "return {and: 1_tmp, or: 3_tmp}",
+      "Result": false,
+      "ResultPath": "$.3_tmp",
+      "Type": "Pass",
+    },
+    "assignTrue__1_tmp = true && 0_tmp": Object {
+      "Next": "2_tmp = await func()",
+      "Result": true,
+      "ResultPath": "$.1_tmp",
+      "Type": "Pass",
+    },
+    "assignTrue__3_tmp = false || 2_tmp": Object {
+      "Next": "return {and: 1_tmp, or: 3_tmp}",
+      "Result": true,
+      "ResultPath": "$.3_tmp",
+      "Type": "Pass",
+    },
+    "return {and: 1_tmp, or: 3_tmp}": Object {
+      "End": true,
+      "Parameters": Object {
+        "and.$": "$.1_tmp",
+        "or.$": "$.3_tmp",
+      },
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+  },
+}
+`;
+
+exports[`binaryOps logic with calls passed boolean 1`] = `
+Object {
+  "StartAt": "__fnl_context",
+  "States": Object {
+    "0_tmp = await func(false)": Object {
+      "Next": "1_tmp = true && 0_tmp",
+      "Parameters": false,
+      "Resource": "__REPLACED_TOKEN",
+      "ResultPath": "$.0_tmp",
+      "Type": "Task",
+    },
+    "1_tmp = true && 0_tmp": Object {
+      "Choices": Array [
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": false,
+              "Variable": "$.0_true",
+            },
+            Object {
+              "And": Array [
+                Object {
+                  "IsPresent": true,
+                  "Variable": "$.0_tmp",
+                },
+                Object {
+                  "IsNull": false,
+                  "Variable": "$.0_tmp",
+                },
+                Object {
+                  "Or": Array [
+                    Object {
+                      "And": Array [
+                        Object {
+                          "IsString": true,
+                          "Variable": "$.0_tmp",
+                        },
+                        Object {
+                          "Not": Object {
+                            "And": Array [
+                              Object {
+                                "IsString": true,
+                                "Variable": "$.0_tmp",
+                              },
+                              Object {
+                                "StringEquals": "",
+                                "Variable": "$.0_tmp",
+                              },
+                            ],
+                          },
+                        },
+                      ],
+                    },
+                    Object {
+                      "And": Array [
+                        Object {
+                          "IsNumeric": true,
+                          "Variable": "$.0_tmp",
+                        },
+                        Object {
+                          "Not": Object {
+                            "And": Array [
+                              Object {
+                                "IsNumeric": true,
+                                "Variable": "$.0_tmp",
+                              },
+                              Object {
+                                "NumericEquals": 0,
+                                "Variable": "$.0_tmp",
+                              },
+                            ],
+                          },
+                        },
+                      ],
+                    },
+                    Object {
+                      "And": Array [
+                        Object {
+                          "IsBoolean": true,
+                          "Variable": "$.0_tmp",
+                        },
+                        Object {
+                          "BooleanEquals": true,
+                          "Variable": "$.0_tmp",
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+          "Next": "assignTrue__1_tmp = true && 0_tmp",
+        },
+      ],
+      "Default": "assignFalse__1_tmp = true && 0_tmp",
+      "Type": "Choice",
+    },
+    "2_tmp = await func(false)": Object {
+      "Next": "3_tmp = false || 2_tmp",
+      "Parameters": false,
+      "Resource": "__REPLACED_TOKEN",
+      "ResultPath": "$.2_tmp",
+      "Type": "Task",
+    },
+    "3_tmp = false || 2_tmp": Object {
+      "Choices": Array [
+        Object {
+          "Next": "assignTrue__3_tmp = false || 2_tmp",
+          "Or": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.0_false",
+            },
+            Object {
+              "And": Array [
+                Object {
+                  "IsPresent": true,
+                  "Variable": "$.2_tmp",
+                },
+                Object {
+                  "IsNull": false,
+                  "Variable": "$.2_tmp",
+                },
+                Object {
+                  "Or": Array [
+                    Object {
+                      "And": Array [
+                        Object {
+                          "IsString": true,
+                          "Variable": "$.2_tmp",
+                        },
+                        Object {
+                          "Not": Object {
+                            "And": Array [
+                              Object {
+                                "IsString": true,
+                                "Variable": "$.2_tmp",
+                              },
+                              Object {
+                                "StringEquals": "",
+                                "Variable": "$.2_tmp",
+                              },
+                            ],
+                          },
+                        },
+                      ],
+                    },
+                    Object {
+                      "And": Array [
+                        Object {
+                          "IsNumeric": true,
+                          "Variable": "$.2_tmp",
+                        },
+                        Object {
+                          "Not": Object {
+                            "And": Array [
+                              Object {
+                                "IsNumeric": true,
+                                "Variable": "$.2_tmp",
+                              },
+                              Object {
+                                "NumericEquals": 0,
+                                "Variable": "$.2_tmp",
+                              },
+                            ],
+                          },
+                        },
+                      ],
+                    },
+                    Object {
+                      "And": Array [
+                        Object {
+                          "IsBoolean": true,
+                          "Variable": "$.2_tmp",
+                        },
+                        Object {
+                          "BooleanEquals": true,
+                          "Variable": "$.2_tmp",
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+      "Default": "assignFalse__3_tmp = false || 2_tmp",
+      "Type": "Choice",
+    },
+    "__fnl_context": Object {
+      "Next": "0_tmp = await func(false)",
+      "Parameters": Object {
+        "input.$": "$",
+        "null": null,
+      },
+      "ResultPath": "$.__fnl",
+      "Type": "Pass",
+    },
+    "assignFalse__1_tmp = true && 0_tmp": Object {
+      "Next": "2_tmp = await func(false)",
+      "Result": false,
+      "ResultPath": "$.1_tmp",
+      "Type": "Pass",
+    },
+    "assignFalse__3_tmp = false || 2_tmp": Object {
+      "Next": "return {and: 1_tmp, or: 3_tmp}",
+      "Result": false,
+      "ResultPath": "$.3_tmp",
+      "Type": "Pass",
+    },
+    "assignTrue__1_tmp = true && 0_tmp": Object {
+      "Next": "2_tmp = await func(false)",
+      "Result": true,
+      "ResultPath": "$.1_tmp",
+      "Type": "Pass",
+    },
+    "assignTrue__3_tmp = false || 2_tmp": Object {
+      "Next": "return {and: 1_tmp, or: 3_tmp}",
+      "Result": true,
+      "ResultPath": "$.3_tmp",
+      "Type": "Pass",
+    },
+    "return {and: 1_tmp, or: 3_tmp}": Object {
+      "End": true,
+      "Parameters": Object {
+        "and.$": "$.1_tmp",
+        "or.$": "$.3_tmp",
+      },
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+  },
+}
+`;
+
 exports[`call lambda $AWS invoke 1`] = `
 Object {
-  "StartAt": "obj = {str: \\"hello world\\"}",
+  "StartAt": "__fnl_context",
   "States": Object {
     "0_tmp = await $AWS.Lambda.Invoke({Function: func, Payload: obj})": Object {
       "Next": "return 0_tmp.Payload.str",
@@ -13,6 +1118,15 @@ Object {
       "Resource": "__REPLACED_ARN",
       "ResultPath": "$.0_tmp",
       "Type": "Task",
+    },
+    "__fnl_context": Object {
+      "Next": "obj = {str: \\"hello world\\"}",
+      "Parameters": Object {
+        "input.$": "$",
+        "null": null,
+      },
+      "ResultPath": "$.__fnl",
+      "Type": "Pass",
     },
     "obj = {str: \\"hello world\\"}": Object {
       "Next": "0_tmp = await $AWS.Lambda.Invoke({Function: func, Payload: obj})",
@@ -33,10 +1147,19 @@ Object {
 
 exports[`call lambda $SFN forEach 1`] = `
 Object {
-  "StartAt": "await $SFN.forEach(input, function(n))",
+  "StartAt": "__fnl_context",
   "States": Object {
-    "await $SFN.forEach(input, function(n))": Object {
-      "ItemsPath": "$",
+    "__fnl_context": Object {
+      "Next": "await $SFN.forEach(input.arr, function(n))",
+      "Parameters": Object {
+        "input.$": "$",
+        "null": null,
+      },
+      "ResultPath": "$.__fnl",
+      "Type": "Pass",
+    },
+    "await $SFN.forEach(input.arr, function(n))": Object {
+      "ItemsPath": "$.__fnl.input.arr",
       "Iterator": Object {
         "StartAt": "return func(n)",
         "States": Object {
@@ -70,11 +1193,20 @@ Object {
 
 exports[`call lambda $SFN map 1`] = `
 Object {
-  "StartAt": "return $SFN.map(input, function(n))",
+  "StartAt": "__fnl_context",
   "States": Object {
-    "return $SFN.map(input, function(n))": Object {
+    "__fnl_context": Object {
+      "Next": "return $SFN.map(input.arr, function(n))",
+      "Parameters": Object {
+        "input.$": "$",
+        "null": null,
+      },
+      "ResultPath": "$.__fnl",
+      "Type": "Pass",
+    },
+    "return $SFN.map(input.arr, function(n))": Object {
       "End": true,
-      "ItemsPath": "$",
+      "ItemsPath": "$.__fnl.input.arr",
       "Iterator": Object {
         "StartAt": "return n",
         "States": Object {
@@ -97,8 +1229,17 @@ Object {
 
 exports[`call lambda $SFN parallel 1`] = `
 Object {
-  "StartAt": "return $SFN.parallel([function(), function()])",
+  "StartAt": "__fnl_context",
   "States": Object {
+    "__fnl_context": Object {
+      "Next": "return $SFN.parallel([function(), function()])",
+      "Parameters": Object {
+        "input.$": "$",
+        "null": null,
+      },
+      "ResultPath": "$.__fnl",
+      "Type": "Pass",
+    },
     "return $SFN.parallel([function(), function()])": Object {
       "Branches": Array [
         Object {
@@ -134,12 +1275,21 @@ Object {
 
 exports[`call lambda $SFN wait 1`] = `
 Object {
-  "StartAt": "$SFN.waitFor(1)",
+  "StartAt": "__fnl_context",
   "States": Object {
     "$SFN.waitFor(1)": Object {
       "Next": "return null",
       "Seconds": 1,
       "Type": "Wait",
+    },
+    "__fnl_context": Object {
+      "Next": "$SFN.waitFor(1)",
+      "Parameters": Object {
+        "input.$": "$",
+        "null": null,
+      },
+      "ResultPath": "$.__fnl",
+      "Type": "Pass",
     },
     "return null": Object {
       "End": true,
@@ -155,8 +1305,17 @@ Object {
 
 exports[`call lambda 1`] = `
 Object {
-  "StartAt": "return func()",
+  "StartAt": "__fnl_context",
   "States": Object {
+    "__fnl_context": Object {
+      "Next": "return func()",
+      "Parameters": Object {
+        "input.$": "$",
+        "null": null,
+      },
+      "ResultPath": "$.__fnl",
+      "Type": "Pass",
+    },
     "return func()": Object {
       "End": true,
       "Resource": "__REPLACED_TOKEN",
@@ -167,9 +1326,76 @@ Object {
 }
 `;
 
+exports[`call lambda with array parameter 1`] = `
+Object {
+  "StartAt": "__fnl_context",
+  "States": Object {
+    "0_tmp = [1, 2]": Object {
+      "Next": "return await func(0_tmp)",
+      "Result": Array [
+        1,
+        2,
+      ],
+      "ResultPath": "$.0_tmp",
+      "Type": "Pass",
+    },
+    "__fnl_context": Object {
+      "Next": "0_tmp = [1, 2]",
+      "Parameters": Object {
+        "input.$": "$",
+        "null": null,
+      },
+      "ResultPath": "$.__fnl",
+      "Type": "Pass",
+    },
+    "return await func(0_tmp)": Object {
+      "End": true,
+      "InputPath": "$.0_tmp",
+      "Resource": "__REPLACED_TOKEN",
+      "ResultPath": "$",
+      "Type": "Task",
+    },
+  },
+}
+`;
+
+exports[`call lambda with array ref 1`] = `
+Object {
+  "StartAt": "__fnl_context",
+  "States": Object {
+    "__fnl_context": Object {
+      "Next": "arr = [1, 2, 3]",
+      "Parameters": Object {
+        "input.$": "$",
+        "null": null,
+      },
+      "ResultPath": "$.__fnl",
+      "Type": "Pass",
+    },
+    "arr = [1, 2, 3]": Object {
+      "Next": "return await func(arr)",
+      "Result": Array [
+        1,
+        2,
+        3,
+      ],
+      "ResultPath": "$.arr",
+      "Type": "Pass",
+    },
+    "return await func(arr)": Object {
+      "End": true,
+      "InputPath": "$.arr",
+      "Resource": "__REPLACED_TOKEN",
+      "ResultPath": "$",
+      "Type": "Task",
+    },
+  },
+}
+`;
+
 exports[`call lambda with object literal parameter 1`] = `
 Object {
-  "StartAt": "0_tmp = await func({str: \\"hello world\\"})",
+  "StartAt": "__fnl_context",
   "States": Object {
     "0_tmp = await func({str: \\"hello world\\"})": Object {
       "Next": "return 0_tmp.str",
@@ -179,6 +1405,15 @@ Object {
       "Resource": "__REPLACED_TOKEN",
       "ResultPath": "$.0_tmp",
       "Type": "Task",
+    },
+    "__fnl_context": Object {
+      "Next": "0_tmp = await func({str: \\"hello world\\"})",
+      "Parameters": Object {
+        "input.$": "$",
+        "null": null,
+      },
+      "ResultPath": "$.__fnl",
+      "Type": "Pass",
     },
     "return 0_tmp.str": Object {
       "End": true,
@@ -191,7 +1426,7 @@ Object {
 
 exports[`call lambda with object reference parameter 1`] = `
 Object {
-  "StartAt": "obj = {str: \\"hello world\\"}",
+  "StartAt": "__fnl_context",
   "States": Object {
     "0_tmp = await func(obj)": Object {
       "InputPath": "$.obj",
@@ -199,6 +1434,15 @@ Object {
       "Resource": "__REPLACED_TOKEN",
       "ResultPath": "$.0_tmp",
       "Type": "Task",
+    },
+    "__fnl_context": Object {
+      "Next": "obj = {str: \\"hello world\\"}",
+      "Parameters": Object {
+        "input.$": "$",
+        "null": null,
+      },
+      "ResultPath": "$.__fnl",
+      "Type": "Pass",
     },
     "obj = {str: \\"hello world\\"}": Object {
       "Next": "0_tmp = await func(obj)",
@@ -219,7 +1463,7 @@ Object {
 
 exports[`call lambda with string parameter 1`] = `
 Object {
-  "StartAt": "0_tmp = await func(\\"hello world\\")",
+  "StartAt": "__fnl_context",
   "States": Object {
     "0_tmp = await func(\\"hello world\\")": Object {
       "Next": "return 0_tmp.str",
@@ -227,6 +1471,15 @@ Object {
       "Resource": "__REPLACED_TOKEN",
       "ResultPath": "$.0_tmp",
       "Type": "Task",
+    },
+    "__fnl_context": Object {
+      "Next": "0_tmp = await func(\\"hello world\\")",
+      "Parameters": Object {
+        "input.$": "$",
+        "null": null,
+      },
+      "ResultPath": "$.__fnl",
+      "Type": "Pass",
     },
     "return 0_tmp.str": Object {
       "End": true,
@@ -239,14 +1492,23 @@ Object {
 
 exports[`call lambda with string reference 1`] = `
 Object {
-  "StartAt": "0_tmp = await func(event.str)",
+  "StartAt": "__fnl_context",
   "States": Object {
     "0_tmp = await func(event.str)": Object {
-      "InputPath": "$.str",
+      "InputPath": "$.__fnl.input.str",
       "Next": "return 0_tmp.str",
       "Resource": "__REPLACED_TOKEN",
       "ResultPath": "$.0_tmp",
       "Type": "Task",
+    },
+    "__fnl_context": Object {
+      "Next": "0_tmp = await func(event.str)",
+      "Parameters": Object {
+        "input.$": "$",
+        "null": null,
+      },
+      "ResultPath": "$.__fnl",
+      "Type": "Pass",
     },
     "return 0_tmp.str": Object {
       "End": true,
@@ -259,8 +1521,17 @@ Object {
 
 exports[`simple 1`] = `
 Object {
-  "StartAt": "return \\"hello world\\"",
+  "StartAt": "__fnl_context",
   "States": Object {
+    "__fnl_context": Object {
+      "Next": "return \\"hello world\\"",
+      "Parameters": Object {
+        "input.$": "$",
+        "null": null,
+      },
+      "ResultPath": "$.__fnl",
+      "Type": "Pass",
+    },
     "return \\"hello world\\"": Object {
       "End": true,
       "Result": "hello world",

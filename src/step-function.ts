@@ -229,7 +229,7 @@ export namespace $SFN {
     if (callbackfn === undefined || callbackfn.kind !== "FunctionExpr") {
       throw new Error("missing callbackfn in $SFN.map");
     }
-    const callbackStates = context.execute(callbackfn.body);
+    const callbackStates = context.evalStmt(callbackfn.body);
     const callbackStart = context.getStateName(callbackfn.body.step()!);
     const props = call.getArgument("props")?.expr;
     let maxConcurrency: number | undefined;
@@ -324,7 +324,7 @@ export namespace $SFN {
         Type: "Parallel",
         Branches: paths.items.map((func) => ({
           StartAt: context.getStateName(func.body.step()!),
-          States: context.execute(func.body),
+          States: context.evalStmt(func.body),
         })),
       };
     },

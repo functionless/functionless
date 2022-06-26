@@ -12,6 +12,36 @@ new StepFunction(stack, "input.i + 2", (input: { i: number }) => input.i + 2);
 new StepFunction(stack, "input.i - 2", (input: { i: number }) => input.i - 2);
 new StepFunction(stack, "input.i * 2", (input: { i: number }) => input.i * 2);
 new StepFunction(stack, "input.i / 2", (input: { i: number }) => input.i / 2);
+new StepFunction(stack, "input.i % 2", (input: { i: number }) => input.i % 2);
+new StepFunction(
+  stack,
+  "input.i += 2",
+  (input: { i: number }) => (input.i += 2)
+);
+new StepFunction(
+  stack,
+  "input.i *= 2",
+  (input: { i: number }) => (input.i *= 2)
+);
+new StepFunction(
+  stack,
+  "input.i -= 2",
+  (input: { i: number }) => (input.i -= 2)
+);
+new StepFunction(
+  stack,
+  "input.i /= 2",
+  (input: { i: number }) => (input.i /= 2)
+);
+new StepFunction(
+  stack,
+  "input.i %= 2",
+  (input: { i: number }) => (input.i %= 2)
+);
+new StepFunction(stack, "input.i++", (input: { i: number }) => input.i++);
+new StepFunction(stack, "++input.i", (input: { i: number }) => ++input.i);
+new StepFunction(stack, "input.i--", (input: { i: number }) => input.i--);
+new StepFunction(stack, "--input.i", (input: { i: number }) => --input.i);
 new StepFunction(stack, "-input.i", (input: { i: number }) => -input.i);
 new StepFunction(
   stack,
@@ -24,6 +54,7 @@ new StepFunction(
 
 // supported arithmetic
 new StepFunction(stack, "1 + 2", () => 1 + 2);
+new StepFunction(stack, "11 % 2", () => 11 % 2);
 new StepFunction(stack, "-1", () => -1);
 new StepFunction(stack, "(1 + 2)", () => 1 + 2);
 new StepFunction(stack, '("hello")', () => "hello");

@@ -50,11 +50,7 @@ import {
   PrewarmClients,
   PrewarmProps,
 } from "./function-prewarm";
-import {
-  isFunctionDecl,
-  isStringLiteralExpr,
-  isVariableReference,
-} from "./guards";
+import { isFunctionDecl } from "./guards";
 import {
   Integration,
   IntegrationCallExpr,
@@ -388,21 +384,7 @@ abstract class FunctionBase<in Payload, Out>
     const payloadArg = call.getArgument("payload")?.expr;
     this.resource.grantInvoke(context.role);
     // TODO generalize this?
-    const props: Partial<Task> = !payloadArg
-      ? {
-          Parameters: undefined,
-        }
-      : isVariableReference(payloadArg)
-      ? {
-          InputPath: ASL.toJsonPath(payloadArg),
-        }
-      : isStringLiteralExpr(payloadArg)
-      ? {
-          Parameters: payloadArg.value,
-        }
-      : {
-          Parameters: ASL.toJson(payloadArg),
-        };
+    const props: Partial<Task> = ASL.toTaskInput(payloadArg);
 
     return {
       Type: "Task" as const,

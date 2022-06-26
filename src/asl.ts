@@ -428,21 +428,52 @@ export class ASL {
           return hoist && self.doHoist(node)
             ? hoist(updatedChild)
             : updatedChild;
+        } else if (isBinaryExpr(node)) {
+          const updated = visitEachChild(node, (expr) =>
+            normalizeAST(expr, hoist)
+          );
+          return hoist && self.doHoist(node) ? hoist(updated) : updated;
+        } else if (
+          isArrayLiteralExpr(node) &&
+          !node.items.some((i) => isFunctionExpr(i))
+        ) {
+          // if the array contains functions, just leave it, it is probably for Parallel.
+          // This is short sighted, but should work now
+          const updated = visitEachChild(node, (expr) =>
+            normalizeAST(expr, hoist)
+          );
+
+          return hoist && self.doHoist(node) ? hoist(updated) : updated;
         }
         return visitEachChild(node, (expr) => normalizeAST(expr, hoist));
       }
     );
 
-    const states = this.execute(this.decl.body);
+    const states = this.evalStmt(this.decl.body);
 
     const start = this.transition(this.decl.body);
     if (start === undefined) {
       throw new Error("State Machine has no States");
     }
 
+    /**
+     * Add some hard to manufacture constants to the machine.
+     *
+     * TODO: only add this when used?
+     */
+    const __fnl_context: Pass = {
+      Type: "Pass",
+      Parameters: {
+        null: null,
+        "input.$": "$",
+      },
+      ResultPath: "$.__fnl",
+      Next: start,
+    };
+
     this.definition = {
-      StartAt: start,
-      States: states,
+      StartAt: "__fnl_context",
+      States: { __fnl_context: __fnl_context, ...states },
     };
   }
 
@@ -497,12 +528,63 @@ export class ASL {
     return this.stateNames.get(stmt)!;
   }
 
-  public execute(stmt: Stmt): States {
+  private rewriteNext(
+    state: State,
+    scope: string,
+    scopeNames: Set<string>
+  ): State {
+    const updateIfInScopeNames = (next: string) =>
+      scopeNames.has(next) ? this.scopedStateName(scope, next) : next;
+    if (state.Type === "Choice") {
+      return {
+        ...state,
+        Choices: state.Choices.map((choice) => ({
+          ...choice,
+          Next: updateIfInScopeNames(choice.Next),
+        })),
+        Default: state.Default
+          ? updateIfInScopeNames(state.Default)
+          : undefined,
+      };
+    } else if (!("Next" in state)) {
+      return state;
+    }
+    return {
+      ...state,
+      Next: state.Next ? updateIfInScopeNames(state.Next) : state.Next,
+    };
+  }
+
+  private scopedStateName(scope: string, localName: string) {
+    if (localName === "default") {
+      return scope;
+    }
+    return `${localName}__${scope}`;
+  }
+
+  private normalizeStates(name: string, states: State | States) {
+    if ("Type" in states) {
+      return {
+        [name]: states as State,
+      };
+    } else {
+      const localKeys = new Set(Object.keys(states));
+      return Object.fromEntries(
+        Object.entries(states).map(([key, state]) => {
+          // re-write any Next states to reflect the updated state names.
+          const updated = this.rewriteNext(state, name, localKeys);
+          return [this.scopedStateName(name, key), updated];
+        })
+      );
+    }
+  }
+
+  public evalStmt(stmt: Stmt): States {
     if (isBlockStmt(stmt)) {
       return stmt.statements.reduce(
         (states: States, s) => ({
           ...states,
-          ...this.execute(s),
+          ...this.evalStmt(s),
         }),
         {}
       );
@@ -555,12 +637,13 @@ export class ASL {
               },
       };
     } else if (isExprStmt(stmt)) {
-      return {
-        [this.getStateName(stmt)]: this.eval(stmt.expr, {
-          Next: this.next(stmt),
-          ResultPath: null,
-        }),
-      };
+      const name = this.getStateName(stmt);
+      const expr = this.eval(stmt.expr, {
+        Next: this.next(stmt),
+        ResultPath: null,
+      });
+
+      return this.normalizeStates(name, expr);
     } else if (isForOfStmt(stmt) || isForInStmt(stmt)) {
       const throwTransition = this.throw(stmt);
 
@@ -610,7 +693,7 @@ export class ASL {
           },
           Iterator: {
             StartAt: this.getStateName(stmt.body.step()!),
-            States: this.execute(stmt.body),
+            States: this.evalStmt(stmt.body),
           },
         },
       };
@@ -620,7 +703,7 @@ export class ASL {
 
       let curr: Stmt | undefined = stmt;
       while (isIfStmt(curr)) {
-        Object.assign(states, this.execute(curr.then));
+        Object.assign(states, this.evalStmt(curr.then));
 
         choices.push({
           Next: this.getStateName(curr.then),
@@ -629,7 +712,7 @@ export class ASL {
         curr = curr._else;
       }
       if (isBlockStmt(curr)) {
-        Object.assign(states, this.execute(curr));
+        Object.assign(states, this.evalStmt(curr));
       }
       const next =
         curr === undefined
@@ -683,23 +766,25 @@ export class ASL {
           },
         };
       }
-      return {
-        [this.getStateName(stmt)]: this.eval(stmt.expr, {
-          ResultPath: "$",
-          End: true,
-        }),
-      };
+      const name = this.getStateName(stmt);
+      const expr = this.eval(stmt.expr, {
+        ResultPath: "$",
+        End: true,
+      });
+
+      return this.normalizeStates(name, expr);
     } else if (isVariableStmt(stmt)) {
       if (stmt.expr === undefined) {
         return {};
       }
 
-      return {
-        [this.getStateName(stmt)]: this.eval(stmt.expr, {
-          ResultPath: `$.${stmt.name}`,
-          Next: this.next(stmt),
-        }),
-      };
+      const name = this.getStateName(stmt);
+      const expr = this.eval(stmt.expr, {
+        ResultPath: `$.${stmt.name}`,
+        Next: this.next(stmt),
+      });
+
+      return this.normalizeStates(name, expr);
     } else if (isThrowStmt(stmt)) {
       if (
         !(
@@ -756,7 +841,7 @@ export class ASL {
       const errorVariableName = stmt.catchClause.variableDecl?.name;
 
       return {
-        ...this.execute(stmt.tryBlock),
+        ...this.evalStmt(stmt.tryBlock),
         ...(tryFlow.hasTask && stmt.catchClause.variableDecl
           ? {
               [this.getStateName(stmt.catchClause.variableDecl)]: {
@@ -775,10 +860,10 @@ export class ASL {
               },
             }
           : {}),
-        ...this.execute(stmt.catchClause.block),
+        ...this.evalStmt(stmt.catchClause.block),
         ...(stmt.finallyBlock
           ? {
-              ...this.execute(stmt.finallyBlock),
+              ...this.evalStmt(stmt.finallyBlock),
               ...(canThrow(stmt.catchClause)
                 ? (() => {
                     if (stmt.finallyBlock.isTerminal()) {
@@ -827,7 +912,7 @@ export class ASL {
           : {}),
       };
     } else if (isCatchClause(stmt)) {
-      return this.execute(stmt.block);
+      return this.evalStmt(stmt.block);
     } else if (isWhileStmt(stmt) || isDoStmt(stmt)) {
       const whenTrue = this.transition(stmt.block);
       if (whenTrue === undefined) {
@@ -845,7 +930,7 @@ export class ASL {
           ],
           Default: whenFalse,
         },
-        ...this.execute(stmt.block),
+        ...this.evalStmt(stmt.block),
       };
     }
     return assertNever(stmt);
@@ -865,7 +950,7 @@ export class ASL {
       End?: true;
       Next?: string;
     }
-  ): State {
+  ): State | States {
     if (props.End === undefined && props.Next === undefined) {
       // Hack: delete props.Next when End is true to clean up test cases
       // TODO: make this cleaner somehow?
@@ -909,30 +994,40 @@ export class ASL {
            * A Wait state with `ResultPath: null` was failing to deploy.
            */
           const taskState = ((): State => {
-            const taskType = partialTask.Type;
-            if (taskType === "Wait") {
+            const partialState = partialTask as State;
+            if (partialState.Type === "Wait") {
               return {
-                ...(partialTask as Omit<Wait, "Next">),
+                ...(partialState as Omit<Wait, "Next">),
                 ...{ End, Next },
               };
+            } else if (partialState.Type === "Choice") {
+              return {
+                ...partialState,
+                Choices: partialState.Choices.map((choice) => ({
+                  ...choice,
+                  // TODO: inject a default end node
+                  Next: Next!,
+                })),
+                // do we always want to inject a default?
+                Default: Next,
+              };
             } else if (
-              taskType === "Choice" ||
-              taskType === "Fail" ||
-              taskType === "Succeed"
+              partialState.Type === "Fail" ||
+              partialState.Type === "Succeed"
             ) {
-              return partialTask as Choice | Fail | Succeed;
+              return partialState as Choice | Fail | Succeed;
             } else if (
-              taskType === "Task" ||
-              taskType === "Parallel" ||
-              taskType === "Pass" ||
-              taskType === "Map"
+              partialState.Type === "Task" ||
+              partialState.Type === "Parallel" ||
+              partialState.Type === "Pass" ||
+              partialState.Type === "Map"
             ) {
               return {
-                ...partialTask,
+                ...partialState,
                 ...props,
               } as Task | ParallelTask | Pass | MapTask;
             }
-            assertNever(taskType);
+            assertNever(partialState);
           })();
 
           const throwOrPass = this.throw(expr);
@@ -961,7 +1056,7 @@ export class ASL {
 
         const callbackfn = expr.getArgument("callbackfn")?.expr;
         if (callbackfn !== undefined && isFunctionExpr(callbackfn)) {
-          const callbackStates = this.execute(callbackfn.body);
+          const callbackStates = this.evalStmt(callbackfn.body);
           const callbackStart = this.getStateName(callbackfn.body.step()!);
 
           const listPath = ASL.toJsonPath(expr.expr.expr);
@@ -1090,7 +1185,74 @@ export class ASL {
         });
       }
     } else if (isBinaryExpr(expr)) {
-      // TODO
+      if (expr.op === "&&" || expr.op === "||") {
+        return {
+          default: {
+            Type: "Choice",
+            Choices: [{ ...ASL.toCondition(expr), Next: "assignTrue" }],
+            Default: "assignFalse",
+          },
+          assignTrue: {
+            Type: "Pass",
+            Result: true,
+            ...props,
+          },
+          assignFalse: {
+            Type: "Pass",
+            Result: false,
+            ...props,
+          },
+        };
+      } else if (expr.op === "??") {
+        // literal ?? anything
+        if (isLiteralExpr(expr.left)) {
+          if (
+            isNullLiteralExpr(expr.left) ||
+            isUndefinedLiteralExpr(expr.left)
+          ) {
+            return {
+              Type: "Pass",
+              ...ASL.toTaskInput(expr.right),
+              ...props,
+            };
+          } else {
+            return {
+              Type: "Pass",
+              ...ASL.toTaskInput(expr.left),
+              ...props,
+            };
+          }
+        }
+        const left = ASL.toJsonPath(expr.left);
+        return {
+          default: {
+            Type: "Choice",
+            Choices: [
+              {
+                ...ASL.and(ASL.isPresent(left), ASL.isNotNull(left)),
+                Next: "takeLeft",
+              },
+            ],
+            Default: "takeRight",
+          },
+          takeLeft: {
+            Type: "Pass",
+            InputPath: left,
+            ...props,
+          },
+          takeRight: {
+            Type: "Pass",
+            ...ASL.toTaskInput(expr.right),
+            ...props,
+          },
+        };
+      }
+
+      // TODO: assert never
+      throw new SynthError(
+        ErrorCodes.Unsupported_Feature,
+        `Step Function does not support operator ${expr.op}`
+      );
     } else if (isAwaitExpr(expr)) {
       return this.eval(expr.expr, props);
     }
@@ -1436,7 +1598,7 @@ export namespace ASL {
       // is in a FunctionDecl and that Function is at the top (no parent).
       // This logic needs to be updated to support destructured inputs: https://github.com/functionless/functionless/issues/68
       if (ref && isParameterDecl(ref) && isFunctionDecl(ref.parent)) {
-        return "$";
+        return "$.__fnl.input";
       }
       return `$.${expr.name}`;
     } else if (isPropAccessExpr(expr)) {
@@ -1448,6 +1610,61 @@ export namespace ASL {
     throw new Error(
       `expression kind '${expr.kind}' cannot be evaluated to a JSON Path expression.`
     );
+  }
+
+  /**
+   * Retrieves a partial {@link Task} which can set the value as the input to a Task.
+   *
+   * Works with Task, Pass, possibly other states.
+   *
+   * ex: func("someString")
+   * {
+   *    Type: "Task",
+   *    Parameters: "someString"
+   * }
+   *
+   * ex: func(someVariable)
+   * {
+   *    Type: "Task",
+   *    InputPath: "$.someVariable"
+   * }
+   */
+  export function toTaskInput(
+    expr?: Expr
+  ): Pick<Task, "Parameters" | "InputPath"> {
+    if (!expr) {
+      return {
+        Parameters: undefined,
+      };
+    } else if (isUndefinedLiteralExpr(expr)) {
+      throw new SynthError(
+        ErrorCodes.Step_Functions_does_not_support_undefined_assignment
+      );
+    } else if (isArrayLiteralExpr(expr)) {
+      throw new SynthError(
+        ErrorCodes.Unexpected_Error,
+        "Array literals should be hoisted to their own variable before assignment or passing"
+      );
+    }
+    return isVariableReference(expr)
+      ? {
+          InputPath: ASL.toJsonPath(expr),
+        }
+      : isLiteralExpr(expr)
+      ? isStringLiteralExpr(expr) ||
+        isNumberLiteralExpr(expr) ||
+        isBooleanLiteralExpr(expr)
+        ? {
+            Parameters: expr.value,
+          }
+        : isNullLiteralExpr(expr)
+        ? { InputPath: "$.__fnl.null" }
+        : isObjectLiteralExpr(expr)
+        ? { Parameters: ASL.toJson(expr) }
+        : assertNever(expr)
+      : {
+          Parameters: ASL.toJson(expr),
+        };
   }
 
   function sliceToJsonPath(expr: CallExpr & { expr: PropAccessExpr }) {
@@ -1647,11 +1864,9 @@ export namespace ASL {
       or(
         and(isString(v), not(stringEquals(v, ""))),
         and(isNumeric(v), not(numericEquals(v, 0))),
-        and(isBoolean(v), ref(v))
+        and(isBoolean(v), booleanEquals(v, true))
       )
     );
-
-  export const ref = (Variable: string): Condition => ({ Variable });
 
   export const and = (...cond: Condition[]): Condition => ({
     And: cond,
@@ -1703,6 +1918,7 @@ export namespace ASL {
       isString(Variable),
       {
         StringEqualsPath: path,
+        Variable,
       },
     ],
   });
@@ -1715,6 +1931,7 @@ export namespace ASL {
       isString(Variable),
       {
         StringEquals: string,
+        Variable,
       },
     ],
   });
@@ -1727,6 +1944,7 @@ export namespace ASL {
       isNumeric(Variable),
       {
         NumericEqualsPath: path,
+        Variable,
       },
     ],
   });
@@ -1739,8 +1957,17 @@ export namespace ASL {
       isNumeric(Variable),
       {
         NumericEquals: number,
+        Variable,
       },
     ],
+  });
+
+  export const booleanEquals = (
+    Variable: string,
+    value: boolean
+  ): Condition => ({
+    BooleanEquals: value,
+    Variable,
   });
 
   export function toCondition(expr: Expr): Condition {
@@ -1946,6 +2173,9 @@ export namespace ASL {
         // need typing information
         // return aws_stepfunctions.Condition.str
       }
+    } else if (isVariableReference(expr)) {
+      // if(expr) { ... }
+      return isTruthy(ASL.toJsonPath(expr));
     }
     throw new Error(`cannot evaluate expression: '${expr.kind}`);
   }
