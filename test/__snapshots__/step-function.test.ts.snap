@@ -142,7 +142,7 @@ Object {
           "if(item == \\"hello\\")": Object {
             "Choices": Array [
               Object {
-                "Next": "break",
+                "Next": "break 1",
                 "StringEquals": "hello",
                 "Variable": "$.item",
               },
@@ -210,7 +210,7 @@ Object {
     "if(person.Item == undefined)": Object {
       "Choices": Array [
         Object {
-          "Next": "return undefined",
+          "Next": "return undefined 1",
           "Or": Array [
             Object {
               "IsPresent": false,
@@ -559,7 +559,7 @@ Object {
     "if(input.id == \\"hello\\")": Object {
       "Choices": Array [
         Object {
-          "Next": "await $AWS.DynamoDB.GetItem({Table: personTable, Key: {id: {S: input.id}}})",
+          "Next": "await $AWS.DynamoDB.GetItem({Table: personTable, Key: {id: {S: input.id}}}) 1",
           "StringEquals": "hello",
           "Variable": "$.id",
         },
@@ -586,12 +586,12 @@ Object {
     "if(input.id == \\"hello\\")": Object {
       "Choices": Array [
         Object {
-          "Next": "return null",
+          "Next": "return null 1",
           "StringEquals": "hello",
           "Variable": "$.id",
         },
       ],
-      "Default": "return null 1",
+      "Default": "return null 2",
       "Type": "Choice",
     },
     "return null": Object {
@@ -602,7 +602,7 @@ Object {
       },
       "Type": "Pass",
     },
-    "return null 1": Object {
+    "return null 2": Object {
       "End": true,
       "OutputPath": "$.null",
       "Parameters": Object {
@@ -637,7 +637,7 @@ Object {
     "if(input.key == \\"sam\\")": Object {
       "Choices": Array [
         Object {
-          "Next": "continue",
+          "Next": "continue 1",
           "StringEquals": "sam",
           "Variable": "$.key",
         },
@@ -689,7 +689,7 @@ Object {
           "if(item == \\"hello\\")": Object {
             "Choices": Array [
               Object {
-                "Next": "continue",
+                "Next": "continue 1",
                 "StringEquals": "hello",
                 "Variable": "$.item",
               },
@@ -742,7 +742,7 @@ Object {
     "if(input.key == \\"sam\\")": Object {
       "Choices": Array [
         Object {
-          "Next": "continue",
+          "Next": "continue 1",
           "StringEquals": "sam",
           "Variable": "$.key",
         },
@@ -1121,7 +1121,7 @@ Object {
           "if(err.message == \\"you dun' goofed\\")": Object {
             "Choices": Array [
               Object {
-                "Next": "throw new Error(\\"little\\")",
+                "Next": "throw new Error(\\"little\\") 1",
                 "StringEquals": "you dun' goofed",
                 "Variable": "$.err.message",
               },
@@ -1181,15 +1181,15 @@ Object {
               "Variable": "$.id",
             },
           ],
-          "Next": "return \\"null\\"",
+          "Next": "return \\"null\\" 1",
         },
         Object {
           "IsPresent": true,
-          "Next": "return \\"undefined\\"",
+          "Next": "return \\"undefined\\" 1",
           "Variable": "$.id",
         },
         Object {
-          "Next": "return \\"string\\"",
+          "Next": "return \\"string\\" 1",
           "Or": Array [
             Object {
               "IsPresent": false,
@@ -1202,7 +1202,7 @@ Object {
           ],
         },
         Object {
-          "Next": "return \\"boolean\\"",
+          "Next": "return \\"boolean\\" 1",
           "Or": Array [
             Object {
               "IsPresent": false,
@@ -1215,7 +1215,7 @@ Object {
           ],
         },
         Object {
-          "Next": "return \\"number\\"",
+          "Next": "return \\"number\\" 1",
           "Or": Array [
             Object {
               "IsPresent": false,
@@ -1228,7 +1228,7 @@ Object {
           ],
         },
         Object {
-          "Next": "return \\"bigint\\"",
+          "Next": "return \\"bigint\\" 1",
           "Or": Array [
             Object {
               "IsPresent": false,
@@ -1299,7 +1299,7 @@ Object {
     "if(input.id == undefined)": Object {
       "Choices": Array [
         Object {
-          "Next": "return \\"null\\"",
+          "Next": "return \\"null\\" 1",
           "Or": Array [
             Object {
               "IsPresent": false,
@@ -1313,7 +1313,7 @@ Object {
         },
         Object {
           "IsPresent": false,
-          "Next": "return \\"undefined\\"",
+          "Next": "return \\"undefined\\" 1",
           "Variable": "$.id",
         },
         Object {
@@ -1327,7 +1327,7 @@ Object {
               "Variable": "$.id",
             },
           ],
-          "Next": "return \\"string\\"",
+          "Next": "return \\"string\\" 1",
         },
         Object {
           "And": Array [
@@ -1340,7 +1340,7 @@ Object {
               "Variable": "$.id",
             },
           ],
-          "Next": "return \\"boolean\\"",
+          "Next": "return \\"boolean\\" 1",
         },
         Object {
           "And": Array [
@@ -1353,7 +1353,7 @@ Object {
               "Variable": "$.id",
             },
           ],
-          "Next": "return \\"number\\"",
+          "Next": "return \\"number\\" 1",
         },
         Object {
           "And": Array [
@@ -1366,7 +1366,7 @@ Object {
               "Variable": "$.id",
             },
           ],
-          "Next": "return \\"bigint\\"",
+          "Next": "return \\"bigint\\" 1",
         },
       ],
       "Default": "return null",
@@ -1427,12 +1427,12 @@ Object {
     "if(input.id == \\"hello\\")": Object {
       "Choices": Array [
         Object {
-          "Next": "return \\"hello\\"",
+          "Next": "return \\"hello\\" 1",
           "StringEquals": "hello",
           "Variable": "$.id",
         },
       ],
-      "Default": "return \\"world\\"",
+      "Default": "return \\"world\\" 1",
       "Type": "Choice",
     },
     "return \\"hello\\"": Object {
@@ -1458,12 +1458,12 @@ Object {
     "if(input.id == \\"hello\\")": Object {
       "Choices": Array [
         Object {
-          "Next": "return \\"hello\\"",
+          "Next": "return \\"hello\\" 1",
           "StringEquals": "hello",
           "Variable": "$.id",
         },
         Object {
-          "Next": "return \\"world\\"",
+          "Next": "return \\"world\\" 1",
           "StringEquals": "world",
           "Variable": "$.id",
         },
@@ -1969,12 +1969,12 @@ Object {
           "if(i == 0)": Object {
             "Choices": Array [
               Object {
-                "Next": "return task(item)",
+                "Next": "return task(item) 1",
                 "NumericEquals": 0,
                 "Variable": "$.i",
               },
             ],
-            "Default": "return null",
+            "Default": "return null 1",
             "Type": "Choice",
           },
           "return null": Object {
@@ -2023,12 +2023,12 @@ Object {
           "if(i == 0)": Object {
             "Choices": Array [
               Object {
-                "Next": "return task(item)",
+                "Next": "return task(item) 1",
                 "NumericEquals": 0,
                 "Variable": "$.i",
               },
             ],
-            "Default": "return task(input.list[0])",
+            "Default": "return task(input.list[0]) 1",
             "Type": "Choice",
           },
           "return task(input.list[0])": Object {
@@ -2114,12 +2114,12 @@ Object {
           "if(i == 0)": Object {
             "Choices": Array [
               Object {
-                "Next": "return task(item)",
+                "Next": "return task(item) 1",
                 "NumericEquals": 0,
                 "Variable": "$.i",
               },
             ],
-            "Default": "return null",
+            "Default": "return null 1",
             "Type": "Choice",
           },
           "return null": Object {
@@ -2168,12 +2168,12 @@ Object {
           "if(i == 0)": Object {
             "Choices": Array [
               Object {
-                "Next": "return task(item)",
+                "Next": "return task(item) 1",
                 "NumericEquals": 0,
                 "Variable": "$.i",
               },
             ],
-            "Default": "return task(input.list[0])",
+            "Default": "return task(input.list[0]) 1",
             "Type": "Choice",
           },
           "return task(input.list[0])": Object {
@@ -2789,7 +2789,7 @@ Object {
     "if(person.Item == undefined)": Object {
       "Choices": Array [
         Object {
-          "Next": "return undefined",
+          "Next": "return undefined 1",
           "Or": Array [
             Object {
               "IsPresent": false,
@@ -3753,7 +3753,7 @@ Object {
     "if(err.message == \\"you dun' goofed\\")": Object {
       "Choices": Array [
         Object {
-          "Next": "throw new Error(\\"little\\")",
+          "Next": "throw new Error(\\"little\\") 1",
           "StringEquals": "you dun' goofed",
           "Variable": "$.err.message",
         },
@@ -3952,12 +3952,12 @@ Object {
     "if(err.message == \\"cause\\")": Object {
       "Choices": Array [
         Object {
-          "Next": "return 0",
+          "Next": "return 0 1",
           "StringEquals": "cause",
           "Variable": "$.err.message",
         },
       ],
-      "Default": "return 1",
+      "Default": "return 1 1",
       "Type": "Choice",
     },
     "return 0": Object {
@@ -4169,12 +4169,12 @@ Object {
     "if(err.message == \\"cause\\")": Object {
       "Choices": Array [
         Object {
-          "Next": "return 0",
+          "Next": "return 0 1",
           "StringEquals": "cause",
           "Variable": "$.err.message",
         },
       ],
-      "Default": "return 1",
+      "Default": "return 1 1",
       "Type": "Choice",
     },
     "return 0": Object {
@@ -4469,7 +4469,7 @@ Object {
     "if(input.id == \\"sam\\")": Object {
       "Choices": Array [
         Object {
-          "Next": "throw new Error(\\"little\\")",
+          "Next": "throw new Error(\\"little\\") 1",
           "StringEquals": "sam",
           "Variable": "$.id",
         },
@@ -4648,7 +4648,7 @@ Object {
     "if(err.message == \\"sam\\")": Object {
       "Choices": Array [
         Object {
-          "Next": "throw new Error(\\"little\\")",
+          "Next": "throw new Error(\\"little\\") 1",
           "StringEquals": "sam",
           "Variable": "$.err.message",
         },
@@ -4709,7 +4709,7 @@ Object {
     "if(input.id == \\"sam\\")": Object {
       "Choices": Array [
         Object {
-          "Next": "throw new Error(\\"little\\")",
+          "Next": "throw new Error(\\"little\\") 1",
           "StringEquals": "sam",
           "Variable": "$.id",
         },
@@ -4896,12 +4896,12 @@ Object {
     "if(err.message == \\"cause\\")": Object {
       "Choices": Array [
         Object {
-          "Next": "return \\"hello\\"",
+          "Next": "return \\"hello\\" 1",
           "StringEquals": "cause",
           "Variable": "$.err.message",
         },
       ],
-      "Default": "return \\"world\\"",
+      "Default": "return \\"world\\" 1",
       "Type": "Choice",
     },
     "return \\"hello\\"": Object {
@@ -5071,18 +5071,18 @@ Object {
     "if(err.message == \\"cause\\")": Object {
       "Choices": Array [
         Object {
-          "Next": "return \\"hello\\"",
+          "Next": "return \\"hello\\" 1",
           "StringEquals": "cause",
           "Variable": "$.err.message",
         },
       ],
-      "Default": "return \\"world\\"",
+      "Default": "return \\"world\\" 1",
       "Type": "Choice",
     },
     "if(input.id == \\"hello\\")": Object {
       "Choices": Array [
         Object {
-          "Next": "await computeScore({id: input.id, name: \\"sam\\"})",
+          "Next": "await computeScore({id: input.id, name: \\"sam\\"}) 1",
           "StringEquals": "hello",
           "Variable": "$.id",
         },
@@ -5133,18 +5133,18 @@ Object {
     "if(err.message == \\"cause\\")": Object {
       "Choices": Array [
         Object {
-          "Next": "return \\"hello\\"",
+          "Next": "return \\"hello\\" 1",
           "StringEquals": "cause",
           "Variable": "$.err.message",
         },
       ],
-      "Default": "return \\"world\\"",
+      "Default": "return \\"world\\" 1",
       "Type": "Choice",
     },
     "if(input.id == \\"hello\\")": Object {
       "Choices": Array [
         Object {
-          "Next": "return await computeScore({id: input.id, name: \\"sam\\"})",
+          "Next": "return await computeScore({id: input.id, name: \\"sam\\"}) 1",
           "StringEquals": "hello",
           "Variable": "$.id",
         },
@@ -5241,18 +5241,18 @@ Object {
     "if(err.message == \\"cause\\")": Object {
       "Choices": Array [
         Object {
-          "Next": "return \\"hello\\"",
+          "Next": "return \\"hello\\" 1",
           "StringEquals": "cause",
           "Variable": "$.err.message",
         },
       ],
-      "Default": "return \\"world\\"",
+      "Default": "return \\"world\\" 1",
       "Type": "Choice",
     },
     "if(input.id == \\"hello\\")": Object {
       "Choices": Array [
         Object {
-          "Next": "await computeScore({id: input.id, name: \\"sam\\"})",
+          "Next": "await computeScore({id: input.id, name: \\"sam\\"}) 1",
           "StringEquals": "hello",
           "Variable": "$.id",
         },
@@ -5289,18 +5289,18 @@ Object {
     "if(err.message == \\"cause\\")": Object {
       "Choices": Array [
         Object {
-          "Next": "return \\"hello\\"",
+          "Next": "return \\"hello\\" 1",
           "StringEquals": "cause",
           "Variable": "$.err.message",
         },
       ],
-      "Default": "return \\"world\\"",
+      "Default": "return \\"world\\" 1",
       "Type": "Choice",
     },
     "if(input.id == \\"hello\\")": Object {
       "Choices": Array [
         Object {
-          "Next": "throw new Error(\\"cause\\")",
+          "Next": "throw new Error(\\"cause\\") 1",
           "StringEquals": "hello",
           "Variable": "$.id",
         },

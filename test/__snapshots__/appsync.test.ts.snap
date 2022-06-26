@@ -901,53 +901,6 @@ Object {
 }
 `;
 
-exports[`return error 1`] = `
-Array [
-  "{}",
-  "#if($context.stash.return__flag)
-  #return($context.stash.return__val)
-#end
-#set($context.stash.identity = $context.identity)
-#set($v1 = !$context.stash.identity)
-#set($v3 = $context.stash.identity.class.name.startsWith('[L') || $context.stash.identity.class.name.contains('ArrayList'))
-#if($v3)
-#set($v4 = $context.stash.identity.length >= 'resolverContext')
-#set($v2 = $v4)
-#else
-#set($v2 = $context.stash.identity.containsKey('resolverContext'))
-#end
-#set($v5 = !$v2)
-#set($v6 = $v1 || $v5)
-#if($v6)
-#set($context.stash.return__val = $util.error('Cannot find account.'))
-#set($context.stash.return__flag = true)
-#return($context.stash.return__val)
-#end
-#set($context.stash.{ accountId } = $context.stash.identity.resolverContext)
-#set($v7 = {})
-#set($v8 = {})
-#set($v9 = {})
-$util.qr($v9.put('S', \\"ACCOUNT#\${accountId}\\"))
-$util.qr($v8.put('pk', $v9))
-#set($v10 = {})
-$util.qr($v10.put('S', \\"ACCOUNT#\${accountId}\\"))
-$util.qr($v8.put('sk', $v10))
-$util.qr($v7.put('key', $v8))
-#set($v11 = {\\"operation\\": \\"GetItem\\", \\"version\\": \\"2018-05-29\\"})
-$util.qr($v11.put('key', $v7.get('key')))
-#if($v7.containsKey('consistentRead'))
-$util.qr($v11.put('consistentRead', $v7.get('consistentRead')))
-#end
-$util.toJson($v11)",
-  "#set( $context.stash.return__flag = true )
-#set( $context.stash.return__val = $context.result )
-{}",
-  "#if($context.stash.return__flag)
-  #return($context.stash.return__val)
-#end",
-]
-`;
-
 exports[`step function describe execution machine describe exec string 1`] = `
 Array [
   "{}",
