@@ -14,7 +14,6 @@ import {
 // eslint-disable-next-line import/no-extraneous-dependencies
 import axios from "axios";
 import { Construct } from "constructs";
-import { testFunction } from "./runtime-util";
 import {
   $AWS,
   EventBus,
@@ -26,6 +25,7 @@ import {
   Table,
 } from "../src";
 import { localstackTestSuite } from "./localstack";
+import { testFunction } from "./runtime-util";
 
 // inject the localstack client config into the lambda clients
 // without this configuration, the functions will try to hit AWS proper
@@ -100,7 +100,7 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
   // eslint-disable-next-line no-only-tests/no-only-tests
   test.only = _testFunc(testResource.only);
 
-  test.only(
+  test(
     "Call Lambda",
     (parent) => {
       return new Function(
