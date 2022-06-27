@@ -30,7 +30,11 @@ import { Set as iSet } from "immutable";
 import { ApiGatewayVtlIntegration } from "./api";
 import type { AppSyncVtlIntegration } from "./appsync";
 import { ASL } from "./asl";
-import { IntegrationInvocation, validateFunctionlessNode } from "./declaration";
+import {
+  IntegrationInvocation,
+  isFunctionLikeOrErr,
+  validateFunctionlessNode,
+} from "./declaration";
 import { ErrorCodes, formatErrorMessage, SynthError } from "./error-code";
 import {
   IEventBus,
@@ -1060,6 +1064,9 @@ export async function serialize(
             return integ;
           };
 
+          if (isFunctionLikeOrErr(obj)) {
+            return false;
+          }
           return obj
             ? transformIntegration(transformResource(transformCfnResource(obj)))
             : obj;
