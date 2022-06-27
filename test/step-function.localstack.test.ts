@@ -42,19 +42,21 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
         return {
           outputs: {
             function: funcRes.resource.stateMachineArn,
-            definition: JSON.stringify(funcRes.definition),
             ...outputs,
+          },
+          extra: {
+            definition: JSON.stringify(funcRes.definition),
           },
         };
       },
-      async (context) => {
+      async (context, extra) => {
         const exp =
           // @ts-ignore
           typeof expected === "function" ? expected(context) : expected;
         // @ts-ignore
         const pay = typeof payload === "function" ? payload(context) : payload;
         expect(
-          normalizeCDKJson(JSON.parse(context.definition))
+          normalizeCDKJson(JSON.parse(extra!.definition))
         ).toMatchSnapshot();
         await testStepFunction(context.function, pay, exp);
       }

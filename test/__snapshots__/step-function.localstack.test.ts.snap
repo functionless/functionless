@@ -7,7 +7,7 @@ Object {
     "0_tmp = await $AWS.Lambda.Invoke({Function: func, Payload: obj})": Object {
       "Next": "return 0_tmp.Payload.str",
       "Parameters": Object {
-        "FunctionName": "sfnStack-parent6func5A43B84B-7a1274a8",
+        "FunctionName": "__REPLACED_TOKEN",
         "Payload.$": "$.obj",
       },
       "Resource": "__REPLACED_ARN",
@@ -37,7 +37,7 @@ Object {
   "States": Object {
     "return func()": Object {
       "End": true,
-      "Resource": "__REPLACED_ARN",
+      "Resource": "__REPLACED_TOKEN",
       "ResultPath": "$",
       "Type": "Task",
     },
@@ -54,7 +54,7 @@ Object {
       "Parameters": Object {
         "str": "hello world",
       },
-      "Resource": "__REPLACED_ARN",
+      "Resource": "__REPLACED_TOKEN",
       "ResultPath": "$.0_tmp",
       "Type": "Task",
     },
@@ -74,7 +74,7 @@ Object {
     "0_tmp = await func(obj)": Object {
       "InputPath": "$.obj",
       "Next": "return 0_tmp.str",
-      "Resource": "__REPLACED_ARN",
+      "Resource": "__REPLACED_TOKEN",
       "ResultPath": "$.0_tmp",
       "Type": "Task",
     },
@@ -102,7 +102,7 @@ Object {
     "0_tmp = await func(\\"hello world\\")": Object {
       "Next": "return 0_tmp.str",
       "Parameters": "hello world",
-      "Resource": "__REPLACED_ARN",
+      "Resource": "__REPLACED_TOKEN",
       "ResultPath": "$.0_tmp",
       "Type": "Task",
     },
@@ -122,7 +122,7 @@ Object {
     "0_tmp = await func(event.str)": Object {
       "InputPath": "$.str",
       "Next": "return 0_tmp.str",
-      "Resource": "__REPLACED_ARN",
+      "Resource": "__REPLACED_TOKEN",
       "ResultPath": "$.0_tmp",
       "Type": "Task",
     },
