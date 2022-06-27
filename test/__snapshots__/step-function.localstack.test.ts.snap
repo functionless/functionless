@@ -7,7 +7,7 @@ Object {
     "0_tmp = await $AWS.Lambda.Invoke({Function: func, Payload: obj})": Object {
       "Next": "return 0_tmp.Payload.str",
       "Parameters": Object {
-        "FunctionName": "sfnStack-parent6func5A43B84B-7a1274a8",
+        "FunctionName": "sfnStack-parent6func5A43B84B-51cd3ffa",
         "Payload.$": "$.obj",
       },
       "Resource": "__REPLACED_ARN",
@@ -70,9 +70,9 @@ Object {
 
 exports[`call lambda $SFN map 1`] = `
 Object {
-  "StartAt": "return await $SFN.map(input, function(n))",
+  "StartAt": "return $SFN.map(input, function(n))",
   "States": Object {
-    "return await $SFN.map(input, function(n))": Object {
+    "return $SFN.map(input, function(n))": Object {
       "End": true,
       "ItemsPath": "$",
       "Iterator": Object {
@@ -97,9 +97,9 @@ Object {
 
 exports[`call lambda $SFN parallel 1`] = `
 Object {
-  "StartAt": "return await $SFN.parallel([function(), function()])",
+  "StartAt": "return $SFN.parallel([function(), function()])",
   "States": Object {
-    "return await $SFN.parallel([function(), function()])": Object {
+    "return $SFN.parallel([function(), function()])": Object {
       "Branches": Array [
         Object {
           "StartAt": "return 1",
