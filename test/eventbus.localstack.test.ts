@@ -105,7 +105,7 @@ localstackTestSuite("eventBusStack", (testResource) => {
             TableName: context.table,
             ConsistentRead: true,
           }).promise(),
-        (item) => !item.Item,
+        (item) => !!item.Item,
         5,
         10000,
         2
