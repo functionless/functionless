@@ -31,6 +31,128 @@ Object {
 }
 `;
 
+exports[`call lambda $SFN forEach 1`] = `
+Object {
+  "StartAt": "await $SFN.forEach(input, function(n))",
+  "States": Object {
+    "await $SFN.forEach(input, function(n))": Object {
+      "ItemsPath": "$",
+      "Iterator": Object {
+        "StartAt": "return func(n)",
+        "States": Object {
+          "return func(n)": Object {
+            "End": true,
+            "InputPath": "$.n",
+            "Resource": "__REPLACED_TOKEN",
+            "ResultPath": "$",
+            "Type": "Task",
+          },
+        },
+      },
+      "Next": "return null",
+      "Parameters": Object {
+        "n.$": "$$.Map.Item.Value",
+      },
+      "ResultPath": null,
+      "Type": "Map",
+    },
+    "return null": Object {
+      "End": true,
+      "OutputPath": "$.null",
+      "Parameters": Object {
+        "null": null,
+      },
+      "Type": "Pass",
+    },
+  },
+}
+`;
+
+exports[`call lambda $SFN map 1`] = `
+Object {
+  "StartAt": "return $SFN.map(input, function(n))",
+  "States": Object {
+    "return $SFN.map(input, function(n))": Object {
+      "End": true,
+      "ItemsPath": "$",
+      "Iterator": Object {
+        "StartAt": "return n",
+        "States": Object {
+          "return n": Object {
+            "End": true,
+            "OutputPath": "$.n",
+            "Type": "Pass",
+          },
+        },
+      },
+      "Parameters": Object {
+        "n.$": "$$.Map.Item.Value",
+      },
+      "ResultPath": "$",
+      "Type": "Map",
+    },
+  },
+}
+`;
+
+exports[`call lambda $SFN parallel 1`] = `
+Object {
+  "StartAt": "return $SFN.parallel([function(), function()])",
+  "States": Object {
+    "return $SFN.parallel([function(), function()])": Object {
+      "Branches": Array [
+        Object {
+          "StartAt": "return 1",
+          "States": Object {
+            "return 1": Object {
+              "End": true,
+              "Result": 1,
+              "ResultPath": "$",
+              "Type": "Pass",
+            },
+          },
+        },
+        Object {
+          "StartAt": "return 2",
+          "States": Object {
+            "return 2": Object {
+              "End": true,
+              "Result": 2,
+              "ResultPath": "$",
+              "Type": "Pass",
+            },
+          },
+        },
+      ],
+      "End": true,
+      "ResultPath": "$",
+      "Type": "Parallel",
+    },
+  },
+}
+`;
+
+exports[`call lambda $SFN wait 1`] = `
+Object {
+  "StartAt": "$SFN.waitFor(1)",
+  "States": Object {
+    "$SFN.waitFor(1)": Object {
+      "Next": "return null",
+      "Seconds": 1,
+      "Type": "Wait",
+    },
+    "return null": Object {
+      "End": true,
+      "OutputPath": "$.null",
+      "Parameters": Object {
+        "null": null,
+      },
+      "Type": "Pass",
+    },
+  },
+}
+`;
+
 exports[`call lambda 1`] = `
 Object {
   "StartAt": "return func()",
