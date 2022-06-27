@@ -11,13 +11,9 @@ Object {
         "States": Object {
           "return task(item)": Object {
             "End": true,
-            "Parameters": Object {
-              "FunctionName": "__REPLACED_TOKEN",
-              "Payload.$": "$.item",
-            },
-            "Resource": "arn:aws:states:::lambda:invoke",
+            "InputPath": "$.item",
+            "Resource": "__REPLACED_TOKEN",
             "ResultPath": "$",
-            "ResultSelector": "$.Payload",
             "Type": "Task",
           },
         },
@@ -52,13 +48,9 @@ Object {
         "States": Object {
           "return task(item)": Object {
             "End": true,
-            "Parameters": Object {
-              "FunctionName": "__REPLACED_TOKEN",
-              "Payload.$": "$.item",
-            },
-            "Resource": "arn:aws:states:::lambda:invoke",
+            "InputPath": "$.item",
+            "Resource": "__REPLACED_TOKEN",
             "ResultPath": "$",
-            "ResultSelector": "$.Payload",
             "Type": "Task",
           },
         },
@@ -236,7 +228,7 @@ Object {
         },
         "TableName": "__REPLACED_TOKEN",
       },
-      "Resource": "arn:aws:states:::aws-sdk:dynamodb:getItem",
+      "Resource": "__REPLACED_ARN",
       "ResultPath": "$.person",
       "Type": "Task",
     },
@@ -261,15 +253,11 @@ Object {
     "score = await computeScore({id: person.Item.id.S, name: person.Item.name.S}": Object {
       "Next": "return {id: person.Item.id.S, name: person.Item.name.S, score: score}",
       "Parameters": Object {
-        "FunctionName": "__REPLACED_TOKEN",
-        "Payload": Object {
-          "id.$": "$.person.Item.id.S",
-          "name.$": "$.person.Item.name.S",
-        },
+        "id.$": "$.person.Item.id.S",
+        "name.$": "$.person.Item.name.S",
       },
-      "Resource": "arn:aws:states:::lambda:invoke",
+      "Resource": "__REPLACED_TOKEN",
       "ResultPath": "$.score",
-      "ResultSelector": "$.Payload",
       "Type": "Task",
     },
   },
@@ -309,14 +297,10 @@ Object {
     "person = await getPerson({id: input.id})": Object {
       "Next": "return person",
       "Parameters": Object {
-        "FunctionName": "__REPLACED_TOKEN",
-        "Payload": Object {
-          "id.$": "$.id",
-        },
+        "id.$": "$.id",
       },
-      "Resource": "arn:aws:states:::lambda:invoke",
+      "Resource": "__REPLACED_TOKEN",
       "ResultPath": "$.person",
-      "ResultSelector": "$.Payload",
       "Type": "Task",
     },
     "return person": Object {
@@ -335,14 +319,10 @@ Object {
     "return getPerson({id: input.id})": Object {
       "End": true,
       "Parameters": Object {
-        "FunctionName": "__REPLACED_TOKEN",
-        "Payload": Object {
-          "id.$": "$.id",
-        },
+        "id.$": "$.id",
       },
-      "Resource": "arn:aws:states:::lambda:invoke",
+      "Resource": "__REPLACED_TOKEN",
       "ResultPath": "$",
-      "ResultSelector": "$.Payload",
       "Type": "Task",
     },
   },
@@ -358,7 +338,7 @@ Object {
       "Parameters": Object {
         "ExecutionArn": "hello",
       },
-      "Resource": "arn:aws:states:::aws-sdk:sfn:describeExecution",
+      "Resource": "__REPLACED_ARN",
       "ResultPath": "$",
       "Type": "Task",
     },
@@ -375,7 +355,7 @@ Object {
       "Parameters": Object {
         "ExecutionArn.$": "$.id",
       },
-      "Resource": "arn:aws:states:::aws-sdk:sfn:describeExecution",
+      "Resource": "__REPLACED_ARN",
       "ResultPath": "$",
       "Type": "Task",
     },
@@ -392,7 +372,7 @@ Object {
       "Parameters": Object {
         "StateMachineArn": "__REPLACED_TOKEN",
       },
-      "Resource": "arn:aws:states:::aws-sdk:sfn:startSyncExecution",
+      "Resource": "__REPLACED_ARN",
       "ResultPath": "$",
       "Type": "Task",
     },
@@ -412,7 +392,7 @@ Object {
         },
         "StateMachineArn": "__REPLACED_TOKEN",
       },
-      "Resource": "arn:aws:states:::aws-sdk:sfn:startSyncExecution",
+      "Resource": "__REPLACED_ARN",
       "ResultPath": "$",
       "Type": "Task",
     },
@@ -430,7 +410,7 @@ Object {
         "Input.$": "$",
         "StateMachineArn": "__REPLACED_TOKEN",
       },
-      "Resource": "arn:aws:states:::aws-sdk:sfn:startSyncExecution",
+      "Resource": "__REPLACED_ARN",
       "ResultPath": "$",
       "Type": "Task",
     },
@@ -450,7 +430,7 @@ Object {
         },
         "StateMachineArn": "__REPLACED_TOKEN",
       },
-      "Resource": "arn:aws:states:::aws-sdk:sfn:startSyncExecution",
+      "Resource": "__REPLACED_ARN",
       "ResultPath": "$",
       "Type": "Task",
     },
@@ -469,7 +449,7 @@ Object {
         "StateMachineArn": "__REPLACED_TOKEN",
         "TraceHeader": "1",
       },
-      "Resource": "arn:aws:states:::aws-sdk:sfn:startSyncExecution",
+      "Resource": "__REPLACED_ARN",
       "ResultPath": "$",
       "Type": "Task",
     },
@@ -488,7 +468,7 @@ Object {
         "StateMachineArn": "__REPLACED_TOKEN",
         "TraceHeader.$": "$.header",
       },
-      "Resource": "arn:aws:states:::aws-sdk:sfn:startSyncExecution",
+      "Resource": "__REPLACED_ARN",
       "ResultPath": "$",
       "Type": "Task",
     },
@@ -552,7 +532,7 @@ Object {
         },
         "TableName": "__REPLACED_TOKEN",
       },
-      "Resource": "arn:aws:states:::aws-sdk:dynamodb:getItem",
+      "Resource": "__REPLACED_ARN",
       "ResultPath": null,
       "Type": "Task",
     },
@@ -619,14 +599,10 @@ Object {
   "StartAt": "if(input.key == \\"sam\\")",
   "States": Object {
     "await task(input.key)": Object {
+      "InputPath": "$.key",
       "Next": "while (true)",
-      "Parameters": Object {
-        "FunctionName": "__REPLACED_TOKEN",
-        "Payload.$": "$.key",
-      },
-      "Resource": "arn:aws:states:::lambda:invoke",
+      "Resource": "__REPLACED_TOKEN",
       "ResultPath": null,
-      "ResultSelector": "$.Payload",
       "Type": "Task",
     },
     "continue": Object {
@@ -724,14 +700,10 @@ Object {
   "StartAt": "while (true)",
   "States": Object {
     "await task(input.key)": Object {
+      "InputPath": "$.key",
       "Next": "while (true)",
-      "Parameters": Object {
-        "FunctionName": "__REPLACED_TOKEN",
-        "Payload.$": "$.key",
-      },
-      "Resource": "arn:aws:states:::lambda:invoke",
+      "Resource": "__REPLACED_TOKEN",
       "ResultPath": null,
-      "ResultSelector": "$.Payload",
       "Type": "Task",
     },
     "continue": Object {
@@ -794,14 +766,10 @@ Object {
   "StartAt": "0_tmp = await task(input)",
   "States": Object {
     "0_tmp = await task(input)": Object {
+      "InputPath": "$",
       "Next": "for(i in [0_tmp])",
-      "Parameters": Object {
-        "FunctionName": "__REPLACED_TOKEN",
-        "Payload.$": "$",
-      },
-      "Resource": "arn:aws:states:::lambda:invoke",
+      "Resource": "__REPLACED_TOKEN",
       "ResultPath": "$.0_tmp",
-      "ResultSelector": "$.Payload",
       "Type": "Task",
     },
     "for(i in [0_tmp])": Object {
@@ -810,25 +778,17 @@ Object {
         "StartAt": "1_tmp = await task(i)",
         "States": Object {
           "1_tmp = await task(i)": Object {
+            "InputPath": "$.i",
             "Next": "await task(1_tmp)",
-            "Parameters": Object {
-              "FunctionName": "__REPLACED_TOKEN",
-              "Payload.$": "$.i",
-            },
-            "Resource": "arn:aws:states:::lambda:invoke",
+            "Resource": "__REPLACED_TOKEN",
             "ResultPath": "$.1_tmp",
-            "ResultSelector": "$.Payload",
             "Type": "Task",
           },
           "await task(1_tmp)": Object {
             "End": true,
-            "Parameters": Object {
-              "FunctionName": "__REPLACED_TOKEN",
-              "Payload.$": "$.1_tmp",
-            },
-            "Resource": "arn:aws:states:::lambda:invoke",
+            "InputPath": "$.1_tmp",
+            "Resource": "__REPLACED_TOKEN",
             "ResultPath": null,
-            "ResultSelector": "$.Payload",
             "Type": "Task",
           },
         },
@@ -859,14 +819,10 @@ Object {
   "StartAt": "0_tmp = await task(input)",
   "States": Object {
     "0_tmp = await task(input)": Object {
+      "InputPath": "$",
       "Next": "for(i of [0_tmp])",
-      "Parameters": Object {
-        "FunctionName": "__REPLACED_TOKEN",
-        "Payload.$": "$",
-      },
-      "Resource": "arn:aws:states:::lambda:invoke",
+      "Resource": "__REPLACED_TOKEN",
       "ResultPath": "$.0_tmp",
-      "ResultSelector": "$.Payload",
       "Type": "Task",
     },
     "for(i of [0_tmp])": Object {
@@ -875,25 +831,17 @@ Object {
         "StartAt": "1_tmp = await task(i)",
         "States": Object {
           "1_tmp = await task(i)": Object {
+            "InputPath": "$.i",
             "Next": "await task(1_tmp)",
-            "Parameters": Object {
-              "FunctionName": "__REPLACED_TOKEN",
-              "Payload.$": "$.i",
-            },
-            "Resource": "arn:aws:states:::lambda:invoke",
+            "Resource": "__REPLACED_TOKEN",
             "ResultPath": "$.1_tmp",
-            "ResultSelector": "$.Payload",
             "Type": "Task",
           },
           "await task(1_tmp)": Object {
             "End": true,
-            "Parameters": Object {
-              "FunctionName": "__REPLACED_TOKEN",
-              "Payload.$": "$.1_tmp",
-            },
-            "Resource": "arn:aws:states:::lambda:invoke",
+            "InputPath": "$.1_tmp",
+            "Resource": "__REPLACED_TOKEN",
             "ResultPath": null,
-            "ResultSelector": "$.Payload",
             "Type": "Task",
           },
         },
@@ -1011,15 +959,11 @@ Object {
           "await computeScore({id: input.id, name: name})": Object {
             "End": true,
             "Parameters": Object {
-              "FunctionName": "__REPLACED_TOKEN",
-              "Payload": Object {
-                "id.$": "$.id",
-                "name.$": "$.name",
-              },
+              "id.$": "$.id",
+              "name.$": "$.name",
             },
-            "Resource": "arn:aws:states:::lambda:invoke",
+            "Resource": "__REPLACED_TOKEN",
             "ResultPath": null,
-            "ResultSelector": "$.Payload",
             "Type": "Task",
           },
         },
@@ -1070,13 +1014,9 @@ Object {
           },
           "await task(\\"2\\")": Object {
             "Next": "exit finally",
-            "Parameters": Object {
-              "FunctionName": "__REPLACED_TOKEN",
-              "Payload": "2",
-            },
-            "Resource": "arn:aws:states:::lambda:invoke",
+            "Parameters": "2",
+            "Resource": "__REPLACED_TOKEN",
             "ResultPath": null,
-            "ResultSelector": "$.Payload",
             "Type": "Task",
           },
           "await task(item)": Object {
@@ -1089,14 +1029,10 @@ Object {
                 "ResultPath": "$.err",
               },
             ],
+            "InputPath": "$.item",
             "Next": "await task(\\"2\\")",
-            "Parameters": Object {
-              "FunctionName": "__REPLACED_TOKEN",
-              "Payload.$": "$.item",
-            },
-            "Resource": "arn:aws:states:::lambda:invoke",
+            "Resource": "__REPLACED_TOKEN",
             "ResultPath": null,
-            "ResultSelector": "$.Payload",
             "Type": "Task",
           },
           "catch(err)": Object {
@@ -1507,7 +1443,7 @@ Object {
         },
         "StateMachineArn": "__REPLACED_TOKEN",
       },
-      "Resource": "arn:aws:states:::aws-sdk:sfn:startSyncExecution",
+      "Resource": "__REPLACED_ARN",
       "ResultPath": null,
       "Type": "Task",
     },
@@ -1535,7 +1471,7 @@ Object {
         },
         "StateMachineArn": "__REPLACED_TOKEN",
       },
-      "Resource": "arn:aws:states:::aws-sdk:sfn:startExecution",
+      "Resource": "__REPLACED_ARN",
       "ResultPath": null,
       "Type": "Task",
     },
@@ -1731,12 +1667,8 @@ Object {
   "States": Object {
     "cond = await task()": Object {
       "Next": "while (cond == undefined)",
-      "Parameters": Object {
-        "FunctionName": "__REPLACED_TOKEN",
-      },
-      "Resource": "arn:aws:states:::lambda:invoke",
+      "Resource": "__REPLACED_TOKEN",
       "ResultPath": "$.cond",
-      "ResultSelector": "$.Payload",
       "Type": "Task",
     },
     "return null": Object {
@@ -1866,13 +1798,9 @@ Object {
         "States": Object {
           "return task(item)": Object {
             "End": true,
-            "Parameters": Object {
-              "FunctionName": "__REPLACED_TOKEN",
-              "Payload.$": "$.item",
-            },
-            "Resource": "arn:aws:states:::lambda:invoke",
+            "InputPath": "$.item",
+            "Resource": "__REPLACED_TOKEN",
             "ResultPath": "$",
-            "ResultSelector": "$.Payload",
             "Type": "Task",
           },
         },
@@ -1900,13 +1828,9 @@ Object {
         "States": Object {
           "return task(item)": Object {
             "End": true,
-            "Parameters": Object {
-              "FunctionName": "__REPLACED_TOKEN",
-              "Payload.$": "$.item",
-            },
-            "Resource": "arn:aws:states:::lambda:invoke",
+            "InputPath": "$.item",
+            "Resource": "__REPLACED_TOKEN",
             "ResultPath": "$",
-            "ResultSelector": "$.Payload",
             "Type": "Task",
           },
         },
@@ -1934,13 +1858,9 @@ Object {
         "States": Object {
           "return task(item)": Object {
             "End": true,
-            "Parameters": Object {
-              "FunctionName": "__REPLACED_TOKEN",
-              "Payload.$": "$.item",
-            },
-            "Resource": "arn:aws:states:::lambda:invoke",
+            "InputPath": "$.item",
+            "Resource": "__REPLACED_TOKEN",
             "ResultPath": "$",
-            "ResultSelector": "$.Payload",
             "Type": "Task",
           },
         },
@@ -1987,13 +1907,9 @@ Object {
           },
           "return task(item)": Object {
             "End": true,
-            "Parameters": Object {
-              "FunctionName": "__REPLACED_TOKEN",
-              "Payload.$": "$.item",
-            },
-            "Resource": "arn:aws:states:::lambda:invoke",
+            "InputPath": "$.item",
+            "Resource": "__REPLACED_TOKEN",
             "ResultPath": "$",
-            "ResultSelector": "$.Payload",
             "Type": "Task",
           },
         },
@@ -2033,24 +1949,16 @@ Object {
           },
           "return task(input.list[0])": Object {
             "End": true,
-            "Parameters": Object {
-              "FunctionName": "__REPLACED_TOKEN",
-              "Payload.$": "$.list[0]",
-            },
-            "Resource": "arn:aws:states:::lambda:invoke",
+            "InputPath": "$.list[0]",
+            "Resource": "__REPLACED_TOKEN",
             "ResultPath": "$",
-            "ResultSelector": "$.Payload",
             "Type": "Task",
           },
           "return task(item)": Object {
             "End": true,
-            "Parameters": Object {
-              "FunctionName": "__REPLACED_TOKEN",
-              "Payload.$": "$.item",
-            },
-            "Resource": "arn:aws:states:::lambda:invoke",
+            "InputPath": "$.item",
+            "Resource": "__REPLACED_TOKEN",
             "ResultPath": "$",
-            "ResultSelector": "$.Payload",
             "Type": "Task",
           },
         },
@@ -2079,13 +1987,9 @@ Object {
         "States": Object {
           "return task(item)": Object {
             "End": true,
-            "Parameters": Object {
-              "FunctionName": "__REPLACED_TOKEN",
-              "Payload.$": "$.item",
-            },
-            "Resource": "arn:aws:states:::lambda:invoke",
+            "InputPath": "$.item",
+            "Resource": "__REPLACED_TOKEN",
             "ResultPath": "$",
-            "ResultSelector": "$.Payload",
             "Type": "Task",
           },
         },
@@ -2132,13 +2036,9 @@ Object {
           },
           "return task(item)": Object {
             "End": true,
-            "Parameters": Object {
-              "FunctionName": "__REPLACED_TOKEN",
-              "Payload.$": "$.item",
-            },
-            "Resource": "arn:aws:states:::lambda:invoke",
+            "InputPath": "$.item",
+            "Resource": "__REPLACED_TOKEN",
             "ResultPath": "$",
-            "ResultSelector": "$.Payload",
             "Type": "Task",
           },
         },
@@ -2178,24 +2078,16 @@ Object {
           },
           "return task(input.list[0])": Object {
             "End": true,
-            "Parameters": Object {
-              "FunctionName": "__REPLACED_TOKEN",
-              "Payload.$": "$.list[0]",
-            },
-            "Resource": "arn:aws:states:::lambda:invoke",
+            "InputPath": "$.list[0]",
+            "Resource": "__REPLACED_TOKEN",
             "ResultPath": "$",
-            "ResultSelector": "$.Payload",
             "Type": "Task",
           },
           "return task(item)": Object {
             "End": true,
-            "Parameters": Object {
-              "FunctionName": "__REPLACED_TOKEN",
-              "Payload.$": "$.item",
-            },
-            "Resource": "arn:aws:states:::lambda:invoke",
+            "InputPath": "$.item",
+            "Resource": "__REPLACED_TOKEN",
             "ResultPath": "$",
-            "ResultSelector": "$.Payload",
             "Type": "Task",
           },
         },
@@ -2224,13 +2116,9 @@ Object {
         "States": Object {
           "return task(item)": Object {
             "End": true,
-            "Parameters": Object {
-              "FunctionName": "__REPLACED_TOKEN",
-              "Payload.$": "$.item",
-            },
-            "Resource": "arn:aws:states:::lambda:invoke",
+            "InputPath": "$.item",
+            "Resource": "__REPLACED_TOKEN",
             "ResultPath": "$",
-            "ResultSelector": "$.Payload",
             "Type": "Task",
           },
         },
@@ -2293,7 +2181,7 @@ Object {
           },
         ],
       },
-      "Resource": "arn:aws:states:::events:putEvents",
+      "Resource": "__REPLACED_ARN",
       "ResultPath": null,
       "Type": "Task",
     },
@@ -2336,7 +2224,7 @@ Object {
           },
         ],
       },
-      "Resource": "arn:aws:states:::events:putEvents",
+      "Resource": "__REPLACED_ARN",
       "ResultPath": null,
       "Type": "Task",
     },
@@ -2364,13 +2252,9 @@ Object {
         "States": Object {
           "return task(item)": Object {
             "End": true,
-            "Parameters": Object {
-              "FunctionName": "__REPLACED_TOKEN",
-              "Payload.$": "$.item",
-            },
-            "Resource": "arn:aws:states:::lambda:invoke",
+            "InputPath": "$.item",
+            "Resource": "__REPLACED_TOKEN",
             "ResultPath": "$",
-            "ResultSelector": "$.Payload",
             "Type": "Task",
           },
         },
@@ -2396,13 +2280,9 @@ Object {
         "States": Object {
           "return task(item)": Object {
             "End": true,
-            "Parameters": Object {
-              "FunctionName": "__REPLACED_TOKEN",
-              "Payload.$": "$.item",
-            },
-            "Resource": "arn:aws:states:::lambda:invoke",
+            "InputPath": "$.item",
+            "Resource": "__REPLACED_TOKEN",
             "ResultPath": "$",
-            "ResultSelector": "$.Payload",
             "Type": "Task",
           },
         },
@@ -2434,14 +2314,10 @@ Object {
         "StartAt": "await task(item)",
         "States": Object {
           "await task(item)": Object {
+            "InputPath": "$.item",
             "Next": "return null",
-            "Parameters": Object {
-              "FunctionName": "__REPLACED_TOKEN",
-              "Payload.$": "$.item",
-            },
-            "Resource": "arn:aws:states:::lambda:invoke",
+            "Resource": "__REPLACED_TOKEN",
             "ResultPath": null,
-            "ResultSelector": "$.Payload",
             "Type": "Task",
           },
           "return null": Object {
@@ -2484,14 +2360,10 @@ Object {
                 "ResultPath": null,
               },
             ],
+            "InputPath": "$.item",
             "Next": "return null",
-            "Parameters": Object {
-              "FunctionName": "__REPLACED_TOKEN",
-              "Payload.$": "$.item",
-            },
-            "Resource": "arn:aws:states:::lambda:invoke",
+            "Resource": "__REPLACED_TOKEN",
             "ResultPath": null,
-            "ResultSelector": "$.Payload",
             "Type": "Task",
           },
           "return null": Object {
@@ -2533,14 +2405,10 @@ Object {
         "StartAt": "await task(item)",
         "States": Object {
           "await task(item)": Object {
+            "InputPath": "$.item",
             "Next": "return null",
-            "Parameters": Object {
-              "FunctionName": "__REPLACED_TOKEN",
-              "Payload.$": "$.item",
-            },
-            "Resource": "arn:aws:states:::lambda:invoke",
+            "Resource": "__REPLACED_TOKEN",
             "ResultPath": null,
-            "ResultSelector": "$.Payload",
             "Type": "Task",
           },
           "return null": Object {
@@ -2576,13 +2444,9 @@ Object {
         "States": Object {
           "return task(item)": Object {
             "End": true,
-            "Parameters": Object {
-              "FunctionName": "__REPLACED_TOKEN",
-              "Payload.$": "$.item",
-            },
-            "Resource": "arn:aws:states:::lambda:invoke",
+            "InputPath": "$.item",
+            "Resource": "__REPLACED_TOKEN",
             "ResultPath": "$",
-            "ResultSelector": "$.Payload",
             "Type": "Task",
           },
         },
@@ -2626,13 +2490,9 @@ Object {
               },
             ],
             "End": true,
-            "Parameters": Object {
-              "FunctionName": "__REPLACED_TOKEN",
-              "Payload.$": "$.item",
-            },
-            "Resource": "arn:aws:states:::lambda:invoke",
+            "InputPath": "$.item",
+            "Resource": "__REPLACED_TOKEN",
             "ResultPath": "$",
-            "ResultSelector": "$.Payload",
             "Type": "Task",
           },
         },
@@ -2659,13 +2519,9 @@ Object {
         "States": Object {
           "return task(item)": Object {
             "End": true,
-            "Parameters": Object {
-              "FunctionName": "__REPLACED_TOKEN",
-              "Payload.$": "$.item",
-            },
-            "Resource": "arn:aws:states:::lambda:invoke",
+            "InputPath": "$.item",
+            "Resource": "__REPLACED_TOKEN",
             "ResultPath": "$",
-            "ResultSelector": "$.Payload",
             "Type": "Task",
           },
         },
@@ -2746,12 +2602,8 @@ Object {
                 },
               ],
               "End": true,
-              "Parameters": Object {
-                "FunctionName": "__REPLACED_TOKEN",
-              },
-              "Resource": "arn:aws:states:::lambda:invoke",
+              "Resource": "__REPLACED_TOKEN",
               "ResultPath": "$",
-              "ResultSelector": "$.Payload",
               "Type": "Task",
             },
           },
@@ -2815,7 +2667,7 @@ Object {
         },
         "TableName": "__REPLACED_TOKEN",
       },
-      "Resource": "arn:aws:states:::aws-sdk:dynamodb:getItem",
+      "Resource": "__REPLACED_ARN",
       "ResultPath": "$.person",
       "Type": "Task",
     },
@@ -2860,14 +2712,10 @@ Object {
     "return getPerson({id: input.id})": Object {
       "End": true,
       "Parameters": Object {
-        "FunctionName": "__REPLACED_TOKEN",
-        "Payload": Object {
-          "id.$": "$.id",
-        },
+        "id.$": "$.id",
       },
-      "Resource": "arn:aws:states:::lambda:invoke",
+      "Resource": "__REPLACED_TOKEN",
       "ResultPath": "$",
-      "ResultSelector": "$.Payload",
       "Type": "Task",
     },
   },
@@ -2880,23 +2728,15 @@ Object {
   "States": Object {
     "0_tmp = await task()": Object {
       "Next": "return task(0_tmp)",
-      "Parameters": Object {
-        "FunctionName": "__REPLACED_TOKEN",
-      },
-      "Resource": "arn:aws:states:::lambda:invoke",
+      "Resource": "__REPLACED_TOKEN",
       "ResultPath": "$.0_tmp",
-      "ResultSelector": "$.Payload",
       "Type": "Task",
     },
     "return task(0_tmp)": Object {
       "End": true,
-      "Parameters": Object {
-        "FunctionName": "__REPLACED_TOKEN",
-        "Payload.$": "$.0_tmp",
-      },
-      "Resource": "arn:aws:states:::lambda:invoke",
+      "InputPath": "$.0_tmp",
+      "Resource": "__REPLACED_TOKEN",
       "ResultPath": "$",
-      "ResultSelector": "$.Payload",
       "Type": "Task",
     },
   },
@@ -3006,16 +2846,12 @@ Object {
     "return task({equals: input.items.filter(function(item)), and: input.items.f": Object {
       "End": true,
       "Parameters": Object {
-        "FunctionName": "__REPLACED_TOKEN",
-        "Payload": Object {
-          "and.$": "$.items[?(@.str=='hello'&&@.items[0]=='hello')]",
-          "equals.$": "$.items[?(@.str=='hello')]",
-          "or.$": "$.items[?(@.str=='hello'||@.items[0]=='hello')]",
-        },
+        "and.$": "$.items[?(@.str=='hello'&&@.items[0]=='hello')]",
+        "equals.$": "$.items[?(@.str=='hello')]",
+        "or.$": "$.items[?(@.str=='hello'||@.items[0]=='hello')]",
       },
-      "Resource": "arn:aws:states:::lambda:invoke",
+      "Resource": "__REPLACED_TOKEN",
       "ResultPath": "$",
-      "ResultSelector": "$.Payload",
       "Type": "Task",
     },
   },
@@ -3029,14 +2865,10 @@ Object {
     "return task({key: input.items.slice(1, 3)})": Object {
       "End": true,
       "Parameters": Object {
-        "FunctionName": "__REPLACED_TOKEN",
-        "Payload": Object {
-          "key.$": "$.items[1:3]",
-        },
+        "key.$": "$.items[1:3]",
       },
-      "Resource": "arn:aws:states:::lambda:invoke",
+      "Resource": "__REPLACED_TOKEN",
       "ResultPath": "$",
-      "ResultSelector": "$.Payload",
       "Type": "Task",
     },
   },
@@ -3049,23 +2881,15 @@ Object {
   "States": Object {
     "0_tmp = await task()": Object {
       "Next": "return task(0_tmp)",
-      "Parameters": Object {
-        "FunctionName": "__REPLACED_TOKEN",
-      },
-      "Resource": "arn:aws:states:::lambda:invoke",
+      "Resource": "__REPLACED_TOKEN",
       "ResultPath": "$.0_tmp",
-      "ResultSelector": "$.Payload",
       "Type": "Task",
     },
     "return task(0_tmp)": Object {
       "End": true,
-      "Parameters": Object {
-        "FunctionName": "__REPLACED_TOKEN",
-        "Payload.$": "$.0_tmp",
-      },
-      "Resource": "arn:aws:states:::lambda:invoke",
+      "InputPath": "$.0_tmp",
+      "Resource": "__REPLACED_TOKEN",
       "ResultPath": "$",
-      "ResultSelector": "$.Payload",
       "Type": "Task",
     },
   },
@@ -3095,14 +2919,10 @@ Object {
     "return task({escape: input.items.filter(function(item))})": Object {
       "End": true,
       "Parameters": Object {
-        "FunctionName": "__REPLACED_TOKEN",
-        "Payload": Object {
-          "escape.$": "$.items[?(@.str=='hello\\\\'world')]",
-        },
+        "escape.$": "$.items[?(@.str=='hello\\\\'world')]",
       },
-      "Resource": "arn:aws:states:::lambda:invoke",
+      "Resource": "__REPLACED_TOKEN",
       "ResultPath": "$",
-      "ResultSelector": "$.Payload",
       "Type": "Task",
     },
   },
@@ -3140,13 +2960,9 @@ Object {
   "States": Object {
     "return task(-1)": Object {
       "End": true,
-      "Parameters": Object {
-        "FunctionName": "__REPLACED_TOKEN",
-        "Payload": -1,
-      },
-      "Resource": "arn:aws:states:::lambda:invoke",
+      "Parameters": -1,
+      "Resource": "__REPLACED_TOKEN",
       "ResultPath": "$",
-      "ResultSelector": "$.Payload",
       "Type": "Task",
     },
   },
@@ -3159,269 +2975,177 @@ Object {
   "States": Object {
     "await task(\\"hello\\" + \\" world\\")": Object {
       "Next": "await task(\\"hello\\" + 1)",
-      "Parameters": Object {
-        "FunctionName": "__REPLACED_TOKEN",
-        "Payload": "hello world",
-      },
-      "Resource": "arn:aws:states:::lambda:invoke",
+      "Parameters": "hello world",
+      "Resource": "__REPLACED_TOKEN",
       "ResultPath": null,
-      "ResultSelector": "$.Payload",
       "Type": "Task",
     },
     "await task(\\"hello\\" + 1)": Object {
       "Next": "await task(1 + \\"hello\\")",
-      "Parameters": Object {
-        "FunctionName": "__REPLACED_TOKEN",
-        "Payload": "hello1",
-      },
-      "Resource": "arn:aws:states:::lambda:invoke",
+      "Parameters": "hello1",
+      "Resource": "__REPLACED_TOKEN",
       "ResultPath": null,
-      "ResultSelector": "$.Payload",
       "Type": "Task",
     },
     "await task(\\"hello\\" + [\\"world\\"])": Object {
       "Next": "return null",
-      "Parameters": Object {
-        "FunctionName": "__REPLACED_TOKEN",
-        "Payload": "helloworld",
-      },
-      "Resource": "arn:aws:states:::lambda:invoke",
+      "Parameters": "helloworld",
+      "Resource": "__REPLACED_TOKEN",
       "ResultPath": null,
-      "ResultSelector": "$.Payload",
       "Type": "Task",
     },
     "await task(\\"hello\\" + null)": Object {
       "Next": "await task([null])",
-      "Parameters": Object {
-        "FunctionName": "__REPLACED_TOKEN",
-        "Payload": "hellonull",
-      },
-      "Resource": "arn:aws:states:::lambda:invoke",
+      "Parameters": "hellonull",
+      "Resource": "__REPLACED_TOKEN",
       "ResultPath": null,
-      "ResultSelector": "$.Payload",
       "Type": "Task",
     },
     "await task(\\"hello\\" + true)": Object {
       "Next": "await task(false + \\"hello\\")",
-      "Parameters": Object {
-        "FunctionName": "__REPLACED_TOKEN",
-        "Payload": "hellotrue",
-      },
-      "Resource": "arn:aws:states:::lambda:invoke",
+      "Parameters": "hellotrue",
+      "Resource": "__REPLACED_TOKEN",
       "ResultPath": null,
-      "ResultSelector": "$.Payload",
       "Type": "Task",
     },
     "await task(\\"hello\\" + {place: \\"world\\"})": Object {
       "Next": "await task(\\"hello\\" + [\\"world\\"])",
-      "Parameters": Object {
-        "FunctionName": "__REPLACED_TOKEN",
-        "Payload": "hello[object Object]",
-      },
-      "Resource": "arn:aws:states:::lambda:invoke",
+      "Parameters": "hello[object Object]",
+      "Resource": "__REPLACED_TOKEN",
       "ResultPath": null,
-      "ResultSelector": "$.Payload",
       "Type": "Task",
     },
     "await task(\\"hello\\")": Object {
       "Next": "await task(\\"hello\\" + \\" world\\")",
-      "Parameters": Object {
-        "FunctionName": "__REPLACED_TOKEN",
-        "Payload": "hello",
-      },
-      "Resource": "arn:aws:states:::lambda:invoke",
+      "Parameters": "hello",
+      "Resource": "__REPLACED_TOKEN",
       "ResultPath": null,
-      "ResultSelector": "$.Payload",
       "Type": "Task",
     },
     "await task(-1)": Object {
       "Next": "await task(-100)",
-      "Parameters": Object {
-        "FunctionName": "__REPLACED_TOKEN",
-        "Payload": -1,
-      },
-      "Resource": "arn:aws:states:::lambda:invoke",
+      "Parameters": -1,
+      "Resource": "__REPLACED_TOKEN",
       "ResultPath": null,
-      "ResultSelector": "$.Payload",
       "Type": "Task",
     },
     "await task(-100)": Object {
       "Next": "await task(1 + 2)",
-      "Parameters": Object {
-        "FunctionName": "__REPLACED_TOKEN",
-        "Payload": -100,
-      },
-      "Resource": "arn:aws:states:::lambda:invoke",
+      "Parameters": -100,
+      "Resource": "__REPLACED_TOKEN",
       "ResultPath": null,
-      "ResultSelector": "$.Payload",
       "Type": "Task",
     },
     "await task(0)": Object {
       "Next": "await task(-1)",
-      "Parameters": Object {
-        "FunctionName": "__REPLACED_TOKEN",
-        "Payload": 0,
-      },
-      "Resource": "arn:aws:states:::lambda:invoke",
+      "Parameters": 0,
+      "Resource": "__REPLACED_TOKEN",
       "ResultPath": null,
-      "ResultSelector": "$.Payload",
       "Type": "Task",
     },
     "await task(1 + \\"hello\\")": Object {
       "Next": "await task(\\"hello\\" + true)",
-      "Parameters": Object {
-        "FunctionName": "__REPLACED_TOKEN",
-        "Payload": "1hello",
-      },
-      "Resource": "arn:aws:states:::lambda:invoke",
+      "Parameters": "1hello",
+      "Resource": "__REPLACED_TOKEN",
       "ResultPath": null,
-      "ResultSelector": "$.Payload",
       "Type": "Task",
     },
     "await task(1 + 2)": Object {
       "Next": "await task(\\"hello\\")",
-      "Parameters": Object {
-        "FunctionName": "__REPLACED_TOKEN",
-        "Payload": 3,
-      },
-      "Resource": "arn:aws:states:::lambda:invoke",
+      "Parameters": 3,
+      "Resource": "__REPLACED_TOKEN",
       "ResultPath": null,
-      "ResultSelector": "$.Payload",
       "Type": "Task",
     },
     "await task([-1])": Object {
       "Next": "await task([true])",
-      "Parameters": Object {
-        "FunctionName": "__REPLACED_TOKEN",
-        "Payload": Array [
-          -1,
-        ],
-      },
-      "Resource": "arn:aws:states:::lambda:invoke",
+      "Parameters": Array [
+        -1,
+      ],
+      "Resource": "__REPLACED_TOKEN",
       "ResultPath": null,
-      "ResultSelector": "$.Payload",
       "Type": "Task",
     },
     "await task([1])": Object {
       "Next": "await task([-1])",
-      "Parameters": Object {
-        "FunctionName": "__REPLACED_TOKEN",
-        "Payload": Array [
-          1,
-        ],
-      },
-      "Resource": "arn:aws:states:::lambda:invoke",
+      "Parameters": Array [
+        1,
+      ],
+      "Resource": "__REPLACED_TOKEN",
       "ResultPath": null,
-      "ResultSelector": "$.Payload",
       "Type": "Task",
     },
     "await task([null])": Object {
       "Next": "await task([1])",
-      "Parameters": Object {
-        "FunctionName": "__REPLACED_TOKEN",
-        "Payload": Array [
-          null,
-        ],
-      },
-      "Resource": "arn:aws:states:::lambda:invoke",
+      "Parameters": Array [
+        null,
+      ],
+      "Resource": "__REPLACED_TOKEN",
       "ResultPath": null,
-      "ResultSelector": "$.Payload",
       "Type": "Task",
     },
     "await task([true])": Object {
       "Next": "await task([{key: \\"value\\"}])",
-      "Parameters": Object {
-        "FunctionName": "__REPLACED_TOKEN",
-        "Payload": Array [
-          true,
-        ],
-      },
-      "Resource": "arn:aws:states:::lambda:invoke",
+      "Parameters": Array [
+        true,
+      ],
+      "Resource": "__REPLACED_TOKEN",
       "ResultPath": null,
-      "ResultSelector": "$.Payload",
       "Type": "Task",
     },
     "await task([{key: \\"value\\"}])": Object {
       "Next": "await task({key: \\"value\\"})",
-      "Parameters": Object {
-        "FunctionName": "__REPLACED_TOKEN",
-        "Payload": Array [
-          Object {
-            "key": "value",
-          },
-        ],
-      },
-      "Resource": "arn:aws:states:::lambda:invoke",
+      "Parameters": Array [
+        Object {
+          "key": "value",
+        },
+      ],
+      "Resource": "__REPLACED_TOKEN",
       "ResultPath": null,
-      "ResultSelector": "$.Payload",
       "Type": "Task",
     },
     "await task(false + \\"hello\\")": Object {
       "Next": "await task(null + \\"hello\\")",
-      "Parameters": Object {
-        "FunctionName": "__REPLACED_TOKEN",
-        "Payload": "falsehello",
-      },
-      "Resource": "arn:aws:states:::lambda:invoke",
+      "Parameters": "falsehello",
+      "Resource": "__REPLACED_TOKEN",
       "ResultPath": null,
-      "ResultSelector": "$.Payload",
       "Type": "Task",
     },
     "await task(false)": Object {
       "Next": "await task(0)",
-      "Parameters": Object {
-        "FunctionName": "__REPLACED_TOKEN",
-        "Payload": false,
-      },
-      "Resource": "arn:aws:states:::lambda:invoke",
+      "Parameters": false,
+      "Resource": "__REPLACED_TOKEN",
       "ResultPath": null,
-      "ResultSelector": "$.Payload",
       "Type": "Task",
     },
     "await task(null + \\"hello\\")": Object {
       "Next": "await task(\\"hello\\" + null)",
-      "Parameters": Object {
-        "FunctionName": "__REPLACED_TOKEN",
-        "Payload": "nullhello",
-      },
-      "Resource": "arn:aws:states:::lambda:invoke",
+      "Parameters": "nullhello",
+      "Resource": "__REPLACED_TOKEN",
       "ResultPath": null,
-      "ResultSelector": "$.Payload",
       "Type": "Task",
     },
     "await task(null)": Object {
       "Next": "await task(true)",
-      "Parameters": Object {
-        "FunctionName": "__REPLACED_TOKEN",
-        "Payload": null,
-      },
-      "Resource": "arn:aws:states:::lambda:invoke",
+      "Parameters": null,
+      "Resource": "__REPLACED_TOKEN",
       "ResultPath": null,
-      "ResultSelector": "$.Payload",
       "Type": "Task",
     },
     "await task(true)": Object {
       "Next": "await task(false)",
-      "Parameters": Object {
-        "FunctionName": "__REPLACED_TOKEN",
-        "Payload": true,
-      },
-      "Resource": "arn:aws:states:::lambda:invoke",
+      "Parameters": true,
+      "Resource": "__REPLACED_TOKEN",
       "ResultPath": null,
-      "ResultSelector": "$.Payload",
       "Type": "Task",
     },
     "await task({key: \\"value\\"})": Object {
       "Next": "await task(\\"hello\\" + {place: \\"world\\"})",
       "Parameters": Object {
-        "FunctionName": "__REPLACED_TOKEN",
-        "Payload": Object {
-          "key": "value",
-        },
+        "key": "value",
       },
-      "Resource": "arn:aws:states:::lambda:invoke",
+      "Resource": "__REPLACED_TOKEN",
       "ResultPath": null,
-      "ResultSelector": "$.Payload",
       "Type": "Task",
     },
     "return null": Object {
@@ -3442,13 +3166,9 @@ Object {
   "States": Object {
     "return task(input.list[-1])": Object {
       "End": true,
-      "Parameters": Object {
-        "FunctionName": "__REPLACED_TOKEN",
-        "Payload.$": "$.list[-1]",
-      },
-      "Resource": "arn:aws:states:::lambda:invoke",
+      "InputPath": "$.list[-1]",
+      "Resource": "__REPLACED_TOKEN",
       "ResultPath": "$",
-      "ResultSelector": "$.Payload",
       "Type": "Task",
     },
   },
@@ -3462,14 +3182,10 @@ Object {
     "return task({key: \`input.obj.str hello input.obj.items[0]\`})": Object {
       "End": true,
       "Parameters": Object {
-        "FunctionName": "__REPLACED_TOKEN",
-        "Payload": Object {
-          "key.$": "States.Format('{} hello {}',$.obj.str,$.obj.items[0])",
-        },
+        "key.$": "States.Format('{} hello {}',$.obj.str,$.obj.items[0])",
       },
-      "Resource": "arn:aws:states:::lambda:invoke",
+      "Resource": "__REPLACED_TOKEN",
       "ResultPath": "$",
-      "ResultSelector": "$.Payload",
       "Type": "Task",
     },
   },
@@ -3556,14 +3272,10 @@ Object {
   "StartAt": "0_tmp = await task(input)",
   "States": Object {
     "0_tmp = await task(input)": Object {
+      "InputPath": "$",
       "Next": "throw await task(0_tmp)",
-      "Parameters": Object {
-        "FunctionName": "__REPLACED_TOKEN",
-        "Payload.$": "$",
-      },
-      "Resource": "arn:aws:states:::lambda:invoke",
+      "Resource": "__REPLACED_TOKEN",
       "ResultPath": "$.0_tmp",
-      "ResultSelector": "$.Payload",
       "Type": "Task",
     },
     "throw await task(0_tmp)": Object {
@@ -3596,13 +3308,9 @@ Object {
         "States": Object {
           "return task(item)": Object {
             "End": true,
-            "Parameters": Object {
-              "FunctionName": "__REPLACED_TOKEN",
-              "Payload.$": "$.item",
-            },
-            "Resource": "arn:aws:states:::lambda:invoke",
+            "InputPath": "$.item",
+            "Resource": "__REPLACED_TOKEN",
             "ResultPath": "$",
-            "ResultSelector": "$.Payload",
             "Type": "Task",
           },
         },
@@ -3646,13 +3354,9 @@ Object {
         "States": Object {
           "return task(item)": Object {
             "End": true,
-            "Parameters": Object {
-              "FunctionName": "__REPLACED_TOKEN",
-              "Payload.$": "$.item",
-            },
-            "Resource": "arn:aws:states:::lambda:invoke",
+            "InputPath": "$.item",
+            "Resource": "__REPLACED_TOKEN",
             "ResultPath": "$",
-            "ResultSelector": "$.Payload",
             "Type": "Task",
           },
         },
@@ -3687,13 +3391,9 @@ Object {
     },
     "await task(\\"2\\")": Object {
       "Next": "exit finally",
-      "Parameters": Object {
-        "FunctionName": "__REPLACED_TOKEN",
-        "Payload": "2",
-      },
-      "Resource": "arn:aws:states:::lambda:invoke",
+      "Parameters": "2",
+      "Resource": "__REPLACED_TOKEN",
       "ResultPath": null,
-      "ResultSelector": "$.Payload",
       "Type": "Task",
     },
     "catch(err)": Object {
@@ -3731,13 +3431,9 @@ Object {
         "States": Object {
           "await task(item)": Object {
             "End": true,
-            "Parameters": Object {
-              "FunctionName": "__REPLACED_TOKEN",
-              "Payload.$": "$.item",
-            },
-            "Resource": "arn:aws:states:::lambda:invoke",
+            "InputPath": "$.item",
+            "Resource": "__REPLACED_TOKEN",
             "ResultPath": null,
-            "ResultSelector": "$.Payload",
             "Type": "Task",
           },
         },
@@ -3807,13 +3503,9 @@ Object {
         "States": Object {
           "return task(item)": Object {
             "End": true,
-            "Parameters": Object {
-              "FunctionName": "__REPLACED_TOKEN",
-              "Payload.$": "$.item",
-            },
-            "Resource": "arn:aws:states:::lambda:invoke",
+            "InputPath": "$.item",
+            "Resource": "__REPLACED_TOKEN",
             "ResultPath": "$",
-            "ResultSelector": "$.Payload",
             "Type": "Task",
           },
         },
@@ -3866,13 +3558,9 @@ Object {
               },
             ],
             "End": true,
-            "Parameters": Object {
-              "FunctionName": "__REPLACED_TOKEN",
-              "Payload.$": "$.item",
-            },
-            "Resource": "arn:aws:states:::lambda:invoke",
+            "InputPath": "$.item",
+            "Resource": "__REPLACED_TOKEN",
             "ResultPath": "$",
-            "ResultSelector": "$.Payload",
             "Type": "Task",
           },
         },
@@ -4024,13 +3712,9 @@ Object {
         "States": Object {
           "return task(item)": Object {
             "End": true,
-            "Parameters": Object {
-              "FunctionName": "__REPLACED_TOKEN",
-              "Payload.$": "$.item",
-            },
-            "Resource": "arn:aws:states:::lambda:invoke",
+            "InputPath": "$.item",
+            "Resource": "__REPLACED_TOKEN",
             "ResultPath": "$",
-            "ResultSelector": "$.Payload",
             "Type": "Task",
           },
         },
@@ -4083,13 +3767,9 @@ Object {
               },
             ],
             "End": true,
-            "Parameters": Object {
-              "FunctionName": "__REPLACED_TOKEN",
-              "Payload.$": "$.item",
-            },
-            "Resource": "arn:aws:states:::lambda:invoke",
+            "InputPath": "$.item",
+            "Resource": "__REPLACED_TOKEN",
             "ResultPath": "$",
-            "ResultSelector": "$.Payload",
             "Type": "Task",
           },
         },
@@ -4296,22 +3976,14 @@ Object {
           "States": Object {
             "await task()": Object {
               "Next": "await task() 1",
-              "Parameters": Object {
-                "FunctionName": "__REPLACED_TOKEN",
-              },
-              "Resource": "arn:aws:states:::lambda:invoke",
+              "Resource": "__REPLACED_TOKEN",
               "ResultPath": null,
-              "ResultSelector": "$.Payload",
               "Type": "Task",
             },
             "await task() 1": Object {
               "Next": "return null",
-              "Parameters": Object {
-                "FunctionName": "__REPLACED_TOKEN",
-              },
-              "Resource": "arn:aws:states:::lambda:invoke",
+              "Resource": "__REPLACED_TOKEN",
               "ResultPath": null,
-              "ResultSelector": "$.Payload",
               "Type": "Task",
             },
             "return null": Object {
@@ -4356,13 +4028,9 @@ Object {
   "States": Object {
     "await task(\\"recover\\")": Object {
       "Next": "exit finally",
-      "Parameters": Object {
-        "FunctionName": "__REPLACED_TOKEN",
-        "Payload": "recover",
-      },
-      "Resource": "arn:aws:states:::lambda:invoke",
+      "Parameters": "recover",
+      "Resource": "__REPLACED_TOKEN",
       "ResultPath": null,
-      "ResultSelector": "$.Payload",
       "Type": "Task",
     },
     "await task()": Object {
@@ -4376,12 +4044,8 @@ Object {
         },
       ],
       "Next": "await task(\\"recover\\")",
-      "Parameters": Object {
-        "FunctionName": "__REPLACED_TOKEN",
-      },
-      "Resource": "arn:aws:states:::lambda:invoke",
+      "Resource": "__REPLACED_TOKEN",
       "ResultPath": null,
-      "ResultSelector": "$.Payload",
       "Type": "Task",
     },
     "exit finally": Object {
@@ -4435,24 +4099,16 @@ Object {
         },
       ],
       "Next": "await task(\\"2\\")",
-      "Parameters": Object {
-        "FunctionName": "__REPLACED_TOKEN",
-        "Payload": "1",
-      },
-      "Resource": "arn:aws:states:::lambda:invoke",
+      "Parameters": "1",
+      "Resource": "__REPLACED_TOKEN",
       "ResultPath": null,
-      "ResultSelector": "$.Payload",
       "Type": "Task",
     },
     "await task(\\"2\\")": Object {
       "Next": "exit finally",
-      "Parameters": Object {
-        "FunctionName": "__REPLACED_TOKEN",
-        "Payload": "2",
-      },
-      "Resource": "arn:aws:states:::lambda:invoke",
+      "Parameters": "2",
+      "Resource": "__REPLACED_TOKEN",
       "ResultPath": null,
-      "ResultSelector": "$.Payload",
       "Type": "Task",
     },
     "exit finally": Object {
@@ -4517,13 +4173,9 @@ Object {
         },
       ],
       "Next": "await task(\\"3\\")",
-      "Parameters": Object {
-        "FunctionName": "__REPLACED_TOKEN",
-        "Payload": "1",
-      },
-      "Resource": "arn:aws:states:::lambda:invoke",
+      "Parameters": "1",
+      "Resource": "__REPLACED_TOKEN",
       "ResultPath": null,
-      "ResultSelector": "$.Payload",
       "Type": "Task",
     },
     "await task(\\"2\\")": Object {
@@ -4537,24 +4189,16 @@ Object {
         },
       ],
       "Next": "await task(\\"3\\")",
-      "Parameters": Object {
-        "FunctionName": "__REPLACED_TOKEN",
-        "Payload": "2",
-      },
-      "Resource": "arn:aws:states:::lambda:invoke",
+      "Parameters": "2",
+      "Resource": "__REPLACED_TOKEN",
       "ResultPath": null,
-      "ResultSelector": "$.Payload",
       "Type": "Task",
     },
     "await task(\\"3\\")": Object {
       "Next": "exit finally",
-      "Parameters": Object {
-        "FunctionName": "__REPLACED_TOKEN",
-        "Payload": "3",
-      },
-      "Resource": "arn:aws:states:::lambda:invoke",
+      "Parameters": "3",
+      "Resource": "__REPLACED_TOKEN",
       "ResultPath": null,
-      "ResultSelector": "$.Payload",
       "Type": "Task",
     },
     "exit finally": Object {
@@ -4606,24 +4250,16 @@ Object {
         },
       ],
       "Next": "await task(\\"2\\")",
-      "Parameters": Object {
-        "FunctionName": "__REPLACED_TOKEN",
-        "Payload": "1",
-      },
-      "Resource": "arn:aws:states:::lambda:invoke",
+      "Parameters": "1",
+      "Resource": "__REPLACED_TOKEN",
       "ResultPath": null,
-      "ResultSelector": "$.Payload",
       "Type": "Task",
     },
     "await task(\\"2\\")": Object {
       "Next": "exit finally",
-      "Parameters": Object {
-        "FunctionName": "__REPLACED_TOKEN",
-        "Payload": "2",
-      },
-      "Resource": "arn:aws:states:::lambda:invoke",
+      "Parameters": "2",
+      "Resource": "__REPLACED_TOKEN",
       "ResultPath": null,
-      "ResultSelector": "$.Payload",
       "Type": "Task",
     },
     "catch(err)": Object {
@@ -4687,12 +4323,8 @@ Object {
   "States": Object {
     "await task()": Object {
       "Next": "exit finally",
-      "Parameters": Object {
-        "FunctionName": "__REPLACED_TOKEN",
-      },
-      "Resource": "arn:aws:states:::lambda:invoke",
+      "Resource": "__REPLACED_TOKEN",
       "ResultPath": null,
-      "ResultSelector": "$.Payload",
       "Type": "Task",
     },
     "exit finally": Object {
@@ -4766,15 +4398,11 @@ Object {
       ],
       "Next": "return null",
       "Parameters": Object {
-        "FunctionName": "__REPLACED_TOKEN",
-        "Payload": Object {
-          "id": "id",
-          "name": "name",
-        },
+        "id": "id",
+        "name": "name",
       },
-      "Resource": "arn:aws:states:::lambda:invoke",
+      "Resource": "__REPLACED_TOKEN",
       "ResultPath": null,
-      "ResultSelector": "$.Payload",
       "Type": "Task",
     },
     "return null": Object {
@@ -4950,15 +4578,11 @@ Object {
       ],
       "Next": "return \\"hello\\"",
       "Parameters": Object {
-        "FunctionName": "__REPLACED_TOKEN",
-        "Payload": Object {
-          "id": "id",
-          "name": "name",
-        },
+        "id": "id",
+        "name": "name",
       },
-      "Resource": "arn:aws:states:::lambda:invoke",
+      "Resource": "__REPLACED_TOKEN",
       "ResultPath": null,
-      "ResultSelector": "$.Payload",
       "Type": "Task",
     },
     "catch(err)": Object {
@@ -5000,15 +4624,11 @@ Object {
       ],
       "Next": "return \\"hello\\"",
       "Parameters": Object {
-        "FunctionName": "__REPLACED_TOKEN",
-        "Payload": Object {
-          "id": "id",
-          "name": "name",
-        },
+        "id": "id",
+        "name": "name",
       },
-      "Resource": "arn:aws:states:::lambda:invoke",
+      "Resource": "__REPLACED_TOKEN",
       "ResultPath": null,
-      "ResultSelector": "$.Payload",
       "Type": "Task",
     },
     "return \\"hello\\"": Object {
@@ -5049,15 +4669,11 @@ Object {
       ],
       "Next": "return \\"hello world\\"",
       "Parameters": Object {
-        "FunctionName": "__REPLACED_TOKEN",
-        "Payload": Object {
-          "id.$": "$.id",
-          "name": "sam",
-        },
+        "id.$": "$.id",
+        "name": "sam",
       },
-      "Resource": "arn:aws:states:::lambda:invoke",
+      "Resource": "__REPLACED_TOKEN",
       "ResultPath": null,
-      "ResultSelector": "$.Payload",
       "Type": "Task",
     },
     "catch(err)": Object {
@@ -5182,15 +4798,11 @@ Object {
       ],
       "End": true,
       "Parameters": Object {
-        "FunctionName": "__REPLACED_TOKEN",
-        "Payload": Object {
-          "id.$": "$.id",
-          "name": "sam",
-        },
+        "id.$": "$.id",
+        "name": "sam",
       },
-      "Resource": "arn:aws:states:::lambda:invoke",
+      "Resource": "__REPLACED_TOKEN",
       "ResultPath": "$",
-      "ResultSelector": "$.Payload",
       "Type": "Task",
     },
   },
@@ -5219,15 +4831,11 @@ Object {
       ],
       "Next": "return \\"hello world\\"",
       "Parameters": Object {
-        "FunctionName": "__REPLACED_TOKEN",
-        "Payload": Object {
-          "id.$": "$.id",
-          "name": "sam",
-        },
+        "id.$": "$.id",
+        "name": "sam",
       },
-      "Resource": "arn:aws:states:::lambda:invoke",
+      "Resource": "__REPLACED_TOKEN",
       "ResultPath": null,
-      "ResultSelector": "$.Payload",
       "Type": "Task",
     },
     "catch(err)": Object {
@@ -5533,15 +5141,11 @@ Object {
       ],
       "Next": "return \\"hello\\"",
       "Parameters": Object {
-        "FunctionName": "__REPLACED_TOKEN",
-        "Payload": Object {
-          "id": "id",
-          "name": "name",
-        },
+        "id": "id",
+        "name": "name",
       },
-      "Resource": "arn:aws:states:::lambda:invoke",
+      "Resource": "__REPLACED_TOKEN",
       "ResultPath": null,
-      "ResultSelector": "$.Payload",
       "Type": "Task",
     },
     "return \\"hello\\"": Object {
@@ -5648,12 +5252,8 @@ Object {
   "States": Object {
     "cond = await task()": Object {
       "Next": "while (cond == undefined)",
-      "Parameters": Object {
-        "FunctionName": "__REPLACED_TOKEN",
-      },
-      "Resource": "arn:aws:states:::lambda:invoke",
+      "Resource": "__REPLACED_TOKEN",
       "ResultPath": "$.cond",
-      "ResultSelector": "$.Payload",
       "Type": "Task",
     },
     "return null": Object {
@@ -5693,12 +5293,8 @@ Object {
   "States": Object {
     "cond = await task()": Object {
       "Next": "while (cond == undefined)",
-      "Parameters": Object {
-        "FunctionName": "__REPLACED_TOKEN",
-      },
-      "Resource": "arn:aws:states:::lambda:invoke",
+      "Resource": "__REPLACED_TOKEN",
       "ResultPath": "$.cond",
-      "ResultSelector": "$.Payload",
       "Type": "Task",
     },
     "return null": Object {
@@ -5753,12 +5349,8 @@ Object {
         },
       ],
       "Next": "while (true)",
-      "Parameters": Object {
-        "FunctionName": "__REPLACED_TOKEN",
-      },
-      "Resource": "arn:aws:states:::lambda:invoke",
+      "Resource": "__REPLACED_TOKEN",
       "ResultPath": null,
-      "ResultSelector": "$.Payload",
       "Type": "Task",
     },
     "return null": Object {

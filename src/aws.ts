@@ -21,7 +21,7 @@ import {
 } from "typesafe-dynamodb/lib/update-item";
 import { ASL } from "./asl";
 import { ErrorCodes, SynthError } from "./error-code";
-import { Argument, Expr, isVariableReference } from "./expression";
+import { Argument, Expr } from "./expression";
 import { Function, isFunction, NativeIntegration } from "./function";
 import { NativePreWarmContext, PrewarmClients } from "./function-prewarm";
 import {
@@ -31,6 +31,7 @@ import {
   isPropAssignExpr,
   isReferenceExpr,
   isStringLiteralExpr,
+  isVariableReference,
 } from "./guards";
 import {
   IntegrationCall,
@@ -422,18 +423,18 @@ export namespace $AWS {
         } else if (input.kind !== "ObjectLiteralExpr") {
           throw new Error("argument 'input' must be an ObjectLiteralExpr");
         }
-        const functionName = input.getProperty("FunctionName")?.expr;
+        const functionName = input.getProperty("Function")?.expr;
         if (functionName === undefined) {
-          throw new Error("missing required property 'FunctionName'");
+          throw new Error("missing required property 'Function'");
         } else if (functionName.kind !== "ReferenceExpr") {
           throw new Error(
-            "property 'FunctionName' must reference a functionless.Function"
+            "property 'Function' must reference a functionless.Function"
           );
         }
         const functionRef = functionName.ref();
         if (!isFunction(functionRef)) {
           throw new Error(
-            "property 'FunctionName' must reference a functionless.Function"
+            "property 'Function' must reference a functionless.Function"
           );
         }
         const payload = input.getProperty("Payload")?.expr;

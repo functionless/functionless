@@ -1,11 +1,5 @@
 import { BindingElem, ParameterDecl } from "./declaration";
-import {
-  isElementAccessExpr,
-  isIdentifier,
-  isPropAccessExpr,
-  isPropAssignExpr,
-  isStringLiteralExpr,
-} from "./guards";
+import { isIdentifier, isPropAssignExpr, isStringLiteralExpr } from "./guards";
 import { BaseNode, FunctionlessNode } from "./node";
 import type {
   BlockStmt,
@@ -89,12 +83,6 @@ export class ReferenceExpr extends BaseExpr<"ReferenceExpr"> {
 }
 
 export type VariableReference = Identifier | PropAccessExpr | ElementAccessExpr;
-
-export function isVariableReference(expr: Expr): expr is VariableReference {
-  return (
-    isIdentifier(expr) || isPropAccessExpr(expr) || isElementAccessExpr(expr)
-  );
-}
 
 export class Identifier extends BaseExpr<"Identifier"> {
   constructor(readonly name: string) {

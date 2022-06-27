@@ -3,6 +3,7 @@ import { aws_dynamodb, CfnOutput } from "aws-cdk-lib";
 import { EventBridge, DynamoDB } from "aws-sdk";
 import { $AWS, EventBus, Event, StepFunction, Table } from "../src";
 import { clientConfig, localstackTestSuite } from "./localstack";
+import { retry } from "./runtime-util";
 
 const EB = new EventBridge(clientConfig);
 const DB = new DynamoDB(clientConfig);
@@ -88,24 +89,6 @@ localstackTestSuite("eventBusStack", (testResource) => {
           },
         ],
       }).promise();
-      const getItem = async (
-        attempts: number,
-        waitMillis: number,
-        factor: number
-      ): Promise<DynamoDB.GetItemOutput> => {
-        const item = await DB.getItem({
-          Key: {
-            id: { S: id },
-          },
-          TableName: context.table,
-          ConsistentRead: true,
-        }).promise();
-        if (!item.Item && attempts) {
-          await new Promise((resolve) => setTimeout(resolve, waitMillis));
-          return getItem(attempts - 1, waitMillis * factor, factor);
-        }
-        return item;
-      };
 
       // Give time for the event to make it to dynamo. Localstack is pretty slow.
       // 1 - 1s
@@ -113,7 +96,20 @@ localstackTestSuite("eventBusStack", (testResource) => {
       // 3 - 4s
       // 4 - 8s
       // 5 - 16s
-      const item = await getItem(5, 10000, 2);
+      const item = await retry(
+        () =>
+          DB.getItem({
+            Key: {
+              id: { S: id },
+            },
+            TableName: context.table,
+            ConsistentRead: true,
+          }).promise(),
+        (item) => !!item.Item,
+        5,
+        10000,
+        2
+      );
 
       expect(item.Item).toBeDefined();
     }

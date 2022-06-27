@@ -9,7 +9,6 @@ import {
   CallExpr,
   ElementAccessExpr,
   Expr,
-  isVariableReference,
   NewExpr,
   NullLiteralExpr,
   PromiseExpr,
@@ -64,6 +63,7 @@ import {
   isReferenceExpr,
   isStmt,
   isPostfixUnaryExpr,
+  isVariableReference,
 } from "./guards";
 import {
   getIntegrationExprFromIntegrationCallPattern,

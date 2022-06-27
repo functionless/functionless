@@ -1,0 +1,150 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`call lambda $AWS invoke 1`] = `
+Object {
+  "StartAt": "obj = {str: \\"hello world\\"}",
+  "States": Object {
+    "0_tmp = await $AWS.Lambda.Invoke({Function: func, Payload: obj})": Object {
+      "Next": "return 0_tmp.Payload.str",
+      "Parameters": Object {
+        "FunctionName": "__REPLACED_TOKEN",
+        "Payload.$": "$.obj",
+      },
+      "Resource": "__REPLACED_ARN",
+      "ResultPath": "$.0_tmp",
+      "Type": "Task",
+    },
+    "obj = {str: \\"hello world\\"}": Object {
+      "Next": "0_tmp = await $AWS.Lambda.Invoke({Function: func, Payload: obj})",
+      "Parameters": Object {
+        "str": "hello world",
+      },
+      "ResultPath": "$.obj",
+      "Type": "Pass",
+    },
+    "return 0_tmp.Payload.str": Object {
+      "End": true,
+      "OutputPath": "$.0_tmp.Payload.str",
+      "Type": "Pass",
+    },
+  },
+}
+`;
+
+exports[`call lambda 1`] = `
+Object {
+  "StartAt": "return func()",
+  "States": Object {
+    "return func()": Object {
+      "End": true,
+      "Resource": "__REPLACED_TOKEN",
+      "ResultPath": "$",
+      "Type": "Task",
+    },
+  },
+}
+`;
+
+exports[`call lambda with object literal parameter 1`] = `
+Object {
+  "StartAt": "0_tmp = await func({str: \\"hello world\\"})",
+  "States": Object {
+    "0_tmp = await func({str: \\"hello world\\"})": Object {
+      "Next": "return 0_tmp.str",
+      "Parameters": Object {
+        "str": "hello world",
+      },
+      "Resource": "__REPLACED_TOKEN",
+      "ResultPath": "$.0_tmp",
+      "Type": "Task",
+    },
+    "return 0_tmp.str": Object {
+      "End": true,
+      "OutputPath": "$.0_tmp.str",
+      "Type": "Pass",
+    },
+  },
+}
+`;
+
+exports[`call lambda with object reference parameter 1`] = `
+Object {
+  "StartAt": "obj = {str: \\"hello world\\"}",
+  "States": Object {
+    "0_tmp = await func(obj)": Object {
+      "InputPath": "$.obj",
+      "Next": "return 0_tmp.str",
+      "Resource": "__REPLACED_TOKEN",
+      "ResultPath": "$.0_tmp",
+      "Type": "Task",
+    },
+    "obj = {str: \\"hello world\\"}": Object {
+      "Next": "0_tmp = await func(obj)",
+      "Parameters": Object {
+        "str": "hello world",
+      },
+      "ResultPath": "$.obj",
+      "Type": "Pass",
+    },
+    "return 0_tmp.str": Object {
+      "End": true,
+      "OutputPath": "$.0_tmp.str",
+      "Type": "Pass",
+    },
+  },
+}
+`;
+
+exports[`call lambda with string parameter 1`] = `
+Object {
+  "StartAt": "0_tmp = await func(\\"hello world\\")",
+  "States": Object {
+    "0_tmp = await func(\\"hello world\\")": Object {
+      "Next": "return 0_tmp.str",
+      "Parameters": "hello world",
+      "Resource": "__REPLACED_TOKEN",
+      "ResultPath": "$.0_tmp",
+      "Type": "Task",
+    },
+    "return 0_tmp.str": Object {
+      "End": true,
+      "OutputPath": "$.0_tmp.str",
+      "Type": "Pass",
+    },
+  },
+}
+`;
+
+exports[`call lambda with string reference 1`] = `
+Object {
+  "StartAt": "0_tmp = await func(event.str)",
+  "States": Object {
+    "0_tmp = await func(event.str)": Object {
+      "InputPath": "$.str",
+      "Next": "return 0_tmp.str",
+      "Resource": "__REPLACED_TOKEN",
+      "ResultPath": "$.0_tmp",
+      "Type": "Task",
+    },
+    "return 0_tmp.str": Object {
+      "End": true,
+      "OutputPath": "$.0_tmp.str",
+      "Type": "Pass",
+    },
+  },
+}
+`;
+
+exports[`simple 1`] = `
+Object {
+  "StartAt": "return \\"hello world\\"",
+  "States": Object {
+    "return \\"hello world\\"": Object {
+      "End": true,
+      "Result": "hello world",
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+  },
+}
+`;

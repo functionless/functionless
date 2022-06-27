@@ -12,7 +12,6 @@ import {
   Token,
 } from "aws-cdk-lib";
 // eslint-disable-next-line import/no-extraneous-dependencies
-import { Lambda } from "aws-sdk";
 import axios from "axios";
 import { Construct } from "constructs";
 import {
@@ -25,9 +24,8 @@ import {
   StepFunction,
   Table,
 } from "../src";
-import { clientConfig, localstackTestSuite } from "./localstack";
-
-const lambda = new Lambda(clientConfig);
+import { localstackTestSuite } from "./localstack";
+import { testFunction } from "./runtime-util";
 
 // inject the localstack client config into the lambda clients
 // without this configuration, the functions will try to hit AWS proper
@@ -58,37 +56,8 @@ interface TestFunctionBase {
 }
 
 interface TestFunctionResource extends TestFunctionBase {
-  skip: <
-    I,
-    O, // Forces typescript to infer O from the Function and not from the expect argument.
-    OO extends O | { errorMessage: string; errorType: string },
-    Outputs extends Record<string, string> = Record<string, string>
-  >(
-    name: string,
-    func: (
-      parent: Construct
-    ) => Function<I, O> | { func: Function<I, O>; outputs: Outputs },
-    expected: OO extends void
-      ? null
-      : OO | ((context: Outputs) => OO extends void ? null : O),
-    payload?: I | ((context: Outputs) => I)
-  ) => void;
-
-  only: <
-    I,
-    O, // Forces typescript to infer O from the Function and not from the expect argument.
-    OO extends O | { errorMessage: string; errorType: string },
-    Outputs extends Record<string, string> = Record<string, string>
-  >(
-    name: string,
-    func: (
-      parent: Construct
-    ) => Function<I, O> | { func: Function<I, O>; outputs: Outputs },
-    expected: OO extends void
-      ? null
-      : OO | ((context: Outputs) => OO extends void ? null : O),
-    payload?: I | ((context: Outputs) => I)
-  ) => void;
+  skip: TestFunctionBase;
+  only: TestFunctionBase;
 }
 
 localstackTestSuite("functionStack", (testResource, _stack, _app) => {
@@ -1305,28 +1274,6 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
     "0hellohellohello"
   );
 });
-
-const testFunction = async (
-  functionName: string,
-  payload: any,
-  expected: any
-) => {
-  const result = await lambda
-    .invoke({
-      FunctionName: functionName,
-      Payload: JSON.stringify(payload),
-    })
-    .promise();
-
-  try {
-    expect(
-      result.Payload ? JSON.parse(result.Payload.toString()) : undefined
-    ).toEqual(expected);
-  } catch (e) {
-    console.error(result);
-    throw e;
-  }
-};
 
 test("should not create new resources in lambda", async () => {
   await expect(async () => {
