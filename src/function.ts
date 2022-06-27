@@ -388,25 +388,22 @@ abstract class FunctionBase<in Payload, Out>
     const payloadArg = call.getArgument("payload")?.expr;
     this.resource.grantInvoke(context.role);
     // TODO generalize this?
-    const props = ((): Partial<Task> => {
-      if (!payloadArg) {
-        return {
+    const props: Partial<Task> = !payloadArg
+      ? {
           Parameters: undefined,
-        };
-      } else if (isVariableReference(payloadArg)) {
-        return {
+        }
+      : isVariableReference(payloadArg)
+      ? {
           InputPath: ASL.toJsonPath(payloadArg),
-        };
-      } else if (isStringLiteralExpr(payloadArg)) {
-        return {
+        }
+      : isStringLiteralExpr(payloadArg)
+      ? {
           Parameters: payloadArg.value,
-        };
-      } else {
-        return {
+        }
+      : {
           Parameters: ASL.toJson(payloadArg),
         };
-      }
-    })();
+
     return {
       Type: "Task" as const,
       Resource: this.resource.functionArn,
