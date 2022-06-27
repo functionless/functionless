@@ -901,26 +901,38 @@ export class ASL {
 
           const { End, Next } = props;
 
+          /**
+           * Step functions can fail to deploy when extraneous properties are left on state nodes.
+           * Only inject the properties the state type can handle.
+           *
+           * For example: https://github.com/functionless/functionless/issues/308
+           * A Wait state with `ResultPath: null` was failing to deploy.
+           */
           const taskState = ((): State => {
-            switch (partialTask.Type) {
-              case "Wait":
-                return {
-                  ...(partialTask as Omit<Wait, "Next">),
-                  ...{ End, Next },
-                };
-              case "Choice":
-              case "Fail":
-              case "Succeed":
-                return partialTask as Choice | Fail | Succeed;
-              case "Task":
-              case "Parallel":
-              case "Pass":
-              case "Map":
-                return {
-                  ...partialTask,
-                  ...props,
-                } as Task | ParallelTask | Pass | MapTask;
+            const taskType = partialTask.Type;
+            if (taskType === "Wait") {
+              return {
+                ...(partialTask as Omit<Wait, "Next">),
+                ...{ End, Next },
+              };
+            } else if (
+              taskType === "Choice" ||
+              taskType === "Fail" ||
+              taskType === "Succeed"
+            ) {
+              return partialTask as Choice | Fail | Succeed;
+            } else if (
+              taskType === "Task" ||
+              taskType === "Parallel" ||
+              taskType === "Pass" ||
+              taskType === "Map"
+            ) {
+              return {
+                ...partialTask,
+                ...props,
+              } as Task | ParallelTask | Pass | MapTask;
             }
+            assertNever(taskType);
           })();
 
           const throwOrPass = this.throw(expr);
