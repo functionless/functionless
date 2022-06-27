@@ -490,9 +490,7 @@ test("return a single Lambda Function call", () => {
   }).definition;
 
   expectTaskToMatch(definition, {
-    Parameters: {
-      FunctionName: getPerson.resource.functionName,
-    },
+    Resource: getPerson.resource.functionArn,
   });
 
   expect(normalizeDefinition(definition)).toMatchSnapshot();
