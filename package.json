@@ -85,6 +85,7 @@
     "@functionless/nodejs-closure-serializer": "^0.0.6",
     "@types/aws-lambda": "^8.10.100",
     "fs-extra": "^10.1.0",
+    "immutable": "^4.1.0",
     "minimatch": "^5.1.0"
   },
   "main": "lib/index.js",

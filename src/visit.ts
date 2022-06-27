@@ -33,6 +33,7 @@ import {
   PromiseExpr,
 } from "./expression";
 import {
+  anyOf,
   isArgument,
   isArrayLiteralExpr,
   isAwaitExpr,
@@ -52,7 +53,7 @@ import {
   isForInStmt,
   isForOfStmt,
   isFunctionDecl,
-  isFunctionExpr,
+  isFunctionLike,
   isIdentifier,
   isIfStmt,
   isNewExpr,
@@ -101,7 +102,6 @@ import {
   WhileStmt,
 } from "./statement";
 import {
-  anyOf,
   DeterministicNameGenerator,
   ensure,
   ensureItemOf,
@@ -295,7 +295,7 @@ export function visitEachChild<T extends FunctionlessNode>(
         ? new ForInStmt(variableDecl, expr, body)
         : new ForOfStmt(variableDecl, expr, body)
     ) as T;
-  } else if (isFunctionDecl(node) || isFunctionExpr(node)) {
+  } else if (isFunctionLike(node)) {
     const parameters = node.parameters.reduce(
       (params: ParameterDecl[], parameter) => {
         let p = visitor(parameter);

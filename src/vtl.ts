@@ -21,8 +21,7 @@ import {
   isExprStmt,
   isForInStmt,
   isForOfStmt,
-  isFunctionDecl,
-  isFunctionExpr,
+  isFunctionLike,
   isIdentifier,
   isIfStmt,
   isNewExpr,
@@ -444,9 +443,7 @@ export abstract class VTL {
       this.eval(node.body);
       this.add("#end");
       return undefined;
-    } else if (isFunctionDecl(node)) {
-      // there should never be nested functions
-    } else if (isFunctionExpr(node)) {
+    } else if (isFunctionLike(node)) {
       return this.eval(node.body);
     } else if (isIdentifier(node)) {
       return this.dereference(node);

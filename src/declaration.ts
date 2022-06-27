@@ -1,15 +1,16 @@
 import { ErrorCodes, SynthError } from "./error-code";
 import { Argument, FunctionExpr } from "./expression";
-import { isErr, isFunctionDecl, isNode, isParameterDecl } from "./guards";
+import { anyOf, isErr, isFunctionLike, isNode } from "./guards";
 import { Integration } from "./integration";
 import { BaseNode, FunctionlessNode } from "./node";
+import { reflect } from "./reflect";
 import { BlockStmt } from "./statement";
-import { AnyFunction, anyOf } from "./util";
+import { AnyFunction } from "./util";
 
 export type Decl = FunctionDecl | ParameterDecl;
 
 export function isDecl(a: any): a is Decl {
-  return isNode(a) && (isFunctionDecl(a) || isParameterDecl(a));
+  return isNode(a) && a.nodeKind === "Decl";
 }
 
 abstract class BaseDecl<
@@ -36,6 +37,12 @@ export class FunctionDecl<F extends AnyFunction = AnyFunction> extends BaseDecl<
       this.body.clone()
     ) as this;
   }
+
+  public isTopLevel(): this is {
+    parent: undefined;
+  } {
+    return this.parent === undefined;
+  }
 }
 
 export interface IntegrationInvocation {
@@ -56,13 +63,13 @@ export class ParameterDecl extends BaseDecl<
   }
 }
 
-export const isFunctionDeclOrErr = anyOf(isFunctionDecl, isErr);
+export const isFunctionLikeOrErr = anyOf(isFunctionLike, isErr);
 
-export function validateFunctionDecl(
-  a: any,
+export function validateFunctionLike(
+  func: any,
   functionLocation: string
-): FunctionDecl {
-  return validateFunctionlessNode(a, functionLocation, isFunctionDecl);
+): FunctionDecl | FunctionExpr {
+  return validateFunctionlessNode(func, functionLocation, isFunctionLike);
 }
 
 export function validateFunctionlessNode<E extends FunctionlessNode>(
@@ -70,7 +77,9 @@ export function validateFunctionlessNode<E extends FunctionlessNode>(
   functionLocation: string,
   validate: (e: FunctionlessNode) => e is E
 ): E {
-  if (validate(a)) {
+  if (typeof a === "function") {
+    return validateFunctionlessNode(reflect(a), functionLocation, validate);
+  } else if (validate(a)) {
     return a;
   } else if (isErr(a)) {
     throw a.error;

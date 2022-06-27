@@ -67,16 +67,22 @@ export function assertConstantValue(val: any, message?: string): ConstantValue {
 
 export function assertNodeKind<T extends FunctionlessNode>(
   node: FunctionlessNode | undefined,
-  kind: T["kind"]
+  guard: T["kind"] | ((a: any) => a is T)
 ): T {
-  if (node?.kind !== kind) {
-    throw Error(
-      `Expected node of type ${kind} and found ${
-        node ? node.kind : "undefined"
-      }`
-    );
+  if (typeof guard === "string") {
+    if (node?.kind !== guard) {
+      throw Error(
+        `Expected node of type ${guard} and found ${
+          node ? node.kind : "undefined"
+        }`
+      );
+    }
+  } else if (!guard(node)) {
+    throw Error(`Unexpected node type`);
   }
-  return <T>node;
+
+  // @ts-ignore
+  return node as any;
 }
 
 // to prevent the closure serializer from trying to import all of functionless.

@@ -5,7 +5,6 @@ import {
   assertPrimitive,
   assertString,
 } from "../../assert";
-import { FunctionDecl } from "../../declaration";
 import { Err } from "../../error";
 import { ErrorCodes, SynthError } from "../../error-code";
 import {
@@ -23,13 +22,14 @@ import {
   isCallExpr,
   isElementAccessExpr,
   isErr,
-  isFunctionDecl,
+  isFunctionLike,
   isNullLiteralExpr,
   isPropAccessExpr,
   isUnaryExpr,
   isUndefinedLiteralExpr,
 } from "../../guards";
 import { isIntegrationCallPattern } from "../../integration";
+import { FunctionLike } from "../../node";
 import { evalToConstant } from "../../util";
 import * as functionless_event_bridge from "../types";
 import {
@@ -123,11 +123,11 @@ export const synthesizeEventPattern = (
  * https://github.com/functionless/functionless/issues/37#issuecomment-1066313146
  */
 export const synthesizePatternDocument = (
-  predicate: FunctionDecl | Err | unknown
+  predicate: FunctionLike | Err | undefined
 ): PatternDocument => {
   if (isErr(predicate)) {
     throw predicate.error;
-  } else if (!isFunctionDecl(predicate)) {
+  } else if (!isFunctionLike(predicate)) {
     throw Error(
       "Expected parameter to synthesizeEventPattern to be compiled by functionless."
     );

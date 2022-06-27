@@ -75,6 +75,12 @@ export class FunctionExpr<
       this.body.clone()
     ) as this;
   }
+
+  public isTopLevel(): this is {
+    parent: undefined;
+  } {
+    return this.parent === undefined;
+  }
 }
 
 export class ReferenceExpr extends BaseExpr<"ReferenceExpr"> {

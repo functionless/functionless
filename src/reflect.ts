@@ -1,36 +1,39 @@
-import { FunctionDecl } from "./declaration";
-import { Err } from "./error";
-import { AnyAsyncFunction, AnyFunction } from "./util";
+import type { Err } from "./error";
+import type { FunctionLike } from "./node";
+import type { AnyFunction } from "./util";
 
 /**
- * A macro (compile-time) function that converts an ArrowFunction or FunctionExpression to a {@link FunctionDecl}.
+ * Returns the {@link func}'s AST form as a {@link FunctionLike} data object
+ * if the {@link func} instance was registered with {@link associateAST}.
  *
- * Use this function to quickly grab the {@link FunctionDecl} (AST) representation of TypeScript syntax and
- * then perform interpretations of that representation.
- *
- * Valid uses  include an in-line ArrowFunction or FunctionExpression:
- * ```ts
- * const decl1 = reflect((arg: string) => {})
- * const decl2 = reflect(function (arg: string) {})
- * ```
- *
- * Illegal uses include references to functions or computed functions:
- * ```ts
- * const functionRef = () => {}
- * const decl1 = reflect(functionRef)
- *
- * function computeFunction() {
- *   return () => "hello"
- * }
- * const decl2 = reflect(computeFunction())
- * ```
- *
- * @param func an in-line ArrowFunction or FunctionExpression. It must be in-line and cannot reference
- *             a variable or a computed function/closure.
+ * If the {@link func} was not registered with {@link associateAST}, then
+ * `undefined` is returned.
  */
-export declare function reflect<F extends AnyFunction | AnyAsyncFunction>(
+export function reflect<F extends AnyFunction>(
   func: F
-): FunctionDecl<F> | Err;
+): FunctionLike<F> | Err | undefined {
+  return closuresMap.get(func) as FunctionLike<F> | Err | undefined;
+}
+
+const globalObj: any = global;
+
+const closuresSymbol = Symbol.for("functionless.closures");
+
+// ensure there is a globally recognized map of closures->AST
+const closuresMap: WeakMap<AnyFunction, FunctionLike | Err> = (globalObj[
+  closuresSymbol
+] = globalObj[closuresSymbol] ?? new WeakMap());
+
+/**
+ * Associates the {@link func} with its {@link FunctionLike} {@link ast} form.
+ */
+export function associateAST<F extends AnyFunction>(
+  func: F,
+  ast: FunctionLike<F> | Err
+): F {
+  closuresMap.set(func, ast);
+  return func;
+}
 
 // to prevent the closure serializer from trying to import all of functionless.
 export const deploymentOnlyModule = true;

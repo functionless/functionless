@@ -8,8 +8,7 @@ import {
   isComputedPropertyNameExpr,
   isForInStmt,
   isForOfStmt,
-  isFunctionDecl,
-  isFunctionExpr,
+  isFunctionLike,
   isIdentifier,
   isNullLiteralExpr,
   isNumberLiteralExpr,
@@ -53,7 +52,7 @@ export function isInTopLevelScope(expr: FunctionlessNode): boolean {
   return walk(expr.parent);
 
   function walk(expr: FunctionlessNode): boolean {
-    if (isFunctionDecl(expr) || isFunctionExpr(expr)) {
+    if (isFunctionLike(expr)) {
       return expr.parent === undefined;
     } else if (isForInStmt(expr) || isForOfStmt(expr)) {
       return false;
@@ -83,18 +82,6 @@ export function ensure<T>(
     debugger;
     throw new Error(message);
   }
-}
-
-export type EnsureOr<T extends ((a: any) => a is any)[]> = T[number] extends (
-  a: any
-) => a is infer T
-  ? T
-  : never;
-
-export function anyOf<T extends ((a: any) => a is any)[]>(
-  ...fns: T
-): (a: any) => a is EnsureOr<T> {
-  return (a: any): a is EnsureOr<T> => fns.some((f) => f(a));
 }
 
 export type AnyDepthArray<T> = T | T[] | AnyDepthArray<T>[];

@@ -6,38 +6,33 @@ export function isNode(a: any): a is FunctionlessNode {
   return typeof a?.kind === "string";
 }
 
+export type AnyOf<T extends ((a: any) => a is any)[]> = T[number] extends (
+  a: any
+) => a is infer T
+  ? T
+  : never;
+
+/**
+ * Composes a list of type assertion functions into a single type assertion
+ * function that narrows its argument to a union of the types narrowed by
+ * each function in the list.
+ *
+ * const a = (t: any): t is A;
+ * const b = (t: any): t is B;
+ *
+ * // (t: any): t is A | B
+ * const c = anyOf(a, b);
+ */
+export function anyOf<T extends ((a: any) => a is any)[]>(
+  ...fns: T
+): (a: any) => a is AnyOf<T> {
+  return (a: any): a is AnyOf<T> => fns.some((f) => f(a));
+}
+
 export const isErr = typeGuard("Err");
 
 export function isExpr(a: any): a is Expr {
-  return (
-    isNode(a) &&
-    (isArgument(a) ||
-      isArrayLiteralExpr(a) ||
-      isAwaitExpr(a) ||
-      isBinaryExpr(a) ||
-      isBooleanLiteralExpr(a) ||
-      isCallExpr(a) ||
-      isConditionExpr(a) ||
-      isComputedPropertyNameExpr(a) ||
-      isFunctionExpr(a) ||
-      isElementAccessExpr(a) ||
-      isFunctionExpr(a) ||
-      isIdentifier(a) ||
-      isNewExpr(a) ||
-      isNullLiteralExpr(a) ||
-      isNumberLiteralExpr(a) ||
-      isObjectLiteralExpr(a) ||
-      isPromiseArrayExpr(a) ||
-      isPromiseExpr(a) ||
-      isPropAccessExpr(a) ||
-      isPropAssignExpr(a) ||
-      isReferenceExpr(a) ||
-      isStringLiteralExpr(a) ||
-      isTemplateExpr(a) ||
-      isTypeOfExpr(a) ||
-      isUnaryExpr(a) ||
-      isUndefinedLiteralExpr(a))
-  );
+  return isNode(a) && a.nodeKind === "Expr";
 }
 
 export const isFunctionExpr = typeGuard("FunctionExpr");
@@ -126,6 +121,8 @@ export const isDoStmt = typeGuard("DoStmt");
 
 export const isFunctionDecl = typeGuard("FunctionDecl");
 export const isParameterDecl = typeGuard("ParameterDecl");
+
+export const isFunctionLike = anyOf(isFunctionDecl, isFunctionExpr);
 
 // generates type guards
 export function typeGuard<Kind extends FunctionlessNode["kind"]>(

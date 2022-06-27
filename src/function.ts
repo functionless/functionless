@@ -26,14 +26,11 @@ import type { Context } from "aws-lambda";
 // eslint-disable-next-line import/no-extraneous-dependencies
 import { Construct } from "constructs";
 import esbuild from "esbuild";
+import { Set as iSet } from "immutable";
 import { ApiGatewayVtlIntegration } from "./api";
 import type { AppSyncVtlIntegration } from "./appsync";
 import { ASL } from "./asl";
-import {
-  FunctionDecl,
-  IntegrationInvocation,
-  validateFunctionlessNode,
-} from "./declaration";
+import { IntegrationInvocation, validateFunctionlessNode } from "./declaration";
 import { ErrorCodes, formatErrorMessage, SynthError } from "./error-code";
 import {
   IEventBus,
@@ -50,7 +47,7 @@ import {
   PrewarmClients,
   PrewarmProps,
 } from "./function-prewarm";
-import { isFunctionDecl } from "./guards";
+import { isFunctionLike } from "./guards";
 import {
   Integration,
   IntegrationCallExpr,
@@ -59,7 +56,8 @@ import {
   isIntegration,
   isIntegrationCallExpr,
 } from "./integration";
-import { FunctionlessNode } from "./node";
+import { FunctionlessNode, FunctionLike } from "./node";
+import { reflect } from "./reflect";
 import { isStepFunction } from "./step-function";
 import { isTable } from "./table";
 import { AnyAsyncFunction, AnyFunction } from "./util";
@@ -499,7 +497,7 @@ interface FunctionBase<in Payload, Out> {
 
 const PromisesSymbol = Symbol.for("functionless.Function.promises");
 
-export interface FunctionProps<in P = any, O = any, OutP extends P = P>
+export interface FunctionProps<in P = any, O = any>
   extends Omit<
     aws_lambda.FunctionProps,
     "code" | "handler" | "runtime" | "onSuccess" | "onFailure"
@@ -525,13 +523,13 @@ export interface FunctionProps<in P = any, O = any, OutP extends P = P>
    *
    * @default - no destination
    */
-  onSuccess?: FunctionAsyncOnSuccessDestination<OutP, O>;
+  onSuccess?: FunctionAsyncOnSuccessDestination<P, O>;
   /**
    * The destination for successful invocations.
    *
    * @default - no destination
    */
-  onFailure?: FunctionAsyncOnFailureDestination<OutP>;
+  onFailure?: FunctionAsyncOnFailureDestination<P>;
 }
 
 /**
@@ -558,11 +556,7 @@ export interface FunctionProps<in P = any, O = any, OutP extends P = P>
  * );
  * ```
  */
-export class Function<
-  in Payload,
-  Out,
-  OutPayload extends Payload = Payload
-> extends FunctionBase<Payload, Out> {
+export class Function<in Payload, Out> extends FunctionBase<Payload, Out> {
   /**
    * Dangling promises which are processing Function handler code from the function serializer.
    * To correctly resolve these for CDK synthesis, either use `asyncSynth()` or use `cdk synth` in the CDK cli.
@@ -598,7 +592,7 @@ export class Function<
   constructor(
     scope: Construct,
     id: string,
-    props: FunctionProps<Payload, Out, OutPayload>,
+    props: FunctionProps<Payload, Out>,
     func: FunctionClosure<Payload, Out>
   );
   /**
@@ -607,11 +601,8 @@ export class Function<
   constructor(
     resource: Construct,
     id: string,
-    propsOrFunc:
-      | FunctionProps<Payload, Out, OutPayload>
-      | FunctionClosure<Payload, Out>,
-    funcOrNothing?: FunctionClosure<Payload, Out>,
-    magic?: any
+    propsOrFunc: FunctionProps<Payload, Out> | FunctionClosure<Payload, Out>,
+    funcOrNothing?: FunctionClosure<Payload, Out>
   ) {
     const func =
       typeof propsOrFunc === "function" ? propsOrFunc : funcOrNothing;
@@ -623,16 +614,12 @@ export class Function<
       );
     }
 
-    const ast = validateFunctionlessNode(
-      magic ? magic : funcOrNothing,
-      "Function",
-      isFunctionDecl
-    );
+    const ast = validateFunctionlessNode(func, "Function", isFunctionLike);
 
     const props =
       typeof propsOrFunc === "function"
         ? undefined
-        : (propsOrFunc as FunctionProps<Payload, Out, OutPayload>);
+        : (propsOrFunc as FunctionProps<Payload, Out>);
 
     const callbackLambdaCode = new CallbackLambdaCode(func, {
       clientConfigRetriever: props?.clientConfigRetriever,
@@ -643,10 +630,10 @@ export class Function<
       runtime: aws_lambda.Runtime.NODEJS_14_X,
       handler: "index.handler",
       code: callbackLambdaCode,
-      onSuccess: FunctionBase.normalizeAsyncDestination<OutPayload, Out>(
+      onSuccess: FunctionBase.normalizeAsyncDestination<Payload, Out>(
         onSuccess
       ),
-      onFailure: FunctionBase.normalizeAsyncDestination<OutPayload, Out>(
+      onFailure: FunctionBase.normalizeAsyncDestination<Payload, Out>(
         onFailure
       ),
     });
@@ -654,21 +641,24 @@ export class Function<
     super(_resource);
 
     const integrations: IntegrationInvocation[] = getInvokedIntegrations(
-      ast
+      ast,
+      iSet()
     ).map((i) => {
       const integ = i.expr.ref();
-      if (!isIntegration<Integration>(integ)) {
-        // TODO: create specific error.
-        throw new SynthError(ErrorCodes.Unexpected_Error);
+
+      if (isIntegration<Integration>(integ)) {
+        return {
+          args: i.args,
+          integration: integ,
+        };
       }
-      return {
-        args: i.args,
-        integration: integ,
-      };
+      // TODO: create specific error.
+      throw new SynthError(ErrorCodes.Unexpected_Error);
     });
 
     // retrieve and bind all found native integrations. Will fail if the integration does not support native integration.
     const nativeIntegrationsPrewarm = integrations.flatMap(
+      // TODO: do we need to d
       ({ integration, args }) => {
         const integ = new IntegrationImpl(integration).native;
         integ.bind(this, args);
@@ -723,11 +713,25 @@ export class Function<
   }
 }
 
-function getInvokedIntegrations(ast: FunctionDecl): IntegrationCallExpr[] {
+function getInvokedIntegrations(
+  ast: FunctionLike,
+  seen: iSet<FunctionlessNode>
+): IntegrationCallExpr[] {
   const nodes: IntegrationCallExpr[] = [];
   visitEachChild(ast, function visit(node: FunctionlessNode): FunctionlessNode {
     if (isIntegrationCallExpr(node)) {
-      nodes.push(node);
+      const ref = node.expr.ref();
+      if (typeof ref === "function") {
+        const closure = reflect(ref as AnyFunction);
+        if (isFunctionLike(closure) && !seen.has(closure)) {
+          // is !seen.has(closure) enough to avoid infinitely circular loops?
+          // we may need to allow circular references for recursion
+          // we also need to trace input arguments, since the arguments may be Integrations
+          nodes.push(...getInvokedIntegrations(closure, seen.add(closure)));
+        }
+      } else {
+        nodes.push(node);
+      }
     }
 
     return visitEachChild(node, visit);

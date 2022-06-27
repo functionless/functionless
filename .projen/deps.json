@@ -220,6 +220,10 @@
       "type": "runtime"
     },
     {
+      "name": "immutable",
+      "type": "runtime"
+    },
+    {
       "name": "minimatch",
       "type": "runtime"
     }

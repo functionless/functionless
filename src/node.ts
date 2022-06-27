@@ -1,14 +1,13 @@
-import { Decl, ParameterDecl } from "./declaration";
+import type { Decl, FunctionDecl, ParameterDecl } from "./declaration";
 import type { Err } from "./error";
-import { Expr } from "./expression";
+import type { Expr, FunctionExpr } from "./expression";
 import {
   isBlockStmt,
   isTryStmt,
   isVariableStmt,
   isDoStmt,
   isWhileStmt,
-  isFunctionExpr,
-  isFunctionDecl,
+  isFunctionLike,
   isForInStmt,
   isForOfStmt,
   isReturnStmt,
@@ -16,9 +15,14 @@ import {
   isIfStmt,
   isCatchClause,
 } from "./guards";
-import { BlockStmt, CatchClause, Stmt, VariableStmt } from "./statement";
+import type { BlockStmt, CatchClause, Stmt, VariableStmt } from "./statement";
+import { AnyFunction } from "./util";
 
 export type FunctionlessNode = Decl | Expr | Stmt | Err;
+
+export type FunctionLike<F extends AnyFunction = AnyFunction> =
+  | FunctionDecl<F>
+  | FunctionExpr<F>;
 
 export interface HasParent<Parent extends FunctionlessNode> {
   get parent(): Parent;
@@ -299,7 +303,7 @@ export abstract class BaseNode<
         return [];
       } else if (isVariableStmt(node)) {
         return [[node.name, node]];
-      } else if (isFunctionExpr(node) || isFunctionDecl(node)) {
+      } else if (isFunctionLike(node)) {
         return node.parameters.reduce(
           (bindings: Binding[], param) => [...bindings, [param.name, param]],
           []

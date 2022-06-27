@@ -85,6 +85,7 @@ const project = new CustomTypescriptProject({
     "fs-extra",
     "minimatch",
     "@functionless/nodejs-closure-serializer",
+    "immutable",
   ],
   devDeps: [
     `@aws-cdk/aws-appsync-alpha@${MIN_CDK_VERSION}-alpha.0`,

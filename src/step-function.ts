@@ -12,7 +12,7 @@ import { ApiGatewayVtlIntegration } from "./api";
 import { AppSyncVtlIntegration } from "./appsync";
 import { ASL, MapTask, StateMachine, States, Task } from "./asl";
 import { assertDefined } from "./assert";
-import { validateFunctionDecl, FunctionDecl } from "./declaration";
+import { validateFunctionLike } from "./declaration";
 import { ErrorCodes, SynthError } from "./error-code";
 import { EventBus, PredicateRuleBase, Rule } from "./event-bridge";
 import {
@@ -25,8 +25,6 @@ import { NativeIntegration } from "./function";
 import { PrewarmClients } from "./function-prewarm";
 import {
   isComputedPropertyNameExpr,
-  isErr,
-  isFunctionDecl,
   isFunctionExpr,
   isNumberLiteralExpr,
   isObjectLiteralExpr,
@@ -40,6 +38,7 @@ import {
   IntegrationInput,
   makeIntegration,
 } from "./integration";
+import { FunctionLike } from "./node";
 import { AnyFunction, ensureItemOf } from "./util";
 import { VTL } from "./vtl";
 
@@ -1325,10 +1324,8 @@ function getStepFunctionArgs<
     | [func: StepFunctionClosure<Payload, Out>]
 ) {
   const props =
-    isFunctionDecl(args[0]) || isErr(args[0])
-      ? {}
-      : (args[1] as StepFunctionProps);
-  const func = validateFunctionDecl(
+    typeof args[0] === "function" ? {} : (args[1] as StepFunctionProps);
+  const func = validateFunctionLike(
     args.length > 1 ? args[1] : args[0],
     "StepFunction"
   );
@@ -1339,7 +1336,7 @@ function getStepFunctionArgs<
 function synthesizeStateMachine(
   scope: Construct,
   id: string,
-  decl: FunctionDecl,
+  decl: FunctionLike,
   props: StepFunctionProps & {
     stateMachineType: aws_stepfunctions.StateMachineType;
   }
