@@ -54,19 +54,27 @@ export const deployStack = async (app: App, stack: Stack) => {
   });
 };
 
-interface ResourceReference<Outputs extends Record<string, string>> {
+interface ResourceReference<
+  Outputs extends Record<string, string>,
+  Extra extends Record<string, string> = Record<string, string>
+> {
   /**
    * CDK references like arns are placed into CfnOutputs and returned to the test function as strings.
    */
   outputs: Outputs;
+  /**
+   * A map of additional strings to set from the resource function to the test.
+   */
+  extra?: Extra;
 }
 
 interface ResourceTest<
-  Outputs extends Record<string, string> = Record<string, string>
+  Outputs extends Record<string, string> = Record<string, string>,
+  Extra extends Record<string, string> = Record<string, string>
 > {
   name: string;
   resources: (parent: Construct) => ResourceReference<Outputs> | void;
-  test: (context: Outputs) => Promise<void>;
+  test: (context: Outputs, extra?: Extra) => Promise<void>;
   skip: boolean;
   only: boolean;
 }
@@ -99,7 +107,7 @@ export const localstackTestSuite = (
 
   const tests: ResourceTest[] = [];
   // will be set in the before all
-  let testContexts: ({ error?: Error } | { output?: any })[];
+  let testContexts: ({ error?: Error } | { output?: any; extra?: any })[];
 
   const app = new App();
   const stack = new Stack(app, stackName, {
@@ -120,7 +128,7 @@ export const localstackTestSuite = (
         try {
           const output = resources(construct);
           // Place each output in a cfn output, encoded with the unique address of the construct
-          if (output) {
+          if (typeof output === "object") {
             return {
               output: Object.fromEntries(
                 Object.entries(output.outputs).map(([key, value]) => {
@@ -132,6 +140,7 @@ export const localstackTestSuite = (
                   return [key, construct.node.addr + key];
                 })
               ),
+              extra: output.extra,
             };
           }
         } catch (e) {
@@ -189,7 +198,7 @@ export const localstackTestSuite = (
               ];
             })
           );
-          return testFunc(resolvedContext);
+          return testFunc(resolvedContext, context.extra);
         }
       });
     } else {
