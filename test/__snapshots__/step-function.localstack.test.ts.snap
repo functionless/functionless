@@ -1,123 +1,5 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[` 1`] = `
-Object {
-  "StartAt": "return \\"hello world\\"",
-  "States": Object {
-    "return \\"hello world\\"": Object {
-      "End": true,
-      "Result": "hello world",
-      "ResultPath": "$",
-      "Type": "Pass",
-    },
-  },
-}
-`;
-
-exports[` 2`] = `
-Object {
-  "StartAt": "return await func()",
-  "States": Object {
-    "return await func()": Object {
-      "End": true,
-      "Resource": "__REPLACED_TOKEN",
-      "ResultPath": "$",
-      "Type": "Task",
-    },
-  },
-}
-`;
-
-exports[` 3`] = `
-Object {
-  "StartAt": "0_tmp = await func(event.str)",
-  "States": Object {
-    "0_tmp = await func(event.str)": Object {
-      "InputPath": "$.str",
-      "Next": "return 0_tmp.str",
-      "Resource": "__REPLACED_TOKEN",
-      "ResultPath": "$.0_tmp",
-      "Type": "Task",
-    },
-    "return 0_tmp.str": Object {
-      "End": true,
-      "OutputPath": "$.0_tmp.str",
-      "Type": "Pass",
-    },
-  },
-}
-`;
-
-exports[` 4`] = `
-Object {
-  "StartAt": "0_tmp = await func(\\"hello world\\")",
-  "States": Object {
-    "0_tmp = await func(\\"hello world\\")": Object {
-      "Next": "return 0_tmp.str",
-      "Parameters": "hello world",
-      "Resource": "__REPLACED_TOKEN",
-      "ResultPath": "$.0_tmp",
-      "Type": "Task",
-    },
-    "return 0_tmp.str": Object {
-      "End": true,
-      "OutputPath": "$.0_tmp.str",
-      "Type": "Pass",
-    },
-  },
-}
-`;
-
-exports[` 5`] = `
-Object {
-  "StartAt": "0_tmp = await func({str: \\"hello world\\"})",
-  "States": Object {
-    "0_tmp = await func({str: \\"hello world\\"})": Object {
-      "Next": "return 0_tmp.str",
-      "Parameters": Object {
-        "str": "hello world",
-      },
-      "Resource": "__REPLACED_TOKEN",
-      "ResultPath": "$.0_tmp",
-      "Type": "Task",
-    },
-    "return 0_tmp.str": Object {
-      "End": true,
-      "OutputPath": "$.0_tmp.str",
-      "Type": "Pass",
-    },
-  },
-}
-`;
-
-exports[` 6`] = `
-Object {
-  "StartAt": "obj = {str: \\"hello world\\"}",
-  "States": Object {
-    "0_tmp = await func(obj)": Object {
-      "InputPath": "$.obj",
-      "Next": "return 0_tmp.str",
-      "Resource": "__REPLACED_TOKEN",
-      "ResultPath": "$.0_tmp",
-      "Type": "Task",
-    },
-    "obj = {str: \\"hello world\\"}": Object {
-      "Next": "0_tmp = await func(obj)",
-      "Parameters": Object {
-        "str": "hello world",
-      },
-      "ResultPath": "$.obj",
-      "Type": "Pass",
-    },
-    "return 0_tmp.str": Object {
-      "End": true,
-      "OutputPath": "$.0_tmp.str",
-      "Type": "Pass",
-    },
-  },
-}
-`;
-
 exports[`call lambda $AWS invoke 1`] = `
 Object {
   "StartAt": "obj = {str: \\"hello world\\"}",
@@ -125,10 +7,10 @@ Object {
     "0_tmp = await $AWS.Lambda.Invoke({Function: func, Payload: obj})": Object {
       "Next": "return 0_tmp.Payload.str",
       "Parameters": Object {
-        "FunctionName": "sfnStack-parent6func5A43B84B-37d6c8c5",
+        "FunctionName": "sfnStack-parent6func5A43B84B-7a1274a8",
         "Payload.$": "$.obj",
       },
-      "Resource": "arn:aws:states:::lambda:invoke",
+      "Resource": "__REPLACED_ARN",
       "ResultPath": "$.0_tmp",
       "Type": "Task",
     },
@@ -149,13 +31,135 @@ Object {
 }
 `;
 
+exports[`call lambda $SFN forEach 1`] = `
+Object {
+  "StartAt": "await $SFN.forEach(input, function(n))",
+  "States": Object {
+    "await $SFN.forEach(input, function(n))": Object {
+      "ItemsPath": "$",
+      "Iterator": Object {
+        "StartAt": "return func(n)",
+        "States": Object {
+          "return func(n)": Object {
+            "End": true,
+            "InputPath": "$.n",
+            "Resource": "__REPLACED_ARN",
+            "ResultPath": "$",
+            "Type": "Task",
+          },
+        },
+      },
+      "Next": "return null",
+      "Parameters": Object {
+        "n.$": "$$.Map.Item.Value",
+      },
+      "ResultPath": null,
+      "Type": "Map",
+    },
+    "return null": Object {
+      "End": true,
+      "OutputPath": "$.null",
+      "Parameters": Object {
+        "null": null,
+      },
+      "Type": "Pass",
+    },
+  },
+}
+`;
+
+exports[`call lambda $SFN map 1`] = `
+Object {
+  "StartAt": "return await $SFN.map(input, function(n))",
+  "States": Object {
+    "return await $SFN.map(input, function(n))": Object {
+      "End": true,
+      "ItemsPath": "$",
+      "Iterator": Object {
+        "StartAt": "return n",
+        "States": Object {
+          "return n": Object {
+            "End": true,
+            "OutputPath": "$.n",
+            "Type": "Pass",
+          },
+        },
+      },
+      "Parameters": Object {
+        "n.$": "$$.Map.Item.Value",
+      },
+      "ResultPath": "$",
+      "Type": "Map",
+    },
+  },
+}
+`;
+
+exports[`call lambda $SFN parallel 1`] = `
+Object {
+  "StartAt": "return await $SFN.parallel([function(), function()])",
+  "States": Object {
+    "return await $SFN.parallel([function(), function()])": Object {
+      "Branches": Array [
+        Object {
+          "StartAt": "return 1",
+          "States": Object {
+            "return 1": Object {
+              "End": true,
+              "Result": 1,
+              "ResultPath": "$",
+              "Type": "Pass",
+            },
+          },
+        },
+        Object {
+          "StartAt": "return 2",
+          "States": Object {
+            "return 2": Object {
+              "End": true,
+              "Result": 2,
+              "ResultPath": "$",
+              "Type": "Pass",
+            },
+          },
+        },
+      ],
+      "End": true,
+      "ResultPath": "$",
+      "Type": "Parallel",
+    },
+  },
+}
+`;
+
+exports[`call lambda $SFN wait 1`] = `
+Object {
+  "StartAt": "$SFN.waitFor(1)",
+  "States": Object {
+    "$SFN.waitFor(1)": Object {
+      "Next": "return null",
+      "Seconds": 1,
+      "Type": "Wait",
+    },
+    "return null": Object {
+      "End": true,
+      "OutputPath": "$.null",
+      "Parameters": Object {
+        "null": null,
+      },
+      "Type": "Pass",
+    },
+  },
+}
+`;
+
 exports[`call lambda 1`] = `
 Object {
-  "StartAt": "return await func()",
+  "StartAt": "return func()",
   "States": Object {
-    "return await func()": Object {
+    "return func()": Object {
       "End": true,
-      "Resource": "arn:aws:lambda:us-east-1:000000000000:function:sfnStack-parent1func2654F7BF-e33310f6",
+      "Resource": "__REPLACED_ARN",
       "ResultPath": "$",
       "Type": "Task",
     },
@@ -172,29 +176,7 @@ Object {
       "Parameters": Object {
         "str": "hello world",
       },
-      "Resource": "arn:aws:lambda:us-east-1:000000000000:function:sfnStack-parent4funcEEECE974-d9fe7ac1",
-      "ResultPath": "$.0_tmp",
-      "Type": "Task",
-    },
-    "return 0_tmp.str": Object {
-      "End": true,
-      "OutputPath": "$.0_tmp.str",
-      "Type": "Pass",
-    },
-  },
-}
-`;
-
-exports[`call lambda with object literal parameter: call lambda with object literal parameter 1`] = `
-Object {
-  "StartAt": "0_tmp = await func({str: \\"hello world\\"})",
-  "States": Object {
-    "0_tmp = await func({str: \\"hello world\\"})": Object {
-      "Next": "return 0_tmp.str",
-      "Parameters": Object {
-        "str": "hello world",
-      },
-      "Resource": "arn:aws:lambda:us-east-1:000000000000:function:sfnStack-parent4funcEEECE974-d9fe7ac1",
+      "Resource": "__REPLACED_ARN",
       "ResultPath": "$.0_tmp",
       "Type": "Task",
     },
@@ -214,35 +196,7 @@ Object {
     "0_tmp = await func(obj)": Object {
       "InputPath": "$.obj",
       "Next": "return 0_tmp.str",
-      "Resource": "arn:aws:lambda:us-east-1:000000000000:function:sfnStack-parent5funcA141DA6B-c4293018",
-      "ResultPath": "$.0_tmp",
-      "Type": "Task",
-    },
-    "obj = {str: \\"hello world\\"}": Object {
-      "Next": "0_tmp = await func(obj)",
-      "Parameters": Object {
-        "str": "hello world",
-      },
-      "ResultPath": "$.obj",
-      "Type": "Pass",
-    },
-    "return 0_tmp.str": Object {
-      "End": true,
-      "OutputPath": "$.0_tmp.str",
-      "Type": "Pass",
-    },
-  },
-}
-`;
-
-exports[`call lambda with object reference parameter: call lambda with object reference parameter 1`] = `
-Object {
-  "StartAt": "obj = {str: \\"hello world\\"}",
-  "States": Object {
-    "0_tmp = await func(obj)": Object {
-      "InputPath": "$.obj",
-      "Next": "return 0_tmp.str",
-      "Resource": "arn:aws:lambda:us-east-1:000000000000:function:sfnStack-parent5funcA141DA6B-c4293018",
+      "Resource": "__REPLACED_ARN",
       "ResultPath": "$.0_tmp",
       "Type": "Task",
     },
@@ -270,27 +224,7 @@ Object {
     "0_tmp = await func(\\"hello world\\")": Object {
       "Next": "return 0_tmp.str",
       "Parameters": "hello world",
-      "Resource": "arn:aws:lambda:us-east-1:000000000000:function:sfnStack-parent3funcA2B27922-97ca43ec",
-      "ResultPath": "$.0_tmp",
-      "Type": "Task",
-    },
-    "return 0_tmp.str": Object {
-      "End": true,
-      "OutputPath": "$.0_tmp.str",
-      "Type": "Pass",
-    },
-  },
-}
-`;
-
-exports[`call lambda with string parameter: call lambda with string parameter 1`] = `
-Object {
-  "StartAt": "0_tmp = await func(\\"hello world\\")",
-  "States": Object {
-    "0_tmp = await func(\\"hello world\\")": Object {
-      "Next": "return 0_tmp.str",
-      "Parameters": "hello world",
-      "Resource": "arn:aws:lambda:us-east-1:000000000000:function:sfnStack-parent3funcA2B27922-97ca43ec",
+      "Resource": "__REPLACED_ARN",
       "ResultPath": "$.0_tmp",
       "Type": "Task",
     },
@@ -310,7 +244,7 @@ Object {
     "0_tmp = await func(event.str)": Object {
       "InputPath": "$.str",
       "Next": "return 0_tmp.str",
-      "Resource": "arn:aws:lambda:us-east-1:000000000000:function:sfnStack-parent2funcB1B31DBB-b321cd1a",
+      "Resource": "__REPLACED_ARN",
       "ResultPath": "$.0_tmp",
       "Type": "Task",
     },
@@ -318,60 +252,12 @@ Object {
       "End": true,
       "OutputPath": "$.0_tmp.str",
       "Type": "Pass",
-    },
-  },
-}
-`;
-
-exports[`call lambda with string reference: call lambda with string reference 1`] = `
-Object {
-  "StartAt": "0_tmp = await func(event.str)",
-  "States": Object {
-    "0_tmp = await func(event.str)": Object {
-      "InputPath": "$.str",
-      "Next": "return 0_tmp.str",
-      "Resource": "arn:aws:lambda:us-east-1:000000000000:function:sfnStack-parent2funcB1B31DBB-b321cd1a",
-      "ResultPath": "$.0_tmp",
-      "Type": "Task",
-    },
-    "return 0_tmp.str": Object {
-      "End": true,
-      "OutputPath": "$.0_tmp.str",
-      "Type": "Pass",
-    },
-  },
-}
-`;
-
-exports[`call lambda: call lambda 1`] = `
-Object {
-  "StartAt": "return await func()",
-  "States": Object {
-    "return await func()": Object {
-      "End": true,
-      "Resource": "arn:aws:lambda:us-east-1:000000000000:function:sfnStack-parent1func2654F7BF-e33310f6",
-      "ResultPath": "$",
-      "Type": "Task",
     },
   },
 }
 `;
 
 exports[`simple 1`] = `
-Object {
-  "StartAt": "return \\"hello world\\"",
-  "States": Object {
-    "return \\"hello world\\"": Object {
-      "End": true,
-      "Result": "hello world",
-      "ResultPath": "$",
-      "Type": "Pass",
-    },
-  },
-}
-`;
-
-exports[`simple: simple 1`] = `
 Object {
   "StartAt": "return \\"hello world\\"",
   "States": Object {

@@ -897,10 +897,31 @@ export class ASL {
         const ref = expr.expr.ref();
         if (isIntegration<Integration>(ref)) {
           const serviceCall = new IntegrationImpl(ref);
-          const taskState = <State>{
-            ...serviceCall.asl(expr, this),
-            ...props,
-          };
+          const partialTask = serviceCall.asl(expr, this);
+
+          const { End, Next } = props;
+
+          const taskState = ((): State => {
+            switch (partialTask.Type) {
+              case "Wait":
+                return {
+                  ...(partialTask as Omit<Wait, "Next">),
+                  ...{ End, Next },
+                };
+              case "Choice":
+              case "Fail":
+              case "Succeed":
+                return partialTask as Choice | Fail | Succeed;
+              case "Task":
+              case "Parallel":
+              case "Pass":
+              case "Map":
+                return {
+                  ...partialTask,
+                  ...props,
+                } as Task | ParallelTask | Pass | MapTask;
+            }
+          })();
 
           const throwOrPass = this.throw(expr);
           if (throwOrPass?.Next) {

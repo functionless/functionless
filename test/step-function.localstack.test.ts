@@ -1,6 +1,6 @@
 import { Duration } from "aws-cdk-lib";
 import { Construct } from "constructs";
-import { StepFunction, Function, $AWS } from "../src";
+import { StepFunction, Function, $AWS, $SFN } from "../src";
 import { localstackTestSuite } from "./localstack";
 import { testStepFunction } from "./runtime-util";
 import { normalizeCDKJson } from "./util";
@@ -213,5 +213,62 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
       });
     },
     "hello world"
+  );
+
+  test(
+    "call lambda $SFN wait",
+    (parent) => {
+      return new StepFunction(parent, "sfn2", async () => {
+        $SFN.waitFor(1);
+      });
+    },
+    null
+  );
+
+  test(
+    "call lambda $SFN map",
+    (parent) => {
+      return new StepFunction(parent, "sfn2", async (input) => {
+        return $SFN.map(input, (n) => {
+          return n;
+        });
+      });
+    },
+    [1, 2],
+    [1, 2]
+  );
+
+  test(
+    "call lambda $SFN forEach",
+    (parent) => {
+      const func = new Function<number, void>(
+        parent,
+        "func",
+        {
+          timeout: Duration.seconds(20),
+        },
+        async (event) => {
+          console.log(event);
+        }
+      );
+      return new StepFunction(parent, "sfn2", async (input) => {
+        await $SFN.forEach(input, (n) => func(n));
+      });
+    },
+    null,
+    [1, 2]
+  );
+
+  test(
+    "call lambda $SFN parallel",
+    (parent) => {
+      return new StepFunction(parent, "sfn2", async () => {
+        return $SFN.parallel(
+          () => 1,
+          () => 2
+        );
+      });
+    },
+    [1, 2]
   );
 });
