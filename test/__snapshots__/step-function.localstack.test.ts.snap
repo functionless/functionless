@@ -7,7 +7,7 @@ Object {
     "0_tmp = await $AWS.Lambda.Invoke({Function: func, Payload: obj})": Object {
       "Next": "return 0_tmp.Payload.str",
       "Parameters": Object {
-        "FunctionName": "sfnStack-parent6func5A43B84B-c2744514",
+        "FunctionName": "sfnStack-parent6func5A43B84B-e4412e22",
         "Payload.$": "$.obj",
       },
       "Resource": "arn:aws:states:::lambda:invoke",
@@ -37,7 +37,7 @@ Object {
   "States": Object {
     "return func()": Object {
       "End": true,
-      "Resource": "arn:aws:lambda:us-east-1:000000000000:function:sfnStack-parent1func2654F7BF-9606a230",
+      "Resource": "arn:aws:lambda:us-east-1:000000000000:function:sfnStack-parent1func2654F7BF-a7f2966c",
       "ResultPath": "$",
       "Type": "Task",
     },
@@ -54,7 +54,7 @@ Object {
       "Parameters": Object {
         "str": "hello world",
       },
-      "Resource": "arn:aws:lambda:us-east-1:000000000000:function:sfnStack-parent4funcEEECE974-f9c00fb4",
+      "Resource": "arn:aws:lambda:us-east-1:000000000000:function:sfnStack-parent4funcEEECE974-6548f22a",
       "ResultPath": "$.0_tmp",
       "Type": "Task",
     },
@@ -74,7 +74,7 @@ Object {
     "0_tmp = await func(obj)": Object {
       "InputPath": "$.obj",
       "Next": "return 0_tmp.str",
-      "Resource": "arn:aws:lambda:us-east-1:000000000000:function:sfnStack-parent5funcA141DA6B-0b0582cd",
+      "Resource": "arn:aws:lambda:us-east-1:000000000000:function:sfnStack-parent5funcA141DA6B-7c9b2a5a",
       "ResultPath": "$.0_tmp",
       "Type": "Task",
     },
@@ -102,7 +102,7 @@ Object {
     "0_tmp = await func(\\"hello world\\")": Object {
       "Next": "return 0_tmp.str",
       "Parameters": "hello world",
-      "Resource": "arn:aws:lambda:us-east-1:000000000000:function:sfnStack-parent3funcA2B27922-ed3b080a",
+      "Resource": "arn:aws:lambda:us-east-1:000000000000:function:sfnStack-parent3funcA2B27922-be74b851",
       "ResultPath": "$.0_tmp",
       "Type": "Task",
     },
@@ -122,7 +122,7 @@ Object {
     "0_tmp = await func(event.str)": Object {
       "InputPath": "$.str",
       "Next": "return 0_tmp.str",
-      "Resource": "arn:aws:lambda:us-east-1:000000000000:function:sfnStack-parent2funcB1B31DBB-ab349089",
+      "Resource": "arn:aws:lambda:us-east-1:000000000000:function:sfnStack-parent2funcB1B31DBB-ad24ff16",
       "ResultPath": "$.0_tmp",
       "Type": "Task",
     },
