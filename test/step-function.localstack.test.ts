@@ -390,4 +390,16 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
       or: true,
     }
   );
+
+  test(
+    "overlapping variable with input",
+    (parent) => {
+      return new StepFunction(parent, "sfn2", async (input) => {
+        const a = "2";
+        return { a: input.a, b: a };
+      });
+    },
+    { a: "1", b: "2" },
+    { a: "1" }
+  );
 });

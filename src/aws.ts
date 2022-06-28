@@ -19,7 +19,6 @@ import {
   UpdateItemInput,
   UpdateItemOutput,
 } from "typesafe-dynamodb/lib/update-item";
-import { ASL } from "./asl";
 import { ErrorCodes, SynthError } from "./error-code";
 import { Argument, Expr } from "./expression";
 import { Function, isFunction, NativeIntegration } from "./function";
@@ -416,7 +415,7 @@ export namespace $AWS {
       >
     >({
       kind: "Lambda.Invoke",
-      asl(call) {
+      asl(call, context) {
         const input = call.args[0].expr;
         if (input === undefined) {
           throw new Error("missing argument 'input'");
@@ -447,7 +446,7 @@ export namespace $AWS {
           Parameters: {
             FunctionName: functionRef.resource.functionName,
             [`Payload${payload && isVariableReference(payload) ? ".$" : ""}`]:
-              payload ? ASL.toJson(payload) : null,
+              payload ? context.toJson(payload) : null,
           },
         };
       },
@@ -580,7 +579,7 @@ function makeDynamoIntegration<
       return {
         Type: "Task",
         Resource: `arn:aws:states:::aws-sdk:dynamodb:${operationName}`,
-        Parameters: ASL.toJson(
+        Parameters: context.toJson(
           renameObjectProperties(input, {
             Table: "TableName",
           })

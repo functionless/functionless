@@ -72,7 +72,7 @@ export namespace $SFN {
     "waitFor",
     (seconds: number) => void
   >("waitFor", {
-    asl(call) {
+    asl(call, context) {
       const seconds = call.args[0].expr;
       if (seconds === undefined) {
         throw new Error("the 'seconds' argument is required");
@@ -86,7 +86,7 @@ export namespace $SFN {
       } else {
         return {
           Type: "Wait" as const,
-          SecondsPath: ASL.toJsonPath(seconds),
+          SecondsPath: context.toJsonPath(seconds),
         };
       }
     },
@@ -105,7 +105,7 @@ export namespace $SFN {
     "waitUntil",
     (timestamp: string) => void
   >("waitUntil", {
-    asl(call) {
+    asl(call, context) {
       const timestamp = call.args[0]?.expr;
       if (timestamp === undefined) {
         throw new Error("the 'timestamp' argument is required");
@@ -119,7 +119,7 @@ export namespace $SFN {
       } else {
         return {
           Type: "Wait",
-          TimestampPath: ASL.toJsonPath(timestamp),
+          TimestampPath: context.toJsonPath(timestamp),
         };
       }
     },
@@ -257,7 +257,7 @@ export namespace $SFN {
     if (array === undefined) {
       throw new Error("missing argument 'array'");
     }
-    const arrayPath = ASL.toJsonPath(array);
+    const arrayPath = context.toJsonPath(array);
     return {
       Type: "Map",
       ...(maxConcurrency
@@ -538,10 +538,10 @@ abstract class BaseStepFunction<
       }`,
       Parameters: {
         StateMachineArn: this.resource.stateMachineArn,
-        ...(input ? ASL.toJsonAssignment("Input", input) : {}),
-        ...(name ? ASL.toJsonAssignment("Name", name) : {}),
+        ...(input ? context.toJsonAssignment("Input", input) : {}),
+        ...(name ? context.toJsonAssignment("Name", name) : {}),
         ...(traceHeader
-          ? ASL.toJsonAssignment("TraceHeader", traceHeader)
+          ? context.toJsonAssignment("TraceHeader", traceHeader)
           : {}),
       },
     };
@@ -1183,7 +1183,10 @@ class BaseStandardStepFunction<
         "Describe Execution requires a single string argument."
       );
 
-      const argValue = ASL.toJsonAssignment("ExecutionArn", executionArnExpr);
+      const argValue = context.toJsonAssignment(
+        "ExecutionArn",
+        executionArnExpr
+      );
 
       const task: Task = {
         Type: "Task",
