@@ -361,7 +361,7 @@ export class ASL {
    */
   static readonly ContextName = "Amazon States Language";
   /**
-   * Tag this instance with its Functionless Context ({@link ASL.ContextName})
+   * Tag this instance with its Functionless Context ({@link this.ContextName})
    */
   readonly kind = ASL.ContextName;
   /**
@@ -380,6 +380,8 @@ export class ASL {
   private readonly stateNames = new Map<Stmt, string>();
   private readonly stateNamesCount = new Map<string, number>();
   private readonly generatedNames = new DeterministicNameGenerator();
+
+  private needsFunctionlessContext: boolean = false;
 
   constructor(
     readonly scope: Construct,
@@ -440,9 +442,36 @@ export class ASL {
       throw new Error("State Machine has no States");
     }
 
-    this.definition = {
-      StartAt: start,
-      States: states,
+    if (this.needsFunctionlessContext) {
+      const functionlessContext: Pass = {
+        Type: "Pass",
+        Parameters: {
+          "input.$": "$",
+        },
+        ResultPath: "$.__fnl_context",
+        OutputPath: "$",
+        Next: start,
+      };
+
+      this.definition = {
+        StartAt: "Initialize Functionless Context",
+        States: {
+          "Initialize Functionless Context": functionlessContext,
+          ...states,
+        },
+      };
+    } else {
+      this.definition = {
+        StartAt: start,
+        States: states,
+      };
+    }
+  }
+
+  public get context() {
+    this.needsFunctionlessContext = true;
+    return {
+      input: "$.__fnl_context.input",
     };
   }
 
@@ -590,7 +619,7 @@ export class ASL {
           Type: "Map",
           ...(Catch.length > 0 ? { Catch } : {}),
           ResultPath: null,
-          ItemsPath: ASL.toJsonPath(stmt.expr),
+          ItemsPath: this.toJsonPath(stmt.expr),
           Next: this.next(stmt),
           MaxConcurrency: 1,
           Parameters: {
@@ -624,7 +653,7 @@ export class ASL {
 
         choices.push({
           Next: this.getStateName(curr.then),
-          ...ASL.toCondition(curr.when),
+          ...this.toCondition(curr.when),
         });
         curr = curr._else;
       }
@@ -679,7 +708,7 @@ export class ASL {
           [this.getStateName(stmt)]: {
             Type: "Pass",
             End: true,
-            OutputPath: ASL.toJsonPath(stmt.expr),
+            OutputPath: this.toJsonPath(stmt.expr),
           },
         };
       }
@@ -727,7 +756,7 @@ export class ASL {
         .reduce(
           (args: any, arg) => ({
             ...args,
-            [arg.name!]: ASL.toJson(arg.expr),
+            [arg.name!]: this.toJson(arg.expr),
           }),
           {}
         );
@@ -839,7 +868,7 @@ export class ASL {
           Type: "Choice",
           Choices: [
             {
-              ...ASL.toCondition(stmt.condition),
+              ...this.toCondition(stmt.condition),
               Next: whenTrue,
             },
           ],
@@ -964,7 +993,7 @@ export class ASL {
           const callbackStates = this.execute(callbackfn.body);
           const callbackStart = this.getStateName(callbackfn.body.step()!);
 
-          const listPath = ASL.toJsonPath(expr.expr.expr);
+          const listPath = this.toJsonPath(expr.expr.expr);
           return {
             Type: "Map",
             MaxConcurrency: 1,
@@ -1001,7 +1030,7 @@ export class ASL {
         return {
           Type: "Pass",
           ...props,
-          InputPath: ASL.toJsonPath(expr),
+          InputPath: this.toJsonPath(expr),
         };
       } else if (isFilter(expr)) {
         const predicate = expr.getArgument("predicate")?.expr;
@@ -1011,7 +1040,7 @@ export class ASL {
             return {
               Type: "Pass",
               ...props,
-              InputPath: ASL.toJsonPath(expr),
+              InputPath: this.toJsonPath(expr),
             };
           } catch {
             throw new Error(".filter with sub-tasks are not yet supported");
@@ -1032,7 +1061,7 @@ export class ASL {
       return {
         Type: "Pass",
         Parameters: {
-          [`result${isLiteralExpr(expr) ? "" : ".$"}`]: ASL.toJsonPath(expr),
+          [`result${isLiteralExpr(expr) ? "" : ".$"}`]: this.toJsonPath(expr),
         },
         OutputPath: "$.result",
         ...props,
@@ -1040,13 +1069,13 @@ export class ASL {
     } else if (isObjectLiteralExpr(expr)) {
       return {
         Type: "Pass",
-        Parameters: ASL.toJson(expr),
+        Parameters: this.toJson(expr),
         ...props,
       };
     } else if (isLiteralExpr(expr)) {
       return {
         Type: "Pass",
-        Result: ASL.toJson(expr),
+        Result: this.toJson(expr),
         ...props,
       };
     } else if (
@@ -1062,15 +1091,15 @@ export class ASL {
             ...Object.fromEntries(
               expr.getVisibleNames().map((name) => [`${name}.$`, `$.${name}`])
             ),
-            [ASL.toJsonPath(expr.left)]: null,
+            [this.toJsonPath(expr.left)]: null,
           },
         };
       } else if (isVariableReference(expr.right)) {
         return {
           Type: "Pass",
           ...props,
-          InputPath: ASL.toJsonPath(expr.right),
-          ResultPath: ASL.toJsonPath(expr.left),
+          InputPath: this.toJsonPath(expr.right),
+          ResultPath: this.toJsonPath(expr.left),
         };
       } else if (
         isLiteralExpr(expr.right) ||
@@ -1080,13 +1109,13 @@ export class ASL {
         return {
           Type: "Pass",
           ...props,
-          Parameters: ASL.toJson(expr.right),
-          ResultPath: ASL.toJsonPath(expr.left),
+          Parameters: this.toJson(expr.right),
+          ResultPath: this.toJsonPath(expr.left),
         };
       } else if (isAwaitExpr(expr.right) || isCallExpr(expr.right)) {
         return this.eval(expr.right, {
           ...props,
-          ResultPath: ASL.toJsonPath(expr.left),
+          ResultPath: this.toJsonPath(expr.left),
         });
       }
     } else if (isBinaryExpr(expr)) {
@@ -1251,6 +1280,517 @@ export class ASL {
       return undefined;
     }
   }
+
+  public toJson(expr?: Expr): any {
+    if (expr === undefined) {
+      return undefined;
+    }
+
+    // check if the value resolves to a constant
+    const constant = evalToConstant(expr);
+    if (constant !== undefined) {
+      if (isFunction(constant.constant)) {
+        return constant.constant.resource.functionArn;
+      } else if (isStepFunction(constant.constant)) {
+        return constant.constant.resource.stateMachineArn;
+      } else if (isTable(constant.constant)) {
+        return constant.constant.resource.tableName;
+      }
+      return constant.constant;
+    } else if (isArgument(expr)) {
+      return this.toJson(expr.expr);
+    } else if (isBinaryExpr(expr)) {
+    } else if (isCallExpr(expr)) {
+      if (isSlice(expr)) {
+        return this.sliceToJsonPath(expr);
+      } else if (isFilter(expr)) {
+        return this.filterToJsonPath(expr);
+      }
+    } else if (isIdentifier(expr)) {
+      return this.toJsonPath(expr);
+    } else if (isPropAccessExpr(expr)) {
+      return `${this.toJson(expr.expr)}.${expr.name}`;
+    } else if (isElementAccessExpr(expr)) {
+      return this.toJsonPath(expr);
+    } else if (isArrayLiteralExpr(expr)) {
+      if (expr.items.find(isVariableReference) !== undefined) {
+        return `States.Array(${expr.items
+          .map((item) => this.toJsonPath(item))
+          .join(", ")})`;
+      }
+      return expr.items.map((item) => this.toJson(item));
+    } else if (isObjectLiteralExpr(expr)) {
+      const payload: any = {};
+      for (const prop of expr.properties) {
+        if (!isPropAssignExpr(prop)) {
+          throw new Error(
+            `${prop.kind} is not supported in Amazon States Language`
+          );
+        }
+        if (
+          (isComputedPropertyNameExpr(prop.name) &&
+            isStringLiteralExpr(prop.name.expr)) ||
+          isIdentifier(prop.name) ||
+          isStringLiteralExpr(prop.name)
+        ) {
+          payload[
+            `${
+              isIdentifier(prop.name)
+                ? prop.name.name
+                : isStringLiteralExpr(prop.name)
+                ? prop.name.value
+                : (prop.name.expr as StringLiteralExpr).value
+            }${
+              isLiteralExpr(prop.expr) || isReferenceExpr(prop.expr) ? "" : ".$"
+            }`
+          ] = this.toJson(prop.expr);
+        } else {
+          throw new Error(
+            "computed name of PropAssignExpr is not supported in Amazon States Language"
+          );
+        }
+      }
+      return payload;
+    } else if (isLiteralExpr(expr)) {
+      return expr.value ?? null;
+    } else if (isTemplateExpr(expr)) {
+      return `States.Format('${expr.exprs
+        .map((e) => (isLiteralExpr(e) ? this.toJson(e) : "{}"))
+        .join("")}',${expr.exprs
+        .filter((e) => !isLiteralExpr(e))
+        .map((e) => this.toJsonPath(e))})`;
+    }
+    throw new Error(`cannot evaluate ${expr.kind} to JSON`);
+  }
+
+  public toJsonPath(expr: Expr): string {
+    if (isArrayLiteralExpr(expr)) {
+      return aws_stepfunctions.JsonPath.array(
+        ...expr.items.map((item) => this.toJsonPath(item))
+      );
+    } else if (isCallExpr(expr)) {
+      if (isSlice(expr)) {
+        return this.sliceToJsonPath(expr);
+      } else if (isFilter(expr)) {
+        return this.filterToJsonPath(expr);
+      }
+    } else if (isIdentifier(expr)) {
+      const ref = expr.lookup();
+      // If the identifier references a parameter expression and that parameter expression
+      // is in a FunctionDecl and that Function is at the top (no parent).
+      // This logic needs to be updated to support destructured inputs: https://github.com/functionless/functionless/issues/68
+      if (ref && isParameterDecl(ref) && isFunctionDecl(ref.parent)) {
+        return this.context.input;
+      }
+      return `$.${expr.name}`;
+    } else if (isPropAccessExpr(expr)) {
+      return `${this.toJsonPath(expr.expr)}.${expr.name}`;
+    } else if (isElementAccessExpr(expr)) {
+      return this.elementAccessExprToJsonPath(expr);
+    }
+
+    throw new Error(
+      `expression kind '${expr.kind}' cannot be evaluated to a JSON Path expression.`
+    );
+  }
+
+  private sliceToJsonPath(expr: CallExpr & { expr: PropAccessExpr }) {
+    const startArg = expr.getArgument("start")?.expr;
+    const endArg = expr.getArgument("end")?.expr;
+    if (startArg === undefined && endArg === undefined) {
+      // .slice()
+      return this.toJsonPath(expr.expr.expr);
+    } else if (startArg !== undefined) {
+      const startConst = evalToConstant(startArg)?.constant;
+      if (startConst === undefined) {
+        throw new Error(
+          "the 'start' argument of slice must be a literal number"
+        );
+      }
+      if (endArg === undefined) {
+        // slice(x)
+        return `${this.toJsonPath(expr.expr.expr)}[${startConst}:]`;
+      } else {
+        const endConst = evalToConstant(endArg);
+        if (
+          endConst === undefined ||
+          (endConst.constant !== undefined &&
+            typeof endConst.constant !== "number")
+        ) {
+          throw new Error(
+            "the 'end' argument of slice must be a literal number"
+          );
+        }
+        if (endConst.constant === undefined) {
+          // explicit undefined passed to slice should be treated the same as not provided
+          return `${this.toJsonPath(expr.expr.expr)}[${startConst}:]`;
+        } else {
+          return `${this.toJsonPath(expr.expr.expr)}[${startConst}:${
+            endConst.constant
+          }]`;
+        }
+      }
+    } else if (endArg !== undefined) {
+      throw new Error(
+        `impossible expression, slice called with end defined without startArg`
+      );
+    } else {
+      throw new Error(
+        `impossible expression, slice called with unknown arguments`
+      );
+    }
+  }
+
+  /**
+   * Returns a object with the key formatted based on the contents of the value.
+   * in ASL, object keys that reference json path values must have a suffix of ".$"
+   * { "input.$": "$.value" }
+   */
+  public toJsonAssignment(key: string, expr: Expr): Record<string, any> {
+    const value = this.toJson(expr);
+
+    return {
+      [isVariableReference(expr) ? `${key}.$` : key]: value,
+    };
+  }
+
+  private filterToJsonPath(expr: CallExpr & { expr: PropAccessExpr }): string {
+    const predicate = expr.getArgument("predicate")?.expr;
+    if (!isFunctionExpr(predicate)) {
+      throw new Error(
+        "the 'predicate' argument of slice must be a FunctionExpr"
+      );
+    }
+
+    const stmt = predicate.body.statements[0];
+    if (
+      stmt === undefined ||
+      !isReturnStmt(stmt) ||
+      predicate.body.statements.length !== 1
+    ) {
+      throw new Error(
+        'a JSONPath filter expression only supports a single, in-line statement, e.g. .filter(a => a == "hello" || a === "world")'
+      );
+    }
+
+    const toFilterCondition = (expr: Expr): string => {
+      if (isBinaryExpr(expr)) {
+        return `${toFilterCondition(expr.left)}${expr.op}${toFilterCondition(
+          expr.right
+        )}`;
+      } else if (isUnaryExpr(expr)) {
+        return `${expr.op}${toFilterCondition(expr.expr)}`;
+      } else if (isIdentifier(expr)) {
+        const ref = expr.lookup();
+        if (ref === undefined) {
+          throw new Error(`unresolved identifier: ${expr.name}`);
+        } else if (isParameterDecl(ref)) {
+          if (ref.parent !== predicate) {
+            throw new Error(
+              "cannot reference a ParameterDecl other than those in .filter((item, index) =>) in a JSONPath filter expression"
+            );
+          }
+          if (ref === ref.parent.parameters[0]) {
+            return "@";
+          } else if (ref === ref.parent.parameters[1]) {
+            throw new Error(
+              "the 'index' parameter in a .filter expression is not supported"
+            );
+          } else {
+            throw new Error(
+              "the 'array' parameter in a .filter expression is not supported"
+            );
+          }
+        } else if (isVariableStmt(ref)) {
+          throw new Error(
+            "cannot reference a VariableStmt within a JSONPath .filter expression"
+          );
+        }
+      } else if (isStringLiteralExpr(expr)) {
+        return `'${expr.value.replace(/'/g, "\\'")}'`;
+      } else if (
+        isBooleanLiteralExpr(expr) ||
+        isNumberLiteralExpr(expr) ||
+        isNullLiteralExpr(expr)
+      ) {
+        return `${expr.value}`;
+      } else if (isPropAccessExpr(expr)) {
+        return `${toFilterCondition(expr.expr)}.${expr.name}`;
+      } else if (isElementAccessExpr(expr)) {
+        return `${toFilterCondition(expr.expr)}[${this.elementToJsonPath(
+          expr.element
+        )}]`;
+      }
+
+      throw new Error(
+        `JSONPath's filter expression does not support '${exprToString(expr)}'`
+      );
+    };
+
+    return `${this.toJsonPath(expr.expr.expr)}[?(${toFilterCondition(
+      stmt.expr
+    )})]`;
+  }
+
+  /**
+   * We're indexing the array we're iterating over with the key. For this special case, we know that
+   * the value points to `$$.Map.Item.Value`.
+   *
+   * In the below example:
+   * 1. the value of `$$.Map.Item.Index` is stashed in `$.i` (as expected)
+   * 2. the value of `$$.Map.Item.Value` is stashed in `$.0_i`. Special `0_` prefix is impossible
+   *    to produce with TypeScript syntax and is therefore safe to use a prefix to store the hidden value.
+   *
+   * ```ts
+   * for (const i in items) {
+   *   const a = items[i]
+   *   {
+   *     Type: Pass
+   *     ResultPath: $.a
+   *     InputPath: "$.0_i"
+   *   }
+   * }
+   * ```
+   */
+  private elementAccessExprToJsonPath(expr: ElementAccessExpr): string {
+    if (isIdentifier(expr.element) && isIdentifier(expr.expr)) {
+      const element = expr.element.lookup();
+      if (
+        isVariableStmt(element) &&
+        isForInStmt(element.parent) &&
+        expr.findParent(isForInStmt) === element.parent
+      ) {
+        return `$.0_${element.name}`;
+      } else {
+        throw new Error(
+          "cannot use an Identifier to index an Array or Object except for an array in a for-in statement"
+        );
+      }
+    }
+    return `${this.toJsonPath(expr.expr)}[${this.elementToJsonPath(
+      expr.element
+    )}]`;
+  }
+
+  private elementToJsonPath(expr: Expr): string {
+    const value = evalToConstant(expr)?.constant;
+    if (typeof value === "string") {
+      return `'${value}'`;
+    } else if (typeof value === "number") {
+      return value.toString(10);
+    }
+
+    throw new Error(
+      `an element in a Step Function must be a literal string or number`
+    );
+  }
+
+  public toCondition(expr: Expr): Condition {
+    if (isBooleanLiteralExpr(expr)) {
+      return {
+        IsPresent: !expr.value,
+        Variable: `$.0_${expr.value}`,
+      };
+    } else if (isUnaryExpr(expr)) {
+      return {
+        Not: this.toCondition(expr.expr),
+      };
+    } else if (isBinaryExpr(expr)) {
+      if (expr.op === "&&") {
+        return {
+          And: [this.toCondition(expr.left), this.toCondition(expr.right)],
+        };
+      } else if (expr.op === "||") {
+        return {
+          Or: [this.toCondition(expr.left), this.toCondition(expr.right)],
+        };
+      } else if (expr.op === "+" || expr.op === "-") {
+        throw new Error(
+          `operation '${expr.op}' is not supported in a Condition`
+        );
+      } else {
+        const isLiteralOrTypeOfExpr = anyOf(isLiteralExpr, isTypeOfExpr);
+
+        if (isLiteralExpr(expr.left) && isLiteralExpr(expr.right)) {
+          throw new Error("cannot compare two literal expressions");
+        } else if (
+          isLiteralOrTypeOfExpr(expr.left) ||
+          isLiteralOrTypeOfExpr(expr.right)
+        ) {
+          // typeof x === "string" -> left: typeOf, right: literal
+          // "string" === typeof x -> left: literal, right: typeOf
+          // x === 1 -> left: identifier, right: literal
+          const [literalExpr, val] = isLiteralExpr(expr.left)
+            ? [expr.left, expr.right]
+            : [expr.right, expr.left];
+
+          if (isTypeOfExpr(val)) {
+            const supportedTypeNames = [
+              "undefined",
+              "boolean",
+              "number",
+              "string",
+              "bigint",
+            ] as const;
+
+            if (!isStringLiteralExpr(literalExpr)) {
+              throw new Error(
+                'typeof expression can only be compared against a string literal, such as typeof x === "string"'
+              );
+            }
+
+            const type = literalExpr.value as typeof supportedTypeNames[number];
+            if (!supportedTypeNames.includes(type)) {
+              throw new Error(`unsupported typeof comparison: "${type}"`);
+            }
+            const Variable = this.toJsonPath(val.expr);
+            if (expr.op === "==" || expr.op === "!=") {
+              if (type === "undefined") {
+                return {
+                  Variable,
+                  IsPresent: expr.op !== "==",
+                };
+              } else {
+                const flag = expr.op === "==";
+                return {
+                  [expr.op === "==" ? "And" : "Or"]: [
+                    {
+                      Variable,
+                      IsPresent: flag,
+                    },
+                    {
+                      Variable,
+                      ...(type === "boolean"
+                        ? { IsBoolean: flag }
+                        : type === "string"
+                        ? { IsString: flag }
+                        : { IsNumeric: flag }),
+                    },
+                  ],
+                };
+              }
+            } else {
+              throw new Error(
+                `unsupported operand '${expr.op}' with 'typeof' expression.`
+              );
+            }
+          } else if (
+            isNullLiteralExpr(literalExpr) ||
+            isUndefinedLiteralExpr(literalExpr)
+          ) {
+            if (expr.op === "!=") {
+              return {
+                And: [
+                  {
+                    Variable: this.toJsonPath(val),
+                    IsPresent: true,
+                  },
+                  {
+                    Variable: this.toJsonPath(val),
+                    IsNull: false,
+                  },
+                ],
+              };
+            } else if (expr.op === "==") {
+              return {
+                Or: [
+                  {
+                    Variable: this.toJsonPath(val),
+                    IsPresent: false,
+                  },
+                  {
+                    Variable: this.toJsonPath(val),
+                    IsNull: true,
+                  },
+                ],
+              };
+            }
+          } else if (isStringLiteralExpr(literalExpr)) {
+            const [variable, value] = [
+              this.toJsonPath(val),
+              literalExpr.value,
+            ] as const;
+            if (expr.op === "==") {
+              return {
+                Variable: variable,
+                StringEquals: value,
+              };
+            } else if (expr.op === "!=") {
+              return {
+                Not: {
+                  Variable: variable,
+                  StringEquals: value,
+                },
+              };
+            } else if (expr.op === "<") {
+              return {
+                Variable: variable,
+                StringLessThan: value,
+              };
+            } else if (expr.op === "<=") {
+              return {
+                Variable: variable,
+                StringLessThanEquals: value,
+              };
+            } else if (expr.op === ">") {
+              return {
+                Variable: variable,
+                StringGreaterThan: value,
+              };
+            } else if (expr.op === ">=") {
+              return {
+                Variable: variable,
+                StringGreaterThanEquals: value,
+              };
+            }
+          } else if (isNumberLiteralExpr(literalExpr)) {
+            const [variable, value] = [
+              this.toJsonPath(val),
+              literalExpr.value,
+            ] as const;
+            if (expr.op === "==") {
+              return {
+                Variable: variable,
+                NumericEquals: value,
+              };
+            } else if (expr.op === "!=") {
+              return {
+                Not: {
+                  Variable: variable,
+                  NumericEquals: value,
+                },
+              };
+            } else if (expr.op === "<") {
+              return {
+                Variable: variable,
+                NumericLessThan: value,
+              };
+            } else if (expr.op === "<=") {
+              return {
+                Variable: variable,
+                NumericLessThanEquals: value,
+              };
+            } else if (expr.op === ">") {
+              return {
+                Variable: variable,
+                NumericGreaterThan: value,
+              };
+            } else if (expr.op === ">=") {
+              return {
+                Variable: variable,
+                NumericGreaterThanEquals: value,
+              };
+            }
+          }
+        }
+        if (isStringLiteralExpr(expr.left) || isStringLiteralExpr(expr.right)) {
+        }
+        // need typing information
+        // return aws_stepfunctions.Condition.str
+      }
+    }
+    throw new Error(`cannot evaluate expression: '${expr.kind}`);
+  }
 }
 
 export function isMapOrForEach(expr: CallExpr): expr is CallExpr & {
@@ -1337,309 +1877,6 @@ function hasBreak(loop: ForInStmt | ForOfStmt | WhileStmt | DoStmt): boolean {
 }
 
 export namespace ASL {
-  export function toJson(expr?: Expr): any {
-    if (expr === undefined) {
-      return undefined;
-    }
-
-    // check if the value resolves to a constant
-    const constant = evalToConstant(expr);
-    if (constant !== undefined) {
-      if (isFunction(constant.constant)) {
-        return constant.constant.resource.functionArn;
-      } else if (isStepFunction(constant.constant)) {
-        return constant.constant.resource.stateMachineArn;
-      } else if (isTable(constant.constant)) {
-        return constant.constant.resource.tableName;
-      }
-      return constant.constant;
-    } else if (isArgument(expr)) {
-      return toJson(expr.expr);
-    } else if (isBinaryExpr(expr)) {
-    } else if (isCallExpr(expr)) {
-      if (isSlice(expr)) {
-        return sliceToJsonPath(expr);
-      } else if (isFilter(expr)) {
-        return filterToJsonPath(expr);
-      }
-    } else if (isIdentifier(expr)) {
-      return toJsonPath(expr);
-    } else if (isPropAccessExpr(expr)) {
-      return `${toJson(expr.expr)}.${expr.name}`;
-    } else if (isElementAccessExpr(expr)) {
-      return toJsonPath(expr);
-    } else if (isArrayLiteralExpr(expr)) {
-      if (expr.items.find(isVariableReference) !== undefined) {
-        return `States.Array(${expr.items
-          .map((item) => toJsonPath(item))
-          .join(", ")})`;
-      }
-      return expr.items.map((item) => toJson(item));
-    } else if (isObjectLiteralExpr(expr)) {
-      const payload: any = {};
-      for (const prop of expr.properties) {
-        if (!isPropAssignExpr(prop)) {
-          throw new Error(
-            `${prop.kind} is not supported in Amazon States Language`
-          );
-        }
-        if (
-          (isComputedPropertyNameExpr(prop.name) &&
-            isStringLiteralExpr(prop.name.expr)) ||
-          isIdentifier(prop.name) ||
-          isStringLiteralExpr(prop.name)
-        ) {
-          payload[
-            `${
-              isIdentifier(prop.name)
-                ? prop.name.name
-                : isStringLiteralExpr(prop.name)
-                ? prop.name.value
-                : (prop.name.expr as StringLiteralExpr).value
-            }${
-              isLiteralExpr(prop.expr) || isReferenceExpr(prop.expr) ? "" : ".$"
-            }`
-          ] = toJson(prop.expr);
-        } else {
-          throw new Error(
-            "computed name of PropAssignExpr is not supported in Amazon States Language"
-          );
-        }
-      }
-      return payload;
-    } else if (isLiteralExpr(expr)) {
-      return expr.value ?? null;
-    } else if (isTemplateExpr(expr)) {
-      return `States.Format('${expr.exprs
-        .map((e) => (isLiteralExpr(e) ? toJson(e) : "{}"))
-        .join("")}',${expr.exprs
-        .filter((e) => !isLiteralExpr(e))
-        .map((e) => toJsonPath(e))})`;
-    }
-    throw new Error(`cannot evaluate ${expr.kind} to JSON`);
-  }
-
-  export function toJsonPath(expr: Expr): string {
-    if (isArrayLiteralExpr(expr)) {
-      return aws_stepfunctions.JsonPath.array(
-        ...expr.items.map((item) => toJsonPath(item))
-      );
-    } else if (isCallExpr(expr)) {
-      if (isSlice(expr)) {
-        return sliceToJsonPath(expr);
-      } else if (isFilter(expr)) {
-        return filterToJsonPath(expr);
-      }
-    } else if (isIdentifier(expr)) {
-      const ref = expr.lookup();
-      // If the identifier references a parameter expression and that parameter expression
-      // is in a FunctionDecl and that Function is at the top (no parent).
-      // This logic needs to be updated to support destructured inputs: https://github.com/functionless/functionless/issues/68
-      if (ref && isParameterDecl(ref) && isFunctionDecl(ref.parent)) {
-        return "$";
-      }
-      return `$.${expr.name}`;
-    } else if (isPropAccessExpr(expr)) {
-      return `${toJsonPath(expr.expr)}.${expr.name}`;
-    } else if (isElementAccessExpr(expr)) {
-      return elementAccessExprToJsonPath(expr);
-    }
-
-    throw new Error(
-      `expression kind '${expr.kind}' cannot be evaluated to a JSON Path expression.`
-    );
-  }
-
-  function sliceToJsonPath(expr: CallExpr & { expr: PropAccessExpr }) {
-    const startArg = expr.getArgument("start")?.expr;
-    const endArg = expr.getArgument("end")?.expr;
-    if (startArg === undefined && endArg === undefined) {
-      // .slice()
-      return toJsonPath(expr.expr.expr);
-    } else if (startArg !== undefined) {
-      const startConst = evalToConstant(startArg)?.constant;
-      if (startConst === undefined) {
-        throw new Error(
-          "the 'start' argument of slice must be a literal number"
-        );
-      }
-      if (endArg === undefined) {
-        // slice(x)
-        return `${toJsonPath(expr.expr.expr)}[${startConst}:]`;
-      } else {
-        const endConst = evalToConstant(endArg);
-        if (
-          endConst === undefined ||
-          (endConst.constant !== undefined &&
-            typeof endConst.constant !== "number")
-        ) {
-          throw new Error(
-            "the 'end' argument of slice must be a literal number"
-          );
-        }
-        if (endConst.constant === undefined) {
-          // explicit undefined passed to slice should be treated the same as not provided
-          return `${toJsonPath(expr.expr.expr)}[${startConst}:]`;
-        } else {
-          return `${toJsonPath(expr.expr.expr)}[${startConst}:${
-            endConst.constant
-          }]`;
-        }
-      }
-    } else if (endArg !== undefined) {
-      throw new Error(
-        `impossible expression, slice called with end defined without startArg`
-      );
-    } else {
-      throw new Error(
-        `impossible expression, slice called with unknown arguments`
-      );
-    }
-  }
-
-  /**
-   * Returns a object with the key formatted based on the contents of the value.
-   * in ASL, object keys that reference json path values must have a suffix of ".$"
-   * { "input.$": "$.value" }
-   */
-  export function toJsonAssignment(
-    key: string,
-    expr: Expr
-  ): Record<string, any> {
-    const value = ASL.toJson(expr);
-
-    return {
-      [isVariableReference(expr) ? `${key}.$` : key]: value,
-    };
-  }
-
-  function filterToJsonPath(expr: CallExpr & { expr: PropAccessExpr }): string {
-    const predicate = expr.getArgument("predicate")?.expr;
-    if (!isFunctionExpr(predicate)) {
-      throw new Error(
-        "the 'predicate' argument of slice must be a FunctionExpr"
-      );
-    }
-
-    const stmt = predicate.body.statements[0];
-    if (
-      stmt === undefined ||
-      !isReturnStmt(stmt) ||
-      predicate.body.statements.length !== 1
-    ) {
-      throw new Error(
-        'a JSONPath filter expression only supports a single, in-line statement, e.g. .filter(a => a == "hello" || a === "world")'
-      );
-    }
-
-    return `${toJsonPath(expr.expr.expr)}[?(${toFilterCondition(stmt.expr)})]`;
-
-    function toFilterCondition(expr: Expr): string {
-      if (isBinaryExpr(expr)) {
-        return `${toFilterCondition(expr.left)}${expr.op}${toFilterCondition(
-          expr.right
-        )}`;
-      } else if (isUnaryExpr(expr)) {
-        return `${expr.op}${toFilterCondition(expr.expr)}`;
-      } else if (isIdentifier(expr)) {
-        const ref = expr.lookup();
-        if (ref === undefined) {
-          throw new Error(`unresolved identifier: ${expr.name}`);
-        } else if (isParameterDecl(ref)) {
-          if (ref.parent !== predicate) {
-            throw new Error(
-              "cannot reference a ParameterDecl other than those in .filter((item, index) =>) in a JSONPath filter expression"
-            );
-          }
-          if (ref === ref.parent.parameters[0]) {
-            return "@";
-          } else if (ref === ref.parent.parameters[1]) {
-            throw new Error(
-              "the 'index' parameter in a .filter expression is not supported"
-            );
-          } else {
-            throw new Error(
-              "the 'array' parameter in a .filter expression is not supported"
-            );
-          }
-        } else if (isVariableStmt(ref)) {
-          throw new Error(
-            "cannot reference a VariableStmt within a JSONPath .filter expression"
-          );
-        }
-      } else if (isStringLiteralExpr(expr)) {
-        return `'${expr.value.replace(/'/g, "\\'")}'`;
-      } else if (
-        isBooleanLiteralExpr(expr) ||
-        isNumberLiteralExpr(expr) ||
-        isNullLiteralExpr(expr)
-      ) {
-        return `${expr.value}`;
-      } else if (isPropAccessExpr(expr)) {
-        return `${toFilterCondition(expr.expr)}.${expr.name}`;
-      } else if (isElementAccessExpr(expr)) {
-        return `${toFilterCondition(expr.expr)}[${elementToJsonPath(
-          expr.element
-        )}]`;
-      }
-
-      throw new Error(
-        `JSONPath's filter expression does not support '${exprToString(expr)}'`
-      );
-    }
-  }
-
-  /**
-   * We're indexing the array we're iterating over with the key. For this special case, we know that
-   * the value points to `$$.Map.Item.Value`.
-   *
-   * In the below example:
-   * 1. the value of `$$.Map.Item.Index` is stashed in `$.i` (as expected)
-   * 2. the value of `$$.Map.Item.Value` is stashed in `$.0_i`. Special `0_` prefix is impossible
-   *    to produce with TypeScript syntax and is therefore safe to use a prefix to store the hidden value.
-   *
-   * ```ts
-   * for (const i in items) {
-   *   const a = items[i]
-   *   {
-   *     Type: Pass
-   *     ResultPath: $.a
-   *     InputPath: "$.0_i"
-   *   }
-   * }
-   * ```
-   */
-  function elementAccessExprToJsonPath(expr: ElementAccessExpr): string {
-    if (isIdentifier(expr.element) && isIdentifier(expr.expr)) {
-      const element = expr.element.lookup();
-      if (
-        isVariableStmt(element) &&
-        isForInStmt(element.parent) &&
-        expr.findParent(isForInStmt) === element.parent
-      ) {
-        return `$.0_${element.name}`;
-      } else {
-        throw new Error(
-          "cannot use an Identifier to index an Array or Object except for an array in a for-in statement"
-        );
-      }
-    }
-    return `${toJsonPath(expr.expr)}[${elementToJsonPath(expr.element)}]`;
-  }
-
-  function elementToJsonPath(expr: Expr): string {
-    const value = evalToConstant(expr)?.constant;
-    if (typeof value === "string") {
-      return `'${value}'`;
-    } else if (typeof value === "number") {
-      return value.toString(10);
-    }
-
-    throw new Error(
-      `an element in a Step Function must be a literal string or number`
-    );
-  }
-
   export const isTruthy = (v: string): Condition =>
     and(
       isPresent(v),
@@ -1742,213 +1979,6 @@ export namespace ASL {
       },
     ],
   });
-
-  export function toCondition(expr: Expr): Condition {
-    if (isBooleanLiteralExpr(expr)) {
-      return {
-        IsPresent: !expr.value,
-        Variable: `$.0_${expr.value}`,
-      };
-    } else if (isUnaryExpr(expr)) {
-      return {
-        Not: toCondition(expr.expr),
-      };
-    } else if (isBinaryExpr(expr)) {
-      if (expr.op === "&&") {
-        return {
-          And: [toCondition(expr.left), toCondition(expr.right)],
-        };
-      } else if (expr.op === "||") {
-        return {
-          Or: [toCondition(expr.left), toCondition(expr.right)],
-        };
-      } else if (expr.op === "+" || expr.op === "-") {
-        throw new Error(
-          `operation '${expr.op}' is not supported in a Condition`
-        );
-      } else {
-        const isLiteralOrTypeOfExpr = anyOf(isLiteralExpr, isTypeOfExpr);
-
-        if (isLiteralExpr(expr.left) && isLiteralExpr(expr.right)) {
-          throw new Error("cannot compare two literal expressions");
-        } else if (
-          isLiteralOrTypeOfExpr(expr.left) ||
-          isLiteralOrTypeOfExpr(expr.right)
-        ) {
-          // typeof x === "string" -> left: typeOf, right: literal
-          // "string" === typeof x -> left: literal, right: typeOf
-          // x === 1 -> left: identifier, right: literal
-          const [literalExpr, val] = isLiteralExpr(expr.left)
-            ? [expr.left, expr.right]
-            : [expr.right, expr.left];
-
-          if (isTypeOfExpr(val)) {
-            const supportedTypeNames = [
-              "undefined",
-              "boolean",
-              "number",
-              "string",
-              "bigint",
-            ] as const;
-
-            if (!isStringLiteralExpr(literalExpr)) {
-              throw new Error(
-                'typeof expression can only be compared against a string literal, such as typeof x === "string"'
-              );
-            }
-
-            const type = literalExpr.value as typeof supportedTypeNames[number];
-            if (!supportedTypeNames.includes(type)) {
-              throw new Error(`unsupported typeof comparison: "${type}"`);
-            }
-            const Variable = toJsonPath(val.expr);
-            if (expr.op === "==" || expr.op === "!=") {
-              if (type === "undefined") {
-                return {
-                  Variable,
-                  IsPresent: expr.op !== "==",
-                };
-              } else {
-                const flag = expr.op === "==";
-                return {
-                  [expr.op === "==" ? "And" : "Or"]: [
-                    {
-                      Variable,
-                      IsPresent: flag,
-                    },
-                    {
-                      Variable,
-                      ...(type === "boolean"
-                        ? { IsBoolean: flag }
-                        : type === "string"
-                        ? { IsString: flag }
-                        : { IsNumeric: flag }),
-                    },
-                  ],
-                };
-              }
-            } else {
-              throw new Error(
-                `unsupported operand '${expr.op}' with 'typeof' expression.`
-              );
-            }
-          } else if (
-            isNullLiteralExpr(literalExpr) ||
-            isUndefinedLiteralExpr(literalExpr)
-          ) {
-            if (expr.op === "!=") {
-              return {
-                And: [
-                  {
-                    Variable: toJsonPath(val),
-                    IsPresent: true,
-                  },
-                  {
-                    Variable: toJsonPath(val),
-                    IsNull: false,
-                  },
-                ],
-              };
-            } else if (expr.op === "==") {
-              return {
-                Or: [
-                  {
-                    Variable: toJsonPath(val),
-                    IsPresent: false,
-                  },
-                  {
-                    Variable: toJsonPath(val),
-                    IsNull: true,
-                  },
-                ],
-              };
-            }
-          } else if (isStringLiteralExpr(literalExpr)) {
-            const [variable, value] = [
-              toJsonPath(val),
-              literalExpr.value,
-            ] as const;
-            if (expr.op === "==") {
-              return {
-                Variable: variable,
-                StringEquals: value,
-              };
-            } else if (expr.op === "!=") {
-              return {
-                Not: {
-                  Variable: variable,
-                  StringEquals: value,
-                },
-              };
-            } else if (expr.op === "<") {
-              return {
-                Variable: variable,
-                StringLessThan: value,
-              };
-            } else if (expr.op === "<=") {
-              return {
-                Variable: variable,
-                StringLessThanEquals: value,
-              };
-            } else if (expr.op === ">") {
-              return {
-                Variable: variable,
-                StringGreaterThan: value,
-              };
-            } else if (expr.op === ">=") {
-              return {
-                Variable: variable,
-                StringGreaterThanEquals: value,
-              };
-            }
-          } else if (isNumberLiteralExpr(literalExpr)) {
-            const [variable, value] = [
-              toJsonPath(val),
-              literalExpr.value,
-            ] as const;
-            if (expr.op === "==") {
-              return {
-                Variable: variable,
-                NumericEquals: value,
-              };
-            } else if (expr.op === "!=") {
-              return {
-                Not: {
-                  Variable: variable,
-                  NumericEquals: value,
-                },
-              };
-            } else if (expr.op === "<") {
-              return {
-                Variable: variable,
-                NumericLessThan: value,
-              };
-            } else if (expr.op === "<=") {
-              return {
-                Variable: variable,
-                NumericLessThanEquals: value,
-              };
-            } else if (expr.op === ">") {
-              return {
-                Variable: variable,
-                NumericGreaterThan: value,
-              };
-            } else if (expr.op === ">=") {
-              return {
-                Variable: variable,
-                NumericGreaterThanEquals: value,
-              };
-            }
-          }
-        }
-        if (isStringLiteralExpr(expr.left) || isStringLiteralExpr(expr.right)) {
-        }
-        // need typing information
-        // return aws_stepfunctions.Condition.str
-      }
-    }
-    throw new Error(`cannot evaluate expression: '${expr.kind}`);
-  }
 }
 
 /**

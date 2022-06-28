@@ -231,13 +231,13 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
     "call lambda $SFN map",
     (parent) => {
       return new StepFunction(parent, "sfn2", async (input) => {
-        return $SFN.map(input, (n) => {
+        return $SFN.map(input.arr, (n) => {
           return n;
         });
       });
     },
     [1, 2],
-    [1, 2]
+    { arr: [1, 2] }
   );
 
   test(
@@ -254,11 +254,11 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
         }
       );
       return new StepFunction(parent, "sfn2", async (input) => {
-        await $SFN.forEach(input, (n) => func(n));
+        await $SFN.forEach(input.arr, (n) => func(n));
       });
     },
     null,
-    [1, 2]
+    { arr: [1, 2] }
   );
 
   test(
@@ -272,5 +272,17 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
       });
     },
     [1, 2]
+  );
+
+  test(
+    "overlapping variable with input",
+    (parent) => {
+      return new StepFunction(parent, "sfn2", async (input) => {
+        const a = "2";
+        return { a: input.a, b: a };
+      });
+    },
+    { a: "1", b: "2" },
+    { a: "1" }
   );
 });
