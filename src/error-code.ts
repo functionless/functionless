@@ -850,6 +850,75 @@ export namespace ErrorCodes {
       type: ErrorType.ERROR,
       title: "Step Functions does not support undefined assignment",
     };
+
+  /**
+   * Events passed to the a bus in a step function must be one or more literal objects and may not use the spread (`...`) syntax or computed properties.
+   *
+   * ```ts
+   * const sfn = new StepFunction(stack, "sfn", async () => {
+   *   const sourceName = "source";
+   *   const event = { source: "lambda", "detail-type": "type", detail: {} };
+   *   // invalid
+   *   await bus.putEvents(event);
+   *   // invalid
+   *   await bus.putEvents({ ...event });
+   *   // invalid
+   *   await bus.putEvents(...[event]);
+   *   // invalid
+   *   await bus.putEvents({
+   *     [sourceName]: "lambda",
+   *     "detail-type": "type",
+   *     detail: {},
+   *   });
+   *   // valid
+   *   await bus.putEvents({
+   *     source: "lambda",
+   *     "detail-type": "type",
+   *     detail: {},
+   *   });
+   * });
+   * ```
+   *
+   * Workaround
+   *
+   * Lambda can be used to generate dynamic event collections.
+   *
+   * ```ts
+   * const sender = new Function(stack, "sender", async (event) => {
+   *   const sourceName = "source";
+   *   const event = { source: "lambda", "detail-type": "type", detail: {} };
+   *   await bus.putEvents(event); // valid
+   *   await bus.putEvents({ ...event }); // valid
+   *   await bus.putEvents(...[event]); // valid
+   *   // valid
+   *   await bus.putEvents({
+   *     [sourceName]: "lambda",
+   *     "detail-type": "type",
+   *     detail: {},
+   *   });
+   *   // valid
+   *   await bus.putEvents({
+   *     source: "lambda",
+   *     "detail-type": "type",
+   *     detail: {},
+   *   });
+   * });
+   *
+   * const sfn = new StepFunction(stack, "sfn", async () => {
+   *   const event = { source: "lambda", "detail-type": "type", detail: {} };
+   *   await sender(event);
+   * });
+   * ```
+   *
+   * The limitation is due to Step Function's lack of optional or default value retrieval for fields. Attempting to access a missing field in ASL leads to en error. This can be fixed using Choice/Conditions to check for the existence of a single field, but would take all permutations of all optional fields to support optional field at runtime. Due to this limitation, we currently compute the transformation at compile time using the fields present on the literal object. For more details and process see: https://github.com/functionless/functionless/issues/101.
+   */
+  export const StepFunctions_calls_to_EventBus_PutEvents_must_use_object_literals: ErrorCode =
+    {
+      code: 10023,
+      type: ErrorType.ERROR,
+      title:
+        "StepFunctions calls to EventBus putEvents must use object literals",
+    };
 }
 
 // to prevent the closure serializer from trying to import all of functionless.

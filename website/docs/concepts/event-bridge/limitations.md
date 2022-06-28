@@ -4,7 +4,7 @@ sidebar_position: 99
 
 # Limitations
 
-## Events passed to the bus in a step function must literal objects
+## Events passed to the bus in a step function must be object literals
 
 Events passed to the bus in a step function must be one or more literal objects and may not use the spread (`...`) syntax.
 

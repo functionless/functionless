@@ -122,6 +122,39 @@ export function validate(
         ),
       ];
     } else if (ts.isCallExpression(node)) {
+      if (
+        checker.getIntegrationNodeKind(node.expression) === "EventBus.putEvents"
+      ) {
+        const errors = node.arguments.flatMap((arg) => {
+          if (ts.isObjectLiteralExpression(arg)) {
+            if (
+              arg.properties.some(
+                (prop) =>
+                  !ts.isPropertyAssignment(prop) ||
+                  ts.isComputedPropertyName(prop.name)
+              )
+            ) {
+              return [
+                newError(
+                  arg,
+                  ErrorCodes.StepFunctions_calls_to_EventBus_PutEvents_must_use_object_literals
+                ),
+              ];
+            }
+            return [];
+          }
+          return [
+            newError(
+              arg,
+              ErrorCodes.StepFunctions_calls_to_EventBus_PutEvents_must_use_object_literals
+            ),
+          ];
+        });
+
+        if (errors) {
+          return errors;
+        }
+      }
       return validatePromiseCalls(node);
     } else if (ts.isNewExpression(node)) {
       const [, diagnostic] = validateNewIntegration(node);

@@ -1,6 +1,7 @@
 import { GraphqlApi } from "@aws-cdk/aws-appsync-alpha";
 import { App, aws_events, Stack } from "aws-cdk-lib";
 import { StepFunction, Function, EventBus, AppsyncResolver } from "../../src";
+import { PutEventInput, Event } from "../../src/event-bridge/event-bus";
 
 const app = new App({
   autoSynth: false,
@@ -194,4 +195,44 @@ new StepFunction(stack, "new resolver", async () => {
 
 new StepFunction(stack, "cdk resource", () => {
   new aws_events.EventBus(stack, "");
+});
+
+/**
+ * Unsupported - Event bus putEvent non-object literal
+ */
+const bus = new EventBus(stack, "bus");
+new StepFunction(stack, "usebus", async () => {
+  const event: PutEventInput<Event<{}>> = {};
+  await bus.putEvents(event);
+});
+
+new StepFunction(stack, "usebus", async () => {
+  const events: PutEventInput<Event<{}>>[] = [{}];
+  await bus.putEvents({ source: "", detail: {}, "detail-type": "" }, ...events);
+});
+
+new StepFunction(stack, "usebus", async () => {
+  const event: PutEventInput<Event<{}>> = {};
+  await bus.putEvents({ ...event });
+});
+
+new StepFunction(stack, "usebus", async () => {
+  const source = "source";
+  await bus.putEvents({ [source]: "", detail: {}, "detail-type": "" });
+});
+
+new StepFunction(stack, "usebus", async () => {
+  const source = "source";
+  await bus.putEvents(
+    { source: "", detail: {}, "detail-type": "" },
+    { [source]: "", detail: {}, "detail-type": "" }
+  );
+});
+
+/**
+ * Supported
+ */
+
+new StepFunction(stack, "usebus", async () => {
+  await bus.putEvents({ "detail-type": "", source: "", detail: {} });
 });

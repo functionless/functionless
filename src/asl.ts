@@ -107,6 +107,10 @@ export interface StateMachine<S extends States> {
 export interface States {
   [stateName: string]: State;
 }
+export interface SubState extends States {
+  default: State;
+}
+
 export type State =
   | Choice
   | Fail
@@ -528,42 +532,76 @@ export class ASL {
     return this.stateNames.get(stmt)!;
   }
 
+  /**
+   * When executing {@link flattenSubStates}, need to replace the next property.
+   *
+   * A few states like Choice have deep Next properties to update.
+   */
   private rewriteNext(
-    state: State,
-    scope: string,
-    scopeNames: Set<string>
+    subState: State,
+    parentState: string,
+    substateNames: Set<string>
   ): State {
-    const updateIfInScopeNames = (next: string) =>
-      scopeNames.has(next) ? this.scopedStateName(scope, next) : next;
-    if (state.Type === "Choice") {
+    const updateSubstateName = (next: string) =>
+      substateNames.has(next) ? this.subStateName(parentState, next) : next;
+    if (subState.Type === "Choice") {
       return {
-        ...state,
-        Choices: state.Choices.map((choice) => ({
+        ...subState,
+        Choices: subState.Choices.map((choice) => ({
           ...choice,
-          Next: updateIfInScopeNames(choice.Next),
+          Next: updateSubstateName(choice.Next),
         })),
-        Default: state.Default
-          ? updateIfInScopeNames(state.Default)
+        Default: subState.Default
+          ? updateSubstateName(subState.Default)
           : undefined,
       };
-    } else if (!("Next" in state)) {
-      return state;
+    } else if (!("Next" in subState)) {
+      return subState;
     }
     return {
-      ...state,
-      Next: state.Next ? updateIfInScopeNames(state.Next) : state.Next,
+      ...subState,
+      Next: subState.Next ? updateSubstateName(subState.Next) : subState.Next,
     };
   }
 
-  private scopedStateName(scope: string, localName: string) {
-    if (localName === "default") {
-      return scope;
+  /**
+   * Sub-states use "default" as their entry point.
+   * Re-write default to be the parent name. For all other subStateNames,
+   * suffix the subStateName with the parentState name.
+   */
+  private subStateName(parentState: string, subStateName: string) {
+    if (subStateName === "default") {
+      return parentState;
     }
-    return `${localName}__${scope}`;
+    return `${subStateName}__${parentState}`;
   }
 
-  private normalizeStates(name: string, states: State | States) {
-    if ("Type" in states) {
+  /**
+   * When `eval` returns a sub-state with multiple states, we need to re-write the sub state names to
+   * include context to their parent state and update the Next property to match.
+   *
+   * sub state
+   * ```ts
+   * {
+   *    default: { Next: 'b' },
+   *    b: { Next: 'c' },
+   *    c: { Next: 'externalState'  }
+   * }
+   * ```
+   *
+   * Parent state name: parentState
+   *
+   * rewrite
+   * ```ts
+   * {
+   *    parentState: { Next: 'b__parentState' },
+   *    b__parentState: { Next: 'c__parentState' },
+   *    c__parentState: { Next: 'externalState' }
+   * }
+   * ```
+   */
+  private flattenSubStates(name: string, states: State | SubState) {
+    if (!("default" in states)) {
       return {
         [name]: states as State,
       };
@@ -573,7 +611,7 @@ export class ASL {
         Object.entries(states).map(([key, state]) => {
           // re-write any Next states to reflect the updated state names.
           const updated = this.rewriteNext(state, name, localKeys);
-          return [this.scopedStateName(name, key), updated];
+          return [this.subStateName(name, key), updated];
         })
       );
     }
@@ -643,7 +681,7 @@ export class ASL {
         ResultPath: null,
       });
 
-      return this.normalizeStates(name, expr);
+      return this.flattenSubStates(name, expr);
     } else if (isForOfStmt(stmt) || isForInStmt(stmt)) {
       const throwTransition = this.throw(stmt);
 
@@ -772,7 +810,7 @@ export class ASL {
         End: true,
       });
 
-      return this.normalizeStates(name, expr);
+      return this.flattenSubStates(name, expr);
     } else if (isVariableStmt(stmt)) {
       if (stmt.expr === undefined) {
         return {};
@@ -784,7 +822,7 @@ export class ASL {
         Next: this.next(stmt),
       });
 
-      return this.normalizeStates(name, expr);
+      return this.flattenSubStates(name, expr);
     } else if (isThrowStmt(stmt)) {
       if (
         !(
@@ -950,7 +988,7 @@ export class ASL {
       End?: true;
       Next?: string;
     }
-  ): State | States {
+  ): State | SubState {
     if (props.End === undefined && props.Next === undefined) {
       // Hack: delete props.Next when End is true to clean up test cases
       // TODO: make this cleaner somehow?
@@ -1248,7 +1286,6 @@ export class ASL {
         };
       }
 
-      // TODO: assert never
       throw new SynthError(
         ErrorCodes.Unsupported_Feature,
         `Step Function does not support operator ${expr.op}`

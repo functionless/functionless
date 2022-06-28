@@ -1,11 +1,11 @@
 import { aws_events, aws_events_targets, Stack } from "aws-cdk-lib";
 import { Construct } from "constructs";
 import { ASL } from "../asl";
+import { ErrorCodes, SynthError } from "../error-code";
 import {
   CallExpr,
   Expr,
   Identifier,
-  ObjectLiteralExpr,
   PropAssignExpr,
   StringLiteralExpr,
 } from "../expression";
@@ -257,24 +257,21 @@ abstract class EventBusBase<in Evnt extends Event, OutEvnt extends Evnt = Evnt>
         // Validate that the events are object literals.
         // Then normalize nested arrays of events into a single list of events.
         // TODO Relax these restrictions: https://github.com/functionless/functionless/issues/101
-        const eventObjs = call.args.reduce(
-          (events: ObjectLiteralExpr[], arg) => {
-            if (isArrayLiteralExpr(arg.expr)) {
-              if (!arg.expr.items.every(isObjectLiteralExpr)) {
-                throw Error(
-                  "Event Bus put events must use inline object parameters. Variable references are not supported currently."
-                );
-              }
-              return [...events, ...arg.expr.items];
-            } else if (isObjectLiteralExpr(arg.expr)) {
-              return [...events, arg.expr];
+        const eventObjs = call.args.flatMap((arg) => {
+          if (isArrayLiteralExpr(arg.expr)) {
+            if (!arg.expr.items.every(isObjectLiteralExpr)) {
+              throw new SynthError(
+                ErrorCodes.StepFunctions_calls_to_EventBus_PutEvents_must_use_object_literals
+              );
             }
-            throw Error(
-              "Event Bus put events must use inline object parameters. Variable references are not supported currently."
-            );
-          },
-          []
-        );
+            return arg.expr.items;
+          } else if (isObjectLiteralExpr(arg.expr)) {
+            return [arg.expr];
+          }
+          throw new SynthError(
+            ErrorCodes.StepFunctions_calls_to_EventBus_PutEvents_must_use_object_literals
+          );
+        });
 
         // The interface should prevent this.
         if (eventObjs.length === 0) {
@@ -302,8 +299,8 @@ abstract class EventBusBase<in Evnt extends Event, OutEvnt extends Evnt = Evnt>
             } => !(isSpreadAssignExpr(e) || isComputedPropertyNameExpr(e.name))
           );
           if (props.length < event.properties.length) {
-            throw Error(
-              "Event Bus put events must use inline objects instantiated without computed or spread keys."
+            throw new SynthError(
+              ErrorCodes.StepFunctions_calls_to_EventBus_PutEvents_must_use_object_literals
             );
           }
           return (
