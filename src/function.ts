@@ -383,14 +383,15 @@ abstract class FunctionBase<in Payload, Out>
   public asl(call: CallExpr, context: ASL) {
     const payloadArg = call.getArgument("payload")?.expr;
     this.resource.grantInvoke(context.role);
-    // TODO generalize this?
-    const props: Partial<Task> = ASL.toTaskInput(payloadArg);
 
-    return {
-      Type: "Task" as const,
-      Resource: this.resource.functionArn,
-      ...props,
-    };
+    return context.passArgument(
+      <Task>{
+        Type: "Task",
+        Resource: this.resource.functionArn,
+        Next: ASL.DeferNext,
+      },
+      payloadArg
+    );
   }
 
   protected static normalizeAsyncDestination<P, O>(

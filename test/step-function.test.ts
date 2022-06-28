@@ -2367,9 +2367,13 @@ test("call Step Function from another Step Function", () => {
     return machine1({});
   }).definition;
 
-  expectTaskToMatch(definition, {
-    Parameters: { StateMachineArn: machine1.resource.stateMachineArn },
-  });
+  expectTaskToMatch(
+    definition,
+    {
+      Parameters: { StateMachineArn: machine1.resource.stateMachineArn },
+    },
+    /machine1/g
+  );
 
   expect(normalizeDefinition(definition)).toMatchSnapshot();
 });

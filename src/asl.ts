@@ -107,9 +107,18 @@ export interface StateMachine<S extends States> {
 export interface States {
   [stateName: string]: State;
 }
-export interface SubState extends States {
-  default: State;
+export interface SubState {
+  default: State | SubState;
+  [stateName: string]: State | SubState;
 }
+
+export const isSubState = (state: State | SubState): state is SubState => {
+  return "default" in state && isState(state.default);
+};
+
+export const isState = (state: any): state is State => {
+  return "Type" in state;
+};
 
 export type State =
   | Choice
@@ -385,6 +394,11 @@ export class ASL {
   private readonly stateNamesCount = new Map<string, number>();
   private readonly generatedNames = new DeterministicNameGenerator();
 
+  /**
+   * When true, includes an extra state at the beginning of the machine which includes injected values.
+   */
+  private needsFnlContext = false;
+
   constructor(
     readonly scope: Construct,
     readonly role: aws_iam.IRole,
@@ -437,17 +451,6 @@ export class ASL {
             normalizeAST(expr, hoist)
           );
           return hoist && self.doHoist(node) ? hoist(updated) : updated;
-        } else if (
-          isArrayLiteralExpr(node) &&
-          !node.items.some((i) => isFunctionExpr(i))
-        ) {
-          // if the array contains functions, just leave it, it is probably for Parallel.
-          // This is short sighted, but should work now
-          const updated = visitEachChild(node, (expr) =>
-            normalizeAST(expr, hoist)
-          );
-
-          return hoist && self.doHoist(node) ? hoist(updated) : updated;
         }
         return visitEachChild(node, (expr) => normalizeAST(expr, hoist));
       }
@@ -460,24 +463,43 @@ export class ASL {
       throw new Error("State Machine has no States");
     }
 
-    /**
-     * Add some hard to manufacture constants to the machine.
-     *
-     * TODO: only add this when used?
-     */
-    const __fnl_context: Pass = {
-      Type: "Pass",
-      Parameters: {
-        null: null,
-        "input.$": "$",
-      },
-      ResultPath: "$.__fnl",
-      Next: start,
-    };
+    if (this.needsFnlContext) {
+      /**
+       * Add some hard to manufacture constants to the machine.
+       *
+       * TODO: only add this when used?
+       */
+      const __fnl_context: Pass = {
+        Type: "Pass",
+        Parameters: {
+          null: null,
+          "input.$": "$",
+        },
+        ResultPath: "$.__fnl",
+        Next: start,
+      };
 
-    this.definition = {
-      StartAt: "__fnl_context",
-      States: { __fnl_context: __fnl_context, ...states },
+      this.definition = {
+        StartAt: "__fnl_context",
+        States: { __fnl_context: __fnl_context, ...states },
+      };
+    } else {
+      this.definition = {
+        StartAt: start,
+        States: states,
+      };
+    }
+  }
+
+  /**
+   * Constants from the functionless context.
+   * On access, marks the machine as needing the context, which is injected as the first state in the machine.
+   */
+  get fnlContext() {
+    this.needsFnlContext = true;
+    return {
+      null: "$.__fnl_context.null",
+      input: "$.__fnl_context.input",
     };
   }
 
@@ -537,31 +559,33 @@ export class ASL {
    *
    * A few states like Choice have deep Next properties to update.
    */
-  private rewriteNext(
-    subState: State,
-    parentState: string,
-    substateNames: Set<string>
-  ): State {
-    const updateSubstateName = (next: string) =>
-      substateNames.has(next) ? this.subStateName(parentState, next) : next;
+  private rewriteNext(subState: State, cb: (next: string) => string): State {
     if (subState.Type === "Choice") {
       return {
         ...subState,
         Choices: subState.Choices.map((choice) => ({
           ...choice,
-          Next: updateSubstateName(choice.Next),
+          Next: cb(choice.Next),
         })),
-        Default: subState.Default
-          ? updateSubstateName(subState.Default)
-          : undefined,
+        Default: subState.Default ? cb(subState.Default) : undefined,
       };
     } else if (!("Next" in subState)) {
       return subState;
     }
     return {
       ...subState,
-      Next: subState.Next ? updateSubstateName(subState.Next) : subState.Next,
+      Next: subState.Next ? cb(subState.Next) : subState.Next,
     };
+  }
+
+  private rewriteSubStateNext(
+    subState: State,
+    parentState: string,
+    substateNames: Set<string>
+  ) {
+    const updateSubstateName = (next: string) =>
+      substateNames.has(next) ? this.subStateName(parentState, next) : next;
+    return this.rewriteNext(subState, updateSubstateName);
   }
 
   /**
@@ -600,18 +624,24 @@ export class ASL {
    * }
    * ```
    */
-  private flattenSubStates(name: string, states: State | SubState) {
-    if (!("default" in states)) {
+  private flattenSubStates(name: string, states: State | SubState): States {
+    if (!isSubState(states)) {
       return {
         [name]: states as State,
       };
     } else {
       const localKeys = new Set(Object.keys(states));
       return Object.fromEntries(
-        Object.entries(states).map(([key, state]) => {
-          // re-write any Next states to reflect the updated state names.
-          const updated = this.rewriteNext(state, name, localKeys);
-          return [this.subStateName(name, key), updated];
+        Object.entries(states).flatMap(([key, state]) => {
+          if (isSubState(state)) {
+            return Object.entries(
+              this.flattenSubStates(`${key}__${name}`, state)
+            );
+          } else {
+            // re-write any Next states to reflect the updated state names.
+            const updated = this.rewriteSubStateNext(state, name, localKeys);
+            return [[this.subStateName(name, key), updated]];
+          }
         })
       );
     }
@@ -1020,7 +1050,13 @@ export class ASL {
         const ref = expr.expr.ref();
         if (isIntegration<Integration>(ref)) {
           const serviceCall = new IntegrationImpl(ref);
-          const partialTask = serviceCall.asl(expr, this);
+          const integStates = serviceCall.asl(expr, this);
+
+          const states = isSubState(integStates)
+            ? integStates
+            : {
+                default: integStates,
+              };
 
           const { End, Next } = props;
 
@@ -1031,17 +1067,16 @@ export class ASL {
            * For example: https://github.com/functionless/functionless/issues/308
            * A Wait state with `ResultPath: null` was failing to deploy.
            */
-          const taskState = ((): State => {
-            const partialState = partialTask as State;
-            if (partialState.Type === "Wait") {
+          const applyDeferredNext = (state: State): State => {
+            if (state.Type === "Wait") {
               return {
-                ...(partialState as Omit<Wait, "Next">),
+                ...(state as Omit<Wait, "Next">),
                 ...{ End, Next },
               };
-            } else if (partialState.Type === "Choice") {
+            } else if (state.Type === "Choice") {
               return {
-                ...partialState,
-                Choices: partialState.Choices.map((choice) => ({
+                ...state,
+                Choices: state.Choices.map((choice) => ({
                   ...choice,
                   // TODO: inject a default end node
                   Next: Next!,
@@ -1049,40 +1084,60 @@ export class ASL {
                 // do we always want to inject a default?
                 Default: Next,
               };
+            } else if (state.Type === "Fail" || state.Type === "Succeed") {
+              return state as Choice | Fail | Succeed;
             } else if (
-              partialState.Type === "Fail" ||
-              partialState.Type === "Succeed"
-            ) {
-              return partialState as Choice | Fail | Succeed;
-            } else if (
-              partialState.Type === "Task" ||
-              partialState.Type === "Parallel" ||
-              partialState.Type === "Pass" ||
-              partialState.Type === "Map"
+              state.Type === "Task" ||
+              state.Type === "Parallel" ||
+              state.Type === "Pass" ||
+              state.Type === "Map"
             ) {
               return {
-                ...partialState,
+                ...state,
                 ...props,
               } as Task | ParallelTask | Pass | MapTask;
             }
-            assertNever(partialState);
-          })();
+            assertNever(state);
+          };
 
-          const throwOrPass = this.throw(expr);
-          if (throwOrPass?.Next) {
-            return <State>{
-              ...taskState,
-              Catch: [
-                {
-                  ErrorEquals: ["States.ALL"],
-                  Next: throwOrPass.Next,
-                  ResultPath: throwOrPass.ResultPath,
-                },
-              ],
-            };
-          } else {
-            return taskState;
-          }
+          const updateStates = (states: SubState): SubState => {
+            return <SubState>Object.fromEntries(
+              Object.entries(states).map(([stateName, state]) => {
+                if (isSubState(state)) {
+                  return [stateName, updateStates(state)];
+                } else {
+                  // when the Next is left empty or is set to ASL.DeferNext, replace the Next, End, and or ResultPath
+                  const updatedState =
+                    !("Next" in state) || state.Next === ASL.DeferNext
+                      ? applyDeferredNext(state)
+                      : state;
+
+                  const throwOrPass = this.throw(expr);
+                  if (throwOrPass?.Next) {
+                    return [
+                      stateName,
+                      <State>{
+                        ...updatedState,
+                        Catch: [
+                          {
+                            ErrorEquals: ["States.ALL"],
+                            Next: throwOrPass.Next,
+                            ResultPath: throwOrPass.ResultPath,
+                          },
+                        ],
+                      },
+                    ];
+                  } else {
+                    return [stateName, updatedState];
+                  }
+                }
+              })
+            );
+          };
+
+          const updatedStates = updateStates(states);
+
+          return updatedStates as SubState;
         } else {
           throw new SynthError(
             ErrorCodes.Unexpected_Error,
@@ -1248,17 +1303,9 @@ export class ASL {
             isNullLiteralExpr(expr.left) ||
             isUndefinedLiteralExpr(expr.left)
           ) {
-            return {
-              Type: "Pass",
-              ...ASL.toTaskInput(expr.right),
-              ...props,
-            };
+            return ASL.passArgument({ Type: "Pass", ...props }, expr.right);
           } else {
-            return {
-              Type: "Pass",
-              ...ASL.toTaskInput(expr.left),
-              ...props,
-            };
+            return ASL.passArgument({ Type: "Pass", ...props }, expr.left);
           }
         }
         const left = ASL.toJsonPath(expr.left);
@@ -1278,11 +1325,7 @@ export class ASL {
             InputPath: left,
             ...props,
           },
-          takeRight: {
-            Type: "Pass",
-            ...ASL.toTaskInput(expr.right),
-            ...props,
-          },
+          takeRight: ASL.passArgument({ Type: "Pass", ...props }, expr.right),
         };
       }
 
@@ -1635,7 +1678,7 @@ export namespace ASL {
       // is in a FunctionDecl and that Function is at the top (no parent).
       // This logic needs to be updated to support destructured inputs: https://github.com/functionless/functionless/issues/68
       if (ref && isParameterDecl(ref) && isFunctionDecl(ref.parent)) {
-        return "$.__fnl.input";
+        return this.fnlContext.input;
       }
       return `$.${expr.name}`;
     } else if (isPropAccessExpr(expr)) {
@@ -1666,43 +1709,65 @@ export namespace ASL {
    *    InputPath: "$.someVariable"
    * }
    */
-  export function toTaskInput(
-    expr?: Expr
-  ): Pick<Task, "Parameters" | "InputPath"> {
-    if (!expr) {
-      return {
+  export function passArgument(
+    task: Omit<Task | Pass, "Parameters" | "InputPath">,
+    argument?: Expr
+  ): State | SubState {
+    if (!argument) {
+      return <State>{
+        ...task,
         Parameters: undefined,
       };
-    } else if (isUndefinedLiteralExpr(expr)) {
+    } else if (isUndefinedLiteralExpr(argument)) {
       throw new SynthError(
         ErrorCodes.Step_Functions_does_not_support_undefined_assignment
       );
-    } else if (isArrayLiteralExpr(expr)) {
-      throw new SynthError(
-        ErrorCodes.Unexpected_Error,
-        "Array literals should be hoisted to their own variable before assignment or passing"
-      );
+    } else if (isArrayLiteralExpr(argument)) {
+      return {
+        default: {
+          Type: "Pass",
+          Parameters: {
+            "arr.$": ASL.toJson(argument),
+          },
+          ResultPath: "$.__arr_arg.arr",
+        },
+        task: <State>{
+          ...task,
+          InputPath: "$.__arr_arg.arr",
+        },
+      };
     }
-    return isVariableReference(expr)
-      ? {
-          InputPath: ASL.toJsonPath(expr),
+    return isVariableReference(argument)
+      ? <State>{
+          ...task,
+          InputPath: ASL.toJsonPath(argument),
         }
-      : isLiteralExpr(expr)
-      ? isStringLiteralExpr(expr) ||
-        isNumberLiteralExpr(expr) ||
-        isBooleanLiteralExpr(expr)
-        ? {
-            Parameters: expr.value,
+      : isLiteralExpr(argument)
+      ? isStringLiteralExpr(argument) ||
+        isNumberLiteralExpr(argument) ||
+        isBooleanLiteralExpr(argument)
+        ? <State>{
+            ...task,
+            Parameters: argument.value,
           }
-        : isNullLiteralExpr(expr)
-        ? { InputPath: "$.__fnl.null" }
-        : isObjectLiteralExpr(expr)
-        ? { Parameters: ASL.toJson(expr) }
-        : assertNever(expr)
-      : {
-          Parameters: ASL.toJson(expr),
+        : isNullLiteralExpr(argument)
+        ? <State>{ ...task, InputPath: this.fnlContext.null }
+        : isObjectLiteralExpr(argument)
+        ? <State>{ ...task, Parameters: ASL.toJson(argument) }
+        : assertNever(argument)
+      : <State>{
+          ...task,
+          Parameters: ASL.toJson(argument),
         };
   }
+
+  /**
+   * Used by integrations as a placeholder for the "Next" property of a task.
+   *
+   * When task.Next is ASL.DeferNext, Functionless will replace the Next with the appropriate value.
+   * It may also add End or ResultPath based on the scenario.
+   */
+  export const DeferNext: string = "__DeferNext";
 
   function sliceToJsonPath(expr: CallExpr & { expr: PropAccessExpr }) {
     const startArg = expr.getArgument("start")?.expr;
