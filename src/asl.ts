@@ -381,6 +381,16 @@ export class ASL {
   private readonly stateNamesCount = new Map<string, number>();
   private readonly generatedNames = new DeterministicNameGenerator();
 
+  /**
+   * When true, adds an extra state to the beginning of the machine that assigns the input
+   * to a state variable and adds some additional constants.
+   *
+   * Example - this json path will contain the inputs to the machine.
+   *
+   * `$__fnl_context.input`
+   *
+   * This flag is set to when when accessing the {@link context} getting in this class.
+   */
   private needsFunctionlessContext: boolean = false;
 
   constructor(
@@ -468,6 +478,12 @@ export class ASL {
     }
   }
 
+  /**
+   * Access Functionless context variables in the machine state like the input to the machine.
+   *
+   * The Functionless context is only added to the machine when needed.
+   * Using this property anywhere in a machine will add the context Pass state to the start of the machine.
+   */
   public get context() {
     this.needsFunctionlessContext = true;
     return {
