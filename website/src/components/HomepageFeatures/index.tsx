@@ -5,10 +5,7 @@ import Keys from "@site/static/img/keys.png";
 
 import clsx from "clsx";
 
-import Highlight, {
-  defaultProps as highlightDefaultProps,
-} from "prism-react-renderer";
-import theme from "prism-react-renderer/themes/vsDark";
+import Highlighter from "../highlighter";
 
 import styles from "./styles.module.css";
 
@@ -91,43 +88,13 @@ const FeatureList: FeatureItem[] = [
 function CodePreview(props: { title: string; code: string }) {
   return (
     <div className="row">
-      <div className="col col--12 padding-top--lg">
-        <h3
-          style={{
-            textAlign: "center",
-            width: "100%",
-          }}
-        >
-          {props.title}
-        </h3>
+      <div className="col col--12 padding-top--lg padding-bottom--md">
+        {props.title}
       </div>
       <div className="col col--12">
-        <Code code={props.code} />
+        <Highlighter>{props.code}</Highlighter>
       </div>
     </div>
-  );
-}
-
-function Code(props: { code: string }) {
-  return (
-    <Highlight
-      {...highlightDefaultProps}
-      theme={theme}
-      code={props.code}
-      language="typescript"
-    >
-      {({ className, style, tokens, getLineProps, getTokenProps }) => (
-        <pre className={className} style={style}>
-          {tokens.map((line, i) => (
-            <div {...getLineProps({ line, key: i })}>
-              {line.map((token, key) => (
-                <span {...getTokenProps({ token, key })} />
-              ))}
-            </div>
-          ))}
-        </pre>
-      )}
-    </Highlight>
   );
 }
 

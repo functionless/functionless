@@ -9,22 +9,24 @@
 :root[data-theme="dark"],
 html[data-theme="dark"] {
   /* lazily setting all colors to be the same, can't see the shades being used anywhere rn*/
-  --ifm-color-primary-lightest: #d4d48a;
-  --ifm-color-primary-lighter: #d4d48a;
-  --ifm-color-primary-light: #d4d48a;
-  --ifm-color-primary: #d4d48a;
-  --ifm-color-primary-dark: #d4d48a;
-  --ifm-color-primary-darker: #d4d48a;
-  --ifm-color-primary-darkest: #d4d48a;
-  --ifm-color-secondary-dark: #d4d48a;
-
-  --ifm-color-secondary-darker: #c2bd8c;
-  --ifm-background-color: #080300;
-  --ifm-background-surface-color: #080300;
+  --ifm-color-primary: #dfd571;
+  --ifm-color-primary-dark: #d9cd56;
+  --ifm-color-primary-darker: #d6c948;
+  --ifm-color-primary-darkest: #c0b22b;
+  --ifm-color-primary-light: #e5dd8c;
+  --ifm-color-primary-lighter: #e8e19a;
+  --ifm-color-primary-lightest: #f2edc3;
+  /* button bg */
+  --ifm-color-secondary-darker: #dfd571;
+  /* button hover bg */
+  --ifm-color-secondary-dark: #ded78c;
+  --ifm-background-color: #0b0906;
+  --ifm-background-surface-color: var(--ifm-background-color);
   --ifm-heading-font-family: var(--ifm-font-family-base);
   --ifm-font-family-base: var(--ifm-font-family-monospace);
   --ifm-font-size-base: 90%;
   --ifm-code-font-size: 95%;
+  --secondary-background-color: #272822;
 }
 
 .navbar {
@@ -67,7 +69,7 @@ html[data-theme="dark"] .navbar-community-menu:before {
 
 .hero--primary.hero {
   --ifm-hero-text-color: #ffffff;
-  --ifm-hero-background-color: #1e1e1e;
+  --ifm-hero-background-color: var(--secondary-background-color);
   padding: 14rem 0 6rem;
 }
 
@@ -90,7 +92,7 @@ main .container .row:last-child {
 }
 
 .footer--dark {
-  --ifm-footer-background-color: #1d1c1c;
+  --ifm-footer-background-color: var(--secondary-background-color);
   --ifm-footer-link-color: var(--ifm-color-secondary-darker);
   --ifm-footer-color: var(--ifm-color-secondary);
 }
