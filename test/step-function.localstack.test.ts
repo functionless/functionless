@@ -85,7 +85,7 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
     "hello world"
   );
 
-  test.only(
+  test(
     "call lambda",
     (parent) => {
       const func = new Function<undefined, string>(
@@ -401,5 +401,28 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
     },
     { a: "1", b: "2" },
     { a: "1" }
+  );
+
+  // breaking test, will fix
+  // b = a incorrectly uses output path
+  // { Pass, { result.$: "$.a" }, resultPath: "$.b", outputPath: "$.result" }
+  // this won't work for multiple reasons, output path will write over the entire state
+  test.skip(
+    "assignment",
+    (parent) => {
+      return new StepFunction(parent, "sfn2", async () => {
+        let a: any = "2";
+        const b = a;
+        a = null;
+        const c = a;
+        a = 1;
+        const d = a;
+        a = [1, 2];
+        const e = a;
+        a = { x: "val" };
+        return { a, b, c, d, e };
+      });
+    },
+    { a: { x: "val" }, b: "2", c: null, d: 1, e: [1, 2] }
   );
 });

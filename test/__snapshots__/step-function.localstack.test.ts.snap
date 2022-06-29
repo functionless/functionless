@@ -1097,6 +1097,93 @@ Object {
       "Parameters": Object {
         "and.$": "$.1_tmp",
         "or.$": "$.3_tmp",
+exports[`assignment 1`] = `
+Object {
+  "StartAt": "a = \\"2\\"",
+  "States": Object {
+    "a = \\"2\\"": Object {
+      "Next": "b = a",
+      "Result": "2",
+      "ResultPath": "$.a",
+      "Type": "Pass",
+    },
+    "a = 1": Object {
+      "Next": "d = a",
+      "Parameters": 1,
+      "ResultPath": "$.a",
+      "Type": "Pass",
+    },
+    "a = [1, 2]": Object {
+      "Next": "e = a",
+      "Parameters": Array [
+        1,
+        2,
+      ],
+      "ResultPath": "$.a",
+      "Type": "Pass",
+    },
+    "a = null": Object {
+      "Next": "c = a",
+      "Parameters": Object {
+        "$.a": null,
+        "a.$": "$.a",
+        "b.$": "$.b",
+      },
+      "ResultPath": null,
+      "Type": "Pass",
+    },
+    "a = {x: \\"val\\"}": Object {
+      "Next": "return {a: a, b: b, c: c, d: d, e: e}",
+      "Parameters": Object {
+        "x": "val",
+      },
+      "ResultPath": "$.a",
+      "Type": "Pass",
+    },
+    "b = a": Object {
+      "Next": "a = null",
+      "OutputPath": "$.result",
+      "Parameters": Object {
+        "result.$": "$.a",
+      },
+      "ResultPath": "$.b",
+      "Type": "Pass",
+    },
+    "c = a": Object {
+      "Next": "a = 1",
+      "OutputPath": "$.result",
+      "Parameters": Object {
+        "result.$": "$.a",
+      },
+      "ResultPath": "$.c",
+      "Type": "Pass",
+    },
+    "d = a": Object {
+      "Next": "a = [1, 2]",
+      "OutputPath": "$.result",
+      "Parameters": Object {
+        "result.$": "$.a",
+      },
+      "ResultPath": "$.d",
+      "Type": "Pass",
+    },
+    "e = a": Object {
+      "Next": "a = {x: \\"val\\"}",
+      "OutputPath": "$.result",
+      "Parameters": Object {
+        "result.$": "$.a",
+      },
+      "ResultPath": "$.e",
+      "Type": "Pass",
+    },
+    "return {a: a, b: b, c: c, d: d, e: e}": Object {
+      "End": true,
+      "Parameters": Object {
+        "a.$": "$.a",
+        "b.$": "$.b",
+        "c.$": "$.c",
+        "d.$": "$.d",
+        "e.$": "$.e",
       },
       "ResultPath": "$",
       "Type": "Pass",
