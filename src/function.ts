@@ -394,14 +394,14 @@ abstract class FunctionBase<in Payload, Out>
         }
       : isVariableReference(payloadArg)
       ? {
-          InputPath: ASL.toJsonPath(payloadArg),
+          InputPath: context.toJsonPath(payloadArg),
         }
       : isStringLiteralExpr(payloadArg)
       ? {
           Parameters: payloadArg.value,
         }
       : {
-          Parameters: ASL.toJson(payloadArg),
+          Parameters: context.toJson(payloadArg),
         };
 
     return {

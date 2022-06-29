@@ -33,10 +33,19 @@ Object {
 
 exports[`call lambda $SFN forEach 1`] = `
 Object {
-  "StartAt": "await $SFN.forEach(input, function(n))",
+  "StartAt": "Initialize Functionless Context",
   "States": Object {
-    "await $SFN.forEach(input, function(n))": Object {
-      "ItemsPath": "$",
+    "Initialize Functionless Context": Object {
+      "Next": "await $SFN.forEach(input.arr, function(n))",
+      "OutputPath": "$",
+      "Parameters": Object {
+        "input.$": "$",
+      },
+      "ResultPath": "$.__fnl_context",
+      "Type": "Pass",
+    },
+    "await $SFN.forEach(input.arr, function(n))": Object {
+      "ItemsPath": "$.__fnl_context.input.arr",
       "Iterator": Object {
         "StartAt": "return func(n)",
         "States": Object {
@@ -70,11 +79,20 @@ Object {
 
 exports[`call lambda $SFN map 1`] = `
 Object {
-  "StartAt": "return $SFN.map(input, function(n))",
+  "StartAt": "Initialize Functionless Context",
   "States": Object {
-    "return $SFN.map(input, function(n))": Object {
+    "Initialize Functionless Context": Object {
+      "Next": "return $SFN.map(input.arr, function(n))",
+      "OutputPath": "$",
+      "Parameters": Object {
+        "input.$": "$",
+      },
+      "ResultPath": "$.__fnl_context",
+      "Type": "Pass",
+    },
+    "return $SFN.map(input.arr, function(n))": Object {
       "End": true,
-      "ItemsPath": "$",
+      "ItemsPath": "$.__fnl_context.input.arr",
       "Iterator": Object {
         "StartAt": "return n",
         "States": Object {
@@ -239,18 +257,59 @@ Object {
 
 exports[`call lambda with string reference 1`] = `
 Object {
-  "StartAt": "0_tmp = await func(event.str)",
+  "StartAt": "Initialize Functionless Context",
   "States": Object {
     "0_tmp = await func(event.str)": Object {
-      "InputPath": "$.str",
+      "InputPath": "$.__fnl_context.input.str",
       "Next": "return 0_tmp.str",
       "Resource": "__REPLACED_TOKEN",
       "ResultPath": "$.0_tmp",
       "Type": "Task",
     },
+    "Initialize Functionless Context": Object {
+      "Next": "0_tmp = await func(event.str)",
+      "OutputPath": "$",
+      "Parameters": Object {
+        "input.$": "$",
+      },
+      "ResultPath": "$.__fnl_context",
+      "Type": "Pass",
+    },
     "return 0_tmp.str": Object {
       "End": true,
       "OutputPath": "$.0_tmp.str",
+      "Type": "Pass",
+    },
+  },
+}
+`;
+
+exports[`overlapping variable with input 1`] = `
+Object {
+  "StartAt": "Initialize Functionless Context",
+  "States": Object {
+    "Initialize Functionless Context": Object {
+      "Next": "a = \\"2\\"",
+      "OutputPath": "$",
+      "Parameters": Object {
+        "input.$": "$",
+      },
+      "ResultPath": "$.__fnl_context",
+      "Type": "Pass",
+    },
+    "a = \\"2\\"": Object {
+      "Next": "return {a: input.a, b: a}",
+      "Result": "2",
+      "ResultPath": "$.a",
+      "Type": "Pass",
+    },
+    "return {a: input.a, b: a}": Object {
+      "End": true,
+      "Parameters": Object {
+        "a.$": "$.__fnl_context.input.a",
+        "b.$": "$.a",
+      },
+      "ResultPath": "$",
       "Type": "Pass",
     },
   },

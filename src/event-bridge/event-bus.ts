@@ -326,7 +326,7 @@ abstract class EventBusBase<in Evnt extends Event, OutEvnt extends Evnt = Evnt>
               .reduce(
                 (acc: Record<string, string>, [name, expr]) => ({
                   ...acc,
-                  [propertyMap[name]]: ASL.toJson(expr),
+                  [propertyMap[name]]: context.toJson(expr),
                 }),
                 { EventBusName: this.resource.eventBusArn }
               )
