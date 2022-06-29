@@ -93,6 +93,7 @@ import {
   anyOf,
   DeterministicNameGenerator,
   evalToConstant,
+  isConstant,
   isPromiseAll,
 } from "./util";
 import { visitBlock, visitEachChild, visitSpecificChildren } from "./visit";
@@ -109,7 +110,7 @@ export interface StateMachine<S extends States> {
   States: S;
 }
 
-type AslStateType = State | CompoundState | Variable | AslConstant;
+type AslStateType = CompoundState | Variable | AslConstant;
 
 export interface States {
   [stateName: string]: State;
@@ -1050,14 +1051,7 @@ export class ASL {
    * @param props where to store the result, whether this is the end state or not, where to go to next
    * @returns the {@link State}
    */
-  public eval(
-    expr: Expr,
-    props: {
-      ResultPath: string | null;
-      End?: true;
-      Next?: string;
-    }
-  ): AslStateType {
+  public eval(expr: Expr): AslStateType {
     // first check to see if the expression can be turned into a constant.
     const constant = evalToConstant(expr);
     if (constant !== undefined) {
@@ -1073,16 +1067,10 @@ export class ASL {
       };
     }
 
-    if (props.End === undefined && props.Next === undefined) {
-      // Hack: delete props.Next when End is true to clean up test cases
-      // TODO: make this cleaner somehow?
-      delete props.Next;
-      props.End = true;
-    }
     if (isPromiseExpr(expr)) {
       // if we find a promise, ensure it is wrapped in Await or returned then unwrap it
       if (isAwaitExpr(expr.parent) || isReturnStmt(expr.parent)) {
-        return this.eval(expr.expr, props);
+        return this.eval(expr.expr);
       }
       throw new SynthError(
         ErrorCodes.Integration_must_be_immediately_awaited_or_returned
@@ -1094,7 +1082,7 @@ export class ASL {
         isCallExpr(expr.parent.parent) &&
         isPromiseAll(expr.parent.parent)
       ) {
-        return this.eval(expr.expr, props);
+        return this.eval(expr.expr);
       }
       throw new SynthError(
         ErrorCodes.Arrays_of_Integration_must_be_immediately_wrapped_in_Promise_all
@@ -1161,44 +1149,61 @@ export class ASL {
           const callbackStates = this.evalStmt(callbackfn.body);
           const callbackStart = this.getStateName(callbackfn.body.step()!);
 
-          const listPath = this.toJsonPath(expr.expr.expr);
+          const list = this.eval(expr.expr.expr);
+          const simpleList =
+            isAslConstant(list) || isVariable(list) ? list : list.simpleEnd;
+          // we assume that an array literl or a call would return a variable.
+          if (!isVariable(simpleList)) {
+            throw new SynthError(
+              ErrorCodes.Unexpected_Error,
+              "Expected input to map to be a variable referene or array"
+            );
+          }
+          const tempHeap = this.randomHeap();
+
           return {
-            Type: "Map",
-            MaxConcurrency: 1,
-            Iterator: {
-              States: callbackStates,
-              StartAt: callbackStart,
+            startState: "default",
+            states: {
+              default: {
+                Type: "Map",
+                MaxConcurrency: 1,
+                Iterator: {
+                  States: callbackStates,
+                  StartAt: callbackStart,
+                },
+                ItemsPath: simpleList.jsonPath,
+                Parameters: Object.fromEntries(
+                  callbackfn.parameters.map((param, i) => [
+                    `${param.name}.$`,
+                    i === 0
+                      ? "$$.Map.Item.Value"
+                      : i == 1
+                      ? "$$.Map.Item.Index"
+                      : simpleList.jsonPath,
+                  ])
+                ),
+                ...(throwTransition
+                  ? {
+                      Catch: [
+                        {
+                          ErrorEquals: ["States.ALL"],
+                          Next: throwTransition.Next!,
+                          ResultPath: throwTransition.ResultPath,
+                        },
+                      ],
+                    }
+                  : {}),
+                Next: ASL.DeferNext,
+              },
             },
-            ...props,
-            ItemsPath: listPath,
-            Parameters: Object.fromEntries(
-              callbackfn.parameters.map((param, i) => [
-                `${param.name}.$`,
-                i === 0
-                  ? "$$.Map.Item.Value"
-                  : i == 1
-                  ? "$$.Map.Item.Index"
-                  : listPath,
-              ])
-            ),
-            ...(throwTransition
-              ? {
-                  Catch: [
-                    {
-                      ErrorEquals: ["States.ALL"],
-                      Next: throwTransition.Next!,
-                      ResultPath: throwTransition.ResultPath,
-                    },
-                  ],
-                }
-              : {}),
+            simpleEnd: {
+              jsonPath: tempHeap,
+            },
           };
         }
       } else if (isSlice(expr)) {
         return {
-          Type: "Pass",
-          ...props,
-          InputPath: this.toJsonPath(expr),
+          jsonPath: this.toJsonPath(expr),
         };
       } else if (isFilter(expr)) {
         const predicate = expr.getArgument("predicate")?.expr;
@@ -1206,9 +1211,7 @@ export class ASL {
           try {
             // first try to implement filter optimally with JSON Path
             return {
-              Type: "Pass",
-              ...props,
-              InputPath: this.toJsonPath(expr),
+              jsonPath: this.toJsonPath(expr),
             };
           } catch {
             throw new Error(".filter with sub-tasks are not yet supported");
@@ -1218,7 +1221,7 @@ export class ASL {
         const values = expr.getArgument("values");
         // just validate Promise.all and continue, will validate the PromiseArray later.
         if (values?.expr && isPromiseArrayExpr(values?.expr)) {
-          return this.eval(values.expr, props);
+          return this.eval(values.expr);
         }
         throw new SynthError(ErrorCodes.Unsupported_Use_of_Promises);
       }
@@ -1287,97 +1290,118 @@ export class ASL {
       expr.op === "=" &&
       (isVariableReference(expr.left) || isIdentifier(expr.left))
     ) {
-      if (isNullLiteralExpr(expr.right)) {
-        return {
-          Type: "Pass",
-          ...props,
-          Parameters: {
-            ...Object.fromEntries(
-              expr.getVisibleNames().map((name) => [`${name}.$`, `$.${name}`])
-            ),
-            [this.toJsonPath(expr.left)]: null,
+      const right = this.eval(expr.right);
+      const left = this.toJsonPath(expr.left);
+
+      const simple =
+        isAslConstant(right) || isVariable(right) ? right : right.simpleEnd;
+
+      return {
+        startState: "default",
+        states: {
+          default: {
+            Type: "Pass",
+            ...(isAslConstant(simple)
+              ? {
+                  Parameters: simple.value,
+                }
+              : {
+                  InputPath: simple.jsonPath,
+                }),
+            ResultPath: left,
+            Next: ASL.DeferNext,
           },
-        };
-      } else if (isVariableReference(expr.right)) {
-        return {
-          Type: "Pass",
-          ...props,
-          InputPath: this.toJsonPath(expr.right),
-          ResultPath: this.toJsonPath(expr.left),
-        };
-      } else if (
-        isLiteralExpr(expr.right) ||
-        isUnaryExpr(expr.right) ||
-        isBinaryExpr(expr.right)
-      ) {
-        return {
-          Type: "Pass",
-          ...props,
-          Parameters: this.toJson(expr.right),
-          ResultPath: this.toJsonPath(expr.left),
-        };
-      } else if (isAwaitExpr(expr.right) || isCallExpr(expr.right)) {
-        return this.eval(expr.right, {
-          ...props,
-          ResultPath: this.toJsonPath(expr.left),
-        });
-      }
+        },
+        simpleEnd: {
+          jsonPath: left,
+        },
+      };
     } else if (isBinaryExpr(expr)) {
       const constant = evalToConstant(expr);
       if (constant !== undefined) {
         return {
-          Type: "Pass",
-          Result: constant.constant as any,
-          ...props,
+          value: constant,
         };
       } else if (expr.op === "&&" || expr.op === "||") {
+        const tempHeap = this.randomHeap();
         return {
-          default: {
-            Type: "Choice",
-            Choices: [{ ...this.toCondition(expr), Next: "assignTrue" }],
-            Default: "assignFalse",
+          startState: "default",
+          states: {
+            default: {
+              Type: "Choice",
+              // TODO: this needs to use eval
+              Choices: [{ ...this.toCondition(expr), Next: "assignTrue" }],
+              Default: "assignFalse",
+            },
+            assignTrue: {
+              Type: "Pass",
+              Result: true,
+              ResultPath: tempHeap,
+              Next: ASL.DeferNext,
+            },
+            assignFalse: {
+              Type: "Pass",
+              Result: false,
+              ResultPath: tempHeap,
+              Next: ASL.DeferNext,
+            },
           },
-          assignTrue: {
-            Type: "Pass",
-            Result: true,
-            ...props,
-          },
-          assignFalse: {
-            Type: "Pass",
-            Result: false,
-            ...props,
+          simpleEnd: {
+            jsonPath: tempHeap,
           },
         };
       } else if (expr.op === "??") {
+        const left = this.eval(expr.left);
+        const right = this.eval(expr.right);
+        const simple =
+          isAslConstant(left) || isVariable(left) ? left : left.simpleEnd;
+        // TODO need to return generates states
         // literal ?? anything
-        if (isLiteralExpr(expr.left)) {
-          if (
-            isNullLiteralExpr(expr.left) ||
-            isUndefinedLiteralExpr(expr.left)
-          ) {
-            return this.passArgument({ Type: "Pass", ...props }, expr.right);
+        if (isAslConstant(simple)) {
+          if (!simple.value) {
+            return left;
           } else {
-            return this.passArgument({ Type: "Pass", ...props }, expr.left);
+            return right;
           }
         }
-        const left = this.toJsonPath(expr.left);
+        const tempHeap = this.randomHeap();
+        const simpleRight =
+          isAslConstant(right) || isVariable(right) ? right : right.simpleEnd;
+        // TODO merge in left and right substates.
         return {
-          default: {
-            Type: "Choice",
-            Choices: [
-              {
-                ...ASL.and(ASL.isPresent(left), ASL.isNotNull(left)),
-                Next: "takeLeft",
-              },
-            ],
-            Default: "takeRight",
+          startState: "default",
+          states: {
+            default: {
+              Type: "Choice",
+              Choices: [
+                {
+                  ...ASL.and(
+                    ASL.isPresent(simple.jsonPath),
+                    ASL.isNotNull(simple.jsonPath)
+                  ),
+                  Next: "takeLeft",
+                },
+              ],
+              Default: "takeRight",
+            },
+            takeLeft: {
+              Type: "Pass",
+              InputPath: simple.jsonPath,
+              ResultPath: tempHeap,
+              Next: ASL.DeferNext,
+            },
+            takeRight: {
+              Type: "Pass",
+              ResultPath: tempHeap,
+              ...(isAslConstant(simpleRight)
+                ? { Parameters: simpleRight.value }
+                : { InputPath: simpleRight.jsonPath }),
+              Next: ASL.DeferNext,
+            },
           },
-          takeLeft: {
-            Type: "Pass",
-            InputPath: left,
-            ...props,
+          simpleEnd: {
+            jsonPath: tempHeap,
           },
-          takeRight: this.passArgument({ Type: "Pass", ...props }, expr.right),
         };
       }
       debugger;
@@ -1386,7 +1410,7 @@ export class ASL {
         `Step Function does not support operator ${expr.op}`
       );
     } else if (isAwaitExpr(expr)) {
-      return this.eval(expr.expr, props);
+      return this.eval(expr.expr);
     }
     throw new Error(`cannot eval expression kind '${expr.kind}'`);
   }
