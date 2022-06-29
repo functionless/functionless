@@ -3,11 +3,13 @@ import Mountain from "@site/static/img/undraw_docusaurus_mountain.svg";
 import Undraw from "@site/static/img/undraw_docusaurus_react.svg";
 import Tree from "@site/static/img/undraw_docusaurus_tree.svg";
 import clsx from "clsx";
+
+import Highlight, {
+  defaultProps as highlightDefaultProps,
+} from "prism-react-renderer";
+import theme from "prism-react-renderer/themes/vsDark";
 import React from "react";
 
-// see: https://www.npmjs.com/package/react-syntax-highlighter
-import SyntaxHighlighter from "react-syntax-highlighter";
-import { a11yDark } from "react-syntax-highlighter/dist/esm/styles/hljs";
 import styles from "./styles.module.css";
 
 export default function HomepageFeatures(): JSX.Element {
@@ -108,14 +110,24 @@ function CodePreview(props: { title: string; code: string }) {
 
 function Code(props: { code: string }) {
   return (
-    <SyntaxHighlighter
+    <Highlight
+      {...highlightDefaultProps}
+      theme={theme}
+      code={props.code}
       language="typescript"
-      style={a11yDark}
-      wrapLongLines={false}
-      customStyle={{ width: "100%" }}
     >
-      {props.code}
-    </SyntaxHighlighter>
+      {({ className, style, tokens, getLineProps, getTokenProps }) => (
+        <pre className={className} style={style}>
+          {tokens.map((line, i) => (
+            <div {...getLineProps({ line, key: i })}>
+              {line.map((token, key) => (
+                <span {...getTokenProps({ token, key })} />
+              ))}
+            </div>
+          ))}
+        </pre>
+      )}
+    </Highlight>
   );
 }
 
