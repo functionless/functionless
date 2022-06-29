@@ -85,7 +85,7 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
     "hello world"
   );
 
-  test(
+  test.only(
     "call lambda",
     (parent) => {
       const func = new Function<undefined, string>(

@@ -1,5 +1,8 @@
 import { aws_iam, aws_stepfunctions } from "aws-cdk-lib";
+import { StateTransitionMetric } from "aws-cdk-lib/aws-stepfunctions";
 import { Construct } from "constructs";
+import { stat } from "fs";
+import { isIfStatement } from "typescript";
 import { assertNever } from "./assert";
 import { FunctionDecl } from "./declaration";
 import { ErrorCodes, SynthError } from "./error-code";
@@ -11,6 +14,7 @@ import {
   Expr,
   NewExpr,
   NullLiteralExpr,
+  ObjectLiteralExpr,
   PromiseExpr,
   PropAccessExpr,
   StringLiteralExpr,
@@ -104,16 +108,61 @@ export interface StateMachine<S extends States> {
   StartAt: keyof S;
   States: S;
 }
+
+type AslStateType = State | CompoundState | Variable | AslConstant;
+
 export interface States {
   [stateName: string]: State;
 }
+
+/**
+ * A Sub-State is a collection of possible return values.
+ * A start state is the first state in the result. It will take on the name of the parent statement node.
+ * States are zero to many named states or sub-stages that will take on the name of the parent statement node.
+ */
 export interface SubState {
-  default: State | SubState;
-  [stateName: string]: State | SubState;
+  startState: string;
+  states?: { [stateName: string]: State | SubState };
+}
+
+/**
+ * A compound state is a state node that may contain a simple Constant or Variable output instead of
+ * built states or sub-states.
+ *
+ * Compound states are designed to be incorporated into existing states or turned into
+ * states before they are returned up.
+ *
+ * Compound states cannot be nested in sub-states.
+ */
+export interface CompoundState extends SubState {
+  simpleEnd: Variable | AslConstant;
+}
+
+export interface AslConstant {
+  containsJsonPath?: boolean;
+  value: string | number | null | boolean | Record<string, any>;
+}
+
+export interface Variable {
+  jsonPath: string;
 }
 
 export const isSubState = (state: State | SubState): state is SubState => {
-  return "default" in state && isState(state.default);
+  return "startState" in state && isState(state.startState);
+};
+
+export const isCompoundState = (
+  state: AslStateType
+): state is CompoundState => {
+  return isSubState(state) && "simpleEnd" in state;
+};
+
+export const isAslConstant = (state: AslStateType): state is AslConstant => {
+  return "value" in state;
+};
+
+export const isVariable = (state: AslStateType): state is Variable => {
+  return "jsonPath" in state;
 };
 
 export const isState = (state: any): state is State => {
@@ -443,11 +492,6 @@ export class ASL {
           return hoist && self.doHoist(node)
             ? hoist(updatedChild)
             : updatedChild;
-        } else if (isBinaryExpr(node)) {
-          const updated = visitEachChild(node, (expr) =>
-            normalizeAST(expr, hoist)
-          );
-          return hoist && self.doHoist(node) ? hoist(updated) : updated;
         }
         return visitEachChild(node, (expr) => normalizeAST(expr, hoist));
       }
@@ -1013,7 +1057,22 @@ export class ASL {
       End?: true;
       Next?: string;
     }
-  ): State | SubState {
+  ): AslStateType {
+    // first check to see if the expression can be turned into a constant.
+    const constant = evalToConstant(expr);
+    if (constant !== undefined) {
+      return {
+        value: isFunction(constant.constant)
+          ? constant.constant.resource.functionArn
+          : isStepFunction(constant.constant)
+          ? constant.constant.resource.stateMachineArn
+          : isTable(constant.constant)
+          ? constant.constant.resource.tableName
+          : (constant.constant as any),
+        containsJsonPath: false,
+      };
+    }
+
     if (props.End === undefined && props.Next === undefined) {
       // Hack: delete props.Next when End is true to clean up test cases
       // TODO: make this cleaner somehow?
@@ -1053,48 +1112,6 @@ export class ASL {
                 default: integStates,
               };
 
-          const { End, Next } = props;
-
-          /**
-           * Step functions can fail to deploy when extraneous properties are left on state nodes.
-           * Only inject the properties the state type can handle.
-           *
-           * For example: https://github.com/functionless/functionless/issues/308
-           * A Wait state with `ResultPath: null` was failing to deploy.
-           */
-          const applyDeferredNext = (state: State): State => {
-            if (state.Type === "Wait") {
-              return {
-                ...(state as Omit<Wait, "Next">),
-                ...{ End, Next },
-              };
-            } else if (state.Type === "Choice") {
-              return {
-                ...state,
-                Choices: state.Choices.map((choice) => ({
-                  ...choice,
-                  // TODO: inject a default end node
-                  Next: Next!,
-                })),
-                // do we always want to inject a default?
-                Default: Next,
-              };
-            } else if (state.Type === "Fail" || state.Type === "Succeed") {
-              return state as Choice | Fail | Succeed;
-            } else if (
-              state.Type === "Task" ||
-              state.Type === "Parallel" ||
-              state.Type === "Pass" ||
-              state.Type === "Map"
-            ) {
-              return {
-                ...state,
-                ...props,
-              } as Task | ParallelTask | Pass | MapTask;
-            }
-            assertNever(state);
-          };
-
           const updateStates = (states: SubState): SubState => {
             return <SubState>Object.fromEntries(
               Object.entries(states).map(([stateName, state]) => {
@@ -1102,10 +1119,7 @@ export class ASL {
                   return [stateName, updateStates(state)];
                 } else {
                   // when the Next is left empty or is set to ASL.DeferNext, replace the Next, End, and or ResultPath
-                  const updatedState =
-                    !("Next" in state) || state.Next === ASL.DeferNext
-                      ? applyDeferredNext(state)
-                      : state;
+                  const updatedState = this.applyDeferNextState(props, state);
 
                   const throwOrPass = this.throw(expr);
                   if (throwOrPass?.Next) {
@@ -1213,24 +1227,60 @@ export class ASL {
       );
     } else if (isVariableReference(expr)) {
       return {
-        Type: "Pass",
-        Parameters: {
-          [`result${isLiteralExpr(expr) ? "" : ".$"}`]: this.toJsonPath(expr),
-        },
-        OutputPath: "$.result",
-        ...props,
+        jsonPath: this.toJsonPath(expr),
       };
     } else if (isObjectLiteralExpr(expr)) {
+      return this.evalObjectLiteral(expr);
+    } else if (isArrayLiteralExpr(expr)) {
+      // evaluate each item
+      const items = expr.items.map((item) => this.eval(item));
+      // extract the value to inline in the array from the additional states
+      const [simpleItems, subStates] = items.reduce(
+        (
+          [simples, subs]: [(Variable | AslConstant)[], (State | SubState)[]],
+          item
+        ) => {
+          const [simple, sub] = this.aslStateToVariableOrConstant(item);
+          return [[...simples, simple], sub ? [...subs, sub] : subs];
+        },
+        [[], []]
+      );
+
+      const subStatesMap = Object.fromEntries(
+        subStates.map((subState, i) => {
+          return [
+            `${i}`,
+            i === subStates.length - 1
+              ? this.applyDeferNext({ Next: "arr" }, subState)
+              : this.applyDeferNext({ Next: `${i + 1}` }, subState),
+          ];
+        })
+      );
+
+      const heapLocation = this.randomHeap();
+
       return {
-        Type: "Pass",
-        Parameters: this.toJson(expr),
-        ...props,
+        startState: subStates.length > 0 ? "0" : "arr",
+        states: {
+          ...subStatesMap,
+          arr: {
+            Type: "Pass",
+            Parameters: {
+              "arr.$": `States.Array(${simpleItems
+                .map((item) => (isVariable(item) ? item.jsonPath : item.value))
+                .join(", ")})`,
+            },
+            ResultPath: heapLocation,
+            Next: ASL.DeferNext,
+          },
+        },
+        simpleEnd: {
+          jsonPath: `${heapLocation}.arr`,
+        },
       };
     } else if (isLiteralExpr(expr)) {
       return {
-        Type: "Pass",
-        Result: this.toJson(expr),
-        ...props,
+        value: expr.value ?? null,
       };
     } else if (
       isBinaryExpr(expr) &&
@@ -1273,7 +1323,14 @@ export class ASL {
         });
       }
     } else if (isBinaryExpr(expr)) {
-      if (expr.op === "&&" || expr.op === "||") {
+      const constant = evalToConstant(expr);
+      if (constant !== undefined) {
+        return {
+          Type: "Pass",
+          Result: constant.constant as any,
+          ...props,
+        };
+      } else if (expr.op === "&&" || expr.op === "||") {
         return {
           default: {
             Type: "Choice",
@@ -1323,7 +1380,7 @@ export class ASL {
           takeRight: this.passArgument({ Type: "Pass", ...props }, expr.right),
         };
       }
-
+      debugger;
       throw new SynthError(
         ErrorCodes.Unsupported_Feature,
         `Step Function does not support operator ${expr.op}`
@@ -1332,6 +1389,138 @@ export class ASL {
       return this.eval(expr.expr, props);
     }
     throw new Error(`cannot eval expression kind '${expr.kind}'`);
+  }
+
+  private applyDeferNext(
+    props: {
+      // TODO remove result path?
+      ResultPath?: string | null;
+      End?: true;
+      Next?: string;
+    },
+    state: State | SubState
+  ) {
+    return isSubState(state)
+      ? this.applyDeferNextSubState(props, state)
+      : this.applyDeferNextState(props, state);
+  }
+
+  /**
+   * Updates DeferNext states for an entire sub-state.
+   */
+  private applyDeferNextSubState(
+    props: {
+      // TODO remove result path?
+      ResultPath?: string | null;
+      End?: true;
+      Next?: string;
+    },
+    subState: SubState
+  ): SubState {
+    return {
+      startState: subState.startState,
+      states: Object.fromEntries(
+        Object.entries(subState).map(([id, state]) => {
+          return [id, this.applyDeferNextState(props, state)];
+        })
+      ),
+    };
+  }
+
+  /**
+   * Step functions can fail to deploy when extraneous properties are left on state nodes.
+   * Only inject the properties the state type can handle.
+   *
+   * For example: https://github.com/functionless/functionless/issues/308
+   * A Wait state with `ResultPath: null` was failing to deploy.
+   */
+  private applyDeferNextState(
+    props: {
+      // TODO remove result path?
+      ResultPath?: string | null;
+      End?: true;
+      Next?: string;
+    },
+    state: State
+  ) {
+    const { End, Next = undefined, ResultPath } = props;
+
+    if ("Next" in state && state.Next === ASL.DeferNext) {
+      if (state.Type === "Wait") {
+        return {
+          ...(state as Omit<Wait, "Next">),
+          ...{ End, Next },
+        };
+      } else if (
+        state.Type === "Task" ||
+        state.Type === "Parallel" ||
+        state.Type === "Pass" ||
+        state.Type === "Map"
+      ) {
+        return {
+          ...state,
+          End,
+          Next,
+          ResultPath,
+        } as Task | ParallelTask | Pass | MapTask;
+      }
+      assertNever(state);
+    } else if (state.Type === "Choice") {
+      return {
+        ...state,
+        Choices: state.Choices.map((choice) => ({
+          ...choice,
+          // TODO: inject a default end node
+          Next:
+            !choice.Next || choice.Next === ASL.DeferNext ? Next! : choice.Next,
+        })),
+        // do we always want to inject a default?
+        Default:
+          !state.Default || state.Default === ASL.DeferNext
+            ? Next
+            : state.Default,
+      };
+    }
+    return state;
+  }
+
+  private heapCounter = 0;
+
+  /**
+   * returns an in order unique memory location
+   * TODO: make this contextual
+   */
+  private randomHeap() {
+    return `$.heap${this.heapCounter++}`;
+  }
+
+  /**
+   * Resolves a set of states to a single constant or variable.
+   */
+  private aslStateToVariableOrConstant(
+    state: AslStateType
+  ): [AslConstant | Variable] | [AslConstant | Variable, State | SubState] {
+    if (isAslConstant(state) || isVariable(state)) {
+      return [state];
+    } else if (isState(state)) {
+      // for a single state, try to resolve the output of the state, if not return null
+      return "ResultPath" in state && state.ResultPath
+        ? [
+            {
+              jsonPath: state.ResultPath,
+            },
+            state,
+          ]
+        : [
+            {
+              value: null,
+            },
+            state,
+          ];
+    } else {
+      const { simpleEnd, ...subState } = state;
+      return [simpleEnd, subState];
+    }
   }
 
   /**
@@ -1508,6 +1697,10 @@ export class ASL {
     } else if (isArgument(expr)) {
       return this.toJson(expr.expr);
     } else if (isBinaryExpr(expr)) {
+      const constant = evalToConstant(expr);
+      if (constant) {
+        return constant.constant;
+      }
     } else if (isCallExpr(expr)) {
       if (isSlice(expr)) {
         return this.sliceToJsonPath(expr);
@@ -1528,8 +1721,22 @@ export class ASL {
       }
       return expr.items.map((item) => this.toJson(item));
     } else if (isObjectLiteralExpr(expr)) {
-      const payload: any = {};
-      for (const prop of expr.properties) {
+      return this.evalObjectLiteral(expr);
+    } else if (isLiteralExpr(expr)) {
+      return expr.value ?? null;
+    } else if (isTemplateExpr(expr)) {
+      return `States.Format('${expr.exprs
+        .map((e) => (isLiteralExpr(e) ? this.toJson(e) : "{}"))
+        .join("")}',${expr.exprs
+        .filter((e) => !isLiteralExpr(e))
+        .map((e) => this.toJsonPath(e))})`;
+    }
+    throw new Error(`cannot evaluate ${expr.kind} to JSON`);
+  }
+
+  public evalObjectLiteral(expr: ObjectLiteralExpr): CompoundState {
+    const payload = Object.fromEntries(
+      expr.properties.map((prop) => {
         if (!isPropAssignExpr(prop)) {
           throw new Error(
             `${prop.kind} is not supported in Amazon States Language`
@@ -1541,7 +1748,8 @@ export class ASL {
           isIdentifier(prop.name) ||
           isStringLiteralExpr(prop.name)
         ) {
-          payload[
+          const value = this.eval(prop.expr);
+          return [
             `${
               isIdentifier(prop.name)
                 ? prop.name.name
@@ -1550,25 +1758,20 @@ export class ASL {
                 : (prop.name.expr as StringLiteralExpr).value
             }${
               isLiteralExpr(prop.expr) || isReferenceExpr(prop.expr) ? "" : ".$"
-            }`
-          ] = this.toJson(prop.expr);
+            }`,
+            this.eval(prop.expr),
+          ];
         } else {
           throw new Error(
             "computed name of PropAssignExpr is not supported in Amazon States Language"
           );
         }
-      }
-      return payload;
-    } else if (isLiteralExpr(expr)) {
-      return expr.value ?? null;
-    } else if (isTemplateExpr(expr)) {
-      return `States.Format('${expr.exprs
-        .map((e) => (isLiteralExpr(e) ? this.toJson(e) : "{}"))
-        .join("")}',${expr.exprs
-        .filter((e) => !isLiteralExpr(e))
-        .map((e) => this.toJsonPath(e))})`;
-    }
-    throw new Error(`cannot evaluate ${expr.kind} to JSON`);
+      })
+    );
+
+    return {
+      simpleEnd: payload,
+    };
   }
 
   public toJsonPath(expr: Expr): string {
