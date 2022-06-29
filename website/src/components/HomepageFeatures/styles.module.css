@@ -8,4 +8,11 @@
 .featureSvg {
   height: 200px;
   width: 200px;
+  margin: 0 0 1.5rem;
+  border-radius: 15%;
+  filter: brightness(90%);
+}
+
+.featureSvg:hover {
+  filter: none;
 }

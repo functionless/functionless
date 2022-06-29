@@ -1,14 +1,14 @@
 /* eslint-disable import/no-unresolved */
-import Mountain from "@site/static/img/undraw_docusaurus_mountain.svg";
-import Undraw from "@site/static/img/undraw_docusaurus_react.svg";
-import Tree from "@site/static/img/undraw_docusaurus_tree.svg";
+import Cloud from "@site/static/img/cloud.png";
+import Friendly from "@site/static/img/friendly.png";
+import Keys from "@site/static/img/keys.png";
+
 import clsx from "clsx";
 
 import Highlight, {
   defaultProps as highlightDefaultProps,
 } from "prism-react-renderer";
 import theme from "prism-react-renderer/themes/vsDark";
-import React from "react";
 
 import styles from "./styles.module.css";
 
@@ -33,11 +33,11 @@ export default function HomepageFeatures(): JSX.Element {
   );
 }
 
-function Feature({ title, Svg, description }: FeatureItem) {
+function Feature({ title, Img, description }: FeatureItem) {
   return (
     <div className={clsx("col col--4")}>
       <div className="text--center">
-        <Svg className={styles.featureSvg} role="img" />
+        <img className={styles.featureSvg} role="img" src={Img} />
       </div>
       <div className="text--center padding-horiz--md">
         <h3>{title}</h3>
@@ -49,14 +49,14 @@ function Feature({ title, Svg, description }: FeatureItem) {
 
 type FeatureItem = {
   title: string;
-  Svg: React.ComponentType<React.ComponentProps<"svg">>;
+  Img: string;
   description: JSX.Element;
 };
 
 const FeatureList: FeatureItem[] = [
   {
     title: "Familiar and friendly TypeScript syntax",
-    Svg: Mountain,
+    Img: Friendly,
     description: (
       <>
         Adopt powerful cloud-native services without boilerplate configurations
@@ -66,7 +66,7 @@ const FeatureList: FeatureItem[] = [
   },
   {
     title: "Secure by default",
-    Svg: Tree,
+    Img: Keys,
     description: (
       <>
         Minimally permissive IAM Policies are inferred from your business logic,
@@ -77,7 +77,7 @@ const FeatureList: FeatureItem[] = [
   },
   {
     title: "Typesafe cloud resources",
-    Svg: Undraw,
+    Img: Cloud,
     description: (
       <>
         Use types to describe the interfaces of your cloud functions and the
