@@ -418,6 +418,14 @@ interface NameMap {
 }
 
 /**
+ * A json path which stores functionless context data like the input and a hard to manufacture null value
+ *
+ * This path/variable must start with a letter.
+ * https://twitter.com/sussmansa/status/1542777348616990720?s=20&t=2PepSKvzPhojs_x01WoQVQ
+ */
+const FUNCTIONLESS_CONTEXT_JSON_PATH = "$.fnl_context";
+
+/**
  * Amazon States Language (ASL) Generator.
  */
 export class ASL {
@@ -514,7 +522,7 @@ export class ASL {
           "input.$": "$",
           null: null,
         },
-        ResultPath: "$.__fnl_context",
+        ResultPath: FUNCTIONLESS_CONTEXT_JSON_PATH,
         OutputPath: "$",
         Next: start,
       };
@@ -541,8 +549,8 @@ export class ASL {
   public get context() {
     this.needsFunctionlessContext = true;
     return {
-      null: "$.__fnl_context.null",
-      input: "$.__fnl_context.input",
+      null: `${FUNCTIONLESS_CONTEXT_JSON_PATH}.null`,
+      input: `${FUNCTIONLESS_CONTEXT_JSON_PATH}.input`,
     };
   }
 
@@ -1219,19 +1227,24 @@ export class ASL {
         .map(({ state }) => state)
         .filter(isCompoundState);
 
-      const joinedStates = this.joinSubStates(subStates, { Next: "string" });
+      const joinedStates = this.joinSubStates(subStates, { Next: "template" });
 
       return {
-        startState: subStates.length > 0 ? "0" : "string",
+        startState: subStates.length > 0 ? "0" : "template",
         states: {
           ...joinedStates,
+          template: {
+            Type: "Pass",
+            Result: outputs
+              .map((output) => (isAslConstant(output) ? output.value : "{}"))
+              .join(""),
+            ResultPath: tempHeap,
+            Next: "string",
+          },
           string: {
             Type: "Pass",
             Parameters: {
-              "string.$": `States.Format('${outputs
-                // what if there is a json path in it?
-                .map((output) => (isAslConstant(output) ? output.value : "{}"))
-                .join("")}',${outputs
+              "string.$": `States.Format(${tempHeap},${outputs
                 .filter(isVariable)
                 .map(({ jsonPath }) => jsonPath)})`,
             },

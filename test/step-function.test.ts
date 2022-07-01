@@ -1541,7 +1541,7 @@ test("list.filter(item => item.length > 2).map(item => task(item))", () => {
 });
 
 // https://github.com/functionless/functionless/issues/209
-test.skip("`template me ${input.value}`", () => {
+test("`template me ${input.value}`", () => {
   const { stack } = initStepFunctionApp();
   const definition = new ExpressStepFunction<{ value: string }, string>(
     stack,
@@ -1555,7 +1555,7 @@ test.skip("`template me ${input.value}`", () => {
 });
 
 // https://github.com/functionless/functionless/issues/209
-test.skip("`template me ${await task(input.value)}`", () => {
+test("`template me ${await task(input.value)}`", () => {
   const { stack, task } = initStepFunctionApp();
   const definition = new ExpressStepFunction<{ value: string }, string>(
     stack,

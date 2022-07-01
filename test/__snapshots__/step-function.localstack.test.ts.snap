@@ -11,7 +11,7 @@ Object {
         "input.$": "$",
         "null": null,
       },
-      "ResultPath": "$.__fnl_context",
+      "ResultPath": "$.fnl_context",
       "Type": "Pass",
     },
     "a = \\"2\\"": Object {
@@ -36,7 +36,7 @@ Object {
       "Type": "Pass",
     },
     "a = null": Object {
-      "InputPath": "$.__fnl_context.null",
+      "InputPath": "$.fnl_context.null",
       "Next": "c = a",
       "ResultPath": "$.a",
       "Type": "Pass",
@@ -116,11 +116,11 @@ Object {
               "And": Array [
                 Object {
                   "IsPresent": true,
-                  "Variable": "$.__fnl_context.input.a",
+                  "Variable": "$.fnl_context.input.a",
                 },
                 Object {
                   "IsNull": false,
-                  "Variable": "$.__fnl_context.input.a",
+                  "Variable": "$.fnl_context.input.a",
                 },
                 Object {
                   "Or": Array [
@@ -128,18 +128,18 @@ Object {
                       "And": Array [
                         Object {
                           "IsString": true,
-                          "Variable": "$.__fnl_context.input.a",
+                          "Variable": "$.fnl_context.input.a",
                         },
                         Object {
                           "Not": Object {
                             "And": Array [
                               Object {
                                 "IsString": true,
-                                "Variable": "$.__fnl_context.input.a",
+                                "Variable": "$.fnl_context.input.a",
                               },
                               Object {
                                 "StringEquals": "",
-                                "Variable": "$.__fnl_context.input.a",
+                                "Variable": "$.fnl_context.input.a",
                               },
                             ],
                           },
@@ -150,18 +150,18 @@ Object {
                       "And": Array [
                         Object {
                           "IsNumeric": true,
-                          "Variable": "$.__fnl_context.input.a",
+                          "Variable": "$.fnl_context.input.a",
                         },
                         Object {
                           "Not": Object {
                             "And": Array [
                               Object {
                                 "IsNumeric": true,
-                                "Variable": "$.__fnl_context.input.a",
+                                "Variable": "$.fnl_context.input.a",
                               },
                               Object {
                                 "NumericEquals": 0,
-                                "Variable": "$.__fnl_context.input.a",
+                                "Variable": "$.fnl_context.input.a",
                               },
                             ],
                           },
@@ -172,11 +172,11 @@ Object {
                       "And": Array [
                         Object {
                           "IsBoolean": true,
-                          "Variable": "$.__fnl_context.input.a",
+                          "Variable": "$.fnl_context.input.a",
                         },
                         Object {
                           "BooleanEquals": true,
-                          "Variable": "$.__fnl_context.input.a",
+                          "Variable": "$.fnl_context.input.a",
                         },
                       ],
                     },
@@ -188,11 +188,11 @@ Object {
               "And": Array [
                 Object {
                   "IsPresent": true,
-                  "Variable": "$.__fnl_context.input.b",
+                  "Variable": "$.fnl_context.input.b",
                 },
                 Object {
                   "IsNull": false,
-                  "Variable": "$.__fnl_context.input.b",
+                  "Variable": "$.fnl_context.input.b",
                 },
                 Object {
                   "Or": Array [
@@ -200,18 +200,18 @@ Object {
                       "And": Array [
                         Object {
                           "IsString": true,
-                          "Variable": "$.__fnl_context.input.b",
+                          "Variable": "$.fnl_context.input.b",
                         },
                         Object {
                           "Not": Object {
                             "And": Array [
                               Object {
                                 "IsString": true,
-                                "Variable": "$.__fnl_context.input.b",
+                                "Variable": "$.fnl_context.input.b",
                               },
                               Object {
                                 "StringEquals": "",
-                                "Variable": "$.__fnl_context.input.b",
+                                "Variable": "$.fnl_context.input.b",
                               },
                             ],
                           },
@@ -222,18 +222,18 @@ Object {
                       "And": Array [
                         Object {
                           "IsNumeric": true,
-                          "Variable": "$.__fnl_context.input.b",
+                          "Variable": "$.fnl_context.input.b",
                         },
                         Object {
                           "Not": Object {
                             "And": Array [
                               Object {
                                 "IsNumeric": true,
-                                "Variable": "$.__fnl_context.input.b",
+                                "Variable": "$.fnl_context.input.b",
                               },
                               Object {
                                 "NumericEquals": 0,
-                                "Variable": "$.__fnl_context.input.b",
+                                "Variable": "$.fnl_context.input.b",
                               },
                             ],
                           },
@@ -244,11 +244,11 @@ Object {
                       "And": Array [
                         Object {
                           "IsBoolean": true,
-                          "Variable": "$.__fnl_context.input.b",
+                          "Variable": "$.fnl_context.input.b",
                         },
                         Object {
                           "BooleanEquals": true,
-                          "Variable": "$.__fnl_context.input.b",
+                          "Variable": "$.fnl_context.input.b",
                         },
                       ],
                     },
@@ -268,11 +268,11 @@ Object {
           "And": Array [
             Object {
               "IsPresent": true,
-              "Variable": "$.__fnl_context.input.v",
+              "Variable": "$.fnl_context.input.v",
             },
             Object {
               "IsNull": false,
-              "Variable": "$.__fnl_context.input.v",
+              "Variable": "$.fnl_context.input.v",
             },
           ],
           "Next": "takeLeft__2__return {andVar: c, and: input.a && input.b, or: input.a || inp",
@@ -287,11 +287,11 @@ Object {
           "And": Array [
             Object {
               "IsPresent": true,
-              "Variable": "$.__fnl_context.input.nv",
+              "Variable": "$.fnl_context.input.nv",
             },
             Object {
               "IsNull": false,
-              "Variable": "$.__fnl_context.input.nv",
+              "Variable": "$.fnl_context.input.nv",
             },
           ],
           "Next": "takeLeft__3__return {andVar: c, and: input.a && input.b, or: input.a || inp",
@@ -306,11 +306,11 @@ Object {
           "And": Array [
             Object {
               "IsPresent": true,
-              "Variable": "$.__fnl_context.input.nv",
+              "Variable": "$.fnl_context.input.nv",
             },
             Object {
               "IsNull": false,
-              "Variable": "$.__fnl_context.input.nv",
+              "Variable": "$.fnl_context.input.nv",
             },
           ],
           "Next": "takeLeft__4__return {andVar: c, and: input.a && input.b, or: input.a || inp",
@@ -325,11 +325,11 @@ Object {
           "And": Array [
             Object {
               "IsPresent": true,
-              "Variable": "$.__fnl_context.null",
+              "Variable": "$.fnl_context.null",
             },
             Object {
               "IsNull": false,
-              "Variable": "$.__fnl_context.null",
+              "Variable": "$.fnl_context.null",
             },
           ],
           "Next": "takeLeft__5__return {andVar: c, and: input.a && input.b, or: input.a || inp",
@@ -345,7 +345,7 @@ Object {
         "input.$": "$",
         "null": null,
       },
-      "ResultPath": "$.__fnl_context",
+      "ResultPath": "$.fnl_context",
       "Type": "Pass",
     },
     "assignFalse__1__return {andVar: c, and: input.a && input.b, or: input.a || ": Object {
@@ -398,11 +398,11 @@ Object {
               "And": Array [
                 Object {
                   "IsPresent": true,
-                  "Variable": "$.__fnl_context.input.a",
+                  "Variable": "$.fnl_context.input.a",
                 },
                 Object {
                   "IsNull": false,
-                  "Variable": "$.__fnl_context.input.a",
+                  "Variable": "$.fnl_context.input.a",
                 },
                 Object {
                   "Or": Array [
@@ -410,18 +410,18 @@ Object {
                       "And": Array [
                         Object {
                           "IsString": true,
-                          "Variable": "$.__fnl_context.input.a",
+                          "Variable": "$.fnl_context.input.a",
                         },
                         Object {
                           "Not": Object {
                             "And": Array [
                               Object {
                                 "IsString": true,
-                                "Variable": "$.__fnl_context.input.a",
+                                "Variable": "$.fnl_context.input.a",
                               },
                               Object {
                                 "StringEquals": "",
-                                "Variable": "$.__fnl_context.input.a",
+                                "Variable": "$.fnl_context.input.a",
                               },
                             ],
                           },
@@ -432,18 +432,18 @@ Object {
                       "And": Array [
                         Object {
                           "IsNumeric": true,
-                          "Variable": "$.__fnl_context.input.a",
+                          "Variable": "$.fnl_context.input.a",
                         },
                         Object {
                           "Not": Object {
                             "And": Array [
                               Object {
                                 "IsNumeric": true,
-                                "Variable": "$.__fnl_context.input.a",
+                                "Variable": "$.fnl_context.input.a",
                               },
                               Object {
                                 "NumericEquals": 0,
-                                "Variable": "$.__fnl_context.input.a",
+                                "Variable": "$.fnl_context.input.a",
                               },
                             ],
                           },
@@ -454,11 +454,11 @@ Object {
                       "And": Array [
                         Object {
                           "IsBoolean": true,
-                          "Variable": "$.__fnl_context.input.a",
+                          "Variable": "$.fnl_context.input.a",
                         },
                         Object {
                           "BooleanEquals": true,
-                          "Variable": "$.__fnl_context.input.a",
+                          "Variable": "$.fnl_context.input.a",
                         },
                       ],
                     },
@@ -470,11 +470,11 @@ Object {
               "And": Array [
                 Object {
                   "IsPresent": true,
-                  "Variable": "$.__fnl_context.input.b",
+                  "Variable": "$.fnl_context.input.b",
                 },
                 Object {
                   "IsNull": false,
-                  "Variable": "$.__fnl_context.input.b",
+                  "Variable": "$.fnl_context.input.b",
                 },
                 Object {
                   "Or": Array [
@@ -482,18 +482,18 @@ Object {
                       "And": Array [
                         Object {
                           "IsString": true,
-                          "Variable": "$.__fnl_context.input.b",
+                          "Variable": "$.fnl_context.input.b",
                         },
                         Object {
                           "Not": Object {
                             "And": Array [
                               Object {
                                 "IsString": true,
-                                "Variable": "$.__fnl_context.input.b",
+                                "Variable": "$.fnl_context.input.b",
                               },
                               Object {
                                 "StringEquals": "",
-                                "Variable": "$.__fnl_context.input.b",
+                                "Variable": "$.fnl_context.input.b",
                               },
                             ],
                           },
@@ -504,18 +504,18 @@ Object {
                       "And": Array [
                         Object {
                           "IsNumeric": true,
-                          "Variable": "$.__fnl_context.input.b",
+                          "Variable": "$.fnl_context.input.b",
                         },
                         Object {
                           "Not": Object {
                             "And": Array [
                               Object {
                                 "IsNumeric": true,
-                                "Variable": "$.__fnl_context.input.b",
+                                "Variable": "$.fnl_context.input.b",
                               },
                               Object {
                                 "NumericEquals": 0,
-                                "Variable": "$.__fnl_context.input.b",
+                                "Variable": "$.fnl_context.input.b",
                               },
                             ],
                           },
@@ -526,11 +526,11 @@ Object {
                       "And": Array [
                         Object {
                           "IsBoolean": true,
-                          "Variable": "$.__fnl_context.input.b",
+                          "Variable": "$.fnl_context.input.b",
                         },
                         Object {
                           "BooleanEquals": true,
-                          "Variable": "$.__fnl_context.input.b",
+                          "Variable": "$.fnl_context.input.b",
                         },
                       ],
                     },
@@ -553,11 +553,11 @@ Object {
               "And": Array [
                 Object {
                   "IsPresent": true,
-                  "Variable": "$.__fnl_context.input.a",
+                  "Variable": "$.fnl_context.input.a",
                 },
                 Object {
                   "IsNull": false,
-                  "Variable": "$.__fnl_context.input.a",
+                  "Variable": "$.fnl_context.input.a",
                 },
                 Object {
                   "Or": Array [
@@ -565,18 +565,18 @@ Object {
                       "And": Array [
                         Object {
                           "IsString": true,
-                          "Variable": "$.__fnl_context.input.a",
+                          "Variable": "$.fnl_context.input.a",
                         },
                         Object {
                           "Not": Object {
                             "And": Array [
                               Object {
                                 "IsString": true,
-                                "Variable": "$.__fnl_context.input.a",
+                                "Variable": "$.fnl_context.input.a",
                               },
                               Object {
                                 "StringEquals": "",
-                                "Variable": "$.__fnl_context.input.a",
+                                "Variable": "$.fnl_context.input.a",
                               },
                             ],
                           },
@@ -587,18 +587,18 @@ Object {
                       "And": Array [
                         Object {
                           "IsNumeric": true,
-                          "Variable": "$.__fnl_context.input.a",
+                          "Variable": "$.fnl_context.input.a",
                         },
                         Object {
                           "Not": Object {
                             "And": Array [
                               Object {
                                 "IsNumeric": true,
-                                "Variable": "$.__fnl_context.input.a",
+                                "Variable": "$.fnl_context.input.a",
                               },
                               Object {
                                 "NumericEquals": 0,
-                                "Variable": "$.__fnl_context.input.a",
+                                "Variable": "$.fnl_context.input.a",
                               },
                             ],
                           },
@@ -609,11 +609,11 @@ Object {
                       "And": Array [
                         Object {
                           "IsBoolean": true,
-                          "Variable": "$.__fnl_context.input.a",
+                          "Variable": "$.fnl_context.input.a",
                         },
                         Object {
                           "BooleanEquals": true,
-                          "Variable": "$.__fnl_context.input.a",
+                          "Variable": "$.fnl_context.input.a",
                         },
                       ],
                     },
@@ -625,11 +625,11 @@ Object {
               "And": Array [
                 Object {
                   "IsPresent": true,
-                  "Variable": "$.__fnl_context.input.b",
+                  "Variable": "$.fnl_context.input.b",
                 },
                 Object {
                   "IsNull": false,
-                  "Variable": "$.__fnl_context.input.b",
+                  "Variable": "$.fnl_context.input.b",
                 },
                 Object {
                   "Or": Array [
@@ -637,18 +637,18 @@ Object {
                       "And": Array [
                         Object {
                           "IsString": true,
-                          "Variable": "$.__fnl_context.input.b",
+                          "Variable": "$.fnl_context.input.b",
                         },
                         Object {
                           "Not": Object {
                             "And": Array [
                               Object {
                                 "IsString": true,
-                                "Variable": "$.__fnl_context.input.b",
+                                "Variable": "$.fnl_context.input.b",
                               },
                               Object {
                                 "StringEquals": "",
-                                "Variable": "$.__fnl_context.input.b",
+                                "Variable": "$.fnl_context.input.b",
                               },
                             ],
                           },
@@ -659,18 +659,18 @@ Object {
                       "And": Array [
                         Object {
                           "IsNumeric": true,
-                          "Variable": "$.__fnl_context.input.b",
+                          "Variable": "$.fnl_context.input.b",
                         },
                         Object {
                           "Not": Object {
                             "And": Array [
                               Object {
                                 "IsNumeric": true,
-                                "Variable": "$.__fnl_context.input.b",
+                                "Variable": "$.fnl_context.input.b",
                               },
                               Object {
                                 "NumericEquals": 0,
-                                "Variable": "$.__fnl_context.input.b",
+                                "Variable": "$.fnl_context.input.b",
                               },
                             ],
                           },
@@ -681,11 +681,11 @@ Object {
                       "And": Array [
                         Object {
                           "IsBoolean": true,
-                          "Variable": "$.__fnl_context.input.b",
+                          "Variable": "$.fnl_context.input.b",
                         },
                         Object {
                           "BooleanEquals": true,
-                          "Variable": "$.__fnl_context.input.b",
+                          "Variable": "$.fnl_context.input.b",
                         },
                       ],
                     },
@@ -701,49 +701,49 @@ Object {
       "Type": "Choice",
     },
     "takeLeft__2__return {andVar: c, and: input.a && input.b, or: input.a || inp": Object {
-      "InputPath": "$.__fnl_context.input.v",
+      "InputPath": "$.fnl_context.input.v",
       "Next": "3__return {andVar: c, and: input.a && input.b, or: input.a || input.b, null",
       "ResultPath": "$.heap3",
       "Type": "Pass",
     },
     "takeLeft__3__return {andVar: c, and: input.a && input.b, or: input.a || inp": Object {
-      "InputPath": "$.__fnl_context.input.nv",
+      "InputPath": "$.fnl_context.input.nv",
       "Next": "4__return {andVar: c, and: input.a && input.b, or: input.a || input.b, null",
       "ResultPath": "$.heap4",
       "Type": "Pass",
     },
     "takeLeft__4__return {andVar: c, and: input.a && input.b, or: input.a || inp": Object {
-      "InputPath": "$.__fnl_context.input.nv",
+      "InputPath": "$.fnl_context.input.nv",
       "Next": "5__return {andVar: c, and: input.a && input.b, or: input.a || input.b, null",
       "ResultPath": "$.heap5",
       "Type": "Pass",
     },
     "takeLeft__5__return {andVar: c, and: input.a && input.b, or: input.a || inp": Object {
-      "InputPath": "$.__fnl_context.null",
+      "InputPath": "$.fnl_context.null",
       "Next": "1__return {andVar: c, and: input.a && input.b, or: input.a || input.b, null",
       "ResultPath": "$.heap6",
       "Type": "Pass",
     },
     "takeRight__2__return {andVar: c, and: input.a && input.b, or: input.a || in": Object {
-      "InputPath": "$.__fnl_context.input.nv",
+      "InputPath": "$.fnl_context.input.nv",
       "Next": "3__return {andVar: c, and: input.a && input.b, or: input.a || input.b, null",
       "ResultPath": "$.heap3",
       "Type": "Pass",
     },
     "takeRight__3__return {andVar: c, and: input.a && input.b, or: input.a || in": Object {
-      "InputPath": "$.__fnl_context.input.v",
+      "InputPath": "$.fnl_context.input.v",
       "Next": "4__return {andVar: c, and: input.a && input.b, or: input.a || input.b, null",
       "ResultPath": "$.heap4",
       "Type": "Pass",
     },
     "takeRight__4__return {andVar: c, and: input.a && input.b, or: input.a || in": Object {
-      "InputPath": "$.__fnl_context.null",
+      "InputPath": "$.fnl_context.null",
       "Next": "5__return {andVar: c, and: input.a && input.b, or: input.a || input.b, null",
       "ResultPath": "$.heap5",
       "Type": "Pass",
     },
     "takeRight__5__return {andVar: c, and: input.a && input.b, or: input.a || in": Object {
-      "InputPath": "$.__fnl_context.input.v",
+      "InputPath": "$.fnl_context.input.v",
       "Next": "1__return {andVar: c, and: input.a && input.b, or: input.a || input.b, null",
       "ResultPath": "$.heap6",
       "Type": "Pass",
@@ -757,7 +757,7 @@ Object {
   "StartAt": "Initialize Functionless Context",
   "States": Object {
     "0_tmp = await func()": Object {
-      "InputPath": "$.__fnl_context.null",
+      "InputPath": "$.fnl_context.null",
       "Next": "assign__0_tmp = await func()",
       "Resource": "__REPLACED_TOKEN",
       "ResultPath": "$.heap0",
@@ -860,7 +860,7 @@ Object {
       "Type": "Choice",
     },
     "1_tmp = await func()": Object {
-      "InputPath": "$.__fnl_context.null",
+      "InputPath": "$.fnl_context.null",
       "Next": "assign__1_tmp = await func()",
       "Resource": "__REPLACED_TOKEN",
       "ResultPath": "$.heap1",
@@ -873,7 +873,7 @@ Object {
         "input.$": "$",
         "null": null,
       },
-      "ResultPath": "$.__fnl_context",
+      "ResultPath": "$.fnl_context",
       "Type": "Pass",
     },
     "assignFalse__1__return {and: true && 0_tmp, or: false || 1_tmp} 1": Object {
@@ -1051,11 +1051,11 @@ Object {
         "input.$": "$",
         "null": null,
       },
-      "ResultPath": "$.__fnl_context",
+      "ResultPath": "$.fnl_context",
       "Type": "Pass",
     },
     "await $SFN.forEach(input.arr, function(n))": Object {
-      "ItemsPath": "$.__fnl_context.input.arr",
+      "ItemsPath": "$.fnl_context.input.arr",
       "Iterator": Object {
         "StartAt": "return func(n)",
         "States": Object {
@@ -1110,11 +1110,11 @@ Object {
         "input.$": "$",
         "null": null,
       },
-      "ResultPath": "$.__fnl_context",
+      "ResultPath": "$.fnl_context",
       "Type": "Pass",
     },
     "return $SFN.map(input.arr, function(n))": Object {
-      "ItemsPath": "$.__fnl_context.input.arr",
+      "ItemsPath": "$.fnl_context.input.arr",
       "Iterator": Object {
         "StartAt": "return n",
         "States": Object {
@@ -1195,7 +1195,7 @@ Object {
         "input.$": "$",
         "null": null,
       },
-      "ResultPath": "$.__fnl_context",
+      "ResultPath": "$.fnl_context",
       "Type": "Pass",
     },
     "return null": Object {
@@ -1227,11 +1227,11 @@ Object {
         "input.$": "$",
         "null": null,
       },
-      "ResultPath": "$.__fnl_context",
+      "ResultPath": "$.fnl_context",
       "Type": "Pass",
     },
     "return func()": Object {
-      "InputPath": "$.__fnl_context.null",
+      "InputPath": "$.fnl_context.null",
       "Next": "1__return func()",
       "Resource": "__REPLACED_TOKEN",
       "ResultPath": "$.heap0",
@@ -1389,7 +1389,7 @@ Object {
   "StartAt": "Initialize Functionless Context",
   "States": Object {
     "0_tmp = await func(event.str)": Object {
-      "InputPath": "$.__fnl_context.input.str",
+      "InputPath": "$.fnl_context.input.str",
       "Next": "assign__0_tmp = await func(event.str)",
       "Resource": "__REPLACED_TOKEN",
       "ResultPath": "$.heap0",
@@ -1402,7 +1402,7 @@ Object {
         "input.$": "$",
         "null": null,
       },
-      "ResultPath": "$.__fnl_context",
+      "ResultPath": "$.fnl_context",
       "Type": "Pass",
     },
     "assign__0_tmp = await func(event.str)": Object {
@@ -1431,7 +1431,7 @@ Object {
         "input.$": "$",
         "null": null,
       },
-      "ResultPath": "$.__fnl_context",
+      "ResultPath": "$.fnl_context",
       "Type": "Pass",
     },
     "a = \\"2\\"": Object {
@@ -1443,7 +1443,7 @@ Object {
     "return {a: input.a, b: a}": Object {
       "End": true,
       "Parameters": Object {
-        "a.$": "$.__fnl_context.input.a",
+        "a.$": "$.fnl_context.input.a",
         "b.$": "$.a",
       },
       "ResultPath": "$",
@@ -1461,6 +1461,166 @@ Object {
       "End": true,
       "Result": "hello world",
       "ResultPath": "$",
+      "Type": "Pass",
+    },
+  },
+}
+`;
+
+exports[`templates 1`] = `
+Object {
+  "StartAt": "Initialize Functionless Context",
+  "States": Object {
+    "1__return \`the result: result.str\`": Object {
+      "End": true,
+      "InputPath": "$.heap4.string",
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "Initialize Functionless Context": Object {
+      "Next": "partOfTheTemplateString = \`hello input.obj.str2 ?? \\"default\\"\`",
+      "OutputPath": "$",
+      "Parameters": Object {
+        "input.$": "$",
+        "null": null,
+      },
+      "ResultPath": "$.fnl_context",
+      "Type": "Pass",
+    },
+    "assign__partOfTheTemplateString = \`hello input.obj.str2 ?? \\"default\\"\`": Object {
+      "InputPath": "$.heap1.string",
+      "Next": "result = await func(\`input.obj.str hello partOfTheTemplateString input.obj.",
+      "ResultPath": "$.partOfTheTemplateString",
+      "Type": "Pass",
+    },
+    "assign__result = await func(\`input.obj.str hello partOfTheTemplateString in": Object {
+      "InputPath": "$.heap2",
+      "Next": "return \`the result: result.str\`",
+      "ResultPath": "$.result",
+      "Type": "Pass",
+    },
+    "partOfTheTemplateString = \`hello input.obj.str2 ?? \\"default\\"\`": Object {
+      "Choices": Array [
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.fnl_context.input.obj.str2",
+            },
+            Object {
+              "IsNull": false,
+              "Variable": "$.fnl_context.input.obj.str2",
+            },
+          ],
+          "Next": "takeLeft__partOfTheTemplateString = \`hello input.obj.str2 ?? \\"default\\"\`",
+        },
+      ],
+      "Default": "takeRight__partOfTheTemplateString = \`hello input.obj.str2 ?? \\"default\\"\`",
+      "Type": "Choice",
+    },
+    "result = await func(\`input.obj.str hello partOfTheTemplateString input.obj.": Object {
+      "Next": "string__result = await func(\`input.obj.str hello partOfTheTemplateString in",
+      "Result": "{} hello {} {}",
+      "ResultPath": "$.heap3",
+      "Type": "Pass",
+    },
+    "return \`the result: result.str\`": Object {
+      "Next": "string__return \`the result: result.str\`",
+      "Result": "the result: {}",
+      "ResultPath": "$.heap4",
+      "Type": "Pass",
+    },
+    "string__partOfTheTemplateString = \`hello input.obj.str2 ?? \\"default\\"\`": Object {
+      "Next": "assign__partOfTheTemplateString = \`hello input.obj.str2 ?? \\"default\\"\`",
+      "Parameters": Object {
+        "string.$": "States.Format($.heap1,$.heap0)",
+      },
+      "ResultPath": "$.heap1",
+      "Type": "Pass",
+    },
+    "string__result = await func(\`input.obj.str hello partOfTheTemplateString in": Object {
+      "Next": "task__result = await func(\`input.obj.str hello partOfTheTemplateString inpu",
+      "Parameters": Object {
+        "string.$": "States.Format($.heap3,$.fnl_context.input.obj.str,$.partOfTheTemplateString,$.fnl_context.input.obj.items[0])",
+      },
+      "ResultPath": "$.heap3",
+      "Type": "Pass",
+    },
+    "string__return \`the result: result.str\`": Object {
+      "Next": "1__return \`the result: result.str\`",
+      "Parameters": Object {
+        "string.$": "States.Format($.heap4,$.result.str)",
+      },
+      "ResultPath": "$.heap4",
+      "Type": "Pass",
+    },
+    "takeLeft__partOfTheTemplateString = \`hello input.obj.str2 ?? \\"default\\"\`": Object {
+      "InputPath": "$.fnl_context.input.obj.str2",
+      "Next": "template__partOfTheTemplateString = \`hello input.obj.str2 ?? \\"default\\"\`",
+      "ResultPath": "$.heap0",
+      "Type": "Pass",
+    },
+    "takeRight__partOfTheTemplateString = \`hello input.obj.str2 ?? \\"default\\"\`": Object {
+      "Next": "template__partOfTheTemplateString = \`hello input.obj.str2 ?? \\"default\\"\`",
+      "Result": "default",
+      "ResultPath": "$.heap0",
+      "Type": "Pass",
+    },
+    "task__result = await func(\`input.obj.str hello partOfTheTemplateString inpu": Object {
+      "InputPath": "$.heap3.string",
+      "Next": "assign__result = await func(\`input.obj.str hello partOfTheTemplateString in",
+      "Resource": "__REPLACED_TOKEN",
+      "ResultPath": "$.heap2",
+      "Type": "Task",
+    },
+    "template__partOfTheTemplateString = \`hello input.obj.str2 ?? \\"default\\"\`": Object {
+      "Next": "string__partOfTheTemplateString = \`hello input.obj.str2 ?? \\"default\\"\`",
+      "Result": "hello {}",
+      "ResultPath": "$.heap1",
+      "Type": "Pass",
+    },
+  },
+}
+`;
+
+exports[`templates simple 1`] = `
+Object {
+  "StartAt": "Initialize Functionless Context",
+  "States": Object {
+    "1__return \`x\`": Object {
+      "End": true,
+      "InputPath": "$.heap0.string",
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "Initialize Functionless Context": Object {
+      "Next": "x = input.str",
+      "OutputPath": "$",
+      "Parameters": Object {
+        "input.$": "$",
+        "null": null,
+      },
+      "ResultPath": "$.fnl_context",
+      "Type": "Pass",
+    },
+    "return \`x\`": Object {
+      "Next": "string__return \`x\`",
+      "Result": "{}",
+      "ResultPath": "$.heap0",
+      "Type": "Pass",
+    },
+    "string__return \`x\`": Object {
+      "Next": "1__return \`x\`",
+      "Parameters": Object {
+        "string.$": "States.Format($.heap0,$.x)",
+      },
+      "ResultPath": "$.heap0",
+      "Type": "Pass",
+    },
+    "x = input.str": Object {
+      "InputPath": "$.fnl_context.input.str",
+      "Next": "return \`x\`",
+      "ResultPath": "$.x",
       "Type": "Pass",
     },
   },

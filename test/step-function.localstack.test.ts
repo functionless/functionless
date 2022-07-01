@@ -425,4 +425,48 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
     },
     { a: { x: "val" }, b: "2", c: null, d: 1, e: [1, 2] }
   );
+
+  test(
+    "templates",
+    (parent) => {
+      const func = new Function<string, { str: string }>(
+        parent,
+        "func",
+        {
+          timeout: Duration.seconds(20),
+        },
+        async (event) => {
+          return { str: event };
+        }
+      );
+      return new StepFunction<
+        { obj: { str: string; str2?: string; items: number[] } },
+        string
+      >(parent, "fn", async (input) => {
+        const partOfTheTemplateString = `hello ${input.obj.str2 ?? "default"}`;
+
+        const result = await func(
+          `${input.obj.str} ${"hello"} ${partOfTheTemplateString} ${
+            input.obj.items[0]
+          }`
+        );
+
+        return `the result: ${result.str}`;
+      });
+    },
+    "the result: hullo hello hello default 1",
+    { obj: { str: "hullo", items: [1] } }
+  );
+
+  test(
+    "templates simple",
+    (parent) => {
+      return new StepFunction(parent, "fn", async (input) => {
+        const x = input.str;
+        return `${x}`;
+      });
+    },
+    "hi",
+    { str: "hi" }
+  );
 });
