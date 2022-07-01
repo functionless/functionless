@@ -134,6 +134,12 @@ export interface CompoundState extends SubState {
 }
 
 export interface AslConstant {
+  /**
+   * Whether there is json path in the constant.
+   *
+   * Helps determine where this constant can go for validation and
+   * when false use Result in a Pass State instead of Parameters
+   */
   containsJsonPath: boolean;
   value: string | number | null | boolean | Record<string, any>;
 }
@@ -2009,15 +2015,11 @@ export class ASL {
           }
           const value = this.eval(prop.expr);
           const valueOutput = this.getAslStateOutput(value);
-          const isJsonPath =
-            isVariable(valueOutput) || valueOutput.containsJsonPath;
           return [
             {
               value: {
                 ...(obj.value as Record<string, any>),
-                [`${name}${isJsonPath ? ".$" : ""}`]: isVariable(valueOutput)
-                  ? valueOutput.jsonPath
-                  : valueOutput.value,
+                ...this.toJsonAssignment(name, valueOutput),
               },
               containsJsonPath:
                 obj.containsJsonPath ||

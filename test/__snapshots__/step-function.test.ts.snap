@@ -926,8 +926,8 @@ Object {
     "person = await $AWS.DynamoDB.GetItem({Table: personTable, Key: {id: {S: inp": Object {
       "Next": "assign__person = await $AWS.DynamoDB.GetItem({Table: personTable, Key: {id:",
       "Parameters": Object {
-        "Key.$": Object {
-          "id.$": Object {
+        "Key": Object {
+          "id": Object {
             "S.$": "$.fnl_context.input.id",
           },
         },
@@ -1401,8 +1401,8 @@ Object {
     "await $AWS.DynamoDB.GetItem({Table: personTable, Key: {id: {S: input.id}}})": Object {
       "Next": "return null",
       "Parameters": Object {
-        "Key.$": Object {
-          "id.$": Object {
+        "Key": Object {
+          "id": Object {
             "S.$": "$.fnl_context.input.id",
           },
         },
@@ -4232,8 +4232,8 @@ Object {
     "person = await $AWS.DynamoDB.GetItem({Table: personTable, Key: {id: {S: inp": Object {
       "Next": "assign__person = await $AWS.DynamoDB.GetItem({Table: personTable, Key: {id:",
       "Parameters": Object {
-        "Key.$": Object {
-          "id.$": Object {
+        "Key": Object {
+          "id": Object {
             "S.$": "$.fnl_context.input.id",
           },
         },
@@ -4287,8 +4287,8 @@ Object {
     "assign__person = await $AWS.DynamoDB.GetItem({Table: personTable, Key: {id: 1": Object {
       "Next": "assign__person = await $AWS.DynamoDB.GetItem({Table: personTable, Key: {id:",
       "Parameters": Object {
-        "Key.$": Object {
-          "id.$": Object {
+        "Key": Object {
+          "id": Object {
             "S.$": "$.heap0",
           },
         },
