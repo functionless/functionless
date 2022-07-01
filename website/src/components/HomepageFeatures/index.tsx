@@ -1,13 +1,12 @@
 /* eslint-disable import/no-unresolved */
-import Mountain from "@site/static/img/undraw_docusaurus_mountain.svg";
-import Undraw from "@site/static/img/undraw_docusaurus_react.svg";
-import Tree from "@site/static/img/undraw_docusaurus_tree.svg";
-import clsx from "clsx";
-import React from "react";
+import Cloud from "@site/static/img/cloud.png";
+import Friendly from "@site/static/img/friendly.png";
+import Keys from "@site/static/img/keys.png";
 
-// see: https://www.npmjs.com/package/react-syntax-highlighter
-import SyntaxHighlighter from "react-syntax-highlighter";
-import { a11yDark } from "react-syntax-highlighter/dist/esm/styles/hljs";
+import clsx from "clsx";
+
+import Highlighter from "../highlighter";
+
 import styles from "./styles.module.css";
 
 export default function HomepageFeatures(): JSX.Element {
@@ -31,11 +30,11 @@ export default function HomepageFeatures(): JSX.Element {
   );
 }
 
-function Feature({ title, Svg, description }: FeatureItem) {
+function Feature({ title, Img, description }: FeatureItem) {
   return (
     <div className={clsx("col col--4")}>
       <div className="text--center">
-        <Svg className={styles.featureSvg} role="img" />
+        <img className={styles.featureSvg} role="img" src={Img} />
       </div>
       <div className="text--center padding-horiz--md">
         <h3>{title}</h3>
@@ -47,14 +46,14 @@ function Feature({ title, Svg, description }: FeatureItem) {
 
 type FeatureItem = {
   title: string;
-  Svg: React.ComponentType<React.ComponentProps<"svg">>;
+  Img: string;
   description: JSX.Element;
 };
 
 const FeatureList: FeatureItem[] = [
   {
     title: "Familiar and friendly TypeScript syntax",
-    Svg: Mountain,
+    Img: Friendly,
     description: (
       <>
         Adopt powerful cloud-native services without boilerplate configurations
@@ -64,7 +63,7 @@ const FeatureList: FeatureItem[] = [
   },
   {
     title: "Secure by default",
-    Svg: Tree,
+    Img: Keys,
     description: (
       <>
         Minimally permissive IAM Policies are inferred from your business logic,
@@ -75,7 +74,7 @@ const FeatureList: FeatureItem[] = [
   },
   {
     title: "Typesafe cloud resources",
-    Svg: Undraw,
+    Img: Cloud,
     description: (
       <>
         Use types to describe the interfaces of your cloud functions and the
@@ -89,33 +88,13 @@ const FeatureList: FeatureItem[] = [
 function CodePreview(props: { title: string; code: string }) {
   return (
     <div className="row">
-      <div className="col col--12 padding-top--lg">
-        <h3
-          style={{
-            textAlign: "center",
-            width: "100%",
-          }}
-        >
-          {props.title}
-        </h3>
+      <div className="col col--12 padding-top--lg padding-bottom--md">
+        {props.title}
       </div>
       <div className="col col--12">
-        <Code code={props.code} />
+        <Highlighter>{props.code}</Highlighter>
       </div>
     </div>
-  );
-}
-
-function Code(props: { code: string }) {
-  return (
-    <SyntaxHighlighter
-      language="typescript"
-      style={a11yDark}
-      wrapLongLines={false}
-      customStyle={{ width: "100%" }}
-    >
-      {props.code}
-    </SyntaxHighlighter>
   );
 }
 

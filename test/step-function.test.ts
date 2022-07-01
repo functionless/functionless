@@ -1560,8 +1560,8 @@ test("`template me ${await task(input.value)}`", () => {
   const definition = new ExpressStepFunction<{ value: string }, string>(
     stack,
     "fn",
-    (input) => {
-      return `template me ${task(input.value)}`;
+    async (input) => {
+      return `template me ${await task(input.value)}`;
     }
   ).definition;
 

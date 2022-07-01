@@ -106,6 +106,57 @@ Object {
 }
 `;
 
+exports[`\`template me \${await task(input.value)}\` 1`] = `
+Object {
+  "StartAt": "Initialize Functionless Context",
+  "States": Object {
+    "0_tmp = await task(input.value)": Object {
+      "InputPath": "$.fnl_context.input.value",
+      "Next": "assign__0_tmp = await task(input.value)",
+      "Resource": "__REPLACED_TOKEN",
+      "ResultPath": "$.heap0",
+      "Type": "Task",
+    },
+    "1__return \`template me 0_tmp\`": Object {
+      "End": true,
+      "InputPath": "$.heap1.string",
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "Initialize Functionless Context": Object {
+      "Next": "0_tmp = await task(input.value)",
+      "OutputPath": "$",
+      "Parameters": Object {
+        "input.$": "$",
+        "null": null,
+      },
+      "ResultPath": "$.fnl_context",
+      "Type": "Pass",
+    },
+    "assign__0_tmp = await task(input.value)": Object {
+      "InputPath": "$.heap0",
+      "Next": "return \`template me 0_tmp\`",
+      "ResultPath": "$.0_tmp",
+      "Type": "Pass",
+    },
+    "return \`template me 0_tmp\`": Object {
+      "Next": "string__return \`template me 0_tmp\`",
+      "Result": "template me {}",
+      "ResultPath": "$.heap1",
+      "Type": "Pass",
+    },
+    "string__return \`template me 0_tmp\`": Object {
+      "Next": "1__return \`template me 0_tmp\`",
+      "Parameters": Object {
+        "string.$": "States.Format($.heap1,$.0_tmp)",
+      },
+      "ResultPath": "$.heap1",
+      "Type": "Pass",
+    },
+  },
+}
+`;
+
 exports[`\`template me \${input.value}\` 1`] = `
 Object {
   "StartAt": "Initialize Functionless Context",
@@ -913,32 +964,6 @@ Object {
       "Resource": "__REPLACED_TOKEN",
       "ResultPath": "$.heap1",
       "Type": "Task",
-    },
-  },
-}
-`;
-
-exports[`call Lambda Function, store as variable, return promise variable 1`] = `
-Object {
-  "StartAt": "person = getPerson({id: input.id})",
-  "States": Object {
-    "person = getPerson({id: input.id})": Object {
-      "Next": "return person",
-      "Parameters": Object {
-        "FunctionName": "__REPLACED_TOKEN",
-        "Payload": Object {
-          "id.$": "$.id",
-        },
-      },
-      "Resource": "arn:aws:states:::lambda:invoke",
-      "ResultPath": "$.person",
-      "ResultSelector": "$.Payload",
-      "Type": "Task",
-    },
-    "return person": Object {
-      "End": true,
-      "OutputPath": "$.person",
-      "Type": "Pass",
     },
   },
 }
