@@ -9,6 +9,7 @@ Object {
       "OutputPath": "$",
       "Parameters": Object {
         "input.$": "$",
+        "null": null,
       },
       "ResultPath": "$.__fnl_context",
       "Type": "Pass",
@@ -37,7 +38,7 @@ Object {
       "Parameters": Object {
         "item.$": "$$.Map.Item.Value",
       },
-      "ResultPath": null,
+      "ResultPath": "$.heap1",
       "Type": "Map",
     },
     "return null": Object {
@@ -61,6 +62,7 @@ Object {
       "OutputPath": "$",
       "Parameters": Object {
         "input.$": "$",
+        "null": null,
       },
       "ResultPath": "$.__fnl_context",
       "Type": "Pass",
@@ -89,7 +91,7 @@ Object {
       "Parameters": Object {
         "item.$": "$$.Map.Item.Value",
       },
-      "ResultPath": null,
+      "ResultPath": "$.heap1",
       "Type": "Map",
     },
     "return null": Object {
@@ -277,6 +279,7 @@ Object {
       "OutputPath": "$",
       "Parameters": Object {
         "input.$": "$",
+        "null": null,
       },
       "ResultPath": "$.__fnl_context",
       "Type": "Pass",
@@ -479,6 +482,7 @@ Object {
       "OutputPath": "$",
       "Parameters": Object {
         "input.$": "$",
+        "null": null,
       },
       "ResultPath": "$.__fnl_context",
       "Type": "Pass",
@@ -694,6 +698,7 @@ Object {
       "OutputPath": "$",
       "Parameters": Object {
         "input.$": "$",
+        "null": null,
       },
       "ResultPath": "$.__fnl_context",
       "Type": "Pass",
@@ -793,6 +798,7 @@ Object {
       "OutputPath": "$",
       "Parameters": Object {
         "input.$": "$",
+        "null": null,
       },
       "ResultPath": "$.__fnl_context",
       "Type": "Pass",
@@ -909,6 +915,7 @@ Object {
       "OutputPath": "$",
       "Parameters": Object {
         "input.$": "$",
+        "null": null,
       },
       "ResultPath": "$.__fnl_context",
       "Type": "Pass",
@@ -952,6 +959,7 @@ Object {
       "OutputPath": "$",
       "Parameters": Object {
         "input.$": "$",
+        "null": null,
       },
       "ResultPath": "$.__fnl_context",
       "Type": "Pass",
@@ -1007,6 +1015,7 @@ Object {
       "OutputPath": "$",
       "Parameters": Object {
         "input.$": "$",
+        "null": null,
       },
       "ResultPath": "$.__fnl_context",
       "Type": "Pass",
@@ -1062,6 +1071,7 @@ Object {
       "OutputPath": "$",
       "Parameters": Object {
         "input.$": "$",
+        "null": null,
       },
       "ResultPath": "$.__fnl_context",
       "Type": "Pass",
@@ -1097,6 +1107,7 @@ Object {
       "OutputPath": "$",
       "Parameters": Object {
         "input.$": "$",
+        "null": null,
       },
       "ResultPath": "$.__fnl_context",
       "Type": "Pass",
@@ -1181,6 +1192,7 @@ Object {
       "OutputPath": "$",
       "Parameters": Object {
         "input.$": "$",
+        "null": null,
       },
       "ResultPath": "$.__fnl_context",
       "Type": "Pass",
@@ -1215,6 +1227,7 @@ Object {
       "OutputPath": "$",
       "Parameters": Object {
         "input.$": "$",
+        "null": null,
       },
       "ResultPath": "$.__fnl_context",
       "Type": "Pass",
@@ -1317,6 +1330,7 @@ Object {
       "OutputPath": "$",
       "Parameters": Object {
         "input.$": "$",
+        "null": null,
       },
       "ResultPath": "$.__fnl_context",
       "Type": "Pass",
@@ -1332,7 +1346,7 @@ Object {
         "TableName": "__REPLACED_TOKEN",
       },
       "Resource": "__REPLACED_ARN",
-      "ResultPath": null,
+      "ResultPath": "$.heap0",
       "Type": "Task",
     },
     "if(input.id == \\"hello\\")": Object {
@@ -1367,6 +1381,7 @@ Object {
       "OutputPath": "$",
       "Parameters": Object {
         "input.$": "$",
+        "null": null,
       },
       "ResultPath": "$.__fnl_context",
       "Type": "Pass",
@@ -1411,6 +1426,7 @@ Object {
       "OutputPath": "$",
       "Parameters": Object {
         "input.$": "$",
+        "null": null,
       },
       "ResultPath": "$.__fnl_context",
       "Type": "Pass",
@@ -1419,7 +1435,7 @@ Object {
       "InputPath": "$.__fnl_context.input.key",
       "Next": "while (true)",
       "Resource": "__REPLACED_TOKEN",
-      "ResultPath": null,
+      "ResultPath": "$.heap0",
       "Type": "Task",
     },
     "continue": Object {
@@ -1470,6 +1486,7 @@ Object {
       "OutputPath": "$",
       "Parameters": Object {
         "input.$": "$",
+        "null": null,
       },
       "ResultPath": "$.__fnl_context",
       "Type": "Pass",
@@ -1530,6 +1547,7 @@ Object {
       "OutputPath": "$",
       "Parameters": Object {
         "input.$": "$",
+        "null": null,
       },
       "ResultPath": "$.__fnl_context",
       "Type": "Pass",
@@ -1538,7 +1556,7 @@ Object {
       "InputPath": "$.__fnl_context.input.key",
       "Next": "while (true)",
       "Resource": "__REPLACED_TOKEN",
-      "ResultPath": null,
+      "ResultPath": "$.heap0",
       "Type": "Task",
     },
     "continue": Object {
@@ -1612,6 +1630,7 @@ Object {
       "OutputPath": "$",
       "Parameters": Object {
         "input.$": "$",
+        "null": null,
       },
       "ResultPath": "$.__fnl_context",
       "Type": "Pass",
@@ -1643,7 +1662,7 @@ Object {
           "await task(1_tmp)": Object {
             "InputPath": "$.1_tmp",
             "Resource": "__REPLACED_TOKEN",
-            "ResultPath": null,
+            "ResultPath": "$.heap2",
             "Type": "Task",
           },
         },
@@ -1685,6 +1704,7 @@ Object {
       "OutputPath": "$",
       "Parameters": Object {
         "input.$": "$",
+        "null": null,
       },
       "ResultPath": "$.__fnl_context",
       "Type": "Pass",
@@ -1716,7 +1736,7 @@ Object {
           "await task(1_tmp)": Object {
             "InputPath": "$.1_tmp",
             "Resource": "__REPLACED_TOKEN",
-            "ResultPath": null,
+            "ResultPath": "$.heap2",
             "Type": "Task",
           },
         },
@@ -1750,6 +1770,7 @@ Object {
       "OutputPath": "$",
       "Parameters": Object {
         "input.$": "$",
+        "null": null,
       },
       "ResultPath": "$.__fnl_context",
       "Type": "Pass",
@@ -1796,6 +1817,7 @@ Object {
       "OutputPath": "$",
       "Parameters": Object {
         "input.$": "$",
+        "null": null,
       },
       "ResultPath": "$.__fnl_context",
       "Type": "Pass",
@@ -1841,6 +1863,7 @@ Object {
       "OutputPath": "$",
       "Parameters": Object {
         "input.$": "$",
+        "null": null,
       },
       "ResultPath": "$.__fnl_context",
       "Type": "Pass",
@@ -1856,7 +1879,7 @@ Object {
               "name.$": "$.name",
             },
             "Resource": "__REPLACED_TOKEN",
-            "ResultPath": null,
+            "ResultPath": "$.heap0",
             "Type": "Task",
           },
         },
@@ -1899,6 +1922,7 @@ Object {
       "OutputPath": "$",
       "Parameters": Object {
         "input.$": "$",
+        "null": null,
       },
       "ResultPath": "$.__fnl_context",
       "Type": "Pass",
@@ -1918,7 +1942,7 @@ Object {
             "Next": "exit finally",
             "Parameters": "2",
             "Resource": "__REPLACED_TOKEN",
-            "ResultPath": null,
+            "ResultPath": "$.heap1",
             "Type": "Task",
           },
           "await task(item)": Object {
@@ -1934,7 +1958,7 @@ Object {
             "InputPath": "$.item",
             "Next": "await task(\\"2\\")",
             "Resource": "__REPLACED_TOKEN",
-            "ResultPath": null,
+            "ResultPath": "$.heap0",
             "Type": "Task",
           },
           "catch(err)": Object {
@@ -2011,6 +2035,7 @@ Object {
       "OutputPath": "$",
       "Parameters": Object {
         "input.$": "$",
+        "null": null,
       },
       "ResultPath": "$.__fnl_context",
       "Type": "Pass",
@@ -2148,6 +2173,7 @@ Object {
       "OutputPath": "$",
       "Parameters": Object {
         "input.$": "$",
+        "null": null,
       },
       "ResultPath": "$.__fnl_context",
       "Type": "Pass",
@@ -2285,6 +2311,7 @@ Object {
       "OutputPath": "$",
       "Parameters": Object {
         "input.$": "$",
+        "null": null,
       },
       "ResultPath": "$.__fnl_context",
       "Type": "Pass",
@@ -2325,6 +2352,7 @@ Object {
       "OutputPath": "$",
       "Parameters": Object {
         "input.$": "$",
+        "null": null,
       },
       "ResultPath": "$.__fnl_context",
       "Type": "Pass",
@@ -2382,7 +2410,7 @@ Object {
         "StateMachineArn": "__REPLACED_TOKEN",
       },
       "Resource": "__REPLACED_ARN",
-      "ResultPath": null,
+      "ResultPath": "$.heap0",
       "Type": "Task",
     },
     "return null": Object {
@@ -2410,7 +2438,7 @@ Object {
         "StateMachineArn": "__REPLACED_TOKEN",
       },
       "Resource": "__REPLACED_ARN",
-      "ResultPath": null,
+      "ResultPath": "$.heap0",
       "Type": "Task",
     },
     "return null": Object {
@@ -2434,6 +2462,7 @@ Object {
       "OutputPath": "$",
       "Parameters": Object {
         "input.$": "$",
+        "null": null,
       },
       "ResultPath": "$.__fnl_context",
       "Type": "Pass",
@@ -2441,73 +2470,73 @@ Object {
     "a = \\"hello\\"": Object {
       "Next": "a = \\"hello\\" + \\" world\\"",
       "Result": "hello",
-      "ResultPath": null,
+      "ResultPath": "$.a",
       "Type": "Pass",
     },
     "a = \\"hello\\" + \\" world\\"": Object {
       "Next": "a = \\"hello\\" + 1",
       "Result": "hello world",
-      "ResultPath": null,
+      "ResultPath": "$.a",
       "Type": "Pass",
     },
     "a = \\"hello\\" + 1": Object {
       "Next": "a = 1 + \\"hello\\"",
       "Result": "hello1",
-      "ResultPath": null,
+      "ResultPath": "$.a",
       "Type": "Pass",
     },
     "a = \\"hello\\" + [\\"world\\"]": Object {
       "Next": "return a",
       "Result": "helloworld",
-      "ResultPath": null,
+      "ResultPath": "$.a",
       "Type": "Pass",
     },
     "a = \\"hello\\" + null": Object {
       "Next": "a = [null]",
       "Result": "hellonull",
-      "ResultPath": null,
+      "ResultPath": "$.a",
       "Type": "Pass",
     },
     "a = \\"hello\\" + true": Object {
       "Next": "a = false + \\"hello\\"",
       "Result": "hellotrue",
-      "ResultPath": null,
+      "ResultPath": "$.a",
       "Type": "Pass",
     },
     "a = \\"hello\\" + {place: \\"world\\"}": Object {
       "Next": "a = \\"hello\\" + [\\"world\\"]",
       "Result": "hello[object Object]",
-      "ResultPath": null,
+      "ResultPath": "$.a",
       "Type": "Pass",
     },
     "a = -1": Object {
       "Next": "a = -100",
       "Result": -1,
-      "ResultPath": null,
+      "ResultPath": "$.a",
       "Type": "Pass",
     },
     "a = -100": Object {
       "Next": "a = 1 + 2",
       "Result": -100,
-      "ResultPath": null,
+      "ResultPath": "$.a",
       "Type": "Pass",
     },
     "a = 0": Object {
       "Next": "a = -1",
       "Result": 0,
-      "ResultPath": null,
+      "ResultPath": "$.a",
       "Type": "Pass",
     },
     "a = 1 + \\"hello\\"": Object {
       "Next": "a = \\"hello\\" + true",
       "Result": "1hello",
-      "ResultPath": null,
+      "ResultPath": "$.a",
       "Type": "Pass",
     },
     "a = 1 + 2": Object {
       "Next": "a = \\"hello\\"",
       "Result": 3,
-      "ResultPath": null,
+      "ResultPath": "$.a",
       "Type": "Pass",
     },
     "a = [-1]": Object {
@@ -2515,7 +2544,7 @@ Object {
       "Result": Array [
         -1,
       ],
-      "ResultPath": null,
+      "ResultPath": "$.a",
       "Type": "Pass",
     },
     "a = [1]": Object {
@@ -2523,7 +2552,7 @@ Object {
       "Result": Array [
         1,
       ],
-      "ResultPath": null,
+      "ResultPath": "$.a",
       "Type": "Pass",
     },
     "a = [null]": Object {
@@ -2531,7 +2560,7 @@ Object {
       "Result": Array [
         null,
       ],
-      "ResultPath": null,
+      "ResultPath": "$.a",
       "Type": "Pass",
     },
     "a = [true]": Object {
@@ -2539,7 +2568,7 @@ Object {
       "Result": Array [
         true,
       ],
-      "ResultPath": null,
+      "ResultPath": "$.a",
       "Type": "Pass",
     },
     "a = [{key: \\"value\\"}]": Object {
@@ -2549,43 +2578,43 @@ Object {
           "key": "value",
         },
       ],
-      "ResultPath": null,
+      "ResultPath": "$.a",
       "Type": "Pass",
     },
     "a = a": Object {
       "InputPath": "$.a",
       "Next": "a = \\"hello\\" + {place: \\"world\\"}",
-      "ResultPath": null,
+      "ResultPath": "$.a",
       "Type": "Pass",
     },
     "a = false": Object {
       "Next": "a = 0",
       "Result": false,
-      "ResultPath": null,
+      "ResultPath": "$.a",
       "Type": "Pass",
     },
     "a = false + \\"hello\\"": Object {
       "Next": "a = null + \\"hello\\"",
       "Result": "falsehello",
-      "ResultPath": null,
+      "ResultPath": "$.a",
       "Type": "Pass",
     },
     "a = null": Object {
       "InputPath": "$.__fnl_context.null",
       "Next": "a = true",
-      "ResultPath": null,
+      "ResultPath": "$.a",
       "Type": "Pass",
     },
     "a = null + \\"hello\\"": Object {
       "Next": "a = \\"hello\\" + null",
       "Result": "nullhello",
-      "ResultPath": null,
+      "ResultPath": "$.a",
       "Type": "Pass",
     },
     "a = true": Object {
       "Next": "a = false",
       "Result": true,
-      "ResultPath": null,
+      "ResultPath": "$.a",
       "Type": "Pass",
     },
     "a = {key: \\"value\\"}": Object {
@@ -2593,7 +2622,7 @@ Object {
       "Result": Object {
         "key": "value",
       },
-      "ResultPath": null,
+      "ResultPath": "$.a",
       "Type": "Pass",
     },
     "return a": Object {
@@ -2614,6 +2643,7 @@ Object {
       "OutputPath": "$",
       "Parameters": Object {
         "input.$": "$",
+        "null": null,
       },
       "ResultPath": "$.__fnl_context",
       "Type": "Pass",
@@ -2621,7 +2651,7 @@ Object {
     "cond = await task()": Object {
       "InputPath": "$.heap0",
       "Next": "while (cond == undefined)",
-      "ResultPath": null,
+      "ResultPath": "$.cond",
       "Type": "Pass",
     },
     "return null": Object {
@@ -2670,6 +2700,7 @@ Object {
       "OutputPath": "$",
       "Parameters": Object {
         "input.$": "$",
+        "null": null,
       },
       "ResultPath": "$.__fnl_context",
       "Type": "Pass",
@@ -2712,6 +2743,7 @@ Object {
       "OutputPath": "$",
       "Parameters": Object {
         "input.$": "$",
+        "null": null,
       },
       "ResultPath": "$.__fnl_context",
       "Type": "Pass",
@@ -2754,6 +2786,7 @@ Object {
       "OutputPath": "$",
       "Parameters": Object {
         "input.$": "$",
+        "null": null,
       },
       "ResultPath": "$.__fnl_context",
       "Type": "Pass",
@@ -2796,6 +2829,7 @@ Object {
       "OutputPath": "$",
       "Parameters": Object {
         "input.$": "$",
+        "null": null,
       },
       "ResultPath": "$.__fnl_context",
       "Type": "Pass",
@@ -2846,6 +2880,7 @@ Object {
       "OutputPath": "$",
       "Parameters": Object {
         "input.$": "$",
+        "null": null,
       },
       "ResultPath": "$.__fnl_context",
       "Type": "Pass",
@@ -2896,6 +2931,7 @@ Object {
       "OutputPath": "$",
       "Parameters": Object {
         "input.$": "$",
+        "null": null,
       },
       "ResultPath": "$.__fnl_context",
       "Type": "Pass",
@@ -2946,6 +2982,7 @@ Object {
       "OutputPath": "$",
       "Parameters": Object {
         "input.$": "$",
+        "null": null,
       },
       "ResultPath": "$.__fnl_context",
       "Type": "Pass",
@@ -3016,6 +3053,7 @@ Object {
       "OutputPath": "$",
       "Parameters": Object {
         "input.$": "$",
+        "null": null,
       },
       "ResultPath": "$.__fnl_context",
       "Type": "Pass",
@@ -3091,6 +3129,7 @@ Object {
       "OutputPath": "$",
       "Parameters": Object {
         "input.$": "$",
+        "null": null,
       },
       "ResultPath": "$.__fnl_context",
       "Type": "Pass",
@@ -3141,6 +3180,7 @@ Object {
       "OutputPath": "$",
       "Parameters": Object {
         "input.$": "$",
+        "null": null,
       },
       "ResultPath": "$.__fnl_context",
       "Type": "Pass",
@@ -3211,6 +3251,7 @@ Object {
       "OutputPath": "$",
       "Parameters": Object {
         "input.$": "$",
+        "null": null,
       },
       "ResultPath": "$.__fnl_context",
       "Type": "Pass",
@@ -3286,6 +3327,7 @@ Object {
       "OutputPath": "$",
       "Parameters": Object {
         "input.$": "$",
+        "null": null,
       },
       "ResultPath": "$.__fnl_context",
       "Type": "Pass",
@@ -3367,6 +3409,7 @@ Object {
       "OutputPath": "$",
       "Parameters": Object {
         "input.$": "$",
+        "null": null,
       },
       "ResultPath": "$.__fnl_context",
       "Type": "Pass",
@@ -3415,6 +3458,7 @@ Object {
       "OutputPath": "$",
       "Parameters": Object {
         "input.$": "$",
+        "null": null,
       },
       "ResultPath": "$.__fnl_context",
       "Type": "Pass",
@@ -3434,7 +3478,7 @@ Object {
         ],
       },
       "Resource": "__REPLACED_ARN",
-      "ResultPath": null,
+      "ResultPath": "$.heap0",
       "Type": "Task",
     },
     "return null": Object {
@@ -3458,6 +3502,7 @@ Object {
       "OutputPath": "$",
       "Parameters": Object {
         "input.$": "$",
+        "null": null,
       },
       "ResultPath": "$.__fnl_context",
       "Type": "Pass",
@@ -3486,7 +3531,7 @@ Object {
         ],
       },
       "Resource": "__REPLACED_ARN",
-      "ResultPath": null,
+      "ResultPath": "$.heap0",
       "Type": "Task",
     },
     "return null": Object {
@@ -3516,6 +3561,7 @@ Object {
       "OutputPath": "$",
       "Parameters": Object {
         "input.$": "$",
+        "null": null,
       },
       "ResultPath": "$.__fnl_context",
       "Type": "Pass",
@@ -3560,6 +3606,7 @@ Object {
       "OutputPath": "$",
       "Parameters": Object {
         "input.$": "$",
+        "null": null,
       },
       "ResultPath": "$.__fnl_context",
       "Type": "Pass",
@@ -3621,6 +3668,7 @@ Object {
       "OutputPath": "$",
       "Parameters": Object {
         "input.$": "$",
+        "null": null,
       },
       "ResultPath": "$.__fnl_context",
       "Type": "Pass",
@@ -3634,7 +3682,7 @@ Object {
             "InputPath": "$.item",
             "Next": "return null",
             "Resource": "__REPLACED_TOKEN",
-            "ResultPath": null,
+            "ResultPath": "$.heap0",
             "Type": "Task",
           },
           "return null": Object {
@@ -3673,6 +3721,7 @@ Object {
       "OutputPath": "$",
       "Parameters": Object {
         "input.$": "$",
+        "null": null,
       },
       "ResultPath": "$.__fnl_context",
       "Type": "Pass",
@@ -3695,7 +3744,7 @@ Object {
             "InputPath": "$.item",
             "Next": "return null 1",
             "Resource": "__REPLACED_TOKEN",
-            "ResultPath": null,
+            "ResultPath": "$.heap0",
             "Type": "Task",
           },
           "return null": Object {
@@ -3742,6 +3791,7 @@ Object {
       "OutputPath": "$",
       "Parameters": Object {
         "input.$": "$",
+        "null": null,
       },
       "ResultPath": "$.__fnl_context",
       "Type": "Pass",
@@ -3755,7 +3805,7 @@ Object {
             "InputPath": "$.item",
             "Next": "return null",
             "Resource": "__REPLACED_TOKEN",
-            "ResultPath": null,
+            "ResultPath": "$.heap0",
             "Type": "Task",
           },
           "return null": Object {
@@ -3795,6 +3845,7 @@ Object {
       "OutputPath": "$",
       "Parameters": Object {
         "input.$": "$",
+        "null": null,
       },
       "ResultPath": "$.__fnl_context",
       "Type": "Pass",
@@ -3845,6 +3896,7 @@ Object {
       "OutputPath": "$",
       "Parameters": Object {
         "input.$": "$",
+        "null": null,
       },
       "ResultPath": "$.__fnl_context",
       "Type": "Pass",
@@ -3912,6 +3964,7 @@ Object {
       "OutputPath": "$",
       "Parameters": Object {
         "input.$": "$",
+        "null": null,
       },
       "ResultPath": "$.__fnl_context",
       "Type": "Pass",
@@ -4006,6 +4059,7 @@ Object {
       "OutputPath": "$",
       "Parameters": Object {
         "input.$": "$",
+        "null": null,
       },
       "ResultPath": "$.__fnl_context",
       "Type": "Pass",
@@ -4082,6 +4136,7 @@ Object {
       "OutputPath": "$",
       "Parameters": Object {
         "input.$": "$",
+        "null": null,
       },
       "ResultPath": "$.__fnl_context",
       "Type": "Pass",
@@ -4155,6 +4210,7 @@ Object {
       "OutputPath": "$",
       "Parameters": Object {
         "input.$": "$",
+        "null": null,
       },
       "ResultPath": "$.__fnl_context",
       "Type": "Pass",
@@ -4278,6 +4334,7 @@ Object {
       "OutputPath": "$",
       "Parameters": Object {
         "input.$": "$",
+        "null": null,
       },
       "ResultPath": "$.__fnl_context",
       "Type": "Pass",
@@ -4330,6 +4387,7 @@ Object {
       "OutputPath": "$",
       "Parameters": Object {
         "input.$": "$",
+        "null": null,
       },
       "ResultPath": "$.__fnl_context",
       "Type": "Pass",
@@ -4358,6 +4416,7 @@ Object {
       "OutputPath": "$",
       "Parameters": Object {
         "input.$": "$",
+        "null": null,
       },
       "ResultPath": "$.__fnl_context",
       "Type": "Pass",
@@ -4397,6 +4456,7 @@ Object {
       "OutputPath": "$",
       "Parameters": Object {
         "input.$": "$",
+        "null": null,
       },
       "ResultPath": "$.__fnl_context",
       "Type": "Pass",
@@ -4427,6 +4487,7 @@ Object {
       "OutputPath": "$",
       "Parameters": Object {
         "input.$": "$",
+        "null": null,
       },
       "ResultPath": "$.__fnl_context",
       "Type": "Pass",
@@ -4449,6 +4510,7 @@ Object {
       "OutputPath": "$",
       "Parameters": Object {
         "input.$": "$",
+        "null": null,
       },
       "ResultPath": "$.__fnl_context",
       "Type": "Pass",
@@ -4472,6 +4534,7 @@ Object {
       "OutputPath": "$",
       "Parameters": Object {
         "input.$": "$",
+        "null": null,
       },
       "ResultPath": "$.__fnl_context",
       "Type": "Pass",
@@ -4495,6 +4558,7 @@ Object {
       "OutputPath": "$",
       "Parameters": Object {
         "input.$": "$",
+        "null": null,
       },
       "ResultPath": "$.__fnl_context",
       "Type": "Pass",
@@ -4518,6 +4582,7 @@ Object {
       "OutputPath": "$",
       "Parameters": Object {
         "input.$": "$",
+        "null": null,
       },
       "ResultPath": "$.__fnl_context",
       "Type": "Pass",
@@ -4541,6 +4606,7 @@ Object {
       "OutputPath": "$",
       "Parameters": Object {
         "input.$": "$",
+        "null": null,
       },
       "ResultPath": "$.__fnl_context",
       "Type": "Pass",
@@ -4564,6 +4630,7 @@ Object {
       "OutputPath": "$",
       "Parameters": Object {
         "input.$": "$",
+        "null": null,
       },
       "ResultPath": "$.__fnl_context",
       "Type": "Pass",
@@ -4592,6 +4659,7 @@ Object {
       "OutputPath": "$",
       "Parameters": Object {
         "input.$": "$",
+        "null": null,
       },
       "ResultPath": "$.__fnl_context",
       "Type": "Pass",
@@ -4626,6 +4694,7 @@ Object {
       "OutputPath": "$",
       "Parameters": Object {
         "input.$": "$",
+        "null": null,
       },
       "ResultPath": "$.__fnl_context",
       "Type": "Pass",
@@ -4665,6 +4734,7 @@ Object {
       "OutputPath": "$",
       "Parameters": Object {
         "input.$": "$",
+        "null": null,
       },
       "ResultPath": "$.__fnl_context",
       "Type": "Pass",
@@ -4717,6 +4787,7 @@ Object {
       "OutputPath": "$",
       "Parameters": Object {
         "input.$": "$",
+        "null": null,
       },
       "ResultPath": "$.__fnl_context",
       "Type": "Pass",
@@ -4789,6 +4860,7 @@ Object {
       "OutputPath": "$",
       "Parameters": Object {
         "input.$": "$",
+        "null": null,
       },
       "ResultPath": "$.__fnl_context",
       "Type": "Pass",
@@ -4797,84 +4869,84 @@ Object {
       "Next": "await task(\\"hello\\" + 1)",
       "Parameters": "hello world",
       "Resource": "__REPLACED_TOKEN",
-      "ResultPath": null,
+      "ResultPath": "$.heap8",
       "Type": "Task",
     },
     "await task(\\"hello\\" + 1)": Object {
       "Next": "await task(1 + \\"hello\\")",
       "Parameters": "hello1",
       "Resource": "__REPLACED_TOKEN",
-      "ResultPath": null,
+      "ResultPath": "$.heap9",
       "Type": "Task",
     },
     "await task(\\"hello\\" + [\\"world\\"])": Object {
       "Next": "return null",
       "Parameters": "helloworld",
       "Resource": "__REPLACED_TOKEN",
-      "ResultPath": null,
+      "ResultPath": "$.heap22",
       "Type": "Task",
     },
     "await task(\\"hello\\" + null)": Object {
       "Next": "await task([null])",
       "Parameters": "hellonull",
       "Resource": "__REPLACED_TOKEN",
-      "ResultPath": null,
+      "ResultPath": "$.heap14",
       "Type": "Task",
     },
     "await task(\\"hello\\" + true)": Object {
       "Next": "await task(false + \\"hello\\")",
       "Parameters": "hellotrue",
       "Resource": "__REPLACED_TOKEN",
-      "ResultPath": null,
+      "ResultPath": "$.heap11",
       "Type": "Task",
     },
     "await task(\\"hello\\" + {place: \\"world\\"})": Object {
       "Next": "await task(\\"hello\\" + [\\"world\\"])",
       "Parameters": "hello[object Object]",
       "Resource": "__REPLACED_TOKEN",
-      "ResultPath": null,
+      "ResultPath": "$.heap21",
       "Type": "Task",
     },
     "await task(\\"hello\\")": Object {
       "Next": "await task(\\"hello\\" + \\" world\\")",
       "Parameters": "hello",
       "Resource": "__REPLACED_TOKEN",
-      "ResultPath": null,
+      "ResultPath": "$.heap7",
       "Type": "Task",
     },
     "await task(-1)": Object {
       "Next": "await task(-100)",
       "Parameters": -1,
       "Resource": "__REPLACED_TOKEN",
-      "ResultPath": null,
+      "ResultPath": "$.heap4",
       "Type": "Task",
     },
     "await task(-100)": Object {
       "Next": "await task(1 + 2)",
       "Parameters": -100,
       "Resource": "__REPLACED_TOKEN",
-      "ResultPath": null,
+      "ResultPath": "$.heap5",
       "Type": "Task",
     },
     "await task(0)": Object {
       "Next": "await task(-1)",
       "Parameters": 0,
       "Resource": "__REPLACED_TOKEN",
-      "ResultPath": null,
+      "ResultPath": "$.heap3",
       "Type": "Task",
     },
     "await task(1 + \\"hello\\")": Object {
       "Next": "await task(\\"hello\\" + true)",
       "Parameters": "1hello",
       "Resource": "__REPLACED_TOKEN",
-      "ResultPath": null,
+      "ResultPath": "$.heap10",
       "Type": "Task",
     },
     "await task(1 + 2)": Object {
       "Next": "await task(\\"hello\\")",
       "Parameters": 3,
       "Resource": "__REPLACED_TOKEN",
-      "ResultPath": null,
+      "ResultPath": "$.heap6",
       "Type": "Task",
     },
     "await task([-1])": Object {
@@ -4883,7 +4955,7 @@ Object {
         -1,
       ],
       "Resource": "__REPLACED_TOKEN",
-      "ResultPath": null,
+      "ResultPath": "$.heap17",
       "Type": "Task",
     },
     "await task([1])": Object {
@@ -4892,7 +4964,7 @@ Object {
         1,
       ],
       "Resource": "__REPLACED_TOKEN",
-      "ResultPath": null,
+      "ResultPath": "$.heap16",
       "Type": "Task",
     },
     "await task([null])": Object {
@@ -4901,7 +4973,7 @@ Object {
         null,
       ],
       "Resource": "__REPLACED_TOKEN",
-      "ResultPath": null,
+      "ResultPath": "$.heap15",
       "Type": "Task",
     },
     "await task([true])": Object {
@@ -4910,7 +4982,7 @@ Object {
         true,
       ],
       "Resource": "__REPLACED_TOKEN",
-      "ResultPath": null,
+      "ResultPath": "$.heap18",
       "Type": "Task",
     },
     "await task([{key: \\"value\\"}])": Object {
@@ -4921,42 +4993,42 @@ Object {
         },
       ],
       "Resource": "__REPLACED_TOKEN",
-      "ResultPath": null,
+      "ResultPath": "$.heap19",
       "Type": "Task",
     },
     "await task(false + \\"hello\\")": Object {
       "Next": "await task(null + \\"hello\\")",
       "Parameters": "falsehello",
       "Resource": "__REPLACED_TOKEN",
-      "ResultPath": null,
+      "ResultPath": "$.heap12",
       "Type": "Task",
     },
     "await task(false)": Object {
       "Next": "await task(0)",
       "Parameters": false,
       "Resource": "__REPLACED_TOKEN",
-      "ResultPath": null,
+      "ResultPath": "$.heap2",
       "Type": "Task",
     },
     "await task(null + \\"hello\\")": Object {
       "Next": "await task(\\"hello\\" + null)",
       "Parameters": "nullhello",
       "Resource": "__REPLACED_TOKEN",
-      "ResultPath": null,
+      "ResultPath": "$.heap13",
       "Type": "Task",
     },
     "await task(null)": Object {
       "InputPath": "$.__fnl_context.null",
       "Next": "await task(true)",
       "Resource": "__REPLACED_TOKEN",
-      "ResultPath": null,
+      "ResultPath": "$.heap0",
       "Type": "Task",
     },
     "await task(true)": Object {
       "Next": "await task(false)",
       "Parameters": true,
       "Resource": "__REPLACED_TOKEN",
-      "ResultPath": null,
+      "ResultPath": "$.heap1",
       "Type": "Task",
     },
     "await task({key: \\"value\\"})": Object {
@@ -4965,7 +5037,7 @@ Object {
         "key": "value",
       },
       "Resource": "__REPLACED_TOKEN",
-      "ResultPath": null,
+      "ResultPath": "$.heap20",
       "Type": "Task",
     },
     "return null": Object {
@@ -4995,6 +5067,7 @@ Object {
       "OutputPath": "$",
       "Parameters": Object {
         "input.$": "$",
+        "null": null,
       },
       "ResultPath": "$.__fnl_context",
       "Type": "Pass",
@@ -5014,22 +5087,153 @@ exports[`template literal strings 1`] = `
 Object {
   "StartAt": "Initialize Functionless Context",
   "States": Object {
+    "1__return task({key: \`input.obj.str hello input.obj.items[0]\`})": Object {
+      "End": true,
+      "InputPath": "$.heap0",
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
     "Initialize Functionless Context": Object {
       "Next": "return task({key: \`input.obj.str hello input.obj.items[0]\`})",
       "OutputPath": "$",
       "Parameters": Object {
         "input.$": "$",
+        "null": null,
       },
       "ResultPath": "$.__fnl_context",
       "Type": "Pass",
     },
     "return task({key: \`input.obj.str hello input.obj.items[0]\`})": Object {
-      "End": true,
+      "Next": "task__return task({key: \`input.obj.str hello input.obj.items[0]\`})",
       "Parameters": Object {
-        "key.$": "States.Format('{} hello {}',$.__fnl_context.input.obj.str,$.__fnl_context.input.obj.items[0])",
+        "string.$": "States.Format('{} hello {}',$.__fnl_context.input.obj.str,$.__fnl_context.input.obj.items[0])",
+      },
+      "ResultPath": "$.heap1",
+      "Type": "Pass",
+    },
+    "task__return task({key: \`input.obj.str hello input.obj.items[0]\`})": Object {
+      "Next": "1__return task({key: \`input.obj.str hello input.obj.items[0]\`})",
+      "Parameters": Object {
+        "key.$": "$.heap1.string",
       },
       "Resource": "__REPLACED_TOKEN",
+      "ResultPath": "$.heap0",
+      "Type": "Task",
+    },
+  },
+}
+`;
+
+exports[`template literal strings complex 1`] = `
+Object {
+  "StartAt": "Initialize Functionless Context",
+  "States": Object {
+    "0_tmp = await task()": Object {
+      "InputPath": "$.__fnl_context.null",
+      "Next": "assign__0_tmp = await task()",
+      "Resource": "__REPLACED_TOKEN",
+      "ResultPath": "$.heap0",
+      "Type": "Task",
+    },
+    "1__return task({key: \`input.obj.str ?? \\"default\\" hello hello input.obj.item": Object {
+      "End": true,
+      "InputPath": "$.heap1",
       "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "1__return task({key: \`input.obj.str ?? \\"default\\" hello hello input.obj.item 1": Object {
+      "Choices": Array [
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.__fnl_context.input.obj.items[0]",
+            },
+            Object {
+              "IsNull": false,
+              "Variable": "$.__fnl_context.input.obj.items[0]",
+            },
+          ],
+          "Next": "takeLeft__1__return task({key: \`input.obj.str ?? \\"default\\" hello hello inpu",
+        },
+      ],
+      "Default": "takeRight__1__return task({key: \`input.obj.str ?? \\"default\\" hello hello inp",
+      "Type": "Choice",
+    },
+    "Initialize Functionless Context": Object {
+      "Next": "0_tmp = await task()",
+      "OutputPath": "$",
+      "Parameters": Object {
+        "input.$": "$",
+        "null": null,
+      },
+      "ResultPath": "$.__fnl_context",
+      "Type": "Pass",
+    },
+    "assign__0_tmp = await task()": Object {
+      "InputPath": "$.heap0",
+      "Next": "return task({key: \`input.obj.str ?? \\"default\\" hello hello input.obj.items[0",
+      "ResultPath": "$.0_tmp",
+      "Type": "Pass",
+    },
+    "return task({key: \`input.obj.str ?? \\"default\\" hello hello input.obj.items[0": Object {
+      "Choices": Array [
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.__fnl_context.input.obj.str",
+            },
+            Object {
+              "IsNull": false,
+              "Variable": "$.__fnl_context.input.obj.str",
+            },
+          ],
+          "Next": "takeLeft__return task({key: \`input.obj.str ?? \\"default\\" hello hello input.o",
+        },
+      ],
+      "Default": "takeRight__return task({key: \`input.obj.str ?? \\"default\\" hello hello input.",
+      "Type": "Choice",
+    },
+    "string__return task({key: \`input.obj.str ?? \\"default\\" hello hello input.obj": Object {
+      "Next": "task__return task({key: \`input.obj.str ?? \\"default\\" hello hello input.obj.i",
+      "Parameters": Object {
+        "string.$": "States.Format('{} hello hello {}',$.heap2,$.heap3)",
+      },
+      "ResultPath": "$.heap4",
+      "Type": "Pass",
+    },
+    "takeLeft__1__return task({key: \`input.obj.str ?? \\"default\\" hello hello inpu": Object {
+      "InputPath": "$.__fnl_context.input.obj.items[0]",
+      "Next": "string__return task({key: \`input.obj.str ?? \\"default\\" hello hello input.obj",
+      "ResultPath": "$.heap3",
+      "Type": "Pass",
+    },
+    "takeLeft__return task({key: \`input.obj.str ?? \\"default\\" hello hello input.o": Object {
+      "InputPath": "$.__fnl_context.input.obj.str",
+      "Next": "1__return task({key: \`input.obj.str ?? \\"default\\" hello hello input.obj.item 1",
+      "ResultPath": "$.heap2",
+      "Type": "Pass",
+    },
+    "takeRight__1__return task({key: \`input.obj.str ?? \\"default\\" hello hello inp": Object {
+      "InputPath": "$.0_tmp",
+      "Next": "string__return task({key: \`input.obj.str ?? \\"default\\" hello hello input.obj",
+      "ResultPath": "$.heap3",
+      "Type": "Pass",
+    },
+    "takeRight__return task({key: \`input.obj.str ?? \\"default\\" hello hello input.": Object {
+      "Next": "1__return task({key: \`input.obj.str ?? \\"default\\" hello hello input.obj.item 1",
+      "Result": "default",
+      "ResultPath": "$.heap2",
+      "Type": "Pass",
+    },
+    "task__return task({key: \`input.obj.str ?? \\"default\\" hello hello input.obj.i": Object {
+      "Next": "1__return task({key: \`input.obj.str ?? \\"default\\" hello hello input.obj.item",
+      "Parameters": Object {
+        "key.$": "$.heap4.string",
+      },
+      "Resource": "__REPLACED_TOKEN",
+      "ResultPath": "$.heap1",
       "Type": "Task",
     },
   },
@@ -5058,6 +5262,7 @@ Object {
       "OutputPath": "$",
       "Parameters": Object {
         "input.$": "$",
+        "null": null,
       },
       "ResultPath": "$.__fnl_context",
       "Type": "Pass",
@@ -5164,6 +5369,7 @@ Object {
       "OutputPath": "$",
       "Parameters": Object {
         "input.$": "$",
+        "null": null,
       },
       "ResultPath": "$.__fnl_context",
       "Type": "Pass",
@@ -5231,6 +5437,7 @@ Object {
       "OutputPath": "$",
       "Parameters": Object {
         "input.$": "$",
+        "null": null,
       },
       "ResultPath": "$.__fnl_context",
       "Type": "Pass",
@@ -5298,6 +5505,7 @@ Object {
       "OutputPath": "$",
       "Parameters": Object {
         "input.$": "$",
+        "null": null,
       },
       "ResultPath": "$.__fnl_context",
       "Type": "Pass",
@@ -5306,7 +5514,7 @@ Object {
       "Next": "exit finally",
       "Parameters": "2",
       "Resource": "__REPLACED_TOKEN",
-      "ResultPath": null,
+      "ResultPath": "$.heap1",
       "Type": "Task",
     },
     "catch(err)": Object {
@@ -5345,7 +5553,7 @@ Object {
           "await task(item)": Object {
             "InputPath": "$.item",
             "Resource": "__REPLACED_TOKEN",
-            "ResultPath": null,
+            "ResultPath": "$.heap0",
             "Type": "Task",
           },
         },
@@ -5409,6 +5617,7 @@ Object {
       "OutputPath": "$",
       "Parameters": Object {
         "input.$": "$",
+        "null": null,
       },
       "ResultPath": "$.__fnl_context",
       "Type": "Pass",
@@ -5476,6 +5685,7 @@ Object {
       "OutputPath": "$",
       "Parameters": Object {
         "input.$": "$",
+        "null": null,
       },
       "ResultPath": "$.__fnl_context",
       "Type": "Pass",
@@ -5543,6 +5753,7 @@ Object {
       "OutputPath": "$",
       "Parameters": Object {
         "input.$": "$",
+        "null": null,
       },
       "ResultPath": "$.__fnl_context",
       "Type": "Pass",
@@ -5606,6 +5817,7 @@ Object {
       "OutputPath": "$",
       "Parameters": Object {
         "input.$": "$",
+        "null": null,
       },
       "ResultPath": "$.__fnl_context",
       "Type": "Pass",
@@ -5686,6 +5898,7 @@ Object {
       "OutputPath": "$",
       "Parameters": Object {
         "input.$": "$",
+        "null": null,
       },
       "ResultPath": "$.__fnl_context",
       "Type": "Pass",
@@ -5753,6 +5966,7 @@ Object {
       "OutputPath": "$",
       "Parameters": Object {
         "input.$": "$",
+        "null": null,
       },
       "ResultPath": "$.__fnl_context",
       "Type": "Pass",
@@ -5820,6 +6034,7 @@ Object {
       "OutputPath": "$",
       "Parameters": Object {
         "input.$": "$",
+        "null": null,
       },
       "ResultPath": "$.__fnl_context",
       "Type": "Pass",
@@ -5883,6 +6098,7 @@ Object {
       "OutputPath": "$",
       "Parameters": Object {
         "input.$": "$",
+        "null": null,
       },
       "ResultPath": "$.__fnl_context",
       "Type": "Pass",
@@ -6023,6 +6239,7 @@ Object {
       "OutputPath": "$",
       "Parameters": Object {
         "input.$": "$",
+        "null": null,
       },
       "ResultPath": "$.__fnl_context",
       "Type": "Pass",
@@ -6047,14 +6264,14 @@ Object {
               "InputPath": "$.__fnl_context.null",
               "Next": "await task() 1",
               "Resource": "__REPLACED_TOKEN",
-              "ResultPath": null,
+              "ResultPath": "$.heap0",
               "Type": "Task",
             },
             "await task() 1": Object {
               "InputPath": "$.__fnl_context.null",
               "Next": "return null",
               "Resource": "__REPLACED_TOKEN",
-              "ResultPath": null,
+              "ResultPath": "$.heap1",
               "Type": "Task",
             },
             "return null": Object {
@@ -6102,6 +6319,7 @@ Object {
       "OutputPath": "$",
       "Parameters": Object {
         "input.$": "$",
+        "null": null,
       },
       "ResultPath": "$.__fnl_context",
       "Type": "Pass",
@@ -6110,7 +6328,7 @@ Object {
       "Next": "exit finally",
       "Parameters": "recover",
       "Resource": "__REPLACED_TOKEN",
-      "ResultPath": null,
+      "ResultPath": "$.heap1",
       "Type": "Task",
     },
     "await task()": Object {
@@ -6126,7 +6344,7 @@ Object {
       "InputPath": "$.__fnl_context.null",
       "Next": "await task(\\"recover\\")",
       "Resource": "__REPLACED_TOKEN",
-      "ResultPath": null,
+      "ResultPath": "$.heap0",
       "Type": "Task",
     },
     "exit finally": Object {
@@ -6174,6 +6392,7 @@ Object {
       "OutputPath": "$",
       "Parameters": Object {
         "input.$": "$",
+        "null": null,
       },
       "ResultPath": "$.__fnl_context",
       "Type": "Pass",
@@ -6191,14 +6410,14 @@ Object {
       "Next": "await task(\\"2\\")",
       "Parameters": "1",
       "Resource": "__REPLACED_TOKEN",
-      "ResultPath": null,
+      "ResultPath": "$.heap0",
       "Type": "Task",
     },
     "await task(\\"2\\")": Object {
       "Next": "exit finally",
       "Parameters": "2",
       "Resource": "__REPLACED_TOKEN",
-      "ResultPath": null,
+      "ResultPath": "$.heap1",
       "Type": "Task",
     },
     "exit finally": Object {
@@ -6265,7 +6484,7 @@ Object {
       "Next": "await task(\\"3\\")",
       "Parameters": "1",
       "Resource": "__REPLACED_TOKEN",
-      "ResultPath": null,
+      "ResultPath": "$.heap0",
       "Type": "Task",
     },
     "await task(\\"2\\")": Object {
@@ -6281,14 +6500,14 @@ Object {
       "Next": "await task(\\"3\\")",
       "Parameters": "2",
       "Resource": "__REPLACED_TOKEN",
-      "ResultPath": null,
+      "ResultPath": "$.heap1",
       "Type": "Task",
     },
     "await task(\\"3\\")": Object {
       "Next": "exit finally",
       "Parameters": "3",
       "Resource": "__REPLACED_TOKEN",
-      "ResultPath": null,
+      "ResultPath": "$.heap2",
       "Type": "Task",
     },
     "exit finally": Object {
@@ -6342,14 +6561,14 @@ Object {
       "Next": "await task(\\"2\\")",
       "Parameters": "1",
       "Resource": "__REPLACED_TOKEN",
-      "ResultPath": null,
+      "ResultPath": "$.heap0",
       "Type": "Task",
     },
     "await task(\\"2\\")": Object {
       "Next": "exit finally",
       "Parameters": "2",
       "Resource": "__REPLACED_TOKEN",
-      "ResultPath": null,
+      "ResultPath": "$.heap1",
       "Type": "Task",
     },
     "catch(err)": Object {
@@ -6416,6 +6635,7 @@ Object {
       "OutputPath": "$",
       "Parameters": Object {
         "input.$": "$",
+        "null": null,
       },
       "ResultPath": "$.__fnl_context",
       "Type": "Pass",
@@ -6424,7 +6644,7 @@ Object {
       "InputPath": "$.__fnl_context.null",
       "Next": "exit finally",
       "Resource": "__REPLACED_TOKEN",
-      "ResultPath": null,
+      "ResultPath": "$.heap0",
       "Type": "Task",
     },
     "exit finally": Object {
@@ -6502,7 +6722,7 @@ Object {
         "name": "name",
       },
       "Resource": "__REPLACED_TOKEN",
-      "ResultPath": null,
+      "ResultPath": "$.heap0",
       "Type": "Task",
     },
     "return null": Object {
@@ -6682,7 +6902,7 @@ Object {
         "name": "name",
       },
       "Resource": "__REPLACED_TOKEN",
-      "ResultPath": null,
+      "ResultPath": "$.heap0",
       "Type": "Task",
     },
     "catch(err)": Object {
@@ -6728,7 +6948,7 @@ Object {
         "name": "name",
       },
       "Resource": "__REPLACED_TOKEN",
-      "ResultPath": null,
+      "ResultPath": "$.heap0",
       "Type": "Task",
     },
     "return \\"hello\\"": Object {
@@ -6762,6 +6982,7 @@ Object {
       "OutputPath": "$",
       "Parameters": Object {
         "input.$": "$",
+        "null": null,
       },
       "ResultPath": "$.__fnl_context",
       "Type": "Pass",
@@ -6782,7 +7003,7 @@ Object {
         "name": "sam",
       },
       "Resource": "__REPLACED_TOKEN",
-      "ResultPath": null,
+      "ResultPath": "$.heap0",
       "Type": "Task",
     },
     "catch(err)": Object {
@@ -6858,6 +7079,7 @@ Object {
       "OutputPath": "$",
       "Parameters": Object {
         "input.$": "$",
+        "null": null,
       },
       "ResultPath": "$.__fnl_context",
       "Type": "Pass",
@@ -6948,6 +7170,7 @@ Object {
       "OutputPath": "$",
       "Parameters": Object {
         "input.$": "$",
+        "null": null,
       },
       "ResultPath": "$.__fnl_context",
       "Type": "Pass",
@@ -6968,7 +7191,7 @@ Object {
         "name": "sam",
       },
       "Resource": "__REPLACED_TOKEN",
-      "ResultPath": null,
+      "ResultPath": "$.heap0",
       "Type": "Task",
     },
     "catch(err)": Object {
@@ -7032,6 +7255,7 @@ Object {
       "OutputPath": "$",
       "Parameters": Object {
         "input.$": "$",
+        "null": null,
       },
       "ResultPath": "$.__fnl_context",
       "Type": "Pass",
@@ -7103,6 +7327,7 @@ Object {
       "OutputPath": "$",
       "Parameters": Object {
         "input.$": "$",
+        "null": null,
       },
       "ResultPath": "$.__fnl_context",
       "Type": "Pass",
@@ -7176,6 +7401,7 @@ Object {
       "OutputPath": "$",
       "Parameters": Object {
         "input.$": "$",
+        "null": null,
       },
       "ResultPath": "$.__fnl_context",
       "Type": "Pass",
@@ -7243,6 +7469,7 @@ Object {
       "OutputPath": "$",
       "Parameters": Object {
         "input.$": "$",
+        "null": null,
       },
       "ResultPath": "$.__fnl_context",
       "Type": "Pass",
@@ -7314,7 +7541,7 @@ Object {
         "name": "name",
       },
       "Resource": "__REPLACED_TOKEN",
-      "ResultPath": null,
+      "ResultPath": "$.heap0",
       "Type": "Task",
     },
     "return \\"hello\\"": Object {
@@ -7341,6 +7568,7 @@ Object {
       "OutputPath": "$",
       "Parameters": Object {
         "input.$": "$",
+        "null": null,
       },
       "ResultPath": "$.__fnl_context",
       "Type": "Pass",
@@ -7371,6 +7599,7 @@ Object {
       "OutputPath": "$",
       "Parameters": Object {
         "input.$": "$",
+        "null": null,
       },
       "ResultPath": "$.__fnl_context",
       "Type": "Pass",
@@ -7401,6 +7630,7 @@ Object {
       "OutputPath": "$",
       "Parameters": Object {
         "input.$": "$",
+        "null": null,
       },
       "ResultPath": "$.__fnl_context",
       "Type": "Pass",
@@ -7431,6 +7661,7 @@ Object {
       "OutputPath": "$",
       "Parameters": Object {
         "input.$": "$",
+        "null": null,
       },
       "ResultPath": "$.__fnl_context",
       "Type": "Pass",
@@ -7456,6 +7687,7 @@ Object {
       "OutputPath": "$",
       "Parameters": Object {
         "input.$": "$",
+        "null": null,
       },
       "ResultPath": "$.__fnl_context",
       "Type": "Pass",
@@ -7463,7 +7695,7 @@ Object {
     "cond = await task()": Object {
       "InputPath": "$.heap0",
       "Next": "while (cond == undefined)",
-      "ResultPath": null,
+      "ResultPath": "$.cond",
       "Type": "Pass",
     },
     "return null": Object {
@@ -7506,6 +7738,7 @@ Object {
       "OutputPath": "$",
       "Parameters": Object {
         "input.$": "$",
+        "null": null,
       },
       "ResultPath": "$.__fnl_context",
       "Type": "Pass",
@@ -7513,7 +7746,7 @@ Object {
     "cond = await task()": Object {
       "InputPath": "$.heap0",
       "Next": "while (cond == undefined)",
-      "ResultPath": null,
+      "ResultPath": "$.cond",
       "Type": "Pass",
     },
     "return null": Object {
@@ -7561,6 +7794,7 @@ Object {
       "OutputPath": "$",
       "Parameters": Object {
         "input.$": "$",
+        "null": null,
       },
       "ResultPath": "$.__fnl_context",
       "Type": "Pass",
@@ -7578,7 +7812,7 @@ Object {
       "InputPath": "$.__fnl_context.null",
       "Next": "while (true)",
       "Resource": "__REPLACED_TOKEN",
-      "ResultPath": null,
+      "ResultPath": "$.heap0",
       "Type": "Task",
     },
     "return null": Object {

@@ -1746,14 +1746,16 @@ test("try { list.map(item => task(item)) }", () => {
 
 test("throw task(task())", () => {
   const { stack, task } = initStepFunctionApp();
-  const definition = new ExpressStepFunction<
-    { list: string[] },
-    (null | number)[] | null
-  >(stack, "fn", async (input) => {
-    throw await task(await task(input));
-  }).definition;
-
-  expect(normalizeDefinition(definition)).toMatchSnapshot();
+  expect(
+    () =>
+      new ExpressStepFunction<{ list: string[] }, (null | number)[] | null>(
+        stack,
+        "fn",
+        async (input) => {
+          throw await task(await task(input));
+        }
+      )
+  ).toThrow("StepFunctions error name and cause must be constant");
 });
 
 test.skip("input.b ? task() : task(input)", () => {
@@ -2274,6 +2276,22 @@ test("template literal strings", () => {
   >(stack, "fn", (input) => {
     return task({
       key: `${input.obj.str} ${"hello"} ${input.obj.items[0]}`,
+    });
+  }).definition;
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+});
+
+test("template literal strings complex", () => {
+  const { stack, task } = initStepFunctionApp();
+  const definition = new ExpressStepFunction<
+    { obj: { str?: string; items: string } },
+    number | null
+  >(stack, "fn", async (input) => {
+    return task({
+      key: `${input.obj.str ?? "default"} hello ${"hello"} ${
+        input.obj.items[0] ?? (await task())
+      }`,
     });
   }).definition;
 

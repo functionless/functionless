@@ -1201,6 +1201,47 @@ export class ASL {
       throw new SynthError(
         ErrorCodes.Arrays_of_Integration_must_be_immediately_wrapped_in_Promise_all
       );
+    } else if (isTemplateExpr(expr)) {
+      const elements = expr.exprs.map((e) => {
+        const ex = this.eval(e);
+        const output = this.getAslStateOutput(ex);
+
+        return {
+          output,
+          state: ex,
+        };
+      });
+
+      const tempHeap = this.randomHeap();
+
+      const outputs = elements.map(({ output }) => output);
+      const subStates = elements
+        .map(({ state }) => state)
+        .filter(isCompoundState);
+
+      const joinedStates = this.joinSubStates(subStates, { Next: "string" });
+
+      return {
+        startState: subStates.length > 0 ? "0" : "string",
+        states: {
+          ...joinedStates,
+          string: {
+            Type: "Pass",
+            Parameters: {
+              "string.$": `States.Format('${outputs
+                // what if there is a json path in it?
+                .map((output) => (isAslConstant(output) ? output.value : "{}"))
+                .join("")}',${outputs
+                .filter(isVariable)
+                .map(({ jsonPath }) => jsonPath)})`,
+            },
+            ResultPath: tempHeap,
+          },
+        },
+        output: {
+          jsonPath: `${tempHeap}.string`,
+        },
+      };
     } else if (isCallExpr(expr)) {
       if (isReferenceExpr(expr.expr)) {
         const ref = expr.expr.ref();
@@ -1916,63 +1957,6 @@ export class ASL {
       // Map/Parallel state
       return undefined;
     }
-  }
-
-  public toJson(expr?: Expr): any {
-    if (expr === undefined) {
-      return undefined;
-    }
-
-    // check if the value resolves to a constant
-    const constant = evalToConstant(expr);
-    if (constant !== undefined) {
-      if (isFunction(constant.constant)) {
-        return constant.constant.resource.functionArn;
-      } else if (isStepFunction(constant.constant)) {
-        return constant.constant.resource.stateMachineArn;
-      } else if (isTable(constant.constant)) {
-        return constant.constant.resource.tableName;
-      }
-      return constant.constant;
-    } else if (isArgument(expr)) {
-      return this.toJson(expr.expr);
-    } else if (isBinaryExpr(expr)) {
-      const constant = evalToConstant(expr);
-      if (constant) {
-        return constant.constant;
-      }
-    } else if (isCallExpr(expr)) {
-      if (isSlice(expr)) {
-        return this.sliceToJsonPath(expr);
-      } else if (isFilter(expr)) {
-        return this.filterToJsonPath(expr);
-      }
-    } else if (isIdentifier(expr)) {
-      return this.toJsonPath(expr);
-    } else if (isPropAccessExpr(expr)) {
-      return `${this.toJson(expr.expr)}.${expr.name}`;
-    } else if (isElementAccessExpr(expr)) {
-      return this.toJsonPath(expr);
-    } else if (isArrayLiteralExpr(expr)) {
-      if (expr.items.find(isVariableReference) !== undefined) {
-        return `States.Array(${expr.items
-          .map((item) => this.toJsonPath(item))
-          .join(", ")})`;
-      }
-      return expr.items.map((item) => this.toJson(item));
-    } else if (isObjectLiteralExpr(expr)) {
-      return this.evalObjectLiteral(expr);
-    } else if (isLiteralExpr(expr)) {
-      return expr.value ?? null;
-    } else if (isTemplateExpr(expr)) {
-      return `States.Format('${expr.exprs
-        .map((e) => (isLiteralExpr(e) ? this.toJson(e) : "{}"))
-        .join("")}',${expr.exprs
-        .filter((e) => !isLiteralExpr(e))
-        .map((e) => this.toJsonPath(e))})`;
-    }
-    debugger;
-    throw new Error(`cannot evaluate ${expr.kind} to JSON`);
   }
 
   public evalObjectLiteral(expr: ObjectLiteralExpr): AslStateType {
