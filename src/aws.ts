@@ -19,6 +19,7 @@ import {
   UpdateItemInput,
   UpdateItemOutput,
 } from "typesafe-dynamodb/lib/update-item";
+import { isCompoundState } from "./asl";
 import { ErrorCodes, SynthError } from "./error-code";
 import { Argument, Expr } from "./expression";
 import { Function, isFunction, NativeIntegration } from "./function";
@@ -30,7 +31,6 @@ import {
   isPropAssignExpr,
   isReferenceExpr,
   isStringLiteralExpr,
-  isVariableReference,
 } from "./guards";
 import {
   IntegrationCall,
@@ -440,15 +440,21 @@ export namespace $AWS {
         if (payload === undefined) {
           throw new Error("missing property 'payload'");
         }
-        return {
-          Type: "Task",
-          Resource: "arn:aws:states:::lambda:invoke",
-          Parameters: {
-            FunctionName: functionRef.resource.functionName,
-            [`Payload${payload && isVariableReference(payload) ? ".$" : ""}`]:
-              payload ? context.toJson(payload) : null,
+
+        const payloadState = context.eval(payload);
+        const payloadOutput = context.getAslStateOutput(payloadState);
+
+        return context.outputState(
+          {
+            Type: "Task",
+            Resource: "arn:aws:states:::lambda:invoke",
+            Parameters: {
+              FunctionName: functionRef.resource.functionName,
+              ...context.toJsonAssignment("Payload", payloadOutput),
+            },
           },
-        };
+          isCompoundState(payloadState) ? [payloadState] : []
+        );
       },
     });
   }
@@ -576,15 +582,23 @@ function makeDynamoIntegration<
       const table = getTableArgument(operationName, call.args);
       grantTablePermissions(table, context.role, operationName);
 
-      return {
-        Type: "Task",
-        Resource: `arn:aws:states:::aws-sdk:dynamodb:${operationName}`,
-        Parameters: context.toJson(
-          renameObjectProperties(input, {
-            Table: "TableName",
-          })
+      const renamedExpr = renameObjectProperties(input, {
+        Table: "TableName",
+      });
+
+      const expr = context.eval(renamedExpr);
+      const output = context.getAslStateOutput(expr);
+
+      return context.outputState(
+        context.applyConstantOrVariableToTask(
+          {
+            Type: "Task",
+            Resource: `arn:aws:states:::aws-sdk:dynamodb:${operationName}`,
+          },
+          output
         ),
-      };
+        isCompoundState(expr) ? [expr] : []
+      );
     },
     native: {
       ...integration.native,

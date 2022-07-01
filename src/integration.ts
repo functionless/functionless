@@ -1,6 +1,6 @@
 import { ApiGatewayVtlIntegration } from "./api";
 import { AppSyncVtlIntegration } from "./appsync";
-import { ASL, State, SubState } from "./asl";
+import { ASL, AslConstant, CompoundState } from "./asl";
 import { EventBus, EventBusTargetIntegration } from "./event-bridge";
 import { AwaitExpr, CallExpr, PromiseExpr, ReferenceExpr } from "./expression";
 import { Function, NativeIntegration } from "./function";
@@ -109,7 +109,7 @@ export interface IntegrationMethods<
    *
    * @private
    */
-  asl: (call: CallExpr, context: ASL) => State | SubState;
+  asl: (call: CallExpr, context: ASL) => CompoundState | AslConstant;
   eventBus: EventBusInteg;
   /**
    * Native javascript code integrations that execute at runtime like Lambda.
@@ -245,7 +245,7 @@ export class IntegrationImpl<F extends AnyFunction = AnyFunction>
   }
 
   // TODO: Update to use an interface https://github.com/functionless/functionless/issues/197
-  public asl(call: CallExpr, context: ASL): State | SubState {
+  public asl(call: CallExpr, context: ASL): CompoundState | AslConstant {
     return this.assertIntegrationDefined(
       context.kind,
       this.integration.asl

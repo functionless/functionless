@@ -1,10 +1,16 @@
 import { aws_events, aws_events_targets, Stack } from "aws-cdk-lib";
 import { Construct } from "constructs";
-import { ASL } from "../asl";
+import {
+  ASL,
+  AslConstant,
+  isAslConstant,
+  isCompoundState,
+  isVariable,
+  Variable,
+} from "../asl";
 import { ErrorCodes, SynthError } from "../error-code";
 import {
   CallExpr,
-  Expr,
   Identifier,
   PropAssignExpr,
   StringLiteralExpr,
@@ -303,40 +309,60 @@ abstract class EventBusBase<in Evnt extends Event, OutEvnt extends Evnt = Evnt>
               ErrorCodes.StepFunctions_calls_to_EventBus_PutEvents_must_use_object_literals
             );
           }
-          return (
-            props
-              .map(
-                (prop) =>
-                  [
-                    isIdentifier(prop.name) ? prop.name.name : prop.name.value,
-                    prop.expr,
-                  ] as const
-              )
+          const evaluatedProps = props.map(({ name, expr }) => {
+            const val = context.eval(expr);
+            const output =
+              isAslConstant(val) || isVariable(val) ? val : val.output;
+            return {
+              name: isIdentifier(name) ? name.name : name.value,
+              value: output,
+              state: val,
+            };
+          });
+
+          const subStates = evaluatedProps
+            .map(({ state }) => state)
+            .filter(isCompoundState);
+
+          return {
+            event: evaluatedProps
               .filter(
-                (x): x is [keyof typeof propertyMap, Expr] =>
-                  x[0] in propertyMap && !!x[1]
+                (
+                  x
+                ): x is {
+                  name: keyof typeof propertyMap;
+                  value: AslConstant | Variable;
+                  state: any;
+                } => x.name in propertyMap
               )
               /**
                * Build the parameter payload for an event entry.
                * All members must be in Pascal case.
                */
               .reduce(
-                (acc: Record<string, string>, [name, expr]) => ({
+                (acc: Record<string, any>, { name, value }) => ({
                   ...acc,
-                  [propertyMap[name]]: context.toJson(expr),
+                  [`${propertyMap[name]}${isVariable(value) ? ".$" : ""}`]:
+                    isAslConstant(value) ? value.value : value.jsonPath,
                 }),
                 { EventBusName: this.resource.eventBusArn }
-              )
-          );
+              ),
+            subStates,
+          };
         });
 
-        return {
-          Resource: "arn:aws:states:::events:putEvents",
-          Type: "Task" as const,
-          Parameters: {
-            Entries: events,
+        const subStates = events.flatMap(({ subStates }) => subStates);
+
+        return context.outputState(
+          {
+            Resource: "arn:aws:states:::events:putEvents",
+            Type: "Task" as const,
+            Parameters: {
+              Entries: events.map(({ event }) => event),
+            },
           },
-        };
+          subStates
+        );
       },
       native: {
         bind: (context: Function<any, any>) => {

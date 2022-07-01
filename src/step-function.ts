@@ -10,7 +10,14 @@ import { StepFunctions } from "aws-sdk";
 import { Construct } from "constructs";
 import { ApiGatewayVtlIntegration } from "./api";
 import { AppSyncVtlIntegration } from "./appsync";
-import { ASL, MapTask, StateMachine, States, Task } from "./asl";
+import {
+  ASL,
+  CompoundState,
+  isCompoundState,
+  StateMachine,
+  States,
+  Task,
+} from "./asl";
 import { assertDefined } from "./assert";
 import { validateFunctionDecl, FunctionDecl } from "./declaration";
 import { ErrorCodes, SynthError } from "./error-code";
@@ -79,15 +86,15 @@ export namespace $SFN {
       }
 
       if (isNumberLiteralExpr(seconds)) {
-        return {
+        return context.voidState({
           Type: "Wait" as const,
           Seconds: seconds.value,
-        };
+        });
       } else {
-        return {
+        return context.voidState({
           Type: "Wait" as const,
           SecondsPath: context.toJsonPath(seconds),
-        };
+        });
       }
     },
   });
@@ -112,15 +119,15 @@ export namespace $SFN {
       }
 
       if (isStringLiteralExpr(timestamp)) {
-        return {
+        return context.voidState({
           Type: "Wait",
           Timestamp: timestamp.value,
-        };
+        });
       } else {
-        return {
+        return context.voidState({
           Type: "Wait",
           TimestampPath: context.toJsonPath(timestamp),
-        };
+        });
       }
     },
   });
@@ -224,7 +231,7 @@ export namespace $SFN {
     },
   });
 
-  function mapOrForEach(call: CallExpr, context: ASL): MapTask {
+  function mapOrForEach(call: CallExpr, context: ASL): CompoundState {
     const callbackfn = call.getArgument("callbackfn")?.expr;
     if (callbackfn === undefined || callbackfn.kind !== "FunctionExpr") {
       throw new Error("missing callbackfn in $SFN.map");
@@ -258,7 +265,7 @@ export namespace $SFN {
       throw new Error("missing argument 'array'");
     }
     const arrayPath = context.toJsonPath(array);
-    return {
+    return context.outputState({
       Type: "Map",
       ...(maxConcurrency
         ? {
@@ -280,7 +287,7 @@ export namespace $SFN {
             : arrayPath,
         ])
       ),
-    };
+    });
   }
 
   /**
@@ -320,13 +327,13 @@ export namespace $SFN {
         "each parallel path must be an inline FunctionExpr"
       );
 
-      return {
+      return context.outputState({
         Type: "Parallel",
         Branches: paths.items.map((func) => ({
           StartAt: context.getStateName(func.body.step()!),
           States: context.evalStmt(func.body),
         })),
-      };
+      });
     },
   });
 }
@@ -528,23 +535,54 @@ abstract class BaseStepFunction<
 
     const { name, input, traceHeader } = retrieveMachineArgs(call);
 
-    return {
-      Type: "Task" as const,
-      Resource: `arn:aws:states:::aws-sdk:sfn:${
-        this.resource.stateMachineType ===
-        aws_stepfunctions.StateMachineType.EXPRESS
-          ? "startSyncExecution"
-          : "startExecution"
-      }`,
-      Parameters: {
-        StateMachineArn: this.resource.stateMachineArn,
-        ...(input ? context.toJsonAssignment("Input", input) : {}),
-        ...(name ? context.toJsonAssignment("Name", name) : {}),
-        ...(traceHeader
-          ? context.toJsonAssignment("TraceHeader", traceHeader)
-          : {}),
-      },
+    const inputs = {
+      Input: input,
+      Name: name,
+      TraceHeader: traceHeader,
     };
+
+    // evaluate each of the input expressions,
+    // returning an object assignment with the output value { input.$: $.inputLocation }
+    // and a state object containing the output and/or a sub-state with additional required nodes to add to the
+    // machine
+    const evalInputs = Object.entries(inputs)
+      .filter(([, expr]) => !!expr)
+      .map(([key, expr]) => {
+        const state = context.eval(expr!);
+        const output = context.getAslStateOutput(state);
+
+        return {
+          assignment: context.toJsonAssignment(key, output),
+          state,
+        };
+      });
+
+    // extract any sub-states to return
+    const subStates = evalInputs
+      .map(({ state }) => state)
+      .filter(isCompoundState);
+
+    return context.outputState(
+      {
+        Type: "Task" as const,
+        Resource: `arn:aws:states:::aws-sdk:sfn:${
+          this.resource.stateMachineType ===
+          aws_stepfunctions.StateMachineType.EXPRESS
+            ? "startSyncExecution"
+            : "startExecution"
+        }`,
+        Parameters: evalInputs.reduce(
+          (obj, { assignment }) => ({
+            ...obj,
+            ...assignment,
+          }),
+          {
+            StateMachineArn: this.resource.stateMachineArn,
+          }
+        ),
+      },
+      subStates
+    );
   }
 
   public readonly eventBus = makeEventBusIntegration<
@@ -1183,17 +1221,15 @@ class BaseStandardStepFunction<
         "Describe Execution requires a single string argument."
       );
 
-      const argValue = context.toJsonAssignment(
-        "ExecutionArn",
-        executionArnExpr
-      );
+      const argValue = context.eval(executionArnExpr);
+      const argValueOutput = context.getAslStateOutput(argValue);
 
       const task: Task = {
         Type: "Task",
         Resource: "arn:aws:states:::aws-sdk:sfn:describeExecution",
-        Parameters: argValue,
+        Parameters: context.toJsonAssignment("ExecutionArn", argValueOutput),
       };
-      return task;
+      return context.outputState(task);
     },
     native: {
       bind: (context) => this.resource.grantRead(context.resource),

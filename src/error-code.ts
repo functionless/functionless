@@ -919,6 +919,44 @@ export namespace ErrorCodes {
       title:
         "StepFunctions calls to EventBus putEvents must use object literals",
     };
+
+  /**
+   * StepFunctions supports throwing errors with causes, however those errors do not support dynamic values.
+   *
+   * * The Error name and Cause must be constant.
+   * * The Error must be a class name (`throw new MyError()`)
+   * * The Cause must be a string or undefined (`throw new Error("some string")`)
+   *
+   * https://docs.aws.amazon.com/step-functions/latest/dg/amazon-states-language-fail-state.html
+   *
+   * ```ts
+   * new StepFunction<{ value: undefined }, void>(this, 'sfn', async (input) => {
+   *    // invalid - the error cause is not constant
+   *    throw new Error(input.value);
+   *    // invalid - the error cause is not a string
+   *    throw new Error(1);
+   * });
+   * ```
+   *
+   * Workaround - Return with the error message encoded in payload and let the machine succeed.
+   *
+   * ```ts
+   * new StepFunction<{ value: undefined }, { error?: string }>(this, 'sfn', async (input) => {
+   *    // invalid - the error cause is not constant
+   *    return {
+   *       error: input.value
+   *    }
+   * });
+   * ```
+   *
+   * TODO: add validation
+   */
+  export const StepFunctions_error_name_and_cause_must_be_constant: ErrorCode =
+    {
+      code: 10024,
+      type: ErrorType.ERROR,
+      title: "StepFunctions error name and cause must be constant",
+    };
 }
 
 // to prevent the closure serializer from trying to import all of functionless.

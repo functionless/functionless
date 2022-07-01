@@ -407,7 +407,7 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
   // b = a incorrectly uses output path
   // { Pass, { result.$: "$.a" }, resultPath: "$.b", outputPath: "$.result" }
   // this won't work for multiple reasons, output path will write over the entire state
-  test.skip(
+  test(
     "assignment",
     (parent) => {
       return new StepFunction(parent, "sfn2", async () => {

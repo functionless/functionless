@@ -632,6 +632,53 @@ test("return AWS.DynamoDB.GetItem", () => {
   expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
+test("return AWS.DynamoDB.GetItem dynamic parameters", () => {
+  const { stack, personTable } = initStepFunctionApp();
+  const definition = new ExpressStepFunction<
+    { id: string | undefined },
+    Person | undefined
+  >(stack, "fn", async (input) => {
+    const person = await $AWS.DynamoDB.GetItem({
+      Table: personTable,
+      Key: {
+        id: {
+          S: input.id ?? "default",
+        },
+      },
+    });
+
+    if (person.Item === undefined) {
+      return undefined;
+    }
+
+    return {
+      id: person.Item.id.S,
+      name: person.Item.name.S,
+    };
+  }).definition;
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+});
+
+test("return AWS.Lambda.Invoke dynamic parameters", () => {
+  const { stack, task } = initStepFunctionApp();
+  const definition = new ExpressStepFunction<
+    { id: string | undefined },
+    number | undefined
+  >(stack, "fn", async (input) => {
+    return (
+      await $AWS.Lambda.Invoke({
+        Function: task,
+        Payload: {
+          id: input.id ?? "default",
+        },
+      })
+    ).Payload;
+  }).definition;
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+});
+
 test("call AWS.DynamoDB.GetItem, then Lambda and return LiteralExpr", () => {
   const { stack, personTable, computeScore } = initStepFunctionApp();
   const definition = new ExpressStepFunction<
@@ -672,7 +719,7 @@ test("for-loop over a list literal", () => {
     stack,
     "fn",
     async (input) => {
-      const people = ["sam", "brendan"];
+      const people = ["sam", "sam"];
       for (const name of people) {
         await computeScore({
           id: input.id,
@@ -771,6 +818,21 @@ test("throw new Error", () => {
   }).definition;
 
   expect(normalizeDefinition(definition)).toMatchSnapshot();
+});
+
+test("throw new Error complex", () => {
+  const { stack } = initStepFunctionApp();
+
+  expect(
+    () =>
+      new ExpressStepFunction<{ val: string | undefined }, void>(
+        stack,
+        "fn",
+        (input) => {
+          throw new Error(input.val ?? "cause");
+        }
+      )
+  ).toThrow("StepFunctions error name and cause must be constant");
 });
 
 test("throw Error", () => {
@@ -2479,6 +2541,31 @@ test("call Step Function from another Step Function with dynamic input field inp
   >(stack, "machine2", (input) => {
     return machine1({
       input: input,
+    });
+  }).definition;
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+});
+
+/**
+ * Represents a situation when set functions would need to generate multiple states.
+ */
+test("call Step Function from another Step Function with null coalesce", () => {
+  const { stack } = initStepFunctionApp();
+  const machine1 = new ExpressStepFunction<{ value: string }, string>(
+    stack,
+    "machine1",
+    () => {
+      return "hello";
+    }
+  );
+
+  const definition = new ExpressStepFunction<
+    { value: string | undefined },
+    SyncExecutionResult<string>
+  >(stack, "machine2", (input) => {
+    return machine1({
+      input: { value: input.value ?? "default" },
     });
   }).definition;
 
