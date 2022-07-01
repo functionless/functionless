@@ -1460,87 +1460,6 @@ test("list.filter(item => item.length > 2).map(item => task(item))", () => {
 });
 
 // https://github.com/functionless/functionless/issues/209
-test.skip("`template me ${input.value}`", () => {
-  const { stack } = initStepFunctionApp();
-  const definition = new ExpressStepFunction<{ value: string }, string>(
-    stack,
-    "fn",
-    (input) => {
-      return `template me ${input.value}`;
-    }
-  ).definition;
-
-  expect(normalizeDefinition(definition)).toMatchSnapshot();
-});
-
-// https://github.com/functionless/functionless/issues/209
-test.skip("`template me ${await task(input.value)}`", () => {
-  const { stack, task } = initStepFunctionApp();
-  const definition = new ExpressStepFunction<{ value: string }, string>(
-    stack,
-    "fn",
-    async (input) => {
-      return `template me ${await task(input.value)}`;
-    }
-  ).definition;
-
-  expect(normalizeDefinition(definition)).toMatchSnapshot();
-});
-
-test("list.filter(item => item.length > 2).map(item => item)", () => {
-  const { stack } = initStepFunctionApp();
-  const definition = new ExpressStepFunction<
-    { list: string[] },
-    (string | null)[]
-  >(stack, "fn", async (input) => {
-    return input.list.filter((item) => item.length > 2).map((item) => item);
-  }).definition;
-
-  expect(normalizeDefinition(definition)).toMatchSnapshot();
-});
-
-// https://github.com/functionless/functionless/issues/210
-test.skip("input.list.map((item) => item).filter((item) => item.length > 2)", () => {
-  const { stack } = initStepFunctionApp();
-  const definition = new ExpressStepFunction<
-    { list: string[] },
-    (string | null)[]
-  >(stack, "fn", async (input) => {
-    return input.list.map((item) => item).filter((item) => item.length > 2);
-  }).definition;
-
-  expect(normalizeDefinition(definition)).toMatchSnapshot();
-});
-
-test.skip("await Promise.all(input.list.map((item) => task(item)))).filter", () => {
-  const { stack, task } = initStepFunctionApp();
-  const definition = new ExpressStepFunction<
-    { list: string[] },
-    (number | null)[]
-  >(stack, "fn", async (input) => {
-    return (await Promise.all(input.list.map((item) => task(item)))).filter(
-      (item) => item !== null
-    );
-  }).definition;
-
-  expect(normalizeDefinition(definition)).toMatchSnapshot();
-});
-
-test("list.filter(item => item.length > 2).map(item => task(item))", () => {
-  const { stack, task } = initStepFunctionApp();
-  const definition = new ExpressStepFunction<
-    { list: string[] },
-    (number | null)[]
-  >(stack, "fn", async (input) => {
-    return Promise.all(
-      input.list.filter((item) => item.length > 2).map((item) => task(item))
-    );
-  }).definition;
-
-  expect(normalizeDefinition(definition)).toMatchSnapshot();
-});
-
-// https://github.com/functionless/functionless/issues/209
 test("`template me ${input.value}`", () => {
   const { stack } = initStepFunctionApp();
   const definition = new ExpressStepFunction<{ value: string }, string>(
@@ -1573,7 +1492,7 @@ test("list.filter(item => item.length > 2).map(item => item)", () => {
   const definition = new ExpressStepFunction<
     { list: string[] },
     (string | null)[]
-  >(stack, "fn", (input) => {
+  >(stack, "fn", async (input) => {
     return input.list.filter((item) => item.length > 2).map((item) => item);
   }).definition;
 
@@ -1586,88 +1505,7 @@ test.skip("input.list.map((item) => item).filter((item) => item.length > 2)", ()
   const definition = new ExpressStepFunction<
     { list: string[] },
     (string | null)[]
-  >(stack, "fn", (input) => {
-    return input.list.map((item) => item).filter((item) => item.length > 2);
-  }).definition;
-
-  expect(normalizeDefinition(definition)).toMatchSnapshot();
-});
-
-test.skip("await Promise.all(input.list.map((item) => task(item)))).filter", () => {
-  const { stack, task } = initStepFunctionApp();
-  const definition = new ExpressStepFunction<
-    { list: string[] },
-    (number | null)[]
   >(stack, "fn", async (input) => {
-    return (await Promise.all(input.list.map((item) => task(item)))).filter(
-      (item) => item !== null
-    );
-  }).definition;
-
-  expect(normalizeDefinition(definition)).toMatchSnapshot();
-});
-
-test("list.filter(item => item.length > 2).map(item => task(item))", () => {
-  const { stack, task } = initStepFunctionApp();
-  const definition = new ExpressStepFunction<
-    { list: string[] },
-    (number | null)[]
-  >(stack, "fn", async (input) => {
-    return Promise.all(
-      input.list.filter((item) => item.length > 2).map((item) => task(item))
-    );
-  }).definition;
-
-  expect(normalizeDefinition(definition)).toMatchSnapshot();
-});
-
-// https://github.com/functionless/functionless/issues/209
-test.skip("`template me ${input.value}`", () => {
-  const { stack } = initStepFunctionApp();
-  const definition = new ExpressStepFunction<{ value: string }, string>(
-    stack,
-    "fn",
-    (input) => {
-      return `template me ${input.value}`;
-    }
-  ).definition;
-
-  expect(normalizeDefinition(definition)).toMatchSnapshot();
-});
-
-// https://github.com/functionless/functionless/issues/209
-test.skip("`template me ${await task(input.value)}`", () => {
-  const { stack, task } = initStepFunctionApp();
-  const definition = new ExpressStepFunction<{ value: string }, string>(
-    stack,
-    "fn",
-    (input) => {
-      return `template me ${task(input.value)}`;
-    }
-  ).definition;
-
-  expect(normalizeDefinition(definition)).toMatchSnapshot();
-});
-
-test("list.filter(item => item.length > 2).map(item => item)", () => {
-  const { stack } = initStepFunctionApp();
-  const definition = new ExpressStepFunction<
-    { list: string[] },
-    (string | null)[]
-  >(stack, "fn", (input) => {
-    return input.list.filter((item) => item.length > 2).map((item) => item);
-  }).definition;
-
-  expect(normalizeDefinition(definition)).toMatchSnapshot();
-});
-
-// https://github.com/functionless/functionless/issues/210
-test.skip("input.list.map((item) => item).filter((item) => item.length > 2)", () => {
-  const { stack } = initStepFunctionApp();
-  const definition = new ExpressStepFunction<
-    { list: string[] },
-    (string | null)[]
-  >(stack, "fn", (input) => {
     return input.list.map((item) => item).filter((item) => item.length > 2);
   }).definition;
 
