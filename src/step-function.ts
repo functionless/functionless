@@ -13,7 +13,9 @@ import { AppSyncVtlIntegration } from "./appsync";
 import {
   ASL,
   CompoundState,
+  isAslConstant,
   isCompoundState,
+  isVariable,
   StateMachine,
   States,
   Task,
@@ -39,7 +41,6 @@ import {
   isObjectLiteralExpr,
   isPropAssignExpr,
   isSpreadAssignExpr,
-  isStringLiteralExpr,
 } from "./guards";
 import {
   Integration,
@@ -85,17 +86,31 @@ export namespace $SFN {
         throw new Error("the 'seconds' argument is required");
       }
 
-      if (isNumberLiteralExpr(seconds)) {
-        return context.voidState({
-          Type: "Wait" as const,
-          Seconds: seconds.value,
-        });
-      } else {
-        return context.voidState({
-          Type: "Wait" as const,
-          SecondsPath: context.toJsonPath(seconds),
-        });
+      const secondsState = context.eval(seconds);
+      const secondsOutput = context.getAslStateOutput(secondsState);
+
+      if (
+        isAslConstant(secondsOutput) &&
+        typeof secondsOutput.value === "number"
+      ) {
+        return context.voidState(
+          {
+            Type: "Wait" as const,
+            Seconds: secondsOutput.value,
+          },
+          isCompoundState(secondsState) ? [secondsState] : []
+        );
+      } else if (isVariable(secondsOutput)) {
+        return context.voidState(
+          {
+            Type: "Wait" as const,
+            SecondsPath: secondsOutput.jsonPath,
+          },
+          isCompoundState(secondsState) ? [secondsState] : []
+        );
       }
+      // TODO:
+      throw new Error("");
     },
   });
 
@@ -118,17 +133,34 @@ export namespace $SFN {
         throw new Error("the 'timestamp' argument is required");
       }
 
-      if (isStringLiteralExpr(timestamp)) {
-        return context.voidState({
-          Type: "Wait",
-          Timestamp: timestamp.value,
-        });
-      } else {
-        return context.voidState({
-          Type: "Wait",
-          TimestampPath: context.toJsonPath(timestamp),
-        });
+      const timestampState = context.eval(timestamp);
+      const timestampOutput = context.getAslStateOutput(timestampState);
+
+      if (
+        isAslConstant(timestampOutput) &&
+        typeof timestampOutput.value === "string"
+      ) {
+        return context.voidState(
+          {
+            Type: "Wait",
+            Timestamp: timestampOutput.value,
+          },
+          isCompoundState(timestampState) ? [timestampState] : []
+        );
+      } else if (isVariable(timestampOutput)) {
+        return context.voidState(
+          {
+            Type: "Wait",
+            TimestampPath: timestampOutput.jsonPath,
+          },
+          isCompoundState(timestampState) ? [timestampState] : []
+        );
       }
+
+      throw new SynthError(
+        ErrorCodes.Unexpected_Error,
+        "Expected timestamp parameter to be a string or a reference."
+      );
     },
   });
 
@@ -264,30 +296,41 @@ export namespace $SFN {
     if (array === undefined) {
       throw new Error("missing argument 'array'");
     }
-    const arrayPath = context.toJsonPath(array);
-    return context.outputState({
-      Type: "Map",
-      ...(maxConcurrency
-        ? {
-            MaxConcurrency: maxConcurrency,
-          }
-        : {}),
-      Iterator: {
-        States: callbackStates,
-        StartAt: callbackStart,
+    const arrayState = context.eval(array);
+    const arrayOutput = context.getAslStateOutput(arrayState);
+
+    if (!isVariable(arrayOutput)) {
+      // TODO
+      throw new Error();
+    }
+
+    const arrayPath = arrayOutput.jsonPath;
+    return context.outputState(
+      {
+        Type: "Map",
+        ...(maxConcurrency
+          ? {
+              MaxConcurrency: maxConcurrency,
+            }
+          : {}),
+        Iterator: {
+          States: callbackStates,
+          StartAt: callbackStart,
+        },
+        ItemsPath: arrayPath,
+        Parameters: Object.fromEntries(
+          callbackfn.parameters.map((param, i) => [
+            `${param.name}.$`,
+            i === 0
+              ? "$$.Map.Item.Value"
+              : i == 1
+              ? "$$.Map.Item.Index"
+              : arrayPath,
+          ])
+        ),
       },
-      ItemsPath: arrayPath,
-      Parameters: Object.fromEntries(
-        callbackfn.parameters.map((param, i) => [
-          `${param.name}.$`,
-          i === 0
-            ? "$$.Map.Item.Value"
-            : i == 1
-            ? "$$.Map.Item.Index"
-            : arrayPath,
-        ])
-      ),
-    });
+      isCompoundState(arrayState) ? [arrayState] : []
+    );
   }
 
   /**

@@ -505,6 +505,22 @@ test("for-loop and do nothing", () => {
   expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
+test("for-loop inline array", () => {
+  const { stack } = initStepFunctionApp();
+  const definition = new ExpressStepFunction<{ items: string[] }, void>(
+    stack,
+    "fn",
+    () => {
+      for (const item of [1, 2, 3]) {
+        // @ts-ignore
+        const a = item;
+      }
+    }
+  ).definition;
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+});
+
 test("for i in items, items[i]", () => {
   const { stack } = initStepFunctionApp();
   const definition = new ExpressStepFunction<{ items: string[] }, void>(

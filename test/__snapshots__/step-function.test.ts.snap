@@ -43,10 +43,8 @@ Object {
     },
     "return null": Object {
       "End": true,
-      "OutputPath": "$.null",
-      "Parameters": Object {
-        "null": null,
-      },
+      "InputPath": "$.fnl_context.null",
+      "ResultPath": "$",
       "Type": "Pass",
     },
   },
@@ -96,10 +94,8 @@ Object {
     },
     "return null": Object {
       "End": true,
-      "OutputPath": "$.null",
-      "Parameters": Object {
-        "null": null,
-      },
+      "InputPath": "$.fnl_context.null",
+      "ResultPath": "$",
       "Type": "Pass",
     },
   },
@@ -749,18 +745,26 @@ Object {
 
 exports[`break from do-while-loop 1`] = `
 Object {
-  "StartAt": "break",
+  "StartAt": "Initialize Functionless Context",
   "States": Object {
+    "Initialize Functionless Context": Object {
+      "Next": "break",
+      "OutputPath": "$",
+      "Parameters": Object {
+        "input.$": "$",
+        "null": null,
+      },
+      "ResultPath": "$.fnl_context",
+      "Type": "Pass",
+    },
     "break": Object {
       "Next": "return null",
       "Type": "Pass",
     },
     "return null": Object {
       "End": true,
-      "OutputPath": "$.null",
-      "Parameters": Object {
-        "null": null,
-      },
+      "InputPath": "$.fnl_context.null",
+      "ResultPath": "$",
       "Type": "Pass",
     },
     "while (true)": Object {
@@ -806,7 +810,7 @@ Object {
       "Iterator": Object {
         "StartAt": "if(item == \\"hello\\")",
         "States": Object {
-          "0_empty_else_if(item == \\"hello\\")": Object {
+          "1__if(item == \\"hello\\")": Object {
             "End": true,
             "Type": "Pass",
           },
@@ -822,7 +826,7 @@ Object {
                 "Variable": "$.item",
               },
             ],
-            "Default": "0_empty_else_if(item == \\"hello\\")",
+            "Default": "1__if(item == \\"hello\\")",
             "Type": "Choice",
           },
         },
@@ -837,10 +841,8 @@ Object {
     },
     "return null": Object {
       "End": true,
-      "OutputPath": "$.null",
-      "Parameters": Object {
-        "null": null,
-      },
+      "InputPath": "$.fnl_context.null",
+      "ResultPath": "$",
       "Type": "Pass",
     },
   },
@@ -849,18 +851,26 @@ Object {
 
 exports[`break from while-loop 1`] = `
 Object {
-  "StartAt": "while (true)",
+  "StartAt": "Initialize Functionless Context",
   "States": Object {
+    "Initialize Functionless Context": Object {
+      "Next": "while (true)",
+      "OutputPath": "$",
+      "Parameters": Object {
+        "input.$": "$",
+        "null": null,
+      },
+      "ResultPath": "$.fnl_context",
+      "Type": "Pass",
+    },
     "break": Object {
       "Next": "return null",
       "Type": "Pass",
     },
     "return null": Object {
       "End": true,
-      "OutputPath": "$.null",
-      "Parameters": Object {
-        "null": null,
-      },
+      "InputPath": "$.fnl_context.null",
+      "ResultPath": "$",
       "Type": "Pass",
     },
     "while (true)": Object {
@@ -939,10 +949,7 @@ Object {
     },
     "return undefined": Object {
       "End": true,
-      "OutputPath": "$.null",
-      "Parameters": Object {
-        "null": null,
-      },
+      "ResultPath": "$",
       "Type": "Pass",
     },
     "return {id: person.Item.id.S, name: person.Item.name.S, score: score}": Object {
@@ -1000,7 +1007,8 @@ Object {
     },
     "return person": Object {
       "End": true,
-      "OutputPath": "$.person",
+      "InputPath": "$.person",
+      "ResultPath": "$",
       "Type": "Pass",
     },
   },
@@ -1425,10 +1433,8 @@ Object {
     },
     "return null": Object {
       "End": true,
-      "OutputPath": "$.null",
-      "Parameters": Object {
-        "null": null,
-      },
+      "InputPath": "$.fnl_context.null",
+      "ResultPath": "$",
       "Type": "Pass",
     },
   },
@@ -1462,18 +1468,14 @@ Object {
     },
     "return null": Object {
       "End": true,
-      "OutputPath": "$.null",
-      "Parameters": Object {
-        "null": null,
-      },
+      "InputPath": "$.fnl_context.null",
+      "ResultPath": "$",
       "Type": "Pass",
     },
     "return null 1": Object {
       "End": true,
-      "OutputPath": "$.null",
-      "Parameters": Object {
-        "null": null,
-      },
+      "InputPath": "$.fnl_context.null",
+      "ResultPath": "$",
       "Type": "Pass",
     },
   },
@@ -1519,10 +1521,8 @@ Object {
     },
     "return null": Object {
       "End": true,
-      "OutputPath": "$.null",
-      "Parameters": Object {
-        "null": null,
-      },
+      "InputPath": "$.fnl_context.null",
+      "ResultPath": "$",
       "Type": "Pass",
     },
     "while (true)": Object {
@@ -1559,7 +1559,7 @@ Object {
       "Iterator": Object {
         "StartAt": "if(item == \\"hello\\")",
         "States": Object {
-          "0_empty_else_if(item == \\"hello\\")": Object {
+          "1__if(item == \\"hello\\")": Object {
             "End": true,
             "Type": "Pass",
           },
@@ -1576,7 +1576,7 @@ Object {
                 "Variable": "$.item",
               },
             ],
-            "Default": "0_empty_else_if(item == \\"hello\\")",
+            "Default": "1__if(item == \\"hello\\")",
             "Type": "Choice",
           },
         },
@@ -1591,10 +1591,8 @@ Object {
     },
     "return null": Object {
       "End": true,
-      "OutputPath": "$.null",
-      "Parameters": Object {
-        "null": null,
-      },
+      "InputPath": "$.fnl_context.null",
+      "ResultPath": "$",
       "Type": "Pass",
     },
   },
@@ -1640,10 +1638,8 @@ Object {
     },
     "return null": Object {
       "End": true,
-      "OutputPath": "$.null",
-      "Parameters": Object {
-        "null": null,
-      },
+      "InputPath": "$.fnl_context.null",
+      "ResultPath": "$",
       "Type": "Pass",
     },
     "while (true)": Object {
@@ -1663,14 +1659,22 @@ Object {
 
 exports[`empty function 1`] = `
 Object {
-  "StartAt": "return null",
+  "StartAt": "Initialize Functionless Context",
   "States": Object {
-    "return null": Object {
-      "End": true,
-      "OutputPath": "$.null",
+    "Initialize Functionless Context": Object {
+      "Next": "return null",
+      "OutputPath": "$",
       "Parameters": Object {
+        "input.$": "$",
         "null": null,
       },
+      "ResultPath": "$.fnl_context",
+      "Type": "Pass",
+    },
+    "return null": Object {
+      "End": true,
+      "InputPath": "$.fnl_context.null",
+      "ResultPath": "$",
       "Type": "Pass",
     },
   },
@@ -1687,6 +1691,41 @@ Object {
       "Resource": "__REPLACED_TOKEN",
       "ResultPath": "$.heap0",
       "Type": "Task",
+    },
+    "1__for(i in [0_tmp])": Object {
+      "ItemsPath": "$.heap1.arr",
+      "Iterator": Object {
+        "StartAt": "1_tmp = await task(i)",
+        "States": Object {
+          "1_tmp = await task(i)": Object {
+            "InputPath": "$.i",
+            "Next": "assign__1_tmp = await task(i)",
+            "Resource": "__REPLACED_TOKEN",
+            "ResultPath": "$.heap2",
+            "Type": "Task",
+          },
+          "assign__1_tmp = await task(i)": Object {
+            "InputPath": "$.heap2",
+            "Next": "await task(1_tmp)",
+            "ResultPath": "$.1_tmp",
+            "Type": "Pass",
+          },
+          "await task(1_tmp)": Object {
+            "InputPath": "$.1_tmp",
+            "Resource": "__REPLACED_TOKEN",
+            "ResultPath": "$.heap3",
+            "Type": "Task",
+          },
+        },
+      },
+      "MaxConcurrency": 1,
+      "Next": "return null",
+      "Parameters": Object {
+        "0_i.$": "$$.Map.Item.Value",
+        "i.$": "$$.Map.Item.Index",
+      },
+      "ResultPath": null,
+      "Type": "Map",
     },
     "Initialize Functionless Context": Object {
       "Next": "0_tmp = await task(input)",
@@ -1705,46 +1744,17 @@ Object {
       "Type": "Pass",
     },
     "for(i in [0_tmp])": Object {
-      "ItemsPath": "__REPLACED_TOKEN",
-      "Iterator": Object {
-        "StartAt": "1_tmp = await task(i)",
-        "States": Object {
-          "1_tmp = await task(i)": Object {
-            "InputPath": "$.i",
-            "Next": "assign__1_tmp = await task(i)",
-            "Resource": "__REPLACED_TOKEN",
-            "ResultPath": "$.heap1",
-            "Type": "Task",
-          },
-          "assign__1_tmp = await task(i)": Object {
-            "InputPath": "$.heap1",
-            "Next": "await task(1_tmp)",
-            "ResultPath": "$.1_tmp",
-            "Type": "Pass",
-          },
-          "await task(1_tmp)": Object {
-            "InputPath": "$.1_tmp",
-            "Resource": "__REPLACED_TOKEN",
-            "ResultPath": "$.heap2",
-            "Type": "Task",
-          },
-        },
-      },
-      "MaxConcurrency": 1,
-      "Next": "return null",
+      "Next": "1__for(i in [0_tmp])",
       "Parameters": Object {
-        "0_i.$": "$$.Map.Item.Value",
-        "i.$": "$$.Map.Item.Index",
+        "arr.$": "States.Array($.0_tmp)",
       },
-      "ResultPath": null,
-      "Type": "Map",
+      "ResultPath": "$.heap1",
+      "Type": "Pass",
     },
     "return null": Object {
       "End": true,
-      "OutputPath": "$.null",
-      "Parameters": Object {
-        "null": null,
-      },
+      "InputPath": "$.fnl_context.null",
+      "ResultPath": "$",
       "Type": "Pass",
     },
   },
@@ -1761,6 +1771,40 @@ Object {
       "Resource": "__REPLACED_TOKEN",
       "ResultPath": "$.heap0",
       "Type": "Task",
+    },
+    "1__for(i of [0_tmp])": Object {
+      "ItemsPath": "$.heap1.arr",
+      "Iterator": Object {
+        "StartAt": "1_tmp = await task(i)",
+        "States": Object {
+          "1_tmp = await task(i)": Object {
+            "InputPath": "$.i",
+            "Next": "assign__1_tmp = await task(i)",
+            "Resource": "__REPLACED_TOKEN",
+            "ResultPath": "$.heap2",
+            "Type": "Task",
+          },
+          "assign__1_tmp = await task(i)": Object {
+            "InputPath": "$.heap2",
+            "Next": "await task(1_tmp)",
+            "ResultPath": "$.1_tmp",
+            "Type": "Pass",
+          },
+          "await task(1_tmp)": Object {
+            "InputPath": "$.1_tmp",
+            "Resource": "__REPLACED_TOKEN",
+            "ResultPath": "$.heap3",
+            "Type": "Task",
+          },
+        },
+      },
+      "MaxConcurrency": 1,
+      "Next": "return null",
+      "Parameters": Object {
+        "i.$": "$$.Map.Item.Value",
+      },
+      "ResultPath": null,
+      "Type": "Map",
     },
     "Initialize Functionless Context": Object {
       "Next": "0_tmp = await task(input)",
@@ -1779,45 +1823,17 @@ Object {
       "Type": "Pass",
     },
     "for(i of [0_tmp])": Object {
-      "ItemsPath": "__REPLACED_TOKEN",
-      "Iterator": Object {
-        "StartAt": "1_tmp = await task(i)",
-        "States": Object {
-          "1_tmp = await task(i)": Object {
-            "InputPath": "$.i",
-            "Next": "assign__1_tmp = await task(i)",
-            "Resource": "__REPLACED_TOKEN",
-            "ResultPath": "$.heap1",
-            "Type": "Task",
-          },
-          "assign__1_tmp = await task(i)": Object {
-            "InputPath": "$.heap1",
-            "Next": "await task(1_tmp)",
-            "ResultPath": "$.1_tmp",
-            "Type": "Pass",
-          },
-          "await task(1_tmp)": Object {
-            "InputPath": "$.1_tmp",
-            "Resource": "__REPLACED_TOKEN",
-            "ResultPath": "$.heap2",
-            "Type": "Task",
-          },
-        },
-      },
-      "MaxConcurrency": 1,
-      "Next": "return null",
+      "Next": "1__for(i of [0_tmp])",
       "Parameters": Object {
-        "i.$": "$$.Map.Item.Value",
+        "arr.$": "States.Array($.0_tmp)",
       },
-      "ResultPath": null,
-      "Type": "Map",
+      "ResultPath": "$.heap1",
+      "Type": "Pass",
     },
     "return null": Object {
       "End": true,
-      "OutputPath": "$.null",
-      "Parameters": Object {
-        "null": null,
-      },
+      "InputPath": "$.fnl_context.null",
+      "ResultPath": "$",
       "Type": "Pass",
     },
   },
@@ -1861,10 +1877,8 @@ Object {
     },
     "return null": Object {
       "End": true,
-      "OutputPath": "$.null",
-      "Parameters": Object {
-        "null": null,
-      },
+      "InputPath": "$.fnl_context.null",
+      "ResultPath": "$",
       "Type": "Pass",
     },
   },
@@ -1907,10 +1921,62 @@ Object {
     },
     "return null": Object {
       "End": true,
-      "OutputPath": "$.null",
+      "InputPath": "$.fnl_context.null",
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+  },
+}
+`;
+
+exports[`for-loop inline array 1`] = `
+Object {
+  "StartAt": "Initialize Functionless Context",
+  "States": Object {
+    "1__for(item of [1, 2, 3])": Object {
+      "ItemsPath": "$.heap0",
+      "Iterator": Object {
+        "StartAt": "a = item",
+        "States": Object {
+          "a = item": Object {
+            "InputPath": "$.item",
+            "ResultPath": "$.a",
+            "Type": "Pass",
+          },
+        },
+      },
+      "MaxConcurrency": 1,
+      "Next": "return null",
       "Parameters": Object {
+        "item.$": "$$.Map.Item.Value",
+      },
+      "ResultPath": null,
+      "Type": "Map",
+    },
+    "Initialize Functionless Context": Object {
+      "Next": "for(item of [1, 2, 3])",
+      "OutputPath": "$",
+      "Parameters": Object {
+        "input.$": "$",
         "null": null,
       },
+      "ResultPath": "$.fnl_context",
+      "Type": "Pass",
+    },
+    "for(item of [1, 2, 3])": Object {
+      "Next": "1__for(item of [1, 2, 3])",
+      "Result": Array [
+        1,
+        2,
+        3,
+      ],
+      "ResultPath": "$.heap0",
+      "Type": "Pass",
+    },
+    "return null": Object {
+      "End": true,
+      "InputPath": "$.fnl_context.null",
+      "ResultPath": "$",
       "Type": "Pass",
     },
   },
@@ -1966,10 +2032,8 @@ Object {
     },
     "return null": Object {
       "End": true,
-      "OutputPath": "$.null",
-      "Parameters": Object {
-        "null": null,
-      },
+      "InputPath": "$.fnl_context.null",
+      "ResultPath": "$",
       "Type": "Pass",
     },
   },
@@ -2079,10 +2143,8 @@ Object {
     },
     "return null": Object {
       "End": true,
-      "OutputPath": "$.null",
-      "Parameters": Object {
-        "null": null,
-      },
+      "InputPath": "$.fnl_context.null",
+      "ResultPath": "$",
       "Type": "Pass",
     },
   },
@@ -2217,10 +2279,8 @@ Object {
     },
     "return null": Object {
       "End": true,
-      "OutputPath": "$.null",
-      "Parameters": Object {
-        "null": null,
-      },
+      "InputPath": "$.fnl_context.null",
+      "ResultPath": "$",
       "Type": "Pass",
     },
   },
@@ -2355,10 +2415,8 @@ Object {
     },
     "return null": Object {
       "End": true,
-      "OutputPath": "$.null",
-      "Parameters": Object {
-        "null": null,
-      },
+      "InputPath": "$.fnl_context.null",
+      "ResultPath": "$",
       "Type": "Pass",
     },
   },
@@ -2450,10 +2508,8 @@ Object {
     },
     "return null": Object {
       "End": true,
-      "OutputPath": "$.null",
-      "Parameters": Object {
-        "null": null,
-      },
+      "InputPath": "$.fnl_context.null",
+      "ResultPath": "$",
       "Type": "Pass",
     },
   },
@@ -2462,8 +2518,18 @@ Object {
 
 exports[`import from express state machine into machine 1`] = `
 Object {
-  "StartAt": "await machine({input: {id: \\"hi\\"}})",
+  "StartAt": "Initialize Functionless Context",
   "States": Object {
+    "Initialize Functionless Context": Object {
+      "Next": "await machine({input: {id: \\"hi\\"}})",
+      "OutputPath": "$",
+      "Parameters": Object {
+        "input.$": "$",
+        "null": null,
+      },
+      "ResultPath": "$.fnl_context",
+      "Type": "Pass",
+    },
     "await machine({input: {id: \\"hi\\"}})": Object {
       "Next": "return null",
       "Parameters": Object {
@@ -2478,10 +2544,8 @@ Object {
     },
     "return null": Object {
       "End": true,
-      "OutputPath": "$.null",
-      "Parameters": Object {
-        "null": null,
-      },
+      "InputPath": "$.fnl_context.null",
+      "ResultPath": "$",
       "Type": "Pass",
     },
   },
@@ -2490,8 +2554,18 @@ Object {
 
 exports[`import from state machine into state machine 1`] = `
 Object {
-  "StartAt": "await machine({input: {id: \\"hi\\"}})",
+  "StartAt": "Initialize Functionless Context",
   "States": Object {
+    "Initialize Functionless Context": Object {
+      "Next": "await machine({input: {id: \\"hi\\"}})",
+      "OutputPath": "$",
+      "Parameters": Object {
+        "input.$": "$",
+        "null": null,
+      },
+      "ResultPath": "$.fnl_context",
+      "Type": "Pass",
+    },
     "await machine({input: {id: \\"hi\\"}})": Object {
       "Next": "return null",
       "Parameters": Object {
@@ -2506,10 +2580,8 @@ Object {
     },
     "return null": Object {
       "End": true,
-      "OutputPath": "$.null",
-      "Parameters": Object {
-        "null": null,
-      },
+      "InputPath": "$.fnl_context.null",
+      "ResultPath": "$",
       "Type": "Pass",
     },
   },
@@ -2690,7 +2762,8 @@ Object {
     },
     "return a": Object {
       "End": true,
-      "OutputPath": "$.a",
+      "InputPath": "$.a",
+      "ResultPath": "$",
       "Type": "Pass",
     },
   },
@@ -2719,10 +2792,8 @@ Object {
     },
     "return null": Object {
       "End": true,
-      "OutputPath": "$.null",
-      "Parameters": Object {
-        "null": null,
-      },
+      "InputPath": "$.fnl_context.null",
+      "ResultPath": "$",
       "Type": "Pass",
     },
     "while (cond == undefined)": Object {
@@ -2775,93 +2846,8 @@ Object {
         "States": Object {
           "return item": Object {
             "End": true,
-            "OutputPath": "$.item",
-            "Type": "Pass",
-          },
-        },
-      },
-      "MaxConcurrency": 1,
-      "Next": "1__return input.list.filter(function(item)).map(function(item))",
-      "Parameters": Object {
-        "item.$": "$$.Map.Item.Value",
-      },
-      "Type": "Map",
-    },
-  },
-}
-`;
-
-exports[`list.filter(item => item.length > 2).map(item => item) 2`] = `
-Object {
-  "StartAt": "Initialize Functionless Context",
-  "States": Object {
-    "1__return input.list.filter(function(item)).map(function(item))": Object {
-      "End": true,
-      "InputPath": "$.heap0",
-      "ResultPath": "$",
-      "Type": "Pass",
-    },
-    "Initialize Functionless Context": Object {
-      "Next": "return input.list.filter(function(item)).map(function(item))",
-      "OutputPath": "$",
-      "Parameters": Object {
-        "input.$": "$",
-        "null": null,
-      },
-      "ResultPath": "$.fnl_context",
-      "Type": "Pass",
-    },
-    "return input.list.filter(function(item)).map(function(item))": Object {
-      "ItemsPath": "$.fnl_context.input.list[?(@.length>2)]",
-      "Iterator": Object {
-        "StartAt": "return item",
-        "States": Object {
-          "return item": Object {
-            "End": true,
-            "OutputPath": "$.item",
-            "Type": "Pass",
-          },
-        },
-      },
-      "MaxConcurrency": 1,
-      "Next": "1__return input.list.filter(function(item)).map(function(item))",
-      "Parameters": Object {
-        "item.$": "$$.Map.Item.Value",
-      },
-      "Type": "Map",
-    },
-  },
-}
-`;
-
-exports[`list.filter(item => item.length > 2).map(item => item) 3`] = `
-Object {
-  "StartAt": "Initialize Functionless Context",
-  "States": Object {
-    "1__return input.list.filter(function(item)).map(function(item))": Object {
-      "End": true,
-      "InputPath": "$.heap0",
-      "ResultPath": "$",
-      "Type": "Pass",
-    },
-    "Initialize Functionless Context": Object {
-      "Next": "return input.list.filter(function(item)).map(function(item))",
-      "OutputPath": "$",
-      "Parameters": Object {
-        "input.$": "$",
-        "null": null,
-      },
-      "ResultPath": "$.fnl_context",
-      "Type": "Pass",
-    },
-    "return input.list.filter(function(item)).map(function(item))": Object {
-      "ItemsPath": "$.fnl_context.input.list[?(@.length>2)]",
-      "Iterator": Object {
-        "StartAt": "return item",
-        "States": Object {
-          "return item": Object {
-            "End": true,
-            "OutputPath": "$.item",
+            "InputPath": "$.item",
+            "ResultPath": "$",
             "Type": "Pass",
           },
         },
@@ -2878,108 +2864,6 @@ Object {
 `;
 
 exports[`list.filter(item => item.length > 2).map(item => task(item)) 1`] = `
-Object {
-  "StartAt": "Initialize Functionless Context",
-  "States": Object {
-    "1__return Promise.all(input.list.filter(function(item)).map(function(item))": Object {
-      "End": true,
-      "InputPath": "$.heap1",
-      "ResultPath": "$",
-      "Type": "Pass",
-    },
-    "Initialize Functionless Context": Object {
-      "Next": "return Promise.all(input.list.filter(function(item)).map(function(item)))",
-      "OutputPath": "$",
-      "Parameters": Object {
-        "input.$": "$",
-        "null": null,
-      },
-      "ResultPath": "$.fnl_context",
-      "Type": "Pass",
-    },
-    "return Promise.all(input.list.filter(function(item)).map(function(item)))": Object {
-      "ItemsPath": "$.fnl_context.input.list[?(@.length>2)]",
-      "Iterator": Object {
-        "StartAt": "return task(item)",
-        "States": Object {
-          "1__return task(item)": Object {
-            "End": true,
-            "InputPath": "$.heap0",
-            "ResultPath": "$",
-            "Type": "Pass",
-          },
-          "return task(item)": Object {
-            "InputPath": "$.item",
-            "Next": "1__return task(item)",
-            "Resource": "__REPLACED_TOKEN",
-            "ResultPath": "$.heap0",
-            "Type": "Task",
-          },
-        },
-      },
-      "MaxConcurrency": 1,
-      "Next": "1__return Promise.all(input.list.filter(function(item)).map(function(item))",
-      "Parameters": Object {
-        "item.$": "$$.Map.Item.Value",
-      },
-      "Type": "Map",
-    },
-  },
-}
-`;
-
-exports[`list.filter(item => item.length > 2).map(item => task(item)) 2`] = `
-Object {
-  "StartAt": "Initialize Functionless Context",
-  "States": Object {
-    "1__return Promise.all(input.list.filter(function(item)).map(function(item))": Object {
-      "End": true,
-      "InputPath": "$.heap1",
-      "ResultPath": "$",
-      "Type": "Pass",
-    },
-    "Initialize Functionless Context": Object {
-      "Next": "return Promise.all(input.list.filter(function(item)).map(function(item)))",
-      "OutputPath": "$",
-      "Parameters": Object {
-        "input.$": "$",
-        "null": null,
-      },
-      "ResultPath": "$.fnl_context",
-      "Type": "Pass",
-    },
-    "return Promise.all(input.list.filter(function(item)).map(function(item)))": Object {
-      "ItemsPath": "$.fnl_context.input.list[?(@.length>2)]",
-      "Iterator": Object {
-        "StartAt": "return task(item)",
-        "States": Object {
-          "1__return task(item)": Object {
-            "End": true,
-            "InputPath": "$.heap0",
-            "ResultPath": "$",
-            "Type": "Pass",
-          },
-          "return task(item)": Object {
-            "InputPath": "$.item",
-            "Next": "1__return task(item)",
-            "Resource": "__REPLACED_TOKEN",
-            "ResultPath": "$.heap0",
-            "Type": "Task",
-          },
-        },
-      },
-      "MaxConcurrency": 1,
-      "Next": "1__return Promise.all(input.list.filter(function(item)).map(function(item))",
-      "Parameters": Object {
-        "item.$": "$$.Map.Item.Value",
-      },
-      "Type": "Map",
-    },
-  },
-}
-`;
-
-exports[`list.filter(item => item.length > 2).map(item => task(item)) 3`] = `
 Object {
   "StartAt": "Initialize Functionless Context",
   "States": Object {
@@ -3074,10 +2958,8 @@ Object {
           },
           "return null": Object {
             "End": true,
-            "OutputPath": "$.null",
-            "Parameters": Object {
-              "null": null,
-            },
+            "InputPath": "$.fnl_context.null",
+            "ResultPath": "$",
             "Type": "Pass",
           },
           "return task(item)": Object {
@@ -3272,10 +3154,8 @@ Object {
           },
           "return null": Object {
             "End": true,
-            "OutputPath": "$.null",
-            "Parameters": Object {
-              "null": null,
-            },
+            "InputPath": "$.fnl_context.null",
+            "ResultPath": "$",
             "Type": "Pass",
           },
           "return task(item)": Object {
@@ -3546,10 +3426,8 @@ Object {
     },
     "return null": Object {
       "End": true,
-      "OutputPath": "$.null",
-      "Parameters": Object {
-        "null": null,
-      },
+      "InputPath": "$.fnl_context.null",
+      "ResultPath": "$",
       "Type": "Pass",
     },
   },
@@ -3599,10 +3477,8 @@ Object {
     },
     "return null": Object {
       "End": true,
-      "OutputPath": "$.null",
-      "Parameters": Object {
-        "null": null,
-      },
+      "InputPath": "$.fnl_context.null",
+      "ResultPath": "$",
       "Type": "Pass",
     },
   },
@@ -3709,7 +3585,8 @@ Object {
     },
     "return result": Object {
       "End": true,
-      "OutputPath": "$.result",
+      "InputPath": "$.result",
+      "ResultPath": "$",
       "Type": "Pass",
     },
   },
@@ -3750,10 +3627,8 @@ Object {
           },
           "return null": Object {
             "End": true,
-            "OutputPath": "$.null",
-            "Parameters": Object {
-              "null": null,
-            },
+            "InputPath": "$.fnl_context.null",
+            "ResultPath": "$",
             "Type": "Pass",
           },
         },
@@ -3812,18 +3687,14 @@ Object {
           },
           "return null": Object {
             "End": true,
-            "OutputPath": "$.null",
-            "Parameters": Object {
-              "null": null,
-            },
+            "InputPath": "$.fnl_context.null",
+            "ResultPath": "$",
             "Type": "Pass",
           },
           "return null 1": Object {
             "End": true,
-            "OutputPath": "$.null",
-            "Parameters": Object {
-              "null": null,
-            },
+            "InputPath": "$.fnl_context.null",
+            "ResultPath": "$",
             "Type": "Pass",
           },
         },
@@ -3873,10 +3744,8 @@ Object {
           },
           "return null": Object {
             "End": true,
-            "OutputPath": "$.null",
-            "Parameters": Object {
-              "null": null,
-            },
+            "InputPath": "$.fnl_context.null",
+            "ResultPath": "$",
             "Type": "Pass",
           },
         },
@@ -3977,10 +3846,8 @@ Object {
           },
           "return null": Object {
             "End": true,
-            "OutputPath": "$.null",
-            "Parameters": Object {
-              "null": null,
-            },
+            "InputPath": "$.fnl_context.null",
+            "ResultPath": "$",
             "Type": "Pass",
           },
           "return task(item)": Object {
@@ -4140,10 +4007,8 @@ Object {
             },
             "return null": Object {
               "End": true,
-              "OutputPath": "$.null",
-              "Parameters": Object {
-                "null": null,
-              },
+              "InputPath": "$.fnl_context.null",
+              "ResultPath": "$",
               "Type": "Pass",
             },
             "return task()": Object {
@@ -4180,10 +4045,8 @@ Object {
     },
     "return null 1": Object {
       "End": true,
-      "OutputPath": "$.null",
-      "Parameters": Object {
-        "null": null,
-      },
+      "InputPath": "$.fnl_context.null",
+      "ResultPath": "$",
       "Type": "Pass",
     },
   },
@@ -4245,10 +4108,7 @@ Object {
     },
     "return undefined": Object {
       "End": true,
-      "OutputPath": "$.null",
-      "Parameters": Object {
-        "null": null,
-      },
+      "ResultPath": "$",
       "Type": "Pass",
     },
     "return {id: person.Item.id.S, name: person.Item.name.S}": Object {
@@ -4338,10 +4198,7 @@ Object {
     },
     "return undefined": Object {
       "End": true,
-      "OutputPath": "$.null",
-      "Parameters": Object {
-        "null": null,
-      },
+      "ResultPath": "$",
       "Type": "Pass",
     },
     "return {id: person.Item.id.S, name: person.Item.name.S}": Object {
@@ -4422,7 +4279,8 @@ Object {
     },
     "return 0_tmp.Payload": Object {
       "End": true,
-      "OutputPath": "$.0_tmp.Payload",
+      "InputPath": "$.0_tmp.Payload",
+      "ResultPath": "$",
       "Type": "Pass",
     },
     "takeLeft__0_tmp = await $AWS.Lambda.Invoke({Function: task, Payload: {id: i": Object {
@@ -4457,7 +4315,8 @@ Object {
     },
     "return input.input.id": Object {
       "End": true,
-      "OutputPath": "$.fnl_context.input.input.id",
+      "InputPath": "$.fnl_context.input.input.id",
+      "ResultPath": "$",
       "Type": "Pass",
     },
   },
@@ -4557,7 +4416,8 @@ Object {
     },
     "return input.id": Object {
       "End": true,
-      "OutputPath": "$.fnl_context.input.id",
+      "InputPath": "$.fnl_context.input.id",
+      "ResultPath": "$",
       "Type": "Pass",
     },
   },
@@ -4700,7 +4560,8 @@ Object {
     },
     "return input.input.id": Object {
       "End": true,
-      "OutputPath": "$.fnl_context.input.input.id",
+      "InputPath": "$.fnl_context.input.input.id",
+      "ResultPath": "$",
       "Type": "Pass",
     },
   },
@@ -4821,14 +4682,22 @@ Object {
 
 exports[`return void 1`] = `
 Object {
-  "StartAt": "return null",
+  "StartAt": "Initialize Functionless Context",
   "States": Object {
-    "return null": Object {
-      "End": true,
-      "OutputPath": "$.null",
+    "Initialize Functionless Context": Object {
+      "Next": "return null",
+      "OutputPath": "$",
       "Parameters": Object {
+        "input.$": "$",
         "null": null,
       },
+      "ResultPath": "$.fnl_context",
+      "Type": "Pass",
+    },
+    "return null": Object {
+      "End": true,
+      "InputPath": "$.fnl_context.null",
+      "ResultPath": "$",
       "Type": "Pass",
     },
   },
@@ -5105,10 +4974,8 @@ Object {
     },
     "return null": Object {
       "End": true,
-      "OutputPath": "$.null",
-      "Parameters": Object {
-        "null": null,
-      },
+      "InputPath": "$.fnl_context.null",
+      "ResultPath": "$",
       "Type": "Pass",
     },
   },
@@ -5364,10 +5231,8 @@ Object {
     },
     "return null": Object {
       "End": true,
-      "OutputPath": "$.null",
-      "Parameters": Object {
-        "null": null,
-      },
+      "InputPath": "$.fnl_context.null",
+      "ResultPath": "$",
       "Type": "Pass",
     },
   },
@@ -5458,10 +5323,8 @@ Object {
     },
     "return null": Object {
       "End": true,
-      "OutputPath": "$.null",
-      "Parameters": Object {
-        "null": null,
-      },
+      "InputPath": "$.fnl_context.null",
+      "ResultPath": "$",
       "Type": "Pass",
     },
   },
@@ -5526,10 +5389,8 @@ Object {
     },
     "return null": Object {
       "End": true,
-      "OutputPath": "$.null",
-      "Parameters": Object {
-        "null": null,
-      },
+      "InputPath": "$.fnl_context.null",
+      "ResultPath": "$",
       "Type": "Pass",
     },
   },
@@ -5625,10 +5486,8 @@ Object {
     },
     "return null": Object {
       "End": true,
-      "OutputPath": "$.null",
-      "Parameters": Object {
-        "null": null,
-      },
+      "InputPath": "$.fnl_context.null",
+      "ResultPath": "$",
       "Type": "Pass",
     },
     "throw finally": Object {
@@ -5706,10 +5565,8 @@ Object {
     },
     "return null": Object {
       "End": true,
-      "OutputPath": "$.null",
-      "Parameters": Object {
-        "null": null,
-      },
+      "InputPath": "$.fnl_context.null",
+      "ResultPath": "$",
       "Type": "Pass",
     },
   },
@@ -5749,10 +5606,8 @@ Object {
           },
           "return null": Object {
             "End": true,
-            "OutputPath": "$.null",
-            "Parameters": Object {
-              "null": null,
-            },
+            "InputPath": "$.fnl_context.null",
+            "ResultPath": "$",
             "Type": "Pass",
           },
           "return task(item)": Object {
@@ -5832,10 +5687,8 @@ Object {
     },
     "return null": Object {
       "End": true,
-      "OutputPath": "$.null",
-      "Parameters": Object {
-        "null": null,
-      },
+      "InputPath": "$.fnl_context.null",
+      "ResultPath": "$",
       "Type": "Pass",
     },
   },
@@ -5987,10 +5840,8 @@ Object {
     },
     "return null": Object {
       "End": true,
-      "OutputPath": "$.null",
-      "Parameters": Object {
-        "null": null,
-      },
+      "InputPath": "$.fnl_context.null",
+      "ResultPath": "$",
       "Type": "Pass",
     },
   },
@@ -6030,10 +5881,8 @@ Object {
           },
           "return null": Object {
             "End": true,
-            "OutputPath": "$.null",
-            "Parameters": Object {
-              "null": null,
-            },
+            "InputPath": "$.fnl_context.null",
+            "ResultPath": "$",
             "Type": "Pass",
           },
           "return task(item)": Object {
@@ -6113,10 +5962,8 @@ Object {
     },
     "return null": Object {
       "End": true,
-      "OutputPath": "$.null",
-      "Parameters": Object {
-        "null": null,
-      },
+      "InputPath": "$.fnl_context.null",
+      "ResultPath": "$",
       "Type": "Pass",
     },
   },
@@ -6212,12 +6059,22 @@ Object {
 
 exports[`try { return $SFN.parallel(() => "hello", () => "world")) } catch { return null } 1`] = `
 Object {
-  "StartAt": "return $SFN.parallel([function(), function()])",
+  "StartAt": "Initialize Functionless Context",
   "States": Object {
     "1__return $SFN.parallel([function(), function()])": Object {
       "End": true,
       "InputPath": "$.heap0",
       "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "Initialize Functionless Context": Object {
+      "Next": "return $SFN.parallel([function(), function()])",
+      "OutputPath": "$",
+      "Parameters": Object {
+        "input.$": "$",
+        "null": null,
+      },
+      "ResultPath": "$.fnl_context",
       "Type": "Pass",
     },
     "return $SFN.parallel([function(), function()])": Object {
@@ -6260,10 +6117,8 @@ Object {
     },
     "return null": Object {
       "End": true,
-      "OutputPath": "$.null",
-      "Parameters": Object {
-        "null": null,
-      },
+      "InputPath": "$.fnl_context.null",
+      "ResultPath": "$",
       "Type": "Pass",
     },
   },
@@ -6322,10 +6177,8 @@ Object {
             },
             "return null": Object {
               "End": true,
-              "OutputPath": "$.null",
-              "Parameters": Object {
-                "null": null,
-              },
+              "InputPath": "$.fnl_context.null",
+              "ResultPath": "$",
               "Type": "Pass",
             },
           },
@@ -6346,10 +6199,8 @@ Object {
     },
     "return null 1": Object {
       "End": true,
-      "OutputPath": "$.null",
-      "Parameters": Object {
-        "null": null,
-      },
+      "InputPath": "$.fnl_context.null",
+      "ResultPath": "$",
       "Type": "Pass",
     },
   },
@@ -6406,10 +6257,8 @@ Object {
     },
     "return null": Object {
       "End": true,
-      "OutputPath": "$.null",
-      "Parameters": Object {
-        "null": null,
-      },
+      "InputPath": "$.fnl_context.null",
+      "ResultPath": "$",
       "Type": "Pass",
     },
     "throw finally": Object {
@@ -6490,10 +6339,8 @@ Object {
     },
     "return null": Object {
       "End": true,
-      "OutputPath": "$.null",
-      "Parameters": Object {
-        "null": null,
-      },
+      "InputPath": "$.fnl_context.null",
+      "ResultPath": "$",
       "Type": "Pass",
     },
     "throw finally": Object {
@@ -6515,8 +6362,18 @@ Object {
 
 exports[`try { task() } catch { task() } finally { task() } 1`] = `
 Object {
-  "StartAt": "await task(\\"1\\")",
+  "StartAt": "Initialize Functionless Context",
   "States": Object {
+    "Initialize Functionless Context": Object {
+      "Next": "await task(\\"1\\")",
+      "OutputPath": "$",
+      "Parameters": Object {
+        "input.$": "$",
+        "null": null,
+      },
+      "ResultPath": "$.fnl_context",
+      "Type": "Pass",
+    },
     "await task(\\"1\\")": Object {
       "Catch": Array [
         Object {
@@ -6569,10 +6426,8 @@ Object {
     },
     "return null": Object {
       "End": true,
-      "OutputPath": "$.null",
-      "Parameters": Object {
-        "null": null,
-      },
+      "InputPath": "$.fnl_context.null",
+      "ResultPath": "$",
       "Type": "Pass",
     },
     "throw finally": Object {
@@ -6586,12 +6441,22 @@ Object {
 
 exports[`try { task() } catch(err) { (maybe) throw } finally { task } 1`] = `
 Object {
-  "StartAt": "await task(\\"1\\")",
+  "StartAt": "Initialize Functionless Context",
   "States": Object {
     "0_catch(err)": Object {
       "InputPath": "$.err.0_ParsedError",
       "Next": "if(err.message == \\"sam\\")",
       "ResultPath": "$.err",
+      "Type": "Pass",
+    },
+    "Initialize Functionless Context": Object {
+      "Next": "await task(\\"1\\")",
+      "OutputPath": "$",
+      "Parameters": Object {
+        "input.$": "$",
+        "null": null,
+      },
+      "ResultPath": "$.fnl_context",
       "Type": "Pass",
     },
     "await task(\\"1\\")": Object {
@@ -6649,10 +6514,8 @@ Object {
     },
     "return null": Object {
       "End": true,
-      "OutputPath": "$.null",
-      "Parameters": Object {
-        "null": null,
-      },
+      "InputPath": "$.fnl_context.null",
+      "ResultPath": "$",
       "Type": "Pass",
     },
     "throw finally": Object {
@@ -6717,10 +6580,8 @@ Object {
     },
     "return null": Object {
       "End": true,
-      "OutputPath": "$.null",
-      "Parameters": Object {
-        "null": null,
-      },
+      "InputPath": "$.fnl_context.null",
+      "ResultPath": "$",
       "Type": "Pass",
     },
     "throw finally": Object {
@@ -6750,8 +6611,18 @@ Object {
 
 exports[`try, task, empty catch 1`] = `
 Object {
-  "StartAt": "await computeScore({id: \\"id\\", name: \\"name\\"})",
+  "StartAt": "Initialize Functionless Context",
   "States": Object {
+    "Initialize Functionless Context": Object {
+      "Next": "await computeScore({id: \\"id\\", name: \\"name\\"})",
+      "OutputPath": "$",
+      "Parameters": Object {
+        "input.$": "$",
+        "null": null,
+      },
+      "ResultPath": "$.fnl_context",
+      "Type": "Pass",
+    },
     "await computeScore({id: \\"id\\", name: \\"name\\"})": Object {
       "Catch": Array [
         Object {
@@ -6773,10 +6644,8 @@ Object {
     },
     "return null": Object {
       "End": true,
-      "OutputPath": "$.null",
-      "Parameters": Object {
-        "null": null,
-      },
+      "InputPath": "$.fnl_context.null",
+      "ResultPath": "$",
       "Type": "Pass",
     },
   },
@@ -6785,14 +6654,22 @@ Object {
 
 exports[`try, throw Error('error'), empty catch 1`] = `
 Object {
-  "StartAt": "throw Error(\\"cause\\")",
+  "StartAt": "Initialize Functionless Context",
   "States": Object {
-    "return null": Object {
-      "End": true,
-      "OutputPath": "$.null",
+    "Initialize Functionless Context": Object {
+      "Next": "throw Error(\\"cause\\")",
+      "OutputPath": "$",
       "Parameters": Object {
+        "input.$": "$",
         "null": null,
       },
+      "ResultPath": "$.fnl_context",
+      "Type": "Pass",
+    },
+    "return null": Object {
+      "End": true,
+      "InputPath": "$.fnl_context.null",
+      "ResultPath": "$",
       "Type": "Pass",
     },
     "throw Error(\\"cause\\")": Object {
@@ -6839,14 +6716,22 @@ Object {
 
 exports[`try, throw, empty catch 1`] = `
 Object {
-  "StartAt": "throw new CustomError(\\"cause\\")",
+  "StartAt": "Initialize Functionless Context",
   "States": Object {
-    "return null": Object {
-      "End": true,
-      "OutputPath": "$.null",
+    "Initialize Functionless Context": Object {
+      "Next": "throw new CustomError(\\"cause\\")",
+      "OutputPath": "$",
       "Parameters": Object {
+        "input.$": "$",
         "null": null,
       },
+      "ResultPath": "$.fnl_context",
+      "Type": "Pass",
+    },
+    "return null": Object {
+      "End": true,
+      "InputPath": "$.fnl_context.null",
+      "ResultPath": "$",
       "Type": "Pass",
     },
     "throw new CustomError(\\"cause\\")": Object {
@@ -6967,7 +6852,8 @@ Object {
     },
     "return err.message": Object {
       "End": true,
-      "OutputPath": "$.err.message",
+      "InputPath": "$.err.message",
+      "ResultPath": "$",
       "Type": "Pass",
     },
   },
@@ -7417,15 +7303,14 @@ Object {
     },
     "return err.message": Object {
       "End": true,
-      "OutputPath": "$.err.message",
+      "InputPath": "$.err.message",
+      "ResultPath": "$",
       "Type": "Pass",
     },
     "return null": Object {
       "End": true,
-      "OutputPath": "$.null",
-      "Parameters": Object {
-        "null": null,
-      },
+      "InputPath": "$.fnl_context.null",
+      "ResultPath": "$",
       "Type": "Pass",
     },
   },
@@ -7491,15 +7376,14 @@ Object {
     },
     "return err.message": Object {
       "End": true,
-      "OutputPath": "$.err.message",
+      "InputPath": "$.err.message",
+      "ResultPath": "$",
       "Type": "Pass",
     },
     "return null": Object {
       "End": true,
-      "OutputPath": "$.null",
-      "Parameters": Object {
-        "null": null,
-      },
+      "InputPath": "$.fnl_context.null",
+      "ResultPath": "$",
       "Type": "Pass",
     },
   },
@@ -7557,10 +7441,8 @@ Object {
     },
     "return null": Object {
       "End": true,
-      "OutputPath": "$.null",
-      "Parameters": Object {
-        "null": null,
-      },
+      "InputPath": "$.fnl_context.null",
+      "ResultPath": "$",
       "Type": "Pass",
     },
   },
@@ -7621,10 +7503,8 @@ Object {
     },
     "return null": Object {
       "End": true,
-      "OutputPath": "$.null",
-      "Parameters": Object {
-        "null": null,
-      },
+      "InputPath": "$.fnl_context.null",
+      "ResultPath": "$",
       "Type": "Pass",
     },
   },
@@ -7652,10 +7532,8 @@ Object {
     },
     "return null": Object {
       "End": true,
-      "OutputPath": "$.null",
-      "Parameters": Object {
-        "null": null,
-      },
+      "InputPath": "$.fnl_context.null",
+      "ResultPath": "$",
       "Type": "Pass",
     },
   },
@@ -7683,10 +7561,8 @@ Object {
     },
     "return null": Object {
       "End": true,
-      "OutputPath": "$.null",
-      "Parameters": Object {
-        "null": null,
-      },
+      "InputPath": "$.fnl_context.null",
+      "ResultPath": "$",
       "Type": "Pass",
     },
   },
@@ -7714,10 +7590,8 @@ Object {
     },
     "return null": Object {
       "End": true,
-      "OutputPath": "$.null",
-      "Parameters": Object {
-        "null": null,
-      },
+      "InputPath": "$.fnl_context.null",
+      "ResultPath": "$",
       "Type": "Pass",
     },
   },
@@ -7746,10 +7620,8 @@ Object {
     },
     "return null": Object {
       "End": true,
-      "OutputPath": "$.null",
-      "Parameters": Object {
-        "null": null,
-      },
+      "InputPath": "$.fnl_context.null",
+      "ResultPath": "$",
       "Type": "Pass",
     },
     "while (cond == undefined)": Object {
@@ -7797,10 +7669,8 @@ Object {
     },
     "return null": Object {
       "End": true,
-      "OutputPath": "$.null",
-      "Parameters": Object {
-        "null": null,
-      },
+      "InputPath": "$.fnl_context.null",
+      "ResultPath": "$",
       "Type": "Pass",
     },
     "while (cond == undefined)": Object {
@@ -7863,10 +7733,8 @@ Object {
     },
     "return null": Object {
       "End": true,
-      "OutputPath": "$.null",
-      "Parameters": Object {
-        "null": null,
-      },
+      "InputPath": "$.fnl_context.null",
+      "ResultPath": "$",
       "Type": "Pass",
     },
     "while (true)": Object {

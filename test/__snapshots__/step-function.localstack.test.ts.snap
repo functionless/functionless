@@ -1033,7 +1033,8 @@ Object {
     },
     "return 0_tmp.Payload.str": Object {
       "End": true,
-      "OutputPath": "$.0_tmp.Payload.str",
+      "InputPath": "$.0_tmp.Payload.str",
+      "ResultPath": "$",
       "Type": "Pass",
     },
   },
@@ -1083,10 +1084,8 @@ Object {
     },
     "return null": Object {
       "End": true,
-      "OutputPath": "$.null",
-      "Parameters": Object {
-        "null": null,
-      },
+      "InputPath": "$.fnl_context.null",
+      "ResultPath": "$",
       "Type": "Pass",
     },
   },
@@ -1120,7 +1119,8 @@ Object {
         "States": Object {
           "return n": Object {
             "End": true,
-            "OutputPath": "$.n",
+            "InputPath": "$.n",
+            "ResultPath": "$",
             "Type": "Pass",
           },
         },
@@ -1200,10 +1200,8 @@ Object {
     },
     "return null": Object {
       "End": true,
-      "OutputPath": "$.null",
-      "Parameters": Object {
-        "null": null,
-      },
+      "InputPath": "$.fnl_context.null",
+      "ResultPath": "$",
       "Type": "Pass",
     },
   },
@@ -1317,7 +1315,8 @@ Object {
     },
     "return 0_tmp.str": Object {
       "End": true,
-      "OutputPath": "$.0_tmp.str",
+      "InputPath": "$.0_tmp.str",
+      "ResultPath": "$",
       "Type": "Pass",
     },
   },
@@ -1351,7 +1350,8 @@ Object {
     },
     "return 0_tmp.str": Object {
       "End": true,
-      "OutputPath": "$.0_tmp.str",
+      "InputPath": "$.0_tmp.str",
+      "ResultPath": "$",
       "Type": "Pass",
     },
   },
@@ -1377,7 +1377,8 @@ Object {
     },
     "return 0_tmp.str": Object {
       "End": true,
-      "OutputPath": "$.0_tmp.str",
+      "InputPath": "$.0_tmp.str",
+      "ResultPath": "$",
       "Type": "Pass",
     },
   },
@@ -1413,7 +1414,8 @@ Object {
     },
     "return 0_tmp.str": Object {
       "End": true,
-      "OutputPath": "$.0_tmp.str",
+      "InputPath": "$.0_tmp.str",
+      "ResultPath": "$",
       "Type": "Pass",
     },
   },
