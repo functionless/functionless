@@ -1,13 +1,6 @@
 import { aws_events, aws_events_targets, Stack } from "aws-cdk-lib";
 import { Construct } from "constructs";
-import {
-  ASL,
-  AslConstant,
-  isAslConstant,
-  isCompoundState,
-  isVariable,
-  Variable,
-} from "../asl";
+import { ASL, AslConstant, isAslConstant, isVariable, Variable } from "../asl";
 import { ErrorCodes, SynthError } from "../error-code";
 import {
   CallExpr,
@@ -320,9 +313,7 @@ abstract class EventBusBase<in Evnt extends Event, OutEvnt extends Evnt = Evnt>
             };
           });
 
-          const subStates = evaluatedProps
-            .map(({ state }) => state)
-            .filter(isCompoundState);
+          const subStates = evaluatedProps.map(({ state }) => state);
 
           return {
             event: evaluatedProps
@@ -354,6 +345,7 @@ abstract class EventBusBase<in Evnt extends Event, OutEvnt extends Evnt = Evnt>
         const subStates = events.flatMap(({ subStates }) => subStates);
 
         return context.outputState(
+          call,
           {
             Resource: "arn:aws:states:::events:putEvents",
             Type: "Task" as const,
@@ -361,7 +353,7 @@ abstract class EventBusBase<in Evnt extends Event, OutEvnt extends Evnt = Evnt>
               Entries: events.map(({ event }) => event),
             },
           },
-          subStates
+          ...subStates
         );
       },
       native: {

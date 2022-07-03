@@ -86,6 +86,18 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
   );
 
   test(
+    "duplicate nodes",
+    (parent) => {
+      return new StepFunction(parent, "sfn2", async () => {
+        "hello world";
+        "hello world";
+        return "hello world";
+      });
+    },
+    "hello world"
+  );
+
+  test(
     "call lambda",
     (parent) => {
       const func = new Function<undefined, string>(
@@ -251,7 +263,7 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
   );
 
   test(
-    "call lambda $SFN wait",
+    "call $SFN wait",
     (parent) => {
       return new StepFunction(parent, "sfn2", async () => {
         $SFN.waitFor(1);
@@ -261,7 +273,7 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
   );
 
   test(
-    "call lambda $SFN map",
+    "call $SFN map",
     (parent) => {
       return new StepFunction(parent, "sfn2", async (input) => {
         return $SFN.map(input.arr, (n) => {
@@ -274,7 +286,7 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
   );
 
   test(
-    "call lambda $SFN forEach",
+    "call $SFN forEach",
     (parent) => {
       const func = new Function<number, void>(
         parent,
@@ -295,7 +307,7 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
   );
 
   test(
-    "call lambda $SFN parallel",
+    "call $SFN parallel",
     (parent) => {
       return new StepFunction(parent, "sfn2", async () => {
         return $SFN.parallel(
@@ -305,6 +317,183 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
       });
     },
     [1, 2]
+  );
+
+  test(
+    "conditionals",
+    (parent) => {
+      const func = new Function<undefined, boolean>(
+        parent,
+        "func",
+        async () => {
+          return true;
+        }
+      );
+      return new StepFunction(parent, "sfn2", async (input) => {
+        if (input.a) {
+          if (await func()) {
+            return input.b;
+          }
+        }
+        return "noop";
+      });
+    },
+    "hello",
+    { a: true, b: "hello" }
+  );
+
+  // Cannot return in a for loop
+  // https://github.com/functionless/functionless/issues/319
+  test.skip(
+    "for map conditional",
+    (parent) => {
+      const func = new Function<undefined, number[]>(
+        parent,
+        "func",
+        async () => {
+          return [1, 2, 3];
+        }
+      );
+      return new StepFunction(parent, "sfn2", async (input) => {
+        let a = "x";
+        const b = ["b"].map((v) => {
+          for (const i of [1, 2, 3]) {
+            if (i === 3) {
+              return `${v}${a}${i}`;
+            }
+          }
+          return "boo";
+        });
+        const c = ["c"].map((v) => {
+          for (const i of input.arr) {
+            if (i === 3) {
+              return `${v}${a}${i}`;
+            }
+          }
+          return "boo";
+        });
+        const d = Promise.all(
+          ["d"].map(async (v) => {
+            for (const i of await func()) {
+              if (i === 3) {
+                return `${v}${a}${i}`;
+              }
+            }
+            return "boo";
+          })
+        );
+        // must be an array
+        // for (const i in input.ob) {
+        //   a = i as any;
+        // }
+        return `${b}${c}${d}`;
+      });
+    },
+    "bx3cx3dx3",
+    { arr: [1, 2, 3] }
+  );
+
+  // uhh, so the best we can do is test that this doesn't fail
+  // Return from for loop - https://github.com/functionless/functionless/issues/319
+  // Assign to mutable variables from for loop - https://github.com/functionless/functionless/issues/318
+  test(
+    "for loops",
+    (parent) => {
+      const func = new Function<undefined, number[]>(
+        parent,
+        "func",
+        async () => {
+          return [1, 2, 3];
+        }
+      );
+      return new StepFunction(parent, "sfn2", async (input) => {
+        let a = "x";
+        for (const i of [1, 2, 3]) {
+          a = `${a}${i}`;
+        }
+        for (const i of input.arr) {
+          a = `${a}${i}`;
+        }
+        for (const i of await func()) {
+          a = `${a}${i}`;
+        }
+        // must be an array
+        // for (const i in input.ob) {
+        //   a = i as any;
+        // }
+        return `madeit`;
+      });
+    },
+    "madeit",
+    { arr: [1, 2, 3] }
+  );
+
+  // Support mutable variables in For and Map: https://github.com/functionless/functionless/issues/318
+  test.skip(
+    "map with dynamic for loops",
+    (parent) => {
+      const func = new Function<undefined, number[]>(
+        parent,
+        "func",
+        async () => {
+          return [1, 2, 3];
+        }
+      );
+      return new StepFunction(parent, "sfn2", async (input) => {
+        const l = (await func()).map((x) => `n${x}`);
+        const l2 = input.arr.map((x) => `n${x}`);
+        let a = "";
+        for (const x of l) {
+          a = `${a}${x}`;
+        }
+        for (const x of l2) {
+          a = `${a}${x}`;
+        }
+        return a;
+      });
+    },
+    "123123",
+    { arr: [1, 2, 3] }
+  );
+
+  test(
+    "map",
+    (parent) => {
+      const func = new Function<undefined, number[]>(
+        parent,
+        "func",
+        async () => {
+          return [1, 2, 3];
+        }
+      );
+      return new StepFunction(parent, "sfn2", async (input) => {
+        const l = (await func()).map((x) => `n${x}`);
+        const l2 = input.arr.map((x) => `n${x}`);
+        return `${l[0]}${l[1]}${l[2]}${l2[0]}${l2[1]}${l2[2]}`;
+      });
+    },
+    "n1n2n3n1n2n3",
+    { arr: [1, 2, 3] }
+  );
+
+  test(
+    "map uses input",
+    (parent) => {
+      const func = new Function<undefined, number[]>(
+        parent,
+        "func",
+        async () => {
+          return [1, 2, 3];
+        }
+      );
+      return new StepFunction(parent, "sfn2", async (input) => {
+        const l = (await func()).map((x) => `${input.prefix}${x}`);
+        const l2 = input.arr.map((x) => `${input.prefix}${x}`);
+        return `${l[0]}${l[1]}${l[2]}${l2[0]}${l2[1]}${l2[2]}`;
+      });
+    },
+    "n1n2n3n1n2n3",
+    { arr: [1, 2, 3], prefix: "n" }
   );
 
   test(

@@ -14,11 +14,9 @@ import {
   ASL,
   CompoundState,
   isAslConstant,
-  isCompoundState,
   isVariable,
   StateMachine,
   States,
-  Task,
 } from "./asl";
 import { assertDefined } from "./assert";
 import { validateFunctionDecl, FunctionDecl } from "./declaration";
@@ -94,19 +92,21 @@ export namespace $SFN {
         typeof secondsOutput.value === "number"
       ) {
         return context.voidState(
+          call,
           {
             Type: "Wait" as const,
             Seconds: secondsOutput.value,
           },
-          isCompoundState(secondsState) ? [secondsState] : []
+          secondsState
         );
       } else if (isVariable(secondsOutput)) {
         return context.voidState(
+          call,
           {
             Type: "Wait" as const,
             SecondsPath: secondsOutput.jsonPath,
           },
-          isCompoundState(secondsState) ? [secondsState] : []
+          secondsState
         );
       }
       // TODO:
@@ -141,19 +141,21 @@ export namespace $SFN {
         typeof timestampOutput.value === "string"
       ) {
         return context.voidState(
+          call,
           {
             Type: "Wait",
             Timestamp: timestampOutput.value,
           },
-          isCompoundState(timestampState) ? [timestampState] : []
+          timestampState
         );
       } else if (isVariable(timestampOutput)) {
         return context.voidState(
+          call,
           {
             Type: "Wait",
             TimestampPath: timestampOutput.jsonPath,
           },
-          isCompoundState(timestampState) ? [timestampState] : []
+          timestampState
         );
       }
 
@@ -306,6 +308,7 @@ export namespace $SFN {
 
     const arrayPath = arrayOutput.jsonPath;
     return context.outputState(
+      call,
       {
         Type: "Map",
         ...(maxConcurrency
@@ -329,7 +332,7 @@ export namespace $SFN {
           ])
         ),
       },
-      isCompoundState(arrayState) ? [arrayState] : []
+      arrayState
     );
   }
 
@@ -370,7 +373,7 @@ export namespace $SFN {
         "each parallel path must be an inline FunctionExpr"
       );
 
-      return context.outputState({
+      return context.outputState(call, {
         Type: "Parallel",
         Branches: paths.items.map((func) => ({
           StartAt: context.getStateName(func.body.step()!),
@@ -601,11 +604,10 @@ abstract class BaseStepFunction<
       });
 
     // extract any sub-states to return
-    const subStates = evalInputs
-      .map(({ state }) => state)
-      .filter(isCompoundState);
+    const subStates = evalInputs.map(({ state }) => state);
 
     return context.outputState(
+      call,
       {
         Type: "Task" as const,
         Resource: `arn:aws:states:::aws-sdk:sfn:${
@@ -624,7 +626,7 @@ abstract class BaseStepFunction<
           }
         ),
       },
-      subStates
+      ...subStates
     );
   }
 
@@ -1267,12 +1269,15 @@ class BaseStandardStepFunction<
       const argValue = context.eval(executionArnExpr);
       const argValueOutput = context.getAslStateOutput(argValue);
 
-      const task: Task = {
-        Type: "Task",
-        Resource: "arn:aws:states:::aws-sdk:sfn:describeExecution",
-        Parameters: context.toJsonAssignment("ExecutionArn", argValueOutput),
-      };
-      return context.outputState(task);
+      return context.outputState(
+        call,
+        {
+          Type: "Task",
+          Resource: "arn:aws:states:::aws-sdk:sfn:describeExecution",
+          Parameters: context.toJsonAssignment("ExecutionArn", argValueOutput),
+        },
+        argValue
+      );
     },
     native: {
       bind: (context) => this.resource.grantRead(context.resource),

@@ -63,6 +63,12 @@ import {
   isStmt,
   isPostfixUnaryExpr,
   isVariableReference,
+  isBindingPattern,
+  isExpr,
+  isBindingElem,
+  isObjectBinding,
+  isArrayBinding,
+  isErr,
 } from "./guards";
 import {
   getIntegrationExprFromIntegrationCallPattern,
@@ -117,6 +123,7 @@ export interface States {
  */
 export interface SubState {
   startState: string;
+  node: FunctionlessNode;
   states?: { [stateName: string]: State | SubState };
 }
 
@@ -148,28 +155,28 @@ export interface Variable {
   jsonPath: string;
 }
 
+export const isState = (state: any): state is State => {
+  return "Type" in state;
+};
+
 export const isSubState = (
   state: State | SubState | AslStateType
 ): state is SubState => {
   return "startState" in state;
 };
 
-export const isCompoundState = (
-  state: AslStateType
-): state is CompoundState => {
+const isStateOrSubState = anyOf(isState, isSubState);
+
+export const isCompoundState = (state: any): state is CompoundState => {
   return "output" in state;
 };
 
-export const isAslConstant = (state: AslStateType): state is AslConstant => {
+export const isAslConstant = (state: any): state is AslConstant => {
   return "value" in state;
 };
 
-export const isVariable = (state: AslStateType): state is Variable => {
+export const isVariable = (state: any): state is Variable => {
   return "jsonPath" in state;
-};
-
-export const isState = (state: any): state is State => {
-  return "Type" in state;
 };
 
 export type State =
@@ -425,13 +432,14 @@ interface NameMap {
   localNames: Record<string, string>;
 }
 
+const FUNCTIONLESS_CONTEXT_NAME = "fnl_context";
 /**
  * A json path which stores functionless context data like the input and a hard to manufacture null value
  *
  * This path/variable must start with a letter.
  * https://twitter.com/sussmansa/status/1542777348616990720?s=20&t=2PepSKvzPhojs_x01WoQVQ
  */
-const FUNCTIONLESS_CONTEXT_JSON_PATH = "$.fnl_context";
+const FUNCTIONLESS_CONTEXT_JSON_PATH = `$.${FUNCTIONLESS_CONTEXT_NAME}`;
 
 /**
  * Amazon States Language (ASL) Generator.
@@ -458,7 +466,7 @@ export class ASL {
    * the AST and assigning each state a unique name. These names are then used to
    * resolve state transitions.
    */
-  private readonly stateNames = new Map<Stmt, string>();
+  private readonly stateNames = new Map<FunctionlessNode, string>();
   private readonly stateNamesCount = new Map<string, number>();
   private readonly generatedNames = new DeterministicNameGenerator();
 
@@ -595,25 +603,25 @@ export class ASL {
   }
 
   /**
-   * Gets a unique State name for the Stmt. This function always returns the same
-   * name for the same {@link stmt} instance.
+   * Gets a unique State name for the {@link FunctionlessNode}. This function always returns the same
+   * name for the same {@link FunctionlessNode} instance.
    *
    * The AST is stringified, truncated to < 75 characters and a monotonically incrementing
-   * number is added as a suffix in the case where to {@link Stmt}s produce the same text.
+   * number is added as a suffix in the case where to {@link FunctionlessNode}s produce the same text.
    */
-  public getStateName(stmt: Stmt): string {
-    if (!this.stateNames.has(stmt)) {
-      let [stateName, updatedStatement] = toStateName(stmt);
+  public getStateName(node: FunctionlessNode): string {
+    if (!this.stateNames.has(node)) {
+      let [stateName, updatedStatement] = toStateName(node);
       if (updatedStatement && this.stateNames.has(updatedStatement)) {
         return this.stateNames.get(updatedStatement)!;
       }
       if (stateName === undefined) {
-        throw new Error(`cannot transition to ${stmt.kind}`);
+        throw new Error(`cannot transition to ${node.kind}`);
       }
       const updatedStateName = this.uniqueStateName(stateName);
-      this.stateNames.set(updatedStatement ?? stmt, updatedStateName);
+      this.stateNames.set(updatedStatement ?? node, updatedStateName);
     }
-    return this.stateNames.get(stmt)!;
+    return this.stateNames.get(node)!;
   }
 
   public uniqueStateName(stateName: string): string {
@@ -622,6 +630,7 @@ export class ASL {
     if (this.stateNamesCount.has(truncatedStateName)) {
       const count = this.stateNamesCount.get(truncatedStateName)!;
       this.stateNamesCount.set(truncatedStateName, count + 1);
+      this.stateNamesCount.set(`${truncatedStateName} ${count}`, 1);
       return `${truncatedStateName} ${count}`;
     }
     this.stateNamesCount.set(truncatedStateName, 1);
@@ -706,21 +715,25 @@ export class ASL {
    */
   private flattenSubStates(
     parentName: string,
-    states: State | SubState,
+    states: State | SubState | undefined,
     stateNameMap?: NameMap
   ): States {
-    if (!isSubState(states)) {
+    if (!states) {
+      return {};
+    } else if (!isSubState(states)) {
       return {
-        [parentName]: states as State,
+        [parentName]: states,
       };
     } else {
       // build a map of local state names to their unique flattened form
       const stateNames = {
         ...Object.fromEntries(
-          Object.keys(states.states ?? {}).map((name) => [
+          Object.entries(states.states ?? {}).map(([name, state]) => [
             name,
             states.startState === name
               ? parentName
+              : isSubState(state)
+              ? this.getStateName(state.node)
               : this.uniqueStateName(this.subStateName(parentName, name)),
           ])
         ),
@@ -806,6 +819,8 @@ export class ASL {
       const name = this.getStateName(stmt);
       const expr = this.eval(stmt.expr);
 
+      const next = this.next(stmt);
+
       // Expr Stmt throws away the constant or reference result of a statement.
       // Either apply the next statement to the returned sub-state
       // or create an empty pass
@@ -815,7 +830,7 @@ export class ASL {
       if (isCompoundState(expr)) {
         return this.flattenSubStates(
           name,
-          this.applyDeferNext({ Next: this.next(stmt) }, expr)
+          this.applyDeferNext(next ? { Next: next } : { End: true }, expr)
         );
       } else {
         return {
@@ -858,22 +873,21 @@ export class ASL {
         ? output.jsonPath
         : this.randomHeap();
 
-      const joined = this.joinSubStates([
+      const joined = this.joinSubStates(
+        stmt,
         // add any sub states generated by the expression first
-        ...(isCompoundState(expr) ? [expr] : []),
+        expr,
         // if the output of the expression is a constant, assign it to a variable for the map
-        ...(isVariable(output)
-          ? []
-          : [
-              this.applyConstantOrVariableToPass(
-                {
-                  ResultPath: itemsLocation,
-                  Type: "Pass",
-                  Next: ASL.DeferNext,
-                },
-                output
-              ),
-            ]),
+        isVariable(output)
+          ? undefined
+          : this.applyConstantOrVariableToPass(
+              {
+                ResultPath: itemsLocation,
+                Type: "Pass",
+                Next: ASL.DeferNext,
+              },
+              output
+            ),
         {
           Type: "Map",
           ...(Catch.length > 0 ? { Catch } : {}),
@@ -882,6 +896,7 @@ export class ASL {
           Next: this.next(stmt),
           MaxConcurrency: 1,
           Parameters: {
+            ...this.cloneLexicalScopeParameters(stmt),
             ...(isForInStmt(stmt)
               ? {
                   // use special `0_` prefix (impossible variable name in JavaScript)
@@ -900,12 +915,12 @@ export class ASL {
             StartAt: this.getStateName(stmt.body.step()!),
             States: this.evalStmt(stmt.body),
           },
-        },
-      ]);
+        }
+      );
 
-      return this.flattenSubStates(this.getStateName(stmt), joined!);
+      return this.flattenSubStates(this.getStateName(stmt), joined);
     } else if (isIfStmt(stmt)) {
-      const prefixSubStates = [];
+      const prefixSubStates: SubState[] = [];
       const states: States = {};
       const choices: Branch[] = [];
 
@@ -913,9 +928,9 @@ export class ASL {
       while (isIfStmt(curr)) {
         Object.assign(states, this.evalStmt(curr.then));
 
-        const [cond, subStates] = this.toCondition(curr.when);
+        const [cond, subState] = this.toCondition(curr.when);
 
-        prefixSubStates.push(...subStates);
+        subState && prefixSubStates.push(subState);
 
         choices.push({
           Next: this.getStateName(curr.then),
@@ -934,28 +949,24 @@ export class ASL {
 
       const name = this.getStateName(stmt);
 
-      const emptyElse =
-        next === undefined
-          ? {
-              Type: "Pass" as const,
-              End: true,
-            }
-          : undefined;
-
       return {
         ...this.flattenSubStates(
           name,
-          this.applyDeferNext(
+          this.joinSubStates(
+            stmt,
             { Next: next },
-            this.joinSubStates([
-              ...prefixSubStates,
-              {
-                Type: "Choice",
-                Choices: choices,
-                Default: ASL.DeferNext,
-              },
-              ...(emptyElse ? [emptyElse] : []),
-            ])!
+            ...prefixSubStates,
+            {
+              Type: "Choice",
+              Choices: choices,
+              Default: ASL.DeferNext,
+            },
+            !next
+              ? {
+                  Type: "Pass" as const,
+                  End: true,
+                }
+              : undefined
           )
         ),
         ...states,
@@ -974,25 +985,22 @@ export class ASL {
       const name = this.getStateName(stmt);
       const expr = this.eval(stmt.expr);
       const exprOutput = this.getAslStateOutput(expr);
-      const simpleState = this.applyConstantOrVariableToPass(
-        {
-          Type: "Pass" as const,
-          ResultPath: `$`,
-          End: true,
-        },
-        exprOutput
-      );
 
-      if (isCompoundState(expr)) {
-        return this.flattenSubStates(
-          name,
-          this.joinSubStates([expr, simpleState])!
-        );
-      } else {
-        return {
-          [name]: simpleState,
-        };
-      }
+      return this.flattenSubStates(
+        name,
+        this.joinSubStates(
+          stmt,
+          expr,
+          this.applyConstantOrVariableToPass(
+            {
+              Type: "Pass" as const,
+              ResultPath: `$`,
+              End: true,
+            },
+            exprOutput
+          )
+        )
+      );
     } else if (isVariableStmt(stmt)) {
       if (stmt.expr === undefined) {
         return {};
@@ -1002,34 +1010,29 @@ export class ASL {
       const expr = this.eval(stmt.expr);
       const exprOutput = this.getAslStateOutput(expr);
       const next = this.next(stmt);
-      const simpleState = this.applyConstantOrVariableToPass(
-        {
-          Type: "Pass" as const,
-          // TODO support binding pattern - https://github.com/functionless/functionless/issues/302
-          ResultPath: `$.${stmt.name}`,
-          Next: next
-            ? // compound state will be one level down
-              isCompoundState(expr)
-              ? `../${next}`
-              : next
-            : undefined,
-        },
-        exprOutput
+
+      if (isBindingPattern(stmt.name)) {
+        throw new SynthError(
+          ErrorCodes.Unsupported_Feature,
+          "Binding pattern assignment in StepFunctions is currently unsupported: https://github.com/functionless/functionless/issues/68"
+        );
+      }
+
+      const joined = this.joinSubStates(
+        stmt,
+        expr,
+        this.applyConstantOrVariableToPass(
+          {
+            Type: "Pass" as const,
+            // TODO support binding pattern - https://github.com/functionless/functionless/issues/302
+            ResultPath: `$.${stmt.name}`,
+            Next: next,
+          },
+          exprOutput
+        )
       );
 
-      if (isCompoundState(expr)) {
-        return this.flattenSubStates(name, {
-          startState: "default",
-          states: {
-            default: this.applyDeferNext({ Next: "assign" }, expr),
-            assign: simpleState,
-          },
-        });
-      } else {
-        return {
-          [name]: simpleState,
-        };
-      }
+      return this.flattenSubStates(name, joined);
     } else if (isThrowStmt(stmt)) {
       if (
         !(
@@ -1178,23 +1181,29 @@ export class ASL {
     } else if (isWhileStmt(stmt) || isDoStmt(stmt)) {
       const whenTrue = this.transition(stmt.block);
       if (whenTrue === undefined) {
-        throw new Error(`a ${stmt.kind} block must have at least one Stmt`);
+        throw new SynthError(
+          ErrorCodes.Unexpected_Error,
+          `a ${stmt.kind} block must have at least one Stmt`
+        );
       }
       const whenFalse = this.next(stmt);
-      const [cond, subStates] = this.toCondition(stmt.condition);
-      const joined = this.joinSubStates([
-        ...subStates,
-        {
-          Type: "Choice",
-          Choices: [
-            {
-              ...cond,
-              Next: whenTrue,
-            },
-          ],
-          Default: whenFalse,
+      const [cond, subState] = this.toCondition(stmt.condition);
+      const joined = this.joinSubStates(stmt, subState, {
+        startState: "default",
+        node: stmt.condition,
+        states: {
+          default: {
+            Type: "Choice",
+            Choices: [
+              {
+                ...cond,
+                Next: whenTrue,
+              },
+            ],
+            Default: whenFalse,
+          },
         },
-      ]);
+      });
       return {
         ...this.flattenSubStates(this.getStateName(stmt), joined!),
         ...this.evalStmt(stmt.block),
@@ -1264,34 +1273,31 @@ export class ASL {
       const tempHeap = this.randomHeap();
 
       const outputs = elements.map(({ output }) => output);
-      const subStates = elements
-        .map(({ state }) => state)
-        .filter(isCompoundState);
+      const subStates = elements.map(({ state }) => state);
 
-      const joinedStates = this.joinSubStates(subStates, { Next: "template" });
+      const joinedStates = this.joinSubStates(
+        expr,
+        ...subStates,
+        {
+          Type: "Pass",
+          Result: outputs
+            .map((output) => (isAslConstant(output) ? output.value : "{}"))
+            .join(""),
+          ResultPath: tempHeap,
+        },
+        {
+          Type: "Pass",
+          Parameters: {
+            "string.$": `States.Format(${tempHeap},${outputs
+              .filter(isVariable)
+              .map(({ jsonPath }) => jsonPath)})`,
+          },
+          ResultPath: tempHeap,
+        }
+      );
 
       return {
-        startState: joinedStates ? joinedStates.startState : "template",
-        states: {
-          ...joinedStates?.states,
-          template: {
-            Type: "Pass",
-            Result: outputs
-              .map((output) => (isAslConstant(output) ? output.value : "{}"))
-              .join(""),
-            ResultPath: tempHeap,
-            Next: "string",
-          },
-          string: {
-            Type: "Pass",
-            Parameters: {
-              "string.$": `States.Format(${tempHeap},${outputs
-                .filter(isVariable)
-                .map(({ jsonPath }) => jsonPath)})`,
-            },
-            ResultPath: tempHeap,
-          },
-        },
+        ...joinedStates!,
         output: {
           jsonPath: `${tempHeap}.string`,
         },
@@ -1358,50 +1364,67 @@ export class ASL {
 
           const list = this.eval(expr.expr.expr);
           const listOutput = this.getAslStateOutput(list);
-          // we assume that an array literl or a call would return a variable.
-          if (!isVariable(listOutput)) {
+          // we assume that an array literal or a call would return a variable.
+          if (isAslConstant(listOutput) && !Array.isArray(listOutput.value)) {
             throw new SynthError(
               ErrorCodes.Unexpected_Error,
-              "Expected input to map to be a variable referene or array"
+              "Expected input to map to be a variable reference or array"
             );
           }
           const tempHeap = this.randomHeap();
+          const listPath = isVariable(listOutput)
+            ? listOutput.jsonPath
+            : this.randomHeap();
 
-          return {
-            startState: "default",
-            states: {
-              default: {
-                Type: "Map",
-                MaxConcurrency: 1,
-                Iterator: {
-                  States: callbackStates,
-                  StartAt: callbackStart,
-                },
-                ItemsPath: listOutput.jsonPath,
-                Parameters: Object.fromEntries(
+          const joined = this.joinSubStates(
+            expr,
+            list,
+            isAslConstant(listOutput)
+              ? {
+                  Type: "Pass",
+                  ResultPath: listPath,
+                  Result: listOutput.value,
+                }
+              : undefined,
+            {
+              Type: "Map",
+              MaxConcurrency: 1,
+              Iterator: {
+                States: callbackStates,
+                StartAt: callbackStart,
+              },
+              ItemsPath: listPath,
+              Parameters: {
+                ...this.cloneLexicalScopeParameters(expr),
+                ...Object.fromEntries(
                   callbackfn.parameters.map((param, i) => [
                     `${param.name}.$`,
                     i === 0
                       ? "$$.Map.Item.Value"
                       : i == 1
                       ? "$$.Map.Item.Index"
-                      : listOutput.jsonPath,
+                      : listPath,
                   ])
                 ),
-                ...(throwTransition
-                  ? {
-                      Catch: [
-                        {
-                          ErrorEquals: ["States.ALL"],
-                          Next: throwTransition.Next!,
-                          ResultPath: throwTransition.ResultPath,
-                        },
-                      ],
-                    }
-                  : {}),
-                Next: ASL.DeferNext,
               },
-            },
+              ...(throwTransition
+                ? {
+                    Catch: [
+                      {
+                        ErrorEquals: ["States.ALL"],
+                        Next: throwTransition.Next!,
+                        ResultPath: throwTransition.ResultPath,
+                      },
+                    ],
+                  }
+                : {}),
+              ResultPath: tempHeap,
+              Next: ASL.DeferNext,
+            }
+          )!;
+
+          return {
+            ...joined,
             output: {
               jsonPath: tempHeap,
             },
@@ -1476,19 +1499,16 @@ export class ASL {
 
       const heapLocation = this.randomHeap();
 
-      const subStatesMap = this.joinSubStates([
-        ...subStates,
-        {
-          Type: "Pass",
-          Parameters: {
-            "arr.$": `States.Array(${simpleItems
-              .map((item) => (isVariable(item) ? item.jsonPath : item.value))
-              .join(", ")})`,
-          },
-          ResultPath: heapLocation,
-          Next: ASL.DeferNext,
+      const subStatesMap = this.joinSubStates(expr, ...subStates, {
+        Type: "Pass",
+        Parameters: {
+          "arr.$": `States.Array(${simpleItems
+            .map((item) => (isVariable(item) ? item.jsonPath : item.value))
+            .join(", ")})`,
         },
-      ])!;
+        ResultPath: heapLocation,
+        Next: ASL.DeferNext,
+      })!;
 
       return {
         ...subStatesMap,
@@ -1516,18 +1536,21 @@ export class ASL {
 
       const rightOutput = this.getAslStateOutput(right);
 
+      const joined = this.joinSubStates(
+        expr,
+        right,
+        this.applyConstantOrVariableToPass(
+          {
+            Type: "Pass",
+            ResultPath: left.jsonPath,
+            Next: ASL.DeferNext,
+          },
+          rightOutput
+        )
+      )!;
+
       return {
-        startState: "default",
-        states: {
-          default: this.applyConstantOrVariableToPass(
-            {
-              Type: "Pass",
-              ResultPath: left.jsonPath,
-              Next: ASL.DeferNext,
-            },
-            rightOutput
-          ),
-        },
+        ...joined,
         output: left,
       };
     } else if (isBinaryExpr(expr)) {
@@ -1539,12 +1562,11 @@ export class ASL {
         };
       } else if (expr.op === "&&" || expr.op === "||") {
         const tempHeap = this.randomHeap();
-        const [cond, subStates] = this.toCondition(expr);
-        const joined = this.joinSubStates(subStates, { Next: "default" });
-        return {
-          startState: joined ? joined.startState : "default",
+        const [cond, subState] = this.toCondition(expr);
+        const joined = this.joinSubStates(expr, subState, {
+          startState: "default",
+          node: expr,
           states: {
-            ...joined?.states,
             default: {
               Type: "Choice",
               Choices: [{ ...cond, Next: "assignTrue" }],
@@ -1563,6 +1585,9 @@ export class ASL {
               Next: ASL.DeferNext,
             },
           },
+        })!;
+        return {
+          ...joined,
           output: {
             jsonPath: tempHeap,
           },
@@ -1585,6 +1610,7 @@ export class ASL {
         // TODO merge in left and right substates.
         return {
           startState: "default",
+          node: expr,
           states: {
             default: {
               Type: "Choice",
@@ -1627,6 +1653,35 @@ export class ASL {
       return this.eval(expr.expr);
     }
     throw new Error(`cannot eval expression kind '${expr.kind}'`);
+  }
+
+  /**
+   * Returns an object containing Pass/Task parameters values to clone the current lexical scope into
+   * another scope, like a Map state.
+   *
+   * ```ts
+   * {
+   *    'a.$': '$.a',
+   *    'input.$': '$.fnl_context.input'
+   * }
+   * ```
+   */
+  private cloneLexicalScopeParameters(
+    node: FunctionlessNode
+  ): Record<string, string> {
+    const parentStmt = isStmt(node) ? node : node.findParent(isStmt);
+    const variableReferences = parentStmt?.prev?.getLexicalScope() ?? new Map();
+    return Object.fromEntries([
+      ...Array.from(variableReferences.entries())
+        .filter(
+          ([, decl]) => !(isParameterDecl(decl) && isFunctionDecl(decl.parent))
+        )
+        .map(([name]) => [`${name}.$`, `$.${name}`]),
+      // if the functionless context has been used at this point, inject it in
+      ...(this.needsFunctionlessContext
+        ? [[`${FUNCTIONLESS_CONTEXT_NAME}.$`, FUNCTIONLESS_CONTEXT_JSON_PATH]]
+        : []),
+    ]);
   }
 
   /**
@@ -1674,62 +1729,34 @@ export class ASL {
   }
 
   public voidState(
+    node: FunctionlessNode,
     state: State | SubState,
-    subStates?: SubState[]
+    ...subStates: AslStateType[]
   ): CompoundState {
-    const joined =
-      subStates && subStates.length > 0
-        ? this.joinSubStates(subStates, { Next: "assign" })
-        : undefined;
-
-    return joined
-      ? {
-          ...joined,
-          states: {
-            ...joined.states,
-            default: state,
-          },
-          output: {
-            jsonPath: this.context.null,
-          },
-        }
-      : {
-          startState: "default",
-          states: {
-            default: state,
-          },
-          output: {
-            jsonPath: this.context.null,
-          },
-        };
+    return {
+      ...this.joinSubStates(node, ...(subStates ?? []), state)!,
+      output: {
+        jsonPath: this.context.null,
+      },
+    };
   }
 
-  public outputState(state: State, subStates?: SubState[]): CompoundState {
+  public outputState(
+    node: FunctionlessNode,
+    state: State,
+    ...subStates: (AslStateType | undefined)[]
+  ): CompoundState {
     const tempHeap = this.randomHeap();
-    const joined =
-      subStates && subStates.length > 0
-        ? this.joinSubStates(subStates, { Next: "assign" })
-        : undefined;
-    return joined
-      ? {
-          ...joined,
-          states: {
-            ...joined.states,
-            assign: this.updateStateResultPath(state, tempHeap),
-          },
-          output: {
-            jsonPath: tempHeap,
-          },
-        }
-      : {
-          startState: "assign",
-          states: {
-            assign: this.updateStateResultPath(state, tempHeap),
-          },
-          output: {
-            jsonPath: tempHeap,
-          },
-        };
+    return {
+      ...this.joinSubStates(
+        node,
+        ...(subStates ?? []),
+        this.updateStateResultPath(state, tempHeap)
+      )!,
+      output: {
+        jsonPath: tempHeap,
+      },
+    };
   }
 
   private updateStateResultPath<S extends State>(
@@ -1798,7 +1825,7 @@ export class ASL {
       Next?: string;
     },
     state: State
-  ) {
+  ): State {
     const { End, Next = undefined, ResultPath } = props;
 
     if (state.Type === "Choice") {
@@ -1926,28 +1953,63 @@ export class ASL {
       : state.output;
   }
 
+  /**
+   * Wires together an array of {@link State} or {@link SubState} nodes in the order given.
+   * Any state which is missing Next/End will be given the Next of the next state with the final state
+   * either being left as is or having the props param applied to it.
+   *
+   * @param props - properties used to re-write the last sub-state in the array with using {@link applyDeferNext}
+   *                Leave empty to not mutate the sub-state.
+   *                This option should be used when the final state could contained Deferred next.
+   */
   private joinSubStates(
-    subStates: (State | SubState)[],
-    /**
-     * properties used to re-write the last sub-state in the array with using {@link applyDeferNext}
-     *
-     * Leave empty to not mutate the sub-state. This option should be used when the final state should maintain Deferred.
-     */
-    props?: {
+    node: FunctionlessNode,
+    ...subStates: (State | SubState | AslStateType | undefined)[]
+  ): SubState | undefined;
+  private joinSubStates(
+    node: FunctionlessNode,
+    props: {
       ResultPath?: string | null;
       End?: true;
       Next?: string;
-    }
+    },
+    ...subStates: (State | SubState | AslStateType | undefined)[]
+  ): SubState | undefined;
+  private joinSubStates(
+    node: FunctionlessNode,
+    ...subStates: (
+      | {
+          ResultPath?: string | null;
+          End?: true;
+          Next?: string;
+        }
+      | State
+      | SubState
+      | AslStateType
+      | undefined
+    )[]
   ): SubState | undefined {
-    return subStates.length === 0
+    if (subStates.length === 0) {
+      return undefined;
+    }
+    const props =
+      subStates[0] &&
+      (isStateOrSubState(subStates[0]) ||
+        isAslConstant(subStates[0]) ||
+        isVariable(subStates[0]))
+        ? undefined
+        : subStates[0];
+    const realStates = subStates.filter((x) => !!x).filter(isStateOrSubState);
+    return realStates.length === 0
       ? undefined
       : {
           startState: "0",
+          node,
           states: Object.fromEntries(
-            subStates.map((subState, i) => {
+            realStates.map((subState, i) => {
               return [
                 `${i}`,
-                i === subStates.length - 1
+                i === realStates.length - 1
                   ? props
                     ? this.applyDeferNext(props, subState)
                     : subState
@@ -2167,7 +2229,7 @@ export class ASL {
         [],
       ] as [AslConstant, (State | SubState)[]]
     );
-    const joined = this.joinSubStates(subStates);
+    const joined = this.joinSubStates(expr, ...subStates);
     return joined
       ? {
           ...joined,
@@ -2467,7 +2529,7 @@ export class ASL {
     );
   }
 
-  public toCondition(expr: Expr): [Condition, SubState[]] {
+  public toCondition(expr: Expr): [Condition, SubState | undefined] {
     // eww mutable collections
     const subStates: SubState[] = [];
     const localEval = (expr: Expr): AslConstant | Variable => {
@@ -2476,8 +2538,8 @@ export class ASL {
       return this.getAslStateOutput(e);
     };
     const localToCondition = (expr: Expr): Condition => {
-      const [cond, subStates] = this.toCondition(expr);
-      subStates.push(...subStates);
+      const [cond, subState] = this.toCondition(expr);
+      subState && subStates.push(subState);
       return cond;
     };
     const internal = (): Condition => {
@@ -2706,7 +2768,7 @@ export class ASL {
           // need typing information
           // return aws_stepfunctions.Condition.str
         }
-      } else if (isVariableReference(expr)) {
+      } else if (isVariableReference(expr) || isCallExpr(expr)) {
         const variableOutput = localEval(expr);
         // todo support constants?
         if (!isVariable(variableOutput)) {
@@ -2714,11 +2776,33 @@ export class ASL {
         }
         // if(expr) { ... }
         return ASL.isTruthy(variableOutput.jsonPath);
+      } else if (isAwaitExpr(expr)) {
+        return localToCondition(expr.expr);
+      } else if (isPromiseExpr(expr)) {
+        // if we find a promise, ensure it is wrapped in Await then unwrap it
+        if (isAwaitExpr(expr.parent)) {
+          return localToCondition(expr.expr);
+        }
+        throw new SynthError(
+          ErrorCodes.Integration_must_be_immediately_awaited_or_returned
+        );
+      } else if (isPromiseArrayExpr(expr)) {
+        // if we find a promise array, ensure it is wrapped in a Promise.all then unwrap it
+        if (
+          isArgument(expr.parent) &&
+          isCallExpr(expr.parent.parent) &&
+          isPromiseAll(expr.parent.parent)
+        ) {
+          return localToCondition(expr.expr);
+        }
+        throw new SynthError(
+          ErrorCodes.Arrays_of_Integration_must_be_immediately_wrapped_in_Promise_all
+        );
       }
       throw new Error(`cannot evaluate expression: '${expr.kind}`);
     };
 
-    return [internal(), subStates];
+    return [internal(), this.joinSubStates(expr, ...subStates)];
   }
 }
 
@@ -2935,64 +3019,85 @@ export namespace ASL {
  *
  * @returns [state name, optionally updated cache key (node)]
  */
-function toStateName(stmt: Stmt): [string | undefined, Stmt | undefined] {
+function toStateName(
+  node: FunctionlessNode
+): [string | undefined, FunctionlessNode | undefined] {
   /**
    * Special case that updates the statement used (cache key)
    */
-  if (isBlockStmt(stmt)) {
-    if (stmt.isFinallyBlock()) {
+  if (isBlockStmt(node)) {
+    if (node.isFinallyBlock()) {
       return ["finally", undefined];
     } else {
-      return stmt.statements.length > 0
-        ? [toStateName(stmt.statements[0])[0], stmt.statements[0]]
+      return node.statements.length > 0
+        ? [toStateName(node.statements[0])[0], node.statements[0]]
         : [undefined, undefined];
     }
   }
-  const name = (() => {
-    if (isIfStmt(stmt)) {
-      return `if(${exprToString(stmt.when)})`;
-    } else if (isExprStmt(stmt)) {
-      return exprToString(stmt.expr);
-    } else if (isBreakStmt(stmt)) {
+  function inner(node: Exclude<FunctionlessNode, BlockStmt>): string {
+    if (isExpr(node)) {
+      return exprToString(node);
+    } else if (isIfStmt(node)) {
+      return `if(${exprToString(node.when)})`;
+    } else if (isExprStmt(node)) {
+      return exprToString(node.expr);
+    } else if (isBreakStmt(node)) {
       return "break";
-    } else if (isContinueStmt(stmt)) {
+    } else if (isContinueStmt(node)) {
       return "continue";
-    } else if (isCatchClause(stmt)) {
+    } else if (isCatchClause(node)) {
       return `catch${
-        stmt.variableDecl?.name ? `(${stmt.variableDecl?.name})` : ""
+        node.variableDecl?.name ? `(${node.variableDecl?.name})` : ""
       }`;
-    } else if (isDoStmt(stmt)) {
-      return `while (${exprToString(stmt.condition)})`;
-    } else if (isForInStmt(stmt)) {
-      return `for(${stmt.variableDecl.name} in ${exprToString(stmt.expr)})`;
-    } else if (isForOfStmt(stmt)) {
-      return `for(${stmt.variableDecl.name} of ${exprToString(stmt.expr)})`;
-    } else if (isReturnStmt(stmt)) {
-      if (stmt.expr) {
-        return `return ${exprToString(stmt.expr)}`;
+    } else if (isDoStmt(node)) {
+      return `while (${exprToString(node.condition)})`;
+    } else if (isForInStmt(node)) {
+      return `for(${node.variableDecl.name} in ${exprToString(node.expr)})`;
+    } else if (isForOfStmt(node)) {
+      return `for(${node.variableDecl.name} of ${exprToString(node.expr)})`;
+    } else if (isReturnStmt(node)) {
+      if (node.expr) {
+        return `return ${exprToString(node.expr)}`;
       } else {
         return "return";
       }
-    } else if (isThrowStmt(stmt)) {
-      return `throw ${exprToString(stmt.expr)}`;
-    } else if (isTryStmt(stmt)) {
+    } else if (isThrowStmt(node)) {
+      return `throw ${exprToString(node.expr)}`;
+    } else if (isTryStmt(node)) {
       return "try";
-    } else if (isVariableStmt(stmt)) {
-      if (isCatchClause(stmt.parent)) {
-        return `catch(${stmt.name})`;
+    } else if (isVariableStmt(node)) {
+      if (isCatchClause(node.parent)) {
+        return `catch(${node.name})`;
       } else {
-        return `${stmt.name} = ${
-          stmt.expr ? exprToString(stmt.expr) : "undefined"
+        return `${node.name} = ${
+          node.expr ? exprToString(node.expr) : "undefined"
         }`;
       }
-    } else if (isWhileStmt(stmt)) {
-      return `while (${exprToString(stmt.condition)})`;
+    } else if (isWhileStmt(node)) {
+      return `while (${exprToString(node.condition)})`;
+    } else if (isBindingElem(node)) {
+      const binding = node.propertyName
+        ? `${inner(node.propertyName)}: ${inner(node.name)}`
+        : `${inner(node.name)}`;
+      return node.initializer
+        ? `${binding} = ${exprToString(node.initializer)}`
+        : binding;
+    } else if (isObjectBinding(node)) {
+      return `{ ${node.bindings.map(inner).join(", ")} }`;
+    } else if (isArrayBinding(node)) {
+      return `[ ${node.bindings.map((b) => (!b ? "" : inner(b))).join(", ")} ]`;
+    } else if (isFunctionDecl(node)) {
+      return `function (${node.parameters.map(inner).join(",")})`;
+    } else if (isParameterDecl(node)) {
+      return isBindingPattern(node.name) ? inner(node.name) : node.name;
+    } else if (isErr(node)) {
+      throw node.error;
     } else {
-      return assertNever(stmt);
+      return assertNever(node);
     }
-  })();
+  }
 
-  return [name, undefined];
+  return [inner(node), undefined];
 }
 
 function exprToString(expr?: Expr): string {

@@ -28,15 +28,7 @@ import { Construct } from "constructs";
 import esbuild from "esbuild";
 import { ApiGatewayVtlIntegration } from "./api";
 import type { AppSyncVtlIntegration } from "./appsync";
-import {
-  ASL,
-  isAslConstant,
-  isCompoundState,
-  isVariable,
-  State,
-  SubState,
-  Task,
-} from "./asl";
+import { ASL } from "./asl";
 import {
   FunctionDecl,
   IntegrationInvocation,
@@ -392,52 +384,21 @@ abstract class FunctionBase<in Payload, Out>
     const payloadArg = call.getArgument("payload")?.expr;
     this.resource.grantInvoke(context.role);
 
-    const tempHeap = context.randomHeap();
-
     const arg = payloadArg ? context.eval(payloadArg) : undefined;
+    const argOutput = arg && context.getAslStateOutput(arg);
 
-    const partialTask: Task = {
-      Type: "Task",
-      Resource: this.resource.functionArn,
-      ResultPath: tempHeap,
-      Next: ASL.DeferNext,
-    };
-
-    const argOutput = arg
-      ? isAslConstant(arg)
-        ? arg
-        : isVariable(arg)
-        ? arg
-        : arg.output
-      : undefined;
-
-    const task: Task = argOutput
-      ? isAslConstant(argOutput)
-        ? {
-            ...partialTask,
-            Parameters: argOutput.value,
-          }
-        : { ...partialTask, InputPath: argOutput.jsonPath }
-      : {
-          ...partialTask,
-          InputPath: context.context.null,
-        };
-
-    return {
-      startState: "default",
-      states:
-        arg && isCompoundState(arg)
-          ? ({
-              default: context.applyDeferNext({ Next: "task" }, arg),
-              task,
-            } as Record<string, State | SubState>)
-          : {
-              default: task,
-            },
-      output: {
-        jsonPath: tempHeap,
-      },
-    };
+    return context.outputState(
+      call,
+      context.applyConstantOrVariableToTask(
+        {
+          Type: "Task",
+          Resource: this.resource.functionArn,
+          Next: ASL.DeferNext,
+        },
+        argOutput ?? { jsonPath: context.context.null }
+      ),
+      arg
+    );
   }
 
   protected static normalizeAsyncDestination<P, O>(

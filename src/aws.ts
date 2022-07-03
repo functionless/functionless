@@ -19,7 +19,6 @@ import {
   UpdateItemInput,
   UpdateItemOutput,
 } from "typesafe-dynamodb/lib/update-item";
-import { isCompoundState } from "./asl";
 import { ErrorCodes, SynthError } from "./error-code";
 import { Argument, Expr } from "./expression";
 import { Function, isFunction, NativeIntegration } from "./function";
@@ -445,6 +444,7 @@ export namespace $AWS {
         const payloadOutput = context.getAslStateOutput(payloadState);
 
         return context.outputState(
+          call,
           {
             Type: "Task",
             Resource: "arn:aws:states:::lambda:invoke",
@@ -453,7 +453,7 @@ export namespace $AWS {
               ...context.toJsonAssignment("Payload", payloadOutput),
             },
           },
-          isCompoundState(payloadState) ? [payloadState] : []
+          payloadState
         );
       },
     });
@@ -590,6 +590,7 @@ function makeDynamoIntegration<
       const output = context.getAslStateOutput(expr);
 
       return context.outputState(
+        call,
         context.applyConstantOrVariableToTask(
           {
             Type: "Task",
@@ -597,7 +598,7 @@ function makeDynamoIntegration<
           },
           output
         ),
-        isCompoundState(expr) ? [expr] : []
+        expr
       );
     },
     native: {
