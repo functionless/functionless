@@ -384,21 +384,29 @@ abstract class FunctionBase<in Payload, Out>
     const payloadArg = call.getArgument("payload")?.expr;
     this.resource.grantInvoke(context.role);
 
-    const arg = payloadArg ? context.eval(payloadArg) : undefined;
-    const argOutput = arg && context.getAslStateOutput(arg);
-
-    return context.outputState(
-      call,
-      context.applyConstantOrVariableToTask(
-        {
-          Type: "Task",
-          Resource: this.resource.functionArn,
-          Next: ASL.DeferNext,
-        },
-        argOutput ?? { jsonPath: context.context.null }
-      ),
-      arg
-    );
+    return payloadArg
+      ? context.evalExpr(payloadArg, (output) => {
+          return context.outputState(
+            ASL.applyConstantOrVariableToTask(
+              {
+                Type: "Task",
+                Resource: this.resource.functionArn,
+                Next: ASL.DeferNext,
+              },
+              output ?? { jsonPath: context.context.null }
+            )
+          );
+        })
+      : context.outputState(
+          ASL.applyConstantOrVariableToTask(
+            {
+              Type: "Task",
+              Resource: this.resource.functionArn,
+              Next: ASL.DeferNext,
+            },
+            { jsonPath: context.context.null }
+          )
+        );
   }
 
   protected static normalizeAsyncDestination<P, O>(

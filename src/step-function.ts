@@ -10,14 +10,7 @@ import { StepFunctions } from "aws-sdk";
 import { Construct } from "constructs";
 import { ApiGatewayVtlIntegration } from "./api";
 import { AppSyncVtlIntegration } from "./appsync";
-import {
-  ASL,
-  CompoundState,
-  isAslConstant,
-  isVariable,
-  StateMachine,
-  States,
-} from "./asl";
+import { ASL, isAslConstant, isVariable, StateMachine, States } from "./asl";
 import { assertDefined } from "./assert";
 import { validateFunctionDecl, FunctionDecl } from "./declaration";
 import { ErrorCodes, SynthError } from "./error-code";
@@ -84,33 +77,24 @@ export namespace $SFN {
         throw new Error("the 'seconds' argument is required");
       }
 
-      const secondsState = context.eval(seconds);
-      const secondsOutput = context.getAslStateOutput(secondsState);
-
-      if (
-        isAslConstant(secondsOutput) &&
-        typeof secondsOutput.value === "number"
-      ) {
-        return context.voidState(
-          call,
-          {
+      return context.evalExpr(seconds, call, (secondsOutput) => {
+        if (
+          isAslConstant(secondsOutput) &&
+          typeof secondsOutput.value === "number"
+        ) {
+          return context.voidState({
             Type: "Wait" as const,
             Seconds: secondsOutput.value,
-          },
-          secondsState
-        );
-      } else if (isVariable(secondsOutput)) {
-        return context.voidState(
-          call,
-          {
+          });
+        } else if (isVariable(secondsOutput)) {
+          return context.voidState({
             Type: "Wait" as const,
             SecondsPath: secondsOutput.jsonPath,
-          },
-          secondsState
-        );
-      }
-      // TODO:
-      throw new Error("");
+          });
+        }
+        // TODO:
+        throw new Error("");
+      });
     },
   });
 
@@ -133,36 +117,27 @@ export namespace $SFN {
         throw new Error("the 'timestamp' argument is required");
       }
 
-      const timestampState = context.eval(timestamp);
-      const timestampOutput = context.getAslStateOutput(timestampState);
-
-      if (
-        isAslConstant(timestampOutput) &&
-        typeof timestampOutput.value === "string"
-      ) {
-        return context.voidState(
-          call,
-          {
+      return context.evalExpr(timestamp, call, (timestampOutput) => {
+        if (
+          isAslConstant(timestampOutput) &&
+          typeof timestampOutput.value === "string"
+        ) {
+          return context.voidState({
             Type: "Wait",
             Timestamp: timestampOutput.value,
-          },
-          timestampState
-        );
-      } else if (isVariable(timestampOutput)) {
-        return context.voidState(
-          call,
-          {
+          });
+        } else if (isVariable(timestampOutput)) {
+          return context.voidState({
             Type: "Wait",
             TimestampPath: timestampOutput.jsonPath,
-          },
-          timestampState
-        );
-      }
+          });
+        }
 
-      throw new SynthError(
-        ErrorCodes.Unexpected_Error,
-        "Expected timestamp parameter to be a string or a reference."
-      );
+        throw new SynthError(
+          ErrorCodes.Unexpected_Error,
+          "Expected timestamp parameter to be a string or a reference."
+        );
+      });
     },
   });
 
@@ -265,7 +240,7 @@ export namespace $SFN {
     },
   });
 
-  function mapOrForEach(call: CallExpr, context: ASL): CompoundState {
+  function mapOrForEach(call: CallExpr, context: ASL) {
     const callbackfn = call.getArgument("callbackfn")?.expr;
     if (callbackfn === undefined || callbackfn.kind !== "FunctionExpr") {
       throw new Error("missing callbackfn in $SFN.map");
@@ -298,18 +273,15 @@ export namespace $SFN {
     if (array === undefined) {
       throw new Error("missing argument 'array'");
     }
-    const arrayState = context.eval(array);
-    const arrayOutput = context.getAslStateOutput(arrayState);
 
-    if (!isVariable(arrayOutput)) {
-      // TODO
-      throw new Error();
-    }
+    return context.evalExpr(array, call, (arrayOutput) => {
+      if (!isVariable(arrayOutput)) {
+        // TODO
+        throw new Error();
+      }
 
-    const arrayPath = arrayOutput.jsonPath;
-    return context.outputState(
-      call,
-      {
+      const arrayPath = arrayOutput.jsonPath;
+      return context.outputState({
         Type: "Map",
         ...(maxConcurrency
           ? {
@@ -331,9 +303,8 @@ export namespace $SFN {
               : arrayPath,
           ])
         ),
-      },
-      arrayState
-    );
+      });
+    });
   }
 
   /**
@@ -373,7 +344,7 @@ export namespace $SFN {
         "each parallel path must be an inline FunctionExpr"
       );
 
-      return context.outputState(call, {
+      return context.outputState({
         Type: "Parallel",
         Branches: paths.items.map((func) => ({
           StartAt: context.getStateName(func.body.step()!),
@@ -587,28 +558,16 @@ abstract class BaseStepFunction<
       TraceHeader: traceHeader,
     };
 
-    // evaluate each of the input expressions,
-    // returning an object assignment with the output value { input.$: $.inputLocation }
-    // and a state object containing the output and/or a sub-state with additional required nodes to add to the
-    // machine
-    const evalInputs = Object.entries(inputs)
-      .filter(([, expr]) => !!expr)
-      .map(([key, expr]) => {
-        const state = context.eval(expr!);
-        const output = context.getAslStateOutput(state);
+    return context.evalContext(call, (evalExpr) => {
+      // evaluate each of the input expressions,
+      // returning an object assignment with the output value { input.$: $.inputLocation }
+      // and a state object containing the output and/or a sub-state with additional required nodes to add to the
+      // machine
+      const evalInputs = Object.entries(inputs)
+        .filter(([, expr]) => !!expr)
+        .map(([key, expr]) => context.toJsonAssignment(key, evalExpr(expr!)));
 
-        return {
-          assignment: context.toJsonAssignment(key, output),
-          state,
-        };
-      });
-
-    // extract any sub-states to return
-    const subStates = evalInputs.map(({ state }) => state);
-
-    return context.outputState(
-      call,
-      {
+      return context.outputState({
         Type: "Task" as const,
         Resource: `arn:aws:states:::aws-sdk:sfn:${
           this.resource.stateMachineType ===
@@ -617,7 +576,7 @@ abstract class BaseStepFunction<
             : "startExecution"
         }`,
         Parameters: evalInputs.reduce(
-          (obj, { assignment }) => ({
+          (obj, assignment) => ({
             ...obj,
             ...assignment,
           }),
@@ -625,9 +584,8 @@ abstract class BaseStepFunction<
             StateMachineArn: this.resource.stateMachineArn,
           }
         ),
-      },
-      ...subStates
-    );
+      });
+    });
   }
 
   public readonly eventBus = makeEventBusIntegration<
@@ -1266,18 +1224,13 @@ class BaseStandardStepFunction<
         "Describe Execution requires a single string argument."
       );
 
-      const argValue = context.eval(executionArnExpr);
-      const argValueOutput = context.getAslStateOutput(argValue);
-
-      return context.outputState(
-        call,
-        {
+      return context.evalExpr(executionArnExpr, (argValueOutput) => {
+        return context.outputState({
           Type: "Task",
           Resource: "arn:aws:states:::aws-sdk:sfn:describeExecution",
           Parameters: context.toJsonAssignment("ExecutionArn", argValueOutput),
-        },
-        argValue
-      );
+        });
+      });
     },
     native: {
       bind: (context) => this.resource.grantRead(context.resource),

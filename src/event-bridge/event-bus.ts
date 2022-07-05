@@ -289,72 +289,62 @@ abstract class EventBusBase<in Evnt extends Event, OutEvnt extends Evnt = Evnt>
           version: "Version",
         };
 
-        const events = eventObjs.map((event) => {
-          const props = event.properties.filter(
-            (
-              e
-            ): e is PropAssignExpr & {
-              name: StringLiteralExpr | Identifier;
-            } => !(isSpreadAssignExpr(e) || isComputedPropertyNameExpr(e.name))
-          );
-          if (props.length < event.properties.length) {
-            throw new SynthError(
-              ErrorCodes.StepFunctions_calls_to_EventBus_PutEvents_must_use_object_literals
+        return context.evalContext(call, (evalExpr) => {
+          const events = eventObjs.map((event) => {
+            const props = event.properties.filter(
+              (
+                e
+              ): e is PropAssignExpr & {
+                name: StringLiteralExpr | Identifier;
+              } =>
+                !(isSpreadAssignExpr(e) || isComputedPropertyNameExpr(e.name))
             );
-          }
-          const evaluatedProps = props.map(({ name, expr }) => {
-            const val = context.eval(expr);
-            const output =
-              isAslConstant(val) || isVariable(val) ? val : val.output;
+            if (props.length < event.properties.length) {
+              throw new SynthError(
+                ErrorCodes.StepFunctions_calls_to_EventBus_PutEvents_must_use_object_literals
+              );
+            }
+            const evaluatedProps = props.map(({ name, expr }) => {
+              const val = evalExpr(expr);
+              return {
+                name: isIdentifier(name) ? name.name : name.value,
+                value: val,
+              };
+            });
+
             return {
-              name: isIdentifier(name) ? name.name : name.value,
-              value: output,
-              state: val,
+              event: evaluatedProps
+                .filter(
+                  (
+                    x
+                  ): x is {
+                    name: keyof typeof propertyMap;
+                    value: AslConstant | Variable;
+                  } => x.name in propertyMap
+                )
+                /**
+                 * Build the parameter payload for an event entry.
+                 * All members must be in Pascal case.
+                 */
+                .reduce(
+                  (acc: Record<string, any>, { name, value }) => ({
+                    ...acc,
+                    [`${propertyMap[name]}${isVariable(value) ? ".$" : ""}`]:
+                      isAslConstant(value) ? value.value : value.jsonPath,
+                  }),
+                  { EventBusName: this.resource.eventBusArn }
+                ),
             };
           });
 
-          const subStates = evaluatedProps.map(({ state }) => state);
-
-          return {
-            event: evaluatedProps
-              .filter(
-                (
-                  x
-                ): x is {
-                  name: keyof typeof propertyMap;
-                  value: AslConstant | Variable;
-                  state: any;
-                } => x.name in propertyMap
-              )
-              /**
-               * Build the parameter payload for an event entry.
-               * All members must be in Pascal case.
-               */
-              .reduce(
-                (acc: Record<string, any>, { name, value }) => ({
-                  ...acc,
-                  [`${propertyMap[name]}${isVariable(value) ? ".$" : ""}`]:
-                    isAslConstant(value) ? value.value : value.jsonPath,
-                }),
-                { EventBusName: this.resource.eventBusArn }
-              ),
-            subStates,
-          };
-        });
-
-        const subStates = events.flatMap(({ subStates }) => subStates);
-
-        return context.outputState(
-          call,
-          {
+          return context.outputState({
             Resource: "arn:aws:states:::events:putEvents",
             Type: "Task" as const,
             Parameters: {
               Entries: events.map(({ event }) => event),
             },
-          },
-          ...subStates
-        );
+          });
+        });
       },
       native: {
         bind: (context: Function<any, any>) => {

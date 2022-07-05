@@ -80,6 +80,77 @@ test("return PropAccessExpr", () => {
   expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
+test("return ElementAccessExpr", () => {
+  const { stack } = initStepFunctionApp();
+  const definition = new ExpressStepFunction(
+    stack,
+    "fn",
+    (input: { input: { id: string } }) => {
+      return input.input["id"];
+    }
+  ).definition;
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+});
+
+test("return ElementAccessExpr identifier", () => {
+  const { stack } = initStepFunctionApp();
+  expect(
+    () =>
+      new ExpressStepFunction(
+        stack,
+        "fn",
+        (input: { input: { id: string } }) => {
+          const id = "id";
+          return input.input[id];
+        }
+      )
+  ).toThrow("an element in a Step Function must be a literal string or number");
+});
+
+test("return ElementAccessExpr expression", () => {
+  const { stack } = initStepFunctionApp();
+  expect(
+    () =>
+      new ExpressStepFunction(
+        stack,
+        "fn",
+        (input: { input: { id: string } }) => {
+          const id: string | null = null;
+          return input.input[id ?? "id"];
+        }
+      )
+  ).toThrow("an element in a Step Function must be a literal string or number");
+});
+
+test("return ElementAccessExpr number", () => {
+  const { stack } = initStepFunctionApp();
+  const definition = new ExpressStepFunction(
+    stack,
+    "fn",
+    (input: { input: { arr: string[] } }) => {
+      return input.input.arr[0];
+    }
+  ).definition;
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+});
+
+test("return ElementAccessExpr number reference", () => {
+  const { stack } = initStepFunctionApp();
+  expect(
+    () =>
+      new ExpressStepFunction(
+        stack,
+        "fn",
+        (input: { input: { arr: string[] } }) => {
+          const id = 0;
+          return input.input.arr[id];
+        }
+      )
+  ).toThrow("an element in a Step Function must be a literal string or number");
+});
+
 test("return optional PropAccessExpr", () => {
   const { stack } = initStepFunctionApp();
   const definition = new ExpressStepFunction<

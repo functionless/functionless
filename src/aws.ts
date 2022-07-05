@@ -19,6 +19,7 @@ import {
   UpdateItemInput,
   UpdateItemOutput,
 } from "typesafe-dynamodb/lib/update-item";
+import { ASL } from "./asl";
 import { ErrorCodes, SynthError } from "./error-code";
 import { Argument, Expr } from "./expression";
 import { Function, isFunction, NativeIntegration } from "./function";
@@ -440,21 +441,16 @@ export namespace $AWS {
           throw new Error("missing property 'payload'");
         }
 
-        const payloadState = context.eval(payload);
-        const payloadOutput = context.getAslStateOutput(payloadState);
-
-        return context.outputState(
-          call,
-          {
+        return context.evalExpr(payload, (output) => {
+          return context.outputState({
             Type: "Task",
             Resource: "arn:aws:states:::lambda:invoke",
             Parameters: {
               FunctionName: functionRef.resource.functionName,
-              ...context.toJsonAssignment("Payload", payloadOutput),
+              ...context.toJsonAssignment("Payload", output),
             },
-          },
-          payloadState
-        );
+          });
+        });
       },
     });
   }
@@ -586,20 +582,17 @@ function makeDynamoIntegration<
         Table: "TableName",
       });
 
-      const expr = context.eval(renamedExpr);
-      const output = context.getAslStateOutput(expr);
-
-      return context.outputState(
-        call,
-        context.applyConstantOrVariableToTask(
-          {
-            Type: "Task",
-            Resource: `arn:aws:states:::aws-sdk:dynamodb:${operationName}`,
-          },
-          output
-        ),
-        expr
-      );
+      return context.evalExpr(renamedExpr, (output) => {
+        return context.outputState(
+          ASL.applyConstantOrVariableToTask(
+            {
+              Type: "Task",
+              Resource: `arn:aws:states:::aws-sdk:dynamodb:${operationName}`,
+            },
+            output
+          )
+        );
+      });
     },
     native: {
       ...integration.native,
