@@ -10,7 +10,7 @@ import { StepFunctions } from "aws-sdk";
 import { Construct } from "constructs";
 import { ApiGatewayVtlIntegration } from "./api";
 import { AppSyncVtlIntegration } from "./appsync";
-import { ASL, isAslConstant, isVariable, StateMachine, States } from "./asl";
+import { ASL, ASLGraph, StateMachine, States } from "./asl";
 import { assertDefined } from "./assert";
 import { validateFunctionDecl, FunctionDecl } from "./declaration";
 import { ErrorCodes, SynthError } from "./error-code";
@@ -79,14 +79,14 @@ export namespace $SFN {
 
       return context.evalExpr(seconds, call, (secondsOutput) => {
         if (
-          isAslConstant(secondsOutput) &&
+          ASLGraph.isValue(secondsOutput) &&
           typeof secondsOutput.value === "number"
         ) {
           return context.voidState({
             Type: "Wait" as const,
             Seconds: secondsOutput.value,
           });
-        } else if (isVariable(secondsOutput)) {
+        } else if (ASLGraph.isVariable(secondsOutput)) {
           return context.voidState({
             Type: "Wait" as const,
             SecondsPath: secondsOutput.jsonPath,
@@ -119,14 +119,14 @@ export namespace $SFN {
 
       return context.evalExpr(timestamp, call, (timestampOutput) => {
         if (
-          isAslConstant(timestampOutput) &&
+          ASLGraph.isValue(timestampOutput) &&
           typeof timestampOutput.value === "string"
         ) {
           return context.voidState({
             Type: "Wait",
             Timestamp: timestampOutput.value,
           });
-        } else if (isVariable(timestampOutput)) {
+        } else if (ASLGraph.isVariable(timestampOutput)) {
           return context.voidState({
             Type: "Wait",
             TimestampPath: timestampOutput.jsonPath,
@@ -275,7 +275,7 @@ export namespace $SFN {
     }
 
     return context.evalExpr(array, call, (arrayOutput) => {
-      if (!isVariable(arrayOutput)) {
+      if (!ASLGraph.isVariable(arrayOutput)) {
         // TODO
         throw new Error();
       }

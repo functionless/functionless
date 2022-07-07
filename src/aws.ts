@@ -19,7 +19,7 @@ import {
   UpdateItemInput,
   UpdateItemOutput,
 } from "typesafe-dynamodb/lib/update-item";
-import { ASL } from "./asl";
+import { ASLGraph } from "./asl";
 import { ErrorCodes, SynthError } from "./error-code";
 import { Argument, Expr } from "./expression";
 import { Function, isFunction, NativeIntegration } from "./function";
@@ -584,7 +584,7 @@ function makeDynamoIntegration<
 
       return context.evalExpr(renamedExpr, (output) => {
         return context.outputState(
-          ASL.applyConstantOrVariableToTask(
+          ASLGraph.applyConstantOrVariableToTask(
             {
               Type: "Task",
               Resource: `arn:aws:states:::aws-sdk:dynamodb:${operationName}`,

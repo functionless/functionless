@@ -1,6 +1,6 @@
 import { aws_events, aws_events_targets, Stack } from "aws-cdk-lib";
 import { Construct } from "constructs";
-import { ASL, AslConstant, isAslConstant, isVariable, Variable } from "../asl";
+import { ASL, ASLGraph } from "../asl";
 import { ErrorCodes, SynthError } from "../error-code";
 import {
   CallExpr,
@@ -319,7 +319,7 @@ abstract class EventBusBase<in Evnt extends Event, OutEvnt extends Evnt = Evnt>
                     x
                   ): x is {
                     name: keyof typeof propertyMap;
-                    value: AslConstant | Variable;
+                    value: ASLGraph.Value | ASLGraph.JsonPath;
                   } => x.name in propertyMap
                 )
                 /**
@@ -329,8 +329,7 @@ abstract class EventBusBase<in Evnt extends Event, OutEvnt extends Evnt = Evnt>
                 .reduce(
                   (acc: Record<string, any>, { name, value }) => ({
                     ...acc,
-                    [`${propertyMap[name]}${isVariable(value) ? ".$" : ""}`]:
-                      isAslConstant(value) ? value.value : value.jsonPath,
+                    ...context.toJsonAssignment(propertyMap[name], value),
                   }),
                   { EventBusName: this.resource.eventBusArn }
                 ),

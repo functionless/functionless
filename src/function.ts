@@ -28,7 +28,7 @@ import { Construct } from "constructs";
 import esbuild from "esbuild";
 import { ApiGatewayVtlIntegration } from "./api";
 import type { AppSyncVtlIntegration } from "./appsync";
-import { ASL } from "./asl";
+import { ASL, ASLGraph } from "./asl";
 import {
   FunctionDecl,
   IntegrationInvocation,
@@ -387,22 +387,22 @@ abstract class FunctionBase<in Payload, Out>
     return payloadArg
       ? context.evalExpr(payloadArg, (output) => {
           return context.outputState(
-            ASL.applyConstantOrVariableToTask(
+            ASLGraph.applyConstantOrVariableToTask(
               {
                 Type: "Task",
                 Resource: this.resource.functionArn,
-                Next: ASL.DeferNext,
+                Next: ASLGraph.DeferNext,
               },
               output ?? { jsonPath: context.context.null }
             )
           );
         })
       : context.outputState(
-          ASL.applyConstantOrVariableToTask(
+          ASLGraph.applyConstantOrVariableToTask(
             {
               Type: "Task",
               Resource: this.resource.functionArn,
-              Next: ASL.DeferNext,
+              Next: ASLGraph.DeferNext,
             },
             { jsonPath: context.context.null }
           )
