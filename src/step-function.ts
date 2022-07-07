@@ -86,7 +86,7 @@ export namespace $SFN {
             Type: "Wait" as const,
             Seconds: secondsOutput.value,
           });
-        } else if (ASLGraph.isVariable(secondsOutput)) {
+        } else if (ASLGraph.isJsonPath(secondsOutput)) {
           return context.voidState({
             Type: "Wait" as const,
             SecondsPath: secondsOutput.jsonPath,
@@ -126,7 +126,7 @@ export namespace $SFN {
             Type: "Wait",
             Timestamp: timestampOutput.value,
           });
-        } else if (ASLGraph.isVariable(timestampOutput)) {
+        } else if (ASLGraph.isJsonPath(timestampOutput)) {
           return context.voidState({
             Type: "Wait",
             TimestampPath: timestampOutput.jsonPath,
@@ -275,7 +275,7 @@ export namespace $SFN {
     }
 
     return context.evalExpr(array, call, (arrayOutput) => {
-      if (!ASLGraph.isVariable(arrayOutput)) {
+      if (!ASLGraph.isJsonPath(arrayOutput)) {
         // TODO
         throw new Error();
       }
