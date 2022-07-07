@@ -358,6 +358,21 @@ test("conditionally return void", () => {
   expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
+test("conditionally return void", () => {
+  const { stack } = initStepFunctionApp();
+  const definition = new ExpressStepFunction<{ id: string }, void>(
+    stack,
+    "fn",
+    (input) => {
+      if (input.id === "hello") {
+        return;
+      }
+    }
+  ).definition;
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+});
+
 test("condition on task output", () => {
   const { stack, task } = initStepFunctionApp();
   const definition = new ExpressStepFunction<{ id: string }, void>(

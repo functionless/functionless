@@ -4913,15 +4913,9 @@ Object {
             "Type": "Pass",
           },
           "a = \`ai\`": Object {
-            "Next": "string__a = \`ai\`",
-            "Result": "{}{}",
-            "ResultPath": "$.heap1",
-            "Type": "Pass",
-          },
-          "string__a = \`ai\`": Object {
             "Next": "1__a = \`ai\`",
             "Parameters": Object {
-              "string.$": "States.Format($.heap1,$.a,$.i)",
+              "string.$": "States.Format('{}{}',$.a,$.i)",
             },
             "ResultPath": "$.heap1",
             "Type": "Pass",
@@ -4965,15 +4959,9 @@ Object {
             "Type": "Pass",
           },
           "a = \`ai\` 2": Object {
-            "Next": "string__a = \`ai\` 2",
-            "Result": "{}{}",
-            "ResultPath": "$.heap4",
-            "Type": "Pass",
-          },
-          "string__a = \`ai\` 2": Object {
             "Next": "1__a = \`ai\` 2",
             "Parameters": Object {
-              "string.$": "States.Format($.heap4,$.a,$.i)",
+              "string.$": "States.Format('{}{}',$.a,$.i)",
             },
             "ResultPath": "$.heap4",
             "Type": "Pass",
@@ -5013,15 +5001,9 @@ Object {
             "Type": "Pass",
           },
           "a = \`ai\` 1": Object {
-            "Next": "string__a = \`ai\` 1",
-            "Result": "{}{}",
-            "ResultPath": "$.heap2",
-            "Type": "Pass",
-          },
-          "string__a = \`ai\` 1": Object {
             "Next": "1__a = \`ai\` 1",
             "Parameters": Object {
-              "string.$": "States.Format($.heap2,$.a,$.i)",
+              "string.$": "States.Format('{}{}',$.a,$.i)",
             },
             "ResultPath": "$.heap2",
             "Type": "Pass",
@@ -5269,15 +5251,9 @@ Object {
             "Type": "Pass",
           },
           "return \`nx\`": Object {
-            "Next": "string__return \`nx\`",
-            "Result": "n{}",
-            "ResultPath": "$.heap1",
-            "Type": "Pass",
-          },
-          "string__return \`nx\`": Object {
             "Next": "1__return \`nx\`",
             "Parameters": Object {
-              "string.$": "States.Format($.heap1,$.x)",
+              "string.$": "States.Format('n{}',$.x)",
             },
             "ResultPath": "$.heap1",
             "Type": "Pass",
@@ -5306,15 +5282,9 @@ Object {
             "Type": "Pass",
           },
           "return \`nx\` 1": Object {
-            "Next": "string__return \`nx\` 1",
-            "Result": "n{}",
-            "ResultPath": "$.heap3",
-            "Type": "Pass",
-          },
-          "string__return \`nx\` 1": Object {
             "Next": "1__return \`nx\` 1",
             "Parameters": Object {
-              "string.$": "States.Format($.heap3,$.x)",
+              "string.$": "States.Format('n{}',$.x)",
             },
             "ResultPath": "$.heap3",
             "Type": "Pass",
@@ -5333,15 +5303,9 @@ Object {
       "Type": "Map",
     },
     "return \`l[0]l[1]l[2]l2[0]l2[1]l2[2]\`": Object {
-      "Next": "string__return \`l[0]l[1]l[2]l2[0]l2[1]l2[2]\`",
-      "Result": "{}{}{}{}{}{}",
-      "ResultPath": "$.heap5",
-      "Type": "Pass",
-    },
-    "string__return \`l[0]l[1]l[2]l2[0]l2[1]l2[2]\`": Object {
       "Next": "1__return \`l[0]l[1]l[2]l2[0]l2[1]l2[2]\`",
       "Parameters": Object {
-        "string.$": "States.Format($.heap5,$.l[0],$.l[1],$.l[2],$.l2[0],$.l2[1],$.l2[2])",
+        "string.$": "States.Format('{}{}{}{}{}{}',$.l[0],$.l[1],$.l[2],$.l2[0],$.l2[1],$.l2[2])",
       },
       "ResultPath": "$.heap5",
       "Type": "Pass",
@@ -5407,15 +5371,9 @@ Object {
             "Type": "Pass",
           },
           "return \`input.prefixx\`": Object {
-            "Next": "string__return \`input.prefixx\`",
-            "Result": "{}{}",
-            "ResultPath": "$.heap1",
-            "Type": "Pass",
-          },
-          "string__return \`input.prefixx\`": Object {
             "Next": "1__return \`input.prefixx\`",
             "Parameters": Object {
-              "string.$": "States.Format($.heap1,$.fnl_context.input.prefix,$.x)",
+              "string.$": "States.Format('{}{}',$.fnl_context.input.prefix,$.x)",
             },
             "ResultPath": "$.heap1",
             "Type": "Pass",
@@ -5444,15 +5402,9 @@ Object {
             "Type": "Pass",
           },
           "return \`input.prefixx\` 1": Object {
-            "Next": "string__return \`input.prefixx\` 1",
-            "Result": "{}{}",
-            "ResultPath": "$.heap3",
-            "Type": "Pass",
-          },
-          "string__return \`input.prefixx\` 1": Object {
             "Next": "1__return \`input.prefixx\` 1",
             "Parameters": Object {
-              "string.$": "States.Format($.heap3,$.fnl_context.input.prefix,$.x)",
+              "string.$": "States.Format('{}{}',$.fnl_context.input.prefix,$.x)",
             },
             "ResultPath": "$.heap3",
             "Type": "Pass",
@@ -5471,15 +5423,9 @@ Object {
       "Type": "Map",
     },
     "return \`l[0]l[1]l[2]l2[0]l2[1]l2[2]\`": Object {
-      "Next": "string__return \`l[0]l[1]l[2]l2[0]l2[1]l2[2]\`",
-      "Result": "{}{}{}{}{}{}",
-      "ResultPath": "$.heap5",
-      "Type": "Pass",
-    },
-    "string__return \`l[0]l[1]l[2]l2[0]l2[1]l2[2]\`": Object {
       "Next": "1__return \`l[0]l[1]l[2]l2[0]l2[1]l2[2]\`",
       "Parameters": Object {
-        "string.$": "States.Format($.heap5,$.l[0],$.l[1],$.l[2],$.l2[0],$.l2[1],$.l2[2])",
+        "string.$": "States.Format('{}{}{}{}{}{}',$.l[0],$.l[1],$.l[2],$.l2[0],$.l2[1],$.l2[2])",
       },
       "ResultPath": "$.heap5",
       "Type": "Pass",
@@ -5546,8 +5492,10 @@ Object {
       "Type": "Pass",
     },
     "1__partOfTheTemplateString = \`hello input.obj.str2 ?? \\"default\\"\` 1": Object {
-      "Next": "string__1__partOfTheTemplateString = \`hello input.obj.str2 ?? \\"default\\"\` 1",
-      "Result": "hello {}",
+      "Next": "1__partOfTheTemplateString = \`hello input.obj.str2 ?? \\"default\\"\`",
+      "Parameters": Object {
+        "string.$": "States.Format('hello {}',$.heap0)",
+      },
       "ResultPath": "$.heap1",
       "Type": "Pass",
     },
@@ -5600,37 +5548,17 @@ Object {
       "Type": "Choice",
     },
     "result = await func(\`input.obj.str hello partOfTheTemplateString input.obj.": Object {
-      "Next": "string__result = await func(\`input.obj.str hello partOfTheTemplateString in",
-      "Result": "{} hello {} {}",
+      "Next": "1__result = await func(\`input.obj.str hello partOfTheTemplateString input.o 1",
+      "Parameters": Object {
+        "string.$": "States.Format('{} hello {} {}',$.fnl_context.input.obj.str,$.partOfTheTemplateString,$.fnl_context.input.obj.items[0])",
+      },
       "ResultPath": "$.heap2",
       "Type": "Pass",
     },
     "return \`the result: result.str\`": Object {
-      "Next": "string__return \`the result: result.str\`",
-      "Result": "the result: {}",
-      "ResultPath": "$.heap4",
-      "Type": "Pass",
-    },
-    "string__1__partOfTheTemplateString = \`hello input.obj.str2 ?? \\"default\\"\` 1": Object {
-      "Next": "1__partOfTheTemplateString = \`hello input.obj.str2 ?? \\"default\\"\`",
-      "Parameters": Object {
-        "string.$": "States.Format($.heap1,$.heap0)",
-      },
-      "ResultPath": "$.heap1",
-      "Type": "Pass",
-    },
-    "string__result = await func(\`input.obj.str hello partOfTheTemplateString in": Object {
-      "Next": "1__result = await func(\`input.obj.str hello partOfTheTemplateString input.o 1",
-      "Parameters": Object {
-        "string.$": "States.Format($.heap2,$.fnl_context.input.obj.str,$.partOfTheTemplateString,$.fnl_context.input.obj.items[0])",
-      },
-      "ResultPath": "$.heap2",
-      "Type": "Pass",
-    },
-    "string__return \`the result: result.str\`": Object {
       "Next": "1__return \`the result: result.str\`",
       "Parameters": Object {
-        "string.$": "States.Format($.heap4,$.result.str)",
+        "string.$": "States.Format('the result: {}',$.result.str)",
       },
       "ResultPath": "$.heap4",
       "Type": "Pass",
@@ -5672,15 +5600,9 @@ Object {
       "Type": "Pass",
     },
     "return \`x\`": Object {
-      "Next": "string__return \`x\`",
-      "Result": "{}",
-      "ResultPath": "$.heap0",
-      "Type": "Pass",
-    },
-    "string__return \`x\`": Object {
       "Next": "1__return \`x\`",
       "Parameters": Object {
-        "string.$": "States.Format($.heap0,$.x)",
+        "string.$": "States.Format('{}',$.x)",
       },
       "ResultPath": "$.heap0",
       "Type": "Pass",

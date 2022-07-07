@@ -1400,32 +1400,22 @@ export class ASL {
 
         const tempHeap = this.randomHeap();
 
-        // TODO: can this be done in one state? it was changed to this for a bug fixed another way
-        return {
-          startState: "template",
-          states: {
-            template: {
-              Type: "Pass",
-              Result: elementOutputs
+        return this.singletonState(
+          {
+            Type: "Pass",
+            Parameters: {
+              "string.$": `States.Format('${elementOutputs
                 .map((output) => (isAslConstant(output) ? output.value : "{}"))
-                .join(""),
-              ResultPath: tempHeap,
-              Next: "string",
+                .join("")}',${elementOutputs
+                .filter(isVariable)
+                .map(({ jsonPath }) => jsonPath)})`,
             },
-            string: {
-              Type: "Pass",
-              Parameters: {
-                "string.$": `States.Format(${tempHeap},${elementOutputs
-                  .filter(isVariable)
-                  .map(({ jsonPath }) => jsonPath)})`,
-              },
-              ResultPath: tempHeap,
-            },
+            ResultPath: tempHeap,
           },
-          output: {
+          {
             jsonPath: `${tempHeap}.string`,
-          },
-        };
+          }
+        );
       });
     } else if (isCallExpr(expr)) {
       if (isReferenceExpr(expr.expr)) {
@@ -1970,7 +1960,6 @@ export class ASL {
 
   public applyDeferNext<T extends State | SubState>(
     props: {
-      ResultPath?: string | null;
       End?: true;
       Next?: string;
     },
@@ -1986,7 +1975,6 @@ export class ASL {
    */
   private applyDeferNextSubState<T extends SubState>(
     props: {
-      ResultPath?: string | null;
       End?: true;
       Next?: string;
     },
@@ -2018,13 +2006,12 @@ export class ASL {
    */
   private applyDeferNextState<T extends State>(
     props: {
-      ResultPath?: string | null;
       End?: true;
       Next?: string;
     },
     state: T
   ): T {
-    const { End, Next = undefined, ResultPath } = props;
+    const { End, Next = undefined } = props;
 
     if (state.Type === "Choice") {
       return {
@@ -2059,9 +2046,6 @@ export class ASL {
           ...state,
           End,
           Next,
-          // alow setting the result path to null, but ignore when undefined
-          ResultPath:
-            typeof ResultPath === "undefined" ? state.ResultPath : ResultPath,
         } as T;
       }
       assertNever(state);
@@ -2669,9 +2653,11 @@ export class ASL {
         }
       } else if (isVariableReference(expr) || isCallExpr(expr)) {
         const variableOutput = localEval(expr);
-        // todo support constants?
         if (!isVariable(variableOutput)) {
-          throw new Error("");
+          throw new SynthError(
+            ErrorCodes.Unexpected_Error,
+            "Expected VariableReference and CallExpr to return variables."
+          );
         }
         // if(expr) { ... }
         return ASL.isTruthy(variableOutput.jsonPath);

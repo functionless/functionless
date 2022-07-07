@@ -181,15 +181,9 @@ Object {
       "Type": "Pass",
     },
     "return \`template me 0_tmp\`": Object {
-      "Next": "string__return \`template me 0_tmp\`",
-      "Result": "template me {}",
-      "ResultPath": "$.heap1",
-      "Type": "Pass",
-    },
-    "string__return \`template me 0_tmp\`": Object {
       "Next": "1__return \`template me 0_tmp\`",
       "Parameters": Object {
-        "string.$": "States.Format($.heap1,$.0_tmp)",
+        "string.$": "States.Format('template me {}',$.0_tmp)",
       },
       "ResultPath": "$.heap1",
       "Type": "Pass",
@@ -219,15 +213,9 @@ Object {
       "Type": "Pass",
     },
     "return \`template me input.value\`": Object {
-      "Next": "string__return \`template me input.value\`",
-      "Result": "template me {}",
-      "ResultPath": "$.heap0",
-      "Type": "Pass",
-    },
-    "string__return \`template me input.value\`": Object {
       "Next": "1__return \`template me input.value\`",
       "Parameters": Object {
-        "string.$": "States.Format($.heap0,$.fnl_context.input.value)",
+        "string.$": "States.Format('template me {}',$.fnl_context.input.value)",
       },
       "ResultPath": "$.heap0",
       "Type": "Pass",
@@ -1590,6 +1578,63 @@ Object {
 `;
 
 exports[`conditionally return void 1`] = `
+Object {
+  "StartAt": "Initialize Functionless Context",
+  "States": Object {
+    "Initialize Functionless Context": Object {
+      "Next": "if(input.id == \\"hello\\")",
+      "OutputPath": "$",
+      "Parameters": Object {
+        "input.$": "$",
+        "null": null,
+      },
+      "ResultPath": "$.fnl_context",
+      "Type": "Pass",
+    },
+    "if(input.id == \\"hello\\")": Object {
+      "Choices": Array [
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.fnl_context.input.id",
+            },
+            Object {
+              "And": Array [
+                Object {
+                  "IsString": true,
+                  "Variable": "$.fnl_context.input.id",
+                },
+                Object {
+                  "StringEquals": "hello",
+                  "Variable": "$.fnl_context.input.id",
+                },
+              ],
+            },
+          ],
+          "Next": "return null",
+        },
+      ],
+      "Default": "return null 1",
+      "Type": "Choice",
+    },
+    "return null": Object {
+      "End": true,
+      "InputPath": "$.fnl_context.null",
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "return null 1": Object {
+      "End": true,
+      "InputPath": "$.fnl_context.null",
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+  },
+}
+`;
+
+exports[`conditionally return void 2`] = `
 Object {
   "StartAt": "Initialize Functionless Context",
   "States": Object {
@@ -6537,15 +6582,9 @@ Object {
       "Type": "Pass",
     },
     "return task({key: \`input.obj.str hello input.obj.items[0]\`})": Object {
-      "Next": "string__return task({key: \`input.obj.str hello input.obj.items[0]\`})",
-      "Result": "{} hello {}",
-      "ResultPath": "$.heap0",
-      "Type": "Pass",
-    },
-    "string__return task({key: \`input.obj.str hello input.obj.items[0]\`})": Object {
       "Next": "1__return task({key: \`input.obj.str hello input.obj.items[0]\`}) 1",
       "Parameters": Object {
-        "string.$": "States.Format($.heap0,$.fnl_context.input.obj.str,$.fnl_context.input.obj.items[0])",
+        "string.$": "States.Format('{} hello {}',$.fnl_context.input.obj.str,$.fnl_context.input.obj.items[0])",
       },
       "ResultPath": "$.heap0",
       "Type": "Pass",
@@ -6587,8 +6626,10 @@ Object {
       "Type": "Task",
     },
     "2__return task({key: \`input.obj.str ?? \\"default\\" hello hello input.obj.item": Object {
-      "Next": "string__2__return task({key: \`input.obj.str ?? \\"default\\" hello hello input.",
-      "Result": "{} hello hello {}",
+      "Next": "1__return task({key: \`input.obj.str ?? \\"default\\" hello hello input.obj.item 1",
+      "Parameters": Object {
+        "string.$": "States.Format('{} hello hello {}',$.heap1,$.heap2)",
+      },
       "ResultPath": "$.heap3",
       "Type": "Pass",
     },
@@ -6639,14 +6680,6 @@ Object {
       ],
       "Default": "takeRight__return task({key: \`input.obj.str ?? \\"default\\" hello hello input.",
       "Type": "Choice",
-    },
-    "string__2__return task({key: \`input.obj.str ?? \\"default\\" hello hello input.": Object {
-      "Next": "1__return task({key: \`input.obj.str ?? \\"default\\" hello hello input.obj.item 1",
-      "Parameters": Object {
-        "string.$": "States.Format($.heap3,$.heap1,$.heap2)",
-      },
-      "ResultPath": "$.heap3",
-      "Type": "Pass",
     },
     "takeLeft__input.obj.items[0] ?? 0_tmp": Object {
       "InputPath": "$.fnl_context.input.obj.items[0]",
