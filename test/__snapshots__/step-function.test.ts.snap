@@ -866,9 +866,25 @@ Object {
           "if(item == \\"hello\\")": Object {
             "Choices": Array [
               Object {
+                "And": Array [
+                  Object {
+                    "IsPresent": true,
+                    "Variable": "$.item",
+                  },
+                  Object {
+                    "And": Array [
+                      Object {
+                        "IsString": true,
+                        "Variable": "$.item",
+                      },
+                      Object {
+                        "StringEquals": "hello",
+                        "Variable": "$.item",
+                      },
+                    ],
+                  },
+                ],
                 "Next": "break",
-                "StringEquals": "hello",
-                "Variable": "$.item",
               },
             ],
             "Default": "end__if(item == \\"hello\\")",
@@ -963,17 +979,17 @@ Object {
     "if(person.Item == undefined)": Object {
       "Choices": Array [
         Object {
-          "Next": "return undefined",
-          "Or": Array [
+          "And": Array [
             Object {
-              "IsPresent": false,
+              "IsPresent": true,
               "Variable": "$.person.Item",
             },
             Object {
-              "IsNull": true,
-              "Variable": "$.person.Item",
+              "IsNull": false,
+              "Variable": "$$.Execution.Id",
             },
           ],
+          "Next": "return undefined",
         },
       ],
       "Default": "score = await computeScore({id: person.Item.id.S, name: person.Item.name.S}",
@@ -1468,9 +1484,25 @@ Object {
     "if(0_tmp == 1)": Object {
       "Choices": Array [
         Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.0_tmp",
+            },
+            Object {
+              "And": Array [
+                Object {
+                  "IsNumeric": true,
+                  "Variable": "$.0_tmp",
+                },
+                Object {
+                  "NumericEquals": 1,
+                  "Variable": "$.0_tmp",
+                },
+              ],
+            },
+          ],
           "Next": "return null",
-          "NumericEquals": 1,
-          "Variable": "$.0_tmp",
         },
       ],
       "Default": "return null 1",
@@ -1523,9 +1555,25 @@ Object {
     "if(input.id == \\"hello\\")": Object {
       "Choices": Array [
         Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.fnl_context.input.id",
+            },
+            Object {
+              "And": Array [
+                Object {
+                  "IsString": true,
+                  "Variable": "$.fnl_context.input.id",
+                },
+                Object {
+                  "StringEquals": "hello",
+                  "Variable": "$.fnl_context.input.id",
+                },
+              ],
+            },
+          ],
           "Next": "await $AWS.DynamoDB.GetItem({Table: personTable, Key: {id: {S: input.id}}})",
-          "StringEquals": "hello",
-          "Variable": "$.fnl_context.input.id",
         },
       ],
       "Default": "return null",
@@ -1558,9 +1606,25 @@ Object {
     "if(input.id == \\"hello\\")": Object {
       "Choices": Array [
         Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.fnl_context.input.id",
+            },
+            Object {
+              "And": Array [
+                Object {
+                  "IsString": true,
+                  "Variable": "$.fnl_context.input.id",
+                },
+                Object {
+                  "StringEquals": "hello",
+                  "Variable": "$.fnl_context.input.id",
+                },
+              ],
+            },
+          ],
           "Next": "return null",
-          "StringEquals": "hello",
-          "Variable": "$.fnl_context.input.id",
         },
       ],
       "Default": "return null 1",
@@ -1611,9 +1675,25 @@ Object {
     "if(input.key == \\"sam\\")": Object {
       "Choices": Array [
         Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.fnl_context.input.key",
+            },
+            Object {
+              "And": Array [
+                Object {
+                  "IsString": true,
+                  "Variable": "$.fnl_context.input.key",
+                },
+                Object {
+                  "StringEquals": "sam",
+                  "Variable": "$.fnl_context.input.key",
+                },
+              ],
+            },
+          ],
           "Next": "continue",
-          "StringEquals": "sam",
-          "Variable": "$.fnl_context.input.key",
         },
       ],
       "Default": "await task(input.key)",
@@ -1671,9 +1751,25 @@ Object {
           "if(item == \\"hello\\")": Object {
             "Choices": Array [
               Object {
+                "And": Array [
+                  Object {
+                    "IsPresent": true,
+                    "Variable": "$.item",
+                  },
+                  Object {
+                    "And": Array [
+                      Object {
+                        "IsString": true,
+                        "Variable": "$.item",
+                      },
+                      Object {
+                        "StringEquals": "hello",
+                        "Variable": "$.item",
+                      },
+                    ],
+                  },
+                ],
                 "Next": "continue",
-                "StringEquals": "hello",
-                "Variable": "$.item",
               },
             ],
             "Default": "end__if(item == \\"hello\\")",
@@ -1729,9 +1825,25 @@ Object {
     "if(input.key == \\"sam\\")": Object {
       "Choices": Array [
         Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.fnl_context.input.key",
+            },
+            Object {
+              "And": Array [
+                Object {
+                  "IsString": true,
+                  "Variable": "$.fnl_context.input.key",
+                },
+                Object {
+                  "StringEquals": "sam",
+                  "Variable": "$.fnl_context.input.key",
+                },
+              ],
+            },
+          ],
           "Next": "continue",
-          "StringEquals": "sam",
-          "Variable": "$.fnl_context.input.key",
         },
       ],
       "Default": "await task(input.key)",
@@ -2221,9 +2333,25 @@ Object {
           "if(err.message == \\"you dun' goofed\\")": Object {
             "Choices": Array [
               Object {
+                "And": Array [
+                  Object {
+                    "IsPresent": true,
+                    "Variable": "$.err.message",
+                  },
+                  Object {
+                    "And": Array [
+                      Object {
+                        "IsString": true,
+                        "Variable": "$.err.message",
+                      },
+                      Object {
+                        "StringEquals": "you dun' goofed",
+                        "Variable": "$.err.message",
+                      },
+                    ],
+                  },
+                ],
                 "Next": "throw new Error(\\"little\\")",
-                "StringEquals": "you dun' goofed",
-                "Variable": "$.err.message",
               },
             ],
             "Default": "await task(\\"2\\")",
@@ -2267,36 +2395,8 @@ exports[`if (?? === typeof x) 1`] = `
 Object {
   "StartAt": "Initialize Functionless Context",
   "States": Object {
-    "Initialize Functionless Context": Object {
-      "Next": "if(input.id == undefined)",
-      "OutputPath": "$",
-      "Parameters": Object {
-        "input.$": "$",
-        "null": null,
-      },
-      "ResultPath": "$.fnl_context",
-      "Type": "Pass",
-    },
-    "if(input.id == undefined)": Object {
+    "\\"bigint\\" == typeof input.id": Object {
       "Choices": Array [
-        Object {
-          "Next": "return \\"null\\"",
-          "Or": Array [
-            Object {
-              "IsPresent": false,
-              "Variable": "$.fnl_context.input.id",
-            },
-            Object {
-              "IsNull": true,
-              "Variable": "$.fnl_context.input.id",
-            },
-          ],
-        },
-        Object {
-          "IsPresent": false,
-          "Next": "return \\"undefined\\"",
-          "Variable": "$.fnl_context.input.id",
-        },
         Object {
           "And": Array [
             Object {
@@ -2308,7 +2408,7 @@ Object {
               "Variable": "$.fnl_context.input.id",
             },
           ],
-          "Next": "return \\"string\\"",
+          "Next": "string__\\"bigint\\" == typeof input.id",
         },
         Object {
           "And": Array [
@@ -2321,7 +2421,7 @@ Object {
               "Variable": "$.fnl_context.input.id",
             },
           ],
-          "Next": "return \\"boolean\\"",
+          "Next": "boolean__\\"bigint\\" == typeof input.id",
         },
         Object {
           "And": Array [
@@ -2334,86 +2434,168 @@ Object {
               "Variable": "$.fnl_context.input.id",
             },
           ],
-          "Next": "return \\"number\\"",
+          "Next": "number__\\"bigint\\" == typeof input.id",
         },
         Object {
-          "And": Array [
-            Object {
-              "IsPresent": true,
-              "Variable": "$.fnl_context.input.id",
-            },
-            Object {
-              "IsNumeric": true,
-              "Variable": "$.fnl_context.input.id",
-            },
-          ],
-          "Next": "return \\"bigint\\"",
+          "IsPresent": true,
+          "Next": "object__\\"bigint\\" == typeof input.id",
+          "Variable": "$.fnl_context.input.id",
         },
       ],
-      "Default": "return null",
+      "Default": "undefined__\\"bigint\\" == typeof input.id",
       "Type": "Choice",
     },
-    "return \\"bigint\\"": Object {
-      "End": true,
-      "Result": "bigint",
-      "ResultPath": "$",
-      "Type": "Pass",
+    "\\"boolean\\" == typeof input.id": Object {
+      "Choices": Array [
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.fnl_context.input.id",
+            },
+            Object {
+              "IsString": true,
+              "Variable": "$.fnl_context.input.id",
+            },
+          ],
+          "Next": "string__\\"boolean\\" == typeof input.id",
+        },
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.fnl_context.input.id",
+            },
+            Object {
+              "IsBoolean": true,
+              "Variable": "$.fnl_context.input.id",
+            },
+          ],
+          "Next": "boolean__\\"boolean\\" == typeof input.id",
+        },
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.fnl_context.input.id",
+            },
+            Object {
+              "IsNumeric": true,
+              "Variable": "$.fnl_context.input.id",
+            },
+          ],
+          "Next": "number__\\"boolean\\" == typeof input.id",
+        },
+        Object {
+          "IsPresent": true,
+          "Next": "object__\\"boolean\\" == typeof input.id",
+          "Variable": "$.fnl_context.input.id",
+        },
+      ],
+      "Default": "undefined__\\"boolean\\" == typeof input.id",
+      "Type": "Choice",
     },
-    "return \\"boolean\\"": Object {
-      "End": true,
-      "Result": "boolean",
-      "ResultPath": "$",
-      "Type": "Pass",
+    "\\"number\\" == typeof input.id": Object {
+      "Choices": Array [
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.fnl_context.input.id",
+            },
+            Object {
+              "IsString": true,
+              "Variable": "$.fnl_context.input.id",
+            },
+          ],
+          "Next": "string__\\"number\\" == typeof input.id",
+        },
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.fnl_context.input.id",
+            },
+            Object {
+              "IsBoolean": true,
+              "Variable": "$.fnl_context.input.id",
+            },
+          ],
+          "Next": "boolean__\\"number\\" == typeof input.id",
+        },
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.fnl_context.input.id",
+            },
+            Object {
+              "IsNumeric": true,
+              "Variable": "$.fnl_context.input.id",
+            },
+          ],
+          "Next": "number__\\"number\\" == typeof input.id",
+        },
+        Object {
+          "IsPresent": true,
+          "Next": "object__\\"number\\" == typeof input.id",
+          "Variable": "$.fnl_context.input.id",
+        },
+      ],
+      "Default": "undefined__\\"number\\" == typeof input.id",
+      "Type": "Choice",
     },
-    "return \\"null\\"": Object {
-      "End": true,
-      "Result": "null",
-      "ResultPath": "$",
-      "Type": "Pass",
+    "\\"string\\" == typeof input.id": Object {
+      "Choices": Array [
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.fnl_context.input.id",
+            },
+            Object {
+              "IsString": true,
+              "Variable": "$.fnl_context.input.id",
+            },
+          ],
+          "Next": "string__\\"string\\" == typeof input.id",
+        },
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.fnl_context.input.id",
+            },
+            Object {
+              "IsBoolean": true,
+              "Variable": "$.fnl_context.input.id",
+            },
+          ],
+          "Next": "boolean__\\"string\\" == typeof input.id",
+        },
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.fnl_context.input.id",
+            },
+            Object {
+              "IsNumeric": true,
+              "Variable": "$.fnl_context.input.id",
+            },
+          ],
+          "Next": "number__\\"string\\" == typeof input.id",
+        },
+        Object {
+          "IsPresent": true,
+          "Next": "object__\\"string\\" == typeof input.id",
+          "Variable": "$.fnl_context.input.id",
+        },
+      ],
+      "Default": "undefined__\\"string\\" == typeof input.id",
+      "Type": "Choice",
     },
-    "return \\"number\\"": Object {
-      "End": true,
-      "Result": "number",
-      "ResultPath": "$",
-      "Type": "Pass",
-    },
-    "return \\"string\\"": Object {
-      "End": true,
-      "Result": "string",
-      "ResultPath": "$",
-      "Type": "Pass",
-    },
-    "return \\"undefined\\"": Object {
-      "End": true,
-      "Result": "undefined",
-      "ResultPath": "$",
-      "Type": "Pass",
-    },
-    "return null": Object {
-      "End": true,
-      "InputPath": "$.fnl_context.null",
-      "ResultPath": "$",
-      "Type": "Pass",
-    },
-  },
-}
-`;
-
-exports[`if (typeof x !== ??) 1`] = `
-Object {
-  "StartAt": "Initialize Functionless Context",
-  "States": Object {
-    "Initialize Functionless Context": Object {
-      "Next": "if(input.id != undefined)",
-      "OutputPath": "$",
-      "Parameters": Object {
-        "input.$": "$",
-        "null": null,
-      },
-      "ResultPath": "$.fnl_context",
-      "Type": "Pass",
-    },
-    "if(input.id != undefined)": Object {
+    "5__if(input.id == undefined)": Object {
       "Choices": Array [
         Object {
           "And": Array [
@@ -2423,71 +2605,269 @@ Object {
             },
             Object {
               "IsNull": false,
-              "Variable": "$.fnl_context.input.id",
+              "Variable": "$$.Execution.Id",
             },
           ],
           "Next": "return \\"null\\"",
         },
         Object {
-          "IsPresent": true,
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.heap0",
+            },
+            Object {
+              "And": Array [
+                Object {
+                  "IsString": true,
+                  "Variable": "$.heap0",
+                },
+                Object {
+                  "StringEquals": "undefined",
+                  "Variable": "$.heap0",
+                },
+              ],
+            },
+          ],
           "Next": "return \\"undefined\\"",
-          "Variable": "$.fnl_context.input.id",
         },
         Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.heap1",
+            },
+            Object {
+              "And": Array [
+                Object {
+                  "IsString": true,
+                  "Variable": "$.heap1",
+                },
+                Object {
+                  "StringEquals": "string",
+                  "Variable": "$.heap1",
+                },
+              ],
+            },
+          ],
           "Next": "return \\"string\\"",
-          "Or": Array [
-            Object {
-              "IsPresent": false,
-              "Variable": "$.fnl_context.input.id",
-            },
-            Object {
-              "IsString": false,
-              "Variable": "$.fnl_context.input.id",
-            },
-          ],
         },
         Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.heap2",
+            },
+            Object {
+              "And": Array [
+                Object {
+                  "IsString": true,
+                  "Variable": "$.heap2",
+                },
+                Object {
+                  "StringEquals": "boolean",
+                  "Variable": "$.heap2",
+                },
+              ],
+            },
+          ],
           "Next": "return \\"boolean\\"",
-          "Or": Array [
-            Object {
-              "IsPresent": false,
-              "Variable": "$.fnl_context.input.id",
-            },
-            Object {
-              "IsBoolean": false,
-              "Variable": "$.fnl_context.input.id",
-            },
-          ],
         },
         Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.heap3",
+            },
+            Object {
+              "And": Array [
+                Object {
+                  "IsString": true,
+                  "Variable": "$.heap3",
+                },
+                Object {
+                  "StringEquals": "number",
+                  "Variable": "$.heap3",
+                },
+              ],
+            },
+          ],
           "Next": "return \\"number\\"",
-          "Or": Array [
-            Object {
-              "IsPresent": false,
-              "Variable": "$.fnl_context.input.id",
-            },
-            Object {
-              "IsNumeric": false,
-              "Variable": "$.fnl_context.input.id",
-            },
-          ],
         },
         Object {
-          "Next": "return \\"bigint\\"",
-          "Or": Array [
+          "And": Array [
             Object {
-              "IsPresent": false,
-              "Variable": "$.fnl_context.input.id",
+              "IsPresent": true,
+              "Variable": "$.heap4",
             },
             Object {
-              "IsNumeric": false,
-              "Variable": "$.fnl_context.input.id",
+              "And": Array [
+                Object {
+                  "IsString": true,
+                  "Variable": "$.heap4",
+                },
+                Object {
+                  "StringEquals": "bigint",
+                  "Variable": "$.heap4",
+                },
+              ],
             },
           ],
+          "Next": "return \\"bigint\\"",
         },
       ],
       "Default": "return null",
       "Type": "Choice",
+    },
+    "Initialize Functionless Context": Object {
+      "Next": "if(input.id == undefined)",
+      "OutputPath": "$",
+      "Parameters": Object {
+        "input.$": "$",
+        "null": null,
+      },
+      "ResultPath": "$.fnl_context",
+      "Type": "Pass",
+    },
+    "boolean__\\"bigint\\" == typeof input.id": Object {
+      "Next": "5__if(input.id == undefined)",
+      "Result": "boolean",
+      "ResultPath": "$.heap4",
+      "Type": "Pass",
+    },
+    "boolean__\\"boolean\\" == typeof input.id": Object {
+      "Next": "\\"number\\" == typeof input.id",
+      "Result": "boolean",
+      "ResultPath": "$.heap2",
+      "Type": "Pass",
+    },
+    "boolean__\\"number\\" == typeof input.id": Object {
+      "Next": "\\"bigint\\" == typeof input.id",
+      "Result": "boolean",
+      "ResultPath": "$.heap3",
+      "Type": "Pass",
+    },
+    "boolean__\\"string\\" == typeof input.id": Object {
+      "Next": "\\"boolean\\" == typeof input.id",
+      "Result": "boolean",
+      "ResultPath": "$.heap1",
+      "Type": "Pass",
+    },
+    "boolean__if(input.id == undefined)": Object {
+      "Next": "\\"string\\" == typeof input.id",
+      "Result": "boolean",
+      "ResultPath": "$.heap0",
+      "Type": "Pass",
+    },
+    "if(input.id == undefined)": Object {
+      "Choices": Array [
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.fnl_context.input.id",
+            },
+            Object {
+              "IsString": true,
+              "Variable": "$.fnl_context.input.id",
+            },
+          ],
+          "Next": "string__if(input.id == undefined)",
+        },
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.fnl_context.input.id",
+            },
+            Object {
+              "IsBoolean": true,
+              "Variable": "$.fnl_context.input.id",
+            },
+          ],
+          "Next": "boolean__if(input.id == undefined)",
+        },
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.fnl_context.input.id",
+            },
+            Object {
+              "IsNumeric": true,
+              "Variable": "$.fnl_context.input.id",
+            },
+          ],
+          "Next": "number__if(input.id == undefined)",
+        },
+        Object {
+          "IsPresent": true,
+          "Next": "object__if(input.id == undefined)",
+          "Variable": "$.fnl_context.input.id",
+        },
+      ],
+      "Default": "undefined__if(input.id == undefined)",
+      "Type": "Choice",
+    },
+    "number__\\"bigint\\" == typeof input.id": Object {
+      "Next": "5__if(input.id == undefined)",
+      "Result": "number",
+      "ResultPath": "$.heap4",
+      "Type": "Pass",
+    },
+    "number__\\"boolean\\" == typeof input.id": Object {
+      "Next": "\\"number\\" == typeof input.id",
+      "Result": "number",
+      "ResultPath": "$.heap2",
+      "Type": "Pass",
+    },
+    "number__\\"number\\" == typeof input.id": Object {
+      "Next": "\\"bigint\\" == typeof input.id",
+      "Result": "number",
+      "ResultPath": "$.heap3",
+      "Type": "Pass",
+    },
+    "number__\\"string\\" == typeof input.id": Object {
+      "Next": "\\"boolean\\" == typeof input.id",
+      "Result": "number",
+      "ResultPath": "$.heap1",
+      "Type": "Pass",
+    },
+    "number__if(input.id == undefined)": Object {
+      "Next": "\\"string\\" == typeof input.id",
+      "Result": "number",
+      "ResultPath": "$.heap0",
+      "Type": "Pass",
+    },
+    "object__\\"bigint\\" == typeof input.id": Object {
+      "Next": "5__if(input.id == undefined)",
+      "Result": "object",
+      "ResultPath": "$.heap4",
+      "Type": "Pass",
+    },
+    "object__\\"boolean\\" == typeof input.id": Object {
+      "Next": "\\"number\\" == typeof input.id",
+      "Result": "object",
+      "ResultPath": "$.heap2",
+      "Type": "Pass",
+    },
+    "object__\\"number\\" == typeof input.id": Object {
+      "Next": "\\"bigint\\" == typeof input.id",
+      "Result": "object",
+      "ResultPath": "$.heap3",
+      "Type": "Pass",
+    },
+    "object__\\"string\\" == typeof input.id": Object {
+      "Next": "\\"boolean\\" == typeof input.id",
+      "Result": "object",
+      "ResultPath": "$.heap1",
+      "Type": "Pass",
+    },
+    "object__if(input.id == undefined)": Object {
+      "Next": "\\"string\\" == typeof input.id",
+      "Result": "object",
+      "ResultPath": "$.heap0",
+      "Type": "Pass",
     },
     "return \\"bigint\\"": Object {
       "End": true,
@@ -2529,6 +2909,66 @@ Object {
       "End": true,
       "InputPath": "$.fnl_context.null",
       "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "string__\\"bigint\\" == typeof input.id": Object {
+      "Next": "5__if(input.id == undefined)",
+      "Result": "string",
+      "ResultPath": "$.heap4",
+      "Type": "Pass",
+    },
+    "string__\\"boolean\\" == typeof input.id": Object {
+      "Next": "\\"number\\" == typeof input.id",
+      "Result": "string",
+      "ResultPath": "$.heap2",
+      "Type": "Pass",
+    },
+    "string__\\"number\\" == typeof input.id": Object {
+      "Next": "\\"bigint\\" == typeof input.id",
+      "Result": "string",
+      "ResultPath": "$.heap3",
+      "Type": "Pass",
+    },
+    "string__\\"string\\" == typeof input.id": Object {
+      "Next": "\\"boolean\\" == typeof input.id",
+      "Result": "string",
+      "ResultPath": "$.heap1",
+      "Type": "Pass",
+    },
+    "string__if(input.id == undefined)": Object {
+      "Next": "\\"string\\" == typeof input.id",
+      "Result": "string",
+      "ResultPath": "$.heap0",
+      "Type": "Pass",
+    },
+    "undefined__\\"bigint\\" == typeof input.id": Object {
+      "Next": "5__if(input.id == undefined)",
+      "Result": "undefined",
+      "ResultPath": "$.heap4",
+      "Type": "Pass",
+    },
+    "undefined__\\"boolean\\" == typeof input.id": Object {
+      "Next": "\\"number\\" == typeof input.id",
+      "Result": "undefined",
+      "ResultPath": "$.heap2",
+      "Type": "Pass",
+    },
+    "undefined__\\"number\\" == typeof input.id": Object {
+      "Next": "\\"bigint\\" == typeof input.id",
+      "Result": "undefined",
+      "ResultPath": "$.heap3",
+      "Type": "Pass",
+    },
+    "undefined__\\"string\\" == typeof input.id": Object {
+      "Next": "\\"boolean\\" == typeof input.id",
+      "Result": "undefined",
+      "ResultPath": "$.heap1",
+      "Type": "Pass",
+    },
+    "undefined__if(input.id == undefined)": Object {
+      "Next": "\\"string\\" == typeof input.id",
+      "Result": "undefined",
+      "ResultPath": "$.heap0",
       "Type": "Pass",
     },
   },
@@ -2539,6 +2979,130 @@ exports[`if (typeof x === ??) 1`] = `
 Object {
   "StartAt": "Initialize Functionless Context",
   "States": Object {
+    "5__if(input.id == undefined)": Object {
+      "Choices": Array [
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.fnl_context.input.id",
+            },
+            Object {
+              "IsNull": false,
+              "Variable": "$$.Execution.Id",
+            },
+          ],
+          "Next": "return \\"null\\"",
+        },
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.heap0",
+            },
+            Object {
+              "And": Array [
+                Object {
+                  "IsString": true,
+                  "Variable": "$.heap0",
+                },
+                Object {
+                  "StringEquals": "undefined",
+                  "Variable": "$.heap0",
+                },
+              ],
+            },
+          ],
+          "Next": "return \\"undefined\\"",
+        },
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.heap1",
+            },
+            Object {
+              "And": Array [
+                Object {
+                  "IsString": true,
+                  "Variable": "$.heap1",
+                },
+                Object {
+                  "StringEquals": "string",
+                  "Variable": "$.heap1",
+                },
+              ],
+            },
+          ],
+          "Next": "return \\"string\\"",
+        },
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.heap2",
+            },
+            Object {
+              "And": Array [
+                Object {
+                  "IsString": true,
+                  "Variable": "$.heap2",
+                },
+                Object {
+                  "StringEquals": "boolean",
+                  "Variable": "$.heap2",
+                },
+              ],
+            },
+          ],
+          "Next": "return \\"boolean\\"",
+        },
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.heap3",
+            },
+            Object {
+              "And": Array [
+                Object {
+                  "IsString": true,
+                  "Variable": "$.heap3",
+                },
+                Object {
+                  "StringEquals": "number",
+                  "Variable": "$.heap3",
+                },
+              ],
+            },
+          ],
+          "Next": "return \\"number\\"",
+        },
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.heap4",
+            },
+            Object {
+              "And": Array [
+                Object {
+                  "IsString": true,
+                  "Variable": "$.heap4",
+                },
+                Object {
+                  "StringEquals": "bigint",
+                  "Variable": "$.heap4",
+                },
+              ],
+            },
+          ],
+          "Next": "return \\"bigint\\"",
+        },
+      ],
+      "Default": "return null",
+      "Type": "Choice",
+    },
     "Initialize Functionless Context": Object {
       "Next": "if(input.id == undefined)",
       "OutputPath": "$",
@@ -2549,26 +3113,38 @@ Object {
       "ResultPath": "$.fnl_context",
       "Type": "Pass",
     },
+    "boolean__if(input.id == undefined)": Object {
+      "Next": "typeof input.id == \\"string\\"",
+      "Result": "boolean",
+      "ResultPath": "$.heap0",
+      "Type": "Pass",
+    },
+    "boolean__typeof input.id == \\"bigint\\"": Object {
+      "Next": "5__if(input.id == undefined)",
+      "Result": "boolean",
+      "ResultPath": "$.heap4",
+      "Type": "Pass",
+    },
+    "boolean__typeof input.id == \\"boolean\\"": Object {
+      "Next": "typeof input.id == \\"number\\"",
+      "Result": "boolean",
+      "ResultPath": "$.heap2",
+      "Type": "Pass",
+    },
+    "boolean__typeof input.id == \\"number\\"": Object {
+      "Next": "typeof input.id == \\"bigint\\"",
+      "Result": "boolean",
+      "ResultPath": "$.heap3",
+      "Type": "Pass",
+    },
+    "boolean__typeof input.id == \\"string\\"": Object {
+      "Next": "typeof input.id == \\"boolean\\"",
+      "Result": "boolean",
+      "ResultPath": "$.heap1",
+      "Type": "Pass",
+    },
     "if(input.id == undefined)": Object {
       "Choices": Array [
-        Object {
-          "Next": "return \\"null\\"",
-          "Or": Array [
-            Object {
-              "IsPresent": false,
-              "Variable": "$.fnl_context.input.id",
-            },
-            Object {
-              "IsNull": true,
-              "Variable": "$.fnl_context.input.id",
-            },
-          ],
-        },
-        Object {
-          "IsPresent": false,
-          "Next": "return \\"undefined\\"",
-          "Variable": "$.fnl_context.input.id",
-        },
         Object {
           "And": Array [
             Object {
@@ -2580,7 +3156,7 @@ Object {
               "Variable": "$.fnl_context.input.id",
             },
           ],
-          "Next": "return \\"string\\"",
+          "Next": "string__if(input.id == undefined)",
         },
         Object {
           "And": Array [
@@ -2593,7 +3169,7 @@ Object {
               "Variable": "$.fnl_context.input.id",
             },
           ],
-          "Next": "return \\"boolean\\"",
+          "Next": "boolean__if(input.id == undefined)",
         },
         Object {
           "And": Array [
@@ -2606,24 +3182,76 @@ Object {
               "Variable": "$.fnl_context.input.id",
             },
           ],
-          "Next": "return \\"number\\"",
+          "Next": "number__if(input.id == undefined)",
         },
         Object {
-          "And": Array [
-            Object {
-              "IsPresent": true,
-              "Variable": "$.fnl_context.input.id",
-            },
-            Object {
-              "IsNumeric": true,
-              "Variable": "$.fnl_context.input.id",
-            },
-          ],
-          "Next": "return \\"bigint\\"",
+          "IsPresent": true,
+          "Next": "object__if(input.id == undefined)",
+          "Variable": "$.fnl_context.input.id",
         },
       ],
-      "Default": "return null",
+      "Default": "undefined__if(input.id == undefined)",
       "Type": "Choice",
+    },
+    "number__if(input.id == undefined)": Object {
+      "Next": "typeof input.id == \\"string\\"",
+      "Result": "number",
+      "ResultPath": "$.heap0",
+      "Type": "Pass",
+    },
+    "number__typeof input.id == \\"bigint\\"": Object {
+      "Next": "5__if(input.id == undefined)",
+      "Result": "number",
+      "ResultPath": "$.heap4",
+      "Type": "Pass",
+    },
+    "number__typeof input.id == \\"boolean\\"": Object {
+      "Next": "typeof input.id == \\"number\\"",
+      "Result": "number",
+      "ResultPath": "$.heap2",
+      "Type": "Pass",
+    },
+    "number__typeof input.id == \\"number\\"": Object {
+      "Next": "typeof input.id == \\"bigint\\"",
+      "Result": "number",
+      "ResultPath": "$.heap3",
+      "Type": "Pass",
+    },
+    "number__typeof input.id == \\"string\\"": Object {
+      "Next": "typeof input.id == \\"boolean\\"",
+      "Result": "number",
+      "ResultPath": "$.heap1",
+      "Type": "Pass",
+    },
+    "object__if(input.id == undefined)": Object {
+      "Next": "typeof input.id == \\"string\\"",
+      "Result": "object",
+      "ResultPath": "$.heap0",
+      "Type": "Pass",
+    },
+    "object__typeof input.id == \\"bigint\\"": Object {
+      "Next": "5__if(input.id == undefined)",
+      "Result": "object",
+      "ResultPath": "$.heap4",
+      "Type": "Pass",
+    },
+    "object__typeof input.id == \\"boolean\\"": Object {
+      "Next": "typeof input.id == \\"number\\"",
+      "Result": "object",
+      "ResultPath": "$.heap2",
+      "Type": "Pass",
+    },
+    "object__typeof input.id == \\"number\\"": Object {
+      "Next": "typeof input.id == \\"bigint\\"",
+      "Result": "object",
+      "ResultPath": "$.heap3",
+      "Type": "Pass",
+    },
+    "object__typeof input.id == \\"string\\"": Object {
+      "Next": "typeof input.id == \\"boolean\\"",
+      "Result": "object",
+      "ResultPath": "$.heap1",
+      "Type": "Pass",
     },
     "return \\"bigint\\"": Object {
       "End": true,
@@ -2665,6 +3293,266 @@ Object {
       "End": true,
       "InputPath": "$.fnl_context.null",
       "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "string__if(input.id == undefined)": Object {
+      "Next": "typeof input.id == \\"string\\"",
+      "Result": "string",
+      "ResultPath": "$.heap0",
+      "Type": "Pass",
+    },
+    "string__typeof input.id == \\"bigint\\"": Object {
+      "Next": "5__if(input.id == undefined)",
+      "Result": "string",
+      "ResultPath": "$.heap4",
+      "Type": "Pass",
+    },
+    "string__typeof input.id == \\"boolean\\"": Object {
+      "Next": "typeof input.id == \\"number\\"",
+      "Result": "string",
+      "ResultPath": "$.heap2",
+      "Type": "Pass",
+    },
+    "string__typeof input.id == \\"number\\"": Object {
+      "Next": "typeof input.id == \\"bigint\\"",
+      "Result": "string",
+      "ResultPath": "$.heap3",
+      "Type": "Pass",
+    },
+    "string__typeof input.id == \\"string\\"": Object {
+      "Next": "typeof input.id == \\"boolean\\"",
+      "Result": "string",
+      "ResultPath": "$.heap1",
+      "Type": "Pass",
+    },
+    "typeof input.id == \\"bigint\\"": Object {
+      "Choices": Array [
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.fnl_context.input.id",
+            },
+            Object {
+              "IsString": true,
+              "Variable": "$.fnl_context.input.id",
+            },
+          ],
+          "Next": "string__typeof input.id == \\"bigint\\"",
+        },
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.fnl_context.input.id",
+            },
+            Object {
+              "IsBoolean": true,
+              "Variable": "$.fnl_context.input.id",
+            },
+          ],
+          "Next": "boolean__typeof input.id == \\"bigint\\"",
+        },
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.fnl_context.input.id",
+            },
+            Object {
+              "IsNumeric": true,
+              "Variable": "$.fnl_context.input.id",
+            },
+          ],
+          "Next": "number__typeof input.id == \\"bigint\\"",
+        },
+        Object {
+          "IsPresent": true,
+          "Next": "object__typeof input.id == \\"bigint\\"",
+          "Variable": "$.fnl_context.input.id",
+        },
+      ],
+      "Default": "undefined__typeof input.id == \\"bigint\\"",
+      "Type": "Choice",
+    },
+    "typeof input.id == \\"boolean\\"": Object {
+      "Choices": Array [
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.fnl_context.input.id",
+            },
+            Object {
+              "IsString": true,
+              "Variable": "$.fnl_context.input.id",
+            },
+          ],
+          "Next": "string__typeof input.id == \\"boolean\\"",
+        },
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.fnl_context.input.id",
+            },
+            Object {
+              "IsBoolean": true,
+              "Variable": "$.fnl_context.input.id",
+            },
+          ],
+          "Next": "boolean__typeof input.id == \\"boolean\\"",
+        },
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.fnl_context.input.id",
+            },
+            Object {
+              "IsNumeric": true,
+              "Variable": "$.fnl_context.input.id",
+            },
+          ],
+          "Next": "number__typeof input.id == \\"boolean\\"",
+        },
+        Object {
+          "IsPresent": true,
+          "Next": "object__typeof input.id == \\"boolean\\"",
+          "Variable": "$.fnl_context.input.id",
+        },
+      ],
+      "Default": "undefined__typeof input.id == \\"boolean\\"",
+      "Type": "Choice",
+    },
+    "typeof input.id == \\"number\\"": Object {
+      "Choices": Array [
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.fnl_context.input.id",
+            },
+            Object {
+              "IsString": true,
+              "Variable": "$.fnl_context.input.id",
+            },
+          ],
+          "Next": "string__typeof input.id == \\"number\\"",
+        },
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.fnl_context.input.id",
+            },
+            Object {
+              "IsBoolean": true,
+              "Variable": "$.fnl_context.input.id",
+            },
+          ],
+          "Next": "boolean__typeof input.id == \\"number\\"",
+        },
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.fnl_context.input.id",
+            },
+            Object {
+              "IsNumeric": true,
+              "Variable": "$.fnl_context.input.id",
+            },
+          ],
+          "Next": "number__typeof input.id == \\"number\\"",
+        },
+        Object {
+          "IsPresent": true,
+          "Next": "object__typeof input.id == \\"number\\"",
+          "Variable": "$.fnl_context.input.id",
+        },
+      ],
+      "Default": "undefined__typeof input.id == \\"number\\"",
+      "Type": "Choice",
+    },
+    "typeof input.id == \\"string\\"": Object {
+      "Choices": Array [
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.fnl_context.input.id",
+            },
+            Object {
+              "IsString": true,
+              "Variable": "$.fnl_context.input.id",
+            },
+          ],
+          "Next": "string__typeof input.id == \\"string\\"",
+        },
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.fnl_context.input.id",
+            },
+            Object {
+              "IsBoolean": true,
+              "Variable": "$.fnl_context.input.id",
+            },
+          ],
+          "Next": "boolean__typeof input.id == \\"string\\"",
+        },
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.fnl_context.input.id",
+            },
+            Object {
+              "IsNumeric": true,
+              "Variable": "$.fnl_context.input.id",
+            },
+          ],
+          "Next": "number__typeof input.id == \\"string\\"",
+        },
+        Object {
+          "IsPresent": true,
+          "Next": "object__typeof input.id == \\"string\\"",
+          "Variable": "$.fnl_context.input.id",
+        },
+      ],
+      "Default": "undefined__typeof input.id == \\"string\\"",
+      "Type": "Choice",
+    },
+    "undefined__if(input.id == undefined)": Object {
+      "Next": "typeof input.id == \\"string\\"",
+      "Result": "undefined",
+      "ResultPath": "$.heap0",
+      "Type": "Pass",
+    },
+    "undefined__typeof input.id == \\"bigint\\"": Object {
+      "Next": "5__if(input.id == undefined)",
+      "Result": "undefined",
+      "ResultPath": "$.heap4",
+      "Type": "Pass",
+    },
+    "undefined__typeof input.id == \\"boolean\\"": Object {
+      "Next": "typeof input.id == \\"number\\"",
+      "Result": "undefined",
+      "ResultPath": "$.heap2",
+      "Type": "Pass",
+    },
+    "undefined__typeof input.id == \\"number\\"": Object {
+      "Next": "typeof input.id == \\"bigint\\"",
+      "Result": "undefined",
+      "ResultPath": "$.heap3",
+      "Type": "Pass",
+    },
+    "undefined__typeof input.id == \\"string\\"": Object {
+      "Next": "typeof input.id == \\"boolean\\"",
+      "Result": "undefined",
+      "ResultPath": "$.heap1",
       "Type": "Pass",
     },
   },
@@ -2688,9 +3576,25 @@ Object {
     "if(input.id == \\"hello\\")": Object {
       "Choices": Array [
         Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.fnl_context.input.id",
+            },
+            Object {
+              "And": Array [
+                Object {
+                  "IsString": true,
+                  "Variable": "$.fnl_context.input.id",
+                },
+                Object {
+                  "StringEquals": "hello",
+                  "Variable": "$.fnl_context.input.id",
+                },
+              ],
+            },
+          ],
           "Next": "return \\"hello\\"",
-          "StringEquals": "hello",
-          "Variable": "$.fnl_context.input.id",
         },
       ],
       "Default": "return \\"world\\"",
@@ -2729,14 +3633,46 @@ Object {
     "if(input.id == \\"hello\\")": Object {
       "Choices": Array [
         Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.fnl_context.input.id",
+            },
+            Object {
+              "And": Array [
+                Object {
+                  "IsString": true,
+                  "Variable": "$.fnl_context.input.id",
+                },
+                Object {
+                  "StringEquals": "hello",
+                  "Variable": "$.fnl_context.input.id",
+                },
+              ],
+            },
+          ],
           "Next": "return \\"hello\\"",
-          "StringEquals": "hello",
-          "Variable": "$.fnl_context.input.id",
         },
         Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.fnl_context.input.id",
+            },
+            Object {
+              "And": Array [
+                Object {
+                  "IsString": true,
+                  "Variable": "$.fnl_context.input.id",
+                },
+                Object {
+                  "StringEquals": "world",
+                  "Variable": "$.fnl_context.input.id",
+                },
+              ],
+            },
+          ],
           "Next": "return \\"world\\"",
-          "StringEquals": "world",
-          "Variable": "$.fnl_context.input.id",
         },
       ],
       "Default": "return null",
@@ -3054,17 +3990,17 @@ Object {
     "while (cond == undefined)": Object {
       "Choices": Array [
         Object {
-          "Next": "cond = await task()",
-          "Or": Array [
+          "And": Array [
             Object {
-              "IsPresent": false,
+              "IsPresent": true,
               "Variable": "$.cond",
             },
             Object {
-              "IsNull": true,
-              "Variable": "$.cond",
+              "IsNull": false,
+              "Variable": "$$.Execution.Id",
             },
           ],
+          "Next": "cond = await task()",
         },
       ],
       "Default": "return null",
@@ -3207,9 +4143,25 @@ Object {
           "if(i == 0)": Object {
             "Choices": Array [
               Object {
+                "And": Array [
+                  Object {
+                    "IsPresent": true,
+                    "Variable": "$.i",
+                  },
+                  Object {
+                    "And": Array [
+                      Object {
+                        "IsNumeric": true,
+                        "Variable": "$.i",
+                      },
+                      Object {
+                        "NumericEquals": 0,
+                        "Variable": "$.i",
+                      },
+                    ],
+                  },
+                ],
                 "Next": "return task(item)",
-                "NumericEquals": 0,
-                "Variable": "$.i",
               },
             ],
             "Default": "return null",
@@ -3284,9 +4236,25 @@ Object {
           "if(i == 0)": Object {
             "Choices": Array [
               Object {
+                "And": Array [
+                  Object {
+                    "IsPresent": true,
+                    "Variable": "$.i",
+                  },
+                  Object {
+                    "And": Array [
+                      Object {
+                        "IsNumeric": true,
+                        "Variable": "$.i",
+                      },
+                      Object {
+                        "NumericEquals": 0,
+                        "Variable": "$.i",
+                      },
+                    ],
+                  },
+                ],
                 "Next": "return task(item)",
-                "NumericEquals": 0,
-                "Variable": "$.i",
               },
             ],
             "Default": "return task(input.list[0])",
@@ -3409,9 +4377,25 @@ Object {
           "if(i == 0)": Object {
             "Choices": Array [
               Object {
+                "And": Array [
+                  Object {
+                    "IsPresent": true,
+                    "Variable": "$.i",
+                  },
+                  Object {
+                    "And": Array [
+                      Object {
+                        "IsNumeric": true,
+                        "Variable": "$.i",
+                      },
+                      Object {
+                        "NumericEquals": 0,
+                        "Variable": "$.i",
+                      },
+                    ],
+                  },
+                ],
                 "Next": "return task(item)",
-                "NumericEquals": 0,
-                "Variable": "$.i",
               },
             ],
             "Default": "return null",
@@ -3486,9 +4470,25 @@ Object {
           "if(i == 0)": Object {
             "Choices": Array [
               Object {
+                "And": Array [
+                  Object {
+                    "IsPresent": true,
+                    "Variable": "$.i",
+                  },
+                  Object {
+                    "And": Array [
+                      Object {
+                        "IsNumeric": true,
+                        "Variable": "$.i",
+                      },
+                      Object {
+                        "NumericEquals": 0,
+                        "Variable": "$.i",
+                      },
+                    ],
+                  },
+                ],
                 "Next": "return task(item)",
-                "NumericEquals": 0,
-                "Variable": "$.i",
               },
             ],
             "Default": "return task(input.list[0])",
@@ -4347,17 +5347,17 @@ Object {
     "if(person.Item == undefined)": Object {
       "Choices": Array [
         Object {
-          "Next": "return undefined",
-          "Or": Array [
+          "And": Array [
             Object {
-              "IsPresent": false,
+              "IsPresent": true,
               "Variable": "$.person.Item",
             },
             Object {
-              "IsNull": true,
-              "Variable": "$.person.Item",
+              "IsNull": false,
+              "Variable": "$$.Execution.Id",
             },
           ],
+          "Next": "return undefined",
         },
       ],
       "Default": "return {id: person.Item.id.S, name: person.Item.name.S}",
@@ -4432,17 +5432,17 @@ Object {
     "if(person.Item == undefined)": Object {
       "Choices": Array [
         Object {
-          "Next": "return undefined",
-          "Or": Array [
+          "And": Array [
             Object {
-              "IsPresent": false,
+              "IsPresent": true,
               "Variable": "$.person.Item",
             },
             Object {
-              "IsNull": true,
-              "Variable": "$.person.Item",
+              "IsNull": false,
+              "Variable": "$$.Execution.Id",
             },
           ],
+          "Next": "return undefined",
         },
       ],
       "Default": "return {id: person.Item.id.S, name: person.Item.name.S}",
@@ -4575,7 +5575,7 @@ Object {
   "StartAt": "Initialize Functionless Context",
   "States": Object {
     "Initialize Functionless Context": Object {
-      "Next": "return input.input[\\"id\\"]",
+      "Next": "return input.input[\\"id special\\"]",
       "OutputPath": "$",
       "Parameters": Object {
         "input.$": "$",
@@ -4584,9 +5584,9 @@ Object {
       "ResultPath": "$.fnl_context",
       "Type": "Pass",
     },
-    "return input.input[\\"id\\"]": Object {
+    "return input.input[\\"id special\\"]": Object {
       "End": true,
-      "InputPath": "$.fnl_context.input.input['id']",
+      "InputPath": "$.fnl_context.input.input['id special']",
       "ResultPath": "$",
       "Type": "Pass",
     },
@@ -5155,9 +6155,8 @@ Object {
           "Variable": "$.fnl_context.input.id",
         },
       ],
-      "Default": "1__return typeof input.id",
+      "Default": "undefined__return typeof input.id",
       "Type": "Choice",
-      "default": "undefined",
     },
     "string__return typeof input.id": Object {
       "Next": "1__return typeof input.id",
@@ -5974,9 +6973,25 @@ Object {
     "if(err.message == \\"you dun' goofed\\")": Object {
       "Choices": Array [
         Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.err.message",
+            },
+            Object {
+              "And": Array [
+                Object {
+                  "IsString": true,
+                  "Variable": "$.err.message",
+                },
+                Object {
+                  "StringEquals": "you dun' goofed",
+                  "Variable": "$.err.message",
+                },
+              ],
+            },
+          ],
           "Next": "throw new Error(\\"little\\")",
-          "StringEquals": "you dun' goofed",
-          "Variable": "$.err.message",
         },
       ],
       "Default": "await task(\\"2\\")",
@@ -6237,9 +7252,25 @@ Object {
     "if(err.message == \\"cause\\")": Object {
       "Choices": Array [
         Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.err.message",
+            },
+            Object {
+              "And": Array [
+                Object {
+                  "IsString": true,
+                  "Variable": "$.err.message",
+                },
+                Object {
+                  "StringEquals": "cause",
+                  "Variable": "$.err.message",
+                },
+              ],
+            },
+          ],
           "Next": "return 0",
-          "StringEquals": "cause",
-          "Variable": "$.err.message",
         },
       ],
       "Default": "return 1",
@@ -6522,9 +7553,25 @@ Object {
     "if(err.message == \\"cause\\")": Object {
       "Choices": Array [
         Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.err.message",
+            },
+            Object {
+              "And": Array [
+                Object {
+                  "IsString": true,
+                  "Variable": "$.err.message",
+                },
+                Object {
+                  "StringEquals": "cause",
+                  "Variable": "$.err.message",
+                },
+              ],
+            },
+          ],
           "Next": "return 0",
-          "StringEquals": "cause",
-          "Variable": "$.err.message",
         },
       ],
       "Default": "return 1",
@@ -6847,9 +7894,25 @@ Object {
     "if(input.id == \\"sam\\")": Object {
       "Choices": Array [
         Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.fnl_context.input.id",
+            },
+            Object {
+              "And": Array [
+                Object {
+                  "IsString": true,
+                  "Variable": "$.fnl_context.input.id",
+                },
+                Object {
+                  "StringEquals": "sam",
+                  "Variable": "$.fnl_context.input.id",
+                },
+              ],
+            },
+          ],
           "Next": "throw new Error(\\"little\\")",
-          "StringEquals": "sam",
-          "Variable": "$.fnl_context.input.id",
         },
       ],
       "Default": "await task(\\"2\\")",
@@ -7022,9 +8085,25 @@ Object {
     "if(err.message == \\"sam\\")": Object {
       "Choices": Array [
         Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.err.message",
+            },
+            Object {
+              "And": Array [
+                Object {
+                  "IsString": true,
+                  "Variable": "$.err.message",
+                },
+                Object {
+                  "StringEquals": "sam",
+                  "Variable": "$.err.message",
+                },
+              ],
+            },
+          ],
           "Next": "throw new Error(\\"little\\")",
-          "StringEquals": "sam",
-          "Variable": "$.err.message",
         },
       ],
       "Default": "await task(\\"2\\")",
@@ -7088,9 +8167,25 @@ Object {
     "if(input.id == \\"sam\\")": Object {
       "Choices": Array [
         Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.fnl_context.input.id",
+            },
+            Object {
+              "And": Array [
+                Object {
+                  "IsString": true,
+                  "Variable": "$.fnl_context.input.id",
+                },
+                Object {
+                  "StringEquals": "sam",
+                  "Variable": "$.fnl_context.input.id",
+                },
+              ],
+            },
+          ],
           "Next": "throw new Error(\\"little\\")",
-          "StringEquals": "sam",
-          "Variable": "$.fnl_context.input.id",
         },
       ],
       "Default": "await task()",
@@ -7293,9 +8388,25 @@ Object {
     "if(err.message == \\"cause\\")": Object {
       "Choices": Array [
         Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.err.message",
+            },
+            Object {
+              "And": Array [
+                Object {
+                  "IsString": true,
+                  "Variable": "$.err.message",
+                },
+                Object {
+                  "StringEquals": "cause",
+                  "Variable": "$.err.message",
+                },
+              ],
+            },
+          ],
           "Next": "return \\"hello\\"",
-          "StringEquals": "cause",
-          "Variable": "$.err.message",
         },
       ],
       "Default": "return \\"world\\"",
@@ -7467,9 +8578,25 @@ Object {
     "if(err.message == \\"cause\\")": Object {
       "Choices": Array [
         Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.err.message",
+            },
+            Object {
+              "And": Array [
+                Object {
+                  "IsString": true,
+                  "Variable": "$.err.message",
+                },
+                Object {
+                  "StringEquals": "cause",
+                  "Variable": "$.err.message",
+                },
+              ],
+            },
+          ],
           "Next": "return \\"hello\\"",
-          "StringEquals": "cause",
-          "Variable": "$.err.message",
         },
       ],
       "Default": "return \\"world\\"",
@@ -7478,9 +8605,25 @@ Object {
     "if(input.id == \\"hello\\")": Object {
       "Choices": Array [
         Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.fnl_context.input.id",
+            },
+            Object {
+              "And": Array [
+                Object {
+                  "IsString": true,
+                  "Variable": "$.fnl_context.input.id",
+                },
+                Object {
+                  "StringEquals": "hello",
+                  "Variable": "$.fnl_context.input.id",
+                },
+              ],
+            },
+          ],
           "Next": "await computeScore({id: input.id, name: \\"sam\\"})",
-          "StringEquals": "hello",
-          "Variable": "$.fnl_context.input.id",
         },
       ],
       "Default": "return \\"hello world\\"",
@@ -7545,9 +8688,25 @@ Object {
     "if(err.message == \\"cause\\")": Object {
       "Choices": Array [
         Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.err.message",
+            },
+            Object {
+              "And": Array [
+                Object {
+                  "IsString": true,
+                  "Variable": "$.err.message",
+                },
+                Object {
+                  "StringEquals": "cause",
+                  "Variable": "$.err.message",
+                },
+              ],
+            },
+          ],
           "Next": "return \\"hello\\"",
-          "StringEquals": "cause",
-          "Variable": "$.err.message",
         },
       ],
       "Default": "return \\"world\\"",
@@ -7556,9 +8715,25 @@ Object {
     "if(input.id == \\"hello\\")": Object {
       "Choices": Array [
         Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.fnl_context.input.id",
+            },
+            Object {
+              "And": Array [
+                Object {
+                  "IsString": true,
+                  "Variable": "$.fnl_context.input.id",
+                },
+                Object {
+                  "StringEquals": "hello",
+                  "Variable": "$.fnl_context.input.id",
+                },
+              ],
+            },
+          ],
           "Next": "return await computeScore({id: input.id, name: \\"sam\\"})",
-          "StringEquals": "hello",
-          "Variable": "$.fnl_context.input.id",
         },
       ],
       "Default": "return \\"hello world\\"",
@@ -7655,9 +8830,25 @@ Object {
     "if(err.message == \\"cause\\")": Object {
       "Choices": Array [
         Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.err.message",
+            },
+            Object {
+              "And": Array [
+                Object {
+                  "IsString": true,
+                  "Variable": "$.err.message",
+                },
+                Object {
+                  "StringEquals": "cause",
+                  "Variable": "$.err.message",
+                },
+              ],
+            },
+          ],
           "Next": "return \\"hello\\"",
-          "StringEquals": "cause",
-          "Variable": "$.err.message",
         },
       ],
       "Default": "return \\"world\\"",
@@ -7666,9 +8857,25 @@ Object {
     "if(input.id == \\"hello\\")": Object {
       "Choices": Array [
         Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.fnl_context.input.id",
+            },
+            Object {
+              "And": Array [
+                Object {
+                  "IsString": true,
+                  "Variable": "$.fnl_context.input.id",
+                },
+                Object {
+                  "StringEquals": "hello",
+                  "Variable": "$.fnl_context.input.id",
+                },
+              ],
+            },
+          ],
           "Next": "await computeScore({id: input.id, name: \\"sam\\"})",
-          "StringEquals": "hello",
-          "Variable": "$.fnl_context.input.id",
         },
       ],
       "Default": "return \\"hello world\\"",
@@ -7713,9 +8920,25 @@ Object {
     "if(err.message == \\"cause\\")": Object {
       "Choices": Array [
         Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.err.message",
+            },
+            Object {
+              "And": Array [
+                Object {
+                  "IsString": true,
+                  "Variable": "$.err.message",
+                },
+                Object {
+                  "StringEquals": "cause",
+                  "Variable": "$.err.message",
+                },
+              ],
+            },
+          ],
           "Next": "return \\"hello\\"",
-          "StringEquals": "cause",
-          "Variable": "$.err.message",
         },
       ],
       "Default": "return \\"world\\"",
@@ -7724,9 +8947,25 @@ Object {
     "if(input.id == \\"hello\\")": Object {
       "Choices": Array [
         Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.fnl_context.input.id",
+            },
+            Object {
+              "And": Array [
+                Object {
+                  "IsString": true,
+                  "Variable": "$.fnl_context.input.id",
+                },
+                Object {
+                  "StringEquals": "hello",
+                  "Variable": "$.fnl_context.input.id",
+                },
+              ],
+            },
+          ],
           "Next": "throw new Error(\\"cause\\")",
-          "StringEquals": "hello",
-          "Variable": "$.fnl_context.input.id",
         },
       ],
       "Default": "return \\"hello world\\"",
@@ -8155,17 +9394,17 @@ Object {
     "while (cond == undefined)": Object {
       "Choices": Array [
         Object {
-          "Next": "cond = await task()",
-          "Or": Array [
+          "And": Array [
             Object {
-              "IsPresent": false,
+              "IsPresent": true,
               "Variable": "$.cond",
             },
             Object {
-              "IsNull": true,
-              "Variable": "$.cond",
+              "IsNull": false,
+              "Variable": "$$.Execution.Id",
             },
           ],
+          "Next": "cond = await task()",
         },
       ],
       "Default": "return null",
@@ -8211,17 +9450,17 @@ Object {
     "while (cond == undefined)": Object {
       "Choices": Array [
         Object {
-          "Next": "cond = await task()",
-          "Or": Array [
+          "And": Array [
             Object {
-              "IsPresent": false,
+              "IsPresent": true,
               "Variable": "$.cond",
             },
             Object {
-              "IsNull": true,
-              "Variable": "$.cond",
+              "IsNull": false,
+              "Variable": "$$.Execution.Id",
             },
           ],
+          "Next": "cond = await task()",
         },
       ],
       "Default": "return null",

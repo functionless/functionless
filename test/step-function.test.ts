@@ -85,8 +85,8 @@ test("return ElementAccessExpr", () => {
   const definition = new ExpressStepFunction(
     stack,
     "fn",
-    (input: { input: { id: string } }) => {
-      return input.input.id;
+    (input: { input: { "id special": string } }) => {
+      return input.input["id special"];
     }
   ).definition;
 
@@ -105,7 +105,7 @@ test("return ElementAccessExpr identifier", () => {
           return input.input[id];
         }
       )
-  ).toThrow("an element in a Step Function must be a literal string or number");
+  ).toThrow("Collection element accessor must be a constant string or number");
 });
 
 test("return ElementAccessExpr expression", () => {
@@ -120,7 +120,7 @@ test("return ElementAccessExpr expression", () => {
           return input.input[id ?? "id"];
         }
       )
-  ).toThrow("an element in a Step Function must be a literal string or number");
+  ).toThrow("Collection element accessor must be a constant string or number");
 });
 
 test("return ElementAccessExpr number", () => {
@@ -148,7 +148,7 @@ test("return ElementAccessExpr number reference", () => {
           return input.input.arr[id];
         }
       )
-  ).toThrow("an element in a Step Function must be a literal string or number");
+  ).toThrow("Collection element accessor must be a constant string or number");
 });
 
 test("return optional PropAccessExpr", () => {
