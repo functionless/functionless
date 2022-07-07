@@ -988,7 +988,7 @@ export class ASL {
         anyOf(isFunctionExpr, isForInStmt, isForOfStmt)
       );
       if (isForInStmt(parent) || isForOfStmt(parent)) {
-        // TODO, relax this
+        // TODO, relax this - https://github.com/functionless/functionless/issues/319
         throw new Error(
           "a 'return' statement is not allowed within a for loop"
         );
@@ -2018,11 +2018,9 @@ export class ASL {
         ...state,
         Choices: state.Choices.map((choice) => ({
           ...choice,
-          // TODO: inject a default end node
           Next:
             !choice.Next || choice.Next === ASL.DeferNext ? Next! : choice.Next,
         })),
-        // do we always want to inject a default?
         Default:
           !state.Default || state.Default === ASL.DeferNext
             ? Next
@@ -2057,7 +2055,7 @@ export class ASL {
 
   /**
    * returns an in order unique memory location
-   * TODO: make this contextual
+   * TODO: make this contextual - https://github.com/functionless/functionless/issues/321
    */
   public randomHeap() {
     return `$.heap${this.heapCounter++}`;
@@ -2404,7 +2402,7 @@ export class ASL {
     };
   }
 
-  // TODO: support variables and computed values.
+  // TODO: support variables and computed values. https://github.com/functionless/functionless/issues/84
   private filterToJsonPath(
     expr: CallExpr & { expr: PropAccessExpr }
   ): AslStateType {
@@ -2574,7 +2572,7 @@ export class ASL {
           Variable: `$.0_${expr.value}`,
         };
       } else if (isUnaryExpr(expr)) {
-        // TODO: more than just unary not...
+        // TODO: more than just unary not... - https://github.com/functionless/functionless/issues/232
         return {
           Not: localToCondition(expr),
         };
