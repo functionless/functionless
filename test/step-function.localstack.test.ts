@@ -525,7 +525,7 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
   );
 
   test(
-    "binaryOps comparison",
+    "binary and unary comparison",
     (parent) => {
       return new StepFunction(parent, "sfn2", async (input) => {
         return {
@@ -596,6 +596,12 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
           constantInConstant: "a" in { a: "val" }, // true
           constantInVar: "a" in input.obj, // true
           constantNotInVar: "b" in input.obj, // false
+          constantNot: !false,
+          varNot: !input.a,
+          varNotPresentTrue: !input.nv,
+          varNotNullFalse: !input.n,
+          // @ts-ignore
+          varNotPresentFalse: !input.x,
           // varInVar: input.v in input.obj, // false - unsupported
           // varInConstant: input.v in { a: "val" }, // false - unsupported
         };
@@ -671,6 +677,12 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
       // varInVar: false,
       // varInConstant: false,
       constantNotInVar: false,
+      constantNot: true,
+      varNot: false,
+      varNotPresentTrue: true,
+      varNotNullFalse: false,
+      // @ts-ignore
+      varNotPresentFalse: true,
     },
     { a: true, n: 1, v: "val", nv: null, obj: { a: "x" } }
   );

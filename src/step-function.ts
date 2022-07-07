@@ -1392,18 +1392,22 @@ function synthesizeStateMachine(
     definition: new aws_stepfunctions.Pass(scope, "dummy"),
   });
 
-  const definition = new ASL(scope, machine.role, decl).definition;
+  try {
+    const definition = new ASL(scope, machine.role, decl).definition;
 
-  const resource = machine.node.findChild(
-    "Resource"
-  ) as aws_stepfunctions.CfnStateMachine;
+    const resource = machine.node.findChild(
+      "Resource"
+    ) as aws_stepfunctions.CfnStateMachine;
 
-  resource.definitionString = Stack.of(resource).toJsonString(definition);
+    resource.definitionString = Stack.of(resource).toJsonString(definition);
 
-  // remove the dummy pass node because we don't need it.
-  scope.node.tryRemoveChild("dummy");
-
-  return [definition, machine];
+    return [definition, machine];
+  } catch (e) {
+    throw e;
+  } finally {
+    // remove the dummy pass node because we don't need it.
+    scope.node.tryRemoveChild("dummy");
+  }
 }
 
 class ImportedStepFunction<
