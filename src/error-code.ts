@@ -957,6 +957,85 @@ export namespace ErrorCodes {
       type: ErrorType.ERROR,
       title: "StepFunctions error name and cause must be constant",
     };
+
+  /**
+   * Error is thrown when an array or object is incorrectly accessed.
+   *
+   * Step Functions:
+   *
+   *   1. Arrays and Objects can be accessed
+   *   2. Access Elements must be constant values - Step Functions does not support access using dynamic variables
+   *
+   * ```ts
+   * new StepFunction(stack, 'sfn', () => {
+   *    const obj = { a: "val" };
+   *    // valid
+   *    obj.a;
+   *    // valid
+   *    obj["a"];
+   *    // invalid
+   *    const a = "a";
+   *    obj[a];
+   *
+   *    const arr = [1];
+   *    // valid
+   *    arr[0]
+   *    // invalid
+   *    const zero = 0;
+   *    arr[zero];
+   * });
+   *
+   * Workaround - use lambda
+   *
+   * const accessor = new Function<{ obj: [key: string]: string, acc: string }, string>(stack, 'func', async (input) => {
+   *    return input.obj[input.acc];
+   * });
+   *
+   * new StepFunction(stack, 'sfn', () => {
+   *    // valid
+   *    await accessor(obj, a);
+   * });
+   * ```
+   */
+  export const Invalid_collection_access: ErrorCode = {
+    code: 10025,
+    type: ErrorType.ERROR,
+    title: "Invalid collect access",
+  };
+
+  /**
+   * StepFunctions does not support dynamic property names
+   *
+   * new StepFunction(stack, 'sfn', async () => {
+   *    const c = "c";
+   *    const {
+   *       a: "valid",
+   *       ["b"]: "valid",
+   *       [c]: "invalid",
+   *       [someMethod()] :"invalid"
+   *    }
+   * });
+   *
+   * Workaround - use lambda
+   *
+   * const assign = new Function<{
+   *    obj: { [key: string]: string },
+   *    key: string, value: string
+   * }>(stack, 'func', async (input) => {
+   *     return {
+   *        ...input.obj,
+   *        [input.key]: input.value
+   *     }
+   * });
+   * new StepFunction(stack, 'sfn', async () => {
+   *    return await assign({}, someMethod(), "value");
+   * })
+   */
+  export const StepFunctions_property_names_must_be_constant: ErrorCode = {
+    code: 10026,
+    type: ErrorType.ERROR,
+    title: "StepFunction property names must be constant",
+  };
 }
 
 // to prevent the closure serializer from trying to import all of functionless.

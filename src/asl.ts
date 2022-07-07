@@ -95,6 +95,7 @@ import {
   anyOf,
   DeterministicNameGenerator,
   evalToConstant,
+  invertBinaryOperator,
   isPromiseAll,
 } from "./util";
 import { visitBlock, visitEachChild, visitSpecificChildren } from "./visit";
@@ -1058,7 +1059,6 @@ export class ASL {
           : stmt.expr.expr;
 
       const throwState = this.evalContextToSubState(updated, (evalExpr) => {
-        // TODO: tests error with complex parameters
         const error = updated.args
           .filter((arg): arg is Argument & { expr: Expr } => !!arg.expr)
           .reduce((args: any, arg) => {
@@ -1644,8 +1644,10 @@ export class ASL {
         const left = evalExpr(expr.left);
 
         if (!isVariable(left)) {
-          // TODO
-          throw new Error("");
+          throw new SynthError(
+            ErrorCodes.Unexpected_Error,
+            `Expected assignment to target a variable, found: ${left.value}`
+          );
         }
 
         return this.singletonState(
@@ -1667,7 +1669,17 @@ export class ASL {
           value: constant,
           containsJsonPath: false,
         };
-      } else if (expr.op === "&&" || expr.op === "||") {
+      } else if (
+        expr.op === "&&" ||
+        expr.op === "||" ||
+        expr.op === "==" ||
+        expr.op == "!=" ||
+        expr.op == ">" ||
+        expr.op == "<" ||
+        expr.op == ">=" ||
+        expr.op == "<=" ||
+        expr.op == "in"
+      ) {
         return this.evalContext(expr, (_, evalCondition) => {
           const tempHeap = this.randomHeap();
           const cond = evalCondition(expr);
@@ -1710,7 +1722,6 @@ export class ASL {
             }
           }
           const tempHeap = this.randomHeap();
-          // TODO merge in left and right substates.
           return {
             startState: "default",
             node: expr,
@@ -1755,6 +1766,82 @@ export class ASL {
       );
     } else if (isAwaitExpr(expr)) {
       return this.eval(expr.expr);
+    } else if (isTypeOfExpr(expr)) {
+      return this.evalExpr(expr.expr, (exprOutput) => {
+        if (isAslConstant(exprOutput)) {
+          return {
+            value: typeof exprOutput.value,
+            containsJsonPath: false,
+          };
+        }
+
+        const tempHeap = this.randomHeap();
+
+        return {
+          startState: "choose",
+          states: {
+            choose: {
+              Type: "Choice",
+              Choices: [
+                {
+                  ...ASL.and(
+                    ASL.isPresent(exprOutput.jsonPath),
+                    ASL.isString(exprOutput.jsonPath)
+                  ),
+                  Next: "string",
+                },
+                {
+                  ...ASL.and(
+                    ASL.isPresent(exprOutput.jsonPath),
+                    ASL.isBoolean(exprOutput.jsonPath)
+                  ),
+                  Next: "boolean",
+                },
+                {
+                  ...ASL.and(
+                    ASL.isPresent(exprOutput.jsonPath),
+                    ASL.isNumeric(exprOutput.jsonPath)
+                  ),
+                  Next: "number",
+                },
+                {
+                  ...ASL.isPresent(exprOutput.jsonPath),
+                  Next: "object",
+                },
+              ],
+              Default: "undefined",
+            },
+            string: {
+              Type: "Pass",
+              Result: "string",
+              ResultPath: tempHeap,
+            },
+            boolean: {
+              Type: "Pass",
+              Result: "boolean",
+              ResultPath: tempHeap,
+            },
+            number: {
+              Type: "Pass",
+              Result: "number",
+              ResultPath: tempHeap,
+            },
+            object: {
+              Type: "Pass",
+              Result: "object",
+              ResultPath: tempHeap,
+            },
+            undefined: {
+              Type: "Pass",
+              Result: "undefined",
+              ResultPath: tempHeap,
+            },
+          },
+          output: {
+            jsonPath: tempHeap,
+          },
+        };
+      });
     }
     throw new Error(`cannot eval expression kind '${expr.kind}'`);
   }
@@ -1798,8 +1885,10 @@ export class ASL {
     element: boolean
   ): AslOutput {
     if (isVariable(value)) {
-      return element || typeof field === "number"
+      return typeof field === "number"
         ? { jsonPath: `${value.jsonPath}[${field}]` }
+        : element
+        ? { jsonPath: `${value.jsonPath}['${field}']` }
         : { jsonPath: `${value.jsonPath}.${field}` };
     }
 
@@ -1809,13 +1898,17 @@ export class ASL {
           if (typeof field === "number") {
             return value.value[field];
           }
-          // TODO
-          throw Error("");
+          throw new SynthError(
+            ErrorCodes.Invalid_collection_access,
+            "Accessor to an array must be a constant number"
+          );
         } else if (typeof value.value === "object") {
           return value.value[field];
         }
-        // TODO
-        throw new Error("");
+        throw new SynthError(
+          ErrorCodes.Invalid_collection_access,
+          "Only a constant object or array may be accessed."
+        );
       })();
 
       return typeof accessedValue === "string" &&
@@ -1828,8 +1921,10 @@ export class ASL {
           };
     }
 
-    // TODO
-    throw new Error("");
+    throw new SynthError(
+      ErrorCodes.Invalid_collection_access,
+      "Only a constant object or array may be accessed."
+    );
   }
 
   public voidState(state: State | SubState): CompoundState {
@@ -2198,8 +2293,9 @@ export class ASL {
               ? prop.name.expr.value
               : undefined;
             if (!name) {
-              // TODO
-              throw Error("object property name must be constant");
+              throw new SynthError(
+                ErrorCodes.StepFunctions_property_names_must_be_constant
+              );
             }
             const valueOutput = evalExpr(prop.expr);
             return {
@@ -2213,8 +2309,8 @@ export class ASL {
                 valueOutput.containsJsonPath,
             };
           } else {
-            throw new Error(
-              "computed name of PropAssignExpr is not supported in Amazon States Language"
+            throw new SynthError(
+              ErrorCodes.StepFunctions_property_names_must_be_constant
             );
           }
         },
@@ -2391,7 +2487,7 @@ export class ASL {
         return `${toFilterCondition(expr.expr)}.${expr.name}`;
       } else if (isElementAccessExpr(expr)) {
         return `${toFilterCondition(expr.expr)}[${this.elementToJsonPath(
-          expr.element
+          ASL.getAslStateOutput(this.eval(expr.element))
         )}]`;
       }
 
@@ -2445,32 +2541,33 @@ export class ASL {
       }
     }
 
-    const expr = this.eval(access.expr);
-    const exprOutput = ASL.getAslStateOutput(expr);
+    return this.evalExpr(access.element, (elementOutput) => {
+      // use explicit `eval` because we update the resulting state object output before returning
+      const expr = this.eval(access.expr);
+      const exprOutput = ASL.getAslStateOutput(expr);
 
-    const element = this.elementToJsonPath(access.element);
+      const updatedOutput = this.accessConstant(
+        exprOutput,
+        this.elementToJsonPath(elementOutput),
+        true
+      );
 
-    const updatedOutput = this.accessConstant(exprOutput, element, true);
-
-    return this.updateAslStateOutput(expr, updatedOutput);
+      return this.updateAslStateOutput(expr, updatedOutput);
+    });
   }
 
-  private elementToJsonPath(expr: Expr): string | number {
-    // element cannot be a variable or contain nested json path.
-    // step function doesn't support dynamic object access.
-    const element = this.eval(expr);
-    const elementOutput = ASL.getAslStateOutput(element);
-
-    if (!isVariable(elementOutput) && !elementOutput.containsJsonPath) {
-      if (typeof elementOutput.value === "string") {
-        return `'${elementOutput.value}'`;
-      } else if (typeof elementOutput.value === "number") {
-        return elementOutput.value;
+  private elementToJsonPath(value: AslOutput): string | number {
+    if (!isVariable(value) && !value.containsJsonPath) {
+      if (typeof value.value === "string") {
+        return value.value;
+      } else if (typeof value.value === "number") {
+        return value.value;
       }
     }
 
-    throw new Error(
-      `an element in a Step Function must be a literal string or number`
+    throw new SynthError(
+      ErrorCodes.Invalid_collection_access,
+      "Collection element accessor must be a constant string or number"
     );
   }
 
@@ -2511,206 +2608,64 @@ export class ASL {
             `operation '${expr.op}' is not supported in a Condition`
           );
         } else {
-          const isLiteralOrTypeOfExpr = anyOf(isLiteralExpr, isTypeOfExpr);
+          const leftOutput = localEval(expr.left);
+          const rightOutput = localEval(expr.right);
 
-          if (isLiteralExpr(expr.left) && isLiteralExpr(expr.right)) {
-            throw new Error("cannot compare two literal expressions");
-          } else if (
-            isLiteralOrTypeOfExpr(expr.left) ||
-            isLiteralOrTypeOfExpr(expr.right)
+          if (
+            expr.op === "!=" ||
+            expr.op === "==" ||
+            expr.op === ">" ||
+            expr.op === "<" ||
+            expr.op === ">=" ||
+            expr.op === "<="
           ) {
-            // typeof x === "string" -> left: typeOf, right: literal
-            // "string" === typeof x -> left: literal, right: typeOf
-            // x === 1 -> left: identifier, right: literal
-            const [literalExpr, val] = isLiteralExpr(expr.left)
-              ? [expr.left, expr.right]
-              : [expr.right, expr.left];
+            if (isAslConstant(leftOutput) && isAslConstant(rightOutput)) {
+              return (expr.op === "==" &&
+                leftOutput.value === rightOutput.value) ||
+                (expr.op === "!=" && leftOutput.value !== rightOutput.value) ||
+                (leftOutput.value !== null &&
+                  rightOutput.value !== null &&
+                  ((expr.op === ">" && leftOutput.value > rightOutput.value) ||
+                    (expr.op === "<" && leftOutput.value < rightOutput.value) ||
+                    (expr.op === "<=" &&
+                      leftOutput.value <= rightOutput.value) ||
+                    (expr.op === ">=" &&
+                      leftOutput.value >= rightOutput.value)))
+                ? ASL.trueCondition()
+                : ASL.falseCondition();
+            }
 
-            if (isTypeOfExpr(val)) {
-              const supportedTypeNames = [
-                "undefined",
-                "boolean",
-                "number",
-                "string",
-                "bigint",
-              ] as const;
+            const [left, right] = isVariable(leftOutput)
+              ? [leftOutput, rightOutput]
+              : [rightOutput as Variable, leftOutput];
+            // if the right is a variable and the left isn't, invert the operator
+            // 1 >= a -> a <= 1
+            // a >= b -> a >= b
+            // a >= 1 -> a >= 1
+            const operator =
+              leftOutput === left ? expr.op : invertBinaryOperator(expr.op);
 
-              // relax? we can use equalsJsonPath for a
-              if (!isStringLiteralExpr(literalExpr)) {
-                throw new Error(
-                  'typeof expression can only be compared against a string literal, such as typeof x === "string"'
-                );
-              }
+            return ASL.compare(left, right, operator as any);
+          } else if (expr.op === "in") {
+            const elm = this.elementToJsonPath(leftOutput);
 
-              const type =
-                literalExpr.value as typeof supportedTypeNames[number];
-              if (!supportedTypeNames.includes(type)) {
-                throw new Error(`unsupported typeof comparison: "${type}"`);
-              }
-              const variableOutput = localEval(val.expr);
-              // todo support constants?
-              if (!isVariable(variableOutput)) {
-                throw new Error("");
-              }
-              const Variable = variableOutput.jsonPath;
-              if (expr.op === "==" || expr.op === "!=") {
-                if (type === "undefined") {
-                  return {
-                    Variable,
-                    IsPresent: expr.op !== "==",
-                  };
-                } else {
-                  const flag = expr.op === "==";
-                  return {
-                    [expr.op === "==" ? "And" : "Or"]: [
-                      {
-                        Variable,
-                        IsPresent: flag,
-                      },
-                      {
-                        Variable,
-                        ...(type === "boolean"
-                          ? { IsBoolean: flag }
-                          : type === "string"
-                          ? { IsString: flag }
-                          : { IsNumeric: flag }),
-                      },
-                    ],
-                  };
-                }
-              } else {
-                throw new Error(
-                  `unsupported operand '${expr.op}' with 'typeof' expression.`
-                );
-              }
-            } else if (
-              isNullLiteralExpr(literalExpr) ||
-              isUndefinedLiteralExpr(literalExpr)
-            ) {
-              const variableOutput = localEval(val);
-              // todo support constants?
-              if (!isVariable(variableOutput)) {
-                throw new Error("");
-              }
+            const accessed = this.accessConstant(rightOutput, elm, true);
 
-              if (expr.op === "!=") {
-                return {
-                  And: [
-                    {
-                      Variable: variableOutput.jsonPath,
-                      IsPresent: true,
-                    },
-                    {
-                      Variable: variableOutput.jsonPath,
-                      IsNull: false,
-                    },
-                  ],
-                };
-              } else if (expr.op === "==") {
-                return {
-                  Or: [
-                    {
-                      Variable: variableOutput.jsonPath,
-                      IsPresent: false,
-                    },
-                    {
-                      Variable: variableOutput.jsonPath,
-                      IsNull: true,
-                    },
-                  ],
-                };
-              }
-            } else if (isStringLiteralExpr(literalExpr)) {
-              const variableOutput = localEval(val);
-              // todo support constants?
-              if (!isVariable(variableOutput)) {
-                throw new Error("");
-              }
-
-              const value = literalExpr.value;
-              if (expr.op === "==") {
-                return {
-                  Variable: variableOutput.jsonPath,
-                  StringEquals: value,
-                };
-              } else if (expr.op === "!=") {
-                return {
-                  Not: {
-                    Variable: variableOutput.jsonPath,
-                    StringEquals: value,
-                  },
-                };
-              } else if (expr.op === "<") {
-                return {
-                  Variable: variableOutput.jsonPath,
-                  StringLessThan: value,
-                };
-              } else if (expr.op === "<=") {
-                return {
-                  Variable: variableOutput.jsonPath,
-                  StringLessThanEquals: value,
-                };
-              } else if (expr.op === ">") {
-                return {
-                  Variable: variableOutput.jsonPath,
-                  StringGreaterThan: value,
-                };
-              } else if (expr.op === ">=") {
-                return {
-                  Variable: variableOutput.jsonPath,
-                  StringGreaterThanEquals: value,
-                };
-              }
-            } else if (isNumberLiteralExpr(literalExpr)) {
-              const variableOutput = localEval(val);
-              // todo support constants?
-              if (!isVariable(variableOutput)) {
-                throw new Error("");
-              }
-
-              const value = literalExpr.value;
-              if (expr.op === "==") {
-                return {
-                  Variable: variableOutput.jsonPath,
-                  NumericEquals: value,
-                };
-              } else if (expr.op === "!=") {
-                return {
-                  Not: {
-                    Variable: variableOutput.jsonPath,
-                    NumericEquals: value,
-                  },
-                };
-              } else if (expr.op === "<") {
-                return {
-                  Variable: variableOutput.jsonPath,
-                  NumericLessThan: value,
-                };
-              } else if (expr.op === "<=") {
-                return {
-                  Variable: variableOutput.jsonPath,
-                  NumericLessThanEquals: value,
-                };
-              } else if (expr.op === ">") {
-                return {
-                  Variable: variableOutput.jsonPath,
-                  NumericGreaterThan: value,
-                };
-              } else if (expr.op === ">=") {
-                return {
-                  Variable: variableOutput.jsonPath,
-                  NumericGreaterThanEquals: value,
-                };
-              }
+            if (isAslConstant(accessed)) {
+              return accessed.value === undefined
+                ? ASL.falseCondition()
+                : ASL.trueCondition();
+            } else {
+              return ASL.isPresent(accessed.jsonPath);
             }
           }
-          if (
-            isStringLiteralExpr(expr.left) ||
-            isStringLiteralExpr(expr.right)
-          ) {
-          }
-          // need typing information
-          // return aws_stepfunctions.Condition.str
+
+          // assertNever(expr.op);
+
+          throw new SynthError(
+            ErrorCodes.Unsupported_Feature,
+            `Operator ${expr.op} is not currently supported in Step Functions.`
+          );
         }
       } else if (isVariableReference(expr) || isCallExpr(expr)) {
         const variableOutput = localEval(expr);
@@ -2853,13 +2808,27 @@ export namespace ASL {
       )
     );
 
-  export const and = (...cond: Condition[]): Condition => ({
-    And: cond,
-  });
+  export const and = (...cond: (Condition | undefined)[]): Condition => {
+    const conds = cond.filter((c): c is Condition => !!c);
+    return conds.length === 1
+      ? conds[0]
+      : conds.length === 0
+      ? ASL.trueCondition()
+      : {
+          And: conds,
+        };
+  };
 
-  export const or = (...cond: Condition[]): Condition => ({
-    Or: cond,
-  });
+  export const or = (...cond: (Condition | undefined)[]): Condition => {
+    const conds = cond.filter((c): c is Condition => !!c);
+    return conds.length === 1
+      ? conds[0]
+      : conds.length === 0
+      ? ASL.trueCondition()
+      : {
+          Or: conds,
+        };
+  };
 
   export const not = (cond: Condition): Condition => ({
     Not: cond,
@@ -2947,6 +2916,14 @@ export namespace ASL {
     ],
   });
 
+  export const booleanEqualsPath = (
+    Variable: string,
+    path: string
+  ): Condition => ({
+    BooleanEqualsPath: path,
+    Variable,
+  });
+
   export const booleanEquals = (
     Variable: string,
     value: boolean
@@ -2954,6 +2931,212 @@ export namespace ASL {
     BooleanEquals: value,
     Variable,
   });
+
+  // for != use not(equals())
+  export const VALUE_COMPARISONS: Record<
+    "==" | ">" | ">=" | "<=" | "<",
+    Record<"string" | "boolean" | "number", keyof Condition | undefined>
+  > = {
+    "==": {
+      string: "StringEquals",
+      boolean: "BooleanEquals",
+      number: "NumericEquals",
+    },
+    "<": {
+      string: "StringLessThan",
+      boolean: undefined,
+      number: "NumericLessThan",
+    },
+    "<=": {
+      string: "StringLessThanEquals",
+      boolean: undefined,
+      number: "NumericLessThanEquals",
+    },
+    ">": {
+      string: "StringGreaterThan",
+      boolean: undefined,
+      number: "NumericGreaterThan",
+    },
+    ">=": {
+      string: "StringGreaterThanEquals",
+      boolean: undefined,
+      number: "NumericGreaterThanEquals",
+    },
+  };
+
+  export const compareValueOfType = (
+    variable: string,
+    operation: keyof typeof VALUE_COMPARISONS,
+    value: string | number | boolean
+  ): Condition => {
+    const comparison =
+      VALUE_COMPARISONS[operation][
+        typeof value as "string" | "number" | "boolean"
+      ];
+
+    if (!comparison) {
+      return ASL.falseCondition();
+    }
+
+    return {
+      Variable: variable,
+      [comparison]: value,
+    };
+  };
+
+  export const comparePathOfType = (
+    variable: string,
+    operation: keyof typeof VALUE_COMPARISONS,
+    path: string,
+    type: "string" | "number" | "boolean"
+  ): Condition => {
+    const comparison = VALUE_COMPARISONS[operation][type];
+
+    if (!comparison) {
+      return ASL.falseCondition();
+    }
+
+    return {
+      Variable: variable,
+      [`${comparison}Path`]: path,
+    };
+  };
+
+  export const compare = (
+    left: Variable,
+    right: AslOutput,
+    operator: keyof typeof VALUE_COMPARISONS | "!="
+  ): Condition => {
+    if (
+      operator === "==" ||
+      operator === ">" ||
+      operator === "<" ||
+      operator === ">=" ||
+      operator === "<="
+    ) {
+      const condition = ASL.or(
+        ASL.nullCompare(left, right, operator),
+        ASL.stringCompare(left, right, operator),
+        ASL.booleanCompare(left, right, operator),
+        ASL.numberCompare(left, right, operator)
+      );
+
+      if (isVariable(right)) {
+        ASL.or(
+          // a === b while a and b are both not defined
+          ASL.not(
+            ASL.and(ASL.isPresent(left.jsonPath), ASL.isPresent(right.jsonPath))
+          ),
+          // a !== undefined && b !== undefined
+          ASL.and(
+            ASL.isPresent(left.jsonPath),
+            ASL.isPresent(right.jsonPath),
+            // && a [op] b
+            condition
+          )
+        );
+      }
+      return ASL.and(ASL.isPresent(left.jsonPath), condition);
+    } else if (operator === "!=") {
+      return ASL.not(ASL.compare(left, right, "=="));
+    }
+
+    assertNever(operator);
+  };
+
+  // Assumes the variable(s) are present and not null
+  export const stringCompare = (
+    left: Variable,
+    right: AslOutput,
+    operator: "==" | ">" | "<" | "<=" | ">="
+  ) => {
+    if (isVariable(right) || typeof right.value === "string") {
+      return ASL.and(
+        ASL.isString(left.jsonPath),
+        isVariable(right)
+          ? ASL.comparePathOfType(
+              left.jsonPath,
+              operator,
+              right.jsonPath,
+              "string"
+            )
+          : ASL.compareValueOfType(
+              left.jsonPath,
+              operator,
+              right.value as string
+            )
+      );
+    }
+    return undefined;
+  };
+
+  export const numberCompare = (
+    left: Variable,
+    right: AslOutput,
+    operator: "==" | ">" | "<" | "<=" | ">="
+  ) => {
+    if (isVariable(right) || typeof right.value === "number") {
+      return ASL.and(
+        ASL.isNumeric(left.jsonPath),
+        isVariable(right)
+          ? ASL.comparePathOfType(
+              left.jsonPath,
+              operator,
+              right.jsonPath,
+              "number"
+            )
+          : ASL.compareValueOfType(
+              left.jsonPath,
+              operator,
+              right.value as number
+            )
+      );
+    }
+    return undefined;
+  };
+
+  export const booleanCompare = (
+    left: Variable,
+    right: AslOutput,
+    operator: "==" | ">" | "<" | "<=" | ">="
+  ) => {
+    if (isVariable(right) || typeof right.value === "boolean") {
+      return ASL.and(
+        ASL.isBoolean(left.jsonPath),
+        isVariable(right)
+          ? ASL.comparePathOfType(
+              left.jsonPath,
+              operator,
+              right.jsonPath,
+              "boolean"
+            )
+          : ASL.compareValueOfType(
+              left.jsonPath,
+              operator,
+              right.value as boolean
+            )
+      );
+    }
+    return undefined;
+  };
+
+  export const nullCompare = (
+    left: Variable,
+    right: AslOutput,
+    operator: "==" | ">" | "<" | "<=" | ">="
+  ) => {
+    if (operator === "==") {
+      if (isVariable(right)) {
+        return ASL.and(ASL.isNull(left.jsonPath), ASL.isNull(right.jsonPath));
+      } else if (right.value === null) {
+        return ASL.isNull(left.jsonPath);
+      }
+    }
+    return undefined;
+  };
+
+  export const falseCondition = () => ASL.isNull("$$.Execution.Id");
+  export const trueCondition = () => ASL.isNotNull("$$.Execution.Id");
 
   /**
    * Normalized an ASL state to just the output (constant or variable).

@@ -524,6 +524,157 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
     { a: true, b: false, v: "val", nv: undefined }
   );
 
+  test(
+    "binaryOps comparison",
+    (parent) => {
+      return new StepFunction(parent, "sfn2", async (input) => {
+        return {
+          constantStringEquals: "a" === "a", // true
+          constantToVarStringEquals: input.v === "val", // true
+          varToConstantStringEquals: "val2" === input.v, // false
+          varToVarStringEquals: input.v === input.v, // true
+          constantStringNotEquals: "a" !== "a", // false
+          constantToVarStringNotEquals: input.v !== "val", // false
+          varToConstantStringNotEquals: "val2" !== input.v, // true
+          varToVarStringNotEquals: input.v !== input.v, // false
+          constantStringLess: "a" < "a", // false
+          constantToVarStringLess: input.v < "val2", // true
+          varToConstantStringLess: "val2" < input.v, // false
+          varToVarStringLess: input.v < input.v, // false
+          constantStringLessEquals: "a" <= "a", // true
+          constantToVarStringLessEquals: input.v <= "val2", // true
+          varToConstantStringLessEquals: "val2" <= input.v, // false
+          varToVarStringLessEquals: input.v <= input.v, // true
+          constantStringGreater: "a" > "a", // false
+          constantToVarStringGreater: input.v > "val2", // false
+          varToConstantStringGreater: "val2" > input.v, // true
+          varToVarStringGreaterE: input.v > input.v, // false
+          constantStringGreaterEquals: "a" >= "a", // true
+          constantToVarStringGreaterEquals: input.v >= "val2", // false
+          varToConstantStringGreaterEquals: "val2" >= input.v, // true
+          varToVarStringGreaterEquals: input.v >= input.v, // true
+          constantNumberEquals: 1 === 1, // true
+          constantToVarNumberEquals: input.n === 2, // false
+          varToConstantNumberEquals: 3 === input.n, // false
+          varToVarNumberEquals: input.n === input.n, // true
+          constantNumberNotEquals: 1 !== 1, // false
+          constantToVarNumberNotEquals: input.n !== 2, // true
+          varToConstantNumberNotEquals: 3 !== input.n, // true
+          varToVarNumberNotEquals: input.n !== input.n, // false
+          constantNumberLess: 1 < 1, // false
+          constantToVarNumberLess: input.n < 3, // true
+          varToConstantNumberLess: 3 < input.n, // false
+          varToVarNumberLess: input.n < input.n, // false
+          constantNumberLessEquals: 1 <= 1, // true
+          constantToVarNumberLessEquals: input.n <= 3, // true
+          varToConstantNumberLessEquals: 3 <= input.n, // false
+          varToVarNumberLessEquals: input.n <= input.n, // true
+          constantNumberGreater: 1 > 1, // false
+          constantToVarNumberGreater: input.n > 3, // false
+          varToConstantNumberGreater: 3 > input.n, // true
+          varToVarNumberGreaterE: input.n > input.n, // false
+          constantNumberGreaterEquals: 1 >= 1, // true
+          constantToVarNumberGreaterEquals: input.n >= 3, // false
+          varToConstantNumberGreaterEquals: 3 >= input.n, // true
+          varToVarNumberGreaterEquals: input.n >= input.n, // true
+          constantBooleanEquals: true === true, // true
+          constantToVarBooleanEquals: input.a === true, // true
+          varToConstantBooleanEquals: false === input.a, // false
+          varToVarBooleanEquals: input.a === input.a, // true
+          constantBooleanNotEquals: true !== true, // false
+          constantToVarBooleanNotEquals: input.a !== true, // false
+          varToConstantBooleanNotEquals: false !== input.a, // true
+          varToVarBooleanNotEquals: input.a !== input.a, // false
+          constantNullEquals: null === null, // true
+          constantToVarNullEquals: input.nv === null, // true
+          varToConstantNullEquals: input.v === input.nv, // false
+          varToVarNullEquals: input.nv === input.nv, // true
+          constantNullNotEquals: null !== null, // false
+          constantToVarNullNotEquals: input.nv !== null, // false
+          varToConstantNullNotEquals: input.v !== input.nv, // true
+          varToVarNullNotEquals: input.nv !== input.nv, // false
+          constantInConstant: "a" in { a: "val" }, // true
+          constantInVar: "a" in input.obj, // true
+          constantNotInVar: "b" in input.obj, // false
+          // varInVar: input.v in input.obj, // false - unsupported
+          // varInConstant: input.v in { a: "val" }, // false - unsupported
+        };
+      });
+    },
+    {
+      constantStringEquals: true,
+      constantToVarStringEquals: true,
+      varToConstantStringEquals: false,
+      varToVarStringEquals: true,
+      constantStringNotEquals: false,
+      constantToVarStringNotEquals: false,
+      varToConstantStringNotEquals: true,
+      varToVarStringNotEquals: false,
+      constantStringLess: false,
+      constantToVarStringLess: true,
+      varToConstantStringLess: false,
+      varToVarStringLess: false,
+      constantStringLessEquals: true,
+      constantToVarStringLessEquals: true,
+      varToConstantStringLessEquals: false,
+      varToVarStringLessEquals: true,
+      constantStringGreater: false,
+      constantToVarStringGreater: false,
+      varToConstantStringGreater: true,
+      varToVarStringGreaterE: false,
+      constantStringGreaterEquals: true,
+      constantToVarStringGreaterEquals: false,
+      varToConstantStringGreaterEquals: true,
+      varToVarStringGreaterEquals: true,
+      constantNumberEquals: true,
+      constantToVarNumberEquals: false,
+      varToConstantNumberEquals: false,
+      varToVarNumberEquals: true,
+      constantNumberNotEquals: false,
+      constantToVarNumberNotEquals: true,
+      varToConstantNumberNotEquals: true,
+      varToVarNumberNotEquals: false,
+      constantNumberLess: false,
+      constantToVarNumberLess: true,
+      varToConstantNumberLess: false,
+      varToVarNumberLess: false,
+      constantNumberLessEquals: true,
+      constantToVarNumberLessEquals: true,
+      varToConstantNumberLessEquals: false,
+      varToVarNumberLessEquals: true,
+      constantNumberGreater: false,
+      constantToVarNumberGreater: false,
+      varToConstantNumberGreater: true,
+      varToVarNumberGreaterE: false,
+      constantNumberGreaterEquals: true,
+      constantToVarNumberGreaterEquals: false,
+      varToConstantNumberGreaterEquals: true,
+      varToVarNumberGreaterEquals: true,
+      constantBooleanEquals: true,
+      constantToVarBooleanEquals: true,
+      varToConstantBooleanEquals: false,
+      varToVarBooleanEquals: true,
+      constantBooleanNotEquals: false,
+      constantToVarBooleanNotEquals: false,
+      varToConstantBooleanNotEquals: true,
+      varToVarBooleanNotEquals: false,
+      constantNullEquals: true,
+      constantToVarNullEquals: true,
+      varToConstantNullEquals: false,
+      varToVarNullEquals: true,
+      constantNullNotEquals: false,
+      constantToVarNullNotEquals: false,
+      varToConstantNullNotEquals: true,
+      varToVarNullNotEquals: false,
+      constantInConstant: true,
+      constantInVar: true,
+      // varInVar: false,
+      // varInConstant: false,
+      constantNotInVar: false,
+    },
+    { a: true, n: 1, v: "val", nv: null, obj: { a: "x" } }
+  );
+
   // localstack sends and empty object to lambda instead of boolean/numbers
   // https://github.com/localstack/localstack/issues/6362
   test.skip(
@@ -657,5 +808,38 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
     },
     "hi",
     { str: "hi" }
+  );
+
+  test(
+    "typeof",
+    (parent) => {
+      return new StepFunction(parent, "fn", async (input) => {
+        return {
+          isString: typeof input.str === "string",
+          stringType: typeof input.str,
+          isBool: typeof input.bool === "boolean",
+          booleanType: typeof input.bool,
+          isNumber: typeof input.num === "number",
+          numberType: typeof input.num,
+          isObject: typeof input.obj === "object",
+          objectType: typeof input.obj,
+          arrType: typeof input.arr,
+          //bigintType: typeof BigInt(0),
+        };
+      });
+    },
+    {
+      isString: true,
+      stringType: "string",
+      isBool: true,
+      booleanType: "boolean",
+      isNumber: true,
+      numberType: "number",
+      isObject: true,
+      objectType: "object",
+      arrType: "object",
+      // bigintType: "number",
+    },
+    { str: "hi", bool: true, num: 1, obj: {}, arr: [] }
   );
 });

@@ -86,7 +86,7 @@ test("return ElementAccessExpr", () => {
     stack,
     "fn",
     (input: { input: { id: string } }) => {
-      return input.input["id"];
+      return input.input.id;
     }
   ).definition;
 
@@ -457,6 +457,45 @@ test("if (typeof x === ??)", () => {
   expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
+test("if (?? === typeof x)", () => {
+  const { stack } = initStepFunctionApp();
+  const definition = new ExpressStepFunction<{ id: string }, string | null>(
+    stack,
+    "fn",
+    (input) => {
+      if (input.id === undefined) {
+        return "null";
+      } else if ("undefined" === typeof input.id) {
+        return "undefined";
+      } else if ("string" === typeof input.id) {
+        return "string";
+      } else if ("boolean" === typeof input.id) {
+        return "boolean";
+      } else if ("number" === typeof input.id) {
+        return "number";
+      } else if ("bigint" === typeof input.id) {
+        return "bigint";
+      }
+      return null;
+    }
+  ).definition;
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+});
+
+test("return typeof x", () => {
+  const { stack } = initStepFunctionApp();
+  const definition = new ExpressStepFunction<{ id: string }, string | null>(
+    stack,
+    "fn",
+    (input) => {
+      return typeof input.id;
+    }
+  ).definition;
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+});
+
 let stack: Stack;
 
 beforeEach(() => {
@@ -526,31 +565,6 @@ test("put multiple event bus events", () => {
           },
         }
       );
-    }
-  ).definition;
-
-  expect(normalizeDefinition(definition)).toMatchSnapshot();
-});
-
-test("if (typeof x !== ??)", () => {
-  const definition = new ExpressStepFunction<{ id: any }, string | null>(
-    stack,
-    "fn",
-    (input) => {
-      if (input.id !== undefined) {
-        return "null";
-      } else if ("undefined" !== typeof input.id) {
-        return "undefined";
-      } else if (typeof input.id !== "string") {
-        return "string";
-      } else if (typeof input.id !== "boolean") {
-        return "boolean";
-      } else if (typeof input.id !== "number") {
-        return "number";
-      } else if (typeof input.id !== "bigint") {
-        return "bigint";
-      }
-      return null;
     }
   ).definition;
 

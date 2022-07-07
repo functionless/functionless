@@ -2263,6 +2263,142 @@ Object {
 }
 `;
 
+exports[`if (?? === typeof x) 1`] = `
+Object {
+  "StartAt": "Initialize Functionless Context",
+  "States": Object {
+    "Initialize Functionless Context": Object {
+      "Next": "if(input.id == undefined)",
+      "OutputPath": "$",
+      "Parameters": Object {
+        "input.$": "$",
+        "null": null,
+      },
+      "ResultPath": "$.fnl_context",
+      "Type": "Pass",
+    },
+    "if(input.id == undefined)": Object {
+      "Choices": Array [
+        Object {
+          "Next": "return \\"null\\"",
+          "Or": Array [
+            Object {
+              "IsPresent": false,
+              "Variable": "$.fnl_context.input.id",
+            },
+            Object {
+              "IsNull": true,
+              "Variable": "$.fnl_context.input.id",
+            },
+          ],
+        },
+        Object {
+          "IsPresent": false,
+          "Next": "return \\"undefined\\"",
+          "Variable": "$.fnl_context.input.id",
+        },
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.fnl_context.input.id",
+            },
+            Object {
+              "IsString": true,
+              "Variable": "$.fnl_context.input.id",
+            },
+          ],
+          "Next": "return \\"string\\"",
+        },
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.fnl_context.input.id",
+            },
+            Object {
+              "IsBoolean": true,
+              "Variable": "$.fnl_context.input.id",
+            },
+          ],
+          "Next": "return \\"boolean\\"",
+        },
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.fnl_context.input.id",
+            },
+            Object {
+              "IsNumeric": true,
+              "Variable": "$.fnl_context.input.id",
+            },
+          ],
+          "Next": "return \\"number\\"",
+        },
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.fnl_context.input.id",
+            },
+            Object {
+              "IsNumeric": true,
+              "Variable": "$.fnl_context.input.id",
+            },
+          ],
+          "Next": "return \\"bigint\\"",
+        },
+      ],
+      "Default": "return null",
+      "Type": "Choice",
+    },
+    "return \\"bigint\\"": Object {
+      "End": true,
+      "Result": "bigint",
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "return \\"boolean\\"": Object {
+      "End": true,
+      "Result": "boolean",
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "return \\"null\\"": Object {
+      "End": true,
+      "Result": "null",
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "return \\"number\\"": Object {
+      "End": true,
+      "Result": "number",
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "return \\"string\\"": Object {
+      "End": true,
+      "Result": "string",
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "return \\"undefined\\"": Object {
+      "End": true,
+      "Result": "undefined",
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "return null": Object {
+      "End": true,
+      "InputPath": "$.fnl_context.null",
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+  },
+}
+`;
+
 exports[`if (typeof x !== ??) 1`] = `
 Object {
   "StartAt": "Initialize Functionless Context",
@@ -4929,6 +5065,111 @@ Object {
       "Resource": "__REPLACED_TOKEN",
       "ResultPath": "$.heap1",
       "Type": "Task",
+    },
+  },
+}
+`;
+
+exports[`return typeof x 1`] = `
+Object {
+  "StartAt": "Initialize Functionless Context",
+  "States": Object {
+    "1__return typeof input.id": Object {
+      "End": true,
+      "InputPath": "$.heap0",
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "Initialize Functionless Context": Object {
+      "Next": "return typeof input.id",
+      "OutputPath": "$",
+      "Parameters": Object {
+        "input.$": "$",
+        "null": null,
+      },
+      "ResultPath": "$.fnl_context",
+      "Type": "Pass",
+    },
+    "boolean__return typeof input.id": Object {
+      "Next": "1__return typeof input.id",
+      "Result": "boolean",
+      "ResultPath": "$.heap0",
+      "Type": "Pass",
+    },
+    "number__return typeof input.id": Object {
+      "Next": "1__return typeof input.id",
+      "Result": "number",
+      "ResultPath": "$.heap0",
+      "Type": "Pass",
+    },
+    "object__return typeof input.id": Object {
+      "Next": "1__return typeof input.id",
+      "Result": "object",
+      "ResultPath": "$.heap0",
+      "Type": "Pass",
+    },
+    "return typeof input.id": Object {
+      "Choices": Array [
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.fnl_context.input.id",
+            },
+            Object {
+              "IsString": true,
+              "Variable": "$.fnl_context.input.id",
+            },
+          ],
+          "Next": "string__return typeof input.id",
+        },
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.fnl_context.input.id",
+            },
+            Object {
+              "IsBoolean": true,
+              "Variable": "$.fnl_context.input.id",
+            },
+          ],
+          "Next": "boolean__return typeof input.id",
+        },
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.fnl_context.input.id",
+            },
+            Object {
+              "IsNumeric": true,
+              "Variable": "$.fnl_context.input.id",
+            },
+          ],
+          "Next": "number__return typeof input.id",
+        },
+        Object {
+          "IsPresent": true,
+          "Next": "object__return typeof input.id",
+          "Variable": "$.fnl_context.input.id",
+        },
+      ],
+      "Default": "1__return typeof input.id",
+      "Type": "Choice",
+      "default": "undefined",
+    },
+    "string__return typeof input.id": Object {
+      "Next": "1__return typeof input.id",
+      "Result": "string",
+      "ResultPath": "$.heap0",
+      "Type": "Pass",
+    },
+    "undefined__return typeof input.id": Object {
+      "Next": "1__return typeof input.id",
+      "Result": "undefined",
+      "ResultPath": "$.heap0",
+      "Type": "Pass",
     },
   },
 }
