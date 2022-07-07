@@ -92,8 +92,11 @@ export namespace $SFN {
             SecondsPath: secondsOutput.jsonPath,
           });
         }
-        // TODO:
-        throw new Error("");
+
+        throw new SynthError(
+          ErrorCodes.Invalid_Input,
+          "Expected the first parameter (seconds) to $SFN.waitFor to a number or a variable."
+        );
       });
     },
   });
@@ -134,8 +137,8 @@ export namespace $SFN {
         }
 
         throw new SynthError(
-          ErrorCodes.Unexpected_Error,
-          "Expected timestamp parameter to be a string or a reference."
+          ErrorCodes.Invalid_Input,
+          "Expected first parameter (timestamp) parameter to $SFN.waitUntil to be a string or a reference."
         );
       });
     },

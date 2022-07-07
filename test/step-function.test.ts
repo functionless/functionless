@@ -1602,6 +1602,15 @@ test("list.filter(item => item.length > 2).map(item => task(item))", () => {
   expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
+test("[1,2,3,4].filter(item => item.length > 2)", () => {
+  const { stack } = initStepFunctionApp();
+  const definition = new ExpressStepFunction(stack, "fn", async () => {
+    return [1, 2, 3, 4].filter((item) => item > 2);
+  }).definition;
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+});
+
 // https://github.com/functionless/functionless/issues/209
 test("`template me ${input.value}`", () => {
   const { stack } = initStepFunctionApp();

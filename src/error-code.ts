@@ -1036,6 +1036,19 @@ export namespace ErrorCodes {
     type: ErrorType.ERROR,
     title: "StepFunction property names must be constant",
   };
+
+  /**
+   * Invalid Input
+   *
+   * Generic error code for when the user provided an unexpected input as documented and reflected in the types.
+   *
+   * See the error message for more details.
+   */
+  export const Invalid_Input: ErrorCode = {
+    code: 10027,
+    type: ErrorType.ERROR,
+    title: "Invalid Input",
+  };
 }
 
 // to prevent the closure serializer from trying to import all of functionless.

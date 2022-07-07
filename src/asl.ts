@@ -1403,8 +1403,11 @@ export class ASL {
           try {
             // first try to implement filter optimally with JSON Path
             return this.filterToJsonPath(expr);
-          } catch {
-            throw new Error(".filter with sub-tasks are not yet supported");
+          } catch (e) {
+            throw new Error(
+              ".filter with sub-tasks are not yet supported: " +
+                (<Error>e).message
+            );
           }
         }
       } else if (isPromiseAll(expr)) {
@@ -1751,8 +1754,7 @@ export class ASL {
       })();
 
       return typeof accessedValue === "string" &&
-        (accessedValue.startsWith("$") ||
-          value.value[field].startsWith("States."))
+        (accessedValue.startsWith("$") || accessedValue.startsWith("States."))
         ? { jsonPath: accessedValue }
         : {
             value: accessedValue,
@@ -2163,15 +2165,40 @@ export class ASL {
       );
     };
 
-    const left = this.eval(expr.expr.expr);
-    const leftOutput = ASLGraph.getAslStateOutput(left);
+    return this.evalExpr(expr.expr.expr, (leftOutput) => {
+      if (
+        !ASLGraph.isJsonPath(leftOutput) &&
+        !Array.isArray(leftOutput.value)
+      ) {
+        throw new SynthError(
+          ErrorCodes.Unexpected_Error,
+          "Expected filter to be called on a literal array or reference to one."
+        );
+      }
 
-    if (!ASLGraph.isJsonPath(leftOutput)) {
-      throw Error("");
-    }
+      const varRef = ASLGraph.isJsonPath(leftOutput)
+        ? leftOutput.jsonPath
+        : this.randomHeap();
 
-    return ASLGraph.updateAslStateOutput(left, {
-      jsonPath: `${leftOutput.jsonPath}[?(${toFilterCondition(stmt.expr)})]`,
+      const output = {
+        jsonPath: `${varRef}[?(${toFilterCondition(stmt.expr)})]`,
+      };
+
+      return ASLGraph.isJsonPath(leftOutput)
+        ? // if we get a jsonPath back, just return the updated jsonPath
+          output
+        : // if we got back a constant array, return the array in a jsonPath variable with correct output
+          {
+            ...ASLGraph.applyConstantOrVariableToPass(
+              {
+                Type: "Pass",
+                Next: ASLGraph.DeferNext,
+                ResultPath: varRef,
+              },
+              leftOutput
+            ),
+            output: output,
+          };
     });
   }
 
@@ -2550,8 +2577,6 @@ export namespace ASLGraph {
    * A literal value of type string, number, boolean, object, or null.
    *
    * If this is an Object, the object may contain nested JsonPaths as denoted by `containsJsonPath`.
-   *
-   * Arrays should always be turned into {@link JsonPath} using a {@link Pass} state.
    */
   export interface Value {
     /**
@@ -2561,7 +2586,7 @@ export namespace ASLGraph {
      * when false use Result in a Pass State instead of Parameters
      */
     containsJsonPath: boolean;
-    value: string | number | null | boolean | Record<string, any>;
+    value: string | number | null | boolean | Record<string, any> | any[];
   }
 
   /**
