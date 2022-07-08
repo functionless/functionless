@@ -110,10 +110,12 @@ export function validate(
     node: typescript.Node
   ): typescript.Diagnostic[] {
     if (
-      (ts.isBinaryExpression(node) &&
-        isArithmeticToken(node.operatorToken.kind) &&
-        !checker.isConstant(node)) ||
-      (ts.isPrefixUnaryExpression(node) && !checker.isConstant(node))
+      ((ts.isBinaryExpression(node) &&
+        isArithmeticToken(node.operatorToken.kind)) ||
+        ((ts.isPrefixUnaryExpression(node) ||
+          ts.isPostfixUnaryExpression(node)) &&
+          isArithmeticToken(node.operator))) &&
+      !checker.isConstant(node)
     ) {
       return [
         newError(

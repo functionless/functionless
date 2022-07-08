@@ -499,10 +499,19 @@ export function makeFunctionlessChecker(
 }
 
 const ArithmeticOperators = [
-  ts.SyntaxKind.PlusToken,
-  ts.SyntaxKind.MinusToken,
-  ts.SyntaxKind.AsteriskEqualsToken,
-  ts.SyntaxKind.SlashToken,
+  ts.SyntaxKind.PlusToken, // +
+  ts.SyntaxKind.MinusToken, // -
+  ts.SyntaxKind.AsteriskToken, // *
+  ts.SyntaxKind.SlashToken, // /
+  ts.SyntaxKind.PercentToken, // %
+  ts.SyntaxKind.PlusEqualsToken, // +=
+  ts.SyntaxKind.MinusEqualsToken, // -=
+  ts.SyntaxKind.AsteriskEqualsToken, // *=
+  ts.SyntaxKind.SlashEqualsToken, // /=
+  ts.SyntaxKind.PercentEqualsToken, // %=
+  ts.SyntaxKind.AsteriskAsteriskToken, // **
+  ts.SyntaxKind.MinusMinusToken, // --
+  ts.SyntaxKind.PlusPlusToken, // ++
 ] as const;
 
 export type ArithmeticToken = typeof ArithmeticOperators[number];

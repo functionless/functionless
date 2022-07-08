@@ -58,6 +58,7 @@ new StepFunction(stack, "1 + 2", () => 1 + 2);
 new StepFunction(stack, "11 % 2", () => 11 % 2);
 new StepFunction(stack, "-1", () => -1);
 new StepFunction(stack, "(1 + 2)", () => 1 + 2);
+new StepFunction(stack, '!"hello"', () => !"hello");
 new StepFunction(stack, '("hello")', () => "hello");
 new StepFunction(stack, '("hello" + " world")', () => "hello" + " world");
 new StepFunction(stack, '("hello" + 1)', () => "hello" + 1);

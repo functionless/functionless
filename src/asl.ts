@@ -2332,7 +2332,7 @@ export class ASL {
         // TODO: more than just unary not... - https://github.com/functionless/functionless/issues/232
         if (expr.op === "!") {
           return {
-            Not: localToCondition(expr),
+            Not: localToCondition(expr.expr),
           };
         } else if (expr.op === "++" || expr.op === "--" || expr.op === "-") {
           throw new SynthError(

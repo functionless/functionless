@@ -89,6 +89,3651 @@ Object {
 }
 `;
 
+exports[`binary and unary comparison 1`] = `
+Object {
+  "StartAt": "Initialize Functionless Context",
+  "States": Object {
+    "!false": Object {
+      "Choices": Array [
+        Object {
+          "Next": "assignTrue__!false",
+          "Not": Object {
+            "IsPresent": true,
+            "Variable": "$.0_false",
+          },
+        },
+      ],
+      "Default": "assignFalse__!false",
+      "Type": "Choice",
+    },
+    "!input.a": Object {
+      "Choices": Array [
+        Object {
+          "Next": "assignTrue__!input.a",
+          "Not": Object {
+            "And": Array [
+              Object {
+                "IsPresent": true,
+                "Variable": "$.fnl_context.input.a",
+              },
+              Object {
+                "IsNull": false,
+                "Variable": "$.fnl_context.input.a",
+              },
+              Object {
+                "Or": Array [
+                  Object {
+                    "And": Array [
+                      Object {
+                        "IsString": true,
+                        "Variable": "$.fnl_context.input.a",
+                      },
+                      Object {
+                        "Not": Object {
+                          "And": Array [
+                            Object {
+                              "IsString": true,
+                              "Variable": "$.fnl_context.input.a",
+                            },
+                            Object {
+                              "StringEquals": "",
+                              "Variable": "$.fnl_context.input.a",
+                            },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                  Object {
+                    "And": Array [
+                      Object {
+                        "IsNumeric": true,
+                        "Variable": "$.fnl_context.input.a",
+                      },
+                      Object {
+                        "Not": Object {
+                          "And": Array [
+                            Object {
+                              "IsNumeric": true,
+                              "Variable": "$.fnl_context.input.a",
+                            },
+                            Object {
+                              "NumericEquals": 0,
+                              "Variable": "$.fnl_context.input.a",
+                            },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                  Object {
+                    "And": Array [
+                      Object {
+                        "IsBoolean": true,
+                        "Variable": "$.fnl_context.input.a",
+                      },
+                      Object {
+                        "BooleanEquals": true,
+                        "Variable": "$.fnl_context.input.a",
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        },
+      ],
+      "Default": "assignFalse__!input.a",
+      "Type": "Choice",
+    },
+    "!input.n": Object {
+      "Choices": Array [
+        Object {
+          "Next": "assignTrue__!input.n",
+          "Not": Object {
+            "And": Array [
+              Object {
+                "IsPresent": true,
+                "Variable": "$.fnl_context.input.n",
+              },
+              Object {
+                "IsNull": false,
+                "Variable": "$.fnl_context.input.n",
+              },
+              Object {
+                "Or": Array [
+                  Object {
+                    "And": Array [
+                      Object {
+                        "IsString": true,
+                        "Variable": "$.fnl_context.input.n",
+                      },
+                      Object {
+                        "Not": Object {
+                          "And": Array [
+                            Object {
+                              "IsString": true,
+                              "Variable": "$.fnl_context.input.n",
+                            },
+                            Object {
+                              "StringEquals": "",
+                              "Variable": "$.fnl_context.input.n",
+                            },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                  Object {
+                    "And": Array [
+                      Object {
+                        "IsNumeric": true,
+                        "Variable": "$.fnl_context.input.n",
+                      },
+                      Object {
+                        "Not": Object {
+                          "And": Array [
+                            Object {
+                              "IsNumeric": true,
+                              "Variable": "$.fnl_context.input.n",
+                            },
+                            Object {
+                              "NumericEquals": 0,
+                              "Variable": "$.fnl_context.input.n",
+                            },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                  Object {
+                    "And": Array [
+                      Object {
+                        "IsBoolean": true,
+                        "Variable": "$.fnl_context.input.n",
+                      },
+                      Object {
+                        "BooleanEquals": true,
+                        "Variable": "$.fnl_context.input.n",
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        },
+      ],
+      "Default": "assignFalse__!input.n",
+      "Type": "Choice",
+    },
+    "!input.nv": Object {
+      "Choices": Array [
+        Object {
+          "Next": "assignTrue__!input.nv",
+          "Not": Object {
+            "And": Array [
+              Object {
+                "IsPresent": true,
+                "Variable": "$.fnl_context.input.nv",
+              },
+              Object {
+                "IsNull": false,
+                "Variable": "$.fnl_context.input.nv",
+              },
+              Object {
+                "Or": Array [
+                  Object {
+                    "And": Array [
+                      Object {
+                        "IsString": true,
+                        "Variable": "$.fnl_context.input.nv",
+                      },
+                      Object {
+                        "Not": Object {
+                          "And": Array [
+                            Object {
+                              "IsString": true,
+                              "Variable": "$.fnl_context.input.nv",
+                            },
+                            Object {
+                              "StringEquals": "",
+                              "Variable": "$.fnl_context.input.nv",
+                            },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                  Object {
+                    "And": Array [
+                      Object {
+                        "IsNumeric": true,
+                        "Variable": "$.fnl_context.input.nv",
+                      },
+                      Object {
+                        "Not": Object {
+                          "And": Array [
+                            Object {
+                              "IsNumeric": true,
+                              "Variable": "$.fnl_context.input.nv",
+                            },
+                            Object {
+                              "NumericEquals": 0,
+                              "Variable": "$.fnl_context.input.nv",
+                            },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                  Object {
+                    "And": Array [
+                      Object {
+                        "IsBoolean": true,
+                        "Variable": "$.fnl_context.input.nv",
+                      },
+                      Object {
+                        "BooleanEquals": true,
+                        "Variable": "$.fnl_context.input.nv",
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        },
+      ],
+      "Default": "assignFalse__!input.nv",
+      "Type": "Choice",
+    },
+    "!input.x": Object {
+      "Choices": Array [
+        Object {
+          "Next": "assignTrue__!input.x",
+          "Not": Object {
+            "And": Array [
+              Object {
+                "IsPresent": true,
+                "Variable": "$.fnl_context.input.x",
+              },
+              Object {
+                "IsNull": false,
+                "Variable": "$.fnl_context.input.x",
+              },
+              Object {
+                "Or": Array [
+                  Object {
+                    "And": Array [
+                      Object {
+                        "IsString": true,
+                        "Variable": "$.fnl_context.input.x",
+                      },
+                      Object {
+                        "Not": Object {
+                          "And": Array [
+                            Object {
+                              "IsString": true,
+                              "Variable": "$.fnl_context.input.x",
+                            },
+                            Object {
+                              "StringEquals": "",
+                              "Variable": "$.fnl_context.input.x",
+                            },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                  Object {
+                    "And": Array [
+                      Object {
+                        "IsNumeric": true,
+                        "Variable": "$.fnl_context.input.x",
+                      },
+                      Object {
+                        "Not": Object {
+                          "And": Array [
+                            Object {
+                              "IsNumeric": true,
+                              "Variable": "$.fnl_context.input.x",
+                            },
+                            Object {
+                              "NumericEquals": 0,
+                              "Variable": "$.fnl_context.input.x",
+                            },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                  Object {
+                    "And": Array [
+                      Object {
+                        "IsBoolean": true,
+                        "Variable": "$.fnl_context.input.x",
+                      },
+                      Object {
+                        "BooleanEquals": true,
+                        "Variable": "$.fnl_context.input.x",
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        },
+      ],
+      "Default": "assignFalse__!input.x",
+      "Type": "Choice",
+    },
+    "\\"a\\" != \\"a\\"": Object {
+      "Choices": Array [
+        Object {
+          "IsNull": true,
+          "Next": "assignTrue__\\"a\\" != \\"a\\"",
+          "Variable": "$$.Execution.Id",
+        },
+      ],
+      "Default": "assignFalse__\\"a\\" != \\"a\\"",
+      "Type": "Choice",
+    },
+    "\\"a\\" < \\"a\\"": Object {
+      "Choices": Array [
+        Object {
+          "IsNull": true,
+          "Next": "assignTrue__\\"a\\" < \\"a\\"",
+          "Variable": "$$.Execution.Id",
+        },
+      ],
+      "Default": "assignFalse__\\"a\\" < \\"a\\"",
+      "Type": "Choice",
+    },
+    "\\"a\\" <= \\"a\\"": Object {
+      "Choices": Array [
+        Object {
+          "IsNull": false,
+          "Next": "assignTrue__\\"a\\" <= \\"a\\"",
+          "Variable": "$$.Execution.Id",
+        },
+      ],
+      "Default": "assignFalse__\\"a\\" <= \\"a\\"",
+      "Type": "Choice",
+    },
+    "\\"a\\" > \\"a\\"": Object {
+      "Choices": Array [
+        Object {
+          "IsNull": true,
+          "Next": "assignTrue__\\"a\\" > \\"a\\"",
+          "Variable": "$$.Execution.Id",
+        },
+      ],
+      "Default": "assignFalse__\\"a\\" > \\"a\\"",
+      "Type": "Choice",
+    },
+    "\\"a\\" >= \\"a\\"": Object {
+      "Choices": Array [
+        Object {
+          "IsNull": false,
+          "Next": "assignTrue__\\"a\\" >= \\"a\\"",
+          "Variable": "$$.Execution.Id",
+        },
+      ],
+      "Default": "assignFalse__\\"a\\" >= \\"a\\"",
+      "Type": "Choice",
+    },
+    "\\"a\\" in input.obj": Object {
+      "Choices": Array [
+        Object {
+          "IsPresent": true,
+          "Next": "assignTrue__\\"a\\" in input.obj",
+          "Variable": "$.fnl_context.input.obj['a']",
+        },
+      ],
+      "Default": "assignFalse__\\"a\\" in input.obj",
+      "Type": "Choice",
+    },
+    "\\"a\\" in {a: \\"val\\"}": Object {
+      "Choices": Array [
+        Object {
+          "IsNull": false,
+          "Next": "assignTrue__\\"a\\" in {a: \\"val\\"}",
+          "Variable": "$$.Execution.Id",
+        },
+      ],
+      "Default": "assignFalse__\\"a\\" in {a: \\"val\\"}",
+      "Type": "Choice",
+    },
+    "\\"b\\" in input.obj": Object {
+      "Choices": Array [
+        Object {
+          "IsPresent": true,
+          "Next": "assignTrue__\\"b\\" in input.obj",
+          "Variable": "$.fnl_context.input.obj['b']",
+        },
+      ],
+      "Default": "assignFalse__\\"b\\" in input.obj",
+      "Type": "Choice",
+    },
+    "\\"val2\\" != input.v": Object {
+      "Choices": Array [
+        Object {
+          "Next": "assignTrue__\\"val2\\" != input.v",
+          "Not": Object {
+            "And": Array [
+              Object {
+                "IsPresent": true,
+                "Variable": "$.fnl_context.input.v",
+              },
+              Object {
+                "And": Array [
+                  Object {
+                    "IsString": true,
+                    "Variable": "$.fnl_context.input.v",
+                  },
+                  Object {
+                    "StringEquals": "val2",
+                    "Variable": "$.fnl_context.input.v",
+                  },
+                ],
+              },
+            ],
+          },
+        },
+      ],
+      "Default": "assignFalse__\\"val2\\" != input.v",
+      "Type": "Choice",
+    },
+    "\\"val2\\" < input.v": Object {
+      "Choices": Array [
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.fnl_context.input.v",
+            },
+            Object {
+              "And": Array [
+                Object {
+                  "IsString": true,
+                  "Variable": "$.fnl_context.input.v",
+                },
+                Object {
+                  "StringGreaterThan": "val2",
+                  "Variable": "$.fnl_context.input.v",
+                },
+              ],
+            },
+          ],
+          "Next": "assignTrue__\\"val2\\" < input.v",
+        },
+      ],
+      "Default": "assignFalse__\\"val2\\" < input.v",
+      "Type": "Choice",
+    },
+    "\\"val2\\" <= input.v": Object {
+      "Choices": Array [
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.fnl_context.input.v",
+            },
+            Object {
+              "And": Array [
+                Object {
+                  "IsString": true,
+                  "Variable": "$.fnl_context.input.v",
+                },
+                Object {
+                  "StringGreaterThanEquals": "val2",
+                  "Variable": "$.fnl_context.input.v",
+                },
+              ],
+            },
+          ],
+          "Next": "assignTrue__\\"val2\\" <= input.v",
+        },
+      ],
+      "Default": "assignFalse__\\"val2\\" <= input.v",
+      "Type": "Choice",
+    },
+    "\\"val2\\" == input.v": Object {
+      "Choices": Array [
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.fnl_context.input.v",
+            },
+            Object {
+              "And": Array [
+                Object {
+                  "IsString": true,
+                  "Variable": "$.fnl_context.input.v",
+                },
+                Object {
+                  "StringEquals": "val2",
+                  "Variable": "$.fnl_context.input.v",
+                },
+              ],
+            },
+          ],
+          "Next": "assignTrue__\\"val2\\" == input.v",
+        },
+      ],
+      "Default": "assignFalse__\\"val2\\" == input.v",
+      "Type": "Choice",
+    },
+    "\\"val2\\" > input.v": Object {
+      "Choices": Array [
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.fnl_context.input.v",
+            },
+            Object {
+              "And": Array [
+                Object {
+                  "IsString": true,
+                  "Variable": "$.fnl_context.input.v",
+                },
+                Object {
+                  "StringLessThan": "val2",
+                  "Variable": "$.fnl_context.input.v",
+                },
+              ],
+            },
+          ],
+          "Next": "assignTrue__\\"val2\\" > input.v",
+        },
+      ],
+      "Default": "assignFalse__\\"val2\\" > input.v",
+      "Type": "Choice",
+    },
+    "\\"val2\\" >= input.v": Object {
+      "Choices": Array [
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.fnl_context.input.v",
+            },
+            Object {
+              "And": Array [
+                Object {
+                  "IsString": true,
+                  "Variable": "$.fnl_context.input.v",
+                },
+                Object {
+                  "StringLessThanEquals": "val2",
+                  "Variable": "$.fnl_context.input.v",
+                },
+              ],
+            },
+          ],
+          "Next": "assignTrue__\\"val2\\" >= input.v",
+        },
+      ],
+      "Default": "assignFalse__\\"val2\\" >= input.v",
+      "Type": "Choice",
+    },
+    "1 != 1": Object {
+      "Choices": Array [
+        Object {
+          "IsNull": true,
+          "Next": "assignTrue__1 != 1",
+          "Variable": "$$.Execution.Id",
+        },
+      ],
+      "Default": "assignFalse__1 != 1",
+      "Type": "Choice",
+    },
+    "1 < 1": Object {
+      "Choices": Array [
+        Object {
+          "IsNull": true,
+          "Next": "assignTrue__1 < 1",
+          "Variable": "$$.Execution.Id",
+        },
+      ],
+      "Default": "assignFalse__1 < 1",
+      "Type": "Choice",
+    },
+    "1 <= 1": Object {
+      "Choices": Array [
+        Object {
+          "IsNull": false,
+          "Next": "assignTrue__1 <= 1",
+          "Variable": "$$.Execution.Id",
+        },
+      ],
+      "Default": "assignFalse__1 <= 1",
+      "Type": "Choice",
+    },
+    "1 == 1": Object {
+      "Choices": Array [
+        Object {
+          "IsNull": false,
+          "Next": "assignTrue__1 == 1",
+          "Variable": "$$.Execution.Id",
+        },
+      ],
+      "Default": "assignFalse__1 == 1",
+      "Type": "Choice",
+    },
+    "1 > 1": Object {
+      "Choices": Array [
+        Object {
+          "IsNull": true,
+          "Next": "assignTrue__1 > 1",
+          "Variable": "$$.Execution.Id",
+        },
+      ],
+      "Default": "assignFalse__1 > 1",
+      "Type": "Choice",
+    },
+    "1 >= 1": Object {
+      "Choices": Array [
+        Object {
+          "IsNull": false,
+          "Next": "assignTrue__1 >= 1",
+          "Variable": "$$.Execution.Id",
+        },
+      ],
+      "Default": "assignFalse__1 >= 1",
+      "Type": "Choice",
+    },
+    "1__return {constantStringEquals: \\"a\\" == \\"a\\", constantToVarStringEquals: inp": Object {
+      "End": true,
+      "Parameters": Object {
+        "constantBooleanEquals.$": "$.heap48",
+        "constantBooleanNotEquals.$": "$.heap52",
+        "constantInConstant.$": "$.heap64",
+        "constantInVar.$": "$.heap65",
+        "constantNot.$": "$.heap67",
+        "constantNotInVar.$": "$.heap66",
+        "constantNullEquals.$": "$.heap56",
+        "constantNullNotEquals.$": "$.heap60",
+        "constantNumberEquals.$": "$.heap24",
+        "constantNumberGreater.$": "$.heap40",
+        "constantNumberGreaterEquals.$": "$.heap44",
+        "constantNumberLess.$": "$.heap32",
+        "constantNumberLessEquals.$": "$.heap36",
+        "constantNumberNotEquals.$": "$.heap28",
+        "constantStringEquals.$": "$.heap0",
+        "constantStringGreater.$": "$.heap16",
+        "constantStringGreaterEquals.$": "$.heap20",
+        "constantStringLess.$": "$.heap8",
+        "constantStringLessEquals.$": "$.heap12",
+        "constantStringNotEquals.$": "$.heap4",
+        "constantToVarBooleanEquals.$": "$.heap49",
+        "constantToVarBooleanNotEquals.$": "$.heap53",
+        "constantToVarNullEquals.$": "$.heap57",
+        "constantToVarNullNotEquals.$": "$.heap61",
+        "constantToVarNumberEquals.$": "$.heap25",
+        "constantToVarNumberGreater.$": "$.heap41",
+        "constantToVarNumberGreaterEquals.$": "$.heap45",
+        "constantToVarNumberLess.$": "$.heap33",
+        "constantToVarNumberLessEquals.$": "$.heap37",
+        "constantToVarNumberNotEquals.$": "$.heap29",
+        "constantToVarStringEquals.$": "$.heap1",
+        "constantToVarStringGreater.$": "$.heap17",
+        "constantToVarStringGreaterEquals.$": "$.heap21",
+        "constantToVarStringLess.$": "$.heap9",
+        "constantToVarStringLessEquals.$": "$.heap13",
+        "constantToVarStringNotEquals.$": "$.heap5",
+        "varNot.$": "$.heap68",
+        "varNotNullFalse.$": "$.heap70",
+        "varNotPresentFalse.$": "$.heap71",
+        "varNotPresentTrue.$": "$.heap69",
+        "varToConstantBooleanEquals.$": "$.heap50",
+        "varToConstantBooleanNotEquals.$": "$.heap54",
+        "varToConstantNullEquals.$": "$.heap58",
+        "varToConstantNullNotEquals.$": "$.heap62",
+        "varToConstantNumberEquals.$": "$.heap26",
+        "varToConstantNumberGreater.$": "$.heap42",
+        "varToConstantNumberGreaterEquals.$": "$.heap46",
+        "varToConstantNumberLess.$": "$.heap34",
+        "varToConstantNumberLessEquals.$": "$.heap38",
+        "varToConstantNumberNotEquals.$": "$.heap30",
+        "varToConstantStringEquals.$": "$.heap2",
+        "varToConstantStringGreater.$": "$.heap18",
+        "varToConstantStringGreaterEquals.$": "$.heap22",
+        "varToConstantStringLess.$": "$.heap10",
+        "varToConstantStringLessEquals.$": "$.heap14",
+        "varToConstantStringNotEquals.$": "$.heap6",
+        "varToVarBooleanEquals.$": "$.heap51",
+        "varToVarBooleanNotEquals.$": "$.heap55",
+        "varToVarNullEquals.$": "$.heap59",
+        "varToVarNullNotEquals.$": "$.heap63",
+        "varToVarNumberEquals.$": "$.heap27",
+        "varToVarNumberGreaterE.$": "$.heap43",
+        "varToVarNumberGreaterEquals.$": "$.heap47",
+        "varToVarNumberLess.$": "$.heap35",
+        "varToVarNumberLessEquals.$": "$.heap39",
+        "varToVarNumberNotEquals.$": "$.heap31",
+        "varToVarStringEquals.$": "$.heap3",
+        "varToVarStringGreaterE.$": "$.heap19",
+        "varToVarStringGreaterEquals.$": "$.heap23",
+        "varToVarStringLess.$": "$.heap11",
+        "varToVarStringLessEquals.$": "$.heap15",
+        "varToVarStringNotEquals.$": "$.heap7",
+      },
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "3 != input.n": Object {
+      "Choices": Array [
+        Object {
+          "Next": "assignTrue__3 != input.n",
+          "Not": Object {
+            "And": Array [
+              Object {
+                "IsPresent": true,
+                "Variable": "$.fnl_context.input.n",
+              },
+              Object {
+                "And": Array [
+                  Object {
+                    "IsNumeric": true,
+                    "Variable": "$.fnl_context.input.n",
+                  },
+                  Object {
+                    "NumericEquals": 3,
+                    "Variable": "$.fnl_context.input.n",
+                  },
+                ],
+              },
+            ],
+          },
+        },
+      ],
+      "Default": "assignFalse__3 != input.n",
+      "Type": "Choice",
+    },
+    "3 < input.n": Object {
+      "Choices": Array [
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.fnl_context.input.n",
+            },
+            Object {
+              "And": Array [
+                Object {
+                  "IsNumeric": true,
+                  "Variable": "$.fnl_context.input.n",
+                },
+                Object {
+                  "NumericGreaterThan": 3,
+                  "Variable": "$.fnl_context.input.n",
+                },
+              ],
+            },
+          ],
+          "Next": "assignTrue__3 < input.n",
+        },
+      ],
+      "Default": "assignFalse__3 < input.n",
+      "Type": "Choice",
+    },
+    "3 <= input.n": Object {
+      "Choices": Array [
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.fnl_context.input.n",
+            },
+            Object {
+              "And": Array [
+                Object {
+                  "IsNumeric": true,
+                  "Variable": "$.fnl_context.input.n",
+                },
+                Object {
+                  "NumericGreaterThanEquals": 3,
+                  "Variable": "$.fnl_context.input.n",
+                },
+              ],
+            },
+          ],
+          "Next": "assignTrue__3 <= input.n",
+        },
+      ],
+      "Default": "assignFalse__3 <= input.n",
+      "Type": "Choice",
+    },
+    "3 == input.n": Object {
+      "Choices": Array [
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.fnl_context.input.n",
+            },
+            Object {
+              "And": Array [
+                Object {
+                  "IsNumeric": true,
+                  "Variable": "$.fnl_context.input.n",
+                },
+                Object {
+                  "NumericEquals": 3,
+                  "Variable": "$.fnl_context.input.n",
+                },
+              ],
+            },
+          ],
+          "Next": "assignTrue__3 == input.n",
+        },
+      ],
+      "Default": "assignFalse__3 == input.n",
+      "Type": "Choice",
+    },
+    "3 > input.n": Object {
+      "Choices": Array [
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.fnl_context.input.n",
+            },
+            Object {
+              "And": Array [
+                Object {
+                  "IsNumeric": true,
+                  "Variable": "$.fnl_context.input.n",
+                },
+                Object {
+                  "NumericLessThan": 3,
+                  "Variable": "$.fnl_context.input.n",
+                },
+              ],
+            },
+          ],
+          "Next": "assignTrue__3 > input.n",
+        },
+      ],
+      "Default": "assignFalse__3 > input.n",
+      "Type": "Choice",
+    },
+    "3 >= input.n": Object {
+      "Choices": Array [
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.fnl_context.input.n",
+            },
+            Object {
+              "And": Array [
+                Object {
+                  "IsNumeric": true,
+                  "Variable": "$.fnl_context.input.n",
+                },
+                Object {
+                  "NumericLessThanEquals": 3,
+                  "Variable": "$.fnl_context.input.n",
+                },
+              ],
+            },
+          ],
+          "Next": "assignTrue__3 >= input.n",
+        },
+      ],
+      "Default": "assignFalse__3 >= input.n",
+      "Type": "Choice",
+    },
+    "Initialize Functionless Context": Object {
+      "Next": "return {constantStringEquals: \\"a\\" == \\"a\\", constantToVarStringEquals: input.",
+      "OutputPath": "$",
+      "Parameters": Object {
+        "input.$": "$",
+        "null": null,
+      },
+      "ResultPath": "$.fnl_context",
+      "Type": "Pass",
+    },
+    "assignFalse__!false": Object {
+      "Next": "!input.a",
+      "Result": false,
+      "ResultPath": "$.heap67",
+      "Type": "Pass",
+    },
+    "assignFalse__!input.a": Object {
+      "Next": "!input.nv",
+      "Result": false,
+      "ResultPath": "$.heap68",
+      "Type": "Pass",
+    },
+    "assignFalse__!input.n": Object {
+      "Next": "!input.x",
+      "Result": false,
+      "ResultPath": "$.heap70",
+      "Type": "Pass",
+    },
+    "assignFalse__!input.nv": Object {
+      "Next": "!input.n",
+      "Result": false,
+      "ResultPath": "$.heap69",
+      "Type": "Pass",
+    },
+    "assignFalse__!input.x": Object {
+      "Next": "1__return {constantStringEquals: \\"a\\" == \\"a\\", constantToVarStringEquals: inp",
+      "Result": false,
+      "ResultPath": "$.heap71",
+      "Type": "Pass",
+    },
+    "assignFalse__\\"a\\" != \\"a\\"": Object {
+      "Next": "input.v != \\"val\\"",
+      "Result": false,
+      "ResultPath": "$.heap4",
+      "Type": "Pass",
+    },
+    "assignFalse__\\"a\\" < \\"a\\"": Object {
+      "Next": "input.v < \\"val2\\"",
+      "Result": false,
+      "ResultPath": "$.heap8",
+      "Type": "Pass",
+    },
+    "assignFalse__\\"a\\" <= \\"a\\"": Object {
+      "Next": "input.v <= \\"val2\\"",
+      "Result": false,
+      "ResultPath": "$.heap12",
+      "Type": "Pass",
+    },
+    "assignFalse__\\"a\\" > \\"a\\"": Object {
+      "Next": "input.v > \\"val2\\"",
+      "Result": false,
+      "ResultPath": "$.heap16",
+      "Type": "Pass",
+    },
+    "assignFalse__\\"a\\" >= \\"a\\"": Object {
+      "Next": "input.v >= \\"val2\\"",
+      "Result": false,
+      "ResultPath": "$.heap20",
+      "Type": "Pass",
+    },
+    "assignFalse__\\"a\\" in input.obj": Object {
+      "Next": "\\"b\\" in input.obj",
+      "Result": false,
+      "ResultPath": "$.heap65",
+      "Type": "Pass",
+    },
+    "assignFalse__\\"a\\" in {a: \\"val\\"}": Object {
+      "Next": "\\"a\\" in input.obj",
+      "Result": false,
+      "ResultPath": "$.heap64",
+      "Type": "Pass",
+    },
+    "assignFalse__\\"b\\" in input.obj": Object {
+      "Next": "!false",
+      "Result": false,
+      "ResultPath": "$.heap66",
+      "Type": "Pass",
+    },
+    "assignFalse__\\"val2\\" != input.v": Object {
+      "Next": "input.v != input.v",
+      "Result": false,
+      "ResultPath": "$.heap6",
+      "Type": "Pass",
+    },
+    "assignFalse__\\"val2\\" < input.v": Object {
+      "Next": "input.v < input.v",
+      "Result": false,
+      "ResultPath": "$.heap10",
+      "Type": "Pass",
+    },
+    "assignFalse__\\"val2\\" <= input.v": Object {
+      "Next": "input.v <= input.v",
+      "Result": false,
+      "ResultPath": "$.heap14",
+      "Type": "Pass",
+    },
+    "assignFalse__\\"val2\\" == input.v": Object {
+      "Next": "input.v == input.v",
+      "Result": false,
+      "ResultPath": "$.heap2",
+      "Type": "Pass",
+    },
+    "assignFalse__\\"val2\\" > input.v": Object {
+      "Next": "input.v > input.v",
+      "Result": false,
+      "ResultPath": "$.heap18",
+      "Type": "Pass",
+    },
+    "assignFalse__\\"val2\\" >= input.v": Object {
+      "Next": "input.v >= input.v",
+      "Result": false,
+      "ResultPath": "$.heap22",
+      "Type": "Pass",
+    },
+    "assignFalse__1 != 1": Object {
+      "Next": "input.n != 2",
+      "Result": false,
+      "ResultPath": "$.heap28",
+      "Type": "Pass",
+    },
+    "assignFalse__1 < 1": Object {
+      "Next": "input.n < 3",
+      "Result": false,
+      "ResultPath": "$.heap32",
+      "Type": "Pass",
+    },
+    "assignFalse__1 <= 1": Object {
+      "Next": "input.n <= 3",
+      "Result": false,
+      "ResultPath": "$.heap36",
+      "Type": "Pass",
+    },
+    "assignFalse__1 == 1": Object {
+      "Next": "input.n == 2",
+      "Result": false,
+      "ResultPath": "$.heap24",
+      "Type": "Pass",
+    },
+    "assignFalse__1 > 1": Object {
+      "Next": "input.n > 3",
+      "Result": false,
+      "ResultPath": "$.heap40",
+      "Type": "Pass",
+    },
+    "assignFalse__1 >= 1": Object {
+      "Next": "input.n >= 3",
+      "Result": false,
+      "ResultPath": "$.heap44",
+      "Type": "Pass",
+    },
+    "assignFalse__3 != input.n": Object {
+      "Next": "input.n != input.n",
+      "Result": false,
+      "ResultPath": "$.heap30",
+      "Type": "Pass",
+    },
+    "assignFalse__3 < input.n": Object {
+      "Next": "input.n < input.n",
+      "Result": false,
+      "ResultPath": "$.heap34",
+      "Type": "Pass",
+    },
+    "assignFalse__3 <= input.n": Object {
+      "Next": "input.n <= input.n",
+      "Result": false,
+      "ResultPath": "$.heap38",
+      "Type": "Pass",
+    },
+    "assignFalse__3 == input.n": Object {
+      "Next": "input.n == input.n",
+      "Result": false,
+      "ResultPath": "$.heap26",
+      "Type": "Pass",
+    },
+    "assignFalse__3 > input.n": Object {
+      "Next": "input.n > input.n",
+      "Result": false,
+      "ResultPath": "$.heap42",
+      "Type": "Pass",
+    },
+    "assignFalse__3 >= input.n": Object {
+      "Next": "input.n >= input.n",
+      "Result": false,
+      "ResultPath": "$.heap46",
+      "Type": "Pass",
+    },
+    "assignFalse__false != input.a": Object {
+      "Next": "input.a != input.a",
+      "Result": false,
+      "ResultPath": "$.heap54",
+      "Type": "Pass",
+    },
+    "assignFalse__false == input.a": Object {
+      "Next": "input.a == input.a",
+      "Result": false,
+      "ResultPath": "$.heap50",
+      "Type": "Pass",
+    },
+    "assignFalse__input.a != input.a": Object {
+      "Next": "null == null",
+      "Result": false,
+      "ResultPath": "$.heap55",
+      "Type": "Pass",
+    },
+    "assignFalse__input.a != true": Object {
+      "Next": "false != input.a",
+      "Result": false,
+      "ResultPath": "$.heap53",
+      "Type": "Pass",
+    },
+    "assignFalse__input.a == input.a": Object {
+      "Next": "true != true",
+      "Result": false,
+      "ResultPath": "$.heap51",
+      "Type": "Pass",
+    },
+    "assignFalse__input.a == true": Object {
+      "Next": "false == input.a",
+      "Result": false,
+      "ResultPath": "$.heap49",
+      "Type": "Pass",
+    },
+    "assignFalse__input.n != 2": Object {
+      "Next": "3 != input.n",
+      "Result": false,
+      "ResultPath": "$.heap29",
+      "Type": "Pass",
+    },
+    "assignFalse__input.n != input.n": Object {
+      "Next": "1 < 1",
+      "Result": false,
+      "ResultPath": "$.heap31",
+      "Type": "Pass",
+    },
+    "assignFalse__input.n < 3": Object {
+      "Next": "3 < input.n",
+      "Result": false,
+      "ResultPath": "$.heap33",
+      "Type": "Pass",
+    },
+    "assignFalse__input.n < input.n": Object {
+      "Next": "1 <= 1",
+      "Result": false,
+      "ResultPath": "$.heap35",
+      "Type": "Pass",
+    },
+    "assignFalse__input.n <= 3": Object {
+      "Next": "3 <= input.n",
+      "Result": false,
+      "ResultPath": "$.heap37",
+      "Type": "Pass",
+    },
+    "assignFalse__input.n <= input.n": Object {
+      "Next": "1 > 1",
+      "Result": false,
+      "ResultPath": "$.heap39",
+      "Type": "Pass",
+    },
+    "assignFalse__input.n == 2": Object {
+      "Next": "3 == input.n",
+      "Result": false,
+      "ResultPath": "$.heap25",
+      "Type": "Pass",
+    },
+    "assignFalse__input.n == input.n": Object {
+      "Next": "1 != 1",
+      "Result": false,
+      "ResultPath": "$.heap27",
+      "Type": "Pass",
+    },
+    "assignFalse__input.n > 3": Object {
+      "Next": "3 > input.n",
+      "Result": false,
+      "ResultPath": "$.heap41",
+      "Type": "Pass",
+    },
+    "assignFalse__input.n > input.n": Object {
+      "Next": "1 >= 1",
+      "Result": false,
+      "ResultPath": "$.heap43",
+      "Type": "Pass",
+    },
+    "assignFalse__input.n >= 3": Object {
+      "Next": "3 >= input.n",
+      "Result": false,
+      "ResultPath": "$.heap45",
+      "Type": "Pass",
+    },
+    "assignFalse__input.n >= input.n": Object {
+      "Next": "true == true",
+      "Result": false,
+      "ResultPath": "$.heap47",
+      "Type": "Pass",
+    },
+    "assignFalse__input.nv != input.nv": Object {
+      "Next": "\\"a\\" in {a: \\"val\\"}",
+      "Result": false,
+      "ResultPath": "$.heap63",
+      "Type": "Pass",
+    },
+    "assignFalse__input.nv != null": Object {
+      "Next": "input.v != input.nv",
+      "Result": false,
+      "ResultPath": "$.heap61",
+      "Type": "Pass",
+    },
+    "assignFalse__input.nv == input.nv": Object {
+      "Next": "null != null",
+      "Result": false,
+      "ResultPath": "$.heap59",
+      "Type": "Pass",
+    },
+    "assignFalse__input.nv == null": Object {
+      "Next": "input.v == input.nv",
+      "Result": false,
+      "ResultPath": "$.heap57",
+      "Type": "Pass",
+    },
+    "assignFalse__input.v != \\"val\\"": Object {
+      "Next": "\\"val2\\" != input.v",
+      "Result": false,
+      "ResultPath": "$.heap5",
+      "Type": "Pass",
+    },
+    "assignFalse__input.v != input.nv": Object {
+      "Next": "input.nv != input.nv",
+      "Result": false,
+      "ResultPath": "$.heap62",
+      "Type": "Pass",
+    },
+    "assignFalse__input.v != input.v": Object {
+      "Next": "\\"a\\" < \\"a\\"",
+      "Result": false,
+      "ResultPath": "$.heap7",
+      "Type": "Pass",
+    },
+    "assignFalse__input.v < \\"val2\\"": Object {
+      "Next": "\\"val2\\" < input.v",
+      "Result": false,
+      "ResultPath": "$.heap9",
+      "Type": "Pass",
+    },
+    "assignFalse__input.v < input.v": Object {
+      "Next": "\\"a\\" <= \\"a\\"",
+      "Result": false,
+      "ResultPath": "$.heap11",
+      "Type": "Pass",
+    },
+    "assignFalse__input.v <= \\"val2\\"": Object {
+      "Next": "\\"val2\\" <= input.v",
+      "Result": false,
+      "ResultPath": "$.heap13",
+      "Type": "Pass",
+    },
+    "assignFalse__input.v <= input.v": Object {
+      "Next": "\\"a\\" > \\"a\\"",
+      "Result": false,
+      "ResultPath": "$.heap15",
+      "Type": "Pass",
+    },
+    "assignFalse__input.v == \\"val\\"": Object {
+      "Next": "\\"val2\\" == input.v",
+      "Result": false,
+      "ResultPath": "$.heap1",
+      "Type": "Pass",
+    },
+    "assignFalse__input.v == input.nv": Object {
+      "Next": "input.nv == input.nv",
+      "Result": false,
+      "ResultPath": "$.heap58",
+      "Type": "Pass",
+    },
+    "assignFalse__input.v == input.v": Object {
+      "Next": "\\"a\\" != \\"a\\"",
+      "Result": false,
+      "ResultPath": "$.heap3",
+      "Type": "Pass",
+    },
+    "assignFalse__input.v > \\"val2\\"": Object {
+      "Next": "\\"val2\\" > input.v",
+      "Result": false,
+      "ResultPath": "$.heap17",
+      "Type": "Pass",
+    },
+    "assignFalse__input.v > input.v": Object {
+      "Next": "\\"a\\" >= \\"a\\"",
+      "Result": false,
+      "ResultPath": "$.heap19",
+      "Type": "Pass",
+    },
+    "assignFalse__input.v >= \\"val2\\"": Object {
+      "Next": "\\"val2\\" >= input.v",
+      "Result": false,
+      "ResultPath": "$.heap21",
+      "Type": "Pass",
+    },
+    "assignFalse__input.v >= input.v": Object {
+      "Next": "1 == 1",
+      "Result": false,
+      "ResultPath": "$.heap23",
+      "Type": "Pass",
+    },
+    "assignFalse__null != null": Object {
+      "Next": "input.nv != null",
+      "Result": false,
+      "ResultPath": "$.heap60",
+      "Type": "Pass",
+    },
+    "assignFalse__null == null": Object {
+      "Next": "input.nv == null",
+      "Result": false,
+      "ResultPath": "$.heap56",
+      "Type": "Pass",
+    },
+    "assignFalse__return {constantStringEquals: \\"a\\" == \\"a\\", constantToVarStringE": Object {
+      "Next": "input.v == \\"val\\"",
+      "Result": false,
+      "ResultPath": "$.heap0",
+      "Type": "Pass",
+    },
+    "assignFalse__true != true": Object {
+      "Next": "input.a != true",
+      "Result": false,
+      "ResultPath": "$.heap52",
+      "Type": "Pass",
+    },
+    "assignFalse__true == true": Object {
+      "Next": "input.a == true",
+      "Result": false,
+      "ResultPath": "$.heap48",
+      "Type": "Pass",
+    },
+    "assignTrue__!false": Object {
+      "Next": "!input.a",
+      "Result": true,
+      "ResultPath": "$.heap67",
+      "Type": "Pass",
+    },
+    "assignTrue__!input.a": Object {
+      "Next": "!input.nv",
+      "Result": true,
+      "ResultPath": "$.heap68",
+      "Type": "Pass",
+    },
+    "assignTrue__!input.n": Object {
+      "Next": "!input.x",
+      "Result": true,
+      "ResultPath": "$.heap70",
+      "Type": "Pass",
+    },
+    "assignTrue__!input.nv": Object {
+      "Next": "!input.n",
+      "Result": true,
+      "ResultPath": "$.heap69",
+      "Type": "Pass",
+    },
+    "assignTrue__!input.x": Object {
+      "Next": "1__return {constantStringEquals: \\"a\\" == \\"a\\", constantToVarStringEquals: inp",
+      "Result": true,
+      "ResultPath": "$.heap71",
+      "Type": "Pass",
+    },
+    "assignTrue__\\"a\\" != \\"a\\"": Object {
+      "Next": "input.v != \\"val\\"",
+      "Result": true,
+      "ResultPath": "$.heap4",
+      "Type": "Pass",
+    },
+    "assignTrue__\\"a\\" < \\"a\\"": Object {
+      "Next": "input.v < \\"val2\\"",
+      "Result": true,
+      "ResultPath": "$.heap8",
+      "Type": "Pass",
+    },
+    "assignTrue__\\"a\\" <= \\"a\\"": Object {
+      "Next": "input.v <= \\"val2\\"",
+      "Result": true,
+      "ResultPath": "$.heap12",
+      "Type": "Pass",
+    },
+    "assignTrue__\\"a\\" > \\"a\\"": Object {
+      "Next": "input.v > \\"val2\\"",
+      "Result": true,
+      "ResultPath": "$.heap16",
+      "Type": "Pass",
+    },
+    "assignTrue__\\"a\\" >= \\"a\\"": Object {
+      "Next": "input.v >= \\"val2\\"",
+      "Result": true,
+      "ResultPath": "$.heap20",
+      "Type": "Pass",
+    },
+    "assignTrue__\\"a\\" in input.obj": Object {
+      "Next": "\\"b\\" in input.obj",
+      "Result": true,
+      "ResultPath": "$.heap65",
+      "Type": "Pass",
+    },
+    "assignTrue__\\"a\\" in {a: \\"val\\"}": Object {
+      "Next": "\\"a\\" in input.obj",
+      "Result": true,
+      "ResultPath": "$.heap64",
+      "Type": "Pass",
+    },
+    "assignTrue__\\"b\\" in input.obj": Object {
+      "Next": "!false",
+      "Result": true,
+      "ResultPath": "$.heap66",
+      "Type": "Pass",
+    },
+    "assignTrue__\\"val2\\" != input.v": Object {
+      "Next": "input.v != input.v",
+      "Result": true,
+      "ResultPath": "$.heap6",
+      "Type": "Pass",
+    },
+    "assignTrue__\\"val2\\" < input.v": Object {
+      "Next": "input.v < input.v",
+      "Result": true,
+      "ResultPath": "$.heap10",
+      "Type": "Pass",
+    },
+    "assignTrue__\\"val2\\" <= input.v": Object {
+      "Next": "input.v <= input.v",
+      "Result": true,
+      "ResultPath": "$.heap14",
+      "Type": "Pass",
+    },
+    "assignTrue__\\"val2\\" == input.v": Object {
+      "Next": "input.v == input.v",
+      "Result": true,
+      "ResultPath": "$.heap2",
+      "Type": "Pass",
+    },
+    "assignTrue__\\"val2\\" > input.v": Object {
+      "Next": "input.v > input.v",
+      "Result": true,
+      "ResultPath": "$.heap18",
+      "Type": "Pass",
+    },
+    "assignTrue__\\"val2\\" >= input.v": Object {
+      "Next": "input.v >= input.v",
+      "Result": true,
+      "ResultPath": "$.heap22",
+      "Type": "Pass",
+    },
+    "assignTrue__1 != 1": Object {
+      "Next": "input.n != 2",
+      "Result": true,
+      "ResultPath": "$.heap28",
+      "Type": "Pass",
+    },
+    "assignTrue__1 < 1": Object {
+      "Next": "input.n < 3",
+      "Result": true,
+      "ResultPath": "$.heap32",
+      "Type": "Pass",
+    },
+    "assignTrue__1 <= 1": Object {
+      "Next": "input.n <= 3",
+      "Result": true,
+      "ResultPath": "$.heap36",
+      "Type": "Pass",
+    },
+    "assignTrue__1 == 1": Object {
+      "Next": "input.n == 2",
+      "Result": true,
+      "ResultPath": "$.heap24",
+      "Type": "Pass",
+    },
+    "assignTrue__1 > 1": Object {
+      "Next": "input.n > 3",
+      "Result": true,
+      "ResultPath": "$.heap40",
+      "Type": "Pass",
+    },
+    "assignTrue__1 >= 1": Object {
+      "Next": "input.n >= 3",
+      "Result": true,
+      "ResultPath": "$.heap44",
+      "Type": "Pass",
+    },
+    "assignTrue__3 != input.n": Object {
+      "Next": "input.n != input.n",
+      "Result": true,
+      "ResultPath": "$.heap30",
+      "Type": "Pass",
+    },
+    "assignTrue__3 < input.n": Object {
+      "Next": "input.n < input.n",
+      "Result": true,
+      "ResultPath": "$.heap34",
+      "Type": "Pass",
+    },
+    "assignTrue__3 <= input.n": Object {
+      "Next": "input.n <= input.n",
+      "Result": true,
+      "ResultPath": "$.heap38",
+      "Type": "Pass",
+    },
+    "assignTrue__3 == input.n": Object {
+      "Next": "input.n == input.n",
+      "Result": true,
+      "ResultPath": "$.heap26",
+      "Type": "Pass",
+    },
+    "assignTrue__3 > input.n": Object {
+      "Next": "input.n > input.n",
+      "Result": true,
+      "ResultPath": "$.heap42",
+      "Type": "Pass",
+    },
+    "assignTrue__3 >= input.n": Object {
+      "Next": "input.n >= input.n",
+      "Result": true,
+      "ResultPath": "$.heap46",
+      "Type": "Pass",
+    },
+    "assignTrue__false != input.a": Object {
+      "Next": "input.a != input.a",
+      "Result": true,
+      "ResultPath": "$.heap54",
+      "Type": "Pass",
+    },
+    "assignTrue__false == input.a": Object {
+      "Next": "input.a == input.a",
+      "Result": true,
+      "ResultPath": "$.heap50",
+      "Type": "Pass",
+    },
+    "assignTrue__input.a != input.a": Object {
+      "Next": "null == null",
+      "Result": true,
+      "ResultPath": "$.heap55",
+      "Type": "Pass",
+    },
+    "assignTrue__input.a != true": Object {
+      "Next": "false != input.a",
+      "Result": true,
+      "ResultPath": "$.heap53",
+      "Type": "Pass",
+    },
+    "assignTrue__input.a == input.a": Object {
+      "Next": "true != true",
+      "Result": true,
+      "ResultPath": "$.heap51",
+      "Type": "Pass",
+    },
+    "assignTrue__input.a == true": Object {
+      "Next": "false == input.a",
+      "Result": true,
+      "ResultPath": "$.heap49",
+      "Type": "Pass",
+    },
+    "assignTrue__input.n != 2": Object {
+      "Next": "3 != input.n",
+      "Result": true,
+      "ResultPath": "$.heap29",
+      "Type": "Pass",
+    },
+    "assignTrue__input.n != input.n": Object {
+      "Next": "1 < 1",
+      "Result": true,
+      "ResultPath": "$.heap31",
+      "Type": "Pass",
+    },
+    "assignTrue__input.n < 3": Object {
+      "Next": "3 < input.n",
+      "Result": true,
+      "ResultPath": "$.heap33",
+      "Type": "Pass",
+    },
+    "assignTrue__input.n < input.n": Object {
+      "Next": "1 <= 1",
+      "Result": true,
+      "ResultPath": "$.heap35",
+      "Type": "Pass",
+    },
+    "assignTrue__input.n <= 3": Object {
+      "Next": "3 <= input.n",
+      "Result": true,
+      "ResultPath": "$.heap37",
+      "Type": "Pass",
+    },
+    "assignTrue__input.n <= input.n": Object {
+      "Next": "1 > 1",
+      "Result": true,
+      "ResultPath": "$.heap39",
+      "Type": "Pass",
+    },
+    "assignTrue__input.n == 2": Object {
+      "Next": "3 == input.n",
+      "Result": true,
+      "ResultPath": "$.heap25",
+      "Type": "Pass",
+    },
+    "assignTrue__input.n == input.n": Object {
+      "Next": "1 != 1",
+      "Result": true,
+      "ResultPath": "$.heap27",
+      "Type": "Pass",
+    },
+    "assignTrue__input.n > 3": Object {
+      "Next": "3 > input.n",
+      "Result": true,
+      "ResultPath": "$.heap41",
+      "Type": "Pass",
+    },
+    "assignTrue__input.n > input.n": Object {
+      "Next": "1 >= 1",
+      "Result": true,
+      "ResultPath": "$.heap43",
+      "Type": "Pass",
+    },
+    "assignTrue__input.n >= 3": Object {
+      "Next": "3 >= input.n",
+      "Result": true,
+      "ResultPath": "$.heap45",
+      "Type": "Pass",
+    },
+    "assignTrue__input.n >= input.n": Object {
+      "Next": "true == true",
+      "Result": true,
+      "ResultPath": "$.heap47",
+      "Type": "Pass",
+    },
+    "assignTrue__input.nv != input.nv": Object {
+      "Next": "\\"a\\" in {a: \\"val\\"}",
+      "Result": true,
+      "ResultPath": "$.heap63",
+      "Type": "Pass",
+    },
+    "assignTrue__input.nv != null": Object {
+      "Next": "input.v != input.nv",
+      "Result": true,
+      "ResultPath": "$.heap61",
+      "Type": "Pass",
+    },
+    "assignTrue__input.nv == input.nv": Object {
+      "Next": "null != null",
+      "Result": true,
+      "ResultPath": "$.heap59",
+      "Type": "Pass",
+    },
+    "assignTrue__input.nv == null": Object {
+      "Next": "input.v == input.nv",
+      "Result": true,
+      "ResultPath": "$.heap57",
+      "Type": "Pass",
+    },
+    "assignTrue__input.v != \\"val\\"": Object {
+      "Next": "\\"val2\\" != input.v",
+      "Result": true,
+      "ResultPath": "$.heap5",
+      "Type": "Pass",
+    },
+    "assignTrue__input.v != input.nv": Object {
+      "Next": "input.nv != input.nv",
+      "Result": true,
+      "ResultPath": "$.heap62",
+      "Type": "Pass",
+    },
+    "assignTrue__input.v != input.v": Object {
+      "Next": "\\"a\\" < \\"a\\"",
+      "Result": true,
+      "ResultPath": "$.heap7",
+      "Type": "Pass",
+    },
+    "assignTrue__input.v < \\"val2\\"": Object {
+      "Next": "\\"val2\\" < input.v",
+      "Result": true,
+      "ResultPath": "$.heap9",
+      "Type": "Pass",
+    },
+    "assignTrue__input.v < input.v": Object {
+      "Next": "\\"a\\" <= \\"a\\"",
+      "Result": true,
+      "ResultPath": "$.heap11",
+      "Type": "Pass",
+    },
+    "assignTrue__input.v <= \\"val2\\"": Object {
+      "Next": "\\"val2\\" <= input.v",
+      "Result": true,
+      "ResultPath": "$.heap13",
+      "Type": "Pass",
+    },
+    "assignTrue__input.v <= input.v": Object {
+      "Next": "\\"a\\" > \\"a\\"",
+      "Result": true,
+      "ResultPath": "$.heap15",
+      "Type": "Pass",
+    },
+    "assignTrue__input.v == \\"val\\"": Object {
+      "Next": "\\"val2\\" == input.v",
+      "Result": true,
+      "ResultPath": "$.heap1",
+      "Type": "Pass",
+    },
+    "assignTrue__input.v == input.nv": Object {
+      "Next": "input.nv == input.nv",
+      "Result": true,
+      "ResultPath": "$.heap58",
+      "Type": "Pass",
+    },
+    "assignTrue__input.v == input.v": Object {
+      "Next": "\\"a\\" != \\"a\\"",
+      "Result": true,
+      "ResultPath": "$.heap3",
+      "Type": "Pass",
+    },
+    "assignTrue__input.v > \\"val2\\"": Object {
+      "Next": "\\"val2\\" > input.v",
+      "Result": true,
+      "ResultPath": "$.heap17",
+      "Type": "Pass",
+    },
+    "assignTrue__input.v > input.v": Object {
+      "Next": "\\"a\\" >= \\"a\\"",
+      "Result": true,
+      "ResultPath": "$.heap19",
+      "Type": "Pass",
+    },
+    "assignTrue__input.v >= \\"val2\\"": Object {
+      "Next": "\\"val2\\" >= input.v",
+      "Result": true,
+      "ResultPath": "$.heap21",
+      "Type": "Pass",
+    },
+    "assignTrue__input.v >= input.v": Object {
+      "Next": "1 == 1",
+      "Result": true,
+      "ResultPath": "$.heap23",
+      "Type": "Pass",
+    },
+    "assignTrue__null != null": Object {
+      "Next": "input.nv != null",
+      "Result": true,
+      "ResultPath": "$.heap60",
+      "Type": "Pass",
+    },
+    "assignTrue__null == null": Object {
+      "Next": "input.nv == null",
+      "Result": true,
+      "ResultPath": "$.heap56",
+      "Type": "Pass",
+    },
+    "assignTrue__return {constantStringEquals: \\"a\\" == \\"a\\", constantToVarStringEq": Object {
+      "Next": "input.v == \\"val\\"",
+      "Result": true,
+      "ResultPath": "$.heap0",
+      "Type": "Pass",
+    },
+    "assignTrue__true != true": Object {
+      "Next": "input.a != true",
+      "Result": true,
+      "ResultPath": "$.heap52",
+      "Type": "Pass",
+    },
+    "assignTrue__true == true": Object {
+      "Next": "input.a == true",
+      "Result": true,
+      "ResultPath": "$.heap48",
+      "Type": "Pass",
+    },
+    "false != input.a": Object {
+      "Choices": Array [
+        Object {
+          "Next": "assignTrue__false != input.a",
+          "Not": Object {
+            "And": Array [
+              Object {
+                "IsPresent": true,
+                "Variable": "$.fnl_context.input.a",
+              },
+              Object {
+                "And": Array [
+                  Object {
+                    "IsBoolean": true,
+                    "Variable": "$.fnl_context.input.a",
+                  },
+                  Object {
+                    "BooleanEquals": false,
+                    "Variable": "$.fnl_context.input.a",
+                  },
+                ],
+              },
+            ],
+          },
+        },
+      ],
+      "Default": "assignFalse__false != input.a",
+      "Type": "Choice",
+    },
+    "false == input.a": Object {
+      "Choices": Array [
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.fnl_context.input.a",
+            },
+            Object {
+              "And": Array [
+                Object {
+                  "IsBoolean": true,
+                  "Variable": "$.fnl_context.input.a",
+                },
+                Object {
+                  "BooleanEquals": false,
+                  "Variable": "$.fnl_context.input.a",
+                },
+              ],
+            },
+          ],
+          "Next": "assignTrue__false == input.a",
+        },
+      ],
+      "Default": "assignFalse__false == input.a",
+      "Type": "Choice",
+    },
+    "input.a != input.a": Object {
+      "Choices": Array [
+        Object {
+          "Next": "assignTrue__input.a != input.a",
+          "Not": Object {
+            "And": Array [
+              Object {
+                "IsPresent": true,
+                "Variable": "$.fnl_context.input.a",
+              },
+              Object {
+                "Or": Array [
+                  Object {
+                    "And": Array [
+                      Object {
+                        "IsNull": true,
+                        "Variable": "$.fnl_context.input.a",
+                      },
+                      Object {
+                        "IsNull": true,
+                        "Variable": "$.fnl_context.input.a",
+                      },
+                    ],
+                  },
+                  Object {
+                    "And": Array [
+                      Object {
+                        "IsString": true,
+                        "Variable": "$.fnl_context.input.a",
+                      },
+                      Object {
+                        "StringEqualsPath": "$.fnl_context.input.a",
+                        "Variable": "$.fnl_context.input.a",
+                      },
+                    ],
+                  },
+                  Object {
+                    "And": Array [
+                      Object {
+                        "IsBoolean": true,
+                        "Variable": "$.fnl_context.input.a",
+                      },
+                      Object {
+                        "BooleanEqualsPath": "$.fnl_context.input.a",
+                        "Variable": "$.fnl_context.input.a",
+                      },
+                    ],
+                  },
+                  Object {
+                    "And": Array [
+                      Object {
+                        "IsNumeric": true,
+                        "Variable": "$.fnl_context.input.a",
+                      },
+                      Object {
+                        "NumericEqualsPath": "$.fnl_context.input.a",
+                        "Variable": "$.fnl_context.input.a",
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        },
+      ],
+      "Default": "assignFalse__input.a != input.a",
+      "Type": "Choice",
+    },
+    "input.a != true": Object {
+      "Choices": Array [
+        Object {
+          "Next": "assignTrue__input.a != true",
+          "Not": Object {
+            "And": Array [
+              Object {
+                "IsPresent": true,
+                "Variable": "$.fnl_context.input.a",
+              },
+              Object {
+                "And": Array [
+                  Object {
+                    "IsBoolean": true,
+                    "Variable": "$.fnl_context.input.a",
+                  },
+                  Object {
+                    "BooleanEquals": true,
+                    "Variable": "$.fnl_context.input.a",
+                  },
+                ],
+              },
+            ],
+          },
+        },
+      ],
+      "Default": "assignFalse__input.a != true",
+      "Type": "Choice",
+    },
+    "input.a == input.a": Object {
+      "Choices": Array [
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.fnl_context.input.a",
+            },
+            Object {
+              "Or": Array [
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsNull": true,
+                      "Variable": "$.fnl_context.input.a",
+                    },
+                    Object {
+                      "IsNull": true,
+                      "Variable": "$.fnl_context.input.a",
+                    },
+                  ],
+                },
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsString": true,
+                      "Variable": "$.fnl_context.input.a",
+                    },
+                    Object {
+                      "StringEqualsPath": "$.fnl_context.input.a",
+                      "Variable": "$.fnl_context.input.a",
+                    },
+                  ],
+                },
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsBoolean": true,
+                      "Variable": "$.fnl_context.input.a",
+                    },
+                    Object {
+                      "BooleanEqualsPath": "$.fnl_context.input.a",
+                      "Variable": "$.fnl_context.input.a",
+                    },
+                  ],
+                },
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsNumeric": true,
+                      "Variable": "$.fnl_context.input.a",
+                    },
+                    Object {
+                      "NumericEqualsPath": "$.fnl_context.input.a",
+                      "Variable": "$.fnl_context.input.a",
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+          "Next": "assignTrue__input.a == input.a",
+        },
+      ],
+      "Default": "assignFalse__input.a == input.a",
+      "Type": "Choice",
+    },
+    "input.a == true": Object {
+      "Choices": Array [
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.fnl_context.input.a",
+            },
+            Object {
+              "And": Array [
+                Object {
+                  "IsBoolean": true,
+                  "Variable": "$.fnl_context.input.a",
+                },
+                Object {
+                  "BooleanEquals": true,
+                  "Variable": "$.fnl_context.input.a",
+                },
+              ],
+            },
+          ],
+          "Next": "assignTrue__input.a == true",
+        },
+      ],
+      "Default": "assignFalse__input.a == true",
+      "Type": "Choice",
+    },
+    "input.n != 2": Object {
+      "Choices": Array [
+        Object {
+          "Next": "assignTrue__input.n != 2",
+          "Not": Object {
+            "And": Array [
+              Object {
+                "IsPresent": true,
+                "Variable": "$.fnl_context.input.n",
+              },
+              Object {
+                "And": Array [
+                  Object {
+                    "IsNumeric": true,
+                    "Variable": "$.fnl_context.input.n",
+                  },
+                  Object {
+                    "NumericEquals": 2,
+                    "Variable": "$.fnl_context.input.n",
+                  },
+                ],
+              },
+            ],
+          },
+        },
+      ],
+      "Default": "assignFalse__input.n != 2",
+      "Type": "Choice",
+    },
+    "input.n != input.n": Object {
+      "Choices": Array [
+        Object {
+          "Next": "assignTrue__input.n != input.n",
+          "Not": Object {
+            "And": Array [
+              Object {
+                "IsPresent": true,
+                "Variable": "$.fnl_context.input.n",
+              },
+              Object {
+                "Or": Array [
+                  Object {
+                    "And": Array [
+                      Object {
+                        "IsNull": true,
+                        "Variable": "$.fnl_context.input.n",
+                      },
+                      Object {
+                        "IsNull": true,
+                        "Variable": "$.fnl_context.input.n",
+                      },
+                    ],
+                  },
+                  Object {
+                    "And": Array [
+                      Object {
+                        "IsString": true,
+                        "Variable": "$.fnl_context.input.n",
+                      },
+                      Object {
+                        "StringEqualsPath": "$.fnl_context.input.n",
+                        "Variable": "$.fnl_context.input.n",
+                      },
+                    ],
+                  },
+                  Object {
+                    "And": Array [
+                      Object {
+                        "IsBoolean": true,
+                        "Variable": "$.fnl_context.input.n",
+                      },
+                      Object {
+                        "BooleanEqualsPath": "$.fnl_context.input.n",
+                        "Variable": "$.fnl_context.input.n",
+                      },
+                    ],
+                  },
+                  Object {
+                    "And": Array [
+                      Object {
+                        "IsNumeric": true,
+                        "Variable": "$.fnl_context.input.n",
+                      },
+                      Object {
+                        "NumericEqualsPath": "$.fnl_context.input.n",
+                        "Variable": "$.fnl_context.input.n",
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        },
+      ],
+      "Default": "assignFalse__input.n != input.n",
+      "Type": "Choice",
+    },
+    "input.n < 3": Object {
+      "Choices": Array [
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.fnl_context.input.n",
+            },
+            Object {
+              "And": Array [
+                Object {
+                  "IsNumeric": true,
+                  "Variable": "$.fnl_context.input.n",
+                },
+                Object {
+                  "NumericLessThan": 3,
+                  "Variable": "$.fnl_context.input.n",
+                },
+              ],
+            },
+          ],
+          "Next": "assignTrue__input.n < 3",
+        },
+      ],
+      "Default": "assignFalse__input.n < 3",
+      "Type": "Choice",
+    },
+    "input.n < input.n": Object {
+      "Choices": Array [
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.fnl_context.input.n",
+            },
+            Object {
+              "Or": Array [
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsString": true,
+                      "Variable": "$.fnl_context.input.n",
+                    },
+                    Object {
+                      "StringLessThanPath": "$.fnl_context.input.n",
+                      "Variable": "$.fnl_context.input.n",
+                    },
+                  ],
+                },
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsBoolean": true,
+                      "Variable": "$.fnl_context.input.n",
+                    },
+                    Object {
+                      "IsNull": true,
+                      "Variable": "$$.Execution.Id",
+                    },
+                  ],
+                },
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsNumeric": true,
+                      "Variable": "$.fnl_context.input.n",
+                    },
+                    Object {
+                      "NumericLessThanPath": "$.fnl_context.input.n",
+                      "Variable": "$.fnl_context.input.n",
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+          "Next": "assignTrue__input.n < input.n",
+        },
+      ],
+      "Default": "assignFalse__input.n < input.n",
+      "Type": "Choice",
+    },
+    "input.n <= 3": Object {
+      "Choices": Array [
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.fnl_context.input.n",
+            },
+            Object {
+              "And": Array [
+                Object {
+                  "IsNumeric": true,
+                  "Variable": "$.fnl_context.input.n",
+                },
+                Object {
+                  "NumericLessThanEquals": 3,
+                  "Variable": "$.fnl_context.input.n",
+                },
+              ],
+            },
+          ],
+          "Next": "assignTrue__input.n <= 3",
+        },
+      ],
+      "Default": "assignFalse__input.n <= 3",
+      "Type": "Choice",
+    },
+    "input.n <= input.n": Object {
+      "Choices": Array [
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.fnl_context.input.n",
+            },
+            Object {
+              "Or": Array [
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsString": true,
+                      "Variable": "$.fnl_context.input.n",
+                    },
+                    Object {
+                      "StringLessThanEqualsPath": "$.fnl_context.input.n",
+                      "Variable": "$.fnl_context.input.n",
+                    },
+                  ],
+                },
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsBoolean": true,
+                      "Variable": "$.fnl_context.input.n",
+                    },
+                    Object {
+                      "IsNull": true,
+                      "Variable": "$$.Execution.Id",
+                    },
+                  ],
+                },
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsNumeric": true,
+                      "Variable": "$.fnl_context.input.n",
+                    },
+                    Object {
+                      "NumericLessThanEqualsPath": "$.fnl_context.input.n",
+                      "Variable": "$.fnl_context.input.n",
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+          "Next": "assignTrue__input.n <= input.n",
+        },
+      ],
+      "Default": "assignFalse__input.n <= input.n",
+      "Type": "Choice",
+    },
+    "input.n == 2": Object {
+      "Choices": Array [
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.fnl_context.input.n",
+            },
+            Object {
+              "And": Array [
+                Object {
+                  "IsNumeric": true,
+                  "Variable": "$.fnl_context.input.n",
+                },
+                Object {
+                  "NumericEquals": 2,
+                  "Variable": "$.fnl_context.input.n",
+                },
+              ],
+            },
+          ],
+          "Next": "assignTrue__input.n == 2",
+        },
+      ],
+      "Default": "assignFalse__input.n == 2",
+      "Type": "Choice",
+    },
+    "input.n == input.n": Object {
+      "Choices": Array [
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.fnl_context.input.n",
+            },
+            Object {
+              "Or": Array [
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsNull": true,
+                      "Variable": "$.fnl_context.input.n",
+                    },
+                    Object {
+                      "IsNull": true,
+                      "Variable": "$.fnl_context.input.n",
+                    },
+                  ],
+                },
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsString": true,
+                      "Variable": "$.fnl_context.input.n",
+                    },
+                    Object {
+                      "StringEqualsPath": "$.fnl_context.input.n",
+                      "Variable": "$.fnl_context.input.n",
+                    },
+                  ],
+                },
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsBoolean": true,
+                      "Variable": "$.fnl_context.input.n",
+                    },
+                    Object {
+                      "BooleanEqualsPath": "$.fnl_context.input.n",
+                      "Variable": "$.fnl_context.input.n",
+                    },
+                  ],
+                },
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsNumeric": true,
+                      "Variable": "$.fnl_context.input.n",
+                    },
+                    Object {
+                      "NumericEqualsPath": "$.fnl_context.input.n",
+                      "Variable": "$.fnl_context.input.n",
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+          "Next": "assignTrue__input.n == input.n",
+        },
+      ],
+      "Default": "assignFalse__input.n == input.n",
+      "Type": "Choice",
+    },
+    "input.n > 3": Object {
+      "Choices": Array [
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.fnl_context.input.n",
+            },
+            Object {
+              "And": Array [
+                Object {
+                  "IsNumeric": true,
+                  "Variable": "$.fnl_context.input.n",
+                },
+                Object {
+                  "NumericGreaterThan": 3,
+                  "Variable": "$.fnl_context.input.n",
+                },
+              ],
+            },
+          ],
+          "Next": "assignTrue__input.n > 3",
+        },
+      ],
+      "Default": "assignFalse__input.n > 3",
+      "Type": "Choice",
+    },
+    "input.n > input.n": Object {
+      "Choices": Array [
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.fnl_context.input.n",
+            },
+            Object {
+              "Or": Array [
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsString": true,
+                      "Variable": "$.fnl_context.input.n",
+                    },
+                    Object {
+                      "StringGreaterThanPath": "$.fnl_context.input.n",
+                      "Variable": "$.fnl_context.input.n",
+                    },
+                  ],
+                },
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsBoolean": true,
+                      "Variable": "$.fnl_context.input.n",
+                    },
+                    Object {
+                      "IsNull": true,
+                      "Variable": "$$.Execution.Id",
+                    },
+                  ],
+                },
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsNumeric": true,
+                      "Variable": "$.fnl_context.input.n",
+                    },
+                    Object {
+                      "NumericGreaterThanPath": "$.fnl_context.input.n",
+                      "Variable": "$.fnl_context.input.n",
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+          "Next": "assignTrue__input.n > input.n",
+        },
+      ],
+      "Default": "assignFalse__input.n > input.n",
+      "Type": "Choice",
+    },
+    "input.n >= 3": Object {
+      "Choices": Array [
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.fnl_context.input.n",
+            },
+            Object {
+              "And": Array [
+                Object {
+                  "IsNumeric": true,
+                  "Variable": "$.fnl_context.input.n",
+                },
+                Object {
+                  "NumericGreaterThanEquals": 3,
+                  "Variable": "$.fnl_context.input.n",
+                },
+              ],
+            },
+          ],
+          "Next": "assignTrue__input.n >= 3",
+        },
+      ],
+      "Default": "assignFalse__input.n >= 3",
+      "Type": "Choice",
+    },
+    "input.n >= input.n": Object {
+      "Choices": Array [
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.fnl_context.input.n",
+            },
+            Object {
+              "Or": Array [
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsString": true,
+                      "Variable": "$.fnl_context.input.n",
+                    },
+                    Object {
+                      "StringGreaterThanEqualsPath": "$.fnl_context.input.n",
+                      "Variable": "$.fnl_context.input.n",
+                    },
+                  ],
+                },
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsBoolean": true,
+                      "Variable": "$.fnl_context.input.n",
+                    },
+                    Object {
+                      "IsNull": true,
+                      "Variable": "$$.Execution.Id",
+                    },
+                  ],
+                },
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsNumeric": true,
+                      "Variable": "$.fnl_context.input.n",
+                    },
+                    Object {
+                      "NumericGreaterThanEqualsPath": "$.fnl_context.input.n",
+                      "Variable": "$.fnl_context.input.n",
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+          "Next": "assignTrue__input.n >= input.n",
+        },
+      ],
+      "Default": "assignFalse__input.n >= input.n",
+      "Type": "Choice",
+    },
+    "input.nv != input.nv": Object {
+      "Choices": Array [
+        Object {
+          "Next": "assignTrue__input.nv != input.nv",
+          "Not": Object {
+            "And": Array [
+              Object {
+                "IsPresent": true,
+                "Variable": "$.fnl_context.input.nv",
+              },
+              Object {
+                "Or": Array [
+                  Object {
+                    "And": Array [
+                      Object {
+                        "IsNull": true,
+                        "Variable": "$.fnl_context.input.nv",
+                      },
+                      Object {
+                        "IsNull": true,
+                        "Variable": "$.fnl_context.input.nv",
+                      },
+                    ],
+                  },
+                  Object {
+                    "And": Array [
+                      Object {
+                        "IsString": true,
+                        "Variable": "$.fnl_context.input.nv",
+                      },
+                      Object {
+                        "StringEqualsPath": "$.fnl_context.input.nv",
+                        "Variable": "$.fnl_context.input.nv",
+                      },
+                    ],
+                  },
+                  Object {
+                    "And": Array [
+                      Object {
+                        "IsBoolean": true,
+                        "Variable": "$.fnl_context.input.nv",
+                      },
+                      Object {
+                        "BooleanEqualsPath": "$.fnl_context.input.nv",
+                        "Variable": "$.fnl_context.input.nv",
+                      },
+                    ],
+                  },
+                  Object {
+                    "And": Array [
+                      Object {
+                        "IsNumeric": true,
+                        "Variable": "$.fnl_context.input.nv",
+                      },
+                      Object {
+                        "NumericEqualsPath": "$.fnl_context.input.nv",
+                        "Variable": "$.fnl_context.input.nv",
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        },
+      ],
+      "Default": "assignFalse__input.nv != input.nv",
+      "Type": "Choice",
+    },
+    "input.nv != null": Object {
+      "Choices": Array [
+        Object {
+          "Next": "assignTrue__input.nv != null",
+          "Not": Object {
+            "And": Array [
+              Object {
+                "IsPresent": true,
+                "Variable": "$.fnl_context.input.nv",
+              },
+              Object {
+                "Or": Array [
+                  Object {
+                    "And": Array [
+                      Object {
+                        "IsNull": true,
+                        "Variable": "$.fnl_context.input.nv",
+                      },
+                      Object {
+                        "IsNull": true,
+                        "Variable": "$.fnl_context.null",
+                      },
+                    ],
+                  },
+                  Object {
+                    "And": Array [
+                      Object {
+                        "IsString": true,
+                        "Variable": "$.fnl_context.input.nv",
+                      },
+                      Object {
+                        "StringEqualsPath": "$.fnl_context.null",
+                        "Variable": "$.fnl_context.input.nv",
+                      },
+                    ],
+                  },
+                  Object {
+                    "And": Array [
+                      Object {
+                        "IsBoolean": true,
+                        "Variable": "$.fnl_context.input.nv",
+                      },
+                      Object {
+                        "BooleanEqualsPath": "$.fnl_context.null",
+                        "Variable": "$.fnl_context.input.nv",
+                      },
+                    ],
+                  },
+                  Object {
+                    "And": Array [
+                      Object {
+                        "IsNumeric": true,
+                        "Variable": "$.fnl_context.input.nv",
+                      },
+                      Object {
+                        "NumericEqualsPath": "$.fnl_context.null",
+                        "Variable": "$.fnl_context.input.nv",
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        },
+      ],
+      "Default": "assignFalse__input.nv != null",
+      "Type": "Choice",
+    },
+    "input.nv == input.nv": Object {
+      "Choices": Array [
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.fnl_context.input.nv",
+            },
+            Object {
+              "Or": Array [
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsNull": true,
+                      "Variable": "$.fnl_context.input.nv",
+                    },
+                    Object {
+                      "IsNull": true,
+                      "Variable": "$.fnl_context.input.nv",
+                    },
+                  ],
+                },
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsString": true,
+                      "Variable": "$.fnl_context.input.nv",
+                    },
+                    Object {
+                      "StringEqualsPath": "$.fnl_context.input.nv",
+                      "Variable": "$.fnl_context.input.nv",
+                    },
+                  ],
+                },
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsBoolean": true,
+                      "Variable": "$.fnl_context.input.nv",
+                    },
+                    Object {
+                      "BooleanEqualsPath": "$.fnl_context.input.nv",
+                      "Variable": "$.fnl_context.input.nv",
+                    },
+                  ],
+                },
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsNumeric": true,
+                      "Variable": "$.fnl_context.input.nv",
+                    },
+                    Object {
+                      "NumericEqualsPath": "$.fnl_context.input.nv",
+                      "Variable": "$.fnl_context.input.nv",
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+          "Next": "assignTrue__input.nv == input.nv",
+        },
+      ],
+      "Default": "assignFalse__input.nv == input.nv",
+      "Type": "Choice",
+    },
+    "input.nv == null": Object {
+      "Choices": Array [
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.fnl_context.input.nv",
+            },
+            Object {
+              "Or": Array [
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsNull": true,
+                      "Variable": "$.fnl_context.input.nv",
+                    },
+                    Object {
+                      "IsNull": true,
+                      "Variable": "$.fnl_context.null",
+                    },
+                  ],
+                },
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsString": true,
+                      "Variable": "$.fnl_context.input.nv",
+                    },
+                    Object {
+                      "StringEqualsPath": "$.fnl_context.null",
+                      "Variable": "$.fnl_context.input.nv",
+                    },
+                  ],
+                },
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsBoolean": true,
+                      "Variable": "$.fnl_context.input.nv",
+                    },
+                    Object {
+                      "BooleanEqualsPath": "$.fnl_context.null",
+                      "Variable": "$.fnl_context.input.nv",
+                    },
+                  ],
+                },
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsNumeric": true,
+                      "Variable": "$.fnl_context.input.nv",
+                    },
+                    Object {
+                      "NumericEqualsPath": "$.fnl_context.null",
+                      "Variable": "$.fnl_context.input.nv",
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+          "Next": "assignTrue__input.nv == null",
+        },
+      ],
+      "Default": "assignFalse__input.nv == null",
+      "Type": "Choice",
+    },
+    "input.v != \\"val\\"": Object {
+      "Choices": Array [
+        Object {
+          "Next": "assignTrue__input.v != \\"val\\"",
+          "Not": Object {
+            "And": Array [
+              Object {
+                "IsPresent": true,
+                "Variable": "$.fnl_context.input.v",
+              },
+              Object {
+                "And": Array [
+                  Object {
+                    "IsString": true,
+                    "Variable": "$.fnl_context.input.v",
+                  },
+                  Object {
+                    "StringEquals": "val",
+                    "Variable": "$.fnl_context.input.v",
+                  },
+                ],
+              },
+            ],
+          },
+        },
+      ],
+      "Default": "assignFalse__input.v != \\"val\\"",
+      "Type": "Choice",
+    },
+    "input.v != input.nv": Object {
+      "Choices": Array [
+        Object {
+          "Next": "assignTrue__input.v != input.nv",
+          "Not": Object {
+            "And": Array [
+              Object {
+                "IsPresent": true,
+                "Variable": "$.fnl_context.input.v",
+              },
+              Object {
+                "Or": Array [
+                  Object {
+                    "And": Array [
+                      Object {
+                        "IsNull": true,
+                        "Variable": "$.fnl_context.input.v",
+                      },
+                      Object {
+                        "IsNull": true,
+                        "Variable": "$.fnl_context.input.nv",
+                      },
+                    ],
+                  },
+                  Object {
+                    "And": Array [
+                      Object {
+                        "IsString": true,
+                        "Variable": "$.fnl_context.input.v",
+                      },
+                      Object {
+                        "StringEqualsPath": "$.fnl_context.input.nv",
+                        "Variable": "$.fnl_context.input.v",
+                      },
+                    ],
+                  },
+                  Object {
+                    "And": Array [
+                      Object {
+                        "IsBoolean": true,
+                        "Variable": "$.fnl_context.input.v",
+                      },
+                      Object {
+                        "BooleanEqualsPath": "$.fnl_context.input.nv",
+                        "Variable": "$.fnl_context.input.v",
+                      },
+                    ],
+                  },
+                  Object {
+                    "And": Array [
+                      Object {
+                        "IsNumeric": true,
+                        "Variable": "$.fnl_context.input.v",
+                      },
+                      Object {
+                        "NumericEqualsPath": "$.fnl_context.input.nv",
+                        "Variable": "$.fnl_context.input.v",
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        },
+      ],
+      "Default": "assignFalse__input.v != input.nv",
+      "Type": "Choice",
+    },
+    "input.v != input.v": Object {
+      "Choices": Array [
+        Object {
+          "Next": "assignTrue__input.v != input.v",
+          "Not": Object {
+            "And": Array [
+              Object {
+                "IsPresent": true,
+                "Variable": "$.fnl_context.input.v",
+              },
+              Object {
+                "Or": Array [
+                  Object {
+                    "And": Array [
+                      Object {
+                        "IsNull": true,
+                        "Variable": "$.fnl_context.input.v",
+                      },
+                      Object {
+                        "IsNull": true,
+                        "Variable": "$.fnl_context.input.v",
+                      },
+                    ],
+                  },
+                  Object {
+                    "And": Array [
+                      Object {
+                        "IsString": true,
+                        "Variable": "$.fnl_context.input.v",
+                      },
+                      Object {
+                        "StringEqualsPath": "$.fnl_context.input.v",
+                        "Variable": "$.fnl_context.input.v",
+                      },
+                    ],
+                  },
+                  Object {
+                    "And": Array [
+                      Object {
+                        "IsBoolean": true,
+                        "Variable": "$.fnl_context.input.v",
+                      },
+                      Object {
+                        "BooleanEqualsPath": "$.fnl_context.input.v",
+                        "Variable": "$.fnl_context.input.v",
+                      },
+                    ],
+                  },
+                  Object {
+                    "And": Array [
+                      Object {
+                        "IsNumeric": true,
+                        "Variable": "$.fnl_context.input.v",
+                      },
+                      Object {
+                        "NumericEqualsPath": "$.fnl_context.input.v",
+                        "Variable": "$.fnl_context.input.v",
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        },
+      ],
+      "Default": "assignFalse__input.v != input.v",
+      "Type": "Choice",
+    },
+    "input.v < \\"val2\\"": Object {
+      "Choices": Array [
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.fnl_context.input.v",
+            },
+            Object {
+              "And": Array [
+                Object {
+                  "IsString": true,
+                  "Variable": "$.fnl_context.input.v",
+                },
+                Object {
+                  "StringLessThan": "val2",
+                  "Variable": "$.fnl_context.input.v",
+                },
+              ],
+            },
+          ],
+          "Next": "assignTrue__input.v < \\"val2\\"",
+        },
+      ],
+      "Default": "assignFalse__input.v < \\"val2\\"",
+      "Type": "Choice",
+    },
+    "input.v < input.v": Object {
+      "Choices": Array [
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.fnl_context.input.v",
+            },
+            Object {
+              "Or": Array [
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsString": true,
+                      "Variable": "$.fnl_context.input.v",
+                    },
+                    Object {
+                      "StringLessThanPath": "$.fnl_context.input.v",
+                      "Variable": "$.fnl_context.input.v",
+                    },
+                  ],
+                },
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsBoolean": true,
+                      "Variable": "$.fnl_context.input.v",
+                    },
+                    Object {
+                      "IsNull": true,
+                      "Variable": "$$.Execution.Id",
+                    },
+                  ],
+                },
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsNumeric": true,
+                      "Variable": "$.fnl_context.input.v",
+                    },
+                    Object {
+                      "NumericLessThanPath": "$.fnl_context.input.v",
+                      "Variable": "$.fnl_context.input.v",
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+          "Next": "assignTrue__input.v < input.v",
+        },
+      ],
+      "Default": "assignFalse__input.v < input.v",
+      "Type": "Choice",
+    },
+    "input.v <= \\"val2\\"": Object {
+      "Choices": Array [
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.fnl_context.input.v",
+            },
+            Object {
+              "And": Array [
+                Object {
+                  "IsString": true,
+                  "Variable": "$.fnl_context.input.v",
+                },
+                Object {
+                  "StringLessThanEquals": "val2",
+                  "Variable": "$.fnl_context.input.v",
+                },
+              ],
+            },
+          ],
+          "Next": "assignTrue__input.v <= \\"val2\\"",
+        },
+      ],
+      "Default": "assignFalse__input.v <= \\"val2\\"",
+      "Type": "Choice",
+    },
+    "input.v <= input.v": Object {
+      "Choices": Array [
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.fnl_context.input.v",
+            },
+            Object {
+              "Or": Array [
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsString": true,
+                      "Variable": "$.fnl_context.input.v",
+                    },
+                    Object {
+                      "StringLessThanEqualsPath": "$.fnl_context.input.v",
+                      "Variable": "$.fnl_context.input.v",
+                    },
+                  ],
+                },
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsBoolean": true,
+                      "Variable": "$.fnl_context.input.v",
+                    },
+                    Object {
+                      "IsNull": true,
+                      "Variable": "$$.Execution.Id",
+                    },
+                  ],
+                },
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsNumeric": true,
+                      "Variable": "$.fnl_context.input.v",
+                    },
+                    Object {
+                      "NumericLessThanEqualsPath": "$.fnl_context.input.v",
+                      "Variable": "$.fnl_context.input.v",
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+          "Next": "assignTrue__input.v <= input.v",
+        },
+      ],
+      "Default": "assignFalse__input.v <= input.v",
+      "Type": "Choice",
+    },
+    "input.v == \\"val\\"": Object {
+      "Choices": Array [
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.fnl_context.input.v",
+            },
+            Object {
+              "And": Array [
+                Object {
+                  "IsString": true,
+                  "Variable": "$.fnl_context.input.v",
+                },
+                Object {
+                  "StringEquals": "val",
+                  "Variable": "$.fnl_context.input.v",
+                },
+              ],
+            },
+          ],
+          "Next": "assignTrue__input.v == \\"val\\"",
+        },
+      ],
+      "Default": "assignFalse__input.v == \\"val\\"",
+      "Type": "Choice",
+    },
+    "input.v == input.nv": Object {
+      "Choices": Array [
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.fnl_context.input.v",
+            },
+            Object {
+              "Or": Array [
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsNull": true,
+                      "Variable": "$.fnl_context.input.v",
+                    },
+                    Object {
+                      "IsNull": true,
+                      "Variable": "$.fnl_context.input.nv",
+                    },
+                  ],
+                },
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsString": true,
+                      "Variable": "$.fnl_context.input.v",
+                    },
+                    Object {
+                      "StringEqualsPath": "$.fnl_context.input.nv",
+                      "Variable": "$.fnl_context.input.v",
+                    },
+                  ],
+                },
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsBoolean": true,
+                      "Variable": "$.fnl_context.input.v",
+                    },
+                    Object {
+                      "BooleanEqualsPath": "$.fnl_context.input.nv",
+                      "Variable": "$.fnl_context.input.v",
+                    },
+                  ],
+                },
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsNumeric": true,
+                      "Variable": "$.fnl_context.input.v",
+                    },
+                    Object {
+                      "NumericEqualsPath": "$.fnl_context.input.nv",
+                      "Variable": "$.fnl_context.input.v",
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+          "Next": "assignTrue__input.v == input.nv",
+        },
+      ],
+      "Default": "assignFalse__input.v == input.nv",
+      "Type": "Choice",
+    },
+    "input.v == input.v": Object {
+      "Choices": Array [
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.fnl_context.input.v",
+            },
+            Object {
+              "Or": Array [
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsNull": true,
+                      "Variable": "$.fnl_context.input.v",
+                    },
+                    Object {
+                      "IsNull": true,
+                      "Variable": "$.fnl_context.input.v",
+                    },
+                  ],
+                },
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsString": true,
+                      "Variable": "$.fnl_context.input.v",
+                    },
+                    Object {
+                      "StringEqualsPath": "$.fnl_context.input.v",
+                      "Variable": "$.fnl_context.input.v",
+                    },
+                  ],
+                },
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsBoolean": true,
+                      "Variable": "$.fnl_context.input.v",
+                    },
+                    Object {
+                      "BooleanEqualsPath": "$.fnl_context.input.v",
+                      "Variable": "$.fnl_context.input.v",
+                    },
+                  ],
+                },
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsNumeric": true,
+                      "Variable": "$.fnl_context.input.v",
+                    },
+                    Object {
+                      "NumericEqualsPath": "$.fnl_context.input.v",
+                      "Variable": "$.fnl_context.input.v",
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+          "Next": "assignTrue__input.v == input.v",
+        },
+      ],
+      "Default": "assignFalse__input.v == input.v",
+      "Type": "Choice",
+    },
+    "input.v > \\"val2\\"": Object {
+      "Choices": Array [
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.fnl_context.input.v",
+            },
+            Object {
+              "And": Array [
+                Object {
+                  "IsString": true,
+                  "Variable": "$.fnl_context.input.v",
+                },
+                Object {
+                  "StringGreaterThan": "val2",
+                  "Variable": "$.fnl_context.input.v",
+                },
+              ],
+            },
+          ],
+          "Next": "assignTrue__input.v > \\"val2\\"",
+        },
+      ],
+      "Default": "assignFalse__input.v > \\"val2\\"",
+      "Type": "Choice",
+    },
+    "input.v > input.v": Object {
+      "Choices": Array [
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.fnl_context.input.v",
+            },
+            Object {
+              "Or": Array [
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsString": true,
+                      "Variable": "$.fnl_context.input.v",
+                    },
+                    Object {
+                      "StringGreaterThanPath": "$.fnl_context.input.v",
+                      "Variable": "$.fnl_context.input.v",
+                    },
+                  ],
+                },
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsBoolean": true,
+                      "Variable": "$.fnl_context.input.v",
+                    },
+                    Object {
+                      "IsNull": true,
+                      "Variable": "$$.Execution.Id",
+                    },
+                  ],
+                },
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsNumeric": true,
+                      "Variable": "$.fnl_context.input.v",
+                    },
+                    Object {
+                      "NumericGreaterThanPath": "$.fnl_context.input.v",
+                      "Variable": "$.fnl_context.input.v",
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+          "Next": "assignTrue__input.v > input.v",
+        },
+      ],
+      "Default": "assignFalse__input.v > input.v",
+      "Type": "Choice",
+    },
+    "input.v >= \\"val2\\"": Object {
+      "Choices": Array [
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.fnl_context.input.v",
+            },
+            Object {
+              "And": Array [
+                Object {
+                  "IsString": true,
+                  "Variable": "$.fnl_context.input.v",
+                },
+                Object {
+                  "StringGreaterThanEquals": "val2",
+                  "Variable": "$.fnl_context.input.v",
+                },
+              ],
+            },
+          ],
+          "Next": "assignTrue__input.v >= \\"val2\\"",
+        },
+      ],
+      "Default": "assignFalse__input.v >= \\"val2\\"",
+      "Type": "Choice",
+    },
+    "input.v >= input.v": Object {
+      "Choices": Array [
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.fnl_context.input.v",
+            },
+            Object {
+              "Or": Array [
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsString": true,
+                      "Variable": "$.fnl_context.input.v",
+                    },
+                    Object {
+                      "StringGreaterThanEqualsPath": "$.fnl_context.input.v",
+                      "Variable": "$.fnl_context.input.v",
+                    },
+                  ],
+                },
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsBoolean": true,
+                      "Variable": "$.fnl_context.input.v",
+                    },
+                    Object {
+                      "IsNull": true,
+                      "Variable": "$$.Execution.Id",
+                    },
+                  ],
+                },
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsNumeric": true,
+                      "Variable": "$.fnl_context.input.v",
+                    },
+                    Object {
+                      "NumericGreaterThanEqualsPath": "$.fnl_context.input.v",
+                      "Variable": "$.fnl_context.input.v",
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+          "Next": "assignTrue__input.v >= input.v",
+        },
+      ],
+      "Default": "assignFalse__input.v >= input.v",
+      "Type": "Choice",
+    },
+    "null != null": Object {
+      "Choices": Array [
+        Object {
+          "Next": "assignTrue__null != null",
+          "Not": Object {
+            "And": Array [
+              Object {
+                "IsPresent": true,
+                "Variable": "$.fnl_context.null",
+              },
+              Object {
+                "Or": Array [
+                  Object {
+                    "And": Array [
+                      Object {
+                        "IsNull": true,
+                        "Variable": "$.fnl_context.null",
+                      },
+                      Object {
+                        "IsNull": true,
+                        "Variable": "$.fnl_context.null",
+                      },
+                    ],
+                  },
+                  Object {
+                    "And": Array [
+                      Object {
+                        "IsString": true,
+                        "Variable": "$.fnl_context.null",
+                      },
+                      Object {
+                        "StringEqualsPath": "$.fnl_context.null",
+                        "Variable": "$.fnl_context.null",
+                      },
+                    ],
+                  },
+                  Object {
+                    "And": Array [
+                      Object {
+                        "IsBoolean": true,
+                        "Variable": "$.fnl_context.null",
+                      },
+                      Object {
+                        "BooleanEqualsPath": "$.fnl_context.null",
+                        "Variable": "$.fnl_context.null",
+                      },
+                    ],
+                  },
+                  Object {
+                    "And": Array [
+                      Object {
+                        "IsNumeric": true,
+                        "Variable": "$.fnl_context.null",
+                      },
+                      Object {
+                        "NumericEqualsPath": "$.fnl_context.null",
+                        "Variable": "$.fnl_context.null",
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        },
+      ],
+      "Default": "assignFalse__null != null",
+      "Type": "Choice",
+    },
+    "null == null": Object {
+      "Choices": Array [
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.fnl_context.null",
+            },
+            Object {
+              "Or": Array [
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsNull": true,
+                      "Variable": "$.fnl_context.null",
+                    },
+                    Object {
+                      "IsNull": true,
+                      "Variable": "$.fnl_context.null",
+                    },
+                  ],
+                },
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsString": true,
+                      "Variable": "$.fnl_context.null",
+                    },
+                    Object {
+                      "StringEqualsPath": "$.fnl_context.null",
+                      "Variable": "$.fnl_context.null",
+                    },
+                  ],
+                },
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsBoolean": true,
+                      "Variable": "$.fnl_context.null",
+                    },
+                    Object {
+                      "BooleanEqualsPath": "$.fnl_context.null",
+                      "Variable": "$.fnl_context.null",
+                    },
+                  ],
+                },
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsNumeric": true,
+                      "Variable": "$.fnl_context.null",
+                    },
+                    Object {
+                      "NumericEqualsPath": "$.fnl_context.null",
+                      "Variable": "$.fnl_context.null",
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+          "Next": "assignTrue__null == null",
+        },
+      ],
+      "Default": "assignFalse__null == null",
+      "Type": "Choice",
+    },
+    "return {constantStringEquals: \\"a\\" == \\"a\\", constantToVarStringEquals: input.": Object {
+      "Choices": Array [
+        Object {
+          "IsNull": false,
+          "Next": "assignTrue__return {constantStringEquals: \\"a\\" == \\"a\\", constantToVarStringEq",
+          "Variable": "$$.Execution.Id",
+        },
+      ],
+      "Default": "assignFalse__return {constantStringEquals: \\"a\\" == \\"a\\", constantToVarStringE",
+      "Type": "Choice",
+    },
+    "true != true": Object {
+      "Choices": Array [
+        Object {
+          "IsNull": true,
+          "Next": "assignTrue__true != true",
+          "Variable": "$$.Execution.Id",
+        },
+      ],
+      "Default": "assignFalse__true != true",
+      "Type": "Choice",
+    },
+    "true == true": Object {
+      "Choices": Array [
+        Object {
+          "IsNull": false,
+          "Next": "assignTrue__true == true",
+          "Variable": "$$.Execution.Id",
+        },
+      ],
+      "Default": "assignFalse__true == true",
+      "Type": "Choice",
+    },
+  },
+}
+`;
+
 exports[`binaryOps comparison 1`] = `
 Object {
   "StartAt": "Initialize Functionless Context",
