@@ -1,7 +1,9 @@
 import "jest";
 import fs from "fs";
+import { readFile } from "fs/promises";
 import path from "path";
 import ts from "typescript";
+import { ErrorCodes } from "../src";
 import { makeFunctionlessChecker } from "../src/checker";
 import { formatDiagnosticsWithColorAndContext } from "../src/format-error";
 import { validate } from "../src/validate";
@@ -28,6 +30,24 @@ test("function.ts", () => runTest("function.ts"));
 test("appsync.ts", () => runTest("appsync.ts"));
 
 test("event-bus.ts", () => runTest("event-bus.ts"));
+
+describe("all error codes tested", () => {
+  let file: string | undefined = undefined;
+  beforeAll(async () => {
+    file = (
+      await readFile(
+        path.resolve(__dirname, "./__snapshots__/validate.test.ts.snap")
+      )
+    ).toString("utf8");
+  });
+
+  test.concurrent.each(Object.values(ErrorCodes))(
+    "$code: $title",
+    async (code) => {
+      expect(file!).toContain(`${code.code}`);
+    }
+  );
+});
 
 function runTest(fileName: string) {
   const diagnostics = validate(
