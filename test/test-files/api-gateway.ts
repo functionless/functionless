@@ -203,3 +203,19 @@ new AwsMethod(
     return "";
   }
 );
+
+// unsupported - cannot find reference to integration outside of scope.
+
+new AwsMethod(
+  { httpMethod: "ANY", resource: api.root },
+  async () => {
+    const getIntegration = (): typeof func => {
+      return func;
+    };
+    const x = getIntegration();
+    await x("");
+  },
+  () => {
+    return "";
+  }
+);

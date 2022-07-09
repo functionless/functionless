@@ -415,3 +415,21 @@ new AppsyncResolver(
     });
   }
 );
+
+// unsupported - cannot find reference to integration outside of scope.
+
+new AppsyncResolver(
+  api,
+  "no promise array",
+  {
+    fieldName: "field",
+    typeName: "type",
+  },
+  async () => {
+    const getIntegration = (): typeof func => {
+      return func;
+    };
+    const x = getIntegration();
+    await x();
+  }
+);

@@ -143,3 +143,13 @@ new Function(stack, "obj ref", async () => {
     },
   });
 });
+
+// unsupported - cannot find reference to integration outside of scope.
+
+new Function(stack, "obj ref", async () => {
+  const getIntegration = (): typeof func => {
+    return func;
+  };
+  const x = getIntegration();
+  await x("");
+});

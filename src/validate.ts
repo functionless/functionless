@@ -45,7 +45,7 @@ export function validate(
     } else if (checker.isAppsyncResolver(node)) {
       return validateNewAppsyncResolverNode(node);
     } else if (checker.isAppsyncField(node)) {
-      return validateNewAppsyncFieldNode(node);
+      return validateNewAppsyncResolverNode(node);
     } else if (checker.isEventBusWhenFunction(node)) {
       return validateEventBusWhen(node);
     } else if (checker.isRuleMapFunction(node)) {
@@ -98,39 +98,41 @@ export function validate(
     const func =
       node.arguments.length === 4 ? node.arguments[3] : node.arguments[2];
 
+    const scope = node;
+
     return [
       // visit all other arguments
       ...validateNodes(node.arguments.filter((arg) => arg !== func)),
       // process the function closure
       ...collectEachChildRecursive(func, validateStepFunctionNode),
     ];
-  }
 
-  function validateStepFunctionNode(
-    node: typescript.Node
-  ): typescript.Diagnostic[] {
-    if (
-      (ts.isBinaryExpression(node) &&
-        isArithmeticToken(node.operatorToken.kind) &&
-        !checker.isConstant(node)) ||
-      (ts.isPrefixUnaryExpression(node) && !checker.isConstant(node))
-    ) {
-      return [
-        newError(
-          node,
-          ErrorCodes.Cannot_perform_arithmetic_on_variables_in_Step_Function
-        ),
-      ];
-    } else if (ts.isCallExpression(node)) {
-      return [
-        ...validateIntegrationCallArguments(node),
-        ...validatePromiseCalls(node),
-      ];
-    } else if (ts.isNewExpression(node)) {
-      const [, diagnostic] = validateNewIntegration(node);
-      return diagnostic;
+    function validateStepFunctionNode(
+      node: typescript.Node
+    ): typescript.Diagnostic[] {
+      if (
+        (ts.isBinaryExpression(node) &&
+          isArithmeticToken(node.operatorToken.kind) &&
+          !checker.isConstant(node)) ||
+        (ts.isPrefixUnaryExpression(node) && !checker.isConstant(node))
+      ) {
+        return [
+          newError(
+            node,
+            ErrorCodes.Cannot_perform_arithmetic_on_variables_in_Step_Function
+          ),
+        ];
+      } else if (ts.isCallExpression(node)) {
+        return [
+          ...validateIntegrationCallArguments(node, scope),
+          ...validatePromiseCalls(node),
+        ];
+      } else if (ts.isNewExpression(node)) {
+        const [, diagnostic] = validateNewIntegration(node);
+        return diagnostic;
+      }
+      return [];
     }
-    return [];
   }
 
   /**
@@ -195,8 +197,21 @@ export function validate(
 
   // TODO: remove integration specific validation in favor of configuration
   // https://github.com/functionless/functionless/issues/324
-  function validateIntegrationCallArguments(node: ts.CallExpression) {
+  function validateIntegrationCallArguments(
+    node: ts.CallExpression,
+    scope: ts.Node
+  ) {
     if (checker.isIntegrationNode(node.expression)) {
+      const outOfScope = checker.getOutOfScopeValueNode(node.expression, scope);
+      if (!outOfScope) {
+        return [
+          newError(
+            node.expression,
+            ErrorCodes.Unable_to_find_reference_out_of_application_function
+          ),
+        ];
+      }
+
       const integrationCodeKind = checker.getIntegrationNodeKind(
         node.expression
       );
@@ -256,13 +271,16 @@ export function validate(
   }
 
   function validateNewAppsyncResolverNode(
-    node: NewAppsyncResolverInterface
+    node: NewAppsyncResolverInterface | NewAppsyncFieldInterface
   ): ts.Diagnostic[] {
-    const func = node.arguments[3];
+    const func =
+      node.arguments.length === 2 ? node.arguments[1] : node.arguments[3];
     const [resolver, errors] = validateInlineFunctionArgument(func);
     if (!resolver) {
       return errors;
     }
+
+    const scope = node;
 
     return [
       ...validateNodes(node.arguments.filter((n) => n !== resolver)),
@@ -270,116 +288,99 @@ export function validate(
         ? collectEachBlockChild(resolver.body, validateAppsyncRootStatement)
         : collectEachChildRecursive(resolver.body, validateAppsync)),
     ];
-  }
 
-  function validateNewAppsyncFieldNode(
-    node: NewAppsyncFieldInterface
-  ): ts.Diagnostic[] {
-    const func = node.arguments[1];
-    const [resolver, errors] = validateInlineFunctionArgument(func);
-    if (!resolver) {
-      return errors;
+    function validateAppsyncRootStatement(node: ts.Statement): ts.Diagnostic[] {
+      const diag = validateAppsync(node);
+
+      const childDiags = collectEachChildRecursive(node, (n) =>
+        validateAppsync(n, node)
+      );
+
+      return [...diag, ...childDiags];
     }
 
-    return [
-      ...validateNodes(node.arguments.filter((n) => n !== resolver)),
-      ...(ts.isBlock(resolver.body)
-        ? collectEachBlockChild(resolver.body, validateAppsyncRootStatement)
-        : collectEachChildRecursive(resolver.body, validateAppsync)),
-    ];
-  }
-
-  function validateAppsyncRootStatement(node: ts.Statement): ts.Diagnostic[] {
-    const diag = validateAppsync(node);
-
-    const childDiags = collectEachChildRecursive(node, (n) =>
-      validateAppsync(n, node)
-    );
-
-    return [...diag, ...childDiags];
-  }
-
-  function validateAppsync(
-    node: ts.Node,
-    rootStatement?: ts.Statement
-  ): ts.Diagnostic[] {
-    if (ts.isCallExpression(node)) {
-      if (
-        ts.isPropertyAccessExpression(node.expression) &&
-        ts.isIdentifier(node.expression.expression) &&
-        node.expression.expression.text === "Promise"
-      ) {
-        return [
-          newError(
-            node,
-            ErrorCodes.Unsupported_Use_of_Promises,
-            "Appsync does not support concurrent integration invocation or methods on the `Promise` api."
-          ),
-        ];
-      } else if (checker.isIntegrationNode(node.expression)) {
-        /**
-         * Used by AppSync to determine of a root statement can be statically analyzed.
-         */
-        const isControlFlowStatement = anyOf(
-          ts.isEmptyStatement,
-          ts.isIfStatement,
-          ts.isDoStatement,
-          ts.isWhileStatement,
-          ts.isForStatement,
-          ts.isForInStatement,
-          ts.isForOfStatement,
-          ts.isSwitchStatement,
-          ts.isLabeledStatement,
-          ts.isTryStatement
-        );
-
-        /**
-         * If this is an integration node, app sync does not support integrations outside of the main function body.
-         *
-         * We check to see if the root statement (the one in the function body), is a conditional statement, an example of support statements:
-         * variable - const v = func()
-         * expression - await func()
-         * return - return await func()
-         *
-         * Also ensure that we are not inside an inline conditional statement.
-         *
-         * const v = x ? await func() : await func2()
-         */
+    function validateAppsync(
+      node: ts.Node,
+      rootStatement?: ts.Statement
+    ): ts.Diagnostic[] {
+      if (ts.isCallExpression(node)) {
         if (
-          rootStatement &&
-          (isControlFlowStatement(rootStatement) ||
-            findParent(
-              node.expression,
-              ts.isConditionalExpression,
-              rootStatement
-            ))
+          ts.isPropertyAccessExpression(node.expression) &&
+          ts.isIdentifier(node.expression.expression) &&
+          node.expression.expression.text === "Promise"
         ) {
           return [
             newError(
               node,
-              ErrorCodes.Appsync_Integration_invocations_must_be_unidirectional_and_defined_statically
+              ErrorCodes.Unsupported_Use_of_Promises,
+              "Appsync does not support concurrent integration invocation or methods on the `Promise` api."
             ),
           ];
-        }
-      }
-      return [
-        ...validateIntegrationCallArguments(node),
-        ...validatePromiseCalls(node),
-      ];
-    } else if (checker.isPromiseArray(checker.getTypeAtLocation(node))) {
-      return [
-        newError(
-          node,
-          ErrorCodes.Unsupported_Use_of_Promises,
-          "Appsync does not support concurrent integration invocation."
-        ),
-      ];
-    } else if (ts.isNewExpression(node)) {
-      const [, diagnostic] = validateNewIntegration(node);
-      return diagnostic;
-    }
+        } else if (checker.isIntegrationNode(node.expression)) {
+          /**
+           * Used by AppSync to determine of a root statement can be statically analyzed.
+           */
+          const isControlFlowStatement = anyOf(
+            ts.isEmptyStatement,
+            ts.isIfStatement,
+            ts.isDoStatement,
+            ts.isWhileStatement,
+            ts.isForStatement,
+            ts.isForInStatement,
+            ts.isForOfStatement,
+            ts.isSwitchStatement,
+            ts.isLabeledStatement,
+            ts.isTryStatement
+          );
 
-    return [];
+          /**
+           * If this is an integration node, app sync does not support integrations outside of the main function body.
+           *
+           * We check to see if the root statement (the one in the function body), is a conditional statement, an example of support statements:
+           * variable - const v = func()
+           * expression - await func()
+           * return - return await func()
+           *
+           * Also ensure that we are not inside an inline conditional statement.
+           *
+           * const v = x ? await func() : await func2()
+           */
+          if (
+            rootStatement &&
+            (isControlFlowStatement(rootStatement) ||
+              findParent(
+                node.expression,
+                ts.isConditionalExpression,
+                rootStatement
+              ))
+          ) {
+            return [
+              newError(
+                node,
+                ErrorCodes.Appsync_Integration_invocations_must_be_unidirectional_and_defined_statically
+              ),
+            ];
+          }
+        }
+        return [
+          ...validateIntegrationCallArguments(node, scope),
+          ...validatePromiseCalls(node),
+        ];
+      } else if (checker.isPromiseArray(checker.getTypeAtLocation(node))) {
+        return [
+          newError(
+            node,
+            ErrorCodes.Unsupported_Use_of_Promises,
+            "Appsync does not support concurrent integration invocation."
+          ),
+        ];
+      } else if (ts.isNewExpression(node)) {
+        const [, diagnostic] = validateNewIntegration(node);
+        return diagnostic;
+      }
+
+      return [];
+    }
   }
 
   function validateInlineFunctionArgument(
@@ -399,6 +400,8 @@ export function validate(
 
   function validateApi(node: ts.NewExpression): ts.Diagnostic[] {
     const kind = checker.getApiMethodKind(node);
+    const scope = node;
+
     if (kind === "AwsMethod") {
       // @ts-ignore
       const [props, request, responses, errors] = node.arguments ?? [];
@@ -438,6 +441,30 @@ export function validate(
       const [props, request, responses] = node.arguments;
     }
     return [];
+
+    function validateApiNode(node: ts.Node): ts.Diagnostic[] {
+      if (ts.isComputedPropertyName(node)) {
+        return [
+          newError(
+            node,
+            ErrorCodes.API_Gateway_does_not_support_computed_property_names
+          ),
+        ];
+      } else if (ts.isSpreadAssignment(node)) {
+        return [
+          newError(
+            node,
+            ErrorCodes.API_Gateway_does_not_support_spread_assignment_expressions
+          ),
+        ];
+      } else if (ts.isNewExpression(node)) {
+        const [, diagnostic] = validateNewIntegration(node);
+        return diagnostic;
+      } else if (ts.isCallExpression(node)) {
+        return validateIntegrationCallArguments(node, scope);
+      }
+      return [];
+    }
   }
 
   function validateApiResponseNode(node: ts.Node): ts.Diagnostic[] {
@@ -458,33 +485,11 @@ export function validate(
     return [];
   }
 
-  function validateApiNode(node: ts.Node): ts.Diagnostic[] {
-    if (ts.isComputedPropertyName(node)) {
-      return [
-        newError(
-          node,
-          ErrorCodes.API_Gateway_does_not_support_computed_property_names
-        ),
-      ];
-    } else if (ts.isSpreadAssignment(node)) {
-      return [
-        newError(
-          node,
-          ErrorCodes.API_Gateway_does_not_support_spread_assignment_expressions
-        ),
-      ];
-    } else if (ts.isNewExpression(node)) {
-      const [, diagnostic] = validateNewIntegration(node);
-      return diagnostic;
-    } else if (ts.isCallExpression(node)) {
-      return validateIntegrationCallArguments(node);
-    }
-    return [];
-  }
-
   function validateFunctionNode(node: FunctionInterface) {
     const func =
       node.arguments.length === 4 ? node.arguments[3] : node.arguments[2];
+
+    const scope = node;
 
     return [
       // visit all other arguments
@@ -492,35 +497,35 @@ export function validate(
       // process the function closure
       ...collectEachChildRecursive(func, validateFunctionClosureNode),
     ];
-  }
 
-  function validateFunctionClosureNode(
-    node: typescript.Node
-  ): typescript.Diagnostic[] {
-    if (
-      checker.isStepFunction(node) ||
-      checker.isTable(node) ||
-      checker.isFunctionlessFunction(node) ||
-      checker.isEventBus(node)
-    ) {
+    function validateFunctionClosureNode(
+      node: typescript.Node
+    ): typescript.Diagnostic[] {
       if (
-        typescript.isPropertyAccessExpression(node.parent) &&
-        node.parent.name.text === "resource"
+        checker.isStepFunction(node) ||
+        checker.isTable(node) ||
+        checker.isFunctionlessFunction(node) ||
+        checker.isEventBus(node)
       ) {
-        return [
-          newError(
-            node,
-            ErrorCodes.Cannot_use_infrastructure_Resource_in_Function_closure
-          ),
-        ];
+        if (
+          typescript.isPropertyAccessExpression(node.parent) &&
+          node.parent.name.text === "resource"
+        ) {
+          return [
+            newError(
+              node,
+              ErrorCodes.Cannot_use_infrastructure_Resource_in_Function_closure
+            ),
+          ];
+        }
+      } else if (ts.isNewExpression(node)) {
+        const [, diagnostic] = validateNewIntegration(node);
+        return diagnostic;
+      } else if (ts.isCallExpression(node)) {
+        return validateIntegrationCallArguments(node, scope);
       }
-    } else if (ts.isNewExpression(node)) {
-      const [, diagnostic] = validateNewIntegration(node);
-      return diagnostic;
-    } else if (ts.isCallExpression(node)) {
-      return validateIntegrationCallArguments(node);
+      return [];
     }
-    return [];
   }
 
   function countIntegrationCalls(node: ts.Node): number {

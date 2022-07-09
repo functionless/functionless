@@ -48,6 +48,12 @@ https://functionless.org/docs/error-codes#unsupported-initialization-of-resource
 
 [7m130[0m     const sfn = new StepFunction(stack, \\"\\", () => {});
 [7m   [0m [91m               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+[96mtest/test-files/api-gateway.ts[0m:[93m131[0m:[93m11[0m - [91merror[0m[90m Functionless(10019): [0mUnable to find reference out of application function
+
+https://functionless.org/docs/error-codes#unable-to-find-reference-out-of-application-function
+
+[7m131[0m     return sfn({});
+[7m   [0m [91m          ~~~~[0m
 [96mtest/test-files/api-gateway.ts[0m:[93m133[0m:[93m10[0m - [91merror[0m[90m Functionless(10008): [0mCannot initialize new resources in a runtime function, found StepFunction.
 
 https://functionless.org/docs/error-codes#unsupported-initialization-of-resources-in-a-runtime-closure
@@ -62,6 +68,12 @@ https://functionless.org/docs/error-codes#unsupported-initialization-of-resource
 
 [7m141[0m     const func = new Function<undefined, void>(stack, \\"\\", async () => {});
 [7m   [0m [91m                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+[96mtest/test-files/api-gateway.ts[0m:[93m142[0m:[93m11[0m - [91merror[0m[90m Functionless(10019): [0mUnable to find reference out of application function
+
+https://functionless.org/docs/error-codes#unable-to-find-reference-out-of-application-function
+
+[7m142[0m     return func();
+[7m   [0m [91m          ~~~~~[0m
 [96mtest/test-files/api-gateway.ts[0m:[93m144[0m:[93m10[0m - [91merror[0m[90m Functionless(10008): [0mCannot initialize new resources in a runtime function, found Function.
 
 https://functionless.org/docs/error-codes#unsupported-initialization-of-resources-in-a-runtime-closure
@@ -76,6 +88,12 @@ https://functionless.org/docs/error-codes#unsupported-initialization-of-resource
 
 [7m152[0m     const bus = new EventBus(stack, \\"\\");
 [7m   [0m [91m               ~~~~~~~~~~~~~~~~~~~~~~~~[0m
+[96mtest/test-files/api-gateway.ts[0m:[93m153[0m:[93m11[0m - [91merror[0m[90m Functionless(10019): [0mUnable to find reference out of application function
+
+https://functionless.org/docs/error-codes#unable-to-find-reference-out-of-application-function
+
+[7m153[0m     return bus.putEvents({ \\"detail-type\\": \\"\\", source: \\"\\", detail: {} });
+[7m   [0m [91m          ~~~~~~~~~~~~~~[0m
 [96mtest/test-files/api-gateway.ts[0m:[93m155[0m:[93m10[0m - [91merror[0m[90m Functionless(10008): [0mCannot initialize new resources in a runtime function, found EventBus.
 
 https://functionless.org/docs/error-codes#unsupported-initialization-of-resources-in-a-runtime-closure
@@ -106,6 +124,12 @@ https://functionless.org/docs/error-codes#expected-an-object-literal
 
 [7m183[0m     await $AWS.DynamoDB.GetItem(event);
 [7m   [0m [91m                                ~~~~~[0m
+[96mtest/test-files/api-gateway.ts[0m:[93m216[0m:[93m10[0m - [91merror[0m[90m Functionless(10019): [0mUnable to find reference out of application function
+
+https://functionless.org/docs/error-codes#unable-to-find-reference-out-of-application-function
+
+[7m216[0m     await x(\\"\\");
+[7m   [0m [91m         ~~[0m
 "
 `;
 
@@ -269,6 +293,12 @@ https://functionless.org/docs/error-codes#expected-an-object-literal
 
 [7m397[0m     await table.appsync.getItem(event);
 [7m   [0m [91m                                ~~~~~[0m
+[96mtest/test-files/appsync.ts[0m:[93m433[0m:[93m10[0m - [91merror[0m[90m Functionless(10019): [0mUnable to find reference out of application function
+
+https://functionless.org/docs/error-codes#unable-to-find-reference-out-of-application-function
+
+[7m433[0m     await x();
+[7m   [0m [91m         ~~[0m
 "
 `;
 
@@ -376,6 +406,12 @@ https://functionless.org/docs/error-codes#expected-an-object-literal
 
 [7m133[0m   await $AWS.DynamoDB.GetItem(event);
 [7m   [0m [91m                              ~~~~~[0m
+[96mtest/test-files/function.ts[0m:[93m154[0m:[93m8[0m - [91merror[0m[90m Functionless(10019): [0mUnable to find reference out of application function
+
+https://functionless.org/docs/error-codes#unable-to-find-reference-out-of-application-function
+
+[7m154[0m   await x(\\"\\");
+[7m   [0m [91m       ~~[0m
 "
 `;
 
@@ -521,5 +557,11 @@ https://functionless.org/docs/error-codes#expected-an-object-literal
 
 [7m202[0m   await $AWS.Lambda.Invoke(event);
 [7m   [0m [91m                           ~~~~~[0m
+[96mtest/test-files/step-function.ts[0m:[93m230[0m:[93m8[0m - [91merror[0m[90m Functionless(10019): [0mUnable to find reference out of application function
+
+https://functionless.org/docs/error-codes#unable-to-find-reference-out-of-application-function
+
+[7m230[0m   await x();
+[7m   [0m [91m       ~~[0m
 "
 `;
