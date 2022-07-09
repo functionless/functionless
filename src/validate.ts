@@ -613,7 +613,10 @@ export function validate(
       checker.isIntegrationNode(node.expression)
     ) {
       return [
-        newError(node, ErrorCodes.EventBus_Rules_do_not_support_Integrations),
+        newError(
+          node,
+          ErrorCodes.EventBus_Input_Transformers_do_not_support_Integrations
+        ),
       ];
     }
 

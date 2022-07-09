@@ -273,9 +273,9 @@ https://functionless.org/docs/error-codes#expected-an-object-literal
 `;
 
 exports[`event-bus.ts 1`] = `
-"[96mtest/test-files/event-bus.ts[0m:[93m16[0m:[93m22[0m - [91merror[0m[90m Functionless(10015): [0mEventBus Rules do not support integrations
+"[96mtest/test-files/event-bus.ts[0m:[93m16[0m:[93m22[0m - [91merror[0m[90m Functionless(10014): [0mEventBus Input Transformers do not support integrations
 
-https://functionless.org/docs/error-codes#eventbus-rules-do-not-support-integrations
+https://functionless.org/docs/error-codes#eventbus-input-transformers-do-not-support-integrations
 
 [7m16[0m bus.all().map(() => {
 [7m  [0m [91m                     [0m
@@ -283,9 +283,9 @@ https://functionless.org/docs/error-codes#eventbus-rules-do-not-support-integrat
 [7m  [0m [91m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
 [7m18[0m   bus.putEvents({ \\"detail-type\\": \\"detail\\", detail: {}, source: \\"\\" });
 [7m  [0m [91m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
-[96mtest/test-files/event-bus.ts[0m:[93m23[0m:[93m9[0m - [91merror[0m[90m Functionless(10015): [0mEventBus Rules do not support integrations
+[96mtest/test-files/event-bus.ts[0m:[93m23[0m:[93m9[0m - [91merror[0m[90m Functionless(10014): [0mEventBus Input Transformers do not support integrations
 
-https://functionless.org/docs/error-codes#eventbus-rules-do-not-support-integrations
+https://functionless.org/docs/error-codes#eventbus-input-transformers-do-not-support-integrations
 
 [7m23[0m   return func();
 [7m  [0m [91m        ~~~~~~~[0m
