@@ -94,6 +94,7 @@ export function makeFunctionlessChecker(
     ...checker,
     getApiMethodKind,
     getFunctionlessTypeKind,
+    getIntegrationNodeKind,
     isApiIntegration,
     isAppsyncField,
     isAppsyncResolver,
@@ -472,6 +473,18 @@ export function makeFunctionlessChecker(
       return isConstant(node.operand);
     }
     return false;
+  }
+
+  function getIntegrationNodeKind(node: ts.Node): string | undefined {
+    const exprType = checker.getTypeAtLocation(node);
+    const exprKind = exprType.getProperty("kind");
+    if (exprKind) {
+      const exprKindType = checker.getTypeOfSymbolAtLocation(exprKind, node);
+      if (exprKindType.isStringLiteral()) {
+        return exprKindType.value;
+      }
+    }
+    return undefined;
   }
 
   function isIntegrationNode(node: ts.Node): boolean {

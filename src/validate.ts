@@ -122,7 +122,10 @@ export function validate(
         ),
       ];
     } else if (ts.isCallExpression(node)) {
-      return validatePromiseCalls(node);
+      return [
+        ...validateIntegrationCallArguments(node),
+        ...validatePromiseCalls(node),
+      ];
     } else if (ts.isNewExpression(node)) {
       const [, diagnostic] = validateNewIntegration(node);
       return diagnostic;
@@ -186,6 +189,35 @@ export function validate(
         !checker.isPromiseArray(checker.getTypeAtLocation(node.arguments[0])))
     ) {
       return [newError(node, ErrorCodes.Unsupported_Use_of_Promises)];
+    }
+    return [];
+  }
+
+  // TODO: remove integration specific validation in favor of configuration
+  // https://github.com/functionless/functionless/issues/324
+  function validateIntegrationCallArguments(node: ts.CallExpression) {
+    if (checker.isIntegrationNode(node.expression)) {
+      const integrationCodeKind = checker.getIntegrationNodeKind(
+        node.expression
+      );
+      if (
+        integrationCodeKind?.startsWith("Table.AppSync.") ||
+        integrationCodeKind?.startsWith("$AWS.DynamoDB") ||
+        integrationCodeKind?.startsWith("$AWS.Lambda")
+      ) {
+        if (
+          node.arguments.length > 0 &&
+          !ts.isObjectLiteralExpression(node.arguments[0])
+        ) {
+          return [
+            newError(
+              node.arguments[0],
+              ErrorCodes.Expected_an_object_literal,
+              `Expected the first argument of ${integrationCodeKind} to be an object literal.`
+            ),
+          ];
+        }
+      }
     }
     return [];
   }
@@ -258,7 +290,7 @@ export function validate(
   }
 
   function validateAppsyncRootStatement(node: ts.Statement): ts.Diagnostic[] {
-    const diag = validateApiNode(node);
+    const diag = validateAppsync(node);
 
     const childDiags = collectEachChildRecursive(node, (n) =>
       validateAppsync(n, node)
@@ -330,7 +362,10 @@ export function validate(
           ];
         }
       }
-      return validatePromiseCalls(node);
+      return [
+        ...validateIntegrationCallArguments(node),
+        ...validatePromiseCalls(node),
+      ];
     } else if (checker.isPromiseArray(checker.getTypeAtLocation(node))) {
       return [
         newError(
@@ -441,6 +476,8 @@ export function validate(
     } else if (ts.isNewExpression(node)) {
       const [, diagnostic] = validateNewIntegration(node);
       return diagnostic;
+    } else if (ts.isCallExpression(node)) {
+      return validateIntegrationCallArguments(node);
     }
     return [];
   }
@@ -480,6 +517,8 @@ export function validate(
     } else if (ts.isNewExpression(node)) {
       const [, diagnostic] = validateNewIntegration(node);
       return diagnostic;
+    } else if (ts.isCallExpression(node)) {
+      return validateIntegrationCallArguments(node);
     }
     return [];
   }

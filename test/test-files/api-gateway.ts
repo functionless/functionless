@@ -167,3 +167,39 @@ new AwsMethod(
     new aws_events.EventBus(stack, "");
   }
 );
+
+// unsupported object references in $AWS calls
+
+new AwsMethod(
+  { httpMethod: "ANY", resource: api.root },
+  async () => {
+    const event = {
+      Table: table,
+      Key: {
+        id: { S: "sas" },
+      },
+    };
+
+    await $AWS.DynamoDB.GetItem(event);
+  },
+  () => {
+    return "";
+  }
+);
+
+// supported - object literal in $AWS calls
+
+new AwsMethod(
+  { httpMethod: "ANY", resource: api.root },
+  async () => {
+    await $AWS.DynamoDB.GetItem({
+      Table: table,
+      Key: {
+        id: { S: "sas" },
+      },
+    });
+  },
+  () => {
+    return "";
+  }
+);

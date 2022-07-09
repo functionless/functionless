@@ -31,6 +31,28 @@ test("appsync.ts", () => runTest("appsync.ts"));
 
 test("event-bus.ts", () => runTest("event-bus.ts"));
 
+const skipErrorCodes: number[] = [
+  // not possible to test, not validated for
+  10001,
+  // dynamic validation - lambda closure serialize poison pill
+  10004,
+  // generic - unexpected error
+  10005,
+  // dynamic validation - wrong step function import type
+  10006,
+  // dynamic validation - unsafe use of secrets
+  10007,
+  // generic - unsupported feature
+  10021,
+];
+
+/**
+ * Test for recorded validations of each error code.
+ * 1. Checks if there is a validation for an error code.
+ * 2. Checks if there is a test for the validation of the error code.
+ *
+ * If the error code cannot be validated or the validation cannot be easily tested, use skipErrorCodes to skip the code.
+ */
 describe("all error codes tested", () => {
   let file: string | undefined = undefined;
   beforeAll(async () => {
@@ -41,12 +63,19 @@ describe("all error codes tested", () => {
     ).toString("utf8");
   });
 
-  test.concurrent.each(Object.values(ErrorCodes))(
-    "$code: $title",
-    async (code) => {
-      expect(file!).toContain(`${code.code}`);
-    }
-  );
+  test.concurrent.each(
+    Object.values(ErrorCodes).filter(
+      ({ code }) => !skipErrorCodes.includes(code)
+    )
+  )("$code: $title", async (code) => {
+    expect(file!).toContain(`${code.code}`);
+  });
+
+  test.skip.each(
+    Object.values(ErrorCodes).filter(({ code }) =>
+      skipErrorCodes.includes(code)
+    )
+  )("$code: $title", () => {});
 });
 
 function runTest(fileName: string) {

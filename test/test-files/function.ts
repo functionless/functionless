@@ -6,6 +6,7 @@ import {
   LambdaDestination,
 } from "aws-cdk-lib/aws-lambda-destinations";
 import {
+  $AWS,
   AppsyncResolver,
   EventBus,
   Function,
@@ -25,7 +26,7 @@ const sfn = new StepFunction(stack, "sfn", () => {
 const func = new Function(stack, "validfunc", async () => {
   return "hi";
 });
-const table = new Table<{ id: "string" }, "id">(stack, "table", {
+const table = new Table<{ id: string }, "id">(stack, "table", {
   partitionKey: {
     name: "id",
     type: AttributeType.STRING,
@@ -117,4 +118,28 @@ new Function(stack, "new resolver", async () => {
 
 new Function(stack, "cdk resource", async () => {
   new aws_events.EventBus(stack, "");
+});
+
+// unsupported object references in $AWS calls
+
+new Function(stack, "obj ref", async () => {
+  const event = {
+    Table: table,
+    Key: {
+      id: { S: "sas" },
+    },
+  };
+
+  await $AWS.DynamoDB.GetItem(event);
+});
+
+// supported - object literal in $AWS calls
+
+new Function(stack, "obj ref", async () => {
+  await $AWS.DynamoDB.GetItem({
+    Table: table,
+    Key: {
+      id: { S: "sas" },
+    },
+  });
 });

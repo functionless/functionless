@@ -1,11 +1,30 @@
 import { GraphqlApi } from "@aws-cdk/aws-appsync-alpha";
 import { App, aws_events, Stack } from "aws-cdk-lib";
-import { StepFunction, Function, EventBus, AppsyncResolver } from "../../src";
+import { AttributeType } from "aws-cdk-lib/aws-dynamodb";
+import {
+  StepFunction,
+  Function,
+  EventBus,
+  AppsyncResolver,
+  $AWS,
+  Table,
+} from "../../src";
 
 const app = new App({
   autoSynth: false,
 });
 const stack = new Stack(app, "stack");
+
+const table = new Table<{ id: string }, "id">(stack, "table", {
+  partitionKey: {
+    name: "id",
+    type: AttributeType.STRING,
+  },
+});
+
+const func = new Function<undefined, string>(stack, "func", async () => {
+  return "hello";
+});
 
 // unsupported arithmetic
 new StepFunction(stack, "input.i + 2", (input: { i: number }) => input.i + 2);
@@ -77,10 +96,6 @@ new StepFunction(
 );
 
 // Unsupported - non-awaited promise
-
-const func = new Function<undefined, string>(stack, "func", async () => {
-  return "hello";
-});
 
 new StepFunction(stack, "no await", async () => {
   const c = func();
@@ -163,4 +178,44 @@ new StepFunction(stack, "new resolver", async () => {
 
 new StepFunction(stack, "cdk resource", () => {
   new aws_events.EventBus(stack, "");
+});
+
+// unsupported object references in $AWS calls
+
+new StepFunction(stack, "obj ref", async () => {
+  const event = {
+    Table: table,
+    Key: {
+      id: { S: "sas" },
+    },
+  };
+
+  await $AWS.DynamoDB.GetItem(event);
+});
+
+new StepFunction(stack, "obj ref", async () => {
+  const event = {
+    Function: func,
+    Payload: undefined,
+  };
+
+  await $AWS.Lambda.Invoke(event);
+});
+
+// supported - object literal in $AWS calls
+
+new StepFunction(stack, "obj ref", async () => {
+  await $AWS.DynamoDB.GetItem({
+    Table: table,
+    Key: {
+      id: { S: "sas" },
+    },
+  });
+});
+
+new StepFunction(stack, "obj ref", async () => {
+  await $AWS.Lambda.Invoke({
+    Function: func,
+    Payload: undefined,
+  });
 });
