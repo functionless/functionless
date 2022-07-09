@@ -396,8 +396,6 @@ export function makeFunctionlessChecker(
           symbol.valueDeclaration
         );
         return updatedSymbol ? isSymbolOutOfScope(updatedSymbol, scope) : false;
-      } else if (ts.isVariableDeclaration(symbol.valueDeclaration)) {
-        return !hasParent(symbol.valueDeclaration, scope);
       } else if (ts.isBindingElement(symbol.valueDeclaration)) {
         /*
                 check if the binding element's declaration is within the scope or not.
@@ -417,6 +415,7 @@ export function makeFunctionlessChecker(
         const declaration = getDestructuredDeclaration(symbol.valueDeclaration);
         return !hasParent(declaration, scope);
       }
+      return !hasParent(symbol.valueDeclaration, scope);
     } else if (symbol.declarations && symbol.declarations.length > 0) {
       const [decl] = symbol.declarations;
       // import x from y

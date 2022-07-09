@@ -229,3 +229,18 @@ new StepFunction(stack, "obj ref", async () => {
   const x = getIntegration();
   await x();
 });
+
+// support reference from surrounding class
+
+export class MyClass {
+  readonly func2: Function<string, string>;
+
+  constructor(readonly func: Function<string, string>) {
+    this.func2 = func;
+
+    new StepFunction(stack, "sfn", async () => {
+      await this.func("");
+      await this.func2("");
+    });
+  }
+}
