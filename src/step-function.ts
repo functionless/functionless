@@ -79,7 +79,7 @@ export namespace $SFN {
 
       return context.evalExpr(seconds, call, (secondsOutput) => {
         if (
-          ASLGraph.isValue(secondsOutput) &&
+          ASLGraph.isLiteralValue(secondsOutput) &&
           typeof secondsOutput.value === "number"
         ) {
           return context.voidState({
@@ -95,7 +95,7 @@ export namespace $SFN {
 
         throw new SynthError(
           ErrorCodes.Invalid_Input,
-          "Expected the first parameter (seconds) to $SFN.waitFor to a number or a variable."
+          "Expected the first parameter (seconds) to $SFN.waitFor to be a number or a variable."
         );
       });
     },
@@ -122,7 +122,7 @@ export namespace $SFN {
 
       return context.evalExpr(timestamp, call, (timestampOutput) => {
         if (
-          ASLGraph.isValue(timestampOutput) &&
+          ASLGraph.isLiteralValue(timestampOutput) &&
           typeof timestampOutput.value === "string"
         ) {
           return context.voidState({
@@ -566,9 +566,13 @@ abstract class BaseStepFunction<
       // returning an object assignment with the output value { input.$: $.inputLocation }
       // and a state object containing the output and/or a sub-state with additional required nodes to add to the
       // machine
-      const evalInputs = Object.entries(inputs)
-        .filter(([, expr]) => !!expr)
-        .map(([key, expr]) => context.toJsonAssignment(key, evalExpr(expr!)));
+      const evalInputs = Object.fromEntries(
+        Object.entries(inputs)
+          .filter(([, expr]) => !!expr)
+          .map(([key, expr]) =>
+            Object.entries(context.toJsonAssignment(key, evalExpr(expr!)))
+          )
+      );
 
       return context.outputState({
         Type: "Task" as const,
@@ -578,15 +582,10 @@ abstract class BaseStepFunction<
             ? "startSyncExecution"
             : "startExecution"
         }`,
-        Parameters: evalInputs.reduce(
-          (obj, assignment) => ({
-            ...obj,
-            ...assignment,
-          }),
-          {
-            StateMachineArn: this.resource.stateMachineArn,
-          }
-        ),
+        Parameters: {
+          StateMachineArn: this.resource.stateMachineArn,
+          ...evalInputs,
+        },
       });
     });
   }

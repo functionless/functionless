@@ -319,7 +319,7 @@ abstract class EventBusBase<in Evnt extends Event, OutEvnt extends Evnt = Evnt>
                     x
                   ): x is {
                     name: keyof typeof propertyMap;
-                    value: ASLGraph.Value | ASLGraph.JsonPath;
+                    value: ASLGraph.LiteralValue | ASLGraph.JsonPath;
                   } => x.name in propertyMap
                 )
                 /**

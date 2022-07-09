@@ -541,5 +541,11 @@ https://functionless.org/docs/error-codes#stepfunctions-calls-to-eventbus-puteve
 [7m   [0m [91m                                                  [0m
 [7m228[0m     { [source]: \\"\\", detail: {}, \\"detail-type\\": \\"\\" }
 [7m   [0m [91m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+[96mtest/test-files/step-function.ts[0m:[93m245[0m:[93m15[0m - [91merror[0m[90m Functionless(10024): [0mStepFunctions error cause must be a constant
+
+https://functionless.org/docs/error-codes#stepfunctions-error-cause-must-be-a-constant
+
+[7m245[0m   throw Error(input.arg);
+[7m   [0m [91m              ~~~~~~~~~[0m
 "
 `;

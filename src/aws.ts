@@ -584,7 +584,7 @@ function makeDynamoIntegration<
 
       return context.evalExpr(renamedExpr, (output) => {
         return context.outputState(
-          ASLGraph.applyConstantOrVariableToTask(
+          ASLGraph.taskWithInput(
             {
               Type: "Task",
               Resource: `arn:aws:states:::aws-sdk:dynamodb:${operationName}`,

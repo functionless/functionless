@@ -10,7 +10,6 @@ import {
   ElementAccessExpr,
   Expr,
   NullLiteralExpr,
-  ObjectLiteralExpr,
   PromiseExpr,
   PropAccessExpr,
 } from "./expression";
@@ -361,6 +360,9 @@ export interface ParallelTask extends CommonTaskFields {
   Branches: StateMachine<States>[];
 }
 
+/**
+ * The name of the functionless context data node used in {@link FUNCTIONLESS_CONTEXT_JSON_PATH}.
+ */
 const FUNCTIONLESS_CONTEXT_NAME = "fnl_context";
 /**
  * A json path which stores functionless context data like the input and a hard to manufacture null value
@@ -547,29 +549,47 @@ export class ASL {
       if (stateName === undefined) {
         throw new Error(`cannot transition to ${node.kind}`);
       }
-      const updatedStateName = this.uniqueStateName(stateName);
+      const updatedStateName = this.createUniqueStateName(stateName);
       this.stateNames.set(updatedStatement ?? node, updatedStateName);
     }
     return this.stateNames.get(node)!;
   }
 
-  private uniqueStateName(stateName: string): string {
+  /**
+   * Generates a valid, unique state name for the ASL machine.
+   *
+   * * Truncates the name to 75 characters
+   * * If the name is already used, suffix with a unique number
+   * * Cache both the truncated name and the suffixed name to prevent future collisions.
+   */
+  private createUniqueStateName(stateName: string): string {
     const truncatedStateName =
       stateName.length > 75 ? stateName.slice(0, 75) : stateName;
     if (this.stateNamesCount.has(truncatedStateName)) {
       const count = this.stateNamesCount.get(truncatedStateName)!;
       this.stateNamesCount.set(truncatedStateName, count + 1);
-      this.stateNamesCount.set(`${truncatedStateName} ${count}`, 1);
-      return `${truncatedStateName} ${count}`;
+      const updatedName = `${truncatedStateName} ${count}`;
+      this.stateNamesCount.set(updatedName, 1);
+      return updatedName;
     }
     this.stateNamesCount.set(truncatedStateName, 1);
     return truncatedStateName;
   }
 
-  private aslGraphToStates = (
+  /**
+   * Flattens a {@link ASLGraph.SubState} graph or {@link ASLGraph.NodeState} into a {@link States} collection.
+   *
+   * Provides a node naming strategy. (see `stmtName`).
+   *
+   * @param stmtName - The name to use to start the graph. When a SubState is given, the first state of the collection
+   *                   with use the `stmtName`. All subsequent states either use the name of the `node` given or their local name
+   *                   prefixed onto the parent name.
+   *                   When a NodeState is given, the `stmtName` is used.
+   */
+  private aslGraphToStates(
     stmtName: string,
     state: ASLGraph.NodeState | ASLGraph.SubState
-  ) => {
+  ): States {
     // build a map of local state names to their unique flattened form
     return ASLGraph.toStates(stmtName, state, (parentName, states) => {
       return Object.fromEntries(
@@ -579,12 +599,15 @@ export class ASL {
             ? parentName
             : state.node
             ? this.getStateName(state.node)
-            : this.uniqueStateName(`${name}__${parentName}`),
+            : this.createUniqueStateName(`${name}__${parentName}`),
         ])
       );
     });
-  };
+  }
 
+  /**
+   * Evaluate a single {@link Stmt} into a collection of named states.
+   */
   public evalStmt(stmt: Stmt): States {
     if (isBlockStmt(stmt)) {
       return stmt.statements.reduce(
@@ -657,7 +680,10 @@ export class ASL {
       if (ASLGraph.isOutputStateOrSubState(expr)) {
         return this.aslGraphToStates(
           name,
-          ASLGraph.applyDeferNext(next ? { Next: next } : { End: true }, expr)
+          ASLGraph.updateDeferredNextStates(
+            next ? { Next: next } : { End: true },
+            expr
+          )
         );
       } else {
         return {
@@ -698,7 +724,7 @@ export class ASL {
       // if we get back a constant, we'll need a location to put it
       const itemsLocation = ASLGraph.isJsonPath(output)
         ? output.jsonPath
-        : this.randomHeap();
+        : this.newHeapVariable();
 
       const joined = ASLGraph.joinSubStates(
         stmt,
@@ -707,7 +733,7 @@ export class ASL {
         // if the output of the expression is a constant, assign it to a variable for the map
         ASLGraph.isJsonPath(output)
           ? undefined
-          : ASLGraph.applyConstantOrVariableToPass(
+          : ASLGraph.passWithInput(
               {
                 ResultPath: itemsLocation,
                 Type: "Pass",
@@ -773,7 +799,7 @@ export class ASL {
             : // there was an else
               this.getStateName(curr);
 
-        return ASLGraph.applyDeferNext(
+        return ASLGraph.updateDeferredNextStates(
           { Next: next },
           {
             startState: "choose",
@@ -816,7 +842,7 @@ export class ASL {
       return this.aslGraphToStates(
         name,
         this.evalExprToSubState(stmt.expr, (output) =>
-          ASLGraph.applyConstantOrVariableToPass(
+          ASLGraph.passWithInput(
             {
               Type: "Pass" as const,
               ResultPath: `$`,
@@ -842,7 +868,7 @@ export class ASL {
       }
 
       const joined = this.evalExprToSubState(stmt.expr, (exprOutput) => {
-        return ASLGraph.applyConstantOrVariableToPass(
+        return ASLGraph.passWithInput(
           {
             Type: "Pass" as const,
             // TODO support binding pattern - https://github.com/functionless/functionless/issues/302
@@ -876,36 +902,26 @@ export class ASL {
           : stmt.expr.expr;
 
       const throwState = this.evalContextToSubState(updated, (evalExpr) => {
-        const error = updated.args
-          .filter((arg): arg is Argument & { expr: Expr } => !!arg.expr)
-          .reduce((args: any, arg) => {
-            const output = evalExpr(arg.expr);
-            // https://stackoverflow.com/questions/67794661/propogating-error-message-through-fail-state-in-aws-step-functions?answertab=trending#tab-top
-            if (
-              !ASLGraph.isValue(output) ||
-              output.containsJsonPath ||
-              typeof output.value !== "string"
-            ) {
-              throw new SynthError(
-                ErrorCodes.StepFunctions_error_name_and_cause_must_be_constant
-              );
-            }
-            return {
-              ...args,
-              [arg.name!]: output.value,
-            };
-          }, {});
+        const error = Object.fromEntries(
+          updated.args
+            .filter((arg): arg is Argument & { expr: Expr } => !!arg.expr)
+            .map((arg) => {
+              const output = evalExpr(arg.expr);
+              // https://stackoverflow.com/questions/67794661/propogating-error-message-through-fail-state-in-aws-step-functions?answertab=trending#tab-top
+              if (!ASLGraph.isLiteralValue(output) || output.containsJsonPath) {
+                throw new SynthError(
+                  ErrorCodes.StepFunctions_error_cause_must_be_a_constant
+                );
+              }
+              return [arg.name!, output.value];
+            })
+        );
 
         const throwTransition = this.throw(stmt);
         if (throwTransition === undefined) {
-          if (!isIdentifier(updated.expr)) {
-            throw new SynthError(
-              ErrorCodes.StepFunctions_error_name_and_cause_must_be_constant
-            );
-          }
           return {
             Type: "Fail",
-            Error: updated.expr.name,
+            Error: exprToString(updated.expr),
             Cause: JSON.stringify(error),
           };
         } else {
@@ -1031,7 +1047,7 @@ export class ASL {
    * of the handler callback.
    *
    * @param expr - Expression to evaluate.
-   * @param contextNode - Optional node to associate with the output state. This node may be ued to name the resulting state.
+   * @param contextNode - Optional node to associate with the output state. This node may be used to name the resulting state.
    *                      Otherwise expr is used.
    * @param handler - A handler callback which received the {@link ASLGraph.Output} resolved from the expression.
    *                  This output will represent the constant or variable representing the output of the expression.
@@ -1107,7 +1123,7 @@ export class ASL {
    * of the handler callback.
    *
    * @param expr - Expression to evaluate.
-   * @param contextNode - Optional node to associate with the output state. This node may be ued to name the resulting state.
+   * @param contextNode - Optional node to associate with the output state. This node may be used to name the resulting state.
    *                      Otherwise expr is used.
    * @param handler - A handler callback which receives the contextual `evalExpr` function. The out of this handler will be
    *                  joined with any SubStates created from the `evalExpr` function.
@@ -1136,6 +1152,15 @@ export class ASL {
     ) as any;
   }
 
+  /**
+   * Internal method similar to {@link evalContext}.
+   *
+   * Unlike {@link evalContext}, this method does not return an output with the State or SubState.
+   *
+   * Used by the {@link evalStmt} cases which do not need an output (the output is determined by the stmt).
+   *
+   * @see evalContext for more details.
+   */
   private evalContextToSubState(
     contextNode: FunctionlessNode,
     handler: (
@@ -1148,6 +1173,11 @@ export class ASL {
     return ASLGraph.joinSubStates(contextNode, ...states, handlerOut)!;
   }
 
+  /**
+   * Base logic shared by {@link evalContext} and {@link evalContextToSubState}.
+   *
+   * @see evalContext for more details.
+   */
   private evalContextBase<T>(
     handler: (
       evalExpr: (expr: Expr) => ASLGraph.Output,
@@ -1223,13 +1253,15 @@ export class ASL {
       return this.evalContext(expr, (evalExpr) => {
         const elementOutputs = expr.exprs.map(evalExpr);
 
-        const tempHeap = this.randomHeap();
+        const tempHeap = this.newHeapVariable();
 
         return {
           Type: "Pass",
           Parameters: {
             "string.$": `States.Format('${elementOutputs
-              .map((output) => (ASLGraph.isValue(output) ? output.value : "{}"))
+              .map((output) =>
+                ASLGraph.isLiteralValue(output) ? output.value : "{}"
+              )
               .join("")}',${elementOutputs
               .filter(ASLGraph.isJsonPath)
               .map(({ jsonPath }) => jsonPath)})`,
@@ -1248,7 +1280,7 @@ export class ASL {
           const integStates = serviceCall.asl(expr, this);
 
           if (
-            ASLGraph.isValue(integStates) ||
+            ASLGraph.isLiteralValue(integStates) ||
             ASLGraph.isJsonPath(integStates)
           ) {
             return integStates;
@@ -1318,12 +1350,12 @@ export class ASL {
           const callbackStates = this.evalStmt(callbackfn.body);
           const callbackStart = this.getStateName(callbackfn.body.step()!);
 
-          const tempHeap = this.randomHeap();
+          const tempHeap = this.newHeapVariable();
 
           return this.evalExpr(expr.expr.expr, (listOutput) => {
             // we assume that an array literal or a call would return a variable.
             if (
-              ASLGraph.isValue(listOutput) &&
+              ASLGraph.isLiteralValue(listOutput) &&
               !Array.isArray(listOutput.value)
             ) {
               throw new SynthError(
@@ -1334,9 +1366,9 @@ export class ASL {
 
             const listPath = ASLGraph.isJsonPath(listOutput)
               ? listOutput.jsonPath
-              : this.randomHeap();
+              : this.newHeapVariable();
 
-            const optionalAssign: State | undefined = ASLGraph.isValue(
+            const optionalAssign: State | undefined = ASLGraph.isLiteralValue(
               listOutput
             )
               ? {
@@ -1396,7 +1428,7 @@ export class ASL {
           });
         }
       } else if (isSlice(expr)) {
-        return this.sliceToJsonPath(expr);
+        return this.sliceToStateOutput(expr);
       } else if (isFilter(expr)) {
         const predicate = expr.getArgument("predicate")?.expr;
         if (predicate !== undefined && isFunctionExpr(predicate)) {
@@ -1440,12 +1472,60 @@ export class ASL {
       }
       assertNever(expr);
     } else if (isObjectLiteralExpr(expr)) {
-      return this.evalObjectLiteral(expr);
+      return this.evalContext(expr, (evalExpr) => {
+        return expr.properties.reduce(
+          (obj: ASLGraph.LiteralValue, prop) => {
+            if (!isPropAssignExpr(prop)) {
+              throw new Error(
+                `${prop.kind} is not supported in Amazon States Language`
+              );
+            }
+            if (
+              (isComputedPropertyNameExpr(prop.name) &&
+                isStringLiteralExpr(prop.name.expr)) ||
+              isIdentifier(prop.name) ||
+              isStringLiteralExpr(prop.name)
+            ) {
+              const name = isIdentifier(prop.name)
+                ? prop.name.name
+                : isStringLiteralExpr(prop.name)
+                ? prop.name.value
+                : isStringLiteralExpr(prop.name.expr)
+                ? prop.name.expr.value
+                : undefined;
+              if (!name) {
+                throw new SynthError(
+                  ErrorCodes.StepFunctions_property_names_must_be_constant
+                );
+              }
+              const valueOutput = evalExpr(prop.expr);
+              return {
+                value: {
+                  ...(obj.value as Record<string, any>),
+                  ...this.toJsonAssignment(name, valueOutput),
+                },
+                containsJsonPath:
+                  obj.containsJsonPath ||
+                  ASLGraph.isJsonPath(valueOutput) ||
+                  valueOutput.containsJsonPath,
+              };
+            } else {
+              throw new SynthError(
+                ErrorCodes.StepFunctions_property_names_must_be_constant
+              );
+            }
+          },
+          {
+            value: {},
+            containsJsonPath: false,
+          }
+        );
+      });
     } else if (isArrayLiteralExpr(expr)) {
       return this.evalContext(expr, (evalExpr) => {
         // evaluate each item
         const items = expr.items.map(evalExpr);
-        const heapLocation = this.randomHeap();
+        const heapLocation = this.newHeapVariable();
 
         const subStatesMap = {
           Type: "Pass" as const,
@@ -1493,7 +1573,7 @@ export class ASL {
         }
 
         return {
-          ...ASLGraph.applyConstantOrVariableToPass(
+          ...ASLGraph.passWithInput(
             {
               Type: "Pass",
               ResultPath: left.jsonPath,
@@ -1523,7 +1603,7 @@ export class ASL {
         expr.op == "in"
       ) {
         return this.evalContext(expr, (_, evalCondition) => {
-          const tempHeap = this.randomHeap();
+          const tempHeap = this.newHeapVariable();
           const cond = evalCondition(expr);
           return {
             startState: "default",
@@ -1556,14 +1636,14 @@ export class ASL {
           const left = evalExpr(expr.left);
           const right = evalExpr(expr.right);
           // literal ?? anything
-          if (ASLGraph.isValue(left)) {
+          if (ASLGraph.isLiteralValue(left)) {
             if (!left.value) {
               return left;
             } else {
               return right;
             }
           }
-          const tempHeap = this.randomHeap();
+          const tempHeap = this.newHeapVariable();
           return {
             startState: "default",
             node: expr,
@@ -1587,7 +1667,7 @@ export class ASL {
                 ResultPath: tempHeap,
                 Next: ASLGraph.DeferNext,
               },
-              takeRight: ASLGraph.applyConstantOrVariableToPass(
+              takeRight: ASLGraph.passWithInput(
                 {
                   Type: "Pass",
                   ResultPath: tempHeap,
@@ -1610,14 +1690,14 @@ export class ASL {
       return this.eval(expr.expr);
     } else if (isTypeOfExpr(expr)) {
       return this.evalExpr(expr.expr, (exprOutput) => {
-        if (ASLGraph.isValue(exprOutput)) {
+        if (ASLGraph.isLiteralValue(exprOutput)) {
           return {
             value: typeof exprOutput.value,
             containsJsonPath: false,
           };
         }
 
-        const tempHeap = this.randomHeap();
+        const tempHeap = this.newHeapVariable();
 
         return {
           startState: "choose",
@@ -1768,6 +1848,9 @@ export class ASL {
     );
   }
 
+  /**
+   * Helper that generates an {@link ASLGraph.OutputState} which returns null.
+   */
   public voidState(
     state: State | ASLGraph.SubState
   ): ASLGraph.OutputSubState | ASLGraph.OutputState {
@@ -1779,34 +1862,35 @@ export class ASL {
     };
   }
 
-  public outputState(state: State): ASLGraph.OutputState {
-    const tempHeap = this.randomHeap();
+  /**
+   * Helper that generates an {@link ASLGraph.OutputState} which returns a value to a temporary location.
+   *
+   * Updates (immutably) a {@link ASLGraph.NodeState} to contain a new heap location result path.
+   * The new heap location is returned an a {@link ASLGraph.JsonPath} output.
+   */
+  public outputState(
+    state: Exclude<ASLGraph.NodeState, Choice | Fail | Succeed | Wait>
+  ): ASLGraph.OutputState {
+    const tempHeap = this.newHeapVariable();
     return {
-      ...this.updateStateResultPath(state, tempHeap),
+      ...state,
+      ResultPath: tempHeap,
       output: {
         jsonPath: tempHeap,
       },
     };
   }
 
-  private updateStateResultPath<S extends State>(
-    state: S,
-    resultPath: string
-  ): S {
-    if (state.Type === "Choice") {
-      return state;
-    } else {
-      return { ...state, ResultPath: resultPath };
-    }
-  }
-
+  /**
+   * Mutable heap counter.
+   */
   private heapCounter = 0;
 
   /**
    * returns an in order unique memory location
    * TODO: make this contextual - https://github.com/functionless/functionless/issues/321
    */
-  public randomHeap() {
+  public newHeapVariable() {
     return `$.heap${this.heapCounter++}`;
   }
 
@@ -1965,59 +2049,10 @@ export class ASL {
     }
   }
 
-  private evalObjectLiteral(expr: ObjectLiteralExpr): ASLGraph.NodeResults {
-    return this.evalContext(expr, (evalExpr) => {
-      return expr.properties.reduce(
-        (obj: ASLGraph.Value, prop) => {
-          if (!isPropAssignExpr(prop)) {
-            throw new Error(
-              `${prop.kind} is not supported in Amazon States Language`
-            );
-          }
-          if (
-            (isComputedPropertyNameExpr(prop.name) &&
-              isStringLiteralExpr(prop.name.expr)) ||
-            isIdentifier(prop.name) ||
-            isStringLiteralExpr(prop.name)
-          ) {
-            const name = isIdentifier(prop.name)
-              ? prop.name.name
-              : isStringLiteralExpr(prop.name)
-              ? prop.name.value
-              : isStringLiteralExpr(prop.name.expr)
-              ? prop.name.expr.value
-              : undefined;
-            if (!name) {
-              throw new SynthError(
-                ErrorCodes.StepFunctions_property_names_must_be_constant
-              );
-            }
-            const valueOutput = evalExpr(prop.expr);
-            return {
-              value: {
-                ...(obj.value as Record<string, any>),
-                ...this.toJsonAssignment(name, valueOutput),
-              },
-              containsJsonPath:
-                obj.containsJsonPath ||
-                ASLGraph.isJsonPath(valueOutput) ||
-                valueOutput.containsJsonPath,
-            };
-          } else {
-            throw new SynthError(
-              ErrorCodes.StepFunctions_property_names_must_be_constant
-            );
-          }
-        },
-        {
-          value: {},
-          containsJsonPath: false,
-        }
-      );
-    });
-  }
-
-  private sliceToJsonPath(
+  /**
+   * Process a `array.slice()` expression and output the jsonPath or constant value.
+   */
+  private sliceToStateOutput(
     expr: CallExpr & { expr: PropAccessExpr }
   ): ASLGraph.NodeResults {
     const startArg = expr.getArgument("start")?.expr;
@@ -2083,7 +2118,9 @@ export class ASL {
     output: ASLGraph.Output
   ): Record<string, any> {
     return {
-      [ASLGraph.isJsonPath(output) ? `${key}.$` : key]: ASLGraph.isValue(output)
+      [ASLGraph.isJsonPath(output) ? `${key}.$` : key]: ASLGraph.isLiteralValue(
+        output
+      )
         ? output.value
         : output.jsonPath,
     };
@@ -2155,7 +2192,9 @@ export class ASL {
       } else if (isPropAccessExpr(expr)) {
         return `${toFilterCondition(expr.expr)}.${expr.name}`;
       } else if (isElementAccessExpr(expr)) {
-        return `${toFilterCondition(expr.expr)}[${this.elementToJsonPath(
+        return `${toFilterCondition(
+          expr.expr
+        )}[${this.assertElementAccessConstant(
           ASLGraph.getAslStateOutput(this.eval(expr.element))
         )}]`;
       }
@@ -2178,7 +2217,7 @@ export class ASL {
 
       const varRef = ASLGraph.isJsonPath(leftOutput)
         ? leftOutput.jsonPath
-        : this.randomHeap();
+        : this.newHeapVariable();
 
       const output = {
         jsonPath: `${varRef}[?(${toFilterCondition(stmt.expr)})]`,
@@ -2189,7 +2228,7 @@ export class ASL {
           output
         : // if we got back a constant array, return the array in a jsonPath variable with correct output
           {
-            ...ASLGraph.applyConstantOrVariableToPass(
+            ...ASLGraph.passWithInput(
               {
                 Type: "Pass",
                 Next: ASLGraph.DeferNext,
@@ -2244,7 +2283,7 @@ export class ASL {
 
       const updatedOutput = this.accessConstant(
         exprOutput,
-        this.elementToJsonPath(elementOutput),
+        this.assertElementAccessConstant(elementOutput),
         true
       );
 
@@ -2252,11 +2291,14 @@ export class ASL {
     });
   }
 
-  private elementToJsonPath(value: ASLGraph.Output): string | number {
+  /**
+   * Asserts that an {@link ASLGraph.Output} is a constant and is a number or string.
+   *
+   * Element access in StepFunctions must be constant because dynamic object is not supported.
+   */
+  private assertElementAccessConstant(value: ASLGraph.Output): string | number {
     if (!ASLGraph.isJsonPath(value) && !value.containsJsonPath) {
-      if (typeof value.value === "string") {
-        return value.value;
-      } else if (typeof value.value === "number") {
+      if (typeof value.value === "string" || typeof value.value === "number") {
         return value.value;
       }
     }
@@ -2267,6 +2309,12 @@ export class ASL {
     );
   }
 
+  /**
+   * Transform an {@link Expr} into a ASL {@link Condition}.
+   *
+   * @returns a {@link Condition} and an optional {@link ASLGraph.SubState} or {@link ASLGraph.NodeState}.
+   *          the states are returned when the condition needs annotation states to generate the conditional.
+   */
   public toCondition(
     expr: Expr
   ): [Condition, ASLGraph.SubState | ASLGraph.NodeState | undefined] {
@@ -2317,7 +2365,10 @@ export class ASL {
             expr.op === ">=" ||
             expr.op === "<="
           ) {
-            if (ASLGraph.isValue(leftOutput) && ASLGraph.isValue(rightOutput)) {
+            if (
+              ASLGraph.isLiteralValue(leftOutput) &&
+              ASLGraph.isLiteralValue(rightOutput)
+            ) {
               return (expr.op === "==" &&
                 leftOutput.value === rightOutput.value) ||
                 (expr.op === "!=" && leftOutput.value !== rightOutput.value) ||
@@ -2345,11 +2396,11 @@ export class ASL {
 
             return ASL.compare(left, right, operator as any);
           } else if (expr.op === "in") {
-            const elm = this.elementToJsonPath(leftOutput);
+            const elm = this.assertElementAccessConstant(leftOutput);
 
             const accessed = this.accessConstant(rightOutput, elm, true);
 
-            if (ASLGraph.isValue(accessed)) {
+            if (ASLGraph.isLiteralValue(accessed)) {
               return accessed.value === undefined
                 ? ASL.falseCondition()
                 : ASL.trueCondition();
@@ -2578,7 +2629,7 @@ export namespace ASLGraph {
    *
    * If this is an Object, the object may contain nested JsonPaths as denoted by `containsJsonPath`.
    */
-  export interface Value {
+  export interface LiteralValue {
     /**
      * Whether there is json path in the constant.
      *
@@ -2596,9 +2647,11 @@ export namespace ASLGraph {
     jsonPath: string;
   }
 
-  export type Output = ASLGraph.Value | ASLGraph.JsonPath;
+  export type Output = ASLGraph.LiteralValue | ASLGraph.JsonPath;
 
-  export const isValue = (state: any): state is ASLGraph.Value => {
+  export const isLiteralValue = (
+    state: any
+  ): state is ASLGraph.LiteralValue => {
     return "value" in state;
   };
 
@@ -2640,7 +2693,7 @@ export namespace ASLGraph {
                 `${i}`,
                 i === realStates.length - 1
                   ? subState
-                  : applyDeferNext({ Next: `${i + 1}` }, subState),
+                  : updateDeferredNextStates({ Next: `${i + 1}` }, subState),
               ];
             })
           ),
@@ -2655,7 +2708,7 @@ export namespace ASLGraph {
    *
    * Note: States without `Next` are ignored and {@link Map} states replace Default and `Choices[].Next` instead.
    */
-  export const applyDeferNext = <T extends State | ASLGraph.SubState>(
+  export const updateDeferredNextStates = <T extends State | ASLGraph.SubState>(
     props: {
       End?: true;
       Next?: string;
@@ -2663,14 +2716,14 @@ export namespace ASLGraph {
     state: T
   ): T => {
     return ASLGraph.isSubState(state)
-      ? applyDeferNextSubState<Extract<typeof state, T>>(props, state)
-      : (applyDeferNextState<any>(props, state) as T);
+      ? updateDeferredNextSubStates<Extract<typeof state, T>>(props, state)
+      : (updateDeferredNextState<any>(props, state) as T);
   };
 
   /**
    * Updates DeferNext states for an entire sub-state.
    */
-  const applyDeferNextSubState = <T extends ASLGraph.SubState>(
+  const updateDeferredNextSubStates = <T extends ASLGraph.SubState>(
     props: {
       End?: true;
       Next?: string;
@@ -2688,7 +2741,7 @@ export namespace ASLGraph {
       ...subState,
       states: Object.fromEntries(
         Object.entries(subState.states ?? {}).map(([id, state]) => {
-          return [id, applyDeferNext(updatedProps, state)];
+          return [id, updateDeferredNextStates(updatedProps, state)];
         })
       ),
     };
@@ -2701,7 +2754,7 @@ export namespace ASLGraph {
    * For example: https://github.com/functionless/functionless/issues/308
    * A Wait state with `ResultPath: null` was failing to deploy.
    */
-  const applyDeferNextState = <T extends State>(
+  const updateDeferredNextState = <T extends State>(
     props: {
       End?: true;
       Next?: string;
@@ -2964,14 +3017,17 @@ export namespace ASLGraph {
   export const getAslStateOutput = (
     state: ASLGraph.NodeResults
   ): ASLGraph.Output => {
-    return ASLGraph.isValue(state)
+    return ASLGraph.isLiteralValue(state)
       ? state
       : ASLGraph.isJsonPath(state)
       ? state
       : state.output;
   };
 
-  export const applyConstantOrVariableToPass = (
+  /**
+   * Applies an {@link ASLGraph.Output} to a partial {@link Pass}
+   */
+  export const passWithInput = (
     pass: Omit<Pass, "Parameters" | "InputPath" | "Result">,
     value: ASLGraph.Output
   ): Pass => {
@@ -2991,12 +3047,15 @@ export namespace ASLGraph {
     };
   };
 
-  export const applyConstantOrVariableToTask = (
-    pass: Omit<Task, "Parameters" | "InputPath">,
+  /**
+   * Applies an {@link ASLGraph.Output} to a partial {@link Task}
+   */
+  export const taskWithInput = (
+    task: Omit<Task, "Parameters" | "InputPath">,
     value: ASLGraph.Output
   ): Task => {
     return {
-      ...pass,
+      ...task,
       ...(ASLGraph.isJsonPath(value)
         ? {
             InputPath: value.jsonPath,
