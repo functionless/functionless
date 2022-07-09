@@ -180,6 +180,18 @@ export const My_New_Error: ErrorCode {
 
 **TSDocs** - Above the ErrorCode, TS docs should be used to describe the error in detail. This can contain markdown, which will be turned into markdown in the docs. Include code examples of what not to do is possible, go into detail on the issue, and explain any workarounds or escape hatching available to bypass the issue.
 
+2. [Optional] - Add validation
+
+Any ErrorCode which can be determined statically should have static validation added to `validate.ts`. `validate.ts` uses the Typescript AST to find errors which would be thrown later. It feels both the `functionless` api (`npx functionless`) and the [`@functionless/language-service`](https://github.com/functionless/functionless-language-service).
+
+> If the error code cannot be validated, add the new error code to `skipErrorCodes` in `validate.test.ts`. You must explain why validation cannot be added in the PR and comments.
+
+3. [Optional] - Add a validation test
+
+If step 2 created validation, add an error code to the corresponding `test/test-files` file(s) and run the tests to recreate the snapshot. The snapshot should show new errors for each test case added.
+
+> In the rare case that validation is added, but cannot be re-created in the `test/test-files`, add the new error code to `skipErrorCodes` in `validate.test.ts`. You must explain why validation cannot be added in the PR and comments.
+
 ## PR
 
 Create a PR from your fork to `functionless` `main`.

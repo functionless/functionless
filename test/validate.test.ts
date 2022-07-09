@@ -3,7 +3,7 @@ import fs from "fs";
 import { readFile } from "fs/promises";
 import path from "path";
 import ts from "typescript";
-import { ErrorCodes } from "../src";
+import { ErrorCode, ErrorCodes } from "../src";
 import { makeFunctionlessChecker } from "../src/checker";
 import { formatDiagnosticsWithColorAndContext } from "../src/format-error";
 import { validate } from "../src/validate";
@@ -31,19 +31,19 @@ test("appsync.ts", () => runTest("appsync.ts"));
 
 test("event-bus.ts", () => runTest("event-bus.ts"));
 
-const skipErrorCodes: number[] = [
+const skipErrorCodes: ErrorCode[] = [
   // not possible to test, not validated for
-  10001,
+  ErrorCodes.FunctionDecl_not_compiled_by_Functionless,
   // dynamic validation - lambda closure serialize poison pill
-  10004,
+  ErrorCodes.Function_Closure_Serialization_Incomplete,
   // generic - unexpected error
-  10005,
+  ErrorCodes.Unexpected_Error,
   // dynamic validation - wrong step function import type
-  10006,
+  ErrorCodes.Incorrect_StateMachine_Import_Type,
   // dynamic validation - unsafe use of secrets
-  10007,
+  ErrorCodes.Unsafe_use_of_secrets,
   // generic - unsupported feature
-  10021,
+  ErrorCodes.Unsupported_Feature,
 ];
 
 /**
@@ -64,18 +64,12 @@ describe("all error codes tested", () => {
   });
 
   test.concurrent.each(
-    Object.values(ErrorCodes).filter(
-      ({ code }) => !skipErrorCodes.includes(code)
-    )
+    Object.values(ErrorCodes).filter((code) => !skipErrorCodes.includes(code))
   )("$code: $title", async (code) => {
     expect(file!).toContain(`${code.code}`);
   });
 
-  test.skip.each(
-    Object.values(ErrorCodes).filter(({ code }) =>
-      skipErrorCodes.includes(code)
-    )
-  )("$code: $title", () => {});
+  test.skip.each(skipErrorCodes)("$code: $title", () => {});
 });
 
 function runTest(fileName: string) {
