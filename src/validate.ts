@@ -161,6 +161,25 @@ export function validate(
     } else if (ts.isNewExpression(node)) {
       const [, diagnostic] = validateNewIntegration(node);
       return diagnostic;
+    } else if (ts.isThrowStatement(node)) {
+      if (
+        ts.isNewExpression(node.expression) ||
+        ts.isCallExpression(node.expression)
+      ) {
+        return (
+          node.expression.arguments?.flatMap((arg) => {
+            if (!checker.isConstant(arg)) {
+              return [
+                newError(
+                  arg,
+                  ErrorCodes.StepFunctions_error_cause_must_be_a_constant
+                ),
+              ];
+            }
+            return [];
+          }) ?? []
+        );
+      }
     }
     return [];
   }

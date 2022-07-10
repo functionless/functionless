@@ -386,8 +386,8 @@ abstract class FunctionBase<in Payload, Out>
 
     return payloadArg
       ? context.evalExpr(payloadArg, (output) => {
-          return context.outputState(
-            ASLGraph.applyConstantOrVariableToTask(
+          return context.stateWithHeapOutput(
+            ASLGraph.taskWithInput(
               {
                 Type: "Task",
                 Resource: this.resource.functionArn,
@@ -397,8 +397,8 @@ abstract class FunctionBase<in Payload, Out>
             )
           );
         })
-      : context.outputState(
-          ASLGraph.applyConstantOrVariableToTask(
+      : context.stateWithHeapOutput(
+          ASLGraph.taskWithInput(
             {
               Type: "Task",
               Resource: this.resource.functionArn,

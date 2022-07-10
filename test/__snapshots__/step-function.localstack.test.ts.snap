@@ -7986,6 +7986,58 @@ Object {
 }
 `;
 
+exports[`call $SFN map with constant array 1`] = `
+Object {
+  "StartAt": "return $SFN.map([1, 2, 3], function(n))",
+  "States": Object {
+    "$SFN.map([1, 2, 3], function(n))": Object {
+      "ItemsPath": "$.heap1",
+      "Iterator": Object {
+        "StartAt": "return \`nn\`",
+        "States": Object {
+          "1__return \`nn\`": Object {
+            "End": true,
+            "InputPath": "$.heap0.string",
+            "ResultPath": "$",
+            "Type": "Pass",
+          },
+          "return \`nn\`": Object {
+            "Next": "1__return \`nn\`",
+            "Parameters": Object {
+              "string.$": "States.Format('n{}',$.n)",
+            },
+            "ResultPath": "$.heap0",
+            "Type": "Pass",
+          },
+        },
+      },
+      "Next": "1__return $SFN.map([1, 2, 3], function(n))",
+      "Parameters": Object {
+        "n.$": "$$.Map.Item.Value",
+      },
+      "ResultPath": "$.heap2",
+      "Type": "Map",
+    },
+    "1__return $SFN.map([1, 2, 3], function(n))": Object {
+      "End": true,
+      "InputPath": "$.heap2",
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "return $SFN.map([1, 2, 3], function(n))": Object {
+      "Next": "$SFN.map([1, 2, 3], function(n))",
+      "Result": Array [
+        1,
+        2,
+        3,
+      ],
+      "ResultPath": "$.heap1",
+      "Type": "Pass",
+    },
+  },
+}
+`;
+
 exports[`call $SFN parallel 1`] = `
 Object {
   "StartAt": "return $SFN.parallel([function(), function()])",

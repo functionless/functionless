@@ -286,6 +286,18 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
   );
 
   test(
+    "call $SFN map with constant array",
+    (parent) => {
+      return new StepFunction(parent, "sfn2", async () => {
+        return $SFN.map([1, 2, 3], (n) => {
+          return `n${n}`;
+        });
+      });
+    },
+    ["n1", "n2", "n3"]
+  );
+
+  test(
     "call $SFN forEach",
     (parent) => {
       const func = new Function<number, void>(

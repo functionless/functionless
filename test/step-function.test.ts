@@ -1091,7 +1091,7 @@ test("throw new Error complex", () => {
           throw new Error(input.val ?? "cause");
         }
       )
-  ).toThrow("StepFunctions error name and cause must be constant");
+  ).toThrow("StepFunctions error cause must be a constant");
 });
 
 test("throw Error", () => {
@@ -1873,7 +1873,7 @@ test("throw task(task())", () => {
           throw await task(await task(input));
         }
       )
-  ).toThrow("StepFunctions error name and cause must be constant");
+  ).toThrow("StepFunctions error cause must be a constant");
 });
 
 test.skip("input.b ? task() : task(input)", () => {
@@ -2106,6 +2106,15 @@ test("try { list.forEach(item => throw) } catch (err)", () => {
       }
     }
   ).definition;
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+});
+
+test("$SFN.map([1, 2, 3], (item) => nitem)", () => {
+  const { stack } = initStepFunctionApp();
+  const definition = new ExpressStepFunction(stack, "fn", async () => {
+    return $SFN.map([1, 2, 3], (item) => `n${item}`);
+  }).definition;
 
   expect(normalizeDefinition(definition)).toMatchSnapshot();
 });

@@ -237,3 +237,19 @@ new StepFunction(stack, "usebus", async () => {
 new StepFunction(stack, "usebus", async () => {
   await bus.putEvents({ "detail-type": "", source: "", detail: {} });
 });
+
+/**
+ * Unsupported - non-constant error arguments
+ */
+
+new StepFunction<{ arg: string }, void>(stack, "error", async (input) => {
+  throw Error(input.arg);
+});
+
+/**
+ * Support - constant error arguments
+ */
+
+new StepFunction(stack, "error", async () => {
+  throw Error("arg");
+});
