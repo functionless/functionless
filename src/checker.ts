@@ -396,26 +396,36 @@ export function makeFunctionlessChecker(
           symbol.valueDeclaration
         );
         return updatedSymbol ? isSymbolOutOfScope(updatedSymbol, scope) : false;
+      } else if (
+        ts.isVariableDeclaration(symbol.valueDeclaration) ||
+        ts.isClassDeclaration(symbol.valueDeclaration)
+      ) {
+        return !hasParent(symbol.valueDeclaration, scope);
       } else if (ts.isBindingElement(symbol.valueDeclaration)) {
         /*
-                check if the binding element's declaration is within the scope or not.
+          check if the binding element's declaration is within the scope or not.
 
-                example: if the scope if func's body
+          example: if the scope ifq func's body
 
-                ({ a }) => {
-                  const { b } = a;
-                  const func = ({ c }) => {
-                    const { d: { x, y } } = b;
-                  }
-                }
+          ({ a }) => {
+            const { b } = a;
+            const func = ({ c }) => {
+              const { d: { x, y } } = b;
+            }
+          }
 
-                // in scope: c, x, y
-                // out of scope: a, b
-              */
+          // in scope: c, x, y
+          // out of scope: a, b
+        */
         const declaration = getDestructuredDeclaration(symbol.valueDeclaration);
         return !hasParent(declaration, scope);
+      } else if (
+        ts.isPropertyDeclaration(symbol.valueDeclaration) ||
+        ts.isPropertySignature(symbol.valueDeclaration)
+      ) {
+        // explicit return false. We always want to check the parent of the declaration or signature.
+        return false;
       }
-      return !hasParent(symbol.valueDeclaration, scope);
     } else if (symbol.declarations && symbol.declarations.length > 0) {
       const [decl] = symbol.declarations;
       // import x from y
