@@ -401,14 +401,17 @@ export namespace $AWS {
      */
     export const Invoke = makeIntegration<
       "$AWS.Lambda.Invoke",
-      <Input, Output>(input: {
-        Function: Function<Input, Output>;
-        Payload: Input;
-        ClientContext?: string;
-        InvocationType?: "Event" | "RequestResponse" | "DryRun";
-        LogType?: "None" | "Tail";
-        Qualifier?: string;
-      }) => Promise<
+      <Input, Output>(
+        input: {
+          Function: Function<Input, Output>;
+          ClientContext?: string;
+          InvocationType?: "Event" | "RequestResponse" | "DryRun";
+          LogType?: "None" | "Tail";
+          Qualifier?: string;
+        } & ([Input] extends [undefined]
+          ? { Payload?: Input }
+          : { Payload: Input })
+      ) => Promise<
         Omit<AWSLambda.InvocationResponse, "payload"> & {
           Payload: Output;
         }

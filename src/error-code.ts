@@ -953,12 +953,11 @@ export namespace ErrorCodes {
   };
 
   /**
-   * Invalid Collection access.
+   * Step Functions - Invalid Collection access.
    *
-   * Step Functions:
-   *
-   *   1. Arrays and Objects can be accessed
-   *   2. Access Elements must be constant values - Step Functions does not support access using dynamic variables
+   *   1. Arrays can be accessed with numbers
+   *   2. Objects can be accessed with strings
+   *   3. Access Elements must be constant values - Step Functions does not support access using dynamic variables
    *
    * ```ts
    * const func = new Function(this, 'func', async () => { return { index: 0, elm: "a" }; });
@@ -996,10 +995,10 @@ export namespace ErrorCodes {
    * });
    * ```
    */
-  export const Invalid_collection_access: ErrorCode = {
+  export const StepFunctions_Invalid_collection_access: ErrorCode = {
     code: 10025,
     type: ErrorType.ERROR,
-    title: "Invalid collection access",
+    title: "StepFunctions Invalid collection access",
   };
 
   /**

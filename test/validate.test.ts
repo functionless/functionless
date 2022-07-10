@@ -44,6 +44,8 @@ const skipErrorCodes: ErrorCode[] = [
   ErrorCodes.Unsafe_use_of_secrets,
   // generic - unsupported feature
   ErrorCodes.Unsupported_Feature,
+  // generic
+  ErrorCodes.Invalid_Input,
 ];
 
 /**

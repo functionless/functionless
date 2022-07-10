@@ -688,16 +688,6 @@ export function makeFunctionlessChecker(
     return undefined;
   }
 
-  function typeMatch(
-    type: ts.Type,
-    predicate: (type: ts.Type) => boolean
-  ): boolean {
-    if (type.isUnionOrIntersection()) {
-      return predicate(type) || type.types.some((t) => typeMatch(t, predicate));
-    }
-    return predicate(type);
-  }
-
   function isPromiseSymbol(symbol: ts.Symbol): boolean {
     return checker.getFullyQualifiedName(symbol) === "Promise";
   }
@@ -858,6 +848,19 @@ export function findParent<T extends ts.Node>(
   } else {
     return findParent(node.parent, predicate);
   }
+}
+
+/**
+ * Visits all types in union or intersection types with a predicate.
+ */
+export function typeMatch(
+  type: ts.Type,
+  predicate: (type: ts.Type) => boolean
+): boolean {
+  if (type.isUnionOrIntersection()) {
+    return predicate(type) || type.types.some((t) => typeMatch(t, predicate));
+  }
+  return predicate(type);
 }
 
 // to prevent the closure serializer from trying to import all of functionless.

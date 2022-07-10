@@ -295,7 +295,6 @@ new StepFunction(stack, "obj ref", async () => {
 new StepFunction(stack, "obj ref", async () => {
   const event = {
     Function: func,
-    Payload: undefined,
   };
 
   await $AWS.Lambda.Invoke(event);
@@ -315,7 +314,6 @@ new StepFunction(stack, "obj ref", async () => {
 new StepFunction(stack, "obj ref", async () => {
   await $AWS.Lambda.Invoke({
     Function: func,
-    Payload: undefined,
   });
 });
 
@@ -343,3 +341,128 @@ export class MyClass {
     });
   }
 }
+
+/**
+ * Unsupported
+ * 10022 - Step Functions does not support undefined assignment
+ * @see ErrorCodes.Step_Functions_does_not_support_undefined_assignment
+ */
+
+const funcUndefined = new Function<undefined, undefined>(
+  stack,
+  "func",
+  async () => {
+    return undefined;
+  }
+);
+
+new StepFunction(stack, "obj ref", async () => {
+  const x = undefined;
+  return x;
+});
+
+new StepFunction(stack, "obj ref", async () => {
+  const x = { y: undefined };
+  return x;
+});
+
+new StepFunction(stack, "obj ref", async () => {
+  const x = await funcUndefined();
+  return x;
+});
+
+/**
+ * Supported - workarounds
+ * 10022 - Step Functions does not support undefined assignment
+ * @see ErrorCodes.Step_Functions_does_not_support_undefined_assignment
+ */
+
+new StepFunction(stack, "obj ref", async () => {
+  const x = null;
+  return x;
+});
+
+new StepFunction(stack, "obj ref", async () => {
+  const x = { y: null };
+  return x;
+});
+
+new StepFunction(stack, "obj ref", async () => {
+  const x = (await funcUndefined()) ?? null;
+  return x;
+});
+
+/**
+ * Unsupported
+ * 10025 - Step Functions invalid collection access
+ * @see ErrorCodes.StepFunctions_Invalid_collection_access
+ */
+
+new StepFunction(stack, "obj ref", async (input: { n: number }) => {
+  const arr = [1, 2, 3];
+  return arr[input.n];
+});
+
+new StepFunction(stack, "obj ref", async (input: { key: string }) => {
+  const obj = { a: "" } as Record<string, any>;
+  return obj[input.key];
+});
+
+/**
+ * Supported - workarounds
+ * 10025 - Step Functions invalid collection access
+ * @see ErrorCodes.StepFunctions_Invalid_collection_access
+ */
+
+const arrayAccessFunc = new Function<
+  { arr: number[]; n: number },
+  number | undefined
+>(stack, "fn", async (input) => {
+  return input.arr[input.n];
+});
+
+const objAccessFunc = new Function<
+  { obj: Record<string, any>; key: string },
+  number | undefined
+>(stack, "fn", async (input) => {
+  return input.obj[input.key];
+});
+
+new StepFunction(stack, "obj ref", async (input: { n: number }) => {
+  const arr = [1, 2, 3];
+  return arrayAccessFunc({ arr, n: input.n });
+});
+
+new StepFunction(stack, "obj ref", async (input: { key: string }) => {
+  const obj = { a: "" } as Record<string, any>;
+  return objAccessFunc({ obj, key: input.key });
+});
+
+/**
+ * Unsupported
+ * 10026 - Step Functions property names must be constant
+ * @see ErrorCodes.StepFunctions_property_names_must_be_constant
+ */
+
+new StepFunction(stack, "obj ref", async (input: { key: string }) => {
+  return {
+    [input.key]: "",
+  };
+});
+
+/**
+ * Supported - Workaround
+ * 10026 - Step Functions property names must be constant
+ * @see ErrorCodes.StepFunctions_property_names_must_be_constant
+ */
+
+const objAssignFunc = new Function<
+  { obj: Record<string, string>; key: string; value: string },
+  Record<string, string>
+>(stack, "fn", async (input) => {
+  return { ...input.obj, [input.key]: input.value };
+});
+
+new StepFunction(stack, "obj ref", async (input: { key: string }) => {
+  return objAssignFunc({ obj: {}, key: input.key, value: "" });
+});

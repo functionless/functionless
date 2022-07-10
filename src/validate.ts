@@ -11,6 +11,7 @@ import {
   NewAppsyncResolverInterface,
   NewStepFunctionInterface,
   RuleInterface,
+  typeMatch,
 } from "./checker";
 import { ErrorCode, ErrorCodes, formatErrorMessage } from "./error-code";
 import { anyOf } from "./util";
@@ -182,6 +183,57 @@ export function validate(
               return [];
             }) ?? []
           );
+        }
+      } else if (
+        ts.isVariableDeclaration(node) ||
+        ts.isPropertyDeclaration(node) ||
+        ts.isPropertyAssignment(node) ||
+        ts.isBindingElement(node) ||
+        ts.isShorthandPropertyAssignment(node)
+      ) {
+        const initializers: (ts.Node | undefined)[] =
+          ts.isShorthandPropertyAssignment(node)
+            ? [node, node.objectAssignmentInitializer]
+            : [node.initializer];
+        if (
+          initializers
+            .filter((x): x is ts.Node => !!x)
+            .map(checker.getTypeAtLocation)
+            .some((type) =>
+              typeMatch(
+                type,
+                // eslint-disable-next-line no-bitwise
+                (t) => (t.getFlags() & ts.TypeFlags.Undefined) !== 0
+              )
+            )
+        ) {
+          return [
+            newError(
+              node,
+              ErrorCodes.Step_Functions_does_not_support_undefined_assignment
+            ),
+          ];
+        } else if (ts.isPropertyAssignment(node)) {
+          if (
+            ts.isComputedPropertyName(node.name) &&
+            !checker.isConstant(node.name.expression)
+          ) {
+            return [
+              newError(
+                node.name,
+                ErrorCodes.StepFunctions_property_names_must_be_constant
+              ),
+            ];
+          }
+        }
+      } else if (ts.isElementAccessExpression(node)) {
+        if (!checker.isConstant(node.argumentExpression)) {
+          return [
+            newError(
+              node.argumentExpression,
+              ErrorCodes.StepFunctions_Invalid_collection_access
+            ),
+          ];
         }
       }
       return [];

@@ -607,17 +607,55 @@ https://functionless.org/docs/error-codes#expected-an-object-literal
 
 [7m292[0m   await $AWS.DynamoDB.GetItem(event);
 [7m   [0m [91m                              ~~~~~[0m
-[96mtest/test-files/step-function.ts[0m:[93m301[0m:[93m28[0m - [91merror[0m[90m Functionless(10012): [0mExpected the first argument of $AWS.Lambda.Invoke to be an object literal.
+[96mtest/test-files/step-function.ts[0m:[93m300[0m:[93m28[0m - [91merror[0m[90m Functionless(10012): [0mExpected the first argument of $AWS.Lambda.Invoke to be an object literal.
 
 https://functionless.org/docs/error-codes#expected-an-object-literal
 
-[7m301[0m   await $AWS.Lambda.Invoke(event);
+[7m300[0m   await $AWS.Lambda.Invoke(event);
 [7m   [0m [91m                           ~~~~~[0m
-[96mtest/test-files/step-function.ts[0m:[93m329[0m:[93m8[0m - [91merror[0m[90m Functionless(10019): [0mUnable to find reference out of application function
+[96mtest/test-files/step-function.ts[0m:[93m327[0m:[93m8[0m - [91merror[0m[90m Functionless(10019): [0mUnable to find reference out of application function
 
 https://functionless.org/docs/error-codes#unable-to-find-reference-out-of-application-function
 
-[7m329[0m   await x();
+[7m327[0m   await x();
 [7m   [0m [91m       ~~[0m
+[96mtest/test-files/step-function.ts[0m:[93m360[0m:[93m8[0m - [91merror[0m[90m Functionless(10022): [0mStep Functions does not support undefined assignment
+
+https://functionless.org/docs/error-codes#step-functions-does-not-support-undefined-assignment
+
+[7m360[0m   const x = undefined;
+[7m   [0m [91m       ~~~~~~~~~~~~~~[0m
+[96mtest/test-files/step-function.ts[0m:[93m365[0m:[93m14[0m - [91merror[0m[90m Functionless(10022): [0mStep Functions does not support undefined assignment
+
+https://functionless.org/docs/error-codes#step-functions-does-not-support-undefined-assignment
+
+[7m365[0m   const x = { y: undefined };
+[7m   [0m [91m             ~~~~~~~~~~~~~[0m
+[96mtest/test-files/step-function.ts[0m:[93m370[0m:[93m8[0m - [91merror[0m[90m Functionless(10022): [0mStep Functions does not support undefined assignment
+
+https://functionless.org/docs/error-codes#step-functions-does-not-support-undefined-assignment
+
+[7m370[0m   const x = await funcUndefined();
+[7m   [0m [91m       ~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+[96mtest/test-files/step-function.ts[0m:[93m403[0m:[93m14[0m - [91merror[0m[90m Functionless(10025): [0mStepFunctions Invalid collection access
+
+https://functionless.org/docs/error-codes#stepfunctions-invalid-collection-access
+
+[7m403[0m   return arr[input.n];
+[7m   [0m [91m             ~~~~~~~[0m
+[96mtest/test-files/step-function.ts[0m:[93m408[0m:[93m14[0m - [91merror[0m[90m Functionless(10025): [0mStepFunctions Invalid collection access
+
+https://functionless.org/docs/error-codes#stepfunctions-invalid-collection-access
+
+[7m408[0m   return obj[input.key];
+[7m   [0m [91m             ~~~~~~~~~[0m
+[96mtest/test-files/step-function.ts[0m:[93m448[0m:[93m11[0m - [91merror[0m[90m Functionless(10026): [0mStepFunction property names must be constant
+
+https://functionless.org/docs/error-codes#stepfunction-property-names-must-be-constant
+
+[7m448[0m   return {
+[7m   [0m [91m          [0m
+[7m449[0m     [input.key]: \\"\\",
+[7m   [0m [91m~~~~~~~~~~~~~~~[0m
 "
 `;

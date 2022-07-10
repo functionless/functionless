@@ -1827,14 +1827,14 @@ export class ASL {
             return value.value[field];
           }
           throw new SynthError(
-            ErrorCodes.Invalid_collection_access,
+            ErrorCodes.StepFunctions_Invalid_collection_access,
             "Accessor to an array must be a constant number"
           );
         } else if (typeof value.value === "object") {
           return value.value[field];
         }
         throw new SynthError(
-          ErrorCodes.Invalid_collection_access,
+          ErrorCodes.StepFunctions_Invalid_collection_access,
           "Only a constant object or array may be accessed."
         );
       })();
@@ -1849,7 +1849,7 @@ export class ASL {
     }
 
     throw new SynthError(
-      ErrorCodes.Invalid_collection_access,
+      ErrorCodes.StepFunctions_Invalid_collection_access,
       "Only a constant object or array may be accessed."
     );
   }
@@ -2310,7 +2310,7 @@ export class ASL {
     }
 
     throw new SynthError(
-      ErrorCodes.Invalid_collection_access,
+      ErrorCodes.StepFunctions_Invalid_collection_access,
       "Collection element accessor must be a constant string or number"
     );
   }
