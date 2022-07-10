@@ -336,7 +336,7 @@ abstract class EventBusBase<in Evnt extends Event, OutEvnt extends Evnt = Evnt>
             };
           });
 
-          return context.outputState({
+          return context.stateWithHeapOutput({
             Resource: "arn:aws:states:::events:putEvents",
             Type: "Task" as const,
             Parameters: {

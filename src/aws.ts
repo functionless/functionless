@@ -442,7 +442,7 @@ export namespace $AWS {
         }
 
         return context.evalExpr(payload, (output) => {
-          return context.outputState({
+          return context.stateWithHeapOutput({
             Type: "Task",
             Resource: "arn:aws:states:::lambda:invoke",
             Parameters: {
@@ -583,7 +583,7 @@ function makeDynamoIntegration<
       });
 
       return context.evalExpr(renamedExpr, (output) => {
-        return context.outputState(
+        return context.stateWithHeapOutput(
           ASLGraph.taskWithInput(
             {
               Type: "Task",

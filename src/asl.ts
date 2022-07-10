@@ -1051,24 +1051,40 @@ export class ASL {
    *                      Otherwise expr is used.
    * @param handler - A handler callback which received the {@link ASLGraph.Output} resolved from the expression.
    *                  This output will represent the constant or variable representing the output of the expression.
+   *                  An `addState` callback is also provided to inject additional states into the graph.
+   *                  The state will be joined (@see ASLGraph.joinSubStates ) with the previous and next states in the order received.
    */
   public evalExpr<T extends ASLGraph.NodeResults>(
     expr: Expr,
-    handler: (output: ASLGraph.Output) => T
+    handler: (
+      output: ASLGraph.Output,
+      addState: (state: ASLGraph.NodeState | ASLGraph.SubState) => void
+    ) => T
   ): T extends ASLGraph.OutputSubState
     ? ASLGraph.OutputSubState
     : ASLGraph.NodeResults;
   public evalExpr<T extends ASLGraph.NodeResults>(
     expr: Expr,
     contextNode: FunctionlessNode,
-    handler: (output: ASLGraph.Output) => T
+    handler: (
+      output: ASLGraph.Output,
+      addState: (state: ASLGraph.NodeState | ASLGraph.SubState) => void
+    ) => T
   ): T extends ASLGraph.OutputSubState
     ? ASLGraph.OutputSubState
     : ASLGraph.NodeResults;
   public evalExpr<T extends ASLGraph.NodeResults>(
     expr: Expr,
-    nodeOrHandler: FunctionlessNode | ((output: ASLGraph.Output) => T),
-    maybeHandler?: (output: ASLGraph.Output) => T
+    nodeOrHandler:
+      | FunctionlessNode
+      | ((
+          output: ASLGraph.Output,
+          addState: (state: ASLGraph.NodeState | ASLGraph.SubState) => void
+        ) => T),
+    maybeHandler?: (
+      output: ASLGraph.Output,
+      addState: (state: ASLGraph.NodeState | ASLGraph.SubState) => void
+    ) => T
   ): T extends ASLGraph.OutputSubState
     ? ASLGraph.OutputSubState
     : ASLGraph.NodeResults {
@@ -1079,10 +1095,16 @@ export class ASL {
     const state = this.eval(expr);
     const output = ASLGraph.getAslStateOutput(state);
 
-    const exprState = handler(output);
+    const states: (ASLGraph.NodeState | ASLGraph.SubState)[] =
+      ASLGraph.isStateOrSubState(state) ? [state] : [];
+
+    const exprState = handler(output, (state) => {
+      states.push(state);
+    });
+
     const exprStateOutput = ASLGraph.getAslStateOutput(exprState);
 
-    const joined = ASLGraph.joinSubStates(node, state, exprState);
+    const joined = ASLGraph.joinSubStates(node, ...states, exprState);
 
     return (
       joined
@@ -1350,9 +1372,7 @@ export class ASL {
           const callbackStates = this.evalStmt(callbackfn.body);
           const callbackStart = this.getStateName(callbackfn.body.step()!);
 
-          const tempHeap = this.newHeapVariable();
-
-          return this.evalExpr(expr.expr.expr, (listOutput) => {
+          return this.evalExpr(expr.expr.expr, (listOutput, addState) => {
             // we assume that an array literal or a call would return a variable.
             if (
               ASLGraph.isLiteralValue(listOutput) &&
@@ -1368,18 +1388,16 @@ export class ASL {
               ? listOutput.jsonPath
               : this.newHeapVariable();
 
-            const optionalAssign: State | undefined = ASLGraph.isLiteralValue(
-              listOutput
-            )
-              ? {
-                  Type: "Pass" as const,
-                  ResultPath: listPath,
-                  Result: listOutput.value,
-                  Next: ASLGraph.DeferNext,
-                }
-              : undefined;
+            if (ASLGraph.isLiteralValue(listOutput)) {
+              addState({
+                Type: "Pass" as const,
+                ResultPath: listPath,
+                Result: listOutput.value,
+                Next: ASLGraph.DeferNext,
+              });
+            }
 
-            const mapState: MapTask = {
+            return this.stateWithHeapOutput({
               Type: "Map",
               MaxConcurrency: 1,
               Iterator: {
@@ -1411,20 +1429,8 @@ export class ASL {
                     ],
                   }
                 : {}),
-              ResultPath: tempHeap,
               Next: ASLGraph.DeferNext,
-            };
-
-            return {
-              ...ASLGraph.joinSubStates(
-                expr.expr.expr,
-                optionalAssign,
-                mapState
-              )!,
-              output: {
-                jsonPath: tempHeap,
-              },
-            };
+            });
           });
         }
       } else if (isSlice(expr)) {
@@ -1851,7 +1857,7 @@ export class ASL {
   /**
    * Helper that generates an {@link ASLGraph.OutputState} which returns null.
    */
-  public voidState(
+  public stateWithVoidOutput(
     state: State | ASLGraph.SubState
   ): ASLGraph.OutputSubState | ASLGraph.OutputState {
     return {
@@ -1868,12 +1874,14 @@ export class ASL {
    * Updates (immutably) a {@link ASLGraph.NodeState} to contain a new heap location result path.
    * The new heap location is returned an a {@link ASLGraph.JsonPath} output.
    */
-  public outputState(
-    state: Exclude<ASLGraph.NodeState, Choice | Fail | Succeed | Wait>
+  public stateWithHeapOutput(
+    state: Exclude<ASLGraph.NodeState, Choice | Fail | Succeed | Wait>,
+    node?: FunctionlessNode
   ): ASLGraph.OutputState {
     const tempHeap = this.newHeapVariable();
     return {
       ...state,
+      node,
       ResultPath: tempHeap,
       output: {
         jsonPath: tempHeap,
@@ -2204,7 +2212,7 @@ export class ASL {
       );
     };
 
-    return this.evalExpr(expr.expr.expr, (leftOutput) => {
+    return this.evalExpr(expr.expr.expr, (leftOutput, addState) => {
       if (
         !ASLGraph.isJsonPath(leftOutput) &&
         !Array.isArray(leftOutput.value)
@@ -2219,25 +2227,23 @@ export class ASL {
         ? leftOutput.jsonPath
         : this.newHeapVariable();
 
-      const output = {
+      // if we got back a constant array, return the array in a jsonPath variable with correct output
+      if (ASLGraph.isLiteralValue(leftOutput)) {
+        addState(
+          ASLGraph.passWithInput(
+            {
+              Type: "Pass",
+              Next: ASLGraph.DeferNext,
+              ResultPath: varRef,
+            },
+            leftOutput
+          )
+        );
+      }
+
+      return {
         jsonPath: `${varRef}[?(${toFilterCondition(stmt.expr)})]`,
       };
-
-      return ASLGraph.isJsonPath(leftOutput)
-        ? // if we get a jsonPath back, just return the updated jsonPath
-          output
-        : // if we got back a constant array, return the array in a jsonPath variable with correct output
-          {
-            ...ASLGraph.passWithInput(
-              {
-                Type: "Pass",
-                Next: ASLGraph.DeferNext,
-                ResultPath: varRef,
-              },
-              leftOutput
-            ),
-            output: output,
-          };
     });
   }
 

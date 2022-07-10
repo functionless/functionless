@@ -51,6 +51,58 @@ Object {
 }
 `;
 
+exports[`$SFN.map([1, 2, 3], (item) => nitem) 1`] = `
+Object {
+  "StartAt": "return $SFN.map([1, 2, 3], function(item))",
+  "States": Object {
+    "$SFN.map([1, 2, 3], function(item))": Object {
+      "ItemsPath": "$.heap1",
+      "Iterator": Object {
+        "StartAt": "return \`nitem\`",
+        "States": Object {
+          "1__return \`nitem\`": Object {
+            "End": true,
+            "InputPath": "$.heap0.string",
+            "ResultPath": "$",
+            "Type": "Pass",
+          },
+          "return \`nitem\`": Object {
+            "Next": "1__return \`nitem\`",
+            "Parameters": Object {
+              "string.$": "States.Format('n{}',$.item)",
+            },
+            "ResultPath": "$.heap0",
+            "Type": "Pass",
+          },
+        },
+      },
+      "Next": "1__return $SFN.map([1, 2, 3], function(item))",
+      "Parameters": Object {
+        "item.$": "$$.Map.Item.Value",
+      },
+      "ResultPath": "$.heap2",
+      "Type": "Map",
+    },
+    "1__return $SFN.map([1, 2, 3], function(item))": Object {
+      "End": true,
+      "InputPath": "$.heap2",
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "return $SFN.map([1, 2, 3], function(item))": Object {
+      "Next": "$SFN.map([1, 2, 3], function(item))",
+      "Result": Array [
+        1,
+        2,
+        3,
+      ],
+      "ResultPath": "$.heap1",
+      "Type": "Pass",
+    },
+  },
+}
+`;
+
 exports[`$SFN.map(list, (item) => task(item)) 1`] = `
 Object {
   "StartAt": "Initialize Functionless Context",
@@ -133,12 +185,12 @@ Object {
   "States": Object {
     "1__return [1, 2, 3].map(function(item))": Object {
       "End": true,
-      "InputPath": "$.heap0",
+      "InputPath": "$.heap1",
       "ResultPath": "$",
       "Type": "Pass",
     },
     "1__return [1, 2, 3].map(function(item)) 1": Object {
-      "ItemsPath": "$.heap1",
+      "ItemsPath": "$.heap0",
       "Iterator": Object {
         "StartAt": "return item",
         "States": Object {
@@ -155,7 +207,7 @@ Object {
       "Parameters": Object {
         "item.$": "$$.Map.Item.Value",
       },
-      "ResultPath": "$.heap0",
+      "ResultPath": "$.heap1",
       "Type": "Map",
     },
     "return [1, 2, 3].map(function(item))": Object {
@@ -165,7 +217,7 @@ Object {
         2,
         3,
       ],
-      "ResultPath": "$.heap1",
+      "ResultPath": "$.heap0",
       "Type": "Pass",
     },
   },

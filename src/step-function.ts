@@ -82,12 +82,12 @@ export namespace $SFN {
           ASLGraph.isLiteralValue(secondsOutput) &&
           typeof secondsOutput.value === "number"
         ) {
-          return context.voidState({
+          return context.stateWithVoidOutput({
             Type: "Wait" as const,
             Seconds: secondsOutput.value,
           });
         } else if (ASLGraph.isJsonPath(secondsOutput)) {
-          return context.voidState({
+          return context.stateWithVoidOutput({
             Type: "Wait" as const,
             SecondsPath: secondsOutput.jsonPath,
           });
@@ -125,12 +125,12 @@ export namespace $SFN {
           ASLGraph.isLiteralValue(timestampOutput) &&
           typeof timestampOutput.value === "string"
         ) {
-          return context.voidState({
+          return context.stateWithVoidOutput({
             Type: "Wait",
             Timestamp: timestampOutput.value,
           });
         } else if (ASLGraph.isJsonPath(timestampOutput)) {
-          return context.voidState({
+          return context.stateWithVoidOutput({
             Type: "Wait",
             TimestampPath: timestampOutput.jsonPath,
           });
@@ -277,36 +277,47 @@ export namespace $SFN {
       throw new Error("missing argument 'array'");
     }
 
-    return context.evalExpr(array, call, (arrayOutput) => {
-      if (!ASLGraph.isJsonPath(arrayOutput)) {
-        // TODO
-        throw new Error();
+    return context.evalExpr(array, call, (arrayOutput, addState) => {
+      const arrayPath = ASLGraph.isJsonPath(arrayOutput)
+        ? arrayOutput.jsonPath
+        : context.newHeapVariable();
+
+      // if the array is given as a literal value, assign it to a heap value on the state
+      if (ASLGraph.isLiteralValue(arrayOutput)) {
+        addState(
+          ASLGraph.passWithInput(
+            { Type: "Pass", ResultPath: arrayPath },
+            arrayOutput
+          )
+        );
       }
 
-      const arrayPath = arrayOutput.jsonPath;
-      return context.outputState({
-        Type: "Map",
-        ...(maxConcurrency
-          ? {
-              MaxConcurrency: maxConcurrency,
-            }
-          : {}),
-        Iterator: {
-          States: callbackStates,
-          StartAt: callbackStart,
+      return context.stateWithHeapOutput(
+        {
+          Type: "Map",
+          ...(maxConcurrency
+            ? {
+                MaxConcurrency: maxConcurrency,
+              }
+            : {}),
+          Iterator: {
+            States: callbackStates,
+            StartAt: callbackStart,
+          },
+          ItemsPath: arrayPath,
+          Parameters: Object.fromEntries(
+            callbackfn.parameters.map((param, i) => [
+              `${param.name}.$`,
+              i === 0
+                ? "$$.Map.Item.Value"
+                : i == 1
+                ? "$$.Map.Item.Index"
+                : arrayPath,
+            ])
+          ),
         },
-        ItemsPath: arrayPath,
-        Parameters: Object.fromEntries(
-          callbackfn.parameters.map((param, i) => [
-            `${param.name}.$`,
-            i === 0
-              ? "$$.Map.Item.Value"
-              : i == 1
-              ? "$$.Map.Item.Index"
-              : arrayPath,
-          ])
-        ),
-      });
+        call
+      );
     });
   }
 
@@ -347,7 +358,7 @@ export namespace $SFN {
         "each parallel path must be an inline FunctionExpr"
       );
 
-      return context.outputState({
+      return context.stateWithHeapOutput({
         Type: "Parallel",
         Branches: paths.items.map((func) => ({
           StartAt: context.getStateName(func.body.step()!),
@@ -569,12 +580,12 @@ abstract class BaseStepFunction<
       const evalInputs = Object.fromEntries(
         Object.entries(inputs)
           .filter(([, expr]) => !!expr)
-          .map(([key, expr]) =>
+          .flatMap(([key, expr]) =>
             Object.entries(context.toJsonAssignment(key, evalExpr(expr!)))
           )
       );
 
-      return context.outputState({
+      return context.stateWithHeapOutput({
         Type: "Task" as const,
         Resource: `arn:aws:states:::aws-sdk:sfn:${
           this.resource.stateMachineType ===
@@ -1227,7 +1238,7 @@ class BaseStandardStepFunction<
       );
 
       return context.evalExpr(executionArnExpr, (argValueOutput) => {
-        return context.outputState({
+        return context.stateWithHeapOutput({
           Type: "Task",
           Resource: "arn:aws:states:::aws-sdk:sfn:describeExecution",
           Parameters: context.toJsonAssignment("ExecutionArn", argValueOutput),
