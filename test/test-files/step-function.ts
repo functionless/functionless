@@ -1,12 +1,32 @@
 import { GraphqlApi } from "@aws-cdk/aws-appsync-alpha";
 import { App, aws_events, Stack } from "aws-cdk-lib";
-import { StepFunction, Function, EventBus, AppsyncResolver } from "../../src";
-import { PutEventInput, Event } from "../../src/event-bridge/event-bus";
+import { AttributeType } from "aws-cdk-lib/aws-dynamodb";
+import {
+  StepFunction,
+  Function,
+  EventBus,
+  AppsyncResolver,
+  $AWS,
+  Table,
+} from "../../src";
+import { Event } from "../../src/event-bridge";
+import { PutEventInput } from "../../src/event-bridge/event-bus";
 
 const app = new App({
   autoSynth: false,
 });
 const stack = new Stack(app, "stack");
+
+const table = new Table<{ id: string }, "id">(stack, "table", {
+  partitionKey: {
+    name: "id",
+    type: AttributeType.STRING,
+  },
+});
+
+const func = new Function<undefined, string>(stack, "func", async () => {
+  return "hello";
+});
 
 // unsupported arithmetic
 new StepFunction(stack, "input.i + 2", (input: { i: number }) => input.i + 2);
@@ -110,10 +130,6 @@ new StepFunction(
 
 // Unsupported - non-awaited promise
 
-const func = new Function<undefined, string>(stack, "func", async () => {
-  return "hello";
-});
-
 new StepFunction(stack, "no await", async () => {
   const c = func();
   return c;
@@ -202,17 +218,27 @@ new StepFunction(stack, "cdk resource", () => {
  */
 const bus = new EventBus(stack, "bus");
 new StepFunction(stack, "usebus", async () => {
-  const event: PutEventInput<Event<{}>> = {};
+  const event: PutEventInput<Event<{}>> = {
+    source: "",
+    detail: {},
+    "detail-type": "",
+  };
   await bus.putEvents(event);
 });
 
 new StepFunction(stack, "usebus", async () => {
-  const events: PutEventInput<Event<{}>>[] = [{}];
+  const events: PutEventInput<Event<{}>>[] = [
+    { source: "", detail: {}, "detail-type": "" },
+  ];
   await bus.putEvents({ source: "", detail: {}, "detail-type": "" }, ...events);
 });
 
 new StepFunction(stack, "usebus", async () => {
-  const event: PutEventInput<Event<{}>> = {};
+  const event: PutEventInput<Event<{}>> = {
+    source: "",
+    detail: {},
+    "detail-type": "",
+  };
   await bus.putEvents({ ...event });
 });
 
@@ -252,3 +278,68 @@ new StepFunction<{ arg: string }, void>(stack, "error", async (input) => {
 new StepFunction(stack, "error", async () => {
   throw Error("arg");
 });
+
+// unsupported object references in $AWS calls
+
+new StepFunction(stack, "obj ref", async () => {
+  const event = {
+    Table: table,
+    Key: {
+      id: { S: "sas" },
+    },
+  };
+
+  await $AWS.DynamoDB.GetItem(event);
+});
+
+new StepFunction(stack, "obj ref", async () => {
+  const event = {
+    Function: func,
+    Payload: undefined,
+  };
+
+  await $AWS.Lambda.Invoke(event);
+});
+
+// supported - object literal in $AWS calls
+
+new StepFunction(stack, "obj ref", async () => {
+  await $AWS.DynamoDB.GetItem({
+    Table: table,
+    Key: {
+      id: { S: "sas" },
+    },
+  });
+});
+
+new StepFunction(stack, "obj ref", async () => {
+  await $AWS.Lambda.Invoke({
+    Function: func,
+    Payload: undefined,
+  });
+});
+
+// unsupported - cannot find reference to integration outside of scope.
+
+new StepFunction(stack, "obj ref", async () => {
+  const getIntegration = (): typeof func => {
+    return func;
+  };
+  const x = getIntegration();
+  await x();
+});
+
+// support reference from surrounding class
+
+export class MyClass {
+  readonly func2: Function<string, string>;
+
+  constructor(readonly func: Function<string, string>) {
+    this.func2 = func;
+
+    new StepFunction(stack, "sfn", async () => {
+      await this.func("");
+      await this.func2("");
+    });
+  }
+}
