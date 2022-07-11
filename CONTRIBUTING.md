@@ -182,7 +182,7 @@ export const My_New_Error: ErrorCode {
 
 2. [Optional] - Add validation
 
-Any ErrorCode which can be determined statically should have static validation added to `validate.ts`. `validate.ts` uses the Typescript AST to find errors which would be thrown later. It feels both the `functionless` api (`npx functionless`) and the [`@functionless/language-service`](https://github.com/functionless/functionless-language-service).
+Any ErrorCode which can be determined statically should have static validation added to `validate.ts`. `validate.ts` uses the Typescript AST to find errors which would be thrown later. `validate.ts` is used by the `functionless` api (`npx functionless`) and the [`@functionless/language-service`](https://github.com/functionless/functionless-language-service).
 
 > If the error code cannot be validated, add the new error code to `skipErrorCodes` in `validate.test.ts`. You must explain why validation cannot be added in the PR and comments.
 
