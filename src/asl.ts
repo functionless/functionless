@@ -719,6 +719,72 @@ export class ASL {
       const expr = this.eval(stmt.expr);
       const output = ASLGraph.getAslStateOutput(expr);
 
+      const next = this.next(stmt);
+
+      // TODO: support ForIn
+      if (isForOfStmt(stmt)) {
+        // assigns either a constant or json path to a new variable
+        const assignTemp = this.stateWithHeapOutput(
+          ASLGraph.passWithInput(
+            {
+              Type: "Pass",
+              Next: "hasNext",
+            },
+            output
+          )
+        );
+        const tempArrayPath = assignTemp.output.jsonPath;
+
+        const forOf: ASLGraph.SubState = {
+          startState: "assignTemp",
+          node: stmt,
+          states: {
+            assignTemp,
+            hasNext: {
+              Type: "Choice",
+              Choices: [
+                { ...ASL.isPresent(`${tempArrayPath}[0]`), Next: "assign" },
+              ],
+              Default: "exit",
+            },
+            assign: {
+              Type: "Pass",
+              node: stmt.expr,
+              InputPath: `${tempArrayPath}[0]`,
+              ResultPath: `${stmt.variableDecl.name}.$`,
+              Next: "body",
+            },
+            // any ASLGraph.DeferNext (or empty) should be wired to exit
+            body: ASLGraph.updateDeferredNextStates(
+              { Next: "tail" },
+              {
+                startState: this.getStateName(stmt.body.step()!),
+                states: this.evalStmt(stmt.body),
+              }
+            ),
+            // tail the array
+            tail: {
+              Type: "Pass",
+              InputPath: `${tempArrayPath}[1:]`,
+              ResultPath: tempArrayPath,
+              Next: "hasNext", // restart by checking for items after tail
+            },
+            // clean up?
+            exit: {
+              Type: "Pass",
+            },
+          },
+        };
+
+        return this.aslGraphToStates(
+          this.getStateName(stmt),
+          ASLGraph.updateDeferredNextStates(
+            next ? { Next: next } : { End: true },
+            forOf
+          )
+        );
+      }
+
       // if we get back a constant, we'll need a location to put it
       const itemsLocation = ASLGraph.isJsonPath(output)
         ? output.jsonPath
@@ -768,8 +834,6 @@ export class ASL {
           },
         }
       )!;
-
-      const next = this.next(stmt);
 
       return this.aslGraphToStates(
         this.getStateName(stmt),
@@ -1911,7 +1975,7 @@ export class ASL {
   public stateWithHeapOutput(
     state: Exclude<ASLGraph.NodeState, Choice | Fail | Succeed | Wait>,
     node?: FunctionlessNode
-  ): ASLGraph.OutputState {
+  ): ASLGraph.NodeState & { output: ASLGraph.JsonPath } {
     const tempHeap = this.newHeapVariable();
     return {
       ...state,

@@ -885,7 +885,7 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
   );
 
   test(
-    "for",
+    "for in",
     (parent) => {
       const table = new Table<{ id: string; val: number }, "id">(
         parent,
@@ -932,6 +932,71 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
             for (const j in input.arr) {
               await func({ n: `${input.arr[i]}`, id: input.id });
               await func({ n: `${input.arr[j]}`, id: input.id });
+            }
+          }
+          const item = await $AWS.DynamoDB.GetItem({
+            Table: table,
+            Key: {
+              id: { S: input.id },
+            },
+            ConsistentRead: true,
+          });
+          return item.Item!.val.N;
+        }
+      );
+    },
+    "42",
+    { arr: [1, 2, 3], id: `key${Math.floor(Math.random() * 1000)}` }
+  );
+
+  test(
+    "for of",
+    (parent) => {
+      const table = new Table<{ id: string; val: number }, "id">(
+        parent,
+        "table",
+        {
+          partitionKey: {
+            name: "id",
+            type: AttributeType.STRING,
+          },
+        }
+      );
+      const update = $AWS.DynamoDB.UpdateItem;
+      const func = new Function(
+        parent,
+        "func",
+        localstackClientConfig,
+        async (input: { n: `${number}`; id: string }) => {
+          console.log("input", input);
+          await update({
+            Table: table,
+            Key: {
+              id: {
+                S: input.id,
+              },
+            },
+            UpdateExpression: "SET val = if_not_exists(val, :start) + :inc",
+            ExpressionAttributeValues: {
+              ":start": { N: "0" },
+              ":inc": { N: input.n },
+            },
+          });
+        }
+      );
+      return new StepFunction<{ arr: number[]; id: string }, string>(
+        parent,
+        "fn",
+        async (input) => {
+          // 1, 2, 3 = 6
+          for (const i of input.arr) {
+            await func({ n: `${i}`, id: input.id });
+          }
+          // 2 + 3 + 4 + 3 + 4 + 5 + 4 + 5 + 6 = 36 + 6 = 42
+          for (const i of input.arr) {
+            for (const j of input.arr) {
+              await func({ n: `${i}`, id: input.id });
+              await func({ n: `${j}`, id: input.id });
             }
           }
           const item = await $AWS.DynamoDB.GetItem({
