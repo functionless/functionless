@@ -11,6 +11,7 @@ import {
   NewAppsyncResolverInterface,
   NewStepFunctionInterface,
   RuleInterface,
+  typeMatch,
 } from "./checker";
 import { ErrorCode, ErrorCodes, formatErrorMessage } from "./error-code";
 import { anyOf } from "./util";
@@ -123,6 +124,40 @@ export function validate(
           ),
         ];
       } else if (ts.isCallExpression(node)) {
+        if (
+          checker.getIntegrationNodeKind(node.expression) ===
+          "EventBus.putEvents"
+        ) {
+          const errors = node.arguments.flatMap((arg) => {
+            if (ts.isObjectLiteralExpression(arg)) {
+              if (
+                arg.properties.some(
+                  (prop) =>
+                    !ts.isPropertyAssignment(prop) ||
+                    ts.isComputedPropertyName(prop.name)
+                )
+              ) {
+                return [
+                  newError(
+                    arg,
+                    ErrorCodes.StepFunctions_calls_to_EventBus_PutEvents_must_use_object_literals
+                  ),
+                ];
+              }
+              return [];
+            }
+            return [
+              newError(
+                arg,
+                ErrorCodes.StepFunctions_calls_to_EventBus_PutEvents_must_use_object_literals
+              ),
+            ];
+          });
+
+          if (errors) {
+            return errors;
+          }
+        }
         return [
           ...validateIntegrationCallArguments(node, scope),
           ...validatePromiseCalls(node),
@@ -130,6 +165,83 @@ export function validate(
       } else if (ts.isNewExpression(node)) {
         const [, diagnostic] = validateNewIntegration(node);
         return diagnostic;
+      } else if (ts.isThrowStatement(node)) {
+        if (
+          ts.isNewExpression(node.expression) ||
+          ts.isCallExpression(node.expression)
+        ) {
+          return (
+            node.expression.arguments?.flatMap((arg) => {
+              if (!checker.isConstant(arg)) {
+                return [
+                  newError(
+                    arg,
+                    ErrorCodes.StepFunctions_error_cause_must_be_a_constant
+                  ),
+                ];
+              }
+              return [];
+            }) ?? []
+          );
+        }
+      } else if (
+        ts.isVariableDeclaration(node) ||
+        ts.isPropertyDeclaration(node) ||
+        ts.isPropertyAssignment(node) ||
+        ts.isBindingElement(node) ||
+        ts.isShorthandPropertyAssignment(node)
+      ) {
+        const initializers: (ts.Node | undefined)[] =
+          ts.isShorthandPropertyAssignment(node)
+            ? [node, node.objectAssignmentInitializer]
+            : [node.initializer];
+        if (
+          initializers
+            .filter((x): x is ts.Node => !!x)
+            .map(checker.getTypeAtLocation)
+            .some((type) =>
+              typeMatch(
+                type,
+                // eslint-disable-next-line no-bitwise
+                (t) => (t.getFlags() & ts.TypeFlags.Undefined) !== 0
+              )
+            )
+        ) {
+          return [
+            newError(
+              node,
+              ErrorCodes.Step_Functions_does_not_support_undefined_assignment
+            ),
+          ];
+        } else if (ts.isPropertyAssignment(node)) {
+          if (
+            ts.isComputedPropertyName(node.name) &&
+            !checker.isConstant(node.name.expression)
+          ) {
+            // TODO need to check for element access in with for in loop
+            return [
+              newError(
+                node.name,
+                ErrorCodes.StepFunctions_property_names_must_be_constant
+              ),
+            ];
+          }
+        }
+      } else if (ts.isElementAccessExpression(node)) {
+        if (
+          !(
+            checker.isConstant(node.argumentExpression) ||
+            (ts.isIdentifier(node.argumentExpression) &&
+              checker.isForInVariable(node.argumentExpression))
+          )
+        ) {
+          return [
+            newError(
+              node.argumentExpression,
+              ErrorCodes.StepFunctions_Invalid_collection_access
+            ),
+          ];
+        }
       }
       return [];
     }

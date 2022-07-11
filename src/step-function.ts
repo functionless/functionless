@@ -10,7 +10,7 @@ import { StepFunctions } from "aws-sdk";
 import { Construct } from "constructs";
 import { ApiGatewayVtlIntegration } from "./api";
 import { AppSyncVtlIntegration } from "./appsync";
-import { ASL, MapTask, StateMachine, States, Task } from "./asl";
+import { ASL, ASLGraph, StateMachine, States } from "./asl";
 import { assertDefined } from "./assert";
 import { validateFunctionDecl, FunctionDecl } from "./declaration";
 import { ErrorCodes, SynthError } from "./error-code";
@@ -32,7 +32,6 @@ import {
   isObjectLiteralExpr,
   isPropAssignExpr,
   isSpreadAssignExpr,
-  isStringLiteralExpr,
 } from "./guards";
 import {
   Integration,
@@ -78,17 +77,27 @@ export namespace $SFN {
         throw new Error("the 'seconds' argument is required");
       }
 
-      if (isNumberLiteralExpr(seconds)) {
-        return {
-          Type: "Wait" as const,
-          Seconds: seconds.value,
-        };
-      } else {
-        return {
-          Type: "Wait" as const,
-          SecondsPath: context.toJsonPath(seconds),
-        };
-      }
+      return context.evalExpr(seconds, call, (secondsOutput) => {
+        if (
+          ASLGraph.isLiteralValue(secondsOutput) &&
+          typeof secondsOutput.value === "number"
+        ) {
+          return context.stateWithVoidOutput({
+            Type: "Wait" as const,
+            Seconds: secondsOutput.value,
+          });
+        } else if (ASLGraph.isJsonPath(secondsOutput)) {
+          return context.stateWithVoidOutput({
+            Type: "Wait" as const,
+            SecondsPath: secondsOutput.jsonPath,
+          });
+        }
+
+        throw new SynthError(
+          ErrorCodes.Invalid_Input,
+          "Expected the first parameter (seconds) to $SFN.waitFor to be a number or a variable."
+        );
+      });
     },
   });
 
@@ -111,17 +120,27 @@ export namespace $SFN {
         throw new Error("the 'timestamp' argument is required");
       }
 
-      if (isStringLiteralExpr(timestamp)) {
-        return {
-          Type: "Wait",
-          Timestamp: timestamp.value,
-        };
-      } else {
-        return {
-          Type: "Wait",
-          TimestampPath: context.toJsonPath(timestamp),
-        };
-      }
+      return context.evalExpr(timestamp, call, (timestampOutput) => {
+        if (
+          ASLGraph.isLiteralValue(timestampOutput) &&
+          typeof timestampOutput.value === "string"
+        ) {
+          return context.stateWithVoidOutput({
+            Type: "Wait",
+            Timestamp: timestampOutput.value,
+          });
+        } else if (ASLGraph.isJsonPath(timestampOutput)) {
+          return context.stateWithVoidOutput({
+            Type: "Wait",
+            TimestampPath: timestampOutput.jsonPath,
+          });
+        }
+
+        throw new SynthError(
+          ErrorCodes.Invalid_Input,
+          "Expected first parameter (timestamp) parameter to $SFN.waitUntil to be a string or a reference."
+        );
+      });
     },
   });
 
@@ -224,12 +243,12 @@ export namespace $SFN {
     },
   });
 
-  function mapOrForEach(call: CallExpr, context: ASL): MapTask {
+  function mapOrForEach(call: CallExpr, context: ASL) {
     const callbackfn = call.getArgument("callbackfn")?.expr;
     if (callbackfn === undefined || callbackfn.kind !== "FunctionExpr") {
       throw new Error("missing callbackfn in $SFN.map");
     }
-    const callbackStates = context.execute(callbackfn.body);
+    const callbackStates = context.evalStmt(callbackfn.body);
     const callbackStart = context.getStateName(callbackfn.body.step()!);
     const props = call.getArgument("props")?.expr;
     let maxConcurrency: number | undefined;
@@ -257,30 +276,49 @@ export namespace $SFN {
     if (array === undefined) {
       throw new Error("missing argument 'array'");
     }
-    const arrayPath = context.toJsonPath(array);
-    return {
-      Type: "Map",
-      ...(maxConcurrency
-        ? {
-            MaxConcurrency: maxConcurrency,
-          }
-        : {}),
-      Iterator: {
-        States: callbackStates,
-        StartAt: callbackStart,
-      },
-      ItemsPath: arrayPath,
-      Parameters: Object.fromEntries(
-        callbackfn.parameters.map((param, i) => [
-          `${param.name}.$`,
-          i === 0
-            ? "$$.Map.Item.Value"
-            : i == 1
-            ? "$$.Map.Item.Index"
-            : arrayPath,
-        ])
-      ),
-    };
+
+    return context.evalExpr(array, call, (arrayOutput, addState) => {
+      const arrayPath = ASLGraph.isJsonPath(arrayOutput)
+        ? arrayOutput.jsonPath
+        : context.newHeapVariable();
+
+      // if the array is given as a literal value, assign it to a heap value on the state
+      if (ASLGraph.isLiteralValue(arrayOutput)) {
+        addState(
+          ASLGraph.passWithInput(
+            { Type: "Pass", ResultPath: arrayPath },
+            arrayOutput
+          )
+        );
+      }
+
+      return context.stateWithHeapOutput(
+        {
+          Type: "Map",
+          ...(maxConcurrency
+            ? {
+                MaxConcurrency: maxConcurrency,
+              }
+            : {}),
+          Iterator: {
+            States: callbackStates,
+            StartAt: callbackStart,
+          },
+          ItemsPath: arrayPath,
+          Parameters: Object.fromEntries(
+            callbackfn.parameters.map((param, i) => [
+              `${param.name}.$`,
+              i === 0
+                ? "$$.Map.Item.Value"
+                : i == 1
+                ? "$$.Map.Item.Index"
+                : arrayPath,
+            ])
+          ),
+        },
+        call
+      );
+    });
   }
 
   /**
@@ -320,13 +358,13 @@ export namespace $SFN {
         "each parallel path must be an inline FunctionExpr"
       );
 
-      return {
+      return context.stateWithHeapOutput({
         Type: "Parallel",
         Branches: paths.items.map((func) => ({
           StartAt: context.getStateName(func.body.step()!),
-          States: context.execute(func.body),
+          States: context.evalStmt(func.body),
         })),
-      };
+      });
     },
   });
 }
@@ -528,23 +566,39 @@ abstract class BaseStepFunction<
 
     const { name, input, traceHeader } = retrieveMachineArgs(call);
 
-    return {
-      Type: "Task" as const,
-      Resource: `arn:aws:states:::aws-sdk:sfn:${
-        this.resource.stateMachineType ===
-        aws_stepfunctions.StateMachineType.EXPRESS
-          ? "startSyncExecution"
-          : "startExecution"
-      }`,
-      Parameters: {
-        StateMachineArn: this.resource.stateMachineArn,
-        ...(input ? context.toJsonAssignment("Input", input) : {}),
-        ...(name ? context.toJsonAssignment("Name", name) : {}),
-        ...(traceHeader
-          ? context.toJsonAssignment("TraceHeader", traceHeader)
-          : {}),
-      },
+    const inputs = {
+      Input: input,
+      Name: name,
+      TraceHeader: traceHeader,
     };
+
+    return context.evalContext(call, (evalExpr) => {
+      // evaluate each of the input expressions,
+      // returning an object assignment with the output value { input.$: $.inputLocation }
+      // and a state object containing the output and/or a sub-state with additional required nodes to add to the
+      // machine
+      const evalInputs = Object.fromEntries(
+        Object.entries(inputs)
+          .filter(([, expr]) => !!expr)
+          .flatMap(([key, expr]) =>
+            Object.entries(context.toJsonAssignment(key, evalExpr(expr!)))
+          )
+      );
+
+      return context.stateWithHeapOutput({
+        Type: "Task" as const,
+        Resource: `arn:aws:states:::aws-sdk:sfn:${
+          this.resource.stateMachineType ===
+          aws_stepfunctions.StateMachineType.EXPRESS
+            ? "startSyncExecution"
+            : "startExecution"
+        }`,
+        Parameters: {
+          StateMachineArn: this.resource.stateMachineArn,
+          ...evalInputs,
+        },
+      });
+    });
   }
 
   public readonly eventBus = makeEventBusIntegration<
@@ -1183,17 +1237,13 @@ class BaseStandardStepFunction<
         "Describe Execution requires a single string argument."
       );
 
-      const argValue = context.toJsonAssignment(
-        "ExecutionArn",
-        executionArnExpr
-      );
-
-      const task: Task = {
-        Type: "Task",
-        Resource: "arn:aws:states:::aws-sdk:sfn:describeExecution",
-        Parameters: argValue,
-      };
-      return task;
+      return context.evalExpr(executionArnExpr, (argValueOutput) => {
+        return context.stateWithHeapOutput({
+          Type: "Task",
+          Resource: "arn:aws:states:::aws-sdk:sfn:describeExecution",
+          Parameters: context.toJsonAssignment("ExecutionArn", argValueOutput),
+        });
+      });
     },
     native: {
       bind: (context) => this.resource.grantRead(context.resource),

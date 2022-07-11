@@ -5,10 +5,14 @@ import {
   StepFunction,
   Function,
   EventBus,
+  // @ts-ignore - for ts-docs
+  ErrorCodes,
   AppsyncResolver,
   $AWS,
   Table,
 } from "../../src";
+import { Event } from "../../src/event-bridge";
+import { PutEventInput } from "../../src/event-bridge/event-bus";
 
 const app = new App({
   autoSynth: false,
@@ -31,6 +35,36 @@ new StepFunction(stack, "input.i + 2", (input: { i: number }) => input.i + 2);
 new StepFunction(stack, "input.i - 2", (input: { i: number }) => input.i - 2);
 new StepFunction(stack, "input.i * 2", (input: { i: number }) => input.i * 2);
 new StepFunction(stack, "input.i / 2", (input: { i: number }) => input.i / 2);
+new StepFunction(stack, "input.i % 2", (input: { i: number }) => input.i % 2);
+new StepFunction(
+  stack,
+  "input.i += 2",
+  (input: { i: number }) => (input.i += 2)
+);
+new StepFunction(
+  stack,
+  "input.i *= 2",
+  (input: { i: number }) => (input.i *= 2)
+);
+new StepFunction(
+  stack,
+  "input.i -= 2",
+  (input: { i: number }) => (input.i -= 2)
+);
+new StepFunction(
+  stack,
+  "input.i /= 2",
+  (input: { i: number }) => (input.i /= 2)
+);
+new StepFunction(
+  stack,
+  "input.i %= 2",
+  (input: { i: number }) => (input.i %= 2)
+);
+new StepFunction(stack, "input.i++", (input: { i: number }) => input.i++);
+new StepFunction(stack, "++input.i", (input: { i: number }) => ++input.i);
+new StepFunction(stack, "input.i--", (input: { i: number }) => input.i--);
+new StepFunction(stack, "--input.i", (input: { i: number }) => --input.i);
 new StepFunction(stack, "-input.i", (input: { i: number }) => -input.i);
 new StepFunction(
   stack,
@@ -43,6 +77,7 @@ new StepFunction(
 
 // supported arithmetic
 new StepFunction(stack, "1 + 2", () => 1 + 2);
+new StepFunction(stack, "11 % 2", () => 11 % 2);
 new StepFunction(stack, "-1", () => -1);
 new StepFunction(stack, "(1 + 2)", () => 1 + 2);
 new StepFunction(stack, '("hello")', () => "hello");
@@ -180,6 +215,72 @@ new StepFunction(stack, "cdk resource", () => {
   new aws_events.EventBus(stack, "");
 });
 
+/**
+ * Unsupported - Event bus putEvent non-object literal
+ */
+const bus = new EventBus(stack, "bus");
+new StepFunction(stack, "usebus", async () => {
+  const event: PutEventInput<Event<{}>> = {
+    source: "",
+    detail: {},
+    "detail-type": "",
+  };
+  await bus.putEvents(event);
+});
+
+new StepFunction(stack, "usebus", async () => {
+  const events: PutEventInput<Event<{}>>[] = [
+    { source: "", detail: {}, "detail-type": "" },
+  ];
+  await bus.putEvents({ source: "", detail: {}, "detail-type": "" }, ...events);
+});
+
+new StepFunction(stack, "usebus", async () => {
+  const event: PutEventInput<Event<{}>> = {
+    source: "",
+    detail: {},
+    "detail-type": "",
+  };
+  await bus.putEvents({ ...event });
+});
+
+new StepFunction(stack, "usebus", async () => {
+  const source = "source";
+  await bus.putEvents({ [source]: "", detail: {}, "detail-type": "" });
+});
+
+new StepFunction(stack, "usebus", async () => {
+  const source = "source";
+  await bus.putEvents(
+    { source: "", detail: {}, "detail-type": "" },
+    { [source]: "", detail: {}, "detail-type": "" }
+  );
+});
+
+/**
+ * Supported
+ */
+
+new StepFunction(stack, "usebus", async () => {
+  await bus.putEvents({ "detail-type": "", source: "", detail: {} });
+});
+
+/**
+ * Unsupported - non-constant error arguments
+ */
+
+new StepFunction<{ arg: string }, void>(stack, "error", async (input) => {
+  throw Error(input.arg);
+});
+
+/**
+ * Support - constant error arguments
+ */
+
+new StepFunction(stack, "error", async () => {
+  throw Error("arg");
+});
+
 // unsupported object references in $AWS calls
 
 new StepFunction(stack, "obj ref", async () => {
@@ -196,7 +297,6 @@ new StepFunction(stack, "obj ref", async () => {
 new StepFunction(stack, "obj ref", async () => {
   const event = {
     Function: func,
-    Payload: undefined,
   };
 
   await $AWS.Lambda.Invoke(event);
@@ -216,7 +316,6 @@ new StepFunction(stack, "obj ref", async () => {
 new StepFunction(stack, "obj ref", async () => {
   await $AWS.Lambda.Invoke({
     Function: func,
-    Payload: undefined,
   });
 });
 
@@ -244,3 +343,156 @@ export class MyClass {
     });
   }
 }
+
+/**
+ * Unsupported
+ * 10022 - Step Functions does not support undefined assignment
+ * @see ErrorCodes.Step_Functions_does_not_support_undefined_assignment
+ */
+
+const funcUndefined = new Function<undefined, undefined>(
+  stack,
+  "func",
+  async () => {
+    return undefined;
+  }
+);
+
+new StepFunction(stack, "obj ref", async () => {
+  const x = undefined;
+  return x;
+});
+
+new StepFunction(stack, "obj ref", async () => {
+  const x = { y: undefined };
+  return x;
+});
+
+new StepFunction(stack, "obj ref", async () => {
+  const x = await funcUndefined();
+  return x;
+});
+
+/**
+ * Supported - workarounds
+ * 10022 - Step Functions does not support undefined assignment
+ * @see ErrorCodes.Step_Functions_does_not_support_undefined_assignment
+ */
+
+new StepFunction(stack, "obj ref", async () => {
+  const x = null;
+  return x;
+});
+
+new StepFunction(stack, "obj ref", async () => {
+  const x = { y: null };
+  return x;
+});
+
+new StepFunction(stack, "obj ref", async () => {
+  const x = (await funcUndefined()) ?? null;
+  return x;
+});
+
+/**
+ * Unsupported
+ * 10025 - Step Functions invalid collection access
+ * @see ErrorCodes.StepFunctions_Invalid_collection_access
+ */
+
+new StepFunction(stack, "obj ref", async (input: { n: number }) => {
+  const arr = [1, 2, 3];
+  return arr[input.n];
+});
+
+new StepFunction(stack, "obj ref", async (input: { key: string }) => {
+  const obj = { a: "" } as Record<string, any>;
+  return obj[input.key];
+});
+
+/**
+ * Supported - workarounds
+ * 10025 - Step Functions invalid collection access
+ * @see ErrorCodes.StepFunctions_Invalid_collection_access
+ */
+
+const arrayAccessFunc = new Function<
+  { arr: number[]; n: number },
+  number | undefined
+>(stack, "fn", async (input) => {
+  return input.arr[input.n];
+});
+
+const objAccessFunc = new Function<
+  { obj: Record<string, any>; key: string },
+  number | undefined
+>(stack, "fn", async (input) => {
+  return input.obj[input.key];
+});
+
+new StepFunction(stack, "obj ref", async (input: { n: number }) => {
+  const arr = [1, 2, 3];
+  return arrayAccessFunc({ arr, n: input.n });
+});
+
+new StepFunction(stack, "obj ref", async (input: { key: string }) => {
+  const obj = { a: "" } as Record<string, any>;
+  return objAccessFunc({ obj, key: input.key });
+});
+
+/**
+ * Supported
+ */
+
+const func2 = new Function<{ x: number; y: number }, string>(
+  stack,
+  "func",
+  async () => {
+    return "hello";
+  }
+);
+
+new StepFunction(stack, "obj ref", async () => {
+  const arr = [1, 2, 3];
+  for (const i in arr) {
+    await func2({ x: arr[i], y: arr[i] });
+  }
+});
+
+new StepFunction(stack, "obj ref", async () => {
+  const arr = [1, 2, 3];
+  for (const i in arr) {
+    for (const j in arr) {
+      await func2({ x: arr[i], y: arr[j] });
+    }
+  }
+});
+
+/**
+ * Unsupported
+ * 10026 - Step Functions property names must be constant
+ * @see ErrorCodes.StepFunctions_property_names_must_be_constant
+ */
+
+new StepFunction(stack, "obj ref", async (input: { key: string }) => {
+  return {
+    [input.key]: "",
+  };
+});
+
+/**
+ * Supported - Workaround
+ * 10026 - Step Functions property names must be constant
+ * @see ErrorCodes.StepFunctions_property_names_must_be_constant
+ */
+
+const objAssignFunc = new Function<
+  { obj: Record<string, string>; key: string; value: string },
+  Record<string, string>
+>(stack, "fn", async (input) => {
+  return { ...input.obj, [input.key]: input.value };
+});
+
+new StepFunction(stack, "obj ref", async (input: { key: string }) => {
+  return objAssignFunc({ obj: {}, key: input.key, value: "" });
+});

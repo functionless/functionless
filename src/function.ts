@@ -28,7 +28,7 @@ import { Construct } from "constructs";
 import esbuild from "esbuild";
 import { ApiGatewayVtlIntegration } from "./api";
 import type { AppSyncVtlIntegration } from "./appsync";
-import { ASL, Task } from "./asl";
+import { ASL, ASLGraph } from "./asl";
 import {
   FunctionDecl,
   IntegrationInvocation,
@@ -50,11 +50,7 @@ import {
   PrewarmClients,
   PrewarmProps,
 } from "./function-prewarm";
-import {
-  isFunctionDecl,
-  isStringLiteralExpr,
-  isVariableReference,
-} from "./guards";
+import { isFunctionDecl } from "./guards";
 import {
   Integration,
   IntegrationCallExpr,
@@ -387,28 +383,30 @@ abstract class FunctionBase<in Payload, Out>
   public asl(call: CallExpr, context: ASL) {
     const payloadArg = call.getArgument("payload")?.expr;
     this.resource.grantInvoke(context.role);
-    // TODO generalize this?
-    const props: Partial<Task> = !payloadArg
-      ? {
-          Parameters: undefined,
-        }
-      : isVariableReference(payloadArg)
-      ? {
-          InputPath: context.toJsonPath(payloadArg),
-        }
-      : isStringLiteralExpr(payloadArg)
-      ? {
-          Parameters: payloadArg.value,
-        }
-      : {
-          Parameters: context.toJson(payloadArg),
-        };
 
-    return {
-      Type: "Task" as const,
-      Resource: this.resource.functionArn,
-      ...props,
-    };
+    return payloadArg
+      ? context.evalExpr(payloadArg, (output) => {
+          return context.stateWithHeapOutput(
+            ASLGraph.taskWithInput(
+              {
+                Type: "Task",
+                Resource: this.resource.functionArn,
+                Next: ASLGraph.DeferNext,
+              },
+              output ?? { jsonPath: context.context.null }
+            )
+          );
+        })
+      : context.stateWithHeapOutput(
+          ASLGraph.taskWithInput(
+            {
+              Type: "Task",
+              Resource: this.resource.functionArn,
+              Next: ASLGraph.DeferNext,
+            },
+            { jsonPath: context.context.null }
+          )
+        );
   }
 
   protected static normalizeAsyncDestination<P, O>(

@@ -19,6 +19,7 @@ import {
   UpdateItemInput,
   UpdateItemOutput,
 } from "typesafe-dynamodb/lib/update-item";
+import { ASLGraph } from "./asl";
 import { ErrorCodes, SynthError } from "./error-code";
 import { Argument, Expr } from "./expression";
 import { Function, isFunction, NativeIntegration } from "./function";
@@ -30,7 +31,6 @@ import {
   isPropAssignExpr,
   isReferenceExpr,
   isStringLiteralExpr,
-  isVariableReference,
 } from "./guards";
 import {
   IntegrationCall,
@@ -39,7 +39,6 @@ import {
 } from "./integration";
 import { AnyTable, isTable, ITable } from "./table";
 import type { AnyAsyncFunction } from "./util";
-import { renameObjectProperties } from "./visit";
 
 /**
  * The `AWS` namespace exports functions that map to AWS Step Functions AWS-SDK Integrations.
@@ -401,14 +400,17 @@ export namespace $AWS {
      */
     export const Invoke = makeIntegration<
       "$AWS.Lambda.Invoke",
-      <Input, Output>(input: {
-        Function: Function<Input, Output>;
-        Payload: Input;
-        ClientContext?: string;
-        InvocationType?: "Event" | "RequestResponse" | "DryRun";
-        LogType?: "None" | "Tail";
-        Qualifier?: string;
-      }) => Promise<
+      <Input, Output>(
+        input: {
+          Function: Function<Input, Output>;
+          ClientContext?: string;
+          InvocationType?: "Event" | "RequestResponse" | "DryRun";
+          LogType?: "None" | "Tail";
+          Qualifier?: string;
+        } & ([Input] extends [undefined]
+          ? { Payload?: Input }
+          : { Payload: Input })
+      ) => Promise<
         Omit<AWSLambda.InvocationResponse, "payload"> & {
           Payload: Output;
         }
@@ -443,15 +445,17 @@ export namespace $AWS {
         if (payload === undefined) {
           throw new Error("missing property 'payload'");
         }
-        return {
-          Type: "Task",
-          Resource: "arn:aws:states:::lambda:invoke",
-          Parameters: {
-            FunctionName: functionRef.resource.functionName,
-            [`Payload${payload && isVariableReference(payload) ? ".$" : ""}`]:
-              payload ? context.toJson(payload) : null,
-          },
-        };
+
+        return context.evalExpr(payload, (output) => {
+          return context.stateWithHeapOutput({
+            Type: "Task",
+            Resource: "arn:aws:states:::lambda:invoke",
+            Parameters: {
+              FunctionName: functionRef.resource.functionName,
+              ...context.toJsonAssignment("Payload", output),
+            },
+          });
+        });
       },
     });
   }
@@ -577,18 +581,34 @@ function makeDynamoIntegration<
           `First argument ('input') into $AWS.DynamoDB.${operationName} must be an object.`
         );
       }
-      const table = getTableArgument(operationName, call.args);
-      grantTablePermissions(table, context.role, operationName);
 
-      return {
-        Type: "Task",
-        Resource: `arn:aws:states:::aws-sdk:dynamodb:${operationName}`,
-        Parameters: context.toJson(
-          renameObjectProperties(input, {
-            Table: "TableName",
-          })
-        ),
-      };
+      return context.evalExpr(input, (output) => {
+        if (
+          !ASLGraph.isLiteralValue(output) ||
+          typeof output.value !== "object" ||
+          !output.value ||
+          !("Table" in output.value) ||
+          !isTable(output.value.Table)
+        ) {
+          throw new SynthError(
+            ErrorCodes.Unexpected_Error,
+            "Expected `Table` parameter in $AWS.DynamoDB for Step Functions to be a Table object."
+          );
+        }
+
+        const { Table, ...params } = output.value;
+
+        grantTablePermissions(Table, context.role, operationName);
+
+        return context.stateWithHeapOutput({
+          Type: "Task",
+          Resource: `arn:aws:states:::aws-sdk:dynamodb:${operationName}`,
+          Parameters: {
+            ...params,
+            TableName: Table.tableName,
+          },
+        });
+      });
     },
     native: {
       ...integration.native,

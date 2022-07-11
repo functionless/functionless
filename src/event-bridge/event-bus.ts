@@ -1,11 +1,10 @@
 import { aws_events, aws_events_targets, Stack } from "aws-cdk-lib";
 import { Construct } from "constructs";
-import { ASL } from "../asl";
+import { ASL, ASLGraph } from "../asl";
+import { ErrorCodes, SynthError } from "../error-code";
 import {
   CallExpr,
-  Expr,
   Identifier,
-  ObjectLiteralExpr,
   PropAssignExpr,
   StringLiteralExpr,
 } from "../expression";
@@ -257,24 +256,21 @@ abstract class EventBusBase<in Evnt extends Event, OutEvnt extends Evnt = Evnt>
         // Validate that the events are object literals.
         // Then normalize nested arrays of events into a single list of events.
         // TODO Relax these restrictions: https://github.com/functionless/functionless/issues/101
-        const eventObjs = call.args.reduce(
-          (events: ObjectLiteralExpr[], arg) => {
-            if (isArrayLiteralExpr(arg.expr)) {
-              if (!arg.expr.items.every(isObjectLiteralExpr)) {
-                throw Error(
-                  "Event Bus put events must use inline object parameters. Variable references are not supported currently."
-                );
-              }
-              return [...events, ...arg.expr.items];
-            } else if (isObjectLiteralExpr(arg.expr)) {
-              return [...events, arg.expr];
+        const eventObjs = call.args.flatMap((arg) => {
+          if (isArrayLiteralExpr(arg.expr)) {
+            if (!arg.expr.items.every(isObjectLiteralExpr)) {
+              throw new SynthError(
+                ErrorCodes.StepFunctions_calls_to_EventBus_PutEvents_must_use_object_literals
+              );
             }
-            throw Error(
-              "Event Bus put events must use inline object parameters. Variable references are not supported currently."
-            );
-          },
-          []
-        );
+            return arg.expr.items;
+          } else if (isObjectLiteralExpr(arg.expr)) {
+            return [arg.expr];
+          }
+          throw new SynthError(
+            ErrorCodes.StepFunctions_calls_to_EventBus_PutEvents_must_use_object_literals
+          );
+        });
 
         // The interface should prevent this.
         if (eventObjs.length === 0) {
@@ -293,53 +289,61 @@ abstract class EventBusBase<in Evnt extends Event, OutEvnt extends Evnt = Evnt>
           version: "Version",
         };
 
-        const events = eventObjs.map((event) => {
-          const props = event.properties.filter(
-            (
-              e
-            ): e is PropAssignExpr & {
-              name: StringLiteralExpr | Identifier;
-            } => !(isSpreadAssignExpr(e) || isComputedPropertyNameExpr(e.name))
-          );
-          if (props.length < event.properties.length) {
-            throw Error(
-              "Event Bus put events must use inline objects instantiated without computed or spread keys."
+        return context.evalContext(call, (evalExpr) => {
+          const events = eventObjs.map((event) => {
+            const props = event.properties.filter(
+              (
+                e
+              ): e is PropAssignExpr & {
+                name: StringLiteralExpr | Identifier;
+              } =>
+                !(isSpreadAssignExpr(e) || isComputedPropertyNameExpr(e.name))
             );
-          }
-          return (
-            props
-              .map(
-                (prop) =>
-                  [
-                    isIdentifier(prop.name) ? prop.name.name : prop.name.value,
-                    prop.expr,
-                  ] as const
-              )
-              .filter(
-                (x): x is [keyof typeof propertyMap, Expr] =>
-                  x[0] in propertyMap && !!x[1]
-              )
-              /**
-               * Build the parameter payload for an event entry.
-               * All members must be in Pascal case.
-               */
-              .reduce(
-                (acc: Record<string, string>, [name, expr]) => ({
-                  ...acc,
-                  [propertyMap[name]]: context.toJson(expr),
-                }),
-                { EventBusName: this.resource.eventBusArn }
-              )
-          );
-        });
+            if (props.length < event.properties.length) {
+              throw new SynthError(
+                ErrorCodes.StepFunctions_calls_to_EventBus_PutEvents_must_use_object_literals
+              );
+            }
+            const evaluatedProps = props.map(({ name, expr }) => {
+              const val = evalExpr(expr);
+              return {
+                name: isIdentifier(name) ? name.name : name.value,
+                value: val,
+              };
+            });
 
-        return {
-          Resource: "arn:aws:states:::events:putEvents",
-          Type: "Task" as const,
-          Parameters: {
-            Entries: events,
-          },
-        };
+            return {
+              event: evaluatedProps
+                .filter(
+                  (
+                    x
+                  ): x is {
+                    name: keyof typeof propertyMap;
+                    value: ASLGraph.LiteralValue | ASLGraph.JsonPath;
+                  } => x.name in propertyMap
+                )
+                /**
+                 * Build the parameter payload for an event entry.
+                 * All members must be in Pascal case.
+                 */
+                .reduce(
+                  (acc: Record<string, any>, { name, value }) => ({
+                    ...acc,
+                    ...context.toJsonAssignment(propertyMap[name], value),
+                  }),
+                  { EventBusName: this.resource.eventBusArn }
+                ),
+            };
+          });
+
+          return context.stateWithHeapOutput({
+            Resource: "arn:aws:states:::events:putEvents",
+            Type: "Task" as const,
+            Parameters: {
+              Entries: events.map(({ event }) => event),
+            },
+          });
+        });
       },
       native: {
         bind: (context: Function<any, any>) => {

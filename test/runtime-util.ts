@@ -77,13 +77,13 @@ export const testStepFunction = async (
     2
   );
 
-  try {
-    expect(result.output ? JSON.parse(result.output) : undefined).toEqual(
-      expected
-    );
-  } catch (e) {
-    throw e;
+  if (result.status === "FAILED") {
+    throw new Error(`Machine failed with output: ${result.output}`);
   }
+
+  expect(result.output ? JSON.parse(result.output) : undefined).toEqual(
+    expected
+  );
 };
 
 const wait = (waitMillis: number) =>

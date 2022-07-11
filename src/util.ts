@@ -1,6 +1,6 @@
 import { Construct } from "constructs";
 import ts from "typescript";
-import { CallExpr, Expr, PropAccessExpr } from "./expression";
+import { BinaryOp, CallExpr, Expr, PropAccessExpr } from "./expression";
 import {
   isArrayLiteralExpr,
   isBinaryExpr,
@@ -333,3 +333,28 @@ export class DeterministicNameGenerator {
 
 // to prevent the closure serializer from trying to import all of functionless.
 export const deploymentOnlyModule = true;
+
+/**
+ * Inverts directional binary operators.
+ *
+ * Useful when normalizing the processing of the left and right of a binary operator.
+ *
+ * < -> >
+ * > -> <
+ * >= -> <=
+ * <= -> >=
+ */
+export const invertBinaryOperator = (op: BinaryOp): BinaryOp => {
+  switch (op) {
+    case "<":
+      return ">";
+    case "<=":
+      return ">=";
+    case ">":
+      return "<";
+    case ">=":
+      return "<=";
+    default:
+      return op;
+  }
+};

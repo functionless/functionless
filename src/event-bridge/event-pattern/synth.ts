@@ -30,7 +30,7 @@ import {
   isUndefinedLiteralExpr,
 } from "../../guards";
 import { isIntegrationCallPattern } from "../../integration";
-import { evalToConstant } from "../../util";
+import { evalToConstant, invertBinaryOperator } from "../../util";
 import * as functionless_event_bridge from "../types";
 import {
   assertValidEventReference,
@@ -752,21 +752,6 @@ const eventReferenceToPatternDocument = (
   };
 
   return __inner(eventReference.reference);
-};
-
-export const invertBinaryOperator = (op: BinaryOp): BinaryOp => {
-  switch (op) {
-    case "<":
-      return ">";
-    case "<=":
-      return ">=";
-    case ">":
-      return "<";
-    case ">=":
-      return "<=";
-    default:
-      return op;
-  }
 };
 
 /**

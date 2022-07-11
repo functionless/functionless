@@ -80,7 +80,7 @@ export namespace ErrorCodes {
    * new StepFunction(scope, id, (input: { num: number }) => input.number + 1);
    * ```
    *
-   * To workaround, use a Lambda Function to implement the arithmetic expression. Be aware that this comes with added cost and operational risk.
+   * To workaround, use a `Function` to implement the arithmetic expression. Be aware that this comes with added cost and operational risk.
    *
    * ```ts
    * const add = new Function(scope, "add", (input: { a: number, b: number }) => input.a + input.b);
@@ -720,7 +720,7 @@ export namespace ErrorCodes {
    *
    * Workaround:
    *
-   * One workaround would be to invoke a lambda function (or {@link ExpressStepFunction}) which handles the conditional parts of the workflow.
+   * One workaround would be to invoke a `Function` (or {@link ExpressStepFunction}) which handles the conditional parts of the workflow.
    *
    * The result of this example would be to call the `conditionalFunc` statically and call `func` conditionally.
    *
@@ -759,6 +759,293 @@ export namespace ErrorCodes {
     code: 10021,
     type: ErrorType.ERROR,
     title: "Unsupported feature",
+  };
+
+  /**
+   * Step Functions does not support undefined assignment
+   *
+   * In Step Functions, a property cannot be undefined when assigned to an object or passed into a state.
+   *
+   * ```ts
+   * const func = new Function(stack, 'func', () => { return undefined; })
+   * new StepFunction<{ val: string | undefined }, undefined>(stack, 'sfn', async (input) => {
+   *    const v = {
+   *       // invalid - could be undefined
+   *       val: input.val
+   *    }
+   *
+   *    // invalid, function outputs undefined.
+   *    const output = await func();
+   *
+   *    // invalid - could be undefined
+   *    return input.val;
+   * });
+   * ```
+   *
+   * 1. Workaround - use null instead of undefined
+   *
+   *    * ```ts
+   * const func = new Function(stack, 'func', () => { return null; })
+   * new StepFunction<{ val: string | null }, null>(stack, 'sfn', async () => {
+   *    const v = {
+   *       // valid
+   *       val: null
+   *    }
+   *
+   *    // valid, function outputs undefined.
+   *    const output = await func();
+   *
+   *    // valid
+   *    return null;
+   * });
+   * ```
+   *
+   * 2. Workaround - resolve undefined to null or a value before assignment
+   *
+   *    * ```ts
+   * const func = new Function(stack, 'func', () => { return undefined; })
+   * new StepFunction<{ val: string | undefined }, null>(stack, 'sfn', async (undefined) => {
+   *    const v = {
+   *       // valid - could replace null with any defined value
+   *       val: input.val ?? null
+   *    }
+   *
+   *    // valid - could replace null with any defined value
+   *    const output = (await func()) ?? null;
+   *
+   *    // valid - could replace null with any defined value
+   *    return input.val ?? null;
+   * });
+   * ```
+   *
+   * 3. Workaround - check for undefined
+   *
+   * ```ts
+   * const func = new Function(stack, 'func', () => { return { val: undefined }; })
+   * new StepFunction<{ val: string | undefined }, null>(stack, 'sfn', async (undefined) => {
+   *    let v;
+   *    if(input.val) {
+   *        v = {
+   *           val: input.val
+   *        }
+   *    } else {
+   *        v = {}
+   *    }
+   *
+   *    // valid - could replace null with any defined value
+   *    const output = await func();
+   *    const val = output ? output : null;
+   *
+   *    // valid - could replace null with any defined value
+   *    if(input.val) {
+   *       return input.val;
+   *    }
+   *    return null;
+   * });
+   * ```
+   */
+  export const Step_Functions_does_not_support_undefined_assignment: ErrorCode =
+    {
+      code: 10022,
+      type: ErrorType.ERROR,
+      title: "Step Functions does not support undefined assignment",
+    };
+
+  /**
+   * Events passed to an {@link EventBus} in a {@link StepFunction} must be one or more literal objects and may not use the spread (`...`) syntax or computed properties.
+   *
+   * ```ts
+   * const sfn = new StepFunction(stack, "sfn", async () => {
+   *   const sourceName = "source";
+   *   const event = { source: "lambda", "detail-type": "type", detail: {} };
+   *   // invalid
+   *   await bus.putEvents(event);
+   *   // invalid
+   *   await bus.putEvents({ ...event });
+   *   // invalid
+   *   await bus.putEvents(...[event]);
+   *   // invalid
+   *   await bus.putEvents({
+   *     [sourceName]: "lambda",
+   *     "detail-type": "type",
+   *     detail: {},
+   *   });
+   *   // valid
+   *   await bus.putEvents({
+   *     source: "lambda",
+   *     "detail-type": "type",
+   *     detail: {},
+   *   });
+   * });
+   * ```
+   *
+   * Workaround - `Function` can be used to generate dynamic event collections.
+   *
+   * ```ts
+   * const sender = new Function(stack, "sender", async (event) => {
+   *   const sourceName = "source";
+   *   const event = { source: "lambda", "detail-type": "type", detail: {} };
+   *   await bus.putEvents(event); // valid
+   *   await bus.putEvents({ ...event }); // valid
+   *   await bus.putEvents(...[event]); // valid
+   *   // valid
+   *   await bus.putEvents({
+   *     [sourceName]: "lambda",
+   *     "detail-type": "type",
+   *     detail: {},
+   *   });
+   *   // valid
+   *   await bus.putEvents({
+   *     source: "lambda",
+   *     "detail-type": "type",
+   *     detail: {},
+   *   });
+   * });
+   *
+   * const sfn = new StepFunction(stack, "sfn", async () => {
+   *   const event = { source: "lambda", "detail-type": "type", detail: {} };
+   *   await sender(event);
+   * });
+   * ```
+   *
+   * The limitation is due to Step Function's lack of optional or default value retrieval for fields.
+   * Attempting to access a missing field in ASL leads to en error.
+   * This can be fixed using Choice/Conditions to check for the existence of a single field,
+   * but would take all permutations of all optional fields to support optional field at runtime.
+   * Due to this limitation, we currently compute the transformation at compile time using the fields present on the literal object.
+   * For more details and process see: https://github.com/functionless/functionless/issues/101.
+   */
+  export const StepFunctions_calls_to_EventBus_PutEvents_must_use_object_literals: ErrorCode =
+    {
+      code: 10023,
+      type: ErrorType.ERROR,
+      title:
+        "StepFunctions calls to EventBus putEvents must use object literals",
+    };
+
+  /**
+   * StepFunctions supports throwing errors with causes, however those errors do not support dynamic values.
+   *
+   * https://docs.aws.amazon.com/step-functions/latest/dg/amazon-states-language-fail-state.html
+   *
+   * ```ts
+   * new StepFunction<{ value: undefined }, void>(this, 'sfn', async (input) => {
+   *    // invalid - the error cause is not constant
+   *    throw new Error(input.value);
+   * });
+   * ```
+   *
+   * Workaround - Return with the error message encoded in payload and let the machine succeed.
+   *
+   * ```ts
+   * new StepFunction<{ value: undefined }, { error?: string }>(this, 'sfn', async (input) => {
+   *    // valid
+   *    return {
+   *       error: input.value
+   *    }
+   * });
+   * ```
+   */
+  export const StepFunctions_error_cause_must_be_a_constant: ErrorCode = {
+    code: 10024,
+    type: ErrorType.ERROR,
+    title: "StepFunctions error cause must be a constant",
+  };
+
+  /**
+   * Step Functions - Invalid Collection access.
+   *
+   *   1. Arrays can be accessed with numbers
+   *   2. Objects can be accessed with strings
+   *   3. Access Elements must be constant values - Step Functions does not support access using dynamic variables
+   *
+   * ```ts
+   * const func = new Function(this, 'func', async () => { return { index: 0, elm: "a" }; });
+   * new StepFunction(stack, 'sfn', () => {
+   *    const obj = { a: "val" };
+   *    // valid
+   *    obj.a;
+   *    // valid
+   *    obj["a"];
+   *    // invalid
+   *    obj[await func().elm];
+   *
+   *    const arr = [1];
+   *    // valid
+   *    arr[0]
+   *    // invalid
+   *    arr[await func().index];
+   * });
+   * ```
+   *
+   * Workaround - use `Function`
+   *
+   * ```ts
+   * const accessor = new Function<{ obj: [key: string]: string, acc: string }, string>(
+   *    stack,
+   *    'func',
+   *    async (input) => {
+   *       return input.obj[input.acc];
+   *    }
+   * );
+   *
+   * new StepFunction(stack, 'sfn', () => {
+   *    // valid
+   *    await accessor(obj, a);
+   * });
+   * ```
+   */
+  export const StepFunctions_Invalid_collection_access: ErrorCode = {
+    code: 10025,
+    type: ErrorType.ERROR,
+    title: "StepFunctions Invalid collection access",
+  };
+
+  /**
+   * StepFunctions does not support dynamic property names
+   *
+   * new StepFunction(stack, 'sfn', async () => {
+   *    const c = "c";
+   *    const {
+   *       a: "valid",
+   *       ["b"]: "valid",
+   *       [c]: "invalid",
+   *       [someMethod()] :"invalid"
+   *    }
+   * });
+   *
+   * Workaround - use `Function`
+   *
+   * const assign = new Function<{
+   *    obj: { [key: string]: string },
+   *    key: string, value: string
+   * }>(stack, 'func', async (input) => {
+   *     return {
+   *        ...input.obj,
+   *        [input.key]: input.value
+   *     }
+   * });
+   * new StepFunction(stack, 'sfn', async () => {
+   *    return await assign({}, someMethod(), "value");
+   * })
+   */
+  export const StepFunctions_property_names_must_be_constant: ErrorCode = {
+    code: 10026,
+    type: ErrorType.ERROR,
+    title: "StepFunction property names must be constant",
+  };
+
+  /**
+   * Invalid Input
+   *
+   * Generic error code for when the user provided an unexpected input as documented and reflected in the types.
+   *
+   * See the error message for more details.
+   */
+  export const Invalid_Input: ErrorCode = {
+    code: 10027,
+    type: ErrorType.ERROR,
+    title: "Invalid Input",
   };
 }
 
