@@ -318,22 +318,6 @@ export function validate(
           ];
         } else if (checker.isIntegrationNode(node.expression)) {
           /**
-           * Used by AppSync to determine of a root statement can be statically analyzed.
-           */
-          const isControlFlowStatement = anyOf(
-            ts.isEmptyStatement,
-            ts.isIfStatement,
-            ts.isDoStatement,
-            ts.isWhileStatement,
-            ts.isForStatement,
-            ts.isForInStatement,
-            ts.isForOfStatement,
-            ts.isSwitchStatement,
-            ts.isLabeledStatement,
-            ts.isTryStatement
-          );
-
-          /**
            * If this is an integration node, app sync does not support integrations outside of the main function body.
            *
            * We check to see if the root statement (the one in the function body), is a conditional statement, an example of support statements:
@@ -644,6 +628,22 @@ export function validate(
     };
   }
 }
+
+/**
+ * Used by AppSync to determine of a root statement can be statically analyzed.
+ */
+const isControlFlowStatement = anyOf(
+  typescript.isEmptyStatement,
+  typescript.isIfStatement,
+  typescript.isDoStatement,
+  typescript.isWhileStatement,
+  typescript.isForStatement,
+  typescript.isForInStatement,
+  typescript.isForOfStatement,
+  typescript.isSwitchStatement,
+  typescript.isLabeledStatement,
+  typescript.isTryStatement
+);
 
 // to prevent the closure serializer from trying to import all of functionless.
 export const deploymentOnlyModule = true;
