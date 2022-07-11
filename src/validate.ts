@@ -218,6 +218,7 @@ export function validate(
             ts.isComputedPropertyName(node.name) &&
             !checker.isConstant(node.name.expression)
           ) {
+            // TODO need to check for element access in with for in loop
             return [
               newError(
                 node.name,
@@ -227,7 +228,13 @@ export function validate(
           }
         }
       } else if (ts.isElementAccessExpression(node)) {
-        if (!checker.isConstant(node.argumentExpression)) {
+        if (
+          !(
+            checker.isConstant(node.argumentExpression) ||
+            (ts.isIdentifier(node.argumentExpression) &&
+              checker.isForInVariable(node.argumentExpression))
+          )
+        ) {
           return [
             newError(
               node.argumentExpression,

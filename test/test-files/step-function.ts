@@ -5,6 +5,8 @@ import {
   StepFunction,
   Function,
   EventBus,
+  // @ts-ignore - for ts-docs
+  ErrorCodes,
   AppsyncResolver,
   $AWS,
   Table,
@@ -436,6 +438,34 @@ new StepFunction(stack, "obj ref", async (input: { n: number }) => {
 new StepFunction(stack, "obj ref", async (input: { key: string }) => {
   const obj = { a: "" } as Record<string, any>;
   return objAccessFunc({ obj, key: input.key });
+});
+
+/**
+ * Supported
+ */
+
+const func2 = new Function<{ x: number; y: number }, string>(
+  stack,
+  "func",
+  async () => {
+    return "hello";
+  }
+);
+
+new StepFunction(stack, "obj ref", async () => {
+  const arr = [1, 2, 3];
+  for (const i in arr) {
+    await func2({ x: arr[i], y: arr[i] });
+  }
+});
+
+new StepFunction(stack, "obj ref", async () => {
+  const arr = [1, 2, 3];
+  for (const i in arr) {
+    for (const j in arr) {
+      await func2({ x: arr[i], y: arr[j] });
+    }
+  }
 });
 
 /**

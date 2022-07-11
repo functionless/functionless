@@ -39,7 +39,6 @@ import {
 } from "./integration";
 import { AnyTable, isTable, ITable } from "./table";
 import type { AnyAsyncFunction } from "./util";
-import { renameObjectProperties } from "./visit";
 
 /**
  * The `AWS` namespace exports functions that map to AWS Step Functions AWS-SDK Integrations.
@@ -582,23 +581,33 @@ function makeDynamoIntegration<
           `First argument ('input') into $AWS.DynamoDB.${operationName} must be an object.`
         );
       }
-      const table = getTableArgument(operationName, call.args);
-      grantTablePermissions(table, context.role, operationName);
 
-      const renamedExpr = renameObjectProperties(input, {
-        Table: "TableName",
-      });
+      return context.evalExpr(input, (output) => {
+        if (
+          !ASLGraph.isLiteralValue(output) ||
+          typeof output.value !== "object" ||
+          !output.value ||
+          !("Table" in output.value) ||
+          !isTable(output.value.Table)
+        ) {
+          throw new SynthError(
+            ErrorCodes.Unexpected_Error,
+            "Expected `Table` parameter in $AWS.DynamoDB for Step Functions to be a Table object."
+          );
+        }
 
-      return context.evalExpr(renamedExpr, (output) => {
-        return context.stateWithHeapOutput(
-          ASLGraph.taskWithInput(
-            {
-              Type: "Task",
-              Resource: `arn:aws:states:::aws-sdk:dynamodb:${operationName}`,
-            },
-            output
-          )
-        );
+        const { Table, ...params } = output.value;
+
+        grantTablePermissions(Table, context.role, operationName);
+
+        return context.stateWithHeapOutput({
+          Type: "Task",
+          Resource: `arn:aws:states:::aws-sdk:dynamodb:${operationName}`,
+          Parameters: {
+            ...params,
+            TableName: Table.tableName,
+          },
+        });
       });
     },
     native: {

@@ -4936,6 +4936,176 @@ Object {
 }
 `;
 
+exports[`for 1`] = `
+Object {
+  "StartAt": "Initialize Functionless Context",
+  "States": Object {
+    "1__item = await $AWS.DynamoDB.GetItem({Table: table, Key: {id: {S: input.id": Object {
+      "InputPath": "$.heap9",
+      "Next": "return item.Item.val.N",
+      "ResultPath": "$.item",
+      "Type": "Pass",
+    },
+    "Initialize Functionless Context": Object {
+      "Next": "for(i in input.arr) 1",
+      "OutputPath": "$",
+      "Parameters": Object {
+        "input.$": "$",
+        "null": null,
+      },
+      "ResultPath": "$.fnl_context",
+      "Type": "Pass",
+    },
+    "for(i in input.arr)": Object {
+      "ItemsPath": "$.fnl_context.input.arr",
+      "Iterator": Object {
+        "StartAt": "for(j in input.arr)",
+        "States": Object {
+          "for(j in input.arr)": Object {
+            "End": true,
+            "ItemsPath": "$.fnl_context.input.arr",
+            "Iterator": Object {
+              "StartAt": "await func({n: \`input.arr[i]\`, id: input.id}) 1",
+              "States": Object {
+                "1__await func({n: \`input.arr[i]\`, id: input.id}) 1 1": Object {
+                  "Next": "await func({n: \`input.arr[j]\`, id: input.id})",
+                  "Parameters": Object {
+                    "id.$": "$.fnl_context.input.id",
+                    "n.$": "$.heap4.string",
+                  },
+                  "Resource": "__REPLACED_TOKEN",
+                  "ResultPath": "$.heap5",
+                  "Type": "Task",
+                },
+                "1__await func({n: \`input.arr[i]\`, id: input.id}) 1 2": Object {
+                  "Next": "1__await func({n: \`input.arr[i]\`, id: input.id}) 1 1",
+                  "Parameters": Object {
+                    "string.$": "States.Format('{}',$.heap3)",
+                  },
+                  "ResultPath": "$.heap4",
+                  "Type": "Pass",
+                },
+                "1__await func({n: \`input.arr[j]\`, id: input.id})": Object {
+                  "End": true,
+                  "Parameters": Object {
+                    "id.$": "$.fnl_context.input.id",
+                    "n.$": "$.heap7.string",
+                  },
+                  "Resource": "__REPLACED_TOKEN",
+                  "ResultPath": "$.heap8",
+                  "Type": "Task",
+                },
+                "1__await func({n: \`input.arr[j]\`, id: input.id}) 1": Object {
+                  "Next": "1__await func({n: \`input.arr[j]\`, id: input.id})",
+                  "Parameters": Object {
+                    "string.$": "States.Format('{}',$.heap6)",
+                  },
+                  "ResultPath": "$.heap7",
+                  "Type": "Pass",
+                },
+                "await func({n: \`input.arr[i]\`, id: input.id}) 1": Object {
+                  "InputPath": "$.0_i",
+                  "Next": "1__await func({n: \`input.arr[i]\`, id: input.id}) 1 2",
+                  "ResultPath": "$.heap3",
+                  "Type": "Pass",
+                },
+                "await func({n: \`input.arr[j]\`, id: input.id})": Object {
+                  "InputPath": "$.0_j",
+                  "Next": "1__await func({n: \`input.arr[j]\`, id: input.id}) 1",
+                  "ResultPath": "$.heap6",
+                  "Type": "Pass",
+                },
+              },
+            },
+            "MaxConcurrency": 1,
+            "Parameters": Object {
+              "0_i.$": "$.0_i",
+              "0_j.$": "$$.Map.Item.Value",
+              "fnl_context.$": "$.fnl_context",
+              "i.$": "$.i",
+              "j.$": "$$.Map.Item.Index",
+            },
+            "ResultPath": null,
+            "Type": "Map",
+          },
+        },
+      },
+      "MaxConcurrency": 1,
+      "Next": "item = await $AWS.DynamoDB.GetItem({Table: table, Key: {id: {S: input.id}},",
+      "Parameters": Object {
+        "0_i.$": "$$.Map.Item.Value",
+        "fnl_context.$": "$.fnl_context",
+        "i.$": "$$.Map.Item.Index",
+      },
+      "ResultPath": null,
+      "Type": "Map",
+    },
+    "for(i in input.arr) 1": Object {
+      "ItemsPath": "$.fnl_context.input.arr",
+      "Iterator": Object {
+        "StartAt": "await func({n: \`input.arr[i]\`, id: input.id})",
+        "States": Object {
+          "1__await func({n: \`input.arr[i]\`, id: input.id})": Object {
+            "End": true,
+            "Parameters": Object {
+              "id.$": "$.fnl_context.input.id",
+              "n.$": "$.heap1.string",
+            },
+            "Resource": "__REPLACED_TOKEN",
+            "ResultPath": "$.heap2",
+            "Type": "Task",
+          },
+          "1__await func({n: \`input.arr[i]\`, id: input.id}) 1": Object {
+            "Next": "1__await func({n: \`input.arr[i]\`, id: input.id})",
+            "Parameters": Object {
+              "string.$": "States.Format('{}',$.heap0)",
+            },
+            "ResultPath": "$.heap1",
+            "Type": "Pass",
+          },
+          "await func({n: \`input.arr[i]\`, id: input.id})": Object {
+            "InputPath": "$.0_i",
+            "Next": "1__await func({n: \`input.arr[i]\`, id: input.id}) 1",
+            "ResultPath": "$.heap0",
+            "Type": "Pass",
+          },
+        },
+      },
+      "MaxConcurrency": 1,
+      "Next": "for(i in input.arr)",
+      "Parameters": Object {
+        "0_i.$": "$$.Map.Item.Value",
+        "fnl_context.$": "$.fnl_context",
+        "i.$": "$$.Map.Item.Index",
+      },
+      "ResultPath": null,
+      "Type": "Map",
+    },
+    "item = await $AWS.DynamoDB.GetItem({Table: table, Key: {id: {S: input.id}},": Object {
+      "Next": "1__item = await $AWS.DynamoDB.GetItem({Table: table, Key: {id: {S: input.id",
+      "Parameters": Object {
+        "ConsistentRead": true,
+        "Key": Object {
+          "id": Object {
+            "S.$": "$.fnl_context.input.id",
+          },
+        },
+        "TableName": "__REPLACED_TOKEN",
+      },
+      "Resource": "__REPLACED_ARN",
+      "ResultPath": "$.heap9",
+      "Type": "Task",
+    },
+    "return item.Item.val.N": Object {
+      "End": true,
+      "InputPath": "$.item.Item.val.N",
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+  },
+}
+`;
+
 exports[`for loops 1`] = `
 Object {
   "StartAt": "Initialize Functionless Context",
@@ -5543,14 +5713,6 @@ Object {
       "ResultPath": "$.partOfTheTemplateString",
       "Type": "Pass",
     },
-    "1__partOfTheTemplateString = \`hello input.obj.str2 ?? \\"default\\"\` 1": Object {
-      "Next": "1__partOfTheTemplateString = \`hello input.obj.str2 ?? \\"default\\"\`",
-      "Parameters": Object {
-        "string.$": "States.Format('hello {}',$.heap0)",
-      },
-      "ResultPath": "$.heap1",
-      "Type": "Pass",
-    },
     "1__result = await func(\`input.obj.str hello partOfTheTemplateString input.o": Object {
       "InputPath": "$.heap3",
       "Next": "return \`the result: result.str\`",
@@ -5578,6 +5740,14 @@ Object {
         "null": null,
       },
       "ResultPath": "$.fnl_context",
+      "Type": "Pass",
+    },
+    "\`hello input.obj.str2 ?? \\"default\\"\`": Object {
+      "Next": "1__partOfTheTemplateString = \`hello input.obj.str2 ?? \\"default\\"\`",
+      "Parameters": Object {
+        "string.$": "States.Format('hello {}',$.heap0)",
+      },
+      "ResultPath": "$.heap1",
       "Type": "Pass",
     },
     "partOfTheTemplateString = \`hello input.obj.str2 ?? \\"default\\"\`": Object {
@@ -5617,12 +5787,12 @@ Object {
     },
     "takeLeft__partOfTheTemplateString = \`hello input.obj.str2 ?? \\"default\\"\`": Object {
       "InputPath": "$.fnl_context.input.obj.str2",
-      "Next": "1__partOfTheTemplateString = \`hello input.obj.str2 ?? \\"default\\"\` 1",
+      "Next": "\`hello input.obj.str2 ?? \\"default\\"\`",
       "ResultPath": "$.heap0",
       "Type": "Pass",
     },
     "takeRight__partOfTheTemplateString = \`hello input.obj.str2 ?? \\"default\\"\`": Object {
-      "Next": "1__partOfTheTemplateString = \`hello input.obj.str2 ?? \\"default\\"\` 1",
+      "Next": "\`hello input.obj.str2 ?? \\"default\\"\`",
       "Result": "default",
       "ResultPath": "$.heap0",
       "Type": "Pass",

@@ -104,6 +104,7 @@ export function makeFunctionlessChecker(
     isConstant,
     isEventBus,
     isEventBusWhenFunction,
+    isForInVariable,
     isFunctionlessFunction,
     isFunctionlessType,
     isIntegrationNode,
@@ -436,6 +437,20 @@ export function makeFunctionlessChecker(
       ) {
         return true;
       }
+    }
+    return false;
+  }
+
+  // findParent(node, ts.isForInStatement)
+  function isForInVariable(node: ts.Identifier) {
+    const symbol = checker.getSymbolAtLocation(node);
+    if (symbol) {
+      return (
+        symbol.valueDeclaration &&
+        ts.isVariableDeclaration(symbol.valueDeclaration) &&
+        ts.isVariableDeclarationList(symbol.valueDeclaration.parent) &&
+        ts.isForInStatement(symbol?.valueDeclaration.parent.parent)
+      );
     }
     return false;
   }
