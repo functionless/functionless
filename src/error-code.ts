@@ -427,7 +427,7 @@ export namespace ErrorCodes {
   export const Expected_an_object_literal: ErrorCode = {
     code: 10012,
     type: ErrorType.ERROR,
-    title: "Expected_an_object_literal",
+    title: "Expected an object literal",
   };
 
   /**

@@ -400,7 +400,7 @@ export namespace $AWS {
      * @see https://docs.aws.amazon.com/lambda/latest/dg/API_Invoke.html
      */
     export const Invoke = makeIntegration<
-      "Lambda.Invoke",
+      "$AWS.Lambda.Invoke",
       <Input, Output>(input: {
         Function: Function<Input, Output>;
         Payload: Input;
@@ -414,13 +414,16 @@ export namespace $AWS {
         }
       >
     >({
-      kind: "Lambda.Invoke",
+      kind: "$AWS.Lambda.Invoke",
       asl(call, context) {
         const input = call.args[0].expr;
         if (input === undefined) {
           throw new Error("missing argument 'input'");
-        } else if (input.kind !== "ObjectLiteralExpr") {
-          throw new Error("argument 'input' must be an ObjectLiteralExpr");
+        } else if (!isObjectLiteralExpr(input)) {
+          throw new SynthError(
+            ErrorCodes.Expected_an_object_literal,
+            "The first argument ('input') into $AWS.Lambda.Invoke must be an object."
+          );
         }
         const functionName = input.getProperty("Function")?.expr;
         if (functionName === undefined) {
@@ -458,12 +461,12 @@ export namespace $AWS {
      * @see https://docs.aws.amazon.com/eventbridge/latest/APIReference/API_PutEvents.html
      */
     export const putEvents = makeIntegration<
-      "EventBridge.putEvent",
+      "$AWS.EventBridge.putEvent",
       (
         request: AWS.EventBridge.Types.PutEventsRequest
       ) => Promise<AWS.EventBridge.Types.PutEventsResponse>
     >({
-      kind: "EventBridge.putEvent",
+      kind: "$AWS.EventBridge.putEvent",
       native: {
         // Access needs to be granted manually
         bind: () => {},
@@ -569,8 +572,9 @@ function makeDynamoIntegration<
     asl(call, context) {
       const input = call.getArgument("input")?.expr;
       if (!isObjectLiteralExpr(input)) {
-        throw new Error(
-          `input parameter must be an ObjectLiteralExpr, but was ${input?.kind}`
+        throw new SynthError(
+          ErrorCodes.Expected_an_object_literal,
+          `First argument ('input') into $AWS.DynamoDB.${operationName} must be an object.`
         );
       }
       const table = getTableArgument(operationName, call.args);

@@ -71,6 +71,25 @@
       }
     },
     {
+      "name": "validate test-app",
+      "type": "node",
+      "request": "launch",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["--nolazy"],
+      "args": ["../bin/functionless.js"],
+      "outFiles": [
+        "${workspaceRoot}/lib/**/*.js",
+        "${workspaceRoot}/test-app/lib/**/*.js",
+        "!**/node_modules/**"
+      ],
+      "cwd": "${workspaceRoot}/test-app",
+      "internalConsoleOptions": "openOnSessionStart",
+      "skipFiles": ["<node_internals>/**", "node_modules/**"],
+      "env": {
+        "TS_NODE_PROJECT": "${workspaceRoot}/test-app/tsconfig.json"
+      }
+    },
+    {
       "type": "node",
       "name": "vscode-jest-tests.v2",
       "request": "launch",

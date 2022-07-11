@@ -147,7 +147,7 @@ export interface ITable<
     /**
      * @see https://docs.aws.amazon.com/appsync/latest/devguide/resolver-mapping-template-reference-dynamodb.html#aws-appsync-resolver-mapping-template-reference-dynamodb-getitem
      */
-    getItem: DynamoIntegrationCall<
+    getItem: DynamoAppSyncIntegrationCall<
       "getItem",
       <
         Key extends TableKey<
@@ -167,7 +167,7 @@ export interface ITable<
     /**
      * @see https://docs.aws.amazon.com/appsync/latest/devguide/resolver-mapping-template-reference-dynamodb.html#aws-appsync-resolver-mapping-template-reference-dynamodb-putitem
      */
-    putItem: DynamoIntegrationCall<
+    putItem: DynamoAppSyncIntegrationCall<
       "putItem",
       <
         Key extends TableKey<
@@ -197,7 +197,7 @@ export interface ITable<
      *
      * @returns the updated the item
      */
-    updateItem: DynamoIntegrationCall<
+    updateItem: DynamoAppSyncIntegrationCall<
       "updateItem",
       <
         Key extends TableKey<
@@ -223,7 +223,7 @@ export interface ITable<
      *
      * @returns the previous item.
      */
-    deleteItem: DynamoIntegrationCall<
+    deleteItem: DynamoAppSyncIntegrationCall<
       "deleteItem",
       <
         Key extends TableKey<
@@ -245,7 +245,7 @@ export interface ITable<
     /**
      * @see https://docs.aws.amazon.com/appsync/latest/devguide/resolver-mapping-template-reference-dynamodb.html#aws-appsync-resolver-mapping-template-reference-dynamodb-query
      */
-    query: DynamoIntegrationCall<
+    query: DynamoAppSyncIntegrationCall<
       "query",
       <Query extends string, Filter extends string | undefined>(input: {
         query: DynamoExpression<Query>;
@@ -283,14 +283,14 @@ class BaseTable<
     RangeKey: RangeKey;
   };
 
-  public readonly appsync;
+  public readonly appsync: ITable<Item, PartitionKey, RangeKey>["appsync"];
 
   constructor(readonly resource: aws_dynamodb.ITable) {
     this.tableName = resource.tableName;
     this.tableArn = resource.tableArn;
 
     this.appsync = {
-      getItem: this.makeTableIntegration("getItem", {
+      getItem: this.makeAppSyncTableIntegration("getItem", {
         appSyncVtl: {
           request(call, vtl) {
             const input = vtl.eval(
@@ -310,7 +310,7 @@ class BaseTable<
         },
       }),
 
-      putItem: this.makeTableIntegration("putItem", {
+      putItem: this.makeAppSyncTableIntegration("putItem", {
         appSyncVtl: {
           request: (call, vtl) => {
             const input = vtl.eval(
@@ -334,7 +334,7 @@ class BaseTable<
         },
       }),
 
-      updateItem: this.makeTableIntegration("updateItem", {
+      updateItem: this.makeAppSyncTableIntegration("updateItem", {
         appSyncVtl: {
           request: (call, vtl) => {
             const input = vtl.eval(
@@ -356,7 +356,7 @@ class BaseTable<
         },
       }),
 
-      deleteItem: this.makeTableIntegration("deleteItem", {
+      deleteItem: this.makeAppSyncTableIntegration("deleteItem", {
         appSyncVtl: {
           request: (call, vtl) => {
             const input = vtl.eval(
@@ -377,7 +377,7 @@ class BaseTable<
         },
       }),
 
-      query: this.makeTableIntegration("query", {
+      query: this.makeAppSyncTableIntegration("query", {
         appSyncVtl: {
           request: (call, vtl) => {
             const input = vtl.eval(
@@ -404,7 +404,7 @@ class BaseTable<
     } as const;
   }
 
-  private makeTableIntegration<
+  private makeAppSyncTableIntegration<
     K extends keyof ITable<Item, PartitionKey, RangeKey>["appsync"]
   >(
     methodName: K,
@@ -414,16 +414,16 @@ class BaseTable<
     > & {
       appSyncVtl: Omit<AppSyncVtlIntegration, "dataSource" | "dataSourceId">;
     }
-  ): DynamoIntegrationCall<
+  ): DynamoAppSyncIntegrationCall<
     K,
     ITable<Item, PartitionKey, RangeKey>["appsync"][K]
   > {
     return makeIntegration<
-      `Table.${K}`,
+      `Table.AppSync.${K}`,
       ITable<Item, PartitionKey, RangeKey>["appsync"][K]
     >({
       ...integration,
-      kind: `Table.${methodName}`,
+      kind: `Table.AppSync.${methodName}`,
       appSyncVtl: {
         dataSourceId: () => this.resource.node.addr,
         dataSource: (api, dataSourceId) => {
@@ -438,10 +438,10 @@ class BaseTable<
   }
 }
 
-export type DynamoIntegrationCall<
+export type DynamoAppSyncIntegrationCall<
   Kind extends string,
   F extends AnyAsyncFunction
-> = IntegrationCall<`Table.${Kind}`, F>;
+> = IntegrationCall<`Table.AppSync.${Kind}`, F>;
 
 /**
  * Wraps an {@link aws_dynamodb.Table} with a type-safe interface that can be
