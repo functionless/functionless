@@ -2799,6 +2799,100 @@ Object {
 }
 `;
 
+exports[`for assign 1`] = `
+Object {
+  "StartAt": "Initialize Functionless Context",
+  "States": Object {
+    "Initialize Functionless Context": Object {
+      "Next": "a = \\"\\"",
+      "OutputPath": "$",
+      "Parameters": Object {
+        "input.$": "$",
+        "null": null,
+      },
+      "ResultPath": "$.fnl_context",
+      "Type": "Pass",
+    },
+    "a = \\"\\"": Object {
+      "Next": "for(i in input.items)",
+      "Result": "",
+      "ResultPath": "$.a",
+      "Type": "Pass",
+    },
+    "for(i in input.items)": Object {
+      "ItemsPath": "$.fnl_context.input.items",
+      "Iterator": Object {
+        "StartAt": "a = \`i\`",
+        "States": Object {
+          "1__a = \`i\`": Object {
+            "End": true,
+            "InputPath": "$.heap0.string",
+            "ResultPath": "$.a",
+            "Type": "Pass",
+          },
+          "a = \`i\`": Object {
+            "Next": "1__a = \`i\`",
+            "Parameters": Object {
+              "string.$": "States.Format('{}',$.i)",
+            },
+            "ResultPath": "$.heap0",
+            "Type": "Pass",
+          },
+        },
+      },
+      "MaxConcurrency": 1,
+      "Next": "for(i of input.items)",
+      "Parameters": Object {
+        "0_i.$": "$$.Map.Item.Value",
+        "a.$": "$.a",
+        "fnl_context.$": "$.fnl_context",
+        "i.$": "$$.Map.Item.Index",
+      },
+      "ResultPath": null,
+      "Type": "Map",
+    },
+    "for(i of input.items)": Object {
+      "ItemsPath": "$.fnl_context.input.items",
+      "Iterator": Object {
+        "StartAt": "a = \`i\` 1",
+        "States": Object {
+          "1__a = \`i\` 1": Object {
+            "End": true,
+            "InputPath": "$.heap1.string",
+            "ResultPath": "$.a",
+            "Type": "Pass",
+          },
+          "a = \`i\` 1": Object {
+            "Next": "1__a = \`i\` 1",
+            "Parameters": Object {
+              "string.$": "States.Format('{}',$.i)",
+            },
+            "ResultPath": "$.heap1",
+            "Type": "Pass",
+          },
+        },
+      },
+      "MaxConcurrency": 1,
+      "Next": "return a",
+      "Parameters": Object {
+        "0_i.$": "$.0_i",
+        "a.$": "$.a",
+        "fnl_context.$": "$.fnl_context",
+        "i.$": "$$.Map.Item.Value",
+      },
+      "ResultPath": null,
+      "Type": "Map",
+    },
+    "return a": Object {
+      "End": true,
+      "InputPath": "$.a",
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+  },
+}
+`;
+
 exports[`for i in items, items[i] 1`] = `
 Object {
   "StartAt": "Initialize Functionless Context",

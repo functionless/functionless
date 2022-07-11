@@ -1589,27 +1589,34 @@ export class ASL {
         value: expr.value ?? null,
         containsJsonPath: false,
       };
-    } else if (isUnaryExpr(expr) || isPostfixUnaryExpr(expr)) {
-      if (expr.op === "!") {
-        const constant = evalToConstant(expr);
-        if (constant !== undefined) {
-          return {
-            value: constant,
-            containsJsonPath: false,
-          };
-        } else {
-          return this.evalContext(expr, (_, evalCondition) => {
-            const cond = evalCondition(expr);
-            return this.conditionState(cond);
-          });
+    } else if (
+      isBinaryExpr(expr) &&
+      expr.op === "=" &&
+      (isVariableReference(expr.left) || isIdentifier(expr.left))
+    ) {
+      return this.evalContext(expr, (evalExpr) => {
+        const right = evalExpr(expr.right);
+        const left = evalExpr(expr.left);
+
+        if (!ASLGraph.isJsonPath(left)) {
+          throw new SynthError(
+            ErrorCodes.Unexpected_Error,
+            `Expected assignment to target a variable, found: ${left.value}`
+          );
         }
-      } else if (expr.op === "-" || expr.op === "++" || expr.op === "--") {
-        throw new SynthError(
-          ErrorCodes.Cannot_perform_arithmetic_on_variables_in_Step_Function,
-          `Step Function does not support operator ${expr.op}`
-        );
-      }
-      assertNever(expr.op);
+
+        return {
+          ...ASLGraph.passWithInput(
+            {
+              Type: "Pass",
+              ResultPath: left.jsonPath,
+              Next: ASLGraph.DeferNext,
+            },
+            right
+          ),
+          output: left,
+        };
+      });
     } else if (isBinaryExpr(expr)) {
       const constant = evalToConstant(expr);
       if (constant !== undefined) {
@@ -1629,8 +1636,33 @@ export class ASL {
         expr.op == "in"
       ) {
         return this.evalContext(expr, (_, evalCondition) => {
+          const tempHeap = this.newHeapVariable();
           const cond = evalCondition(expr);
-          return this.conditionState(cond);
+          return {
+            startState: "default",
+            states: {
+              default: {
+                Type: "Choice",
+                Choices: [{ ...cond, Next: "assignTrue" }],
+                Default: "assignFalse",
+              },
+              assignTrue: {
+                Type: "Pass",
+                Result: true,
+                ResultPath: tempHeap,
+                Next: ASLGraph.DeferNext,
+              },
+              assignFalse: {
+                Type: "Pass",
+                Result: false,
+                ResultPath: tempHeap,
+                Next: ASLGraph.DeferNext,
+              },
+            },
+            output: {
+              jsonPath: tempHeap,
+            },
+          };
         });
       } else if (expr.op === "??") {
         return this.evalContext(expr, (evalExpr) => {
@@ -1682,55 +1714,11 @@ export class ASL {
             },
           };
         });
-      } else if (expr.op === "=") {
-        if (!(isVariableReference(expr.left) || isIdentifier(expr.left))) {
-          throw new SynthError(
-            ErrorCodes.Unexpected_Error,
-            "Expected left side of assignment to be a variable."
-          );
-        }
-        return this.evalContext(expr, (evalExpr) => {
-          const right = evalExpr(expr.right);
-          const left = evalExpr(expr.left);
-
-          if (!ASLGraph.isJsonPath(left)) {
-            throw new SynthError(
-              ErrorCodes.Unexpected_Error,
-              `Expected assignment to target a variable, found: ${left.value}`
-            );
-          }
-
-          return {
-            ...ASLGraph.passWithInput(
-              {
-                Type: "Pass",
-                ResultPath: left.jsonPath,
-                Next: ASLGraph.DeferNext,
-              },
-              right
-            ),
-            output: left,
-          };
-        });
-      } else if (
-        expr.op === "+" ||
-        expr.op === "-" ||
-        expr.op === "*" ||
-        expr.op === "/" ||
-        expr.op === "%" ||
-        expr.op === "+=" ||
-        expr.op === "-=" ||
-        expr.op === "*=" ||
-        expr.op === "/=" ||
-        expr.op === "%="
-      ) {
-        // TODO: support string concat?
-        throw new SynthError(
-          ErrorCodes.Cannot_perform_arithmetic_on_variables_in_Step_Function,
-          `Step Function does not support operator ${expr.op}`
-        );
       }
-      assertNever(expr.op);
+      throw new SynthError(
+        ErrorCodes.Unsupported_Feature,
+        `Step Function does not support operator ${expr.op}`
+      );
     } else if (isAwaitExpr(expr)) {
       return this.eval(expr.expr);
     } else if (isTypeOfExpr(expr)) {
@@ -1929,35 +1917,6 @@ export class ASL {
       ...state,
       node,
       ResultPath: tempHeap,
-      output: {
-        jsonPath: tempHeap,
-      },
-    };
-  }
-
-  public conditionState(cond: Condition): ASLGraph.OutputSubState {
-    const tempHeap = this.newHeapVariable();
-    return {
-      startState: "default",
-      states: {
-        default: {
-          Type: "Choice",
-          Choices: [{ ...cond, Next: "assignTrue" }],
-          Default: "assignFalse",
-        },
-        assignTrue: {
-          Type: "Pass",
-          Result: true,
-          ResultPath: tempHeap,
-          Next: ASLGraph.DeferNext,
-        },
-        assignFalse: {
-          Type: "Pass",
-          Result: false,
-          ResultPath: tempHeap,
-          Next: ASLGraph.DeferNext,
-        },
-      },
       output: {
         jsonPath: tempHeap,
       },
@@ -2419,19 +2378,11 @@ export class ASL {
           IsPresent: !expr.value,
           Variable: `$.0_${expr.value}`,
         };
-      } else if (isUnaryExpr(expr) || isPostfixUnaryExpr(expr)) {
+      } else if (isUnaryExpr(expr)) {
         // TODO: more than just unary not... - https://github.com/functionless/functionless/issues/232
-        if (expr.op === "!") {
-          return {
-            Not: localToCondition(expr.expr),
-          };
-        } else if (expr.op === "++" || expr.op === "--" || expr.op === "-") {
-          throw new SynthError(
-            ErrorCodes.Cannot_perform_arithmetic_on_variables_in_Step_Function,
-            `Step Function does not support operator ${expr.op}`
-          );
-        }
-        assertNever(expr.op);
+        return {
+          Not: localToCondition(expr),
+        };
       } else if (isBinaryExpr(expr)) {
         if (expr.op === "&&") {
           return {
@@ -2441,25 +2392,10 @@ export class ASL {
           return {
             Or: [localToCondition(expr.left), localToCondition(expr.right)],
           };
-        } else if (expr.op === "??" || expr.op === "=") {
-          // FIXME: the potentially circular reference here (eval -> toCondition -> eval -> toCondition) is not good. Should toCondition and eval also be merged?
-          const res = localEval(expr);
-          if (ASLGraph.isJsonPath(res)) {
-            return ASL.isTruthy(res.jsonPath);
-          } else {
-            // if a value is returned, assign it into a variable and check if it is truthy.
-            const temp = this.newHeapVariable();
-            subStates.push(
-              ASLGraph.passWithInput(
-                {
-                  Type: "Pass",
-                  ResultPath: temp,
-                },
-                res
-              )
-            );
-            return ASL.isTruthy(temp);
-          }
+        } else if (expr.op === "+" || expr.op === "-") {
+          throw new Error(
+            `operation '${expr.op}' is not supported in a Condition`
+          );
         } else {
           const leftOutput = localEval(expr.left);
           const rightOutput = localEval(expr.right);
@@ -2514,25 +2450,14 @@ export class ASL {
             } else {
               return ASL.isPresent(accessed.jsonPath);
             }
-          } else if (
-            expr.op === "+" ||
-            expr.op === "-" ||
-            expr.op === "*" ||
-            expr.op === "/" ||
-            expr.op === "%" ||
-            expr.op === "+=" ||
-            expr.op === "-=" ||
-            expr.op === "*=" ||
-            expr.op === "/=" ||
-            expr.op === "%="
-          ) {
-            throw new SynthError(
-              ErrorCodes.Cannot_perform_arithmetic_on_variables_in_Step_Function,
-              `Step Function does not support operator ${expr.op}`
-            );
           }
 
-          assertNever(expr.op);
+          // assertNever(expr.op);
+
+          throw new SynthError(
+            ErrorCodes.Unsupported_Feature,
+            `Operator ${expr.op} is not currently supported in Step Functions.`
+          );
         }
       } else if (isVariableReference(expr) || isCallExpr(expr)) {
         const variableOutput = localEval(expr);

@@ -780,6 +780,107 @@ test("for i in items, items[i]", () => {
   expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
+test("for return", () => {
+  const { stack } = initStepFunctionApp();
+  const definition = new ExpressStepFunction<{ items: string[] }, string>(
+    stack,
+    "fn",
+    (input) => {
+      for (const i in input.items) {
+        if (input.items[i] === "1") {
+          return input.items[i];
+        }
+      }
+
+      for (const i of input.items) {
+        if (i === "1") {
+          return i;
+        }
+      }
+
+      return "end";
+    }
+  ).definition;
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+});
+
+test("for continue", () => {
+  const { stack } = initStepFunctionApp();
+  const definition = new ExpressStepFunction<{ items: string[] }, string>(
+    stack,
+    "fn",
+    (input) => {
+      for (const i in input.items) {
+        if (input.items[i] === "1") {
+          continue;
+        }
+        return input.items[i];
+      }
+
+      for (const i of input.items) {
+        if (i === "1") {
+          continue;
+        }
+        return i;
+      }
+
+      return "end";
+    }
+  ).definition;
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+});
+
+test("for break", () => {
+  const { stack } = initStepFunctionApp();
+  const definition = new ExpressStepFunction<{ items: string[] }, string>(
+    stack,
+    "fn",
+    (input) => {
+      for (const i in input.items) {
+        if (input.items[i] === "1") {
+          break;
+        }
+        return input.items[i];
+      }
+
+      for (const i of input.items) {
+        if (i === "1") {
+          break;
+        }
+        return i;
+      }
+
+      return "end";
+    }
+  ).definition;
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+});
+
+test("for assign", () => {
+  const { stack } = initStepFunctionApp();
+  const definition = new ExpressStepFunction<{ items: string[] }, string>(
+    stack,
+    "fn",
+    (input) => {
+      let a = "";
+      for (const i in input.items) {
+        a = `${i}`;
+      }
+
+      for (const i of input.items) {
+        a = `${i}`;
+      }
+
+      return a;
+    }
+  ).definition;
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+});
+
 test("return a single Lambda Function call", () => {
   const { stack, getPerson } = initStepFunctionApp();
   const definition = new ExpressStepFunction<

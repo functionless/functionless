@@ -948,4 +948,37 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
     "42",
     { arr: [1, 2, 3], id: `key${Math.floor(Math.random() * 1000)}` }
   );
+
+  test(
+    "for control and assignment",
+    (parent) => {
+      return new StepFunction<{ arr: number[] }, string>(
+        parent,
+        "fn",
+        async (input) => {
+          let a = "";
+          for (const i in input.arr) {
+            if (i === "2") {
+              break;
+            }
+            a = `${a}n${i}`;
+          }
+          for (const i in input.arr) {
+            if (i !== "2") {
+              continue;
+            }
+            a = `${a}n${i}`;
+          }
+          for (const i of input.arr) {
+            if (i === 2) {
+              return a;
+            }
+          }
+          return "woops";
+        }
+      );
+    },
+    "n0n1n2",
+    { arr: [1, 2, 3] }
+  );
 });
