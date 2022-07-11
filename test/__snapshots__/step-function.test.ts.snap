@@ -243,8 +243,16 @@ Object {
     },
     "1__return \`template me 0_tmp\`": Object {
       "End": true,
-      "InputPath": "$.heap1.string",
+      "InputPath": "$.heap2.string",
       "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "1__return \`template me 0_tmp\` 1": Object {
+      "Next": "1__return \`template me 0_tmp\`",
+      "Parameters": Object {
+        "string.$": "States.Format('template me {}',$.heap1)",
+      },
+      "ResultPath": "$.heap2",
       "Type": "Pass",
     },
     "Initialize Functionless Context": Object {
@@ -258,10 +266,8 @@ Object {
       "Type": "Pass",
     },
     "return \`template me 0_tmp\`": Object {
-      "Next": "1__return \`template me 0_tmp\`",
-      "Parameters": Object {
-        "string.$": "States.Format('template me {}',$.0_tmp)",
-      },
+      "InputPath": "$.0_tmp",
+      "Next": "1__return \`template me 0_tmp\` 1",
       "ResultPath": "$.heap1",
       "Type": "Pass",
     },
@@ -7314,14 +7320,6 @@ Object {
       "ResultPath": "$.heap4",
       "Type": "Task",
     },
-    "2__return task({key: \`input.obj.str ?? \\"default\\" hello hello input.obj.item": Object {
-      "Next": "1__return task({key: \`input.obj.str ?? \\"default\\" hello hello input.obj.item 1",
-      "Parameters": Object {
-        "string.$": "States.Format('{} hello hello {}',$.heap1,$.heap2)",
-      },
-      "ResultPath": "$.heap3",
-      "Type": "Pass",
-    },
     "Initialize Functionless Context": Object {
       "Next": "0_tmp = await task()",
       "OutputPath": "$",
@@ -7330,6 +7328,14 @@ Object {
         "null": null,
       },
       "ResultPath": "$.fnl_context",
+      "Type": "Pass",
+    },
+    "\`input.obj.str ?? \\"default\\" hello hello input.obj.items[0] ?? 0_tmp\`": Object {
+      "Next": "1__return task({key: \`input.obj.str ?? \\"default\\" hello hello input.obj.item 1",
+      "Parameters": Object {
+        "string.$": "States.Format('{} hello hello {}',$.heap1,$.heap2)",
+      },
+      "ResultPath": "$.heap3",
       "Type": "Pass",
     },
     "input.obj.items[0] ?? 0_tmp": Object {
@@ -7372,7 +7378,7 @@ Object {
     },
     "takeLeft__input.obj.items[0] ?? 0_tmp": Object {
       "InputPath": "$.fnl_context.input.obj.items[0]",
-      "Next": "2__return task({key: \`input.obj.str ?? \\"default\\" hello hello input.obj.item",
+      "Next": "\`input.obj.str ?? \\"default\\" hello hello input.obj.items[0] ?? 0_tmp\`",
       "ResultPath": "$.heap2",
       "Type": "Pass",
     },
@@ -7384,7 +7390,7 @@ Object {
     },
     "takeRight__input.obj.items[0] ?? 0_tmp": Object {
       "InputPath": "$.0_tmp",
-      "Next": "2__return task({key: \`input.obj.str ?? \\"default\\" hello hello input.obj.item",
+      "Next": "\`input.obj.str ?? \\"default\\" hello hello input.obj.items[0] ?? 0_tmp\`",
       "ResultPath": "$.heap2",
       "Type": "Pass",
     },

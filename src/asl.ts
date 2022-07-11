@@ -1,7 +1,7 @@
 import { aws_iam } from "aws-cdk-lib";
 import { Construct } from "constructs";
 import { assertNever } from "./assert";
-import { FunctionDecl } from "./declaration";
+import { BindingElem, FunctionDecl, ParameterDecl } from "./declaration";
 import { ErrorCodes, SynthError } from "./error-code";
 import {
   Argument,
@@ -13,7 +13,6 @@ import {
   PromiseExpr,
   PropAccessExpr,
 } from "./expression";
-import { isFunction } from "./function";
 import {
   isBlockStmt,
   isFunctionExpr,
@@ -86,10 +85,9 @@ import {
   ForOfStmt,
   ReturnStmt,
   Stmt,
+  VariableStmt,
   WhileStmt,
 } from "./statement";
-import { isStepFunction } from "./step-function";
-import { isTable } from "./table";
 import {
   anyOf,
   DeterministicNameGenerator,
@@ -746,7 +744,7 @@ export class ASL {
           ...(Catch.length > 0 ? { Catch } : {}),
           ResultPath: null,
           ItemsPath: itemsLocation,
-          Next: this.next(stmt),
+          Next: ASLGraph.DeferNext,
           MaxConcurrency: 1,
           Parameters: {
             ...this.cloneLexicalScopeParameters(stmt),
@@ -771,7 +769,17 @@ export class ASL {
         }
       )!;
 
-      return this.aslGraphToStates(this.getStateName(stmt), joined);
+      const next = this.next(stmt);
+
+      return this.aslGraphToStates(
+        this.getStateName(stmt),
+        // if the next statement is known, apply it to all states with Deferred Next values.
+        // otherwise set end to true
+        ASLGraph.updateDeferredNextStates(
+          next ? { Next: next } : { End: true },
+          joined
+        )
+      );
     } else if (isIfStmt(stmt)) {
       const states: States = {};
       const choices: Branch[] = [];
@@ -1235,13 +1243,7 @@ export class ASL {
     // first check to see if the expression can be turned into a constant.
     const constant = evalToConstant(expr);
     if (constant !== undefined) {
-      const value = isFunction(constant.constant)
-        ? constant.constant.resource.functionArn
-        : isStepFunction(constant.constant)
-        ? constant.constant.resource.stateMachineArn
-        : isTable(constant.constant)
-        ? constant.constant.resource.tableName
-        : (constant.constant as any);
+      const value = constant.constant as any;
       // manufacturing null can be difficult, just use our magic constant
       return value === null
         ? { jsonPath: this.context.null }
@@ -1275,20 +1277,45 @@ export class ASL {
       return this.evalContext(expr, (evalExpr) => {
         const elementOutputs = expr.exprs.map(evalExpr);
 
+        /**
+         * Step Functions `States.Format` has a bug which fails when a jsonPath does not start with a
+         * alpha character.
+         * https://twitter.com/sussmansa/status/1542777348616990720?s=20&t=2PepSKvzPhojs_x01WoQVQ
+         *
+         * For this edge case, we re-assign each json path to a heap variable and use the heap location
+         * in the States.Format call to ensure we don't fail to deploy.
+         */
+        const jsonPaths = elementOutputs
+          .filter(ASLGraph.isJsonPath)
+          .map(({ jsonPath }) => jsonPath)
+          .map((jp) =>
+            jp.match(/\$\.[^a-zA-Z]/g) ? [jp, this.newHeapVariable()] : [jp, jp]
+          );
+
+        // generate any pass states to rewrite variables as needed
+        // we expect this to only happen rarely
+        const rewriteStates = jsonPaths
+          .filter(([original, updated]) => original !== updated)
+          .map(([original, updated]) => ({
+            Type: "Pass" as const,
+            InputPath: original,
+            ResultPath: updated,
+          }));
+
         const tempHeap = this.newHeapVariable();
 
         return {
-          Type: "Pass",
-          Parameters: {
-            "string.$": `States.Format('${elementOutputs
-              .map((output) =>
-                ASLGraph.isLiteralValue(output) ? output.value : "{}"
-              )
-              .join("")}',${elementOutputs
-              .filter(ASLGraph.isJsonPath)
-              .map(({ jsonPath }) => jsonPath)})`,
-          },
-          ResultPath: tempHeap,
+          ...ASLGraph.joinSubStates(expr, ...rewriteStates, {
+            Type: "Pass",
+            Parameters: {
+              "string.$": `States.Format('${elementOutputs
+                .map((output) =>
+                  ASLGraph.isLiteralValue(output) ? output.value : "{}"
+                )
+                .join("")}',${jsonPaths.map(([, jp]) => jp)})`,
+            },
+            ResultPath: tempHeap,
+          })!,
           output: {
             jsonPath: `${tempHeap}.string`,
           },
@@ -1801,13 +1828,20 @@ export class ASL {
     node: FunctionlessNode
   ): Record<string, string> {
     const parentStmt = isStmt(node) ? node : node.findParent(isStmt);
-    const variableReferences = parentStmt?.prev?.getLexicalScope() ?? new Map();
+    const variableReferences =
+      (parentStmt?.prev ?? parentStmt?.parent)?.getLexicalScope() ??
+      new Map<string, VariableStmt | ParameterDecl | BindingElem>();
     return Object.fromEntries([
       ...Array.from(variableReferences.entries())
         .filter(
           ([, decl]) => !(isParameterDecl(decl) && isFunctionDecl(decl.parent))
         )
-        .map(([name]) => [`${name}.$`, `$.${name}`]),
+        .flatMap(([name, decl]) => [
+          [`${name}.$`, `$.${name}`],
+          ...(isVariableStmt(decl) && isForInStmt(decl.parent)
+            ? [[`0_${name}.$`, `$.0_${name}`]]
+            : []),
+        ]),
       // if the functionless context has been used at this point, inject it in
       ...(this.needsFunctionlessContext
         ? [[`${FUNCTIONLESS_CONTEXT_NAME}.$`, FUNCTIONLESS_CONTEXT_JSON_PATH]]
@@ -1839,14 +1873,14 @@ export class ASL {
             return value.value[field];
           }
           throw new SynthError(
-            ErrorCodes.Invalid_collection_access,
+            ErrorCodes.StepFunctions_Invalid_collection_access,
             "Accessor to an array must be a constant number"
           );
         } else if (typeof value.value === "object") {
           return value.value[field];
         }
         throw new SynthError(
-          ErrorCodes.Invalid_collection_access,
+          ErrorCodes.StepFunctions_Invalid_collection_access,
           "Only a constant object or array may be accessed."
         );
       })();
@@ -1861,7 +1895,7 @@ export class ASL {
     }
 
     throw new SynthError(
-      ErrorCodes.Invalid_collection_access,
+      ErrorCodes.StepFunctions_Invalid_collection_access,
       "Only a constant object or array may be accessed."
     );
   }
@@ -2312,12 +2346,15 @@ export class ASL {
     access: ElementAccessExpr
   ): ASLGraph.NodeResults {
     // special case when in a for-in loop
-    if (isIdentifier(access.element) && isIdentifier(access.expr)) {
+    if (isIdentifier(access.element)) {
       const element = access.element.lookup();
       if (
         isVariableStmt(element) &&
         isForInStmt(element.parent) &&
-        access.findParent(isForInStmt) === element.parent
+        access.findParent(
+          (parent): parent is ForInStmt =>
+            isForInStmt(parent) && parent === element.parent
+        )
       ) {
         return { jsonPath: `$.0_${element.name}` };
       }
@@ -2351,7 +2388,7 @@ export class ASL {
     }
 
     throw new SynthError(
-      ErrorCodes.Invalid_collection_access,
+      ErrorCodes.StepFunctions_Invalid_collection_access,
       "Collection element accessor must be a constant string or number"
     );
   }

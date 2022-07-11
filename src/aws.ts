@@ -39,7 +39,6 @@ import {
 } from "./integration";
 import { AnyTable, isTable, ITable } from "./table";
 import type { AnyAsyncFunction } from "./util";
-import { renameObjectProperties } from "./visit";
 
 /**
  * The `AWS` namespace exports functions that map to AWS Step Functions AWS-SDK Integrations.
@@ -400,27 +399,33 @@ export namespace $AWS {
      * @see https://docs.aws.amazon.com/lambda/latest/dg/API_Invoke.html
      */
     export const Invoke = makeIntegration<
-      "Lambda.Invoke",
-      <Input, Output>(input: {
-        Function: Function<Input, Output>;
-        Payload: Input;
-        ClientContext?: string;
-        InvocationType?: "Event" | "RequestResponse" | "DryRun";
-        LogType?: "None" | "Tail";
-        Qualifier?: string;
-      }) => Promise<
+      "$AWS.Lambda.Invoke",
+      <Input, Output>(
+        input: {
+          Function: Function<Input, Output>;
+          ClientContext?: string;
+          InvocationType?: "Event" | "RequestResponse" | "DryRun";
+          LogType?: "None" | "Tail";
+          Qualifier?: string;
+        } & ([Input] extends [undefined]
+          ? { Payload?: Input }
+          : { Payload: Input })
+      ) => Promise<
         Omit<AWSLambda.InvocationResponse, "payload"> & {
           Payload: Output;
         }
       >
     >({
-      kind: "Lambda.Invoke",
+      kind: "$AWS.Lambda.Invoke",
       asl(call, context) {
         const input = call.args[0].expr;
         if (input === undefined) {
           throw new Error("missing argument 'input'");
-        } else if (input.kind !== "ObjectLiteralExpr") {
-          throw new Error("argument 'input' must be an ObjectLiteralExpr");
+        } else if (!isObjectLiteralExpr(input)) {
+          throw new SynthError(
+            ErrorCodes.Expected_an_object_literal,
+            "The first argument ('input') into $AWS.Lambda.Invoke must be an object."
+          );
         }
         const functionName = input.getProperty("Function")?.expr;
         if (functionName === undefined) {
@@ -460,12 +465,12 @@ export namespace $AWS {
      * @see https://docs.aws.amazon.com/eventbridge/latest/APIReference/API_PutEvents.html
      */
     export const putEvents = makeIntegration<
-      "EventBridge.putEvent",
+      "$AWS.EventBridge.putEvent",
       (
         request: AWS.EventBridge.Types.PutEventsRequest
       ) => Promise<AWS.EventBridge.Types.PutEventsResponse>
     >({
-      kind: "EventBridge.putEvent",
+      kind: "$AWS.EventBridge.putEvent",
       native: {
         // Access needs to be granted manually
         bind: () => {},
@@ -571,27 +576,38 @@ function makeDynamoIntegration<
     asl(call, context) {
       const input = call.getArgument("input")?.expr;
       if (!isObjectLiteralExpr(input)) {
-        throw new Error(
-          `input parameter must be an ObjectLiteralExpr, but was ${input?.kind}`
+        throw new SynthError(
+          ErrorCodes.Expected_an_object_literal,
+          `First argument ('input') into $AWS.DynamoDB.${operationName} must be an object.`
         );
       }
-      const table = getTableArgument(operationName, call.args);
-      grantTablePermissions(table, context.role, operationName);
 
-      const renamedExpr = renameObjectProperties(input, {
-        Table: "TableName",
-      });
+      return context.evalExpr(input, (output) => {
+        if (
+          !ASLGraph.isLiteralValue(output) ||
+          typeof output.value !== "object" ||
+          !output.value ||
+          !("Table" in output.value) ||
+          !isTable(output.value.Table)
+        ) {
+          throw new SynthError(
+            ErrorCodes.Unexpected_Error,
+            "Expected `Table` parameter in $AWS.DynamoDB for Step Functions to be a Table object."
+          );
+        }
 
-      return context.evalExpr(renamedExpr, (output) => {
-        return context.stateWithHeapOutput(
-          ASLGraph.taskWithInput(
-            {
-              Type: "Task",
-              Resource: `arn:aws:states:::aws-sdk:dynamodb:${operationName}`,
-            },
-            output
-          )
-        );
+        const { Table, ...params } = output.value;
+
+        grantTablePermissions(Table, context.role, operationName);
+
+        return context.stateWithHeapOutput({
+          Type: "Task",
+          Resource: `arn:aws:states:::aws-sdk:dynamodb:${operationName}`,
+          Parameters: {
+            ...params,
+            TableName: Table.tableName,
+          },
+        });
       });
     },
     native: {

@@ -1,12 +1,30 @@
 import * as appsync from "@aws-cdk/aws-appsync-alpha";
 import { GraphqlApi } from "@aws-cdk/aws-appsync-alpha";
-import { App, aws_events, Stack } from "aws-cdk-lib";
-import { AppsyncResolver, EventBus, Function, StepFunction } from "../../src";
+import { App, aws_dynamodb, aws_events, Stack } from "aws-cdk-lib";
+import {
+  AppsyncResolver,
+  EventBus,
+  Function,
+  StepFunction,
+  Table,
+} from "../../src";
 
 const app = new App({
   autoSynth: false,
 });
 const stack = new Stack(app, "stack");
+
+interface Item {
+  id: string;
+  name: string;
+}
+
+const table = new Table<Item, "id">(stack, "table", {
+  partitionKey: {
+    name: "id",
+    type: aws_dynamodb.AttributeType.NUMBER,
+  },
+});
 
 const api = new appsync.GraphqlApi(stack, "API", {
   name: "api",
@@ -357,5 +375,61 @@ new AppsyncResolver<{ bool: boolean }, string>(
   async ($context) => {
     const c = $context.arguments.bool ? await func() : "x";
     return c;
+  }
+);
+
+// unsupported object references in $AWS calls
+
+new AppsyncResolver(
+  api,
+  "no promise array",
+  {
+    fieldName: "field",
+    typeName: "type",
+  },
+  async () => {
+    const event = {
+      key: {
+        id: { S: "sas" },
+      },
+    };
+
+    await table.appsync.getItem(event);
+  }
+);
+
+// supported - object literal in $AWS calls
+
+new AppsyncResolver(
+  api,
+  "no promise array",
+  {
+    fieldName: "field",
+    typeName: "type",
+  },
+  async () => {
+    await table.appsync.getItem({
+      key: {
+        id: { S: "sas" },
+      },
+    });
+  }
+);
+
+// unsupported - cannot find reference to integration outside of scope.
+
+new AppsyncResolver(
+  api,
+  "no promise array",
+  {
+    fieldName: "field",
+    typeName: "type",
+  },
+  async () => {
+    const getIntegration = (): typeof func => {
+      return func;
+    };
+    const x = getIntegration();
+    await x();
   }
 );

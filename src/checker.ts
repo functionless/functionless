@@ -7,6 +7,7 @@ import { EventTransform } from "./event-bridge/transform";
 import { Function } from "./function";
 import { ExpressStepFunction, StepFunction } from "./step-function";
 import { Table } from "./table";
+import { anyOf, hasParent } from "./util";
 
 /**
  * Various types that could be in a call argument position of a function parameter.
@@ -95,6 +96,7 @@ export function makeFunctionlessChecker(
     getApiMethodKind,
     getFunctionlessTypeKind,
     getIntegrationNodeKind,
+    getOutOfScopeValueNode,
     isApiIntegration,
     isAppsyncField,
     isAppsyncResolver,
@@ -102,6 +104,7 @@ export function makeFunctionlessChecker(
     isConstant,
     isEventBus,
     isEventBusWhenFunction,
+    isForInVariable,
     isFunctionlessFunction,
     isFunctionlessType,
     isIntegrationNode,
@@ -117,6 +120,340 @@ export function makeFunctionlessChecker(
     isStepFunction,
     isTable,
   };
+
+  /**
+   * Flattens {@link ts.BindingElement} (destructured assignments) to a series of
+   * {@link ts.ElementAccessExpression} or {@link ts.PropertyAccessExpression}
+   *
+   * Caveat: It is not possible to flatten a destructured ParameterDeclaration (({ a }) => {}).
+   *         Use {@link getDestructuredDeclaration} to determine if the {@link ts.BindingElement} is
+   *         {@link ts.VariableDeclaration} or a {@link ts.ParameterDeclaration}.
+   *
+   * given a
+   *
+   * { a } = b;
+   * -> b.a;
+   *
+   * { x: a } = b;
+   * -> b.x;
+   *
+   * { "x-x": a } = b;
+   * b["x-x"];
+   *
+   * { b: { a } } = c;
+   * -> c.b.a;
+   *
+   * [a] = l;
+   * -> l[0];
+   *
+   * [{ a }] = l;
+   * -> l[0].a;
+   *
+   * { a } = b.c;
+   * -> b.c.a;
+   *
+   * { [key]: a } = b;
+   * b[key];
+   */
+  function flattenBindingElement(
+    element: ts.BindingElement
+  ): ts.ElementAccessExpression | ts.PropertyAccessExpression {
+    // if the binding renames the property, get the original
+    // { a : x } -> a
+    // { a } -> a
+    // [a] -> 0
+    const name = ts.isArrayBindingPattern(element.parent)
+      ? element.pos
+      : // binding renames the property or is a nested binding pattern.
+      element.propertyName
+      ? element.propertyName
+      : // the "name" can be a binding pattern. In that case the propertyName will be set.
+        (element.name as ts.Identifier);
+
+    const getParent = () => {
+      // { a } = b;
+      if (ts.isVariableDeclaration(element.parent.parent)) {
+        if (!element.parent.parent.initializer) {
+          throw Error(
+            "Expected a initializer on a destructured assignment: " +
+              element.getText()
+          );
+        }
+        return element.parent.parent.initializer;
+      } else if (ts.isBindingElement(element.parent.parent)) {
+        return flattenBindingElement(element.parent.parent);
+      } else {
+        throw Error(
+          "Cannot flatten destructured parameter: " + element.getText()
+        );
+      }
+    };
+
+    const parent = getParent();
+
+    // always use element access as this will work for all possible values.
+    // [parent][name]
+    return typeof name !== "number" && ts.isIdentifier(name)
+      ? ts.factory.createPropertyAccessExpression(parent, name)
+      : ts.factory.createElementAccessExpression(
+          parent,
+          typeof name !== "number" && ts.isComputedPropertyName(name)
+            ? name.expression
+            : name
+        );
+  }
+
+  /**
+   * Finds the top level declaration of a destructured binding element.
+   * Supports arbitrary nesting.
+   *
+   * const { a } = b; -> VariableDeclaration { initializer = b }
+   * const [a] = b; -> VariableDeclaration { initializer = b }
+   * ({ a }) => {} -> ParameterDeclaration { { a } }
+   * ([a]) => {} -> ParameterDeclaration { { a } }
+   */
+  function getDestructuredDeclaration(
+    element: ts.BindingElement
+  ): ts.VariableDeclaration | ts.ParameterDeclaration {
+    if (ts.isBindingElement(element.parent.parent)) {
+      return getDestructuredDeclaration(element.parent.parent);
+    }
+    return element.parent.parent;
+  }
+
+  /**
+   * Attempts to find the a version of a reference that is outside of a certain scope.
+   *
+   * This is useful for finding variables that have been instantiated outside of a closure, but
+   * renamed inside of the closure.
+   *
+   * When serializing the lambda functions, we want references from outside of the closure if possible.
+   *
+   * ```ts
+   * const bus = new EventBus()
+   * new Function(() => {
+   *     const busbus = bus;
+   *     busbus.putEvents(...)
+   * })
+   * ```
+   *
+   * Can also follow property access.
+   *
+   * ```ts
+   * const x = { y : () => {} };
+   *
+   * () => {
+   *    const z = x;
+   *    z.y() // x.y() is returned
+   * }
+   * ```
+   *
+   * getOutOfScopeValueNode(z.y) => x.y
+   *
+   * ```ts
+   * const x = () => {};
+   *
+   * () => {
+   *    const z = { y: x };
+   *    z.y()
+   * }
+   * ```
+   *
+   * getOutOfScopeValueNode(z.y) => x
+   *
+   * The call to busbus can be resolved to bus if the scope is the array function.
+   */
+  function getOutOfScopeValueNode(
+    expression: ts.Expression,
+    scope: ts.Node
+  ): ts.Expression | undefined {
+    const symbol = checker.getSymbolAtLocation(expression);
+    if (symbol) {
+      if (isSymbolOutOfScope(symbol, scope)) {
+        return expression;
+      } else {
+        if (ts.isIdentifier(expression)) {
+          if (symbol.valueDeclaration) {
+            if (
+              ts.isVariableDeclaration(symbol.valueDeclaration) &&
+              symbol.valueDeclaration.initializer
+            ) {
+              return getOutOfScopeValueNode(
+                symbol.valueDeclaration.initializer,
+                scope
+              );
+            } else if (ts.isBindingElement(symbol.valueDeclaration)) {
+              /* when we find an identifier that was created using a binding assignment
+                      flatten it and run the flattened form through again.
+                      const b = { a: 1 };
+                      () => {
+                        const c = b;
+                        const { a } = c;
+                      }
+                      -> b["a"];
+                    */
+              const flattened = flattenBindingElement(symbol.valueDeclaration);
+              return getOutOfScopeValueNode(flattened, scope);
+            } else if (ts.isIdentifier(symbol.valueDeclaration)) {
+              return symbol.valueDeclaration;
+            } else if (ts.isParameter(symbol.valueDeclaration)) {
+              /**
+               * Cases like parameter
+               *
+               * (table) => {
+               *    new StepFunction(async () => { return table.appsync.getItem(...) });
+               * }
+               */
+              return ts.factory.createIdentifier(symbol.name);
+            }
+          }
+        }
+      }
+    }
+    if (
+      ts.isPropertyAccessExpression(expression) ||
+      ts.isElementAccessExpression(expression)
+    ) {
+      if (symbol && symbol.valueDeclaration) {
+        if (
+          ts.isPropertyAssignment(symbol.valueDeclaration) &&
+          anyOf(
+            ts.isIdentifier,
+            ts.isPropertyAccessExpression,
+            ts.isElementAccessExpression
+          )(symbol.valueDeclaration.initializer)
+        ) {
+          // this variable is assigned to by another variable, follow that node
+          return getOutOfScopeValueNode(
+            symbol.valueDeclaration.initializer,
+            scope
+          );
+        }
+      }
+      // this node is assigned a value, attempt to rewrite the parent
+      const outOfScope = getOutOfScopeValueNode(expression.expression, scope);
+      return outOfScope
+        ? ts.isElementAccessExpression(expression)
+          ? ts.factory.updateElementAccessExpression(
+              expression,
+              outOfScope,
+              expression.argumentExpression
+            )
+          : ts.factory.updatePropertyAccessExpression(
+              expression,
+              outOfScope,
+              expression.name
+            )
+        : undefined;
+    }
+    return undefined;
+  }
+
+  /**
+   * Checks to see if a symbol is defined with the given scope.
+   *
+   * Any symbol that has no declaration or has a value declaration in the scope is considered to be in scope.
+   * Imports are considered out of scope.
+   *
+   * ```ts
+   * () => { // scope
+   *  const x = "y";
+   *  x // in scope
+   * }
+   * ```
+   *
+   * ```ts
+   * const x = "y"; // out of scope
+   * () => { // scope
+   *  x // in scope
+   * }
+   * ```
+   *
+   * ```ts
+   * import x from y;
+   *
+   * () => { // scope
+   *  x // out of scope
+   * }
+   * ```
+   *
+   * ```ts
+   * () => {
+   *    const { x } = y;
+   *    x // in scope
+   * }
+   * ```
+   *
+   * ```ts
+   * ({ x }) => {
+   *    x // in scope
+   * }
+   * ```
+   */
+  function isSymbolOutOfScope(symbol: ts.Symbol, scope: ts.Node): boolean {
+    if (symbol.valueDeclaration) {
+      if (ts.isShorthandPropertyAssignment(symbol.valueDeclaration)) {
+        const updatedSymbol = checker.getShorthandAssignmentValueSymbol(
+          symbol.valueDeclaration
+        );
+        return updatedSymbol ? isSymbolOutOfScope(updatedSymbol, scope) : false;
+      } else if (
+        ts.isVariableDeclaration(symbol.valueDeclaration) ||
+        ts.isClassDeclaration(symbol.valueDeclaration)
+      ) {
+        return !hasParent(symbol.valueDeclaration, scope);
+      } else if (ts.isBindingElement(symbol.valueDeclaration)) {
+        /*
+          check if the binding element's declaration is within the scope or not.
+
+          example: if the scope ifq func's body
+
+          ({ a }) => {
+            const { b } = a;
+            const func = ({ c }) => {
+              const { d: { x, y } } = b;
+            }
+          }
+
+          // in scope: c, x, y
+          // out of scope: a, b
+        */
+        const declaration = getDestructuredDeclaration(symbol.valueDeclaration);
+        return !hasParent(declaration, scope);
+      } else if (
+        ts.isPropertyDeclaration(symbol.valueDeclaration) ||
+        ts.isPropertySignature(symbol.valueDeclaration)
+      ) {
+        // explicit return false. We always want to check the parent of the declaration or signature.
+        return false;
+      }
+    } else if (symbol.declarations && symbol.declarations.length > 0) {
+      const [decl] = symbol.declarations;
+      // import x from y
+      if (
+        ts.isImportClause(decl) ||
+        ts.isImportSpecifier(decl) ||
+        ts.isNamespaceImport(decl)
+      ) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  // findParent(node, ts.isForInStatement)
+  function isForInVariable(node: ts.Identifier) {
+    const symbol = checker.getSymbolAtLocation(node);
+    if (symbol) {
+      return (
+        symbol.valueDeclaration &&
+        ts.isVariableDeclaration(symbol.valueDeclaration) &&
+        ts.isVariableDeclarationList(symbol.valueDeclaration.parent) &&
+        ts.isForInStatement(symbol?.valueDeclaration.parent.parent)
+      );
+    }
+    return false;
+  }
 
   /**
    * Matches the patterns:
@@ -366,16 +703,6 @@ export function makeFunctionlessChecker(
     return undefined;
   }
 
-  function typeMatch(
-    type: ts.Type,
-    predicate: (type: ts.Type) => boolean
-  ): boolean {
-    if (type.isUnionOrIntersection()) {
-      return predicate(type) || type.types.some((t) => typeMatch(t, predicate));
-    }
-    return predicate(type);
-  }
-
   function isPromiseSymbol(symbol: ts.Symbol): boolean {
     return checker.getFullyQualifiedName(symbol) === "Promise";
   }
@@ -545,6 +872,19 @@ export function findParent<T extends ts.Node>(
   } else {
     return findParent(node.parent, predicate);
   }
+}
+
+/**
+ * Visits all types in union or intersection types with a predicate.
+ */
+export function typeMatch(
+  type: ts.Type,
+  predicate: (type: ts.Type) => boolean
+): boolean {
+  if (type.isUnionOrIntersection()) {
+    return predicate(type) || type.types.some((t) => typeMatch(t, predicate));
+  }
+  return predicate(type);
 }
 
 // to prevent the closure serializer from trying to import all of functionless.
