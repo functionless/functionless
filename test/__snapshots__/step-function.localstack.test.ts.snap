@@ -98,8 +98,8 @@ Object {
         Object {
           "Next": "assignTrue__!false",
           "Not": Object {
-            "IsPresent": true,
-            "Variable": "$.0_false",
+            "IsNull": true,
+            "Variable": "$$.Execution.Id",
           },
         },
       ],
