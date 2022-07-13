@@ -230,7 +230,7 @@ export interface FinallyBlock extends BlockStmt {
 export class TryStmt extends BaseStmt<"TryStmt"> {
   constructor(
     readonly tryBlock: BlockStmt,
-    readonly catchClause: CatchClause,
+    readonly catchClause?: CatchClause,
     readonly finallyBlock?: FinallyBlock
   ) {
     super("TryStmt");
@@ -246,7 +246,7 @@ export class TryStmt extends BaseStmt<"TryStmt"> {
   public clone(): this {
     return new TryStmt(
       this.tryBlock.clone(),
-      this.catchClause.clone(),
+      this.catchClause?.clone(),
       this.finallyBlock?.clone()
     ) as this;
   }

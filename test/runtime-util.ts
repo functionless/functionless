@@ -72,7 +72,7 @@ export const testStepFunction = async (
         })
         .promise(),
     (exec) => exec.status !== "RUNNING",
-    5,
+    10,
     1000,
     2
   );

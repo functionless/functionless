@@ -347,11 +347,13 @@ export abstract class BaseNode<
       if (stmt.finallyBlock) {
         return (
           stmt.finallyBlock.isTerminal() ||
-          (stmt.tryBlock.isTerminal() && stmt.catchClause.block.isTerminal())
+          (!!stmt.catchClause &&
+            stmt.tryBlock.isTerminal() &&
+            stmt.catchClause.block.isTerminal())
         );
       } else {
         return (
-          stmt.tryBlock.isTerminal() && stmt.catchClause.block.isTerminal()
+          stmt.tryBlock.isTerminal() && stmt.catchClause!.block.isTerminal()
         );
       }
     } else if (isBlockStmt(stmt)) {
