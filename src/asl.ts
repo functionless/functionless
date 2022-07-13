@@ -81,14 +81,11 @@ import {
   BlockStmt,
   BreakStmt,
   ContinueStmt,
-  DoStmt,
   ForInStmt,
-  ForOfStmt,
   IfStmt,
   ReturnStmt,
   Stmt,
   VariableStmt,
-  WhileStmt,
 } from "./statement";
 import {
   anyOf,
@@ -601,18 +598,22 @@ export class ASL {
     // build a map of local state names to their unique flattened form
     return {
       StartAt: stmtName,
-      States: ASLGraph.toStates(stmtName, state, (parentName, states) => {
-        return Object.fromEntries(
-          Object.entries(states.states ?? {}).map(([name, state]) => [
-            name,
-            states.startState === name
-              ? parentName
-              : state.node
-              ? this.createUniqueStateName(toStateName(state.node))
-              : this.createUniqueStateName(`${name}__${parentName}`),
-          ])
-        );
-      }),
+      States: ASLGraph.toStates(
+        stmtName,
+        ASLGraph.updateDeferredNextStates({ End: true }, state),
+        (parentName, states) => {
+          return Object.fromEntries(
+            Object.entries(states.states ?? {}).map(([name, state]) => [
+              name,
+              states.startState === name
+                ? parentName
+                : state.node
+                ? this.createUniqueStateName(toStateName(state.node))
+                : this.createUniqueStateName(`${name}__${parentName}`),
+            ])
+          );
+        }
+      ),
     };
   }
 
@@ -636,7 +637,7 @@ export class ASL {
             : undefined;
         })
       );
-    } else if (isBreakStmt(stmt)) {
+    } else if (isBreakStmt(stmt) || isContinueStmt(stmt)) {
       const loop = stmt.findParent(
         anyOf(isForOfStmt, isForInStmt, isWhileStmt, isDoStmt)
       );
@@ -644,25 +645,18 @@ export class ASL {
         throw new Error("Stack Underflow");
       }
 
-      return {
-        node: stmt,
-        Type: "Pass",
-        Next: ASL.BreakNext,
-      };
-    } else if (isContinueStmt(stmt)) {
-      const loop = stmt.findParent(
-        anyOf(isForOfStmt, isForInStmt, isWhileStmt, isDoStmt)
-      );
-      if (loop === undefined) {
-        throw new Error("Stack Underflow");
-      }
-
-      return {
-        node: stmt,
-        Type: "Pass",
-        Next: ASL.ContinueNext,
-        ResultPath: null,
-      };
+      return isBreakStmt(stmt)
+        ? {
+            node: stmt,
+            Type: "Pass",
+            Next: ASL.BreakNext,
+          }
+        : {
+            node: stmt,
+            Type: "Pass",
+            Next: ASL.ContinueNext,
+            ResultPath: null,
+          };
     } else if (isExprStmt(stmt)) {
       const expr = this.eval(stmt.expr);
 
@@ -683,35 +677,7 @@ export class ASL {
         };
       }
     } else if (isForOfStmt(stmt) || isForInStmt(stmt)) {
-      const throwTransition = this.throw(stmt);
-
-      const Catch = [
-        ...(hasBreak(stmt)
-          ? [
-              {
-                ErrorEquals: ["Break"],
-                Next: ASLGraph.DeferNext,
-                ResultPath: null,
-              },
-            ]
-          : []),
-        ...(throwTransition
-          ? [
-              {
-                ErrorEquals: ["States.ALL"],
-                Next: throwTransition.Next!,
-                ResultPath: throwTransition.ResultPath,
-              },
-            ]
-          : []),
-      ];
-
       return this.evalExprToSubState(stmt.expr, (output) => {
-        // if we get back a constant, we'll need a location to put it
-        const itemsLocation = ASLGraph.isJsonPath(output)
-          ? output.jsonPath
-          : this.newHeapVariable();
-
         const body = this.evalStmt(stmt.body);
 
         if (!body) {
@@ -721,116 +687,83 @@ export class ASL {
           };
         }
 
-        // TODO: support ForIn
-        if (isForOfStmt(stmt)) {
-          // assigns either a constant or json path to a new variable
-          const assignTemp = this.stateWithHeapOutput(
-            ASLGraph.passWithInput(
-              {
-                Type: "Pass",
-                Next: "hasNext",
-              },
-              output
-            )
-          );
-          const tempArrayPath = assignTemp.output.jsonPath;
-
-          return {
-            startState: "assignTemp",
-            node: stmt,
-            states: {
-              assignTemp,
-              hasNext: {
-                Type: "Choice",
-                Choices: [
-                  { ...ASL.isPresent(`${tempArrayPath}[0]`), Next: "assign" },
-                ],
-                Default: "exit",
-              },
-              assign: {
-                Type: "Pass",
-                node: stmt.expr,
-                InputPath: `${tempArrayPath}[0]`,
-                ResultPath: `${stmt.variableDecl.name}.$`,
-                Next: "body",
-              },
-              // any ASLGraph.DeferNext (or empty) should be wired to exit
-              body: ASLGraph.updateDeferredNextStates({ Next: "tail" }, body),
-              // tail the array
-              tail: {
-                Type: "Pass",
-                InputPath: `${tempArrayPath}[1:]`,
-                ResultPath: tempArrayPath,
-                Next: "hasNext", // restart by checking for items after tail
-              },
-              // clean up?
-              exit: {
-                Type: "Pass",
-              },
+        // assigns either a constant or json path to a new variable
+        const assignTempState = this.stateWithHeapOutput(
+          ASLGraph.passWithInput(
+            {
+              Type: "Pass",
             },
-          };
-        }
+            output
+          )
+        );
+        const tempArrayPath = assignTempState.output.jsonPath;
 
-        return ASLGraph.joinSubStates(
-          stmt,
-          ASLGraph.isJsonPath(output)
-            ? undefined
-            : ASLGraph.passWithInput(
-                {
-                  ResultPath: itemsLocation,
-                  Type: "Pass",
-                  Next: ASLGraph.DeferNext,
-                },
-                output
-              ),
-          {
-            Type: "Map" as const,
-            ...(Catch.length > 0 ? { Catch } : {}),
-            ResultPath: null,
-            ItemsPath: itemsLocation,
-            Next: ASLGraph.DeferNext,
-            MaxConcurrency: 1,
-            Parameters: {
-              ...this.cloneLexicalScopeParameters(stmt),
-              ...(isForInStmt(stmt)
-                ? {
-                    // use special `0_` prefix (impossible variable name in JavaScript)
-                    // to store a reference to the value so that we can implement array index
-                    // for (const i in items) {
-                    //   items[i] // $$.Map.Item.Value
-                    // }
-                    [`0_${stmt.variableDecl.name}.$`]: "$$.Map.Item.Value",
-                  }
-                : {}),
-              [`${stmt.variableDecl.name}.$`]: isForOfStmt(stmt)
-                ? "$$.Map.Item.Value"
-                : "$$.Map.Item.Index",
-            },
-            Iterator: this.aslGraphToStates(
-              // ensure any deferred next values are updated to end
-              ASLGraph.updateDeferredNextStates(
-                { End: true },
-                {
-                  startState: "body",
-                  node: stmt.body,
-                  states: {
-                    body,
-                    [ASL.ContinueNext]: {
-                      Type: "Pass" as const,
-                      node: new ContinueStmt(),
-                      ResultPath: null,
-                    },
-                    [ASL.BreakNext]: {
-                      Type: "Fail" as const,
-                      Error: "Break",
-                      node: new BreakStmt(),
-                    },
-                  },
-                }
-              )
+        const assignTemp = isForOfStmt(stmt)
+          ? assignTempState
+          : // if `ForIn`, map the array into a tuple of index and item
+            ASLGraph.joinSubStates(stmt.expr, assignTempState, {
+              Type: "Map" as const,
+              InputPath: tempArrayPath,
+              Parameters: {
+                "index.$": "$$.Map.Item.Index",
+                "item.$": "$$.Map.Item.Value",
+              },
+              Iterator: this.aslGraphToStates({
+                Type: "Pass",
+                ResultPath: "$",
+              }),
+              ResultPath: tempArrayPath,
+            })!;
+
+        return {
+          startState: "assignTemp",
+          node: stmt,
+          states: {
+            assignTemp: ASLGraph.updateDeferredNextStates(
+              { Next: "hasNext" },
+              assignTemp
             ),
-          }
-        )!;
+            hasNext: {
+              Type: "Choice",
+              Choices: [
+                { ...ASL.isPresent(`${tempArrayPath}[0]`), Next: "assign" },
+              ],
+              Default: "exit",
+            },
+            assign: {
+              Type: "Pass",
+              node: stmt.expr,
+              // in a forIn, the variable is the index, we will rewrite `var` to `$.{var}.index`
+              // `arr[var]` is rewritten to `$.{var}.item`
+              InputPath: `${tempArrayPath}[0]`,
+              ResultPath: `$.${stmt.variableDecl.name}`,
+              Next: "body",
+            },
+            // any ASLGraph.DeferNext (or empty) should be wired to exit
+            body: ASLGraph.updateDeferredNextStates({ Next: "tail" }, body),
+            // tail the array
+            tail: {
+              Type: "Pass",
+              InputPath: `${tempArrayPath}[1:]`,
+              ResultPath: tempArrayPath,
+              Next: "hasNext", // restart by checking for items after tail
+            },
+            // clean up?
+            exit: {
+              Type: "Pass",
+            },
+            [ASL.ContinueNext]: {
+              Type: "Pass",
+              Next: "tail",
+              node: new ContinueStmt(),
+            },
+            [ASL.BreakNext]: {
+              Type: "Pass",
+              Next: "exit",
+              node: new BreakStmt(),
+            },
+          },
+        };
       });
     } else if (isIfStmt(stmt)) {
       return this.evalContextToSubState(stmt, (_, evalCondition) => {
@@ -874,16 +807,6 @@ export class ASL {
         };
       });
     } else if (isReturnStmt(stmt)) {
-      const parent = stmt.findParent(
-        anyOf(isFunctionExpr, isForInStmt, isForOfStmt)
-      );
-      if (isForInStmt(parent) || isForOfStmt(parent)) {
-        // TODO, relax this - https://github.com/functionless/functionless/issues/319
-        throw new Error(
-          "a 'return' statement is not allowed within a for loop"
-        );
-      }
-
       return this.evalExprToSubState(stmt.expr, (output) =>
         ASLGraph.passWithInput(
           {
@@ -1620,6 +1543,9 @@ export class ASL {
         // This logic needs to be updated to support destructured inputs: https://github.com/functionless/functionless/issues/68
         if (ref && isParameterDecl(ref) && isFunctionDecl(ref.parent)) {
           return { jsonPath: this.context.input };
+        } else if (ref && isVariableStmt(ref) && isForInStmt(ref.parent)) {
+          // the array element for ForIn is enumerated into `{ index: number, item: T}`
+          return { jsonPath: `$.${expr.name}.index` };
         }
         return { jsonPath: `$.${expr.name}` };
       } else if (isPropAccessExpr(expr)) {
@@ -1962,12 +1888,7 @@ export class ASL {
         .filter(
           ([, decl]) => !(isParameterDecl(decl) && isFunctionDecl(decl.parent))
         )
-        .flatMap(([name, decl]) => [
-          [`${name}.$`, `$.${name}`],
-          ...(isVariableStmt(decl) && isForInStmt(decl.parent)
-            ? [[`0_${name}.$`, `$.0_${name}`]]
-            : []),
-        ]),
+        .map(([name]) => [`${name}.$`, `$.${name}`]),
       // if the functionless context has been used at this point, inject it in
       ...(this.needsFunctionlessContext
         ? [[`${FUNCTIONLESS_CONTEXT_NAME}.$`, FUNCTIONLESS_CONTEXT_JSON_PATH]]
@@ -2125,9 +2046,7 @@ export class ASL {
     // detect the immediate for-loop closure surrounding this throw statement
     // because of how step function's Catch feature works, we need to check if the try
     // is inside or outside the closure
-    const mapOrParallelClosure = node.findParent(
-      anyOf(isForOfStmt, isForInStmt, isFunctionExpr)
-    );
+    const mapOrParallelClosure = node.findParent(isFunctionExpr);
 
     // catchClause or finallyBlock that will run upon throwing this error
     const catchOrFinally = node.throw();
@@ -2387,7 +2306,8 @@ export class ASL {
             isForInStmt(parent) && parent === element.parent
         )
       ) {
-        return { jsonPath: `$.0_${element.name}` };
+        // the array element is enumerated into `{ index: number, item: T}`
+        return { jsonPath: `$.${element.name}.item` };
       }
     }
 
@@ -2645,44 +2565,12 @@ function analyzeFlow(node: FunctionlessNode): FlowResult {
     .map(analyzeFlow)
     .reduce(
       (a, b) => ({ ...a, ...b }),
-      (isCallExpr(node) &&
-        (isReferenceExpr(node.expr) || isMapOrForEach(node))) ||
-        isForInStmt(node) ||
-        isForOfStmt(node)
+      isCallExpr(node) && (isReferenceExpr(node.expr) || isMapOrForEach(node))
         ? { hasTask: true }
         : isThrowStmt(node)
         ? { hasThrow: true }
         : {}
     );
-}
-
-function hasBreak(loop: ForInStmt | ForOfStmt | WhileStmt | DoStmt): boolean {
-  for (const child of loop.children) {
-    if (hasBreak(child)) {
-      return true;
-    }
-  }
-  return false;
-
-  function hasBreak(node: FunctionlessNode): boolean {
-    if (
-      isForInStmt(node) ||
-      isForOfStmt(node) ||
-      isWhileStmt(node) ||
-      isDoStmt(node)
-    ) {
-      return false;
-    } else if (isBreakStmt(node)) {
-      return true;
-    } else {
-      for (const child of node.children) {
-        if (hasBreak(child)) {
-          return true;
-        }
-      }
-      return false;
-    }
-  }
 }
 
 /**
@@ -2928,8 +2816,17 @@ export namespace ASLGraph {
       return state;
     } else if (isWaitState(state)) {
       return {
-        ...(state as Omit<Wait, "Next">),
-        ...{ End, Next },
+        ...state,
+        End:
+          (state.Next === undefined && state.End === undefined) ||
+          state.Next === ASLGraph.DeferNext
+            ? End
+            : state.End,
+        Next:
+          (state.Next === undefined && state.End === undefined) ||
+          state.Next === ASLGraph.DeferNext
+            ? Next
+            : state.Next,
       } as T;
     } else if (
       isTaskState(state) ||

@@ -1075,10 +1075,7 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
         }
       );
     },
-    // TODO: fix this test
-    //       Map short circuiting does not work on localstack: https://github.com/localstack/localstack/issues/6443
-    //       this case was tested on AWS, which returned the right answer
-    "111219",
+    "111215",
     { id: `key${Math.floor(Math.random() * 1000)}` }
   );
 
