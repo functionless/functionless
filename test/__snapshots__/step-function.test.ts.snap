@@ -932,6 +932,30 @@ Object {
       "ResultPath": "$.heap0",
       "Type": "Pass",
     },
+    "assignTrue__!input.a && input.b": Object {
+      "Next": "!input.a || input.b",
+      "Result": true,
+      "ResultPath": "$.heap3",
+      "Type": "Pass",
+    },
+    "assignTrue__!input.a || input.b": Object {
+      "Next": "!input.a || input.b && input.a",
+      "Result": true,
+      "ResultPath": "$.heap4",
+      "Type": "Pass",
+    },
+    "assignTrue__!input.a || input.b && input.a": Object {
+      "Next": "1__return {and: input.a && input.b, or: input.a || input.b, not: !true, not",
+      "Result": true,
+      "ResultPath": "$.heap5",
+      "Type": "Pass",
+    },
+    "assignTrue__!true": Object {
+      "Next": "!input.a && input.b",
+      "Result": true,
+      "ResultPath": "$.heap2",
+      "Type": "Pass",
+    },
     "assignTrue__input.a || input.b": Object {
       "Next": "!true",
       "Result": true,
@@ -8109,31 +8133,47 @@ Object {
       "ResultPath": "$.fnl_context",
       "Type": "Pass",
     },
-    "await task(\\"2\\")": Object {
-      "Next": "exit finally",
-      "Parameters": "2",
-      "Resource": "__REPLACED_TOKEN",
-      "ResultPath": "$.heap1",
-      "Type": "Task",
-    },
     "catch(err)": Object {
-      "Next": "0_catch(err)",
+      "Choices": Array [
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.err.message",
+            },
+            Object {
+              "And": Array [
+                Object {
+                  "IsString": true,
+                  "Variable": "$.err.message",
+                },
+                Object {
+                  "StringEquals": "you dun' goofed",
+                  "Variable": "$.err.message",
+                },
+              ],
+            },
+          ],
+          "Next": "throw new Error(\\"little\\")",
+        },
+      ],
+      "Default": "finally",
+      "Type": "Choice",
+    },
+    "catch__for(item of input.items)": Object {
+      "Next": "1__catch__for(item of input.items)",
       "Parameters": Object {
         "0_ParsedError.$": "States.StringToJson($.err.Cause)",
       },
       "ResultPath": "$.err",
       "Type": "Pass",
     },
-    "exit finally": Object {
-      "Choices": Array [
-        Object {
-          "IsPresent": true,
-          "Next": "throw finally",
-          "Variable": "$.0_tmp",
-        },
-      ],
-      "Default": "return null",
-      "Type": "Choice",
+    "finally": Object {
+      "Next": "1__finally",
+      "Parameters": "2",
+      "Resource": "__REPLACED_TOKEN",
+      "ResultPath": "$.heap1",
+      "Type": "Task",
     },
     "for(item of input.items)": Object {
       "Catch": Array [
