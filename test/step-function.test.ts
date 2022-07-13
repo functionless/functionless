@@ -397,10 +397,138 @@ test("boolean logic", () => {
     return {
       and: input.a && input.b,
       or: input.a || input.b,
+      not: !true,
+      notAnd: !(input.a && input.b),
+      notOr: !(input.a || input.b),
+      chain: !(input.a || (input.b && input.a)),
     };
   }).definition;
 
   expect(normalizeDefinition(definition)).toMatchSnapshot();
+});
+
+test("binary and unary unsupported", () => {
+  const { stack } = initStepFunctionApp();
+  expect(
+    () =>
+      new ExpressStepFunction<{ a: number }, number>(
+        stack,
+        "fn",
+        (input) => input.a + input.a
+      )
+  ).toThrow("Step Function does not support operator");
+  expect(
+    () =>
+      new ExpressStepFunction<{ a: number }, number>(
+        stack,
+        "fn2",
+        (input) => input.a - input.a
+      )
+  ).toThrow("Step Function does not support operator");
+  expect(
+    () =>
+      new ExpressStepFunction<{ a: number }, number>(
+        stack,
+        "fn3",
+        (input) => input.a * input.a
+      )
+  ).toThrow("Step Function does not support operator");
+  expect(
+    () =>
+      new ExpressStepFunction<{ a: number }, number>(
+        stack,
+        "fn4",
+        (input) => input.a / input.a
+      )
+  ).toThrow("Step Function does not support operator");
+  expect(
+    () =>
+      new ExpressStepFunction<{ a: number }, number>(
+        stack,
+        "fn5",
+        (input) => input.a % input.a
+      )
+  ).toThrow("Step Function does not support operator");
+  expect(
+    () =>
+      new ExpressStepFunction<{ a: number }, number>(
+        stack,
+        "fn6",
+        (input) => (input.a += input.a)
+      )
+  ).toThrow("Step Function does not support operator");
+  expect(
+    () =>
+      new ExpressStepFunction<{ a: number }, number>(
+        stack,
+        "fn7",
+        (input) => (input.a -= input.a)
+      )
+  ).toThrow("Step Function does not support operator");
+  expect(
+    () =>
+      new ExpressStepFunction<{ a: number }, number>(
+        stack,
+        "fn8",
+        (input) => (input.a *= input.a)
+      )
+  ).toThrow("Step Function does not support operator");
+  expect(
+    () =>
+      new ExpressStepFunction<{ a: number }, number>(
+        stack,
+        "fn9",
+        (input) => (input.a /= input.a)
+      )
+  ).toThrow("Step Function does not support operator");
+  expect(
+    () =>
+      new ExpressStepFunction<{ a: number }, number>(
+        stack,
+        "fn10",
+        (input) => (input.a %= input.a)
+      )
+  ).toThrow("Step Function does not support operator");
+  expect(
+    () =>
+      new ExpressStepFunction<{ a: number }, number>(
+        stack,
+        "fn11",
+        (input) => -input.a
+      )
+  ).toThrow("Step Function does not support operator");
+  expect(
+    () =>
+      new ExpressStepFunction<{ a: number }, number>(
+        stack,
+        "fn12",
+        (input) => --input.a
+      )
+  ).toThrow("Step Function does not support operator");
+  expect(
+    () =>
+      new ExpressStepFunction<{ a: number }, number>(
+        stack,
+        "fn13",
+        (input) => ++input.a
+      )
+  ).toThrow("Step Function does not support operator");
+  expect(
+    () =>
+      new ExpressStepFunction<{ a: number }, number>(
+        stack,
+        "fn14",
+        (input) => input.a++
+      )
+  ).toThrow("Step Function does not support operator");
+  expect(
+    () =>
+      new ExpressStepFunction<{ a: number }, number>(
+        stack,
+        "fn15",
+        (input) => input.a--
+      )
+  ).toThrow("Step Function does not support operator");
 });
 
 test("boolean return", () => {

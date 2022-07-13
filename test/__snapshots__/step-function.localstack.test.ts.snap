@@ -89,10 +89,347 @@ Object {
 }
 `;
 
-exports[`binaryOps comparison 1`] = `
+exports[`binary and unary comparison 1`] = `
 Object {
   "StartAt": "Initialize Functionless Context",
   "States": Object {
+    "!false": Object {
+      "Choices": Array [
+        Object {
+          "Next": "assignTrue__!false",
+          "Not": Object {
+            "IsPresent": true,
+            "Variable": "$.0_false",
+          },
+        },
+      ],
+      "Default": "assignFalse__!false",
+      "Type": "Choice",
+    },
+    "!input.a": Object {
+      "Choices": Array [
+        Object {
+          "Next": "assignTrue__!input.a",
+          "Not": Object {
+            "And": Array [
+              Object {
+                "IsPresent": true,
+                "Variable": "$.fnl_context.input.a",
+              },
+              Object {
+                "IsNull": false,
+                "Variable": "$.fnl_context.input.a",
+              },
+              Object {
+                "Or": Array [
+                  Object {
+                    "And": Array [
+                      Object {
+                        "IsString": true,
+                        "Variable": "$.fnl_context.input.a",
+                      },
+                      Object {
+                        "Not": Object {
+                          "And": Array [
+                            Object {
+                              "IsString": true,
+                              "Variable": "$.fnl_context.input.a",
+                            },
+                            Object {
+                              "StringEquals": "",
+                              "Variable": "$.fnl_context.input.a",
+                            },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                  Object {
+                    "And": Array [
+                      Object {
+                        "IsNumeric": true,
+                        "Variable": "$.fnl_context.input.a",
+                      },
+                      Object {
+                        "Not": Object {
+                          "And": Array [
+                            Object {
+                              "IsNumeric": true,
+                              "Variable": "$.fnl_context.input.a",
+                            },
+                            Object {
+                              "NumericEquals": 0,
+                              "Variable": "$.fnl_context.input.a",
+                            },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                  Object {
+                    "And": Array [
+                      Object {
+                        "IsBoolean": true,
+                        "Variable": "$.fnl_context.input.a",
+                      },
+                      Object {
+                        "BooleanEquals": true,
+                        "Variable": "$.fnl_context.input.a",
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        },
+      ],
+      "Default": "assignFalse__!input.a",
+      "Type": "Choice",
+    },
+    "!input.n": Object {
+      "Choices": Array [
+        Object {
+          "Next": "assignTrue__!input.n",
+          "Not": Object {
+            "And": Array [
+              Object {
+                "IsPresent": true,
+                "Variable": "$.fnl_context.input.n",
+              },
+              Object {
+                "IsNull": false,
+                "Variable": "$.fnl_context.input.n",
+              },
+              Object {
+                "Or": Array [
+                  Object {
+                    "And": Array [
+                      Object {
+                        "IsString": true,
+                        "Variable": "$.fnl_context.input.n",
+                      },
+                      Object {
+                        "Not": Object {
+                          "And": Array [
+                            Object {
+                              "IsString": true,
+                              "Variable": "$.fnl_context.input.n",
+                            },
+                            Object {
+                              "StringEquals": "",
+                              "Variable": "$.fnl_context.input.n",
+                            },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                  Object {
+                    "And": Array [
+                      Object {
+                        "IsNumeric": true,
+                        "Variable": "$.fnl_context.input.n",
+                      },
+                      Object {
+                        "Not": Object {
+                          "And": Array [
+                            Object {
+                              "IsNumeric": true,
+                              "Variable": "$.fnl_context.input.n",
+                            },
+                            Object {
+                              "NumericEquals": 0,
+                              "Variable": "$.fnl_context.input.n",
+                            },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                  Object {
+                    "And": Array [
+                      Object {
+                        "IsBoolean": true,
+                        "Variable": "$.fnl_context.input.n",
+                      },
+                      Object {
+                        "BooleanEquals": true,
+                        "Variable": "$.fnl_context.input.n",
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        },
+      ],
+      "Default": "assignFalse__!input.n",
+      "Type": "Choice",
+    },
+    "!input.nv": Object {
+      "Choices": Array [
+        Object {
+          "Next": "assignTrue__!input.nv",
+          "Not": Object {
+            "And": Array [
+              Object {
+                "IsPresent": true,
+                "Variable": "$.fnl_context.input.nv",
+              },
+              Object {
+                "IsNull": false,
+                "Variable": "$.fnl_context.input.nv",
+              },
+              Object {
+                "Or": Array [
+                  Object {
+                    "And": Array [
+                      Object {
+                        "IsString": true,
+                        "Variable": "$.fnl_context.input.nv",
+                      },
+                      Object {
+                        "Not": Object {
+                          "And": Array [
+                            Object {
+                              "IsString": true,
+                              "Variable": "$.fnl_context.input.nv",
+                            },
+                            Object {
+                              "StringEquals": "",
+                              "Variable": "$.fnl_context.input.nv",
+                            },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                  Object {
+                    "And": Array [
+                      Object {
+                        "IsNumeric": true,
+                        "Variable": "$.fnl_context.input.nv",
+                      },
+                      Object {
+                        "Not": Object {
+                          "And": Array [
+                            Object {
+                              "IsNumeric": true,
+                              "Variable": "$.fnl_context.input.nv",
+                            },
+                            Object {
+                              "NumericEquals": 0,
+                              "Variable": "$.fnl_context.input.nv",
+                            },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                  Object {
+                    "And": Array [
+                      Object {
+                        "IsBoolean": true,
+                        "Variable": "$.fnl_context.input.nv",
+                      },
+                      Object {
+                        "BooleanEquals": true,
+                        "Variable": "$.fnl_context.input.nv",
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        },
+      ],
+      "Default": "assignFalse__!input.nv",
+      "Type": "Choice",
+    },
+    "!input.x": Object {
+      "Choices": Array [
+        Object {
+          "Next": "assignTrue__!input.x",
+          "Not": Object {
+            "And": Array [
+              Object {
+                "IsPresent": true,
+                "Variable": "$.fnl_context.input.x",
+              },
+              Object {
+                "IsNull": false,
+                "Variable": "$.fnl_context.input.x",
+              },
+              Object {
+                "Or": Array [
+                  Object {
+                    "And": Array [
+                      Object {
+                        "IsString": true,
+                        "Variable": "$.fnl_context.input.x",
+                      },
+                      Object {
+                        "Not": Object {
+                          "And": Array [
+                            Object {
+                              "IsString": true,
+                              "Variable": "$.fnl_context.input.x",
+                            },
+                            Object {
+                              "StringEquals": "",
+                              "Variable": "$.fnl_context.input.x",
+                            },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                  Object {
+                    "And": Array [
+                      Object {
+                        "IsNumeric": true,
+                        "Variable": "$.fnl_context.input.x",
+                      },
+                      Object {
+                        "Not": Object {
+                          "And": Array [
+                            Object {
+                              "IsNumeric": true,
+                              "Variable": "$.fnl_context.input.x",
+                            },
+                            Object {
+                              "NumericEquals": 0,
+                              "Variable": "$.fnl_context.input.x",
+                            },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                  Object {
+                    "And": Array [
+                      Object {
+                        "IsBoolean": true,
+                        "Variable": "$.fnl_context.input.x",
+                      },
+                      Object {
+                        "BooleanEquals": true,
+                        "Variable": "$.fnl_context.input.x",
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        },
+      ],
+      "Default": "assignFalse__!input.x",
+      "Type": "Choice",
+    },
     "\\"a\\" != \\"a\\"": Object {
       "Choices": Array [
         Object {
@@ -418,6 +755,7 @@ Object {
         "constantBooleanNotEquals.$": "$.heap52",
         "constantInConstant.$": "$.heap64",
         "constantInVar.$": "$.heap65",
+        "constantNot.$": "$.heap67",
         "constantNotInVar.$": "$.heap66",
         "constantNullEquals.$": "$.heap56",
         "constantNullNotEquals.$": "$.heap60",
@@ -449,6 +787,10 @@ Object {
         "constantToVarStringLess.$": "$.heap9",
         "constantToVarStringLessEquals.$": "$.heap13",
         "constantToVarStringNotEquals.$": "$.heap5",
+        "varNot.$": "$.heap68",
+        "varNotNullFalse.$": "$.heap70",
+        "varNotPresentFalse.$": "$.heap71",
+        "varNotPresentTrue.$": "$.heap69",
         "varToConstantBooleanEquals.$": "$.heap50",
         "varToConstantBooleanNotEquals.$": "$.heap54",
         "varToConstantNullEquals.$": "$.heap58",
@@ -659,6 +1001,36 @@ Object {
       "ResultPath": "$.fnl_context",
       "Type": "Pass",
     },
+    "assignFalse__!false": Object {
+      "Next": "!input.a",
+      "Result": false,
+      "ResultPath": "$.heap67",
+      "Type": "Pass",
+    },
+    "assignFalse__!input.a": Object {
+      "Next": "!input.nv",
+      "Result": false,
+      "ResultPath": "$.heap68",
+      "Type": "Pass",
+    },
+    "assignFalse__!input.n": Object {
+      "Next": "!input.x",
+      "Result": false,
+      "ResultPath": "$.heap70",
+      "Type": "Pass",
+    },
+    "assignFalse__!input.nv": Object {
+      "Next": "!input.n",
+      "Result": false,
+      "ResultPath": "$.heap69",
+      "Type": "Pass",
+    },
+    "assignFalse__!input.x": Object {
+      "Next": "1__return {constantStringEquals: \\"a\\" == \\"a\\", constantToVarStringEquals: inp",
+      "Result": false,
+      "ResultPath": "$.heap71",
+      "Type": "Pass",
+    },
     "assignFalse__\\"a\\" != \\"a\\"": Object {
       "Next": "input.v != \\"val\\"",
       "Result": false,
@@ -702,7 +1074,7 @@ Object {
       "Type": "Pass",
     },
     "assignFalse__\\"b\\" in input.obj": Object {
-      "Next": "1__return {constantStringEquals: \\"a\\" == \\"a\\", constantToVarStringEquals: inp",
+      "Next": "!false",
       "Result": false,
       "ResultPath": "$.heap66",
       "Type": "Pass",
@@ -1061,6 +1433,36 @@ Object {
       "ResultPath": "$.heap48",
       "Type": "Pass",
     },
+    "assignTrue__!false": Object {
+      "Next": "!input.a",
+      "Result": true,
+      "ResultPath": "$.heap67",
+      "Type": "Pass",
+    },
+    "assignTrue__!input.a": Object {
+      "Next": "!input.nv",
+      "Result": true,
+      "ResultPath": "$.heap68",
+      "Type": "Pass",
+    },
+    "assignTrue__!input.n": Object {
+      "Next": "!input.x",
+      "Result": true,
+      "ResultPath": "$.heap70",
+      "Type": "Pass",
+    },
+    "assignTrue__!input.nv": Object {
+      "Next": "!input.n",
+      "Result": true,
+      "ResultPath": "$.heap69",
+      "Type": "Pass",
+    },
+    "assignTrue__!input.x": Object {
+      "Next": "1__return {constantStringEquals: \\"a\\" == \\"a\\", constantToVarStringEquals: inp",
+      "Result": true,
+      "ResultPath": "$.heap71",
+      "Type": "Pass",
+    },
     "assignTrue__\\"a\\" != \\"a\\"": Object {
       "Next": "input.v != \\"val\\"",
       "Result": true,
@@ -1104,7 +1506,7 @@ Object {
       "Type": "Pass",
     },
     "assignTrue__\\"b\\" in input.obj": Object {
-      "Next": "1__return {constantStringEquals: \\"a\\" == \\"a\\", constantToVarStringEquals: inp",
+      "Next": "!false",
       "Result": true,
       "ResultPath": "$.heap66",
       "Type": "Pass",
@@ -5538,170 +5940,6 @@ Object {
 }
 `;
 
-exports[`for map conditional 1`] = `
-Object {
-  "StartAt": "Initialize Functionless Context",
-  "States": Object {
-    "0_tmp = await func()": Object {
-      "InputPath": "$.fnl_context.null",
-      "Next": "1__0_tmp = await func()",
-      "Resource": "__REPLACED_TOKEN",
-      "ResultPath": "$.heap3",
-      "Type": "Task",
-    },
-    "1__0_tmp = await func()": Object {
-      "InputPath": "$.heap3",
-      "Next": "for(i of 0_tmp)",
-      "ResultPath": "$.0_tmp",
-      "Type": "Pass",
-    },
-    "1__for(i of [1, 2, 3])": Object {
-      "ItemsPath": "$.heap0",
-      "Iterator": Object {
-        "StartAt": "a = \`ai\`",
-        "States": Object {
-          "1__a = \`ai\`": Object {
-            "End": true,
-            "InputPath": "$.heap1.string",
-            "ResultPath": "$.a",
-            "Type": "Pass",
-          },
-          "1__a = \`ai\` 1": Object {
-            "Next": "1__a = \`ai\`",
-            "Parameters": Object {
-              "string.$": "States.Format($.heap1,$.a,$.i)",
-            },
-            "ResultPath": "$.heap1",
-            "Type": "Pass",
-          },
-          "a = \`ai\`": Object {
-            "Next": "1__a = \`ai\` 1",
-            "Result": "{}{}",
-            "ResultPath": "$.heap1",
-            "Type": "Pass",
-          },
-        },
-      },
-      "MaxConcurrency": 1,
-      "Next": "for(i of input.arr)",
-      "Parameters": Object {
-        "a.$": "$.a",
-        "i.$": "$$.Map.Item.Value",
-      },
-      "ResultPath": null,
-      "Type": "Map",
-    },
-    "Initialize Functionless Context": Object {
-      "Next": "a = \\"x\\"",
-      "OutputPath": "$",
-      "Parameters": Object {
-        "input.$": "$",
-        "null": null,
-      },
-      "ResultPath": "$.fnl_context",
-      "Type": "Pass",
-    },
-    "a = \\"x\\"": Object {
-      "Next": "for(i of [1, 2, 3])",
-      "Result": "x",
-      "ResultPath": "$.a",
-      "Type": "Pass",
-    },
-    "for(i of 0_tmp)": Object {
-      "ItemsPath": "$.0_tmp",
-      "Iterator": Object {
-        "StartAt": "a = \`ai\` 2",
-        "States": Object {
-          "1__a = \`ai\` 2": Object {
-            "End": true,
-            "InputPath": "$.heap4.string",
-            "ResultPath": "$.a",
-            "Type": "Pass",
-          },
-          "1__a = \`ai\` 2 1": Object {
-            "Next": "1__a = \`ai\` 2",
-            "Parameters": Object {
-              "string.$": "States.Format($.heap4,$.a,$.i)",
-            },
-            "ResultPath": "$.heap4",
-            "Type": "Pass",
-          },
-          "a = \`ai\` 2": Object {
-            "Next": "1__a = \`ai\` 2 1",
-            "Result": "{}{}",
-            "ResultPath": "$.heap4",
-            "Type": "Pass",
-          },
-        },
-      },
-      "MaxConcurrency": 1,
-      "Next": "return \\"madeit\\"",
-      "Parameters": Object {
-        "0_tmp.$": "$.0_tmp",
-        "a.$": "$.a",
-        "fnl_context.$": "$.fnl_context",
-        "i.$": "$$.Map.Item.Value",
-      },
-      "ResultPath": null,
-      "Type": "Map",
-    },
-    "for(i of [1, 2, 3])": Object {
-      "Next": "1__for(i of [1, 2, 3])",
-      "Result": Array [
-        1,
-        2,
-        3,
-      ],
-      "ResultPath": "$.heap0",
-      "Type": "Pass",
-    },
-    "for(i of input.arr)": Object {
-      "ItemsPath": "$.fnl_context.input.arr",
-      "Iterator": Object {
-        "StartAt": "a = \`ai\` 1",
-        "States": Object {
-          "1__a = \`ai\` 1 1": Object {
-            "End": true,
-            "InputPath": "$.heap2.string",
-            "ResultPath": "$.a",
-            "Type": "Pass",
-          },
-          "1__a = \`ai\` 1 2": Object {
-            "Next": "1__a = \`ai\` 1 1",
-            "Parameters": Object {
-              "string.$": "States.Format($.heap2,$.a,$.i)",
-            },
-            "ResultPath": "$.heap2",
-            "Type": "Pass",
-          },
-          "a = \`ai\` 1": Object {
-            "Next": "1__a = \`ai\` 1 2",
-            "Result": "{}{}",
-            "ResultPath": "$.heap2",
-            "Type": "Pass",
-          },
-        },
-      },
-      "MaxConcurrency": 1,
-      "Next": "0_tmp = await func()",
-      "Parameters": Object {
-        "a.$": "$.a",
-        "fnl_context.$": "$.fnl_context",
-        "i.$": "$$.Map.Item.Value",
-      },
-      "ResultPath": null,
-      "Type": "Map",
-    },
-    "return \\"madeit\\"": Object {
-      "End": true,
-      "Result": "madeit",
-      "ResultPath": "$",
-      "Type": "Pass",
-    },
-  },
-}
-`;
-
 exports[`map 1`] = `
 Object {
   "StartAt": "Initialize Functionless Context",
@@ -6732,10 +6970,10 @@ Object {
       "Parameters": Object {
         "arrType.$": "$.heap12",
         "booleanType.$": "$.heap5",
-        "isBool.$": "$.heap3",
-        "isNumber.$": "$.heap6",
-        "isObject.$": "$.heap9",
-        "isString.$": "$.heap0",
+        "isBool.$": "$.heap4",
+        "isNumber.$": "$.heap7",
+        "isObject.$": "$.heap10",
+        "isString.$": "$.heap1",
         "numberType.$": "$.heap8",
         "objectType.$": "$.heap11",
         "stringType.$": "$.heap2",
@@ -6749,17 +6987,17 @@ Object {
           "And": Array [
             Object {
               "IsPresent": true,
-              "Variable": "$.heap1",
+              "Variable": "$.heap0",
             },
             Object {
               "And": Array [
                 Object {
                   "IsString": true,
-                  "Variable": "$.heap1",
+                  "Variable": "$.heap0",
                 },
                 Object {
                   "StringEquals": "string",
-                  "Variable": "$.heap1",
+                  "Variable": "$.heap0",
                 },
               ],
             },
@@ -6776,17 +7014,17 @@ Object {
           "And": Array [
             Object {
               "IsPresent": true,
-              "Variable": "$.heap4",
+              "Variable": "$.heap3",
             },
             Object {
               "And": Array [
                 Object {
                   "IsString": true,
-                  "Variable": "$.heap4",
+                  "Variable": "$.heap3",
                 },
                 Object {
                   "StringEquals": "boolean",
-                  "Variable": "$.heap4",
+                  "Variable": "$.heap3",
                 },
               ],
             },
@@ -6803,17 +7041,17 @@ Object {
           "And": Array [
             Object {
               "IsPresent": true,
-              "Variable": "$.heap7",
+              "Variable": "$.heap6",
             },
             Object {
               "And": Array [
                 Object {
                   "IsString": true,
-                  "Variable": "$.heap7",
+                  "Variable": "$.heap6",
                 },
                 Object {
                   "StringEquals": "number",
-                  "Variable": "$.heap7",
+                  "Variable": "$.heap6",
                 },
               ],
             },
@@ -6830,17 +7068,17 @@ Object {
           "And": Array [
             Object {
               "IsPresent": true,
-              "Variable": "$.heap10",
+              "Variable": "$.heap9",
             },
             Object {
               "And": Array [
                 Object {
                   "IsString": true,
-                  "Variable": "$.heap10",
+                  "Variable": "$.heap9",
                 },
                 Object {
                   "StringEquals": "object",
-                  "Variable": "$.heap10",
+                  "Variable": "$.heap9",
                 },
               ],
             },
@@ -6864,49 +7102,49 @@ Object {
     "assignFalse__1__return {isString: typeof input.str == \\"string\\", stringType:": Object {
       "Next": "input.str",
       "Result": false,
-      "ResultPath": "$.heap0",
+      "ResultPath": "$.heap1",
       "Type": "Pass",
     },
     "assignFalse__1__typeof input.bool == \\"boolean\\"": Object {
       "Next": "input.bool",
       "Result": false,
-      "ResultPath": "$.heap3",
+      "ResultPath": "$.heap4",
       "Type": "Pass",
     },
     "assignFalse__1__typeof input.num == \\"number\\"": Object {
       "Next": "input.num",
       "Result": false,
-      "ResultPath": "$.heap6",
+      "ResultPath": "$.heap7",
       "Type": "Pass",
     },
     "assignFalse__1__typeof input.obj == \\"object\\"": Object {
       "Next": "input.obj",
       "Result": false,
-      "ResultPath": "$.heap9",
+      "ResultPath": "$.heap10",
       "Type": "Pass",
     },
     "assignTrue__1__return {isString: typeof input.str == \\"string\\", stringType: ": Object {
       "Next": "input.str",
       "Result": true,
-      "ResultPath": "$.heap0",
+      "ResultPath": "$.heap1",
       "Type": "Pass",
     },
     "assignTrue__1__typeof input.bool == \\"boolean\\"": Object {
       "Next": "input.bool",
       "Result": true,
-      "ResultPath": "$.heap3",
+      "ResultPath": "$.heap4",
       "Type": "Pass",
     },
     "assignTrue__1__typeof input.num == \\"number\\"": Object {
       "Next": "input.num",
       "Result": true,
-      "ResultPath": "$.heap6",
+      "ResultPath": "$.heap7",
       "Type": "Pass",
     },
     "assignTrue__1__typeof input.obj == \\"object\\"": Object {
       "Next": "input.obj",
       "Result": true,
-      "ResultPath": "$.heap9",
+      "ResultPath": "$.heap10",
       "Type": "Pass",
     },
     "boolean__input.arr": Object {
@@ -6942,25 +7180,25 @@ Object {
     "boolean__return {isString: typeof input.str == \\"string\\", stringType: typeof": Object {
       "Next": "1__return {isString: typeof input.str == \\"string\\", stringType: typeof input 1",
       "Result": "boolean",
-      "ResultPath": "$.heap1",
+      "ResultPath": "$.heap0",
       "Type": "Pass",
     },
     "boolean__typeof input.bool == \\"boolean\\"": Object {
       "Next": "1__typeof input.bool == \\"boolean\\"",
       "Result": "boolean",
-      "ResultPath": "$.heap4",
+      "ResultPath": "$.heap3",
       "Type": "Pass",
     },
     "boolean__typeof input.num == \\"number\\"": Object {
       "Next": "1__typeof input.num == \\"number\\"",
       "Result": "boolean",
-      "ResultPath": "$.heap7",
+      "ResultPath": "$.heap6",
       "Type": "Pass",
     },
     "boolean__typeof input.obj == \\"object\\"": Object {
       "Next": "1__typeof input.obj == \\"object\\"",
       "Result": "boolean",
-      "ResultPath": "$.heap10",
+      "ResultPath": "$.heap9",
       "Type": "Pass",
     },
     "input.arr": Object {
@@ -7246,25 +7484,25 @@ Object {
     "number__return {isString: typeof input.str == \\"string\\", stringType: typeof ": Object {
       "Next": "1__return {isString: typeof input.str == \\"string\\", stringType: typeof input 1",
       "Result": "number",
-      "ResultPath": "$.heap1",
+      "ResultPath": "$.heap0",
       "Type": "Pass",
     },
     "number__typeof input.bool == \\"boolean\\"": Object {
       "Next": "1__typeof input.bool == \\"boolean\\"",
       "Result": "number",
-      "ResultPath": "$.heap4",
+      "ResultPath": "$.heap3",
       "Type": "Pass",
     },
     "number__typeof input.num == \\"number\\"": Object {
       "Next": "1__typeof input.num == \\"number\\"",
       "Result": "number",
-      "ResultPath": "$.heap7",
+      "ResultPath": "$.heap6",
       "Type": "Pass",
     },
     "number__typeof input.obj == \\"object\\"": Object {
       "Next": "1__typeof input.obj == \\"object\\"",
       "Result": "number",
-      "ResultPath": "$.heap10",
+      "ResultPath": "$.heap9",
       "Type": "Pass",
     },
     "object__input.arr": Object {
@@ -7300,25 +7538,25 @@ Object {
     "object__return {isString: typeof input.str == \\"string\\", stringType: typeof ": Object {
       "Next": "1__return {isString: typeof input.str == \\"string\\", stringType: typeof input 1",
       "Result": "object",
-      "ResultPath": "$.heap1",
+      "ResultPath": "$.heap0",
       "Type": "Pass",
     },
     "object__typeof input.bool == \\"boolean\\"": Object {
       "Next": "1__typeof input.bool == \\"boolean\\"",
       "Result": "object",
-      "ResultPath": "$.heap4",
+      "ResultPath": "$.heap3",
       "Type": "Pass",
     },
     "object__typeof input.num == \\"number\\"": Object {
       "Next": "1__typeof input.num == \\"number\\"",
       "Result": "object",
-      "ResultPath": "$.heap7",
+      "ResultPath": "$.heap6",
       "Type": "Pass",
     },
     "object__typeof input.obj == \\"object\\"": Object {
       "Next": "1__typeof input.obj == \\"object\\"",
       "Result": "object",
-      "ResultPath": "$.heap10",
+      "ResultPath": "$.heap9",
       "Type": "Pass",
     },
     "return {isString: typeof input.str == \\"string\\", stringType: typeof input.st": Object {
@@ -7404,25 +7642,25 @@ Object {
     "string__return {isString: typeof input.str == \\"string\\", stringType: typeof ": Object {
       "Next": "1__return {isString: typeof input.str == \\"string\\", stringType: typeof input 1",
       "Result": "string",
-      "ResultPath": "$.heap1",
+      "ResultPath": "$.heap0",
       "Type": "Pass",
     },
     "string__typeof input.bool == \\"boolean\\"": Object {
       "Next": "1__typeof input.bool == \\"boolean\\"",
       "Result": "string",
-      "ResultPath": "$.heap4",
+      "ResultPath": "$.heap3",
       "Type": "Pass",
     },
     "string__typeof input.num == \\"number\\"": Object {
       "Next": "1__typeof input.num == \\"number\\"",
       "Result": "string",
-      "ResultPath": "$.heap7",
+      "ResultPath": "$.heap6",
       "Type": "Pass",
     },
     "string__typeof input.obj == \\"object\\"": Object {
       "Next": "1__typeof input.obj == \\"object\\"",
       "Result": "string",
-      "ResultPath": "$.heap10",
+      "ResultPath": "$.heap9",
       "Type": "Pass",
     },
     "typeof input.bool == \\"boolean\\"": Object {
@@ -7608,25 +7846,25 @@ Object {
     "undefined__return {isString: typeof input.str == \\"string\\", stringType: type": Object {
       "Next": "1__return {isString: typeof input.str == \\"string\\", stringType: typeof input 1",
       "Result": "undefined",
-      "ResultPath": "$.heap1",
+      "ResultPath": "$.heap0",
       "Type": "Pass",
     },
     "undefined__typeof input.bool == \\"boolean\\"": Object {
       "Next": "1__typeof input.bool == \\"boolean\\"",
       "Result": "undefined",
-      "ResultPath": "$.heap4",
+      "ResultPath": "$.heap3",
       "Type": "Pass",
     },
     "undefined__typeof input.num == \\"number\\"": Object {
       "Next": "1__typeof input.num == \\"number\\"",
       "Result": "undefined",
-      "ResultPath": "$.heap7",
+      "ResultPath": "$.heap6",
       "Type": "Pass",
     },
     "undefined__typeof input.obj == \\"object\\"": Object {
       "Next": "1__typeof input.obj == \\"object\\"",
       "Result": "undefined",
-      "ResultPath": "$.heap10",
+      "ResultPath": "$.heap9",
       "Type": "Pass",
     },
   },
