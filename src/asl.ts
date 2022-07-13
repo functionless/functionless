@@ -766,15 +766,14 @@ export class ASL {
                   states: {
                     body,
                     [ASL.ContinueNext]: {
-                      Type: "Pass",
+                      Type: "Pass" as const,
                       node: new ContinueStmt(),
                       ResultPath: null,
                     },
                     [ASL.BreakNext]: {
-                      Type: "Fail",
+                      Type: "Fail" as const,
                       Error: "Break",
                       node: new BreakStmt(),
-                      ResultPath: null,
                     },
                   },
                 }
@@ -812,12 +811,15 @@ export class ASL {
             choose: {
               Type: "Choice",
               Choices: choices,
-              ...(elsState ? { Default: "else" } : {}),
+              Default: "else",
             },
             ...Object.fromEntries(
               ifs.map((_if, i) => [`if_${i}`, this.evalStmt(_if.then)])
             ),
-            ...(elsState ? { else: elsState } : {}),
+            // provide an empty else statement. A choice default cannot terminate a sub-graph,
+            // without a pass here, an if statement without else cannot end a block.
+            // if the extra pass isn't needed, it will be pruned later
+            else: elsState ? elsState : { Type: "Pass" },
           },
         };
       });

@@ -925,8 +925,12 @@ Object {
         "StartAt": "if(item == \\"hello\\")",
         "States": Object {
           "break": Object {
-            "ResultPath": null,
+            "Error": "Break",
             "Type": "Fail",
+          },
+          "else__if(item == \\"hello\\")": Object {
+            "End": true,
+            "Type": "Pass",
           },
           "if(item == \\"hello\\")": Object {
             "Choices": Array [
@@ -952,6 +956,7 @@ Object {
                 "Next": "break",
               },
             ],
+            "Default": "else__if(item == \\"hello\\")",
             "Type": "Choice",
           },
         },
@@ -1856,6 +1861,10 @@ Object {
             "ResultPath": null,
             "Type": "Pass",
           },
+          "else__if(item == \\"hello\\")": Object {
+            "End": true,
+            "Type": "Pass",
+          },
           "if(item == \\"hello\\")": Object {
             "Choices": Array [
               Object {
@@ -1880,6 +1889,7 @@ Object {
                 "Next": "continue",
               },
             ],
+            "Default": "else__if(item == \\"hello\\")",
             "Type": "Choice",
           },
         },

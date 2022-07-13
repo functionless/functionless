@@ -4914,6 +4914,295 @@ Object {
 }
 `;
 
+exports[`continue break 1`] = `
+Object {
+  "StartAt": "Initialize Functionless Context",
+  "States": Object {
+    "1__a = \`a1\`": Object {
+      "InputPath": "$.heap0.string",
+      "Next": "if(a != \\"111\\")",
+      "ResultPath": "$.a",
+      "Type": "Pass",
+    },
+    "1__a = \`a2\`": Object {
+      "InputPath": "$.heap1.string",
+      "Next": "while (true)",
+      "ResultPath": "$.a",
+      "Type": "Pass",
+    },
+    "1__for(i of [1, 2, 3, 4])": Object {
+      "Catch": Array [
+        Object {
+          "ErrorEquals": Array [
+            "Break",
+          ],
+          "Next": "item = await $AWS.DynamoDB.GetItem({Table: table, Key: {id: {S: input.id}},",
+          "ResultPath": null,
+        },
+      ],
+      "ItemsPath": "$.heap2",
+      "Iterator": Object {
+        "StartAt": "if(i == 1)",
+        "States": Object {
+          "1__await $AWS.DynamoDB.UpdateItem({Table: table, Key: {id: {S: input.id}}, ": Object {
+            "Next": "if(i == 3)",
+            "Parameters": Object {
+              "ExpressionAttributeValues": Object {
+                ":inc": Object {
+                  "N.$": "$.heap3.string",
+                },
+                ":start": Object {
+                  "N": "0",
+                },
+              },
+              "Key": Object {
+                "id": Object {
+                  "S.$": "$.fnl_context.input.id",
+                },
+              },
+              "TableName": "__REPLACED_TOKEN",
+              "UpdateExpression": "SET val = if_not_exists(val, :start) + :inc",
+            },
+            "Resource": "__REPLACED_ARN",
+            "ResultPath": "$.heap4",
+            "Type": "Task",
+          },
+          "await $AWS.DynamoDB.UpdateItem({Table: table, Key: {id: {S: input.id}}, Upd": Object {
+            "Next": "1__await $AWS.DynamoDB.UpdateItem({Table: table, Key: {id: {S: input.id}}, ",
+            "Parameters": Object {
+              "string.$": "States.Format('{}',$.i)",
+            },
+            "ResultPath": "$.heap3",
+            "Type": "Pass",
+          },
+          "break": Object {
+            "Error": "Break",
+            "Type": "Fail",
+          },
+          "continue": Object {
+            "End": true,
+            "ResultPath": null,
+            "Type": "Pass",
+          },
+          "else__if(i == 3)": Object {
+            "End": true,
+            "Type": "Pass",
+          },
+          "if(i == 1)": Object {
+            "Choices": Array [
+              Object {
+                "And": Array [
+                  Object {
+                    "IsPresent": true,
+                    "Variable": "$.i",
+                  },
+                  Object {
+                    "And": Array [
+                      Object {
+                        "IsNumeric": true,
+                        "Variable": "$.i",
+                      },
+                      Object {
+                        "NumericEquals": 1,
+                        "Variable": "$.i",
+                      },
+                    ],
+                  },
+                ],
+                "Next": "continue",
+              },
+            ],
+            "Default": "await $AWS.DynamoDB.UpdateItem({Table: table, Key: {id: {S: input.id}}, Upd",
+            "Type": "Choice",
+          },
+          "if(i == 3)": Object {
+            "Choices": Array [
+              Object {
+                "And": Array [
+                  Object {
+                    "IsPresent": true,
+                    "Variable": "$.i",
+                  },
+                  Object {
+                    "And": Array [
+                      Object {
+                        "IsNumeric": true,
+                        "Variable": "$.i",
+                      },
+                      Object {
+                        "NumericEquals": 3,
+                        "Variable": "$.i",
+                      },
+                    ],
+                  },
+                ],
+                "Next": "break",
+              },
+            ],
+            "Default": "else__if(i == 3)",
+            "Type": "Choice",
+          },
+        },
+      },
+      "MaxConcurrency": 1,
+      "Next": "item = await $AWS.DynamoDB.GetItem({Table: table, Key: {id: {S: input.id}},",
+      "Parameters": Object {
+        "a.$": "$.a",
+        "fnl_context.$": "$.fnl_context",
+        "i.$": "$$.Map.Item.Value",
+      },
+      "ResultPath": null,
+      "Type": "Map",
+    },
+    "1__item = await $AWS.DynamoDB.GetItem({Table: table, Key: {id: {S: input.id": Object {
+      "InputPath": "$.heap5",
+      "Next": "return \`aitem.Item.val.N\`",
+      "ResultPath": "$.item",
+      "Type": "Pass",
+    },
+    "1__return \`aitem.Item.val.N\`": Object {
+      "End": true,
+      "InputPath": "$.heap6.string",
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "Initialize Functionless Context": Object {
+      "Next": "a = \\"\\"",
+      "OutputPath": "$",
+      "Parameters": Object {
+        "input.$": "$",
+        "null": null,
+      },
+      "ResultPath": "$.fnl_context",
+      "Type": "Pass",
+    },
+    "a = \\"\\"": Object {
+      "Next": "while (true)",
+      "Result": "",
+      "ResultPath": "$.a",
+      "Type": "Pass",
+    },
+    "a = \`a1\`": Object {
+      "Next": "1__a = \`a1\`",
+      "Parameters": Object {
+        "string.$": "States.Format('{}1',$.a)",
+      },
+      "ResultPath": "$.heap0",
+      "Type": "Pass",
+    },
+    "a = \`a2\`": Object {
+      "Next": "1__a = \`a2\`",
+      "Parameters": Object {
+        "string.$": "States.Format('{}2',$.a)",
+      },
+      "ResultPath": "$.heap1",
+      "Type": "Pass",
+    },
+    "for(i of [1, 2, 3, 4])": Object {
+      "Next": "1__for(i of [1, 2, 3, 4])",
+      "Result": Array [
+        1,
+        2,
+        3,
+        4,
+      ],
+      "ResultPath": "$.heap2",
+      "Type": "Pass",
+    },
+    "if(a != \\"111\\")": Object {
+      "Choices": Array [
+        Object {
+          "Next": "if(a == \\"11121\\")",
+          "Not": Object {
+            "And": Array [
+              Object {
+                "IsPresent": true,
+                "Variable": "$.a",
+              },
+              Object {
+                "And": Array [
+                  Object {
+                    "IsString": true,
+                    "Variable": "$.a",
+                  },
+                  Object {
+                    "StringEquals": "111",
+                    "Variable": "$.a",
+                  },
+                ],
+              },
+            ],
+          },
+        },
+      ],
+      "Default": "a = \`a2\`",
+      "Type": "Choice",
+    },
+    "if(a == \\"11121\\")": Object {
+      "Choices": Array [
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.a",
+            },
+            Object {
+              "And": Array [
+                Object {
+                  "IsString": true,
+                  "Variable": "$.a",
+                },
+                Object {
+                  "StringEquals": "11121",
+                  "Variable": "$.a",
+                },
+              ],
+            },
+          ],
+          "Next": "for(i of [1, 2, 3, 4])",
+        },
+      ],
+      "Default": "while (true)",
+      "Type": "Choice",
+    },
+    "item = await $AWS.DynamoDB.GetItem({Table: table, Key: {id: {S: input.id}},": Object {
+      "Next": "1__item = await $AWS.DynamoDB.GetItem({Table: table, Key: {id: {S: input.id",
+      "Parameters": Object {
+        "ConsistentRead": true,
+        "Key": Object {
+          "id": Object {
+            "S.$": "$.fnl_context.input.id",
+          },
+        },
+        "TableName": "__REPLACED_TOKEN",
+      },
+      "Resource": "__REPLACED_ARN",
+      "ResultPath": "$.heap5",
+      "Type": "Task",
+    },
+    "return \`aitem.Item.val.N\`": Object {
+      "Next": "1__return \`aitem.Item.val.N\`",
+      "Parameters": Object {
+        "string.$": "States.Format('{}{}',$.a,$.item.Item.val.N)",
+      },
+      "ResultPath": "$.heap6",
+      "Type": "Pass",
+    },
+    "while (true)": Object {
+      "Choices": Array [
+        Object {
+          "IsNull": false,
+          "Next": "a = \`a1\`",
+          "Variable": "$$.Execution.Id",
+        },
+      ],
+      "Default": "for(i of [1, 2, 3, 4])",
+      "Type": "Choice",
+    },
+  },
+}
+`;
+
 exports[`duplicate nodes 1`] = `
 Object {
   "StartAt": "\\"hello world\\"",
@@ -5852,17 +6141,17 @@ Object {
       ],
       "ItemsPath": "$.heap20",
       "Iterator": Object {
-        "StartAt": "return await func()",
+        "StartAt": "return func()",
         "States": Object {
-          "1__return await func()": Object {
+          "1__return func()": Object {
             "End": true,
             "InputPath": "$.heap19",
             "ResultPath": "$",
             "Type": "Pass",
           },
-          "return await func()": Object {
+          "return func()": Object {
             "InputPath": "$.fnl_context.null",
-            "Next": "1__return await func()",
+            "Next": "1__return func()",
             "Resource": "__REPLACED_TOKEN",
             "ResultPath": "$.heap19",
             "Type": "Task",
@@ -6020,17 +6309,17 @@ Object {
       ],
       "ItemsPath": "$.heap24",
       "Iterator": Object {
-        "StartAt": "return await func() 1",
+        "StartAt": "return func() 1",
         "States": Object {
-          "1__return await func() 1": Object {
+          "1__return func() 1": Object {
             "End": true,
             "InputPath": "$.heap23",
             "ResultPath": "$",
             "Type": "Pass",
           },
-          "return await func() 1": Object {
+          "return func() 1": Object {
             "InputPath": "$.fnl_context.null",
-            "Next": "1__return await func() 1",
+            "Next": "1__return func() 1",
             "Resource": "__REPLACED_TOKEN",
             "ResultPath": "$.heap23",
             "Type": "Task",

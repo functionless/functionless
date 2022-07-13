@@ -938,6 +938,74 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
   );
 
   test(
+    "continue break",
+    (parent) => {
+      const table = new Table<{ id: string; val: number }, "id">(
+        parent,
+        "table",
+        {
+          partitionKey: {
+            name: "id",
+            type: AttributeType.STRING,
+          },
+        }
+      );
+      return new StepFunction<{ id: string }, string>(
+        parent,
+        "sfn",
+        async (input) => {
+          let a = "";
+          while (true) {
+            a = `${a}1`;
+            if (a !== "111") {
+              if (a === "11121") {
+                break;
+              }
+              continue;
+            }
+            a = `${a}2`;
+          }
+
+          for (const i of [1, 2, 3, 4]) {
+            if (i === 1) {
+              continue;
+            }
+            await $AWS.DynamoDB.UpdateItem({
+              Table: table,
+              Key: {
+                id: {
+                  S: input.id,
+                },
+              },
+              UpdateExpression: "SET val = if_not_exists(val, :start) + :inc",
+              ExpressionAttributeValues: {
+                ":start": { N: "0" },
+                ":inc": { N: `${i}` },
+              },
+            });
+            if (i === 3) {
+              break;
+            }
+          }
+          const item = await $AWS.DynamoDB.GetItem({
+            Table: table,
+            Key: {
+              id: { S: input.id },
+            },
+            ConsistentRead: true,
+          });
+          return `${a}${item.Item?.val.N}`;
+        }
+      );
+    },
+    // TODO: fix this test
+    //       Map short circuiting does not work on localstack: https://github.com/localstack/localstack/issues/6443
+    //       this case was tested on AWS, which returned the right answer
+    "111219",
+    { id: `key${Math.floor(Math.random() * 1000)}` }
+  );
+
+  test(
     "throw catch finally",
     (parent) => {
       const func = new Function<undefined, void>(parent, "func", async () => {
