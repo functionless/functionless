@@ -249,7 +249,12 @@ export namespace $SFN {
       throw new Error("missing callbackfn in $SFN.map");
     }
     const callbackStates = context.evalStmt(callbackfn.body);
-    const callbackStart = context.getStateName(callbackfn.body.step()!);
+    if (!callbackStates) {
+      throw new SynthError(
+        ErrorCodes.Unexpected_Error,
+        `a $SFN.Map or $SFN.ForEach block must have at least one Stmt`
+      );
+    }
     const props = call.getArgument("props")?.expr;
     let maxConcurrency: number | undefined;
     if (props !== undefined) {
@@ -300,21 +305,21 @@ export namespace $SFN {
                 MaxConcurrency: maxConcurrency,
               }
             : {}),
-          Iterator: {
-            States: callbackStates,
-            StartAt: callbackStart,
-          },
+          Iterator: context.aslGraphToStates(callbackStates),
           ItemsPath: arrayPath,
-          Parameters: Object.fromEntries(
-            callbackfn.parameters.map((param, i) => [
-              `${param.name}.$`,
-              i === 0
-                ? "$$.Map.Item.Value"
-                : i == 1
-                ? "$$.Map.Item.Index"
-                : arrayPath,
-            ])
-          ),
+          Parameters: {
+            ...context.cloneLexicalScopeParameters(call),
+            ...Object.fromEntries(
+              callbackfn.parameters.map((param, i) => [
+                `${param.name}.$`,
+                i === 0
+                  ? "$$.Map.Item.Value"
+                  : i == 1
+                  ? "$$.Map.Item.Index"
+                  : arrayPath,
+              ])
+            ),
+          },
         },
         call
       );
@@ -360,10 +365,19 @@ export namespace $SFN {
 
       return context.stateWithHeapOutput({
         Type: "Parallel",
-        Branches: paths.items.map((func) => ({
-          StartAt: context.getStateName(func.body.step()!),
-          States: context.evalStmt(func.body),
-        })),
+        Branches: paths.items.map((func) => {
+          const funcBody = context.evalStmt(func.body);
+
+          if (!funcBody) {
+            // TODO: test me
+            return context.aslGraphToStates({
+              Type: "Pass" as const,
+              ResultPath: null,
+            });
+          }
+
+          return context.aslGraphToStates(funcBody);
+        }),
       });
     },
   });

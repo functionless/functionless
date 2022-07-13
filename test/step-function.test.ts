@@ -511,6 +511,104 @@ test("return typeof x", () => {
   expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
+test("if", () => {
+  const { stack } = initStepFunctionApp();
+  const definition = new ExpressStepFunction(stack, "fn", () => {
+    if (true) {
+      return "yup";
+    }
+    return "noop";
+  }).definition;
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+});
+
+test("else if", () => {
+  const { stack } = initStepFunctionApp();
+  const definition = new ExpressStepFunction(
+    stack,
+    "fn",
+    (input: { val: string }) => {
+      if (input.val === "a") {
+        return "yup";
+      } else if (input.val === "b") {
+        return "yip";
+      } else if (input.val === "c") {
+        return "woop";
+      }
+      return "noop";
+    }
+  ).definition;
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+});
+
+test("if else", () => {
+  const { stack } = initStepFunctionApp();
+  const definition = new ExpressStepFunction(
+    stack,
+    "fn",
+    (input: { val: string }) => {
+      if (input.val === "a") {
+        return "yup";
+      } else {
+        return "noop";
+      }
+    }
+  ).definition;
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+});
+
+test("else if else", () => {
+  const { stack } = initStepFunctionApp();
+  const definition = new ExpressStepFunction(
+    stack,
+    "fn",
+    (input: { val: string }) => {
+      if (input.val === "a") {
+        return "yup";
+      } else if (input.val === "b") {
+        return "woop";
+      } else {
+        return "noop";
+      }
+    }
+  ).definition;
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+});
+
+test("if if", () => {
+  const { stack } = initStepFunctionApp();
+  const definition = new ExpressStepFunction(
+    stack,
+    "fn",
+    (input: { val: string }) => {
+      if (input.val !== "a") {
+        if (input.val === "b") {
+          return "hullo";
+        }
+      }
+      return "woop";
+    }
+  ).definition;
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+});
+
+test("if invoke", () => {
+  const { stack, task } = initStepFunctionApp();
+  const definition = new ExpressStepFunction(stack, "fn", async () => {
+    if (await task()) {
+      return "hi";
+    }
+    return "woop";
+  }).definition;
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+});
+
 let stack: Stack;
 
 beforeEach(() => {

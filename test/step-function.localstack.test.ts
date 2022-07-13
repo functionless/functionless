@@ -936,4 +936,93 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
     "42",
     { arr: [1, 2, 3], id: `key${Math.floor(Math.random() * 1000)}` }
   );
+
+  test(
+    "throw catch finally",
+    (parent) => {
+      const func = new Function<undefined, void>(parent, "func", async () => {
+        throw new Error("wat");
+      });
+
+      return new StepFunction(parent, "sfn", async () => {
+        let a = "";
+        try {
+          throw new Error("Error1");
+        } catch {
+          a = `${a}error1`;
+        }
+        try {
+          throw new Error("Error2");
+        } catch (err) {
+          a = `${a}${(<Error>err).message}`;
+        }
+        try {
+          throw Error();
+        } catch {
+          a = `${a}error3`;
+        } finally {
+          a = `${a}finally1`;
+        }
+        try {
+          a = `${a}set`;
+        } finally {
+          a = `${a}finally2`;
+        }
+        try {
+          await func();
+        } catch {
+          a = `${a}error4`;
+        }
+        try {
+          await func();
+        } catch (err) {
+          a = `${a}${(<any>err).errorMessage}`;
+        }
+        try {
+          for (const _ in [1]) {
+            await func();
+          }
+        } catch (err) {
+          a = `${a}for${(<any>err).errorMessage}`;
+        }
+        try {
+          try {
+            throw new Error("error5");
+          } catch {
+            throw new Error("error6");
+          } finally {
+            a = `${a}finally`;
+          }
+        } catch (err) {
+          a = `${a}recatch${(<Error>err).message}`;
+        }
+        try {
+          while (true) {
+            await func();
+          }
+        } catch (err) {
+          a = `${a}while${(<any>err).errorMessage}`;
+        }
+        try {
+          do {
+            await func();
+          } while (true);
+        } catch (err) {
+          a = `${a}do${(<any>err).errorMessage}`;
+        }
+        try {
+          await $SFN.map([1], async () => func());
+        } catch (err) {
+          a = `${a}sfnmap${(<any>err).errorMessage}`;
+        }
+        try {
+          await Promise.all([1].map(async () => func()));
+        } catch (err) {
+          a = `${a}arrmap${(<any>err).errorMessage}`;
+        }
+        return a;
+      });
+    },
+    "error1Error2error3finally1setfinally2error4watforwatfinallyrecatcherror6whilewatdowatsfnmapwatarrmapwat"
+  );
 });
