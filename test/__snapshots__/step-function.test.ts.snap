@@ -311,17 +311,581 @@ exports[`boolean logic 1`] = `
 Object {
   "StartAt": "Initialize Functionless Context",
   "States": Object {
-    "1__return {and: input.a && input.b, or: input.a || input.b}": Object {
+    "!input.a && input.b": Object {
+      "Choices": Array [
+        Object {
+          "Next": "assignTrue__!input.a && input.b",
+          "Not": Object {
+            "And": Array [
+              Object {
+                "And": Array [
+                  Object {
+                    "IsPresent": true,
+                    "Variable": "$.fnl_context.input.a",
+                  },
+                  Object {
+                    "IsNull": false,
+                    "Variable": "$.fnl_context.input.a",
+                  },
+                  Object {
+                    "Or": Array [
+                      Object {
+                        "And": Array [
+                          Object {
+                            "IsString": true,
+                            "Variable": "$.fnl_context.input.a",
+                          },
+                          Object {
+                            "Not": Object {
+                              "And": Array [
+                                Object {
+                                  "IsString": true,
+                                  "Variable": "$.fnl_context.input.a",
+                                },
+                                Object {
+                                  "StringEquals": "",
+                                  "Variable": "$.fnl_context.input.a",
+                                },
+                              ],
+                            },
+                          },
+                        ],
+                      },
+                      Object {
+                        "And": Array [
+                          Object {
+                            "IsNumeric": true,
+                            "Variable": "$.fnl_context.input.a",
+                          },
+                          Object {
+                            "Not": Object {
+                              "And": Array [
+                                Object {
+                                  "IsNumeric": true,
+                                  "Variable": "$.fnl_context.input.a",
+                                },
+                                Object {
+                                  "NumericEquals": 0,
+                                  "Variable": "$.fnl_context.input.a",
+                                },
+                              ],
+                            },
+                          },
+                        ],
+                      },
+                      Object {
+                        "And": Array [
+                          Object {
+                            "IsBoolean": true,
+                            "Variable": "$.fnl_context.input.a",
+                          },
+                          Object {
+                            "BooleanEquals": true,
+                            "Variable": "$.fnl_context.input.a",
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                ],
+              },
+              Object {
+                "And": Array [
+                  Object {
+                    "IsPresent": true,
+                    "Variable": "$.fnl_context.input.b",
+                  },
+                  Object {
+                    "IsNull": false,
+                    "Variable": "$.fnl_context.input.b",
+                  },
+                  Object {
+                    "Or": Array [
+                      Object {
+                        "And": Array [
+                          Object {
+                            "IsString": true,
+                            "Variable": "$.fnl_context.input.b",
+                          },
+                          Object {
+                            "Not": Object {
+                              "And": Array [
+                                Object {
+                                  "IsString": true,
+                                  "Variable": "$.fnl_context.input.b",
+                                },
+                                Object {
+                                  "StringEquals": "",
+                                  "Variable": "$.fnl_context.input.b",
+                                },
+                              ],
+                            },
+                          },
+                        ],
+                      },
+                      Object {
+                        "And": Array [
+                          Object {
+                            "IsNumeric": true,
+                            "Variable": "$.fnl_context.input.b",
+                          },
+                          Object {
+                            "Not": Object {
+                              "And": Array [
+                                Object {
+                                  "IsNumeric": true,
+                                  "Variable": "$.fnl_context.input.b",
+                                },
+                                Object {
+                                  "NumericEquals": 0,
+                                  "Variable": "$.fnl_context.input.b",
+                                },
+                              ],
+                            },
+                          },
+                        ],
+                      },
+                      Object {
+                        "And": Array [
+                          Object {
+                            "IsBoolean": true,
+                            "Variable": "$.fnl_context.input.b",
+                          },
+                          Object {
+                            "BooleanEquals": true,
+                            "Variable": "$.fnl_context.input.b",
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        },
+      ],
+      "Default": "assignFalse__!input.a && input.b",
+      "Type": "Choice",
+    },
+    "!input.a || input.b": Object {
+      "Choices": Array [
+        Object {
+          "Next": "assignTrue__!input.a || input.b",
+          "Not": Object {
+            "Or": Array [
+              Object {
+                "And": Array [
+                  Object {
+                    "IsPresent": true,
+                    "Variable": "$.fnl_context.input.a",
+                  },
+                  Object {
+                    "IsNull": false,
+                    "Variable": "$.fnl_context.input.a",
+                  },
+                  Object {
+                    "Or": Array [
+                      Object {
+                        "And": Array [
+                          Object {
+                            "IsString": true,
+                            "Variable": "$.fnl_context.input.a",
+                          },
+                          Object {
+                            "Not": Object {
+                              "And": Array [
+                                Object {
+                                  "IsString": true,
+                                  "Variable": "$.fnl_context.input.a",
+                                },
+                                Object {
+                                  "StringEquals": "",
+                                  "Variable": "$.fnl_context.input.a",
+                                },
+                              ],
+                            },
+                          },
+                        ],
+                      },
+                      Object {
+                        "And": Array [
+                          Object {
+                            "IsNumeric": true,
+                            "Variable": "$.fnl_context.input.a",
+                          },
+                          Object {
+                            "Not": Object {
+                              "And": Array [
+                                Object {
+                                  "IsNumeric": true,
+                                  "Variable": "$.fnl_context.input.a",
+                                },
+                                Object {
+                                  "NumericEquals": 0,
+                                  "Variable": "$.fnl_context.input.a",
+                                },
+                              ],
+                            },
+                          },
+                        ],
+                      },
+                      Object {
+                        "And": Array [
+                          Object {
+                            "IsBoolean": true,
+                            "Variable": "$.fnl_context.input.a",
+                          },
+                          Object {
+                            "BooleanEquals": true,
+                            "Variable": "$.fnl_context.input.a",
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                ],
+              },
+              Object {
+                "And": Array [
+                  Object {
+                    "IsPresent": true,
+                    "Variable": "$.fnl_context.input.b",
+                  },
+                  Object {
+                    "IsNull": false,
+                    "Variable": "$.fnl_context.input.b",
+                  },
+                  Object {
+                    "Or": Array [
+                      Object {
+                        "And": Array [
+                          Object {
+                            "IsString": true,
+                            "Variable": "$.fnl_context.input.b",
+                          },
+                          Object {
+                            "Not": Object {
+                              "And": Array [
+                                Object {
+                                  "IsString": true,
+                                  "Variable": "$.fnl_context.input.b",
+                                },
+                                Object {
+                                  "StringEquals": "",
+                                  "Variable": "$.fnl_context.input.b",
+                                },
+                              ],
+                            },
+                          },
+                        ],
+                      },
+                      Object {
+                        "And": Array [
+                          Object {
+                            "IsNumeric": true,
+                            "Variable": "$.fnl_context.input.b",
+                          },
+                          Object {
+                            "Not": Object {
+                              "And": Array [
+                                Object {
+                                  "IsNumeric": true,
+                                  "Variable": "$.fnl_context.input.b",
+                                },
+                                Object {
+                                  "NumericEquals": 0,
+                                  "Variable": "$.fnl_context.input.b",
+                                },
+                              ],
+                            },
+                          },
+                        ],
+                      },
+                      Object {
+                        "And": Array [
+                          Object {
+                            "IsBoolean": true,
+                            "Variable": "$.fnl_context.input.b",
+                          },
+                          Object {
+                            "BooleanEquals": true,
+                            "Variable": "$.fnl_context.input.b",
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        },
+      ],
+      "Default": "assignFalse__!input.a || input.b",
+      "Type": "Choice",
+    },
+    "!input.a || input.b && input.a": Object {
+      "Choices": Array [
+        Object {
+          "Next": "assignTrue__!input.a || input.b && input.a",
+          "Not": Object {
+            "Or": Array [
+              Object {
+                "And": Array [
+                  Object {
+                    "IsPresent": true,
+                    "Variable": "$.fnl_context.input.a",
+                  },
+                  Object {
+                    "IsNull": false,
+                    "Variable": "$.fnl_context.input.a",
+                  },
+                  Object {
+                    "Or": Array [
+                      Object {
+                        "And": Array [
+                          Object {
+                            "IsString": true,
+                            "Variable": "$.fnl_context.input.a",
+                          },
+                          Object {
+                            "Not": Object {
+                              "And": Array [
+                                Object {
+                                  "IsString": true,
+                                  "Variable": "$.fnl_context.input.a",
+                                },
+                                Object {
+                                  "StringEquals": "",
+                                  "Variable": "$.fnl_context.input.a",
+                                },
+                              ],
+                            },
+                          },
+                        ],
+                      },
+                      Object {
+                        "And": Array [
+                          Object {
+                            "IsNumeric": true,
+                            "Variable": "$.fnl_context.input.a",
+                          },
+                          Object {
+                            "Not": Object {
+                              "And": Array [
+                                Object {
+                                  "IsNumeric": true,
+                                  "Variable": "$.fnl_context.input.a",
+                                },
+                                Object {
+                                  "NumericEquals": 0,
+                                  "Variable": "$.fnl_context.input.a",
+                                },
+                              ],
+                            },
+                          },
+                        ],
+                      },
+                      Object {
+                        "And": Array [
+                          Object {
+                            "IsBoolean": true,
+                            "Variable": "$.fnl_context.input.a",
+                          },
+                          Object {
+                            "BooleanEquals": true,
+                            "Variable": "$.fnl_context.input.a",
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                ],
+              },
+              Object {
+                "And": Array [
+                  Object {
+                    "And": Array [
+                      Object {
+                        "IsPresent": true,
+                        "Variable": "$.fnl_context.input.b",
+                      },
+                      Object {
+                        "IsNull": false,
+                        "Variable": "$.fnl_context.input.b",
+                      },
+                      Object {
+                        "Or": Array [
+                          Object {
+                            "And": Array [
+                              Object {
+                                "IsString": true,
+                                "Variable": "$.fnl_context.input.b",
+                              },
+                              Object {
+                                "Not": Object {
+                                  "And": Array [
+                                    Object {
+                                      "IsString": true,
+                                      "Variable": "$.fnl_context.input.b",
+                                    },
+                                    Object {
+                                      "StringEquals": "",
+                                      "Variable": "$.fnl_context.input.b",
+                                    },
+                                  ],
+                                },
+                              },
+                            ],
+                          },
+                          Object {
+                            "And": Array [
+                              Object {
+                                "IsNumeric": true,
+                                "Variable": "$.fnl_context.input.b",
+                              },
+                              Object {
+                                "Not": Object {
+                                  "And": Array [
+                                    Object {
+                                      "IsNumeric": true,
+                                      "Variable": "$.fnl_context.input.b",
+                                    },
+                                    Object {
+                                      "NumericEquals": 0,
+                                      "Variable": "$.fnl_context.input.b",
+                                    },
+                                  ],
+                                },
+                              },
+                            ],
+                          },
+                          Object {
+                            "And": Array [
+                              Object {
+                                "IsBoolean": true,
+                                "Variable": "$.fnl_context.input.b",
+                              },
+                              Object {
+                                "BooleanEquals": true,
+                                "Variable": "$.fnl_context.input.b",
+                              },
+                            ],
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                  Object {
+                    "And": Array [
+                      Object {
+                        "IsPresent": true,
+                        "Variable": "$.fnl_context.input.a",
+                      },
+                      Object {
+                        "IsNull": false,
+                        "Variable": "$.fnl_context.input.a",
+                      },
+                      Object {
+                        "Or": Array [
+                          Object {
+                            "And": Array [
+                              Object {
+                                "IsString": true,
+                                "Variable": "$.fnl_context.input.a",
+                              },
+                              Object {
+                                "Not": Object {
+                                  "And": Array [
+                                    Object {
+                                      "IsString": true,
+                                      "Variable": "$.fnl_context.input.a",
+                                    },
+                                    Object {
+                                      "StringEquals": "",
+                                      "Variable": "$.fnl_context.input.a",
+                                    },
+                                  ],
+                                },
+                              },
+                            ],
+                          },
+                          Object {
+                            "And": Array [
+                              Object {
+                                "IsNumeric": true,
+                                "Variable": "$.fnl_context.input.a",
+                              },
+                              Object {
+                                "Not": Object {
+                                  "And": Array [
+                                    Object {
+                                      "IsNumeric": true,
+                                      "Variable": "$.fnl_context.input.a",
+                                    },
+                                    Object {
+                                      "NumericEquals": 0,
+                                      "Variable": "$.fnl_context.input.a",
+                                    },
+                                  ],
+                                },
+                              },
+                            ],
+                          },
+                          Object {
+                            "And": Array [
+                              Object {
+                                "IsBoolean": true,
+                                "Variable": "$.fnl_context.input.a",
+                              },
+                              Object {
+                                "BooleanEquals": true,
+                                "Variable": "$.fnl_context.input.a",
+                              },
+                            ],
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        },
+      ],
+      "Default": "assignFalse__!input.a || input.b && input.a",
+      "Type": "Choice",
+    },
+    "!true": Object {
+      "Choices": Array [
+        Object {
+          "Next": "assignTrue__!true",
+          "Not": Object {
+            "IsPresent": false,
+            "Variable": "$.0_true",
+          },
+        },
+      ],
+      "Default": "assignFalse__!true",
+      "Type": "Choice",
+    },
+    "1__return {and: input.a && input.b, or: input.a || input.b, not: !true, not": Object {
       "End": true,
       "Parameters": Object {
         "and.$": "$.heap0",
+        "chain.$": "$.heap5",
+        "not.$": "$.heap2",
+        "notAnd.$": "$.heap3",
+        "notOr.$": "$.heap4",
         "or.$": "$.heap1",
       },
       "ResultPath": "$",
       "Type": "Pass",
     },
     "Initialize Functionless Context": Object {
-      "Next": "return {and: input.a && input.b, or: input.a || input.b}",
+      "Next": "return {and: input.a && input.b, or: input.a || input.b, not: !true, notAnd",
       "OutputPath": "$",
       "Parameters": Object {
         "input.$": "$",
@@ -330,25 +894,73 @@ Object {
       "ResultPath": "$.fnl_context",
       "Type": "Pass",
     },
+    "assignFalse__!input.a && input.b": Object {
+      "Next": "!input.a || input.b",
+      "Result": false,
+      "ResultPath": "$.heap3",
+      "Type": "Pass",
+    },
+    "assignFalse__!input.a || input.b": Object {
+      "Next": "!input.a || input.b && input.a",
+      "Result": false,
+      "ResultPath": "$.heap4",
+      "Type": "Pass",
+    },
+    "assignFalse__!input.a || input.b && input.a": Object {
+      "Next": "1__return {and: input.a && input.b, or: input.a || input.b, not: !true, not",
+      "Result": false,
+      "ResultPath": "$.heap5",
+      "Type": "Pass",
+    },
+    "assignFalse__!true": Object {
+      "Next": "!input.a && input.b",
+      "Result": false,
+      "ResultPath": "$.heap2",
+      "Type": "Pass",
+    },
     "assignFalse__input.a || input.b": Object {
-      "Next": "1__return {and: input.a && input.b, or: input.a || input.b}",
+      "Next": "!true",
       "Result": false,
       "ResultPath": "$.heap1",
       "Type": "Pass",
     },
-    "assignFalse__return {and: input.a && input.b, or: input.a || input.b}": Object {
+    "assignFalse__return {and: input.a && input.b, or: input.a || input.b, not: ": Object {
       "Next": "input.a || input.b",
       "Result": false,
       "ResultPath": "$.heap0",
       "Type": "Pass",
     },
+    "assignTrue__!input.a && input.b": Object {
+      "Next": "!input.a || input.b",
+      "Result": true,
+      "ResultPath": "$.heap3",
+      "Type": "Pass",
+    },
+    "assignTrue__!input.a || input.b": Object {
+      "Next": "!input.a || input.b && input.a",
+      "Result": true,
+      "ResultPath": "$.heap4",
+      "Type": "Pass",
+    },
+    "assignTrue__!input.a || input.b && input.a": Object {
+      "Next": "1__return {and: input.a && input.b, or: input.a || input.b, not: !true, not",
+      "Result": true,
+      "ResultPath": "$.heap5",
+      "Type": "Pass",
+    },
+    "assignTrue__!true": Object {
+      "Next": "!input.a && input.b",
+      "Result": true,
+      "ResultPath": "$.heap2",
+      "Type": "Pass",
+    },
     "assignTrue__input.a || input.b": Object {
-      "Next": "1__return {and: input.a && input.b, or: input.a || input.b}",
+      "Next": "!true",
       "Result": true,
       "ResultPath": "$.heap1",
       "Type": "Pass",
     },
-    "assignTrue__return {and: input.a && input.b, or: input.a || input.b}": Object {
+    "assignTrue__return {and: input.a && input.b, or: input.a || input.b, not: !": Object {
       "Next": "input.a || input.b",
       "Result": true,
       "ResultPath": "$.heap0",
@@ -509,7 +1121,7 @@ Object {
       "Default": "assignFalse__input.a || input.b",
       "Type": "Choice",
     },
-    "return {and: input.a && input.b, or: input.a || input.b}": Object {
+    "return {and: input.a && input.b, or: input.a || input.b, not: !true, notAnd": Object {
       "Choices": Array [
         Object {
           "And": Array [
@@ -658,10 +1270,10 @@ Object {
               ],
             },
           ],
-          "Next": "assignTrue__return {and: input.a && input.b, or: input.a || input.b}",
+          "Next": "assignTrue__return {and: input.a && input.b, or: input.a || input.b, not: !",
         },
       ],
-      "Default": "assignFalse__return {and: input.a && input.b, or: input.a || input.b}",
+      "Default": "assignFalse__return {and: input.a && input.b, or: input.a || input.b, not: ",
       "Type": "Choice",
     },
   },
