@@ -1683,7 +1683,7 @@ export class ASL {
           };
         });
       } else if (expr.op === "=") {
-        if (!(isVariableReference(expr.left) || isIdentifier(expr.left))) {
+        if (!isVariableReference(expr.left)) {
           throw new SynthError(
             ErrorCodes.Unexpected_Error,
             "Expected left side of assignment to be a variable."
@@ -1724,7 +1724,7 @@ export class ASL {
         expr.op === "/=" ||
         expr.op === "%="
       ) {
-        // TODO: support string concat?
+        // TODO: support string concat - https://github.com/functionless/functionless/issues/330
         throw new SynthError(
           ErrorCodes.Cannot_perform_arithmetic_on_variables_in_Step_Function,
           `Step Function does not support operator ${expr.op}`
