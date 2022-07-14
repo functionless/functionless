@@ -369,7 +369,6 @@ export namespace $SFN {
           const funcBody = context.evalStmt(func.body);
 
           if (!funcBody) {
-            // TODO: test me
             return context.aslGraphToStates({
               Type: "Pass" as const,
               ResultPath: null,

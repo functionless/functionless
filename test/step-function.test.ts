@@ -878,6 +878,20 @@ test("for i in items, items[i]", () => {
   expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
+test("empty for", () => {
+  const { stack, task } = initStepFunctionApp();
+  const definition = new ExpressStepFunction<{ items: string[] }, void>(
+    stack,
+    "fn",
+    async (input) => {
+      for (const _ of [await task(input.items)]) {
+      }
+    }
+  ).definition;
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+});
+
 test("for return", () => {
   const { stack } = initStepFunctionApp();
   const definition = new ExpressStepFunction<{ items: string[] }, string>(
@@ -2555,6 +2569,15 @@ test("return $SFN.parallel(() => try { task() } catch { return null })) }", () =
     } catch {
       return null;
     }
+  }).definition;
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+});
+
+test("return $SFN.parallel(() => {})) }", () => {
+  const { stack } = initStepFunctionApp();
+  const definition = new ExpressStepFunction(stack, "fn", () => {
+    return $SFN.parallel(() => {});
   }).definition;
 
   expect(normalizeDefinition(definition)).toMatchSnapshot();

@@ -4401,79 +4401,10 @@ exports[`binaryOps logic with calls 1`] = `
 Object {
   "StartAt": "Initialize Functionless Context",
   "States": Object {
-    "0_tmp = await func()": Object {
-      "InputPath": "$.fnl_context.null",
-      "Next": "1__0_tmp = await func()",
-      "Resource": "__REPLACED_TOKEN",
-      "ResultPath": "$.heap0",
-      "Type": "Task",
-    },
-    "1__0_tmp = await func()": Object {
-      "InputPath": "$.heap0",
-      "Next": "1_tmp = await func()",
-      "ResultPath": "$.0_tmp",
-      "Type": "Pass",
-    },
-    "1__1_tmp = await func()": Object {
-      "InputPath": "$.heap1",
-      "Next": "return {and: true && 0_tmp, or: false || 1_tmp}",
-      "ResultPath": "$.1_tmp",
-      "Type": "Pass",
-    },
-    "1__return {and: true && 0_tmp, or: false || 1_tmp}": Object {
-      "End": true,
-      "Parameters": Object {
-        "and.$": "$.heap2",
-        "or.$": "$.heap3",
-      },
-      "ResultPath": "$",
-      "Type": "Pass",
-    },
-    "1_tmp = await func()": Object {
-      "InputPath": "$.fnl_context.null",
-      "Next": "1__1_tmp = await func()",
-      "Resource": "__REPLACED_TOKEN",
-      "ResultPath": "$.heap1",
-      "Type": "Task",
-    },
-    "Initialize Functionless Context": Object {
-      "Next": "0_tmp = await func()",
-      "OutputPath": "$",
-      "Parameters": Object {
-        "input.$": "$",
-        "null": null,
-      },
-      "ResultPath": "$.fnl_context",
-      "Type": "Pass",
-    },
-    "assignFalse__false || 1_tmp": Object {
-      "Next": "1__return {and: true && 0_tmp, or: false || 1_tmp}",
-      "Result": false,
-      "ResultPath": "$.heap3",
-      "Type": "Pass",
-    },
-    "assignFalse__return {and: true && 0_tmp, or: false || 1_tmp}": Object {
-      "Next": "false || 1_tmp",
-      "Result": false,
-      "ResultPath": "$.heap2",
-      "Type": "Pass",
-    },
-    "assignTrue__false || 1_tmp": Object {
-      "Next": "1__return {and: true && 0_tmp, or: false || 1_tmp}",
-      "Result": true,
-      "ResultPath": "$.heap3",
-      "Type": "Pass",
-    },
-    "assignTrue__return {and: true && 0_tmp, or: false || 1_tmp}": Object {
-      "Next": "false || 1_tmp",
-      "Result": true,
-      "ResultPath": "$.heap2",
-      "Type": "Pass",
-    },
-    "false || 1_tmp": Object {
+    "1__false || await func()": Object {
       "Choices": Array [
         Object {
-          "Next": "assignTrue__false || 1_tmp",
+          "Next": "assignTrue__1__false || await func()",
           "Or": Array [
             Object {
               "IsNull": true,
@@ -4483,11 +4414,11 @@ Object {
               "And": Array [
                 Object {
                   "IsPresent": true,
-                  "Variable": "$.1_tmp",
+                  "Variable": "$.heap2",
                 },
                 Object {
                   "IsNull": false,
-                  "Variable": "$.1_tmp",
+                  "Variable": "$.heap2",
                 },
                 Object {
                   "Or": Array [
@@ -4495,18 +4426,18 @@ Object {
                       "And": Array [
                         Object {
                           "IsString": true,
-                          "Variable": "$.1_tmp",
+                          "Variable": "$.heap2",
                         },
                         Object {
                           "Not": Object {
                             "And": Array [
                               Object {
                                 "IsString": true,
-                                "Variable": "$.1_tmp",
+                                "Variable": "$.heap2",
                               },
                               Object {
                                 "StringEquals": "",
-                                "Variable": "$.1_tmp",
+                                "Variable": "$.heap2",
                               },
                             ],
                           },
@@ -4517,18 +4448,18 @@ Object {
                       "And": Array [
                         Object {
                           "IsNumeric": true,
-                          "Variable": "$.1_tmp",
+                          "Variable": "$.heap2",
                         },
                         Object {
                           "Not": Object {
                             "And": Array [
                               Object {
                                 "IsNumeric": true,
-                                "Variable": "$.1_tmp",
+                                "Variable": "$.heap2",
                               },
                               Object {
                                 "NumericEquals": 0,
-                                "Variable": "$.1_tmp",
+                                "Variable": "$.heap2",
                               },
                             ],
                           },
@@ -4539,11 +4470,11 @@ Object {
                       "And": Array [
                         Object {
                           "IsBoolean": true,
-                          "Variable": "$.1_tmp",
+                          "Variable": "$.heap2",
                         },
                         Object {
                           "BooleanEquals": true,
-                          "Variable": "$.1_tmp",
+                          "Variable": "$.heap2",
                         },
                       ],
                     },
@@ -4554,10 +4485,19 @@ Object {
           ],
         },
       ],
-      "Default": "assignFalse__false || 1_tmp",
+      "Default": "assignFalse__1__false || await func()",
       "Type": "Choice",
     },
-    "return {and: true && 0_tmp, or: false || 1_tmp}": Object {
+    "1__return {and: true && await func(), or: false || await func()}": Object {
+      "End": true,
+      "Parameters": Object {
+        "and.$": "$.heap1",
+        "or.$": "$.heap3",
+      },
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "1__return {and: true && await func(), or: false || await func()} 1": Object {
       "Choices": Array [
         Object {
           "And": Array [
@@ -4569,11 +4509,11 @@ Object {
               "And": Array [
                 Object {
                   "IsPresent": true,
-                  "Variable": "$.0_tmp",
+                  "Variable": "$.heap0",
                 },
                 Object {
                   "IsNull": false,
-                  "Variable": "$.0_tmp",
+                  "Variable": "$.heap0",
                 },
                 Object {
                   "Or": Array [
@@ -4581,18 +4521,18 @@ Object {
                       "And": Array [
                         Object {
                           "IsString": true,
-                          "Variable": "$.0_tmp",
+                          "Variable": "$.heap0",
                         },
                         Object {
                           "Not": Object {
                             "And": Array [
                               Object {
                                 "IsString": true,
-                                "Variable": "$.0_tmp",
+                                "Variable": "$.heap0",
                               },
                               Object {
                                 "StringEquals": "",
-                                "Variable": "$.0_tmp",
+                                "Variable": "$.heap0",
                               },
                             ],
                           },
@@ -4603,18 +4543,18 @@ Object {
                       "And": Array [
                         Object {
                           "IsNumeric": true,
-                          "Variable": "$.0_tmp",
+                          "Variable": "$.heap0",
                         },
                         Object {
                           "Not": Object {
                             "And": Array [
                               Object {
                                 "IsNumeric": true,
-                                "Variable": "$.0_tmp",
+                                "Variable": "$.heap0",
                               },
                               Object {
                                 "NumericEquals": 0,
-                                "Variable": "$.0_tmp",
+                                "Variable": "$.heap0",
                               },
                             ],
                           },
@@ -4625,11 +4565,11 @@ Object {
                       "And": Array [
                         Object {
                           "IsBoolean": true,
-                          "Variable": "$.0_tmp",
+                          "Variable": "$.heap0",
                         },
                         Object {
                           "BooleanEquals": true,
-                          "Variable": "$.0_tmp",
+                          "Variable": "$.heap0",
                         },
                       ],
                     },
@@ -4638,11 +4578,59 @@ Object {
               ],
             },
           ],
-          "Next": "assignTrue__return {and: true && 0_tmp, or: false || 1_tmp}",
+          "Next": "assignTrue__1__return {and: true && await func(), or: false || await func()",
         },
       ],
-      "Default": "assignFalse__return {and: true && 0_tmp, or: false || 1_tmp}",
+      "Default": "assignFalse__1__return {and: true && await func(), or: false || await func(",
       "Type": "Choice",
+    },
+    "Initialize Functionless Context": Object {
+      "Next": "return {and: true && await func(), or: false || await func()}",
+      "OutputPath": "$",
+      "Parameters": Object {
+        "input.$": "$",
+        "null": null,
+      },
+      "ResultPath": "$.fnl_context",
+      "Type": "Pass",
+    },
+    "assignFalse__1__false || await func()": Object {
+      "Next": "1__return {and: true && await func(), or: false || await func()}",
+      "Result": false,
+      "ResultPath": "$.heap3",
+      "Type": "Pass",
+    },
+    "assignFalse__1__return {and: true && await func(), or: false || await func(": Object {
+      "Next": "false || await func()",
+      "Result": false,
+      "ResultPath": "$.heap1",
+      "Type": "Pass",
+    },
+    "assignTrue__1__false || await func()": Object {
+      "Next": "1__return {and: true && await func(), or: false || await func()}",
+      "Result": true,
+      "ResultPath": "$.heap3",
+      "Type": "Pass",
+    },
+    "assignTrue__1__return {and: true && await func(), or: false || await func()": Object {
+      "Next": "false || await func()",
+      "Result": true,
+      "ResultPath": "$.heap1",
+      "Type": "Pass",
+    },
+    "false || await func()": Object {
+      "InputPath": "$.fnl_context.null",
+      "Next": "1__false || await func()",
+      "Resource": "__REPLACED_TOKEN",
+      "ResultPath": "$.heap2",
+      "Type": "Task",
+    },
+    "return {and: true && await func(), or: false || await func()}": Object {
+      "InputPath": "$.fnl_context.null",
+      "Next": "1__return {and: true && await func(), or: false || await func()} 1",
+      "Resource": "__REPLACED_TOKEN",
+      "ResultPath": "$.heap0",
+      "Type": "Task",
     },
   },
 }
@@ -4873,8 +4861,22 @@ exports[`call lambda $AWS invoke 1`] = `
 Object {
   "StartAt": "obj = {str: \\"hello world\\"}",
   "States": Object {
-    "0_tmp = await $AWS.Lambda.Invoke({Function: func, Payload: obj})": Object {
-      "Next": "1__0_tmp = await $AWS.Lambda.Invoke({Function: func, Payload: obj})",
+    "1__return await $AWS.Lambda.Invoke({Function: func, Payload: obj}).Payload.": Object {
+      "End": true,
+      "InputPath": "$.heap0.Payload.str",
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "obj = {str: \\"hello world\\"}": Object {
+      "Next": "return await $AWS.Lambda.Invoke({Function: func, Payload: obj}).Payload.str",
+      "Result": Object {
+        "str": "hello world",
+      },
+      "ResultPath": "$.obj",
+      "Type": "Pass",
+    },
+    "return await $AWS.Lambda.Invoke({Function: func, Payload: obj}).Payload.str": Object {
+      "Next": "1__return await $AWS.Lambda.Invoke({Function: func, Payload: obj}).Payload.",
       "Parameters": Object {
         "FunctionName": "__REPLACED_TOKEN",
         "Payload.$": "$.obj",
@@ -4882,26 +4884,6 @@ Object {
       "Resource": "__REPLACED_ARN",
       "ResultPath": "$.heap0",
       "Type": "Task",
-    },
-    "1__0_tmp = await $AWS.Lambda.Invoke({Function: func, Payload: obj})": Object {
-      "InputPath": "$.heap0",
-      "Next": "return 0_tmp.Payload.str",
-      "ResultPath": "$.0_tmp",
-      "Type": "Pass",
-    },
-    "obj = {str: \\"hello world\\"}": Object {
-      "Next": "0_tmp = await $AWS.Lambda.Invoke({Function: func, Payload: obj})",
-      "Result": Object {
-        "str": "hello world",
-      },
-      "ResultPath": "$.obj",
-      "Type": "Pass",
-    },
-    "return 0_tmp.Payload.str": Object {
-      "End": true,
-      "InputPath": "$.0_tmp.Payload.str",
-      "ResultPath": "$",
-      "Type": "Pass",
     },
   },
 }
@@ -4995,28 +4977,22 @@ Object {
 
 exports[`call lambda with object literal parameter 1`] = `
 Object {
-  "StartAt": "0_tmp = await func({str: \\"hello world\\"})",
+  "StartAt": "return await func({str: \\"hello world\\"}).str",
   "States": Object {
-    "0_tmp = await func({str: \\"hello world\\"})": Object {
-      "Next": "1__0_tmp = await func({str: \\"hello world\\"})",
+    "1__return await func({str: \\"hello world\\"}).str": Object {
+      "End": true,
+      "InputPath": "$.heap0.str",
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "return await func({str: \\"hello world\\"}).str": Object {
+      "Next": "1__return await func({str: \\"hello world\\"}).str",
       "Parameters": Object {
         "str": "hello world",
       },
       "Resource": "__REPLACED_TOKEN",
       "ResultPath": "$.heap0",
       "Type": "Task",
-    },
-    "1__0_tmp = await func({str: \\"hello world\\"})": Object {
-      "InputPath": "$.heap0",
-      "Next": "return 0_tmp.str",
-      "ResultPath": "$.0_tmp",
-      "Type": "Pass",
-    },
-    "return 0_tmp.str": Object {
-      "End": true,
-      "InputPath": "$.0_tmp.str",
-      "ResultPath": "$",
-      "Type": "Pass",
     },
   },
 }
@@ -5026,32 +5002,26 @@ exports[`call lambda with object reference parameter 1`] = `
 Object {
   "StartAt": "obj = {str: \\"hello world\\"}",
   "States": Object {
-    "0_tmp = await func(obj)": Object {
-      "InputPath": "$.obj",
-      "Next": "1__0_tmp = await func(obj)",
-      "Resource": "__REPLACED_TOKEN",
-      "ResultPath": "$.heap0",
-      "Type": "Task",
-    },
-    "1__0_tmp = await func(obj)": Object {
-      "InputPath": "$.heap0",
-      "Next": "return 0_tmp.str",
-      "ResultPath": "$.0_tmp",
+    "1__return await func(obj).str": Object {
+      "End": true,
+      "InputPath": "$.heap0.str",
+      "ResultPath": "$",
       "Type": "Pass",
     },
     "obj = {str: \\"hello world\\"}": Object {
-      "Next": "0_tmp = await func(obj)",
+      "Next": "return await func(obj).str",
       "Result": Object {
         "str": "hello world",
       },
       "ResultPath": "$.obj",
       "Type": "Pass",
     },
-    "return 0_tmp.str": Object {
-      "End": true,
-      "InputPath": "$.0_tmp.str",
-      "ResultPath": "$",
-      "Type": "Pass",
+    "return await func(obj).str": Object {
+      "InputPath": "$.obj",
+      "Next": "1__return await func(obj).str",
+      "Resource": "__REPLACED_TOKEN",
+      "ResultPath": "$.heap0",
+      "Type": "Task",
     },
   },
 }
@@ -5059,26 +5029,20 @@ Object {
 
 exports[`call lambda with string parameter 1`] = `
 Object {
-  "StartAt": "0_tmp = await func(\\"hello world\\")",
+  "StartAt": "return await func(\\"hello world\\").str",
   "States": Object {
-    "0_tmp = await func(\\"hello world\\")": Object {
-      "Next": "1__0_tmp = await func(\\"hello world\\")",
+    "1__return await func(\\"hello world\\").str": Object {
+      "End": true,
+      "InputPath": "$.heap0.str",
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "return await func(\\"hello world\\").str": Object {
+      "Next": "1__return await func(\\"hello world\\").str",
       "Parameters": "hello world",
       "Resource": "__REPLACED_TOKEN",
       "ResultPath": "$.heap0",
       "Type": "Task",
-    },
-    "1__0_tmp = await func(\\"hello world\\")": Object {
-      "InputPath": "$.heap0",
-      "Next": "return 0_tmp.str",
-      "ResultPath": "$.0_tmp",
-      "Type": "Pass",
-    },
-    "return 0_tmp.str": Object {
-      "End": true,
-      "InputPath": "$.0_tmp.str",
-      "ResultPath": "$",
-      "Type": "Pass",
     },
   },
 }
@@ -5088,21 +5052,14 @@ exports[`call lambda with string reference 1`] = `
 Object {
   "StartAt": "Initialize Functionless Context",
   "States": Object {
-    "0_tmp = await func(event.str)": Object {
-      "InputPath": "$.fnl_context.input.str",
-      "Next": "1__0_tmp = await func(event.str)",
-      "Resource": "__REPLACED_TOKEN",
-      "ResultPath": "$.heap0",
-      "Type": "Task",
-    },
-    "1__0_tmp = await func(event.str)": Object {
-      "InputPath": "$.heap0",
-      "Next": "return 0_tmp.str",
-      "ResultPath": "$.0_tmp",
+    "1__return await func(event.str).str": Object {
+      "End": true,
+      "InputPath": "$.heap0.str",
+      "ResultPath": "$",
       "Type": "Pass",
     },
     "Initialize Functionless Context": Object {
-      "Next": "0_tmp = await func(event.str)",
+      "Next": "return await func(event.str).str",
       "OutputPath": "$",
       "Parameters": Object {
         "input.$": "$",
@@ -5111,11 +5068,12 @@ Object {
       "ResultPath": "$.fnl_context",
       "Type": "Pass",
     },
-    "return 0_tmp.str": Object {
-      "End": true,
-      "InputPath": "$.0_tmp.str",
-      "ResultPath": "$",
-      "Type": "Pass",
+    "return await func(event.str).str": Object {
+      "InputPath": "$.fnl_context.input.str",
+      "Next": "1__return await func(event.str).str",
+      "Resource": "__REPLACED_TOKEN",
+      "ResultPath": "$.heap0",
+      "Type": "Task",
     },
   },
 }
@@ -6132,25 +6090,6 @@ exports[`for loops 1`] = `
 Object {
   "StartAt": "Initialize Functionless Context",
   "States": Object {
-    "0_tmp": Object {
-      "InputPath": "$.heap6[0]",
-      "Next": "a = \`ai\` 2",
-      "ResultPath": "$.i",
-      "Type": "Pass",
-    },
-    "0_tmp = await func()": Object {
-      "InputPath": "$.fnl_context.null",
-      "Next": "1__0_tmp = await func()",
-      "Resource": "__REPLACED_TOKEN",
-      "ResultPath": "$.heap4",
-      "Type": "Task",
-    },
-    "1__0_tmp = await func()": Object {
-      "InputPath": "$.heap4",
-      "Next": "for(i of 0_tmp)",
-      "ResultPath": "$.0_tmp",
-      "Type": "Pass",
-    },
     "1__a = \`ai\`": Object {
       "InputPath": "$.heap0.string",
       "Next": "tail__for(i of [1, 2, 3])",
@@ -6165,7 +6104,7 @@ Object {
     },
     "1__a = \`ai\` 2": Object {
       "InputPath": "$.heap5.string",
-      "Next": "tail__for(i of 0_tmp)",
+      "Next": "tail__for(i of await func()) 1",
       "ResultPath": "$.a",
       "Type": "Pass",
     },
@@ -6215,10 +6154,10 @@ Object {
       "ResultPath": "$.heap5",
       "Type": "Pass",
     },
-    "for(i of 0_tmp)": Object {
-      "InputPath": "$.0_tmp",
-      "Next": "hasNext__for(i of 0_tmp)",
-      "ResultPath": "$.heap6",
+    "await func()": Object {
+      "InputPath": "$.heap6[0]",
+      "Next": "a = \`ai\` 2",
+      "ResultPath": "$.i",
       "Type": "Pass",
     },
     "for(i of [1, 2, 3])": Object {
@@ -6231,22 +6170,24 @@ Object {
       "ResultPath": "$.heap1",
       "Type": "Pass",
     },
+    "for(i of await func())": Object {
+      "InputPath": "$.fnl_context.null",
+      "Next": "for(i of await func()) 1",
+      "Resource": "__REPLACED_TOKEN",
+      "ResultPath": "$.heap4",
+      "Type": "Task",
+    },
+    "for(i of await func()) 1": Object {
+      "InputPath": "$.heap4",
+      "Next": "hasNext__for(i of await func()) 1",
+      "ResultPath": "$.heap6",
+      "Type": "Pass",
+    },
     "for(i of input.arr)": Object {
       "InputPath": "$.fnl_context.input.arr",
       "Next": "hasNext__for(i of input.arr)",
       "ResultPath": "$.heap3",
       "Type": "Pass",
-    },
-    "hasNext__for(i of 0_tmp)": Object {
-      "Choices": Array [
-        Object {
-          "IsPresent": true,
-          "Next": "0_tmp",
-          "Variable": "$.heap6[0]",
-        },
-      ],
-      "Default": "return \\"madeit\\"",
-      "Type": "Choice",
     },
     "hasNext__for(i of [1, 2, 3])": Object {
       "Choices": Array [
@@ -6259,6 +6200,17 @@ Object {
       "Default": "for(i of input.arr)",
       "Type": "Choice",
     },
+    "hasNext__for(i of await func()) 1": Object {
+      "Choices": Array [
+        Object {
+          "IsPresent": true,
+          "Next": "await func()",
+          "Variable": "$.heap6[0]",
+        },
+      ],
+      "Default": "return \\"madeit\\"",
+      "Type": "Choice",
+    },
     "hasNext__for(i of input.arr)": Object {
       "Choices": Array [
         Object {
@@ -6267,7 +6219,7 @@ Object {
           "Variable": "$.heap3[0]",
         },
       ],
-      "Default": "0_tmp = await func()",
+      "Default": "for(i of await func())",
       "Type": "Choice",
     },
     "input.arr": Object {
@@ -6282,16 +6234,16 @@ Object {
       "ResultPath": "$",
       "Type": "Pass",
     },
-    "tail__for(i of 0_tmp)": Object {
-      "InputPath": "$.heap6[1:]",
-      "Next": "hasNext__for(i of 0_tmp)",
-      "ResultPath": "$.heap6",
-      "Type": "Pass",
-    },
     "tail__for(i of [1, 2, 3])": Object {
       "InputPath": "$.heap1[1:]",
       "Next": "hasNext__for(i of [1, 2, 3])",
       "ResultPath": "$.heap1",
+      "Type": "Pass",
+    },
+    "tail__for(i of await func()) 1": Object {
+      "InputPath": "$.heap6[1:]",
+      "Next": "hasNext__for(i of await func()) 1",
+      "ResultPath": "$.heap6",
       "Type": "Pass",
     },
     "tail__for(i of input.arr)": Object {
@@ -6494,24 +6446,41 @@ exports[`map 1`] = `
 Object {
   "StartAt": "Initialize Functionless Context",
   "States": Object {
-    "0_tmp = await func()": Object {
-      "InputPath": "$.fnl_context.null",
-      "Next": "1__0_tmp = await func()",
-      "Resource": "__REPLACED_TOKEN",
-      "ResultPath": "$.heap0",
-      "Type": "Task",
-    },
-    "1__0_tmp = await func()": Object {
-      "InputPath": "$.heap0",
-      "Next": "l = 0_tmp.map(function(x))",
-      "ResultPath": "$.0_tmp",
-      "Type": "Pass",
-    },
-    "1__l = 0_tmp.map(function(x))": Object {
+    "1__l = await func().map(function(x))": Object {
       "InputPath": "$.heap2",
       "Next": "l2 = input.arr.map(function(x))",
       "ResultPath": "$.l",
       "Type": "Pass",
+    },
+    "1__l = await func().map(function(x)) 1": Object {
+      "ItemsPath": "$.heap1",
+      "Iterator": Object {
+        "StartAt": "return \`nx\`",
+        "States": Object {
+          "1__return \`nx\`": Object {
+            "End": true,
+            "InputPath": "$.heap0.string",
+            "ResultPath": "$",
+            "Type": "Pass",
+          },
+          "return \`nx\`": Object {
+            "Next": "1__return \`nx\`",
+            "Parameters": Object {
+              "string.$": "States.Format('n{}',$.x)",
+            },
+            "ResultPath": "$.heap0",
+            "Type": "Pass",
+          },
+        },
+      },
+      "MaxConcurrency": 1,
+      "Next": "1__l = await func().map(function(x))",
+      "Parameters": Object {
+        "fnl_context.$": "$.fnl_context",
+        "x.$": "$$.Map.Item.Value",
+      },
+      "ResultPath": "$.heap2",
+      "Type": "Map",
     },
     "1__l2 = input.arr.map(function(x))": Object {
       "InputPath": "$.heap4",
@@ -6526,7 +6495,7 @@ Object {
       "Type": "Pass",
     },
     "Initialize Functionless Context": Object {
-      "Next": "0_tmp = await func()",
+      "Next": "l = await func().map(function(x))",
       "OutputPath": "$",
       "Parameters": Object {
         "input.$": "$",
@@ -6535,36 +6504,12 @@ Object {
       "ResultPath": "$.fnl_context",
       "Type": "Pass",
     },
-    "l = 0_tmp.map(function(x))": Object {
-      "ItemsPath": "$.0_tmp",
-      "Iterator": Object {
-        "StartAt": "return \`nx\`",
-        "States": Object {
-          "1__return \`nx\`": Object {
-            "End": true,
-            "InputPath": "$.heap1.string",
-            "ResultPath": "$",
-            "Type": "Pass",
-          },
-          "return \`nx\`": Object {
-            "Next": "1__return \`nx\`",
-            "Parameters": Object {
-              "string.$": "States.Format('n{}',$.x)",
-            },
-            "ResultPath": "$.heap1",
-            "Type": "Pass",
-          },
-        },
-      },
-      "MaxConcurrency": 1,
-      "Next": "1__l = 0_tmp.map(function(x))",
-      "Parameters": Object {
-        "0_tmp.$": "$.0_tmp",
-        "fnl_context.$": "$.fnl_context",
-        "x.$": "$$.Map.Item.Value",
-      },
-      "ResultPath": "$.heap2",
-      "Type": "Map",
+    "l = await func().map(function(x))": Object {
+      "InputPath": "$.fnl_context.null",
+      "Next": "1__l = await func().map(function(x)) 1",
+      "Resource": "__REPLACED_TOKEN",
+      "ResultPath": "$.heap1",
+      "Type": "Task",
     },
     "l2 = input.arr.map(function(x))": Object {
       "ItemsPath": "$.fnl_context.input.arr",
@@ -6590,7 +6535,6 @@ Object {
       "MaxConcurrency": 1,
       "Next": "1__l2 = input.arr.map(function(x))",
       "Parameters": Object {
-        "0_tmp.$": "$.0_tmp",
         "fnl_context.$": "$.fnl_context",
         "l.$": "$.l",
         "x.$": "$$.Map.Item.Value",
@@ -6614,24 +6558,41 @@ exports[`map uses input 1`] = `
 Object {
   "StartAt": "Initialize Functionless Context",
   "States": Object {
-    "0_tmp = await func()": Object {
-      "InputPath": "$.fnl_context.null",
-      "Next": "1__0_tmp = await func()",
-      "Resource": "__REPLACED_TOKEN",
-      "ResultPath": "$.heap0",
-      "Type": "Task",
-    },
-    "1__0_tmp = await func()": Object {
-      "InputPath": "$.heap0",
-      "Next": "l = 0_tmp.map(function(x))",
-      "ResultPath": "$.0_tmp",
-      "Type": "Pass",
-    },
-    "1__l = 0_tmp.map(function(x))": Object {
+    "1__l = await func().map(function(x))": Object {
       "InputPath": "$.heap2",
       "Next": "l2 = input.arr.map(function(x))",
       "ResultPath": "$.l",
       "Type": "Pass",
+    },
+    "1__l = await func().map(function(x)) 1": Object {
+      "ItemsPath": "$.heap1",
+      "Iterator": Object {
+        "StartAt": "return \`input.prefixx\`",
+        "States": Object {
+          "1__return \`input.prefixx\`": Object {
+            "End": true,
+            "InputPath": "$.heap0.string",
+            "ResultPath": "$",
+            "Type": "Pass",
+          },
+          "return \`input.prefixx\`": Object {
+            "Next": "1__return \`input.prefixx\`",
+            "Parameters": Object {
+              "string.$": "States.Format('{}{}',$.fnl_context.input.prefix,$.x)",
+            },
+            "ResultPath": "$.heap0",
+            "Type": "Pass",
+          },
+        },
+      },
+      "MaxConcurrency": 1,
+      "Next": "1__l = await func().map(function(x))",
+      "Parameters": Object {
+        "fnl_context.$": "$.fnl_context",
+        "x.$": "$$.Map.Item.Value",
+      },
+      "ResultPath": "$.heap2",
+      "Type": "Map",
     },
     "1__l2 = input.arr.map(function(x))": Object {
       "InputPath": "$.heap4",
@@ -6646,7 +6607,7 @@ Object {
       "Type": "Pass",
     },
     "Initialize Functionless Context": Object {
-      "Next": "0_tmp = await func()",
+      "Next": "l = await func().map(function(x))",
       "OutputPath": "$",
       "Parameters": Object {
         "input.$": "$",
@@ -6655,36 +6616,12 @@ Object {
       "ResultPath": "$.fnl_context",
       "Type": "Pass",
     },
-    "l = 0_tmp.map(function(x))": Object {
-      "ItemsPath": "$.0_tmp",
-      "Iterator": Object {
-        "StartAt": "return \`input.prefixx\`",
-        "States": Object {
-          "1__return \`input.prefixx\`": Object {
-            "End": true,
-            "InputPath": "$.heap1.string",
-            "ResultPath": "$",
-            "Type": "Pass",
-          },
-          "return \`input.prefixx\`": Object {
-            "Next": "1__return \`input.prefixx\`",
-            "Parameters": Object {
-              "string.$": "States.Format('{}{}',$.fnl_context.input.prefix,$.x)",
-            },
-            "ResultPath": "$.heap1",
-            "Type": "Pass",
-          },
-        },
-      },
-      "MaxConcurrency": 1,
-      "Next": "1__l = 0_tmp.map(function(x))",
-      "Parameters": Object {
-        "0_tmp.$": "$.0_tmp",
-        "fnl_context.$": "$.fnl_context",
-        "x.$": "$$.Map.Item.Value",
-      },
-      "ResultPath": "$.heap2",
-      "Type": "Map",
+    "l = await func().map(function(x))": Object {
+      "InputPath": "$.fnl_context.null",
+      "Next": "1__l = await func().map(function(x)) 1",
+      "Resource": "__REPLACED_TOKEN",
+      "ResultPath": "$.heap1",
+      "Type": "Task",
     },
     "l2 = input.arr.map(function(x))": Object {
       "ItemsPath": "$.fnl_context.input.arr",
@@ -6710,7 +6647,6 @@ Object {
       "MaxConcurrency": 1,
       "Next": "1__l2 = input.arr.map(function(x))",
       "Parameters": Object {
-        "0_tmp.$": "$.0_tmp",
         "fnl_context.$": "$.fnl_context",
         "l.$": "$.l",
         "x.$": "$$.Map.Item.Value",
