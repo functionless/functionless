@@ -948,4 +948,161 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
     "42",
     { arr: [1, 2, 3], id: `key${Math.floor(Math.random() * 1000)}` }
   );
+
+  test(
+    "continue break",
+    (parent) => {
+      const table = new Table<{ id: string; val: number }, "id">(
+        parent,
+        "table",
+        {
+          partitionKey: {
+            name: "id",
+            type: AttributeType.STRING,
+          },
+        }
+      );
+      return new StepFunction<{ id: string }, string>(
+        parent,
+        "sfn",
+        async (input) => {
+          let a = "";
+          while (true) {
+            a = `${a}1`;
+            if (a !== "111") {
+              if (a === "11121") {
+                break;
+              }
+              continue;
+            }
+            a = `${a}2`;
+          }
+
+          for (const i of [1, 2, 3, 4]) {
+            if (i === 1) {
+              continue;
+            }
+            await $AWS.DynamoDB.UpdateItem({
+              Table: table,
+              Key: {
+                id: {
+                  S: input.id,
+                },
+              },
+              UpdateExpression: "SET val = if_not_exists(val, :start) + :inc",
+              ExpressionAttributeValues: {
+                ":start": { N: "0" },
+                ":inc": { N: `${i}` },
+              },
+            });
+            if (i === 3) {
+              break;
+            }
+          }
+          const item = await $AWS.DynamoDB.GetItem({
+            Table: table,
+            Key: {
+              id: { S: input.id },
+            },
+            ConsistentRead: true,
+          });
+          return `${a}${item.Item?.val.N}`;
+        }
+      );
+    },
+    // TODO: fix this test
+    //       Map short circuiting does not work on localstack: https://github.com/localstack/localstack/issues/6443
+    //       this case was tested on AWS, which returned the right answer
+    "111219",
+    { id: `key${Math.floor(Math.random() * 1000)}` }
+  );
+
+  test(
+    "throw catch finally",
+    (parent) => {
+      const func = new Function<undefined, void>(parent, "func", async () => {
+        throw new Error("wat");
+      });
+
+      return new StepFunction(parent, "sfn", async () => {
+        let a = "";
+        try {
+          throw new Error("Error1");
+        } catch {
+          a = `${a}error1`;
+        }
+        try {
+          throw new Error("Error2");
+        } catch (err) {
+          a = `${a}${(<Error>err).message}`;
+        }
+        try {
+          throw Error();
+        } catch {
+          a = `${a}error3`;
+        } finally {
+          a = `${a}finally1`;
+        }
+        try {
+          a = `${a}set`;
+        } finally {
+          a = `${a}finally2`;
+        }
+        try {
+          await func();
+        } catch {
+          a = `${a}error4`;
+        }
+        try {
+          await func();
+        } catch (err) {
+          a = `${a}${(<any>err).errorMessage}`;
+        }
+        try {
+          for (const _ in [1]) {
+            await func();
+          }
+        } catch (err) {
+          a = `${a}for${(<any>err).errorMessage}`;
+        }
+        try {
+          try {
+            throw new Error("error5");
+          } catch {
+            throw new Error("error6");
+          } finally {
+            a = `${a}finally`;
+          }
+        } catch (err) {
+          a = `${a}recatch${(<Error>err).message}`;
+        }
+        try {
+          while (true) {
+            await func();
+          }
+        } catch (err) {
+          a = `${a}while${(<any>err).errorMessage}`;
+        }
+        try {
+          do {
+            await func();
+          } while (true);
+        } catch (err) {
+          a = `${a}do${(<any>err).errorMessage}`;
+        }
+        try {
+          await $SFN.map([1], async () => func());
+        } catch (err) {
+          a = `${a}sfnmap${(<any>err).errorMessage}`;
+        }
+        try {
+          await Promise.all([1].map(async () => func()));
+        } catch (err) {
+          a = `${a}arrmap${(<any>err).errorMessage}`;
+        }
+        return a;
+      });
+    },
+    "error1Error2error3finally1setfinally2error4watforwatfinallyrecatcherror6whilewatdowatsfnmapwatarrmapwat"
+  );
 });

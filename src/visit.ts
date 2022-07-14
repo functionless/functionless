@@ -90,6 +90,7 @@ import {
   isUndefinedLiteralExpr,
   isVariableStmt,
   isWhileStmt,
+  isElementAccessExpr,
 } from "./guards";
 import { FunctionlessNode } from "./node";
 
@@ -266,7 +267,7 @@ export function visitEachChild<T extends FunctionlessNode>(
     return new DoStmt(block, condition) as T;
   } else if (isErr(node)) {
     return new Err(node.error) as T;
-  } else if (node.kind == "ElementAccessExpr") {
+  } else if (isElementAccessExpr(node)) {
     const expr = visitor(node.expr);
     const element = visitor(node.element);
     ensure(expr, isExpr, "ElementAccessExpr's expr property must be an Expr");
@@ -452,12 +453,16 @@ export function visitEachChild<T extends FunctionlessNode>(
     const tryBlock = visitor(node.tryBlock);
     ensure(tryBlock, isBlockStmt, "a TryStmt's tryBlock must be a BlockStmt");
 
-    const catchClause = visitor(node.catchClause);
-    ensure(
-      catchClause,
-      isCatchClause,
-      "a TryStmt's catchClause must be a CatchClause"
-    );
+    const catchClause = node.catchClause
+      ? visitor(node.catchClause)
+      : undefined;
+    if (catchClause) {
+      ensure(
+        catchClause,
+        isCatchClause,
+        "a TryStmt's catchClause must be a CatchClause"
+      );
+    }
 
     const finallyBlock = node.finallyBlock
       ? visitor(node.finallyBlock)

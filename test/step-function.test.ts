@@ -639,6 +639,104 @@ test("return typeof x", () => {
   expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
+test("if", () => {
+  const { stack } = initStepFunctionApp();
+  const definition = new ExpressStepFunction(stack, "fn", () => {
+    if (true) {
+      return "yup";
+    }
+    return "noop";
+  }).definition;
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+});
+
+test("else if", () => {
+  const { stack } = initStepFunctionApp();
+  const definition = new ExpressStepFunction(
+    stack,
+    "fn",
+    (input: { val: string }) => {
+      if (input.val === "a") {
+        return "yup";
+      } else if (input.val === "b") {
+        return "yip";
+      } else if (input.val === "c") {
+        return "woop";
+      }
+      return "noop";
+    }
+  ).definition;
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+});
+
+test("if else", () => {
+  const { stack } = initStepFunctionApp();
+  const definition = new ExpressStepFunction(
+    stack,
+    "fn",
+    (input: { val: string }) => {
+      if (input.val === "a") {
+        return "yup";
+      } else {
+        return "noop";
+      }
+    }
+  ).definition;
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+});
+
+test("else if else", () => {
+  const { stack } = initStepFunctionApp();
+  const definition = new ExpressStepFunction(
+    stack,
+    "fn",
+    (input: { val: string }) => {
+      if (input.val === "a") {
+        return "yup";
+      } else if (input.val === "b") {
+        return "woop";
+      } else {
+        return "noop";
+      }
+    }
+  ).definition;
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+});
+
+test("if if", () => {
+  const { stack } = initStepFunctionApp();
+  const definition = new ExpressStepFunction(
+    stack,
+    "fn",
+    (input: { val: string }) => {
+      if (input.val !== "a") {
+        if (input.val === "b") {
+          return "hullo";
+        }
+      }
+      return "woop";
+    }
+  ).definition;
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+});
+
+test("if invoke", () => {
+  const { stack, task } = initStepFunctionApp();
+  const definition = new ExpressStepFunction(stack, "fn", async () => {
+    if (await task()) {
+      return "hi";
+    }
+    return "woop";
+  }).definition;
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+});
+
 let stack: Stack;
 
 beforeEach(() => {
@@ -773,6 +871,20 @@ test("for i in items, items[i]", () => {
       for (const i in input.items) {
         // @ts-ignore
         const a = items[i];
+      }
+    }
+  ).definition;
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+});
+
+test("empty for", () => {
+  const { stack, task } = initStepFunctionApp();
+  const definition = new ExpressStepFunction<{ items: string[] }, void>(
+    stack,
+    "fn",
+    async (input) => {
+      for (const _ of [await task(input.items)]) {
       }
     }
   ).definition;
@@ -2356,6 +2468,15 @@ test("return $SFN.parallel(() => try { task() } catch { return null })) }", () =
     } catch {
       return null;
     }
+  }).definition;
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+});
+
+test("return $SFN.parallel(() => {})) }", () => {
+  const { stack } = initStepFunctionApp();
+  const definition = new ExpressStepFunction(stack, "fn", () => {
+    return $SFN.parallel(() => {});
   }).definition;
 
   expect(normalizeDefinition(definition)).toMatchSnapshot();
