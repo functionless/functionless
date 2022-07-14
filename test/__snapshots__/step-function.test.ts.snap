@@ -230,35 +230,14 @@ exports[`\`template me \${await task(input.value)}\` 1`] = `
 Object {
   "StartAt": "Initialize Functionless Context",
   "States": Object {
-    "0_tmp = await task(input.value)": Object {
-      "InputPath": "$.fnl_context.input.value",
-      "Next": "1__0_tmp = await task(input.value)",
-      "Resource": "__REPLACED_TOKEN",
-      "ResultPath": "$.heap0",
-      "Type": "Task",
-    },
-    "1__0_tmp = await task(input.value)": Object {
-      "InputPath": "$.heap0",
-      "Next": "return \`template me 0_tmp\`",
-      "ResultPath": "$.0_tmp",
-      "Type": "Pass",
-    },
-    "1__return \`template me 0_tmp\`": Object {
+    "1__return \`template me await task(input.value)\`": Object {
       "End": true,
-      "InputPath": "$.heap2.string",
+      "InputPath": "$.heap1.string",
       "ResultPath": "$",
       "Type": "Pass",
     },
-    "1__return \`template me 0_tmp\` 1": Object {
-      "Next": "1__return \`template me 0_tmp\`",
-      "Parameters": Object {
-        "string.$": "States.Format('template me {}',$.heap1)",
-      },
-      "ResultPath": "$.heap2",
-      "Type": "Pass",
-    },
     "Initialize Functionless Context": Object {
-      "Next": "0_tmp = await task(input.value)",
+      "Next": "return \`template me await task(input.value)\`",
       "OutputPath": "$",
       "Parameters": Object {
         "input.$": "$",
@@ -267,11 +246,20 @@ Object {
       "ResultPath": "$.fnl_context",
       "Type": "Pass",
     },
-    "return \`template me 0_tmp\`": Object {
-      "InputPath": "$.0_tmp",
-      "Next": "1__return \`template me 0_tmp\` 1",
+    "\`template me await task(input.value)\`": Object {
+      "Next": "1__return \`template me await task(input.value)\`",
+      "Parameters": Object {
+        "string.$": "States.Format('template me {}',$.heap0)",
+      },
       "ResultPath": "$.heap1",
       "Type": "Pass",
+    },
+    "return \`template me await task(input.value)\`": Object {
+      "InputPath": "$.fnl_context.input.value",
+      "Next": "\`template me await task(input.value)\`",
+      "Resource": "__REPLACED_TOKEN",
+      "ResultPath": "$.heap0",
+      "Type": "Task",
     },
   },
 }
@@ -930,6 +918,30 @@ Object {
       "Next": "input.a || input.b",
       "Result": false,
       "ResultPath": "$.heap0",
+      "Type": "Pass",
+    },
+    "assignTrue__!input.a && input.b": Object {
+      "Next": "!input.a || input.b",
+      "Result": true,
+      "ResultPath": "$.heap3",
+      "Type": "Pass",
+    },
+    "assignTrue__!input.a || input.b": Object {
+      "Next": "!input.a || input.b && input.a",
+      "Result": true,
+      "ResultPath": "$.heap4",
+      "Type": "Pass",
+    },
+    "assignTrue__!input.a || input.b && input.a": Object {
+      "Next": "1__return {and: input.a && input.b, or: input.a || input.b, not: !true, not",
+      "Result": true,
+      "ResultPath": "$.heap5",
+      "Type": "Pass",
+    },
+    "assignTrue__!true": Object {
+      "Next": "!input.a && input.b",
+      "Result": true,
+      "ResultPath": "$.heap2",
       "Type": "Pass",
     },
     "assignTrue__input.a || input.b": Object {
@@ -2111,46 +2123,23 @@ exports[`condition on task output 1`] = `
 Object {
   "StartAt": "Initialize Functionless Context",
   "States": Object {
-    "0_tmp = await task()": Object {
-      "InputPath": "$.fnl_context.null",
-      "Next": "1__0_tmp = await task()",
-      "Resource": "__REPLACED_TOKEN",
-      "ResultPath": "$.heap0",
-      "Type": "Task",
-    },
-    "1__0_tmp = await task()": Object {
-      "InputPath": "$.heap0",
-      "Next": "if(0_tmp == 1)",
-      "ResultPath": "$.0_tmp",
-      "Type": "Pass",
-    },
-    "Initialize Functionless Context": Object {
-      "Next": "0_tmp = await task()",
-      "OutputPath": "$",
-      "Parameters": Object {
-        "input.$": "$",
-        "null": null,
-      },
-      "ResultPath": "$.fnl_context",
-      "Type": "Pass",
-    },
-    "if(0_tmp == 1)": Object {
+    "1__if(await task() == 1)": Object {
       "Choices": Array [
         Object {
           "And": Array [
             Object {
               "IsPresent": true,
-              "Variable": "$.0_tmp",
+              "Variable": "$.heap0",
             },
             Object {
               "And": Array [
                 Object {
                   "IsNumeric": true,
-                  "Variable": "$.0_tmp",
+                  "Variable": "$.heap0",
                 },
                 Object {
                   "NumericEquals": 1,
-                  "Variable": "$.0_tmp",
+                  "Variable": "$.heap0",
                 },
               ],
             },
@@ -2160,6 +2149,23 @@ Object {
       ],
       "Default": "return null",
       "Type": "Choice",
+    },
+    "Initialize Functionless Context": Object {
+      "Next": "if(await task() == 1)",
+      "OutputPath": "$",
+      "Parameters": Object {
+        "input.$": "$",
+        "null": null,
+      },
+      "ResultPath": "$.fnl_context",
+      "Type": "Pass",
+    },
+    "if(await task() == 1)": Object {
+      "InputPath": "$.fnl_context.null",
+      "Next": "1__if(await task() == 1)",
+      "Resource": "__REPLACED_TOKEN",
+      "ResultPath": "$.heap0",
+      "Type": "Task",
     },
     "return null": Object {
       "End": true,
@@ -2765,6 +2771,45 @@ Object {
 }
 `;
 
+exports[`empty for 1`] = `
+Object {
+  "StartAt": "Initialize Functionless Context",
+  "States": Object {
+    "Initialize Functionless Context": Object {
+      "Next": "for(_ of [await task(input.items)])",
+      "OutputPath": "$",
+      "Parameters": Object {
+        "input.$": "$",
+        "null": null,
+      },
+      "ResultPath": "$.fnl_context",
+      "Type": "Pass",
+    },
+    "[await task(input.items)]": Object {
+      "Next": "return null",
+      "Parameters": Object {
+        "arr.$": "States.Array($.heap0)",
+      },
+      "ResultPath": "$.heap1",
+      "Type": "Pass",
+    },
+    "for(_ of [await task(input.items)])": Object {
+      "InputPath": "$.fnl_context.input.items",
+      "Next": "[await task(input.items)]",
+      "Resource": "__REPLACED_TOKEN",
+      "ResultPath": "$.heap0",
+      "Type": "Task",
+    },
+    "return null": Object {
+      "End": true,
+      "InputPath": "$.fnl_context.null",
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+  },
+}
+`;
+
 exports[`empty function 1`] = `
 Object {
   "StartAt": "Initialize Functionless Context",
@@ -2793,21 +2838,8 @@ exports[`for (const i in [task(input)]) 1`] = `
 Object {
   "StartAt": "Initialize Functionless Context",
   "States": Object {
-    "0_tmp = await task(input)": Object {
-      "InputPath": "$.fnl_context.input",
-      "Next": "1__0_tmp = await task(input)",
-      "Resource": "__REPLACED_TOKEN",
-      "ResultPath": "$.heap0",
-      "Type": "Task",
-    },
-    "1__0_tmp = await task(input)": Object {
-      "InputPath": "$.heap0",
-      "Next": "for(i in [0_tmp])",
-      "ResultPath": "$.0_tmp",
-      "Type": "Pass",
-    },
     "Initialize Functionless Context": Object {
-      "Next": "0_tmp = await task(input)",
+      "Next": "for(i in [await task(input)])",
       "OutputPath": "$",
       "Parameters": Object {
         "input.$": "$",
@@ -2816,37 +2848,38 @@ Object {
       "ResultPath": "$.fnl_context",
       "Type": "Pass",
     },
-    "for(i in [0_tmp])": Object {
-      "Next": "for(i in [0_tmp]) 1",
+    "[await task(input)]": Object {
+      "Next": "for(i in [await task(input)]) 1",
       "Parameters": Object {
-        "arr.$": "States.Array($.0_tmp)",
+        "arr.$": "States.Array($.heap0)",
       },
       "ResultPath": "$.heap1",
       "Type": "Pass",
     },
-    "for(i in [0_tmp]) 1": Object {
+    "for(i in [await task(input)])": Object {
+      "InputPath": "$.fnl_context.input",
+      "Next": "[await task(input)]",
+      "Resource": "__REPLACED_TOKEN",
+      "ResultPath": "$.heap0",
+      "Type": "Task",
+    },
+    "for(i in [await task(input)]) 1": Object {
       "ItemsPath": "$.heap1.arr",
       "Iterator": Object {
-        "StartAt": "1_tmp = await task(i)",
+        "StartAt": "await task(await task(i))",
         "States": Object {
-          "1__1_tmp = await task(i)": Object {
-            "InputPath": "$.heap2",
-            "Next": "await task(1_tmp)",
-            "ResultPath": "$.1_tmp",
-            "Type": "Pass",
-          },
-          "1_tmp = await task(i)": Object {
-            "InputPath": "$.i",
-            "Next": "1__1_tmp = await task(i)",
-            "Resource": "__REPLACED_TOKEN",
-            "ResultPath": "$.heap2",
-            "Type": "Task",
-          },
-          "await task(1_tmp)": Object {
+          "1__await task(await task(i))": Object {
             "End": true,
-            "InputPath": "$.1_tmp",
+            "InputPath": "$.heap2",
             "Resource": "__REPLACED_TOKEN",
             "ResultPath": "$.heap3",
+            "Type": "Task",
+          },
+          "await task(await task(i))": Object {
+            "InputPath": "$.i",
+            "Next": "1__await task(await task(i))",
+            "Resource": "__REPLACED_TOKEN",
+            "ResultPath": "$.heap2",
             "Type": "Task",
           },
         },
@@ -2855,7 +2888,6 @@ Object {
       "Next": "return null",
       "Parameters": Object {
         "0_i.$": "$$.Map.Item.Value",
-        "0_tmp.$": "$.0_tmp",
         "fnl_context.$": "$.fnl_context",
         "i.$": "$$.Map.Item.Index",
       },
@@ -2876,21 +2908,8 @@ exports[`for (const i of [task(input)]) 1`] = `
 Object {
   "StartAt": "Initialize Functionless Context",
   "States": Object {
-    "0_tmp = await task(input)": Object {
-      "InputPath": "$.fnl_context.input",
-      "Next": "1__0_tmp = await task(input)",
-      "Resource": "__REPLACED_TOKEN",
-      "ResultPath": "$.heap0",
-      "Type": "Task",
-    },
-    "1__0_tmp = await task(input)": Object {
-      "InputPath": "$.heap0",
-      "Next": "for(i of [0_tmp])",
-      "ResultPath": "$.0_tmp",
-      "Type": "Pass",
-    },
     "Initialize Functionless Context": Object {
-      "Next": "0_tmp = await task(input)",
+      "Next": "for(i of [await task(input)])",
       "OutputPath": "$",
       "Parameters": Object {
         "input.$": "$",
@@ -2899,37 +2918,38 @@ Object {
       "ResultPath": "$.fnl_context",
       "Type": "Pass",
     },
-    "for(i of [0_tmp])": Object {
-      "Next": "for(i of [0_tmp]) 1",
+    "[await task(input)]": Object {
+      "Next": "for(i of [await task(input)]) 1",
       "Parameters": Object {
-        "arr.$": "States.Array($.0_tmp)",
+        "arr.$": "States.Array($.heap0)",
       },
       "ResultPath": "$.heap1",
       "Type": "Pass",
     },
-    "for(i of [0_tmp]) 1": Object {
+    "for(i of [await task(input)])": Object {
+      "InputPath": "$.fnl_context.input",
+      "Next": "[await task(input)]",
+      "Resource": "__REPLACED_TOKEN",
+      "ResultPath": "$.heap0",
+      "Type": "Task",
+    },
+    "for(i of [await task(input)]) 1": Object {
       "ItemsPath": "$.heap1.arr",
       "Iterator": Object {
-        "StartAt": "1_tmp = await task(i)",
+        "StartAt": "await task(await task(i))",
         "States": Object {
-          "1__1_tmp = await task(i)": Object {
-            "InputPath": "$.heap2",
-            "Next": "await task(1_tmp)",
-            "ResultPath": "$.1_tmp",
-            "Type": "Pass",
-          },
-          "1_tmp = await task(i)": Object {
-            "InputPath": "$.i",
-            "Next": "1__1_tmp = await task(i)",
-            "Resource": "__REPLACED_TOKEN",
-            "ResultPath": "$.heap2",
-            "Type": "Task",
-          },
-          "await task(1_tmp)": Object {
+          "1__await task(await task(i))": Object {
             "End": true,
-            "InputPath": "$.1_tmp",
+            "InputPath": "$.heap2",
             "Resource": "__REPLACED_TOKEN",
             "ResultPath": "$.heap3",
+            "Type": "Task",
+          },
+          "await task(await task(i))": Object {
+            "InputPath": "$.i",
+            "Next": "1__await task(await task(i))",
+            "Resource": "__REPLACED_TOKEN",
+            "ResultPath": "$.heap2",
             "Type": "Task",
           },
         },
@@ -2937,7 +2957,6 @@ Object {
       "MaxConcurrency": 1,
       "Next": "return null",
       "Parameters": Object {
-        "0_tmp.$": "$.0_tmp",
         "fnl_context.$": "$.fnl_context",
         "i.$": "$$.Map.Item.Value",
       },
@@ -6441,6 +6460,48 @@ Object {
 }
 `;
 
+exports[`return $SFN.parallel(() => {})) } 1`] = `
+Object {
+  "StartAt": "Initialize Functionless Context",
+  "States": Object {
+    "1__return $SFN.parallel([function()])": Object {
+      "End": true,
+      "InputPath": "$.heap0",
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "Initialize Functionless Context": Object {
+      "Next": "return $SFN.parallel([function()])",
+      "OutputPath": "$",
+      "Parameters": Object {
+        "input.$": "$",
+        "null": null,
+      },
+      "ResultPath": "$.fnl_context",
+      "Type": "Pass",
+    },
+    "return $SFN.parallel([function()])": Object {
+      "Branches": Array [
+        Object {
+          "StartAt": "return null",
+          "States": Object {
+            "return null": Object {
+              "End": true,
+              "InputPath": "$.fnl_context.null",
+              "ResultPath": "$",
+              "Type": "Pass",
+            },
+          },
+        },
+      ],
+      "Next": "1__return $SFN.parallel([function()])",
+      "ResultPath": "$.heap0",
+      "Type": "Parallel",
+    },
+  },
+}
+`;
+
 exports[`return $SFN.parallel(() => try { task() } catch { return null })) } 1`] = `
 Object {
   "StartAt": "Initialize Functionless Context",
@@ -6697,7 +6758,35 @@ exports[`return AWS.Lambda.Invoke dynamic parameters 1`] = `
 Object {
   "StartAt": "Initialize Functionless Context",
   "States": Object {
-    "0_tmp = await $AWS.Lambda.Invoke({Function: task, Payload: {id: input.id ??": Object {
+    "1__return await $AWS.Lambda.Invoke({Function: task, Payload: {id: input.id ": Object {
+      "End": true,
+      "InputPath": "$.heap1.Payload",
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "1__return await $AWS.Lambda.Invoke({Function: task, Payload: {id: input.id  1": Object {
+      "Next": "1__return await $AWS.Lambda.Invoke({Function: task, Payload: {id: input.id ",
+      "Parameters": Object {
+        "FunctionName": "__REPLACED_TOKEN",
+        "Payload": Object {
+          "id.$": "$.heap0",
+        },
+      },
+      "Resource": "__REPLACED_ARN",
+      "ResultPath": "$.heap1",
+      "Type": "Task",
+    },
+    "Initialize Functionless Context": Object {
+      "Next": "return await $AWS.Lambda.Invoke({Function: task, Payload: {id: input.id ?? ",
+      "OutputPath": "$",
+      "Parameters": Object {
+        "input.$": "$",
+        "null": null,
+      },
+      "ResultPath": "$.fnl_context",
+      "Type": "Pass",
+    },
+    "return await $AWS.Lambda.Invoke({Function: task, Payload: {id: input.id ?? ": Object {
       "Choices": Array [
         Object {
           "And": Array [
@@ -6710,54 +6799,20 @@ Object {
               "Variable": "$.fnl_context.input.id",
             },
           ],
-          "Next": "takeLeft__0_tmp = await $AWS.Lambda.Invoke({Function: task, Payload: {id: i",
+          "Next": "takeLeft__return await $AWS.Lambda.Invoke({Function: task, Payload: {id: in",
         },
       ],
-      "Default": "takeRight__0_tmp = await $AWS.Lambda.Invoke({Function: task, Payload: {id: ",
+      "Default": "takeRight__return await $AWS.Lambda.Invoke({Function: task, Payload: {id: i",
       "Type": "Choice",
     },
-    "1__0_tmp = await $AWS.Lambda.Invoke({Function: task, Payload: {id: input.id": Object {
-      "InputPath": "$.heap1",
-      "Next": "return 0_tmp.Payload",
-      "ResultPath": "$.0_tmp",
-      "Type": "Pass",
-    },
-    "1__0_tmp = await $AWS.Lambda.Invoke({Function: task, Payload: {id: input.id 1": Object {
-      "Next": "1__0_tmp = await $AWS.Lambda.Invoke({Function: task, Payload: {id: input.id",
-      "Parameters": Object {
-        "FunctionName": "__REPLACED_TOKEN",
-        "Payload": Object {
-          "id.$": "$.heap0",
-        },
-      },
-      "Resource": "__REPLACED_ARN",
-      "ResultPath": "$.heap1",
-      "Type": "Task",
-    },
-    "Initialize Functionless Context": Object {
-      "Next": "0_tmp = await $AWS.Lambda.Invoke({Function: task, Payload: {id: input.id ??",
-      "OutputPath": "$",
-      "Parameters": Object {
-        "input.$": "$",
-        "null": null,
-      },
-      "ResultPath": "$.fnl_context",
-      "Type": "Pass",
-    },
-    "return 0_tmp.Payload": Object {
-      "End": true,
-      "InputPath": "$.0_tmp.Payload",
-      "ResultPath": "$",
-      "Type": "Pass",
-    },
-    "takeLeft__0_tmp = await $AWS.Lambda.Invoke({Function: task, Payload: {id: i": Object {
+    "takeLeft__return await $AWS.Lambda.Invoke({Function: task, Payload: {id: in": Object {
       "InputPath": "$.fnl_context.input.id",
-      "Next": "1__0_tmp = await $AWS.Lambda.Invoke({Function: task, Payload: {id: input.id 1",
+      "Next": "1__return await $AWS.Lambda.Invoke({Function: task, Payload: {id: input.id  1",
       "ResultPath": "$.heap0",
       "Type": "Pass",
     },
-    "takeRight__0_tmp = await $AWS.Lambda.Invoke({Function: task, Payload: {id: ": Object {
-      "Next": "1__0_tmp = await $AWS.Lambda.Invoke({Function: task, Payload: {id: input.id 1",
+    "takeRight__return await $AWS.Lambda.Invoke({Function: task, Payload: {id: i": Object {
+      "Next": "1__return await $AWS.Lambda.Invoke({Function: task, Payload: {id: input.id  1",
       "Result": "default",
       "ResultPath": "$.heap0",
       "Type": "Pass",
@@ -6875,27 +6930,21 @@ exports[`return await task(await task()) 1`] = `
 Object {
   "StartAt": "Initialize Functionless Context",
   "States": Object {
-    "0_tmp = await task()": Object {
-      "InputPath": "$.fnl_context.null",
-      "Next": "1__0_tmp = await task()",
-      "Resource": "__REPLACED_TOKEN",
-      "ResultPath": "$.heap0",
-      "Type": "Task",
-    },
-    "1__0_tmp = await task()": Object {
-      "InputPath": "$.heap0",
-      "Next": "return task(0_tmp)",
-      "ResultPath": "$.0_tmp",
-      "Type": "Pass",
-    },
-    "1__return task(0_tmp)": Object {
+    "1__return task(await task())": Object {
       "End": true,
       "InputPath": "$.heap1",
       "ResultPath": "$",
       "Type": "Pass",
     },
+    "1__return task(await task()) 1": Object {
+      "InputPath": "$.heap0",
+      "Next": "1__return task(await task())",
+      "Resource": "__REPLACED_TOKEN",
+      "ResultPath": "$.heap1",
+      "Type": "Task",
+    },
     "Initialize Functionless Context": Object {
-      "Next": "0_tmp = await task()",
+      "Next": "return task(await task())",
       "OutputPath": "$",
       "Parameters": Object {
         "input.$": "$",
@@ -6904,11 +6953,11 @@ Object {
       "ResultPath": "$.fnl_context",
       "Type": "Pass",
     },
-    "return task(0_tmp)": Object {
-      "InputPath": "$.0_tmp",
-      "Next": "1__return task(0_tmp)",
+    "return task(await task())": Object {
+      "InputPath": "$.fnl_context.null",
+      "Next": "1__return task(await task()) 1",
       "Resource": "__REPLACED_TOKEN",
-      "ResultPath": "$.heap1",
+      "ResultPath": "$.heap0",
       "Type": "Task",
     },
   },
@@ -7153,68 +7202,56 @@ Object {
 
 exports[`return task(1) ?? task(2)) 1`] = `
 Object {
-  "StartAt": "0_tmp = await task(1)",
+  "StartAt": "return await task(1) ?? await task(2)",
   "States": Object {
-    "0_tmp = await task(1)": Object {
-      "Next": "1__0_tmp = await task(1)",
-      "Parameters": 1,
-      "Resource": "__REPLACED_TOKEN",
-      "ResultPath": "$.heap0",
-      "Type": "Task",
-    },
-    "1__0_tmp = await task(1)": Object {
-      "InputPath": "$.heap0",
-      "Next": "1_tmp = await task(2)",
-      "ResultPath": "$.0_tmp",
-      "Type": "Pass",
-    },
-    "1__1_tmp = await task(2)": Object {
-      "InputPath": "$.heap1",
-      "Next": "return 0_tmp ?? 1_tmp",
-      "ResultPath": "$.1_tmp",
-      "Type": "Pass",
-    },
-    "1__return 0_tmp ?? 1_tmp": Object {
+    "1__return await task(1) ?? await task(2)": Object {
       "End": true,
       "InputPath": "$.heap2",
       "ResultPath": "$",
       "Type": "Pass",
     },
-    "1_tmp = await task(2)": Object {
-      "Next": "1__1_tmp = await task(2)",
+    "1__return await task(1) ?? await task(2) 1": Object {
+      "Next": "await task(1) ?? await task(2)",
       "Parameters": 2,
       "Resource": "__REPLACED_TOKEN",
       "ResultPath": "$.heap1",
       "Type": "Task",
     },
-    "return 0_tmp ?? 1_tmp": Object {
+    "await task(1) ?? await task(2)": Object {
       "Choices": Array [
         Object {
           "And": Array [
             Object {
               "IsPresent": true,
-              "Variable": "$.0_tmp",
+              "Variable": "$.heap0",
             },
             Object {
               "IsNull": false,
-              "Variable": "$.0_tmp",
+              "Variable": "$.heap0",
             },
           ],
-          "Next": "takeLeft__return 0_tmp ?? 1_tmp",
+          "Next": "takeLeft__await task(1) ?? await task(2)",
         },
       ],
-      "Default": "takeRight__return 0_tmp ?? 1_tmp",
+      "Default": "takeRight__await task(1) ?? await task(2)",
       "Type": "Choice",
     },
-    "takeLeft__return 0_tmp ?? 1_tmp": Object {
-      "InputPath": "$.0_tmp",
-      "Next": "1__return 0_tmp ?? 1_tmp",
+    "return await task(1) ?? await task(2)": Object {
+      "Next": "1__return await task(1) ?? await task(2) 1",
+      "Parameters": 1,
+      "Resource": "__REPLACED_TOKEN",
+      "ResultPath": "$.heap0",
+      "Type": "Task",
+    },
+    "takeLeft__await task(1) ?? await task(2)": Object {
+      "InputPath": "$.heap0",
+      "Next": "1__return await task(1) ?? await task(2)",
       "ResultPath": "$.heap2",
       "Type": "Pass",
     },
-    "takeRight__return 0_tmp ?? 1_tmp": Object {
-      "InputPath": "$.1_tmp",
-      "Next": "1__return 0_tmp ?? 1_tmp",
+    "takeRight__await task(1) ?? await task(2)": Object {
+      "InputPath": "$.heap1",
+      "Next": "1__return await task(1) ?? await task(2)",
       "ResultPath": "$.heap2",
       "Type": "Pass",
     },
@@ -7226,27 +7263,21 @@ exports[`return task(await task()) 1`] = `
 Object {
   "StartAt": "Initialize Functionless Context",
   "States": Object {
-    "0_tmp = await task()": Object {
-      "InputPath": "$.fnl_context.null",
-      "Next": "1__0_tmp = await task()",
-      "Resource": "__REPLACED_TOKEN",
-      "ResultPath": "$.heap0",
-      "Type": "Task",
-    },
-    "1__0_tmp = await task()": Object {
-      "InputPath": "$.heap0",
-      "Next": "return task(0_tmp)",
-      "ResultPath": "$.0_tmp",
-      "Type": "Pass",
-    },
-    "1__return task(0_tmp)": Object {
+    "1__return task(await task())": Object {
       "End": true,
       "InputPath": "$.heap1",
       "ResultPath": "$",
       "Type": "Pass",
     },
+    "1__return task(await task()) 1": Object {
+      "InputPath": "$.heap0",
+      "Next": "1__return task(await task())",
+      "Resource": "__REPLACED_TOKEN",
+      "ResultPath": "$.heap1",
+      "Type": "Task",
+    },
     "Initialize Functionless Context": Object {
-      "Next": "0_tmp = await task()",
+      "Next": "return task(await task())",
       "OutputPath": "$",
       "Parameters": Object {
         "input.$": "$",
@@ -7255,11 +7286,11 @@ Object {
       "ResultPath": "$.fnl_context",
       "Type": "Pass",
     },
-    "return task(0_tmp)": Object {
-      "InputPath": "$.0_tmp",
-      "Next": "1__return task(0_tmp)",
+    "return task(await task())": Object {
+      "InputPath": "$.fnl_context.null",
+      "Next": "1__return task(await task()) 1",
       "Resource": "__REPLACED_TOKEN",
-      "ResultPath": "$.heap1",
+      "ResultPath": "$.heap0",
       "Type": "Task",
     },
   },
@@ -7748,19 +7779,6 @@ exports[`template literal strings complex 1`] = `
 Object {
   "StartAt": "Initialize Functionless Context",
   "States": Object {
-    "0_tmp = await task()": Object {
-      "InputPath": "$.fnl_context.null",
-      "Next": "1__0_tmp = await task()",
-      "Resource": "__REPLACED_TOKEN",
-      "ResultPath": "$.heap0",
-      "Type": "Task",
-    },
-    "1__0_tmp = await task()": Object {
-      "InputPath": "$.heap0",
-      "Next": "return task({key: \`input.obj.str ?? \\"default\\" hello hello input.obj.items[0",
-      "ResultPath": "$.0_tmp",
-      "Type": "Pass",
-    },
     "1__return task({key: \`input.obj.str ?? \\"default\\" hello hello input.obj.item": Object {
       "End": true,
       "InputPath": "$.heap4",
@@ -7777,7 +7795,7 @@ Object {
       "Type": "Task",
     },
     "Initialize Functionless Context": Object {
-      "Next": "0_tmp = await task()",
+      "Next": "return task({key: \`input.obj.str ?? \\"default\\" hello hello input.obj.items[0",
       "OutputPath": "$",
       "Parameters": Object {
         "input.$": "$",
@@ -7786,15 +7804,22 @@ Object {
       "ResultPath": "$.fnl_context",
       "Type": "Pass",
     },
-    "\`input.obj.str ?? \\"default\\" hello hello input.obj.items[0] ?? 0_tmp\`": Object {
+    "\`input.obj.str ?? \\"default\\" hello hello input.obj.items[0] ?? await task()\`": Object {
       "Next": "1__return task({key: \`input.obj.str ?? \\"default\\" hello hello input.obj.item 1",
       "Parameters": Object {
-        "string.$": "States.Format('{} hello hello {}',$.heap1,$.heap2)",
+        "string.$": "States.Format('{} hello hello {}',$.heap0,$.heap2)",
       },
       "ResultPath": "$.heap3",
       "Type": "Pass",
     },
-    "input.obj.items[0] ?? 0_tmp": Object {
+    "input.obj.items[0] ?? await task()": Object {
+      "InputPath": "$.fnl_context.null",
+      "Next": "input.obj.items[0] ?? await task() 1",
+      "Resource": "__REPLACED_TOKEN",
+      "ResultPath": "$.heap1",
+      "Type": "Task",
+    },
+    "input.obj.items[0] ?? await task() 1": Object {
       "Choices": Array [
         Object {
           "And": Array [
@@ -7807,10 +7832,10 @@ Object {
               "Variable": "$.fnl_context.input.obj.items[0]",
             },
           ],
-          "Next": "takeLeft__input.obj.items[0] ?? 0_tmp",
+          "Next": "takeLeft__input.obj.items[0] ?? await task() 1",
         },
       ],
-      "Default": "takeRight__input.obj.items[0] ?? 0_tmp",
+      "Default": "takeRight__input.obj.items[0] ?? await task() 1",
       "Type": "Choice",
     },
     "return task({key: \`input.obj.str ?? \\"default\\" hello hello input.obj.items[0": Object {
@@ -7832,28 +7857,28 @@ Object {
       "Default": "takeRight__return task({key: \`input.obj.str ?? \\"default\\" hello hello input.",
       "Type": "Choice",
     },
-    "takeLeft__input.obj.items[0] ?? 0_tmp": Object {
+    "takeLeft__input.obj.items[0] ?? await task() 1": Object {
       "InputPath": "$.fnl_context.input.obj.items[0]",
-      "Next": "\`input.obj.str ?? \\"default\\" hello hello input.obj.items[0] ?? 0_tmp\`",
+      "Next": "\`input.obj.str ?? \\"default\\" hello hello input.obj.items[0] ?? await task()\`",
       "ResultPath": "$.heap2",
       "Type": "Pass",
     },
     "takeLeft__return task({key: \`input.obj.str ?? \\"default\\" hello hello input.o": Object {
       "InputPath": "$.fnl_context.input.obj.str",
-      "Next": "input.obj.items[0] ?? 0_tmp",
-      "ResultPath": "$.heap1",
+      "Next": "input.obj.items[0] ?? await task()",
+      "ResultPath": "$.heap0",
       "Type": "Pass",
     },
-    "takeRight__input.obj.items[0] ?? 0_tmp": Object {
-      "InputPath": "$.0_tmp",
-      "Next": "\`input.obj.str ?? \\"default\\" hello hello input.obj.items[0] ?? 0_tmp\`",
+    "takeRight__input.obj.items[0] ?? await task() 1": Object {
+      "InputPath": "$.heap1",
+      "Next": "\`input.obj.str ?? \\"default\\" hello hello input.obj.items[0] ?? await task()\`",
       "ResultPath": "$.heap2",
       "Type": "Pass",
     },
     "takeRight__return task({key: \`input.obj.str ?? \\"default\\" hello hello input.": Object {
-      "Next": "input.obj.items[0] ?? 0_tmp",
+      "Next": "input.obj.items[0] ?? await task()",
       "Result": "default",
-      "ResultPath": "$.heap1",
+      "ResultPath": "$.heap0",
       "Type": "Pass",
     },
   },
@@ -8109,31 +8134,47 @@ Object {
       "ResultPath": "$.fnl_context",
       "Type": "Pass",
     },
-    "await task(\\"2\\")": Object {
-      "Next": "exit finally",
-      "Parameters": "2",
-      "Resource": "__REPLACED_TOKEN",
-      "ResultPath": "$.heap1",
-      "Type": "Task",
-    },
     "catch(err)": Object {
-      "Next": "0_catch(err)",
+      "Choices": Array [
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.err.message",
+            },
+            Object {
+              "And": Array [
+                Object {
+                  "IsString": true,
+                  "Variable": "$.err.message",
+                },
+                Object {
+                  "StringEquals": "you dun' goofed",
+                  "Variable": "$.err.message",
+                },
+              ],
+            },
+          ],
+          "Next": "throw new Error(\\"little\\")",
+        },
+      ],
+      "Default": "finally",
+      "Type": "Choice",
+    },
+    "catch__for(item of input.items)": Object {
+      "Next": "1__catch__for(item of input.items)",
       "Parameters": Object {
         "0_ParsedError.$": "States.StringToJson($.err.Cause)",
       },
       "ResultPath": "$.err",
       "Type": "Pass",
     },
-    "exit finally": Object {
-      "Choices": Array [
-        Object {
-          "IsPresent": true,
-          "Next": "throw finally",
-          "Variable": "$.0_tmp",
-        },
-      ],
-      "Default": "return null",
-      "Type": "Choice",
+    "finally": Object {
+      "Next": "1__finally",
+      "Parameters": "2",
+      "Resource": "__REPLACED_TOKEN",
+      "ResultPath": "$.heap1",
+      "Type": "Task",
     },
     "for(item of input.items)": Object {
       "Catch": Array [

@@ -5,12 +5,10 @@ import { BindingElem, FunctionDecl, ParameterDecl } from "./declaration";
 import { ErrorCodes, SynthError } from "./error-code";
 import {
   Argument,
-  AwaitExpr,
   CallExpr,
   ElementAccessExpr,
   Expr,
   NullLiteralExpr,
-  PromiseExpr,
   PropAccessExpr,
 } from "./expression";
 import {
@@ -70,7 +68,6 @@ import {
   isNode,
 } from "./guards";
 import {
-  getIntegrationExprFromIntegrationCallPattern,
   Integration,
   IntegrationImpl,
   isIntegration,
@@ -97,7 +94,7 @@ import {
   invertBinaryOperator,
   isPromiseAll,
 } from "./util";
-import { visitBlock, visitEachChild, visitSpecificChildren } from "./visit";
+import { visitBlock, visitEachChild } from "./visit";
 
 export interface StateMachine<S extends States> {
   Version?: "1.0";
@@ -425,19 +422,19 @@ export class ASL {
    *
    * For and While loops should implement this state.
    */
-  private static ContinueNext: string = "__ContinueNext";
+  private static readonly ContinueNext: string = "__ContinueNext";
 
   /**
    * A pointer to the nearest break point.
    *
    * For and While loops should implement this state.
    */
-  private static BreakNext: string = "__BreakNext";
+  private static readonly BreakNext: string = "__BreakNext";
 
   /**
    * A pointer to the nearest catch state.
    */
-  private static CatchState: string = "__catch";
+  private static readonly CatchState: string = "__catch";
 
   /**
    * When true, adds an extra state to the beginning of the machine that assigns the input
@@ -457,51 +454,31 @@ export class ASL {
     decl: FunctionDecl
   ) {
     const self = this;
-    this.decl = visitEachChild(
-      decl,
-      function normalizeAST(
-        node,
-        hoist?: (expr: Expr) => Expr
-      ): FunctionlessNode | FunctionlessNode[] {
-        if (isBlockStmt(node)) {
-          return new BlockStmt([
-            // for each block statement
-            ...visitBlock(
-              node,
-              function normalizeBlock(stmt, hoist) {
-                return visitEachChild(stmt, (expr) =>
-                  normalizeAST(expr, hoist)
-                );
-              },
-              self.generatedNames
-            ).statements,
-            // re-write the AST to include explicit `ReturnStmt(NullLiteral())` statements
-            // this simplifies the interpreter code by always having a node to chain onto, even when
-            // the AST has no final `ReturnStmt` (i.e. when the function is a void function)
-            // without this, chains that should return null will actually include the entire state as their output
-            ...((isFunctionDecl(node.parent) || isFunctionExpr(node.parent)) &&
-            (!node.lastStmt || !node.lastStmt.isTerminal())
-              ? [new ReturnStmt(new NullLiteralExpr())]
-              : []),
-          ]);
-        } else if (isIntegrationCallPattern(node)) {
-          // we find the range of nodes to hoist so that we avoid visiting the middle nodes.
-          // The start node is the first node in the integration pattern (integ, await, or promise)
-          // The end is always the integration.
-          const end = getIntegrationExprFromIntegrationCallPattern(node);
-
-          const updatedChild = visitSpecificChildren(node, [end], (expr) =>
-            normalizeAST(expr, hoist)
-          );
-          // when we find an integration call,
-          // if it is nested, hoist it up (create variable, add above, replace expr with variable)
-          return hoist && self.doHoist(node)
-            ? hoist(updatedChild)
-            : updatedChild;
-        }
-        return visitEachChild(node, (expr) => normalizeAST(expr, hoist));
+    this.decl = visitEachChild(decl, function normalizeAST(node):
+      | FunctionlessNode
+      | FunctionlessNode[] {
+      if (isBlockStmt(node)) {
+        return new BlockStmt([
+          // for each block statement
+          ...visitBlock(
+            node,
+            function normalizeBlock(stmt) {
+              return visitEachChild(stmt, normalizeAST);
+            },
+            self.generatedNames
+          ).statements,
+          // re-write the AST to include explicit `ReturnStmt(NullLiteral())` statements
+          // this simplifies the interpreter code by always having a node to chain onto, even when
+          // the AST has no final `ReturnStmt` (i.e. when the function is a void function)
+          // without this, chains that should return null will actually include the entire state as their output
+          ...((isFunctionDecl(node.parent) || isFunctionExpr(node.parent)) &&
+          (!node.lastStmt || !node.lastStmt.isTerminal())
+            ? [new ReturnStmt(new NullLiteralExpr())]
+            : []),
+        ]);
       }
-    );
+      return visitEachChild(node, normalizeAST);
+    });
 
     const states = this.evalStmt(this.decl.body);
 
@@ -538,26 +515,6 @@ export class ASL {
       null: `${FUNCTIONLESS_CONTEXT_JSON_PATH}.null`,
       input: `${FUNCTIONLESS_CONTEXT_JSON_PATH}.input`,
     };
-  }
-
-  /**
-   * Determines of an expression should be hoisted
-   * Hoisted - Add new variable to the current block above the
-   */
-  private doHoist(
-    node: FunctionlessNode
-  ): node is CallExpr | AwaitExpr | PromiseExpr {
-    const parent = node.parent;
-
-    return (
-      // const v = task()
-      (!isStmt(parent) ||
-        // for(const i in task())
-        isForInStmt(parent) ||
-        isForOfStmt(parent)) &&
-      // v = task()
-      !(isBinaryExpr(parent) && parent.op === "=")
-    );
   }
 
   /**
@@ -715,7 +672,8 @@ export class ASL {
         const body = this.evalStmt(stmt.body);
 
         if (!body) {
-          // TODO: test me
+          // if the body is empty, the for expression is evaluated,
+          // and then continue on. This state will be optimized out later.
           return {
             Type: "Pass",
           };
