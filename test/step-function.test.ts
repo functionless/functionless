@@ -1993,7 +1993,7 @@ test("list.filter(item => item.length > 2).map(item => item)", () => {
 });
 
 // https://github.com/functionless/functionless/issues/210
-test.skip("input.list.map((item) => item).filter((item) => item.length > 2)", () => {
+test("input.list.map((item) => item).filter((item) => item.length > 2)", () => {
   const { stack } = initStepFunctionApp();
   const definition = new ExpressStepFunction<
     { list: string[] },
@@ -2005,7 +2005,20 @@ test.skip("input.list.map((item) => item).filter((item) => item.length > 2)", ()
   expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
-test.skip("await Promise.all(input.list.map((item) => task(item)))).filter", () => {
+test("closure from map", () => {
+  const { stack } = initStepFunctionApp();
+  const definition = new ExpressStepFunction<
+    { list: string[] },
+    (string | null)[]
+  >(stack, "fn", async (input) => {
+    const a = "x";
+    return input.list.map((item) => `${a}${item}`);
+  }).definition;
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+});
+
+test("await Promise.all(input.list.map((item) => task(item)))).filter", () => {
   const { stack, task } = initStepFunctionApp();
   const definition = new ExpressStepFunction<
     { list: string[] },
@@ -2089,12 +2102,12 @@ test("throw task(task())", () => {
   ).toThrow("StepFunctions error cause must be a constant");
 });
 
-test.skip("input.b ? task() : task(input)", () => {
+test("input.b ? task() : task(input)", () => {
   const { stack, task } = initStepFunctionApp();
   const definition = new ExpressStepFunction<{ b: boolean }, null | number>(
     stack,
     "fn",
-    (input) => {
+    async (input) => {
       return input.b ? task() : task(input);
     }
   ).definition;
@@ -2758,7 +2771,7 @@ test("return await task(await task())", () => {
 });
 
 // https://github.com/functionless/functionless/issues/281
-test.skip("return cond ? task(1) : task(2))", () => {
+test("return cond ? task(1) : task(2))", () => {
   const { stack, task } = initStepFunctionApp();
   const definition = new ExpressStepFunction<{ cond: boolean }, number | null>(
     stack,
@@ -2768,7 +2781,7 @@ test.skip("return cond ? task(1) : task(2))", () => {
     }
   ).definition;
 
-  expect(definition).toMatchSnapshot();
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
 test("return task(1) ?? task(2))", () => {

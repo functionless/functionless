@@ -1482,6 +1482,8 @@ export class ASL {
             );
           }
         }
+      } else if (isJoin(expr)) {
+        return this.joinToStateOutput(expr);
       } else if (isPromiseAll(expr)) {
         const values = expr.getArgument("values");
         // just validate Promise.all and continue, will validate the PromiseArray later.
@@ -1491,7 +1493,9 @@ export class ASL {
         throw new SynthError(ErrorCodes.Unsupported_Use_of_Promises);
       }
       throw new Error(
-        `call must be a service call or list .slice, .map, .forEach or .filter, ${expr}`
+        `call must be a service call or list .slice, .map, .forEach or .filter: ${exprToString(
+          expr
+        )}`
       );
     } else if (isVariableReference(expr)) {
       if (isIdentifier(expr)) {
@@ -1575,7 +1579,11 @@ export class ASL {
           Parameters: {
             "arr.$": `States.Array(${items
               .map((item) =>
-                ASLGraph.isJsonPath(item) ? item.jsonPath : item.value
+                ASLGraph.isJsonPath(item)
+                  ? item.jsonPath
+                  : typeof item.value === "string"
+                  ? `'${item.value}'`
+                  : item.value
               )
               .join(", ")})`,
           },
@@ -1816,6 +1824,72 @@ export class ASL {
           },
           output: {
             jsonPath: tempHeap,
+          },
+        };
+      });
+    } else if (isConditionExpr(expr)) {
+      return this.evalContext(expr, (_, evalCondition) => {
+        const cond = evalCondition(expr.when);
+
+        /* use `this.eval` instead of the evalContext's evalExpr so that the states for left and right are not hoisted before the condition is evaluated
+           statesForCondition
+           Choice(cond)
+              true ->
+                states for left
+                left
+              false ->
+                states for false
+                right
+            return output of left or right
+        */
+        const left = this.eval(expr.then);
+        const right = this.eval(expr._else);
+        const outputVar = this.newHeapVariable();
+
+        const computeAndAssign = (
+          result: ASLGraph.NodeResults
+        ): ASLGraph.NodeState | ASLGraph.SubState => {
+          return ASLGraph.isJsonPath(result) || ASLGraph.isLiteralValue(result)
+            ? // if there is only an output and no additional states, just assign and continue
+              ASLGraph.passWithInput(
+                {
+                  Type: "Pass",
+                  ResultPath: outputVar,
+                },
+                result
+              )
+            : // if there are some returned states with the output reference, run the states and then assign the output value
+              {
+                startState: "compute",
+                states: {
+                  compute: ASLGraph.updateDeferredNextStates(
+                    { Next: "assign" },
+                    result
+                  ),
+                  assign: ASLGraph.passWithInput(
+                    {
+                      Type: "Pass",
+                      ResultPath: outputVar,
+                    },
+                    ASLGraph.getAslStateOutput(result)
+                  ),
+                },
+              };
+        };
+
+        return {
+          startState: "default",
+          states: {
+            default: {
+              Type: "Choice",
+              Choices: [{ ...cond, Next: "doTrue" }],
+              Default: "doFalse",
+            },
+            doTrue: computeAndAssign(left),
+            doFalse: computeAndAssign(right),
+          },
+          output: {
+            jsonPath: outputVar,
           },
         };
       });
@@ -2097,6 +2171,137 @@ export class ASL {
         `impossible expression, slice called with unknown arguments`
       );
     }
+  }
+
+  private joinToStateOutput(
+    expr: CallExpr & { expr: PropAccessExpr }
+  ): ASLGraph.NodeResults {
+    return this.evalContext(expr, (evalExpr) => {
+      const separatorArg = expr.getArgument("separator")?.expr;
+      const valueOutput = evalExpr(expr.expr.expr);
+      const separatorOutput = separatorArg ? evalExpr(separatorArg) : undefined;
+      const separator =
+        separatorOutput &&
+        (ASLGraph.isJsonPath(separatorOutput) ||
+          separatorOutput.value !== undefined)
+          ? separatorOutput
+          : // default to `,`
+            { value: ",", containsJsonPath: false };
+
+      if (
+        ASLGraph.isLiteralValue(valueOutput) &&
+        !Array.isArray(valueOutput.value)
+      ) {
+        throw new SynthError(
+          ErrorCodes.Unexpected_Error,
+          "Expected join to be performed on a variable or array constant"
+        );
+      }
+
+      if (
+        ASLGraph.isLiteralValue(separator) &&
+        typeof separator.value !== "string"
+      ) {
+        throw new SynthError(
+          ErrorCodes.Unexpected_Error,
+          "Expected join separator to be missing, undefined, a string, or a variable"
+        );
+      }
+
+      // both are constants, evaluate them here.
+      if (
+        ASLGraph.isLiteralValue(valueOutput) &&
+        ASLGraph.isLiteralValue(separator)
+      ) {
+        return {
+          value: (<any[]>valueOutput.value).join(<string>separator.value),
+          containsJsonPath: false,
+        };
+      }
+
+      const arrayPath = this.newHeapVariable();
+      const resultVariable = this.newHeapVariable();
+
+      return {
+        startState: "initArray",
+        states: {
+          // put the constant or variable array in a new temp json path
+          initArray: ASLGraph.passWithInput(
+            {
+              Type: "Pass",
+              ResultPath: arrayPath,
+              Next: "hasNext",
+            },
+            valueOutput
+          ),
+          hasNext: {
+            Type: "Choice" as const,
+            Choices: [
+              // not initialized and has next: init as first element
+              {
+                ...ASL.and(
+                  ASL.isPresent(`${arrayPath}[0]`),
+                  ASL.not(ASL.isPresent(resultVariable))
+                ),
+                Next: "initValue",
+              },
+              // not initialized, but the array is empty
+              {
+                ...ASL.and(
+                  ASL.not(ASL.isPresent(`${arrayPath}[0]`)),
+                  ASL.not(ASL.isPresent(resultVariable))
+                ),
+                Next: "returnEmpty",
+              },
+              // already initialized, there are items left
+              { ...ASL.isPresent(`${arrayPath}[0]`), Next: "append" },
+            ],
+            // nothing left to do, return the accumulated string
+            Default: "done",
+          },
+          // place the first value on the output
+          initValue: {
+            Type: "Pass" as const,
+            InputPath: `${arrayPath}[0]`,
+            ResultPath: `${resultVariable}.string`,
+            // update the temp array
+            Next: "tail",
+          },
+          // append the current string to the separator and the head of the array
+          append: {
+            Type: "Pass" as const,
+            Parameters: {
+              "string.$": ASLGraph.isJsonPath(separator)
+                ? `States.Format('{}{}{}', ${resultVariable}.string, ${separator.jsonPath}, ${arrayPath}[0])`
+                : `States.Format('{}${separator.value}{}', ${resultVariable}.string, ${arrayPath}[0])`,
+            },
+            ResultPath: resultVariable,
+            // update the temp array
+            Next: "tail",
+          },
+          // update the temp array and then check to see if there is more to do
+          tail: {
+            Type: "Pass",
+            InputPath: `${arrayPath}[1:]`,
+            ResultPath: arrayPath,
+            Next: "hasNext", // restart by checking for items after tail
+          },
+          // empty array, return `''`
+          returnEmpty: {
+            Type: "Pass" as const,
+            Result: "",
+            ResultPath: `${resultVariable}`,
+          },
+          // nothing left to do, this state will likely get optimized out, but it gives us a target
+          done: {
+            Type: "Pass" as const,
+          },
+        },
+        output: {
+          jsonPath: `${resultVariable}.string`,
+        },
+      };
+    });
   }
 
   /**
@@ -2497,6 +2702,14 @@ function isSlice(expr: CallExpr): expr is CallExpr & {
   return isPropAccessExpr(expr.expr) && expr.expr.name === "slice";
 }
 
+function isJoin(expr: CallExpr): expr is CallExpr & {
+  expr: PropAccessExpr & {
+    name: "join";
+  };
+} {
+  return isPropAccessExpr(expr.expr) && expr.expr.name === "join";
+}
+
 function isFilter(expr: CallExpr): expr is CallExpr & {
   expr: PropAccessExpr & {
     name: "filter";
@@ -2523,7 +2736,9 @@ function analyzeFlow(node: FunctionlessNode): FlowResult {
     .map(analyzeFlow)
     .reduce(
       (a, b) => ({ ...a, ...b }),
-      isCallExpr(node) && (isReferenceExpr(node.expr) || isMapOrForEach(node))
+      isCallExpr(node) &&
+        ((isReferenceExpr(node.expr) && isIntegration(node.expr.ref())) ||
+          isMapOrForEach(node))
         ? { hasTask: true }
         : isThrowStmt(node)
         ? { hasThrow: true }

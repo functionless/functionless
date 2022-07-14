@@ -118,6 +118,7 @@ export function makeFunctionlessChecker(
     isReflectFunction,
     isRuleMapFunction,
     isStepFunction,
+    isSymbolOutOfScope,
     isTable,
   };
 

@@ -141,17 +141,13 @@ export const isPrimitive = (val: any): val is PrimitiveValue => {
 export function isPromiseAll(expr: CallExpr): expr is CallExpr & {
   expr: PropAccessExpr & {
     name: "all";
-    parent: {
-      kind: "Identifier";
-      name: "Promise";
-    };
   };
 } {
   return (
     isPropAccessExpr(expr.expr) &&
-    isIdentifier(expr.expr.expr) &&
     expr.expr.name === "all" &&
-    expr.expr.expr.name === "Promise"
+    ((isIdentifier(expr.expr.expr) && expr.expr.expr.name === "Promise") ||
+      (isReferenceExpr(expr.expr.expr) && expr.expr.expr.ref() === Promise))
   );
 }
 
