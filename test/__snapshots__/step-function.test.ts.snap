@@ -1511,69 +1511,65 @@ Object {
       "Type": "Pass",
     },
     "for(item of input.items)": Object {
-      "Catch": Array [
+      "InputPath": "$.fnl_context.input.items",
+      "Next": "hasNext__for(item of input.items)",
+      "ResultPath": "$.heap0",
+      "Type": "Pass",
+    },
+    "hasNext__for(item of input.items)": Object {
+      "Choices": Array [
         Object {
-          "ErrorEquals": Array [
-            "Break",
-          ],
-          "Next": "return null",
-          "ResultPath": null,
+          "IsPresent": true,
+          "Next": "input.items",
+          "Variable": "$.heap0[0]",
         },
       ],
-      "ItemsPath": "$.fnl_context.input.items",
-      "Iterator": Object {
-        "StartAt": "if(item == \\"hello\\")",
-        "States": Object {
-          "break": Object {
-            "Error": "Break",
-            "Type": "Fail",
-          },
-          "else__if(item == \\"hello\\")": Object {
-            "End": true,
-            "Type": "Pass",
-          },
-          "if(item == \\"hello\\")": Object {
-            "Choices": Array [
-              Object {
-                "And": Array [
-                  Object {
-                    "IsPresent": true,
-                    "Variable": "$.item",
-                  },
-                  Object {
-                    "And": Array [
-                      Object {
-                        "IsString": true,
-                        "Variable": "$.item",
-                      },
-                      Object {
-                        "StringEquals": "hello",
-                        "Variable": "$.item",
-                      },
-                    ],
-                  },
-                ],
-                "Next": "break",
-              },
-            ],
-            "Default": "else__if(item == \\"hello\\")",
-            "Type": "Choice",
-          },
+      "Default": "return null",
+      "Type": "Choice",
+    },
+    "if(item == \\"hello\\")": Object {
+      "Choices": Array [
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.item",
+            },
+            Object {
+              "And": Array [
+                Object {
+                  "IsString": true,
+                  "Variable": "$.item",
+                },
+                Object {
+                  "StringEquals": "hello",
+                  "Variable": "$.item",
+                },
+              ],
+            },
+          ],
+          "Next": "return null",
         },
-      },
-      "MaxConcurrency": 1,
-      "Next": "return null",
-      "Parameters": Object {
-        "fnl_context.$": "$.fnl_context",
-        "item.$": "$$.Map.Item.Value",
-      },
-      "ResultPath": null,
-      "Type": "Map",
+      ],
+      "Default": "tail__for(item of input.items)",
+      "Type": "Choice",
+    },
+    "input.items": Object {
+      "InputPath": "$.heap0[0]",
+      "Next": "if(item == \\"hello\\")",
+      "ResultPath": "$.item",
+      "Type": "Pass",
     },
     "return null": Object {
       "End": true,
       "InputPath": "$.fnl_context.null",
       "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "tail__for(item of input.items)": Object {
+      "InputPath": "$.heap0[1:]",
+      "Next": "hasNext__for(item of input.items)",
+      "ResultPath": "$.heap0",
       "Type": "Pass",
     },
   },
@@ -2446,61 +2442,65 @@ Object {
       "Type": "Pass",
     },
     "for(item of input.items)": Object {
-      "ItemsPath": "$.fnl_context.input.items",
-      "Iterator": Object {
-        "StartAt": "if(item == \\"hello\\")",
-        "States": Object {
-          "continue": Object {
-            "End": true,
-            "ResultPath": null,
-            "Type": "Pass",
-          },
-          "else__if(item == \\"hello\\")": Object {
-            "End": true,
-            "Type": "Pass",
-          },
-          "if(item == \\"hello\\")": Object {
-            "Choices": Array [
-              Object {
-                "And": Array [
-                  Object {
-                    "IsPresent": true,
-                    "Variable": "$.item",
-                  },
-                  Object {
-                    "And": Array [
-                      Object {
-                        "IsString": true,
-                        "Variable": "$.item",
-                      },
-                      Object {
-                        "StringEquals": "hello",
-                        "Variable": "$.item",
-                      },
-                    ],
-                  },
-                ],
-                "Next": "continue",
-              },
-            ],
-            "Default": "else__if(item == \\"hello\\")",
-            "Type": "Choice",
-          },
+      "InputPath": "$.fnl_context.input.items",
+      "Next": "hasNext__for(item of input.items)",
+      "ResultPath": "$.heap0",
+      "Type": "Pass",
+    },
+    "hasNext__for(item of input.items)": Object {
+      "Choices": Array [
+        Object {
+          "IsPresent": true,
+          "Next": "input.items",
+          "Variable": "$.heap0[0]",
         },
-      },
-      "MaxConcurrency": 1,
-      "Next": "return null",
-      "Parameters": Object {
-        "fnl_context.$": "$.fnl_context",
-        "item.$": "$$.Map.Item.Value",
-      },
-      "ResultPath": null,
-      "Type": "Map",
+      ],
+      "Default": "return null",
+      "Type": "Choice",
+    },
+    "if(item == \\"hello\\")": Object {
+      "Choices": Array [
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.item",
+            },
+            Object {
+              "And": Array [
+                Object {
+                  "IsString": true,
+                  "Variable": "$.item",
+                },
+                Object {
+                  "StringEquals": "hello",
+                  "Variable": "$.item",
+                },
+              ],
+            },
+          ],
+          "Next": "tail__for(item of input.items)",
+        },
+      ],
+      "Default": "tail__for(item of input.items)",
+      "Type": "Choice",
+    },
+    "input.items": Object {
+      "InputPath": "$.heap0[0]",
+      "Next": "if(item == \\"hello\\")",
+      "ResultPath": "$.item",
+      "Type": "Pass",
     },
     "return null": Object {
       "End": true,
       "InputPath": "$.fnl_context.null",
       "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "tail__for(item of input.items)": Object {
+      "InputPath": "$.heap0[1:]",
+      "Next": "hasNext__for(item of input.items)",
+      "ResultPath": "$.heap0",
       "Type": "Pass",
     },
   },
@@ -2838,6 +2838,33 @@ exports[`for (const i in [task(input)]) 1`] = `
 Object {
   "StartAt": "Initialize Functionless Context",
   "States": Object {
+    "1__await task(await task(i))": Object {
+      "InputPath": "$.heap2",
+      "Next": "tail__for(i in [await task(input)]) 1",
+      "Resource": "__REPLACED_TOKEN",
+      "ResultPath": "$.heap3",
+      "Type": "Task",
+    },
+    "1__for(i in [await task(input)]) 1": Object {
+      "InputPath": "$.heap4",
+      "Iterator": Object {
+        "StartAt": "Default",
+        "States": Object {
+          "Default": Object {
+            "End": true,
+            "ResultPath": "$",
+            "Type": "Pass",
+          },
+        },
+      },
+      "Next": "hasNext__for(i in [await task(input)]) 1",
+      "Parameters": Object {
+        "index.$": "$$.Map.Item.Index",
+        "item.$": "$$.Map.Item.Value",
+      },
+      "ResultPath": "$.heap4",
+      "Type": "Map",
+    },
     "Initialize Functionless Context": Object {
       "Next": "for(i in [await task(input)])",
       "OutputPath": "$",
@@ -2856,6 +2883,19 @@ Object {
       "ResultPath": "$.heap1",
       "Type": "Pass",
     },
+    "[await task(input)] 1": Object {
+      "InputPath": "$.heap4[0]",
+      "Next": "await task(await task(i))",
+      "ResultPath": "$.i",
+      "Type": "Pass",
+    },
+    "await task(await task(i))": Object {
+      "InputPath": "$.i.index",
+      "Next": "1__await task(await task(i))",
+      "Resource": "__REPLACED_TOKEN",
+      "ResultPath": "$.heap2",
+      "Type": "Task",
+    },
     "for(i in [await task(input)])": Object {
       "InputPath": "$.fnl_context.input",
       "Next": "[await task(input)]",
@@ -2864,40 +2904,32 @@ Object {
       "Type": "Task",
     },
     "for(i in [await task(input)]) 1": Object {
-      "ItemsPath": "$.heap1.arr",
-      "Iterator": Object {
-        "StartAt": "await task(await task(i))",
-        "States": Object {
-          "1__await task(await task(i))": Object {
-            "End": true,
-            "InputPath": "$.heap2",
-            "Resource": "__REPLACED_TOKEN",
-            "ResultPath": "$.heap3",
-            "Type": "Task",
-          },
-          "await task(await task(i))": Object {
-            "InputPath": "$.i",
-            "Next": "1__await task(await task(i))",
-            "Resource": "__REPLACED_TOKEN",
-            "ResultPath": "$.heap2",
-            "Type": "Task",
-          },
+      "InputPath": "$.heap1.arr",
+      "Next": "1__for(i in [await task(input)]) 1",
+      "ResultPath": "$.heap4",
+      "Type": "Pass",
+    },
+    "hasNext__for(i in [await task(input)]) 1": Object {
+      "Choices": Array [
+        Object {
+          "IsPresent": true,
+          "Next": "[await task(input)] 1",
+          "Variable": "$.heap4[0]",
         },
-      },
-      "MaxConcurrency": 1,
-      "Next": "return null",
-      "Parameters": Object {
-        "0_i.$": "$$.Map.Item.Value",
-        "fnl_context.$": "$.fnl_context",
-        "i.$": "$$.Map.Item.Index",
-      },
-      "ResultPath": null,
-      "Type": "Map",
+      ],
+      "Default": "return null",
+      "Type": "Choice",
     },
     "return null": Object {
       "End": true,
       "InputPath": "$.fnl_context.null",
       "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "tail__for(i in [await task(input)]) 1": Object {
+      "InputPath": "$.heap4[1:]",
+      "Next": "hasNext__for(i in [await task(input)]) 1",
+      "ResultPath": "$.heap4",
       "Type": "Pass",
     },
   },
@@ -2908,6 +2940,13 @@ exports[`for (const i of [task(input)]) 1`] = `
 Object {
   "StartAt": "Initialize Functionless Context",
   "States": Object {
+    "1__await task(await task(i))": Object {
+      "InputPath": "$.heap2",
+      "Next": "tail__for(i of [await task(input)]) 1",
+      "Resource": "__REPLACED_TOKEN",
+      "ResultPath": "$.heap3",
+      "Type": "Task",
+    },
     "Initialize Functionless Context": Object {
       "Next": "for(i of [await task(input)])",
       "OutputPath": "$",
@@ -2926,6 +2965,19 @@ Object {
       "ResultPath": "$.heap1",
       "Type": "Pass",
     },
+    "[await task(input)] 1": Object {
+      "InputPath": "$.heap4[0]",
+      "Next": "await task(await task(i))",
+      "ResultPath": "$.i",
+      "Type": "Pass",
+    },
+    "await task(await task(i))": Object {
+      "InputPath": "$.i",
+      "Next": "1__await task(await task(i))",
+      "Resource": "__REPLACED_TOKEN",
+      "ResultPath": "$.heap2",
+      "Type": "Task",
+    },
     "for(i of [await task(input)])": Object {
       "InputPath": "$.fnl_context.input",
       "Next": "[await task(input)]",
@@ -2934,34 +2986,21 @@ Object {
       "Type": "Task",
     },
     "for(i of [await task(input)]) 1": Object {
-      "ItemsPath": "$.heap1.arr",
-      "Iterator": Object {
-        "StartAt": "await task(await task(i))",
-        "States": Object {
-          "1__await task(await task(i))": Object {
-            "End": true,
-            "InputPath": "$.heap2",
-            "Resource": "__REPLACED_TOKEN",
-            "ResultPath": "$.heap3",
-            "Type": "Task",
-          },
-          "await task(await task(i))": Object {
-            "InputPath": "$.i",
-            "Next": "1__await task(await task(i))",
-            "Resource": "__REPLACED_TOKEN",
-            "ResultPath": "$.heap2",
-            "Type": "Task",
-          },
+      "InputPath": "$.heap1.arr",
+      "Next": "hasNext__for(i of [await task(input)]) 1",
+      "ResultPath": "$.heap4",
+      "Type": "Pass",
+    },
+    "hasNext__for(i of [await task(input)]) 1": Object {
+      "Choices": Array [
+        Object {
+          "IsPresent": true,
+          "Next": "[await task(input)] 1",
+          "Variable": "$.heap4[0]",
         },
-      },
-      "MaxConcurrency": 1,
-      "Next": "return null",
-      "Parameters": Object {
-        "fnl_context.$": "$.fnl_context",
-        "i.$": "$$.Map.Item.Value",
-      },
-      "ResultPath": null,
-      "Type": "Map",
+      ],
+      "Default": "return null",
+      "Type": "Choice",
     },
     "return null": Object {
       "End": true,
@@ -2969,14 +3008,176 @@ Object {
       "ResultPath": "$",
       "Type": "Pass",
     },
+    "tail__for(i of [await task(input)]) 1": Object {
+      "InputPath": "$.heap4[1:]",
+      "Next": "hasNext__for(i of [await task(input)]) 1",
+      "ResultPath": "$.heap4",
+      "Type": "Pass",
+    },
   },
 }
 `;
 
-exports[`for i in items, items[i] 1`] = `
+exports[`for assign 1`] = `
 Object {
   "StartAt": "Initialize Functionless Context",
   "States": Object {
+    "1__a = \`i\`": Object {
+      "InputPath": "$.heap0.string",
+      "Next": "tail__for(i in input.items)",
+      "ResultPath": "$.a",
+      "Type": "Pass",
+    },
+    "1__a = \`i\` 1": Object {
+      "InputPath": "$.heap2.string",
+      "Next": "tail__for(i of input.items)",
+      "ResultPath": "$.a",
+      "Type": "Pass",
+    },
+    "1__for(i in input.items)": Object {
+      "InputPath": "$.heap1",
+      "Iterator": Object {
+        "StartAt": "Default",
+        "States": Object {
+          "Default": Object {
+            "End": true,
+            "ResultPath": "$",
+            "Type": "Pass",
+          },
+        },
+      },
+      "Next": "hasNext__for(i in input.items)",
+      "Parameters": Object {
+        "index.$": "$$.Map.Item.Index",
+        "item.$": "$$.Map.Item.Value",
+      },
+      "ResultPath": "$.heap1",
+      "Type": "Map",
+    },
+    "Initialize Functionless Context": Object {
+      "Next": "a = \\"\\"",
+      "OutputPath": "$",
+      "Parameters": Object {
+        "input.$": "$",
+        "null": null,
+      },
+      "ResultPath": "$.fnl_context",
+      "Type": "Pass",
+    },
+    "a = \\"\\"": Object {
+      "Next": "for(i in input.items)",
+      "Result": "",
+      "ResultPath": "$.a",
+      "Type": "Pass",
+    },
+    "a = \`i\`": Object {
+      "Next": "1__a = \`i\`",
+      "Parameters": Object {
+        "string.$": "States.Format('{}',$.i.index)",
+      },
+      "ResultPath": "$.heap0",
+      "Type": "Pass",
+    },
+    "a = \`i\` 1": Object {
+      "Next": "1__a = \`i\` 1",
+      "Parameters": Object {
+        "string.$": "States.Format('{}',$.i)",
+      },
+      "ResultPath": "$.heap2",
+      "Type": "Pass",
+    },
+    "for(i in input.items)": Object {
+      "InputPath": "$.fnl_context.input.items",
+      "Next": "1__for(i in input.items)",
+      "ResultPath": "$.heap1",
+      "Type": "Pass",
+    },
+    "for(i of input.items)": Object {
+      "InputPath": "$.fnl_context.input.items",
+      "Next": "hasNext__for(i of input.items)",
+      "ResultPath": "$.heap3",
+      "Type": "Pass",
+    },
+    "hasNext__for(i in input.items)": Object {
+      "Choices": Array [
+        Object {
+          "IsPresent": true,
+          "Next": "input.items",
+          "Variable": "$.heap1[0]",
+        },
+      ],
+      "Default": "for(i of input.items)",
+      "Type": "Choice",
+    },
+    "hasNext__for(i of input.items)": Object {
+      "Choices": Array [
+        Object {
+          "IsPresent": true,
+          "Next": "input.items 1",
+          "Variable": "$.heap3[0]",
+        },
+      ],
+      "Default": "return a",
+      "Type": "Choice",
+    },
+    "input.items": Object {
+      "InputPath": "$.heap1[0]",
+      "Next": "a = \`i\`",
+      "ResultPath": "$.i",
+      "Type": "Pass",
+    },
+    "input.items 1": Object {
+      "InputPath": "$.heap3[0]",
+      "Next": "a = \`i\` 1",
+      "ResultPath": "$.i",
+      "Type": "Pass",
+    },
+    "return a": Object {
+      "End": true,
+      "InputPath": "$.a",
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "tail__for(i in input.items)": Object {
+      "InputPath": "$.heap1[1:]",
+      "Next": "hasNext__for(i in input.items)",
+      "ResultPath": "$.heap1",
+      "Type": "Pass",
+    },
+    "tail__for(i of input.items)": Object {
+      "InputPath": "$.heap3[1:]",
+      "Next": "hasNext__for(i of input.items)",
+      "ResultPath": "$.heap3",
+      "Type": "Pass",
+    },
+  },
+}
+`;
+
+exports[`for break 1`] = `
+Object {
+  "StartAt": "Initialize Functionless Context",
+  "States": Object {
+    "1__for(i in input.items)": Object {
+      "InputPath": "$.heap0",
+      "Iterator": Object {
+        "StartAt": "Default",
+        "States": Object {
+          "Default": Object {
+            "End": true,
+            "ResultPath": "$",
+            "Type": "Pass",
+          },
+        },
+      },
+      "Next": "hasNext__for(i in input.items)",
+      "Parameters": Object {
+        "index.$": "$$.Map.Item.Index",
+        "item.$": "$$.Map.Item.Value",
+      },
+      "ResultPath": "$.heap0",
+      "Type": "Map",
+    },
     "Initialize Functionless Context": Object {
       "Next": "for(i in input.items)",
       "OutputPath": "$",
@@ -2988,32 +3189,536 @@ Object {
       "Type": "Pass",
     },
     "for(i in input.items)": Object {
-      "ItemsPath": "$.fnl_context.input.items",
+      "InputPath": "$.fnl_context.input.items",
+      "Next": "1__for(i in input.items)",
+      "ResultPath": "$.heap0",
+      "Type": "Pass",
+    },
+    "for(i of input.items)": Object {
+      "InputPath": "$.fnl_context.input.items",
+      "Next": "hasNext__for(i of input.items)",
+      "ResultPath": "$.heap1",
+      "Type": "Pass",
+    },
+    "hasNext__for(i in input.items)": Object {
+      "Choices": Array [
+        Object {
+          "IsPresent": true,
+          "Next": "input.items",
+          "Variable": "$.heap0[0]",
+        },
+      ],
+      "Default": "for(i of input.items)",
+      "Type": "Choice",
+    },
+    "hasNext__for(i of input.items)": Object {
+      "Choices": Array [
+        Object {
+          "IsPresent": true,
+          "Next": "input.items 1",
+          "Variable": "$.heap1[0]",
+        },
+      ],
+      "Default": "return \\"end\\"",
+      "Type": "Choice",
+    },
+    "if(i == \\"1\\")": Object {
+      "Choices": Array [
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.i",
+            },
+            Object {
+              "And": Array [
+                Object {
+                  "IsString": true,
+                  "Variable": "$.i",
+                },
+                Object {
+                  "StringEquals": "1",
+                  "Variable": "$.i",
+                },
+              ],
+            },
+          ],
+          "Next": "return \\"end\\"",
+        },
+      ],
+      "Default": "return i",
+      "Type": "Choice",
+    },
+    "if(input.items[i] == \\"1\\")": Object {
+      "Choices": Array [
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.i.item",
+            },
+            Object {
+              "And": Array [
+                Object {
+                  "IsString": true,
+                  "Variable": "$.i.item",
+                },
+                Object {
+                  "StringEquals": "1",
+                  "Variable": "$.i.item",
+                },
+              ],
+            },
+          ],
+          "Next": "for(i of input.items)",
+        },
+      ],
+      "Default": "return input.items[i]",
+      "Type": "Choice",
+    },
+    "input.items": Object {
+      "InputPath": "$.heap0[0]",
+      "Next": "if(input.items[i] == \\"1\\")",
+      "ResultPath": "$.i",
+      "Type": "Pass",
+    },
+    "input.items 1": Object {
+      "InputPath": "$.heap1[0]",
+      "Next": "if(i == \\"1\\")",
+      "ResultPath": "$.i",
+      "Type": "Pass",
+    },
+    "return \\"end\\"": Object {
+      "End": true,
+      "Result": "end",
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "return i": Object {
+      "End": true,
+      "InputPath": "$.i",
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "return input.items[i]": Object {
+      "End": true,
+      "InputPath": "$.i.item",
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+  },
+}
+`;
+
+exports[`for continue 1`] = `
+Object {
+  "StartAt": "Initialize Functionless Context",
+  "States": Object {
+    "1__for(i in input.items)": Object {
+      "InputPath": "$.heap0",
       "Iterator": Object {
-        "StartAt": "a = items[i]",
+        "StartAt": "Default",
         "States": Object {
-          "a = items[i]": Object {
+          "Default": Object {
             "End": true,
-            "InputPath": "$.0_i",
-            "ResultPath": "$.a",
+            "ResultPath": "$",
             "Type": "Pass",
           },
         },
       },
-      "MaxConcurrency": 1,
-      "Next": "return null",
+      "Next": "hasNext__for(i in input.items)",
       "Parameters": Object {
-        "0_i.$": "$$.Map.Item.Value",
-        "fnl_context.$": "$.fnl_context",
-        "i.$": "$$.Map.Item.Index",
+        "index.$": "$$.Map.Item.Index",
+        "item.$": "$$.Map.Item.Value",
       },
-      "ResultPath": null,
+      "ResultPath": "$.heap0",
       "Type": "Map",
+    },
+    "Initialize Functionless Context": Object {
+      "Next": "for(i in input.items)",
+      "OutputPath": "$",
+      "Parameters": Object {
+        "input.$": "$",
+        "null": null,
+      },
+      "ResultPath": "$.fnl_context",
+      "Type": "Pass",
+    },
+    "for(i in input.items)": Object {
+      "InputPath": "$.fnl_context.input.items",
+      "Next": "1__for(i in input.items)",
+      "ResultPath": "$.heap0",
+      "Type": "Pass",
+    },
+    "for(i of input.items)": Object {
+      "InputPath": "$.fnl_context.input.items",
+      "Next": "hasNext__for(i of input.items)",
+      "ResultPath": "$.heap1",
+      "Type": "Pass",
+    },
+    "hasNext__for(i in input.items)": Object {
+      "Choices": Array [
+        Object {
+          "IsPresent": true,
+          "Next": "input.items",
+          "Variable": "$.heap0[0]",
+        },
+      ],
+      "Default": "for(i of input.items)",
+      "Type": "Choice",
+    },
+    "hasNext__for(i of input.items)": Object {
+      "Choices": Array [
+        Object {
+          "IsPresent": true,
+          "Next": "input.items 1",
+          "Variable": "$.heap1[0]",
+        },
+      ],
+      "Default": "return \\"end\\"",
+      "Type": "Choice",
+    },
+    "if(i == \\"1\\")": Object {
+      "Choices": Array [
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.i",
+            },
+            Object {
+              "And": Array [
+                Object {
+                  "IsString": true,
+                  "Variable": "$.i",
+                },
+                Object {
+                  "StringEquals": "1",
+                  "Variable": "$.i",
+                },
+              ],
+            },
+          ],
+          "Next": "tail__for(i of input.items)",
+        },
+      ],
+      "Default": "return i",
+      "Type": "Choice",
+    },
+    "if(input.items[i] == \\"1\\")": Object {
+      "Choices": Array [
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.i.item",
+            },
+            Object {
+              "And": Array [
+                Object {
+                  "IsString": true,
+                  "Variable": "$.i.item",
+                },
+                Object {
+                  "StringEquals": "1",
+                  "Variable": "$.i.item",
+                },
+              ],
+            },
+          ],
+          "Next": "tail__for(i in input.items)",
+        },
+      ],
+      "Default": "return input.items[i]",
+      "Type": "Choice",
+    },
+    "input.items": Object {
+      "InputPath": "$.heap0[0]",
+      "Next": "if(input.items[i] == \\"1\\")",
+      "ResultPath": "$.i",
+      "Type": "Pass",
+    },
+    "input.items 1": Object {
+      "InputPath": "$.heap1[0]",
+      "Next": "if(i == \\"1\\")",
+      "ResultPath": "$.i",
+      "Type": "Pass",
+    },
+    "return \\"end\\"": Object {
+      "End": true,
+      "Result": "end",
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "return i": Object {
+      "End": true,
+      "InputPath": "$.i",
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "return input.items[i]": Object {
+      "End": true,
+      "InputPath": "$.i.item",
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "tail__for(i in input.items)": Object {
+      "InputPath": "$.heap0[1:]",
+      "Next": "hasNext__for(i in input.items)",
+      "ResultPath": "$.heap0",
+      "Type": "Pass",
+    },
+    "tail__for(i of input.items)": Object {
+      "InputPath": "$.heap1[1:]",
+      "Next": "hasNext__for(i of input.items)",
+      "ResultPath": "$.heap1",
+      "Type": "Pass",
+    },
+  },
+}
+`;
+
+exports[`for i in items, items[i] 1`] = `
+Object {
+  "StartAt": "Initialize Functionless Context",
+  "States": Object {
+    "1__for(i in input.items)": Object {
+      "InputPath": "$.heap0",
+      "Iterator": Object {
+        "StartAt": "Default",
+        "States": Object {
+          "Default": Object {
+            "End": true,
+            "ResultPath": "$",
+            "Type": "Pass",
+          },
+        },
+      },
+      "Next": "hasNext__for(i in input.items)",
+      "Parameters": Object {
+        "index.$": "$$.Map.Item.Index",
+        "item.$": "$$.Map.Item.Value",
+      },
+      "ResultPath": "$.heap0",
+      "Type": "Map",
+    },
+    "Initialize Functionless Context": Object {
+      "Next": "for(i in input.items)",
+      "OutputPath": "$",
+      "Parameters": Object {
+        "input.$": "$",
+        "null": null,
+      },
+      "ResultPath": "$.fnl_context",
+      "Type": "Pass",
+    },
+    "a = items[i]": Object {
+      "InputPath": "$.i.item",
+      "Next": "tail__for(i in input.items)",
+      "ResultPath": "$.a",
+      "Type": "Pass",
+    },
+    "for(i in input.items)": Object {
+      "InputPath": "$.fnl_context.input.items",
+      "Next": "1__for(i in input.items)",
+      "ResultPath": "$.heap0",
+      "Type": "Pass",
+    },
+    "hasNext__for(i in input.items)": Object {
+      "Choices": Array [
+        Object {
+          "IsPresent": true,
+          "Next": "input.items",
+          "Variable": "$.heap0[0]",
+        },
+      ],
+      "Default": "return null",
+      "Type": "Choice",
+    },
+    "input.items": Object {
+      "InputPath": "$.heap0[0]",
+      "Next": "a = items[i]",
+      "ResultPath": "$.i",
+      "Type": "Pass",
     },
     "return null": Object {
       "End": true,
       "InputPath": "$.fnl_context.null",
       "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "tail__for(i in input.items)": Object {
+      "InputPath": "$.heap0[1:]",
+      "Next": "hasNext__for(i in input.items)",
+      "ResultPath": "$.heap0",
+      "Type": "Pass",
+    },
+  },
+}
+`;
+
+exports[`for return 1`] = `
+Object {
+  "StartAt": "Initialize Functionless Context",
+  "States": Object {
+    "1__for(i in input.items)": Object {
+      "InputPath": "$.heap0",
+      "Iterator": Object {
+        "StartAt": "Default",
+        "States": Object {
+          "Default": Object {
+            "End": true,
+            "ResultPath": "$",
+            "Type": "Pass",
+          },
+        },
+      },
+      "Next": "hasNext__for(i in input.items)",
+      "Parameters": Object {
+        "index.$": "$$.Map.Item.Index",
+        "item.$": "$$.Map.Item.Value",
+      },
+      "ResultPath": "$.heap0",
+      "Type": "Map",
+    },
+    "Initialize Functionless Context": Object {
+      "Next": "for(i in input.items)",
+      "OutputPath": "$",
+      "Parameters": Object {
+        "input.$": "$",
+        "null": null,
+      },
+      "ResultPath": "$.fnl_context",
+      "Type": "Pass",
+    },
+    "for(i in input.items)": Object {
+      "InputPath": "$.fnl_context.input.items",
+      "Next": "1__for(i in input.items)",
+      "ResultPath": "$.heap0",
+      "Type": "Pass",
+    },
+    "for(i of input.items)": Object {
+      "InputPath": "$.fnl_context.input.items",
+      "Next": "hasNext__for(i of input.items)",
+      "ResultPath": "$.heap1",
+      "Type": "Pass",
+    },
+    "hasNext__for(i in input.items)": Object {
+      "Choices": Array [
+        Object {
+          "IsPresent": true,
+          "Next": "input.items",
+          "Variable": "$.heap0[0]",
+        },
+      ],
+      "Default": "for(i of input.items)",
+      "Type": "Choice",
+    },
+    "hasNext__for(i of input.items)": Object {
+      "Choices": Array [
+        Object {
+          "IsPresent": true,
+          "Next": "input.items 1",
+          "Variable": "$.heap1[0]",
+        },
+      ],
+      "Default": "return \\"end\\"",
+      "Type": "Choice",
+    },
+    "if(i == \\"1\\")": Object {
+      "Choices": Array [
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.i",
+            },
+            Object {
+              "And": Array [
+                Object {
+                  "IsString": true,
+                  "Variable": "$.i",
+                },
+                Object {
+                  "StringEquals": "1",
+                  "Variable": "$.i",
+                },
+              ],
+            },
+          ],
+          "Next": "return i",
+        },
+      ],
+      "Default": "tail__for(i of input.items)",
+      "Type": "Choice",
+    },
+    "if(input.items[i] == \\"1\\")": Object {
+      "Choices": Array [
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.i.item",
+            },
+            Object {
+              "And": Array [
+                Object {
+                  "IsString": true,
+                  "Variable": "$.i.item",
+                },
+                Object {
+                  "StringEquals": "1",
+                  "Variable": "$.i.item",
+                },
+              ],
+            },
+          ],
+          "Next": "return input.items[i]",
+        },
+      ],
+      "Default": "tail__for(i in input.items)",
+      "Type": "Choice",
+    },
+    "input.items": Object {
+      "InputPath": "$.heap0[0]",
+      "Next": "if(input.items[i] == \\"1\\")",
+      "ResultPath": "$.i",
+      "Type": "Pass",
+    },
+    "input.items 1": Object {
+      "InputPath": "$.heap1[0]",
+      "Next": "if(i == \\"1\\")",
+      "ResultPath": "$.i",
+      "Type": "Pass",
+    },
+    "return \\"end\\"": Object {
+      "End": true,
+      "Result": "end",
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "return i": Object {
+      "End": true,
+      "InputPath": "$.i",
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "return input.items[i]": Object {
+      "End": true,
+      "InputPath": "$.i.item",
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "tail__for(i in input.items)": Object {
+      "InputPath": "$.heap0[1:]",
+      "Next": "hasNext__for(i in input.items)",
+      "ResultPath": "$.heap0",
+      "Type": "Pass",
+    },
+    "tail__for(i of input.items)": Object {
+      "InputPath": "$.heap1[1:]",
+      "Next": "hasNext__for(i of input.items)",
+      "ResultPath": "$.heap1",
       "Type": "Pass",
     },
   },
@@ -3034,32 +3739,45 @@ Object {
       "ResultPath": "$.fnl_context",
       "Type": "Pass",
     },
+    "a = item": Object {
+      "InputPath": "$.item",
+      "Next": "tail__for(item of input.items)",
+      "ResultPath": "$.a",
+      "Type": "Pass",
+    },
     "for(item of input.items)": Object {
-      "ItemsPath": "$.fnl_context.input.items",
-      "Iterator": Object {
-        "StartAt": "a = item",
-        "States": Object {
-          "a = item": Object {
-            "End": true,
-            "InputPath": "$.item",
-            "ResultPath": "$.a",
-            "Type": "Pass",
-          },
+      "InputPath": "$.fnl_context.input.items",
+      "Next": "hasNext__for(item of input.items)",
+      "ResultPath": "$.heap0",
+      "Type": "Pass",
+    },
+    "hasNext__for(item of input.items)": Object {
+      "Choices": Array [
+        Object {
+          "IsPresent": true,
+          "Next": "input.items",
+          "Variable": "$.heap0[0]",
         },
-      },
-      "MaxConcurrency": 1,
-      "Next": "return null",
-      "Parameters": Object {
-        "fnl_context.$": "$.fnl_context",
-        "item.$": "$$.Map.Item.Value",
-      },
-      "ResultPath": null,
-      "Type": "Map",
+      ],
+      "Default": "return null",
+      "Type": "Choice",
+    },
+    "input.items": Object {
+      "InputPath": "$.heap0[0]",
+      "Next": "a = item",
+      "ResultPath": "$.item",
+      "Type": "Pass",
     },
     "return null": Object {
       "End": true,
       "InputPath": "$.fnl_context.null",
       "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "tail__for(item of input.items)": Object {
+      "InputPath": "$.heap0[1:]",
+      "Next": "hasNext__for(item of input.items)",
+      "ResultPath": "$.heap0",
       "Type": "Pass",
     },
   },
@@ -3070,27 +3788,6 @@ exports[`for-loop inline array 1`] = `
 Object {
   "StartAt": "Initialize Functionless Context",
   "States": Object {
-    "1__for(item of [1, 2, 3])": Object {
-      "ItemsPath": "$.heap0",
-      "Iterator": Object {
-        "StartAt": "a = item",
-        "States": Object {
-          "a = item": Object {
-            "End": true,
-            "InputPath": "$.item",
-            "ResultPath": "$.a",
-            "Type": "Pass",
-          },
-        },
-      },
-      "MaxConcurrency": 1,
-      "Next": "return null",
-      "Parameters": Object {
-        "item.$": "$$.Map.Item.Value",
-      },
-      "ResultPath": null,
-      "Type": "Map",
-    },
     "Initialize Functionless Context": Object {
       "Next": "for(item of [1, 2, 3])",
       "OutputPath": "$",
@@ -3101,8 +3798,20 @@ Object {
       "ResultPath": "$.fnl_context",
       "Type": "Pass",
     },
+    "[1, 2, 3]": Object {
+      "InputPath": "$.heap0[0]",
+      "Next": "a = item",
+      "ResultPath": "$.item",
+      "Type": "Pass",
+    },
+    "a = item": Object {
+      "InputPath": "$.item",
+      "Next": "tail__for(item of [1, 2, 3])",
+      "ResultPath": "$.a",
+      "Type": "Pass",
+    },
     "for(item of [1, 2, 3])": Object {
-      "Next": "1__for(item of [1, 2, 3])",
+      "Next": "hasNext__for(item of [1, 2, 3])",
       "Result": Array [
         1,
         2,
@@ -3111,10 +3820,27 @@ Object {
       "ResultPath": "$.heap0",
       "Type": "Pass",
     },
+    "hasNext__for(item of [1, 2, 3])": Object {
+      "Choices": Array [
+        Object {
+          "IsPresent": true,
+          "Next": "[1, 2, 3]",
+          "Variable": "$.heap0[0]",
+        },
+      ],
+      "Default": "return null",
+      "Type": "Choice",
+    },
     "return null": Object {
       "End": true,
       "InputPath": "$.fnl_context.null",
       "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "tail__for(item of [1, 2, 3])": Object {
+      "InputPath": "$.heap0[1:]",
+      "Next": "hasNext__for(item of [1, 2, 3])",
+      "ResultPath": "$.heap0",
       "Type": "Pass",
     },
   },
@@ -3135,32 +3861,38 @@ Object {
       "ResultPath": "$.fnl_context",
       "Type": "Pass",
     },
-    "for(name of people)": Object {
-      "ItemsPath": "$.people",
-      "Iterator": Object {
-        "StartAt": "await computeScore({id: input.id, name: name})",
-        "States": Object {
-          "await computeScore({id: input.id, name: name})": Object {
-            "End": true,
-            "Parameters": Object {
-              "id.$": "$.fnl_context.input.id",
-              "name.$": "$.name",
-            },
-            "Resource": "__REPLACED_TOKEN",
-            "ResultPath": "$.heap0",
-            "Type": "Task",
-          },
-        },
-      },
-      "MaxConcurrency": 1,
-      "Next": "return null",
+    "await computeScore({id: input.id, name: name})": Object {
+      "Next": "tail__for(name of people)",
       "Parameters": Object {
-        "fnl_context.$": "$.fnl_context",
-        "name.$": "$$.Map.Item.Value",
-        "people.$": "$.people",
+        "id.$": "$.fnl_context.input.id",
+        "name.$": "$.name",
       },
-      "ResultPath": null,
-      "Type": "Map",
+      "Resource": "__REPLACED_TOKEN",
+      "ResultPath": "$.heap0",
+      "Type": "Task",
+    },
+    "for(name of people)": Object {
+      "InputPath": "$.people",
+      "Next": "hasNext__for(name of people)",
+      "ResultPath": "$.heap1",
+      "Type": "Pass",
+    },
+    "hasNext__for(name of people)": Object {
+      "Choices": Array [
+        Object {
+          "IsPresent": true,
+          "Next": "people",
+          "Variable": "$.heap1[0]",
+        },
+      ],
+      "Default": "return null",
+      "Type": "Choice",
+    },
+    "people": Object {
+      "InputPath": "$.heap1[0]",
+      "Next": "await computeScore({id: input.id, name: name})",
+      "ResultPath": "$.name",
+      "Type": "Pass",
     },
     "people = [\\"sam\\", \\"sam\\"]": Object {
       "Next": "for(name of people)",
@@ -3177,6 +3909,12 @@ Object {
       "ResultPath": "$",
       "Type": "Pass",
     },
+    "tail__for(name of people)": Object {
+      "InputPath": "$.heap1[1:]",
+      "Next": "hasNext__for(name of people)",
+      "ResultPath": "$.heap1",
+      "Type": "Pass",
+    },
   },
 }
 `;
@@ -3185,6 +3923,23 @@ exports[`for-of { try { task() } catch (err) { if(err) throw } finally { task() 
 Object {
   "StartAt": "Initialize Functionless Context",
   "States": Object {
+    "1__catch__try": Object {
+      "InputPath": "$.err.0_ParsedError",
+      "Next": "catch(err)",
+      "ResultPath": "$.err",
+      "Type": "Pass",
+    },
+    "1__finally": Object {
+      "Choices": Array [
+        Object {
+          "IsPresent": true,
+          "Next": "throw__1__finally",
+          "Variable": "$.0_tmp",
+        },
+      ],
+      "Default": "tail__for(item of input.items)",
+      "Type": "Choice",
+    },
     "Initialize Functionless Context": Object {
       "Next": "for(item of input.items)",
       "OutputPath": "$",
@@ -3195,114 +3950,111 @@ Object {
       "ResultPath": "$.fnl_context",
       "Type": "Pass",
     },
-    "for(item of input.items)": Object {
-      "ItemsPath": "$.fnl_context.input.items",
-      "Iterator": Object {
-        "StartAt": "await task(item)",
-        "States": Object {
-          "1__catch__await task(item)": Object {
-            "InputPath": "$.err.0_ParsedError",
-            "Next": "catch(err)",
-            "ResultPath": "$.err",
-            "Type": "Pass",
-          },
-          "1__finally": Object {
-            "Choices": Array [
-              Object {
-                "IsPresent": true,
-                "Next": "throw__1__finally",
-                "Variable": "$.0_tmp",
-              },
-            ],
-            "Type": "Choice",
-          },
-          "await task(item)": Object {
-            "Catch": Array [
-              Object {
-                "ErrorEquals": Array [
-                  "States.ALL",
-                ],
-                "Next": "catch__await task(item)",
-                "ResultPath": "$.err",
-              },
-            ],
-            "InputPath": "$.item",
-            "Next": "finally",
-            "Resource": "__REPLACED_TOKEN",
-            "ResultPath": "$.heap0",
-            "Type": "Task",
-          },
-          "catch(err)": Object {
-            "Choices": Array [
-              Object {
-                "And": Array [
-                  Object {
-                    "IsPresent": true,
-                    "Variable": "$.err.message",
-                  },
-                  Object {
-                    "And": Array [
-                      Object {
-                        "IsString": true,
-                        "Variable": "$.err.message",
-                      },
-                      Object {
-                        "StringEquals": "you dun' goofed",
-                        "Variable": "$.err.message",
-                      },
-                    ],
-                  },
-                ],
-                "Next": "throw new Error(\\"little\\")",
-              },
-            ],
-            "Default": "finally",
-            "Type": "Choice",
-          },
-          "catch__await task(item)": Object {
-            "Next": "1__catch__await task(item)",
-            "Parameters": Object {
-              "0_ParsedError.$": "States.StringToJson($.err.Cause)",
+    "catch(err)": Object {
+      "Choices": Array [
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.err.message",
             },
-            "ResultPath": "$.err",
-            "Type": "Pass",
-          },
-          "finally": Object {
-            "Next": "1__finally",
-            "Parameters": "2",
-            "Resource": "__REPLACED_TOKEN",
-            "ResultPath": "$.heap1",
-            "Type": "Task",
-          },
-          "throw new Error(\\"little\\")": Object {
-            "Next": "finally",
-            "Result": Object {
-              "message": "little",
+            Object {
+              "And": Array [
+                Object {
+                  "IsString": true,
+                  "Variable": "$.err.message",
+                },
+                Object {
+                  "StringEquals": "you dun' goofed",
+                  "Variable": "$.err.message",
+                },
+              ],
             },
-            "ResultPath": "$.0_tmp",
-            "Type": "Pass",
-          },
-          "throw__1__finally": Object {
-            "Cause": "an error was re-thrown from a finally block which is unsupported by Step Functions",
-            "Error": "ReThrowFromFinally",
-            "Type": "Fail",
-          },
+          ],
+          "Next": "throw new Error(\\"little\\")",
         },
-      },
-      "MaxConcurrency": 1,
-      "Next": "return null",
+      ],
+      "Default": "finally",
+      "Type": "Choice",
+    },
+    "catch__try": Object {
+      "Next": "1__catch__try",
       "Parameters": Object {
-        "fnl_context.$": "$.fnl_context",
-        "item.$": "$$.Map.Item.Value",
+        "0_ParsedError.$": "States.StringToJson($.err.Cause)",
       },
-      "ResultPath": null,
-      "Type": "Map",
+      "ResultPath": "$.err",
+      "Type": "Pass",
+    },
+    "finally": Object {
+      "Next": "1__finally",
+      "Parameters": "2",
+      "Resource": "__REPLACED_TOKEN",
+      "ResultPath": "$.heap1",
+      "Type": "Task",
+    },
+    "for(item of input.items)": Object {
+      "InputPath": "$.fnl_context.input.items",
+      "Next": "hasNext__for(item of input.items)",
+      "ResultPath": "$.heap2",
+      "Type": "Pass",
+    },
+    "hasNext__for(item of input.items)": Object {
+      "Choices": Array [
+        Object {
+          "IsPresent": true,
+          "Next": "input.items",
+          "Variable": "$.heap2[0]",
+        },
+      ],
+      "Default": "return null",
+      "Type": "Choice",
+    },
+    "input.items": Object {
+      "InputPath": "$.heap2[0]",
+      "Next": "try",
+      "ResultPath": "$.item",
+      "Type": "Pass",
     },
     "return null": Object {
       "End": true,
       "InputPath": "$.fnl_context.null",
       "ResultPath": "$",
       "Type": "Pass",
+    },
+    "tail__for(item of input.items)": Object {
+      "InputPath": "$.heap2[1:]",
+      "Next": "hasNext__for(item of input.items)",
+      "ResultPath": "$.heap2",
+      "Type": "Pass",
+    },
+    "throw new Error(\\"little\\")": Object {
+      "Next": "finally",
+      "Result": Object {
+        "message": "little",
+      },
+      "ResultPath": "$.0_tmp",
+      "Type": "Pass",
+    },
+    "throw__1__finally": Object {
+      "Cause": "an error was re-thrown from a finally block which is unsupported by Step Functions",
+      "Error": "ReThrowFromFinally",
+      "Type": "Fail",
+    },
+    "try": Object {
+      "Catch": Array [
+        Object {
+          "ErrorEquals": Array [
+            "States.ALL",
+          ],
+          "Next": "catch__try",
+          "ResultPath": "$.err",
+        },
+      ],
+      "InputPath": "$.item",
+      "Next": "finally",
+      "Resource": "__REPLACED_TOKEN",
+      "ResultPath": "$.heap0",
+      "Type": "Task",
     },
   },
 }
@@ -7913,31 +8665,38 @@ Object {
       "Type": "Pass",
     },
     "for(item of input.items)": Object {
-      "ItemsPath": "$.fnl_context.input.items",
-      "Iterator": Object {
-        "StartAt": "throw new Error(\\"err\\")",
-        "States": Object {
-          "throw new Error(\\"err\\")": Object {
-            "Cause": "{\\"message\\":\\"err\\"}",
-            "Error": "Error",
-            "Type": "Fail",
-          },
+      "InputPath": "$.fnl_context.input.items",
+      "Next": "hasNext__for(item of input.items)",
+      "ResultPath": "$.heap0",
+      "Type": "Pass",
+    },
+    "hasNext__for(item of input.items)": Object {
+      "Choices": Array [
+        Object {
+          "IsPresent": true,
+          "Next": "input.items",
+          "Variable": "$.heap0[0]",
         },
-      },
-      "MaxConcurrency": 1,
-      "Next": "return null",
-      "Parameters": Object {
-        "fnl_context.$": "$.fnl_context",
-        "item.$": "$$.Map.Item.Value",
-      },
-      "ResultPath": null,
-      "Type": "Map",
+      ],
+      "Default": "return null",
+      "Type": "Choice",
+    },
+    "input.items": Object {
+      "InputPath": "$.heap0[0]",
+      "Next": "throw new Error(\\"err\\")",
+      "ResultPath": "$.item",
+      "Type": "Pass",
     },
     "return null": Object {
       "End": true,
       "InputPath": "$.fnl_context.null",
       "ResultPath": "$",
       "Type": "Pass",
+    },
+    "throw new Error(\\"err\\")": Object {
+      "Cause": "{\\"message\\":\\"err\\"}",
+      "Error": "Error",
+      "Type": "Fail",
     },
   },
 }
@@ -8134,6 +8893,22 @@ Object {
       "ResultPath": "$.fnl_context",
       "Type": "Pass",
     },
+    "await task(item)": Object {
+      "Catch": Array [
+        Object {
+          "ErrorEquals": Array [
+            "States.ALL",
+          ],
+          "Next": "catch__for(item of input.items)",
+          "ResultPath": "$.err",
+        },
+      ],
+      "InputPath": "$.item",
+      "Next": "tail__for(item of input.items)",
+      "Resource": "__REPLACED_TOKEN",
+      "ResultPath": "$.heap0",
+      "Type": "Task",
+    },
     "catch(err)": Object {
       "Choices": Array [
         Object {
@@ -8173,45 +8948,42 @@ Object {
       "Next": "1__finally",
       "Parameters": "2",
       "Resource": "__REPLACED_TOKEN",
-      "ResultPath": "$.heap1",
+      "ResultPath": "$.heap2",
       "Type": "Task",
     },
     "for(item of input.items)": Object {
-      "Catch": Array [
+      "InputPath": "$.fnl_context.input.items",
+      "Next": "hasNext__for(item of input.items)",
+      "ResultPath": "$.heap1",
+      "Type": "Pass",
+    },
+    "hasNext__for(item of input.items)": Object {
+      "Choices": Array [
         Object {
-          "ErrorEquals": Array [
-            "States.ALL",
-          ],
-          "Next": "catch__for(item of input.items)",
-          "ResultPath": "$.err",
+          "IsPresent": true,
+          "Next": "input.items",
+          "Variable": "$.heap1[0]",
         },
       ],
-      "ItemsPath": "$.fnl_context.input.items",
-      "Iterator": Object {
-        "StartAt": "await task(item)",
-        "States": Object {
-          "await task(item)": Object {
-            "End": true,
-            "InputPath": "$.item",
-            "Resource": "__REPLACED_TOKEN",
-            "ResultPath": "$.heap0",
-            "Type": "Task",
-          },
-        },
-      },
-      "MaxConcurrency": 1,
-      "Next": "finally",
-      "Parameters": Object {
-        "fnl_context.$": "$.fnl_context",
-        "item.$": "$$.Map.Item.Value",
-      },
-      "ResultPath": null,
-      "Type": "Map",
+      "Default": "finally",
+      "Type": "Choice",
+    },
+    "input.items": Object {
+      "InputPath": "$.heap1[0]",
+      "Next": "await task(item)",
+      "ResultPath": "$.item",
+      "Type": "Pass",
     },
     "return null": Object {
       "End": true,
       "InputPath": "$.fnl_context.null",
       "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "tail__for(item of input.items)": Object {
+      "InputPath": "$.heap1[1:]",
+      "Next": "hasNext__for(item of input.items)",
+      "ResultPath": "$.heap1",
       "Type": "Pass",
     },
     "throw new Error(\\"little\\")": Object {
@@ -10216,12 +10988,6 @@ exports[`try-catch, err variable, contains for-of, throw Error 1`] = `
 Object {
   "StartAt": "Initialize Functionless Context",
   "States": Object {
-    "1__catch__for(item of input.items)": Object {
-      "InputPath": "$.err.0_ParsedError",
-      "Next": "catch(err)",
-      "ResultPath": "$.err",
-      "Type": "Pass",
-    },
     "Initialize Functionless Context": Object {
       "Next": "for(item of input.items)",
       "OutputPath": "$",
@@ -10232,54 +10998,47 @@ Object {
       "ResultPath": "$.fnl_context",
       "Type": "Pass",
     },
-    "catch(err)": Object {
+    "catch__for(item of input.items)": Object {
       "End": true,
       "InputPath": "$.err.message",
       "ResultPath": "$",
       "Type": "Pass",
     },
-    "catch__for(item of input.items)": Object {
-      "Next": "1__catch__for(item of input.items)",
-      "Parameters": Object {
-        "0_ParsedError.$": "States.StringToJson($.err.Cause)",
-      },
-      "ResultPath": "$.err",
+    "for(item of input.items)": Object {
+      "InputPath": "$.fnl_context.input.items",
+      "Next": "hasNext__for(item of input.items)",
+      "ResultPath": "$.heap0",
       "Type": "Pass",
     },
-    "for(item of input.items)": Object {
-      "Catch": Array [
+    "hasNext__for(item of input.items)": Object {
+      "Choices": Array [
         Object {
-          "ErrorEquals": Array [
-            "States.ALL",
-          ],
-          "Next": "catch__for(item of input.items)",
-          "ResultPath": "$.err",
+          "IsPresent": true,
+          "Next": "input.items",
+          "Variable": "$.heap0[0]",
         },
       ],
-      "ItemsPath": "$.fnl_context.input.items",
-      "Iterator": Object {
-        "StartAt": "throw Error(\\"err\\")",
-        "States": Object {
-          "throw Error(\\"err\\")": Object {
-            "Cause": "{\\"message\\":\\"err\\"}",
-            "Error": "Error",
-            "Type": "Fail",
-          },
-        },
-      },
-      "MaxConcurrency": 1,
-      "Next": "return null",
-      "Parameters": Object {
-        "fnl_context.$": "$.fnl_context",
-        "item.$": "$$.Map.Item.Value",
-      },
-      "ResultPath": null,
-      "Type": "Map",
+      "Default": "return null",
+      "Type": "Choice",
+    },
+    "input.items": Object {
+      "InputPath": "$.heap0[0]",
+      "Next": "throw Error(\\"err\\")",
+      "ResultPath": "$.item",
+      "Type": "Pass",
     },
     "return null": Object {
       "End": true,
       "InputPath": "$.fnl_context.null",
       "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "throw Error(\\"err\\")": Object {
+      "Next": "catch__for(item of input.items)",
+      "Result": Object {
+        "message": "err",
+      },
+      "ResultPath": "$.err",
       "Type": "Pass",
     },
   },
@@ -10290,12 +11049,6 @@ exports[`try-catch, err variable, contains for-of, throw new Error 1`] = `
 Object {
   "StartAt": "Initialize Functionless Context",
   "States": Object {
-    "1__catch__for(item of input.items)": Object {
-      "InputPath": "$.err.0_ParsedError",
-      "Next": "catch(err)",
-      "ResultPath": "$.err",
-      "Type": "Pass",
-    },
     "Initialize Functionless Context": Object {
       "Next": "for(item of input.items)",
       "OutputPath": "$",
@@ -10306,54 +11059,47 @@ Object {
       "ResultPath": "$.fnl_context",
       "Type": "Pass",
     },
-    "catch(err)": Object {
+    "catch__for(item of input.items)": Object {
       "End": true,
       "InputPath": "$.err.message",
       "ResultPath": "$",
       "Type": "Pass",
     },
-    "catch__for(item of input.items)": Object {
-      "Next": "1__catch__for(item of input.items)",
-      "Parameters": Object {
-        "0_ParsedError.$": "States.StringToJson($.err.Cause)",
-      },
-      "ResultPath": "$.err",
+    "for(item of input.items)": Object {
+      "InputPath": "$.fnl_context.input.items",
+      "Next": "hasNext__for(item of input.items)",
+      "ResultPath": "$.heap0",
       "Type": "Pass",
     },
-    "for(item of input.items)": Object {
-      "Catch": Array [
+    "hasNext__for(item of input.items)": Object {
+      "Choices": Array [
         Object {
-          "ErrorEquals": Array [
-            "States.ALL",
-          ],
-          "Next": "catch__for(item of input.items)",
-          "ResultPath": "$.err",
+          "IsPresent": true,
+          "Next": "input.items",
+          "Variable": "$.heap0[0]",
         },
       ],
-      "ItemsPath": "$.fnl_context.input.items",
-      "Iterator": Object {
-        "StartAt": "throw new Error(\\"err\\")",
-        "States": Object {
-          "throw new Error(\\"err\\")": Object {
-            "Cause": "{\\"message\\":\\"err\\"}",
-            "Error": "Error",
-            "Type": "Fail",
-          },
-        },
-      },
-      "MaxConcurrency": 1,
-      "Next": "return null",
-      "Parameters": Object {
-        "fnl_context.$": "$.fnl_context",
-        "item.$": "$$.Map.Item.Value",
-      },
-      "ResultPath": null,
-      "Type": "Map",
+      "Default": "return null",
+      "Type": "Choice",
+    },
+    "input.items": Object {
+      "InputPath": "$.heap0[0]",
+      "Next": "throw new Error(\\"err\\")",
+      "ResultPath": "$.item",
+      "Type": "Pass",
     },
     "return null": Object {
       "End": true,
       "InputPath": "$.fnl_context.null",
       "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "throw new Error(\\"err\\")": Object {
+      "Next": "catch__for(item of input.items)",
+      "Result": Object {
+        "message": "err",
+      },
+      "ResultPath": "$.err",
       "Type": "Pass",
     },
   },
@@ -10381,39 +11127,40 @@ Object {
       "Type": "Pass",
     },
     "for(item of input.items)": Object {
-      "Catch": Array [
+      "InputPath": "$.fnl_context.input.items",
+      "Next": "hasNext__for(item of input.items)",
+      "ResultPath": "$.heap0",
+      "Type": "Pass",
+    },
+    "hasNext__for(item of input.items)": Object {
+      "Choices": Array [
         Object {
-          "ErrorEquals": Array [
-            "States.ALL",
-          ],
-          "Next": "catch__for(item of input.items)",
-          "ResultPath": null,
+          "IsPresent": true,
+          "Next": "input.items",
+          "Variable": "$.heap0[0]",
         },
       ],
-      "ItemsPath": "$.fnl_context.input.items",
-      "Iterator": Object {
-        "StartAt": "throw new Error(\\"err\\")",
-        "States": Object {
-          "throw new Error(\\"err\\")": Object {
-            "Cause": "{\\"message\\":\\"err\\"}",
-            "Error": "Error",
-            "Type": "Fail",
-          },
-        },
-      },
-      "MaxConcurrency": 1,
-      "Next": "return null",
-      "Parameters": Object {
-        "fnl_context.$": "$.fnl_context",
-        "item.$": "$$.Map.Item.Value",
-      },
-      "ResultPath": null,
-      "Type": "Map",
+      "Default": "return null",
+      "Type": "Choice",
+    },
+    "input.items": Object {
+      "InputPath": "$.heap0[0]",
+      "Next": "throw new Error(\\"err\\")",
+      "ResultPath": "$.item",
+      "Type": "Pass",
     },
     "return null": Object {
       "End": true,
       "InputPath": "$.fnl_context.null",
       "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "throw new Error(\\"err\\")": Object {
+      "Next": "catch__for(item of input.items)",
+      "Result": Object {
+        "message": "err",
+      },
+      "ResultPath": null,
       "Type": "Pass",
     },
   },
@@ -10696,7 +11443,7 @@ Object {
       "Type": "Pass",
     },
     "catch__try": Object {
-      "Next": "return null",
+      "Next": "while (true)",
       "Seconds": 1,
       "Type": "Wait",
     },
