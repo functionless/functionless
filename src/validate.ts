@@ -14,7 +14,7 @@ import {
   typeMatch,
 } from "./checker";
 import { ErrorCode, ErrorCodes, formatErrorMessage } from "./error-code";
-import { anyOf } from "./util";
+import { anyOf, hasAncestors as hasOnlyAncestors } from "./util";
 
 /**
  * Validates a TypeScript SourceFile containing Functionless primitives does not
@@ -277,10 +277,10 @@ export function validate(
       ts.isCallExpression(node) &&
       typeSymbol &&
       checker.isPromiseSymbol(typeSymbol) &&
-      !(
-        ts.isAwaitExpression(node.parent) ||
-        ts.isReturnStatement(node.parent) ||
-        ts.isArrowFunction(node.parent)
+      !hasOnlyAncestors(
+        node,
+        ts.isConditionalExpression,
+        anyOf(ts.isAwaitExpression, ts.isReturnStatement, ts.isArrowFunction)
       )
     ) {
       return [

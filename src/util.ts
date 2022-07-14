@@ -118,6 +118,26 @@ export function hasParent(node: ts.Node, parent: ts.Node): boolean {
   return hasParent(node.parent, parent);
 }
 
+/**
+ * Returns true when all ancestors match the predicate.
+ * If there are no parents left, `true` is returned.
+ * If there is a `stop` provided, matching stop will halt the search and return `true`.
+ */
+export function hasAncestors(
+  node: ts.Node,
+  cont: (node: ts.Node) => boolean,
+  stop?: (node: ts.Node) => boolean
+): boolean {
+  if (!node.parent) {
+    return true;
+  } else if (stop && stop(node.parent)) {
+    return true;
+  } else if (!cont(node.parent)) {
+    return false;
+  }
+  return hasAncestors(node.parent, cont, stop);
+}
+
 export type ConstantValue =
   | PrimitiveValue
   | { [key: string]: ConstantValue }

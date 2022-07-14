@@ -5849,6 +5849,12 @@ exports[`input.b ? task() : task(input) 1`] = `
 Object {
   "StartAt": "Initialize Functionless Context",
   "States": Object {
+    "1__return if(input.b)": Object {
+      "End": true,
+      "InputPath": "$.heap2",
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
     "Initialize Functionless Context": Object {
       "Next": "return if(input.b)",
       "OutputPath": "$",
@@ -5858,6 +5864,32 @@ Object {
       },
       "ResultPath": "$.fnl_context",
       "Type": "Pass",
+    },
+    "assign__doFalse__return if(input.b)": Object {
+      "InputPath": "$.heap1",
+      "Next": "1__return if(input.b)",
+      "ResultPath": "$.heap2",
+      "Type": "Pass",
+    },
+    "assign__doTrue__return if(input.b)": Object {
+      "InputPath": "$.heap0",
+      "Next": "1__return if(input.b)",
+      "ResultPath": "$.heap2",
+      "Type": "Pass",
+    },
+    "doFalse__return if(input.b)": Object {
+      "InputPath": "$.fnl_context.input",
+      "Next": "assign__doFalse__return if(input.b)",
+      "Resource": "__REPLACED_TOKEN",
+      "ResultPath": "$.heap1",
+      "Type": "Task",
+    },
+    "doTrue__return if(input.b)": Object {
+      "InputPath": "$.fnl_context.null",
+      "Next": "assign__doTrue__return if(input.b)",
+      "Resource": "__REPLACED_TOKEN",
+      "ResultPath": "$.heap0",
+      "Type": "Task",
     },
     "return if(input.b)": Object {
       "Choices": Array [
@@ -7973,19 +8005,17 @@ Object {
 }
 `;
 
-exports[`return cond ? task(1) : task(2)) 1`] = `
+exports[`return cond ? task(1) : task(2) 1`] = `
 Object {
   "StartAt": "Initialize Functionless Context",
   "States": Object {
     "1__return if(input.cond)": Object {
       "End": true,
       "InputPath": "$.heap2",
-      "Next": undefined,
       "ResultPath": "$",
       "Type": "Pass",
     },
     "Initialize Functionless Context": Object {
-      "End": undefined,
       "Next": "return if(input.cond)",
       "OutputPath": "$",
       "Parameters": Object {
@@ -7996,34 +8026,28 @@ Object {
       "Type": "Pass",
     },
     "assign__doFalse__return if(input.cond)": Object {
-      "End": undefined,
       "InputPath": "$.heap1",
       "Next": "1__return if(input.cond)",
       "ResultPath": "$.heap2",
       "Type": "Pass",
     },
     "assign__doTrue__return if(input.cond)": Object {
-      "End": undefined,
       "InputPath": "$.heap0",
       "Next": "1__return if(input.cond)",
       "ResultPath": "$.heap2",
       "Type": "Pass",
     },
     "doFalse__return if(input.cond)": Object {
-      "Catch": undefined,
-      "End": undefined,
       "Next": "assign__doFalse__return if(input.cond)",
       "Parameters": 2,
-      "Resource": "\${Token[TOKEN.223]}",
+      "Resource": "__REPLACED_TOKEN",
       "ResultPath": "$.heap1",
       "Type": "Task",
     },
     "doTrue__return if(input.cond)": Object {
-      "Catch": undefined,
-      "End": undefined,
       "Next": "assign__doTrue__return if(input.cond)",
       "Parameters": 1,
-      "Resource": "\${Token[TOKEN.223]}",
+      "Resource": "__REPLACED_TOKEN",
       "ResultPath": "$.heap0",
       "Type": "Task",
     },
@@ -8346,7 +8370,7 @@ Object {
 }
 `;
 
-exports[`return task(1) ?? task(2)) 1`] = `
+exports[`return task(1) ?? task(2) 1`] = `
 Object {
   "StartAt": "return await task(1) ?? await task(2)",
   "States": Object {

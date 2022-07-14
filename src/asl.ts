@@ -1255,7 +1255,9 @@ export class ASL {
 
     if (isPromiseExpr(expr)) {
       // if we find a promise, ensure it is wrapped in Await or returned then unwrap it
-      if (isAwaitExpr(expr.parent) || isReturnStmt(expr.parent)) {
+      if (
+        expr.hasOnlyAncestors(isConditionExpr, anyOf(isReturnStmt, isAwaitExpr))
+      ) {
         return this.eval(expr.expr);
       }
       throw new SynthError(
@@ -1470,18 +1472,7 @@ export class ASL {
       } else if (isSlice(expr)) {
         return this.sliceToStateOutput(expr);
       } else if (isFilter(expr)) {
-        const predicate = expr.getArgument("predicate")?.expr;
-        if (predicate !== undefined && isFunctionExpr(predicate)) {
-          try {
-            // first try to implement filter optimally with JSON Path
-            return this.filterToJsonPath(expr);
-          } catch (e) {
-            throw new Error(
-              ".filter with sub-tasks are not yet supported: " +
-                (<Error>e).message
-            );
-          }
-        }
+        return this.filterToJsonPath(expr);
       } else if (isJoin(expr)) {
         return this.joinToStateOutput(expr);
       } else if (isPromiseAll(expr)) {

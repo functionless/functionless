@@ -97,6 +97,20 @@ export abstract class BaseNode<
     }
   }
 
+  public hasOnlyAncestors(
+    cont: (node: FunctionlessNode) => boolean,
+    stop?: (node: FunctionlessNode) => boolean
+  ): boolean {
+    if (!this.parent) {
+      return true;
+    } else if (stop && stop(this.parent)) {
+      return true;
+    } else if (!cont(this.parent)) {
+      return false;
+    }
+    return this.parent.hasOnlyAncestors(cont, stop);
+  }
+
   /**
    * Finds the {@link CatchClause} that this Node should throw to.
    */

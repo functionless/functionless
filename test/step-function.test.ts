@@ -1992,7 +1992,6 @@ test("list.filter(item => item.length > 2).map(item => item)", () => {
   expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
-// https://github.com/functionless/functionless/issues/210
 test("input.list.map((item) => item).filter((item) => item.length > 2)", () => {
   const { stack } = initStepFunctionApp();
   const definition = new ExpressStepFunction<
@@ -2771,7 +2770,7 @@ test("return await task(await task())", () => {
 });
 
 // https://github.com/functionless/functionless/issues/281
-test("return cond ? task(1) : task(2))", () => {
+test("return cond ? task(1) : task(2)", () => {
   const { stack, task } = initStepFunctionApp();
   const definition = new ExpressStepFunction<{ cond: boolean }, number | null>(
     stack,
@@ -2784,7 +2783,7 @@ test("return cond ? task(1) : task(2))", () => {
   expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
-test("return task(1) ?? task(2))", () => {
+test("return task(1) ?? task(2)", () => {
   const { stack, task } = initStepFunctionApp();
   const definition = new ExpressStepFunction(stack, "fn", async () => {
     return (await task(1)) ?? (await task(2));
