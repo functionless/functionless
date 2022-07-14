@@ -4369,6 +4369,12 @@ Object {
           ],
           "Next": "number__input.id 1",
         },
+      ],
+      "Default": "undefined__input.id 1",
+      "Type": "Choice",
+    },
+    "input.id 2": Object {
+      "Choices": Array [
         Object {
           "IsPresent": true,
           "Next": "object__input.id 1",
