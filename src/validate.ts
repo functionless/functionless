@@ -475,6 +475,24 @@ export function validate(
       } else if (ts.isNewExpression(node)) {
         const [, diagnostic] = validateNewIntegration(node);
         return diagnostic;
+      } else if (ts.isIdentifier(node)) {
+        const symbol = checker.getSymbolAtLocation(node);
+        if (
+          symbol &&
+          checker.isSymbolOutOfScope(symbol, scope) &&
+          !(
+            checker.isIntegrationNode(node) ||
+            // is this ID used to reference an integration
+            hasOnlyAncestors(
+              node,
+              ts.isPropertyAccessExpression,
+              checker.isIntegrationNode
+            ) ||
+            node.getText() === "$util"
+          )
+        ) {
+          return [newError(node, ErrorCodes.AppSync_Unsupported_Reference)];
+        }
       }
 
       return [];
@@ -560,27 +578,53 @@ export function validate(
         return diagnostic;
       } else if (ts.isCallExpression(node)) {
         return validateIntegrationCallArguments(node, scope);
+      } else if (ts.isIdentifier(node)) {
+        const symbol = checker.getSymbolAtLocation(node);
+        if (
+          symbol &&
+          checker.isSymbolOutOfScope(symbol, scope) &&
+          !(
+            checker.isIntegrationNode(node) ||
+            hasOnlyAncestors(
+              node,
+              ts.isPropertyAccessExpression,
+              checker.isIntegrationNode
+            ) ||
+            node.getText() === "Number"
+          )
+        ) {
+          return [newError(node, ErrorCodes.ApiGateway_Unsupported_Reference)];
+        }
       }
       return [];
     }
-  }
 
-  function validateApiResponseNode(node: ts.Node): ts.Diagnostic[] {
-    if (
-      ts.isCallExpression(node) &&
-      checker.isIntegrationNode(node.expression)
-    ) {
-      return [
-        newError(
-          node,
-          ErrorCodes.API_gateway_response_mapping_template_cannot_call_integration
-        ),
-      ];
-    } else if (ts.isNewExpression(node)) {
-      const [, diagnostic] = validateNewIntegration(node);
-      return diagnostic;
+    function validateApiResponseNode(node: ts.Node): ts.Diagnostic[] {
+      if (
+        ts.isCallExpression(node) &&
+        checker.isIntegrationNode(node.expression)
+      ) {
+        return [
+          newError(
+            node,
+            ErrorCodes.API_gateway_response_mapping_template_cannot_call_integration
+          ),
+        ];
+      } else if (ts.isNewExpression(node)) {
+        const [, diagnostic] = validateNewIntegration(node);
+        return diagnostic;
+      } else if (ts.isIdentifier(node)) {
+        const symbol = checker.getSymbolAtLocation(node);
+        if (symbol && checker.isSymbolOutOfScope(symbol, scope)) {
+          if (!(node.getText() === "Number")) {
+            return [
+              newError(node, ErrorCodes.ApiGateway_Unsupported_Reference),
+            ];
+          }
+        }
+      }
+      return [];
     }
-    return [];
   }
 
   function validateFunctionNode(node: FunctionInterface) {

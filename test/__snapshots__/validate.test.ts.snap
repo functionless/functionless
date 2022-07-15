@@ -42,6 +42,24 @@ https://functionless.org/docs/error-codes#api-gateway-response-mapping-template-
 [7m   [0m [91m~~~~~~~~[0m
 [7m121[0m     });
 [7m   [0m [91m~~~~~~[0m
+[96mtest/test-files/api-gateway.ts[0m:[93m114[0m:[93m11[0m - [91merror[0m[90m Functionless(10028): [0mApiGateway Unsupported Reference
+
+https://functionless.org/docs/error-codes#apigateway-unsupported-reference
+
+[7m114[0m     return $AWS.DynamoDB.GetItem({
+[7m   [0m [91m          ~~~~~[0m
+[96mtest/test-files/api-gateway.ts[0m:[93m114[0m:[93m26[0m - [91merror[0m[90m Functionless(10028): [0mApiGateway Unsupported Reference
+
+https://functionless.org/docs/error-codes#apigateway-unsupported-reference
+
+[7m114[0m     return $AWS.DynamoDB.GetItem({
+[7m   [0m [91m                         ~~~~~~~[0m
+[96mtest/test-files/api-gateway.ts[0m:[93m115[0m:[93m13[0m - [91merror[0m[90m Functionless(10028): [0mApiGateway Unsupported Reference
+
+https://functionless.org/docs/error-codes#apigateway-unsupported-reference
+
+[7m115[0m       Table: table,
+[7m   [0m [91m            ~~~~~~[0m
 [96mtest/test-files/api-gateway.ts[0m:[93m130[0m:[93m16[0m - [91merror[0m[90m Functionless(10008): [0mCannot initialize new resources in a runtime function, found StepFunction.
 
 https://functionless.org/docs/error-codes#unsupported-initialization-of-resources-in-a-runtime-closure
@@ -62,6 +80,18 @@ https://functionless.org/docs/error-codes#unsupported-initialization-of-resource
 [7m   [0m [91m         [0m
 [7m134[0m     new StepFunction(stack, \\"\\", () => {});
 [7m   [0m [91m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+[96mtest/test-files/api-gateway.ts[0m:[93m134[0m:[93m8[0m - [91merror[0m[90m Functionless(10028): [0mApiGateway Unsupported Reference
+
+https://functionless.org/docs/error-codes#apigateway-unsupported-reference
+
+[7m134[0m     new StepFunction(stack, \\"\\", () => {});
+[7m   [0m [91m       ~~~~~~~~~~~~~[0m
+[96mtest/test-files/api-gateway.ts[0m:[93m134[0m:[93m22[0m - [91merror[0m[90m Functionless(10028): [0mApiGateway Unsupported Reference
+
+https://functionless.org/docs/error-codes#apigateway-unsupported-reference
+
+[7m134[0m     new StepFunction(stack, \\"\\", () => {});
+[7m   [0m [91m                     ~~~~~[0m
 [96mtest/test-files/api-gateway.ts[0m:[93m141[0m:[93m17[0m - [91merror[0m[90m Functionless(10008): [0mCannot initialize new resources in a runtime function, found Function.
 
 https://functionless.org/docs/error-codes#unsupported-initialization-of-resources-in-a-runtime-closure
@@ -82,6 +112,18 @@ https://functionless.org/docs/error-codes#unsupported-initialization-of-resource
 [7m   [0m [91m         [0m
 [7m145[0m     new Function(stack, \\"\\", async () => {});
 [7m   [0m [91m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+[96mtest/test-files/api-gateway.ts[0m:[93m145[0m:[93m8[0m - [91merror[0m[90m Functionless(10028): [0mApiGateway Unsupported Reference
+
+https://functionless.org/docs/error-codes#apigateway-unsupported-reference
+
+[7m145[0m     new Function(stack, \\"\\", async () => {});
+[7m   [0m [91m       ~~~~~~~~~[0m
+[96mtest/test-files/api-gateway.ts[0m:[93m145[0m:[93m18[0m - [91merror[0m[90m Functionless(10028): [0mApiGateway Unsupported Reference
+
+https://functionless.org/docs/error-codes#apigateway-unsupported-reference
+
+[7m145[0m     new Function(stack, \\"\\", async () => {});
+[7m   [0m [91m                 ~~~~~[0m
 [96mtest/test-files/api-gateway.ts[0m:[93m152[0m:[93m16[0m - [91merror[0m[90m Functionless(10008): [0mCannot initialize new resources in a runtime function, found EventBus.
 
 https://functionless.org/docs/error-codes#unsupported-initialization-of-resources-in-a-runtime-closure
@@ -102,6 +144,18 @@ https://functionless.org/docs/error-codes#unsupported-initialization-of-resource
 [7m   [0m [91m         [0m
 [7m156[0m     new EventBus(stack, \\"\\");
 [7m   [0m [91m~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+[96mtest/test-files/api-gateway.ts[0m:[93m156[0m:[93m8[0m - [91merror[0m[90m Functionless(10028): [0mApiGateway Unsupported Reference
+
+https://functionless.org/docs/error-codes#apigateway-unsupported-reference
+
+[7m156[0m     new EventBus(stack, \\"\\");
+[7m   [0m [91m       ~~~~~~~~~[0m
+[96mtest/test-files/api-gateway.ts[0m:[93m156[0m:[93m18[0m - [91merror[0m[90m Functionless(10028): [0mApiGateway Unsupported Reference
+
+https://functionless.org/docs/error-codes#apigateway-unsupported-reference
+
+[7m156[0m     new EventBus(stack, \\"\\");
+[7m   [0m [91m                 ~~~~~[0m
 [96mtest/test-files/api-gateway.ts[0m:[93m162[0m:[93m16[0m - [91merror[0m[90m Functionless(10008): [0mCannot initialize new CDK resources in a runtime function, found EventBus.
 
 https://functionless.org/docs/error-codes#unsupported-initialization-of-resources-in-a-runtime-closure
@@ -110,6 +164,24 @@ https://functionless.org/docs/error-codes#unsupported-initialization-of-resource
 [7m   [0m [91m               [0m
 [7m163[0m     new aws_events.EventBus(stack, \\"\\");
 [7m   [0m [91m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+[96mtest/test-files/api-gateway.ts[0m:[93m163[0m:[93m8[0m - [91merror[0m[90m Functionless(10028): [0mApiGateway Unsupported Reference
+
+https://functionless.org/docs/error-codes#apigateway-unsupported-reference
+
+[7m163[0m     new aws_events.EventBus(stack, \\"\\");
+[7m   [0m [91m       ~~~~~~~~~~~[0m
+[96mtest/test-files/api-gateway.ts[0m:[93m163[0m:[93m20[0m - [91merror[0m[90m Functionless(10028): [0mApiGateway Unsupported Reference
+
+https://functionless.org/docs/error-codes#apigateway-unsupported-reference
+
+[7m163[0m     new aws_events.EventBus(stack, \\"\\");
+[7m   [0m [91m                   ~~~~~~~~[0m
+[96mtest/test-files/api-gateway.ts[0m:[93m163[0m:[93m29[0m - [91merror[0m[90m Functionless(10028): [0mApiGateway Unsupported Reference
+
+https://functionless.org/docs/error-codes#apigateway-unsupported-reference
+
+[7m163[0m     new aws_events.EventBus(stack, \\"\\");
+[7m   [0m [91m                            ~~~~~[0m
 [96mtest/test-files/api-gateway.ts[0m:[93m166[0m:[93m10[0m - [91merror[0m[90m Functionless(10008): [0mCannot initialize new CDK resources in a runtime function, found EventBus.
 
 https://functionless.org/docs/error-codes#unsupported-initialization-of-resources-in-a-runtime-closure
@@ -118,6 +190,24 @@ https://functionless.org/docs/error-codes#unsupported-initialization-of-resource
 [7m   [0m [91m         [0m
 [7m167[0m     new aws_events.EventBus(stack, \\"\\");
 [7m   [0m [91m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+[96mtest/test-files/api-gateway.ts[0m:[93m167[0m:[93m8[0m - [91merror[0m[90m Functionless(10028): [0mApiGateway Unsupported Reference
+
+https://functionless.org/docs/error-codes#apigateway-unsupported-reference
+
+[7m167[0m     new aws_events.EventBus(stack, \\"\\");
+[7m   [0m [91m       ~~~~~~~~~~~[0m
+[96mtest/test-files/api-gateway.ts[0m:[93m167[0m:[93m20[0m - [91merror[0m[90m Functionless(10028): [0mApiGateway Unsupported Reference
+
+https://functionless.org/docs/error-codes#apigateway-unsupported-reference
+
+[7m167[0m     new aws_events.EventBus(stack, \\"\\");
+[7m   [0m [91m                   ~~~~~~~~[0m
+[96mtest/test-files/api-gateway.ts[0m:[93m167[0m:[93m29[0m - [91merror[0m[90m Functionless(10028): [0mApiGateway Unsupported Reference
+
+https://functionless.org/docs/error-codes#apigateway-unsupported-reference
+
+[7m167[0m     new aws_events.EventBus(stack, \\"\\");
+[7m   [0m [91m                            ~~~~~[0m
 [96mtest/test-files/api-gateway.ts[0m:[93m183[0m:[93m33[0m - [91merror[0m[90m Functionless(10012): [0mExpected the first argument of $AWS.DynamoDB.getItem to be an object literal.
 
 https://functionless.org/docs/error-codes#expected-an-object-literal
@@ -130,175 +220,249 @@ https://functionless.org/docs/error-codes#unable-to-find-reference-out-of-applic
 
 [7m216[0m     await x(\\"\\");
 [7m   [0m [91m         ~~[0m
+[96mtest/test-files/api-gateway.ts[0m:[93m235[0m:[93m17[0m - [91merror[0m[90m Functionless(10028): [0mApiGateway Unsupported Reference
+
+https://functionless.org/docs/error-codes#apigateway-unsupported-reference
+
+[7m235[0m         id: { S: a },
+[7m   [0m [91m                ~~[0m
+[96mtest/test-files/api-gateway.ts[0m:[93m255[0m:[93m11[0m - [91merror[0m[90m Functionless(10028): [0mApiGateway Unsupported Reference
+
+https://functionless.org/docs/error-codes#apigateway-unsupported-reference
+
+[7m255[0m     return a;
+[7m   [0m [91m          ~~[0m
 "
 `;
 
 exports[`appsync.ts 1`] = `
-"[96mtest/test-files/appsync.ts[0m:[93m67[0m:[93m5[0m - [91merror[0m[90m Functionless(10002): [0mArgument must be an inline Function
+"[96mtest/test-files/appsync.ts[0m:[93m68[0m:[93m5[0m - [91merror[0m[90m Functionless(10002): [0mArgument must be an inline Function
 
 https://functionless.org/docs/error-codes#argument-must-be-an-inline-function
 
-[7m67[0m   },
+[7m68[0m   },
 [7m  [0m [91m    [0m
-[7m68[0m   // invalid - must be an inline function
+[7m69[0m   // invalid - must be an inline function
 [7m  [0m [91m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
-[7m69[0m   f
+[7m70[0m   f
 [7m  [0m [91m~~~[0m
-[96mtest/test-files/appsync.ts[0m:[93m79[0m:[93m5[0m - [91merror[0m[90m Functionless(10002): [0mArgument must be an inline Function
+[96mtest/test-files/appsync.ts[0m:[93m80[0m:[93m5[0m - [91merror[0m[90m Functionless(10002): [0mArgument must be an inline Function
 
 https://functionless.org/docs/error-codes#argument-must-be-an-inline-function
 
-[7m 79[0m   },
+[7m 80[0m   },
 [7m   [0m [91m    [0m
-[7m 80[0m   // invalid - must be an inline function
+[7m 81[0m   // invalid - must be an inline function
 [7m   [0m [91m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
 [7m...[0m 
-[7m 83[0m       null
+[7m 84[0m       null
 [7m   [0m [91m~~~~~~~~~~[0m
-[7m 84[0m   )()
+[7m 85[0m   )()
 [7m   [0m [91m~~~~~[0m
-[96mtest/test-files/appsync.ts[0m:[93m100[0m:[93m58[0m - [91merror[0m[90m Functionless(10002): [0mArgument must be an inline Function
+[96mtest/test-files/appsync.ts[0m:[93m101[0m:[93m58[0m - [91merror[0m[90m Functionless(10002): [0mArgument must be an inline Function
 
 https://functionless.org/docs/error-codes#argument-must-be-an-inline-function
 
-[7m100[0m         { api, typeName: \\"Query\\", fieldName: \\"getPost\\" },
+[7m101[0m         { api, typeName: \\"Query\\", fieldName: \\"getPost\\" },
 [7m   [0m [91m                                                         [0m
-[7m101[0m         // invalid - must be an inline function
+[7m102[0m         // invalid - must be an inline function
 [7m   [0m [91m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
 [7m...[0m 
-[7m104[0m             null
+[7m105[0m             null
 [7m   [0m [91m~~~~~~~~~~~~~~~~[0m
-[7m105[0m         )()
+[7m106[0m         )()
 [7m   [0m [91m~~~~~~~~~~~[0m
-[96mtest/test-files/appsync.ts[0m:[93m126[0m:[93m14[0m - [91merror[0m[90m Functionless(10016): [0mIntegration must be immediately awaited or returned
+[96mtest/test-files/appsync.ts[0m:[93m127[0m:[93m14[0m - [91merror[0m[90m Functionless(10016): [0mIntegration must be immediately awaited or returned
 
 https://functionless.org/docs/error-codes#integration-must-be-immediately-awaited-or-returned
 
-[7m126[0m     const c = func();
+[7m127[0m     const c = func();
 [7m   [0m [91m             ~~~~~~~[0m
-[96mtest/test-files/appsync.ts[0m:[93m139[0m:[93m14[0m - [91merror[0m[90m Functionless(10016): [0mIntegration must be immediately awaited or returned
+[96mtest/test-files/appsync.ts[0m:[93m140[0m:[93m14[0m - [91merror[0m[90m Functionless(10016): [0mIntegration must be immediately awaited or returned
 
 https://functionless.org/docs/error-codes#integration-must-be-immediately-awaited-or-returned
 
-[7m139[0m     const c = func();
+[7m140[0m     const c = func();
 [7m   [0m [91m             ~~~~~~~[0m
-[96mtest/test-files/appsync.ts[0m:[93m153[0m:[93m11[0m - [91merror[0m[90m Functionless(10016): [0mIntegration must be immediately awaited or returned
+[96mtest/test-files/appsync.ts[0m:[93m154[0m:[93m11[0m - [91merror[0m[90m Functionless(10016): [0mIntegration must be immediately awaited or returned
 
 https://functionless.org/docs/error-codes#integration-must-be-immediately-awaited-or-returned
 
-[7m153[0m     return func().then((x) => x);
+[7m154[0m     return func().then((x) => x);
 [7m   [0m [91m          ~~~~~~~[0m
-[96mtest/test-files/appsync.ts[0m:[93m165[0m:[93m11[0m - [91merror[0m[90m Functionless(10016): [0mIntegration must be immediately awaited or returned
+[96mtest/test-files/appsync.ts[0m:[93m166[0m:[93m11[0m - [91merror[0m[90m Functionless(10016): [0mIntegration must be immediately awaited or returned
 
 https://functionless.org/docs/error-codes#integration-must-be-immediately-awaited-or-returned
 
-[7m165[0m     return func().catch((x) => x);
+[7m166[0m     return func().catch((x) => x);
 [7m   [0m [91m          ~~~~~~~[0m
-[96mtest/test-files/appsync.ts[0m:[93m218[0m:[93m11[0m - [91merror[0m[90m Functionless(10017): [0mArrays of Integration must be immediately wrapped in Promise.all
+[96mtest/test-files/appsync.ts[0m:[93m219[0m:[93m11[0m - [91merror[0m[90m Functionless(10017): [0mArrays of Integration must be immediately wrapped in Promise.all
 
 https://functionless.org/docs/error-codes#arrays-of-integration-must-be-immediately-wrapped-in-promise.all
 
-[7m218[0m     return [1, 2].map(async () => func());
+[7m219[0m     return [1, 2].map(async () => func());
 [7m   [0m [91m          ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
-[96mtest/test-files/appsync.ts[0m:[93m230[0m:[93m14[0m - [91merror[0m[90m Functionless(10018): [0mAppsync does not support concurrent integration invocation or methods on the \`Promise\` api.
+[96mtest/test-files/appsync.ts[0m:[93m231[0m:[93m14[0m - [91merror[0m[90m Functionless(10018): [0mAppsync does not support concurrent integration invocation or methods on the \`Promise\` api.
 
 https://functionless.org/docs/error-codes#unsupported-use-of-promises
 
-[7m230[0m     const c = Promise.all([1, 2].map(async () => func()));
+[7m231[0m     const c = Promise.all([1, 2].map(async () => func()));
 [7m   [0m [91m             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
-[96mtest/test-files/appsync.ts[0m:[93m244[0m:[93m11[0m - [91merror[0m[90m Functionless(10018): [0mAppsync does not support concurrent integration invocation or methods on the \`Promise\` api.
+[96mtest/test-files/appsync.ts[0m:[93m231[0m:[93m14[0m - [91merror[0m[90m Functionless(10027): [0mAppSync Unsupported Reference
+
+https://functionless.org/docs/error-codes#appsync-unsupported-reference
+
+[7m231[0m     const c = Promise.all([1, 2].map(async () => func()));
+[7m   [0m [91m             ~~~~~~~~[0m
+[96mtest/test-files/appsync.ts[0m:[93m245[0m:[93m11[0m - [91merror[0m[90m Functionless(10018): [0mAppsync does not support concurrent integration invocation or methods on the \`Promise\` api.
 
 https://functionless.org/docs/error-codes#unsupported-use-of-promises
 
-[7m244[0m     return Promise.all(c);
+[7m245[0m     return Promise.all(c);
 [7m   [0m [91m          ~~~~~~~~~~~~~~~[0m
-[96mtest/test-files/appsync.ts[0m:[93m257[0m:[93m16[0m - [91merror[0m[90m Functionless(10008): [0mCannot initialize new resources in a runtime function, found StepFunction.
+[96mtest/test-files/appsync.ts[0m:[93m245[0m:[93m11[0m - [91merror[0m[90m Functionless(10027): [0mAppSync Unsupported Reference
+
+https://functionless.org/docs/error-codes#appsync-unsupported-reference
+
+[7m245[0m     return Promise.all(c);
+[7m   [0m [91m          ~~~~~~~~[0m
+[96mtest/test-files/appsync.ts[0m:[93m258[0m:[93m16[0m - [91merror[0m[90m Functionless(10008): [0mCannot initialize new resources in a runtime function, found StepFunction.
 
 https://functionless.org/docs/error-codes#unsupported-initialization-of-resources-in-a-runtime-closure
 
-[7m257[0m   async () => {
+[7m258[0m   async () => {
 [7m   [0m [91m               [0m
-[7m258[0m     new StepFunction(stack, \\"\\", () => {});
+[7m259[0m     new StepFunction(stack, \\"\\", () => {});
 [7m   [0m [91m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
-[96mtest/test-files/appsync.ts[0m:[93m269[0m:[93m16[0m - [91merror[0m[90m Functionless(10008): [0mCannot initialize new resources in a runtime function, found Function.
+[96mtest/test-files/appsync.ts[0m:[93m270[0m:[93m16[0m - [91merror[0m[90m Functionless(10008): [0mCannot initialize new resources in a runtime function, found Function.
 
 https://functionless.org/docs/error-codes#unsupported-initialization-of-resources-in-a-runtime-closure
 
-[7m269[0m   async () => {
+[7m270[0m   async () => {
 [7m   [0m [91m               [0m
-[7m270[0m     new Function(stack, \\"\\", async () => {});
+[7m271[0m     new Function(stack, \\"\\", async () => {});
 [7m   [0m [91m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
-[96mtest/test-files/appsync.ts[0m:[93m281[0m:[93m16[0m - [91merror[0m[90m Functionless(10008): [0mCannot initialize new resources in a runtime function, found EventBus.
+[96mtest/test-files/appsync.ts[0m:[93m282[0m:[93m16[0m - [91merror[0m[90m Functionless(10008): [0mCannot initialize new resources in a runtime function, found EventBus.
 
 https://functionless.org/docs/error-codes#unsupported-initialization-of-resources-in-a-runtime-closure
 
-[7m281[0m   async () => {
+[7m282[0m   async () => {
 [7m   [0m [91m               [0m
-[7m282[0m     new EventBus(stack, \\"\\");
+[7m283[0m     new EventBus(stack, \\"\\");
 [7m   [0m [91m~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
-[96mtest/test-files/appsync.ts[0m:[93m293[0m:[93m16[0m - [91merror[0m[90m Functionless(10008): [0mCannot initialize new resources in a runtime function, found AppsyncResolver.
+[96mtest/test-files/appsync.ts[0m:[93m294[0m:[93m16[0m - [91merror[0m[90m Functionless(10008): [0mCannot initialize new resources in a runtime function, found AppsyncResolver.
 
 https://functionless.org/docs/error-codes#unsupported-initialization-of-resources-in-a-runtime-closure
 
-[7m293[0m   async () => {
+[7m294[0m   async () => {
 [7m   [0m [91m               [0m
-[7m294[0m     new AppsyncResolver(
+[7m295[0m     new AppsyncResolver(
 [7m   [0m [91m~~~~~~~~~~~~~~~~~~~~~~~~[0m
 [7m...[0m 
-[7m302[0m       () => {}
+[7m303[0m       () => {}
 [7m   [0m [91m~~~~~~~~~~~~~~[0m
-[7m303[0m     );
+[7m304[0m     );
 [7m   [0m [91m~~~~~[0m
-[96mtest/test-files/appsync.ts[0m:[93m298[0m:[93m13[0m - [91merror[0m[90m Functionless(10008): [0mCannot initialize new CDK resources in a runtime function, found GraphqlApi.
+[96mtest/test-files/appsync.ts[0m:[93m295[0m:[93m8[0m - [91merror[0m[90m Functionless(10027): [0mAppSync Unsupported Reference
+
+https://functionless.org/docs/error-codes#appsync-unsupported-reference
+
+[7m295[0m     new AppsyncResolver(
+[7m   [0m [91m       ~~~~~~~~~~~~~~~~[0m
+[96mtest/test-files/appsync.ts[0m:[93m295[0m:[93m25[0m - [91merror[0m[90m Functionless(10027): [0mAppSync Unsupported Reference
+
+https://functionless.org/docs/error-codes#appsync-unsupported-reference
+
+[7m295[0m     new AppsyncResolver(
+[7m   [0m [91m                        [0m
+[7m296[0m       stack,
+[7m   [0m [91m~~~~~~~~~~~[0m
+[96mtest/test-files/appsync.ts[0m:[93m299[0m:[93m13[0m - [91merror[0m[90m Functionless(10008): [0mCannot initialize new CDK resources in a runtime function, found GraphqlApi.
 
 https://functionless.org/docs/error-codes#unsupported-initialization-of-resources-in-a-runtime-closure
 
-[7m298[0m         api: new GraphqlApi(stack, \\"\\", { name: \\"api\\" }),
+[7m299[0m         api: new GraphqlApi(stack, \\"\\", { name: \\"api\\" }),
 [7m   [0m [91m            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
-[96mtest/test-files/appsync.ts[0m:[93m314[0m:[93m16[0m - [91merror[0m[90m Functionless(10008): [0mCannot initialize new CDK resources in a runtime function, found EventBus.
+[96mtest/test-files/appsync.ts[0m:[93m299[0m:[93m17[0m - [91merror[0m[90m Functionless(10027): [0mAppSync Unsupported Reference
+
+https://functionless.org/docs/error-codes#appsync-unsupported-reference
+
+[7m299[0m         api: new GraphqlApi(stack, \\"\\", { name: \\"api\\" }),
+[7m   [0m [91m                ~~~~~~~~~~~[0m
+[96mtest/test-files/appsync.ts[0m:[93m299[0m:[93m29[0m - [91merror[0m[90m Functionless(10027): [0mAppSync Unsupported Reference
+
+https://functionless.org/docs/error-codes#appsync-unsupported-reference
+
+[7m299[0m         api: new GraphqlApi(stack, \\"\\", { name: \\"api\\" }),
+[7m   [0m [91m                            ~~~~~[0m
+[96mtest/test-files/appsync.ts[0m:[93m315[0m:[93m16[0m - [91merror[0m[90m Functionless(10008): [0mCannot initialize new CDK resources in a runtime function, found EventBus.
 
 https://functionless.org/docs/error-codes#unsupported-initialization-of-resources-in-a-runtime-closure
 
-[7m314[0m   async () => {
+[7m315[0m   async () => {
 [7m   [0m [91m               [0m
-[7m315[0m     new aws_events.EventBus(stack, \\"\\");
+[7m316[0m     new aws_events.EventBus(stack, \\"\\");
 [7m   [0m [91m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
-[96mtest/test-files/appsync.ts[0m:[93m332[0m:[93m12[0m - [91merror[0m[90m Functionless(10020): [0mAppsync Integration invocations must be unidirectional and defined statically
+[96mtest/test-files/appsync.ts[0m:[93m316[0m:[93m8[0m - [91merror[0m[90m Functionless(10027): [0mAppSync Unsupported Reference
+
+https://functionless.org/docs/error-codes#appsync-unsupported-reference
+
+[7m316[0m     new aws_events.EventBus(stack, \\"\\");
+[7m   [0m [91m       ~~~~~~~~~~~[0m
+[96mtest/test-files/appsync.ts[0m:[93m316[0m:[93m20[0m - [91merror[0m[90m Functionless(10027): [0mAppSync Unsupported Reference
+
+https://functionless.org/docs/error-codes#appsync-unsupported-reference
+
+[7m316[0m     new aws_events.EventBus(stack, \\"\\");
+[7m   [0m [91m                   ~~~~~~~~[0m
+[96mtest/test-files/appsync.ts[0m:[93m316[0m:[93m29[0m - [91merror[0m[90m Functionless(10027): [0mAppSync Unsupported Reference
+
+https://functionless.org/docs/error-codes#appsync-unsupported-reference
+
+[7m316[0m     new aws_events.EventBus(stack, \\"\\");
+[7m   [0m [91m                            ~~~~~[0m
+[96mtest/test-files/appsync.ts[0m:[93m333[0m:[93m12[0m - [91merror[0m[90m Functionless(10020): [0mAppsync Integration invocations must be unidirectional and defined statically
 
 https://functionless.org/docs/error-codes#appsync-integration-invocations-must-be-unidirectional-and-defined-statically
 
-[7m332[0m       await func();
+[7m333[0m       await func();
 [7m   [0m [91m           ~~~~~~~[0m
-[96mtest/test-files/appsync.ts[0m:[93m347[0m:[93m12[0m - [91merror[0m[90m Functionless(10020): [0mAppsync Integration invocations must be unidirectional and defined statically
+[96mtest/test-files/appsync.ts[0m:[93m348[0m:[93m12[0m - [91merror[0m[90m Functionless(10020): [0mAppsync Integration invocations must be unidirectional and defined statically
 
 https://functionless.org/docs/error-codes#appsync-integration-invocations-must-be-unidirectional-and-defined-statically
 
-[7m347[0m       await func();
+[7m348[0m       await func();
 [7m   [0m [91m           ~~~~~~~[0m
-[96mtest/test-files/appsync.ts[0m:[93m362[0m:[93m12[0m - [91merror[0m[90m Functionless(10020): [0mAppsync Integration invocations must be unidirectional and defined statically
+[96mtest/test-files/appsync.ts[0m:[93m363[0m:[93m12[0m - [91merror[0m[90m Functionless(10020): [0mAppsync Integration invocations must be unidirectional and defined statically
 
 https://functionless.org/docs/error-codes#appsync-integration-invocations-must-be-unidirectional-and-defined-statically
 
-[7m362[0m       await func();
+[7m363[0m       await func();
 [7m   [0m [91m           ~~~~~~~[0m
-[96mtest/test-files/appsync.ts[0m:[93m376[0m:[93m46[0m - [91merror[0m[90m Functionless(10020): [0mAppsync Integration invocations must be unidirectional and defined statically
+[96mtest/test-files/appsync.ts[0m:[93m377[0m:[93m46[0m - [91merror[0m[90m Functionless(10020): [0mAppsync Integration invocations must be unidirectional and defined statically
 
 https://functionless.org/docs/error-codes#appsync-integration-invocations-must-be-unidirectional-and-defined-statically
 
-[7m376[0m     const c = $context.arguments.bool ? await func() : \\"x\\";
+[7m377[0m     const c = $context.arguments.bool ? await func() : \\"x\\";
 [7m   [0m [91m                                             ~~~~~~~[0m
-[96mtest/test-files/appsync.ts[0m:[93m397[0m:[93m33[0m - [91merror[0m[90m Functionless(10012): [0mExpected the first argument of Table.AppSync.getItem to be an object literal.
+[96mtest/test-files/appsync.ts[0m:[93m398[0m:[93m33[0m - [91merror[0m[90m Functionless(10012): [0mExpected the first argument of Table.AppSync.getItem to be an object literal.
 
 https://functionless.org/docs/error-codes#expected-an-object-literal
 
-[7m397[0m     await table.appsync.getItem(event);
+[7m398[0m     await table.appsync.getItem(event);
 [7m   [0m [91m                                ~~~~~[0m
-[96mtest/test-files/appsync.ts[0m:[93m433[0m:[93m10[0m - [91merror[0m[90m Functionless(10019): [0mUnable to find reference out of application function
+[96mtest/test-files/appsync.ts[0m:[93m434[0m:[93m10[0m - [91merror[0m[90m Functionless(10019): [0mUnable to find reference out of application function
 
 https://functionless.org/docs/error-codes#unable-to-find-reference-out-of-application-function
 
-[7m433[0m     await x();
+[7m434[0m     await x();
 [7m   [0m [91m         ~~[0m
+[96mtest/test-files/appsync.ts[0m:[93m452[0m:[93m11[0m - [91merror[0m[90m Functionless(10027): [0mAppSync Unsupported Reference
+
+https://functionless.org/docs/error-codes#appsync-unsupported-reference
+
+[7m452[0m     return a;
+[7m   [0m [91m          ~~[0m
 "
 `;
 
