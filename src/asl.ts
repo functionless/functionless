@@ -2164,6 +2164,14 @@ export class ASL {
     }
   }
 
+  /**
+   * Turns a call to `.join` on an array into a {@link ASLGraph.SubState}.
+   *
+   * If both the array and the separator argument are constant, just run .join and return the results.
+   *
+   * Otherwise, create a state machine that iterates over all elements of the array at runtime and creates a new
+   * string with the separator between elements.
+   */
   private joinToStateOutput(
     expr: CallExpr & { expr: PropAccessExpr }
   ): ASLGraph.NodeResults {
