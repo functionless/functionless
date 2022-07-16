@@ -59,6 +59,7 @@ import {
   isUndefinedLiteralExpr,
   isVariableStmt,
   isWhileStmt,
+  isForStmt,
 } from "./guards";
 import { Integration, IntegrationImpl, isIntegration } from "./integration";
 import { FunctionlessNode } from "./node";
@@ -667,6 +668,11 @@ export abstract class VTL {
       throw new SynthError(
         ErrorCodes.Unexpected_Error,
         "BindingElm and BindingPatterns should be handled locally (ex: VariableStmt)"
+      );
+    } else if (isForStmt(node)) {
+      throw new SynthError(
+        ErrorCodes.Unsupported_Feature,
+        "Condition based for loops (for(;;)) are not currently supported. For in and for of loops may be supported based on the use case. https://github.com/functionless/functionless/issues/303"
       );
     } else {
       return assertNever(node);

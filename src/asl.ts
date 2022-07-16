@@ -66,6 +66,7 @@ import {
   isArrayBinding,
   isErr,
   isNode,
+  isForStmt,
 } from "./guards";
 import {
   Integration,
@@ -722,6 +723,65 @@ export class ASL {
             },
           },
         };
+      });
+    } else if (isForStmt(stmt)) {
+      const body = this.evalStmt(stmt.body);
+
+      if (!body) {
+        // if the body is empty, the for expression is evaluated,
+        // and then continue on. This state will be optimized out later.
+        return {
+          Type: "Pass",
+        };
+      }
+
+      return this.evalContextToSubState(stmt, (evalExpr) => {
+        const initializer = stmt.variableDecl
+          ? isVariableStmt(stmt.variableDecl)
+            ? this.evalStmt(stmt.variableDecl)
+            : evalExpr(stmt.variableDecl)
+          : undefined;
+
+        const [cond, condStates] = stmt.condition
+          ? this.toCondition(stmt.condition)
+          : [];
+
+        const increment = stmt.incrementor
+          ? this.eval(stmt.incrementor)
+          : undefined;
+        const incrementState =
+          increment && ASLGraph.isStateOrSubState(increment)
+            ? increment
+            : { Type: "Pass" as const };
+
+        // run optional initializer
+        return ASLGraph.joinSubStates(stmt, initializer, {
+          startState: "check",
+          states: {
+            // check the condition (or do nothing)
+            check:
+              cond && stmt.condition
+                ? // join the states required to execute the condition with the condition value.
+                  // This ensures the condition supports short circuiting and runs all expressions as needed
+                  ASLGraph.joinSubStates(stmt.condition, condStates, {
+                    Type: "Choice",
+                    Choices: [{ ...cond, Next: "body" }],
+                    Default: "exit",
+                  })!
+                : // no condition, for loop will require an explicit exit
+                  { Type: "Pass" as const },
+            // then run the body
+            body: ASLGraph.updateDeferredNextStates(
+              { Next: "increment" },
+              body
+            ),
+            // then increment (or do nothing)
+            increment: incrementState,
+            // return back to check
+            // TODO: clean up?
+            exit: { Type: "Pass" },
+          },
+        })!;
       });
     } else if (isIfStmt(stmt)) {
       return this.evalContextToSubState(stmt, (_, evalCondition) => {
@@ -3800,6 +3860,13 @@ function toStateName(node: FunctionlessNode): string {
       return `for(${node.variableDecl.name} in ${exprToString(node.expr)})`;
     } else if (isForOfStmt(node)) {
       return `for(${node.variableDecl.name} of ${exprToString(node.expr)})`;
+    } else if (isForStmt(node)) {
+      // for(;;)
+      return `for(${
+        node.variableDecl && isVariableStmt(node.variableDecl)
+          ? node.variableDecl.name
+          : exprToString(node.variableDecl)
+      };${exprToString(node.condition)};${exprToString(node.incrementor)})`;
     } else if (isReturnStmt(node)) {
       if (node.expr) {
         return `return ${exprToString(node.expr)}`;

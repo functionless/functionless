@@ -3,16 +3,16 @@
 # Installs and runs localstack
 
 # install LocalStack cli and awslocal
-pip install localstack --upgrade awscli-local[ver1]
+pip install localstack==0.14.5 --upgrade awscli-local[ver1]
 # install CDK Local
 npm install -g aws-cdk-local aws-cdk
 # Make sure to pull the latest version of the image
-docker pull localstack/localstack
+docker pull localstack/localstack:0.14.5
 # Start LocalStack in the background
 localstack start -d
 # Wait 30 seconds for the LocalStack container to become ready before timing out
 echo "Waiting for LocalStack startup..."
-localstack wait -t 30
+localstack wait -t 60
 echo "Startup complete"
 echo "Bootstrapping CDK..."
 # Bootstrap CDK

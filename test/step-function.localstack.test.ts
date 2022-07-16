@@ -926,10 +926,13 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
           }
           // 2 + 3 + 4 + 3 + 4 + 5 + 4 + 5 + 6 = 36 + 6 = 42
           for (const i in input.arr) {
-            for (const j in input.arr) {
+            let j = "1";
+            for (j in input.arr) {
               await func({ n: `${input.arr[i]}`, id: input.id });
               await func({ n: `${input.arr[j]}`, id: input.id });
             }
+            // 3 + 3 + 3 = 9 + 42 = 51
+            await func({ n: `${input.arr[j as any]}`, id: input.id });
           }
           const item = await $AWS.DynamoDB.GetItem({
             Table: table,
@@ -942,7 +945,7 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
         }
       );
     },
-    "42",
+    "60",
     { arr: [1, 2, 3], id: `key${Math.floor(Math.random() * 1000)}` }
   );
 
@@ -991,10 +994,13 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
           }
           // 2 + 3 + 4 + 3 + 4 + 5 + 4 + 5 + 6 = 36 + 6 = 42
           for (const i of input.arr) {
-            for (const j of input.arr) {
+            let j = 1;
+            for (j of input.arr) {
               await func({ n: `${i}`, id: input.id });
               await func({ n: `${j}`, id: input.id });
             }
+            // 3 + 3 + 3 = 9 = 51
+            await func({ n: `${j}`, id: input.id });
           }
           const item = await $AWS.DynamoDB.GetItem({
             Table: table,
@@ -1007,8 +1013,35 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
         }
       );
     },
-    "42",
+    "51",
     { arr: [1, 2, 3], id: `key${Math.floor(Math.random() * 1000)}` }
+  );
+
+  test(
+    "for",
+    (parent) => {
+      return new StepFunction(parent, "sfn", (input) => {
+        let arr = input.arr;
+        let a = "";
+        for (const i = arr[0]; arr; arr = arr.slice(1)) {
+          a = `${a}n${i}`;
+        }
+        let c = "";
+        for (;;) {
+          if (c === "1") {
+            continue;
+          }
+          if (c === "111") {
+            break;
+          }
+          a = `${a}c${c}`;
+          c = `${c}1`;
+        }
+        return a;
+      });
+    },
+    "n1n2n3",
+    { arr: [1, 2, 3] }
   );
 
   test(

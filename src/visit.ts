@@ -91,6 +91,7 @@ import {
   isVariableStmt,
   isWhileStmt,
   isElementAccessExpr,
+  isForStmt,
 } from "./guards";
 import { FunctionlessNode } from "./node";
 
@@ -104,6 +105,7 @@ import {
   FinallyBlock,
   ForInStmt,
   ForOfStmt,
+  ForStmt,
   IfStmt,
   ReturnStmt,
   Stmt,
@@ -285,27 +287,38 @@ export function visitEachChild<T extends FunctionlessNode>(
     const variableDecl = visitor(node.variableDecl);
     ensure(
       variableDecl,
-      isVariableStmt,
-      `VariableDecl in ${node.kind} must be a VariableDecl`
+      anyOf(isVariableStmt, isIdentifier),
+      `Initializer in ${node.kind} must be a VariableDecl or Identifier`
     );
 
     const expr = visitor(node.expr);
     ensure(expr, isExpr, `Expr in ${node.kind} must be an Expr`);
 
-    let body = visitor(node.body);
-    if (Array.isArray(body)) {
-      body = flatten(body);
-      ensureItemOf(body, isStmt, "Statements in BlockStmt must be Stmt nodes");
-      body = new BlockStmt(body);
-    } else {
-      ensure(body, isBlockStmt, `Body in ${node.kind} must be a BlockStmt`);
-    }
+    const body = blockStmtVisitor(node.body, visitor);
 
     return (
       isForInStmt(node)
         ? new ForInStmt(variableDecl, expr, body)
         : new ForOfStmt(variableDecl, expr, body)
     ) as T;
+  } else if (isForStmt(node)) {
+    const body = blockStmtVisitor(node.body, visitor);
+    const variableDecl = node.variableDecl
+      ? visitor(node.variableDecl)
+      : undefined;
+    ensure(
+      variableDecl,
+      anyOf(isVariableStmt, isExpr),
+      `Initializer in ForStmt must be a VariableDecl or Expr`
+    );
+    const condition = node.condition ? visitor(node.condition) : undefined;
+    ensure(condition, isExpr, `Condition in ForStmt must be an Expr`);
+    const incrementor = node.incrementor
+      ? visitor(node.incrementor)
+      : undefined;
+    ensure(incrementor, isExpr, `Incrementor in ForStmt must be an Expr`);
+
+    return new ForStmt(body, variableDecl, condition, incrementor) as T;
   } else if (isFunctionDecl(node) || isFunctionExpr(node)) {
     const parameters = node.parameters.reduce(
       (params: ParameterDecl[], parameter) => {
@@ -565,6 +578,22 @@ export function visitEachChild<T extends FunctionlessNode>(
     }
   }
   return assertNever(node);
+}
+
+function blockStmtVisitor(
+  node: BlockStmt,
+  visitor: (
+    node: FunctionlessNode
+  ) => FunctionlessNode | FunctionlessNode[] | undefined
+): BlockStmt {
+  let block = visitor(node);
+  if (Array.isArray(block)) {
+    block = flatten(block);
+    ensureItemOf(block, isStmt, "Statements in BlockStmt must be Stmt nodes");
+    return new BlockStmt(block);
+  }
+  ensure(block, isBlockStmt, `Body in ${node.kind} must be a BlockStmt`);
+  return block;
 }
 
 /**

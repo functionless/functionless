@@ -1,5 +1,5 @@
 import { BindingPattern, FunctionDecl } from "./declaration";
-import { Expr, FunctionExpr } from "./expression";
+import { Expr, FunctionExpr, Identifier } from "./expression";
 import { isBindingPattern, isTryStmt } from "./guards";
 import { BaseNode, FunctionlessNode } from "./node";
 
@@ -16,6 +16,7 @@ export type Stmt =
   | ExprStmt
   | ForInStmt
   | ForOfStmt
+  | ForStmt
   | IfStmt
   | ReturnStmt
   | ThrowStmt
@@ -161,7 +162,7 @@ export class IfStmt extends BaseStmt<"IfStmt"> {
 
 export class ForOfStmt extends BaseStmt<"ForOfStmt"> {
   constructor(
-    readonly variableDecl: VariableStmt,
+    readonly variableDecl: VariableStmt | Identifier,
     readonly expr: Expr,
     readonly body: BlockStmt
   ) {
@@ -182,7 +183,7 @@ export class ForOfStmt extends BaseStmt<"ForOfStmt"> {
 
 export class ForInStmt extends BaseStmt<"ForInStmt"> {
   constructor(
-    readonly variableDecl: VariableStmt,
+    readonly variableDecl: VariableStmt | Identifier,
     readonly expr: Expr,
     readonly body: BlockStmt
   ) {
@@ -197,6 +198,30 @@ export class ForInStmt extends BaseStmt<"ForInStmt"> {
       this.variableDecl.clone(),
       this.expr.clone(),
       this.body.clone()
+    ) as this;
+  }
+}
+
+export class ForStmt extends BaseStmt<"ForStmt"> {
+  constructor(
+    readonly body: BlockStmt,
+    readonly variableDecl?: VariableStmt | Expr,
+    readonly condition?: Expr,
+    readonly incrementor?: Expr
+  ) {
+    super("ForStmt");
+    variableDecl?.setParent(this);
+    condition?.setParent(this);
+    incrementor?.setParent(this);
+    body.setParent(this);
+  }
+
+  public clone(): this {
+    return new ForStmt(
+      this.body.clone(),
+      this.variableDecl?.clone(),
+      this.condition?.clone(),
+      this.incrementor?.clone()
     ) as this;
   }
 }

@@ -3839,6 +3839,206 @@ Object {
 }
 `;
 
+exports[`for(;;) loop 1`] = `
+Object {
+  "StartAt": "Initialize Functionless Context",
+  "States": Object {
+    "1__for(i;i < 3;i = if(i == 0))": Object {
+      "Choices": Array [
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.i",
+            },
+            Object {
+              "And": Array [
+                Object {
+                  "IsNumeric": true,
+                  "Variable": "$.i",
+                },
+                Object {
+                  "NumericLessThan": 3,
+                  "Variable": "$.i",
+                },
+              ],
+            },
+          ],
+          "Next": "await task(i)",
+        },
+      ],
+      "Default": "return null",
+      "Type": "Choice",
+    },
+    "1__i = if(i == 0)": Object {
+      "InputPath": "$.heap2",
+      "Next": "return null",
+      "ResultPath": "$.i",
+      "Type": "Pass",
+    },
+    "Initialize Functionless Context": Object {
+      "Next": "for(i;i < 3;i = if(i == 0))",
+      "OutputPath": "$",
+      "Parameters": Object {
+        "input.$": "$",
+        "null": null,
+      },
+      "ResultPath": "$.fnl_context",
+      "Type": "Pass",
+    },
+    "assign__doFalse__i = if(i == 0)": Object {
+      "InputPath": "$.heap1",
+      "Next": "1__i = if(i == 0)",
+      "ResultPath": "$.heap2",
+      "Type": "Pass",
+    },
+    "await task(i)": Object {
+      "InputPath": "$.i",
+      "Next": "i = if(i == 0)",
+      "Resource": "__REPLACED_TOKEN",
+      "ResultPath": "$.heap0",
+      "Type": "Task",
+    },
+    "doFalse__doFalse__i = if(i == 0)": Object {
+      "Next": "assign__doFalse__i = if(i == 0)",
+      "Result": 3,
+      "ResultPath": "$.heap1",
+      "Type": "Pass",
+    },
+    "doFalse__i = if(i == 0)": Object {
+      "Choices": Array [
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.i",
+            },
+            Object {
+              "And": Array [
+                Object {
+                  "IsNumeric": true,
+                  "Variable": "$.i",
+                },
+                Object {
+                  "NumericEquals": 1,
+                  "Variable": "$.i",
+                },
+              ],
+            },
+          ],
+          "Next": "doTrue__doFalse__i = if(i == 0)",
+        },
+      ],
+      "Default": "doFalse__doFalse__i = if(i == 0)",
+      "Type": "Choice",
+    },
+    "doTrue__doFalse__i = if(i == 0)": Object {
+      "Next": "assign__doFalse__i = if(i == 0)",
+      "Result": 2,
+      "ResultPath": "$.heap1",
+      "Type": "Pass",
+    },
+    "doTrue__i = if(i == 0)": Object {
+      "Next": "1__i = if(i == 0)",
+      "Result": 1,
+      "ResultPath": "$.heap2",
+      "Type": "Pass",
+    },
+    "for(i;i < 3;i = if(i == 0))": Object {
+      "Next": "1__for(i;i < 3;i = if(i == 0))",
+      "Result": 0,
+      "ResultPath": "$.i",
+      "Type": "Pass",
+    },
+    "i = if(i == 0)": Object {
+      "Choices": Array [
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.i",
+            },
+            Object {
+              "And": Array [
+                Object {
+                  "IsNumeric": true,
+                  "Variable": "$.i",
+                },
+                Object {
+                  "NumericEquals": 0,
+                  "Variable": "$.i",
+                },
+              ],
+            },
+          ],
+          "Next": "doTrue__i = if(i == 0)",
+        },
+      ],
+      "Default": "doFalse__i = if(i == 0)",
+      "Type": "Choice",
+    },
+    "return null": Object {
+      "End": true,
+      "InputPath": "$.fnl_context.null",
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+  },
+}
+`;
+
+exports[`for-in-loop variable initializer 1`] = `
+Object {
+  "StartAt": "Initialize Functionless Context",
+  "States": Object {
+    "Initialize Functionless Context": Object {
+      "Next": "for(x of input.items)",
+      "OutputPath": "$",
+      "Parameters": Object {
+        "input.$": "$",
+        "null": null,
+      },
+      "ResultPath": "$.fnl_context",
+      "Type": "Pass",
+    },
+    "for(x of input.items)": Object {
+      "InputPath": "$.fnl_context.input.items",
+      "Next": "hasNext__for(x of input.items)",
+      "ResultPath": "$.heap0",
+      "Type": "Pass",
+    },
+    "hasNext__for(x of input.items)": Object {
+      "Choices": Array [
+        Object {
+          "IsPresent": true,
+          "Next": "input.items",
+          "Variable": "$.heap0[0]",
+        },
+      ],
+      "Default": "return undefined",
+      "Type": "Choice",
+    },
+    "input.items": Object {
+      "InputPath": "$.heap0[0]",
+      "Next": "return x",
+      "ResultPath": "$.x",
+      "Type": "Pass",
+    },
+    "return undefined": Object {
+      "End": true,
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "return x": Object {
+      "End": true,
+      "InputPath": "$.x",
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+  },
+}
+`;
+
 exports[`for-loop and do nothing 1`] = `
 Object {
   "StartAt": "Initialize Functionless Context",
@@ -4169,6 +4369,78 @@ Object {
       "Resource": "__REPLACED_TOKEN",
       "ResultPath": "$.heap0",
       "Type": "Task",
+    },
+  },
+}
+`;
+
+exports[`for-of-loop variable initializer 1`] = `
+Object {
+  "StartAt": "Initialize Functionless Context",
+  "States": Object {
+    "1__for(x in input.items)": Object {
+      "InputPath": "$.heap0",
+      "Iterator": Object {
+        "StartAt": "Default",
+        "States": Object {
+          "Default": Object {
+            "End": true,
+            "ResultPath": "$",
+            "Type": "Pass",
+          },
+        },
+      },
+      "Next": "hasNext__for(x in input.items)",
+      "Parameters": Object {
+        "index.$": "$$.Map.Item.Index",
+        "item.$": "$$.Map.Item.Value",
+      },
+      "ResultPath": "$.heap0",
+      "Type": "Map",
+    },
+    "Initialize Functionless Context": Object {
+      "Next": "for(x in input.items)",
+      "OutputPath": "$",
+      "Parameters": Object {
+        "input.$": "$",
+        "null": null,
+      },
+      "ResultPath": "$.fnl_context",
+      "Type": "Pass",
+    },
+    "for(x in input.items)": Object {
+      "InputPath": "$.fnl_context.input.items",
+      "Next": "1__for(x in input.items)",
+      "ResultPath": "$.heap0",
+      "Type": "Pass",
+    },
+    "hasNext__for(x in input.items)": Object {
+      "Choices": Array [
+        Object {
+          "IsPresent": true,
+          "Next": "input.items",
+          "Variable": "$.heap0[0]",
+        },
+      ],
+      "Default": "return undefined",
+      "Type": "Choice",
+    },
+    "input.items": Object {
+      "InputPath": "$.heap0[0]",
+      "Next": "return x",
+      "ResultPath": "$.x",
+      "Type": "Pass",
+    },
+    "return undefined": Object {
+      "End": true,
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "return x": Object {
+      "End": true,
+      "InputPath": "$.x",
+      "ResultPath": "$",
+      "Type": "Pass",
     },
   },
 }

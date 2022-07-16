@@ -2659,6 +2659,38 @@ test("template literal strings complex", () => {
   expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
+test("for-in-loop variable initializer", () => {
+  const { stack } = initStepFunctionApp();
+  const definition = new ExpressStepFunction<
+    { items: string[] },
+    string | void
+  >(stack, "fn", (input) => {
+    let x;
+    for (x of input.items) {
+      return x;
+    }
+    return undefined;
+  }).definition;
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+});
+
+test("for-of-loop variable initializer", () => {
+  const { stack } = initStepFunctionApp();
+  const definition = new ExpressStepFunction<
+    { items: string[] },
+    string | void
+  >(stack, "fn", (input) => {
+    let x;
+    for (x in input.items) {
+      return x;
+    }
+    return undefined;
+  }).definition;
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+});
+
 test("break from for-loop", () => {
   const { stack } = initStepFunctionApp();
   const definition = new ExpressStepFunction<{ items: string[] }, void>(
@@ -2745,6 +2777,21 @@ test("continue in do..while loop", () => {
         }
         await task(input.key);
       } while (true);
+    }
+  ).definition;
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+});
+
+test("for(;;) loop", () => {
+  const { stack, task } = initStepFunctionApp();
+  const definition = new ExpressStepFunction<{ key: string }, void>(
+    stack,
+    "fn",
+    async () => {
+      for (let i = 0; i < 3; i = i === 0 ? 1 : i === 1 ? 2 : 3) {
+        await task(i);
+      }
     }
   ).definition;
 

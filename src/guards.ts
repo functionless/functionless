@@ -104,6 +104,7 @@ export function isStmt(a: any): a is Stmt {
       isExprStmt(a) ||
       isForInStmt(a) ||
       isForOfStmt(a) ||
+      isForStmt(a) ||
       isIfStmt(a) ||
       isReturnStmt(a) ||
       isThrowStmt(a) ||
@@ -119,6 +120,7 @@ export const isReturnStmt = typeGuard("ReturnStmt");
 export const isIfStmt = typeGuard("IfStmt");
 export const isForOfStmt = typeGuard("ForOfStmt");
 export const isForInStmt = typeGuard("ForInStmt");
+export const isForStmt = typeGuard("ForStmt");
 export const isBreakStmt = typeGuard("BreakStmt");
 export const isContinueStmt = typeGuard("ContinueStmt");
 export const isTryStmt = typeGuard("TryStmt");
