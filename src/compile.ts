@@ -520,7 +520,6 @@ export function compile(
             }
           }
 
-          const symbol = checker.getSymbolAtLocation(node);
           /**
            * If the identifier is not within the closure, we attempt to enclose the reference in its own closure.
            * const val = "hello";
@@ -530,7 +529,7 @@ export function compile(
            *
            * return { value: () => val };
            */
-          if (symbol && checker.isSymbolOutOfScope(symbol, scope)) {
+          if (checker.isIdentifierOutOfScope(node, scope)) {
             const _ref = checker.getOutOfScopeValueNode(node, scope);
             if (_ref) {
               return ref(_ref);

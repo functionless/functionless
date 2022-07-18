@@ -42,19 +42,19 @@ https://functionless.org/docs/error-codes#api-gateway-response-mapping-template-
 [7m   [0m [91m~~~~~~~~[0m
 [7m121[0m     });
 [7m   [0m [91m~~~~~~[0m
-[96mtest/test-files/api-gateway.ts[0m:[93m114[0m:[93m11[0m - [91merror[0m[90m Functionless(10028): [0mApiGateway Unsupported Reference
+[96mtest/test-files/api-gateway.ts[0m:[93m114[0m:[93m11[0m - [91merror[0m[90m Functionless(10028): [0mApiGateway Unsupported Reference: $AWS
 
 https://functionless.org/docs/error-codes#apigateway-unsupported-reference
 
 [7m114[0m     return $AWS.DynamoDB.GetItem({
 [7m   [0m [91m          ~~~~~[0m
-[96mtest/test-files/api-gateway.ts[0m:[93m114[0m:[93m26[0m - [91merror[0m[90m Functionless(10028): [0mApiGateway Unsupported Reference
+[96mtest/test-files/api-gateway.ts[0m:[93m114[0m:[93m26[0m - [91merror[0m[90m Functionless(10028): [0mApiGateway Unsupported Reference: GetItem
 
 https://functionless.org/docs/error-codes#apigateway-unsupported-reference
 
 [7m114[0m     return $AWS.DynamoDB.GetItem({
 [7m   [0m [91m                         ~~~~~~~[0m
-[96mtest/test-files/api-gateway.ts[0m:[93m115[0m:[93m13[0m - [91merror[0m[90m Functionless(10028): [0mApiGateway Unsupported Reference
+[96mtest/test-files/api-gateway.ts[0m:[93m115[0m:[93m13[0m - [91merror[0m[90m Functionless(10028): [0mApiGateway Unsupported Reference: table
 
 https://functionless.org/docs/error-codes#apigateway-unsupported-reference
 
@@ -80,13 +80,13 @@ https://functionless.org/docs/error-codes#unsupported-initialization-of-resource
 [7m   [0m [91m         [0m
 [7m134[0m     new StepFunction(stack, \\"\\", () => {});
 [7m   [0m [91m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
-[96mtest/test-files/api-gateway.ts[0m:[93m134[0m:[93m8[0m - [91merror[0m[90m Functionless(10028): [0mApiGateway Unsupported Reference
+[96mtest/test-files/api-gateway.ts[0m:[93m134[0m:[93m8[0m - [91merror[0m[90m Functionless(10028): [0mApiGateway Unsupported Reference: StepFunction
 
 https://functionless.org/docs/error-codes#apigateway-unsupported-reference
 
 [7m134[0m     new StepFunction(stack, \\"\\", () => {});
 [7m   [0m [91m       ~~~~~~~~~~~~~[0m
-[96mtest/test-files/api-gateway.ts[0m:[93m134[0m:[93m22[0m - [91merror[0m[90m Functionless(10028): [0mApiGateway Unsupported Reference
+[96mtest/test-files/api-gateway.ts[0m:[93m134[0m:[93m22[0m - [91merror[0m[90m Functionless(10028): [0mApiGateway Unsupported Reference: stack
 
 https://functionless.org/docs/error-codes#apigateway-unsupported-reference
 
@@ -112,13 +112,13 @@ https://functionless.org/docs/error-codes#unsupported-initialization-of-resource
 [7m   [0m [91m         [0m
 [7m145[0m     new Function(stack, \\"\\", async () => {});
 [7m   [0m [91m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
-[96mtest/test-files/api-gateway.ts[0m:[93m145[0m:[93m8[0m - [91merror[0m[90m Functionless(10028): [0mApiGateway Unsupported Reference
+[96mtest/test-files/api-gateway.ts[0m:[93m145[0m:[93m8[0m - [91merror[0m[90m Functionless(10028): [0mApiGateway Unsupported Reference: Function
 
 https://functionless.org/docs/error-codes#apigateway-unsupported-reference
 
 [7m145[0m     new Function(stack, \\"\\", async () => {});
 [7m   [0m [91m       ~~~~~~~~~[0m
-[96mtest/test-files/api-gateway.ts[0m:[93m145[0m:[93m18[0m - [91merror[0m[90m Functionless(10028): [0mApiGateway Unsupported Reference
+[96mtest/test-files/api-gateway.ts[0m:[93m145[0m:[93m18[0m - [91merror[0m[90m Functionless(10028): [0mApiGateway Unsupported Reference: stack
 
 https://functionless.org/docs/error-codes#apigateway-unsupported-reference
 
@@ -144,13 +144,13 @@ https://functionless.org/docs/error-codes#unsupported-initialization-of-resource
 [7m   [0m [91m         [0m
 [7m156[0m     new EventBus(stack, \\"\\");
 [7m   [0m [91m~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
-[96mtest/test-files/api-gateway.ts[0m:[93m156[0m:[93m8[0m - [91merror[0m[90m Functionless(10028): [0mApiGateway Unsupported Reference
+[96mtest/test-files/api-gateway.ts[0m:[93m156[0m:[93m8[0m - [91merror[0m[90m Functionless(10028): [0mApiGateway Unsupported Reference: EventBus
 
 https://functionless.org/docs/error-codes#apigateway-unsupported-reference
 
 [7m156[0m     new EventBus(stack, \\"\\");
 [7m   [0m [91m       ~~~~~~~~~[0m
-[96mtest/test-files/api-gateway.ts[0m:[93m156[0m:[93m18[0m - [91merror[0m[90m Functionless(10028): [0mApiGateway Unsupported Reference
+[96mtest/test-files/api-gateway.ts[0m:[93m156[0m:[93m18[0m - [91merror[0m[90m Functionless(10028): [0mApiGateway Unsupported Reference: stack
 
 https://functionless.org/docs/error-codes#apigateway-unsupported-reference
 
@@ -164,19 +164,19 @@ https://functionless.org/docs/error-codes#unsupported-initialization-of-resource
 [7m   [0m [91m               [0m
 [7m163[0m     new aws_events.EventBus(stack, \\"\\");
 [7m   [0m [91m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
-[96mtest/test-files/api-gateway.ts[0m:[93m163[0m:[93m8[0m - [91merror[0m[90m Functionless(10028): [0mApiGateway Unsupported Reference
+[96mtest/test-files/api-gateway.ts[0m:[93m163[0m:[93m8[0m - [91merror[0m[90m Functionless(10028): [0mApiGateway Unsupported Reference: aws_events
 
 https://functionless.org/docs/error-codes#apigateway-unsupported-reference
 
 [7m163[0m     new aws_events.EventBus(stack, \\"\\");
 [7m   [0m [91m       ~~~~~~~~~~~[0m
-[96mtest/test-files/api-gateway.ts[0m:[93m163[0m:[93m20[0m - [91merror[0m[90m Functionless(10028): [0mApiGateway Unsupported Reference
+[96mtest/test-files/api-gateway.ts[0m:[93m163[0m:[93m20[0m - [91merror[0m[90m Functionless(10028): [0mApiGateway Unsupported Reference: EventBus
 
 https://functionless.org/docs/error-codes#apigateway-unsupported-reference
 
 [7m163[0m     new aws_events.EventBus(stack, \\"\\");
 [7m   [0m [91m                   ~~~~~~~~[0m
-[96mtest/test-files/api-gateway.ts[0m:[93m163[0m:[93m29[0m - [91merror[0m[90m Functionless(10028): [0mApiGateway Unsupported Reference
+[96mtest/test-files/api-gateway.ts[0m:[93m163[0m:[93m29[0m - [91merror[0m[90m Functionless(10028): [0mApiGateway Unsupported Reference: stack
 
 https://functionless.org/docs/error-codes#apigateway-unsupported-reference
 
@@ -190,19 +190,19 @@ https://functionless.org/docs/error-codes#unsupported-initialization-of-resource
 [7m   [0m [91m         [0m
 [7m167[0m     new aws_events.EventBus(stack, \\"\\");
 [7m   [0m [91m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
-[96mtest/test-files/api-gateway.ts[0m:[93m167[0m:[93m8[0m - [91merror[0m[90m Functionless(10028): [0mApiGateway Unsupported Reference
+[96mtest/test-files/api-gateway.ts[0m:[93m167[0m:[93m8[0m - [91merror[0m[90m Functionless(10028): [0mApiGateway Unsupported Reference: aws_events
 
 https://functionless.org/docs/error-codes#apigateway-unsupported-reference
 
 [7m167[0m     new aws_events.EventBus(stack, \\"\\");
 [7m   [0m [91m       ~~~~~~~~~~~[0m
-[96mtest/test-files/api-gateway.ts[0m:[93m167[0m:[93m20[0m - [91merror[0m[90m Functionless(10028): [0mApiGateway Unsupported Reference
+[96mtest/test-files/api-gateway.ts[0m:[93m167[0m:[93m20[0m - [91merror[0m[90m Functionless(10028): [0mApiGateway Unsupported Reference: EventBus
 
 https://functionless.org/docs/error-codes#apigateway-unsupported-reference
 
 [7m167[0m     new aws_events.EventBus(stack, \\"\\");
 [7m   [0m [91m                   ~~~~~~~~[0m
-[96mtest/test-files/api-gateway.ts[0m:[93m167[0m:[93m29[0m - [91merror[0m[90m Functionless(10028): [0mApiGateway Unsupported Reference
+[96mtest/test-files/api-gateway.ts[0m:[93m167[0m:[93m29[0m - [91merror[0m[90m Functionless(10028): [0mApiGateway Unsupported Reference: stack
 
 https://functionless.org/docs/error-codes#apigateway-unsupported-reference
 
@@ -220,13 +220,13 @@ https://functionless.org/docs/error-codes#unable-to-find-reference-out-of-applic
 
 [7m216[0m     await x(\\"\\");
 [7m   [0m [91m         ~~[0m
-[96mtest/test-files/api-gateway.ts[0m:[93m235[0m:[93m17[0m - [91merror[0m[90m Functionless(10028): [0mApiGateway Unsupported Reference
+[96mtest/test-files/api-gateway.ts[0m:[93m235[0m:[93m17[0m - [91merror[0m[90m Functionless(10028): [0mApiGateway Unsupported Reference: a
 
 https://functionless.org/docs/error-codes#apigateway-unsupported-reference
 
 [7m235[0m         id: { S: a },
 [7m   [0m [91m                ~~[0m
-[96mtest/test-files/api-gateway.ts[0m:[93m255[0m:[93m11[0m - [91merror[0m[90m Functionless(10028): [0mApiGateway Unsupported Reference
+[96mtest/test-files/api-gateway.ts[0m:[93m255[0m:[93m11[0m - [91merror[0m[90m Functionless(10028): [0mApiGateway Unsupported Reference: a
 
 https://functionless.org/docs/error-codes#apigateway-unsupported-reference
 
@@ -308,24 +308,12 @@ https://functionless.org/docs/error-codes#unsupported-use-of-promises
 
 [7m231[0m     const c = Promise.all([1, 2].map(async () => func()));
 [7m   [0m [91m             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
-[96mtest/test-files/appsync.ts[0m:[93m231[0m:[93m14[0m - [91merror[0m[90m Functionless(10027): [0mAppSync Unsupported Reference
-
-https://functionless.org/docs/error-codes#appsync-unsupported-reference
-
-[7m231[0m     const c = Promise.all([1, 2].map(async () => func()));
-[7m   [0m [91m             ~~~~~~~~[0m
 [96mtest/test-files/appsync.ts[0m:[93m245[0m:[93m11[0m - [91merror[0m[90m Functionless(10018): [0mAppsync does not support concurrent integration invocation or methods on the \`Promise\` api.
 
 https://functionless.org/docs/error-codes#unsupported-use-of-promises
 
 [7m245[0m     return Promise.all(c);
 [7m   [0m [91m          ~~~~~~~~~~~~~~~[0m
-[96mtest/test-files/appsync.ts[0m:[93m245[0m:[93m11[0m - [91merror[0m[90m Functionless(10027): [0mAppSync Unsupported Reference
-
-https://functionless.org/docs/error-codes#appsync-unsupported-reference
-
-[7m245[0m     return Promise.all(c);
-[7m   [0m [91m          ~~~~~~~~[0m
 [96mtest/test-files/appsync.ts[0m:[93m258[0m:[93m16[0m - [91merror[0m[90m Functionless(10008): [0mCannot initialize new resources in a runtime function, found StepFunction.
 
 https://functionless.org/docs/error-codes#unsupported-initialization-of-resources-in-a-runtime-closure
@@ -363,13 +351,13 @@ https://functionless.org/docs/error-codes#unsupported-initialization-of-resource
 [7m   [0m [91m~~~~~~~~~~~~~~[0m
 [7m304[0m     );
 [7m   [0m [91m~~~~~[0m
-[96mtest/test-files/appsync.ts[0m:[93m295[0m:[93m8[0m - [91merror[0m[90m Functionless(10027): [0mAppSync Unsupported Reference
+[96mtest/test-files/appsync.ts[0m:[93m295[0m:[93m8[0m - [91merror[0m[90m Functionless(10027): [0mAppSync Unsupported Reference: AppsyncResolver
 
 https://functionless.org/docs/error-codes#appsync-unsupported-reference
 
 [7m295[0m     new AppsyncResolver(
 [7m   [0m [91m       ~~~~~~~~~~~~~~~~[0m
-[96mtest/test-files/appsync.ts[0m:[93m295[0m:[93m25[0m - [91merror[0m[90m Functionless(10027): [0mAppSync Unsupported Reference
+[96mtest/test-files/appsync.ts[0m:[93m295[0m:[93m25[0m - [91merror[0m[90m Functionless(10027): [0mAppSync Unsupported Reference: stack
 
 https://functionless.org/docs/error-codes#appsync-unsupported-reference
 
@@ -383,13 +371,13 @@ https://functionless.org/docs/error-codes#unsupported-initialization-of-resource
 
 [7m299[0m         api: new GraphqlApi(stack, \\"\\", { name: \\"api\\" }),
 [7m   [0m [91m            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
-[96mtest/test-files/appsync.ts[0m:[93m299[0m:[93m17[0m - [91merror[0m[90m Functionless(10027): [0mAppSync Unsupported Reference
+[96mtest/test-files/appsync.ts[0m:[93m299[0m:[93m17[0m - [91merror[0m[90m Functionless(10027): [0mAppSync Unsupported Reference: GraphqlApi
 
 https://functionless.org/docs/error-codes#appsync-unsupported-reference
 
 [7m299[0m         api: new GraphqlApi(stack, \\"\\", { name: \\"api\\" }),
 [7m   [0m [91m                ~~~~~~~~~~~[0m
-[96mtest/test-files/appsync.ts[0m:[93m299[0m:[93m29[0m - [91merror[0m[90m Functionless(10027): [0mAppSync Unsupported Reference
+[96mtest/test-files/appsync.ts[0m:[93m299[0m:[93m29[0m - [91merror[0m[90m Functionless(10027): [0mAppSync Unsupported Reference: stack
 
 https://functionless.org/docs/error-codes#appsync-unsupported-reference
 
@@ -403,19 +391,19 @@ https://functionless.org/docs/error-codes#unsupported-initialization-of-resource
 [7m   [0m [91m               [0m
 [7m316[0m     new aws_events.EventBus(stack, \\"\\");
 [7m   [0m [91m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
-[96mtest/test-files/appsync.ts[0m:[93m316[0m:[93m8[0m - [91merror[0m[90m Functionless(10027): [0mAppSync Unsupported Reference
+[96mtest/test-files/appsync.ts[0m:[93m316[0m:[93m8[0m - [91merror[0m[90m Functionless(10027): [0mAppSync Unsupported Reference: aws_events
 
 https://functionless.org/docs/error-codes#appsync-unsupported-reference
 
 [7m316[0m     new aws_events.EventBus(stack, \\"\\");
 [7m   [0m [91m       ~~~~~~~~~~~[0m
-[96mtest/test-files/appsync.ts[0m:[93m316[0m:[93m20[0m - [91merror[0m[90m Functionless(10027): [0mAppSync Unsupported Reference
+[96mtest/test-files/appsync.ts[0m:[93m316[0m:[93m20[0m - [91merror[0m[90m Functionless(10027): [0mAppSync Unsupported Reference: EventBus
 
 https://functionless.org/docs/error-codes#appsync-unsupported-reference
 
 [7m316[0m     new aws_events.EventBus(stack, \\"\\");
 [7m   [0m [91m                   ~~~~~~~~[0m
-[96mtest/test-files/appsync.ts[0m:[93m316[0m:[93m29[0m - [91merror[0m[90m Functionless(10027): [0mAppSync Unsupported Reference
+[96mtest/test-files/appsync.ts[0m:[93m316[0m:[93m29[0m - [91merror[0m[90m Functionless(10027): [0mAppSync Unsupported Reference: stack
 
 https://functionless.org/docs/error-codes#appsync-unsupported-reference
 
@@ -457,7 +445,7 @@ https://functionless.org/docs/error-codes#unable-to-find-reference-out-of-applic
 
 [7m434[0m     await x();
 [7m   [0m [91m         ~~[0m
-[96mtest/test-files/appsync.ts[0m:[93m452[0m:[93m11[0m - [91merror[0m[90m Functionless(10027): [0mAppSync Unsupported Reference
+[96mtest/test-files/appsync.ts[0m:[93m452[0m:[93m11[0m - [91merror[0m[90m Functionless(10027): [0mAppSync Unsupported Reference: a
 
 https://functionless.org/docs/error-codes#appsync-unsupported-reference
 

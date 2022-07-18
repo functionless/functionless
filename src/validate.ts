@@ -14,7 +14,7 @@ import {
   typeMatch,
 } from "./checker";
 import { ErrorCode, ErrorCodes, formatErrorMessage } from "./error-code";
-import { anyOf, hasAncestors as hasOnlyAncestors } from "./util";
+import { anyOf, hasOnlyAncestors } from "./util";
 
 /**
  * Validates a TypeScript SourceFile containing Functionless primitives does not
@@ -476,10 +476,8 @@ export function validate(
         const [, diagnostic] = validateNewIntegration(node);
         return diagnostic;
       } else if (ts.isIdentifier(node)) {
-        const symbol = checker.getSymbolAtLocation(node);
         if (
-          symbol &&
-          checker.isSymbolOutOfScope(symbol, scope) &&
+          checker.isIdentifierOutOfScope(node, scope) &&
           !(
             checker.isIntegrationNode(node) ||
             // is this ID used to reference an integration
@@ -488,10 +486,17 @@ export function validate(
               ts.isPropertyAccessExpression,
               checker.isIntegrationNode
             ) ||
-            node.getText() === "$util"
+            node.getText() === "$util" ||
+            node.getText() === "Promise"
           )
         ) {
-          return [newError(node, ErrorCodes.AppSync_Unsupported_Reference)];
+          return [
+            newError(
+              node,
+              ErrorCodes.AppSync_Unsupported_Reference,
+              `AppSync Unsupported Reference: ${node.getText()}`
+            ),
+          ];
         }
       }
 
@@ -579,10 +584,8 @@ export function validate(
       } else if (ts.isCallExpression(node)) {
         return validateIntegrationCallArguments(node, scope);
       } else if (ts.isIdentifier(node)) {
-        const symbol = checker.getSymbolAtLocation(node);
         if (
-          symbol &&
-          checker.isSymbolOutOfScope(symbol, scope) &&
+          checker.isIdentifierOutOfScope(node, scope) &&
           !(
             checker.isIntegrationNode(node) ||
             hasOnlyAncestors(
@@ -593,7 +596,13 @@ export function validate(
             node.getText() === "Number"
           )
         ) {
-          return [newError(node, ErrorCodes.ApiGateway_Unsupported_Reference)];
+          return [
+            newError(
+              node,
+              ErrorCodes.ApiGateway_Unsupported_Reference,
+              `ApiGateway Unsupported Reference: ${node.getText()}`
+            ),
+          ];
         }
       }
       return [];
@@ -614,11 +623,14 @@ export function validate(
         const [, diagnostic] = validateNewIntegration(node);
         return diagnostic;
       } else if (ts.isIdentifier(node)) {
-        const symbol = checker.getSymbolAtLocation(node);
-        if (symbol && checker.isSymbolOutOfScope(symbol, scope)) {
+        if (checker.isIdentifierOutOfScope(node, scope)) {
           if (!(node.getText() === "Number")) {
             return [
-              newError(node, ErrorCodes.ApiGateway_Unsupported_Reference),
+              newError(
+                node,
+                ErrorCodes.ApiGateway_Unsupported_Reference,
+                `ApiGateway Unsupported Reference: ${node.getText()}`
+              ),
             ];
           }
         }
