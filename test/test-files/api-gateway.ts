@@ -266,7 +266,7 @@ new AwsMethod(
     await $AWS.DynamoDB.GetItem({
       Table: table,
       Key: {
-        id: { S: a },
+        id: { S: `${a}` },
       },
     });
   },
