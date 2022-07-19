@@ -123,7 +123,7 @@ export function hasParent(node: ts.Node, parent: ts.Node): boolean {
  * If there are no parents left, `true` is returned.
  * If there is a `stop` provided, matching stop will halt the search and return `true`.
  */
-export function hasAncestors(
+export function hasOnlyAncestors(
   node: ts.Node,
   cont: (node: ts.Node) => boolean,
   stop?: (node: ts.Node) => boolean
@@ -135,7 +135,7 @@ export function hasAncestors(
   } else if (!cont(node.parent)) {
     return false;
   }
-  return hasAncestors(node.parent, cont, stop);
+  return hasOnlyAncestors(node.parent, cont, stop);
 }
 
 export type ConstantValue =

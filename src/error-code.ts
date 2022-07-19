@@ -1068,7 +1068,7 @@ export namespace ErrorCodes {
    * ```
    */
   export const AppSync_Unsupported_Reference: ErrorCode = {
-    code: 10027,
+    code: 10028,
     type: ErrorType.ERROR,
     title: "AppSync Unsupported Reference",
   };
@@ -1092,7 +1092,7 @@ export namespace ErrorCodes {
    * ```
    */
   export const ApiGateway_Unsupported_Reference: ErrorCode = {
-    code: 10028,
+    code: 10029,
     type: ErrorType.ERROR,
     title: "ApiGateway Unsupported Reference",
   };
