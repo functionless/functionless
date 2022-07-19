@@ -46,10 +46,19 @@ export type AnyStepFunction =
   | ExpressStepFunction<any, any>
   | StepFunction<any, any>;
 
+// TODO: fill out
+export interface SfnContext {
+  readonly Execution: {
+    readonly Name: string;
+    readonly Id: string;
+    readonly StartTime: string;
+  };
+}
+
 export type StepFunctionClosure<
   Payload extends Record<string, any> | undefined,
   Out
-> = (arg: Payload) => Promise<Out> | Out;
+> = (arg: Payload, context: SfnContext) => Promise<Out> | Out;
 
 type ParallelFunction<T> = () => Promise<T> | T;
 

@@ -3129,3 +3129,70 @@ test("import standard from express should fail", () => {
     ExpressStepFunction.fromStateMachine<{ id: string }, string>(awsMachine)
   ).toThrow(new SynthError(ErrorCodes.Incorrect_StateMachine_Import_Type));
 });
+
+test("use context parameter", () => {
+  const { stack } = initStepFunctionApp();
+  const definition = new StepFunction<{ value: string }, string>(
+    stack,
+    "machine1",
+    (_, context) => {
+      return context.Execution.Name;
+    }
+  ).definition;
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+});
+
+test("use context parameter in template", () => {
+  const { stack } = initStepFunctionApp();
+  const definition = new StepFunction<{ value: string }, string>(
+    stack,
+    "machine1",
+    (_, context) => {
+      return `name: ${context.Execution.Id}`;
+    }
+  ).definition;
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+});
+
+test("use context parameter in function call", () => {
+  const { stack, task } = initStepFunctionApp();
+  const definition = new StepFunction<{ value: string }, number | null>(
+    stack,
+    "machine1",
+    async (_, context) => {
+      return task(context.Execution.Id);
+    }
+  ).definition;
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+});
+
+test("use context object", () => {
+  const { stack, task } = initStepFunctionApp();
+  const definition = new StepFunction<{ value: string }, number | null>(
+    stack,
+    "machine1",
+    async (_, context) => {
+      return task(context);
+    }
+  ).definition;
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+});
+
+test("use context in object", () => {
+  const { stack } = initStepFunctionApp();
+  const definition = new StepFunction<{ value: string }, { a: string }>(
+    stack,
+    "machine1",
+    async (_, context) => {
+      return {
+        a: context.Execution.Name,
+      };
+    }
+  ).definition;
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+});
