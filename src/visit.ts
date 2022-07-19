@@ -229,18 +229,7 @@ export function visitEachChild<T extends FunctionlessNode>(
         "visitEachChild of a CatchClause's VariableStmt must return another VariableStmt"
       );
     }
-    let block = visitor(node.block);
-    if (Array.isArray(block)) {
-      block = flatten(block);
-      ensureItemOf(block, isStmt, "Statements in BlockStmt must be Stmt nodes");
-      block = new BlockStmt(block);
-    } else {
-      ensure(
-        block,
-        isBlockStmt,
-        "visitEachChild of a CatchClause's BlockStmt must return another BlockStmt or an Array of Stmt"
-      );
-    }
+    const block = blockStmtVisitor(node.block, visitor);
 
     return new CatchClause(variableDecl, block) as T;
   } else if (isComputedPropertyNameExpr(node)) {
@@ -262,8 +251,7 @@ export function visitEachChild<T extends FunctionlessNode>(
 
     return new ConditionExpr(when, then, _else) as T;
   } else if (isDoStmt(node)) {
-    const block = visitor(node.block);
-    ensure(block, isBlockStmt, "a DoStmt's block must be a BlockStmt");
+    const block = blockStmtVisitor(node.block, visitor);
     const condition = visitor(node.condition);
     ensure(condition, isExpr, "a DoStmt's condition must be an Expr");
     return new DoStmt(block, condition) as T;
@@ -343,8 +331,8 @@ export function visitEachChild<T extends FunctionlessNode>(
       []
     );
 
-    const body = visitor(node.body);
-    ensure(body, isBlockStmt, `a ${node.kind}'s body must be a BlockStmt`);
+    const body = blockStmtVisitor(node.body, visitor);
+
     return (
       isFunctionDecl(node)
         ? new FunctionDecl(parameters, body)
@@ -463,8 +451,7 @@ export function visitEachChild<T extends FunctionlessNode>(
     ensure(expr, isExpr, "a ThrowStmt's expr must be an Expr node type");
     return new ThrowStmt(expr) as T;
   } else if (isTryStmt(node)) {
-    const tryBlock = visitor(node.tryBlock);
-    ensure(tryBlock, isBlockStmt, "a TryStmt's tryBlock must be a BlockStmt");
+    const tryBlock = blockStmtVisitor(node.tryBlock, visitor);
 
     const catchClause = node.catchClause
       ? visitor(node.catchClause)
@@ -478,15 +465,9 @@ export function visitEachChild<T extends FunctionlessNode>(
     }
 
     const finallyBlock = node.finallyBlock
-      ? visitor(node.finallyBlock)
+      ? blockStmtVisitor(node.finallyBlock, visitor)
       : undefined;
-    if (finallyBlock) {
-      ensure(
-        finallyBlock,
-        isBlockStmt,
-        "a TryStmt's finallyBlock must be a BlockStmt"
-      );
-    }
+
     return new TryStmt(
       tryBlock,
       catchClause,
@@ -515,8 +496,7 @@ export function visitEachChild<T extends FunctionlessNode>(
   } else if (isWhileStmt(node)) {
     const condition = visitor(node.condition);
     ensure(condition, isExpr, "a WhileStmt's condition must be an Expr");
-    const block = visitor(node.block);
-    ensure(block, isBlockStmt, "a WhileStmt's block must be a BlockStmt");
+    const block = blockStmtVisitor(node.block, visitor);
     return new WhileStmt(condition, block) as T;
   } else if (isAwaitExpr(node)) {
     const expr = visitor(node.expr);
