@@ -46,12 +46,27 @@ export type AnyStepFunction =
   | ExpressStepFunction<any, any>
   | StepFunction<any, any>;
 
-// TODO: fill out
+/**
+ * Machine and Execution context.
+ *
+ * @see https://docs.aws.amazon.com/step-functions/latest/dg/input-output-contextobject.html
+ *
+ * > Note: missing fields (ex: `$$.State.Name`) are abstracted away from {@link StepFunction}.
+ * > Note: `$$.Execution.Input` is available as the first parameter of the closure.
+ */
 export interface SfnContext {
   readonly Execution: {
     readonly Name: string;
     readonly Id: string;
+    /**
+     * Format: ISO 8601
+     */
     readonly StartTime: string;
+    readonly RoleArn: string;
+  };
+  readonly StateMachine: {
+    readonly Name: string;
+    readonly Id: string;
   };
 }
 
