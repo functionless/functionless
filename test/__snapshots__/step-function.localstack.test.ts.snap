@@ -5786,40 +5786,7 @@ Object {
       "ResultPath": null,
       "Type": "Map",
     },
-    "Initialize Functionless Context": Object {
-      "Next": "a = \\"x\\"",
-      "OutputPath": "$",
-      "Parameters": Object {
-        "input.$": "$",
-        "null": null,
-      },
-      "ResultPath": "$.fnl_context",
-      "Type": "Pass",
-    },
-    "a = \\"x\\"": Object {
-      "Next": "for(i of [1, 2, 3])",
-      "Result": "x",
-      "ResultPath": "$.a",
-      "Type": "Pass",
-    },
-    "for(i of [1, 2, 3])": Object {
-      "Next": "1__for(i of [1, 2, 3])",
-      "Result": Array [
-        1,
-        2,
-        3,
-      ],
-      "ResultPath": "$.heap0",
-      "Type": "Pass",
-    },
-    "for(i of await func())": Object {
-      "InputPath": "$.fnl_context.null",
-      "Next": "for(i of await func()) 1",
-      "Resource": "__REPLACED_TOKEN",
-      "ResultPath": "$.heap3",
-      "Type": "Task",
-    },
-    "for(i of await func()) 1": Object {
+    "1__for(i of await func())": Object {
       "ItemsPath": "$.heap3",
       "Iterator": Object {
         "StartAt": "a = \`ai\` 2",
@@ -5849,6 +5816,39 @@ Object {
       },
       "ResultPath": null,
       "Type": "Map",
+    },
+    "Initialize Functionless Context": Object {
+      "Next": "a = \\"x\\"",
+      "OutputPath": "$",
+      "Parameters": Object {
+        "input.$": "$",
+        "null": null,
+      },
+      "ResultPath": "$.fnl_context",
+      "Type": "Pass",
+    },
+    "a = \\"x\\"": Object {
+      "Next": "for(i of [1, 2, 3])",
+      "Result": "x",
+      "ResultPath": "$.a",
+      "Type": "Pass",
+    },
+    "for(i of [1, 2, 3])": Object {
+      "Next": "1__for(i of [1, 2, 3])",
+      "Result": Array [
+        1,
+        2,
+        3,
+      ],
+      "ResultPath": "$.heap0",
+      "Type": "Pass",
+    },
+    "for(i of await func())": Object {
+      "InputPath": "$.fnl_context.null",
+      "Next": "1__for(i of await func())",
+      "Resource": "__REPLACED_TOKEN",
+      "ResultPath": "$.heap3",
+      "Type": "Task",
     },
     "for(i of input.arr)": Object {
       "ItemsPath": "$.fnl_context.input.arr",
@@ -5885,6 +5885,62 @@ Object {
       "End": true,
       "Result": "madeit",
       "ResultPath": "$",
+      "Type": "Pass",
+    },
+  },
+}
+`;
+
+exports[`json parse and stringify 1`] = `
+Object {
+  "StartAt": "Initialize Functionless Context",
+  "States": Object {
+    "1__obj = JSON.parse(str)": Object {
+      "InputPath": "$.heap1.string",
+      "Next": "return {str: str, obj: obj, a: obj.a}",
+      "ResultPath": "$.obj",
+      "Type": "Pass",
+    },
+    "1__str = JSON.stringify(input)": Object {
+      "InputPath": "$.heap0.string",
+      "Next": "obj = JSON.parse(str)",
+      "ResultPath": "$.str",
+      "Type": "Pass",
+    },
+    "Initialize Functionless Context": Object {
+      "Next": "str = JSON.stringify(input)",
+      "OutputPath": "$",
+      "Parameters": Object {
+        "input.$": "$",
+        "null": null,
+      },
+      "ResultPath": "$.fnl_context",
+      "Type": "Pass",
+    },
+    "obj = JSON.parse(str)": Object {
+      "Next": "1__obj = JSON.parse(str)",
+      "Parameters": Object {
+        "string.$": "States.StringToJson($.str)",
+      },
+      "ResultPath": "$.heap1",
+      "Type": "Pass",
+    },
+    "return {str: str, obj: obj, a: obj.a}": Object {
+      "End": true,
+      "Parameters": Object {
+        "a.$": "$.obj.a",
+        "obj.$": "$.obj",
+        "str.$": "$.str",
+      },
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "str = JSON.stringify(input)": Object {
+      "Next": "1__str = JSON.stringify(input)",
+      "Parameters": Object {
+        "string.$": "States.JsonToString($.fnl_context.input)",
+      },
+      "ResultPath": "$.heap0",
       "Type": "Pass",
     },
   },
