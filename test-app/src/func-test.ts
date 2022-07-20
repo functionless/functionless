@@ -2,7 +2,7 @@ import { App, Stack } from "aws-cdk-lib";
 import { StepFunction, EventBus, Function } from "functionless";
 
 export const app = new App();
-export const stack = new Stack(app, "message-board");
+export const stack = new Stack(app, "func-test");
 
 /**
  * Just playing with functions
