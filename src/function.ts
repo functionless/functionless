@@ -26,14 +26,11 @@ import type { Context } from "aws-lambda";
 // eslint-disable-next-line import/no-extraneous-dependencies
 import { Construct } from "constructs";
 import esbuild from "esbuild";
+import ts from "typescript";
 import { ApiGatewayVtlIntegration } from "./api";
 import type { AppSyncVtlIntegration } from "./appsync";
 import { ASL, ASLGraph } from "./asl";
-import {
-  FunctionDecl,
-  IntegrationInvocation,
-  validateFunctionlessNode,
-} from "./declaration";
+import { IntegrationInvocation, validateFunctionlessNode } from "./declaration";
 import { ErrorCodes, formatErrorMessage, SynthError } from "./error-code";
 import {
   IEventBus,
@@ -50,7 +47,7 @@ import {
   PrewarmClients,
   PrewarmProps,
 } from "./function-prewarm";
-import { isFunctionDecl } from "./guards";
+import { isFunctionLike } from "./guards";
 import {
   Integration,
   IntegrationCallExpr,
@@ -59,7 +56,7 @@ import {
   isIntegration,
   isIntegrationCallExpr,
 } from "./integration";
-import { FunctionlessNode } from "./node";
+import { FunctionlessNode, FunctionLike } from "./node";
 import { isStepFunction } from "./step-function";
 import { isTable } from "./table";
 import { AnyAsyncFunction, AnyFunction } from "./util";
@@ -638,9 +635,9 @@ export class Function<
     }
 
     const ast = validateFunctionlessNode(
-      magic ? magic : funcOrNothing,
+      magic ? magic : func,
       "Function",
-      isFunctionDecl
+      isFunctionLike
     );
 
     const props =
@@ -737,7 +734,7 @@ export class Function<
   }
 }
 
-function getInvokedIntegrations(ast: FunctionDecl): IntegrationCallExpr[] {
+function getInvokedIntegrations(ast: FunctionLike): IntegrationCallExpr[] {
   const nodes: IntegrationCallExpr[] = [];
   visitEachChild(ast, function visit(node: FunctionlessNode): FunctionlessNode {
     if (isIntegrationCallExpr(node)) {
@@ -939,6 +936,24 @@ export async function serialize(
       : func,
     {
       isFactoryFunction: integrationPrewarms.length > 0,
+      transformers: [
+        (ctx) =>
+          function visit(node: ts.Node): ts.Node {
+            if (
+              ts.isCallExpression(node) &&
+              ts.isPropertyAccessExpression(node.expression) &&
+              node.expression.name.text === "associateAST" &&
+              node.arguments.length === 2
+            ) {
+              // this is the injected associateAST call
+              // input: associateAST(() => {}, new FunctionDecl([..]))
+              // erase the associateAST call and replace with the closure,
+              // output: () => {}
+              return node.arguments[0];
+            }
+            return ts.visitEachChild(node, visit, ctx);
+          },
+      ],
       serialize: (obj) => {
         if (typeof obj === "string") {
           const reversed =

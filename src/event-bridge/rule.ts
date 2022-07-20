@@ -1,5 +1,7 @@
 import { aws_events } from "aws-cdk-lib";
 import { Construct } from "constructs";
+import { validateFunctionLike } from "../declaration";
+import { reflect } from "../reflect";
 import {
   IEventBus,
   IEventBusFilterable,
@@ -264,7 +266,7 @@ export class PredicateRuleBase<
     predicate?: RulePredicateFunction<InEvent, NewEvnt>
   ): PredicateRuleBase<InEvent, NewEvnt> {
     if (predicate) {
-      const document = synthesizePatternDocument(predicate as any);
+      const document = synthesizePatternDocument(reflect(predicate));
 
       return new PredicateRuleBase<InEvent, NewEvnt>(
         scope as Construct,
@@ -274,7 +276,9 @@ export class PredicateRuleBase<
         document
       );
     } else {
-      const document = synthesizePatternDocument(id as any);
+      const document = synthesizePatternDocument(
+        reflect(id as RulePredicateFunction<InEvent, NewEvnt>)
+      );
 
       return new PredicateRuleBase<InEvent, NewEvnt>(
         this.bus.resource,
@@ -306,7 +310,9 @@ export class Rule<
     bus: IEventBus<Evnt>,
     predicate: RulePredicateFunction<Evnt, OutEvnt>
   ) {
-    const document = synthesizePatternDocument(predicate as any);
+    const document = synthesizePatternDocument(
+      validateFunctionLike(predicate, "Rule")
+    );
 
     super(scope, id, bus as IEventBus<Evnt>, document);
   }

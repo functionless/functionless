@@ -5,9 +5,10 @@ import { AppsyncField, AppsyncResolver } from "./appsync";
 import { EventBus, Rule } from "./event-bridge";
 import { EventTransform } from "./event-bridge/transform";
 import { Function } from "./function";
+import { anyOf } from "./guards";
 import { ExpressStepFunction, StepFunction } from "./step-function";
 import { Table } from "./table";
-import { anyOf, hasParent } from "./util";
+import { hasParent } from "./util";
 
 /**
  * Various types that could be in a call argument position of a function parameter.

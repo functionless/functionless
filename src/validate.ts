@@ -14,7 +14,7 @@ import {
   typeMatch,
 } from "./checker";
 import { ErrorCode, ErrorCodes, formatErrorMessage } from "./error-code";
-import { anyOf } from "./util";
+import { anyOf } from "./guards";
 
 /**
  * Validates a TypeScript SourceFile containing Functionless primitives does not

@@ -1,4 +1,4 @@
-import { BindingPattern } from "./declaration";
+import type { BindingPattern } from "./declaration";
 import type { Expr, VariableReference } from "./expression";
 import type { FunctionlessNode } from "./node";
 import type { Stmt } from "./statement";
@@ -128,6 +128,8 @@ export const isWhileStmt = typeGuard("WhileStmt");
 export const isDoStmt = typeGuard("DoStmt");
 
 export const isFunctionDecl = typeGuard("FunctionDecl");
+
+export const isFunctionLike = anyOf(isFunctionDecl, isFunctionExpr);
 export const isParameterDecl = typeGuard("ParameterDecl");
 export const isBindingElem = typeGuard("BindingElem");
 
@@ -149,4 +151,16 @@ export function isVariableReference(expr: Expr): expr is VariableReference {
   return (
     isIdentifier(expr) || isPropAccessExpr(expr) || isElementAccessExpr(expr)
   );
+}
+
+export type EnsureOr<T extends ((a: any) => a is any)[]> = T[number] extends (
+  a: any
+) => a is infer T
+  ? T
+  : never;
+
+export function anyOf<T extends ((a: any) => a is any)[]>(
+  ...fns: T
+): (a: any) => a is EnsureOr<T> {
+  return (a: any): a is EnsureOr<T> => fns.some((f) => f(a));
 }

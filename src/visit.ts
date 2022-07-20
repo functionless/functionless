@@ -40,6 +40,7 @@ import {
   PostfixUnaryExpr,
 } from "./expression";
 import {
+  anyOf,
   isArgument,
   isArrayLiteralExpr,
   isAwaitExpr,
@@ -113,7 +114,6 @@ import {
   WhileStmt,
 } from "./statement";
 import {
-  anyOf,
   DeterministicNameGenerator,
   ensure,
   ensureItemOf,

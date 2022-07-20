@@ -7,11 +7,19 @@ import {
   Identifier,
   StringLiteralExpr,
 } from "./expression";
-import { isErr, isFunctionDecl, isNode, isParameterDecl } from "./guards";
+import {
+  anyOf,
+  isErr,
+  isFunctionDecl,
+  isFunctionLike,
+  isNode,
+  isParameterDecl,
+} from "./guards";
 import { Integration } from "./integration";
-import { BaseNode, FunctionlessNode } from "./node";
+import { BaseNode, FunctionlessNode, FunctionLike } from "./node";
+import { reflect } from "./reflect";
 import { BlockStmt } from "./statement";
-import { AnyFunction, anyOf } from "./util";
+import { AnyFunction } from "./util";
 
 export type Decl = FunctionDecl | ParameterDecl | BindingElem;
 
@@ -65,11 +73,11 @@ export class ParameterDecl extends BaseDecl<
 
 export const isFunctionDeclOrErr = anyOf(isFunctionDecl, isErr);
 
-export function validateFunctionDecl(
+export function validateFunctionLike(
   a: any,
   functionLocation: string
-): FunctionDecl {
-  return validateFunctionlessNode(a, functionLocation, isFunctionDecl);
+): FunctionLike {
+  return validateFunctionlessNode(a, functionLocation, isFunctionLike);
 }
 
 export function validateFunctionlessNode<E extends FunctionlessNode>(
@@ -77,11 +85,15 @@ export function validateFunctionlessNode<E extends FunctionlessNode>(
   functionLocation: string,
   validate: (e: FunctionlessNode) => e is E
 ): E {
-  if (validate(a)) {
+  if (typeof a === "function") {
+    return validateFunctionlessNode(reflect(a), functionLocation, validate);
+  } else if (validate(a)) {
     return a;
   } else if (isErr(a)) {
     throw a.error;
   } else {
+    // eslint-disable-next-line no-debugger
+    debugger;
     throw new SynthError(
       ErrorCodes.FunctionDecl_not_compiled_by_Functionless,
       `Expected input function to ${functionLocation} to be compiled by Functionless. Make sure you have the Functionless compiler plugin configured correctly.`

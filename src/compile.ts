@@ -3,14 +3,7 @@ import minimatch from "minimatch";
 import type { PluginConfig, TransformerExtras } from "ts-patch";
 import ts from "typescript";
 import { assertDefined } from "./assert";
-import {
-  EventBusMapInterface,
-  RuleInterface,
-  EventTransformInterface,
-  EventBusWhenInterface,
-  FunctionInterface,
-  makeFunctionlessChecker,
-} from "./checker";
+import { makeFunctionlessChecker } from "./checker";
 import type { FunctionDecl } from "./declaration";
 import { ErrorCodes, SynthError } from "./error-code";
 import type {
@@ -101,34 +94,54 @@ export function compile(
       );
 
       function visitor(node: ts.Node): ts.Node | ts.Node[] {
-        const visit = () => {
-          if (checker.isAppsyncResolver(node)) {
-            return visitAppsyncResolver(node);
-          } else if (checker.isAppsyncField(node)) {
-            return visitAppsyncField(node);
-          } else if (checker.isNewStepFunction(node)) {
-            return visitStepFunction(node);
-          } else if (checker.isReflectFunction(node)) {
-            return errorBoundary(() =>
-              toFunction("FunctionDecl", node.arguments[0])
-            );
-          } else if (checker.isEventBusWhenFunction(node)) {
-            return visitEventBusWhen(node);
-          } else if (checker.isRuleMapFunction(node)) {
-            return visitEventBusMap(node);
-          } else if (checker.isNewRule(node)) {
-            return visitRule(node);
-          } else if (checker.isNewEventTransform(node)) {
-            return visitEventTransform(node);
-          } else if (checker.isNewFunctionlessFunction(node)) {
-            return visitFunction(node);
-          } else if (checker.isApiIntegration(node)) {
-            return visitApiIntegration(node);
-          }
-          return node;
-        };
-        // keep processing the children of the updated node.
-        return ts.visitEachChild(visit(), visitor, ctx);
+        if (ts.isArrowFunction(node) || ts.isFunctionExpression(node)) {
+          return associateAST(visit(node), toFunction("FunctionExpr", node));
+        } else if (
+          ts.isBlock(node) &&
+          node.statements.find(ts.isFunctionDeclaration) !== undefined
+        ) {
+          return ts.factory.updateBlock(node, [
+            // hoist an ExprStmt(Call(wrapClosure)) to the top of each block for each FunctionDecl found within the body
+            ...node.statements
+              .filter(
+                (
+                  func
+                ): func is ts.FunctionDeclaration & {
+                  name: {
+                    text: string;
+                  };
+                } =>
+                  ts.isFunctionDeclaration(func) &&
+                  func.name?.text !== undefined
+              )
+              .map((func) =>
+                ts.factory.createExpressionStatement(
+                  associateAST(
+                    ts.factory.createIdentifier(func.name?.text),
+                    toFunction("FunctionDecl", func)
+                  )
+                )
+              ),
+            ...node.statements.map(visit),
+          ]);
+        }
+
+        return visit(node);
+
+        function visit<N extends ts.Node>(node: N): N {
+          return ts.visitEachChild(node, visitor, ctx) as N;
+        }
+      }
+
+      function associateAST(node: ts.Expression, ast: ts.Expression) {
+        return ts.factory.createCallExpression(
+          ts.factory.createPropertyAccessExpression(
+            functionless,
+            "associateAST"
+          ),
+          undefined,
+          [node, ast]
+        );
       }
 
       /**
@@ -152,235 +165,49 @@ export function compile(
         }
       }
 
-      function visitStepFunction(call: ts.NewExpression): ts.Node {
-        return ts.factory.updateNewExpression(
-          call,
-          call.expression,
-          call.typeArguments,
-          call.arguments?.map((arg) =>
-            ts.isFunctionExpression(arg) || ts.isArrowFunction(arg)
-              ? errorBoundary(() => toFunction("FunctionDecl", arg))
-              : arg
-          )
-        );
-      }
-
-      function visitRule(call: RuleInterface): ts.Node {
-        const [one, two, three, impl] = call.arguments;
-
-        return ts.factory.updateNewExpression(
-          call,
-          call.expression,
-          call.typeArguments,
-          [
-            one,
-            two,
-            three,
-            errorBoundary(() => toFunction("FunctionDecl", impl)),
-          ]
-        );
-      }
-
-      function visitEventTransform(call: EventTransformInterface): ts.Node {
-        const [impl, ...rest] = call.arguments;
-
-        return ts.factory.updateNewExpression(
-          call,
-          call.expression,
-          call.typeArguments,
-          [errorBoundary(() => toFunction("FunctionDecl", impl)), ...rest]
-        );
-      }
-
-      function visitEventBusWhen(call: EventBusWhenInterface): ts.Node {
-        // support the 2 or 3 parameter when.
-        if (call.arguments.length === 3) {
-          const [one, two, impl] = call.arguments;
-
-          return ts.factory.updateCallExpression(
-            call,
-            call.expression,
-            call.typeArguments,
-            [one, two, errorBoundary(() => toFunction("FunctionDecl", impl))]
-          );
-        } else {
-          const [one, impl] = call.arguments;
-
-          return ts.factory.updateCallExpression(
-            call,
-            call.expression,
-            call.typeArguments,
-            [one, errorBoundary(() => toFunction("FunctionDecl", impl))]
-          );
-        }
-      }
-
-      function visitEventBusMap(call: EventBusMapInterface): ts.Node {
-        const [impl] = call.arguments;
-
-        return ts.factory.updateCallExpression(
-          call,
-          call.expression,
-          call.typeArguments,
-          [errorBoundary(() => toFunction("FunctionDecl", impl))]
-        );
-      }
-
-      function visitAppsyncResolver(call: ts.NewExpression): ts.Node {
-        if (call.arguments?.length === 4) {
-          const [scope, id, props, resolver] = call.arguments;
-
-          if (
-            ts.isArrowFunction(resolver) ||
-            ts.isFunctionExpression(resolver)
-          ) {
-            return ts.factory.updateNewExpression(
-              call,
-              call.expression,
-              call.typeArguments,
-              [
-                scope,
-                id,
-                props,
-                errorBoundary(() => toFunction("FunctionDecl", resolver)),
-              ]
-            );
-          }
-        }
-        return call;
-      }
-
-      function visitAppsyncField(call: ts.NewExpression): ts.Node {
-        if (call.arguments?.length === 2) {
-          const [options, resolver] = call.arguments;
-
-          if (
-            ts.isArrowFunction(resolver) ||
-            ts.isFunctionExpression(resolver)
-          ) {
-            return ts.factory.updateNewExpression(
-              call,
-              call.expression,
-              call.typeArguments,
-              [
-                options,
-                errorBoundary(() => toFunction("FunctionDecl", resolver, 1)),
-              ]
-            );
-          }
-        }
-        return call;
-      }
-
-      function visitFunction(func: FunctionInterface): ts.Node {
-        const [_one, _two, _three, funcDecl] =
-          func.arguments.length === 4
-            ? func.arguments
-            : [
-                func.arguments[0],
-                func.arguments[1],
-                undefined,
-                func.arguments[2],
-              ];
-
-        return ts.factory.updateNewExpression(
-          func,
-          func.expression,
-          func.typeArguments,
-          [
-            _one,
-            _two,
-            ...(_three ? [_three] : []),
-            funcDecl,
-            errorBoundary(() => toFunction("FunctionDecl", funcDecl)),
-          ]
-        );
-      }
-
       function toFunction(
         type: FunctionDecl["kind"] | FunctionExpr["kind"],
-        impl: ts.Expression,
-        dropArgs?: number
+        impl: ts.Expression | ts.FunctionDeclaration
       ): ts.Expression {
-        if (
-          !ts.isFunctionDeclaration(impl) &&
-          !ts.isArrowFunction(impl) &&
-          !ts.isFunctionExpression(impl)
-        ) {
-          throw new Error(
-            `Functionless reflection only supports function parameters with bodies, no signature only declarations or references. Found ${impl.getText()}.`
-          );
-        }
+        return errorBoundary(() => {
+          if (
+            !ts.isFunctionDeclaration(impl) &&
+            !ts.isArrowFunction(impl) &&
+            !ts.isFunctionExpression(impl)
+          ) {
+            throw new Error(
+              `Functionless reflection only supports function parameters with bodies, no signature only declarations or references. Found ${impl.getText()}.`
+            );
+          }
 
-        const params =
-          dropArgs === undefined
-            ? impl.parameters
-            : impl.parameters.slice(dropArgs);
+          const params = impl.parameters;
 
-        if (impl.body === undefined) {
-          throw new Error(
-            `cannot parse declaration-only function: ${impl.getText()}`
-          );
-        }
-        const body = ts.isBlock(impl.body)
-          ? toExpr(impl.body, impl)
-          : newExpr("BlockStmt", [
-              ts.factory.createArrayLiteralExpression([
-                newExpr("ReturnStmt", [toExpr(impl.body, impl)]),
-              ]),
-            ]);
+          if (impl.body === undefined) {
+            throw new Error(
+              `cannot parse declaration-only function: ${impl.getText()}`
+            );
+          }
+          const body = ts.isBlock(impl.body)
+            ? toExpr(impl.body, impl)
+            : newExpr("BlockStmt", [
+                ts.factory.createArrayLiteralExpression([
+                  newExpr("ReturnStmt", [toExpr(impl.body, impl)]),
+                ]),
+              ]);
 
-        return newExpr(type, [
-          ts.factory.createArrayLiteralExpression(
-            params.map((param) =>
-              newExpr("ParameterDecl", [
-                ts.isIdentifier(param.name)
-                  ? ts.factory.createStringLiteral(param.name.text)
-                  : toExpr(param.name, impl),
-              ])
-            )
-          ),
-          body,
-        ]);
-      }
-
-      function visitApiIntegration(node: ts.NewExpression): ts.Node {
-        const [props, request, response, errors] = node.arguments ?? [];
-
-        return errorBoundary(() =>
-          ts.factory.updateNewExpression(
-            node,
-            node.expression,
-            node.typeArguments,
-            [
-              props,
-              toFunction("FunctionDecl", request),
-              ts.isObjectLiteralExpression(response)
-                ? visitApiErrors(response)
-                : toFunction("FunctionDecl", response),
-              ...(errors && ts.isObjectLiteralExpression(errors)
-                ? [visitApiErrors(errors)]
-                : []),
-            ]
-          )
-        );
-      }
-
-      function visitApiErrors(errors: ts.ObjectLiteralExpression) {
-        return errorBoundary(() =>
-          ts.factory.updateObjectLiteralExpression(
-            errors,
-            errors.properties.map((prop) =>
-              ts.isPropertyAssignment(prop)
-                ? ts.factory.updatePropertyAssignment(
-                    prop,
-                    prop.name,
-                    toFunction("FunctionDecl", prop.initializer)
-                  )
-                : prop
-            )
-          )
-        );
+          return newExpr(type, [
+            ts.factory.createArrayLiteralExpression(
+              params.map((param) =>
+                newExpr("ParameterDecl", [
+                  ts.isIdentifier(param.name)
+                    ? ts.factory.createStringLiteral(param.name.text)
+                    : toExpr(param.name, impl),
+                ])
+              )
+            ),
+            body,
+          ]);
+        });
       }
 
       function toExpr(

@@ -6,7 +6,7 @@ import {
   ToAttributeMap,
   ToAttributeValue,
 } from "typesafe-dynamodb/lib/attribute-value";
-import { FunctionDecl, validateFunctionDecl } from "./declaration";
+import { validateFunctionLike } from "./declaration";
 import { ErrorCodes, SynthError } from "./error-code";
 import {
   Argument,
@@ -47,7 +47,7 @@ import {
   isIntegrationCallPattern,
 } from "./integration";
 import { Literal } from "./literal";
-import { FunctionlessNode } from "./node";
+import { FunctionlessNode, FunctionLike } from "./node";
 import { BlockStmt } from "./statement";
 import {
   AnyFunction,
@@ -196,7 +196,7 @@ export class AppsyncResolver<
   /**
    * The AST form of this resolver.
    */
-  public readonly decl: FunctionDecl<
+  public readonly decl: FunctionLike<
     ResolverFunction<Arguments, Result, Source>
   >;
 
@@ -245,7 +245,7 @@ export class AppsyncResolver<
         }),
     resolve: ResolverFunction<Arguments, Result, Source>
   ) {
-    this.decl = validateFunctionDecl(resolve, "AppsyncResolver");
+    this.decl = validateFunctionLike(resolve, "AppsyncResolver");
 
     const api = props.api ?? (scope as unknown as appsync.GraphqlApi);
 
@@ -353,7 +353,7 @@ export class AppsyncField<
   ) {
     const fields = synthResolvers(
       options.api,
-      validateFunctionDecl(resolve, "AppsyncField")
+      validateFunctionLike(resolve, "AppsyncField")
     );
     super({
       ...options,
@@ -365,7 +365,7 @@ export class AppsyncField<
   }
 }
 
-function synthResolvers(api: appsync.GraphqlApi, decl: FunctionDecl) {
+function synthResolvers(api: appsync.GraphqlApi, decl: FunctionLike) {
   const [pipelineConfig, responseMappingTemplate, innerTemplates] =
     synthesizeFunctions(api, decl);
 
@@ -413,7 +413,7 @@ function synthResolvers(api: appsync.GraphqlApi, decl: FunctionDecl) {
   }
 }
 
-function synthesizeFunctions(api: appsync.GraphqlApi, decl: FunctionDecl) {
+function synthesizeFunctions(api: appsync.GraphqlApi, decl: FunctionLike) {
   const generatedNames = new DeterministicNameGenerator();
   let resolverCount = 0;
   /**

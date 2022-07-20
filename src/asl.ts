@@ -1,7 +1,7 @@
 import { aws_iam } from "aws-cdk-lib";
 import { Construct } from "constructs";
 import { assertNever } from "./assert";
-import { BindingElem, FunctionDecl, ParameterDecl } from "./declaration";
+import { BindingElem, ParameterDecl } from "./declaration";
 import { ErrorCodes, SynthError } from "./error-code";
 import {
   Argument,
@@ -12,6 +12,7 @@ import {
   PropAccessExpr,
 } from "./expression";
 import {
+  anyOf,
   isBlockStmt,
   isFunctionExpr,
   isFunctionDecl,
@@ -66,6 +67,7 @@ import {
   isArrayBinding,
   isErr,
   isNode,
+  isFunctionLike,
 } from "./guards";
 import {
   Integration,
@@ -73,7 +75,7 @@ import {
   isIntegration,
   isIntegrationCallPattern,
 } from "./integration";
-import { FunctionlessNode } from "./node";
+import { FunctionlessNode, FunctionLike } from "./node";
 import {
   BlockStmt,
   BreakStmt,
@@ -85,7 +87,6 @@ import {
   VariableStmt,
 } from "./statement";
 import {
-  anyOf,
   DeterministicNameGenerator,
   evalToConstant,
   invertBinaryOperator,
@@ -408,9 +409,9 @@ export class ASL {
    */
   readonly definition: StateMachine<States>;
   /**
-   * The {@link FunctionDecl} AST representation of the State Machine.
+   * The {@link FunctionLike} AST representation of the State Machine.
    */
-  readonly decl: FunctionDecl;
+  readonly decl: FunctionLike;
   private readonly stateNamesCount = new Map<string, number>();
   private readonly generatedNames = new DeterministicNameGenerator();
 
@@ -448,7 +449,7 @@ export class ASL {
   constructor(
     readonly scope: Construct,
     readonly role: aws_iam.IRole,
-    decl: FunctionDecl
+    decl: FunctionLike
   ) {
     const self = this;
     this.decl = visitEachChild(decl, function normalizeAST(node):
@@ -468,7 +469,7 @@ export class ASL {
           // this simplifies the interpreter code by always having a node to chain onto, even when
           // the AST has no final `ReturnStmt` (i.e. when the function is a void function)
           // without this, chains that should return null will actually include the entire state as their output
-          ...((isFunctionDecl(node.parent) || isFunctionExpr(node.parent)) &&
+          ...(isFunctionLike(node.parent) &&
           (!node.lastStmt || !node.lastStmt.isTerminal())
             ? [new ReturnStmt(new NullLiteralExpr())]
             : []),
@@ -1497,9 +1498,14 @@ export class ASL {
       if (isIdentifier(expr)) {
         const ref = expr.lookup();
         // If the identifier references a parameter expression and that parameter expression
-        // is in a FunctionDecl and that Function is at the top (no parent).
+        // and that Function is at the top (no parent).
         // This logic needs to be updated to support destructured inputs: https://github.com/functionless/functionless/issues/68
-        if (ref && isParameterDecl(ref) && isFunctionDecl(ref.parent)) {
+        if (
+          ref &&
+          isParameterDecl(ref) &&
+          isFunctionLike(ref.parent) &&
+          ref.parent.parent === undefined
+        ) {
           return { jsonPath: this.context.input };
         } else if (ref && isVariableStmt(ref) && isForInStmt(ref.parent)) {
           // the array element for ForIn is enumerated into `{ index: number, item: T}`
@@ -1844,7 +1850,7 @@ export class ASL {
     return Object.fromEntries([
       ...Array.from(variableReferences.entries())
         .filter(
-          ([, decl]) => !(isParameterDecl(decl) && isFunctionDecl(decl.parent))
+          ([, decl]) => !(isParameterDecl(decl) && isFunctionLike(decl.parent))
         )
         .map(([name]) => [`${name}.$`, `$.${name}`]),
       // if the functionless context has been used at this point, inject it in

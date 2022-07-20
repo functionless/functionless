@@ -10,13 +10,13 @@ import { App, aws_dynamodb, aws_events, aws_lambda, Stack } from "aws-cdk-lib";
 import { Rule } from "aws-cdk-lib/aws-events";
 import {
   AppsyncResolver,
-  FunctionDecl,
   Table,
   Function,
   Event,
   FunctionlessEventPattern,
   ResolverFunction,
   ResolverArguments,
+  AnyFunction,
 } from "../src";
 
 import { Err } from "../src/error";
@@ -26,7 +26,7 @@ import {
 } from "../src/event-bridge/event-pattern/synth";
 import { synthesizeEventBridgeTargets } from "../src/event-bridge/target-input";
 import { EventTransformFunction } from "../src/event-bridge/transform";
-import { isErr } from "../src/guards";
+import { FunctionLike } from "../src/node";
 
 // generates boilerplate for the circuit-breaker logic for implementing early return
 export function returnExpr(varName: string) {
@@ -35,13 +35,9 @@ export function returnExpr(varName: string) {
 #return($context.stash.return__val)`;
 }
 
-export function getAppSyncTemplates(decl: FunctionDecl | Err): string[] {
+export function getAppSyncTemplates(func: AnyFunction): string[] {
   const app = new App({ autoSynth: false });
   const stack = new Stack(app, "stack");
-
-  if (isErr(decl)) {
-    throw decl.error;
-  }
 
   const schema = new appsync.Schema({
     filePath: path.join(__dirname, "..", "test-app", "schema.gql"),
@@ -66,7 +62,7 @@ export function getAppSyncTemplates(decl: FunctionDecl | Err): string[] {
       typeName: "Query",
       fieldName: "getPerson",
     },
-    decl as any
+    func
   );
   return appsyncFunction.resolvers().templates;
 }
@@ -88,7 +84,7 @@ export function appsyncTestCase<
   Result,
   Source extends object | undefined = undefined
 >(
-  decl: FunctionDecl<ResolverFunction<Arguments, Result, Source>> | Err,
+  decl: ResolverFunction<Arguments, Result, Source>,
   config?: {
     /**
      * Template count is generally [total integrations] * 2 + 2
@@ -215,7 +211,7 @@ export function initStepFunctionApp() {
 }
 
 export function ebEventPatternTestCase(
-  decl: FunctionDecl | Err,
+  decl: FunctionLike | Err | undefined,
   expected: FunctionlessEventPattern
 ) {
   const document = synthesizePatternDocument(decl);
@@ -225,7 +221,7 @@ export function ebEventPatternTestCase(
 }
 
 export function ebEventPatternTestCaseError(
-  decl: FunctionDecl | Err,
+  decl: FunctionLike | Err | undefined,
   message?: string
 ) {
   expect(() => {
@@ -241,9 +237,12 @@ beforeEach(() => {
 });
 
 export function ebEventTargetTestCase<T extends Event>(
-  decl: FunctionDecl<EventTransformFunction<T>> | Err,
+  decl: FunctionLike<EventTransformFunction<T>> | Err | undefined,
   targetInput: aws_events.RuleTargetInput
 ) {
+  if (decl === undefined) {
+    throw new Error(`function was undefined`);
+  }
   const result = synthesizeEventBridgeTargets(decl);
 
   const rule = new Rule(stack, "testrule");
@@ -273,9 +272,12 @@ export function ebEventTargetTestCase<T extends Event>(
 }
 
 export function ebEventTargetTestCaseError<T extends Event>(
-  decl: FunctionDecl<EventTransformFunction<T>> | Err,
+  decl: FunctionLike<EventTransformFunction<T>> | Err | undefined,
   message?: string
 ) {
+  if (decl === undefined) {
+    throw new Error(`function was undefined`);
+  }
   expect(() => synthesizeEventBridgeTargets(decl)).toThrow(message);
 }
 

@@ -1,6 +1,7 @@
-import { Construct } from "constructs";
+import type { Construct } from "constructs";
 import ts from "typescript";
-import { BinaryOp, CallExpr, Expr, PropAccessExpr } from "./expression";
+
+import type { BinaryOp, CallExpr, Expr, PropAccessExpr } from "./expression";
 import {
   isArrayLiteralExpr,
   isBinaryExpr,
@@ -23,9 +24,9 @@ import {
   isUnaryExpr,
   isUndefinedLiteralExpr,
 } from "./guards";
-import { FunctionlessNode } from "./node";
+import type { FunctionlessNode } from "./node";
 
-export type AnyFunction = (...args: any[]) => any;
+export type AnyFunction = (...args: any[]) => any | Promise<any>;
 export type AnyAsyncFunction = (...args: any[]) => Promise<any>;
 
 /**
@@ -82,18 +83,6 @@ export function ensure<T>(
   if (!is(a)) {
     throw new Error(message);
   }
-}
-
-export type EnsureOr<T extends ((a: any) => a is any)[]> = T[number] extends (
-  a: any
-) => a is infer T
-  ? T
-  : never;
-
-export function anyOf<T extends ((a: any) => a is any)[]>(
-  ...fns: T
-): (a: any) => a is EnsureOr<T> {
-  return (a: any): a is EnsureOr<T> => fns.some((f) => f(a));
 }
 
 export type AnyDepthArray<T> = T | T[] | AnyDepthArray<T>[];

@@ -1,7 +1,7 @@
 import { aws_events } from "aws-cdk-lib";
 import { RuleTargetInput } from "aws-cdk-lib/aws-events";
 import { assertConstantValue, assertString } from "../assert";
-import { FunctionDecl, validateFunctionDecl } from "../declaration";
+import { FunctionDecl, validateFunctionLike } from "../declaration";
 import { Err } from "../error";
 import { ErrorCodes, SynthError } from "../error-code";
 import { ArrayLiteralExpr, Expr, ObjectLiteralExpr } from "../expression";
@@ -51,7 +51,7 @@ type PREDEFINED = typeof PREDEFINED_VALUES[number];
 export const synthesizeEventBridgeTargets = (
   maybeDecl: FunctionDecl | Err | unknown
 ): aws_events.RuleTargetInput => {
-  const decl = validateFunctionDecl(maybeDecl, "EventBridgeTarget");
+  const decl = validateFunctionLike(maybeDecl, "EventBridgeTarget");
 
   const [eventDecl = undefined, utilsDecl = undefined] = decl.parameters;
 
