@@ -949,7 +949,7 @@ export async function serialize(
               // input: associateAST(() => {}, new FunctionDecl([..]))
               // erase the associateAST call and replace with the closure,
               // output: () => {}
-              return node.arguments[0];
+              return visit(node.arguments[0]);
             }
             return ts.visitEachChild(node, visit, ctx);
           },
