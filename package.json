@@ -60,7 +60,7 @@
     "jest": "^27",
     "jest-junit": "^13",
     "json-schema": "^0.4.0",
-    "npm-check-updates": "^12",
+    "npm-check-updates": "^15",
     "prettier": "^2.7.1",
     "projen": "^0.58.15",
     "promptly": "^3.2.0",
@@ -82,7 +82,7 @@
     "@aws-cdk/aws-appsync-alpha": "*"
   },
   "dependencies": {
-    "@functionless/nodejs-closure-serializer": "^0.0.6",
+    "@functionless/nodejs-closure-serializer": "^0.1.0",
     "@types/aws-lambda": "^8.10.100",
     "fs-extra": "^10.1.0",
     "minimatch": "^5.1.0"
@@ -101,7 +101,7 @@
     },
     "testMatch": [
       "<rootDir>/src/**/__tests__/**/*.ts?(x)",
-      "<rootDir>/(test|src)/**/?(*.)+(spec|test).ts?(x)"
+      "<rootDir>/(test|src)/**/*(*.)@(spec|test).ts?(x)"
     ],
     "clearMocks": true,
     "collectCoverage": true,
