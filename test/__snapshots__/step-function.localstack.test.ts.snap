@@ -6589,7 +6589,7 @@ Object {
     "\`b.join(\\"\\")c.join(\\"\\")d.join(\\"\\")\`": Object {
       "Next": "1__return \`b.join(\\"\\")c.join(\\"\\")d.join(\\"\\")\`",
       "Parameters": Object {
-        "string.$": "States.Format('{}{}{}',$.heap14,$.heap16,$.heap18)",
+        "string.$": "States.Format('{}{}{}',$.heap14.string,$.heap16.string,$.heap18.string)",
       },
       "ResultPath": "$.heap19",
       "Type": "Pass",
@@ -6660,24 +6660,6 @@ Object {
       "ResultPath": "$.heap17",
       "Type": "Pass",
     },
-    "done__c.join(\\"\\")": Object {
-      "InputPath": "$.heap16.string",
-      "Next": "d.join(\\"\\")",
-      "ResultPath": "$.heap16",
-      "Type": "Pass",
-    },
-    "done__d.join(\\"\\")": Object {
-      "InputPath": "$.heap18.string",
-      "Next": "\`b.join(\\"\\")c.join(\\"\\")d.join(\\"\\")\`",
-      "ResultPath": "$.heap18",
-      "Type": "Pass",
-    },
-    "done__return \`b.join(\\"\\")c.join(\\"\\")d.join(\\"\\")\`": Object {
-      "InputPath": "$.heap14.string",
-      "Next": "c.join(\\"\\")",
-      "ResultPath": "$.heap14",
-      "Type": "Pass",
-    },
     "hasNext__c.join(\\"\\")": Object {
       "Choices": Array [
         Object {
@@ -6718,7 +6700,7 @@ Object {
           "Variable": "$.heap15[0]",
         },
       ],
-      "Default": "done__c.join(\\"\\")",
+      "Default": "d.join(\\"\\")",
       "Type": "Choice",
     },
     "hasNext__d.join(\\"\\")": Object {
@@ -6761,7 +6743,7 @@ Object {
           "Variable": "$.heap17[0]",
         },
       ],
-      "Default": "done__d.join(\\"\\")",
+      "Default": "\`b.join(\\"\\")c.join(\\"\\")d.join(\\"\\")\`",
       "Type": "Choice",
     },
     "hasNext__return \`b.join(\\"\\")c.join(\\"\\")d.join(\\"\\")\`": Object {
@@ -6804,7 +6786,7 @@ Object {
           "Variable": "$.heap13[0]",
         },
       ],
-      "Default": "done__return \`b.join(\\"\\")c.join(\\"\\")d.join(\\"\\")\`",
+      "Default": "c.join(\\"\\")",
       "Type": "Choice",
     },
     "initValue__c.join(\\"\\")": Object {
