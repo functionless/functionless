@@ -1160,10 +1160,8 @@
   resolved "https://registry.yarnpkg.com/@functionless/language-service/-/language-service-0.0.3.tgz#f6baedb5a684b70eeccfd64621de3fa95c380c08"
   integrity sha512-TLGnXXx8p4NFMF2lP/GADGjWl6u/IxLF5M55ExddzilJB4nI7CB6LTM9YSzGeO7L3YK29OGyr4ffm7EpZIGsnQ==
 
-"@functionless/nodejs-closure-serializer@^0.0.6":
-  version "0.0.6"
-  resolved "https://registry.yarnpkg.com/@functionless/nodejs-closure-serializer/-/nodejs-closure-serializer-0.0.6.tgz#8a4f5a67cf30e53cb5c8a06b1e9fcbf3e4531dee"
-  integrity sha512-9sRLmEsSwLWG3fRkv6rujrZnZi1jlBSHl0Ped413qyFjfG1kw6ou2OAk203hZTEx2gd4Np6mUlV//oX6RlcM5A==
+"@functionless/nodejs-closure-serializer@file:../../nodejs-closure-serializer":
+  version "0.0.0"
   dependencies:
     normalize-package-data "^4.0.0"
     read-package-tree "^5.3.1"
@@ -2698,7 +2696,7 @@ function.prototype.name@^1.1.5:
 "functionless@file:..":
   version "0.0.0"
   dependencies:
-    "@functionless/nodejs-closure-serializer" "^0.0.6"
+    "@functionless/nodejs-closure-serializer" "file:../../../Library/Caches/Yarn/v6/npm-functionless-0.0.0-72b1dc80-6750-46fe-be8a-6546177b7861-1658275014475/node_modules/nodejs-closure-serializer"
     "@types/aws-lambda" "^8.10.100"
     fs-extra "^10.1.0"
     minimatch "^5.1.0"
