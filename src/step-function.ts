@@ -52,7 +52,7 @@ export type AnyStepFunction =
  * @see https://docs.aws.amazon.com/step-functions/latest/dg/input-output-contextobject.html
  *
  * > Note: missing fields (ex: `$$.State.Name`) are abstracted away from {@link StepFunction}.
- * > Note: `$$.Execution.Input` is available as the first parameter of the closure.
+ * > Note: `$$.Execution.Input` is available as the first parameter of the closure `(input) => {}`.
  */
 export interface SfnContext {
   readonly Execution: {
