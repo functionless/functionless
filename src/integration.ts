@@ -19,12 +19,18 @@ export const isIntegration = <I extends IntegrationInput<string, AnyFunction>>(
   i: any
 ): i is I => typeof i === "object" && "kind" in i;
 
-export type IntegrationCallExpr = CallExpr & { expr: ReferenceExpr };
+export type IntegrationCallExpr = Omit<CallExpr, "expr"> & {
+  expr: ReferenceExpr<Integration>;
+};
 
 export function isIntegrationCallExpr(
   node: FunctionlessNode
 ): node is IntegrationCallExpr {
-  return isCallExpr(node) && isReferenceExpr(node.expr);
+  return (
+    isCallExpr(node) &&
+    isReferenceExpr(node.expr) &&
+    isIntegration(node.expr.ref())
+  );
 }
 
 export type IntegrationCallPattern =

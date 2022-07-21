@@ -1047,6 +1047,55 @@ export namespace ErrorCodes {
     type: ErrorType.ERROR,
     title: "Invalid Input",
   };
+
+  /**
+   * AppSync supports the use of many integrations like {@link Function} and {@link StepFunction}.
+   * It also supports special utility functions through {@link $util}.
+   *
+   * Other references to data outside of of the {@link AppsyncResolver} or {@link AppsyncField} are not supported.
+   *
+   * ```ts
+   * const myObject = new Object();
+   * const func = new Function(this, 'func', async () => { ... });
+   * new AppsyncResolver(..., async () => {
+   *    // invalid
+   *    myObject;
+   *    // valid
+   *    $util.autoUlid();
+   *    // valid
+   *    return func();
+   * });
+   * ```
+   */
+  export const AppSync_Unsupported_Reference: ErrorCode = {
+    code: 10028,
+    type: ErrorType.ERROR,
+    title: "AppSync Unsupported Reference",
+  };
+
+  /**
+   * ApiGateway supports the use of many integrations like {@link Function} and {@link StepFunction}.
+   *
+   * Other references to data outside of of the {@link AwsMethod} are not supported.
+   *
+   * ```ts
+   * const myObject = new Object();
+   * const func = new Function(this, 'func', async () => { ... });
+   * new AwsMethod(..., async () => {
+   *    // invalid
+   *    myObject;
+   *    // invalid
+   *    $util.autoUlid();
+   *    // valid
+   *    return func();
+   * }, ...);
+   * ```
+   */
+  export const ApiGateway_Unsupported_Reference: ErrorCode = {
+    code: 10029,
+    type: ErrorType.ERROR,
+    title: "ApiGateway Unsupported Reference",
+  };
 }
 
 // to prevent the closure serializer from trying to import all of functionless.

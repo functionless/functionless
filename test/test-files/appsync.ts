@@ -2,6 +2,7 @@ import * as appsync from "@aws-cdk/aws-appsync-alpha";
 import { GraphqlApi } from "@aws-cdk/aws-appsync-alpha";
 import { App, aws_dynamodb, aws_events, Stack } from "aws-cdk-lib";
 import {
+  $util,
   AppsyncResolver,
   EventBus,
   Function,
@@ -431,5 +432,37 @@ new AppsyncResolver(
     };
     const x = getIntegration();
     await x();
+  }
+);
+
+/**
+ * Unsupported
+ * @see ErrorCodes.AppSync_Unsupported_Reference
+ */
+
+const a = "x";
+new AppsyncResolver(
+  api,
+  "no promise array",
+  {
+    fieldName: "field",
+    typeName: "type",
+  },
+  async () => {
+    return a;
+  }
+);
+
+// supported - $util
+
+new AppsyncResolver(
+  api,
+  "no promise array",
+  {
+    fieldName: "field",
+    typeName: "type",
+  },
+  async () => {
+    return $util.autoId();
   }
 );

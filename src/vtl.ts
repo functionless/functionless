@@ -2,7 +2,13 @@ import { assertNever, assertNodeKind } from "./assert";
 import { BindingPattern } from "./declaration";
 import {} from "./error";
 import { ErrorCodes, SynthError } from "./error-code";
-import { CallExpr, Expr, FunctionExpr, Identifier } from "./expression";
+import {
+  CallExpr,
+  Expr,
+  FunctionExpr,
+  Identifier,
+  ReferenceExpr,
+} from "./expression";
 import {
   isArgument,
   isArrayBinding,
@@ -264,7 +270,7 @@ export abstract class VTL {
     call: CallExpr
   ): string;
 
-  protected abstract dereference(id: Identifier): string;
+  protected abstract dereference(id: Identifier | ReferenceExpr): string;
 
   /**
    * Evaluate an {@link Expr} or {@link Stmt} by emitting statements to this VTL template and
@@ -552,11 +558,9 @@ export abstract class VTL {
       return obj;
     } else if (isComputedPropertyNameExpr(node)) {
       return this.eval(node.expr);
-    } else if (
-      isParameterDecl(node) ||
-      isReferenceExpr(node) ||
-      isPropAssignExpr(node)
-    ) {
+    } else if (isReferenceExpr(node)) {
+      return this.dereference(node);
+    } else if (isParameterDecl(node) || isPropAssignExpr(node)) {
       throw new Error(`cannot evaluate Expr kind: '${node.kind}'`);
     } else if (isReturnStmt(node)) {
       if (returnVar) {
