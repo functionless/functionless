@@ -219,3 +219,58 @@ new AwsMethod(
     return "";
   }
 );
+
+/**
+ * Unsupported
+ * @see ErrorCodes.ApiGateway_Unsupported_Reference
+ */
+
+const a = "x";
+new AwsMethod(
+  { httpMethod: "ANY", resource: api.root },
+  async () => {
+    await $AWS.DynamoDB.GetItem({
+      Table: table,
+      Key: {
+        id: { S: a },
+      },
+    });
+  },
+  () => {
+    return "";
+  }
+);
+
+new AwsMethod(
+  { httpMethod: "ANY", resource: api.root },
+  async () => {
+    return $AWS.DynamoDB.GetItem({
+      Table: table,
+      Key: {
+        id: { S: "sas" },
+      },
+    });
+  },
+  () => {
+    return a;
+  }
+);
+
+/**
+ * Supported - Number reference
+ */
+new AwsMethod(
+  { httpMethod: "ANY", resource: api.root },
+  async () => {
+    const a = Number("1");
+    await $AWS.DynamoDB.GetItem({
+      Table: table,
+      Key: {
+        id: { S: `${a}` },
+      },
+    });
+  },
+  () => {
+    return "";
+  }
+);

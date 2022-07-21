@@ -297,6 +297,59 @@ Object {
 }
 `;
 
+exports[`await Promise.all(input.list.map((item) => task(item)))).filter 1`] = `
+Object {
+  "StartAt": "Initialize Functionless Context",
+  "States": Object {
+    "1__return await Promise.all(input.list.map(function(item))).filter(function": Object {
+      "End": true,
+      "InputPath": "$.heap1[?(@!=null)]",
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "Initialize Functionless Context": Object {
+      "Next": "return await Promise.all(input.list.map(function(item))).filter(function(it",
+      "OutputPath": "$",
+      "Parameters": Object {
+        "input.$": "$",
+        "null": null,
+      },
+      "ResultPath": "$.fnl_context",
+      "Type": "Pass",
+    },
+    "return await Promise.all(input.list.map(function(item))).filter(function(it": Object {
+      "ItemsPath": "$.fnl_context.input.list",
+      "Iterator": Object {
+        "StartAt": "return task(item)",
+        "States": Object {
+          "1__return task(item)": Object {
+            "End": true,
+            "InputPath": "$.heap0",
+            "ResultPath": "$",
+            "Type": "Pass",
+          },
+          "return task(item)": Object {
+            "InputPath": "$.item",
+            "Next": "1__return task(item)",
+            "Resource": "__REPLACED_TOKEN",
+            "ResultPath": "$.heap0",
+            "Type": "Task",
+          },
+        },
+      },
+      "MaxConcurrency": 1,
+      "Next": "1__return await Promise.all(input.list.map(function(item))).filter(function",
+      "Parameters": Object {
+        "fnl_context.$": "$.fnl_context",
+        "item.$": "$$.Map.Item.Value",
+      },
+      "ResultPath": "$.heap1",
+      "Type": "Map",
+    },
+  },
+}
+`;
+
 exports[`boolean logic 1`] = `
 Object {
   "StartAt": "Initialize Functionless Context",
@@ -2110,6 +2163,67 @@ Object {
       },
       "ResultPath": "$.err",
       "Type": "Pass",
+    },
+  },
+}
+`;
+
+exports[`closure from map 1`] = `
+Object {
+  "StartAt": "Initialize Functionless Context",
+  "States": Object {
+    "1__return input.list.map(function(item))": Object {
+      "End": true,
+      "InputPath": "$.heap1",
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "Initialize Functionless Context": Object {
+      "Next": "a = \\"x\\"",
+      "OutputPath": "$",
+      "Parameters": Object {
+        "input.$": "$",
+        "null": null,
+      },
+      "ResultPath": "$.fnl_context",
+      "Type": "Pass",
+    },
+    "a = \\"x\\"": Object {
+      "Next": "return input.list.map(function(item))",
+      "Result": "x",
+      "ResultPath": "$.a",
+      "Type": "Pass",
+    },
+    "return input.list.map(function(item))": Object {
+      "ItemsPath": "$.fnl_context.input.list",
+      "Iterator": Object {
+        "StartAt": "return \`aitem\`",
+        "States": Object {
+          "1__return \`aitem\`": Object {
+            "End": true,
+            "InputPath": "$.heap0.string",
+            "ResultPath": "$",
+            "Type": "Pass",
+          },
+          "return \`aitem\`": Object {
+            "Next": "1__return \`aitem\`",
+            "Parameters": Object {
+              "string.$": "States.Format('{}{}',$.a,$.item)",
+            },
+            "ResultPath": "$.heap0",
+            "Type": "Pass",
+          },
+        },
+      },
+      "MaxConcurrency": 1,
+      "Next": "1__return input.list.map(function(item))",
+      "Parameters": Object {
+        "a.$": "$.a",
+        "fnl_context.$": "$.fnl_context",
+        "item.$": "$$.Map.Item.Value",
+      },
+      "ResultPath": "$.heap1",
+      "Type": "Map",
     },
   },
 }
@@ -5731,6 +5845,181 @@ Object {
 }
 `;
 
+exports[`input.b ? task() : task(input) 1`] = `
+Object {
+  "StartAt": "Initialize Functionless Context",
+  "States": Object {
+    "1__return if(input.b)": Object {
+      "End": true,
+      "InputPath": "$.heap2",
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "Initialize Functionless Context": Object {
+      "Next": "return if(input.b)",
+      "OutputPath": "$",
+      "Parameters": Object {
+        "input.$": "$",
+        "null": null,
+      },
+      "ResultPath": "$.fnl_context",
+      "Type": "Pass",
+    },
+    "assign__doFalse__return if(input.b)": Object {
+      "InputPath": "$.heap1",
+      "Next": "1__return if(input.b)",
+      "ResultPath": "$.heap2",
+      "Type": "Pass",
+    },
+    "assign__doTrue__return if(input.b)": Object {
+      "InputPath": "$.heap0",
+      "Next": "1__return if(input.b)",
+      "ResultPath": "$.heap2",
+      "Type": "Pass",
+    },
+    "doFalse__return if(input.b)": Object {
+      "InputPath": "$.fnl_context.input",
+      "Next": "assign__doFalse__return if(input.b)",
+      "Resource": "__REPLACED_TOKEN",
+      "ResultPath": "$.heap1",
+      "Type": "Task",
+    },
+    "doTrue__return if(input.b)": Object {
+      "InputPath": "$.fnl_context.null",
+      "Next": "assign__doTrue__return if(input.b)",
+      "Resource": "__REPLACED_TOKEN",
+      "ResultPath": "$.heap0",
+      "Type": "Task",
+    },
+    "return if(input.b)": Object {
+      "Choices": Array [
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.fnl_context.input.b",
+            },
+            Object {
+              "IsNull": false,
+              "Variable": "$.fnl_context.input.b",
+            },
+            Object {
+              "Or": Array [
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsString": true,
+                      "Variable": "$.fnl_context.input.b",
+                    },
+                    Object {
+                      "Not": Object {
+                        "And": Array [
+                          Object {
+                            "IsString": true,
+                            "Variable": "$.fnl_context.input.b",
+                          },
+                          Object {
+                            "StringEquals": "",
+                            "Variable": "$.fnl_context.input.b",
+                          },
+                        ],
+                      },
+                    },
+                  ],
+                },
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsNumeric": true,
+                      "Variable": "$.fnl_context.input.b",
+                    },
+                    Object {
+                      "Not": Object {
+                        "And": Array [
+                          Object {
+                            "IsNumeric": true,
+                            "Variable": "$.fnl_context.input.b",
+                          },
+                          Object {
+                            "NumericEquals": 0,
+                            "Variable": "$.fnl_context.input.b",
+                          },
+                        ],
+                      },
+                    },
+                  ],
+                },
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsBoolean": true,
+                      "Variable": "$.fnl_context.input.b",
+                    },
+                    Object {
+                      "BooleanEquals": true,
+                      "Variable": "$.fnl_context.input.b",
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+          "Next": "doTrue__return if(input.b)",
+        },
+      ],
+      "Default": "doFalse__return if(input.b)",
+      "Type": "Choice",
+    },
+  },
+}
+`;
+
+exports[`input.list.map((item) => item).filter((item) => item.length > 2) 1`] = `
+Object {
+  "StartAt": "Initialize Functionless Context",
+  "States": Object {
+    "1__return input.list.map(function(item)).filter(function(item))": Object {
+      "End": true,
+      "InputPath": "$.heap0[?(@.length>2)]",
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "Initialize Functionless Context": Object {
+      "Next": "return input.list.map(function(item)).filter(function(item))",
+      "OutputPath": "$",
+      "Parameters": Object {
+        "input.$": "$",
+        "null": null,
+      },
+      "ResultPath": "$.fnl_context",
+      "Type": "Pass",
+    },
+    "return input.list.map(function(item)).filter(function(item))": Object {
+      "ItemsPath": "$.fnl_context.input.list",
+      "Iterator": Object {
+        "StartAt": "return item",
+        "States": Object {
+          "return item": Object {
+            "End": true,
+            "InputPath": "$.item",
+            "ResultPath": "$",
+            "Type": "Pass",
+          },
+        },
+      },
+      "MaxConcurrency": 1,
+      "Next": "1__return input.list.map(function(item)).filter(function(item))",
+      "Parameters": Object {
+        "fnl_context.$": "$.fnl_context",
+        "item.$": "$$.Map.Item.Value",
+      },
+      "ResultPath": "$.heap0",
+      "Type": "Map",
+    },
+  },
+}
+`;
+
 exports[`let and set 1`] = `
 Object {
   "StartAt": "Initialize Functionless Context",
@@ -7716,6 +8005,135 @@ Object {
 }
 `;
 
+exports[`return cond ? task(1) : task(2) 1`] = `
+Object {
+  "StartAt": "Initialize Functionless Context",
+  "States": Object {
+    "1__return if(input.cond)": Object {
+      "End": true,
+      "InputPath": "$.heap2",
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "Initialize Functionless Context": Object {
+      "Next": "return if(input.cond)",
+      "OutputPath": "$",
+      "Parameters": Object {
+        "input.$": "$",
+        "null": null,
+      },
+      "ResultPath": "$.fnl_context",
+      "Type": "Pass",
+    },
+    "assign__doFalse__return if(input.cond)": Object {
+      "InputPath": "$.heap1",
+      "Next": "1__return if(input.cond)",
+      "ResultPath": "$.heap2",
+      "Type": "Pass",
+    },
+    "assign__doTrue__return if(input.cond)": Object {
+      "InputPath": "$.heap0",
+      "Next": "1__return if(input.cond)",
+      "ResultPath": "$.heap2",
+      "Type": "Pass",
+    },
+    "doFalse__return if(input.cond)": Object {
+      "Next": "assign__doFalse__return if(input.cond)",
+      "Parameters": 2,
+      "Resource": "__REPLACED_TOKEN",
+      "ResultPath": "$.heap1",
+      "Type": "Task",
+    },
+    "doTrue__return if(input.cond)": Object {
+      "Next": "assign__doTrue__return if(input.cond)",
+      "Parameters": 1,
+      "Resource": "__REPLACED_TOKEN",
+      "ResultPath": "$.heap0",
+      "Type": "Task",
+    },
+    "return if(input.cond)": Object {
+      "Choices": Array [
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.fnl_context.input.cond",
+            },
+            Object {
+              "IsNull": false,
+              "Variable": "$.fnl_context.input.cond",
+            },
+            Object {
+              "Or": Array [
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsString": true,
+                      "Variable": "$.fnl_context.input.cond",
+                    },
+                    Object {
+                      "Not": Object {
+                        "And": Array [
+                          Object {
+                            "IsString": true,
+                            "Variable": "$.fnl_context.input.cond",
+                          },
+                          Object {
+                            "StringEquals": "",
+                            "Variable": "$.fnl_context.input.cond",
+                          },
+                        ],
+                      },
+                    },
+                  ],
+                },
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsNumeric": true,
+                      "Variable": "$.fnl_context.input.cond",
+                    },
+                    Object {
+                      "Not": Object {
+                        "And": Array [
+                          Object {
+                            "IsNumeric": true,
+                            "Variable": "$.fnl_context.input.cond",
+                          },
+                          Object {
+                            "NumericEquals": 0,
+                            "Variable": "$.fnl_context.input.cond",
+                          },
+                        ],
+                      },
+                    },
+                  ],
+                },
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsBoolean": true,
+                      "Variable": "$.fnl_context.input.cond",
+                    },
+                    Object {
+                      "BooleanEquals": true,
+                      "Variable": "$.fnl_context.input.cond",
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+          "Next": "doTrue__return if(input.cond)",
+        },
+      ],
+      "Default": "doFalse__return if(input.cond)",
+      "Type": "Choice",
+    },
+  },
+}
+`;
+
 exports[`return identifier 1`] = `
 Object {
   "StartAt": "Initialize Functionless Context",
@@ -7952,7 +8370,7 @@ Object {
 }
 `;
 
-exports[`return task(1) ?? task(2)) 1`] = `
+exports[`return task(1) ?? task(2) 1`] = `
 Object {
   "StartAt": "return await task(1) ?? await task(2)",
   "States": Object {

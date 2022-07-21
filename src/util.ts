@@ -118,6 +118,26 @@ export function hasParent(node: ts.Node, parent: ts.Node): boolean {
   return hasParent(node.parent, parent);
 }
 
+/**
+ * Returns true when all ancestors match the predicate.
+ * If there are no parents left, `true` is returned.
+ * If there is a `stop` provided, matching stop will halt the search and return `true`.
+ */
+export function hasOnlyAncestors(
+  node: ts.Node,
+  cont: (node: ts.Node) => boolean,
+  stop?: (node: ts.Node) => boolean
+): boolean {
+  if (!node.parent) {
+    return true;
+  } else if (stop && stop(node.parent)) {
+    return true;
+  } else if (!cont(node.parent)) {
+    return false;
+  }
+  return hasOnlyAncestors(node.parent, cont, stop);
+}
+
 export type ConstantValue =
   | PrimitiveValue
   | { [key: string]: ConstantValue }
@@ -141,17 +161,13 @@ export const isPrimitive = (val: any): val is PrimitiveValue => {
 export function isPromiseAll(expr: CallExpr): expr is CallExpr & {
   expr: PropAccessExpr & {
     name: "all";
-    parent: {
-      kind: "Identifier";
-      name: "Promise";
-    };
   };
 } {
   return (
     isPropAccessExpr(expr.expr) &&
-    isIdentifier(expr.expr.expr) &&
     expr.expr.name === "all" &&
-    expr.expr.expr.name === "Promise"
+    ((isIdentifier(expr.expr.expr) && expr.expr.expr.name === "Promise") ||
+      (isReferenceExpr(expr.expr.expr) && expr.expr.expr.ref() === Promise))
   );
 }
 
