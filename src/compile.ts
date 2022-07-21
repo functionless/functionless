@@ -62,15 +62,23 @@ export function compile(
         },
       };
 
-      const functionlessImport = ts.factory.createImportDeclaration(
+      const functionlessImport = ts.factory.createVariableStatement(
         undefined,
-        undefined,
-        ts.factory.createImportClause(
-          false,
-          undefined,
-          ts.factory.createNamespaceImport(functionless)
-        ),
-        ts.factory.createStringLiteral("functionless")
+        ts.factory.createVariableDeclarationList(
+          [
+            ts.factory.createVariableDeclaration(
+              functionless,
+              undefined,
+              undefined,
+              ts.factory.createCallExpression(
+                ts.factory.createIdentifier("require"),
+                undefined,
+                [ts.factory.createStringLiteral("functionless")]
+              )
+            ),
+          ],
+          ts.NodeFlags.Const
+        )
       );
 
       const statements = sf.statements.map(

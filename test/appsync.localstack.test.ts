@@ -3,9 +3,6 @@
 // 2. #return fails when running in the response template - https://github.com/localstack/localstack/issues/5988
 // 3. Need a valid LocalStack Pro license
 
-// @ts-ignore - importing so that tsc will re-write imports as require, see https://github.com/functionless/functionless/issues/341
-import path from "path";
-
 test("fix me", () => {
   expect(true).toBeTruthy();
 });
