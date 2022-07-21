@@ -91,6 +91,7 @@
   "license": "Apache-2.0",
   "version": "0.0.0",
   "jest": {
+    "collectCoverage": false,
     "coveragePathIgnorePatterns": [
       "/test/",
       "/node_modules/",
@@ -104,7 +105,6 @@
       "<rootDir>/(test|src)/**/*(*.)@(spec|test).ts?(x)"
     ],
     "clearMocks": true,
-    "collectCoverage": true,
     "coverageReporters": [
       "json",
       "lcov",
