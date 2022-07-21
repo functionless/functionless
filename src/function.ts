@@ -664,19 +664,13 @@ export class Function<
 
     super(_resource);
 
-    const integrations: IntegrationInvocation[] = getInvokedIntegrations(
-      ast
-    ).map((i) => {
-      const integ = i.expr.ref();
-      if (!isIntegration<Integration>(integ)) {
-        // TODO: create specific error.
-        throw new SynthError(ErrorCodes.Unexpected_Error);
-      }
-      return {
-        args: i.args,
-        integration: integ,
-      };
-    });
+    const integrations = getInvokedIntegrations(ast).map(
+      (i) =>
+        <IntegrationInvocation>{
+          args: i.args,
+          integration: i.expr.ref(),
+        }
+    );
 
     // retrieve and bind all found native integrations. Will fail if the integration does not support native integration.
     const nativeIntegrationsPrewarm = integrations.flatMap(

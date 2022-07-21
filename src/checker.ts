@@ -108,6 +108,7 @@ export function makeFunctionlessChecker(
     isForInVariable,
     isFunctionlessFunction,
     isFunctionlessType,
+    isIdentifierOutOfScope,
     isIntegrationNode,
     isNewEventTransform,
     isNewFunctionlessFunction,
@@ -440,6 +441,20 @@ export function makeFunctionlessChecker(
       }
     }
     return false;
+  }
+
+  /**
+   * Determines if an identifier is out of scope.
+   *
+   * Returns false if the symbol isn't found or if it is a in a type reference.
+   */
+  function isIdentifierOutOfScope(node: ts.Identifier, scope: ts.Node) {
+    const symbol = checker.getSymbolAtLocation(node);
+    return (
+      !ts.isTypeReferenceNode(node.parent) &&
+      symbol &&
+      isSymbolOutOfScope(symbol, scope)
+    );
   }
 
   // findParent(node, ts.isForInStatement)

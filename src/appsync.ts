@@ -16,6 +16,7 @@ import {
   Expr,
   Identifier,
   PropAccessExpr,
+  ReferenceExpr,
   StringLiteralExpr,
 } from "./expression";
 import {
@@ -37,6 +38,7 @@ import {
   isPromiseExpr,
   isBindingElem,
   isBindingPattern,
+  isReferenceExpr,
 } from "./guards";
 import {
   findDeepIntegrations,
@@ -138,18 +140,29 @@ export class AppsyncVTL extends VTL {
     }
   }
 
-  protected dereference(id: Identifier): string {
-    const ref = id.lookup();
-    if ((isVariableStmt(ref) || isBindingElem(ref)) && isInTopLevelScope(ref)) {
-      return `$context.stash.${id.name}`;
-    } else if (isParameterDecl(ref) && isFunctionDecl(ref.parent)) {
-      // regardless of the name of the first argument in the root FunctionDecl, it is always the intrinsic Appsync `$context`.
-      return "$context";
-    }
-    if (id.name.startsWith("$")) {
-      return id.name;
+  protected dereference(id: Identifier | ReferenceExpr): string {
+    if (isReferenceExpr(id)) {
+      const ref = id.ref();
+      if (ref === $util) {
+        return "$util";
+      }
+      throw new SynthError(ErrorCodes.AppSync_Unsupported_Reference);
     } else {
-      return `$${id.name}`;
+      const ref = id.lookup();
+      if (
+        (isVariableStmt(ref) || isBindingElem(ref)) &&
+        isInTopLevelScope(ref)
+      ) {
+        return `$context.stash.${id.name}`;
+      } else if (isParameterDecl(ref) && isFunctionDecl(ref.parent)) {
+        // regardless of the name of the first argument in the root FunctionDecl, it is always the intrinsic Appsync `$context`.
+        return "$context";
+      }
+      if (id.name.startsWith("$")) {
+        return id.name;
+      } else {
+        return `$${id.name}`;
+      }
     }
   }
 }

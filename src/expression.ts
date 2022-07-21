@@ -72,8 +72,8 @@ export class FunctionExpr<
   }
 }
 
-export class ReferenceExpr extends BaseExpr<"ReferenceExpr"> {
-  constructor(readonly name: string, readonly ref: () => unknown) {
+export class ReferenceExpr<R = unknown> extends BaseExpr<"ReferenceExpr"> {
+  constructor(readonly name: string, readonly ref: () => R) {
     super("ReferenceExpr");
   }
 
