@@ -640,14 +640,6 @@ export class ASL {
       return this.evalExprToSubState(stmt.expr, (output) => {
         const body = this.evalStmt(stmt.body);
 
-        if (!body) {
-          // if the body is empty, the for expression is evaluated,
-          // and then continue on. This state will be optimized out later.
-          return {
-            Type: "Pass",
-          };
-        }
-
         // assigns either a constant or json path to a new variable
         const assignTempState = this.stateWithHeapOutput(
           ASLGraph.passWithInput(
@@ -727,7 +719,12 @@ export class ASL {
                   },
                 },
             // any ASLGraph.DeferNext (or empty) should be wired to exit
-            body: ASLGraph.updateDeferredNextStates({ Next: "tail" }, body),
+            body: ASLGraph.updateDeferredNextStates(
+              { Next: "tail" },
+              body ?? {
+                Type: "Pass",
+              }
+            ),
             // tail the array
             tail: {
               Type: "Pass",
@@ -755,14 +752,6 @@ export class ASL {
     } else if (isForStmt(stmt)) {
       const body = this.evalStmt(stmt.body);
 
-      if (!body) {
-        // if the body is empty, the for expression is evaluated,
-        // and then continue on. This state will be optimized out later.
-        return {
-          Type: "Pass",
-        };
-      }
-
       return this.evalContextToSubState(stmt, (evalExpr) => {
         const initializers = stmt.variableDecl
           ? isVariableList(stmt.variableDecl)
@@ -777,10 +766,6 @@ export class ASL {
         const increment = stmt.incrementor
           ? this.eval(stmt.incrementor)
           : undefined;
-        const incrementState =
-          increment && ASLGraph.isStateOrSubState(increment)
-            ? increment
-            : { Type: "Pass" as const };
 
         // run optional initializer
         return ASLGraph.joinSubStates(stmt, ...initializers, {
@@ -801,12 +786,16 @@ export class ASL {
             // then run the body
             body: ASLGraph.updateDeferredNextStates(
               { Next: "increment" },
-              body
+              body ?? {
+                Type: "Pass",
+              }
             ),
             // then increment (or do nothing)
             increment: ASLGraph.updateDeferredNextStates(
               { Next: "check" },
-              incrementState
+              increment && ASLGraph.isStateOrSubState(increment)
+                ? increment
+                : { Type: "Pass" as const }
             ),
             // return back to check
             // TODO: clean up?
@@ -3392,12 +3381,52 @@ export namespace ASLGraph {
       if (name in emptyStates) {
         return [];
       }
-      const getNext = (transition: string): string => {
+      const getNext = (transition: string, seen: string[] = []): string => {
+        /**
+         * When empty passes generate circular references, the state will be impossible to exit.
+         *
+         * Note: This should be a rare case and is not an attempt to find any non-terminating logic.
+         *       ex: `for(;;){}`
+         *       Adding most conditions, incrementors, or bodies will not run into this issue.
+         *
+         * ```ts
+         * {
+         *   1: { Type: "???", Next: 2 },
+         *   2: { Type: "Pass", Next: 3 },
+         *   3: { Type: "Pass", Next: 4 },
+         *   4: { Type: "Pass", Next: 2 }
+         * }
+         * ```
+         *
+         * State 1 is any state that transitions to state 2.
+         * State 2 transitions to empty state 3
+         * State 3 transitions to empty state 4
+         * State 4 transitions back to empty state 2.
+         *
+         * Empty Pass states provide no value and will be removed.
+         * Empty Pass states can never fail and no factor can change where it goes.
+         *
+         * This is not an issue for other states which may fail or inject other logic to change the next state.
+         * Even the Wait stat could be used in an infinite loop if the machine is terminated from external source.
+         */
+        if (seen?.includes(transition)) {
+          throw new SynthError(
+            ErrorCodes.Invalid_Input,
+            `Discovered invalid circular states: ${seen.join(
+              "->"
+            )}->${transition}`
+          );
+        }
         return transition in emptyStates
-          ? getNext(emptyStates[transition].Next!)
+          ? getNext(
+              emptyStates[transition].Next!,
+              seen ? [...seen, transition] : [transition]
+            )
           : transition;
       };
-      return [[name, visitTransition(state, getNext)]];
+      return [
+        [name, visitTransition(state, (transition) => getNext(transition))],
+      ];
     });
   };
 

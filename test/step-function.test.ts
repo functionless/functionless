@@ -2861,15 +2861,12 @@ test("for(;;) no statement", () => {
 
 test("for(;;) empty", () => {
   const { stack } = initStepFunctionApp();
-  const definition = new ExpressStepFunction<{ key: string }, void>(
-    stack,
-    "fn",
-    async () => {
-      for (;;) {}
-    }
-  ).definition;
-
-  expect(normalizeDefinition(definition)).toMatchSnapshot();
+  expect(
+    () =>
+      new ExpressStepFunction<{ key: string }, void>(stack, "fn", async () => {
+        for (;;) {}
+      })
+  ).toThrow("Discovered invalid circular states");
 });
 
 test("return task(await task())", () => {

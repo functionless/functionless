@@ -2900,11 +2900,17 @@ Object {
       "Type": "Pass",
     },
     "[await task(input.items)]": Object {
-      "Next": "return null",
+      "Next": "for(_ of [await task(input.items)]) 1",
       "Parameters": Object {
         "arr.$": "States.Array($.heap0)",
       },
       "ResultPath": "$.heap1",
+      "Type": "Pass",
+    },
+    "_ = undefined": Object {
+      "InputPath": "$.heap2[0]",
+      "Next": "tail__for(_ of [await task(input.items)]) 1",
+      "ResultPath": "$._",
       "Type": "Pass",
     },
     "for(_ of [await task(input.items)])": Object {
@@ -2914,10 +2920,33 @@ Object {
       "ResultPath": "$.heap0",
       "Type": "Task",
     },
+    "for(_ of [await task(input.items)]) 1": Object {
+      "InputPath": "$.heap1.arr",
+      "Next": "hasNext__for(_ of [await task(input.items)]) 1",
+      "ResultPath": "$.heap2",
+      "Type": "Pass",
+    },
+    "hasNext__for(_ of [await task(input.items)]) 1": Object {
+      "Choices": Array [
+        Object {
+          "IsPresent": true,
+          "Next": "_ = undefined",
+          "Variable": "$.heap2[0]",
+        },
+      ],
+      "Default": "return null",
+      "Type": "Choice",
+    },
     "return null": Object {
       "End": true,
       "InputPath": "$.fnl_context.null",
       "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "tail__for(_ of [await task(input.items)]) 1": Object {
+      "InputPath": "$.heap2[1:]",
+      "Next": "hasNext__for(_ of [await task(input.items)]) 1",
+      "ResultPath": "$.heap2",
       "Type": "Pass",
     },
   },
@@ -4279,8 +4308,41 @@ exports[`for(;;) loop empty body 1`] = `
 Object {
   "StartAt": "Initialize Functionless Context",
   "States": Object {
+    "1__for(i;i < 3;i = if(i == 0))": Object {
+      "Choices": Array [
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.i",
+            },
+            Object {
+              "And": Array [
+                Object {
+                  "IsNumeric": true,
+                  "Variable": "$.i",
+                },
+                Object {
+                  "NumericLessThan": 3,
+                  "Variable": "$.i",
+                },
+              ],
+            },
+          ],
+          "Next": "i = if(i == 0)",
+        },
+      ],
+      "Default": "return null",
+      "Type": "Choice",
+    },
+    "1__i = if(i == 0)": Object {
+      "InputPath": "$.heap1",
+      "Next": "1__for(i;i < 3;i = if(i == 0))",
+      "ResultPath": "$.i",
+      "Type": "Pass",
+    },
     "Initialize Functionless Context": Object {
-      "Next": "return null",
+      "Next": "for(i;i < 3;i = if(i == 0))",
       "OutputPath": "$",
       "Parameters": Object {
         "input.$": "$",
@@ -4288,6 +4350,90 @@ Object {
       },
       "ResultPath": "$.fnl_context",
       "Type": "Pass",
+    },
+    "assign__doFalse__i = if(i == 0)": Object {
+      "InputPath": "$.heap0",
+      "Next": "1__i = if(i == 0)",
+      "ResultPath": "$.heap1",
+      "Type": "Pass",
+    },
+    "doFalse__doFalse__i = if(i == 0)": Object {
+      "Next": "assign__doFalse__i = if(i == 0)",
+      "Result": 3,
+      "ResultPath": "$.heap0",
+      "Type": "Pass",
+    },
+    "doFalse__i = if(i == 0)": Object {
+      "Choices": Array [
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.i",
+            },
+            Object {
+              "And": Array [
+                Object {
+                  "IsNumeric": true,
+                  "Variable": "$.i",
+                },
+                Object {
+                  "NumericEquals": 1,
+                  "Variable": "$.i",
+                },
+              ],
+            },
+          ],
+          "Next": "doTrue__doFalse__i = if(i == 0)",
+        },
+      ],
+      "Default": "doFalse__doFalse__i = if(i == 0)",
+      "Type": "Choice",
+    },
+    "doTrue__doFalse__i = if(i == 0)": Object {
+      "Next": "assign__doFalse__i = if(i == 0)",
+      "Result": 2,
+      "ResultPath": "$.heap0",
+      "Type": "Pass",
+    },
+    "doTrue__i = if(i == 0)": Object {
+      "Next": "1__i = if(i == 0)",
+      "Result": 1,
+      "ResultPath": "$.heap1",
+      "Type": "Pass",
+    },
+    "for(i;i < 3;i = if(i == 0))": Object {
+      "Next": "1__for(i;i < 3;i = if(i == 0))",
+      "Result": 0,
+      "ResultPath": "$.i",
+      "Type": "Pass",
+    },
+    "i = if(i == 0)": Object {
+      "Choices": Array [
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.i",
+            },
+            Object {
+              "And": Array [
+                Object {
+                  "IsNumeric": true,
+                  "Variable": "$.i",
+                },
+                Object {
+                  "NumericEquals": 0,
+                  "Variable": "$.i",
+                },
+              ],
+            },
+          ],
+          "Next": "doTrue__i = if(i == 0)",
+        },
+      ],
+      "Default": "doFalse__i = if(i == 0)",
+      "Type": "Choice",
     },
     "return null": Object {
       "End": true,
