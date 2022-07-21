@@ -1533,8 +1533,8 @@ export class ASL {
         throw new SynthError(ErrorCodes.Unsupported_Use_of_Promises);
       } else if (
         isPropAccessExpr(expr.expr) &&
-        isIdentifier(expr.expr.expr) &&
-        expr.expr.expr.name === "JSON" &&
+        ((isIdentifier(expr.expr.expr) && expr.expr.expr.name === "JSON") ||
+          (isReferenceExpr(expr.expr.expr) && expr.expr.expr.ref() === JSON)) &&
         (expr.expr.name === "stringify" || expr.expr.name === "parse")
       ) {
         const heap = this.newHeapVariable();
