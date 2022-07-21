@@ -6,7 +6,7 @@ import {
 } from "aws-lambda";
 import { FunctionDecl, validateFunctionDecl } from "./declaration";
 import { ErrorCodes, SynthError } from "./error-code";
-import { CallExpr, Expr, Identifier } from "./expression";
+import { CallExpr, Expr, Identifier, ReferenceExpr } from "./expression";
 import { Function } from "./function";
 import {
   isReturnStmt,
@@ -689,6 +689,8 @@ export class APIGatewayVTL extends VTL {
         if (isIntegration<Integration>(ref)) {
           const serviceCall = new IntegrationImpl(ref);
           return this.integrate(serviceCall, expr);
+        } else if (ref === Number) {
+          return this.exprToJson(expr.args[0]);
         } else {
           throw new SynthError(
             ErrorCodes.Unexpected_Error,
@@ -715,8 +717,10 @@ export class APIGatewayVTL extends VTL {
               if (isStringLiteralExpr(argName)) {
                 if (
                   isArgument(expr.parent) &&
-                  isIdentifier(expr.parent.parent.expr) &&
-                  expr.parent.parent.expr.name === "Number"
+                  ((isIdentifier(expr.parent.parent.expr) &&
+                    expr.parent.parent.expr.name === "Number") ||
+                    (isReferenceExpr(expr.parent.parent.expr) &&
+                      expr.parent.parent.expr.ref() === Number))
                 ) {
                   // this parameter is surrounded by a cast to Number, so omit the quotes
                   return `$input.params('${argName.value}')`;
@@ -848,24 +852,28 @@ ${reference}
    * @param id the {@link Identifier} expression.
    * @returns a VTL string that points to the value at runtime.
    */
-  public override dereference(id: Identifier): string {
-    const ref = id.lookup();
-    if (isVariableStmt(ref)) {
-      return `$${id.name}`;
-    } else if (isParameterDecl(ref) && isFunctionDecl(ref.parent)) {
-      const paramIndex = ref.parent.parameters.indexOf(ref);
-      if (paramIndex === 0) {
-        return `$input.path('$')`;
-      } else if (paramIndex === 1) {
-        return "$context";
-      } else {
-        throw new Error(`unknown argument`);
-      }
-    }
-    if (id.name.startsWith("$")) {
-      return id.name;
+  public override dereference(id: Identifier | ReferenceExpr): string {
+    if (isReferenceExpr(id)) {
+      throw new SynthError(ErrorCodes.ApiGateway_Unsupported_Reference);
     } else {
-      return `$${id.name}`;
+      const ref = id.lookup();
+      if (isVariableStmt(ref)) {
+        return `$${id.name}`;
+      } else if (isParameterDecl(ref) && isFunctionDecl(ref.parent)) {
+        const paramIndex = ref.parent.parameters.indexOf(ref);
+        if (paramIndex === 0) {
+          return `$input.path('$')`;
+        } else if (paramIndex === 1) {
+          return "$context";
+        } else {
+          throw new Error(`unknown argument`);
+        }
+      }
+      if (id.name.startsWith("$")) {
+        return id.name;
+      } else {
+        return `$${id.name}`;
+      }
     }
   }
 }

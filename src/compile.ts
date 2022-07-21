@@ -20,7 +20,6 @@ import type {
   PostfixUnaryOp,
 } from "./expression";
 import { FunctionlessNode } from "./node";
-import { hasParent } from "./util";
 
 export default compile;
 
@@ -62,7 +61,7 @@ export function compile(
       }
 
       const functionlessContext = {
-        requireFunctionless: false,
+        requireFunctionless: true,
         get functionless() {
           this.requireFunctionless = true;
           return functionless;
@@ -84,7 +83,7 @@ export function compile(
         (stmt) => visitor(stmt) as ts.Statement
       );
 
-      return ts.factory.updateSourceFile(
+      const updatedSourceFile = ts.factory.updateSourceFile(
         sf,
         [
           // only require functionless if it is used.
@@ -99,6 +98,20 @@ export function compile(
         sf.hasNoDefaultLib,
         sf.libReferenceDirectives
       );
+
+      /**
+       * Forces the source file to update the external module indicator.
+       * This is important when we add new imports to files without imports.
+       */
+
+      // @ts-ignore
+      !updatedSourceFile.externalModuleIndicator &&
+        // @ts-ignore
+        updatedSourceFile.setExternalModuleIndicator &&
+        // @ts-ignore
+        updatedSourceFile.setExternalModuleIndicator(updatedSourceFile);
+
+      return updatedSourceFile;
 
       function visitor(node: ts.Node): ts.Node | ts.Node[] {
         const visit = () => {
@@ -264,7 +277,7 @@ export function compile(
               call.typeArguments,
               [
                 options,
-                errorBoundary(() => toFunction("FunctionDecl", resolver, 1)),
+                errorBoundary(() => toFunction("FunctionDecl", resolver)),
               ]
             );
           }
@@ -300,7 +313,25 @@ export function compile(
       function toFunction(
         type: FunctionDecl["kind"] | FunctionExpr["kind"],
         impl: ts.Expression,
-        dropArgs?: number
+        /**
+         * Scope used to determine the accessability of identifiers.
+         * Functionless considers identifiers in a closure and all nested closures to be in scope.
+         *
+         * ```ts
+         * const a;
+         * new Function(async () => {
+         *    const b;
+         *    return [1].map((item) => {
+         *       a // out of scope
+         *       b // in scope
+         *       item // in scope
+         *    })
+         * })
+         * ```
+         *
+         * @default - This function `impl`
+         */
+        scope?: ts.Node
       ): ts.Expression {
         if (
           !ts.isFunctionDeclaration(impl) &&
@@ -312,31 +343,26 @@ export function compile(
           );
         }
 
-        const params =
-          dropArgs === undefined
-            ? impl.parameters
-            : impl.parameters.slice(dropArgs);
-
         if (impl.body === undefined) {
           throw new Error(
             `cannot parse declaration-only function: ${impl.getText()}`
           );
         }
         const body = ts.isBlock(impl.body)
-          ? toExpr(impl.body, impl)
+          ? toExpr(impl.body, scope ?? impl)
           : newExpr("BlockStmt", [
               ts.factory.createArrayLiteralExpression([
-                newExpr("ReturnStmt", [toExpr(impl.body, impl)]),
+                newExpr("ReturnStmt", [toExpr(impl.body, scope ?? impl)]),
               ]),
             ]);
 
         return newExpr(type, [
           ts.factory.createArrayLiteralExpression(
-            params.map((param) =>
+            impl.parameters.map((param) =>
               newExpr("ParameterDecl", [
                 ts.isIdentifier(param.name)
                   ? ts.factory.createStringLiteral(param.name.text)
-                  : toExpr(param.name, impl),
+                  : toExpr(param.name, scope ?? impl),
               ])
             )
           ),
@@ -390,7 +416,7 @@ export function compile(
         if (node === undefined) {
           return ts.factory.createIdentifier("undefined");
         } else if (ts.isArrowFunction(node) || ts.isFunctionExpression(node)) {
-          return toFunction("FunctionExpr", node);
+          return toFunction("FunctionExpr", node, scope);
         } else if (ts.isExpressionStatement(node)) {
           return newExpr("ExprStmt", [toExpr(node.expression, scope)]);
         } else if (ts.isCallExpression(node) || ts.isNewExpression(node)) {
@@ -508,7 +534,6 @@ export function compile(
             }
           }
 
-          const symbol = checker.getSymbolAtLocation(node);
           /**
            * If the identifier is not within the closure, we attempt to enclose the reference in its own closure.
            * const val = "hello";
@@ -518,10 +543,10 @@ export function compile(
            *
            * return { value: () => val };
            */
-          if (symbol) {
-            const ref = outOfScopeIdentifierToRef(symbol, scope);
-            if (ref) {
-              return ref;
+          if (checker.isIdentifierOutOfScope(node, scope)) {
+            const _ref = checker.getOutOfScopeValueNode(node, scope);
+            if (_ref) {
+              return ref(_ref);
             }
           }
 
@@ -829,46 +854,6 @@ export function compile(
             node
           ),
         ]);
-      }
-
-      /**
-       * Follow the parent of the symbol to determine if the identifier shares the same scope as the current closure being compiled.
-       * If not within the scope of the current closure, return a reference that returns the external value if possible.
-       * const val = "hello";
-       * reflect(() => return { value: val }; );
-       *
-       * result
-       *
-       * return { value: () => val };
-       */
-      function outOfScopeIdentifierToRef(
-        symbol: ts.Symbol,
-        scope: ts.Node
-      ): ts.NewExpression | undefined {
-        if (symbol) {
-          if (symbol.valueDeclaration) {
-            // Identifies if Shorthand Property Assignment value declarations return the shorthand prop assignment and not the value.
-            // const value = "hello"
-            // const v = { value } <== shorthand prop assignment.
-            // The checker supports getting the value assignment symbol, recursively call this method on the new symbol instead.
-            if (ts.isShorthandPropertyAssignment(symbol.valueDeclaration)) {
-              const updatedSymbol = checker.getShorthandAssignmentValueSymbol(
-                symbol.valueDeclaration
-              );
-              return updatedSymbol
-                ? outOfScopeIdentifierToRef(updatedSymbol, scope)
-                : undefined;
-            } else if (ts.isVariableDeclaration(symbol.valueDeclaration)) {
-              if (
-                symbol.valueDeclaration.initializer &&
-                !hasParent(symbol.valueDeclaration, scope)
-              ) {
-                return ref(ts.factory.createIdentifier(symbol.name));
-              }
-            }
-          }
-        }
-        return;
       }
 
       function exprToString(node: ts.Expression): string {

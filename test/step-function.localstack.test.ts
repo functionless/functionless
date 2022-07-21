@@ -371,9 +371,7 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
     { a: true, b: "hello" }
   );
 
-  // Cannot return in a for loop
-  // https://github.com/functionless/functionless/issues/319
-  test.skip(
+  test(
     "for map conditional",
     (parent) => {
       const func = new Function<undefined, number[]>(
@@ -401,7 +399,7 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
           }
           return "boo";
         });
-        const d = Promise.all(
+        const d = await Promise.all(
           ["d"].map(async (v) => {
             for (const i of await func()) {
               if (i === 3) {
@@ -415,7 +413,7 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
         // for (const i in input.ob) {
         //   a = i as any;
         // }
-        return `${b}${c}${d}`;
+        return `${b.join("")}${c.join("")}${d.join("")}`;
       });
     },
     "bx3cx3dx3",
@@ -457,8 +455,7 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
     { arr: [1, 2, 3] }
   );
 
-  // Support mutable variables in For and Map: https://github.com/functionless/functionless/issues/318
-  test.skip(
+  test(
     "map with dynamic for loops",
     (parent) => {
       const func = new Function<undefined, number[]>(
@@ -481,7 +478,7 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
         return a;
       });
     },
-    "123123",
+    "n1n2n3n1n2n3",
     { arr: [1, 2, 3] }
   );
 
@@ -1199,6 +1196,121 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
     },
     "n0n1n2",
     { arr: [1, 2, 3] }
+  );
+
+  test(
+    "join",
+    (parent) => {
+      return new StepFunction(parent, "sfn2", async (input) => {
+        const resultArr = [
+          ["a", "b", "c"].join("/"),
+          input.arr.join("-"),
+          input.arr.join(input.sep),
+          ["d", "e", "f"].join(input.sep),
+          [].join(""),
+          input.arr.join(),
+        ];
+
+        return resultArr.join("#");
+      });
+    },
+    "a/b/c#1-2-3#1|2|3#d|e|f##1,2,3",
+    { arr: [1, 2, 3], sep: "|" }
+  );
+
+  test(
+    "ternary",
+    (parent) => {
+      const table = new Table<{ id: string; val: number }, "id">(
+        parent,
+        "table",
+        {
+          partitionKey: {
+            name: "id",
+            type: AttributeType.STRING,
+          },
+        }
+      );
+      return new StepFunction(parent, "fn", async (input) => {
+        // should add 1
+        input.t
+          ? await $AWS.DynamoDB.UpdateItem({
+              Table: table,
+              Key: {
+                id: { S: input.id },
+              },
+              UpdateExpression: "SET val = if_not_exists(val, :start) + :inc",
+              ExpressionAttributeValues: {
+                ":start": { N: "0" },
+                ":inc": { N: "1" },
+              },
+            })
+          : undefined;
+
+        // should add 3
+        input.f
+          ? await $AWS.DynamoDB.UpdateItem({
+              Table: table,
+              Key: {
+                id: { S: input.id },
+              },
+              UpdateExpression: "SET val = if_not_exists(val, :start) + :inc",
+              ExpressionAttributeValues: {
+                ":start": { N: "0" },
+                ":inc": { N: "2" },
+              },
+            })
+          : await $AWS.DynamoDB.UpdateItem({
+              Table: table,
+              Key: {
+                id: { S: input.id },
+              },
+              UpdateExpression: "SET val = if_not_exists(val, :start) + :inc",
+              ExpressionAttributeValues: {
+                ":start": { N: "0" },
+                ":inc": { N: "3" },
+              },
+            });
+
+        // should not execute update
+        input.t
+          ? undefined
+          : await $AWS.DynamoDB.UpdateItem({
+              Table: table,
+              Key: {
+                id: { S: input.id },
+              },
+              UpdateExpression: "SET val = if_not_exists(val, :start) + :inc",
+              ExpressionAttributeValues: {
+                ":start": { N: "0" },
+                ":inc": { N: "4" },
+              },
+            });
+
+        return {
+          true: input.t ? "a" : "b",
+          false: input.f ? "a" : "b",
+          constantTrue: true ? "c" : "d",
+          constantFalse: false ? "c" : "d",
+          result: (
+            await $AWS.DynamoDB.GetItem({
+              Table: table,
+              Key: {
+                id: { S: input.id },
+              },
+            })
+          ).Item?.val.N,
+        };
+      });
+    },
+    {
+      true: "a",
+      false: "b",
+      constantTrue: "c",
+      constantFalse: "d",
+      result: "4",
+    },
+    { t: true, f: false, id: `key${Math.floor(Math.random() * 1000)}` }
   );
 
   test(
