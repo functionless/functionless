@@ -72,21 +72,11 @@ export function compile(
         ts.factory.createStringLiteral("functionless")
       );
 
-      if (
-        functionlessContext.requireFunctionless &&
-        // @ts-ignore
-        !updatedSourceFile.externalModuleIndicator &&
-        // @ts-ignore
-        updatedSourceFile.setExternalModuleIndicator
-      ) {
-        // @ts-ignore
-        updatedSourceFile.setExternalModuleIndicator(updatedSourceFile);
-      }
       const statements = sf.statements.map(
         (stmt) => visitor(stmt) as ts.Statement
       );
 
-      return ts.factory.updateSourceFile(
+      const updatedSourceFile = ts.factory.updateSourceFile(
         sf,
         [
           // only require functionless if it is used.
@@ -101,6 +91,19 @@ export function compile(
         sf.hasNoDefaultLib,
         sf.libReferenceDirectives
       );
+
+      if (
+        functionlessContext.requireFunctionless &&
+        // @ts-ignore
+        !updatedSourceFile.externalModuleIndicator &&
+        // @ts-ignore
+        updatedSourceFile.setExternalModuleIndicator
+      ) {
+        // @ts-ignore
+        updatedSourceFile.setExternalModuleIndicator(updatedSourceFile);
+      }
+
+      return updatedSourceFile;
 
       function visitor(node: ts.Node): ts.Node | ts.Node[] {
         if (ts.isArrowFunction(node) || ts.isFunctionExpression(node)) {
