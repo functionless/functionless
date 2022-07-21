@@ -3358,6 +3358,9 @@ export namespace ASLGraph {
     startState: string,
     stateEntries: [string, State][]
   ): [string, State][] => {
+    /**
+     * Find all {@link Pass} states that do not do anything.
+     */
     const emptyStates = Object.fromEntries(
       stateEntries.filter((entry): entry is [string, Pass] => {
         const [name, state] = entry;
@@ -3377,55 +3380,88 @@ export namespace ASLGraph {
       })
     );
 
+    /**
+     * Find the updated next value for all of the empty states.
+     * If the updated Next cannot be determined, do not remove the state.
+     */
+    const emptyTransitions = Object.fromEntries(
+      Object.entries(emptyStates).flatMap(([name, { Next }]) => {
+        const getNext = (
+          transition: string,
+          seen: string[] = []
+        ): string | undefined => {
+          /**
+           * When all states in a cycle are empty, the cycle will be impossible to exit.
+           *
+           * Note: This should be a rare case and is not an attempt to find any non-terminating logic.
+           *       ex: `for(;;){}`
+           *       Adding most conditions, incrementors, or bodies will not run into this issue.
+           *
+           * ```ts
+           * {
+           *   1: { Type: "???", Next: 2 },
+           *   2: { Type: "Pass", Next: 3 },
+           *   3: { Type: "Pass", Next: 4 },
+           *   4: { Type: "Pass", Next: 2 }
+           * }
+           * ```
+           *
+           * State 1 is any state that transitions to state 2.
+           * State 2 transitions to empty state 3
+           * State 3 transitions to empty state 4
+           * State 4 transitions back to empty state 2.
+           *
+           * Empty Pass states provide no value and will be removed.
+           * Empty Pass states can never fail and no factor can change where it goes.
+           *
+           * This is not an issue for other states which may fail or inject other logic to change the next state.
+           * Even the Wait stat could be used in an infinite loop if the machine is terminated from external source.
+           *
+           * If this happens, return undefined.
+           */
+          if (seen?.includes(transition)) {
+            return undefined;
+          }
+          return transition in emptyStates
+            ? getNext(
+                emptyStates[transition].Next!,
+                seen ? [...seen, transition] : [transition]
+              )
+            : transition;
+        };
+
+        const newNext = Next ? getNext(Next, []) : Next;
+
+        /**
+         * If the updated Next value for this state cannot be determined,
+         * do not remove the state.
+         *
+         * This can because the state has no Next value (Functionless bug)
+         * or because all of the states in a cycle are empty.
+         */
+        if (!newNext) {
+          return [];
+        }
+
+        return [[name, newNext]];
+      })
+    );
+
+    // return the updated set of name to state.
     return stateEntries.flatMap(([name, state]) => {
-      if (name in emptyStates) {
+      if (name in emptyTransitions) {
         return [];
       }
-      const getNext = (transition: string, seen: string[] = []): string => {
-        /**
-         * When empty passes generate circular references, the state will be impossible to exit.
-         *
-         * Note: This should be a rare case and is not an attempt to find any non-terminating logic.
-         *       ex: `for(;;){}`
-         *       Adding most conditions, incrementors, or bodies will not run into this issue.
-         *
-         * ```ts
-         * {
-         *   1: { Type: "???", Next: 2 },
-         *   2: { Type: "Pass", Next: 3 },
-         *   3: { Type: "Pass", Next: 4 },
-         *   4: { Type: "Pass", Next: 2 }
-         * }
-         * ```
-         *
-         * State 1 is any state that transitions to state 2.
-         * State 2 transitions to empty state 3
-         * State 3 transitions to empty state 4
-         * State 4 transitions back to empty state 2.
-         *
-         * Empty Pass states provide no value and will be removed.
-         * Empty Pass states can never fail and no factor can change where it goes.
-         *
-         * This is not an issue for other states which may fail or inject other logic to change the next state.
-         * Even the Wait stat could be used in an infinite loop if the machine is terminated from external source.
-         */
-        if (seen?.includes(transition)) {
-          throw new SynthError(
-            ErrorCodes.Invalid_Input,
-            `Discovered invalid circular states: ${seen.join(
-              "->"
-            )}->${transition}`
-          );
-        }
-        return transition in emptyStates
-          ? getNext(
-              emptyStates[transition].Next!,
-              seen ? [...seen, transition] : [transition]
-            )
-          : transition;
-      };
+
       return [
-        [name, visitTransition(state, (transition) => getNext(transition))],
+        [
+          name,
+          visitTransition(state, (transition) =>
+            transition in emptyTransitions
+              ? emptyTransitions[transition]
+              : transition
+          ),
+        ],
       ];
     });
   };

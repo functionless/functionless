@@ -3994,7 +3994,7 @@ Object {
   "StartAt": "Initialize Functionless Context",
   "States": Object {
     "Initialize Functionless Context": Object {
-      "Next": "return null",
+      "Next": "for(;;)",
       "OutputPath": "$",
       "Parameters": Object {
         "input.$": "$",
@@ -4003,10 +4003,16 @@ Object {
       "ResultPath": "$.fnl_context",
       "Type": "Pass",
     },
-    "return null": Object {
-      "End": true,
-      "InputPath": "$.fnl_context.null",
-      "ResultPath": "$",
+    "body__for(;;)": Object {
+      "Next": "increment__for(;;)",
+      "Type": "Pass",
+    },
+    "for(;;)": Object {
+      "Next": "body__for(;;)",
+      "Type": "Pass",
+    },
+    "increment__for(;;)": Object {
+      "Next": "for(;;)",
       "Type": "Pass",
     },
   },
