@@ -3,14 +3,17 @@
 // 2. #return fails when running in the response template - https://github.com/localstack/localstack/issues/5988
 // 3. Need a valid LocalStack Pro license
 
+// @ts-ignore - importing so that tsc will re-write imports as require, see https://github.com/functionless/functionless/issues/341
+import path from "path";
+
 test("fix me", () => {
   expect(true).toBeTruthy();
 });
 
 // import * as appsync from "@aws-cdk/aws-appsync-alpha";
+// import { gql, GraphQLClient } from "graphql-request";
 // import { AppsyncResolver } from "../src";
 // import { localstackTestSuite } from "./localstack";
-// import { gql, GraphQLClient } from "graphql-request";
 
 // localstackTestSuite("appSyncStack", (testResource, stack) => {
 //   const api = new appsync.GraphqlApi(stack, "graphql1", {
@@ -25,20 +28,17 @@ test("fix me", () => {
 //   testResource(
 //     "app sync basic",
 //     () => {
-//       const resolver = new AppsyncResolver(() => {
-//         return { value: "hi2" };
-//       });
-
-//       const valueObjType = new appsync.ObjectType("valueObj", {
-//         definition: {
-//           value: appsync.GraphqlType.string(),
+//       new AppsyncResolver(
+//         api,
+//         "resolver",
+//         {
+//           fieldName: "field",
+//           typeName: "type",
 //         },
-//       });
-
-//       api.addType(valueObjType);
-//       const field = resolver.getField(api, valueObjType.attribute());
-//       api.addQuery("hi5", field);
-
+//         () => {
+//           return { value: "hi2" };
+//         }
+//       );
 //       return {
 //         outputs: {
 //           apiUrl: api.graphqlUrl,
