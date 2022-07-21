@@ -24,9 +24,21 @@ import {
   isBindingElem,
   isIdentifier,
 } from "./guards";
-import { BlockStmt, CatchClause, Stmt, VariableStmt } from "./statement";
+import {
+  BlockStmt,
+  CatchClause,
+  Stmt,
+  VariableList,
+  VariableStmt,
+} from "./statement";
 
-export type FunctionlessNode = Decl | Expr | Stmt | Err | BindingPattern;
+export type FunctionlessNode =
+  | Decl
+  | Expr
+  | Stmt
+  | Err
+  | BindingPattern
+  | VariableList;
 
 export interface HasParent<Parent extends FunctionlessNode> {
   get parent(): Parent;

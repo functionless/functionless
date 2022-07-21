@@ -573,6 +573,12 @@ export function compile(
           node.declarationList.declarations.length === 1
         ) {
           return toExpr(node.declarationList.declarations[0], scope);
+        } else if (ts.isVariableDeclarationList(node)) {
+          return newExpr("VariableList", [
+            ts.factory.createArrayLiteralExpression(
+              node.declarations.map((decl) => toExpr(decl, scope))
+            ),
+          ]);
         } else if (ts.isVariableDeclaration(node)) {
           if (ts.isIdentifier(node.name)) {
             return newExpr("VariableStmt", [
@@ -745,20 +751,12 @@ export function compile(
             ]
           );
         } else if (ts.isForStatement(node)) {
-          if (
-            node.initializer &&
-            ts.isVariableDeclarationList(node.initializer)
-          ) {
-            if (node.initializer.declarations.length === 1) {
-              const varDecl = node.initializer.declarations[0];
-              return newExpr("ForStmt", [
-                toExpr(node.statement, scope),
-                toExpr(varDecl, scope),
-                toExpr(node.condition, scope),
-                toExpr(node.incrementor, scope),
-              ]);
-            }
-          }
+          return newExpr("ForStmt", [
+            toExpr(node.statement, scope),
+            toExpr(node.initializer, scope),
+            toExpr(node.condition, scope),
+            toExpr(node.incrementor, scope),
+          ]);
         } else if (ts.isTemplateExpression(node)) {
           const exprs = [];
           if (node.head.text) {

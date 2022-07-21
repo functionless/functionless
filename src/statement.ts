@@ -76,6 +76,21 @@ export class VariableStmt<
   }
 }
 
+export type VariableListParent = ForStmt;
+
+export class VariableList extends BaseNode<"VariableList", VariableListParent> {
+  readonly nodeKind: "Node" = "Node";
+
+  constructor(readonly decls: VariableStmt[]) {
+    super("VariableList");
+    decls.map((decl) => decl.setParent(this));
+  }
+
+  public clone(): this {
+    return new VariableList(this.decls.map((decl) => decl.clone())) as this;
+  }
+}
+
 export type BlockStmtParent =
   | CatchClause
   | DoStmt
@@ -205,7 +220,7 @@ export class ForInStmt extends BaseStmt<"ForInStmt"> {
 export class ForStmt extends BaseStmt<"ForStmt"> {
   constructor(
     readonly body: BlockStmt,
-    readonly variableDecl?: VariableStmt | Expr,
+    readonly variableDecl?: VariableList | Expr,
     readonly condition?: Expr,
     readonly incrementor?: Expr
   ) {

@@ -211,6 +211,7 @@ export type BinaryOp =
   | MutationMathBinaryOp
   | ValueComparisonBinaryOp
   | ComparatorOp
+  | ","
   | "="
   | "in";
 

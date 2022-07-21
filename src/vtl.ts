@@ -60,6 +60,7 @@ import {
   isVariableStmt,
   isWhileStmt,
   isForStmt,
+  isVariableList,
 } from "./guards";
 import { Integration, IntegrationImpl, isIntegration } from "./integration";
 import { FunctionlessNode } from "./node";
@@ -673,6 +674,11 @@ export abstract class VTL {
       throw new SynthError(
         ErrorCodes.Unsupported_Feature,
         "Condition based for loops (for(;;)) are not currently supported. For in and for of loops may be supported based on the use case. https://github.com/functionless/functionless/issues/303"
+      );
+    } else if (isVariableList(node)) {
+      throw new SynthError(
+        ErrorCodes.Unsupported_Feature,
+        "Variable Lists are not currently supported. https://github.com/functionless/functionless/issues/303"
       );
     } else {
       return assertNever(node);

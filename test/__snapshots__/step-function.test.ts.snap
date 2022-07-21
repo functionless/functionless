@@ -1573,7 +1573,7 @@ Object {
       "Choices": Array [
         Object {
           "IsPresent": true,
-          "Next": "input.items",
+          "Next": "item = undefined",
           "Variable": "$.heap0[0]",
         },
       ],
@@ -1607,7 +1607,7 @@ Object {
       "Default": "tail__for(item of input.items)",
       "Type": "Choice",
     },
-    "input.items": Object {
+    "item = undefined": Object {
       "InputPath": "$.heap0[0]",
       "Next": "if(item == \\"hello\\")",
       "ResultPath": "$.item",
@@ -2565,7 +2565,7 @@ Object {
       "Choices": Array [
         Object {
           "IsPresent": true,
-          "Next": "input.items",
+          "Next": "item = undefined",
           "Variable": "$.heap0[0]",
         },
       ],
@@ -2599,7 +2599,7 @@ Object {
       "Default": "tail__for(item of input.items)",
       "Type": "Choice",
     },
-    "input.items": Object {
+    "item = undefined": Object {
       "InputPath": "$.heap0[0]",
       "Next": "if(item == \\"hello\\")",
       "ResultPath": "$.item",
@@ -2973,7 +2973,7 @@ Object {
       },
       "Next": "hasNext__for(i in [await task(input)]) 1",
       "Parameters": Object {
-        "index.$": "$$.Map.Item.Index",
+        "index.$": "States.Format('{}', $$.Map.Item.Index)",
         "item.$": "$$.Map.Item.Value",
       },
       "ResultPath": "$.heap4",
@@ -2997,14 +2997,14 @@ Object {
       "ResultPath": "$.heap1",
       "Type": "Pass",
     },
-    "[await task(input)] 1": Object {
-      "InputPath": "$.heap4[0]",
+    "assignValue__i = undefined": Object {
+      "InputPath": "$.heap4[0].item",
       "Next": "await task(await task(i))",
-      "ResultPath": "$.i",
+      "ResultPath": "$.0__i",
       "Type": "Pass",
     },
     "await task(await task(i))": Object {
-      "InputPath": "$.i.index",
+      "InputPath": "$.i",
       "Next": "1__await task(await task(i))",
       "Resource": "__REPLACED_TOKEN",
       "ResultPath": "$.heap2",
@@ -3027,12 +3027,18 @@ Object {
       "Choices": Array [
         Object {
           "IsPresent": true,
-          "Next": "[await task(input)] 1",
+          "Next": "i = undefined",
           "Variable": "$.heap4[0]",
         },
       ],
       "Default": "return null",
       "Type": "Choice",
+    },
+    "i = undefined": Object {
+      "InputPath": "$.heap4[0].index",
+      "Next": "assignValue__i = undefined",
+      "ResultPath": "$.i",
+      "Type": "Pass",
     },
     "return null": Object {
       "End": true,
@@ -3079,12 +3085,6 @@ Object {
       "ResultPath": "$.heap1",
       "Type": "Pass",
     },
-    "[await task(input)] 1": Object {
-      "InputPath": "$.heap4[0]",
-      "Next": "await task(await task(i))",
-      "ResultPath": "$.i",
-      "Type": "Pass",
-    },
     "await task(await task(i))": Object {
       "InputPath": "$.i",
       "Next": "1__await task(await task(i))",
@@ -3109,12 +3109,18 @@ Object {
       "Choices": Array [
         Object {
           "IsPresent": true,
-          "Next": "[await task(input)] 1",
+          "Next": "i = undefined",
           "Variable": "$.heap4[0]",
         },
       ],
       "Default": "return null",
       "Type": "Choice",
+    },
+    "i = undefined": Object {
+      "InputPath": "$.heap4[0]",
+      "Next": "await task(await task(i))",
+      "ResultPath": "$.i",
+      "Type": "Pass",
     },
     "return null": Object {
       "End": true,
@@ -3162,7 +3168,7 @@ Object {
       },
       "Next": "hasNext__for(i in input.items)",
       "Parameters": Object {
-        "index.$": "$$.Map.Item.Index",
+        "index.$": "States.Format('{}', $$.Map.Item.Index)",
         "item.$": "$$.Map.Item.Value",
       },
       "ResultPath": "$.heap1",
@@ -3187,7 +3193,7 @@ Object {
     "a = \`i\`": Object {
       "Next": "1__a = \`i\`",
       "Parameters": Object {
-        "string.$": "States.Format('{}',$.i.index)",
+        "string.$": "States.Format('{}',$.i)",
       },
       "ResultPath": "$.heap0",
       "Type": "Pass",
@@ -3198,6 +3204,12 @@ Object {
         "string.$": "States.Format('{}',$.i)",
       },
       "ResultPath": "$.heap2",
+      "Type": "Pass",
+    },
+    "assignValue__i = undefined": Object {
+      "InputPath": "$.heap1[0].item",
+      "Next": "a = \`i\`",
+      "ResultPath": "$.0__i",
       "Type": "Pass",
     },
     "for(i in input.items)": Object {
@@ -3216,7 +3228,7 @@ Object {
       "Choices": Array [
         Object {
           "IsPresent": true,
-          "Next": "input.items",
+          "Next": "i = undefined",
           "Variable": "$.heap1[0]",
         },
       ],
@@ -3227,20 +3239,20 @@ Object {
       "Choices": Array [
         Object {
           "IsPresent": true,
-          "Next": "input.items 1",
+          "Next": "i = undefined 1",
           "Variable": "$.heap3[0]",
         },
       ],
       "Default": "return a",
       "Type": "Choice",
     },
-    "input.items": Object {
-      "InputPath": "$.heap1[0]",
-      "Next": "a = \`i\`",
+    "i = undefined": Object {
+      "InputPath": "$.heap1[0].index",
+      "Next": "assignValue__i = undefined",
       "ResultPath": "$.i",
       "Type": "Pass",
     },
-    "input.items 1": Object {
+    "i = undefined 1": Object {
       "InputPath": "$.heap3[0]",
       "Next": "a = \`i\` 1",
       "ResultPath": "$.i",
@@ -3286,7 +3298,7 @@ Object {
       },
       "Next": "hasNext__for(i in input.items)",
       "Parameters": Object {
-        "index.$": "$$.Map.Item.Index",
+        "index.$": "States.Format('{}', $$.Map.Item.Index)",
         "item.$": "$$.Map.Item.Value",
       },
       "ResultPath": "$.heap0",
@@ -3300,6 +3312,12 @@ Object {
         "null": null,
       },
       "ResultPath": "$.fnl_context",
+      "Type": "Pass",
+    },
+    "assignValue__i = undefined": Object {
+      "InputPath": "$.heap0[0].item",
+      "Next": "if(input.items[i] == \\"1\\")",
+      "ResultPath": "$.0__i",
       "Type": "Pass",
     },
     "for(i in input.items)": Object {
@@ -3318,7 +3336,7 @@ Object {
       "Choices": Array [
         Object {
           "IsPresent": true,
-          "Next": "input.items",
+          "Next": "i = undefined",
           "Variable": "$.heap0[0]",
         },
       ],
@@ -3329,12 +3347,24 @@ Object {
       "Choices": Array [
         Object {
           "IsPresent": true,
-          "Next": "input.items 1",
+          "Next": "i = undefined 1",
           "Variable": "$.heap1[0]",
         },
       ],
       "Default": "return \\"end\\"",
       "Type": "Choice",
+    },
+    "i = undefined": Object {
+      "InputPath": "$.heap0[0].index",
+      "Next": "assignValue__i = undefined",
+      "ResultPath": "$.i",
+      "Type": "Pass",
+    },
+    "i = undefined 1": Object {
+      "InputPath": "$.heap1[0]",
+      "Next": "if(i == \\"1\\")",
+      "ResultPath": "$.i",
+      "Type": "Pass",
     },
     "if(i == \\"1\\")": Object {
       "Choices": Array [
@@ -3369,17 +3399,17 @@ Object {
           "And": Array [
             Object {
               "IsPresent": true,
-              "Variable": "$.i.item",
+              "Variable": "$.0__i",
             },
             Object {
               "And": Array [
                 Object {
                   "IsString": true,
-                  "Variable": "$.i.item",
+                  "Variable": "$.0__i",
                 },
                 Object {
                   "StringEquals": "1",
-                  "Variable": "$.i.item",
+                  "Variable": "$.0__i",
                 },
               ],
             },
@@ -3389,18 +3419,6 @@ Object {
       ],
       "Default": "return input.items[i]",
       "Type": "Choice",
-    },
-    "input.items": Object {
-      "InputPath": "$.heap0[0]",
-      "Next": "if(input.items[i] == \\"1\\")",
-      "ResultPath": "$.i",
-      "Type": "Pass",
-    },
-    "input.items 1": Object {
-      "InputPath": "$.heap1[0]",
-      "Next": "if(i == \\"1\\")",
-      "ResultPath": "$.i",
-      "Type": "Pass",
     },
     "return \\"end\\"": Object {
       "End": true,
@@ -3416,8 +3434,93 @@ Object {
     },
     "return input.items[i]": Object {
       "End": true,
-      "InputPath": "$.i.item",
+      "InputPath": "$.0__i",
       "ResultPath": "$",
+      "Type": "Pass",
+    },
+  },
+}
+`;
+
+exports[`for const i in items, items[i] 1`] = `
+Object {
+  "StartAt": "Initialize Functionless Context",
+  "States": Object {
+    "1__for(i in input.items)": Object {
+      "InputPath": "$.heap0",
+      "Iterator": Object {
+        "StartAt": "Default",
+        "States": Object {
+          "Default": Object {
+            "End": true,
+            "ResultPath": "$",
+            "Type": "Pass",
+          },
+        },
+      },
+      "Next": "hasNext__for(i in input.items)",
+      "Parameters": Object {
+        "index.$": "States.Format('{}', $$.Map.Item.Index)",
+        "item.$": "$$.Map.Item.Value",
+      },
+      "ResultPath": "$.heap0",
+      "Type": "Map",
+    },
+    "Initialize Functionless Context": Object {
+      "Next": "for(i in input.items)",
+      "OutputPath": "$",
+      "Parameters": Object {
+        "input.$": "$",
+        "null": null,
+      },
+      "ResultPath": "$.fnl_context",
+      "Type": "Pass",
+    },
+    "a = items[i]": Object {
+      "InputPath": "$.0__i",
+      "Next": "tail__for(i in input.items)",
+      "ResultPath": "$.a",
+      "Type": "Pass",
+    },
+    "assignValue__i = undefined": Object {
+      "InputPath": "$.heap0[0].item",
+      "Next": "a = items[i]",
+      "ResultPath": "$.0__i",
+      "Type": "Pass",
+    },
+    "for(i in input.items)": Object {
+      "InputPath": "$.fnl_context.input.items",
+      "Next": "1__for(i in input.items)",
+      "ResultPath": "$.heap0",
+      "Type": "Pass",
+    },
+    "hasNext__for(i in input.items)": Object {
+      "Choices": Array [
+        Object {
+          "IsPresent": true,
+          "Next": "i = undefined",
+          "Variable": "$.heap0[0]",
+        },
+      ],
+      "Default": "return null",
+      "Type": "Choice",
+    },
+    "i = undefined": Object {
+      "InputPath": "$.heap0[0].index",
+      "Next": "assignValue__i = undefined",
+      "ResultPath": "$.i",
+      "Type": "Pass",
+    },
+    "return null": Object {
+      "End": true,
+      "InputPath": "$.fnl_context.null",
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "tail__for(i in input.items)": Object {
+      "InputPath": "$.heap0[1:]",
+      "Next": "hasNext__for(i in input.items)",
+      "ResultPath": "$.heap0",
       "Type": "Pass",
     },
   },
@@ -3442,7 +3545,7 @@ Object {
       },
       "Next": "hasNext__for(i in input.items)",
       "Parameters": Object {
-        "index.$": "$$.Map.Item.Index",
+        "index.$": "States.Format('{}', $$.Map.Item.Index)",
         "item.$": "$$.Map.Item.Value",
       },
       "ResultPath": "$.heap0",
@@ -3456,6 +3559,12 @@ Object {
         "null": null,
       },
       "ResultPath": "$.fnl_context",
+      "Type": "Pass",
+    },
+    "assignValue__i = undefined": Object {
+      "InputPath": "$.heap0[0].item",
+      "Next": "if(input.items[i] == \\"1\\")",
+      "ResultPath": "$.0__i",
       "Type": "Pass",
     },
     "for(i in input.items)": Object {
@@ -3474,7 +3583,7 @@ Object {
       "Choices": Array [
         Object {
           "IsPresent": true,
-          "Next": "input.items",
+          "Next": "i = undefined",
           "Variable": "$.heap0[0]",
         },
       ],
@@ -3485,12 +3594,24 @@ Object {
       "Choices": Array [
         Object {
           "IsPresent": true,
-          "Next": "input.items 1",
+          "Next": "i = undefined 1",
           "Variable": "$.heap1[0]",
         },
       ],
       "Default": "return \\"end\\"",
       "Type": "Choice",
+    },
+    "i = undefined": Object {
+      "InputPath": "$.heap0[0].index",
+      "Next": "assignValue__i = undefined",
+      "ResultPath": "$.i",
+      "Type": "Pass",
+    },
+    "i = undefined 1": Object {
+      "InputPath": "$.heap1[0]",
+      "Next": "if(i == \\"1\\")",
+      "ResultPath": "$.i",
+      "Type": "Pass",
     },
     "if(i == \\"1\\")": Object {
       "Choices": Array [
@@ -3525,17 +3646,17 @@ Object {
           "And": Array [
             Object {
               "IsPresent": true,
-              "Variable": "$.i.item",
+              "Variable": "$.0__i",
             },
             Object {
               "And": Array [
                 Object {
                   "IsString": true,
-                  "Variable": "$.i.item",
+                  "Variable": "$.0__i",
                 },
                 Object {
                   "StringEquals": "1",
-                  "Variable": "$.i.item",
+                  "Variable": "$.0__i",
                 },
               ],
             },
@@ -3545,18 +3666,6 @@ Object {
       ],
       "Default": "return input.items[i]",
       "Type": "Choice",
-    },
-    "input.items": Object {
-      "InputPath": "$.heap0[0]",
-      "Next": "if(input.items[i] == \\"1\\")",
-      "ResultPath": "$.i",
-      "Type": "Pass",
-    },
-    "input.items 1": Object {
-      "InputPath": "$.heap1[0]",
-      "Next": "if(i == \\"1\\")",
-      "ResultPath": "$.i",
-      "Type": "Pass",
     },
     "return \\"end\\"": Object {
       "End": true,
@@ -3572,7 +3681,7 @@ Object {
     },
     "return input.items[i]": Object {
       "End": true,
-      "InputPath": "$.i.item",
+      "InputPath": "$.0__i",
       "ResultPath": "$",
       "Type": "Pass",
     },
@@ -3610,7 +3719,7 @@ Object {
       },
       "Next": "hasNext__for(i in input.items)",
       "Parameters": Object {
-        "index.$": "$$.Map.Item.Index",
+        "index.$": "States.Format('{}', $$.Map.Item.Index)",
         "item.$": "$$.Map.Item.Value",
       },
       "ResultPath": "$.heap0",
@@ -3627,9 +3736,15 @@ Object {
       "Type": "Pass",
     },
     "a = items[i]": Object {
-      "InputPath": "$.i.item",
+      "InputPath": "$.0__i",
       "Next": "tail__for(i in input.items)",
       "ResultPath": "$.a",
+      "Type": "Pass",
+    },
+    "assignValue__i": Object {
+      "InputPath": "$.heap0[0].item",
+      "Next": "a = items[i]",
+      "ResultPath": "$.0__i",
       "Type": "Pass",
     },
     "for(i in input.items)": Object {
@@ -3642,16 +3757,16 @@ Object {
       "Choices": Array [
         Object {
           "IsPresent": true,
-          "Next": "input.items",
+          "Next": "i",
           "Variable": "$.heap0[0]",
         },
       ],
       "Default": "return null",
       "Type": "Choice",
     },
-    "input.items": Object {
-      "InputPath": "$.heap0[0]",
-      "Next": "a = items[i]",
+    "i": Object {
+      "InputPath": "$.heap0[0].index",
+      "Next": "assignValue__i",
       "ResultPath": "$.i",
       "Type": "Pass",
     },
@@ -3689,7 +3804,7 @@ Object {
       },
       "Next": "hasNext__for(i in input.items)",
       "Parameters": Object {
-        "index.$": "$$.Map.Item.Index",
+        "index.$": "States.Format('{}', $$.Map.Item.Index)",
         "item.$": "$$.Map.Item.Value",
       },
       "ResultPath": "$.heap0",
@@ -3703,6 +3818,12 @@ Object {
         "null": null,
       },
       "ResultPath": "$.fnl_context",
+      "Type": "Pass",
+    },
+    "assignValue__i = undefined": Object {
+      "InputPath": "$.heap0[0].item",
+      "Next": "if(input.items[i] == \\"1\\")",
+      "ResultPath": "$.0__i",
       "Type": "Pass",
     },
     "for(i in input.items)": Object {
@@ -3721,7 +3842,7 @@ Object {
       "Choices": Array [
         Object {
           "IsPresent": true,
-          "Next": "input.items",
+          "Next": "i = undefined",
           "Variable": "$.heap0[0]",
         },
       ],
@@ -3732,12 +3853,24 @@ Object {
       "Choices": Array [
         Object {
           "IsPresent": true,
-          "Next": "input.items 1",
+          "Next": "i = undefined 1",
           "Variable": "$.heap1[0]",
         },
       ],
       "Default": "return \\"end\\"",
       "Type": "Choice",
+    },
+    "i = undefined": Object {
+      "InputPath": "$.heap0[0].index",
+      "Next": "assignValue__i = undefined",
+      "ResultPath": "$.i",
+      "Type": "Pass",
+    },
+    "i = undefined 1": Object {
+      "InputPath": "$.heap1[0]",
+      "Next": "if(i == \\"1\\")",
+      "ResultPath": "$.i",
+      "Type": "Pass",
     },
     "if(i == \\"1\\")": Object {
       "Choices": Array [
@@ -3772,17 +3905,17 @@ Object {
           "And": Array [
             Object {
               "IsPresent": true,
-              "Variable": "$.i.item",
+              "Variable": "$.0__i",
             },
             Object {
               "And": Array [
                 Object {
                   "IsString": true,
-                  "Variable": "$.i.item",
+                  "Variable": "$.0__i",
                 },
                 Object {
                   "StringEquals": "1",
-                  "Variable": "$.i.item",
+                  "Variable": "$.0__i",
                 },
               ],
             },
@@ -3792,18 +3925,6 @@ Object {
       ],
       "Default": "tail__for(i in input.items)",
       "Type": "Choice",
-    },
-    "input.items": Object {
-      "InputPath": "$.heap0[0]",
-      "Next": "if(input.items[i] == \\"1\\")",
-      "ResultPath": "$.i",
-      "Type": "Pass",
-    },
-    "input.items 1": Object {
-      "InputPath": "$.heap1[0]",
-      "Next": "if(i == \\"1\\")",
-      "ResultPath": "$.i",
-      "Type": "Pass",
     },
     "return \\"end\\"": Object {
       "End": true,
@@ -3819,7 +3940,7 @@ Object {
     },
     "return input.items[i]": Object {
       "End": true,
-      "InputPath": "$.i.item",
+      "InputPath": "$.0__i",
       "ResultPath": "$",
       "Type": "Pass",
     },
@@ -3833,6 +3954,30 @@ Object {
       "InputPath": "$.heap1[1:]",
       "Next": "hasNext__for(i of input.items)",
       "ResultPath": "$.heap1",
+      "Type": "Pass",
+    },
+  },
+}
+`;
+
+exports[`for(;;) empty 1`] = `
+Object {
+  "StartAt": "Initialize Functionless Context",
+  "States": Object {
+    "Initialize Functionless Context": Object {
+      "Next": "return null",
+      "OutputPath": "$",
+      "Parameters": Object {
+        "input.$": "$",
+        "null": null,
+      },
+      "ResultPath": "$.fnl_context",
+      "Type": "Pass",
+    },
+    "return null": Object {
+      "End": true,
+      "InputPath": "$.fnl_context.null",
+      "ResultPath": "$",
       "Type": "Pass",
     },
   },
@@ -3872,7 +4017,7 @@ Object {
     },
     "1__i = if(i == 0)": Object {
       "InputPath": "$.heap2",
-      "Next": "return null",
+      "Next": "1__for(i;i < 3;i = if(i == 0))",
       "ResultPath": "$.i",
       "Type": "Pass",
     },
@@ -3987,6 +4132,204 @@ Object {
 }
 `;
 
+exports[`for(;;) loop complex 1`] = `
+Object {
+  "StartAt": "Initialize Functionless Context",
+  "States": Object {
+    "2__for(i,j;i[0];i = i.slice(1) , j = j.slice(1))": Object {
+      "Choices": Array [
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.i[0]",
+            },
+            Object {
+              "IsNull": false,
+              "Variable": "$.i[0]",
+            },
+            Object {
+              "Or": Array [
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsString": true,
+                      "Variable": "$.i[0]",
+                    },
+                    Object {
+                      "Not": Object {
+                        "And": Array [
+                          Object {
+                            "IsString": true,
+                            "Variable": "$.i[0]",
+                          },
+                          Object {
+                            "StringEquals": "",
+                            "Variable": "$.i[0]",
+                          },
+                        ],
+                      },
+                    },
+                  ],
+                },
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsNumeric": true,
+                      "Variable": "$.i[0]",
+                    },
+                    Object {
+                      "Not": Object {
+                        "And": Array [
+                          Object {
+                            "IsNumeric": true,
+                            "Variable": "$.i[0]",
+                          },
+                          Object {
+                            "NumericEquals": 0,
+                            "Variable": "$.i[0]",
+                          },
+                        ],
+                      },
+                    },
+                  ],
+                },
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsBoolean": true,
+                      "Variable": "$.i[0]",
+                    },
+                    Object {
+                      "BooleanEquals": true,
+                      "Variable": "$.i[0]",
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+          "Next": "await task({i: i, j: j})",
+        },
+      ],
+      "Default": "return null",
+      "Type": "Choice",
+    },
+    "Initialize Functionless Context": Object {
+      "Next": "for(i,j;i[0];i = i.slice(1) , j = j.slice(1))",
+      "OutputPath": "$",
+      "Parameters": Object {
+        "input.$": "$",
+        "null": null,
+      },
+      "ResultPath": "$.fnl_context",
+      "Type": "Pass",
+    },
+    "[3, 4]": Object {
+      "Next": "2__for(i,j;i[0];i = i.slice(1) , j = j.slice(1))",
+      "Result": Array [
+        3,
+        4,
+      ],
+      "ResultPath": "$.j",
+      "Type": "Pass",
+    },
+    "await task({i: i, j: j})": Object {
+      "Next": "i = i.slice(1) , j = j.slice(1)",
+      "Parameters": Object {
+        "i.$": "$.i",
+        "j.$": "$.j",
+      },
+      "Resource": "__REPLACED_TOKEN",
+      "ResultPath": "$.heap0",
+      "Type": "Task",
+    },
+    "for(i,j;i[0];i = i.slice(1) , j = j.slice(1))": Object {
+      "Next": "[3, 4]",
+      "Result": Array [
+        1,
+        2,
+      ],
+      "ResultPath": "$.i",
+      "Type": "Pass",
+    },
+    "i = i.slice(1) , j = j.slice(1)": Object {
+      "InputPath": "$.i[1:]",
+      "Next": "j = j.slice(1)",
+      "ResultPath": "$.i",
+      "Type": "Pass",
+    },
+    "j = j.slice(1)": Object {
+      "InputPath": "$.j[1:]",
+      "Next": "2__for(i,j;i[0];i = i.slice(1) , j = j.slice(1))",
+      "ResultPath": "$.j",
+      "Type": "Pass",
+    },
+    "return null": Object {
+      "End": true,
+      "InputPath": "$.fnl_context.null",
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+  },
+}
+`;
+
+exports[`for(;;) loop empty body 1`] = `
+Object {
+  "StartAt": "Initialize Functionless Context",
+  "States": Object {
+    "Initialize Functionless Context": Object {
+      "Next": "return null",
+      "OutputPath": "$",
+      "Parameters": Object {
+        "input.$": "$",
+        "null": null,
+      },
+      "ResultPath": "$.fnl_context",
+      "Type": "Pass",
+    },
+    "return null": Object {
+      "End": true,
+      "InputPath": "$.fnl_context.null",
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+  },
+}
+`;
+
+exports[`for(;;) no statement 1`] = `
+Object {
+  "StartAt": "Initialize Functionless Context",
+  "States": Object {
+    "Initialize Functionless Context": Object {
+      "Next": "await task()",
+      "OutputPath": "$",
+      "Parameters": Object {
+        "input.$": "$",
+        "null": null,
+      },
+      "ResultPath": "$.fnl_context",
+      "Type": "Pass",
+    },
+    "await task()": Object {
+      "InputPath": "$.fnl_context.null",
+      "Next": "return null",
+      "Resource": "__REPLACED_TOKEN",
+      "ResultPath": "$.heap0",
+      "Type": "Task",
+    },
+    "return null": Object {
+      "End": true,
+      "InputPath": "$.fnl_context.null",
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+  },
+}
+`;
+
 exports[`for-in-loop variable initializer 1`] = `
 Object {
   "StartAt": "Initialize Functionless Context",
@@ -4011,18 +4354,12 @@ Object {
       "Choices": Array [
         Object {
           "IsPresent": true,
-          "Next": "input.items",
+          "Next": "x",
           "Variable": "$.heap0[0]",
         },
       ],
       "Default": "return undefined",
       "Type": "Choice",
-    },
-    "input.items": Object {
-      "InputPath": "$.heap0[0]",
-      "Next": "return x",
-      "ResultPath": "$.x",
-      "Type": "Pass",
     },
     "return undefined": Object {
       "End": true,
@@ -4033,6 +4370,12 @@ Object {
       "End": true,
       "InputPath": "$.x",
       "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "x": Object {
+      "InputPath": "$.heap0[0]",
+      "Next": "return x",
+      "ResultPath": "$.x",
       "Type": "Pass",
     },
   },
@@ -4069,14 +4412,14 @@ Object {
       "Choices": Array [
         Object {
           "IsPresent": true,
-          "Next": "input.items",
+          "Next": "item = undefined",
           "Variable": "$.heap0[0]",
         },
       ],
       "Default": "return null",
       "Type": "Choice",
     },
-    "input.items": Object {
+    "item = undefined": Object {
       "InputPath": "$.heap0[0]",
       "Next": "a = item",
       "ResultPath": "$.item",
@@ -4112,12 +4455,6 @@ Object {
       "ResultPath": "$.fnl_context",
       "Type": "Pass",
     },
-    "[1, 2, 3]": Object {
-      "InputPath": "$.heap0[0]",
-      "Next": "a = item",
-      "ResultPath": "$.item",
-      "Type": "Pass",
-    },
     "a = item": Object {
       "InputPath": "$.item",
       "Next": "tail__for(item of [1, 2, 3])",
@@ -4138,12 +4475,18 @@ Object {
       "Choices": Array [
         Object {
           "IsPresent": true,
-          "Next": "[1, 2, 3]",
+          "Next": "item = undefined",
           "Variable": "$.heap0[0]",
         },
       ],
       "Default": "return null",
       "Type": "Choice",
+    },
+    "item = undefined": Object {
+      "InputPath": "$.heap0[0]",
+      "Next": "a = item",
+      "ResultPath": "$.item",
+      "Type": "Pass",
     },
     "return null": Object {
       "End": true,
@@ -4195,14 +4538,14 @@ Object {
       "Choices": Array [
         Object {
           "IsPresent": true,
-          "Next": "people",
+          "Next": "name = undefined",
           "Variable": "$.heap1[0]",
         },
       ],
       "Default": "return null",
       "Type": "Choice",
     },
-    "people": Object {
+    "name = undefined": Object {
       "InputPath": "$.heap1[0]",
       "Next": "await computeScore({id: input.id, name: name})",
       "ResultPath": "$.name",
@@ -4316,14 +4659,14 @@ Object {
       "Choices": Array [
         Object {
           "IsPresent": true,
-          "Next": "input.items",
+          "Next": "item = undefined",
           "Variable": "$.heap2[0]",
         },
       ],
       "Default": "return null",
       "Type": "Choice",
     },
-    "input.items": Object {
+    "item = undefined": Object {
       "InputPath": "$.heap2[0]",
       "Next": "try",
       "ResultPath": "$.item",
@@ -4392,7 +4735,7 @@ Object {
       },
       "Next": "hasNext__for(x in input.items)",
       "Parameters": Object {
-        "index.$": "$$.Map.Item.Index",
+        "index.$": "States.Format('{}', $$.Map.Item.Index)",
         "item.$": "$$.Map.Item.Value",
       },
       "ResultPath": "$.heap0",
@@ -4408,6 +4751,12 @@ Object {
       "ResultPath": "$.fnl_context",
       "Type": "Pass",
     },
+    "assignValue__x": Object {
+      "InputPath": "$.heap0[0].item",
+      "Next": "return x",
+      "ResultPath": "$.0__x",
+      "Type": "Pass",
+    },
     "for(x in input.items)": Object {
       "InputPath": "$.fnl_context.input.items",
       "Next": "1__for(x in input.items)",
@@ -4418,18 +4767,12 @@ Object {
       "Choices": Array [
         Object {
           "IsPresent": true,
-          "Next": "input.items",
+          "Next": "x",
           "Variable": "$.heap0[0]",
         },
       ],
       "Default": "return undefined",
       "Type": "Choice",
-    },
-    "input.items": Object {
-      "InputPath": "$.heap0[0]",
-      "Next": "return x",
-      "ResultPath": "$.x",
-      "Type": "Pass",
     },
     "return undefined": Object {
       "End": true,
@@ -4440,6 +4783,12 @@ Object {
       "End": true,
       "InputPath": "$.x",
       "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "x": Object {
+      "InputPath": "$.heap0[0].index",
+      "Next": "assignValue__x",
+      "ResultPath": "$.x",
       "Type": "Pass",
     },
   },
@@ -9364,14 +9713,14 @@ Object {
       "Choices": Array [
         Object {
           "IsPresent": true,
-          "Next": "input.items",
+          "Next": "item = undefined",
           "Variable": "$.heap0[0]",
         },
       ],
       "Default": "return null",
       "Type": "Choice",
     },
-    "input.items": Object {
+    "item = undefined": Object {
       "InputPath": "$.heap0[0]",
       "Next": "throw new Error(\\"err\\")",
       "ResultPath": "$.item",
@@ -9651,14 +10000,14 @@ Object {
       "Choices": Array [
         Object {
           "IsPresent": true,
-          "Next": "input.items",
+          "Next": "item = undefined",
           "Variable": "$.heap1[0]",
         },
       ],
       "Default": "finally",
       "Type": "Choice",
     },
-    "input.items": Object {
+    "item = undefined": Object {
       "InputPath": "$.heap1[0]",
       "Next": "await task(item)",
       "ResultPath": "$.item",
@@ -11704,14 +12053,14 @@ Object {
       "Choices": Array [
         Object {
           "IsPresent": true,
-          "Next": "input.items",
+          "Next": "item = undefined",
           "Variable": "$.heap0[0]",
         },
       ],
       "Default": "return null",
       "Type": "Choice",
     },
-    "input.items": Object {
+    "item = undefined": Object {
       "InputPath": "$.heap0[0]",
       "Next": "throw Error(\\"err\\")",
       "ResultPath": "$.item",
@@ -11765,14 +12114,14 @@ Object {
       "Choices": Array [
         Object {
           "IsPresent": true,
-          "Next": "input.items",
+          "Next": "item = undefined",
           "Variable": "$.heap0[0]",
         },
       ],
       "Default": "return null",
       "Type": "Choice",
     },
-    "input.items": Object {
+    "item = undefined": Object {
       "InputPath": "$.heap0[0]",
       "Next": "throw new Error(\\"err\\")",
       "ResultPath": "$.item",
@@ -11826,14 +12175,14 @@ Object {
       "Choices": Array [
         Object {
           "IsPresent": true,
-          "Next": "input.items",
+          "Next": "item = undefined",
           "Variable": "$.heap0[0]",
         },
       ],
       "Default": "return null",
       "Type": "Choice",
     },
-    "input.items": Object {
+    "item = undefined": Object {
       "InputPath": "$.heap0[0]",
       "Next": "throw new Error(\\"err\\")",
       "ResultPath": "$.item",

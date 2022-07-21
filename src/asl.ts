@@ -8,6 +8,7 @@ import {
   CallExpr,
   ElementAccessExpr,
   Expr,
+  Identifier,
   NullLiteralExpr,
   PropAccessExpr,
 } from "./expression";
@@ -67,6 +68,7 @@ import {
   isErr,
   isNode,
   isForStmt,
+  isVariableList,
 } from "./guards";
 import {
   Integration,
@@ -597,7 +599,7 @@ export class ASL {
       );
     } else if (isBreakStmt(stmt) || isContinueStmt(stmt)) {
       const loop = stmt.findParent(
-        anyOf(isForOfStmt, isForInStmt, isWhileStmt, isDoStmt)
+        anyOf(isForOfStmt, isForInStmt, isForStmt, isWhileStmt, isDoStmt)
       );
       if (loop === undefined) {
         throw new Error("Stack Underflow");
@@ -664,7 +666,8 @@ export class ASL {
               Type: "Map" as const,
               InputPath: tempArrayPath,
               Parameters: {
-                "index.$": "$$.Map.Item.Index",
+                // in javascript, for(const i in arr) returns string indices (i)
+                "index.$": "States.Format('{}', $$.Map.Item.Index)",
                 "item.$": "$$.Map.Item.Value",
               },
               Iterator: this.aslGraphToStates({
@@ -689,15 +692,40 @@ export class ASL {
               ],
               Default: "exit",
             },
-            assign: {
-              Type: "Pass",
-              node: stmt.expr,
-              // in a forIn, the variable is the index, we will rewrite `var` to `$.{var}.index`
-              // `arr[var]` is rewritten to `$.{var}.item`
-              InputPath: `${tempArrayPath}[0]`,
-              ResultPath: `$.${stmt.variableDecl.name}`,
-              Next: "body",
-            },
+            /**
+             * Assign the index to $.[variableName].
+             * When the loop.variableDecl is an {@link Identifier} (not {@link VariableStmt}), the variable may be used after the for loop.
+             */
+            assign: isForOfStmt(stmt)
+              ? {
+                  Type: "Pass",
+                  node: stmt.variableDecl,
+                  InputPath: `${tempArrayPath}[0]`,
+                  ResultPath: `$.${stmt.variableDecl.name}`,
+                  Next: "body",
+                }
+              : /**ForInStmt
+                 * Assign the value to $.0__[variableName].
+                 * Assign the index to the variable decl. If the variable decl is an identifier, it may be carried beyond the ForIn.
+                 */
+                {
+                  startState: "assignIndex",
+                  node: stmt.variableDecl,
+                  states: {
+                    assignIndex: {
+                      Type: "Pass",
+                      InputPath: `${tempArrayPath}[0].index`,
+                      ResultPath: `$.${stmt.variableDecl.name}`,
+                      Next: "assignValue",
+                    },
+                    assignValue: {
+                      Type: "Pass",
+                      InputPath: `${tempArrayPath}[0].item`,
+                      ResultPath: `$.0__${stmt.variableDecl.name}`,
+                      Next: "body",
+                    },
+                  },
+                },
             // any ASLGraph.DeferNext (or empty) should be wired to exit
             body: ASLGraph.updateDeferredNextStates({ Next: "tail" }, body),
             // tail the array
@@ -736,11 +764,11 @@ export class ASL {
       }
 
       return this.evalContextToSubState(stmt, (evalExpr) => {
-        const initializer = stmt.variableDecl
-          ? isVariableStmt(stmt.variableDecl)
-            ? this.evalStmt(stmt.variableDecl)
-            : evalExpr(stmt.variableDecl)
-          : undefined;
+        const initializers = stmt.variableDecl
+          ? isVariableList(stmt.variableDecl)
+            ? stmt.variableDecl.decls.map((x) => this.evalStmt(x))
+            : [evalExpr(stmt.variableDecl)]
+          : [undefined];
 
         const [cond, condStates] = stmt.condition
           ? this.toCondition(stmt.condition)
@@ -755,7 +783,7 @@ export class ASL {
             : { Type: "Pass" as const };
 
         // run optional initializer
-        return ASLGraph.joinSubStates(stmt, initializer, {
+        return ASLGraph.joinSubStates(stmt, ...initializers, {
           startState: "check",
           states: {
             // check the condition (or do nothing)
@@ -769,17 +797,30 @@ export class ASL {
                     Default: "exit",
                   })!
                 : // no condition, for loop will require an explicit exit
-                  { Type: "Pass" as const },
+                  { Type: "Pass" as const, Next: "body" },
             // then run the body
             body: ASLGraph.updateDeferredNextStates(
               { Next: "increment" },
               body
             ),
             // then increment (or do nothing)
-            increment: incrementState,
+            increment: ASLGraph.updateDeferredNextStates(
+              { Next: "check" },
+              incrementState
+            ),
             // return back to check
             // TODO: clean up?
             exit: { Type: "Pass" },
+            [ASL.ContinueNext]: {
+              Type: "Pass",
+              Next: "check",
+              node: new ContinueStmt(),
+            },
+            [ASL.BreakNext]: {
+              Type: "Pass",
+              Next: "exit",
+              node: new BreakStmt(),
+            },
           },
         })!;
       });
@@ -1556,9 +1597,6 @@ export class ASL {
         // This logic needs to be updated to support destructured inputs: https://github.com/functionless/functionless/issues/68
         if (ref && isParameterDecl(ref) && isFunctionDecl(ref.parent)) {
           return { jsonPath: this.context.input };
-        } else if (ref && isVariableStmt(ref) && isForInStmt(ref.parent)) {
-          // the array element for ForIn is enumerated into `{ index: number, item: T}`
-          return { jsonPath: `$.${expr.name}.index` };
         }
         return { jsonPath: `$.${expr.name}` };
       } else if (isPropAccessExpr(expr)) {
@@ -1780,6 +1818,13 @@ export class ASL {
             ),
             output: left,
           };
+        });
+      } else if (expr.op === ",") {
+        return this.evalContext(expr, (evalExpr) => {
+          // eval left and discard the result
+          evalExpr(expr.left);
+          // eval right and return the result
+          return evalExpr(expr.right);
         });
       } else if (
         expr.op === "+" ||
@@ -2521,15 +2566,20 @@ export class ASL {
     if (isIdentifier(access.element)) {
       const element = access.element.lookup();
       if (
-        isVariableStmt(element) &&
-        isForInStmt(element.parent) &&
         access.findParent(
           (parent): parent is ForInStmt =>
-            isForInStmt(parent) && parent === element.parent
+            isForInStmt(parent) &&
+            // find the first forin parent which has an identifier with this name
+            parent.variableDecl.name === (<Identifier>access.element).name &&
+            // if the variable decl is an identifier, it will have the same initializer.
+            ((isIdentifier(parent.variableDecl) &&
+              element === parent.variableDecl.lookup()) ||
+              // if the variable decl is an variable stmt, it will be the initializer of the element.
+              element === parent.variableDecl)
         )
       ) {
-        // the array element is enumerated into `{ index: number, item: T}`
-        return { jsonPath: `$.${element.name}.item` };
+        // the array element is assigned to $.0__[name]
+        return { jsonPath: `$.0__${access.element.name}` };
       }
     }
 
@@ -2684,6 +2734,11 @@ export class ASL {
             } else {
               return ASL.isPresent(accessed.jsonPath);
             }
+          } else if (expr.op === ",") {
+            // eval left and discard the result
+            localEval(expr.left);
+            // eval right to a condition and return
+            return localToCondition(expr.right);
           } else if (
             expr.op === "+" ||
             expr.op === "-" ||
@@ -3863,8 +3918,8 @@ function toStateName(node: FunctionlessNode): string {
     } else if (isForStmt(node)) {
       // for(;;)
       return `for(${
-        node.variableDecl && isVariableStmt(node.variableDecl)
-          ? node.variableDecl.name
+        node.variableDecl && isVariableList(node.variableDecl)
+          ? inner(node.variableDecl)
           : exprToString(node.variableDecl)
       };${exprToString(node.condition)};${exprToString(node.incrementor)})`;
     } else if (isReturnStmt(node)) {
@@ -3904,6 +3959,8 @@ function toStateName(node: FunctionlessNode): string {
       return isBindingPattern(node.name) ? inner(node.name) : node.name;
     } else if (isErr(node)) {
       throw node.error;
+    } else if (isVariableList(node)) {
+      return `${node.decls.map((v) => v.name).join(",")}`;
     } else {
       return assertNever(node);
     }

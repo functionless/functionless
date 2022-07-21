@@ -139,6 +139,8 @@ export const isArrayBinding = typeGuard("ArrayBinding");
 export const isBindingPattern = (a: any): a is BindingPattern =>
   isNode(a) && (isObjectBinding(a) || isArrayBinding(a));
 
+export const isVariableList = typeGuard("VariableList");
+
 // generates type guards
 export function typeGuard<Kind extends FunctionlessNode["kind"]>(
   ...kinds: Kind[]

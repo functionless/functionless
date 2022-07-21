@@ -92,6 +92,7 @@ import {
   isWhileStmt,
   isElementAccessExpr,
   isForStmt,
+  isVariableList,
 } from "./guards";
 import { FunctionlessNode } from "./node";
 
@@ -111,6 +112,7 @@ import {
   Stmt,
   ThrowStmt,
   TryStmt,
+  VariableList,
   VariableStmt,
   WhileStmt,
 } from "./statement";
@@ -276,7 +278,7 @@ export function visitEachChild<T extends FunctionlessNode>(
     ensure(
       variableDecl,
       anyOf(isVariableStmt, isIdentifier),
-      `Initializer in ${node.kind} must be a VariableDecl or Identifier`
+      `Initializer in ${node.kind} must be a VariableStmt or Identifier`
     );
 
     const expr = visitor(node.expr);
@@ -294,19 +296,27 @@ export function visitEachChild<T extends FunctionlessNode>(
     const variableDecl = node.variableDecl
       ? visitor(node.variableDecl)
       : undefined;
-    ensure(
-      variableDecl,
-      anyOf(isVariableStmt, isExpr),
-      `Initializer in ForStmt must be a VariableDecl or Expr`
-    );
+    variableDecl &&
+      ensure(
+        variableDecl,
+        anyOf(isVariableList, isExpr),
+        `Initializer in ForStmt must be a VariableList or Expr`
+      );
     const condition = node.condition ? visitor(node.condition) : undefined;
-    ensure(condition, isExpr, `Condition in ForStmt must be an Expr`);
+    condition &&
+      ensure(condition, isExpr, `Condition in ForStmt must be an Expr`);
     const incrementor = node.incrementor
       ? visitor(node.incrementor)
       : undefined;
-    ensure(incrementor, isExpr, `Incrementor in ForStmt must be an Expr`);
+    incrementor &&
+      ensure(incrementor, isExpr, `Incrementor in ForStmt must be an Expr`);
 
-    return new ForStmt(body, variableDecl, condition, incrementor) as T;
+    return new ForStmt(
+      body,
+      variableDecl as VariableList | Expr,
+      condition as Expr,
+      incrementor as Expr
+    ) as T;
   } else if (isFunctionDecl(node) || isFunctionExpr(node)) {
     const parameters = node.parameters.reduce(
       (params: ParameterDecl[], parameter) => {
@@ -556,6 +566,14 @@ export function visitEachChild<T extends FunctionlessNode>(
     } else {
       return new ArrayBinding(bindings as ArrayBinding["bindings"]) as T;
     }
+  } else if (isVariableList(node)) {
+    const variables = node.decls.map(visitor);
+    ensureItemOf(
+      variables,
+      isVariableStmt,
+      "Variables in a VariableList must be of type VariableStmt"
+    );
+    return new VariableList(variables) as T;
   }
   return assertNever(node);
 }
