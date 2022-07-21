@@ -61,7 +61,7 @@ export function compile(
       }
 
       const functionlessContext = {
-        requireFunctionless: false,
+        requireFunctionless: true,
         get functionless() {
           this.requireFunctionless = true;
           return functionless;
@@ -83,7 +83,7 @@ export function compile(
         (stmt) => visitor(stmt) as ts.Statement
       );
 
-      return ts.factory.updateSourceFile(
+      const updatedSourceFile = ts.factory.updateSourceFile(
         sf,
         [
           // only require functionless if it is used.
@@ -98,6 +98,20 @@ export function compile(
         sf.hasNoDefaultLib,
         sf.libReferenceDirectives
       );
+
+      /**
+       * Forces the source file to update the external module indicator.
+       * This is important when we add new imports to files without imports.
+       */
+
+      // @ts-ignore
+      !updatedSourceFile.externalModuleIndicator &&
+        // @ts-ignore
+        updatedSourceFile.setExternalModuleIndicator &&
+        // @ts-ignore
+        updatedSourceFile.setExternalModuleIndicator(updatedSourceFile);
+
+      return updatedSourceFile;
 
       function visitor(node: ts.Node): ts.Node | ts.Node[] {
         const visit = () => {
