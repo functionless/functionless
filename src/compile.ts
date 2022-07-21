@@ -61,7 +61,7 @@ export function compile(
       }
 
       const functionlessContext = {
-        requireFunctionless: true,
+        requireFunctionless: false,
         get functionless() {
           this.requireFunctionless = true;
           return functionless;
