@@ -32,7 +32,6 @@ import {
   NewExpr,
   NullLiteralExpr,
   NumberLiteralExpr,
-  ObjectElementExpr,
   ObjectLiteralExpr,
   PostfixUnaryExpr,
   PrivateIdentifier,
@@ -181,20 +180,13 @@ export function visitEachChild<T extends FunctionlessNode>(
     return new Argument(expr, node.name) as T;
   } else if (isArrayLiteralExpr(node)) {
     return new ArrayLiteralExpr(
-      node.items.reduce((items: Expr[], item) => {
-        let result = visitor(item);
-        if (Array.isArray(result)) {
-          result = flatten(result);
-          ensureItemOf(
-            result,
-            isExpr,
-            "Items of an ArrayLiteralExpr must be Expr nodes"
-          );
-          return items.concat(result as Expr[]);
-        } else {
-          return [...items, result] as any;
-        }
-      }, [])
+      node.items.flatMap((item) =>
+        ensureSingleOrArray(
+          visitor(item),
+          isExpr,
+          "Items of an ArrayLiteralExpr must be Expr nodes"
+        )
+      )
     ) as T;
   } else if (isBinaryExpr(node)) {
     const left = visitor(node.left);
@@ -208,24 +200,13 @@ export function visitEachChild<T extends FunctionlessNode>(
     }
   } else if (isBlockStmt(node)) {
     return new BlockStmt(
-      node.statements.reduce((stmts: Stmt[], stmt) => {
-        let result = visitor(stmt);
-        if (Array.isArray(result)) {
-          result = flatten(result);
-          ensureItemOf(
-            result,
-            isStmt,
-            "Statements in BlockStmt must be Stmt nodes"
-          );
-          return stmts.concat(result);
-        } else if (isStmt(result)) {
-          return [...stmts, result];
-        } else {
-          throw new Error(
-            "visitEachChild of a BlockStmt's child statements must return a Stmt"
-          );
-        }
-      }, [])
+      node.statements.flatMap((stmt) =>
+        ensureSingleOrArray(
+          visitor(stmt),
+          isStmt,
+          "Statements in BlockStmt must be Stmt nodes"
+        )
+      )
     ) as T;
   } else if (isBooleanLiteralExpr(node)) {
     return new BooleanLiteralExpr(node.value) as T;
@@ -270,33 +251,27 @@ export function visitEachChild<T extends FunctionlessNode>(
 
     return new CatchClause(variableDecl, block) as T;
   } else if (isClassDecl(node) || isClassExpr(node)) {
-    const heritage = node.heritage ? visitor(node.heritage) : undefined;
+    let heritage;
 
-    ensure(
-      heritage,
-      isExpr,
-      `A ${node.kind}'s Heritage Clause must be an Expr`
-    );
+    if (node.heritage) {
+      heritage = visitor(node.heritage);
+      if (heritage) {
+        ensure(
+          heritage,
+          isExpr,
+          `A ${node.kind}'s Heritage Clause must be an Expr`
+        );
+      }
+    }
 
     const classMembers = node.members.flatMap((classMember) => {
       let updatedMember = visitor(classMember);
 
-      if (Array.isArray(updatedMember)) {
-        updatedMember = flatten(updatedMember);
-        ensureItemOf(
-          updatedMember,
-          isClassMember,
-          "A ClassDecl's ClassMembers must be ClassMember declarations"
-        );
-        return updatedMember;
-      } else {
-        ensure(
-          updatedMember,
-          isClassMember,
-          "A ClassDecl's ClassMembers must be ClassMember declarations"
-        );
-        return [updatedMember];
-      }
+      return ensureSingleOrArray(
+        updatedMember,
+        isClassMember,
+        "A ClassDecl's ClassMembers must be ClassMember declarations"
+      );
     });
 
     if (isClassDecl(node)) {
@@ -404,27 +379,12 @@ export function visitEachChild<T extends FunctionlessNode>(
     isMethodDecl(node) ||
     isConstructorDecl(node)
   ) {
-    const parameters = node.parameters.reduce(
-      (params: ParameterDecl[], parameter) => {
-        let p = visitor(parameter);
-        if (Array.isArray(p)) {
-          p = flatten(p);
-          ensureItemOf(
-            p,
-            isParameterDecl,
-            `a ${node.kind}'s parameters must be ParameterDecl nodes`
-          );
-          return params.concat(p);
-        } else {
-          ensure(
-            p,
-            isParameterDecl,
-            `a ${node.kind}'s parameters must be ParameterDecl nodes`
-          );
-          return [...params, p];
-        }
-      },
-      []
+    const parameters = node.parameters.flatMap((parameter) =>
+      ensureSingleOrArray(
+        visitor(parameter),
+        isParameterDecl,
+        `a ${node.kind}'s parameters must be ParameterDecl nodes`
+      )
     );
 
     const body = visitBlockStmt(node.body, visitor);
@@ -462,25 +422,13 @@ export function visitEachChild<T extends FunctionlessNode>(
     return new NumberLiteralExpr(node.value) as T;
   } else if (isObjectLiteralExpr(node)) {
     return new ObjectLiteralExpr(
-      node.properties.reduce((props: ObjectElementExpr[], prop) => {
-        let p = visitor(prop);
-        if (Array.isArray(p)) {
-          p = flatten(p);
-          ensureItemOf(
-            p,
-            isObjectElementExpr,
-            "an ObjectLiteralExpr's properties must be ObjectElementExpr nodes"
-          );
-          return props.concat(p);
-        } else {
-          ensure(
-            p,
-            isObjectElementExpr,
-            "an ObjectLiteralExpr's properties must be ObjectElementExpr nodes"
-          );
-          return [...props, p];
-        }
-      }, [])
+      node.properties.flatMap((prop) =>
+        ensureSingleOrArray(
+          visitor(prop),
+          isObjectElementExpr,
+          "an ObjectLiteralExpr's properties must be ObjectElementExpr nodes"
+        )
+      )
     ) as T;
   } else if (isParameterDecl(node)) {
     return new ParameterDecl(node.name) as T;
@@ -543,27 +491,13 @@ export function visitEachChild<T extends FunctionlessNode>(
     return node.clone() as T;
   } else if (isTemplateExpr(node)) {
     return new TemplateExpr(
-      node.exprs.reduce((exprs: Expr[], expr) => {
-        let e = visitor(expr);
-        if (e === undefined) {
-          return exprs;
-        } else if (Array.isArray(e)) {
-          e = flatten(e);
-          ensureItemOf(
-            e,
-            isExpr,
-            "a TemplateExpr's expr property must only contain Expr node types"
-          );
-          return exprs.concat(e);
-        } else {
-          ensure(
-            e,
-            isExpr,
-            "a TemplateExpr's expr property must only contain Expr node types"
-          );
-          return [...exprs, e];
-        }
-      }, [])
+      node.exprs.flatMap((expr) =>
+        ensureSingleOrArray(
+          visitor(expr),
+          isExpr,
+          "a TemplateExpr's expr property must only contain Expr node types"
+        )
+      )
     ) as T;
   } else if (isThisExpr(node)) {
     return node.clone() as T;
@@ -698,24 +632,13 @@ export function visitEachChild<T extends FunctionlessNode>(
     ensure(stmt, isStmt, "LabelledStmt's stmt must be a Stmt");
     return new LabelledStmt(node.label, stmt) as T;
   } else if (isSwitchStmt(node)) {
-    const clauses = node.clauses.flatMap((clause) => {
-      const updatedClause = visitor(clause);
-      if (Array.isArray(updatedClause)) {
-        ensureItemOf(
-          updatedClause,
-          isSwitchClause,
-          "must be a CaseClause or DefaultClause"
-        );
-        return updatedClause;
-      } else {
-        ensure(
-          updatedClause,
-          isSwitchClause,
-          "must be a CaseClause or DefaultClause"
-        );
-        return [updatedClause];
-      }
-    });
+    const clauses = node.clauses.flatMap((clause) =>
+      ensureSingleOrArray(
+        visitor(clause),
+        isSwitchClause,
+        "must be a CaseClause or DefaultClause"
+      )
+    );
 
     const defaultClauses = clauses.filter(isDefaultClause);
     if (defaultClauses.length === 1) {
@@ -732,45 +655,23 @@ export function visitEachChild<T extends FunctionlessNode>(
   } else if (isCaseClause(node)) {
     const expr = visitor(node.expr);
     ensure(expr, isExpr, `the CaseClause's expr must be an Expr`);
-    const stmts = node.statements.flatMap((stmt) => {
-      const updatedStmt = visitor(stmt);
-      if (Array.isArray(updatedStmt)) {
-        ensureItemOf(
-          updatedStmt,
-          isStmt,
-          `expected all items in a CaseClause's statements to be Stmt nodes`
-        );
-        return updatedStmt;
-      } else {
-        ensure(
-          updatedStmt,
-          isStmt,
-          `expected all items in a CaseClause's statements to be Stmt nodes`
-        );
-        return [updatedStmt];
-      }
-    });
+    const stmts = node.statements.flatMap((stmt) =>
+      ensureSingleOrArray(
+        visitor(stmt),
+        isStmt,
+        `expected all items in a CaseClause's statements to be Stmt nodes`
+      )
+    );
 
     return new CaseClause(expr, stmts) as T;
   } else if (isDefaultClause(node)) {
-    const stmts = node.statements.flatMap((stmt) => {
-      const updatedStmt = visitor(stmt);
-      if (Array.isArray(updatedStmt)) {
-        ensureItemOf(
-          updatedStmt,
-          isStmt,
-          `expected all items in a DefaultClause's statements to be Stmt nodes`
-        );
-        return updatedStmt;
-      } else {
-        ensure(
-          updatedStmt,
-          isStmt,
-          `expected all items in a DefaultClause's statements to be Stmt nodes`
-        );
-        return [updatedStmt];
-      }
-    });
+    const stmts = node.statements.flatMap((stmt) =>
+      ensureSingleOrArray(
+        visitor(stmt),
+        isStmt,
+        `expected all items in a DefaultClause's statements to be Stmt nodes`
+      )
+    );
 
     return new DefaultClause(stmts) as T;
   } else if (isEmptyStmt(node)) {
@@ -829,6 +730,21 @@ export function visitBlock(
       ? updatedNode
       : [...nestedTasks, updatedNode];
   });
+}
+
+function ensureSingleOrArray<T>(
+  result: any,
+  assertion: (a: any) => a is T,
+  message: string
+): T[] {
+  if (Array.isArray(result)) {
+    result = result.flat();
+    ensureItemOf(result, assertion, message);
+    return result;
+  } else {
+    ensure(result, assertion, message);
+    return [result];
+  }
 }
 
 /**

@@ -1174,14 +1174,7 @@ export class ASL {
         };
       });
     } else if (isDebuggerStmt(stmt) || isEmptyStmt(stmt)) {
-      return {
-        startState: "pass",
-        states: {
-          pass: {
-            Type: "Pass",
-          },
-        },
-      };
+      return undefined;
     } else if (isLabelledStmt(stmt)) {
       return this.evalStmt(stmt.stmt);
     } else if (isWithStmt(stmt)) {
@@ -4205,7 +4198,10 @@ function toStateName(node: FunctionlessNode): string {
       isSwitchStmt(node) ||
       isWithStmt(node)
     ) {
-      throw new SynthError(ErrorCodes.Unsupported_Feature, "");
+      throw new SynthError(
+        ErrorCodes.Unsupported_Feature,
+        `Unsupported kind: ${node.kind}`
+      );
     } else {
       return assertNever(node);
     }
