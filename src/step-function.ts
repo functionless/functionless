@@ -282,20 +282,8 @@ export namespace $SFN {
       throw new Error("missing argument 'array'");
     }
 
-    return context.evalExpr(array, call, (arrayOutput, addState) => {
-      const arrayPath = ASLGraph.isJsonPath(arrayOutput)
-        ? arrayOutput.jsonPath
-        : context.newHeapVariable();
-
-      // if the array is given as a literal value, assign it to a heap value on the state
-      if (ASLGraph.isLiteralValue(arrayOutput)) {
-        addState(
-          ASLGraph.passWithInput(
-            { Type: "Pass", ResultPath: arrayPath },
-            arrayOutput
-          )
-        );
-      }
+    return context.evalExpr(array, call, (_, { normalizeOutputToJsonPath }) => {
+      const arrayPath = normalizeOutputToJsonPath().jsonPath;
 
       return context.stateWithHeapOutput(
         {
