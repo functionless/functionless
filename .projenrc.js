@@ -153,6 +153,7 @@ const project = new CustomTypescriptProject({
   releaseToNpm: true,
   jestOptions: {
     jestConfig: {
+      collectCoverage: false,
       coveragePathIgnorePatterns: ["/test/", "/node_modules/", "/lib"],
       moduleNameMapper: {
         "^@fnls$": "<rootDir>/lib/index",
