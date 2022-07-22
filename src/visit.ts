@@ -35,6 +35,7 @@ import {
   ObjectElementExpr,
   ObjectLiteralExpr,
   PostfixUnaryExpr,
+  PrivateIdentifier,
   PromiseArrayExpr,
   PromiseExpr,
   PropAccessExpr,
@@ -122,6 +123,7 @@ import {
   isForStmt,
   isVariableDeclList,
   isVariableDecl,
+  isPrivateIdentifier,
 } from "./guards";
 import { FunctionlessNode } from "./node";
 
@@ -440,6 +442,8 @@ export function visitEachChild<T extends FunctionlessNode>(
     ) as T;
   } else if (isIdentifier(node)) {
     return new Identifier(node.name) as T;
+  } else if (isPrivateIdentifier(node)) {
+    return new PrivateIdentifier(node.name) as T;
   } else if (isIfStmt(node)) {
     const when = visitor(node.when);
     const then = visitor(node.then);

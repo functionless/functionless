@@ -32,6 +32,7 @@ export type Expr =
   | NumberLiteralExpr
   | ObjectLiteralExpr
   | PostfixUnaryExpr
+  | PrivateIdentifier
   | PromiseArrayExpr
   | PromiseExpr
   | PropAccessExpr
@@ -140,6 +141,20 @@ export class Identifier extends BaseExpr<"Identifier"> {
 
   public clone(): this {
     return new Identifier(this.name) as this;
+  }
+
+  public lookup(): Decl | undefined {
+    return this.getLexicalScope().get(this.name);
+  }
+}
+
+export class PrivateIdentifier extends BaseExpr<"PrivateIdentifier"> {
+  constructor(readonly name: `#${string}`) {
+    super("PrivateIdentifier");
+  }
+
+  public clone(): this {
+    return new PrivateIdentifier(this.name) as this;
   }
 
   public lookup(): Decl | undefined {

@@ -26,6 +26,7 @@ export const isConditionExpr = typeGuard("ConditionExpr");
 export const isElementAccessExpr = typeGuard("ElementAccessExpr");
 export const isFunctionExpr = typeGuard("FunctionExpr");
 export const isIdentifier = typeGuard("Identifier");
+export const isPrivateIdentifier = typeGuard("PrivateIdentifier");
 export const isNewExpr = typeGuard("NewExpr");
 export const isNullLiteralExpr = typeGuard("NullLiteralExpr");
 export const isNumberLiteralExpr = typeGuard("NumberLiteralExpr");

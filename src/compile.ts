@@ -917,6 +917,10 @@ export function compile(
           node.expression;
           node.statement;
           return newExpr("WithStmt", []);
+        } else if (ts.isPrivateIdentifier(node)) {
+          return newExpr("PrivateIdentifier", [
+            ts.factory.createStringLiteral(node.getText()),
+          ]);
         }
 
         throw new Error(

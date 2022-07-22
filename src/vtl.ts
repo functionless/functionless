@@ -52,6 +52,7 @@ import {
   isObjectLiteralExpr,
   isParameterDecl,
   isPostfixUnaryExpr,
+  isPrivateIdentifier,
   isPromiseArrayExpr,
   isPromiseExpr,
   isPropAccessExpr,
@@ -700,7 +701,8 @@ export abstract class VTL {
       isSuperKeyword(node) ||
       isSwitchStmt(node) ||
       isWithStmt(node) ||
-      isEmptyStmt(node)
+      isEmptyStmt(node) ||
+      isPrivateIdentifier(node)
     ) {
       throw new SynthError(
         ErrorCodes.Unexpected_Error,

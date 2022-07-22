@@ -87,6 +87,7 @@ import {
   isVariableDeclList,
   isVariableDecl,
   isClassMember,
+  isPrivateIdentifier,
 } from "./guards";
 import {
   Integration,
@@ -4294,6 +4295,8 @@ function exprToString(expr?: Expr): string {
     return "this";
   } else if (isClassExpr(expr)) {
     throw new Error(`ClassDecl is not supported in StepFunctions`);
+  } else if (isPrivateIdentifier(expr)) {
+    return expr.name;
   } else {
     return assertNever(expr);
   }
