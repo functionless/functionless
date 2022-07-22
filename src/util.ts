@@ -1,5 +1,6 @@
 import { Construct } from "constructs";
 import ts from "typescript";
+import { ErrorCodes, SynthError } from "./error-code";
 import { BinaryOp, CallExpr, Expr, PropAccessExpr } from "./expression";
 import {
   isArrayLiteralExpr,
@@ -81,7 +82,7 @@ export function ensure<T>(
   message: string
 ): asserts a is T {
   if (!is(a)) {
-    throw new Error(message);
+    throw new SynthError(ErrorCodes.Unexpected_Error, message);
   }
 }
 

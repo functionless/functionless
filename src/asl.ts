@@ -4296,7 +4296,10 @@ function exprToString(expr?: Expr): string {
   } else if (isThisExpr(expr)) {
     return "this";
   } else if (isClassExpr(expr)) {
-    throw new Error(`ClassDecl is not supported in StepFunctions`);
+    throw new SynthError(
+      ErrorCodes.Unsupported_Feature,
+      `ClassDecl is not supported in StepFunctions`
+    );
   } else if (isPrivateIdentifier(expr)) {
     return expr.name;
   } else if (isYieldExpr(expr)) {

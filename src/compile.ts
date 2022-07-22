@@ -918,8 +918,6 @@ export function compile(
             ),
           ]);
         } else if (ts.isWithStatement(node)) {
-          node.expression;
-          node.statement;
           return newExpr("WithStmt", []);
         } else if (ts.isPrivateIdentifier(node)) {
           return newExpr("PrivateIdentifier", [

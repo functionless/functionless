@@ -14,6 +14,7 @@ import {
   VariableDeclList,
 } from "./declaration";
 import { Err } from "./error";
+import { ErrorCodes, SynthError } from "./error-code";
 import {
   Argument,
   ArrayLiteralExpr,
@@ -198,7 +199,8 @@ export function visitEachChild<T extends FunctionlessNode>(
     if (isExpr(left) && isExpr(right)) {
       return new BinaryExpr(left, node.op, right) as T;
     } else {
-      throw new Error(
+      throw new SynthError(
+        ErrorCodes.Unexpected_Error,
         "visitEachChild of BinaryExpr must return an Expr for both the left and right operands"
       );
     }
@@ -649,10 +651,14 @@ export function visitEachChild<T extends FunctionlessNode>(
     const defaultClauses = clauses.filter(isDefaultClause);
     if (defaultClauses.length === 1) {
       if (!isDefaultClause(clauses[clauses.length - 1])) {
-        throw new Error(`only the last SwitchClause can be a DefaultClause`);
+        throw new SynthError(
+          ErrorCodes.Unexpected_Error,
+          `only the last SwitchClause can be a DefaultClause`
+        );
       }
     } else if (defaultClauses.length > 1) {
-      throw new Error(
+      throw new SynthError(
+        ErrorCodes.Unexpected_Error,
         `there must be 0 or 1 DefaultClauses in a single SwitchStmt, but found ${defaultClauses.length}`
       );
     }
