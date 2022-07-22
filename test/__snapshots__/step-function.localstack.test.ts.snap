@@ -6254,7 +6254,13 @@ Object {
       "Type": "Pass",
     },
     "await func({n: \`input.arr[j]\`, id: input.id})": Object {
-      "Next": "1__await func({n: \`input.arr[j]\`, id: input.id})",
+      "InputPath": "$.0__j",
+      "Next": "1__await func({n: \`input.arr[j]\`, id: input.id}) 1",
+      "ResultPath": "$.heap8",
+      "Type": "Pass",
+    },
+    "await func({n: i, id: input.id})": Object {
+      "Next": "await func({n: \`input.arr[j]\`, id: input.id})",
       "Parameters": Object {
         "id.$": "$.fnl_context.input.id",
         "n.$": "$.i",
@@ -7282,7 +7288,7 @@ Object {
       "Choices": Array [
         Object {
           "IsPresent": true,
-          "Next": "input.arr",
+          "Next": "i = undefined",
           "Variable": "$.heap2[0]",
         },
       ],
