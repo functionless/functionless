@@ -5,6 +5,8 @@ import {
   FunctionDecl,
   ObjectBinding,
   ParameterDecl,
+  VariableDecl,
+  VariableDeclList,
 } from "./declaration";
 import { Err } from "./error";
 import {
@@ -92,7 +94,8 @@ import {
   isWhileStmt,
   isElementAccessExpr,
   isForStmt,
-  isVariableList,
+  isVariableDeclList,
+  isVariableDecl,
 } from "./guards";
 import { FunctionlessNode } from "./node";
 
@@ -112,7 +115,6 @@ import {
   Stmt,
   ThrowStmt,
   TryStmt,
-  VariableList,
   VariableStmt,
   WhileStmt,
 } from "./statement";
@@ -227,8 +229,8 @@ export function visitEachChild<T extends FunctionlessNode>(
     if (variableDecl !== undefined && variableDecl) {
       ensure(
         variableDecl,
-        isVariableStmt,
-        "visitEachChild of a CatchClause's VariableStmt must return another VariableStmt"
+        isVariableDecl,
+        "visitEachChild of a CatchClause's VariableDecl must return another VariableDecl"
       );
     }
     const block = visitBlockStmt(node.block, visitor);
@@ -277,8 +279,8 @@ export function visitEachChild<T extends FunctionlessNode>(
     const variableDecl = visitor(node.variableDecl);
     ensure(
       variableDecl,
-      anyOf(isVariableStmt, isIdentifier),
-      `Initializer in ${node.kind} must be a VariableStmt or Identifier`
+      anyOf(isVariableDecl, isIdentifier),
+      `Initializer in ${node.kind} must be a VariableDecl or Identifier`
     );
 
     const expr = visitor(node.expr);
@@ -299,7 +301,7 @@ export function visitEachChild<T extends FunctionlessNode>(
     variableDecl &&
       ensure(
         variableDecl,
-        anyOf(isVariableList, isExpr),
+        anyOf(isVariableDeclList, isExpr),
         `Initializer in ForStmt must be a VariableList or Expr`
       );
     const condition = node.condition ? visitor(node.condition) : undefined;
@@ -313,7 +315,7 @@ export function visitEachChild<T extends FunctionlessNode>(
 
     return new ForStmt(
       body,
-      variableDecl as VariableList | Expr,
+      variableDecl as VariableDeclList | Expr,
       condition as Expr,
       incrementor as Expr
     ) as T;
@@ -497,12 +499,20 @@ export function visitEachChild<T extends FunctionlessNode>(
     return new PostfixUnaryExpr(node.op, expr) as T;
   } else if (isUndefinedLiteralExpr(node)) {
     return new UndefinedLiteralExpr() as T;
-  } else if (isVariableStmt(node)) {
+  } else if (isVariableDecl(node)) {
     const expr = node.expr ? visitor(node.expr) : undefined;
     if (expr) {
-      ensure(expr, isExpr, "a VariableStmt's expr property must be an Expr");
+      ensure(expr, isExpr, "a VariableDecl's expr property must be an Expr");
     }
-    return new VariableStmt(node.name, expr) as T;
+    return new VariableDecl(node.name, expr) as T;
+  } else if (isVariableStmt(node)) {
+    const declList = visitor(node.declList);
+    ensure(
+      declList,
+      isVariableDeclList,
+      "a VariableStmt's declList property must be an VariableDeclList"
+    );
+    return new VariableStmt(declList) as T;
   } else if (isWhileStmt(node)) {
     const condition = visitor(node.condition);
     ensure(condition, isExpr, "a WhileStmt's condition must be an Expr");
@@ -566,14 +576,14 @@ export function visitEachChild<T extends FunctionlessNode>(
     } else {
       return new ArrayBinding(bindings as ArrayBinding["bindings"]) as T;
     }
-  } else if (isVariableList(node)) {
+  } else if (isVariableDeclList(node)) {
     const variables = node.decls.map(visitor);
     ensureItemOf(
       variables,
-      isVariableStmt,
-      "Variables in a VariableList must be of type VariableStmt"
+      isVariableDecl,
+      "Variables in a VariableDeclList must be of type VariableDecl"
     );
-    return new VariableList(variables) as T;
+    return new VariableDeclList(variables) as T;
   }
   return assertNever(node);
 }
@@ -608,7 +618,11 @@ export function visitBlock(
     const nestedTasks: FunctionlessNode[] = [];
     function hoist(expr: Expr): Identifier {
       const id = new Identifier(nameGenerator.generateOrGet(expr));
-      nestedTasks.push(new VariableStmt(id.name, expr));
+      nestedTasks.push(
+        new VariableStmt(
+          new VariableDeclList([new VariableDecl(id.name, expr)])
+        )
+      );
       return id;
     }
 

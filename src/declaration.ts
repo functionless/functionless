@@ -7,13 +7,25 @@ import {
   Identifier,
   StringLiteralExpr,
 } from "./expression";
-import { isErr, isFunctionDecl, isNode, isParameterDecl } from "./guards";
+import {
+  isBindingPattern,
+  isErr,
+  isFunctionDecl,
+  isNode,
+  isParameterDecl,
+} from "./guards";
 import { Integration } from "./integration";
 import { BaseNode, FunctionlessNode } from "./node";
-import { BlockStmt } from "./statement";
+import type {
+  BlockStmt,
+  CatchClause,
+  ForInStmt,
+  ForOfStmt,
+  ForStmt,
+} from "./statement";
 import { AnyFunction, anyOf } from "./util";
 
-export type Decl = FunctionDecl | ParameterDecl | BindingElem;
+export type Decl = FunctionDecl | ParameterDecl | BindingElem | VariableDecl;
 
 export function isDecl(a: any): a is Decl {
   return isNode(a) && (isFunctionDecl(a) || isParameterDecl(a));
@@ -213,6 +225,47 @@ export class ArrayBinding extends BaseNode<"ArrayBinding"> {
 
   public clone(): this {
     return new ArrayBinding(this.bindings.map((b) => b?.clone())) as this;
+  }
+}
+
+export type VariableDeclParent = ForInStmt | ForOfStmt | CatchClause;
+
+export class VariableDecl<
+  E extends Expr | undefined = Expr | undefined
+> extends BaseDecl<"VariableDecl", VariableDeclParent> {
+  constructor(readonly name: string | BindingPattern, readonly expr: E) {
+    super("VariableDecl");
+    if (isBindingPattern(name)) {
+      name.setParent(this);
+    }
+    if (expr) {
+      expr.setParent(this);
+    }
+  }
+
+  public clone(): this {
+    return new VariableDecl(
+      isBindingPattern(this.name) ? this.name.clone() : this.name,
+      this.expr?.clone()
+    ) as this;
+  }
+}
+
+export type VariableDeclListParent = ForStmt;
+
+export class VariableDeclList extends BaseNode<
+  "VariableDeclList",
+  VariableDeclListParent
+> {
+  readonly nodeKind: "Node" = "Node";
+
+  constructor(readonly decls: VariableDecl[]) {
+    super("VariableDeclList");
+    decls.map((decl) => decl.setParent(this));
+  }
+
+  public clone(): this {
+    return new VariableDeclList(this.decls.map((decl) => decl.clone())) as this;
   }
 }
 

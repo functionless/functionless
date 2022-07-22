@@ -24,11 +24,11 @@ import {
   isElementAccessExpr,
   isObjectLiteralExpr,
   isPropAssignExpr,
-  isVariableStmt,
   isIdentifier,
   isReferenceExpr,
   isAwaitExpr,
   isPromiseExpr,
+  isVariableDecl,
 } from "./guards";
 import { Integration, IntegrationImpl, isIntegration } from "./integration";
 import { Stmt } from "./statement";
@@ -857,7 +857,7 @@ ${reference}
       throw new SynthError(ErrorCodes.ApiGateway_Unsupported_Reference);
     } else {
       const ref = id.lookup();
-      if (isVariableStmt(ref)) {
+      if (isVariableDecl(ref)) {
         return `$${id.name}`;
       } else if (isParameterDecl(ref) && isFunctionDecl(ref.parent)) {
         const paramIndex = ref.parent.parameters.indexOf(ref);

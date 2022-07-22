@@ -568,25 +568,22 @@ export function compile(
               ? ts.factory.createStringLiteral(checker.typeToString(type))
               : ts.factory.createIdentifier("undefined"),
           ]);
-        } else if (
-          ts.isVariableStatement(node) &&
-          node.declarationList.declarations.length === 1
-        ) {
-          return toExpr(node.declarationList.declarations[0], scope);
+        } else if (ts.isVariableStatement(node)) {
+          return newExpr("VariableStmt", [toExpr(node.declarationList, scope)]);
         } else if (ts.isVariableDeclarationList(node)) {
-          return newExpr("VariableList", [
+          return newExpr("VariableDeclList", [
             ts.factory.createArrayLiteralExpression(
               node.declarations.map((decl) => toExpr(decl, scope))
             ),
           ]);
         } else if (ts.isVariableDeclaration(node)) {
           if (ts.isIdentifier(node.name)) {
-            return newExpr("VariableStmt", [
+            return newExpr("VariableDecl", [
               ts.factory.createStringLiteral(node.name.getText()),
               ...(node.initializer ? [toExpr(node.initializer, scope)] : []),
             ]);
           } else {
-            return newExpr("VariableStmt", [
+            return newExpr("VariableDecl", [
               toExpr(node.name, scope),
               toExpr(node.initializer, scope),
             ]);

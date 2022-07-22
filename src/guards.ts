@@ -132,6 +132,7 @@ export const isDoStmt = typeGuard("DoStmt");
 export const isFunctionDecl = typeGuard("FunctionDecl");
 export const isParameterDecl = typeGuard("ParameterDecl");
 export const isBindingElem = typeGuard("BindingElem");
+export const isVariableDecl = typeGuard("VariableDecl");
 
 export const isObjectBinding = typeGuard("ObjectBinding");
 export const isArrayBinding = typeGuard("ArrayBinding");
@@ -139,7 +140,7 @@ export const isArrayBinding = typeGuard("ArrayBinding");
 export const isBindingPattern = (a: any): a is BindingPattern =>
   isNode(a) && (isObjectBinding(a) || isArrayBinding(a));
 
-export const isVariableList = typeGuard("VariableList");
+export const isVariableDeclList = typeGuard("VariableDeclList");
 
 // generates type guards
 export function typeGuard<Kind extends FunctionlessNode["kind"]>(

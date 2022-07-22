@@ -265,23 +265,25 @@ export const flattenExpression = (expr: Expr, scope: EventScope): Expr => {
 export const flattenStatementsScope = (
   stmts: VariableStmt[]
 ): Record<string, Expr | undefined> => {
-  return stmts.reduce((scope, stmt) => {
-    const flattened = stmt.expr
-      ? flattenExpression(stmt.expr, scope)
-      : undefined;
+  return stmts
+    .flatMap((stmt) => stmt.declList.decls)
+    .reduce((scope, stmt) => {
+      const flattened = stmt.expr
+        ? flattenExpression(stmt.expr, scope)
+        : undefined;
 
-    if (isBindingPattern(stmt.name)) {
-      throw new SynthError(
-        ErrorCodes.Unsupported_Feature,
-        "Binding variable assignment is not currently supported in Event Bridge rules and input transforms. https://github.com/functionless/functionless/issues/302"
-      );
-    }
+      if (isBindingPattern(stmt.name)) {
+        throw new SynthError(
+          ErrorCodes.Unsupported_Feature,
+          "Binding variable assignment is not currently supported in Event Bridge rules and input transforms. https://github.com/functionless/functionless/issues/302"
+        );
+      }
 
-    return {
-      ...scope,
-      [stmt.name]: flattened,
-    };
-  }, {});
+      return {
+        ...scope,
+        [stmt.name]: flattened,
+      };
+    }, {});
 };
 
 export type EventReference = ReferencePath & {

@@ -1,6 +1,10 @@
-import { BindingPattern, FunctionDecl } from "./declaration";
+import type {
+  FunctionDecl,
+  VariableDecl,
+  VariableDeclList,
+} from "./declaration";
 import { Expr, FunctionExpr, Identifier } from "./expression";
-import { isBindingPattern, isTryStmt } from "./guards";
+import { isTryStmt } from "./guards";
 import { BaseNode, FunctionlessNode } from "./node";
 
 /**
@@ -51,43 +55,16 @@ export class ExprStmt extends BaseStmt<"ExprStmt"> {
   }
 }
 
-export type VariableStmtParent =
-  | ForInStmt
-  | ForOfStmt
-  | FunctionDecl
-  | FunctionExpr
-  | CatchClause;
+export type VariableStmtParent = FunctionDecl | FunctionExpr;
 
-export class VariableStmt<
-  E extends Expr | undefined = Expr | undefined
-> extends BaseStmt<"VariableStmt", VariableStmtParent> {
-  constructor(readonly name: string | BindingPattern, readonly expr: E) {
+export class VariableStmt extends BaseStmt<"VariableStmt", VariableStmtParent> {
+  constructor(readonly declList: VariableDeclList) {
     super("VariableStmt");
-    if (isBindingPattern(name)) {
-      name.setParent(this);
-    }
-    if (expr) {
-      expr.setParent(this);
-    }
+    declList.setParent(this);
   }
 
   public clone(): this {
-    return new VariableStmt(this.name, this.expr?.clone()) as this;
-  }
-}
-
-export type VariableListParent = ForStmt;
-
-export class VariableList extends BaseNode<"VariableList", VariableListParent> {
-  readonly nodeKind: "Node" = "Node";
-
-  constructor(readonly decls: VariableStmt[]) {
-    super("VariableList");
-    decls.map((decl) => decl.setParent(this));
-  }
-
-  public clone(): this {
-    return new VariableList(this.decls.map((decl) => decl.clone())) as this;
+    return new VariableStmt(this.declList.clone()) as this;
   }
 }
 
@@ -177,7 +154,7 @@ export class IfStmt extends BaseStmt<"IfStmt"> {
 
 export class ForOfStmt extends BaseStmt<"ForOfStmt"> {
   constructor(
-    readonly variableDecl: VariableStmt | Identifier,
+    readonly variableDecl: VariableDecl | Identifier,
     readonly expr: Expr,
     readonly body: BlockStmt
   ) {
@@ -198,7 +175,7 @@ export class ForOfStmt extends BaseStmt<"ForOfStmt"> {
 
 export class ForInStmt extends BaseStmt<"ForInStmt"> {
   constructor(
-    readonly variableDecl: VariableStmt | Identifier,
+    readonly variableDecl: VariableDecl | Identifier,
     readonly expr: Expr,
     readonly body: BlockStmt
   ) {
@@ -220,7 +197,7 @@ export class ForInStmt extends BaseStmt<"ForInStmt"> {
 export class ForStmt extends BaseStmt<"ForStmt"> {
   constructor(
     readonly body: BlockStmt,
-    readonly variableDecl?: VariableList | Expr,
+    readonly variableDecl?: VariableDeclList | Expr,
     readonly condition?: Expr,
     readonly incrementor?: Expr
   ) {
@@ -294,7 +271,7 @@ export class TryStmt extends BaseStmt<"TryStmt"> {
 
 export class CatchClause extends BaseStmt<"CatchClause", TryStmt> {
   constructor(
-    readonly variableDecl: VariableStmt | undefined,
+    readonly variableDecl: VariableDecl | undefined,
     readonly block: BlockStmt
   ) {
     super("CatchClause");

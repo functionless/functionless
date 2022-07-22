@@ -1,7 +1,7 @@
 import { aws_iam } from "aws-cdk-lib";
 import { Construct } from "constructs";
 import { assertNever } from "./assert";
-import { BindingElem, FunctionDecl, ParameterDecl } from "./declaration";
+import { Decl, FunctionDecl, VariableDecl } from "./declaration";
 import { ErrorCodes, SynthError } from "./error-code";
 import {
   Argument,
@@ -68,7 +68,8 @@ import {
   isErr,
   isNode,
   isForStmt,
-  isVariableList,
+  isVariableDeclList,
+  isVariableDecl,
 } from "./guards";
 import {
   Integration,
@@ -85,7 +86,6 @@ import {
   IfStmt,
   ReturnStmt,
   Stmt,
-  VariableStmt,
 } from "./statement";
 import {
   anyOf,
@@ -596,7 +596,7 @@ export class ASL {
    * Evaluate a single {@link Stmt} into a collection of named states.
    */
   public evalStmt(
-    stmt: Stmt
+    stmt: Stmt | VariableDecl
   ): ASLGraph.SubState | ASLGraph.NodeState | undefined {
     if (isBlockStmt(stmt)) {
       return ASLGraph.joinSubStates(
@@ -769,7 +769,7 @@ export class ASL {
 
       return this.evalContextToSubState(stmt, (evalExpr) => {
         const initializers = stmt.variableDecl
-          ? isVariableList(stmt.variableDecl)
+          ? isVariableDeclList(stmt.variableDecl)
             ? stmt.variableDecl.decls.map((x) => this.evalStmt(x))
             : [evalExpr(stmt.variableDecl)]
           : [undefined];
@@ -880,7 +880,7 @@ export class ASL {
           output
         )
       );
-    } else if (isVariableStmt(stmt)) {
+    } else if (isVariableDecl(stmt)) {
       if (stmt.expr === undefined) {
         return undefined;
       }
@@ -902,6 +902,11 @@ export class ASL {
           exprOutput
         );
       });
+    } else if (isVariableStmt(stmt)) {
+      return ASLGraph.joinSubStates(
+        stmt,
+        ...stmt.declList.decls.map((decl) => this.evalStmt(decl))
+      );
     } else if (isThrowStmt(stmt)) {
       if (
         !(
@@ -2093,7 +2098,7 @@ export class ASL {
     const parentStmt = isStmt(node) ? node : node.findParent(isStmt);
     const variableReferences =
       (parentStmt?.prev ?? parentStmt?.parent)?.getLexicalScope() ??
-      new Map<string, VariableStmt | ParameterDecl | BindingElem>();
+      new Map<string, Decl>();
     return Object.fromEntries([
       ...Array.from(variableReferences.entries())
         .filter(
@@ -2559,11 +2564,16 @@ export class ASL {
               "the 'array' parameter in a .filter expression is not supported"
             );
           }
-        } else if (isVariableStmt(ref)) {
+        } else if (
+          isVariableDecl(ref) ||
+          isBindingElem(ref) ||
+          isFunctionDecl(ref)
+        ) {
           throw new Error(
-            "cannot reference a VariableStmt within a JSONPath .filter expression"
+            `cannot reference a ${ref.kind} within a JSONPath .filter expression`
           );
         }
+        assertNever(ref);
       } else if (isStringLiteralExpr(expr)) {
         return `'${expr.value.replace(/'/g, "\\'")}'`;
       } else if (
@@ -3461,7 +3471,7 @@ export namespace ASLGraph {
       })
     );
 
-    const emptyTransitions = computeEmptyStateToUpdatedTransution(emptyStates);
+    const emptyTransitions = computeEmptyStateToUpdatedTransition(emptyStates);
 
     // return the updated set of name to state.
     return stateEntries.flatMap(([name, state]) => {
@@ -3485,7 +3495,7 @@ export namespace ASLGraph {
      * Find the updated next value for all of the empty states.
      * If the updated Next cannot be determined, do not remove the state.
      */
-    function computeEmptyStateToUpdatedTransution(
+    function computeEmptyStateToUpdatedTransition(
       emptyStates: Record<string, Pass>
     ) {
       return Object.fromEntries(
@@ -4070,7 +4080,7 @@ function toStateName(node: FunctionlessNode): string {
     } else if (isForStmt(node)) {
       // for(;;)
       return `for(${
-        node.variableDecl && isVariableList(node.variableDecl)
+        node.variableDecl && isVariableDeclList(node.variableDecl)
           ? inner(node.variableDecl)
           : exprToString(node.variableDecl)
       };${exprToString(node.condition)};${exprToString(node.incrementor)})`;
@@ -4085,6 +4095,8 @@ function toStateName(node: FunctionlessNode): string {
     } else if (isTryStmt(node)) {
       return "try";
     } else if (isVariableStmt(node)) {
+      return inner(node.declList);
+    } else if (isVariableDecl(node)) {
       if (isCatchClause(node.parent)) {
         return `catch(${node.name})`;
       } else {
@@ -4111,8 +4123,8 @@ function toStateName(node: FunctionlessNode): string {
       return isBindingPattern(node.name) ? inner(node.name) : node.name;
     } else if (isErr(node)) {
       throw node.error;
-    } else if (isVariableList(node)) {
-      return `${node.decls.map((v) => v.name).join(",")}`;
+    } else if (isVariableDeclList(node)) {
+      return `${node.decls.map((v) => inner(v)).join(",")}`;
     } else {
       return assertNever(node);
     }
