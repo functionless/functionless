@@ -1683,8 +1683,22 @@ export class ASL {
         // If the identifier references a parameter expression and that parameter expression
         // is in a FunctionDecl and that Function is at the top (no parent).
         // This logic needs to be updated to support destructured inputs: https://github.com/functionless/functionless/issues/68
-        if (ref && isParameterDecl(ref) && isFunctionDecl(ref.parent)) {
+        if (
+          ref &&
+          isParameterDecl(ref) &&
+          isFunctionDecl(ref.parent) &&
+          ref.parent === this.decl &&
+          ref.parent.parameters[0] === ref
+        ) {
           return { jsonPath: this.context.input };
+        } else if (
+          ref &&
+          isParameterDecl(ref) &&
+          isFunctionDecl(ref.parent) &&
+          ref.parent === this.decl &&
+          ref.parent.parameters[1] === ref
+        ) {
+          return { jsonPath: `$$` };
         }
         return { jsonPath: `$.${expr.name}` };
       } else if (isPropAccessExpr(expr)) {

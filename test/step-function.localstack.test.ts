@@ -1,5 +1,7 @@
 import { Duration } from "aws-cdk-lib";
 import { AttributeType } from "aws-cdk-lib/aws-dynamodb";
+// eslint-disable-next-line import/no-extraneous-dependencies
+import { StepFunctions } from "aws-sdk";
 import { Construct } from "constructs";
 import {
   StepFunction,
@@ -36,8 +38,14 @@ interface TestExpressStepFunctionBase {
     ) => StepFunction<I, O> | { sfn: StepFunction<I, O>; outputs: Outputs },
     expected: OO extends void
       ? null
-      : OO | ((context: Outputs) => OO extends void ? null : O),
-    payload?: I | ((context: Outputs) => I)
+      :
+          | OO
+          | ((
+              context: Outputs,
+              result: StepFunctions.DescribeExecutionOutput
+            ) => OO extends void ? null : O),
+    payload?: I | ((context: Outputs) => I),
+    executionName?: string
   ): void;
 }
 
@@ -67,15 +75,28 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
         };
       },
       async (context, extra) => {
-        const exp =
-          // @ts-ignore
-          typeof expected === "function" ? expected(context) : expected;
-        // @ts-ignore
-        const pay = typeof payload === "function" ? payload(context) : payload;
+        const pay =
+          typeof payload === "function"
+            ? (<globalThis.Function>payload)(context)
+            : payload;
+
         expect(
           normalizeCDKJson(JSON.parse(extra!.definition))
         ).toMatchSnapshot();
-        await testStepFunction(context.function, pay, exp);
+        const result = await testStepFunction(context.function, pay);
+
+        const exp =
+          typeof expected === "function"
+            ? (<globalThis.Function>expected)(context, result)
+            : expected;
+
+        if (result.status === "FAILED") {
+          throw new Error(`Machine failed with output: ${result.output}`);
+        }
+
+        expect(result.output ? JSON.parse(result.output) : undefined).toEqual(
+          exp
+        );
       }
     );
   };
@@ -1366,5 +1387,15 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
       a: "1",
     },
     { a: "1", b: 1, c: { d: "d" } }
+  );
+
+  test(
+    "context",
+    (parent) => {
+      return new StepFunction(parent, "sfn", async (_, context) => {
+        return `name: ${context.Execution.Name}`;
+      });
+    },
+    (_, result) => `name: ${result.name}`
   );
 });
