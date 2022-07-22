@@ -125,6 +125,8 @@ import {
   isVariableDecl,
   isPrivateIdentifier,
   isYieldExpr,
+  isBigIntExpr,
+  isRegexExpr,
 } from "./guards";
 import { FunctionlessNode } from "./node";
 
@@ -210,6 +212,8 @@ export function visitEachChild<T extends FunctionlessNode>(
         )
       )
     ) as T;
+  } else if (isBigIntExpr(node)) {
+    return node.clone() as T;
   } else if (isBooleanLiteralExpr(node)) {
     return new BooleanLiteralExpr(node.value) as T;
   } else if (isBreakStmt(node)) {
@@ -685,9 +689,14 @@ export function visitEachChild<T extends FunctionlessNode>(
     ensure(stmt, isStmt, "WithStmt's stmt must be a Stmt");
     return new WithStmt(expr, stmt) as T;
   } else if (isYieldExpr(node)) {
-    const expr = visitor(node.expr);
-    ensure(expr, isExpr, "YieldExpr's expr must be an Expr");
+    let expr;
+    if (node.expr) {
+      expr = visitor(node.expr);
+      ensure(expr, isExpr, "YieldExpr's expr must be an Expr");
+    }
     return new YieldExpr(expr, node.delegate) as T;
+  } else if (isRegexExpr(node)) {
+    return node.clone() as T;
   }
   return assertNever(node);
 }

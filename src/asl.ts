@@ -89,6 +89,8 @@ import {
   isClassMember,
   isPrivateIdentifier,
   isYieldExpr,
+  isBigIntExpr,
+  isRegexExpr,
 } from "./guards";
 import {
   Integration,
@@ -4219,6 +4221,8 @@ function exprToString(expr?: Expr): string {
     return exprToString(expr.expr);
   } else if (isArrayLiteralExpr(expr)) {
     return `[${expr.items.map(exprToString).join(", ")}]`;
+  } else if (isBigIntExpr(expr)) {
+    return expr.value.toString(10);
   } else if (isBinaryExpr(expr)) {
     return `${exprToString(expr.left)} ${expr.op} ${exprToString(expr.right)}`;
   } else if (isBooleanLiteralExpr(expr)) {
@@ -4297,6 +4301,8 @@ function exprToString(expr?: Expr): string {
     return expr.name;
   } else if (isYieldExpr(expr)) {
     return `yield${expr.delegate ? "*" : ""} ${exprToString(expr.expr)}`;
+  } else if (isRegexExpr(expr)) {
+    return expr.regex.source;
   } else {
     return assertNever(expr);
   }

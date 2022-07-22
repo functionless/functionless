@@ -16,6 +16,7 @@ import {
   isArrayLiteralExpr,
   isArrowFunctionExpr,
   isAwaitExpr,
+  isBigIntExpr,
   isBinaryExpr,
   isBindingPattern,
   isBlockStmt,
@@ -59,6 +60,7 @@ import {
   isPropAssignExpr,
   isPropDecl,
   isReferenceExpr,
+  isRegexExpr,
   isReturnStmt,
   isSpreadAssignExpr,
   isSpreadElementExpr,
@@ -559,7 +561,7 @@ export abstract class VTL {
       return `${this.eval(node.expr)}[${this.eval(node.element)}]`;
     } else if (isNullLiteralExpr(node) || isUndefinedLiteralExpr(node)) {
       return "$null";
-    } else if (isNumberLiteralExpr(node)) {
+    } else if (isNumberLiteralExpr(node) || isBigIntExpr(node)) {
       return node.value.toString(10);
     } else if (isObjectLiteralExpr(node)) {
       const obj = this.var("{}");
@@ -698,6 +700,7 @@ export abstract class VTL {
       isDefaultClause(node) ||
       isLabelledStmt(node) ||
       isMethodDecl(node) ||
+      isRegexExpr(node) ||
       isPropDecl(node) ||
       isSuperKeyword(node) ||
       isSwitchStmt(node) ||

@@ -18,6 +18,7 @@ export type Expr =
   | ArrayLiteralExpr
   | ArrowFunctionExpr
   | AwaitExpr
+  | BigIntExpr
   | BinaryExpr
   | BooleanLiteralExpr
   | CallExpr
@@ -38,6 +39,7 @@ export type Expr =
   | PropAccessExpr
   | PropAssignExpr
   | ReferenceExpr
+  | RegexExpr
   | SpreadAssignExpr
   | SpreadElementExpr
   | StringLiteralExpr
@@ -360,6 +362,16 @@ export class BooleanLiteralExpr extends BaseExpr<"BooleanLiteralExpr"> {
   }
 }
 
+export class BigIntExpr extends BaseExpr<"BigIntExpr"> {
+  constructor(readonly value: bigint) {
+    super("BigIntExpr");
+  }
+
+  public clone(): this {
+    return new BigIntExpr(this.value) as this;
+  }
+}
+
 export class NumberLiteralExpr extends BaseExpr<"NumberLiteralExpr"> {
   constructor(readonly value: number) {
     super("NumberLiteralExpr");
@@ -589,7 +601,7 @@ export class YieldExpr extends BaseExpr<"YieldExpr"> {
     /**
      * The expression to yield (or delegate) to.
      */
-    readonly expr: Expr,
+    readonly expr: Expr | undefined,
     /**
      * Is a `yield*` delegate expression.
      */
@@ -598,7 +610,17 @@ export class YieldExpr extends BaseExpr<"YieldExpr"> {
     super("YieldExpr");
   }
   public clone(): this {
-    return new YieldExpr(this.expr.clone(), this.delegate) as this;
+    return new YieldExpr(this.expr?.clone(), this.delegate) as this;
+  }
+}
+
+export class RegexExpr extends BaseExpr<"RegexExpr"> {
+  constructor(readonly regex: RegExp) {
+    super("RegexExpr");
+  }
+
+  public clone(): this {
+    return new RegexExpr(this.regex) as this;
   }
 }
 

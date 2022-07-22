@@ -725,6 +725,10 @@ export function compile(
           ]);
         } else if (ts.isNumericLiteral(node)) {
           return newExpr("NumberLiteralExpr", [node]);
+        } else if (ts.isBigIntLiteral(node)) {
+          return newExpr("BigIntExpr", [node]);
+        } else if (ts.isRegularExpressionLiteral(node)) {
+          return newExpr("RegexExpr", [node]);
         } else if (
           ts.isStringLiteral(node) ||
           ts.isNoSubstitutionTemplateLiteral(node)

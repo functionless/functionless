@@ -17,6 +17,7 @@ export const isArgument = typeGuard("Argument");
 export const isArrayLiteralExpr = typeGuard("ArrayLiteralExpr");
 export const isArrowFunctionExpr = typeGuard("ArrowFunctionExpr");
 export const isAwaitExpr = typeGuard("AwaitExpr");
+export const isBigIntExpr = typeGuard("BigIntExpr");
 export const isBinaryExpr = typeGuard("BinaryExpr");
 export const isBooleanLiteralExpr = typeGuard("BooleanLiteralExpr");
 export const isCallExpr = typeGuard("CallExpr");
@@ -26,17 +27,18 @@ export const isConditionExpr = typeGuard("ConditionExpr");
 export const isElementAccessExpr = typeGuard("ElementAccessExpr");
 export const isFunctionExpr = typeGuard("FunctionExpr");
 export const isIdentifier = typeGuard("Identifier");
-export const isPrivateIdentifier = typeGuard("PrivateIdentifier");
 export const isNewExpr = typeGuard("NewExpr");
 export const isNullLiteralExpr = typeGuard("NullLiteralExpr");
 export const isNumberLiteralExpr = typeGuard("NumberLiteralExpr");
 export const isObjectLiteralExpr = typeGuard("ObjectLiteralExpr");
 export const isPostfixUnaryExpr = typeGuard("PostfixUnaryExpr");
+export const isPrivateIdentifier = typeGuard("PrivateIdentifier");
 export const isPromiseArrayExpr = typeGuard("PromiseArrayExpr");
 export const isPromiseExpr = typeGuard("PromiseExpr");
 export const isPropAccessExpr = typeGuard("PropAccessExpr");
 export const isPropAssignExpr = typeGuard("PropAssignExpr");
 export const isReferenceExpr = typeGuard("ReferenceExpr");
+export const isRegexExpr = typeGuard("RegexExpr");
 export const isSpreadAssignExpr = typeGuard("SpreadAssignExpr");
 export const isSpreadElementExpr = typeGuard("SpreadElementExpr");
 export const isStringLiteralExpr = typeGuard("StringLiteralExpr");
@@ -46,6 +48,7 @@ export const isThisExpr = typeGuard("ThisExpr");
 export const isTypeOfExpr = typeGuard("TypeOfExpr");
 export const isUnaryExpr = typeGuard("UnaryExpr");
 export const isUndefinedLiteralExpr = typeGuard("UndefinedLiteralExpr");
+export const isYieldExpr = typeGuard("YieldExpr");
 
 export const isObjectElementExpr = typeGuard(
   "PropAssignExpr",
@@ -94,7 +97,6 @@ export const isTryStmt = typeGuard("TryStmt");
 export const isVariableStmt = typeGuard("VariableStmt");
 export const isWhileStmt = typeGuard("WhileStmt");
 export const isWithStmt = typeGuard("WithStmt");
-export const isYieldExpr = typeGuard("YieldExpr");
 
 export const isSwitchClause = typeGuard("CaseClause", "DefaultClause");
 
