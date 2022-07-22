@@ -11725,6 +11725,100 @@ Object {
 }
 `;
 
+exports[`use context in object 1`] = `
+Object {
+  "StartAt": "return {a: context.Execution.Name}",
+  "States": Object {
+    "return {a: context.Execution.Name}": Object {
+      "End": true,
+      "Parameters": Object {
+        "a.$": "$$.Execution.Name",
+      },
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+  },
+}
+`;
+
+exports[`use context object 1`] = `
+Object {
+  "StartAt": "return task(context)",
+  "States": Object {
+    "1__return task(context)": Object {
+      "End": true,
+      "InputPath": "$.heap0",
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "return task(context)": Object {
+      "InputPath": "$$",
+      "Next": "1__return task(context)",
+      "Resource": "__REPLACED_TOKEN",
+      "ResultPath": "$.heap0",
+      "Type": "Task",
+    },
+  },
+}
+`;
+
+exports[`use context parameter 1`] = `
+Object {
+  "StartAt": "return context.Execution.Name",
+  "States": Object {
+    "return context.Execution.Name": Object {
+      "End": true,
+      "InputPath": "$$.Execution.Name",
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+  },
+}
+`;
+
+exports[`use context parameter in function call 1`] = `
+Object {
+  "StartAt": "return task(context.Execution.Id)",
+  "States": Object {
+    "1__return task(context.Execution.Id)": Object {
+      "End": true,
+      "InputPath": "$.heap0",
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "return task(context.Execution.Id)": Object {
+      "InputPath": "$$.Execution.Id",
+      "Next": "1__return task(context.Execution.Id)",
+      "Resource": "__REPLACED_TOKEN",
+      "ResultPath": "$.heap0",
+      "Type": "Task",
+    },
+  },
+}
+`;
+
+exports[`use context parameter in template 1`] = `
+Object {
+  "StartAt": "return \`name: context.Execution.Id\`",
+  "States": Object {
+    "1__return \`name: context.Execution.Id\`": Object {
+      "End": true,
+      "InputPath": "$.heap0.string",
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "return \`name: context.Execution.Id\`": Object {
+      "Next": "1__return \`name: context.Execution.Id\`",
+      "Parameters": Object {
+        "string.$": "States.Format('name: {}',$$.Execution.Id)",
+      },
+      "ResultPath": "$.heap0",
+      "Type": "Pass",
+    },
+  },
+}
+`;
+
 exports[`waitFor literal number of seconds 1`] = `
 Object {
   "StartAt": "Initialize Functionless Context",

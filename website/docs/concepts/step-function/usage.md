@@ -22,7 +22,7 @@ new StepFunction(scope, "StepFunction", () => {
 
 ## Input Argument
 
-The function can only accept a single argument and it must be an object (key-value pairs). It must be an object because the input is used as the initial state of the state machine.
+The function accepts two arguments, `input` and `context`. `input` (first position) must be an object (key-value pairs). It must be an object because the input is used as the initial state of the state machine. For more on context, see [Context Argument](#context-argument).
 
 ```ts
 new StepFunction(scope, "StepFunction", (input: { key: string }) => {
@@ -223,3 +223,19 @@ if (response.status === "SUCCEEDED") {
   }
 }
 ```
+
+## Context Argument
+
+In addition to the `input` argument to the function, `StepFunction` supports a `context` argument of type [SfnContext](../../api/interfaces/SfnContext.md).
+
+The context argument contains information about the machine and execution like names, ids, and the start timestamp.
+
+```ts
+new StepFunction(stack, "sfn", (input, context) => {
+  return context.Execution.Name;
+});
+```
+
+:::info
+For more details on the Context Argument, see [Context Object](https://docs.aws.amazon.com/step-functions/latest/dg/input-output-contextobject.html).
+:::
