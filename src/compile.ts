@@ -923,6 +923,10 @@ export function compile(
           return newExpr("PrivateIdentifier", [
             ts.factory.createStringLiteral(node.getText()),
           ]);
+        } else if (ts.isVoidExpression(node)) {
+          return newExpr("VoidExpr", [toExpr(node.expression, scope)]);
+        } else if (ts.isDeleteExpression(node)) {
+          return newExpr("DeleteExpr", [toExpr(node.expression, scope)]);
         } else if (ts.isYieldExpression(node)) {
           return newExpr("YieldExpr", [
             toExpr(node.expression, scope),

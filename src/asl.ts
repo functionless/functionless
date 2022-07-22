@@ -2138,8 +2138,6 @@ export class ASL {
           },
         };
       });
-    } else if (isVoidExpr(expr)) {
-      // TODO: eval expr and discard result
     }
     throw new Error(`cannot eval expression kind '${expr.kind}'`);
   }
