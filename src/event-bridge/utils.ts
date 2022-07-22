@@ -268,8 +268,8 @@ export const flattenStatementsScope = (
   return stmts
     .flatMap((stmt) => stmt.declList.decls)
     .reduce((scope, stmt) => {
-      const flattened = stmt.expr
-        ? flattenExpression(stmt.expr, scope)
+      const flattened = stmt.initializer
+        ? flattenExpression(stmt.initializer, scope)
         : undefined;
 
       if (isBindingPattern(stmt.name)) {

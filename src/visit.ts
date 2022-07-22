@@ -500,7 +500,7 @@ export function visitEachChild<T extends FunctionlessNode>(
   } else if (isUndefinedLiteralExpr(node)) {
     return new UndefinedLiteralExpr() as T;
   } else if (isVariableDecl(node)) {
-    const expr = node.expr ? visitor(node.expr) : undefined;
+    const expr = node.initializer ? visitor(node.initializer) : undefined;
     if (expr) {
       ensure(expr, isExpr, "a VariableDecl's expr property must be an Expr");
     }

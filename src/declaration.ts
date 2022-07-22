@@ -22,6 +22,7 @@ import type {
   ForInStmt,
   ForOfStmt,
   ForStmt,
+  VariableStmt,
 } from "./statement";
 import { AnyFunction, anyOf } from "./util";
 
@@ -182,7 +183,7 @@ export class BindingElem extends BaseDecl<"BindingElem", BindingPattern> {
  *
  * @see BindingElm for more details.
  */
-export class ObjectBinding extends BaseNode<"ObjectBinding"> {
+export class ObjectBinding extends BaseNode<"ObjectBinding", VariableDecl> {
   readonly nodeKind: "Node" = "Node";
 
   constructor(readonly bindings: BindingElem[]) {
@@ -215,7 +216,7 @@ export class ObjectBinding extends BaseNode<"ObjectBinding"> {
  *
  * @see BindingElm for more details.
  */
-export class ArrayBinding extends BaseNode<"ArrayBinding"> {
+export class ArrayBinding extends BaseNode<"ArrayBinding", VariableDecl> {
   readonly nodeKind: "Node" = "Node";
 
   constructor(readonly bindings: (BindingElem | undefined)[]) {
@@ -228,30 +229,32 @@ export class ArrayBinding extends BaseNode<"ArrayBinding"> {
   }
 }
 
-export type VariableDeclParent = ForInStmt | ForOfStmt | CatchClause;
+export type VariableDeclParent =
+  | CatchClause
+  | ForInStmt
+  | ForOfStmt
+  | VariableDeclList;
 
 export class VariableDecl<
   E extends Expr | undefined = Expr | undefined
 > extends BaseDecl<"VariableDecl", VariableDeclParent> {
-  constructor(readonly name: string | BindingPattern, readonly expr: E) {
+  constructor(readonly name: string | BindingPattern, readonly initializer: E) {
     super("VariableDecl");
     if (isBindingPattern(name)) {
       name.setParent(this);
     }
-    if (expr) {
-      expr.setParent(this);
-    }
+    initializer?.setParent(this);
   }
 
   public clone(): this {
     return new VariableDecl(
       isBindingPattern(this.name) ? this.name.clone() : this.name,
-      this.expr?.clone()
+      this.initializer?.clone()
     ) as this;
   }
 }
 
-export type VariableDeclListParent = ForStmt;
+export type VariableDeclListParent = ForStmt | VariableStmt;
 
 export class VariableDeclList extends BaseNode<
   "VariableDeclList",

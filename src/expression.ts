@@ -1,7 +1,7 @@
-import { Decl, ParameterDecl, VariableDecl } from "./declaration";
+import { BindingElem, Decl, ParameterDecl, VariableDecl } from "./declaration";
 import { isIdentifier, isPropAssignExpr, isStringLiteralExpr } from "./guards";
 import { BaseNode, FunctionlessNode } from "./node";
-import type { BlockStmt, ExprStmt, ReturnStmt } from "./statement";
+import type { BlockStmt, Stmt } from "./statement";
 import type { AnyFunction } from "./util";
 
 /**
@@ -40,10 +40,10 @@ export type Expr =
 export abstract class BaseExpr<
   Kind extends FunctionlessNode["kind"],
   Parent extends FunctionlessNode | undefined =
-    | ExprStmt
-    | VariableDecl
-    | ReturnStmt
+    | BindingElem
     | Expr
+    | Stmt
+    | VariableDecl
     | undefined
 > extends BaseNode<Kind, Parent> {
   readonly nodeKind: "Expr" = "Expr";

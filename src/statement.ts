@@ -55,9 +55,7 @@ export class ExprStmt extends BaseStmt<"ExprStmt"> {
   }
 }
 
-export type VariableStmtParent = FunctionDecl | FunctionExpr;
-
-export class VariableStmt extends BaseStmt<"VariableStmt", VariableStmtParent> {
+export class VariableStmt extends BaseStmt<"VariableStmt"> {
   constructor(readonly declList: VariableDeclList) {
     super("VariableStmt");
     declList.setParent(this);
@@ -73,6 +71,7 @@ export type BlockStmtParent =
   | DoStmt
   | ForInStmt
   | ForOfStmt
+  | ForStmt
   | FunctionDecl
   | FunctionExpr
   | IfStmt

@@ -881,7 +881,7 @@ export class ASL {
         )
       );
     } else if (isVariableDecl(stmt)) {
-      if (stmt.expr === undefined) {
+      if (stmt.initializer === undefined) {
         return undefined;
       }
 
@@ -892,7 +892,7 @@ export class ASL {
         );
       }
 
-      return this.evalExprToSubState(stmt.expr, (exprOutput) => {
+      return this.evalExprToSubState(stmt.initializer, (exprOutput) => {
         return ASLGraph.passWithInput(
           {
             Type: "Pass" as const,
@@ -4115,7 +4115,7 @@ function toStateName(node: FunctionlessNode): string {
         return `catch(${node.name})`;
       } else {
         return `${node.name} = ${
-          node.expr ? exprToString(node.expr) : "undefined"
+          node.initializer ? exprToString(node.initializer) : "undefined"
         }`;
       }
     } else if (isWhileStmt(node)) {

@@ -617,21 +617,21 @@ export abstract class VTL {
       const decl = node.declList.decls[0];
       const variablePrefix = isInTopLevelScope(node) ? `$context.stash.` : `$`;
       if (isBindingPattern(decl.name)) {
-        if (!decl.expr) {
+        if (!decl.initializer) {
           throw new SynthError(
             ErrorCodes.Unexpected_Error,
             "Expected an initializer for a binding pattern assignment"
           );
         }
-        const right = this.var(decl.expr);
+        const right = this.var(decl.initializer);
         this.evaluateBindingPattern(decl.name, right, variablePrefix);
         // may generate may variables, return nothing.
         return undefined;
       } else {
         const varName = `${variablePrefix}${decl.name}`;
 
-        if (decl.expr) {
-          return this.set(varName, decl.expr);
+        if (decl.initializer) {
+          return this.set(varName, decl.initializer);
         } else {
           return varName;
         }
