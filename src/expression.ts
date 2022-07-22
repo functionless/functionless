@@ -354,14 +354,16 @@ export class ObjectLiteralExpr extends BaseExpr<"ObjectLiteralExpr"> {
   }
 }
 
+export type PropName =
+  | Identifier
+  | ComputedPropertyNameExpr
+  | StringLiteralExpr;
+
 export class PropAssignExpr extends BaseExpr<
   "PropAssignExpr",
   ObjectLiteralExpr
 > {
-  constructor(
-    readonly name: Identifier | ComputedPropertyNameExpr | StringLiteralExpr,
-    readonly expr: Expr
-  ) {
+  constructor(readonly name: PropName, readonly expr: Expr) {
     super("PropAssignExpr");
     name.setParent(this);
     expr.setParent(this);

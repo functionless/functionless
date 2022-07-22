@@ -1,11 +1,12 @@
-import {
+import type {
   BindingElem,
   BindingPattern,
+  ClassMember,
   Decl,
   ParameterDecl,
 } from "./declaration";
 import type { Err } from "./error";
-import { Expr } from "./expression";
+import type { Expr } from "./expression";
 import {
   isBlockStmt,
   isTryStmt,
@@ -24,9 +25,15 @@ import {
   isBindingElem,
   isIdentifier,
 } from "./guards";
-import { BlockStmt, CatchClause, Stmt, VariableStmt } from "./statement";
+import type { BlockStmt, CatchClause, Stmt, VariableStmt } from "./statement";
 
-export type FunctionlessNode = Decl | Expr | Stmt | Err | BindingPattern;
+export type FunctionlessNode =
+  | Decl
+  | Expr
+  | Stmt
+  | Err
+  | BindingPattern
+  | ClassMember;
 
 export interface HasParent<Parent extends FunctionlessNode> {
   get parent(): Parent;

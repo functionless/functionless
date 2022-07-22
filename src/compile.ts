@@ -11,7 +11,7 @@ import {
   FunctionInterface,
   makeFunctionlessChecker,
 } from "./checker";
-import type { FunctionDecl } from "./declaration";
+import type { ConstructorDecl, FunctionDecl, MethodDecl } from "./declaration";
 import { ErrorCodes, SynthError } from "./error-code";
 import type {
   FunctionExpr,
@@ -297,8 +297,12 @@ export function compile(
       }
 
       function toFunction(
-        type: FunctionDecl["kind"] | FunctionExpr["kind"],
-        impl: ts.Expression,
+        type:
+          | FunctionDecl["kind"]
+          | FunctionExpr["kind"]
+          | ConstructorDecl["kind"]
+          | MethodDecl["kind"],
+        impl: ts.Node,
         /**
          * Scope used to determine the accessability of identifiers.
          * Functionless considers identifiers in a closure and all nested closures to be in scope.
@@ -322,7 +326,9 @@ export function compile(
         if (
           !ts.isFunctionDeclaration(impl) &&
           !ts.isArrowFunction(impl) &&
-          !ts.isFunctionExpression(impl)
+          !ts.isFunctionExpression(impl) &&
+          !ts.isConstructorDeclaration(impl) &&
+          !ts.isMethodDeclaration(impl)
         ) {
           throw new Error(
             `Functionless reflection only supports function parameters with bodies, no signature only declarations or references. Found ${impl.getText()}.`
@@ -821,6 +827,48 @@ export function compile(
           return ref(ts.factory.createIdentifier("this"));
         } else if (ts.isAwaitExpression(node)) {
           return newExpr("AwaitExpr", [toExpr(node.expression, scope)]);
+        } else if (ts.isClassDeclaration(node)) {
+          return newExpr("ClassDecl", [
+            ts.factory.createArrayLiteralExpression(
+              node.members.map((member) => toExpr(member, scope))
+            ),
+          ]);
+        } else if (ts.isClassStaticBlockDeclaration(node)) {
+          return newExpr("ClassStaticBlockDecl", [toExpr(node.body, scope)]);
+        } else if (ts.isConstructorDeclaration(node)) {
+          return toFunction("ConstructorDecl", node);
+        } else if (ts.isMethodDeclaration(node)) {
+          return toFunction("MethodDecl", node);
+        } else if (ts.isPropertyDeclaration(node)) {
+          return newExpr("PropDecl", [
+            toExpr(node.name, scope),
+            node.initializer
+              ? toExpr(node.initializer, scope)
+              : ts.factory.createIdentifier("undefined"),
+          ]);
+        } else if (ts.isDebuggerStatement(node)) {
+          return newExpr("Debugger", []);
+        } else if (ts.isLabeledStatement(node)) {
+          return newExpr("LabelledStmt", [toExpr(node.statement, scope)]);
+        } else if (ts.isSwitchStatement(node)) {
+          return newExpr("SwitchStmt", [
+            ts.factory.createArrayLiteralExpression(
+              node.caseBlock.clauses.map((clause) => toExpr(clause, scope))
+            ),
+          ]);
+        } else if (ts.isCaseClause(node)) {
+          return newExpr("CaseClause", [
+            toExpr(node.expression, scope),
+            ts.factory.createArrayLiteralExpression(
+              node.statements.map((stmt) => toExpr(stmt, scope))
+            ),
+          ]);
+        } else if (ts.isDefaultClause(node)) {
+          return newExpr("DefaultClause", [
+            ts.factory.createArrayLiteralExpression(
+              node.statements.map((stmt) => toExpr(stmt, scope))
+            ),
+          ]);
         }
 
         throw new Error(

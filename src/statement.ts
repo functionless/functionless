@@ -12,12 +12,16 @@ export type Stmt =
   | BlockStmt
   | CatchClause
   | ContinueStmt
+  | DebuggerStmt
   | DoStmt
   | ExprStmt
   | ForInStmt
   | ForOfStmt
   | IfStmt
+  | LabelledStmt
   | ReturnStmt
+  | SwitchStmt
+  | SwitchClause
   | ThrowStmt
   | TryStmt
   | VariableStmt
@@ -304,6 +308,65 @@ export class DoStmt extends BaseStmt<"DoStmt"> {
 
   public clone(): this {
     return new DoStmt(this.block.clone(), this.condition.clone()) as this;
+  }
+}
+
+export class LabelledStmt extends BaseStmt<"LabelledStmt"> {
+  constructor(readonly label: string, readonly stmt: Stmt) {
+    super("LabelledStmt");
+    stmt.setParent(this);
+  }
+
+  public clone(): this {
+    return new LabelledStmt(this.label, this.stmt.clone()) as this;
+  }
+}
+
+export class DebuggerStmt extends BaseStmt<"Debugger"> {
+  constructor() {
+    super("Debugger");
+  }
+  public clone(): this {
+    return new DebuggerStmt() as this;
+  }
+}
+
+export class SwitchStmt extends BaseStmt<"SwitchStmt"> {
+  constructor(readonly clauses: SwitchClause[]) {
+    super("SwitchStmt");
+    clauses.forEach((clause) => clause.setParent(this));
+  }
+
+  public clone(): this {
+    return new SwitchStmt(this.clauses.map((clause) => clause.clone())) as this;
+  }
+}
+
+export type SwitchClause = CaseClause | DefaultClause;
+
+export class CaseClause extends BaseStmt<"CaseClause"> {
+  constructor(readonly expr: Expr, readonly statements: Stmt[]) {
+    super("CaseClause");
+    expr.setParent(this);
+    statements.forEach((stmt) => stmt.setParent(this));
+  }
+  public clone(): this {
+    return new CaseClause(
+      this.expr.clone(),
+      this.statements.map((stmt) => stmt.clone())
+    ) as this;
+  }
+}
+
+export class DefaultClause extends BaseStmt<"DefaultClause"> {
+  constructor(readonly statements: Stmt[]) {
+    super("DefaultClause");
+    statements.forEach((stmt) => stmt.setParent(this));
+  }
+  public clone(): this {
+    return new DefaultClause(
+      this.statements.map((stmt) => stmt.clone())
+    ) as this;
   }
 }
 
