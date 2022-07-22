@@ -1,5 +1,7 @@
 import { Duration } from "aws-cdk-lib";
 import { AttributeType } from "aws-cdk-lib/aws-dynamodb";
+// eslint-disable-next-line import/no-extraneous-dependencies
+import { StepFunctions } from "aws-sdk";
 import { Construct } from "constructs";
 import {
   StepFunction,
@@ -36,8 +38,14 @@ interface TestExpressStepFunctionBase {
     ) => StepFunction<I, O> | { sfn: StepFunction<I, O>; outputs: Outputs },
     expected: OO extends void
       ? null
-      : OO | ((context: Outputs) => OO extends void ? null : O),
-    payload?: I | ((context: Outputs) => I)
+      :
+          | OO
+          | ((
+              context: Outputs,
+              result: StepFunctions.DescribeExecutionOutput
+            ) => OO extends void ? null : O),
+    payload?: I | ((context: Outputs) => I),
+    executionName?: string
   ): void;
 }
 
@@ -67,15 +75,28 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
         };
       },
       async (context, extra) => {
-        const exp =
-          // @ts-ignore
-          typeof expected === "function" ? expected(context) : expected;
-        // @ts-ignore
-        const pay = typeof payload === "function" ? payload(context) : payload;
+        const pay =
+          typeof payload === "function"
+            ? (<globalThis.Function>payload)(context)
+            : payload;
+
         expect(
           normalizeCDKJson(JSON.parse(extra!.definition))
         ).toMatchSnapshot();
-        await testStepFunction(context.function, pay, exp);
+        const result = await testStepFunction(context.function, pay);
+
+        const exp =
+          typeof expected === "function"
+            ? (<globalThis.Function>expected)(context, result)
+            : expected;
+
+        if (result.status === "FAILED") {
+          throw new Error(`Machine failed with output: ${result.output}`);
+        }
+
+        expect(result.output ? JSON.parse(result.output) : undefined).toEqual(
+          exp
+        );
       }
     );
   };
@@ -924,12 +945,15 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
           for (const i in input.arr) {
             await func({ n: `${input.arr[i]}`, id: input.id });
           }
-          // 2 + 3 + 4 + 3 + 4 + 5 + 4 + 5 + 6 = 36 + 6 = 42
           for (const i in input.arr) {
-            for (const j in input.arr) {
-              await func({ n: `${input.arr[i]}`, id: input.id });
-              await func({ n: `${input.arr[j]}`, id: input.id });
+            let j = "1";
+            for (j in input.arr) {
+              await func({ n: `${input.arr[i]}`, id: input.id }); // 1 1 1 2 2 2 3 3 3 = 18
+              await func({ n: i as `${number}`, id: input.id }); // 0 0 0 1 1 1 2 2 2 = 9
+              await func({ n: `${input.arr[j]}`, id: input.id }); // 1 2 3 1 2 3 1 2 3 = 18
+              await func({ n: j as `${number}`, id: input.id }); // 0 1 2 0 1 2 0 1 2 = 9
             }
+            await func({ n: j as "2", id: input.id }); // 2 2 2 = 6
           }
           const item = await $AWS.DynamoDB.GetItem({
             Table: table,
@@ -942,7 +966,8 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
         }
       );
     },
-    "42",
+    // 6 + 54 + 6
+    "66",
     { arr: [1, 2, 3], id: `key${Math.floor(Math.random() * 1000)}` }
   );
 
@@ -991,10 +1016,13 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
           }
           // 2 + 3 + 4 + 3 + 4 + 5 + 4 + 5 + 6 = 36 + 6 = 42
           for (const i of input.arr) {
-            for (const j of input.arr) {
+            let j = 1;
+            for (j of input.arr) {
               await func({ n: `${i}`, id: input.id });
               await func({ n: `${j}`, id: input.id });
             }
+            // 3 + 3 + 3 = 9 = 51
+            await func({ n: `${j}`, id: input.id });
           }
           const item = await $AWS.DynamoDB.GetItem({
             Table: table,
@@ -1007,8 +1035,35 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
         }
       );
     },
-    "42",
+    "51",
     { arr: [1, 2, 3], id: `key${Math.floor(Math.random() * 1000)}` }
+  );
+
+  test(
+    "for",
+    (parent) => {
+      return new StepFunction(parent, "sfn", (input) => {
+        let a = "";
+        for (let arr = input.arr; arr[0]; arr = arr.slice(1)) {
+          a = `${a}n${arr[0]}`;
+        }
+        let c = "";
+        for (;;) {
+          if (c === "1") {
+            c = `${c}1`;
+            continue;
+          }
+          if (c === "111") {
+            break;
+          }
+          a = `${a}c${c}`;
+          c = `${c}1`;
+        }
+        return a;
+      });
+    },
+    "n1n2n3cc11",
+    { arr: [1, 2, 3] }
   );
 
   test(
@@ -1332,5 +1387,15 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
       a: "1",
     },
     { a: "1", b: 1, c: { d: "d" } }
+  );
+
+  test(
+    "context",
+    (parent) => {
+      return new StepFunction(parent, "sfn", async (_, context) => {
+        return `name: ${context.Execution.Name}`;
+      });
+    },
+    (_, result) => `name: ${result.name}`
   );
 });

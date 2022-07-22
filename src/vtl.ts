@@ -1,5 +1,5 @@
 import { assertNever, assertNodeKind } from "./assert";
-import { BindingPattern } from "./declaration";
+import { BindingPattern, VariableDecl } from "./declaration";
 import {} from "./error";
 import { ErrorCodes, SynthError } from "./error-code";
 import {
@@ -17,7 +17,6 @@ import {
   isArrowFunctionExpr,
   isAwaitExpr,
   isBinaryExpr,
-  isBindingElem,
   isBindingPattern,
   isBlockStmt,
   isBooleanLiteralExpr,
@@ -37,10 +36,10 @@ import {
   isDoStmt,
   isElementAccessExpr,
   isEmptyStmt,
-  isErr,
   isExprStmt,
   isForInStmt,
   isForOfStmt,
+  isForStmt,
   isFunctionDecl,
   isFunctionExpr,
   isIdentifier,
@@ -73,13 +72,13 @@ import {
   isTypeOfExpr,
   isUnaryExpr,
   isUndefinedLiteralExpr,
+  isVariableDecl,
   isVariableStmt,
   isWhileStmt,
   isWithStmt,
 } from "./guards";
 import { Integration, IntegrationImpl, isIntegration } from "./integration";
-import { FunctionlessNode } from "./node";
-import { Stmt, VariableStmt } from "./statement";
+import { Stmt } from "./statement";
 import { AnyFunction, isInTopLevelScope } from "./util";
 
 // https://velocity.apache.org/engine/devel/user-guide.html#conditionals
@@ -236,11 +235,11 @@ export abstract class VTL {
   }
 
   public foreach(
-    iterVar: string | Expr | VariableStmt,
+    iterVar: string | Expr | VariableDecl,
     iterValue: string | Expr,
     body: string | Stmt | (() => void)
   ) {
-    if (isVariableStmt(iterVar)) {
+    if (isVariableDecl(iterVar)) {
       if (isBindingPattern(iterVar.name)) {
         // iterate into a temp variable
         const tempVar = this.newLocalVarName();
@@ -300,7 +299,7 @@ export abstract class VTL {
    */
   public eval(node?: Expr, returnVar?: string): string;
   public eval(node: Stmt, returnVar?: string): void;
-  public eval(node?: FunctionlessNode, returnVar?: string): string | void {
+  public eval(node?: Expr | Stmt, returnVar?: string): string | void {
     if (!node) {
       return "$null";
     }
@@ -633,23 +632,25 @@ export abstract class VTL {
       );
       return temp;
     } else if (isVariableStmt(node)) {
+      // variable statements with multiple declarations are turned into multiple variable statements.
+      const decl = node.declList.decls[0];
       const variablePrefix = isInTopLevelScope(node) ? `$context.stash.` : `$`;
-      if (isBindingPattern(node.name)) {
-        if (!node.expr) {
+      if (isBindingPattern(decl.name)) {
+        if (!decl.initializer) {
           throw new SynthError(
             ErrorCodes.Unexpected_Error,
             "Expected an initializer for a binding pattern assignment"
           );
         }
-        const right = this.var(node.expr);
-        this.evaluateBindingPattern(node.name, right, variablePrefix);
+        const right = this.var(decl.initializer);
+        this.evaluateBindingPattern(decl.name, right, variablePrefix);
         // may generate may variables, return nothing.
         return undefined;
       } else {
-        const varName = `${variablePrefix}${node.name}`;
+        const varName = `${variablePrefix}${decl.name}`;
 
-        if (node.expr) {
-          return this.set(varName, node.expr);
+        if (decl.initializer) {
+          return this.set(varName, decl.initializer);
         } else {
           return varName;
         }
@@ -678,14 +679,12 @@ export abstract class VTL {
         ErrorCodes.Unsupported_Use_of_Promises,
         "Appsync does not support concurrent integration invocation."
       );
-    } else if (isErr(node)) {
-      throw node.error;
     } else if (isArgument(node)) {
       return this.eval(node.expr);
-    } else if (isBindingElem(node) || isBindingPattern(node)) {
+    } else if (isForStmt(node)) {
       throw new SynthError(
-        ErrorCodes.Unexpected_Error,
-        "BindingElm and BindingPatterns should be handled locally (ex: VariableStmt)"
+        ErrorCodes.Unsupported_Feature,
+        "Condition based for loops (for(;;)) are not currently supported. For in and for of loops may be supported based on the use case. https://github.com/functionless/functionless/issues/303"
       );
     } else if (
       isCaseClause(node) ||

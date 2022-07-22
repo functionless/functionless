@@ -54,8 +54,7 @@ export const testExprStepFunction = async (
 
 export const testStepFunction = async (
   stateMachineArn: string,
-  payload: any,
-  expected: any
+  payload: any
 ) => {
   const execResult = await sfn
     .startExecution({
@@ -64,7 +63,7 @@ export const testStepFunction = async (
     })
     .promise();
 
-  const result = await retry(
+  return retry(
     () =>
       sfn
         .describeExecution({
@@ -75,14 +74,6 @@ export const testStepFunction = async (
     10,
     1000,
     2
-  );
-
-  if (result.status === "FAILED") {
-    throw new Error(`Machine failed with output: ${result.output}`);
-  }
-
-  expect(result.output ? JSON.parse(result.output) : undefined).toEqual(
-    expected
   );
 };
 

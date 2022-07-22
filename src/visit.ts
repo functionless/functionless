@@ -10,6 +10,8 @@ import {
   ObjectBinding,
   ParameterDecl,
   ConstructorDecl,
+  VariableDecl,
+  VariableDeclList,
 } from "./declaration";
 import { Err } from "./error";
 import {
@@ -117,6 +119,9 @@ import {
   isVariableStmt,
   isWhileStmt,
   isWithStmt,
+  isForStmt,
+  isVariableDeclList,
+  isVariableDecl,
 } from "./guards";
 import { FunctionlessNode } from "./node";
 
@@ -132,6 +137,7 @@ import {
   FinallyBlock,
   ForInStmt,
   ForOfStmt,
+  ForStmt,
   IfStmt,
   LabelledStmt,
   ReturnStmt,
@@ -254,22 +260,11 @@ export function visitEachChild<T extends FunctionlessNode>(
     if (variableDecl !== undefined && variableDecl) {
       ensure(
         variableDecl,
-        isVariableStmt,
-        "visitEachChild of a CatchClause's VariableStmt must return another VariableStmt"
+        isVariableDecl,
+        "visitEachChild of a CatchClause's VariableDecl must return another VariableDecl"
       );
     }
-    let block = visitor(node.block);
-    if (Array.isArray(block)) {
-      block = flatten(block);
-      ensureItemOf(block, isStmt, "Statements in BlockStmt must be Stmt nodes");
-      block = new BlockStmt(block);
-    } else {
-      ensure(
-        block,
-        isBlockStmt,
-        "visitEachChild of a CatchClause's BlockStmt must return another BlockStmt or an Array of Stmt"
-      );
-    }
+    const block = visitBlockStmt(node.block, visitor);
 
     return new CatchClause(variableDecl, block) as T;
   } else if (isClassDecl(node) || isClassExpr(node)) {
@@ -336,8 +331,7 @@ export function visitEachChild<T extends FunctionlessNode>(
   } else if (isDebuggerStmt(node)) {
     return node.clone() as T;
   } else if (isDoStmt(node)) {
-    const block = visitor(node.block);
-    ensure(block, isBlockStmt, "a DoStmt's block must be a BlockStmt");
+    const block = visitBlockStmt(node.block, visitor);
     const condition = visitor(node.condition);
     ensure(condition, isExpr, "a DoStmt's condition must be an Expr");
     return new DoStmt(block, condition) as T;
@@ -357,25 +351,44 @@ export function visitEachChild<T extends FunctionlessNode>(
     const expr = visitor(node.expr);
     ensure(expr, isExpr, "The Expr in an ExprStmt must be an Expr");
     return new ExprStmt(expr) as T;
+  } else if (isForStmt(node)) {
+    const body = visitBlockStmt(node.body, visitor);
+    const variableDecl = node.variableDecl
+      ? visitor(node.variableDecl)
+      : undefined;
+    variableDecl &&
+      ensure(
+        variableDecl,
+        anyOf(isVariableDeclList, isExpr),
+        `Initializer in ForStmt must be a VariableList or Expr`
+      );
+    const condition = node.condition ? visitor(node.condition) : undefined;
+    condition &&
+      ensure(condition, isExpr, `Condition in ForStmt must be an Expr`);
+    const incrementor = node.incrementor
+      ? visitor(node.incrementor)
+      : undefined;
+    incrementor &&
+      ensure(incrementor, isExpr, `Incrementor in ForStmt must be an Expr`);
+
+    return new ForStmt(
+      body,
+      variableDecl as VariableDeclList | Expr,
+      condition as Expr,
+      incrementor as Expr
+    ) as T;
   } else if (isForInStmt(node) || isForOfStmt(node)) {
     const variableDecl = visitor(node.variableDecl);
     ensure(
       variableDecl,
-      isVariableStmt,
-      `VariableDecl in ${node.kind} must be a VariableDecl`
+      anyOf(isVariableDecl, isIdentifier),
+      `Initializer in ${node.kind} must be a VariableDecl or Identifier`
     );
 
     const expr = visitor(node.expr);
     ensure(expr, isExpr, `Expr in ${node.kind} must be an Expr`);
 
-    let body = visitor(node.body);
-    if (Array.isArray(body)) {
-      body = flatten(body);
-      ensureItemOf(body, isStmt, "Statements in BlockStmt must be Stmt nodes");
-      body = new BlockStmt(body);
-    } else {
-      ensure(body, isBlockStmt, `Body in ${node.kind} must be a BlockStmt`);
-    }
+    const body = visitBlockStmt(node.body, visitor);
 
     return (
       isForInStmt(node)
@@ -412,8 +425,8 @@ export function visitEachChild<T extends FunctionlessNode>(
       []
     );
 
-    const body = visitor(node.body);
-    ensure(body, isBlockStmt, `a ${node.kind}'s body must be a BlockStmt`);
+    const body = visitBlockStmt(node.body, visitor);
+
     return (
       isFunctionDecl(node)
         ? new FunctionDecl(node.name, parameters, body)
@@ -555,8 +568,7 @@ export function visitEachChild<T extends FunctionlessNode>(
     ensure(expr, isExpr, "a ThrowStmt's expr must be an Expr node type");
     return new ThrowStmt(expr) as T;
   } else if (isTryStmt(node)) {
-    const tryBlock = visitor(node.tryBlock);
-    ensure(tryBlock, isBlockStmt, "a TryStmt's tryBlock must be a BlockStmt");
+    const tryBlock = visitBlockStmt(node.tryBlock, visitor);
 
     const catchClause = node.catchClause
       ? visitor(node.catchClause)
@@ -570,15 +582,9 @@ export function visitEachChild<T extends FunctionlessNode>(
     }
 
     const finallyBlock = node.finallyBlock
-      ? visitor(node.finallyBlock)
+      ? visitBlockStmt(node.finallyBlock, visitor)
       : undefined;
-    if (finallyBlock) {
-      ensure(
-        finallyBlock,
-        isBlockStmt,
-        "a TryStmt's finallyBlock must be a BlockStmt"
-      );
-    }
+
     return new TryStmt(
       tryBlock,
       catchClause,
@@ -599,16 +605,31 @@ export function visitEachChild<T extends FunctionlessNode>(
   } else if (isUndefinedLiteralExpr(node)) {
     return new UndefinedLiteralExpr() as T;
   } else if (isVariableStmt(node)) {
-    const expr = node.expr ? visitor(node.expr) : undefined;
+    const declList = visitor(node.declList);
+    ensure(
+      declList,
+      isVariableDeclList,
+      "a VariableStmt's declList property must be an VariableDeclList"
+    );
+    return new VariableStmt(declList) as T;
+  } else if (isVariableDeclList(node)) {
+    const variables = node.decls.map(visitor);
+    ensureItemOf(
+      variables,
+      isVariableDecl,
+      "Variables in a VariableDeclList must be of type VariableDecl"
+    );
+    return new VariableDeclList(variables) as T;
+  } else if (isVariableDecl(node)) {
+    const expr = node.initializer ? visitor(node.initializer) : undefined;
     if (expr) {
-      ensure(expr, isExpr, "a VariableStmt's expr property must be an Expr");
+      ensure(expr, isExpr, "a VariableDecl's expr property must be an Expr");
     }
-    return new VariableStmt(node.name, expr) as T;
+    return new VariableDecl(node.name, expr) as T;
   } else if (isWhileStmt(node)) {
     const condition = visitor(node.condition);
     ensure(condition, isExpr, "a WhileStmt's condition must be an Expr");
-    const block = visitor(node.block);
-    ensure(block, isBlockStmt, "a WhileStmt's block must be a BlockStmt");
+    const block = visitBlockStmt(node.block, visitor);
     return new WhileStmt(condition, block) as T;
   } else if (isAwaitExpr(node)) {
     const expr = visitor(node.expr);
@@ -760,6 +781,22 @@ export function visitEachChild<T extends FunctionlessNode>(
   return assertNever(node);
 }
 
+function visitBlockStmt(
+  node: BlockStmt,
+  visitor: (
+    node: FunctionlessNode
+  ) => FunctionlessNode | FunctionlessNode[] | undefined
+): BlockStmt {
+  let block = visitor(node);
+  if (Array.isArray(block)) {
+    block = flatten(block);
+    ensureItemOf(block, isStmt, "Statements in BlockStmt must be Stmt nodes");
+    return new BlockStmt(block);
+  }
+  ensure(block, isBlockStmt, `Body in ${node.kind} must be a BlockStmt`);
+  return block;
+}
+
 /**
  * Like {@link visitEachChild} but it only visits the statements of a block.
  *
@@ -774,7 +811,11 @@ export function visitBlock(
     const nestedTasks: FunctionlessNode[] = [];
     function hoist(expr: Expr): Identifier {
       const id = new Identifier(nameGenerator.generateOrGet(expr));
-      nestedTasks.push(new VariableStmt(id.name, expr));
+      nestedTasks.push(
+        new VariableStmt(
+          new VariableDeclList([new VariableDecl(id.name, expr)])
+        )
+      );
       return id;
     }
 

@@ -8,18 +8,26 @@ import {
   PropName,
   StringLiteralExpr,
 } from "./expression";
-import { isErr, isFunctionDecl } from "./guards";
+import { isBindingPattern, isErr, isFunctionDecl } from "./guards";
 import { Integration } from "./integration";
 import { BaseNode, FunctionlessNode } from "./node";
-import { BlockStmt } from "./statement";
+import type {
+  BlockStmt,
+  CatchClause,
+  ForInStmt,
+  ForOfStmt,
+  ForStmt,
+  VariableStmt,
+} from "./statement";
 import { AnyClass, AnyFunction, anyOf } from "./util";
 
 export type Decl =
+  | BindingElem
   | ClassDecl
   | ClassMember
   | FunctionDecl
   | ParameterDecl
-  | BindingElem;
+  | VariableDecl;
 
 abstract class BaseDecl<
   Kind extends FunctionlessNode["kind"],
@@ -261,7 +269,7 @@ export class BindingElem extends BaseDecl<"BindingElem", BindingPattern> {
  *
  * @see BindingElm for more details.
  */
-export class ObjectBinding extends BaseNode<"ObjectBinding"> {
+export class ObjectBinding extends BaseNode<"ObjectBinding", VariableDecl> {
   readonly nodeKind: "Node" = "Node";
 
   constructor(readonly bindings: BindingElem[]) {
@@ -294,7 +302,7 @@ export class ObjectBinding extends BaseNode<"ObjectBinding"> {
  *
  * @see BindingElm for more details.
  */
-export class ArrayBinding extends BaseNode<"ArrayBinding"> {
+export class ArrayBinding extends BaseNode<"ArrayBinding", VariableDecl> {
   readonly nodeKind: "Node" = "Node";
 
   constructor(readonly bindings: (BindingElem | undefined)[]) {
@@ -304,6 +312,49 @@ export class ArrayBinding extends BaseNode<"ArrayBinding"> {
 
   public clone(): this {
     return new ArrayBinding(this.bindings.map((b) => b?.clone())) as this;
+  }
+}
+
+export type VariableDeclParent =
+  | CatchClause
+  | ForInStmt
+  | ForOfStmt
+  | VariableDeclList;
+
+export class VariableDecl<
+  E extends Expr | undefined = Expr | undefined
+> extends BaseDecl<"VariableDecl", VariableDeclParent> {
+  constructor(readonly name: string | BindingPattern, readonly initializer: E) {
+    super("VariableDecl");
+    if (isBindingPattern(name)) {
+      name.setParent(this);
+    }
+    initializer?.setParent(this);
+  }
+
+  public clone(): this {
+    return new VariableDecl(
+      isBindingPattern(this.name) ? this.name.clone() : this.name,
+      this.initializer?.clone()
+    ) as this;
+  }
+}
+
+export type VariableDeclListParent = ForStmt | VariableStmt;
+
+export class VariableDeclList extends BaseNode<
+  "VariableDeclList",
+  VariableDeclListParent
+> {
+  readonly nodeKind: "Node" = "Node";
+
+  constructor(readonly decls: VariableDecl[]) {
+    super("VariableDeclList");
+    decls.map((decl) => decl.setParent(this));
+  }
+
+  public clone(): this {
+    return new VariableDeclList(this.decls.map((decl) => decl.clone())) as this;
   }
 }
 

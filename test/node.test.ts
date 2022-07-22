@@ -9,13 +9,13 @@ import {
   Identifier,
   NullLiteralExpr,
   TryStmt,
-  VariableStmt,
+  VariableDecl,
   WhileStmt,
 } from "../src";
 
 test("node.exit() from catch surrounded by while", () => {
   const catchClause = new CatchClause(
-    new VariableStmt("var", new NullLiteralExpr()),
+    new VariableDecl("var", new NullLiteralExpr()),
     new BlockStmt([new ExprStmt(new CallExpr(new Identifier("task"), []))])
   );
 

@@ -46,10 +46,77 @@ export type AnyStepFunction =
   | ExpressStepFunction<any, any>
   | StepFunction<any, any>;
 
+/**
+ * Machine and Execution context available during runtime.
+ *
+ * @see https://docs.aws.amazon.com/step-functions/latest/dg/input-output-contextobject.html
+ *
+ * To access this data, use the second parameter in a new {@link StepFunction}'s callback.
+ *
+ * ```ts
+ * new StepFunction(stack, 'sfn', (input, context) => {
+ *    return context.Execution.Name;
+ * })
+ * ```
+ *
+ * > Note: missing fields (ex: `$$.State.Name`) are abstracted away from {@link StepFunction}.
+ * > Note: `$$.Execution.Input` is available as the first parameter of the closure `(input) => {}`.
+ */
+export interface SfnContext {
+  /**
+   * Data associated with the current execution of the state machine which is available during execution.
+   */
+  readonly Execution: {
+    /**
+     * Unique name of the current execution of the {@link StateMachine}.
+     *
+     * @example - executionName
+     */
+    readonly Name: string;
+    /**
+     * Arn of the current execution of the {@link StateMachine}.
+     *
+     * @example - arn:aws:states:us-east-1:123456789012:execution:stateMachineName:executionName
+     */
+    readonly Id: string;
+    /**
+     * Time the current execution started.
+     *
+     * Format: ISO 8601
+     *
+     * @example - 2019-03-26T20:14:13.192Z
+     */
+    readonly StartTime: string;
+    /**
+     * Execution role ARN
+     *
+     * @example - arn:aws:iam::123456789012:role
+     */
+    readonly RoleArn: string;
+  };
+  /**
+   * Data associated with the state machine which is available during execution.
+   */
+  readonly StateMachine: {
+    /**
+     * Unique name of the {@link StateMachine}.
+     *
+     * @example - stateMachineName
+     */
+    readonly Name: string;
+    /**
+     * Arn of the {@link StateMachine}.
+     *
+     * @example  arn:aws:states:us-east-1:123456789012:stateMachine:stateMachineName
+     */
+    readonly Id: string;
+  };
+}
+
 export type StepFunctionClosure<
   Payload extends Record<string, any> | undefined,
   Out
-> = (arg: Payload) => Promise<Out> | Out;
+> = (arg: Payload, context: SfnContext) => Promise<Out> | Out;
 
 type ParallelFunction<T> = () => Promise<T> | T;
 

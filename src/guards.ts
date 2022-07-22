@@ -72,6 +72,7 @@ export function isStmt(a: any): a is Stmt {
   return isNode(a) && a.nodeKind === "Stmt";
 }
 export const isBlockStmt = typeGuard("BlockStmt");
+export const isForStmt = typeGuard("ForStmt");
 export const isBreakStmt = typeGuard("BreakStmt");
 export const isCaseClause = typeGuard("CaseClause");
 export const isCatchClause = typeGuard("CatchClause");
@@ -112,6 +113,7 @@ export const isClassMember = typeGuard(
   "MethodDecl",
   "PropDecl"
 );
+export const isVariableDecl = typeGuard("VariableDecl");
 
 export const isArrayBinding = typeGuard("ArrayBinding");
 export const isBindingElem = typeGuard("BindingElem");
@@ -125,6 +127,8 @@ export const isPropName = typeGuard(
 
 export const isBindingPattern = (a: any): a is BindingPattern =>
   isNode(a) && (isObjectBinding(a) || isArrayBinding(a));
+
+export const isVariableDeclList = typeGuard("VariableDeclList");
 
 // generates type guards
 export function typeGuard<Kind extends FunctionlessNode["kind"]>(

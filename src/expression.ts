@@ -1,12 +1,13 @@
-import type { BindingElem, ClassMember, ParameterDecl } from "./declaration";
+import type {
+  BindingElem,
+  ClassMember,
+  Decl,
+  ParameterDecl,
+  VariableDecl,
+} from "./declaration";
 import { isIdentifier, isPropAssignExpr, isStringLiteralExpr } from "./guards";
 import { BaseNode, FunctionlessNode } from "./node";
-import type {
-  BlockStmt,
-  ExprStmt,
-  ReturnStmt,
-  VariableStmt,
-} from "./statement";
+import type { BlockStmt, Stmt } from "./statement";
 import type { AnyClass, AnyFunction } from "./util";
 
 /**
@@ -48,10 +49,10 @@ export type Expr =
 export abstract class BaseExpr<
   Kind extends FunctionlessNode["kind"],
   Parent extends FunctionlessNode | undefined =
-    | ExprStmt
-    | VariableStmt
-    | ReturnStmt
+    | BindingElem
     | Expr
+    | Stmt
+    | VariableDecl
     | undefined
 > extends BaseNode<Kind, Parent> {
   readonly nodeKind: "Expr" = "Expr";
@@ -141,7 +142,7 @@ export class Identifier extends BaseExpr<"Identifier"> {
     return new Identifier(this.name) as this;
   }
 
-  public lookup(): VariableStmt | ParameterDecl | BindingElem | undefined {
+  public lookup(): Decl | undefined {
     return this.getLexicalScope().get(this.name);
   }
 }
@@ -259,6 +260,7 @@ export type BinaryOp =
   | MutationMathBinaryOp
   | ValueComparisonBinaryOp
   | ComparatorOp
+  | ","
   | "="
   | "in";
 

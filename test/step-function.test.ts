@@ -862,13 +862,30 @@ test("for-loop inline array", () => {
   expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
-test("for i in items, items[i]", () => {
+test("for const i in items, items[i]", () => {
   const { stack } = initStepFunctionApp();
   const definition = new ExpressStepFunction<{ items: string[] }, void>(
     stack,
     "fn",
     (input) => {
       for (const i in input.items) {
+        // @ts-ignore
+        const a = items[i];
+      }
+    }
+  ).definition;
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+});
+
+test("for i in items, items[i]", () => {
+  const { stack } = initStepFunctionApp();
+  const definition = new ExpressStepFunction<{ items: string[] }, void>(
+    stack,
+    "fn",
+    (input) => {
+      var i;
+      for (i in input.items) {
         // @ts-ignore
         const a = items[i];
       }
@@ -2659,6 +2676,38 @@ test("template literal strings complex", () => {
   expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
+test("for-in-loop variable initializer", () => {
+  const { stack } = initStepFunctionApp();
+  const definition = new ExpressStepFunction<
+    { items: string[] },
+    string | void
+  >(stack, "fn", (input) => {
+    let x;
+    for (x of input.items) {
+      return x;
+    }
+    return undefined;
+  }).definition;
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+});
+
+test("for-of-loop variable initializer", () => {
+  const { stack } = initStepFunctionApp();
+  const definition = new ExpressStepFunction<
+    { items: string[] },
+    string | void
+  >(stack, "fn", (input) => {
+    let x;
+    for (x in input.items) {
+      return x;
+    }
+    return undefined;
+  }).definition;
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+});
+
 test("break from for-loop", () => {
   const { stack } = initStepFunctionApp();
   const definition = new ExpressStepFunction<{ items: string[] }, void>(
@@ -2745,6 +2794,78 @@ test("continue in do..while loop", () => {
         }
         await task(input.key);
       } while (true);
+    }
+  ).definition;
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+});
+
+test("for(;;) loop", () => {
+  const { stack, task } = initStepFunctionApp();
+  const definition = new ExpressStepFunction<{ key: string }, void>(
+    stack,
+    "fn",
+    async () => {
+      for (let i = 0; i < 3; i = i === 0 ? 1 : i === 1 ? 2 : 3) {
+        await task(i);
+      }
+    }
+  ).definition;
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+});
+
+test("for(;;) loop empty body", () => {
+  const { stack } = initStepFunctionApp();
+  const definition = new ExpressStepFunction<{ key: string }, void>(
+    stack,
+    "fn",
+    async () => {
+      for (let i = 0; i < 3; i = i === 0 ? 1 : i === 1 ? 2 : 3) {}
+    }
+  ).definition;
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+});
+
+test("for(;;) loop complex", () => {
+  const { stack, task } = initStepFunctionApp();
+  const definition = new ExpressStepFunction<{ key: string }, void>(
+    stack,
+    "fn",
+    async () => {
+      for (let i = [1, 2], j = [3, 4]; i[0]; i = i.slice(1), j = j.slice(1)) {
+        await task({ i: i, j: j });
+      }
+    }
+  ).definition;
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+});
+
+test("for(;;) no statement", () => {
+  const { stack, task } = initStepFunctionApp();
+  const definition = new ExpressStepFunction<{ key: string }, void>(
+    stack,
+    "fn",
+    async () => {
+      for (;;) {
+        await task();
+        break;
+      }
+    }
+  ).definition;
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+});
+
+test("for(;;) empty", () => {
+  const { stack } = initStepFunctionApp();
+  const definition = new ExpressStepFunction<{ key: string }, void>(
+    stack,
+    "fn",
+    async () => {
+      for (;;) {}
     }
   ).definition;
 
@@ -3284,6 +3405,73 @@ test("parse json", () => {
   const definition = new ExpressStepFunction(stack, "machine2", () => {
     return JSON.parse("{ a: 'a', b: { c: 'c' } }");
   }).definition;
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+});
+
+test("use context parameter", () => {
+  const { stack } = initStepFunctionApp();
+  const definition = new StepFunction<{ value: string }, string>(
+    stack,
+    "machine1",
+    (_, context) => {
+      return context.Execution.Name;
+    }
+  ).definition;
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+});
+
+test("use context parameter in template", () => {
+  const { stack } = initStepFunctionApp();
+  const definition = new StepFunction<{ value: string }, string>(
+    stack,
+    "machine1",
+    (_, context) => {
+      return `name: ${context.Execution.Id}`;
+    }
+  ).definition;
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+});
+
+test("use context parameter in function call", () => {
+  const { stack, task } = initStepFunctionApp();
+  const definition = new StepFunction<{ value: string }, number | null>(
+    stack,
+    "machine1",
+    async (_, context) => {
+      return task(context.Execution.Id);
+    }
+  ).definition;
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+});
+
+test("use context object", () => {
+  const { stack, task } = initStepFunctionApp();
+  const definition = new StepFunction<{ value: string }, number | null>(
+    stack,
+    "machine1",
+    async (_, context) => {
+      return task(context);
+    }
+  ).definition;
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+});
+
+test("use context in object", () => {
+  const { stack } = initStepFunctionApp();
+  const definition = new StepFunction<{ value: string }, { a: string }>(
+    stack,
+    "machine1",
+    async (_, context) => {
+      return {
+        a: context.Execution.Name,
+      };
+    }
+  ).definition;
 
   expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
