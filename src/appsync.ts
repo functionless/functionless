@@ -6,7 +6,11 @@ import {
   ToAttributeMap,
   ToAttributeValue,
 } from "typesafe-dynamodb/lib/attribute-value";
-import { FunctionDecl, validateFunctionDecl } from "./declaration";
+import {
+  FunctionDecl,
+  validateFunctionDecl,
+  VariableDeclList,
+} from "./declaration";
 import { ErrorCodes, SynthError } from "./error-code";
 import {
   Argument,
@@ -39,18 +43,20 @@ import {
   isBindingElem,
   isBindingPattern,
   isReferenceExpr,
+  isVariableDecl,
 } from "./guards";
 import {
   findDeepIntegrations,
   getIntegrationExprFromIntegrationCallPattern,
   Integration,
+  IntegrationCallPattern,
   IntegrationImpl,
   isIntegration,
   isIntegrationCallPattern,
 } from "./integration";
 import { Literal } from "./literal";
 import { FunctionlessNode } from "./node";
-import { BlockStmt } from "./statement";
+import { BlockStmt, VariableStmt } from "./statement";
 import {
   AnyFunction,
   DeterministicNameGenerator,
@@ -150,7 +156,7 @@ export class AppsyncVTL extends VTL {
     } else {
       const ref = id.lookup();
       if (
-        (isVariableStmt(ref) || isBindingElem(ref)) &&
+        (isVariableDecl(ref) || isBindingElem(ref)) &&
         isInTopLevelScope(ref)
       ) {
         return `$context.stash.${id.name}`;
@@ -463,6 +469,13 @@ function synthesizeFunctions(api: appsync.GraphqlApi, decl: FunctionDecl) {
         // when we find an integration call,
         // if it is nested, hoist it up (create variable, add above, replace expr with variable)
         return hoist && doHoist(node) ? hoist(updatedChild) : updatedChild;
+      } else if (isVariableStmt(node) && node.declList.decls.length > 1) {
+        /**
+         * Flatten variable declarations into multiple variable statements.
+         */
+        return node.declList.decls.map(
+          (decl) => new VariableStmt(new VariableDeclList([decl]))
+        );
       } else if (isBinaryExpr(node)) {
         /**
          * rewrite `in` to a conditional statement to support both arrays and maps
@@ -569,14 +582,16 @@ function synthesizeFunctions(api: appsync.GraphqlApi, decl: FunctionDecl) {
           );
         } else if (
           isVariableStmt(stmt) &&
-          stmt.expr &&
-          isIntegrationCallPattern(stmt.expr)
+          stmt.declList.decls[0].initializer &&
+          isIntegrationCallPattern(stmt.declList.decls[0].initializer)
         ) {
+          const decl = stmt.declList.decls[0];
+
           return createStage(
             service,
             `${pre ? `${pre}\n` : ""}#set( $context.stash.${
-              stmt.name
-            } = ${getResult(stmt.expr)} )\n{}`
+              decl.name
+            } = ${getResult(<IntegrationCallPattern>decl.initializer)} )\n{}`
           );
         } else {
           throw new SynthError(
@@ -673,7 +688,8 @@ function doHoist(node: FunctionlessNode): boolean {
       isForInStmt(parent) ||
       isForOfStmt(parent)) &&
     // v = task()
-    !(isBinaryExpr(parent) && parent.op === "=")
+    !(isBinaryExpr(parent) && parent.op === "=") &&
+    !isVariableDecl(parent)
   );
 }
 

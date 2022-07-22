@@ -945,12 +945,15 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
           for (const i in input.arr) {
             await func({ n: `${input.arr[i]}`, id: input.id });
           }
-          // 2 + 3 + 4 + 3 + 4 + 5 + 4 + 5 + 6 = 36 + 6 = 42
           for (const i in input.arr) {
-            for (const j in input.arr) {
-              await func({ n: `${input.arr[i]}`, id: input.id });
-              await func({ n: `${input.arr[j]}`, id: input.id });
+            let j = "1";
+            for (j in input.arr) {
+              await func({ n: `${input.arr[i]}`, id: input.id }); // 1 1 1 2 2 2 3 3 3 = 18
+              await func({ n: i as `${number}`, id: input.id }); // 0 0 0 1 1 1 2 2 2 = 9
+              await func({ n: `${input.arr[j]}`, id: input.id }); // 1 2 3 1 2 3 1 2 3 = 18
+              await func({ n: j as `${number}`, id: input.id }); // 0 1 2 0 1 2 0 1 2 = 9
             }
+            await func({ n: j as "2", id: input.id }); // 2 2 2 = 6
           }
           const item = await $AWS.DynamoDB.GetItem({
             Table: table,
@@ -963,7 +966,8 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
         }
       );
     },
-    "42",
+    // 6 + 54 + 6
+    "66",
     { arr: [1, 2, 3], id: `key${Math.floor(Math.random() * 1000)}` }
   );
 
@@ -1012,10 +1016,13 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
           }
           // 2 + 3 + 4 + 3 + 4 + 5 + 4 + 5 + 6 = 36 + 6 = 42
           for (const i of input.arr) {
-            for (const j of input.arr) {
+            let j = 1;
+            for (j of input.arr) {
               await func({ n: `${i}`, id: input.id });
               await func({ n: `${j}`, id: input.id });
             }
+            // 3 + 3 + 3 = 9 = 51
+            await func({ n: `${j}`, id: input.id });
           }
           const item = await $AWS.DynamoDB.GetItem({
             Table: table,
@@ -1028,8 +1035,35 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
         }
       );
     },
-    "42",
+    "51",
     { arr: [1, 2, 3], id: `key${Math.floor(Math.random() * 1000)}` }
+  );
+
+  test(
+    "for",
+    (parent) => {
+      return new StepFunction(parent, "sfn", (input) => {
+        let a = "";
+        for (let arr = input.arr; arr[0]; arr = arr.slice(1)) {
+          a = `${a}n${arr[0]}`;
+        }
+        let c = "";
+        for (;;) {
+          if (c === "1") {
+            c = `${c}1`;
+            continue;
+          }
+          if (c === "111") {
+            break;
+          }
+          a = `${a}c${c}`;
+          c = `${c}1`;
+        }
+        return a;
+      });
+    },
+    "n1n2n3cc11",
+    { arr: [1, 2, 3] }
   );
 
   test(
