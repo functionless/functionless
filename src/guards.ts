@@ -94,6 +94,7 @@ export const isTryStmt = typeGuard("TryStmt");
 export const isVariableStmt = typeGuard("VariableStmt");
 export const isWhileStmt = typeGuard("WhileStmt");
 export const isWithStmt = typeGuard("WithStmt");
+export const isYieldExpr = typeGuard("YieldExpr");
 
 export const isSwitchClause = typeGuard("CaseClause", "DefaultClause");
 

@@ -47,6 +47,7 @@ import {
   TypeOfExpr,
   UnaryExpr,
   UndefinedLiteralExpr,
+  YieldExpr,
 } from "./expression";
 import {
   isArgument,
@@ -123,6 +124,7 @@ import {
   isVariableDeclList,
   isVariableDecl,
   isPrivateIdentifier,
+  isYieldExpr,
 } from "./guards";
 import { FunctionlessNode } from "./node";
 
@@ -682,6 +684,10 @@ export function visitEachChild<T extends FunctionlessNode>(
     ensure(expr, isExpr, "WithStmt's expr must be an Expr");
     ensure(stmt, isStmt, "WithStmt's stmt must be a Stmt");
     return new WithStmt(expr, stmt) as T;
+  } else if (isYieldExpr(node)) {
+    const expr = visitor(node.expr);
+    ensure(expr, isExpr, "YieldExpr's expr must be an Expr");
+    return new YieldExpr(expr, node.delegate) as T;
   }
   return assertNever(node);
 }

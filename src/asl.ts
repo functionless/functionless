@@ -88,6 +88,7 @@ import {
   isVariableDecl,
   isClassMember,
   isPrivateIdentifier,
+  isYieldExpr,
 } from "./guards";
 import {
   Integration,
@@ -4196,7 +4197,8 @@ function toStateName(node: FunctionlessNode): string {
       isPropDecl(node) ||
       isSuperKeyword(node) ||
       isSwitchStmt(node) ||
-      isWithStmt(node)
+      isWithStmt(node) ||
+      isYieldExpr(node)
     ) {
       throw new SynthError(
         ErrorCodes.Unsupported_Feature,
@@ -4293,6 +4295,8 @@ function exprToString(expr?: Expr): string {
     throw new Error(`ClassDecl is not supported in StepFunctions`);
   } else if (isPrivateIdentifier(expr)) {
     return expr.name;
+  } else if (isYieldExpr(expr)) {
+    return `yield${expr.delegate ? "*" : ""} ${exprToString(expr.expr)}`;
   } else {
     return assertNever(expr);
   }

@@ -45,7 +45,8 @@ export type Expr =
   | ThisExpr
   | TypeOfExpr
   | UnaryExpr
-  | UndefinedLiteralExpr;
+  | UndefinedLiteralExpr
+  | YieldExpr;
 
 export abstract class BaseExpr<
   Kind extends FunctionlessNode["kind"],
@@ -580,6 +581,24 @@ export class SuperKeyword extends BaseNode<"SuperKeyword"> {
   }
   public clone(): this {
     return new SuperKeyword() as this;
+  }
+}
+
+export class YieldExpr extends BaseExpr<"YieldExpr"> {
+  constructor(
+    /**
+     * The expression to yield (or delegate) to.
+     */
+    readonly expr: Expr,
+    /**
+     * Is a `yield*` delegate expression.
+     */
+    readonly delegate: boolean
+  ) {
+    super("YieldExpr");
+  }
+  public clone(): this {
+    return new YieldExpr(this.expr.clone(), this.delegate) as this;
   }
 }
 

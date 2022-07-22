@@ -77,6 +77,7 @@ import {
   isVariableStmt,
   isWhileStmt,
   isWithStmt,
+  isYieldExpr,
 } from "./guards";
 import { Integration, IntegrationImpl, isIntegration } from "./integration";
 import { Stmt } from "./statement";
@@ -702,7 +703,8 @@ export abstract class VTL {
       isSwitchStmt(node) ||
       isWithStmt(node) ||
       isEmptyStmt(node) ||
-      isPrivateIdentifier(node)
+      isPrivateIdentifier(node) ||
+      isYieldExpr(node)
     ) {
       throw new SynthError(
         ErrorCodes.Unexpected_Error,

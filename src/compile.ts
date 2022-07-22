@@ -921,6 +921,13 @@ export function compile(
           return newExpr("PrivateIdentifier", [
             ts.factory.createStringLiteral(node.getText()),
           ]);
+        } else if (ts.isYieldExpression(node)) {
+          return newExpr("YieldExpr", [
+            toExpr(node.expression, scope),
+            node.asteriskToken
+              ? ts.factory.createTrue()
+              : ts.factory.createFalse(),
+          ]);
         }
 
         throw new Error(
