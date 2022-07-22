@@ -3242,3 +3242,48 @@ test("import standard from express should fail", () => {
     ExpressStepFunction.fromStateMachine<{ id: string }, string>(awsMachine)
   ).toThrow(new SynthError(ErrorCodes.Incorrect_StateMachine_Import_Type));
 });
+
+test("stringify json", () => {
+  const { stack } = initStepFunctionApp();
+  const definition = new ExpressStepFunction(
+    stack,
+    "machine2",
+    (input: { id: string }) => {
+      return JSON.stringify(input);
+    }
+  ).definition;
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+});
+
+test("stringify undefined 2", () => {
+  const { stack } = initStepFunctionApp();
+  const definition = new ExpressStepFunction(stack, "machine2", () => {
+    return JSON.stringify(undefined);
+  }).definition;
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+});
+
+test("stringify object literal", () => {
+  const { stack } = initStepFunctionApp();
+  const definition = new ExpressStepFunction(stack, "machine2", () => {
+    return JSON.stringify({
+      a: "a",
+      b: {
+        c: "c",
+      },
+    });
+  }).definition;
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+});
+
+test("parse json", () => {
+  const { stack } = initStepFunctionApp();
+  const definition = new ExpressStepFunction(stack, "machine2", () => {
+    return JSON.parse("{ a: 'a', b: { c: 'c' } }");
+  }).definition;
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+});

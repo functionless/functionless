@@ -7456,6 +7456,62 @@ Object {
 }
 `;
 
+exports[`json parse and stringify 1`] = `
+Object {
+  "StartAt": "Initialize Functionless Context",
+  "States": Object {
+    "1__obj = JSON.parse(str)": Object {
+      "InputPath": "$.heap1.string",
+      "Next": "return {str: str, obj: obj, a: obj.a}",
+      "ResultPath": "$.obj",
+      "Type": "Pass",
+    },
+    "1__str = JSON.stringify(input)": Object {
+      "InputPath": "$.heap0.string",
+      "Next": "obj = JSON.parse(str)",
+      "ResultPath": "$.str",
+      "Type": "Pass",
+    },
+    "Initialize Functionless Context": Object {
+      "Next": "str = JSON.stringify(input)",
+      "OutputPath": "$",
+      "Parameters": Object {
+        "input.$": "$",
+        "null": null,
+      },
+      "ResultPath": "$.fnl_context",
+      "Type": "Pass",
+    },
+    "obj = JSON.parse(str)": Object {
+      "Next": "1__obj = JSON.parse(str)",
+      "Parameters": Object {
+        "string.$": "States.StringToJson($.str)",
+      },
+      "ResultPath": "$.heap1",
+      "Type": "Pass",
+    },
+    "return {str: str, obj: obj, a: obj.a}": Object {
+      "End": true,
+      "Parameters": Object {
+        "a.$": "$.obj.a",
+        "obj.$": "$.obj",
+        "str.$": "$.str",
+      },
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "str = JSON.stringify(input)": Object {
+      "Next": "1__str = JSON.stringify(input)",
+      "Parameters": Object {
+        "string.$": "States.JsonToString($.fnl_context.input)",
+      },
+      "ResultPath": "$.heap0",
+      "Type": "Pass",
+    },
+  },
+}
+`;
+
 exports[`map 1`] = `
 Object {
   "StartAt": "Initialize Functionless Context",
