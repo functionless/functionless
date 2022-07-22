@@ -1,4 +1,4 @@
-import { BindingElem, ParameterDecl } from "./declaration";
+import type { BindingElem, ClassMember, ParameterDecl } from "./declaration";
 import { isIdentifier, isPropAssignExpr, isStringLiteralExpr } from "./guards";
 import { BaseNode, FunctionlessNode } from "./node";
 import type {
@@ -7,7 +7,7 @@ import type {
   ReturnStmt,
   VariableStmt,
 } from "./statement";
-import type { AnyFunction } from "./util";
+import type { AnyClass, AnyFunction } from "./util";
 
 /**
  * An {@link Expr} (Expression) is a Node that will be interpreted to a value.
@@ -15,12 +15,14 @@ import type { AnyFunction } from "./util";
 export type Expr =
   | Argument
   | ArrayLiteralExpr
+  | ArrowFunctionExpr
   | AwaitExpr
   | BinaryExpr
   | BooleanLiteralExpr
   | CallExpr
-  | ConditionExpr
+  | ClassExpr
   | ComputedPropertyNameExpr
+  | ConditionExpr
   | ElementAccessExpr
   | FunctionExpr
   | Identifier
@@ -28,19 +30,19 @@ export type Expr =
   | NullLiteralExpr
   | NumberLiteralExpr
   | ObjectLiteralExpr
-  | PropAccessExpr
-  | PropAssignExpr
+  | PostfixUnaryExpr
   | PromiseArrayExpr
   | PromiseExpr
+  | PropAccessExpr
+  | PropAssignExpr
   | ReferenceExpr
   | SpreadAssignExpr
   | SpreadElementExpr
   | StringLiteralExpr
-  | SuperExpr
   | TemplateExpr
+  | ThisExpr
   | TypeOfExpr
   | UnaryExpr
-  | PostfixUnaryExpr
   | UndefinedLiteralExpr;
 
 export abstract class BaseExpr<
@@ -55,11 +57,33 @@ export abstract class BaseExpr<
   readonly nodeKind: "Expr" = "Expr";
 }
 
+export class ArrowFunctionExpr<
+  F extends AnyFunction = AnyFunction
+> extends BaseExpr<"ArrowFunctionExpr"> {
+  readonly _functionBrand?: F;
+  constructor(readonly parameters: ParameterDecl[], readonly body: BlockStmt) {
+    super("ArrowFunctionExpr");
+    parameters.forEach((param) => param.setParent(this));
+    body.setParent(this);
+  }
+
+  public clone(): this {
+    return new ArrowFunctionExpr(
+      this.parameters.map((p) => p.clone()),
+      this.body.clone()
+    ) as this;
+  }
+}
+
 export class FunctionExpr<
   F extends AnyFunction = AnyFunction
 > extends BaseExpr<"FunctionExpr"> {
   readonly _functionBrand?: F;
-  constructor(readonly parameters: ParameterDecl[], readonly body: BlockStmt) {
+  constructor(
+    readonly name: string | undefined,
+    readonly parameters: ParameterDecl[],
+    readonly body: BlockStmt
+  ) {
     super("FunctionExpr");
     parameters.forEach((param) => param.setParent(this));
     body.setParent(this);
@@ -67,8 +91,31 @@ export class FunctionExpr<
 
   public clone(): this {
     return new FunctionExpr(
+      this.name,
       this.parameters.map((p) => p.clone()),
       this.body.clone()
+    ) as this;
+  }
+}
+
+export class ClassExpr<C extends AnyClass = AnyClass> extends BaseExpr<
+  "ClassExpr",
+  undefined
+> {
+  readonly _classBrand?: C;
+  constructor(
+    readonly name: string | undefined,
+    readonly heritage: Expr | undefined,
+    readonly members: ClassMember[]
+  ) {
+    super("ClassExpr");
+    members.forEach((m) => m.setParent(this));
+  }
+  public clone(): this {
+    return new ClassExpr(
+      this.name,
+      this.heritage?.clone(),
+      this.members.map((m) => m.clone())
     ) as this;
   }
 }
@@ -491,12 +538,31 @@ export class PromiseArrayExpr extends BaseExpr<"PromiseArrayExpr"> {
   }
 }
 
-export class SuperExpr extends BaseExpr<"SuperExpr"> {
-  constructor() {
-    super("SuperExpr");
+export class ThisExpr<T = any> extends BaseExpr<"ThisExpr"> {
+  constructor(
+    /**
+     * Produce the value of `this`
+     */
+    readonly ref: () => T
+  ) {
+    super("ThisExpr");
   }
   public clone(): this {
-    return new SuperExpr() as this;
+    return new ThisExpr(this.ref) as this;
+  }
+}
+
+export class SuperKeyword extends BaseNode<"SuperKeyword"> {
+  // `super` is not an expression - a reference to it does not yield a value
+  // it only supports the following interactions
+  // 1. call in a constructor - `super(..)`
+  // 2. call a method on it - `super.method(..)`.
+  readonly nodeKind = "Node";
+  constructor() {
+    super("SuperKeyword");
+  }
+  public clone(): this {
+    return new SuperKeyword() as this;
   }
 }
 

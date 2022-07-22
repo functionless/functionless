@@ -6,7 +6,13 @@ import {
 } from "aws-lambda";
 import { FunctionDecl, validateFunctionDecl } from "./declaration";
 import { ErrorCodes, SynthError } from "./error-code";
-import { CallExpr, Expr, Identifier, ReferenceExpr } from "./expression";
+import {
+  CallExpr,
+  Expr,
+  Identifier,
+  ReferenceExpr,
+  ThisExpr,
+} from "./expression";
 import { Function } from "./function";
 import {
   isReturnStmt,
@@ -29,6 +35,7 @@ import {
   isReferenceExpr,
   isAwaitExpr,
   isPromiseExpr,
+  isThisExpr,
 } from "./guards";
 import { Integration, IntegrationImpl, isIntegration } from "./integration";
 import { Stmt } from "./statement";
@@ -684,7 +691,7 @@ export class APIGatewayVTL extends VTL {
         return this.exprToJson(expr.expr);
       }
     } else if (isCallExpr(expr)) {
-      if (isReferenceExpr(expr.expr)) {
+      if (isReferenceExpr(expr.expr) || isThisExpr(expr.expr)) {
         const ref = expr.expr.ref();
         if (isIntegration<Integration>(ref)) {
           const serviceCall = new IntegrationImpl(ref);
@@ -852,8 +859,10 @@ ${reference}
    * @param id the {@link Identifier} expression.
    * @returns a VTL string that points to the value at runtime.
    */
-  public override dereference(id: Identifier | ReferenceExpr): string {
-    if (isReferenceExpr(id)) {
+  public override dereference(
+    id: Identifier | ReferenceExpr | ThisExpr
+  ): string {
+    if (isReferenceExpr(id) || isThisExpr(id)) {
       throw new SynthError(ErrorCodes.ApiGateway_Unsupported_Reference);
     } else {
       const ref = id.lookup();

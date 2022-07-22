@@ -12,60 +12,74 @@ import {
   PropAccessExpr,
 } from "./expression";
 import {
-  isBlockStmt,
-  isFunctionExpr,
-  isFunctionDecl,
-  isExprStmt,
-  isVariableStmt,
-  isReturnStmt,
-  isCallExpr,
-  isBreakStmt,
-  isForInStmt,
-  isDoStmt,
-  isContinueStmt,
-  isIfStmt,
-  isNullLiteralExpr,
-  isUndefinedLiteralExpr,
-  isThrowStmt,
-  isNewExpr,
-  isTryStmt,
-  isPropAccessExpr,
-  isLiteralExpr,
-  isObjectLiteralExpr,
-  isBinaryExpr,
-  isUnaryExpr,
   isArgument,
-  isElementAccessExpr,
+  isArrayBinding,
   isArrayLiteralExpr,
-  isPropAssignExpr,
-  isComputedPropertyNameExpr,
-  isStringLiteralExpr,
-  isTemplateExpr,
-  isParameterDecl,
-  isBooleanLiteralExpr,
-  isNumberLiteralExpr,
-  isTypeOfExpr,
-  isConditionExpr,
-  isSpreadAssignExpr,
-  isSpreadElementExpr,
-  isCatchClause,
-  isIdentifier,
+  isArrowFunctionExpr,
   isAwaitExpr,
+  isBinaryExpr,
+  isBindingElem,
+  isBindingPattern,
+  isBlockStmt,
+  isBooleanLiteralExpr,
+  isBreakStmt,
+  isCallExpr,
+  isCaseClause,
+  isCatchClause,
+  isClassDecl,
+  isClassExpr,
+  isClassStaticBlockDecl,
+  isComputedPropertyNameExpr,
+  isConditionExpr,
+  isConstructorDecl,
+  isContinueStmt,
+  isDebuggerStmt,
+  isDefaultClause,
+  isDoStmt,
+  isElementAccessExpr,
+  isErr,
+  isExpr,
+  isExprStmt,
+  isForInStmt,
   isForOfStmt,
+  isFunctionDecl,
+  isFunctionExpr,
+  isIdentifier,
+  isIfStmt,
+  isLabelledStmt,
+  isLiteralExpr,
+  isMethodDecl,
+  isNewExpr,
+  isNode,
+  isNullLiteralExpr,
+  isNumberLiteralExpr,
+  isObjectBinding,
+  isObjectLiteralExpr,
+  isParameterDecl,
+  isPostfixUnaryExpr,
   isPromiseArrayExpr,
   isPromiseExpr,
-  isWhileStmt,
+  isPropAccessExpr,
+  isPropAssignExpr,
+  isPropDecl,
   isReferenceExpr,
+  isReturnStmt,
+  isSpreadAssignExpr,
+  isSpreadElementExpr,
   isStmt,
-  isPostfixUnaryExpr,
+  isStringLiteralExpr,
+  isSuperKeyword,
+  isSwitchStmt,
+  isTemplateExpr,
+  isThisExpr,
+  isThrowStmt,
+  isTryStmt,
+  isTypeOfExpr,
+  isUnaryExpr,
+  isUndefinedLiteralExpr,
   isVariableReference,
-  isBindingPattern,
-  isExpr,
-  isBindingElem,
-  isObjectBinding,
-  isArrayBinding,
-  isErr,
-  isNode,
+  isVariableStmt,
+  isWhileStmt,
 } from "./guards";
 import {
   Integration,
@@ -1060,6 +1074,27 @@ export class ASL {
           },
         };
       });
+    } else if (isDebuggerStmt(stmt)) {
+      return {
+        startState: "pass",
+        states: {
+          pass: {
+            Type: "Pass",
+          },
+        },
+      };
+    } else if (isLabelledStmt(stmt)) {
+      return this.evalStmt(stmt.stmt);
+    } else if (
+      isSwitchStmt(stmt) ||
+      isCaseClause(stmt) ||
+      isDefaultClause(stmt)
+    ) {
+      // see: https://github.com/functionless/functionless/issues/306
+      throw new SynthError(
+        ErrorCodes.Unsupported_Feature,
+        `switch statements are not yet supported in Step Functions, see https://github.com/functionless/functionless/issues/306`
+      );
     }
     return assertNever(stmt);
   }
@@ -3912,12 +3947,30 @@ function toStateName(node: FunctionlessNode): string {
       return `{ ${node.bindings.map(inner).join(", ")} }`;
     } else if (isArrayBinding(node)) {
       return `[ ${node.bindings.map((b) => (!b ? "" : inner(b))).join(", ")} ]`;
-    } else if (isFunctionDecl(node)) {
+    } else if (
+      isFunctionDecl(node) ||
+      isFunctionExpr(node) ||
+      isArrowFunctionExpr(node)
+    ) {
       return `function (${node.parameters.map(inner).join(",")})`;
     } else if (isParameterDecl(node)) {
       return isBindingPattern(node.name) ? inner(node.name) : node.name;
     } else if (isErr(node)) {
       throw node.error;
+    } else if (
+      isCaseClause(node) ||
+      isClassDecl(node) ||
+      isClassStaticBlockDecl(node) ||
+      isConstructorDecl(node) ||
+      isDebuggerStmt(node) ||
+      isDefaultClause(node) ||
+      isLabelledStmt(node) ||
+      isMethodDecl(node) ||
+      isPropDecl(node) ||
+      isSuperKeyword(node) ||
+      isSwitchStmt(node)
+    ) {
+      throw new SynthError(ErrorCodes.Unsupported_Feature, "");
     } else {
       return assertNever(node);
     }
@@ -3955,7 +4008,7 @@ function exprToString(expr?: Expr): string {
     return `[${exprToString(expr.expr)}]`;
   } else if (isElementAccessExpr(expr)) {
     return `${exprToString(expr.expr)}[${exprToString(expr.element)}]`;
-  } else if (isFunctionExpr(expr)) {
+  } else if (isFunctionExpr(expr) || isArrowFunctionExpr(expr)) {
     return `function(${expr.parameters.map((param) => param.name).join(", ")})`;
   } else if (isIdentifier(expr)) {
     return expr.name;
@@ -4003,6 +4056,10 @@ function exprToString(expr?: Expr): string {
     return `await ${exprToString(expr.expr)}`;
   } else if (isPromiseExpr(expr) || isPromiseArrayExpr(expr)) {
     return exprToString(expr.expr);
+  } else if (isThisExpr(expr)) {
+    return "this";
+  } else if (isClassExpr(expr)) {
+    throw new Error(`ClassDecl is not supported in StepFunctions`);
   } else {
     return assertNever(expr);
   }

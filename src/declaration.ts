@@ -8,7 +8,7 @@ import {
   PropName,
   StringLiteralExpr,
 } from "./expression";
-import { isErr, isFunctionDecl, isNode, isParameterDecl } from "./guards";
+import { isErr, isFunctionDecl } from "./guards";
 import { Integration } from "./integration";
 import { BaseNode, FunctionlessNode } from "./node";
 import { BlockStmt } from "./statement";
@@ -20,10 +20,6 @@ export type Decl =
   | FunctionDecl
   | ParameterDecl
   | BindingElem;
-
-export function isDecl(a: any): a is Decl {
-  return isNode(a) && (isFunctionDecl(a) || isParameterDecl(a));
-}
 
 abstract class BaseDecl<
   Kind extends FunctionlessNode["kind"],
@@ -37,12 +33,20 @@ export class ClassDecl<C extends AnyClass = AnyClass> extends BaseDecl<
   undefined
 > {
   readonly _classBrand?: C;
-  constructor(readonly members: ClassMember[]) {
+  constructor(
+    readonly name: string,
+    readonly heritage: Expr | undefined,
+    readonly members: ClassMember[]
+  ) {
     super("ClassDecl");
     members.forEach((m) => m.setParent(this));
   }
   public clone(): this {
-    return new ClassDecl(this.members.map((m) => m.clone())) as this;
+    return new ClassDecl(
+      this.name,
+      this.heritage?.clone(),
+      this.members.map((m) => m.clone())
+    ) as this;
   }
 }
 
@@ -79,7 +83,11 @@ export class ConstructorDecl extends BaseDecl<"ConstructorDecl"> {
 }
 
 export class MethodDecl extends BaseDecl<"MethodDecl"> {
-  constructor(readonly parameters: ParameterDecl[], readonly body: BlockStmt) {
+  constructor(
+    readonly name: string,
+    readonly parameters: ParameterDecl[],
+    readonly body: BlockStmt
+  ) {
     super("MethodDecl");
     parameters.forEach((param) => param.setParent(this));
     body.setParent(this);
@@ -87,6 +95,7 @@ export class MethodDecl extends BaseDecl<"MethodDecl"> {
 
   public clone(): this {
     return new MethodDecl(
+      this.name,
       this.parameters.map((p) => p.clone()),
       this.body.clone()
     ) as this;
@@ -94,13 +103,13 @@ export class MethodDecl extends BaseDecl<"MethodDecl"> {
 }
 
 export class PropDecl extends BaseDecl<"PropDecl"> {
-  constructor(readonly name: PropName, readonly expr?: Expr) {
+  constructor(readonly name: PropName, readonly initializer?: Expr) {
     super("PropDecl");
     name.setParent(this);
-    expr?.setParent(this);
+    initializer?.setParent(this);
   }
   public clone(): this {
-    return new PropDecl(this.name.clone(), this.expr?.clone()) as this;
+    return new PropDecl(this.name.clone(), this.initializer?.clone()) as this;
   }
 }
 
@@ -108,7 +117,11 @@ export class FunctionDecl<
   F extends AnyFunction = AnyFunction
 > extends BaseDecl<"FunctionDecl"> {
   readonly _functionBrand?: F;
-  constructor(readonly parameters: ParameterDecl[], readonly body: BlockStmt) {
+  constructor(
+    readonly name: string,
+    readonly parameters: ParameterDecl[],
+    readonly body: BlockStmt
+  ) {
     super("FunctionDecl");
     parameters.forEach((param) => param.setParent(this));
     body.setParent(this);
@@ -116,6 +129,7 @@ export class FunctionDecl<
 
   public clone(): this {
     return new FunctionDecl(
+      this.name,
       this.parameters.map((param) => param.clone()),
       this.body.clone()
     ) as this;

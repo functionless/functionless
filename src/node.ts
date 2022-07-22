@@ -6,7 +6,7 @@ import type {
   ParameterDecl,
 } from "./declaration";
 import type { Err } from "./error";
-import type { Expr } from "./expression";
+import type { Expr, SuperKeyword } from "./expression";
 import {
   isBlockStmt,
   isTryStmt,
@@ -32,6 +32,7 @@ export type FunctionlessNode =
   | Expr
   | Stmt
   | Err
+  | SuperKeyword
   | BindingPattern
   | ClassMember;
 

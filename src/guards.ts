@@ -1,4 +1,4 @@
-import { BindingPattern } from "./declaration";
+import type { BindingPattern, Decl } from "./declaration";
 import type { Expr, VariableReference } from "./expression";
 import type { FunctionlessNode } from "./node";
 import type { Stmt } from "./statement";
@@ -10,66 +10,41 @@ export function isNode(a: any): a is FunctionlessNode {
 export const isErr = typeGuard("Err");
 
 export function isExpr(a: any): a is Expr {
-  return (
-    isNode(a) &&
-    (isArgument(a) ||
-      isArrayLiteralExpr(a) ||
-      isAwaitExpr(a) ||
-      isBinaryExpr(a) ||
-      isBooleanLiteralExpr(a) ||
-      isCallExpr(a) ||
-      isConditionExpr(a) ||
-      isComputedPropertyNameExpr(a) ||
-      isFunctionExpr(a) ||
-      isElementAccessExpr(a) ||
-      isFunctionExpr(a) ||
-      isIdentifier(a) ||
-      isNewExpr(a) ||
-      isNullLiteralExpr(a) ||
-      isNumberLiteralExpr(a) ||
-      isObjectLiteralExpr(a) ||
-      isPromiseArrayExpr(a) ||
-      isPromiseExpr(a) ||
-      isPropAccessExpr(a) ||
-      isPropAssignExpr(a) ||
-      isReferenceExpr(a) ||
-      isStringLiteralExpr(a) ||
-      isTemplateExpr(a) ||
-      isTypeOfExpr(a) ||
-      isUnaryExpr(a) ||
-      isPostfixUnaryExpr(a) ||
-      isUndefinedLiteralExpr(a))
-  );
+  return isNode(a) && a.nodeKind === "Expr";
 }
 
-export const isFunctionExpr = typeGuard("FunctionExpr");
-export const isReferenceExpr = typeGuard("ReferenceExpr");
-export const isIdentifier = typeGuard("Identifier");
-export const isPropAccessExpr = typeGuard("PropAccessExpr");
-export const isElementAccessExpr = typeGuard("ElementAccessExpr");
 export const isArgument = typeGuard("Argument");
-export const isCallExpr = typeGuard("CallExpr");
-export const isNewExpr = typeGuard("NewExpr");
-export const isConditionExpr = typeGuard("ConditionExpr");
-export const isBinaryExpr = typeGuard("BinaryExpr");
-export const isUnaryExpr = typeGuard("UnaryExpr");
-export const isPostfixUnaryExpr = typeGuard("PostfixUnaryExpr");
-export const isNullLiteralExpr = typeGuard("NullLiteralExpr");
-export const isUndefinedLiteralExpr = typeGuard("UndefinedLiteralExpr");
-export const isBooleanLiteralExpr = typeGuard("BooleanLiteralExpr");
-export const isNumberLiteralExpr = typeGuard("NumberLiteralExpr");
-export const isStringLiteralExpr = typeGuard("StringLiteralExpr");
 export const isArrayLiteralExpr = typeGuard("ArrayLiteralExpr");
-export const isObjectLiteralExpr = typeGuard("ObjectLiteralExpr");
-export const isPropAssignExpr = typeGuard("PropAssignExpr");
+export const isArrowFunctionExpr = typeGuard("ArrowFunctionExpr");
+export const isAwaitExpr = typeGuard("AwaitExpr");
+export const isBinaryExpr = typeGuard("BinaryExpr");
+export const isBooleanLiteralExpr = typeGuard("BooleanLiteralExpr");
+export const isCallExpr = typeGuard("CallExpr");
+export const isClassExpr = typeGuard("ClassExpr");
 export const isComputedPropertyNameExpr = typeGuard("ComputedPropertyNameExpr");
+export const isConditionExpr = typeGuard("ConditionExpr");
+export const isElementAccessExpr = typeGuard("ElementAccessExpr");
+export const isFunctionExpr = typeGuard("FunctionExpr");
+export const isIdentifier = typeGuard("Identifier");
+export const isNewExpr = typeGuard("NewExpr");
+export const isNullLiteralExpr = typeGuard("NullLiteralExpr");
+export const isNumberLiteralExpr = typeGuard("NumberLiteralExpr");
+export const isObjectLiteralExpr = typeGuard("ObjectLiteralExpr");
+export const isPostfixUnaryExpr = typeGuard("PostfixUnaryExpr");
+export const isPromiseArrayExpr = typeGuard("PromiseArrayExpr");
+export const isPromiseExpr = typeGuard("PromiseExpr");
+export const isPropAccessExpr = typeGuard("PropAccessExpr");
+export const isPropAssignExpr = typeGuard("PropAssignExpr");
+export const isReferenceExpr = typeGuard("ReferenceExpr");
 export const isSpreadAssignExpr = typeGuard("SpreadAssignExpr");
 export const isSpreadElementExpr = typeGuard("SpreadElementExpr");
+export const isStringLiteralExpr = typeGuard("StringLiteralExpr");
+export const isSuperKeyword = typeGuard("SuperKeyword");
 export const isTemplateExpr = typeGuard("TemplateExpr");
+export const isThisExpr = typeGuard("ThisExpr");
 export const isTypeOfExpr = typeGuard("TypeOfExpr");
-export const isPromiseExpr = typeGuard("PromiseExpr");
-export const isPromiseArrayExpr = typeGuard("PromiseArrayExpr");
-export const isAwaitExpr = typeGuard("AwaitExpr");
+export const isUnaryExpr = typeGuard("UnaryExpr");
+export const isUndefinedLiteralExpr = typeGuard("UndefinedLiteralExpr");
 
 export const isObjectElementExpr = typeGuard(
   "PropAssignExpr",
@@ -94,45 +69,57 @@ export const isLiteralPrimitiveExpr = typeGuard(
 );
 
 export function isStmt(a: any): a is Stmt {
-  return (
-    isNode(a) &&
-    (isBreakStmt(a) ||
-      isBlockStmt(a) ||
-      isCatchClause(a) ||
-      isContinueStmt(a) ||
-      isDoStmt(a) ||
-      isExprStmt(a) ||
-      isForInStmt(a) ||
-      isForOfStmt(a) ||
-      isIfStmt(a) ||
-      isReturnStmt(a) ||
-      isThrowStmt(a) ||
-      isTryStmt(a) ||
-      isVariableStmt(a) ||
-      isWhileStmt(a))
-  );
+  return isNode(a) && a.nodeKind === "Stmt";
 }
-export const isExprStmt = typeGuard("ExprStmt");
-export const isVariableStmt = typeGuard("VariableStmt");
 export const isBlockStmt = typeGuard("BlockStmt");
-export const isReturnStmt = typeGuard("ReturnStmt");
-export const isIfStmt = typeGuard("IfStmt");
-export const isForOfStmt = typeGuard("ForOfStmt");
-export const isForInStmt = typeGuard("ForInStmt");
 export const isBreakStmt = typeGuard("BreakStmt");
-export const isContinueStmt = typeGuard("ContinueStmt");
-export const isTryStmt = typeGuard("TryStmt");
+export const isCaseClause = typeGuard("CaseClause");
 export const isCatchClause = typeGuard("CatchClause");
-export const isThrowStmt = typeGuard("ThrowStmt");
-export const isWhileStmt = typeGuard("WhileStmt");
+export const isContinueStmt = typeGuard("ContinueStmt");
+export const isDebuggerStmt = typeGuard("DebuggerStmt");
+export const isDefaultClause = typeGuard("DefaultClause");
 export const isDoStmt = typeGuard("DoStmt");
+export const isExprStmt = typeGuard("ExprStmt");
+export const isForInStmt = typeGuard("ForInStmt");
+export const isForOfStmt = typeGuard("ForOfStmt");
+export const isIfStmt = typeGuard("IfStmt");
+export const isLabelledStmt = typeGuard("LabelledStmt");
+export const isReturnStmt = typeGuard("ReturnStmt");
+export const isSwitchStmt = typeGuard("SwitchStmt");
+export const isThrowStmt = typeGuard("ThrowStmt");
+export const isTryStmt = typeGuard("TryStmt");
+export const isVariableStmt = typeGuard("VariableStmt");
+export const isWhileStmt = typeGuard("WhileStmt");
 
+export const isSwitchClause = typeGuard("CaseClause", "DefaultClause");
+
+export function isDecl(a: any): a is Decl {
+  return isNode(a) && a.nodeKind === "Decl";
+}
+
+export const isClassDecl = typeGuard("ClassDecl");
+export const isClassStaticBlockDecl = typeGuard("ClassStaticBlockDecl");
+export const isConstructorDecl = typeGuard("ConstructorDecl");
 export const isFunctionDecl = typeGuard("FunctionDecl");
+export const isMethodDecl = typeGuard("MethodDecl");
 export const isParameterDecl = typeGuard("ParameterDecl");
-export const isBindingElem = typeGuard("BindingElem");
+export const isPropDecl = typeGuard("PropDecl");
+export const isClassMember = typeGuard(
+  "ClassStaticBlockDecl",
+  "ConstructorDecl",
+  "MethodDecl",
+  "PropDecl"
+);
 
-export const isObjectBinding = typeGuard("ObjectBinding");
 export const isArrayBinding = typeGuard("ArrayBinding");
+export const isBindingElem = typeGuard("BindingElem");
+export const isObjectBinding = typeGuard("ObjectBinding");
+
+export const isPropName = typeGuard(
+  "Identifier",
+  "ComputedPropertyNameExpr",
+  "StringLiteralExpr"
+);
 
 export const isBindingPattern = (a: any): a is BindingPattern =>
   isNode(a) && (isObjectBinding(a) || isArrayBinding(a));

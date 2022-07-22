@@ -322,9 +322,9 @@ export class LabelledStmt extends BaseStmt<"LabelledStmt"> {
   }
 }
 
-export class DebuggerStmt extends BaseStmt<"Debugger"> {
+export class DebuggerStmt extends BaseStmt<"DebuggerStmt"> {
   constructor() {
-    super("Debugger");
+    super("DebuggerStmt");
   }
   public clone(): this {
     return new DebuggerStmt() as this;

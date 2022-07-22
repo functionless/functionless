@@ -18,6 +18,7 @@ import type {
   BinaryOp,
   UnaryOp,
   PostfixUnaryOp,
+  ArrowFunctionExpr,
 } from "./expression";
 import { FunctionlessNode } from "./node";
 
@@ -299,6 +300,7 @@ export function compile(
       function toFunction(
         type:
           | FunctionDecl["kind"]
+          | ArrowFunctionExpr["kind"]
           | FunctionExpr["kind"]
           | ConstructorDecl["kind"]
           | MethodDecl["kind"],
@@ -349,6 +351,13 @@ export function compile(
             ]);
 
         return newExpr(type, [
+          ...(type === "FunctionDecl" || type === "FunctionExpr"
+            ? (ts.isFunctionDeclaration(impl) ||
+                ts.isFunctionExpression(impl)) &&
+              impl.name
+              ? [ts.factory.createStringLiteral(impl.name.text)]
+              : [ts.factory.createIdentifier("undefined")]
+            : []),
           ts.factory.createArrayLiteralExpression(
             impl.parameters.map((param) =>
               newExpr("ParameterDecl", [
@@ -823,21 +832,42 @@ export function compile(
         } else if (ts.isNonNullExpression(node)) {
           return toExpr(node.expression, scope);
         } else if (node.kind === ts.SyntaxKind.ThisKeyword) {
-          // assuming that this is used in a valid location, create a closure around that instance.
-          return ref(ts.factory.createIdentifier("this"));
+          return newExpr("ThisExpr", [
+            ts.factory.createArrowFunction(
+              undefined,
+              undefined,
+              [],
+              undefined,
+              undefined,
+              ts.factory.createIdentifier("this")
+            ),
+          ]);
         } else if (
           ts.isToken(node) &&
           node.kind === ts.SyntaxKind.SuperKeyword
         ) {
-          return newExpr("SuperExpr", []);
+          return newExpr("SuperKeyword", []);
         } else if (ts.isAwaitExpression(node)) {
           return newExpr("AwaitExpr", [toExpr(node.expression, scope)]);
-        } else if (ts.isClassDeclaration(node)) {
-          return newExpr("ClassDecl", [
-            ts.factory.createArrayLiteralExpression(
-              node.members.map((member) => toExpr(member, scope))
-            ),
-          ]);
+        } else if (ts.isClassDeclaration(node) || ts.isClassExpression(node)) {
+          return newExpr(
+            `Class${ts.isClassDeclaration(node) ? "Decl" : "Expr"}`,
+            [
+              // name
+              node.name ?? ts.factory.createIdentifier("undefined"),
+              // extends
+              node.heritageClauses?.flatMap((clause) =>
+                clause.token === ts.SyntaxKind.ExtendsKeyword &&
+                clause.types[0].expression !== undefined
+                  ? [toExpr(clause.types[0].expression, scope)]
+                  : []
+              )[0] ?? ts.factory.createIdentifier("undefined"),
+              // members
+              ts.factory.createArrayLiteralExpression(
+                node.members.map((member) => toExpr(member, scope))
+              ),
+            ]
+          );
         } else if (ts.isClassStaticBlockDeclaration(node)) {
           return newExpr("ClassStaticBlockDecl", [toExpr(node.body, scope)]);
         } else if (ts.isConstructorDeclaration(node)) {
@@ -852,7 +882,7 @@ export function compile(
               : ts.factory.createIdentifier("undefined"),
           ]);
         } else if (ts.isDebuggerStatement(node)) {
-          return newExpr("Debugger", []);
+          return newExpr("DebuggerStmt", []);
         } else if (ts.isLabeledStatement(node)) {
           return newExpr("LabelledStmt", [toExpr(node.statement, scope)]);
         } else if (ts.isSwitchStatement(node)) {

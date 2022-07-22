@@ -18,6 +18,7 @@ import {
   PropAccessExpr,
   ReferenceExpr,
   StringLiteralExpr,
+  ThisExpr,
 } from "./expression";
 import {
   isVariableStmt,
@@ -39,6 +40,7 @@ import {
   isBindingElem,
   isBindingPattern,
   isReferenceExpr,
+  isThisExpr,
 } from "./guards";
 import {
   findDeepIntegrations,
@@ -140,8 +142,8 @@ export class AppsyncVTL extends VTL {
     }
   }
 
-  protected dereference(id: Identifier | ReferenceExpr): string {
-    if (isReferenceExpr(id)) {
+  protected dereference(id: Identifier | ReferenceExpr | ThisExpr): string {
+    if (isReferenceExpr(id) || isThisExpr(id)) {
       const ref = id.ref();
       if (ref === $util) {
         return "$util";

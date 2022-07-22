@@ -8,11 +8,13 @@ import {
   FunctionExpr,
   Identifier,
   ReferenceExpr,
+  ThisExpr,
 } from "./expression";
 import {
   isArgument,
   isArrayBinding,
   isArrayLiteralExpr,
+  isArrowFunctionExpr,
   isAwaitExpr,
   isBinaryExpr,
   isBindingElem,
@@ -21,10 +23,17 @@ import {
   isBooleanLiteralExpr,
   isBreakStmt,
   isCallExpr,
+  isCaseClause,
   isCatchClause,
+  isClassDecl,
+  isClassExpr,
+  isClassStaticBlockDecl,
   isComputedPropertyNameExpr,
   isConditionExpr,
+  isConstructorDecl,
   isContinueStmt,
+  isDebuggerStmt,
+  isDefaultClause,
   isDoStmt,
   isElementAccessExpr,
   isErr,
@@ -35,27 +44,33 @@ import {
   isFunctionExpr,
   isIdentifier,
   isIfStmt,
+  isLabelledStmt,
+  isMethodDecl,
   isNewExpr,
   isNullLiteralExpr,
   isNumberLiteralExpr,
   isObjectLiteralExpr,
   isParameterDecl,
+  isPostfixUnaryExpr,
   isPromiseArrayExpr,
   isPromiseExpr,
   isPropAccessExpr,
   isPropAssignExpr,
+  isPropDecl,
   isReferenceExpr,
   isReturnStmt,
   isSpreadAssignExpr,
   isSpreadElementExpr,
   isStmt,
   isStringLiteralExpr,
+  isSuperKeyword,
+  isSwitchStmt,
   isTemplateExpr,
+  isThisExpr,
   isThrowStmt,
   isTryStmt,
   isTypeOfExpr,
   isUnaryExpr,
-  isPostfixUnaryExpr,
   isUndefinedLiteralExpr,
   isVariableStmt,
   isWhileStmt,
@@ -270,7 +285,9 @@ export abstract class VTL {
     call: CallExpr
   ): string;
 
-  protected abstract dereference(id: Identifier | ReferenceExpr): string;
+  protected abstract dereference(
+    id: Identifier | ReferenceExpr | ThisExpr
+  ): string;
 
   /**
    * Evaluate an {@link Expr} or {@link Stmt} by emitting statements to this VTL template and
@@ -521,7 +538,7 @@ export abstract class VTL {
       return undefined;
     } else if (isFunctionDecl(node)) {
       // there should never be nested functions
-    } else if (isFunctionExpr(node)) {
+    } else if (isFunctionExpr(node) || isArrowFunctionExpr(node)) {
       return this.eval(node.body);
     } else if (isIdentifier(node)) {
       return this.dereference(node);
@@ -558,7 +575,7 @@ export abstract class VTL {
       return obj;
     } else if (isComputedPropertyNameExpr(node)) {
       return this.eval(node.expr);
-    } else if (isReferenceExpr(node)) {
+    } else if (isReferenceExpr(node) || isThisExpr(node)) {
       return this.dereference(node);
     } else if (isParameterDecl(node) || isPropAssignExpr(node)) {
       throw new Error(`cannot evaluate Expr kind: '${node.kind}'`);
@@ -667,6 +684,24 @@ export abstract class VTL {
       throw new SynthError(
         ErrorCodes.Unexpected_Error,
         "BindingElm and BindingPatterns should be handled locally (ex: VariableStmt)"
+      );
+    } else if (
+      isCaseClause(node) ||
+      isClassExpr(node) ||
+      isClassDecl(node) ||
+      isClassStaticBlockDecl(node) ||
+      isConstructorDecl(node) ||
+      isDebuggerStmt(node) ||
+      isDefaultClause(node) ||
+      isLabelledStmt(node) ||
+      isMethodDecl(node) ||
+      isPropDecl(node) ||
+      isSuperKeyword(node) ||
+      isSwitchStmt(node)
+    ) {
+      throw new SynthError(
+        ErrorCodes.Unexpected_Error,
+        `${node.kind} is not yet supported in VTL`
       );
     } else {
       return assertNever(node);
