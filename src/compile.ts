@@ -825,6 +825,11 @@ export function compile(
         } else if (node.kind === ts.SyntaxKind.ThisKeyword) {
           // assuming that this is used in a valid location, create a closure around that instance.
           return ref(ts.factory.createIdentifier("this"));
+        } else if (
+          ts.isToken(node) &&
+          node.kind === ts.SyntaxKind.SuperKeyword
+        ) {
+          return newExpr("SuperExpr", []);
         } else if (ts.isAwaitExpression(node)) {
           return newExpr("AwaitExpr", [toExpr(node.expression, scope)]);
         } else if (ts.isClassDeclaration(node)) {

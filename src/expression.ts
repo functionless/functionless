@@ -36,6 +36,7 @@ export type Expr =
   | SpreadAssignExpr
   | SpreadElementExpr
   | StringLiteralExpr
+  | SuperExpr
   | TemplateExpr
   | TypeOfExpr
   | UnaryExpr
@@ -487,6 +488,15 @@ export class PromiseArrayExpr extends BaseExpr<"PromiseArrayExpr"> {
 
   public clone(): this {
     return new PromiseArrayExpr(this.expr.clone()) as this;
+  }
+}
+
+export class SuperExpr extends BaseExpr<"SuperExpr"> {
+  constructor() {
+    super("SuperExpr");
+  }
+  public clone(): this {
+    return new SuperExpr() as this;
   }
 }
 
