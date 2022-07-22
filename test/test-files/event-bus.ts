@@ -41,6 +41,7 @@ new Rule(stack, "rule2", bus, () => {
 
 // truthy is not allowed
 bus.when("rule", (event) => <any>event);
+bus.when("rule", (event) => event as any);
 bus.when("rule", (event) => event.detail.a);
 bus.when("rule", (event) => !event.detail.a);
 bus.when("rule", (event) => !event.detail.a || event.detail.b === "b");

@@ -750,19 +750,19 @@ export function validate(
       if (
         // () => a
         // () => a.b.c
-        ts.isFunctionDeclaration(node.parent) ||
-        ts.isFunctionExpression(node.parent) ||
-        ts.isArrowFunction(node.parent) ||
+        ts.isFunctionDeclaration(parent) ||
+        ts.isFunctionExpression(parent) ||
+        ts.isArrowFunction(parent) ||
         // a && a.b
         // a || a.b
-        (ts.isBinaryExpression(node.parent) &&
-          (node.parent.operatorToken.kind ===
+        (ts.isBinaryExpression(parent) &&
+          (parent.operatorToken.kind ===
             ts.SyntaxKind.AmpersandAmpersandToken ||
-            node.parent.operatorToken.kind === ts.SyntaxKind.BarBarToken)) ||
+            parent.operatorToken.kind === ts.SyntaxKind.BarBarToken)) ||
         // !a
         // !a.b
-        (ts.isPrefixUnaryExpression(node.parent) &&
-          node.parent.operator === ts.SyntaxKind.ExclamationToken)
+        (ts.isPrefixUnaryExpression(parent) &&
+          parent.operator === ts.SyntaxKind.ExclamationToken)
       ) {
         return [
           newError(
