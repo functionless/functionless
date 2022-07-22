@@ -26,6 +26,7 @@ import {
   ClassExpr,
   ComputedPropertyNameExpr,
   ConditionExpr,
+  DeleteExpr,
   ElementAccessExpr,
   Expr,
   FunctionExpr,
@@ -48,6 +49,7 @@ import {
   TypeOfExpr,
   UnaryExpr,
   UndefinedLiteralExpr,
+  VoidExpr,
   YieldExpr,
 } from "./expression";
 import {
@@ -128,6 +130,8 @@ import {
   isYieldExpr,
   isBigIntExpr,
   isRegexExpr,
+  isVoidExpr,
+  isDeleteExpr,
 } from "./guards";
 import { FunctionlessNode } from "./node";
 
@@ -694,6 +698,20 @@ export function visitEachChild<T extends FunctionlessNode>(
     ensure(expr, isExpr, "WithStmt's expr must be an Expr");
     ensure(stmt, isStmt, "WithStmt's stmt must be a Stmt");
     return new WithStmt(expr, stmt) as T;
+  } else if (isRegexExpr(node)) {
+    return node.clone() as T;
+  } else if (isDeleteExpr(node)) {
+    const expr = visitor(node.expr);
+    ensure(
+      expr,
+      anyOf(isPropAccessExpr, isElementAccessExpr),
+      "DeleteExpr's expr must be PropAccessExpr or ElementAccessExpr"
+    );
+    return new DeleteExpr(expr) as T;
+  } else if (isVoidExpr(node)) {
+    const expr = visitor(node.expr);
+    ensure(expr, isExpr, "VoidExpr's expr must be an Expr");
+    return new VoidExpr(expr) as T;
   } else if (isYieldExpr(node)) {
     let expr;
     if (node.expr) {
@@ -701,8 +719,6 @@ export function visitEachChild<T extends FunctionlessNode>(
       ensure(expr, isExpr, "YieldExpr's expr must be an Expr");
     }
     return new YieldExpr(expr, node.delegate) as T;
-  } else if (isRegexExpr(node)) {
-    return node.clone() as T;
   }
   return assertNever(node);
 }

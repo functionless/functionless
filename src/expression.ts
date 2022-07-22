@@ -25,6 +25,7 @@ export type Expr =
   | ClassExpr
   | ComputedPropertyNameExpr
   | ConditionExpr
+  | DeleteExpr
   | ElementAccessExpr
   | FunctionExpr
   | Identifier
@@ -48,6 +49,7 @@ export type Expr =
   | TypeOfExpr
   | UnaryExpr
   | UndefinedLiteralExpr
+  | VoidExpr
   | YieldExpr;
 
 export abstract class BaseExpr<
@@ -303,7 +305,7 @@ export class BinaryExpr extends BaseExpr<"BinaryExpr"> {
 }
 
 export type PostfixUnaryOp = "--" | "++";
-export type UnaryOp = "!" | "-" | PostfixUnaryOp;
+export type UnaryOp = "!" | "-" | "~" | PostfixUnaryOp;
 
 export class UnaryExpr extends BaseExpr<"UnaryExpr"> {
   constructor(readonly op: UnaryOp, readonly expr: Expr) {
@@ -621,6 +623,29 @@ export class RegexExpr extends BaseExpr<"RegexExpr"> {
 
   public clone(): this {
     return new RegexExpr(this.regex) as this;
+  }
+}
+
+export class VoidExpr extends BaseExpr<"VoidExpr"> {
+  constructor(
+    /**
+     * The expression to yield (or delegate) to.
+     */
+    readonly expr: Expr
+  ) {
+    super("VoidExpr");
+  }
+  public clone(): this {
+    return new VoidExpr(this.expr?.clone()) as this;
+  }
+}
+
+export class DeleteExpr extends BaseExpr<"DeleteExpr"> {
+  constructor(readonly expr: PropAccessExpr | ElementAccessExpr) {
+    super("DeleteExpr");
+  }
+  public clone(): this {
+    return new DeleteExpr(this.expr?.clone()) as this;
   }
 }
 

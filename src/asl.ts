@@ -91,6 +91,8 @@ import {
   isYieldExpr,
   isBigIntExpr,
   isRegexExpr,
+  isDeleteExpr,
+  isVoidExpr,
 } from "./guards";
 import {
   Integration,
@@ -1852,7 +1854,12 @@ export class ASL {
             return this.conditionState(cond);
           });
         }
-      } else if (expr.op === "-" || expr.op === "++" || expr.op === "--") {
+      } else if (
+        expr.op === "-" ||
+        expr.op === "++" ||
+        expr.op === "--" ||
+        expr.op === "~"
+      ) {
         throw new SynthError(
           ErrorCodes.Cannot_perform_arithmetic_on_variables_in_Step_Function,
           `Step Function does not support operator ${expr.op}`
@@ -2131,6 +2138,8 @@ export class ASL {
           },
         };
       });
+    } else if (isVoidExpr(expr)) {
+      // TODO: eval expr and discard result
     }
     throw new Error(`cannot eval expression kind '${expr.kind}'`);
   }
@@ -2781,7 +2790,12 @@ export class ASL {
           return {
             Not: localToCondition(expr.expr),
           };
-        } else if (expr.op === "++" || expr.op === "--" || expr.op === "-") {
+        } else if (
+          expr.op === "++" ||
+          expr.op === "--" ||
+          expr.op === "-" ||
+          expr.op === "~"
+        ) {
           throw new SynthError(
             ErrorCodes.Cannot_perform_arithmetic_on_variables_in_Step_Function,
             `Step Function does not support operator ${expr.op}`
@@ -4306,6 +4320,10 @@ function exprToString(expr?: Expr): string {
     return `yield${expr.delegate ? "*" : ""} ${exprToString(expr.expr)}`;
   } else if (isRegexExpr(expr)) {
     return expr.regex.source;
+  } else if (isDeleteExpr(expr)) {
+    return `delete ${exprToString(expr.expr)}`;
+  } else if (isVoidExpr(expr)) {
+    return `void ${exprToString(expr.expr)}`;
   } else {
     return assertNever(expr);
   }

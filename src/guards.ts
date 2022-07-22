@@ -24,6 +24,7 @@ export const isCallExpr = typeGuard("CallExpr");
 export const isClassExpr = typeGuard("ClassExpr");
 export const isComputedPropertyNameExpr = typeGuard("ComputedPropertyNameExpr");
 export const isConditionExpr = typeGuard("ConditionExpr");
+export const isDeleteExpr = typeGuard("DeleteExpr");
 export const isElementAccessExpr = typeGuard("ElementAccessExpr");
 export const isFunctionExpr = typeGuard("FunctionExpr");
 export const isIdentifier = typeGuard("Identifier");
@@ -48,6 +49,7 @@ export const isThisExpr = typeGuard("ThisExpr");
 export const isTypeOfExpr = typeGuard("TypeOfExpr");
 export const isUnaryExpr = typeGuard("UnaryExpr");
 export const isUndefinedLiteralExpr = typeGuard("UndefinedLiteralExpr");
+export const isVoidExpr = typeGuard("VoidExpr");
 export const isYieldExpr = typeGuard("YieldExpr");
 
 export const isObjectElementExpr = typeGuard(

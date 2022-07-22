@@ -34,6 +34,7 @@ import {
   isContinueStmt,
   isDebuggerStmt,
   isDefaultClause,
+  isDeleteExpr,
   isDoStmt,
   isElementAccessExpr,
   isEmptyStmt,
@@ -77,6 +78,7 @@ import {
   isUndefinedLiteralExpr,
   isVariableDecl,
   isVariableStmt,
+  isVoidExpr,
   isWhileStmt,
   isWithStmt,
   isYieldExpr,
@@ -692,21 +694,23 @@ export abstract class VTL {
       );
     } else if (
       isCaseClause(node) ||
-      isClassExpr(node) ||
       isClassDecl(node) ||
+      isClassExpr(node) ||
       isClassStaticBlockDecl(node) ||
       isConstructorDecl(node) ||
       isDebuggerStmt(node) ||
       isDefaultClause(node) ||
+      isDeleteExpr(node) ||
+      isEmptyStmt(node) ||
       isLabelledStmt(node) ||
       isMethodDecl(node) ||
-      isRegexExpr(node) ||
+      isPrivateIdentifier(node) ||
       isPropDecl(node) ||
+      isRegexExpr(node) ||
       isSuperKeyword(node) ||
       isSwitchStmt(node) ||
+      isVoidExpr(node) ||
       isWithStmt(node) ||
-      isEmptyStmt(node) ||
-      isPrivateIdentifier(node) ||
       isYieldExpr(node)
     ) {
       throw new SynthError(
