@@ -1335,6 +1335,27 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
   );
 
   test(
+    "json parse and stringify",
+    (parent) => {
+      return new StepFunction(parent, "sfn", async (input) => {
+        const str = JSON.stringify(input);
+        const obj = JSON.parse(str);
+        return {
+          str: str,
+          obj: obj,
+          a: obj.a,
+        };
+      });
+    },
+    {
+      str: `{"a":"1","b":1,"c":{"d":"d"}}`,
+      obj: { a: "1", b: 1, c: { d: "d" } },
+      a: "1",
+    },
+    { a: "1", b: 1, c: { d: "d" } }
+  );
+
+  test(
     "context",
     (parent) => {
       return new StepFunction(parent, "sfn", async (_, context) => {

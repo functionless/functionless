@@ -6911,6 +6911,34 @@ Object {
 }
 `;
 
+exports[`parse json 1`] = `
+Object {
+  "StartAt": "return JSON.parse(\\"{ a: 'a', b: { c: 'c' } }\\")",
+  "States": Object {
+    "1__return JSON.parse(\\"{ a: 'a', b: { c: 'c' } }\\")": Object {
+      "End": true,
+      "InputPath": "$.heap0.string",
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "1__return JSON.parse(\\"{ a: 'a', b: { c: 'c' } }\\") 1": Object {
+      "Next": "1__return JSON.parse(\\"{ a: 'a', b: { c: 'c' } }\\")",
+      "Parameters": Object {
+        "string.$": "States.StringToJson($.heap1)",
+      },
+      "ResultPath": "$.heap0",
+      "Type": "Pass",
+    },
+    "return JSON.parse(\\"{ a: 'a', b: { c: 'c' } }\\")": Object {
+      "Next": "1__return JSON.parse(\\"{ a: 'a', b: { c: 'c' } }\\") 1",
+      "Result": "{ a: 'a', b: { c: 'c' } }",
+      "ResultPath": "$.heap1",
+      "Type": "Pass",
+    },
+  },
+}
+`;
+
 exports[`put an event bus event 1`] = `
 Object {
   "StartAt": "Initialize Functionless Context",
@@ -8646,6 +8674,85 @@ Object {
           "key": "value",
         },
       },
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+  },
+}
+`;
+
+exports[`stringify json 1`] = `
+Object {
+  "StartAt": "Initialize Functionless Context",
+  "States": Object {
+    "1__return JSON.stringify(input)": Object {
+      "End": true,
+      "InputPath": "$.heap0.string",
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "Initialize Functionless Context": Object {
+      "Next": "return JSON.stringify(input)",
+      "OutputPath": "$",
+      "Parameters": Object {
+        "input.$": "$",
+        "null": null,
+      },
+      "ResultPath": "$.fnl_context",
+      "Type": "Pass",
+    },
+    "return JSON.stringify(input)": Object {
+      "Next": "1__return JSON.stringify(input)",
+      "Parameters": Object {
+        "string.$": "States.JsonToString($.fnl_context.input)",
+      },
+      "ResultPath": "$.heap0",
+      "Type": "Pass",
+    },
+  },
+}
+`;
+
+exports[`stringify object literal 1`] = `
+Object {
+  "StartAt": "return JSON.stringify({a: \\"a\\", b: {c: \\"c\\"}})",
+  "States": Object {
+    "1__return JSON.stringify({a: \\"a\\", b: {c: \\"c\\"}})": Object {
+      "End": true,
+      "InputPath": "$.heap0.string",
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "1__return JSON.stringify({a: \\"a\\", b: {c: \\"c\\"}}) 1": Object {
+      "Next": "1__return JSON.stringify({a: \\"a\\", b: {c: \\"c\\"}})",
+      "Parameters": Object {
+        "string.$": "States.JsonToString($.heap1)",
+      },
+      "ResultPath": "$.heap0",
+      "Type": "Pass",
+    },
+    "return JSON.stringify({a: \\"a\\", b: {c: \\"c\\"}})": Object {
+      "Next": "1__return JSON.stringify({a: \\"a\\", b: {c: \\"c\\"}}) 1",
+      "Result": Object {
+        "a": "a",
+        "b": Object {
+          "c": "c",
+        },
+      },
+      "ResultPath": "$.heap1",
+      "Type": "Pass",
+    },
+  },
+}
+`;
+
+exports[`stringify undefined 2 1`] = `
+Object {
+  "StartAt": "return JSON.stringify(undefined)",
+  "States": Object {
+    "return JSON.stringify(undefined)": Object {
+      "End": true,
+      "InputPath": "$.heap0",
       "ResultPath": "$",
       "Type": "Pass",
     },
