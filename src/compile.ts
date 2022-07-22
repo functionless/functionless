@@ -904,6 +904,10 @@ export function compile(
               node.statements.map((stmt) => toExpr(stmt, scope))
             ),
           ]);
+        } else if (ts.isWithStatement(node)) {
+          node.expression;
+          node.statement;
+          return newExpr("WithStmt", []);
         }
 
         throw new Error(

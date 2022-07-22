@@ -36,6 +36,7 @@ import {
   isDefaultClause,
   isDoStmt,
   isElementAccessExpr,
+  isEmptyStmt,
   isErr,
   isExprStmt,
   isForInStmt,
@@ -74,6 +75,7 @@ import {
   isUndefinedLiteralExpr,
   isVariableStmt,
   isWhileStmt,
+  isWithStmt,
 } from "./guards";
 import { Integration, IntegrationImpl, isIntegration } from "./integration";
 import { FunctionlessNode } from "./node";
@@ -697,7 +699,9 @@ export abstract class VTL {
       isMethodDecl(node) ||
       isPropDecl(node) ||
       isSuperKeyword(node) ||
-      isSwitchStmt(node)
+      isSwitchStmt(node) ||
+      isWithStmt(node) ||
+      isEmptyStmt(node)
     ) {
       throw new SynthError(
         ErrorCodes.Unexpected_Error,

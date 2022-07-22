@@ -79,6 +79,7 @@ export const isContinueStmt = typeGuard("ContinueStmt");
 export const isDebuggerStmt = typeGuard("DebuggerStmt");
 export const isDefaultClause = typeGuard("DefaultClause");
 export const isDoStmt = typeGuard("DoStmt");
+export const isEmptyStmt = typeGuard("EmptyStmt");
 export const isExprStmt = typeGuard("ExprStmt");
 export const isForInStmt = typeGuard("ForInStmt");
 export const isForOfStmt = typeGuard("ForOfStmt");
@@ -90,6 +91,7 @@ export const isThrowStmt = typeGuard("ThrowStmt");
 export const isTryStmt = typeGuard("TryStmt");
 export const isVariableStmt = typeGuard("VariableStmt");
 export const isWhileStmt = typeGuard("WhileStmt");
+export const isWithStmt = typeGuard("WithStmt");
 
 export const isSwitchClause = typeGuard("CaseClause", "DefaultClause");
 

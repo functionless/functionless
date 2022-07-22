@@ -72,6 +72,7 @@ import {
   isDefaultClause,
   isDoStmt,
   isElementAccessExpr,
+  isEmptyStmt,
   isErr,
   isExpr,
   isExprStmt,
@@ -115,6 +116,7 @@ import {
   isUndefinedLiteralExpr,
   isVariableStmt,
   isWhileStmt,
+  isWithStmt,
 } from "./guards";
 import { FunctionlessNode } from "./node";
 
@@ -139,6 +141,7 @@ import {
   TryStmt,
   VariableStmt,
   WhileStmt,
+  WithStmt,
 } from "./statement";
 import {
   anyOf,
@@ -745,6 +748,14 @@ export function visitEachChild<T extends FunctionlessNode>(
     });
 
     return new DefaultClause(stmts) as T;
+  } else if (isEmptyStmt(node)) {
+    return node.clone() as T;
+  } else if (isWithStmt(node)) {
+    const expr = visitor(node.expr);
+    const stmt = visitor(node.stmt);
+    ensure(expr, isExpr, "WithStmt's expr must be an Expr");
+    ensure(stmt, isStmt, "WithStmt's stmt must be a Stmt");
+    return new WithStmt(expr, stmt) as T;
   }
   return assertNever(node);
 }

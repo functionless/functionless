@@ -37,6 +37,7 @@ import {
   isDefaultClause,
   isDoStmt,
   isElementAccessExpr,
+  isEmptyStmt,
   isErr,
   isExpr,
   isExprStmt,
@@ -80,6 +81,7 @@ import {
   isVariableReference,
   isVariableStmt,
   isWhileStmt,
+  isWithStmt,
 } from "./guards";
 import {
   Integration,
@@ -1074,7 +1076,7 @@ export class ASL {
           },
         };
       });
-    } else if (isDebuggerStmt(stmt)) {
+    } else if (isDebuggerStmt(stmt) || isEmptyStmt(stmt)) {
       return {
         startState: "pass",
         states: {
@@ -1085,6 +1087,11 @@ export class ASL {
       };
     } else if (isLabelledStmt(stmt)) {
       return this.evalStmt(stmt.stmt);
+    } else if (isWithStmt(stmt)) {
+      throw new SynthError(
+        ErrorCodes.Unsupported_Feature,
+        `with statements are not yet supported by ASL`
+      );
     } else if (
       isSwitchStmt(stmt) ||
       isCaseClause(stmt) ||
@@ -3957,6 +3964,8 @@ function toStateName(node: FunctionlessNode): string {
       return isBindingPattern(node.name) ? inner(node.name) : node.name;
     } else if (isErr(node)) {
       throw node.error;
+    } else if (isEmptyStmt(node)) {
+      return ";";
     } else if (
       isCaseClause(node) ||
       isClassDecl(node) ||
@@ -3968,7 +3977,8 @@ function toStateName(node: FunctionlessNode): string {
       isMethodDecl(node) ||
       isPropDecl(node) ||
       isSuperKeyword(node) ||
-      isSwitchStmt(node)
+      isSwitchStmt(node) ||
+      isWithStmt(node)
     ) {
       throw new SynthError(ErrorCodes.Unsupported_Feature, "");
     } else {

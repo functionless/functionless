@@ -14,6 +14,7 @@ export type Stmt =
   | ContinueStmt
   | DebuggerStmt
   | DoStmt
+  | EmptyStmt
   | ExprStmt
   | ForInStmt
   | ForOfStmt
@@ -25,7 +26,8 @@ export type Stmt =
   | ThrowStmt
   | TryStmt
   | VariableStmt
-  | WhileStmt;
+  | WhileStmt
+  | WithStmt;
 
 export abstract class BaseStmt<
   Kind extends FunctionlessNode["kind"],
@@ -367,6 +369,27 @@ export class DefaultClause extends BaseStmt<"DefaultClause"> {
     return new DefaultClause(
       this.statements.map((stmt) => stmt.clone())
     ) as this;
+  }
+}
+
+export class EmptyStmt extends BaseStmt<"EmptyStmt"> {
+  constructor() {
+    super("EmptyStmt");
+  }
+  public clone(): this {
+    return new EmptyStmt() as this;
+  }
+}
+
+export class WithStmt extends BaseStmt<"WithStmt"> {
+  constructor(readonly expr: Expr, readonly stmt: Stmt) {
+    super("WithStmt");
+    expr.setParent(this);
+    stmt.setParent(this);
+  }
+
+  public clone(): this {
+    return new WithStmt(this.expr.clone(), this.stmt.clone()) as this;
   }
 }
 
