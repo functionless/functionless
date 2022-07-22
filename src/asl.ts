@@ -3461,16 +3461,50 @@ export namespace ASLGraph {
       })
     );
 
+    const emptyTransitions = computeEmptyStateToUpdatedTransution(emptyStates);
+
+    // return the updated set of name to state.
+    return stateEntries.flatMap(([name, state]) => {
+      if (name in emptyTransitions) {
+        return [];
+      }
+
+      return [
+        [
+          name,
+          visitTransition(state, (transition) =>
+            transition in emptyTransitions
+              ? emptyTransitions[transition]
+              : transition
+          ),
+        ],
+      ];
+    });
+
     /**
      * Find the updated next value for all of the empty states.
      * If the updated Next cannot be determined, do not remove the state.
      */
-    const emptyTransitions = Object.fromEntries(
-      Object.entries(emptyStates).flatMap(([name, { Next }]) => {
-        const getNext = (
-          transition: string,
-          seen: string[] = []
-        ): string | undefined => {
+    function computeEmptyStateToUpdatedTransution(
+      emptyStates: Record<string, Pass>
+    ) {
+      return Object.fromEntries(
+        Object.entries(emptyStates).flatMap(([name, { Next }]) => {
+          const newNext = Next ? getNext(Next, []) : Next;
+
+          /**
+           * If the updated Next value for this state cannot be determined,
+           * do not remove the state.
+           *
+           * This can because the state has no Next value (Functionless bug)
+           * or because all of the states in a cycle are empty.
+           */
+          if (!newNext) {
+            return [];
+          }
+
+          return [[name, newNext]];
+
           /**
            * When all states in a cycle are empty, the cycle will be impossible to exit.
            *
@@ -3500,51 +3534,23 @@ export namespace ASLGraph {
            *
            * If this happens, return undefined.
            */
-          if (seen?.includes(transition)) {
-            return undefined;
+          function getNext(
+            transition: string,
+            seen: string[] = []
+          ): string | undefined {
+            if (seen?.includes(transition)) {
+              return undefined;
+            }
+            return transition in emptyStates
+              ? getNext(
+                  emptyStates[transition].Next!,
+                  seen ? [...seen, transition] : [transition]
+                )
+              : transition;
           }
-          return transition in emptyStates
-            ? getNext(
-                emptyStates[transition].Next!,
-                seen ? [...seen, transition] : [transition]
-              )
-            : transition;
-        };
-
-        const newNext = Next ? getNext(Next, []) : Next;
-
-        /**
-         * If the updated Next value for this state cannot be determined,
-         * do not remove the state.
-         *
-         * This can because the state has no Next value (Functionless bug)
-         * or because all of the states in a cycle are empty.
-         */
-        if (!newNext) {
-          return [];
-        }
-
-        return [[name, newNext]];
-      })
-    );
-
-    // return the updated set of name to state.
-    return stateEntries.flatMap(([name, state]) => {
-      if (name in emptyTransitions) {
-        return [];
-      }
-
-      return [
-        [
-          name,
-          visitTransition(state, (transition) =>
-            transition in emptyTransitions
-              ? emptyTransitions[transition]
-              : transition
-          ),
-        ],
-      ];
-    });
+        })
+      );
+    }
   };
 
   /**
