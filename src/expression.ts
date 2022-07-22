@@ -99,26 +99,18 @@ export class Identifier extends BaseExpr<"Identifier"> {
 }
 
 export class PropAccessExpr extends BaseExpr<"PropAccessExpr"> {
-  constructor(
-    readonly expr: Expr,
-    readonly name: string,
-    readonly type?: string
-  ) {
+  constructor(readonly expr: Expr, readonly name: string) {
     super("PropAccessExpr");
     expr.setParent(this);
   }
 
   public clone(): this {
-    return new PropAccessExpr(this.expr.clone(), this.name, this.type) as this;
+    return new PropAccessExpr(this.expr.clone(), this.name) as this;
   }
 }
 
 export class ElementAccessExpr extends BaseExpr<"ElementAccessExpr"> {
-  constructor(
-    readonly expr: Expr,
-    readonly element: Expr,
-    readonly type?: string
-  ) {
+  constructor(readonly expr: Expr, readonly element: Expr) {
     super("ElementAccessExpr");
     expr.setParent(this);
     element.setParent(this);
@@ -127,8 +119,7 @@ export class ElementAccessExpr extends BaseExpr<"ElementAccessExpr"> {
   public clone(): this {
     return new ElementAccessExpr(
       this.expr.clone(),
-      this.element.clone(),
-      this.type
+      this.element.clone()
     ) as this;
   }
 }

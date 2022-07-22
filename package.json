@@ -60,7 +60,7 @@
     "jest": "^27",
     "jest-junit": "^13",
     "json-schema": "^0.4.0",
-    "npm-check-updates": "^15",
+    "npm-check-updates": "^12",
     "prettier": "^2.7.1",
     "projen": "^0.59.3",
     "promptly": "^3.2.0",
@@ -102,7 +102,7 @@
     },
     "testMatch": [
       "<rootDir>/src/**/__tests__/**/*.ts?(x)",
-      "<rootDir>/(test|src)/**/*(*.)@(spec|test).ts?(x)"
+      "<rootDir>/(test|src)/**/?(*.)+(spec|test).ts?(x)"
     ],
     "clearMocks": true,
     "coverageReporters": [

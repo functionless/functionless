@@ -483,6 +483,54 @@ https://functionless.org/docs/error-codes#eventbus-rules-do-not-support-integrat
 
 [7m39[0m   return (func() as any) === \\"x\\";
 [7m  [0m [91m          ~~~~~~[0m
+[96mtest/test-files/event-bus.ts[0m:[93m44[0m:[93m28[0m - [91merror[0m[90m Functionless(10030): [0mEvent Bridge does not support a truthy comparison in
+
+https://functionless.org/docs/error-codes#event-bridge-does-not-support-a-truthy-comparison-in
+
+[7m44[0m bus.when(\\"rule\\", (event) => event.detail.a);
+[7m  [0m [91m                           ~~~~~~~~~~~~~~~[0m
+[96mtest/test-files/event-bus.ts[0m:[93m45[0m:[93m30[0m - [91merror[0m[90m Functionless(10030): [0mEvent Bridge does not support a truthy comparison in
+
+https://functionless.org/docs/error-codes#event-bridge-does-not-support-a-truthy-comparison-in
+
+[7m45[0m bus.when(\\"rule\\", (event) => !event.detail.a);
+[7m  [0m [91m                             ~~~~~~~~~~~~~~[0m
+[96mtest/test-files/event-bus.ts[0m:[93m46[0m:[93m30[0m - [91merror[0m[90m Functionless(10030): [0mEvent Bridge does not support a truthy comparison in
+
+https://functionless.org/docs/error-codes#event-bridge-does-not-support-a-truthy-comparison-in
+
+[7m46[0m bus.when(\\"rule\\", (event) => !event.detail.a || event.detail.b === \\"b\\");
+[7m  [0m [91m                             ~~~~~~~~~~~~~~[0m
+[96mtest/test-files/event-bus.ts[0m:[93m47[0m:[93m56[0m - [91merror[0m[90m Functionless(10030): [0mEvent Bridge does not support a truthy comparison in
+
+https://functionless.org/docs/error-codes#event-bridge-does-not-support-a-truthy-comparison-in
+
+[7m47[0m bus.when(\\"rule\\", (event) => event.detail.a === \\"b\\" || !event.detail.b);
+[7m  [0m [91m                                                       ~~~~~~~~~~~~~~[0m
+[96mtest/test-files/event-bus.ts[0m:[93m48[0m:[93m28[0m - [91merror[0m[90m Functionless(10030): [0mEvent Bridge does not support a truthy comparison in
+
+https://functionless.org/docs/error-codes#event-bridge-does-not-support-a-truthy-comparison-in
+
+[7m48[0m bus.when(\\"rule\\", (event) => event.detail.a && event.detail.b === \\"b\\");
+[7m  [0m [91m                           ~~~~~~~~~~~~~~~[0m
+[96mtest/test-files/event-bus.ts[0m:[93m49[0m:[93m54[0m - [91merror[0m[90m Functionless(10030): [0mEvent Bridge does not support a truthy comparison in
+
+https://functionless.org/docs/error-codes#event-bridge-does-not-support-a-truthy-comparison-in
+
+[7m49[0m bus.when(\\"rule\\", (event) => event.detail.a === \\"a\\" && event.detail.b);
+[7m  [0m [91m                                                     ~~~~~~~~~~~~~~~[0m
+[96mtest/test-files/event-bus.ts[0m:[93m50[0m:[93m28[0m - [91merror[0m[90m Functionless(10030): [0mEvent Bridge does not support a truthy comparison in
+
+https://functionless.org/docs/error-codes#event-bridge-does-not-support-a-truthy-comparison-in
+
+[7m50[0m bus.when(\\"rule\\", (event) => event.detail.a || event.detail.b === \\"b\\");
+[7m  [0m [91m                           ~~~~~~~~~~~~~~~[0m
+[96mtest/test-files/event-bus.ts[0m:[93m51[0m:[93m54[0m - [91merror[0m[90m Functionless(10030): [0mEvent Bridge does not support a truthy comparison in
+
+https://functionless.org/docs/error-codes#event-bridge-does-not-support-a-truthy-comparison-in
+
+[7m51[0m bus.when(\\"rule\\", (event) => event.detail.a === \\"a\\" || event.detail.b);
+[7m  [0m [91m                                                     ~~~~~~~~~~~~~~~[0m
 "
 `;
 

@@ -668,7 +668,8 @@ describe("not allowed", () => {
     await Promise.all(Function.promises);
   });
 
-  test("math", () => {
+  // regression: this will be a tsc-level error now that we don't have type information in the AST
+  test.skip("math", () => {
     ebEventTargetTestCaseError<testEvent>(
       reflect((event) => event.detail.num + 1),
       "Addition operator is only supported to concatenate at least one string to another value."

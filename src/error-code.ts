@@ -1096,6 +1096,24 @@ export namespace ErrorCodes {
     type: ErrorType.ERROR,
     title: "ApiGateway Unsupported Reference",
   };
+
+  /**
+   * Event Bridge does not allow for truthy comparisons.
+   *
+   * ```ts
+   * .when(id, event => event.detail.prop)
+   * ```
+   *
+   * To workaround, be explicit with `===`
+   * ```ts
+   * .when(id, event => event.detail.prop === true)
+   * ```
+   */
+  export const EventBridge_DoesNotSupport_TruthyComparison: ErrorCode = {
+    code: 10030,
+    type: ErrorType.ERROR,
+    title: "Event Bridge does not support a truthy comparison in",
+  };
 }
 
 // to prevent the closure serializer from trying to import all of functionless.

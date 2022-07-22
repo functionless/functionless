@@ -25,7 +25,6 @@ import {
   assertValidEventReference,
   flattenReturnEvent,
   getReferencePath,
-  isStringType,
   ReferencePath,
 } from "./utils";
 
@@ -170,18 +169,13 @@ export const synthesizeEventBridgeTargets = (
       };
     } else if (isBinaryExpr(expr)) {
       if (expr.op === "+") {
-        if (isStringType(expr.left) || isStringType(expr.right)) {
-          const val = `${exprToInternalLiteral(
-            expr.left
-          )}${exprToInternalLiteral(expr.right)}`;
-          return {
-            value: val,
-            type: "string",
-          };
-        }
-        throw Error(
-          "Addition operator is only supported to concatenate at least one string to another value."
-        );
+        const val = `${exprToInternalLiteral(expr.left)}${exprToInternalLiteral(
+          expr.right
+        )}`;
+        return {
+          value: val,
+          type: "string",
+        };
       } else {
         throw Error(`Unsupported binary operator: ${expr.op}`);
       }
