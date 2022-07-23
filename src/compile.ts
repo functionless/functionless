@@ -837,7 +837,7 @@ export function compile(
             toExpr(node.expression, scope),
           ]);
         } else if (ts.isParenthesizedExpression(node)) {
-          return toExpr(node.expression, scope);
+          return newExpr("ParenthesizedExpr", [toExpr(node.expression, scope)]);
         } else if (ts.isAsExpression(node)) {
           return toExpr(node.expression, scope);
         } else if (ts.isTypeAssertionExpression(node)) {

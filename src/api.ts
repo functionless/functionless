@@ -36,6 +36,7 @@ import {
   isPromiseExpr,
   isThisExpr,
   isVariableDecl,
+  isParenthesizedExpr,
 } from "./guards";
 import { Integration, IntegrationImpl, isIntegration } from "./integration";
 import { Stmt } from "./statement";
@@ -671,6 +672,8 @@ export class APIGatewayVTL extends VTL {
     const jsonPath = toJsonPath(expr);
     if (jsonPath) {
       return `$input.json('${jsonPath}')`;
+    } else if (isParenthesizedExpr(expr)) {
+      return this.exprToJson(expr.expr);
     } else if (isNullLiteralExpr(expr) || isUndefinedLiteralExpr(expr)) {
       // Undefined is not the same as null. In JSON terms, `undefined` is the absence of a value where-as `null` is a present null value.
       return "null";
@@ -795,7 +798,9 @@ export class APIGatewayVTL extends VTL {
      * @returns a JSON Path `string` if this {@link Expr} can be evaluated as a JSON Path from the `$input`, otherwise `undefined`.
      */
     function toJsonPath(expr: Expr): string | undefined {
-      if (isInputBody(expr)) {
+      if (isParenthesizedExpr(expr)) {
+        return toJsonPath(expr.expr);
+      } else if (isInputBody(expr)) {
         return "$";
       } else if (isIdentifier(expr)) {
         // this is a reference to an intermediate value, cannot be expressed as JSON Path

@@ -35,6 +35,7 @@ import {
   NullLiteralExpr,
   NumberLiteralExpr,
   ObjectLiteralExpr,
+  ParenthesizedExpr,
   PostfixUnaryExpr,
   PrivateIdentifier,
   PromiseArrayExpr,
@@ -132,6 +133,7 @@ import {
   isRegexExpr,
   isVoidExpr,
   isDeleteExpr,
+  isParenthesizedExpr,
 } from "./guards";
 import { FunctionlessNode } from "./node";
 
@@ -719,6 +721,10 @@ export function visitEachChild<T extends FunctionlessNode>(
       ensure(expr, isExpr, "YieldExpr's expr must be an Expr");
     }
     return new YieldExpr(expr, node.delegate) as T;
+  } else if (isParenthesizedExpr(node)) {
+    const expr = visitor(node.expr);
+    ensure(expr, isExpr, "ParenthesizedExpr's expr must be an Expr");
+    return new ParenthesizedExpr(expr) as T;
   }
   return assertNever(node);
 }

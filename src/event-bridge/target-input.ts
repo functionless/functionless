@@ -18,6 +18,7 @@ import {
   isReferenceExpr,
   isPromiseExpr,
   isTemplateExpr,
+  isParenthesizedExpr,
 } from "../guards";
 import { isIntegration } from "../integration";
 import { evalToConstant } from "../util";
@@ -103,7 +104,9 @@ export const synthesizeEventBridgeTargets = (
   const exprToLiteral = (expr: Expr): LiteralType => {
     const constant = evalToConstant(expr);
 
-    if (
+    if (isParenthesizedExpr(expr)) {
+      return exprToLiteral(expr.expr);
+    } else if (
       constant &&
       (constant.constant === null || typeof constant.constant !== "object")
     ) {

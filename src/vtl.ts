@@ -53,6 +53,7 @@ import {
   isNumberLiteralExpr,
   isObjectLiteralExpr,
   isParameterDecl,
+  isParenthesizedExpr,
   isPostfixUnaryExpr,
   isPrivateIdentifier,
   isPromiseArrayExpr,
@@ -309,7 +310,10 @@ export abstract class VTL {
     if (!node) {
       return "$null";
     }
-    if (isArrayLiteralExpr(node)) {
+    if (isParenthesizedExpr(node)) {
+      // TODO: do we need to do anything to ensure precedence of parenthesis are maintained?
+      return this.eval(node.expr);
+    } else if (isArrayLiteralExpr(node)) {
       if (node.items.find(isSpreadElementExpr) === undefined) {
         return `[${node.items.map((item) => this.eval(item)).join(", ")}]`;
       } else {
@@ -370,8 +374,12 @@ export abstract class VTL {
     } else if (isBreakStmt(node)) {
       return this.add("#break");
     } else if (isCallExpr(node)) {
-      if (isReferenceExpr(node.expr)) {
-        const ref = node.expr.ref();
+      let expr = node.expr;
+      while (isParenthesizedExpr(expr)) {
+        expr = expr.expr;
+      }
+      if (isReferenceExpr(expr)) {
+        const ref = expr.ref();
         if (isIntegration<Integration>(ref)) {
           const serviceCall = new IntegrationImpl(ref);
           return this.integrate(serviceCall, node);
@@ -383,24 +391,24 @@ export abstract class VTL {
         }
       } else if (
         // If the parent is a propAccessExpr
-        isPropAccessExpr(node.expr) &&
-        (node.expr.name === "map" ||
-          node.expr.name === "forEach" ||
-          node.expr.name === "reduce")
+        isPropAccessExpr(expr) &&
+        (expr.name === "map" ||
+          expr.name === "forEach" ||
+          expr.name === "reduce")
       ) {
-        if (node.expr.name === "map" || node.expr.name == "forEach") {
+        if (expr.name === "map" || expr.name == "forEach") {
           // list.map(item => ..)
           // list.map((item, idx) => ..)
           // list.forEach(item => ..)
           // list.forEach((item, idx) => ..)
-          const newList = node.expr.name === "map" ? this.var("[]") : undefined;
+          const newList = expr.name === "map" ? this.var("[]") : undefined;
 
           const [value, index, array] = getMapForEachArgs(node);
 
           // Try to flatten any maps before this operation
           // returns the first variable to be used in the foreach of this operation (may be the `value`)
           const list = this.flattenListMapOperations(
-            node.expr.expr,
+            expr.expr,
             value,
             (firstVariable, list) => {
               this.add(`#foreach(${firstVariable} in ${list})`);
@@ -420,13 +428,13 @@ export abstract class VTL {
           );
 
           // Add the final value to the array
-          if (node.expr.name === "map") {
+          if (expr.name === "map") {
             this.qr(`${newList}.add(${tmp})`);
           }
 
           this.add("#end");
           return newList ?? "$null";
-        } else if (node.expr.name === "reduce") {
+        } else if (expr.name === "reduce") {
           // list.reduce((result: string[], next) => [...result, next], []);
           // list.reduce((result, next) => [...result, next]);
 
@@ -455,7 +463,7 @@ export abstract class VTL {
           const previousTmp = this.newLocalVarName();
 
           const list = this.flattenListMapOperations(
-            node.expr.expr,
+            expr.expr,
             currentValue,
             (firstVariable, list) => {
               if (initialValue !== undefined) {
@@ -506,10 +514,7 @@ export abstract class VTL {
           }
 
           return previousTmp;
-        } else if (
-          isIdentifier(node.expr.expr) &&
-          node.expr.expr.name === "Promise"
-        ) {
+        } else if (isIdentifier(expr.expr) && expr.expr.name === "Promise") {
           throw new SynthError(
             ErrorCodes.Unsupported_Use_of_Promises,
             "Appsync does not support concurrent integration invocation or methods on the `Promise` api."
@@ -517,7 +522,7 @@ export abstract class VTL {
         }
         // this is an array map, forEach, reduce call
       }
-      return `${this.eval(node.expr)}(${Object.values(node.args)
+      return `${this.eval(expr)}(${Object.values(node.args)
         .map((arg) => this.eval(arg))
         .join(", ")})`;
     } else if (isConditionExpr(node)) {

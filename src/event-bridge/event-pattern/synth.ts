@@ -25,6 +25,7 @@ import {
   isErr,
   isFunctionDecl,
   isNullLiteralExpr,
+  isParenthesizedExpr,
   isPropAccessExpr,
   isUnaryExpr,
   isUndefinedLiteralExpr,
@@ -132,7 +133,7 @@ export const synthesizePatternDocument = (
       "Expected parameter to synthesizeEventPattern to be compiled by functionless."
     );
   }
-  const [eventDecl = undefined] = predicate.parameters;
+  const [eventDecl = undefined] = (<FunctionDecl>predicate).parameters;
 
   const evalExpr = (expr: Expr): PatternDocument => {
     if (isBinaryExpr(expr)) {
@@ -149,6 +150,8 @@ export const synthesizePatternDocument = (
       return evalCall(expr);
     } else if (isBooleanLiteralExpr(expr)) {
       return { doc: {} };
+    } else if (isParenthesizedExpr(expr)) {
+      return evalExpr(expr.expr);
     } else {
       throw new Error(`${expr.kind} is unsupported`);
     }
@@ -488,11 +491,13 @@ export const synthesizePatternDocument = (
       );
     }
 
-    if (
-      isPropAccessExpr(expr.expr.expr) ||
-      isElementAccessExpr(expr.expr.expr)
-    ) {
-      if (expr.expr.expr.type === "string") {
+    let e = expr.expr.expr;
+    while (isParenthesizedExpr(e)) {
+      e = e.expr;
+    }
+
+    if (isPropAccessExpr(e) || isElementAccessExpr(e)) {
+      if (e.type === "string") {
         assertValidEventReference(eventReference, eventDecl);
         return eventReferenceToPatternDocument(eventReference, {
           prefix: searchString,
@@ -501,7 +506,7 @@ export const synthesizePatternDocument = (
 
       // TODO: support for strings
       throw new Error(
-        `Starts With operation only supported on strings, found ${expr.expr.expr.type}.`
+        `Starts With operation only supported on strings, found ${e.type}.`
       );
     }
 

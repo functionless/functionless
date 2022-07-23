@@ -23,6 +23,7 @@ import {
   isElementAccessExpr,
   isIdentifier,
   isObjectLiteralExpr,
+  isParenthesizedExpr,
   isPropAccessExpr,
   isPropAssignExpr,
   isReturnStmt,
@@ -49,7 +50,9 @@ import { Constant, evalToConstant } from "../util";
 export const getReferencePath = (
   expression: Expr
 ): ReferencePath | undefined => {
-  if (isIdentifier(expression)) {
+  if (isParenthesizedExpr(expression)) {
+    return getReferencePath(expression.expr);
+  } else if (isIdentifier(expression)) {
     return { reference: [], identity: expression.name };
   } else if (isPropAccessExpr(expression) || isElementAccessExpr(expression)) {
     const key = getPropertyAccessKey(expression);
@@ -139,7 +142,9 @@ export interface EventScope {
  * Also does some optimization like turning templated strings of all constants into a string constant.
  */
 export const flattenExpression = (expr: Expr, scope: EventScope): Expr => {
-  if (isUnaryExpr(expr)) {
+  if (isParenthesizedExpr(expr)) {
+    return flattenExpression(expr.expr, scope);
+  } else if (isUnaryExpr(expr)) {
     return new UnaryExpr(expr.op, flattenExpression(expr.expr, scope));
   } else if (isIdentifier(expr)) {
     // if this variable is in scope, return the expression it points to.

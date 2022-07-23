@@ -25,6 +25,7 @@ export const isClassExpr = typeGuard("ClassExpr");
 export const isComputedPropertyNameExpr = typeGuard("ComputedPropertyNameExpr");
 export const isConditionExpr = typeGuard("ConditionExpr");
 export const isDeleteExpr = typeGuard("DeleteExpr");
+export const isParenthesizedExpr = typeGuard("ParenthesizedExpr");
 export const isElementAccessExpr = typeGuard("ElementAccessExpr");
 export const isFunctionExpr = typeGuard("FunctionExpr");
 export const isIdentifier = typeGuard("Identifier");

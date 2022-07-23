@@ -7,6 +7,7 @@ import {
   NullLiteralExpr,
   NumberLiteralExpr,
   ObjectLiteralExpr,
+  ParenthesizedExpr,
   reflect,
   ReturnStmt,
   StringLiteralExpr,
@@ -44,7 +45,11 @@ test("parenthesis", () => {
   );
 
   const expr = assertNodeKind<ExprStmt>(fn.body.statements[0], "ExprStmt");
-  assertNodeKind<StringLiteralExpr>(expr.expr, "StringLiteralExpr");
+  const parens = assertNodeKind<ParenthesizedExpr>(
+    expr.expr,
+    "ParenthesizedExpr"
+  );
+  assertNodeKind<StringLiteralExpr>(parens.expr, "StringLiteralExpr");
 });
 
 test("parenthesis are respected", () => {
@@ -58,7 +63,11 @@ test("parenthesis are respected", () => {
   const expr = assertNodeKind<ExprStmt>(fn.body.statements[0], "ExprStmt");
   const bin = assertNodeKind<BinaryExpr>(expr.expr, "BinaryExpr");
   assertNodeKind<NumberLiteralExpr>(bin.left, "NumberLiteralExpr");
-  assertNodeKind<BinaryExpr>(bin.right, "BinaryExpr");
+  const parens = assertNodeKind<ParenthesizedExpr>(
+    bin.right,
+    "ParenthesizedExpr"
+  );
+  assertNodeKind<BinaryExpr>(parens.expr, "BinaryExpr");
 });
 
 test("parenthesis are respected inverted", () => {

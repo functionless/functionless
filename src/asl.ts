@@ -93,6 +93,7 @@ import {
   isRegexExpr,
   isDeleteExpr,
   isVoidExpr,
+  isParenthesizedExpr,
 } from "./guards";
 import {
   Integration,
@@ -495,7 +496,9 @@ export class ASL {
     this.decl = visitEachChild(decl, function normalizeAST(node):
       | FunctionlessNode
       | FunctionlessNode[] {
-      if (isBlockStmt(node)) {
+      if (isParenthesizedExpr(node)) {
+        return visitEachChild(node.expr, normalizeAST);
+      } else if (isBlockStmt(node)) {
         return new BlockStmt([
           // for each block statement
           ...visitBlock(
@@ -2138,6 +2141,8 @@ export class ASL {
           },
         };
       });
+    } else if (isParenthesizedExpr(expr)) {
+      return this.eval(expr.expr);
     }
     throw new Error(`cannot eval expression kind '${expr.kind}'`);
   }
@@ -2779,8 +2784,10 @@ export class ASL {
       subState && subStates.push(subState);
       return cond;
     };
-    const internal = (): Condition => {
-      if (isBooleanLiteralExpr(expr)) {
+    const internal = (expr: Expr): Condition => {
+      if (isParenthesizedExpr(expr)) {
+        return internal(expr.expr);
+      } else if (isBooleanLiteralExpr(expr)) {
         return expr.value ? ASL.trueCondition() : ASL.falseCondition();
       } else if (isUnaryExpr(expr) || isPostfixUnaryExpr(expr)) {
         // TODO: more than just unary not... - https://github.com/functionless/functionless/issues/232
@@ -2943,7 +2950,7 @@ export class ASL {
       throw new Error(`cannot evaluate expression: '${expr.kind}`);
     };
 
-    return [internal(), ASLGraph.joinSubStates(expr, ...subStates)];
+    return [internal(expr), ASLGraph.joinSubStates(expr, ...subStates)];
   }
 }
 
@@ -4322,6 +4329,8 @@ function exprToString(expr?: Expr): string {
     return `delete ${exprToString(expr.expr)}`;
   } else if (isVoidExpr(expr)) {
     return `void ${exprToString(expr.expr)}`;
+  } else if (isParenthesizedExpr(expr)) {
+    return exprToString(expr.expr);
   } else {
     return assertNever(expr);
   }

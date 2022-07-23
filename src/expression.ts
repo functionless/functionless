@@ -33,6 +33,7 @@ export type Expr =
   | NullLiteralExpr
   | NumberLiteralExpr
   | ObjectLiteralExpr
+  | ParenthesizedExpr
   | PostfixUnaryExpr
   | PrivateIdentifier
   | PromiseArrayExpr
@@ -610,6 +611,7 @@ export class YieldExpr extends BaseExpr<"YieldExpr"> {
     readonly delegate: boolean
   ) {
     super("YieldExpr");
+    expr?.setParent(this);
   }
   public clone(): this {
     return new YieldExpr(this.expr?.clone(), this.delegate) as this;
@@ -634,6 +636,7 @@ export class VoidExpr extends BaseExpr<"VoidExpr"> {
     readonly expr: Expr
   ) {
     super("VoidExpr");
+    expr.setParent(this);
   }
   public clone(): this {
     return new VoidExpr(this.expr?.clone()) as this;
@@ -643,9 +646,21 @@ export class VoidExpr extends BaseExpr<"VoidExpr"> {
 export class DeleteExpr extends BaseExpr<"DeleteExpr"> {
   constructor(readonly expr: PropAccessExpr | ElementAccessExpr) {
     super("DeleteExpr");
+    expr.setParent(this);
   }
   public clone(): this {
     return new DeleteExpr(this.expr?.clone()) as this;
+  }
+}
+
+export class ParenthesizedExpr extends BaseExpr<"ParenthesizedExpr"> {
+  constructor(readonly expr: Expr) {
+    super("ParenthesizedExpr");
+    expr.setParent(this);
+  }
+
+  public clone(): this {
+    return new ParenthesizedExpr(this.expr.clone()) as this;
   }
 }
 
