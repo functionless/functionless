@@ -1410,7 +1410,10 @@ export class ASL {
         return this.eval(expr.expr);
       }
       throw new SynthError(
-        ErrorCodes.Integration_must_be_immediately_awaited_or_returned
+        ErrorCodes.Integration_must_be_immediately_awaited_or_returned,
+        `Integration must be immediately awaited or returned ${exprToString(
+          expr
+        )}`
       );
     } else if (isPromiseArrayExpr(expr)) {
       // if we find a promise array, ensure it is wrapped in a Promise.all then unwrap it
@@ -2871,7 +2874,10 @@ export class ASL {
           return localToCondition(expr.expr);
         }
         throw new SynthError(
-          ErrorCodes.Integration_must_be_immediately_awaited_or_returned
+          ErrorCodes.Integration_must_be_immediately_awaited_or_returned,
+          `Integration must be immediately awaited or returned ${exprToString(
+            expr
+          )}`
         );
       } else if (isPromiseArrayExpr(expr)) {
         // if we find a promise array, ensure it is wrapped in a Promise.all then unwrap it
@@ -3672,6 +3678,12 @@ export namespace ASLGraph {
     pass: Omit<Pass, "Parameters" | "InputPath" | "Result">,
     value: ASLGraph.Output
   ): Pass => {
+    if (ASLGraph.isLiteralValue(value) && typeof value.value === "undefined") {
+      throw new SynthError(
+        ErrorCodes.Step_Functions_does_not_support_undefined_assignment
+      );
+    }
+
     return {
       ...pass,
       ...(ASLGraph.isJsonPath(value)
@@ -3695,6 +3707,12 @@ export namespace ASLGraph {
     task: Omit<Task, "Parameters" | "InputPath">,
     value: ASLGraph.Output
   ): Task => {
+    if (ASLGraph.isLiteralValue(value) && typeof value.value === "undefined") {
+      throw new SynthError(
+        ErrorCodes.Step_Functions_does_not_support_undefined_assignment
+      );
+    }
+
     return {
       ...task,
       ...(ASLGraph.isJsonPath(value)

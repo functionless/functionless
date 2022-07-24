@@ -280,6 +280,31 @@ test("let and set", () => {
   expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
+test("let undefined", () => {
+  const { stack } = initStepFunctionApp();
+  expect(
+    () =>
+      new ExpressStepFunction(stack, "fn", () => {
+        let a = undefined;
+        a = "b";
+        // returning undefined is invalid.
+        return a;
+      })
+  ).toThrow("Step Functions does not support undefined assignment");
+});
+
+test("let empty", () => {
+  const { stack } = initStepFunctionApp();
+  const definition = new ExpressStepFunction(stack, "fn", () => {
+    let a;
+    a = "b";
+    // returning undefined is invalid.
+    return a;
+  }).definition;
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+});
+
 test("task(any)", () => {
   const { stack, task } = initStepFunctionApp();
   const definition = new ExpressStepFunction(stack, "fn", async () => {
@@ -1109,7 +1134,7 @@ test("return AWS.DynamoDB.GetItem", () => {
     });
 
     if (person.Item === undefined) {
-      return undefined;
+      return;
     }
 
     return {
@@ -1137,7 +1162,7 @@ test("return AWS.DynamoDB.GetItem dynamic parameters", () => {
     });
 
     if (person.Item === undefined) {
-      return undefined;
+      return;
     }
 
     return {
@@ -1184,7 +1209,7 @@ test("call AWS.DynamoDB.GetItem, then Lambda and return LiteralExpr", () => {
     });
 
     if (person.Item === undefined) {
-      return undefined;
+      return;
     }
 
     const score = await computeScore({
@@ -2686,7 +2711,7 @@ test("for-in-loop variable initializer", () => {
     for (x of input.items) {
       return x;
     }
-    return undefined;
+    return;
   }).definition;
 
   expect(normalizeDefinition(definition)).toMatchSnapshot();
@@ -2702,7 +2727,7 @@ test("for-of-loop variable initializer", () => {
     for (x in input.items) {
       return x;
     }
-    return undefined;
+    return;
   }).definition;
 
   expect(normalizeDefinition(definition)).toMatchSnapshot();

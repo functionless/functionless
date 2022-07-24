@@ -1717,14 +1717,15 @@ Object {
               "Variable": "$$.Execution.Id",
             },
           ],
-          "Next": "return undefined",
+          "Next": "return null",
         },
       ],
       "Default": "score = await computeScore({id: person.Item.id.S, name: person.Item.name.S}",
       "Type": "Choice",
     },
-    "return undefined": Object {
+    "return null": Object {
       "End": true,
+      "InputPath": "$.fnl_context.null",
       "ResultPath": "$",
       "Type": "Pass",
     },
@@ -4510,11 +4511,12 @@ Object {
           "Variable": "$.heap0[0]",
         },
       ],
-      "Default": "return undefined",
+      "Default": "return null",
       "Type": "Choice",
     },
-    "return undefined": Object {
+    "return null": Object {
       "End": true,
+      "InputPath": "$.fnl_context.null",
       "ResultPath": "$",
       "Type": "Pass",
     },
@@ -4923,11 +4925,12 @@ Object {
           "Variable": "$.heap0[0]",
         },
       ],
-      "Default": "return undefined",
+      "Default": "return null",
       "Type": "Choice",
     },
-    "return undefined": Object {
+    "return null": Object {
       "End": true,
+      "InputPath": "$.fnl_context.null",
       "ResultPath": "$",
       "Type": "Pass",
     },
@@ -7031,6 +7034,26 @@ Object {
 }
 `;
 
+exports[`let empty 1`] = `
+Object {
+  "StartAt": "a = \\"b\\"",
+  "States": Object {
+    "a = \\"b\\"": Object {
+      "Next": "return a",
+      "Result": "b",
+      "ResultPath": "$.a",
+      "Type": "Pass",
+    },
+    "return a": Object {
+      "End": true,
+      "InputPath": "$.a",
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+  },
+}
+`;
+
 exports[`list.filter(item => item.length > 2).map(item => item) 1`] = `
 Object {
   "StartAt": "Initialize Functionless Context",
@@ -8470,14 +8493,15 @@ Object {
               "Variable": "$$.Execution.Id",
             },
           ],
-          "Next": "return undefined",
+          "Next": "return null",
         },
       ],
       "Default": "return {id: person.Item.id.S, name: person.Item.name.S}",
       "Type": "Choice",
     },
-    "return undefined": Object {
+    "return null": Object {
       "End": true,
+      "InputPath": "$.fnl_context.null",
       "ResultPath": "$",
       "Type": "Pass",
     },
@@ -8560,14 +8584,15 @@ Object {
               "Variable": "$$.Execution.Id",
             },
           ],
-          "Next": "return undefined",
+          "Next": "return null",
         },
       ],
       "Default": "return {id: person.Item.id.S, name: person.Item.name.S}",
       "Type": "Choice",
     },
-    "return undefined": Object {
+    "return null": Object {
       "End": true,
+      "InputPath": "$.fnl_context.null",
       "ResultPath": "$",
       "Type": "Pass",
     },
