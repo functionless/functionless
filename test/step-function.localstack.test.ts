@@ -11,6 +11,7 @@ import {
   Table,
   FunctionProps,
 } from "../src";
+import { makeIntegration } from "../src/integration";
 import { localstackTestSuite } from "./localstack";
 import { testStepFunction } from "./runtime-util";
 import { normalizeCDKJson } from "./util";
@@ -1398,4 +1399,69 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
     },
     (_, result) => `name: ${result.name}`
   );
+
+  /**
+   * Tests that the input to the machine has been removed from the machine state before continuing.
+   *
+   * Why:
+   * 1. if the machine leaves the input payload at the top level, a declared, but uninitialized variable that shadows would adopt the input value.
+   * 2. The size of the state in a machine is limited, if the input is not used, discard it, if the input is used, it will only exist at the input parameter name.
+   *
+   * ```ts
+   * async (input: { a: string }) => {
+   *    let a;
+   *    return { a: a ?? null, b: input.a };
+   * }
+   * ```
+   *
+   * ^ If the state is polluted with the input, `a` will be whatever `input.a` is, but we expect it to be undefined.
+   */
+  test(
+    "clean state after input",
+    (parent) =>
+      new StepFunction(parent, "sfn", async (input) => {
+        const state = dumpState<
+          Partial<typeof input> & { input: typeof input }
+        >();
+        let a;
+        return {
+          stateA: state.a ?? null,
+          a: input.a,
+          stateInput: state.input?.a ?? null,
+          initA: a ?? null,
+        };
+      }),
+    { stateA: null, stateInput: "a", a: "a", initA: null },
+    { a: "a" }
+  );
+
+  /**
+   * We should see no state pollution even when the input is never used, but provided.
+   */
+  test(
+    "no state pollution",
+    (parent) =>
+      new StepFunction(parent, "sfn", async () => {
+        let a;
+        return a ?? null;
+      }),
+    null,
+    { a: "a" }
+  );
+});
+
+/**
+ * Helper state integration that dumps out the whole state into an object.
+ *
+ * ```ts
+ * const a = "1";
+ * const state = dumpState();
+ * return state.a;
+ * ```
+ */
+const dumpState = makeIntegration<"dumpState", <T>() => T>({
+  kind: "dumpState",
+  asl: () => ({
+    jsonPath: "$",
+  }),
 });
