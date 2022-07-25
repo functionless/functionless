@@ -133,7 +133,10 @@ export function validate(
               ts.isIfStatement(node.parent) ||
               ts.isForStatement(node.parent) ||
               ts.isAwaitExpression(node.parent) ||
-              ts.isParenthesizedExpression(node.parent))
+              ts.isParenthesizedExpression(node.parent) ||
+              ts.isPropertyAccessExpression(node.parent) ||
+              (ts.isElementAccessExpression(node.parent) &&
+                node !== node.parent.argumentExpression))
           )
         ) {
           return [

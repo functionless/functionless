@@ -411,6 +411,19 @@ new StepFunction(stack, "obj ref", async () => {
   return x;
 });
 
+new StepFunction(stack, "obj ref", async () => {
+  const x =
+    (
+      await $AWS.DynamoDB.GetItem({
+        Table: table,
+        Key: {
+          id: { S: "" },
+        },
+      })
+    ).Item?.id.S ?? null;
+  return x;
+});
+
 /**
  * Unsupported
  * 10025 - Step Functions invalid collection access
