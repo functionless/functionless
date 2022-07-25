@@ -1,8 +1,10 @@
+import { ErrorCodes, SynthError } from "./error-code";
 import { FunctionlessNode } from "./node";
 import { ConstantValue, PrimitiveValue, isPrimitive } from "./util";
 
 export function assertNever(value: never): never {
-  throw new Error(
+  throw new SynthError(
+    ErrorCodes.Unexpected_Error,
     `reached unreachable branch with value: ${
       typeof value === "string" ? value : JSON.stringify(value)
     }`

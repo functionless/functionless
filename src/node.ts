@@ -3,6 +3,8 @@ import {
   BindingPattern,
   Decl,
   ParameterDecl,
+  VariableDecl,
+  VariableDeclList,
 } from "./declaration";
 import type { Err } from "./error";
 import { Expr } from "./expression";
@@ -23,10 +25,17 @@ import {
   isBindingPattern,
   isBindingElem,
   isIdentifier,
+  isVariableDecl,
 } from "./guards";
-import { BlockStmt, CatchClause, Stmt, VariableStmt } from "./statement";
+import { BlockStmt, CatchClause, Stmt } from "./statement";
 
-export type FunctionlessNode = Decl | Expr | Stmt | Err | BindingPattern;
+export type FunctionlessNode =
+  | Decl
+  | Expr
+  | Stmt
+  | Err
+  | BindingPattern
+  | VariableDeclList;
 
 export interface HasParent<Parent extends FunctionlessNode> {
   get parent(): Parent;
@@ -181,7 +190,7 @@ export abstract class BaseNode<
       } else {
         return self.block.step();
       }
-    } else if (isVariableStmt(self) && self.expr === undefined) {
+    } else if (isVariableStmt(self)) {
       if (self.next) {
         return self.next.step();
       } else {
@@ -302,13 +311,10 @@ export abstract class BaseNode<
   /**
    * @returns a mapping of name to the node visible in this node's scope.
    */
-  public getLexicalScope(): Map<
-    string,
-    VariableStmt | ParameterDecl | BindingElem
-  > {
+  public getLexicalScope(): Map<string, Decl> {
     return new Map(getLexicalScope(this as unknown as FunctionlessNode));
 
-    type Binding = [string, VariableStmt | ParameterDecl | BindingElem];
+    type Binding = [string, VariableDecl | ParameterDecl | BindingElem];
 
     function getLexicalScope(node: FunctionlessNode | undefined): Binding[] {
       if (node === undefined) {
@@ -323,6 +329,8 @@ export abstract class BaseNode<
       if (node === undefined) {
         return [];
       } else if (isVariableStmt(node)) {
+        return node.declList.decls.flatMap(getNames);
+      } else if (isVariableDecl(node)) {
         if (isBindingPattern(node.name)) {
           return getNames(node.name);
         }

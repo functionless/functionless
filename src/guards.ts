@@ -104,6 +104,7 @@ export function isStmt(a: any): a is Stmt {
       isExprStmt(a) ||
       isForInStmt(a) ||
       isForOfStmt(a) ||
+      isForStmt(a) ||
       isIfStmt(a) ||
       isReturnStmt(a) ||
       isThrowStmt(a) ||
@@ -119,6 +120,7 @@ export const isReturnStmt = typeGuard("ReturnStmt");
 export const isIfStmt = typeGuard("IfStmt");
 export const isForOfStmt = typeGuard("ForOfStmt");
 export const isForInStmt = typeGuard("ForInStmt");
+export const isForStmt = typeGuard("ForStmt");
 export const isBreakStmt = typeGuard("BreakStmt");
 export const isContinueStmt = typeGuard("ContinueStmt");
 export const isTryStmt = typeGuard("TryStmt");
@@ -130,12 +132,15 @@ export const isDoStmt = typeGuard("DoStmt");
 export const isFunctionDecl = typeGuard("FunctionDecl");
 export const isParameterDecl = typeGuard("ParameterDecl");
 export const isBindingElem = typeGuard("BindingElem");
+export const isVariableDecl = typeGuard("VariableDecl");
 
 export const isObjectBinding = typeGuard("ObjectBinding");
 export const isArrayBinding = typeGuard("ArrayBinding");
 
 export const isBindingPattern = (a: any): a is BindingPattern =>
   isNode(a) && (isObjectBinding(a) || isArrayBinding(a));
+
+export const isVariableDeclList = typeGuard("VariableDeclList");
 
 // generates type guards
 export function typeGuard<Kind extends FunctionlessNode["kind"]>(

@@ -1,13 +1,14 @@
 import { aws_iam } from "aws-cdk-lib";
 import { Construct } from "constructs";
 import { assertNever } from "./assert";
-import { BindingElem, FunctionDecl, ParameterDecl } from "./declaration";
+import { Decl, FunctionDecl, VariableDecl } from "./declaration";
 import { ErrorCodes, SynthError } from "./error-code";
 import {
   Argument,
   CallExpr,
   ElementAccessExpr,
   Expr,
+  Identifier,
   NullLiteralExpr,
   PropAccessExpr,
 } from "./expression";
@@ -66,6 +67,9 @@ import {
   isArrayBinding,
   isErr,
   isNode,
+  isForStmt,
+  isVariableDeclList,
+  isVariableDecl,
 } from "./guards";
 import {
   Integration,
@@ -82,7 +86,6 @@ import {
   IfStmt,
   ReturnStmt,
   Stmt,
-  VariableStmt,
 } from "./statement";
 import {
   anyOf,
@@ -448,18 +451,6 @@ export class ASL {
    */
   private static readonly CatchState: string = "__catch";
 
-  /**
-   * When true, adds an extra state to the beginning of the machine that assigns the input
-   * to a state variable and adds some additional constants.
-   *
-   * Example - this json path will contain the inputs to the machine.
-   *
-   * `$__fnl_context.input`
-   *
-   * This flag is set to when when accessing the {@link context} getting in this class.
-   */
-  private needsFunctionlessContext: boolean = false;
-
   constructor(
     readonly scope: Construct,
     readonly role: aws_iam.IRole,
@@ -492,27 +483,33 @@ export class ASL {
       return visitEachChild(node, normalizeAST);
     });
 
+    const inputName = decl.parameters[0]?.name;
+
     const states = this.evalStmt(this.decl.body);
 
-    if (this.needsFunctionlessContext) {
-      const functionlessContext: Pass = {
-        Type: "Pass",
-        Parameters: {
-          "input.$": "$",
-          null: null,
-        },
-        ResultPath: FUNCTIONLESS_CONTEXT_JSON_PATH,
-        OutputPath: "$",
-        Next: ASLGraph.DeferNext,
-      };
+    /**
+     * Always inject this initial state into the machine. It does 3 things:
+     *
+     * 1. Adds the fnl_context which provides hard to generate values like null.
+     * 2. assigns the input to the mutable input parameter name.
+     * 3. Clears out the initial input from the state.
+     *
+     * The 3rd task is always required as the input could populate later generated variables.
+     */
+    const functionlessContext: Pass = {
+      Type: "Pass",
+      Parameters: {
+        [FUNCTIONLESS_CONTEXT_NAME]: { null: null },
+        ...(inputName ? { [`${inputName}.$`]: "$" } : {}),
+      },
+      ResultPath: "$",
+      Next: ASLGraph.DeferNext,
+    };
 
-      this.definition = this.aslGraphToStates(
-        ASLGraph.joinSubStates(this.decl.body, functionlessContext, states)!,
-        "Initialize Functionless Context"
-      );
-    } else {
-      this.definition = this.aslGraphToStates(states!);
-    }
+    this.definition = this.aslGraphToStates(
+      ASLGraph.joinSubStates(this.decl.body, functionlessContext, states)!,
+      "Initialize Functionless Context"
+    );
   }
 
   /**
@@ -521,13 +518,9 @@ export class ASL {
    * The Functionless context is only added to the machine when needed.
    * Using this property anywhere in a machine will add the context Pass state to the start of the machine.
    */
-  public get context() {
-    this.needsFunctionlessContext = true;
-    return {
-      null: `${FUNCTIONLESS_CONTEXT_JSON_PATH}.null`,
-      input: `${FUNCTIONLESS_CONTEXT_JSON_PATH}.input`,
-    };
-  }
+  public context = {
+    null: `${FUNCTIONLESS_CONTEXT_JSON_PATH}.null`,
+  };
 
   /**
    * Generates a valid, unique state name for the ASL machine.
@@ -593,7 +586,7 @@ export class ASL {
    * Evaluate a single {@link Stmt} into a collection of named states.
    */
   public evalStmt(
-    stmt: Stmt
+    stmt: Stmt | VariableDecl
   ): ASLGraph.SubState | ASLGraph.NodeState | undefined {
     if (isBlockStmt(stmt)) {
       return ASLGraph.joinSubStates(
@@ -611,7 +604,7 @@ export class ASL {
       );
     } else if (isBreakStmt(stmt) || isContinueStmt(stmt)) {
       const loop = stmt.findParent(
-        anyOf(isForOfStmt, isForInStmt, isWhileStmt, isDoStmt)
+        anyOf(isForOfStmt, isForInStmt, isForStmt, isWhileStmt, isDoStmt)
       );
       if (loop === undefined) {
         throw new Error("Stack Underflow");
@@ -652,14 +645,6 @@ export class ASL {
       return this.evalExprToSubState(stmt.expr, (output) => {
         const body = this.evalStmt(stmt.body);
 
-        if (!body) {
-          // if the body is empty, the for expression is evaluated,
-          // and then continue on. This state will be optimized out later.
-          return {
-            Type: "Pass",
-          };
-        }
-
         // assigns either a constant or json path to a new variable
         const assignTempState = this.stateWithHeapOutput(
           ASLGraph.passWithInput(
@@ -678,7 +663,8 @@ export class ASL {
               Type: "Map" as const,
               InputPath: tempArrayPath,
               Parameters: {
-                "index.$": "$$.Map.Item.Index",
+                // in javascript, for(const i in arr) returns string indices (i)
+                "index.$": "States.Format('{}', $$.Map.Item.Index)",
                 "item.$": "$$.Map.Item.Value",
               },
               Iterator: this.aslGraphToStates({
@@ -703,17 +689,47 @@ export class ASL {
               ],
               Default: "exit",
             },
-            assign: {
-              Type: "Pass",
-              node: stmt.expr,
-              // in a forIn, the variable is the index, we will rewrite `var` to `$.{var}.index`
-              // `arr[var]` is rewritten to `$.{var}.item`
-              InputPath: `${tempArrayPath}[0]`,
-              ResultPath: `$.${stmt.variableDecl.name}`,
-              Next: "body",
-            },
+            /**
+             * Assign the index to $.[variableName].
+             * When the loop.variableDecl is an {@link Identifier} (not {@link VariableStmt}), the variable may be used after the for loop.
+             */
+            assign: isForOfStmt(stmt)
+              ? {
+                  Type: "Pass",
+                  node: stmt.variableDecl,
+                  InputPath: `${tempArrayPath}[0]`,
+                  ResultPath: `$.${stmt.variableDecl.name}`,
+                  Next: "body",
+                }
+              : /**ForInStmt
+                 * Assign the value to $.0__[variableName].
+                 * Assign the index to the variable decl. If the variable decl is an identifier, it may be carried beyond the ForIn.
+                 */
+                {
+                  startState: "assignIndex",
+                  node: stmt.variableDecl,
+                  states: {
+                    assignIndex: {
+                      Type: "Pass",
+                      InputPath: `${tempArrayPath}[0].index`,
+                      ResultPath: `$.${stmt.variableDecl.name}`,
+                      Next: "assignValue",
+                    },
+                    assignValue: {
+                      Type: "Pass",
+                      InputPath: `${tempArrayPath}[0].item`,
+                      ResultPath: `$.0__${stmt.variableDecl.name}`,
+                      Next: "body",
+                    },
+                  },
+                },
             // any ASLGraph.DeferNext (or empty) should be wired to exit
-            body: ASLGraph.updateDeferredNextStates({ Next: "tail" }, body),
+            body: ASLGraph.updateDeferredNextStates(
+              { Next: "tail" },
+              body ?? {
+                Type: "Pass",
+              }
+            ),
             // tail the array
             tail: {
               Type: "Pass",
@@ -737,6 +753,70 @@ export class ASL {
             },
           },
         };
+      });
+    } else if (isForStmt(stmt)) {
+      const body = this.evalStmt(stmt.body);
+
+      return this.evalContextToSubState(stmt, (evalExpr) => {
+        const initializers = stmt.variableDecl
+          ? isVariableDeclList(stmt.variableDecl)
+            ? stmt.variableDecl.decls.map((x) => this.evalStmt(x))
+            : [evalExpr(stmt.variableDecl)]
+          : [undefined];
+
+        const [cond, condStates] = stmt.condition
+          ? this.toCondition(stmt.condition)
+          : [];
+
+        const increment = stmt.incrementor
+          ? this.eval(stmt.incrementor)
+          : undefined;
+
+        // run optional initializer
+        return ASLGraph.joinSubStates(stmt, ...initializers, {
+          startState: "check",
+          states: {
+            // check the condition (or do nothing)
+            check:
+              cond && stmt.condition
+                ? // join the states required to execute the condition with the condition value.
+                  // This ensures the condition supports short circuiting and runs all expressions as needed
+                  ASLGraph.joinSubStates(stmt.condition, condStates, {
+                    Type: "Choice",
+                    Choices: [{ ...cond, Next: "body" }],
+                    Default: "exit",
+                  })!
+                : // no condition, for loop will require an explicit exit
+                  { Type: "Pass" as const, Next: "body" },
+            // then run the body
+            body: ASLGraph.updateDeferredNextStates(
+              { Next: "increment" },
+              body ?? {
+                Type: "Pass",
+              }
+            ),
+            // then increment (or do nothing)
+            increment: ASLGraph.updateDeferredNextStates(
+              { Next: "check" },
+              increment && ASLGraph.isStateOrSubState(increment)
+                ? increment
+                : { Type: "Pass" as const }
+            ),
+            // return back to check
+            // TODO: clean up?
+            exit: { Type: "Pass" },
+            [ASL.ContinueNext]: {
+              Type: "Pass",
+              Next: "check",
+              node: new ContinueStmt(),
+            },
+            [ASL.BreakNext]: {
+              Type: "Pass",
+              Next: "exit",
+              node: new BreakStmt(),
+            },
+          },
+        })!;
       });
     } else if (isIfStmt(stmt)) {
       return this.evalContextToSubState(stmt, (_, evalCondition) => {
@@ -790,8 +870,8 @@ export class ASL {
           output
         )
       );
-    } else if (isVariableStmt(stmt)) {
-      if (stmt.expr === undefined) {
+    } else if (isVariableDecl(stmt)) {
+      if (stmt.initializer === undefined) {
         return undefined;
       }
 
@@ -802,7 +882,7 @@ export class ASL {
         );
       }
 
-      return this.evalExprToSubState(stmt.expr, (exprOutput) => {
+      return this.evalExprToSubState(stmt.initializer, (exprOutput) => {
         return ASLGraph.passWithInput(
           {
             Type: "Pass" as const,
@@ -812,6 +892,11 @@ export class ASL {
           exprOutput
         );
       });
+    } else if (isVariableStmt(stmt)) {
+      return ASLGraph.joinSubStates(
+        stmt,
+        ...stmt.declList.decls.map((decl) => this.evalStmt(decl))
+      );
     } else if (isThrowStmt(stmt)) {
       if (
         !(
@@ -1585,14 +1670,20 @@ export class ASL {
     } else if (isVariableReference(expr)) {
       if (isIdentifier(expr)) {
         const ref = expr.lookup();
-        // If the identifier references a parameter expression and that parameter expression
-        // is in a FunctionDecl and that Function is at the top (no parent).
-        // This logic needs to be updated to support destructured inputs: https://github.com/functionless/functionless/issues/68
-        if (ref && isParameterDecl(ref) && isFunctionDecl(ref.parent)) {
-          return { jsonPath: this.context.input };
-        } else if (ref && isVariableStmt(ref) && isForInStmt(ref.parent)) {
-          // the array element for ForIn is enumerated into `{ index: number, item: T}`
-          return { jsonPath: `$.${expr.name}.index` };
+        /**
+         * Support the optional second parameter context reference.
+         * async (input, context) => return context;
+         *
+         * context -> '$$'
+         */
+        if (
+          ref &&
+          isParameterDecl(ref) &&
+          isFunctionDecl(ref.parent) &&
+          ref.parent === this.decl &&
+          ref.parent.parameters[1] === ref
+        ) {
+          return { jsonPath: `$$` };
         }
         return { jsonPath: `$.${expr.name}` };
       } else if (isPropAccessExpr(expr)) {
@@ -1815,6 +1906,13 @@ export class ASL {
             output: left,
           };
         });
+      } else if (expr.op === ",") {
+        return this.evalContext(expr, (evalExpr) => {
+          // eval left and discard the result
+          evalExpr(expr.left);
+          // eval right and return the result
+          return evalExpr(expr.right);
+        });
       } else if (
         expr.op === "+" ||
         expr.op === "-" ||
@@ -1988,8 +2086,7 @@ export class ASL {
    *
    * ```ts
    * {
-   *    'a.$': '$.a',
-   *    'input.$': '$.fnl_context.input'
+   *    'a.$': '$.a'
    * }
    * ```
    */
@@ -1999,18 +2096,16 @@ export class ASL {
     const parentStmt = isStmt(node) ? node : node.findParent(isStmt);
     const variableReferences =
       (parentStmt?.prev ?? parentStmt?.parent)?.getLexicalScope() ??
-      new Map<string, VariableStmt | ParameterDecl | BindingElem>();
-    return Object.fromEntries([
-      ...Array.from(variableReferences.entries())
-        .filter(
-          ([, decl]) => !(isParameterDecl(decl) && isFunctionDecl(decl.parent))
-        )
-        .map(([name]) => [`${name}.$`, `$.${name}`]),
-      // if the functionless context has been used at this point, inject it in
-      ...(this.needsFunctionlessContext
-        ? [[`${FUNCTIONLESS_CONTEXT_NAME}.$`, FUNCTIONLESS_CONTEXT_JSON_PATH]]
-        : []),
-    ]);
+      new Map<string, Decl>();
+    return {
+      [`${FUNCTIONLESS_CONTEXT_NAME}.$`]: FUNCTIONLESS_CONTEXT_JSON_PATH,
+      ...Object.fromEntries(
+        Array.from(variableReferences.entries()).map(([name]) => [
+          `${name}.$`,
+          `$.${name}`,
+        ])
+      ),
+    };
   }
 
   /**
@@ -2465,11 +2560,16 @@ export class ASL {
               "the 'array' parameter in a .filter expression is not supported"
             );
           }
-        } else if (isVariableStmt(ref)) {
+        } else if (
+          isVariableDecl(ref) ||
+          isBindingElem(ref) ||
+          isFunctionDecl(ref)
+        ) {
           throw new Error(
-            "cannot reference a VariableStmt within a JSONPath .filter expression"
+            `cannot reference a ${ref.kind} within a JSONPath .filter expression`
           );
         }
+        assertNever(ref);
       } else if (isStringLiteralExpr(expr)) {
         return `'${expr.value.replace(/'/g, "\\'")}'`;
       } else if (
@@ -2542,15 +2642,20 @@ export class ASL {
     if (isIdentifier(access.element)) {
       const element = access.element.lookup();
       if (
-        isVariableStmt(element) &&
-        isForInStmt(element.parent) &&
         access.findParent(
           (parent): parent is ForInStmt =>
-            isForInStmt(parent) && parent === element.parent
+            isForInStmt(parent) &&
+            // find the first forin parent which has an identifier with this name
+            parent.variableDecl.name === (<Identifier>access.element).name &&
+            // if the variable decl is an identifier, it will have the same initializer.
+            ((isIdentifier(parent.variableDecl) &&
+              element === parent.variableDecl.lookup()) ||
+              // if the variable decl is an variable stmt, it will be the initializer of the element.
+              element === parent.variableDecl)
         )
       ) {
-        // the array element is enumerated into `{ index: number, item: T}`
-        return { jsonPath: `$.${element.name}.item` };
+        // the array element is assigned to $.0__[name]
+        return { jsonPath: `$.0__${access.element.name}` };
       }
     }
 
@@ -2705,6 +2810,11 @@ export class ASL {
             } else {
               return ASL.isPresent(accessed.jsonPath);
             }
+          } else if (expr.op === ",") {
+            // eval left and discard the result
+            localEval(expr.left);
+            // eval right to a condition and return
+            return localToCondition(expr.right);
           } else if (
             expr.op === "+" ||
             expr.op === "-" ||
@@ -3335,6 +3445,9 @@ export namespace ASLGraph {
     startState: string,
     stateEntries: [string, State][]
   ): [string, State][] => {
+    /**
+     * Find all {@link Pass} states that do not do anything.
+     */
     const emptyStates = Object.fromEntries(
       stateEntries.filter((entry): entry is [string, Pass] => {
         const [name, state] = entry;
@@ -3354,17 +3467,96 @@ export namespace ASLGraph {
       })
     );
 
+    const emptyTransitions = computeEmptyStateToUpdatedTransition(emptyStates);
+
+    // return the updated set of name to state.
     return stateEntries.flatMap(([name, state]) => {
-      if (name in emptyStates) {
+      if (name in emptyTransitions) {
         return [];
       }
-      const getNext = (transition: string): string => {
-        return transition in emptyStates
-          ? getNext(emptyStates[transition].Next!)
-          : transition;
-      };
-      return [[name, visitTransition(state, getNext)]];
+
+      return [
+        [
+          name,
+          visitTransition(state, (transition) =>
+            transition in emptyTransitions
+              ? emptyTransitions[transition]
+              : transition
+          ),
+        ],
+      ];
     });
+
+    /**
+     * Find the updated next value for all of the empty states.
+     * If the updated Next cannot be determined, do not remove the state.
+     */
+    function computeEmptyStateToUpdatedTransition(
+      emptyStates: Record<string, Pass>
+    ) {
+      return Object.fromEntries(
+        Object.entries(emptyStates).flatMap(([name, { Next }]) => {
+          const newNext = Next ? getNext(Next, []) : Next;
+
+          /**
+           * If the updated Next value for this state cannot be determined,
+           * do not remove the state.
+           *
+           * This can because the state has no Next value (Functionless bug)
+           * or because all of the states in a cycle are empty.
+           */
+          if (!newNext) {
+            return [];
+          }
+
+          return [[name, newNext]];
+
+          /**
+           * When all states in a cycle are empty, the cycle will be impossible to exit.
+           *
+           * Note: This should be a rare case and is not an attempt to find any non-terminating logic.
+           *       ex: `for(;;){}`
+           *       Adding most conditions, incrementors, or bodies will not run into this issue.
+           *
+           * ```ts
+           * {
+           *   1: { Type: "???", Next: 2 },
+           *   2: { Type: "Pass", Next: 3 },
+           *   3: { Type: "Pass", Next: 4 },
+           *   4: { Type: "Pass", Next: 2 }
+           * }
+           * ```
+           *
+           * State 1 is any state that transitions to state 2.
+           * State 2 transitions to empty state 3
+           * State 3 transitions to empty state 4
+           * State 4 transitions back to empty state 2.
+           *
+           * Empty Pass states provide no value and will be removed.
+           * Empty Pass states can never fail and no factor can change where it goes.
+           *
+           * This is not an issue for other states which may fail or inject other logic to change the next state.
+           * Even the Wait stat could be used in an infinite loop if the machine is terminated from external source.
+           *
+           * If this happens, return undefined.
+           */
+          function getNext(
+            transition: string,
+            seen: string[] = []
+          ): string | undefined {
+            if (seen?.includes(transition)) {
+              return undefined;
+            }
+            return transition in emptyStates
+              ? getNext(
+                  emptyStates[transition].Next!,
+                  seen ? [...seen, transition] : [transition]
+                )
+              : transition;
+          }
+        })
+      );
+    }
   };
 
   /**
@@ -3881,6 +4073,13 @@ function toStateName(node: FunctionlessNode): string {
       return `for(${node.variableDecl.name} in ${exprToString(node.expr)})`;
     } else if (isForOfStmt(node)) {
       return `for(${node.variableDecl.name} of ${exprToString(node.expr)})`;
+    } else if (isForStmt(node)) {
+      // for(;;)
+      return `for(${
+        node.variableDecl && isVariableDeclList(node.variableDecl)
+          ? inner(node.variableDecl)
+          : exprToString(node.variableDecl)
+      };${exprToString(node.condition)};${exprToString(node.incrementor)})`;
     } else if (isReturnStmt(node)) {
       if (node.expr) {
         return `return ${exprToString(node.expr)}`;
@@ -3892,11 +4091,13 @@ function toStateName(node: FunctionlessNode): string {
     } else if (isTryStmt(node)) {
       return "try";
     } else if (isVariableStmt(node)) {
+      return inner(node.declList);
+    } else if (isVariableDecl(node)) {
       if (isCatchClause(node.parent)) {
         return `catch(${node.name})`;
       } else {
         return `${node.name} = ${
-          node.expr ? exprToString(node.expr) : "undefined"
+          node.initializer ? exprToString(node.initializer) : "undefined"
         }`;
       }
     } else if (isWhileStmt(node)) {
@@ -3918,6 +4119,8 @@ function toStateName(node: FunctionlessNode): string {
       return isBindingPattern(node.name) ? inner(node.name) : node.name;
     } else if (isErr(node)) {
       throw node.error;
+    } else if (isVariableDeclList(node)) {
+      return `${node.decls.map((v) => inner(v)).join(",")}`;
     } else {
       return assertNever(node);
     }
