@@ -476,18 +476,6 @@ export class ASL {
    */
   private static readonly CatchState: string = "__catch";
 
-  /**
-   * When true, adds an extra state to the beginning of the machine that assigns the input
-   * to a state variable and adds some additional constants.
-   *
-   * Example - this json path will contain the inputs to the machine.
-   *
-   * `$__fnl_context.input`
-   *
-   * This flag is set to when when accessing the {@link context} getting in this class.
-   */
-  private needsFunctionlessContext: boolean = false;
-
   constructor(
     readonly scope: Construct,
     readonly role: aws_iam.IRole,
@@ -522,27 +510,33 @@ export class ASL {
       return visitEachChild(node, normalizeAST);
     });
 
+    const inputName = decl.parameters[0]?.name;
+
     const states = this.evalStmt(this.decl.body);
 
-    if (this.needsFunctionlessContext) {
-      const functionlessContext: Pass = {
-        Type: "Pass",
-        Parameters: {
-          "input.$": "$",
-          null: null,
-        },
-        ResultPath: FUNCTIONLESS_CONTEXT_JSON_PATH,
-        OutputPath: "$",
-        Next: ASLGraph.DeferNext,
-      };
+    /**
+     * Always inject this initial state into the machine. It does 3 things:
+     *
+     * 1. Adds the fnl_context which provides hard to generate values like null.
+     * 2. assigns the input to the mutable input parameter name.
+     * 3. Clears out the initial input from the state.
+     *
+     * The 3rd task is always required as the input could populate later generated variables.
+     */
+    const functionlessContext: Pass = {
+      Type: "Pass",
+      Parameters: {
+        [FUNCTIONLESS_CONTEXT_NAME]: { null: null },
+        ...(inputName ? { [`${inputName}.$`]: "$" } : {}),
+      },
+      ResultPath: "$",
+      Next: ASLGraph.DeferNext,
+    };
 
-      this.definition = this.aslGraphToStates(
-        ASLGraph.joinSubStates(this.decl.body, functionlessContext, states)!,
-        "Initialize Functionless Context"
-      );
-    } else {
-      this.definition = this.aslGraphToStates(states!);
-    }
+    this.definition = this.aslGraphToStates(
+      ASLGraph.joinSubStates(this.decl.body, functionlessContext, states)!,
+      "Initialize Functionless Context"
+    );
   }
 
   /**
@@ -551,13 +545,9 @@ export class ASL {
    * The Functionless context is only added to the machine when needed.
    * Using this property anywhere in a machine will add the context Pass state to the start of the machine.
    */
-  public get context() {
-    this.needsFunctionlessContext = true;
-    return {
-      null: `${FUNCTIONLESS_CONTEXT_JSON_PATH}.null`,
-      input: `${FUNCTIONLESS_CONTEXT_JSON_PATH}.input`,
-    };
-  }
+  public context = {
+    null: `${FUNCTIONLESS_CONTEXT_JSON_PATH}.null`,
+  };
 
   /**
    * Generates a valid, unique state name for the ASL machine.
@@ -962,7 +952,9 @@ export class ASL {
           isReferenceExpr(updated.expr) &&
           StepFunctionError.isConstructor(updated.expr.ref())
             ? StepFunctionError.kind
-            : isIdentifier(updated.expr) || isPropAccessExpr(updated.expr)
+            : isReferenceExpr(updated.expr) ||
+              isIdentifier(updated.expr) ||
+              isPropAccessExpr(updated.expr)
             ? updated.expr.name
             : undefined;
 
@@ -1790,18 +1782,13 @@ export class ASL {
     } else if (isVariableReference(expr)) {
       if (isIdentifier(expr)) {
         const ref = expr.lookup();
-        // If the identifier references a parameter expression and that parameter expression
-        // is in a FunctionDecl and that Function is at the top (no parent).
-        // This logic needs to be updated to support destructured inputs: https://github.com/functionless/functionless/issues/68
+        /**
+         * Support the optional second parameter context reference.
+         * async (input, context) => return context;
+         *
+         * context -> '$$'
+         */
         if (
-          ref &&
-          isParameterDecl(ref) &&
-          isFunctionDecl(ref.parent) &&
-          ref.parent === this.decl &&
-          ref.parent.parameters[0] === ref
-        ) {
-          return { jsonPath: this.context.input };
-        } else if (
           ref &&
           isParameterDecl(ref) &&
           isFunctionDecl(ref.parent) &&
@@ -2218,8 +2205,7 @@ export class ASL {
    *
    * ```ts
    * {
-   *    'a.$': '$.a',
-   *    'input.$': '$.fnl_context.input'
+   *    'a.$': '$.a'
    * }
    * ```
    */
@@ -2230,17 +2216,15 @@ export class ASL {
     const variableReferences =
       (parentStmt?.prev ?? parentStmt?.parent)?.getLexicalScope() ??
       new Map<string, Decl>();
-    return Object.fromEntries([
-      ...Array.from(variableReferences.entries())
-        .filter(
-          ([, decl]) => !(isParameterDecl(decl) && isFunctionDecl(decl.parent))
-        )
-        .map(([name]) => [`${name}.$`, `$.${name}`]),
-      // if the functionless context has been used at this point, inject it in
-      ...(this.needsFunctionlessContext
-        ? [[`${FUNCTIONLESS_CONTEXT_NAME}.$`, FUNCTIONLESS_CONTEXT_JSON_PATH]]
-        : []),
-    ]);
+    return {
+      [`${FUNCTIONLESS_CONTEXT_NAME}.$`]: FUNCTIONLESS_CONTEXT_JSON_PATH,
+      ...Object.fromEntries(
+        Array.from(variableReferences.entries()).map(([name]) => [
+          `${name}.$`,
+          `$.${name}`,
+        ])
+      ),
+    };
   }
 
   /**
