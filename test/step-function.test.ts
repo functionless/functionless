@@ -290,7 +290,7 @@ test("let undefined", () => {
         // returning undefined is invalid.
         return a;
       })
-  ).toThrow("Step Functions does not support undefined assignment");
+  ).toThrow("Undefined literal is not supported");
 });
 
 test("let empty", () => {
@@ -305,9 +305,41 @@ test("let empty", () => {
   expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
+test("undefined in ExprStmt", () => {
+  const { stack } = initStepFunctionApp();
+  expect(
+    () =>
+      new ExpressStepFunction(stack, "fn", () => {
+        undefined;
+      })
+  ).toThrow("Undefined literal is not supported");
+});
+
+test("undefined in ternary", () => {
+  const { stack, task } = initStepFunctionApp();
+  expect(
+    () =>
+      new ExpressStepFunction(stack, "fn", async (input: { a: boolean }) => {
+        // this should pass because undefined is just ignored
+        input.a ? undefined : await task();
+      })
+  ).toThrow("Undefined literal is not supported");
+});
+
+test("undefined in task input", () => {
+  const { stack, task } = initStepFunctionApp();
+  expect(
+    () =>
+      new ExpressStepFunction(stack, "fn", async () => {
+        await task(undefined);
+      })
+  ).toThrow("Undefined literal is not supported");
+});
+
 test("task(any)", () => {
   const { stack, task } = initStepFunctionApp();
   const definition = new ExpressStepFunction(stack, "fn", async () => {
+    await task();
     await task(null);
     await task(true);
     await task(false);
@@ -1917,7 +1949,7 @@ test("while (cond) { cond = task() }", () => {
   const { stack, task } = initStepFunctionApp();
   const definition = new ExpressStepFunction(stack, "fn", async () => {
     let cond;
-    while (cond === undefined) {
+    while (cond === null) {
       cond = await task();
     }
   }).definition;
@@ -1929,7 +1961,7 @@ test("while (cond); cond = task()", () => {
   const { stack, task } = initStepFunctionApp();
   const definition = new ExpressStepFunction(stack, "fn", async () => {
     let cond;
-    while (cond === undefined) cond = await task();
+    while (cond === null) cond = await task();
   }).definition;
 
   expect(normalizeDefinition(definition)).toMatchSnapshot();
@@ -1941,7 +1973,7 @@ test("let cond; do { cond = task() } while (cond)", () => {
     let cond;
     do {
       cond = await task();
-    } while (cond === undefined);
+    } while (cond === null);
   }).definition;
 
   expect(normalizeDefinition(definition)).toMatchSnapshot();

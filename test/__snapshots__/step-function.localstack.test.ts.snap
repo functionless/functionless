@@ -8492,25 +8492,11 @@ Object {
         "constantFalse.$": "$.heap10",
         "constantTrue.$": "$.heap9",
         "false.$": "$.heap8",
-        "result.$": "$.heap11.Item.val.N",
+        "result.$": "$.heap12",
         "true.$": "$.heap7",
       },
       "ResultPath": "$",
       "Type": "Pass",
-    },
-    "4__return {true: if(input.t), false: if(input.f), constantTrue: if(true), c": Object {
-      "Next": "1__return {true: if(input.t), false: if(input.f), constantTrue: if(true), c",
-      "Parameters": Object {
-        "Key": Object {
-          "id": Object {
-            "S.$": "$.fnl_context.input.id",
-          },
-        },
-        "TableName": "__REPLACED_TOKEN",
-      },
-      "Resource": "__REPLACED_ARN",
-      "ResultPath": "$.heap11",
-      "Type": "Task",
     },
     "Initialize Functionless Context": Object {
       "Next": "if(input.t)",
@@ -8546,8 +8532,41 @@ Object {
       "ResultPath": "$.heap1",
       "Type": "Pass",
     },
+    "await $AWS.DynamoDB.GetItem({Table: table, Key: {id: {S: input.id}}}).Item.": Object {
+      "Next": "await $AWS.DynamoDB.GetItem({Table: table, Key: {id: {S: input.id}}}).Item. 1",
+      "Parameters": Object {
+        "Key": Object {
+          "id": Object {
+            "S.$": "$.fnl_context.input.id",
+          },
+        },
+        "TableName": "__REPLACED_TOKEN",
+      },
+      "Resource": "__REPLACED_ARN",
+      "ResultPath": "$.heap11",
+      "Type": "Task",
+    },
+    "await $AWS.DynamoDB.GetItem({Table: table, Key: {id: {S: input.id}}}).Item. 1": Object {
+      "Choices": Array [
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.heap11.Item.val.N",
+            },
+            Object {
+              "IsNull": false,
+              "Variable": "$.heap11.Item.val.N",
+            },
+          ],
+          "Next": "takeLeft__await $AWS.DynamoDB.GetItem({Table: table, Key: {id: {S: input.id",
+        },
+      ],
+      "Default": "takeRight__await $AWS.DynamoDB.GetItem({Table: table, Key: {id: {S: input.i",
+      "Type": "Choice",
+    },
     "doFalse__if(false)": Object {
-      "Next": "4__return {true: if(input.t), false: if(input.f), constantTrue: if(true), c",
+      "Next": "await $AWS.DynamoDB.GetItem({Table: table, Key: {id: {S: input.id}}}).Item.",
       "Result": "d",
       "ResultPath": "$.heap10",
       "Type": "Pass",
@@ -8582,6 +8601,7 @@ Object {
       "Type": "Pass",
     },
     "doFalse__if(input.t)": Object {
+      "InputPath": "$.fnl_context.null",
       "Next": "if(input.f)",
       "ResultPath": "$.heap1",
       "Type": "Pass",
@@ -8622,7 +8642,7 @@ Object {
       "Type": "Pass",
     },
     "doTrue__if(false)": Object {
-      "Next": "4__return {true: if(input.t), false: if(input.f), constantTrue: if(true), c",
+      "Next": "await $AWS.DynamoDB.GetItem({Table: table, Key: {id: {S: input.id}}}).Item.",
       "Result": "c",
       "ResultPath": "$.heap10",
       "Type": "Pass",
@@ -8680,6 +8700,7 @@ Object {
       "Type": "Task",
     },
     "doTrue__if(input.t) 1": Object {
+      "InputPath": "$.fnl_context.null",
       "Next": "return {true: if(input.t), false: if(input.f), constantTrue: if(true), cons",
       "ResultPath": "$.heap6",
       "Type": "Pass",
@@ -9112,6 +9133,18 @@ Object {
       ],
       "Default": "doFalse__return {true: if(input.t), false: if(input.f), constantTrue: if(tr",
       "Type": "Choice",
+    },
+    "takeLeft__await $AWS.DynamoDB.GetItem({Table: table, Key: {id: {S: input.id": Object {
+      "InputPath": "$.heap11.Item.val.N",
+      "Next": "1__return {true: if(input.t), false: if(input.f), constantTrue: if(true), c",
+      "ResultPath": "$.heap12",
+      "Type": "Pass",
+    },
+    "takeRight__await $AWS.DynamoDB.GetItem({Table: table, Key: {id: {S: input.i": Object {
+      "InputPath": "$.fnl_context.null",
+      "Next": "1__return {true: if(input.t), false: if(input.f), constantTrue: if(true), c",
+      "ResultPath": "$.heap12",
+      "Type": "Pass",
     },
   },
 }

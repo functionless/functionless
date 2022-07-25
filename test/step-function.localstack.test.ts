@@ -1300,7 +1300,7 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
                 ":inc": { N: "1" },
               },
             })
-          : undefined;
+          : null;
 
         // should add 3
         input.f
@@ -1329,7 +1329,7 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
 
         // should not execute update
         input.t
-          ? undefined
+          ? null
           : await $AWS.DynamoDB.UpdateItem({
               Table: table,
               Key: {
@@ -1347,14 +1347,15 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
           false: input.f ? "a" : "b",
           constantTrue: true ? "c" : "d",
           constantFalse: false ? "c" : "d",
-          result: (
-            await $AWS.DynamoDB.GetItem({
-              Table: table,
-              Key: {
-                id: { S: input.id },
-              },
-            })
-          ).Item?.val.N,
+          result:
+            (
+              await $AWS.DynamoDB.GetItem({
+                Table: table,
+                Key: {
+                  id: { S: input.id },
+                },
+              })
+            ).Item?.val.N ?? null,
         };
       });
     },

@@ -762,9 +762,12 @@ export namespace ErrorCodes {
   };
 
   /**
-   * Step Functions does not support undefined assignment
+   * Step Functions does not support undefined
    *
    * In Step Functions, a property cannot be undefined when assigned to an object or passed into a state.
+   *
+   * For consistency, `undefined` is not allowed anytime a value is returned, for example in a ternary expression (`x ? undefined : value`).
+   * The `undefined` literal is allowed for comparison. `if(x === undefined){}`.
    *
    * ```ts
    * const func = new Function(stack, 'func', () => { return undefined; })
@@ -773,6 +776,9 @@ export namespace ErrorCodes {
    *       // invalid - could be undefined
    *       val: input.val
    *    }
+   *
+   *    // invalid
+   *    v ? undefined : "a"
    *
    *    // invalid, function outputs undefined.
    *    const output = await func();
@@ -791,6 +797,9 @@ export namespace ErrorCodes {
    *       // valid
    *       val: null
    *    }
+   *
+   *    // valid
+   *    v ? null : "a"
    *
    *    // valid, function outputs undefined.
    *    const output = await func();
@@ -844,12 +853,11 @@ export namespace ErrorCodes {
    * });
    * ```
    */
-  export const Step_Functions_does_not_support_undefined_assignment: ErrorCode =
-    {
-      code: 10022,
-      type: ErrorType.ERROR,
-      title: "Step Functions does not support undefined assignment",
-    };
+  export const Step_Functions_does_not_support_undefined: ErrorCode = {
+    code: 10022,
+    type: ErrorType.ERROR,
+    title: "Step Functions does not support undefined",
+  };
 
   /**
    * Events passed to an {@link EventBus} in a {@link StepFunction} must be one or more literal objects and may not use the spread (`...`) syntax or computed properties.
