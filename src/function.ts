@@ -351,10 +351,8 @@ abstract class FunctionBase<in Payload, Out>
         });
       },
       request(call, context) {
-        const payloadArg = call.getArgument("payload");
-        const payload = payloadArg?.expr
-          ? context.eval(payloadArg.expr)
-          : "$null";
+        const payloadArg = call.args[0]?.expr;
+        const payload = payloadArg ? context.eval(payloadArg) : "$null";
 
         const request = context.var(
           `{"version": "2018-05-29", "operation": "Invoke", "payload": ${payload}}`
@@ -365,8 +363,8 @@ abstract class FunctionBase<in Payload, Out>
 
     this.apiGWVtl = {
       renderRequest: (call, context) => {
-        const payloadArg = call.getArgument("payload");
-        return payloadArg?.expr ? context.exprToJson(payloadArg.expr) : "$null";
+        const payloadArg = call.args[0]?.expr;
+        return payloadArg ? context.exprToJson(payloadArg) : "$null";
       },
 
       createIntegration: (options) => {
@@ -381,7 +379,7 @@ abstract class FunctionBase<in Payload, Out>
   }
 
   public asl(call: CallExpr, context: ASL) {
-    const payloadArg = call.getArgument("payload")?.expr;
+    const payloadArg = call.args[0]?.expr;
     this.resource.grantInvoke(context.role);
 
     return payloadArg

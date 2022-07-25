@@ -134,6 +134,7 @@ import {
   isVoidExpr,
   isDeleteExpr,
   isParenthesizedExpr,
+  isImportKeyword,
 } from "./guards";
 import { FunctionlessNode } from "./node";
 
@@ -188,7 +189,7 @@ export function visitEachChild<T extends FunctionlessNode>(
     }
     const expr = visitor(node.expr);
     ensure(expr, isExpr, "an Argument's expr must be an Expr");
-    return new Argument(expr, node.name) as T;
+    return new Argument(expr) as T;
   } else if (isArrayLiteralExpr(node)) {
     return new ArrayLiteralExpr(
       node.items.flatMap((item) =>
@@ -236,16 +237,13 @@ export function visitEachChild<T extends FunctionlessNode>(
       `visitEachChild of a ${node.kind}'s expr must return a single Expr`
     );
     const args = node.args.flatMap((arg) => {
-      if (!arg.expr) {
-        return arg.clone();
-      }
-      const expr = visitor(arg.expr);
+      const expr = visitor(arg.expr!);
       ensure(
         expr,
         isExpr,
         `visitEachChild of a ${node.kind}'s argument must return a single Expr`
       );
-      return new Argument(expr, arg.name);
+      return new Argument(expr);
     });
     return (
       isCallExpr(node) ? new CallExpr(expr, args) : new NewExpr(expr, args)
@@ -725,6 +723,8 @@ export function visitEachChild<T extends FunctionlessNode>(
     const expr = visitor(node.expr);
     ensure(expr, isExpr, "ParenthesizedExpr's expr must be an Expr");
     return new ParenthesizedExpr(expr) as T;
+  } else if (isImportKeyword(node)) {
+    return node.clone() as T;
   }
   return assertNever(node);
 }

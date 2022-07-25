@@ -1,6 +1,7 @@
 import { aws_stepfunctions, Stack } from "aws-cdk-lib";
 import { Pass } from "aws-cdk-lib/aws-stepfunctions";
 import "jest";
+import * as functionless from "../src";
 import {
   $AWS,
   $SFN,
@@ -11,6 +12,7 @@ import {
   SyncExecutionResult,
   ErrorCodes,
   SynthError,
+  StepFunctionError,
 } from "../src";
 import { StateMachine, States, Task } from "../src/asl";
 import { Function } from "../src/function";
@@ -1334,15 +1336,23 @@ test("throw Error", () => {
   expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
-class CustomError {
-  constructor(readonly property: string) {}
-}
-
-test("throw new CustomError", () => {
+test("throw new StepFunctionError", () => {
   const { stack } = initStepFunctionApp();
 
   const definition = new ExpressStepFunction(stack, "fn", () => {
-    throw new CustomError("cause");
+    throw new StepFunctionError("CustomError", { property: "cause" });
+  }).definition;
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+});
+
+test("throw new functionless.StepFunctionError", () => {
+  const { stack } = initStepFunctionApp();
+
+  const definition = new ExpressStepFunction(stack, "fn", () => {
+    throw new functionless.StepFunctionError("CustomError", {
+      property: "cause",
+    });
   }).definition;
 
   expect(normalizeDefinition(definition)).toMatchSnapshot();
@@ -1365,7 +1375,7 @@ test("try, throw, empty catch", () => {
 
   const definition = new ExpressStepFunction(stack, "fn", () => {
     try {
-      throw new CustomError("cause");
+      throw new StepFunctionError("CustomError", { property: "cause" });
     } catch {}
   }).definition;
 
@@ -1394,7 +1404,7 @@ test("catch and throw new Error", () => {
     try {
       throw new Error("cause");
     } catch (err: any) {
-      throw new CustomError("custom cause");
+      throw new StepFunctionError("CustomError", { property: "custom cause" });
     }
   }).definition;
 
@@ -1408,7 +1418,7 @@ test("catch and throw Error", () => {
     try {
       throw Error("cause");
     } catch (err: any) {
-      throw new CustomError("custom cause");
+      throw new StepFunctionError("CustomError", { property: "custom cause" });
     }
   }).definition;
 
@@ -2115,7 +2125,9 @@ test("throw task(task())", () => {
           throw await task(await task(input));
         }
       )
-  ).toThrow("StepFunctions error cause must be a constant");
+  ).toThrow(
+    "StepFunction throw must be Error or StepFunctionError class\n\nhttps://functionless.org/docs/error-codes#stepfunction-throw-must-be-error-or-stepfunctionerror-class"
+  );
 });
 
 test("input.b ? task() : task(input)", () => {

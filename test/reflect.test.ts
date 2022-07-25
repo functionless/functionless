@@ -120,7 +120,6 @@ test("any function args", () => {
   const call = assertNodeKind<CallExpr>(expr.expr, "CallExpr");
 
   expect(call.args).toHaveLength(1);
-  expect(call.getArgument("searchString")).toBeUndefined();
 });
 
 test("named function args", () => {
@@ -134,9 +133,7 @@ test("named function args", () => {
   const expr = assertNodeKind<ExprStmt>(result.body.statements[0], "ExprStmt");
   const call = assertNodeKind<CallExpr>(expr.expr, "CallExpr");
 
-  expect(call.getArgument("searchString")?.expr?.kind).toEqual(
-    "StringLiteralExpr"
-  );
+  expect(call.args[0]?.expr?.kind).toEqual("StringLiteralExpr");
 });
 
 test("null", () => {

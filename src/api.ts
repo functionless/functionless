@@ -719,7 +719,7 @@ export class APIGatewayVTL extends VTL {
             ref.parent.parameters.findIndex((param) => param === ref) === 0
           ) {
             // the first argument of the FunctionDecl is the `$input`, regardless of what it is named
-            if (expr.args.length === 0 || expr.args[0]?.expr === undefined) {
+            if (expr.args.length === 0 || expr.args[0].expr === undefined) {
               const key = this.newLocalVarName();
               return `{#foreach(${key} in $input.params().keySet())"${key}": "$input.params("${key}")"#if($foreach.hasNext),#end#end}`;
             } else if (expr.args.length === 1) {

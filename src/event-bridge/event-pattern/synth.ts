@@ -392,22 +392,20 @@ export const synthesizePatternDocument = (
   ): PatternDocument => {
     const searchElement = evalToConstant(
       assertDefined(
-        expr.args[0].expr,
+        expr.args[0]?.expr,
         `Includes must have a single string argument ${INCLUDES_SEARCH_ELEMENT}.`
       )
     )?.constant;
 
     if (
-      expr.args
-        .map((e) => e.expr)
-        .filter(
-          (e) =>
-            !(
-              e === undefined ||
-              isNullLiteralExpr(e) ||
-              isUndefinedLiteralExpr(e)
-            )
-        ).length > 1
+      expr.args.filter(
+        (e) =>
+          !(
+            e?.expr === undefined ||
+            isNullLiteralExpr(e.expr) ||
+            isUndefinedLiteralExpr(e.expr)
+          )
+      ).length > 1
     ) {
       throw new Error("Includes only supports the searchElement argument");
     }
@@ -462,22 +460,20 @@ export const synthesizePatternDocument = (
     expr: CallExpr & { expr: PropAccessExpr | ElementAccessExpr }
   ): PatternDocument => {
     const arg = assertDefined(
-      expr.args[0].expr,
+      expr.args[0]?.expr,
       `StartsWith must contain a single string argument ${STARTS_WITH_SEARCH_STRING}`
     );
     const searchString = assertString(evalToConstant(arg)?.constant);
 
     if (
-      expr.args
-        .map((e) => e.expr)
-        .filter(
-          (e) =>
-            !(
-              e === undefined ||
-              isNullLiteralExpr(e) ||
-              isUndefinedLiteralExpr(e)
-            )
-        ).length > 1
+      expr.args.filter(
+        (e) =>
+          !(
+            e?.expr === undefined ||
+            isNullLiteralExpr(e.expr) ||
+            isUndefinedLiteralExpr(e.expr)
+          )
+      ).length > 1
     ) {
       throw new Error("Includes only supports the searchString argument");
     }

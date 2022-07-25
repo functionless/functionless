@@ -440,69 +440,17 @@ export function compile(
             }
           }
 
-          const getCall = () => {
-            const exprType = checker.getTypeAtLocation(node.expression);
-            const functionBrand = exprType.getProperty("__functionBrand");
-            let signature: ts.Signature | undefined;
-            if (functionBrand !== undefined) {
-              const functionType = checker.getTypeOfSymbolAtLocation(
-                functionBrand,
-                node.expression
-              );
-              const signatures = checker.getSignaturesOfType(
-                functionType,
-                ts.SignatureKind.Call
-              );
-
-              if (signatures.length === 1) {
-                signature = signatures[0];
-              } else {
-                // If the function brand has multiple signatures, try the resolved signature.
-                signature = checker.getResolvedSignature(node);
-              }
-            } else {
-              signature = checker.getResolvedSignature(node);
-            }
-            if (signature && signature.parameters.length > 0) {
-              return newExpr(
-                ts.isCallExpression(node) ? "CallExpr" : "NewExpr",
-                [
-                  toExpr(node.expression, scope),
-                  ts.factory.createArrayLiteralExpression(
-                    signature.parameters.map((parameter, i) =>
-                      newExpr("Argument", [
-                        (parameter.declarations?.[0] as ts.ParameterDeclaration)
-                          ?.dotDotDotToken
-                          ? newExpr("ArrayLiteralExpr", [
-                              ts.factory.createArrayLiteralExpression(
-                                node.arguments
-                                  ?.slice(i)
-                                  .map((x) => toExpr(x, scope)) ?? []
-                              ),
-                            ])
-                          : toExpr(node.arguments?.[i], scope),
-                        ts.factory.createStringLiteral(parameter.name),
-                      ])
-                    )
-                  ),
-                ]
-              );
-            } else {
-              return newExpr("CallExpr", [
-                toExpr(node.expression, scope),
-                ts.factory.createArrayLiteralExpression(
-                  node.arguments?.map((arg) =>
-                    newExpr("Argument", [
-                      toExpr(arg, scope),
-                      ts.factory.createIdentifier("undefined"),
-                    ])
-                  ) ?? []
-                ),
-              ]);
-            }
-          };
-
-          const call = getCall();
+          const call = newExpr(
+            ts.isCallExpression(node) ? "CallExpr" : "NewExpr",
+            [
+              toExpr(node.expression, scope),
+              ts.factory.createArrayLiteralExpression(
+                node.arguments?.map((arg) =>
+                  newExpr("Argument", [toExpr(arg, scope)])
+                ) ?? []
+              ),
+            ]
+          );
 
           const type = checker.getTypeAtLocation(node);
           const typeSymbol = type.getSymbol();

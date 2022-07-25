@@ -4,7 +4,6 @@ import { assertNever } from "./assert";
 import { Decl, FunctionDecl, VariableDecl } from "./declaration";
 import { ErrorCodes, SynthError } from "./error-code";
 import {
-  Argument,
   CallExpr,
   ElementAccessExpr,
   Expr,
@@ -94,6 +93,7 @@ import {
   isDeleteExpr,
   isVoidExpr,
   isParenthesizedExpr,
+  isImportKeyword,
 } from "./guards";
 import {
   Integration,
@@ -956,32 +956,95 @@ export class ASL {
           : stmt.expr.expr;
 
       const throwState = this.evalContextToSubState(updated, (evalExpr) => {
-        const error = Object.fromEntries(
-          updated.args
-            .filter((arg): arg is Argument & { expr: Expr } => !!arg.expr)
-            .map((arg) => {
-              const output = evalExpr(arg.expr);
-              // https://stackoverflow.com/questions/67794661/propogating-error-message-through-fail-state-in-aws-step-functions?answertab=trending#tab-top
-              if (!ASLGraph.isLiteralValue(output) || output.containsJsonPath) {
-                throw new SynthError(
-                  ErrorCodes.StepFunctions_error_cause_must_be_a_constant
-                );
-              }
-              return [arg.name!, output.value];
-            })
-        );
+        const errorClassName =
+          // new StepFunctionError will be a ReferenceExpr with the name: Step
+          isReferenceExpr(updated.expr) ||
+          isIdentifier(updated.expr) ||
+          isPropAccessExpr(updated.expr)
+            ? updated.expr.name
+            : undefined;
+
+        // we support three ways of throwing errors within Step Functions
+        // throw new Error(msg)
+        // throw Error(msg)
+        // throw StepFunctionError(cause, message);
+        let errorName: string;
+        let causeJson: unknown;
+        if (errorClassName === "Error") {
+          const errorMessage = updated.args[0]?.expr;
+          errorName = "Error";
+          if (
+            errorMessage === undefined ||
+            isUndefinedLiteralExpr(errorMessage)
+          ) {
+            causeJson = {
+              message: null,
+            };
+          } else {
+            causeJson = {
+              message: toJson(errorMessage),
+            };
+          }
+        } else if (errorClassName === "StepFunctionError") {
+          const [error, cause] = updated.args.map(({ expr }) => expr);
+          if (error === undefined || cause === undefined) {
+            // this should never happen if typescript type checking is enabled
+            // hence why we don't add a new ErrorCode for it
+            throw new SynthError(
+              ErrorCodes.Unexpected_Error,
+              `Expected 'error' and 'cause' parameter in StepFunctionError`
+            );
+          }
+          const errorNameVal = toJson(error);
+          if (typeof errorNameVal !== "string") {
+            // this should never happen if typescript type checking is enabled
+            // hence why we don't add a new ErrorCode for it
+            throw new SynthError(
+              ErrorCodes.Unexpected_Error,
+              `Expected 'error' parameter in StepFunctionError to be of type string, but got ${typeof errorNameVal}`
+            );
+          }
+          errorName = errorNameVal;
+          try {
+            causeJson = toJson(cause);
+          } catch (err: any) {
+            throw new SynthError(
+              ErrorCodes.StepFunctions_error_cause_must_be_a_constant,
+              err.message
+            );
+          }
+        } else {
+          throw new SynthError(
+            ErrorCodes.StepFunction_Throw_must_be_Error_or_StepFunctionError_class
+          );
+        }
+
+        /**
+         * Attempts to convert a Node into a JSON object.
+         *
+         * Only literal expression types are supported - no computation.
+         */
+        function toJson(expr: Expr): unknown {
+          const val = evalExpr(expr);
+          if (!ASLGraph.isLiteralValue(val) || val.containsJsonPath) {
+            throw new SynthError(
+              ErrorCodes.StepFunctions_error_cause_must_be_a_constant
+            );
+          }
+          return val.value;
+        }
 
         const throwTransition = this.throw(stmt);
         if (throwTransition === undefined) {
           return {
             Type: "Fail",
-            Error: exprToString(updated.expr),
-            Cause: JSON.stringify(error),
+            Error: errorName,
+            Cause: JSON.stringify(causeJson),
           };
         } else {
           return {
             Type: "Pass",
-            Result: error,
+            Result: causeJson,
             ...throwTransition,
           };
         }
@@ -1590,7 +1653,7 @@ export class ASL {
       } else if (isMapOrForEach(expr)) {
         const throwTransition = this.throw(expr);
 
-        const callbackfn = expr.getArgument("callbackfn")?.expr;
+        const callbackfn = expr.args[0].expr;
         if (callbackfn !== undefined && isFunctionExpr(callbackfn)) {
           const callbackStates = this.evalStmt(callbackfn.body);
 
@@ -1665,10 +1728,10 @@ export class ASL {
       } else if (isJoin(expr)) {
         return this.joinToStateOutput(expr);
       } else if (isPromiseAll(expr)) {
-        const values = expr.getArgument("values");
+        const values = expr.args[0]?.expr;
         // just validate Promise.all and continue, will validate the PromiseArray later.
-        if (values?.expr && isPromiseArrayExpr(values?.expr)) {
-          return this.eval(values.expr);
+        if (values && isPromiseArrayExpr(values)) {
+          return this.eval(values);
         }
         throw new SynthError(ErrorCodes.Unsupported_Use_of_Promises);
       } else if (
@@ -1679,7 +1742,7 @@ export class ASL {
       ) {
         const heap = this.newHeapVariable();
 
-        const objParamExpr = expr.args[0].expr;
+        const objParamExpr = expr.args[0]?.expr;
         if (!objParamExpr || isUndefinedLiteralExpr(objParamExpr)) {
           if (expr.expr.name === "stringify") {
             // return an undefined variable
@@ -2370,8 +2433,8 @@ export class ASL {
   private sliceToStateOutput(
     expr: CallExpr & { expr: PropAccessExpr }
   ): ASLGraph.NodeResults {
-    const startArg = expr.getArgument("start")?.expr;
-    const endArg = expr.getArgument("end")?.expr;
+    const startArg = expr.args[0]?.expr;
+    const endArg = expr.args[1]?.expr;
     const value = this.eval(expr.expr.expr);
     const valueOutput = ASLGraph.getAslStateOutput(value);
     if (startArg === undefined && endArg === undefined) {
@@ -2435,7 +2498,7 @@ export class ASL {
     expr: CallExpr & { expr: PropAccessExpr }
   ): ASLGraph.NodeResults {
     return this.evalContext(expr, (evalExpr) => {
-      const separatorArg = expr.getArgument("separator")?.expr;
+      const separatorArg = expr.args[0]?.expr;
       const valueOutput = evalExpr(expr.expr.expr);
       const separatorOutput = separatorArg ? evalExpr(separatorArg) : undefined;
       const separator =
@@ -2584,7 +2647,7 @@ export class ASL {
   private filterToJsonPath(
     expr: CallExpr & { expr: PropAccessExpr }
   ): ASLGraph.NodeResults {
-    const predicate = expr.getArgument("predicate")?.expr;
+    const predicate = expr.args[0]?.expr;
     if (!isFunctionExpr(predicate)) {
       throw new Error(
         "the 'predicate' argument of slice must be a FunctionExpr"
@@ -4219,7 +4282,9 @@ function toStateName(node: FunctionlessNode): string {
       isSuperKeyword(node) ||
       isSwitchStmt(node) ||
       isWithStmt(node) ||
-      isYieldExpr(node)
+      isYieldExpr(node) ||
+      isSuperKeyword(node) ||
+      isImportKeyword(node)
     ) {
       throw new SynthError(
         ErrorCodes.Unsupported_Feature,
@@ -4247,16 +4312,15 @@ function exprToString(expr?: Expr): string {
   } else if (isBooleanLiteralExpr(expr)) {
     return `${expr.value}`;
   } else if (isCallExpr(expr) || isNewExpr(expr)) {
+    if (isSuperKeyword(expr.expr) || isImportKeyword(expr.expr)) {
+      throw new Error(`calling ${expr.expr.kind} is unsupported in ASL`);
+    }
     return `${isNewExpr(expr) ? "new " : ""}${exprToString(
       expr.expr
     )}(${expr.args
       // Assume that undefined args are in order.
-      .filter(
-        (arg) =>
-          arg.expr &&
-          !(arg.name === "thisArg" && isUndefinedLiteralExpr(arg.expr))
-      )
-      .map((arg) => exprToString(arg.expr))
+      .filter((arg) => arg && !isUndefinedLiteralExpr(arg))
+      .map(exprToString)
       .join(", ")})`;
   } else if (isConditionExpr(expr)) {
     return `if(${exprToString(expr.when)})`;

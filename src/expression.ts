@@ -204,25 +204,24 @@ export class ElementAccessExpr extends BaseExpr<"ElementAccessExpr"> {
 }
 
 export class Argument extends BaseExpr<"Argument", CallExpr | NewExpr> {
-  constructor(readonly expr?: Expr, readonly name?: string) {
+  constructor(readonly expr?: Expr) {
     super("Argument");
     expr?.setParent(this);
   }
 
   public clone(): this {
-    return new Argument(this.expr?.clone(), this.name) as this;
+    return new Argument(this.expr?.clone()) as this;
   }
 }
 
 export class CallExpr extends BaseExpr<"CallExpr"> {
-  constructor(readonly expr: Expr, readonly args: Argument[]) {
+  constructor(
+    readonly expr: Expr | SuperKeyword | ImportKeyword,
+    readonly args: Argument[]
+  ) {
     super("CallExpr");
     expr.setParent(this);
     args.forEach((arg) => arg.setParent(this));
-  }
-
-  public getArgument(name: string): Argument | undefined {
-    return this.args.find((arg) => arg.name === name);
   }
 
   public clone(): this {
@@ -596,6 +595,16 @@ export class SuperKeyword extends BaseNode<"SuperKeyword"> {
   }
   public clone(): this {
     return new SuperKeyword() as this;
+  }
+}
+
+export class ImportKeyword extends BaseNode<"ImportKeyword"> {
+  readonly nodeKind = "Node";
+  constructor() {
+    super("ImportKeyword");
+  }
+  public clone(): this {
+    return new ImportKeyword() as this;
   }
 }
 

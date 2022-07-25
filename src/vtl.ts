@@ -1,6 +1,5 @@
 import { assertNever, assertNodeKind } from "./assert";
 import { BindingPattern, VariableDecl } from "./declaration";
-import {} from "./error";
 import { ErrorCodes, SynthError } from "./error-code";
 import {
   CallExpr,
@@ -46,6 +45,7 @@ import {
   isFunctionExpr,
   isIdentifier,
   isIfStmt,
+  isImportKeyword,
   isLabelledStmt,
   isMethodDecl,
   isNewExpr,
@@ -314,22 +314,7 @@ export abstract class VTL {
       // TODO: do we need to do anything to ensure precedence of parenthesis are maintained?
       return this.eval(node.expr);
     } else if (isArrayLiteralExpr(node)) {
-      if (node.items.find(isSpreadElementExpr) === undefined) {
-        return `[${node.items.map((item) => this.eval(item)).join(", ")}]`;
-      } else {
-        // contains a spread, e.g. [...i], so we will store in a variable
-        const list = this.var("[]");
-        for (const item of node.items) {
-          if (isSpreadElementExpr(item)) {
-            this.qr(`${list}.addAll(${this.eval(item.expr)})`);
-          } else {
-            // we use addAll because `list.push(item)` is pared as `list.push(...[item])`
-            // - i.e. the compiler passes us an ArrayLiteralExpr even if there is one arg
-            this.qr(`${list}.add(${this.eval(item)})`);
-          }
-        }
-        return list;
-      }
+      return this.addAll(node.items);
     } else if (isBinaryExpr(node)) {
       if (node.op === "in") {
         throw new SynthError(
@@ -376,9 +361,13 @@ export abstract class VTL {
     } else if (isCallExpr(node)) {
       let expr = node.expr;
       while (isParenthesizedExpr(expr)) {
+        // unwrap the (<expr>)
         expr = expr.expr;
       }
-      if (isReferenceExpr(expr)) {
+
+      if (isSuperKeyword(expr) || isImportKeyword(expr)) {
+        throw new Error(`super and import are not supported by VTL`);
+      } else if (isReferenceExpr(expr)) {
         const ref = expr.ref();
         if (isIntegration<Integration>(ref)) {
           const serviceCall = new IntegrationImpl(ref);
@@ -394,7 +383,8 @@ export abstract class VTL {
         isPropAccessExpr(expr) &&
         (expr.name === "map" ||
           expr.name === "forEach" ||
-          expr.name === "reduce")
+          expr.name === "reduce" ||
+          expr.name === "push")
       ) {
         if (expr.name === "map" || expr.name == "forEach") {
           // list.map(item => ..)
@@ -439,10 +429,10 @@ export abstract class VTL {
           // list.reduce((result, next) => [...result, next]);
 
           const fn = assertNodeKind<FunctionExpr>(
-            node.getArgument("callbackfn")?.expr,
+            node.args[0]?.expr,
             "FunctionExpr"
           );
-          const initialValue = node.getArgument("initialValue")?.expr;
+          const initialValue = node.args[1];
 
           // (previousValue: string[], currentValue: string, currentIndex: number, array: string[])
           const previousValue = fn.parameters[0]?.name
@@ -519,6 +509,21 @@ export abstract class VTL {
             ErrorCodes.Unsupported_Use_of_Promises,
             "Appsync does not support concurrent integration invocation or methods on the `Promise` api."
           );
+        } else if (expr.name === "push") {
+          if (
+            node.args.length === 1 &&
+            !isSpreadElementExpr(node.args[0].expr)
+          ) {
+            return `${this.eval(expr.expr)}.add(${this.eval(
+              node.args[0].expr
+            )})`;
+          } else {
+            return `${this.eval(expr.expr)}.addAll(${this.addAll(
+              node.args
+                .map((arg) => arg.expr)
+                .filter((e): e is Expr => e !== undefined)
+            )})`;
+          }
         }
         // this is an array map, forEach, reduce call
       }
@@ -557,13 +562,7 @@ export abstract class VTL {
     } else if (isNewExpr(node)) {
       throw new Error("NewExpr is not supported by Velocity Templates");
     } else if (isPropAccessExpr(node)) {
-      let name = node.name;
-      if (name === "push" && isCallExpr(node.parent)) {
-        // this is a push to an array, rename to 'addAll'
-        // addAll because the var-args are converted to an ArrayLiteralExpr
-        name = "addAll";
-      }
-      return `${this.eval(node.expr)}.${name}`;
+      return `${this.eval(node.expr)}.${node.name}`;
     } else if (isElementAccessExpr(node)) {
       return `${this.eval(node.expr)}[${this.eval(node.element)}]`;
     } else if (isNullLiteralExpr(node) || isUndefinedLiteralExpr(node)) {
@@ -726,6 +725,24 @@ export abstract class VTL {
       return assertNever(node);
     }
     throw new Error(`cannot evaluate Expr kind: '${node.kind}'`);
+  }
+
+  public addAll(items: Expr[]) {
+    if (items.find(isSpreadElementExpr) === undefined) {
+      return `[${items.map((item) => this.eval(item)).join(", ")}]`;
+    }
+    // contains a spread, e.g. [...i], so we will store in a variable
+    const list = this.var("[]");
+    for (const item of items) {
+      if (isSpreadElementExpr(item)) {
+        this.qr(`${list}.addAll(${this.eval(item.expr)})`);
+      } else {
+        // we use addAll because `list.push(item)` is pared as `list.push(...[item])`
+        // - i.e. the compiler passes us an ArrayLiteralExpr even if there is one arg
+        this.qr(`${list}.add(${this.eval(item)})`);
+      }
+    }
+    return list;
   }
 
   /**
@@ -931,10 +948,7 @@ export abstract class VTL {
       this.add(`#set(${array} = ${list})`);
     }
 
-    const fn = assertNodeKind<FunctionExpr>(
-      call.getArgument("callbackfn")?.expr,
-      "FunctionExpr"
-    );
+    const fn = assertNodeKind<FunctionExpr>(call.args[0]?.expr, "FunctionExpr");
 
     const tmp = returnVariable ? returnVariable : this.newLocalVarName();
 
@@ -996,10 +1010,7 @@ export abstract class VTL {
  * Returns the [value, index, array] arguments if this CallExpr is a `forEach` or `map` call.
  */
 const getMapForEachArgs = (call: CallExpr) => {
-  const fn = assertNodeKind<FunctionExpr>(
-    call.getArgument("callbackfn")?.expr,
-    "FunctionExpr"
-  );
+  const fn = assertNodeKind<FunctionExpr>(call.args[0].expr, "FunctionExpr");
   return fn.parameters.map((p) => (p.name ? `$${p.name}` : p.name));
 };
 

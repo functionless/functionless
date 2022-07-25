@@ -1,6 +1,5 @@
 import { ErrorCodes, SynthError } from "./error-code";
 import {
-  Argument,
   ComputedPropertyNameExpr,
   Expr,
   FunctionExpr,
@@ -146,7 +145,7 @@ export class FunctionDecl<
 
 export interface IntegrationInvocation {
   integration: Integration<any>;
-  args: Argument[];
+  args: Expr[];
 }
 
 export class ParameterDecl extends BaseDecl<

@@ -1,4 +1,4 @@
-import * as typescript from "typescript";
+import ts, * as typescript from "typescript";
 import {
   EventBusMapInterface,
   EventBusWhenInterface,
@@ -172,8 +172,9 @@ export function validate(
           ts.isNewExpression(node.expression) ||
           ts.isCallExpression(node.expression)
         ) {
-          return (
-            node.expression.arguments?.flatMap((arg) => {
+          return [
+            ...validateStepFunctionError(node.expression.expression),
+            ...(node.expression.arguments?.flatMap((arg) => {
               if (!checker.isConstant(arg)) {
                 return [
                   newError(
@@ -183,8 +184,8 @@ export function validate(
                 ];
               }
               return [];
-            }) ?? []
-          );
+            }) ?? []),
+          ];
         }
       } else if (
         ts.isVariableDeclaration(node) ||
@@ -247,6 +248,32 @@ export function validate(
       }
       return [];
     }
+  }
+
+  function validateStepFunctionError(expr: ts.Expression): ts.Diagnostic[] {
+    const callExprType = checker.getTypeAtLocation(expr);
+    if (checker.typeToString(callExprType) === "ErrorConstructor") {
+      // throw new Error
+      return [];
+    }
+    const kind = callExprType.getProperty("kind");
+    if (kind !== undefined) {
+      const kindType = checker.getTypeOfSymbolAtLocation(kind, expr);
+      if (
+        kindType.isStringLiteral() &&
+        kindType.value === "StepFunctionError"
+      ) {
+        // throw new StepFunctionError
+        return [];
+      }
+    }
+
+    return [
+      newError(
+        expr,
+        ErrorCodes.StepFunction_Throw_must_be_Error_or_StepFunctionError_class
+      ),
+    ];
   }
 
   /**

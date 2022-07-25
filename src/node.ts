@@ -8,7 +8,7 @@ import type {
   VariableDeclList,
 } from "./declaration";
 import type { Err } from "./error";
-import type { Expr, SuperKeyword } from "./expression";
+import type { Expr, ImportKeyword, SuperKeyword } from "./expression";
 import {
   isBlockStmt,
   isTryStmt,
@@ -36,6 +36,7 @@ export type FunctionlessNode =
   | Stmt
   | Err
   | SuperKeyword
+  | ImportKeyword
   | BindingPattern
   | ClassMember
   | VariableDeclList;

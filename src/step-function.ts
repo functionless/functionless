@@ -139,7 +139,7 @@ export namespace $SFN {
     (seconds: number) => void
   >("waitFor", {
     asl(call, context) {
-      const seconds = call.args[0].expr;
+      const seconds = call.args[0]?.expr;
       if (seconds === undefined) {
         throw new Error("the 'seconds' argument is required");
       }
@@ -311,7 +311,8 @@ export namespace $SFN {
   });
 
   function mapOrForEach(call: CallExpr, context: ASL) {
-    const callbackfn = call.getArgument("callbackfn")?.expr;
+    const callbackfn =
+      call.args.length === 3 ? call.args[2]?.expr : call.args[1]?.expr;
     if (callbackfn === undefined || callbackfn.kind !== "FunctionExpr") {
       throw new Error("missing callbackfn in $SFN.map");
     }
@@ -322,7 +323,7 @@ export namespace $SFN {
         `a $SFN.Map or $SFN.ForEach block must have at least one Stmt`
       );
     }
-    const props = call.getArgument("props")?.expr;
+    const props = call.args.length === 3 ? call.args[1]?.expr : undefined;
     let maxConcurrency: number | undefined;
     if (props !== undefined) {
       if (isObjectLiteralExpr(props)) {
@@ -344,7 +345,7 @@ export namespace $SFN {
         throw new Error("argument 'props' must be an ObjectLiteralExpr");
       }
     }
-    const array = call.getArgument("array")?.expr;
+    const array = call.args[0]?.expr;
     if (array === undefined) {
       throw new Error("missing argument 'array'");
     }
@@ -405,22 +406,17 @@ export namespace $SFN {
     }>
   >("parallel", {
     asl(call, context) {
-      const paths = call.getArgument("paths")?.expr;
-      if (paths === undefined) {
-        throw new Error("missing required argument 'paths'");
-      }
-      if (paths.kind !== "ArrayLiteralExpr") {
-        throw new Error("invalid arguments to $SFN.parallel");
-      }
+      const paths = call.args.map((arg) => arg.expr);
+
       ensureItemOf(
-        paths.items,
+        paths,
         isFunctionExpr,
         "each parallel path must be an inline FunctionExpr"
       );
 
       return context.stateWithHeapOutput({
         Type: "Parallel",
-        Branches: paths.items.map((func) => {
+        Branches: paths.map((func) => {
           const funcBody = context.evalStmt(func.body);
 
           if (!funcBody) {
@@ -435,6 +431,72 @@ export namespace $SFN {
       });
     },
   });
+}
+
+/**
+ * Data types allowed as a Step Function Cause.
+ */
+export type StepFunctionCause =
+  | null
+  | boolean
+  | number
+  | string
+  | StepFunctionCause[]
+  | {
+      [prop: string]: StepFunctionCause;
+    };
+
+/**
+ * An Error that can be thrown from within a {@link StepFunction} or {@link ExpressStepFunction}.
+ *
+ * It encodes a `Fail` state in ASL.
+ * ```json
+ * {
+ *   "Type": "Fail",
+ *   "Error": <error>,
+ *   "Cause": JSON.stringify(<cause>)
+ * }
+ * ```
+ *
+ * For example:
+ * ```ts
+ * throw new StepFunctionError("MyError", { "key": "value"});
+ * ```
+ *
+ * Produces the following Fail state:
+ * ```json
+ * {
+ *   "Type": "Fail",
+ *   "Error": "MyError",
+ *   "Cause": "{\"key\":\"value\""}"
+ * }
+ * ```
+ */
+export class StepFunctionError extends Error {
+  static readonly kind = "StepFunctionError";
+  constructor(
+    /**
+     * The name of the Error to place in the Fail state.
+     */
+    readonly error: string,
+    /*
+     * A JSON object to be encoded as the `Cause`.
+     *
+     * Due to limitations in Step Functions, all values in the {@link cause} must be
+     * a literal value - no references or calls are allowed.
+     *
+     * ```ts
+     * // valid
+     * new StepFunctionError("Error", { data: "prop" })
+     * // invalid
+     * new StepFunctionError("Error", { data: ref })
+     * new StepFunctionError("Error", { data: call() })
+     * ```
+     */
+    readonly cause: StepFunctionCause
+  ) {
+    super();
+  }
 }
 
 function makeStepFunctionIntegration<K extends string, F extends AnyFunction>(
@@ -836,14 +898,14 @@ function retrieveMachineArgs(call: CallExpr) {
   // machine({ input: { ... } })
   // Inline with reference
   // machine({ input: ref, name: "hi", traceHeader: "hi" })
-  const arg = call.args[0];
+  const arg = call.args[0]?.expr;
 
-  if (!arg.expr || !isObjectLiteralExpr(arg.expr)) {
+  if (!arg || !isObjectLiteralExpr(arg)) {
     throw Error(
       "Step function invocation must use a single, inline object parameter. Variable references are not supported currently."
     );
   } else if (
-    arg.expr.properties.some(
+    arg.properties.some(
       (x) => isSpreadAssignExpr(x) || isComputedPropertyNameExpr(x.name)
     )
   ) {
@@ -854,9 +916,9 @@ function retrieveMachineArgs(call: CallExpr) {
 
   // we know the keys cannot be computed, so it is safe to use getProperty
   return {
-    name: arg.expr.getProperty("name")?.expr,
-    traceHeader: arg.expr.getProperty("traceHeader")?.expr,
-    input: arg.expr.getProperty("input")?.expr,
+    name: arg.getProperty("name")?.expr,
+    traceHeader: arg.getProperty("traceHeader")?.expr,
+    input: arg.getProperty("input")?.expr,
   };
 }
 
@@ -1301,7 +1363,7 @@ class BaseStandardStepFunction<
       this.resource.grantRead(context.role);
 
       const executionArnExpr = assertDefined(
-        call.args[0].expr,
+        call.args[0]?.expr,
         "Describe Execution requires a single string argument."
       );
 
@@ -1504,7 +1566,7 @@ class ImportedStepFunction<
 }
 
 function getArgs(call: CallExpr) {
-  const executionArn = call.args[0]?.expr;
+  const executionArn = call.args[0];
   if (executionArn === undefined) {
     throw new Error("missing argument 'executionArn'");
   }

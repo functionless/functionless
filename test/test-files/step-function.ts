@@ -5,11 +5,11 @@ import {
   StepFunction,
   Function,
   EventBus,
-  // @ts-ignore - for ts-docs
   ErrorCodes,
   AppsyncResolver,
   $AWS,
   Table,
+  StepFunctionError,
 } from "../../src";
 import { Event } from "../../src/event-bridge";
 import { PutEventInput } from "../../src/event-bridge/event-bus";
@@ -497,3 +497,55 @@ const objAssignFunc = new Function<
 new StepFunction(stack, "obj ref", async (input: { key: string }) => {
   return objAssignFunc({ obj: {}, key: input.key, value: "" });
 });
+
+// supported errors
+
+// eslint-disable-next-line import/order
+import * as functionless from "../../src";
+
+new StepFunction(stack, "supported errors", async (input: { key: string }) => {
+  if (input.key === "1") {
+    throw new Error();
+  } else if (input.key === "2") {
+    throw Error();
+  } else if (input.key === "3") {
+    throw new Error("message");
+  } else if (input.key === "4") {
+    throw Error("message");
+  } else if (input.key === "5") {
+    // import { StepFunctionError } from "functionless";
+    throw new StepFunctionError("ErrorName", { reason: "you suck" });
+  } else if (input.key === "6") {
+    // import * as functionless from "functionless";
+    throw new functionless.StepFunctionError("ErrorName", {
+      reason: "you suck",
+    });
+  }
+});
+
+// unsupported errors
+
+new StepFunction(
+  stack,
+  "unsupported errors",
+  async (input: { key: string }) => {
+    if (input.key === "1") {
+      // reference is not allowed
+      throw new Error(input.key);
+    } else if (input.key === "2") {
+      throw new CustomError("error");
+    } else if (input.key === "3") {
+      // non-constant value as first arg
+      throw new StepFunctionError(input.key, { reason: "reason" });
+    } else if (input.key === "4") {
+      // non-constant value as second arg
+      throw new StepFunctionError("ErrorName", { reason: input.key });
+    } else {
+      throw new StepFunctionError("ErrorName", input.key);
+    }
+  }
+);
+
+class CustomError {
+  constructor(readonly prop: string) {}
+}
