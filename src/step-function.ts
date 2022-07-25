@@ -474,6 +474,11 @@ export type StepFunctionCause =
  */
 export class StepFunctionError extends Error {
   static readonly kind = "StepFunctionError";
+
+  public static isConstructor(a: any): a is typeof StepFunctionError {
+    return a === StepFunctionError || a?.kind === StepFunctionError.kind;
+  }
+
   constructor(
     /**
      * The name of the Error to place in the Fail state.

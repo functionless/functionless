@@ -111,6 +111,7 @@ import {
   ReturnStmt,
   Stmt,
 } from "./statement";
+import { StepFunctionError } from "./step-function";
 import {
   anyOf,
   DeterministicNameGenerator,
@@ -958,9 +959,10 @@ export class ASL {
       const throwState = this.evalContextToSubState(updated, (evalExpr) => {
         const errorClassName =
           // new StepFunctionError will be a ReferenceExpr with the name: Step
-          isReferenceExpr(updated.expr) ||
-          isIdentifier(updated.expr) ||
-          isPropAccessExpr(updated.expr)
+          isReferenceExpr(updated.expr) &&
+          StepFunctionError.isConstructor(updated.expr.ref())
+            ? StepFunctionError.kind
+            : isIdentifier(updated.expr) || isPropAccessExpr(updated.expr)
             ? updated.expr.name
             : undefined;
 
