@@ -1112,7 +1112,7 @@ export namespace ErrorCodes {
   export const EventBridge_DoesNotSupport_TruthyComparison: ErrorCode = {
     code: 10030,
     type: ErrorType.ERROR,
-    title: "Event Bridge does not support a truthy comparison in",
+    title: "Event Bridge does not support a truthy comparison",
   };
 }
 

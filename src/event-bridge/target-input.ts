@@ -18,6 +18,7 @@ import {
   isReferenceExpr,
   isPromiseExpr,
   isTemplateExpr,
+  isStringLiteralExpr,
 } from "../guards";
 import { isIntegration } from "../integration";
 import { evalToConstant } from "../util";
@@ -169,13 +170,19 @@ export const synthesizeEventBridgeTargets = (
       };
     } else if (isBinaryExpr(expr)) {
       if (expr.op === "+") {
-        const val = `${exprToInternalLiteral(expr.left)}${exprToInternalLiteral(
-          expr.right
-        )}`;
-        return {
-          value: val,
-          type: "string",
-        };
+        const left = exprToInternalLiteral(expr.left);
+        const right = exprToInternalLiteral(expr.right);
+
+        if (isStringLiteralExpr(expr.left) || isStringLiteralExpr(expr.right)) {
+          const val = `${left}${right}`;
+          return {
+            value: val,
+            type: "string",
+          };
+        }
+        throw Error(
+          "Addition operator is only supported to concatenate at least one string to another value."
+        );
       } else {
         throw Error(`Unsupported binary operator: ${expr.op}`);
       }

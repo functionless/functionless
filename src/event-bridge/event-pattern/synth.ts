@@ -422,10 +422,9 @@ export const synthesizePatternDocument = (
       assertValidEventReference(eventReference, eventDecl);
       if (eventReference)
         if (typeof searchElement === "number") {
-          const num = assertNumber(searchElement);
           return eventReferenceToPatternDocument(eventReference, {
-            lower: { value: num, inclusive: true },
-            upper: { value: num, inclusive: true },
+            lower: { value: searchElement, inclusive: true },
+            upper: { value: searchElement, inclusive: true },
           });
         }
       if (
