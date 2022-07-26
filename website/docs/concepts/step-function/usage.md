@@ -239,3 +239,26 @@ new StepFunction(stack, "sfn", (input, context) => {
 :::info
 For more details on the Context Argument, see [Context Object](https://docs.aws.amazon.com/step-functions/latest/dg/input-output-contextobject.html).
 :::
+
+## Throw Error
+
+When throwing errors from a Step Function, you have two options available:
+
+1. throw NodeJS's `Error` type
+
+```ts
+throw new Error("message");
+```
+
+2. throw Functionless's [`StepFunctionError`](../../api/classes/StepFunctionError.md) type
+
+```ts
+throw new StepFunctionError("CustomErrorName", "cause");
+```
+
+Due to limitations in AWS Step Functions, all of the arguments to `Error` and `StepFunctionError` must be constant values.
+
+```ts
+// illegal: input.prop is not a constant value
+throw new Error(input.prop);
+```
