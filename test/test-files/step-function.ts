@@ -359,19 +359,35 @@ const funcUndefined = new Function<undefined, undefined>(
   }
 );
 
-new StepFunction(stack, "obj ref", async () => {
+new StepFunction(stack, "undefined", async () => {
   const x = undefined;
   return x;
 });
 
-new StepFunction(stack, "obj ref", async () => {
+new StepFunction(stack, "obj lit", async () => {
   const x = { y: undefined };
   return x;
 });
 
-new StepFunction(stack, "obj ref", async () => {
+new StepFunction(stack, "task", async () => {
   const x = await funcUndefined();
   return x;
+});
+
+new StepFunction(stack, "arr", async () => {
+  return [undefined];
+});
+
+new StepFunction(stack, "ternary", async () => {
+  return true ? undefined : func();
+});
+
+new StepFunction(stack, "ternary task", async () => {
+  return true ? funcUndefined() : func();
+});
+
+new StepFunction(stack, "obj lit task", async () => {
+  return { y: await funcUndefined() };
 });
 
 /**
@@ -392,6 +408,19 @@ new StepFunction(stack, "obj ref", async () => {
 
 new StepFunction(stack, "obj ref", async () => {
   const x = (await funcUndefined()) ?? null;
+  return x;
+});
+
+new StepFunction(stack, "obj ref", async () => {
+  const x =
+    (
+      await $AWS.DynamoDB.GetItem({
+        Table: table,
+        Key: {
+          id: { S: "" },
+        },
+      })
+    ).Item?.id.S ?? null;
   return x;
 });
 

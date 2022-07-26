@@ -111,6 +111,42 @@ export function validate(
     function validateStepFunctionNode(
       node: typescript.Node
     ): typescript.Diagnostic[] {
+      const type = checker.getTypeAtLocation(node);
+      if (
+        typeMatch(
+          type,
+          // eslint-disable-next-line no-bitwise
+          (t) => (t.getFlags() & ts.TypeFlags.Undefined) !== 0
+        )
+      ) {
+        // allow list of expressions which support `undefined` values.
+        if (
+          !(
+            node.parent &&
+            ((ts.isBinaryExpression(node.parent) &&
+              node.parent.operatorToken.kind !== ts.SyntaxKind.EqualsToken) ||
+              ts.isPrefixUnaryExpression(node.parent) ||
+              ts.isPostfixUnaryExpression(node.parent) ||
+              (ts.isConditionalExpression(node.parent) &&
+                node !== node.parent.whenTrue &&
+                node !== node.parent.whenFalse) ||
+              ts.isIfStatement(node.parent) ||
+              ts.isForStatement(node.parent) ||
+              ts.isAwaitExpression(node.parent) ||
+              ts.isParenthesizedExpression(node.parent) ||
+              ts.isPropertyAccessExpression(node.parent) ||
+              (ts.isElementAccessExpression(node.parent) &&
+                node !== node.parent.argumentExpression))
+          )
+        ) {
+          return [
+            newError(
+              node,
+              ErrorCodes.Step_Functions_does_not_support_undefined
+            ),
+          ];
+        }
+      }
       if (
         ((ts.isBinaryExpression(node) &&
           isArithmeticToken(node.operatorToken.kind)) ||
@@ -186,48 +222,18 @@ export function validate(
             }) ?? []
           );
         }
-      } else if (
-        ts.isVariableDeclaration(node) ||
-        ts.isPropertyDeclaration(node) ||
-        ts.isPropertyAssignment(node) ||
-        ts.isBindingElement(node) ||
-        ts.isShorthandPropertyAssignment(node)
-      ) {
-        const initializers: (ts.Node | undefined)[] =
-          ts.isShorthandPropertyAssignment(node)
-            ? [node, node.objectAssignmentInitializer]
-            : [node.initializer];
+      } else if (ts.isPropertyAssignment(node)) {
         if (
-          initializers
-            .filter((x): x is ts.Node => !!x)
-            .map(checker.getTypeAtLocation)
-            .some((type) =>
-              typeMatch(
-                type,
-                // eslint-disable-next-line no-bitwise
-                (t) => (t.getFlags() & ts.TypeFlags.Undefined) !== 0
-              )
-            )
+          ts.isComputedPropertyName(node.name) &&
+          !checker.isConstant(node.name.expression)
         ) {
+          // TODO need to check for element access in with for in loop
           return [
             newError(
-              node,
-              ErrorCodes.Step_Functions_does_not_support_undefined_assignment
+              node.name,
+              ErrorCodes.StepFunctions_property_names_must_be_constant
             ),
           ];
-        } else if (ts.isPropertyAssignment(node)) {
-          if (
-            ts.isComputedPropertyName(node.name) &&
-            !checker.isConstant(node.name.expression)
-          ) {
-            // TODO need to check for element access in with for in loop
-            return [
-              newError(
-                node.name,
-                ErrorCodes.StepFunctions_property_names_must_be_constant
-              ),
-            ];
-          }
         }
       } else if (ts.isElementAccessExpression(node)) {
         if (

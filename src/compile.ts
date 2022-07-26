@@ -515,7 +515,8 @@ export function compile(
               return ref(_ref);
             } else {
               throw new SynthError(
-                ErrorCodes.Unable_to_find_reference_out_of_application_function
+                ErrorCodes.Unable_to_find_reference_out_of_application_function,
+                `Unable to find reference out of application function: ${node.getText()}`
               );
             }
           }
@@ -547,7 +548,8 @@ export function compile(
               return ref(_ref);
             } else {
               throw new SynthError(
-                ErrorCodes.Unable_to_find_reference_out_of_application_function
+                ErrorCodes.Unable_to_find_reference_out_of_application_function,
+                `Unable to find reference out of application function: ${node.getText()}`
               );
             }
           }
