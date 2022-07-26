@@ -1,7 +1,6 @@
 import type {
   BindingElem,
   BindingPattern,
-  ClassMember,
   Decl,
   ParameterDecl,
   VariableDecl,
@@ -27,6 +26,7 @@ import {
   isBindingElem,
   isIdentifier,
   isVariableDecl,
+  isNode,
 } from "./guards";
 import type { BlockStmt, CatchClause, Stmt } from "./statement";
 
@@ -38,7 +38,6 @@ export type FunctionlessNode =
   | SuperKeyword
   | ImportKeyword
   | BindingPattern
-  | ClassMember
   | VariableDeclList;
 
 export interface HasParent<Parent extends FunctionlessNode> {
@@ -60,7 +59,20 @@ export abstract class BaseNode<
    */
   readonly children: FunctionlessNode[] = [];
 
-  constructor(readonly kind: Kind) {}
+  constructor(readonly kind: Kind, args: IArguments) {
+    const setParent = (node: any) => {
+      if (!node) {
+        return;
+      } else if (isNode(node)) {
+        node.setParent(this as FunctionlessNode);
+      } else if (Array.isArray(node)) {
+        node.forEach(setParent);
+      }
+    };
+    for (const arg of args) {
+      setParent(arg);
+    }
+  }
 
   public abstract clone(): this;
 

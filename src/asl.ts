@@ -4348,7 +4348,7 @@ function exprToString(expr?: Expr): string {
     return `${exprToString(expr.expr)}.${expr.name.name}`;
   } else if (isPropAssignExpr(expr)) {
     return `${
-      isIdentifier(expr.name)
+      isIdentifier(expr.name) || isPrivateIdentifier(expr.name)
         ? expr.name.name
         : isStringLiteralExpr(expr.name)
         ? expr.name.value

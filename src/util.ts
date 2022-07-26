@@ -15,6 +15,7 @@ import {
   isNullLiteralExpr,
   isNumberLiteralExpr,
   isObjectLiteralExpr,
+  isPrivateIdentifier,
   isPropAccessExpr,
   isPropAssignExpr,
   isReferenceExpr,
@@ -264,7 +265,10 @@ export const evalToConstant = (expr: Expr): Constant | undefined => {
             return undefined;
           }
         } else {
-          name = isIdentifier(prop.name) ? prop.name.name : prop.name.value;
+          name =
+            isIdentifier(prop.name) || isPrivateIdentifier(prop.name)
+              ? prop.name.name
+              : prop.name.value;
         }
         const val = evalToConstant(prop.expr);
         if (val === undefined) {

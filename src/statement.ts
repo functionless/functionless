@@ -52,8 +52,7 @@ export abstract class BaseStmt<
 
 export class ExprStmt extends BaseStmt<"ExprStmt"> {
   constructor(readonly expr: Expr) {
-    super("ExprStmt");
-    expr.setParent(this);
+    super("ExprStmt", arguments);
   }
 
   public clone(): this {
@@ -63,8 +62,7 @@ export class ExprStmt extends BaseStmt<"ExprStmt"> {
 
 export class VariableStmt extends BaseStmt<"VariableStmt"> {
   constructor(readonly declList: VariableDeclList) {
-    super("VariableStmt");
-    declList.setParent(this);
+    super("VariableStmt", arguments);
   }
 
   public clone(): this {
@@ -86,9 +84,8 @@ export type BlockStmtParent =
 
 export class BlockStmt extends BaseStmt<"BlockStmt", BlockStmtParent> {
   constructor(readonly statements: Stmt[]) {
-    super("BlockStmt");
+    super("BlockStmt", arguments);
     statements.forEach((stmt, i) => {
-      stmt.setParent(this as never);
       stmt.prev = i > 0 ? statements[i - 1] : undefined;
       stmt.next = i + 1 < statements.length ? statements[i + 1] : undefined;
     });
@@ -129,8 +126,7 @@ export class BlockStmt extends BaseStmt<"BlockStmt", BlockStmtParent> {
 
 export class ReturnStmt extends BaseStmt<"ReturnStmt"> {
   constructor(readonly expr: Expr) {
-    super("ReturnStmt");
-    expr.setParent(this);
+    super("ReturnStmt", arguments);
   }
 
   public clone(): this {
@@ -140,11 +136,8 @@ export class ReturnStmt extends BaseStmt<"ReturnStmt"> {
 
 export class IfStmt extends BaseStmt<"IfStmt"> {
   constructor(readonly when: Expr, readonly then: Stmt, readonly _else?: Stmt) {
-    super("IfStmt");
-    when.setParent(this as never);
-    then.setParent(this);
+    super("IfStmt", arguments);
     if (_else) {
-      _else.setParent(this);
     }
   }
 
@@ -163,10 +156,7 @@ export class ForOfStmt extends BaseStmt<"ForOfStmt"> {
     readonly expr: Expr,
     readonly body: BlockStmt
   ) {
-    super("ForOfStmt");
-    variableDecl.setParent(this);
-    expr.setParent(this as never);
-    body.setParent(this);
+    super("ForOfStmt", arguments);
   }
 
   public clone(): this {
@@ -184,10 +174,7 @@ export class ForInStmt extends BaseStmt<"ForInStmt"> {
     readonly expr: Expr,
     readonly body: BlockStmt
   ) {
-    super("ForInStmt");
-    variableDecl.setParent(this);
-    expr.setParent(this as never);
-    body.setParent(this);
+    super("ForInStmt", arguments);
   }
 
   public clone(): this {
@@ -206,11 +193,7 @@ export class ForStmt extends BaseStmt<"ForStmt"> {
     readonly condition?: Expr,
     readonly incrementor?: Expr
   ) {
-    super("ForStmt");
-    variableDecl?.setParent(this);
-    condition?.setParent(this);
-    incrementor?.setParent(this);
-    body.setParent(this);
+    super("ForStmt", arguments);
   }
 
   public clone(): this {
@@ -225,7 +208,7 @@ export class ForStmt extends BaseStmt<"ForStmt"> {
 
 export class BreakStmt extends BaseStmt<"BreakStmt"> {
   constructor() {
-    super("BreakStmt");
+    super("BreakStmt", arguments);
   }
 
   public clone(): this {
@@ -235,7 +218,7 @@ export class BreakStmt extends BaseStmt<"BreakStmt"> {
 
 export class ContinueStmt extends BaseStmt<"ContinueStmt"> {
   constructor() {
-    super("ContinueStmt");
+    super("ContinueStmt", arguments);
   }
 
   public clone(): this {
@@ -255,13 +238,10 @@ export class TryStmt extends BaseStmt<"TryStmt"> {
     readonly catchClause?: CatchClause,
     readonly finallyBlock?: FinallyBlock
   ) {
-    super("TryStmt");
-    tryBlock.setParent(this);
+    super("TryStmt", arguments);
     if (catchClause) {
-      catchClause.setParent(this);
     }
     if (finallyBlock) {
-      finallyBlock.setParent(this);
     }
   }
 
@@ -279,11 +259,9 @@ export class CatchClause extends BaseStmt<"CatchClause", TryStmt> {
     readonly variableDecl: VariableDecl | undefined,
     readonly block: BlockStmt
   ) {
-    super("CatchClause");
+    super("CatchClause", arguments);
     if (variableDecl) {
-      variableDecl.setParent(this);
     }
-    block.setParent(this);
   }
 
   public clone(): this {
@@ -296,8 +274,7 @@ export class CatchClause extends BaseStmt<"CatchClause", TryStmt> {
 
 export class ThrowStmt extends BaseStmt<"ThrowStmt"> {
   constructor(readonly expr: Expr) {
-    super("ThrowStmt");
-    expr.setParent(this as never);
+    super("ThrowStmt", arguments);
   }
 
   public clone(): this {
@@ -307,9 +284,7 @@ export class ThrowStmt extends BaseStmt<"ThrowStmt"> {
 
 export class WhileStmt extends BaseStmt<"WhileStmt"> {
   constructor(readonly condition: Expr, readonly block: BlockStmt) {
-    super("WhileStmt");
-    condition.setParent(this);
-    block.setParent(this);
+    super("WhileStmt", arguments);
   }
 
   public clone(): this {
@@ -319,9 +294,7 @@ export class WhileStmt extends BaseStmt<"WhileStmt"> {
 
 export class DoStmt extends BaseStmt<"DoStmt"> {
   constructor(readonly block: BlockStmt, readonly condition: Expr) {
-    super("DoStmt");
-    block.setParent(this);
-    condition.setParent(this);
+    super("DoStmt", arguments);
   }
 
   public clone(): this {
@@ -331,8 +304,7 @@ export class DoStmt extends BaseStmt<"DoStmt"> {
 
 export class LabelledStmt extends BaseStmt<"LabelledStmt"> {
   constructor(readonly label: string, readonly stmt: Stmt) {
-    super("LabelledStmt");
-    stmt.setParent(this);
+    super("LabelledStmt", arguments);
   }
 
   public clone(): this {
@@ -342,7 +314,7 @@ export class LabelledStmt extends BaseStmt<"LabelledStmt"> {
 
 export class DebuggerStmt extends BaseStmt<"DebuggerStmt"> {
   constructor() {
-    super("DebuggerStmt");
+    super("DebuggerStmt", arguments);
   }
   public clone(): this {
     return new DebuggerStmt() as this;
@@ -351,8 +323,7 @@ export class DebuggerStmt extends BaseStmt<"DebuggerStmt"> {
 
 export class SwitchStmt extends BaseStmt<"SwitchStmt"> {
   constructor(readonly clauses: SwitchClause[]) {
-    super("SwitchStmt");
-    clauses.forEach((clause) => clause.setParent(this));
+    super("SwitchStmt", arguments);
   }
 
   public clone(): this {
@@ -364,9 +335,7 @@ export type SwitchClause = CaseClause | DefaultClause;
 
 export class CaseClause extends BaseStmt<"CaseClause"> {
   constructor(readonly expr: Expr, readonly statements: Stmt[]) {
-    super("CaseClause");
-    expr.setParent(this);
-    statements.forEach((stmt) => stmt.setParent(this));
+    super("CaseClause", arguments);
   }
   public clone(): this {
     return new CaseClause(
@@ -378,8 +347,7 @@ export class CaseClause extends BaseStmt<"CaseClause"> {
 
 export class DefaultClause extends BaseStmt<"DefaultClause"> {
   constructor(readonly statements: Stmt[]) {
-    super("DefaultClause");
-    statements.forEach((stmt) => stmt.setParent(this));
+    super("DefaultClause", arguments);
   }
   public clone(): this {
     return new DefaultClause(
@@ -390,7 +358,7 @@ export class DefaultClause extends BaseStmt<"DefaultClause"> {
 
 export class EmptyStmt extends BaseStmt<"EmptyStmt"> {
   constructor() {
-    super("EmptyStmt");
+    super("EmptyStmt", arguments);
   }
   public clone(): this {
     return new EmptyStmt() as this;
@@ -399,9 +367,7 @@ export class EmptyStmt extends BaseStmt<"EmptyStmt"> {
 
 export class WithStmt extends BaseStmt<"WithStmt"> {
   constructor(readonly expr: Expr, readonly stmt: Stmt) {
-    super("WithStmt");
-    expr.setParent(this);
-    stmt.setParent(this);
+    super("WithStmt", arguments);
   }
 
   public clone(): this {

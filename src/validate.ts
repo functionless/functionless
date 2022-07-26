@@ -1,4 +1,3 @@
-import ts, * as typescript from "typescript";
 import {
   EventBusMapInterface,
   EventBusWhenInterface,
@@ -27,7 +26,7 @@ import { anyOf, hasOnlyAncestors } from "./util";
  * @returns diagnostic errors for the file.
  */
 export function validate(
-  ts: typeof typescript,
+  ts: typeof import("typescript"),
   checker: FunctionlessChecker,
   node: ts.Node,
   logger?: {
@@ -36,7 +35,7 @@ export function validate(
 ): ts.Diagnostic[] {
   logger?.info("Beginning validation of Functionless semantics");
 
-  function visit(node: typescript.Node): typescript.Diagnostic[] {
+  function visit(node: ts.Node): ts.Diagnostic[] {
     if (checker.isNewStepFunction(node)) {
       return validateNewStepFunctionNode(node);
     } else if (checker.isApiIntegration(node)) {
@@ -91,7 +90,7 @@ export function validate(
     ]);
   }
 
-  function validateNodes(nodes: typescript.Node[]) {
+  function validateNodes(nodes: ts.Node[]) {
     return nodes.flatMap((arg) => collectEachChild(arg, visit));
   }
 
@@ -108,9 +107,7 @@ export function validate(
       ...collectEachChildRecursive(func, validateStepFunctionNode),
     ];
 
-    function validateStepFunctionNode(
-      node: typescript.Node
-    ): typescript.Diagnostic[] {
+    function validateStepFunctionNode(node: ts.Node): ts.Diagnostic[] {
       if (
         ((ts.isBinaryExpression(node) &&
           isArithmeticToken(node.operatorToken.kind)) ||
@@ -471,13 +468,22 @@ export function validate(
            * const v = x ? await func() : await func2()
            */
           if (
-            rootStatement &&
-            (isControlFlowStatement(rootStatement) ||
-              findParent(
-                node.expression,
-                ts.isConditionalExpression,
-                rootStatement
-              ))
+            (rootStatement &&
+              (ts.isEmptyStatement(rootStatement) ||
+                ts.isIfStatement(rootStatement) ||
+                ts.isDoStatement(rootStatement) ||
+                ts.isWhileStatement(rootStatement) ||
+                ts.isForStatement(rootStatement) ||
+                ts.isForInStatement(rootStatement) ||
+                ts.isForOfStatement(rootStatement) ||
+                ts.isSwitchStatement(rootStatement) ||
+                ts.isLabeledStatement(rootStatement) ||
+                ts.isTryStatement(rootStatement))) ||
+            findParent(
+              node.expression,
+              ts.isConditionalExpression,
+              rootStatement
+            )
           ) {
             return [
               newError(
@@ -679,9 +685,7 @@ export function validate(
       ...collectEachChildRecursive(func, validateFunctionClosureNode),
     ];
 
-    function validateFunctionClosureNode(
-      node: typescript.Node
-    ): typescript.Diagnostic[] {
+    function validateFunctionClosureNode(node: ts.Node): ts.Diagnostic[] {
       if (
         checker.isStepFunction(node) ||
         checker.isTable(node) ||
@@ -689,7 +693,7 @@ export function validate(
         checker.isEventBus(node)
       ) {
         if (
-          typescript.isPropertyAccessExpression(node.parent) &&
+          ts.isPropertyAccessExpression(node.parent) &&
           node.parent.name.text === "resource"
         ) {
           return [
@@ -729,9 +733,7 @@ export function validate(
     }
   }
 
-  function validateEventBusWhen(
-    node: EventBusWhenInterface
-  ): typescript.Diagnostic[] {
+  function validateEventBusWhen(node: EventBusWhenInterface): ts.Diagnostic[] {
     const func =
       node.arguments.length === 3 ? node.arguments[2] : node.arguments[1];
 
@@ -743,7 +745,7 @@ export function validate(
     ];
   }
 
-  function validateRule(node: RuleInterface): typescript.Diagnostic[] {
+  function validateRule(node: RuleInterface): ts.Diagnostic[] {
     const func = node.arguments[3];
 
     return [
@@ -769,7 +771,7 @@ export function validate(
 
   function validateEventTransform(
     node: EventTransformInterface
-  ): typescript.Diagnostic[] {
+  ): ts.Diagnostic[] {
     const func = node.arguments[1];
 
     return [
@@ -780,9 +782,7 @@ export function validate(
     ];
   }
 
-  function validateEventBusMap(
-    node: EventBusMapInterface
-  ): typescript.Diagnostic[] {
+  function validateEventBusMap(node: EventBusMapInterface): ts.Diagnostic[] {
     const func = node.arguments[0];
 
     return [
@@ -825,22 +825,6 @@ export function validate(
     };
   }
 }
-
-/**
- * Used by AppSync to determine of a root statement can be statically analyzed.
- */
-const isControlFlowStatement = anyOf(
-  typescript.isEmptyStatement,
-  typescript.isIfStatement,
-  typescript.isDoStatement,
-  typescript.isWhileStatement,
-  typescript.isForStatement,
-  typescript.isForInStatement,
-  typescript.isForOfStatement,
-  typescript.isSwitchStatement,
-  typescript.isLabeledStatement,
-  typescript.isTryStatement
-);
 
 // to prevent the closure serializer from trying to import all of functionless.
 export const deploymentOnlyModule = true;

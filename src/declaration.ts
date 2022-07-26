@@ -4,6 +4,7 @@ import {
   Expr,
   FunctionExpr,
   Identifier,
+  PrivateIdentifier,
   PropName,
   StringLiteralExpr,
 } from "./expression";
@@ -45,8 +46,7 @@ export class ClassDecl<C extends AnyClass = AnyClass> extends BaseDecl<
     readonly heritage: Expr | undefined,
     readonly members: ClassMember[]
   ) {
-    super("ClassDecl");
-    members.forEach((m) => m.setParent(this));
+    super("ClassDecl", arguments);
   }
   public clone(): this {
     return new ClassDecl(
@@ -65,8 +65,7 @@ export type ClassMember =
 
 export class ClassStaticBlockDecl extends BaseDecl<"ClassStaticBlockDecl"> {
   constructor(readonly block: BlockStmt) {
-    super("ClassStaticBlockDecl");
-    block.setParent(this);
+    super("ClassStaticBlockDecl", arguments);
   }
 
   public clone(): this {
@@ -76,9 +75,7 @@ export class ClassStaticBlockDecl extends BaseDecl<"ClassStaticBlockDecl"> {
 
 export class ConstructorDecl extends BaseDecl<"ConstructorDecl"> {
   constructor(readonly parameters: ParameterDecl[], readonly body: BlockStmt) {
-    super("ConstructorDecl");
-    parameters.forEach((param) => param.setParent(this));
-    body.setParent(this);
+    super("ConstructorDecl", arguments);
   }
 
   public clone(): this {
@@ -91,18 +88,16 @@ export class ConstructorDecl extends BaseDecl<"ConstructorDecl"> {
 
 export class MethodDecl extends BaseDecl<"MethodDecl"> {
   constructor(
-    readonly name: string,
+    readonly name: Identifier | PrivateIdentifier,
     readonly parameters: ParameterDecl[],
     readonly body: BlockStmt
   ) {
-    super("MethodDecl");
-    parameters.forEach((param) => param.setParent(this));
-    body.setParent(this);
+    super("MethodDecl", arguments);
   }
 
   public clone(): this {
     return new MethodDecl(
-      this.name,
+      this.name.clone(),
       this.parameters.map((p) => p.clone()),
       this.body.clone()
     ) as this;
@@ -111,9 +106,7 @@ export class MethodDecl extends BaseDecl<"MethodDecl"> {
 
 export class PropDecl extends BaseDecl<"PropDecl"> {
   constructor(readonly name: PropName, readonly initializer?: Expr) {
-    super("PropDecl");
-    name.setParent(this);
-    initializer?.setParent(this);
+    super("PropDecl", arguments);
   }
   public clone(): this {
     return new PropDecl(this.name.clone(), this.initializer?.clone()) as this;
@@ -129,9 +122,7 @@ export class FunctionDecl<
     readonly parameters: ParameterDecl[],
     readonly body: BlockStmt
   ) {
-    super("FunctionDecl");
-    parameters.forEach((param) => param.setParent(this));
-    body.setParent(this);
+    super("FunctionDecl", arguments);
   }
 
   public clone(): this {
@@ -153,7 +144,7 @@ export class ParameterDecl extends BaseDecl<
   FunctionDecl | FunctionExpr
 > {
   constructor(readonly name: string | BindingPattern) {
-    super("ParameterDecl");
+    super("ParameterDecl", arguments);
   }
 
   public clone(): this {
@@ -231,10 +222,7 @@ export class BindingElem extends BaseDecl<"BindingElem", BindingPattern> {
       | StringLiteralExpr,
     readonly initializer?: Expr
   ) {
-    super("BindingElem");
-    name.setParent(this);
-    propertyName?.setParent(this);
-    initializer?.setParent(this);
+    super("BindingElem", arguments);
   }
 
   public clone(): this {
@@ -272,8 +260,7 @@ export class ObjectBinding extends BaseNode<"ObjectBinding", VariableDecl> {
   readonly nodeKind: "Node" = "Node";
 
   constructor(readonly bindings: BindingElem[]) {
-    super("ObjectBinding");
-    bindings.forEach((b) => b.setParent(this));
+    super("ObjectBinding", arguments);
   }
 
   public clone(): this {
@@ -305,8 +292,7 @@ export class ArrayBinding extends BaseNode<"ArrayBinding", VariableDecl> {
   readonly nodeKind: "Node" = "Node";
 
   constructor(readonly bindings: (BindingElem | undefined)[]) {
-    super("ArrayBinding");
-    bindings.forEach((b) => b?.setParent(this));
+    super("ArrayBinding", arguments);
   }
 
   public clone(): this {
@@ -324,11 +310,9 @@ export class VariableDecl<
   E extends Expr | undefined = Expr | undefined
 > extends BaseDecl<"VariableDecl", VariableDeclParent> {
   constructor(readonly name: string | BindingPattern, readonly initializer: E) {
-    super("VariableDecl");
+    super("VariableDecl", arguments);
     if (isBindingPattern(name)) {
-      name.setParent(this);
     }
-    initializer?.setParent(this);
   }
 
   public clone(): this {
@@ -348,8 +332,7 @@ export class VariableDeclList extends BaseNode<
   readonly nodeKind: "Node" = "Node";
 
   constructor(readonly decls: VariableDecl[]) {
-    super("VariableDeclList");
-    decls.map((decl) => decl.setParent(this));
+    super("VariableDeclList", arguments);
   }
 
   public clone(): this {
