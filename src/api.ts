@@ -663,6 +663,37 @@ export class APIGatewayVTL extends VTL {
   }
 
   /**
+   * Attempt to return the expression as a valid escaped json string.
+   *
+   * ```ts
+   * {
+   *    x: input
+   * }
+   * ```
+   *
+   * =>
+   *
+   * ```ts
+   * { "x": $input.json('$') }
+   * ```
+   *
+   * =>
+   *
+   * ```ts
+   * "{ \"x\": $util.escapeJavaScript($input.json('$')) }"
+   * ```
+   */
+  public stringify(expr: Expr): string {
+    const json = this.exprToJson(expr);
+    return `"${json
+      .replace(/"/g, '\\"')
+      .replace(
+        /\$input\.json\('([^']*)'\)/g,
+        "$util.escapeJavaScript($input.json('$1'))"
+      )}"`;
+  }
+
+  /**
    * Renders a VTL string that will emit a JSON String representation of the {@link expr} to the VTL output.
    *
    * @param expr the {@link Expr} to convert to JSON

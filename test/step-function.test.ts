@@ -282,9 +282,66 @@ test("let and set", () => {
   expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
+test("let undefined", () => {
+  const { stack } = initStepFunctionApp();
+  expect(
+    () =>
+      new ExpressStepFunction(stack, "fn", () => {
+        let a = undefined;
+        a = "b";
+        // returning undefined is invalid.
+        return a;
+      })
+  ).toThrow("Undefined literal is not supported");
+});
+
+test("let empty", () => {
+  const { stack } = initStepFunctionApp();
+  const definition = new ExpressStepFunction(stack, "fn", () => {
+    let a;
+    a = "b";
+    // returning undefined is invalid.
+    return a;
+  }).definition;
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+});
+
+test("undefined in ExprStmt", () => {
+  const { stack } = initStepFunctionApp();
+  expect(
+    () =>
+      new ExpressStepFunction(stack, "fn", () => {
+        undefined;
+      })
+  ).toThrow("Undefined literal is not supported");
+});
+
+test("undefined in ternary", () => {
+  const { stack, task } = initStepFunctionApp();
+  expect(
+    () =>
+      new ExpressStepFunction(stack, "fn", async (input: { a: boolean }) => {
+        // this should pass because undefined is just ignored
+        input.a ? undefined : await task();
+      })
+  ).toThrow("Undefined literal is not supported");
+});
+
+test("undefined in task input", () => {
+  const { stack, task } = initStepFunctionApp();
+  expect(
+    () =>
+      new ExpressStepFunction(stack, "fn", async () => {
+        await task(undefined);
+      })
+  ).toThrow("Undefined literal is not supported");
+});
+
 test("task(any)", () => {
   const { stack, task } = initStepFunctionApp();
   const definition = new ExpressStepFunction(stack, "fn", async () => {
+    await task();
     await task(null);
     await task(true);
     await task(false);
@@ -1111,7 +1168,7 @@ test("return AWS.DynamoDB.GetItem", () => {
     });
 
     if (person.Item === undefined) {
-      return undefined;
+      return;
     }
 
     return {
@@ -1139,7 +1196,7 @@ test("return AWS.DynamoDB.GetItem dynamic parameters", () => {
     });
 
     if (person.Item === undefined) {
-      return undefined;
+      return;
     }
 
     return {
@@ -1186,7 +1243,7 @@ test("call AWS.DynamoDB.GetItem, then Lambda and return LiteralExpr", () => {
     });
 
     if (person.Item === undefined) {
-      return undefined;
+      return;
     }
 
     const score = await computeScore({
@@ -1902,7 +1959,7 @@ test("while (cond) { cond = task() }", () => {
   const { stack, task } = initStepFunctionApp();
   const definition = new ExpressStepFunction(stack, "fn", async () => {
     let cond;
-    while (cond === undefined) {
+    while (cond === null) {
       cond = await task();
     }
   }).definition;
@@ -1914,7 +1971,7 @@ test("while (cond); cond = task()", () => {
   const { stack, task } = initStepFunctionApp();
   const definition = new ExpressStepFunction(stack, "fn", async () => {
     let cond;
-    while (cond === undefined) cond = await task();
+    while (cond === null) cond = await task();
   }).definition;
 
   expect(normalizeDefinition(definition)).toMatchSnapshot();
@@ -1926,7 +1983,7 @@ test("let cond; do { cond = task() } while (cond)", () => {
     let cond;
     do {
       cond = await task();
-    } while (cond === undefined);
+    } while (cond === null);
   }).definition;
 
   expect(normalizeDefinition(definition)).toMatchSnapshot();
@@ -2698,7 +2755,7 @@ test("for-in-loop variable initializer", () => {
     for (x of input.items) {
       return x;
     }
-    return undefined;
+    return;
   }).definition;
 
   expect(normalizeDefinition(definition)).toMatchSnapshot();
@@ -2714,7 +2771,7 @@ test("for-of-loop variable initializer", () => {
     for (x in input.items) {
       return x;
     }
-    return undefined;
+    return;
   }).definition;
 
   expect(normalizeDefinition(definition)).toMatchSnapshot();
