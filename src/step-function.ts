@@ -571,9 +571,7 @@ abstract class BaseStepFunction<
         .map(([argName, argVal]) => {
           if (argName === "input") {
             // stringify the JSON input
-            return `"${argName}":"$util.escapeJavaScript(${context.exprToJson(
-              argVal
-            )})"`;
+            return `"${argName}":${context.stringify(argVal)}`;
           } else {
             return `"${argName}":${context.exprToJson(argVal)}`;
           }

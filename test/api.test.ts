@@ -167,6 +167,52 @@ test("AWS integration with Standard Step Function", () => {
   expect(getTemplates(method)).toMatchSnapshot();
 });
 
+test("AWS integration with Standard Step Function using input data", () => {
+  const api = new aws_apigateway.RestApi(stack, "API");
+
+  const sfn = new StepFunction(
+    stack,
+    "SFN",
+    (_input: {
+      num: number;
+      obj: {
+        value: string;
+      };
+    }) => {
+      return "done";
+    }
+  );
+
+  const method = new AwsMethod(
+    {
+      httpMethod: "GET",
+      resource: api.root,
+    },
+    (
+      $input: ApiGatewayInput<{
+        query: {
+          num: string;
+          str: string;
+        };
+        body: {
+          value: string;
+        };
+      }>
+    ) =>
+      sfn({
+        input: {
+          num: Number($input.params("num")),
+          obj: $input.data,
+        },
+      }),
+    ($input) => {
+      return $input.data.executionArn;
+    }
+  );
+
+  expect(getTemplates(method)).toMatchSnapshot();
+});
+
 test("AWS integration with DynamoDB Table", () => {
   const api = new aws_apigateway.RestApi(stack, "API");
   const table = Table.fromTable(
