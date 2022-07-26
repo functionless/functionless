@@ -24,6 +24,12 @@ A Standard Step Function is a long-running workflow that can run for up to a yea
 
 An Express Step Function is a short-running workflow that can run for a maximum of 5 minutes. You only pay for the time it takes the machine to complete. Express Step Functions are a useful substitute for glue code ordinarily implemented with Lambda Functions, for example to handle an API Gateway request or process some event from an Event Bus. State transitions have **at-least-once** guarantees and may be re-executed if the machine terminates prematurely for any reason, as opposed to a Standard Step Function's exactly-once guarantees.
 
+:::info
+Express vs Standard workflows
+
+It's important to choose the right type of Step Function for your workload. Refer to the official [Execution Guarantees](https://docs.aws.amazon.com/step-functions/latest/dg/express-at-least-once-execution.html) documentation for more information.
+:::
+
 ## Amazon States Language (ASL)
 
 Step Functions are configured declaratively with a JSON document structured according to the [Amazon States Language (ASL) JSON specification](https://docs.aws.amazon.com/step-functions/latest/dg/concepts-amazon-states-language.html). This JSON document specifies distinct States and transitions between them using JSON Path to select, filter and transform data.
@@ -63,7 +69,7 @@ new StepFunction(scope, "F", async (payload) => {
 
 There are cases in which you want to integrate with an existing State Machine.
 
-To achieve this, use the `StepFunction.fromStateMachine`  or `ExpressStepFunction.fromStateMachine` utilities to wrap existing `aws_stepfunctions.StateMachine`s.
+To achieve this, use the `StepFunction.fromStateMachine` or `ExpressStepFunction.fromStateMachine` utilities to wrap existing `aws_stepfunctions.StateMachine`s.
 
 ```ts
 import { aws_stepfunctions } from "aws-cdk-lib";
