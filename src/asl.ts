@@ -1386,7 +1386,7 @@ export class ASL {
     const constant = evalToConstant(expr);
     if (constant !== undefined) {
       const value = constant.constant;
-      if (!allowUndefined && typeof value === "undefined") {
+      if (!allowUndefined && value === undefined) {
         throw new SynthError(
           ErrorCodes.Step_Functions_does_not_support_undefined,
           "Undefined literal is not supported"
