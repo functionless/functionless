@@ -27,7 +27,7 @@ An Express Step Function is a short-running workflow that can run for a maximum 
 :::info
 Express vs Standard workflows
 
-See https://docs.aws.amazon.com/step-functions/latest/dg/express-at-least-once-execution.html
+It's important to choose the right type of Step Function for your workload. Refer to the official [Execution Guarantees](https://docs.aws.amazon.com/step-functions/latest/dg/express-at-least-once-execution.html) documentation for more information.
 :::
 
 ## Amazon States Language (ASL)
