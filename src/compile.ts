@@ -351,13 +351,7 @@ export function compile(
             ]);
 
         return newExpr(type, [
-          ...(type === "FunctionDecl" || type === "FunctionExpr"
-            ? (ts.isFunctionDeclaration(impl) ||
-                ts.isFunctionExpression(impl)) &&
-              impl.name
-              ? [ts.factory.createStringLiteral(impl.name.text)]
-              : [ts.factory.createIdentifier("undefined")]
-            : []),
+          ...resolveFunctionName(),
           ts.factory.createArrayLiteralExpression(
             impl.parameters.map((param) =>
               newExpr("ParameterDecl", [
@@ -369,6 +363,24 @@ export function compile(
           ),
           body,
         ]);
+
+        function resolveFunctionName(): [ts.Expression] | [] {
+          if (type === "MethodDecl") {
+            // methods can be any valid PropertyName expression
+            return [toExpr((<ts.MethodDeclaration>impl).name!, scope ?? impl)];
+          } else if (type === "FunctionDecl" || type === "FunctionExpr") {
+            if (
+              (ts.isFunctionDeclaration(impl) ||
+                ts.isFunctionExpression(impl)) &&
+              impl.name
+            ) {
+              return [ts.factory.createStringLiteral(impl.name.text)];
+            } else {
+              return [ts.factory.createIdentifier("undefined")];
+            }
+          }
+          return [];
+        }
       }
 
       function visitApiIntegration(node: ts.NewExpression): ts.Node {

@@ -4,7 +4,6 @@ import {
   Expr,
   FunctionExpr,
   Identifier,
-  PrivateIdentifier,
   PropName,
   StringLiteralExpr,
 } from "./expression";
@@ -88,7 +87,7 @@ export class ConstructorDecl extends BaseDecl<"ConstructorDecl"> {
 
 export class MethodDecl extends BaseDecl<"MethodDecl"> {
   constructor(
-    readonly name: Identifier | PrivateIdentifier,
+    readonly name: PropName,
     readonly parameters: ParameterDecl[],
     readonly body: BlockStmt
   ) {
