@@ -676,6 +676,10 @@ export class APIGatewayVTL extends VTL {
    */
   public stringify(expr: Expr): string {
     const json = this.exprToJson(expr);
+    // already a string
+    if (json.startsWith('"')) {
+      return json;
+    }
     return `"${json
       .replace(/"/g, '\\"')
       .replace(

@@ -1,9 +1,15 @@
-import { aws_events, aws_events_targets, Stack } from "aws-cdk-lib";
+import {
+  aws_apigateway,
+  aws_events,
+  aws_events_targets,
+  Stack,
+} from "aws-cdk-lib";
 import { Construct } from "constructs";
 import { ASL, ASLGraph } from "../asl";
 import { ErrorCodes, SynthError } from "../error-code";
 import {
   CallExpr,
+  Expr,
   Identifier,
   PropAssignExpr,
   StringLiteralExpr,
@@ -15,7 +21,9 @@ import {
   isComputedPropertyNameExpr,
   isIdentifier,
   isObjectLiteralExpr,
+  isPropAssignExpr,
   isSpreadAssignExpr,
+  isStringLiteralExpr,
 } from "../guards";
 import {
   Integration,
@@ -130,6 +138,18 @@ export interface IEventBusFilterable<in Evnt extends Event> {
     predicate: RulePredicateFunction<InEvnt, NewEvnt>
   ): Rule<InEvnt, NewEvnt>;
 }
+
+const ENTRY_PROPERTY_MAP: Record<keyof Event, string> = {
+  "detail-type": "DetailType",
+  account: "Account",
+  detail: "Detail",
+  id: "Id",
+  region: "Region",
+  resources: "Resources",
+  source: "Source",
+  time: "Time",
+  version: "Version",
+};
 
 /**
  * @typeParam Evnt - the union type of events that this EventBus can accept.
@@ -277,18 +297,6 @@ abstract class EventBusBase<in Evnt extends Event, OutEvnt extends Evnt = Evnt>
           throw Error("Must provide at least one event.");
         }
 
-        const propertyMap: Record<keyof Event, string> = {
-          "detail-type": "DetailType",
-          account: "Account",
-          detail: "Detail",
-          id: "Id",
-          region: "Region",
-          resources: "Resources",
-          source: "Source",
-          time: "Time",
-          version: "Version",
-        };
-
         return context.evalContext(call, (evalExpr) => {
           const events = eventObjs.map((event) => {
             const props = event.properties.filter(
@@ -318,9 +326,9 @@ abstract class EventBusBase<in Evnt extends Event, OutEvnt extends Evnt = Evnt>
                   (
                     x
                   ): x is {
-                    name: keyof typeof propertyMap;
+                    name: keyof typeof ENTRY_PROPERTY_MAP;
                     value: ASLGraph.LiteralValue | ASLGraph.JsonPath;
-                  } => x.name in propertyMap
+                  } => x.name in ENTRY_PROPERTY_MAP
                 )
                 /**
                  * Build the parameter payload for an event entry.
@@ -329,7 +337,10 @@ abstract class EventBusBase<in Evnt extends Event, OutEvnt extends Evnt = Evnt>
                 .reduce(
                   (acc: Record<string, any>, { name, value }) => ({
                     ...acc,
-                    ...context.toJsonAssignment(propertyMap[name], value),
+                    ...context.toJsonAssignment(
+                      ENTRY_PROPERTY_MAP[name],
+                      value
+                    ),
                   }),
                   { EventBusName: this.resource.eventBusArn }
                 ),
@@ -344,6 +355,100 @@ abstract class EventBusBase<in Evnt extends Event, OutEvnt extends Evnt = Evnt>
             },
           });
         });
+      },
+      apiGWVtl: {
+        renderRequest: (call, context): string => {
+          const args = call.args
+            .map((arg) => arg.expr)
+            .filter((arg): arg is Expr => !!arg)
+            .flatMap((arg) => (isArrayLiteralExpr(arg) ? arg.items : arg));
+
+          context.set(
+            "$context.requestOverride.header.X-Amz-Target",
+            '"AWSEvents.PutEvents"'
+          );
+          context.set(
+            "$context.requestOverride.header.Content-Type",
+            '"application/x-amz-json-1.1"'
+          );
+
+          const argObjects = args.map((arg) => {
+            if (!isObjectLiteralExpr(arg)) {
+              throw new SynthError(
+                ErrorCodes.Expected_an_object_literal,
+                "API Gateway Integration with EventBus.putEvents expects object literals with no computed properties"
+              );
+            }
+
+            const objectProps = arg.properties.map((prop) => {
+              if (
+                !isPropAssignExpr(prop) ||
+                !(isIdentifier(prop.name) || isStringLiteralExpr(prop.name))
+              ) {
+                throw new SynthError(
+                  ErrorCodes.Expected_an_object_literal,
+                  "API Gateway Integration with EventBus.putEvents expects object literals with no computed properties"
+                );
+              }
+              const propName = isIdentifier(prop.name)
+                ? prop.name.name
+                : prop.name.value;
+              const fieldName = ENTRY_PROPERTY_MAP[propName as keyof Event];
+
+              if (!fieldName) {
+                throw new SynthError(
+                  ErrorCodes.Invalid_Input,
+                  `Unexpected field name in EventBus.putEvents object ${propName}`
+                );
+              }
+
+              const content =
+                fieldName === "Resources"
+                  ? isArrayLiteralExpr(prop.expr)
+                    ? `[${prop.expr.items
+                        .map((item) => context.stringify(item))
+                        .join(",")}]`
+                    : context.stringify(prop.expr)
+                  : context.stringify(prop.expr);
+
+              return `"${fieldName}":${content}`;
+            });
+
+            return `{
+  ${objectProps.join(",\n")},
+  "EventBusName":"${this.resource.eventBusName}"
+}`;
+          });
+
+          /**
+           * {
+           *    "Entries": [
+           *        {
+           *             "Source": "",
+           *             "Detail-Type": "",
+           *             "Detail": ...
+           *        }
+           *    ]
+           * }
+           */
+          return `{\n"Entries":[${argObjects.join(",\n")}\n]}`;
+        },
+        createIntegration: (options) => {
+          const credentialsRole = options.credentialsRole;
+
+          this.resource.grantPutEventsTo(credentialsRole);
+
+          return new aws_apigateway.AwsIntegration({
+            service: "events",
+            action: "PutEvents",
+            integrationHttpMethod: "POST",
+            options: {
+              ...options,
+              credentialsRole,
+              passthroughBehavior: aws_apigateway.PassthroughBehavior.NEVER,
+            },
+          });
+        },
       },
       native: {
         bind: (context: Function<any, any>) => {
