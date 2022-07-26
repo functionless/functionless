@@ -1013,8 +1013,9 @@ export class ExpressStepFunction<
         .map(([argName, argVal]) => {
           if (argName === "input") {
             // stringify the JSON input
-            const input = context.exprToJson(argVal).replace(/"/g, '\\"');
-            return `"${argName}":"${input}"`;
+            return `"${argName}":"$util.escapeJavaScript(${context.exprToJson(
+              argVal
+            )})"`;
           } else {
             return `"${argName}":${context.exprToJson(argVal)}`;
           }
@@ -1271,6 +1272,49 @@ class BaseStandardStepFunction<
       },
     };
   }
+
+  readonly apiGWVtl: ApiGatewayVtlIntegration = {
+    renderRequest: (call, context) => {
+      const args = retrieveMachineArgs(call);
+
+      return `{\n"stateMachineArn":"${
+        this.resource.stateMachineArn
+      }",\n${Object.entries(args)
+        .filter(
+          (arg): arg is [typeof arg[0], Exclude<typeof arg[1], undefined>] =>
+            arg[1] !== undefined
+        )
+        .map(([argName, argVal]) => {
+          if (argName === "input") {
+            // stringify the JSON input
+            return `"${argName}":"$util.escapeJavaScript(${context.exprToJson(
+              argVal
+            )})"`;
+          } else {
+            return `"${argName}":${context.exprToJson(argVal)}`;
+          }
+        })
+        .join(",")}\n}`;
+    },
+
+    createIntegration: (options) => {
+      const credentialsRole = options.credentialsRole;
+
+      this.resource.grantRead(credentialsRole);
+      this.resource.grantStartExecution(credentialsRole);
+
+      return new aws_apigateway.AwsIntegration({
+        service: "states",
+        action: "StartExecution",
+        integrationHttpMethod: "POST",
+        options: {
+          ...options,
+          credentialsRole,
+          passthroughBehavior: aws_apigateway.PassthroughBehavior.NEVER,
+        },
+      });
+    },
+  };
 
   public describeExecution = makeIntegration<
     "StepFunction.describeExecution",

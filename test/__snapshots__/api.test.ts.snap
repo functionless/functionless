@@ -68,6 +68,25 @@ Object {
 }
 `;
 
+exports[`AWS integration with Standard Step Function 1`] = `
+Object {
+  "integrationResponses": Array [
+    Object {
+      "responseTemplates": Object {
+        "application/json": "$input.json('$.executionArn')",
+      },
+      "statusCode": "200",
+    },
+  ],
+  "requestTemplates": Object {
+    "application/json": "{
+\\"stateMachineArn\\":\\"__REPLACED_TOKEN\\",
+\\"input\\":\\"{\\\\\\"num\\\\\\":$input.params('num'),\\\\\\"str\\\\\\":\\\\\\"$input.params('str')\\\\\\"}\\"
+}",
+  },
+}
+`;
+
 exports[`mock integration with object literal 1`] = `
 Object {
   "integrationResponses": Array [
