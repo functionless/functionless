@@ -381,17 +381,18 @@ export abstract class VTL {
       } else if (
         // If the parent is a propAccessExpr
         isPropAccessExpr(expr) &&
-        (expr.name === "map" ||
-          expr.name === "forEach" ||
-          expr.name === "reduce" ||
-          expr.name === "push")
+        isIdentifier(expr.name) &&
+        (expr.name.name === "map" ||
+          expr.name.name === "forEach" ||
+          expr.name.name === "reduce" ||
+          expr.name.name === "push")
       ) {
-        if (expr.name === "map" || expr.name == "forEach") {
+        if (expr.name.name === "map" || expr.name.name == "forEach") {
           // list.map(item => ..)
           // list.map((item, idx) => ..)
           // list.forEach(item => ..)
           // list.forEach((item, idx) => ..)
-          const newList = expr.name === "map" ? this.var("[]") : undefined;
+          const newList = expr.name.name === "map" ? this.var("[]") : undefined;
 
           const [value, index, array] = getMapForEachArgs(node);
 
@@ -418,13 +419,13 @@ export abstract class VTL {
           );
 
           // Add the final value to the array
-          if (expr.name === "map") {
+          if (expr.name.name === "map") {
             this.qr(`${newList}.add(${tmp})`);
           }
 
           this.add("#end");
           return newList ?? "$null";
-        } else if (expr.name === "reduce") {
+        } else if (expr.name.name === "reduce") {
           // list.reduce((result: string[], next) => [...result, next], []);
           // list.reduce((result, next) => [...result, next]);
 
@@ -509,7 +510,7 @@ export abstract class VTL {
             ErrorCodes.Unsupported_Use_of_Promises,
             "Appsync does not support concurrent integration invocation or methods on the `Promise` api."
           );
-        } else if (expr.name === "push") {
+        } else if (expr.name.name === "push") {
           if (
             node.args.length === 1 &&
             !isSpreadElementExpr(node.args[0].expr)
@@ -562,7 +563,7 @@ export abstract class VTL {
     } else if (isNewExpr(node)) {
       throw new Error("NewExpr is not supported by Velocity Templates");
     } else if (isPropAccessExpr(node)) {
-      return `${this.eval(node.expr)}.${node.name}`;
+      return `${this.eval(node.expr)}.${node.name.name}`;
     } else if (isElementAccessExpr(node)) {
       return `${this.eval(node.expr)}[${this.eval(node.element)}]`;
     } else if (isNullLiteralExpr(node) || isUndefinedLiteralExpr(node)) {
@@ -977,7 +978,8 @@ export abstract class VTL {
       !alwaysEvaluate &&
       isCallExpr(expr) &&
       isPropAccessExpr(expr.expr) &&
-      expr.expr.name === "map"
+      isIdentifier(expr.expr.name) &&
+      expr.expr.name.name === "map"
     ) {
       const [value, index, array] = getMapForEachArgs(expr);
 

@@ -167,7 +167,8 @@ export function isPromiseAll(expr: CallExpr): expr is CallExpr & {
 } {
   return (
     isPropAccessExpr(expr.expr) &&
-    expr.expr.name === "all" &&
+    isIdentifier(expr.expr.name) &&
+    expr.expr.name.name === "all" &&
     ((isIdentifier(expr.expr.expr) && expr.expr.expr.name === "Promise") ||
       (isReferenceExpr(expr.expr.expr) && expr.expr.expr.ref() === Promise))
   );
@@ -295,8 +296,8 @@ export const evalToConstant = (expr: Expr): Constant | undefined => {
     }
   } else if (isPropAccessExpr(expr)) {
     const obj = evalToConstant(expr.expr)?.constant as any;
-    if (obj && expr.name in obj) {
-      return { constant: obj[expr.name] };
+    if (obj && isIdentifier(expr.name) && expr.name.name in obj) {
+      return { constant: obj[expr.name.name] };
     }
     return undefined;
   } else if (isReferenceExpr(expr)) {

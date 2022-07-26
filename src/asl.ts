@@ -952,10 +952,10 @@ export class ASL {
           isReferenceExpr(updated.expr) &&
           StepFunctionError.isConstructor(updated.expr.ref())
             ? StepFunctionError.kind
-            : isReferenceExpr(updated.expr) ||
-              isIdentifier(updated.expr) ||
-              isPropAccessExpr(updated.expr)
+            : isReferenceExpr(updated.expr) || isIdentifier(updated.expr)
             ? updated.expr.name
+            : isPropAccessExpr(updated.expr)
+            ? updated.expr.name.name
             : undefined;
 
         // we support three ways of throwing errors within Step Functions
@@ -1730,15 +1730,16 @@ export class ASL {
         throw new SynthError(ErrorCodes.Unsupported_Use_of_Promises);
       } else if (
         isPropAccessExpr(expr.expr) &&
+        isIdentifier(expr.expr.name) &&
         ((isIdentifier(expr.expr.expr) && expr.expr.expr.name === "JSON") ||
           (isReferenceExpr(expr.expr.expr) && expr.expr.expr.ref() === JSON)) &&
-        (expr.expr.name === "stringify" || expr.expr.name === "parse")
+        (expr.expr.name.name === "stringify" || expr.expr.name.name === "parse")
       ) {
         const heap = this.newHeapVariable();
 
         const objParamExpr = expr.args[0]?.expr;
         if (!objParamExpr || isUndefinedLiteralExpr(objParamExpr)) {
-          if (expr.expr.name === "stringify") {
+          if (expr.expr.name.name === "stringify") {
             // return an undefined variable
             return {
               jsonPath: heap,
@@ -1762,7 +1763,9 @@ export class ASL {
                 // intrinsic functions cannot be used in InputPath and some other json path locations.
                 // We compute the value and place it on the heap.
                 "string.$":
-                  (<PropAccessExpr>expr.expr).name === "stringify"
+                  isPropAccessExpr(expr.expr) &&
+                  isIdentifier(expr.expr.name) &&
+                  expr.expr.name.name === "stringify"
                     ? `States.JsonToString(${objectPath})`
                     : `States.StringToJson(${objectPath})`,
               },
@@ -1799,9 +1802,13 @@ export class ASL {
         }
         return { jsonPath: `$.${expr.name}` };
       } else if (isPropAccessExpr(expr)) {
-        return this.evalExpr(expr.expr, (output) => {
-          return this.accessConstant(output, expr.name, false);
-        });
+        if (isIdentifier(expr.name)) {
+          return this.evalExpr(expr.expr, (output) => {
+            return this.accessConstant(output, expr.name.name, false);
+          });
+        } else {
+          throw new SynthError(ErrorCodes.Classes_are_not_supported);
+        }
       } else if (isElementAccessExpr(expr)) {
         return this.elementAccessExprToJsonPath(expr);
       }
@@ -2700,7 +2707,7 @@ export class ASL {
       ) {
         return `${expr.value}`;
       } else if (isPropAccessExpr(expr)) {
-        return `${toFilterCondition(expr.expr)}.${expr.name}`;
+        return `${toFilterCondition(expr.expr)}.${expr.name.name}`;
       } else if (isElementAccessExpr(expr)) {
         return `${toFilterCondition(
           expr.expr
@@ -3008,7 +3015,8 @@ export function isMapOrForEach(expr: CallExpr): expr is CallExpr & {
 } {
   return (
     isPropAccessExpr(expr.expr) &&
-    (expr.expr.name === "map" || expr.expr.name === "forEach")
+    isIdentifier(expr.expr.name) &&
+    (expr.expr.name.name === "map" || expr.expr.name.name === "forEach")
   );
 }
 
@@ -3017,7 +3025,11 @@ function isSlice(expr: CallExpr): expr is CallExpr & {
     name: "slice";
   };
 } {
-  return isPropAccessExpr(expr.expr) && expr.expr.name === "slice";
+  return (
+    isPropAccessExpr(expr.expr) &&
+    isIdentifier(expr.expr.name) &&
+    expr.expr.name.name === "slice"
+  );
 }
 
 function isJoin(expr: CallExpr): expr is CallExpr & {
@@ -3025,7 +3037,11 @@ function isJoin(expr: CallExpr): expr is CallExpr & {
     name: "join";
   };
 } {
-  return isPropAccessExpr(expr.expr) && expr.expr.name === "join";
+  return (
+    isPropAccessExpr(expr.expr) &&
+    isIdentifier(expr.expr.name) &&
+    expr.expr.name.name === "join"
+  );
 }
 
 function isFilter(expr: CallExpr): expr is CallExpr & {
@@ -3033,7 +3049,11 @@ function isFilter(expr: CallExpr): expr is CallExpr & {
     name: "filter";
   };
 } {
-  return isPropAccessExpr(expr.expr) && expr.expr.name === "filter";
+  return (
+    isPropAccessExpr(expr.expr) &&
+    isIdentifier(expr.expr.name) &&
+    expr.expr.name.name === "filter"
+  );
 }
 
 function canThrow(node: FunctionlessNode): boolean {
@@ -4325,7 +4345,7 @@ function exprToString(expr?: Expr): string {
   } else if (isObjectLiteralExpr(expr)) {
     return `{${expr.properties.map(exprToString).join(", ")}}`;
   } else if (isPropAccessExpr(expr)) {
-    return `${exprToString(expr.expr)}.${expr.name}`;
+    return `${exprToString(expr.expr)}.${expr.name.name}`;
   } else if (isPropAssignExpr(expr)) {
     return `${
       isIdentifier(expr.name)

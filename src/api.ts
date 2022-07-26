@@ -651,8 +651,9 @@ export class APIGatewayVTL extends VTL {
       return this.add(this.exprToJson(node.expr));
     } else if (
       isPropAccessExpr(node) &&
+      isIdentifier(node.name) &&
       isInputBody(node.expr) &&
-      node.name === "data"
+      node.name.name === "data"
     ) {
       // $input.data maps to `$input.path('$')`
       // this returns a VTL object representing the root payload data
@@ -709,7 +710,11 @@ export class APIGatewayVTL extends VTL {
         }
       } else if (isIdentifier(expr.expr) && expr.expr.name === "Number") {
         return this.exprToJson(expr.args[0]);
-      } else if (isPropAccessExpr(expr.expr) && expr.expr.name === "params") {
+      } else if (
+        isPropAccessExpr(expr.expr) &&
+        isIdentifier(expr.expr.name) &&
+        expr.expr.name.name === "params"
+      ) {
         if (isIdentifier(expr.expr.expr)) {
           const ref = expr.expr.expr.lookup();
           if (
@@ -806,12 +811,16 @@ export class APIGatewayVTL extends VTL {
         // this is a reference to an intermediate value, cannot be expressed as JSON Path
         return undefined;
       } else if (isPropAccessExpr(expr)) {
-        if (expr.name === "data" && isInputBody(expr.expr)) {
+        if (
+          isIdentifier(expr.name) &&
+          expr.name.name === "data" &&
+          isInputBody(expr.expr)
+        ) {
           return "$";
         }
         const exprJsonPath = toJsonPath(expr.expr);
         if (exprJsonPath !== undefined) {
-          return `${exprJsonPath}.${expr.name}`;
+          return `${exprJsonPath}.${expr.name.name}`;
         }
       } else if (
         isElementAccessExpr(expr) &&

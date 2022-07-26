@@ -91,7 +91,7 @@ export const getPropertyAccessKey = (
   expr: PropAccessExpr | ElementAccessExpr
 ): string | number => {
   const key = isPropAccessExpr(expr)
-    ? expr.name
+    ? expr.name.name
     : evalToConstant(expr.element)?.constant;
 
   if (!(typeof key === "string" || typeof key === "number")) {

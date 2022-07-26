@@ -46,6 +46,8 @@ const skipErrorCodes: ErrorCode[] = [
   ErrorCodes.Unsupported_Feature,
   // generic
   ErrorCodes.Invalid_Input,
+  // hard to validate, will be supported later
+  ErrorCodes.Classes_are_not_supported,
 ];
 
 /**

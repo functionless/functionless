@@ -623,7 +623,7 @@ function synthesizeFunctions(api: appsync.GraphqlApi, decl: FunctionDecl) {
             template.call(expr);
             return returnValName;
           } else if (isPropAccessExpr(expr)) {
-            return `${getResult(expr.expr)}.${expr.name}`;
+            return `${getResult(expr.expr)}.${expr.name.name}`;
           } else if (isElementAccessExpr(expr)) {
             return `${getResult(expr.expr)}[${getResult(expr.element)}]`;
           } else if (isPromiseExpr(expr)) {

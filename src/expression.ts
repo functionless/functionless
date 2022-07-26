@@ -169,12 +169,14 @@ export class PrivateIdentifier extends BaseExpr<"PrivateIdentifier"> {
 }
 
 export class PropAccessExpr extends BaseExpr<"PropAccessExpr"> {
+  readonly name: Identifier | PrivateIdentifier;
   constructor(
     readonly expr: Expr,
-    readonly name: string,
+    name: string | Identifier | PrivateIdentifier,
     readonly type?: string
   ) {
     super("PropAccessExpr");
+    this.name = typeof name === "string" ? new Identifier(name) : name;
     expr.setParent(this);
   }
 
