@@ -46,7 +46,7 @@ $input.json('$.error')
   "requestTemplates": Object {
     "application/json": "{
 \\"stateMachineArn\\":\\"__REPLACED_TOKEN\\",
-\\"input\\":\\"{\\\\\\"num\\\\\\":$input.params('num'),\\\\\\"str\\\\\\":\\\\\\"$input.params('str')\\\\\\"}\\"
+\\"input\\":\\"$util.escapeJavaScript({\\"num\\":$input.params('num'),\\"str\\":\\"$input.params('str')\\"})\\"
 }",
   },
 }
@@ -64,6 +64,25 @@ Object {
   ],
   "requestTemplates": Object {
     "application/json": "$input.json('$.prop')",
+  },
+}
+`;
+
+exports[`AWS integration with Standard Step Function 1`] = `
+Object {
+  "integrationResponses": Array [
+    Object {
+      "responseTemplates": Object {
+        "application/json": "$input.json('$.executionArn')",
+      },
+      "statusCode": "200",
+    },
+  ],
+  "requestTemplates": Object {
+    "application/json": "{
+\\"stateMachineArn\\":\\"__REPLACED_TOKEN\\",
+\\"input\\":\\"$util.escapeJavaScript({\\"num\\":$input.params('num'),\\"str\\":\\"$input.params('str')\\"})\\"
+}",
   },
 }
 `;
