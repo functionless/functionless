@@ -962,55 +962,83 @@ export class ASL {
         // throw new Error(msg)
         // throw Error(msg)
         // throw StepFunctionError(cause, message);
-        let errorName: string;
-        let causeJson: unknown;
-        if (errorClassName === "Error") {
-          const errorMessage = updated.args[0]?.expr;
-          errorName = "Error";
-          if (
-            errorMessage === undefined ||
-            isUndefinedLiteralExpr(errorMessage)
-          ) {
-            causeJson = {
-              message: null,
-            };
-          } else {
-            causeJson = {
-              message: toJson(errorMessage),
-            };
-          }
-        } else if (errorClassName === "StepFunctionError") {
-          const [error, cause] = updated.args.map(({ expr }) => expr);
-          if (error === undefined || cause === undefined) {
-            // this should never happen if typescript type checking is enabled
-            // hence why we don't add a new ErrorCode for it
-            throw new SynthError(
-              ErrorCodes.Unexpected_Error,
-              `Expected 'error' and 'cause' parameter in StepFunctionError`
-            );
-          }
-          const errorNameVal = toJson(error);
-          if (typeof errorNameVal !== "string") {
-            // this should never happen if typescript type checking is enabled
-            // hence why we don't add a new ErrorCode for it
-            throw new SynthError(
-              ErrorCodes.Unexpected_Error,
-              `Expected 'error' parameter in StepFunctionError to be of type string, but got ${typeof errorNameVal}`
-            );
-          }
-          errorName = errorNameVal;
-          try {
-            causeJson = toJson(cause);
-          } catch (err: any) {
-            throw new SynthError(
-              ErrorCodes.StepFunctions_error_cause_must_be_a_constant,
-              err.message
-            );
-          }
+
+        const { errorName, causeJson } = resolveErrorNameAndCause();
+
+        const throwTransition = this.throw(stmt);
+        if (throwTransition === undefined) {
+          return {
+            Type: "Fail",
+            Error: errorName,
+            Cause: JSON.stringify(causeJson),
+          };
         } else {
-          throw new SynthError(
-            ErrorCodes.StepFunction_Throw_must_be_Error_or_StepFunctionError_class
-          );
+          return {
+            Type: "Pass",
+            Result: causeJson,
+            ...throwTransition,
+          };
+        }
+
+        function resolveErrorNameAndCause(): {
+          errorName: string;
+          causeJson: unknown;
+        } {
+          if (errorClassName === "Error") {
+            const errorMessage = updated.args[0]?.expr;
+            if (
+              errorMessage === undefined ||
+              isUndefinedLiteralExpr(errorMessage)
+            ) {
+              return {
+                errorName: "Error",
+                causeJson: {
+                  message: null,
+                },
+              };
+            } else {
+              return {
+                errorName: "Error",
+                causeJson: {
+                  message: toJson(errorMessage),
+                },
+              };
+            }
+          } else if (errorClassName === "StepFunctionError") {
+            const [error, cause] = updated.args.map(({ expr }) => expr);
+            if (error === undefined || cause === undefined) {
+              // this should never happen if typescript type checking is enabled
+              // hence why we don't add a new ErrorCode for it
+              throw new SynthError(
+                ErrorCodes.Unexpected_Error,
+                `Expected 'error' and 'cause' parameter in StepFunctionError`
+              );
+            }
+            const errorName = toJson(error);
+            if (typeof errorName !== "string") {
+              // this should never happen if typescript type checking is enabled
+              // hence why we don't add a new ErrorCode for it
+              throw new SynthError(
+                ErrorCodes.Unexpected_Error,
+                `Expected 'error' parameter in StepFunctionError to be of type string, but got ${typeof errorName}`
+              );
+            }
+            try {
+              return {
+                errorName,
+                causeJson: toJson(cause),
+              };
+            } catch (err: any) {
+              throw new SynthError(
+                ErrorCodes.StepFunctions_error_cause_must_be_a_constant,
+                err.message
+              );
+            }
+          } else {
+            throw new SynthError(
+              ErrorCodes.StepFunction_Throw_must_be_Error_or_StepFunctionError_class
+            );
+          }
         }
 
         /**
@@ -1026,21 +1054,6 @@ export class ASL {
             );
           }
           return val.value;
-        }
-
-        const throwTransition = this.throw(stmt);
-        if (throwTransition === undefined) {
-          return {
-            Type: "Fail",
-            Error: errorName,
-            Cause: JSON.stringify(causeJson),
-          };
-        } else {
-          return {
-            Type: "Pass",
-            Result: causeJson,
-            ...throwTransition,
-          };
         }
       });
 
