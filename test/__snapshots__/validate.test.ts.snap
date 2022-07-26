@@ -226,6 +226,12 @@ https://functionless.org/docs/error-codes#apigateway-unsupported-reference
 
 [7m255[0m     return a;
 [7m   [0m [91m          ~~[0m
+[96mtest/test-files/api-gateway.ts[0m:[93m288[0m:[93m26[0m - [91merror[0m[90m Functionless(10012): [0mAPI Gateway Integration with EventBus.putEvents expects object literals with no computed properties
+
+https://functionless.org/docs/error-codes#expected-an-object-literal
+
+[7m288[0m     return bus.putEvents(x);
+[7m   [0m [91m                         ~[0m
 "
 `;
 
