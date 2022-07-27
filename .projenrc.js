@@ -127,6 +127,7 @@ const project = new CustomTypescriptProject({
   ],
   eslintOptions: {
     lintProjenRc: true,
+    ignorePatterns: ["examples/**/*"],
   },
   tsconfig: {
     compilerOptions: {
