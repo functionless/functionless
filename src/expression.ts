@@ -8,6 +8,7 @@ import type {
 import {
   isIdentifier,
   isNumberLiteralExpr,
+  isParenthesizedExpr,
   isPrivateIdentifier,
   isPropAssignExpr,
   isStringLiteralExpr,
@@ -643,6 +644,13 @@ export class ParenthesizedExpr extends BaseExpr<"ParenthesizedExpr"> {
 
   public clone(): this {
     return new ParenthesizedExpr(this.expr.clone()) as this;
+  }
+
+  public unwrap(): Expr | undefined {
+    if (isParenthesizedExpr(this.expr)) {
+      return this.expr.unwrap();
+    }
+    return this.expr;
   }
 }
 

@@ -476,7 +476,9 @@ export function visitEachChild<T extends FunctionlessNode>(
       isPropName,
       "a PropDecl's name must be an Identifier, StringLiteralExpr or ComputedPropNameExpr"
     );
-    ensure(initializer, isExpr, "A PropDecl's initializer must be an Expr");
+    if (initializer) {
+      ensure(initializer, isExpr, "A PropDecl's initializer must be an Expr");
+    }
 
     return new PropDecl(name, initializer) as T;
   } else if (isReferenceExpr(node)) {
@@ -775,18 +777,28 @@ export function visitBlock(
   });
 }
 
+/**
+ * Ensures that the {@link val} is either:
+ * 1. a "single" instance of {@link T}
+ * 2. an "array" of {@link T}
+ *
+ * @param val value to check
+ * @param assertion assertion function to apply to a single instance
+ * @param message error message to throw if the assertion is false
+ * @returns an array of {@link T} for folding back into a visitEachChild result
+ */
 function ensureSingleOrArray<T>(
-  result: any,
+  val: any,
   assertion: (a: any) => a is T,
   message: string
 ): T[] {
-  if (Array.isArray(result)) {
-    result = result.flat();
-    ensureItemOf(result, assertion, message);
-    return result;
+  if (Array.isArray(val)) {
+    val = val.flat();
+    ensureItemOf(val, assertion, message);
+    return val;
   } else {
-    ensure(result, assertion, message);
-    return [result];
+    ensure(val, assertion, message);
+    return [val];
   }
 }
 

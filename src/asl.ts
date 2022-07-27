@@ -491,9 +491,7 @@ export class ASL {
     this.decl = visitEachChild(decl, function normalizeAST(node):
       | FunctionlessNode
       | FunctionlessNode[] {
-      if (isParenthesizedExpr(node)) {
-        return visitEachChild(node.expr, normalizeAST);
-      } else if (isBlockStmt(node)) {
+      if (isBlockStmt(node)) {
         return new BlockStmt([
           // for each block statement
           ...visitBlock(
@@ -518,7 +516,10 @@ export class ASL {
 
     const inputName = decl.parameters[0]?.name;
     if (inputName && !isIdentifier(inputName)) {
-      throw new Error(`Binding Patterns are not supported by Step Functions`);
+      throw new SynthError(
+        ErrorCodes.Unsupported_Feature,
+        "Destructured parameter declarations are not yet supported by Step Functions. https://github.com/functionless/functionless/issues/364"
+      );
     }
 
     const states = this.evalStmt(this.decl.body);

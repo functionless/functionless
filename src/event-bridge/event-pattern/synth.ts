@@ -487,10 +487,9 @@ export const synthesizePatternDocument = (
       );
     }
 
-    let e = expr.expr.expr;
-    while (isParenthesizedExpr(e)) {
-      e = e.expr;
-    }
+    const e = isParenthesizedExpr(expr.expr.expr)
+      ? expr.expr.expr.unwrap()
+      : expr.expr.expr;
 
     if (isPropAccessExpr(e) || isElementAccessExpr(e)) {
       if (e.type === "string") {

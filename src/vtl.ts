@@ -361,11 +361,9 @@ export abstract class VTL {
     } else if (isBreakStmt(node)) {
       return this.add("#break");
     } else if (isCallExpr(node)) {
-      let expr = node.expr;
-      while (isParenthesizedExpr(expr)) {
-        // unwrap the (<expr>)
-        expr = expr.expr;
-      }
+      const expr = isParenthesizedExpr(node.expr)
+        ? node.expr.unwrap()
+        : node.expr;
 
       if (isSuperKeyword(expr) || isImportKeyword(expr)) {
         throw new Error(`super and import are not supported by VTL`);
@@ -521,10 +519,13 @@ export abstract class VTL {
             node.args.length === 1 &&
             !isSpreadElementExpr(node.args[0].expr)
           ) {
+            // use the .add for the case when we are pushing exactly one argument
             return `${this.eval(expr.expr)}.add(${this.eval(
               node.args[0].expr
             )})`;
           } else {
+            // for all other cases, use .addAll
+            // such as `.push(a, b, ...c)` or `.push(...a)`
             return `${this.eval(expr.expr)}.addAll(${this.addAll(
               node.args
                 .map((arg) => arg.expr)
