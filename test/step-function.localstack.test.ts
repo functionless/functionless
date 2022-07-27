@@ -1449,6 +1449,63 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
     null,
     { a: "a" }
   );
+
+  test(
+    "destructure",
+    (parent) =>
+      new StepFunction(
+        parent,
+        "sfn",
+        async ({
+          a,
+          bb: { value: b },
+          c = "what",
+          arr: [d, , e, f = "sir", ...arrRest],
+          value,
+          ...objRest
+        }) => {
+          const {
+            z,
+            yy: { ["value"]: w, ["a" + "b"]: v },
+            x = "what",
+            rra: [s, , u, t = "sir", ...tserRra],
+            ...TserJbo
+          } = value;
+
+          const map = [{ a: "a", b: ["b"] }]
+            .map(({ a, b: [c] }) => `${a}${c}`)
+            .join();
+
+          return {
+            prop: a + b + c + d + e + f + objRest.d + arrRest[0] + z,
+            var: z + w + v + x + s + u + t + TserJbo.k + tserRra[0] + z,
+            map,
+          };
+        }
+      ),
+    {
+      prop: "helloworldwhatisupsirendofobjendofarraydynamic",
+      var: "helloworlddynamicwhatisupsirendofobjendofarraydynamic",
+      map: "ab",
+    },
+    {
+      a: "hello",
+      bb: { value: "world" },
+      c: undefined,
+      d: "endofobj",
+      arr: ["is", "skipme", "up", undefined, "endofarray"],
+      value: {
+        z: "hello",
+        yy: { value: "world", ab: "dynamic" } as {
+          value: string;
+          [key: string]: string;
+        },
+        x: "endofobj",
+        rra: ["is", "skipme", "up", undefined, "endofarray"],
+        k: "endofobj",
+      },
+    }
+  );
 });
 
 /**

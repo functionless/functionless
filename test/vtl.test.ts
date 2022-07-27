@@ -967,3 +967,93 @@ test("deconstruct for of", () => {
     resultMatch: "helloworldwhatisupsirendofobjendofarray",
   });
 });
+
+test("deconstruct map", () => {
+  const templates = appsyncTestCase<
+    {
+      items: {
+        a: string;
+        bb: { value: string };
+        c?: string;
+        arr: string[];
+        d: string;
+      }[];
+    },
+    string[]
+  >(
+    reflect(($context) => {
+      return $context.arguments.items.map(
+        ({
+          a,
+          bb: { value: b },
+          c = "what",
+          arr: [d, , e, f = "sir", ...arrRest],
+          ...objRest
+        }) => {
+          return a + b + c + d + e + f + objRest.d + arrRest[0];
+        }
+      );
+    })
+  );
+
+  testAppsyncVelocity(templates[1], {
+    arguments: {
+      items: [
+        {
+          a: "hello",
+          bb: { value: "world" },
+          d: "endofobj",
+          arr: ["is", "skipme", "up", undefined, "endofarray"],
+        },
+      ],
+    },
+    resultMatch: ["helloworldwhatisupsirendofobjendofarray"],
+  });
+});
+
+test("deconstruct reduce", () => {
+  const templates = appsyncTestCase<
+    {
+      items: {
+        a: string;
+        bb: { value: string };
+        c?: string;
+        arr: string[];
+        d: string;
+      }[];
+    },
+    string
+  >(
+    reflect(($context) => {
+      return $context.arguments.items.reduce(
+        (
+          acc,
+          {
+            a,
+            bb: { value: b },
+            c = "what",
+            arr: [d, , e, f = "sir", ...arrRest],
+            ...objRest
+          }
+        ) => {
+          return `${acc}${a + b + c + d + e + f + objRest.d + arrRest[0]}`;
+        },
+        ""
+      );
+    })
+  );
+
+  testAppsyncVelocity(templates[1], {
+    arguments: {
+      items: [
+        {
+          a: "hello",
+          bb: { value: "world" },
+          d: "endofobj",
+          arr: ["is", "skipme", "up", undefined, "endofarray"],
+        },
+      ],
+    },
+    resultMatch: ["helloworldwhatisupsirendofobjendofarray"],
+  });
+});
