@@ -427,13 +427,6 @@ export function compile(
         node: ts.Node | undefined,
         scope: ts.Node
       ): ts.Expression {
-        return errorBoundary(() => _toExpr(node, scope));
-      }
-
-      function _toExpr(
-        node: ts.Node | undefined,
-        scope: ts.Node
-      ): ts.Expression {
         if (node === undefined) {
           return ts.factory.createIdentifier("undefined");
         } else if (ts.isArrowFunction(node) || ts.isFunctionExpression(node)) {
@@ -445,7 +438,7 @@ export function compile(
             const newType = checker.getTypeAtLocation(node);
             // cannot create new resources in native runtime code.
             const functionlessKind = checker.getFunctionlessTypeKind(newType);
-            if (checker.getFunctionlessTypeKind(newType)) {
+            if (functionlessKind) {
               throw new SynthError(
                 ErrorCodes.Unsupported_initialization_of_resources,
                 `Cannot initialize new resources in a runtime function, found ${functionlessKind}.`
@@ -563,7 +556,11 @@ export function compile(
           ]);
         } else if (ts.isVariableDeclaration(node)) {
           return newExpr("VariableDecl", [
-            toExpr(node.name, scope),
+            ts.isIdentifier(node.name)
+              ? newExpr("Identifier", [
+                  ts.factory.createStringLiteral(node.name.text),
+                ])
+              : toExpr(node.name, scope),
             ...(node.initializer ? [toExpr(node.initializer, scope)] : []),
           ]);
         } else if (ts.isIfStatement(node)) {
