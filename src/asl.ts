@@ -736,9 +736,9 @@ export class ASL {
             assign: isForOfStmt(stmt)
               ? {
                   Type: "Pass",
-                  node: stmt.variableDecl,
+                  node: stmt.initializer,
                   InputPath: `${tempArrayPath}[0]`,
-                  ResultPath: `$.${stmt.variableDecl.getName()}`,
+                  ResultPath: `$.${stmt.initializer.getName()}`,
                   Next: "body",
                 }
               : /**ForInStmt
@@ -747,18 +747,18 @@ export class ASL {
                  */
                 {
                   startState: "assignIndex",
-                  node: stmt.variableDecl,
+                  node: stmt.initializer,
                   states: {
                     assignIndex: {
                       Type: "Pass",
                       InputPath: `${tempArrayPath}[0].index`,
-                      ResultPath: `$.${stmt.variableDecl.getName()}`,
+                      ResultPath: `$.${stmt.initializer.getName()}`,
                       Next: "assignValue",
                     },
                     assignValue: {
                       Type: "Pass",
                       InputPath: `${tempArrayPath}[0].item`,
-                      ResultPath: `$.0__${stmt.variableDecl.getName()}`,
+                      ResultPath: `$.0__${stmt.initializer.getName()}`,
                       Next: "body",
                     },
                   },
@@ -798,10 +798,10 @@ export class ASL {
       const body = this.evalStmt(stmt.body);
 
       return this.evalContextToSubState(stmt, (evalExpr) => {
-        const initializers = stmt.variableDecl
-          ? isVariableDeclList(stmt.variableDecl)
-            ? stmt.variableDecl.decls.map((x) => this.evalStmt(x))
-            : [evalExpr(stmt.variableDecl)]
+        const initializers = stmt.initializer
+          ? isVariableDeclList(stmt.initializer)
+            ? stmt.initializer.decls.map((x) => this.evalStmt(x))
+            : [evalExpr(stmt.initializer)]
           : [undefined];
 
         const [cond, condStates] = stmt.condition
@@ -2811,13 +2811,13 @@ export class ASL {
         isVariableDecl(element) &&
         access.findParent((parent): parent is ForInStmt => {
           if (isForInStmt(parent)) {
-            if (isIdentifier(parent.variableDecl)) {
+            if (isIdentifier(parent.initializer)) {
               // let i;
               // for (i in ..)
-              return parent.variableDecl.name === access.element.tryGetName();
-            } else if (isVariableDecl(parent.variableDecl)) {
+              return element === parent.initializer.lookup();
+            } else if (isVariableDecl(parent.initializer)) {
               // for (let i in ..)
-              return parent.variableDecl === element;
+              return parent.initializer === element;
             }
           }
           return false;
@@ -4266,20 +4266,20 @@ function toStateName(node: FunctionlessNode): string {
       return `while (${exprToString(node.condition)})`;
     } else if (isForInStmt(node)) {
       return `for(${
-        isIdentifier(node.variableDecl)
-          ? exprToString(node.variableDecl)
-          : exprToString(node.variableDecl.name)
+        isIdentifier(node.initializer)
+          ? exprToString(node.initializer)
+          : exprToString(node.initializer.name)
       } in ${exprToString(node.expr)})`;
     } else if (isForOfStmt(node)) {
-      return `for(${exprToString(node.variableDecl)} of ${exprToString(
+      return `for(${exprToString(node.initializer)} of ${exprToString(
         node.expr
       )})`;
     } else if (isForStmt(node)) {
       // for(;;)
       return `for(${
-        node.variableDecl && isVariableDeclList(node.variableDecl)
-          ? inner(node.variableDecl)
-          : exprToString(node.variableDecl)
+        node.initializer && isVariableDeclList(node.initializer)
+          ? inner(node.initializer)
+          : exprToString(node.initializer)
       };${exprToString(node.condition)};${exprToString(node.incrementor)})`;
     } else if (isReturnStmt(node)) {
       if (node.expr) {

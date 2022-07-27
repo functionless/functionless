@@ -954,6 +954,44 @@ test("for i in items, items[i]", () => {
   expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
+test("for i in items, items[i] (shadowed)", () => {
+  const { stack } = initStepFunctionApp();
+  expect(
+    () =>
+      new ExpressStepFunction<{ items: string[] }, void>(
+        stack,
+        "fn",
+        (input) => {
+          var i;
+          for (i in input.items) {
+            const i = "";
+            // @ts-ignore
+            const a = items[i];
+          }
+        }
+      )
+  ).toThrow();
+});
+
+test("for let i in items, items[i] (shadowed)", () => {
+  const { stack } = initStepFunctionApp();
+  expect(
+    () =>
+      new ExpressStepFunction<{ items: string[] }, void>(
+        stack,
+        "fn",
+        (input) => {
+          // @ts-ignore
+          for (let i in input.items) {
+            const i = "";
+            // @ts-ignore
+            const a = items[i];
+          }
+        }
+      )
+  ).toThrow();
+});
+
 test("empty for", () => {
   const { stack, task } = initStepFunctionApp();
   const definition = new ExpressStepFunction<{ items: string[] }, void>(

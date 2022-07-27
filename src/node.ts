@@ -383,7 +383,7 @@ export abstract class BaseNode<
             : getNames(param.name)
         );
       } else if (isForInStmt(node) || isForOfStmt(node)) {
-        return getNames(node.variableDecl);
+        return getNames(node.initializer);
       } else if (isCatchClause(node) && node.variableDecl?.name) {
         return getNames(node.variableDecl);
       } else {

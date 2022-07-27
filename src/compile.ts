@@ -427,6 +427,13 @@ export function compile(
         node: ts.Node | undefined,
         scope: ts.Node
       ): ts.Expression {
+        return errorBoundary(() => _toExpr(node, scope));
+      }
+
+      function _toExpr(
+        node: ts.Node | undefined,
+        scope: ts.Node
+      ): ts.Expression {
         if (node === undefined) {
           return ts.factory.createIdentifier("undefined");
         } else if (ts.isArrowFunction(node) || ts.isFunctionExpression(node)) {

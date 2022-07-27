@@ -152,7 +152,7 @@ export class IfStmt extends BaseStmt<"IfStmt"> {
 
 export class ForOfStmt extends BaseStmt<"ForOfStmt"> {
   constructor(
-    readonly variableDecl: VariableDecl | Identifier,
+    readonly initializer: VariableDecl | Identifier,
     readonly expr: Expr,
     readonly body: BlockStmt
   ) {
@@ -161,7 +161,7 @@ export class ForOfStmt extends BaseStmt<"ForOfStmt"> {
 
   public clone(): this {
     return new ForOfStmt(
-      this.variableDecl.clone(),
+      this.initializer.clone(),
       this.expr.clone(),
       this.body.clone()
     ) as this;
@@ -170,7 +170,7 @@ export class ForOfStmt extends BaseStmt<"ForOfStmt"> {
 
 export class ForInStmt extends BaseStmt<"ForInStmt"> {
   constructor(
-    readonly variableDecl: VariableDecl | Identifier,
+    readonly initializer: VariableDecl | Identifier,
     readonly expr: Expr,
     readonly body: BlockStmt
   ) {
@@ -179,7 +179,7 @@ export class ForInStmt extends BaseStmt<"ForInStmt"> {
 
   public clone(): this {
     return new ForInStmt(
-      this.variableDecl.clone(),
+      this.initializer.clone(),
       this.expr.clone(),
       this.body.clone()
     ) as this;
@@ -189,7 +189,7 @@ export class ForInStmt extends BaseStmt<"ForInStmt"> {
 export class ForStmt extends BaseStmt<"ForStmt"> {
   constructor(
     readonly body: BlockStmt,
-    readonly variableDecl?: VariableDeclList | Expr,
+    readonly initializer?: VariableDeclList | Expr,
     readonly condition?: Expr,
     readonly incrementor?: Expr
   ) {
@@ -199,7 +199,7 @@ export class ForStmt extends BaseStmt<"ForStmt"> {
   public clone(): this {
     return new ForStmt(
       this.body.clone(),
-      this.variableDecl?.clone(),
+      this.initializer?.clone(),
       this.condition?.clone(),
       this.incrementor?.clone()
     ) as this;

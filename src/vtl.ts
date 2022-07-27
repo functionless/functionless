@@ -551,7 +551,7 @@ export abstract class VTL {
       return this.qr(this.eval(node.expr));
     } else if (isForInStmt(node) || isForOfStmt(node)) {
       this.foreach(
-        node.variableDecl,
+        node.initializer,
         `${this.eval(node.expr)}${isForInStmt(node) ? ".keySet()" : ""}`,
         node.body
       );

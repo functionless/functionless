@@ -342,8 +342,8 @@ export function visitEachChild<T extends FunctionlessNode>(
     return new ExprStmt(expr) as T;
   } else if (isForStmt(node)) {
     const body = visitBlockStmt(node.body, visitor);
-    const variableDecl = node.variableDecl
-      ? visitor(node.variableDecl)
+    const variableDecl = node.initializer
+      ? visitor(node.initializer)
       : undefined;
     variableDecl &&
       ensure(
@@ -367,7 +367,7 @@ export function visitEachChild<T extends FunctionlessNode>(
       incrementor as Expr
     ) as T;
   } else if (isForInStmt(node) || isForOfStmt(node)) {
-    const variableDecl = visitor(node.variableDecl);
+    const variableDecl = visitor(node.initializer);
     ensure(
       variableDecl,
       anyOf(isVariableDecl, isIdentifier),
