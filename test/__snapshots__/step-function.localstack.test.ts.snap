@@ -4806,14 +4806,14 @@ exports[`call $SFN parallel 1`] = `
 Object {
   "StartAt": "Initialize Functionless Context",
   "States": Object {
-    "1__return $SFN.parallel([function(), function()])": Object {
+    "1__return $SFN.parallel(function(), function())": Object {
       "End": true,
       "InputPath": "$.heap0",
       "ResultPath": "$",
       "Type": "Pass",
     },
     "Initialize Functionless Context": Object {
-      "Next": "return $SFN.parallel([function(), function()])",
+      "Next": "return $SFN.parallel(function(), function())",
       "Parameters": Object {
         "fnl_context": Object {
           "null": null,
@@ -4822,7 +4822,7 @@ Object {
       "ResultPath": "$",
       "Type": "Pass",
     },
-    "return $SFN.parallel([function(), function()])": Object {
+    "return $SFN.parallel(function(), function())": Object {
       "Branches": Array [
         Object {
           "StartAt": "return 1",
@@ -4847,7 +4847,7 @@ Object {
           },
         },
       ],
-      "Next": "1__return $SFN.parallel([function(), function()])",
+      "Next": "1__return $SFN.parallel(function(), function())",
       "ResultPath": "$.heap0",
       "Type": "Parallel",
     },
@@ -10018,7 +10018,9 @@ Object {
     },
     "try 2": Object {
       "Next": "catch__try 2",
-      "Result": Object {},
+      "Result": Object {
+        "message": null,
+      },
       "ResultPath": null,
       "Type": "Pass",
     },

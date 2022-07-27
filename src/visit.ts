@@ -2,22 +2,31 @@ import { assertNever } from "./assert";
 import {
   ArrayBinding,
   BindingElem,
+  ClassDecl,
+  ClassStaticBlockDecl,
+  MethodDecl,
+  PropDecl,
   FunctionDecl,
   ObjectBinding,
   ParameterDecl,
+  ConstructorDecl,
   VariableDecl,
   VariableDeclList,
 } from "./declaration";
 import { Err } from "./error";
+import { ErrorCodes, SynthError } from "./error-code";
 import {
   Argument,
   ArrayLiteralExpr,
+  ArrowFunctionExpr,
   AwaitExpr,
   BinaryExpr,
   BooleanLiteralExpr,
   CallExpr,
+  ClassExpr,
   ComputedPropertyNameExpr,
   ConditionExpr,
+  DeleteExpr,
   ElementAccessExpr,
   Expr,
   FunctionExpr,
@@ -25,8 +34,12 @@ import {
   NewExpr,
   NullLiteralExpr,
   NumberLiteralExpr,
-  ObjectElementExpr,
   ObjectLiteralExpr,
+  ParenthesizedExpr,
+  PostfixUnaryExpr,
+  PrivateIdentifier,
+  PromiseArrayExpr,
+  PromiseExpr,
   PropAccessExpr,
   PropAssignExpr,
   ReferenceExpr,
@@ -37,13 +50,13 @@ import {
   TypeOfExpr,
   UnaryExpr,
   UndefinedLiteralExpr,
-  PromiseArrayExpr,
-  PromiseExpr,
-  PostfixUnaryExpr,
+  VoidExpr,
+  YieldExpr,
 } from "./expression";
 import {
   isArgument,
   isArrayLiteralExpr,
+  isArrowFunctionExpr,
   isAwaitExpr,
   isBinaryExpr,
   isBindingElem,
@@ -52,11 +65,21 @@ import {
   isBooleanLiteralExpr,
   isBreakStmt,
   isCallExpr,
+  isCaseClause,
   isCatchClause,
+  isClassDecl,
+  isClassExpr,
+  isClassMember,
+  isClassStaticBlockDecl,
   isComputedPropertyNameExpr,
   isConditionExpr,
+  isConstructorDecl,
   isContinueStmt,
+  isDebuggerStmt,
+  isDefaultClause,
   isDoStmt,
+  isElementAccessExpr,
+  isEmptyStmt,
   isErr,
   isExpr,
   isExprStmt,
@@ -66,6 +89,8 @@ import {
   isFunctionExpr,
   isIdentifier,
   isIfStmt,
+  isLabelledStmt,
+  isMethodDecl,
   isNewExpr,
   isNullLiteralExpr,
   isNumberLiteralExpr,
@@ -73,37 +98,53 @@ import {
   isObjectElementExpr,
   isObjectLiteralExpr,
   isParameterDecl,
+  isPostfixUnaryExpr,
   isPromiseArrayExpr,
   isPromiseExpr,
   isPropAccessExpr,
   isPropAssignExpr,
+  isPropDecl,
+  isPropName,
   isReferenceExpr,
   isReturnStmt,
   isSpreadAssignExpr,
   isSpreadElementExpr,
   isStmt,
   isStringLiteralExpr,
+  isSuperKeyword,
+  isSwitchClause,
+  isSwitchStmt,
   isTemplateExpr,
+  isThisExpr,
   isThrowStmt,
   isTryStmt,
   isTypeOfExpr,
   isUnaryExpr,
-  isPostfixUnaryExpr,
   isUndefinedLiteralExpr,
   isVariableStmt,
   isWhileStmt,
-  isElementAccessExpr,
+  isWithStmt,
   isForStmt,
   isVariableDeclList,
   isVariableDecl,
+  isPrivateIdentifier,
+  isYieldExpr,
+  isBigIntExpr,
+  isRegexExpr,
+  isVoidExpr,
+  isDeleteExpr,
+  isParenthesizedExpr,
+  isImportKeyword,
 } from "./guards";
 import { FunctionlessNode } from "./node";
 
 import {
   BlockStmt,
   BreakStmt,
+  CaseClause,
   CatchClause,
   ContinueStmt,
+  DefaultClause,
   DoStmt,
   ExprStmt,
   FinallyBlock,
@@ -111,12 +152,15 @@ import {
   ForOfStmt,
   ForStmt,
   IfStmt,
+  LabelledStmt,
   ReturnStmt,
   Stmt,
+  SwitchStmt,
   ThrowStmt,
   TryStmt,
   VariableStmt,
   WhileStmt,
+  WithStmt,
 } from "./statement";
 import {
   anyOf,
@@ -145,23 +189,16 @@ export function visitEachChild<T extends FunctionlessNode>(
     }
     const expr = visitor(node.expr);
     ensure(expr, isExpr, "an Argument's expr must be an Expr");
-    return new Argument(expr, node.name) as T;
+    return new Argument(expr) as T;
   } else if (isArrayLiteralExpr(node)) {
     return new ArrayLiteralExpr(
-      node.items.reduce((items: Expr[], item) => {
-        let result = visitor(item);
-        if (Array.isArray(result)) {
-          result = flatten(result);
-          ensureItemOf(
-            result,
-            isExpr,
-            "Items of an ArrayLiteralExpr must be Expr nodes"
-          );
-          return items.concat(result as Expr[]);
-        } else {
-          return [...items, result] as any;
-        }
-      }, [])
+      node.items.flatMap((item) =>
+        ensureSingleOrArray(
+          visitor(item),
+          isExpr,
+          "Items of an ArrayLiteralExpr must be Expr nodes"
+        )
+      )
     ) as T;
   } else if (isBinaryExpr(node)) {
     const left = visitor(node.left);
@@ -169,31 +206,23 @@ export function visitEachChild<T extends FunctionlessNode>(
     if (isExpr(left) && isExpr(right)) {
       return new BinaryExpr(left, node.op, right) as T;
     } else {
-      throw new Error(
+      throw new SynthError(
+        ErrorCodes.Unexpected_Error,
         "visitEachChild of BinaryExpr must return an Expr for both the left and right operands"
       );
     }
   } else if (isBlockStmt(node)) {
     return new BlockStmt(
-      node.statements.reduce((stmts: Stmt[], stmt) => {
-        let result = visitor(stmt);
-        if (Array.isArray(result)) {
-          result = flatten(result);
-          ensureItemOf(
-            result,
-            isStmt,
-            "Statements in BlockStmt must be Stmt nodes"
-          );
-          return stmts.concat(result);
-        } else if (isStmt(result)) {
-          return [...stmts, result];
-        } else {
-          throw new Error(
-            "visitEachChild of a BlockStmt's child statements must return a Stmt"
-          );
-        }
-      }, [])
+      node.statements.flatMap((stmt) =>
+        ensureSingleOrArray(
+          visitor(stmt),
+          isStmt,
+          "Statements in BlockStmt must be Stmt nodes"
+        )
+      )
     ) as T;
+  } else if (isBigIntExpr(node)) {
+    return node.clone() as T;
   } else if (isBooleanLiteralExpr(node)) {
     return new BooleanLiteralExpr(node.value) as T;
   } else if (isBreakStmt(node)) {
@@ -208,16 +237,13 @@ export function visitEachChild<T extends FunctionlessNode>(
       `visitEachChild of a ${node.kind}'s expr must return a single Expr`
     );
     const args = node.args.flatMap((arg) => {
-      if (!arg.expr) {
-        return arg.clone();
-      }
-      const expr = visitor(arg.expr);
+      const expr = visitor(arg.expr!);
       ensure(
         expr,
         isExpr,
         `visitEachChild of a ${node.kind}'s argument must return a single Expr`
       );
-      return new Argument(expr, arg.name);
+      return new Argument(expr);
     });
     return (
       isCallExpr(node) ? new CallExpr(expr, args) : new NewExpr(expr, args)
@@ -236,6 +262,43 @@ export function visitEachChild<T extends FunctionlessNode>(
     const block = visitBlockStmt(node.block, visitor);
 
     return new CatchClause(variableDecl, block) as T;
+  } else if (isClassDecl(node) || isClassExpr(node)) {
+    let heritage;
+
+    if (node.heritage) {
+      heritage = visitor(node.heritage);
+      if (heritage) {
+        ensure(
+          heritage,
+          isExpr,
+          `A ${node.kind}'s Heritage Clause must be an Expr`
+        );
+      }
+    }
+
+    const classMembers = node.members.flatMap((classMember) => {
+      let updatedMember = visitor(classMember);
+
+      return ensureSingleOrArray(
+        updatedMember,
+        isClassMember,
+        "A ClassDecl's ClassMembers must be ClassMember declarations"
+      );
+    });
+
+    if (isClassDecl(node)) {
+      return new ClassDecl(node.name, heritage, classMembers) as T;
+    } else {
+      return new ClassExpr(node.name, heritage, classMembers) as T;
+    }
+  } else if (isClassStaticBlockDecl(node)) {
+    const block = visitor(node);
+    ensure(
+      block,
+      isBlockStmt,
+      "A ClassStaticBlockDecl's block must be a BlockStmt"
+    );
+    return new ClassStaticBlockDecl(block) as T;
   } else if (isComputedPropertyNameExpr(node)) {
     const expr = visitor(node.expr);
     ensure(
@@ -254,6 +317,8 @@ export function visitEachChild<T extends FunctionlessNode>(
     ensure(_else, isExpr, "ConditionExpr's else must be an Expr");
 
     return new ConditionExpr(when, then, _else) as T;
+  } else if (isDebuggerStmt(node)) {
+    return node.clone() as T;
   } else if (isDoStmt(node)) {
     const block = visitBlockStmt(node.block, visitor);
     const condition = visitor(node.condition);
@@ -275,28 +340,10 @@ export function visitEachChild<T extends FunctionlessNode>(
     const expr = visitor(node.expr);
     ensure(expr, isExpr, "The Expr in an ExprStmt must be an Expr");
     return new ExprStmt(expr) as T;
-  } else if (isForInStmt(node) || isForOfStmt(node)) {
-    const variableDecl = visitor(node.variableDecl);
-    ensure(
-      variableDecl,
-      anyOf(isVariableDecl, isIdentifier),
-      `Initializer in ${node.kind} must be a VariableDecl or Identifier`
-    );
-
-    const expr = visitor(node.expr);
-    ensure(expr, isExpr, `Expr in ${node.kind} must be an Expr`);
-
-    const body = visitBlockStmt(node.body, visitor);
-
-    return (
-      isForInStmt(node)
-        ? new ForInStmt(variableDecl, expr, body)
-        : new ForOfStmt(variableDecl, expr, body)
-    ) as T;
   } else if (isForStmt(node)) {
     const body = visitBlockStmt(node.body, visitor);
-    const variableDecl = node.variableDecl
-      ? visitor(node.variableDecl)
+    const variableDecl = node.initializer
+      ? visitor(node.initializer)
       : undefined;
     variableDecl &&
       ensure(
@@ -319,39 +366,56 @@ export function visitEachChild<T extends FunctionlessNode>(
       condition as Expr,
       incrementor as Expr
     ) as T;
-  } else if (isFunctionDecl(node) || isFunctionExpr(node)) {
-    const parameters = node.parameters.reduce(
-      (params: ParameterDecl[], parameter) => {
-        let p = visitor(parameter);
-        if (Array.isArray(p)) {
-          p = flatten(p);
-          ensureItemOf(
-            p,
-            isParameterDecl,
-            `a ${node.kind}'s parameters must be ParameterDecl nodes`
-          );
-          return params.concat(p);
-        } else {
-          ensure(
-            p,
-            isParameterDecl,
-            `a ${node.kind}'s parameters must be ParameterDecl nodes`
-          );
-          return [...params, p];
-        }
-      },
-      []
+  } else if (isForInStmt(node) || isForOfStmt(node)) {
+    const variableDecl = visitor(node.initializer);
+    ensure(
+      variableDecl,
+      anyOf(isVariableDecl, isIdentifier),
+      `Initializer in ${node.kind} must be a VariableDecl or Identifier`
+    );
+
+    const expr = visitor(node.expr);
+    ensure(expr, isExpr, `Expr in ${node.kind} must be an Expr`);
+
+    const body = visitBlockStmt(node.body, visitor);
+
+    return (
+      isForInStmt(node)
+        ? new ForInStmt(variableDecl, expr, body)
+        : new ForOfStmt(variableDecl, expr, body)
+    ) as T;
+  } else if (
+    isFunctionDecl(node) ||
+    isArrowFunctionExpr(node) ||
+    isFunctionExpr(node) ||
+    isMethodDecl(node) ||
+    isConstructorDecl(node)
+  ) {
+    const parameters = node.parameters.flatMap((parameter) =>
+      ensureSingleOrArray(
+        visitor(parameter),
+        isParameterDecl,
+        `a ${node.kind}'s parameters must be ParameterDecl nodes`
+      )
     );
 
     const body = visitBlockStmt(node.body, visitor);
 
     return (
       isFunctionDecl(node)
-        ? new FunctionDecl(parameters, body)
-        : new FunctionExpr(parameters, body)
+        ? new FunctionDecl(node.name, parameters, body)
+        : isArrowFunctionExpr(node)
+        ? new ArrowFunctionExpr(parameters, body)
+        : isFunctionExpr(node)
+        ? new FunctionExpr(node.name, parameters, body)
+        : isMethodDecl(node)
+        ? new MethodDecl(node.name, parameters, body)
+        : new ConstructorDecl(parameters, body)
     ) as T;
   } else if (isIdentifier(node)) {
     return new Identifier(node.name) as T;
+  } else if (isPrivateIdentifier(node)) {
+    return new PrivateIdentifier(node.name) as T;
   } else if (isIfStmt(node)) {
     const when = visitor(node.when);
     const then = visitor(node.then);
@@ -370,25 +434,13 @@ export function visitEachChild<T extends FunctionlessNode>(
     return new NumberLiteralExpr(node.value) as T;
   } else if (isObjectLiteralExpr(node)) {
     return new ObjectLiteralExpr(
-      node.properties.reduce((props: ObjectElementExpr[], prop) => {
-        let p = visitor(prop);
-        if (Array.isArray(p)) {
-          p = flatten(p);
-          ensureItemOf(
-            p,
-            isObjectElementExpr,
-            "an ObjectLiteralExpr's properties must be ObjectElementExpr nodes"
-          );
-          return props.concat(p);
-        } else {
-          ensure(
-            p,
-            isObjectElementExpr,
-            "an ObjectLiteralExpr's properties must be ObjectElementExpr nodes"
-          );
-          return [...props, p];
-        }
-      }, [])
+      node.properties.flatMap((prop) =>
+        ensureSingleOrArray(
+          visitor(prop),
+          isObjectElementExpr,
+          "an ObjectLiteralExpr's properties must be ObjectElementExpr nodes"
+        )
+      )
     ) as T;
   } else if (isParameterDecl(node)) {
     return new ParameterDecl(node.name) as T;
@@ -414,6 +466,21 @@ export function visitEachChild<T extends FunctionlessNode>(
       "a PropAssignExpr's expr property must be an Expr node type"
     );
     return new PropAssignExpr(name, expr) as T;
+  } else if (isPropDecl(node)) {
+    const name = visitor(node.name);
+    const initializer = node.initializer
+      ? visitor(node.initializer)
+      : undefined;
+    ensure(
+      name,
+      isPropName,
+      "a PropDecl's name must be an Identifier, StringLiteralExpr or ComputedPropNameExpr"
+    );
+    if (initializer) {
+      ensure(initializer, isExpr, "A PropDecl's initializer must be an Expr");
+    }
+
+    return new PropDecl(name, initializer) as T;
   } else if (isReferenceExpr(node)) {
     return new ReferenceExpr(node.name, node.ref) as T;
   } else if (isReturnStmt(node)) {
@@ -434,30 +501,20 @@ export function visitEachChild<T extends FunctionlessNode>(
     return new SpreadElementExpr(expr) as T;
   } else if (isStringLiteralExpr(node)) {
     return new StringLiteralExpr(node.value) as T;
+  } else if (isSuperKeyword(node)) {
+    return node.clone() as T;
   } else if (isTemplateExpr(node)) {
     return new TemplateExpr(
-      node.exprs.reduce((exprs: Expr[], expr) => {
-        let e = visitor(expr);
-        if (e === undefined) {
-          return exprs;
-        } else if (Array.isArray(e)) {
-          e = flatten(e);
-          ensureItemOf(
-            e,
-            isExpr,
-            "a TemplateExpr's expr property must only contain Expr node types"
-          );
-          return exprs.concat(e);
-        } else {
-          ensure(
-            e,
-            isExpr,
-            "a TemplateExpr's expr property must only contain Expr node types"
-          );
-          return [...exprs, e];
-        }
-      }, [])
+      node.exprs.flatMap((expr) =>
+        ensureSingleOrArray(
+          visitor(expr),
+          isExpr,
+          "a TemplateExpr's expr property must only contain Expr node types"
+        )
+      )
     ) as T;
+  } else if (isThisExpr(node)) {
+    return node.clone() as T;
   } else if (isThrowStmt(node)) {
     const expr = visitor(node.expr);
     ensure(expr, isExpr, "a ThrowStmt's expr must be an Expr node type");
@@ -499,12 +556,6 @@ export function visitEachChild<T extends FunctionlessNode>(
     return new PostfixUnaryExpr(node.op, expr) as T;
   } else if (isUndefinedLiteralExpr(node)) {
     return new UndefinedLiteralExpr() as T;
-  } else if (isVariableDecl(node)) {
-    const expr = node.initializer ? visitor(node.initializer) : undefined;
-    if (expr) {
-      ensure(expr, isExpr, "a VariableDecl's expr property must be an Expr");
-    }
-    return new VariableDecl(node.name, expr) as T;
   } else if (isVariableStmt(node)) {
     const declList = visitor(node.declList);
     ensure(
@@ -513,6 +564,20 @@ export function visitEachChild<T extends FunctionlessNode>(
       "a VariableStmt's declList property must be an VariableDeclList"
     );
     return new VariableStmt(declList) as T;
+  } else if (isVariableDeclList(node)) {
+    const variables = node.decls.map(visitor);
+    ensureItemOf(
+      variables,
+      isVariableDecl,
+      "Variables in a VariableDeclList must be of type VariableDecl"
+    );
+    return new VariableDeclList(variables) as T;
+  } else if (isVariableDecl(node)) {
+    const expr = node.initializer ? visitor(node.initializer) : undefined;
+    if (expr) {
+      ensure(expr, isExpr, "a VariableDecl's expr property must be an Expr");
+    }
+    return new VariableDecl(node.name, expr) as T;
   } else if (isWhileStmt(node)) {
     const condition = visitor(node.condition);
     ensure(condition, isExpr, "a WhileStmt's condition must be an Expr");
@@ -576,14 +641,92 @@ export function visitEachChild<T extends FunctionlessNode>(
     } else {
       return new ArrayBinding(bindings as ArrayBinding["bindings"]) as T;
     }
-  } else if (isVariableDeclList(node)) {
-    const variables = node.decls.map(visitor);
-    ensureItemOf(
-      variables,
-      isVariableDecl,
-      "Variables in a VariableDeclList must be of type VariableDecl"
+  } else if (isLabelledStmt(node)) {
+    const stmt = visitor(node.stmt);
+    ensure(stmt, isStmt, "LabelledStmt's stmt must be a Stmt");
+    return new LabelledStmt(node.label, stmt) as T;
+  } else if (isSwitchStmt(node)) {
+    const clauses = node.clauses.flatMap((clause) =>
+      ensureSingleOrArray(
+        visitor(clause),
+        isSwitchClause,
+        "must be a CaseClause or DefaultClause"
+      )
     );
-    return new VariableDeclList(variables) as T;
+
+    const defaultClauses = clauses.filter(isDefaultClause);
+    if (defaultClauses.length === 1) {
+      if (!isDefaultClause(clauses[clauses.length - 1])) {
+        throw new SynthError(
+          ErrorCodes.Unexpected_Error,
+          `only the last SwitchClause can be a DefaultClause`
+        );
+      }
+    } else if (defaultClauses.length > 1) {
+      throw new SynthError(
+        ErrorCodes.Unexpected_Error,
+        `there must be 0 or 1 DefaultClauses in a single SwitchStmt, but found ${defaultClauses.length}`
+      );
+    }
+
+    return new SwitchStmt(clauses) as T;
+  } else if (isCaseClause(node)) {
+    const expr = visitor(node.expr);
+    ensure(expr, isExpr, `the CaseClause's expr must be an Expr`);
+    const stmts = node.statements.flatMap((stmt) =>
+      ensureSingleOrArray(
+        visitor(stmt),
+        isStmt,
+        `expected all items in a CaseClause's statements to be Stmt nodes`
+      )
+    );
+
+    return new CaseClause(expr, stmts) as T;
+  } else if (isDefaultClause(node)) {
+    const stmts = node.statements.flatMap((stmt) =>
+      ensureSingleOrArray(
+        visitor(stmt),
+        isStmt,
+        `expected all items in a DefaultClause's statements to be Stmt nodes`
+      )
+    );
+
+    return new DefaultClause(stmts) as T;
+  } else if (isEmptyStmt(node)) {
+    return node.clone() as T;
+  } else if (isWithStmt(node)) {
+    const expr = visitor(node.expr);
+    const stmt = visitor(node.stmt);
+    ensure(expr, isExpr, "WithStmt's expr must be an Expr");
+    ensure(stmt, isStmt, "WithStmt's stmt must be a Stmt");
+    return new WithStmt(expr, stmt) as T;
+  } else if (isRegexExpr(node)) {
+    return node.clone() as T;
+  } else if (isDeleteExpr(node)) {
+    const expr = visitor(node.expr);
+    ensure(
+      expr,
+      anyOf(isPropAccessExpr, isElementAccessExpr),
+      "DeleteExpr's expr must be PropAccessExpr or ElementAccessExpr"
+    );
+    return new DeleteExpr(expr) as T;
+  } else if (isVoidExpr(node)) {
+    const expr = visitor(node.expr);
+    ensure(expr, isExpr, "VoidExpr's expr must be an Expr");
+    return new VoidExpr(expr) as T;
+  } else if (isYieldExpr(node)) {
+    let expr;
+    if (node.expr) {
+      expr = visitor(node.expr);
+      ensure(expr, isExpr, "YieldExpr's expr must be an Expr");
+    }
+    return new YieldExpr(expr, node.delegate) as T;
+  } else if (isParenthesizedExpr(node)) {
+    const expr = visitor(node.expr);
+    ensure(expr, isExpr, "ParenthesizedExpr's expr must be an Expr");
+    return new ParenthesizedExpr(expr) as T;
+  } else if (isImportKeyword(node)) {
+    return node.clone() as T;
   }
   return assertNever(node);
 }
@@ -620,7 +763,7 @@ export function visitBlock(
       const id = new Identifier(nameGenerator.generateOrGet(expr));
       nestedTasks.push(
         new VariableStmt(
-          new VariableDeclList([new VariableDecl(id.name, expr)])
+          new VariableDeclList([new VariableDecl(id.clone(), expr)])
         )
       );
       return id;
@@ -632,6 +775,31 @@ export function visitBlock(
       ? updatedNode
       : [...nestedTasks, updatedNode];
   });
+}
+
+/**
+ * Ensures that the {@link val} is either:
+ * 1. a "single" instance of {@link T}
+ * 2. an "array" of {@link T}
+ *
+ * @param val value to check
+ * @param assertion assertion function to apply to a single instance
+ * @param message error message to throw if the assertion is false
+ * @returns an array of {@link T} for folding back into a visitEachChild result
+ */
+function ensureSingleOrArray<T>(
+  val: any,
+  assertion: (a: any) => a is T,
+  message: string
+): T[] {
+  if (Array.isArray(val)) {
+    val = val.flat();
+    ensureItemOf(val, assertion, message);
+    return val;
+  } else {
+    ensure(val, assertion, message);
+    return [val];
+  }
 }
 
 /**

@@ -1104,6 +1104,44 @@ export namespace ErrorCodes {
     type: ErrorType.ERROR,
     title: "ApiGateway Unsupported Reference",
   };
+
+  /**
+   * Errors in Step Functions can only be thrown in one of two ways:
+   *
+   * 1. by throwing javascript's `Error` class
+   * ```ts
+   * throw Error("message");
+   * throw new Error("message");
+   * ```
+   * 2. by throwing the `StepFunctionError` class
+   * ```ts
+   * throw new StepFunctionError("CustomErrorName", { error: "data" })
+   * ```
+   */
+  export const StepFunction_Throw_must_be_Error_or_StepFunctionError_class: ErrorCode =
+    {
+      code: 10030,
+      type: ErrorType.ERROR,
+      title: "StepFunction throw must be Error or StepFunctionError class",
+    };
+
+  /**
+   * Classes, methods and private identifiers are not yet supported by Functionless.
+   *
+   * To workaround, use Functions.
+   *
+   * ```ts
+   * function foo () { .. }
+   * const foo = () => { .. }
+   * ```
+   *
+   * @see https://github.com/functionless/functionless/issues/362
+   */
+  export const Classes_are_not_supported: ErrorCode = {
+    code: 10031,
+    type: ErrorType.ERROR,
+    title: "Classes are not yet supported by Functionless",
+  };
 }
 
 // to prevent the closure serializer from trying to import all of functionless.
