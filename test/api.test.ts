@@ -268,7 +268,9 @@ test("AWS integration with Event Bus fails when given a reference", () => {
           return "success";
         }
       )
-  ).toThrow("object literal");
+  ).toThrow(
+    "API Gateway Integration with EventBus.putEvents expects object literals with no computed properties"
+  );
 });
 
 test("AWS integration with DynamoDB Table", () => {

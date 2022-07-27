@@ -21,9 +21,9 @@ import {
   isComputedPropertyNameExpr,
   isIdentifier,
   isObjectLiteralExpr,
+  isPrivateIdentifier,
   isPropAssignExpr,
   isSpreadAssignExpr,
-  isStringLiteralExpr,
 } from "../guards";
 import {
   Integration,
@@ -383,16 +383,17 @@ abstract class EventBusBase<in Evnt extends Event, OutEvnt extends Evnt = Evnt>
             const objectProps = arg.properties.map((prop) => {
               if (
                 !isPropAssignExpr(prop) ||
-                !(isIdentifier(prop.name) || isStringLiteralExpr(prop.name))
+                isComputedPropertyNameExpr(prop.name)
               ) {
                 throw new SynthError(
                   ErrorCodes.Expected_an_object_literal,
                   "API Gateway Integration with EventBus.putEvents expects object literals with no computed properties"
                 );
               }
-              const propName = isIdentifier(prop.name)
-                ? prop.name.name
-                : prop.name.value;
+              const propName =
+                isIdentifier(prop.name) || isPrivateIdentifier(prop.name)
+                  ? prop.name.name
+                  : prop.name.value;
               const fieldName = ENTRY_PROPERTY_MAP[propName as keyof Event];
 
               if (!fieldName) {
