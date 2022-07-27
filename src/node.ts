@@ -1,4 +1,4 @@
-import {
+import type {
   BindingElem,
   BindingPattern,
   Decl,
@@ -7,7 +7,7 @@ import {
   VariableDeclList,
 } from "./declaration";
 import type { Err } from "./error";
-import { Expr } from "./expression";
+import type { Expr, ImportKeyword, SuperKeyword } from "./expression";
 import {
   isBlockStmt,
   isTryStmt,
@@ -26,14 +26,17 @@ import {
   isBindingElem,
   isIdentifier,
   isVariableDecl,
+  isNode,
 } from "./guards";
-import { BlockStmt, CatchClause, Stmt } from "./statement";
+import type { BlockStmt, CatchClause, Stmt } from "./statement";
 
 export type FunctionlessNode =
   | Decl
   | Expr
   | Stmt
   | Err
+  | SuperKeyword
+  | ImportKeyword
   | BindingPattern
   | VariableDeclList;
 
@@ -56,7 +59,20 @@ export abstract class BaseNode<
    */
   readonly children: FunctionlessNode[] = [];
 
-  constructor(readonly kind: Kind) {}
+  constructor(readonly kind: Kind, args: IArguments) {
+    const setParent = (node: any) => {
+      if (!node) {
+        return;
+      } else if (isNode(node)) {
+        node.setParent(this as FunctionlessNode);
+      } else if (Array.isArray(node)) {
+        node.forEach(setParent);
+      }
+    };
+    for (const arg of args) {
+      setParent(arg);
+    }
+  }
 
   public abstract clone(): this;
 
@@ -334,7 +350,7 @@ export abstract class BaseNode<
         if (isBindingPattern(node.name)) {
           return getNames(node.name);
         }
-        return [[node.name, node]];
+        return [[node.name.name, node]];
       } else if (isBindingElem(node)) {
         if (isIdentifier(node.name)) {
           return [[node.name.name, node]];
@@ -344,12 +360,12 @@ export abstract class BaseNode<
         return node.bindings.flatMap((b) => getNames(b));
       } else if (isFunctionExpr(node) || isFunctionDecl(node)) {
         return node.parameters.flatMap((param) =>
-          typeof param.name === "string"
-            ? [[param.name, param]]
+          isIdentifier(param.name)
+            ? [[param.name.name, param]]
             : getNames(param.name)
         );
       } else if (isForInStmt(node) || isForOfStmt(node)) {
-        return getNames(node.variableDecl);
+        return getNames(node.initializer);
       } else if (isCatchClause(node) && node.variableDecl?.name) {
         return getNames(node.variableDecl);
       } else {

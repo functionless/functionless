@@ -11,13 +11,14 @@ import {
   FunctionInterface,
   makeFunctionlessChecker,
 } from "./checker";
-import type { FunctionDecl } from "./declaration";
+import type { ConstructorDecl, FunctionDecl, MethodDecl } from "./declaration";
 import { ErrorCodes, SynthError } from "./error-code";
 import type {
   FunctionExpr,
   BinaryOp,
   UnaryOp,
   PostfixUnaryOp,
+  ArrowFunctionExpr,
 } from "./expression";
 import { FunctionlessNode } from "./node";
 
@@ -297,8 +298,13 @@ export function compile(
       }
 
       function toFunction(
-        type: FunctionDecl["kind"] | FunctionExpr["kind"],
-        impl: ts.Expression,
+        type:
+          | FunctionDecl["kind"]
+          | ArrowFunctionExpr["kind"]
+          | FunctionExpr["kind"]
+          | ConstructorDecl["kind"]
+          | MethodDecl["kind"],
+        impl: ts.Node,
         /**
          * Scope used to determine the accessability of identifiers.
          * Functionless considers identifiers in a closure and all nested closures to be in scope.
@@ -322,7 +328,9 @@ export function compile(
         if (
           !ts.isFunctionDeclaration(impl) &&
           !ts.isArrowFunction(impl) &&
-          !ts.isFunctionExpression(impl)
+          !ts.isFunctionExpression(impl) &&
+          !ts.isConstructorDeclaration(impl) &&
+          !ts.isMethodDeclaration(impl)
         ) {
           throw new Error(
             `Functionless reflection only supports function parameters with bodies, no signature only declarations or references. Found ${impl.getText()}.`
@@ -343,17 +351,37 @@ export function compile(
             ]);
 
         return newExpr(type, [
+          ...resolveFunctionName(),
           ts.factory.createArrayLiteralExpression(
             impl.parameters.map((param) =>
               newExpr("ParameterDecl", [
-                ts.isIdentifier(param.name)
-                  ? ts.factory.createStringLiteral(param.name.text)
-                  : toExpr(param.name, scope ?? impl),
+                toExpr(param.name, scope ?? impl),
+                ...(param.initializer
+                  ? [toExpr(param.initializer, scope ?? impl)]
+                  : []),
               ])
             )
           ),
           body,
         ]);
+
+        function resolveFunctionName(): [ts.Expression] | [] {
+          if (type === "MethodDecl") {
+            // methods can be any valid PropertyName expression
+            return [toExpr((<ts.MethodDeclaration>impl).name!, scope ?? impl)];
+          } else if (type === "FunctionDecl" || type === "FunctionExpr") {
+            if (
+              (ts.isFunctionDeclaration(impl) ||
+                ts.isFunctionExpression(impl)) &&
+              impl.name
+            ) {
+              return [ts.factory.createStringLiteral(impl.name.text)];
+            } else {
+              return [ts.factory.createIdentifier("undefined")];
+            }
+          }
+          return [];
+        }
       }
 
       function visitApiIntegration(node: ts.NewExpression): ts.Node {
@@ -410,7 +438,7 @@ export function compile(
             const newType = checker.getTypeAtLocation(node);
             // cannot create new resources in native runtime code.
             const functionlessKind = checker.getFunctionlessTypeKind(newType);
-            if (checker.getFunctionlessTypeKind(newType)) {
+            if (functionlessKind) {
               throw new SynthError(
                 ErrorCodes.Unsupported_initialization_of_resources,
                 `Cannot initialize new resources in a runtime function, found ${functionlessKind}.`
@@ -425,69 +453,17 @@ export function compile(
             }
           }
 
-          const getCall = () => {
-            const exprType = checker.getTypeAtLocation(node.expression);
-            const functionBrand = exprType.getProperty("__functionBrand");
-            let signature: ts.Signature | undefined;
-            if (functionBrand !== undefined) {
-              const functionType = checker.getTypeOfSymbolAtLocation(
-                functionBrand,
-                node.expression
-              );
-              const signatures = checker.getSignaturesOfType(
-                functionType,
-                ts.SignatureKind.Call
-              );
-
-              if (signatures.length === 1) {
-                signature = signatures[0];
-              } else {
-                // If the function brand has multiple signatures, try the resolved signature.
-                signature = checker.getResolvedSignature(node);
-              }
-            } else {
-              signature = checker.getResolvedSignature(node);
-            }
-            if (signature && signature.parameters.length > 0) {
-              return newExpr(
-                ts.isCallExpression(node) ? "CallExpr" : "NewExpr",
-                [
-                  toExpr(node.expression, scope),
-                  ts.factory.createArrayLiteralExpression(
-                    signature.parameters.map((parameter, i) =>
-                      newExpr("Argument", [
-                        (parameter.declarations?.[0] as ts.ParameterDeclaration)
-                          ?.dotDotDotToken
-                          ? newExpr("ArrayLiteralExpr", [
-                              ts.factory.createArrayLiteralExpression(
-                                node.arguments
-                                  ?.slice(i)
-                                  .map((x) => toExpr(x, scope)) ?? []
-                              ),
-                            ])
-                          : toExpr(node.arguments?.[i], scope),
-                        ts.factory.createStringLiteral(parameter.name),
-                      ])
-                    )
-                  ),
-                ]
-              );
-            } else {
-              return newExpr("CallExpr", [
-                toExpr(node.expression, scope),
-                ts.factory.createArrayLiteralExpression(
-                  node.arguments?.map((arg) =>
-                    newExpr("Argument", [
-                      toExpr(arg, scope),
-                      ts.factory.createIdentifier("undefined"),
-                    ])
-                  ) ?? []
-                ),
-              ]);
-            }
-          };
-
-          const call = getCall();
+          const call = newExpr(
+            ts.isCallExpression(node) ? "CallExpr" : "NewExpr",
+            [
+              toExpr(node.expression, scope),
+              ts.factory.createArrayLiteralExpression(
+                node.arguments?.map((arg) =>
+                  newExpr("Argument", [toExpr(arg, scope)])
+                ) ?? []
+              ),
+            ]
+          );
 
           const type = checker.getTypeAtLocation(node);
           const typeSymbol = type.getSymbol();
@@ -515,7 +491,8 @@ export function compile(
               return ref(_ref);
             } else {
               throw new SynthError(
-                ErrorCodes.Unable_to_find_reference_out_of_application_function
+                ErrorCodes.Unable_to_find_reference_out_of_application_function,
+                `Unable to find reference out of application function: ${node.getText()}`
               );
             }
           }
@@ -547,7 +524,8 @@ export function compile(
               return ref(_ref);
             } else {
               throw new SynthError(
-                ErrorCodes.Unable_to_find_reference_out_of_application_function
+                ErrorCodes.Unable_to_find_reference_out_of_application_function,
+                `Unable to find reference out of application function: ${node.getText()}`
               );
             }
           }
@@ -577,17 +555,14 @@ export function compile(
             ),
           ]);
         } else if (ts.isVariableDeclaration(node)) {
-          if (ts.isIdentifier(node.name)) {
-            return newExpr("VariableDecl", [
-              ts.factory.createStringLiteral(node.name.getText()),
-              ...(node.initializer ? [toExpr(node.initializer, scope)] : []),
-            ]);
-          } else {
-            return newExpr("VariableDecl", [
-              toExpr(node.name, scope),
-              toExpr(node.initializer, scope),
-            ]);
-          }
+          return newExpr("VariableDecl", [
+            ts.isIdentifier(node.name)
+              ? newExpr("Identifier", [
+                  ts.factory.createStringLiteral(node.name.text),
+                ])
+              : toExpr(node.name, scope),
+            ...(node.initializer ? [toExpr(node.initializer, scope)] : []),
+          ]);
         } else if (ts.isIfStatement(node)) {
           return newExpr("IfStmt", [
             // when
@@ -710,6 +685,10 @@ export function compile(
           ]);
         } else if (ts.isNumericLiteral(node)) {
           return newExpr("NumberLiteralExpr", [node]);
+        } else if (ts.isBigIntLiteral(node)) {
+          return newExpr("BigIntExpr", [node]);
+        } else if (ts.isRegularExpressionLiteral(node)) {
+          return newExpr("RegexExpr", [node]);
         } else if (
           ts.isStringLiteral(node) ||
           ts.isNoSubstitutionTemplateLiteral(node)
@@ -818,7 +797,7 @@ export function compile(
             toExpr(node.expression, scope),
           ]);
         } else if (ts.isParenthesizedExpression(node)) {
-          return toExpr(node.expression, scope);
+          return newExpr("ParenthesizedExpr", [toExpr(node.expression, scope)]);
         } else if (ts.isAsExpression(node)) {
           return toExpr(node.expression, scope);
         } else if (ts.isTypeAssertionExpression(node)) {
@@ -826,10 +805,95 @@ export function compile(
         } else if (ts.isNonNullExpression(node)) {
           return toExpr(node.expression, scope);
         } else if (node.kind === ts.SyntaxKind.ThisKeyword) {
-          // assuming that this is used in a valid location, create a closure around that instance.
-          return ref(ts.factory.createIdentifier("this"));
+          return newExpr("ThisExpr", [
+            ts.factory.createArrowFunction(
+              undefined,
+              undefined,
+              [],
+              undefined,
+              undefined,
+              ts.factory.createIdentifier("this")
+            ),
+          ]);
+        } else if (
+          ts.isToken(node) &&
+          node.kind === ts.SyntaxKind.SuperKeyword
+        ) {
+          return newExpr("SuperKeyword", []);
         } else if (ts.isAwaitExpression(node)) {
           return newExpr("AwaitExpr", [toExpr(node.expression, scope)]);
+        } else if (ts.isClassDeclaration(node) || ts.isClassExpression(node)) {
+          return newExpr(
+            `Class${ts.isClassDeclaration(node) ? "Decl" : "Expr"}`,
+            [
+              // name
+              node.name ?? ts.factory.createIdentifier("undefined"),
+              // extends
+              node.heritageClauses?.flatMap((clause) =>
+                clause.token === ts.SyntaxKind.ExtendsKeyword &&
+                clause.types[0].expression !== undefined
+                  ? [toExpr(clause.types[0].expression, scope)]
+                  : []
+              )[0] ?? ts.factory.createIdentifier("undefined"),
+              // members
+              ts.factory.createArrayLiteralExpression(
+                node.members.map((member) => toExpr(member, scope))
+              ),
+            ]
+          );
+        } else if (ts.isClassStaticBlockDeclaration(node)) {
+          return newExpr("ClassStaticBlockDecl", [toExpr(node.body, scope)]);
+        } else if (ts.isConstructorDeclaration(node)) {
+          return toFunction("ConstructorDecl", node);
+        } else if (ts.isMethodDeclaration(node)) {
+          return toFunction("MethodDecl", node);
+        } else if (ts.isPropertyDeclaration(node)) {
+          return newExpr("PropDecl", [
+            toExpr(node.name, scope),
+            node.initializer
+              ? toExpr(node.initializer, scope)
+              : ts.factory.createIdentifier("undefined"),
+          ]);
+        } else if (ts.isDebuggerStatement(node)) {
+          return newExpr("DebuggerStmt", []);
+        } else if (ts.isLabeledStatement(node)) {
+          return newExpr("LabelledStmt", [toExpr(node.statement, scope)]);
+        } else if (ts.isSwitchStatement(node)) {
+          return newExpr("SwitchStmt", [
+            ts.factory.createArrayLiteralExpression(
+              node.caseBlock.clauses.map((clause) => toExpr(clause, scope))
+            ),
+          ]);
+        } else if (ts.isCaseClause(node)) {
+          return newExpr("CaseClause", [
+            toExpr(node.expression, scope),
+            ts.factory.createArrayLiteralExpression(
+              node.statements.map((stmt) => toExpr(stmt, scope))
+            ),
+          ]);
+        } else if (ts.isDefaultClause(node)) {
+          return newExpr("DefaultClause", [
+            ts.factory.createArrayLiteralExpression(
+              node.statements.map((stmt) => toExpr(stmt, scope))
+            ),
+          ]);
+        } else if (ts.isWithStatement(node)) {
+          return newExpr("WithStmt", []);
+        } else if (ts.isPrivateIdentifier(node)) {
+          return newExpr("PrivateIdentifier", [
+            ts.factory.createStringLiteral(node.getText()),
+          ]);
+        } else if (ts.isVoidExpression(node)) {
+          return newExpr("VoidExpr", [toExpr(node.expression, scope)]);
+        } else if (ts.isDeleteExpression(node)) {
+          return newExpr("DeleteExpr", [toExpr(node.expression, scope)]);
+        } else if (ts.isYieldExpression(node)) {
+          return newExpr("YieldExpr", [
+            toExpr(node.expression, scope),
+            node.asteriskToken
+              ? ts.factory.createTrue()
+              : ts.factory.createFalse(),
+          ]);
         }
 
         throw new Error(

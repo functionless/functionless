@@ -20,7 +20,7 @@ Array [
 $util.qr($v1.put('a', 1))
 #set($v2 = {})
 $util.qr($v2.put('b', 2))
-#return($util.log.error('hello world', [$v1, $v2]))",
+#return($util.log.error('hello world', $v1, $v2))",
 ]
 `;
 
@@ -44,7 +44,7 @@ Array [
 $util.qr($v1.put('a', 1))
 #set($v2 = {})
 $util.qr($v2.put('b', 2))
-#return($util.log.info('hello world', [$v1, $v2]))",
+#return($util.log.info('hello world', $v1, $v2))",
 ]
 `;
 
@@ -523,7 +523,7 @@ Array [
 #if($v1)
 #break
 #end
-$util.qr($context.stash.newList.addAll([$item]))
+$util.qr($context.stash.newList.add($item))
 #end
 #return($context.stash.newList)",
 ]
@@ -799,7 +799,7 @@ Array [
 }",
   "#set($context.stash.newList = [])
 #foreach($key in $context.arguments.record.keySet())
-$util.qr($context.stash.newList.addAll([$context.arguments.record[$key]]))
+$util.qr($context.stash.newList.add($context.arguments.record[$key]))
 #end
 #return($context.stash.newList)",
 ]
@@ -813,7 +813,7 @@ Array [
 }",
   "#set($context.stash.newList = [])
 #foreach($item in $context.arguments.list)
-$util.qr($context.stash.newList.addAll([$item]))
+$util.qr($context.stash.newList.add($item))
 #end
 #return($context.stash.newList)",
 ]
@@ -860,7 +860,7 @@ Array [
   "#set($context.stash.newList = [])
 #foreach($item in $context.arguments.list)
 #set($i = $item)
-$util.qr($context.stash.newList.addAll([$i]))
+$util.qr($context.stash.newList.add($i))
 #end
 #return($context.stash.newList)",
 ]
@@ -1056,7 +1056,7 @@ Array [
 \\"version\\": \\"2018-05-29\\",
 \\"payload\\": null
 }",
-  "$util.qr($context.arguments.list.addAll(['hello']))
+  "$util.qr($context.arguments.list.add('hello'))
 #return($context.arguments.list)",
 ]
 `;

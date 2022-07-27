@@ -6,7 +6,13 @@ import {
 } from "aws-lambda";
 import { FunctionDecl, validateFunctionDecl } from "./declaration";
 import { ErrorCodes, SynthError } from "./error-code";
-import { CallExpr, Expr, Identifier, ReferenceExpr } from "./expression";
+import {
+  CallExpr,
+  Expr,
+  Identifier,
+  ReferenceExpr,
+  ThisExpr,
+} from "./expression";
 import { Function } from "./function";
 import {
   isReturnStmt,
@@ -28,7 +34,9 @@ import {
   isReferenceExpr,
   isAwaitExpr,
   isPromiseExpr,
+  isThisExpr,
   isVariableDecl,
+  isParenthesizedExpr,
 } from "./guards";
 import { Integration, IntegrationImpl, isIntegration } from "./integration";
 import { Stmt } from "./statement";
@@ -643,14 +651,46 @@ export class APIGatewayVTL extends VTL {
       return this.add(this.exprToJson(node.expr));
     } else if (
       isPropAccessExpr(node) &&
+      isIdentifier(node.name) &&
       isInputBody(node.expr) &&
-      node.name === "data"
+      node.name.name === "data"
     ) {
       // $input.data maps to `$input.path('$')`
       // this returns a VTL object representing the root payload data
       return `$input.path('$')`;
     }
     return super.eval(node as any, returnVar);
+  }
+
+  /**
+   * Attempt to return the expression as a valid escaped json string.
+   *
+   * ```ts
+   * {
+   *    x: input
+   * }
+   * ```
+   *
+   * =>
+   *
+   * ```ts
+   * { "x": $input.json('$') }
+   * ```
+   *
+   * =>
+   *
+   * ```ts
+   * "{ \"x\": $util.escapeJavaScript($input.json('$')) }"
+   * ```
+   */
+  public stringify(expr: Expr): string {
+    const json = this.exprToJson(expr);
+    return `"${json
+      .replace(/"/g, '\\"')
+      .replace(
+        /\$input\.json\('([^']*)'\)/g,
+        "$util.escapeJavaScript($input.json('$1'))"
+      )}"`;
   }
 
   /**
@@ -664,6 +704,8 @@ export class APIGatewayVTL extends VTL {
     const jsonPath = toJsonPath(expr);
     if (jsonPath) {
       return `$input.json('${jsonPath}')`;
+    } else if (isParenthesizedExpr(expr)) {
+      return this.exprToJson(expr.expr);
     } else if (isNullLiteralExpr(expr) || isUndefinedLiteralExpr(expr)) {
       // Undefined is not the same as null. In JSON terms, `undefined` is the absence of a value where-as `null` is a present null value.
       return "null";
@@ -684,7 +726,7 @@ export class APIGatewayVTL extends VTL {
         return this.exprToJson(expr.expr);
       }
     } else if (isCallExpr(expr)) {
-      if (isReferenceExpr(expr.expr)) {
+      if (isReferenceExpr(expr.expr) || isThisExpr(expr.expr)) {
         const ref = expr.expr.ref();
         if (isIntegration<Integration>(ref)) {
           const serviceCall = new IntegrationImpl(ref);
@@ -699,7 +741,11 @@ export class APIGatewayVTL extends VTL {
         }
       } else if (isIdentifier(expr.expr) && expr.expr.name === "Number") {
         return this.exprToJson(expr.args[0]);
-      } else if (isPropAccessExpr(expr.expr) && expr.expr.name === "params") {
+      } else if (
+        isPropAccessExpr(expr.expr) &&
+        isIdentifier(expr.expr.name) &&
+        expr.expr.name.name === "params"
+      ) {
         if (isIdentifier(expr.expr.expr)) {
           const ref = expr.expr.expr.lookup();
           if (
@@ -709,7 +755,7 @@ export class APIGatewayVTL extends VTL {
             ref.parent.parameters.findIndex((param) => param === ref) === 0
           ) {
             // the first argument of the FunctionDecl is the `$input`, regardless of what it is named
-            if (expr.args.length === 0 || expr.args[0]?.expr === undefined) {
+            if (expr.args.length === 0 || expr.args[0].expr === undefined) {
               const key = this.newLocalVarName();
               return `{#foreach(${key} in $input.params().keySet())"${key}": "$input.params("${key}")"#if($foreach.hasNext),#end#end}`;
             } else if (expr.args.length === 1) {
@@ -788,18 +834,24 @@ export class APIGatewayVTL extends VTL {
      * @returns a JSON Path `string` if this {@link Expr} can be evaluated as a JSON Path from the `$input`, otherwise `undefined`.
      */
     function toJsonPath(expr: Expr): string | undefined {
-      if (isInputBody(expr)) {
+      if (isParenthesizedExpr(expr)) {
+        return toJsonPath(expr.expr);
+      } else if (isInputBody(expr)) {
         return "$";
       } else if (isIdentifier(expr)) {
         // this is a reference to an intermediate value, cannot be expressed as JSON Path
         return undefined;
       } else if (isPropAccessExpr(expr)) {
-        if (expr.name === "data" && isInputBody(expr.expr)) {
+        if (
+          isIdentifier(expr.name) &&
+          expr.name.name === "data" &&
+          isInputBody(expr.expr)
+        ) {
           return "$";
         }
         const exprJsonPath = toJsonPath(expr.expr);
         if (exprJsonPath !== undefined) {
-          return `${exprJsonPath}.${expr.name}`;
+          return `${exprJsonPath}.${expr.name.name}`;
         }
       } else if (
         isElementAccessExpr(expr) &&
@@ -852,8 +904,10 @@ ${reference}
    * @param id the {@link Identifier} expression.
    * @returns a VTL string that points to the value at runtime.
    */
-  public override dereference(id: Identifier | ReferenceExpr): string {
-    if (isReferenceExpr(id)) {
+  public override dereference(
+    id: Identifier | ReferenceExpr | ThisExpr
+  ): string {
+    if (isReferenceExpr(id) || isThisExpr(id)) {
       throw new SynthError(ErrorCodes.ApiGateway_Unsupported_Reference);
     } else {
       const ref = id.lookup();

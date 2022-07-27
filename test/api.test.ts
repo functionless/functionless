@@ -8,6 +8,7 @@ import {
   Table,
   $AWS,
   ApiGatewayInput,
+  StepFunction,
 } from "../src";
 import { normalizeCDKJson } from "./util";
 
@@ -122,6 +123,90 @@ test("AWS integration with Express Step Function", () => {
         $context.responseOverride.status = 500;
         return $input.data.error;
       }
+    }
+  );
+
+  expect(getTemplates(method)).toMatchSnapshot();
+});
+
+test("AWS integration with Standard Step Function", () => {
+  const api = new aws_apigateway.RestApi(stack, "API");
+
+  const sfn = new StepFunction(
+    stack,
+    "SFN",
+    (_input: { num: number; str: string }) => {
+      return "done";
+    }
+  );
+
+  const method = new AwsMethod(
+    {
+      httpMethod: "GET",
+      resource: api.root,
+    },
+    (
+      $input: ApiGatewayInput<{
+        query: {
+          num: string;
+          str: string;
+        };
+      }>
+    ) =>
+      sfn({
+        input: {
+          num: Number($input.params("num")),
+          str: $input.params("str"),
+        },
+      }),
+    ($input) => {
+      return $input.data.executionArn;
+    }
+  );
+
+  expect(getTemplates(method)).toMatchSnapshot();
+});
+
+test("AWS integration with Standard Step Function using input data", () => {
+  const api = new aws_apigateway.RestApi(stack, "API");
+
+  const sfn = new StepFunction(
+    stack,
+    "SFN",
+    (_input: {
+      num: number;
+      obj: {
+        value: string;
+      };
+    }) => {
+      return "done";
+    }
+  );
+
+  const method = new AwsMethod(
+    {
+      httpMethod: "GET",
+      resource: api.root,
+    },
+    (
+      $input: ApiGatewayInput<{
+        query: {
+          num: string;
+          str: string;
+        };
+        body: {
+          value: string;
+        };
+      }>
+    ) =>
+      sfn({
+        input: {
+          num: Number($input.params("num")),
+          obj: $input.data,
+        },
+      }),
+    ($input) => {
+      return $input.data.executionArn;
     }
   );
 

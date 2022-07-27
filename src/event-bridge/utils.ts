@@ -23,6 +23,7 @@ import {
   isElementAccessExpr,
   isIdentifier,
   isObjectLiteralExpr,
+  isParenthesizedExpr,
   isPropAccessExpr,
   isPropAssignExpr,
   isReturnStmt,
@@ -49,7 +50,9 @@ import { Constant, evalToConstant } from "../util";
 export const getReferencePath = (
   expression: Expr
 ): ReferencePath | undefined => {
-  if (isIdentifier(expression)) {
+  if (isParenthesizedExpr(expression)) {
+    return getReferencePath(expression.expr);
+  } else if (isIdentifier(expression)) {
     return { reference: [], identity: expression.name };
   } else if (isPropAccessExpr(expression) || isElementAccessExpr(expression)) {
     const key = getPropertyAccessKey(expression);
@@ -84,7 +87,7 @@ export const getPropertyAccessKey = (
   expr: PropAccessExpr | ElementAccessExpr
 ): string | number => {
   const key = isPropAccessExpr(expr)
-    ? expr.name
+    ? expr.name.name
     : evalToConstant(expr.element)?.constant;
 
   if (!(typeof key === "string" || typeof key === "number")) {
@@ -126,7 +129,9 @@ export interface EventScope {
  * Also does some optimization like turning templated strings of all constants into a string constant.
  */
 export const flattenExpression = (expr: Expr, scope: EventScope): Expr => {
-  if (isUnaryExpr(expr)) {
+  if (isParenthesizedExpr(expr)) {
+    return flattenExpression(expr.expr, scope);
+  } else if (isUnaryExpr(expr)) {
     return new UnaryExpr(expr.op, flattenExpression(expr.expr, scope));
   } else if (isIdentifier(expr)) {
     // if this variable is in scope, return the expression it points to.
@@ -268,7 +273,7 @@ export const flattenStatementsScope = (
 
       return {
         ...scope,
-        [stmt.name]: flattened,
+        [stmt.name.name]: flattened,
       };
     }, {});
 };
@@ -297,7 +302,7 @@ export function assertValidEventReference(
   }
   const eName = eventName?.name;
   const uName = utilsName?.name;
-  if (eventReference.identity === eName) {
+  if (eventReference.identity === (<Identifier | undefined>eName)?.name) {
     if (eventReference.reference.length > 1) {
       const [first] = eventReference.reference;
       if (first !== "detail") {
@@ -306,7 +311,10 @@ export function assertValidEventReference(
         )}`;
       }
     }
-  } else if (!utilsName || eventReference.identity !== uName) {
+  } else if (
+    !utilsName ||
+    eventReference.identity !== (<Identifier | undefined>uName)?.name
+  ) {
     throw Error(
       `Unresolved references can only reference the event parameter (${eventName}) or the $utils parameter (${utilsName}), but found ${eventReference.identity}`
     );

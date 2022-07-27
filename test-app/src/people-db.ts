@@ -78,7 +78,7 @@ export class PeopleDatabase extends Construct {
     // a synchronous Express Step Function for getting a Person
     this.getPersonMachine = new ExpressStepFunction<
       { id: string },
-      undefined | ProcessedPerson
+      null | ProcessedPerson
     >(
       this,
       "GetPersonMachine",
@@ -99,7 +99,7 @@ export class PeopleDatabase extends Construct {
         });
 
         if (person.Item === undefined) {
-          return undefined;
+          return null;
         }
 
         const score = await this.computeScore({

@@ -1,75 +1,105 @@
 import { aws_iam } from "aws-cdk-lib";
 import { Construct } from "constructs";
 import { assertNever } from "./assert";
-import { Decl, FunctionDecl, VariableDecl } from "./declaration";
+import {
+  BindingElem,
+  BindingName,
+  Decl,
+  FunctionDecl,
+  ParameterDecl,
+  VariableDecl,
+} from "./declaration";
 import { ErrorCodes, SynthError } from "./error-code";
 import {
-  Argument,
   CallExpr,
   ElementAccessExpr,
   Expr,
-  Identifier,
   NullLiteralExpr,
   PropAccessExpr,
 } from "./expression";
 import {
-  isBlockStmt,
-  isFunctionExpr,
-  isFunctionDecl,
-  isExprStmt,
-  isVariableStmt,
-  isReturnStmt,
-  isCallExpr,
-  isBreakStmt,
-  isForInStmt,
-  isDoStmt,
-  isContinueStmt,
-  isIfStmt,
-  isNullLiteralExpr,
-  isUndefinedLiteralExpr,
-  isThrowStmt,
-  isNewExpr,
-  isTryStmt,
-  isPropAccessExpr,
-  isLiteralExpr,
-  isObjectLiteralExpr,
-  isBinaryExpr,
-  isUnaryExpr,
   isArgument,
-  isElementAccessExpr,
+  isArrayBinding,
   isArrayLiteralExpr,
-  isPropAssignExpr,
-  isComputedPropertyNameExpr,
-  isStringLiteralExpr,
-  isTemplateExpr,
-  isParameterDecl,
-  isBooleanLiteralExpr,
-  isNumberLiteralExpr,
-  isTypeOfExpr,
-  isConditionExpr,
-  isSpreadAssignExpr,
-  isSpreadElementExpr,
-  isCatchClause,
-  isIdentifier,
+  isArrowFunctionExpr,
   isAwaitExpr,
+  isBinaryExpr,
+  isBindingElem,
+  isBindingPattern,
+  isBlockStmt,
+  isBooleanLiteralExpr,
+  isBreakStmt,
+  isCallExpr,
+  isCaseClause,
+  isCatchClause,
+  isClassDecl,
+  isClassExpr,
+  isClassStaticBlockDecl,
+  isComputedPropertyNameExpr,
+  isConditionExpr,
+  isConstructorDecl,
+  isContinueStmt,
+  isDebuggerStmt,
+  isDefaultClause,
+  isDoStmt,
+  isElementAccessExpr,
+  isEmptyStmt,
+  isErr,
+  isExpr,
+  isExprStmt,
+  isForInStmt,
   isForOfStmt,
+  isFunctionDecl,
+  isFunctionExpr,
+  isIdentifier,
+  isIfStmt,
+  isLabelledStmt,
+  isLiteralExpr,
+  isMethodDecl,
+  isNewExpr,
+  isNode,
+  isNullLiteralExpr,
+  isNumberLiteralExpr,
+  isObjectBinding,
+  isObjectLiteralExpr,
+  isParameterDecl,
+  isPostfixUnaryExpr,
   isPromiseArrayExpr,
   isPromiseExpr,
-  isWhileStmt,
+  isPropAccessExpr,
+  isPropAssignExpr,
+  isPropDecl,
   isReferenceExpr,
+  isReturnStmt,
+  isSpreadAssignExpr,
+  isSpreadElementExpr,
   isStmt,
-  isPostfixUnaryExpr,
+  isStringLiteralExpr,
+  isSuperKeyword,
+  isSwitchStmt,
+  isTemplateExpr,
+  isThisExpr,
+  isThrowStmt,
+  isTryStmt,
+  isTypeOfExpr,
+  isUnaryExpr,
+  isUndefinedLiteralExpr,
   isVariableReference,
-  isBindingPattern,
-  isExpr,
-  isBindingElem,
-  isObjectBinding,
-  isArrayBinding,
-  isErr,
-  isNode,
+  isVariableStmt,
+  isWhileStmt,
+  isWithStmt,
   isForStmt,
   isVariableDeclList,
   isVariableDecl,
+  isClassMember,
+  isPrivateIdentifier,
+  isYieldExpr,
+  isBigIntExpr,
+  isRegexExpr,
+  isDeleteExpr,
+  isVoidExpr,
+  isParenthesizedExpr,
+  isImportKeyword,
 } from "./guards";
 import {
   Integration,
@@ -87,6 +117,7 @@ import {
   ReturnStmt,
   Stmt,
 } from "./statement";
+import { StepFunctionError } from "./step-function";
 import {
   anyOf,
   DeterministicNameGenerator,
@@ -484,6 +515,12 @@ export class ASL {
     });
 
     const inputName = decl.parameters[0]?.name;
+    if (inputName && !isIdentifier(inputName)) {
+      throw new SynthError(
+        ErrorCodes.Unsupported_Feature,
+        "Destructured parameter declarations are not yet supported by Step Functions. https://github.com/functionless/functionless/issues/364"
+      );
+    }
 
     const states = this.evalStmt(this.decl.body);
 
@@ -500,7 +537,11 @@ export class ASL {
       Type: "Pass",
       Parameters: {
         [FUNCTIONLESS_CONTEXT_NAME]: { null: null },
-        ...(inputName ? { [`${inputName}.$`]: "$" } : {}),
+        ...(inputName
+          ? {
+              [`${inputName.name}.$`]: "$",
+            }
+          : {}),
       },
       ResultPath: "$",
       Next: ASLGraph.DeferNext,
@@ -674,6 +715,20 @@ export class ASL {
               ResultPath: tempArrayPath,
             })!;
 
+        const initializerName = isIdentifier(stmt.initializer)
+          ? stmt.initializer.name
+          : isVariableDecl(stmt.initializer) &&
+            isIdentifier(stmt.initializer.name)
+          ? stmt.initializer.name.name
+          : undefined;
+
+        if (initializerName === undefined) {
+          throw new SynthError(
+            ErrorCodes.Unsupported_Feature,
+            "Destructured parameter declarations are not yet supported by Step Functions. https://github.com/functionless/functionless/issues/364"
+          );
+        }
+
         return {
           startState: "assignTemp",
           node: stmt,
@@ -696,9 +751,9 @@ export class ASL {
             assign: isForOfStmt(stmt)
               ? {
                   Type: "Pass",
-                  node: stmt.variableDecl,
+                  node: stmt.initializer,
                   InputPath: `${tempArrayPath}[0]`,
-                  ResultPath: `$.${stmt.variableDecl.name}`,
+                  ResultPath: `$.${initializerName}`,
                   Next: "body",
                 }
               : /**ForInStmt
@@ -707,18 +762,18 @@ export class ASL {
                  */
                 {
                   startState: "assignIndex",
-                  node: stmt.variableDecl,
+                  node: stmt.initializer,
                   states: {
                     assignIndex: {
                       Type: "Pass",
                       InputPath: `${tempArrayPath}[0].index`,
-                      ResultPath: `$.${stmt.variableDecl.name}`,
+                      ResultPath: `$.${initializerName}`,
                       Next: "assignValue",
                     },
                     assignValue: {
                       Type: "Pass",
                       InputPath: `${tempArrayPath}[0].item`,
-                      ResultPath: `$.0__${stmt.variableDecl.name}`,
+                      ResultPath: `$.0__${initializerName}`,
                       Next: "body",
                     },
                   },
@@ -758,10 +813,10 @@ export class ASL {
       const body = this.evalStmt(stmt.body);
 
       return this.evalContextToSubState(stmt, (evalExpr) => {
-        const initializers = stmt.variableDecl
-          ? isVariableDeclList(stmt.variableDecl)
-            ? stmt.variableDecl.decls.map((x) => this.evalStmt(x))
-            : [evalExpr(stmt.variableDecl)]
+        const initializers = stmt.initializer
+          ? isVariableDeclList(stmt.initializer)
+            ? stmt.initializer.decls.map((x) => this.evalStmt(x))
+            : [evalExpr(stmt.initializer)]
           : [undefined];
 
         const [cond, condStates] = stmt.condition
@@ -883,11 +938,19 @@ export class ASL {
       }
 
       return this.evalExprToSubState(stmt.initializer, (exprOutput) => {
+        const name = isIdentifier(stmt.name) ? stmt.name.name : undefined;
+        if (name === undefined) {
+          throw new SynthError(
+            ErrorCodes.Unsupported_Feature,
+            "Destructured parameter declarations are not yet supported by Step Functions. https://github.com/functionless/functionless/issues/364"
+          );
+        }
+
         return ASLGraph.passWithInput(
           {
             Type: "Pass" as const,
             // TODO support binding pattern - https://github.com/functionless/functionless/issues/302
-            ResultPath: `$.${stmt.name}`,
+            ResultPath: `$.${name}`,
           },
           exprOutput
         );
@@ -920,34 +983,113 @@ export class ASL {
           : stmt.expr.expr;
 
       const throwState = this.evalContextToSubState(updated, (evalExpr) => {
-        const error = Object.fromEntries(
-          updated.args
-            .filter((arg): arg is Argument & { expr: Expr } => !!arg.expr)
-            .map((arg) => {
-              const output = evalExpr(arg.expr);
-              // https://stackoverflow.com/questions/67794661/propogating-error-message-through-fail-state-in-aws-step-functions?answertab=trending#tab-top
-              if (!ASLGraph.isLiteralValue(output) || output.containsJsonPath) {
-                throw new SynthError(
-                  ErrorCodes.StepFunctions_error_cause_must_be_a_constant
-                );
-              }
-              return [arg.name!, output.value];
-            })
-        );
+        const errorClassName =
+          // new StepFunctionError will be a ReferenceExpr with the name: Step
+          isReferenceExpr(updated.expr) &&
+          StepFunctionError.isConstructor(updated.expr.ref())
+            ? StepFunctionError.kind
+            : isReferenceExpr(updated.expr) || isIdentifier(updated.expr)
+            ? updated.expr.name
+            : isPropAccessExpr(updated.expr)
+            ? updated.expr.name.name
+            : undefined;
+
+        // we support three ways of throwing errors within Step Functions
+        // throw new Error(msg)
+        // throw Error(msg)
+        // throw StepFunctionError(cause, message);
+
+        const { errorName, causeJson } = resolveErrorNameAndCause();
 
         const throwTransition = this.throw(stmt);
         if (throwTransition === undefined) {
           return {
             Type: "Fail",
-            Error: exprToString(updated.expr),
-            Cause: JSON.stringify(error),
+            Error: errorName,
+            Cause: JSON.stringify(causeJson),
           };
         } else {
           return {
             Type: "Pass",
-            Result: error,
+            Result: causeJson,
             ...throwTransition,
           };
+        }
+
+        function resolveErrorNameAndCause(): {
+          errorName: string;
+          causeJson: unknown;
+        } {
+          if (errorClassName === "Error") {
+            const errorMessage = updated.args[0]?.expr;
+            if (
+              errorMessage === undefined ||
+              isUndefinedLiteralExpr(errorMessage)
+            ) {
+              return {
+                errorName: "Error",
+                causeJson: {
+                  message: null,
+                },
+              };
+            } else {
+              return {
+                errorName: "Error",
+                causeJson: {
+                  message: toJson(errorMessage),
+                },
+              };
+            }
+          } else if (errorClassName === "StepFunctionError") {
+            const [error, cause] = updated.args.map(({ expr }) => expr);
+            if (error === undefined || cause === undefined) {
+              // this should never happen if typescript type checking is enabled
+              // hence why we don't add a new ErrorCode for it
+              throw new SynthError(
+                ErrorCodes.Unexpected_Error,
+                `Expected 'error' and 'cause' parameter in StepFunctionError`
+              );
+            }
+            const errorName = toJson(error);
+            if (typeof errorName !== "string") {
+              // this should never happen if typescript type checking is enabled
+              // hence why we don't add a new ErrorCode for it
+              throw new SynthError(
+                ErrorCodes.Unexpected_Error,
+                `Expected 'error' parameter in StepFunctionError to be of type string, but got ${typeof errorName}`
+              );
+            }
+            try {
+              return {
+                errorName,
+                causeJson: toJson(cause),
+              };
+            } catch (err: any) {
+              throw new SynthError(
+                ErrorCodes.StepFunctions_error_cause_must_be_a_constant,
+                err.message
+              );
+            }
+          } else {
+            throw new SynthError(
+              ErrorCodes.StepFunction_Throw_must_be_Error_or_StepFunctionError_class
+            );
+          }
+        }
+
+        /**
+         * Attempts to convert a Node into a JSON object.
+         *
+         * Only literal expression types are supported - no computation.
+         */
+        function toJson(expr: Expr): unknown {
+          const val = evalExpr(expr);
+          if (!ASLGraph.isLiteralValue(val) || val.containsJsonPath) {
+            throw new SynthError(
+              ErrorCodes.StepFunctions_error_cause_must_be_a_constant
+            );
+          }
+          return val.value;
         }
       });
 
@@ -955,7 +1097,11 @@ export class ASL {
     } else if (isTryStmt(stmt)) {
       const tryFlow = analyzeFlow(stmt.tryBlock);
 
-      const errorVariableName = stmt.catchClause?.variableDecl?.name;
+      const errorVariableName = isIdentifier(
+        stmt.catchClause?.variableDecl?.name
+      )
+        ? stmt.catchClause!.variableDecl!.name.name
+        : undefined;
 
       const tryState = {
         startState: "try",
@@ -1145,6 +1291,25 @@ export class ASL {
           },
         };
       });
+    } else if (isDebuggerStmt(stmt) || isEmptyStmt(stmt)) {
+      return undefined;
+    } else if (isLabelledStmt(stmt)) {
+      return this.evalStmt(stmt.stmt);
+    } else if (isWithStmt(stmt)) {
+      throw new SynthError(
+        ErrorCodes.Unsupported_Feature,
+        `with statements are not yet supported by ASL`
+      );
+    } else if (
+      isSwitchStmt(stmt) ||
+      isCaseClause(stmt) ||
+      isDefaultClause(stmt)
+    ) {
+      // see: https://github.com/functionless/functionless/issues/306
+      throw new SynthError(
+        ErrorCodes.Unsupported_Feature,
+        `switch statements are not yet supported in Step Functions, see https://github.com/functionless/functionless/issues/306`
+      );
     }
     return assertNever(stmt);
   }
@@ -1375,19 +1540,28 @@ export class ASL {
    * Method is private. External consumers should use use {@link evalContext} or {@link evalExpr}.
    *
    * @param expr the {@link Expr} to evaluate.
-   * @param props where to store the result, whether this is the end state or not, where to go to next
-   * @returns the {@link ASLGraph.Output} generated by an expression or a {@link ASLGraph.OutputSubState} with additional states and outputs.
+   * @param allowUndefined - when true, does not fail on undefined values. The resulting output literal may contain `value: undefined`.
+   * @returns the {@link ASLGraph.Output} generated by an expression or an {@link ASLGraph.OutputSubState} with additional states and outputs.
    */
-  private eval(expr: Expr): ASLGraph.NodeResults {
+  private eval(
+    expr: Expr,
+    allowUndefined: boolean = false
+  ): ASLGraph.NodeResults {
     // first check to see if the expression can be turned into a constant.
     const constant = evalToConstant(expr);
     if (constant !== undefined) {
-      const value = constant.constant as any;
+      const value = constant.constant;
+      if (!allowUndefined && value === undefined) {
+        throw new SynthError(
+          ErrorCodes.Step_Functions_does_not_support_undefined,
+          "Undefined literal is not supported"
+        );
+      }
       // manufacturing null can be difficult, just use our magic constant
       return value === null
         ? { jsonPath: this.context.null }
         : {
-            value: value,
+            value: value as any,
             containsJsonPath: false,
           };
     }
@@ -1400,7 +1574,10 @@ export class ASL {
         return this.eval(expr.expr);
       }
       throw new SynthError(
-        ErrorCodes.Integration_must_be_immediately_awaited_or_returned
+        ErrorCodes.Integration_must_be_immediately_awaited_or_returned,
+        `Integration must be immediately awaited or returned ${exprToString(
+          expr
+        )}`
       );
     } else if (isPromiseArrayExpr(expr)) {
       // if we find a promise array, ensure it is wrapped in a Promise.all then unwrap it
@@ -1535,7 +1712,7 @@ export class ASL {
       } else if (isMapOrForEach(expr)) {
         const throwTransition = this.throw(expr);
 
-        const callbackfn = expr.getArgument("callbackfn")?.expr;
+        const callbackfn = expr.args[0].expr;
         if (callbackfn !== undefined && isFunctionExpr(callbackfn)) {
           const callbackStates = this.evalStmt(callbackfn.body);
 
@@ -1577,14 +1754,26 @@ export class ASL {
                 Parameters: {
                   ...this.cloneLexicalScopeParameters(expr),
                   ...Object.fromEntries(
-                    callbackfn.parameters.map((param, i) => [
-                      `${param.name}.$`,
-                      i === 0
-                        ? "$$.Map.Item.Value"
-                        : i == 1
-                        ? "$$.Map.Item.Index"
-                        : listPath,
-                    ])
+                    callbackfn.parameters.map((param, i) => {
+                      const paramName = isIdentifier(param.name)
+                        ? param.name.name
+                        : undefined;
+
+                      if (paramName === undefined) {
+                        throw new SynthError(
+                          ErrorCodes.Unsupported_Feature,
+                          "Destructured parameter declarations are not yet supported by Step Functions. https://github.com/functionless/functionless/issues/364"
+                        );
+                      }
+                      return [
+                        `${paramName}.$`,
+                        i === 0
+                          ? "$$.Map.Item.Value"
+                          : i == 1
+                          ? "$$.Map.Item.Index"
+                          : listPath,
+                      ];
+                    })
                   ),
                 },
                 ...(throwTransition
@@ -1610,23 +1799,24 @@ export class ASL {
       } else if (isJoin(expr)) {
         return this.joinToStateOutput(expr);
       } else if (isPromiseAll(expr)) {
-        const values = expr.getArgument("values");
+        const values = expr.args[0]?.expr;
         // just validate Promise.all and continue, will validate the PromiseArray later.
-        if (values?.expr && isPromiseArrayExpr(values?.expr)) {
-          return this.eval(values.expr);
+        if (values && isPromiseArrayExpr(values)) {
+          return this.eval(values);
         }
         throw new SynthError(ErrorCodes.Unsupported_Use_of_Promises);
       } else if (
         isPropAccessExpr(expr.expr) &&
+        isIdentifier(expr.expr.name) &&
         ((isIdentifier(expr.expr.expr) && expr.expr.expr.name === "JSON") ||
           (isReferenceExpr(expr.expr.expr) && expr.expr.expr.ref() === JSON)) &&
-        (expr.expr.name === "stringify" || expr.expr.name === "parse")
+        (expr.expr.name.name === "stringify" || expr.expr.name.name === "parse")
       ) {
         const heap = this.newHeapVariable();
 
-        const objParamExpr = expr.args[0].expr;
+        const objParamExpr = expr.args[0]?.expr;
         if (!objParamExpr || isUndefinedLiteralExpr(objParamExpr)) {
-          if (expr.expr.name === "stringify") {
+          if (expr.expr.name.name === "stringify") {
             // return an undefined variable
             return {
               jsonPath: heap,
@@ -1650,7 +1840,9 @@ export class ASL {
                 // intrinsic functions cannot be used in InputPath and some other json path locations.
                 // We compute the value and place it on the heap.
                 "string.$":
-                  (<PropAccessExpr>expr.expr).name === "stringify"
+                  isPropAccessExpr(expr.expr) &&
+                  isIdentifier(expr.expr.name) &&
+                  expr.expr.name.name === "stringify"
                     ? `States.JsonToString(${objectPath})`
                     : `States.StringToJson(${objectPath})`,
               },
@@ -1687,9 +1879,13 @@ export class ASL {
         }
         return { jsonPath: `$.${expr.name}` };
       } else if (isPropAccessExpr(expr)) {
-        return this.evalExpr(expr.expr, (output) => {
-          return this.accessConstant(output, expr.name, false);
-        });
+        if (isIdentifier(expr.name)) {
+          return this.evalExpr(expr.expr, (output) => {
+            return this.accessConstant(output, expr.name.name, false);
+          });
+        } else {
+          throw new SynthError(ErrorCodes.Classes_are_not_supported);
+        }
       } else if (isElementAccessExpr(expr)) {
         return this.elementAccessExprToJsonPath(expr);
       }
@@ -1797,7 +1993,12 @@ export class ASL {
             return this.conditionState(cond);
           });
         }
-      } else if (expr.op === "-" || expr.op === "++" || expr.op === "--") {
+      } else if (
+        expr.op === "-" ||
+        expr.op === "++" ||
+        expr.op === "--" ||
+        expr.op === "~"
+      ) {
         throw new SynthError(
           ErrorCodes.Cannot_perform_arithmetic_on_variables_in_Step_Function,
           `Step Function does not support operator ${expr.op}`
@@ -2076,6 +2277,8 @@ export class ASL {
           },
         };
       });
+    } else if (isParenthesizedExpr(expr)) {
+      return this.eval(expr.expr);
     }
     throw new Error(`cannot eval expression kind '${expr.kind}'`);
   }
@@ -2272,19 +2475,37 @@ export class ASL {
       // the catch/finally handler is nearer than the surrounding Map/Parallel State
       return {
         Next: ASL.CatchState,
-        ResultPath:
-          isCatchClause(catchOrFinally) && catchOrFinally.variableDecl
-            ? `$.${catchOrFinally.variableDecl.name}`
-            : isBlockStmt(catchOrFinally) &&
-              catchOrFinally.isFinallyBlock() &&
-              catchOrFinally.parent.catchClause &&
-              canThrow(catchOrFinally.parent.catchClause) &&
-              // we only store the error thrown from the catchClause if the finallyBlock is not terminal
-              // by terminal, we mean that every branch returns a value - meaning that the re-throw
-              // behavior of a finally will never be triggered - the return within the finally intercepts it
-              !catchOrFinally.isTerminal()
-            ? `$.${this.generatedNames.generateOrGet(catchOrFinally)}`
-            : null,
+        ResultPath: (() => {
+          if (isCatchClause(catchOrFinally)) {
+            if (catchOrFinally.variableDecl) {
+              const varName = isIdentifier(catchOrFinally.variableDecl?.name)
+                ? catchOrFinally.variableDecl!.name.name
+                : undefined;
+              if (varName === undefined) {
+                throw new SynthError(
+                  ErrorCodes.Unsupported_Feature,
+                  "Destructured parameter declarations are not yet supported by Step Functions. https://github.com/functionless/functionless/issues/364"
+                );
+              }
+              return `$.${varName}`;
+            } else {
+              return null;
+            }
+          } else if (
+            isBlockStmt(catchOrFinally) &&
+            catchOrFinally.isFinallyBlock() &&
+            catchOrFinally.parent.catchClause &&
+            canThrow(catchOrFinally.parent.catchClause) &&
+            // we only store the error thrown from the catchClause if the finallyBlock is not terminal
+            // by terminal, we mean that every branch returns a value - meaning that the re-throw
+            // behavior of a finally will never be triggered - the return within the finally intercepts it
+            !catchOrFinally.isTerminal()
+          ) {
+            return `$.${this.generatedNames.generateOrGet(catchOrFinally)}`;
+          } else {
+            return null;
+          }
+        })(),
       };
     } else {
       // the Map/Parallel tasks are closer than the catch/finally, so we use a Fail State
@@ -2300,8 +2521,8 @@ export class ASL {
   private sliceToStateOutput(
     expr: CallExpr & { expr: PropAccessExpr }
   ): ASLGraph.NodeResults {
-    const startArg = expr.getArgument("start")?.expr;
-    const endArg = expr.getArgument("end")?.expr;
+    const startArg = expr.args[0]?.expr;
+    const endArg = expr.args[1]?.expr;
     const value = this.eval(expr.expr.expr);
     const valueOutput = ASLGraph.getAslStateOutput(value);
     if (startArg === undefined && endArg === undefined) {
@@ -2365,7 +2586,7 @@ export class ASL {
     expr: CallExpr & { expr: PropAccessExpr }
   ): ASLGraph.NodeResults {
     return this.evalContext(expr, (evalExpr) => {
-      const separatorArg = expr.getArgument("separator")?.expr;
+      const separatorArg = expr.args[0]?.expr;
       const valueOutput = evalExpr(expr.expr.expr);
       const separatorOutput = separatorArg ? evalExpr(separatorArg) : undefined;
       const separator =
@@ -2514,7 +2735,7 @@ export class ASL {
   private filterToJsonPath(
     expr: CallExpr & { expr: PropAccessExpr }
   ): ASLGraph.NodeResults {
-    const predicate = expr.getArgument("predicate")?.expr;
+    const predicate = expr.args[0]?.expr;
     if (!isFunctionExpr(predicate)) {
       throw new Error(
         "the 'predicate' argument of slice must be a FunctionExpr"
@@ -2563,7 +2784,9 @@ export class ASL {
         } else if (
           isVariableDecl(ref) ||
           isBindingElem(ref) ||
-          isFunctionDecl(ref)
+          isFunctionDecl(ref) ||
+          isClassDecl(ref) ||
+          isClassMember(ref)
         ) {
           throw new Error(
             `cannot reference a ${ref.kind} within a JSONPath .filter expression`
@@ -2579,7 +2802,7 @@ export class ASL {
       ) {
         return `${expr.value}`;
       } else if (isPropAccessExpr(expr)) {
-        return `${toFilterCondition(expr.expr)}.${expr.name}`;
+        return `${toFilterCondition(expr.expr)}.${expr.name.name}`;
       } else if (isElementAccessExpr(expr)) {
         return `${toFilterCondition(
           expr.expr
@@ -2642,17 +2865,20 @@ export class ASL {
     if (isIdentifier(access.element)) {
       const element = access.element.lookup();
       if (
-        access.findParent(
-          (parent): parent is ForInStmt =>
-            isForInStmt(parent) &&
-            // find the first forin parent which has an identifier with this name
-            parent.variableDecl.name === (<Identifier>access.element).name &&
-            // if the variable decl is an identifier, it will have the same initializer.
-            ((isIdentifier(parent.variableDecl) &&
-              element === parent.variableDecl.lookup()) ||
-              // if the variable decl is an variable stmt, it will be the initializer of the element.
-              element === parent.variableDecl)
-        )
+        isVariableDecl(element) &&
+        access.findParent((parent): parent is ForInStmt => {
+          if (isForInStmt(parent)) {
+            if (isIdentifier(parent.initializer)) {
+              // let i;
+              // for (i in ..)
+              return element === parent.initializer.lookup();
+            } else if (isVariableDecl(parent.initializer)) {
+              // for (let i in ..)
+              return parent.initializer === element;
+            }
+          }
+          return false;
+        })
       ) {
         // the array element is assigned to $.0__[name]
         return { jsonPath: `$.0__${access.element.name}` };
@@ -2703,7 +2929,8 @@ export class ASL {
   ): [Condition, ASLGraph.SubState | ASLGraph.NodeState | undefined] {
     const subStates: (ASLGraph.SubState | ASLGraph.NodeState)[] = [];
     const localEval = (expr: Expr): ASLGraph.Output => {
-      const e = this.eval(expr);
+      // for condition, allow undefined values.
+      const e = this.eval(expr, true);
       ASLGraph.isStateOrSubState(e) && subStates.push(e);
       return ASLGraph.getAslStateOutput(e);
     };
@@ -2712,8 +2939,10 @@ export class ASL {
       subState && subStates.push(subState);
       return cond;
     };
-    const internal = (): Condition => {
-      if (isBooleanLiteralExpr(expr)) {
+    const internal = (expr: Expr): Condition => {
+      if (isParenthesizedExpr(expr)) {
+        return internal(expr.expr);
+      } else if (isBooleanLiteralExpr(expr)) {
         return expr.value ? ASL.trueCondition() : ASL.falseCondition();
       } else if (isUnaryExpr(expr) || isPostfixUnaryExpr(expr)) {
         // TODO: more than just unary not... - https://github.com/functionless/functionless/issues/232
@@ -2721,7 +2950,12 @@ export class ASL {
           return {
             Not: localToCondition(expr.expr),
           };
-        } else if (expr.op === "++" || expr.op === "--" || expr.op === "-") {
+        } else if (
+          expr.op === "++" ||
+          expr.op === "--" ||
+          expr.op === "-" ||
+          expr.op === "~"
+        ) {
           throw new SynthError(
             ErrorCodes.Cannot_perform_arithmetic_on_variables_in_Step_Function,
             `Step Function does not support operator ${expr.op}`
@@ -2853,7 +3087,10 @@ export class ASL {
           return localToCondition(expr.expr);
         }
         throw new SynthError(
-          ErrorCodes.Integration_must_be_immediately_awaited_or_returned
+          ErrorCodes.Integration_must_be_immediately_awaited_or_returned,
+          `Integration must be immediately awaited or returned ${exprToString(
+            expr
+          )}`
         );
       } else if (isPromiseArrayExpr(expr)) {
         // if we find a promise array, ensure it is wrapped in a Promise.all then unwrap it
@@ -2871,7 +3108,7 @@ export class ASL {
       throw new Error(`cannot evaluate expression: '${expr.kind}`);
     };
 
-    return [internal(), ASLGraph.joinSubStates(expr, ...subStates)];
+    return [internal(expr), ASLGraph.joinSubStates(expr, ...subStates)];
   }
 }
 
@@ -2880,7 +3117,8 @@ export function isMapOrForEach(expr: CallExpr): expr is CallExpr & {
 } {
   return (
     isPropAccessExpr(expr.expr) &&
-    (expr.expr.name === "map" || expr.expr.name === "forEach")
+    isIdentifier(expr.expr.name) &&
+    (expr.expr.name.name === "map" || expr.expr.name.name === "forEach")
   );
 }
 
@@ -2889,7 +3127,11 @@ function isSlice(expr: CallExpr): expr is CallExpr & {
     name: "slice";
   };
 } {
-  return isPropAccessExpr(expr.expr) && expr.expr.name === "slice";
+  return (
+    isPropAccessExpr(expr.expr) &&
+    isIdentifier(expr.expr.name) &&
+    expr.expr.name.name === "slice"
+  );
 }
 
 function isJoin(expr: CallExpr): expr is CallExpr & {
@@ -2897,7 +3139,11 @@ function isJoin(expr: CallExpr): expr is CallExpr & {
     name: "join";
   };
 } {
-  return isPropAccessExpr(expr.expr) && expr.expr.name === "join";
+  return (
+    isPropAccessExpr(expr.expr) &&
+    isIdentifier(expr.expr.name) &&
+    expr.expr.name.name === "join"
+  );
 }
 
 function isFilter(expr: CallExpr): expr is CallExpr & {
@@ -2905,7 +3151,11 @@ function isFilter(expr: CallExpr): expr is CallExpr & {
     name: "filter";
   };
 } {
-  return isPropAccessExpr(expr.expr) && expr.expr.name === "filter";
+  return (
+    isPropAccessExpr(expr.expr) &&
+    isIdentifier(expr.expr.name) &&
+    expr.expr.name.name === "filter"
+  );
 }
 
 function canThrow(node: FunctionlessNode): boolean {
@@ -4065,20 +4315,28 @@ function toStateName(node: FunctionlessNode): string {
       return "continue";
     } else if (isCatchClause(node)) {
       return `catch${
-        node.variableDecl?.name ? `(${node.variableDecl?.name})` : ""
+        node.variableDecl?.name
+          ? `(${exprToString(node.variableDecl.name)})`
+          : ""
       }`;
     } else if (isDoStmt(node)) {
       return `while (${exprToString(node.condition)})`;
     } else if (isForInStmt(node)) {
-      return `for(${node.variableDecl.name} in ${exprToString(node.expr)})`;
+      return `for(${
+        isIdentifier(node.initializer)
+          ? exprToString(node.initializer)
+          : exprToString(node.initializer.name)
+      } in ${exprToString(node.expr)})`;
     } else if (isForOfStmt(node)) {
-      return `for(${node.variableDecl.name} of ${exprToString(node.expr)})`;
+      return `for(${exprToString(node.initializer)} of ${exprToString(
+        node.expr
+      )})`;
     } else if (isForStmt(node)) {
       // for(;;)
       return `for(${
-        node.variableDecl && isVariableDeclList(node.variableDecl)
-          ? inner(node.variableDecl)
-          : exprToString(node.variableDecl)
+        node.initializer && isVariableDeclList(node.initializer)
+          ? inner(node.initializer)
+          : exprToString(node.initializer)
       };${exprToString(node.condition)};${exprToString(node.incrementor)})`;
     } else if (isReturnStmt(node)) {
       if (node.expr) {
@@ -4092,11 +4350,13 @@ function toStateName(node: FunctionlessNode): string {
       return "try";
     } else if (isVariableStmt(node)) {
       return inner(node.declList);
+    } else if (isVariableDeclList(node)) {
+      return `${node.decls.map((v) => inner(v)).join(",")}`;
     } else if (isVariableDecl(node)) {
       if (isCatchClause(node.parent)) {
         return `catch(${node.name})`;
       } else {
-        return `${node.name} = ${
+        return `${exprToString(node.name)} = ${
           node.initializer ? exprToString(node.initializer) : "undefined"
         }`;
       }
@@ -4113,14 +4373,39 @@ function toStateName(node: FunctionlessNode): string {
       return `{ ${node.bindings.map(inner).join(", ")} }`;
     } else if (isArrayBinding(node)) {
       return `[ ${node.bindings.map((b) => (!b ? "" : inner(b))).join(", ")} ]`;
-    } else if (isFunctionDecl(node)) {
+    } else if (
+      isFunctionDecl(node) ||
+      isFunctionExpr(node) ||
+      isArrowFunctionExpr(node)
+    ) {
       return `function (${node.parameters.map(inner).join(",")})`;
     } else if (isParameterDecl(node)) {
-      return isBindingPattern(node.name) ? inner(node.name) : node.name;
+      return inner(node.name);
     } else if (isErr(node)) {
       throw node.error;
-    } else if (isVariableDeclList(node)) {
-      return `${node.decls.map((v) => inner(v)).join(",")}`;
+    } else if (isEmptyStmt(node)) {
+      return ";";
+    } else if (
+      isCaseClause(node) ||
+      isClassDecl(node) ||
+      isClassStaticBlockDecl(node) ||
+      isConstructorDecl(node) ||
+      isDebuggerStmt(node) ||
+      isDefaultClause(node) ||
+      isLabelledStmt(node) ||
+      isMethodDecl(node) ||
+      isPropDecl(node) ||
+      isSuperKeyword(node) ||
+      isSwitchStmt(node) ||
+      isWithStmt(node) ||
+      isYieldExpr(node) ||
+      isSuperKeyword(node) ||
+      isImportKeyword(node)
+    ) {
+      throw new SynthError(
+        ErrorCodes.Unsupported_Feature,
+        `Unsupported kind: ${node.kind}`
+      );
     } else {
       return assertNever(node);
     }
@@ -4129,28 +4414,31 @@ function toStateName(node: FunctionlessNode): string {
   return inner(node);
 }
 
-function exprToString(expr?: Expr): string {
+function exprToString(
+  expr?: Expr | ParameterDecl | BindingName | BindingElem | VariableDecl
+): string {
   if (!expr) {
     return "";
   } else if (isArgument(expr)) {
     return exprToString(expr.expr);
   } else if (isArrayLiteralExpr(expr)) {
     return `[${expr.items.map(exprToString).join(", ")}]`;
+  } else if (isBigIntExpr(expr)) {
+    return expr.value.toString(10);
   } else if (isBinaryExpr(expr)) {
     return `${exprToString(expr.left)} ${expr.op} ${exprToString(expr.right)}`;
   } else if (isBooleanLiteralExpr(expr)) {
     return `${expr.value}`;
   } else if (isCallExpr(expr) || isNewExpr(expr)) {
+    if (isSuperKeyword(expr.expr) || isImportKeyword(expr.expr)) {
+      throw new Error(`calling ${expr.expr.kind} is unsupported in ASL`);
+    }
     return `${isNewExpr(expr) ? "new " : ""}${exprToString(
       expr.expr
     )}(${expr.args
       // Assume that undefined args are in order.
-      .filter(
-        (arg) =>
-          arg.expr &&
-          !(arg.name === "thisArg" && isUndefinedLiteralExpr(arg.expr))
-      )
-      .map((arg) => exprToString(arg.expr))
+      .filter((arg) => arg && !isUndefinedLiteralExpr(arg))
+      .map(exprToString)
       .join(", ")})`;
   } else if (isConditionExpr(expr)) {
     return `if(${exprToString(expr.when)})`;
@@ -4158,8 +4446,8 @@ function exprToString(expr?: Expr): string {
     return `[${exprToString(expr.expr)}]`;
   } else if (isElementAccessExpr(expr)) {
     return `${exprToString(expr.expr)}[${exprToString(expr.element)}]`;
-  } else if (isFunctionExpr(expr)) {
-    return `function(${expr.parameters.map((param) => param.name).join(", ")})`;
+  } else if (isFunctionExpr(expr) || isArrowFunctionExpr(expr)) {
+    return `function(${expr.parameters.map(exprToString).join(", ")})`;
   } else if (isIdentifier(expr)) {
     return expr.name;
   } else if (isNullLiteralExpr(expr)) {
@@ -4169,12 +4457,14 @@ function exprToString(expr?: Expr): string {
   } else if (isObjectLiteralExpr(expr)) {
     return `{${expr.properties.map(exprToString).join(", ")}}`;
   } else if (isPropAccessExpr(expr)) {
-    return `${exprToString(expr.expr)}.${expr.name}`;
+    return `${exprToString(expr.expr)}.${expr.name.name}`;
   } else if (isPropAssignExpr(expr)) {
     return `${
-      isIdentifier(expr.name)
+      isIdentifier(expr.name) || isPrivateIdentifier(expr.name)
         ? expr.name.name
         : isStringLiteralExpr(expr.name)
+        ? expr.name.value
+        : isNumberLiteralExpr(expr.name)
         ? expr.name.value
         : isComputedPropertyNameExpr(expr.name)
         ? isStringLiteralExpr(expr.name.expr)
@@ -4206,6 +4496,41 @@ function exprToString(expr?: Expr): string {
     return `await ${exprToString(expr.expr)}`;
   } else if (isPromiseExpr(expr) || isPromiseArrayExpr(expr)) {
     return exprToString(expr.expr);
+  } else if (isThisExpr(expr)) {
+    return "this";
+  } else if (isClassExpr(expr)) {
+    throw new SynthError(
+      ErrorCodes.Unsupported_Feature,
+      `ClassDecl is not supported in StepFunctions`
+    );
+  } else if (isPrivateIdentifier(expr)) {
+    return expr.name;
+  } else if (isYieldExpr(expr)) {
+    return `yield${expr.delegate ? "*" : ""} ${exprToString(expr.expr)}`;
+  } else if (isRegexExpr(expr)) {
+    return expr.regex.source;
+  } else if (isDeleteExpr(expr)) {
+    return `delete ${exprToString(expr.expr)}`;
+  } else if (isVoidExpr(expr)) {
+    return `void ${exprToString(expr.expr)}`;
+  } else if (isParenthesizedExpr(expr)) {
+    return exprToString(expr.expr);
+  } else if (isObjectBinding(expr)) {
+    return `{${expr.bindings.map(exprToString).join(",")}}`;
+  } else if (isArrayBinding(expr)) {
+    return `[${expr.bindings.map(exprToString).join(",")}]`;
+  } else if (isBindingElem(expr)) {
+    return `${expr.rest ? "..." : ""}${
+      expr.propertyName
+        ? `${exprToString(expr.propertyName)}:${exprToString(expr.name)}`
+        : `${exprToString(expr.name)}`
+    }`;
+  } else if (isVariableDecl(expr)) {
+    return `${exprToString(expr.name)}${
+      expr.initializer ? ` = ${exprToString(expr.initializer)}` : ""
+    }`;
+  } else if (isParameterDecl(expr)) {
+    return exprToString(expr.name);
   } else {
     return assertNever(expr);
   }

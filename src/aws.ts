@@ -574,7 +574,7 @@ function makeDynamoIntegration<
       },
     },
     asl(call, context) {
-      const input = call.getArgument("input")?.expr;
+      const input = call.args[0]?.expr;
       if (!isObjectLiteralExpr(input)) {
         throw new SynthError(
           ErrorCodes.Expected_an_object_literal,

@@ -1,4 +1,3 @@
-import * as typescript from "typescript";
 import {
   EventBusMapInterface,
   EventBusWhenInterface,
@@ -27,7 +26,7 @@ import { anyOf, hasOnlyAncestors } from "./util";
  * @returns diagnostic errors for the file.
  */
 export function validate(
-  ts: typeof typescript,
+  ts: typeof import("typescript"),
   checker: FunctionlessChecker,
   node: ts.Node,
   logger?: {
@@ -36,7 +35,7 @@ export function validate(
 ): ts.Diagnostic[] {
   logger?.info("Beginning validation of Functionless semantics");
 
-  function visit(node: typescript.Node): typescript.Diagnostic[] {
+  function visit(node: ts.Node): ts.Diagnostic[] {
     if (checker.isNewStepFunction(node)) {
       return validateNewStepFunctionNode(node);
     } else if (checker.isApiIntegration(node)) {
@@ -91,7 +90,7 @@ export function validate(
     ]);
   }
 
-  function validateNodes(nodes: typescript.Node[]) {
+  function validateNodes(nodes: ts.Node[]) {
     return nodes.flatMap((arg) => collectEachChild(arg, visit));
   }
 
@@ -108,10 +107,43 @@ export function validate(
       ...collectEachChildRecursive(func, validateStepFunctionNode),
     ];
 
-    function validateStepFunctionNode(
-      node: typescript.Node
-    ): typescript.Diagnostic[] {
+    function validateStepFunctionNode(node: ts.Node): ts.Diagnostic[] {
+      const type = checker.getTypeAtLocation(node);
       if (
+        typeMatch(
+          type,
+          // eslint-disable-next-line no-bitwise
+          (t) => (t.getFlags() & ts.TypeFlags.Undefined) !== 0
+        )
+      ) {
+        // allow list of expressions which support `undefined` values.
+        if (
+          !(
+            node.parent &&
+            ((ts.isBinaryExpression(node.parent) &&
+              node.parent.operatorToken.kind !== ts.SyntaxKind.EqualsToken) ||
+              ts.isPrefixUnaryExpression(node.parent) ||
+              ts.isPostfixUnaryExpression(node.parent) ||
+              (ts.isConditionalExpression(node.parent) &&
+                node !== node.parent.whenTrue &&
+                node !== node.parent.whenFalse) ||
+              ts.isIfStatement(node.parent) ||
+              ts.isForStatement(node.parent) ||
+              ts.isAwaitExpression(node.parent) ||
+              ts.isParenthesizedExpression(node.parent) ||
+              ts.isPropertyAccessExpression(node.parent) ||
+              (ts.isElementAccessExpression(node.parent) &&
+                node !== node.parent.argumentExpression))
+          )
+        ) {
+          return [
+            newError(
+              node,
+              ErrorCodes.Step_Functions_does_not_support_undefined
+            ),
+          ];
+        }
+      } else if (
         ((ts.isBinaryExpression(node) &&
           isArithmeticToken(node.operatorToken.kind)) ||
           ((ts.isPrefixUnaryExpression(node) ||
@@ -172,8 +204,9 @@ export function validate(
           ts.isNewExpression(node.expression) ||
           ts.isCallExpression(node.expression)
         ) {
-          return (
-            node.expression.arguments?.flatMap((arg) => {
+          return [
+            ...validateStepFunctionError(node.expression.expression),
+            ...(node.expression.arguments?.flatMap((arg) => {
               if (!checker.isConstant(arg)) {
                 return [
                   newError(
@@ -183,51 +216,21 @@ export function validate(
                 ];
               }
               return [];
-            }) ?? []
-          );
+            }) ?? []),
+          ];
         }
-      } else if (
-        ts.isVariableDeclaration(node) ||
-        ts.isPropertyDeclaration(node) ||
-        ts.isPropertyAssignment(node) ||
-        ts.isBindingElement(node) ||
-        ts.isShorthandPropertyAssignment(node)
-      ) {
-        const initializers: (ts.Node | undefined)[] =
-          ts.isShorthandPropertyAssignment(node)
-            ? [node, node.objectAssignmentInitializer]
-            : [node.initializer];
+      } else if (ts.isPropertyAssignment(node)) {
         if (
-          initializers
-            .filter((x): x is ts.Node => !!x)
-            .map(checker.getTypeAtLocation)
-            .some((type) =>
-              typeMatch(
-                type,
-                // eslint-disable-next-line no-bitwise
-                (t) => (t.getFlags() & ts.TypeFlags.Undefined) !== 0
-              )
-            )
+          ts.isComputedPropertyName(node.name) &&
+          !checker.isConstant(node.name.expression)
         ) {
+          // TODO need to check for element access in with for in loop
           return [
             newError(
-              node,
-              ErrorCodes.Step_Functions_does_not_support_undefined_assignment
+              node.name,
+              ErrorCodes.StepFunctions_property_names_must_be_constant
             ),
           ];
-        } else if (ts.isPropertyAssignment(node)) {
-          if (
-            ts.isComputedPropertyName(node.name) &&
-            !checker.isConstant(node.name.expression)
-          ) {
-            // TODO need to check for element access in with for in loop
-            return [
-              newError(
-                node.name,
-                ErrorCodes.StepFunctions_property_names_must_be_constant
-              ),
-            ];
-          }
         }
       } else if (ts.isElementAccessExpression(node)) {
         if (
@@ -247,6 +250,32 @@ export function validate(
       }
       return [];
     }
+  }
+
+  function validateStepFunctionError(expr: ts.Expression): ts.Diagnostic[] {
+    const callExprType = checker.getTypeAtLocation(expr);
+    if (checker.typeToString(callExprType) === "ErrorConstructor") {
+      // throw new Error
+      return [];
+    }
+    const kind = callExprType.getProperty("kind");
+    if (kind !== undefined) {
+      const kindType = checker.getTypeOfSymbolAtLocation(kind, expr);
+      if (
+        kindType.isStringLiteral() &&
+        kindType.value === "StepFunctionError"
+      ) {
+        // throw new StepFunctionError
+        return [];
+      }
+    }
+
+    return [
+      newError(
+        expr,
+        ErrorCodes.StepFunction_Throw_must_be_Error_or_StepFunctionError_class
+      ),
+    ];
   }
 
   /**
@@ -444,13 +473,22 @@ export function validate(
            * const v = x ? await func() : await func2()
            */
           if (
-            rootStatement &&
-            (isControlFlowStatement(rootStatement) ||
-              findParent(
-                node.expression,
-                ts.isConditionalExpression,
-                rootStatement
-              ))
+            (rootStatement &&
+              (ts.isEmptyStatement(rootStatement) ||
+                ts.isIfStatement(rootStatement) ||
+                ts.isDoStatement(rootStatement) ||
+                ts.isWhileStatement(rootStatement) ||
+                ts.isForStatement(rootStatement) ||
+                ts.isForInStatement(rootStatement) ||
+                ts.isForOfStatement(rootStatement) ||
+                ts.isSwitchStatement(rootStatement) ||
+                ts.isLabeledStatement(rootStatement) ||
+                ts.isTryStatement(rootStatement))) ||
+            findParent(
+              node.expression,
+              ts.isConditionalExpression,
+              rootStatement
+            )
           ) {
             return [
               newError(
@@ -652,9 +690,7 @@ export function validate(
       ...collectEachChildRecursive(func, validateFunctionClosureNode),
     ];
 
-    function validateFunctionClosureNode(
-      node: typescript.Node
-    ): typescript.Diagnostic[] {
+    function validateFunctionClosureNode(node: ts.Node): ts.Diagnostic[] {
       if (
         checker.isStepFunction(node) ||
         checker.isTable(node) ||
@@ -662,7 +698,7 @@ export function validate(
         checker.isEventBus(node)
       ) {
         if (
-          typescript.isPropertyAccessExpression(node.parent) &&
+          ts.isPropertyAccessExpression(node.parent) &&
           node.parent.name.text === "resource"
         ) {
           return [
@@ -702,9 +738,7 @@ export function validate(
     }
   }
 
-  function validateEventBusWhen(
-    node: EventBusWhenInterface
-  ): typescript.Diagnostic[] {
+  function validateEventBusWhen(node: EventBusWhenInterface): ts.Diagnostic[] {
     const func =
       node.arguments.length === 3 ? node.arguments[2] : node.arguments[1];
 
@@ -716,7 +750,7 @@ export function validate(
     ];
   }
 
-  function validateRule(node: RuleInterface): typescript.Diagnostic[] {
+  function validateRule(node: RuleInterface): ts.Diagnostic[] {
     const func = node.arguments[3];
 
     return [
@@ -777,7 +811,7 @@ export function validate(
 
   function validateEventTransform(
     node: EventTransformInterface
-  ): typescript.Diagnostic[] {
+  ): ts.Diagnostic[] {
     const func = node.arguments[1];
 
     return [
@@ -788,9 +822,7 @@ export function validate(
     ];
   }
 
-  function validateEventBusMap(
-    node: EventBusMapInterface
-  ): typescript.Diagnostic[] {
+  function validateEventBusMap(node: EventBusMapInterface): ts.Diagnostic[] {
     const func = node.arguments[0];
 
     return [
@@ -833,22 +865,6 @@ export function validate(
     };
   }
 }
-
-/**
- * Used by AppSync to determine of a root statement can be statically analyzed.
- */
-const isControlFlowStatement = anyOf(
-  typescript.isEmptyStatement,
-  typescript.isIfStatement,
-  typescript.isDoStatement,
-  typescript.isWhileStatement,
-  typescript.isForStatement,
-  typescript.isForInStatement,
-  typescript.isForOfStatement,
-  typescript.isSwitchStatement,
-  typescript.isLabeledStatement,
-  typescript.isTryStatement
-);
 
 // to prevent the closure serializer from trying to import all of functionless.
 export const deploymentOnlyModule = true;

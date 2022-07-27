@@ -762,9 +762,12 @@ export namespace ErrorCodes {
   };
 
   /**
-   * Step Functions does not support undefined assignment
+   * Step Functions does not support undefined
    *
    * In Step Functions, a property cannot be undefined when assigned to an object or passed into a state.
+   *
+   * For consistency, `undefined` is not allowed anytime a value is returned, for example in a ternary expression (`x ? undefined : value`).
+   * The `undefined` literal is allowed for comparison. `if(x === undefined){}`.
    *
    * ```ts
    * const func = new Function(stack, 'func', () => { return undefined; })
@@ -773,6 +776,9 @@ export namespace ErrorCodes {
    *       // invalid - could be undefined
    *       val: input.val
    *    }
+   *
+   *    // invalid
+   *    v ? undefined : "a"
    *
    *    // invalid, function outputs undefined.
    *    const output = await func();
@@ -791,6 +797,9 @@ export namespace ErrorCodes {
    *       // valid
    *       val: null
    *    }
+   *
+   *    // valid
+   *    v ? null : "a"
    *
    *    // valid, function outputs undefined.
    *    const output = await func();
@@ -844,12 +853,11 @@ export namespace ErrorCodes {
    * });
    * ```
    */
-  export const Step_Functions_does_not_support_undefined_assignment: ErrorCode =
-    {
-      code: 10022,
-      type: ErrorType.ERROR,
-      title: "Step Functions does not support undefined assignment",
-    };
+  export const Step_Functions_does_not_support_undefined: ErrorCode = {
+    code: 10022,
+    type: ErrorType.ERROR,
+    title: "Step Functions does not support undefined",
+  };
 
   /**
    * Events passed to an {@link EventBus} in a {@link StepFunction} must be one or more literal objects and may not use the spread (`...`) syntax or computed properties.
@@ -1098,6 +1106,44 @@ export namespace ErrorCodes {
   };
 
   /**
+   * Errors in Step Functions can only be thrown in one of two ways:
+   *
+   * 1. by throwing javascript's `Error` class
+   * ```ts
+   * throw Error("message");
+   * throw new Error("message");
+   * ```
+   * 2. by throwing the `StepFunctionError` class
+   * ```ts
+   * throw new StepFunctionError("CustomErrorName", { error: "data" })
+   * ```
+   */
+  export const StepFunction_Throw_must_be_Error_or_StepFunctionError_class: ErrorCode =
+    {
+      code: 10030,
+      type: ErrorType.ERROR,
+      title: "StepFunction throw must be Error or StepFunctionError class",
+    };
+
+  /**
+   * Classes, methods and private identifiers are not yet supported by Functionless.
+   *
+   * To workaround, use Functions.
+   *
+   * ```ts
+   * function foo () { .. }
+   * const foo = () => { .. }
+   * ```
+   *
+   * @see https://github.com/functionless/functionless/issues/362
+   */
+  export const Classes_are_not_supported: ErrorCode = {
+    code: 10031,
+    type: ErrorType.ERROR,
+    title: "Classes are not yet supported by Functionless",
+  };
+
+  /**
    * Event Bridge does not allow for truthy comparisons.
    *
    * ```ts
@@ -1110,7 +1156,7 @@ export namespace ErrorCodes {
    * ```
    */
   export const EventBridge_DoesNotSupport_TruthyComparison: ErrorCode = {
-    code: 10030,
+    code: 10032,
     type: ErrorType.ERROR,
     title: "Event Bridge does not support a truthy comparison",
   };

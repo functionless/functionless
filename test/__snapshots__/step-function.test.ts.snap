@@ -1761,14 +1761,15 @@ Object {
               "Variable": "$$.Execution.Id",
             },
           ],
-          "Next": "return undefined",
+          "Next": "return null",
         },
       ],
       "Default": "score = await computeScore({id: person.Item.id.S, name: person.Item.name.S}",
       "Type": "Choice",
     },
-    "return undefined": Object {
+    "return null": Object {
       "End": true,
+      "InputPath": "$.fnl_context.null",
       "ResultPath": "$",
       "Type": "Pass",
     },
@@ -4641,11 +4642,12 @@ Object {
           "Variable": "$.heap0[0]",
         },
       ],
-      "Default": "return undefined",
+      "Default": "return null",
       "Type": "Choice",
     },
-    "return undefined": Object {
+    "return null": Object {
       "End": true,
+      "InputPath": "$.fnl_context.null",
       "ResultPath": "$",
       "Type": "Pass",
     },
@@ -5058,11 +5060,12 @@ Object {
           "Variable": "$.heap0[0]",
         },
       ],
-      "Default": "return undefined",
+      "Default": "return null",
       "Type": "Choice",
     },
-    "return undefined": Object {
+    "return null": Object {
       "End": true,
+      "InputPath": "$.fnl_context.null",
       "ResultPath": "$",
       "Type": "Pass",
     },
@@ -7158,8 +7161,56 @@ Object {
               "Variable": "$.cond",
             },
             Object {
-              "IsNull": false,
-              "Variable": "$$.Execution.Id",
+              "Or": Array [
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsNull": true,
+                      "Variable": "$.cond",
+                    },
+                    Object {
+                      "IsNull": true,
+                      "Variable": "$.fnl_context.null",
+                    },
+                  ],
+                },
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsString": true,
+                      "Variable": "$.cond",
+                    },
+                    Object {
+                      "StringEqualsPath": "$.fnl_context.null",
+                      "Variable": "$.cond",
+                    },
+                  ],
+                },
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsBoolean": true,
+                      "Variable": "$.cond",
+                    },
+                    Object {
+                      "BooleanEqualsPath": "$.fnl_context.null",
+                      "Variable": "$.cond",
+                    },
+                  ],
+                },
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsNumeric": true,
+                      "Variable": "$.cond",
+                    },
+                    Object {
+                      "NumericEqualsPath": "$.fnl_context.null",
+                      "Variable": "$.cond",
+                    },
+                  ],
+                },
+              ],
             },
           ],
           "Next": "cond = await task() 1",
@@ -7178,6 +7229,36 @@ Object {
     "return null": Object {
       "End": true,
       "InputPath": "$.fnl_context.null",
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+  },
+}
+`;
+
+exports[`let empty 1`] = `
+Object {
+  "StartAt": "Initialize Functionless Context",
+  "States": Object {
+    "Initialize Functionless Context": Object {
+      "Next": "a = \\"b\\"",
+      "Parameters": Object {
+        "fnl_context": Object {
+          "null": null,
+        },
+      },
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "a = \\"b\\"": Object {
+      "Next": "return a",
+      "Result": "b",
+      "ResultPath": "$.a",
+      "Type": "Pass",
+    },
+    "return a": Object {
+      "End": true,
+      "InputPath": "$.a",
       "ResultPath": "$",
       "Type": "Pass",
     },
@@ -8472,14 +8553,14 @@ exports[`return $SFN.parallel(() => "hello", () => "world")) 1`] = `
 Object {
   "StartAt": "Initialize Functionless Context",
   "States": Object {
-    "1__return $SFN.parallel([function(), function()])": Object {
+    "1__return $SFN.parallel(function(), function())": Object {
       "End": true,
       "InputPath": "$.heap0",
       "ResultPath": "$",
       "Type": "Pass",
     },
     "Initialize Functionless Context": Object {
-      "Next": "return $SFN.parallel([function(), function()])",
+      "Next": "return $SFN.parallel(function(), function())",
       "Parameters": Object {
         "fnl_context": Object {
           "null": null,
@@ -8488,7 +8569,7 @@ Object {
       "ResultPath": "$",
       "Type": "Pass",
     },
-    "return $SFN.parallel([function(), function()])": Object {
+    "return $SFN.parallel(function(), function())": Object {
       "Branches": Array [
         Object {
           "StartAt": "return \\"hello\\"",
@@ -8513,7 +8594,7 @@ Object {
           },
         },
       ],
-      "Next": "1__return $SFN.parallel([function(), function()])",
+      "Next": "1__return $SFN.parallel(function(), function())",
       "ResultPath": "$.heap0",
       "Type": "Parallel",
     },
@@ -8525,14 +8606,14 @@ exports[`return $SFN.parallel(() => {})) } 1`] = `
 Object {
   "StartAt": "Initialize Functionless Context",
   "States": Object {
-    "1__return $SFN.parallel([function()])": Object {
+    "1__return $SFN.parallel(function())": Object {
       "End": true,
       "InputPath": "$.heap0",
       "ResultPath": "$",
       "Type": "Pass",
     },
     "Initialize Functionless Context": Object {
-      "Next": "return $SFN.parallel([function()])",
+      "Next": "return $SFN.parallel(function())",
       "Parameters": Object {
         "fnl_context": Object {
           "null": null,
@@ -8541,7 +8622,7 @@ Object {
       "ResultPath": "$",
       "Type": "Pass",
     },
-    "return $SFN.parallel([function()])": Object {
+    "return $SFN.parallel(function())": Object {
       "Branches": Array [
         Object {
           "StartAt": "return null",
@@ -8555,7 +8636,7 @@ Object {
           },
         },
       ],
-      "Next": "1__return $SFN.parallel([function()])",
+      "Next": "1__return $SFN.parallel(function())",
       "ResultPath": "$.heap0",
       "Type": "Parallel",
     },
@@ -8690,14 +8771,15 @@ Object {
               "Variable": "$$.Execution.Id",
             },
           ],
-          "Next": "return undefined",
+          "Next": "return null",
         },
       ],
       "Default": "return {id: person.Item.id.S, name: person.Item.name.S}",
       "Type": "Choice",
     },
-    "return undefined": Object {
+    "return null": Object {
       "End": true,
+      "InputPath": "$.fnl_context.null",
       "ResultPath": "$",
       "Type": "Pass",
     },
@@ -8781,14 +8863,15 @@ Object {
               "Variable": "$$.Execution.Id",
             },
           ],
-          "Next": "return undefined",
+          "Next": "return null",
         },
       ],
       "Default": "return {id: person.Item.id.S, name: person.Item.name.S}",
       "Type": "Choice",
     },
-    "return undefined": Object {
+    "return null": Object {
       "End": true,
+      "InputPath": "$.fnl_context.null",
       "ResultPath": "$",
       "Type": "Pass",
     },
@@ -9848,7 +9931,7 @@ Object {
   "StartAt": "Initialize Functionless Context",
   "States": Object {
     "Initialize Functionless Context": Object {
-      "Next": "await task(null)",
+      "Next": "await task()",
       "Parameters": Object {
         "fnl_context": Object {
           "null": null,
@@ -9861,84 +9944,91 @@ Object {
       "Next": "await task(\\"hello\\" + 1)",
       "Parameters": "hello world",
       "Resource": "__REPLACED_TOKEN",
-      "ResultPath": "$.heap8",
+      "ResultPath": "$.heap9",
       "Type": "Task",
     },
     "await task(\\"hello\\" + 1)": Object {
       "Next": "await task(1 + \\"hello\\")",
       "Parameters": "hello1",
       "Resource": "__REPLACED_TOKEN",
-      "ResultPath": "$.heap9",
+      "ResultPath": "$.heap10",
       "Type": "Task",
     },
     "await task(\\"hello\\" + [\\"world\\"])": Object {
       "Next": "return null",
       "Parameters": "helloworld",
       "Resource": "__REPLACED_TOKEN",
-      "ResultPath": "$.heap22",
+      "ResultPath": "$.heap23",
       "Type": "Task",
     },
     "await task(\\"hello\\" + null)": Object {
       "Next": "await task([null])",
       "Parameters": "hellonull",
       "Resource": "__REPLACED_TOKEN",
-      "ResultPath": "$.heap14",
+      "ResultPath": "$.heap15",
       "Type": "Task",
     },
     "await task(\\"hello\\" + true)": Object {
       "Next": "await task(false + \\"hello\\")",
       "Parameters": "hellotrue",
       "Resource": "__REPLACED_TOKEN",
-      "ResultPath": "$.heap11",
+      "ResultPath": "$.heap12",
       "Type": "Task",
     },
     "await task(\\"hello\\" + {place: \\"world\\"})": Object {
       "Next": "await task(\\"hello\\" + [\\"world\\"])",
       "Parameters": "hello[object Object]",
       "Resource": "__REPLACED_TOKEN",
-      "ResultPath": "$.heap21",
+      "ResultPath": "$.heap22",
       "Type": "Task",
     },
     "await task(\\"hello\\")": Object {
       "Next": "await task(\\"hello\\" + \\" world\\")",
       "Parameters": "hello",
       "Resource": "__REPLACED_TOKEN",
-      "ResultPath": "$.heap7",
+      "ResultPath": "$.heap8",
+      "Type": "Task",
+    },
+    "await task()": Object {
+      "InputPath": "$.fnl_context.null",
+      "Next": "await task(null)",
+      "Resource": "__REPLACED_TOKEN",
+      "ResultPath": "$.heap0",
       "Type": "Task",
     },
     "await task(-1)": Object {
       "Next": "await task(-100)",
       "Parameters": -1,
       "Resource": "__REPLACED_TOKEN",
-      "ResultPath": "$.heap4",
+      "ResultPath": "$.heap5",
       "Type": "Task",
     },
     "await task(-100)": Object {
       "Next": "await task(1 + 2)",
       "Parameters": -100,
       "Resource": "__REPLACED_TOKEN",
-      "ResultPath": "$.heap5",
+      "ResultPath": "$.heap6",
       "Type": "Task",
     },
     "await task(0)": Object {
       "Next": "await task(-1)",
       "Parameters": 0,
       "Resource": "__REPLACED_TOKEN",
-      "ResultPath": "$.heap3",
+      "ResultPath": "$.heap4",
       "Type": "Task",
     },
     "await task(1 + \\"hello\\")": Object {
       "Next": "await task(\\"hello\\" + true)",
       "Parameters": "1hello",
       "Resource": "__REPLACED_TOKEN",
-      "ResultPath": "$.heap10",
+      "ResultPath": "$.heap11",
       "Type": "Task",
     },
     "await task(1 + 2)": Object {
       "Next": "await task(\\"hello\\")",
       "Parameters": 3,
       "Resource": "__REPLACED_TOKEN",
-      "ResultPath": "$.heap6",
+      "ResultPath": "$.heap7",
       "Type": "Task",
     },
     "await task([-1])": Object {
@@ -9947,7 +10037,7 @@ Object {
         -1,
       ],
       "Resource": "__REPLACED_TOKEN",
-      "ResultPath": "$.heap17",
+      "ResultPath": "$.heap18",
       "Type": "Task",
     },
     "await task([1])": Object {
@@ -9956,7 +10046,7 @@ Object {
         1,
       ],
       "Resource": "__REPLACED_TOKEN",
-      "ResultPath": "$.heap16",
+      "ResultPath": "$.heap17",
       "Type": "Task",
     },
     "await task([null])": Object {
@@ -9965,7 +10055,7 @@ Object {
         null,
       ],
       "Resource": "__REPLACED_TOKEN",
-      "ResultPath": "$.heap15",
+      "ResultPath": "$.heap16",
       "Type": "Task",
     },
     "await task([true])": Object {
@@ -9974,7 +10064,7 @@ Object {
         true,
       ],
       "Resource": "__REPLACED_TOKEN",
-      "ResultPath": "$.heap18",
+      "ResultPath": "$.heap19",
       "Type": "Task",
     },
     "await task([{key: \\"value\\"}])": Object {
@@ -9985,42 +10075,42 @@ Object {
         },
       ],
       "Resource": "__REPLACED_TOKEN",
-      "ResultPath": "$.heap19",
+      "ResultPath": "$.heap20",
       "Type": "Task",
     },
     "await task(false + \\"hello\\")": Object {
       "Next": "await task(null + \\"hello\\")",
       "Parameters": "falsehello",
       "Resource": "__REPLACED_TOKEN",
-      "ResultPath": "$.heap12",
+      "ResultPath": "$.heap13",
       "Type": "Task",
     },
     "await task(false)": Object {
       "Next": "await task(0)",
       "Parameters": false,
       "Resource": "__REPLACED_TOKEN",
-      "ResultPath": "$.heap2",
+      "ResultPath": "$.heap3",
       "Type": "Task",
     },
     "await task(null + \\"hello\\")": Object {
       "Next": "await task(\\"hello\\" + null)",
       "Parameters": "nullhello",
       "Resource": "__REPLACED_TOKEN",
-      "ResultPath": "$.heap13",
+      "ResultPath": "$.heap14",
       "Type": "Task",
     },
     "await task(null)": Object {
       "InputPath": "$.fnl_context.null",
       "Next": "await task(true)",
       "Resource": "__REPLACED_TOKEN",
-      "ResultPath": "$.heap0",
+      "ResultPath": "$.heap1",
       "Type": "Task",
     },
     "await task(true)": Object {
       "Next": "await task(false)",
       "Parameters": true,
       "Resource": "__REPLACED_TOKEN",
-      "ResultPath": "$.heap1",
+      "ResultPath": "$.heap2",
       "Type": "Task",
     },
     "await task({key: \\"value\\"})": Object {
@@ -10029,7 +10119,7 @@ Object {
         "key": "value",
       },
       "Resource": "__REPLACED_TOKEN",
-      "ResultPath": "$.heap20",
+      "ResultPath": "$.heap21",
       "Type": "Task",
     },
     "return null": Object {
@@ -10303,29 +10393,6 @@ Object {
 }
 `;
 
-exports[`throw new CustomError 1`] = `
-Object {
-  "StartAt": "Initialize Functionless Context",
-  "States": Object {
-    "Initialize Functionless Context": Object {
-      "Next": "throw new CustomError(\\"cause\\")",
-      "Parameters": Object {
-        "fnl_context": Object {
-          "null": null,
-        },
-      },
-      "ResultPath": "$",
-      "Type": "Pass",
-    },
-    "throw new CustomError(\\"cause\\")": Object {
-      "Cause": "{\\"property\\":\\"cause\\"}",
-      "Error": "CustomError",
-      "Type": "Fail",
-    },
-  },
-}
-`;
-
 exports[`throw new Error 1`] = `
 Object {
   "StartAt": "Initialize Functionless Context",
@@ -10343,6 +10410,52 @@ Object {
     "throw new Error(\\"cause\\")": Object {
       "Cause": "{\\"message\\":\\"cause\\"}",
       "Error": "Error",
+      "Type": "Fail",
+    },
+  },
+}
+`;
+
+exports[`throw new StepFunctionError 1`] = `
+Object {
+  "StartAt": "Initialize Functionless Context",
+  "States": Object {
+    "Initialize Functionless Context": Object {
+      "Next": "throw new StepFunctionError(\\"CustomError\\", {property: \\"cause\\"})",
+      "Parameters": Object {
+        "fnl_context": Object {
+          "null": null,
+        },
+      },
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "throw new StepFunctionError(\\"CustomError\\", {property: \\"cause\\"})": Object {
+      "Cause": "{\\"property\\":\\"cause\\"}",
+      "Error": "CustomError",
+      "Type": "Fail",
+    },
+  },
+}
+`;
+
+exports[`throw new functionless.StepFunctionError 1`] = `
+Object {
+  "StartAt": "Initialize Functionless Context",
+  "States": Object {
+    "Initialize Functionless Context": Object {
+      "Next": "throw new functionless.StepFunctionError(\\"CustomError\\", {property: \\"cause\\"}",
+      "Parameters": Object {
+        "fnl_context": Object {
+          "null": null,
+        },
+      },
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "throw new functionless.StepFunctionError(\\"CustomError\\", {property: \\"cause\\"}": Object {
+      "Cause": "{\\"property\\":\\"cause\\"}",
+      "Error": "CustomError",
       "Type": "Fail",
     },
   },
@@ -11969,7 +12082,7 @@ Object {
   "StartAt": "Initialize Functionless Context",
   "States": Object {
     "Initialize Functionless Context": Object {
-      "Next": "throw new CustomError(\\"cause\\")",
+      "Next": "throw new StepFunctionError(\\"CustomError\\", {property: \\"cause\\"})",
       "Parameters": Object {
         "fnl_context": Object {
           "null": null,
@@ -11984,7 +12097,7 @@ Object {
       "ResultPath": "$",
       "Type": "Pass",
     },
-    "throw new CustomError(\\"cause\\")": Object {
+    "throw new StepFunctionError(\\"CustomError\\", {property: \\"cause\\"})": Object {
       "Next": "return null",
       "Result": Object {
         "property": "cause",
@@ -13184,12 +13297,12 @@ Object {
   "States": Object {
     "1__cond = await task()": Object {
       "InputPath": "$.heap0",
-      "Next": "while (cond == undefined)",
+      "Next": "while (cond == null)",
       "ResultPath": "$.cond",
       "Type": "Pass",
     },
     "Initialize Functionless Context": Object {
-      "Next": "while (cond == undefined)",
+      "Next": "while (cond == null)",
       "Parameters": Object {
         "fnl_context": Object {
           "null": null,
@@ -13211,7 +13324,7 @@ Object {
       "ResultPath": "$",
       "Type": "Pass",
     },
-    "while (cond == undefined)": Object {
+    "while (cond == null)": Object {
       "Choices": Array [
         Object {
           "And": Array [
@@ -13220,8 +13333,56 @@ Object {
               "Variable": "$.cond",
             },
             Object {
-              "IsNull": false,
-              "Variable": "$$.Execution.Id",
+              "Or": Array [
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsNull": true,
+                      "Variable": "$.cond",
+                    },
+                    Object {
+                      "IsNull": true,
+                      "Variable": "$.fnl_context.null",
+                    },
+                  ],
+                },
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsString": true,
+                      "Variable": "$.cond",
+                    },
+                    Object {
+                      "StringEqualsPath": "$.fnl_context.null",
+                      "Variable": "$.cond",
+                    },
+                  ],
+                },
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsBoolean": true,
+                      "Variable": "$.cond",
+                    },
+                    Object {
+                      "BooleanEqualsPath": "$.fnl_context.null",
+                      "Variable": "$.cond",
+                    },
+                  ],
+                },
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsNumeric": true,
+                      "Variable": "$.cond",
+                    },
+                    Object {
+                      "NumericEqualsPath": "$.fnl_context.null",
+                      "Variable": "$.cond",
+                    },
+                  ],
+                },
+              ],
             },
           ],
           "Next": "cond = await task()",
@@ -13240,12 +13401,12 @@ Object {
   "States": Object {
     "1__cond = await task()": Object {
       "InputPath": "$.heap0",
-      "Next": "while (cond == undefined)",
+      "Next": "while (cond == null)",
       "ResultPath": "$.cond",
       "Type": "Pass",
     },
     "Initialize Functionless Context": Object {
-      "Next": "while (cond == undefined)",
+      "Next": "while (cond == null)",
       "Parameters": Object {
         "fnl_context": Object {
           "null": null,
@@ -13267,7 +13428,7 @@ Object {
       "ResultPath": "$",
       "Type": "Pass",
     },
-    "while (cond == undefined)": Object {
+    "while (cond == null)": Object {
       "Choices": Array [
         Object {
           "And": Array [
@@ -13276,8 +13437,56 @@ Object {
               "Variable": "$.cond",
             },
             Object {
-              "IsNull": false,
-              "Variable": "$$.Execution.Id",
+              "Or": Array [
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsNull": true,
+                      "Variable": "$.cond",
+                    },
+                    Object {
+                      "IsNull": true,
+                      "Variable": "$.fnl_context.null",
+                    },
+                  ],
+                },
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsString": true,
+                      "Variable": "$.cond",
+                    },
+                    Object {
+                      "StringEqualsPath": "$.fnl_context.null",
+                      "Variable": "$.cond",
+                    },
+                  ],
+                },
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsBoolean": true,
+                      "Variable": "$.cond",
+                    },
+                    Object {
+                      "BooleanEqualsPath": "$.fnl_context.null",
+                      "Variable": "$.cond",
+                    },
+                  ],
+                },
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsNumeric": true,
+                      "Variable": "$.cond",
+                    },
+                    Object {
+                      "NumericEqualsPath": "$.fnl_context.null",
+                      "Variable": "$.cond",
+                    },
+                  ],
+                },
+              ],
             },
           ],
           "Next": "cond = await task()",

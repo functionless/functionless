@@ -1,6 +1,5 @@
 import { assertNever, assertNodeKind } from "./assert";
 import { BindingPattern, VariableDecl } from "./declaration";
-import {} from "./error";
 import { ErrorCodes, SynthError } from "./error-code";
 import {
   CallExpr,
@@ -8,57 +7,82 @@ import {
   FunctionExpr,
   Identifier,
   ReferenceExpr,
+  ThisExpr,
 } from "./expression";
 import {
   isArgument,
   isArrayBinding,
   isArrayLiteralExpr,
+  isArrowFunctionExpr,
   isAwaitExpr,
+  isBigIntExpr,
   isBinaryExpr,
   isBindingPattern,
   isBlockStmt,
   isBooleanLiteralExpr,
   isBreakStmt,
   isCallExpr,
+  isCaseClause,
   isCatchClause,
+  isClassDecl,
+  isClassExpr,
+  isClassStaticBlockDecl,
   isComputedPropertyNameExpr,
   isConditionExpr,
+  isConstructorDecl,
   isContinueStmt,
+  isDebuggerStmt,
+  isDefaultClause,
+  isDeleteExpr,
   isDoStmt,
   isElementAccessExpr,
+  isEmptyStmt,
   isExprStmt,
   isForInStmt,
   isForOfStmt,
+  isForStmt,
   isFunctionDecl,
   isFunctionExpr,
   isIdentifier,
   isIfStmt,
+  isImportKeyword,
+  isLabelledStmt,
+  isMethodDecl,
   isNewExpr,
   isNullLiteralExpr,
   isNumberLiteralExpr,
   isObjectLiteralExpr,
   isParameterDecl,
+  isParenthesizedExpr,
+  isPostfixUnaryExpr,
+  isPrivateIdentifier,
   isPromiseArrayExpr,
   isPromiseExpr,
   isPropAccessExpr,
   isPropAssignExpr,
+  isPropDecl,
   isReferenceExpr,
+  isRegexExpr,
   isReturnStmt,
   isSpreadAssignExpr,
   isSpreadElementExpr,
   isStmt,
   isStringLiteralExpr,
+  isSuperKeyword,
+  isSwitchStmt,
   isTemplateExpr,
+  isThisExpr,
   isThrowStmt,
   isTryStmt,
   isTypeOfExpr,
   isUnaryExpr,
-  isPostfixUnaryExpr,
   isUndefinedLiteralExpr,
-  isVariableStmt,
-  isWhileStmt,
-  isForStmt,
   isVariableDecl,
+  isVariableStmt,
+  isVoidExpr,
+  isWhileStmt,
+  isWithStmt,
+  isYieldExpr,
 } from "./guards";
 import { Integration, IntegrationImpl, isIntegration } from "./integration";
 import { Stmt } from "./statement";
@@ -230,7 +254,9 @@ export abstract class VTL {
         // deconstruct from the temp variable
         this.evaluateBindingPattern(iterVar.name, tempVar);
       } else {
-        this.add(`#foreach($${iterVar.name} in ${this.printExpr(iterValue)})`);
+        this.add(
+          `#foreach($${iterVar.name.name} in ${this.printExpr(iterValue)})`
+        );
       }
     } else {
       this.add(
@@ -269,7 +295,9 @@ export abstract class VTL {
     call: CallExpr
   ): string;
 
-  protected abstract dereference(id: Identifier | ReferenceExpr): string;
+  protected abstract dereference(
+    id: Identifier | ReferenceExpr | ThisExpr
+  ): string;
 
   /**
    * Evaluate an {@link Expr} or {@link Stmt} by emitting statements to this VTL template and
@@ -284,23 +312,11 @@ export abstract class VTL {
     if (!node) {
       return "$null";
     }
-    if (isArrayLiteralExpr(node)) {
-      if (node.items.find(isSpreadElementExpr) === undefined) {
-        return `[${node.items.map((item) => this.eval(item)).join(", ")}]`;
-      } else {
-        // contains a spread, e.g. [...i], so we will store in a variable
-        const list = this.var("[]");
-        for (const item of node.items) {
-          if (isSpreadElementExpr(item)) {
-            this.qr(`${list}.addAll(${this.eval(item.expr)})`);
-          } else {
-            // we use addAll because `list.push(item)` is pared as `list.push(...[item])`
-            // - i.e. the compiler passes us an ArrayLiteralExpr even if there is one arg
-            this.qr(`${list}.add(${this.eval(item)})`);
-          }
-        }
-        return list;
-      }
+    if (isParenthesizedExpr(node)) {
+      // TODO: do we need to do anything to ensure precedence of parenthesis are maintained?
+      return this.eval(node.expr);
+    } else if (isArrayLiteralExpr(node)) {
+      return this.addAll(node.items);
     } else if (isBinaryExpr(node)) {
       if (node.op === "in") {
         throw new SynthError(
@@ -345,8 +361,14 @@ export abstract class VTL {
     } else if (isBreakStmt(node)) {
       return this.add("#break");
     } else if (isCallExpr(node)) {
-      if (isReferenceExpr(node.expr)) {
-        const ref = node.expr.ref();
+      const expr = isParenthesizedExpr(node.expr)
+        ? node.expr.unwrap()
+        : node.expr;
+
+      if (isSuperKeyword(expr) || isImportKeyword(expr)) {
+        throw new Error(`super and import are not supported by VTL`);
+      } else if (isReferenceExpr(expr)) {
+        const ref = expr.ref();
         if (isIntegration<Integration>(ref)) {
           const serviceCall = new IntegrationImpl(ref);
           return this.integrate(serviceCall, node);
@@ -358,24 +380,26 @@ export abstract class VTL {
         }
       } else if (
         // If the parent is a propAccessExpr
-        isPropAccessExpr(node.expr) &&
-        (node.expr.name === "map" ||
-          node.expr.name === "forEach" ||
-          node.expr.name === "reduce")
+        isPropAccessExpr(expr) &&
+        isIdentifier(expr.name) &&
+        (expr.name.name === "map" ||
+          expr.name.name === "forEach" ||
+          expr.name.name === "reduce" ||
+          expr.name.name === "push")
       ) {
-        if (node.expr.name === "map" || node.expr.name == "forEach") {
+        if (expr.name.name === "map" || expr.name.name == "forEach") {
           // list.map(item => ..)
           // list.map((item, idx) => ..)
           // list.forEach(item => ..)
           // list.forEach((item, idx) => ..)
-          const newList = node.expr.name === "map" ? this.var("[]") : undefined;
+          const newList = expr.name.name === "map" ? this.var("[]") : undefined;
 
           const [value, index, array] = getMapForEachArgs(node);
 
           // Try to flatten any maps before this operation
           // returns the first variable to be used in the foreach of this operation (may be the `value`)
           const list = this.flattenListMapOperations(
-            node.expr.expr,
+            expr.expr,
             value,
             (firstVariable, list) => {
               this.add(`#foreach(${firstVariable} in ${list})`);
@@ -395,42 +419,46 @@ export abstract class VTL {
           );
 
           // Add the final value to the array
-          if (node.expr.name === "map") {
+          if (expr.name.name === "map") {
             this.qr(`${newList}.add(${tmp})`);
           }
 
           this.add("#end");
           return newList ?? "$null";
-        } else if (node.expr.name === "reduce") {
+        } else if (expr.name.name === "reduce") {
           // list.reduce((result: string[], next) => [...result, next], []);
           // list.reduce((result, next) => [...result, next]);
 
           const fn = assertNodeKind<FunctionExpr>(
-            node.getArgument("callbackfn")?.expr,
+            node.args[0]?.expr,
             "FunctionExpr"
           );
-          const initialValue = node.getArgument("initialValue")?.expr;
+          const initialValue = node.args[1];
 
           // (previousValue: string[], currentValue: string, currentIndex: number, array: string[])
-          const previousValue = fn.parameters[0]?.name
-            ? `$${fn.parameters[0].name}`
-            : this.newLocalVarName();
-          const currentValue = fn.parameters[1]?.name
-            ? `$${fn.parameters[1].name}`
-            : this.newLocalVarName();
-          const currentIndex = fn.parameters[2]?.name
-            ? `$${fn.parameters[2].name}`
-            : undefined;
-          const array = fn.parameters[3]?.name
-            ? `$${fn.parameters[3].name}`
-            : undefined;
+
+          const [
+            previousValue = this.newLocalVarName(),
+            currentValue = this.newLocalVarName(),
+            currentIndex,
+            array,
+          ] = fn.parameters.map((param) => {
+            if (isIdentifier(param.name)) {
+              return `$${param.name.name}`;
+            } else {
+              throw new SynthError(
+                ErrorCodes.Unsupported_Feature,
+                "Binding variable assignment is not currently supported in VTL. https://github.com/functionless/functionless/issues/302"
+              );
+            }
+          });
 
           // create a new local variable name to hold the initial/previous value
           // this is because previousValue may not be unique and isn't contained within the loop
           const previousTmp = this.newLocalVarName();
 
           const list = this.flattenListMapOperations(
-            node.expr.expr,
+            expr.expr,
             currentValue,
             (firstVariable, list) => {
               if (initialValue !== undefined) {
@@ -481,18 +509,33 @@ export abstract class VTL {
           }
 
           return previousTmp;
-        } else if (
-          isIdentifier(node.expr.expr) &&
-          node.expr.expr.name === "Promise"
-        ) {
+        } else if (isIdentifier(expr.expr) && expr.expr.name === "Promise") {
           throw new SynthError(
             ErrorCodes.Unsupported_Use_of_Promises,
             "Appsync does not support concurrent integration invocation or methods on the `Promise` api."
           );
+        } else if (expr.name.name === "push") {
+          if (
+            node.args.length === 1 &&
+            !isSpreadElementExpr(node.args[0].expr)
+          ) {
+            // use the .add for the case when we are pushing exactly one argument
+            return `${this.eval(expr.expr)}.add(${this.eval(
+              node.args[0].expr
+            )})`;
+          } else {
+            // for all other cases, use .addAll
+            // such as `.push(a, b, ...c)` or `.push(...a)`
+            return `${this.eval(expr.expr)}.addAll(${this.addAll(
+              node.args
+                .map((arg) => arg.expr)
+                .filter((e): e is Expr => e !== undefined)
+            )})`;
+          }
         }
         // this is an array map, forEach, reduce call
       }
-      return `${this.eval(node.expr)}(${Object.values(node.args)
+      return `${this.eval(expr)}(${Object.values(node.args)
         .map((arg) => this.eval(arg))
         .join(", ")})`;
     } else if (isConditionExpr(node)) {
@@ -513,32 +556,26 @@ export abstract class VTL {
       return this.qr(this.eval(node.expr));
     } else if (isForInStmt(node) || isForOfStmt(node)) {
       this.foreach(
-        node.variableDecl,
+        node.initializer,
         `${this.eval(node.expr)}${isForInStmt(node) ? ".keySet()" : ""}`,
         node.body
       );
       return undefined;
     } else if (isFunctionDecl(node)) {
       // there should never be nested functions
-    } else if (isFunctionExpr(node)) {
+    } else if (isFunctionExpr(node) || isArrowFunctionExpr(node)) {
       return this.eval(node.body);
     } else if (isIdentifier(node)) {
       return this.dereference(node);
     } else if (isNewExpr(node)) {
       throw new Error("NewExpr is not supported by Velocity Templates");
     } else if (isPropAccessExpr(node)) {
-      let name = node.name;
-      if (name === "push" && isCallExpr(node.parent)) {
-        // this is a push to an array, rename to 'addAll'
-        // addAll because the var-args are converted to an ArrayLiteralExpr
-        name = "addAll";
-      }
-      return `${this.eval(node.expr)}.${name}`;
+      return `${this.eval(node.expr)}.${node.name.name}`;
     } else if (isElementAccessExpr(node)) {
       return `${this.eval(node.expr)}[${this.eval(node.element)}]`;
     } else if (isNullLiteralExpr(node) || isUndefinedLiteralExpr(node)) {
       return "$null";
-    } else if (isNumberLiteralExpr(node)) {
+    } else if (isNumberLiteralExpr(node) || isBigIntExpr(node)) {
       return node.value.toString(10);
     } else if (isObjectLiteralExpr(node)) {
       const obj = this.var("{}");
@@ -557,7 +594,7 @@ export abstract class VTL {
       return obj;
     } else if (isComputedPropertyNameExpr(node)) {
       return this.eval(node.expr);
-    } else if (isReferenceExpr(node)) {
+    } else if (isReferenceExpr(node) || isThisExpr(node)) {
       return this.dereference(node);
     } else if (isParameterDecl(node) || isPropAssignExpr(node)) {
       throw new Error(`cannot evaluate Expr kind: '${node.kind}'`);
@@ -628,7 +665,7 @@ export abstract class VTL {
         // may generate may variables, return nothing.
         return undefined;
       } else {
-        const varName = `${variablePrefix}${decl.name}`;
+        const varName = `${variablePrefix}${decl.name.name}`;
 
         if (decl.initializer) {
           return this.set(varName, decl.initializer);
@@ -667,10 +704,53 @@ export abstract class VTL {
         ErrorCodes.Unsupported_Feature,
         "Condition based for loops (for(;;)) are not currently supported. For in and for of loops may be supported based on the use case. https://github.com/functionless/functionless/issues/303"
       );
+    } else if (
+      isCaseClause(node) ||
+      isClassDecl(node) ||
+      isClassExpr(node) ||
+      isClassStaticBlockDecl(node) ||
+      isConstructorDecl(node) ||
+      isDebuggerStmt(node) ||
+      isDefaultClause(node) ||
+      isDeleteExpr(node) ||
+      isEmptyStmt(node) ||
+      isLabelledStmt(node) ||
+      isMethodDecl(node) ||
+      isPrivateIdentifier(node) ||
+      isPropDecl(node) ||
+      isRegexExpr(node) ||
+      isSuperKeyword(node) ||
+      isSwitchStmt(node) ||
+      isVoidExpr(node) ||
+      isWithStmt(node) ||
+      isYieldExpr(node)
+    ) {
+      throw new SynthError(
+        ErrorCodes.Unexpected_Error,
+        `${node.kind} is not yet supported in VTL`
+      );
     } else {
       return assertNever(node);
     }
     throw new Error(`cannot evaluate Expr kind: '${node.kind}'`);
+  }
+
+  public addAll(items: Expr[]) {
+    if (items.find(isSpreadElementExpr) === undefined) {
+      return `[${items.map((item) => this.eval(item)).join(", ")}]`;
+    }
+    // contains a spread, e.g. [...i], so we will store in a variable
+    const list = this.var("[]");
+    for (const item of items) {
+      if (isSpreadElementExpr(item)) {
+        this.qr(`${list}.addAll(${this.eval(item.expr)})`);
+      } else {
+        // we use addAll because `list.push(item)` is pared as `list.push(...[item])`
+        // - i.e. the compiler passes us an ArrayLiteralExpr even if there is one arg
+        this.qr(`${list}.add(${this.eval(item)})`);
+      }
+    }
+    return list;
   }
 
   /**
@@ -876,10 +956,7 @@ export abstract class VTL {
       this.add(`#set(${array} = ${list})`);
     }
 
-    const fn = assertNodeKind<FunctionExpr>(
-      call.getArgument("callbackfn")?.expr,
-      "FunctionExpr"
-    );
+    const fn = assertNodeKind<FunctionExpr>(call.args[0]?.expr, "FunctionExpr");
 
     const tmp = returnVariable ? returnVariable : this.newLocalVarName();
 
@@ -908,7 +985,8 @@ export abstract class VTL {
       !alwaysEvaluate &&
       isCallExpr(expr) &&
       isPropAccessExpr(expr.expr) &&
-      expr.expr.name === "map"
+      isIdentifier(expr.expr.name) &&
+      expr.expr.name.name === "map"
     ) {
       const [value, index, array] = getMapForEachArgs(expr);
 
@@ -941,11 +1019,17 @@ export abstract class VTL {
  * Returns the [value, index, array] arguments if this CallExpr is a `forEach` or `map` call.
  */
 const getMapForEachArgs = (call: CallExpr) => {
-  const fn = assertNodeKind<FunctionExpr>(
-    call.getArgument("callbackfn")?.expr,
-    "FunctionExpr"
-  );
-  return fn.parameters.map((p) => (p.name ? `$${p.name}` : p.name));
+  const fn = assertNodeKind<FunctionExpr>(call.args[0].expr, "FunctionExpr");
+  return fn.parameters.map((p) => {
+    if (isIdentifier(p.name)) {
+      return `$${p.name.name}`;
+    } else {
+      throw new SynthError(
+        ErrorCodes.Unsupported_Feature,
+        "Destructured parameter declarations are not yet supported by VTL. https://github.com/functionless/functionless/issues/364"
+      );
+    }
+  });
 };
 
 // to prevent the closure serializer from trying to import all of functionless.

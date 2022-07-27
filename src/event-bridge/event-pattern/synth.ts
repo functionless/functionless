@@ -25,6 +25,7 @@ import {
   isErr,
   isFunctionDecl,
   isNullLiteralExpr,
+  isParenthesizedExpr,
   isPropAccessExpr,
   isUnaryExpr,
   isUndefinedLiteralExpr,
@@ -132,7 +133,7 @@ export const synthesizePatternDocument = (
       "Expected parameter to synthesizeEventPattern to be compiled by functionless."
     );
   }
-  const [eventDecl = undefined] = predicate.parameters;
+  const [eventDecl = undefined] = (<FunctionDecl>predicate).parameters;
 
   const evalExpr = (expr: Expr): PatternDocument => {
     if (isBinaryExpr(expr)) {
@@ -149,6 +150,8 @@ export const synthesizePatternDocument = (
       return evalCall(expr);
     } else if (isBooleanLiteralExpr(expr)) {
       return { doc: {} };
+    } else if (isParenthesizedExpr(expr)) {
+      return evalExpr(expr.expr);
     } else {
       throw new Error(`${expr.kind} is unsupported`);
     }
@@ -388,22 +391,20 @@ export const synthesizePatternDocument = (
   ): PatternDocument => {
     const searchElement = evalToConstant(
       assertDefined(
-        expr.args[0].expr,
+        expr.args[0]?.expr,
         `Includes must have a single string argument ${INCLUDES_SEARCH_ELEMENT}.`
       )
     )?.constant;
 
     if (
-      expr.args
-        .map((e) => e.expr)
-        .filter(
-          (e) =>
-            !(
-              e === undefined ||
-              isNullLiteralExpr(e) ||
-              isUndefinedLiteralExpr(e)
-            )
-        ).length > 1
+      expr.args.filter(
+        (e) =>
+          !(
+            e?.expr === undefined ||
+            isNullLiteralExpr(e.expr) ||
+            isUndefinedLiteralExpr(e.expr)
+          )
+      ).length > 1
     ) {
       throw new Error("Includes only supports the searchElement argument");
     }
@@ -449,22 +450,20 @@ export const synthesizePatternDocument = (
     expr: CallExpr & { expr: PropAccessExpr | ElementAccessExpr }
   ): PatternDocument => {
     const arg = assertDefined(
-      expr.args[0].expr,
+      expr.args[0]?.expr,
       `StartsWith must contain a single string argument ${STARTS_WITH_SEARCH_STRING}`
     );
     const searchString = assertString(evalToConstant(arg)?.constant);
 
     if (
-      expr.args
-        .map((e) => e.expr)
-        .filter(
-          (e) =>
-            !(
-              e === undefined ||
-              isNullLiteralExpr(e) ||
-              isUndefinedLiteralExpr(e)
-            )
-        ).length > 1
+      expr.args.filter(
+        (e) =>
+          !(
+            e?.expr === undefined ||
+            isNullLiteralExpr(e.expr) ||
+            isUndefinedLiteralExpr(e.expr)
+          )
+      ).length > 1
     ) {
       throw new Error("Includes only supports the searchString argument");
     }
@@ -477,11 +476,11 @@ export const synthesizePatternDocument = (
         "StartsWith operation must be on a property of the event."
       );
     }
+    const e = isParenthesizedExpr(expr.expr.expr)
+      ? expr.expr.expr.unwrap()
+      : expr.expr.expr;
 
-    if (
-      isPropAccessExpr(expr.expr.expr) ||
-      isElementAccessExpr(expr.expr.expr)
-    ) {
+    if (isPropAccessExpr(e) || isElementAccessExpr(e)) {
       assertValidEventReference(eventReference, eventDecl);
       return eventReferenceToPatternDocument(eventReference, {
         prefix: searchString,
