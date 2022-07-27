@@ -354,7 +354,12 @@ export function compile(
           ...resolveFunctionName(),
           ts.factory.createArrayLiteralExpression(
             impl.parameters.map((param) =>
-              newExpr("ParameterDecl", [toExpr(param.name, scope ?? impl)])
+              newExpr("ParameterDecl", [
+                toExpr(param.name, scope ?? impl),
+                ...(param.initializer
+                  ? [toExpr(param.initializer, scope ?? impl)]
+                  : []),
+              ])
             )
           ),
           body,

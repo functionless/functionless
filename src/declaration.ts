@@ -144,7 +144,7 @@ export class ParameterDecl extends BaseDecl<
   "ParameterDecl",
   FunctionDecl | FunctionExpr
 > {
-  constructor(readonly name: BindingName) {
+  constructor(readonly name: BindingName, readonly initializer?: Expr) {
     super("ParameterDecl", arguments);
   }
 
