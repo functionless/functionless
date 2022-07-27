@@ -74,24 +74,6 @@ export abstract class BaseNode<
     }
   }
 
-  public hasName(): this is {
-    tryGetName(): string;
-  } {
-    return this.tryGetName() !== undefined;
-  }
-
-  public getName(): string {
-    const name = this.tryGetName();
-    if (name !== undefined) {
-      return name;
-    }
-    throw new Error(`${this.kind} does not have a name`);
-  }
-
-  public tryGetName(): string | undefined {
-    return undefined;
-  }
-
   public abstract clone(): this;
 
   public setParent(parent: FunctionlessNode | undefined) {

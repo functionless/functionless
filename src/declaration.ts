@@ -322,10 +322,6 @@ export class VariableDecl<
     super("VariableDecl", arguments);
   }
 
-  public tryGetName(): string | undefined {
-    return this.name.tryGetName();
-  }
-
   public clone(): this {
     return new VariableDecl(
       isBindingPattern(this.name) ? this.name.clone() : this.name,

@@ -7,6 +7,7 @@ import type {
 } from "./declaration";
 import {
   isIdentifier,
+  isNumberLiteralExpr,
   isPrivateIdentifier,
   isPropAssignExpr,
   isStringLiteralExpr,
@@ -152,10 +153,6 @@ export class Identifier extends BaseExpr<"Identifier"> {
   public lookup(): Decl | undefined {
     return this.getLexicalScope().get(this.name);
   }
-
-  public tryGetName() {
-    return this.name;
-  }
 }
 
 export class PrivateIdentifier extends BaseExpr<"PrivateIdentifier"> {
@@ -169,10 +166,6 @@ export class PrivateIdentifier extends BaseExpr<"PrivateIdentifier"> {
 
   public lookup(): Decl | undefined {
     return this.getLexicalScope().get(this.name);
-  }
-
-  public tryGetName() {
-    return this.name;
   }
 }
 
@@ -418,6 +411,9 @@ export class ObjectLiteralExpr extends BaseExpr<"ObjectLiteralExpr"> {
           return prop.name.name === name;
         } else if (isStringLiteralExpr(prop.name)) {
           return prop.name.value === name;
+        } else if (isNumberLiteralExpr(prop.name)) {
+          // compare by string
+          return prop.name.value.toString(10) === name;
         } else if (isStringLiteralExpr(prop.name.expr)) {
           return prop.name.expr.value === name;
         }
@@ -431,7 +427,8 @@ export type PropName =
   | Identifier
   | PrivateIdentifier
   | ComputedPropertyNameExpr
-  | StringLiteralExpr;
+  | StringLiteralExpr
+  | NumberLiteralExpr;
 
 export class PropAssignExpr extends BaseExpr<
   "PropAssignExpr",

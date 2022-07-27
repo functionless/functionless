@@ -28,6 +28,7 @@ import {
   isErr,
   isFunctionDecl,
   isFunctionExpr,
+  isIdentifier,
   isNumberLiteralExpr,
   isObjectLiteralExpr,
   isPropAssignExpr,
@@ -366,14 +367,25 @@ export namespace $SFN {
           Parameters: {
             ...context.cloneLexicalScopeParameters(call),
             ...Object.fromEntries(
-              callbackfn.parameters.map((param, i) => [
-                `${param.name.getName()}.$`,
-                i === 0
-                  ? "$$.Map.Item.Value"
-                  : i == 1
-                  ? "$$.Map.Item.Index"
-                  : arrayPath,
-              ])
+              callbackfn.parameters.map((param, i) => {
+                const paramName = isIdentifier(param?.name)
+                  ? param.name.name
+                  : undefined;
+                if (paramName === undefined) {
+                  throw new SynthError(
+                    ErrorCodes.Unsupported_Feature,
+                    "Destructured parameter declarations are not yet supported by Step Functions. https://github.com/functionless/functionless/issues/364"
+                  );
+                }
+                return [
+                  `${paramName}.$`,
+                  i === 0
+                    ? "$$.Map.Item.Value"
+                    : i == 1
+                    ? "$$.Map.Item.Index"
+                    : arrayPath,
+                ];
+              })
             ),
           },
         },

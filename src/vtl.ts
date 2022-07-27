@@ -438,18 +438,22 @@ export abstract class VTL {
           const initialValue = node.args[1];
 
           // (previousValue: string[], currentValue: string, currentIndex: number, array: string[])
-          const previousValue = fn.parameters[0]?.name
-            ? `$${fn.parameters[0].name.getName()}`
-            : this.newLocalVarName();
-          const currentValue = fn.parameters[1]?.name
-            ? `$${fn.parameters[1].name.getName()}`
-            : this.newLocalVarName();
-          const currentIndex = fn.parameters[2]?.name
-            ? `$${fn.parameters[2].name.getName()}`
-            : undefined;
-          const array = fn.parameters[3]?.name
-            ? `$${fn.parameters[3].name.getName()}`
-            : undefined;
+
+          const [
+            previousValue = this.newLocalVarName(),
+            currentValue = this.newLocalVarName(),
+            currentIndex,
+            array,
+          ] = fn.parameters.map((param) => {
+            if (isIdentifier(param.name)) {
+              return `$${param.name.name}`;
+            } else {
+              throw new SynthError(
+                ErrorCodes.Unsupported_Feature,
+                "Binding variable assignment is not currently supported in Event Bridge rules and input transforms. https://github.com/functionless/functionless/issues/302"
+              );
+            }
+          });
 
           // create a new local variable name to hold the initial/previous value
           // this is because previousValue may not be unique and isn't contained within the loop
@@ -1015,7 +1019,16 @@ export abstract class VTL {
  */
 const getMapForEachArgs = (call: CallExpr) => {
   const fn = assertNodeKind<FunctionExpr>(call.args[0].expr, "FunctionExpr");
-  return fn.parameters.map((p) => `$${p.name.getName()}`);
+  return fn.parameters.map((p) => {
+    if (isIdentifier(p.name)) {
+      return `$${p.name.name}`;
+    } else {
+      throw new SynthError(
+        ErrorCodes.Unsupported_Feature,
+        "Destructured parameter declarations are not yet supported by VTL. https://github.com/functionless/functionless/issues/364"
+      );
+    }
+  });
 };
 
 // to prevent the closure serializer from trying to import all of functionless.

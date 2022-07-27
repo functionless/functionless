@@ -714,6 +714,20 @@ export class ASL {
               ResultPath: tempArrayPath,
             })!;
 
+        const initializerName = isIdentifier(stmt.initializer)
+          ? stmt.initializer.name
+          : isVariableDecl(stmt.initializer) &&
+            isIdentifier(stmt.initializer.name)
+          ? stmt.initializer.name.name
+          : undefined;
+
+        if (initializerName === undefined) {
+          throw new SynthError(
+            ErrorCodes.Unsupported_Feature,
+            "Destructured parameter declarations are not yet supported by Step Functions. https://github.com/functionless/functionless/issues/364"
+          );
+        }
+
         return {
           startState: "assignTemp",
           node: stmt,
@@ -738,7 +752,7 @@ export class ASL {
                   Type: "Pass",
                   node: stmt.initializer,
                   InputPath: `${tempArrayPath}[0]`,
-                  ResultPath: `$.${stmt.initializer.getName()}`,
+                  ResultPath: `$.${initializerName}`,
                   Next: "body",
                 }
               : /**ForInStmt
@@ -752,13 +766,13 @@ export class ASL {
                     assignIndex: {
                       Type: "Pass",
                       InputPath: `${tempArrayPath}[0].index`,
-                      ResultPath: `$.${stmt.initializer.getName()}`,
+                      ResultPath: `$.${initializerName}`,
                       Next: "assignValue",
                     },
                     assignValue: {
                       Type: "Pass",
                       InputPath: `${tempArrayPath}[0].item`,
-                      ResultPath: `$.0__${stmt.initializer.getName()}`,
+                      ResultPath: `$.0__${initializerName}`,
                       Next: "body",
                     },
                   },
@@ -923,11 +937,19 @@ export class ASL {
       }
 
       return this.evalExprToSubState(stmt.initializer, (exprOutput) => {
+        const name = isIdentifier(stmt.name) ? stmt.name.name : undefined;
+        if (name === undefined) {
+          throw new SynthError(
+            ErrorCodes.Unsupported_Feature,
+            "Destructured parameter declarations are not yet supported by Step Functions. https://github.com/functionless/functionless/issues/364"
+          );
+        }
+
         return ASLGraph.passWithInput(
           {
             Type: "Pass" as const,
             // TODO support binding pattern - https://github.com/functionless/functionless/issues/302
-            ResultPath: `$.${stmt.name.getName()}`,
+            ResultPath: `$.${name}`,
           },
           exprOutput
         );
@@ -1074,7 +1096,11 @@ export class ASL {
     } else if (isTryStmt(stmt)) {
       const tryFlow = analyzeFlow(stmt.tryBlock);
 
-      const errorVariableName = stmt.catchClause?.variableDecl?.getName();
+      const errorVariableName = isIdentifier(
+        stmt.catchClause?.variableDecl?.name
+      )
+        ? stmt.catchClause!.variableDecl!.name.name
+        : undefined;
 
       const tryState = {
         startState: "try",
@@ -1727,14 +1753,26 @@ export class ASL {
                 Parameters: {
                   ...this.cloneLexicalScopeParameters(expr),
                   ...Object.fromEntries(
-                    callbackfn.parameters.map((param, i) => [
-                      `${param.name.getName()}.$`,
-                      i === 0
-                        ? "$$.Map.Item.Value"
-                        : i == 1
-                        ? "$$.Map.Item.Index"
-                        : listPath,
-                    ])
+                    callbackfn.parameters.map((param, i) => {
+                      const paramName = isIdentifier(param.name)
+                        ? param.name.name
+                        : undefined;
+
+                      if (paramName === undefined) {
+                        throw new SynthError(
+                          ErrorCodes.Unsupported_Feature,
+                          "Destructured parameter declarations are not yet supported by Step Functions. https://github.com/functionless/functionless/issues/364"
+                        );
+                      }
+                      return [
+                        `${paramName}.$`,
+                        i === 0
+                          ? "$$.Map.Item.Value"
+                          : i == 1
+                          ? "$$.Map.Item.Index"
+                          : listPath,
+                      ];
+                    })
                   ),
                 },
                 ...(throwTransition
@@ -2436,19 +2474,37 @@ export class ASL {
       // the catch/finally handler is nearer than the surrounding Map/Parallel State
       return {
         Next: ASL.CatchState,
-        ResultPath:
-          isCatchClause(catchOrFinally) && catchOrFinally.variableDecl
-            ? `$.${catchOrFinally.variableDecl.getName()}`
-            : isBlockStmt(catchOrFinally) &&
-              catchOrFinally.isFinallyBlock() &&
-              catchOrFinally.parent.catchClause &&
-              canThrow(catchOrFinally.parent.catchClause) &&
-              // we only store the error thrown from the catchClause if the finallyBlock is not terminal
-              // by terminal, we mean that every branch returns a value - meaning that the re-throw
-              // behavior of a finally will never be triggered - the return within the finally intercepts it
-              !catchOrFinally.isTerminal()
-            ? `$.${this.generatedNames.generateOrGet(catchOrFinally)}`
-            : null,
+        ResultPath: (() => {
+          if (isCatchClause(catchOrFinally)) {
+            if (catchOrFinally.variableDecl) {
+              const varName = isIdentifier(catchOrFinally.variableDecl?.name)
+                ? catchOrFinally.variableDecl!.name.name
+                : undefined;
+              if (varName === undefined) {
+                throw new SynthError(
+                  ErrorCodes.Unsupported_Feature,
+                  "Destructured parameter declarations are not yet supported by Step Functions. https://github.com/functionless/functionless/issues/364"
+                );
+              }
+              return `$.${varName}`;
+            } else {
+              return null;
+            }
+          } else if (
+            isBlockStmt(catchOrFinally) &&
+            catchOrFinally.isFinallyBlock() &&
+            catchOrFinally.parent.catchClause &&
+            canThrow(catchOrFinally.parent.catchClause) &&
+            // we only store the error thrown from the catchClause if the finallyBlock is not terminal
+            // by terminal, we mean that every branch returns a value - meaning that the re-throw
+            // behavior of a finally will never be triggered - the return within the finally intercepts it
+            !catchOrFinally.isTerminal()
+          ) {
+            return `$.${this.generatedNames.generateOrGet(catchOrFinally)}`;
+          } else {
+            return null;
+          }
+        })(),
       };
     } else {
       // the Map/Parallel tasks are closer than the catch/finally, so we use a Fail State
@@ -4406,6 +4462,8 @@ function exprToString(
       isIdentifier(expr.name) || isPrivateIdentifier(expr.name)
         ? expr.name.name
         : isStringLiteralExpr(expr.name)
+        ? expr.name.value
+        : isNumberLiteralExpr(expr.name)
         ? expr.name.value
         : isComputedPropertyNameExpr(expr.name)
         ? isStringLiteralExpr(expr.name.expr)

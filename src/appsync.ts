@@ -9,6 +9,7 @@ import {
 import {
   FunctionDecl,
   validateFunctionDecl,
+  VariableDecl,
   VariableDeclList,
 } from "./declaration";
 import { ErrorCodes, SynthError } from "./error-code";
@@ -46,6 +47,7 @@ import {
   isReferenceExpr,
   isThisExpr,
   isVariableDecl,
+  isIdentifier,
 } from "./guards";
 import {
   findDeepIntegrations,
@@ -587,13 +589,19 @@ function synthesizeFunctions(api: appsync.GraphqlApi, decl: FunctionDecl) {
           stmt.declList.decls[0].initializer &&
           isIntegrationCallPattern(stmt.declList.decls[0].initializer)
         ) {
-          const decl = stmt.declList.decls[0];
-
+          const decl: VariableDecl | undefined = stmt.declList.decls[0];
+          const varName = isIdentifier(decl?.name) ? decl.name.name : undefined;
+          if (varName === undefined) {
+            throw new SynthError(
+              ErrorCodes.Unsupported_Feature,
+              "Destructured parameter declarations are not yet supported by Appsync. https://github.com/functionless/functionless/issues/364"
+            );
+          }
           return createStage(
             service,
             `${
               pre ? `${pre}\n` : ""
-            }#set( $context.stash.${decl.getName()} = ${getResult(
+            }#set( $context.stash.${varName} = ${getResult(
               <IntegrationCallPattern>decl.initializer
             )} )\n{}`
           );
