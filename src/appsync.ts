@@ -591,9 +591,11 @@ function synthesizeFunctions(api: appsync.GraphqlApi, decl: FunctionDecl) {
 
           return createStage(
             service,
-            `${pre ? `${pre}\n` : ""}#set( $context.stash.${
-              decl.name
-            } = ${getResult(<IntegrationCallPattern>decl.initializer)} )\n{}`
+            `${
+              pre ? `${pre}\n` : ""
+            }#set( $context.stash.${decl.getName()} = ${getResult(
+              <IntegrationCallPattern>decl.initializer
+            )} )\n{}`
           );
         } else {
           throw new SynthError(

@@ -4,7 +4,12 @@ import { assertConstantValue, assertString } from "../assert";
 import { FunctionDecl, validateFunctionDecl } from "../declaration";
 import { Err } from "../error";
 import { ErrorCodes, SynthError } from "../error-code";
-import { ArrayLiteralExpr, Expr, ObjectLiteralExpr } from "../expression";
+import {
+  ArrayLiteralExpr,
+  Expr,
+  Identifier,
+  ObjectLiteralExpr,
+} from "../expression";
 import {
   isArrayLiteralExpr,
   isAwaitExpr,
@@ -125,7 +130,7 @@ export const synthesizeEventBridgeTargets = (
       if (
         eventDecl &&
         ref.reference.length === 0 &&
-        ref.identity === eventDecl.name
+        ref.identity === (<Identifier>eventDecl.name).name
       ) {
         return {
           value: "<aws.events.event>",
@@ -133,7 +138,7 @@ export const synthesizeEventBridgeTargets = (
         };
       }
       // check to see if the value is a predefined value
-      if (utilsDecl && ref.identity === utilsDecl?.name) {
+      if (utilsDecl && ref.identity === (<Identifier>utilsDecl.name).name) {
         const [context = undefined, value = undefined] = ref.reference;
         if (context === "context") {
           if (value === "ruleName") {

@@ -761,7 +761,7 @@ export function visitBlock(
       const id = new Identifier(nameGenerator.generateOrGet(expr));
       nestedTasks.push(
         new VariableStmt(
-          new VariableDeclList([new VariableDecl(id.name, expr)])
+          new VariableDeclList([new VariableDecl(id.clone(), expr)])
         )
       );
       return id;

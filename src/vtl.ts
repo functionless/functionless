@@ -254,7 +254,9 @@ export abstract class VTL {
         // deconstruct from the temp variable
         this.evaluateBindingPattern(iterVar.name, tempVar);
       } else {
-        this.add(`#foreach($${iterVar.name} in ${this.printExpr(iterValue)})`);
+        this.add(
+          `#foreach($${iterVar.name.name} in ${this.printExpr(iterValue)})`
+        );
       }
     } else {
       this.add(
@@ -437,16 +439,16 @@ export abstract class VTL {
 
           // (previousValue: string[], currentValue: string, currentIndex: number, array: string[])
           const previousValue = fn.parameters[0]?.name
-            ? `$${fn.parameters[0].name}`
+            ? `$${fn.parameters[0].name.getName()}`
             : this.newLocalVarName();
           const currentValue = fn.parameters[1]?.name
-            ? `$${fn.parameters[1].name}`
+            ? `$${fn.parameters[1].name.getName()}`
             : this.newLocalVarName();
           const currentIndex = fn.parameters[2]?.name
-            ? `$${fn.parameters[2].name}`
+            ? `$${fn.parameters[2].name.getName()}`
             : undefined;
           const array = fn.parameters[3]?.name
-            ? `$${fn.parameters[3].name}`
+            ? `$${fn.parameters[3].name.getName()}`
             : undefined;
 
           // create a new local variable name to hold the initial/previous value
@@ -658,7 +660,7 @@ export abstract class VTL {
         // may generate may variables, return nothing.
         return undefined;
       } else {
-        const varName = `${variablePrefix}${decl.name}`;
+        const varName = `${variablePrefix}${decl.name.name}`;
 
         if (decl.initializer) {
           return this.set(varName, decl.initializer);
@@ -1013,7 +1015,7 @@ export abstract class VTL {
  */
 const getMapForEachArgs = (call: CallExpr) => {
   const fn = assertNodeKind<FunctionExpr>(call.args[0].expr, "FunctionExpr");
-  return fn.parameters.map((p) => (p.name ? `$${p.name}` : p.name));
+  return fn.parameters.map((p) => `$${p.name.getName()}`);
 };
 
 // to prevent the closure serializer from trying to import all of functionless.

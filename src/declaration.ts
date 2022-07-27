@@ -138,11 +138,13 @@ export interface IntegrationInvocation {
   args: Expr[];
 }
 
+export type BindingName = Identifier | BindingPattern;
+
 export class ParameterDecl extends BaseDecl<
   "ParameterDecl",
   FunctionDecl | FunctionExpr
 > {
-  constructor(readonly name: string | BindingPattern) {
+  constructor(readonly name: BindingName) {
     super("ParameterDecl", arguments);
   }
 
@@ -195,7 +197,7 @@ export type BindingPattern = ObjectBinding | ArrayBinding;
  * ```
  *
  * * `a` - creates a variable called a with the value of the right side (`const a = right.a`).
- * * `a: b` - creates a variable called b with the value of the right side (`const b = right.b`).
+ * * `a: b` - creates a variable called b with the value of the right side (`const b = right.a`).
  * * `a = "value"` - creates a variable called a with the value of the right side or "value" when the right side is undefined (`const a = right.a ?? "value"`)
  * * `a: { b }` - creates a variable called b with the value of the right side's a value. (`const b = right.a.b`)
  * * `...rest`- creates a variable called rest with all of the unused keys in the right side
@@ -265,6 +267,10 @@ export class ObjectBinding extends BaseNode<"ObjectBinding", VariableDecl> {
   public clone(): this {
     return new ObjectBinding(this.bindings.map((b) => b.clone())) as this;
   }
+
+  public getName(): never {
+    throw new Error(`an ObjectBinding does not have a name`);
+  }
 }
 
 /**
@@ -297,6 +303,10 @@ export class ArrayBinding extends BaseNode<"ArrayBinding", VariableDecl> {
   public clone(): this {
     return new ArrayBinding(this.bindings.map((b) => b?.clone())) as this;
   }
+
+  public getName(): never {
+    throw new Error(`an ArrayBinding does not have a name`);
+  }
 }
 
 export type VariableDeclParent =
@@ -308,10 +318,12 @@ export type VariableDeclParent =
 export class VariableDecl<
   E extends Expr | undefined = Expr | undefined
 > extends BaseDecl<"VariableDecl", VariableDeclParent> {
-  constructor(readonly name: string | BindingPattern, readonly initializer: E) {
+  constructor(readonly name: BindingName, readonly initializer: E) {
     super("VariableDecl", arguments);
-    if (isBindingPattern(name)) {
-    }
+  }
+
+  public tryGetName(): string | undefined {
+    return this.name.tryGetName();
   }
 
   public clone(): this {

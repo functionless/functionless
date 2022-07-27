@@ -286,7 +286,7 @@ export const flattenStatementsScope = (
 
       return {
         ...scope,
-        [stmt.name]: flattened,
+        [stmt.name.name]: flattened,
       };
     }, {});
 };
@@ -315,7 +315,7 @@ export function assertValidEventReference(
   }
   const eName = eventName?.name;
   const uName = utilsName?.name;
-  if (eventReference.identity === eName) {
+  if (eventReference.identity === (<Identifier | undefined>eName)?.name) {
     if (eventReference.reference.length > 1) {
       const [first] = eventReference.reference;
       if (first !== "detail") {
@@ -324,7 +324,10 @@ export function assertValidEventReference(
         )}`;
       }
     }
-  } else if (!utilsName || eventReference.identity !== uName) {
+  } else if (
+    !utilsName ||
+    eventReference.identity !== (<Identifier | undefined>uName)?.name
+  ) {
     throw Error(
       `Unresolved references can only reference the event parameter (${eventName}) or the $utils parameter (${utilsName}), but found ${eventReference.identity}`
     );

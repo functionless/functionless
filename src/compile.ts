@@ -354,11 +354,7 @@ export function compile(
           ...resolveFunctionName(),
           ts.factory.createArrayLiteralExpression(
             impl.parameters.map((param) =>
-              newExpr("ParameterDecl", [
-                ts.isIdentifier(param.name)
-                  ? ts.factory.createStringLiteral(param.name.text)
-                  : toExpr(param.name, scope ?? impl),
-              ])
+              newExpr("ParameterDecl", [toExpr(param.name, scope ?? impl)])
             )
           ),
           body,
@@ -554,17 +550,10 @@ export function compile(
             ),
           ]);
         } else if (ts.isVariableDeclaration(node)) {
-          if (ts.isIdentifier(node.name)) {
-            return newExpr("VariableDecl", [
-              ts.factory.createStringLiteral(node.name.getText()),
-              ...(node.initializer ? [toExpr(node.initializer, scope)] : []),
-            ]);
-          } else {
-            return newExpr("VariableDecl", [
-              toExpr(node.name, scope),
-              toExpr(node.initializer, scope),
-            ]);
-          }
+          return newExpr("VariableDecl", [
+            toExpr(node.name, scope),
+            ...(node.initializer ? [toExpr(node.initializer, scope)] : []),
+          ]);
         } else if (ts.isIfStatement(node)) {
           return newExpr("IfStmt", [
             // when

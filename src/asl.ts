@@ -1,13 +1,19 @@
 import { aws_iam } from "aws-cdk-lib";
 import { Construct } from "constructs";
 import { assertNever } from "./assert";
-import { Decl, FunctionDecl, VariableDecl } from "./declaration";
+import {
+  BindingElem,
+  BindingName,
+  Decl,
+  FunctionDecl,
+  ParameterDecl,
+  VariableDecl,
+} from "./declaration";
 import { ErrorCodes, SynthError } from "./error-code";
 import {
   CallExpr,
   ElementAccessExpr,
   Expr,
-  Identifier,
   NullLiteralExpr,
   PropAccessExpr,
 } from "./expression";
@@ -511,6 +517,9 @@ export class ASL {
     });
 
     const inputName = decl.parameters[0]?.name;
+    if (inputName && !isIdentifier(inputName)) {
+      throw new Error(`Binding Patterns are not supported by Step Functions`);
+    }
 
     const states = this.evalStmt(this.decl.body);
 
@@ -527,7 +536,11 @@ export class ASL {
       Type: "Pass",
       Parameters: {
         [FUNCTIONLESS_CONTEXT_NAME]: { null: null },
-        ...(inputName ? { [`${inputName}.$`]: "$" } : {}),
+        ...(inputName
+          ? {
+              [`${inputName.name}.$`]: "$",
+            }
+          : {}),
       },
       ResultPath: "$",
       Next: ASLGraph.DeferNext,
@@ -725,7 +738,7 @@ export class ASL {
                   Type: "Pass",
                   node: stmt.variableDecl,
                   InputPath: `${tempArrayPath}[0]`,
-                  ResultPath: `$.${stmt.variableDecl.name}`,
+                  ResultPath: `$.${stmt.variableDecl.getName()}`,
                   Next: "body",
                 }
               : /**ForInStmt
@@ -739,13 +752,13 @@ export class ASL {
                     assignIndex: {
                       Type: "Pass",
                       InputPath: `${tempArrayPath}[0].index`,
-                      ResultPath: `$.${stmt.variableDecl.name}`,
+                      ResultPath: `$.${stmt.variableDecl.getName()}`,
                       Next: "assignValue",
                     },
                     assignValue: {
                       Type: "Pass",
                       InputPath: `${tempArrayPath}[0].item`,
-                      ResultPath: `$.0__${stmt.variableDecl.name}`,
+                      ResultPath: `$.0__${stmt.variableDecl.getName()}`,
                       Next: "body",
                     },
                   },
@@ -914,7 +927,7 @@ export class ASL {
           {
             Type: "Pass" as const,
             // TODO support binding pattern - https://github.com/functionless/functionless/issues/302
-            ResultPath: `$.${stmt.name}`,
+            ResultPath: `$.${stmt.name.getName()}`,
           },
           exprOutput
         );
@@ -1061,7 +1074,7 @@ export class ASL {
     } else if (isTryStmt(stmt)) {
       const tryFlow = analyzeFlow(stmt.tryBlock);
 
-      const errorVariableName = stmt.catchClause?.variableDecl?.name;
+      const errorVariableName = stmt.catchClause?.variableDecl?.getName();
 
       const tryState = {
         startState: "try",
@@ -1715,7 +1728,7 @@ export class ASL {
                   ...this.cloneLexicalScopeParameters(expr),
                   ...Object.fromEntries(
                     callbackfn.parameters.map((param, i) => [
-                      `${param.name}.$`,
+                      `${param.name.getName()}.$`,
                       i === 0
                         ? "$$.Map.Item.Value"
                         : i == 1
@@ -2425,7 +2438,7 @@ export class ASL {
         Next: ASL.CatchState,
         ResultPath:
           isCatchClause(catchOrFinally) && catchOrFinally.variableDecl
-            ? `$.${catchOrFinally.variableDecl.name}`
+            ? `$.${catchOrFinally.variableDecl.getName()}`
             : isBlockStmt(catchOrFinally) &&
               catchOrFinally.isFinallyBlock() &&
               catchOrFinally.parent.catchClause &&
@@ -2795,17 +2808,20 @@ export class ASL {
     if (isIdentifier(access.element)) {
       const element = access.element.lookup();
       if (
-        access.findParent(
-          (parent): parent is ForInStmt =>
-            isForInStmt(parent) &&
-            // find the first forin parent which has an identifier with this name
-            parent.variableDecl.name === (<Identifier>access.element).name &&
-            // if the variable decl is an identifier, it will have the same initializer.
-            ((isIdentifier(parent.variableDecl) &&
-              element === parent.variableDecl.lookup()) ||
-              // if the variable decl is an variable stmt, it will be the initializer of the element.
-              element === parent.variableDecl)
-        )
+        isVariableDecl(element) &&
+        access.findParent((parent): parent is ForInStmt => {
+          if (isForInStmt(parent)) {
+            if (isIdentifier(parent.variableDecl)) {
+              // let i;
+              // for (i in ..)
+              return parent.variableDecl.name === access.element.tryGetName();
+            } else if (isVariableDecl(parent.variableDecl)) {
+              // for (let i in ..)
+              return parent.variableDecl === element;
+            }
+          }
+          return false;
+        })
       ) {
         // the array element is assigned to $.0__[name]
         return { jsonPath: `$.0__${access.element.name}` };
@@ -4242,14 +4258,22 @@ function toStateName(node: FunctionlessNode): string {
       return "continue";
     } else if (isCatchClause(node)) {
       return `catch${
-        node.variableDecl?.name ? `(${node.variableDecl?.name})` : ""
+        node.variableDecl?.name
+          ? `(${exprToString(node.variableDecl.name)})`
+          : ""
       }`;
     } else if (isDoStmt(node)) {
       return `while (${exprToString(node.condition)})`;
     } else if (isForInStmt(node)) {
-      return `for(${node.variableDecl.name} in ${exprToString(node.expr)})`;
+      return `for(${
+        isIdentifier(node.variableDecl)
+          ? exprToString(node.variableDecl)
+          : exprToString(node.variableDecl.name)
+      } in ${exprToString(node.expr)})`;
     } else if (isForOfStmt(node)) {
-      return `for(${node.variableDecl.name} of ${exprToString(node.expr)})`;
+      return `for(${exprToString(node.variableDecl)} of ${exprToString(
+        node.expr
+      )})`;
     } else if (isForStmt(node)) {
       // for(;;)
       return `for(${
@@ -4275,7 +4299,7 @@ function toStateName(node: FunctionlessNode): string {
       if (isCatchClause(node.parent)) {
         return `catch(${node.name})`;
       } else {
-        return `${node.name} = ${
+        return `${exprToString(node.name)} = ${
           node.initializer ? exprToString(node.initializer) : "undefined"
         }`;
       }
@@ -4299,7 +4323,7 @@ function toStateName(node: FunctionlessNode): string {
     ) {
       return `function (${node.parameters.map(inner).join(",")})`;
     } else if (isParameterDecl(node)) {
-      return isBindingPattern(node.name) ? inner(node.name) : node.name;
+      return inner(node.name);
     } else if (isErr(node)) {
       throw node.error;
     } else if (isEmptyStmt(node)) {
@@ -4333,7 +4357,9 @@ function toStateName(node: FunctionlessNode): string {
   return inner(node);
 }
 
-function exprToString(expr?: Expr): string {
+function exprToString(
+  expr?: Expr | ParameterDecl | BindingName | BindingElem | VariableDecl
+): string {
   if (!expr) {
     return "";
   } else if (isArgument(expr)) {
@@ -4364,7 +4390,7 @@ function exprToString(expr?: Expr): string {
   } else if (isElementAccessExpr(expr)) {
     return `${exprToString(expr.expr)}[${exprToString(expr.element)}]`;
   } else if (isFunctionExpr(expr) || isArrowFunctionExpr(expr)) {
-    return `function(${expr.parameters.map((param) => param.name).join(", ")})`;
+    return `function(${expr.parameters.map(exprToString).join(", ")})`;
   } else if (isIdentifier(expr)) {
     return expr.name;
   } else if (isNullLiteralExpr(expr)) {
@@ -4430,6 +4456,22 @@ function exprToString(expr?: Expr): string {
     return `void ${exprToString(expr.expr)}`;
   } else if (isParenthesizedExpr(expr)) {
     return exprToString(expr.expr);
+  } else if (isObjectBinding(expr)) {
+    return `{${expr.bindings.map(exprToString).join(",")}}`;
+  } else if (isArrayBinding(expr)) {
+    return `[${expr.bindings.map(exprToString).join(",")}]`;
+  } else if (isBindingElem(expr)) {
+    return `${expr.rest ? "..." : ""}${
+      expr.propertyName
+        ? `${exprToString(expr.propertyName)}:${exprToString(expr.name)}`
+        : `${exprToString(expr.name)}`
+    }`;
+  } else if (isVariableDecl(expr)) {
+    return `${exprToString(expr.name)}${
+      expr.initializer ? ` = ${exprToString(expr.initializer)}` : ""
+    }`;
+  } else if (isParameterDecl(expr)) {
+    return exprToString(expr.name);
   } else {
     return assertNever(expr);
   }

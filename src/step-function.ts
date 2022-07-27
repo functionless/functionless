@@ -367,7 +367,7 @@ export namespace $SFN {
             ...context.cloneLexicalScopeParameters(call),
             ...Object.fromEntries(
               callbackfn.parameters.map((param, i) => [
-                `${param.name}.$`,
+                `${param.name.getName()}.$`,
                 i === 0
                   ? "$$.Map.Item.Value"
                   : i == 1

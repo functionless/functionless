@@ -74,6 +74,24 @@ export abstract class BaseNode<
     }
   }
 
+  public hasName(): this is {
+    tryGetName(): string;
+  } {
+    return this.tryGetName() !== undefined;
+  }
+
+  public getName(): string {
+    const name = this.tryGetName();
+    if (name !== undefined) {
+      return name;
+    }
+    throw new Error(`${this.kind} does not have a name`);
+  }
+
+  public tryGetName(): string | undefined {
+    return undefined;
+  }
+
   public abstract clone(): this;
 
   public setParent(parent: FunctionlessNode | undefined) {
@@ -350,7 +368,7 @@ export abstract class BaseNode<
         if (isBindingPattern(node.name)) {
           return getNames(node.name);
         }
-        return [[node.name, node]];
+        return [[node.name.name, node]];
       } else if (isBindingElem(node)) {
         if (isIdentifier(node.name)) {
           return [[node.name.name, node]];
@@ -360,8 +378,8 @@ export abstract class BaseNode<
         return node.bindings.flatMap((b) => getNames(b));
       } else if (isFunctionExpr(node) || isFunctionDecl(node)) {
         return node.parameters.flatMap((param) =>
-          typeof param.name === "string"
-            ? [[param.name, param]]
+          isIdentifier(param.name)
+            ? [[param.name.name, param]]
             : getNames(param.name)
         );
       } else if (isForInStmt(node) || isForOfStmt(node)) {

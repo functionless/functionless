@@ -152,6 +152,10 @@ export class Identifier extends BaseExpr<"Identifier"> {
   public lookup(): Decl | undefined {
     return this.getLexicalScope().get(this.name);
   }
+
+  public tryGetName() {
+    return this.name;
+  }
 }
 
 export class PrivateIdentifier extends BaseExpr<"PrivateIdentifier"> {
@@ -165,6 +169,10 @@ export class PrivateIdentifier extends BaseExpr<"PrivateIdentifier"> {
 
   public lookup(): Decl | undefined {
     return this.getLexicalScope().get(this.name);
+  }
+
+  public tryGetName() {
+    return this.name;
   }
 }
 
