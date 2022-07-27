@@ -1,19 +1,13 @@
 import { ErrorCodes, SynthError } from "./error-code";
 import {
-  Argument,
   ComputedPropertyNameExpr,
   Expr,
   FunctionExpr,
   Identifier,
+  PropName,
   StringLiteralExpr,
 } from "./expression";
-import {
-  isBindingPattern,
-  isErr,
-  isFunctionDecl,
-  isNode,
-  isParameterDecl,
-} from "./guards";
+import { isBindingPattern, isErr, isFunctionDecl } from "./guards";
 import { Integration } from "./integration";
 import { BaseNode, FunctionlessNode } from "./node";
 import type {
@@ -24,34 +18,115 @@ import type {
   ForStmt,
   VariableStmt,
 } from "./statement";
-import { AnyFunction, anyOf } from "./util";
+import { AnyClass, AnyFunction, anyOf } from "./util";
 
-export type Decl = FunctionDecl | ParameterDecl | BindingElem | VariableDecl;
-
-export function isDecl(a: any): a is Decl {
-  return isNode(a) && (isFunctionDecl(a) || isParameterDecl(a));
-}
+export type Decl =
+  | BindingElem
+  | ClassDecl
+  | ClassMember
+  | FunctionDecl
+  | ParameterDecl
+  | VariableDecl;
 
 abstract class BaseDecl<
   Kind extends FunctionlessNode["kind"],
-  Parent extends FunctionlessNode | undefined
+  Parent extends FunctionlessNode | undefined = FunctionlessNode | undefined
 > extends BaseNode<Kind, Parent> {
   readonly nodeKind: "Decl" = "Decl";
 }
 
-export class FunctionDecl<F extends AnyFunction = AnyFunction> extends BaseDecl<
-  "FunctionDecl",
+export class ClassDecl<C extends AnyClass = AnyClass> extends BaseDecl<
+  "ClassDecl",
   undefined
 > {
-  readonly _functionBrand?: F;
+  readonly _classBrand?: C;
+  constructor(
+    readonly name: string,
+    readonly heritage: Expr | undefined,
+    readonly members: ClassMember[]
+  ) {
+    super("ClassDecl", arguments);
+  }
+  public clone(): this {
+    return new ClassDecl(
+      this.name,
+      this.heritage?.clone(),
+      this.members.map((m) => m.clone())
+    ) as this;
+  }
+}
+
+export type ClassMember =
+  | ClassStaticBlockDecl
+  | ConstructorDecl
+  | MethodDecl
+  | PropDecl;
+
+export class ClassStaticBlockDecl extends BaseDecl<"ClassStaticBlockDecl"> {
+  constructor(readonly block: BlockStmt) {
+    super("ClassStaticBlockDecl", arguments);
+  }
+
+  public clone(): this {
+    return new ClassStaticBlockDecl(this.block.clone()) as this;
+  }
+}
+
+export class ConstructorDecl extends BaseDecl<"ConstructorDecl"> {
   constructor(readonly parameters: ParameterDecl[], readonly body: BlockStmt) {
-    super("FunctionDecl");
-    parameters.forEach((param) => param.setParent(this));
-    body.setParent(this);
+    super("ConstructorDecl", arguments);
+  }
+
+  public clone(): this {
+    return new ConstructorDecl(
+      this.parameters.map((p) => p.clone()),
+      this.body.clone()
+    ) as this;
+  }
+}
+
+export class MethodDecl extends BaseDecl<"MethodDecl"> {
+  constructor(
+    readonly name: PropName,
+    readonly parameters: ParameterDecl[],
+    readonly body: BlockStmt
+  ) {
+    super("MethodDecl", arguments);
+  }
+
+  public clone(): this {
+    return new MethodDecl(
+      this.name.clone(),
+      this.parameters.map((p) => p.clone()),
+      this.body.clone()
+    ) as this;
+  }
+}
+
+export class PropDecl extends BaseDecl<"PropDecl"> {
+  constructor(readonly name: PropName, readonly initializer?: Expr) {
+    super("PropDecl", arguments);
+  }
+  public clone(): this {
+    return new PropDecl(this.name.clone(), this.initializer?.clone()) as this;
+  }
+}
+
+export class FunctionDecl<
+  F extends AnyFunction = AnyFunction
+> extends BaseDecl<"FunctionDecl"> {
+  readonly _functionBrand?: F;
+  constructor(
+    readonly name: string,
+    readonly parameters: ParameterDecl[],
+    readonly body: BlockStmt
+  ) {
+    super("FunctionDecl", arguments);
   }
 
   public clone(): this {
     return new FunctionDecl(
+      this.name,
       this.parameters.map((param) => param.clone()),
       this.body.clone()
     ) as this;
@@ -60,15 +135,17 @@ export class FunctionDecl<F extends AnyFunction = AnyFunction> extends BaseDecl<
 
 export interface IntegrationInvocation {
   integration: Integration<any>;
-  args: Argument[];
+  args: Expr[];
 }
+
+export type BindingName = Identifier | BindingPattern;
 
 export class ParameterDecl extends BaseDecl<
   "ParameterDecl",
   FunctionDecl | FunctionExpr
 > {
-  constructor(readonly name: string | BindingPattern) {
-    super("ParameterDecl");
+  constructor(readonly name: BindingName, readonly initializer?: Expr) {
+    super("ParameterDecl", arguments);
   }
 
   public clone(): this {
@@ -120,7 +197,7 @@ export type BindingPattern = ObjectBinding | ArrayBinding;
  * ```
  *
  * * `a` - creates a variable called a with the value of the right side (`const a = right.a`).
- * * `a: b` - creates a variable called b with the value of the right side (`const b = right.b`).
+ * * `a: b` - creates a variable called b with the value of the right side (`const b = right.a`).
  * * `a = "value"` - creates a variable called a with the value of the right side or "value" when the right side is undefined (`const a = right.a ?? "value"`)
  * * `a: { b }` - creates a variable called b with the value of the right side's a value. (`const b = right.a.b`)
  * * `...rest`- creates a variable called rest with all of the unused keys in the right side
@@ -146,10 +223,7 @@ export class BindingElem extends BaseDecl<"BindingElem", BindingPattern> {
       | StringLiteralExpr,
     readonly initializer?: Expr
   ) {
-    super("BindingElem");
-    name.setParent(this);
-    propertyName?.setParent(this);
-    initializer?.setParent(this);
+    super("BindingElem", arguments);
   }
 
   public clone(): this {
@@ -187,12 +261,15 @@ export class ObjectBinding extends BaseNode<"ObjectBinding", VariableDecl> {
   readonly nodeKind: "Node" = "Node";
 
   constructor(readonly bindings: BindingElem[]) {
-    super("ObjectBinding");
-    bindings.forEach((b) => b.setParent(this));
+    super("ObjectBinding", arguments);
   }
 
   public clone(): this {
     return new ObjectBinding(this.bindings.map((b) => b.clone())) as this;
+  }
+
+  public getName(): never {
+    throw new Error(`an ObjectBinding does not have a name`);
   }
 }
 
@@ -220,12 +297,15 @@ export class ArrayBinding extends BaseNode<"ArrayBinding", VariableDecl> {
   readonly nodeKind: "Node" = "Node";
 
   constructor(readonly bindings: (BindingElem | undefined)[]) {
-    super("ArrayBinding");
-    bindings.forEach((b) => b?.setParent(this));
+    super("ArrayBinding", arguments);
   }
 
   public clone(): this {
     return new ArrayBinding(this.bindings.map((b) => b?.clone())) as this;
+  }
+
+  public getName(): never {
+    throw new Error(`an ArrayBinding does not have a name`);
   }
 }
 
@@ -238,12 +318,8 @@ export type VariableDeclParent =
 export class VariableDecl<
   E extends Expr | undefined = Expr | undefined
 > extends BaseDecl<"VariableDecl", VariableDeclParent> {
-  constructor(readonly name: string | BindingPattern, readonly initializer: E) {
-    super("VariableDecl");
-    if (isBindingPattern(name)) {
-      name.setParent(this);
-    }
-    initializer?.setParent(this);
+  constructor(readonly name: BindingName, readonly initializer: E) {
+    super("VariableDecl", arguments);
   }
 
   public clone(): this {
@@ -263,8 +339,7 @@ export class VariableDeclList extends BaseNode<
   readonly nodeKind: "Node" = "Node";
 
   constructor(readonly decls: VariableDecl[]) {
-    super("VariableDeclList");
-    decls.map((decl) => decl.setParent(this));
+    super("VariableDeclList", arguments);
   }
 
   public clone(): this {

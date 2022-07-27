@@ -295,7 +295,7 @@ class BaseTable<
           request(call, vtl) {
             const input = vtl.eval(
               assertNodeKind<ObjectLiteralExpr>(
-                call.getArgument("input")?.expr,
+                call.args[0]?.expr,
                 "ObjectLiteralExpr"
               )
             );
@@ -315,7 +315,7 @@ class BaseTable<
           request: (call, vtl) => {
             const input = vtl.eval(
               assertNodeKind<ObjectLiteralExpr>(
-                call.getArgument("input")?.expr,
+                call.args[0]?.expr,
                 "ObjectLiteralExpr"
               )
             );
@@ -339,7 +339,7 @@ class BaseTable<
           request: (call, vtl) => {
             const input = vtl.eval(
               assertNodeKind<ObjectLiteralExpr>(
-                call.getArgument("input")?.expr,
+                call.args[0]?.expr,
                 "ObjectLiteralExpr"
               )
             );
@@ -361,7 +361,7 @@ class BaseTable<
           request: (call, vtl) => {
             const input = vtl.eval(
               assertNodeKind<ObjectLiteralExpr>(
-                call.getArgument("input")?.expr,
+                call.args[0]?.expr,
                 "ObjectLiteralExpr"
               )
             );
@@ -382,7 +382,7 @@ class BaseTable<
           request: (call, vtl) => {
             const input = vtl.eval(
               assertNodeKind<ObjectLiteralExpr>(
-                call.getArgument("input")?.expr,
+                call.args[0]?.expr,
                 "ObjectLiteralExpr"
               )
             );

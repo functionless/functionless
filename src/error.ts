@@ -4,7 +4,7 @@ export class Err extends BaseNode<"Err"> {
   readonly nodeKind: "Err" = "Err";
 
   constructor(readonly error: Error) {
-    super("Err");
+    super("Err", arguments);
   }
 
   public clone(): this {

@@ -276,16 +276,16 @@ abstract class EventBusBase<in Evnt extends Event, OutEvnt extends Evnt = Evnt>
         // Validate that the events are object literals.
         // Then normalize nested arrays of events into a single list of events.
         // TODO Relax these restrictions: https://github.com/functionless/functionless/issues/101
-        const eventObjs = call.args.flatMap((arg) => {
-          if (isArrayLiteralExpr(arg.expr)) {
-            if (!arg.expr.items.every(isObjectLiteralExpr)) {
+        const eventObjs = call.args.flatMap(({ expr: arg }) => {
+          if (isArrayLiteralExpr(arg)) {
+            if (!arg.items.every(isObjectLiteralExpr)) {
               throw new SynthError(
                 ErrorCodes.StepFunctions_calls_to_EventBus_PutEvents_must_use_object_literals
               );
             }
-            return arg.expr.items;
-          } else if (isObjectLiteralExpr(arg.expr)) {
-            return [arg.expr];
+            return arg.items;
+          } else if (isObjectLiteralExpr(arg)) {
+            return [arg];
           }
           throw new SynthError(
             ErrorCodes.StepFunctions_calls_to_EventBus_PutEvents_must_use_object_literals

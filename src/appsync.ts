@@ -9,6 +9,7 @@ import {
 import {
   FunctionDecl,
   validateFunctionDecl,
+  VariableDecl,
   VariableDeclList,
 } from "./declaration";
 import { ErrorCodes, SynthError } from "./error-code";
@@ -22,6 +23,7 @@ import {
   PropAccessExpr,
   ReferenceExpr,
   StringLiteralExpr,
+  ThisExpr,
 } from "./expression";
 import {
   isVariableStmt,
@@ -43,7 +45,9 @@ import {
   isBindingElem,
   isBindingPattern,
   isReferenceExpr,
+  isThisExpr,
   isVariableDecl,
+  isIdentifier,
 } from "./guards";
 import {
   findDeepIntegrations,
@@ -146,8 +150,8 @@ export class AppsyncVTL extends VTL {
     }
   }
 
-  protected dereference(id: Identifier | ReferenceExpr): string {
-    if (isReferenceExpr(id)) {
+  protected dereference(id: Identifier | ReferenceExpr | ThisExpr): string {
+    if (isReferenceExpr(id) || isThisExpr(id)) {
       const ref = id.ref();
       if (ref === $util) {
         return "$util";
@@ -585,13 +589,21 @@ function synthesizeFunctions(api: appsync.GraphqlApi, decl: FunctionDecl) {
           stmt.declList.decls[0].initializer &&
           isIntegrationCallPattern(stmt.declList.decls[0].initializer)
         ) {
-          const decl = stmt.declList.decls[0];
-
+          const decl: VariableDecl | undefined = stmt.declList.decls[0];
+          const varName = isIdentifier(decl?.name) ? decl.name.name : undefined;
+          if (varName === undefined) {
+            throw new SynthError(
+              ErrorCodes.Unsupported_Feature,
+              "Destructured parameter declarations are not yet supported by Appsync. https://github.com/functionless/functionless/issues/364"
+            );
+          }
           return createStage(
             service,
-            `${pre ? `${pre}\n` : ""}#set( $context.stash.${
-              decl.name
-            } = ${getResult(<IntegrationCallPattern>decl.initializer)} )\n{}`
+            `${
+              pre ? `${pre}\n` : ""
+            }#set( $context.stash.${varName} = ${getResult(
+              <IntegrationCallPattern>decl.initializer
+            )} )\n{}`
           );
         } else {
           throw new SynthError(
@@ -621,7 +633,7 @@ function synthesizeFunctions(api: appsync.GraphqlApi, decl: FunctionDecl) {
             template.call(expr);
             return returnValName;
           } else if (isPropAccessExpr(expr)) {
-            return `${getResult(expr.expr)}.${expr.name}`;
+            return `${getResult(expr.expr)}.${expr.name.name}`;
           } else if (isElementAccessExpr(expr)) {
             return `${getResult(expr.expr)}[${getResult(expr.element)}]`;
           } else if (isPromiseExpr(expr)) {

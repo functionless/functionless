@@ -8553,14 +8553,14 @@ exports[`return $SFN.parallel(() => "hello", () => "world")) 1`] = `
 Object {
   "StartAt": "Initialize Functionless Context",
   "States": Object {
-    "1__return $SFN.parallel([function(), function()])": Object {
+    "1__return $SFN.parallel(function(), function())": Object {
       "End": true,
       "InputPath": "$.heap0",
       "ResultPath": "$",
       "Type": "Pass",
     },
     "Initialize Functionless Context": Object {
-      "Next": "return $SFN.parallel([function(), function()])",
+      "Next": "return $SFN.parallel(function(), function())",
       "Parameters": Object {
         "fnl_context": Object {
           "null": null,
@@ -8569,7 +8569,7 @@ Object {
       "ResultPath": "$",
       "Type": "Pass",
     },
-    "return $SFN.parallel([function(), function()])": Object {
+    "return $SFN.parallel(function(), function())": Object {
       "Branches": Array [
         Object {
           "StartAt": "return \\"hello\\"",
@@ -8594,7 +8594,7 @@ Object {
           },
         },
       ],
-      "Next": "1__return $SFN.parallel([function(), function()])",
+      "Next": "1__return $SFN.parallel(function(), function())",
       "ResultPath": "$.heap0",
       "Type": "Parallel",
     },
@@ -8606,14 +8606,14 @@ exports[`return $SFN.parallel(() => {})) } 1`] = `
 Object {
   "StartAt": "Initialize Functionless Context",
   "States": Object {
-    "1__return $SFN.parallel([function()])": Object {
+    "1__return $SFN.parallel(function())": Object {
       "End": true,
       "InputPath": "$.heap0",
       "ResultPath": "$",
       "Type": "Pass",
     },
     "Initialize Functionless Context": Object {
-      "Next": "return $SFN.parallel([function()])",
+      "Next": "return $SFN.parallel(function())",
       "Parameters": Object {
         "fnl_context": Object {
           "null": null,
@@ -8622,7 +8622,7 @@ Object {
       "ResultPath": "$",
       "Type": "Pass",
     },
-    "return $SFN.parallel([function()])": Object {
+    "return $SFN.parallel(function())": Object {
       "Branches": Array [
         Object {
           "StartAt": "return null",
@@ -8636,7 +8636,7 @@ Object {
           },
         },
       ],
-      "Next": "1__return $SFN.parallel([function()])",
+      "Next": "1__return $SFN.parallel(function())",
       "ResultPath": "$.heap0",
       "Type": "Parallel",
     },
@@ -10393,29 +10393,6 @@ Object {
 }
 `;
 
-exports[`throw new CustomError 1`] = `
-Object {
-  "StartAt": "Initialize Functionless Context",
-  "States": Object {
-    "Initialize Functionless Context": Object {
-      "Next": "throw new CustomError(\\"cause\\")",
-      "Parameters": Object {
-        "fnl_context": Object {
-          "null": null,
-        },
-      },
-      "ResultPath": "$",
-      "Type": "Pass",
-    },
-    "throw new CustomError(\\"cause\\")": Object {
-      "Cause": "{\\"property\\":\\"cause\\"}",
-      "Error": "CustomError",
-      "Type": "Fail",
-    },
-  },
-}
-`;
-
 exports[`throw new Error 1`] = `
 Object {
   "StartAt": "Initialize Functionless Context",
@@ -10433,6 +10410,52 @@ Object {
     "throw new Error(\\"cause\\")": Object {
       "Cause": "{\\"message\\":\\"cause\\"}",
       "Error": "Error",
+      "Type": "Fail",
+    },
+  },
+}
+`;
+
+exports[`throw new StepFunctionError 1`] = `
+Object {
+  "StartAt": "Initialize Functionless Context",
+  "States": Object {
+    "Initialize Functionless Context": Object {
+      "Next": "throw new StepFunctionError(\\"CustomError\\", {property: \\"cause\\"})",
+      "Parameters": Object {
+        "fnl_context": Object {
+          "null": null,
+        },
+      },
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "throw new StepFunctionError(\\"CustomError\\", {property: \\"cause\\"})": Object {
+      "Cause": "{\\"property\\":\\"cause\\"}",
+      "Error": "CustomError",
+      "Type": "Fail",
+    },
+  },
+}
+`;
+
+exports[`throw new functionless.StepFunctionError 1`] = `
+Object {
+  "StartAt": "Initialize Functionless Context",
+  "States": Object {
+    "Initialize Functionless Context": Object {
+      "Next": "throw new functionless.StepFunctionError(\\"CustomError\\", {property: \\"cause\\"}",
+      "Parameters": Object {
+        "fnl_context": Object {
+          "null": null,
+        },
+      },
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "throw new functionless.StepFunctionError(\\"CustomError\\", {property: \\"cause\\"}": Object {
+      "Cause": "{\\"property\\":\\"cause\\"}",
+      "Error": "CustomError",
       "Type": "Fail",
     },
   },
@@ -12059,7 +12082,7 @@ Object {
   "StartAt": "Initialize Functionless Context",
   "States": Object {
     "Initialize Functionless Context": Object {
-      "Next": "throw new CustomError(\\"cause\\")",
+      "Next": "throw new StepFunctionError(\\"CustomError\\", {property: \\"cause\\"})",
       "Parameters": Object {
         "fnl_context": Object {
           "null": null,
@@ -12074,7 +12097,7 @@ Object {
       "ResultPath": "$",
       "Type": "Pass",
     },
-    "throw new CustomError(\\"cause\\")": Object {
+    "throw new StepFunctionError(\\"CustomError\\", {property: \\"cause\\"})": Object {
       "Next": "return null",
       "Result": Object {
         "property": "cause",

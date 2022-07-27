@@ -15,7 +15,7 @@ import {
 
 test("node.exit() from catch surrounded by while", () => {
   const catchClause = new CatchClause(
-    new VariableDecl("var", new NullLiteralExpr()),
+    new VariableDecl(new Identifier("var"), new NullLiteralExpr()),
     new BlockStmt([new ExprStmt(new CallExpr(new Identifier("task"), []))])
   );
 
@@ -24,7 +24,7 @@ test("node.exit() from catch surrounded by while", () => {
     new BlockStmt([new TryStmt(new BlockStmt([]), catchClause)])
   );
 
-  new FunctionDecl([], new BlockStmt([whileStmt]));
+  new FunctionDecl("name", [], new BlockStmt([whileStmt]));
 
   const exit = catchClause.exit();
 

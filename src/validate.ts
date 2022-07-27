@@ -1,4 +1,3 @@
-import * as typescript from "typescript";
 import {
   EventBusMapInterface,
   EventBusWhenInterface,
@@ -27,7 +26,7 @@ import { anyOf, hasOnlyAncestors } from "./util";
  * @returns diagnostic errors for the file.
  */
 export function validate(
-  ts: typeof typescript,
+  ts: typeof import("typescript"),
   checker: FunctionlessChecker,
   node: ts.Node,
   logger?: {
@@ -36,7 +35,7 @@ export function validate(
 ): ts.Diagnostic[] {
   logger?.info("Beginning validation of Functionless semantics");
 
-  function visit(node: typescript.Node): typescript.Diagnostic[] {
+  function visit(node: ts.Node): ts.Diagnostic[] {
     if (checker.isNewStepFunction(node)) {
       return validateNewStepFunctionNode(node);
     } else if (checker.isApiIntegration(node)) {
@@ -91,7 +90,7 @@ export function validate(
     ]);
   }
 
-  function validateNodes(nodes: typescript.Node[]) {
+  function validateNodes(nodes: ts.Node[]) {
     return nodes.flatMap((arg) => collectEachChild(arg, visit));
   }
 
@@ -108,9 +107,7 @@ export function validate(
       ...collectEachChildRecursive(func, validateStepFunctionNode),
     ];
 
-    function validateStepFunctionNode(
-      node: typescript.Node
-    ): typescript.Diagnostic[] {
+    function validateStepFunctionNode(node: ts.Node): ts.Diagnostic[] {
       const type = checker.getTypeAtLocation(node);
       if (
         typeMatch(
@@ -146,8 +143,7 @@ export function validate(
             ),
           ];
         }
-      }
-      if (
+      } else if (
         ((ts.isBinaryExpression(node) &&
           isArithmeticToken(node.operatorToken.kind)) ||
           ((ts.isPrefixUnaryExpression(node) ||
@@ -208,8 +204,9 @@ export function validate(
           ts.isNewExpression(node.expression) ||
           ts.isCallExpression(node.expression)
         ) {
-          return (
-            node.expression.arguments?.flatMap((arg) => {
+          return [
+            ...validateStepFunctionError(node.expression.expression),
+            ...(node.expression.arguments?.flatMap((arg) => {
               if (!checker.isConstant(arg)) {
                 return [
                   newError(
@@ -219,8 +216,8 @@ export function validate(
                 ];
               }
               return [];
-            }) ?? []
-          );
+            }) ?? []),
+          ];
         }
       } else if (ts.isPropertyAssignment(node)) {
         if (
@@ -253,6 +250,32 @@ export function validate(
       }
       return [];
     }
+  }
+
+  function validateStepFunctionError(expr: ts.Expression): ts.Diagnostic[] {
+    const callExprType = checker.getTypeAtLocation(expr);
+    if (checker.typeToString(callExprType) === "ErrorConstructor") {
+      // throw new Error
+      return [];
+    }
+    const kind = callExprType.getProperty("kind");
+    if (kind !== undefined) {
+      const kindType = checker.getTypeOfSymbolAtLocation(kind, expr);
+      if (
+        kindType.isStringLiteral() &&
+        kindType.value === "StepFunctionError"
+      ) {
+        // throw new StepFunctionError
+        return [];
+      }
+    }
+
+    return [
+      newError(
+        expr,
+        ErrorCodes.StepFunction_Throw_must_be_Error_or_StepFunctionError_class
+      ),
+    ];
   }
 
   /**
@@ -450,13 +473,22 @@ export function validate(
            * const v = x ? await func() : await func2()
            */
           if (
-            rootStatement &&
-            (isControlFlowStatement(rootStatement) ||
-              findParent(
-                node.expression,
-                ts.isConditionalExpression,
-                rootStatement
-              ))
+            (rootStatement &&
+              (ts.isEmptyStatement(rootStatement) ||
+                ts.isIfStatement(rootStatement) ||
+                ts.isDoStatement(rootStatement) ||
+                ts.isWhileStatement(rootStatement) ||
+                ts.isForStatement(rootStatement) ||
+                ts.isForInStatement(rootStatement) ||
+                ts.isForOfStatement(rootStatement) ||
+                ts.isSwitchStatement(rootStatement) ||
+                ts.isLabeledStatement(rootStatement) ||
+                ts.isTryStatement(rootStatement))) ||
+            findParent(
+              node.expression,
+              ts.isConditionalExpression,
+              rootStatement
+            )
           ) {
             return [
               newError(
@@ -690,9 +722,7 @@ export function validate(
       ...collectEachChildRecursive(func, validateFunctionClosureNode),
     ];
 
-    function validateFunctionClosureNode(
-      node: typescript.Node
-    ): typescript.Diagnostic[] {
+    function validateFunctionClosureNode(node: ts.Node): ts.Diagnostic[] {
       if (
         checker.isStepFunction(node) ||
         checker.isTable(node) ||
@@ -700,7 +730,7 @@ export function validate(
         checker.isEventBus(node)
       ) {
         if (
-          typescript.isPropertyAccessExpression(node.parent) &&
+          ts.isPropertyAccessExpression(node.parent) &&
           node.parent.name.text === "resource"
         ) {
           return [
@@ -740,9 +770,7 @@ export function validate(
     }
   }
 
-  function validateEventBusWhen(
-    node: EventBusWhenInterface
-  ): typescript.Diagnostic[] {
+  function validateEventBusWhen(node: EventBusWhenInterface): ts.Diagnostic[] {
     const func =
       node.arguments.length === 3 ? node.arguments[2] : node.arguments[1];
 
@@ -754,7 +782,7 @@ export function validate(
     ];
   }
 
-  function validateRule(node: RuleInterface): typescript.Diagnostic[] {
+  function validateRule(node: RuleInterface): ts.Diagnostic[] {
     const func = node.arguments[3];
 
     return [
@@ -780,7 +808,7 @@ export function validate(
 
   function validateEventTransform(
     node: EventTransformInterface
-  ): typescript.Diagnostic[] {
+  ): ts.Diagnostic[] {
     const func = node.arguments[1];
 
     return [
@@ -791,9 +819,7 @@ export function validate(
     ];
   }
 
-  function validateEventBusMap(
-    node: EventBusMapInterface
-  ): typescript.Diagnostic[] {
+  function validateEventBusMap(node: EventBusMapInterface): ts.Diagnostic[] {
     const func = node.arguments[0];
 
     return [
@@ -836,22 +862,6 @@ export function validate(
     };
   }
 }
-
-/**
- * Used by AppSync to determine of a root statement can be statically analyzed.
- */
-const isControlFlowStatement = anyOf(
-  typescript.isEmptyStatement,
-  typescript.isIfStatement,
-  typescript.isDoStatement,
-  typescript.isWhileStatement,
-  typescript.isForStatement,
-  typescript.isForInStatement,
-  typescript.isForOfStatement,
-  typescript.isSwitchStatement,
-  typescript.isLabeledStatement,
-  typescript.isTryStatement
-);
 
 // to prevent the closure serializer from trying to import all of functionless.
 export const deploymentOnlyModule = true;

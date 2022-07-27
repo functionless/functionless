@@ -1,5 +1,6 @@
 import { Construct } from "constructs";
 import ts from "typescript";
+import { ErrorCodes, SynthError } from "./error-code";
 import { BinaryOp, CallExpr, Expr, PropAccessExpr } from "./expression";
 import {
   isArrayLiteralExpr,
@@ -14,6 +15,7 @@ import {
   isNullLiteralExpr,
   isNumberLiteralExpr,
   isObjectLiteralExpr,
+  isPrivateIdentifier,
   isPropAccessExpr,
   isPropAssignExpr,
   isReferenceExpr,
@@ -25,6 +27,7 @@ import {
 } from "./guards";
 import { FunctionlessNode } from "./node";
 
+export type AnyClass = new (...args: any[]) => any;
 export type AnyFunction = (...args: any[]) => any;
 export type AnyAsyncFunction = (...args: any[]) => Promise<any>;
 
@@ -80,7 +83,7 @@ export function ensure<T>(
   message: string
 ): asserts a is T {
   if (!is(a)) {
-    throw new Error(message);
+    throw new SynthError(ErrorCodes.Unexpected_Error, message);
   }
 }
 
@@ -165,7 +168,8 @@ export function isPromiseAll(expr: CallExpr): expr is CallExpr & {
 } {
   return (
     isPropAccessExpr(expr.expr) &&
-    expr.expr.name === "all" &&
+    isIdentifier(expr.expr.name) &&
+    expr.expr.name.name === "all" &&
     ((isIdentifier(expr.expr.expr) && expr.expr.expr.name === "Promise") ||
       (isReferenceExpr(expr.expr.expr) && expr.expr.expr.ref() === Promise))
   );
@@ -261,7 +265,10 @@ export const evalToConstant = (expr: Expr): Constant | undefined => {
             return undefined;
           }
         } else {
-          name = isIdentifier(prop.name) ? prop.name.name : prop.name.value;
+          name =
+            isIdentifier(prop.name) || isPrivateIdentifier(prop.name)
+              ? prop.name.name
+              : prop.name.value;
         }
         const val = evalToConstant(prop.expr);
         if (val === undefined) {
@@ -293,8 +300,8 @@ export const evalToConstant = (expr: Expr): Constant | undefined => {
     }
   } else if (isPropAccessExpr(expr)) {
     const obj = evalToConstant(expr.expr)?.constant as any;
-    if (obj && expr.name in obj) {
-      return { constant: obj[expr.name] };
+    if (obj && isIdentifier(expr.name) && expr.name.name in obj) {
+      return { constant: obj[expr.name.name] };
     }
     return undefined;
   } else if (isReferenceExpr(expr)) {

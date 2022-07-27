@@ -1,8 +1,21 @@
-import { BindingElem, Decl, ParameterDecl, VariableDecl } from "./declaration";
-import { isIdentifier, isPropAssignExpr, isStringLiteralExpr } from "./guards";
+import type {
+  BindingElem,
+  ClassMember,
+  Decl,
+  ParameterDecl,
+  VariableDecl,
+} from "./declaration";
+import {
+  isIdentifier,
+  isNumberLiteralExpr,
+  isParenthesizedExpr,
+  isPrivateIdentifier,
+  isPropAssignExpr,
+  isStringLiteralExpr,
+} from "./guards";
 import { BaseNode, FunctionlessNode } from "./node";
 import type { BlockStmt, Stmt } from "./statement";
-import type { AnyFunction } from "./util";
+import type { AnyClass, AnyFunction } from "./util";
 
 /**
  * An {@link Expr} (Expression) is a Node that will be interpreted to a value.
@@ -10,12 +23,16 @@ import type { AnyFunction } from "./util";
 export type Expr =
   | Argument
   | ArrayLiteralExpr
+  | ArrowFunctionExpr
   | AwaitExpr
+  | BigIntExpr
   | BinaryExpr
   | BooleanLiteralExpr
   | CallExpr
-  | ConditionExpr
+  | ClassExpr
   | ComputedPropertyNameExpr
+  | ConditionExpr
+  | DeleteExpr
   | ElementAccessExpr
   | FunctionExpr
   | Identifier
@@ -23,19 +40,25 @@ export type Expr =
   | NullLiteralExpr
   | NumberLiteralExpr
   | ObjectLiteralExpr
-  | PropAccessExpr
-  | PropAssignExpr
+  | ParenthesizedExpr
+  | PostfixUnaryExpr
+  | PrivateIdentifier
   | PromiseArrayExpr
   | PromiseExpr
+  | PropAccessExpr
+  | PropAssignExpr
   | ReferenceExpr
+  | RegexExpr
   | SpreadAssignExpr
   | SpreadElementExpr
   | StringLiteralExpr
   | TemplateExpr
+  | ThisExpr
   | TypeOfExpr
   | UnaryExpr
-  | PostfixUnaryExpr
-  | UndefinedLiteralExpr;
+  | UndefinedLiteralExpr
+  | VoidExpr
+  | YieldExpr;
 
 export abstract class BaseExpr<
   Kind extends FunctionlessNode["kind"],
@@ -49,27 +72,67 @@ export abstract class BaseExpr<
   readonly nodeKind: "Expr" = "Expr";
 }
 
-export class FunctionExpr<
+export class ArrowFunctionExpr<
   F extends AnyFunction = AnyFunction
-> extends BaseExpr<"FunctionExpr"> {
+> extends BaseExpr<"ArrowFunctionExpr"> {
   readonly _functionBrand?: F;
   constructor(readonly parameters: ParameterDecl[], readonly body: BlockStmt) {
-    super("FunctionExpr");
-    parameters.forEach((param) => param.setParent(this));
-    body.setParent(this);
+    super("ArrowFunctionExpr", arguments);
   }
 
   public clone(): this {
-    return new FunctionExpr(
+    return new ArrowFunctionExpr(
       this.parameters.map((p) => p.clone()),
       this.body.clone()
     ) as this;
   }
 }
 
+export class FunctionExpr<
+  F extends AnyFunction = AnyFunction
+> extends BaseExpr<"FunctionExpr"> {
+  readonly _functionBrand?: F;
+  constructor(
+    readonly name: string | undefined,
+    readonly parameters: ParameterDecl[],
+    readonly body: BlockStmt
+  ) {
+    super("FunctionExpr", arguments);
+  }
+
+  public clone(): this {
+    return new FunctionExpr(
+      this.name,
+      this.parameters.map((p) => p.clone()),
+      this.body.clone()
+    ) as this;
+  }
+}
+
+export class ClassExpr<C extends AnyClass = AnyClass> extends BaseExpr<
+  "ClassExpr",
+  undefined
+> {
+  readonly _classBrand?: C;
+  constructor(
+    readonly name: string | undefined,
+    readonly heritage: Expr | undefined,
+    readonly members: ClassMember[]
+  ) {
+    super("ClassExpr", arguments);
+  }
+  public clone(): this {
+    return new ClassExpr(
+      this.name,
+      this.heritage?.clone(),
+      this.members.map((m) => m.clone())
+    ) as this;
+  }
+}
+
 export class ReferenceExpr<R = unknown> extends BaseExpr<"ReferenceExpr"> {
   constructor(readonly name: string, readonly ref: () => R) {
-    super("ReferenceExpr");
+    super("ReferenceExpr", arguments);
   }
 
   public clone(): this {
@@ -81,7 +144,7 @@ export type VariableReference = Identifier | PropAccessExpr | ElementAccessExpr;
 
 export class Identifier extends BaseExpr<"Identifier"> {
   constructor(readonly name: string) {
-    super("Identifier");
+    super("Identifier", arguments);
   }
 
   public clone(): this {
@@ -93,14 +156,29 @@ export class Identifier extends BaseExpr<"Identifier"> {
   }
 }
 
+export class PrivateIdentifier extends BaseExpr<"PrivateIdentifier"> {
+  constructor(readonly name: `#${string}`) {
+    super("PrivateIdentifier", arguments);
+  }
+
+  public clone(): this {
+    return new PrivateIdentifier(this.name) as this;
+  }
+
+  public lookup(): Decl | undefined {
+    return this.getLexicalScope().get(this.name);
+  }
+}
+
 export class PropAccessExpr extends BaseExpr<"PropAccessExpr"> {
+  readonly name: Identifier | PrivateIdentifier;
   constructor(
     readonly expr: Expr,
-    readonly name: string,
+    name: string | Identifier | PrivateIdentifier,
     readonly type?: string
   ) {
-    super("PropAccessExpr");
-    expr.setParent(this);
+    super("PropAccessExpr", arguments);
+    this.name = typeof name === "string" ? new Identifier(name) : name;
   }
 
   public clone(): this {
@@ -114,9 +192,7 @@ export class ElementAccessExpr extends BaseExpr<"ElementAccessExpr"> {
     readonly element: Expr,
     readonly type?: string
   ) {
-    super("ElementAccessExpr");
-    expr.setParent(this);
-    element.setParent(this);
+    super("ElementAccessExpr", arguments);
   }
 
   public clone(): this {
@@ -129,25 +205,21 @@ export class ElementAccessExpr extends BaseExpr<"ElementAccessExpr"> {
 }
 
 export class Argument extends BaseExpr<"Argument", CallExpr | NewExpr> {
-  constructor(readonly expr?: Expr, readonly name?: string) {
-    super("Argument");
-    expr?.setParent(this);
+  constructor(readonly expr?: Expr) {
+    super("Argument", arguments);
   }
 
   public clone(): this {
-    return new Argument(this.expr?.clone(), this.name) as this;
+    return new Argument(this.expr?.clone()) as this;
   }
 }
 
 export class CallExpr extends BaseExpr<"CallExpr"> {
-  constructor(readonly expr: Expr, readonly args: Argument[]) {
-    super("CallExpr");
-    expr.setParent(this);
-    args.forEach((arg) => arg.setParent(this));
-  }
-
-  public getArgument(name: string): Argument | undefined {
-    return this.args.find((arg) => arg.name === name);
+  constructor(
+    readonly expr: Expr | SuperKeyword | ImportKeyword,
+    readonly args: Argument[]
+  ) {
+    super("CallExpr", arguments);
   }
 
   public clone(): this {
@@ -160,11 +232,9 @@ export class CallExpr extends BaseExpr<"CallExpr"> {
 
 export class NewExpr extends BaseExpr<"NewExpr"> {
   constructor(readonly expr: Expr, readonly args: Argument[]) {
-    super("NewExpr");
-    expr.setParent(this);
+    super("NewExpr", arguments);
     for (const arg of Object.values(args)) {
       if (arg) {
-        arg.setParent(this);
       }
     }
   }
@@ -179,11 +249,8 @@ export class NewExpr extends BaseExpr<"NewExpr"> {
 
 export class ConditionExpr extends BaseExpr<"ConditionExpr"> {
   constructor(readonly when: Expr, readonly then: Expr, readonly _else: Expr) {
-    super("ConditionExpr");
-    when.setParent(this);
-    then.setParent(this);
+    super("ConditionExpr", arguments);
     if (_else) {
-      _else.setParent(this);
     }
   }
 
@@ -216,9 +283,7 @@ export class BinaryExpr extends BaseExpr<"BinaryExpr"> {
     readonly op: BinaryOp,
     readonly right: Expr
   ) {
-    super("BinaryExpr");
-    left.setParent(this);
-    right.setParent(this);
+    super("BinaryExpr", arguments);
   }
 
   public clone(): this {
@@ -231,12 +296,11 @@ export class BinaryExpr extends BaseExpr<"BinaryExpr"> {
 }
 
 export type PostfixUnaryOp = "--" | "++";
-export type UnaryOp = "!" | "-" | PostfixUnaryOp;
+export type UnaryOp = "!" | "-" | "~" | PostfixUnaryOp;
 
 export class UnaryExpr extends BaseExpr<"UnaryExpr"> {
   constructor(readonly op: UnaryOp, readonly expr: Expr) {
-    super("UnaryExpr");
-    expr.setParent(this);
+    super("UnaryExpr", arguments);
   }
 
   public clone(): this {
@@ -246,8 +310,7 @@ export class UnaryExpr extends BaseExpr<"UnaryExpr"> {
 
 export class PostfixUnaryExpr extends BaseExpr<"PostfixUnaryExpr"> {
   constructor(readonly op: PostfixUnaryOp, readonly expr: Expr) {
-    super("PostfixUnaryExpr");
-    expr.setParent(this);
+    super("PostfixUnaryExpr", arguments);
   }
 
   public clone(): this {
@@ -260,7 +323,7 @@ export class PostfixUnaryExpr extends BaseExpr<"PostfixUnaryExpr"> {
 export class NullLiteralExpr extends BaseExpr<"NullLiteralExpr"> {
   readonly value = null;
   constructor() {
-    super("NullLiteralExpr");
+    super("NullLiteralExpr", arguments);
   }
 
   public clone(): this {
@@ -272,7 +335,7 @@ export class UndefinedLiteralExpr extends BaseExpr<"UndefinedLiteralExpr"> {
   readonly value = undefined;
 
   constructor() {
-    super("UndefinedLiteralExpr");
+    super("UndefinedLiteralExpr", arguments);
   }
 
   public clone(): this {
@@ -282,7 +345,7 @@ export class UndefinedLiteralExpr extends BaseExpr<"UndefinedLiteralExpr"> {
 
 export class BooleanLiteralExpr extends BaseExpr<"BooleanLiteralExpr"> {
   constructor(readonly value: boolean) {
-    super("BooleanLiteralExpr");
+    super("BooleanLiteralExpr", arguments);
   }
 
   public clone(): this {
@@ -290,9 +353,19 @@ export class BooleanLiteralExpr extends BaseExpr<"BooleanLiteralExpr"> {
   }
 }
 
+export class BigIntExpr extends BaseExpr<"BigIntExpr"> {
+  constructor(readonly value: bigint) {
+    super("BigIntExpr", arguments);
+  }
+
+  public clone(): this {
+    return new BigIntExpr(this.value) as this;
+  }
+}
+
 export class NumberLiteralExpr extends BaseExpr<"NumberLiteralExpr"> {
   constructor(readonly value: number) {
-    super("NumberLiteralExpr");
+    super("NumberLiteralExpr", arguments);
   }
 
   public clone(): this {
@@ -302,7 +375,7 @@ export class NumberLiteralExpr extends BaseExpr<"NumberLiteralExpr"> {
 
 export class StringLiteralExpr extends BaseExpr<"StringLiteralExpr"> {
   constructor(readonly value: string) {
-    super("StringLiteralExpr");
+    super("StringLiteralExpr", arguments);
   }
 
   public clone(): this {
@@ -312,8 +385,7 @@ export class StringLiteralExpr extends BaseExpr<"StringLiteralExpr"> {
 
 export class ArrayLiteralExpr extends BaseExpr<"ArrayLiteralExpr"> {
   constructor(readonly items: Expr[]) {
-    super("ArrayLiteralExpr");
-    items.forEach((item) => item.setParent(this));
+    super("ArrayLiteralExpr", arguments);
   }
 
   public clone(): this {
@@ -325,8 +397,7 @@ export type ObjectElementExpr = PropAssignExpr | SpreadAssignExpr;
 
 export class ObjectLiteralExpr extends BaseExpr<"ObjectLiteralExpr"> {
   constructor(readonly properties: ObjectElementExpr[]) {
-    super("ObjectLiteralExpr");
-    properties.forEach((prop) => prop.setParent(this));
+    super("ObjectLiteralExpr", arguments);
   }
 
   public clone(): this {
@@ -337,10 +408,13 @@ export class ObjectLiteralExpr extends BaseExpr<"ObjectLiteralExpr"> {
   public getProperty(name: string) {
     return this.properties.find((prop) => {
       if (isPropAssignExpr(prop)) {
-        if (isIdentifier(prop.name)) {
+        if (isIdentifier(prop.name) || isPrivateIdentifier(prop.name)) {
           return prop.name.name === name;
         } else if (isStringLiteralExpr(prop.name)) {
           return prop.name.value === name;
+        } else if (isNumberLiteralExpr(prop.name)) {
+          // compare by string
+          return prop.name.value.toString(10) === name;
         } else if (isStringLiteralExpr(prop.name.expr)) {
           return prop.name.expr.value === name;
         }
@@ -350,17 +424,19 @@ export class ObjectLiteralExpr extends BaseExpr<"ObjectLiteralExpr"> {
   }
 }
 
+export type PropName =
+  | Identifier
+  | PrivateIdentifier
+  | ComputedPropertyNameExpr
+  | StringLiteralExpr
+  | NumberLiteralExpr;
+
 export class PropAssignExpr extends BaseExpr<
   "PropAssignExpr",
   ObjectLiteralExpr
 > {
-  constructor(
-    readonly name: Identifier | ComputedPropertyNameExpr | StringLiteralExpr,
-    readonly expr: Expr
-  ) {
-    super("PropAssignExpr");
-    name.setParent(this);
-    expr.setParent(this);
+  constructor(readonly name: PropName, readonly expr: Expr) {
+    super("PropAssignExpr", arguments);
   }
 
   /**
@@ -385,8 +461,7 @@ export class ComputedPropertyNameExpr extends BaseExpr<
   PropAssignExpr
 > {
   constructor(readonly expr: Expr) {
-    super("ComputedPropertyNameExpr");
-    expr.setParent(this);
+    super("ComputedPropertyNameExpr", arguments);
   }
 
   public clone(): this {
@@ -399,8 +474,7 @@ export class SpreadAssignExpr extends BaseExpr<
   ObjectLiteralExpr
 > {
   constructor(readonly expr: Expr) {
-    super("SpreadAssignExpr");
-    expr.setParent(this);
+    super("SpreadAssignExpr", arguments);
   }
 
   public clone(): this {
@@ -413,8 +487,7 @@ export class SpreadElementExpr extends BaseExpr<
   ObjectLiteralExpr
 > {
   constructor(readonly expr: Expr) {
-    super("SpreadElementExpr");
-    expr.setParent(this);
+    super("SpreadElementExpr", arguments);
   }
 
   public clone(): this {
@@ -427,8 +500,7 @@ export class SpreadElementExpr extends BaseExpr<
  */
 export class TemplateExpr extends BaseExpr<"TemplateExpr"> {
   constructor(readonly exprs: Expr[]) {
-    super("TemplateExpr");
-    exprs.forEach((expr) => expr.setParent(this));
+    super("TemplateExpr", arguments);
   }
 
   public clone(): this {
@@ -438,9 +510,7 @@ export class TemplateExpr extends BaseExpr<"TemplateExpr"> {
 
 export class TypeOfExpr extends BaseExpr<"TypeOfExpr"> {
   constructor(readonly expr: Expr) {
-    super("TypeOfExpr");
-
-    expr.setParent(this);
+    super("TypeOfExpr", arguments);
   }
 
   public clone(): this {
@@ -450,9 +520,7 @@ export class TypeOfExpr extends BaseExpr<"TypeOfExpr"> {
 
 export class AwaitExpr extends BaseExpr<"AwaitExpr"> {
   constructor(readonly expr: Expr) {
-    super("AwaitExpr");
-
-    expr.setParent(this);
+    super("AwaitExpr", arguments);
   }
 
   public clone(): this {
@@ -462,9 +530,7 @@ export class AwaitExpr extends BaseExpr<"AwaitExpr"> {
 
 export class PromiseExpr extends BaseExpr<"PromiseExpr"> {
   constructor(readonly expr: Expr) {
-    super("PromiseExpr");
-
-    expr.setParent(this);
+    super("PromiseExpr", arguments);
   }
 
   public clone(): this {
@@ -474,13 +540,117 @@ export class PromiseExpr extends BaseExpr<"PromiseExpr"> {
 
 export class PromiseArrayExpr extends BaseExpr<"PromiseArrayExpr"> {
   constructor(readonly expr: Expr) {
-    super("PromiseArrayExpr");
-
-    expr.setParent(this);
+    super("PromiseArrayExpr", arguments);
   }
 
   public clone(): this {
     return new PromiseArrayExpr(this.expr.clone()) as this;
+  }
+}
+
+export class ThisExpr<T = any> extends BaseExpr<"ThisExpr"> {
+  constructor(
+    /**
+     * Produce the value of `this`
+     */
+    readonly ref: () => T
+  ) {
+    super("ThisExpr", arguments);
+  }
+  public clone(): this {
+    return new ThisExpr(this.ref) as this;
+  }
+}
+
+export class SuperKeyword extends BaseNode<"SuperKeyword"> {
+  // `super` is not an expression - a reference to it does not yield a value
+  // it only supports the following interactions
+  // 1. call in a constructor - `super(..)`
+  // 2. call a method on it - `super.method(..)`.
+  readonly nodeKind = "Node";
+  constructor() {
+    super("SuperKeyword", arguments);
+  }
+  public clone(): this {
+    return new SuperKeyword() as this;
+  }
+}
+
+export class ImportKeyword extends BaseNode<"ImportKeyword"> {
+  readonly nodeKind = "Node";
+  constructor() {
+    super("ImportKeyword", arguments);
+  }
+  public clone(): this {
+    return new ImportKeyword() as this;
+  }
+}
+
+export class YieldExpr extends BaseExpr<"YieldExpr"> {
+  constructor(
+    /**
+     * The expression to yield (or delegate) to.
+     */
+    readonly expr: Expr | undefined,
+    /**
+     * Is a `yield*` delegate expression.
+     */
+    readonly delegate: boolean
+  ) {
+    super("YieldExpr", arguments);
+  }
+  public clone(): this {
+    return new YieldExpr(this.expr?.clone(), this.delegate) as this;
+  }
+}
+
+export class RegexExpr extends BaseExpr<"RegexExpr"> {
+  constructor(readonly regex: RegExp) {
+    super("RegexExpr", arguments);
+  }
+
+  public clone(): this {
+    return new RegexExpr(this.regex) as this;
+  }
+}
+
+export class VoidExpr extends BaseExpr<"VoidExpr"> {
+  constructor(
+    /**
+     * The expression to yield (or delegate) to.
+     */
+    readonly expr: Expr
+  ) {
+    super("VoidExpr", arguments);
+  }
+  public clone(): this {
+    return new VoidExpr(this.expr?.clone()) as this;
+  }
+}
+
+export class DeleteExpr extends BaseExpr<"DeleteExpr"> {
+  constructor(readonly expr: PropAccessExpr | ElementAccessExpr) {
+    super("DeleteExpr", arguments);
+  }
+  public clone(): this {
+    return new DeleteExpr(this.expr?.clone()) as this;
+  }
+}
+
+export class ParenthesizedExpr extends BaseExpr<"ParenthesizedExpr"> {
+  constructor(readonly expr: Expr) {
+    super("ParenthesizedExpr", arguments);
+  }
+
+  public clone(): this {
+    return new ParenthesizedExpr(this.expr.clone()) as this;
+  }
+
+  public unwrap(): Expr | undefined {
+    if (isParenthesizedExpr(this.expr)) {
+      return this.expr.unwrap();
+    }
+    return this.expr;
   }
 }
 

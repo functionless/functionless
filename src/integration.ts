@@ -9,6 +9,7 @@ import {
   isCallExpr,
   isPromiseExpr,
   isReferenceExpr,
+  isThisExpr,
 } from "./guards";
 import { FunctionlessNode } from "./node";
 import { AnyFunction } from "./util";
@@ -28,7 +29,7 @@ export function isIntegrationCallExpr(
 ): node is IntegrationCallExpr {
   return (
     isCallExpr(node) &&
-    isReferenceExpr(node.expr) &&
+    (isReferenceExpr(node.expr) || isThisExpr(node.expr)) &&
     isIntegration(node.expr.ref())
   );
 }
