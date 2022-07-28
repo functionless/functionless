@@ -1458,16 +1458,18 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
         "sfn",
         async ({
           a,
-          bb: { value: b },
+          bb: { value: b, [`${"a"}${"b"}`]: r },
           c = "what",
-          arr: [d, , e, f = "sir", ...arrRest],
+          arr: [d, , e, ...arrRest],
+          arr2: [f = "sir"],
           value,
         }) => {
           const {
             z,
             yy: { ["value"]: w, [`${"a"}${"b"}`]: v },
             x = "what",
-            rra: [s, , u, t = "sir", ...tserRra],
+            rra: [s, , u, ...tserRra],
+            rra2: [t = "sir"],
           } = value;
 
           const map = [{ a: "a", b: ["b"] }]
@@ -1475,12 +1477,11 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
             .join();
 
           let forV = "";
-
           for (const {
-            a,
-            b: [c],
-          } of [{ a: "a", b: ["b"] }]) {
-            forV = `${forV}${a}${c}`;
+            h,
+            j: [l],
+          } of [{ h: "a", j: ["b"] }]) {
+            forV = `${forV}${h}${l}`;
           }
 
           let tr;
@@ -1491,7 +1492,7 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
           }
 
           return {
-            prop: `${a}${b}${c}${d}${e}${f}${arrRest[0]}`,
+            prop: `${a}${b}${c}${d}${e}${f}${arrRest[0]}${r}`,
             var: `${z}${w}${v}${x}${s}${u}${t}${tserRra[0]}`,
             map,
             forV,
@@ -1500,29 +1501,49 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
         }
       ),
     {
-      prop: "helloworldwhatisupsirendofobjendofarraydynamic",
-      var: "helloworlddynamicwhatisupsirendofobjendofarraydynamic",
+      prop: "helloworldwhatisupsirendofarraydynamic",
+      var: "helloworlddynamicwhatisupsirendofarray",
       map: "ab",
       forV: "ab",
       tr: "hi",
     },
     {
       a: "hello",
-      bb: { value: "world" },
+      bb: { value: "world", ab: "dynamic" } as {
+        value: string;
+        [key: string]: string;
+      },
       c: undefined,
       d: "endofobj",
-      arr: ["is", "skipme", "up", undefined, "endofarray"],
+      arr: ["is", "skipme", "up", "endofarray"],
+      arr2: [],
       value: {
         z: "hello",
         yy: { value: "world", ab: "dynamic" } as {
           value: string;
           [key: string]: string;
         },
-        x: "endofobj",
-        rra: ["is", "skipme", "up", undefined, "endofarray"],
+        x: undefined,
+        rra: ["is", "skipme", "up", "endofarray"],
+        rra2: [],
         k: "endofobj",
       },
     }
+  );
+
+  // https://github.com/functionless/functionless/issues/369
+  test.skip(
+    "shadowing maintains state",
+    (parent) =>
+      new StepFunction(parent, "sfn", async () => {
+        const a = "a";
+        let b;
+        for (const a of ["b"]) {
+          b = a;
+        }
+        return `${a}${b}`;
+      }),
+    "ab"
   );
 });
 

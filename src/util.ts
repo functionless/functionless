@@ -334,8 +334,8 @@ export const evalToConstant = (expr: Expr): Constant | undefined => {
     }
   } else if (isTemplateExpr(expr)) {
     const values = expr.exprs.map(evalToConstant);
-    if (values.every((v) => !!v)) {
-      return { constant: values.join("") };
+    if (values.every((v): v is Constant => !!v)) {
+      return { constant: values.map((v) => v.constant).join("") };
     }
     return undefined;
   }

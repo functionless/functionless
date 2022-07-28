@@ -524,7 +524,8 @@ export class ASL {
     // We'll set input during context initialization
     const inputParameterBinding =
       inputParam && isBindingPattern(inputParam.name)
-        ? this.evalDecl(inputParam, { jsonPath: "$" })
+        ? // when we bind input, we can use the context execution input value as a source (same a `$` at the start of the machine)
+          this.evalDecl(inputParam, { jsonPath: "$$.Execution.Input" })
         : undefined;
 
     // only evaluate the context parameter if its a binding parameter.
@@ -1734,7 +1735,7 @@ export class ASL {
                 const paramName = isIdentifier(param.name)
                   ? param.name.name
                   : // if the parameter is a binding pattern, we to assign the value to a variable first to access it in the map state.
-                    this.newHeapVariable();
+                    this.newHeapVariableName();
 
                 return {
                   param: [
@@ -1747,7 +1748,7 @@ export class ASL {
                   ],
                   states: isBindingPattern(param.name)
                     ? // if the param is a binding pattern, the value will be placed on the heap and then bound in the body
-                      this.evalDecl(param, { jsonPath: paramName })
+                      this.evalDecl(param, { jsonPath: `$.${paramName}` })
                     : undefined,
                 };
               });
@@ -2435,11 +2436,19 @@ export class ASL {
   private heapCounter = 0;
 
   /**
-   * returns an in order unique memory location
+   * returns an in order unique memory location in the form `$.heap[id]`
    * TODO: make this contextual - https://github.com/functionless/functionless/issues/321
    */
   public newHeapVariable() {
-    return `$.heap${this.heapCounter++}`;
+    return `$.${this.newHeapVariableName()}`;
+  }
+
+  /**
+   * returns an in order unique memory location in the form `heap[id]`
+   * TODO: make this contextual - https://github.com/functionless/functionless/issues/321
+   */
+  public newHeapVariableName() {
+    return `heap${this.heapCounter++}`;
   }
 
   /**
@@ -3023,7 +3032,7 @@ export class ASL {
 
       // run each of the assignments as a sequence of states, they should not rely on each other.
       const assignments = pattern.bindings.map((binding, i) => {
-        if (!binding) {
+        if (!binding || binding.rest) {
           return undefined;
         }
 
@@ -3109,23 +3118,28 @@ export class ASL {
 
       // rest is only value for arrays
       const restState = rest
-        ? (() => {
-            if (ASLGraph.isJsonPath(value)) {
-              return {
-                jsonPath: `${value.jsonPath}[${pattern.bindings.length - 1}:]`,
-              };
-            } else if (Array.isArray(value.value)) {
-              return {
-                ...value,
-                value: value.value.slice(pattern.bindings.length - 1),
-              };
-            } else {
-              throw new SynthError(
-                ErrorCodes.Invalid_Input,
-                "Expected array binding pattern to be on a reference path or array literal."
-              );
-            }
-          })()
+        ? this.evalAssignment(
+            rest.name,
+            (() => {
+              if (ASLGraph.isJsonPath(value)) {
+                return {
+                  jsonPath: `${value.jsonPath}[${
+                    pattern.bindings.length - 1
+                  }:]`,
+                };
+              } else if (Array.isArray(value.value)) {
+                return {
+                  ...value,
+                  value: value.value.slice(pattern.bindings.length - 1),
+                };
+              } else {
+                throw new SynthError(
+                  ErrorCodes.Invalid_Input,
+                  "Expected array binding pattern to be on a reference path or array literal."
+                );
+              }
+            })()
+          )
         : undefined;
 
       return ASLGraph.joinSubStates(pattern, ...assignments, restState);

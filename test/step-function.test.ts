@@ -3637,6 +3637,19 @@ describe("binding", () => {
       expect(normalizeDefinition(definition)).toMatchSnapshot();
     });
 
+    test("array rest", () => {
+      const { stack } = initStepFunctionApp();
+      const definition = new StepFunction<{ arr: string[] }, string[]>(
+        stack,
+        "machine1",
+        async ({ arr: [, ...b] }) => {
+          return b;
+        }
+      ).definition;
+
+      expect(normalizeDefinition(definition)).toMatchSnapshot();
+    });
+
     test("rename", () => {
       const { stack } = initStepFunctionApp();
       const definition = new StepFunction<{ value: string }, string>(

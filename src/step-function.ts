@@ -354,7 +354,7 @@ export namespace $SFN {
         const paramName = isIdentifier(param.name)
           ? param.name.name
           : // if the parameter is a binding pattern, we to assign the value to a variable first to access it in the map state.
-            context.newHeapVariable();
+            context.newHeapVariableName();
 
         return {
           param: [
@@ -367,7 +367,7 @@ export namespace $SFN {
           ],
           states: isBindingPattern(param.name)
             ? // if the param is a binding pattern, the value will be placed on the heap and then bound in the body
-              context.evalDecl(param, { jsonPath: paramName })
+              context.evalDecl(param, { jsonPath: `$.${paramName}` })
             : undefined,
         };
       });
