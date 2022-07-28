@@ -1716,14 +1716,6 @@ export class ASL {
         if (callbackfn !== undefined && isFunctionExpr(callbackfn)) {
           const callbackStates = this.evalStmt(callbackfn.body);
 
-          if (!callbackStates) {
-            // TODO: support empty?
-            throw new SynthError(
-              ErrorCodes.Unexpected_Error,
-              `a .map or .foreach block must have at least one Stmt`
-            );
-          }
-
           return this.evalExpr(
             expr.expr.expr,
             (listOutput, { normalizeOutputToJsonPath }) => {
@@ -1740,41 +1732,54 @@ export class ASL {
 
               const listPath = normalizeOutputToJsonPath().jsonPath;
 
+              const parameters = callbackfn.parameters.map((param, i) => {
+                const paramName = isIdentifier(param.name)
+                  ? param.name.name
+                  : // if the parameter is a binding pattern, we to assign the value to a variable first to access it in the map state.
+                    this.newHeapVariable();
+
+                return {
+                  param: [
+                    `${paramName}.$`,
+                    i === 0
+                      ? "$$.Map.Item.Value"
+                      : i == 1
+                      ? "$$.Map.Item.Index"
+                      : listPath,
+                  ],
+                  states: isBindingPattern(param.name)
+                    ? // if the param is a binding pattern, the value will be placed on the heap and then bound in the body
+                      this.evalDecl(param, { jsonPath: paramName })
+                    : undefined,
+                };
+              });
+
+              const bodyStates = ASLGraph.joinSubStates(
+                callbackfn,
+                // run any parameter initializers if they exist
+                ...parameters.map(({ states }) => states),
+                callbackStates
+              );
+
+              if (!bodyStates) {
+                // TODO: support empty?
+                throw new SynthError(
+                  ErrorCodes.Unexpected_Error,
+                  `a .map or .foreach block must have at least one Stmt`
+                );
+              }
+
               return this.stateWithHeapOutput({
                 Type: "Map",
                 MaxConcurrency: 1,
                 Iterator: this.aslGraphToStates(
                   // ensure any deferred states are updated to end
-                  ASLGraph.updateDeferredNextStates(
-                    { End: true },
-                    callbackStates
-                  )
+                  ASLGraph.updateDeferredNextStates({ End: true }, bodyStates)
                 ),
                 ItemsPath: listPath,
                 Parameters: {
                   ...this.cloneLexicalScopeParameters(expr),
-                  ...Object.fromEntries(
-                    callbackfn.parameters.map((param, i) => {
-                      const paramName = isIdentifier(param.name)
-                        ? param.name.name
-                        : undefined;
-
-                      if (paramName === undefined) {
-                        throw new SynthError(
-                          ErrorCodes.Unsupported_Feature,
-                          "Destructured parameter declarations are not yet supported by Step Functions. https://github.com/functionless/functionless/issues/364"
-                        );
-                      }
-                      return [
-                        `${paramName}.$`,
-                        i === 0
-                          ? "$$.Map.Item.Value"
-                          : i == 1
-                          ? "$$.Map.Item.Index"
-                          : listPath,
-                      ];
-                    })
-                  ),
+                  ...Object.fromEntries(parameters.map(({ param }) => param)),
                 },
                 ...(throwTransition
                   ? {

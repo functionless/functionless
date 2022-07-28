@@ -514,6 +514,217 @@ Object {
 }
 `;
 
+exports[`binding functions forEach 1`] = `
+Object {
+  "StartAt": "Initialize Functionless Context",
+  "States": Object {
+    "Initialize Functionless Context": Object {
+      "Next": "input.value.forEach(function({value:b,arr:[c]}))",
+      "Parameters": Object {
+        "fnl_context": Object {
+          "null": null,
+        },
+        "input.$": "$",
+      },
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "input.value.forEach(function({value:b,arr:[c]}))": Object {
+      "ItemsPath": "$.input.value",
+      "Iterator": Object {
+        "StartAt": "function({value:b,arr:[c]})",
+        "States": Object {
+          "1__return \`bc\`": Object {
+            "End": true,
+            "InputPath": "$.heap1.string",
+            "ResultPath": "$",
+            "Type": "Pass",
+          },
+          "[ c ]": Object {
+            "InputPath": "$.heap0['arr'][0]",
+            "Next": "return \`bc\`",
+            "ResultPath": "$.c",
+            "Type": "Pass",
+          },
+          "function({value:b,arr:[c]})": Object {
+            "InputPath": "$.heap0['value']",
+            "Next": "[ c ]",
+            "ResultPath": "$.b",
+            "Type": "Pass",
+          },
+          "return \`bc\`": Object {
+            "Next": "1__return \`bc\`",
+            "Parameters": Object {
+              "string.$": "States.Format('{}{}',$.b,$.c)",
+            },
+            "ResultPath": "$.heap1",
+            "Type": "Pass",
+          },
+        },
+      },
+      "MaxConcurrency": 1,
+      "Next": "return \\"success\\"",
+      "Parameters": Object {
+        "$.heap0.$": "$$.Map.Item.Value",
+        "fnl_context.$": "$.fnl_context",
+        "input.$": "$.input",
+      },
+      "ResultPath": "$.heap2",
+      "Type": "Map",
+    },
+    "return \\"success\\"": Object {
+      "End": true,
+      "Result": "success",
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+  },
+}
+`;
+
+exports[`binding functions map 1`] = `
+Object {
+  "StartAt": "Initialize Functionless Context",
+  "States": Object {
+    "1__return input.value.map(function({value:b,arr:[c]})).join()": Object {
+      "End": true,
+      "InputPath": "$.heap4.string",
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "1__return input.value.map(function({value:b,arr:[c]})).join() 1": Object {
+      "InputPath": "$.heap2",
+      "Next": "hasNext__1__return input.value.map(function({value:b,arr:[c]})).join() 1",
+      "ResultPath": "$.heap3",
+      "Type": "Pass",
+    },
+    "Initialize Functionless Context": Object {
+      "Next": "return input.value.map(function({value:b,arr:[c]})).join()",
+      "Parameters": Object {
+        "fnl_context": Object {
+          "null": null,
+        },
+        "input.$": "$",
+      },
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "append__1__return input.value.map(function({value:b,arr:[c]})).join() 1": Object {
+      "Next": "tail__1__return input.value.map(function({value:b,arr:[c]})).join() 1",
+      "Parameters": Object {
+        "string.$": "States.Format('{},{}', $.heap4.string, $.heap3[0])",
+      },
+      "ResultPath": "$.heap4",
+      "Type": "Pass",
+    },
+    "hasNext__1__return input.value.map(function({value:b,arr:[c]})).join() 1": Object {
+      "Choices": Array [
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.heap3[0]",
+            },
+            Object {
+              "Not": Object {
+                "IsPresent": true,
+                "Variable": "$.heap4",
+              },
+            },
+          ],
+          "Next": "initValue__1__return input.value.map(function({value:b,arr:[c]})).join() 1",
+        },
+        Object {
+          "And": Array [
+            Object {
+              "Not": Object {
+                "IsPresent": true,
+                "Variable": "$.heap3[0]",
+              },
+            },
+            Object {
+              "Not": Object {
+                "IsPresent": true,
+                "Variable": "$.heap4",
+              },
+            },
+          ],
+          "Next": "returnEmpty__1__return input.value.map(function({value:b,arr:[c]})).join() ",
+        },
+        Object {
+          "IsPresent": true,
+          "Next": "append__1__return input.value.map(function({value:b,arr:[c]})).join() 1",
+          "Variable": "$.heap3[0]",
+        },
+      ],
+      "Default": "1__return input.value.map(function({value:b,arr:[c]})).join()",
+      "Type": "Choice",
+    },
+    "initValue__1__return input.value.map(function({value:b,arr:[c]})).join() 1": Object {
+      "InputPath": "$.heap3[0]",
+      "Next": "tail__1__return input.value.map(function({value:b,arr:[c]})).join() 1",
+      "ResultPath": "$.heap4.string",
+      "Type": "Pass",
+    },
+    "return input.value.map(function({value:b,arr:[c]})).join()": Object {
+      "ItemsPath": "$.input.value",
+      "Iterator": Object {
+        "StartAt": "function({value:b,arr:[c]})",
+        "States": Object {
+          "1__return \`bc\`": Object {
+            "End": true,
+            "InputPath": "$.heap1.string",
+            "ResultPath": "$",
+            "Type": "Pass",
+          },
+          "[ c ]": Object {
+            "InputPath": "$.heap0['arr'][0]",
+            "Next": "return \`bc\`",
+            "ResultPath": "$.c",
+            "Type": "Pass",
+          },
+          "function({value:b,arr:[c]})": Object {
+            "InputPath": "$.heap0['value']",
+            "Next": "[ c ]",
+            "ResultPath": "$.b",
+            "Type": "Pass",
+          },
+          "return \`bc\`": Object {
+            "Next": "1__return \`bc\`",
+            "Parameters": Object {
+              "string.$": "States.Format('{}{}',$.b,$.c)",
+            },
+            "ResultPath": "$.heap1",
+            "Type": "Pass",
+          },
+        },
+      },
+      "MaxConcurrency": 1,
+      "Next": "1__return input.value.map(function({value:b,arr:[c]})).join() 1",
+      "Parameters": Object {
+        "$.heap0.$": "$$.Map.Item.Value",
+        "fnl_context.$": "$.fnl_context",
+        "input.$": "$.input",
+      },
+      "ResultPath": "$.heap2",
+      "Type": "Map",
+    },
+    "returnEmpty__1__return input.value.map(function({value:b,arr:[c]})).join() ": Object {
+      "Next": "1__return input.value.map(function({value:b,arr:[c]})).join()",
+      "Result": "",
+      "ResultPath": "$.heap4",
+      "Type": "Pass",
+    },
+    "tail__1__return input.value.map(function({value:b,arr:[c]})).join() 1": Object {
+      "InputPath": "$.heap3[1:]",
+      "Next": "hasNext__1__return input.value.map(function({value:b,arr:[c]})).join() 1",
+      "ResultPath": "$.heap3",
+      "Type": "Pass",
+    },
+  },
+}
+`;
+
 exports[`binding functions use in map 1`] = `
 Object {
   "StartAt": "Initialize Functionless Context",
