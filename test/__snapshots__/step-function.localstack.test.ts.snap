@@ -5799,6 +5799,474 @@ Object {
 }
 `;
 
+exports[`destructure 1`] = `
+Object {
+  "StartAt": "Initialize Functionless Context",
+  "States": Object {
+    "\\"sir\\"": Object {
+      "Next": "1__f = \\"sir\\"",
+      "Result": "sir",
+      "ResultPath": "$.heap13",
+      "Type": "Pass",
+    },
+    "\\"sir\\" 1": Object {
+      "Next": "1__t = \\"sir\\"",
+      "Result": "sir",
+      "ResultPath": "$.heap1",
+      "Type": "Pass",
+    },
+    "\\"what\\"": Object {
+      "Next": "1__c = \\"what\\"",
+      "Result": "what",
+      "ResultPath": "$.heap12",
+      "Type": "Pass",
+    },
+    "\\"what\\" 1": Object {
+      "Next": "1__x = \\"what\\"",
+      "Result": "what",
+      "ResultPath": "$.heap0",
+      "Type": "Pass",
+    },
+    "1__[ d, , e, f = \\"sir\\", arrRest ]": Object {
+      "InputPath": "$['arr'][2]",
+      "Next": "f = \\"sir\\"",
+      "ResultPath": "$.e",
+      "Type": "Pass",
+    },
+    "1__[ s, , u, t = \\"sir\\", tserRra ]": Object {
+      "InputPath": "$.value['rra'][2]",
+      "Next": "t = \\"sir\\"",
+      "ResultPath": "$.u",
+      "Type": "Pass",
+    },
+    "1__c = \\"what\\"": Object {
+      "InputPath": "$.heap12",
+      "Next": "[ d, , e, f = \\"sir\\", arrRest ]",
+      "ResultPath": "$.c",
+      "Type": "Pass",
+    },
+    "1__f = \\"sir\\"": Object {
+      "InputPath": "$.heap13",
+      "Next": "3__[ d, , e, f = \\"sir\\", arrRest ]",
+      "ResultPath": "$.f",
+      "Type": "Pass",
+    },
+    "1__forV = \`forVac\`": Object {
+      "InputPath": "$.heap8.string",
+      "Next": "tail__for({a,b:[c]} of [{a: \\"a\\", b: [\\"b\\"]}]) 1",
+      "ResultPath": "$.forV",
+      "Type": "Pass",
+    },
+    "1__map = [{a: \\"a\\", b: [\\"b\\"]}].map(function({a,b:[c]})).join()": Object {
+      "InputPath": "$.heap7.string",
+      "Next": "forV = \\"\\"",
+      "ResultPath": "$.map",
+      "Type": "Pass",
+    },
+    "1__map = [{a: \\"a\\", b: [\\"b\\"]}].map(function({a,b:[c]})).join() 1": Object {
+      "InputPath": "$.heap5",
+      "Next": "hasNext__1__map = [{a: \\"a\\", b: [\\"b\\"]}].map(function({a,b:[c]})).join() 1",
+      "ResultPath": "$.heap6",
+      "Type": "Pass",
+    },
+    "1__map = [{a: \\"a\\", b: [\\"b\\"]}].map(function({a,b:[c]})).join() 2": Object {
+      "ItemsPath": "$.heap3",
+      "Iterator": Object {
+        "StartAt": "function({a,b:[c]})",
+        "States": Object {
+          "1__return \`ac\`": Object {
+            "End": true,
+            "InputPath": "$.heap2.string",
+            "ResultPath": "$",
+            "Type": "Pass",
+          },
+          "[ c ]": Object {
+            "InputPath": "$.heap4['b'][0]",
+            "Next": "return \`ac\`",
+            "ResultPath": "$.c",
+            "Type": "Pass",
+          },
+          "function({a,b:[c]})": Object {
+            "InputPath": "$.heap4['a']",
+            "Next": "[ c ]",
+            "ResultPath": "$.a",
+            "Type": "Pass",
+          },
+          "return \`ac\`": Object {
+            "Next": "1__return \`ac\`",
+            "Parameters": Object {
+              "string.$": "States.Format('{}{}',$.a,$.c)",
+            },
+            "ResultPath": "$.heap2",
+            "Type": "Pass",
+          },
+        },
+      },
+      "MaxConcurrency": 1,
+      "Next": "1__map = [{a: \\"a\\", b: [\\"b\\"]}].map(function({a,b:[c]})).join() 1",
+      "Parameters": Object {
+        "$.heap4.$": "$$.Map.Item.Value",
+        "a.$": "$.a",
+        "arrRest.$": "$.arrRest",
+        "b.$": "$.b",
+        "c.$": "$.c",
+        "d.$": "$.d",
+        "e.$": "$.e",
+        "f.$": "$.f",
+        "fnl_context.$": "$.fnl_context",
+        "s.$": "$.s",
+        "t.$": "$.t",
+        "tserRra.$": "$.tserRra",
+        "u.$": "$.u",
+        "v.$": "$.v",
+        "value.$": "$.value",
+        "w.$": "$.w",
+        "x.$": "$.x",
+        "z.$": "$.z",
+      },
+      "ResultPath": "$.heap5",
+      "Type": "Map",
+    },
+    "1__return {prop: \`abcdefarrRest[0]\`, var: \`zwvxsuttserRra[0]\`, map: map, fo": Object {
+      "End": true,
+      "Parameters": Object {
+        "forV.$": "$.forV",
+        "map.$": "$.map",
+        "prop.$": "$.heap10.string",
+        "tr.$": "$.tr",
+        "var.$": "$.heap11.string",
+      },
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "1__t = \\"sir\\"": Object {
+      "InputPath": "$.heap1",
+      "Next": "3__[ s, , u, t = \\"sir\\", tserRra ]",
+      "ResultPath": "$.t",
+      "Type": "Pass",
+    },
+    "1__x = \\"what\\"": Object {
+      "InputPath": "$.heap0",
+      "Next": "[ s, , u, t = \\"sir\\", tserRra ]",
+      "ResultPath": "$.x",
+      "Type": "Pass",
+    },
+    "1__{ [\\"value\\"]: w, [\`ab\`]: v }": Object {
+      "InputPath": "$.value['yy']['[object Object][object Object]']",
+      "Next": "x = \\"what\\"",
+      "ResultPath": "$.v",
+      "Type": "Pass",
+    },
+    "3__[ d, , e, f = \\"sir\\", arrRest ]": Object {
+      "InputPath": "$['arr'][4]",
+      "Next": "4__{ a, bb: { value: b }, c = \\"what\\", arr: [ d, , e, f = \\"sir\\", arrRest ], ",
+      "ResultPath": "$.arrRest",
+      "Type": "Pass",
+    },
+    "3__[ s, , u, t = \\"sir\\", tserRra ]": Object {
+      "InputPath": "$.value['rra'][4]",
+      "Next": "map = [{a: \\"a\\", b: [\\"b\\"]}].map(function({a,b:[c]})).join()",
+      "ResultPath": "$.tserRra",
+      "Type": "Pass",
+    },
+    "4__{ a, bb: { value: b }, c = \\"what\\", arr: [ d, , e, f = \\"sir\\", arrRest ], ": Object {
+      "InputPath": "$['value']",
+      "Next": "for({a,b:[c]} of [{a: \\"a\\", b: [\\"b\\"]}])",
+      "ResultPath": "$.value",
+      "Type": "Pass",
+    },
+    "Initialize Functionless Context": Object {
+      "Next": "{ a, bb: { value: b }, c = \\"what\\", arr: [ d, , e, f = \\"sir\\", arrRest ], val",
+      "Parameters": Object {
+        "fnl_context": Object {
+          "null": null,
+        },
+      },
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "[ c ] 1": Object {
+      "InputPath": "$.heap9[0]['b'][0]",
+      "Next": "forV = \`forVac\`",
+      "ResultPath": "$.c",
+      "Type": "Pass",
+    },
+    "[ d, , e, f = \\"sir\\", arrRest ]": Object {
+      "InputPath": "$['arr'][0]",
+      "Next": "1__[ d, , e, f = \\"sir\\", arrRest ]",
+      "ResultPath": "$.d",
+      "Type": "Pass",
+    },
+    "[ s, , u, t = \\"sir\\", tserRra ]": Object {
+      "InputPath": "$.value['rra'][0]",
+      "Next": "1__[ s, , u, t = \\"sir\\", tserRra ]",
+      "ResultPath": "$.s",
+      "Type": "Pass",
+    },
+    "\`zwvxsuttserRra[0]\`": Object {
+      "Next": "1__return {prop: \`abcdefarrRest[0]\`, var: \`zwvxsuttserRra[0]\`, map: map, fo",
+      "Parameters": Object {
+        "string.$": "States.Format('{}{}{}{}{}{}{}{}',$.z,$.w,$.v,$.x,$.s,$.u,$.t,$.tserRra[0])",
+      },
+      "ResultPath": "$.heap11",
+      "Type": "Pass",
+    },
+    "append__1__map = [{a: \\"a\\", b: [\\"b\\"]}].map(function({a,b:[c]})).join() 1": Object {
+      "Next": "tail__1__map = [{a: \\"a\\", b: [\\"b\\"]}].map(function({a,b:[c]})).join() 1",
+      "Parameters": Object {
+        "string.$": "States.Format('{},{}', $.heap7.string, $.heap6[0])",
+      },
+      "ResultPath": "$.heap7",
+      "Type": "Pass",
+    },
+    "c = \\"what\\"": Object {
+      "Choices": Array [
+        Object {
+          "IsPresent": true,
+          "Next": "value__c = \\"what\\"",
+          "Variable": "$['c']",
+        },
+      ],
+      "Default": "\\"what\\"",
+      "Type": "Choice",
+    },
+    "catch__try": Object {
+      "InputPath": "$.0_tmp['message']",
+      "Next": "tr = message",
+      "ResultPath": "$.message",
+      "Type": "Pass",
+    },
+    "f = \\"sir\\"": Object {
+      "Choices": Array [
+        Object {
+          "IsPresent": true,
+          "Next": "value__f = \\"sir\\"",
+          "Variable": "$['arr'][3]",
+        },
+      ],
+      "Default": "\\"sir\\"",
+      "Type": "Choice",
+    },
+    "for({a,b:[c]} of [{a: \\"a\\", b: [\\"b\\"]}])": Object {
+      "InputPath": "$.value['z']",
+      "Next": "{ [\\"value\\"]: w, [\`ab\`]: v }",
+      "ResultPath": "$.z",
+      "Type": "Pass",
+    },
+    "for({a,b:[c]} of [{a: \\"a\\", b: [\\"b\\"]}]) 1": Object {
+      "Next": "hasNext__for({a,b:[c]} of [{a: \\"a\\", b: [\\"b\\"]}]) 1",
+      "Result": Array [
+        Object {
+          "a": "a",
+          "b": Array [
+            "b",
+          ],
+        },
+      ],
+      "ResultPath": "$.heap9",
+      "Type": "Pass",
+    },
+    "forV = \\"\\"": Object {
+      "Next": "for({a,b:[c]} of [{a: \\"a\\", b: [\\"b\\"]}]) 1",
+      "Result": "",
+      "ResultPath": "$.forV",
+      "Type": "Pass",
+    },
+    "forV = \`forVac\`": Object {
+      "Next": "1__forV = \`forVac\`",
+      "Parameters": Object {
+        "string.$": "States.Format('{}{}{}',$.forV,$.a,$.c)",
+      },
+      "ResultPath": "$.heap8",
+      "Type": "Pass",
+    },
+    "hasNext__1__map = [{a: \\"a\\", b: [\\"b\\"]}].map(function({a,b:[c]})).join() 1": Object {
+      "Choices": Array [
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.heap6[0]",
+            },
+            Object {
+              "Not": Object {
+                "IsPresent": true,
+                "Variable": "$.heap7",
+              },
+            },
+          ],
+          "Next": "initValue__1__map = [{a: \\"a\\", b: [\\"b\\"]}].map(function({a,b:[c]})).join() 1",
+        },
+        Object {
+          "And": Array [
+            Object {
+              "Not": Object {
+                "IsPresent": true,
+                "Variable": "$.heap6[0]",
+              },
+            },
+            Object {
+              "Not": Object {
+                "IsPresent": true,
+                "Variable": "$.heap7",
+              },
+            },
+          ],
+          "Next": "returnEmpty__1__map = [{a: \\"a\\", b: [\\"b\\"]}].map(function({a,b:[c]})).join() ",
+        },
+        Object {
+          "IsPresent": true,
+          "Next": "append__1__map = [{a: \\"a\\", b: [\\"b\\"]}].map(function({a,b:[c]})).join() 1",
+          "Variable": "$.heap6[0]",
+        },
+      ],
+      "Default": "1__map = [{a: \\"a\\", b: [\\"b\\"]}].map(function({a,b:[c]})).join()",
+      "Type": "Choice",
+    },
+    "hasNext__for({a,b:[c]} of [{a: \\"a\\", b: [\\"b\\"]}]) 1": Object {
+      "Choices": Array [
+        Object {
+          "IsPresent": true,
+          "Next": "{ a, b: [ c ] }",
+          "Variable": "$.heap9[0]",
+        },
+      ],
+      "Default": "try",
+      "Type": "Choice",
+    },
+    "initValue__1__map = [{a: \\"a\\", b: [\\"b\\"]}].map(function({a,b:[c]})).join() 1": Object {
+      "InputPath": "$.heap6[0]",
+      "Next": "tail__1__map = [{a: \\"a\\", b: [\\"b\\"]}].map(function({a,b:[c]})).join() 1",
+      "ResultPath": "$.heap7.string",
+      "Type": "Pass",
+    },
+    "map = [{a: \\"a\\", b: [\\"b\\"]}].map(function({a,b:[c]})).join()": Object {
+      "Next": "1__map = [{a: \\"a\\", b: [\\"b\\"]}].map(function({a,b:[c]})).join() 2",
+      "Result": Array [
+        Object {
+          "a": "a",
+          "b": Array [
+            "b",
+          ],
+        },
+      ],
+      "ResultPath": "$.heap3",
+      "Type": "Pass",
+    },
+    "return {prop: \`abcdefarrRest[0]\`, var: \`zwvxsuttserRra[0]\`, map: map, forV:": Object {
+      "Next": "\`zwvxsuttserRra[0]\`",
+      "Parameters": Object {
+        "string.$": "States.Format('{}{}{}{}{}{}{}',$.a,$.b,$.c,$.d,$.e,$.f,$.arrRest[0])",
+      },
+      "ResultPath": "$.heap10",
+      "Type": "Pass",
+    },
+    "returnEmpty__1__map = [{a: \\"a\\", b: [\\"b\\"]}].map(function({a,b:[c]})).join() ": Object {
+      "Next": "1__map = [{a: \\"a\\", b: [\\"b\\"]}].map(function({a,b:[c]})).join()",
+      "Result": "",
+      "ResultPath": "$.heap7",
+      "Type": "Pass",
+    },
+    "t = \\"sir\\"": Object {
+      "Choices": Array [
+        Object {
+          "IsPresent": true,
+          "Next": "value__t = \\"sir\\"",
+          "Variable": "$.value['rra'][3]",
+        },
+      ],
+      "Default": "\\"sir\\" 1",
+      "Type": "Choice",
+    },
+    "tail__1__map = [{a: \\"a\\", b: [\\"b\\"]}].map(function({a,b:[c]})).join() 1": Object {
+      "InputPath": "$.heap6[1:]",
+      "Next": "hasNext__1__map = [{a: \\"a\\", b: [\\"b\\"]}].map(function({a,b:[c]})).join() 1",
+      "ResultPath": "$.heap6",
+      "Type": "Pass",
+    },
+    "tail__for({a,b:[c]} of [{a: \\"a\\", b: [\\"b\\"]}]) 1": Object {
+      "InputPath": "$.heap9[1:]",
+      "Next": "hasNext__for({a,b:[c]} of [{a: \\"a\\", b: [\\"b\\"]}]) 1",
+      "ResultPath": "$.heap9",
+      "Type": "Pass",
+    },
+    "tr = message": Object {
+      "InputPath": "$.message",
+      "Next": "return {prop: \`abcdefarrRest[0]\`, var: \`zwvxsuttserRra[0]\`, map: map, forV:",
+      "ResultPath": "$.tr",
+      "Type": "Pass",
+    },
+    "try": Object {
+      "Next": "catch__try",
+      "Result": Object {
+        "message": "hi",
+      },
+      "ResultPath": "$.0_tmp",
+      "Type": "Pass",
+    },
+    "value__c = \\"what\\"": Object {
+      "InputPath": "$['c']",
+      "Next": "1__c = \\"what\\"",
+      "ResultPath": "$.heap12",
+      "Type": "Pass",
+    },
+    "value__f = \\"sir\\"": Object {
+      "InputPath": "$['arr'][3]",
+      "Next": "1__f = \\"sir\\"",
+      "ResultPath": "$.heap13",
+      "Type": "Pass",
+    },
+    "value__t = \\"sir\\"": Object {
+      "InputPath": "$.value['rra'][3]",
+      "Next": "1__t = \\"sir\\"",
+      "ResultPath": "$.heap1",
+      "Type": "Pass",
+    },
+    "value__x = \\"what\\"": Object {
+      "InputPath": "$.value['x']",
+      "Next": "1__x = \\"what\\"",
+      "ResultPath": "$.heap0",
+      "Type": "Pass",
+    },
+    "x = \\"what\\"": Object {
+      "Choices": Array [
+        Object {
+          "IsPresent": true,
+          "Next": "value__x = \\"what\\"",
+          "Variable": "$.value['x']",
+        },
+      ],
+      "Default": "\\"what\\" 1",
+      "Type": "Choice",
+    },
+    "{ [\\"value\\"]: w, [\`ab\`]: v }": Object {
+      "InputPath": "$.value['yy']['value']",
+      "Next": "1__{ [\\"value\\"]: w, [\`ab\`]: v }",
+      "ResultPath": "$.w",
+      "Type": "Pass",
+    },
+    "{ a, b: [ c ] }": Object {
+      "InputPath": "$.heap9[0]['a']",
+      "Next": "[ c ] 1",
+      "ResultPath": "$.a",
+      "Type": "Pass",
+    },
+    "{ a, bb: { value: b }, c = \\"what\\", arr: [ d, , e, f = \\"sir\\", arrRest ], val": Object {
+      "InputPath": "$['a']",
+      "Next": "{ value: b }",
+      "ResultPath": "$.a",
+      "Type": "Pass",
+    },
+    "{ value: b }": Object {
+      "InputPath": "$['bb']['value']",
+      "Next": "c = \\"what\\"",
+      "ResultPath": "$.b",
+      "Type": "Pass",
+    },
+  },
+}
+`;
+
 exports[`duplicate nodes 1`] = `
 Object {
   "StartAt": "Initialize Functionless Context",

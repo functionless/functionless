@@ -1465,7 +1465,7 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
         }) => {
           const {
             z,
-            yy: { ["value"]: w, [`${a}${b}`]: v },
+            yy: { ["value"]: w, [`${"a"}${"b"}`]: v },
             x = "what",
             rra: [s, , u, t = "sir", ...tserRra],
           } = value;

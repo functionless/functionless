@@ -22,6 +22,7 @@ import {
   isSpreadAssignExpr,
   isSpreadElementExpr,
   isStringLiteralExpr,
+  isTemplateExpr,
   isUnaryExpr,
   isUndefinedLiteralExpr,
 } from "./guards";
@@ -331,6 +332,12 @@ export const evalToConstant = (expr: Expr): Constant | undefined => {
         return { constant: left.constant / right.constant };
       }
     }
+  } else if (isTemplateExpr(expr)) {
+    const values = expr.exprs.map(evalToConstant);
+    if (values.every((v) => !!v)) {
+      return { constant: values.join("") };
+    }
+    return undefined;
   }
   return undefined;
 };
