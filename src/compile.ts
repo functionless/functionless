@@ -532,7 +532,7 @@ export function compile(
           const type = checker.getTypeAtLocation(node.name);
           return newExpr("PropAccessExpr", [
             toExpr(node.expression, scope),
-            ts.factory.createStringLiteral(node.name.text),
+            toExpr(node.name, scope),
             type
               ? ts.factory.createStringLiteral(checker.typeToString(type))
               : ts.factory.createIdentifier("undefined"),

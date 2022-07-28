@@ -43,6 +43,7 @@ import {
   isForStmt,
   isFunctionDecl,
   isFunctionExpr,
+  isGetAccessorDecl,
   isIdentifier,
   isIfStmt,
   isImportKeyword,
@@ -64,12 +65,14 @@ import {
   isReferenceExpr,
   isRegexExpr,
   isReturnStmt,
+  isSetAccessorDecl,
   isSpreadAssignExpr,
   isSpreadElementExpr,
   isStmt,
   isStringLiteralExpr,
   isSuperKeyword,
   isSwitchStmt,
+  isTaggedTemplateExpr,
   isTemplateExpr,
   isThisExpr,
   isThrowStmt,
@@ -587,6 +590,15 @@ export abstract class VTL {
           this.put(obj, name, prop.expr);
         } else if (isSpreadAssignExpr(prop)) {
           this.putAll(obj, prop.expr);
+        } else if (
+          isGetAccessorDecl(prop) ||
+          isSetAccessorDecl(prop) ||
+          isMethodDecl(prop)
+        ) {
+          throw new SynthError(
+            ErrorCodes.Unsupported_Feature,
+            `${prop.kind} is not supported by VTL`
+          );
         } else {
           assertNever(prop);
         }
@@ -721,6 +733,7 @@ export abstract class VTL {
       isRegexExpr(node) ||
       isSuperKeyword(node) ||
       isSwitchStmt(node) ||
+      isTaggedTemplateExpr(node) ||
       isVoidExpr(node) ||
       isWithStmt(node) ||
       isYieldExpr(node)

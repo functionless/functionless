@@ -100,6 +100,9 @@ import {
   isVoidExpr,
   isParenthesizedExpr,
   isImportKeyword,
+  isSetAccessorDecl,
+  isGetAccessorDecl,
+  isTaggedTemplateExpr,
 } from "./guards";
 import {
   Integration,
@@ -2785,10 +2788,13 @@ export class ASL {
           isVariableDecl(ref) ||
           isBindingElem(ref) ||
           isFunctionDecl(ref) ||
+          isSetAccessorDecl(ref) ||
+          isGetAccessorDecl(ref) ||
           isClassDecl(ref) ||
           isClassMember(ref)
         ) {
-          throw new Error(
+          throw new SynthError(
+            ErrorCodes.Unsupported_Feature,
             `cannot reference a ${ref.kind} within a JSONPath .filter expression`
           );
         }
@@ -4392,15 +4398,17 @@ function toStateName(node: FunctionlessNode): string {
       isConstructorDecl(node) ||
       isDebuggerStmt(node) ||
       isDefaultClause(node) ||
+      isGetAccessorDecl(node) ||
+      isImportKeyword(node) ||
       isLabelledStmt(node) ||
       isMethodDecl(node) ||
       isPropDecl(node) ||
+      isSetAccessorDecl(node) ||
+      isSuperKeyword(node) ||
       isSuperKeyword(node) ||
       isSwitchStmt(node) ||
       isWithStmt(node) ||
-      isYieldExpr(node) ||
-      isSuperKeyword(node) ||
-      isImportKeyword(node)
+      isYieldExpr(node)
     ) {
       throw new SynthError(
         ErrorCodes.Unsupported_Feature,
@@ -4455,7 +4463,22 @@ function exprToString(
   } else if (isNumberLiteralExpr(expr)) {
     return `${expr.value}`;
   } else if (isObjectLiteralExpr(expr)) {
-    return `{${expr.properties.map(exprToString).join(", ")}}`;
+    return `{${expr.properties
+      .map((prop) => {
+        if (
+          isSetAccessorDecl(prop) ||
+          isGetAccessorDecl(prop) ||
+          isMethodDecl(prop)
+        ) {
+          throw new SynthError(
+            ErrorCodes.Unsupported_Feature,
+            `${prop.kind} is not supported by Step Functions`
+          );
+        }
+
+        return exprToString(prop);
+      })
+      .join(", ")}}`;
   } else if (isPropAccessExpr(expr)) {
     return `${exprToString(expr.expr)}.${expr.name.name}`;
   } else if (isPropAssignExpr(expr)) {
@@ -4531,6 +4554,11 @@ function exprToString(
     }`;
   } else if (isParameterDecl(expr)) {
     return exprToString(expr.name);
+  } else if (isTaggedTemplateExpr(expr)) {
+    throw new SynthError(
+      ErrorCodes.Unsupported_Feature,
+      `${expr.kind} is not supported by Step Functions`
+    );
   } else {
     return assertNever(expr);
   }

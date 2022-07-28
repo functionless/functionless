@@ -80,7 +80,6 @@ export function isStmt(a: any): a is Stmt {
   return isNode(a) && a.nodeKind === "Stmt";
 }
 export const isBlockStmt = typeGuard("BlockStmt");
-export const isForStmt = typeGuard("ForStmt");
 export const isBreakStmt = typeGuard("BreakStmt");
 export const isCaseClause = typeGuard("CaseClause");
 export const isCatchClause = typeGuard("CatchClause");
@@ -92,10 +91,12 @@ export const isEmptyStmt = typeGuard("EmptyStmt");
 export const isExprStmt = typeGuard("ExprStmt");
 export const isForInStmt = typeGuard("ForInStmt");
 export const isForOfStmt = typeGuard("ForOfStmt");
+export const isForStmt = typeGuard("ForStmt");
 export const isIfStmt = typeGuard("IfStmt");
 export const isLabelledStmt = typeGuard("LabelledStmt");
 export const isReturnStmt = typeGuard("ReturnStmt");
 export const isSwitchStmt = typeGuard("SwitchStmt");
+export const isTaggedTemplateExpr = typeGuard("TaggedTemplateExpr");
 export const isThrowStmt = typeGuard("ThrowStmt");
 export const isTryStmt = typeGuard("TryStmt");
 export const isVariableStmt = typeGuard("VariableStmt");
@@ -112,9 +113,11 @@ export const isClassDecl = typeGuard("ClassDecl");
 export const isClassStaticBlockDecl = typeGuard("ClassStaticBlockDecl");
 export const isConstructorDecl = typeGuard("ConstructorDecl");
 export const isFunctionDecl = typeGuard("FunctionDecl");
+export const isGetAccessorDecl = typeGuard("GetAccessorDecl");
 export const isMethodDecl = typeGuard("MethodDecl");
 export const isParameterDecl = typeGuard("ParameterDecl");
 export const isPropDecl = typeGuard("PropDecl");
+export const isSetAccessorDecl = typeGuard("SetAccessorDecl");
 export const isClassMember = typeGuard(
   "ClassStaticBlockDecl",
   "ConstructorDecl",
@@ -128,8 +131,9 @@ export const isBindingElem = typeGuard("BindingElem");
 export const isObjectBinding = typeGuard("ObjectBinding");
 
 export const isPropName = typeGuard(
-  "Identifier",
   "ComputedPropertyNameExpr",
+  "Identifier",
+  "NumberLiteralExpr",
   "StringLiteralExpr"
 );
 

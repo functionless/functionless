@@ -26,10 +26,14 @@ import { Function, isFunction, NativeIntegration } from "./function";
 import { NativePreWarmContext, PrewarmClients } from "./function-prewarm";
 import {
   isArgument,
+  isGetAccessorDecl,
   isIdentifier,
+  isMethodDecl,
   isObjectLiteralExpr,
   isPropAssignExpr,
   isReferenceExpr,
+  isSetAccessorDecl,
+  isSpreadAssignExpr,
   isStringLiteralExpr,
 } from "./guards";
 import {
@@ -427,26 +431,47 @@ export namespace $AWS {
             "The first argument ('input') into $AWS.Lambda.Invoke must be an object."
           );
         }
-        const functionName = input.getProperty("Function")?.expr;
+        const functionName = input.getProperty("Function");
         if (functionName === undefined) {
           throw new Error("missing required property 'Function'");
-        } else if (functionName.kind !== "ReferenceExpr") {
+        } else if (!isPropAssignExpr(functionName)) {
+          throw new SynthError(
+            ErrorCodes.StepFunctions_property_names_must_be_constant,
+            `the Function property must reference a Function construct`
+          );
+        }
+
+        if (functionName.expr.kind !== "ReferenceExpr") {
           throw new Error(
             "property 'Function' must reference a functionless.Function"
           );
         }
-        const functionRef = functionName.ref();
+        const functionRef = functionName.expr.ref();
         if (!isFunction(functionRef)) {
           throw new Error(
             "property 'Function' must reference a functionless.Function"
           );
         }
-        const payload = input.getProperty("Payload")?.expr;
+        const payload = input.getProperty("Payload");
         if (payload === undefined) {
           throw new Error("missing property 'payload'");
+        } else if (
+          isGetAccessorDecl(payload) ||
+          isSetAccessorDecl(payload) ||
+          isMethodDecl(payload)
+        ) {
+          throw new SynthError(
+            ErrorCodes.Unsupported_Feature,
+            `${payload.kind} is not supported by Step Functions`
+          );
+        } else if (isSpreadAssignExpr(payload)) {
+          throw new SynthError(
+            ErrorCodes.Expected_an_object_literal,
+            `Payload property must be an object literal with no getters, setters or methods`
+          );
         }
 
-        return context.evalExpr(payload, (output) => {
+        return context.evalExpr(payload.expr, (output) => {
           return context.stateWithHeapOutput({
             Type: "Task",
             Resource: "arn:aws:states:::lambda:invoke",
