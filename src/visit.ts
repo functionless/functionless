@@ -866,36 +866,5 @@ export function visitSpecificChildren<T extends FunctionlessNode>(
   });
 }
 
-/**
- * Rename all {@link PropAssignExpr} expressions within the {@link obj} where the
- * name is statically known and matches a property in the {@link rename} map.
- */
-export function renameObjectProperties(
-  obj: ObjectLiteralExpr,
-  rename: Record<string, string>
-) {
-  const newObj = visitEachChild(obj, (node) => {
-    if (isPropAssignExpr(node)) {
-      const propName = isIdentifier(node.name)
-        ? node.name.name
-        : isStringLiteralExpr(node.name)
-        ? node.name.value
-        : undefined;
-
-      if (propName !== undefined && propName in rename) {
-        const substituteName = rename[propName];
-
-        return new PropAssignExpr(
-          new Identifier(substituteName),
-          node.expr.clone()
-        );
-      }
-    }
-    return node;
-  });
-  newObj.parent = obj.parent;
-  return newObj;
-}
-
 // to prevent the closure serializer from trying to import all of functionless.
 export const deploymentOnlyModule = true;
