@@ -186,7 +186,7 @@ export class PropAccessExpr extends BaseExpr<"PropAccessExpr"> {
   public clone(): this {
     return new PropAccessExpr(
       this.expr.clone(),
-      this.name,
+      this.name.clone(),
       this.isOptional
     ) as this;
   }

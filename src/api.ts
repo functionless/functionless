@@ -803,7 +803,7 @@ export class APIGatewayVTL extends VTL {
             }
           } else if (isSpreadAssignExpr(prop)) {
             const key = context.newLocalVarName();
-            const map = this.eval(prop?.expr);
+            const map = this.eval(prop.expr);
             return `#foreach(${key} in ${map}.keySet())"${key}":${this.json(
               `${map}.get(${key})`
             )}#if($foreach.hasNext),#end#end`;

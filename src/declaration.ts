@@ -133,7 +133,7 @@ export class GetAccessorDecl extends BaseDecl<
     super("GetAccessorDecl", arguments);
   }
   public clone(): this {
-    throw new Error("Method not implemented.");
+    return new GetAccessorDecl(this.name.clone(), this.body.clone()) as this;
   }
 }
 export class SetAccessorDecl extends BaseDecl<
@@ -148,7 +148,11 @@ export class SetAccessorDecl extends BaseDecl<
     super("SetAccessorDecl", arguments);
   }
   public clone(): this {
-    throw new Error("Method not implemented.");
+    return new SetAccessorDecl(
+      this.name.clone(),
+      this.parameter.clone(),
+      this.body.clone()
+    ) as this;
   }
 }
 
