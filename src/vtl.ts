@@ -448,7 +448,7 @@ export abstract class VTL {
             } else {
               throw new SynthError(
                 ErrorCodes.Unsupported_Feature,
-                "Binding variable assignment is not currently supported in Event Bridge rules and input transforms. https://github.com/functionless/functionless/issues/302"
+                "Binding variable assignment is not currently supported in VTL. https://github.com/functionless/functionless/issues/302"
               );
             }
           });
