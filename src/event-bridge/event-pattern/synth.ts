@@ -327,19 +327,18 @@ export const synthesizePatternDocument = (
   };
 
   const evalNumericRange = (expr: BinaryExpr): PatternDocument => {
-    const { eventReference, eventExpr, other, op } = assertOneEventReference(
+    const { eventReference, other, op } = assertOneEventReference(
       expr.left,
       expr.right,
       expr.op
     );
 
-    if (eventExpr.type !== "number") {
+    const value = assertNumber(evalToConstant(other)?.constant);
+    if (typeof value !== "number") {
       throw new Error(
         "Numeric range only supported for event properties of type number"
       );
     }
-
-    const value = assertNumber(evalToConstant(other)?.constant);
 
     assertValidEventReference(eventReference, eventDecl);
     const range = createSingleNumericRange(value, op);
@@ -422,33 +421,24 @@ export const synthesizePatternDocument = (
       isElementAccessExpr(expr.expr.expr)
     ) {
       assertValidEventReference(eventReference, eventDecl);
-      if (expr.expr.expr.type === "number[]") {
-        const num = assertNumber(searchElement);
-        return eventReferenceToPatternDocument(eventReference, {
-          lower: { value: num, inclusive: true },
-          upper: { value: num, inclusive: true },
-        });
-      }
-      if (
-        expr.expr.expr.type === "string[]" ||
-        expr.expr.expr.type === "boolean[]"
-      ) {
-        if (
-          typeof searchElement !== "string" &&
-          typeof searchElement !== "boolean"
-        ) {
-          throw Error("Includes operation only supports string or booleans.");
+      if (eventReference)
+        if (typeof searchElement === "number") {
+          return eventReferenceToPatternDocument(eventReference, {
+            lower: { value: searchElement, inclusive: true },
+            upper: { value: searchElement, inclusive: true },
+          });
         }
-
+      if (
+        typeof searchElement === "string" ||
+        typeof searchElement === "boolean"
+      ) {
         return eventReferenceToPatternDocument(eventReference, {
           value: searchElement,
         });
       }
 
       // TODO: support for strings
-      throw new Error(
-        `Includes operation only supported on Arrays, found ${expr.expr.expr.type}.`
-      );
+      throw new Error(`Includes operation only supported on Arrays`);
     }
 
     throw new Error(
@@ -486,23 +476,15 @@ export const synthesizePatternDocument = (
         "StartsWith operation must be on a property of the event."
       );
     }
-
     const e = isParenthesizedExpr(expr.expr.expr)
       ? expr.expr.expr.unwrap()
       : expr.expr.expr;
 
     if (isPropAccessExpr(e) || isElementAccessExpr(e)) {
-      if (e.type === "string") {
-        assertValidEventReference(eventReference, eventDecl);
-        return eventReferenceToPatternDocument(eventReference, {
-          prefix: searchString,
-        });
-      }
-
-      // TODO: support for strings
-      throw new Error(
-        `Starts With operation only supported on strings, found ${e.type}.`
-      );
+      assertValidEventReference(eventReference, eventDecl);
+      return eventReferenceToPatternDocument(eventReference, {
+        prefix: searchString,
+      });
     }
 
     throw new Error(
@@ -558,13 +540,7 @@ export const synthesizePatternDocument = (
 
     assertValidEventReference(eventReference, eventDecl);
 
-    return eventReferenceToPatternDocument(
-      eventReference,
-      expr.type === "boolean"
-        ? { value: true }
-        : // for all other fields, assert they are simply present
-          { isPresent: true }
-    );
+    return eventReferenceToPatternDocument(eventReference, { isPresent: true });
   };
 
   /**

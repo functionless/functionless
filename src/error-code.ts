@@ -1142,6 +1142,24 @@ export namespace ErrorCodes {
     type: ErrorType.ERROR,
     title: "Classes are not yet supported by Functionless",
   };
+
+  /**
+   * Event Bridge does not allow for truthy comparisons.
+   *
+   * ```ts
+   * .when(id, event => event.detail.prop)
+   * ```
+   *
+   * To workaround, be explicit with `===`
+   * ```ts
+   * .when(id, event => event.detail.prop === true)
+   * ```
+   */
+  export const EventBridge_DoesNotSupport_TruthyComparison: ErrorCode = {
+    code: 10032,
+    type: ErrorType.ERROR,
+    title: "Event Bridge does not support a truthy comparison",
+  };
 }
 
 // to prevent the closure serializer from trying to import all of functionless.

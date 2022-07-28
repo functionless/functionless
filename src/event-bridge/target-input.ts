@@ -18,12 +18,13 @@ import {
   isElementAccessExpr,
   isIdentifier,
   isObjectLiteralExpr,
+  isParenthesizedExpr,
+  isPromiseExpr,
   isPropAccessExpr,
   isPropAssignExpr,
   isReferenceExpr,
-  isPromiseExpr,
+  isStringLiteralExpr,
   isTemplateExpr,
-  isParenthesizedExpr,
 } from "../guards";
 import { isIntegration } from "../integration";
 import { evalToConstant } from "../util";
@@ -31,7 +32,6 @@ import {
   assertValidEventReference,
   flattenReturnEvent,
   getReferencePath,
-  isStringType,
   ReferencePath,
 } from "./utils";
 
@@ -178,10 +178,11 @@ export const synthesizeEventBridgeTargets = (
       };
     } else if (isBinaryExpr(expr)) {
       if (expr.op === "+") {
-        if (isStringType(expr.left) || isStringType(expr.right)) {
-          const val = `${exprToInternalLiteral(
-            expr.left
-          )}${exprToInternalLiteral(expr.right)}`;
+        const left = exprToInternalLiteral(expr.left);
+        const right = exprToInternalLiteral(expr.right);
+
+        if (isStringLiteralExpr(expr.left) || isStringLiteralExpr(expr.right)) {
+          const val = `${left}${right}`;
           return {
             value: val,
             type: "string",

@@ -182,7 +182,7 @@ export class PropAccessExpr extends BaseExpr<"PropAccessExpr"> {
   }
 
   public clone(): this {
-    return new PropAccessExpr(this.expr.clone(), this.name, this.type) as this;
+    return new PropAccessExpr(this.expr.clone(), this.name) as this;
   }
 }
 
@@ -198,8 +198,7 @@ export class ElementAccessExpr extends BaseExpr<"ElementAccessExpr"> {
   public clone(): this {
     return new ElementAccessExpr(
       this.expr.clone(),
-      this.element.clone(),
-      this.type
+      this.element.clone()
     ) as this;
   }
 }

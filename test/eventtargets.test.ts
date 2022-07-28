@@ -1,5 +1,4 @@
 import { aws_events, Stack } from "aws-cdk-lib";
-import { EventField } from "aws-cdk-lib/aws-events";
 import {
   ErrorCodes,
   formatErrorMessage,
@@ -79,6 +78,13 @@ test("string concat", () => {
     aws_events.RuleTargetInput.fromText(
       `hello ${aws_events.EventField.fromPath("$.source")}`
     )
+  );
+});
+
+test("string concat with number", () => {
+  ebEventTargetTestCase<testEvent>(
+    reflect(() => "hello " + 1),
+    aws_events.RuleTargetInput.fromText(`hello 1`)
   );
 });
 
@@ -259,12 +265,10 @@ test("object with bare undefined", () => {
 type MyString = string;
 interface MyTest extends Event<{ s: MyString }> {}
 
-test("non-string type", () => {
-  ebEventTargetTestCase<MyTest>(
+test("event field + another event field should error because there is no way to know if strings", () => {
+  ebEventTargetTestCaseError<MyTest>(
     reflect((event) => event.detail.s + event.detail.s),
-    aws_events.RuleTargetInput.fromObject(
-      `${EventField.fromPath("$.detail.s")}${EventField.fromPath("$.detail.s")}`
-    )
+    "Addition operator is only supported to concatenate at least one string to another value."
   );
 });
 
@@ -668,7 +672,8 @@ describe("not allowed", () => {
     await Promise.all(Function.promises);
   });
 
-  test("math", () => {
+  // regression: this will be a tsc-level error now that we don't have type information in the AST
+  test.skip("math", () => {
     ebEventTargetTestCaseError<testEvent>(
       reflect((event) => event.detail.num + 1),
       "Addition operator is only supported to concatenate at least one string to another value."

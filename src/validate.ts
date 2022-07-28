@@ -801,8 +801,43 @@ export function validate(
       return [
         newError(node, ErrorCodes.EventBus_Rules_do_not_support_Integrations),
       ];
+    } else if (
+      ts.isPropertyAccessExpression(node) ||
+      (ts.isIdentifier(node) && !ts.isTypeReferenceNode(node.parent))
+    ) {
+      let parent = node.parent;
+      while (
+        parent &&
+        (ts.isAsExpression(parent) || ts.isTypeAssertionExpression(parent))
+      ) {
+        // unroll `val as type` or `<type>val`
+        parent = parent.parent;
+      }
+      if (
+        // () => a
+        // () => a.b.c
+        ts.isFunctionDeclaration(parent) ||
+        ts.isFunctionExpression(parent) ||
+        ts.isArrowFunction(parent) ||
+        // a && a.b
+        // a || a.b
+        (ts.isBinaryExpression(parent) &&
+          (parent.operatorToken.kind ===
+            ts.SyntaxKind.AmpersandAmpersandToken ||
+            parent.operatorToken.kind === ts.SyntaxKind.BarBarToken)) ||
+        // !a
+        // !a.b
+        (ts.isPrefixUnaryExpression(parent) &&
+          parent.operator === ts.SyntaxKind.ExclamationToken)
+      ) {
+        return [
+          newError(
+            node,
+            ErrorCodes.EventBridge_DoesNotSupport_TruthyComparison
+          ),
+        ];
+      }
     }
-
     return [];
   }
 
