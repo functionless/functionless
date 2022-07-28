@@ -3832,4 +3832,22 @@ describe("binding", () => {
 
     expect(normalizeDefinition(definition)).toMatchSnapshot();
   });
+
+  test("catch", () => {
+    const { stack, computeScore } = initStepFunctionApp();
+
+    const definition = new ExpressStepFunction(stack, "fn", async () => {
+      try {
+        await computeScore({
+          id: "id",
+          name: "name",
+        });
+        return "hello";
+      } catch ({ message }) {
+        return message;
+      }
+    }).definition;
+
+    expect(normalizeDefinition(definition)).toMatchSnapshot();
+  });
 });
