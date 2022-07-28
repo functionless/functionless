@@ -1241,15 +1241,13 @@ export class ASL {
         },
       };
     } else if (isCatchClause(stmt)) {
-      const _catch = this.evalStmt(stmt.block);
-      return {
-        ...(_catch
-          ? _catch
-          : {
-              Type: "Pass",
-            }),
-        node: stmt,
-      };
+      const _catch = this.evalStmt(stmt.block) ?? { Type: "Pass" };
+      const initialize = stmt.variableDecl
+        ? this.evalDecl(stmt.variableDecl, {
+            jsonPath: `$.${this.generatedNames.generateOrGet(stmt)}`,
+          })
+        : undefined;
+      return ASLGraph.joinSubStates(stmt, initialize, _catch);
     } else if (isWhileStmt(stmt) || isDoStmt(stmt)) {
       const blockState = this.evalStmt(stmt.block);
       if (!blockState) {
@@ -2481,30 +2479,16 @@ export class ASL {
       return {
         Next: ASL.CatchState,
         ResultPath: (() => {
-          if (isCatchClause(catchOrFinally)) {
-            if (catchOrFinally.variableDecl) {
-              const varName = isIdentifier(catchOrFinally.variableDecl?.name)
-                ? catchOrFinally.variableDecl!.name.name
-                : undefined;
-              if (varName === undefined) {
-                throw new SynthError(
-                  ErrorCodes.Unsupported_Feature,
-                  "Destructured parameter declarations are not yet supported by Step Functions. https://github.com/functionless/functionless/issues/364"
-                );
-              }
-              return `$.${varName}`;
-            } else {
-              return null;
-            }
-          } else if (
-            isBlockStmt(catchOrFinally) &&
-            catchOrFinally.isFinallyBlock() &&
-            catchOrFinally.parent.catchClause &&
-            canThrow(catchOrFinally.parent.catchClause) &&
-            // we only store the error thrown from the catchClause if the finallyBlock is not terminal
-            // by terminal, we mean that every branch returns a value - meaning that the re-throw
-            // behavior of a finally will never be triggered - the return within the finally intercepts it
-            !catchOrFinally.isTerminal()
+          if (
+            (isCatchClause(catchOrFinally) && catchOrFinally.variableDecl) ||
+            (isBlockStmt(catchOrFinally) &&
+              catchOrFinally.isFinallyBlock() &&
+              catchOrFinally.parent.catchClause &&
+              canThrow(catchOrFinally.parent.catchClause) &&
+              // we only store the error thrown from the catchClause if the finallyBlock is not terminal
+              // by terminal, we mean that every branch returns a value - meaning that the re-throw
+              // behavior of a finally will never be triggered - the return within the finally intercepts it
+              !catchOrFinally.isTerminal())
           ) {
             return `$.${this.generatedNames.generateOrGet(catchOrFinally)}`;
           } else {
@@ -4626,9 +4610,7 @@ function toStateName(node: FunctionlessNode): string {
       return "continue";
     } else if (isCatchClause(node)) {
       return `catch${
-        node.variableDecl?.name
-          ? `(${exprToString(node.variableDecl.name)})`
-          : ""
+        node.variableDecl ? `(${exprToString(node.variableDecl)})` : ""
       }`;
     } else if (isDoStmt(node)) {
       return `while (${exprToString(node.condition)})`;
@@ -4664,13 +4646,9 @@ function toStateName(node: FunctionlessNode): string {
     } else if (isVariableDeclList(node)) {
       return `${node.decls.map((v) => inner(v)).join(",")}`;
     } else if (isVariableDecl(node)) {
-      if (isCatchClause(node.parent)) {
-        return `catch(${node.name})`;
-      } else {
-        return `${exprToString(node.name)} = ${
-          node.initializer ? exprToString(node.initializer) : "undefined"
-        }`;
-      }
+      return node.initializer
+        ? `${exprToString(node.name)} = ${exprToString(node.initializer)}`
+        : exprToString(node.name);
     } else if (isWhileStmt(node)) {
       return `while (${exprToString(node.condition)})`;
     } else if (isBindingElem(node)) {

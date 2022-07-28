@@ -390,6 +390,75 @@ Object {
 }
 `;
 
+exports[`binding catch 1`] = `
+Object {
+  "StartAt": "Initialize Functionless Context",
+  "States": Object {
+    "1__catch__try": Object {
+      "InputPath": "$.undefined.0_ParsedError",
+      "Next": "catch({message})",
+      "ResultPath": "$.undefined",
+      "Type": "Pass",
+    },
+    "Initialize Functionless Context": Object {
+      "Next": "try",
+      "Parameters": Object {
+        "fnl_context": Object {
+          "null": null,
+        },
+      },
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "catch({message})": Object {
+      "InputPath": "$.0_tmp['message']",
+      "Next": "return message",
+      "ResultPath": "$.message",
+      "Type": "Pass",
+    },
+    "catch__try": Object {
+      "Next": "1__catch__try",
+      "Parameters": Object {
+        "0_ParsedError.$": "States.StringToJson($.undefined.Cause)",
+      },
+      "ResultPath": "$.undefined",
+      "Type": "Pass",
+    },
+    "return \\"hello\\"": Object {
+      "End": true,
+      "Result": "hello",
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "return message": Object {
+      "End": true,
+      "InputPath": "$.message",
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "try": Object {
+      "Catch": Array [
+        Object {
+          "ErrorEquals": Array [
+            "States.ALL",
+          ],
+          "Next": "catch__try",
+          "ResultPath": "$.0_tmp",
+        },
+      ],
+      "Next": "return \\"hello\\"",
+      "Parameters": Object {
+        "id": "id",
+        "name": "name",
+      },
+      "Resource": "__REPLACED_TOKEN",
+      "ResultPath": "$.heap0",
+      "Type": "Task",
+    },
+  },
+}
+`;
+
 exports[`binding for 1`] = `
 Object {
   "StartAt": "Initialize Functionless Context",
@@ -508,6 +577,215 @@ Object {
       "InputPath": "$.heap1[0]['key']",
       "Next": "1__{ key, value }",
       "ResultPath": "$.key",
+      "Type": "Pass",
+    },
+  },
+}
+`;
+
+exports[`binding functions $SFN.forEach 1`] = `
+Object {
+  "StartAt": "Initialize Functionless Context",
+  "States": Object {
+    "Initialize Functionless Context": Object {
+      "Next": "await $SFN.forEach(input.value, function({value:b,arr:[c]}))",
+      "Parameters": Object {
+        "fnl_context": Object {
+          "null": null,
+        },
+        "input.$": "$",
+      },
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "await $SFN.forEach(input.value, function({value:b,arr:[c]}))": Object {
+      "ItemsPath": "$.input.value",
+      "Iterator": Object {
+        "StartAt": "function({value:b,arr:[c]})",
+        "States": Object {
+          "1__return \`bc\`": Object {
+            "End": true,
+            "InputPath": "$.heap0.string",
+            "ResultPath": "$",
+            "Type": "Pass",
+          },
+          "[ c ]": Object {
+            "InputPath": "$.heap1['arr'][0]",
+            "Next": "return \`bc\`",
+            "ResultPath": "$.c",
+            "Type": "Pass",
+          },
+          "function({value:b,arr:[c]})": Object {
+            "InputPath": "$.heap1['value']",
+            "Next": "[ c ]",
+            "ResultPath": "$.b",
+            "Type": "Pass",
+          },
+          "return \`bc\`": Object {
+            "Next": "1__return \`bc\`",
+            "Parameters": Object {
+              "string.$": "States.Format('{}{}',$.b,$.c)",
+            },
+            "ResultPath": "$.heap0",
+            "Type": "Pass",
+          },
+        },
+      },
+      "Next": "return \\"success\\"",
+      "Parameters": Object {
+        "$.heap1.$": "$$.Map.Item.Value",
+        "fnl_context.$": "$.fnl_context",
+        "input.$": "$.input",
+      },
+      "ResultPath": "$.heap2",
+      "Type": "Map",
+    },
+    "return \\"success\\"": Object {
+      "End": true,
+      "Result": "success",
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+  },
+}
+`;
+
+exports[`binding functions $SFN.map 1`] = `
+Object {
+  "StartAt": "Initialize Functionless Context",
+  "States": Object {
+    "1__return await $SFN.map(input.value, function({value:b,arr:[c]})).join()": Object {
+      "End": true,
+      "InputPath": "$.heap4.string",
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "1__return await $SFN.map(input.value, function({value:b,arr:[c]})).join() 1": Object {
+      "InputPath": "$.heap2",
+      "Next": "hasNext__1__return await $SFN.map(input.value, function({value:b,arr:[c]}))",
+      "ResultPath": "$.heap3",
+      "Type": "Pass",
+    },
+    "Initialize Functionless Context": Object {
+      "Next": "return await $SFN.map(input.value, function({value:b,arr:[c]})).join()",
+      "Parameters": Object {
+        "fnl_context": Object {
+          "null": null,
+        },
+        "input.$": "$",
+      },
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "append__1__return await $SFN.map(input.value, function({value:b,arr:[c]})).": Object {
+      "Next": "tail__1__return await $SFN.map(input.value, function({value:b,arr:[c]})).jo",
+      "Parameters": Object {
+        "string.$": "States.Format('{},{}', $.heap4.string, $.heap3[0])",
+      },
+      "ResultPath": "$.heap4",
+      "Type": "Pass",
+    },
+    "hasNext__1__return await $SFN.map(input.value, function({value:b,arr:[c]}))": Object {
+      "Choices": Array [
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.heap3[0]",
+            },
+            Object {
+              "Not": Object {
+                "IsPresent": true,
+                "Variable": "$.heap4",
+              },
+            },
+          ],
+          "Next": "initValue__1__return await $SFN.map(input.value, function({value:b,arr:[c]}",
+        },
+        Object {
+          "And": Array [
+            Object {
+              "Not": Object {
+                "IsPresent": true,
+                "Variable": "$.heap3[0]",
+              },
+            },
+            Object {
+              "Not": Object {
+                "IsPresent": true,
+                "Variable": "$.heap4",
+              },
+            },
+          ],
+          "Next": "returnEmpty__1__return await $SFN.map(input.value, function({value:b,arr:[c",
+        },
+        Object {
+          "IsPresent": true,
+          "Next": "append__1__return await $SFN.map(input.value, function({value:b,arr:[c]})).",
+          "Variable": "$.heap3[0]",
+        },
+      ],
+      "Default": "1__return await $SFN.map(input.value, function({value:b,arr:[c]})).join()",
+      "Type": "Choice",
+    },
+    "initValue__1__return await $SFN.map(input.value, function({value:b,arr:[c]}": Object {
+      "InputPath": "$.heap3[0]",
+      "Next": "tail__1__return await $SFN.map(input.value, function({value:b,arr:[c]})).jo",
+      "ResultPath": "$.heap4.string",
+      "Type": "Pass",
+    },
+    "return await $SFN.map(input.value, function({value:b,arr:[c]})).join()": Object {
+      "ItemsPath": "$.input.value",
+      "Iterator": Object {
+        "StartAt": "function({value:b,arr:[c]})",
+        "States": Object {
+          "1__return \`bc\`": Object {
+            "End": true,
+            "InputPath": "$.heap0.string",
+            "ResultPath": "$",
+            "Type": "Pass",
+          },
+          "[ c ]": Object {
+            "InputPath": "$.heap1['arr'][0]",
+            "Next": "return \`bc\`",
+            "ResultPath": "$.c",
+            "Type": "Pass",
+          },
+          "function({value:b,arr:[c]})": Object {
+            "InputPath": "$.heap1['value']",
+            "Next": "[ c ]",
+            "ResultPath": "$.b",
+            "Type": "Pass",
+          },
+          "return \`bc\`": Object {
+            "Next": "1__return \`bc\`",
+            "Parameters": Object {
+              "string.$": "States.Format('{}{}',$.b,$.c)",
+            },
+            "ResultPath": "$.heap0",
+            "Type": "Pass",
+          },
+        },
+      },
+      "Next": "1__return await $SFN.map(input.value, function({value:b,arr:[c]})).join() 1",
+      "Parameters": Object {
+        "$.heap1.$": "$$.Map.Item.Value",
+        "fnl_context.$": "$.fnl_context",
+        "input.$": "$.input",
+      },
+      "ResultPath": "$.heap2",
+      "Type": "Map",
+    },
+    "returnEmpty__1__return await $SFN.map(input.value, function({value:b,arr:[c": Object {
+      "Next": "1__return await $SFN.map(input.value, function({value:b,arr:[c]})).join()",
+      "Result": "",
+      "ResultPath": "$.heap4",
+      "Type": "Pass",
+    },
+    "tail__1__return await $SFN.map(input.value, function({value:b,arr:[c]})).jo": Object {
+      "InputPath": "$.heap3[1:]",
+      "Next": "hasNext__1__return await $SFN.map(input.value, function({value:b,arr:[c]}))",
+      "ResultPath": "$.heap3",
       "Type": "Pass",
     },
   },
@@ -2486,7 +2764,7 @@ Object {
       "Choices": Array [
         Object {
           "IsPresent": true,
-          "Next": "item = undefined",
+          "Next": "item",
           "Variable": "$.heap0[0]",
         },
       ],
@@ -2520,7 +2798,7 @@ Object {
       "Default": "tail__for(item of input.items)",
       "Type": "Choice",
     },
-    "item = undefined": Object {
+    "item": Object {
       "InputPath": "$.heap0[0]",
       "Next": "if(item == \\"hello\\")",
       "ResultPath": "$.item",
@@ -3103,6 +3381,12 @@ Object {
       "Type": "Pass",
     },
     "catch__try": Object {
+      "InputPath": "$.0_tmp",
+      "Next": "throw new StepFunctionError(\\"CustomError\\", {property: \\"custom cause\\"})",
+      "ResultPath": "$.err",
+      "Type": "Pass",
+    },
+    "throw new StepFunctionError(\\"CustomError\\", {property: \\"custom cause\\"})": Object {
       "Cause": "{\\"property\\":\\"custom cause\\"}",
       "Error": "CustomError",
       "Type": "Fail",
@@ -3112,7 +3396,7 @@ Object {
       "Result": Object {
         "message": "cause",
       },
-      "ResultPath": "$.err",
+      "ResultPath": "$.0_tmp",
       "Type": "Pass",
     },
   },
@@ -3134,6 +3418,12 @@ Object {
       "Type": "Pass",
     },
     "catch__try": Object {
+      "InputPath": "$.0_tmp",
+      "Next": "throw new StepFunctionError(\\"CustomError\\", {property: \\"custom cause\\"})",
+      "ResultPath": "$.err",
+      "Type": "Pass",
+    },
+    "throw new StepFunctionError(\\"CustomError\\", {property: \\"custom cause\\"})": Object {
       "Cause": "{\\"property\\":\\"custom cause\\"}",
       "Error": "CustomError",
       "Type": "Fail",
@@ -3143,7 +3433,7 @@ Object {
       "Result": Object {
         "message": "cause",
       },
-      "ResultPath": "$.err",
+      "ResultPath": "$.0_tmp",
       "Type": "Pass",
     },
   },
@@ -3554,7 +3844,7 @@ Object {
       "Choices": Array [
         Object {
           "IsPresent": true,
-          "Next": "item = undefined",
+          "Next": "item",
           "Variable": "$.heap0[0]",
         },
       ],
@@ -3588,7 +3878,7 @@ Object {
       "Default": "tail__for(item of input.items)",
       "Type": "Choice",
     },
-    "item = undefined": Object {
+    "item": Object {
       "InputPath": "$.heap0[0]",
       "Next": "if(item == \\"hello\\")",
       "ResultPath": "$.item",
@@ -3900,7 +4190,7 @@ Object {
       "ResultPath": "$.heap1",
       "Type": "Pass",
     },
-    "_ = undefined": Object {
+    "_": Object {
       "InputPath": "$.heap2[0]",
       "Next": "tail__for(_ of [await task(input.items)]) 1",
       "ResultPath": "$._",
@@ -3923,7 +4213,7 @@ Object {
       "Choices": Array [
         Object {
           "IsPresent": true,
-          "Next": "_ = undefined",
+          "Next": "_",
           "Variable": "$.heap2[0]",
         },
       ],
@@ -4020,7 +4310,7 @@ Object {
       "ResultPath": "$.heap1",
       "Type": "Pass",
     },
-    "assignValue__i = undefined": Object {
+    "assignValue__i": Object {
       "InputPath": "$.heap4[0].item",
       "Next": "await task(await task(i))",
       "ResultPath": "$.0__i",
@@ -4050,16 +4340,16 @@ Object {
       "Choices": Array [
         Object {
           "IsPresent": true,
-          "Next": "i = undefined",
+          "Next": "i",
           "Variable": "$.heap4[0]",
         },
       ],
       "Default": "return null",
       "Type": "Choice",
     },
-    "i = undefined": Object {
+    "i": Object {
       "InputPath": "$.heap4[0].index",
-      "Next": "assignValue__i = undefined",
+      "Next": "assignValue__i",
       "ResultPath": "$.i",
       "Type": "Pass",
     },
@@ -4133,14 +4423,14 @@ Object {
       "Choices": Array [
         Object {
           "IsPresent": true,
-          "Next": "i = undefined",
+          "Next": "i",
           "Variable": "$.heap4[0]",
         },
       ],
       "Default": "return null",
       "Type": "Choice",
     },
-    "i = undefined": Object {
+    "i": Object {
       "InputPath": "$.heap4[0]",
       "Next": "await task(await task(i))",
       "ResultPath": "$.i",
@@ -4225,7 +4515,7 @@ Object {
       "ResultPath": "$.heap2",
       "Type": "Pass",
     },
-    "assignValue__i = undefined": Object {
+    "assignValue__i": Object {
       "InputPath": "$.heap1[0].item",
       "Next": "a = \`i\`",
       "ResultPath": "$.0__i",
@@ -4253,7 +4543,7 @@ Object {
       "Choices": Array [
         Object {
           "IsPresent": true,
-          "Next": "i = undefined",
+          "Next": "i",
           "Variable": "$.heap1[0]",
         },
       ],
@@ -4264,20 +4554,20 @@ Object {
       "Choices": Array [
         Object {
           "IsPresent": true,
-          "Next": "i = undefined 1",
+          "Next": "i 1",
           "Variable": "$.heap3[0]",
         },
       ],
       "Default": "return a",
       "Type": "Choice",
     },
-    "i = undefined": Object {
+    "i": Object {
       "InputPath": "$.heap1[0].index",
-      "Next": "assignValue__i = undefined",
+      "Next": "assignValue__i",
       "ResultPath": "$.i",
       "Type": "Pass",
     },
-    "i = undefined 1": Object {
+    "i 1": Object {
       "InputPath": "$.heap3[0]",
       "Next": "a = \`i\` 1",
       "ResultPath": "$.i",
@@ -4340,7 +4630,7 @@ Object {
       "ResultPath": "$",
       "Type": "Pass",
     },
-    "assignValue__i = undefined": Object {
+    "assignValue__i": Object {
       "InputPath": "$.heap0[0].item",
       "Next": "if(input.items[i] == \\"1\\")",
       "ResultPath": "$.0__i",
@@ -4362,7 +4652,7 @@ Object {
       "Choices": Array [
         Object {
           "IsPresent": true,
-          "Next": "i = undefined",
+          "Next": "i",
           "Variable": "$.heap0[0]",
         },
       ],
@@ -4373,20 +4663,20 @@ Object {
       "Choices": Array [
         Object {
           "IsPresent": true,
-          "Next": "i = undefined 1",
+          "Next": "i 1",
           "Variable": "$.heap1[0]",
         },
       ],
       "Default": "return \\"end\\"",
       "Type": "Choice",
     },
-    "i = undefined": Object {
+    "i": Object {
       "InputPath": "$.heap0[0].index",
-      "Next": "assignValue__i = undefined",
+      "Next": "assignValue__i",
       "ResultPath": "$.i",
       "Type": "Pass",
     },
-    "i = undefined 1": Object {
+    "i 1": Object {
       "InputPath": "$.heap1[0]",
       "Next": "if(i == \\"1\\")",
       "ResultPath": "$.i",
@@ -4509,7 +4799,7 @@ Object {
       "ResultPath": "$.a",
       "Type": "Pass",
     },
-    "assignValue__i = undefined": Object {
+    "assignValue__i": Object {
       "InputPath": "$.heap0[0].item",
       "Next": "a = items[i]",
       "ResultPath": "$.0__i",
@@ -4525,16 +4815,16 @@ Object {
       "Choices": Array [
         Object {
           "IsPresent": true,
-          "Next": "i = undefined",
+          "Next": "i",
           "Variable": "$.heap0[0]",
         },
       ],
       "Default": "return null",
       "Type": "Choice",
     },
-    "i = undefined": Object {
+    "i": Object {
       "InputPath": "$.heap0[0].index",
-      "Next": "assignValue__i = undefined",
+      "Next": "assignValue__i",
       "ResultPath": "$.i",
       "Type": "Pass",
     },
@@ -4589,7 +4879,7 @@ Object {
       "ResultPath": "$",
       "Type": "Pass",
     },
-    "assignValue__i = undefined": Object {
+    "assignValue__i": Object {
       "InputPath": "$.heap0[0].item",
       "Next": "if(input.items[i] == \\"1\\")",
       "ResultPath": "$.0__i",
@@ -4611,7 +4901,7 @@ Object {
       "Choices": Array [
         Object {
           "IsPresent": true,
-          "Next": "i = undefined",
+          "Next": "i",
           "Variable": "$.heap0[0]",
         },
       ],
@@ -4622,20 +4912,20 @@ Object {
       "Choices": Array [
         Object {
           "IsPresent": true,
-          "Next": "i = undefined 1",
+          "Next": "i 1",
           "Variable": "$.heap1[0]",
         },
       ],
       "Default": "return \\"end\\"",
       "Type": "Choice",
     },
-    "i = undefined": Object {
+    "i": Object {
       "InputPath": "$.heap0[0].index",
-      "Next": "assignValue__i = undefined",
+      "Next": "assignValue__i",
       "ResultPath": "$.i",
       "Type": "Pass",
     },
-    "i = undefined 1": Object {
+    "i 1": Object {
       "InputPath": "$.heap1[0]",
       "Next": "if(i == \\"1\\")",
       "ResultPath": "$.i",
@@ -4850,7 +5140,7 @@ Object {
       "ResultPath": "$",
       "Type": "Pass",
     },
-    "assignValue__i = undefined": Object {
+    "assignValue__i": Object {
       "InputPath": "$.heap0[0].item",
       "Next": "if(input.items[i] == \\"1\\")",
       "ResultPath": "$.0__i",
@@ -4872,7 +5162,7 @@ Object {
       "Choices": Array [
         Object {
           "IsPresent": true,
-          "Next": "i = undefined",
+          "Next": "i",
           "Variable": "$.heap0[0]",
         },
       ],
@@ -4883,20 +5173,20 @@ Object {
       "Choices": Array [
         Object {
           "IsPresent": true,
-          "Next": "i = undefined 1",
+          "Next": "i 1",
           "Variable": "$.heap1[0]",
         },
       ],
       "Default": "return \\"end\\"",
       "Type": "Choice",
     },
-    "i = undefined": Object {
+    "i": Object {
       "InputPath": "$.heap0[0].index",
-      "Next": "assignValue__i = undefined",
+      "Next": "assignValue__i",
       "ResultPath": "$.i",
       "Type": "Pass",
     },
-    "i = undefined 1": Object {
+    "i 1": Object {
       "InputPath": "$.heap1[0]",
       "Next": "if(i == \\"1\\")",
       "ResultPath": "$.i",
@@ -5568,14 +5858,14 @@ Object {
       "Choices": Array [
         Object {
           "IsPresent": true,
-          "Next": "item = undefined",
+          "Next": "item",
           "Variable": "$.heap0[0]",
         },
       ],
       "Default": "return null",
       "Type": "Choice",
     },
-    "item = undefined": Object {
+    "item": Object {
       "InputPath": "$.heap0[0]",
       "Next": "a = item",
       "ResultPath": "$.item",
@@ -5631,14 +5921,14 @@ Object {
       "Choices": Array [
         Object {
           "IsPresent": true,
-          "Next": "item = undefined",
+          "Next": "item",
           "Variable": "$.heap0[0]",
         },
       ],
       "Default": "return null",
       "Type": "Choice",
     },
-    "item = undefined": Object {
+    "item": Object {
       "InputPath": "$.heap0[0]",
       "Next": "a = item",
       "ResultPath": "$.item",
@@ -5704,14 +5994,14 @@ Object {
       "Choices": Array [
         Object {
           "IsPresent": true,
-          "Next": "name = undefined",
+          "Next": "name",
           "Variable": "$.heap1[0]",
         },
       ],
       "Default": "return null",
       "Type": "Choice",
     },
-    "name = undefined": Object {
+    "name": Object {
       "InputPath": "$.heap1[0]",
       "Next": "await computeScore({id: input.id, name: name})",
       "ResultPath": "$.name",
@@ -5748,7 +6038,7 @@ Object {
         Object {
           "IsPresent": true,
           "Next": "throw__1__finally",
-          "Variable": "$.0_tmp",
+          "Variable": "$.1_tmp",
         },
       ],
       "Default": "tail__for(item of input.items)",
@@ -5766,31 +6056,10 @@ Object {
       "Type": "Pass",
     },
     "catch(err)": Object {
-      "Choices": Array [
-        Object {
-          "And": Array [
-            Object {
-              "IsPresent": true,
-              "Variable": "$.err.message",
-            },
-            Object {
-              "And": Array [
-                Object {
-                  "IsString": true,
-                  "Variable": "$.err.message",
-                },
-                Object {
-                  "StringEquals": "you dun' goofed",
-                  "Variable": "$.err.message",
-                },
-              ],
-            },
-          ],
-          "Next": "throw new Error(\\"little\\")",
-        },
-      ],
-      "Default": "finally",
-      "Type": "Choice",
+      "InputPath": "$.0_tmp",
+      "Next": "if(err.message == \\"you dun' goofed\\")",
+      "ResultPath": "$.err",
+      "Type": "Pass",
     },
     "catch__try": Object {
       "Next": "1__catch__try",
@@ -5817,14 +6086,41 @@ Object {
       "Choices": Array [
         Object {
           "IsPresent": true,
-          "Next": "item = undefined",
+          "Next": "item",
           "Variable": "$.heap2[0]",
         },
       ],
       "Default": "return null",
       "Type": "Choice",
     },
-    "item = undefined": Object {
+    "if(err.message == \\"you dun' goofed\\")": Object {
+      "Choices": Array [
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.err.message",
+            },
+            Object {
+              "And": Array [
+                Object {
+                  "IsString": true,
+                  "Variable": "$.err.message",
+                },
+                Object {
+                  "StringEquals": "you dun' goofed",
+                  "Variable": "$.err.message",
+                },
+              ],
+            },
+          ],
+          "Next": "throw new Error(\\"little\\")",
+        },
+      ],
+      "Default": "finally",
+      "Type": "Choice",
+    },
+    "item": Object {
       "InputPath": "$.heap2[0]",
       "Next": "try",
       "ResultPath": "$.item",
@@ -5847,7 +6143,7 @@ Object {
       "Result": Object {
         "message": "little",
       },
-      "ResultPath": "$.0_tmp",
+      "ResultPath": "$.1_tmp",
       "Type": "Pass",
     },
     "throw__1__finally": Object {
@@ -5862,7 +6158,7 @@ Object {
             "States.ALL",
           ],
           "Next": "catch__try",
-          "ResultPath": "$.err",
+          "ResultPath": "$.0_tmp",
         },
       ],
       "InputPath": "$.item",
@@ -11235,14 +11531,14 @@ Object {
       "Choices": Array [
         Object {
           "IsPresent": true,
-          "Next": "item = undefined",
+          "Next": "item",
           "Variable": "$.heap0[0]",
         },
       ],
       "Default": "return null",
       "Type": "Choice",
     },
-    "item = undefined": Object {
+    "item": Object {
       "InputPath": "$.heap0[0]",
       "Next": "throw new Error(\\"err\\")",
       "ResultPath": "$.item",
@@ -11485,7 +11781,7 @@ Object {
         Object {
           "IsPresent": true,
           "Next": "throw__1__finally",
-          "Variable": "$.0_tmp",
+          "Variable": "$.1_tmp",
         },
       ],
       "Default": "return null",
@@ -11509,7 +11805,7 @@ Object {
             "States.ALL",
           ],
           "Next": "catch__for(item of input.items)",
-          "ResultPath": "$.err",
+          "ResultPath": "$.0_tmp",
         },
       ],
       "InputPath": "$.item",
@@ -11519,31 +11815,10 @@ Object {
       "Type": "Task",
     },
     "catch(err)": Object {
-      "Choices": Array [
-        Object {
-          "And": Array [
-            Object {
-              "IsPresent": true,
-              "Variable": "$.err.message",
-            },
-            Object {
-              "And": Array [
-                Object {
-                  "IsString": true,
-                  "Variable": "$.err.message",
-                },
-                Object {
-                  "StringEquals": "you dun' goofed",
-                  "Variable": "$.err.message",
-                },
-              ],
-            },
-          ],
-          "Next": "throw new Error(\\"little\\")",
-        },
-      ],
-      "Default": "finally",
-      "Type": "Choice",
+      "InputPath": "$.0_tmp",
+      "Next": "if(err.message == \\"you dun' goofed\\")",
+      "ResultPath": "$.err",
+      "Type": "Pass",
     },
     "catch__for(item of input.items)": Object {
       "Next": "1__catch__for(item of input.items)",
@@ -11570,14 +11845,41 @@ Object {
       "Choices": Array [
         Object {
           "IsPresent": true,
-          "Next": "item = undefined",
+          "Next": "item",
           "Variable": "$.heap1[0]",
         },
       ],
       "Default": "finally",
       "Type": "Choice",
     },
-    "item = undefined": Object {
+    "if(err.message == \\"you dun' goofed\\")": Object {
+      "Choices": Array [
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.err.message",
+            },
+            Object {
+              "And": Array [
+                Object {
+                  "IsString": true,
+                  "Variable": "$.err.message",
+                },
+                Object {
+                  "StringEquals": "you dun' goofed",
+                  "Variable": "$.err.message",
+                },
+              ],
+            },
+          ],
+          "Next": "throw new Error(\\"little\\")",
+        },
+      ],
+      "Default": "finally",
+      "Type": "Choice",
+    },
+    "item": Object {
       "InputPath": "$.heap1[0]",
       "Next": "await task(item)",
       "ResultPath": "$.item",
@@ -11600,7 +11902,7 @@ Object {
       "Result": Object {
         "message": "little",
       },
-      "ResultPath": "$.0_tmp",
+      "ResultPath": "$.1_tmp",
       "Type": "Pass",
     },
     "throw__1__finally": Object {
@@ -11841,6 +12143,20 @@ Object {
       "Type": "Pass",
     },
     "catch(err)": Object {
+      "InputPath": "$.0_tmp",
+      "Next": "if(err.message == \\"cause\\")",
+      "ResultPath": "$.err",
+      "Type": "Pass",
+    },
+    "catch__try": Object {
+      "Next": "1__catch__try",
+      "Parameters": Object {
+        "0_ParsedError.$": "States.StringToJson($.err.Cause)",
+      },
+      "ResultPath": "$.err",
+      "Type": "Pass",
+    },
+    "if(err.message == \\"cause\\")": Object {
       "Choices": Array [
         Object {
           "And": Array [
@@ -11867,14 +12183,6 @@ Object {
       "Default": "return 1",
       "Type": "Choice",
     },
-    "catch__try": Object {
-      "Next": "1__catch__try",
-      "Parameters": Object {
-        "0_ParsedError.$": "States.StringToJson($.err.Cause)",
-      },
-      "ResultPath": "$.err",
-      "Type": "Pass",
-    },
     "return 0": Object {
       "End": true,
       "Result": 0,
@@ -11894,7 +12202,7 @@ Object {
             "States.ALL",
           ],
           "Next": "catch__try",
-          "ResultPath": "$.err",
+          "ResultPath": "$.0_tmp",
         },
       ],
       "ItemsPath": "$.input.list",
@@ -12150,6 +12458,20 @@ Object {
       "Type": "Pass",
     },
     "catch(err)": Object {
+      "InputPath": "$.0_tmp",
+      "Next": "if(err.message == \\"cause\\")",
+      "ResultPath": "$.err",
+      "Type": "Pass",
+    },
+    "catch__try": Object {
+      "Next": "1__catch__try",
+      "Parameters": Object {
+        "0_ParsedError.$": "States.StringToJson($.err.Cause)",
+      },
+      "ResultPath": "$.err",
+      "Type": "Pass",
+    },
+    "if(err.message == \\"cause\\")": Object {
       "Choices": Array [
         Object {
           "And": Array [
@@ -12176,14 +12498,6 @@ Object {
       "Default": "return 1",
       "Type": "Choice",
     },
-    "catch__try": Object {
-      "Next": "1__catch__try",
-      "Parameters": Object {
-        "0_ParsedError.$": "States.StringToJson($.err.Cause)",
-      },
-      "ResultPath": "$.err",
-      "Type": "Pass",
-    },
     "return 0": Object {
       "End": true,
       "Result": 0,
@@ -12203,7 +12517,7 @@ Object {
             "States.ALL",
           ],
           "Next": "catch__try",
-          "ResultPath": "$.err",
+          "ResultPath": "$.0_tmp",
         },
       ],
       "ItemsPath": "$.input.list",
@@ -12644,7 +12958,7 @@ Object {
         Object {
           "IsPresent": true,
           "Next": "throw__1__finally",
-          "Variable": "$.0_tmp",
+          "Variable": "$.1_tmp",
         },
       ],
       "Default": "return null",
@@ -12667,7 +12981,7 @@ Object {
             "States.ALL",
           ],
           "Next": "catch__await task(\\"1\\")",
-          "ResultPath": "$.err",
+          "ResultPath": "$.0_tmp",
         },
       ],
       "Next": "finally",
@@ -12677,6 +12991,27 @@ Object {
       "Type": "Task",
     },
     "catch(err)": Object {
+      "InputPath": "$.0_tmp",
+      "Next": "if(err.message == \\"sam\\")",
+      "ResultPath": "$.err",
+      "Type": "Pass",
+    },
+    "catch__await task(\\"1\\")": Object {
+      "Next": "1__catch__await task(\\"1\\")",
+      "Parameters": Object {
+        "0_ParsedError.$": "States.StringToJson($.err.Cause)",
+      },
+      "ResultPath": "$.err",
+      "Type": "Pass",
+    },
+    "finally": Object {
+      "Next": "1__finally",
+      "Parameters": "2",
+      "Resource": "__REPLACED_TOKEN",
+      "ResultPath": "$.heap1",
+      "Type": "Task",
+    },
+    "if(err.message == \\"sam\\")": Object {
       "Choices": Array [
         Object {
           "And": Array [
@@ -12703,21 +13038,6 @@ Object {
       "Default": "finally",
       "Type": "Choice",
     },
-    "catch__await task(\\"1\\")": Object {
-      "Next": "1__catch__await task(\\"1\\")",
-      "Parameters": Object {
-        "0_ParsedError.$": "States.StringToJson($.err.Cause)",
-      },
-      "ResultPath": "$.err",
-      "Type": "Pass",
-    },
-    "finally": Object {
-      "Next": "1__finally",
-      "Parameters": "2",
-      "Resource": "__REPLACED_TOKEN",
-      "ResultPath": "$.heap1",
-      "Type": "Task",
-    },
     "return null": Object {
       "End": true,
       "InputPath": "$.fnl_context.null",
@@ -12729,7 +13049,7 @@ Object {
       "Result": Object {
         "message": "little",
       },
-      "ResultPath": "$.0_tmp",
+      "ResultPath": "$.1_tmp",
       "Type": "Pass",
     },
     "throw__1__finally": Object {
@@ -13026,6 +13346,12 @@ Object {
       "Type": "Pass",
     },
     "catch__try": Object {
+      "InputPath": "$.0_tmp",
+      "Next": "if(err.message == \\"cause\\")",
+      "ResultPath": "$.err",
+      "Type": "Pass",
+    },
+    "if(err.message == \\"cause\\")": Object {
       "Choices": Array [
         Object {
           "And": Array [
@@ -13069,7 +13395,7 @@ Object {
       "Result": Object {
         "message": "cause",
       },
-      "ResultPath": "$.err",
+      "ResultPath": "$.0_tmp",
       "Type": "Pass",
     },
   },
@@ -13097,9 +13423,9 @@ Object {
       "Type": "Pass",
     },
     "catch(err)": Object {
-      "End": true,
-      "InputPath": "$.err.message",
-      "ResultPath": "$",
+      "InputPath": "$.0_tmp",
+      "Next": "return err.message",
+      "ResultPath": "$.err",
       "Type": "Pass",
     },
     "catch__try": Object {
@@ -13116,6 +13442,12 @@ Object {
       "ResultPath": "$",
       "Type": "Pass",
     },
+    "return err.message": Object {
+      "End": true,
+      "InputPath": "$.err.message",
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
     "try": Object {
       "Catch": Array [
         Object {
@@ -13123,7 +13455,7 @@ Object {
             "States.ALL",
           ],
           "Next": "catch__try",
-          "ResultPath": "$.err",
+          "ResultPath": "$.0_tmp",
         },
       ],
       "Next": "return \\"hello\\"",
@@ -13216,7 +13548,7 @@ Object {
             "States.ALL",
           ],
           "Next": "catch__try",
-          "ResultPath": "$.err",
+          "ResultPath": "$.0_tmp",
         },
       ],
       "Next": "return \\"hello world\\"",
@@ -13229,6 +13561,20 @@ Object {
       "Type": "Task",
     },
     "catch(err)": Object {
+      "InputPath": "$.0_tmp",
+      "Next": "if(err.message == \\"cause\\")",
+      "ResultPath": "$.err",
+      "Type": "Pass",
+    },
+    "catch__try": Object {
+      "Next": "1__catch__try",
+      "Parameters": Object {
+        "0_ParsedError.$": "States.StringToJson($.err.Cause)",
+      },
+      "ResultPath": "$.err",
+      "Type": "Pass",
+    },
+    "if(err.message == \\"cause\\")": Object {
       "Choices": Array [
         Object {
           "And": Array [
@@ -13254,14 +13600,6 @@ Object {
       ],
       "Default": "return \\"world\\"",
       "Type": "Choice",
-    },
-    "catch__try": Object {
-      "Next": "1__catch__try",
-      "Parameters": Object {
-        "0_ParsedError.$": "States.StringToJson($.err.Cause)",
-      },
-      "ResultPath": "$.err",
-      "Type": "Pass",
     },
     "return \\"hello world\\"": Object {
       "End": true,
@@ -13340,6 +13678,20 @@ Object {
       "Type": "Pass",
     },
     "catch(err)": Object {
+      "InputPath": "$.0_tmp",
+      "Next": "if(err.message == \\"cause\\")",
+      "ResultPath": "$.err",
+      "Type": "Pass",
+    },
+    "catch__try": Object {
+      "Next": "1__catch__try",
+      "Parameters": Object {
+        "0_ParsedError.$": "States.StringToJson($.err.Cause)",
+      },
+      "ResultPath": "$.err",
+      "Type": "Pass",
+    },
+    "if(err.message == \\"cause\\")": Object {
       "Choices": Array [
         Object {
           "And": Array [
@@ -13366,14 +13718,6 @@ Object {
       "Default": "return \\"world\\"",
       "Type": "Choice",
     },
-    "catch__try": Object {
-      "Next": "1__catch__try",
-      "Parameters": Object {
-        "0_ParsedError.$": "States.StringToJson($.err.Cause)",
-      },
-      "ResultPath": "$.err",
-      "Type": "Pass",
-    },
     "return \\"hello world\\"": Object {
       "End": true,
       "Result": "hello world",
@@ -13399,7 +13743,7 @@ Object {
             "States.ALL",
           ],
           "Next": "catch__try",
-          "ResultPath": "$.err",
+          "ResultPath": "$.0_tmp",
         },
       ],
       "Next": "1__return await computeScore({id: input.id, name: \\"sam\\"})",
@@ -13470,7 +13814,7 @@ Object {
             "States.ALL",
           ],
           "Next": "catch__try",
-          "ResultPath": "$.err",
+          "ResultPath": "$.0_tmp",
         },
       ],
       "Next": "return \\"hello world\\"",
@@ -13483,6 +13827,20 @@ Object {
       "Type": "Task",
     },
     "catch(err)": Object {
+      "InputPath": "$.0_tmp",
+      "Next": "if(err.message == \\"cause\\")",
+      "ResultPath": "$.err",
+      "Type": "Pass",
+    },
+    "catch__try": Object {
+      "Next": "1__catch__try",
+      "Parameters": Object {
+        "0_ParsedError.$": "States.StringToJson($.err.Cause)",
+      },
+      "ResultPath": "$.err",
+      "Type": "Pass",
+    },
+    "if(err.message == \\"cause\\")": Object {
       "Choices": Array [
         Object {
           "And": Array [
@@ -13508,14 +13866,6 @@ Object {
       ],
       "Default": "return \\"world\\"",
       "Type": "Choice",
-    },
-    "catch__try": Object {
-      "Next": "1__catch__try",
-      "Parameters": Object {
-        "0_ParsedError.$": "States.StringToJson($.err.Cause)",
-      },
-      "ResultPath": "$.err",
-      "Type": "Pass",
     },
     "return \\"hello world\\"": Object {
       "End": true,
@@ -13582,6 +13932,12 @@ Object {
       "Type": "Pass",
     },
     "catch__try": Object {
+      "InputPath": "$.0_tmp",
+      "Next": "if(err.message == \\"cause\\")",
+      "ResultPath": "$.err",
+      "Type": "Pass",
+    },
+    "if(err.message == \\"cause\\")": Object {
       "Choices": Array [
         Object {
           "And": Array [
@@ -13631,7 +13987,7 @@ Object {
       "Result": Object {
         "message": "cause",
       },
-      "ResultPath": "$.err",
+      "ResultPath": "$.0_tmp",
       "Type": "Pass",
     },
     "try": Object {
@@ -13681,9 +14037,9 @@ Object {
       "Type": "Pass",
     },
     "catch__for(item of input.items)": Object {
-      "End": true,
-      "InputPath": "$.err.message",
-      "ResultPath": "$",
+      "InputPath": "$.0_tmp",
+      "Next": "return err.message",
+      "ResultPath": "$.err",
       "Type": "Pass",
     },
     "for(item of input.items)": Object {
@@ -13696,17 +14052,23 @@ Object {
       "Choices": Array [
         Object {
           "IsPresent": true,
-          "Next": "item = undefined",
+          "Next": "item",
           "Variable": "$.heap0[0]",
         },
       ],
       "Default": "return null",
       "Type": "Choice",
     },
-    "item = undefined": Object {
+    "item": Object {
       "InputPath": "$.heap0[0]",
       "Next": "throw Error(\\"err\\")",
       "ResultPath": "$.item",
+      "Type": "Pass",
+    },
+    "return err.message": Object {
+      "End": true,
+      "InputPath": "$.err.message",
+      "ResultPath": "$",
       "Type": "Pass",
     },
     "return null": Object {
@@ -13720,7 +14082,7 @@ Object {
       "Result": Object {
         "message": "err",
       },
-      "ResultPath": "$.err",
+      "ResultPath": "$.0_tmp",
       "Type": "Pass",
     },
   },
@@ -13743,9 +14105,9 @@ Object {
       "Type": "Pass",
     },
     "catch__for(item of input.items)": Object {
-      "End": true,
-      "InputPath": "$.err.message",
-      "ResultPath": "$",
+      "InputPath": "$.0_tmp",
+      "Next": "return err.message",
+      "ResultPath": "$.err",
       "Type": "Pass",
     },
     "for(item of input.items)": Object {
@@ -13758,17 +14120,23 @@ Object {
       "Choices": Array [
         Object {
           "IsPresent": true,
-          "Next": "item = undefined",
+          "Next": "item",
           "Variable": "$.heap0[0]",
         },
       ],
       "Default": "return null",
       "Type": "Choice",
     },
-    "item = undefined": Object {
+    "item": Object {
       "InputPath": "$.heap0[0]",
       "Next": "throw new Error(\\"err\\")",
       "ResultPath": "$.item",
+      "Type": "Pass",
+    },
+    "return err.message": Object {
+      "End": true,
+      "InputPath": "$.err.message",
+      "ResultPath": "$",
       "Type": "Pass",
     },
     "return null": Object {
@@ -13782,7 +14150,7 @@ Object {
       "Result": Object {
         "message": "err",
       },
-      "ResultPath": "$.err",
+      "ResultPath": "$.0_tmp",
       "Type": "Pass",
     },
   },
@@ -13820,14 +14188,14 @@ Object {
       "Choices": Array [
         Object {
           "IsPresent": true,
-          "Next": "item = undefined",
+          "Next": "item",
           "Variable": "$.heap0[0]",
         },
       ],
       "Default": "return null",
       "Type": "Choice",
     },
-    "item = undefined": Object {
+    "item": Object {
       "InputPath": "$.heap0[0]",
       "Next": "throw new Error(\\"err\\")",
       "ResultPath": "$.item",
