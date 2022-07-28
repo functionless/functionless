@@ -514,6 +514,31 @@ Object {
 }
 `;
 
+exports[`binding functions filter 1`] = `
+Object {
+  "StartAt": "Initialize Functionless Context",
+  "States": Object {
+    "Initialize Functionless Context": Object {
+      "Next": "return input.value.filter(function({value:b,arr:[c]}))",
+      "Parameters": Object {
+        "fnl_context": Object {
+          "null": null,
+        },
+        "input.$": "$",
+      },
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "return input.value.filter(function({value:b,arr:[c]}))": Object {
+      "End": true,
+      "InputPath": "$.input.value[?(@[value]==@[arr][0])]",
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+  },
+}
+`;
+
 exports[`binding functions forEach 1`] = `
 Object {
   "StartAt": "Initialize Functionless Context",

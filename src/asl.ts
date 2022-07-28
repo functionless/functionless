@@ -2769,35 +2769,62 @@ export class ASL {
         const ref = expr.lookup();
         if (ref === undefined) {
           throw new Error(`unresolved identifier: ${expr.name}`);
-        } else if (isParameterDecl(ref)) {
-          if (ref.parent !== predicate) {
-            throw new Error(
-              "cannot reference a ParameterDecl other than those in .filter((item, index) =>) in a JSONPath filter expression"
-            );
-          }
-          if (ref === ref.parent.parameters[0]) {
-            return "@";
-          } else if (ref === ref.parent.parameters[1]) {
-            throw new Error(
-              "the 'index' parameter in a .filter expression is not supported"
-            );
-          } else {
-            throw new Error(
-              "the 'array' parameter in a .filter expression is not supported"
-            );
-          }
-        } else if (
-          isVariableDecl(ref) ||
-          isBindingElem(ref) ||
-          isFunctionDecl(ref) ||
-          isClassDecl(ref) ||
-          isClassMember(ref)
-        ) {
-          throw new Error(
-            `cannot reference a ${ref.kind} within a JSONPath .filter expression`
-          );
         }
-        assertNever(ref);
+        return resolveRef(ref);
+        function resolveRef(ref: Decl): string {
+          if (isParameterDecl(ref)) {
+            if (ref.parent !== predicate) {
+              throw new Error(
+                "cannot reference a ParameterDecl other than those in .filter((item, index) =>) in a JSONPath filter expression"
+              );
+            }
+            if (ref === ref.parent.parameters[0]) {
+              return "@";
+            } else if (ref === ref.parent.parameters[1]) {
+              throw new Error(
+                "the 'index' parameter in a .filter expression is not supported"
+              );
+            } else {
+              throw new Error(
+                "the 'array' parameter in a .filter expression is not supported"
+              );
+            }
+          } else if (isBindingElem(ref)) {
+            if (isArrayBinding(ref.parent)) {
+              return `${resolveRef(
+                ref.parent.parent
+              )}[${ref.parent.bindings.indexOf(ref)}]`;
+            }
+
+            const propName = ref.propertyName
+              ? isIdentifier(ref.propertyName)
+                ? ref.propertyName.name
+                : isStringLiteralExpr(ref.propertyName)
+                ? ref.propertyName.value
+                : evalToConstant(ref.propertyName)?.constant
+              : isIdentifier(ref.name)
+              ? ref.name.name
+              : undefined;
+
+            if (!propName) {
+              throw new SynthError(
+                ErrorCodes.StepFunctions_property_names_must_be_constant
+              );
+            }
+
+            return `${resolveRef(ref.parent.parent)}[${propName}]`;
+          } else if (
+            isVariableDecl(ref) ||
+            isFunctionDecl(ref) ||
+            isClassDecl(ref) ||
+            isClassMember(ref)
+          ) {
+            throw new Error(
+              `cannot reference a ${ref.kind} within a JSONPath .filter expression`
+            );
+          }
+          assertNever(ref);
+        }
       } else if (isStringLiteralExpr(expr)) {
         return `'${expr.value.replace(/'/g, "\\'")}'`;
       } else if (
