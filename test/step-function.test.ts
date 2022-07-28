@@ -3805,4 +3805,20 @@ describe("binding", () => {
       expect(normalizeDefinition(definition)).toMatchSnapshot();
     });
   });
+
+  test("forOf", () => {
+    const { stack } = initStepFunctionApp();
+    const definition = new StepFunction<
+      { value: { key: string; value: string }[] },
+      string
+    >(stack, "machine1", async (input) => {
+      let a = "";
+      for (const { key, value } of input.value) {
+        a = `${key}${value}${a}`;
+      }
+      return a;
+    }).definition;
+
+    expect(normalizeDefinition(definition)).toMatchSnapshot();
+  });
 });

@@ -1476,10 +1476,20 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
             .map(({ a, b: [c] }) => `${a}${c}`)
             .join();
 
+          let forV = "";
+
+          for (const {
+            a,
+            b: [c],
+          } of [{ a: "a", b: ["b"] }]) {
+            forV = `${forV}${a}${c}`;
+          }
+
           return {
             prop: a + b + c + d + e + f + objRest.d + arrRest[0] + z,
             var: z + w + v + x + s + u + t + TserJbo.k + tserRra[0] + z,
             map,
+            forV,
           };
         }
       ),
@@ -1487,6 +1497,7 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
       prop: "helloworldwhatisupsirendofobjendofarraydynamic",
       var: "helloworlddynamicwhatisupsirendofobjendofarraydynamic",
       map: "ab",
+      forV: "ab",
     },
     {
       a: "hello",
