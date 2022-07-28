@@ -1462,14 +1462,12 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
           c = "what",
           arr: [d, , e, f = "sir", ...arrRest],
           value,
-          ...objRest
         }) => {
           const {
             z,
-            yy: { ["value"]: w, ["a" + "b"]: v },
+            yy: { ["value"]: w, [`${a}${b}`]: v },
             x = "what",
             rra: [s, , u, t = "sir", ...tserRra],
-            ...TserJbo
           } = value;
 
           const map = [{ a: "a", b: ["b"] }]
@@ -1485,11 +1483,19 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
             forV = `${forV}${a}${c}`;
           }
 
+          let tr;
+          try {
+            throw new Error("hi");
+          } catch ({ message }) {
+            tr = message;
+          }
+
           return {
-            prop: a + b + c + d + e + f + objRest.d + arrRest[0] + z,
-            var: z + w + v + x + s + u + t + TserJbo.k + tserRra[0] + z,
+            prop: `${a}${b}${c}${d}${e}${f}${arrRest[0]}`,
+            var: `${z}${w}${v}${x}${s}${u}${t}${tserRra[0]}`,
             map,
             forV,
+            tr,
           };
         }
       ),
@@ -1498,6 +1504,7 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
       var: "helloworlddynamicwhatisupsirendofobjendofarraydynamic",
       map: "ab",
       forV: "ab",
+      tr: "hi",
     },
     {
       a: "hello",
