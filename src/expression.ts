@@ -182,7 +182,7 @@ export class PropAccessExpr extends BaseExpr<"PropAccessExpr"> {
   }
 
   public clone(): this {
-    return new PropAccessExpr(this.expr.clone(), this.name, this.type) as this;
+    return new PropAccessExpr(this.expr.clone(), this.name) as this;
   }
 }
 
@@ -198,8 +198,7 @@ export class ElementAccessExpr extends BaseExpr<"ElementAccessExpr"> {
   public clone(): this {
     return new ElementAccessExpr(
       this.expr.clone(),
-      this.element.clone(),
-      this.type
+      this.element.clone()
     ) as this;
   }
 }
@@ -437,18 +436,6 @@ export class PropAssignExpr extends BaseExpr<
 > {
   constructor(readonly name: PropName, readonly expr: Expr) {
     super("PropAssignExpr", arguments);
-  }
-
-  /**
-   * @returns the name of this property if it is statically known (an Identifier or StringLiteralExpr).
-   */
-  public tryGetName(): string | undefined {
-    if (isIdentifier(this.name)) {
-      return this.name.name;
-    } else if (isStringLiteralExpr(this.name)) {
-      return this.name.value;
-    }
-    return undefined;
   }
 
   public clone(): this {

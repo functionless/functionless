@@ -74,11 +74,7 @@ export const getPropertyAccessKeyFlatten = (
 ): string | number => {
   if (isElementAccessExpr(expr)) {
     return getPropertyAccessKey(
-      new ElementAccessExpr(
-        expr.expr,
-        flattenExpression(expr.element, scope),
-        expr.type
-      )
+      new ElementAccessExpr(expr.expr, flattenExpression(expr.element, scope))
     );
   }
   return getPropertyAccessKey(expr);
@@ -101,15 +97,6 @@ export const getPropertyAccessKey = (
   }
 
   return key;
-};
-
-export const isStringType = (expr: Expr) => {
-  return (
-    ((isPropAccessExpr(expr) || isElementAccessExpr(expr)) &&
-      expr.type === "string") ||
-    isStringLiteralExpr(expr) ||
-    isTemplateExpr(expr)
-  );
 };
 
 export interface ReferencePath {
@@ -193,8 +180,8 @@ export const flattenExpression = (expr: Expr, scope: EventScope): Expr => {
       throw new Error("Array access must be a number.");
     }
     return typeof key === "string"
-      ? new PropAccessExpr(parent, key, expr.type)
-      : new ElementAccessExpr(parent, new NumberLiteralExpr(key), expr.type);
+      ? new PropAccessExpr(parent, key)
+      : new ElementAccessExpr(parent, new NumberLiteralExpr(key));
   } else if (isComputedPropertyNameExpr(expr)) {
     return flattenExpression(expr.expr, scope);
   } else if (isArrayLiteralExpr(expr)) {

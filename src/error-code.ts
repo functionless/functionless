@@ -1143,6 +1143,24 @@ export namespace ErrorCodes {
     title: "Classes are not yet supported by Functionless",
   };
 
+  /*
+   * Event Bridge does not allow for truthy comparisons.
+   *
+   * ```ts
+   * .when(id, event => event.detail.prop)
+   * ```
+   *
+   * To workaround, be explicit with `===`
+   * ```ts
+   * .when(id, event => event.detail.prop === true)
+   * ```
+   */
+  export const EventBridge_DoesNotSupport_TruthyComparison: ErrorCode = {
+    code: 10032,
+    type: ErrorType.ERROR,
+    title: "Event Bridge does not support a truthy comparison",
+  };
+
   /**
    * Step Functions does not natively support dynamic object manipulation.
    *
@@ -1197,7 +1215,7 @@ export namespace ErrorCodes {
    */
   export const StepFunctions_does_not_support_destructuring_object_with_rest: ErrorCode =
     {
-      code: 10032,
+      code: 10033,
       type: ErrorType.ERROR,
       title: "StepFunctions does not support destructuring object with rest",
     };

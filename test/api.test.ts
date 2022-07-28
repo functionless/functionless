@@ -9,6 +9,7 @@ import {
   $AWS,
   ApiGatewayInput,
   StepFunction,
+  EventBus,
 } from "../src";
 import { normalizeCDKJson } from "./util";
 
@@ -211,6 +212,65 @@ test("AWS integration with Standard Step Function using input data", () => {
   );
 
   expect(getTemplates(method)).toMatchSnapshot();
+});
+
+test("AWS integration with Event Bus", () => {
+  const api = new aws_apigateway.RestApi(stack, "API");
+
+  const bus = new EventBus(stack, "bus");
+
+  const method = new AwsMethod(
+    {
+      httpMethod: "GET",
+      resource: api.root,
+    },
+    (
+      $input: ApiGatewayInput<{
+        body: {
+          value: string;
+        };
+      }>
+    ) =>
+      bus.putEvents({
+        source: "source",
+        detail: $input.data,
+        "detail-type": "data",
+        resources: ["a", $input.data.value],
+      }),
+    () => {
+      return "success";
+    }
+  );
+
+  expect(getTemplates(method)).toMatchSnapshot();
+});
+
+test("AWS integration with Event Bus fails when given a reference", () => {
+  const api = new aws_apigateway.RestApi(stack, "API");
+
+  const bus = new EventBus(stack, "bus");
+
+  expect(
+    () =>
+      new AwsMethod(
+        {
+          httpMethod: "GET",
+          resource: api.root,
+        },
+        (
+          $input: ApiGatewayInput<{
+            body: {
+              event: { source: string; "detail-type": string; detail: any };
+            };
+          }>
+        ) => bus.putEvents($input.data.event),
+        () => {
+          return "success";
+        }
+      )
+  ).toThrow(
+    "API Gateway Integration with EventBus.putEvents expects object literals with no computed properties"
+  );
 });
 
 test("AWS integration with DynamoDB Table", () => {

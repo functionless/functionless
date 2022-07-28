@@ -274,3 +274,30 @@ new AwsMethod(
     return "";
   }
 );
+
+/**
+ * Unsupported - putEvents with references
+ */
+
+const bus = new EventBus(stack, "");
+
+new AwsMethod(
+  { httpMethod: "ANY", resource: api.root },
+  async () => {
+    const x = { "detail-type": "", source: "", detail: {} };
+    return bus.putEvents(x);
+  },
+  () => {}
+);
+
+/**
+ * Supported - putEvents with object literal
+ */
+
+new AwsMethod(
+  { httpMethod: "ANY", resource: api.root },
+  async () => {
+    return bus.putEvents({ "detail-type": "", source: "", detail: {} });
+  },
+  () => {}
+);

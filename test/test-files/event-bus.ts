@@ -38,3 +38,15 @@ bus.when("rule1", () => {
 new Rule(stack, "rule2", bus, () => {
   return (func() as any) === "x";
 });
+
+// truthy is not allowed
+bus.when("rule", (event) => <any>event);
+bus.when("rule", (event) => event as any);
+bus.when("rule", (event) => event.detail.a);
+bus.when("rule", (event) => !event.detail.a);
+bus.when("rule", (event) => !event.detail.a || event.detail.b === "b");
+bus.when("rule", (event) => event.detail.a === "b" || !event.detail.b);
+bus.when("rule", (event) => event.detail.a && event.detail.b === "b");
+bus.when("rule", (event) => event.detail.a === "a" && event.detail.b);
+bus.when("rule", (event) => event.detail.a || event.detail.b === "b");
+bus.when("rule", (event) => event.detail.a === "a" || event.detail.b);
