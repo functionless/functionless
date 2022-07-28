@@ -620,6 +620,38 @@ export function validate(
         const [, diagnostic] = validateNewIntegration(node);
         return diagnostic;
       } else if (ts.isCallExpression(node)) {
+        if (
+          checker.getIntegrationNodeKind(node.expression) ===
+          "EventBus.putEvents"
+        ) {
+          return node.arguments.flatMap((arg) => {
+            if (ts.isObjectLiteralExpression(arg)) {
+              if (
+                arg.properties.some(
+                  (prop) =>
+                    !ts.isPropertyAssignment(prop) ||
+                    ts.isComputedPropertyName(prop.name)
+                )
+              ) {
+                return [
+                  newError(
+                    arg,
+                    ErrorCodes.Expected_an_object_literal,
+                    "API Gateway Integration with EventBus.putEvents expects object literals with no computed properties"
+                  ),
+                ];
+              }
+              return [];
+            }
+            return [
+              newError(
+                arg,
+                ErrorCodes.Expected_an_object_literal,
+                "API Gateway Integration with EventBus.putEvents expects object literals with no computed properties"
+              ),
+            ];
+          });
+        }
         return validateIntegrationCallArguments(node, scope);
       } else if (ts.isIdentifier(node)) {
         if (

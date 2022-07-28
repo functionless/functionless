@@ -267,6 +267,10 @@ export class ObjectBinding extends BaseNode<"ObjectBinding", VariableDecl> {
   public clone(): this {
     return new ObjectBinding(this.bindings.map((b) => b.clone())) as this;
   }
+
+  public getName(): never {
+    throw new Error(`an ObjectBinding does not have a name`);
+  }
 }
 
 /**
@@ -298,6 +302,10 @@ export class ArrayBinding extends BaseNode<"ArrayBinding", VariableDecl> {
 
   public clone(): this {
     return new ArrayBinding(this.bindings.map((b) => b?.clone())) as this;
+  }
+
+  public getName(): never {
+    throw new Error(`an ArrayBinding does not have a name`);
   }
 }
 

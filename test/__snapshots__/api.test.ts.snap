@@ -26,6 +26,32 @@ $util.qr($context.responseOverride.status)
 }
 `;
 
+exports[`AWS integration with Event Bus 1`] = `
+Object {
+  "integrationResponses": Array [
+    Object {
+      "responseTemplates": Object {
+        "application/json": "\\"success\\"",
+      },
+      "statusCode": "200",
+    },
+  ],
+  "requestTemplates": Object {
+    "application/json": "#set($context.requestOverride.header.X-Amz-Target = \\"AWSEvents.PutEvents\\")
+#set($context.requestOverride.header.Content-Type = \\"application/x-amz-json-1.1\\")
+{
+\\"Entries\\":[{
+  \\"Source\\":\\"source\\",
+\\"Detail\\":\\"$util.escapeJavaScript($input.json('$'))\\",
+\\"DetailType\\":\\"data\\",
+\\"Resources\\":[\\"a\\",\\"$util.escapeJavaScript($input.json('$.value'))\\"],
+  \\"EventBusName\\":\\"__REPLACED_TOKEN\\"
+}
+]}",
+  },
+}
+`;
+
 exports[`AWS integration with Express Step Function 1`] = `
 Object {
   "integrationResponses": Array [

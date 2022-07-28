@@ -14,7 +14,7 @@ Functionless supports integrations between some AWS services and Event Bridge. S
 | EventBus       | &#x2705;        | &#x2705;      | &#x2705;                               |
 | Table          |                 |               |                                        |
 | App Sync       |                 | Coming Soon   |                                        |
-| API Gateway    |                 | Coming Soon   |                                        |
+| API Gateway    |                 | &#x2705;      |                                        |
 
 See [issues](https://github.com/functionless/functionless/issues?q=is%3Aissue+is%3Aopen+label%3Aevent-bridge) for progress or create a new issue in the form `Event Bridge + [Service]`.
 
@@ -63,7 +63,7 @@ See [issues](https://github.com/functionless/functionless/issues?q=is%3Aissue+is
 
 ```ts
 const bus = new EventBus();
-= new StepFunction(stack, "sfn", () => {
+new StepFunction(stack, "sfn", () => {
   await bus.putEvents({
     source: "myStepFunction",
     "detail-type": "someType",
@@ -88,6 +88,34 @@ new Lambda(stack, "sfn", async () => {
   });
 });
 ```
+
+### API Gateway
+
+```ts
+const api = new RestApi(stack, "api");
+const bus = new EventBus();
+new AwsMethod(
+  {
+    httpMethod: "POST",
+    resource: api.root,
+  },
+  ($input: Request) => {
+    return bus.putEvents({
+      source: "here",
+      detail: $input.data,
+      "detail-type": "event2",
+      resources: ["this api"],
+    });
+  },
+  (result) => {
+    return result.data;
+  }
+);
+```
+
+:::caution
+Limitation: [Events passed to the bus in a api gateway method must one or more literal objects](../../error-codes.md#expected-an-object-literal), may not use the spread (`...`) syntax, and must not have computed property names.
+:::
 
 ### Event Bus
 

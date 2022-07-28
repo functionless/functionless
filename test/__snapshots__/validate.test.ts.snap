@@ -130,12 +130,6 @@ https://functionless.org/docs/error-codes#unsupported-initialization-of-resource
 
 [7m152[0m     const bus = new EventBus(stack, \\"\\");
 [7m   [0m [91m               ~~~~~~~~~~~~~~~~~~~~~~~~[0m
-[96mtest/test-files/api-gateway.ts[0m:[93m153[0m:[93m11[0m - [91merror[0m[90m Functionless(10019): [0mUnable to find reference out of application function
-
-https://functionless.org/docs/error-codes#unable-to-find-reference-out-of-application-function
-
-[7m153[0m     return bus.putEvents({ \\"detail-type\\": \\"\\", source: \\"\\", detail: {} });
-[7m   [0m [91m          ~~~~~~~~~~~~~~[0m
 [96mtest/test-files/api-gateway.ts[0m:[93m155[0m:[93m10[0m - [91merror[0m[90m Functionless(10008): [0mCannot initialize new resources in a runtime function, found EventBus.
 
 https://functionless.org/docs/error-codes#unsupported-initialization-of-resources-in-a-runtime-closure
@@ -232,6 +226,12 @@ https://functionless.org/docs/error-codes#apigateway-unsupported-reference
 
 [7m255[0m     return a;
 [7m   [0m [91m          ~~[0m
+[96mtest/test-files/api-gateway.ts[0m:[93m288[0m:[93m26[0m - [91merror[0m[90m Functionless(10012): [0mAPI Gateway Integration with EventBus.putEvents expects object literals with no computed properties
+
+https://functionless.org/docs/error-codes#expected-an-object-literal
+
+[7m288[0m     return bus.putEvents(x);
+[7m   [0m [91m                         ~[0m
 "
 `;
 
