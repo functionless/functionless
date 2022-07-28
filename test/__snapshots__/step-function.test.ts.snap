@@ -390,6 +390,516 @@ Object {
 }
 `;
 
+exports[`binding functions use in map 1`] = `
+Object {
+  "StartAt": "Initialize Functionless Context",
+  "States": Object {
+    "1__return [1, 2, 3].map(function()).join() 1": Object {
+      "End": true,
+      "InputPath": "$.heap4.string",
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "1__return [1, 2, 3].map(function()).join() 1 1": Object {
+      "InputPath": "$.heap2",
+      "Next": "hasNext__1__return [1, 2, 3].map(function()).join() 1 1",
+      "ResultPath": "$.heap3",
+      "Type": "Pass",
+    },
+    "1__return [1, 2, 3].map(function()).join() 1 2": Object {
+      "ItemsPath": "$.heap1",
+      "Iterator": Object {
+        "StartAt": "return \`valuev\`",
+        "States": Object {
+          "1__return \`valuev\`": Object {
+            "End": true,
+            "InputPath": "$.heap0.string",
+            "ResultPath": "$",
+            "Type": "Pass",
+          },
+          "return \`valuev\`": Object {
+            "Next": "1__return \`valuev\`",
+            "Parameters": Object {
+              "string.$": "States.Format('{}{}',$.value,$.v)",
+            },
+            "ResultPath": "$.heap0",
+            "Type": "Pass",
+          },
+        },
+      },
+      "MaxConcurrency": 1,
+      "Next": "1__return [1, 2, 3].map(function()).join() 1 1",
+      "Parameters": Object {
+        "fnl_context.$": "$.fnl_context",
+        "obj.$": "$.obj",
+        "v.$": "$.v",
+        "value.$": "$.value",
+      },
+      "ResultPath": "$.heap2",
+      "Type": "Map",
+    },
+    "1__{ value, obj }": Object {
+      "InputPath": "$['obj']",
+      "Next": "return [1, 2, 3].map(function()).join()",
+      "ResultPath": "$.obj",
+      "Type": "Pass",
+    },
+    "Initialize Functionless Context": Object {
+      "Next": "{ value, obj }",
+      "Parameters": Object {
+        "fnl_context": Object {
+          "null": null,
+        },
+      },
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "append__1__return [1, 2, 3].map(function()).join() 1 1": Object {
+      "Next": "tail__1__return [1, 2, 3].map(function()).join() 1 1",
+      "Parameters": Object {
+        "string.$": "States.Format('{},{}', $.heap4.string, $.heap3[0])",
+      },
+      "ResultPath": "$.heap4",
+      "Type": "Pass",
+    },
+    "hasNext__1__return [1, 2, 3].map(function()).join() 1 1": Object {
+      "Choices": Array [
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.heap3[0]",
+            },
+            Object {
+              "Not": Object {
+                "IsPresent": true,
+                "Variable": "$.heap4",
+              },
+            },
+          ],
+          "Next": "initValue__1__return [1, 2, 3].map(function()).join() 1 1",
+        },
+        Object {
+          "And": Array [
+            Object {
+              "Not": Object {
+                "IsPresent": true,
+                "Variable": "$.heap3[0]",
+              },
+            },
+            Object {
+              "Not": Object {
+                "IsPresent": true,
+                "Variable": "$.heap4",
+              },
+            },
+          ],
+          "Next": "returnEmpty__1__return [1, 2, 3].map(function()).join() 1 1",
+        },
+        Object {
+          "IsPresent": true,
+          "Next": "append__1__return [1, 2, 3].map(function()).join() 1 1",
+          "Variable": "$.heap3[0]",
+        },
+      ],
+      "Default": "1__return [1, 2, 3].map(function()).join() 1",
+      "Type": "Choice",
+    },
+    "initValue__1__return [1, 2, 3].map(function()).join() 1 1": Object {
+      "InputPath": "$.heap3[0]",
+      "Next": "tail__1__return [1, 2, 3].map(function()).join() 1 1",
+      "ResultPath": "$.heap4.string",
+      "Type": "Pass",
+    },
+    "return [1, 2, 3].map(function()).join()": Object {
+      "InputPath": "$.obj['value']",
+      "Next": "return [1, 2, 3].map(function()).join() 1",
+      "ResultPath": "$.v",
+      "Type": "Pass",
+    },
+    "return [1, 2, 3].map(function()).join() 1": Object {
+      "Next": "1__return [1, 2, 3].map(function()).join() 1 2",
+      "Result": Array [
+        1,
+        2,
+        3,
+      ],
+      "ResultPath": "$.heap1",
+      "Type": "Pass",
+    },
+    "returnEmpty__1__return [1, 2, 3].map(function()).join() 1 1": Object {
+      "Next": "1__return [1, 2, 3].map(function()).join() 1",
+      "Result": "",
+      "ResultPath": "$.heap4",
+      "Type": "Pass",
+    },
+    "tail__1__return [1, 2, 3].map(function()).join() 1 1": Object {
+      "InputPath": "$.heap3[1:]",
+      "Next": "hasNext__1__return [1, 2, 3].map(function()).join() 1 1",
+      "ResultPath": "$.heap3",
+      "Type": "Pass",
+    },
+    "{ value, obj }": Object {
+      "InputPath": "$['value']",
+      "Next": "1__{ value, obj }",
+      "ResultPath": "$.value",
+      "Type": "Pass",
+    },
+  },
+}
+`;
+
+exports[`binding prop array 1`] = `
+Object {
+  "StartAt": "Initialize Functionless Context",
+  "States": Object {
+    "Initialize Functionless Context": Object {
+      "Next": "[ b ]",
+      "Parameters": Object {
+        "fnl_context": Object {
+          "null": null,
+        },
+      },
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "[ b ]": Object {
+      "InputPath": "$['arr'][0]",
+      "Next": "return b",
+      "ResultPath": "$.b",
+      "Type": "Pass",
+    },
+    "return b": Object {
+      "End": true,
+      "InputPath": "$.b",
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+  },
+}
+`;
+
+exports[`binding prop binding 1`] = `
+Object {
+  "StartAt": "Initialize Functionless Context",
+  "States": Object {
+    "Initialize Functionless Context": Object {
+      "Next": "{ value }",
+      "Parameters": Object {
+        "fnl_context": Object {
+          "null": null,
+        },
+      },
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "return value": Object {
+      "End": true,
+      "InputPath": "$.value",
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "{ value }": Object {
+      "InputPath": "$['value']",
+      "Next": "return value",
+      "ResultPath": "$.value",
+      "Type": "Pass",
+    },
+  },
+}
+`;
+
+exports[`binding prop nested 1`] = `
+Object {
+  "StartAt": "Initialize Functionless Context",
+  "States": Object {
+    "Initialize Functionless Context": Object {
+      "Next": "{ b }",
+      "Parameters": Object {
+        "fnl_context": Object {
+          "null": null,
+        },
+      },
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "return b": Object {
+      "End": true,
+      "InputPath": "$.b",
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "{ b }": Object {
+      "InputPath": "$['value']['b']",
+      "Next": "return b",
+      "ResultPath": "$.b",
+      "Type": "Pass",
+    },
+  },
+}
+`;
+
+exports[`binding prop rename 1`] = `
+Object {
+  "StartAt": "Initialize Functionless Context",
+  "States": Object {
+    "Initialize Functionless Context": Object {
+      "Next": "{ value: b }",
+      "Parameters": Object {
+        "fnl_context": Object {
+          "null": null,
+        },
+      },
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "return b": Object {
+      "End": true,
+      "InputPath": "$.b",
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "{ value: b }": Object {
+      "InputPath": "$['value']",
+      "Next": "return b",
+      "ResultPath": "$.b",
+      "Type": "Pass",
+    },
+  },
+}
+`;
+
+exports[`binding prop with default 1`] = `
+Object {
+  "StartAt": "Initialize Functionless Context",
+  "States": Object {
+    "\\"b\\"": Object {
+      "Next": "1__value = \\"b\\"",
+      "Result": "b",
+      "ResultPath": "$.heap0",
+      "Type": "Pass",
+    },
+    "1__value = \\"b\\"": Object {
+      "InputPath": "$.heap0",
+      "Next": "return value",
+      "ResultPath": "$.value",
+      "Type": "Pass",
+    },
+    "Initialize Functionless Context": Object {
+      "Next": "value = \\"b\\"",
+      "Parameters": Object {
+        "fnl_context": Object {
+          "null": null,
+        },
+      },
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "return value": Object {
+      "End": true,
+      "InputPath": "$.value",
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "value = \\"b\\"": Object {
+      "Choices": Array [
+        Object {
+          "IsPresent": true,
+          "Next": "value__value = \\"b\\"",
+          "Variable": "$['value']",
+        },
+      ],
+      "Default": "\\"b\\"",
+      "Type": "Choice",
+    },
+    "value__value = \\"b\\"": Object {
+      "InputPath": "$['value']",
+      "Next": "1__value = \\"b\\"",
+      "ResultPath": "$.heap0",
+      "Type": "Pass",
+    },
+  },
+}
+`;
+
+exports[`binding variable array 1`] = `
+Object {
+  "StartAt": "Initialize Functionless Context",
+  "States": Object {
+    "Initialize Functionless Context": Object {
+      "Next": "return b",
+      "Parameters": Object {
+        "fnl_context": Object {
+          "null": null,
+        },
+        "input.$": "$",
+      },
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "return b": Object {
+      "InputPath": "$.input['arr'][0]",
+      "Next": "return b 1",
+      "ResultPath": "$.b",
+      "Type": "Pass",
+    },
+    "return b 1": Object {
+      "End": true,
+      "InputPath": "$.b",
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+  },
+}
+`;
+
+exports[`binding variable binding 1`] = `
+Object {
+  "StartAt": "Initialize Functionless Context",
+  "States": Object {
+    "Initialize Functionless Context": Object {
+      "Next": "return value",
+      "Parameters": Object {
+        "fnl_context": Object {
+          "null": null,
+        },
+        "input.$": "$",
+      },
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "return value": Object {
+      "InputPath": "$.input['value']",
+      "Next": "return value 1",
+      "ResultPath": "$.value",
+      "Type": "Pass",
+    },
+    "return value 1": Object {
+      "End": true,
+      "InputPath": "$.value",
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+  },
+}
+`;
+
+exports[`binding variable nested 1`] = `
+Object {
+  "StartAt": "Initialize Functionless Context",
+  "States": Object {
+    "Initialize Functionless Context": Object {
+      "Next": "return b",
+      "Parameters": Object {
+        "fnl_context": Object {
+          "null": null,
+        },
+        "input.$": "$",
+      },
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "return b": Object {
+      "InputPath": "$.input['value']['b']",
+      "Next": "return b 1",
+      "ResultPath": "$.b",
+      "Type": "Pass",
+    },
+    "return b 1": Object {
+      "End": true,
+      "InputPath": "$.b",
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+  },
+}
+`;
+
+exports[`binding variable rename 1`] = `
+Object {
+  "StartAt": "Initialize Functionless Context",
+  "States": Object {
+    "Initialize Functionless Context": Object {
+      "Next": "return b",
+      "Parameters": Object {
+        "fnl_context": Object {
+          "null": null,
+        },
+        "input.$": "$",
+      },
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "return b": Object {
+      "InputPath": "$.input['value']",
+      "Next": "return b 1",
+      "ResultPath": "$.b",
+      "Type": "Pass",
+    },
+    "return b 1": Object {
+      "End": true,
+      "InputPath": "$.b",
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+  },
+}
+`;
+
+exports[`binding variable with default 1`] = `
+Object {
+  "StartAt": "Initialize Functionless Context",
+  "States": Object {
+    "\\"b\\"": Object {
+      "Next": "1__return value",
+      "Result": "b",
+      "ResultPath": "$.heap0",
+      "Type": "Pass",
+    },
+    "1__return value": Object {
+      "InputPath": "$.heap0",
+      "Next": "return value 1",
+      "ResultPath": "$.value",
+      "Type": "Pass",
+    },
+    "Initialize Functionless Context": Object {
+      "Next": "return value",
+      "Parameters": Object {
+        "fnl_context": Object {
+          "null": null,
+        },
+        "input.$": "$",
+      },
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "return value": Object {
+      "Choices": Array [
+        Object {
+          "IsPresent": true,
+          "Next": "value__return value",
+          "Variable": "$.input['value']",
+        },
+      ],
+      "Default": "\\"b\\"",
+      "Type": "Choice",
+    },
+    "return value 1": Object {
+      "End": true,
+      "InputPath": "$.value",
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "value__return value": Object {
+      "InputPath": "$.input['value']",
+      "Next": "1__return value",
+      "ResultPath": "$.heap0",
+      "Type": "Pass",
+    },
+  },
+}
+`;
+
 exports[`boolean logic 1`] = `
 Object {
   "StartAt": "Initialize Functionless Context",

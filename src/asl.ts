@@ -4,6 +4,7 @@ import { assertNever } from "./assert";
 import {
   BindingElem,
   BindingName,
+  BindingPattern,
   Decl,
   FunctionDecl,
   ParameterDecl,
@@ -14,6 +15,7 @@ import {
   CallExpr,
   ElementAccessExpr,
   Expr,
+  Identifier,
   NullLiteralExpr,
   PropAccessExpr,
 } from "./expression";
@@ -25,7 +27,6 @@ import {
   isAwaitExpr,
   isBinaryExpr,
   isBindingElem,
-  isBindingPattern,
   isBlockStmt,
   isBooleanLiteralExpr,
   isBreakStmt,
@@ -100,6 +101,7 @@ import {
   isVoidExpr,
   isParenthesizedExpr,
   isImportKeyword,
+  isBindingPattern,
 } from "./guards";
 import {
   Integration,
@@ -514,15 +516,23 @@ export class ASL {
       return visitEachChild(node, normalizeAST);
     });
 
-    const inputName = decl.parameters[0]?.name;
-    if (inputName && !isIdentifier(inputName)) {
-      throw new SynthError(
-        ErrorCodes.Unsupported_Feature,
-        "Destructured parameter declarations are not yet supported by Step Functions. https://github.com/functionless/functionless/issues/364"
-      );
-    }
+    const inputParam = decl.parameters[0];
 
     const states = this.evalStmt(this.decl.body);
+
+    // only evaluate the input parameter if its a binding parameter.
+    // We'll set input during context initialization
+    const inputParameterBinding =
+      inputParam && isBindingPattern(inputParam.name)
+        ? this.evalDecl(inputParam, { jsonPath: "$" })
+        : undefined;
+
+    // only evaluate the context parameter if its a binding parameter.
+    // We'll inject the context variable if not deconstructed
+    const contextParameterBinding =
+      this.decl.parameters[1] && isBindingPattern(this.decl.parameters[1].name)
+        ? this.evalDecl(this.decl.parameters[1], { jsonPath: "$$" })
+        : undefined;
 
     /**
      * Always inject this initial state into the machine. It does 3 things:
@@ -537,9 +547,11 @@ export class ASL {
       Type: "Pass",
       Parameters: {
         [FUNCTIONLESS_CONTEXT_NAME]: { null: null },
-        ...(inputName
+        ...(inputParam &&
+        !inputParameterBinding &&
+        isIdentifier(inputParam.name)
           ? {
-              [`${inputName.name}.$`]: "$",
+              [`${inputParam.name.name}.$`]: "$",
             }
           : {}),
       },
@@ -548,7 +560,13 @@ export class ASL {
     };
 
     this.definition = this.aslGraphToStates(
-      ASLGraph.joinSubStates(this.decl.body, functionlessContext, states)!,
+      ASLGraph.joinSubStates(
+        this.decl.body,
+        functionlessContext,
+        inputParameterBinding,
+        contextParameterBinding,
+        states
+      )!,
       "Initialize Functionless Context"
     );
   }
@@ -627,7 +645,7 @@ export class ASL {
    * Evaluate a single {@link Stmt} into a collection of named states.
    */
   public evalStmt(
-    stmt: Stmt | VariableDecl
+    stmt: Stmt
   ): ASLGraph.SubState | ASLGraph.NodeState | undefined {
     if (isBlockStmt(stmt)) {
       return ASLGraph.joinSubStates(
@@ -815,7 +833,7 @@ export class ASL {
       return this.evalContextToSubState(stmt, (evalExpr) => {
         const initializers = stmt.initializer
           ? isVariableDeclList(stmt.initializer)
-            ? stmt.initializer.decls.map((x) => this.evalStmt(x))
+            ? stmt.initializer.decls.map((x) => this.evalDecl(x))
             : [evalExpr(stmt.initializer)]
           : [undefined];
 
@@ -925,40 +943,10 @@ export class ASL {
           output
         )
       );
-    } else if (isVariableDecl(stmt)) {
-      if (stmt.initializer === undefined) {
-        return undefined;
-      }
-
-      if (isBindingPattern(stmt.name)) {
-        throw new SynthError(
-          ErrorCodes.Unsupported_Feature,
-          "Binding pattern assignment in StepFunctions is currently unsupported: https://github.com/functionless/functionless/issues/68"
-        );
-      }
-
-      return this.evalExprToSubState(stmt.initializer, (exprOutput) => {
-        const name = isIdentifier(stmt.name) ? stmt.name.name : undefined;
-        if (name === undefined) {
-          throw new SynthError(
-            ErrorCodes.Unsupported_Feature,
-            "Destructured parameter declarations are not yet supported by Step Functions. https://github.com/functionless/functionless/issues/364"
-          );
-        }
-
-        return ASLGraph.passWithInput(
-          {
-            Type: "Pass" as const,
-            // TODO support binding pattern - https://github.com/functionless/functionless/issues/302
-            ResultPath: `$.${name}`,
-          },
-          exprOutput
-        );
-      });
     } else if (isVariableStmt(stmt)) {
       return ASLGraph.joinSubStates(
         stmt,
-        ...stmt.declList.decls.map((decl) => this.evalStmt(decl))
+        ...stmt.declList.decls.map((decl) => this.evalDecl(decl))
       );
     } else if (isThrowStmt(stmt)) {
       if (
@@ -1382,11 +1370,11 @@ export class ASL {
     handler: (
       output: ASLGraph.Output,
       context: EvalExprContext
-    ) => ASLGraph.SubState | ASLGraph.NodeState
-  ): ASLGraph.SubState | ASLGraph.NodeState {
+    ) => ASLGraph.SubState | ASLGraph.NodeState | undefined
+  ): ASLGraph.SubState | ASLGraph.NodeState | undefined {
     const [exprState, states] = this.evalExprBase(expr, handler);
 
-    return ASLGraph.joinSubStates(expr, ...states, exprState)!;
+    return ASLGraph.joinSubStates(expr, ...states, exprState);
   }
 
   /**
@@ -2916,6 +2904,285 @@ export class ASL {
       ErrorCodes.StepFunctions_Invalid_collection_access,
       "Collection element accessor must be a constant string or number"
     );
+  }
+
+  public evalDecl(
+    decl: VariableDecl | ParameterDecl,
+    initialValue?: ASLGraph.Output
+  ): ASLGraph.SubState | ASLGraph.NodeState | undefined {
+    const getState = () => {
+      if (initialValue) {
+        return this.evalAssignment(decl.name, initialValue);
+      } else if (decl.initializer === undefined) {
+        return undefined;
+      }
+
+      return this.evalExprToSubState(decl.initializer, (exprOutput) => {
+        return this.evalAssignment(decl.name, exprOutput);
+      });
+    };
+    const state = getState();
+    return state ? { node: decl, ...state } : undefined;
+  }
+
+  /**
+   * Generic handler for any type of assignment with either an identifier or a binding pattern (deconstruction).
+   *
+   * Nested BindPatterns are handled recursively.
+   *
+   * const x = 1;
+   * =>
+   * const x = 1;
+   *
+   * const { x } = y;
+   * =>
+   * const x = y.x;
+   *
+   * const { x } = { x: 1 };
+   * =>
+   * const x = 1;
+   *
+   * const { x = 1 } = y;
+   * =>
+   * const x = y.x === undefined ? 1 : y.x;
+   *
+   * const { x = 1 } = {};
+   * =>
+   * const x = 1;
+   *
+   * const { x: { z } } = y;
+   * =>
+   * const z = y.x.z;
+   *
+   * const { x, ...rest } = y;
+   * =>
+   * INVALID - rest is unsupported in objects because ASL doesn't support object manipulation (ex: delete) or field enumeration (ex: keySet).
+   *
+   * const [x] = arr;
+   * =>
+   * const x = arr[0];
+   *
+   * const [,x] = arr;
+   * =>
+   * const x = arr[1];
+   *
+   * const [x,...rest] = arr;
+   * =>
+   * const x = arr[0];
+   * const rest = arr.slice(1);
+   */
+  private evalAssignment(
+    pattern: Identifier | BindingPattern,
+    value: ASLGraph.Output
+  ): ASLGraph.SubState | ASLGraph.NodeState | undefined {
+    // assign an identifier the current value
+    if (isIdentifier(pattern)) {
+      return ASLGraph.passWithInput(
+        {
+          Type: "Pass",
+          ResultPath: `$.${pattern.name}`,
+        },
+        value
+      );
+    } else {
+      const rest = pattern.bindings.find((binding) => binding?.rest);
+      if (rest && isObjectBinding(pattern)) {
+        // TODO: validator
+        throw new SynthError(
+          ErrorCodes.StepFunctions_does_not_support_destructuring_object_with_rest
+        );
+      }
+
+      // run each of the assignments as a sequence of states, they should not rely on each other.
+      const assignments = pattern.bindings.map((binding, i) => {
+        if (!binding) {
+          return undefined;
+        }
+
+        const updatedValue: ASLGraph.Output = (() => {
+          if (isArrayBinding(pattern)) {
+            // const [a] = arr;
+            if (ASLGraph.isJsonPath(value)) {
+              return {
+                jsonPath: `${value.jsonPath}[${i}]`,
+              };
+            } else {
+              // const [a] = [1,2,3];
+              if (!Array.isArray(value.value)) {
+                throw new SynthError(
+                  ErrorCodes.Invalid_Input,
+                  "Expected array binding pattern to be on a reference path or array literal."
+                );
+              }
+              return {
+                value: value.value[i],
+                containsJsonPath: value.containsJsonPath,
+              };
+            }
+          } else {
+            // when `name` is a bindingPattern, propertyName should always be present.
+            const propertyNameExpr = binding.propertyName ?? binding.name;
+            const propertyName = isComputedPropertyNameExpr(propertyNameExpr)
+              ? evalToConstant(propertyNameExpr.expr)?.constant
+              : isIdentifier(propertyNameExpr)
+              ? propertyNameExpr.name
+              : isStringLiteralExpr(propertyNameExpr)
+              ? propertyNameExpr.value
+              : undefined;
+
+            if (!propertyName || typeof propertyName !== "string") {
+              throw new SynthError(
+                ErrorCodes.StepFunctions_property_names_must_be_constant
+              );
+            }
+
+            if (ASLGraph.isJsonPath(value)) {
+              return {
+                jsonPath: `${value.jsonPath}['${propertyName}']`,
+              };
+            } else if (value.value && typeof value.value === "object") {
+              return {
+                value: value.value[propertyName as keyof typeof value.value],
+                containsJsonPath: value.containsJsonPath,
+              };
+            } else {
+              throw new SynthError(
+                ErrorCodes.Invalid_Input,
+                "Expected object binding pattern to be on a reference path or object literal"
+              );
+            }
+          }
+        })();
+
+        // when there is a default value
+        if (binding.initializer) {
+          // if there is a default value, update the output to reflect it
+          const valueStatesWithDefault = this.applyDefaultValue(
+            updatedValue,
+            binding.initializer
+          );
+
+          // recursively assign, with the new value (original value or default value)
+          const assignStates = this.evalAssignment(
+            binding.name,
+            ASLGraph.getAslStateOutput(valueStatesWithDefault)
+          );
+
+          // run the value states first and then the assignment which uses it
+          return ASLGraph.joinSubStates(
+            binding,
+            valueStatesWithDefault,
+            assignStates
+          )!;
+        }
+        // if there is no default value, just continue finding assignments with the updated value.
+        return this.evalAssignment(binding.name, updatedValue);
+      });
+
+      // rest is only value for arrays
+      const restState = rest
+        ? (() => {
+            if (ASLGraph.isJsonPath(value)) {
+              return {
+                jsonPath: `${value.jsonPath}[${pattern.bindings.length - 1}:]`,
+              };
+            } else if (Array.isArray(value.value)) {
+              return {
+                ...value,
+                value: value.value.slice(pattern.bindings.length - 1),
+              };
+            } else {
+              throw new SynthError(
+                ErrorCodes.Invalid_Input,
+                "Expected array binding pattern to be on a reference path or array literal."
+              );
+            }
+          })()
+        : undefined;
+
+      return ASLGraph.joinSubStates(pattern, ...assignments, restState);
+    }
+  }
+
+  /**
+   * Given an output value (json path or literal) and an expression to compute a default value,
+   * return a possibly updated output value which will contain the default value if the initial value is undefined.
+   *
+   * `return value === undefined ? defaultValue : value;`
+   */
+  private applyDefaultValue(
+    value: ASLGraph.Output,
+    defaultValueExpression: Expr
+  ): ASLGraph.NodeResults {
+    // the states to execute to compute the default value, if needed.
+    const defaultValueState = this.eval(defaultValueExpression);
+    const defaultValue = ASLGraph.getAslStateOutput(defaultValueState);
+
+    // attempt to optimize the assignment of the default value.
+    // if the original value is known to be undefined at runtime, we can directly return the default value
+    // or fail if both will be undefined
+    const updatedValue =
+      ASLGraph.isLiteralValue(value) && value.value === undefined
+        ? defaultValueState
+        : value;
+    // if the value was undefined and there is no default or the default value was also undefined, fail
+    if (
+      !updatedValue ||
+      (ASLGraph.isLiteralValue(updatedValue) && updatedValue === undefined)
+    ) {
+      throw new SynthError(
+        ErrorCodes.Step_Functions_does_not_support_undefined,
+        "Undefined literal is not supported"
+      );
+    }
+
+    if (
+      // if the updated value is the default value, there is no default, or the value is a constant (and defined)
+      // then just output a simple assignment
+      updatedValue === defaultValueState ||
+      ASLGraph.isLiteralValue(value)
+    ) {
+      return updatedValue;
+    } else {
+      const temp = this.newHeapVariable();
+      // runtime determination of default values
+      return {
+        startState: "check",
+        states: {
+          check: {
+            Type: "Choice",
+            // in javascript, the default value is applied only for `undefined` or missing values.
+            // in ASL that is the same as NOT(ISPRESENT(jsonPath))
+            Choices: [{ ...ASL.isPresent(value.jsonPath), Next: "value" }],
+            Default: "default",
+          },
+          value: ASLGraph.passWithInput(
+            {
+              Type: "Pass",
+              ResultPath: temp,
+              Next: ASLGraph.DeferNext,
+            },
+            value
+          ),
+          // default will first execute any states to compute the default value and then assign the output to the temp variable.
+          default: ASLGraph.joinSubStates(
+            defaultValueExpression,
+            defaultValueState,
+            ASLGraph.passWithInput(
+              {
+                Type: "Pass",
+                ResultPath: temp,
+                Next: ASLGraph.DeferNext,
+              },
+              defaultValue
+            )
+          )!,
+        },
+        output: {
+          jsonPath: temp,
+        },
+      };
+    }
   }
 
   /**

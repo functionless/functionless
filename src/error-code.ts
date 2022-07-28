@@ -1142,6 +1142,65 @@ export namespace ErrorCodes {
     type: ErrorType.ERROR,
     title: "Classes are not yet supported by Functionless",
   };
+
+  /**
+   * Step Functions does not natively support dynamic object manipulation.
+   *
+   * Due to this limitation, `...rest` is not supported when destructuring objects.
+   *
+   * ```ts
+   * new StepFunction(..., async () => {
+   *    const value = { a: "a", b: "b", c: "c" };
+   *    // valid
+   *    const { a, b } = value;
+   *    // invalid
+   *    const { a, b, ...rest } = value;
+   * });
+   * ```
+   *
+   * In the above example, we'd expect `rest` to look like `{ c: "c" }`,
+   * but Step Functions Amazon States Language does not natively support a way
+   * to enumerate the fields of an object or delete fields from an object without first
+   * knowing all field names in an object.
+   *
+   * Workaround - Explicit
+   *
+   * If `...rest` is being used as a convince, a work around is to just be explicit.
+   *
+   * ```ts
+   * new StepFunction(..., async () => {
+   *    const value = { a: "a", b: "b", c: "c" };
+   *    // valid
+   *    const { a, b } = value;
+   *    // invalid
+   *    const rest = { c: value.c };
+   * });
+   * ```
+   *
+   * Workaround - Lambda
+   *
+   * Sometimes `...rest` is used as part of the program logic, for example,
+   * if some fields of an object are known while others are not
+   * or to remove known fields from an object.
+   *
+   * ```ts
+   * const extractAAndB = new Function<
+   *   { a: string; b: string; [key: string]: string },
+   *   { a: string; b: string; rest: { [key: string]: string } }
+   * >(stack, "func", async ({ a, b, ...rest }) => ({ a, b, rest }));
+   * new StepFunction(..., async () => {
+   *    const value = { a: "a", b: "b", c: "c" };
+   *    // valid
+   *    const { a, b, rest } = await extractAAndB(value);
+   * });
+   * ```
+   */
+  export const StepFunctions_does_not_support_destructuring_object_with_rest: ErrorCode =
+    {
+      code: 10032,
+      type: ErrorType.ERROR,
+      title: "StepFunctions does not support destructuring object with rest",
+    };
 }
 
 // to prevent the closure serializer from trying to import all of functionless.
