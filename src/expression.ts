@@ -177,13 +177,18 @@ export class PrivateIdentifier extends BaseExpr<"PrivateIdentifier"> {
 export class PropAccessExpr extends BaseExpr<"PropAccessExpr"> {
   constructor(
     readonly expr: Expr,
-    readonly name: Identifier | PrivateIdentifier
+    readonly name: Identifier | PrivateIdentifier,
+    readonly isOptional: boolean
   ) {
     super("PropAccessExpr", arguments);
   }
 
   public clone(): this {
-    return new PropAccessExpr(this.expr.clone(), this.name) as this;
+    return new PropAccessExpr(
+      this.expr.clone(),
+      this.name,
+      this.isOptional
+    ) as this;
   }
 }
 

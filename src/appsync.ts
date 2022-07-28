@@ -495,8 +495,13 @@ function synthesizeFunctions(api: appsync.GraphqlApi, decl: FunctionDecl) {
           );
 
           const rightClassName = new PropAccessExpr(
-            new PropAccessExpr(updatedNode.right, new Identifier("class")),
-            new Identifier("name")
+            new PropAccessExpr(
+              updatedNode.right,
+              new Identifier("class"),
+              false
+            ),
+            new Identifier("name"),
+            false
           );
 
           return new ConditionExpr(
@@ -504,25 +509,35 @@ function synthesizeFunctions(api: appsync.GraphqlApi, decl: FunctionDecl) {
               new CallExpr(
                 new PropAccessExpr(
                   rightClassName,
-                  new Identifier("startsWith")
+                  new Identifier("startsWith"),
+                  false
                 ),
                 [new Argument(new StringLiteralExpr("[L"))]
               ),
               "||",
               new CallExpr(
-                new PropAccessExpr(rightClassName, new Identifier("contains")),
+                new PropAccessExpr(
+                  rightClassName,
+                  new Identifier("contains"),
+                  false
+                ),
                 [new Argument(new StringLiteralExpr("ArrayList"))]
               )
             ),
             new BinaryExpr(
-              new PropAccessExpr(updatedNode.right, new Identifier("length")),
+              new PropAccessExpr(
+                updatedNode.right,
+                new Identifier("length"),
+                false
+              ),
               ">=",
               updatedNode.left
             ),
             new CallExpr(
               new PropAccessExpr(
                 updatedNode.right,
-                new Identifier("containsKey")
+                new Identifier("containsKey"),
+                false
               ),
               [new Argument(updatedNode.left)]
             )

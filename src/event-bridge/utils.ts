@@ -183,7 +183,7 @@ export const flattenExpression = (expr: Expr, scope: EventScope): Expr => {
       throw new Error("Array access must be a number.");
     }
     return typeof key === "string"
-      ? new PropAccessExpr(parent, new Identifier(key))
+      ? new PropAccessExpr(parent, new Identifier(key), false)
       : new ElementAccessExpr(parent, new NumberLiteralExpr(key));
   } else if (isComputedPropertyNameExpr(expr)) {
     return flattenExpression(expr.expr, scope);

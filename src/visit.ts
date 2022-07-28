@@ -457,7 +457,7 @@ export function visitEachChild<T extends FunctionlessNode>(
       isExpr,
       "a PropAccessExpr's expr property must be an Expr node type"
     );
-    return new PropAccessExpr(expr, node.name) as T;
+    return new PropAccessExpr(expr, node.name, node.isOptional) as T;
   } else if (isPropAssignExpr(node)) {
     const name = visitor(node.name);
     const expr = visitor(node.expr);

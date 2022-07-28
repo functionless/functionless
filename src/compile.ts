@@ -462,6 +462,11 @@ export function compile(
                   newExpr("Argument", [toExpr(arg, scope)])
                 ) ?? []
               ),
+              ts.isPropertyAccessExpression(node.parent) &&
+              ts.isCallExpression(node) &&
+              node.questionDotToken
+                ? ts.factory.createTrue()
+                : ts.factory.createFalse(),
             ]
           );
 
@@ -529,13 +534,12 @@ export function compile(
               );
             }
           }
-          const type = checker.getTypeAtLocation(node.name);
           return newExpr("PropAccessExpr", [
             toExpr(node.expression, scope),
             toExpr(node.name, scope),
-            type
-              ? ts.factory.createStringLiteral(checker.typeToString(type))
-              : ts.factory.createIdentifier("undefined"),
+            node.questionDotToken
+              ? ts.factory.createTrue()
+              : ts.factory.createFalse(),
           ]);
         } else if (ts.isElementAccessExpression(node)) {
           const type = checker.getTypeAtLocation(node.argumentExpression);
