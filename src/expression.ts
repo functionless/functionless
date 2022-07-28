@@ -439,18 +439,6 @@ export class PropAssignExpr extends BaseExpr<
     super("PropAssignExpr", arguments);
   }
 
-  /**
-   * @returns the name of this property if it is statically known (an Identifier or StringLiteralExpr).
-   */
-  public tryGetName(): string | undefined {
-    if (isIdentifier(this.name)) {
-      return this.name.name;
-    } else if (isStringLiteralExpr(this.name)) {
-      return this.name.value;
-    }
-    return undefined;
-  }
-
   public clone(): this {
     return new PropAssignExpr(this.name.clone(), this.expr.clone()) as this;
   }
