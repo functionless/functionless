@@ -733,19 +733,57 @@ export class ASL {
               ResultPath: tempArrayPath,
             })!;
 
-        const initializerName = isIdentifier(stmt.initializer)
-          ? stmt.initializer.name
-          : isVariableDecl(stmt.initializer) &&
-            isIdentifier(stmt.initializer.name)
-          ? stmt.initializer.name.name
-          : undefined;
+        const initializer: ASLGraph.SubState | ASLGraph.NodeState = (() => {
+          /**ForInStmt
+           * Assign the value to $.0__[variableName].
+           * Assign the index to the variable decl. If the variable decl is an identifier, it may be carried beyond the ForIn.
+           */
+          if (isForInStmt(stmt)) {
+            const initializerName = isIdentifier(stmt.initializer)
+              ? stmt.initializer.name
+              : isVariableDecl(stmt.initializer) &&
+                isIdentifier(stmt.initializer.name)
+              ? stmt.initializer.name.name
+              : undefined;
 
-        if (initializerName === undefined) {
-          throw new SynthError(
-            ErrorCodes.Unsupported_Feature,
-            "Destructured parameter declarations are not yet supported by Step Functions. https://github.com/functionless/functionless/issues/364"
-          );
-        }
+            if (initializerName === undefined) {
+              throw new SynthError(
+                ErrorCodes.Unexpected_Error,
+                "The left-hand side of a 'for...in' statement cannot be a destructuring pattern."
+              );
+            }
+
+            return {
+              startState: "assignIndex",
+              node: stmt.initializer,
+              states: {
+                assignIndex: {
+                  Type: "Pass",
+                  InputPath: `${tempArrayPath}[0].index`,
+                  ResultPath: `$.${initializerName}`,
+                  Next: "assignValue",
+                },
+                assignValue: {
+                  Type: "Pass",
+                  InputPath: `${tempArrayPath}[0].item`,
+                  ResultPath: `$.0__${initializerName}`,
+                },
+              },
+            };
+          } else {
+            return isVariableDecl(stmt.initializer)
+              ? // supports deconstruction variable declaration
+                this.evalDecl(stmt.initializer, {
+                  jsonPath: `${tempArrayPath}[0]`,
+                })!
+              : {
+                  Type: "Pass",
+                  node: stmt.initializer,
+                  InputPath: `${tempArrayPath}[0]`,
+                  ResultPath: `$.${stmt.initializer.name}`,
+                };
+          }
+        })();
 
         return {
           startState: "assignTemp",
@@ -766,36 +804,10 @@ export class ASL {
              * Assign the index to $.[variableName].
              * When the loop.variableDecl is an {@link Identifier} (not {@link VariableStmt}), the variable may be used after the for loop.
              */
-            assign: isForOfStmt(stmt)
-              ? {
-                  Type: "Pass",
-                  node: stmt.initializer,
-                  InputPath: `${tempArrayPath}[0]`,
-                  ResultPath: `$.${initializerName}`,
-                  Next: "body",
-                }
-              : /**ForInStmt
-                 * Assign the value to $.0__[variableName].
-                 * Assign the index to the variable decl. If the variable decl is an identifier, it may be carried beyond the ForIn.
-                 */
-                {
-                  startState: "assignIndex",
-                  node: stmt.initializer,
-                  states: {
-                    assignIndex: {
-                      Type: "Pass",
-                      InputPath: `${tempArrayPath}[0].index`,
-                      ResultPath: `$.${initializerName}`,
-                      Next: "assignValue",
-                    },
-                    assignValue: {
-                      Type: "Pass",
-                      InputPath: `${tempArrayPath}[0].item`,
-                      ResultPath: `$.0__${initializerName}`,
-                      Next: "body",
-                    },
-                  },
-                },
+            assign: ASLGraph.updateDeferredNextStates(
+              { Next: "body" },
+              initializer
+            ),
             // any ASLGraph.DeferNext (or empty) should be wired to exit
             body: ASLGraph.updateDeferredNextStates(
               { Next: "tail" },

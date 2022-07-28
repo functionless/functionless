@@ -3821,4 +3821,15 @@ describe("binding", () => {
 
     expect(normalizeDefinition(definition)).toMatchSnapshot();
   });
+
+  test("for", () => {
+    const { stack } = initStepFunctionApp();
+    const definition = new StepFunction(stack, "machine1", async () => {
+      for (const { key, value } = { key: "x", value: "y" }; ; ) {
+        return `${key}${value}`;
+      }
+    }).definition;
+
+    expect(normalizeDefinition(definition)).toMatchSnapshot();
+  });
 });

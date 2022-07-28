@@ -390,6 +390,130 @@ Object {
 }
 `;
 
+exports[`binding for 1`] = `
+Object {
+  "StartAt": "Initialize Functionless Context",
+  "States": Object {
+    "1__for({key,value} = {key: \\"x\\", value: \\"y\\"};;) 1": Object {
+      "Next": "return \`keyvalue\`",
+      "Result": "y",
+      "ResultPath": "$.value",
+      "Type": "Pass",
+    },
+    "1__return \`keyvalue\`": Object {
+      "End": true,
+      "InputPath": "$.heap0.string",
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "Initialize Functionless Context": Object {
+      "Next": "for({key,value} = {key: \\"x\\", value: \\"y\\"};;)",
+      "Parameters": Object {
+        "fnl_context": Object {
+          "null": null,
+        },
+      },
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "for({key,value} = {key: \\"x\\", value: \\"y\\"};;)": Object {
+      "Next": "1__for({key,value} = {key: \\"x\\", value: \\"y\\"};;) 1",
+      "Result": "x",
+      "ResultPath": "$.key",
+      "Type": "Pass",
+    },
+    "return \`keyvalue\`": Object {
+      "Next": "1__return \`keyvalue\`",
+      "Parameters": Object {
+        "string.$": "States.Format('{}{}',$.key,$.value)",
+      },
+      "ResultPath": "$.heap0",
+      "Type": "Pass",
+    },
+  },
+}
+`;
+
+exports[`binding forOf 1`] = `
+Object {
+  "StartAt": "Initialize Functionless Context",
+  "States": Object {
+    "1__a = \`keyvaluea\`": Object {
+      "InputPath": "$.heap0.string",
+      "Next": "tail__for({key,value} of input.value) 1",
+      "ResultPath": "$.a",
+      "Type": "Pass",
+    },
+    "1__{ key, value }": Object {
+      "InputPath": "$.heap1[0]['value']",
+      "Next": "a = \`keyvaluea\`",
+      "ResultPath": "$.value",
+      "Type": "Pass",
+    },
+    "Initialize Functionless Context": Object {
+      "Next": "for({key,value} of input.value)",
+      "Parameters": Object {
+        "fnl_context": Object {
+          "null": null,
+        },
+        "input.$": "$",
+      },
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "a = \`keyvaluea\`": Object {
+      "Next": "1__a = \`keyvaluea\`",
+      "Parameters": Object {
+        "string.$": "States.Format('{}{}{}',$.key,$.value,$.a)",
+      },
+      "ResultPath": "$.heap0",
+      "Type": "Pass",
+    },
+    "for({key,value} of input.value)": Object {
+      "Next": "for({key,value} of input.value) 1",
+      "Result": "",
+      "ResultPath": "$.a",
+      "Type": "Pass",
+    },
+    "for({key,value} of input.value) 1": Object {
+      "InputPath": "$.input.value",
+      "Next": "hasNext__for({key,value} of input.value) 1",
+      "ResultPath": "$.heap1",
+      "Type": "Pass",
+    },
+    "hasNext__for({key,value} of input.value) 1": Object {
+      "Choices": Array [
+        Object {
+          "IsPresent": true,
+          "Next": "{ key, value }",
+          "Variable": "$.heap1[0]",
+        },
+      ],
+      "Default": "return a",
+      "Type": "Choice",
+    },
+    "return a": Object {
+      "End": true,
+      "InputPath": "$.a",
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "tail__for({key,value} of input.value) 1": Object {
+      "InputPath": "$.heap1[1:]",
+      "Next": "hasNext__for({key,value} of input.value) 1",
+      "ResultPath": "$.heap1",
+      "Type": "Pass",
+    },
+    "{ key, value }": Object {
+      "InputPath": "$.heap1[0]['key']",
+      "Next": "1__{ key, value }",
+      "ResultPath": "$.key",
+      "Type": "Pass",
+    },
+  },
+}
+`;
+
 exports[`binding functions use in map 1`] = `
 Object {
   "StartAt": "Initialize Functionless Context",
