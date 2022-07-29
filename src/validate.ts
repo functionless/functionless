@@ -247,6 +247,15 @@ export function validate(
             ),
           ];
         }
+      } else if (ts.isBindingElement(node)) {
+        if (node.dotDotDotToken && ts.isObjectBindingPattern(node.parent)) {
+          return [
+            newError(
+              node,
+              ErrorCodes.StepFunctions_does_not_support_destructuring_object_with_rest
+            ),
+          ];
+        }
       }
       return [];
     }

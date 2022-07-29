@@ -5,6 +5,7 @@ import {
   StepFunction,
   Function,
   EventBus,
+  // @ts-ignore - tsdocs
   ErrorCodes,
   AppsyncResolver,
   $AWS,
@@ -578,3 +579,32 @@ new StepFunction(
 class CustomError {
   constructor(readonly prop: string) {}
 }
+
+/**
+ * Unsupported - Object `{... rest}`
+ * @see ErrorCodes.StepFunctions_does_not_support_destructuring_object_with_rest
+ */
+
+new StepFunction(stack, "sfn", async ({ ...rest }) => {
+  return rest;
+});
+new StepFunction(stack, "sfn", async (input: { [key: string]: string }) => {
+  const { ...rest } = input;
+  return rest;
+});
+
+/**
+ * Supported - Array `[...rest]`
+ */
+
+new StepFunction(
+  stack,
+  "sfn",
+  async ({ arr: [...rest] }: { arr: string[] }) => {
+    return rest;
+  }
+);
+new StepFunction(stack, "sfn", async (input: { arr: string[] }) => {
+  const [...rest] = input.arr;
+  return rest;
+});
