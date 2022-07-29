@@ -2947,7 +2947,7 @@ export class ASL {
     decl: VariableDecl | ParameterDecl,
     initialValue?: ASLGraph.Output
   ): ASLGraph.SubState | ASLGraph.NodeState | undefined {
-    const getState = () => {
+    const state = (() => {
       if (initialValue) {
         return this.evalAssignment(decl.name, initialValue);
       } else if (decl.initializer === undefined) {
@@ -2957,8 +2957,7 @@ export class ASL {
       return this.evalExprToSubState(decl.initializer, (exprOutput) => {
         return this.evalAssignment(decl.name, exprOutput);
       });
-    };
-    const state = getState();
+    })();
     return state ? { node: decl, ...state } : undefined;
   }
 
