@@ -20,7 +20,7 @@ import {
   makeEventBusIntegration,
 } from "./event-bridge/event-bus";
 import { Event } from "./event-bridge/types";
-import { CallExpr } from "./expression";
+import { CallExpr, FunctionExpr } from "./expression";
 import { NativeIntegration } from "./function";
 import { PrewarmClients } from "./function-prewarm";
 import {
@@ -43,7 +43,7 @@ import {
   IntegrationInput,
   makeIntegration,
 } from "./integration";
-import { AnyFunction, ensureItemOf } from "./util";
+import { AnyFunction } from "./util";
 import { VTL } from "./vtl";
 
 export type AnyStepFunction =
@@ -421,13 +421,13 @@ export namespace $SFN {
     }>
   >("parallel", {
     asl(call, context) {
-      const paths = call.args.map((arg) => arg.expr);
-
-      ensureItemOf(
-        paths,
-        isFunctionExpr,
-        "each parallel path must be an inline FunctionExpr"
-      );
+      const paths = call.args.map((arg): FunctionExpr => {
+        if (isFunctionExpr(arg.expr)) {
+          return arg.expr;
+        } else {
+          throw new Error("each parallel path must be an inline FunctionExpr");
+        }
+      });
 
       return context.stateWithHeapOutput({
         Type: "Parallel",

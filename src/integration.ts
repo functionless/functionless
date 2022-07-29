@@ -20,7 +20,7 @@ export const isIntegration = <I extends IntegrationInput<string, AnyFunction>>(
   i: any
 ): i is I => typeof i === "object" && "kind" in i;
 
-export type IntegrationCallExpr = Omit<CallExpr, "expr"> & {
+export type IntegrationCallExpr = CallExpr & {
   expr: ReferenceExpr<Integration>;
 };
 

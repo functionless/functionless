@@ -112,9 +112,15 @@ export function parseSExpr<Kind extends NodeKind>(
   expr: [kind: Kind, ...args: any[]]
 ): InstanceType<typeof nodes[Kind]> {
   const [kind, ...args] = expr;
-  const ctor: new (...args: any[]) => any = nodes[kind];
+  const ctor = getCtor(kind);
   // TODO: recursively parse the args s-expressions
-  return new ctor(...(<any>args));
+  return new ctor(...(<any>args)) as InstanceType<typeof nodes[Kind]>;
+}
+
+export function getCtor<Kind extends NodeKind>(
+  kind: Kind
+): new (...args: any[]) => InstanceType<typeof nodes[Kind]> {
+  return nodes[kind] as any;
 }
 
 export const declarations = {
@@ -218,3 +224,7 @@ export const nodes = {
   ...keywords,
   ...statements,
 } as const;
+
+export type NodeInstance<Kind extends NodeKind> = InstanceType<
+  typeof nodes[Kind]
+>;

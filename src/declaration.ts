@@ -2,14 +2,12 @@ import { ErrorCodes, SynthError } from "./error-code";
 import {
   ArrowFunctionExpr,
   ClassExpr,
-  ComputedPropertyNameExpr,
   Expr,
   FunctionExpr,
   Identifier,
   ObjectLiteralExpr,
   OmittedExpr,
   PropName,
-  StringLiteralExpr,
 } from "./expression";
 import { isBindingPattern, isErr, isFunctionDecl } from "./guards";
 import { Integration } from "./integration";
@@ -51,6 +49,8 @@ export class ClassDecl<C extends AnyClass = AnyClass> extends BaseDecl<
     readonly members: ClassMember[]
   ) {
     super(NodeKind.ClassDecl, arguments);
+    this.ensure(name, "name", ["string"]);
+    this.ensureArrayOf(members, "members", ClassMember.Kinds);
   }
   public clone(): this {
     return new ClassDecl(
@@ -69,9 +69,21 @@ export type ClassMember =
   | PropDecl
   | SetAccessorDecl;
 
+export namespace ClassMember {
+  export const Kinds = [
+    NodeKind.ClassStaticBlockDecl,
+    NodeKind.ConstructorDecl,
+    NodeKind.GetAccessorDecl,
+    NodeKind.MethodDecl,
+    NodeKind.PropDecl,
+    NodeKind.SetAccessorDecl,
+  ];
+}
+
 export class ClassStaticBlockDecl extends BaseDecl<NodeKind.ClassStaticBlockDecl> {
   constructor(readonly block: BlockStmt) {
     super(NodeKind.ClassStaticBlockDecl, arguments);
+    this.ensure(block, "block", [NodeKind.BlockStmt]);
   }
 
   public clone(): this {
@@ -82,6 +94,8 @@ export class ClassStaticBlockDecl extends BaseDecl<NodeKind.ClassStaticBlockDecl
 export class ConstructorDecl extends BaseDecl<NodeKind.ConstructorDecl> {
   constructor(readonly parameters: ParameterDecl[], readonly body: BlockStmt) {
     super(NodeKind.ConstructorDecl, arguments);
+    this.ensureArrayOf(parameters, "parameters", [NodeKind.ParameterDecl]);
+    this.ensure(body, "body", [NodeKind.BlockStmt]);
   }
 
   public clone(): this {
@@ -99,6 +113,9 @@ export class MethodDecl extends BaseDecl<NodeKind.MethodDecl> {
     readonly body: BlockStmt
   ) {
     super(NodeKind.MethodDecl, arguments);
+    this.ensure(name, "name", PropName.Kinds);
+    this.ensureArrayOf(parameters, "parameters", [NodeKind.ParameterDecl]);
+    this.ensure(body, "body", [NodeKind.BlockStmt]);
   }
 
   public clone(): this {
@@ -117,6 +134,9 @@ export class PropDecl extends BaseDecl<NodeKind.PropDecl> {
     readonly initializer?: Expr
   ) {
     super(NodeKind.PropDecl, arguments);
+    this.ensure(name, "name", PropName.Kinds);
+    this.ensure(isStatic, "isStatic", ["boolean"]);
+    this.ensure(initializer, "initializer", ["undefined", "Expr"]);
   }
   public clone(): this {
     return new PropDecl(
@@ -133,6 +153,8 @@ export class GetAccessorDecl extends BaseDecl<
 > {
   constructor(readonly name: PropName, readonly body: BlockStmt) {
     super(NodeKind.GetAccessorDecl, arguments);
+    this.ensure(name, "name", PropName.Kinds);
+    this.ensure(body, "body", [NodeKind.BlockStmt]);
   }
   public clone(): this {
     return new GetAccessorDecl(this.name.clone(), this.body.clone()) as this;
@@ -148,6 +170,9 @@ export class SetAccessorDecl extends BaseDecl<
     readonly body: BlockStmt
   ) {
     super(NodeKind.SetAccessorDecl, arguments);
+    this.ensure(name, "name", PropName.Kinds);
+    this.ensure(parameter, "parameter", [NodeKind.ParameterDecl]);
+    this.ensure(body, "body", [NodeKind.BlockStmt]);
   }
   public clone(): this {
     return new SetAccessorDecl(
@@ -163,11 +188,17 @@ export class FunctionDecl<
 > extends BaseDecl<NodeKind.FunctionDecl> {
   readonly _functionBrand?: F;
   constructor(
-    readonly name: string,
+    // TODO: narrow to string once we migrate compile.ts to produce a 1:1 AST node
+    // right now, Arrow and FunctionExpr are parsed to FunctionDecl, so name can be undefined
+    // according to the spec, name is mandatory on a FunctionDecl and FunctionExpr
+    readonly name: string | undefined,
     readonly parameters: ParameterDecl[],
     readonly body: BlockStmt
   ) {
     super(NodeKind.FunctionDecl, arguments);
+    this.ensure(name, "name", ["undefined", "string"]);
+    this.ensureArrayOf(parameters, "parameters", [NodeKind.ParameterDecl]);
+    this.ensure(body, "body", [NodeKind.BlockStmt]);
   }
 
   public clone(): this {
@@ -183,15 +214,14 @@ export interface IntegrationInvocation {
   integration: Integration<any>;
   args: Expr[];
 }
-
-export type BindingName = Identifier | BindingPattern;
-
 export class ParameterDecl extends BaseDecl<
   NodeKind.ParameterDecl,
   ArrowFunctionExpr | FunctionDecl | FunctionExpr | SetAccessorDecl
 > {
   constructor(readonly name: BindingName, readonly initializer?: Expr) {
     super(NodeKind.ParameterDecl, arguments);
+    this.ensure(name, "name", BindingName.Kinds);
+    this.ensure(initializer, "initializer", ["undefined", "Expr"]);
   }
 
   public clone(): this {
@@ -226,6 +256,16 @@ export function validateFunctionlessNode<E extends FunctionlessNode>(
 }
 
 export type BindingPattern = ObjectBinding | ArrayBinding;
+
+export namespace BindingPattern {
+  export const Kinds = [NodeKind.ObjectBinding, NodeKind.ArrayBinding];
+}
+
+export type BindingName = Identifier | BindingPattern;
+
+export namespace BindingName {
+  export const Kinds = [NodeKind.Identifier, ...BindingPattern.Kinds];
+}
 
 /**
  * A binding element declares new variable or acts as the root to a nested {@link BindingPattern}
@@ -266,13 +306,14 @@ export class BindingElem extends BaseDecl<
   constructor(
     readonly name: BindingName,
     readonly rest: boolean,
-    readonly propertyName?:
-      | Identifier
-      | ComputedPropertyNameExpr
-      | StringLiteralExpr,
+    readonly propertyName?: PropName,
     readonly initializer?: Expr
   ) {
     super(NodeKind.BindingElem, arguments);
+    this.ensure(name, "name", BindingName.Kinds);
+    this.ensure(rest, "rest", ["boolean"]);
+    this.ensure(propertyName, "propertyName", ["undefined", ...PropName.Kinds]);
+    this.ensure(initializer, "initializer", ["undefined", "Expr"]);
   }
 
   public clone(): this {
@@ -314,6 +355,7 @@ export class ObjectBinding extends BaseNode<
 
   constructor(readonly bindings: BindingElem[]) {
     super(NodeKind.ObjectBinding, arguments);
+    this.ensureArrayOf(bindings, "bindings", [NodeKind.BindingElem]);
   }
 
   public clone(): this {
@@ -349,6 +391,10 @@ export class ArrayBinding extends BaseNode<
 
   constructor(readonly bindings: (BindingElem | OmittedExpr)[]) {
     super(NodeKind.ArrayBinding, arguments);
+    this.ensureArrayOf(bindings, "bindings", [
+      NodeKind.BindingElem,
+      NodeKind.OmittedExpr,
+    ]);
   }
 
   public clone(): this {
@@ -367,6 +413,8 @@ export class VariableDecl<
 > extends BaseDecl<NodeKind.VariableDecl, VariableDeclParent> {
   constructor(readonly name: BindingName, readonly initializer: E) {
     super(NodeKind.VariableDecl, arguments);
+    this.ensure(name, "name", BindingName.Kinds);
+    this.ensure(initializer, "initializer", ["undefined", "Expr"]);
   }
 
   public clone(): this {
@@ -387,6 +435,7 @@ export class VariableDeclList extends BaseNode<
 
   constructor(readonly decls: VariableDecl[]) {
     super(NodeKind.VariableDeclList, arguments);
+    this.ensureArrayOf(decls, "decls", [NodeKind.VariableDecl]);
   }
 
   public clone(): this {

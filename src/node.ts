@@ -6,6 +6,12 @@ import type {
   VariableDecl,
   VariableDeclList,
 } from "./declaration";
+import {
+  Assertion,
+  AssertionToInstance,
+  ensure,
+  ensureArrayOf,
+} from "./ensure";
 import type { Err } from "./error";
 import type { Expr, ImportKeyword, SuperKeyword } from "./expression";
 import {
@@ -52,8 +58,8 @@ export abstract class BaseNode<
 > {
   abstract readonly nodeKind: "Err" | "Expr" | "Stmt" | "Decl" | "Node";
 
-  // @ts-ignore
-  parent: Parent;
+  // @ts-ignore - we have a convention to set this in the parent constructor
+  readonly parent: Parent;
 
   /**
    * The immediate Child nodes contained within this Node.
@@ -62,10 +68,10 @@ export abstract class BaseNode<
 
   constructor(readonly kind: Kind, readonly _arguments: IArguments) {
     const setParent = (node: any) => {
-      if (!node) {
-        return;
-      } else if (isNode(node)) {
-        node.setParent(this as FunctionlessNode);
+      if (isNode(node)) {
+        // @ts-ignore
+        node.parent = this;
+        this.children.push(node);
       } else if (Array.isArray(node)) {
         node.forEach(setParent);
       }
@@ -80,16 +86,25 @@ export abstract class BaseNode<
   }
 
   public toSExpr(): [kind: this["kind"], ...args: any[]] {
-    return [this.kind, [this._arguments]] as any;
+    return [this.kind, ...Array.from(this._arguments)];
   }
 
   public abstract clone(): this;
 
-  public setParent(parent: FunctionlessNode | undefined) {
-    this.parent = parent as Parent;
-    if (parent) {
-      parent.children.push(this as unknown as FunctionlessNode);
-    }
+  protected ensureArrayOf<Assert extends Assertion>(
+    arr: any[],
+    fieldName: string,
+    assertion: Assert[]
+  ): asserts arr is AssertionToInstance<Assert>[] {
+    return ensureArrayOf(this.kind, arr, fieldName, assertion);
+  }
+
+  protected ensure<Assert extends Assertion>(
+    item: any,
+    fieldName: string,
+    assertion: Assert[]
+  ): asserts item is AssertionToInstance<Assert> {
+    return ensure(this.kind, item, fieldName, assertion);
   }
 
   public as<T>(guard: (a: any) => a is T): T | undefined {

@@ -195,6 +195,7 @@ export class ForStmt extends BaseStmt<NodeKind.ForStmt> {
     readonly incrementor?: Expr
   ) {
     super(NodeKind.ForStmt, arguments);
+    // validate
   }
 
   public clone(): this {
@@ -240,10 +241,15 @@ export class TryStmt extends BaseStmt<NodeKind.TryStmt> {
     readonly finallyBlock?: FinallyBlock
   ) {
     super(NodeKind.TryStmt, arguments);
-    if (catchClause) {
-    }
-    if (finallyBlock) {
-    }
+    this.ensure(tryBlock, "tryBlock", [NodeKind.BlockStmt]);
+    this.ensure(catchClause, "catchClause", [
+      "undefined",
+      NodeKind.CatchClause,
+    ]);
+    this.ensure(finallyBlock, "finallyBlock", [
+      "undefined",
+      NodeKind.BlockStmt,
+    ]);
   }
 
   public clone(): this {
@@ -261,8 +267,11 @@ export class CatchClause extends BaseStmt<NodeKind.CatchClause, TryStmt> {
     readonly block: BlockStmt
   ) {
     super(NodeKind.CatchClause, arguments);
-    if (variableDecl) {
-    }
+    this.ensure(variableDecl, "variableDecl", [
+      "undefined",
+      NodeKind.VariableDecl,
+    ]);
+    this.ensure(block, "block", [NodeKind.BlockStmt]);
   }
 
   public clone(): this {
@@ -276,6 +285,7 @@ export class CatchClause extends BaseStmt<NodeKind.CatchClause, TryStmt> {
 export class ThrowStmt extends BaseStmt<NodeKind.ThrowStmt> {
   constructor(readonly expr: Expr) {
     super(NodeKind.ThrowStmt, arguments);
+    this.ensure(expr, "expr", ["Expr"]);
   }
 
   public clone(): this {
@@ -286,6 +296,8 @@ export class ThrowStmt extends BaseStmt<NodeKind.ThrowStmt> {
 export class WhileStmt extends BaseStmt<NodeKind.WhileStmt> {
   constructor(readonly condition: Expr, readonly block: BlockStmt) {
     super(NodeKind.WhileStmt, arguments);
+    this.ensure(condition, "condition", ["Expr"]);
+    this.ensure(block, "block", [NodeKind.BlockStmt]);
   }
 
   public clone(): this {
@@ -296,6 +308,8 @@ export class WhileStmt extends BaseStmt<NodeKind.WhileStmt> {
 export class DoStmt extends BaseStmt<NodeKind.DoStmt> {
   constructor(readonly block: BlockStmt, readonly condition: Expr) {
     super(NodeKind.DoStmt, arguments);
+    this.ensure(block, "block", [NodeKind.BlockStmt]);
+    this.ensure(condition, "condition", ["Expr"]);
   }
 
   public clone(): this {
@@ -306,6 +320,8 @@ export class DoStmt extends BaseStmt<NodeKind.DoStmt> {
 export class LabelledStmt extends BaseStmt<NodeKind.LabelledStmt> {
   constructor(readonly label: string, readonly stmt: Stmt) {
     super(NodeKind.LabelledStmt, arguments);
+    this.ensure(label, "label", ["string"]);
+    this.ensure(stmt, "stmt", ["Stmt"]);
   }
 
   public clone(): this {
@@ -325,6 +341,7 @@ export class DebuggerStmt extends BaseStmt<NodeKind.DebuggerStmt> {
 export class SwitchStmt extends BaseStmt<NodeKind.SwitchStmt> {
   constructor(readonly clauses: SwitchClause[]) {
     super(NodeKind.SwitchStmt, arguments);
+    this.ensureArrayOf(clauses, "clauses", SwitchClause.Kinds);
   }
 
   public clone(): this {
@@ -334,9 +351,15 @@ export class SwitchStmt extends BaseStmt<NodeKind.SwitchStmt> {
 
 export type SwitchClause = CaseClause | DefaultClause;
 
+export namespace SwitchClause {
+  export const Kinds = [NodeKind.CaseClause, NodeKind.DefaultClause];
+}
+
 export class CaseClause extends BaseStmt<NodeKind.CaseClause> {
   constructor(readonly expr: Expr, readonly statements: Stmt[]) {
     super(NodeKind.CaseClause, arguments);
+    this.ensure(expr, "expr", ["Expr"]);
+    this.ensureArrayOf(statements, "statements", ["Stmt"]);
   }
   public clone(): this {
     return new CaseClause(
@@ -349,6 +372,7 @@ export class CaseClause extends BaseStmt<NodeKind.CaseClause> {
 export class DefaultClause extends BaseStmt<NodeKind.DefaultClause> {
   constructor(readonly statements: Stmt[]) {
     super(NodeKind.DefaultClause, arguments);
+    this.ensureArrayOf(statements, "statements", ["Stmt"]);
   }
   public clone(): this {
     return new DefaultClause(
@@ -369,6 +393,8 @@ export class EmptyStmt extends BaseStmt<NodeKind.EmptyStmt> {
 export class WithStmt extends BaseStmt<NodeKind.WithStmt> {
   constructor(readonly expr: Expr, readonly stmt: Stmt) {
     super(NodeKind.WithStmt, arguments);
+    this.ensure(expr, "expr", ["Expr"]);
+    this.ensure(stmt, "stmt", ["Stmt"]);
   }
 
   public clone(): this {
