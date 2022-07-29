@@ -2,7 +2,10 @@ import type {
   BindingElem,
   ClassMember,
   Decl,
+  GetAccessorDecl,
+  MethodDecl,
   ParameterDecl,
+  SetAccessorDecl,
   VariableDecl,
 } from "./declaration";
 import {
@@ -40,6 +43,7 @@ export type Expr =
   | NullLiteralExpr
   | NumberLiteralExpr
   | ObjectLiteralExpr
+  | OmittedExpr
   | ParenthesizedExpr
   | PostfixUnaryExpr
   | PrivateIdentifier
@@ -52,6 +56,7 @@ export type Expr =
   | SpreadAssignExpr
   | SpreadElementExpr
   | StringLiteralExpr
+  | TaggedTemplateExpr
   | TemplateExpr
   | ThisExpr
   | TypeOfExpr
@@ -171,27 +176,25 @@ export class PrivateIdentifier extends BaseExpr<"PrivateIdentifier"> {
 }
 
 export class PropAccessExpr extends BaseExpr<"PropAccessExpr"> {
-  readonly name: Identifier | PrivateIdentifier;
   constructor(
     readonly expr: Expr,
-    name: string | Identifier | PrivateIdentifier,
-    readonly type?: string
+    readonly name: Identifier | PrivateIdentifier,
+    readonly isOptional: boolean
   ) {
     super("PropAccessExpr", arguments);
-    this.name = typeof name === "string" ? new Identifier(name) : name;
   }
 
   public clone(): this {
-    return new PropAccessExpr(this.expr.clone(), this.name) as this;
+    return new PropAccessExpr(
+      this.expr.clone(),
+      this.name.clone(),
+      this.isOptional
+    ) as this;
   }
 }
 
 export class ElementAccessExpr extends BaseExpr<"ElementAccessExpr"> {
-  constructor(
-    readonly expr: Expr,
-    readonly element: Expr,
-    readonly type?: string
-  ) {
+  constructor(readonly expr: Expr, readonly element: Expr) {
     super("ElementAccessExpr", arguments);
   }
 
@@ -392,7 +395,12 @@ export class ArrayLiteralExpr extends BaseExpr<"ArrayLiteralExpr"> {
   }
 }
 
-export type ObjectElementExpr = PropAssignExpr | SpreadAssignExpr;
+export type ObjectElementExpr =
+  | GetAccessorDecl
+  | MethodDecl
+  | PropAssignExpr
+  | SetAccessorDecl
+  | SpreadAssignExpr;
 
 export class ObjectLiteralExpr extends BaseExpr<"ObjectLiteralExpr"> {
   constructor(readonly properties: ObjectElementExpr[]) {
@@ -404,6 +412,7 @@ export class ObjectLiteralExpr extends BaseExpr<"ObjectLiteralExpr"> {
       this.properties.map((prop) => prop.clone())
     ) as this;
   }
+
   public getProperty(name: string) {
     return this.properties.find((prop) => {
       if (isPropAssignExpr(prop)) {
@@ -492,6 +501,19 @@ export class TemplateExpr extends BaseExpr<"TemplateExpr"> {
 
   public clone(): this {
     return new TemplateExpr(this.exprs.map((expr) => expr.clone())) as this;
+  }
+}
+
+export class TaggedTemplateExpr extends BaseExpr<"TaggedTemplateExpr"> {
+  constructor(readonly tag: Expr, readonly exprs: Expr[]) {
+    super("TaggedTemplateExpr", arguments);
+  }
+
+  public clone(): this {
+    return new TaggedTemplateExpr(
+      this.tag.clone(),
+      this.exprs.map((expr) => expr.clone())
+    ) as this;
   }
 }
 
@@ -638,6 +660,15 @@ export class ParenthesizedExpr extends BaseExpr<"ParenthesizedExpr"> {
       return this.expr.unwrap();
     }
     return this.expr;
+  }
+}
+
+export class OmittedExpr extends BaseExpr<"OmittedExpr"> {
+  constructor() {
+    super("OmittedExpr", arguments);
+  }
+  public clone(): this {
+    return new OmittedExpr() as this;
   }
 }
 

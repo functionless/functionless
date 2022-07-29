@@ -29,10 +29,13 @@ import {
   isErr,
   isFunctionDecl,
   isFunctionExpr,
+  isGetAccessorDecl,
   isIdentifier,
+  isMethodDecl,
   isNumberLiteralExpr,
   isObjectLiteralExpr,
   isPropAssignExpr,
+  isSetAccessorDecl,
   isSpreadAssignExpr,
 } from "./guards";
 import {
@@ -995,11 +998,29 @@ function retrieveMachineArgs(call: CallExpr) {
     );
   }
 
+  const [name, traceHeader, input] = ["name", "traceHeader", "input"].map(
+    (name) => {
+      const prop = arg.getProperty(name);
+      if (
+        prop &&
+        (isGetAccessorDecl(prop) ||
+          isSetAccessorDecl(prop) ||
+          isMethodDecl(prop))
+      ) {
+        throw new SynthError(
+          ErrorCodes.Unsupported_Feature,
+          `${prop.kind} is not suppported by Step Functions`
+        );
+      }
+      return prop?.expr;
+    }
+  );
+
   // we know the keys cannot be computed, so it is safe to use getProperty
   return {
-    name: arg.getProperty("name")?.expr,
-    traceHeader: arg.getProperty("traceHeader")?.expr,
-    input: arg.getProperty("input")?.expr,
+    name,
+    traceHeader,
+    input,
   };
 }
 

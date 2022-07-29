@@ -1,9 +1,13 @@
 import { ErrorCodes, SynthError } from "./error-code";
 import {
+  ArrowFunctionExpr,
+  ClassExpr,
   ComputedPropertyNameExpr,
   Expr,
   FunctionExpr,
   Identifier,
+  ObjectLiteralExpr,
+  OmittedExpr,
   PropName,
   StringLiteralExpr,
 } from "./expression";
@@ -59,8 +63,10 @@ export class ClassDecl<C extends AnyClass = AnyClass> extends BaseDecl<
 export type ClassMember =
   | ClassStaticBlockDecl
   | ConstructorDecl
+  | GetAccessorDecl
   | MethodDecl
-  | PropDecl;
+  | PropDecl
+  | SetAccessorDecl;
 
 export class ClassStaticBlockDecl extends BaseDecl<"ClassStaticBlockDecl"> {
   constructor(readonly block: BlockStmt) {
@@ -104,11 +110,50 @@ export class MethodDecl extends BaseDecl<"MethodDecl"> {
 }
 
 export class PropDecl extends BaseDecl<"PropDecl"> {
-  constructor(readonly name: PropName, readonly initializer?: Expr) {
+  constructor(
+    readonly name: PropName,
+    readonly isStatic: boolean,
+    readonly initializer?: Expr
+  ) {
     super("PropDecl", arguments);
   }
   public clone(): this {
-    return new PropDecl(this.name.clone(), this.initializer?.clone()) as this;
+    return new PropDecl(
+      this.name.clone(),
+      this.isStatic,
+      this.initializer?.clone()
+    ) as this;
+  }
+}
+
+export class GetAccessorDecl extends BaseDecl<
+  "GetAccessorDecl",
+  ClassDecl | ClassExpr | ObjectLiteralExpr
+> {
+  constructor(readonly name: PropName, readonly body: BlockStmt) {
+    super("GetAccessorDecl", arguments);
+  }
+  public clone(): this {
+    return new GetAccessorDecl(this.name.clone(), this.body.clone()) as this;
+  }
+}
+export class SetAccessorDecl extends BaseDecl<
+  "SetAccessorDecl",
+  ClassDecl | ClassExpr | ObjectLiteralExpr
+> {
+  constructor(
+    readonly name: PropName,
+    readonly parameter: ParameterDecl,
+    readonly body: BlockStmt
+  ) {
+    super("SetAccessorDecl", arguments);
+  }
+  public clone(): this {
+    return new SetAccessorDecl(
+      this.name.clone(),
+      this.parameter.clone(),
+      this.body.clone()
+    ) as this;
   }
 }
 
@@ -142,7 +187,7 @@ export type BindingName = Identifier | BindingPattern;
 
 export class ParameterDecl extends BaseDecl<
   "ParameterDecl",
-  FunctionDecl | FunctionExpr
+  ArrowFunctionExpr | FunctionDecl | FunctionExpr | SetAccessorDecl
 > {
   constructor(readonly name: BindingName, readonly initializer?: Expr) {
     super("ParameterDecl", arguments);
@@ -215,7 +260,7 @@ export type BindingPattern = ObjectBinding | ArrayBinding;
  */
 export class BindingElem extends BaseDecl<"BindingElem", BindingPattern> {
   constructor(
-    readonly name: Identifier | BindingPattern,
+    readonly name: BindingName,
     readonly rest: boolean,
     readonly propertyName?:
       | Identifier
@@ -292,7 +337,7 @@ export class ObjectBinding extends BaseNode<"ObjectBinding", VariableDecl> {
 export class ArrayBinding extends BaseNode<"ArrayBinding", VariableDecl> {
   readonly nodeKind: "Node" = "Node";
 
-  constructor(readonly bindings: (BindingElem | undefined)[]) {
+  constructor(readonly bindings: (BindingElem | OmittedExpr)[]) {
     super("ArrayBinding", arguments);
   }
 

@@ -495,28 +495,52 @@ function synthesizeFunctions(api: appsync.GraphqlApi, decl: FunctionDecl) {
           );
 
           const rightClassName = new PropAccessExpr(
-            new PropAccessExpr(updatedNode.right, "class"),
-            "name"
+            new PropAccessExpr(
+              updatedNode.right,
+              new Identifier("class"),
+              false
+            ),
+            new Identifier("name"),
+            false
           );
 
           return new ConditionExpr(
             new BinaryExpr(
-              new CallExpr(new PropAccessExpr(rightClassName, "startsWith"), [
-                new Argument(new StringLiteralExpr("[L")),
-              ]),
+              new CallExpr(
+                new PropAccessExpr(
+                  rightClassName,
+                  new Identifier("startsWith"),
+                  false
+                ),
+                [new Argument(new StringLiteralExpr("[L"))]
+              ),
               "||",
-              new CallExpr(new PropAccessExpr(rightClassName, "contains"), [
-                new Argument(new StringLiteralExpr("ArrayList")),
-              ])
+              new CallExpr(
+                new PropAccessExpr(
+                  rightClassName,
+                  new Identifier("contains"),
+                  false
+                ),
+                [new Argument(new StringLiteralExpr("ArrayList"))]
+              )
             ),
             new BinaryExpr(
-              new PropAccessExpr(updatedNode.right, "length"),
+              new PropAccessExpr(
+                updatedNode.right,
+                new Identifier("length"),
+                false
+              ),
               ">=",
               updatedNode.left
             ),
-            new CallExpr(new PropAccessExpr(updatedNode.right, "containsKey"), [
-              new Argument(updatedNode.left),
-            ])
+            new CallExpr(
+              new PropAccessExpr(
+                updatedNode.right,
+                new Identifier("containsKey"),
+                false
+              ),
+              [new Argument(updatedNode.left)]
+            )
           );
         }
       }

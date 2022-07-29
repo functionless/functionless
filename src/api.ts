@@ -37,6 +37,7 @@ import {
   isThisExpr,
   isVariableDecl,
   isParenthesizedExpr,
+  isSpreadAssignExpr,
 } from "./guards";
 import { Integration, IntegrationImpl, isIntegration } from "./integration";
 import { Stmt } from "./statement";
@@ -800,7 +801,7 @@ export class APIGatewayVTL extends VTL {
                 isIdentifier(prop.name) ? prop.name.name : prop.name.value
               }":${this.exprToJson(prop.expr)}`;
             }
-          } else {
+          } else if (isSpreadAssignExpr(prop)) {
             const key = context.newLocalVarName();
             const map = this.eval(prop.expr);
             return `#foreach(${key} in ${map}.keySet())"${key}":${this.json(

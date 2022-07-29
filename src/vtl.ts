@@ -1,5 +1,6 @@
 import { assertNever, assertNodeKind } from "./assert";
 import {
+  BindingElem,
   BindingPattern,
   Decl,
   ParameterDecl,
@@ -49,6 +50,7 @@ import {
   isForStmt,
   isFunctionDecl,
   isFunctionExpr,
+  isGetAccessorDecl,
   isIdentifier,
   isIfStmt,
   isImportKeyword,
@@ -58,6 +60,7 @@ import {
   isNullLiteralExpr,
   isNumberLiteralExpr,
   isObjectLiteralExpr,
+  isOmittedExpr,
   isParameterDecl,
   isParenthesizedExpr,
   isPostfixUnaryExpr,
@@ -70,12 +73,14 @@ import {
   isReferenceExpr,
   isRegexExpr,
   isReturnStmt,
+  isSetAccessorDecl,
   isSpreadAssignExpr,
   isSpreadElementExpr,
   isStmt,
   isStringLiteralExpr,
   isSuperKeyword,
   isSwitchStmt,
+  isTaggedTemplateExpr,
   isTemplateExpr,
   isThisExpr,
   isThrowStmt,
@@ -580,7 +585,11 @@ export abstract class VTL {
       return `${this.eval(node.expr)}.${node.name.name}`;
     } else if (isElementAccessExpr(node)) {
       return `${this.eval(node.expr)}[${this.eval(node.element)}]`;
-    } else if (isNullLiteralExpr(node) || isUndefinedLiteralExpr(node)) {
+    } else if (
+      isNullLiteralExpr(node) ||
+      isUndefinedLiteralExpr(node) ||
+      isOmittedExpr(node)
+    ) {
       return "$null";
     } else if (isNumberLiteralExpr(node) || isBigIntExpr(node)) {
       return node.value.toString(10);
@@ -594,6 +603,15 @@ export abstract class VTL {
           this.put(obj, name, prop.expr);
         } else if (isSpreadAssignExpr(prop)) {
           this.putAll(obj, prop.expr);
+        } else if (
+          isGetAccessorDecl(prop) ||
+          isSetAccessorDecl(prop) ||
+          isMethodDecl(prop)
+        ) {
+          throw new SynthError(
+            ErrorCodes.Unsupported_Feature,
+            `${prop.kind} is not supported by VTL`
+          );
         } else {
           assertNever(prop);
         }
@@ -703,6 +721,7 @@ export abstract class VTL {
       isRegexExpr(node) ||
       isSuperKeyword(node) ||
       isSwitchStmt(node) ||
+      isTaggedTemplateExpr(node) ||
       isVoidExpr(node) ||
       isWithStmt(node) ||
       isYieldExpr(node)
@@ -764,7 +783,9 @@ export abstract class VTL {
       isClassStaticBlockDecl(decl) ||
       isConstructorDecl(decl) ||
       isFunctionDecl(decl) ||
-      isMethodDecl(decl)
+      isGetAccessorDecl(decl) ||
+      isMethodDecl(decl) ||
+      isSetAccessorDecl(decl)
     ) {
       throw new SynthError(
         ErrorCodes.Unexpected_Error,
@@ -866,13 +887,16 @@ export abstract class VTL {
    * const rest = b[1..]
    */
   private evaluateBindingPattern(pattern: BindingPattern, target: string) {
-    const rest = pattern.bindings.find((binding) => binding?.rest);
-    const properties = pattern.bindings.map((binding, i) => {
+    const rest = pattern.bindings.find(
+      (binding): binding is BindingElem =>
+        binding.as(isBindingElem)?.rest ?? false
+    ) as BindingElem | undefined;
+    const properties = pattern.bindings.flatMap((binding, i) => {
       /**
        * OmitElement for ArrayBinding, skip
        */
-      if (!binding || binding === rest) {
-        return;
+      if (isOmittedExpr(binding) || binding === rest) {
+        return [];
       }
 
       const accessor: string | undefined = isArrayBinding(pattern)
@@ -910,7 +934,7 @@ export abstract class VTL {
 
       this.evalDecl(binding, next);
 
-      return accessor;
+      return [accessor];
     });
 
     if (rest) {
@@ -926,12 +950,10 @@ export abstract class VTL {
         );
       } else {
         // compute an array of the properties bound from the object
-        const userProps = properties
-          .filter((p): p is string => !!p)
-          .map((p) =>
-            // strip off the accessor patterns
-            p.startsWith(".") ? p.slice(1) : p.slice(1, p.length - 1)
-          );
+        const userProps = properties.map((p) =>
+          // strip off the accessor patterns
+          p.startsWith(".") ? p.slice(1) : p.slice(1, p.length - 1)
+        );
         // create a new object
         this.set(restTemp, `{}`);
         // create a new variable to use in the loop

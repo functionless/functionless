@@ -83,14 +83,11 @@ export abstract class BaseNode<
     }
   }
 
-  public as<K extends FunctionlessNode["kind"]>(
-    kind: K
-  ): Extract<this, { kind: K }> {
-    // @ts-ignore
-    if (this.kind !== kind) {
-      throw new Error(`expected to be a ${kind} but was ${this.kind}`);
+  public as<T>(guard: (a: any) => a is T): T | undefined {
+    if (guard(this)) {
+      return this;
     }
-    return this as any;
+    return undefined;
   }
 
   public is<N extends this>(is: (node: this) => node is N): this is N {

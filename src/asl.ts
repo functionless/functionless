@@ -102,6 +102,10 @@ import {
   isParenthesizedExpr,
   isImportKeyword,
   isBindingPattern,
+  isSetAccessorDecl,
+  isGetAccessorDecl,
+  isTaggedTemplateExpr,
+  isOmittedExpr,
 } from "./guards";
 import {
   Integration,
@@ -1947,7 +1951,15 @@ export class ASL {
     } else if (isArrayLiteralExpr(expr)) {
       return this.evalContext(expr, (evalExpr) => {
         // evaluate each item
-        const items = expr.items.map(evalExpr);
+        const items = expr.items.map((item) => {
+          if (isOmittedExpr(item)) {
+            throw new SynthError(
+              ErrorCodes.Step_Functions_does_not_support_undefined,
+              `omitted expressions in an array create an undefined value which cannot be represented in Step Functions`
+            );
+          }
+          return evalExpr(item);
+        });
         const heapLocation = this.newHeapVariable();
 
         const subStatesMap = {
@@ -2762,62 +2774,37 @@ export class ASL {
         const ref = expr.lookup();
         if (ref === undefined) {
           throw new Error(`unresolved identifier: ${expr.name}`);
-        }
-        return resolveRef(ref);
-        function resolveRef(ref: Decl): string {
-          if (isParameterDecl(ref)) {
-            if (ref.parent !== predicate) {
-              throw new Error(
-                "cannot reference a ParameterDecl other than those in .filter((item, index) =>) in a JSONPath filter expression"
-              );
-            }
-            if (ref === ref.parent.parameters[0]) {
-              return "@";
-            } else if (ref === ref.parent.parameters[1]) {
-              throw new Error(
-                "the 'index' parameter in a .filter expression is not supported"
-              );
-            } else {
-              throw new Error(
-                "the 'array' parameter in a .filter expression is not supported"
-              );
-            }
-          } else if (isBindingElem(ref)) {
-            if (isArrayBinding(ref.parent)) {
-              return `${resolveRef(
-                ref.parent.parent
-              )}[${ref.parent.bindings.indexOf(ref)}]`;
-            }
-
-            const propName = ref.propertyName
-              ? isIdentifier(ref.propertyName)
-                ? ref.propertyName.name
-                : isStringLiteralExpr(ref.propertyName)
-                ? ref.propertyName.value
-                : evalToConstant(ref.propertyName)?.constant
-              : isIdentifier(ref.name)
-              ? ref.name.name
-              : undefined;
-
-            if (!propName) {
-              throw new SynthError(
-                ErrorCodes.StepFunctions_property_names_must_be_constant
-              );
-            }
-
-            return `${resolveRef(ref.parent.parent)}[${propName}]`;
-          } else if (
-            isVariableDecl(ref) ||
-            isFunctionDecl(ref) ||
-            isClassDecl(ref) ||
-            isClassMember(ref)
-          ) {
+        } else if (isParameterDecl(ref)) {
+          if (ref.parent !== predicate) {
             throw new Error(
-              `cannot reference a ${ref.kind} within a JSONPath .filter expression`
+              "cannot reference a ParameterDecl other than those in .filter((item, index) =>) in a JSONPath filter expression"
             );
           }
-          assertNever(ref);
+          if (ref === ref.parent.parameters[0]) {
+            return "@";
+          } else if (ref === ref.parent.parameters[1]) {
+            throw new Error(
+              "the 'index' parameter in a .filter expression is not supported"
+            );
+          } else {
+            throw new Error(
+              "the 'array' parameter in a .filter expression is not supported"
+            );
+          }
+        } else if (
+          isVariableDecl(ref) ||
+          isBindingElem(ref) ||
+          isFunctionDecl(ref) ||
+          isClassDecl(ref) ||
+          isClassMember(ref) ||
+          isSetAccessorDecl(ref) ||
+          isGetAccessorDecl(ref)
+        ) {
+          throw new Error(
+            `cannot reference a ${ref.kind} within a JSONPath .filter expression`
+          );
         }
+        assertNever(ref);
       } else if (isStringLiteralExpr(expr)) {
         return `'${expr.value.replace(/'/g, "\\'")}'`;
       } else if (
@@ -3021,7 +3008,9 @@ export class ASL {
         value
       );
     } else {
-      const rest = pattern.bindings.find((binding) => binding?.rest);
+      const rest = pattern.bindings.find(
+        (binding) => isBindingElem(binding) && binding?.rest
+      ) as BindingElem | undefined;
       if (rest && isObjectBinding(pattern)) {
         // TODO: validator
         throw new SynthError(
@@ -3031,7 +3020,7 @@ export class ASL {
 
       // run each of the assignments as a sequence of states, they should not rely on each other.
       const assignments = pattern.bindings.map((binding, i) => {
-        if (!binding || binding.rest) {
+        if (isOmittedExpr(binding) || binding.rest) {
           return undefined;
         }
 
@@ -4694,15 +4683,17 @@ function toStateName(node: FunctionlessNode): string {
       isConstructorDecl(node) ||
       isDebuggerStmt(node) ||
       isDefaultClause(node) ||
+      isGetAccessorDecl(node) ||
+      isImportKeyword(node) ||
       isLabelledStmt(node) ||
       isMethodDecl(node) ||
       isPropDecl(node) ||
+      isSetAccessorDecl(node) ||
+      isSuperKeyword(node) ||
       isSuperKeyword(node) ||
       isSwitchStmt(node) ||
       isWithStmt(node) ||
-      isYieldExpr(node) ||
-      isSuperKeyword(node) ||
-      isImportKeyword(node)
+      isYieldExpr(node)
     ) {
       throw new SynthError(
         ErrorCodes.Unsupported_Feature,
@@ -4724,7 +4715,9 @@ function exprToString(
   } else if (isArgument(expr)) {
     return exprToString(expr.expr);
   } else if (isArrayLiteralExpr(expr)) {
-    return `[${expr.items.map(exprToString).join(", ")}]`;
+    return `[${expr.items
+      .map((item) => (item ? exprToString(item) : "null"))
+      .join(", ")}]`;
   } else if (isBigIntExpr(expr)) {
     return expr.value.toString(10);
   } else if (isBinaryExpr(expr)) {
@@ -4757,7 +4750,22 @@ function exprToString(
   } else if (isNumberLiteralExpr(expr)) {
     return `${expr.value}`;
   } else if (isObjectLiteralExpr(expr)) {
-    return `{${expr.properties.map(exprToString).join(", ")}}`;
+    return `{${expr.properties
+      .map((prop) => {
+        if (
+          isSetAccessorDecl(prop) ||
+          isGetAccessorDecl(prop) ||
+          isMethodDecl(prop)
+        ) {
+          throw new SynthError(
+            ErrorCodes.Unsupported_Feature,
+            `${prop.kind} is not supported by Step Functions`
+          );
+        }
+
+        return exprToString(prop);
+      })
+      .join(", ")}}`;
   } else if (isPropAccessExpr(expr)) {
     return `${exprToString(expr.expr)}.${expr.name.name}`;
   } else if (isPropAssignExpr(expr)) {
@@ -4833,6 +4841,13 @@ function exprToString(
     }`;
   } else if (isParameterDecl(expr)) {
     return exprToString(expr.name);
+  } else if (isTaggedTemplateExpr(expr)) {
+    throw new SynthError(
+      ErrorCodes.Unsupported_Feature,
+      `${expr.kind} is not supported by Step Functions`
+    );
+  } else if (isOmittedExpr(expr)) {
+    return "undefined";
   } else {
     return assertNever(expr);
   }

@@ -21,12 +21,15 @@ import {
   isBindingPattern,
   isComputedPropertyNameExpr,
   isElementAccessExpr,
+  isGetAccessorDecl,
   isIdentifier,
+  isMethodDecl,
   isObjectLiteralExpr,
   isParenthesizedExpr,
   isPropAccessExpr,
   isPropAssignExpr,
   isReturnStmt,
+  isSetAccessorDecl,
   isSpreadElementExpr,
   isStringLiteralExpr,
   isTemplateExpr,
@@ -180,7 +183,7 @@ export const flattenExpression = (expr: Expr, scope: EventScope): Expr => {
       throw new Error("Array access must be a number.");
     }
     return typeof key === "string"
-      ? new PropAccessExpr(parent, key)
+      ? new PropAccessExpr(parent, new Identifier(key), false)
       : new ElementAccessExpr(parent, new NumberLiteralExpr(key));
   } else if (isComputedPropertyNameExpr(expr)) {
     return flattenExpression(expr.expr, scope);
@@ -222,6 +225,12 @@ export const flattenExpression = (expr: Expr, scope: EventScope): Expr => {
             ),
           ];
         } else {
+          if (isSetAccessorDecl(e) || isGetAccessorDecl(e) || isMethodDecl(e)) {
+            throw new SynthError(
+              ErrorCodes.Unsupported_Feature,
+              `${e.kind} is not supported by Event Bridge`
+            );
+          }
           const flattened = flattenExpression(e.expr, scope);
           if (isObjectLiteralExpr(flattened)) {
             const spreadProps = flattened.properties.filter(isPropAssignExpr);

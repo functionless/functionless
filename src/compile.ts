@@ -462,6 +462,11 @@ export function compile(
                   newExpr("Argument", [toExpr(arg, scope)])
                 ) ?? []
               ),
+              ts.isPropertyAccessExpression(node.parent) &&
+              ts.isCallExpression(node) &&
+              node.questionDotToken
+                ? ts.factory.createTrue()
+                : ts.factory.createFalse(),
             ]
           );
 
@@ -529,13 +534,12 @@ export function compile(
               );
             }
           }
-          const type = checker.getTypeAtLocation(node.name);
           return newExpr("PropAccessExpr", [
             toExpr(node.expression, scope),
-            ts.factory.createStringLiteral(node.name.text),
-            type
-              ? ts.factory.createStringLiteral(checker.typeToString(type))
-              : ts.factory.createIdentifier("undefined"),
+            toExpr(node.name, scope),
+            node.questionDotToken
+              ? ts.factory.createTrue()
+              : ts.factory.createFalse(),
           ]);
         } else if (ts.isElementAccessExpression(node)) {
           const type = checker.getTypeAtLocation(node.argumentExpression);
@@ -581,11 +585,7 @@ export function compile(
         } else if (ts.isArrayBindingPattern(node)) {
           return newExpr("ArrayBinding", [
             ts.factory.createArrayLiteralExpression(
-              node.elements.map((e) =>
-                ts.isOmittedExpression(e)
-                  ? ts.factory.createIdentifier("undefined")
-                  : toExpr(e, scope)
-              )
+              node.elements.map((e) => toExpr(e, scope))
             ),
           ]);
         } else if (ts.isBindingElement(node)) {
@@ -894,6 +894,8 @@ export function compile(
               ? ts.factory.createTrue()
               : ts.factory.createFalse(),
           ]);
+        } else if (ts.isOmittedExpression(node)) {
+          return newExpr("OmittedExpr", []);
         }
 
         throw new Error(

@@ -12,6 +12,8 @@ import {
   ConstructorDecl,
   VariableDecl,
   VariableDeclList,
+  GetAccessorDecl,
+  SetAccessorDecl,
 } from "./declaration";
 import { Err } from "./error";
 import { ErrorCodes, SynthError } from "./error-code";
@@ -46,6 +48,7 @@ import {
   SpreadAssignExpr,
   SpreadElementExpr,
   StringLiteralExpr,
+  TaggedTemplateExpr,
   TemplateExpr,
   TypeOfExpr,
   UnaryExpr,
@@ -135,6 +138,10 @@ import {
   isDeleteExpr,
   isParenthesizedExpr,
   isImportKeyword,
+  isGetAccessorDecl,
+  isSetAccessorDecl,
+  isTaggedTemplateExpr,
+  isOmittedExpr,
 } from "./guards";
 import { FunctionlessNode } from "./node";
 
@@ -451,7 +458,7 @@ export function visitEachChild<T extends FunctionlessNode>(
       isExpr,
       "a PropAccessExpr's expr property must be an Expr node type"
     );
-    return new PropAccessExpr(expr, node.name) as T;
+    return new PropAccessExpr(expr, node.name, node.isOptional) as T;
   } else if (isPropAssignExpr(node)) {
     const name = visitor(node.name);
     const expr = visitor(node.expr);
@@ -480,7 +487,7 @@ export function visitEachChild<T extends FunctionlessNode>(
       ensure(initializer, isExpr, "A PropDecl's initializer must be an Expr");
     }
 
-    return new PropDecl(name, initializer) as T;
+    return new PropDecl(name, node.isStatic, initializer) as T;
   } else if (isReferenceExpr(node)) {
     return new ReferenceExpr(node.name, node.ref) as T;
   } else if (isReturnStmt(node)) {
@@ -503,6 +510,20 @@ export function visitEachChild<T extends FunctionlessNode>(
     return new StringLiteralExpr(node.value) as T;
   } else if (isSuperKeyword(node)) {
     return node.clone() as T;
+  } else if (isTaggedTemplateExpr(node)) {
+    const tag = visitor(node.tag);
+    ensure(tag, isExpr, "A TaggedTemplateExpr's tag must be an Expr");
+
+    return new TaggedTemplateExpr(
+      tag,
+      node.exprs.flatMap((expr) =>
+        ensureSingleOrArray(
+          visitor(expr),
+          isExpr,
+          "a TaggedTemplateExpr's expr property must only contain Expr node types"
+        )
+      )
+    ) as T;
   } else if (isTemplateExpr(node)) {
     return new TemplateExpr(
       node.exprs.flatMap((expr) =>
@@ -606,7 +627,12 @@ export function visitEachChild<T extends FunctionlessNode>(
     property &&
       ensure(
         property,
-        anyOf(isComputedPropertyNameExpr, isIdentifier, isStringLiteralExpr),
+        anyOf(
+          isComputedPropertyNameExpr,
+          isIdentifier,
+          isStringLiteralExpr,
+          isNumberLiteralExpr
+        ),
         "A BindingElm's propertyName property must be an Identifier, Computed, String, or undefined"
       );
     const initializer = node.initializer
@@ -625,16 +651,13 @@ export function visitEachChild<T extends FunctionlessNode>(
       initializer as BindingElem["initializer"]
     ) as T;
   } else if (isBindingPattern(node)) {
-    const bindings = node.bindings.map((b) => {
-      const binding = b ? visitor(b) : undefined;
-      binding &&
-        ensure(
-          binding,
-          isBindingElem,
-          "Bindings property on BindingPatterns must be a BindingElm or undefined"
-        );
-      return binding;
-    });
+    const bindings = node.bindings.flatMap((b) =>
+      ensureSingleOrArray(
+        visitor(b),
+        anyOf(isBindingElem, isOmittedExpr),
+        "Bindings property on BindingPatterns must be a BindingElm or OmittedExpr"
+      )
+    );
 
     if (isObjectBinding(node)) {
       return new ObjectBinding(bindings as ObjectBinding["bindings"]) as T;
@@ -726,6 +749,30 @@ export function visitEachChild<T extends FunctionlessNode>(
     ensure(expr, isExpr, "ParenthesizedExpr's expr must be an Expr");
     return new ParenthesizedExpr(expr) as T;
   } else if (isImportKeyword(node)) {
+    return node.clone() as T;
+  } else if (isGetAccessorDecl(node)) {
+    const name = visitor(node.name);
+    const body = visitor(node.body);
+
+    ensure(name, isPropName, `GetAccessorDecl's name must be a PropName`);
+    ensure(body, isBlockStmt, "GetAccessorDecl's body must be a BlockStmt");
+
+    return new GetAccessorDecl(name, body) as T;
+  } else if (isSetAccessorDecl(node)) {
+    const name = visitor(node.name);
+    const parameter = visitor(node.parameter);
+    const body = visitor(node.body);
+
+    ensure(name, isPropName, `SetAccessorDecl's name must be a PropName`);
+    ensure(
+      parameter,
+      isParameterDecl,
+      `SetAccessorDecl's parameter must be a ParameterDecl`
+    );
+    ensure(body, isBlockStmt, "SetAccessorDecl's body must be a BlockStmt");
+
+    return new SetAccessorDecl(name, parameter, body) as T;
+  } else if (isOmittedExpr(node)) {
     return node.clone() as T;
   }
   return assertNever(node);
