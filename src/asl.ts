@@ -103,6 +103,7 @@ import {
   isSetAccessorDecl,
   isGetAccessorDecl,
   isTaggedTemplateExpr,
+  isOmittedExpr,
 } from "./guards";
 import {
   Integration,
@@ -1946,7 +1947,15 @@ export class ASL {
     } else if (isArrayLiteralExpr(expr)) {
       return this.evalContext(expr, (evalExpr) => {
         // evaluate each item
-        const items = expr.items.map(evalExpr);
+        const items = expr.items.map((item) => {
+          if (isOmittedExpr(item)) {
+            throw new SynthError(
+              ErrorCodes.Step_Functions_does_not_support_undefined,
+              `omitted expressions in an array create an undefined value which cannot be represented in Step Functions`
+            );
+          }
+          return evalExpr(item);
+        });
         const heapLocation = this.newHeapVariable();
 
         const subStatesMap = {
@@ -4430,7 +4439,9 @@ function exprToString(
   } else if (isArgument(expr)) {
     return exprToString(expr.expr);
   } else if (isArrayLiteralExpr(expr)) {
-    return `[${expr.items.map(exprToString).join(", ")}]`;
+    return `[${expr.items
+      .map((item) => (item ? exprToString(item) : "null"))
+      .join(", ")}]`;
   } else if (isBigIntExpr(expr)) {
     return expr.value.toString(10);
   } else if (isBinaryExpr(expr)) {
@@ -4559,6 +4570,8 @@ function exprToString(
       ErrorCodes.Unsupported_Feature,
       `${expr.kind} is not supported by Step Functions`
     );
+  } else if (isOmittedExpr(expr)) {
+    return "undefined";
   } else {
     return assertNever(expr);
   }

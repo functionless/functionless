@@ -43,6 +43,7 @@ export type Expr =
   | NullLiteralExpr
   | NumberLiteralExpr
   | ObjectLiteralExpr
+  | OmittedExpr
   | ParenthesizedExpr
   | PostfixUnaryExpr
   | PrivateIdentifier
@@ -659,6 +660,15 @@ export class ParenthesizedExpr extends BaseExpr<"ParenthesizedExpr"> {
       return this.expr.unwrap();
     }
     return this.expr;
+  }
+}
+
+export class OmittedExpr extends BaseExpr<"OmittedExpr"> {
+  constructor() {
+    super("OmittedExpr", arguments);
+  }
+  public clone(): this {
+    return new OmittedExpr() as this;
   }
 }
 

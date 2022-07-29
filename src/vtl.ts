@@ -53,6 +53,7 @@ import {
   isNullLiteralExpr,
   isNumberLiteralExpr,
   isObjectLiteralExpr,
+  isOmittedExpr,
   isParameterDecl,
   isParenthesizedExpr,
   isPostfixUnaryExpr,
@@ -576,7 +577,11 @@ export abstract class VTL {
       return `${this.eval(node.expr)}.${node.name.name}`;
     } else if (isElementAccessExpr(node)) {
       return `${this.eval(node.expr)}[${this.eval(node.element)}]`;
-    } else if (isNullLiteralExpr(node) || isUndefinedLiteralExpr(node)) {
+    } else if (
+      isNullLiteralExpr(node) ||
+      isUndefinedLiteralExpr(node) ||
+      isOmittedExpr(node)
+    ) {
       return "$null";
     } else if (isNumberLiteralExpr(node) || isBigIntExpr(node)) {
       return node.value.toString(10);

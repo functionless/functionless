@@ -585,11 +585,7 @@ export function compile(
         } else if (ts.isArrayBindingPattern(node)) {
           return newExpr("ArrayBinding", [
             ts.factory.createArrayLiteralExpression(
-              node.elements.map((e) =>
-                ts.isOmittedExpression(e)
-                  ? ts.factory.createIdentifier("undefined")
-                  : toExpr(e, scope)
-              )
+              node.elements.map((e) => toExpr(e, scope))
             ),
           ]);
         } else if (ts.isBindingElement(node)) {
@@ -898,6 +894,8 @@ export function compile(
               ? ts.factory.createTrue()
               : ts.factory.createFalse(),
           ]);
+        } else if (ts.isOmittedExpression(node)) {
+          return newExpr("OmittedExpr", []);
         }
 
         throw new Error(

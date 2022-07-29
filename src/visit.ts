@@ -141,6 +141,7 @@ import {
   isGetAccessorDecl,
   isSetAccessorDecl,
   isTaggedTemplateExpr,
+  isOmittedExpr,
 } from "./guards";
 import { FunctionlessNode } from "./node";
 
@@ -769,6 +770,8 @@ export function visitEachChild<T extends FunctionlessNode>(
     ensure(body, isBlockStmt, "SetAccessorDecl's body must be a BlockStmt");
 
     return new SetAccessorDecl(name, parameter, body) as T;
+  } else if (isOmittedExpr(node)) {
+    return node.clone() as T;
   }
   return assertNever(node);
 }

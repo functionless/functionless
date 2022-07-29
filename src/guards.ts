@@ -33,6 +33,7 @@ export const isNewExpr = typeGuard("NewExpr");
 export const isNullLiteralExpr = typeGuard("NullLiteralExpr");
 export const isNumberLiteralExpr = typeGuard("NumberLiteralExpr");
 export const isObjectLiteralExpr = typeGuard("ObjectLiteralExpr");
+export const isOmittedExpr = typeGuard("OmittedExpr");
 export const isParenthesizedExpr = typeGuard("ParenthesizedExpr");
 export const isPostfixUnaryExpr = typeGuard("PostfixUnaryExpr");
 export const isPrivateIdentifier = typeGuard("PrivateIdentifier");
