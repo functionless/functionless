@@ -943,6 +943,11 @@ export abstract class VTL {
       // weird, right?
       if (isIdentifier(rest.name)) {
         this.set(this.eval(rest.name), restTemp);
+      } else if (isReferenceExpr(rest.name)) {
+        throw new SynthError(
+          ErrorCodes.Unexpected_Error,
+          `found ReferenceExpr in BindingElem`
+        );
       } else {
         this.evaluateBindingPattern(rest.name, restTemp);
       }

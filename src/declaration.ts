@@ -8,6 +8,7 @@ import {
   ObjectLiteralExpr,
   OmittedExpr,
   PropName,
+  ReferenceExpr,
 } from "./expression";
 import { isErr, isFunctionDecl } from "./guards";
 import { Integration } from "./integration";
@@ -206,10 +207,14 @@ export namespace BindingPattern {
   export const Kinds = [NodeKind.ObjectBinding, NodeKind.ArrayBinding];
 }
 
-export type BindingName = Identifier | BindingPattern;
+export type BindingName = Identifier | BindingPattern | ReferenceExpr;
 
 export namespace BindingName {
-  export const Kinds = [NodeKind.Identifier, ...BindingPattern.Kinds];
+  export const Kinds = [
+    NodeKind.Identifier,
+    NodeKind.ReferenceExpr,
+    ...BindingPattern.Kinds,
+  ];
 }
 
 /**
