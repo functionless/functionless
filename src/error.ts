@@ -7,10 +7,6 @@ export class Err extends BaseNode<NodeKind.Err> {
   constructor(readonly error: Error) {
     super(NodeKind.Err, arguments);
   }
-
-  public clone(): this {
-    return new Err(this.error) as this;
-  }
 }
 
 // to prevent the closure serializer from trying to import all of functionless.

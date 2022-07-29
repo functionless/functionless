@@ -2,8 +2,8 @@ import type { Decl } from "./declaration";
 import type { Expr } from "./expression";
 import { isDecl, isExpr, isNode, isStmt } from "./guards";
 import type { FunctionlessNode } from "./node";
+import type { NodeInstance } from "./node-ctor";
 import { getNodeKindName, NodeKind } from "./node-kind";
-import type { NodeInstance } from "./s-expression";
 import type { Stmt } from "./statement";
 
 export type Assertion =

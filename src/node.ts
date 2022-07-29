@@ -89,8 +89,6 @@ export abstract class BaseNode<
     return [this.kind, ...Array.from(this._arguments)];
   }
 
-  public abstract clone(): this;
-
   protected ensureArrayOf<Assert extends Assertion>(
     arr: any[],
     fieldName: string,

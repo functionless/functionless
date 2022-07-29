@@ -2,10 +2,12 @@ import { VariableDecl, VariableDeclList } from "./declaration";
 import { Expr, Identifier } from "./expression";
 import { isNode } from "./guards";
 import { FunctionlessNode } from "./node";
-import { getCtor } from "./s-expression";
+import { getCtor } from "./node-ctor";
 
 import { BlockStmt, Stmt, VariableStmt } from "./statement";
 import { DeterministicNameGenerator } from "./util";
+
+import "./node-clone";
 
 /**
  * Visits each child of a Node using the supplied visitor, possibly returning a new Node of the same kind in its place.

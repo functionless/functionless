@@ -16,5 +16,7 @@ export * from "./statement";
 export * from "./step-function";
 export * from "./table";
 export * from "./util";
+export * from "./node";
+export * from "./node-kind";
 // to prevent the closure serializer from trying to import all of functionless.
 export const deploymentOnlyModule = true;

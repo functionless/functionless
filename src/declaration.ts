@@ -9,7 +9,7 @@ import {
   OmittedExpr,
   PropName,
 } from "./expression";
-import { isBindingPattern, isErr, isFunctionDecl } from "./guards";
+import { isErr, isFunctionDecl } from "./guards";
 import { Integration } from "./integration";
 import { BaseNode, FunctionlessNode } from "./node";
 import { NodeKind } from "./node-kind";
@@ -52,13 +52,6 @@ export class ClassDecl<C extends AnyClass = AnyClass> extends BaseDecl<
     this.ensure(name, "name", ["string"]);
     this.ensureArrayOf(members, "members", ClassMember.Kinds);
   }
-  public clone(): this {
-    return new ClassDecl(
-      this.name,
-      this.heritage?.clone(),
-      this.members.map((m) => m.clone())
-    ) as this;
-  }
 }
 
 export type ClassMember =
@@ -85,10 +78,6 @@ export class ClassStaticBlockDecl extends BaseDecl<NodeKind.ClassStaticBlockDecl
     super(NodeKind.ClassStaticBlockDecl, arguments);
     this.ensure(block, "block", [NodeKind.BlockStmt]);
   }
-
-  public clone(): this {
-    return new ClassStaticBlockDecl(this.block.clone()) as this;
-  }
 }
 
 export class ConstructorDecl extends BaseDecl<NodeKind.ConstructorDecl> {
@@ -96,13 +85,6 @@ export class ConstructorDecl extends BaseDecl<NodeKind.ConstructorDecl> {
     super(NodeKind.ConstructorDecl, arguments);
     this.ensureArrayOf(parameters, "parameters", [NodeKind.ParameterDecl]);
     this.ensure(body, "body", [NodeKind.BlockStmt]);
-  }
-
-  public clone(): this {
-    return new ConstructorDecl(
-      this.parameters.map((p) => p.clone()),
-      this.body.clone()
-    ) as this;
   }
 }
 
@@ -117,14 +99,6 @@ export class MethodDecl extends BaseDecl<NodeKind.MethodDecl> {
     this.ensureArrayOf(parameters, "parameters", [NodeKind.ParameterDecl]);
     this.ensure(body, "body", [NodeKind.BlockStmt]);
   }
-
-  public clone(): this {
-    return new MethodDecl(
-      this.name.clone(),
-      this.parameters.map((p) => p.clone()),
-      this.body.clone()
-    ) as this;
-  }
 }
 
 export class PropDecl extends BaseDecl<NodeKind.PropDecl> {
@@ -138,13 +112,6 @@ export class PropDecl extends BaseDecl<NodeKind.PropDecl> {
     this.ensure(isStatic, "isStatic", ["boolean"]);
     this.ensure(initializer, "initializer", ["undefined", "Expr"]);
   }
-  public clone(): this {
-    return new PropDecl(
-      this.name.clone(),
-      this.isStatic,
-      this.initializer?.clone()
-    ) as this;
-  }
 }
 
 export class GetAccessorDecl extends BaseDecl<
@@ -155,9 +122,6 @@ export class GetAccessorDecl extends BaseDecl<
     super(NodeKind.GetAccessorDecl, arguments);
     this.ensure(name, "name", PropName.Kinds);
     this.ensure(body, "body", [NodeKind.BlockStmt]);
-  }
-  public clone(): this {
-    return new GetAccessorDecl(this.name.clone(), this.body.clone()) as this;
   }
 }
 export class SetAccessorDecl extends BaseDecl<
@@ -173,13 +137,6 @@ export class SetAccessorDecl extends BaseDecl<
     this.ensure(name, "name", PropName.Kinds);
     this.ensure(parameter, "parameter", [NodeKind.ParameterDecl]);
     this.ensure(body, "body", [NodeKind.BlockStmt]);
-  }
-  public clone(): this {
-    return new SetAccessorDecl(
-      this.name.clone(),
-      this.parameter.clone(),
-      this.body.clone()
-    ) as this;
   }
 }
 
@@ -200,14 +157,6 @@ export class FunctionDecl<
     this.ensureArrayOf(parameters, "parameters", [NodeKind.ParameterDecl]);
     this.ensure(body, "body", [NodeKind.BlockStmt]);
   }
-
-  public clone(): this {
-    return new FunctionDecl(
-      this.name,
-      this.parameters.map((param) => param.clone()),
-      this.body.clone()
-    ) as this;
-  }
 }
 
 export interface IntegrationInvocation {
@@ -222,10 +171,6 @@ export class ParameterDecl extends BaseDecl<
     super(NodeKind.ParameterDecl, arguments);
     this.ensure(name, "name", BindingName.Kinds);
     this.ensure(initializer, "initializer", ["undefined", "Expr"]);
-  }
-
-  public clone(): this {
-    return new ParameterDecl(this.name) as this;
   }
 }
 
@@ -315,15 +260,6 @@ export class BindingElem extends BaseDecl<
     this.ensure(propertyName, "propertyName", ["undefined", ...PropName.Kinds]);
     this.ensure(initializer, "initializer", ["undefined", "Expr"]);
   }
-
-  public clone(): this {
-    return new BindingElem(
-      this.name,
-      this.rest,
-      this.propertyName,
-      this.initializer
-    ) as this;
-  }
 }
 
 /**
@@ -356,10 +292,6 @@ export class ObjectBinding extends BaseNode<
   constructor(readonly bindings: BindingElem[]) {
     super(NodeKind.ObjectBinding, arguments);
     this.ensureArrayOf(bindings, "bindings", [NodeKind.BindingElem]);
-  }
-
-  public clone(): this {
-    return new ObjectBinding(this.bindings.map((b) => b.clone())) as this;
   }
 }
 
@@ -396,10 +328,6 @@ export class ArrayBinding extends BaseNode<
       NodeKind.OmittedExpr,
     ]);
   }
-
-  public clone(): this {
-    return new ArrayBinding(this.bindings.map((b) => b?.clone())) as this;
-  }
 }
 
 export type VariableDeclParent =
@@ -416,13 +344,6 @@ export class VariableDecl<
     this.ensure(name, "name", BindingName.Kinds);
     this.ensure(initializer, "initializer", ["undefined", "Expr"]);
   }
-
-  public clone(): this {
-    return new VariableDecl(
-      isBindingPattern(this.name) ? this.name.clone() : this.name,
-      this.initializer?.clone()
-    ) as this;
-  }
 }
 
 export type VariableDeclListParent = ForStmt | VariableStmt;
@@ -436,10 +357,6 @@ export class VariableDeclList extends BaseNode<
   constructor(readonly decls: VariableDecl[]) {
     super(NodeKind.VariableDeclList, arguments);
     this.ensureArrayOf(decls, "decls", [NodeKind.VariableDecl]);
-  }
-
-  public clone(): this {
-    return new VariableDeclList(this.decls.map((decl) => decl.clone())) as this;
   }
 }
 

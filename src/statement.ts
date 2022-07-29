@@ -251,14 +251,6 @@ export class TryStmt extends BaseStmt<NodeKind.TryStmt> {
       NodeKind.BlockStmt,
     ]);
   }
-
-  public clone(): this {
-    return new TryStmt(
-      this.tryBlock.clone(),
-      this.catchClause?.clone(),
-      this.finallyBlock?.clone()
-    ) as this;
-  }
 }
 
 export class CatchClause extends BaseStmt<NodeKind.CatchClause, TryStmt> {
@@ -273,23 +265,12 @@ export class CatchClause extends BaseStmt<NodeKind.CatchClause, TryStmt> {
     ]);
     this.ensure(block, "block", [NodeKind.BlockStmt]);
   }
-
-  public clone(): this {
-    return new CatchClause(
-      this.variableDecl?.clone(),
-      this.block.clone()
-    ) as this;
-  }
 }
 
 export class ThrowStmt extends BaseStmt<NodeKind.ThrowStmt> {
   constructor(readonly expr: Expr) {
     super(NodeKind.ThrowStmt, arguments);
     this.ensure(expr, "expr", ["Expr"]);
-  }
-
-  public clone(): this {
-    return new ThrowStmt(this.expr.clone()) as this;
   }
 }
 
@@ -299,10 +280,6 @@ export class WhileStmt extends BaseStmt<NodeKind.WhileStmt> {
     this.ensure(condition, "condition", ["Expr"]);
     this.ensure(block, "block", [NodeKind.BlockStmt]);
   }
-
-  public clone(): this {
-    return new WhileStmt(this.condition.clone(), this.block.clone()) as this;
-  }
 }
 
 export class DoStmt extends BaseStmt<NodeKind.DoStmt> {
@@ -310,10 +287,6 @@ export class DoStmt extends BaseStmt<NodeKind.DoStmt> {
     super(NodeKind.DoStmt, arguments);
     this.ensure(block, "block", [NodeKind.BlockStmt]);
     this.ensure(condition, "condition", ["Expr"]);
-  }
-
-  public clone(): this {
-    return new DoStmt(this.block.clone(), this.condition.clone()) as this;
   }
 }
 
@@ -323,18 +296,11 @@ export class LabelledStmt extends BaseStmt<NodeKind.LabelledStmt> {
     this.ensure(label, "label", ["string"]);
     this.ensure(stmt, "stmt", ["Stmt"]);
   }
-
-  public clone(): this {
-    return new LabelledStmt(this.label, this.stmt.clone()) as this;
-  }
 }
 
 export class DebuggerStmt extends BaseStmt<NodeKind.DebuggerStmt> {
   constructor() {
     super(NodeKind.DebuggerStmt, arguments);
-  }
-  public clone(): this {
-    return new DebuggerStmt() as this;
   }
 }
 
@@ -342,10 +308,6 @@ export class SwitchStmt extends BaseStmt<NodeKind.SwitchStmt> {
   constructor(readonly clauses: SwitchClause[]) {
     super(NodeKind.SwitchStmt, arguments);
     this.ensureArrayOf(clauses, "clauses", SwitchClause.Kinds);
-  }
-
-  public clone(): this {
-    return new SwitchStmt(this.clauses.map((clause) => clause.clone())) as this;
   }
 }
 
@@ -361,12 +323,6 @@ export class CaseClause extends BaseStmt<NodeKind.CaseClause> {
     this.ensure(expr, "expr", ["Expr"]);
     this.ensureArrayOf(statements, "statements", ["Stmt"]);
   }
-  public clone(): this {
-    return new CaseClause(
-      this.expr.clone(),
-      this.statements.map((stmt) => stmt.clone())
-    ) as this;
-  }
 }
 
 export class DefaultClause extends BaseStmt<NodeKind.DefaultClause> {
@@ -374,19 +330,11 @@ export class DefaultClause extends BaseStmt<NodeKind.DefaultClause> {
     super(NodeKind.DefaultClause, arguments);
     this.ensureArrayOf(statements, "statements", ["Stmt"]);
   }
-  public clone(): this {
-    return new DefaultClause(
-      this.statements.map((stmt) => stmt.clone())
-    ) as this;
-  }
 }
 
 export class EmptyStmt extends BaseStmt<NodeKind.EmptyStmt> {
   constructor() {
     super(NodeKind.EmptyStmt, arguments);
-  }
-  public clone(): this {
-    return new EmptyStmt() as this;
   }
 }
 
@@ -395,10 +343,6 @@ export class WithStmt extends BaseStmt<NodeKind.WithStmt> {
     super(NodeKind.WithStmt, arguments);
     this.ensure(expr, "expr", ["Expr"]);
     this.ensure(stmt, "stmt", ["Stmt"]);
-  }
-
-  public clone(): this {
-    return new WithStmt(this.expr.clone(), this.stmt.clone()) as this;
   }
 }
 

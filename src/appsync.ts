@@ -71,6 +71,8 @@ import {
 import { visitBlock, visitEachChild, visitSpecificChildren } from "./visit";
 import { VTL } from "./vtl";
 
+import "./node-clone";
+
 /**
  * The shape of the AWS Appsync `$context` variable.
  *
