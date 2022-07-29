@@ -14,7 +14,7 @@ import { NodeKind } from "./node-kind";
  * [Identifier, "id"]
  * ```
  */
-export type SExpr<Node extends FunctionlessNode> = [
+export type SExpr<Node extends FunctionlessNode = FunctionlessNode> = [
   kind: Node["kind"],
   ...args: any[] // we could make these more type-safe, but TS has instantiation problems because of eager evaluation of spreads on recursive tuple types
 ];
@@ -30,5 +30,19 @@ export function parseSExpr<Kind extends NodeKind>(
   const [kind, ...args] = expr;
   const ctor = getCtor(kind);
   // TODO: recursively parse the args s-expressions
-  return new ctor(...(<any>args)) as NodeInstance<Kind>;
+  return new ctor(
+    ...(<any>args.map(function parse(item: any): any {
+      if (Array.isArray(item)) {
+        if (typeof item[0] === "number") {
+          // s-expression
+          return parseSExpr(item as SExpr);
+        } else {
+          // array of s-expressions
+          return item.map(parse);
+        }
+      } else {
+        return item;
+      }
+    }))
+  ) as NodeInstance<Kind>;
 }
