@@ -176,9 +176,9 @@ test("machine describe exec var", () => {
   const machine = new StepFunction(stack, "machine", () => {});
 
   const templates = appsyncTestCase(
-    reflect(() => {
+    reflect(async () => {
       const exec = "exec1";
-      const v = machine.describeExecution(exec);
+      const v = await machine.describeExecution(exec);
       return v;
     })
   );

@@ -610,7 +610,10 @@ function synthesizeFunctions(api: appsync.GraphqlApi, decl: FunctionDecl) {
           isIntegrationCallPattern(stmt.declList.decls[0].initializer)
         ) {
           const preTemplate = new AppsyncVTL(...(pre ? [pre] : []));
-          preTemplate.evalDecl(stmt.declList.decls[0]);
+          preTemplate.evalDecl(
+            stmt.declList.decls[0],
+            getResult(stmt.declList.decls[0].initializer)
+          );
           return createStage(service, `${preTemplate.toVTL()}\n{}`);
         } else {
           throw new SynthError(
