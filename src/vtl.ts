@@ -1,5 +1,10 @@
 import { assertNever, assertNodeKind } from "./assert";
-import { BindingPattern, VariableDecl } from "./declaration";
+import {
+  BindingPattern,
+  Decl,
+  ParameterDecl,
+  VariableDecl,
+} from "./declaration";
 import { ErrorCodes, SynthError } from "./error-code";
 import {
   CallExpr,
@@ -17,6 +22,7 @@ import {
   isAwaitExpr,
   isBigIntExpr,
   isBinaryExpr,
+  isBindingElem,
   isBindingPattern,
   isBlockStmt,
   isBooleanLiteralExpr,
@@ -396,17 +402,25 @@ export abstract class VTL {
 
           const [value, index, array] = getMapForEachArgs(node);
 
+          const valueVar = isIdentifier(value.name)
+            ? `$${value.name.name}`
+            : this.newLocalVarName();
+
           // Try to flatten any maps before this operation
           // returns the first variable to be used in the foreach of this operation (may be the `value`)
           const list = this.flattenListMapOperations(
             expr.expr,
-            value,
+            valueVar,
             (firstVariable, list) => {
               this.add(`#foreach(${firstVariable} in ${list})`);
             },
             // If array is present, do not flatten the map, this option immediately evaluates the next expression
             !!array
           );
+
+          if (isBindingPattern(value.name)) {
+            this.evaluateBindingPattern(value.name, valueVar);
+          }
 
           // Render the body
           const tmp = this.renderMapOrForEachBody(
@@ -437,21 +451,12 @@ export abstract class VTL {
 
           // (previousValue: string[], currentValue: string, currentIndex: number, array: string[])
 
-          const [
-            previousValue = this.newLocalVarName(),
-            currentValue = this.newLocalVarName(),
-            currentIndex,
-            array,
-          ] = fn.parameters.map((param) => {
-            if (isIdentifier(param.name)) {
-              return `$${param.name.name}`;
-            } else {
-              throw new SynthError(
-                ErrorCodes.Unsupported_Feature,
-                "Binding variable assignment is not currently supported in VTL. https://github.com/functionless/functionless/issues/302"
-              );
-            }
-          });
+          const [previousValue, currentValue, currentIndex, array] =
+            fn.parameters;
+
+          const currentValueName = isIdentifier(currentValue.name)
+            ? `$${currentValue.name.name}`
+            : this.newLocalVarName();
 
           // create a new local variable name to hold the initial/previous value
           // this is because previousValue may not be unique and isn't contained within the loop
@@ -459,7 +464,7 @@ export abstract class VTL {
 
           const list = this.flattenListMapOperations(
             expr.expr,
-            currentValue,
+            currentValueName,
             (firstVariable, list) => {
               if (initialValue !== undefined) {
                 this.set(previousTmp, initialValue);
@@ -476,16 +481,20 @@ export abstract class VTL {
             !!array
           );
 
+          if (isBindingPattern(currentValue.name)) {
+            this.evaluateBindingPattern(currentValue.name, currentValueName);
+          }
+
           if (currentIndex) {
-            this.add(`#set(${currentIndex} = $foreach.index)`);
+            this.evalDecl(currentIndex, "$foreach.index");
           }
           if (array) {
-            this.add(`#set(${array} = ${list})`);
+            this.evalDecl(array, list);
           }
 
           const body = () => {
             // set previousValue variable name to avoid remapping
-            this.set(previousValue, previousTmp);
+            this.evalDecl(previousValue, previousTmp);
             const tmp = this.newLocalVarName();
             for (const stmt of fn.body.statements) {
               this.eval(stmt, tmp);
@@ -500,7 +509,7 @@ export abstract class VTL {
             this.ifStmt(
               "$foreach.index == 0",
               () => {
-                this.set(previousTmp, currentValue);
+                this.set(previousTmp, currentValueName);
               },
               body
             );
@@ -561,8 +570,6 @@ export abstract class VTL {
         node.body
       );
       return undefined;
-    } else if (isFunctionDecl(node)) {
-      // there should never be nested functions
     } else if (isFunctionExpr(node) || isArrowFunctionExpr(node)) {
       return this.eval(node.body);
     } else if (isIdentifier(node)) {
@@ -596,7 +603,7 @@ export abstract class VTL {
       return this.eval(node.expr);
     } else if (isReferenceExpr(node) || isThisExpr(node)) {
       return this.dereference(node);
-    } else if (isParameterDecl(node) || isPropAssignExpr(node)) {
+    } else if (isPropAssignExpr(node)) {
       throw new Error(`cannot evaluate Expr kind: '${node.kind}'`);
     } else if (isReturnStmt(node)) {
       if (returnVar) {
@@ -652,27 +659,7 @@ export abstract class VTL {
     } else if (isVariableStmt(node)) {
       // variable statements with multiple declarations are turned into multiple variable statements.
       const decl = node.declList.decls[0];
-      const variablePrefix = isInTopLevelScope(node) ? `$context.stash.` : `$`;
-      if (isBindingPattern(decl.name)) {
-        if (!decl.initializer) {
-          throw new SynthError(
-            ErrorCodes.Unexpected_Error,
-            "Expected an initializer for a binding pattern assignment"
-          );
-        }
-        const right = this.var(decl.initializer);
-        this.evaluateBindingPattern(decl.name, right, variablePrefix);
-        // may generate may variables, return nothing.
-        return undefined;
-      } else {
-        const varName = `${variablePrefix}${decl.name.name}`;
-
-        if (decl.initializer) {
-          return this.set(varName, decl.initializer);
-        } else {
-          return varName;
-        }
-      }
+      return this.evalDecl(decl);
     } else if (isThrowStmt(node)) {
       return `#throw(${this.eval(node.expr)})`;
     } else if (isTryStmt(node)) {
@@ -706,18 +693,13 @@ export abstract class VTL {
       );
     } else if (
       isCaseClause(node) ||
-      isClassDecl(node) ||
       isClassExpr(node) ||
-      isClassStaticBlockDecl(node) ||
-      isConstructorDecl(node) ||
       isDebuggerStmt(node) ||
       isDefaultClause(node) ||
       isDeleteExpr(node) ||
       isEmptyStmt(node) ||
       isLabelledStmt(node) ||
-      isMethodDecl(node) ||
       isPrivateIdentifier(node) ||
-      isPropDecl(node) ||
       isRegexExpr(node) ||
       isSuperKeyword(node) ||
       isSwitchStmt(node) ||
@@ -733,6 +715,63 @@ export abstract class VTL {
       return assertNever(node);
     }
     throw new Error(`cannot evaluate Expr kind: '${node.kind}'`);
+  }
+
+  /**
+   * Evaluates a declaration, currently supporting {@link VariableDecl} or {@link ParameterDecl}.
+   *
+   * VariableDecl(Identifier("name"), StringLiteralExpr("value"))
+   * =>
+   * #set($name = "value")
+   *
+   * VariableDecl(ObjectBinding([BindingElm("name")), Identifier("ref"))
+   * =>
+   * #set($name = $ref.name)
+   *
+   * @param initialValueVar - Optional variable name to use when an initializer is supported.
+   *                          Overrides the `decl.initializer` if supported by the Node.
+   */
+  public evalDecl(decl: Decl, initialValueVar?: string) {
+    if (isVariableDecl(decl) || isParameterDecl(decl) || isBindingElem(decl)) {
+      const variablePrefix = isInTopLevelScope(decl) ? `$context.stash.` : `$`;
+      if (isBindingPattern(decl.name)) {
+        if (!(decl.initializer || initialValueVar)) {
+          throw new SynthError(
+            ErrorCodes.Unexpected_Error,
+            "Expected an initializer for a binding pattern assignment"
+          );
+        }
+        const right = initialValueVar ?? this.var(decl.initializer!);
+        this.evaluateBindingPattern(decl.name, right);
+        // may generate may variables, return nothing.
+        return undefined;
+      } else {
+        const varName = `${variablePrefix}${decl.name.name}`;
+
+        if (initialValueVar || decl.initializer) {
+          return this.set(varName, initialValueVar ?? decl.initializer!);
+        } else {
+          return varName;
+        }
+      }
+    } else if (isPropDecl(decl)) {
+      throw new SynthError(
+        ErrorCodes.Unexpected_Error,
+        `Unexpected decl of kind: '${decl.kind}'`
+      );
+    } else if (
+      isClassDecl(decl) ||
+      isClassStaticBlockDecl(decl) ||
+      isConstructorDecl(decl) ||
+      isFunctionDecl(decl) ||
+      isMethodDecl(decl)
+    ) {
+      throw new SynthError(
+        ErrorCodes.Unexpected_Error,
+        `'${decl.kind}' is not supported yet by VTL`
+      );
+    }
+    assertNever(decl);
   }
 
   public addAll(items: Expr[]) {
@@ -826,11 +865,7 @@ export abstract class VTL {
    * const a = b[0]
    * const rest = b[1..]
    */
-  public evaluateBindingPattern(
-    pattern: BindingPattern,
-    target: string,
-    variablePrefix: string = "$"
-  ) {
+  private evaluateBindingPattern(pattern: BindingPattern, target: string) {
     const rest = pattern.bindings.find((binding) => binding?.rest);
     const properties = pattern.bindings.map((binding, i) => {
       /**
@@ -873,11 +908,7 @@ export abstract class VTL {
         return `${target}${accessor}`;
       })();
 
-      if (isBindingPattern(binding.name)) {
-        this.evaluateBindingPattern(binding.name, next, variablePrefix);
-      } else {
-        this.set(`${variablePrefix}${binding.name.name}`, next);
-      }
+      this.evalDecl(binding, next);
 
       return accessor;
     });
@@ -946,14 +977,22 @@ export abstract class VTL {
     list: string,
     // Should start with $
     returnVariable?: string,
-    index?: string,
-    array?: string
+    index?: ParameterDecl,
+    array?: ParameterDecl
   ) {
     if (index) {
-      this.add(`#set(${index} = $foreach.index)`);
+      if (isIdentifier(index.name)) {
+        this.add(`#set($${index.name.name} = $foreach.index)`);
+      } else {
+        this.evaluateBindingPattern(index.name, "$foreach.index");
+      }
     }
     if (array) {
-      this.add(`#set(${array} = ${list})`);
+      if (isIdentifier(array.name)) {
+        this.add(`#set($${array.name.name} = ${list})`);
+      } else {
+        this.evaluateBindingPattern(array.name, list);
+      }
     }
 
     const fn = assertNodeKind<FunctionExpr>(call.args[0]?.expr, "FunctionExpr");
@@ -992,14 +1031,26 @@ export abstract class VTL {
 
       const next = expr.expr.expr;
 
+      /**
+       * The variable name this iteration is expecting.
+       * If the variable is a binding expression, create a new variable name to assign the previous value into.
+       */
+      const valueVar = isIdentifier(value.name)
+        ? `$${value.name.name}`
+        : this.newLocalVarName();
+
       const list = this.flattenListMapOperations(
         next,
-        value,
+        valueVar,
         before,
         // If we find array, the next expression should be evaluated.
         // A map which relies on `array` cannot be flattened further as the array will be inaccurate.
         !!array
       );
+
+      if (isBindingPattern(value.name)) {
+        this.evaluateBindingPattern(value.name, valueVar);
+      }
 
       this.renderMapOrForEachBody(expr, list, returnVariable, index, array);
 
@@ -1020,16 +1071,7 @@ export abstract class VTL {
  */
 const getMapForEachArgs = (call: CallExpr) => {
   const fn = assertNodeKind<FunctionExpr>(call.args[0].expr, "FunctionExpr");
-  return fn.parameters.map((p) => {
-    if (isIdentifier(p.name)) {
-      return `$${p.name.name}`;
-    } else {
-      throw new SynthError(
-        ErrorCodes.Unsupported_Feature,
-        "Destructured parameter declarations are not yet supported by VTL. https://github.com/functionless/functionless/issues/364"
-      );
-    }
-  });
+  return fn.parameters;
 };
 
 // to prevent the closure serializer from trying to import all of functionless.

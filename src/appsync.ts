@@ -530,15 +530,14 @@ function synthesizeFunctions(api: appsync.GraphqlApi, decl: FunctionDecl) {
       ? new AppsyncVTL()
       : new AppsyncVTL(AppsyncVTL.CircuitBreaker);
 
+  /**
+   * If the first parameter is not a binding pattern, we'll just rename the name later
+   */
   if (
     updatedDecl.parameters.length > 0 &&
     isBindingPattern(updatedDecl.parameters[0].name)
   ) {
-    template.evaluateBindingPattern(
-      updatedDecl.parameters[0].name,
-      "$context",
-      "$context.stash."
-    );
+    template.evalDecl(updatedDecl.parameters[0], "$context");
   }
 
   const functions = updatedDecl.body.statements

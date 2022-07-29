@@ -132,6 +132,25 @@ Object {
 }
 `;
 
+exports[`deconstruct 1`] = `
+Object {
+  "integrationResponses": Array [
+    Object {
+      "responseTemplates": Object {
+        "application/json": "$input.json('$')",
+      },
+      "statusCode": "200",
+    },
+  ],
+  "requestTemplates": Object {
+    "application/json": "{
+  \\"TableName\\":\\"__REPLACED_TOKEN\\",
+  \\"Key\\":{\\"pk\\":{\\"S\\":$input.json('$.id')}}
+}",
+  },
+}
+`;
+
 exports[`mock integration with object literal 1`] = `
 Object {
   "integrationResponses": Array [

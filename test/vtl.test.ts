@@ -1011,6 +1011,34 @@ test("deconstruct map", () => {
   });
 });
 
+test("deconstruct map chain", () => {
+  const templates = appsyncTestCase<
+    {
+      items: { a: string; b: string }[];
+    },
+    string[]
+  >(
+    reflect(($context) => {
+      return $context.arguments.items
+        .map(({ a, b }) => ({ a: b, b: a }))
+        .map(({ a, b }) => ({ a: a + b, b: b + a }))
+        .map(({ a, b }) => a + b);
+    })
+  );
+
+  testAppsyncVelocity(templates[1], {
+    arguments: {
+      items: [
+        {
+          a: "a",
+          b: "b",
+        },
+      ],
+    },
+    resultMatch: ["baab"],
+  });
+});
+
 test("deconstruct reduce", () => {
   const templates = appsyncTestCase<
     {
@@ -1054,6 +1082,6 @@ test("deconstruct reduce", () => {
         },
       ],
     },
-    resultMatch: ["helloworldwhatisupsirendofobjendofarray"],
+    resultMatch: "helloworldwhatisupsirendofobjendofarray",
   });
 });

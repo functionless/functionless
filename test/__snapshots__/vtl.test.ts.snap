@@ -691,6 +691,96 @@ Array [
 
 exports[`deconstruct for of 2`] = `"helloworldwhatisupsirendofobjendofarray"`;
 
+exports[`deconstruct map 1`] = `
+Array [
+  "{
+\\"version\\": \\"2018-05-29\\",
+\\"payload\\": null
+}",
+  "#set($v1 = [])
+#foreach($v2 in $context.arguments.items)
+#set($a = $v2.a)
+#set($b = $v2.bb.value)
+#set($v3 = $v2.c)
+#if(!$v3)
+#set($v3 = 'what')
+#end
+#set($c = $v3)
+#set($d = $v2.arr[0])
+#set($e = $v2.arr[2])
+#set($v4 = $v2.arr[3])
+#if(!$v4)
+#set($v4 = 'sir')
+#end
+#set($f = $v4)
+#set($v5 = $v2.arr.subList(4, $v2.arr.size()))
+#set($arrRest = $v5)
+#set($v6 = {})
+#set($v8 = ['a','bb','c','arr'])
+#foreach($v7 in $v2.keySet())
+#if(!$v8.contains($v7))
+#set($v6[$v7] = $v2[$v7])
+#end
+#end
+#set($objRest = $v6)
+#set($v10 = $a + $b)
+#set($v11 = $v10 + $c)
+#set($v12 = $v11 + $d)
+#set($v13 = $v12 + $e)
+#set($v14 = $v13 + $f)
+#set($v15 = $v14 + $objRest.d)
+#set($v16 = $v15 + $arrRest[0])
+#set($v9 = $v16)
+$util.qr($v1.add($v9))
+#end
+#return($v1)",
+]
+`;
+
+exports[`deconstruct map 2`] = `
+Array [
+  "helloworldwhatisupsirendofobjendofarray",
+]
+`;
+
+exports[`deconstruct map chain 1`] = `
+Array [
+  "{
+\\"version\\": \\"2018-05-29\\",
+\\"payload\\": null
+}",
+  "#set($v1 = [])
+#foreach($v4 in $context.arguments.items)
+#set($a = $v4.a)
+#set($b = $v4.b)
+#set($v5 = {})
+$util.qr($v5.put('a', $b))
+$util.qr($v5.put('b', $a))
+#set($v3 = $v5)
+#set($a = $v3.a)
+#set($b = $v3.b)
+#set($v6 = {})
+#set($v7 = $a + $b)
+$util.qr($v6.put('a', $v7))
+#set($v8 = $b + $a)
+$util.qr($v6.put('b', $v8))
+#set($v2 = $v6)
+#set($a = $v2.a)
+#set($b = $v2.b)
+#set($v10 = $a + $b)
+#set($v9 = $v10)
+$util.qr($v1.add($v9))
+#end
+#return($v1)",
+]
+`;
+
+exports[`deconstruct map chain 2`] = `
+Array [
+  "baab",
+]
+`;
+
 exports[`deconstruct parameter 1`] = `
 Array [
   "{
@@ -733,6 +823,55 @@ Array [
 `;
 
 exports[`deconstruct parameter 2`] = `"helloworldwhatisupsirendofobjendofarray"`;
+
+exports[`deconstruct reduce 1`] = `
+Array [
+  "{
+\\"version\\": \\"2018-05-29\\",
+\\"payload\\": null
+}",
+  "#set($v2 = '')
+#foreach($v1 in $context.arguments.items)
+#set($a = $v1.a)
+#set($b = $v1.bb.value)
+#set($v3 = $v1.c)
+#if(!$v3)
+#set($v3 = 'what')
+#end
+#set($c = $v3)
+#set($d = $v1.arr[0])
+#set($e = $v1.arr[2])
+#set($v4 = $v1.arr[3])
+#if(!$v4)
+#set($v4 = 'sir')
+#end
+#set($f = $v4)
+#set($v5 = $v1.arr.subList(4, $v1.arr.size()))
+#set($arrRest = $v5)
+#set($v6 = {})
+#set($v8 = ['a','bb','c','arr'])
+#foreach($v7 in $v1.keySet())
+#if(!$v8.contains($v7))
+#set($v6[$v7] = $v1[$v7])
+#end
+#end
+#set($objRest = $v6)
+#set($acc = $v2)
+#set($v10 = $a + $b)
+#set($v11 = $v10 + $c)
+#set($v12 = $v11 + $d)
+#set($v13 = $v12 + $e)
+#set($v14 = $v13 + $f)
+#set($v15 = $v14 + $objRest.d)
+#set($v16 = $v15 + $arrRest[0])
+#set($v9 = \\"\${acc}\${v16}\\")
+#set($v2 = $v9)
+#end
+#return($v2)",
+]
+`;
+
+exports[`deconstruct reduce 2`] = `"helloworldwhatisupsirendofobjendofarray"`;
 
 exports[`deconstruct variable 1`] = `
 Array [
