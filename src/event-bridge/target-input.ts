@@ -27,7 +27,6 @@ import {
   isTemplateExpr,
 } from "../guards";
 import { isIntegration } from "../integration";
-import { getNodeKindName } from "../node-kind";
 import { evalToConstant } from "../util";
 import {
   assertValidEventReference,
@@ -231,7 +230,7 @@ export const synthesizeEventBridgeTargets = (
             ? expr.name.name
             : assertString(
                 evalToConstant(expr.name)?.constant,
-                getNodeKindName(expr.name.kind)
+                expr.name.kindName
               );
           return {
             ...obj,
