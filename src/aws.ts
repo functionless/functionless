@@ -427,26 +427,37 @@ export namespace $AWS {
             "The first argument ('input') into $AWS.Lambda.Invoke must be an object."
           );
         }
-        const functionName = input.getProperty("Function")?.expr;
+        const functionName = input.getProperty("Function");
+
         if (functionName === undefined) {
           throw new Error("missing required property 'Function'");
-        } else if (functionName.kind !== "ReferenceExpr") {
+        } else if (!isPropAssignExpr(functionName)) {
+          throw new SynthError(
+            ErrorCodes.StepFunctions_property_names_must_be_constant,
+            `the Function property must reference a Function construct`
+          );
+        } else if (!isReferenceExpr(functionName.expr)) {
           throw new Error(
             "property 'Function' must reference a functionless.Function"
           );
         }
-        const functionRef = functionName.ref();
+        const functionRef = functionName.expr.ref();
         if (!isFunction(functionRef)) {
           throw new Error(
             "property 'Function' must reference a functionless.Function"
           );
         }
-        const payload = input.getProperty("Payload")?.expr;
+        const payload = input.getProperty("Payload");
         if (payload === undefined) {
           throw new Error("missing property 'payload'");
+        } else if (!isPropAssignExpr(payload)) {
+          throw new SynthError(
+            ErrorCodes.Unsupported_Feature,
+            `${payload.kind} is not supported by Step Functions`
+          );
         }
 
-        return context.evalExpr(payload, (output) => {
+        return context.evalExpr(payload.expr, (output) => {
           return context.stateWithHeapOutput({
             Type: "Task",
             Resource: "arn:aws:states:::lambda:invoke",

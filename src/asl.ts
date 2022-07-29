@@ -100,6 +100,10 @@ import {
   isVoidExpr,
   isParenthesizedExpr,
   isImportKeyword,
+  isSetAccessorDecl,
+  isGetAccessorDecl,
+  isTaggedTemplateExpr,
+  isOmittedExpr,
 } from "./guards";
 import {
   Integration,
@@ -1943,7 +1947,15 @@ export class ASL {
     } else if (isArrayLiteralExpr(expr)) {
       return this.evalContext(expr, (evalExpr) => {
         // evaluate each item
-        const items = expr.items.map(evalExpr);
+        const items = expr.items.map((item) => {
+          if (isOmittedExpr(item)) {
+            throw new SynthError(
+              ErrorCodes.Step_Functions_does_not_support_undefined,
+              `omitted expressions in an array create an undefined value which cannot be represented in Step Functions`
+            );
+          }
+          return evalExpr(item);
+        });
         const heapLocation = this.newHeapVariable();
 
         const subStatesMap = {
@@ -2785,10 +2797,13 @@ export class ASL {
           isVariableDecl(ref) ||
           isBindingElem(ref) ||
           isFunctionDecl(ref) ||
+          isSetAccessorDecl(ref) ||
+          isGetAccessorDecl(ref) ||
           isClassDecl(ref) ||
           isClassMember(ref)
         ) {
-          throw new Error(
+          throw new SynthError(
+            ErrorCodes.Unsupported_Feature,
             `cannot reference a ${ref.kind} within a JSONPath .filter expression`
           );
         }
@@ -4392,15 +4407,17 @@ function toStateName(node: FunctionlessNode): string {
       isConstructorDecl(node) ||
       isDebuggerStmt(node) ||
       isDefaultClause(node) ||
+      isGetAccessorDecl(node) ||
+      isImportKeyword(node) ||
       isLabelledStmt(node) ||
       isMethodDecl(node) ||
       isPropDecl(node) ||
+      isSetAccessorDecl(node) ||
+      isSuperKeyword(node) ||
       isSuperKeyword(node) ||
       isSwitchStmt(node) ||
       isWithStmt(node) ||
-      isYieldExpr(node) ||
-      isSuperKeyword(node) ||
-      isImportKeyword(node)
+      isYieldExpr(node)
     ) {
       throw new SynthError(
         ErrorCodes.Unsupported_Feature,
@@ -4422,7 +4439,9 @@ function exprToString(
   } else if (isArgument(expr)) {
     return exprToString(expr.expr);
   } else if (isArrayLiteralExpr(expr)) {
-    return `[${expr.items.map(exprToString).join(", ")}]`;
+    return `[${expr.items
+      .map((item) => (item ? exprToString(item) : "null"))
+      .join(", ")}]`;
   } else if (isBigIntExpr(expr)) {
     return expr.value.toString(10);
   } else if (isBinaryExpr(expr)) {
@@ -4455,7 +4474,22 @@ function exprToString(
   } else if (isNumberLiteralExpr(expr)) {
     return `${expr.value}`;
   } else if (isObjectLiteralExpr(expr)) {
-    return `{${expr.properties.map(exprToString).join(", ")}}`;
+    return `{${expr.properties
+      .map((prop) => {
+        if (
+          isSetAccessorDecl(prop) ||
+          isGetAccessorDecl(prop) ||
+          isMethodDecl(prop)
+        ) {
+          throw new SynthError(
+            ErrorCodes.Unsupported_Feature,
+            `${prop.kind} is not supported by Step Functions`
+          );
+        }
+
+        return exprToString(prop);
+      })
+      .join(", ")}}`;
   } else if (isPropAccessExpr(expr)) {
     return `${exprToString(expr.expr)}.${expr.name.name}`;
   } else if (isPropAssignExpr(expr)) {
@@ -4531,6 +4565,13 @@ function exprToString(
     }`;
   } else if (isParameterDecl(expr)) {
     return exprToString(expr.name);
+  } else if (isTaggedTemplateExpr(expr)) {
+    throw new SynthError(
+      ErrorCodes.Unsupported_Feature,
+      `${expr.kind} is not supported by Step Functions`
+    );
+  } else if (isOmittedExpr(expr)) {
+    return "undefined";
   } else {
     return assertNever(expr);
   }
