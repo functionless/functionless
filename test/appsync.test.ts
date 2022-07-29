@@ -186,6 +186,20 @@ test("machine describe exec var", () => {
   testAppsyncVelocity(templates[1]);
 });
 
+test("deconstruct integration response", () => {
+  const machine = new StepFunction(stack, "machine", () => {});
+
+  const templates = appsyncTestCase(
+    reflect(async () => {
+      const exec = "exec1";
+      const { executionArn } = await machine.describeExecution(exec);
+      return executionArn;
+    })
+  );
+
+  testAppsyncVelocity(templates[1]);
+});
+
 describe("step function describe execution", () => {
   test("machine describe exec string", () => {
     const machine = new StepFunction(stack, "machine", async () => {});
