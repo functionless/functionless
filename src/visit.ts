@@ -627,7 +627,12 @@ export function visitEachChild<T extends FunctionlessNode>(
     property &&
       ensure(
         property,
-        anyOf(isComputedPropertyNameExpr, isIdentifier, isStringLiteralExpr),
+        anyOf(
+          isComputedPropertyNameExpr,
+          isIdentifier,
+          isStringLiteralExpr,
+          isNumberLiteralExpr
+        ),
         "A BindingElm's propertyName property must be an Identifier, Computed, String, or undefined"
       );
     const initializer = node.initializer
@@ -646,16 +651,13 @@ export function visitEachChild<T extends FunctionlessNode>(
       initializer as BindingElem["initializer"]
     ) as T;
   } else if (isBindingPattern(node)) {
-    const bindings = node.bindings.map((b) => {
-      const binding = b ? visitor(b) : undefined;
-      binding &&
-        ensure(
-          binding,
-          isBindingElem,
-          "Bindings property on BindingPatterns must be a BindingElm or undefined"
-        );
-      return binding;
-    });
+    const bindings = node.bindings.flatMap((b) =>
+      ensureSingleOrArray(
+        visitor(b),
+        anyOf(isBindingElem, isOmittedExpr),
+        "Bindings property on BindingPatterns must be a BindingElm or OmittedExpr"
+      )
+    );
 
     if (isObjectBinding(node)) {
       return new ObjectBinding(bindings as ObjectBinding["bindings"]) as T;

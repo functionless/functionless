@@ -7,6 +7,7 @@ import {
   FunctionExpr,
   Identifier,
   ObjectLiteralExpr,
+  OmittedExpr,
   PropName,
   StringLiteralExpr,
 } from "./expression";
@@ -336,7 +337,7 @@ export class ObjectBinding extends BaseNode<"ObjectBinding", VariableDecl> {
 export class ArrayBinding extends BaseNode<"ArrayBinding", VariableDecl> {
   readonly nodeKind: "Node" = "Node";
 
-  constructor(readonly bindings: (BindingElem | undefined)[]) {
+  constructor(readonly bindings: (BindingElem | OmittedExpr)[]) {
     super("ArrayBinding", arguments);
   }
 

@@ -1,5 +1,5 @@
 import { assertNever, assertNodeKind } from "./assert";
-import { BindingPattern, VariableDecl } from "./declaration";
+import { BindingElem, BindingPattern, VariableDecl } from "./declaration";
 import { ErrorCodes, SynthError } from "./error-code";
 import {
   CallExpr,
@@ -17,6 +17,7 @@ import {
   isAwaitExpr,
   isBigIntExpr,
   isBinaryExpr,
+  isBindingElem,
   isBindingPattern,
   isBlockStmt,
   isBooleanLiteralExpr,
@@ -849,13 +850,16 @@ export abstract class VTL {
     target: string,
     variablePrefix: string = "$"
   ) {
-    const rest = pattern.bindings.find((binding) => binding?.rest);
-    const properties = pattern.bindings.map((binding, i) => {
+    const rest = pattern.bindings.find(
+      (binding): binding is BindingElem =>
+        binding.as(isBindingElem)?.rest ?? false
+    ) as BindingElem | undefined;
+    const properties = pattern.bindings.flatMap((binding, i) => {
       /**
        * OmitElement for ArrayBinding, skip
        */
-      if (!binding || binding === rest) {
-        return;
+      if (isOmittedExpr(binding) || binding === rest) {
+        return [];
       }
 
       const accessor: string | undefined = isArrayBinding(pattern)
@@ -897,7 +901,7 @@ export abstract class VTL {
         this.set(`${variablePrefix}${binding.name.name}`, next);
       }
 
-      return accessor;
+      return [accessor];
     });
 
     if (rest) {
@@ -913,12 +917,10 @@ export abstract class VTL {
         );
       } else {
         // compute an array of the properties bound from the object
-        const userProps = properties
-          .filter((p): p is string => !!p)
-          .map((p) =>
-            // strip off the accessor patterns
-            p.startsWith(".") ? p.slice(1) : p.slice(1, p.length - 1)
-          );
+        const userProps = properties.map((p) =>
+          // strip off the accessor patterns
+          p.startsWith(".") ? p.slice(1) : p.slice(1, p.length - 1)
+        );
         // create a new object
         this.set(restTemp, `{}`);
         // create a new variable to use in the loop
