@@ -897,7 +897,14 @@ test("deconstruct variable", () => {
 
 test("deconstruct parameter", () => {
   const templates = appsyncTestCase<
-    { a: string; bb: { value: string }; c?: string; arr: string[]; d: string },
+    {
+      a: string;
+      bb: { value: string };
+      c?: string;
+      m?: string;
+      arr: string[];
+      d: string;
+    },
     string
   >(
     reflect(
@@ -906,11 +913,12 @@ test("deconstruct parameter", () => {
           a,
           bb: { value: b },
           c = "what",
+          m = c,
           arr: [d, , e, f = "sir", ...arrRest],
           ...objRest
         },
       }) => {
-        return a + b + c + d + e + f + objRest.d + arrRest[0];
+        return a + b + c + d + e + f + objRest.d + arrRest[0] + m;
       }
     )
   );
@@ -922,7 +930,7 @@ test("deconstruct parameter", () => {
       d: "endofobj",
       arr: ["is", "skipme", "up", undefined, "endofarray"],
     },
-    resultMatch: "helloworldwhatisupsirendofobjendofarray",
+    resultMatch: "helloworldwhatisupsirendofobjendofarraywhat",
   });
 });
 

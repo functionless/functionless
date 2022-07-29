@@ -3611,6 +3611,18 @@ describe("binding", () => {
       expect(normalizeDefinition(definition)).toMatchSnapshot();
     });
 
+    test("with self default", () => {
+      const { stack } = initStepFunctionApp();
+      const definition = new StepFunction<
+        { value: string; value2: string | undefined },
+        string
+      >(stack, "machine1", async ({ value, value2 = value }) => {
+        return value2;
+      }).definition;
+
+      expect(normalizeDefinition(definition)).toMatchSnapshot();
+    });
+
     test("nested", () => {
       const { stack } = initStepFunctionApp();
       const definition = new StepFunction<{ value: { b: string } }, string>(

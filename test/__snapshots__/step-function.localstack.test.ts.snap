@@ -5806,7 +5806,7 @@ Object {
     "\\"sir\\"": Object {
       "Next": "1__f = \\"sir\\"",
       "Result": "sir",
-      "ResultPath": "$.heap13",
+      "ResultPath": "$.heap14",
       "Type": "Pass",
     },
     "\\"sir\\" 1": Object {
@@ -5827,27 +5827,27 @@ Object {
       "ResultPath": "$.heap0",
       "Type": "Pass",
     },
-    "1__[ d, , e, arrRest ]": Object {
+    "1__[ d, undefined, e, arrRest ]": Object {
       "InputPath": "$$.Execution.Input['arr'][2]",
-      "Next": "2__[ d, , e, arrRest ]",
+      "Next": "2__[ d, undefined, e, arrRest ]",
       "ResultPath": "$.e",
       "Type": "Pass",
     },
-    "1__[ s, , u, tserRra ]": Object {
+    "1__[ s, undefined, u, tserRra ]": Object {
       "InputPath": "$.value['rra'][2]",
-      "Next": "2__[ s, , u, tserRra ]",
+      "Next": "2__[ s, undefined, u, tserRra ]",
       "ResultPath": "$.u",
       "Type": "Pass",
     },
     "1__c = \\"what\\"": Object {
       "InputPath": "$.heap12",
-      "Next": "[ d, , e, arrRest ]",
+      "Next": "m = c",
       "ResultPath": "$.c",
       "Type": "Pass",
     },
     "1__f = \\"sir\\"": Object {
-      "InputPath": "$.heap13",
-      "Next": "5__{ a, bb: { value: b, [\`ab\`]: r }, c = \\"what\\", arr: [ d, , e, arrRest ], ",
+      "InputPath": "$.heap14",
+      "Next": "6__{ a, bb: { value: b, [\`ab\`]: r }, c = \\"what\\", m = c, arr: [ d, undefined",
       "ResultPath": "$.f",
       "Type": "Pass",
     },
@@ -5855,6 +5855,12 @@ Object {
       "InputPath": "$.heap8.string",
       "Next": "tail__for({h,j:[l]} of [{h: \\"a\\", j: [\\"b\\"]}]) 1",
       "ResultPath": "$.forV",
+      "Type": "Pass",
+    },
+    "1__m = c": Object {
+      "InputPath": "$.heap13",
+      "Next": "[ d, undefined, e, arrRest ]",
+      "ResultPath": "$.m",
       "Type": "Pass",
     },
     "1__map = [{a: \\"a\\", b: [\\"b\\"]}].map(function({a,b:[c]})).join()": Object {
@@ -5914,6 +5920,7 @@ Object {
         "f.$": "$.f",
         "fnl_context.$": "$.fnl_context",
         "heap4.$": "$$.Map.Item.Value",
+        "m.$": "$.m",
         "r.$": "$.r",
         "s.$": "$.s",
         "t.$": "$.t",
@@ -5928,7 +5935,7 @@ Object {
       "ResultPath": "$.heap5",
       "Type": "Map",
     },
-    "1__return {prop: \`abcdefarrRest[0]r\`, var: \`zwvxsuttserRra[0]\`, map: map, f": Object {
+    "1__return {prop: \`abcdefarrRest[0]rm\`, var: \`zwvxsuttserRra[0]\`, map: map, ": Object {
       "End": true,
       "Parameters": Object {
         "forV.$": "$.forV",
@@ -5948,7 +5955,7 @@ Object {
     },
     "1__x = \\"what\\"": Object {
       "InputPath": "$.heap0",
-      "Next": "[ s, , u, tserRra ]",
+      "Next": "[ s, undefined, u, tserRra ]",
       "ResultPath": "$.x",
       "Type": "Pass",
     },
@@ -5964,26 +5971,26 @@ Object {
       "ResultPath": "$.r",
       "Type": "Pass",
     },
-    "2__[ d, , e, arrRest ]": Object {
+    "2__[ d, undefined, e, arrRest ]": Object {
       "InputPath": "$$.Execution.Input['arr'][3:]",
       "Next": "f = \\"sir\\"",
       "ResultPath": "$.arrRest",
       "Type": "Pass",
     },
-    "2__[ s, , u, tserRra ]": Object {
+    "2__[ s, undefined, u, tserRra ]": Object {
       "InputPath": "$.value['rra'][3:]",
       "Next": "t = \\"sir\\"",
       "ResultPath": "$.tserRra",
       "Type": "Pass",
     },
-    "5__{ a, bb: { value: b, [\`ab\`]: r }, c = \\"what\\", arr: [ d, , e, arrRest ], ": Object {
+    "6__{ a, bb: { value: b, [\`ab\`]: r }, c = \\"what\\", m = c, arr: [ d, undefined": Object {
       "InputPath": "$$.Execution.Input['value']",
       "Next": "for({h,j:[l]} of [{h: \\"a\\", j: [\\"b\\"]}])",
       "ResultPath": "$.value",
       "Type": "Pass",
     },
     "Initialize Functionless Context": Object {
-      "Next": "{ a, bb: { value: b, [\`ab\`]: r }, c = \\"what\\", arr: [ d, , e, arrRest ], arr",
+      "Next": "{ a, bb: { value: b, [\`ab\`]: r }, c = \\"what\\", m = c, arr: [ d, undefined, e",
       "Parameters": Object {
         "fnl_context": Object {
           "null": null,
@@ -5992,9 +5999,9 @@ Object {
       "ResultPath": "$",
       "Type": "Pass",
     },
-    "[ d, , e, arrRest ]": Object {
+    "[ d, undefined, e, arrRest ]": Object {
       "InputPath": "$$.Execution.Input['arr'][0]",
-      "Next": "1__[ d, , e, arrRest ]",
+      "Next": "1__[ d, undefined, e, arrRest ]",
       "ResultPath": "$.d",
       "Type": "Pass",
     },
@@ -6004,14 +6011,14 @@ Object {
       "ResultPath": "$.l",
       "Type": "Pass",
     },
-    "[ s, , u, tserRra ]": Object {
+    "[ s, undefined, u, tserRra ]": Object {
       "InputPath": "$.value['rra'][0]",
-      "Next": "1__[ s, , u, tserRra ]",
+      "Next": "1__[ s, undefined, u, tserRra ]",
       "ResultPath": "$.s",
       "Type": "Pass",
     },
     "\`zwvxsuttserRra[0]\`": Object {
-      "Next": "1__return {prop: \`abcdefarrRest[0]r\`, var: \`zwvxsuttserRra[0]\`, map: map, f",
+      "Next": "1__return {prop: \`abcdefarrRest[0]rm\`, var: \`zwvxsuttserRra[0]\`, map: map, ",
       "Parameters": Object {
         "string.$": "States.Format('{}{}{}{}{}{}{}{}',$.z,$.w,$.v,$.x,$.s,$.u,$.t,$.tserRra[0])",
       },
@@ -6024,6 +6031,12 @@ Object {
         "string.$": "States.Format('{},{}', $.heap7.string, $.heap6[0])",
       },
       "ResultPath": "$.heap7",
+      "Type": "Pass",
+    },
+    "c": Object {
+      "InputPath": "$.c",
+      "Next": "1__m = c",
+      "ResultPath": "$.heap13",
       "Type": "Pass",
     },
     "c = \\"what\\"": Object {
@@ -6147,6 +6160,17 @@ Object {
       "ResultPath": "$.heap7.string",
       "Type": "Pass",
     },
+    "m = c": Object {
+      "Choices": Array [
+        Object {
+          "IsPresent": true,
+          "Next": "value__m = c",
+          "Variable": "$$.Execution.Input['m']",
+        },
+      ],
+      "Default": "c",
+      "Type": "Choice",
+    },
     "map = [{a: \\"a\\", b: [\\"b\\"]}].map(function({a,b:[c]})).join()": Object {
       "Next": "1__map = [{a: \\"a\\", b: [\\"b\\"]}].map(function({a,b:[c]})).join() 2",
       "Result": Array [
@@ -6160,10 +6184,10 @@ Object {
       "ResultPath": "$.heap3",
       "Type": "Pass",
     },
-    "return {prop: \`abcdefarrRest[0]r\`, var: \`zwvxsuttserRra[0]\`, map: map, forV": Object {
+    "return {prop: \`abcdefarrRest[0]rm\`, var: \`zwvxsuttserRra[0]\`, map: map, for": Object {
       "Next": "\`zwvxsuttserRra[0]\`",
       "Parameters": Object {
-        "string.$": "States.Format('{}{}{}{}{}{}{}{}',$.a,$.b,$.c,$.d,$.e,$.f,$.arrRest[0],$.r)",
+        "string.$": "States.Format('{}{}{}{}{}{}{}{}{}',$.a,$.b,$.c,$.d,$.e,$.f,$.arrRest[0],$.r,$.m)",
       },
       "ResultPath": "$.heap10",
       "Type": "Pass",
@@ -6199,7 +6223,7 @@ Object {
     },
     "tr = message": Object {
       "InputPath": "$.message",
-      "Next": "return {prop: \`abcdefarrRest[0]r\`, var: \`zwvxsuttserRra[0]\`, map: map, forV",
+      "Next": "return {prop: \`abcdefarrRest[0]rm\`, var: \`zwvxsuttserRra[0]\`, map: map, for",
       "ResultPath": "$.tr",
       "Type": "Pass",
     },
@@ -6220,6 +6244,12 @@ Object {
     "value__f = \\"sir\\"": Object {
       "InputPath": "$$.Execution.Input['arr2'][0]",
       "Next": "1__f = \\"sir\\"",
+      "ResultPath": "$.heap14",
+      "Type": "Pass",
+    },
+    "value__m = c": Object {
+      "InputPath": "$$.Execution.Input['m']",
+      "Next": "1__m = c",
       "ResultPath": "$.heap13",
       "Type": "Pass",
     },
@@ -6252,7 +6282,7 @@ Object {
       "ResultPath": "$.w",
       "Type": "Pass",
     },
-    "{ a, bb: { value: b, [\`ab\`]: r }, c = \\"what\\", arr: [ d, , e, arrRest ], arr": Object {
+    "{ a, bb: { value: b, [\`ab\`]: r }, c = \\"what\\", m = c, arr: [ d, undefined, e": Object {
       "InputPath": "$$.Execution.Input['a']",
       "Next": "{ value: b, [\`ab\`]: r }",
       "ResultPath": "$.a",

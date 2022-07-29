@@ -794,35 +794,41 @@ Array [
 #set($v1 = 'what')
 #end
 #set($context.stash.c = $v1)
+#set($v2 = $context.arguments.m)
+#if(!$v2)
+#set($v2 = $context.stash.c)
+#end
+#set($context.stash.m = $v2)
 #set($context.stash.d = $context.arguments.arr[0])
 #set($context.stash.e = $context.arguments.arr[2])
-#set($v2 = $context.arguments.arr[3])
-#if(!$v2)
-#set($v2 = 'sir')
+#set($v3 = $context.arguments.arr[3])
+#if(!$v3)
+#set($v3 = 'sir')
 #end
-#set($context.stash.f = $v2)
-#set($v3 = $context.arguments.arr.subList(4, $context.arguments.arr.size()))
-#set($context.stash.arrRest = $v3)
-#set($v4 = {})
-#set($v6 = ['a','bb','c','arr'])
-#foreach($v5 in $context.arguments.keySet())
-#if(!$v6.contains($v5))
-#set($v4[$v5] = $context.arguments[$v5])
+#set($context.stash.f = $v3)
+#set($v4 = $context.arguments.arr.subList(4, $context.arguments.arr.size()))
+#set($context.stash.arrRest = $v4)
+#set($v5 = {})
+#set($v7 = ['a','bb','c','m','arr'])
+#foreach($v6 in $context.arguments.keySet())
+#if(!$v7.contains($v6))
+#set($v5[$v6] = $context.arguments[$v6])
 #end
 #end
-#set($context.stash.objRest = $v4)
-#set($v7 = $context.stash.a + $context.stash.b)
-#set($v8 = $v7 + $context.stash.c)
-#set($v9 = $v8 + $context.stash.d)
-#set($v10 = $v9 + $context.stash.e)
-#set($v11 = $v10 + $context.stash.f)
-#set($v12 = $v11 + $context.stash.objRest.d)
-#set($v13 = $v12 + $context.stash.arrRest[0])
-#return($v13)",
+#set($context.stash.objRest = $v5)
+#set($v8 = $context.stash.a + $context.stash.b)
+#set($v9 = $v8 + $context.stash.c)
+#set($v10 = $v9 + $context.stash.d)
+#set($v11 = $v10 + $context.stash.e)
+#set($v12 = $v11 + $context.stash.f)
+#set($v13 = $v12 + $context.stash.objRest.d)
+#set($v14 = $v13 + $context.stash.arrRest[0])
+#set($v15 = $v14 + $context.stash.m)
+#return($v15)",
 ]
 `;
 
-exports[`deconstruct parameter 2`] = `"helloworldwhatisupsirendofobjendofarray"`;
+exports[`deconstruct parameter 2`] = `"helloworldwhatisupsirendofobjendofarraywhat"`;
 
 exports[`deconstruct reduce 1`] = `
 Array [

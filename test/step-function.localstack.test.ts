@@ -1460,6 +1460,7 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
           a,
           bb: { value: b, [`${"a"}${"b"}`]: r },
           c = "what",
+          m = c,
           arr: [d, , e, ...arrRest],
           arr2: [f = "sir"],
           value,
@@ -1492,7 +1493,7 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
           }
 
           return {
-            prop: `${a}${b}${c}${d}${e}${f}${arrRest[0]}${r}`,
+            prop: `${a}${b}${c}${d}${e}${f}${arrRest[0]}${r}${m}`,
             var: `${z}${w}${v}${x}${s}${u}${t}${tserRra[0]}`,
             map,
             forV,
@@ -1501,7 +1502,7 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
         }
       ),
     {
-      prop: "helloworldwhatisupsirendofarraydynamic",
+      prop: "helloworldwhatisupsirendofarraydynamicwhat",
       var: "helloworlddynamicwhatisupsirendofarray",
       map: "ab",
       forV: "ab",
@@ -1514,6 +1515,7 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
         [key: string]: string;
       },
       c: undefined,
+      m: undefined,
       d: "endofobj",
       arr: ["is", "skipme", "up", "endofarray"],
       arr2: [],
