@@ -395,9 +395,9 @@ Object {
   "StartAt": "Initialize Functionless Context",
   "States": Object {
     "1__catch__try": Object {
-      "InputPath": "$.undefined.0_ParsedError",
+      "InputPath": "$.fnl_tmp_0.0_ParsedError",
       "Next": "catch({message})",
-      "ResultPath": "$.undefined",
+      "ResultPath": "$.fnl_tmp_0",
       "Type": "Pass",
     },
     "Initialize Functionless Context": Object {
@@ -411,7 +411,7 @@ Object {
       "Type": "Pass",
     },
     "catch({message})": Object {
-      "InputPath": "$.0_tmp['message']",
+      "InputPath": "$.fnl_tmp_0['message']",
       "Next": "return message",
       "ResultPath": "$.message",
       "Type": "Pass",
@@ -419,9 +419,9 @@ Object {
     "catch__try": Object {
       "Next": "1__catch__try",
       "Parameters": Object {
-        "0_ParsedError.$": "States.StringToJson($.undefined.Cause)",
+        "0_ParsedError.$": "States.StringToJson($.fnl_tmp_0.Cause)",
       },
-      "ResultPath": "$.undefined",
+      "ResultPath": "$.fnl_tmp_0",
       "Type": "Pass",
     },
     "return \\"hello\\"": Object {
@@ -443,7 +443,7 @@ Object {
             "States.ALL",
           ],
           "Next": "catch__try",
-          "ResultPath": "$.0_tmp",
+          "ResultPath": "$.fnl_tmp_0",
         },
       ],
       "Next": "return \\"hello\\"",
@@ -1222,7 +1222,7 @@ Object {
   "StartAt": "Initialize Functionless Context",
   "States": Object {
     "Initialize Functionless Context": Object {
-      "Next": "[ , b ]",
+      "Next": "[ undefined, b ]",
       "Parameters": Object {
         "fnl_context": Object {
           "null": null,
@@ -1231,7 +1231,7 @@ Object {
       "ResultPath": "$",
       "Type": "Pass",
     },
-    "[ , b ]": Object {
+    "[ undefined, b ]": Object {
       "InputPath": "$$.Execution.Input['arr'][1:]",
       "Next": "return b",
       "ResultPath": "$.b",
@@ -3470,7 +3470,7 @@ Object {
       "Type": "Pass",
     },
     "catch__try": Object {
-      "InputPath": "$.0_tmp",
+      "InputPath": "$.fnl_tmp_0",
       "Next": "throw new StepFunctionError(\\"CustomError\\", {property: \\"custom cause\\"})",
       "ResultPath": "$.err",
       "Type": "Pass",
@@ -3485,7 +3485,7 @@ Object {
       "Result": Object {
         "message": "cause",
       },
-      "ResultPath": "$.0_tmp",
+      "ResultPath": "$.fnl_tmp_0",
       "Type": "Pass",
     },
   },
@@ -3507,7 +3507,7 @@ Object {
       "Type": "Pass",
     },
     "catch__try": Object {
-      "InputPath": "$.0_tmp",
+      "InputPath": "$.fnl_tmp_0",
       "Next": "throw new StepFunctionError(\\"CustomError\\", {property: \\"custom cause\\"})",
       "ResultPath": "$.err",
       "Type": "Pass",
@@ -3522,7 +3522,7 @@ Object {
       "Result": Object {
         "message": "cause",
       },
-      "ResultPath": "$.0_tmp",
+      "ResultPath": "$.fnl_tmp_0",
       "Type": "Pass",
     },
   },
@@ -6117,9 +6117,9 @@ Object {
   "StartAt": "Initialize Functionless Context",
   "States": Object {
     "1__catch__try": Object {
-      "InputPath": "$.err.0_ParsedError",
+      "InputPath": "$.fnl_tmp_0.0_ParsedError",
       "Next": "catch(err)",
-      "ResultPath": "$.err",
+      "ResultPath": "$.fnl_tmp_0",
       "Type": "Pass",
     },
     "1__finally": Object {
@@ -6127,7 +6127,7 @@ Object {
         Object {
           "IsPresent": true,
           "Next": "throw__1__finally",
-          "Variable": "$.1_tmp",
+          "Variable": "$.fnl_tmp_1",
         },
       ],
       "Default": "tail__for(item of input.items)",
@@ -6145,7 +6145,7 @@ Object {
       "Type": "Pass",
     },
     "catch(err)": Object {
-      "InputPath": "$.0_tmp",
+      "InputPath": "$.fnl_tmp_0",
       "Next": "if(err.message == \\"you dun' goofed\\")",
       "ResultPath": "$.err",
       "Type": "Pass",
@@ -6153,9 +6153,9 @@ Object {
     "catch__try": Object {
       "Next": "1__catch__try",
       "Parameters": Object {
-        "0_ParsedError.$": "States.StringToJson($.err.Cause)",
+        "0_ParsedError.$": "States.StringToJson($.fnl_tmp_0.Cause)",
       },
-      "ResultPath": "$.err",
+      "ResultPath": "$.fnl_tmp_0",
       "Type": "Pass",
     },
     "finally": Object {
@@ -6232,7 +6232,7 @@ Object {
       "Result": Object {
         "message": "little",
       },
-      "ResultPath": "$.1_tmp",
+      "ResultPath": "$.fnl_tmp_1",
       "Type": "Pass",
     },
     "throw__1__finally": Object {
@@ -6247,7 +6247,7 @@ Object {
             "States.ALL",
           ],
           "Next": "catch__try",
-          "ResultPath": "$.0_tmp",
+          "ResultPath": "$.fnl_tmp_0",
         },
       ],
       "InputPath": "$.item",
@@ -11860,9 +11860,9 @@ Object {
   "StartAt": "Initialize Functionless Context",
   "States": Object {
     "1__catch__for(item of input.items)": Object {
-      "InputPath": "$.err.0_ParsedError",
+      "InputPath": "$.fnl_tmp_0.0_ParsedError",
       "Next": "catch(err)",
-      "ResultPath": "$.err",
+      "ResultPath": "$.fnl_tmp_0",
       "Type": "Pass",
     },
     "1__finally": Object {
@@ -11870,7 +11870,7 @@ Object {
         Object {
           "IsPresent": true,
           "Next": "throw__1__finally",
-          "Variable": "$.1_tmp",
+          "Variable": "$.fnl_tmp_1",
         },
       ],
       "Default": "return null",
@@ -11894,7 +11894,7 @@ Object {
             "States.ALL",
           ],
           "Next": "catch__for(item of input.items)",
-          "ResultPath": "$.0_tmp",
+          "ResultPath": "$.fnl_tmp_0",
         },
       ],
       "InputPath": "$.item",
@@ -11904,7 +11904,7 @@ Object {
       "Type": "Task",
     },
     "catch(err)": Object {
-      "InputPath": "$.0_tmp",
+      "InputPath": "$.fnl_tmp_0",
       "Next": "if(err.message == \\"you dun' goofed\\")",
       "ResultPath": "$.err",
       "Type": "Pass",
@@ -11912,9 +11912,9 @@ Object {
     "catch__for(item of input.items)": Object {
       "Next": "1__catch__for(item of input.items)",
       "Parameters": Object {
-        "0_ParsedError.$": "States.StringToJson($.err.Cause)",
+        "0_ParsedError.$": "States.StringToJson($.fnl_tmp_0.Cause)",
       },
-      "ResultPath": "$.err",
+      "ResultPath": "$.fnl_tmp_0",
       "Type": "Pass",
     },
     "finally": Object {
@@ -11991,7 +11991,7 @@ Object {
       "Result": Object {
         "message": "little",
       },
-      "ResultPath": "$.1_tmp",
+      "ResultPath": "$.fnl_tmp_1",
       "Type": "Pass",
     },
     "throw__1__finally": Object {
@@ -12209,9 +12209,9 @@ Object {
   "StartAt": "Initialize Functionless Context",
   "States": Object {
     "1__catch__try": Object {
-      "InputPath": "$.err.0_ParsedError",
+      "InputPath": "$.fnl_tmp_0.0_ParsedError",
       "Next": "catch(err)",
-      "ResultPath": "$.err",
+      "ResultPath": "$.fnl_tmp_0",
       "Type": "Pass",
     },
     "1__try": Object {
@@ -12232,7 +12232,7 @@ Object {
       "Type": "Pass",
     },
     "catch(err)": Object {
-      "InputPath": "$.0_tmp",
+      "InputPath": "$.fnl_tmp_0",
       "Next": "if(err.message == \\"cause\\")",
       "ResultPath": "$.err",
       "Type": "Pass",
@@ -12240,9 +12240,9 @@ Object {
     "catch__try": Object {
       "Next": "1__catch__try",
       "Parameters": Object {
-        "0_ParsedError.$": "States.StringToJson($.err.Cause)",
+        "0_ParsedError.$": "States.StringToJson($.fnl_tmp_0.Cause)",
       },
-      "ResultPath": "$.err",
+      "ResultPath": "$.fnl_tmp_0",
       "Type": "Pass",
     },
     "if(err.message == \\"cause\\")": Object {
@@ -12291,7 +12291,7 @@ Object {
             "States.ALL",
           ],
           "Next": "catch__try",
-          "ResultPath": "$.0_tmp",
+          "ResultPath": "$.fnl_tmp_0",
         },
       ],
       "ItemsPath": "$.input.list",
@@ -12524,9 +12524,9 @@ Object {
   "StartAt": "Initialize Functionless Context",
   "States": Object {
     "1__catch__try": Object {
-      "InputPath": "$.err.0_ParsedError",
+      "InputPath": "$.fnl_tmp_0.0_ParsedError",
       "Next": "catch(err)",
-      "ResultPath": "$.err",
+      "ResultPath": "$.fnl_tmp_0",
       "Type": "Pass",
     },
     "1__try": Object {
@@ -12547,7 +12547,7 @@ Object {
       "Type": "Pass",
     },
     "catch(err)": Object {
-      "InputPath": "$.0_tmp",
+      "InputPath": "$.fnl_tmp_0",
       "Next": "if(err.message == \\"cause\\")",
       "ResultPath": "$.err",
       "Type": "Pass",
@@ -12555,9 +12555,9 @@ Object {
     "catch__try": Object {
       "Next": "1__catch__try",
       "Parameters": Object {
-        "0_ParsedError.$": "States.StringToJson($.err.Cause)",
+        "0_ParsedError.$": "States.StringToJson($.fnl_tmp_0.Cause)",
       },
-      "ResultPath": "$.err",
+      "ResultPath": "$.fnl_tmp_0",
       "Type": "Pass",
     },
     "if(err.message == \\"cause\\")": Object {
@@ -12606,7 +12606,7 @@ Object {
             "States.ALL",
           ],
           "Next": "catch__try",
-          "ResultPath": "$.0_tmp",
+          "ResultPath": "$.fnl_tmp_0",
         },
       ],
       "ItemsPath": "$.input.list",
@@ -12792,7 +12792,7 @@ Object {
         Object {
           "IsPresent": true,
           "Next": "throw__1__finally",
-          "Variable": "$.0_tmp",
+          "Variable": "$.fnl_tmp_1",
         },
       ],
       "Default": "return null",
@@ -12829,7 +12829,7 @@ Object {
       "Result": Object {
         "message": "cause",
       },
-      "ResultPath": "$.0_tmp",
+      "ResultPath": "$.fnl_tmp_1",
       "Type": "Pass",
     },
     "finally": Object {
@@ -12863,7 +12863,7 @@ Object {
         Object {
           "IsPresent": true,
           "Next": "throw__1__finally",
-          "Variable": "$.0_tmp",
+          "Variable": "$.fnl_tmp_1",
         },
       ],
       "Default": "return null",
@@ -12941,7 +12941,7 @@ Object {
       "Result": Object {
         "message": "little",
       },
-      "ResultPath": "$.0_tmp",
+      "ResultPath": "$.fnl_tmp_1",
       "Type": "Pass",
     },
     "throw__1__finally": Object {
@@ -12962,7 +12962,7 @@ Object {
         Object {
           "IsPresent": true,
           "Next": "throw__1__finally",
-          "Variable": "$.0_tmp",
+          "Variable": "$.fnl_tmp_1",
         },
       ],
       "Default": "return null",
@@ -13001,7 +13001,7 @@ Object {
             "States.ALL",
           ],
           "Next": "finally",
-          "ResultPath": "$.0_tmp",
+          "ResultPath": "$.fnl_tmp_1",
         },
       ],
       "Next": "finally",
@@ -13037,9 +13037,9 @@ Object {
   "StartAt": "Initialize Functionless Context",
   "States": Object {
     "1__catch__await task(\\"1\\")": Object {
-      "InputPath": "$.err.0_ParsedError",
+      "InputPath": "$.fnl_tmp_0.0_ParsedError",
       "Next": "catch(err)",
-      "ResultPath": "$.err",
+      "ResultPath": "$.fnl_tmp_0",
       "Type": "Pass",
     },
     "1__finally": Object {
@@ -13047,7 +13047,7 @@ Object {
         Object {
           "IsPresent": true,
           "Next": "throw__1__finally",
-          "Variable": "$.1_tmp",
+          "Variable": "$.fnl_tmp_1",
         },
       ],
       "Default": "return null",
@@ -13070,7 +13070,7 @@ Object {
             "States.ALL",
           ],
           "Next": "catch__await task(\\"1\\")",
-          "ResultPath": "$.0_tmp",
+          "ResultPath": "$.fnl_tmp_0",
         },
       ],
       "Next": "finally",
@@ -13080,7 +13080,7 @@ Object {
       "Type": "Task",
     },
     "catch(err)": Object {
-      "InputPath": "$.0_tmp",
+      "InputPath": "$.fnl_tmp_0",
       "Next": "if(err.message == \\"sam\\")",
       "ResultPath": "$.err",
       "Type": "Pass",
@@ -13088,9 +13088,9 @@ Object {
     "catch__await task(\\"1\\")": Object {
       "Next": "1__catch__await task(\\"1\\")",
       "Parameters": Object {
-        "0_ParsedError.$": "States.StringToJson($.err.Cause)",
+        "0_ParsedError.$": "States.StringToJson($.fnl_tmp_0.Cause)",
       },
-      "ResultPath": "$.err",
+      "ResultPath": "$.fnl_tmp_0",
       "Type": "Pass",
     },
     "finally": Object {
@@ -13138,7 +13138,7 @@ Object {
       "Result": Object {
         "message": "little",
       },
-      "ResultPath": "$.1_tmp",
+      "ResultPath": "$.fnl_tmp_1",
       "Type": "Pass",
     },
     "throw__1__finally": Object {
@@ -13159,7 +13159,7 @@ Object {
         Object {
           "IsPresent": true,
           "Next": "throw__1__finally",
-          "Variable": "$.0_tmp",
+          "Variable": "$.fnl_tmp_1",
         },
       ],
       "Default": "return null",
@@ -13229,7 +13229,7 @@ Object {
       "Result": Object {
         "message": "little",
       },
-      "ResultPath": "$.0_tmp",
+      "ResultPath": "$.fnl_tmp_1",
       "Type": "Pass",
     },
     "throw__1__finally": Object {
@@ -13435,7 +13435,7 @@ Object {
       "Type": "Pass",
     },
     "catch__try": Object {
-      "InputPath": "$.0_tmp",
+      "InputPath": "$.fnl_tmp_0",
       "Next": "if(err.message == \\"cause\\")",
       "ResultPath": "$.err",
       "Type": "Pass",
@@ -13484,7 +13484,7 @@ Object {
       "Result": Object {
         "message": "cause",
       },
-      "ResultPath": "$.0_tmp",
+      "ResultPath": "$.fnl_tmp_0",
       "Type": "Pass",
     },
   },
@@ -13496,9 +13496,9 @@ Object {
   "StartAt": "Initialize Functionless Context",
   "States": Object {
     "1__catch__try": Object {
-      "InputPath": "$.err.0_ParsedError",
+      "InputPath": "$.fnl_tmp_0.0_ParsedError",
       "Next": "catch(err)",
-      "ResultPath": "$.err",
+      "ResultPath": "$.fnl_tmp_0",
       "Type": "Pass",
     },
     "Initialize Functionless Context": Object {
@@ -13512,7 +13512,7 @@ Object {
       "Type": "Pass",
     },
     "catch(err)": Object {
-      "InputPath": "$.0_tmp",
+      "InputPath": "$.fnl_tmp_0",
       "Next": "return err.message",
       "ResultPath": "$.err",
       "Type": "Pass",
@@ -13520,9 +13520,9 @@ Object {
     "catch__try": Object {
       "Next": "1__catch__try",
       "Parameters": Object {
-        "0_ParsedError.$": "States.StringToJson($.err.Cause)",
+        "0_ParsedError.$": "States.StringToJson($.fnl_tmp_0.Cause)",
       },
-      "ResultPath": "$.err",
+      "ResultPath": "$.fnl_tmp_0",
       "Type": "Pass",
     },
     "return \\"hello\\"": Object {
@@ -13544,7 +13544,7 @@ Object {
             "States.ALL",
           ],
           "Next": "catch__try",
-          "ResultPath": "$.0_tmp",
+          "ResultPath": "$.fnl_tmp_0",
         },
       ],
       "Next": "return \\"hello\\"",
@@ -13614,9 +13614,9 @@ Object {
   "StartAt": "Initialize Functionless Context",
   "States": Object {
     "1__catch__try": Object {
-      "InputPath": "$.err.0_ParsedError",
+      "InputPath": "$.fnl_tmp_0.0_ParsedError",
       "Next": "catch(err)",
-      "ResultPath": "$.err",
+      "ResultPath": "$.fnl_tmp_0",
       "Type": "Pass",
     },
     "Initialize Functionless Context": Object {
@@ -13637,7 +13637,7 @@ Object {
             "States.ALL",
           ],
           "Next": "catch__try",
-          "ResultPath": "$.0_tmp",
+          "ResultPath": "$.fnl_tmp_0",
         },
       ],
       "Next": "return \\"hello world\\"",
@@ -13650,7 +13650,7 @@ Object {
       "Type": "Task",
     },
     "catch(err)": Object {
-      "InputPath": "$.0_tmp",
+      "InputPath": "$.fnl_tmp_0",
       "Next": "if(err.message == \\"cause\\")",
       "ResultPath": "$.err",
       "Type": "Pass",
@@ -13658,9 +13658,9 @@ Object {
     "catch__try": Object {
       "Next": "1__catch__try",
       "Parameters": Object {
-        "0_ParsedError.$": "States.StringToJson($.err.Cause)",
+        "0_ParsedError.$": "States.StringToJson($.fnl_tmp_0.Cause)",
       },
-      "ResultPath": "$.err",
+      "ResultPath": "$.fnl_tmp_0",
       "Type": "Pass",
     },
     "if(err.message == \\"cause\\")": Object {
@@ -13744,9 +13744,9 @@ Object {
   "StartAt": "Initialize Functionless Context",
   "States": Object {
     "1__catch__try": Object {
-      "InputPath": "$.err.0_ParsedError",
+      "InputPath": "$.fnl_tmp_0.0_ParsedError",
       "Next": "catch(err)",
-      "ResultPath": "$.err",
+      "ResultPath": "$.fnl_tmp_0",
       "Type": "Pass",
     },
     "1__return await computeScore({id: input.id, name: \\"sam\\"})": Object {
@@ -13767,7 +13767,7 @@ Object {
       "Type": "Pass",
     },
     "catch(err)": Object {
-      "InputPath": "$.0_tmp",
+      "InputPath": "$.fnl_tmp_0",
       "Next": "if(err.message == \\"cause\\")",
       "ResultPath": "$.err",
       "Type": "Pass",
@@ -13775,9 +13775,9 @@ Object {
     "catch__try": Object {
       "Next": "1__catch__try",
       "Parameters": Object {
-        "0_ParsedError.$": "States.StringToJson($.err.Cause)",
+        "0_ParsedError.$": "States.StringToJson($.fnl_tmp_0.Cause)",
       },
-      "ResultPath": "$.err",
+      "ResultPath": "$.fnl_tmp_0",
       "Type": "Pass",
     },
     "if(err.message == \\"cause\\")": Object {
@@ -13832,7 +13832,7 @@ Object {
             "States.ALL",
           ],
           "Next": "catch__try",
-          "ResultPath": "$.0_tmp",
+          "ResultPath": "$.fnl_tmp_0",
         },
       ],
       "Next": "1__return await computeScore({id: input.id, name: \\"sam\\"})",
@@ -13880,9 +13880,9 @@ Object {
   "StartAt": "Initialize Functionless Context",
   "States": Object {
     "1__catch__try": Object {
-      "InputPath": "$.err.0_ParsedError",
+      "InputPath": "$.fnl_tmp_0.0_ParsedError",
       "Next": "catch(err)",
-      "ResultPath": "$.err",
+      "ResultPath": "$.fnl_tmp_0",
       "Type": "Pass",
     },
     "Initialize Functionless Context": Object {
@@ -13903,7 +13903,7 @@ Object {
             "States.ALL",
           ],
           "Next": "catch__try",
-          "ResultPath": "$.0_tmp",
+          "ResultPath": "$.fnl_tmp_0",
         },
       ],
       "Next": "return \\"hello world\\"",
@@ -13916,7 +13916,7 @@ Object {
       "Type": "Task",
     },
     "catch(err)": Object {
-      "InputPath": "$.0_tmp",
+      "InputPath": "$.fnl_tmp_0",
       "Next": "if(err.message == \\"cause\\")",
       "ResultPath": "$.err",
       "Type": "Pass",
@@ -13924,9 +13924,9 @@ Object {
     "catch__try": Object {
       "Next": "1__catch__try",
       "Parameters": Object {
-        "0_ParsedError.$": "States.StringToJson($.err.Cause)",
+        "0_ParsedError.$": "States.StringToJson($.fnl_tmp_0.Cause)",
       },
-      "ResultPath": "$.err",
+      "ResultPath": "$.fnl_tmp_0",
       "Type": "Pass",
     },
     "if(err.message == \\"cause\\")": Object {
@@ -14021,7 +14021,7 @@ Object {
       "Type": "Pass",
     },
     "catch__try": Object {
-      "InputPath": "$.0_tmp",
+      "InputPath": "$.fnl_tmp_0",
       "Next": "if(err.message == \\"cause\\")",
       "ResultPath": "$.err",
       "Type": "Pass",
@@ -14076,7 +14076,7 @@ Object {
       "Result": Object {
         "message": "cause",
       },
-      "ResultPath": "$.0_tmp",
+      "ResultPath": "$.fnl_tmp_0",
       "Type": "Pass",
     },
     "try": Object {
@@ -14126,7 +14126,7 @@ Object {
       "Type": "Pass",
     },
     "catch__for(item of input.items)": Object {
-      "InputPath": "$.0_tmp",
+      "InputPath": "$.fnl_tmp_0",
       "Next": "return err.message",
       "ResultPath": "$.err",
       "Type": "Pass",
@@ -14171,7 +14171,7 @@ Object {
       "Result": Object {
         "message": "err",
       },
-      "ResultPath": "$.0_tmp",
+      "ResultPath": "$.fnl_tmp_0",
       "Type": "Pass",
     },
   },
@@ -14194,7 +14194,7 @@ Object {
       "Type": "Pass",
     },
     "catch__for(item of input.items)": Object {
-      "InputPath": "$.0_tmp",
+      "InputPath": "$.fnl_tmp_0",
       "Next": "return err.message",
       "ResultPath": "$.err",
       "Type": "Pass",
@@ -14239,7 +14239,7 @@ Object {
       "Result": Object {
         "message": "err",
       },
-      "ResultPath": "$.0_tmp",
+      "ResultPath": "$.fnl_tmp_0",
       "Type": "Pass",
     },
   },

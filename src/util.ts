@@ -355,7 +355,7 @@ export class DeterministicNameGenerator {
    */
   public generateOrGet(node: FunctionlessNode): string {
     if (!this.generatedNames.has(node)) {
-      this.generatedNames.set(node, `${this.generatedNames.size}_tmp`);
+      this.generatedNames.set(node, `fnl_tmp_${this.generatedNames.size}`);
     }
     return this.generatedNames.get(node)!;
   }
