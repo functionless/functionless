@@ -317,7 +317,7 @@ export namespace $SFN {
   function mapOrForEach(call: CallExpr, context: ASL) {
     const callbackfn =
       call.args.length === 3 ? call.args[2]?.expr : call.args[1]?.expr;
-    if (callbackfn === undefined || callbackfn.kind !== "FunctionExpr") {
+    if (callbackfn === undefined || !isFunctionExpr(callbackfn)) {
       throw new Error("missing callbackfn in $SFN.map");
     }
     const callbackStates = context.evalStmt(callbackfn.body);
@@ -997,7 +997,7 @@ function retrieveMachineArgs(call: CallExpr) {
       ) {
         throw new SynthError(
           ErrorCodes.Unsupported_Feature,
-          `${prop.kind} is not suppported by Step Functions`
+          `${prop.kindName} is not suppported by Step Functions`
         );
       }
       return prop?.expr;

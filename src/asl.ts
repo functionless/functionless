@@ -1259,7 +1259,7 @@ export class ASL {
       if (!blockState) {
         throw new SynthError(
           ErrorCodes.Unexpected_Error,
-          `a ${stmt.kind} block must have at least one Stmt`
+          `a ${stmt.kindName} block must have at least one Stmt`
         );
       }
       return this.evalContextToSubState(stmt, (_, evalCondition) => {
@@ -1900,7 +1900,7 @@ export class ASL {
           (obj: ASLGraph.LiteralValue, prop) => {
             if (!isPropAssignExpr(prop)) {
               throw new Error(
-                `${prop.kind} is not supported in Amazon States Language`
+                `${prop.kindName} is not supported in Amazon States Language`
               );
             }
             if (
@@ -2292,7 +2292,7 @@ export class ASL {
     } else if (isParenthesizedExpr(expr)) {
       return this.eval(expr.expr);
     }
-    throw new Error(`cannot eval expression kind '${expr.kind}'`);
+    throw new Error(`cannot eval expression kind '${expr.kindName}'`);
   }
 
   /**
@@ -2804,7 +2804,7 @@ export class ASL {
         ) {
           throw new SynthError(
             ErrorCodes.Unsupported_Feature,
-            `cannot reference a ${ref.kind} within a JSONPath .filter expression`
+            `cannot reference a ${ref.kindName} within a JSONPath .filter expression`
           );
         }
         assertNever(ref);
@@ -3120,7 +3120,7 @@ export class ASL {
           ErrorCodes.Arrays_of_Integration_must_be_immediately_wrapped_in_Promise_all
         );
       }
-      throw new Error(`cannot evaluate expression: '${expr.kind}`);
+      throw new Error(`cannot evaluate expression: '${expr.kindName}`);
     };
 
     return [internal(expr), ASLGraph.joinSubStates(expr, ...subStates)];
@@ -4421,7 +4421,7 @@ function toStateName(node: FunctionlessNode): string {
     ) {
       throw new SynthError(
         ErrorCodes.Unsupported_Feature,
-        `Unsupported kind: ${node.kind}`
+        `Unsupported kind: ${node.kindName}`
       );
     } else {
       return assertNever(node);
@@ -4450,7 +4450,7 @@ function exprToString(
     return `${expr.value}`;
   } else if (isCallExpr(expr) || isNewExpr(expr)) {
     if (isSuperKeyword(expr.expr) || isImportKeyword(expr.expr)) {
-      throw new Error(`calling ${expr.expr.kind} is unsupported in ASL`);
+      throw new Error(`calling ${expr.expr.kindName} is unsupported in ASL`);
     }
     return `${isNewExpr(expr) ? "new " : ""}${exprToString(
       expr.expr
@@ -4483,7 +4483,7 @@ function exprToString(
         ) {
           throw new SynthError(
             ErrorCodes.Unsupported_Feature,
-            `${prop.kind} is not supported by Step Functions`
+            `${prop.kindName} is not supported by Step Functions`
           );
         }
 
@@ -4568,7 +4568,7 @@ function exprToString(
   } else if (isTaggedTemplateExpr(expr)) {
     throw new SynthError(
       ErrorCodes.Unsupported_Feature,
-      `${expr.kind} is not supported by Step Functions`
+      `${expr.kindName} is not supported by Step Functions`
     );
   } else if (isOmittedExpr(expr)) {
     return "undefined";

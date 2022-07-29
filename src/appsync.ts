@@ -666,7 +666,7 @@ function synthesizeFunctions(api: appsync.GraphqlApi, decl: FunctionDecl) {
             return getResult(expr.expr);
           } else {
             throw new Error(
-              `invalid Expression in-lined with Service Call: ${expr.kind}`
+              `invalid Expression in-lined with Service Call: ${expr.kindName}`
             );
           }
         }

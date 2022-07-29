@@ -14,6 +14,7 @@ import {
 import { isBindingPattern, isErr, isFunctionDecl } from "./guards";
 import { Integration } from "./integration";
 import { BaseNode, FunctionlessNode } from "./node";
+import { NodeKind } from "./node-kind";
 import type {
   BlockStmt,
   CatchClause,
@@ -33,14 +34,14 @@ export type Decl =
   | VariableDecl;
 
 abstract class BaseDecl<
-  Kind extends FunctionlessNode["kind"],
+  Kind extends NodeKind,
   Parent extends FunctionlessNode | undefined = FunctionlessNode | undefined
 > extends BaseNode<Kind, Parent> {
   readonly nodeKind: "Decl" = "Decl";
 }
 
 export class ClassDecl<C extends AnyClass = AnyClass> extends BaseDecl<
-  "ClassDecl",
+  NodeKind.ClassDecl,
   undefined
 > {
   readonly _classBrand?: C;
@@ -49,7 +50,7 @@ export class ClassDecl<C extends AnyClass = AnyClass> extends BaseDecl<
     readonly heritage: Expr | undefined,
     readonly members: ClassMember[]
   ) {
-    super("ClassDecl", arguments);
+    super(NodeKind.ClassDecl, arguments);
   }
   public clone(): this {
     return new ClassDecl(
@@ -68,9 +69,9 @@ export type ClassMember =
   | PropDecl
   | SetAccessorDecl;
 
-export class ClassStaticBlockDecl extends BaseDecl<"ClassStaticBlockDecl"> {
+export class ClassStaticBlockDecl extends BaseDecl<NodeKind.ClassStaticBlockDecl> {
   constructor(readonly block: BlockStmt) {
-    super("ClassStaticBlockDecl", arguments);
+    super(NodeKind.ClassStaticBlockDecl, arguments);
   }
 
   public clone(): this {
@@ -78,9 +79,9 @@ export class ClassStaticBlockDecl extends BaseDecl<"ClassStaticBlockDecl"> {
   }
 }
 
-export class ConstructorDecl extends BaseDecl<"ConstructorDecl"> {
+export class ConstructorDecl extends BaseDecl<NodeKind.ConstructorDecl> {
   constructor(readonly parameters: ParameterDecl[], readonly body: BlockStmt) {
-    super("ConstructorDecl", arguments);
+    super(NodeKind.ConstructorDecl, arguments);
   }
 
   public clone(): this {
@@ -91,13 +92,13 @@ export class ConstructorDecl extends BaseDecl<"ConstructorDecl"> {
   }
 }
 
-export class MethodDecl extends BaseDecl<"MethodDecl"> {
+export class MethodDecl extends BaseDecl<NodeKind.MethodDecl> {
   constructor(
     readonly name: PropName,
     readonly parameters: ParameterDecl[],
     readonly body: BlockStmt
   ) {
-    super("MethodDecl", arguments);
+    super(NodeKind.MethodDecl, arguments);
   }
 
   public clone(): this {
@@ -109,13 +110,13 @@ export class MethodDecl extends BaseDecl<"MethodDecl"> {
   }
 }
 
-export class PropDecl extends BaseDecl<"PropDecl"> {
+export class PropDecl extends BaseDecl<NodeKind.PropDecl> {
   constructor(
     readonly name: PropName,
     readonly isStatic: boolean,
     readonly initializer?: Expr
   ) {
-    super("PropDecl", arguments);
+    super(NodeKind.PropDecl, arguments);
   }
   public clone(): this {
     return new PropDecl(
@@ -127,18 +128,18 @@ export class PropDecl extends BaseDecl<"PropDecl"> {
 }
 
 export class GetAccessorDecl extends BaseDecl<
-  "GetAccessorDecl",
+  NodeKind.GetAccessorDecl,
   ClassDecl | ClassExpr | ObjectLiteralExpr
 > {
   constructor(readonly name: PropName, readonly body: BlockStmt) {
-    super("GetAccessorDecl", arguments);
+    super(NodeKind.GetAccessorDecl, arguments);
   }
   public clone(): this {
     return new GetAccessorDecl(this.name.clone(), this.body.clone()) as this;
   }
 }
 export class SetAccessorDecl extends BaseDecl<
-  "SetAccessorDecl",
+  NodeKind.SetAccessorDecl,
   ClassDecl | ClassExpr | ObjectLiteralExpr
 > {
   constructor(
@@ -146,7 +147,7 @@ export class SetAccessorDecl extends BaseDecl<
     readonly parameter: ParameterDecl,
     readonly body: BlockStmt
   ) {
-    super("SetAccessorDecl", arguments);
+    super(NodeKind.SetAccessorDecl, arguments);
   }
   public clone(): this {
     return new SetAccessorDecl(
@@ -159,14 +160,14 @@ export class SetAccessorDecl extends BaseDecl<
 
 export class FunctionDecl<
   F extends AnyFunction = AnyFunction
-> extends BaseDecl<"FunctionDecl"> {
+> extends BaseDecl<NodeKind.FunctionDecl> {
   readonly _functionBrand?: F;
   constructor(
     readonly name: string,
     readonly parameters: ParameterDecl[],
     readonly body: BlockStmt
   ) {
-    super("FunctionDecl", arguments);
+    super(NodeKind.FunctionDecl, arguments);
   }
 
   public clone(): this {
@@ -186,11 +187,11 @@ export interface IntegrationInvocation {
 export type BindingName = Identifier | BindingPattern;
 
 export class ParameterDecl extends BaseDecl<
-  "ParameterDecl",
+  NodeKind.ParameterDecl,
   ArrowFunctionExpr | FunctionDecl | FunctionExpr | SetAccessorDecl
 > {
   constructor(readonly name: BindingName, readonly initializer?: Expr) {
-    super("ParameterDecl", arguments);
+    super(NodeKind.ParameterDecl, arguments);
   }
 
   public clone(): this {
@@ -258,7 +259,10 @@ export type BindingPattern = ObjectBinding | ArrayBinding;
  *             // ^ { b: 2 }
  * ```
  */
-export class BindingElem extends BaseDecl<"BindingElem", BindingPattern> {
+export class BindingElem extends BaseDecl<
+  NodeKind.BindingElem,
+  BindingPattern
+> {
   constructor(
     readonly name: BindingName,
     readonly rest: boolean,
@@ -268,7 +272,7 @@ export class BindingElem extends BaseDecl<"BindingElem", BindingPattern> {
       | StringLiteralExpr,
     readonly initializer?: Expr
   ) {
-    super("BindingElem", arguments);
+    super(NodeKind.BindingElem, arguments);
   }
 
   public clone(): this {
@@ -302,11 +306,14 @@ export class BindingElem extends BaseDecl<"BindingElem", BindingPattern> {
  *
  * @see BindingElm for more details.
  */
-export class ObjectBinding extends BaseNode<"ObjectBinding", VariableDecl> {
+export class ObjectBinding extends BaseNode<
+  NodeKind.ObjectBinding,
+  VariableDecl
+> {
   readonly nodeKind: "Node" = "Node";
 
   constructor(readonly bindings: BindingElem[]) {
-    super("ObjectBinding", arguments);
+    super(NodeKind.ObjectBinding, arguments);
   }
 
   public clone(): this {
@@ -334,11 +341,14 @@ export class ObjectBinding extends BaseNode<"ObjectBinding", VariableDecl> {
  *
  * @see BindingElm for more details.
  */
-export class ArrayBinding extends BaseNode<"ArrayBinding", VariableDecl> {
+export class ArrayBinding extends BaseNode<
+  NodeKind.ArrayBinding,
+  VariableDecl
+> {
   readonly nodeKind: "Node" = "Node";
 
   constructor(readonly bindings: (BindingElem | OmittedExpr)[]) {
-    super("ArrayBinding", arguments);
+    super(NodeKind.ArrayBinding, arguments);
   }
 
   public clone(): this {
@@ -354,9 +364,9 @@ export type VariableDeclParent =
 
 export class VariableDecl<
   E extends Expr | undefined = Expr | undefined
-> extends BaseDecl<"VariableDecl", VariableDeclParent> {
+> extends BaseDecl<NodeKind.VariableDecl, VariableDeclParent> {
   constructor(readonly name: BindingName, readonly initializer: E) {
-    super("VariableDecl", arguments);
+    super(NodeKind.VariableDecl, arguments);
   }
 
   public clone(): this {
@@ -370,13 +380,13 @@ export class VariableDecl<
 export type VariableDeclListParent = ForStmt | VariableStmt;
 
 export class VariableDeclList extends BaseNode<
-  "VariableDeclList",
+  NodeKind.VariableDeclList,
   VariableDeclListParent
 > {
   readonly nodeKind: "Node" = "Node";
 
   constructor(readonly decls: VariableDecl[]) {
-    super("VariableDeclList", arguments);
+    super(NodeKind.VariableDeclList, arguments);
   }
 
   public clone(): this {

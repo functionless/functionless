@@ -6,6 +6,7 @@ import type {
 import { Expr, FunctionExpr, Identifier } from "./expression";
 import { isTryStmt } from "./guards";
 import { BaseNode, FunctionlessNode } from "./node";
+import { NodeKind } from "./node-kind";
 
 /**
  * A {@link Stmt} (Statement) is unit of execution that does not yield any value. They are translated
@@ -35,7 +36,7 @@ export type Stmt =
   | WithStmt;
 
 export abstract class BaseStmt<
-  Kind extends FunctionlessNode["kind"],
+  Kind extends NodeKind,
   Parent extends FunctionlessNode | undefined = BlockStmt | IfStmt
 > extends BaseNode<Kind, Parent> {
   readonly nodeKind: "Stmt" = "Stmt";
@@ -50,9 +51,9 @@ export abstract class BaseStmt<
   next: Stmt | undefined;
 }
 
-export class ExprStmt extends BaseStmt<"ExprStmt"> {
+export class ExprStmt extends BaseStmt<NodeKind.ExprStmt> {
   constructor(readonly expr: Expr) {
-    super("ExprStmt", arguments);
+    super(NodeKind.ExprStmt, arguments);
   }
 
   public clone(): this {
@@ -60,9 +61,9 @@ export class ExprStmt extends BaseStmt<"ExprStmt"> {
   }
 }
 
-export class VariableStmt extends BaseStmt<"VariableStmt"> {
+export class VariableStmt extends BaseStmt<NodeKind.VariableStmt> {
   constructor(readonly declList: VariableDeclList) {
-    super("VariableStmt", arguments);
+    super(NodeKind.VariableStmt, arguments);
   }
 
   public clone(): this {
@@ -82,9 +83,9 @@ export type BlockStmtParent =
   | TryStmt
   | WhileStmt;
 
-export class BlockStmt extends BaseStmt<"BlockStmt", BlockStmtParent> {
+export class BlockStmt extends BaseStmt<NodeKind.BlockStmt, BlockStmtParent> {
   constructor(readonly statements: Stmt[]) {
-    super("BlockStmt", arguments);
+    super(NodeKind.BlockStmt, arguments);
     statements.forEach((stmt, i) => {
       stmt.prev = i > 0 ? statements[i - 1] : undefined;
       stmt.next = i + 1 < statements.length ? statements[i + 1] : undefined;
@@ -124,9 +125,9 @@ export class BlockStmt extends BaseStmt<"BlockStmt", BlockStmtParent> {
   }
 }
 
-export class ReturnStmt extends BaseStmt<"ReturnStmt"> {
+export class ReturnStmt extends BaseStmt<NodeKind.ReturnStmt> {
   constructor(readonly expr: Expr) {
-    super("ReturnStmt", arguments);
+    super(NodeKind.ReturnStmt, arguments);
   }
 
   public clone(): this {
@@ -134,9 +135,9 @@ export class ReturnStmt extends BaseStmt<"ReturnStmt"> {
   }
 }
 
-export class IfStmt extends BaseStmt<"IfStmt"> {
+export class IfStmt extends BaseStmt<NodeKind.IfStmt> {
   constructor(readonly when: Expr, readonly then: Stmt, readonly _else?: Stmt) {
-    super("IfStmt", arguments);
+    super(NodeKind.IfStmt, arguments);
     if (_else) {
     }
   }
@@ -150,13 +151,13 @@ export class IfStmt extends BaseStmt<"IfStmt"> {
   }
 }
 
-export class ForOfStmt extends BaseStmt<"ForOfStmt"> {
+export class ForOfStmt extends BaseStmt<NodeKind.ForOfStmt> {
   constructor(
     readonly initializer: VariableDecl | Identifier,
     readonly expr: Expr,
     readonly body: BlockStmt
   ) {
-    super("ForOfStmt", arguments);
+    super(NodeKind.ForOfStmt, arguments);
   }
 
   public clone(): this {
@@ -168,13 +169,13 @@ export class ForOfStmt extends BaseStmt<"ForOfStmt"> {
   }
 }
 
-export class ForInStmt extends BaseStmt<"ForInStmt"> {
+export class ForInStmt extends BaseStmt<NodeKind.ForInStmt> {
   constructor(
     readonly initializer: VariableDecl | Identifier,
     readonly expr: Expr,
     readonly body: BlockStmt
   ) {
-    super("ForInStmt", arguments);
+    super(NodeKind.ForInStmt, arguments);
   }
 
   public clone(): this {
@@ -186,14 +187,14 @@ export class ForInStmt extends BaseStmt<"ForInStmt"> {
   }
 }
 
-export class ForStmt extends BaseStmt<"ForStmt"> {
+export class ForStmt extends BaseStmt<NodeKind.ForStmt> {
   constructor(
     readonly body: BlockStmt,
     readonly initializer?: VariableDeclList | Expr,
     readonly condition?: Expr,
     readonly incrementor?: Expr
   ) {
-    super("ForStmt", arguments);
+    super(NodeKind.ForStmt, arguments);
   }
 
   public clone(): this {
@@ -206,9 +207,9 @@ export class ForStmt extends BaseStmt<"ForStmt"> {
   }
 }
 
-export class BreakStmt extends BaseStmt<"BreakStmt"> {
+export class BreakStmt extends BaseStmt<NodeKind.BreakStmt> {
   constructor() {
-    super("BreakStmt", arguments);
+    super(NodeKind.BreakStmt, arguments);
   }
 
   public clone(): this {
@@ -216,9 +217,9 @@ export class BreakStmt extends BaseStmt<"BreakStmt"> {
   }
 }
 
-export class ContinueStmt extends BaseStmt<"ContinueStmt"> {
+export class ContinueStmt extends BaseStmt<NodeKind.ContinueStmt> {
   constructor() {
-    super("ContinueStmt", arguments);
+    super(NodeKind.ContinueStmt, arguments);
   }
 
   public clone(): this {
@@ -232,13 +233,13 @@ export interface FinallyBlock extends BlockStmt {
   };
 }
 
-export class TryStmt extends BaseStmt<"TryStmt"> {
+export class TryStmt extends BaseStmt<NodeKind.TryStmt> {
   constructor(
     readonly tryBlock: BlockStmt,
     readonly catchClause?: CatchClause,
     readonly finallyBlock?: FinallyBlock
   ) {
-    super("TryStmt", arguments);
+    super(NodeKind.TryStmt, arguments);
     if (catchClause) {
     }
     if (finallyBlock) {
@@ -254,12 +255,12 @@ export class TryStmt extends BaseStmt<"TryStmt"> {
   }
 }
 
-export class CatchClause extends BaseStmt<"CatchClause", TryStmt> {
+export class CatchClause extends BaseStmt<NodeKind.CatchClause, TryStmt> {
   constructor(
     readonly variableDecl: VariableDecl | undefined,
     readonly block: BlockStmt
   ) {
-    super("CatchClause", arguments);
+    super(NodeKind.CatchClause, arguments);
     if (variableDecl) {
     }
   }
@@ -272,9 +273,9 @@ export class CatchClause extends BaseStmt<"CatchClause", TryStmt> {
   }
 }
 
-export class ThrowStmt extends BaseStmt<"ThrowStmt"> {
+export class ThrowStmt extends BaseStmt<NodeKind.ThrowStmt> {
   constructor(readonly expr: Expr) {
-    super("ThrowStmt", arguments);
+    super(NodeKind.ThrowStmt, arguments);
   }
 
   public clone(): this {
@@ -282,9 +283,9 @@ export class ThrowStmt extends BaseStmt<"ThrowStmt"> {
   }
 }
 
-export class WhileStmt extends BaseStmt<"WhileStmt"> {
+export class WhileStmt extends BaseStmt<NodeKind.WhileStmt> {
   constructor(readonly condition: Expr, readonly block: BlockStmt) {
-    super("WhileStmt", arguments);
+    super(NodeKind.WhileStmt, arguments);
   }
 
   public clone(): this {
@@ -292,9 +293,9 @@ export class WhileStmt extends BaseStmt<"WhileStmt"> {
   }
 }
 
-export class DoStmt extends BaseStmt<"DoStmt"> {
+export class DoStmt extends BaseStmt<NodeKind.DoStmt> {
   constructor(readonly block: BlockStmt, readonly condition: Expr) {
-    super("DoStmt", arguments);
+    super(NodeKind.DoStmt, arguments);
   }
 
   public clone(): this {
@@ -302,9 +303,9 @@ export class DoStmt extends BaseStmt<"DoStmt"> {
   }
 }
 
-export class LabelledStmt extends BaseStmt<"LabelledStmt"> {
+export class LabelledStmt extends BaseStmt<NodeKind.LabelledStmt> {
   constructor(readonly label: string, readonly stmt: Stmt) {
-    super("LabelledStmt", arguments);
+    super(NodeKind.LabelledStmt, arguments);
   }
 
   public clone(): this {
@@ -312,18 +313,18 @@ export class LabelledStmt extends BaseStmt<"LabelledStmt"> {
   }
 }
 
-export class DebuggerStmt extends BaseStmt<"DebuggerStmt"> {
+export class DebuggerStmt extends BaseStmt<NodeKind.DebuggerStmt> {
   constructor() {
-    super("DebuggerStmt", arguments);
+    super(NodeKind.DebuggerStmt, arguments);
   }
   public clone(): this {
     return new DebuggerStmt() as this;
   }
 }
 
-export class SwitchStmt extends BaseStmt<"SwitchStmt"> {
+export class SwitchStmt extends BaseStmt<NodeKind.SwitchStmt> {
   constructor(readonly clauses: SwitchClause[]) {
-    super("SwitchStmt", arguments);
+    super(NodeKind.SwitchStmt, arguments);
   }
 
   public clone(): this {
@@ -333,9 +334,9 @@ export class SwitchStmt extends BaseStmt<"SwitchStmt"> {
 
 export type SwitchClause = CaseClause | DefaultClause;
 
-export class CaseClause extends BaseStmt<"CaseClause"> {
+export class CaseClause extends BaseStmt<NodeKind.CaseClause> {
   constructor(readonly expr: Expr, readonly statements: Stmt[]) {
-    super("CaseClause", arguments);
+    super(NodeKind.CaseClause, arguments);
   }
   public clone(): this {
     return new CaseClause(
@@ -345,9 +346,9 @@ export class CaseClause extends BaseStmt<"CaseClause"> {
   }
 }
 
-export class DefaultClause extends BaseStmt<"DefaultClause"> {
+export class DefaultClause extends BaseStmt<NodeKind.DefaultClause> {
   constructor(readonly statements: Stmt[]) {
-    super("DefaultClause", arguments);
+    super(NodeKind.DefaultClause, arguments);
   }
   public clone(): this {
     return new DefaultClause(
@@ -356,18 +357,18 @@ export class DefaultClause extends BaseStmt<"DefaultClause"> {
   }
 }
 
-export class EmptyStmt extends BaseStmt<"EmptyStmt"> {
+export class EmptyStmt extends BaseStmt<NodeKind.EmptyStmt> {
   constructor() {
-    super("EmptyStmt", arguments);
+    super(NodeKind.EmptyStmt, arguments);
   }
   public clone(): this {
     return new EmptyStmt() as this;
   }
 }
 
-export class WithStmt extends BaseStmt<"WithStmt"> {
+export class WithStmt extends BaseStmt<NodeKind.WithStmt> {
   constructor(readonly expr: Expr, readonly stmt: Stmt) {
-    super("WithStmt", arguments);
+    super(NodeKind.WithStmt, arguments);
   }
 
   public clone(): this {

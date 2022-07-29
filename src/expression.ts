@@ -17,6 +17,7 @@ import {
   isStringLiteralExpr,
 } from "./guards";
 import { BaseNode, FunctionlessNode } from "./node";
+import { NodeKind } from "./node-kind";
 import type { BlockStmt, Stmt } from "./statement";
 import type { AnyClass, AnyFunction } from "./util";
 
@@ -66,7 +67,7 @@ export type Expr =
   | YieldExpr;
 
 export abstract class BaseExpr<
-  Kind extends FunctionlessNode["kind"],
+  Kind extends NodeKind,
   Parent extends FunctionlessNode | undefined =
     | BindingElem
     | Expr
@@ -79,10 +80,10 @@ export abstract class BaseExpr<
 
 export class ArrowFunctionExpr<
   F extends AnyFunction = AnyFunction
-> extends BaseExpr<"ArrowFunctionExpr"> {
+> extends BaseExpr<NodeKind.ArrowFunctionExpr> {
   readonly _functionBrand?: F;
   constructor(readonly parameters: ParameterDecl[], readonly body: BlockStmt) {
-    super("ArrowFunctionExpr", arguments);
+    super(NodeKind.ArrowFunctionExpr, arguments);
   }
 
   public clone(): this {
@@ -95,14 +96,14 @@ export class ArrowFunctionExpr<
 
 export class FunctionExpr<
   F extends AnyFunction = AnyFunction
-> extends BaseExpr<"FunctionExpr"> {
+> extends BaseExpr<NodeKind.FunctionExpr> {
   readonly _functionBrand?: F;
   constructor(
     readonly name: string | undefined,
     readonly parameters: ParameterDecl[],
     readonly body: BlockStmt
   ) {
-    super("FunctionExpr", arguments);
+    super(NodeKind.FunctionExpr, arguments);
   }
 
   public clone(): this {
@@ -115,7 +116,7 @@ export class FunctionExpr<
 }
 
 export class ClassExpr<C extends AnyClass = AnyClass> extends BaseExpr<
-  "ClassExpr",
+  NodeKind.ClassExpr,
   undefined
 > {
   readonly _classBrand?: C;
@@ -124,7 +125,7 @@ export class ClassExpr<C extends AnyClass = AnyClass> extends BaseExpr<
     readonly heritage: Expr | undefined,
     readonly members: ClassMember[]
   ) {
-    super("ClassExpr", arguments);
+    super(NodeKind.ClassExpr, arguments);
   }
   public clone(): this {
     return new ClassExpr(
@@ -135,9 +136,11 @@ export class ClassExpr<C extends AnyClass = AnyClass> extends BaseExpr<
   }
 }
 
-export class ReferenceExpr<R = unknown> extends BaseExpr<"ReferenceExpr"> {
+export class ReferenceExpr<
+  R = unknown
+> extends BaseExpr<NodeKind.ReferenceExpr> {
   constructor(readonly name: string, readonly ref: () => R) {
-    super("ReferenceExpr", arguments);
+    super(NodeKind.ReferenceExpr, arguments);
   }
 
   public clone(): this {
@@ -147,9 +150,9 @@ export class ReferenceExpr<R = unknown> extends BaseExpr<"ReferenceExpr"> {
 
 export type VariableReference = Identifier | PropAccessExpr | ElementAccessExpr;
 
-export class Identifier extends BaseExpr<"Identifier"> {
+export class Identifier extends BaseExpr<NodeKind.Identifier> {
   constructor(readonly name: string) {
-    super("Identifier", arguments);
+    super(NodeKind.Identifier, arguments);
   }
 
   public clone(): this {
@@ -161,9 +164,9 @@ export class Identifier extends BaseExpr<"Identifier"> {
   }
 }
 
-export class PrivateIdentifier extends BaseExpr<"PrivateIdentifier"> {
+export class PrivateIdentifier extends BaseExpr<NodeKind.PrivateIdentifier> {
   constructor(readonly name: `#${string}`) {
-    super("PrivateIdentifier", arguments);
+    super(NodeKind.PrivateIdentifier, arguments);
   }
 
   public clone(): this {
@@ -175,13 +178,13 @@ export class PrivateIdentifier extends BaseExpr<"PrivateIdentifier"> {
   }
 }
 
-export class PropAccessExpr extends BaseExpr<"PropAccessExpr"> {
+export class PropAccessExpr extends BaseExpr<NodeKind.PropAccessExpr> {
   constructor(
     readonly expr: Expr,
     readonly name: Identifier | PrivateIdentifier,
     readonly isOptional: boolean
   ) {
-    super("PropAccessExpr", arguments);
+    super(NodeKind.PropAccessExpr, arguments);
   }
 
   public clone(): this {
@@ -193,9 +196,9 @@ export class PropAccessExpr extends BaseExpr<"PropAccessExpr"> {
   }
 }
 
-export class ElementAccessExpr extends BaseExpr<"ElementAccessExpr"> {
+export class ElementAccessExpr extends BaseExpr<NodeKind.ElementAccessExpr> {
   constructor(readonly expr: Expr, readonly element: Expr) {
-    super("ElementAccessExpr", arguments);
+    super(NodeKind.ElementAccessExpr, arguments);
   }
 
   public clone(): this {
@@ -206,9 +209,9 @@ export class ElementAccessExpr extends BaseExpr<"ElementAccessExpr"> {
   }
 }
 
-export class Argument extends BaseExpr<"Argument", CallExpr | NewExpr> {
+export class Argument extends BaseExpr<NodeKind.Argument, CallExpr | NewExpr> {
   constructor(readonly expr?: Expr) {
-    super("Argument", arguments);
+    super(NodeKind.Argument, arguments);
   }
 
   public clone(): this {
@@ -216,12 +219,12 @@ export class Argument extends BaseExpr<"Argument", CallExpr | NewExpr> {
   }
 }
 
-export class CallExpr extends BaseExpr<"CallExpr"> {
+export class CallExpr extends BaseExpr<NodeKind.CallExpr> {
   constructor(
     readonly expr: Expr | SuperKeyword | ImportKeyword,
     readonly args: Argument[]
   ) {
-    super("CallExpr", arguments);
+    super(NodeKind.CallExpr, arguments);
   }
 
   public clone(): this {
@@ -232,9 +235,9 @@ export class CallExpr extends BaseExpr<"CallExpr"> {
   }
 }
 
-export class NewExpr extends BaseExpr<"NewExpr"> {
+export class NewExpr extends BaseExpr<NodeKind.NewExpr> {
   constructor(readonly expr: Expr, readonly args: Argument[]) {
-    super("NewExpr", arguments);
+    super(NodeKind.NewExpr, arguments);
     for (const arg of Object.values(args)) {
       if (arg) {
       }
@@ -249,9 +252,9 @@ export class NewExpr extends BaseExpr<"NewExpr"> {
   }
 }
 
-export class ConditionExpr extends BaseExpr<"ConditionExpr"> {
+export class ConditionExpr extends BaseExpr<NodeKind.ConditionExpr> {
   constructor(readonly when: Expr, readonly then: Expr, readonly _else: Expr) {
-    super("ConditionExpr", arguments);
+    super(NodeKind.ConditionExpr, arguments);
     if (_else) {
     }
   }
@@ -279,13 +282,13 @@ export type BinaryOp =
   | "="
   | "in";
 
-export class BinaryExpr extends BaseExpr<"BinaryExpr"> {
+export class BinaryExpr extends BaseExpr<NodeKind.BinaryExpr> {
   constructor(
     readonly left: Expr,
     readonly op: BinaryOp,
     readonly right: Expr
   ) {
-    super("BinaryExpr", arguments);
+    super(NodeKind.BinaryExpr, arguments);
   }
 
   public clone(): this {
@@ -300,9 +303,9 @@ export class BinaryExpr extends BaseExpr<"BinaryExpr"> {
 export type PostfixUnaryOp = "--" | "++";
 export type UnaryOp = "!" | "-" | "~" | PostfixUnaryOp;
 
-export class UnaryExpr extends BaseExpr<"UnaryExpr"> {
+export class UnaryExpr extends BaseExpr<NodeKind.UnaryExpr> {
   constructor(readonly op: UnaryOp, readonly expr: Expr) {
-    super("UnaryExpr", arguments);
+    super(NodeKind.UnaryExpr, arguments);
   }
 
   public clone(): this {
@@ -310,9 +313,9 @@ export class UnaryExpr extends BaseExpr<"UnaryExpr"> {
   }
 }
 
-export class PostfixUnaryExpr extends BaseExpr<"PostfixUnaryExpr"> {
+export class PostfixUnaryExpr extends BaseExpr<NodeKind.PostfixUnaryExpr> {
   constructor(readonly op: PostfixUnaryOp, readonly expr: Expr) {
-    super("PostfixUnaryExpr", arguments);
+    super(NodeKind.PostfixUnaryExpr, arguments);
   }
 
   public clone(): this {
@@ -322,10 +325,10 @@ export class PostfixUnaryExpr extends BaseExpr<"PostfixUnaryExpr"> {
 
 // literals
 
-export class NullLiteralExpr extends BaseExpr<"NullLiteralExpr"> {
+export class NullLiteralExpr extends BaseExpr<NodeKind.NullLiteralExpr> {
   readonly value = null;
   constructor() {
-    super("NullLiteralExpr", arguments);
+    super(NodeKind.NullLiteralExpr, arguments);
   }
 
   public clone(): this {
@@ -333,11 +336,11 @@ export class NullLiteralExpr extends BaseExpr<"NullLiteralExpr"> {
   }
 }
 
-export class UndefinedLiteralExpr extends BaseExpr<"UndefinedLiteralExpr"> {
+export class UndefinedLiteralExpr extends BaseExpr<NodeKind.UndefinedLiteralExpr> {
   readonly value = undefined;
 
   constructor() {
-    super("UndefinedLiteralExpr", arguments);
+    super(NodeKind.UndefinedLiteralExpr, arguments);
   }
 
   public clone(): this {
@@ -345,9 +348,9 @@ export class UndefinedLiteralExpr extends BaseExpr<"UndefinedLiteralExpr"> {
   }
 }
 
-export class BooleanLiteralExpr extends BaseExpr<"BooleanLiteralExpr"> {
+export class BooleanLiteralExpr extends BaseExpr<NodeKind.BooleanLiteralExpr> {
   constructor(readonly value: boolean) {
-    super("BooleanLiteralExpr", arguments);
+    super(NodeKind.BooleanLiteralExpr, arguments);
   }
 
   public clone(): this {
@@ -355,9 +358,9 @@ export class BooleanLiteralExpr extends BaseExpr<"BooleanLiteralExpr"> {
   }
 }
 
-export class BigIntExpr extends BaseExpr<"BigIntExpr"> {
+export class BigIntExpr extends BaseExpr<NodeKind.BigIntExpr> {
   constructor(readonly value: bigint) {
-    super("BigIntExpr", arguments);
+    super(NodeKind.BigIntExpr, arguments);
   }
 
   public clone(): this {
@@ -365,9 +368,9 @@ export class BigIntExpr extends BaseExpr<"BigIntExpr"> {
   }
 }
 
-export class NumberLiteralExpr extends BaseExpr<"NumberLiteralExpr"> {
+export class NumberLiteralExpr extends BaseExpr<NodeKind.NumberLiteralExpr> {
   constructor(readonly value: number) {
-    super("NumberLiteralExpr", arguments);
+    super(NodeKind.NumberLiteralExpr, arguments);
   }
 
   public clone(): this {
@@ -375,9 +378,9 @@ export class NumberLiteralExpr extends BaseExpr<"NumberLiteralExpr"> {
   }
 }
 
-export class StringLiteralExpr extends BaseExpr<"StringLiteralExpr"> {
+export class StringLiteralExpr extends BaseExpr<NodeKind.StringLiteralExpr> {
   constructor(readonly value: string) {
-    super("StringLiteralExpr", arguments);
+    super(NodeKind.StringLiteralExpr, arguments);
   }
 
   public clone(): this {
@@ -385,9 +388,9 @@ export class StringLiteralExpr extends BaseExpr<"StringLiteralExpr"> {
   }
 }
 
-export class ArrayLiteralExpr extends BaseExpr<"ArrayLiteralExpr"> {
+export class ArrayLiteralExpr extends BaseExpr<NodeKind.ArrayLiteralExpr> {
   constructor(readonly items: Expr[]) {
-    super("ArrayLiteralExpr", arguments);
+    super(NodeKind.ArrayLiteralExpr, arguments);
   }
 
   public clone(): this {
@@ -402,9 +405,9 @@ export type ObjectElementExpr =
   | SetAccessorDecl
   | SpreadAssignExpr;
 
-export class ObjectLiteralExpr extends BaseExpr<"ObjectLiteralExpr"> {
+export class ObjectLiteralExpr extends BaseExpr<NodeKind.ObjectLiteralExpr> {
   constructor(readonly properties: ObjectElementExpr[]) {
-    super("ObjectLiteralExpr", arguments);
+    super(NodeKind.ObjectLiteralExpr, arguments);
   }
 
   public clone(): this {
@@ -440,11 +443,11 @@ export type PropName =
   | NumberLiteralExpr;
 
 export class PropAssignExpr extends BaseExpr<
-  "PropAssignExpr",
+  NodeKind.PropAssignExpr,
   ObjectLiteralExpr
 > {
   constructor(readonly name: PropName, readonly expr: Expr) {
-    super("PropAssignExpr", arguments);
+    super(NodeKind.PropAssignExpr, arguments);
   }
 
   public clone(): this {
@@ -453,11 +456,11 @@ export class PropAssignExpr extends BaseExpr<
 }
 
 export class ComputedPropertyNameExpr extends BaseExpr<
-  "ComputedPropertyNameExpr",
+  NodeKind.ComputedPropertyNameExpr,
   PropAssignExpr
 > {
   constructor(readonly expr: Expr) {
-    super("ComputedPropertyNameExpr", arguments);
+    super(NodeKind.ComputedPropertyNameExpr, arguments);
   }
 
   public clone(): this {
@@ -466,11 +469,11 @@ export class ComputedPropertyNameExpr extends BaseExpr<
 }
 
 export class SpreadAssignExpr extends BaseExpr<
-  "SpreadAssignExpr",
+  NodeKind.SpreadAssignExpr,
   ObjectLiteralExpr
 > {
   constructor(readonly expr: Expr) {
-    super("SpreadAssignExpr", arguments);
+    super(NodeKind.SpreadAssignExpr, arguments);
   }
 
   public clone(): this {
@@ -479,11 +482,11 @@ export class SpreadAssignExpr extends BaseExpr<
 }
 
 export class SpreadElementExpr extends BaseExpr<
-  "SpreadElementExpr",
+  NodeKind.SpreadElementExpr,
   ObjectLiteralExpr
 > {
   constructor(readonly expr: Expr) {
-    super("SpreadElementExpr", arguments);
+    super(NodeKind.SpreadElementExpr, arguments);
   }
 
   public clone(): this {
@@ -494,9 +497,9 @@ export class SpreadElementExpr extends BaseExpr<
 /**
  * Interpolates a TemplateExpr to a string `this ${is} a template expression`
  */
-export class TemplateExpr extends BaseExpr<"TemplateExpr"> {
+export class TemplateExpr extends BaseExpr<NodeKind.TemplateExpr> {
   constructor(readonly exprs: Expr[]) {
-    super("TemplateExpr", arguments);
+    super(NodeKind.TemplateExpr, arguments);
   }
 
   public clone(): this {
@@ -504,9 +507,9 @@ export class TemplateExpr extends BaseExpr<"TemplateExpr"> {
   }
 }
 
-export class TaggedTemplateExpr extends BaseExpr<"TaggedTemplateExpr"> {
+export class TaggedTemplateExpr extends BaseExpr<NodeKind.TaggedTemplateExpr> {
   constructor(readonly tag: Expr, readonly exprs: Expr[]) {
-    super("TaggedTemplateExpr", arguments);
+    super(NodeKind.TaggedTemplateExpr, arguments);
   }
 
   public clone(): this {
@@ -517,9 +520,9 @@ export class TaggedTemplateExpr extends BaseExpr<"TaggedTemplateExpr"> {
   }
 }
 
-export class TypeOfExpr extends BaseExpr<"TypeOfExpr"> {
+export class TypeOfExpr extends BaseExpr<NodeKind.TypeOfExpr> {
   constructor(readonly expr: Expr) {
-    super("TypeOfExpr", arguments);
+    super(NodeKind.TypeOfExpr, arguments);
   }
 
   public clone(): this {
@@ -527,9 +530,9 @@ export class TypeOfExpr extends BaseExpr<"TypeOfExpr"> {
   }
 }
 
-export class AwaitExpr extends BaseExpr<"AwaitExpr"> {
+export class AwaitExpr extends BaseExpr<NodeKind.AwaitExpr> {
   constructor(readonly expr: Expr) {
-    super("AwaitExpr", arguments);
+    super(NodeKind.AwaitExpr, arguments);
   }
 
   public clone(): this {
@@ -537,9 +540,9 @@ export class AwaitExpr extends BaseExpr<"AwaitExpr"> {
   }
 }
 
-export class PromiseExpr extends BaseExpr<"PromiseExpr"> {
+export class PromiseExpr extends BaseExpr<NodeKind.PromiseExpr> {
   constructor(readonly expr: Expr) {
-    super("PromiseExpr", arguments);
+    super(NodeKind.PromiseExpr, arguments);
   }
 
   public clone(): this {
@@ -547,9 +550,9 @@ export class PromiseExpr extends BaseExpr<"PromiseExpr"> {
   }
 }
 
-export class PromiseArrayExpr extends BaseExpr<"PromiseArrayExpr"> {
+export class PromiseArrayExpr extends BaseExpr<NodeKind.PromiseArrayExpr> {
   constructor(readonly expr: Expr) {
-    super("PromiseArrayExpr", arguments);
+    super(NodeKind.PromiseArrayExpr, arguments);
   }
 
   public clone(): this {
@@ -557,45 +560,45 @@ export class PromiseArrayExpr extends BaseExpr<"PromiseArrayExpr"> {
   }
 }
 
-export class ThisExpr<T = any> extends BaseExpr<"ThisExpr"> {
+export class ThisExpr<T = any> extends BaseExpr<NodeKind.ThisExpr> {
   constructor(
     /**
      * Produce the value of `this`
      */
     readonly ref: () => T
   ) {
-    super("ThisExpr", arguments);
+    super(NodeKind.ThisExpr, arguments);
   }
   public clone(): this {
     return new ThisExpr(this.ref) as this;
   }
 }
 
-export class SuperKeyword extends BaseNode<"SuperKeyword"> {
+export class SuperKeyword extends BaseNode<NodeKind.SuperKeyword> {
   // `super` is not an expression - a reference to it does not yield a value
   // it only supports the following interactions
   // 1. call in a constructor - `super(..)`
   // 2. call a method on it - `super.method(..)`.
   readonly nodeKind = "Node";
   constructor() {
-    super("SuperKeyword", arguments);
+    super(NodeKind.SuperKeyword, arguments);
   }
   public clone(): this {
     return new SuperKeyword() as this;
   }
 }
 
-export class ImportKeyword extends BaseNode<"ImportKeyword"> {
+export class ImportKeyword extends BaseNode<NodeKind.ImportKeyword> {
   readonly nodeKind = "Node";
   constructor() {
-    super("ImportKeyword", arguments);
+    super(NodeKind.ImportKeyword, arguments);
   }
   public clone(): this {
     return new ImportKeyword() as this;
   }
 }
 
-export class YieldExpr extends BaseExpr<"YieldExpr"> {
+export class YieldExpr extends BaseExpr<NodeKind.YieldExpr> {
   constructor(
     /**
      * The expression to yield (or delegate) to.
@@ -606,16 +609,16 @@ export class YieldExpr extends BaseExpr<"YieldExpr"> {
      */
     readonly delegate: boolean
   ) {
-    super("YieldExpr", arguments);
+    super(NodeKind.YieldExpr, arguments);
   }
   public clone(): this {
     return new YieldExpr(this.expr?.clone(), this.delegate) as this;
   }
 }
 
-export class RegexExpr extends BaseExpr<"RegexExpr"> {
+export class RegexExpr extends BaseExpr<NodeKind.RegexExpr> {
   constructor(readonly regex: RegExp) {
-    super("RegexExpr", arguments);
+    super(NodeKind.RegexExpr, arguments);
   }
 
   public clone(): this {
@@ -623,32 +626,32 @@ export class RegexExpr extends BaseExpr<"RegexExpr"> {
   }
 }
 
-export class VoidExpr extends BaseExpr<"VoidExpr"> {
+export class VoidExpr extends BaseExpr<NodeKind.VoidExpr> {
   constructor(
     /**
      * The expression to yield (or delegate) to.
      */
     readonly expr: Expr
   ) {
-    super("VoidExpr", arguments);
+    super(NodeKind.VoidExpr, arguments);
   }
   public clone(): this {
     return new VoidExpr(this.expr?.clone()) as this;
   }
 }
 
-export class DeleteExpr extends BaseExpr<"DeleteExpr"> {
+export class DeleteExpr extends BaseExpr<NodeKind.DeleteExpr> {
   constructor(readonly expr: PropAccessExpr | ElementAccessExpr) {
-    super("DeleteExpr", arguments);
+    super(NodeKind.DeleteExpr, arguments);
   }
   public clone(): this {
     return new DeleteExpr(this.expr?.clone()) as this;
   }
 }
 
-export class ParenthesizedExpr extends BaseExpr<"ParenthesizedExpr"> {
+export class ParenthesizedExpr extends BaseExpr<NodeKind.ParenthesizedExpr> {
   constructor(readonly expr: Expr) {
-    super("ParenthesizedExpr", arguments);
+    super(NodeKind.ParenthesizedExpr, arguments);
   }
 
   public clone(): this {
@@ -663,9 +666,9 @@ export class ParenthesizedExpr extends BaseExpr<"ParenthesizedExpr"> {
   }
 }
 
-export class OmittedExpr extends BaseExpr<"OmittedExpr"> {
+export class OmittedExpr extends BaseExpr<NodeKind.OmittedExpr> {
   constructor() {
-    super("OmittedExpr", arguments);
+    super(NodeKind.OmittedExpr, arguments);
   }
   public clone(): this {
     return new OmittedExpr() as this;

@@ -28,6 +28,7 @@ import {
   isVariableDecl,
   isNode,
 } from "./guards";
+import { NodeKind, NodeKindName, getNodeKindName } from "./node-kind";
 import type { BlockStmt, CatchClause, Stmt } from "./statement";
 
 export type FunctionlessNode =
@@ -46,7 +47,7 @@ export interface HasParent<Parent extends FunctionlessNode> {
 }
 
 export abstract class BaseNode<
-  Kind extends FunctionlessNode["kind"],
+  Kind extends NodeKind,
   Parent extends FunctionlessNode | undefined = FunctionlessNode | undefined
 > {
   abstract readonly nodeKind: "Err" | "Expr" | "Stmt" | "Decl" | "Node";
@@ -59,7 +60,7 @@ export abstract class BaseNode<
    */
   readonly children: FunctionlessNode[] = [];
 
-  constructor(readonly kind: Kind, args: IArguments) {
+  constructor(readonly kind: Kind, readonly _arguments: IArguments) {
     const setParent = (node: any) => {
       if (!node) {
         return;
@@ -69,9 +70,17 @@ export abstract class BaseNode<
         node.forEach(setParent);
       }
     };
-    for (const arg of args) {
+    for (const arg of _arguments) {
       setParent(arg);
     }
+  }
+
+  public get kindName(): NodeKindName<Kind> {
+    return getNodeKindName(this.kind);
+  }
+
+  public toSExpr(): [kind: this["kind"], ...args: any[]] {
+    return [this.kind, [this._arguments]] as any;
   }
 
   public abstract clone(): this;

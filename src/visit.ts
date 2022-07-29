@@ -241,14 +241,14 @@ export function visitEachChild<T extends FunctionlessNode>(
     ensure(
       expr,
       isExpr,
-      `visitEachChild of a ${node.kind}'s expr must return a single Expr`
+      `visitEachChild of a ${node.kindName}'s expr must return a single Expr`
     );
     const args = node.args.flatMap((arg) => {
       const expr = visitor(arg.expr!);
       ensure(
         expr,
         isExpr,
-        `visitEachChild of a ${node.kind}'s argument must return a single Expr`
+        `visitEachChild of a ${node.kindName}'s argument must return a single Expr`
       );
       return new Argument(expr);
     });
@@ -278,7 +278,7 @@ export function visitEachChild<T extends FunctionlessNode>(
         ensure(
           heritage,
           isExpr,
-          `A ${node.kind}'s Heritage Clause must be an Expr`
+          `A ${node.kindName}'s Heritage Clause must be an Expr`
         );
       }
     }
@@ -378,11 +378,11 @@ export function visitEachChild<T extends FunctionlessNode>(
     ensure(
       variableDecl,
       anyOf(isVariableDecl, isIdentifier),
-      `Initializer in ${node.kind} must be a VariableDecl or Identifier`
+      `Initializer in ${node.kindName} must be a VariableDecl or Identifier`
     );
 
     const expr = visitor(node.expr);
-    ensure(expr, isExpr, `Expr in ${node.kind} must be an Expr`);
+    ensure(expr, isExpr, `Expr in ${node.kindName} must be an Expr`);
 
     const body = visitBlockStmt(node.body, visitor);
 
@@ -402,7 +402,7 @@ export function visitEachChild<T extends FunctionlessNode>(
       ensureSingleOrArray(
         visitor(parameter),
         isParameterDecl,
-        `a ${node.kind}'s parameters must be ParameterDecl nodes`
+        `a ${node.kindName}'s parameters must be ParameterDecl nodes`
       )
     );
 
@@ -790,7 +790,7 @@ function visitBlockStmt(
     ensureItemOf(block, isStmt, "Statements in BlockStmt must be Stmt nodes");
     return new BlockStmt(block);
   }
-  ensure(block, isBlockStmt, `Body in ${node.kind} must be a BlockStmt`);
+  ensure(block, isBlockStmt, `Body in ${node.kindName} must be a BlockStmt`);
   return block;
 }
 

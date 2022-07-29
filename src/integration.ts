@@ -170,7 +170,7 @@ export interface IntegrationMethods<
  * If an integration does not support an integration type, leave the function undefined or throw an error.
  *
  * Implement the unhandledContext function to customize the error message for unsupported contexts.
- * Otherwise the error will be: `${this.name} is not supported by context ${context.kind}.`
+ * Otherwise the error will be: `${this.name} is not supported by context ${context.kindStr}.`
  */
 export interface Integration<
   K extends string = string,
