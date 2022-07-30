@@ -217,7 +217,7 @@ export const synthesizeEventBridgeTargets = (
       }
     }
 
-    throw Error(`Unsupported template expression of kind: ${expr.kind}`);
+    throw Error(`Unsupported template expression of kind: ${expr.kindName}`);
   };
 
   const exprToObject = (
@@ -228,7 +228,10 @@ export const synthesizeEventBridgeTargets = (
         if (isPropAssignExpr(expr)) {
           const name = isIdentifier(expr.name)
             ? expr.name.name
-            : assertString(evalToConstant(expr.name)?.constant, expr.name.kind);
+            : assertString(
+                evalToConstant(expr.name)?.constant,
+                expr.name.kindName
+              );
           return {
             ...obj,
             [name]: assertConstantValue(

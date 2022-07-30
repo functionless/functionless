@@ -20,7 +20,7 @@ import {
   makeEventBusIntegration,
 } from "./event-bridge/event-bus";
 import { Event } from "./event-bridge/types";
-import { CallExpr } from "./expression";
+import { CallExpr, FunctionExpr } from "./expression";
 import { NativeIntegration } from "./function";
 import { PrewarmClients } from "./function-prewarm";
 import {
@@ -43,7 +43,7 @@ import {
   IntegrationInput,
   makeIntegration,
 } from "./integration";
-import { AnyFunction, ensureItemOf } from "./util";
+import { AnyFunction } from "./util";
 import { VTL } from "./vtl";
 
 export type AnyStepFunction =
@@ -317,7 +317,7 @@ export namespace $SFN {
   function mapOrForEach(call: CallExpr, context: ASL) {
     const callbackfn =
       call.args.length === 3 ? call.args[2]?.expr : call.args[1]?.expr;
-    if (callbackfn === undefined || callbackfn.kind !== "FunctionExpr") {
+    if (callbackfn === undefined || !isFunctionExpr(callbackfn)) {
       throw new Error("missing callbackfn in $SFN.map");
     }
     const callbackStates = context.evalStmt(callbackfn.body);
@@ -421,13 +421,13 @@ export namespace $SFN {
     }>
   >("parallel", {
     asl(call, context) {
-      const paths = call.args.map((arg) => arg.expr);
-
-      ensureItemOf(
-        paths,
-        isFunctionExpr,
-        "each parallel path must be an inline FunctionExpr"
-      );
+      const paths = call.args.map((arg): FunctionExpr => {
+        if (isFunctionExpr(arg.expr)) {
+          return arg.expr;
+        } else {
+          throw new Error("each parallel path must be an inline FunctionExpr");
+        }
+      });
 
       return context.stateWithHeapOutput({
         Type: "Parallel",
@@ -997,7 +997,7 @@ function retrieveMachineArgs(call: CallExpr) {
       ) {
         throw new SynthError(
           ErrorCodes.Unsupported_Feature,
-          `${prop.kind} is not suppported by Step Functions`
+          `${prop.kindName} is not suppported by Step Functions`
         );
       }
       return prop?.expr;

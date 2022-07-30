@@ -26,6 +26,7 @@ import {
   IntegrationInput,
   makeIntegration,
 } from "./integration";
+import { NodeKind } from "./node-kind";
 import { AnyAsyncFunction } from "./util";
 import { VTL } from "./vtl";
 
@@ -296,7 +297,7 @@ class BaseTable<
             const input = vtl.eval(
               assertNodeKind<ObjectLiteralExpr>(
                 call.args[0]?.expr,
-                "ObjectLiteralExpr"
+                NodeKind.ObjectLiteralExpr
               )
             );
             const request = vtl.var(
@@ -316,7 +317,7 @@ class BaseTable<
             const input = vtl.eval(
               assertNodeKind<ObjectLiteralExpr>(
                 call.args[0]?.expr,
-                "ObjectLiteralExpr"
+                NodeKind.ObjectLiteralExpr
               )
             );
             const request = vtl.var(
@@ -340,7 +341,7 @@ class BaseTable<
             const input = vtl.eval(
               assertNodeKind<ObjectLiteralExpr>(
                 call.args[0]?.expr,
-                "ObjectLiteralExpr"
+                NodeKind.ObjectLiteralExpr
               )
             );
             const request = vtl.var(
@@ -362,7 +363,7 @@ class BaseTable<
             const input = vtl.eval(
               assertNodeKind<ObjectLiteralExpr>(
                 call.args[0]?.expr,
-                "ObjectLiteralExpr"
+                NodeKind.ObjectLiteralExpr
               )
             );
             const request = vtl.var(
@@ -383,7 +384,7 @@ class BaseTable<
             const input = vtl.eval(
               assertNodeKind<ObjectLiteralExpr>(
                 call.args[0]?.expr,
-                "ObjectLiteralExpr"
+                NodeKind.ObjectLiteralExpr
               )
             );
             const request = vtl.var(

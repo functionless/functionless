@@ -453,7 +453,7 @@ export namespace $AWS {
         } else if (!isPropAssignExpr(payload)) {
           throw new SynthError(
             ErrorCodes.Unsupported_Feature,
-            `${payload.kind} is not supported by Step Functions`
+            `${payload.kindName} is not supported by Step Functions`
           );
         }
 
@@ -667,7 +667,7 @@ function getTableArgument(op: string, args: Argument[] | Expr[]) {
   if (!inputArgument || !isObjectLiteralExpr(inputArgument)) {
     throw new SynthError(
       ErrorCodes.Expected_an_object_literal,
-      `First argument into ${op} should be an input object, found ${inputArgument?.kind}`
+      `First argument into ${op} should be an input object, found ${inputArgument?.kindName}`
     );
   }
 

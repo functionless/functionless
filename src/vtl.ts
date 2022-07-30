@@ -90,6 +90,7 @@ import {
   isYieldExpr,
 } from "./guards";
 import { Integration, IntegrationImpl, isIntegration } from "./integration";
+import { NodeKind } from "./node-kind";
 import { Stmt } from "./statement";
 import { AnyFunction, isInTopLevelScope } from "./util";
 
@@ -436,7 +437,7 @@ export abstract class VTL {
 
           const fn = assertNodeKind<FunctionExpr>(
             node.args[0]?.expr,
-            "FunctionExpr"
+            NodeKind.FunctionExpr
           );
           const initialValue = node.args[1];
 
@@ -603,7 +604,7 @@ export abstract class VTL {
         ) {
           throw new SynthError(
             ErrorCodes.Unsupported_Feature,
-            `${prop.kind} is not supported by VTL`
+            `${prop.kindName} is not supported by VTL`
           );
         } else {
           assertNever(prop);
@@ -615,7 +616,7 @@ export abstract class VTL {
     } else if (isReferenceExpr(node) || isThisExpr(node)) {
       return this.dereference(node);
     } else if (isParameterDecl(node) || isPropAssignExpr(node)) {
-      throw new Error(`cannot evaluate Expr kind: '${node.kind}'`);
+      throw new Error(`cannot evaluate Expr kind: '${node.kindName}'`);
     } else if (isReturnStmt(node)) {
       if (returnVar) {
         this.set(returnVar, node.expr ?? "$null");
@@ -746,12 +747,12 @@ export abstract class VTL {
     ) {
       throw new SynthError(
         ErrorCodes.Unexpected_Error,
-        `${node.kind} is not yet supported in VTL`
+        `${node.kindName} is not yet supported in VTL`
       );
     } else {
       return assertNever(node);
     }
-    throw new Error(`cannot evaluate Expr kind: '${node.kind}'`);
+    throw new Error(`cannot evaluate Expr kind: '${node.kindName}'`);
   }
 
   public addAll(items: Expr[]) {
@@ -942,6 +943,11 @@ export abstract class VTL {
       // weird, right?
       if (isIdentifier(rest.name)) {
         this.set(this.eval(rest.name), restTemp);
+      } else if (isReferenceExpr(rest.name)) {
+        throw new SynthError(
+          ErrorCodes.Unexpected_Error,
+          `found ReferenceExpr in BindingElem`
+        );
       } else {
         this.evaluateBindingPattern(rest.name, restTemp);
       }
@@ -976,7 +982,10 @@ export abstract class VTL {
       this.add(`#set(${array} = ${list})`);
     }
 
-    const fn = assertNodeKind<FunctionExpr>(call.args[0]?.expr, "FunctionExpr");
+    const fn = assertNodeKind<FunctionExpr>(
+      call.args[0]?.expr,
+      NodeKind.FunctionExpr
+    );
 
     const tmp = returnVariable ? returnVariable : this.newLocalVarName();
 
@@ -1039,7 +1048,10 @@ export abstract class VTL {
  * Returns the [value, index, array] arguments if this CallExpr is a `forEach` or `map` call.
  */
 const getMapForEachArgs = (call: CallExpr) => {
-  const fn = assertNodeKind<FunctionExpr>(call.args[0].expr, "FunctionExpr");
+  const fn = assertNodeKind<FunctionExpr>(
+    call.args[0].expr,
+    NodeKind.FunctionExpr
+  );
   return fn.parameters.map((p) => {
     if (isIdentifier(p.name)) {
       return `$${p.name.name}`;

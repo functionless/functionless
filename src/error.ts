@@ -1,14 +1,11 @@
 import { BaseNode } from "./node";
+import { NodeKind } from "./node-kind";
 
-export class Err extends BaseNode<"Err"> {
+export class Err extends BaseNode<NodeKind.Err> {
   readonly nodeKind: "Err" = "Err";
 
   constructor(readonly error: Error) {
-    super("Err", arguments);
-  }
-
-  public clone(): this {
-    return new Err(this.error) as this;
+    super(NodeKind.Err, arguments);
   }
 }
 

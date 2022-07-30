@@ -31,6 +31,7 @@ import {
   isUndefinedLiteralExpr,
 } from "../../guards";
 import { isIntegrationCallPattern } from "../../integration";
+import { getNodeKindName } from "../../node-kind";
 import { evalToConstant, invertBinaryOperator } from "../../util";
 import * as functionless_event_bridge from "../types";
 import {
@@ -153,7 +154,7 @@ export const synthesizePatternDocument = (
     } else if (isParenthesizedExpr(expr)) {
       return evalExpr(expr.expr);
     } else {
-      throw new Error(`${expr.kind} is unsupported`);
+      throw new Error(`${getNodeKindName(expr.kind)} is unsupported`);
     }
   };
 
