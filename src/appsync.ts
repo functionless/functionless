@@ -6,12 +6,7 @@ import {
   ToAttributeMap,
   ToAttributeValue,
 } from "typesafe-dynamodb/lib/attribute-value";
-import {
-  FunctionLike,
-  validateFunctionLike,
-  VariableDecl,
-  VariableDeclList,
-} from "./declaration";
+import { FunctionLike, VariableDecl, VariableDeclList } from "./declaration";
 import { ErrorCodes, SynthError } from "./error-code";
 import {
   Argument,
@@ -60,6 +55,7 @@ import {
 } from "./integration";
 import { Literal } from "./literal";
 import { FunctionlessNode } from "./node";
+import { validateFunctionLike } from "./reflect";
 import { BlockStmt, VariableStmt } from "./statement";
 import {
   AnyFunction,

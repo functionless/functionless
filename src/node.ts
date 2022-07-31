@@ -91,7 +91,7 @@ export abstract class BaseNode<
   protected ensureArrayOf<Assert extends Assertion>(
     arr: any[],
     fieldName: string,
-    assertion: Assert[]
+    assertion: Assert[] | readonly Assert[]
   ): asserts arr is AssertionToInstance<Assert>[] {
     return ensureArrayOf(this.kind, arr, fieldName, assertion);
   }

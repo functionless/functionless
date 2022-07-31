@@ -1,4 +1,3 @@
-import { ErrorCodes, SynthError } from "./error-code";
 import {
   ArrowFunctionExpr,
   ClassExpr,
@@ -10,11 +9,9 @@ import {
   PropName,
   ReferenceExpr,
 } from "./expression";
-import { isErr, isFunctionLike } from "./guards";
 import { Integration } from "./integration";
 import { BaseNode, FunctionlessNode } from "./node";
 import { NodeKind } from "./node-kind";
-import { reflect } from "./reflect";
 import type {
   BlockStmt,
   CatchClause,
@@ -23,7 +20,7 @@ import type {
   ForStmt,
   VariableStmt,
 } from "./statement";
-import { AnyClass, AnyFunction, anyOf } from "./util";
+import { AnyClass, AnyFunction } from "./util";
 
 export type Decl =
   | BindingElem
@@ -52,7 +49,7 @@ export class ClassDecl<C extends AnyClass = AnyClass> extends BaseDecl<
   ) {
     super(NodeKind.ClassDecl, arguments);
     this.ensure(name, "name", ["string"]);
-    this.ensureArrayOf(members, "members", ClassMember.Kinds);
+    this.ensureArrayOf(members, "members", NodeKind.ClassMember);
   }
 }
 
@@ -63,17 +60,6 @@ export type ClassMember =
   | MethodDecl
   | PropDecl
   | SetAccessorDecl;
-
-export namespace ClassMember {
-  export const Kinds = [
-    NodeKind.ClassStaticBlockDecl,
-    NodeKind.ConstructorDecl,
-    NodeKind.GetAccessorDecl,
-    NodeKind.MethodDecl,
-    NodeKind.PropDecl,
-    NodeKind.SetAccessorDecl,
-  ];
-}
 
 export class ClassStaticBlockDecl extends BaseDecl<NodeKind.ClassStaticBlockDecl> {
   constructor(readonly block: BlockStmt) {
@@ -181,42 +167,7 @@ export class ParameterDecl extends BaseDecl<
   }
 }
 
-export const isFunctionLikeOrErr = anyOf(isFunctionLike, isErr);
-
-export function validateFunctionLike(
-  a: any,
-  functionLocation: string
-): FunctionLike {
-  return validateFunctionlessNode(a, functionLocation, isFunctionLike);
-}
-
-export function validateFunctionlessNode<E extends FunctionlessNode>(
-  a: any,
-  functionLocation: string,
-  validate: (e: FunctionlessNode) => e is E
-): E {
-  if (validate(a)) {
-    return a;
-  } else if (isErr(a)) {
-    throw a.error;
-  } else if (typeof a === "function") {
-    if (a.name.startsWith("bound")) {
-    }
-    const ast = reflect(a);
-    return validateFunctionlessNode(ast, functionLocation, validate);
-  } else {
-    throw new SynthError(
-      ErrorCodes.FunctionDecl_not_compiled_by_Functionless,
-      `Expected input function to ${functionLocation} to be compiled by Functionless. Make sure you have the Functionless compiler plugin configured correctly.`
-    );
-  }
-}
-
 export type BindingPattern = ObjectBinding | ArrayBinding;
-
-export namespace BindingPattern {
-  export const Kinds = [NodeKind.ObjectBinding, NodeKind.ArrayBinding];
-}
 
 export type BindingName = Identifier | BindingPattern | ReferenceExpr;
 
@@ -224,7 +175,7 @@ export namespace BindingName {
   export const Kinds = [
     NodeKind.Identifier,
     NodeKind.ReferenceExpr,
-    ...BindingPattern.Kinds,
+    ...NodeKind.BindingPattern,
   ];
 }
 

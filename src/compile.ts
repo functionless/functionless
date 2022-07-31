@@ -13,7 +13,7 @@ import type {
   PostfixUnaryOp,
   ArrowFunctionExpr,
 } from "./expression";
-import { NodeKind, getNodeKindName } from "./node-kind";
+import { NodeKind } from "./node-kind";
 import { ReflectionSymbolNames } from "./reflect";
 
 export default compile;
@@ -322,7 +322,7 @@ export function compile(
        */
       function errorBoundary<T extends ts.Node>(
         func: () => T
-      ): T | ts.NewExpression {
+      ): T | ts.ArrayLiteralExpression {
         try {
           return func();
         } catch (err) {
@@ -961,14 +961,10 @@ export function compile(
       }
 
       function newExpr(type: NodeKind, args: ts.Expression[]) {
-        return ts.factory.createNewExpression(
-          ts.factory.createPropertyAccessExpression(
-            functionlessContext.functionless,
-            getNodeKindName(type)
-          ),
-          undefined,
-          args
-        );
+        return ts.factory.createArrayLiteralExpression([
+          ts.factory.createNumericLiteral(type),
+          ...args,
+        ]);
       }
 
       function isIntegrationNode(node: ts.Node): boolean {

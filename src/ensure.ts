@@ -40,7 +40,7 @@ export function ensureArrayOf<Assert extends Assertion>(
   nodeKind: NodeKind,
   arr: any[],
   fieldName: string,
-  assertions: Assert[]
+  assertions: Assert[] | readonly Assert[]
 ): asserts arr is AssertionToInstance<Assert>[] {
   if (!arr.every((item) => is(item, assertions))) {
     throw new Error(
@@ -76,7 +76,7 @@ export function ensure<Assert extends Assertion>(
 
 function is<Assert extends Assertion>(
   item: any,
-  assertions: Assert[]
+  assertions: Assert[] | readonly Assert[]
 ): item is AssertionToInstance<Assert> {
   return assertions.some((assertion) => {
     if (typeof assertion === "string") {

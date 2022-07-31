@@ -1,6 +1,10 @@
 import { FunctionLike } from "./declaration";
 import { Err } from "./error";
-import { AnyAsyncFunction, AnyFunction } from "./util";
+import { ErrorCodes, SynthError } from "./error-code";
+import { isFunctionLike, isErr } from "./guards";
+import type { FunctionlessNode } from "./node";
+import { parseSExpr } from "./s-expression";
+import { AnyAsyncFunction, AnyFunction, anyOf } from "./util";
 
 /**
  * A macro (compile-time) function that converts an ArrowFunction or FunctionExpression to a {@link FunctionDecl}.
@@ -43,10 +47,17 @@ export function reflect<F extends AnyFunction | AnyAsyncFunction>(
     }
   }
 
-  return (<any>func)[ReflectionSymbols.AST]?.() as
-    | FunctionLike<F>
-    | Err
-    | undefined;
+  const astCallback = (<any>func)[ReflectionSymbols.AST];
+  if (typeof astCallback === "function") {
+    if (!reflectCache.has(astCallback)) {
+      reflectCache.set(
+        astCallback,
+        parseSExpr(astCallback()) as FunctionLike | Err
+      );
+    }
+    return reflectCache.get(astCallback) as FunctionLike<F> | Err | undefined;
+  }
+  return undefined;
 }
 
 const Global: any = global;
@@ -72,3 +83,34 @@ export const ReflectionSymbols = {
   BoundArgs: Symbol.for(ReflectionSymbolNames.BoundArgs),
   TargetFunction: Symbol.for(ReflectionSymbolNames.TargetFunction),
 } as const;
+
+export const isFunctionLikeOrErr = anyOf(isFunctionLike, isErr);
+
+export function validateFunctionLike(
+  a: any,
+  functionLocation: string
+): FunctionLike {
+  return validateFunctionlessNode(a, functionLocation, isFunctionLike);
+}
+
+function validateFunctionlessNode<E extends FunctionlessNode>(
+  a: any,
+  functionLocation: string,
+  validate: (e: FunctionlessNode) => e is E
+): E {
+  if (validate(a)) {
+    return a;
+  } else if (isErr(a)) {
+    throw a.error;
+  } else if (typeof a === "function") {
+    if (a.name.startsWith("bound")) {
+    }
+    const ast = reflect(a);
+    return validateFunctionlessNode(ast, functionLocation, validate);
+  } else {
+    throw new SynthError(
+      ErrorCodes.FunctionDecl_not_compiled_by_Functionless,
+      `Expected input function to ${functionLocation} to be compiled by Functionless. Make sure you have the Functionless compiler plugin configured correctly.`
+    );
+  }
+}

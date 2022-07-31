@@ -4,7 +4,7 @@ import {
   APIGatewayProxyResult,
   APIGatewayEventRequestContext,
 } from "aws-lambda";
-import { FunctionDecl, validateFunctionLike } from "./declaration";
+import { FunctionDecl } from "./declaration";
 import { ErrorCodes, SynthError } from "./error-code";
 import {
   CallExpr,
@@ -40,6 +40,7 @@ import {
   isFunctionLike,
 } from "./guards";
 import { Integration, IntegrationImpl, isIntegration } from "./integration";
+import { validateFunctionLike } from "./reflect";
 import { Stmt } from "./statement";
 import { AnyFunction, singletonConstruct } from "./util";
 import { VTL } from "./vtl";

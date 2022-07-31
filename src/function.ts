@@ -29,11 +29,7 @@ import esbuild from "esbuild";
 import { ApiGatewayVtlIntegration } from "./api";
 import type { AppSyncVtlIntegration } from "./appsync";
 import { ASL, ASLGraph } from "./asl";
-import {
-  FunctionLike,
-  IntegrationInvocation,
-  validateFunctionLike,
-} from "./declaration";
+import { FunctionLike, IntegrationInvocation } from "./declaration";
 import { ErrorCodes, formatErrorMessage, SynthError } from "./error-code";
 import {
   IEventBus,
@@ -59,6 +55,7 @@ import {
   isIntegrationCallExpr,
 } from "./integration";
 import { FunctionlessNode } from "./node";
+import { validateFunctionLike } from "./reflect";
 import { isStepFunction } from "./step-function";
 import { isTable } from "./table";
 import { AnyAsyncFunction, AnyFunction } from "./util";

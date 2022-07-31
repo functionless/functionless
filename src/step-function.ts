@@ -12,7 +12,7 @@ import { ApiGatewayVtlIntegration } from "./api";
 import { AppSyncVtlIntegration } from "./appsync";
 import { ASL, ASLGraph, StateMachine, States } from "./asl";
 import { assertDefined } from "./assert";
-import { validateFunctionLike, FunctionLike } from "./declaration";
+import { FunctionLike } from "./declaration";
 import { ErrorCodes, SynthError } from "./error-code";
 import { EventBus, PredicateRuleBase, Rule } from "./event-bridge";
 import {
@@ -43,6 +43,7 @@ import {
   IntegrationInput,
   makeIntegration,
 } from "./integration";
+import { validateFunctionLike } from "./reflect";
 import { AnyFunction } from "./util";
 import { VTL } from "./vtl";
 

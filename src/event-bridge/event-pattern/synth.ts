@@ -5,7 +5,7 @@ import {
   assertPrimitive,
   assertString,
 } from "../../assert";
-import { FunctionLike, validateFunctionLike } from "../../declaration";
+import { FunctionLike } from "../../declaration";
 import { Err } from "../../error";
 import { ErrorCodes, SynthError } from "../../error-code";
 import {
@@ -30,6 +30,7 @@ import {
 } from "../../guards";
 import { isIntegrationCallPattern } from "../../integration";
 import { getNodeKindName } from "../../node-kind";
+import { validateFunctionLike } from "../../reflect";
 import { evalToConstant, invertBinaryOperator } from "../../util";
 import { RulePredicateFunction } from "../rule";
 import * as functionless_event_bridge from "../types";

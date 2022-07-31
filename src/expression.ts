@@ -1,4 +1,4 @@
-import {
+import type {
   BindingElem,
   ClassMember,
   Decl,
@@ -118,7 +118,7 @@ export class ClassExpr<C extends AnyClass = AnyClass> extends BaseExpr<
     super(NodeKind.ClassExpr, arguments);
     this.ensure(name, "name", ["undefined", "string"]);
     this.ensure(heritage, "heritage", ["undefined", "Expr"]);
-    this.ensureArrayOf(members, "members", ClassMember.Kinds);
+    this.ensureArrayOf(members, "members", NodeKind.ClassMember);
   }
 }
 
