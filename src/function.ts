@@ -30,9 +30,9 @@ import { ApiGatewayVtlIntegration } from "./api";
 import type { AppSyncVtlIntegration } from "./appsync";
 import { ASL, ASLGraph } from "./asl";
 import {
-  FunctionDecl,
+  FunctionLike,
   IntegrationInvocation,
-  validateFunctionlessNode,
+  validateFunctionLike,
 } from "./declaration";
 import { ErrorCodes, formatErrorMessage, SynthError } from "./error-code";
 import {
@@ -50,7 +50,6 @@ import {
   PrewarmClients,
   PrewarmProps,
 } from "./function-prewarm";
-import { isFunctionDecl } from "./guards";
 import {
   Integration,
   IntegrationCallExpr,
@@ -635,11 +634,7 @@ export class Function<
       );
     }
 
-    const ast = validateFunctionlessNode(
-      magic ? magic : funcOrNothing,
-      "Function",
-      isFunctionDecl
-    );
+    const ast = validateFunctionLike(magic ? magic : func, "Function");
 
     const props =
       typeof propsOrFunc === "function"
@@ -729,7 +724,7 @@ export class Function<
   }
 }
 
-function getInvokedIntegrations(ast: FunctionDecl): IntegrationCallExpr[] {
+function getInvokedIntegrations(ast: FunctionLike): IntegrationCallExpr[] {
   const nodes: IntegrationCallExpr[] = [];
   visitEachChild(ast, function visit(node: FunctionlessNode): FunctionlessNode {
     if (isIntegrationCallExpr(node)) {

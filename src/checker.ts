@@ -578,9 +578,7 @@ export function makeFunctionlessChecker(
       const exprType = checker.getTypeAtLocation(node.expression);
       const exprDecl = exprType.symbol?.declarations?.[0];
       if (exprDecl && ts.isFunctionDeclaration(exprDecl)) {
-        if (exprDecl.name?.text === "reflect") {
-          return true;
-        }
+        return exprDecl.name?.text === "reflect";
       }
     }
     return false;

@@ -10,10 +10,11 @@ import {
   PropName,
   ReferenceExpr,
 } from "./expression";
-import { isErr, isFunctionDecl } from "./guards";
+import { isErr, isFunctionLike } from "./guards";
 import { Integration } from "./integration";
 import { BaseNode, FunctionlessNode } from "./node";
 import { NodeKind } from "./node-kind";
+import { reflect } from "./reflect";
 import type {
   BlockStmt,
   CatchClause,
@@ -141,6 +142,11 @@ export class SetAccessorDecl extends BaseDecl<
   }
 }
 
+export type FunctionLike<F extends AnyFunction = AnyFunction> =
+  | FunctionDecl<F>
+  | FunctionExpr<F>
+  | ArrowFunctionExpr<F>;
+
 export class FunctionDecl<
   F extends AnyFunction = AnyFunction
 > extends BaseDecl<NodeKind.FunctionDecl> {
@@ -175,13 +181,13 @@ export class ParameterDecl extends BaseDecl<
   }
 }
 
-export const isFunctionDeclOrErr = anyOf(isFunctionDecl, isErr);
+export const isFunctionLikeOrErr = anyOf(isFunctionLike, isErr);
 
-export function validateFunctionDecl(
+export function validateFunctionLike(
   a: any,
   functionLocation: string
-): FunctionDecl {
-  return validateFunctionlessNode(a, functionLocation, isFunctionDecl);
+): FunctionLike {
+  return validateFunctionlessNode(a, functionLocation, isFunctionLike);
 }
 
 export function validateFunctionlessNode<E extends FunctionlessNode>(
@@ -193,6 +199,11 @@ export function validateFunctionlessNode<E extends FunctionlessNode>(
     return a;
   } else if (isErr(a)) {
     throw a.error;
+  } else if (typeof a === "function") {
+    if (a.name.startsWith("bound")) {
+    }
+    const ast = reflect(a);
+    return validateFunctionlessNode(ast, functionLocation, validate);
   } else {
     throw new SynthError(
       ErrorCodes.FunctionDecl_not_compiled_by_Functionless,

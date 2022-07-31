@@ -12,7 +12,7 @@ import { ApiGatewayVtlIntegration } from "./api";
 import { AppSyncVtlIntegration } from "./appsync";
 import { ASL, ASLGraph, StateMachine, States } from "./asl";
 import { assertDefined } from "./assert";
-import { validateFunctionDecl, FunctionDecl } from "./declaration";
+import { validateFunctionLike, FunctionLike } from "./declaration";
 import { ErrorCodes, SynthError } from "./error-code";
 import { EventBus, PredicateRuleBase, Rule } from "./event-bridge";
 import {
@@ -26,8 +26,8 @@ import { PrewarmClients } from "./function-prewarm";
 import {
   isComputedPropertyNameExpr,
   isErr,
-  isFunctionDecl,
   isFunctionExpr,
+  isFunctionLike,
   isGetAccessorDecl,
   isIdentifier,
   isMethodDecl,
@@ -1555,10 +1555,10 @@ function getStepFunctionArgs<
     | [func: StepFunctionClosure<Payload, Out>]
 ) {
   const props =
-    isFunctionDecl(args[0]) || isErr(args[0])
+    isFunctionLike(args[0]) || isErr(args[0])
       ? {}
       : (args[1] as StepFunctionProps);
-  const func = validateFunctionDecl(
+  const func = validateFunctionLike(
     args.length > 1 ? args[1] : args[0],
     "StepFunction"
   );
@@ -1569,7 +1569,7 @@ function getStepFunctionArgs<
 function synthesizeStateMachine(
   scope: Construct,
   id: string,
-  decl: FunctionDecl,
+  decl: FunctionLike,
   props: StepFunctionProps & {
     stateMachineType: aws_stepfunctions.StateMachineType;
   }

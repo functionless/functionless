@@ -5,7 +5,7 @@ import {
   BindingElem,
   BindingName,
   Decl,
-  FunctionDecl,
+  FunctionLike,
   ParameterDecl,
   VariableDecl,
 } from "./declaration";
@@ -104,6 +104,7 @@ import {
   isGetAccessorDecl,
   isTaggedTemplateExpr,
   isOmittedExpr,
+  isFunctionLike,
 } from "./guards";
 import {
   Integration,
@@ -461,9 +462,9 @@ export class ASL {
    */
   readonly definition: StateMachine<States>;
   /**
-   * The {@link FunctionDecl} AST representation of the State Machine.
+   * The {@link FunctionLike} AST representation of the State Machine.
    */
-  readonly decl: FunctionDecl;
+  readonly decl: FunctionLike;
   private readonly stateNamesCount = new Map<string, number>();
   private readonly generatedNames = new DeterministicNameGenerator();
 
@@ -489,7 +490,7 @@ export class ASL {
   constructor(
     readonly scope: Construct,
     readonly role: aws_iam.IRole,
-    decl: FunctionDecl
+    decl: FunctionLike
   ) {
     const self = this;
     this.decl = visitEachChild(decl, function normalizeAST(node):
@@ -509,7 +510,7 @@ export class ASL {
           // this simplifies the interpreter code by always having a node to chain onto, even when
           // the AST has no final `ReturnStmt` (i.e. when the function is a void function)
           // without this, chains that should return null will actually include the entire state as their output
-          ...((isFunctionDecl(node.parent) || isFunctionExpr(node.parent)) &&
+          ...(isFunctionLike(node.parent) &&
           (!node.lastStmt || !node.lastStmt.isTerminal())
             ? [new ReturnStmt(new NullLiteralExpr())]
             : []),
@@ -1875,7 +1876,7 @@ export class ASL {
         if (
           ref &&
           isParameterDecl(ref) &&
-          isFunctionDecl(ref.parent) &&
+          isFunctionLike(ref.parent) &&
           ref.parent === this.decl &&
           ref.parent.parameters[1] === ref
         ) {
@@ -4388,11 +4389,7 @@ function toStateName(node: FunctionlessNode): string {
       return `{ ${node.bindings.map(inner).join(", ")} }`;
     } else if (isArrayBinding(node)) {
       return `[ ${node.bindings.map((b) => (!b ? "" : inner(b))).join(", ")} ]`;
-    } else if (
-      isFunctionDecl(node) ||
-      isFunctionExpr(node) ||
-      isArrowFunctionExpr(node)
-    ) {
+    } else if (isFunctionLike(node)) {
       return `function (${node.parameters.map(inner).join(",")})`;
     } else if (isParameterDecl(node)) {
       return inner(node.name);

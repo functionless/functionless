@@ -4,7 +4,7 @@ import {
   APIGatewayProxyResult,
   APIGatewayEventRequestContext,
 } from "aws-lambda";
-import { FunctionDecl, validateFunctionDecl } from "./declaration";
+import { FunctionDecl, validateFunctionLike } from "./declaration";
 import { ErrorCodes, SynthError } from "./error-code";
 import {
   CallExpr,
@@ -26,7 +26,6 @@ import {
   isArgument,
   isCallExpr,
   isParameterDecl,
-  isFunctionDecl,
   isElementAccessExpr,
   isObjectLiteralExpr,
   isPropAssignExpr,
@@ -38,6 +37,7 @@ import {
   isVariableDecl,
   isParenthesizedExpr,
   isSpreadAssignExpr,
+  isFunctionLike,
 } from "./guards";
 import { Integration, IntegrationImpl, isIntegration } from "./integration";
 import { Stmt } from "./statement";
@@ -269,11 +269,11 @@ export class MockMethod<
       ) => Promise<any> | any;
     }
   ) {
-    const requestDecl = validateFunctionDecl(request, "MockMethod Request");
+    const requestDecl = validateFunctionLike(request, "MockMethod Request");
     const responseDecls = Object.fromEntries(
       Object.entries(responses).map(([k, v]) => [
         k,
-        validateFunctionDecl(v, `MockMethod Response ${k}`),
+        validateFunctionLike(v, `MockMethod Response ${k}`),
       ])
     ) as { [K in 200]: FunctionDecl };
 
@@ -540,12 +540,12 @@ export class AwsMethod<
       ) => any;
     }
   ) {
-    const requestDecl = validateFunctionDecl(request, "AwsMethod Request");
-    const responseDecl = validateFunctionDecl(response, "AwsMethod Response");
+    const requestDecl = validateFunctionLike(request, "AwsMethod Request");
+    const responseDecl = validateFunctionLike(response, "AwsMethod Response");
     const errorDecls = Object.fromEntries(
       Object.entries(errors ?? {}).map(([k, v]) => [
         k,
-        validateFunctionDecl(v, `AwsMethod ${k}`),
+        validateFunctionLike(v, `AwsMethod ${k}`),
       ])
     );
     const role = getRole(props);
@@ -755,7 +755,7 @@ export class APIGatewayVTL extends VTL {
           const ref = expr.expr.expr.lookup();
           if (
             isParameterDecl(ref) &&
-            isFunctionDecl(ref.parent) &&
+            isFunctionLike(ref.parent) &&
             ref.parent.parent === undefined &&
             ref.parent.parameters.findIndex((param) => param === ref) === 0
           ) {
@@ -918,7 +918,12 @@ ${reference}
       const ref = id.lookup();
       if (isVariableDecl(ref)) {
         return `$${id.name}`;
-      } else if (isParameterDecl(ref) && isFunctionDecl(ref.parent)) {
+      } else if (
+        isParameterDecl(ref) &&
+        isFunctionLike(ref.parent) &&
+        // check this is the top-level function
+        ref.parent.parent === undefined
+      ) {
         const paramIndex = ref.parent.parameters.indexOf(ref);
         if (paramIndex === 0) {
           return `$input.path('$')`;
@@ -943,7 +948,7 @@ function isInputBody(expr: Expr): expr is Identifier {
     const ref = expr.lookup();
     return (
       isParameterDecl(ref) &&
-      isFunctionDecl(ref.parent) &&
+      isFunctionLike(ref.parent) &&
       ref.parent.parent === undefined
     );
   }

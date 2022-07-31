@@ -8,8 +8,7 @@ import {
   isComputedPropertyNameExpr,
   isForInStmt,
   isForOfStmt,
-  isFunctionDecl,
-  isFunctionExpr,
+  isFunctionLike,
   isIdentifier,
   isNullLiteralExpr,
   isNumberLiteralExpr,
@@ -55,7 +54,7 @@ export function isInTopLevelScope(expr: FunctionlessNode): boolean {
   return walk(expr.parent);
 
   function walk(expr: FunctionlessNode): boolean {
-    if (isFunctionDecl(expr) || isFunctionExpr(expr)) {
+    if (isFunctionLike(expr)) {
       return expr.parent === undefined;
     } else if (isForInStmt(expr) || isForOfStmt(expr)) {
       return false;

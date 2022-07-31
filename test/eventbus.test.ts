@@ -43,7 +43,8 @@ test("new transform without map", () => {
   const rule = new Rule(stack, "rule", bus, (_event) => true);
   const transform = new EventTransform((event) => event.source, rule);
 
-  expect(transform.targetInput.bind(rule.resource)).toEqual({
+  const result = transform.targetInput.bind(rule.resource);
+  expect(result).toEqual({
     inputPath: "$.source",
   } as aws_events.RuleTargetInputProperties);
 });

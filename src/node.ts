@@ -15,24 +15,23 @@ import {
 import type { Err } from "./error";
 import type { Expr, ImportKeyword, SuperKeyword } from "./expression";
 import {
+  isBindingElem,
+  isBindingPattern,
   isBlockStmt,
-  isTryStmt,
-  isVariableStmt,
+  isCatchClause,
   isDoStmt,
-  isWhileStmt,
-  isFunctionExpr,
-  isFunctionDecl,
   isForInStmt,
   isForOfStmt,
+  isFunctionLike,
+  isIdentifier,
+  isIfStmt,
+  isNode,
   isReturnStmt,
   isThrowStmt,
-  isIfStmt,
-  isCatchClause,
-  isBindingPattern,
-  isBindingElem,
-  isIdentifier,
+  isTryStmt,
   isVariableDecl,
-  isNode,
+  isVariableStmt,
+  isWhileStmt,
 } from "./guards";
 import { NodeKind, NodeKindName, getNodeKindName } from "./node-kind";
 import type { BlockStmt, CatchClause, Stmt } from "./statement";
@@ -377,7 +376,7 @@ export abstract class BaseNode<
         return getNames(node.name);
       } else if (isBindingPattern(node)) {
         return node.bindings.flatMap((b) => getNames(b));
-      } else if (isFunctionExpr(node) || isFunctionDecl(node)) {
+      } else if (isFunctionLike(node)) {
         return node.parameters.flatMap((param) =>
           isIdentifier(param.name)
             ? [[param.name.name, param]]

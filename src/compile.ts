@@ -3,14 +3,7 @@ import minimatch from "minimatch";
 import type { PluginConfig, TransformerExtras } from "ts-patch";
 import ts from "typescript";
 import { assertDefined } from "./assert";
-import {
-  EventBusMapInterface,
-  RuleInterface,
-  EventTransformInterface,
-  EventBusWhenInterface,
-  FunctionInterface,
-  makeFunctionlessChecker,
-} from "./checker";
+import { makeFunctionlessChecker } from "./checker";
 import type { ConstructorDecl, FunctionDecl, MethodDecl } from "./declaration";
 import { ErrorCodes, SynthError } from "./error-code";
 import type {
@@ -21,6 +14,7 @@ import type {
   ArrowFunctionExpr,
 } from "./expression";
 import { NodeKind, getNodeKindName } from "./node-kind";
+import { ReflectionSymbolNames } from "./reflect";
 
 export default compile;
 
@@ -80,8 +74,139 @@ export function compile(
         ts.factory.createStringLiteral("functionless")
       );
 
-      const statements = sf.statements.map(
-        (stmt) => visitor(stmt) as ts.Statement
+      const registerName = ts.factory.createUniqueName("register");
+      const bindName = ts.factory.createUniqueName("bind");
+      const globals: (ts.FunctionDeclaration | ts.Statement)[] = [
+        // function register(func, ast) {
+        //   func[Symbol.for("functionless:ast")] = ast;
+        //   return func;
+        // }
+        ts.factory.createFunctionDeclaration(
+          undefined,
+          undefined,
+          undefined,
+          registerName,
+          undefined,
+          [param("func"), param("ast")],
+          undefined,
+          ts.factory.createBlock([
+            // func[Symbol.for("functionless:ast")] = ast;
+            setSymbol("func", ReflectionSymbolNames.AST, "ast"),
+
+            // return func;
+            ret("func"),
+          ])
+        ),
+        // function bind(func, self, ...args) {
+        //   const f = func.bind(self, ...args);
+        //   f[Symbol.for("functionless:BoundThis")] = self;
+        //   f[Symbol.for("functionless:BoundArgs")] = args;
+        //   f[Symbol.for("functionless:TargetFunction")] = func;
+        //   return func.bind(self, ...args);
+        //}
+        ts.factory.createFunctionDeclaration(
+          undefined,
+          undefined,
+          undefined,
+          bindName,
+          undefined,
+          [param("func"), param("self"), param("args", true)],
+          undefined,
+          ts.factory.createBlock([
+            // const tmp = func.bind(self, ...args)
+            ts.factory.createVariableStatement(
+              undefined,
+              ts.factory.createVariableDeclarationList(
+                [
+                  ts.factory.createVariableDeclaration(
+                    "tmp",
+                    undefined,
+                    undefined,
+                    ts.factory.createCallExpression(
+                      ts.factory.createPropertyAccessExpression(
+                        ts.factory.createIdentifier("func"),
+                        "bind"
+                      ),
+                      undefined,
+                      [
+                        ts.factory.createIdentifier("self"),
+                        ts.factory.createSpreadElement(
+                          ts.factory.createIdentifier("args")
+                        ),
+                      ]
+                    )
+                  ),
+                ],
+                ts.NodeFlags.Const
+              )
+            ),
+            // if (typeof func === "string")
+            ts.factory.createIfStatement(
+              ts.factory.createBinaryExpression(
+                ts.factory.createTypeOfExpression(
+                  ts.factory.createIdentifier("func")
+                ),
+                ts.factory.createToken(ts.SyntaxKind.EqualsEqualsEqualsToken),
+                ts.factory.createStringLiteral("function")
+              ),
+              ts.factory.createBlock([
+                // func[Symbol.for("functionless:BoundThis")] = ast;
+                setSymbol("func", ReflectionSymbolNames.BoundThis, "self"),
+                setSymbol("func", ReflectionSymbolNames.BoundArgs, "args"),
+                setSymbol("func", ReflectionSymbolNames.TargetFunction, "func"),
+              ])
+            ),
+
+            // return tmp;
+            ts.factory.createReturnStatement(
+              ts.factory.createIdentifier("tmp")
+            ),
+          ])
+        ),
+      ];
+
+      function param(name: string, spread: boolean = false) {
+        return ts.factory.createParameterDeclaration(
+          undefined,
+          undefined,
+          spread
+            ? ts.factory.createToken(ts.SyntaxKind.DotDotDotToken)
+            : undefined,
+          name
+        );
+      }
+
+      function setSymbol(varName: string, symName: string, valueName: string) {
+        return ts.factory.createExpressionStatement(
+          // func[Symbol.for("functionless:ast")] = ast;
+          ts.factory.createBinaryExpression(
+            ts.factory.createElementAccessExpression(
+              ts.factory.createIdentifier(varName),
+              ts.factory.createCallExpression(
+                ts.factory.createPropertyAccessExpression(
+                  ts.factory.createIdentifier("Symbol"),
+                  "for"
+                ),
+                undefined,
+                [ts.factory.createStringLiteral(symName)]
+              )
+            ),
+            ts.factory.createToken(ts.SyntaxKind.EqualsToken),
+            ts.factory.createIdentifier(valueName)
+          )
+        );
+      }
+
+      function ret(name: string) {
+        return ts.factory.createReturnStatement(
+          ts.factory.createIdentifier(name)
+        );
+      }
+
+      const statements = globals.concat(
+        sf.statements.map(
+          (stmt) => visitor(stmt) as ts.Statement | ts.FunctionDeclaration
+        )
       );
 
       return ts.factory.updateSourceFile(
@@ -101,34 +226,95 @@ export function compile(
       );
 
       function visitor(node: ts.Node): ts.Node | ts.Node[] {
-        const visit = () => {
-          if (checker.isAppsyncResolver(node)) {
-            return visitAppsyncResolver(node);
-          } else if (checker.isAppsyncField(node)) {
-            return visitAppsyncField(node);
-          } else if (checker.isNewStepFunction(node)) {
-            return visitStepFunction(node);
-          } else if (checker.isReflectFunction(node)) {
-            return errorBoundary(() =>
-              toFunction(NodeKind.FunctionDecl, node.arguments[0])
-            );
-          } else if (checker.isEventBusWhenFunction(node)) {
-            return visitEventBusWhen(node);
-          } else if (checker.isRuleMapFunction(node)) {
-            return visitEventBusMap(node);
-          } else if (checker.isNewRule(node)) {
-            return visitRule(node);
-          } else if (checker.isNewEventTransform(node)) {
-            return visitEventTransform(node);
-          } else if (checker.isNewFunctionlessFunction(node)) {
-            return visitFunction(node);
-          } else if (checker.isApiIntegration(node)) {
-            return visitApiIntegration(node);
-          }
-          return node;
-        };
-        // keep processing the children of the updated node.
-        return ts.visitEachChild(visit(), visitor, ctx);
+        if (
+          checker.isApiIntegration(node) ||
+          checker.isAppsyncField(node) ||
+          checker.isAppsyncResolver(node) ||
+          checker.isEventBusWhenFunction(node) ||
+          checker.isNewEventTransform(node) ||
+          checker.isNewFunctionlessFunction(node) ||
+          checker.isNewRule(node) ||
+          checker.isNewStepFunction(node) ||
+          checker.isReflectFunction(node) ||
+          checker.isRuleMapFunction(node)
+        ) {
+          // if this is a Functionless primitive, transform its arguments to wrap functions in their AST form
+          return transform(node);
+        } else if (
+          ts.isCallExpression(node) &&
+          ts.isPropertyAccessExpression(node.expression) &&
+          ts.isIdentifier(node.expression.name) &&
+          node.expression.name.text === "bind"
+        ) {
+          // potentially a func.bind(self, ..args) call
+          // wrap in the generated bind function wrapper
+          return ts.factory.createCallExpression(bindName, undefined, [
+            node.expression.expression,
+            ...node.arguments,
+          ]);
+        } else if (ts.isBlock(node)) {
+          return ts.factory.updateBlock(node, [
+            ...node.statements.flatMap((stmt) => {
+              if (ts.isFunctionDeclaration(stmt) && stmt.name) {
+                // hoist statements to register each function declaration within the block
+                return [
+                  ts.factory.createExpressionStatement(
+                    register(
+                      stmt.name,
+                      toFunction(NodeKind.FunctionDecl, node, node)
+                    )
+                  ),
+                ];
+              } else {
+                return [];
+              }
+            }),
+            ...node.statements.map((stmt) =>
+              ts.visitEachChild(stmt, visitor, ctx)
+            ),
+          ]);
+        }
+        // nothing special about this node, continue walking
+        return ts.visitEachChild(node, visitor, ctx);
+      }
+
+      /**
+       * Transforms all Function Decls, Function Exprs and Arrow Functions to their AST form
+       * and injects register calls.
+       */
+      function transform(node: ts.Node): ts.Node {
+        return ts.visitEachChild(
+          node,
+          (node: ts.Node): ts.Node => {
+            if (ts.isFunctionExpression(node)) {
+              return register(
+                node,
+                toFunction(NodeKind.FunctionExpr, node, node)
+              );
+            } else if (ts.isArrowFunction(node)) {
+              return register(
+                node,
+                toFunction(NodeKind.ArrowFunctionExpr, node, node)
+              );
+            }
+            return transform(node);
+          },
+          ctx
+        );
+      }
+
+      function register(func: ts.Expression, ast: ts.Expression) {
+        return ts.factory.createCallExpression(registerName, undefined, [
+          func,
+          ts.factory.createArrowFunction(
+            undefined,
+            undefined,
+            [],
+            undefined,
+            undefined,
+            ast
+          ),
+        ]);
       }
 
       /**
@@ -150,162 +336,6 @@ export function compile(
             ),
           ]);
         }
-      }
-
-      function visitStepFunction(call: ts.NewExpression): ts.Node {
-        return ts.factory.updateNewExpression(
-          call,
-          call.expression,
-          call.typeArguments,
-          call.arguments?.map((arg) =>
-            ts.isFunctionExpression(arg) || ts.isArrowFunction(arg)
-              ? errorBoundary(() => toFunction(NodeKind.FunctionDecl, arg))
-              : arg
-          )
-        );
-      }
-
-      function visitRule(call: RuleInterface): ts.Node {
-        const [one, two, three, impl] = call.arguments;
-
-        return ts.factory.updateNewExpression(
-          call,
-          call.expression,
-          call.typeArguments,
-          [
-            one,
-            two,
-            three,
-            errorBoundary(() => toFunction(NodeKind.FunctionDecl, impl)),
-          ]
-        );
-      }
-
-      function visitEventTransform(call: EventTransformInterface): ts.Node {
-        const [impl, ...rest] = call.arguments;
-
-        return ts.factory.updateNewExpression(
-          call,
-          call.expression,
-          call.typeArguments,
-          [
-            errorBoundary(() => toFunction(NodeKind.FunctionDecl, impl)),
-            ...rest,
-          ]
-        );
-      }
-
-      function visitEventBusWhen(call: EventBusWhenInterface): ts.Node {
-        // support the 2 or 3 parameter when.
-        if (call.arguments.length === 3) {
-          const [one, two, impl] = call.arguments;
-
-          return ts.factory.updateCallExpression(
-            call,
-            call.expression,
-            call.typeArguments,
-            [
-              one,
-              two,
-              errorBoundary(() => toFunction(NodeKind.FunctionDecl, impl)),
-            ]
-          );
-        } else {
-          const [one, impl] = call.arguments;
-
-          return ts.factory.updateCallExpression(
-            call,
-            call.expression,
-            call.typeArguments,
-            [one, errorBoundary(() => toFunction(NodeKind.FunctionDecl, impl))]
-          );
-        }
-      }
-
-      function visitEventBusMap(call: EventBusMapInterface): ts.Node {
-        const [impl] = call.arguments;
-
-        return ts.factory.updateCallExpression(
-          call,
-          call.expression,
-          call.typeArguments,
-          [errorBoundary(() => toFunction(NodeKind.FunctionDecl, impl))]
-        );
-      }
-
-      function visitAppsyncResolver(call: ts.NewExpression): ts.Node {
-        if (call.arguments?.length === 4) {
-          const [scope, id, props, resolver] = call.arguments;
-
-          if (
-            ts.isArrowFunction(resolver) ||
-            ts.isFunctionExpression(resolver)
-          ) {
-            return ts.factory.updateNewExpression(
-              call,
-              call.expression,
-              call.typeArguments,
-              [
-                scope,
-                id,
-                props,
-                errorBoundary(() =>
-                  toFunction(NodeKind.FunctionDecl, resolver)
-                ),
-              ]
-            );
-          }
-        }
-        return call;
-      }
-
-      function visitAppsyncField(call: ts.NewExpression): ts.Node {
-        if (call.arguments?.length === 2) {
-          const [options, resolver] = call.arguments;
-
-          if (
-            ts.isArrowFunction(resolver) ||
-            ts.isFunctionExpression(resolver)
-          ) {
-            return ts.factory.updateNewExpression(
-              call,
-              call.expression,
-              call.typeArguments,
-              [
-                options,
-                errorBoundary(() =>
-                  toFunction(NodeKind.FunctionDecl, resolver)
-                ),
-              ]
-            );
-          }
-        }
-        return call;
-      }
-
-      function visitFunction(func: FunctionInterface): ts.Node {
-        const [_one, _two, _three, funcDecl] =
-          func.arguments.length === 4
-            ? func.arguments
-            : [
-                func.arguments[0],
-                func.arguments[1],
-                undefined,
-                func.arguments[2],
-              ];
-
-        return ts.factory.updateNewExpression(
-          func,
-          func.expression,
-          func.typeArguments,
-          [
-            _one,
-            _two,
-            ...(_three ? [_three] : []),
-            funcDecl,
-            errorBoundary(() => toFunction(NodeKind.FunctionDecl, funcDecl)),
-          ]
-        );
       }
 
       function toFunction(
@@ -336,47 +366,49 @@ export function compile(
          */
         scope?: ts.Node
       ): ts.Expression {
-        if (
-          !ts.isFunctionDeclaration(impl) &&
-          !ts.isArrowFunction(impl) &&
-          !ts.isFunctionExpression(impl) &&
-          !ts.isConstructorDeclaration(impl) &&
-          !ts.isMethodDeclaration(impl)
-        ) {
-          throw new Error(
-            `Functionless reflection only supports function parameters with bodies, no signature only declarations or references. Found ${impl.getText()}.`
-          );
-        }
+        return errorBoundary(() => {
+          if (
+            !ts.isFunctionDeclaration(impl) &&
+            !ts.isArrowFunction(impl) &&
+            !ts.isFunctionExpression(impl) &&
+            !ts.isConstructorDeclaration(impl) &&
+            !ts.isMethodDeclaration(impl)
+          ) {
+            throw new Error(
+              `Functionless reflection only supports function parameters with bodies, no signature only declarations or references. Found ${impl.getText()}.`
+            );
+          }
 
-        if (impl.body === undefined) {
-          throw new Error(
-            `cannot parse declaration-only function: ${impl.getText()}`
-          );
-        }
-        const body = ts.isBlock(impl.body)
-          ? toExpr(impl.body, scope ?? impl)
-          : newExpr(NodeKind.BlockStmt, [
-              ts.factory.createArrayLiteralExpression([
-                newExpr(NodeKind.ReturnStmt, [
-                  toExpr(impl.body, scope ?? impl),
+          if (impl.body === undefined) {
+            throw new Error(
+              `cannot parse declaration-only function: ${impl.getText()}`
+            );
+          }
+          const body = ts.isBlock(impl.body)
+            ? toExpr(impl.body, scope ?? impl)
+            : newExpr(NodeKind.BlockStmt, [
+                ts.factory.createArrayLiteralExpression([
+                  newExpr(NodeKind.ReturnStmt, [
+                    toExpr(impl.body, scope ?? impl),
+                  ]),
                 ]),
-              ]),
-            ]);
+              ]);
 
-        return newExpr(type, [
-          ...resolveFunctionName(),
-          ts.factory.createArrayLiteralExpression(
-            impl.parameters.map((param) =>
-              newExpr(NodeKind.ParameterDecl, [
-                toExpr(param.name, scope ?? impl),
-                ...(param.initializer
-                  ? [toExpr(param.initializer, scope ?? impl)]
-                  : []),
-              ])
-            )
-          ),
-          body,
-        ]);
+          return newExpr(type, [
+            ...resolveFunctionName(),
+            ts.factory.createArrayLiteralExpression(
+              impl.parameters.map((param) =>
+                newExpr(NodeKind.ParameterDecl, [
+                  toExpr(param.name, scope ?? impl),
+                  ...(param.initializer
+                    ? [toExpr(param.initializer, scope ?? impl)]
+                    : []),
+                ])
+              )
+            ),
+            body,
+          ]);
+        });
 
         function resolveFunctionName(): [ts.Expression] | [] {
           if (type === NodeKind.MethodDecl) {
@@ -398,45 +430,6 @@ export function compile(
           }
           return [];
         }
-      }
-
-      function visitApiIntegration(node: ts.NewExpression): ts.Node {
-        const [props, request, response, errors] = node.arguments ?? [];
-
-        return errorBoundary(() =>
-          ts.factory.updateNewExpression(
-            node,
-            node.expression,
-            node.typeArguments,
-            [
-              props,
-              toFunction(NodeKind.FunctionDecl, request),
-              ts.isObjectLiteralExpression(response)
-                ? visitApiErrors(response)
-                : toFunction(NodeKind.FunctionDecl, response),
-              ...(errors && ts.isObjectLiteralExpression(errors)
-                ? [visitApiErrors(errors)]
-                : []),
-            ]
-          )
-        );
-      }
-
-      function visitApiErrors(errors: ts.ObjectLiteralExpression) {
-        return errorBoundary(() =>
-          ts.factory.updateObjectLiteralExpression(
-            errors,
-            errors.properties.map((prop) =>
-              ts.isPropertyAssignment(prop)
-                ? ts.factory.updatePropertyAssignment(
-                    prop,
-                    prop.name,
-                    toFunction(NodeKind.FunctionDecl, prop.initializer)
-                  )
-                : prop
-            )
-          )
-        );
       }
 
       function toExpr(

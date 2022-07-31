@@ -10,7 +10,7 @@ import { App, aws_dynamodb, aws_events, aws_lambda, Stack } from "aws-cdk-lib";
 import { Rule } from "aws-cdk-lib/aws-events";
 import {
   AppsyncResolver,
-  FunctionDecl,
+  FunctionLike,
   Table,
   Function,
   Event,
@@ -35,7 +35,9 @@ export function returnExpr(varName: string) {
 #return($context.stash.return__val)`;
 }
 
-export function getAppSyncTemplates(decl: FunctionDecl | Err): string[] {
+export function getAppSyncTemplates(
+  decl: FunctionLike | Err | undefined
+): string[] {
   const app = new App({ autoSynth: false });
   const stack = new Stack(app, "stack");
 
@@ -88,7 +90,10 @@ export function appsyncTestCase<
   Result,
   Source extends object | undefined = undefined
 >(
-  decl: FunctionDecl<ResolverFunction<Arguments, Result, Source>> | Err,
+  decl:
+    | FunctionLike<ResolverFunction<Arguments, Result, Source>>
+    | Err
+    | undefined,
   config?: {
     /**
      * Template count is generally [total integrations] * 2 + 2
@@ -215,7 +220,7 @@ export function initStepFunctionApp() {
 }
 
 export function ebEventPatternTestCase(
-  decl: FunctionDecl | Err,
+  decl: FunctionLike | Err | undefined,
   expected: FunctionlessEventPattern
 ) {
   const document = synthesizePatternDocument(decl);
@@ -225,7 +230,7 @@ export function ebEventPatternTestCase(
 }
 
 export function ebEventPatternTestCaseError(
-  decl: FunctionDecl | Err,
+  decl: FunctionLike | Err | undefined,
   message?: string
 ) {
   expect(() => {
@@ -241,7 +246,7 @@ beforeEach(() => {
 });
 
 export function ebEventTargetTestCase<T extends Event>(
-  decl: FunctionDecl<EventTransformFunction<T>> | Err,
+  decl: FunctionLike<EventTransformFunction<T>> | Err | undefined,
   targetInput: aws_events.RuleTargetInput
 ) {
   const result = synthesizeEventBridgeTargets(decl);
@@ -273,7 +278,7 @@ export function ebEventTargetTestCase<T extends Event>(
 }
 
 export function ebEventTargetTestCaseError<T extends Event>(
-  decl: FunctionDecl<EventTransformFunction<T>> | Err,
+  decl: FunctionLike<EventTransformFunction<T>> | Err | undefined,
   message?: string
 ) {
   expect(() => synthesizeEventBridgeTargets(decl)).toThrow(message);
