@@ -775,8 +775,7 @@ export function makeFunctionlessChecker(
         .getSymbolsInScope(
           node,
           // eslint-disable-next-line no-bitwise
-          ts.SymbolFlags.BlockScopedVariable |
-            ts.SymbolFlags.FunctionScopedVariable
+          ts.SymbolFlags.Variable
         )
         .find((sym) => sym.name === node.text);
       if (sym?.valueDeclaration) {

@@ -240,9 +240,7 @@ export function validate(
               if (
                 symbol?.valueDeclaration &&
                 // eslint-disable-next-line no-bitwise
-                (symbol.flags & ts.SymbolFlags.BlockScopedVariable ||
-                  // eslint-disable-next-line no-bitwise
-                  symbol.flags & ts.SymbolFlags.FunctionScopedVariable)
+                symbol.flags & ts.SymbolFlags.Variable
               ) {
                 if (
                   !(
