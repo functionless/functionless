@@ -829,7 +829,7 @@ export class APIGatewayVTL extends VTL {
       return this.json(this.eval(expr));
     }
 
-    throw new Error(`unsupported expression ${expr.kind}`);
+    throw new Error(`unsupported expression ${expr.kindName}`);
 
     /**
      * Translates an {@link Expr} into JSON Path if this expression references values

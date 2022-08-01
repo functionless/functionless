@@ -36,6 +36,7 @@ import {
   isUnaryExpr,
   isVariableStmt,
 } from "../guards";
+import { NodeKind } from "../node-kind";
 import { Stmt, VariableStmt } from "../statement";
 import { Constant, evalToConstant } from "../util";
 
@@ -219,7 +220,7 @@ export const flattenExpression = (expr: Expr, scope: EventScope): Expr => {
                 ? e.name
                 : assertNodeKind<StringLiteralExpr>(
                     flattenExpression(e.name, scope),
-                    "StringLiteralExpr"
+                    NodeKind.StringLiteralExpr
                   ),
               flattenExpression(e.expr, scope)
             ),
@@ -228,7 +229,7 @@ export const flattenExpression = (expr: Expr, scope: EventScope): Expr => {
           if (isSetAccessorDecl(e) || isGetAccessorDecl(e) || isMethodDecl(e)) {
             throw new SynthError(
               ErrorCodes.Unsupported_Feature,
-              `${e.kind} is not supported by Event Bridge`
+              `${e.kindName} is not supported by Event Bridge`
             );
           }
           const flattened = flattenExpression(e.expr, scope);

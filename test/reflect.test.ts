@@ -14,25 +14,28 @@ import {
   UndefinedLiteralExpr,
 } from "../src";
 import { assertNodeKind } from "../src/assert";
+import { NodeKind } from "../src/node-kind";
 
-test("function", () => expect(reflect(() => {}).kind).toEqual("FunctionDecl"));
+test("function", () =>
+  expect(reflect(() => {}).kindName).toEqual("FunctionDecl"));
 
 test("turns a single line function into a return", () => {
   const fn = assertNodeKind<FunctionDecl>(
     reflect(() => ""),
-    "FunctionDecl"
+    NodeKind.FunctionDecl
   );
 
-  expect(fn.body.statements[0].kind).toEqual("ReturnStmt");
+  expect(fn.body.statements[0].kindName).toEqual("ReturnStmt");
 });
 
 test("returns a string", () => {
   const fn = assertNodeKind<FunctionDecl>(
     reflect(() => ""),
-    "FunctionDecl"
+    NodeKind.FunctionDecl
   );
   expect(
-    assertNodeKind<ReturnStmt>(fn.body.statements[0], "ReturnStmt").expr.kind
+    assertNodeKind<ReturnStmt>(fn.body.statements[0], NodeKind.ReturnStmt).expr
+      .kindName
   ).toEqual("StringLiteralExpr");
 });
 
@@ -41,15 +44,18 @@ test("parenthesis", () => {
     reflect(() => {
       ("");
     }),
-    "FunctionDecl"
+    NodeKind.FunctionDecl
   );
 
-  const expr = assertNodeKind<ExprStmt>(fn.body.statements[0], "ExprStmt");
+  const expr = assertNodeKind<ExprStmt>(
+    fn.body.statements[0],
+    NodeKind.ExprStmt
+  );
   const parens = assertNodeKind<ParenthesizedExpr>(
     expr.expr,
-    "ParenthesizedExpr"
+    NodeKind.ParenthesizedExpr
   );
-  assertNodeKind<StringLiteralExpr>(parens.expr, "StringLiteralExpr");
+  assertNodeKind<StringLiteralExpr>(parens.expr, NodeKind.StringLiteralExpr);
 });
 
 test("parenthesis are respected", () => {
@@ -57,17 +63,20 @@ test("parenthesis are respected", () => {
     reflect(() => {
       2 + (1 + 2);
     }),
-    "FunctionDecl"
+    NodeKind.FunctionDecl
   );
 
-  const expr = assertNodeKind<ExprStmt>(fn.body.statements[0], "ExprStmt");
-  const bin = assertNodeKind<BinaryExpr>(expr.expr, "BinaryExpr");
-  assertNodeKind<NumberLiteralExpr>(bin.left, "NumberLiteralExpr");
+  const expr = assertNodeKind<ExprStmt>(
+    fn.body.statements[0],
+    NodeKind.ExprStmt
+  );
+  const bin = assertNodeKind<BinaryExpr>(expr.expr, NodeKind.BinaryExpr);
+  assertNodeKind<NumberLiteralExpr>(bin.left, NodeKind.NumberLiteralExpr);
   const parens = assertNodeKind<ParenthesizedExpr>(
     bin.right,
-    "ParenthesizedExpr"
+    NodeKind.ParenthesizedExpr
   );
-  assertNodeKind<BinaryExpr>(parens.expr, "BinaryExpr");
+  assertNodeKind<BinaryExpr>(parens.expr, NodeKind.BinaryExpr);
 });
 
 test("parenthesis are respected inverted", () => {
@@ -75,13 +84,16 @@ test("parenthesis are respected inverted", () => {
     reflect(() => {
       2 + 1 + 2;
     }),
-    "FunctionDecl"
+    NodeKind.FunctionDecl
   );
 
-  const expr = assertNodeKind<ExprStmt>(fn.body.statements[0], "ExprStmt");
-  const bin = assertNodeKind<BinaryExpr>(expr.expr, "BinaryExpr");
-  assertNodeKind<NumberLiteralExpr>(bin.right, "NumberLiteralExpr");
-  assertNodeKind<BinaryExpr>(bin.left, "BinaryExpr");
+  const expr = assertNodeKind<ExprStmt>(
+    fn.body.statements[0],
+    NodeKind.ExprStmt
+  );
+  const bin = assertNodeKind<BinaryExpr>(expr.expr, NodeKind.BinaryExpr);
+  assertNodeKind<NumberLiteralExpr>(bin.right, NodeKind.NumberLiteralExpr);
+  assertNodeKind<BinaryExpr>(bin.left, NodeKind.BinaryExpr);
 });
 
 test("type casting", () => {
@@ -89,11 +101,14 @@ test("type casting", () => {
     reflect(() => {
       <any>2;
     }),
-    "FunctionDecl"
+    NodeKind.FunctionDecl
   );
 
-  const expr = assertNodeKind<ExprStmt>(fn.body.statements[0], "ExprStmt");
-  assertNodeKind<NumberLiteralExpr>(expr.expr, "NumberLiteralExpr");
+  const expr = assertNodeKind<ExprStmt>(
+    fn.body.statements[0],
+    NodeKind.ExprStmt
+  );
+  assertNodeKind<NumberLiteralExpr>(expr.expr, NodeKind.NumberLiteralExpr);
 });
 
 test("type casting as", () => {
@@ -101,11 +116,14 @@ test("type casting as", () => {
     reflect(() => {
       2 as any;
     }),
-    "FunctionDecl"
+    NodeKind.FunctionDecl
   );
 
-  const expr = assertNodeKind<ExprStmt>(fn.body.statements[0], "ExprStmt");
-  assertNodeKind<NumberLiteralExpr>(expr.expr, "NumberLiteralExpr");
+  const expr = assertNodeKind<ExprStmt>(
+    fn.body.statements[0],
+    NodeKind.ExprStmt
+  );
+  assertNodeKind<NumberLiteralExpr>(expr.expr, NodeKind.NumberLiteralExpr);
 });
 
 test("any function args", () => {
@@ -113,11 +131,14 @@ test("any function args", () => {
     reflect(() => {
       (<any>"").startsWith("");
     }),
-    "FunctionDecl"
+    NodeKind.FunctionDecl
   );
 
-  const expr = assertNodeKind<ExprStmt>(result.body.statements[0], "ExprStmt");
-  const call = assertNodeKind<CallExpr>(expr.expr, "CallExpr");
+  const expr = assertNodeKind<ExprStmt>(
+    result.body.statements[0],
+    NodeKind.ExprStmt
+  );
+  const call = assertNodeKind<CallExpr>(expr.expr, NodeKind.CallExpr);
 
   expect(call.args).toHaveLength(1);
 });
@@ -127,39 +148,42 @@ test("named function args", () => {
     reflect(() => {
       "".startsWith("");
     }),
-    "FunctionDecl"
+    NodeKind.FunctionDecl
   );
 
-  const expr = assertNodeKind<ExprStmt>(result.body.statements[0], "ExprStmt");
-  const call = assertNodeKind<CallExpr>(expr.expr, "CallExpr");
+  const expr = assertNodeKind<ExprStmt>(
+    result.body.statements[0],
+    NodeKind.ExprStmt
+  );
+  const call = assertNodeKind<CallExpr>(expr.expr, NodeKind.CallExpr);
 
-  expect(call.args[0]?.expr?.kind).toEqual("StringLiteralExpr");
+  expect(call.args[0]?.expr?.kindName).toEqual("StringLiteralExpr");
 });
 
 test("null", () => {
   const result = assertNodeKind<FunctionDecl>(
     reflect(() => null),
-    "FunctionDecl"
+    NodeKind.FunctionDecl
   );
 
   const ret = assertNodeKind<ReturnStmt>(
     result.body.statements[0],
-    "ReturnStmt"
+    NodeKind.ReturnStmt
   );
-  assertNodeKind<NullLiteralExpr>(ret.expr, "NullLiteralExpr");
+  assertNodeKind<NullLiteralExpr>(ret.expr, NodeKind.NullLiteralExpr);
 });
 
 test("undefined", () => {
   const result = assertNodeKind<FunctionDecl>(
     reflect(() => undefined),
-    "FunctionDecl"
+    NodeKind.FunctionDecl
   );
 
   const ret = assertNodeKind<ReturnStmt>(
     result.body.statements[0],
-    "ReturnStmt"
+    NodeKind.ReturnStmt
   );
-  assertNodeKind<UndefinedLiteralExpr>(ret.expr, "UndefinedLiteralExpr");
+  assertNodeKind<UndefinedLiteralExpr>(ret.expr, NodeKind.UndefinedLiteralExpr);
 });
 
 test("computed object name", () => {
@@ -170,20 +194,23 @@ test("computed object name", () => {
         [name]: "value",
       };
     }),
-    "FunctionDecl"
+    NodeKind.FunctionDecl
   );
 
   const ret = assertNodeKind<ReturnStmt>(
     result.body.statements[1],
-    "ReturnStmt"
+    NodeKind.ReturnStmt
   );
-  const obj = assertNodeKind<ObjectLiteralExpr>(ret.expr, "ObjectLiteralExpr");
+  const obj = assertNodeKind<ObjectLiteralExpr>(
+    ret.expr,
+    NodeKind.ObjectLiteralExpr
+  );
   obj.properties;
 });
 
 test("err", () => {
   const fn = () => {};
-  const result = assertNodeKind<Err>(reflect(fn), "Err");
+  const result = assertNodeKind<Err>(reflect(fn), NodeKind.Err);
   expect(result.error.message).toEqual(
     "Functionless reflection only supports function parameters with bodies, no signature only declarations or references. Found fn."
   );

@@ -1,6 +1,5 @@
 import { Construct } from "constructs";
 import ts from "typescript";
-import { ErrorCodes, SynthError } from "./error-code";
 import { BinaryOp, CallExpr, Expr, PropAccessExpr } from "./expression";
 import {
   isArrayLiteralExpr,
@@ -68,27 +67,7 @@ export function isInTopLevelScope(expr: FunctionlessNode): boolean {
   }
 }
 
-export function ensureItemOf<T>(
-  arr: any[],
-  f: (item: any) => item is T,
-  message: string
-): asserts arr is T[] {
-  if (arr.some((item) => !f(item))) {
-    throw new Error(message);
-  }
-}
-
-export function ensure<T>(
-  a: any,
-  is: (a: any) => a is T,
-  message: string
-): asserts a is T {
-  if (!is(a)) {
-    throw new SynthError(ErrorCodes.Unexpected_Error, message);
-  }
-}
-
-export type EnsureOr<T extends ((a: any) => a is any)[]> = T[number] extends (
+type EnsureOr<T extends ((a: any) => a is any)[]> = T[number] extends (
   a: any
 ) => a is infer T
   ? T
