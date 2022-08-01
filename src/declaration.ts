@@ -7,7 +7,6 @@ import {
   ObjectLiteralExpr,
   OmittedExpr,
   PropName,
-  ReferenceExpr,
 } from "./expression";
 import { Integration } from "./integration";
 import { BaseNode, FunctionlessNode } from "./node";
@@ -83,7 +82,7 @@ export class MethodDecl extends BaseDecl<NodeKind.MethodDecl> {
     readonly body: BlockStmt
   ) {
     super(NodeKind.MethodDecl, arguments);
-    this.ensure(name, "name", PropName.Kinds);
+    this.ensure(name, "name", NodeKind.PropName);
     this.ensureArrayOf(parameters, "parameters", [NodeKind.ParameterDecl]);
     this.ensure(body, "body", [NodeKind.BlockStmt]);
   }
@@ -96,7 +95,7 @@ export class PropDecl extends BaseDecl<NodeKind.PropDecl> {
     readonly initializer?: Expr
   ) {
     super(NodeKind.PropDecl, arguments);
-    this.ensure(name, "name", PropName.Kinds);
+    this.ensure(name, "name", NodeKind.PropName);
     this.ensure(isStatic, "isStatic", ["boolean"]);
     this.ensure(initializer, "initializer", ["undefined", "Expr"]);
   }
@@ -108,7 +107,7 @@ export class GetAccessorDecl extends BaseDecl<
 > {
   constructor(readonly name: PropName, readonly body: BlockStmt) {
     super(NodeKind.GetAccessorDecl, arguments);
-    this.ensure(name, "name", PropName.Kinds);
+    this.ensure(name, "name", NodeKind.PropName);
     this.ensure(body, "body", [NodeKind.BlockStmt]);
   }
 }
@@ -122,7 +121,7 @@ export class SetAccessorDecl extends BaseDecl<
     readonly body: BlockStmt
   ) {
     super(NodeKind.SetAccessorDecl, arguments);
-    this.ensure(name, "name", PropName.Kinds);
+    this.ensure(name, "name", NodeKind.PropName);
     this.ensure(parameter, "parameter", [NodeKind.ParameterDecl]);
     this.ensure(body, "body", [NodeKind.BlockStmt]);
   }
@@ -162,22 +161,14 @@ export class ParameterDecl extends BaseDecl<
 > {
   constructor(readonly name: BindingName, readonly initializer?: Expr) {
     super(NodeKind.ParameterDecl, arguments);
-    this.ensure(name, "name", BindingName.Kinds);
+    this.ensure(name, "name", NodeKind.BindingNames);
     this.ensure(initializer, "initializer", ["undefined", "Expr"]);
   }
 }
 
 export type BindingPattern = ObjectBinding | ArrayBinding;
 
-export type BindingName = Identifier | BindingPattern | ReferenceExpr;
-
-export namespace BindingName {
-  export const Kinds = [
-    NodeKind.Identifier,
-    NodeKind.ReferenceExpr,
-    ...NodeKind.BindingPattern,
-  ];
-}
+export type BindingName = Identifier | BindingPattern;
 
 /**
  * A binding element declares new variable or acts as the root to a nested {@link BindingPattern}
@@ -222,9 +213,12 @@ export class BindingElem extends BaseDecl<
     readonly initializer?: Expr
   ) {
     super(NodeKind.BindingElem, arguments);
-    this.ensure(name, "name", BindingName.Kinds);
+    this.ensure(name, "name", NodeKind.BindingNames);
     this.ensure(rest, "rest", ["boolean"]);
-    this.ensure(propertyName, "propertyName", ["undefined", ...PropName.Kinds]);
+    this.ensure(propertyName, "propertyName", [
+      "undefined",
+      ...NodeKind.PropName,
+    ]);
     this.ensure(initializer, "initializer", ["undefined", "Expr"]);
   }
 }
@@ -308,7 +302,7 @@ export class VariableDecl<
 > extends BaseDecl<NodeKind.VariableDecl, VariableDeclParent> {
   constructor(readonly name: BindingName, readonly initializer: E) {
     super(NodeKind.VariableDecl, arguments);
-    this.ensure(name, "name", BindingName.Kinds);
+    this.ensure(name, "name", NodeKind.BindingNames);
     this.ensure(initializer, "initializer", ["undefined", "Expr"]);
   }
 }

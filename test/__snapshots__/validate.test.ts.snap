@@ -48,12 +48,6 @@ https://functionless.org/docs/error-codes#apigateway-unsupported-reference
 
 [7m114[0m     return $AWS.DynamoDB.GetItem({
 [7m   [0m [91m          ~~~~~[0m
-[96mtest/test-files/api-gateway.ts[0m:[93m114[0m:[93m26[0m - [91merror[0m[90m Functionless(10029): [0mApiGateway Unsupported Reference: GetItem
-
-https://functionless.org/docs/error-codes#apigateway-unsupported-reference
-
-[7m114[0m     return $AWS.DynamoDB.GetItem({
-[7m   [0m [91m                         ~~~~~~~[0m
 [96mtest/test-files/api-gateway.ts[0m:[93m115[0m:[93m13[0m - [91merror[0m[90m Functionless(10029): [0mApiGateway Unsupported Reference: table
 
 https://functionless.org/docs/error-codes#apigateway-unsupported-reference
@@ -164,12 +158,6 @@ https://functionless.org/docs/error-codes#apigateway-unsupported-reference
 
 [7m163[0m     new aws_events.EventBus(stack, \\"\\");
 [7m   [0m [91m       ~~~~~~~~~~~[0m
-[96mtest/test-files/api-gateway.ts[0m:[93m163[0m:[93m20[0m - [91merror[0m[90m Functionless(10029): [0mApiGateway Unsupported Reference: EventBus
-
-https://functionless.org/docs/error-codes#apigateway-unsupported-reference
-
-[7m163[0m     new aws_events.EventBus(stack, \\"\\");
-[7m   [0m [91m                   ~~~~~~~~[0m
 [96mtest/test-files/api-gateway.ts[0m:[93m163[0m:[93m29[0m - [91merror[0m[90m Functionless(10029): [0mApiGateway Unsupported Reference: stack
 
 https://functionless.org/docs/error-codes#apigateway-unsupported-reference
@@ -190,12 +178,6 @@ https://functionless.org/docs/error-codes#apigateway-unsupported-reference
 
 [7m167[0m     new aws_events.EventBus(stack, \\"\\");
 [7m   [0m [91m       ~~~~~~~~~~~[0m
-[96mtest/test-files/api-gateway.ts[0m:[93m167[0m:[93m20[0m - [91merror[0m[90m Functionless(10029): [0mApiGateway Unsupported Reference: EventBus
-
-https://functionless.org/docs/error-codes#apigateway-unsupported-reference
-
-[7m167[0m     new aws_events.EventBus(stack, \\"\\");
-[7m   [0m [91m                   ~~~~~~~~[0m
 [96mtest/test-files/api-gateway.ts[0m:[93m167[0m:[93m29[0m - [91merror[0m[90m Functionless(10029): [0mApiGateway Unsupported Reference: stack
 
 https://functionless.org/docs/error-codes#apigateway-unsupported-reference
@@ -397,12 +379,6 @@ https://functionless.org/docs/error-codes#appsync-unsupported-reference
 
 [7m316[0m     new aws_events.EventBus(stack, \\"\\");
 [7m   [0m [91m       ~~~~~~~~~~~[0m
-[96mtest/test-files/appsync.ts[0m:[93m316[0m:[93m20[0m - [91merror[0m[90m Functionless(10028): [0mAppSync Unsupported Reference: EventBus
-
-https://functionless.org/docs/error-codes#appsync-unsupported-reference
-
-[7m316[0m     new aws_events.EventBus(stack, \\"\\");
-[7m   [0m [91m                   ~~~~~~~~[0m
 [96mtest/test-files/appsync.ts[0m:[93m316[0m:[93m29[0m - [91merror[0m[90m Functionless(10028): [0mAppSync Unsupported Reference: stack
 
 https://functionless.org/docs/error-codes#appsync-unsupported-reference

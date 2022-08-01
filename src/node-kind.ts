@@ -85,6 +85,13 @@ export namespace NodeKind {
     NodeKind.ObjectBinding,
     NodeKind.ArrayBinding,
   ] as const;
+
+  export const BindingNames = [
+    NodeKind.Identifier,
+    NodeKind.ReferenceExpr,
+    ...NodeKind.BindingPattern,
+  ];
+
   export const ClassMember = [
     NodeKind.ClassStaticBlockDecl,
     NodeKind.ConstructorDecl,
@@ -93,6 +100,24 @@ export namespace NodeKind {
     NodeKind.PropDecl,
     NodeKind.SetAccessorDecl,
   ] as const;
+
+  export const ObjectElementExpr = [
+    NodeKind.GetAccessorDecl,
+    NodeKind.MethodDecl,
+    NodeKind.PropAssignExpr,
+    NodeKind.SetAccessorDecl,
+    NodeKind.SpreadAssignExpr,
+  ];
+
+  export const PropName = [
+    NodeKind.Identifier,
+    NodeKind.PrivateIdentifier,
+    NodeKind.ComputedPropertyNameExpr,
+    NodeKind.StringLiteralExpr,
+    NodeKind.NumberLiteralExpr,
+  ];
+
+  export const SwitchClause = [NodeKind.CaseClause, NodeKind.DefaultClause];
 }
 
 export type NodeKindName<Kind extends NodeKind> = typeof NodeKindNames[Kind];

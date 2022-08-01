@@ -218,7 +218,7 @@ export const flattenExpression = (expr: Expr, scope: EventScope): Expr => {
             new PropAssignExpr(
               isIdentifier(e.name)
                 ? e.name
-                : assertNodeKind<StringLiteralExpr>(
+                : assertNodeKind(
                     flattenExpression(e.name, scope),
                     NodeKind.StringLiteralExpr
                   ),

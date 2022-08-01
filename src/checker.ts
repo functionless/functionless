@@ -108,6 +108,7 @@ export function makeFunctionlessChecker(
     isFunctionlessFunction,
     isFunctionlessType,
     isIdentifierOutOfScope,
+    isIdentifierReference,
     isIntegrationNode,
     isNewEventTransform,
     isNewFunctionlessFunction,
@@ -443,11 +444,42 @@ export function makeFunctionlessChecker(
   }
 
   /**
+   * Checks if the {@link id} references a variable
+   * @param id
+   * @returns
+   */
+  function isIdentifierReference(id: ts.Identifier) {
+    if (ts.isBindingElement(id.parent)) {
+      // { a: b = c }
+      //   ^T ^T  ^F
+      return id.parent.initializer === id;
+    } else if (ts.isParameter(id.parent)) {
+      // function foo(a = b)
+      //              ^F  ^T
+      return id.parent.initializer === id;
+    } else if (ts.isVariableDeclaration(id.parent)) {
+      // const a = b;
+      //       ^F  ^T
+      return id.parent.initializer === id;
+    } else if (ts.isPropertyAccessExpression(id.parent)) {
+      // event.bus
+      // ^T    ^F
+      return id.parent.expression === id;
+    }
+
+    return true;
+  }
+
+  /**
    * Determines if an identifier is out of scope.
    *
    * Returns false if the symbol isn't found or if it is a in a type reference.
    */
   function isIdentifierOutOfScope(node: ts.Identifier, scope: ts.Node) {
+    if (!isIdentifierReference(node)) {
+      // not a variable reference
+      return false;
+    }
     const symbol = checker.getSymbolAtLocation(node);
     return (
       !ts.isTypeReferenceNode(node.parent) &&
@@ -828,6 +860,10 @@ export function makeFunctionlessChecker(
   }
 
   function isIntegrationNode(node: ts.Node): boolean {
+    if (ts.isIdentifier(node) && !isIdentifierReference(node)) {
+      // this identifier does not point to a value
+      return false;
+    }
     const exprType = checker.getTypeAtLocation(node);
     const exprKind = exprType.getProperty("kind");
     if (exprKind) {

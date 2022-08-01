@@ -1,18 +1,5 @@
-import {
-  ArrowFunctionExpr,
-  BinaryExpr,
-  CallExpr,
-  ExprStmt,
-  FunctionExpr,
-  NullLiteralExpr,
-  NumberLiteralExpr,
-  ObjectLiteralExpr,
-  ParenthesizedExpr,
-  reflect,
-  ReturnStmt,
-  StringLiteralExpr,
-  UndefinedLiteralExpr,
-} from "../src";
+import { aws_events, Stack } from "aws-cdk-lib";
+import { EventBus, reflect } from "../src";
 import { assertNodeKind } from "../src/assert";
 import { NodeKind } from "../src/node-kind";
 
@@ -20,7 +7,7 @@ test("function", () =>
   expect(reflect(() => {})?.kindName).toEqual("ArrowFunctionExpr"));
 
 test("turns a single line function into a return", () => {
-  const fn = assertNodeKind<ArrowFunctionExpr>(
+  const fn = assertNodeKind(
     reflect(() => ""),
     NodeKind.ArrowFunctionExpr
   );
@@ -29,179 +16,145 @@ test("turns a single line function into a return", () => {
 });
 
 test("returns a string", () => {
-  const fn = assertNodeKind<ArrowFunctionExpr>(
+  const fn = assertNodeKind(
     reflect(() => ""),
     NodeKind.ArrowFunctionExpr
   );
   expect(
-    assertNodeKind<ReturnStmt>(fn.body.statements[0], NodeKind.ReturnStmt).expr
-      .kindName
+    assertNodeKind(fn.body.statements[0], NodeKind.ReturnStmt).expr.kindName
   ).toEqual("StringLiteralExpr");
 });
 
 test("parenthesis", () => {
-  const fn = assertNodeKind<ArrowFunctionExpr>(
+  const fn = assertNodeKind(
     reflect(() => {
       ("");
     }),
     NodeKind.ArrowFunctionExpr
   );
 
-  const expr = assertNodeKind<ExprStmt>(
-    fn.body.statements[0],
-    NodeKind.ExprStmt
-  );
-  const parens = assertNodeKind<ParenthesizedExpr>(
-    expr.expr,
-    NodeKind.ParenthesizedExpr
-  );
-  assertNodeKind<StringLiteralExpr>(parens.expr, NodeKind.StringLiteralExpr);
+  const expr = assertNodeKind(fn.body.statements[0], NodeKind.ExprStmt);
+  const parens = assertNodeKind(expr.expr, NodeKind.ParenthesizedExpr);
+  assertNodeKind(parens.expr, NodeKind.StringLiteralExpr);
 });
 
 test("parenthesis are respected", () => {
-  const fn = assertNodeKind<ArrowFunctionExpr>(
+  const fn = assertNodeKind(
     reflect(() => {
       2 + (1 + 2);
     }),
     NodeKind.ArrowFunctionExpr
   );
 
-  const expr = assertNodeKind<ExprStmt>(
-    fn.body.statements[0],
-    NodeKind.ExprStmt
-  );
-  const bin = assertNodeKind<BinaryExpr>(expr.expr, NodeKind.BinaryExpr);
-  assertNodeKind<NumberLiteralExpr>(bin.left, NodeKind.NumberLiteralExpr);
-  const parens = assertNodeKind<ParenthesizedExpr>(
-    bin.right,
-    NodeKind.ParenthesizedExpr
-  );
-  assertNodeKind<BinaryExpr>(parens.expr, NodeKind.BinaryExpr);
+  const expr = assertNodeKind(fn.body.statements[0], NodeKind.ExprStmt);
+  const bin = assertNodeKind(expr.expr, NodeKind.BinaryExpr);
+  assertNodeKind(bin.left, NodeKind.NumberLiteralExpr);
+  const parens = assertNodeKind(bin.right, NodeKind.ParenthesizedExpr);
+  assertNodeKind(parens.expr, NodeKind.BinaryExpr);
 });
 
 test("parenthesis are respected inverted", () => {
-  const fn = assertNodeKind<ArrowFunctionExpr>(
+  const fn = assertNodeKind(
     reflect(() => {
       2 + 1 + 2;
     }),
     NodeKind.ArrowFunctionExpr
   );
 
-  const expr = assertNodeKind<ExprStmt>(
-    fn.body.statements[0],
-    NodeKind.ExprStmt
-  );
-  const bin = assertNodeKind<BinaryExpr>(expr.expr, NodeKind.BinaryExpr);
-  assertNodeKind<NumberLiteralExpr>(bin.right, NodeKind.NumberLiteralExpr);
-  assertNodeKind<BinaryExpr>(bin.left, NodeKind.BinaryExpr);
+  const expr = assertNodeKind(fn.body.statements[0], NodeKind.ExprStmt);
+  const bin = assertNodeKind(expr.expr, NodeKind.BinaryExpr);
+  assertNodeKind(bin.right, NodeKind.NumberLiteralExpr);
+  assertNodeKind(bin.left, NodeKind.BinaryExpr);
 });
 
 test("type casting", () => {
-  const fn = assertNodeKind<ArrowFunctionExpr>(
+  const fn = assertNodeKind(
     reflect(() => {
       <any>2;
     }),
     NodeKind.ArrowFunctionExpr
   );
 
-  const expr = assertNodeKind<ExprStmt>(
-    fn.body.statements[0],
-    NodeKind.ExprStmt
-  );
-  assertNodeKind<NumberLiteralExpr>(expr.expr, NodeKind.NumberLiteralExpr);
+  const expr = assertNodeKind(fn.body.statements[0], NodeKind.ExprStmt);
+  assertNodeKind(expr.expr, NodeKind.NumberLiteralExpr);
 });
 
 test("type casting as", () => {
-  const fn = assertNodeKind<ArrowFunctionExpr>(
+  const fn = assertNodeKind(
     reflect(() => {
       2 as any;
     }),
     NodeKind.ArrowFunctionExpr
   );
 
-  const expr = assertNodeKind<ExprStmt>(
-    fn.body.statements[0],
-    NodeKind.ExprStmt
-  );
-  assertNodeKind<NumberLiteralExpr>(expr.expr, NodeKind.NumberLiteralExpr);
+  const expr = assertNodeKind(fn.body.statements[0], NodeKind.ExprStmt);
+  assertNodeKind(expr.expr, NodeKind.NumberLiteralExpr);
 });
 
 test("any function args", () => {
-  const result = assertNodeKind<ArrowFunctionExpr>(
+  const result = assertNodeKind(
     reflect(() => {
       (<any>"").startsWith("");
     }),
     NodeKind.ArrowFunctionExpr
   );
 
-  const expr = assertNodeKind<ExprStmt>(
-    result.body.statements[0],
-    NodeKind.ExprStmt
-  );
-  const call = assertNodeKind<CallExpr>(expr.expr, NodeKind.CallExpr);
+  const expr = assertNodeKind(result.body.statements[0], NodeKind.ExprStmt);
+  const call = assertNodeKind(expr.expr, NodeKind.CallExpr);
 
   expect(call.args).toHaveLength(1);
 });
 
 test("named function args", () => {
-  const result = assertNodeKind<ArrowFunctionExpr>(
+  const result = assertNodeKind(
     reflect(() => {
       "".startsWith("");
     }),
     NodeKind.ArrowFunctionExpr
   );
 
-  const expr = assertNodeKind<ExprStmt>(
-    result.body.statements[0],
-    NodeKind.ExprStmt
-  );
-  const call = assertNodeKind<CallExpr>(expr.expr, NodeKind.CallExpr);
+  const expr = assertNodeKind(result.body.statements[0], NodeKind.ExprStmt);
+  const call = assertNodeKind(expr.expr, NodeKind.CallExpr);
 
   expect(call.args[0]?.expr?.kindName).toEqual("StringLiteralExpr");
 });
 
 test("null", () => {
-  const result = assertNodeKind<ArrowFunctionExpr>(
+  const result = assertNodeKind(
     reflect(() => null),
     NodeKind.ArrowFunctionExpr
   );
 
-  const ret = assertNodeKind<ReturnStmt>(
-    result.body.statements[0],
-    NodeKind.ReturnStmt
-  );
-  assertNodeKind<NullLiteralExpr>(ret.expr, NodeKind.NullLiteralExpr);
+  const ret = assertNodeKind(result.body.statements[0], NodeKind.ReturnStmt);
+  assertNodeKind(ret.expr, NodeKind.NullLiteralExpr);
 });
 
 test("undefined", () => {
-  const result = assertNodeKind<ArrowFunctionExpr>(
+  const result = assertNodeKind(
     reflect(() => undefined),
     NodeKind.ArrowFunctionExpr
   );
 
-  const ret = assertNodeKind<ReturnStmt>(
-    result.body.statements[0],
-    NodeKind.ReturnStmt
-  );
-  assertNodeKind<UndefinedLiteralExpr>(ret.expr, NodeKind.UndefinedLiteralExpr);
+  const ret = assertNodeKind(result.body.statements[0], NodeKind.ReturnStmt);
+  assertNodeKind(ret.expr, NodeKind.UndefinedLiteralExpr);
 });
 
 test("anonymous function expression", () => {
-  assertNodeKind<FunctionExpr>(
+  assertNodeKind(
     reflect(function () {}),
     NodeKind.FunctionExpr
   );
 });
 
 test("function expression", () => {
-  assertNodeKind<FunctionExpr>(
+  assertNodeKind(
     reflect(function foo() {}),
     NodeKind.FunctionExpr
   );
 });
 
 test("computed object name", () => {
-  const result = assertNodeKind<ArrowFunctionExpr>(
+  const result = assertNodeKind(
     reflect(() => {
       const name = "aName";
       return {
@@ -211,18 +164,84 @@ test("computed object name", () => {
     NodeKind.ArrowFunctionExpr
   );
 
-  const ret = assertNodeKind<ReturnStmt>(
-    result.body.statements[1],
-    NodeKind.ReturnStmt
-  );
-  const obj = assertNodeKind<ObjectLiteralExpr>(
-    ret.expr,
-    NodeKind.ObjectLiteralExpr
-  );
+  const ret = assertNodeKind(result.body.statements[1], NodeKind.ReturnStmt);
+  const obj = assertNodeKind(ret.expr, NodeKind.ObjectLiteralExpr);
   obj.properties;
 });
 
 test("err", () => {
   const fn = () => {};
   expect(reflect(fn)).toBeUndefined();
+});
+
+test("ObjectBinding with out-of-bound reference", () => {
+  const stack = new Stack();
+  new aws_events.EventBus(stack, "busbus");
+
+  const customDeleteBus = new EventBus<any>(stack, "deleteBus");
+  const b = { bus: customDeleteBus };
+
+  const ast = reflect(() => {
+    // @ts-ignore
+    const { bus } = b;
+    // @ts-ignore
+    const { bus: bus2 } = b;
+    // @ts-ignore
+    const { bus: bus3 = bus } = b;
+  });
+
+  const func = assertNodeKind(ast, NodeKind.ArrowFunctionExpr);
+  const [binding1, binding2, binding3] = func.body.statements.map((stmt) => {
+    const varStmt = assertNodeKind(stmt, NodeKind.VariableStmt);
+    const varDecl = assertNodeKind(
+      varStmt.declList.decls[0].name,
+      NodeKind.ObjectBinding
+    );
+    assertNodeKind(
+      varStmt.declList.decls[0].initializer,
+      NodeKind.ReferenceExpr
+    );
+    return varDecl.bindings[0];
+  });
+
+  assertNodeKind(binding1.name, NodeKind.Identifier);
+  assertNodeKind(binding2.name, NodeKind.Identifier);
+  assertNodeKind(binding2.propertyName, NodeKind.Identifier);
+  assertNodeKind(binding3.name, NodeKind.Identifier);
+  assertNodeKind(binding3.propertyName, NodeKind.Identifier);
+  assertNodeKind(binding3.initializer, NodeKind.ReferenceExpr);
+});
+
+test("ArrayBinding with out-of-bound reference", () => {
+  const stack = new Stack();
+  new aws_events.EventBus(stack, "busbus");
+
+  const customDeleteBus = new EventBus<any>(stack, "deleteBus");
+  const b = [customDeleteBus];
+
+  const ast = reflect(() => {
+    // @ts-ignore
+    const [bus] = b;
+    // @ts-ignore
+    const [bus2 = bus] = b;
+  });
+
+  const func = assertNodeKind(ast, NodeKind.ArrowFunctionExpr);
+  const [binding1, binding2] = func.body.statements.map((stmt) => {
+    const varStmt = assertNodeKind(stmt, NodeKind.VariableStmt);
+    const varDecl = assertNodeKind(
+      varStmt.declList.decls[0].name,
+      NodeKind.ArrayBinding
+    );
+    assertNodeKind(
+      varStmt.declList.decls[0].initializer,
+      NodeKind.ReferenceExpr
+    );
+
+    return assertNodeKind(varDecl.bindings[0], NodeKind.BindingElem);
+  });
+
+  assertNodeKind(binding1.name, NodeKind.Identifier);
+  assertNodeKind(binding2.name, NodeKind.Identifier);
+  assertNodeKind(binding2.initializer, NodeKind.ReferenceExpr);
 });

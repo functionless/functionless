@@ -498,7 +498,7 @@ export function compile(
           } else if (node.text === "null") {
             return newExpr(NodeKind.NullLiteralExpr, []);
           }
-          if (isIntegrationNode(node)) {
+          if (checker.isIntegrationNode(node)) {
             // if this is a reference to a Table or Lambda, retain it
             const _ref = checker.getOutOfScopeValueNode(node, scope);
             if (_ref) {
@@ -531,7 +531,7 @@ export function compile(
             ts.factory.createStringLiteral(node.text),
           ]);
         } else if (ts.isPropertyAccessExpression(node)) {
-          if (isIntegrationNode(node)) {
+          if (checker.isIntegrationNode(node)) {
             // if this is a reference to a Table or Lambda, retain it
             const _ref = checker.getOutOfScopeValueNode(node, scope);
             if (_ref) {
@@ -965,19 +965,6 @@ export function compile(
           ts.factory.createNumericLiteral(type),
           ...args,
         ]);
-      }
-
-      function isIntegrationNode(node: ts.Node): boolean {
-        const exprType = checker.getTypeAtLocation(node);
-        const exprKind = exprType.getProperty("kind");
-        if (exprKind) {
-          const exprKindType = checker.getTypeOfSymbolAtLocation(
-            exprKind,
-            node
-          );
-          return exprKindType.isStringLiteral();
-        }
-        return false;
       }
     };
   };

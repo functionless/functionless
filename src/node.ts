@@ -85,7 +85,18 @@ export abstract class BaseNode<
   }
 
   public toSExpr(): [kind: this["kind"], ...args: any[]] {
-    return [this.kind, ...Array.from(this._arguments)];
+    return [
+      this.kind,
+      ...Array.from(this._arguments).map(function toSExpr(arg): any {
+        if (isNode(arg)) {
+          return arg.toSExpr();
+        } else if (Array.isArray(arg)) {
+          return arg.map(toSExpr);
+        } else {
+          return arg;
+        }
+      }),
+    ];
   }
 
   protected ensureArrayOf<Assert extends Assertion>(
