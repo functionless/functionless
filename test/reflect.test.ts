@@ -1,5 +1,5 @@
 import { aws_events, Stack } from "aws-cdk-lib";
-import { EventBus, reflect } from "../src";
+import { EventBus, reflect, validateFunctionLike } from "../src";
 import { assertNodeKind } from "../src/assert";
 import { NodeKind } from "../src/node-kind";
 
@@ -254,4 +254,11 @@ test("reflect on a bound function declaration", () => {
 
   const ast = reflect(a);
   assertNodeKind(ast, NodeKind.FunctionDecl);
+});
+
+test("validateFunctionLikeNode throws when function not registered", () => {
+  // arrow/function expressions are currently only compiled when in-lined
+  const foo = () => {};
+
+  expect(() => validateFunctionLike(foo, "here")).toThrow();
 });
