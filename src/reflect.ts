@@ -41,7 +41,8 @@ export function reflect<F extends AnyFunction | AnyAsyncFunction>(
     if (targetFunc) {
       return reflect(targetFunc);
     } else {
-      throw new Error(
+      throw new SynthError(
+        ErrorCodes.FunctionDecl_not_compiled_by_Functionless,
         `bound function not compiled with Functionless, cannot introspect on its form`
       );
     }

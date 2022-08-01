@@ -133,7 +133,7 @@ export function compile(
         } else if (ts.isBlock(node)) {
           return ts.factory.updateBlock(node, [
             ...node.statements.flatMap((stmt) => {
-              if (ts.isFunctionDeclaration(stmt) && stmt.name) {
+              if (ts.isFunctionDeclaration(stmt) && stmt.name && stmt.body) {
                 // hoist statements to register each function declaration within the block
                 return [
                   ts.factory.createExpressionStatement(
