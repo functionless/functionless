@@ -5,7 +5,7 @@ Object {
   "StartAt": "Initialize Functionless Context",
   "States": Object {
     "Initialize Functionless Context": Object {
-      "Next": "return {a: obj[\\"x\\"], b: obj.x, d: obj[\\"1\\"], e: arr[0]}",
+      "Next": "return {a: obj.x, b: obj.x, d: obj[\\"1\\"], e: arr[0]}",
       "Parameters": Object {
         "fnl_context": Object {
           "null": null,
@@ -15,14 +15,14 @@ Object {
       "Type": "Pass",
     },
     "arr = [1]": Object {
-      "Next": "return {a: obj[\\"x\\"], b: obj.x, d: obj[\\"1\\"], e: arr[0]} 1",
+      "Next": "return {a: obj.x, b: obj.x, d: obj[\\"1\\"], e: arr[0]} 1",
       "Result": Array [
         1,
       ],
       "ResultPath": "$.arr",
       "Type": "Pass",
     },
-    "return {a: obj[\\"x\\"], b: obj.x, d: obj[\\"1\\"], e: arr[0]}": Object {
+    "return {a: obj.x, b: obj.x, d: obj[\\"1\\"], e: arr[0]}": Object {
       "Next": "arr = [1]",
       "Result": Object {
         "1": "a",
@@ -31,10 +31,10 @@ Object {
       "ResultPath": "$.obj",
       "Type": "Pass",
     },
-    "return {a: obj[\\"x\\"], b: obj.x, d: obj[\\"1\\"], e: arr[0]} 1": Object {
+    "return {a: obj.x, b: obj.x, d: obj[\\"1\\"], e: arr[0]} 1": Object {
       "End": true,
       "Parameters": Object {
-        "a.$": "$.obj['x']",
+        "a.$": "$.obj.x",
         "b.$": "$.obj.x",
         "d.$": "$.obj['1']",
         "e.$": "$.arr[0]",

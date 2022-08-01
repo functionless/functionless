@@ -241,76 +241,6 @@ Object {
 }
 `;
 
-exports[`[1,2,3,4].filter(item => item.length > 1 + 2) 1`] = `
-Object {
-  "StartAt": "Initialize Functionless Context",
-  "States": Object {
-    "1__return [1, 2, 3, 4].filter(function(item))": Object {
-      "End": true,
-      "InputPath": "$.heap0[?(@>3)]",
-      "ResultPath": "$",
-      "Type": "Pass",
-    },
-    "Initialize Functionless Context": Object {
-      "Next": "return [1, 2, 3, 4].filter(function(item))",
-      "Parameters": Object {
-        "fnl_context": Object {
-          "null": null,
-        },
-      },
-      "ResultPath": "$",
-      "Type": "Pass",
-    },
-    "return [1, 2, 3, 4].filter(function(item))": Object {
-      "Next": "1__return [1, 2, 3, 4].filter(function(item))",
-      "Result": Array [
-        1,
-        2,
-        3,
-        4,
-      ],
-      "ResultPath": "$.heap0",
-      "Type": "Pass",
-    },
-  },
-}
-`;
-
-exports[`[1,2,3,4].filter(item => item.length > 2) 1`] = `
-Object {
-  "StartAt": "Initialize Functionless Context",
-  "States": Object {
-    "1__return [1, 2, 3, 4].filter(function(item))": Object {
-      "End": true,
-      "InputPath": "$.heap0[?(@>2)]",
-      "ResultPath": "$",
-      "Type": "Pass",
-    },
-    "Initialize Functionless Context": Object {
-      "Next": "return [1, 2, 3, 4].filter(function(item))",
-      "Parameters": Object {
-        "fnl_context": Object {
-          "null": null,
-        },
-      },
-      "ResultPath": "$",
-      "Type": "Pass",
-    },
-    "return [1, 2, 3, 4].filter(function(item))": Object {
-      "Next": "1__return [1, 2, 3, 4].filter(function(item))",
-      "Result": Array [
-        1,
-        2,
-        3,
-        4,
-      ],
-      "ResultPath": "$.heap0",
-      "Type": "Pass",
-    },
-  },
-}
-`;
-
 exports[`[1,2,3].map(item => item) 1`] = `
 Object {
   "StartAt": "Initialize Functionless Context",
@@ -8474,8 +8404,16 @@ Object {
       "ResultPath": "$.a",
       "Type": "Pass",
     },
-    "a = {key: \\"value\\"}": Object {
+    "a = {1: \\"value\\"}": Object {
       "Next": "a = a",
+      "Result": Object {
+        "1": "value",
+      },
+      "ResultPath": "$.a",
+      "Type": "Pass",
+    },
+    "a = {key: \\"value\\"}": Object {
+      "Next": "a = {1: \\"value\\"}",
       "Result": Object {
         "key": "value",
       },
