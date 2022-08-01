@@ -14,6 +14,7 @@ import {
   CallExpr,
   ElementAccessExpr,
   Expr,
+  Identifier,
   NullLiteralExpr,
   PropAccessExpr,
 } from "./expression";
@@ -2742,9 +2743,10 @@ export class ASL {
     expr: CallExpr & { expr: PropAccessExpr }
   ): ASLGraph.NodeResults {
     const predicate = expr.args[0]?.expr;
-    if (!isFunctionExpr(predicate)) {
-      throw new Error(
-        "the 'predicate' argument of slice must be a FunctionExpr"
+    if (!(isFunctionExpr(predicate) || isArrowFunctionExpr(predicate))) {
+      throw new SynthError(
+        ErrorCodes.StepFunction_invalid_filter_syntax,
+        `the 'predicate' argument of slice must be a function or arrow expression, found: ${predicate?.kindName}`
       );
     }
 
@@ -2754,13 +2756,32 @@ export class ASL {
       !isReturnStmt(stmt) ||
       predicate.body.statements.length !== 1
     ) {
-      throw new Error(
+      throw new SynthError(
+        ErrorCodes.StepFunction_invalid_filter_syntax,
         'a JSONPath filter expression only supports a single, in-line statement, e.g. .filter(a => a == "hello" || a === "world")'
       );
     }
 
     const toFilterCondition = (expr: Expr): string => {
-      if (isBinaryExpr(expr)) {
+      const constant = evalToConstant(expr);
+      if (constant) {
+        if (typeof constant.constant === "string") {
+          return `'${constant.constant.replace(/'/g, "\\'")}'`;
+        }
+        if (
+          typeof constant.constant === "object" &&
+          constant.constant !== null
+        ) {
+          throw new SynthError(
+            ErrorCodes.StepFunction_invalid_filter_syntax,
+            `Filter expressions do not support object or array literals, found: ${JSON.stringify(
+              constant.constant
+            )}`
+          );
+        } else {
+          return `${constant.constant}`;
+        }
+      } else if (isBinaryExpr(expr)) {
         return `${toFilterCondition(expr.left)}${expr.op}${toFilterCondition(
           expr.right
         )}`;
@@ -2769,25 +2790,38 @@ export class ASL {
       } else if (isIdentifier(expr)) {
         const ref = expr.lookup();
         if (ref === undefined) {
-          throw new Error(`unresolved identifier: ${expr.name}`);
+          throw new SynthError(
+            ErrorCodes.Unexpected_Error,
+            `unresolved identifier: ${expr.name}`
+          );
         }
         return resolveRef(ref);
         function resolveRef(ref: Decl): string {
           if (isParameterDecl(ref)) {
             if (ref.parent !== predicate) {
-              throw new Error(
-                "cannot reference a ParameterDecl other than those in .filter((item, index) =>) in a JSONPath filter expression"
+              throw new SynthError(
+                ErrorCodes.StepFunction_invalid_filter_syntax,
+                `Cannot reference a parameter from a parent closure (found: ${
+                  // we can assume an identifier here as binding patterns cannot be the parent of an identifier (only `BindingElm`s)
+                  (<Identifier>ref.name).name
+                }. Can only use the item parameter .filter((item) =>) in a JSONPath filter expression`
               );
             }
             if (ref === ref.parent.parameters[0]) {
               return "@";
             } else if (ref === ref.parent.parameters[1]) {
-              throw new Error(
-                "the 'index' parameter in a .filter expression is not supported"
+              throw new SynthError(
+                ErrorCodes.StepFunction_invalid_filter_syntax,
+                `the 'index' (found: ${
+                  (<Identifier>ref.name).name
+                }) parameter in a .filter expression is not supported`
               );
             } else {
-              throw new Error(
-                "the 'array' parameter in a .filter expression is not supported"
+              throw new SynthError(
+                ErrorCodes.StepFunction_invalid_filter_syntax,
+                `the 'array' (found: ${
+                  (<Identifier>ref.name).name
+                })parameter in a .filter expression is not supported`
               );
             }
           } else if (isBindingElem(ref)) {
@@ -2822,20 +2856,13 @@ export class ASL {
             isClassDecl(ref) ||
             isClassMember(ref)
           ) {
-            throw new Error(
-              `cannot reference a ${ref.kind} within a JSONPath .filter expression`
+            throw new SynthError(
+              ErrorCodes.StepFunction_invalid_filter_syntax,
+              `cannot reference a ${ref.kindName} within a JSONPath .filter expression`
             );
           }
           assertNever(ref);
         }
-      } else if (isStringLiteralExpr(expr)) {
-        return `'${expr.value.replace(/'/g, "\\'")}'`;
-      } else if (
-        isBooleanLiteralExpr(expr) ||
-        isNumberLiteralExpr(expr) ||
-        isNullLiteralExpr(expr)
-      ) {
-        return `${expr.value}`;
       } else if (isPropAccessExpr(expr)) {
         return `${toFilterCondition(expr.expr)}.${expr.name.name}`;
       } else if (isElementAccessExpr(expr)) {
@@ -2846,7 +2873,8 @@ export class ASL {
         )}]`;
       }
 
-      throw new Error(
+      throw new SynthError(
+        ErrorCodes.StepFunction_invalid_filter_syntax,
         `JSONPath's filter expression does not support '${exprToString(expr)}'`
       );
     };
