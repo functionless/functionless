@@ -9,5 +9,5 @@ test("s-expression isomorphism", () => {
     return foo([a, c]);
   });
 
-  expect(parseSExpr(ast?.toSExpr()!)).toEqual(ast);
+  expect(parseSExpr(ast?.toSExpr()!).equals(ast)).toEqual(true);
 });

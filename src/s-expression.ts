@@ -29,7 +29,6 @@ export function parseSExpr<Kind extends NodeKind>(
 ): NodeInstance<Kind> {
   const [kind, ...args] = expr;
   const ctor = getCtor(kind);
-  // TODO: recursively parse the args s-expressions
   return new ctor(
     ...(<any>args.map(function parse(item: any): any {
       if (Array.isArray(item)) {

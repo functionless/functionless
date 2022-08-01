@@ -246,22 +246,18 @@ export function compile(
       ): ts.Expression {
         return errorBoundary(() => {
           if (
-            !ts.isFunctionDeclaration(impl) &&
-            !ts.isArrowFunction(impl) &&
-            !ts.isFunctionExpression(impl) &&
-            !ts.isConstructorDeclaration(impl) &&
-            !ts.isMethodDeclaration(impl)
+            (!ts.isFunctionDeclaration(impl) &&
+              !ts.isArrowFunction(impl) &&
+              !ts.isFunctionExpression(impl) &&
+              !ts.isConstructorDeclaration(impl) &&
+              !ts.isMethodDeclaration(impl)) ||
+            impl.body === undefined
           ) {
             throw new Error(
-              `Functionless reflection only supports function parameters with bodies, no signature only declarations or references. Found ${impl.getText()}.`
+              `Functionless reflection only supports function declarations with bodies, no signature only declarations or references. Found ${impl.getText()}.`
             );
           }
 
-          if (impl.body === undefined) {
-            throw new Error(
-              `cannot parse declaration-only function: ${impl.getText()}`
-            );
-          }
           const body = ts.isBlock(impl.body)
             ? toExpr(impl.body, scope ?? impl)
             : newExpr(NodeKind.BlockStmt, [
