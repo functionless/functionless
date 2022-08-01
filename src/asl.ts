@@ -2766,6 +2766,8 @@ export class ASL {
       const constant = evalToConstant(expr);
       if (constant) {
         if (typeof constant.constant === "string") {
+          // strings are wrapped with '' in the filter expression.
+          // Escape existing quotes to avoid issues.
           return `'${constant.constant.replace(/'/g, "\\'")}'`;
         }
         if (
