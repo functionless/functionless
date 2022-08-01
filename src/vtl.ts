@@ -761,8 +761,10 @@ export abstract class VTL {
             "Expected an initializer for a binding pattern assignment"
           );
         }
-        const right = initialValueVar ?? this.var(decl.initializer!);
-        this.evaluateBindingPattern(decl.name, right);
+        this.evaluateBindingPattern(
+          decl.name,
+          initialValueVar ?? this.var(decl.initializer!)
+        );
         // may generate may variables, return nothing.
         return undefined;
       } else {

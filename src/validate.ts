@@ -343,6 +343,44 @@ export function validate(
             ),
           ];
         }
+        const valueType = checker.getTypeAtLocation(node.expression);
+        const elmType = checker.getTypeAtLocation(node.argumentExpression);
+        if (
+          checker.isArraySymbol(valueType.symbol) &&
+          !(
+            // if the accessor is the forIn variable, it will always be a string
+            (
+              ts.isIdentifier(node.argumentExpression) &&
+              checker.isForInVariable(node.argumentExpression)
+            )
+          )
+        ) {
+          if (
+            // eslint-disable-next-line no-bitwise
+            !(elmType.flags & ts.TypeFlags.NumberLike)
+          ) {
+            return [
+              newWarning(
+                node.argumentExpression,
+                ErrorCodes.StepFunctions_mismatched_index_type,
+                `Numeric constants should be used to access arrays. Other types may fail at runtime.`
+              ),
+            ];
+          }
+        } else {
+          if (
+            // eslint-disable-next-line no-bitwise
+            !(elmType.flags & ts.TypeFlags.StringLike)
+          ) {
+            return [
+              newWarning(
+                node.argumentExpression,
+                ErrorCodes.StepFunctions_mismatched_index_type,
+                `String constants should be used to access objects. Other types may fail at runtime.`
+              ),
+            ];
+          }
+        }
       } else if (ts.isBindingElement(node)) {
         if (node.dotDotDotToken && ts.isObjectBindingPattern(node.parent)) {
           return [
@@ -986,20 +1024,47 @@ export function validate(
     return [];
   }
 
-  function newError(
+  function newDiagnostic(
     invalidNode: ts.Node,
     error: ErrorCode,
+    category: ts.DiagnosticCategory,
     messageText?: string
   ): ts.Diagnostic {
     return {
       source: "Functionless",
       code: error.code,
       messageText: formatErrorMessage(error, messageText),
-      category: ts.DiagnosticCategory.Error,
+      category,
       file: invalidNode.getSourceFile(),
       start: invalidNode.pos,
       length: invalidNode.end - invalidNode.pos,
     };
+  }
+
+  function newError(
+    invalidNode: ts.Node,
+    error: ErrorCode,
+    messageText?: string
+  ): ts.Diagnostic {
+    return newDiagnostic(
+      invalidNode,
+      error,
+      ts.DiagnosticCategory.Error,
+      messageText
+    );
+  }
+
+  function newWarning(
+    invalidNode: ts.Node,
+    error: ErrorCode,
+    messageText?: string
+  ): ts.Diagnostic {
+    return newDiagnostic(
+      invalidNode,
+      error,
+      ts.DiagnosticCategory.Warning,
+      messageText
+    );
   }
 }
 

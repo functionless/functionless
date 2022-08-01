@@ -100,6 +100,7 @@ export function makeFunctionlessChecker(
     isApiIntegration,
     isAppsyncField,
     isAppsyncResolver,
+    isArraySymbol,
     isCDKConstruct,
     isConstant,
     isEventBus,

@@ -820,10 +820,38 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
         a = [1, 2];
         const e = a;
         a = { x: "val" };
-        return { a, b, c, d, e };
+        const f = a;
+        a = { 1: "val2" };
+        return { a, b, c, d, e, f };
       });
     },
-    { a: { x: "val" }, b: "2", c: null, d: 1, e: [1, 2] }
+    { a: { "1": "val2" }, b: "2", c: null, d: 1, e: [1, 2], f: { x: "val" } }
+  );
+
+  test(
+    "access",
+    (parent) => {
+      return new StepFunction(parent, "sfn2", async () => {
+        const obj = { 1: "a", x: "b" };
+        const arr = [1];
+        return {
+          a: obj.x,
+          b: obj.x,
+          // c: obj[1], -- invalid SFN - localstack hangs on error
+          d: obj["1"],
+          e: arr[0],
+          // f: arr["0"], -- invalid SFN - localstack hangs on error
+        };
+      });
+    },
+    {
+      a: "b",
+      b: "b",
+      // c: "a",
+      d: "a",
+      e: 1,
+      //  f: 1
+    }
   );
 
   test(

@@ -1,5 +1,51 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`access 1`] = `
+Object {
+  "StartAt": "Initialize Functionless Context",
+  "States": Object {
+    "Initialize Functionless Context": Object {
+      "Next": "return {a: obj[\\"x\\"], b: obj.x, d: obj[\\"1\\"], e: arr[0]}",
+      "Parameters": Object {
+        "fnl_context": Object {
+          "null": null,
+        },
+      },
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "arr = [1]": Object {
+      "Next": "return {a: obj[\\"x\\"], b: obj.x, d: obj[\\"1\\"], e: arr[0]} 1",
+      "Result": Array [
+        1,
+      ],
+      "ResultPath": "$.arr",
+      "Type": "Pass",
+    },
+    "return {a: obj[\\"x\\"], b: obj.x, d: obj[\\"1\\"], e: arr[0]}": Object {
+      "Next": "arr = [1]",
+      "Result": Object {
+        "1": "a",
+        "x": "b",
+      },
+      "ResultPath": "$.obj",
+      "Type": "Pass",
+    },
+    "return {a: obj[\\"x\\"], b: obj.x, d: obj[\\"1\\"], e: arr[0]} 1": Object {
+      "End": true,
+      "Parameters": Object {
+        "a.$": "$.obj['x']",
+        "b.$": "$.obj.x",
+        "d.$": "$.obj['1']",
+        "e.$": "$.arr[0]",
+      },
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+  },
+}
+`;
+
 exports[`assignment 1`] = `
 Object {
   "StartAt": "Initialize Functionless Context",
@@ -41,8 +87,16 @@ Object {
       "ResultPath": "$.a",
       "Type": "Pass",
     },
+    "a = {1: \\"val2\\"}": Object {
+      "Next": "return {a: a, b: b, c: c, d: d, e: e, f: f}",
+      "Result": Object {
+        "1": "val2",
+      },
+      "ResultPath": "$.a",
+      "Type": "Pass",
+    },
     "a = {x: \\"val\\"}": Object {
-      "Next": "return {a: a, b: b, c: c, d: d, e: e}",
+      "Next": "f = a",
       "Result": Object {
         "x": "val",
       },
@@ -73,7 +127,13 @@ Object {
       "ResultPath": "$.e",
       "Type": "Pass",
     },
-    "return {a: a, b: b, c: c, d: d, e: e}": Object {
+    "f = a": Object {
+      "InputPath": "$.a",
+      "Next": "a = {1: \\"val2\\"}",
+      "ResultPath": "$.f",
+      "Type": "Pass",
+    },
+    "return {a: a, b: b, c: c, d: d, e: e, f: f}": Object {
       "End": true,
       "Parameters": Object {
         "a.$": "$.a",
@@ -81,6 +141,7 @@ Object {
         "c.$": "$.c",
         "d.$": "$.d",
         "e.$": "$.e",
+        "f.$": "$.f",
       },
       "ResultPath": "$",
       "Type": "Pass",

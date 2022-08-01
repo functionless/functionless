@@ -11086,6 +11086,54 @@ Object {
 }
 `;
 
+exports[`set obj 1`] = `
+Object {
+  "StartAt": "Initialize Functionless Context",
+  "States": Object {
+    "Initialize Functionless Context": Object {
+      "Next": "return {a: a, b: b, c: c}",
+      "Parameters": Object {
+        "fnl_context": Object {
+          "null": null,
+        },
+      },
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "b = a[1]": Object {
+      "InputPath": "$.a[1]",
+      "Next": "c = a[\\"1\\"]",
+      "ResultPath": "$.b",
+      "Type": "Pass",
+    },
+    "c = a[\\"1\\"]": Object {
+      "InputPath": "$.a['1']",
+      "Next": "return {a: a, b: b, c: c} 1",
+      "ResultPath": "$.c",
+      "Type": "Pass",
+    },
+    "return {a: a, b: b, c: c}": Object {
+      "Next": "b = a[1]",
+      "Result": Object {
+        "1": "value",
+      },
+      "ResultPath": "$.a",
+      "Type": "Pass",
+    },
+    "return {a: a, b: b, c: c} 1": Object {
+      "End": true,
+      "Parameters": Object {
+        "a.$": "$.a",
+        "b.$": "$.b",
+        "c.$": "$.c",
+      },
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+  },
+}
+`;
+
 exports[`single quotes in StringLiteralExpr should be escaped in a JSON Path filter expression 1`] = `
 Object {
   "StartAt": "Initialize Functionless Context",

@@ -273,10 +273,23 @@ test("let and set", () => {
     a = {
       key: "value",
     };
+    a = { 1: "value" };
     a = a;
     a = "hello" + { place: "world" };
     a = "hello" + ["world"];
     return a;
+  }).definition;
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+});
+
+test("set obj", () => {
+  const { stack } = initStepFunctionApp();
+  const definition = new ExpressStepFunction(stack, "fn", () => {
+    let a = { 1: "value" };
+    let b = a[1];
+    let c = a["1"];
+    return { a, b, c };
   }).definition;
 
   expect(normalizeDefinition(definition)).toMatchSnapshot();

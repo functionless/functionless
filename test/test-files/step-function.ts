@@ -650,3 +650,33 @@ new StepFunction(stack, "fn", async (input: { arr: { name: string }[] }) => {
   input.arr.filter((item) => item.name === "some string");
   input.arr.filter(({ name }) => name === "some string");
 });
+
+/**
+ * Unsupported - Mis-matched element access
+ * @see ErrorCodes.StepFunctions_mismatched_index_type
+ */
+
+new StepFunction(stack, "fn", async () => {
+  const obj = { 1: "value" };
+  const arr = [1];
+
+  // invalid - numeric object property access in SFN is invalid, key must be a string
+  obj[1];
+
+  // invalid - string array access in SFN is invalid, index must be a number
+  arr["0"];
+});
+
+/**
+ * Support - element access
+ */
+
+new StepFunction(stack, "fn", async () => {
+  const obj = { 1: "value" };
+  const arr = [1];
+
+  // valid
+  obj["1"];
+  // valid
+  arr[0];
+});

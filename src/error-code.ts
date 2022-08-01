@@ -1268,6 +1268,42 @@ export namespace ErrorCodes {
     type: ErrorType.ERROR,
     title: "StepFunction invalid filter syntax",
   };
+
+  /**
+   * StepFunctions could fail at runtime with mismatched index types.
+   *
+   * Javascript and Typescript support the normalization object property access
+   * and array access when the index is a number or number as a string.
+   *
+   * Unfortunately SFN cannot repeat this normalization in an inexpensive way
+   * (ex: checking all property access for correctness at runtime).
+   *
+   * The below is all valid typescript.
+   *
+   * ```ts
+   * new StepFunction(stack, 'sfn', async () => {
+   *    const obj = {1: "value"};
+   *    const arr = [1];
+   *
+   *    // invalid - numeric object property access in SFN is invalid, key must be a string
+   *    obj[1];
+   *
+   *    // invalid - string array access in SFN is invalid, index must be a number
+   *    arr["0"];
+   *
+   *    // valid
+   *    obj["1"];
+   *    // valid
+   *    arr[0];
+   * });
+   * ```
+   */
+  export const StepFunctions_mismatched_index_type: ErrorCode = {
+    code: 10035,
+    // Warn because we do not fail on this during synth, but SFN may fail during runtime.
+    type: ErrorType.WARN,
+    title: "StepFunctions mismatched index type.",
+  };
 }
 
 // to prevent the closure serializer from trying to import all of functionless.
