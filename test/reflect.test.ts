@@ -245,3 +245,13 @@ test("ArrayBinding with out-of-bound reference", () => {
   assertNodeKind(binding2.name, NodeKind.Identifier);
   assertNodeKind(binding2.initializer, NodeKind.ReferenceExpr);
 });
+
+test("reflect on a bound function declaration", () => {
+  function foo() {
+    return "hello";
+  }
+  const a = foo.bind({});
+
+  const ast = reflect(a);
+  assertNodeKind(ast, NodeKind.FunctionDecl);
+});

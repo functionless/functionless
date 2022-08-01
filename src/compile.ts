@@ -77,131 +77,9 @@ export function compile(
       const registerName = ts.factory.createUniqueName("register");
       const bindName = ts.factory.createUniqueName("bind");
       const globals: (ts.FunctionDeclaration | ts.Statement)[] = [
-        // function register(func, ast) {
-        //   func[Symbol.for("functionless:ast")] = ast;
-        //   return func;
-        // }
-        ts.factory.createFunctionDeclaration(
-          undefined,
-          undefined,
-          undefined,
-          registerName,
-          undefined,
-          [param("func"), param("ast")],
-          undefined,
-          ts.factory.createBlock([
-            // func[Symbol.for("functionless:ast")] = ast;
-            setSymbol("func", ReflectionSymbolNames.AST, "ast"),
-
-            // return func;
-            ret("func"),
-          ])
-        ),
-        // function bind(func, self, ...args) {
-        //   const f = func.bind(self, ...args);
-        //   f[Symbol.for("functionless:BoundThis")] = self;
-        //   f[Symbol.for("functionless:BoundArgs")] = args;
-        //   f[Symbol.for("functionless:TargetFunction")] = func;
-        //   return func.bind(self, ...args);
-        //}
-        ts.factory.createFunctionDeclaration(
-          undefined,
-          undefined,
-          undefined,
-          bindName,
-          undefined,
-          [param("func"), param("self"), param("args", true)],
-          undefined,
-          ts.factory.createBlock([
-            // const tmp = func.bind(self, ...args)
-            ts.factory.createVariableStatement(
-              undefined,
-              ts.factory.createVariableDeclarationList(
-                [
-                  ts.factory.createVariableDeclaration(
-                    "tmp",
-                    undefined,
-                    undefined,
-                    ts.factory.createCallExpression(
-                      ts.factory.createPropertyAccessExpression(
-                        ts.factory.createIdentifier("func"),
-                        "bind"
-                      ),
-                      undefined,
-                      [
-                        ts.factory.createIdentifier("self"),
-                        ts.factory.createSpreadElement(
-                          ts.factory.createIdentifier("args")
-                        ),
-                      ]
-                    )
-                  ),
-                ],
-                ts.NodeFlags.Const
-              )
-            ),
-            // if (typeof func === "string")
-            ts.factory.createIfStatement(
-              ts.factory.createBinaryExpression(
-                ts.factory.createTypeOfExpression(
-                  ts.factory.createIdentifier("func")
-                ),
-                ts.factory.createToken(ts.SyntaxKind.EqualsEqualsEqualsToken),
-                ts.factory.createStringLiteral("function")
-              ),
-              ts.factory.createBlock([
-                // func[Symbol.for("functionless:BoundThis")] = ast;
-                setSymbol("func", ReflectionSymbolNames.BoundThis, "self"),
-                setSymbol("func", ReflectionSymbolNames.BoundArgs, "args"),
-                setSymbol("func", ReflectionSymbolNames.TargetFunction, "func"),
-              ])
-            ),
-
-            // return tmp;
-            ts.factory.createReturnStatement(
-              ts.factory.createIdentifier("tmp")
-            ),
-          ])
-        ),
+        createRegisterFunctionDeclaration(registerName),
+        createBindFunctionDeclaration(bindName),
       ];
-
-      function param(name: string, spread: boolean = false) {
-        return ts.factory.createParameterDeclaration(
-          undefined,
-          undefined,
-          spread
-            ? ts.factory.createToken(ts.SyntaxKind.DotDotDotToken)
-            : undefined,
-          name
-        );
-      }
-
-      function setSymbol(varName: string, symName: string, valueName: string) {
-        return ts.factory.createExpressionStatement(
-          // func[Symbol.for("functionless:ast")] = ast;
-          ts.factory.createBinaryExpression(
-            ts.factory.createElementAccessExpression(
-              ts.factory.createIdentifier(varName),
-              ts.factory.createCallExpression(
-                ts.factory.createPropertyAccessExpression(
-                  ts.factory.createIdentifier("Symbol"),
-                  "for"
-                ),
-                undefined,
-                [ts.factory.createStringLiteral(symName)]
-              )
-            ),
-            ts.factory.createToken(ts.SyntaxKind.EqualsToken),
-            ts.factory.createIdentifier(valueName)
-          )
-        );
-      }
-
-      function ret(name: string) {
-        return ts.factory.createReturnStatement(
-          ts.factory.createIdentifier(name)
-        );
-      }
 
       const statements = globals.concat(
         sf.statements.map(
@@ -261,7 +139,7 @@ export function compile(
                   ts.factory.createExpressionStatement(
                     register(
                       stmt.name,
-                      toFunction(NodeKind.FunctionDecl, node, node)
+                      toFunction(NodeKind.FunctionDecl, stmt, stmt)
                     )
                   ),
                 ];
@@ -994,6 +872,130 @@ const BinaryOperatorRemappings: Record<number, BinaryOp> = {
   [ts.SyntaxKind.EqualsEqualsEqualsToken]: "==",
   [ts.SyntaxKind.ExclamationEqualsEqualsToken]: "!=",
 } as const;
+
+function param(name: string, spread: boolean = false) {
+  return ts.factory.createParameterDeclaration(
+    undefined,
+    undefined,
+    spread ? ts.factory.createToken(ts.SyntaxKind.DotDotDotToken) : undefined,
+    name
+  );
+}
+
+function setSymbol(varName: string, symName: string, valueName: string) {
+  return ts.factory.createExpressionStatement(
+    // func[Symbol.for("functionless:ast")] = ast;
+    ts.factory.createBinaryExpression(
+      ts.factory.createElementAccessExpression(
+        ts.factory.createIdentifier(varName),
+        ts.factory.createCallExpression(
+          ts.factory.createPropertyAccessExpression(
+            ts.factory.createIdentifier("Symbol"),
+            "for"
+          ),
+          undefined,
+          [ts.factory.createStringLiteral(symName)]
+        )
+      ),
+      ts.factory.createToken(ts.SyntaxKind.EqualsToken),
+      ts.factory.createIdentifier(valueName)
+    )
+  );
+}
+
+function ret(name: string) {
+  return ts.factory.createReturnStatement(ts.factory.createIdentifier(name));
+}
+
+function createRegisterFunctionDeclaration(registerName: ts.Identifier) {
+  // function register(func, ast) {
+  //   func[Symbol.for("functionless:ast")] = ast;
+  //   return func;
+  // }
+  return ts.factory.createFunctionDeclaration(
+    undefined,
+    undefined,
+    undefined,
+    registerName,
+    undefined,
+    [param("func"), param("ast")],
+    undefined,
+    ts.factory.createBlock([
+      // func[Symbol.for("functionless:ast")] = ast;
+      setSymbol("func", ReflectionSymbolNames.AST, "ast"),
+
+      // return func;
+      ret("func"),
+    ])
+  );
+}
+
+function createBindFunctionDeclaration(bindName: ts.Identifier) {
+  // function bind(func, self, ...args) {
+  //   const f = func.bind(self, ...args);
+  //   f[Symbol.for("functionless:BoundThis")] = self;
+  //   f[Symbol.for("functionless:BoundArgs")] = args;
+  //   f[Symbol.for("functionless:TargetFunction")] = func;
+  //   return func.bind(self, ...args);
+  //}
+  return ts.factory.createFunctionDeclaration(
+    undefined,
+    undefined,
+    undefined,
+    bindName,
+    undefined,
+    [param("func"), param("self"), param("args", true)],
+    undefined,
+    ts.factory.createBlock([
+      // const tmp = func.bind(self, ...args)
+      ts.factory.createVariableStatement(
+        undefined,
+        ts.factory.createVariableDeclarationList(
+          [
+            ts.factory.createVariableDeclaration(
+              "tmp",
+              undefined,
+              undefined,
+              ts.factory.createCallExpression(
+                ts.factory.createPropertyAccessExpression(
+                  ts.factory.createIdentifier("func"),
+                  "bind"
+                ),
+                undefined,
+                [
+                  ts.factory.createIdentifier("self"),
+                  ts.factory.createSpreadElement(
+                    ts.factory.createIdentifier("args")
+                  ),
+                ]
+              )
+            ),
+          ],
+          ts.NodeFlags.Const
+        )
+      ),
+      // if (typeof func === "string")
+      ts.factory.createIfStatement(
+        ts.factory.createBinaryExpression(
+          ts.factory.createTypeOfExpression(
+            ts.factory.createIdentifier("func")
+          ),
+          ts.factory.createToken(ts.SyntaxKind.EqualsEqualsEqualsToken),
+          ts.factory.createStringLiteral("function")
+        ),
+        ts.factory.createBlock([
+          // func[Symbol.for("functionless:BoundThis")] = ast;
+          setSymbol("tmp", ReflectionSymbolNames.BoundThis, "self"),
+          setSymbol("tmp", ReflectionSymbolNames.BoundArgs, "args"),
+          setSymbol("tmp", ReflectionSymbolNames.TargetFunction, "func"),
+        ])
+      ),
+
+      // return tmp;
+      ts.factory.createReturnStatement(ts.factory.createIdentifier("tmp")),
+    ])
+  );
+}
 
 // to prevent the closure serializer from trying to import all of functionless.
 export const deploymentOnlyModule = true;

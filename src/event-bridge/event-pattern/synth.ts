@@ -127,7 +127,6 @@ export const synthesizeEventPattern = (
 export const synthesizePatternDocument = (
   predicate: RulePredicateFunction<any, any> | FunctionLike | Err | undefined
 ): PatternDocument => {
-  // @ts-ignore
   const func = validateFunctionLike(predicate, "synthesizeEventPattern");
 
   const [eventDecl = undefined] = func.parameters;

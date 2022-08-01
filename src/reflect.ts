@@ -62,7 +62,6 @@ export function reflect<F extends AnyFunction | AnyAsyncFunction>(
 
 const Global: any = global;
 
-// @ts-ignore
 const reflectCache: WeakMap<Function, FunctionLike | Err> = (Global[
   Symbol.for("functionless:Reflect")
 ] = Global[Symbol.for("functionless:Reflect")] ?? new WeakMap());
@@ -103,10 +102,7 @@ function validateFunctionlessNode<E extends FunctionlessNode>(
   } else if (isErr(a)) {
     throw a.error;
   } else if (typeof a === "function") {
-    if (a.name.startsWith("bound")) {
-    }
-    const ast = reflect(a);
-    return validateFunctionlessNode(ast, functionLocation, validate);
+    return validateFunctionlessNode(reflect(a), functionLocation, validate);
   } else {
     throw new SynthError(
       ErrorCodes.FunctionDecl_not_compiled_by_Functionless,
