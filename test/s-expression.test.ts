@@ -22,7 +22,9 @@ function equals(self: any, other: any): boolean {
       return false;
     }
   } else if (Array.isArray(self) && Array.isArray(other)) {
-    return self.every((a, i) => equals(a, other[i]));
+    return (
+      self.length === other.length && self.every((a, i) => equals(a, other[i]))
+    );
   } else {
     return self === other;
   }
