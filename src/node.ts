@@ -84,30 +84,6 @@ export abstract class BaseNode<
     return getNodeKindName(this.kind);
   }
 
-  /**
-   * Checks if {@link this} is deeply equal to {@link other}
-   */
-  public equals(other: any): boolean {
-    if (!isNode(other)) {
-      return false;
-    } else if (this.kind !== other.kind) {
-      return false;
-    } else {
-      return Array.from(this._arguments).every((thisArg, i) =>
-        equals(thisArg, other._arguments[i])
-      );
-    }
-
-    function equals(thisArg: any, otherArg: any): boolean {
-      if (isNode(thisArg) && isNode(otherArg)) {
-        return thisArg.equals(otherArg);
-      } else if (Array.isArray(thisArg) && Array.isArray(otherArg)) {
-        return thisArg.every((a, i) => equals(a, otherArg[i]));
-      }
-      return thisArg === otherArg;
-    }
-  }
-
   public toSExpr(): [kind: this["kind"], ...args: any[]] {
     return [
       this.kind,
