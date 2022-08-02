@@ -15,24 +15,23 @@ import {
 import type { Err } from "./error";
 import type { Expr, ImportKeyword, SuperKeyword } from "./expression";
 import {
+  isBindingElem,
+  isBindingPattern,
   isBlockStmt,
-  isTryStmt,
-  isVariableStmt,
+  isCatchClause,
   isDoStmt,
-  isWhileStmt,
-  isFunctionExpr,
-  isFunctionDecl,
   isForInStmt,
   isForOfStmt,
+  isFunctionLike,
+  isIdentifier,
+  isIfStmt,
+  isNode,
   isReturnStmt,
   isThrowStmt,
-  isIfStmt,
-  isCatchClause,
-  isBindingPattern,
-  isBindingElem,
-  isIdentifier,
+  isTryStmt,
   isVariableDecl,
-  isNode,
+  isVariableStmt,
+  isWhileStmt,
 } from "./guards";
 import { NodeKind, NodeKindName, getNodeKindName } from "./node-kind";
 import type { BlockStmt, CatchClause, Stmt } from "./statement";
@@ -86,13 +85,24 @@ export abstract class BaseNode<
   }
 
   public toSExpr(): [kind: this["kind"], ...args: any[]] {
-    return [this.kind, ...Array.from(this._arguments)];
+    return [
+      this.kind,
+      ...Array.from(this._arguments).map(function toSExpr(arg): any {
+        if (isNode(arg)) {
+          return arg.toSExpr();
+        } else if (Array.isArray(arg)) {
+          return arg.map(toSExpr);
+        } else {
+          return arg;
+        }
+      }),
+    ];
   }
 
   protected ensureArrayOf<Assert extends Assertion>(
     arr: any[],
     fieldName: string,
-    assertion: Assert[]
+    assertion: Assert[] | readonly Assert[]
   ): asserts arr is AssertionToInstance<Assert>[] {
     return ensureArrayOf(this.kind, arr, fieldName, assertion);
   }
@@ -377,7 +387,7 @@ export abstract class BaseNode<
         return getNames(node.name);
       } else if (isBindingPattern(node)) {
         return node.bindings.flatMap((b) => getNames(b));
-      } else if (isFunctionExpr(node) || isFunctionDecl(node)) {
+      } else if (isFunctionLike(node)) {
         return node.parameters.flatMap((param) =>
           isIdentifier(param.name)
             ? [[param.name.name, param]]

@@ -1,5 +1,7 @@
 import { ErrorCodes, SynthError } from "./error-code";
 import { FunctionlessNode } from "./node";
+import { NodeInstance } from "./node-ctor";
+import { getNodeKindName, NodeKind } from "./node-kind";
 import { ConstantValue, PrimitiveValue, isPrimitive } from "./util";
 
 export function assertNever(value: never): never {
@@ -67,18 +69,18 @@ export function assertConstantValue(val: any, message?: string): ConstantValue {
   );
 }
 
-export function assertNodeKind<T extends FunctionlessNode>(
+export function assertNodeKind<Kind extends NodeKind>(
   node: FunctionlessNode | undefined,
-  kind: T["kind"]
-): T {
+  kind: Kind
+): NodeInstance<Kind> {
   if (node?.kind !== kind) {
     throw Error(
-      `Expected node of type ${kind} and found ${
-        node ? node.kind : "undefined"
+      `Expected node of type ${getNodeKindName(kind)} and found ${
+        node ? getNodeKindName(node.kind) : "undefined"
       }`
     );
   }
-  return <T>node;
+  return <NodeInstance<Kind>>node;
 }
 
 // to prevent the closure serializer from trying to import all of functionless.

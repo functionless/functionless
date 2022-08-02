@@ -1,5 +1,5 @@
 import "jest";
-import { parseSExpr, reflect } from "../src";
+import { isNode, parseSExpr, reflect } from "../src";
 
 test("s-expression isomorphism", () => {
   function foo(...args: any[]) {
@@ -9,5 +9,23 @@ test("s-expression isomorphism", () => {
     return foo([a, c]);
   });
 
-  expect(parseSExpr(ast.toSExpr())).toEqual(ast);
+  expect(equals(parseSExpr(ast?.toSExpr()!), ast)).toEqual(true);
 });
+
+function equals(self: any, other: any): boolean {
+  if (isNode(self) && isNode(other)) {
+    if (self.kind === other.kind) {
+      return Array.from(self._arguments).every((thisArg, i) =>
+        equals(thisArg, other._arguments[i])
+      );
+    } else {
+      return false;
+    }
+  } else if (Array.isArray(self) && Array.isArray(other)) {
+    return (
+      self.length === other.length && self.every((a, i) => equals(a, other[i]))
+    );
+  } else {
+    return self === other;
+  }
+}

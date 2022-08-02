@@ -264,7 +264,7 @@ export class PredicateRuleBase<
     predicate?: RulePredicateFunction<InEvent, NewEvnt>
   ): PredicateRuleBase<InEvent, NewEvnt> {
     if (predicate) {
-      const document = synthesizePatternDocument(predicate as any);
+      const document = synthesizePatternDocument(predicate);
 
       return new PredicateRuleBase<InEvent, NewEvnt>(
         scope as Construct,

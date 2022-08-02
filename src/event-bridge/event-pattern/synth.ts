@@ -5,7 +5,7 @@ import {
   assertPrimitive,
   assertString,
 } from "../../assert";
-import { FunctionDecl } from "../../declaration";
+import { FunctionLike } from "../../declaration";
 import { Err } from "../../error";
 import { ErrorCodes, SynthError } from "../../error-code";
 import {
@@ -22,8 +22,6 @@ import {
   isBooleanLiteralExpr,
   isCallExpr,
   isElementAccessExpr,
-  isErr,
-  isFunctionDecl,
   isNullLiteralExpr,
   isParenthesizedExpr,
   isPropAccessExpr,
@@ -32,7 +30,9 @@ import {
 } from "../../guards";
 import { isIntegrationCallPattern } from "../../integration";
 import { getNodeKindName } from "../../node-kind";
+import { validateFunctionLike } from "../../reflect";
 import { evalToConstant, invertBinaryOperator } from "../../util";
+import { RulePredicateFunction } from "../rule";
 import * as functionless_event_bridge from "../types";
 import {
   assertValidEventReference,
@@ -125,16 +125,11 @@ export const synthesizeEventPattern = (
  * https://github.com/functionless/functionless/issues/37#issuecomment-1066313146
  */
 export const synthesizePatternDocument = (
-  predicate: FunctionDecl | Err | unknown
+  predicate: RulePredicateFunction<any, any> | FunctionLike | Err | undefined
 ): PatternDocument => {
-  if (isErr(predicate)) {
-    throw predicate.error;
-  } else if (!isFunctionDecl(predicate)) {
-    throw Error(
-      "Expected parameter to synthesizeEventPattern to be compiled by functionless."
-    );
-  }
-  const [eventDecl = undefined] = (<FunctionDecl>predicate).parameters;
+  const func = validateFunctionLike(predicate, "synthesizeEventPattern");
+
+  const [eventDecl = undefined] = func.parameters;
 
   const evalExpr = (expr: Expr): PatternDocument => {
     if (isBinaryExpr(expr)) {
@@ -635,7 +630,7 @@ export const synthesizePatternDocument = (
     return getReferencePath(expression);
   };
 
-  const flattenedExpression = flattenReturnEvent(predicate.body.statements);
+  const flattenedExpression = flattenReturnEvent(func.body.statements);
 
   return evalExpr(flattenedExpression);
 };

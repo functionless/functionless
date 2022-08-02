@@ -10,7 +10,6 @@ import { ErrorCodes, SynthError } from "./error-code";
 import {
   CallExpr,
   Expr,
-  FunctionExpr,
   Identifier,
   ReferenceExpr,
   ThisExpr,
@@ -449,10 +448,7 @@ export abstract class VTL {
           // list.reduce((result: string[], next) => [...result, next], []);
           // list.reduce((result, next) => [...result, next]);
 
-          const fn = assertNodeKind<FunctionExpr>(
-            node.args[0]?.expr,
-            NodeKind.FunctionExpr
-          );
+          const fn = assertNodeKind(node.args[0]?.expr, NodeKind.FunctionExpr);
           const initialValue = node.args[1];
 
           // (previousValue: string[], currentValue: string, currentIndex: number, array: string[])
@@ -1017,10 +1013,7 @@ export abstract class VTL {
       this.evalDecl(array, list);
     }
 
-    const fn = assertNodeKind<FunctionExpr>(
-      call.args[0]?.expr,
-      NodeKind.FunctionExpr
-    );
+    const fn = assertNodeKind(call.args[0]?.expr, NodeKind.FunctionExpr);
 
     const tmp = returnVariable ? returnVariable : this.newLocalVarName();
 
@@ -1095,11 +1088,7 @@ export abstract class VTL {
  * Returns the [value, index, array] arguments if this CallExpr is a `forEach` or `map` call.
  */
 const getMapForEachArgs = (call: CallExpr) => {
-  const fn = assertNodeKind<FunctionExpr>(
-    call.args[0].expr,
-    NodeKind.FunctionExpr
-  );
-  return fn.parameters;
+  return assertNodeKind(call.args[0].expr, NodeKind.FunctionExpr).parameters;
 };
 
 // to prevent the closure serializer from trying to import all of functionless.

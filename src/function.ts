@@ -26,14 +26,12 @@ import type { Context } from "aws-lambda";
 // eslint-disable-next-line import/no-extraneous-dependencies
 import { Construct } from "constructs";
 import esbuild from "esbuild";
+import ts from "typescript";
 import { ApiGatewayVtlIntegration } from "./api";
 import type { AppSyncVtlIntegration } from "./appsync";
 import { ASL, ASLGraph } from "./asl";
-import {
-  FunctionDecl,
-  IntegrationInvocation,
-  validateFunctionlessNode,
-} from "./declaration";
+import { BindFunctionName, RegisterFunctionName } from "./compile";
+import { FunctionLike, IntegrationInvocation } from "./declaration";
 import { ErrorCodes, formatErrorMessage, SynthError } from "./error-code";
 import {
   IEventBus,
@@ -50,7 +48,6 @@ import {
   PrewarmClients,
   PrewarmProps,
 } from "./function-prewarm";
-import { isFunctionDecl } from "./guards";
 import {
   Integration,
   IntegrationCallExpr,
@@ -60,6 +57,7 @@ import {
   isIntegrationCallExpr,
 } from "./integration";
 import { FunctionlessNode } from "./node";
+import { ReflectionSymbols, validateFunctionLike } from "./reflect";
 import { isStepFunction } from "./step-function";
 import { isTable } from "./table";
 import { AnyAsyncFunction, AnyFunction } from "./util";
@@ -635,11 +633,7 @@ export class Function<
       );
     }
 
-    const ast = validateFunctionlessNode(
-      magic ? magic : funcOrNothing,
-      "Function",
-      isFunctionDecl
-    );
+    const ast = validateFunctionLike(magic ? magic : func, "Function");
 
     const props =
       typeof propsOrFunc === "function"
@@ -729,7 +723,7 @@ export class Function<
   }
 }
 
-function getInvokedIntegrations(ast: FunctionDecl): IntegrationCallExpr[] {
+function getInvokedIntegrations(ast: FunctionLike): IntegrationCallExpr[] {
   const nodes: IntegrationCallExpr[] = [];
   visitEachChild(ast, function visit(node: FunctionlessNode): FunctionlessNode {
     if (isIntegrationCallExpr(node)) {
@@ -931,6 +925,42 @@ export async function serialize(
       : func,
     {
       isFactoryFunction: integrationPrewarms.length > 0,
+      transformers: [
+        (ctx) =>
+          /**
+           * TS Transformer for erasing calls to the generated `register` and `bind` functions
+           * from all emitted closures.
+           */
+          function eraseBindAndRegister(node: ts.Node): ts.Node {
+            if (ts.isCallExpression(node) && ts.isIdentifier(node.expression)) {
+              if (node.expression.text === RegisterFunctionName) {
+                // register(func, ast)
+                // => func
+                return ts.visitEachChild(
+                  node.arguments[0],
+                  eraseBindAndRegister,
+                  ctx
+                );
+              } else if (node.expression.text === BindFunctionName) {
+                // bind(func, self, ...args)
+                // => func.bind(self, ...args)
+                return ts.factory.createCallExpression(
+                  eraseBindAndRegister(node.arguments[0]) as ts.Expression,
+                  undefined,
+                  [
+                    eraseBindAndRegister(node.arguments[1]) as ts.Expression,
+                    eraseBindAndRegister(node.arguments[2]) as ts.Expression,
+                  ]
+                );
+              }
+            }
+            return ts.visitEachChild(node, eraseBindAndRegister, ctx);
+          },
+      ],
+      shouldCaptureProp: (_, propName) => {
+        // do not serialize the AST property on functions
+        return propName !== ReflectionSymbols.AST;
+      },
       serialize: (obj) => {
         if (typeof obj === "string") {
           const reversed =

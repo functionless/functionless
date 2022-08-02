@@ -307,15 +307,11 @@ export class DebuggerStmt extends BaseStmt<NodeKind.DebuggerStmt> {
 export class SwitchStmt extends BaseStmt<NodeKind.SwitchStmt> {
   constructor(readonly clauses: SwitchClause[]) {
     super(NodeKind.SwitchStmt, arguments);
-    this.ensureArrayOf(clauses, "clauses", SwitchClause.Kinds);
+    this.ensureArrayOf(clauses, "clauses", NodeKind.SwitchClause);
   }
 }
 
 export type SwitchClause = CaseClause | DefaultClause;
-
-export namespace SwitchClause {
-  export const Kinds = [NodeKind.CaseClause, NodeKind.DefaultClause];
-}
 
 export class CaseClause extends BaseStmt<NodeKind.CaseClause> {
   constructor(readonly expr: Expr, readonly statements: Stmt[]) {

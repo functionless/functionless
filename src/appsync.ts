@@ -6,11 +6,7 @@ import {
   ToAttributeMap,
   ToAttributeValue,
 } from "typesafe-dynamodb/lib/attribute-value";
-import {
-  FunctionDecl,
-  validateFunctionDecl,
-  VariableDeclList,
-} from "./declaration";
+import { FunctionLike, VariableDeclList } from "./declaration";
 import { ErrorCodes, SynthError } from "./error-code";
 import {
   Argument,
@@ -27,7 +23,6 @@ import {
 import {
   isVariableStmt,
   isParameterDecl,
-  isFunctionDecl,
   isBinaryExpr,
   isExprStmt,
   isReturnStmt,
@@ -46,6 +41,7 @@ import {
   isReferenceExpr,
   isThisExpr,
   isVariableDecl,
+  isFunctionLike,
 } from "./guards";
 import {
   findDeepIntegrations,
@@ -57,6 +53,7 @@ import {
 } from "./integration";
 import { Literal } from "./literal";
 import { FunctionlessNode } from "./node";
+import { validateFunctionLike } from "./reflect";
 import { BlockStmt, VariableStmt } from "./statement";
 import {
   AnyFunction,
@@ -163,8 +160,13 @@ export class AppsyncVTL extends VTL {
         isInTopLevelScope(ref)
       ) {
         return `$context.stash.${id.name}`;
-      } else if (isParameterDecl(ref) && isFunctionDecl(ref.parent)) {
-        // regardless of the name of the first argument in the root FunctionDecl, it is always the intrinsic Appsync `$context`.
+      } else if (
+        isParameterDecl(ref) &&
+        isFunctionLike(ref.parent) &&
+        // top-level function
+        ref.parent.parent === undefined
+      ) {
+        // regardless of the name of the first argument in the root Function, it is always the intrinsic Appsync `$context`.
         return "$context";
       }
       if (id.name.startsWith("$")) {
@@ -218,7 +220,7 @@ export class AppsyncResolver<
   /**
    * The AST form of this resolver.
    */
-  public readonly decl: FunctionDecl<
+  public readonly decl: FunctionLike<
     ResolverFunction<Arguments, Result, Source>
   >;
 
@@ -267,7 +269,7 @@ export class AppsyncResolver<
         }),
     resolve: ResolverFunction<Arguments, Result, Source>
   ) {
-    this.decl = validateFunctionDecl(resolve, "AppsyncResolver");
+    this.decl = validateFunctionLike(resolve, "AppsyncResolver");
 
     const api = props.api ?? (scope as unknown as appsync.GraphqlApi);
 
@@ -375,7 +377,7 @@ export class AppsyncField<
   ) {
     const fields = synthResolvers(
       options.api,
-      validateFunctionDecl(resolve, "AppsyncField")
+      validateFunctionLike(resolve, "AppsyncField")
     );
     super({
       ...options,
@@ -387,7 +389,7 @@ export class AppsyncField<
   }
 }
 
-function synthResolvers(api: appsync.GraphqlApi, decl: FunctionDecl) {
+function synthResolvers(api: appsync.GraphqlApi, decl: FunctionLike) {
   const [pipelineConfig, responseMappingTemplate, innerTemplates] =
     synthesizeFunctions(api, decl);
 
@@ -435,7 +437,7 @@ function synthResolvers(api: appsync.GraphqlApi, decl: FunctionDecl) {
   }
 }
 
-function synthesizeFunctions(api: appsync.GraphqlApi, decl: FunctionDecl) {
+function synthesizeFunctions(api: appsync.GraphqlApi, decl: FunctionLike) {
   const generatedNames = new DeterministicNameGenerator();
   let resolverCount = 0;
   /**

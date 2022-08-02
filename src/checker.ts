@@ -109,6 +109,7 @@ export function makeFunctionlessChecker(
     isFunctionlessFunction,
     isFunctionlessType,
     isIdentifierOutOfScope,
+    isIdentifierVariableReference,
     isIntegrationNode,
     isNewEventTransform,
     isNewFunctionlessFunction,
@@ -444,11 +445,95 @@ export function makeFunctionlessChecker(
   }
 
   /**
+   * Checks if the {@link id} is a reference to a variable or a name as part of another structure.
+   *
+   * ```ts
+   * const a;
+   *    // ^ a name within a VariableDeclaration
+   * const { a }
+   *      // ^ a name within a BindingElement
+   * const { a: b }
+   *         // ^ propertyName within a BindingElement
+   * const { a : b = c }
+   *              // ^ this is a reference to a variable
+   * const [ a ];
+   *      // ^ a name within a BindingElement
+   * const [ a = b ]
+   *          // ^ a reference to a variable
+   *
+   * reference;
+   * // ^ a reference to a variable
+   *
+   * reference.name;
+   *         // ^ a name within a PropertyAccessExpression
+   *
+   * class A
+   *       ^F
+   * function foo() {}
+   *           ^F
+   * interface foo {}
+   *            ^F
+   * type A
+   *      ^F
+   * ```
+   * @param id the identifier node
+   */
+  function isIdentifierVariableReference(id: ts.Identifier) {
+    if (ts.isBindingElement(id.parent)) {
+      // { a: b = c }
+      //   ^F ^F  ^T
+      return id.parent.initializer === id;
+    } else if (ts.isParameter(id.parent)) {
+      // function foo(a = b)
+      //              ^F  ^T
+      return id.parent.initializer === id;
+    } else if (ts.isVariableDeclaration(id.parent)) {
+      // const a = b;
+      //       ^F  ^T
+      return id.parent.initializer === id;
+    } else if (ts.isPropertyAccessExpression(id.parent)) {
+      // event.bus
+      // ^T    ^F
+      return id.parent.expression === id;
+    } else if (
+      ts.isClassDeclaration(id.parent) ||
+      ts.isClassExpression(id.parent) ||
+      ts.isFunctionDeclaration(id.parent) ||
+      ts.isFunctionExpression(id.parent) ||
+      ts.isInterfaceDeclaration(id.parent) ||
+      ts.isTypeAliasDeclaration(id.parent)
+    ) {
+      // class A
+      //       ^F
+
+      // function foo() {}
+      //          ^F
+
+      // interface foo {}
+      //           ^F
+
+      // type A
+      //      ^F
+      return id.parent.name !== id;
+    } else if (ts.isTypeReferenceNode(id.parent)) {
+      // foo<T>
+      //     ^F
+      return false;
+    }
+
+    return true;
+  }
+
+  /**
    * Determines if an identifier is out of scope.
    *
    * Returns false if the symbol isn't found or if it is a in a type reference.
    */
   function isIdentifierOutOfScope(node: ts.Identifier, scope: ts.Node) {
+    if (!isIdentifierVariableReference(node)) {
+      // not a variable reference
+      return false;
+    }
     const symbol = checker.getSymbolAtLocation(node);
     return (
       !ts.isTypeReferenceNode(node.parent) &&
@@ -579,9 +664,7 @@ export function makeFunctionlessChecker(
       const exprType = checker.getTypeAtLocation(node.expression);
       const exprDecl = exprType.symbol?.declarations?.[0];
       if (exprDecl && ts.isFunctionDeclaration(exprDecl)) {
-        if (exprDecl.name?.text === "reflect") {
-          return true;
-        }
+        return exprDecl.name?.text === "reflect";
       }
     }
     return false;
@@ -830,6 +913,10 @@ export function makeFunctionlessChecker(
   }
 
   function isIntegrationNode(node: ts.Node): boolean {
+    if (ts.isIdentifier(node) && !isIdentifierVariableReference(node)) {
+      // this identifier does not point to a value
+      return false;
+    }
     const exprType = checker.getTypeAtLocation(node);
     const exprKind = exprType.getProperty("kind");
     if (exprKind) {

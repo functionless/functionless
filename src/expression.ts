@@ -1,4 +1,4 @@
-import {
+import type {
   BindingElem,
   ClassMember,
   Decl,
@@ -118,7 +118,7 @@ export class ClassExpr<C extends AnyClass = AnyClass> extends BaseExpr<
     super(NodeKind.ClassExpr, arguments);
     this.ensure(name, "name", ["undefined", "string"]);
     this.ensure(heritage, "heritage", ["undefined", "Expr"]);
-    this.ensureArrayOf(members, "members", ClassMember.Kinds);
+    this.ensureArrayOf(members, "members", NodeKind.ClassMember);
   }
 }
 
@@ -315,20 +315,10 @@ export type ObjectElementExpr =
   | SetAccessorDecl
   | SpreadAssignExpr;
 
-export namespace ObjectElementExpr {
-  export const Kinds = [
-    NodeKind.GetAccessorDecl,
-    NodeKind.MethodDecl,
-    NodeKind.PropAssignExpr,
-    NodeKind.SetAccessorDecl,
-    NodeKind.SpreadAssignExpr,
-  ];
-}
-
 export class ObjectLiteralExpr extends BaseExpr<NodeKind.ObjectLiteralExpr> {
   constructor(readonly properties: ObjectElementExpr[]) {
     super(NodeKind.ObjectLiteralExpr, arguments);
-    this.ensureArrayOf(properties, "properties", ObjectElementExpr.Kinds);
+    this.ensureArrayOf(properties, "properties", NodeKind.ObjectElementExpr);
   }
 
   public getProperty(name: string) {
@@ -356,16 +346,6 @@ export type PropName =
   | ComputedPropertyNameExpr
   | StringLiteralExpr
   | NumberLiteralExpr;
-
-export namespace PropName {
-  export const Kinds = [
-    NodeKind.Identifier,
-    NodeKind.PrivateIdentifier,
-    NodeKind.ComputedPropertyNameExpr,
-    NodeKind.StringLiteralExpr,
-    NodeKind.NumberLiteralExpr,
-  ];
-}
 
 export class PropAssignExpr extends BaseExpr<
   NodeKind.PropAssignExpr,

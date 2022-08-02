@@ -80,10 +80,53 @@ export enum NodeKind {
   YieldExpr = 78,
 }
 
+export namespace NodeKind {
+  export const BindingPattern = [
+    NodeKind.ObjectBinding,
+    NodeKind.ArrayBinding,
+  ] as const;
+
+  export const BindingNames = [
+    NodeKind.Identifier,
+    NodeKind.ReferenceExpr,
+    ...NodeKind.BindingPattern,
+  ];
+
+  export const ClassMember = [
+    NodeKind.ClassStaticBlockDecl,
+    NodeKind.ConstructorDecl,
+    NodeKind.GetAccessorDecl,
+    NodeKind.MethodDecl,
+    NodeKind.PropDecl,
+    NodeKind.SetAccessorDecl,
+  ] as const;
+
+  export const ObjectElementExpr = [
+    NodeKind.GetAccessorDecl,
+    NodeKind.MethodDecl,
+    NodeKind.PropAssignExpr,
+    NodeKind.SetAccessorDecl,
+    NodeKind.SpreadAssignExpr,
+  ];
+
+  export const PropName = [
+    NodeKind.Identifier,
+    NodeKind.PrivateIdentifier,
+    NodeKind.ComputedPropertyNameExpr,
+    NodeKind.StringLiteralExpr,
+    NodeKind.NumberLiteralExpr,
+  ];
+
+  export const SwitchClause = [NodeKind.CaseClause, NodeKind.DefaultClause];
+}
+
 export type NodeKindName<Kind extends NodeKind> = typeof NodeKindNames[Kind];
 
 const NodeKindNames: {
-  [name in keyof typeof NodeKind as typeof NodeKind[name]]: name;
+  [name in keyof typeof NodeKind as Extract<
+    typeof NodeKind[name],
+    number
+  >]: name;
 } = Object.fromEntries(
   Object.entries(NodeKind).flatMap(([name, kind]) =>
     typeof kind === "number" ? [[kind, name]] : []

@@ -20,7 +20,6 @@ import {
   AppSyncVtlIntegration,
 } from "./appsync";
 import { assertNodeKind } from "./assert";
-import { ObjectLiteralExpr } from "./expression";
 import {
   IntegrationCall,
   IntegrationInput,
@@ -295,10 +294,7 @@ class BaseTable<
         appSyncVtl: {
           request(call, vtl) {
             const input = vtl.eval(
-              assertNodeKind<ObjectLiteralExpr>(
-                call.args[0]?.expr,
-                NodeKind.ObjectLiteralExpr
-              )
+              assertNodeKind(call.args[0]?.expr, NodeKind.ObjectLiteralExpr)
             );
             const request = vtl.var(
               '{"operation": "GetItem", "version": "2018-05-29"}'
@@ -315,10 +311,7 @@ class BaseTable<
         appSyncVtl: {
           request: (call, vtl) => {
             const input = vtl.eval(
-              assertNodeKind<ObjectLiteralExpr>(
-                call.args[0]?.expr,
-                NodeKind.ObjectLiteralExpr
-              )
+              assertNodeKind(call.args[0]?.expr, NodeKind.ObjectLiteralExpr)
             );
             const request = vtl.var(
               '{"operation": "PutItem", "version": "2018-05-29"}'
@@ -339,10 +332,7 @@ class BaseTable<
         appSyncVtl: {
           request: (call, vtl) => {
             const input = vtl.eval(
-              assertNodeKind<ObjectLiteralExpr>(
-                call.args[0]?.expr,
-                NodeKind.ObjectLiteralExpr
-              )
+              assertNodeKind(call.args[0]?.expr, NodeKind.ObjectLiteralExpr)
             );
             const request = vtl.var(
               '{"operation": "UpdateItem", "version": "2018-05-29"}'
@@ -361,10 +351,7 @@ class BaseTable<
         appSyncVtl: {
           request: (call, vtl) => {
             const input = vtl.eval(
-              assertNodeKind<ObjectLiteralExpr>(
-                call.args[0]?.expr,
-                NodeKind.ObjectLiteralExpr
-              )
+              assertNodeKind(call.args[0]?.expr, NodeKind.ObjectLiteralExpr)
             );
             const request = vtl.var(
               '{"operation": "DeleteItem", "version": "2018-05-29"}'
@@ -382,10 +369,7 @@ class BaseTable<
         appSyncVtl: {
           request: (call, vtl) => {
             const input = vtl.eval(
-              assertNodeKind<ObjectLiteralExpr>(
-                call.args[0]?.expr,
-                NodeKind.ObjectLiteralExpr
-              )
+              assertNodeKind(call.args[0]?.expr, NodeKind.ObjectLiteralExpr)
             );
             const request = vtl.var(
               '{"operation": "Query", "version": "2018-05-29"}'

@@ -116,6 +116,12 @@ export function isDecl(a: any): a is Decl {
   return isNode(a) && a.nodeKind === "Decl";
 }
 
+export const isFunctionLike = typeGuard(
+  NodeKind.FunctionDecl,
+  NodeKind.FunctionExpr,
+  NodeKind.ArrowFunctionExpr
+);
+
 export const isClassDecl = typeGuard(NodeKind.ClassDecl);
 export const isClassStaticBlockDecl = typeGuard(NodeKind.ClassStaticBlockDecl);
 export const isConstructorDecl = typeGuard(NodeKind.ConstructorDecl);

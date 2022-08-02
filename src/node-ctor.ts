@@ -88,7 +88,8 @@ import {
 export function getCtor<Kind extends NodeKind>(
   kind: Kind
 ): new (...args: any[]) => NodeInstance<Kind> {
-  return nodes[kind] as any;
+  const n = nodes;
+  return n[kind] as any;
 }
 
 export type NodeInstance<Kind extends NodeKind> = InstanceType<

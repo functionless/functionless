@@ -19,7 +19,7 @@
       "request": "launch",
       "runtimeExecutable": "node",
       "runtimeArgs": ["--nolazy"],
-      "args": ["./lib/api-test.js"],
+      "args": ["./lib/message-board.js"],
       "outFiles": [
         "${workspaceRoot}/lib/**/*.js",
         "${workspaceRoot}/test-app/lib/**/*.js",

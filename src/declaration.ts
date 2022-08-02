@@ -1,4 +1,3 @@
-import { ErrorCodes, SynthError } from "./error-code";
 import {
   ArrowFunctionExpr,
   ClassExpr,
@@ -8,9 +7,7 @@ import {
   ObjectLiteralExpr,
   OmittedExpr,
   PropName,
-  ReferenceExpr,
 } from "./expression";
-import { isErr, isFunctionDecl } from "./guards";
 import { Integration } from "./integration";
 import { BaseNode, FunctionlessNode } from "./node";
 import { NodeKind } from "./node-kind";
@@ -22,7 +19,7 @@ import type {
   ForStmt,
   VariableStmt,
 } from "./statement";
-import { AnyClass, AnyFunction, anyOf } from "./util";
+import { AnyClass, AnyFunction } from "./util";
 
 export type Decl =
   | BindingElem
@@ -51,7 +48,7 @@ export class ClassDecl<C extends AnyClass = AnyClass> extends BaseDecl<
   ) {
     super(NodeKind.ClassDecl, arguments);
     this.ensure(name, "name", ["string"]);
-    this.ensureArrayOf(members, "members", ClassMember.Kinds);
+    this.ensureArrayOf(members, "members", NodeKind.ClassMember);
   }
 }
 
@@ -62,17 +59,6 @@ export type ClassMember =
   | MethodDecl
   | PropDecl
   | SetAccessorDecl;
-
-export namespace ClassMember {
-  export const Kinds = [
-    NodeKind.ClassStaticBlockDecl,
-    NodeKind.ConstructorDecl,
-    NodeKind.GetAccessorDecl,
-    NodeKind.MethodDecl,
-    NodeKind.PropDecl,
-    NodeKind.SetAccessorDecl,
-  ];
-}
 
 export class ClassStaticBlockDecl extends BaseDecl<NodeKind.ClassStaticBlockDecl> {
   constructor(readonly block: BlockStmt) {
@@ -96,7 +82,7 @@ export class MethodDecl extends BaseDecl<NodeKind.MethodDecl> {
     readonly body: BlockStmt
   ) {
     super(NodeKind.MethodDecl, arguments);
-    this.ensure(name, "name", PropName.Kinds);
+    this.ensure(name, "name", NodeKind.PropName);
     this.ensureArrayOf(parameters, "parameters", [NodeKind.ParameterDecl]);
     this.ensure(body, "body", [NodeKind.BlockStmt]);
   }
@@ -109,7 +95,7 @@ export class PropDecl extends BaseDecl<NodeKind.PropDecl> {
     readonly initializer?: Expr
   ) {
     super(NodeKind.PropDecl, arguments);
-    this.ensure(name, "name", PropName.Kinds);
+    this.ensure(name, "name", NodeKind.PropName);
     this.ensure(isStatic, "isStatic", ["boolean"]);
     this.ensure(initializer, "initializer", ["undefined", "Expr"]);
   }
@@ -121,7 +107,7 @@ export class GetAccessorDecl extends BaseDecl<
 > {
   constructor(readonly name: PropName, readonly body: BlockStmt) {
     super(NodeKind.GetAccessorDecl, arguments);
-    this.ensure(name, "name", PropName.Kinds);
+    this.ensure(name, "name", NodeKind.PropName);
     this.ensure(body, "body", [NodeKind.BlockStmt]);
   }
 }
@@ -135,11 +121,16 @@ export class SetAccessorDecl extends BaseDecl<
     readonly body: BlockStmt
   ) {
     super(NodeKind.SetAccessorDecl, arguments);
-    this.ensure(name, "name", PropName.Kinds);
+    this.ensure(name, "name", NodeKind.PropName);
     this.ensure(parameter, "parameter", [NodeKind.ParameterDecl]);
     this.ensure(body, "body", [NodeKind.BlockStmt]);
   }
 }
+
+export type FunctionLike<F extends AnyFunction = AnyFunction> =
+  | FunctionDecl<F>
+  | FunctionExpr<F>
+  | ArrowFunctionExpr<F>;
 
 export class FunctionDecl<
   F extends AnyFunction = AnyFunction
@@ -170,52 +161,14 @@ export class ParameterDecl extends BaseDecl<
 > {
   constructor(readonly name: BindingName, readonly initializer?: Expr) {
     super(NodeKind.ParameterDecl, arguments);
-    this.ensure(name, "name", BindingName.Kinds);
+    this.ensure(name, "name", NodeKind.BindingNames);
     this.ensure(initializer, "initializer", ["undefined", "Expr"]);
-  }
-}
-
-export const isFunctionDeclOrErr = anyOf(isFunctionDecl, isErr);
-
-export function validateFunctionDecl(
-  a: any,
-  functionLocation: string
-): FunctionDecl {
-  return validateFunctionlessNode(a, functionLocation, isFunctionDecl);
-}
-
-export function validateFunctionlessNode<E extends FunctionlessNode>(
-  a: any,
-  functionLocation: string,
-  validate: (e: FunctionlessNode) => e is E
-): E {
-  if (validate(a)) {
-    return a;
-  } else if (isErr(a)) {
-    throw a.error;
-  } else {
-    throw new SynthError(
-      ErrorCodes.FunctionDecl_not_compiled_by_Functionless,
-      `Expected input function to ${functionLocation} to be compiled by Functionless. Make sure you have the Functionless compiler plugin configured correctly.`
-    );
   }
 }
 
 export type BindingPattern = ObjectBinding | ArrayBinding;
 
-export namespace BindingPattern {
-  export const Kinds = [NodeKind.ObjectBinding, NodeKind.ArrayBinding];
-}
-
-export type BindingName = Identifier | BindingPattern | ReferenceExpr;
-
-export namespace BindingName {
-  export const Kinds = [
-    NodeKind.Identifier,
-    NodeKind.ReferenceExpr,
-    ...BindingPattern.Kinds,
-  ];
-}
+export type BindingName = Identifier | BindingPattern;
 
 /**
  * A binding element declares new variable or acts as the root to a nested {@link BindingPattern}
@@ -260,9 +213,12 @@ export class BindingElem extends BaseDecl<
     readonly initializer?: Expr
   ) {
     super(NodeKind.BindingElem, arguments);
-    this.ensure(name, "name", BindingName.Kinds);
+    this.ensure(name, "name", NodeKind.BindingNames);
     this.ensure(rest, "rest", ["boolean"]);
-    this.ensure(propertyName, "propertyName", ["undefined", ...PropName.Kinds]);
+    this.ensure(propertyName, "propertyName", [
+      "undefined",
+      ...NodeKind.PropName,
+    ]);
     this.ensure(initializer, "initializer", ["undefined", "Expr"]);
   }
 }
@@ -346,7 +302,7 @@ export class VariableDecl<
 > extends BaseDecl<NodeKind.VariableDecl, VariableDeclParent> {
   constructor(readonly name: BindingName, readonly initializer: E) {
     super(NodeKind.VariableDecl, arguments);
-    this.ensure(name, "name", BindingName.Kinds);
+    this.ensure(name, "name", NodeKind.BindingNames);
     this.ensure(initializer, "initializer", ["undefined", "Expr"]);
   }
 }
