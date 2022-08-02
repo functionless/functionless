@@ -20,6 +20,7 @@ import {
   isSpreadAssignExpr,
   isSpreadElementExpr,
   isStringLiteralExpr,
+  isTemplateExpr,
   isUnaryExpr,
   isUndefinedLiteralExpr,
 } from "./guards";
@@ -309,6 +310,12 @@ export const evalToConstant = (expr: Expr): Constant | undefined => {
         return { constant: left.constant / right.constant };
       }
     }
+  } else if (isTemplateExpr(expr)) {
+    const values = expr.exprs.map(evalToConstant);
+    if (values.every((v): v is Constant => !!v)) {
+      return { constant: values.map((v) => v.constant).join("") };
+    }
+    return undefined;
   }
   return undefined;
 };
@@ -326,7 +333,7 @@ export class DeterministicNameGenerator {
    */
   public generateOrGet(node: FunctionlessNode): string {
     if (!this.generatedNames.has(node)) {
-      this.generatedNames.set(node, `${this.generatedNames.size}_tmp`);
+      this.generatedNames.set(node, `fnl_tmp_${this.generatedNames.size}`);
     }
     return this.generatedNames.get(node)!;
   }

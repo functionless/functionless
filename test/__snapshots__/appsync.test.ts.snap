@@ -1,5 +1,57 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`deconstruct integration response 1`] = `
+Array [
+  "{}",
+  "#if($context.stash.return__flag)
+  #return($context.stash.return__val)
+#end
+#set($context.stash.exec = 'exec1')
+{
+  \\"version\\": \\"2018-05-29\\",
+  \\"method\\": \\"POST\\",
+  \\"resourcePath\\": \\"/\\",
+  \\"params\\": {
+    \\"headers\\": {
+      \\"content-type\\": \\"application/x-amz-json-1.0\\",
+      \\"x-amz-target\\": \\"AWSStepFunctions.DescribeExecution\\"
+    },
+    \\"body\\": {
+      \\"executionArn\\": $util.toJson($context.stash.exec)
+    }
+  }
+}",
+  "#if($context.result.statusCode == 200)
+    #set($sfn__result = $util.parseJson($context.result.body))
+    #else 
+    $util.error($context.result.body, \\"$context.result.statusCode\\")
+    #end
+#set($context.stash.executionArn = $sfn__result.executionArn)
+{}",
+  "#if($context.stash.return__flag)
+  #return($context.stash.return__val)
+#end
+#return($context.stash.executionArn)",
+]
+`;
+
+exports[`deconstruct integration response 2`] = `
+Object {
+  "method": "POST",
+  "params": Object {
+    "body": Object {
+      "executionArn": "exec1",
+    },
+    "headers": Object {
+      "content-type": "application/x-amz-json-1.0",
+      "x-amz-target": "AWSStepFunctions.DescribeExecution",
+    },
+  },
+  "resourcePath": "/",
+  "version": "2018-05-29",
+}
+`;
+
 exports[`integrations separated by in 1`] = `
 Array [
   "{}",
@@ -9,7 +61,7 @@ Array [
 #set($v1 = {})
 #set($v2 = {\\"version\\": \\"2018-05-29\\", \\"operation\\": \\"Invoke\\", \\"payload\\": $v1})
 $util.toJson($v2)",
-  "#set( $context.stash.0_tmp = $context.result )
+  "#set($context.stash.fnl_tmp_0 = $context.result)
 {}",
   "#if($context.stash.return__flag)
   #return($context.stash.return__val)
@@ -17,17 +69,17 @@ $util.toJson($v2)",
 #set($v1 = {})
 #set($v2 = {\\"version\\": \\"2018-05-29\\", \\"operation\\": \\"Invoke\\", \\"payload\\": $v1})
 $util.toJson($v2)",
-  "#set( $context.stash.1_tmp = $context.result )
+  "#set($context.stash.fnl_tmp_1 = $context.result)
 {}",
   "#if($context.stash.return__flag)
   #return($context.stash.return__val)
 #end
-#set($v2 = $context.stash.1_tmp.class.name.startsWith('[L') || $context.stash.1_tmp.class.name.contains('ArrayList'))
+#set($v2 = $context.stash.fnl_tmp_1.class.name.startsWith('[L') || $context.stash.fnl_tmp_1.class.name.contains('ArrayList'))
 #if($v2)
-#set($v3 = $context.stash.1_tmp.length >= $context.stash.0_tmp)
+#set($v3 = $context.stash.fnl_tmp_1.length >= $context.stash.fnl_tmp_0)
 #set($v1 = $v3)
 #else
-#set($v1 = $context.stash.1_tmp.containsKey($context.stash.0_tmp))
+#set($v1 = $context.stash.fnl_tmp_1.containsKey($context.stash.fnl_tmp_0))
 #end
 #if($v1)
 #set($context.stash.return__val = true)
@@ -124,7 +176,7 @@ Array [
     #else 
     $util.error($context.result.body, \\"$context.result.statusCode\\")
     #end
-#set( $context.stash.v = $sfn__result )
+#set($context.stash.v = $sfn__result)
 {}",
   "#if($context.stash.return__flag)
   #return($context.stash.return__val)
@@ -275,7 +327,7 @@ $util.qr($v1.put('stateMachineArn', '__REPLACED_TOKEN'))
     #else 
     $util.error($context.result.body, \\"$context.result.statusCode\\")
     #end
-#set( $context.stash.res1 = $sfn__result )
+#set($context.stash.res1 = $sfn__result)
 {}",
   "#if($context.stash.return__flag)
   #return($context.stash.return__val)
@@ -300,7 +352,7 @@ $util.qr($v1.put('stateMachineArn', '__REPLACED_TOKEN'))
     #else 
     $util.error($context.result.body, \\"$context.result.statusCode\\")
     #end
-#set( $context.stash.res2 = $sfn__result )
+#set($context.stash.res2 = $sfn__result)
 {}",
   "#if($context.stash.return__flag)
   #return($context.stash.return__val)
@@ -372,7 +424,7 @@ $util.qr($v1.put('stateMachineArn', '__REPLACED_TOKEN'))
     #else 
     $util.error($context.result.body, \\"$context.result.statusCode\\")
     #end
-#set( $context.stash.res1 = $sfn__result )
+#set($context.stash.res1 = $sfn__result)
 {}",
   "#if($context.stash.return__flag)
   #return($context.stash.return__val)
@@ -397,7 +449,7 @@ $util.qr($v1.put('stateMachineArn', '__REPLACED_TOKEN'))
     #else 
     $util.error($context.result.body, \\"$context.result.statusCode\\")
     #end
-#set( $context.stash.res2 = $sfn__result )
+#set($context.stash.res2 = $sfn__result)
 {}",
   "#if($context.stash.return__flag)
   #return($context.stash.return__val)
@@ -422,7 +474,7 @@ $util.qr($v1.put('stateMachineArn', '__REPLACED_TOKEN'))
     #else 
     $util.error($context.result.body, \\"$context.result.statusCode\\")
     #end
-#set( $context.stash.result = $sfn__result )
+#set($context.stash.result = $sfn__result)
 {}",
   "#if($context.stash.return__flag)
   #return($context.stash.return__val)
@@ -478,7 +530,7 @@ $util.qr($v1.put('stateMachineArn', '__REPLACED_TOKEN'))
     #else 
     $util.error($context.result.body, \\"$context.result.statusCode\\")
     #end
-#set( $context.stash.res1 = $sfn__result )
+#set($context.stash.res1 = $sfn__result)
 {}",
   "#if($context.stash.return__flag)
   #return($context.stash.return__val)
@@ -503,7 +555,7 @@ $util.qr($v1.put('stateMachineArn', '__REPLACED_TOKEN'))
     #else 
     $util.error($context.result.body, \\"$context.result.statusCode\\")
     #end
-#set( $context.stash.res2 = $sfn__result )
+#set($context.stash.res2 = $sfn__result)
 {}",
   "#if($context.stash.return__flag)
   #return($context.stash.return__val)
@@ -573,7 +625,7 @@ Array [
     #else 
     $util.error($context.result.body, \\"$context.result.statusCode\\")
     #end
-#set( $context.stash.res1 = $sfn__result )
+#set($context.stash.res1 = $sfn__result)
 {}",
   "#if($context.stash.return__flag)
   #return($context.stash.return__val)
@@ -645,7 +697,7 @@ Array [
     #else 
     $util.error($context.result.body, \\"$context.result.statusCode\\")
     #end
-#set( $context.stash.res1 = $sfn__result )
+#set($context.stash.res1 = $sfn__result)
 {}",
   "#if($context.stash.return__flag)
   #return($context.stash.return__val)
@@ -669,7 +721,7 @@ Array [
     #else 
     $util.error($context.result.body, \\"$context.result.statusCode\\")
     #end
-#set( $context.stash.res2 = $sfn__result )
+#set($context.stash.res2 = $sfn__result)
 {}",
   "#if($context.stash.return__flag)
   #return($context.stash.return__val)
@@ -739,13 +791,13 @@ $util.qr($v1.put('stateMachineArn', '__REPLACED_TOKEN'))
     #else 
     $util.error($context.result.body, \\"$context.result.statusCode\\")
     #end
-#set( $context.stash.0_tmp = $sfn__result )
+#set($context.stash.fnl_tmp_0 = $sfn__result)
 {}",
   "#if($context.stash.return__flag)
   #return($context.stash.return__val)
 #end
 #set($v1 = {})
-$util.qr($v1.put('input', $util.toJson($context.stash.0_tmp)))
+$util.qr($v1.put('input', $util.toJson($context.stash.fnl_tmp_0)))
 $util.qr($v1.put('stateMachineArn', '__REPLACED_TOKEN'))
 {
   \\"version\\": \\"2018-05-29\\",
@@ -764,13 +816,13 @@ $util.qr($v1.put('stateMachineArn', '__REPLACED_TOKEN'))
     #else 
     $util.error($context.result.body, \\"$context.result.statusCode\\")
     #end
-#set( $context.stash.1_tmp = $sfn__result )
+#set($context.stash.fnl_tmp_1 = $sfn__result)
 {}",
   "#if($context.stash.return__flag)
   #return($context.stash.return__val)
 #end
 #set($v1 = {})
-$util.qr($v1.put('input', $util.toJson($context.stash.1_tmp)))
+$util.qr($v1.put('input', $util.toJson($context.stash.fnl_tmp_1)))
 $util.qr($v1.put('stateMachineArn', '__REPLACED_TOKEN'))
 {
   \\"version\\": \\"2018-05-29\\",
@@ -834,7 +886,7 @@ Array [
     #else 
     $util.error($context.result.body, \\"$context.result.statusCode\\")
     #end
-#set( $context.stash.0_tmp = $sfn__result )
+#set($context.stash.fnl_tmp_0 = $sfn__result)
 {}",
   "#if($context.stash.return__flag)
   #return($context.stash.return__val)
@@ -849,7 +901,7 @@ Array [
       \\"x-amz-target\\": \\"AWSStepFunctions.DescribeExecution\\"
     },
     \\"body\\": {
-      \\"executionArn\\": $util.toJson($context.stash.0_tmp.executionArn)
+      \\"executionArn\\": $util.toJson($context.stash.fnl_tmp_0.executionArn)
     }
   }
 }",
@@ -858,7 +910,7 @@ Array [
     #else 
     $util.error($context.result.body, \\"$context.result.statusCode\\")
     #end
-#set( $context.stash.1_tmp = $sfn__result )
+#set($context.stash.fnl_tmp_1 = $sfn__result)
 {}",
   "#if($context.stash.return__flag)
   #return($context.stash.return__val)
@@ -873,7 +925,7 @@ Array [
       \\"x-amz-target\\": \\"AWSStepFunctions.DescribeExecution\\"
     },
     \\"body\\": {
-      \\"executionArn\\": $util.toJson($context.stash.1_tmp.executionArn)
+      \\"executionArn\\": $util.toJson($context.stash.fnl_tmp_1.executionArn)
     }
   }
 }",

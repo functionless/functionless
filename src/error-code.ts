@@ -1143,7 +1143,7 @@ export namespace ErrorCodes {
     title: "Classes are not yet supported by Functionless",
   };
 
-  /**
+  /*
    * Event Bridge does not allow for truthy comparisons.
    *
    * ```ts
@@ -1159,6 +1159,150 @@ export namespace ErrorCodes {
     code: 10032,
     type: ErrorType.ERROR,
     title: "Event Bridge does not support a truthy comparison",
+  };
+
+  /**
+   * Step Functions does not natively support dynamic object manipulation.
+   *
+   * Due to this limitation, `...rest` is not supported when destructuring objects.
+   *
+   * ```ts
+   * new StepFunction(..., async () => {
+   *    const value = { a: "a", b: "b", c: "c" };
+   *    // valid
+   *    const { a, b } = value;
+   *    // invalid
+   *    const { a, b, ...rest } = value;
+   * });
+   * ```
+   *
+   * In the above example, we'd expect `rest` to look like `{ c: "c" }`,
+   * but Step Functions Amazon States Language does not natively support a way
+   * to enumerate the fields of an object or delete fields from an object without first
+   * knowing all field names in an object.
+   *
+   * Workaround - Explicit
+   *
+   * If `...rest` is being used as a convince, a work around is to just be explicit.
+   *
+   * ```ts
+   * new StepFunction(..., async () => {
+   *    const value = { a: "a", b: "b", c: "c" };
+   *    // valid
+   *    const { a, b } = value;
+   *    // invalid
+   *    const rest = { c: value.c };
+   * });
+   * ```
+   *
+   * Workaround - Lambda
+   *
+   * Sometimes `...rest` is used as part of the program logic, for example,
+   * if some fields of an object are known while others are not
+   * or to remove known fields from an object.
+   *
+   * ```ts
+   * const extractAAndB = new Function<
+   *   { a: string; b: string; [key: string]: string },
+   *   { a: string; b: string; rest: { [key: string]: string } }
+   * >(stack, "func", async ({ a, b, ...rest }) => ({ a, b, rest }));
+   * new StepFunction(..., async () => {
+   *    const value = { a: "a", b: "b", c: "c" };
+   *    // valid
+   *    const { a, b, rest } = await extractAAndB(value);
+   * });
+   * ```
+   */
+  export const StepFunctions_does_not_support_destructuring_object_with_rest: ErrorCode =
+    {
+      code: 10033,
+      type: ErrorType.ERROR,
+      title: "StepFunctions does not support destructuring object with rest",
+    };
+
+  /**
+   * Invalid Syntax in Step Function filter expressions.
+   *
+   * Functionless supports filtering arrays in {@link StepFunction} with limited syntax.
+   *
+   * Valid syntax
+   *
+   * ```ts
+   * new StepFunction(stack, 'fn', async (input) => {
+   *    [1,2,3].filter((item) => item > 1);
+   *
+   *    input.arr.filter((item) => item.name === "some string");
+   *
+   *    input.arr.filter(({ name }) => name === "some string");
+   * });
+   * ```
+   *
+   * Invalid syntax
+   *
+   * ```ts
+   * new StepFunction(stack, 'fn', async (input) => {
+   *    // invalid - index and array parameters are not supported.
+   *    [1,2,3].filter((val, index, array) => { array[0] === index });
+   *
+   *    // invalid - cannot reference parameters to parent closures.
+   *    [1,2,3].filter((val) => input.value === val);
+   *
+   *    // invalid - predicate function must be inline arrow or function
+   *    [1,2,3].filter(someFunctionReference);
+   *
+   *    // invalid - filter must be a single statement
+   *    [1,2,3].filter((item) => {
+   *       const value = "a";
+   *       return item === value;
+   *    });
+   *
+   *    // invalid - filter cannot use object or array literals
+   *    [{}].filter((item) => {
+   *       return item === {};
+   *    });
+   * });
+   * ```
+   */
+  export const StepFunction_invalid_filter_syntax: ErrorCode = {
+    code: 10034,
+    type: ErrorType.ERROR,
+    title: "StepFunction invalid filter syntax",
+  };
+
+  /**
+   * StepFunctions could fail at runtime with mismatched index types.
+   *
+   * Javascript and Typescript support the normalization object property access
+   * and array access when the index is a number or number as a string.
+   *
+   * Unfortunately SFN cannot repeat this normalization in an inexpensive way
+   * (ex: checking all property access for correctness at runtime).
+   *
+   * The below is all valid typescript.
+   *
+   * ```ts
+   * new StepFunction(stack, 'sfn', async () => {
+   *    const obj = {1: "value"};
+   *    const arr = [1];
+   *
+   *    // invalid - numeric object property access in SFN is invalid, key must be a string
+   *    obj[1];
+   *
+   *    // invalid - string array access in SFN is invalid, index must be a number
+   *    arr["0"];
+   *
+   *    // valid
+   *    obj["1"];
+   *    // valid
+   *    arr[0];
+   * });
+   * ```
+   */
+  export const StepFunctions_mismatched_index_type: ErrorCode = {
+    code: 10035,
+    // Warn because we do not fail on this during synth, but SFN may fail during runtime.
+    type: ErrorType.WARN,
+    title: "StepFunctions mismatched index type.",
   };
 }
 

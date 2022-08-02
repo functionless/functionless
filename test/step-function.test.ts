@@ -273,10 +273,23 @@ test("let and set", () => {
     a = {
       key: "value",
     };
+    a = { 1: "value" };
     a = a;
     a = "hello" + { place: "world" };
     a = "hello" + ["world"];
     return a;
+  }).definition;
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+});
+
+test("set obj", () => {
+  const { stack } = initStepFunctionApp();
+  const definition = new ExpressStepFunction(stack, "fn", () => {
+    let a = { 1: "value" };
+    let b = a[1];
+    let c = a["1"];
+    return { a, b, c };
   }).definition;
 
   expect(normalizeDefinition(definition)).toMatchSnapshot();
@@ -2065,13 +2078,32 @@ test("list.filter(item => item.length > 2).map(item => task(item))", () => {
   expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
-test("[1,2,3,4].filter(item => item.length > 2)", () => {
+test("[1,2,3,4].filter(item => item > 2)", () => {
   const { stack } = initStepFunctionApp();
   const definition = new ExpressStepFunction(stack, "fn", async () => {
     return [1, 2, 3, 4].filter((item) => item > 2);
   }).definition;
 
   expect(normalizeDefinition(definition)).toMatchSnapshot();
+});
+
+test("[1,2,3,4].filter(item => item > 1 + 2)", () => {
+  const { stack } = initStepFunctionApp();
+  const definition = new ExpressStepFunction(stack, "fn", async () => {
+    return [1, 2, 3, 4].filter((item) => item > 1 + 2);
+  }).definition;
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+});
+
+test("[1,2,3,4].filter(item => item > {})", () => {
+  const { stack } = initStepFunctionApp();
+  expect(
+    () =>
+      new ExpressStepFunction(stack, "fn", async () => {
+        return [{}].filter((item) => item === { a: "a" });
+      })
+  ).toThrow("Filter expressions do not support object or array literals");
 });
 
 // https://github.com/functionless/functionless/issues/209
@@ -3581,4 +3613,298 @@ test("use context in object", () => {
   ).definition;
 
   expect(normalizeDefinition(definition)).toMatchSnapshot();
+});
+
+describe("binding", () => {
+  describe("prop", () => {
+    test("binding", () => {
+      const { stack } = initStepFunctionApp();
+      const definition = new StepFunction<{ value: string }, string>(
+        stack,
+        "machine1",
+        async ({ value }) => {
+          return value;
+        }
+      ).definition;
+
+      expect(normalizeDefinition(definition)).toMatchSnapshot();
+    });
+
+    test("with default", () => {
+      const { stack } = initStepFunctionApp();
+      const definition = new StepFunction<{ value: string }, string>(
+        stack,
+        "machine1",
+        async ({ value = "b" }) => {
+          return value;
+        }
+      ).definition;
+
+      expect(normalizeDefinition(definition)).toMatchSnapshot();
+    });
+
+    test("with self default", () => {
+      const { stack } = initStepFunctionApp();
+      const definition = new StepFunction<
+        { value: string; value2: string | undefined },
+        string
+      >(stack, "machine1", async ({ value, value2 = value }) => {
+        return value2;
+      }).definition;
+
+      expect(normalizeDefinition(definition)).toMatchSnapshot();
+    });
+
+    test("nested", () => {
+      const { stack } = initStepFunctionApp();
+      const definition = new StepFunction<{ value: { b: string } }, string>(
+        stack,
+        "machine1",
+        async ({ value: { b } }) => {
+          return b;
+        }
+      ).definition;
+
+      expect(normalizeDefinition(definition)).toMatchSnapshot();
+    });
+
+    test("array", () => {
+      const { stack } = initStepFunctionApp();
+      const definition = new StepFunction<{ arr: string[] }, string>(
+        stack,
+        "machine1",
+        async ({ arr: [b] }) => {
+          return b;
+        }
+      ).definition;
+
+      expect(normalizeDefinition(definition)).toMatchSnapshot();
+    });
+
+    test("array rest", () => {
+      const { stack } = initStepFunctionApp();
+      const definition = new StepFunction<{ arr: string[] }, string[]>(
+        stack,
+        "machine1",
+        async ({ arr: [, ...b] }) => {
+          return b;
+        }
+      ).definition;
+
+      expect(normalizeDefinition(definition)).toMatchSnapshot();
+    });
+
+    test("rename", () => {
+      const { stack } = initStepFunctionApp();
+      const definition = new StepFunction<{ value: string }, string>(
+        stack,
+        "machine1",
+        async ({ value: b }) => {
+          return b;
+        }
+      ).definition;
+
+      expect(normalizeDefinition(definition)).toMatchSnapshot();
+    });
+  });
+
+  describe("variable", () => {
+    test("binding", () => {
+      const { stack } = initStepFunctionApp();
+      const definition = new StepFunction<{ value: string }, string>(
+        stack,
+        "machine1",
+        async (input) => {
+          const { value } = input;
+          return value;
+        }
+      ).definition;
+
+      expect(normalizeDefinition(definition)).toMatchSnapshot();
+    });
+
+    test("with default", () => {
+      const { stack } = initStepFunctionApp();
+      const definition = new StepFunction<{ value: string }, string>(
+        stack,
+        "machine1",
+        async (input) => {
+          const { value = "b" } = input;
+          return value;
+        }
+      ).definition;
+
+      expect(normalizeDefinition(definition)).toMatchSnapshot();
+    });
+
+    test("nested", () => {
+      const { stack } = initStepFunctionApp();
+      const definition = new StepFunction<{ value: { b: string } }, string>(
+        stack,
+        "machine1",
+        async (input) => {
+          const {
+            value: { b },
+          } = input;
+          return b;
+        }
+      ).definition;
+
+      expect(normalizeDefinition(definition)).toMatchSnapshot();
+    });
+
+    test("array", () => {
+      const { stack } = initStepFunctionApp();
+      const definition = new StepFunction<{ arr: string[] }, string>(
+        stack,
+        "machine1",
+        async (input) => {
+          const {
+            arr: [b],
+          } = input;
+          return b;
+        }
+      ).definition;
+
+      expect(normalizeDefinition(definition)).toMatchSnapshot();
+    });
+
+    test("rename", () => {
+      const { stack } = initStepFunctionApp();
+      const definition = new StepFunction<{ value: string }, string>(
+        stack,
+        "machine1",
+        async (input) => {
+          const { value: b } = input;
+          return b;
+        }
+      ).definition;
+
+      expect(normalizeDefinition(definition)).toMatchSnapshot();
+    });
+  });
+
+  describe("functions", () => {
+    test("use in map", () => {
+      const { stack } = initStepFunctionApp();
+      const definition = new StepFunction<
+        { value: string; obj: { value: string } },
+        string
+      >(stack, "machine1", async ({ value, obj }) => {
+        const { value: v } = obj;
+        return [1, 2, 3].map(() => `${value}${v}`).join();
+      }).definition;
+
+      expect(normalizeDefinition(definition)).toMatchSnapshot();
+    });
+
+    test("map", () => {
+      const { stack } = initStepFunctionApp();
+      const definition = new StepFunction<
+        { value: { value: string; arr: string[] }[] },
+        string
+      >(stack, "machine1", async (input) => {
+        return input.value.map(({ value: b, arr: [c] }) => `${b}${c}`).join();
+      }).definition;
+
+      expect(normalizeDefinition(definition)).toMatchSnapshot();
+    });
+
+    test("forEach", () => {
+      const { stack } = initStepFunctionApp();
+      const definition = new StepFunction<
+        { value: { value: string; arr: string[] }[] },
+        string
+      >(stack, "machine1", async (input) => {
+        input.value.forEach(({ value: b, arr: [c] }) => `${b}${c}`);
+        return "success";
+      }).definition;
+
+      expect(normalizeDefinition(definition)).toMatchSnapshot();
+    });
+
+    test("$SFN.map", () => {
+      const { stack } = initStepFunctionApp();
+      const definition = new StepFunction<
+        { value: { value: string; arr: string[] }[] },
+        string
+      >(stack, "machine1", async (input) => {
+        return (
+          await $SFN.map(input.value, ({ value: b, arr: [c] }) => `${b}${c}`)
+        ).join();
+      }).definition;
+
+      expect(normalizeDefinition(definition)).toMatchSnapshot();
+    });
+
+    test("$SFN.forEach", () => {
+      const { stack } = initStepFunctionApp();
+      const definition = new StepFunction<
+        { value: { value: string; arr: string[] }[] },
+        string
+      >(stack, "machine1", async (input) => {
+        await $SFN.forEach(input.value, ({ value: b, arr: [c] }) => `${b}${c}`);
+        return "success";
+      }).definition;
+
+      expect(normalizeDefinition(definition)).toMatchSnapshot();
+    });
+
+    test("filter", () => {
+      const { stack } = initStepFunctionApp();
+      const definition = new StepFunction<
+        { value: { value: string; arr: string[] }[] },
+        { value: string; arr: string[] }[]
+      >(stack, "machine1", async (input) => {
+        return input.value.filter(({ value: b, arr: [c] }) => b === c);
+      }).definition;
+
+      expect(normalizeDefinition(definition)).toMatchSnapshot();
+    });
+  });
+
+  test("forOf", () => {
+    const { stack } = initStepFunctionApp();
+    const definition = new StepFunction<
+      { value: { key: string; value: string }[] },
+      string
+    >(stack, "machine1", async (input) => {
+      let a = "";
+      for (const { key, value } of input.value) {
+        a = `${key}${value}${a}`;
+      }
+      return a;
+    }).definition;
+
+    expect(normalizeDefinition(definition)).toMatchSnapshot();
+  });
+
+  test("for", () => {
+    const { stack } = initStepFunctionApp();
+    const definition = new StepFunction(stack, "machine1", async () => {
+      for (const { key, value } = { key: "x", value: "y" }; ; ) {
+        return `${key}${value}`;
+      }
+    }).definition;
+
+    expect(normalizeDefinition(definition)).toMatchSnapshot();
+  });
+
+  test("catch", () => {
+    const { stack, computeScore } = initStepFunctionApp();
+
+    const definition = new ExpressStepFunction(stack, "fn", async () => {
+      try {
+        await computeScore({
+          id: "id",
+          name: "name",
+        });
+        return "hello";
+      } catch ({ message }) {
+        return message;
+      }
+    }).definition;
+
+    expect(normalizeDefinition(definition)).toMatchSnapshot();
+  });
 });

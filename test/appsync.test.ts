@@ -176,10 +176,24 @@ test("machine describe exec var", () => {
   const machine = new StepFunction(stack, "machine", () => {});
 
   const templates = appsyncTestCase(
-    reflect(() => {
+    reflect(async () => {
       const exec = "exec1";
-      const v = machine.describeExecution(exec);
+      const v = await machine.describeExecution(exec);
       return v;
+    })
+  );
+
+  testAppsyncVelocity(templates[1]);
+});
+
+test("deconstruct integration response", () => {
+  const machine = new StepFunction(stack, "machine", () => {});
+
+  const templates = appsyncTestCase(
+    reflect(async () => {
+      const exec = "exec1";
+      const { executionArn } = await machine.describeExecution(exec);
+      return executionArn;
     })
   );
 

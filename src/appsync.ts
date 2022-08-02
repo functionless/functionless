@@ -48,7 +48,6 @@ import {
   findDeepIntegrations,
   getIntegrationExprFromIntegrationCallPattern,
   Integration,
-  IntegrationCallPattern,
   IntegrationImpl,
   isIntegration,
   isIntegrationCallPattern,
@@ -557,15 +556,14 @@ function synthesizeFunctions(api: appsync.GraphqlApi, decl: FunctionLike) {
       ? new AppsyncVTL()
       : new AppsyncVTL(AppsyncVTL.CircuitBreaker);
 
+  /**
+   * If the first parameter is not a binding pattern, we'll just rename the name later
+   */
   if (
     updatedDecl.parameters.length > 0 &&
     isBindingPattern(updatedDecl.parameters[0].name)
   ) {
-    template.evaluateBindingPattern(
-      updatedDecl.parameters[0].name,
-      "$context",
-      "$context.stash."
-    );
+    template.evalDecl(updatedDecl.parameters[0], "$context");
   }
 
   const functions = updatedDecl.body.statements
@@ -616,22 +614,12 @@ function synthesizeFunctions(api: appsync.GraphqlApi, decl: FunctionLike) {
           stmt.declList.decls[0].initializer &&
           isIntegrationCallPattern(stmt.declList.decls[0].initializer)
         ) {
-          const decl: VariableDecl | undefined = stmt.declList.decls[0];
-          const varName = isIdentifier(decl?.name) ? decl.name.name : undefined;
-          if (varName === undefined) {
-            throw new SynthError(
-              ErrorCodes.Unsupported_Feature,
-              "Destructured parameter declarations are not yet supported by Appsync. https://github.com/functionless/functionless/issues/364"
-            );
-          }
-          return createStage(
-            service,
-            `${
-              pre ? `${pre}\n` : ""
-            }#set( $context.stash.${varName} = ${getResult(
-              <IntegrationCallPattern>decl.initializer
-            )} )\n{}`
+          const preTemplate = new AppsyncVTL(...(pre ? [pre] : []));
+          preTemplate.evalDecl(
+            stmt.declList.decls[0],
+            getResult(stmt.declList.decls[0].initializer)
           );
+          return createStage(service, `${preTemplate.toVTL()}\n{}`);
         } else {
           throw new SynthError(
             ErrorCodes.Appsync_Integration_invocations_must_be_unidirectional_and_defined_statically

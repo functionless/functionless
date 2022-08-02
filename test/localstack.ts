@@ -144,6 +144,8 @@ export const localstackTestSuite = (
             };
           }
         } catch (e) {
+          /** if the node fails to add, remove it from the stack before continuing */
+          stack.node.tryRemoveChild(construct.node.id);
           return {
             error: e,
           };
