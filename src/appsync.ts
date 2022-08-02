@@ -6,7 +6,7 @@ import {
   ToAttributeMap,
   ToAttributeValue,
 } from "typesafe-dynamodb/lib/attribute-value";
-import { FunctionLike, VariableDecl, VariableDeclList } from "./declaration";
+import { FunctionLike, VariableDeclList } from "./declaration";
 import { ErrorCodes, SynthError } from "./error-code";
 import {
   Argument,
@@ -41,7 +41,6 @@ import {
   isReferenceExpr,
   isThisExpr,
   isVariableDecl,
-  isIdentifier,
   isFunctionLike,
 } from "./guards";
 import {

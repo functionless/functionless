@@ -131,12 +131,6 @@ export function compile(
         ts.factory.createStringLiteral("functionless")
       );
 
-      sf.statements.find((stmt) => {
-        if (ts.isVariableStatement(stmt)) {
-        }
-        return false;
-      });
-
       const registerName = ts.factory.createIdentifier(RegisterFunctionName);
       const bindName = ts.factory.createIdentifier(BindFunctionName);
       const globals: (ts.FunctionDeclaration | ts.Statement)[] = [
