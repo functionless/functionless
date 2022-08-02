@@ -35,9 +35,9 @@ new StepFunction<
     key: number;
     key2: string;
   },
-  { value: number; key?: string }[]
+  { arr1: { value: number; key?: string }[]; arr2: number[] }
 >(stack, "sfn2", async ({ arr, key }) => {
-  return arr
+  const arr1 = arr
     .filter(({ value }) => value <= 3)
     .filter(({ value }) => value <= key)
     .filter((item) => {
@@ -45,6 +45,12 @@ new StepFunction<
       $SFN.waitFor(1);
       return itemKey === `hi${key}`;
     });
+
+  const arr2 = [4, 3, 2, 1].filter(
+    (x, index, [first]) => x <= index || first === x
+  );
+
+  return { arr1, arr2 };
 });
 
 // const database = Table.fromTable<Post | Comment, "pk", "sk">(

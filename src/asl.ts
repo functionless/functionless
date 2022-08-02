@@ -255,7 +255,7 @@ export interface Pass extends CommonFields {
 export interface CommonTaskFields extends CommonFields {
   Comment?: string;
   Parameters?: Parameters;
-  ResultSelector?: string;
+  ResultSelector?: Parameters;
   ResultPath?: string | null;
   Retry?: Retry[];
   Catch?: Catch[];
@@ -2914,6 +2914,30 @@ export class ASL {
     const predicateResult = this.newHeapVariable();
     const filterResult = this.newHeapVariable();
 
+    const [itemParameter, indexParameter, arrayParameter] =
+      predicate.parameters;
+
+    const assignParameters = ASLGraph.joinSubStates(
+      predicate,
+      itemParameter
+        ? this.evalDecl(itemParameter, {
+            jsonPath: indexParameter
+              ? `${filterResult}.arr[0].item`
+              : `${filterResult}.arr[0]`,
+          })
+        : undefined,
+      indexParameter
+        ? this.evalDecl(indexParameter, {
+            jsonPath: `${filterResult}.arr[0].index`,
+          })
+        : undefined,
+      arrayParameter
+        ? this.evalDecl(arrayParameter, {
+            jsonPath: valueJsonPath.jsonPath,
+          })
+        : undefined
+    );
+
     const predicateBody = ASLGraph.joinSubStates(
       predicate.body,
       ...predicate.body.statements.map((stmt) =>
@@ -2928,17 +2952,36 @@ export class ASL {
     return {
       startState: "init",
       states: {
-        init: {
-          Type: "Pass" as const,
-          Parameters: {
-            // copy array to tail it
-            "arr.$": valueJsonPath.jsonPath,
-            arrStr: "[null",
-          },
-          // use the eventual result location as a temp working space
-          ResultPath: filterResult,
-          Next: "check",
-        },
+        init: indexParameter
+          ? {
+              Type: "Map" as const,
+              ItemsPath: valueJsonPath.jsonPath,
+              Parameters: {
+                "index.$": "$$.Map.Item.Index",
+                "item.$": "$$.Map.Item.Value",
+              },
+              Iterator: this.aslGraphToStates({
+                Type: "Pass",
+                ResultPath: "$",
+              }),
+              ResultSelector: {
+                "arr.$": "$",
+                arrStr: "[null",
+              },
+              ResultPath: filterResult,
+              Next: "check",
+            }
+          : {
+              Type: "Pass" as const,
+              Parameters: {
+                // copy array to tail it
+                "arr.$": valueJsonPath.jsonPath,
+                arrStr: "[null",
+              },
+              // use the eventual result location as a temp working space
+              ResultPath: filterResult,
+              Next: "check",
+            },
         check: {
           Type: "Choice",
           Choices: [
@@ -2949,12 +2992,7 @@ export class ASL {
         // assign the item parameter the head of the temp array
         assign: ASLGraph.updateDeferredNextStates(
           { Next: "predicate" },
-          // TODO: support index and array?
-          (predicate.parameters.length > 0
-            ? this.evalDecl(predicate.parameters[0], {
-                jsonPath: `${filterResult}.arr[0]`,
-              })
-            : undefined) ?? { Type: "Pass" }
+          assignParameters ?? { Type: "Pass" }
         ),
         // run the predicate function logic
         predicate: ASLGraph.updateDeferredNextStates(
@@ -2975,7 +3013,10 @@ export class ASL {
           Parameters: {
             "arr.$": `${filterResult}.arr[1:]`,
             // const arrStr = `${arrStr},${JSON.stringify(arr[0])}`;
-            "arrStr.$": `States.Format('{},{}', ${filterResult}.arrStr, States.JsonToString(${filterResult}.arr[0]))`,
+            "arrStr.$": `States.Format('{},{}', ${filterResult}.arrStr, States.JsonToString(${filterResult}.arr[0]${
+              // when the index parameter is present, we zip the index with the
+              indexParameter ? ".item" : ""
+            }))`,
           },
           ResultPath: filterResult,
           Next: "check",

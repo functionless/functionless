@@ -171,6 +171,807 @@ Object {
 }
 `;
 
+exports[`[1,2,3,4].filter((item, index) => item > index) 1`] = `
+Object {
+  "StartAt": "Initialize Functionless Context",
+  "States": Object {
+    "1__item > index": Object {
+      "InputPath": "$.heap3",
+      "Next": "checkPredicate__1__return [1, 2, 3, 4].filter(function(item, index)) 1",
+      "ResultPath": "$.heap1",
+      "Type": "Pass",
+    },
+    "1__return [1, 2, 3, 4].filter(function(item, index))": Object {
+      "End": true,
+      "InputPath": "$.heap2",
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "1__return [1, 2, 3, 4].filter(function(item, index)) 1": Object {
+      "ItemsPath": "$.heap0",
+      "Iterator": Object {
+        "StartAt": "Default",
+        "States": Object {
+          "Default": Object {
+            "End": true,
+            "ResultPath": "$",
+            "Type": "Pass",
+          },
+        },
+      },
+      "Next": "check__1__return [1, 2, 3, 4].filter(function(item, index)) 1",
+      "Parameters": Object {
+        "index.$": "$$.Map.Item.Index",
+        "item.$": "$$.Map.Item.Value",
+      },
+      "ResultPath": "$.heap2",
+      "ResultSelector": Object {
+        "arr": "$",
+        "arrStr": "[null",
+      },
+      "Type": "Map",
+    },
+    "Initialize Functionless Context": Object {
+      "Next": "return [1, 2, 3, 4].filter(function(item, index))",
+      "Parameters": Object {
+        "fnl_context": Object {
+          "null": null,
+        },
+      },
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "assignFalse__item > index": Object {
+      "Next": "1__item > index",
+      "Result": false,
+      "ResultPath": "$.heap3",
+      "Type": "Pass",
+    },
+    "assignTrue__item > index": Object {
+      "Next": "1__item > index",
+      "Result": true,
+      "ResultPath": "$.heap3",
+      "Type": "Pass",
+    },
+    "checkPredicate__1__return [1, 2, 3, 4].filter(function(item, index)) 1": Object {
+      "Choices": Array [
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.heap1",
+            },
+            Object {
+              "IsNull": false,
+              "Variable": "$.heap1",
+            },
+            Object {
+              "Or": Array [
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsString": true,
+                      "Variable": "$.heap1",
+                    },
+                    Object {
+                      "Not": Object {
+                        "And": Array [
+                          Object {
+                            "IsString": true,
+                            "Variable": "$.heap1",
+                          },
+                          Object {
+                            "StringEquals": "",
+                            "Variable": "$.heap1",
+                          },
+                        ],
+                      },
+                    },
+                  ],
+                },
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsNumeric": true,
+                      "Variable": "$.heap1",
+                    },
+                    Object {
+                      "Not": Object {
+                        "And": Array [
+                          Object {
+                            "IsNumeric": true,
+                            "Variable": "$.heap1",
+                          },
+                          Object {
+                            "NumericEquals": 0,
+                            "Variable": "$.heap1",
+                          },
+                        ],
+                      },
+                    },
+                  ],
+                },
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsBoolean": true,
+                      "Variable": "$.heap1",
+                    },
+                    Object {
+                      "BooleanEquals": true,
+                      "Variable": "$.heap1",
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+          "Next": "predicateTrue__1__return [1, 2, 3, 4].filter(function(item, index)) 1",
+        },
+      ],
+      "Default": "predicateFalse__1__return [1, 2, 3, 4].filter(function(item, index)) 1",
+      "Type": "Choice",
+    },
+    "check__1__return [1, 2, 3, 4].filter(function(item, index)) 1": Object {
+      "Choices": Array [
+        Object {
+          "IsPresent": true,
+          "Next": "function(item, index)",
+          "Variable": "$.heap2.arr[0]",
+        },
+      ],
+      "Default": "end__1__return [1, 2, 3, 4].filter(function(item, index)) 1",
+      "Type": "Choice",
+    },
+    "end__1__return [1, 2, 3, 4].filter(function(item, index)) 1": Object {
+      "Next": "set__end__1__return [1, 2, 3, 4].filter(function(item, index)) 1",
+      "Parameters": Object {
+        "result.$": "States.StringToJson(States.Format('{}]', $.heap2.arrStr))",
+      },
+      "ResultPath": "$.heap2",
+      "Type": "Pass",
+    },
+    "function(item, index)": Object {
+      "InputPath": "$.heap2.arr[0].item",
+      "Next": "index",
+      "ResultPath": "$.item",
+      "Type": "Pass",
+    },
+    "index": Object {
+      "InputPath": "$.heap2.arr[0].index",
+      "Next": "item > index",
+      "ResultPath": "$.index",
+      "Type": "Pass",
+    },
+    "item > index": Object {
+      "Choices": Array [
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.item",
+            },
+            Object {
+              "Or": Array [
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsString": true,
+                      "Variable": "$.item",
+                    },
+                    Object {
+                      "StringGreaterThanPath": "$.index",
+                      "Variable": "$.item",
+                    },
+                  ],
+                },
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsBoolean": true,
+                      "Variable": "$.item",
+                    },
+                    Object {
+                      "IsNull": true,
+                      "Variable": "$$.Execution.Id",
+                    },
+                  ],
+                },
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsNumeric": true,
+                      "Variable": "$.item",
+                    },
+                    Object {
+                      "NumericGreaterThanPath": "$.index",
+                      "Variable": "$.item",
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+          "Next": "assignTrue__item > index",
+        },
+      ],
+      "Default": "assignFalse__item > index",
+      "Type": "Choice",
+    },
+    "predicateFalse__1__return [1, 2, 3, 4].filter(function(item, index)) 1": Object {
+      "InputPath": "$.heap2.arr[1:]",
+      "Next": "check__1__return [1, 2, 3, 4].filter(function(item, index)) 1",
+      "ResultPath": "$.heap2.arr",
+      "Type": "Pass",
+    },
+    "predicateTrue__1__return [1, 2, 3, 4].filter(function(item, index)) 1": Object {
+      "Next": "check__1__return [1, 2, 3, 4].filter(function(item, index)) 1",
+      "Parameters": Object {
+        "arr.$": "$.heap2.arr[1:]",
+        "arrStr.$": "States.Format('{},{}', $.heap2.arrStr, States.JsonToString($.heap2.arr[0]))",
+      },
+      "ResultPath": "$.heap2",
+      "Type": "Pass",
+    },
+    "return [1, 2, 3, 4].filter(function(item, index))": Object {
+      "Next": "1__return [1, 2, 3, 4].filter(function(item, index)) 1",
+      "Result": Array [
+        1,
+        2,
+        3,
+        4,
+      ],
+      "ResultPath": "$.heap0",
+      "Type": "Pass",
+    },
+    "set__end__1__return [1, 2, 3, 4].filter(function(item, index)) 1": Object {
+      "InputPath": "$.heap2.result[1:]",
+      "Next": "1__return [1, 2, 3, 4].filter(function(item, index))",
+      "ResultPath": "$.heap2",
+      "Type": "Pass",
+    },
+  },
+}
+`;
+
+exports[`[1,2,3,4].filter((item, index, array) => item > 1 + 2) 1`] = `
+Object {
+  "StartAt": "Initialize Functionless Context",
+  "States": Object {
+    "1__item > arr[0]": Object {
+      "InputPath": "$.heap3",
+      "Next": "checkPredicate__1__return [1, 2, 3, 4].filter(function(item, _, arr)) 1",
+      "ResultPath": "$.heap1",
+      "Type": "Pass",
+    },
+    "1__return [1, 2, 3, 4].filter(function(item, _, arr))": Object {
+      "End": true,
+      "InputPath": "$.heap2",
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "1__return [1, 2, 3, 4].filter(function(item, _, arr)) 1": Object {
+      "ItemsPath": "$.heap0",
+      "Iterator": Object {
+        "StartAt": "Default",
+        "States": Object {
+          "Default": Object {
+            "End": true,
+            "ResultPath": "$",
+            "Type": "Pass",
+          },
+        },
+      },
+      "Next": "check__1__return [1, 2, 3, 4].filter(function(item, _, arr)) 1",
+      "Parameters": Object {
+        "index.$": "$$.Map.Item.Index",
+        "item.$": "$$.Map.Item.Value",
+      },
+      "ResultPath": "$.heap2",
+      "ResultSelector": Object {
+        "arr": "$",
+        "arrStr": "[null",
+      },
+      "Type": "Map",
+    },
+    "Initialize Functionless Context": Object {
+      "Next": "return [1, 2, 3, 4].filter(function(item, _, arr))",
+      "Parameters": Object {
+        "fnl_context": Object {
+          "null": null,
+        },
+      },
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "_": Object {
+      "InputPath": "$.heap2.arr[0].index",
+      "Next": "arr",
+      "ResultPath": "$._",
+      "Type": "Pass",
+    },
+    "arr": Object {
+      "InputPath": "$.heap0",
+      "Next": "item > arr[0]",
+      "ResultPath": "$.arr",
+      "Type": "Pass",
+    },
+    "assignFalse__item > arr[0]": Object {
+      "Next": "1__item > arr[0]",
+      "Result": false,
+      "ResultPath": "$.heap3",
+      "Type": "Pass",
+    },
+    "assignTrue__item > arr[0]": Object {
+      "Next": "1__item > arr[0]",
+      "Result": true,
+      "ResultPath": "$.heap3",
+      "Type": "Pass",
+    },
+    "checkPredicate__1__return [1, 2, 3, 4].filter(function(item, _, arr)) 1": Object {
+      "Choices": Array [
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.heap1",
+            },
+            Object {
+              "IsNull": false,
+              "Variable": "$.heap1",
+            },
+            Object {
+              "Or": Array [
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsString": true,
+                      "Variable": "$.heap1",
+                    },
+                    Object {
+                      "Not": Object {
+                        "And": Array [
+                          Object {
+                            "IsString": true,
+                            "Variable": "$.heap1",
+                          },
+                          Object {
+                            "StringEquals": "",
+                            "Variable": "$.heap1",
+                          },
+                        ],
+                      },
+                    },
+                  ],
+                },
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsNumeric": true,
+                      "Variable": "$.heap1",
+                    },
+                    Object {
+                      "Not": Object {
+                        "And": Array [
+                          Object {
+                            "IsNumeric": true,
+                            "Variable": "$.heap1",
+                          },
+                          Object {
+                            "NumericEquals": 0,
+                            "Variable": "$.heap1",
+                          },
+                        ],
+                      },
+                    },
+                  ],
+                },
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsBoolean": true,
+                      "Variable": "$.heap1",
+                    },
+                    Object {
+                      "BooleanEquals": true,
+                      "Variable": "$.heap1",
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+          "Next": "predicateTrue__1__return [1, 2, 3, 4].filter(function(item, _, arr)) 1",
+        },
+      ],
+      "Default": "predicateFalse__1__return [1, 2, 3, 4].filter(function(item, _, arr)) 1",
+      "Type": "Choice",
+    },
+    "check__1__return [1, 2, 3, 4].filter(function(item, _, arr)) 1": Object {
+      "Choices": Array [
+        Object {
+          "IsPresent": true,
+          "Next": "function(item, _, arr)",
+          "Variable": "$.heap2.arr[0]",
+        },
+      ],
+      "Default": "end__1__return [1, 2, 3, 4].filter(function(item, _, arr)) 1",
+      "Type": "Choice",
+    },
+    "end__1__return [1, 2, 3, 4].filter(function(item, _, arr)) 1": Object {
+      "Next": "set__end__1__return [1, 2, 3, 4].filter(function(item, _, arr)) 1",
+      "Parameters": Object {
+        "result.$": "States.StringToJson(States.Format('{}]', $.heap2.arrStr))",
+      },
+      "ResultPath": "$.heap2",
+      "Type": "Pass",
+    },
+    "function(item, _, arr)": Object {
+      "InputPath": "$.heap2.arr[0].item",
+      "Next": "_",
+      "ResultPath": "$.item",
+      "Type": "Pass",
+    },
+    "item > arr[0]": Object {
+      "Choices": Array [
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.item",
+            },
+            Object {
+              "Or": Array [
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsString": true,
+                      "Variable": "$.item",
+                    },
+                    Object {
+                      "StringGreaterThanPath": "$.arr[0]",
+                      "Variable": "$.item",
+                    },
+                  ],
+                },
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsBoolean": true,
+                      "Variable": "$.item",
+                    },
+                    Object {
+                      "IsNull": true,
+                      "Variable": "$$.Execution.Id",
+                    },
+                  ],
+                },
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsNumeric": true,
+                      "Variable": "$.item",
+                    },
+                    Object {
+                      "NumericGreaterThanPath": "$.arr[0]",
+                      "Variable": "$.item",
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+          "Next": "assignTrue__item > arr[0]",
+        },
+      ],
+      "Default": "assignFalse__item > arr[0]",
+      "Type": "Choice",
+    },
+    "predicateFalse__1__return [1, 2, 3, 4].filter(function(item, _, arr)) 1": Object {
+      "InputPath": "$.heap2.arr[1:]",
+      "Next": "check__1__return [1, 2, 3, 4].filter(function(item, _, arr)) 1",
+      "ResultPath": "$.heap2.arr",
+      "Type": "Pass",
+    },
+    "predicateTrue__1__return [1, 2, 3, 4].filter(function(item, _, arr)) 1": Object {
+      "Next": "check__1__return [1, 2, 3, 4].filter(function(item, _, arr)) 1",
+      "Parameters": Object {
+        "arr.$": "$.heap2.arr[1:]",
+        "arrStr.$": "States.Format('{},{}', $.heap2.arrStr, States.JsonToString($.heap2.arr[0]))",
+      },
+      "ResultPath": "$.heap2",
+      "Type": "Pass",
+    },
+    "return [1, 2, 3, 4].filter(function(item, _, arr))": Object {
+      "Next": "1__return [1, 2, 3, 4].filter(function(item, _, arr)) 1",
+      "Result": Array [
+        1,
+        2,
+        3,
+        4,
+      ],
+      "ResultPath": "$.heap0",
+      "Type": "Pass",
+    },
+    "set__end__1__return [1, 2, 3, 4].filter(function(item, _, arr)) 1": Object {
+      "InputPath": "$.heap2.result[1:]",
+      "Next": "1__return [1, 2, 3, 4].filter(function(item, _, arr))",
+      "ResultPath": "$.heap2",
+      "Type": "Pass",
+    },
+  },
+}
+`;
+
+exports[`[1,2,3,4].filter((item, index, array) => item > 1 + 2) 2`] = `
+Object {
+  "StartAt": "Initialize Functionless Context",
+  "States": Object {
+    "1__item > first": Object {
+      "InputPath": "$.heap3",
+      "Next": "checkPredicate__1__return [1, 2, 3, 4].filter(function(item, _, [first])) 1",
+      "ResultPath": "$.heap1",
+      "Type": "Pass",
+    },
+    "1__return [1, 2, 3, 4].filter(function(item, _, [first]))": Object {
+      "End": true,
+      "InputPath": "$.heap2",
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "1__return [1, 2, 3, 4].filter(function(item, _, [first])) 1": Object {
+      "ItemsPath": "$.heap0",
+      "Iterator": Object {
+        "StartAt": "Default",
+        "States": Object {
+          "Default": Object {
+            "End": true,
+            "ResultPath": "$",
+            "Type": "Pass",
+          },
+        },
+      },
+      "Next": "check__1__return [1, 2, 3, 4].filter(function(item, _, [first])) 1",
+      "Parameters": Object {
+        "index.$": "$$.Map.Item.Index",
+        "item.$": "$$.Map.Item.Value",
+      },
+      "ResultPath": "$.heap2",
+      "ResultSelector": Object {
+        "arr": "$",
+        "arrStr": "[null",
+      },
+      "Type": "Map",
+    },
+    "Initialize Functionless Context": Object {
+      "Next": "return [1, 2, 3, 4].filter(function(item, _, [first]))",
+      "Parameters": Object {
+        "fnl_context": Object {
+          "null": null,
+        },
+      },
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "[ first ]": Object {
+      "InputPath": "$.heap0[0]",
+      "Next": "item > first",
+      "ResultPath": "$.first",
+      "Type": "Pass",
+    },
+    "_": Object {
+      "InputPath": "$.heap2.arr[0].index",
+      "Next": "[ first ]",
+      "ResultPath": "$._",
+      "Type": "Pass",
+    },
+    "assignFalse__item > first": Object {
+      "Next": "1__item > first",
+      "Result": false,
+      "ResultPath": "$.heap3",
+      "Type": "Pass",
+    },
+    "assignTrue__item > first": Object {
+      "Next": "1__item > first",
+      "Result": true,
+      "ResultPath": "$.heap3",
+      "Type": "Pass",
+    },
+    "checkPredicate__1__return [1, 2, 3, 4].filter(function(item, _, [first])) 1": Object {
+      "Choices": Array [
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.heap1",
+            },
+            Object {
+              "IsNull": false,
+              "Variable": "$.heap1",
+            },
+            Object {
+              "Or": Array [
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsString": true,
+                      "Variable": "$.heap1",
+                    },
+                    Object {
+                      "Not": Object {
+                        "And": Array [
+                          Object {
+                            "IsString": true,
+                            "Variable": "$.heap1",
+                          },
+                          Object {
+                            "StringEquals": "",
+                            "Variable": "$.heap1",
+                          },
+                        ],
+                      },
+                    },
+                  ],
+                },
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsNumeric": true,
+                      "Variable": "$.heap1",
+                    },
+                    Object {
+                      "Not": Object {
+                        "And": Array [
+                          Object {
+                            "IsNumeric": true,
+                            "Variable": "$.heap1",
+                          },
+                          Object {
+                            "NumericEquals": 0,
+                            "Variable": "$.heap1",
+                          },
+                        ],
+                      },
+                    },
+                  ],
+                },
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsBoolean": true,
+                      "Variable": "$.heap1",
+                    },
+                    Object {
+                      "BooleanEquals": true,
+                      "Variable": "$.heap1",
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+          "Next": "predicateTrue__1__return [1, 2, 3, 4].filter(function(item, _, [first])) 1",
+        },
+      ],
+      "Default": "predicateFalse__1__return [1, 2, 3, 4].filter(function(item, _, [first])) 1",
+      "Type": "Choice",
+    },
+    "check__1__return [1, 2, 3, 4].filter(function(item, _, [first])) 1": Object {
+      "Choices": Array [
+        Object {
+          "IsPresent": true,
+          "Next": "function(item, _, [first])",
+          "Variable": "$.heap2.arr[0]",
+        },
+      ],
+      "Default": "end__1__return [1, 2, 3, 4].filter(function(item, _, [first])) 1",
+      "Type": "Choice",
+    },
+    "end__1__return [1, 2, 3, 4].filter(function(item, _, [first])) 1": Object {
+      "Next": "set__end__1__return [1, 2, 3, 4].filter(function(item, _, [first])) 1",
+      "Parameters": Object {
+        "result.$": "States.StringToJson(States.Format('{}]', $.heap2.arrStr))",
+      },
+      "ResultPath": "$.heap2",
+      "Type": "Pass",
+    },
+    "function(item, _, [first])": Object {
+      "InputPath": "$.heap2.arr[0].item",
+      "Next": "_",
+      "ResultPath": "$.item",
+      "Type": "Pass",
+    },
+    "item > first": Object {
+      "Choices": Array [
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.item",
+            },
+            Object {
+              "Or": Array [
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsString": true,
+                      "Variable": "$.item",
+                    },
+                    Object {
+                      "StringGreaterThanPath": "$.first",
+                      "Variable": "$.item",
+                    },
+                  ],
+                },
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsBoolean": true,
+                      "Variable": "$.item",
+                    },
+                    Object {
+                      "IsNull": true,
+                      "Variable": "$$.Execution.Id",
+                    },
+                  ],
+                },
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsNumeric": true,
+                      "Variable": "$.item",
+                    },
+                    Object {
+                      "NumericGreaterThanPath": "$.first",
+                      "Variable": "$.item",
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+          "Next": "assignTrue__item > first",
+        },
+      ],
+      "Default": "assignFalse__item > first",
+      "Type": "Choice",
+    },
+    "predicateFalse__1__return [1, 2, 3, 4].filter(function(item, _, [first])) 1": Object {
+      "InputPath": "$.heap2.arr[1:]",
+      "Next": "check__1__return [1, 2, 3, 4].filter(function(item, _, [first])) 1",
+      "ResultPath": "$.heap2.arr",
+      "Type": "Pass",
+    },
+    "predicateTrue__1__return [1, 2, 3, 4].filter(function(item, _, [first])) 1": Object {
+      "Next": "check__1__return [1, 2, 3, 4].filter(function(item, _, [first])) 1",
+      "Parameters": Object {
+        "arr.$": "$.heap2.arr[1:]",
+        "arrStr.$": "States.Format('{},{}', $.heap2.arrStr, States.JsonToString($.heap2.arr[0]))",
+      },
+      "ResultPath": "$.heap2",
+      "Type": "Pass",
+    },
+    "return [1, 2, 3, 4].filter(function(item, _, [first]))": Object {
+      "Next": "1__return [1, 2, 3, 4].filter(function(item, _, [first])) 1",
+      "Result": Array [
+        1,
+        2,
+        3,
+        4,
+      ],
+      "ResultPath": "$.heap0",
+      "Type": "Pass",
+    },
+    "set__end__1__return [1, 2, 3, 4].filter(function(item, _, [first])) 1": Object {
+      "InputPath": "$.heap2.result[1:]",
+      "Next": "1__return [1, 2, 3, 4].filter(function(item, _, [first]))",
+      "ResultPath": "$.heap2",
+      "Type": "Pass",
+    },
+  },
+}
+`;
+
 exports[`[1,2,3,4].filter(item => item > {}) 1`] = `
 Object {
   "StartAt": "Initialize Functionless Context",
@@ -668,6 +1469,269 @@ Object {
         4,
       ],
       "ResultPath": "$.heap0",
+      "Type": "Pass",
+    },
+  },
+}
+`;
+
+exports[`[1,2,3,4].filter(item => item > 1 + 2) 2`] = `
+Object {
+  "StartAt": "Initialize Functionless Context",
+  "States": Object {
+    "1__item > index": Object {
+      "InputPath": "$.heap3",
+      "Next": "checkPredicate__1__return [1, 2, 3, 4].filter(function(item, index)) 1",
+      "ResultPath": "$.heap1",
+      "Type": "Pass",
+    },
+    "1__return [1, 2, 3, 4].filter(function(item, index))": Object {
+      "End": true,
+      "InputPath": "$.heap2",
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "1__return [1, 2, 3, 4].filter(function(item, index)) 1": Object {
+      "ItemsPath": "$.heap0",
+      "Iterator": Object {
+        "StartAt": "Default",
+        "States": Object {
+          "Default": Object {
+            "End": true,
+            "ResultPath": "$",
+            "Type": "Pass",
+          },
+        },
+      },
+      "Next": "check__1__return [1, 2, 3, 4].filter(function(item, index)) 1",
+      "Parameters": Object {
+        "index.$": "$$.Map.Item.Index",
+        "item.$": "$$.Map.Item.Value",
+      },
+      "ResultPath": "$.heap2",
+      "ResultSelector": Object {
+        "arr": "$",
+        "arrStr": "[null",
+      },
+      "Type": "Map",
+    },
+    "Initialize Functionless Context": Object {
+      "Next": "return [1, 2, 3, 4].filter(function(item, index))",
+      "Parameters": Object {
+        "fnl_context": Object {
+          "null": null,
+        },
+      },
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "assignFalse__item > index": Object {
+      "Next": "1__item > index",
+      "Result": false,
+      "ResultPath": "$.heap3",
+      "Type": "Pass",
+    },
+    "assignTrue__item > index": Object {
+      "Next": "1__item > index",
+      "Result": true,
+      "ResultPath": "$.heap3",
+      "Type": "Pass",
+    },
+    "checkPredicate__1__return [1, 2, 3, 4].filter(function(item, index)) 1": Object {
+      "Choices": Array [
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.heap1",
+            },
+            Object {
+              "IsNull": false,
+              "Variable": "$.heap1",
+            },
+            Object {
+              "Or": Array [
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsString": true,
+                      "Variable": "$.heap1",
+                    },
+                    Object {
+                      "Not": Object {
+                        "And": Array [
+                          Object {
+                            "IsString": true,
+                            "Variable": "$.heap1",
+                          },
+                          Object {
+                            "StringEquals": "",
+                            "Variable": "$.heap1",
+                          },
+                        ],
+                      },
+                    },
+                  ],
+                },
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsNumeric": true,
+                      "Variable": "$.heap1",
+                    },
+                    Object {
+                      "Not": Object {
+                        "And": Array [
+                          Object {
+                            "IsNumeric": true,
+                            "Variable": "$.heap1",
+                          },
+                          Object {
+                            "NumericEquals": 0,
+                            "Variable": "$.heap1",
+                          },
+                        ],
+                      },
+                    },
+                  ],
+                },
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsBoolean": true,
+                      "Variable": "$.heap1",
+                    },
+                    Object {
+                      "BooleanEquals": true,
+                      "Variable": "$.heap1",
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+          "Next": "predicateTrue__1__return [1, 2, 3, 4].filter(function(item, index)) 1",
+        },
+      ],
+      "Default": "predicateFalse__1__return [1, 2, 3, 4].filter(function(item, index)) 1",
+      "Type": "Choice",
+    },
+    "check__1__return [1, 2, 3, 4].filter(function(item, index)) 1": Object {
+      "Choices": Array [
+        Object {
+          "IsPresent": true,
+          "Next": "function(item, index)",
+          "Variable": "$.heap2.arr[0]",
+        },
+      ],
+      "Default": "end__1__return [1, 2, 3, 4].filter(function(item, index)) 1",
+      "Type": "Choice",
+    },
+    "end__1__return [1, 2, 3, 4].filter(function(item, index)) 1": Object {
+      "Next": "set__end__1__return [1, 2, 3, 4].filter(function(item, index)) 1",
+      "Parameters": Object {
+        "result.$": "States.StringToJson(States.Format('{}]', $.heap2.arrStr))",
+      },
+      "ResultPath": "$.heap2",
+      "Type": "Pass",
+    },
+    "function(item, index)": Object {
+      "InputPath": "$.heap2.arr[0].item",
+      "Next": "index",
+      "ResultPath": "$.item",
+      "Type": "Pass",
+    },
+    "index": Object {
+      "InputPath": "$.heap2.arr[0].index",
+      "Next": "item > index",
+      "ResultPath": "$.index",
+      "Type": "Pass",
+    },
+    "item > index": Object {
+      "Choices": Array [
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.item",
+            },
+            Object {
+              "Or": Array [
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsString": true,
+                      "Variable": "$.item",
+                    },
+                    Object {
+                      "StringGreaterThanPath": "$.index",
+                      "Variable": "$.item",
+                    },
+                  ],
+                },
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsBoolean": true,
+                      "Variable": "$.item",
+                    },
+                    Object {
+                      "IsNull": true,
+                      "Variable": "$$.Execution.Id",
+                    },
+                  ],
+                },
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsNumeric": true,
+                      "Variable": "$.item",
+                    },
+                    Object {
+                      "NumericGreaterThanPath": "$.index",
+                      "Variable": "$.item",
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+          "Next": "assignTrue__item > index",
+        },
+      ],
+      "Default": "assignFalse__item > index",
+      "Type": "Choice",
+    },
+    "predicateFalse__1__return [1, 2, 3, 4].filter(function(item, index)) 1": Object {
+      "InputPath": "$.heap2.arr[1:]",
+      "Next": "check__1__return [1, 2, 3, 4].filter(function(item, index)) 1",
+      "ResultPath": "$.heap2.arr",
+      "Type": "Pass",
+    },
+    "predicateTrue__1__return [1, 2, 3, 4].filter(function(item, index)) 1": Object {
+      "Next": "check__1__return [1, 2, 3, 4].filter(function(item, index)) 1",
+      "Parameters": Object {
+        "arr.$": "$.heap2.arr[1:]",
+        "arrStr.$": "States.Format('{},{}', $.heap2.arrStr, States.JsonToString($.heap2.arr[0]))",
+      },
+      "ResultPath": "$.heap2",
+      "Type": "Pass",
+    },
+    "return [1, 2, 3, 4].filter(function(item, index))": Object {
+      "Next": "1__return [1, 2, 3, 4].filter(function(item, index)) 1",
+      "Result": Array [
+        1,
+        2,
+        3,
+        4,
+      ],
+      "ResultPath": "$.heap0",
+      "Type": "Pass",
+    },
+    "set__end__1__return [1, 2, 3, 4].filter(function(item, index)) 1": Object {
+      "InputPath": "$.heap2.result[1:]",
+      "Next": "1__return [1, 2, 3, 4].filter(function(item, index))",
+      "ResultPath": "$.heap2",
       "Type": "Pass",
     },
   },

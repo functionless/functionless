@@ -550,7 +550,7 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
     "filter",
     (parent) => {
       return new StepFunction(parent, "sfn2", async ({ arr, key }) => {
-        return arr
+        const arr1 = arr
           .filter(({ value }) => value <= 3)
           .filter(({ value }) => value <= key)
           .filter((item) => {
@@ -558,19 +558,30 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
             $SFN.waitFor(1);
             return itemKey === `hi${key}`;
           });
+
+        const arr2 = [4, 3, 2, 1].filter(
+          (x, index, [first]) => x <= index || first === x
+        );
+
+        return { arr1, arr2 };
       });
     },
-    [
-      { value: 1, key: "hi2" },
-      { value: 2, key: "hi2" },
-    ],
+    {
+      arr1: [
+        { value: 1, key: "hi2" },
+        { value: 2, key: "hi2" },
+      ],
+      arr2: [4, 2, 1],
+    },
     {
       arr: [
         { value: 1, key: "hi" },
         { value: 1, key: "hi2" },
         { value: 2, key: "hi" },
         { value: 2, key: "hi2" },
-        { value: 3 },
+        { value: 3, key: "hi" },
+        { value: 3, key: "hi2" },
+        { value: 4 },
         { value: 1, key: "hi" },
       ],
       key: 2,
