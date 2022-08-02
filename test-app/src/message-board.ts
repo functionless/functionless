@@ -38,6 +38,7 @@ new StepFunction<
   { value: number; key?: string }[]
 >(stack, "sfn2", async ({ arr, key }) => {
   return arr
+    .filter(({ value }) => value <= 3)
     .filter(({ value }) => value <= key)
     .filter((item) => {
       const { key: itemKey } = item;

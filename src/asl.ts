@@ -11,9 +11,12 @@ import {
 } from "./declaration";
 import { ErrorCodes, SynthError } from "./error-code";
 import {
+  ArrowFunctionExpr,
   CallExpr,
   ElementAccessExpr,
   Expr,
+  FunctionExpr,
+  Identifier,
   NullLiteralExpr,
   PropAccessExpr,
 } from "./expression";
@@ -1800,7 +1803,7 @@ export class ASL {
       } else if (isSlice(expr)) {
         return this.sliceToStateOutput(expr);
       } else if (isFilter(expr)) {
-        return this.filterToJsonPath(expr);
+        return this.filterToStateOutput(expr);
       } else if (isJoin(expr)) {
         return this.joinToStateOutput(expr);
       } else if (isPromiseAll(expr)) {
@@ -2738,8 +2741,7 @@ export class ASL {
     };
   }
 
-  // TODO: support variables and computed values. https://github.com/functionless/functionless/issues/84
-  private filterToJsonPath(
+  private filterToStateOutput(
     expr: CallExpr & { expr: PropAccessExpr }
   ): ASLGraph.NodeResults {
     const predicate = expr.args[0]?.expr;
@@ -2750,6 +2752,165 @@ export class ASL {
       );
     }
 
+    return this.evalExpr(
+      expr.expr.expr,
+      (leftOutput, { normalizeOutputToJsonPath }) => {
+        if (
+          !ASLGraph.isJsonPath(leftOutput) &&
+          !Array.isArray(leftOutput.value)
+        ) {
+          throw new SynthError(
+            ErrorCodes.Unexpected_Error,
+            "Expected filter to be called on a literal array or reference to one."
+          );
+        }
+
+        const varRef = normalizeOutputToJsonPath();
+
+        return (
+          this.filterToJsonPath(varRef, predicate) ??
+          this.filterToASLGraph(varRef, predicate)
+        );
+      }
+    );
+  }
+
+  /**
+   * Attempt to compile filter to JSONPath. If possible, this is the most efficient way to filter.
+   *
+   * When not possible, undefined is returned.
+   */
+  private filterToJsonPath(
+    valueJsonPath: ASLGraph.JsonPath,
+    predicate: FunctionExpr | ArrowFunctionExpr
+  ): ASLGraph.JsonPath | undefined {
+    const stmt = predicate.body.statements[0];
+    if (
+      stmt === undefined ||
+      !isReturnStmt(stmt) ||
+      predicate.body.statements.length !== 1
+    ) {
+      return undefined;
+    }
+
+    const toFilterCondition = (expr: Expr): string => {
+      const constant = evalToConstant(expr);
+      if (constant) {
+        if (typeof constant.constant === "string") {
+          // strings are wrapped with '' in the filter expression.
+          // Escape existing quotes to avoid issues.
+          return `'${constant.constant.replace(/'/g, "\\'")}'`;
+        }
+        if (
+          typeof constant.constant === "object" &&
+          constant.constant !== null
+        ) {
+          // will be caught, try to compile with ASLGraph instead
+          throw new FilterJsonPathUnsupported("Use ASLGraph");
+        } else {
+          return `${constant.constant}`;
+        }
+      } else if (isBinaryExpr(expr)) {
+        return `${toFilterCondition(expr.left)}${expr.op}${toFilterCondition(
+          expr.right
+        )}`;
+      } else if (isUnaryExpr(expr)) {
+        return `${expr.op}${toFilterCondition(expr.expr)}`;
+      } else if (isIdentifier(expr)) {
+        const ref = expr.lookup();
+        if (ref === undefined) {
+          // will be caught, try to compile with ASLGraph instead
+          throw new FilterJsonPathUnsupported("Use ASLGraph");
+        }
+        if (
+          (isParameterDecl(ref) || isBindingElem(ref)) &&
+          ref.findParent(
+            (parent): parent is typeof predicate => parent === predicate
+          )
+        ) {
+          return resolveRef(ref);
+        } else {
+          return `$.${(<Identifier>expr).name}`;
+        }
+        function resolveRef(ref: ParameterDecl | BindingElem): string {
+          if (isParameterDecl(ref)) {
+            if (ref === predicate.parameters[0]) {
+              return "@";
+            } else if (ref === predicate.parameters[1]) {
+              // will be caught, try to compile with ASLGraph instead
+              throw new FilterJsonPathUnsupported("Use ASLGraph");
+            } else {
+              // will be caught, try to compile with ASLGraph instead
+              throw new FilterJsonPathUnsupported("Use ASLGraph");
+            }
+          } else {
+            if (isArrayBinding(ref.parent)) {
+              return `${resolveRef(
+                ref.parent.parent as unknown as ParameterDecl | BindingElem
+              )}[${ref.parent.bindings.indexOf(ref)}]`;
+            }
+
+            const propName = ref.propertyName
+              ? isIdentifier(ref.propertyName)
+                ? ref.propertyName.name
+                : isStringLiteralExpr(ref.propertyName)
+                ? ref.propertyName.value
+                : evalToConstant(ref.propertyName)?.constant
+              : isIdentifier(ref.name)
+              ? ref.name.name
+              : undefined;
+
+            if (!propName) {
+              throw new SynthError(
+                ErrorCodes.StepFunctions_property_names_must_be_constant
+              );
+            }
+
+            return `${resolveRef(
+              ref.parent.parent as unknown as ParameterDecl | BindingElem
+            )}['${propName}']`;
+          }
+        }
+      } else if (isPropAccessExpr(expr)) {
+        return `${toFilterCondition(expr.expr)}.${expr.name.name}`;
+      } else if (isElementAccessExpr(expr)) {
+        const field = this.assertElementAccessConstant(
+          ASLGraph.getAslStateOutput(this.eval(expr.element))
+        );
+
+        return `${toFilterCondition(expr.expr)}[${
+          typeof field === "number" ? field : `'${field}'`
+        }]`;
+      }
+
+      // will be caught, try to compile with ASLGraph instead
+      throw new FilterJsonPathUnsupported("Use ASLGraph");
+    };
+
+    try {
+      return {
+        jsonPath: `${valueJsonPath.jsonPath}[?(${toFilterCondition(
+          stmt.expr
+        )})]`,
+      };
+    } catch (err) {
+      if (err instanceof FilterJsonPathUnsupported) {
+        // if the error was thrown because of unsupported syntax for filter to json path, return undefined and try to compile using ASL Graph
+        return undefined;
+      }
+      throw err;
+    }
+  }
+
+  /**
+   * filter an array using ASLGraph. Should support any logic that returns a boolean already supported by Functionless Step Functions.
+   *
+   * Note: If possible, try to use {@link filterToJsonPath} as it introduces no new state transitions.
+   */
+  private filterToASLGraph(
+    valueJsonPath: ASLGraph.JsonPath,
+    predicate: FunctionExpr | ArrowFunctionExpr
+  ): ASLGraph.OutputSubState {
     const predicateResult = this.newHeapVariable();
     const filterResult = this.newHeapVariable();
 
@@ -2764,99 +2925,95 @@ export class ASL {
       )
     );
 
-    return this.evalExpr(expr.expr.expr, (_, { normalizeOutputToJsonPath }) => {
-      const initialArrayLocation = normalizeOutputToJsonPath().jsonPath;
-
-      return {
-        startState: "init",
-        states: {
-          init: {
-            Type: "Pass",
-            Parameters: {
-              // copy array to tail it
-              "arr.$": initialArrayLocation,
-              arrStr: "[null",
-            },
-            // use the eventual result location as a temp working space
-            ResultPath: filterResult,
-            Next: "check",
+    return {
+      startState: "init",
+      states: {
+        init: {
+          Type: "Pass" as const,
+          Parameters: {
+            // copy array to tail it
+            "arr.$": valueJsonPath.jsonPath,
+            arrStr: "[null",
           },
-          check: {
-            Type: "Choice",
-            Choices: [
-              { ...ASL.isPresent(`${filterResult}.arr[0]`), Next: "assign" },
-            ],
-            Default: "end",
+          // use the eventual result location as a temp working space
+          ResultPath: filterResult,
+          Next: "check",
+        },
+        check: {
+          Type: "Choice",
+          Choices: [
+            { ...ASL.isPresent(`${filterResult}.arr[0]`), Next: "assign" },
+          ],
+          Default: "end",
+        },
+        // assign the item parameter the head of the temp array
+        assign: ASLGraph.updateDeferredNextStates(
+          { Next: "predicate" },
+          // TODO: support index and array?
+          (predicate.parameters.length > 0
+            ? this.evalDecl(predicate.parameters[0], {
+                jsonPath: `${filterResult}.arr[0]`,
+              })
+            : undefined) ?? { Type: "Pass" }
+        ),
+        // run the predicate function logic
+        predicate: ASLGraph.updateDeferredNextStates(
+          { Next: "checkPredicate" },
+          predicateBody ?? { Type: "Pass" }
+        ),
+        // check that the predicate value is true
+        checkPredicate: {
+          Type: "Choice",
+          Choices: [
+            { ...ASL.isTruthy(predicateResult), Next: "predicateTrue" },
+          ],
+          Default: "predicateFalse",
+        },
+        // tail and append
+        predicateTrue: {
+          Type: "Pass",
+          Parameters: {
+            "arr.$": `${filterResult}.arr[1:]`,
+            // const arrStr = `${arrStr},${JSON.stringify(arr[0])}`;
+            "arrStr.$": `States.Format('{},{}', ${filterResult}.arrStr, States.JsonToString(${filterResult}.arr[0]))`,
           },
-          // assign the item parameter the head of the temp array
-          assign: ASLGraph.updateDeferredNextStates(
-            { Next: "predicate" },
-            // TODO: support index and array?
-            (predicate.parameters.length > 0
-              ? this.evalDecl(predicate.parameters[0], {
-                  jsonPath: `${filterResult}.arr[0]`,
-                })
-              : undefined) ?? { Type: "Pass" }
-          ),
-          // run the predicate function logic
-          predicate: ASLGraph.updateDeferredNextStates(
-            { Next: "checkPredicate" },
-            predicateBody ?? { Type: "Pass" }
-          ),
-          // check that the predicate value is true
-          checkPredicate: {
-            Type: "Choice",
-            Choices: [
-              { ...ASL.isTruthy(predicateResult), Next: "predicateTrue" },
-            ],
-            Default: "predicateFalse",
-          },
-          // tail and append
-          predicateTrue: {
-            Type: "Pass",
-            Parameters: {
-              "arr.$": `${filterResult}.arr[1:]`,
-              // const arrStr = `${arrStr},${JSON.stringify(arr[0])}`;
-              "arrStr.$": `States.Format('{},{}', ${filterResult}.arrStr, States.JsonToString(${filterResult}.arr[0]))`,
-            },
-            ResultPath: filterResult,
-            Next: "check",
-          },
-          // tail
-          predicateFalse: {
-            Type: "Pass",
-            InputPath: `${filterResult}.arr[1:]`,
-            ResultPath: `${filterResult}.arr`,
-            Next: "check",
-          },
-          // parse the arrStr back to json and assign over the filter result value.
-          end: {
-            startState: "format",
-            states: {
-              format: {
-                Type: "Pass",
-                // filterResult = { result: JSON.parse(filterResult.arrStr + "]") }
-                Parameters: {
-                  // cannot use intrinsic functions in InputPath or Result
-                  "result.$": `States.StringToJson(States.Format('{}]', ${filterResult}.arrStr))`,
-                },
-                ResultPath: filterResult,
-                Next: "set",
+          ResultPath: filterResult,
+          Next: "check",
+        },
+        // tail
+        predicateFalse: {
+          Type: "Pass",
+          InputPath: `${filterResult}.arr[1:]`,
+          ResultPath: `${filterResult}.arr`,
+          Next: "check",
+        },
+        // parse the arrStr back to json and assign over the filter result value.
+        end: {
+          startState: "format",
+          states: {
+            format: {
+              Type: "Pass",
+              // filterResult = { result: JSON.parse(filterResult.arrStr + "]") }
+              Parameters: {
+                // cannot use intrinsic functions in InputPath or Result
+                "result.$": `States.StringToJson(States.Format('{}]', ${filterResult}.arrStr))`,
               },
-              // filterResult = filterResult.result
-              set: {
-                Type: "Pass",
-                // the original array is initialized with a leading null to simplify the adding of new values to the array string "[null"+",{new item}"+"]"
-                InputPath: `${filterResult}.result[1:]`,
-                ResultPath: filterResult,
-                Next: ASLGraph.DeferNext,
-              },
+              ResultPath: filterResult,
+              Next: "set",
+            },
+            // filterResult = filterResult.result
+            set: {
+              Type: "Pass",
+              // the original array is initialized with a leading null to simplify the adding of new values to the array string "[null"+",{new item}"+"]"
+              InputPath: `${filterResult}.result[1:]`,
+              ResultPath: filterResult,
+              Next: ASLGraph.DeferNext,
             },
           },
         },
-        output: { jsonPath: filterResult },
-      };
-    });
+      },
+      output: { jsonPath: filterResult },
+    };
   }
 
   /**
@@ -4857,6 +5014,11 @@ function exprToString(
     return assertNever(expr);
   }
 }
+
+/**
+ * Special error class for situations unsupported by JSON path filters.
+ */
+class FilterJsonPathUnsupported extends Error {}
 
 // to prevent the closure serializer from trying to import all of functionless.
 export const deploymentOnlyModule = true;
