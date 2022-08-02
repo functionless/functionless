@@ -847,6 +847,9 @@ export function makeFunctionlessChecker(
     if (
       ts.isStringLiteral(node) ||
       ts.isNumericLiteral(node) ||
+      ts.isTemplateHead(node) ||
+      ts.isTemplateMiddle(node) ||
+      ts.isTemplateTail(node) ||
       node.kind === ts.SyntaxKind.TrueKeyword ||
       node.kind === ts.SyntaxKind.FalseKeyword ||
       node.kind === ts.SyntaxKind.NullKeyword ||

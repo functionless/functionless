@@ -650,20 +650,30 @@ export function compile(
             toExpr(node.condition, scope),
             toExpr(node.incrementor, scope),
           ]);
-        } else if (ts.isTemplateExpression(node)) {
+        } else if (
+          ts.isTemplateExpression(node) ||
+          ts.isTaggedTemplateExpression(node)
+        ) {
+          const template = ts.isTemplateExpression(node) ? node : node.template;
           const exprs = [];
-          if (node.head.text) {
-            exprs.push(string(node.head.text));
+          if (ts.isNoSubstitutionTemplateLiteral(template)) {
+            return newExpr(NodeKind.TaggedTemplateExpr, [quasi(template.text)]);
           }
-          for (const span of node.templateSpans) {
+          if (template.head.text) {
+            exprs.push(quasi(template.head.text));
+          }
+          for (const span of template.templateSpans) {
             exprs.push(toExpr(span.expression, scope));
             if (span.literal.text) {
-              exprs.push(string(span.literal.text));
+              exprs.push(quasi(span.literal.text));
             }
           }
-          return newExpr(NodeKind.TemplateExpr, [
-            ts.factory.createArrayLiteralExpression(exprs),
-          ]);
+          return newExpr(
+            ts.isTemplateExpression(node)
+              ? NodeKind.TemplateExpr
+              : NodeKind.TaggedTemplateExpr,
+            [ts.factory.createArrayLiteralExpression(exprs)]
+          );
         } else if (ts.isBreakStatement(node)) {
           return newExpr(NodeKind.BreakStmt, []);
         } else if (ts.isContinueStatement(node)) {
@@ -854,6 +864,12 @@ export function compile(
         } else {
           return "";
         }
+      }
+
+      function quasi(literal: string): ts.Expression {
+        return newExpr(NodeKind.QuasiString, [
+          ts.factory.createStringLiteral(literal),
+        ]);
       }
 
       function string(literal: string): ts.Expression {

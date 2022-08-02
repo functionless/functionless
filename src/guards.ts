@@ -44,6 +44,7 @@ export const isPromiseArrayExpr = typeGuard(NodeKind.PromiseArrayExpr);
 export const isPromiseExpr = typeGuard(NodeKind.PromiseExpr);
 export const isPropAccessExpr = typeGuard(NodeKind.PropAccessExpr);
 export const isPropAssignExpr = typeGuard(NodeKind.PropAssignExpr);
+export const isQuasiString = typeGuard(NodeKind.QuasiString);
 export const isReferenceExpr = typeGuard(NodeKind.ReferenceExpr);
 export const isRegexExpr = typeGuard(NodeKind.RegexExpr);
 export const isSpreadAssignExpr = typeGuard(NodeKind.SpreadAssignExpr);

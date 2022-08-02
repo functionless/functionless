@@ -78,6 +78,7 @@ export enum NodeKind {
   WhileStmt = 76,
   WithStmt = 77,
   YieldExpr = 78,
+  QuasiString = 79,
 }
 
 export namespace NodeKind {
