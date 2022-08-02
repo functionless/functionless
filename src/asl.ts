@@ -14,7 +14,6 @@ import {
   CallExpr,
   ElementAccessExpr,
   Expr,
-  Identifier,
   NullLiteralExpr,
   PropAccessExpr,
 } from "./expression";
@@ -49,7 +48,6 @@ import {
   isExprStmt,
   isForInStmt,
   isForOfStmt,
-  isFunctionDecl,
   isFunctionExpr,
   isIdentifier,
   isIfStmt,
@@ -91,7 +89,6 @@ import {
   isForStmt,
   isVariableDeclList,
   isVariableDecl,
-  isClassMember,
   isPrivateIdentifier,
   isYieldExpr,
   isBigIntExpr,
@@ -650,7 +647,8 @@ export class ASL {
    * Evaluate a single {@link Stmt} into a collection of named states.
    */
   public evalStmt(
-    stmt: Stmt
+    stmt: Stmt,
+    returnPass?: Partial<Pass>
   ): ASLGraph.SubState | ASLGraph.NodeState | undefined {
     if (isBlockStmt(stmt)) {
       return ASLGraph.joinSubStates(
@@ -956,6 +954,7 @@ export class ASL {
             Type: "Pass" as const,
             ResultPath: `$`,
             End: true,
+            ...(returnPass ?? {}),
           },
           output
         )
@@ -2751,157 +2750,113 @@ export class ASL {
       );
     }
 
-    const stmt = predicate.body.statements[0];
-    if (
-      stmt === undefined ||
-      !isReturnStmt(stmt) ||
-      predicate.body.statements.length !== 1
-    ) {
-      throw new SynthError(
-        ErrorCodes.StepFunction_invalid_filter_syntax,
-        'a JSONPath filter expression only supports a single, in-line statement, e.g. .filter(a => a == "hello" || a === "world")'
-      );
-    }
+    const predicateResult = this.newHeapVariable();
+    const filterResult = this.newHeapVariable();
 
-    const toFilterCondition = (expr: Expr): string => {
-      const constant = evalToConstant(expr);
-      if (constant) {
-        if (typeof constant.constant === "string") {
-          // strings are wrapped with '' in the filter expression.
-          // Escape existing quotes to avoid issues.
-          return `'${constant.constant.replace(/'/g, "\\'")}'`;
-        }
-        if (
-          typeof constant.constant === "object" &&
-          constant.constant !== null
-        ) {
-          throw new SynthError(
-            ErrorCodes.StepFunction_invalid_filter_syntax,
-            `Filter expressions do not support object or array literals, found: ${JSON.stringify(
-              constant.constant
-            )}`
-          );
-        } else {
-          return `${constant.constant}`;
-        }
-      } else if (isBinaryExpr(expr)) {
-        return `${toFilterCondition(expr.left)}${expr.op}${toFilterCondition(
-          expr.right
-        )}`;
-      } else if (isUnaryExpr(expr)) {
-        return `${expr.op}${toFilterCondition(expr.expr)}`;
-      } else if (isIdentifier(expr)) {
-        const ref = expr.lookup();
-        if (ref === undefined) {
-          throw new SynthError(
-            ErrorCodes.Unexpected_Error,
-            `unresolved identifier: ${expr.name}`
-          );
-        }
-        return resolveRef(ref);
-        function resolveRef(ref: Decl): string {
-          if (isParameterDecl(ref)) {
-            if (ref.parent !== predicate) {
-              throw new SynthError(
-                ErrorCodes.StepFunction_invalid_filter_syntax,
-                `Cannot reference a parameter from a parent closure (found: ${
-                  // we can assume an identifier here as binding patterns cannot be the parent of an identifier (only `BindingElm`s)
-                  (<Identifier>ref.name).name
-                }. Can only use the item parameter .filter((item) =>) in a JSONPath filter expression`
-              );
-            }
-            if (ref === ref.parent.parameters[0]) {
-              return "@";
-            } else if (ref === ref.parent.parameters[1]) {
-              throw new SynthError(
-                ErrorCodes.StepFunction_invalid_filter_syntax,
-                `the 'index' (found: ${
-                  (<Identifier>ref.name).name
-                }) parameter in a .filter expression is not supported`
-              );
-            } else {
-              throw new SynthError(
-                ErrorCodes.StepFunction_invalid_filter_syntax,
-                `the 'array' (found: ${
-                  (<Identifier>ref.name).name
-                })parameter in a .filter expression is not supported`
-              );
-            }
-          } else if (isBindingElem(ref)) {
-            if (isArrayBinding(ref.parent)) {
-              return `${resolveRef(
-                ref.parent.parent
-              )}[${ref.parent.bindings.indexOf(ref)}]`;
-            }
-
-            const propName = ref.propertyName
-              ? isIdentifier(ref.propertyName)
-                ? ref.propertyName.name
-                : isStringLiteralExpr(ref.propertyName)
-                ? ref.propertyName.value
-                : evalToConstant(ref.propertyName)?.constant
-              : isIdentifier(ref.name)
-              ? ref.name.name
-              : undefined;
-
-            if (!propName) {
-              throw new SynthError(
-                ErrorCodes.StepFunctions_property_names_must_be_constant
-              );
-            }
-
-            return `${resolveRef(ref.parent.parent)}[${propName}]`;
-          } else if (
-            isVariableDecl(ref) ||
-            isFunctionDecl(ref) ||
-            isSetAccessorDecl(ref) ||
-            isGetAccessorDecl(ref) ||
-            isClassDecl(ref) ||
-            isClassMember(ref)
-          ) {
-            throw new SynthError(
-              ErrorCodes.StepFunction_invalid_filter_syntax,
-              `cannot reference a ${ref.kindName} within a JSONPath .filter expression`
-            );
-          }
-          assertNever(ref);
-        }
-      } else if (isPropAccessExpr(expr)) {
-        return `${toFilterCondition(expr.expr)}.${expr.name.name}`;
-      } else if (isElementAccessExpr(expr)) {
-        return `${toFilterCondition(
-          expr.expr
-        )}[${this.assertElementAccessConstant(
-          ASLGraph.getAslStateOutput(this.eval(expr.element))
-        )}]`;
-      }
-
-      throw new SynthError(
-        ErrorCodes.StepFunction_invalid_filter_syntax,
-        `JSONPath's filter expression does not support '${exprToString(expr)}'`
-      );
-    };
-
-    return this.evalExpr(
-      expr.expr.expr,
-      (leftOutput, { normalizeOutputToJsonPath }) => {
-        if (
-          !ASLGraph.isJsonPath(leftOutput) &&
-          !Array.isArray(leftOutput.value)
-        ) {
-          throw new SynthError(
-            ErrorCodes.Unexpected_Error,
-            "Expected filter to be called on a literal array or reference to one."
-          );
-        }
-
-        const varRef = normalizeOutputToJsonPath().jsonPath;
-
-        return {
-          jsonPath: `${varRef}[?(${toFilterCondition(stmt.expr)})]`,
-        };
-      }
+    const predicateBody = ASLGraph.joinSubStates(
+      predicate.body,
+      ...predicate.body.statements.map((stmt) =>
+        this.evalStmt(stmt, {
+          End: undefined,
+          ResultPath: predicateResult,
+          Next: ASLGraph.DeferNext,
+        })
+      )
     );
+
+    return this.evalExpr(expr.expr.expr, (_, { normalizeOutputToJsonPath }) => {
+      const initialArrayLocation = normalizeOutputToJsonPath().jsonPath;
+
+      return {
+        startState: "init",
+        states: {
+          init: {
+            Type: "Pass",
+            Parameters: {
+              // copy array to tail it
+              "arr.$": initialArrayLocation,
+              arrStr: "[null",
+            },
+            // use the eventual result location as a temp working space
+            ResultPath: filterResult,
+            Next: "check",
+          },
+          check: {
+            Type: "Choice",
+            Choices: [
+              { ...ASL.isPresent(`${filterResult}.arr[0]`), Next: "assign" },
+            ],
+            Default: "end",
+          },
+          // assign the item parameter the head of the temp array
+          assign: ASLGraph.updateDeferredNextStates(
+            { Next: "predicate" },
+            // TODO: support index and array?
+            (predicate.parameters.length > 0
+              ? this.evalDecl(predicate.parameters[0], {
+                  jsonPath: `${filterResult}.arr[0]`,
+                })
+              : undefined) ?? { Type: "Pass" }
+          ),
+          // run the predicate function logic
+          predicate: ASLGraph.updateDeferredNextStates(
+            { Next: "checkPredicate" },
+            predicateBody ?? { Type: "Pass" }
+          ),
+          // check that the predicate value is true
+          checkPredicate: {
+            Type: "Choice",
+            Choices: [
+              { ...ASL.isTruthy(predicateResult), Next: "predicateTrue" },
+            ],
+            Default: "predicateFalse",
+          },
+          // tail and append
+          predicateTrue: {
+            Type: "Pass",
+            Parameters: {
+              "arr.$": `${filterResult}.arr[1:]`,
+              // const arrStr = `${arrStr},${JSON.stringify(arr[0])}`;
+              "arrStr.$": `States.Format('{},{}', ${filterResult}.arrStr, States.JsonToString(${filterResult}.arr[0]))`,
+            },
+            ResultPath: filterResult,
+            Next: "check",
+          },
+          // tail
+          predicateFalse: {
+            Type: "Pass",
+            InputPath: `${filterResult}.arr[1:]`,
+            ResultPath: `${filterResult}.arr`,
+            Next: "check",
+          },
+          // parse the arrStr back to json and assign over the filter result value.
+          end: {
+            startState: "format",
+            states: {
+              format: {
+                Type: "Pass",
+                // filterResult = { result: JSON.parse(filterResult.arrStr + "]") }
+                Parameters: {
+                  // cannot use intrinsic functions in InputPath or Result
+                  "result.$": `States.StringToJson(States.Format('{}]', ${filterResult}.arrStr))`,
+                },
+                ResultPath: filterResult,
+                Next: "set",
+              },
+              // filterResult = filterResult.result
+              set: {
+                Type: "Pass",
+                // the original array is initialized with a leading null to simplify the adding of new values to the array string "[null"+",{new item}"+"]"
+                InputPath: `${filterResult}.result[1:]`,
+                ResultPath: filterResult,
+                Next: ASLGraph.DeferNext,
+              },
+            },
+          },
+        },
+        output: { jsonPath: filterResult },
+      };
+    });
   }
 
   /**

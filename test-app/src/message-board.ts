@@ -1,668 +1,688 @@
-import * as path from "path";
-import * as appsync from "@aws-cdk/aws-appsync-alpha";
-import {
-  App,
-  aws_dynamodb,
-  RemovalPolicy,
-  Stack,
-  aws_events,
-  Duration,
-} from "aws-cdk-lib";
-import {
-  $AWS,
-  $SFN,
-  $util,
-  AppsyncResolver,
-  Function,
-  StepFunction,
-  Table,
-  EventBus,
-  Event,
-  ExpressStepFunction,
-  AppsyncField,
-  AppsyncContext,
-} from "functionless";
+// import * as path from "path";
+// import * as appsync from "@aws-cdk/aws-appsync-alpha";
+// import {
+//   App,
+//   aws_dynamodb,
+//   RemovalPolicy,
+//   Stack,
+//   aws_events,
+//   Duration,
+// } from "aws-cdk-lib";
+// import {
+//   $AWS,
+//   $SFN,
+//   $util,
+//   AppsyncResolver,
+//   Function,
+//   StepFunction,
+//   Table,
+//   EventBus,
+//   Event,
+//   ExpressStepFunction,
+//   AppsyncField,
+//   AppsyncContext,
+// } from "functionless";
+
+import { App, Stack } from "aws-cdk-lib";
+import { $SFN, StepFunction } from "../../lib";
 
 export const app = new App();
 export const stack = new Stack(app, "message-board");
 
-const database = Table.fromTable<Post | Comment, "pk", "sk">(
-  new aws_dynamodb.Table(stack, "MessageBoard", {
-    tableName: "MessageBoard",
-    partitionKey: {
-      name: "pk",
-      type: aws_dynamodb.AttributeType.STRING,
-    },
-    sortKey: {
-      name: "sk",
-      type: aws_dynamodb.AttributeType.STRING,
-    },
-    billingMode: aws_dynamodb.BillingMode.PAY_PER_REQUEST,
-    removalPolicy: RemovalPolicy.DESTROY,
-  })
-);
-
-const schema = new appsync.Schema({
-  filePath: path.join(__dirname, "..", "message-board.gql"),
-});
-
-const api = new appsync.GraphqlApi(stack, "Api", {
-  name: "MessageBoard",
-  schema,
-  authorizationConfig: {
-    defaultAuthorization: {
-      authorizationType: appsync.AuthorizationType.IAM,
-    },
-  },
-  xrayEnabled: true,
-  logConfig: {
-    fieldLogLevel: appsync.FieldLogLevel.ALL,
-    excludeVerboseContent: false,
-  },
-});
-
-new AppsyncResolver<{ postId: string }, Post | undefined>(
-  stack,
-  "getPost",
+new StepFunction<
   {
-    api,
-    typeName: "Query",
-    fieldName: "getPost",
+    arr: { value: number; key?: string }[];
+    key: number;
+    key2: string;
   },
-  ($context) => {
-    return database.appsync.getItem({
-      key: {
-        pk: {
-          S: `Post|${$context.arguments.postId}`,
-        },
-        sk: {
-          S: "Post",
-        },
-      },
+  { value: number; key?: string }[]
+>(stack, "sfn2", async ({ arr, key }) => {
+  return arr
+    .filter(({ value }) => value <= key)
+    .filter((item) => {
+      const { key: itemKey } = item;
+      $SFN.waitFor(1);
+      return itemKey === `hi${key}`;
     });
-  }
-);
-
-new AppsyncResolver<
-  { nextToken?: string; limit?: number },
-  CommentPage,
-  Omit<Post, "comments">
->(
-  stack,
-  "comments",
-  {
-    api,
-    typeName: "Post",
-    fieldName: "comments",
-  },
-  async ($context) => {
-    const response = await database.appsync.query({
-      query: {
-        expression: `pk = :pk and begins_with(#sk,:sk)`,
-        expressionValues: {
-          ":pk": {
-            S: $context.source.pk,
-          },
-          ":sk": {
-            S: "Comment|",
-          },
-        },
-        expressionNames: {
-          "#sk": "sk",
-        },
-      },
-      nextToken: $context.arguments.nextToken,
-      limit: $context.arguments.limit,
-    });
-
-    if (response.items !== undefined) {
-      return {
-        comments: response.items as Comment[],
-        nextToken: response.nextToken,
-      };
-    }
-    return {
-      comments: [],
-    };
-  }
-);
-
-export const createPost = new AppsyncResolver<{ title: string }, Post>(
-  stack,
-  "createPost",
-  {
-    api,
-    typeName: "Mutation",
-    fieldName: "createPost",
-  },
-  async ($context) => {
-    const postId = $util.autoUlid();
-    const post = await database.appsync.putItem({
-      key: {
-        pk: {
-          S: `Post|${postId}`,
-        },
-        sk: {
-          S: "Post",
-        },
-      },
-      attributeValues: {
-        postId: {
-          S: postId,
-        },
-        title: {
-          S: $context.arguments.title,
-        },
-      },
-    });
-
-    return post;
-  }
-);
-
-export const validateComment = new Function<
-  { commentText: string },
-  "ok" | "bad"
->(stack, "ValidateComment", async () => {
-  return "ok" as const;
 });
 
-export const commentValidationWorkflow = new StepFunction<
-  { postId: string; commentId: string; commentText: string },
-  void
->(stack, "CommentValidationWorkflow", async (input) => {
-  const status = await validateComment({ commentText: input.commentText });
-  if (status === "bad") {
-    await $AWS.DynamoDB.DeleteItem({
-      Table: database,
-      Key: {
-        pk: {
-          S: `Post|${input.postId}`,
-        },
-        sk: {
-          S: `Comment|${input.commentId}`,
-        },
-      },
-    });
-  }
-});
+// const database = Table.fromTable<Post | Comment, "pk", "sk">(
+//   new aws_dynamodb.Table(stack, "MessageBoard", {
+//     tableName: "MessageBoard",
+//     partitionKey: {
+//       name: "pk",
+//       type: aws_dynamodb.AttributeType.STRING,
+//     },
+//     sortKey: {
+//       name: "sk",
+//       type: aws_dynamodb.AttributeType.STRING,
+//     },
+//     billingMode: aws_dynamodb.BillingMode.PAY_PER_REQUEST,
+//     removalPolicy: RemovalPolicy.DESTROY,
+//   })
+// );
 
-export const addComment = new AppsyncResolver<
-  { postId: string; commentText: string },
-  Comment
->(
-  stack,
-  "addComment",
-  {
-    api,
-    typeName: "Mutation",
-    fieldName: "addComment",
-  },
-  async ($context) => {
-    const commentId = $util.autoUlid();
-    const comment = await database.appsync.putItem({
-      key: {
-        pk: {
-          S: `Post|${$context.arguments.postId}`,
-        },
-        sk: {
-          S: `Comment|${commentId}`,
-        },
-      },
-      attributeValues: {
-        postId: {
-          S: $context.arguments.postId,
-        },
-        commentId: {
-          S: commentId,
-        },
-        commentText: {
-          S: $context.arguments.commentText,
-        },
-        createdTime: {
-          S: $util.time.nowISO8601(),
-        },
-      },
-    });
+// const schema = new appsync.Schema({
+//   filePath: path.join(__dirname, "..", "message-board.gql"),
+// });
 
-    // kick off a workflow to validate the comment
-    await commentValidationWorkflow({ input: comment });
+// const api = new appsync.GraphqlApi(stack, "Api", {
+//   name: "MessageBoard",
+//   schema,
+//   authorizationConfig: {
+//     defaultAuthorization: {
+//       authorizationType: appsync.AuthorizationType.IAM,
+//     },
+//   },
+//   xrayEnabled: true,
+//   logConfig: {
+//     fieldLogLevel: appsync.FieldLogLevel.ALL,
+//     excludeVerboseContent: false,
+//   },
+// });
 
-    return comment;
-  }
-);
+// new AppsyncResolver<{ postId: string }, Post | undefined>(
+//   stack,
+//   "getPost",
+//   {
+//     api,
+//     typeName: "Query",
+//     fieldName: "getPost",
+//   },
+//   ($context) => {
+//     return database.appsync.getItem({
+//       key: {
+//         pk: {
+//           S: `Post|${$context.arguments.postId}`,
+//         },
+//         sk: {
+//           S: "Post",
+//         },
+//       },
+//     });
+//   }
+// );
 
-interface MessageDeletedEvent
-  extends Event<
-    { count: number },
-    "Delete-Message-Success",
-    "MessageDeleter"
-  > {}
+// new AppsyncResolver<
+//   { nextToken?: string; limit?: number },
+//   CommentPage,
+//   Omit<Post, "comments">
+// >(
+//   stack,
+//   "comments",
+//   {
+//     api,
+//     typeName: "Post",
+//     fieldName: "comments",
+//   },
+//   async ($context) => {
+//     const response = await database.appsync.query({
+//       query: {
+//         expression: `pk = :pk and begins_with(#sk,:sk)`,
+//         expressionValues: {
+//           ":pk": {
+//             S: $context.source.pk,
+//           },
+//           ":sk": {
+//             S: "Comment|",
+//           },
+//         },
+//         expressionNames: {
+//           "#sk": "sk",
+//         },
+//       },
+//       nextToken: $context.arguments.nextToken,
+//       limit: $context.arguments.limit,
+//     });
 
-interface PostDeletedEvent
-  extends Event<{ id: string }, "Delete-Post-Success", "MessageDeleter"> {}
+//     if (response.items !== undefined) {
+//       return {
+//         comments: response.items as Comment[],
+//         nextToken: response.nextToken,
+//       };
+//     }
+//     return {
+//       comments: [],
+//     };
+//   }
+// );
 
-const customDeleteBus = new EventBus<MessageDeletedEvent | PostDeletedEvent>(
-  stack,
-  "deleteBus"
-);
+// export const createPost = new AppsyncResolver<{ title: string }, Post>(
+//   stack,
+//   "createPost",
+//   {
+//     api,
+//     typeName: "Mutation",
+//     fieldName: "createPost",
+//   },
+//   async ($context) => {
+//     const postId = $util.autoUlid();
+//     const post = await database.appsync.putItem({
+//       key: {
+//         pk: {
+//           S: `Post|${postId}`,
+//         },
+//         sk: {
+//           S: "Post",
+//         },
+//       },
+//       attributeValues: {
+//         postId: {
+//           S: postId,
+//         },
+//         title: {
+//           S: $context.arguments.title,
+//         },
+//       },
+//     });
 
-const deleteWorkflow = new StepFunction<{ postId: string }, void>(
-  stack,
-  "DeletePostWorkflow",
-  async (input) => {
-    while (true) {
-      try {
-        const comments = await $AWS.DynamoDB.Query({
-          Table: database,
-          KeyConditionExpression: `pk = :pk`,
-          ExpressionAttributeValues: {
-            ":pk": {
-              S: `Post|${input.postId}`,
-            },
-          },
-        });
+//     return post;
+//   }
+// );
 
-        if (comments.Items?.[0] !== undefined) {
-          await $SFN.forEach(comments.Items, async (comment) =>
-            $AWS.DynamoDB.DeleteItem({
-              Table: database,
-              Key: {
-                pk: comment.pk,
-                sk: comment.sk,
-              },
-            })
-          );
-        } else {
-          await $AWS.DynamoDB.DeleteItem({
-            Table: database,
-            Key: {
-              pk: {
-                S: `Post|${input.postId}`,
-              },
-              sk: {
-                S: "Post",
-              },
-            },
-          });
+// export const validateComment = new Function<
+//   { commentText: string },
+//   "ok" | "bad"
+// >(stack, "ValidateComment", async () => {
+//   return "ok" as const;
+// });
 
-          await customDeleteBus.putEvents({
-            "detail-type": "Delete-Post-Success",
-            source: "MessageDeleter",
-            detail: {
-              id: input.postId,
-            },
-          });
-        }
-      } catch {
-        $SFN.waitFor(10);
-      }
-    }
-  }
-);
+// export const commentValidationWorkflow = new StepFunction<
+//   { postId: string; commentId: string; commentText: string },
+//   void
+// >(stack, "CommentValidationWorkflow", async (input) => {
+//   const status = await validateComment({ commentText: input.commentText });
+//   if (status === "bad") {
+//     await $AWS.DynamoDB.DeleteItem({
+//       Table: database,
+//       Key: {
+//         pk: {
+//           S: `Post|${input.postId}`,
+//         },
+//         sk: {
+//           S: `Comment|${input.commentId}`,
+//         },
+//       },
+//     });
+//   }
+// });
 
-export const deletePost = new AppsyncResolver<
-  { postId: string },
-  AWS.StepFunctions.StartExecutionOutput | undefined
->(
-  stack,
-  "deletePost",
-  {
-    api,
-    typeName: "Mutation",
-    fieldName: "deletePost",
-  },
-  async ($context) => {
-    const item = await database.appsync.getItem({
-      key: {
-        pk: {
-          S: `Post|${$context.arguments.postId}`,
-        },
-        sk: {
-          S: "Post",
-        },
-      },
-    });
+// export const addComment = new AppsyncResolver<
+//   { postId: string; commentText: string },
+//   Comment
+// >(
+//   stack,
+//   "addComment",
+//   {
+//     api,
+//     typeName: "Mutation",
+//     fieldName: "addComment",
+//   },
+//   async ($context) => {
+//     const commentId = $util.autoUlid();
+//     const comment = await database.appsync.putItem({
+//       key: {
+//         pk: {
+//           S: `Post|${$context.arguments.postId}`,
+//         },
+//         sk: {
+//           S: `Comment|${commentId}`,
+//         },
+//       },
+//       attributeValues: {
+//         postId: {
+//           S: $context.arguments.postId,
+//         },
+//         commentId: {
+//           S: commentId,
+//         },
+//         commentText: {
+//           S: $context.arguments.commentText,
+//         },
+//         createdTime: {
+//           S: $util.time.nowISO8601(),
+//         },
+//       },
+//     });
 
-    if (item === undefined) {
-      $util.log.info("Item was undefined");
-      return undefined;
-    }
+//     // kick off a workflow to validate the comment
+//     await commentValidationWorkflow({ input: comment });
 
-    return deleteWorkflow({
-      input: {
-        postId: $context.arguments.postId,
-      },
-    });
-  }
-);
+//     return comment;
+//   }
+// );
 
-export const getDeletionStatus = new AppsyncResolver<
-  { executionArn: string },
-  string | undefined
->(
-  stack,
-  "getDeletionStatus",
-  {
-    api,
-    typeName: "Query",
-    fieldName: "getDeletionStatus",
-  },
-  async ($context) => {
-    const executionStatus = await deleteWorkflow.describeExecution(
-      $context.arguments.executionArn
-    );
+// interface MessageDeletedEvent
+//   extends Event<
+//     { count: number },
+//     "Delete-Message-Success",
+//     "MessageDeleter"
+//   > {}
 
-    return executionStatus.status;
-  }
-);
+// interface PostDeletedEvent
+//   extends Event<{ id: string }, "Delete-Post-Success", "MessageDeleter"> {}
 
-export interface CommentPage {
-  nextToken?: string;
-  comments: Comment[];
-}
+// const customDeleteBus = new EventBus<MessageDeletedEvent | PostDeletedEvent>(
+//   stack,
+//   "deleteBus"
+// );
 
-interface Notification {
-  message: string;
-}
+// const deleteWorkflow = new StepFunction<{ postId: string }, void>(
+//   stack,
+//   "DeletePostWorkflow",
+//   async (input) => {
+//     while (true) {
+//       try {
+//         const comments = await $AWS.DynamoDB.Query({
+//           Table: database,
+//           KeyConditionExpression: `pk = :pk`,
+//           ExpressionAttributeValues: {
+//             ":pk": {
+//               S: `Post|${input.postId}`,
+//             },
+//           },
+//         });
 
-interface TestDeleteEvent extends Event<{ postId: string }, "Delete", "test"> {}
+//         if (comments.Items?.[0] !== undefined) {
+//           await $SFN.forEach(comments.Items, async (comment) =>
+//             $AWS.DynamoDB.DeleteItem({
+//               Table: database,
+//               Key: {
+//                 pk: comment.pk,
+//                 sk: comment.sk,
+//               },
+//             })
+//           );
+//         } else {
+//           await $AWS.DynamoDB.DeleteItem({
+//             Table: database,
+//             Key: {
+//               pk: {
+//                 S: `Post|${input.postId}`,
+//               },
+//               sk: {
+//                 S: "Post",
+//               },
+//             },
+//           });
 
-const sendNotification = new Function<Notification, void>(
-  stack,
-  "sendNotification",
-  async (event) => {
-    console.log("notification: ", event);
-  }
-);
+//           await customDeleteBus.putEvents({
+//             "detail-type": "Delete-Post-Success",
+//             source: "MessageDeleter",
+//             detail: {
+//               id: input.postId,
+//             },
+//           });
+//         }
+//       } catch {
+//         $SFN.waitFor(10);
+//       }
+//     }
+//   }
+// );
 
-const defaultBus = EventBus.default<TestDeleteEvent>(stack);
+// export const deletePost = new AppsyncResolver<
+//   { postId: string },
+//   AWS.StepFunctions.StartExecutionOutput | undefined
+// >(
+//   stack,
+//   "deletePost",
+//   {
+//     api,
+//     typeName: "Mutation",
+//     fieldName: "deletePost",
+//   },
+//   async ($context) => {
+//     const item = await database.appsync.getItem({
+//       key: {
+//         pk: {
+//           S: `Post|${$context.arguments.postId}`,
+//         },
+//         sk: {
+//           S: "Post",
+//         },
+//       },
+//     });
 
-deleteWorkflow
-  .onSucceeded(stack, "deleteSuccessfulEvent")
-  .map((event) => ({
-    message: `post deleted ${event.id} using ${deleteWorkflow.resource.stateMachineName}`,
-  }))
-  .pipe(sendNotification);
+//     if (item === undefined) {
+//       $util.log.info("Item was undefined");
+//       return undefined;
+//     }
 
-defaultBus
-  .when(stack, "testDelete", (event) => event.source === "test")
-  .map((event) => event.detail)
-  .pipe(deleteWorkflow);
+//     return deleteWorkflow({
+//       input: {
+//         postId: $context.arguments.postId,
+//       },
+//     });
+//   }
+// );
 
-customDeleteBus
-  .when(
-    stack,
-    "Delete Message Rule",
-    (event) => event["detail-type"] === "Delete-Message-Success"
-  )
-  .map(
-    (event) =>
-      <Notification>{
-        message: `Messages deleted: ${
-          (<MessageDeletedEvent>event).detail.count
-        }`,
-      }
-  )
-  .pipe(sendNotification);
+// export const getDeletionStatus = new AppsyncResolver<
+//   { executionArn: string },
+//   string | undefined
+// >(
+//   stack,
+//   "getDeletionStatus",
+//   {
+//     api,
+//     typeName: "Query",
+//     fieldName: "getDeletionStatus",
+//   },
+//   async ($context) => {
+//     const executionStatus = await deleteWorkflow.describeExecution(
+//       $context.arguments.executionArn
+//     );
 
-customDeleteBus
-  .when(
-    stack,
-    "Delete Post Rule",
-    (event) => event["detail-type"] === "Delete-Post-Success"
-  )
-  .map(
-    (event) =>
-      <Notification>{
-        message: `Post Deleted: ${(<PostDeletedEvent>event).detail.id}`,
-      }
-  )
-  .pipe(sendNotification);
+//     return executionStatus.status;
+//   }
+// );
 
-/**
- * Native Function test
- */
+// export interface CommentPage {
+//   nextToken?: string;
+//   comments: Comment[];
+// }
 
-new aws_events.EventBus(stack, "busbus");
+// interface Notification {
+//   message: string;
+// }
 
-const b = { bus: customDeleteBus };
+// interface TestDeleteEvent extends Event<{ postId: string }, "Delete", "test"> {}
 
-const func = new Function<undefined, string>(stack, "testFunc2", async () => {
-  return "hi";
-});
+// const sendNotification = new Function<Notification, void>(
+//   stack,
+//   "sendNotification",
+//   async (event) => {
+//     console.log("notification: ", event);
+//   }
+// );
 
-const exprSfn = new ExpressStepFunction(stack, "exp", () => {
-  return "woo";
-});
+// const defaultBus = EventBus.default<TestDeleteEvent>(stack);
 
-new Function(
-  stack,
-  "testFunc",
-  {
-    timeout: Duration.minutes(1),
-  },
-  async () => {
-    const result = func();
-    console.log(`function result: ${result}`);
-    await customDeleteBus.putEvents({
-      "detail-type": "Delete-Post-Success",
-      source: "MessageDeleter",
-      detail: {
-        id: "from the test method!!",
-      },
-    });
-    const result2 = await $AWS.EventBridge.putEvents({
-      Entries: [
-        {
-          EventBusName: customDeleteBus.eventBusArn,
-          Source: "MessageDeleter",
-          Detail: JSON.stringify({
-            id: "from the sdk put event method!",
-          }),
-          DetailType: "Delete-Post-Success",
-        },
-      ],
-    });
-    console.log(`bus: ${JSON.stringify(result2)}`);
-    const exc = await deleteWorkflow({
-      input: {
-        postId: "something",
-      },
-    });
-    const { bus } = b;
-    await bus.putEvents({
-      "detail-type": "Delete-Message-Success",
-      detail: { count: 0 },
-      source: "MessageDeleter",
-    });
-    console.log(deleteWorkflow.describeExecution(exc.executionArn));
-    await $AWS.DynamoDB.PutItem({
-      Table: database,
-      Item: {
-        pk: { S: "Post|1" },
-        sk: { S: "Post" },
-        postId: {
-          S: "1",
-        },
-        title: { S: "myPost" },
-      },
-    });
-    const item = await $AWS.DynamoDB.GetItem({
-      Table: database,
-      ConsistentRead: true,
-      Key: { pk: { S: "Post|1" }, sk: { S: "Post" } },
-    });
-    console.log(item.Item?.pk?.S);
-    return exprSfn({});
-    // return "hi";
-  }
-);
+// deleteWorkflow
+//   .onSucceeded(stack, "deleteSuccessfulEvent")
+//   .map((event) => ({
+//     message: `post deleted ${event.id} using ${deleteWorkflow.resource.stateMachineName}`,
+//   }))
+//   .pipe(sendNotification);
 
-/**
- * GraphQL created with Code-First
- */
-const api2 = new appsync.GraphqlApi(stack, "Api2", {
-  name: "MessageReader",
-});
+// defaultBus
+//   .when(stack, "testDelete", (event) => event.source === "test")
+//   .map((event) => event.detail)
+//   .pipe(deleteWorkflow);
 
-/*
-  type Query {
-    getPost(postId: string!): Post
-  }
+// customDeleteBus
+//   .when(
+//     stack,
+//     "Delete Message Rule",
+//     (event) => event["detail-type"] === "Delete-Message-Success"
+//   )
+//   .map(
+//     (event) =>
+//       <Notification>{
+//         message: `Messages deleted: ${
+//           (<MessageDeletedEvent>event).detail.count
+//         }`,
+//       }
+//   )
+//   .pipe(sendNotification);
 
- type Post {
-  postId: ID!
-  title: String!
-  comments(nextToken: String, limit: Int): CommentPage
- }
+// customDeleteBus
+//   .when(
+//     stack,
+//     "Delete Post Rule",
+//     (event) => event["detail-type"] === "Delete-Post-Success"
+//   )
+//   .map(
+//     (event) =>
+//       <Notification>{
+//         message: `Post Deleted: ${(<PostDeletedEvent>event).detail.id}`,
+//       }
+//   )
+//   .pipe(sendNotification);
 
- type CommentPage {
-  nextToken: String
-  comments: [Comment]!
- }
+// /**
+//  * Native Function test
+//  */
 
- type Comment {
-  postId: ID!
-  commentId: ID!
-  commentText: String!
-  createdTime: String!
- }
- */
+// new aws_events.EventBus(stack, "busbus");
 
-const post = api2.addType(
-  new appsync.ObjectType("Post", {
-    definition: {
-      postId: appsync.GraphqlType.id({
-        isRequired: true,
-      }),
-      title: appsync.GraphqlType.string({
-        isRequired: true,
-      }),
-    },
-  })
-);
+// const b = { bus: customDeleteBus };
 
-const comment = api2.addType(
-  new appsync.ObjectType("Comment", {
-    definition: {
-      postId: appsync.GraphqlType.id({
-        isRequired: true,
-      }),
-      commentId: appsync.GraphqlType.id({
-        isRequired: true,
-      }),
-      commentText: appsync.GraphqlType.string({
-        isRequired: true,
-      }),
-      createdTime: appsync.GraphqlType.string({
-        isRequired: true,
-      }),
-    },
-  })
-);
+// const func = new Function<undefined, string>(stack, "testFunc2", async () => {
+//   return "hi";
+// });
 
-const commentPage = api2.addType(
-  new appsync.ObjectType("CommentPage", {
-    definition: {
-      nextToken: appsync.GraphqlType.string(),
-      comments: appsync.GraphqlType.intermediate({
-        intermediateType: comment,
-        isRequiredList: true,
-      }),
-    },
-  })
-);
+// const exprSfn = new ExpressStepFunction(stack, "exp", () => {
+//   return "woo";
+// });
 
-post.addField({
-  fieldName: "comments",
-  field: new AppsyncField(
-    {
-      api: api2,
-      returnType: commentPage.attribute(),
-      args: {
-        nextToken: appsync.GraphqlType.string(),
-        limit: appsync.GraphqlType.int(),
-      },
-    },
-    async (
-      $context: AppsyncContext<
-        { nextToken?: string; limit?: number },
-        Omit<Post, "comments">
-      >
-    ): Promise<CommentPage> => {
-      const response = await database.appsync.query({
-        query: {
-          expression: `pk = :pk and begins_with(#sk,:sk)`,
-          expressionValues: {
-            ":pk": {
-              S: $context.source.pk,
-            },
-            ":sk": {
-              S: "Comment|",
-            },
-          },
-          expressionNames: {
-            "#sk": "sk",
-          },
-        },
-        nextToken: $context.arguments.nextToken,
-        limit: $context.arguments.limit,
-      });
+// new Function(
+//   stack,
+//   "testFunc",
+//   {
+//     timeout: Duration.minutes(1),
+//   },
+//   async () => {
+//     const result = func();
+//     console.log(`function result: ${result}`);
+//     await customDeleteBus.putEvents({
+//       "detail-type": "Delete-Post-Success",
+//       source: "MessageDeleter",
+//       detail: {
+//         id: "from the test method!!",
+//       },
+//     });
+//     const result2 = await $AWS.EventBridge.putEvents({
+//       Entries: [
+//         {
+//           EventBusName: customDeleteBus.eventBusArn,
+//           Source: "MessageDeleter",
+//           Detail: JSON.stringify({
+//             id: "from the sdk put event method!",
+//           }),
+//           DetailType: "Delete-Post-Success",
+//         },
+//       ],
+//     });
+//     console.log(`bus: ${JSON.stringify(result2)}`);
+//     const exc = await deleteWorkflow({
+//       input: {
+//         postId: "something",
+//       },
+//     });
+//     const { bus } = b;
+//     await bus.putEvents({
+//       "detail-type": "Delete-Message-Success",
+//       detail: { count: 0 },
+//       source: "MessageDeleter",
+//     });
+//     console.log(deleteWorkflow.describeExecution(exc.executionArn));
+//     await $AWS.DynamoDB.PutItem({
+//       Table: database,
+//       Item: {
+//         pk: { S: "Post|1" },
+//         sk: { S: "Post" },
+//         postId: {
+//           S: "1",
+//         },
+//         title: { S: "myPost" },
+//       },
+//     });
+//     const item = await $AWS.DynamoDB.GetItem({
+//       Table: database,
+//       ConsistentRead: true,
+//       Key: { pk: { S: "Post|1" }, sk: { S: "Post" } },
+//     });
+//     console.log(item.Item?.pk?.S);
+//     return exprSfn({});
+//     // return "hi";
+//   }
+// );
 
-      if (response.items !== undefined) {
-        return {
-          comments: response.items as Comment[],
-          nextToken: response.nextToken,
-        };
-      }
-      return {
-        comments: [],
-      };
-    }
-  ),
-});
+// /**
+//  * GraphQL created with Code-First
+//  */
+// const api2 = new appsync.GraphqlApi(stack, "Api2", {
+//   name: "MessageReader",
+// });
 
-api2.addQuery(
-  "getPost",
-  new AppsyncField(
-    {
-      api: api2,
-      returnType: post.attribute(),
-      args: {
-        postId: appsync.GraphqlType.string({ isRequired: true }),
-      },
-    },
-    ($context) => {
-      return database.appsync.getItem({
-        key: {
-          pk: {
-            S: `Post|${$context.arguments.postId}`,
-          },
-          sk: {
-            S: "Post",
-          },
-        },
-      });
-    }
-  )
-);
+// /*
+//   type Query {
+//     getPost(postId: string!): Post
+//   }
 
-export interface Post<PostID extends string = string> {
-  pk: `Post|${PostID}`;
-  sk: "Post";
-  postId: PostID;
-  title: string;
-}
+//  type Post {
+//   postId: ID!
+//   title: String!
+//   comments(nextToken: String, limit: Int): CommentPage
+//  }
 
-export interface Comment<
-  PostID extends string = string,
-  CommentID extends string = string
-> {
-  pk: `Post|${PostID}`;
-  sk: `Comment|${CommentID}`;
-  postId: PostID;
-  commentId: CommentID;
-  commentText: string;
-  createdTime: string;
-}
+//  type CommentPage {
+//   nextToken: String
+//   comments: [Comment]!
+//  }
+
+//  type Comment {
+//   postId: ID!
+//   commentId: ID!
+//   commentText: String!
+//   createdTime: String!
+//  }
+//  */
+
+// const post = api2.addType(
+//   new appsync.ObjectType("Post", {
+//     definition: {
+//       postId: appsync.GraphqlType.id({
+//         isRequired: true,
+//       }),
+//       title: appsync.GraphqlType.string({
+//         isRequired: true,
+//       }),
+//     },
+//   })
+// );
+
+// const comment = api2.addType(
+//   new appsync.ObjectType("Comment", {
+//     definition: {
+//       postId: appsync.GraphqlType.id({
+//         isRequired: true,
+//       }),
+//       commentId: appsync.GraphqlType.id({
+//         isRequired: true,
+//       }),
+//       commentText: appsync.GraphqlType.string({
+//         isRequired: true,
+//       }),
+//       createdTime: appsync.GraphqlType.string({
+//         isRequired: true,
+//       }),
+//     },
+//   })
+// );
+
+// const commentPage = api2.addType(
+//   new appsync.ObjectType("CommentPage", {
+//     definition: {
+//       nextToken: appsync.GraphqlType.string(),
+//       comments: appsync.GraphqlType.intermediate({
+//         intermediateType: comment,
+//         isRequiredList: true,
+//       }),
+//     },
+//   })
+// );
+
+// post.addField({
+//   fieldName: "comments",
+//   field: new AppsyncField(
+//     {
+//       api: api2,
+//       returnType: commentPage.attribute(),
+//       args: {
+//         nextToken: appsync.GraphqlType.string(),
+//         limit: appsync.GraphqlType.int(),
+//       },
+//     },
+//     async (
+//       $context: AppsyncContext<
+//         { nextToken?: string; limit?: number },
+//         Omit<Post, "comments">
+//       >
+//     ): Promise<CommentPage> => {
+//       const response = await database.appsync.query({
+//         query: {
+//           expression: `pk = :pk and begins_with(#sk,:sk)`,
+//           expressionValues: {
+//             ":pk": {
+//               S: $context.source.pk,
+//             },
+//             ":sk": {
+//               S: "Comment|",
+//             },
+//           },
+//           expressionNames: {
+//             "#sk": "sk",
+//           },
+//         },
+//         nextToken: $context.arguments.nextToken,
+//         limit: $context.arguments.limit,
+//       });
+
+//       if (response.items !== undefined) {
+//         return {
+//           comments: response.items as Comment[],
+//           nextToken: response.nextToken,
+//         };
+//       }
+//       return {
+//         comments: [],
+//       };
+//     }
+//   ),
+// });
+
+// api2.addQuery(
+//   "getPost",
+//   new AppsyncField(
+//     {
+//       api: api2,
+//       returnType: post.attribute(),
+//       args: {
+//         postId: appsync.GraphqlType.string({ isRequired: true }),
+//       },
+//     },
+//     ($context) => {
+//       return database.appsync.getItem({
+//         key: {
+//           pk: {
+//             S: `Post|${$context.arguments.postId}`,
+//           },
+//           sk: {
+//             S: "Post",
+//           },
+//         },
+//       });
+//     }
+//   )
+// );
+
+// export interface Post<PostID extends string = string> {
+//   pk: `Post|${PostID}`;
+//   sk: "Post";
+//   postId: PostID;
+//   title: string;
+// }
+
+// export interface Comment<
+//   PostID extends string = string,
+//   CommentID extends string = string
+// > {
+//   pk: `Post|${PostID}`;
+//   sk: `Comment|${CommentID}`;
+//   postId: PostID;
+//   commentId: CommentID;
+//   commentText: string;
+//   createdTime: string;
+// }
