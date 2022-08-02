@@ -442,9 +442,6 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
     { arr: [1, 2, 3] }
   );
 
-  // uhh, so the best we can do is test that this doesn't fail
-  // Return from for loop - https://github.com/functionless/functionless/issues/319
-  // Assign to mutable variables from for loop - https://github.com/functionless/functionless/issues/318
   test(
     "for loops",
     (parent) => {
@@ -515,12 +512,17 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
         }
       );
       return new StepFunction(parent, "sfn2", async (input) => {
+        let a = "";
         const l = (await func()).map((x) => `n${x}`);
         const l2 = input.arr.map((x) => `n${x}`);
-        return `${l[0]}${l[1]}${l[2]}${l2[0]}${l2[1]}${l2[2]}`;
+        input.arr.map((x) => {
+          a = `${a}a${x}`;
+          return a;
+        });
+        return `${l[0]}${l[1]}${l[2]}${l2[0]}${l2[1]}${l2[2]}${a}`;
       });
     },
-    "n1n2n3n1n2n3",
+    "n1n2n3n1n2n3a1a2a3",
     { arr: [1, 2, 3] }
   );
 
@@ -834,10 +836,6 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
     { a: "1" }
   );
 
-  // breaking test, will fix
-  // b = a incorrectly uses output path
-  // { Pass, { result.$: "$.a" }, resultPath: "$.b", outputPath: "$.result" }
-  // this won't work for multiple reasons, output path will write over the entire state
   test(
     "assignment",
     (parent) => {
