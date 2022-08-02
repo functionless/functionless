@@ -418,18 +418,6 @@ export function compile(
             ts.factory.createStringLiteral(node.text),
           ]);
         } else if (ts.isPropertyAccessExpression(node)) {
-          if (checker.isIntegrationNode(node)) {
-            // if this is a reference to a Table or Lambda, retain it
-            const _ref = checker.getOutOfScopeValueNode(node, scope);
-            if (_ref) {
-              return ref(_ref);
-            } else {
-              throw new SynthError(
-                ErrorCodes.Unable_to_find_reference_out_of_application_function,
-                `Unable to find reference out of application function: ${node.getText()}`
-              );
-            }
-          }
           return newExpr(NodeKind.PropAccessExpr, [
             toExpr(node.expression, scope),
             toExpr(node.name, scope),
