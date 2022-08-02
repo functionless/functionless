@@ -82,7 +82,7 @@
     "@aws-cdk/aws-appsync-alpha": "*"
   },
   "dependencies": {
-    "@functionless/nodejs-closure-serializer": "^0.1.0",
+    "@functionless/nodejs-closure-serializer": "^0.1.1",
     "@types/aws-lambda": "^8.10.101",
     "fs-extra": "^10.1.0",
     "minimatch": "^5.1.0"

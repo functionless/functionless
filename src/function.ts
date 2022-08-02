@@ -915,37 +915,6 @@ export async function serialize(
   let tokens: string[] = [];
   const preWarmContext = new NativePreWarmContext(props);
 
-  const astRestorationMap = new Map();
-
-  // the closure serializer does not call `serialize` for the first function being serialize
-  // so we don't get a chance to intercept and modify it before serialization recurses through its properties
-  // as a workaround, we register `func` and delete the AST property before proceeding with serialization
-  registerASTRestoration(func);
-
-  /**
-   * Stores a mapping from the {@link func} to the value of its {@link ReflectionSymbols.AST} property
-   * and then deletes the property from {@link func}.
-   */
-  function registerASTRestoration(func: any) {
-    if (func && ReflectionSymbols.AST in func) {
-      // store a reference to this in a map so that it can be restored after serialization
-      astRestorationMap.set(func, func[ReflectionSymbols.AST]);
-      // temporarily remove the AST from the function so that it isn't serialized
-      delete func[ReflectionSymbols.AST];
-    }
-  }
-
-  /**
-   * Restores the value of all deleted {@link ReflectionSymbols.AST} properties.
-   */
-  function restoreASTProperties() {
-    for (const [func, ast] of astRestorationMap) {
-      if (typeof func === "function") {
-        func[ReflectionSymbols.AST] = ast;
-      }
-    }
-  }
-
   const result = await serializeFunction(
     // factory function allows us to prewarm the clients and other context.
     integrationPrewarms.length > 0
@@ -988,10 +957,12 @@ export async function serialize(
             return ts.visitEachChild(node, eraseBindAndRegister, ctx);
           },
       ],
+      shouldCaptureProp: (_, propName) => {
+        // do not serialize the AST property on functions
+        return propName !== ReflectionSymbols.AST;
+      },
       serialize: (obj) => {
-        if (typeof obj === "function") {
-          registerASTRestoration(obj);
-        } else if (typeof obj === "string") {
+        if (typeof obj === "string") {
           const reversed =
             Tokenization.reverse(obj, { failConcat: false }) ??
             Tokenization.reverseString(obj).tokens;
@@ -1129,9 +1100,6 @@ export async function serialize(
       },
     }
   );
-
-  // now that serialization is complete, restore the AST properties on all serialized closures
-  restoreASTProperties();
 
   /**
    * A map of token id to unique index.
