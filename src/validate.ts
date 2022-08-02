@@ -191,6 +191,100 @@ export function validate(
           if (errors) {
             return errors;
           }
+        } else if (
+          ts.isPropertyAccessExpression(node.expression) &&
+          ts.isIdentifier(node.expression.name) &&
+          node.expression.name.text === "filter"
+        ) {
+          const [predicate] = node.arguments;
+
+          if (
+            !(
+              ts.isFunctionExpression(predicate) ||
+              ts.isArrowFunction(predicate)
+            )
+          ) {
+            return [
+              newError(
+                predicate,
+                ErrorCodes.StepFunction_invalid_filter_syntax,
+                `the 'predicate' argument of slice must be a function or arrow expression, found: ${
+                  ts.SyntaxKind[predicate.kind]
+                }`
+              ),
+            ];
+          }
+
+          const [expression] = ts.isBlock(predicate.body)
+            ? ts.isReturnStatement(predicate.body.statements[0]) &&
+              predicate.body.statements.length === 1
+              ? predicate.body.statements
+              : []
+            : [predicate.body];
+
+          if (!expression) {
+            return [
+              newError(
+                predicate.body,
+                ErrorCodes.StepFunction_invalid_filter_syntax,
+                'a JSONPath filter expression only supports a single, in-line statement, e.g. .filter(a => a == "hello" || a === "world")'
+              ),
+            ];
+          }
+
+          return collectEachChildRecursive(predicate.body, validateFilterCall);
+
+          function validateFilterCall(node: ts.Node): ts.Diagnostic[] {
+            if (ts.isIdentifier(node)) {
+              const symbol = checker.getSymbolAtLocation(node);
+              if (
+                symbol?.valueDeclaration &&
+                // eslint-disable-next-line no-bitwise
+                symbol.flags & ts.SymbolFlags.Variable
+              ) {
+                if (
+                  !(
+                    (ts.isParameter(symbol.valueDeclaration) &&
+                      symbol.valueDeclaration ===
+                        (<ts.FunctionExpression | ts.ArrowFunction>predicate)
+                          .parameters[0]) ||
+                    ts.isBindingElement(symbol.valueDeclaration)
+                  )
+                ) {
+                  return [
+                    newError(
+                      node,
+                      ErrorCodes.StepFunction_invalid_filter_syntax,
+                      `Only references defined in the predicate first parameter (value) are allowed, found: ${node.text}`
+                    ),
+                  ];
+                }
+              }
+            } else if (
+              !(
+                checker.isConstant(node) ||
+                ts.isPropertyAccessExpression(node) ||
+                ts.isElementAccessExpression(node) ||
+                ts.isPrefixUnaryExpression(node) ||
+                ts.isToken(node) ||
+                ts.isReturnStatement(node) ||
+                ts.isBinaryExpression(node)
+              ) ||
+              ts.isObjectLiteralExpression(node) ||
+              ts.isArrayLiteralExpression(node)
+            ) {
+              return [
+                newError(
+                  node,
+                  ErrorCodes.StepFunction_invalid_filter_syntax,
+                  `JSONPath's filter expression does not support '${
+                    ts.SyntaxKind[node.kind]
+                  }'`
+                ),
+              ];
+            }
+            return [];
+          }
         }
         return [
           ...validateIntegrationCallArguments(node, scope),
@@ -244,6 +338,53 @@ export function validate(
             newError(
               node.argumentExpression,
               ErrorCodes.StepFunctions_Invalid_collection_access
+            ),
+          ];
+        }
+        const valueType = checker.getTypeAtLocation(node.expression);
+        const elmType = checker.getTypeAtLocation(node.argumentExpression);
+        if (
+          checker.isArraySymbol(valueType.symbol) &&
+          !(
+            // if the accessor is the forIn variable, it will always be a string
+            (
+              ts.isIdentifier(node.argumentExpression) &&
+              checker.isForInVariable(node.argumentExpression)
+            )
+          )
+        ) {
+          if (
+            // eslint-disable-next-line no-bitwise
+            !(elmType.flags & ts.TypeFlags.NumberLike)
+          ) {
+            return [
+              newWarning(
+                node.argumentExpression,
+                ErrorCodes.StepFunctions_mismatched_index_type,
+                `Numeric constants should be used to access arrays. Other types may fail at runtime.`
+              ),
+            ];
+          }
+        } else {
+          if (
+            // eslint-disable-next-line no-bitwise
+            !(elmType.flags & ts.TypeFlags.StringLike)
+          ) {
+            return [
+              newWarning(
+                node.argumentExpression,
+                ErrorCodes.StepFunctions_mismatched_index_type,
+                `String constants should be used to access objects. Other types may fail at runtime.`
+              ),
+            ];
+          }
+        }
+      } else if (ts.isBindingElement(node)) {
+        if (node.dotDotDotToken && ts.isObjectBindingPattern(node.parent)) {
+          return [
+            newError(
+              node,
+              ErrorCodes.StepFunctions_does_not_support_destructuring_object_with_rest
             ),
           ];
         }
@@ -881,20 +1022,47 @@ export function validate(
     return [];
   }
 
-  function newError(
+  function newDiagnostic(
     invalidNode: ts.Node,
     error: ErrorCode,
+    category: ts.DiagnosticCategory,
     messageText?: string
   ): ts.Diagnostic {
     return {
       source: "Functionless",
       code: error.code,
       messageText: formatErrorMessage(error, messageText),
-      category: ts.DiagnosticCategory.Error,
+      category,
       file: invalidNode.getSourceFile(),
       start: invalidNode.pos,
       length: invalidNode.end - invalidNode.pos,
     };
+  }
+
+  function newError(
+    invalidNode: ts.Node,
+    error: ErrorCode,
+    messageText?: string
+  ): ts.Diagnostic {
+    return newDiagnostic(
+      invalidNode,
+      error,
+      ts.DiagnosticCategory.Error,
+      messageText
+    );
+  }
+
+  function newWarning(
+    invalidNode: ts.Node,
+    error: ErrorCode,
+    messageText?: string
+  ): ts.Diagnostic {
+    return newDiagnostic(
+      invalidNode,
+      error,
+      ts.DiagnosticCategory.Warning,
+      messageText
+    );
   }
 }
 

@@ -24,6 +24,7 @@ import { CallExpr, FunctionExpr } from "./expression";
 import { NativeIntegration } from "./function";
 import { PrewarmClients } from "./function-prewarm";
 import {
+  isBindingPattern,
   isComputedPropertyNameExpr,
   isErr,
   isFunctionDecl,
@@ -321,12 +322,7 @@ export namespace $SFN {
       throw new Error("missing callbackfn in $SFN.map");
     }
     const callbackStates = context.evalStmt(callbackfn.body);
-    if (!callbackStates) {
-      throw new SynthError(
-        ErrorCodes.Unexpected_Error,
-        `a $SFN.Map or $SFN.ForEach block must have at least one Stmt`
-      );
-    }
+
     const props = call.args.length === 3 ? call.args[1]?.expr : undefined;
     let maxConcurrency: number | undefined;
     if (props !== undefined) {
@@ -357,6 +353,42 @@ export namespace $SFN {
     return context.evalExpr(array, call, (_, { normalizeOutputToJsonPath }) => {
       const arrayPath = normalizeOutputToJsonPath().jsonPath;
 
+      const parameters = callbackfn.parameters.map((param, i) => {
+        const paramName = isIdentifier(param.name)
+          ? param.name.name
+          : // if the parameter is a binding pattern, we to assign the value to a variable first to access it in the map state.
+            context.newHeapVariableName();
+
+        return {
+          param: [
+            `${paramName}.$`,
+            i === 0
+              ? "$$.Map.Item.Value"
+              : i == 1
+              ? "$$.Map.Item.Index"
+              : arrayPath,
+          ],
+          states: isBindingPattern(param.name)
+            ? // if the param is a binding pattern, the value will be placed on the heap and then bound in the body
+              context.evalDecl(param, { jsonPath: `$.${paramName}` })
+            : undefined,
+        };
+      });
+
+      const bodyStates = ASLGraph.joinSubStates(
+        callbackfn,
+        // run any parameter initializers if they exist
+        ...parameters.map(({ states }) => states),
+        callbackStates
+      );
+
+      if (!bodyStates) {
+        throw new SynthError(
+          ErrorCodes.Unexpected_Error,
+          `a $SFN.Map or $SFN.ForEach block must have at least one Stmt`
+        );
+      }
+
       return context.stateWithHeapOutput(
         {
           Type: "Map",
@@ -365,31 +397,11 @@ export namespace $SFN {
                 MaxConcurrency: maxConcurrency,
               }
             : {}),
-          Iterator: context.aslGraphToStates(callbackStates),
+          Iterator: context.aslGraphToStates(bodyStates),
           ItemsPath: arrayPath,
           Parameters: {
             ...context.cloneLexicalScopeParameters(call),
-            ...Object.fromEntries(
-              callbackfn.parameters.map((param, i) => {
-                const paramName = isIdentifier(param?.name)
-                  ? param.name.name
-                  : undefined;
-                if (paramName === undefined) {
-                  throw new SynthError(
-                    ErrorCodes.Unsupported_Feature,
-                    "Destructured parameter declarations are not yet supported by Step Functions. https://github.com/functionless/functionless/issues/364"
-                  );
-                }
-                return [
-                  `${paramName}.$`,
-                  i === 0
-                    ? "$$.Map.Item.Value"
-                    : i == 1
-                    ? "$$.Map.Item.Index"
-                    : arrayPath,
-                ];
-              })
-            ),
+            ...Object.fromEntries(parameters.map(({ param }) => param)),
           },
         },
         call

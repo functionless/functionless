@@ -5,6 +5,7 @@ import {
   StepFunction,
   Function,
   EventBus,
+  // @ts-ignore - tsdocs
   ErrorCodes,
   AppsyncResolver,
   $AWS,
@@ -578,3 +579,104 @@ new StepFunction(
 class CustomError {
   constructor(readonly prop: string) {}
 }
+
+/**
+ * Unsupported - Object `{... rest}`
+ * @see ErrorCodes.StepFunctions_does_not_support_destructuring_object_with_rest
+ */
+
+new StepFunction(stack, "sfn", async ({ ...rest }) => {
+  return rest;
+});
+new StepFunction(stack, "sfn", async (input: { [key: string]: string }) => {
+  const { ...rest } = input;
+  return rest;
+});
+
+/**
+ * Supported - Array `[...rest]`
+ */
+
+new StepFunction(
+  stack,
+  "sfn",
+  async ({ arr: [...rest] }: { arr: string[] }) => {
+    return rest;
+  }
+);
+new StepFunction(stack, "sfn", async (input: { arr: string[] }) => {
+  const [...rest] = input.arr;
+  return rest;
+});
+
+/**
+ * Unsupported - Filter
+ * @see ErrorCodes.StepFunction_invalid_filter_syntax
+ */
+
+const someFunctionReference = () => {
+  return true;
+};
+
+new StepFunction(stack, "fn", async (input: { value: number }) => {
+  // invalid - index and array parameters are not supported.
+  [1, 2, 3].filter((_, index, array) => array[0] === index);
+
+  // invalid - cannot reference parameters to parent closures.
+  [1, 2, 3].filter((val) => input.value === val);
+
+  // invalid - predicate function must be inline arrow or function
+  [1, 2, 3].filter(someFunctionReference);
+
+  // invalid - filter must be a single statement
+  [1, 2, 3].filter((item) => {
+    const value = 1;
+    return item === value;
+  });
+
+  // invalid - filter cannot use object or array literals
+  [{}].filter((item) => {
+    return item === {};
+  });
+});
+
+/**
+ * Supported - Filter
+ * @see ErrorCodes.StepFunction_invalid_filter_syntax
+ */
+
+new StepFunction(stack, "fn", async (input: { arr: { name: string }[] }) => {
+  [1, 2, 3].filter((item) => item > 1);
+  input.arr.filter((item) => item.name === "some string");
+  input.arr.filter(({ name }) => name === "some string");
+});
+
+/**
+ * Unsupported - Mis-matched element access
+ * @see ErrorCodes.StepFunctions_mismatched_index_type
+ */
+
+new StepFunction(stack, "fn", async () => {
+  const obj = { 1: "value" };
+  const arr = [1];
+
+  // invalid - numeric object property access in SFN is invalid, key must be a string
+  obj[1];
+
+  // invalid - string array access in SFN is invalid, index must be a number
+  arr["0"];
+});
+
+/**
+ * Support - element access
+ */
+
+new StepFunction(stack, "fn", async () => {
+  const obj = { 1: "value" };
+  const arr = [1];
+
+  // valid
+  obj["1"];
+  // valid
+  arr[0];
+});

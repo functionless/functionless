@@ -820,10 +820,38 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
         a = [1, 2];
         const e = a;
         a = { x: "val" };
-        return { a, b, c, d, e };
+        const f = a;
+        a = { 1: "val2" };
+        return { a, b, c, d, e, f };
       });
     },
-    { a: { x: "val" }, b: "2", c: null, d: 1, e: [1, 2] }
+    { a: { "1": "val2" }, b: "2", c: null, d: 1, e: [1, 2], f: { x: "val" } }
+  );
+
+  test(
+    "access",
+    (parent) => {
+      return new StepFunction(parent, "sfn2", async () => {
+        const obj = { 1: "a", x: "b" };
+        const arr = [1];
+        return {
+          a: obj.x,
+          b: obj.x,
+          // c: obj[1], -- invalid SFN - localstack hangs on error
+          d: obj["1"],
+          e: arr[0],
+          // f: arr["0"], -- invalid SFN - localstack hangs on error
+        };
+      });
+    },
+    {
+      a: "b",
+      b: "b",
+      // c: "a",
+      d: "a",
+      e: 1,
+      //  f: 1
+    }
   );
 
   test(
@@ -1448,6 +1476,104 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
       }),
     null,
     { a: "a" }
+  );
+
+  test(
+    "destructure",
+    (parent) =>
+      new StepFunction(
+        parent,
+        "sfn",
+        async ({
+          a,
+          bb: { value: b, [`${"a"}${"b"}`]: r },
+          c = "what",
+          m = c,
+          arr: [d, , e, ...arrRest],
+          arr2: [f = "sir"],
+          value,
+        }) => {
+          const {
+            z,
+            yy: { ["value"]: w, [`${"a"}${"b"}`]: v },
+            x = "what",
+            rra: [s, , u, ...tserRra],
+            rra2: [t = "sir"],
+          } = value;
+
+          const map = [{ a: "a", b: ["b"] }]
+            .map(({ a, b: [c] }) => `${a}${c}`)
+            .join();
+
+          let forV = "";
+          for (const {
+            h,
+            j: [l],
+          } of [{ h: "a", j: ["b"] }]) {
+            forV = `${forV}${h}${l}`;
+          }
+
+          let tr;
+          try {
+            throw new Error("hi");
+          } catch ({ message }) {
+            tr = message;
+          }
+
+          return {
+            prop: `${a}${b}${c}${d}${e}${f}${arrRest[0]}${r}${m}`,
+            var: `${z}${w}${v}${x}${s}${u}${t}${tserRra[0]}`,
+            map,
+            forV,
+            tr,
+          };
+        }
+      ),
+    {
+      prop: "helloworldwhatisupsirendofarraydynamicwhat",
+      var: "helloworlddynamicwhatisupsirendofarray",
+      map: "ab",
+      forV: "ab",
+      tr: "hi",
+    },
+    {
+      a: "hello",
+      bb: { value: "world", ab: "dynamic" } as {
+        value: string;
+        [key: string]: string;
+      },
+      c: undefined,
+      m: undefined,
+      d: "endofobj",
+      arr: ["is", "skipme", "up", "endofarray"],
+      arr2: [],
+      value: {
+        z: "hello",
+        yy: { value: "world", ab: "dynamic" } as {
+          value: string;
+          [key: string]: string;
+        },
+        x: undefined,
+        rra: ["is", "skipme", "up", "endofarray"],
+        rra2: [],
+        k: "endofobj",
+      },
+    }
+  );
+
+  // https://github.com/functionless/functionless/issues/369
+  test.skip(
+    "shadowing maintains state",
+    (parent) =>
+      new StepFunction(parent, "sfn", async () => {
+        const a = "a";
+        let b;
+        for (const a of ["b"]) {
+          b = a;
+        }
+        return `${a}${b}`;
+      }),
+    "ab"
   );
 });
 

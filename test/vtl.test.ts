@@ -897,7 +897,14 @@ test("deconstruct variable", () => {
 
 test("deconstruct parameter", () => {
   const templates = appsyncTestCase<
-    { a: string; bb: { value: string }; c?: string; arr: string[]; d: string },
+    {
+      a: string;
+      bb: { value: string };
+      c?: string;
+      m?: string;
+      arr: string[];
+      d: string;
+    },
     string
   >(
     reflect(
@@ -906,11 +913,12 @@ test("deconstruct parameter", () => {
           a,
           bb: { value: b },
           c = "what",
+          m = c,
           arr: [d, , e, f = "sir", ...arrRest],
           ...objRest
         },
       }) => {
-        return a + b + c + d + e + f + objRest.d + arrRest[0];
+        return a + b + c + d + e + f + objRest.d + arrRest[0] + m;
       }
     )
   );
@@ -922,7 +930,7 @@ test("deconstruct parameter", () => {
       d: "endofobj",
       arr: ["is", "skipme", "up", undefined, "endofarray"],
     },
-    resultMatch: "helloworldwhatisupsirendofobjendofarray",
+    resultMatch: "helloworldwhatisupsirendofobjendofarraywhat",
   });
 });
 
@@ -950,6 +958,124 @@ test("deconstruct for of", () => {
         return a + b + c + d + e + f + objRest.d + arrRest[0];
       }
       return "";
+    })
+  );
+
+  testAppsyncVelocity(templates[1], {
+    arguments: {
+      items: [
+        {
+          a: "hello",
+          bb: { value: "world" },
+          d: "endofobj",
+          arr: ["is", "skipme", "up", undefined, "endofarray"],
+        },
+      ],
+    },
+    resultMatch: "helloworldwhatisupsirendofobjendofarray",
+  });
+});
+
+test("deconstruct map", () => {
+  const templates = appsyncTestCase<
+    {
+      items: {
+        a: string;
+        bb: { value: string };
+        c?: string;
+        arr: string[];
+        d: string;
+      }[];
+    },
+    string[]
+  >(
+    reflect(($context) => {
+      return $context.arguments.items.map(
+        ({
+          a,
+          bb: { value: b },
+          c = "what",
+          arr: [d, , e, f = "sir", ...arrRest],
+          ...objRest
+        }) => {
+          return a + b + c + d + e + f + objRest.d + arrRest[0];
+        }
+      );
+    })
+  );
+
+  testAppsyncVelocity(templates[1], {
+    arguments: {
+      items: [
+        {
+          a: "hello",
+          bb: { value: "world" },
+          d: "endofobj",
+          arr: ["is", "skipme", "up", undefined, "endofarray"],
+        },
+      ],
+    },
+    resultMatch: ["helloworldwhatisupsirendofobjendofarray"],
+  });
+});
+
+test("deconstruct map chain", () => {
+  const templates = appsyncTestCase<
+    {
+      items: { a: string; b: string }[];
+    },
+    string[]
+  >(
+    reflect(($context) => {
+      return $context.arguments.items
+        .map(({ a, b }) => ({ a: b, b: a }))
+        .map(({ a, b }) => ({ a: a + b, b: b + a }))
+        .map(({ a, b }) => a + b);
+    })
+  );
+
+  testAppsyncVelocity(templates[1], {
+    arguments: {
+      items: [
+        {
+          a: "a",
+          b: "b",
+        },
+      ],
+    },
+    resultMatch: ["baab"],
+  });
+});
+
+test("deconstruct reduce", () => {
+  const templates = appsyncTestCase<
+    {
+      items: {
+        a: string;
+        bb: { value: string };
+        c?: string;
+        arr: string[];
+        d: string;
+      }[];
+    },
+    string
+  >(
+    reflect(($context) => {
+      return $context.arguments.items.reduce(
+        (
+          acc,
+          {
+            a,
+            bb: { value: b },
+            c = "what",
+            arr: [d, , e, f = "sir", ...arrRest],
+            ...objRest
+          }
+        ) => {
+          return `${acc}${a + b + c + d + e + f + objRest.d + arrRest[0]}`;
+        },
+        ""
+      );
     })
   );
 
