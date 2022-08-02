@@ -1,6 +1,12 @@
 import { Construct } from "constructs";
 import ts from "typescript";
-import { BinaryOp, CallExpr, Expr, PropAccessExpr } from "./expression";
+import {
+  BinaryOp,
+  CallExpr,
+  Expr,
+  PropAccessExpr,
+  QuasiString,
+} from "./expression";
 import {
   isArrayLiteralExpr,
   isBinaryExpr,
@@ -16,6 +22,7 @@ import {
   isPrivateIdentifier,
   isPropAccessExpr,
   isPropAssignExpr,
+  isQuasiString,
   isReferenceExpr,
   isSpreadAssignExpr,
   isSpreadElementExpr,
@@ -199,13 +206,16 @@ export function isConstant(x: any): x is Constant {
  * const obj = { val: "hello" };
  * obj.val -> { constant: "hello" }
  */
-export const evalToConstant = (expr: Expr): Constant | undefined => {
+export const evalToConstant = (
+  expr: Expr | QuasiString
+): Constant | undefined => {
   if (
     isStringLiteralExpr(expr) ||
     isNumberLiteralExpr(expr) ||
     isBooleanLiteralExpr(expr) ||
     isNullLiteralExpr(expr) ||
-    isUndefinedLiteralExpr(expr)
+    isUndefinedLiteralExpr(expr) ||
+    isQuasiString(expr)
   ) {
     return { constant: expr.value };
   } else if (isArrayLiteralExpr(expr)) {
@@ -311,7 +321,7 @@ export const evalToConstant = (expr: Expr): Constant | undefined => {
       }
     }
   } else if (isTemplateExpr(expr)) {
-    const values = expr.exprs.map(evalToConstant);
+    const values = expr.spans.map(evalToConstant);
     if (values.every((v): v is Constant => !!v)) {
       return { constant: values.map((v) => v.constant).join("") };
     }

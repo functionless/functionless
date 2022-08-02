@@ -17,6 +17,7 @@ import {
   Identifier,
   NullLiteralExpr,
   PropAccessExpr,
+  QuasiString,
 } from "./expression";
 import {
   isArgument,
@@ -106,6 +107,7 @@ import {
   isTaggedTemplateExpr,
   isOmittedExpr,
   isFunctionLike,
+  isQuasiString,
 } from "./guards";
 import {
   Integration,
@@ -1576,7 +1578,7 @@ export class ASL {
       }
       throw new SynthError(
         ErrorCodes.Integration_must_be_immediately_awaited_or_returned,
-        `Integration must be immediately awaited or returned ${exprToString(
+        `Integration must be immediately awaited or returned ${nodeToString(
           expr
         )}`
       );
@@ -1594,7 +1596,11 @@ export class ASL {
       );
     } else if (isTemplateExpr(expr)) {
       return this.evalContext(expr, (evalExpr) => {
-        const elementOutputs = expr.exprs.map(evalExpr);
+        const elementOutputs = expr.spans.map((span) =>
+          isQuasiString(span)
+            ? { value: span.value, containsJsonPath: false }
+            : evalExpr(span)
+        );
 
         /**
          * Step Functions `States.Format` has a bug which fails when a jsonPath does not start with a
@@ -1861,7 +1867,7 @@ export class ASL {
         );
       }
       throw new Error(
-        `call must be a service call or list .slice, .map, .forEach or .filter: ${exprToString(
+        `call must be a service call or list .slice, .map, .forEach or .filter: ${nodeToString(
           expr
         )}`
       );
@@ -2878,7 +2884,7 @@ export class ASL {
 
       throw new SynthError(
         ErrorCodes.StepFunction_invalid_filter_syntax,
-        `JSONPath's filter expression does not support '${exprToString(expr)}'`
+        `JSONPath's filter expression does not support '${nodeToString(expr)}'`
       );
     };
 
@@ -3439,7 +3445,7 @@ export class ASL {
         }
         throw new SynthError(
           ErrorCodes.Integration_must_be_immediately_awaited_or_returned,
-          `Integration must be immediately awaited or returned ${exprToString(
+          `Integration must be immediately awaited or returned ${nodeToString(
             expr
           )}`
         );
@@ -4654,30 +4660,30 @@ function toStateName(node: FunctionlessNode): string {
     }
   }
   function inner(node: Exclude<FunctionlessNode, BlockStmt>): string {
-    if (isExpr(node)) {
-      return exprToString(node);
+    if (isExpr(node) || isQuasiString(node)) {
+      return nodeToString(node);
     } else if (isIfStmt(node)) {
-      return `if(${exprToString(node.when)})`;
+      return `if(${nodeToString(node.when)})`;
     } else if (isExprStmt(node)) {
-      return exprToString(node.expr);
+      return nodeToString(node.expr);
     } else if (isBreakStmt(node)) {
       return "break";
     } else if (isContinueStmt(node)) {
       return "continue";
     } else if (isCatchClause(node)) {
       return `catch${
-        node.variableDecl ? `(${exprToString(node.variableDecl)})` : ""
+        node.variableDecl ? `(${nodeToString(node.variableDecl)})` : ""
       }`;
     } else if (isDoStmt(node)) {
-      return `while (${exprToString(node.condition)})`;
+      return `while (${nodeToString(node.condition)})`;
     } else if (isForInStmt(node)) {
       return `for(${
         isIdentifier(node.initializer)
-          ? exprToString(node.initializer)
-          : exprToString(node.initializer.name)
-      } in ${exprToString(node.expr)})`;
+          ? nodeToString(node.initializer)
+          : nodeToString(node.initializer.name)
+      } in ${nodeToString(node.expr)})`;
     } else if (isForOfStmt(node)) {
-      return `for(${exprToString(node.initializer)} of ${exprToString(
+      return `for(${nodeToString(node.initializer)} of ${nodeToString(
         node.expr
       )})`;
     } else if (isForStmt(node)) {
@@ -4685,16 +4691,16 @@ function toStateName(node: FunctionlessNode): string {
       return `for(${
         node.initializer && isVariableDeclList(node.initializer)
           ? inner(node.initializer)
-          : exprToString(node.initializer)
-      };${exprToString(node.condition)};${exprToString(node.incrementor)})`;
+          : nodeToString(node.initializer)
+      };${nodeToString(node.condition)};${nodeToString(node.incrementor)})`;
     } else if (isReturnStmt(node)) {
       if (node.expr) {
-        return `return ${exprToString(node.expr)}`;
+        return `return ${nodeToString(node.expr)}`;
       } else {
         return "return";
       }
     } else if (isThrowStmt(node)) {
-      return `throw ${exprToString(node.expr)}`;
+      return `throw ${nodeToString(node.expr)}`;
     } else if (isTryStmt(node)) {
       return "try";
     } else if (isVariableStmt(node)) {
@@ -4703,16 +4709,16 @@ function toStateName(node: FunctionlessNode): string {
       return `${node.decls.map((v) => inner(v)).join(",")}`;
     } else if (isVariableDecl(node)) {
       return node.initializer
-        ? `${exprToString(node.name)} = ${exprToString(node.initializer)}`
-        : exprToString(node.name);
+        ? `${nodeToString(node.name)} = ${nodeToString(node.initializer)}`
+        : nodeToString(node.name);
     } else if (isWhileStmt(node)) {
-      return `while (${exprToString(node.condition)})`;
+      return `while (${nodeToString(node.condition)})`;
     } else if (isBindingElem(node)) {
       const binding = node.propertyName
         ? `${inner(node.propertyName)}: ${inner(node.name)}`
         : `${inner(node.name)}`;
       return node.initializer
-        ? `${binding} = ${exprToString(node.initializer)}`
+        ? `${binding} = ${nodeToString(node.initializer)}`
         : binding;
     } else if (isObjectBinding(node)) {
       return `{ ${node.bindings.map(inner).join(", ")} }`;
@@ -4757,42 +4763,48 @@ function toStateName(node: FunctionlessNode): string {
   return inner(node);
 }
 
-function exprToString(
-  expr?: Expr | ParameterDecl | BindingName | BindingElem | VariableDecl
+function nodeToString(
+  expr?:
+    | Expr
+    | ParameterDecl
+    | BindingName
+    | BindingElem
+    | VariableDecl
+    | QuasiString
 ): string {
   if (!expr) {
     return "";
   } else if (isArgument(expr)) {
-    return exprToString(expr.expr);
+    return nodeToString(expr.expr);
   } else if (isArrayLiteralExpr(expr)) {
     return `[${expr.items
-      .map((item) => (item ? exprToString(item) : "null"))
+      .map((item) => (item ? nodeToString(item) : "null"))
       .join(", ")}]`;
   } else if (isBigIntExpr(expr)) {
     return expr.value.toString(10);
   } else if (isBinaryExpr(expr)) {
-    return `${exprToString(expr.left)} ${expr.op} ${exprToString(expr.right)}`;
+    return `${nodeToString(expr.left)} ${expr.op} ${nodeToString(expr.right)}`;
   } else if (isBooleanLiteralExpr(expr)) {
     return `${expr.value}`;
   } else if (isCallExpr(expr) || isNewExpr(expr)) {
     if (isSuperKeyword(expr.expr) || isImportKeyword(expr.expr)) {
       throw new Error(`calling ${expr.expr.kindName} is unsupported in ASL`);
     }
-    return `${isNewExpr(expr) ? "new " : ""}${exprToString(
+    return `${isNewExpr(expr) ? "new " : ""}${nodeToString(
       expr.expr
     )}(${expr.args
       // Assume that undefined args are in order.
       .filter((arg) => arg && !isUndefinedLiteralExpr(arg))
-      .map(exprToString)
+      .map(nodeToString)
       .join(", ")})`;
   } else if (isConditionExpr(expr)) {
-    return `if(${exprToString(expr.when)})`;
+    return `if(${nodeToString(expr.when)})`;
   } else if (isComputedPropertyNameExpr(expr)) {
-    return `[${exprToString(expr.expr)}]`;
+    return `[${nodeToString(expr.expr)}]`;
   } else if (isElementAccessExpr(expr)) {
-    return `${exprToString(expr.expr)}[${exprToString(expr.element)}]`;
+    return `${nodeToString(expr.expr)}[${nodeToString(expr.element)}]`;
   } else if (isFunctionExpr(expr) || isArrowFunctionExpr(expr)) {
-    return `function(${expr.parameters.map(exprToString).join(", ")})`;
+    return `function(${expr.parameters.map(nodeToString).join(", ")})`;
   } else if (isIdentifier(expr)) {
     return expr.name;
   } else if (isNullLiteralExpr(expr)) {
@@ -4813,11 +4825,11 @@ function exprToString(
           );
         }
 
-        return exprToString(prop);
+        return nodeToString(prop);
       })
       .join(", ")}}`;
   } else if (isPropAccessExpr(expr)) {
-    return `${exprToString(expr.expr)}.${expr.name.name}`;
+    return `${nodeToString(expr.expr)}.${expr.name.name}`;
   } else if (isPropAssignExpr(expr)) {
     return `${
       isIdentifier(expr.name) || isPrivateIdentifier(expr.name)
@@ -4829,33 +4841,33 @@ function exprToString(
         : isComputedPropertyNameExpr(expr.name)
         ? isStringLiteralExpr(expr.name.expr)
           ? expr.name.expr.value
-          : exprToString(expr.name.expr)
+          : nodeToString(expr.name.expr)
         : assertNever(expr.name)
-    }: ${exprToString(expr.expr)}`;
+    }: ${nodeToString(expr.expr)}`;
   } else if (isReferenceExpr(expr)) {
     return expr.name;
   } else if (isSpreadAssignExpr(expr)) {
-    return `...${exprToString(expr.expr)}`;
+    return `...${nodeToString(expr.expr)}`;
   } else if (isSpreadElementExpr(expr)) {
-    return `...${exprToString(expr.expr)}`;
+    return `...${nodeToString(expr.expr)}`;
   } else if (isStringLiteralExpr(expr)) {
     return `"${expr.value}"`;
   } else if (isTemplateExpr(expr)) {
-    return `\`${expr.exprs
-      .map((e) => (isStringLiteralExpr(e) ? e.value : exprToString(e)))
+    return `\`${expr.spans
+      .map((e) => (isStringLiteralExpr(e) ? e.value : nodeToString(e)))
       .join("")}\``;
   } else if (isTypeOfExpr(expr)) {
-    return `typeof ${exprToString(expr.expr)}`;
+    return `typeof ${nodeToString(expr.expr)}`;
   } else if (isUnaryExpr(expr)) {
-    return `${expr.op}${exprToString(expr.expr)}`;
+    return `${expr.op}${nodeToString(expr.expr)}`;
   } else if (isPostfixUnaryExpr(expr)) {
-    return `${exprToString(expr.expr)}${expr.op}`;
+    return `${nodeToString(expr.expr)}${expr.op}`;
   } else if (isUndefinedLiteralExpr(expr)) {
     return "undefined";
   } else if (isAwaitExpr(expr)) {
-    return `await ${exprToString(expr.expr)}`;
+    return `await ${nodeToString(expr.expr)}`;
   } else if (isPromiseExpr(expr) || isPromiseArrayExpr(expr)) {
-    return exprToString(expr.expr);
+    return nodeToString(expr.expr);
   } else if (isThisExpr(expr)) {
     return "this";
   } else if (isClassExpr(expr)) {
@@ -4866,31 +4878,31 @@ function exprToString(
   } else if (isPrivateIdentifier(expr)) {
     return expr.name;
   } else if (isYieldExpr(expr)) {
-    return `yield${expr.delegate ? "*" : ""} ${exprToString(expr.expr)}`;
+    return `yield${expr.delegate ? "*" : ""} ${nodeToString(expr.expr)}`;
   } else if (isRegexExpr(expr)) {
     return expr.regex.source;
   } else if (isDeleteExpr(expr)) {
-    return `delete ${exprToString(expr.expr)}`;
+    return `delete ${nodeToString(expr.expr)}`;
   } else if (isVoidExpr(expr)) {
-    return `void ${exprToString(expr.expr)}`;
+    return `void ${nodeToString(expr.expr)}`;
   } else if (isParenthesizedExpr(expr)) {
-    return exprToString(expr.expr);
+    return nodeToString(expr.expr);
   } else if (isObjectBinding(expr)) {
-    return `{${expr.bindings.map(exprToString).join(",")}}`;
+    return `{${expr.bindings.map(nodeToString).join(",")}}`;
   } else if (isArrayBinding(expr)) {
-    return `[${expr.bindings.map(exprToString).join(",")}]`;
+    return `[${expr.bindings.map(nodeToString).join(",")}]`;
   } else if (isBindingElem(expr)) {
     return `${expr.rest ? "..." : ""}${
       expr.propertyName
-        ? `${exprToString(expr.propertyName)}:${exprToString(expr.name)}`
-        : `${exprToString(expr.name)}`
+        ? `${nodeToString(expr.propertyName)}:${nodeToString(expr.name)}`
+        : `${nodeToString(expr.name)}`
     }`;
   } else if (isVariableDecl(expr)) {
-    return `${exprToString(expr.name)}${
-      expr.initializer ? ` = ${exprToString(expr.initializer)}` : ""
+    return `${nodeToString(expr.name)}${
+      expr.initializer ? ` = ${nodeToString(expr.initializer)}` : ""
     }`;
   } else if (isParameterDecl(expr)) {
-    return exprToString(expr.name);
+    return nodeToString(expr.name);
   } else if (isTaggedTemplateExpr(expr)) {
     throw new SynthError(
       ErrorCodes.Unsupported_Feature,
@@ -4898,6 +4910,8 @@ function exprToString(
     );
   } else if (isOmittedExpr(expr)) {
     return "undefined";
+  } else if (isQuasiString(expr)) {
+    return expr.value;
   } else {
     return assertNever(expr);
   }

@@ -388,19 +388,46 @@ export class SpreadElementExpr extends BaseExpr<
 }
 
 /**
+ * A quasi string in a {@link TemplateExpr} or {@link TaggedTemplateExpr}.
+ *
+ * ```ts
+ * const s = `abc${def}`
+ *          // ^ quasi
+ * ```
+ */
+export class QuasiString extends BaseNode<NodeKind.QuasiString> {
+  readonly nodeKind = "Node";
+  constructor(readonly value: string) {
+    super(NodeKind.QuasiString, arguments);
+  }
+}
+
+/**
+ * A span of text within a {@link TemplateExpr} or {@link TaggedTemplateExpr}.
+ *
+ * ```ts
+ * const s = `quasi ${expr}`
+ *           // ^ Quasi string
+ * const s = `quasi ${expr}`
+ *                  // ^ expression to splice
+ * ```
+ */
+export type TemplateSpan = QuasiString | Expr;
+
+/**
  * Interpolates a TemplateExpr to a string `this ${is} a template expression`
  */
 export class TemplateExpr extends BaseExpr<NodeKind.TemplateExpr> {
-  constructor(readonly exprs: Expr[]) {
+  constructor(readonly spans: TemplateSpan[]) {
     super(NodeKind.TemplateExpr, arguments);
-    this.ensureArrayOf(exprs, "expr", ["Expr"]);
+    this.ensureArrayOf(spans, "span", [NodeKind.QuasiString, "Expr"]);
   }
 }
 
 export class TaggedTemplateExpr extends BaseExpr<NodeKind.TaggedTemplateExpr> {
-  constructor(readonly tag: Expr, readonly exprs: Expr[]) {
+  constructor(readonly tag: Expr, readonly spans: TemplateSpan[]) {
     super(NodeKind.TaggedTemplateExpr, arguments);
-    this.ensureArrayOf(exprs, "expr", ["Expr"]);
+    this.ensureArrayOf(spans, "span", [NodeKind.QuasiString, "Expr"]);
   }
 }
 
