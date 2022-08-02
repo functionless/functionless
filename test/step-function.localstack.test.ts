@@ -545,6 +545,36 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
   );
 
   test(
+    "filter",
+    (parent) => {
+      return new StepFunction(parent, "sfn2", async ({ arr, key }) => {
+        return arr
+          .filter(({ value }) => value <= key)
+          .filter((item) => {
+            const { key: itemKey } = item;
+            $SFN.waitFor(1);
+            return itemKey === `hi${key}`;
+          });
+      });
+    },
+    [
+      { value: 1, key: "hi2" },
+      { value: 2, key: "hi2" },
+    ],
+    {
+      arr: [
+        { value: 1, key: "hi" },
+        { value: 1, key: "hi2" },
+        { value: 2, key: "hi" },
+        { value: 2, key: "hi2" },
+        { value: 3 },
+        { value: 1, key: "hi" },
+      ],
+      key: 2,
+    }
+  );
+
+  test(
     "binaryOps logic",
     (parent) => {
       return new StepFunction(parent, "sfn2", async (input) => {

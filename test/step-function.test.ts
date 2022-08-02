@@ -2098,12 +2098,24 @@ test("[1,2,3,4].filter(item => item > 1 + 2)", () => {
 
 test("[1,2,3,4].filter(item => item > {})", () => {
   const { stack } = initStepFunctionApp();
-  expect(
-    () =>
-      new ExpressStepFunction(stack, "fn", async () => {
-        return [{}].filter((item) => item === { a: "a" });
-      })
-  ).toThrow("Filter expressions do not support object or array literals");
+  const { definition } = new ExpressStepFunction(stack, "fn", async () => {
+    return [{}].filter((item) => item === { a: "a" });
+  });
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+});
+
+test("[1,2,3,4].filter(item => item > {})", () => {
+  const { stack } = initStepFunctionApp();
+  const { definition } = new ExpressStepFunction(stack, "fn", async () => {
+    return [{ value: "a" }].filter((item) => {
+      const a = "a";
+      const { value } = item;
+      return value === a;
+    });
+  });
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
 // https://github.com/functionless/functionless/issues/209
