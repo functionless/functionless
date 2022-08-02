@@ -176,24 +176,24 @@ Object {
   "StartAt": "Initialize Functionless Context",
   "States": Object {
     "1__item == {a: \\"a\\"}": Object {
-      "InputPath": "$.heap2",
+      "InputPath": "$.heap3",
       "Next": "checkPredicate__1__return [{}].filter(function(item)) 1",
-      "ResultPath": "$.heap0",
+      "ResultPath": "$.heap1",
       "Type": "Pass",
     },
     "1__return [{}].filter(function(item))": Object {
       "End": true,
-      "InputPath": "$.heap1",
+      "InputPath": "$.heap2",
       "ResultPath": "$",
       "Type": "Pass",
     },
     "1__return [{}].filter(function(item)) 1": Object {
       "Next": "check__1__return [{}].filter(function(item)) 1",
       "Parameters": Object {
-        "arr.$": "$.heap3",
-        "arrStr": "[",
+        "arr.$": "$.heap0",
+        "arrStr": "[null",
       },
-      "ResultPath": "$.heap1",
+      "ResultPath": "$.heap2",
       "Type": "Pass",
     },
     "Initialize Functionless Context": Object {
@@ -209,13 +209,13 @@ Object {
     "assignFalse__item == {a: \\"a\\"}": Object {
       "Next": "1__item == {a: \\"a\\"}",
       "Result": false,
-      "ResultPath": "$.heap2",
+      "ResultPath": "$.heap3",
       "Type": "Pass",
     },
     "assignTrue__item == {a: \\"a\\"}": Object {
       "Next": "1__item == {a: \\"a\\"}",
       "Result": true,
-      "ResultPath": "$.heap2",
+      "ResultPath": "$.heap3",
       "Type": "Pass",
     },
     "checkPredicate__1__return [{}].filter(function(item)) 1": Object {
@@ -224,11 +224,11 @@ Object {
           "And": Array [
             Object {
               "IsPresent": true,
-              "Variable": "$.heap0",
+              "Variable": "$.heap1",
             },
             Object {
               "IsNull": false,
-              "Variable": "$.heap0",
+              "Variable": "$.heap1",
             },
             Object {
               "Or": Array [
@@ -236,18 +236,18 @@ Object {
                   "And": Array [
                     Object {
                       "IsString": true,
-                      "Variable": "$.heap0",
+                      "Variable": "$.heap1",
                     },
                     Object {
                       "Not": Object {
                         "And": Array [
                           Object {
                             "IsString": true,
-                            "Variable": "$.heap0",
+                            "Variable": "$.heap1",
                           },
                           Object {
                             "StringEquals": "",
-                            "Variable": "$.heap0",
+                            "Variable": "$.heap1",
                           },
                         ],
                       },
@@ -258,18 +258,18 @@ Object {
                   "And": Array [
                     Object {
                       "IsNumeric": true,
-                      "Variable": "$.heap0",
+                      "Variable": "$.heap1",
                     },
                     Object {
                       "Not": Object {
                         "And": Array [
                           Object {
                             "IsNumeric": true,
-                            "Variable": "$.heap0",
+                            "Variable": "$.heap1",
                           },
                           Object {
                             "NumericEquals": 0,
-                            "Variable": "$.heap0",
+                            "Variable": "$.heap1",
                           },
                         ],
                       },
@@ -280,11 +280,11 @@ Object {
                   "And": Array [
                     Object {
                       "IsBoolean": true,
-                      "Variable": "$.heap0",
+                      "Variable": "$.heap1",
                     },
                     Object {
                       "BooleanEquals": true,
-                      "Variable": "$.heap0",
+                      "Variable": "$.heap1",
                     },
                   ],
                 },
@@ -302,7 +302,7 @@ Object {
         Object {
           "IsPresent": true,
           "Next": "item",
-          "Variable": "$.heap1.arr[0]",
+          "Variable": "$.heap2.arr[0]",
         },
       ],
       "Default": "end__1__return [{}].filter(function(item)) 1",
@@ -311,13 +311,13 @@ Object {
     "end__1__return [{}].filter(function(item)) 1": Object {
       "Next": "set__end__1__return [{}].filter(function(item)) 1",
       "Parameters": Object {
-        "result.$": "States.StringToJson(States.Format('{}]', $.heap1.arrStr))",
+        "result.$": "States.StringToJson(States.Format('{}]', $.heap2.arrStr))",
       },
-      "ResultPath": "$.heap1",
+      "ResultPath": "$.heap2",
       "Type": "Pass",
     },
     "item": Object {
-      "InputPath": "$.heap1.arr[0]",
+      "InputPath": "$.heap2.arr[0]",
       "Next": "item == {a: \\"a\\"}",
       "ResultPath": "$.item",
       "Type": "Pass",
@@ -342,18 +342,18 @@ Object {
       "Type": "Choice",
     },
     "predicateFalse__1__return [{}].filter(function(item)) 1": Object {
-      "InputPath": "$.heap1.arr[1:]",
+      "InputPath": "$.heap2.arr[1:]",
       "Next": "check__1__return [{}].filter(function(item)) 1",
-      "ResultPath": "$.heap1.arr",
+      "ResultPath": "$.heap2.arr",
       "Type": "Pass",
     },
     "predicateTrue__1__return [{}].filter(function(item)) 1": Object {
-      "Next": "1__return [{}].filter(function(item))",
+      "Next": "check__1__return [{}].filter(function(item)) 1",
       "Parameters": Object {
-        "arr.$": "$.heap1.arr[1:]",
-        "arrStr.$": "States.Format('{},{}', $.heap1.arrStr, States.JsonToString($.heap1.arr[0]))",
+        "arr.$": "$.heap2.arr[1:]",
+        "arrStr.$": "States.Format('{},{}', $.heap2.arrStr, States.JsonToString($.heap2.arr[0]))",
       },
-      "ResultPath": "$.heap1",
+      "ResultPath": "$.heap2",
       "Type": "Pass",
     },
     "return [{}].filter(function(item))": Object {
@@ -361,13 +361,13 @@ Object {
       "Result": Array [
         Object {},
       ],
-      "ResultPath": "$.heap3",
+      "ResultPath": "$.heap0",
       "Type": "Pass",
     },
     "set__end__1__return [{}].filter(function(item)) 1": Object {
-      "InputPath": "$.heap1.result",
+      "InputPath": "$.heap2.result[1:]",
       "Next": "1__return [{}].filter(function(item))",
-      "ResultPath": "$.heap1",
+      "ResultPath": "$.heap2",
       "Type": "Pass",
     },
   },
@@ -380,23 +380,23 @@ Object {
   "States": Object {
     "1__return [{value: \\"a\\"}].filter(function(item))": Object {
       "End": true,
-      "InputPath": "$.heap1",
+      "InputPath": "$.heap2",
       "ResultPath": "$",
       "Type": "Pass",
     },
     "1__return [{value: \\"a\\"}].filter(function(item)) 1": Object {
       "Next": "check__1__return [{value: \\"a\\"}].filter(function(item)) 1",
       "Parameters": Object {
-        "arr.$": "$.heap3",
-        "arrStr": "[",
+        "arr.$": "$.heap0",
+        "arrStr": "[null",
       },
-      "ResultPath": "$.heap1",
+      "ResultPath": "$.heap2",
       "Type": "Pass",
     },
     "1__value == a": Object {
-      "InputPath": "$.heap2",
+      "InputPath": "$.heap3",
       "Next": "checkPredicate__1__return [{value: \\"a\\"}].filter(function(item)) 1",
-      "ResultPath": "$.heap0",
+      "ResultPath": "$.heap1",
       "Type": "Pass",
     },
     "Initialize Functionless Context": Object {
@@ -412,13 +412,13 @@ Object {
     "assignFalse__value == a": Object {
       "Next": "1__value == a",
       "Result": false,
-      "ResultPath": "$.heap2",
+      "ResultPath": "$.heap3",
       "Type": "Pass",
     },
     "assignTrue__value == a": Object {
       "Next": "1__value == a",
       "Result": true,
-      "ResultPath": "$.heap2",
+      "ResultPath": "$.heap3",
       "Type": "Pass",
     },
     "checkPredicate__1__return [{value: \\"a\\"}].filter(function(item)) 1": Object {
@@ -427,11 +427,11 @@ Object {
           "And": Array [
             Object {
               "IsPresent": true,
-              "Variable": "$.heap0",
+              "Variable": "$.heap1",
             },
             Object {
               "IsNull": false,
-              "Variable": "$.heap0",
+              "Variable": "$.heap1",
             },
             Object {
               "Or": Array [
@@ -439,18 +439,18 @@ Object {
                   "And": Array [
                     Object {
                       "IsString": true,
-                      "Variable": "$.heap0",
+                      "Variable": "$.heap1",
                     },
                     Object {
                       "Not": Object {
                         "And": Array [
                           Object {
                             "IsString": true,
-                            "Variable": "$.heap0",
+                            "Variable": "$.heap1",
                           },
                           Object {
                             "StringEquals": "",
-                            "Variable": "$.heap0",
+                            "Variable": "$.heap1",
                           },
                         ],
                       },
@@ -461,18 +461,18 @@ Object {
                   "And": Array [
                     Object {
                       "IsNumeric": true,
-                      "Variable": "$.heap0",
+                      "Variable": "$.heap1",
                     },
                     Object {
                       "Not": Object {
                         "And": Array [
                           Object {
                             "IsNumeric": true,
-                            "Variable": "$.heap0",
+                            "Variable": "$.heap1",
                           },
                           Object {
                             "NumericEquals": 0,
-                            "Variable": "$.heap0",
+                            "Variable": "$.heap1",
                           },
                         ],
                       },
@@ -483,11 +483,11 @@ Object {
                   "And": Array [
                     Object {
                       "IsBoolean": true,
-                      "Variable": "$.heap0",
+                      "Variable": "$.heap1",
                     },
                     Object {
                       "BooleanEquals": true,
-                      "Variable": "$.heap0",
+                      "Variable": "$.heap1",
                     },
                   ],
                 },
@@ -505,7 +505,7 @@ Object {
         Object {
           "IsPresent": true,
           "Next": "item",
-          "Variable": "$.heap1.arr[0]",
+          "Variable": "$.heap2.arr[0]",
         },
       ],
       "Default": "end__1__return [{value: \\"a\\"}].filter(function(item)) 1",
@@ -514,30 +514,30 @@ Object {
     "end__1__return [{value: \\"a\\"}].filter(function(item)) 1": Object {
       "Next": "set__end__1__return [{value: \\"a\\"}].filter(function(item)) 1",
       "Parameters": Object {
-        "result.$": "States.StringToJson(States.Format('{}]', $.heap1.arrStr))",
+        "result.$": "States.StringToJson(States.Format('{}]', $.heap2.arrStr))",
       },
-      "ResultPath": "$.heap1",
+      "ResultPath": "$.heap2",
       "Type": "Pass",
     },
     "item": Object {
-      "InputPath": "$.heap1.arr[0]",
+      "InputPath": "$.heap2.arr[0]",
       "Next": "return value == a",
       "ResultPath": "$.item",
       "Type": "Pass",
     },
     "predicateFalse__1__return [{value: \\"a\\"}].filter(function(item)) 1": Object {
-      "InputPath": "$.heap1.arr[1:]",
+      "InputPath": "$.heap2.arr[1:]",
       "Next": "check__1__return [{value: \\"a\\"}].filter(function(item)) 1",
-      "ResultPath": "$.heap1.arr",
+      "ResultPath": "$.heap2.arr",
       "Type": "Pass",
     },
     "predicateTrue__1__return [{value: \\"a\\"}].filter(function(item)) 1": Object {
-      "Next": "1__return [{value: \\"a\\"}].filter(function(item))",
+      "Next": "check__1__return [{value: \\"a\\"}].filter(function(item)) 1",
       "Parameters": Object {
-        "arr.$": "$.heap1.arr[1:]",
-        "arrStr.$": "States.Format('{},{}', $.heap1.arrStr, States.JsonToString($.heap1.arr[0]))",
+        "arr.$": "$.heap2.arr[1:]",
+        "arrStr.$": "States.Format('{},{}', $.heap2.arrStr, States.JsonToString($.heap2.arr[0]))",
       },
-      "ResultPath": "$.heap1",
+      "ResultPath": "$.heap2",
       "Type": "Pass",
     },
     "return [{value: \\"a\\"}].filter(function(item))": Object {
@@ -547,7 +547,7 @@ Object {
           "value": "a",
         },
       ],
-      "ResultPath": "$.heap3",
+      "ResultPath": "$.heap0",
       "Type": "Pass",
     },
     "return value == a": Object {
@@ -557,9 +557,9 @@ Object {
       "Type": "Pass",
     },
     "set__end__1__return [{value: \\"a\\"}].filter(function(item)) 1": Object {
-      "InputPath": "$.heap1.result",
+      "InputPath": "$.heap2.result[1:]",
       "Next": "1__return [{value: \\"a\\"}].filter(function(item))",
-      "ResultPath": "$.heap1",
+      "ResultPath": "$.heap2",
       "Type": "Pass",
     },
     "value == a": Object {
@@ -1312,7 +1312,7 @@ Object {
     },
     "return input.value.filter(function({value:b,arr:[c]}))": Object {
       "End": true,
-      "InputPath": "$.input.value[?(@[value]==@[arr][0])]",
+      "InputPath": "$.input.value[?(@['value']==@['arr'][0])]",
       "ResultPath": "$",
       "Type": "Pass",
     },
