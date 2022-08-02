@@ -44,6 +44,7 @@ import {
   PromiseExpr,
   PropAccessExpr,
   PropAssignExpr,
+  QuasiString,
   ReferenceExpr,
   RegexExpr,
   SpreadAssignExpr,
@@ -111,6 +112,7 @@ export const declarations = {
   [NodeKind.SetAccessorDecl]: SetAccessorDecl,
   [NodeKind.VariableDecl]: VariableDecl,
   [NodeKind.VariableDeclList]: VariableDeclList,
+  [NodeKind.QuasiString]: QuasiString,
 } as const;
 
 export const error = {
