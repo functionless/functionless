@@ -549,6 +549,7 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
     (parent) => {
       return new StepFunction(parent, "sfn2", async ({ arr, key }) => {
         return arr
+          .filter(({ value }) => value <= 3)
           .filter(({ value }) => value <= key)
           .filter((item) => {
             const { key: itemKey } = item;
