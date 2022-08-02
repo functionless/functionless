@@ -1,5 +1,10 @@
 import { aws_events, Stack } from "aws-cdk-lib";
-import { EventBus, reflect, validateFunctionLike } from "../src";
+import {
+  EventBus,
+  reflect,
+  ReflectionSymbols,
+  validateFunctionLike,
+} from "../src";
 import { assertNodeKind } from "../src/assert";
 import { NodeKind } from "../src/node-kind";
 
@@ -169,11 +174,6 @@ test("computed object name", () => {
   obj.properties;
 });
 
-test("err", () => {
-  const fn = () => {};
-  expect(reflect(fn)).toBeUndefined();
-});
-
 test("ObjectBinding with out-of-bound reference", () => {
   const stack = new Stack();
   new aws_events.EventBus(stack, "busbus");
@@ -257,8 +257,8 @@ test("reflect on a bound function declaration", () => {
 });
 
 test("validateFunctionLikeNode throws when function not registered", () => {
-  // arrow/function expressions are currently only compiled when in-lined
-  const foo = () => {};
+  function foo() {}
+  delete (foo as any)[ReflectionSymbols.AST];
 
   expect(() => validateFunctionLike(foo, "here")).toThrow();
 });

@@ -26,9 +26,11 @@ import type { Context } from "aws-lambda";
 // eslint-disable-next-line import/no-extraneous-dependencies
 import { Construct } from "constructs";
 import esbuild from "esbuild";
+import ts from "typescript";
 import { ApiGatewayVtlIntegration } from "./api";
 import type { AppSyncVtlIntegration } from "./appsync";
 import { ASL, ASLGraph } from "./asl";
+import { BindFunctionName, RegisterFunctionName } from "./compile";
 import { FunctionLike, IntegrationInvocation } from "./declaration";
 import { ErrorCodes, formatErrorMessage, SynthError } from "./error-code";
 import {
@@ -55,7 +57,7 @@ import {
   isIntegrationCallExpr,
 } from "./integration";
 import { FunctionlessNode } from "./node";
-import { validateFunctionLike } from "./reflect";
+import { ReflectionSymbols, validateFunctionLike } from "./reflect";
 import { isStepFunction } from "./step-function";
 import { isTable } from "./table";
 import { AnyAsyncFunction, AnyFunction } from "./util";
@@ -913,6 +915,37 @@ export async function serialize(
   let tokens: string[] = [];
   const preWarmContext = new NativePreWarmContext(props);
 
+  const astRestorationMap = new Map();
+
+  // the closure serializer does not call `serialize` for the first function being serialize
+  // so we don't get a chance to intercept and modify it before serialization recurses through its properties
+  // as a workaround, we register `func` and delete the AST property before proceeding with serialization
+  registerASTRestoration(func);
+
+  /**
+   * Stores a mapping from the {@link func} to the value of its {@link ReflectionSymbols.AST} property
+   * and then deletes the property from {@link func}.
+   */
+  function registerASTRestoration(func: any) {
+    if (func && ReflectionSymbols.AST in func) {
+      // store a reference to this in a map so that it can be restored after serialization
+      astRestorationMap.set(func, func[ReflectionSymbols.AST]);
+      // temporarily remove the AST from the function so that it isn't serialized
+      delete func[ReflectionSymbols.AST];
+    }
+  }
+
+  /**
+   * Restores the value of all deleted {@link ReflectionSymbols.AST} properties.
+   */
+  function restoreASTProperties() {
+    for (const [func, ast] of astRestorationMap) {
+      if (typeof func === "function") {
+        func[ReflectionSymbols.AST] = ast;
+      }
+    }
+  }
+
   const result = await serializeFunction(
     // factory function allows us to prewarm the clients and other context.
     integrationPrewarms.length > 0
@@ -923,8 +956,42 @@ export async function serialize(
       : func,
     {
       isFactoryFunction: integrationPrewarms.length > 0,
+      transformers: [
+        (ctx) =>
+          /**
+           * TS Transformer for erasing calls to the generated `register` and `bind` functions
+           * from all emitted closures.
+           */
+          function eraseBindAndRegister(node: ts.Node): ts.Node {
+            if (ts.isCallExpression(node) && ts.isIdentifier(node.expression)) {
+              if (node.expression.text === RegisterFunctionName) {
+                // register(func, ast)
+                // => func
+                return ts.visitEachChild(
+                  node.arguments[0],
+                  eraseBindAndRegister,
+                  ctx
+                );
+              } else if (node.expression.text === BindFunctionName) {
+                // bind(func, self, ...args)
+                // => func.bind(self, ...args)
+                return ts.factory.createCallExpression(
+                  eraseBindAndRegister(node.arguments[0]) as ts.Expression,
+                  undefined,
+                  [
+                    eraseBindAndRegister(node.arguments[1]) as ts.Expression,
+                    eraseBindAndRegister(node.arguments[2]) as ts.Expression,
+                  ]
+                );
+              }
+            }
+            return ts.visitEachChild(node, eraseBindAndRegister, ctx);
+          },
+      ],
       serialize: (obj) => {
-        if (typeof obj === "string") {
+        if (typeof obj === "function") {
+          registerASTRestoration(obj);
+        } else if (typeof obj === "string") {
           const reversed =
             Tokenization.reverse(obj, { failConcat: false }) ??
             Tokenization.reverseString(obj).tokens;
@@ -1062,6 +1129,9 @@ export async function serialize(
       },
     }
   );
+
+  // now that serialization is complete, restore the AST properties on all serialized closures
+  restoreASTProperties();
 
   /**
    * A map of token id to unique index.

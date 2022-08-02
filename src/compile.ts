@@ -29,6 +29,63 @@ export interface FunctionlessConfig extends PluginConfig {
 }
 
 /**
+ * A CRC-32 hash of the word "functionless".
+ *
+ * Used to give generated functions a predictable name is that is highly-likely
+ * to be unique within a module.
+ *
+ * If we ever have collisions (highly improbable) we can simply change this to
+ * a hash with higher entropy such as a SHA256. For now, CRC-32 is chosen for its
+ * relatively small size.
+ */
+const FunctionlessSalt = "8269d1a8";
+
+/**
+ * Name of the `register` function that is injected into all compiled source files.
+ *
+ * ```ts
+ * function register_8269d1a8(func, ast) {
+ *   func[Symbol.for("functionless:AST")] = ast;
+ *   return func;
+ * }
+ * ```
+ *
+ * All Function Declarations, Expressions and Arrow Expressions are decorated with
+ * the `register` function which attaches its AST as a property.
+ */
+export const RegisterFunctionName = `register_${FunctionlessSalt}`;
+
+/**
+ * Name of the `bind` function that is injected into all compiled source files.
+ *
+ * ```ts
+ * function bind_8269d1a8(func, self, ...args) {
+ *   const tmp = func.bind(self, ...args);
+ *   if (typeof func === "function") {
+ *     func[Symbol.for("functionless:BoundThis")] = self;
+ *     func[Symbol.for("functionless:BoundArgs")] = args;
+ *     func[Symbol.for("functionless:TargetFunction")] = func;
+ *   }
+ *   return tmp;
+ * }
+ * ```
+ *
+ * All CallExpressions with the shape <expr>.bind(...<args>) are re-written as calls
+ * to this special function which intercepts the call.
+ * ```ts
+ * <expr>.bind(...<args>)
+ * // =>
+ * bind_8269d1a8(<expr>, ...<args>)
+ * ```
+ *
+ * If `<expr>` is a Function, then the values of BoundThis, BoundArgs and TargetFunction
+ * are added to the bound Function.
+ *
+ * If `<expr>` is not a Function, then the call is proxied without modification.
+ */
+export const BindFunctionName = `bind_${FunctionlessSalt}`;
+
+/**
  * TypeScript Transformer which transforms functionless functions, such as `AppsyncResolver`,
  * into an AST that can be interpreted at CDK synth time to produce VTL templates and AppSync
  * Resolver configurations.
@@ -74,8 +131,14 @@ export function compile(
         ts.factory.createStringLiteral("functionless")
       );
 
-      const registerName = ts.factory.createUniqueName("register");
-      const bindName = ts.factory.createUniqueName("bind");
+      sf.statements.find((stmt) => {
+        if (ts.isVariableStatement(stmt)) {
+        }
+        return false;
+      });
+
+      const registerName = ts.factory.createIdentifier(RegisterFunctionName);
+      const bindName = ts.factory.createIdentifier(BindFunctionName);
       const globals: (ts.FunctionDeclaration | ts.Statement)[] = [
         createRegisterFunctionDeclaration(registerName),
         createBindFunctionDeclaration(bindName),
@@ -104,20 +167,16 @@ export function compile(
       );
 
       function visitor(node: ts.Node): ts.Node | ts.Node[] {
-        if (
-          checker.isApiIntegration(node) ||
-          checker.isAppsyncField(node) ||
-          checker.isAppsyncResolver(node) ||
-          checker.isEventBusWhenFunction(node) ||
-          checker.isNewEventTransform(node) ||
-          checker.isNewFunctionlessFunction(node) ||
-          checker.isNewRule(node) ||
-          checker.isNewStepFunction(node) ||
-          checker.isReflectFunction(node) ||
-          checker.isRuleMapFunction(node)
-        ) {
-          // if this is a Functionless primitive, transform its arguments to wrap functions in their AST form
-          return transform(node);
+        if (ts.isFunctionExpression(node)) {
+          return register(
+            ts.visitEachChild(node, visitor, ctx),
+            toFunction(NodeKind.FunctionExpr, node, node)
+          );
+        } else if (ts.isArrowFunction(node)) {
+          return register(
+            ts.visitEachChild(node, visitor, ctx),
+            toFunction(NodeKind.ArrowFunctionExpr, node, node)
+          );
         } else if (
           ts.isCallExpression(node) &&
           ts.isPropertyAccessExpression(node.expression) &&
@@ -154,31 +213,6 @@ export function compile(
         }
         // nothing special about this node, continue walking
         return ts.visitEachChild(node, visitor, ctx);
-      }
-
-      /**
-       * Transforms all Function Decls, Function Exprs and Arrow Functions to their AST form
-       * and injects register calls.
-       */
-      function transform(node: ts.Node): ts.Node {
-        return ts.visitEachChild(
-          node,
-          (node: ts.Node): ts.Node => {
-            if (ts.isFunctionExpression(node)) {
-              return register(
-                node,
-                toFunction(NodeKind.FunctionExpr, node, node)
-              );
-            } else if (ts.isArrowFunction(node)) {
-              return register(
-                node,
-                toFunction(NodeKind.ArrowFunctionExpr, node, node)
-              );
-            }
-            return transform(node);
-          },
-          ctx
-        );
       }
 
       function register(func: ts.Expression, ast: ts.Expression) {
