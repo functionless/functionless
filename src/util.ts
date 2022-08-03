@@ -209,14 +209,7 @@ export function isConstant(x: any): x is Constant {
 export const evalToConstant = (
   expr: Expr | QuasiString
 ): Constant | undefined => {
-  if (isIdentifier(expr)) {
-    // const decl = expr.lookup();
-    // if (decl) {
-    //   if (isVariableDecl(decl) && decl.initializer) {
-    //     return evalToConstant(decl.initializer);
-    //   }
-    // }
-  } else if (
+  if (
     isStringLiteralExpr(expr) ||
     isNumberLiteralExpr(expr) ||
     isBooleanLiteralExpr(expr) ||

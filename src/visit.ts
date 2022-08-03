@@ -24,9 +24,8 @@ export function visitEachChild<T extends FunctionlessNode>(
 ): T {
   const ctor = getCtor(node.kind);
   const args = node._arguments.map((argument) => {
-    if (!(typeof argument === "object" || Array.isArray(argument))) {
+    if (argument === null || typeof argument !== "object") {
       // all primitives are simply returned as-is
-      // all objects are assumed
       return argument;
     } else if (isNode(argument)) {
       const transformed = visit(argument);

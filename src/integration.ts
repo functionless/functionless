@@ -9,18 +9,17 @@ import {
   isBindingElem,
   isBindingPattern,
   isCallExpr,
+  isConditionExpr,
   isElementAccessExpr,
   isIdentifier,
-  isNumberLiteralExpr,
   isPromiseExpr,
   isPropAccessExpr,
   isReferenceExpr,
-  isStringLiteralExpr,
   isThisExpr,
   isVariableDecl,
 } from "./guards";
 import { FunctionlessNode } from "./node";
-import { AnyFunction } from "./util";
+import { AnyFunction, evalToConstant } from "./util";
 import { visitEachChild } from "./visit";
 import { VTL } from "./vtl";
 
@@ -410,9 +409,9 @@ export function tryFindIntegrations(node: FunctionlessNode): Integration[] {
     } else if (isIdentifier(node)) {
       return resolve(node.lookup(), defaultValue);
     } else if (isBindingElem(node)) {
-      return resolve(node.parent, node.initializer).flatMap((pattern) => {
+      return resolve(node.parent, node.initializer).flatMap((value) => {
         if (isIdentifier(node.name)) {
-          return [pattern[node.name.name]];
+          return [value[node.name.name]];
         } else {
           throw new Error("should be impossible");
         }
@@ -425,17 +424,18 @@ export function tryFindIntegrations(node: FunctionlessNode): Integration[] {
       return resolve(node.initializer, defaultValue);
     } else if (isPropAccessExpr(node) || isElementAccessExpr(node)) {
       return resolve(node.expr, undefined).flatMap((expr) => {
-        const key = isPropAccessExpr(node)
+        const key: any = isPropAccessExpr(node)
           ? node.name.name
-          : isStringLiteralExpr(node.element) ||
-            isNumberLiteralExpr(node.element)
-          ? node.element.value
-          : undefined;
+          : evalToConstant(node.element)?.constant;
         if (key !== undefined) {
           return [(<any>expr)?.[key]];
         }
         return [];
       });
+    } else if (isConditionExpr(node)) {
+      return resolve(node.then, defaultValue).concat(
+        resolve(node._else, defaultValue)
+      );
     }
     return [];
   }

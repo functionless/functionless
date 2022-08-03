@@ -58,7 +58,8 @@ export interface HasParent<Parent extends FunctionlessNode> {
   set parent(parent: Parent);
 }
 
-type Binding = [string, VariableDecl | ParameterDecl | BindingElem];
+type Binding = [string, BindingDecl];
+type BindingDecl = VariableDecl | ParameterDecl | BindingElem;
 
 export abstract class BaseNode<
   Kind extends NodeKind,
@@ -111,6 +112,11 @@ export abstract class BaseNode<
     ];
   }
 
+  /**
+   * Forks the tree starting from `this` node with {@link node} as its child
+   *
+   * This function simply sets the {@link node}'s parent and returns it.
+   */
   public fork<N extends this["parent"]>(node: N): N {
     // @ts-ignore
     node.parent = this;
@@ -374,7 +380,7 @@ export abstract class BaseNode<
   /**
    * @returns a mapping of name to the node visible in this node's scope.
    */
-  public getLexicalScope(): Map<string, Binding[1]> {
+  public getLexicalScope(): Map<string, BindingDecl> {
     return new Map(getLexicalScope(this as unknown as FunctionlessNode));
 
     function getLexicalScope(node: FunctionlessNode | undefined): Binding[] {
