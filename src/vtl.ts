@@ -95,7 +95,12 @@ import {
   isWithStmt,
   isYieldExpr,
 } from "./guards";
-import { Integration, IntegrationImpl, isIntegration } from "./integration";
+import {
+  Integration,
+  IntegrationImpl,
+  isIntegration,
+  tryFindIntegration,
+} from "./integration";
 import { NodeKind } from "./node-kind";
 import { Stmt } from "./statement";
 import { AnyFunction, isInTopLevelScope } from "./util";
@@ -377,10 +382,8 @@ export abstract class VTL {
         ? node.expr.unwrap()
         : node.expr;
 
-      if (isSuperKeyword(expr) || isImportKeyword(expr)) {
-        throw new Error(`super and import are not supported by VTL`);
-      } else if (isReferenceExpr(expr)) {
-        const ref = expr.ref();
+      const ref = expr ? tryFindIntegration(expr) : undefined;
+      if (ref) {
         if (isIntegration<Integration>(ref)) {
           const serviceCall = new IntegrationImpl(ref);
           return this.integrate(serviceCall, node);
@@ -390,6 +393,13 @@ export abstract class VTL {
             "Called references are expected to be an integration."
           );
         }
+      } else if (isReferenceExpr(expr)) {
+        throw new SynthError(
+          ErrorCodes.Unexpected_Error,
+          "Called references are expected to be an integration."
+        );
+      } else if (isSuperKeyword(expr) || isImportKeyword(expr)) {
+        throw new Error(`super and import are not supported by VTL`);
       } else if (
         // If the parent is a propAccessExpr
         isPropAccessExpr(expr) &&

@@ -15,7 +15,7 @@ test("s-expression isomorphism", () => {
 function equals(self: any, other: any): boolean {
   if (isNode(self) && isNode(other)) {
     if (self.kind === other.kind) {
-      return Array.from(self._arguments).every((thisArg, i) =>
+      return (self._arguments as any[]).every((thisArg, i) =>
         equals(thisArg, other._arguments[i])
       );
     } else {

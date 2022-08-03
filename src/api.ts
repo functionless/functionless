@@ -39,7 +39,7 @@ import {
   isSpreadAssignExpr,
   isFunctionLike,
 } from "./guards";
-import { Integration, IntegrationImpl, isIntegration } from "./integration";
+import { IntegrationImpl, tryFindIntegration } from "./integration";
 import { validateFunctionLike } from "./reflect";
 import { Stmt } from "./statement";
 import { AnyFunction, singletonConstruct } from "./util";
@@ -732,12 +732,13 @@ export class APIGatewayVTL extends VTL {
         return this.exprToJson(expr.expr);
       }
     } else if (isCallExpr(expr)) {
-      if (isReferenceExpr(expr.expr) || isThisExpr(expr.expr)) {
+      const integration = tryFindIntegration(expr.expr);
+      if (integration) {
+        const serviceCall = new IntegrationImpl(integration);
+        return this.integrate(serviceCall, expr);
+      } else if (isReferenceExpr(expr.expr) || isThisExpr(expr.expr)) {
         const ref = expr.expr.ref();
-        if (isIntegration<Integration>(ref)) {
-          const serviceCall = new IntegrationImpl(ref);
-          return this.integrate(serviceCall, expr);
-        } else if (ref === Number) {
+        if (ref === Number) {
           return this.exprToJson(expr.args[0]);
         } else {
           throw new SynthError(

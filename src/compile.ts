@@ -400,18 +400,6 @@ export function compile(
           } else if (node.text === "null") {
             return newExpr(NodeKind.NullLiteralExpr, []);
           }
-          if (checker.isIntegrationNode(node)) {
-            // if this is a reference to a Table or Lambda, retain it
-            const _ref = checker.getOutOfScopeValueNode(node, scope);
-            if (_ref) {
-              return ref(_ref);
-            } else {
-              throw new SynthError(
-                ErrorCodes.Unable_to_find_reference_out_of_application_function,
-                `Unable to find reference out of application function: ${node.getText()}`
-              );
-            }
-          }
 
           /**
            * If the identifier is not within the closure, we attempt to enclose the reference in its own closure.
@@ -423,28 +411,13 @@ export function compile(
            * return { value: () => val };
            */
           if (checker.isIdentifierOutOfScope(node, scope)) {
-            const _ref = checker.getOutOfScopeValueNode(node, scope);
-            if (_ref) {
-              return ref(_ref);
-            }
+            return ref(node);
           }
 
           return newExpr(NodeKind.Identifier, [
             ts.factory.createStringLiteral(node.text),
           ]);
         } else if (ts.isPropertyAccessExpression(node)) {
-          if (checker.isIntegrationNode(node)) {
-            // if this is a reference to a Table or Lambda, retain it
-            const _ref = checker.getOutOfScopeValueNode(node, scope);
-            if (_ref) {
-              return ref(_ref);
-            } else {
-              throw new SynthError(
-                ErrorCodes.Unable_to_find_reference_out_of_application_function,
-                `Unable to find reference out of application function: ${node.getText()}`
-              );
-            }
-          }
           return newExpr(NodeKind.PropAccessExpr, [
             toExpr(node.expression, scope),
             toExpr(node.name, scope),

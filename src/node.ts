@@ -38,6 +38,7 @@ import {
   isVariableStmt,
   isWhileStmt,
 } from "./guards";
+import type { NodeCtor } from "./node-ctor";
 import { NodeKind, NodeKindName, getNodeKindName } from "./node-kind";
 import type { BlockStmt, CatchClause, Stmt } from "./statement";
 
@@ -57,6 +58,8 @@ export interface HasParent<Parent extends FunctionlessNode> {
   set parent(parent: Parent);
 }
 
+type Binding = [string, VariableDecl | ParameterDecl | BindingElem];
+
 export abstract class BaseNode<
   Kind extends NodeKind,
   Parent extends FunctionlessNode | undefined = FunctionlessNode | undefined
@@ -71,7 +74,10 @@ export abstract class BaseNode<
    */
   readonly children: FunctionlessNode[] = [];
 
-  constructor(readonly kind: Kind, readonly _arguments: IArguments) {
+  readonly _arguments: ConstructorParameters<NodeCtor<this["kind"]>>;
+
+  constructor(readonly kind: Kind, _arguments: IArguments) {
+    this._arguments = Array.from(_arguments) as any;
     const setParent = (node: any) => {
       if (isNode(node)) {
         // @ts-ignore
@@ -93,7 +99,7 @@ export abstract class BaseNode<
   public toSExpr(): [kind: this["kind"], ...args: any[]] {
     return [
       this.kind,
-      ...Array.from(this._arguments).map(function toSExpr(arg): any {
+      ...this._arguments.map(function toSExpr(arg: any): any {
         if (isNode(arg)) {
           return arg.toSExpr();
         } else if (Array.isArray(arg)) {
@@ -103,6 +109,12 @@ export abstract class BaseNode<
         }
       }),
     ];
+  }
+
+  public fork<N extends this["parent"]>(node: N): N {
+    // @ts-ignore
+    node.parent = this;
+    return node;
   }
 
   protected ensureArrayOf<Assert extends Assertion>(
@@ -362,10 +374,8 @@ export abstract class BaseNode<
   /**
    * @returns a mapping of name to the node visible in this node's scope.
    */
-  public getLexicalScope(): Map<string, Decl> {
+  public getLexicalScope(): Map<string, Binding[1]> {
     return new Map(getLexicalScope(this as unknown as FunctionlessNode));
-
-    type Binding = [string, VariableDecl | ParameterDecl | BindingElem];
 
     function getLexicalScope(node: FunctionlessNode | undefined): Binding[] {
       if (node === undefined) {
