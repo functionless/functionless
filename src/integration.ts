@@ -6,39 +6,44 @@ import { AwaitExpr, CallExpr, PromiseExpr, ReferenceExpr } from "./expression";
 import { Function, NativeIntegration } from "./function";
 import {
   isAwaitExpr,
+  isBindingElem,
+  isBindingPattern,
   isCallExpr,
+  isElementAccessExpr,
+  isIdentifier,
+  isNumberLiteralExpr,
   isPromiseExpr,
+  isPropAccessExpr,
   isReferenceExpr,
+  isStringLiteralExpr,
   isThisExpr,
+  isVariableDecl,
 } from "./guards";
 import { FunctionlessNode } from "./node";
 import { AnyFunction } from "./util";
 import { visitEachChild } from "./visit";
 import { VTL } from "./vtl";
 
-export const isIntegration = <I extends IntegrationInput<string, AnyFunction>>(
+export const isIntegration = <I extends Integration<string, AnyFunction>>(
   i: any
 ): i is I => typeof i === "object" && "kind" in i;
 
-export type IntegrationCallExpr = CallExpr & {
-  expr: ReferenceExpr<Integration>;
-};
+export interface IntegrationCallExpr extends CallExpr {}
 
 export function isIntegrationCallExpr(
   node: FunctionlessNode
 ): node is IntegrationCallExpr {
-  return (
-    isCallExpr(node) &&
-    (isReferenceExpr(node.expr) || isThisExpr(node.expr)) &&
-    isIntegration(node.expr.ref())
-  );
+  if (isCallExpr(node)) {
+    return tryFindIntegration(node.expr) !== undefined;
+  }
+  return false;
 }
 
 export type IntegrationCallPattern =
-  | IntegrationCallExpr
-  | (AwaitExpr & { expr: IntegrationCallExpr })
-  | (PromiseExpr & { expr: IntegrationCallExpr })
-  | (AwaitExpr & { expr: PromiseExpr & { expr: IntegrationCallExpr } });
+  | CallExpr
+  | (AwaitExpr & { expr: CallExpr })
+  | (PromiseExpr & { expr: CallExpr })
+  | (AwaitExpr & { expr: PromiseExpr & { expr: CallExpr } });
 
 export function isIntegrationCallPattern(
   node: FunctionlessNode
@@ -58,20 +63,16 @@ export function isIntegrationCallPattern(
  */
 export function getIntegrationExprFromIntegrationCallPattern(
   pattern: IntegrationCallPattern
-): IntegrationCallExpr {
-  if (isAwaitExpr(pattern)) {
-    if (isIntegrationCallExpr(pattern.expr)) {
-      return pattern.expr;
-    } else if (
-      isPromiseExpr(pattern.expr) &&
-      isIntegrationCallExpr(pattern.expr.expr)
-    ) {
-      return pattern.expr.expr;
+): IntegrationCallExpr | undefined {
+  if (isAwaitExpr(pattern) || isPromiseExpr(pattern)) {
+    return getIntegrationExprFromIntegrationCallPattern(pattern.expr);
+  } else if (isCallExpr(pattern)) {
+    const integration = tryFindIntegration(pattern.expr);
+    if (integration) {
+      return pattern;
     }
-  } else if (isPromiseExpr(pattern) && isIntegrationCallExpr(pattern.expr)) {
-    return pattern.expr;
   }
-  return pattern as IntegrationCallExpr;
+  return undefined;
 }
 
 /**
@@ -301,20 +302,97 @@ export function makeIntegration<K extends string, F extends AnyFunction>(
 
 export type CallContext = ASL | VTL | Function<any, any> | EventBus<any>;
 
-/**
- * Dive until we find a integration object.
- */
 export function findDeepIntegrations(
-  expr: FunctionlessNode
-): IntegrationCallExpr[] {
-  const integrations: IntegrationCallExpr[] = [];
-  visitEachChild(expr, function find(node: FunctionlessNode): FunctionlessNode {
-    if (isIntegrationCallExpr(node)) {
-      integrations.push(node);
+  ast: FunctionlessNode
+): CallExpr<ReferenceExpr>[] {
+  const nodes: CallExpr<ReferenceExpr>[] = [];
+  visitEachChild(ast, function visit(node: FunctionlessNode): FunctionlessNode {
+    if (isCallExpr(node)) {
+      const integrations = tryFindIntegrations(node.expr);
+      if (integrations) {
+        nodes.push(
+          ...integrations.map((integration) =>
+            node.fork(
+              new CallExpr(
+                new ReferenceExpr("", () => integration),
+                node.args.map((arg) => arg.clone())
+              )
+            )
+          )
+        );
+      }
     }
-    return visitEachChild(node, find);
+
+    return visitEachChild(node, visit);
   });
-  return integrations;
+
+  return nodes;
+}
+
+export function tryFindIntegration(
+  node: FunctionlessNode
+): Integration | undefined {
+  const integrations = tryFindIntegrations(node);
+  if (integrations?.length === 1) {
+    return integrations[0];
+  }
+  return undefined;
+}
+
+export function tryFindIntegrations(
+  node: FunctionlessNode
+): Integration[] | undefined {
+  const integrations = resolve(node, undefined).filter(isIntegration);
+  if (integrations.length !== 0) {
+    return integrations;
+  } else {
+    return undefined;
+  }
+
+  function resolve(
+    node: FunctionlessNode | undefined,
+    defaultValue: FunctionlessNode | undefined
+  ): any[] | [] {
+    if (node === undefined) {
+      if (defaultValue === undefined) {
+        return [];
+      } else {
+        return resolve(defaultValue, undefined);
+      }
+    } else if (isReferenceExpr(node) || isThisExpr(node)) {
+      return [node.ref()];
+    } else if (isIdentifier(node)) {
+      return resolve(node.lookup(), defaultValue);
+    } else if (isBindingElem(node)) {
+      return resolve(node.parent, node.initializer).flatMap((pattern) => {
+        if (isIdentifier(node.name)) {
+          return [pattern[node.name.name]];
+        } else {
+          throw new Error("should be impossible");
+        }
+      });
+    } else if (isBindingPattern(node)) {
+      // we only ever evaluate `{ a }` or `[ a ]` when walking backwards from `a`
+      // the BindingElem resolver case will pluck `a` from the object returned by this
+      return resolve(node.parent, defaultValue);
+    } else if (isVariableDecl(node)) {
+      return resolve(node.initializer, defaultValue);
+    } else if (isPropAccessExpr(node) || isElementAccessExpr(node)) {
+      return resolve(node.expr, undefined).flatMap((expr) => {
+        const key = isPropAccessExpr(node)
+          ? node.name.name
+          : isStringLiteralExpr(node.element) ||
+            isNumberLiteralExpr(node.element)
+          ? node.element.value
+          : undefined;
+        if (key !== undefined) {
+          return [(<any>expr)?.[key]];
+        }
+        return [];
+      });
+    }
+    return [];
+  }
 }
 
 // to prevent the closure serializer from trying to import all of functionless.

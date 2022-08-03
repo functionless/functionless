@@ -402,7 +402,8 @@ export function makeFunctionlessChecker(
         return updatedSymbol ? isSymbolOutOfScope(updatedSymbol, scope) : false;
       } else if (
         ts.isVariableDeclaration(symbol.valueDeclaration) ||
-        ts.isClassDeclaration(symbol.valueDeclaration)
+        ts.isClassDeclaration(symbol.valueDeclaration) ||
+        ts.isParameter(symbol.valueDeclaration)
       ) {
         return !hasParent(symbol.valueDeclaration, scope);
       } else if (ts.isBindingElement(symbol.valueDeclaration)) {

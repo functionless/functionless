@@ -414,6 +414,10 @@ export function compile(
             return ref(node);
           }
 
+          if (node.text === "table") {
+            checker.isIdentifierOutOfScope(node, scope);
+          }
+
           return newExpr(NodeKind.Identifier, [
             ts.factory.createStringLiteral(node.text),
           ]);
