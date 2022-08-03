@@ -11,6 +11,7 @@ import {
   $AWS,
   Table,
   StepFunctionError,
+  $SFN,
 } from "../../src";
 import { Event } from "../../src/event-bridge";
 import { PutEventInput } from "../../src/event-bridge/event-bus";
@@ -621,6 +622,8 @@ new StepFunction(stack, "fn", async () => {
   [1, 2, 3].filter(someFunctionReference);
   [1, 2, 3].map(someFunctionReference);
   [1, 2, 3].forEach(someFunctionReference);
+  // valid - ensure that $SFN isn't caught by this validation
+  await $SFN.forEach([], () => {});
 });
 
 /**

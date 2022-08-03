@@ -198,20 +198,28 @@ export function validate(
             node.expression.name.text === "map" ||
             node.expression.name.text === "forEach")
         ) {
-          const [callback] = node.arguments;
+          const valueSymbol = checker.getTypeAtLocation(
+            node.expression.expression
+          )?.symbol;
+          if (valueSymbol && checker.isArraySymbol(valueSymbol)) {
+            const [callback] = node.arguments;
 
-          if (
-            !(ts.isFunctionExpression(callback) || ts.isArrowFunction(callback))
-          ) {
-            return [
-              newError(
-                callback,
-                ErrorCodes.Invalid_Input,
-                `the callback argument of filter, forEach, and map must be a function or arrow expression, found: ${
-                  ts.SyntaxKind[callback.kind]
-                }`
-              ),
-            ];
+            if (
+              !(
+                ts.isFunctionExpression(callback) ||
+                ts.isArrowFunction(callback)
+              )
+            ) {
+              return [
+                newError(
+                  callback,
+                  ErrorCodes.Invalid_Input,
+                  `the callback argument of filter, forEach, and map must be a function or arrow expression, found: ${
+                    ts.SyntaxKind[callback.kind]
+                  }`
+                ),
+              ];
+            }
           }
         }
         return [
