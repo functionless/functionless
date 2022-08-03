@@ -2717,7 +2717,7 @@ export class ASL {
       return undefined;
     }
 
-    const toFilterCondition = (expr: Expr): string => {
+    const toFilterCondition = (expr: Expr): string | undefined => {
       const constant = evalToConstant(expr);
       if (constant) {
         if (typeof constant.constant === "string") {
@@ -2729,22 +2729,23 @@ export class ASL {
           typeof constant.constant === "object" &&
           constant.constant !== null
         ) {
-          // will be caught, try to compile with ASLGraph instead
-          throw new FilterJsonPathUnsupported("Use ASLGraph");
+          // try to compile with ASLGraph instead
+          return undefined;
         } else {
           return `${constant.constant}`;
         }
       } else if (isBinaryExpr(expr)) {
-        return `${toFilterCondition(expr.left)}${expr.op}${toFilterCondition(
-          expr.right
-        )}`;
+        const left = toFilterCondition(expr.left);
+        const right = toFilterCondition(expr.right);
+        return left && right ? `${left}${expr.op}${right}` : undefined;
       } else if (isUnaryExpr(expr)) {
-        return `${expr.op}${toFilterCondition(expr.expr)}`;
+        const right = toFilterCondition(expr.expr);
+        return right ? `${expr.op}${right}` : undefined;
       } else if (isIdentifier(expr)) {
         const ref = expr.lookup();
         if (ref === undefined) {
-          // will be caught, try to compile with ASLGraph instead
-          throw new FilterJsonPathUnsupported("Use ASLGraph");
+          // try to compile with ASLGraph instead
+          return undefined;
         }
         if (
           (isParameterDecl(ref) || isBindingElem(ref)) &&
@@ -2756,22 +2757,26 @@ export class ASL {
         } else {
           return `$.${(<Identifier>expr).name}`;
         }
-        function resolveRef(ref: ParameterDecl | BindingElem): string {
+        function resolveRef(
+          ref: ParameterDecl | BindingElem
+        ): string | undefined {
           if (isParameterDecl(ref)) {
             if (ref === predicate.parameters[0]) {
               return "@";
-            } else if (ref === predicate.parameters[1]) {
-              // will be caught, try to compile with ASLGraph instead
-              throw new FilterJsonPathUnsupported("Use ASLGraph");
-            } else {
-              // will be caught, try to compile with ASLGraph instead
-              throw new FilterJsonPathUnsupported("Use ASLGraph");
             }
+            return undefined;
           } else {
+            const value = resolveRef(
+              ref.parent.parent as unknown as ParameterDecl | BindingElem
+            );
+
+            // if undefined, try to compile with ASL Graph
+            if (!value) {
+              return value;
+            }
+
             if (isArrayBinding(ref.parent)) {
-              return `${resolveRef(
-                ref.parent.parent as unknown as ParameterDecl | BindingElem
-              )}[${ref.parent.bindings.indexOf(ref)}]`;
+              return `${value}[${ref.parent.bindings.indexOf(ref)}]`;
             }
 
             const propName = ref.propertyName
@@ -2785,45 +2790,40 @@ export class ASL {
               : undefined;
 
             if (!propName) {
-              throw new SynthError(
-                ErrorCodes.StepFunctions_property_names_must_be_constant
-              );
+              // step function does not support variable property accessors
+              // this will probably fail in the filter to ASLGraph implementation too
+              // however, lets let ASLGraph try and fail if needed.
+              return undefined;
             }
 
-            return `${resolveRef(
-              ref.parent.parent as unknown as ParameterDecl | BindingElem
-            )}['${propName}']`;
+            return `${value}['${propName}']`;
           }
         }
       } else if (isPropAccessExpr(expr)) {
-        return `${toFilterCondition(expr.expr)}.${expr.name.name}`;
+        const value = toFilterCondition(expr.expr);
+        return value ? `${value}.${expr.name.name}` : undefined;
       } else if (isElementAccessExpr(expr)) {
         const field = this.assertElementAccessConstant(
           ASLGraph.getAslStateOutput(this.eval(expr.element))
         );
 
-        return `${toFilterCondition(expr.expr)}[${
-          typeof field === "number" ? field : `'${field}'`
-        }]`;
+        const value = toFilterCondition(expr.expr);
+
+        return value
+          ? `${value}[${typeof field === "number" ? field : `'${field}'`}]`
+          : undefined;
       }
 
-      // will be caught, try to compile with ASLGraph instead
-      throw new FilterJsonPathUnsupported("Use ASLGraph");
+      // try to compile with ASLGraph instead
+      return undefined;
     };
 
-    try {
-      return {
-        jsonPath: `${valueJsonPath.jsonPath}[?(${toFilterCondition(
-          stmt.expr
-        )})]`,
-      };
-    } catch (err) {
-      if (err instanceof FilterJsonPathUnsupported) {
-        // if the error was thrown because of unsupported syntax for filter to json path, return undefined and try to compile using ASL Graph
-        return undefined;
-      }
-      throw err;
-    }
+    const expression = toFilterCondition(stmt.expr);
+    return expression
+      ? {
+          jsonPath: `${valueJsonPath.jsonPath}[?(${expression})]`,
+        }
+      : undefined;
   }
 
   /**
@@ -5272,11 +5272,6 @@ function nodeToString(
     return assertNever(expr);
   }
 }
-
-/**
- * Special error class for situations unsupported by JSON path filters.
- */
-class FilterJsonPathUnsupported extends Error {}
 
 // to prevent the closure serializer from trying to import all of functionless.
 export const deploymentOnlyModule = true;
