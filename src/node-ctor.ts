@@ -93,9 +93,9 @@ export function getCtor<Kind extends NodeKind>(
   return n[kind] as any;
 }
 
-export type NodeInstance<Kind extends NodeKind> = InstanceType<
-  typeof nodes[Kind]
->;
+export type NodeCtor<Kind extends NodeKind> = typeof nodes[Kind];
+
+export type NodeInstance<Kind extends NodeKind> = InstanceType<NodeCtor<Kind>>;
 
 export const declarations = {
   [NodeKind.ArrayBinding]: ArrayBinding,

@@ -31,7 +31,7 @@ import { ApiGatewayVtlIntegration } from "./api";
 import type { AppSyncVtlIntegration } from "./appsync";
 import { ASL, ASLGraph } from "./asl";
 import { BindFunctionName, RegisterFunctionName } from "./compile";
-import { FunctionLike, IntegrationInvocation } from "./declaration";
+import { IntegrationInvocation } from "./declaration";
 import { ErrorCodes, formatErrorMessage, SynthError } from "./error-code";
 import {
   IEventBus,
@@ -49,19 +49,16 @@ import {
   PrewarmProps,
 } from "./function-prewarm";
 import {
+  findDeepIntegrations,
   Integration,
-  IntegrationCallExpr,
   IntegrationImpl,
   INTEGRATION_TYPE_KEYS,
   isIntegration,
-  isIntegrationCallExpr,
 } from "./integration";
-import { FunctionlessNode } from "./node";
 import { ReflectionSymbols, validateFunctionLike } from "./reflect";
 import { isStepFunction } from "./step-function";
 import { isTable } from "./table";
 import { AnyAsyncFunction, AnyFunction } from "./util";
-import { visitEachChild } from "./visit";
 
 export function isFunction<Payload = any, Output = any>(
   a: any
@@ -659,7 +656,7 @@ export class Function<
 
     super(_resource);
 
-    const integrations = getInvokedIntegrations(ast).map(
+    const integrations = findDeepIntegrations(ast).map(
       (i) =>
         <IntegrationInvocation>{
           args: i.args,
@@ -721,19 +718,6 @@ export class Function<
       })()
     );
   }
-}
-
-function getInvokedIntegrations(ast: FunctionLike): IntegrationCallExpr[] {
-  const nodes: IntegrationCallExpr[] = [];
-  visitEachChild(ast, function visit(node: FunctionlessNode): FunctionlessNode {
-    if (isIntegrationCallExpr(node)) {
-      nodes.push(node);
-    }
-
-    return visitEachChild(node, visit);
-  });
-
-  return nodes;
 }
 
 /**

@@ -23,48 +23,37 @@ export function visitEachChild<T extends FunctionlessNode>(
   ) => FunctionlessNode | FunctionlessNode[] | undefined
 ): T {
   const ctor = getCtor(node.kind);
-  const args = Array.from(node._arguments).map(
-    (
-      argument:
-        | FunctionlessNode
-        | FunctionlessNode[]
-        | string
-        | number
-        | boolean
-        | undefined
-    ): typeof argument => {
-      if (!(typeof argument === "object" || Array.isArray(argument))) {
-        // all primitives are simply returned as-is
-        // all objects are assumed
-        return argument;
-      } else if (isNode(argument)) {
-        const transformed = visit(argument);
-        if (transformed === undefined || isNode(transformed)) {
-          return transformed;
-        } else {
-          throw new Error(
-            `cannot spread nodes into an argument taking a single ${argument.kindName} node`
-          );
-        }
-      } else if (Array.isArray(argument)) {
-        // is an Array of nodes
-        return argument.flatMap((item) => {
-          const transformed = visit(item);
-          if (transformed === undefined) {
-            // the item was deleted, so remove it from the array
-            return [];
-          } else if (isNode(transformed)) {
-            return [transformed];
-          } else {
-            // spread the nodes into the array
-            return transformed;
-          }
-        });
+  const args = node._arguments.map((argument) => {
+    if (argument === null || typeof argument !== "object") {
+      // all primitives are simply returned as-is
+      return argument;
+    } else if (isNode(argument)) {
+      const transformed = visit(argument);
+      if (transformed === undefined || isNode(transformed)) {
+        return transformed;
       } else {
-        return argument;
+        throw new Error(
+          `cannot spread nodes into an argument taking a single ${argument.kindName} node`
+        );
       }
+    } else if (Array.isArray(argument)) {
+      // is an Array of nodes
+      return argument.flatMap((item) => {
+        const transformed = visit(item);
+        if (transformed === undefined) {
+          // the item was deleted, so remove it from the array
+          return [];
+        } else if (isNode(transformed)) {
+          return [transformed];
+        } else {
+          // spread the nodes into the array
+          return transformed;
+        }
+      });
+    } else {
+      return argument;
     }
-  );
+  });
 
   return new ctor(...args) as T;
 }
@@ -83,11 +72,10 @@ export function visitBlock(
     const nestedTasks: FunctionlessNode[] = [];
     function hoist(expr: Expr): Identifier {
       const id = new Identifier(nameGenerator.generateOrGet(expr));
-      nestedTasks.push(
-        new VariableStmt(
-          new VariableDeclList([new VariableDecl(id.clone(), expr)])
-        )
+      const stmt = new VariableStmt(
+        new VariableDeclList([new VariableDecl(id.clone(), expr.clone())])
       );
+      nestedTasks.push(stmt);
       return id;
     }
 

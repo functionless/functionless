@@ -187,11 +187,13 @@ export class Argument extends BaseExpr<NodeKind.Argument, CallExpr | NewExpr> {
   }
 }
 
-export class CallExpr extends BaseExpr<NodeKind.CallExpr> {
-  constructor(
-    readonly expr: Expr | SuperKeyword | ImportKeyword,
-    readonly args: Argument[]
-  ) {
+export class CallExpr<
+  E extends Expr | SuperKeyword | ImportKeyword =
+    | Expr
+    | SuperKeyword
+    | ImportKeyword
+> extends BaseExpr<NodeKind.CallExpr> {
+  constructor(readonly expr: E, readonly args: Argument[]) {
     super(NodeKind.CallExpr, arguments);
   }
 }
