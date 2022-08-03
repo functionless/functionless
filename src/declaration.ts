@@ -142,12 +142,16 @@ export class FunctionDecl<
     // according to the spec, name is mandatory on a FunctionDecl and FunctionExpr
     readonly name: string | undefined,
     readonly parameters: ParameterDecl[],
-    readonly body: BlockStmt
+    readonly body: BlockStmt,
+    readonly isAsync: boolean,
+    readonly isAsterisk: boolean
   ) {
     super(NodeKind.FunctionDecl, arguments);
     this.ensure(name, "name", ["undefined", "string"]);
     this.ensureArrayOf(parameters, "parameters", [NodeKind.ParameterDecl]);
     this.ensure(body, "body", [NodeKind.BlockStmt]);
+    this.ensure(isAsync, "isAsync", ["boolean"]);
+    this.ensure(isAsterisk, "isAsterisk", ["boolean"]);
   }
 }
 

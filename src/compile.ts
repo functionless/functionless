@@ -4,7 +4,7 @@ import type { PluginConfig, TransformerExtras } from "ts-patch";
 import ts from "typescript";
 import { assertDefined } from "./assert";
 import { makeFunctionlessChecker } from "./checker";
-import type { ConstructorDecl, FunctionDecl, MethodDecl } from "./declaration";
+import { ConstructorDecl, FunctionDecl, MethodDecl } from "./declaration";
 import { ErrorCodes, SynthError } from "./error-code";
 import type {
   FunctionExpr,
@@ -104,6 +104,16 @@ export function compile(
     ? _config.exclude.map((pattern) => minimatch.makeRe(path.resolve(pattern)))
     : [];
   const checker = makeFunctionlessChecker(program.getTypeChecker());
+  const getUniqueId = (() => {
+    const uniqueIds = new Map<ts.Node, number>();
+    let i = 1; // start counter from 1 so that unresolvable names can use 0
+    return (node: ts.Node) => {
+      if (!uniqueIds.has(node)) {
+        uniqueIds.set(node, i++);
+      }
+      return uniqueIds.get(node)!;
+    };
+  })();
   return (ctx) => {
     const functionless = ts.factory.createUniqueName("functionless");
     return (sf) => {
@@ -309,6 +319,16 @@ export function compile(
               )
             ),
             body,
+            // isAsync
+            impl.modifiers?.find(
+              (mod) => mod.kind === ts.SyntaxKind.AsyncKeyword
+            )
+              ? ts.factory.createTrue()
+              : ts.factory.createFalse(),
+            // isAsterisk
+            impl.asteriskToken
+              ? ts.factory.createTrue()
+              : ts.factory.createFalse(),
           ]);
         });
 
@@ -426,13 +446,12 @@ export function compile(
               : ts.factory.createFalse(),
           ]);
         } else if (ts.isElementAccessExpression(node)) {
-          const type = checker.getTypeAtLocation(node.argumentExpression);
           return newExpr(NodeKind.ElementAccessExpr, [
             toExpr(node.expression, scope),
             toExpr(node.argumentExpression, scope),
-            type
-              ? ts.factory.createStringLiteral(checker.typeToString(type))
-              : ts.factory.createIdentifier("undefined"),
+            node.questionDotToken
+              ? ts.factory.createTrue()
+              : ts.factory.createFalse(),
           ]);
         } else if (ts.isVariableStatement(node)) {
           return newExpr(NodeKind.VariableStmt, [
@@ -811,7 +830,14 @@ export function compile(
         );
       }
 
-      function ref(node: ts.Expression) {
+      function ref(node: ts.Identifier) {
+        const symbol = checker.getSymbolAtLocation(node);
+
+        const id = symbol?.valueDeclaration
+          ? getUniqueId(symbol.valueDeclaration)
+          : symbol?.declarations?.[0]
+          ? getUniqueId(symbol.declarations[0])
+          : 0;
         return newExpr(NodeKind.ReferenceExpr, [
           ts.factory.createStringLiteral(exprToString(node)),
           ts.factory.createArrowFunction(
@@ -822,6 +848,8 @@ export function compile(
             undefined,
             node
           ),
+          ts.factory.createNumericLiteral(id),
+          ts.factory.createIdentifier("__filename"),
         ]);
       }
 

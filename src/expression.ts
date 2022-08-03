@@ -125,10 +125,17 @@ export class ClassExpr<C extends AnyClass = AnyClass> extends BaseExpr<
 export class ReferenceExpr<
   R = unknown
 > extends BaseExpr<NodeKind.ReferenceExpr> {
-  constructor(readonly name: string, readonly ref: () => R) {
+  constructor(
+    readonly name: string,
+    readonly ref: () => R,
+    readonly id: number,
+    readonly filename: string
+  ) {
     super(NodeKind.ReferenceExpr, arguments);
     this.ensure(name, "name", ["undefined", "string"]);
     this.ensure(ref, "ref", ["function"]);
+    this.ensure(id, "id", ["number"]);
+    this.ensure(filename, "filename", ["string"]);
   }
 }
 
@@ -169,7 +176,18 @@ export class PropAccessExpr extends BaseExpr<NodeKind.PropAccessExpr> {
 }
 
 export class ElementAccessExpr extends BaseExpr<NodeKind.ElementAccessExpr> {
-  constructor(readonly expr: Expr, readonly element: Expr) {
+  constructor(
+    readonly expr: Expr,
+    readonly element: Expr,
+    /**
+     * If this is an ElementAccessExpr with a `?.`
+     *
+     * ```ts
+     * obj?.[element]
+     * ```
+     */
+    readonly isOptional: boolean
+  ) {
     super(NodeKind.ElementAccessExpr, arguments);
     this.ensure(expr, "expr", ["Expr"]);
     this.ensure(element, "element", ["Expr"]);
