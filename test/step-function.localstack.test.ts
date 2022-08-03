@@ -547,6 +547,22 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
   );
 
   test(
+    "foreach",
+    (parent) => {
+      return new StepFunction(parent, "sfn2", async (input) => {
+        let a = "";
+        input.arr.forEach((x) => {
+          a = `${a}a${x}`;
+          return a;
+        });
+        return a;
+      });
+    },
+    "a1a2a3",
+    { arr: [1, 2, 3] }
+  );
+
+  test(
     "filter",
     (parent) => {
       return new StepFunction(parent, "sfn2", async ({ arr, key }) => {

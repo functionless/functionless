@@ -8815,6 +8815,96 @@ Object {
 }
 `;
 
+exports[`foreach 1`] = `
+Object {
+  "StartAt": "Initialize Functionless Context",
+  "States": Object {
+    "1__a = \`aax\`": Object {
+      "InputPath": "$.heap1.string",
+      "Next": "return a 1",
+      "ResultPath": "$.a",
+      "Type": "Pass",
+    },
+    "Initialize Functionless Context": Object {
+      "Next": "input.arr.forEach(function(x))",
+      "Parameters": Object {
+        "fnl_context": Object {
+          "null": null,
+        },
+        "input.$": "$",
+      },
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "a = \`aax\`": Object {
+      "Next": "1__a = \`aax\`",
+      "Parameters": Object {
+        "string.$": "States.Format('{}a{}',$.a,$.x)",
+      },
+      "ResultPath": "$.heap1",
+      "Type": "Pass",
+    },
+    "check__input.arr.forEach(function(x)) 1": Object {
+      "Choices": Array [
+        Object {
+          "IsPresent": true,
+          "Next": "function(x)",
+          "Variable": "$.heap0.arr[0]",
+        },
+      ],
+      "Default": "end__input.arr.forEach(function(x)) 1",
+      "Type": "Choice",
+    },
+    "end__input.arr.forEach(function(x)) 1": Object {
+      "Next": "return a",
+      "Result": "$.fnl_context.null",
+      "ResultPath": "$.heap0",
+      "Type": "Pass",
+    },
+    "function(x)": Object {
+      "InputPath": "$.heap0.arr[0]",
+      "Next": "a = \`aax\`",
+      "ResultPath": "$.x",
+      "Type": "Pass",
+    },
+    "input.arr.forEach(function(x))": Object {
+      "Next": "input.arr.forEach(function(x)) 1",
+      "Result": "",
+      "ResultPath": "$.a",
+      "Type": "Pass",
+    },
+    "input.arr.forEach(function(x)) 1": Object {
+      "Next": "check__input.arr.forEach(function(x)) 1",
+      "Parameters": Object {
+        "arr.$": "$.input.arr",
+      },
+      "ResultPath": "$.heap0",
+      "Type": "Pass",
+    },
+    "return a": Object {
+      "End": true,
+      "InputPath": "$.a",
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "return a 1": Object {
+      "InputPath": "$.a",
+      "Next": "tail__input.arr.forEach(function(x)) 1",
+      "ResultPath": null,
+      "Type": "Pass",
+    },
+    "tail__input.arr.forEach(function(x)) 1": Object {
+      "Next": "check__input.arr.forEach(function(x)) 1",
+      "Parameters": Object {
+        "arr.$": "$.heap0.arr[1:]",
+      },
+      "ResultPath": "$.heap0",
+      "Type": "Pass",
+    },
+  },
+}
+`;
+
 exports[`join 1`] = `
 Object {
   "StartAt": "Initialize Functionless Context",

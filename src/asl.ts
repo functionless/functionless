@@ -659,7 +659,7 @@ export class ASL {
       return ASLGraph.joinSubStates(
         stmt,
         ...stmt.statements.map((s) => {
-          const states = this.evalStmt(s);
+          const states = this.evalStmt(s, returnPass);
           // ensure all of the states in a block have a node associated with them
           return states
             ? {
@@ -1718,94 +1718,10 @@ export class ASL {
             "Called references are expected to be an integration."
           );
         }
-      } else if (isMapOrForEach(expr)) {
-        const throwTransition = this.throw(expr);
-
-        const callbackfn = expr.args[0].expr;
-        if (callbackfn !== undefined && isFunctionExpr(callbackfn)) {
-          const callbackStates = this.evalStmt(callbackfn.body);
-
-          return this.evalExpr(
-            expr.expr.expr,
-            (listOutput, { normalizeOutputToJsonPath }) => {
-              // we assume that an array literal or a call would return a variable.
-              if (
-                ASLGraph.isLiteralValue(listOutput) &&
-                !Array.isArray(listOutput.value)
-              ) {
-                throw new SynthError(
-                  ErrorCodes.Unexpected_Error,
-                  "Expected input to map to be a variable reference or array"
-                );
-              }
-
-              const listPath = normalizeOutputToJsonPath().jsonPath;
-
-              const parameters = callbackfn.parameters.map((param, i) => {
-                const paramName = isIdentifier(param.name)
-                  ? param.name.name
-                  : // if the parameter is a binding pattern, we to assign the value to a variable first to access it in the map state.
-                    this.newHeapVariableName();
-
-                return {
-                  param: [
-                    `${paramName}.$`,
-                    i === 0
-                      ? "$$.Map.Item.Value"
-                      : i == 1
-                      ? "$$.Map.Item.Index"
-                      : listPath,
-                  ],
-                  states: isBindingPattern(param.name)
-                    ? // if the param is a binding pattern, the value will be placed on the heap and then bound in the body
-                      this.evalDecl(param, { jsonPath: `$.${paramName}` })
-                    : undefined,
-                };
-              });
-
-              const bodyStates = ASLGraph.joinSubStates(
-                callbackfn,
-                // run any parameter initializers if they exist
-                ...parameters.map(({ states }) => states),
-                callbackStates
-              );
-
-              if (!bodyStates) {
-                // TODO: support empty?
-                throw new SynthError(
-                  ErrorCodes.Unexpected_Error,
-                  `a .map or .foreach block must have at least one Stmt`
-                );
-              }
-
-              return this.stateWithHeapOutput({
-                Type: "Map",
-                MaxConcurrency: 1,
-                Iterator: this.aslGraphToStates(
-                  // ensure any deferred states are updated to end
-                  ASLGraph.updateDeferredNextStates({ End: true }, bodyStates)
-                ),
-                ItemsPath: listPath,
-                Parameters: {
-                  ...this.cloneLexicalScopeParameters(expr),
-                  ...Object.fromEntries(parameters.map(({ param }) => param)),
-                },
-                ...(throwTransition
-                  ? {
-                      Catch: [
-                        {
-                          ErrorEquals: ["States.ALL"],
-                          Next: throwTransition.Next!,
-                          ResultPath: throwTransition.ResultPath,
-                        },
-                      ],
-                    }
-                  : {}),
-                Next: ASLGraph.DeferNext,
-              });
-            }
-          );
-        }
+      } else if (isMap(expr)) {
+        return this.mapToStateOutput(expr);
+      } else if (isForEach(expr)) {
+        return this.forEachToStateOutput(expr);
       } else if (isSlice(expr)) {
         return this.sliceToStateOutput(expr);
       } else if (isFilter(expr)) {
@@ -2751,10 +2667,10 @@ export class ASL {
     expr: CallExpr & { expr: PropAccessExpr }
   ): ASLGraph.NodeResults {
     const predicate = expr.args[0]?.expr;
-    if (!(isFunctionExpr(predicate) || isArrowFunctionExpr(predicate))) {
+    if (!isFunctionLike(predicate)) {
       throw new SynthError(
-        ErrorCodes.StepFunction_invalid_filter_syntax,
-        `the 'predicate' argument of slice must be a function or arrow expression, found: ${predicate?.kindName}`
+        ErrorCodes.Invalid_Input,
+        `the 'predicate' argument of filter must be a function or arrow expression, found: ${predicate?.kindName}`
       );
     }
 
@@ -2774,8 +2690,10 @@ export class ASL {
         const varRef = normalizeOutputToJsonPath();
 
         return (
-          this.filterToJsonPath(varRef, predicate) ??
-          this.filterToASLGraph(varRef, predicate)
+          this.filterToJsonPath(varRef, predicate) ?? {
+            node: expr,
+            ...this.filterToASLGraph(varRef, predicate),
+          }
         );
       }
     );
@@ -2944,16 +2862,11 @@ export class ASL {
         : undefined
     );
 
-    const predicateBody = ASLGraph.joinSubStates(
-      predicate.body,
-      ...predicate.body.statements.map((stmt) =>
-        this.evalStmt(stmt, {
-          End: undefined,
-          ResultPath: predicateResult,
-          Next: ASLGraph.DeferNext,
-        })
-      )
-    );
+    const predicateBody = this.evalStmt(predicate.body, {
+      End: undefined,
+      ResultPath: predicateResult,
+      Next: ASLGraph.DeferNext,
+    });
 
     return {
       startState: "init",
@@ -3061,6 +2974,286 @@ export class ASL {
       },
       output: { jsonPath: filterResult },
     };
+  }
+
+  private mapToStateOutput(
+    expr: CallExpr & {
+      expr: PropAccessExpr;
+    }
+  ) {
+    const callbackfn = expr.args[0].expr;
+    if (!isFunctionLike(callbackfn)) {
+      throw new SynthError(
+        ErrorCodes.Invalid_Input,
+        "Expected map to have a callback parameter"
+      );
+    }
+    return this.evalExpr(
+      expr.expr.expr,
+      (listOutput, { normalizeOutputToJsonPath }) => {
+        // we assume that an array literal or a call would return a variable.
+        if (
+          ASLGraph.isLiteralValue(listOutput) &&
+          !Array.isArray(listOutput.value)
+        ) {
+          throw new SynthError(
+            ErrorCodes.Unexpected_Error,
+            "Expected input to map to be a variable reference or array"
+          );
+        }
+
+        const listPath = normalizeOutputToJsonPath().jsonPath;
+
+        const bodyReturnVariable = this.newHeapVariable();
+        const mapResultVariable = this.newHeapVariable();
+
+        const [valueParameter, indexParameter, arrayParameter] =
+          callbackfn.parameters;
+
+        const bodyStates = ASLGraph.joinSubStates(
+          callbackfn,
+          // run any parameter initializers if they exist
+          valueParameter
+            ? this.evalDecl(valueParameter, {
+                jsonPath: indexParameter
+                  ? `${mapResultVariable}.arr[0].item`
+                  : `${mapResultVariable}.arr[0]`,
+              })
+            : undefined,
+          indexParameter
+            ? this.evalDecl(indexParameter, {
+                jsonPath: `${mapResultVariable}.arr[0].index`,
+              })
+            : undefined,
+          arrayParameter
+            ? this.evalDecl(arrayParameter, {
+                jsonPath: listPath,
+              })
+            : undefined,
+          this.evalStmt(callbackfn.body, {
+            End: undefined,
+            ResultPath: bodyReturnVariable,
+            Next: ASLGraph.DeferNext,
+          })
+        ) ?? { Type: "Pass" };
+
+        return {
+          node: expr,
+          startState: "init",
+          states: {
+            init: indexParameter
+              ? <MapTask>{
+                  Type: "Map" as const,
+                  ItemsPath: listPath,
+                  Parameters: {
+                    "index.$": "$$.Map.Item.Index",
+                    "item.$": "$$.Map.Item.Value",
+                  },
+                  Iterator: this.aslGraphToStates({
+                    Type: "Pass",
+                    ResultPath: "$",
+                  }),
+                  ResultSelector: {
+                    "arr.$": "$",
+                    arrStr: "[null",
+                  },
+                  ResultPath: mapResultVariable,
+                  Next: "check",
+                }
+              : <Pass>{
+                  Type: "Pass" as const,
+                  Parameters: {
+                    // copy array to tail it
+                    "arr.$": listPath,
+                    arrStr: "[null",
+                  },
+                  // use the eventual result location as a temp working space
+                  ResultPath: mapResultVariable,
+                  Next: "check",
+                },
+            check: {
+              Type: "Choice",
+              Choices: [
+                {
+                  ...ASL.isPresent(`${mapResultVariable}.arr[0]`),
+                  Next: "body",
+                },
+              ],
+              Default: "end",
+            },
+            // assign the item parameter the head of the temp array
+            body: ASLGraph.updateDeferredNextStates(
+              { Next: "tail" },
+              bodyStates
+            ),
+            // tail and append
+            tail: {
+              Type: "Pass" as const,
+              Parameters: {
+                "arr.$": `${mapResultVariable}.arr[1:]`,
+                // const arrStr = `${arrStr},${JSON.stringify(arr[0])}`;
+                "arrStr.$": `States.Format('{},{}', ${mapResultVariable}.arrStr, States.JsonToString(${bodyReturnVariable}))`,
+              },
+              ResultPath: mapResultVariable,
+              Next: "check",
+            },
+            // parse the arrStr back to json and assign over the filter result value.
+            end: {
+              startState: "format",
+              states: {
+                format: {
+                  Type: "Pass",
+                  // filterResult = { result: JSON.parse(filterResult.arrStr + "]") }
+                  Parameters: {
+                    // cannot use intrinsic functions in InputPath or Result
+                    "result.$": `States.StringToJson(States.Format('{}]', ${mapResultVariable}.arrStr))`,
+                  },
+                  ResultPath: mapResultVariable,
+                  Next: "set",
+                },
+                // filterResult = filterResult.result
+                set: {
+                  Type: "Pass",
+                  // the original array is initialized with a leading null to simplify the adding of new values to the array string "[null"+",{new item}"+"]"
+                  InputPath: `${mapResultVariable}.result[1:]`,
+                  ResultPath: mapResultVariable,
+                  Next: ASLGraph.DeferNext,
+                },
+              },
+            },
+          },
+          output: { jsonPath: mapResultVariable },
+        };
+      }
+    );
+  }
+
+  private forEachToStateOutput(
+    expr: CallExpr & {
+      expr: PropAccessExpr;
+    }
+  ) {
+    const callbackfn = expr.args[0].expr;
+    if (!isFunctionLike(callbackfn)) {
+      throw new SynthError(
+        ErrorCodes.Invalid_Input,
+        "Expected forEach to have a callback parameter"
+      );
+    }
+    return this.evalExpr(
+      expr.expr.expr,
+      (listOutput, { normalizeOutputToJsonPath }) => {
+        // we assume that an array literal or a call would return a variable.
+        if (
+          ASLGraph.isLiteralValue(listOutput) &&
+          !Array.isArray(listOutput.value)
+        ) {
+          throw new SynthError(
+            ErrorCodes.Unexpected_Error,
+            "Expected input to map to be a variable reference or array"
+          );
+        }
+
+        const listPath = normalizeOutputToJsonPath().jsonPath;
+
+        const forEachResultVariable = this.newHeapVariable();
+
+        const [valueParameter, indexParameter, arrayParameter] =
+          callbackfn.parameters;
+
+        const bodyStates = ASLGraph.joinSubStates(
+          callbackfn,
+          // run any parameter initializers if they exist
+          valueParameter
+            ? this.evalDecl(valueParameter, {
+                jsonPath: indexParameter
+                  ? `${forEachResultVariable}.arr[0].item`
+                  : `${forEachResultVariable}.arr[0]`,
+              })
+            : undefined,
+          indexParameter
+            ? this.evalDecl(indexParameter, {
+                jsonPath: `${forEachResultVariable}.arr[0].index`,
+              })
+            : undefined,
+          arrayParameter
+            ? this.evalDecl(arrayParameter, {
+                jsonPath: listPath,
+              })
+            : undefined,
+          this.evalStmt(callbackfn.body, {
+            End: undefined,
+            ResultPath: null,
+            Next: ASLGraph.DeferNext,
+          })
+        ) ?? { Type: "Pass" };
+
+        return {
+          node: expr,
+          startState: "init",
+          states: {
+            init: indexParameter
+              ? <MapTask>{
+                  Type: "Map" as const,
+                  ItemsPath: listPath,
+                  Parameters: {
+                    "index.$": "$$.Map.Item.Index",
+                    "item.$": "$$.Map.Item.Value",
+                  },
+                  Iterator: this.aslGraphToStates({
+                    Type: "Pass",
+                    ResultPath: "$",
+                  }),
+                  ResultSelector: {
+                    "arr.$": "$",
+                  },
+                  ResultPath: forEachResultVariable,
+                  Next: "check",
+                }
+              : <Pass>{
+                  Type: "Pass" as const,
+                  Parameters: {
+                    // copy array to tail it
+                    "arr.$": listPath,
+                  },
+                  // use the eventual result location as a temp working space
+                  ResultPath: forEachResultVariable,
+                  Next: "check",
+                },
+            check: {
+              Type: "Choice",
+              Choices: [
+                {
+                  ...ASL.isPresent(`${forEachResultVariable}.arr[0]`),
+                  Next: "body",
+                },
+              ],
+              Default: "end",
+            },
+            body: ASLGraph.updateDeferredNextStates(
+              { Next: "tail" },
+              bodyStates
+            ),
+            // tail
+            tail: {
+              Type: "Pass" as const,
+              Parameters: {
+                "arr.$": `${forEachResultVariable}.arr[1:]`,
+              },
+              ResultPath: forEachResultVariable,
+              Next: "check",
+            },
+            // clear the working space variables and replace with null
+            end: {
+              Type: "Pass",
+              Result: this.context.null,
+              ResultPath: forEachResultVariable,
+            },
+          },
+          output: { jsonPath: forEachResultVariable },
+        };
+      }
+    );
   }
 
   /**
@@ -3622,13 +3815,23 @@ export class ASL {
   }
 }
 
-export function isMapOrForEach(expr: CallExpr): expr is CallExpr & {
+export function isForEach(expr: CallExpr): expr is CallExpr & {
   expr: PropAccessExpr;
 } {
   return (
     isPropAccessExpr(expr.expr) &&
     isIdentifier(expr.expr.name) &&
-    (expr.expr.name.name === "map" || expr.expr.name.name === "forEach")
+    expr.expr.name.name === "forEach"
+  );
+}
+
+export function isMap(expr: CallExpr): expr is CallExpr & {
+  expr: PropAccessExpr;
+} {
+  return (
+    isPropAccessExpr(expr.expr) &&
+    isIdentifier(expr.expr.name) &&
+    expr.expr.name.name === "map"
   );
 }
 
@@ -3687,8 +3890,8 @@ function analyzeFlow(node: FunctionlessNode): FlowResult {
     .reduce(
       (a, b) => ({ ...a, ...b }),
       isCallExpr(node) &&
-        ((isReferenceExpr(node.expr) && isIntegration(node.expr.ref())) ||
-          isMapOrForEach(node))
+        isReferenceExpr(node.expr) &&
+        isIntegration(node.expr.ref())
         ? { hasTask: true }
         : isThrowStmt(node)
         ? { hasThrow: true }
