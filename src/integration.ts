@@ -329,6 +329,18 @@ export function findDeepIntegrations(
   return nodes;
 }
 
+/**
+ * A bottom-up algorithm that determines the ONLY {@link Integration} value that the {@link node}
+ * will resolve to at runtime.
+ *
+ * If the {@link node} resolves to 0 or more than 1 {@link Integration} then `undefined` is returned.
+ *
+ * **Note**: This function is an intermediate helper until we migrate the interpreters to be more general
+ * (likely by migrating to top-down algorithms, see https://github.com/functionless/functionless/issues/374#issuecomment-1203313604)
+ *
+ * @param node the node to resolve the {@link Integration} of.
+ * @returns the ONLY {@link Integration} that {@link node} can resolve to, otherwise `undefined`.
+ */
 export function tryFindIntegration(
   node: FunctionlessNode
 ): Integration | undefined {
@@ -339,20 +351,54 @@ export function tryFindIntegration(
   return undefined;
 }
 
-export function tryFindIntegrations(
-  node: FunctionlessNode
-): Integration[] | undefined {
-  const integrations = resolve(node, undefined).filter(isIntegration);
-  if (integrations.length !== 0) {
-    return integrations;
-  } else {
-    return undefined;
-  }
+/**
+ * A bottom-up algorithm that determines all of the possible {@link Integration}s that a {@link node}
+ * may resolve to at runtime.
+ *
+ * ```ts
+ * declare const table1;
+ * declare const table2;
+ *
+ * const tables = [table1, table2];
+ *
+ * const a = table1;
+ *    // ^ [table1]
+ *
+ * for (const a of tables) {
+ *   const b = a;
+ *          // ^ [table1, table2]
+ *
+ *   const { appsync: { getItem } } = a;
+ *                     // ^ [ table1.appsync.getItem, table2.appsync.getItem ]
+ * }
+ *
+ * const a = tables[0];
+ *          // ^ [table1]
+ *
+ * const { appsync: { getItem } } = table[0];
+ *                   // ^ [ table1.appsync.getItem ]
+ *
+ * const { appsync: { getItem = table1.appsync.getItem } } = table[2];
+ *                   // ^ [ table1.appsync.getItem ] (because of initializer)
+ * ```
+ *
+ * @param node the node to resolve the possible {@link Integration}s of.
+ * @returns a list of all the {@link Integration}s that the {@link node} could evaluate to.
+ */
+export function tryFindIntegrations(node: FunctionlessNode): Integration[] {
+  return resolve(node, undefined).filter(isIntegration);
 
+  /**
+   * Resolve all of the possible values that {@link node} may resolve to at runtime.
+   *
+   * @param node
+   * @param defaultValue default value to use if the value cannot be resolved (set by default initializers in BindingElement)
+   * @returns an array of all the values the {@link node} resolves to.
+   */
   function resolve(
     node: FunctionlessNode | undefined,
     defaultValue: FunctionlessNode | undefined
-  ): any[] | [] {
+  ): any[] {
     if (node === undefined) {
       if (defaultValue === undefined) {
         return [];
