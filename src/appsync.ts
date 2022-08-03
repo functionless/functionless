@@ -466,14 +466,18 @@ function synthesizeFunctions(api: appsync.GraphqlApi, decl: FunctionLike) {
         // we find the range of nodes to hoist so that we avoid visiting the middle nodes.
         // The start node is the first node in the integration pattern (integ, await, or promise)
         // The end is always the integration.
+
         const end = getIntegrationExprFromIntegrationCallPattern(node);
 
-        const updatedChild = visitSpecificChildren(node, [end], (expr) =>
-          normalizeAST(expr, hoist)
-        );
-        // when we find an integration call,
-        // if it is nested, hoist it up (create variable, add above, replace expr with variable)
-        return hoist && doHoist(node) ? hoist(updatedChild) : updatedChild;
+        if (end) {
+          const updatedChild = visitSpecificChildren(node, [end], (expr) =>
+            normalizeAST(expr, hoist)
+          );
+
+          // when we find an integration call,
+          // if it is nested, hoist it up (create variable, add above, replace expr with variable)
+          return hoist && doHoist(node) ? hoist(updatedChild) : updatedChild;
+        }
       } else if (isVariableStmt(node) && node.declList.decls.length > 1) {
         /**
          * Flatten variable declarations into multiple variable statements.

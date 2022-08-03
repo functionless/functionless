@@ -110,10 +110,10 @@ import {
   isQuasiString,
 } from "./guards";
 import {
-  Integration,
   IntegrationImpl,
   isIntegration,
   isIntegrationCallPattern,
+  tryFindIntegration,
 } from "./integration";
 import { FunctionlessNode } from "./node";
 import {
@@ -1656,75 +1656,65 @@ export class ASL {
         };
       });
     } else if (isCallExpr(expr)) {
-      if (isReferenceExpr(expr.expr)) {
-        const ref = expr.expr.ref();
-        if (isIntegration<Integration>(ref)) {
-          const serviceCall = new IntegrationImpl(ref);
-          const integStates = serviceCall.asl(expr, this);
+      const integration = tryFindIntegration(expr.expr);
+      if (integration) {
+        const serviceCall = new IntegrationImpl(integration);
+        const integStates = serviceCall.asl(expr, this);
 
-          if (
-            ASLGraph.isLiteralValue(integStates) ||
-            ASLGraph.isJsonPath(integStates)
-          ) {
-            return integStates;
-          }
-
-          const updateState = (
-            state: ASLGraph.NodeState
-          ): ASLGraph.NodeState => {
-            const throwOrPass = this.throw(expr);
-            if (
-              throwOrPass?.Next &&
-              (isTaskState(state) ||
-                isMapTaskState(state) ||
-                isParallelTaskState(state))
-            ) {
-              return {
-                ...state,
-                Catch: [
-                  {
-                    ErrorEquals: ["States.ALL"],
-                    Next: throwOrPass.Next,
-                    ResultPath: throwOrPass.ResultPath,
-                  },
-                ],
-              };
-            } else {
-              return state;
-            }
-          };
-
-          const updateStates = (
-            states: ASLGraph.NodeState | ASLGraph.SubState
-          ): ASLGraph.NodeState | ASLGraph.SubState => {
-            return ASLGraph.isSubState(states)
-              ? {
-                  ...states,
-                  states: Object.fromEntries(
-                    Object.entries(states.states ?? {}).map(
-                      ([stateName, state]) => {
-                        if (ASLGraph.isSubState(state)) {
-                          return [stateName, updateStates(state)];
-                        } else {
-                          return [stateName, updateState(state)];
-                        }
-                      }
-                    )
-                  ),
-                }
-              : updateState(states);
-          };
-
-          return {
-            ...integStates,
-            ...updateStates(integStates),
-          };
-        } else {
-          throw new SynthError(
-            ErrorCodes.Unexpected_Error,
-            "Called references are expected to be an integration."
-          );
+        if (
+          ASLGraph.isLiteralValue(integStates) ||
+          ASLGraph.isJsonPath(integStates)
+        ) {
+          return integStates;
         }
+
+        const updateState = (state: ASLGraph.NodeState): ASLGraph.NodeState => {
+          const throwOrPass = this.throw(expr);
+          if (
+            throwOrPass?.Next &&
+            (isTaskState(state) ||
+              isMapTaskState(state) ||
+              isParallelTaskState(state))
+          ) {
+            return {
+              ...state,
+              Catch: [
+                {
+                  ErrorEquals: ["States.ALL"],
+                  Next: throwOrPass.Next,
+                  ResultPath: throwOrPass.ResultPath,
+                },
+              ],
+            };
+          } else {
+            return state;
+          }
+        };
+
+        const updateStates = (
+          states: ASLGraph.NodeState | ASLGraph.SubState
+        ): ASLGraph.NodeState | ASLGraph.SubState => {
+          return ASLGraph.isSubState(states)
+            ? {
+                ...states,
+                states: Object.fromEntries(
+                  Object.entries(states.states ?? {}).map(
+                    ([stateName, state]) => {
+                      if (ASLGraph.isSubState(state)) {
+                        return [stateName, updateStates(state)];
+                      } else {
+                        return [stateName, updateState(state)];
+                      }
+                    }
+                  )
+                ),
+              }
+            : updateState(states);
+        };
+        return {
+          ...integStates,
+          ...updateStates(integStates),
+        };
       } else if (isMap(expr)) {
         return this.mapToStateOutput(expr);
       } else if (isForEach(expr)) {

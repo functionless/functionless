@@ -209,7 +209,7 @@ test("ObjectBinding with out-of-bound reference", () => {
   assertNodeKind(binding2.propertyName, NodeKind.Identifier);
   assertNodeKind(binding3.name, NodeKind.Identifier);
   assertNodeKind(binding3.propertyName, NodeKind.Identifier);
-  assertNodeKind(binding3.initializer, NodeKind.ReferenceExpr);
+  assertNodeKind(binding3.initializer, NodeKind.Identifier);
 });
 
 test("ArrayBinding with out-of-bound reference", () => {
@@ -243,7 +243,7 @@ test("ArrayBinding with out-of-bound reference", () => {
 
   assertNodeKind(binding1.name, NodeKind.Identifier);
   assertNodeKind(binding2.name, NodeKind.Identifier);
-  assertNodeKind(binding2.initializer, NodeKind.ReferenceExpr);
+  assertNodeKind(binding2.initializer, NodeKind.Identifier);
 });
 
 test("reflect on a bound function declaration", () => {

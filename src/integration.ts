@@ -6,39 +6,43 @@ import { AwaitExpr, CallExpr, PromiseExpr, ReferenceExpr } from "./expression";
 import { Function, NativeIntegration } from "./function";
 import {
   isAwaitExpr,
+  isBindingElem,
+  isBindingPattern,
   isCallExpr,
+  isConditionExpr,
+  isElementAccessExpr,
+  isIdentifier,
   isPromiseExpr,
+  isPropAccessExpr,
   isReferenceExpr,
   isThisExpr,
+  isVariableDecl,
 } from "./guards";
 import { FunctionlessNode } from "./node";
-import { AnyFunction } from "./util";
+import { AnyFunction, evalToConstant } from "./util";
 import { visitEachChild } from "./visit";
 import { VTL } from "./vtl";
 
-export const isIntegration = <I extends IntegrationInput<string, AnyFunction>>(
+export const isIntegration = <I extends Integration<string, AnyFunction>>(
   i: any
 ): i is I => typeof i === "object" && "kind" in i;
 
-export type IntegrationCallExpr = CallExpr & {
-  expr: ReferenceExpr<Integration>;
-};
+export interface IntegrationCallExpr extends CallExpr {}
 
 export function isIntegrationCallExpr(
   node: FunctionlessNode
 ): node is IntegrationCallExpr {
-  return (
-    isCallExpr(node) &&
-    (isReferenceExpr(node.expr) || isThisExpr(node.expr)) &&
-    isIntegration(node.expr.ref())
-  );
+  if (isCallExpr(node)) {
+    return tryFindIntegration(node.expr) !== undefined;
+  }
+  return false;
 }
 
 export type IntegrationCallPattern =
-  | IntegrationCallExpr
-  | (AwaitExpr & { expr: IntegrationCallExpr })
-  | (PromiseExpr & { expr: IntegrationCallExpr })
-  | (AwaitExpr & { expr: PromiseExpr & { expr: IntegrationCallExpr } });
+  | CallExpr
+  | (AwaitExpr & { expr: CallExpr })
+  | (PromiseExpr & { expr: CallExpr })
+  | (AwaitExpr & { expr: PromiseExpr & { expr: CallExpr } });
 
 export function isIntegrationCallPattern(
   node: FunctionlessNode
@@ -58,20 +62,16 @@ export function isIntegrationCallPattern(
  */
 export function getIntegrationExprFromIntegrationCallPattern(
   pattern: IntegrationCallPattern
-): IntegrationCallExpr {
-  if (isAwaitExpr(pattern)) {
-    if (isIntegrationCallExpr(pattern.expr)) {
-      return pattern.expr;
-    } else if (
-      isPromiseExpr(pattern.expr) &&
-      isIntegrationCallExpr(pattern.expr.expr)
-    ) {
-      return pattern.expr.expr;
+): IntegrationCallExpr | undefined {
+  if (isAwaitExpr(pattern) || isPromiseExpr(pattern)) {
+    return getIntegrationExprFromIntegrationCallPattern(pattern.expr);
+  } else if (isCallExpr(pattern)) {
+    const integration = tryFindIntegration(pattern.expr);
+    if (integration) {
+      return pattern;
     }
-  } else if (isPromiseExpr(pattern) && isIntegrationCallExpr(pattern.expr)) {
-    return pattern.expr;
   }
-  return pattern as IntegrationCallExpr;
+  return undefined;
 }
 
 /**
@@ -301,20 +301,144 @@ export function makeIntegration<K extends string, F extends AnyFunction>(
 
 export type CallContext = ASL | VTL | Function<any, any> | EventBus<any>;
 
-/**
- * Dive until we find a integration object.
- */
 export function findDeepIntegrations(
-  expr: FunctionlessNode
-): IntegrationCallExpr[] {
-  const integrations: IntegrationCallExpr[] = [];
-  visitEachChild(expr, function find(node: FunctionlessNode): FunctionlessNode {
-    if (isIntegrationCallExpr(node)) {
-      integrations.push(node);
+  ast: FunctionlessNode
+): CallExpr<ReferenceExpr>[] {
+  const nodes: CallExpr<ReferenceExpr>[] = [];
+  visitEachChild(ast, function visit(node: FunctionlessNode): FunctionlessNode {
+    if (isCallExpr(node)) {
+      const integrations = tryFindIntegrations(node.expr);
+      if (integrations) {
+        nodes.push(
+          ...integrations.map((integration) =>
+            node.fork(
+              new CallExpr(
+                new ReferenceExpr("", () => integration),
+                node.args.map((arg) => arg.clone())
+              )
+            )
+          )
+        );
+      }
     }
-    return visitEachChild(node, find);
+
+    return visitEachChild(node, visit);
   });
-  return integrations;
+
+  return nodes;
+}
+
+/**
+ * A bottom-up algorithm that determines the ONLY {@link Integration} value that the {@link node}
+ * will resolve to at runtime.
+ *
+ * If the {@link node} resolves to 0 or more than 1 {@link Integration} then `undefined` is returned.
+ *
+ * **Note**: This function is an intermediate helper until we migrate the interpreters to be more general
+ * (likely by migrating to top-down algorithms, see https://github.com/functionless/functionless/issues/374#issuecomment-1203313604)
+ *
+ * @param node the node to resolve the {@link Integration} of.
+ * @returns the ONLY {@link Integration} that {@link node} can resolve to, otherwise `undefined`.
+ */
+export function tryFindIntegration(
+  node: FunctionlessNode
+): Integration | undefined {
+  const integrations = tryFindIntegrations(node);
+  if (integrations?.length === 1) {
+    return integrations[0];
+  }
+  return undefined;
+}
+
+/**
+ * A bottom-up algorithm that determines all of the possible {@link Integration}s that a {@link node}
+ * may resolve to at runtime.
+ *
+ * ```ts
+ * declare const table1;
+ * declare const table2;
+ *
+ * const tables = [table1, table2];
+ *
+ * const a = table1;
+ *    // ^ [table1]
+ *
+ * for (const a of tables) {
+ *   const b = a;
+ *          // ^ [table1, table2]
+ *
+ *   const { appsync: { getItem } } = a;
+ *                     // ^ [ table1.appsync.getItem, table2.appsync.getItem ]
+ * }
+ *
+ * const a = tables[0];
+ *          // ^ [table1]
+ *
+ * const { appsync: { getItem } } = table[0];
+ *                   // ^ [ table1.appsync.getItem ]
+ *
+ * const { appsync: { getItem = table1.appsync.getItem } } = table[2];
+ *                   // ^ [ table1.appsync.getItem ] (because of initializer)
+ * ```
+ *
+ * @param node the node to resolve the possible {@link Integration}s of.
+ * @returns a list of all the {@link Integration}s that the {@link node} could evaluate to.
+ */
+export function tryFindIntegrations(node: FunctionlessNode): Integration[] {
+  return resolve(node, undefined).filter(isIntegration);
+
+  /**
+   * Resolve all of the possible values that {@link node} may resolve to at runtime.
+   *
+   * @param node
+   * @param defaultValue default value to use if the value cannot be resolved (set by default initializers in BindingElement)
+   * @returns an array of all the values the {@link node} resolves to.
+   */
+  function resolve(
+    node: FunctionlessNode | undefined,
+    defaultValue: FunctionlessNode | undefined
+  ): any[] {
+    if (node === undefined) {
+      if (defaultValue === undefined) {
+        return [];
+      } else {
+        return resolve(defaultValue, undefined);
+      }
+    } else if (isReferenceExpr(node) || isThisExpr(node)) {
+      return [node.ref()];
+    } else if (isIdentifier(node)) {
+      return resolve(node.lookup(), defaultValue);
+    } else if (isBindingElem(node)) {
+      return resolve(node.parent, node.initializer).flatMap((value) => {
+        if (isIdentifier(node.name)) {
+          return [value[node.name.name]];
+        } else {
+          throw new Error("should be impossible");
+        }
+      });
+    } else if (isBindingPattern(node)) {
+      // we only ever evaluate `{ a }` or `[ a ]` when walking backwards from `a`
+      // the BindingElem resolver case will pluck `a` from the object returned by this
+      return resolve(node.parent, defaultValue);
+    } else if (isVariableDecl(node)) {
+      return resolve(node.initializer, defaultValue);
+    } else if (isPropAccessExpr(node) || isElementAccessExpr(node)) {
+      return resolve(node.expr, undefined).flatMap((expr) => {
+        const key: any = isPropAccessExpr(node)
+          ? node.name.name
+          : evalToConstant(node.element)?.constant;
+        if (key !== undefined) {
+          return [(<any>expr)?.[key]];
+        }
+        return [];
+      });
+    } else if (isConditionExpr(node)) {
+      return resolve(node.then, defaultValue).concat(
+        resolve(node._else, defaultValue)
+      );
+    }
+    return [];
+  }
 }
 
 // to prevent the closure serializer from trying to import all of functionless.
