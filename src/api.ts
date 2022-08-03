@@ -32,7 +32,6 @@ import {
   isIdentifier,
   isReferenceExpr,
   isAwaitExpr,
-  isPromiseExpr,
   isThisExpr,
   isVariableDecl,
   isParenthesizedExpr,
@@ -813,14 +812,6 @@ export class APIGatewayVTL extends VTL {
           return "#stop";
         })
         .join(`,`)}}`;
-    } else if (isPromiseExpr(expr)) {
-      // if we find a promise, ensure it is wrapped in Await or returned then unwrap it
-      if (isAwaitExpr(expr.parent) || isReturnStmt(expr.parent)) {
-        return this.exprToJson(expr.expr);
-      }
-      throw new SynthError(
-        ErrorCodes.Integration_must_be_immediately_awaited_or_returned
-      );
     } else if (isAwaitExpr(expr)) {
       // just pass these through
       return this.exprToJson(expr.expr);
