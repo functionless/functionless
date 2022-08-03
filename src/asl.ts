@@ -2985,7 +2985,7 @@ export class ASL {
     if (!isFunctionLike(callbackfn)) {
       throw new SynthError(
         ErrorCodes.Invalid_Input,
-        "Expected map to have a callback parameter"
+        `the 'callback' argument of map must be a function or arrow expression, found: ${callbackfn?.kindName}`
       );
     }
     return this.evalExpr(
@@ -3004,7 +3004,6 @@ export class ASL {
 
         const listPath = normalizeOutputToJsonPath().jsonPath;
 
-        const bodyReturnVariable = this.newHeapVariable();
         const mapResultVariable = this.newHeapVariable();
 
         const [valueParameter, indexParameter, arrayParameter] =
@@ -3032,7 +3031,8 @@ export class ASL {
             : undefined,
           this.evalStmt(callbackfn.body, {
             End: undefined,
-            ResultPath: bodyReturnVariable,
+            // write over the input value to avoid creating a new heap value
+            ResultPath: `${mapResultVariable}.arr[0]`,
             Next: ASLGraph.DeferNext,
           })
         ) ?? { Type: "Pass" };
@@ -3092,7 +3092,7 @@ export class ASL {
               Parameters: {
                 "arr.$": `${mapResultVariable}.arr[1:]`,
                 // const arrStr = `${arrStr},${JSON.stringify(arr[0])}`;
-                "arrStr.$": `States.Format('{},{}', ${mapResultVariable}.arrStr, States.JsonToString(${bodyReturnVariable}))`,
+                "arrStr.$": `States.Format('{},{}', ${mapResultVariable}.arrStr, States.JsonToString(${mapResultVariable}.arr[0]))`,
               },
               ResultPath: mapResultVariable,
               Next: "check",
@@ -3137,7 +3137,7 @@ export class ASL {
     if (!isFunctionLike(callbackfn)) {
       throw new SynthError(
         ErrorCodes.Invalid_Input,
-        "Expected forEach to have a callback parameter"
+        `the 'callback' argument of forEach must be a function or arrow expression, found: ${callbackfn?.kindName}`
       );
     }
     return this.evalExpr(

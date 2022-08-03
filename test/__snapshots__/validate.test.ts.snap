@@ -995,59 +995,35 @@ https://functionless.org/docs/error-codes#stepfunctions-does-not-support-destruc
 
 [7m592[0m   const { ...rest } = input;
 [7m   [0m [91m         ~~~~~~~~[0m
-[96mtest/test-files/step-function.ts[0m:[93m623[0m:[93m40[0m - [91merror[0m[90m Functionless(10034): [0mOnly references defined in the predicate first parameter (value) are allowed, found: array
+[96mtest/test-files/step-function.ts[0m:[93m621[0m:[93m20[0m - [91merror[0m[90m Functionless(10027): [0mthe callback argument of filter, forEach, and map must be a function or arrow expression, found: Identifier
 
-https://functionless.org/docs/error-codes#stepfunction-invalid-filter-syntax
+https://functionless.org/docs/error-codes#invalid-input
 
-[7m623[0m   [1, 2, 3].filter((_, index, array) => array[0] === index);
-[7m   [0m [91m                                       ~~~~~~[0m
-[96mtest/test-files/step-function.ts[0m:[93m623[0m:[93m53[0m - [91merror[0m[90m Functionless(10034): [0mOnly references defined in the predicate first parameter (value) are allowed, found: index
-
-https://functionless.org/docs/error-codes#stepfunction-invalid-filter-syntax
-
-[7m623[0m   [1, 2, 3].filter((_, index, array) => array[0] === index);
-[7m   [0m [91m                                                    ~~~~~~[0m
-[96mtest/test-files/step-function.ts[0m:[93m626[0m:[93m28[0m - [91merror[0m[90m Functionless(10034): [0mOnly references defined in the predicate first parameter (value) are allowed, found: input
-
-https://functionless.org/docs/error-codes#stepfunction-invalid-filter-syntax
-
-[7m626[0m   [1, 2, 3].filter((val) => input.value === val);
-[7m   [0m [91m                           ~~~~~~[0m
-[96mtest/test-files/step-function.ts[0m:[93m629[0m:[93m20[0m - [91merror[0m[90m Functionless(10034): [0mthe 'predicate' argument of slice must be a function or arrow expression, found: Identifier
-
-https://functionless.org/docs/error-codes#stepfunction-invalid-filter-syntax
-
-[7m629[0m   [1, 2, 3].filter(someFunctionReference);
+[7m621[0m   [1, 2, 3].filter(someFunctionReference);
 [7m   [0m [91m                   ~~~~~~~~~~~~~~~~~~~~~[0m
-[96mtest/test-files/step-function.ts[0m:[93m632[0m:[93m29[0m - [91merror[0m[90m Functionless(10034): [0ma JSONPath filter expression only supports a single, in-line statement, e.g. .filter(a => a == \\"hello\\" || a === \\"world\\")
+[96mtest/test-files/step-function.ts[0m:[93m622[0m:[93m17[0m - [91merror[0m[90m Functionless(10027): [0mthe callback argument of filter, forEach, and map must be a function or arrow expression, found: Identifier
 
-https://functionless.org/docs/error-codes#stepfunction-invalid-filter-syntax
+https://functionless.org/docs/error-codes#invalid-input
 
-[7m632[0m   [1, 2, 3].filter((item) => {
-[7m   [0m [91m                            ~~[0m
-[7m633[0m     const value = 1;
-[7m   [0m [91m~~~~~~~~~~~~~~~~~~~~[0m
-[7m634[0m     return item === value;
-[7m   [0m [91m~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
-[7m635[0m   });
-[7m   [0m [91m~~~[0m
-[96mtest/test-files/step-function.ts[0m:[93m639[0m:[93m20[0m - [91merror[0m[90m Functionless(10034): [0mJSONPath's filter expression does not support 'ObjectLiteralExpression'
+[7m622[0m   [1, 2, 3].map(someFunctionReference);
+[7m   [0m [91m                ~~~~~~~~~~~~~~~~~~~~~[0m
+[96mtest/test-files/step-function.ts[0m:[93m623[0m:[93m21[0m - [91merror[0m[90m Functionless(10027): [0mthe callback argument of filter, forEach, and map must be a function or arrow expression, found: Identifier
 
-https://functionless.org/docs/error-codes#stepfunction-invalid-filter-syntax
+https://functionless.org/docs/error-codes#invalid-input
 
-[7m639[0m     return item === {};
-[7m   [0m [91m                   ~~~[0m
-[96mtest/test-files/step-function.ts[0m:[93m664[0m:[93m7[0m - [93mwarning[0m[90m Functionless(10035): [0mString constants should be used to access objects. Other types may fail at runtime.
+[7m623[0m   [1, 2, 3].forEach(someFunctionReference);
+[7m   [0m [91m                    ~~~~~~~~~~~~~~~~~~~~~[0m
+[96mtest/test-files/step-function.ts[0m:[93m659[0m:[93m7[0m - [93mwarning[0m[90m Functionless(10035): [0mString constants should be used to access objects. Other types may fail at runtime.
 
 https://functionless.org/docs/error-codes#stepfunctions-mismatched-index-type.
 
-[7m664[0m   obj[1];
+[7m659[0m   obj[1];
 [7m   [0m [93m      ~[0m
-[96mtest/test-files/step-function.ts[0m:[93m667[0m:[93m7[0m - [93mwarning[0m[90m Functionless(10035): [0mNumeric constants should be used to access arrays. Other types may fail at runtime.
+[96mtest/test-files/step-function.ts[0m:[93m662[0m:[93m7[0m - [93mwarning[0m[90m Functionless(10035): [0mNumeric constants should be used to access arrays. Other types may fail at runtime.
 
 https://functionless.org/docs/error-codes#stepfunctions-mismatched-index-type.
 
-[7m667[0m   arr[\\"0\\"];
+[7m662[0m   arr[\\"0\\"];
 [7m   [0m [93m      ~~~[0m
 "
 `;

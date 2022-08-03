@@ -194,96 +194,24 @@ export function validate(
         } else if (
           ts.isPropertyAccessExpression(node.expression) &&
           ts.isIdentifier(node.expression.name) &&
-          node.expression.name.text === "filter"
+          (node.expression.name.text === "filter" ||
+            node.expression.name.text === "map" ||
+            node.expression.name.text === "forEach")
         ) {
-          const [predicate] = node.arguments;
+          const [callback] = node.arguments;
 
           if (
-            !(
-              ts.isFunctionExpression(predicate) ||
-              ts.isArrowFunction(predicate)
-            )
+            !(ts.isFunctionExpression(callback) || ts.isArrowFunction(callback))
           ) {
             return [
               newError(
-                predicate,
-                ErrorCodes.StepFunction_invalid_filter_syntax,
-                `the 'predicate' argument of slice must be a function or arrow expression, found: ${
-                  ts.SyntaxKind[predicate.kind]
+                callback,
+                ErrorCodes.Invalid_Input,
+                `the callback argument of filter, forEach, and map must be a function or arrow expression, found: ${
+                  ts.SyntaxKind[callback.kind]
                 }`
               ),
             ];
-          }
-
-          const [expression] = ts.isBlock(predicate.body)
-            ? ts.isReturnStatement(predicate.body.statements[0]) &&
-              predicate.body.statements.length === 1
-              ? predicate.body.statements
-              : []
-            : [predicate.body];
-
-          if (!expression) {
-            return [
-              newError(
-                predicate.body,
-                ErrorCodes.StepFunction_invalid_filter_syntax,
-                'a JSONPath filter expression only supports a single, in-line statement, e.g. .filter(a => a == "hello" || a === "world")'
-              ),
-            ];
-          }
-
-          return collectEachChildRecursive(predicate.body, validateFilterCall);
-
-          function validateFilterCall(node: ts.Node): ts.Diagnostic[] {
-            if (ts.isIdentifier(node)) {
-              const symbol = checker.getSymbolAtLocation(node);
-              if (
-                symbol?.valueDeclaration &&
-                // eslint-disable-next-line no-bitwise
-                symbol.flags & ts.SymbolFlags.Variable
-              ) {
-                if (
-                  !(
-                    (ts.isParameter(symbol.valueDeclaration) &&
-                      symbol.valueDeclaration ===
-                        (<ts.FunctionExpression | ts.ArrowFunction>predicate)
-                          .parameters[0]) ||
-                    ts.isBindingElement(symbol.valueDeclaration)
-                  )
-                ) {
-                  return [
-                    newError(
-                      node,
-                      ErrorCodes.StepFunction_invalid_filter_syntax,
-                      `Only references defined in the predicate first parameter (value) are allowed, found: ${node.text}`
-                    ),
-                  ];
-                }
-              }
-            } else if (
-              !(
-                checker.isConstant(node) ||
-                ts.isPropertyAccessExpression(node) ||
-                ts.isElementAccessExpression(node) ||
-                ts.isPrefixUnaryExpression(node) ||
-                ts.isToken(node) ||
-                ts.isReturnStatement(node) ||
-                ts.isBinaryExpression(node)
-              ) ||
-              ts.isObjectLiteralExpression(node) ||
-              ts.isArrayLiteralExpression(node)
-            ) {
-              return [
-                newError(
-                  node,
-                  ErrorCodes.StepFunction_invalid_filter_syntax,
-                  `JSONPath's filter expression does not support '${
-                    ts.SyntaxKind[node.kind]
-                  }'`
-                ),
-              ];
-            }
-            return [];
           }
         }
         return [

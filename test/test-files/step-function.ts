@@ -610,40 +610,35 @@ new StepFunction(stack, "sfn", async (input: { arr: string[] }) => {
 });
 
 /**
- * Unsupported - Filter
- * @see ErrorCodes.StepFunction_invalid_filter_syntax
+ * Unsupported
  */
 
 const someFunctionReference = () => {
   return true;
 };
 
-new StepFunction(stack, "fn", async (input: { value: number }) => {
-  // invalid - index and array parameters are not supported.
-  [1, 2, 3].filter((_, index, array) => array[0] === index);
-
-  // invalid - cannot reference parameters to parent closures.
-  [1, 2, 3].filter((val) => input.value === val);
-
-  // invalid - predicate function must be inline arrow or function
+new StepFunction(stack, "fn", async () => {
   [1, 2, 3].filter(someFunctionReference);
-
-  // invalid - filter must be a single statement
-  [1, 2, 3].filter((item) => {
-    const value = 1;
-    return item === value;
-  });
-
-  // invalid - filter cannot use object or array literals
-  [{}].filter((item) => {
-    return item === {};
-  });
+  [1, 2, 3].map(someFunctionReference);
+  [1, 2, 3].forEach(someFunctionReference);
 });
 
 /**
  * Supported - Filter
  * @see ErrorCodes.StepFunction_invalid_filter_syntax
  */
+
+new StepFunction(stack, "fn", async (input: { value: number }) => {
+  [1, 2, 3].filter((_, index, array) => array[0] === index);
+  [1, 2, 3].filter((val) => input.value === val);
+  [1, 2, 3].filter((item) => {
+    const value = 1;
+    return item === value;
+  });
+  [{}].filter((item) => {
+    return item === {};
+  });
+});
 
 new StepFunction(stack, "fn", async (input: { arr: { name: string }[] }) => {
   [1, 2, 3].filter((item) => item > 1);
