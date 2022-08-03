@@ -322,7 +322,14 @@ export namespace $SFN {
     if (callbackfn === undefined || !isFunctionExpr(callbackfn)) {
       throw new Error("missing callbackfn in $SFN.map");
     }
-    const callbackStates = context.evalStmt(callbackfn.body);
+    const callbackStates = context.evalStmt(
+      callbackfn.body,
+      // when a return statement is hit, end the sub-machine in the map and return the given value.
+      {
+        End: true,
+        ResultPath: "$",
+      }
+    );
 
     const props = call.args.length === 3 ? call.args[1]?.expr : undefined;
     let maxConcurrency: number | undefined;
@@ -445,7 +452,14 @@ export namespace $SFN {
       return context.stateWithHeapOutput({
         Type: "Parallel",
         Branches: paths.map((func) => {
-          const funcBody = context.evalStmt(func.body);
+          const funcBody = context.evalStmt(
+            func.body,
+            // when a return statement is hit, end the sub-machine in the parallel branch and return the given value.
+            {
+              End: true,
+              ResultPath: "$",
+            }
+          );
 
           if (!funcBody) {
             return context.aslGraphToStates({

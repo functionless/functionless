@@ -524,7 +524,10 @@ export class ASL {
 
     const inputParam = decl.parameters[0];
 
-    const states = this.evalStmt(this.decl.body);
+    const states = this.evalStmt(this.decl.body, {
+      End: true,
+      ResultPath: "$",
+    });
 
     // only evaluate the input parameter if its a binding parameter.
     // We'll set input during context initialization
@@ -650,10 +653,13 @@ export class ASL {
 
   /**
    * Evaluate a single {@link Stmt} into a collection of named states.
+   *
+   * @param returnPass partial Pass state which will be given the return value as input using {@link ASLGraph.passWithInput}.
+   *                   provide the rest to determine the behavior of the returnStmt.
    */
   public evalStmt(
     stmt: Stmt,
-    returnPass?: Partial<Pass>
+    returnPass: Omit<Pass, "Type" | "InputPath" | "Parameters" | "Result">
   ): ASLGraph.SubState | ASLGraph.NodeState | undefined {
     if (isBlockStmt(stmt)) {
       return ASLGraph.joinSubStates(
@@ -710,7 +716,7 @@ export class ASL {
       }
     } else if (isForOfStmt(stmt) || isForInStmt(stmt)) {
       return this.evalExprToSubState(stmt.expr, (output) => {
-        const body = this.evalStmt(stmt.body);
+        const body = this.evalStmt(stmt.body, returnPass);
 
         // assigns either a constant or json path to a new variable
         const assignTempState = this.stateWithHeapOutput(
@@ -848,7 +854,7 @@ export class ASL {
         };
       });
     } else if (isForStmt(stmt)) {
-      const body = this.evalStmt(stmt.body);
+      const body = this.evalStmt(stmt.body, returnPass);
 
       return this.evalContextToSubState(stmt, (evalExpr) => {
         const initializers = stmt.initializer
@@ -932,7 +938,7 @@ export class ASL {
           Next: `if_${i}`,
         }));
 
-        const elsState = els ? this.evalStmt(els) : undefined;
+        const elsState = els ? this.evalStmt(els, returnPass) : undefined;
 
         return <ASLGraph.SubState>{
           startState: "choose",
@@ -943,7 +949,10 @@ export class ASL {
               Default: "else",
             },
             ...Object.fromEntries(
-              ifs.map((_if, i) => [`if_${i}`, this.evalStmt(_if.then)])
+              ifs.map((_if, i) => [
+                `if_${i}`,
+                this.evalStmt(_if.then, returnPass),
+              ])
             ),
             // provide an empty else statement. A choice default cannot terminate a sub-graph,
             // without a pass here, an if statement without else cannot end a block.
@@ -957,9 +966,7 @@ export class ASL {
         ASLGraph.passWithInput(
           {
             Type: "Pass" as const,
-            ResultPath: `$`,
-            End: true,
-            ...(returnPass ?? {}),
+            ...returnPass,
           },
           output
         )
@@ -1114,7 +1121,7 @@ export class ASL {
         startState: "try",
         node: stmt.tryBlock,
         states: {
-          try: this.evalStmt(stmt.tryBlock) ?? {
+          try: this.evalStmt(stmt.tryBlock, returnPass) ?? {
             Type: "Pass" as const,
             ResultPath: null,
           },
@@ -1153,7 +1160,7 @@ export class ASL {
               catch: ASLGraph.joinSubStates(
                 stmt.catchClause,
                 tryFlowStates,
-                this.evalStmt(stmt.catchClause)
+                this.evalStmt(stmt.catchClause, returnPass)
               ) ?? { Type: "Pass" as const },
               // if there is a finally, make sure any thrown errors in catch are handled
               ...(stmt.finallyBlock
@@ -1172,7 +1179,7 @@ export class ASL {
         ? ASLGraph.joinSubStates(
             stmt.finallyBlock,
             // finally block, which may be empty.
-            this.evalStmt(stmt.finallyBlock) ?? {
+            this.evalStmt(stmt.finallyBlock, returnPass) ?? {
               Type: "Pass" as const,
               ResultPath: null,
             },
@@ -1248,7 +1255,7 @@ export class ASL {
         },
       };
     } else if (isCatchClause(stmt)) {
-      const _catch = this.evalStmt(stmt.block) ?? { Type: "Pass" };
+      const _catch = this.evalStmt(stmt.block, returnPass) ?? { Type: "Pass" };
       const initialize = stmt.variableDecl
         ? this.evalDecl(stmt.variableDecl, {
             jsonPath: `$.${this.generatedNames.generateOrGet(stmt)}`,
@@ -1256,7 +1263,7 @@ export class ASL {
         : undefined;
       return ASLGraph.joinSubStates(stmt, initialize, _catch);
     } else if (isWhileStmt(stmt) || isDoStmt(stmt)) {
-      const blockState = this.evalStmt(stmt.block);
+      const blockState = this.evalStmt(stmt.block, returnPass);
       if (!blockState) {
         throw new SynthError(
           ErrorCodes.Unexpected_Error,
@@ -1299,7 +1306,7 @@ export class ASL {
     } else if (isDebuggerStmt(stmt) || isEmptyStmt(stmt)) {
       return undefined;
     } else if (isLabelledStmt(stmt)) {
-      return this.evalStmt(stmt.stmt);
+      return this.evalStmt(stmt.stmt, returnPass);
     } else if (isWithStmt(stmt)) {
       throw new SynthError(
         ErrorCodes.Unsupported_Feature,
@@ -2631,7 +2638,7 @@ export class ASL {
           returnEmpty: {
             Type: "Pass" as const,
             Result: "",
-            ResultPath: `${resultVariable}`,
+            ResultPath: `${resultVariable}.string`,
           },
           // nothing left to do, this state will likely get optimized out, but it gives us a target
           done: {
@@ -2862,10 +2869,12 @@ export class ASL {
         : undefined
     );
 
+    const uniqueReturnName = this.generatedNames.generateOrGet(predicate);
+
     const predicateBody = this.evalStmt(predicate.body, {
       End: undefined,
       ResultPath: predicateResult,
-      Next: ASLGraph.DeferNext,
+      Next: uniqueReturnName,
     });
 
     return {
@@ -2907,6 +2916,11 @@ export class ASL {
             { ...ASL.isPresent(`${filterResult}.arr[0]`), Next: "assign" },
           ],
           Default: "end",
+        },
+        // unique return name used by deep returns
+        [uniqueReturnName]: {
+          Type: "Pass",
+          Next: "checkPredicate",
         },
         // assign the item parameter the head of the temp array
         assign: ASLGraph.updateDeferredNextStates(
@@ -3009,6 +3023,8 @@ export class ASL {
         const [valueParameter, indexParameter, arrayParameter] =
           callbackfn.parameters;
 
+        const uniqueReturnName = this.generatedNames.generateOrGet(expr);
+
         const bodyStates = ASLGraph.joinSubStates(
           callbackfn,
           // run any parameter initializers if they exist
@@ -3033,7 +3049,8 @@ export class ASL {
             End: undefined,
             // write over the input value to avoid creating a new heap value
             ResultPath: `${mapResultVariable}.arr[0]`,
-            Next: ASLGraph.DeferNext,
+            // unique return name
+            Next: uniqueReturnName,
           })
         ) ?? { Type: "Pass" };
 
@@ -3086,6 +3103,11 @@ export class ASL {
               { Next: "tail" },
               bodyStates
             ),
+            // unique alias to the "tail" state, used by deep returns in the map callback.
+            [uniqueReturnName]: {
+              Type: "Pass",
+              Next: "tail",
+            },
             // tail and append
             tail: {
               Type: "Pass" as const,
@@ -3154,6 +3176,8 @@ export class ASL {
           );
         }
 
+        const uniqueReturnName = this.generatedNames.generateOrGet(expr);
+
         const listPath = normalizeOutputToJsonPath().jsonPath;
 
         const forEachResultVariable = this.newHeapVariable();
@@ -3184,7 +3208,8 @@ export class ASL {
           this.evalStmt(callbackfn.body, {
             End: undefined,
             ResultPath: null,
-            Next: ASLGraph.DeferNext,
+            // unique return name used by deep returns in the forEach
+            Next: uniqueReturnName,
           })
         ) ?? { Type: "Pass" };
 
@@ -3234,6 +3259,11 @@ export class ASL {
               { Next: "tail" },
               bodyStates
             ),
+            // unique return state which aliases the tail state, used by deep returns in the forEach callback.
+            [uniqueReturnName]: {
+              Type: "Pass",
+              Next: "tail",
+            },
             // tail
             tail: {
               Type: "Pass" as const,
