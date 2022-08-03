@@ -459,7 +459,10 @@ export abstract class VTL {
           // list.reduce((result: string[], next) => [...result, next], []);
           // list.reduce((result, next) => [...result, next]);
 
-          const fn = assertNodeKind(node.args[0]?.expr, NodeKind.FunctionExpr);
+          const fn = assertNodeKind(
+            node.args[0]?.expr,
+            ...NodeKind.FunctionLike
+          );
           const initialValue = node.args[1];
 
           // (previousValue: string[], currentValue: string, currentIndex: number, array: string[])
@@ -1024,7 +1027,7 @@ export abstract class VTL {
       this.evalDecl(array, list);
     }
 
-    const fn = assertNodeKind(call.args[0]?.expr, NodeKind.FunctionExpr);
+    const fn = assertNodeKind(call.args[0]?.expr, ...NodeKind.FunctionLike);
 
     const tmp = returnVariable ? returnVariable : this.newLocalVarName();
 
@@ -1099,7 +1102,7 @@ export abstract class VTL {
  * Returns the [value, index, array] arguments if this CallExpr is a `forEach` or `map` call.
  */
 const getMapForEachArgs = (call: CallExpr) => {
-  return assertNodeKind(call.args[0].expr, NodeKind.FunctionExpr).parameters;
+  return assertNodeKind(call.args[0].expr, ...NodeKind.FunctionLike).parameters;
 };
 
 // to prevent the closure serializer from trying to import all of functionless.

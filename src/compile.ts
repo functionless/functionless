@@ -296,6 +296,31 @@ export function compile(
                 ]),
               ]);
 
+          const isAsync =
+            ts.isFunctionDeclaration(impl) ||
+            ts.isFunctionExpression(impl) ||
+            ts.isArrowFunction(impl) ||
+            ts.isMethodDeclaration(impl)
+              ? [
+                  impl.modifiers?.find(
+                    (mod) => mod.kind === ts.SyntaxKind.AsyncKeyword
+                  )
+                    ? ts.factory.createTrue()
+                    : ts.factory.createFalse(),
+                ]
+              : [];
+
+          const isAsterisk =
+            ts.isFunctionDeclaration(impl) ||
+            ts.isFunctionExpression(impl) ||
+            ts.isMethodDeclaration(impl)
+              ? [
+                  impl.asteriskToken
+                    ? ts.factory.createTrue()
+                    : ts.factory.createFalse(),
+                ]
+              : [];
+
           return newExpr(type, [
             ...resolveFunctionName(),
             ts.factory.createArrayLiteralExpression(
@@ -310,28 +335,9 @@ export function compile(
             ),
             body,
             // isAsync for Functions, Arrows and Methods
-            ...(ts.isFunctionDeclaration(impl) ||
-            ts.isFunctionExpression(impl) ||
-            ts.isArrowFunction(impl) ||
-            ts.isMethodDeclaration(impl)
-              ? [
-                  impl.modifiers?.find(
-                    (mod) => mod.kind === ts.SyntaxKind.AsyncKeyword
-                  )
-                    ? ts.factory.createTrue()
-                    : ts.factory.createFalse(),
-                ]
-              : []),
+            ...isAsync,
             // isAsterisk for Functions and Methods
-            ...(ts.isFunctionDeclaration(impl) ||
-            ts.isFunctionExpression(impl) ||
-            ts.isMethodDeclaration(impl)
-              ? [
-                  impl.asteriskToken
-                    ? ts.factory.createTrue()
-                    : ts.factory.createFalse(),
-                ]
-              : []),
+            ...isAsterisk,
           ]);
         });
 
@@ -363,7 +369,9 @@ export function compile(
       ): ts.Expression {
         if (node === undefined) {
           return ts.factory.createIdentifier("undefined");
-        } else if (ts.isArrowFunction(node) || ts.isFunctionExpression(node)) {
+        } else if (ts.isArrowFunction(node)) {
+          return toFunction(NodeKind.ArrowFunctionExpr, node, scope);
+        } else if (ts.isFunctionExpression(node)) {
           return toFunction(NodeKind.FunctionExpr, node, scope);
         } else if (ts.isExpressionStatement(node)) {
           return newExpr(NodeKind.ExprStmt, [toExpr(node.expression, scope)]);
@@ -448,7 +456,23 @@ export function compile(
               ? ts.factory.createTrue()
               : ts.factory.createFalse(),
           ]);
+        } else if (ts.isPropertyAccessChain(node)) {
+          return newExpr(NodeKind.PropAccessExpr, [
+            toExpr(node.expression, scope),
+            toExpr(node.name, scope),
+            node.questionDotToken
+              ? ts.factory.createTrue()
+              : ts.factory.createFalse(),
+          ]);
         } else if (ts.isElementAccessChain(node)) {
+          return newExpr(NodeKind.ElementAccessExpr, [
+            toExpr(node.expression, scope),
+            toExpr(node.argumentExpression, scope),
+            node.questionDotToken
+              ? ts.factory.createTrue()
+              : ts.factory.createFalse(),
+          ]);
+        } else if (ts.isElementAccessExpression(node)) {
           return newExpr(NodeKind.ElementAccessExpr, [
             toExpr(node.expression, scope),
             toExpr(node.argumentExpression, scope),

@@ -20,14 +20,13 @@ import {
   makeEventBusIntegration,
 } from "./event-bridge/event-bus";
 import { Event } from "./event-bridge/types";
-import { CallExpr, FunctionExpr } from "./expression";
+import { CallExpr } from "./expression";
 import { NativeIntegration } from "./function";
 import { PrewarmClients } from "./function-prewarm";
 import {
   isBindingPattern,
   isComputedPropertyNameExpr,
   isErr,
-  isFunctionExpr,
   isFunctionLike,
   isGetAccessorDecl,
   isIdentifier,
@@ -319,7 +318,7 @@ export namespace $SFN {
   function mapOrForEach(call: CallExpr, context: ASL) {
     const callbackfn =
       call.args.length === 3 ? call.args[2]?.expr : call.args[1]?.expr;
-    if (callbackfn === undefined || !isFunctionExpr(callbackfn)) {
+    if (callbackfn === undefined || !isFunctionLike(callbackfn)) {
       throw new Error("missing callbackfn in $SFN.map");
     }
     const callbackStates = context.evalStmt(callbackfn.body);
@@ -434,8 +433,8 @@ export namespace $SFN {
     }>
   >("parallel", {
     asl(call, context) {
-      const paths = call.args.map((arg): FunctionExpr => {
-        if (isFunctionExpr(arg.expr)) {
+      const paths = call.args.map((arg): FunctionLike => {
+        if (isFunctionLike(arg.expr)) {
           return arg.expr;
         } else {
           throw new Error("each parallel path must be an inline FunctionExpr");
