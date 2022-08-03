@@ -309,6 +309,29 @@ export function compile(
               )
             ),
             body,
+            // isAsync for Functions, Arrows and Methods
+            ...(ts.isFunctionDeclaration(impl) ||
+            ts.isFunctionExpression(impl) ||
+            ts.isArrowFunction(impl) ||
+            ts.isMethodDeclaration(impl)
+              ? [
+                  impl.modifiers?.find(
+                    (mod) => mod.kind === ts.SyntaxKind.AsyncKeyword
+                  )
+                    ? ts.factory.createTrue()
+                    : ts.factory.createFalse(),
+                ]
+              : []),
+            // isAsterisk for Functions and Methods
+            ...(ts.isFunctionDeclaration(impl) ||
+            ts.isFunctionExpression(impl) ||
+            ts.isMethodDeclaration(impl)
+              ? [
+                  impl.asteriskToken
+                    ? ts.factory.createTrue()
+                    : ts.factory.createFalse(),
+                ]
+              : []),
           ]);
         });
 
@@ -425,14 +448,13 @@ export function compile(
               ? ts.factory.createTrue()
               : ts.factory.createFalse(),
           ]);
-        } else if (ts.isElementAccessExpression(node)) {
-          const type = checker.getTypeAtLocation(node.argumentExpression);
+        } else if (ts.isElementAccessChain(node)) {
           return newExpr(NodeKind.ElementAccessExpr, [
             toExpr(node.expression, scope),
             toExpr(node.argumentExpression, scope),
-            type
-              ? ts.factory.createStringLiteral(checker.typeToString(type))
-              : ts.factory.createIdentifier("undefined"),
+            node.questionDotToken
+              ? ts.factory.createTrue()
+              : ts.factory.createFalse(),
           ]);
         } else if (ts.isVariableStatement(node)) {
           return newExpr(NodeKind.VariableStmt, [
