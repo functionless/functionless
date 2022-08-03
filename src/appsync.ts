@@ -478,7 +478,6 @@ function synthesizeFunctions(api: appsync.GraphqlApi, decl: FunctionLike) {
           // if it is nested, hoist it up (create variable, add above, replace expr with variable)
           return hoist && doHoist(node) ? hoist(updatedChild) : updatedChild;
         }
-        return visitEachChild(node, normalizeAST);
       } else if (isVariableStmt(node) && node.declList.decls.length > 1) {
         /**
          * Flatten variable declarations into multiple variable statements.

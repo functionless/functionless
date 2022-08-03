@@ -492,7 +492,13 @@ var require_settle = __commonJS({
       if (!response.status || !validateStatus || validateStatus(response.status)) {
         resolve(response);
       } else {
-        reject(new AxiosError(\\"Request failed with status code \\" + response.status, [AxiosError.ERR_BAD_REQUEST, AxiosError.ERR_BAD_RESPONSE][Math.floor(response.status / 100) - 4], response.config, response.request, response));
+        reject(new AxiosError(
+          \\"Request failed with status code \\" + response.status,
+          [AxiosError.ERR_BAD_REQUEST, AxiosError.ERR_BAD_RESPONSE][Math.floor(response.status / 100) - 4],
+          response.config,
+          response.request,
+          response
+        ));
       }
     };
   }
@@ -793,7 +799,12 @@ var require_xhr = __commonJS({
           if (config.timeoutErrorMessage) {
             timeoutErrorMessage = config.timeoutErrorMessage;
           }
-          reject(new AxiosError(timeoutErrorMessage, transitional.clarifyTimeoutError ? AxiosError.ETIMEDOUT : AxiosError.ECONNABORTED, config, request));
+          reject(new AxiosError(
+            timeoutErrorMessage,
+            transitional.clarifyTimeoutError ? AxiosError.ETIMEDOUT : AxiosError.ECONNABORTED,
+            config,
+            request
+          ));
           request = null;
         };
         if (utils.isStandardBrowserEnv()) {
@@ -868,14 +879,18 @@ var require_ms = __commonJS({
       } else if (type === \\"number\\" && isFinite(val)) {
         return options.long ? fmtLong(val) : fmtShort(val);
       }
-      throw new Error(\\"val is not a non-empty string or a valid number. val=\\" + JSON.stringify(val));
+      throw new Error(
+        \\"val is not a non-empty string or a valid number. val=\\" + JSON.stringify(val)
+      );
     };
     function parse(str) {
       str = String(str);
       if (str.length > 100) {
         return;
       }
-      var match = /^(-?(?:\\\\d+)?\\\\.?\\\\d+) *(milliseconds?|msecs?|ms|seconds?|secs?|s|minutes?|mins?|m|hours?|hrs?|h|days?|d|weeks?|w|years?|yrs?|y)?$/i.exec(str);
+      var match = /^(-?(?:\\\\d+)?\\\\.?\\\\d+) *(milliseconds?|msecs?|ms|seconds?|secs?|s|minutes?|mins?|m|hours?|hrs?|h|days?|d|weeks?|w|years?|yrs?|y)?$/i.exec(
+        str
+      );
       if (!match) {
         return;
       }
@@ -1417,8 +1432,11 @@ var require_node = __commonJS({
     exports2.save = save;
     exports2.load = load;
     exports2.useColors = useColors;
-    exports2.destroy = util.deprecate(() => {
-    }, \\"Instance method \`debug.destroy()\` is deprecated and no longer does anything. It will be removed in the next major version of \`debug\`.\\");
+    exports2.destroy = util.deprecate(
+      () => {
+      },
+      \\"Instance method \`debug.destroy()\` is deprecated and no longer does anything. It will be removed in the next major version of \`debug\`.\\"
+    );
     exports2.colors = [6, 2, 3, 4, 5, 1];
     try {
       const supportsColor = require_supports_color();
@@ -1625,10 +1643,22 @@ var require_follow_redirects = __commonJS({
         this._redirectable.emit(event, arg1, arg2, arg3);
       };
     });
-    var RedirectionError = createErrorType(\\"ERR_FR_REDIRECTION_FAILURE\\", \\"Redirected request failed\\");
-    var TooManyRedirectsError = createErrorType(\\"ERR_FR_TOO_MANY_REDIRECTS\\", \\"Maximum number of redirects exceeded\\");
-    var MaxBodyLengthExceededError = createErrorType(\\"ERR_FR_MAX_BODY_LENGTH_EXCEEDED\\", \\"Request body larger than maxBodyLength limit\\");
-    var WriteAfterEndError = createErrorType(\\"ERR_STREAM_WRITE_AFTER_END\\", \\"write after end\\");
+    var RedirectionError = createErrorType(
+      \\"ERR_FR_REDIRECTION_FAILURE\\",
+      \\"Redirected request failed\\"
+    );
+    var TooManyRedirectsError = createErrorType(
+      \\"ERR_FR_TOO_MANY_REDIRECTS\\",
+      \\"Maximum number of redirects exceeded\\"
+    );
+    var MaxBodyLengthExceededError = createErrorType(
+      \\"ERR_FR_MAX_BODY_LENGTH_EXCEEDED\\",
+      \\"Request body larger than maxBodyLength limit\\"
+    );
+    var WriteAfterEndError = createErrorType(
+      \\"ERR_STREAM_WRITE_AFTER_END\\",
+      \\"write after end\\"
+    );
     function RedirectableRequest(options, responseCallback) {
       Writable.call(this);
       this._sanitizeOptions(options);
@@ -2101,10 +2131,18 @@ var require_http = __commonJS({
           } else if (utils.isString(data)) {
             data = Buffer.from(data, \\"utf-8\\");
           } else {
-            return reject(new AxiosError(\\"Data after transformation must be a string, an ArrayBuffer, a Buffer, or a Stream\\", AxiosError.ERR_BAD_REQUEST, config));
+            return reject(new AxiosError(
+              \\"Data after transformation must be a string, an ArrayBuffer, a Buffer, or a Stream\\",
+              AxiosError.ERR_BAD_REQUEST,
+              config
+            ));
           }
           if (config.maxBodyLength > -1 && data.length > config.maxBodyLength) {
-            return reject(new AxiosError(\\"Request body larger than maxBodyLength limit\\", AxiosError.ERR_BAD_REQUEST, config));
+            return reject(new AxiosError(
+              \\"Request body larger than maxBodyLength limit\\",
+              AxiosError.ERR_BAD_REQUEST,
+              config
+            ));
           }
           if (!headerNames[\\"content-length\\"]) {
             headers[\\"Content-Length\\"] = data.length;
@@ -2120,7 +2158,11 @@ var require_http = __commonJS({
         var parsed = url.parse(fullPath);
         var protocol = parsed.protocol || supportedProtocols[0];
         if (supportedProtocols.indexOf(protocol) === -1) {
-          return reject(new AxiosError(\\"Unsupported protocol \\" + protocol, AxiosError.ERR_BAD_REQUEST, config));
+          return reject(new AxiosError(
+            \\"Unsupported protocol \\" + protocol,
+            AxiosError.ERR_BAD_REQUEST,
+            config
+          ));
         }
         if (!auth && parsed.auth) {
           var urlAuth = parsed.auth.split(\\":\\");
@@ -2256,7 +2298,12 @@ var require_http = __commonJS({
               if (config.maxContentLength > -1 && totalResponseBytes > config.maxContentLength) {
                 rejected = true;
                 stream.destroy();
-                reject(new AxiosError(\\"maxContentLength size of \\" + config.maxContentLength + \\" exceeded\\", AxiosError.ERR_BAD_RESPONSE, config, lastRequest));
+                reject(new AxiosError(
+                  \\"maxContentLength size of \\" + config.maxContentLength + \\" exceeded\\",
+                  AxiosError.ERR_BAD_RESPONSE,
+                  config,
+                  lastRequest
+                ));
               }
             });
             stream.on(\\"aborted\\", function handlerStreamAborted() {
@@ -2264,7 +2311,12 @@ var require_http = __commonJS({
                 return;
               }
               stream.destroy();
-              reject(new AxiosError(\\"maxContentLength size of \\" + config.maxContentLength + \\" exceeded\\", AxiosError.ERR_BAD_RESPONSE, config, lastRequest));
+              reject(new AxiosError(
+                \\"maxContentLength size of \\" + config.maxContentLength + \\" exceeded\\",
+                AxiosError.ERR_BAD_RESPONSE,
+                config,
+                lastRequest
+              ));
             });
             stream.on(\\"error\\", function handleStreamError(err) {
               if (req.aborted)
@@ -2297,13 +2349,23 @@ var require_http = __commonJS({
         if (config.timeout) {
           var timeout = parseInt(config.timeout, 10);
           if (isNaN(timeout)) {
-            reject(new AxiosError(\\"error trying to parse \`config.timeout\` to int\\", AxiosError.ERR_BAD_OPTION_VALUE, config, req));
+            reject(new AxiosError(
+              \\"error trying to parse \`config.timeout\` to int\\",
+              AxiosError.ERR_BAD_OPTION_VALUE,
+              config,
+              req
+            ));
             return;
           }
           req.setTimeout(timeout, function handleRequestTimeout() {
             req.abort();
             var transitional = config.transitional || transitionalDefaults;
-            reject(new AxiosError(\\"timeout of \\" + timeout + \\"ms exceeded\\", transitional.clarifyTimeoutError ? AxiosError.ETIMEDOUT : AxiosError.ECONNABORTED, config, req));
+            reject(new AxiosError(
+              \\"timeout of \\" + timeout + \\"ms exceeded\\",
+              transitional.clarifyTimeoutError ? AxiosError.ETIMEDOUT : AxiosError.ECONNABORTED,
+              config,
+              req
+            ));
           });
         }
         if (config.cancelToken || config.signal) {
@@ -11915,21 +11977,43 @@ var require_dispatchRequest = __commonJS({
     module2.exports = function dispatchRequest(config) {
       throwIfCancellationRequested(config);
       config.headers = config.headers || {};
-      config.data = transformData.call(config, config.data, config.headers, config.transformRequest);
-      config.headers = utils.merge(config.headers.common || {}, config.headers[config.method] || {}, config.headers);
-      utils.forEach([\\"delete\\", \\"get\\", \\"head\\", \\"post\\", \\"put\\", \\"patch\\", \\"common\\"], function cleanHeaderConfig(method) {
-        delete config.headers[method];
-      });
+      config.data = transformData.call(
+        config,
+        config.data,
+        config.headers,
+        config.transformRequest
+      );
+      config.headers = utils.merge(
+        config.headers.common || {},
+        config.headers[config.method] || {},
+        config.headers
+      );
+      utils.forEach(
+        [\\"delete\\", \\"get\\", \\"head\\", \\"post\\", \\"put\\", \\"patch\\", \\"common\\"],
+        function cleanHeaderConfig(method) {
+          delete config.headers[method];
+        }
+      );
       var adapter = config.adapter || defaults.adapter;
       return adapter(config).then(function onAdapterResolution(response) {
         throwIfCancellationRequested(config);
-        response.data = transformData.call(config, response.data, response.headers, config.transformResponse);
+        response.data = transformData.call(
+          config,
+          response.data,
+          response.headers,
+          config.transformResponse
+        );
         return response;
       }, function onAdapterRejection(reason) {
         if (!isCancel(reason)) {
           throwIfCancellationRequested(config);
           if (reason && reason.response) {
-            reason.response.data = transformData.call(config, reason.response.data, reason.response.headers, config.transformResponse);
+            reason.response.data = transformData.call(
+              config,
+              reason.response.data,
+              reason.response.headers,
+              config.transformResponse
+            );
           }
         }
         return Promise.reject(reason);
@@ -12040,11 +12124,19 @@ var require_validator = __commonJS({
       }
       return function(value, opt, opts) {
         if (validator === false) {
-          throw new AxiosError(formatMessage(opt, \\" has been removed\\" + (version ? \\" in \\" + version : \\"\\")), AxiosError.ERR_DEPRECATED);
+          throw new AxiosError(
+            formatMessage(opt, \\" has been removed\\" + (version ? \\" in \\" + version : \\"\\")),
+            AxiosError.ERR_DEPRECATED
+          );
         }
         if (version && !deprecatedWarnings[opt]) {
           deprecatedWarnings[opt] = true;
-          console.warn(formatMessage(opt, \\" has been deprecated since v\\" + version + \\" and will be removed in the near future\\"));
+          console.warn(
+            formatMessage(
+              opt,
+              \\" has been deprecated since v\\" + version + \\" and will be removed in the near future\\"
+            )
+          );
         }
         return validator ? validator(value, opt, opts) : true;
       };
