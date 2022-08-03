@@ -13,7 +13,12 @@ import {
   ensureArrayOf,
 } from "./ensure";
 import type { Err } from "./error";
-import type { Expr, ImportKeyword, SuperKeyword } from "./expression";
+import type {
+  Expr,
+  ImportKeyword,
+  QuasiString,
+  SuperKeyword,
+} from "./expression";
 import {
   isBindingElem,
   isBindingPattern,
@@ -44,7 +49,8 @@ export type FunctionlessNode =
   | SuperKeyword
   | ImportKeyword
   | BindingPattern
-  | VariableDeclList;
+  | VariableDeclList
+  | QuasiString;
 
 export interface HasParent<Parent extends FunctionlessNode> {
   get parent(): Parent;

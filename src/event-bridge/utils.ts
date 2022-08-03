@@ -28,6 +28,7 @@ import {
   isParenthesizedExpr,
   isPropAccessExpr,
   isPropAssignExpr,
+  isQuasiString,
   isReturnStmt,
   isSetAccessorDecl,
   isSpreadElementExpr,
@@ -244,8 +245,8 @@ export const flattenExpression = (expr: Expr, scope: EventScope): Expr => {
       }, [] as PropAssignExpr[])
     );
   } else if (isTemplateExpr(expr)) {
-    const flattenedExpressions = expr.exprs.map((x) =>
-      flattenExpression(x, scope)
+    const flattenedExpressions = expr.spans.map((x) =>
+      isQuasiString(x) ? x : flattenExpression(x, scope)
     );
 
     const flattenedConstants = flattenedExpressions.map((e) =>
@@ -258,7 +259,11 @@ export const flattenExpression = (expr: Expr, scope: EventScope): Expr => {
       ? new StringLiteralExpr(
           (<Constant[]>flattenedConstants).map((e) => e.constant).join("")
         )
-      : new TemplateExpr(expr.exprs.map((x) => flattenExpression(x, scope)));
+      : new TemplateExpr(
+          expr.spans.map((x) =>
+            isQuasiString(x) ? x : flattenExpression(x, scope)
+          )
+        );
   } else {
     return expr;
   }

@@ -69,6 +69,7 @@ import {
   isPropAccessExpr,
   isPropAssignExpr,
   isPropDecl,
+  isQuasiString,
   isReferenceExpr,
   isRegexExpr,
   isReturnStmt,
@@ -634,9 +635,9 @@ export abstract class VTL {
     } else if (isStringLiteralExpr(node)) {
       return this.str(node.value);
     } else if (isTemplateExpr(node)) {
-      return `"${node.exprs
+      return `"${node.spans
         .map((expr) => {
-          if (isStringLiteralExpr(expr)) {
+          if (isQuasiString(expr) || isStringLiteralExpr(expr)) {
             return expr.value;
           }
           const text = this.eval(expr, returnVar);
