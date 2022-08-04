@@ -20,14 +20,13 @@ import {
   makeEventBusIntegration,
 } from "./event-bridge/event-bus";
 import { Event } from "./event-bridge/types";
-import { CallExpr, FunctionExpr } from "./expression";
+import { CallExpr } from "./expression";
 import { NativeIntegration } from "./function";
 import { PrewarmClients } from "./function-prewarm";
 import {
   isBindingPattern,
   isComputedPropertyNameExpr,
   isErr,
-  isFunctionExpr,
   isFunctionLike,
   isGetAccessorDecl,
   isIdentifier,
@@ -156,13 +155,15 @@ export namespace $SFN {
           typeof secondsOutput.value === "number"
         ) {
           return context.stateWithVoidOutput({
-            Type: "Wait" as const,
+            Type: "Wait",
             Seconds: secondsOutput.value,
+            Next: ASLGraph.DeferNext,
           });
         } else if (ASLGraph.isJsonPath(secondsOutput)) {
           return context.stateWithVoidOutput({
-            Type: "Wait" as const,
+            Type: "Wait",
             SecondsPath: secondsOutput.jsonPath,
+            Next: ASLGraph.DeferNext,
           });
         }
 
@@ -201,11 +202,13 @@ export namespace $SFN {
           return context.stateWithVoidOutput({
             Type: "Wait",
             Timestamp: timestampOutput.value,
+            Next: ASLGraph.DeferNext,
           });
         } else if (ASLGraph.isJsonPath(timestampOutput)) {
           return context.stateWithVoidOutput({
             Type: "Wait",
             TimestampPath: timestampOutput.jsonPath,
+            Next: ASLGraph.DeferNext,
           });
         }
 
@@ -319,7 +322,7 @@ export namespace $SFN {
   function mapOrForEach(call: CallExpr, context: ASL) {
     const callbackfn =
       call.args.length === 3 ? call.args[2]?.expr : call.args[1]?.expr;
-    if (callbackfn === undefined || !isFunctionExpr(callbackfn)) {
+    if (callbackfn === undefined || !isFunctionLike(callbackfn)) {
       throw new Error("missing callbackfn in $SFN.map");
     }
     const callbackStates = context.evalStmt(
@@ -411,6 +414,7 @@ export namespace $SFN {
             ...context.cloneLexicalScopeParameters(call),
             ...Object.fromEntries(parameters.map(({ param }) => param)),
           },
+          Next: ASLGraph.DeferNext,
         },
         call
       );
@@ -441,8 +445,8 @@ export namespace $SFN {
     }>
   >("parallel", {
     asl(call, context) {
-      const paths = call.args.map((arg): FunctionExpr => {
-        if (isFunctionExpr(arg.expr)) {
+      const paths = call.args.map((arg): FunctionLike => {
+        if (isFunctionLike(arg.expr)) {
           return arg.expr;
         } else {
           throw new Error("each parallel path must be an inline FunctionExpr");
@@ -463,13 +467,15 @@ export namespace $SFN {
 
           if (!funcBody) {
             return context.aslGraphToStates({
-              Type: "Pass" as const,
+              Type: "Pass",
               ResultPath: null,
+              Next: ASLGraph.DeferNext,
             });
           }
 
           return context.aslGraphToStates(funcBody);
         }),
+        Next: ASLGraph.DeferNext,
       });
     },
   });
@@ -815,7 +821,7 @@ abstract class BaseStepFunction<
       );
 
       return context.stateWithHeapOutput({
-        Type: "Task" as const,
+        Type: "Task",
         Resource: `arn:aws:states:::aws-sdk:sfn:${
           this.resource.stateMachineType ===
           aws_stepfunctions.StateMachineType.EXPRESS
@@ -826,6 +832,7 @@ abstract class BaseStepFunction<
           StateMachineArn: this.resource.stateMachineArn,
           ...evalInputs,
         },
+        Next: ASLGraph.DeferNext,
       });
     });
   }
@@ -1446,6 +1453,7 @@ class BaseStandardStepFunction<
           Type: "Task",
           Resource: "arn:aws:states:::aws-sdk:sfn:describeExecution",
           Parameters: context.toJsonAssignment("ExecutionArn", argValueOutput),
+          Next: ASLGraph.DeferNext,
         });
       });
     },

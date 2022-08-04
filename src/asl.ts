@@ -25,7 +25,6 @@ import {
   isArgument,
   isArrayBinding,
   isArrayLiteralExpr,
-  isArrowFunctionExpr,
   isAwaitExpr,
   isBinaryExpr,
   isBindingElem,
@@ -52,7 +51,7 @@ import {
   isExprStmt,
   isForInStmt,
   isForOfStmt,
-  isFunctionExpr,
+  isFunctionLike,
   isIdentifier,
   isIfStmt,
   isLabelledStmt,
@@ -104,7 +103,6 @@ import {
   isGetAccessorDecl,
   isTaggedTemplateExpr,
   isOmittedExpr,
-  isFunctionLike,
   isQuasiString,
 } from "./guards";
 import {
@@ -164,15 +162,7 @@ export type TerminalState = Succeed | Fail | Extract<State, { End: true }>;
 /**
  * @see https://docs.aws.amazon.com/step-functions/latest/dg/amazon-states-language-common-fields.html
  */
-export interface CommonFields {
-  /**
-   * The name of the next state that is run when the current state finishes. Some state types, such as Choice, allow multiple transition states.
-   */
-  Next?: string;
-  /**
-   * Designates this state as a terminal state (ends the execution) if set to true. There can be any number of terminal states per state machine. Only one of Next or End can be used in a state. Some state types, such as Choice, don't support or use the End field.
-   */
-  End?: boolean;
+export type CommonFields = {
   /**
    * Holds a human-readable description of the state.
    */
@@ -185,7 +175,22 @@ export interface CommonFields {
    * A path that selects a portion of the state's input to be passed to the state's output. If omitted, it has the value $ which designates the entire input. For more information, see Input and Output Processing.
    */
   OutputPath?: string;
-}
+} & (
+  | {
+      /**
+       * The name of the next state that is run when the current state finishes. Some state types, such as Choice, allow multiple transition states.
+       */
+      Next: string;
+      End?: never;
+    }
+  | {
+      /**
+       * Designates this state as a terminal state (ends the execution) if set to true. There can be any number of terminal states per state machine. Only one of Next or End can be used in a state. Some state types, such as Choice, don't support or use the End field.
+       */
+      End: true;
+      Next?: never;
+    }
+);
 
 /**
  * @see https://docs.aws.amazon.com/step-functions/latest/dg/amazon-states-language-succeed-state.html
@@ -206,7 +211,7 @@ export interface Fail extends Pick<CommonFields, "Comment"> {
 /**
  * @see https://docs.aws.amazon.com/step-functions/latest/dg/amazon-states-language-wait-state.html
  */
-export interface Wait extends CommonFields {
+export type Wait = CommonFields & {
   Type: "Wait";
   /**
    * A time, in seconds, to wait before beginning the state specified in the Next field.
@@ -226,7 +231,7 @@ export interface Wait extends CommonFields {
    * An absolute time to wait until beginning the state specified in the Next field, specified using a path from the state's input data.
    */
   TimestampPath?: string;
-}
+};
 
 export type Parameters =
   | null
@@ -241,33 +246,33 @@ export type Parameters =
 /**
  * @see https://docs.aws.amazon.com/step-functions/latest/dg/amazon-states-language-pass-state.html
  */
-export interface Pass extends CommonFields {
+export type Pass = CommonFields & {
   Comment?: string;
   Type: "Pass";
   Result?: any;
   ResultPath?: string | null;
   Parameters?: Parameters;
-}
+};
 
 /**
  * @see https://docs.aws.amazon.com/step-functions/latest/dg/amazon-states-language-task-state.html
  */
-export interface CommonTaskFields extends CommonFields {
+export type CommonTaskFields = CommonFields & {
   Comment?: string;
   Parameters?: Parameters;
   ResultSelector?: Parameters;
   ResultPath?: string | null;
   Retry?: Retry[];
   Catch?: Catch[];
-}
+};
 
 /**
  * @see https://docs.aws.amazon.com/step-functions/latest/dg/amazon-states-language-task-state.html
  */
-export interface Task extends CommonTaskFields {
+export type Task = CommonTaskFields & {
   Type: "Task";
   Resource: string;
-}
+};
 
 /**
  * @see https://docs.aws.amazon.com/step-functions/latest/dg/amazon-states-language-choice-state.html
@@ -356,7 +361,7 @@ export interface Catch {
 /**
  * @see https://docs.aws.amazon.com/step-functions/latest/dg/amazon-states-language-map-state.html
  */
-export interface MapTask extends CommonTaskFields {
+export type MapTask = CommonTaskFields & {
   Type: "Map";
   /**
    * The Iterator field’s value is an object that defines a state machine which will process each element of the array.
@@ -384,15 +389,15 @@ export interface MapTask extends CommonTaskFields {
    * A MaxConcurrency value of 1 invokes the Iterator once for each array element in the order of their appearance in the input, and will not start a new iteration until the previous has completed.
    */
   MaxConcurrency?: number;
-}
+};
 
 /**
  * @see https://docs.aws.amazon.com/step-functions/latest/dg/amazon-states-language-parallel-state.html
  */
-export interface ParallelTask extends CommonTaskFields {
+export type ParallelTask = CommonTaskFields & {
   Type: "Parallel";
   Branches: StateMachine<States>[];
-}
+};
 
 export const isParallelTaskState = (state: State): state is ParallelTask => {
   return state.Type === "Parallel";
@@ -657,7 +662,8 @@ export class ASL {
    */
   public evalStmt(
     stmt: Stmt,
-    returnPass: Omit<Pass, "Type" | "InputPath" | "Parameters" | "Result">
+    returnPass: Omit<Pass, "Type" | "InputPath" | "Parameters" | "Result"> &
+      CommonFields
   ): ASLGraph.SubState | ASLGraph.NodeState | undefined {
     if (isBlockStmt(stmt)) {
       return ASLGraph.joinSubStates(
@@ -721,6 +727,7 @@ export class ASL {
           ASLGraph.passWithInput(
             {
               Type: "Pass",
+              Next: ASLGraph.DeferNext,
             },
             output
           )
@@ -731,7 +738,7 @@ export class ASL {
           ? assignTempState
           : // if `ForIn`, map the array into a tuple of index and item
             ASLGraph.joinSubStates(stmt.expr, assignTempState, {
-              Type: "Map" as const,
+              Type: "Map",
               InputPath: tempArrayPath,
               Parameters: {
                 // in javascript, for(const i in arr) returns string indices (i)
@@ -741,8 +748,10 @@ export class ASL {
               Iterator: this.aslGraphToStates({
                 Type: "Pass",
                 ResultPath: "$",
+                End: true,
               }),
               ResultPath: tempArrayPath,
+              Next: ASLGraph.DeferNext,
             })!;
 
         const initializer: ASLGraph.SubState | ASLGraph.NodeState = (() => {
@@ -779,6 +788,7 @@ export class ASL {
                   Type: "Pass",
                   InputPath: `${tempArrayPath}[0].item`,
                   ResultPath: `$.0__${initializerName}`,
+                  Next: ASLGraph.DeferNext,
                 },
               },
             };
@@ -793,6 +803,7 @@ export class ASL {
                   node: stmt.initializer,
                   InputPath: `${tempArrayPath}[0]`,
                   ResultPath: `$.${stmt.initializer.name}`,
+                  Next: ASLGraph.DeferNext,
                 };
           }
         })();
@@ -825,6 +836,7 @@ export class ASL {
               { Next: "tail" },
               body ?? {
                 Type: "Pass",
+                Next: ASLGraph.DeferNext,
               }
             ),
             // tail the array
@@ -837,6 +849,7 @@ export class ASL {
             // clean up?
             exit: {
               Type: "Pass",
+              Next: ASLGraph.DeferNext,
             },
             [ASL.ContinueNext]: {
               Type: "Pass",
@@ -884,12 +897,13 @@ export class ASL {
                     Default: "exit",
                   })!
                 : // no condition, for loop will require an explicit exit
-                  { Type: "Pass" as const, Next: "body" },
+                  { Type: "Pass", Next: "body" },
             // then run the body
             body: ASLGraph.updateDeferredNextStates(
               { Next: "increment" },
               body ?? {
                 Type: "Pass",
+                Next: ASLGraph.DeferNext,
               }
             ),
             // then increment (or do nothing)
@@ -897,11 +911,11 @@ export class ASL {
               { Next: "check" },
               increment && ASLGraph.isStateOrSubState(increment)
                 ? increment
-                : { Type: "Pass" as const }
+                : { Type: "Pass", Next: ASLGraph.DeferNext }
             ),
             // return back to check
             // TODO: clean up?
-            exit: { Type: "Pass" },
+            exit: { Type: "Pass", Next: ASLGraph.DeferNext },
             [ASL.ContinueNext]: {
               Type: "Pass",
               Next: "check",
@@ -938,7 +952,7 @@ export class ASL {
 
         const elsState = els ? this.evalStmt(els, returnPass) : undefined;
 
-        return <ASLGraph.SubState>{
+        return {
           startState: "choose",
           states: {
             choose: {
@@ -955,7 +969,9 @@ export class ASL {
             // provide an empty else statement. A choice default cannot terminate a sub-graph,
             // without a pass here, an if statement without else cannot end a block.
             // if the extra pass isn't needed, it will be pruned later
-            else: elsState ? elsState : { Type: "Pass" },
+            else: elsState
+              ? elsState
+              : { Type: "Pass", Next: ASLGraph.DeferNext },
           },
         };
       });
@@ -963,7 +979,7 @@ export class ASL {
       return this.evalExprToSubState(stmt.expr, (output) =>
         ASLGraph.passWithInput(
           {
-            Type: "Pass" as const,
+            Type: "Pass",
             ...returnPass,
           },
           output
@@ -1116,12 +1132,13 @@ export class ASL {
         node: stmt.tryBlock,
         states: {
           try: this.evalStmt(stmt.tryBlock, returnPass) ?? {
-            Type: "Pass" as const,
+            Type: "Pass",
             ResultPath: null,
+            Next: ASLGraph.DeferNext,
           },
           // create a special catch clause that is only visible to states in the try block
           ...(stmt.catchClause
-            ? { [ASL.CatchState]: { Type: "Pass" as const, Next: "catch" } }
+            ? { [ASL.CatchState]: { Type: "Pass", Next: "catch" } }
             : {}),
         },
       };
@@ -1131,7 +1148,7 @@ export class ASL {
           ? ASLGraph.joinSubStates(
               stmt.catchClause.variableDecl,
               {
-                Type: "Pass" as const,
+                Type: "Pass",
                 Next: ASLGraph.DeferNext,
                 Parameters: {
                   "0_ParsedError.$": `States.StringToJson($.${errorVariableName}.Cause)`,
@@ -1139,7 +1156,7 @@ export class ASL {
                 ResultPath: `$.${errorVariableName}`,
               },
               {
-                Type: "Pass" as const,
+                Type: "Pass",
                 InputPath: `$.${errorVariableName}.0_ParsedError`,
                 ResultPath: `$.${errorVariableName}`,
                 Next: ASLGraph.DeferNext,
@@ -1155,12 +1172,12 @@ export class ASL {
                 stmt.catchClause,
                 tryFlowStates,
                 this.evalStmt(stmt.catchClause, returnPass)
-              ) ?? { Type: "Pass" as const },
+              ) ?? { Type: "Pass", Next: ASLGraph.DeferNext },
               // if there is a finally, make sure any thrown errors in catch are handled
               ...(stmt.finallyBlock
                 ? {
                     [ASL.CatchState]: {
-                      Type: "Pass" as const,
+                      Type: "Pass",
                       Next: "finally",
                     },
                   }
@@ -1174,8 +1191,9 @@ export class ASL {
             stmt.finallyBlock,
             // finally block, which may be empty.
             this.evalStmt(stmt.finallyBlock, returnPass) ?? {
-              Type: "Pass" as const,
+              Type: "Pass",
               ResultPath: null,
+              Next: ASLGraph.DeferNext,
             },
             stmt.catchClause && canThrow(stmt.catchClause)
               ? (() => {
@@ -1191,12 +1209,12 @@ export class ASL {
                   const errVariable = `$.${this.generatedNames.generateOrGet(
                     stmt.finallyBlock
                   )}`;
-                  return <ASLGraph.SubState>{
+                  return {
                     startState: "exit",
                     states: {
                       exit: {
                         // when exiting the finally block, if we entered via an error, then we need to re-throw the error
-                        Type: "Choice" as const,
+                        Type: "Choice",
                         Choices: [
                           {
                             // errors thrown from the catch block will be directed to this special variable for the `finally` block
@@ -1209,12 +1227,12 @@ export class ASL {
                       },
                       throw: throwTarget
                         ? {
-                            Type: "Pass" as const,
+                            Type: "Pass",
                             InputPath: errVariable,
                             ...throwTarget,
                           }
                         : {
-                            Type: "Fail" as const,
+                            Type: "Fail",
                             Error: "ReThrowFromFinally",
                             Cause:
                               "an error was re-thrown from a finally block which is unsupported by Step Functions",
@@ -1249,7 +1267,10 @@ export class ASL {
         },
       };
     } else if (isCatchClause(stmt)) {
-      const _catch = this.evalStmt(stmt.block, returnPass) ?? { Type: "Pass" };
+      const _catch = this.evalStmt(stmt.block, returnPass) ?? {
+        Type: "Pass",
+        Next: ASLGraph.DeferNext,
+      };
       const initialize = stmt.variableDecl
         ? this.evalDecl(stmt.variableDecl, {
             jsonPath: `$.${this.generatedNames.generateOrGet(stmt)}`,
@@ -1269,7 +1290,7 @@ export class ASL {
           startState: "check",
           states: {
             check: {
-              Type: "Choice" as const,
+              Type: "Choice",
               node: stmt.condition,
               Choices: [
                 {
@@ -1436,6 +1457,7 @@ export class ASL {
               {
                 Type: "Pass",
                 ResultPath: heap,
+                Next: ASLGraph.DeferNext,
               },
               output
             ),
@@ -1597,12 +1619,13 @@ export class ASL {
 
         // generate any pass states to rewrite variables as needed
         // we expect this to only happen rarely
-        const rewriteStates = jsonPaths
+        const rewriteStates: Pass[] = jsonPaths
           .filter(([original, updated]) => original !== updated)
           .map(([original, updated]) => ({
-            Type: "Pass" as const,
+            Type: "Pass",
             InputPath: original,
             ResultPath: updated,
+            Next: ASLGraph.DeferNext,
           }));
 
         const tempHeap = this.newHeapVariable();
@@ -1618,6 +1641,7 @@ export class ASL {
                 .join("")}',${jsonPaths.map(([, jp]) => jp)})`,
             },
             ResultPath: tempHeap,
+            Next: ASLGraph.DeferNext,
           })!,
           output: {
             jsonPath: `${tempHeap}.string`,
@@ -1681,7 +1705,8 @@ export class ASL {
             : updateState(states);
         };
         return {
-          ...integStates,
+          node: integStates.node,
+          output: integStates.output,
           ...updateStates(integStates),
         };
       } else if (isMap(expr)) {
@@ -1742,6 +1767,7 @@ export class ASL {
                     : `States.StringToJson(${objectPath})`,
               },
               ResultPath: heap,
+              Next: ASLGraph.DeferNext,
               output: {
                 jsonPath: `${heap}.string`,
               },
@@ -1849,8 +1875,8 @@ export class ASL {
         });
         const heapLocation = this.newHeapVariable();
 
-        const subStatesMap = {
-          Type: "Pass" as const,
+        return {
+          Type: "Pass",
           Parameters: {
             "arr.$": `States.Array(${items
               .map((item) =>
@@ -1864,13 +1890,6 @@ export class ASL {
           },
           ResultPath: heapLocation,
           Next: ASLGraph.DeferNext,
-        };
-
-        return {
-          startState: "subStatesMap",
-          states: {
-            subStatesMap,
-          },
           node: expr,
           output: {
             jsonPath: `${heapLocation}.arr`,
@@ -2087,26 +2106,31 @@ export class ASL {
               Type: "Pass",
               Result: "string",
               ResultPath: tempHeap,
+              Next: ASLGraph.DeferNext,
             },
             boolean: {
               Type: "Pass",
               Result: "boolean",
               ResultPath: tempHeap,
+              Next: ASLGraph.DeferNext,
             },
             number: {
               Type: "Pass",
               Result: "number",
               ResultPath: tempHeap,
+              Next: ASLGraph.DeferNext,
             },
             object: {
               Type: "Pass",
               Result: "object",
               ResultPath: tempHeap,
+              Next: ASLGraph.DeferNext,
             },
             undefined: {
               Type: "Pass",
               Result: "undefined",
               ResultPath: tempHeap,
+              Next: ASLGraph.DeferNext,
             },
           },
           output: {
@@ -2142,6 +2166,7 @@ export class ASL {
                 {
                   Type: "Pass",
                   ResultPath: outputVar,
+                  Next: ASLGraph.DeferNext,
                 },
                 result
               )
@@ -2157,6 +2182,7 @@ export class ASL {
                     {
                       Type: "Pass",
                       ResultPath: outputVar,
+                      Next: ASLGraph.DeferNext,
                     },
                     ASLGraph.getAslStateOutput(result)
                   ),
@@ -2362,7 +2388,7 @@ export class ASL {
         /**
          * Name of the state to transition to.
          */
-        Next: string | undefined;
+        Next: string;
         /**
          * JSON Path to store the the error payload.
          */
@@ -2544,7 +2570,7 @@ export class ASL {
             valueOutput
           ),
           hasNext: {
-            Type: "Choice" as const,
+            Type: "Choice",
             Choices: [
               // not initialized and has next: init as first element
               {
@@ -2570,7 +2596,7 @@ export class ASL {
           },
           // place the first value on the output
           initValue: {
-            Type: "Pass" as const,
+            Type: "Pass",
             InputPath: `${arrayPath}[0]`,
             ResultPath: `${resultVariable}.string`,
             // update the temp array
@@ -2578,7 +2604,7 @@ export class ASL {
           },
           // append the current string to the separator and the head of the array
           append: {
-            Type: "Pass" as const,
+            Type: "Pass",
             Parameters: {
               "string.$": ASLGraph.isJsonPath(separator)
                 ? `States.Format('{}{}{}', ${resultVariable}.string, ${separator.jsonPath}, ${arrayPath}[0])`
@@ -2597,13 +2623,15 @@ export class ASL {
           },
           // empty array, return `''`
           returnEmpty: {
-            Type: "Pass" as const,
+            Type: "Pass",
             Result: "",
             ResultPath: `${resultVariable}.string`,
+            Next: ASLGraph.DeferNext,
           },
           // nothing left to do, this state will likely get optimized out, but it gives us a target
           done: {
-            Type: "Pass" as const,
+            Type: "Pass",
+            Next: ASLGraph.DeferNext,
           },
         },
         output: {
@@ -2843,7 +2871,7 @@ export class ASL {
       states: {
         init: indexParameter
           ? {
-              Type: "Map" as const,
+              Type: "Map",
               ItemsPath: valueJsonPath.jsonPath,
               Parameters: {
                 "index.$": "$$.Map.Item.Index",
@@ -2852,6 +2880,7 @@ export class ASL {
               Iterator: this.aslGraphToStates({
                 Type: "Pass",
                 ResultPath: "$",
+                Next: ASLGraph.DeferNext,
               }),
               ResultSelector: {
                 "arr.$": "$",
@@ -2861,7 +2890,7 @@ export class ASL {
               Next: "check",
             }
           : {
-              Type: "Pass" as const,
+              Type: "Pass",
               Parameters: {
                 // copy array to tail it
                 "arr.$": valueJsonPath.jsonPath,
@@ -2886,12 +2915,12 @@ export class ASL {
         // assign the item parameter the head of the temp array
         assign: ASLGraph.updateDeferredNextStates(
           { Next: "predicate" },
-          assignParameters ?? { Type: "Pass" }
+          assignParameters ?? { Type: "Pass", Next: ASLGraph.DeferNext }
         ),
         // run the predicate function logic
         predicate: ASLGraph.updateDeferredNextStates(
           { Next: "checkPredicate" },
-          predicateBody ?? { Type: "Pass" }
+          predicateBody ?? { Type: "Pass", Next: ASLGraph.DeferNext }
         ),
         // check that the predicate value is true
         checkPredicate: {
@@ -3013,15 +3042,15 @@ export class ASL {
             // unique return name
             Next: uniqueReturnName,
           })
-        ) ?? { Type: "Pass" };
+        ) ?? { Type: "Pass", Next: ASLGraph.DeferNext };
 
         return {
           node: expr,
           startState: "init",
           states: {
             init: indexParameter
-              ? <MapTask>{
-                  Type: "Map" as const,
+              ? {
+                  Type: "Map",
                   ItemsPath: listPath,
                   Parameters: {
                     "index.$": "$$.Map.Item.Index",
@@ -3030,6 +3059,7 @@ export class ASL {
                   Iterator: this.aslGraphToStates({
                     Type: "Pass",
                     ResultPath: "$",
+                    Next: ASLGraph.DeferNext,
                   }),
                   ResultSelector: {
                     "arr.$": "$",
@@ -3038,8 +3068,8 @@ export class ASL {
                   ResultPath: mapResultVariable,
                   Next: "check",
                 }
-              : <Pass>{
-                  Type: "Pass" as const,
+              : {
+                  Type: "Pass",
                   Parameters: {
                     // copy array to tail it
                     "arr.$": listPath,
@@ -3071,7 +3101,7 @@ export class ASL {
             },
             // tail and append
             tail: {
-              Type: "Pass" as const,
+              Type: "Pass",
               Parameters: {
                 "arr.$": `${mapResultVariable}.arr[1:]`,
                 // const arrStr = `${arrStr},${JSON.stringify(arr[0])}`;
@@ -3172,15 +3202,15 @@ export class ASL {
             // unique return name used by deep returns in the forEach
             Next: uniqueReturnName,
           })
-        ) ?? { Type: "Pass" };
+        ) ?? { Type: "Pass", Next: ASLGraph.DeferNext };
 
         return {
           node: expr,
           startState: "init",
           states: {
             init: indexParameter
-              ? <MapTask>{
-                  Type: "Map" as const,
+              ? {
+                  Type: "Map",
                   ItemsPath: listPath,
                   Parameters: {
                     "index.$": "$$.Map.Item.Index",
@@ -3189,6 +3219,7 @@ export class ASL {
                   Iterator: this.aslGraphToStates({
                     Type: "Pass",
                     ResultPath: "$",
+                    Next: ASLGraph.DeferNext,
                   }),
                   ResultSelector: {
                     "arr.$": "$",
@@ -3196,8 +3227,8 @@ export class ASL {
                   ResultPath: forEachResultVariable,
                   Next: "check",
                 }
-              : <Pass>{
-                  Type: "Pass" as const,
+              : {
+                  Type: "Pass",
                   Parameters: {
                     // copy array to tail it
                     "arr.$": listPath,
@@ -3227,7 +3258,7 @@ export class ASL {
             },
             // tail
             tail: {
-              Type: "Pass" as const,
+              Type: "Pass",
               Parameters: {
                 "arr.$": `${forEachResultVariable}.arr[1:]`,
               },
@@ -3239,6 +3270,7 @@ export class ASL {
               Type: "Pass",
               Result: this.context.null,
               ResultPath: forEachResultVariable,
+              Next: ASLGraph.DeferNext,
             },
           },
           output: { jsonPath: forEachResultVariable },
@@ -3401,6 +3433,7 @@ export class ASL {
         {
           Type: "Pass",
           ResultPath: `$.${pattern.name}`,
+          Next: ASLGraph.DeferNext,
         },
         value
       );
@@ -3678,6 +3711,7 @@ export class ASL {
                 {
                   Type: "Pass",
                   ResultPath: temp,
+                  Next: ASLGraph.DeferNext,
                 },
                 res
               )
@@ -4037,10 +4071,13 @@ export namespace ASLGraph {
    * Note: States without `Next` are ignored and {@link Map} states replace Default and `Choices[].Next` instead.
    */
   export const updateDeferredNextStates = <T extends State | ASLGraph.SubState>(
-    props: {
-      End?: true;
-      Next?: string;
-    },
+    props:
+      | {
+          End: true;
+        }
+      | {
+          Next: string;
+        },
     state: T
   ): T => {
     return ASLGraph.isSubState(state)
@@ -4052,19 +4089,23 @@ export namespace ASLGraph {
    * Updates DeferNext states for an entire sub-state.
    */
   const updateDeferredNextSubStates = <T extends ASLGraph.SubState>(
-    props: {
-      End?: true;
-      Next?: string;
-    },
+    props:
+      | {
+          End: true;
+        }
+      | {
+          Next: string;
+        },
     subState: T
   ): T => {
     // address the next state as a level up to keep the name unique.
-    const updatedProps = props.Next
-      ? {
-          ...props,
-          Next: `../${props.Next}`,
-        }
-      : props;
+    const updatedProps =
+      "Next" in props && props.Next
+        ? {
+            ...props,
+            Next: `../${props.Next}`,
+          }
+        : props;
     return {
       ...subState,
       states: Object.fromEntries(
@@ -4083,44 +4124,34 @@ export namespace ASLGraph {
    * A Wait state with `ResultPath: null` was failing to deploy.
    */
   const updateDeferredNextState = <T extends State>(
-    props: {
-      End?: true;
-      Next?: string;
-    },
+    props:
+      | {
+          End: true;
+        }
+      | {
+          Next: string;
+        },
     state: T
   ): T => {
-    const { End, Next = undefined } = props;
+    const [End, Next] =
+      "End" in props ? [props.End, undefined] : [undefined, props.Next];
 
     if (isChoiceState(state)) {
       return {
         ...state,
         Choices: state.Choices.map((choice) => ({
           ...choice,
-          Next:
-            !choice.Next || choice.Next === ASLGraph.DeferNext
-              ? Next!
-              : choice.Next,
+          Next: choice.Next === ASLGraph.DeferNext ? Next! : choice.Next,
         })),
-        Default:
-          !state.Default || state.Default === ASLGraph.DeferNext
-            ? Next
-            : state.Default,
+        Default: state.Default === ASLGraph.DeferNext ? Next : state.Default,
       };
     } else if (isFailState(state) || isSucceedState(state)) {
       return state;
     } else if (isWaitState(state)) {
       return {
         ...state,
-        End:
-          (state.Next === undefined && state.End === undefined) ||
-          state.Next === ASLGraph.DeferNext
-            ? End
-            : state.End,
-        Next:
-          (state.Next === undefined && state.End === undefined) ||
-          state.Next === ASLGraph.DeferNext
-            ? Next
-            : state.Next,
+        End: state.Next === ASLGraph.DeferNext ? End : state.End,
+        Next: state.Next === ASLGraph.DeferNext ? Next : state.Next,
       } as T;
     } else if (
       isTaskState(state) ||
@@ -4132,36 +4163,17 @@ export namespace ASLGraph {
         Catch: state.Catch
           ? state.Catch.map((_catch) => ({
               ..._catch,
-              Next:
-                _catch.Next === undefined || _catch.Next === ASLGraph.DeferNext
-                  ? Next
-                  : _catch.Next,
+              Next: _catch.Next === ASLGraph.DeferNext ? Next : _catch.Next,
             }))
           : undefined,
-        End:
-          (state.Next === undefined && state.End === undefined) ||
-          state.Next === ASLGraph.DeferNext
-            ? End
-            : state.End,
-        Next:
-          (state.Next === undefined && state.End === undefined) ||
-          state.Next === ASLGraph.DeferNext
-            ? Next
-            : state.Next,
+        End: state.Next === ASLGraph.DeferNext ? End : state.End,
+        Next: state.Next === ASLGraph.DeferNext ? Next : state.Next,
       } as T;
     } else if (isPassState(state)) {
       return {
         ...state,
-        End:
-          (state.Next === undefined && state.End === undefined) ||
-          state.Next === ASLGraph.DeferNext
-            ? End
-            : state.End,
-        Next:
-          (state.Next === undefined && state.End === undefined) ||
-          state.Next === ASLGraph.DeferNext
-            ? Next
-            : state.Next,
+        End: state.Next === ASLGraph.DeferNext ? End : state.End,
+        Next: state.Next === ASLGraph.DeferNext ? Next : state.Next,
       };
     }
     assertNever(state);
@@ -4498,6 +4510,9 @@ export namespace ASLGraph {
     state: State,
     cb: (next: string) => string
   ): State => {
+    if ("End" in state && state.End !== undefined) {
+      return state;
+    }
     if (isChoiceState(state)) {
       return {
         ...state,
@@ -4582,7 +4597,7 @@ export namespace ASLGraph {
    * Applies an {@link ASLGraph.Output} to a partial {@link Pass}
    */
   export const passWithInput = (
-    pass: Omit<Pass, "Parameters" | "InputPath" | "Result">,
+    pass: Omit<Pass, "Parameters" | "InputPath" | "Result"> & CommonFields,
     value: ASLGraph.Output
   ): Pass => {
     return {
@@ -4605,7 +4620,7 @@ export namespace ASLGraph {
    * Applies an {@link ASLGraph.Output} to a partial {@link Task}
    */
   export const taskWithInput = (
-    task: Omit<Task, "Parameters" | "InputPath">,
+    task: Omit<Task, "Parameters" | "InputPath"> & CommonFields,
     value: ASLGraph.Output
   ): Task => {
     return {
@@ -5127,7 +5142,7 @@ function nodeToString(
     return `[${nodeToString(expr.expr)}]`;
   } else if (isElementAccessExpr(expr)) {
     return `${nodeToString(expr.expr)}[${nodeToString(expr.element)}]`;
-  } else if (isFunctionExpr(expr) || isArrowFunctionExpr(expr)) {
+  } else if (isFunctionLike(expr)) {
     return `function(${expr.parameters.map(nodeToString).join(", ")})`;
   } else if (isIdentifier(expr)) {
     return expr.name;

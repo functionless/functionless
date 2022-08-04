@@ -59,7 +59,7 @@ export function ensure<Assert extends Assertion>(
   nodeKind: NodeKind,
   item: any,
   fieldName: string,
-  assertions: Assert[]
+  assertions: Assert[] | readonly Assert[]
 ): asserts item is AssertionToInstance<Assert> {
   if (!is(item, assertions)) {
     throw new Error(
