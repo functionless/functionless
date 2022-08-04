@@ -112,7 +112,14 @@ const project = new CustomTypescriptProject({
      */
     // for serializer testing
     "uuid",
+    "@swc/core",
+    "@swc/register",
+    "swc-closure@file:../swc-closure",
+    "jest",
+    "ts-jest",
   ],
+  // we will manually set up jest because we need to use jest.config.ts
+  jest: false,
   scripts: {
     prepare: "ts-patch install -s",
     localstack: "./scripts/localstack",
@@ -127,6 +134,7 @@ const project = new CustomTypescriptProject({
   ],
   eslintOptions: {
     lintProjenRc: true,
+    ignorePatterns: ["jest.config.ts"],
   },
   tsconfig: {
     compilerOptions: {
@@ -151,15 +159,7 @@ const project = new CustomTypescriptProject({
   },
   gitignore: [".DS_Store", ".dccache"],
   releaseToNpm: true,
-  jestOptions: {
-    jestConfig: {
-      collectCoverage: false,
-      coveragePathIgnorePatterns: ["/test/", "/node_modules/", "/lib"],
-      moduleNameMapper: {
-        "^@fnls$": "<rootDir>/lib/index",
-      },
-    },
-  },
+
   depsUpgradeOptions: {
     workflowOptions: {
       projenCredentials: GithubCredentials.fromApp(),

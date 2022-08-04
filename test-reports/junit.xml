@@ -1,0 +1,193 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="jest tests" tests="93" failures="0" errors="0" time="38.029">
+  <testsuite name="no duplicate ids" errors="0" failures="0" skipped="0" timestamp="2022-08-04T02:15:36" time="0.609" tests="78">
+    <testcase classname="no duplicate ids NodeKind(0)" name="no duplicate ids NodeKind(0)" time="0.001">
+    </testcase>
+    <testcase classname="no duplicate ids NodeKind(1)" name="no duplicate ids NodeKind(1)" time="0.001">
+    </testcase>
+    <testcase classname="no duplicate ids NodeKind(2)" name="no duplicate ids NodeKind(2)" time="0">
+    </testcase>
+    <testcase classname="no duplicate ids NodeKind(3)" name="no duplicate ids NodeKind(3)" time="0">
+    </testcase>
+    <testcase classname="no duplicate ids NodeKind(4)" name="no duplicate ids NodeKind(4)" time="0">
+    </testcase>
+    <testcase classname="no duplicate ids NodeKind(5)" name="no duplicate ids NodeKind(5)" time="0">
+    </testcase>
+    <testcase classname="no duplicate ids NodeKind(6)" name="no duplicate ids NodeKind(6)" time="0">
+    </testcase>
+    <testcase classname="no duplicate ids NodeKind(7)" name="no duplicate ids NodeKind(7)" time="0">
+    </testcase>
+    <testcase classname="no duplicate ids NodeKind(8)" name="no duplicate ids NodeKind(8)" time="0.001">
+    </testcase>
+    <testcase classname="no duplicate ids NodeKind(9)" name="no duplicate ids NodeKind(9)" time="0.001">
+    </testcase>
+    <testcase classname="no duplicate ids NodeKind(10)" name="no duplicate ids NodeKind(10)" time="0">
+    </testcase>
+    <testcase classname="no duplicate ids NodeKind(11)" name="no duplicate ids NodeKind(11)" time="0">
+    </testcase>
+    <testcase classname="no duplicate ids NodeKind(12)" name="no duplicate ids NodeKind(12)" time="0">
+    </testcase>
+    <testcase classname="no duplicate ids NodeKind(13)" name="no duplicate ids NodeKind(13)" time="0">
+    </testcase>
+    <testcase classname="no duplicate ids NodeKind(14)" name="no duplicate ids NodeKind(14)" time="0">
+    </testcase>
+    <testcase classname="no duplicate ids NodeKind(15)" name="no duplicate ids NodeKind(15)" time="0">
+    </testcase>
+    <testcase classname="no duplicate ids NodeKind(16)" name="no duplicate ids NodeKind(16)" time="0">
+    </testcase>
+    <testcase classname="no duplicate ids NodeKind(17)" name="no duplicate ids NodeKind(17)" time="0">
+    </testcase>
+    <testcase classname="no duplicate ids NodeKind(18)" name="no duplicate ids NodeKind(18)" time="0">
+    </testcase>
+    <testcase classname="no duplicate ids NodeKind(19)" name="no duplicate ids NodeKind(19)" time="0">
+    </testcase>
+    <testcase classname="no duplicate ids NodeKind(20)" name="no duplicate ids NodeKind(20)" time="0">
+    </testcase>
+    <testcase classname="no duplicate ids NodeKind(21)" name="no duplicate ids NodeKind(21)" time="0">
+    </testcase>
+    <testcase classname="no duplicate ids NodeKind(22)" name="no duplicate ids NodeKind(22)" time="0">
+    </testcase>
+    <testcase classname="no duplicate ids NodeKind(23)" name="no duplicate ids NodeKind(23)" time="0">
+    </testcase>
+    <testcase classname="no duplicate ids NodeKind(24)" name="no duplicate ids NodeKind(24)" time="0">
+    </testcase>
+    <testcase classname="no duplicate ids NodeKind(25)" name="no duplicate ids NodeKind(25)" time="0">
+    </testcase>
+    <testcase classname="no duplicate ids NodeKind(26)" name="no duplicate ids NodeKind(26)" time="0.001">
+    </testcase>
+    <testcase classname="no duplicate ids NodeKind(27)" name="no duplicate ids NodeKind(27)" time="0">
+    </testcase>
+    <testcase classname="no duplicate ids NodeKind(28)" name="no duplicate ids NodeKind(28)" time="0">
+    </testcase>
+    <testcase classname="no duplicate ids NodeKind(29)" name="no duplicate ids NodeKind(29)" time="0">
+    </testcase>
+    <testcase classname="no duplicate ids NodeKind(30)" name="no duplicate ids NodeKind(30)" time="0">
+    </testcase>
+    <testcase classname="no duplicate ids NodeKind(31)" name="no duplicate ids NodeKind(31)" time="0">
+    </testcase>
+    <testcase classname="no duplicate ids NodeKind(32)" name="no duplicate ids NodeKind(32)" time="0">
+    </testcase>
+    <testcase classname="no duplicate ids NodeKind(33)" name="no duplicate ids NodeKind(33)" time="0">
+    </testcase>
+    <testcase classname="no duplicate ids NodeKind(34)" name="no duplicate ids NodeKind(34)" time="0">
+    </testcase>
+    <testcase classname="no duplicate ids NodeKind(35)" name="no duplicate ids NodeKind(35)" time="0">
+    </testcase>
+    <testcase classname="no duplicate ids NodeKind(36)" name="no duplicate ids NodeKind(36)" time="0">
+    </testcase>
+    <testcase classname="no duplicate ids NodeKind(37)" name="no duplicate ids NodeKind(37)" time="0">
+    </testcase>
+    <testcase classname="no duplicate ids NodeKind(38)" name="no duplicate ids NodeKind(38)" time="0">
+    </testcase>
+    <testcase classname="no duplicate ids NodeKind(39)" name="no duplicate ids NodeKind(39)" time="0">
+    </testcase>
+    <testcase classname="no duplicate ids NodeKind(40)" name="no duplicate ids NodeKind(40)" time="0">
+    </testcase>
+    <testcase classname="no duplicate ids NodeKind(41)" name="no duplicate ids NodeKind(41)" time="0">
+    </testcase>
+    <testcase classname="no duplicate ids NodeKind(42)" name="no duplicate ids NodeKind(42)" time="0">
+    </testcase>
+    <testcase classname="no duplicate ids NodeKind(43)" name="no duplicate ids NodeKind(43)" time="0">
+    </testcase>
+    <testcase classname="no duplicate ids NodeKind(44)" name="no duplicate ids NodeKind(44)" time="0">
+    </testcase>
+    <testcase classname="no duplicate ids NodeKind(45)" name="no duplicate ids NodeKind(45)" time="0">
+    </testcase>
+    <testcase classname="no duplicate ids NodeKind(46)" name="no duplicate ids NodeKind(46)" time="0">
+    </testcase>
+    <testcase classname="no duplicate ids NodeKind(47)" name="no duplicate ids NodeKind(47)" time="0">
+    </testcase>
+    <testcase classname="no duplicate ids NodeKind(48)" name="no duplicate ids NodeKind(48)" time="0">
+    </testcase>
+    <testcase classname="no duplicate ids NodeKind(49)" name="no duplicate ids NodeKind(49)" time="0">
+    </testcase>
+    <testcase classname="no duplicate ids NodeKind(52)" name="no duplicate ids NodeKind(52)" time="0">
+    </testcase>
+    <testcase classname="no duplicate ids NodeKind(53)" name="no duplicate ids NodeKind(53)" time="0">
+    </testcase>
+    <testcase classname="no duplicate ids NodeKind(54)" name="no duplicate ids NodeKind(54)" time="0">
+    </testcase>
+    <testcase classname="no duplicate ids NodeKind(55)" name="no duplicate ids NodeKind(55)" time="0">
+    </testcase>
+    <testcase classname="no duplicate ids NodeKind(56)" name="no duplicate ids NodeKind(56)" time="0">
+    </testcase>
+    <testcase classname="no duplicate ids NodeKind(57)" name="no duplicate ids NodeKind(57)" time="0">
+    </testcase>
+    <testcase classname="no duplicate ids NodeKind(58)" name="no duplicate ids NodeKind(58)" time="0">
+    </testcase>
+    <testcase classname="no duplicate ids NodeKind(59)" name="no duplicate ids NodeKind(59)" time="0">
+    </testcase>
+    <testcase classname="no duplicate ids NodeKind(60)" name="no duplicate ids NodeKind(60)" time="0">
+    </testcase>
+    <testcase classname="no duplicate ids NodeKind(61)" name="no duplicate ids NodeKind(61)" time="0">
+    </testcase>
+    <testcase classname="no duplicate ids NodeKind(62)" name="no duplicate ids NodeKind(62)" time="0">
+    </testcase>
+    <testcase classname="no duplicate ids NodeKind(63)" name="no duplicate ids NodeKind(63)" time="0">
+    </testcase>
+    <testcase classname="no duplicate ids NodeKind(64)" name="no duplicate ids NodeKind(64)" time="0.001">
+    </testcase>
+    <testcase classname="no duplicate ids NodeKind(65)" name="no duplicate ids NodeKind(65)" time="0">
+    </testcase>
+    <testcase classname="no duplicate ids NodeKind(66)" name="no duplicate ids NodeKind(66)" time="0">
+    </testcase>
+    <testcase classname="no duplicate ids NodeKind(67)" name="no duplicate ids NodeKind(67)" time="0">
+    </testcase>
+    <testcase classname="no duplicate ids NodeKind(68)" name="no duplicate ids NodeKind(68)" time="0">
+    </testcase>
+    <testcase classname="no duplicate ids NodeKind(69)" name="no duplicate ids NodeKind(69)" time="0">
+    </testcase>
+    <testcase classname="no duplicate ids NodeKind(70)" name="no duplicate ids NodeKind(70)" time="0.001">
+    </testcase>
+    <testcase classname="no duplicate ids NodeKind(71)" name="no duplicate ids NodeKind(71)" time="0">
+    </testcase>
+    <testcase classname="no duplicate ids NodeKind(72)" name="no duplicate ids NodeKind(72)" time="0">
+    </testcase>
+    <testcase classname="no duplicate ids NodeKind(73)" name="no duplicate ids NodeKind(73)" time="0">
+    </testcase>
+    <testcase classname="no duplicate ids NodeKind(74)" name="no duplicate ids NodeKind(74)" time="0">
+    </testcase>
+    <testcase classname="no duplicate ids NodeKind(75)" name="no duplicate ids NodeKind(75)" time="0">
+    </testcase>
+    <testcase classname="no duplicate ids NodeKind(76)" name="no duplicate ids NodeKind(76)" time="0.001">
+    </testcase>
+    <testcase classname="no duplicate ids NodeKind(77)" name="no duplicate ids NodeKind(77)" time="0">
+    </testcase>
+    <testcase classname="no duplicate ids NodeKind(78)" name="no duplicate ids NodeKind(78)" time="0">
+    </testcase>
+    <testcase classname="no duplicate ids NodeKind(79)" name="no duplicate ids NodeKind(79)" time="0">
+    </testcase>
+  </testsuite>
+  <testsuite name="serialize" errors="0" failures="0" skipped="0" timestamp="2022-08-04T02:15:35" time="7.206" tests="15">
+    <testcase classname="serialize simple" name="serialize simple" time="0.137">
+    </testcase>
+    <testcase classname="serialize tableMethods get" name="serialize tableMethods get" time="0.235">
+    </testcase>
+    <testcase classname="serialize tableMethods get referenced" name="serialize tableMethods get referenced" time="0.077">
+    </testcase>
+    <testcase classname="serialize tableMethods put" name="serialize tableMethods put" time="0.236">
+    </testcase>
+    <testcase classname="serialize tableMethods put" name="serialize tableMethods put" time="0.241">
+    </testcase>
+    <testcase classname="serialize tableMethods delete" name="serialize tableMethods delete" time="0.245">
+    </testcase>
+    <testcase classname="serialize tableMethods query" name="serialize tableMethods query" time="0.288">
+    </testcase>
+    <testcase classname="serialize tableMethods scan" name="serialize tableMethods scan" time="0.277">
+    </testcase>
+    <testcase classname="serialize sfn sfn" name="serialize sfn sfn" time="0.083">
+    </testcase>
+    <testcase classname="serialize lambda func" name="serialize lambda func" time="0.068">
+    </testcase>
+    <testcase classname="serialize lambda invoke func" name="serialize lambda invoke func" time="0.304">
+    </testcase>
+    <testcase classname="serialize event bridge put events" name="serialize event bridge put events" time="0.066">
+    </testcase>
+    <testcase classname="serialize event bridge aws put events" name="serialize event bridge aws put events" time="0.281">
+    </testcase>
+    <testcase classname="serialize axios import" name="serialize axios import" time="0.032">
+    </testcase>
+    <testcase classname="serialize uuid" name="serialize uuid" time="0.013">
+    </testcase>
+  </testsuite>
+</testsuites>

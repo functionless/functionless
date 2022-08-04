@@ -157,6 +157,7 @@ export function serializeClosure(func: AnyFunction): string {
         // const vFunc = vMod.prop
         return emitVarDecl(prop(id(moduleName), mod.exportName));
       } else if (isFunctionLike(ast)) {
+        return emitVarDecl(serializeAST(ast) as ts.Expression);
       } else {
         throw ast.error;
       }
@@ -167,7 +168,7 @@ export function serializeClosure(func: AnyFunction): string {
 
   function serializeAST(node: FunctionlessNode): ts.Node {
     if (isFunctionDecl(node)) {
-      return ts.factory.createFunctionDeclaration(undefined, undefined);
+      // return ts.factory.createFunctionDeclaration(undefined, undefined);
     } else if (isBlockStmt(node)) {
       return ts.factory.createBlock(
         node.statements.map((stmt) => serializeAST(stmt) as ts.Statement)
@@ -201,6 +202,8 @@ export function serializeClosure(func: AnyFunction): string {
         serializeAST(node.element) as ts.Expression
       );
     }
+
+    throw new Error("not yet implemented");
   }
 }
 

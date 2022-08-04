@@ -21,11 +21,15 @@
       "type": "build"
     },
     {
-      "name": "@types/fs-extra",
+      "name": "@swc/core",
       "type": "build"
     },
     {
-      "name": "@types/jest",
+      "name": "@swc/register",
+      "type": "build"
+    },
+    {
+      "name": "@types/fs-extra",
       "type": "build"
     },
     {
@@ -121,11 +125,6 @@
       "type": "build"
     },
     {
-      "name": "jest-junit",
-      "version": "^13",
-      "type": "build"
-    },
-    {
       "name": "json-schema",
       "type": "build"
     },
@@ -153,6 +152,11 @@
     {
       "name": "standard-version",
       "version": "^9",
+      "type": "build"
+    },
+    {
+      "name": "swc-closure",
+      "version": "file:../swc-closure",
       "type": "build"
     },
     {

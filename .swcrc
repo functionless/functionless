@@ -1,0 +1,16 @@
+{
+  "jsc": {
+    "target": "es2018",
+    "parser": {
+      "syntax": "typescript",
+      "tsx": true,
+      "decorators": true
+    },
+    "experimental": {
+      "plugins": [["swc_closure"]]
+    }
+  },
+  "module": {
+    "type": "commonjs"
+  }
+}
