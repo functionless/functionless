@@ -5924,21 +5924,21 @@ Object {
       "ResultPath": "$.m",
       "Type": "Pass",
     },
-    "1__map = [{a: \\"a\\", b: [\\"b\\"]}].map(function({a,b:[c]})).join()": Object {
+    "1__map = [{aa: \\"a\\", bb: [\\"b\\"]}].map(function({aa,bb:[cc]})).join()": Object {
       "InputPath": "$.heap6.string",
       "Next": "forV = \\"\\"",
       "ResultPath": "$.map",
       "Type": "Pass",
     },
-    "1__map = [{a: \\"a\\", b: [\\"b\\"]}].map(function({a,b:[c]})).join() 1": Object {
+    "1__map = [{aa: \\"a\\", bb: [\\"b\\"]}].map(function({aa,bb:[cc]})).join() 1": Object {
       "InputPath": "$.heap3",
-      "Next": "hasNext__1__map = [{a: \\"a\\", b: [\\"b\\"]}].map(function({a,b:[c]})).join() 1",
+      "Next": "hasNext__1__map = [{aa: \\"a\\", bb: [\\"b\\"]}].map(function({aa,bb:[cc]})).join()",
       "ResultPath": "$.heap5",
       "Type": "Pass",
     },
-    "1__return \`ac\`": Object {
+    "1__return \`aacc\`": Object {
       "InputPath": "$.heap4.string",
-      "Next": "tail__[{a: \\"a\\", b: [\\"b\\"]}].map(function({a,b:[c]}))",
+      "Next": "tail__[{aa: \\"a\\", bb: [\\"b\\"]}].map(function({aa,bb:[cc]}))",
       "ResultPath": "$.heap3.arr[0]",
       "Type": "Pass",
     },
@@ -5956,7 +5956,7 @@ Object {
     },
     "1__t = \\"sir\\"": Object {
       "InputPath": "$.heap1",
-      "Next": "map = [{a: \\"a\\", b: [\\"b\\"]}].map(function({a,b:[c]})).join()",
+      "Next": "map = [{aa: \\"a\\", bb: [\\"b\\"]}].map(function({aa,bb:[cc]})).join()",
       "ResultPath": "$.t",
       "Type": "Pass",
     },
@@ -6006,10 +6006,10 @@ Object {
       "ResultPath": "$",
       "Type": "Pass",
     },
-    "[ c ]": Object {
-      "InputPath": "$.heap3.arr[0]['b'][0]",
-      "Next": "return \`ac\`",
-      "ResultPath": "$.c",
+    "[ cc ]": Object {
+      "InputPath": "$.heap3.arr[0]['bb'][0]",
+      "Next": "return \`aacc\`",
+      "ResultPath": "$.cc",
       "Type": "Pass",
     },
     "[ d, undefined, e, arrRest ]": Object {
@@ -6030,8 +6030,8 @@ Object {
       "ResultPath": "$.s",
       "Type": "Pass",
     },
-    "[{a: \\"a\\", b: [\\"b\\"]}].map(function({a,b:[c]}))": Object {
-      "Next": "check__[{a: \\"a\\", b: [\\"b\\"]}].map(function({a,b:[c]}))",
+    "[{aa: \\"a\\", bb: [\\"b\\"]}].map(function({aa,bb:[cc]}))": Object {
+      "Next": "check__[{aa: \\"a\\", bb: [\\"b\\"]}].map(function({aa,bb:[cc]}))",
       "Parameters": Object {
         "arr.$": "$.heap2",
         "arrStr": "[null",
@@ -6047,8 +6047,8 @@ Object {
       "ResultPath": "$.heap10",
       "Type": "Pass",
     },
-    "append__1__map = [{a: \\"a\\", b: [\\"b\\"]}].map(function({a,b:[c]})).join() 1": Object {
-      "Next": "tail__1__map = [{a: \\"a\\", b: [\\"b\\"]}].map(function({a,b:[c]})).join() 1",
+    "append__1__map = [{aa: \\"a\\", bb: [\\"b\\"]}].map(function({aa,bb:[cc]})).join() ": Object {
+      "Next": "tail__1__map = [{aa: \\"a\\", bb: [\\"b\\"]}].map(function({aa,bb:[cc]})).join() 1",
       "Parameters": Object {
         "string.$": "States.Format('{},{}', $.heap6.string, $.heap5[0])",
       },
@@ -6078,19 +6078,19 @@ Object {
       "ResultPath": "$.message",
       "Type": "Pass",
     },
-    "check__[{a: \\"a\\", b: [\\"b\\"]}].map(function({a,b:[c]}))": Object {
+    "check__[{aa: \\"a\\", bb: [\\"b\\"]}].map(function({aa,bb:[cc]}))": Object {
       "Choices": Array [
         Object {
           "IsPresent": true,
-          "Next": "function({a,b:[c]})",
+          "Next": "function({aa,bb:[cc]})",
           "Variable": "$.heap3.arr[0]",
         },
       ],
-      "Default": "end__[{a: \\"a\\", b: [\\"b\\"]}].map(function({a,b:[c]}))",
+      "Default": "end__[{aa: \\"a\\", bb: [\\"b\\"]}].map(function({aa,bb:[cc]}))",
       "Type": "Choice",
     },
-    "end__[{a: \\"a\\", b: [\\"b\\"]}].map(function({a,b:[c]}))": Object {
-      "Next": "set__end__[{a: \\"a\\", b: [\\"b\\"]}].map(function({a,b:[c]}))",
+    "end__[{aa: \\"a\\", bb: [\\"b\\"]}].map(function({aa,bb:[cc]}))": Object {
+      "Next": "set__end__[{aa: \\"a\\", bb: [\\"b\\"]}].map(function({aa,bb:[cc]}))",
       "Parameters": Object {
         "result.$": "States.StringToJson(States.Format('{}]', $.heap3.arrStr))",
       },
@@ -6141,13 +6141,13 @@ Object {
       "ResultPath": "$.heap7",
       "Type": "Pass",
     },
-    "function({a,b:[c]})": Object {
-      "InputPath": "$.heap3.arr[0]['a']",
-      "Next": "[ c ]",
-      "ResultPath": "$.a",
+    "function({aa,bb:[cc]})": Object {
+      "InputPath": "$.heap3.arr[0]['aa']",
+      "Next": "[ cc ]",
+      "ResultPath": "$.aa",
       "Type": "Pass",
     },
-    "hasNext__1__map = [{a: \\"a\\", b: [\\"b\\"]}].map(function({a,b:[c]})).join() 1": Object {
+    "hasNext__1__map = [{aa: \\"a\\", bb: [\\"b\\"]}].map(function({aa,bb:[cc]})).join()": Object {
       "Choices": Array [
         Object {
           "And": Array [
@@ -6162,7 +6162,7 @@ Object {
               },
             },
           ],
-          "Next": "initValue__1__map = [{a: \\"a\\", b: [\\"b\\"]}].map(function({a,b:[c]})).join() 1",
+          "Next": "initValue__1__map = [{aa: \\"a\\", bb: [\\"b\\"]}].map(function({aa,bb:[cc]})).join",
         },
         Object {
           "And": Array [
@@ -6179,15 +6179,15 @@ Object {
               },
             },
           ],
-          "Next": "returnEmpty__1__map = [{a: \\"a\\", b: [\\"b\\"]}].map(function({a,b:[c]})).join() ",
+          "Next": "returnEmpty__1__map = [{aa: \\"a\\", bb: [\\"b\\"]}].map(function({aa,bb:[cc]})).jo",
         },
         Object {
           "IsPresent": true,
-          "Next": "append__1__map = [{a: \\"a\\", b: [\\"b\\"]}].map(function({a,b:[c]})).join() 1",
+          "Next": "append__1__map = [{aa: \\"a\\", bb: [\\"b\\"]}].map(function({aa,bb:[cc]})).join() ",
           "Variable": "$.heap5[0]",
         },
       ],
-      "Default": "1__map = [{a: \\"a\\", b: [\\"b\\"]}].map(function({a,b:[c]})).join()",
+      "Default": "1__map = [{aa: \\"a\\", bb: [\\"b\\"]}].map(function({aa,bb:[cc]})).join()",
       "Type": "Choice",
     },
     "hasNext__for({h,j:[l]} of [{h: \\"a\\", j: [\\"b\\"]}]) 1": Object {
@@ -6201,9 +6201,9 @@ Object {
       "Default": "try",
       "Type": "Choice",
     },
-    "initValue__1__map = [{a: \\"a\\", b: [\\"b\\"]}].map(function({a,b:[c]})).join() 1": Object {
+    "initValue__1__map = [{aa: \\"a\\", bb: [\\"b\\"]}].map(function({aa,bb:[cc]})).join": Object {
       "InputPath": "$.heap5[0]",
-      "Next": "tail__1__map = [{a: \\"a\\", b: [\\"b\\"]}].map(function({a,b:[c]})).join() 1",
+      "Next": "tail__1__map = [{aa: \\"a\\", bb: [\\"b\\"]}].map(function({aa,bb:[cc]})).join() 1",
       "ResultPath": "$.heap6.string",
       "Type": "Pass",
     },
@@ -6218,12 +6218,12 @@ Object {
       "Default": "c",
       "Type": "Choice",
     },
-    "map = [{a: \\"a\\", b: [\\"b\\"]}].map(function({a,b:[c]})).join()": Object {
-      "Next": "[{a: \\"a\\", b: [\\"b\\"]}].map(function({a,b:[c]}))",
+    "map = [{aa: \\"a\\", bb: [\\"b\\"]}].map(function({aa,bb:[cc]})).join()": Object {
+      "Next": "[{aa: \\"a\\", bb: [\\"b\\"]}].map(function({aa,bb:[cc]}))",
       "Result": Array [
         Object {
-          "a": "a",
-          "b": Array [
+          "aa": "a",
+          "bb": Array [
             "b",
           ],
         },
@@ -6231,10 +6231,10 @@ Object {
       "ResultPath": "$.heap2",
       "Type": "Pass",
     },
-    "return \`ac\`": Object {
-      "Next": "1__return \`ac\`",
+    "return \`aacc\`": Object {
+      "Next": "1__return \`aacc\`",
       "Parameters": Object {
-        "string.$": "States.Format('{}{}',$.a,$.c)",
+        "string.$": "States.Format('{}{}',$.aa,$.cc)",
       },
       "ResultPath": "$.heap4",
       "Type": "Pass",
@@ -6247,15 +6247,15 @@ Object {
       "ResultPath": "$.heap9",
       "Type": "Pass",
     },
-    "returnEmpty__1__map = [{a: \\"a\\", b: [\\"b\\"]}].map(function({a,b:[c]})).join() ": Object {
-      "Next": "1__map = [{a: \\"a\\", b: [\\"b\\"]}].map(function({a,b:[c]})).join()",
+    "returnEmpty__1__map = [{aa: \\"a\\", bb: [\\"b\\"]}].map(function({aa,bb:[cc]})).jo": Object {
+      "Next": "1__map = [{aa: \\"a\\", bb: [\\"b\\"]}].map(function({aa,bb:[cc]})).join()",
       "Result": "",
       "ResultPath": "$.heap6.string",
       "Type": "Pass",
     },
-    "set__end__[{a: \\"a\\", b: [\\"b\\"]}].map(function({a,b:[c]}))": Object {
+    "set__end__[{aa: \\"a\\", bb: [\\"b\\"]}].map(function({aa,bb:[cc]}))": Object {
       "InputPath": "$.heap3.result[1:]",
-      "Next": "1__map = [{a: \\"a\\", b: [\\"b\\"]}].map(function({a,b:[c]})).join() 1",
+      "Next": "1__map = [{aa: \\"a\\", bb: [\\"b\\"]}].map(function({aa,bb:[cc]})).join() 1",
       "ResultPath": "$.heap3",
       "Type": "Pass",
     },
@@ -6270,14 +6270,14 @@ Object {
       "Default": "\\"sir\\" 1",
       "Type": "Choice",
     },
-    "tail__1__map = [{a: \\"a\\", b: [\\"b\\"]}].map(function({a,b:[c]})).join() 1": Object {
+    "tail__1__map = [{aa: \\"a\\", bb: [\\"b\\"]}].map(function({aa,bb:[cc]})).join() 1": Object {
       "InputPath": "$.heap5[1:]",
-      "Next": "hasNext__1__map = [{a: \\"a\\", b: [\\"b\\"]}].map(function({a,b:[c]})).join() 1",
+      "Next": "hasNext__1__map = [{aa: \\"a\\", bb: [\\"b\\"]}].map(function({aa,bb:[cc]})).join()",
       "ResultPath": "$.heap5",
       "Type": "Pass",
     },
-    "tail__[{a: \\"a\\", b: [\\"b\\"]}].map(function({a,b:[c]}))": Object {
-      "Next": "check__[{a: \\"a\\", b: [\\"b\\"]}].map(function({a,b:[c]}))",
+    "tail__[{aa: \\"a\\", bb: [\\"b\\"]}].map(function({aa,bb:[cc]}))": Object {
+      "Next": "check__[{aa: \\"a\\", bb: [\\"b\\"]}].map(function({aa,bb:[cc]}))",
       "Parameters": Object {
         "arr.$": "$.heap3.arr[1:]",
         "arrStr.$": "States.Format('{},{}', $.heap3.arrStr, States.JsonToString($.heap3.arr[0]))",
