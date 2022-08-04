@@ -48,8 +48,6 @@ export type Expr =
   | ParenthesizedExpr
   | PostfixUnaryExpr
   | PrivateIdentifier
-  | PromiseArrayExpr
-  | PromiseExpr
   | PropAccessExpr
   | PropAssignExpr
   | ReferenceExpr
@@ -492,20 +490,6 @@ export class TypeOfExpr extends BaseExpr<NodeKind.TypeOfExpr> {
 export class AwaitExpr extends BaseExpr<NodeKind.AwaitExpr> {
   constructor(readonly expr: Expr) {
     super(NodeKind.AwaitExpr, arguments);
-    this.ensure(expr, "expr", ["Expr"]);
-  }
-}
-
-export class PromiseExpr extends BaseExpr<NodeKind.PromiseExpr> {
-  constructor(readonly expr: Expr) {
-    super(NodeKind.PromiseExpr, arguments);
-    this.ensure(expr, "expr", ["Expr"]);
-  }
-}
-
-export class PromiseArrayExpr extends BaseExpr<NodeKind.PromiseArrayExpr> {
-  constructor(readonly expr: Expr) {
-    super(NodeKind.PromiseArrayExpr, arguments);
     this.ensure(expr, "expr", ["Expr"]);
   }
 }

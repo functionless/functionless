@@ -19,7 +19,6 @@ import {
   isIdentifier,
   isObjectLiteralExpr,
   isParenthesizedExpr,
-  isPromiseExpr,
   isPropAccessExpr,
   isPropAssignExpr,
   isQuasiString,
@@ -207,7 +206,7 @@ export const synthesizeEventBridgeTargets = (
       return exprToObject(expr);
     } else if (isIdentifier(expr)) {
       throw Error("Unsupported direct use of the event parameter.");
-    } else if (isPromiseExpr(expr) || isAwaitExpr(expr)) {
+    } else if (isAwaitExpr(expr)) {
       // pass these through, most promises will fail later, await could be benign
       return exprToLiteral(expr.expr);
     } else if (isCallExpr(expr)) {

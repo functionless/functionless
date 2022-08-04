@@ -412,13 +412,7 @@ export function compile(
             ]
           );
 
-          const type = checker.getTypeAtLocation(node);
-          const typeSymbol = type.getSymbol();
-          return typeSymbol && checker.isPromiseSymbol(typeSymbol)
-            ? newExpr(NodeKind.PromiseExpr, [call])
-            : checker.isPromiseArray(type)
-            ? newExpr(NodeKind.PromiseArrayExpr, [call])
-            : call;
+          return call;
         } else if (ts.isBlock(node)) {
           return newExpr(NodeKind.BlockStmt, [
             ts.factory.createArrayLiteralExpression(

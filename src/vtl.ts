@@ -64,8 +64,6 @@ import {
   isParenthesizedExpr,
   isPostfixUnaryExpr,
   isPrivateIdentifier,
-  isPromiseArrayExpr,
-  isPromiseExpr,
   isPropAccessExpr,
   isPropAssignExpr,
   isPropDecl,
@@ -700,19 +698,6 @@ export abstract class VTL {
     } else if (isAwaitExpr(node)) {
       // we will check for awaits on the PromiseExpr
       return this.eval(node.expr);
-    } else if (isPromiseExpr(node)) {
-      // if we find a promise, ensure it is wrapped in Await or returned then unwrap it
-      if (isAwaitExpr(node.parent) || isReturnStmt(node.parent)) {
-        return this.eval(node.expr);
-      }
-      throw new SynthError(
-        ErrorCodes.Integration_must_be_immediately_awaited_or_returned
-      );
-    } else if (isPromiseArrayExpr(node)) {
-      throw new SynthError(
-        ErrorCodes.Unsupported_Use_of_Promises,
-        "Appsync does not support concurrent integration invocation."
-      );
     } else if (isArgument(node)) {
       return this.eval(node.expr);
     } else if (isForStmt(node)) {
