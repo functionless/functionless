@@ -1557,8 +1557,8 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
             rra2: [t = "sir"],
           } = value;
 
-          const map = [{ a: "a", b: ["b"] }]
-            .map(({ a, b: [c] }) => `${a}${c}`)
+          const map = [{ aa: "a", bb: ["b"] }]
+            .map(({ aa, bb: [cc] }) => `${aa}${cc}`)
             .join();
 
           let forV = "";
