@@ -55,19 +55,11 @@ export class ExprStmt extends BaseStmt<NodeKind.ExprStmt> {
   constructor(readonly expr: Expr) {
     super(NodeKind.ExprStmt, arguments);
   }
-
-  public clone(): this {
-    return new ExprStmt(this.expr.clone()) as this;
-  }
 }
 
 export class VariableStmt extends BaseStmt<NodeKind.VariableStmt> {
   constructor(readonly declList: VariableDeclList) {
     super(NodeKind.VariableStmt, arguments);
-  }
-
-  public clone(): this {
-    return new VariableStmt(this.declList.clone()) as this;
   }
 }
 
@@ -90,10 +82,6 @@ export class BlockStmt extends BaseStmt<NodeKind.BlockStmt, BlockStmtParent> {
       stmt.prev = i > 0 ? statements[i - 1] : undefined;
       stmt.next = i + 1 < statements.length ? statements[i + 1] : undefined;
     });
-  }
-
-  public clone(): this {
-    return new BlockStmt(this.statements.map((stmt) => stmt.clone())) as this;
   }
 
   public isFinallyBlock(): this is FinallyBlock {
@@ -129,10 +117,6 @@ export class ReturnStmt extends BaseStmt<NodeKind.ReturnStmt> {
   constructor(readonly expr: Expr) {
     super(NodeKind.ReturnStmt, arguments);
   }
-
-  public clone(): this {
-    return new ReturnStmt(this.expr.clone()) as this;
-  }
 }
 
 export class IfStmt extends BaseStmt<NodeKind.IfStmt> {
@@ -140,14 +124,6 @@ export class IfStmt extends BaseStmt<NodeKind.IfStmt> {
     super(NodeKind.IfStmt, arguments);
     if (_else) {
     }
-  }
-
-  public clone(): this {
-    return new IfStmt(
-      this.when.clone(),
-      this.then.clone(),
-      this._else?.clone()
-    ) as this;
   }
 }
 
@@ -159,14 +135,6 @@ export class ForOfStmt extends BaseStmt<NodeKind.ForOfStmt> {
   ) {
     super(NodeKind.ForOfStmt, arguments);
   }
-
-  public clone(): this {
-    return new ForOfStmt(
-      this.initializer.clone(),
-      this.expr.clone(),
-      this.body.clone()
-    ) as this;
-  }
 }
 
 export class ForInStmt extends BaseStmt<NodeKind.ForInStmt> {
@@ -176,14 +144,6 @@ export class ForInStmt extends BaseStmt<NodeKind.ForInStmt> {
     readonly body: BlockStmt
   ) {
     super(NodeKind.ForInStmt, arguments);
-  }
-
-  public clone(): this {
-    return new ForInStmt(
-      this.initializer.clone(),
-      this.expr.clone(),
-      this.body.clone()
-    ) as this;
   }
 }
 
@@ -197,34 +157,17 @@ export class ForStmt extends BaseStmt<NodeKind.ForStmt> {
     super(NodeKind.ForStmt, arguments);
     // validate
   }
-
-  public clone(): this {
-    return new ForStmt(
-      this.body.clone(),
-      this.initializer?.clone(),
-      this.condition?.clone(),
-      this.incrementor?.clone()
-    ) as this;
-  }
 }
 
 export class BreakStmt extends BaseStmt<NodeKind.BreakStmt> {
   constructor() {
     super(NodeKind.BreakStmt, arguments);
   }
-
-  public clone(): this {
-    return new BreakStmt() as this;
-  }
 }
 
 export class ContinueStmt extends BaseStmt<NodeKind.ContinueStmt> {
   constructor() {
     super(NodeKind.ContinueStmt, arguments);
-  }
-
-  public clone(): this {
-    return new ContinueStmt() as this;
   }
 }
 

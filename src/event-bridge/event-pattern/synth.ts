@@ -154,9 +154,9 @@ export const synthesizePatternDocument = (
   };
 
   const evalBinary = (expr: BinaryExpr): PatternDocument => {
-    if (expr.op === "==") {
+    if (expr.op === "==" || expr.op === "===") {
       return evalEquals(expr);
-    } else if (expr.op === "!=") {
+    } else if (expr.op === "!=" || expr.op === "!==") {
       return evalNotEquals(expr);
     } else if ([">", ">=", "<", "<="].includes(expr.op)) {
       return evalNumericRange(expr);
