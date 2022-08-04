@@ -66,8 +66,6 @@ import {
   isObjectLiteralExpr,
   isParameterDecl,
   isPostfixUnaryExpr,
-  isPromiseArrayExpr,
-  isPromiseExpr,
   isPropAccessExpr,
   isPropAssignExpr,
   isPropDecl,
@@ -992,10 +990,6 @@ export class ASL {
       const updated =
         isNewExpr(stmt.expr) || isCallExpr(stmt.expr)
           ? stmt.expr
-          : isAwaitExpr(stmt.expr)
-          ? isPromiseExpr(stmt.expr.expr)
-            ? stmt.expr.expr.expr
-            : stmt.expr.expr
           : stmt.expr.expr;
 
       const throwState = this.evalContextToSubState(updated, (evalExpr) => {
@@ -1578,32 +1572,7 @@ export class ASL {
           };
     }
 
-    if (isPromiseExpr(expr)) {
-      // if we find a promise, ensure it is wrapped in Await or returned then unwrap it
-      if (
-        expr.hasOnlyAncestors(isConditionExpr, anyOf(isReturnStmt, isAwaitExpr))
-      ) {
-        return this.eval(expr.expr);
-      }
-      throw new SynthError(
-        ErrorCodes.Integration_must_be_immediately_awaited_or_returned,
-        `Integration must be immediately awaited or returned ${nodeToString(
-          expr
-        )}`
-      );
-    } else if (isPromiseArrayExpr(expr)) {
-      // if we find a promise array, ensure it is wrapped in a Promise.all then unwrap it
-      if (
-        isArgument(expr.parent) &&
-        isCallExpr(expr.parent.parent) &&
-        isPromiseAll(expr.parent.parent)
-      ) {
-        return this.eval(expr.expr);
-      }
-      throw new SynthError(
-        ErrorCodes.Arrays_of_Integration_must_be_immediately_wrapped_in_Promise_all
-      );
-    } else if (isTemplateExpr(expr)) {
+    if (isTemplateExpr(expr)) {
       return this.evalContext(expr, (evalExpr) => {
         const elementOutputs = expr.spans.map((span) =>
           isQuasiString(span)
@@ -1727,8 +1696,7 @@ export class ASL {
         return this.joinToStateOutput(expr);
       } else if (isPromiseAll(expr)) {
         const values = expr.args[0]?.expr;
-        // just validate Promise.all and continue, will validate the PromiseArray later.
-        if (values && isPromiseArrayExpr(values)) {
+        if (values) {
           return this.eval(values);
         }
         throw new SynthError(ErrorCodes.Unsupported_Use_of_Promises);
@@ -3804,29 +3772,6 @@ export class ASL {
         return ASL.isTruthy(variableOutput.jsonPath);
       } else if (isAwaitExpr(expr)) {
         return localToCondition(expr.expr);
-      } else if (isPromiseExpr(expr)) {
-        // if we find a promise, ensure it is wrapped in Await then unwrap it
-        if (isAwaitExpr(expr.parent)) {
-          return localToCondition(expr.expr);
-        }
-        throw new SynthError(
-          ErrorCodes.Integration_must_be_immediately_awaited_or_returned,
-          `Integration must be immediately awaited or returned ${nodeToString(
-            expr
-          )}`
-        );
-      } else if (isPromiseArrayExpr(expr)) {
-        // if we find a promise array, ensure it is wrapped in a Promise.all then unwrap it
-        if (
-          isArgument(expr.parent) &&
-          isCallExpr(expr.parent.parent) &&
-          isPromiseAll(expr.parent.parent)
-        ) {
-          return localToCondition(expr.expr);
-        }
-        throw new SynthError(
-          ErrorCodes.Arrays_of_Integration_must_be_immediately_wrapped_in_Promise_all
-        );
       }
       throw new Error(`cannot evaluate expression: '${expr.kindName}`);
     };
@@ -5242,8 +5187,6 @@ function nodeToString(
     return "undefined";
   } else if (isAwaitExpr(expr)) {
     return `await ${nodeToString(expr.expr)}`;
-  } else if (isPromiseExpr(expr) || isPromiseArrayExpr(expr)) {
-    return nodeToString(expr.expr);
   } else if (isThisExpr(expr)) {
     return "this";
   } else if (isClassExpr(expr)) {

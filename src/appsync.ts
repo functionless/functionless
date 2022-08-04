@@ -35,7 +35,6 @@ import {
   isForInStmt,
   isForOfStmt,
   isAwaitExpr,
-  isPromiseExpr,
   isBindingElem,
   isBindingPattern,
   isReferenceExpr,
@@ -654,8 +653,6 @@ function synthesizeFunctions(api: appsync.GraphqlApi, decl: FunctionLike) {
             return `${getResult(expr.expr)}.${expr.name.name}`;
           } else if (isElementAccessExpr(expr)) {
             return `${getResult(expr.expr)}[${getResult(expr.element)}]`;
-          } else if (isPromiseExpr(expr)) {
-            return getResult(expr.expr);
           } else if (isAwaitExpr(expr)) {
             return getResult(expr.expr);
           } else {
