@@ -187,7 +187,7 @@ export type CommonFields = {
       /**
        * Designates this state as a terminal state (ends the execution) if set to true. There can be any number of terminal states per state machine. Only one of Next or End can be used in a state. Some state types, such as Choice, don't support or use the End field.
        */
-      End: boolean;
+      End: true;
       Next?: never;
     }
 );
