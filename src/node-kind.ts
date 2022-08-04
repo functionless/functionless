@@ -49,8 +49,6 @@ export enum NodeKind {
   ParenthesizedExpr = 47,
   PostfixUnaryExpr = 48,
   PrivateIdentifier = 49,
-  PromiseArrayExpr = 50,
-  PromiseExpr = 51,
   PropAccessExpr = 52,
   PropAssignExpr = 53,
   PropDecl = 54,

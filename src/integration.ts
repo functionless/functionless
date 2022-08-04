@@ -2,7 +2,7 @@ import { ApiGatewayVtlIntegration } from "./api";
 import { AppSyncVtlIntegration } from "./appsync";
 import { ASL, ASLGraph } from "./asl";
 import { EventBus, EventBusTargetIntegration } from "./event-bridge";
-import { AwaitExpr, CallExpr, PromiseExpr, ReferenceExpr } from "./expression";
+import { AwaitExpr, CallExpr, ReferenceExpr } from "./expression";
 import { Function, NativeIntegration } from "./function";
 import {
   isAwaitExpr,
@@ -12,7 +12,6 @@ import {
   isConditionExpr,
   isElementAccessExpr,
   isIdentifier,
-  isPromiseExpr,
   isPropAccessExpr,
   isReferenceExpr,
   isThisExpr,
@@ -40,19 +39,13 @@ export function isIntegrationCallExpr(
 
 export type IntegrationCallPattern =
   | CallExpr
-  | (AwaitExpr & { expr: CallExpr })
-  | (PromiseExpr & { expr: CallExpr })
-  | (AwaitExpr & { expr: PromiseExpr & { expr: CallExpr } });
+  | (AwaitExpr & { expr: CallExpr });
 
 export function isIntegrationCallPattern(
   node: FunctionlessNode
 ): node is IntegrationCallPattern {
   return (
-    (isAwaitExpr(node) &&
-      isPromiseExpr(node.expr) &&
-      isIntegrationCallExpr(node.expr.expr)) ||
     (isAwaitExpr(node) && isIntegrationCallExpr(node.expr)) ||
-    (isPromiseExpr(node) && isIntegrationCallExpr(node.expr)) ||
     isIntegrationCallExpr(node)
   );
 }
@@ -63,7 +56,7 @@ export function isIntegrationCallPattern(
 export function getIntegrationExprFromIntegrationCallPattern(
   pattern: IntegrationCallPattern
 ): IntegrationCallExpr | undefined {
-  if (isAwaitExpr(pattern) || isPromiseExpr(pattern)) {
+  if (isAwaitExpr(pattern)) {
     return getIntegrationExprFromIntegrationCallPattern(pattern.expr);
   } else if (isCallExpr(pattern)) {
     const integration = tryFindIntegration(pattern.expr);
