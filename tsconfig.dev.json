@@ -25,14 +25,6 @@
     "stripInternal": true,
     "target": "ES2019",
     "declarationMap": true,
-    "plugins": [
-      {
-        "transform": "./lib/compile",
-        "exclude": [
-          "./src/{,**}/*"
-        ]
-      }
-    ],
     "paths": {
       "@fnls": [
         "lib/index"

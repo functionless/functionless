@@ -21,7 +21,15 @@
       "type": "build"
     },
     {
+      "name": "@swc/cli",
+      "type": "build"
+    },
+    {
       "name": "@swc/core",
+      "type": "build"
+    },
+    {
+      "name": "@swc/jest",
       "type": "build"
     },
     {

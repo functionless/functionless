@@ -197,10 +197,6 @@ export class Argument extends BaseExpr<NodeKind.Argument, CallExpr | NewExpr> {
     super(NodeKind.Argument, arguments);
     this.ensure(expr, "element", ["undefined", "Expr"]);
   }
-
-  public clone(): this {
-    return new Argument(this.expr?.clone()) as this;
-  }
 }
 
 export class CallExpr<

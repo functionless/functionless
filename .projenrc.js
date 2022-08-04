@@ -112,8 +112,10 @@ const project = new CustomTypescriptProject({
      */
     // for serializer testing
     "uuid",
+    "@swc/cli",
     "@swc/core",
     "@swc/register",
+    "@swc/jest",
     "swc-closure@file:../swc-closure",
     "jest",
     "ts-jest",
@@ -144,20 +146,20 @@ const project = new CustomTypescriptProject({
   },
   tsconfigDev: {
     compilerOptions: {
-      plugins: [
-        {
-          transform: "./lib/compile",
-          // exclude the source of this package while running tests.
-          exclude: ["./src/{,**}/*"],
-        },
-      ],
+      // plugins: [
+      //   {
+      //     transform: "./lib/compile",
+      //     // exclude the source of this package while running tests.
+      //     exclude: ["./src/{,**}/*"],
+      //   },
+      // ],
       paths: {
         "@fnls": ["lib/index"],
       },
       baseUrl: ".",
     },
   },
-  gitignore: [".DS_Store", ".dccache"],
+  gitignore: [".DS_Store", ".dccache", ".swc"],
   releaseToNpm: true,
 
   depsUpgradeOptions: {

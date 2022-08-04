@@ -11,8 +11,9 @@ export default async (): Promise<Config.InitialOptions> => {
       "^@fnls$": "<rootDir>/lib/index",
     },
     testMatch: [
-      "<rootDir>/src/**/__tests__/**/*.ts?(x)",
-      "<rootDir>/(test|src)/**/*(*.)@(spec|test).ts?(x)",
+      "<rootDir>/src/**/__tests__/**/*.(t|j)s?(x)",
+      "<rootDir>/(test|src)/**/*(*.)@(spec|test).(t|j)s?(x)",
+      "<rootDir>/lib-test/(test|src)/**/*(*.)@(spec|test).(t|j)s?(x)",
     ],
     clearMocks: true,
     coverageReporters: ["json", "lcov", "clover", "cobertura", "text"],
@@ -28,6 +29,20 @@ export default async (): Promise<Config.InitialOptions> => {
         },
       ],
     ],
+    transform: {
+      "^.+\\.(t|j)sx?$": [
+        "@swc/jest",
+        {
+          jsc: {
+            parser: { syntax: "typescript", tsx: true, jsx: true },
+            experimental: {
+              plugins: [["swc-closure", {}]],
+            },
+          },
+          minify: true,
+        },
+      ],
+    },
     preset: "ts-jest",
     globals: {
       "ts-jest": {
