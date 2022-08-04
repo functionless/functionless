@@ -79,7 +79,11 @@ export const getPropertyAccessKeyFlatten = (
 ): string | number => {
   if (isElementAccessExpr(expr)) {
     return getPropertyAccessKey(
-      new ElementAccessExpr(expr.expr, flattenExpression(expr.element, scope))
+      new ElementAccessExpr(
+        expr.expr,
+        flattenExpression(expr.element, scope),
+        expr.isOptional
+      )
     );
   }
   return getPropertyAccessKey(expr);
@@ -186,7 +190,7 @@ export const flattenExpression = (expr: Expr, scope: EventScope): Expr => {
     }
     return typeof key === "string"
       ? new PropAccessExpr(parent, new Identifier(key), false)
-      : new ElementAccessExpr(parent, new NumberLiteralExpr(key));
+      : new ElementAccessExpr(parent, new NumberLiteralExpr(key), false);
   } else if (isComputedPropertyNameExpr(expr)) {
     return flattenExpression(expr.expr, scope);
   } else if (isArrayLiteralExpr(expr)) {

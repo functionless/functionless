@@ -23,7 +23,6 @@ import {
   isArgument,
   isArrayBinding,
   isArrayLiteralExpr,
-  isArrowFunctionExpr,
   isAwaitExpr,
   isBinaryExpr,
   isBindingElem,
@@ -51,7 +50,7 @@ import {
   isForInStmt,
   isForOfStmt,
   isFunctionDecl,
-  isFunctionExpr,
+  isFunctionLike,
   isIdentifier,
   isIfStmt,
   isLabelledStmt,
@@ -104,7 +103,6 @@ import {
   isGetAccessorDecl,
   isTaggedTemplateExpr,
   isOmittedExpr,
-  isFunctionLike,
   isQuasiString,
 } from "./guards";
 import {
@@ -1680,7 +1678,7 @@ export class ASL {
         const throwTransition = this.throw(expr);
 
         const callbackfn = expr.args[0].expr;
-        if (callbackfn !== undefined && isFunctionExpr(callbackfn)) {
+        if (callbackfn !== undefined && isFunctionLike(callbackfn)) {
           const callbackStates = this.evalStmt(callbackfn.body);
 
           return this.evalExpr(
@@ -2448,7 +2446,7 @@ export class ASL {
     // detect the immediate for-loop closure surrounding this throw statement
     // because of how step function's Catch feature works, we need to check if the try
     // is inside or outside the closure
-    const mapOrParallelClosure = node.findParent(isFunctionExpr);
+    const mapOrParallelClosure = node.findParent(isFunctionLike);
 
     // catchClause or finallyBlock that will run upon throwing this error
     const catchOrFinally = node.throw();
@@ -2709,7 +2707,7 @@ export class ASL {
     expr: CallExpr & { expr: PropAccessExpr }
   ): ASLGraph.NodeResults {
     const predicate = expr.args[0]?.expr;
-    if (!(isFunctionExpr(predicate) || isArrowFunctionExpr(predicate))) {
+    if (!isFunctionLike(predicate)) {
       throw new SynthError(
         ErrorCodes.StepFunction_invalid_filter_syntax,
         `the 'predicate' argument of slice must be a function or arrow expression, found: ${predicate?.kindName}`
@@ -4739,7 +4737,7 @@ function nodeToString(
     return `[${nodeToString(expr.expr)}]`;
   } else if (isElementAccessExpr(expr)) {
     return `${nodeToString(expr.expr)}[${nodeToString(expr.element)}]`;
-  } else if (isFunctionExpr(expr) || isArrowFunctionExpr(expr)) {
+  } else if (isFunctionLike(expr)) {
     return `function(${expr.parameters.map(nodeToString).join(", ")})`;
   } else if (isIdentifier(expr)) {
     return expr.name;

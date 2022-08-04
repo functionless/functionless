@@ -80,10 +80,21 @@ export class ArrowFunctionExpr<
   F extends AnyFunction = AnyFunction
 > extends BaseExpr<NodeKind.ArrowFunctionExpr> {
   readonly _functionBrand?: F;
-  constructor(readonly parameters: ParameterDecl[], readonly body: BlockStmt) {
+  constructor(
+    readonly parameters: ParameterDecl[],
+    readonly body: BlockStmt,
+    /**
+     * true if this function has an `async` modifier
+     * ```ts
+     * async () =>  {}
+     * ```
+     */
+    readonly isAsync: boolean
+  ) {
     super(NodeKind.ArrowFunctionExpr, arguments);
     this.ensure(body, "body", [NodeKind.BlockStmt]);
     this.ensureArrayOf(parameters, "parameters", [NodeKind.ParameterDecl]);
+    this.ensure(isAsync, "isAsync", ["boolean"]);
   }
 }
 
@@ -94,12 +105,34 @@ export class FunctionExpr<
   constructor(
     readonly name: string | undefined,
     readonly parameters: ParameterDecl[],
-    readonly body: BlockStmt
+    readonly body: BlockStmt,
+    /**
+     * true if this function has an `async` modifier
+     * ```ts
+     * async function foo() {}
+     * // asterisk can co-exist
+     * async function *foo() {}
+     * ```
+     */
+    readonly isAsync: boolean,
+    /**
+     * true if this function has an `*` modifier
+     *
+     * ```ts
+     * function foo*() {}
+     *
+     * // async can co-exist
+     * async function *foo() {}
+     * ```
+     */
+    readonly isAsterisk: boolean
   ) {
     super(NodeKind.FunctionExpr, arguments);
     this.ensure(name, "name", ["undefined", "string"]);
     this.ensureArrayOf(parameters, "parameters", [NodeKind.ParameterDecl]);
     this.ensure(body, "body", [NodeKind.BlockStmt]);
+    this.ensure(isAsync, "isAsync", ["boolean"]);
+    this.ensure(isAsterisk, "isAsterisk", ["boolean"]);
   }
 }
 
@@ -158,6 +191,12 @@ export class PropAccessExpr extends BaseExpr<NodeKind.PropAccessExpr> {
   constructor(
     readonly expr: Expr,
     readonly name: Identifier | PrivateIdentifier,
+    /**
+     * Whether this is using optional chaining.
+     * ```ts
+     * a?.prop
+     * ```
+     */
     readonly isOptional: boolean
   ) {
     super(NodeKind.PropAccessExpr, arguments);
@@ -167,7 +206,17 @@ export class PropAccessExpr extends BaseExpr<NodeKind.PropAccessExpr> {
 }
 
 export class ElementAccessExpr extends BaseExpr<NodeKind.ElementAccessExpr> {
-  constructor(readonly expr: Expr, readonly element: Expr) {
+  constructor(
+    readonly expr: Expr,
+    readonly element: Expr,
+    /**
+     * Whether this is using optional chaining.
+     * ```ts
+     * a?.[element]
+     * ```
+     */
+    readonly isOptional: boolean
+  ) {
     super(NodeKind.ElementAccessExpr, arguments);
     this.ensure(expr, "expr", ["Expr"]);
     this.ensure(element, "element", ["Expr"]);

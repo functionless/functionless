@@ -79,12 +79,40 @@ export class MethodDecl extends BaseDecl<NodeKind.MethodDecl> {
   constructor(
     readonly name: PropName,
     readonly parameters: ParameterDecl[],
-    readonly body: BlockStmt
+    readonly body: BlockStmt,
+
+    /**
+     * true if this function has an `async` modifier
+     * ```ts
+     * class Foo {
+     *   async foo() {}
+     *
+     *   // asterisk can co-exist
+     *   async *foo() {}
+     * }
+     * ```
+     */
+    readonly isAsync: boolean,
+    /**
+     * true if this function has an `*` modifier
+     *
+     * ```ts
+     * class Foo {
+     *   foo*() {}
+     *
+     *   // async can co-exist
+     *   async *foo() {}
+     * }
+     * ```
+     */
+    readonly isAsterisk: boolean
   ) {
     super(NodeKind.MethodDecl, arguments);
     this.ensure(name, "name", NodeKind.PropName);
     this.ensureArrayOf(parameters, "parameters", [NodeKind.ParameterDecl]);
     this.ensure(body, "body", [NodeKind.BlockStmt]);
+    this.ensure(isAsync, "isAsync", ["boolean"]);
+    this.ensure(isAsterisk, "isAsterisk", ["boolean"]);
   }
 }
 
@@ -142,12 +170,34 @@ export class FunctionDecl<
     // according to the spec, name is mandatory on a FunctionDecl and FunctionExpr
     readonly name: string | undefined,
     readonly parameters: ParameterDecl[],
-    readonly body: BlockStmt
+    readonly body: BlockStmt,
+    /**
+     * true if this function has an `async` modifier
+     * ```ts
+     * async function foo() {}
+     * // asterisk can co-exist
+     * async function *foo() {}
+     * ```
+     */
+    readonly isAsync: boolean,
+    /**
+     * true if this function has an `*` modifier
+     *
+     * ```ts
+     * function foo*() {}
+     *
+     * // async can co-exist
+     * async function *foo() {}
+     * ```
+     */
+    readonly isAsterisk: boolean
   ) {
     super(NodeKind.FunctionDecl, arguments);
     this.ensure(name, "name", ["undefined", "string"]);
     this.ensureArrayOf(parameters, "parameters", [NodeKind.ParameterDecl]);
     this.ensure(body, "body", [NodeKind.BlockStmt]);
+    this.ensure(isAsync, "isAsync", ["boolean"]);
+    this.ensure(isAsterisk, "isAsterisk", ["boolean"]);
   }
 }
 

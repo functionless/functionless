@@ -69,18 +69,22 @@ export function assertConstantValue(val: any, message?: string): ConstantValue {
   );
 }
 
-export function assertNodeKind<Kind extends NodeKind>(
+export function assertNodeKind<Kind extends NodeKind[]>(
   node: FunctionlessNode | undefined,
-  kind: Kind
-): NodeInstance<Kind> {
-  if (node?.kind !== kind) {
-    throw Error(
-      `Expected node of type ${getNodeKindName(kind)} and found ${
-        node ? getNodeKindName(node.kind) : "undefined"
-      }`
-    );
+  ...kinds: Kind
+): NodeInstance<Kind[number]> {
+  if (node) {
+    for (const kind of kinds) {
+      if (node?.kind === kind) {
+        return <NodeInstance<Kind[number]>>node;
+      }
+    }
   }
-  return <NodeInstance<Kind>>node;
+  throw Error(
+    `Expected node of type ${kinds.map(getNodeKindName).join(", ")} and found ${
+      node ? getNodeKindName(node.kind) : "undefined"
+    }`
+  );
 }
 
 // to prevent the closure serializer from trying to import all of functionless.
