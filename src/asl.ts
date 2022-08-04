@@ -2372,17 +2372,19 @@ export class ASL {
     // detect the immediate for-loop closure surrounding this throw statement
     // because of how step function's Catch feature works, we need to check if the try
     // is inside or outside the closure
-    const mapOrParallelClosure = node.findParent(isFunctionExpr);
+    // const mapOrParallelClosure = node.findParent(isFunctionLike);
 
     // catchClause or finallyBlock that will run upon throwing this error
     const catchOrFinally = node.throw();
     if (catchOrFinally === undefined) {
       // error is terminal
       return undefined;
-    } else if (
-      mapOrParallelClosure === undefined ||
-      mapOrParallelClosure.contains(catchOrFinally)
-    ) {
+    }
+    // if (
+    //   mapOrParallelClosure === undefined ||
+    //   mapOrParallelClosure.contains(catchOrFinally)
+    // )
+    else {
       // the catch/finally handler is nearer than the surrounding Map/Parallel State
       return {
         Next: ASL.CatchState,
@@ -2404,12 +2406,13 @@ export class ASL {
           }
         })(),
       };
-    } else {
-      // the Map/Parallel tasks are closer than the catch/finally, so we use a Fail State
-      // to terminate the Map/Parallel and delegate the propagation of the error to the
-      // Map/Parallel state
-      return undefined;
     }
+    // else {
+    //   // the Map/Parallel tasks are closer than the catch/finally, so we use a Fail State
+    //   // to terminate the Map/Parallel and delegate the propagation of the error to the
+    //   // Map/Parallel state
+    //   return undefined;
+    // }
   }
 
   /**
