@@ -2148,7 +2148,7 @@ Object {
     "returnEmpty__1__return await $SFN.map(input.value, function({value:b,arr:[c": Object {
       "Next": "1__return await $SFN.map(input.value, function({value:b,arr:[c]})).join()",
       "Result": "",
-      "ResultPath": "$.heap4",
+      "ResultPath": "$.heap4.string",
       "Type": "Pass",
     },
     "tail__1__return await $SFN.map(input.value, function({value:b,arr:[c]})).jo": Object {
@@ -2411,7 +2411,7 @@ Object {
     "returnEmpty__1__return input.value.map(function({value:b,arr:[c]})).join() ": Object {
       "Next": "1__return input.value.map(function({value:b,arr:[c]})).join()",
       "Result": "",
-      "ResultPath": "$.heap3",
+      "ResultPath": "$.heap3.string",
       "Type": "Pass",
     },
     "set__end__return input.value.map(function({value:b,arr:[c]})).join()": Object {
@@ -2589,7 +2589,7 @@ Object {
     "returnEmpty__1__return [1, 2, 3].map(function()).join() 1 1": Object {
       "Next": "1__return [1, 2, 3].map(function()).join() 1",
       "Result": "",
-      "ResultPath": "$.heap4",
+      "ResultPath": "$.heap4.string",
       "Type": "Pass",
     },
     "set__end__[1, 2, 3].map(function())": Object {
@@ -10206,9 +10206,9 @@ Object {
       "Type": "Pass",
     },
     "1__return task(item)": Object {
-      "End": true,
       "InputPath": "$.heap1",
-      "ResultPath": "$",
+      "Next": "tail__return input.list.forEach(function(item, i))",
+      "ResultPath": null,
       "Type": "Pass",
     },
     "Initialize Functionless Context": Object {
@@ -10302,9 +10302,9 @@ Object {
       "Type": "Map",
     },
     "return null": Object {
-      "End": true,
       "InputPath": "$.fnl_context.null",
-      "ResultPath": "$",
+      "Next": "tail__return input.list.forEach(function(item, i))",
+      "ResultPath": null,
       "Type": "Pass",
     },
     "return task(item)": Object {
@@ -10313,6 +10313,14 @@ Object {
       "Resource": "__REPLACED_TOKEN",
       "ResultPath": "$.heap1",
       "Type": "Task",
+    },
+    "tail__return input.list.forEach(function(item, i))": Object {
+      "Next": "check__return input.list.forEach(function(item, i))",
+      "Parameters": Object {
+        "arr.$": "$.heap0.arr[1:]",
+      },
+      "ResultPath": "$.heap0",
+      "Type": "Pass",
     },
   },
 }
@@ -10329,15 +10337,15 @@ Object {
       "Type": "Pass",
     },
     "1__return task(input.list[0])": Object {
-      "End": true,
       "InputPath": "$.heap1",
-      "ResultPath": "$",
+      "Next": "tail__return input.list.forEach(function(item, i))",
+      "ResultPath": null,
       "Type": "Pass",
     },
     "1__return task(item)": Object {
-      "End": true,
       "InputPath": "$.heap2",
-      "ResultPath": "$",
+      "Next": "tail__return input.list.forEach(function(item, i))",
+      "ResultPath": null,
       "Type": "Pass",
     },
     "Initialize Functionless Context": Object {
@@ -10443,6 +10451,14 @@ Object {
       "Resource": "__REPLACED_TOKEN",
       "ResultPath": "$.heap2",
       "Type": "Task",
+    },
+    "tail__return input.list.forEach(function(item, i))": Object {
+      "Next": "check__return input.list.forEach(function(item, i))",
+      "Parameters": Object {
+        "arr.$": "$.heap0.arr[1:]",
+      },
+      "ResultPath": "$.heap0",
+      "Type": "Pass",
     },
   },
 }
@@ -10536,9 +10552,9 @@ Object {
       "Type": "Pass",
     },
     "1__return task(item)": Object {
-      "End": true,
       "InputPath": "$.heap1",
-      "ResultPath": "$",
+      "Next": "tail__return Promise.all(input.list.map(function(item, i)))",
+      "ResultPath": "$.heap0.arr[0]",
       "Type": "Pass",
     },
     "Initialize Functionless Context": Object {
@@ -10635,9 +10651,9 @@ Object {
       "Type": "Map",
     },
     "return null": Object {
-      "End": true,
       "InputPath": "$.fnl_context.null",
-      "ResultPath": "$",
+      "Next": "tail__return Promise.all(input.list.map(function(item, i)))",
+      "ResultPath": "$.heap0.arr[0]",
       "Type": "Pass",
     },
     "return task(item)": Object {
@@ -10650,6 +10666,15 @@ Object {
     "set__end__return Promise.all(input.list.map(function(item, i)))": Object {
       "InputPath": "$.heap0.result[1:]",
       "Next": "1__return Promise.all(input.list.map(function(item, i)))",
+      "ResultPath": "$.heap0",
+      "Type": "Pass",
+    },
+    "tail__return Promise.all(input.list.map(function(item, i)))": Object {
+      "Next": "check__return Promise.all(input.list.map(function(item, i)))",
+      "Parameters": Object {
+        "arr.$": "$.heap0.arr[1:]",
+        "arrStr.$": "States.Format('{},{}', $.heap0.arrStr, States.JsonToString($.heap0.arr[0]))",
+      },
       "ResultPath": "$.heap0",
       "Type": "Pass",
     },
@@ -10668,15 +10693,15 @@ Object {
       "Type": "Pass",
     },
     "1__return task(input.list[0])": Object {
-      "End": true,
       "InputPath": "$.heap1",
-      "ResultPath": "$",
+      "Next": "tail__return Promise.all(input.list.map(function(item, i)))",
+      "ResultPath": "$.heap0.arr[0]",
       "Type": "Pass",
     },
     "1__return task(item)": Object {
-      "End": true,
       "InputPath": "$.heap2",
-      "ResultPath": "$",
+      "Next": "tail__return Promise.all(input.list.map(function(item, i)))",
+      "ResultPath": "$.heap0.arr[0]",
       "Type": "Pass",
     },
     "Initialize Functionless Context": Object {
@@ -10789,6 +10814,15 @@ Object {
     "set__end__return Promise.all(input.list.map(function(item, i)))": Object {
       "InputPath": "$.heap0.result[1:]",
       "Next": "1__return Promise.all(input.list.map(function(item, i)))",
+      "ResultPath": "$.heap0",
+      "Type": "Pass",
+    },
+    "tail__return Promise.all(input.list.map(function(item, i)))": Object {
+      "Next": "check__return Promise.all(input.list.map(function(item, i)))",
+      "Parameters": Object {
+        "arr.$": "$.heap0.arr[1:]",
+        "arrStr.$": "States.Format('{},{}', $.heap0.arrStr, States.JsonToString($.heap0.arr[0]))",
+      },
       "ResultPath": "$.heap0",
       "Type": "Pass",
     },
@@ -13857,6 +13891,12 @@ Object {
       "ResultPath": "$",
       "Type": "Pass",
     },
+    "catch__try": Object {
+      "End": true,
+      "InputPath": "$.fnl_context.null",
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
     "check__try": Object {
       "Choices": Array [
         Object {
@@ -13881,6 +13921,15 @@ Object {
       "Type": "Pass",
     },
     "return task(item)": Object {
+      "Catch": Array [
+        Object {
+          "ErrorEquals": Array [
+            "States.ALL",
+          ],
+          "Next": "catch__try",
+          "ResultPath": null,
+        },
+      ],
       "InputPath": "$.item",
       "Next": "1__return task(item)",
       "Resource": "__REPLACED_TOKEN",
@@ -13918,9 +13967,9 @@ Object {
       "Type": "Pass",
     },
     "1__try": Object {
-      "End": true,
       "InputPath": "$.heap1",
-      "ResultPath": "$",
+      "Next": "tail__return input.list.forEach(function(item))",
+      "ResultPath": null,
       "Type": "Pass",
     },
     "Initialize Functionless Context": Object {
@@ -13935,9 +13984,9 @@ Object {
       "Type": "Pass",
     },
     "catch__try": Object {
-      "End": true,
       "InputPath": "$.fnl_context.null",
-      "ResultPath": "$",
+      "Next": "tail__return input.list.forEach(function(item))",
+      "ResultPath": null,
       "Type": "Pass",
     },
     "check__return input.list.forEach(function(item))": Object {
@@ -13967,6 +14016,14 @@ Object {
       "Next": "check__return input.list.forEach(function(item))",
       "Parameters": Object {
         "arr.$": "$.input.list",
+      },
+      "ResultPath": "$.heap0",
+      "Type": "Pass",
+    },
+    "tail__return input.list.forEach(function(item))": Object {
+      "Next": "check__return input.list.forEach(function(item))",
+      "Parameters": Object {
+        "arr.$": "$.heap0.arr[1:]",
       },
       "ResultPath": "$.heap0",
       "Type": "Pass",
@@ -14012,6 +14069,12 @@ Object {
       "ResultPath": "$",
       "Type": "Pass",
     },
+    "catch__try": Object {
+      "End": true,
+      "InputPath": "$.fnl_context.null",
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
     "check__try": Object {
       "Choices": Array [
         Object {
@@ -14030,9 +14093,12 @@ Object {
       "Type": "Pass",
     },
     "throw new Error(\\"cause\\")": Object {
-      "Cause": "{\\"message\\":\\"cause\\"}",
-      "Error": "Error",
-      "Type": "Fail",
+      "Next": "catch__try",
+      "Result": Object {
+        "message": "cause",
+      },
+      "ResultPath": null,
+      "Type": "Pass",
     },
     "try": Object {
       "Next": "check__try",
@@ -14067,6 +14133,12 @@ Object {
       "ResultPath": "$",
       "Type": "Pass",
     },
+    "catch__try": Object {
+      "InputPath": "$.fnl_tmp_0",
+      "Next": "if(err.message == \\"cause\\")",
+      "ResultPath": "$.err",
+      "Type": "Pass",
+    },
     "check__try": Object {
       "Choices": Array [
         Object {
@@ -14084,10 +14156,52 @@ Object {
       "ResultPath": "$.heap0",
       "Type": "Pass",
     },
+    "if(err.message == \\"cause\\")": Object {
+      "Choices": Array [
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.err.message",
+            },
+            Object {
+              "And": Array [
+                Object {
+                  "IsString": true,
+                  "Variable": "$.err.message",
+                },
+                Object {
+                  "StringEquals": "cause",
+                  "Variable": "$.err.message",
+                },
+              ],
+            },
+          ],
+          "Next": "return 0",
+        },
+      ],
+      "Default": "return 1",
+      "Type": "Choice",
+    },
+    "return 0": Object {
+      "End": true,
+      "Result": 0,
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "return 1": Object {
+      "End": true,
+      "Result": 1,
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
     "throw new Error(\\"cause\\")": Object {
-      "Cause": "{\\"message\\":\\"cause\\"}",
-      "Error": "Error",
-      "Type": "Fail",
+      "Next": "catch__try",
+      "Result": Object {
+        "message": "cause",
+      },
+      "ResultPath": "$.fnl_tmp_0",
+      "Type": "Pass",
     },
     "try": Object {
       "Next": "check__try",
@@ -14128,6 +14242,12 @@ Object {
       "ResultPath": "$",
       "Type": "Pass",
     },
+    "catch__try": Object {
+      "End": true,
+      "InputPath": "$.fnl_context.null",
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
     "check__try": Object {
       "Choices": Array [
         Object {
@@ -14154,6 +14274,15 @@ Object {
       "Type": "Pass",
     },
     "return task(item)": Object {
+      "Catch": Array [
+        Object {
+          "ErrorEquals": Array [
+            "States.ALL",
+          ],
+          "Next": "catch__try",
+          "ResultPath": null,
+        },
+      ],
       "InputPath": "$.item",
       "Next": "1__return task(item)",
       "Resource": "__REPLACED_TOKEN",
@@ -14199,9 +14328,9 @@ Object {
       "Type": "Pass",
     },
     "1__try": Object {
-      "End": true,
       "InputPath": "$.heap1",
-      "ResultPath": "$",
+      "Next": "tail__return Promise.all(input.list.map(function(item)))",
+      "ResultPath": "$.heap0.arr[0]",
       "Type": "Pass",
     },
     "Initialize Functionless Context": Object {
@@ -14216,9 +14345,9 @@ Object {
       "Type": "Pass",
     },
     "catch__try": Object {
-      "End": true,
       "InputPath": "$.fnl_context.null",
-      "ResultPath": "$",
+      "Next": "tail__return Promise.all(input.list.map(function(item)))",
+      "ResultPath": "$.heap0.arr[0]",
       "Type": "Pass",
     },
     "check__return Promise.all(input.list.map(function(item)))": Object {
@@ -14258,6 +14387,15 @@ Object {
     "set__end__return Promise.all(input.list.map(function(item)))": Object {
       "InputPath": "$.heap0.result[1:]",
       "Next": "1__return Promise.all(input.list.map(function(item)))",
+      "ResultPath": "$.heap0",
+      "Type": "Pass",
+    },
+    "tail__return Promise.all(input.list.map(function(item)))": Object {
+      "Next": "check__return Promise.all(input.list.map(function(item)))",
+      "Parameters": Object {
+        "arr.$": "$.heap0.arr[1:]",
+        "arrStr.$": "States.Format('{},{}', $.heap0.arrStr, States.JsonToString($.heap0.arr[0]))",
+      },
       "ResultPath": "$.heap0",
       "Type": "Pass",
     },
@@ -14302,6 +14440,12 @@ Object {
       "ResultPath": "$",
       "Type": "Pass",
     },
+    "catch__try": Object {
+      "End": true,
+      "InputPath": "$.fnl_context.null",
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
     "check__try": Object {
       "Choices": Array [
         Object {
@@ -14328,9 +14472,12 @@ Object {
       "Type": "Pass",
     },
     "throw new Error(\\"cause\\")": Object {
-      "Cause": "{\\"message\\":\\"cause\\"}",
-      "Error": "Error",
-      "Type": "Fail",
+      "Next": "catch__try",
+      "Result": Object {
+        "message": "cause",
+      },
+      "ResultPath": null,
+      "Type": "Pass",
     },
     "try": Object {
       "Next": "check__try",
@@ -14366,6 +14513,12 @@ Object {
       "ResultPath": "$",
       "Type": "Pass",
     },
+    "catch__try": Object {
+      "InputPath": "$.fnl_tmp_0",
+      "Next": "if(err.message == \\"cause\\")",
+      "ResultPath": "$.err",
+      "Type": "Pass",
+    },
     "check__try": Object {
       "Choices": Array [
         Object {
@@ -14385,6 +14538,45 @@ Object {
       "ResultPath": "$.heap0",
       "Type": "Pass",
     },
+    "if(err.message == \\"cause\\")": Object {
+      "Choices": Array [
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.err.message",
+            },
+            Object {
+              "And": Array [
+                Object {
+                  "IsString": true,
+                  "Variable": "$.err.message",
+                },
+                Object {
+                  "StringEquals": "cause",
+                  "Variable": "$.err.message",
+                },
+              ],
+            },
+          ],
+          "Next": "return 0",
+        },
+      ],
+      "Default": "return 1",
+      "Type": "Choice",
+    },
+    "return 0": Object {
+      "End": true,
+      "Result": 0,
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "return 1": Object {
+      "End": true,
+      "Result": 1,
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
     "set__end__try": Object {
       "InputPath": "$.heap0.result[1:]",
       "Next": "1__try",
@@ -14392,9 +14584,12 @@ Object {
       "Type": "Pass",
     },
     "throw new Error(\\"cause\\")": Object {
-      "Cause": "{\\"message\\":\\"cause\\"}",
-      "Error": "Error",
-      "Type": "Fail",
+      "Next": "catch__try",
+      "Result": Object {
+        "message": "cause",
+      },
+      "ResultPath": "$.fnl_tmp_0",
+      "Type": "Pass",
     },
     "try": Object {
       "Next": "check__try",

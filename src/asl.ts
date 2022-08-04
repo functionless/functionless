@@ -2398,19 +2398,26 @@ export class ASL {
     // detect the immediate for-loop closure surrounding this throw statement
     // because of how step function's Catch feature works, we need to check if the try
     // is inside or outside the closure
-    // const mapOrParallelClosure = node.findParent(isFunctionLike);
+    const mapOrParallelClosure = node.findParent(isFunctionLike);
 
     // catchClause or finallyBlock that will run upon throwing this error
     const catchOrFinally = node.throw();
     if (catchOrFinally === undefined) {
       // error is terminal
       return undefined;
-    }
-    // if (
-    //   mapOrParallelClosure === undefined ||
-    //   mapOrParallelClosure.contains(catchOrFinally)
-    // )
-    else {
+    } else if (
+      mapOrParallelClosure === undefined ||
+      // TODO: this implementation is specific to the current state. Try/Catch/Finally needs to be generalize based on the generated ASL, not the AST.
+      // https://github.com/functionless/functionless/issues/385
+      (isArgument(mapOrParallelClosure.parent) &&
+        isCallExpr(mapOrParallelClosure.parent.parent) &&
+        isPropAccessExpr(mapOrParallelClosure.parent.parent.expr) &&
+        (mapOrParallelClosure.parent.parent.expr.name.name === "map" ||
+          mapOrParallelClosure.parent.parent.expr.name.name === "filter" ||
+          mapOrParallelClosure.parent.parent.expr.name.name === "forEach") &&
+        !isReferenceExpr(mapOrParallelClosure.parent.parent.expr.expr)) ||
+      mapOrParallelClosure.contains(catchOrFinally)
+    ) {
       // the catch/finally handler is nearer than the surrounding Map/Parallel State
       return {
         Next: ASL.CatchState,
@@ -2432,13 +2439,12 @@ export class ASL {
           }
         })(),
       };
+    } else {
+      // the Map/Parallel tasks are closer than the catch/finally, so we use a Fail State
+      // to terminate the Map/Parallel and delegate the propagation of the error to the
+      // Map/Parallel state
+      return undefined;
     }
-    // else {
-    //   // the Map/Parallel tasks are closer than the catch/finally, so we use a Fail State
-    //   // to terminate the Map/Parallel and delegate the propagation of the error to the
-    //   // Map/Parallel state
-    //   return undefined;
-    // }
   }
 
   /**
