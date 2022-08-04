@@ -23,7 +23,6 @@ import {
   isArgument,
   isArrayBinding,
   isArrayLiteralExpr,
-  isArrowFunctionExpr,
   isAwaitExpr,
   isBinaryExpr,
   isBindingElem,
@@ -2708,7 +2707,7 @@ export class ASL {
     expr: CallExpr & { expr: PropAccessExpr }
   ): ASLGraph.NodeResults {
     const predicate = expr.args[0]?.expr;
-    if (!(isFunctionLike(predicate) || isArrowFunctionExpr(predicate))) {
+    if (!isFunctionLike(predicate)) {
       throw new SynthError(
         ErrorCodes.StepFunction_invalid_filter_syntax,
         `the 'predicate' argument of slice must be a function or arrow expression, found: ${predicate?.kindName}`
@@ -4738,7 +4737,7 @@ function nodeToString(
     return `[${nodeToString(expr.expr)}]`;
   } else if (isElementAccessExpr(expr)) {
     return `${nodeToString(expr.expr)}[${nodeToString(expr.element)}]`;
-  } else if (isFunctionLike(expr) || isArrowFunctionExpr(expr)) {
+  } else if (isFunctionLike(expr)) {
     return `function(${expr.parameters.map(nodeToString).join(", ")})`;
   } else if (isIdentifier(expr)) {
     return expr.name;
