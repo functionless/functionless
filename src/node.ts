@@ -27,6 +27,7 @@ import {
   isDoStmt,
   isForInStmt,
   isForOfStmt,
+  isForStmt,
   isFunctionLike,
   isIdentifier,
   isIfStmt,
@@ -416,6 +417,8 @@ export abstract class BaseNode<
             : getNames(param.name)
         );
       } else if (isForInStmt(node) || isForOfStmt(node)) {
+        return getNames(node.initializer);
+      } else if (isForStmt(node)) {
         return getNames(node.initializer);
       } else if (isCatchClause(node) && node.variableDecl?.name) {
         return getNames(node.variableDecl);
