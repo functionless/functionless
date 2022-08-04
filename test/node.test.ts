@@ -24,7 +24,7 @@ test("node.exit() from catch surrounded by while", () => {
     new BlockStmt([new TryStmt(new BlockStmt([]), catchClause)])
   );
 
-  new FunctionDecl("name", [], new BlockStmt([whileStmt]));
+  new FunctionDecl("name", [], new BlockStmt([whileStmt]), false, false);
 
   const exit = catchClause.exit();
 
