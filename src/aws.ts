@@ -465,6 +465,7 @@ export namespace $AWS {
               FunctionName: functionRef.resource.functionName,
               ...context.toJsonAssignment("Payload", output),
             },
+            Next: ASLGraph.DeferNext,
           });
         });
       },
@@ -618,6 +619,7 @@ function makeDynamoIntegration<
             ...params,
             TableName: Table.tableName,
           },
+          Next: ASLGraph.DeferNext,
         });
       });
     },
