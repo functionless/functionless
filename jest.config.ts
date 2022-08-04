@@ -30,18 +30,7 @@ export default async (): Promise<Config.InitialOptions> => {
       ],
     ],
     transform: {
-      "^.+\\.(t|j)sx?$": [
-        "@swc/jest",
-        {
-          jsc: {
-            parser: { syntax: "typescript", tsx: true, jsx: true },
-            experimental: {
-              plugins: [["swc-closure", {}]],
-            },
-          },
-          minify: true,
-        },
-      ],
+      "^.+\\.(t|j)sx?$": ["@swc/jest", {}],
     },
     preset: "ts-jest",
     globals: {
