@@ -134,7 +134,7 @@ export abstract class BaseNode<
   protected ensure<Assert extends Assertion>(
     item: any,
     fieldName: string,
-    assertion: Assert[]
+    assertion: Assert[] | readonly Assert[]
   ): asserts item is AssertionToInstance<Assert> {
     return ensure(this.kind, item, fieldName, assertion);
   }
