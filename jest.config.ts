@@ -1,6 +1,6 @@
 import type { Config } from "@jest/types";
 
-// import "@swc/register";
+import "@swc/register";
 
 export default async (): Promise<Config.InitialOptions> => {
   return {
@@ -12,7 +12,6 @@ export default async (): Promise<Config.InitialOptions> => {
     testMatch: [
       "<rootDir>/src/**/__tests__/**/*.(t|j)s?(x)",
       "<rootDir>/(test|src)/**/*(*.)@(spec|test).(t|j)s?(x)",
-      // "<rootDir>/lib-test/(test|src)/**/*(*.)@(spec|test).js?(x)",
     ],
     clearMocks: true,
     coverageReporters: ["json", "lcov", "clover", "cobertura", "text"],
@@ -31,11 +30,5 @@ export default async (): Promise<Config.InitialOptions> => {
     transform: {
       "^.+\\.(t|j)sx?$": ["@swc/jest", {}],
     },
-    // preset: "ts-jest",
-    // globals: {
-    //   "ts-jest": {
-    //     tsconfig: "tsconfig.dev.json",
-    //   },
-    // },
   };
 };
