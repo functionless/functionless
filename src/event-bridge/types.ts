@@ -13,7 +13,6 @@ export interface Event<
   time: string;
   region: string;
   resources: string[];
-  "trace-header": string;
 }
 
 /**

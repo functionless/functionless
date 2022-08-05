@@ -11,31 +11,11 @@ const func = new Function<undefined, { source: string }>(
 );
 
 /**
- * Invalid integrations in transformers (minimal payload)
+ * Invalid integrations in transformers
  */
 bus.all().map(() => {
   // eslint-disable-next-line @typescript-eslint/no-floating-promises
   bus.putEvents({ "detail-type": "detail", detail: {}, source: "" });
-  return {};
-});
-
-/**
- * Invalid integrations in transformers (maximal payload)
- */
-bus.all().map(() => {
-  // eslint-disable-next-line @typescript-eslint/no-floating-promises
-  bus.putEvents({
-    "detail-type": "detail",
-    detail: {},
-    source: "",
-    version: "",
-    id: "",
-    account: "",
-    time: "",
-    region: "",
-    resources: [""],
-    "trace-header": "",
-  });
   return {};
 });
 
