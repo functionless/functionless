@@ -149,6 +149,7 @@ const ENTRY_PROPERTY_MAP: Record<keyof Event, string> = {
   source: "Source",
   time: "Time",
   version: "Version",
+  "trace-header": "TraceHeader",
 };
 
 /**
