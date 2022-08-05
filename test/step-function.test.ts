@@ -2052,6 +2052,22 @@ test("list.map(item => task(item))", () => {
   expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
+test("list.forEach(item => )", () => {
+  const { stack } = initStepFunctionApp();
+  const definition = new ExpressStepFunction(
+    stack,
+    "fn",
+    async (input: { list: string[] }) => {
+      let a = "";
+      input.list.forEach((item) => {
+        a = `${a}${item}`;
+      });
+    }
+  ).definition;
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+});
+
 test("[1,2,3].map(item => item)", () => {
   const { stack } = initStepFunctionApp();
   const definition = new ExpressStepFunction<

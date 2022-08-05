@@ -6421,7 +6421,7 @@ Object {
     },
     "1__return itemKey == \`hikey\`": Object {
       "InputPath": "$.heap3",
-      "Next": "checkPredicate__return {arr1: arr1, arr2: arr2}",
+      "Next": "handleResult__return {arr1: arr1, arr2: arr2}",
       "ResultPath": "$.heap0",
       "Type": "Pass",
     },
@@ -6494,7 +6494,7 @@ Object {
     },
     "1__return x <= index || first == x": Object {
       "InputPath": "$.heap7",
-      "Next": "checkPredicate__[4, 3, 2, 1].filter(function(x, index, [first]))",
+      "Next": "handleResult__[4, 3, 2, 1].filter(function(x, index, [first]))",
       "ResultPath": "$.heap5",
       "Type": "Pass",
     },
@@ -6585,164 +6585,6 @@ Object {
       "ResultPath": "$.heap7",
       "Type": "Pass",
     },
-    "checkPredicate__[4, 3, 2, 1].filter(function(x, index, [first]))": Object {
-      "Choices": Array [
-        Object {
-          "And": Array [
-            Object {
-              "IsPresent": true,
-              "Variable": "$.heap5",
-            },
-            Object {
-              "IsNull": false,
-              "Variable": "$.heap5",
-            },
-            Object {
-              "Or": Array [
-                Object {
-                  "And": Array [
-                    Object {
-                      "IsString": true,
-                      "Variable": "$.heap5",
-                    },
-                    Object {
-                      "Not": Object {
-                        "And": Array [
-                          Object {
-                            "IsString": true,
-                            "Variable": "$.heap5",
-                          },
-                          Object {
-                            "StringEquals": "",
-                            "Variable": "$.heap5",
-                          },
-                        ],
-                      },
-                    },
-                  ],
-                },
-                Object {
-                  "And": Array [
-                    Object {
-                      "IsNumeric": true,
-                      "Variable": "$.heap5",
-                    },
-                    Object {
-                      "Not": Object {
-                        "And": Array [
-                          Object {
-                            "IsNumeric": true,
-                            "Variable": "$.heap5",
-                          },
-                          Object {
-                            "NumericEquals": 0,
-                            "Variable": "$.heap5",
-                          },
-                        ],
-                      },
-                    },
-                  ],
-                },
-                Object {
-                  "And": Array [
-                    Object {
-                      "IsBoolean": true,
-                      "Variable": "$.heap5",
-                    },
-                    Object {
-                      "BooleanEquals": true,
-                      "Variable": "$.heap5",
-                    },
-                  ],
-                },
-              ],
-            },
-          ],
-          "Next": "predicateTrue__[4, 3, 2, 1].filter(function(x, index, [first]))",
-        },
-      ],
-      "Default": "predicateFalse__[4, 3, 2, 1].filter(function(x, index, [first]))",
-      "Type": "Choice",
-    },
-    "checkPredicate__return {arr1: arr1, arr2: arr2}": Object {
-      "Choices": Array [
-        Object {
-          "And": Array [
-            Object {
-              "IsPresent": true,
-              "Variable": "$.heap0",
-            },
-            Object {
-              "IsNull": false,
-              "Variable": "$.heap0",
-            },
-            Object {
-              "Or": Array [
-                Object {
-                  "And": Array [
-                    Object {
-                      "IsString": true,
-                      "Variable": "$.heap0",
-                    },
-                    Object {
-                      "Not": Object {
-                        "And": Array [
-                          Object {
-                            "IsString": true,
-                            "Variable": "$.heap0",
-                          },
-                          Object {
-                            "StringEquals": "",
-                            "Variable": "$.heap0",
-                          },
-                        ],
-                      },
-                    },
-                  ],
-                },
-                Object {
-                  "And": Array [
-                    Object {
-                      "IsNumeric": true,
-                      "Variable": "$.heap0",
-                    },
-                    Object {
-                      "Not": Object {
-                        "And": Array [
-                          Object {
-                            "IsNumeric": true,
-                            "Variable": "$.heap0",
-                          },
-                          Object {
-                            "NumericEquals": 0,
-                            "Variable": "$.heap0",
-                          },
-                        ],
-                      },
-                    },
-                  ],
-                },
-                Object {
-                  "And": Array [
-                    Object {
-                      "IsBoolean": true,
-                      "Variable": "$.heap0",
-                    },
-                    Object {
-                      "BooleanEquals": true,
-                      "Variable": "$.heap0",
-                    },
-                  ],
-                },
-              ],
-            },
-          ],
-          "Next": "predicateTrue__return {arr1: arr1, arr2: arr2}",
-        },
-      ],
-      "Default": "predicateFalse__return {arr1: arr1, arr2: arr2}",
-      "Type": "Choice",
-    },
     "check__[4, 3, 2, 1].filter(function(x, index, [first]))": Object {
       "Choices": Array [
         Object {
@@ -6787,6 +6629,164 @@ Object {
       "ResultPath": "$.x",
       "Type": "Pass",
     },
+    "handleResult__[4, 3, 2, 1].filter(function(x, index, [first]))": Object {
+      "Choices": Array [
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.heap5",
+            },
+            Object {
+              "IsNull": false,
+              "Variable": "$.heap5",
+            },
+            Object {
+              "Or": Array [
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsString": true,
+                      "Variable": "$.heap5",
+                    },
+                    Object {
+                      "Not": Object {
+                        "And": Array [
+                          Object {
+                            "IsString": true,
+                            "Variable": "$.heap5",
+                          },
+                          Object {
+                            "StringEquals": "",
+                            "Variable": "$.heap5",
+                          },
+                        ],
+                      },
+                    },
+                  ],
+                },
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsNumeric": true,
+                      "Variable": "$.heap5",
+                    },
+                    Object {
+                      "Not": Object {
+                        "And": Array [
+                          Object {
+                            "IsNumeric": true,
+                            "Variable": "$.heap5",
+                          },
+                          Object {
+                            "NumericEquals": 0,
+                            "Variable": "$.heap5",
+                          },
+                        ],
+                      },
+                    },
+                  ],
+                },
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsBoolean": true,
+                      "Variable": "$.heap5",
+                    },
+                    Object {
+                      "BooleanEquals": true,
+                      "Variable": "$.heap5",
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+          "Next": "predicateTrue__handleResult__[4, 3, 2, 1].filter(function(x, index, [first]",
+        },
+      ],
+      "Default": "tail__[4, 3, 2, 1].filter(function(x, index, [first]))",
+      "Type": "Choice",
+    },
+    "handleResult__return {arr1: arr1, arr2: arr2}": Object {
+      "Choices": Array [
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.heap0",
+            },
+            Object {
+              "IsNull": false,
+              "Variable": "$.heap0",
+            },
+            Object {
+              "Or": Array [
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsString": true,
+                      "Variable": "$.heap0",
+                    },
+                    Object {
+                      "Not": Object {
+                        "And": Array [
+                          Object {
+                            "IsString": true,
+                            "Variable": "$.heap0",
+                          },
+                          Object {
+                            "StringEquals": "",
+                            "Variable": "$.heap0",
+                          },
+                        ],
+                      },
+                    },
+                  ],
+                },
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsNumeric": true,
+                      "Variable": "$.heap0",
+                    },
+                    Object {
+                      "Not": Object {
+                        "And": Array [
+                          Object {
+                            "IsNumeric": true,
+                            "Variable": "$.heap0",
+                          },
+                          Object {
+                            "NumericEquals": 0,
+                            "Variable": "$.heap0",
+                          },
+                        ],
+                      },
+                    },
+                  ],
+                },
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsBoolean": true,
+                      "Variable": "$.heap0",
+                    },
+                    Object {
+                      "BooleanEquals": true,
+                      "Variable": "$.heap0",
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+          "Next": "predicateTrue__handleResult__return {arr1: arr1, arr2: arr2}",
+        },
+      ],
+      "Default": "tail__return {arr1: arr1, arr2: arr2}",
+      "Type": "Choice",
+    },
     "index": Object {
       "InputPath": "$.heap6.arr[0].index",
       "Next": "[ first ]",
@@ -6799,19 +6799,7 @@ Object {
       "ResultPath": "$.item",
       "Type": "Pass",
     },
-    "predicateFalse__[4, 3, 2, 1].filter(function(x, index, [first]))": Object {
-      "InputPath": "$.heap6.arr[1:]",
-      "Next": "check__[4, 3, 2, 1].filter(function(x, index, [first]))",
-      "ResultPath": "$.heap6.arr",
-      "Type": "Pass",
-    },
-    "predicateFalse__return {arr1: arr1, arr2: arr2}": Object {
-      "InputPath": "$.heap1.arr[1:]",
-      "Next": "check__return {arr1: arr1, arr2: arr2}",
-      "ResultPath": "$.heap1.arr",
-      "Type": "Pass",
-    },
-    "predicateTrue__[4, 3, 2, 1].filter(function(x, index, [first]))": Object {
+    "predicateTrue__handleResult__[4, 3, 2, 1].filter(function(x, index, [first]": Object {
       "Next": "check__[4, 3, 2, 1].filter(function(x, index, [first]))",
       "Parameters": Object {
         "arr.$": "$.heap6.arr[1:]",
@@ -6820,7 +6808,7 @@ Object {
       "ResultPath": "$.heap6",
       "Type": "Pass",
     },
-    "predicateTrue__return {arr1: arr1, arr2: arr2}": Object {
+    "predicateTrue__handleResult__return {arr1: arr1, arr2: arr2}": Object {
       "Next": "check__return {arr1: arr1, arr2: arr2}",
       "Parameters": Object {
         "arr.$": "$.heap1.arr[1:]",
@@ -6984,6 +6972,18 @@ Object {
       "InputPath": "$.heap1.result[1:]",
       "Next": "1__return {arr1: arr1, arr2: arr2}",
       "ResultPath": "$.heap1",
+      "Type": "Pass",
+    },
+    "tail__[4, 3, 2, 1].filter(function(x, index, [first]))": Object {
+      "InputPath": "$.heap6.arr[1:]",
+      "Next": "check__[4, 3, 2, 1].filter(function(x, index, [first]))",
+      "ResultPath": "$.heap6.arr",
+      "Type": "Pass",
+    },
+    "tail__return {arr1: arr1, arr2: arr2}": Object {
+      "InputPath": "$.heap1.arr[1:]",
+      "Next": "check__return {arr1: arr1, arr2: arr2}",
+      "ResultPath": "$.heap1.arr",
       "Type": "Pass",
     },
     "{ arr, key }": Object {

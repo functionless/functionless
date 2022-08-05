@@ -738,18 +738,10 @@ export class ASL {
           ? assignTempState
           : // if `ForIn`, map the array into a tuple of index and item
             ASLGraph.joinSubStates(stmt.expr, assignTempState, {
-              Type: "Map",
-              InputPath: tempArrayPath,
-              Parameters: {
-                // in javascript, for(const i in arr) returns string indices (i)
-                "index.$": "States.Format('{}', $$.Map.Item.Index)",
-                "item.$": "$$.Map.Item.Value",
-              },
-              Iterator: this.aslGraphToStates({
-                Type: "Pass",
-                ResultPath: "$",
-                End: true,
-              }),
+              ...ASL.zipArray(
+                tempArrayPath,
+                (indexJsonPath) => `States.Format('{}', ${indexJsonPath})`
+              ),
               ResultPath: tempArrayPath,
               Next: ASLGraph.DeferNext,
             })!;
@@ -2837,128 +2829,57 @@ export class ASL {
     valueJsonPath: ASLGraph.JsonPath,
     predicate: FunctionExpr | ArrowFunctionExpr
   ): ASLGraph.OutputSubState {
-    const predicateResult = this.newHeapVariable();
-    const filterResult = this.newHeapVariable();
-
-    const [itemParameter, indexParameter, arrayParameter] =
-      predicate.parameters;
-
-    const assignParameters = ASLGraph.joinSubStates(
+    return this.iterateArrayMethod(
       predicate,
-      itemParameter
-        ? this.evalDecl(itemParameter, {
-            jsonPath: indexParameter
-              ? `${filterResult}.arr[0].item`
-              : `${filterResult}.arr[0]`,
-          })
-        : undefined,
-      indexParameter
-        ? this.evalDecl(indexParameter, {
-            jsonPath: `${filterResult}.arr[0].index`,
-          })
-        : undefined,
-      arrayParameter
-        ? this.evalDecl(arrayParameter, {
-            jsonPath: valueJsonPath.jsonPath,
-          })
-        : undefined
-    );
-
-    const uniqueReturnName = this.generatedNames.generateOrGet(predicate);
-
-    const predicateBody = this.evalStmt(predicate.body, {
-      End: undefined,
-      ResultPath: predicateResult,
-      Next: uniqueReturnName,
-    });
-
-    return {
-      startState: "init",
-      states: {
-        init: indexParameter
-          ? {
-              Type: "Map",
-              ItemsPath: valueJsonPath.jsonPath,
-              Parameters: {
-                "index.$": "$$.Map.Item.Index",
-                "item.$": "$$.Map.Item.Value",
-              },
-              Iterator: this.aslGraphToStates({
-                Type: "Pass",
-                ResultPath: "$",
-                Next: ASLGraph.DeferNext,
-              }),
-              ResultSelector: {
-                "arr.$": "$",
-                arrStr: "[null",
-              },
-              ResultPath: filterResult,
-              Next: "check",
-            }
-          : {
+      valueJsonPath.jsonPath,
+      false,
+      // initialize the arrStr to [null
+      {
+        arrStr: "[null",
+      },
+      // customize the default result handling logic by:
+      // 1. check the returned predicate (iterationResult)
+      // 2. if true, append the original item (itemJsonPath) to the `arrStr` initialized above.
+      // 3. return over the `resultPath`
+      ({
+        iterationResult,
+        itemJsonPath,
+        tailStateName,
+        tailJsonPath,
+        tailTarget,
+        workingSpaceJsonPath,
+      }) => {
+        return {
+          startState: "checkPredicate",
+          states: {
+            checkPredicate: {
+              Type: "Choice",
+              Choices: [
+                { ...ASL.isTruthy(iterationResult), Next: "predicateTrue" },
+              ],
+              Default: tailStateName,
+            },
+            // tail and append
+            predicateTrue: {
               Type: "Pass",
               Parameters: {
-                // copy array to tail it
-                "arr.$": valueJsonPath.jsonPath,
-                arrStr: "[null",
+                // tail
+                [`${tailTarget}.$`]: tailJsonPath,
+                // const arrStr = `${arrStr},${JSON.stringify(arr[0])}`;
+                "arrStr.$": `States.Format('{},{}', ${workingSpaceJsonPath}.arrStr, States.JsonToString(${itemJsonPath}))`,
               },
-              // use the eventual result location as a temp working space
-              ResultPath: filterResult,
-              Next: "check",
+              // write over the current working space
+              ResultPath: workingSpaceJsonPath,
+              Next: ASLGraph.DeferNext,
             },
-        check: {
-          Type: "Choice",
-          Choices: [
-            { ...ASL.isPresent(`${filterResult}.arr[0]`), Next: "assign" },
-          ],
-          Default: "end",
-        },
-        // unique return name used by deep returns
-        [uniqueReturnName]: {
-          Type: "Pass",
-          Next: "checkPredicate",
-        },
-        // assign the item parameter the head of the temp array
-        assign: ASLGraph.updateDeferredNextStates(
-          { Next: "predicate" },
-          assignParameters ?? { Type: "Pass", Next: ASLGraph.DeferNext }
-        ),
-        // run the predicate function logic
-        predicate: ASLGraph.updateDeferredNextStates(
-          { Next: "checkPredicate" },
-          predicateBody ?? { Type: "Pass", Next: ASLGraph.DeferNext }
-        ),
-        // check that the predicate value is true
-        checkPredicate: {
-          Type: "Choice",
-          Choices: [
-            { ...ASL.isTruthy(predicateResult), Next: "predicateTrue" },
-          ],
-          Default: "predicateFalse",
-        },
-        // tail and append
-        predicateTrue: {
-          Type: "Pass",
-          Parameters: {
-            "arr.$": `${filterResult}.arr[1:]`,
-            // const arrStr = `${arrStr},${JSON.stringify(arr[0])}`;
-            "arrStr.$": `States.Format('{},{}', ${filterResult}.arrStr, States.JsonToString(${filterResult}.arr[0]${
-              // when the index parameter is present, we zip the index with the
-              indexParameter ? ".item" : ""
-            }))`,
           },
-          ResultPath: filterResult,
-          Next: "check",
-        },
-        // tail
-        predicateFalse: {
-          Type: "Pass",
-          InputPath: `${filterResult}.arr[1:]`,
-          ResultPath: `${filterResult}.arr`,
-          Next: "check",
-        },
-        // parse the arrStr back to json and assign over the filter result value.
-        end: {
+        };
+      },
+      // handle the end of the iteration.
+      // 1. turn the array string into an array
+      // 2. assign to the working variable json path (which is also the return value)
+      (workingJsonPath) => {
+        return {
           startState: "format",
           states: {
             format: {
@@ -2966,24 +2887,23 @@ export class ASL {
               // filterResult = { result: JSON.parse(filterResult.arrStr + "]") }
               Parameters: {
                 // cannot use intrinsic functions in InputPath or Result
-                "result.$": `States.StringToJson(States.Format('{}]', ${filterResult}.arrStr))`,
+                "result.$": `States.StringToJson(States.Format('{}]', ${workingJsonPath}.arrStr))`,
               },
-              ResultPath: filterResult,
+              ResultPath: workingJsonPath,
               Next: "set",
             },
             // filterResult = filterResult.result
             set: {
               Type: "Pass",
               // the original array is initialized with a leading null to simplify the adding of new values to the array string "[null"+",{new item}"+"]"
-              InputPath: `${filterResult}.result[1:]`,
-              ResultPath: filterResult,
+              InputPath: `${workingJsonPath}.result[1:]`,
+              ResultPath: workingJsonPath,
               Next: ASLGraph.DeferNext,
             },
           },
-        },
-      },
-      output: { jsonPath: filterResult },
-    };
+        };
+      }
+    );
   }
 
   private mapToStateOutput(
@@ -3012,112 +2932,32 @@ export class ASL {
           );
         }
 
-        const listPath = normalizeOutputToJsonPath().jsonPath;
-
-        const mapResultVariable = this.newHeapVariable();
-
-        const [valueParameter, indexParameter, arrayParameter] =
-          callbackfn.parameters;
-
-        const uniqueReturnName = this.generatedNames.generateOrGet(expr);
-
-        const bodyStates = ASLGraph.joinSubStates(
+        return this.iterateArrayMethod(
           callbackfn,
-          // run any parameter initializers if they exist
-          valueParameter
-            ? this.evalDecl(valueParameter, {
-                jsonPath: indexParameter
-                  ? `${mapResultVariable}.arr[0].item`
-                  : `${mapResultVariable}.arr[0]`,
-              })
-            : undefined,
-          indexParameter
-            ? this.evalDecl(indexParameter, {
-                jsonPath: `${mapResultVariable}.arr[0].index`,
-              })
-            : undefined,
-          arrayParameter
-            ? this.evalDecl(arrayParameter, {
-                jsonPath: listPath,
-              })
-            : undefined,
-          this.evalStmt(callbackfn.body, {
-            End: undefined,
-            // write over the input value to avoid creating a new heap value
-            ResultPath: `${mapResultVariable}.arr[0]`,
-            // unique return name
-            Next: uniqueReturnName,
-          })
-        ) ?? { Type: "Pass", Next: ASLGraph.DeferNext };
-
-        return {
-          node: expr,
-          startState: "init",
-          states: {
-            init: indexParameter
-              ? {
-                  Type: "Map",
-                  ItemsPath: listPath,
-                  Parameters: {
-                    "index.$": "$$.Map.Item.Index",
-                    "item.$": "$$.Map.Item.Value",
-                  },
-                  Iterator: this.aslGraphToStates({
-                    Type: "Pass",
-                    ResultPath: "$",
-                    Next: ASLGraph.DeferNext,
-                  }),
-                  ResultSelector: {
-                    "arr.$": "$",
-                    arrStr: "[null",
-                  },
-                  ResultPath: mapResultVariable,
-                  Next: "check",
-                }
-              : {
-                  Type: "Pass",
-                  Parameters: {
-                    // copy array to tail it
-                    "arr.$": listPath,
-                    arrStr: "[null",
-                  },
-                  // use the eventual result location as a temp working space
-                  ResultPath: mapResultVariable,
-                  Next: "check",
-                },
-            check: {
-              Type: "Choice",
-              Choices: [
-                {
-                  ...ASL.isPresent(`${mapResultVariable}.arr[0]`),
-                  Next: "body",
-                },
-              ],
-              Default: "end",
-            },
-            // assign the item parameter the head of the temp array
-            body: ASLGraph.updateDeferredNextStates(
-              { Next: "tail" },
-              bodyStates
-            ),
-            // unique alias to the "tail" state, used by deep returns in the map callback.
-            [uniqueReturnName]: {
-              Type: "Pass",
-              Next: "tail",
-            },
-            // tail and append
-            tail: {
+          normalizeOutputToJsonPath().jsonPath,
+          true,
+          {
+            arrStr: "[null",
+          },
+          ({
+            tailJsonPath,
+            tailTarget,
+            iterationResult,
+            workingSpaceJsonPath,
+          }) => {
+            return {
               Type: "Pass",
               Parameters: {
-                "arr.$": `${mapResultVariable}.arr[1:]`,
+                [`${tailTarget}.$`]: `${tailJsonPath}`,
                 // const arrStr = `${arrStr},${JSON.stringify(arr[0])}`;
-                "arrStr.$": `States.Format('{},{}', ${mapResultVariable}.arrStr, States.JsonToString(${mapResultVariable}.arr[0]))`,
+                "arrStr.$": `States.Format('{},{}', ${workingSpaceJsonPath}.arrStr, States.JsonToString(${iterationResult}))`,
               },
-              ResultPath: mapResultVariable,
-              Next: "check",
-            },
-            // parse the arrStr back to json and assign over the filter result value.
-            end: {
+              ResultPath: workingSpaceJsonPath,
+              Next: ASLGraph.DeferNext,
+            };
+          },
+          (workingSpaceJsonPath) => {
+            return {
               startState: "format",
               states: {
                 format: {
@@ -3125,24 +2965,23 @@ export class ASL {
                   // filterResult = { result: JSON.parse(filterResult.arrStr + "]") }
                   Parameters: {
                     // cannot use intrinsic functions in InputPath or Result
-                    "result.$": `States.StringToJson(States.Format('{}]', ${mapResultVariable}.arrStr))`,
+                    "result.$": `States.StringToJson(States.Format('{}]', ${workingSpaceJsonPath}.arrStr))`,
                   },
-                  ResultPath: mapResultVariable,
+                  ResultPath: workingSpaceJsonPath,
                   Next: "set",
                 },
                 // filterResult = filterResult.result
                 set: {
                   Type: "Pass",
                   // the original array is initialized with a leading null to simplify the adding of new values to the array string "[null"+",{new item}"+"]"
-                  InputPath: `${mapResultVariable}.result[1:]`,
-                  ResultPath: mapResultVariable,
+                  InputPath: `${workingSpaceJsonPath}.result[1:]`,
+                  ResultPath: workingSpaceJsonPath,
                   Next: ASLGraph.DeferNext,
                 },
               },
-            },
-          },
-          output: { jsonPath: mapResultVariable },
-        };
+            };
+          }
+        );
       }
     );
   }
@@ -3173,116 +3012,242 @@ export class ASL {
           );
         }
 
-        const uniqueReturnName = this.generatedNames.generateOrGet(expr);
-
-        const listPath = normalizeOutputToJsonPath().jsonPath;
-
-        const forEachResultVariable = this.newHeapVariable();
-
-        const [valueParameter, indexParameter, arrayParameter] =
-          callbackfn.parameters;
-
-        const bodyStates = ASLGraph.joinSubStates(
+        return this.iterateArrayMethod(
           callbackfn,
-          // run any parameter initializers if they exist
-          valueParameter
-            ? this.evalDecl(valueParameter, {
-                jsonPath: indexParameter
-                  ? `${forEachResultVariable}.arr[0].item`
-                  : `${forEachResultVariable}.arr[0]`,
-              })
-            : undefined,
-          indexParameter
-            ? this.evalDecl(indexParameter, {
-                jsonPath: `${forEachResultVariable}.arr[0].index`,
-              })
-            : undefined,
-          arrayParameter
-            ? this.evalDecl(arrayParameter, {
-                jsonPath: listPath,
-              })
-            : undefined,
-          this.evalStmt(callbackfn.body, {
-            End: undefined,
-            ResultPath: null,
-            // unique return name used by deep returns in the forEach
-            Next: uniqueReturnName,
+          normalizeOutputToJsonPath().jsonPath,
+          true,
+          {},
+          undefined,
+          (workingSpaceJsonPath) => ({
+            Type: "Pass",
+            Result: this.context.null,
+            ResultPath: workingSpaceJsonPath,
+            Next: ASLGraph.DeferNext,
           })
-        ) ?? { Type: "Pass", Next: ASLGraph.DeferNext };
-
-        return {
-          node: expr,
-          startState: "init",
-          states: {
-            init: indexParameter
-              ? {
-                  Type: "Map",
-                  ItemsPath: listPath,
-                  Parameters: {
-                    "index.$": "$$.Map.Item.Index",
-                    "item.$": "$$.Map.Item.Value",
-                  },
-                  Iterator: this.aslGraphToStates({
-                    Type: "Pass",
-                    ResultPath: "$",
-                    Next: ASLGraph.DeferNext,
-                  }),
-                  ResultSelector: {
-                    "arr.$": "$",
-                  },
-                  ResultPath: forEachResultVariable,
-                  Next: "check",
-                }
-              : {
-                  Type: "Pass",
-                  Parameters: {
-                    // copy array to tail it
-                    "arr.$": listPath,
-                  },
-                  // use the eventual result location as a temp working space
-                  ResultPath: forEachResultVariable,
-                  Next: "check",
-                },
-            check: {
-              Type: "Choice",
-              Choices: [
-                {
-                  ...ASL.isPresent(`${forEachResultVariable}.arr[0]`),
-                  Next: "body",
-                },
-              ],
-              Default: "end",
-            },
-            body: ASLGraph.updateDeferredNextStates(
-              { Next: "tail" },
-              bodyStates
-            ),
-            // unique return state which aliases the tail state, used by deep returns in the forEach callback.
-            [uniqueReturnName]: {
-              Type: "Pass",
-              Next: "tail",
-            },
-            // tail
-            tail: {
-              Type: "Pass",
-              Parameters: {
-                "arr.$": `${forEachResultVariable}.arr[1:]`,
-              },
-              ResultPath: forEachResultVariable,
-              Next: "check",
-            },
-            // clear the working space variables and replace with null
-            end: {
-              Type: "Pass",
-              Result: this.context.null,
-              ResultPath: forEachResultVariable,
-              Next: ASLGraph.DeferNext,
-            },
-          },
-          output: { jsonPath: forEachResultVariable },
-        };
+        );
       }
     );
+  }
+
+  /**
+   * Generic, plugable helper for array methods likes map, forEach, and filter.
+   *
+   * Expects a function in the form arr.(item, index, array) => {};
+   *
+   * `workingSpace` - a state location used by the array method machine. We'll write over this location with the result after.
+   *
+   * 1. init - initializes a working copy of the array, used to tail the array in the `workingSpace` (workingSpace.arr)
+   *    1. [optional] - user provided parameter values to initialize the `workingSpace`
+   * 2. check - check if the tailed array (`workingSpace.arr`) has more items.
+   *    1. If yes, go to next, else go to `end` state.
+   * 3. assignParameters - setup the current item, index, and array parameters, including handling any binding. Only if the parameter is defined by the program.
+   * 4. body - execute the body of the function, with any return values going to the `iterationResultJsonPath`
+   * 5. handle result - optional - optionally handle the result and customize the tail operation. Often the tail and handle logic can be joined together into one state.
+   * 6. tail - if tail was not bypassed in the handle result step, update the `workingSpace.arr` to the tail of the array `workingSpace.arr[1:]`.
+   * 7. check - return to the check state
+   * 8. end - once the array is empty, execute the end state provided by the caller. Generally writing the result to the `workingSpace` location.
+   */
+  private iterateArrayMethod(
+    func: FunctionLike,
+    /**
+     * The array to iterate on as a json path.
+     */
+    arrayJsonPath: string,
+    /**
+     * When true, the current array location will be re-used to store the function result.
+     *
+     * `workingSpace.arr[0]`
+     *
+     * This option saves creating a new memory location for result, but means the original item is not available during handleResult.
+     *
+     * The `tail` step will erase this value. `workingSpace.arr[0] = workingSpace.arr[1:]`
+     */
+    overwriteIterationItemResult: boolean,
+    /**
+     * Additional values to be initialized in the first state of the iteration.
+     */
+    initValues: Record<string, Parameters>,
+    /**
+     * Generate states to handle the output of the iteration function.
+     *
+     * iterationFunction -> handler (?) -> tail -> check
+     *
+     * if {@link ASLGraph.DeferNext} is given as the NEXT the "check" step will be wired. To navigate to the default "tail" state use the given `tailStateName`.
+     *
+     * if undefined, the body will go directly to the `tail` step and any output of the iteration method will be lost.
+     */
+    handleIterationResult:
+      | ((context: {
+          /**
+           * The location where the result of the function is stored.
+           */
+          iterationResult: string;
+          itemJsonPath: string;
+          tailStateName: string;
+          tailJsonPath: string;
+          /**
+           * The object key to assign the tail to.
+           *
+           * Example
+           * {
+           *    Type: "Pass",
+           *    Parameters: {
+           *       `${tailTarget}.$`: tailJsonPath
+           *    },
+           *    ResultPath: ResultPath
+           * }
+           */
+          tailTarget: string;
+          /**
+           * The position to update with the tailed array and any other data.
+           *
+           * [workingSpaceJsonPath]: {
+           *    [tailTarget]: [tailJsonPath],
+           *    ... anything else ...
+           * }
+           * =>
+           * [workingSpaceJsonPath]: {
+           *    arr.$: resultPath.arr[1:],
+           *    ... anything else ...
+           * }
+           */
+          workingSpaceJsonPath: string;
+        }) => ASLGraph.NodeState | ASLGraph.SubState)
+      | undefined,
+    /**
+     * A callback to return the end states(s).
+     *
+     * End should write over the working variable with the return value.
+     *
+     * return a special variable created during `init` and `handleIteration` as the method result.
+     *
+     * ex:
+     * {
+     *    Type: "Pass",
+     *    InputPath: `${workingVariable}.someAccValue`,
+     *    ResultPath: workingVariable
+     * }
+     */
+    getEndState: (
+      workingVariable: string
+    ) => ASLGraph.NodeState | ASLGraph.SubState
+  ): ASLGraph.OutputSubState {
+    const workingSpace = this.newHeapVariable();
+
+    const [itemParameter, indexParameter, arrayParameter] = func.parameters;
+
+    const workingArrayName = "arr";
+    const workingArray = `${workingSpace}.${workingArrayName}`;
+    const headJsonPath = `${workingArray}[0]`;
+
+    const functionResult = overwriteIterationItemResult
+      ? headJsonPath
+      : this.newHeapVariable();
+
+    const tailJsonPath = `${workingArray}[1:]`;
+    const itemJsonPath = indexParameter ? `${headJsonPath}.item` : headJsonPath;
+    const indexJsonPath = `${headJsonPath}.index`;
+
+    const assignParameters = ASLGraph.joinSubStates(
+      func,
+      itemParameter
+        ? this.evalDecl(itemParameter, { jsonPath: itemJsonPath })
+        : undefined,
+      indexParameter
+        ? this.evalDecl(indexParameter, {
+            jsonPath: indexJsonPath,
+          })
+        : undefined,
+      arrayParameter
+        ? this.evalDecl(arrayParameter, {
+            jsonPath: arrayJsonPath,
+          })
+        : undefined
+    );
+
+    const uniqueReturnName = this.generatedNames.generateOrGet(func);
+
+    const functionBody = this.evalStmt(func.body, {
+      End: undefined,
+      ResultPath: functionResult,
+      Next: uniqueReturnName,
+    });
+
+    const handleResult = handleIterationResult?.({
+      iterationResult: functionResult,
+      itemJsonPath,
+      tailStateName: "tail",
+      tailJsonPath,
+      tailTarget: workingArrayName,
+      workingSpaceJsonPath: workingSpace,
+    });
+
+    const endState = getEndState(workingSpace);
+
+    return {
+      startState: "init",
+      states: {
+        init: indexParameter
+          ? {
+              ...ASL.zipArray(arrayJsonPath),
+              ResultSelector: {
+                [`${workingArrayName}.$`]: "$",
+                ...initValues,
+              },
+              ResultPath: workingSpace,
+              Next: "check",
+            }
+          : {
+              Type: "Pass",
+              Parameters: {
+                // copy array to tail it
+                [`${workingArrayName}.$`]: arrayJsonPath,
+                ...initValues,
+              },
+              // use the eventual result location as a temp working space
+              ResultPath: workingSpace,
+              Next: "check",
+            },
+        check: {
+          Type: "Choice",
+          Choices: [{ ...ASL.isPresent(headJsonPath), Next: "assign" }],
+          Default: "end",
+        },
+        // unique return name used by deep returns
+        [uniqueReturnName]: {
+          Type: "Pass",
+          Next: handleResult ? "handleResult" : "tail",
+        },
+        // assign the item parameter the head of the temp array
+        assign: ASLGraph.updateDeferredNextStates(
+          { Next: "body" },
+          assignParameters ?? { Type: "Pass", Next: ASLGraph.DeferNext }
+        ),
+        // run the predicate function logic
+        body: ASLGraph.updateDeferredNextStates(
+          { Next: handleResult ? "handleResult" : "tail" },
+          functionBody ?? { Type: "Pass", Next: ASLGraph.DeferNext }
+        ),
+        ...(handleResult
+          ? {
+              handleResult: ASLGraph.updateDeferredNextStates(
+                { Next: "check" },
+                handleResult
+              ),
+            }
+          : {}),
+        // tail
+        tail: {
+          Type: "Pass",
+          InputPath: tailJsonPath,
+          ResultPath: workingArray,
+          Next: "check",
+        },
+        // parse the arrStr back to json and assign over the filter result value.
+        end: endState,
+      },
+      output: { jsonPath: workingSpace },
+    };
   }
 
   /**
@@ -4983,6 +4948,39 @@ export namespace ASL {
 
   export const falseCondition = () => ASL.isNull("$$.Execution.Id");
   export const trueCondition = () => ASL.isNotNull("$$.Execution.Id");
+
+  /**
+   * Zip an array with it's index.
+   *
+   * In ASL, it is not possible to do arithmetic or get the length of an array, but
+   * the map state does give us the index.
+   *
+   * @param formatIndex allows the optional formatting of the index number, for example, turning it into a string.
+   * @returns a partial map state that results in an array of { index: number, item: arrayElement[index] }.
+   */
+  export const zipArray = (
+    arrayJsonPath: string,
+    formatIndex: (indexJsonPath: string) => string = (index) => index
+  ): Pick<MapTask, "Type" | "ItemsPath" | "Parameters" | "Iterator"> => {
+    return {
+      Type: "Map" as const,
+      ItemsPath: arrayJsonPath,
+      Parameters: {
+        "index.$": formatIndex("$$.Map.Item.Index"),
+        "item.$": "$$.Map.Item.Value",
+      },
+      Iterator: {
+        StartAt: "zip",
+        States: {
+          zip: {
+            Type: "Pass",
+            ResultPath: "$",
+            End: true,
+          },
+        },
+      },
+    };
+  };
 }
 
 /**

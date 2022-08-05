@@ -261,7 +261,10 @@ export abstract class BaseNode<
         return self.block.step();
       }
     } else if (isVariableStmt(self)) {
-      if (self.next) {
+      //if a variableStmt has a declaration with an initializer, return the variableStmt.
+      if (self.declList.decls.find((x) => x.initializer)) {
+        return self;
+      } else if (self.next) {
         return self.next.step();
       } else {
         return self.exit();
