@@ -3132,21 +3132,22 @@ export class ASL {
       workingVariable: string
     ) => ASLGraph.NodeState | ASLGraph.SubState
   ): ASLGraph.OutputSubState {
-    const workingSpace = this.newHeapVariable();
+    const workingSpaceJsonPath = this.newHeapVariable();
 
     const [itemParameter, indexParameter, arrayParameter] = func.parameters;
 
     const workingArrayName = "arr";
-    const workingArray = `${workingSpace}.${workingArrayName}`;
+    const workingArray = `${workingSpaceJsonPath}.${workingArrayName}`; // { arr: [items] }
     const headJsonPath = `${workingArray}[0]`;
+    const tailJsonPath = `${workingArray}[1:]`;
+    // when the index parameter is given, we zip the index and item into a new array. The item will actually be at arr[pos].item.
+    const itemJsonPath = indexParameter ? `${headJsonPath}.item` : headJsonPath;
+    // this path is only used when the index parameter is provided.
+    const indexJsonPath = `${headJsonPath}.index`;
 
     const functionResult = overwriteIterationItemResult
       ? headJsonPath
       : this.newHeapVariable();
-
-    const tailJsonPath = `${workingArray}[1:]`;
-    const itemJsonPath = indexParameter ? `${headJsonPath}.item` : headJsonPath;
-    const indexJsonPath = `${headJsonPath}.index`;
 
     const assignParameters = ASLGraph.joinSubStates(
       func,
@@ -3165,6 +3166,9 @@ export class ASL {
         : undefined
     );
 
+    /**
+     * Provide a globally unique state name to return from in the iteration body.
+     */
     const uniqueReturnName = this.generatedNames.generateOrGet(func);
 
     const functionBody = this.evalStmt(func.body, {
@@ -3173,16 +3177,29 @@ export class ASL {
       Next: uniqueReturnName,
     });
 
+    /**
+     * Get the caller provided handle state if provided.
+     */
     const handleResult = handleIterationResult?.({
       iterationResult: functionResult,
       itemJsonPath,
       tailStateName: "tail",
       tailJsonPath,
       tailTarget: workingArrayName,
-      workingSpaceJsonPath: workingSpace,
+      workingSpaceJsonPath: workingSpaceJsonPath,
     });
 
-    const endState = getEndState(workingSpace);
+    /**
+     * Get the caller provided end state, if provided.
+     */
+    const endState = getEndState(workingSpaceJsonPath);
+
+    // initial state of the `workingSpace`.
+    const initialState: Parameters = {
+      // copy array to tail it
+      [`${workingArrayName}.$`]: arrayJsonPath,
+      ...initValues,
+    };
 
     return {
       startState: "init",
@@ -3190,22 +3207,15 @@ export class ASL {
         init: indexParameter
           ? {
               ...ASL.zipArray(arrayJsonPath),
-              ResultSelector: {
-                [`${workingArrayName}.$`]: "$",
-                ...initValues,
-              },
-              ResultPath: workingSpace,
+              ResultSelector: initialState,
+              ResultPath: workingSpaceJsonPath,
               Next: "check",
             }
           : {
               Type: "Pass",
-              Parameters: {
-                // copy array to tail it
-                [`${workingArrayName}.$`]: arrayJsonPath,
-                ...initValues,
-              },
+              Parameters: initialState,
               // use the eventual result location as a temp working space
-              ResultPath: workingSpace,
+              ResultPath: workingSpaceJsonPath,
               Next: "check",
             },
         check: {
@@ -3246,7 +3256,7 @@ export class ASL {
         // parse the arrStr back to json and assign over the filter result value.
         end: endState,
       },
-      output: { jsonPath: workingSpace },
+      output: { jsonPath: workingSpaceJsonPath },
     };
   }
 
