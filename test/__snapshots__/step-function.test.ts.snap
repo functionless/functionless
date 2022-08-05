@@ -9302,12 +9302,20 @@ Object {
       "Parameters": Object {
         "Entries": Array [
           Object {
+            "Account": "123456789012",
             "Detail": Object {
               "value.$": "$.input.id",
             },
             "DetailType": "someEvent",
             "EventBusName": "__REPLACED_TOKEN",
+            "Id": "bbbbbbbb-eeee-eeee-eeee-ffffffffffff",
+            "Region": "us-east-1",
+            "Resources": Array [
+              "__REPLACED_ARN",
+            ],
             "Source": "sfnTest",
+            "Time": "2022-08-05T16:19:03Z",
+            "Version": "1",
           },
         ],
       },
