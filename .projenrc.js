@@ -1,6 +1,6 @@
 const { readFileSync, writeFileSync, chmodSync } = require("fs");
 const { join } = require("path");
-const { typescript, TextFile } = require("projen");
+const { typescript, TextFile, JsonFile } = require("projen");
 const { GithubCredentials } = require("projen/lib/github");
 
 /**
@@ -146,20 +146,13 @@ const project = new CustomTypescriptProject({
   },
   tsconfigDev: {
     compilerOptions: {
-      // plugins: [
-      //   {
-      //     transform: "./lib/compile",
-      //     // exclude the source of this package while running tests.
-      //     exclude: ["./src/{,**}/*"],
-      //   },
-      // ],
       paths: {
         "@fnls": ["lib/index"],
       },
       baseUrl: ".",
     },
   },
-  gitignore: [".DS_Store", ".dccache", ".swc"],
+  gitignore: [".DS_Store", ".dccache", ".swc", "test-reports"],
   releaseToNpm: true,
 
   depsUpgradeOptions: {
@@ -169,7 +162,6 @@ const project = new CustomTypescriptProject({
   },
   prettier: {},
 });
-
 const packageJson = project.tryFindObjectFile("package.json");
 
 packageJson.addOverride("lint-staged", {

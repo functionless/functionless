@@ -4736,7 +4736,7 @@ function nodeToString(
     return `${nodeToString(expr.left)} ${
       // backwards compatibility
       // TODO: remove this and update snapshots
-      expr.op === "===" ? "==" : expr.op
+      expr.op === "===" ? "==" : expr.op === "!==" ? "!=" : expr.op
     } ${nodeToString(expr.right)}`;
   } else if (isBooleanLiteralExpr(expr)) {
     return `${expr.value}`;

@@ -96,7 +96,7 @@
       "request": "launch",
       "runtimeExecutable": "node",
       "runtimeArgs": ["--nolazy"],
-      "args": ["./lib-test/test/reflect.test.js"],
+      "args": ["./lib-test/test/step-function.test.js"],
       "cwd": "${workspaceRoot}",
       "internalConsoleOptions": "openOnSessionStart",
       "skipFiles": ["<node_internals>/**", "node_modules/**"]

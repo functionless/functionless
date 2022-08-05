@@ -728,7 +728,7 @@ function doHoist(node: FunctionlessNode): boolean {
  *
  * @see https://docs.aws.amazon.com/appsync/latest/devguide/resolver-util-reference.html
  */
-export declare const $util: $util;
+export const $util: $util = {} as any;
 
 /**
  * $util.dynamodb contains helper methods that make it easier to write and read data to Amazon DynamoDB, such as automatic type mapping and formatting. These methods are designed to make mapping primitive types and Lists to the proper DynamoDB input format automatically, which is a Map of the format { "TYPE" : VALUE }.

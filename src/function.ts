@@ -709,12 +709,12 @@ export class Function<
               `While serializing ${_resource.node.path}:\n\n${e.message}`
             );
           } else if (e instanceof Error) {
-            throw Error(
-              `While serializing ${_resource.node.path}:\n\n${e.message}`
-            );
+            throw e;
+            // throw Error(
+            //   `While serializing ${_resource.node.path}:\n\n${e.message}`
+            // );
           }
         }
-        return;
       })()
     );
   }
@@ -931,10 +931,9 @@ export async function serialize(
                 return ts.factory.createCallExpression(
                   eraseBindAndRegister(node.arguments[0]) as ts.Expression,
                   undefined,
-                  [
-                    eraseBindAndRegister(node.arguments[1]) as ts.Expression,
-                    eraseBindAndRegister(node.arguments[2]) as ts.Expression,
-                  ]
+                  node.arguments.map(
+                    (arg) => eraseBindAndRegister(arg) as ts.Expression
+                  )
                 );
               }
             }
