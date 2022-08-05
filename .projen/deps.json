@@ -176,10 +176,6 @@
       "type": "build"
     },
     {
-      "name": "ts-patch",
-      "type": "build"
-    },
-    {
       "name": "typesafe-dynamodb",
       "version": "0.1.5",
       "type": "build"

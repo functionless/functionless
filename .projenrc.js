@@ -96,7 +96,6 @@ const project = new CustomTypescriptProject({
     "eslint-plugin-no-only-tests",
     "graphql-request",
     "ts-node",
-    "ts-patch",
     /**
      * For CDK Local Stack tests
      */
@@ -123,7 +122,6 @@ const project = new CustomTypescriptProject({
   // we will manually set up jest because we need to use jest.config.ts
   jest: false,
   scripts: {
-    prepare: "ts-patch install -s",
     localstack: "./scripts/localstack",
     "build:website": "npx tsc && cd ./website && yarn && yarn build",
   },
@@ -184,7 +182,6 @@ project.testTask.env("AWS_ACCESS_KEY_ID", "test");
 project.testTask.env("AWS_SECRET_ACCESS_KEY", "test");
 
 const testFast = project.addTask("test:fast");
-testFast.exec("ts-patch install -s");
 testFast.exec(`jest --testPathIgnorePatterns localstack --coverage false`);
 
 project.addPackageIgnore("/test-app");

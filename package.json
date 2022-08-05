@@ -19,7 +19,6 @@
     "post-compile": "npx projen post-compile",
     "post-upgrade": "npx projen post-upgrade",
     "pre-compile": "npx projen pre-compile",
-    "prepare": "npx projen prepare",
     "release": "npx projen release",
     "test": "npx projen test",
     "test:fast": "npx projen test:fast",
@@ -69,7 +68,6 @@
     "swc-closure": "file:../swc-closure",
     "ts-jest": "^28.0.7",
     "ts-node": "^10.9.1",
-    "ts-patch": "^2.0.1",
     "typesafe-dynamodb": "0.1.5",
     "typescript": "4.7.2",
     "uuid": "^8.3.2"

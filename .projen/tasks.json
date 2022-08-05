@@ -155,14 +155,6 @@
       "name": "pre-compile",
       "description": "Prepare the project for compilation"
     },
-    "prepare": {
-      "name": "prepare",
-      "steps": [
-        {
-          "exec": "ts-patch install -s"
-        }
-      ]
-    },
     "release": {
       "name": "release",
       "description": "Prepare a release from \"main\" branch",
@@ -214,9 +206,6 @@
     "test:fast": {
       "name": "test:fast",
       "steps": [
-        {
-          "exec": "ts-patch install -s"
-        },
         {
           "exec": "jest --testPathIgnorePatterns localstack --coverage false"
         }
