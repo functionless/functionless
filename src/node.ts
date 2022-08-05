@@ -27,6 +27,7 @@ import {
   isDoStmt,
   isForInStmt,
   isForOfStmt,
+  isForStmt,
   isFunctionLike,
   isIdentifier,
   isIfStmt,
@@ -260,7 +261,10 @@ export abstract class BaseNode<
         return self.block.step();
       }
     } else if (isVariableStmt(self)) {
-      if (self.next) {
+      //if a variableStmt has a declaration with an initializer, return the variableStmt.
+      if (self.declList.decls.find((x) => x.initializer)) {
+        return self;
+      } else if (self.next) {
         return self.next.step();
       } else {
         return self.exit();
@@ -416,6 +420,8 @@ export abstract class BaseNode<
             : getNames(param.name)
         );
       } else if (isForInStmt(node) || isForOfStmt(node)) {
+        return getNames(node.initializer);
+      } else if (isForStmt(node)) {
         return getNames(node.initializer);
       } else if (isCatchClause(node) && node.variableDecl?.name) {
         return getNames(node.variableDecl);

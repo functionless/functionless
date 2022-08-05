@@ -11,9 +11,11 @@ import {
 } from "./declaration";
 import { ErrorCodes, SynthError } from "./error-code";
 import {
+  ArrowFunctionExpr,
   CallExpr,
   ElementAccessExpr,
   Expr,
+  FunctionExpr,
   Identifier,
   NullLiteralExpr,
   PropAccessExpr,
@@ -49,7 +51,6 @@ import {
   isExprStmt,
   isForInStmt,
   isForOfStmt,
-  isFunctionDecl,
   isFunctionLike,
   isIdentifier,
   isIfStmt,
@@ -89,7 +90,6 @@ import {
   isForStmt,
   isVariableDeclList,
   isVariableDecl,
-  isClassMember,
   isPrivateIdentifier,
   isYieldExpr,
   isBigIntExpr,
@@ -260,7 +260,7 @@ export type Pass = CommonFields & {
 export type CommonTaskFields = CommonFields & {
   Comment?: string;
   Parameters?: Parameters;
-  ResultSelector?: string;
+  ResultSelector?: Parameters;
   ResultPath?: string | null;
   Retry?: Retry[];
   Catch?: Catch[];
@@ -527,7 +527,10 @@ export class ASL {
 
     const inputParam = decl.parameters[0];
 
-    const states = this.evalStmt(this.decl.body);
+    const states = this.evalStmt(this.decl.body, {
+      End: true,
+      ResultPath: "$",
+    });
 
     // only evaluate the input parameter if its a binding parameter.
     // We'll set input during context initialization
@@ -653,15 +656,20 @@ export class ASL {
 
   /**
    * Evaluate a single {@link Stmt} into a collection of named states.
+   *
+   * @param returnPass partial Pass state which will be given the return value as input using {@link ASLGraph.passWithInput}.
+   *                   provide the rest to determine the behavior of the returnStmt.
    */
   public evalStmt(
-    stmt: Stmt
+    stmt: Stmt,
+    returnPass: Omit<Pass, "Type" | "InputPath" | "Parameters" | "Result"> &
+      CommonFields
   ): ASLGraph.SubState | ASLGraph.NodeState | undefined {
     if (isBlockStmt(stmt)) {
       return ASLGraph.joinSubStates(
         stmt,
         ...stmt.statements.map((s) => {
-          const states = this.evalStmt(s);
+          const states = this.evalStmt(s, returnPass);
           // ensure all of the states in a block have a node associated with them
           return states
             ? {
@@ -712,7 +720,7 @@ export class ASL {
       }
     } else if (isForOfStmt(stmt) || isForInStmt(stmt)) {
       return this.evalExprToSubState(stmt.expr, (output) => {
-        const body = this.evalStmt(stmt.body);
+        const body = this.evalStmt(stmt.body, returnPass);
 
         // assigns either a constant or json path to a new variable
         const assignTempState = this.stateWithHeapOutput(
@@ -730,18 +738,10 @@ export class ASL {
           ? assignTempState
           : // if `ForIn`, map the array into a tuple of index and item
             ASLGraph.joinSubStates(stmt.expr, assignTempState, {
-              Type: "Map",
-              InputPath: tempArrayPath,
-              Parameters: {
-                // in javascript, for(const i in arr) returns string indices (i)
-                "index.$": "States.Format('{}', $$.Map.Item.Index)",
-                "item.$": "$$.Map.Item.Value",
-              },
-              Iterator: this.aslGraphToStates({
-                Type: "Pass",
-                ResultPath: "$",
-                End: true,
-              }),
+              ...this.zipArray(
+                tempArrayPath,
+                (indexJsonPath) => `States.Format('{}', ${indexJsonPath})`
+              ),
               ResultPath: tempArrayPath,
               Next: ASLGraph.DeferNext,
             })!;
@@ -857,7 +857,7 @@ export class ASL {
         };
       });
     } else if (isForStmt(stmt)) {
-      const body = this.evalStmt(stmt.body);
+      const body = this.evalStmt(stmt.body, returnPass);
 
       return this.evalContextToSubState(stmt, (evalExpr) => {
         const initializers = stmt.initializer
@@ -942,7 +942,7 @@ export class ASL {
           Next: `if_${i}`,
         }));
 
-        const elsState = els ? this.evalStmt(els) : undefined;
+        const elsState = els ? this.evalStmt(els, returnPass) : undefined;
 
         return {
           startState: "choose",
@@ -953,7 +953,10 @@ export class ASL {
               Default: "else",
             },
             ...Object.fromEntries(
-              ifs.map((_if, i) => [`if_${i}`, this.evalStmt(_if.then)])
+              ifs.map((_if, i) => [
+                `if_${i}`,
+                this.evalStmt(_if.then, returnPass),
+              ])
             ),
             // provide an empty else statement. A choice default cannot terminate a sub-graph,
             // without a pass here, an if statement without else cannot end a block.
@@ -969,8 +972,7 @@ export class ASL {
         ASLGraph.passWithInput(
           {
             Type: "Pass",
-            ResultPath: `$`,
-            End: true,
+            ...returnPass,
           },
           output
         )
@@ -1121,7 +1123,7 @@ export class ASL {
         startState: "try",
         node: stmt.tryBlock,
         states: {
-          try: this.evalStmt(stmt.tryBlock) ?? {
+          try: this.evalStmt(stmt.tryBlock, returnPass) ?? {
             Type: "Pass",
             ResultPath: null,
             Next: ASLGraph.DeferNext,
@@ -1161,7 +1163,7 @@ export class ASL {
               catch: ASLGraph.joinSubStates(
                 stmt.catchClause,
                 tryFlowStates,
-                this.evalStmt(stmt.catchClause)
+                this.evalStmt(stmt.catchClause, returnPass)
               ) ?? { Type: "Pass", Next: ASLGraph.DeferNext },
               // if there is a finally, make sure any thrown errors in catch are handled
               ...(stmt.finallyBlock
@@ -1180,7 +1182,7 @@ export class ASL {
         ? ASLGraph.joinSubStates(
             stmt.finallyBlock,
             // finally block, which may be empty.
-            this.evalStmt(stmt.finallyBlock) ?? {
+            this.evalStmt(stmt.finallyBlock, returnPass) ?? {
               Type: "Pass",
               ResultPath: null,
               Next: ASLGraph.DeferNext,
@@ -1257,7 +1259,7 @@ export class ASL {
         },
       };
     } else if (isCatchClause(stmt)) {
-      const _catch = this.evalStmt(stmt.block) ?? {
+      const _catch = this.evalStmt(stmt.block, returnPass) ?? {
         Type: "Pass",
         Next: ASLGraph.DeferNext,
       };
@@ -1268,7 +1270,7 @@ export class ASL {
         : undefined;
       return ASLGraph.joinSubStates(stmt, initialize, _catch);
     } else if (isWhileStmt(stmt) || isDoStmt(stmt)) {
-      const blockState = this.evalStmt(stmt.block);
+      const blockState = this.evalStmt(stmt.block, returnPass);
       if (!blockState) {
         throw new SynthError(
           ErrorCodes.Unexpected_Error,
@@ -1311,7 +1313,7 @@ export class ASL {
     } else if (isDebuggerStmt(stmt) || isEmptyStmt(stmt)) {
       return undefined;
     } else if (isLabelledStmt(stmt)) {
-      return this.evalStmt(stmt.stmt);
+      return this.evalStmt(stmt.stmt, returnPass);
     } else if (isWithStmt(stmt)) {
       throw new SynthError(
         ErrorCodes.Unsupported_Feature,
@@ -1694,104 +1696,19 @@ export class ASL {
               }
             : updateState(states);
         };
-
         return {
           node: integStates.node,
           output: integStates.output,
           ...updateStates(integStates),
         };
-      } else if (isMapOrForEach(expr)) {
-        const throwTransition = this.throw(expr);
-
-        const callbackfn = expr.args[0].expr;
-        if (callbackfn !== undefined && isFunctionLike(callbackfn)) {
-          const callbackStates = this.evalStmt(callbackfn.body);
-
-          return this.evalExpr(
-            expr.expr.expr,
-            (listOutput, { normalizeOutputToJsonPath }) => {
-              // we assume that an array literal or a call would return a variable.
-              if (
-                ASLGraph.isLiteralValue(listOutput) &&
-                !Array.isArray(listOutput.value)
-              ) {
-                throw new SynthError(
-                  ErrorCodes.Unexpected_Error,
-                  "Expected input to map to be a variable reference or array"
-                );
-              }
-
-              const listPath = normalizeOutputToJsonPath().jsonPath;
-
-              const parameters = callbackfn.parameters.map((param, i) => {
-                const paramName = isIdentifier(param.name)
-                  ? param.name.name
-                  : // if the parameter is a binding pattern, we to assign the value to a variable first to access it in the map state.
-                    this.newHeapVariableName();
-
-                return {
-                  param: [
-                    `${paramName}.$`,
-                    i === 0
-                      ? "$$.Map.Item.Value"
-                      : i == 1
-                      ? "$$.Map.Item.Index"
-                      : listPath,
-                  ],
-                  states: isBindingPattern(param.name)
-                    ? // if the param is a binding pattern, the value will be placed on the heap and then bound in the body
-                      this.evalDecl(param, { jsonPath: `$.${paramName}` })
-                    : undefined,
-                };
-              });
-
-              const bodyStates = ASLGraph.joinSubStates(
-                callbackfn,
-                // run any parameter initializers if they exist
-                ...parameters.map(({ states }) => states),
-                callbackStates
-              );
-
-              if (!bodyStates) {
-                // TODO: support empty?
-                throw new SynthError(
-                  ErrorCodes.Unexpected_Error,
-                  `a .map or .foreach block must have at least one Stmt`
-                );
-              }
-
-              return this.stateWithHeapOutput({
-                Type: "Map",
-                MaxConcurrency: 1,
-                Iterator: this.aslGraphToStates(
-                  // ensure any deferred states are updated to end
-                  ASLGraph.updateDeferredNextStates({ End: true }, bodyStates)
-                ),
-                ItemsPath: listPath,
-                Parameters: {
-                  ...this.cloneLexicalScopeParameters(expr),
-                  ...Object.fromEntries(parameters.map(({ param }) => param)),
-                },
-                ...(throwTransition
-                  ? {
-                      Catch: [
-                        {
-                          ErrorEquals: ["States.ALL"],
-                          Next: throwTransition.Next!,
-                          ResultPath: throwTransition.ResultPath,
-                        },
-                      ],
-                    }
-                  : {}),
-                Next: ASLGraph.DeferNext,
-              });
-            }
-          );
-        }
+      } else if (isMap(expr)) {
+        return this.mapToStateOutput(expr);
+      } else if (isForEach(expr)) {
+        return this.forEachToStateOutput(expr);
       } else if (isSlice(expr)) {
         return this.sliceToStateOutput(expr);
       } else if (isFilter(expr)) {
-        return this.filterToJsonPath(expr);
+        return this.filterToStateOutput(expr);
       } else if (isJoin(expr)) {
         return this.joinToStateOutput(expr);
       } else if (isPromiseAll(expr)) {
@@ -2482,6 +2399,15 @@ export class ASL {
       return undefined;
     } else if (
       mapOrParallelClosure === undefined ||
+      // TODO: this implementation is specific to the current state. Try/Catch/Finally needs to be generalize based on the generated ASL, not the AST.
+      // https://github.com/functionless/functionless/issues/385
+      (isArgument(mapOrParallelClosure.parent) &&
+        isCallExpr(mapOrParallelClosure.parent.parent) &&
+        isPropAccessExpr(mapOrParallelClosure.parent.parent.expr) &&
+        (mapOrParallelClosure.parent.parent.expr.name.name === "map" ||
+          mapOrParallelClosure.parent.parent.expr.name.name === "filter" ||
+          mapOrParallelClosure.parent.parent.expr.name.name === "forEach") &&
+        !isReferenceExpr(mapOrParallelClosure.parent.parent.expr.expr)) ||
       mapOrParallelClosure.contains(catchOrFinally)
     ) {
       // the catch/finally handler is nearer than the surrounding Map/Parallel State
@@ -2697,7 +2623,7 @@ export class ASL {
           returnEmpty: {
             Type: "Pass",
             Result: "",
-            ResultPath: `${resultVariable}`,
+            ResultPath: `${resultVariable}.string`,
             Next: ASLGraph.DeferNext,
           },
           // nothing left to do, this state will likely get optimized out, but it gives us a target
@@ -2731,148 +2657,16 @@ export class ASL {
     };
   }
 
-  // TODO: support variables and computed values. https://github.com/functionless/functionless/issues/84
-  private filterToJsonPath(
+  private filterToStateOutput(
     expr: CallExpr & { expr: PropAccessExpr }
   ): ASLGraph.NodeResults {
     const predicate = expr.args[0]?.expr;
     if (!isFunctionLike(predicate)) {
       throw new SynthError(
-        ErrorCodes.StepFunction_invalid_filter_syntax,
-        `the 'predicate' argument of slice must be a function or arrow expression, found: ${predicate?.kindName}`
+        ErrorCodes.Invalid_Input,
+        `the 'predicate' argument of filter must be a function or arrow expression, found: ${predicate?.kindName}`
       );
     }
-
-    const stmt = predicate.body.statements[0];
-    if (
-      stmt === undefined ||
-      !isReturnStmt(stmt) ||
-      predicate.body.statements.length !== 1
-    ) {
-      throw new SynthError(
-        ErrorCodes.StepFunction_invalid_filter_syntax,
-        'a JSONPath filter expression only supports a single, in-line statement, e.g. .filter(a => a == "hello" || a === "world")'
-      );
-    }
-
-    const toFilterCondition = (expr: Expr): string => {
-      const constant = evalToConstant(expr);
-      if (constant) {
-        if (typeof constant.constant === "string") {
-          // strings are wrapped with '' in the filter expression.
-          // Escape existing quotes to avoid issues.
-          return `'${constant.constant.replace(/'/g, "\\'")}'`;
-        }
-        if (
-          typeof constant.constant === "object" &&
-          constant.constant !== null
-        ) {
-          throw new SynthError(
-            ErrorCodes.StepFunction_invalid_filter_syntax,
-            `Filter expressions do not support object or array literals, found: ${JSON.stringify(
-              constant.constant
-            )}`
-          );
-        } else {
-          return `${constant.constant}`;
-        }
-      } else if (isBinaryExpr(expr)) {
-        return `${toFilterCondition(expr.left)}${expr.op}${toFilterCondition(
-          expr.right
-        )}`;
-      } else if (isUnaryExpr(expr)) {
-        return `${expr.op}${toFilterCondition(expr.expr)}`;
-      } else if (isIdentifier(expr)) {
-        const ref = expr.lookup();
-        if (ref === undefined) {
-          throw new SynthError(
-            ErrorCodes.Unexpected_Error,
-            `unresolved identifier: ${expr.name}`
-          );
-        }
-        return resolveRef(ref);
-        function resolveRef(ref: Decl): string {
-          if (isParameterDecl(ref)) {
-            if (ref.parent !== predicate) {
-              throw new SynthError(
-                ErrorCodes.StepFunction_invalid_filter_syntax,
-                `Cannot reference a parameter from a parent closure (found: ${
-                  // we can assume an identifier here as binding patterns cannot be the parent of an identifier (only `BindingElm`s)
-                  (<Identifier>ref.name).name
-                }. Can only use the item parameter .filter((item) =>) in a JSONPath filter expression`
-              );
-            }
-            if (ref === ref.parent.parameters[0]) {
-              return "@";
-            } else if (ref === ref.parent.parameters[1]) {
-              throw new SynthError(
-                ErrorCodes.StepFunction_invalid_filter_syntax,
-                `the 'index' (found: ${
-                  (<Identifier>ref.name).name
-                }) parameter in a .filter expression is not supported`
-              );
-            } else {
-              throw new SynthError(
-                ErrorCodes.StepFunction_invalid_filter_syntax,
-                `the 'array' (found: ${
-                  (<Identifier>ref.name).name
-                })parameter in a .filter expression is not supported`
-              );
-            }
-          } else if (isBindingElem(ref)) {
-            if (isArrayBinding(ref.parent)) {
-              return `${resolveRef(
-                ref.parent.parent
-              )}[${ref.parent.bindings.indexOf(ref)}]`;
-            }
-
-            const propName = ref.propertyName
-              ? isIdentifier(ref.propertyName)
-                ? ref.propertyName.name
-                : isStringLiteralExpr(ref.propertyName)
-                ? ref.propertyName.value
-                : evalToConstant(ref.propertyName)?.constant
-              : isIdentifier(ref.name)
-              ? ref.name.name
-              : undefined;
-
-            if (!propName) {
-              throw new SynthError(
-                ErrorCodes.StepFunctions_property_names_must_be_constant
-              );
-            }
-
-            return `${resolveRef(ref.parent.parent)}[${propName}]`;
-          } else if (
-            isVariableDecl(ref) ||
-            isFunctionDecl(ref) ||
-            isSetAccessorDecl(ref) ||
-            isGetAccessorDecl(ref) ||
-            isClassDecl(ref) ||
-            isClassMember(ref)
-          ) {
-            throw new SynthError(
-              ErrorCodes.StepFunction_invalid_filter_syntax,
-              `cannot reference a ${ref.kindName} within a JSONPath .filter expression`
-            );
-          }
-          assertNever(ref);
-        }
-      } else if (isPropAccessExpr(expr)) {
-        return `${toFilterCondition(expr.expr)}.${expr.name.name}`;
-      } else if (isElementAccessExpr(expr)) {
-        return `${toFilterCondition(
-          expr.expr
-        )}[${this.assertElementAccessConstant(
-          ASLGraph.getAslStateOutput(this.eval(expr.element))
-        )}]`;
-      }
-
-      throw new SynthError(
-        ErrorCodes.StepFunction_invalid_filter_syntax,
-        `JSONPath's filter expression does not support '${nodeToString(expr)}'`
-      );
-    };
 
     return this.evalExpr(
       expr.expr.expr,
@@ -2887,13 +2681,588 @@ export class ASL {
           );
         }
 
-        const varRef = normalizeOutputToJsonPath().jsonPath;
+        const varRef = normalizeOutputToJsonPath();
 
+        return (
+          this.filterToJsonPath(varRef, predicate) ?? {
+            node: expr,
+            ...this.filterToASLGraph(varRef, predicate),
+          }
+        );
+      }
+    );
+  }
+
+  /**
+   * Attempt to compile filter to JSONPath. If possible, this is the most efficient way to filter.
+   *
+   * When not possible, undefined is returned.
+   */
+  private filterToJsonPath(
+    valueJsonPath: ASLGraph.JsonPath,
+    predicate: FunctionExpr | ArrowFunctionExpr
+  ): ASLGraph.JsonPath | undefined {
+    const stmt = predicate.body.statements[0];
+    if (
+      stmt === undefined ||
+      !isReturnStmt(stmt) ||
+      predicate.body.statements.length !== 1
+    ) {
+      return undefined;
+    }
+
+    const toFilterCondition = (expr: Expr): string | undefined => {
+      const constant = evalToConstant(expr);
+      if (constant) {
+        if (typeof constant.constant === "string") {
+          // strings are wrapped with '' in the filter expression.
+          // Escape existing quotes to avoid issues.
+          return `'${constant.constant.replace(/'/g, "\\'")}'`;
+        }
+        if (
+          typeof constant.constant === "object" &&
+          constant.constant !== null
+        ) {
+          // try to compile with ASLGraph instead
+          return undefined;
+        } else {
+          return `${constant.constant}`;
+        }
+      } else if (isBinaryExpr(expr)) {
+        const left = toFilterCondition(expr.left);
+        const right = toFilterCondition(expr.right);
+        return left && right ? `${left}${expr.op}${right}` : undefined;
+      } else if (isUnaryExpr(expr)) {
+        const right = toFilterCondition(expr.expr);
+        return right ? `${expr.op}${right}` : undefined;
+      } else if (isIdentifier(expr)) {
+        const ref = expr.lookup();
+        if (ref === undefined) {
+          // try to compile with ASLGraph instead
+          return undefined;
+        }
+        if (
+          (isParameterDecl(ref) || isBindingElem(ref)) &&
+          ref.findParent(
+            (parent): parent is typeof predicate => parent === predicate
+          )
+        ) {
+          return resolveRef(ref);
+        } else {
+          return `$.${(<Identifier>expr).name}`;
+        }
+        function resolveRef(
+          ref: ParameterDecl | BindingElem
+        ): string | undefined {
+          if (isParameterDecl(ref)) {
+            if (ref === predicate.parameters[0]) {
+              return "@";
+            }
+            return undefined;
+          } else {
+            const value = resolveRef(
+              ref.parent.parent as unknown as ParameterDecl | BindingElem
+            );
+
+            // if undefined, try to compile with ASL Graph
+            if (!value) {
+              return value;
+            }
+
+            if (isArrayBinding(ref.parent)) {
+              return `${value}[${ref.parent.bindings.indexOf(ref)}]`;
+            }
+
+            const propName = ref.propertyName
+              ? isIdentifier(ref.propertyName)
+                ? ref.propertyName.name
+                : isStringLiteralExpr(ref.propertyName)
+                ? ref.propertyName.value
+                : evalToConstant(ref.propertyName)?.constant
+              : isIdentifier(ref.name)
+              ? ref.name.name
+              : undefined;
+
+            if (!propName) {
+              // step function does not support variable property accessors
+              // this will probably fail in the filter to ASLGraph implementation too
+              // however, lets let ASLGraph try and fail if needed.
+              return undefined;
+            }
+
+            return `${value}['${propName}']`;
+          }
+        }
+      } else if (isPropAccessExpr(expr)) {
+        const value = toFilterCondition(expr.expr);
+        return value ? `${value}.${expr.name.name}` : undefined;
+      } else if (isElementAccessExpr(expr)) {
+        const field = this.assertElementAccessConstant(
+          ASLGraph.getAslStateOutput(this.eval(expr.element))
+        );
+
+        const value = toFilterCondition(expr.expr);
+
+        return value
+          ? `${value}[${typeof field === "number" ? field : `'${field}'`}]`
+          : undefined;
+      }
+
+      // try to compile with ASLGraph instead
+      return undefined;
+    };
+
+    const expression = toFilterCondition(stmt.expr);
+    return expression
+      ? {
+          jsonPath: `${valueJsonPath.jsonPath}[?(${expression})]`,
+        }
+      : undefined;
+  }
+
+  /**
+   * filter an array using ASLGraph. Should support any logic that returns a boolean already supported by Functionless Step Functions.
+   *
+   * Note: If possible, try to use {@link filterToJsonPath} as it introduces no new state transitions.
+   */
+  private filterToASLGraph(
+    valueJsonPath: ASLGraph.JsonPath,
+    predicate: FunctionExpr | ArrowFunctionExpr
+  ): ASLGraph.OutputSubState {
+    return this.iterateArrayMethod(
+      predicate,
+      valueJsonPath.jsonPath,
+      false,
+      // initialize the arrStr to [null
+      {
+        arrStr: "[null",
+      },
+      // customize the default result handling logic by:
+      // 1. check the returned predicate (iterationResult)
+      // 2. if true, append the original item (itemJsonPath) to the `arrStr` initialized above.
+      // 3. return over the `resultPath`
+      ({
+        iterationResult,
+        itemJsonPath,
+        tailStateName,
+        tailJsonPath,
+        tailTarget,
+        workingSpaceJsonPath,
+      }) => {
         return {
-          jsonPath: `${varRef}[?(${toFilterCondition(stmt.expr)})]`,
+          startState: "checkPredicate",
+          states: {
+            checkPredicate: {
+              Type: "Choice",
+              Choices: [
+                { ...ASL.isTruthy(iterationResult), Next: "predicateTrue" },
+              ],
+              Default: tailStateName,
+            },
+            // tail and append
+            predicateTrue: {
+              Type: "Pass",
+              Parameters: {
+                // tail
+                [`${tailTarget}.$`]: tailJsonPath,
+                // const arrStr = `${arrStr},${JSON.stringify(arr[0])}`;
+                "arrStr.$": `States.Format('{},{}', ${workingSpaceJsonPath}.arrStr, States.JsonToString(${itemJsonPath}))`,
+              },
+              // write over the current working space
+              ResultPath: workingSpaceJsonPath,
+              Next: ASLGraph.DeferNext,
+            },
+          },
+        };
+      },
+      // handle the end of the iteration.
+      // 1. turn the array string into an array
+      // 2. assign to the working variable json path (which is also the return value)
+      (workingJsonPath) => {
+        return {
+          startState: "format",
+          states: {
+            format: {
+              Type: "Pass",
+              // filterResult = { result: JSON.parse(filterResult.arrStr + "]") }
+              Parameters: {
+                // cannot use intrinsic functions in InputPath or Result
+                "result.$": `States.StringToJson(States.Format('{}]', ${workingJsonPath}.arrStr))`,
+              },
+              ResultPath: workingJsonPath,
+              Next: "set",
+            },
+            // filterResult = filterResult.result
+            set: {
+              Type: "Pass",
+              // the original array is initialized with a leading null to simplify the adding of new values to the array string "[null"+",{new item}"+"]"
+              InputPath: `${workingJsonPath}.result[1:]`,
+              ResultPath: workingJsonPath,
+              Next: ASLGraph.DeferNext,
+            },
+          },
         };
       }
     );
+  }
+
+  private mapToStateOutput(
+    expr: CallExpr & {
+      expr: PropAccessExpr;
+    }
+  ) {
+    const callbackfn = expr.args[0].expr;
+    if (!isFunctionLike(callbackfn)) {
+      throw new SynthError(
+        ErrorCodes.Invalid_Input,
+        `the 'callback' argument of map must be a function or arrow expression, found: ${callbackfn?.kindName}`
+      );
+    }
+    return this.evalExpr(
+      expr.expr.expr,
+      (listOutput, { normalizeOutputToJsonPath }) => {
+        // we assume that an array literal or a call would return a variable.
+        if (
+          ASLGraph.isLiteralValue(listOutput) &&
+          !Array.isArray(listOutput.value)
+        ) {
+          throw new SynthError(
+            ErrorCodes.Unexpected_Error,
+            "Expected input to map to be a variable reference or array"
+          );
+        }
+
+        return this.iterateArrayMethod(
+          callbackfn,
+          normalizeOutputToJsonPath().jsonPath,
+          true,
+          {
+            arrStr: "[null",
+          },
+          ({
+            tailJsonPath,
+            tailTarget,
+            iterationResult,
+            workingSpaceJsonPath,
+          }) => {
+            return {
+              Type: "Pass",
+              Parameters: {
+                [`${tailTarget}.$`]: `${tailJsonPath}`,
+                // const arrStr = `${arrStr},${JSON.stringify(arr[0])}`;
+                "arrStr.$": `States.Format('{},{}', ${workingSpaceJsonPath}.arrStr, States.JsonToString(${iterationResult}))`,
+              },
+              ResultPath: workingSpaceJsonPath,
+              Next: ASLGraph.DeferNext,
+            };
+          },
+          (workingSpaceJsonPath) => {
+            return {
+              startState: "format",
+              states: {
+                format: {
+                  Type: "Pass",
+                  // filterResult = { result: JSON.parse(filterResult.arrStr + "]") }
+                  Parameters: {
+                    // cannot use intrinsic functions in InputPath or Result
+                    "result.$": `States.StringToJson(States.Format('{}]', ${workingSpaceJsonPath}.arrStr))`,
+                  },
+                  ResultPath: workingSpaceJsonPath,
+                  Next: "set",
+                },
+                // filterResult = filterResult.result
+                set: {
+                  Type: "Pass",
+                  // the original array is initialized with a leading null to simplify the adding of new values to the array string "[null"+",{new item}"+"]"
+                  InputPath: `${workingSpaceJsonPath}.result[1:]`,
+                  ResultPath: workingSpaceJsonPath,
+                  Next: ASLGraph.DeferNext,
+                },
+              },
+            };
+          }
+        );
+      }
+    );
+  }
+
+  private forEachToStateOutput(
+    expr: CallExpr & {
+      expr: PropAccessExpr;
+    }
+  ) {
+    const callbackfn = expr.args[0].expr;
+    if (!isFunctionLike(callbackfn)) {
+      throw new SynthError(
+        ErrorCodes.Invalid_Input,
+        `the 'callback' argument of forEach must be a function or arrow expression, found: ${callbackfn?.kindName}`
+      );
+    }
+    return this.evalExpr(
+      expr.expr.expr,
+      (listOutput, { normalizeOutputToJsonPath }) => {
+        // we assume that an array literal or a call would return a variable.
+        if (
+          ASLGraph.isLiteralValue(listOutput) &&
+          !Array.isArray(listOutput.value)
+        ) {
+          throw new SynthError(
+            ErrorCodes.Unexpected_Error,
+            "Expected input to map to be a variable reference or array"
+          );
+        }
+
+        return this.iterateArrayMethod(
+          callbackfn,
+          normalizeOutputToJsonPath().jsonPath,
+          true,
+          {},
+          undefined,
+          (workingSpaceJsonPath) => ({
+            Type: "Pass",
+            Result: this.context.null,
+            ResultPath: workingSpaceJsonPath,
+            Next: ASLGraph.DeferNext,
+          })
+        );
+      }
+    );
+  }
+
+  /**
+   * Generic, plugable helper for array methods likes map, forEach, and filter.
+   *
+   * Expects a function in the form arr.(item, index, array) => {};
+   *
+   * `workingSpace` - a state location used by the array method machine. We'll write over this location with the result after.
+   *
+   * 1. init - initializes a working copy of the array, used to tail the array in the `workingSpace` (workingSpace.arr)
+   *    1. [optional] - user provided parameter values to initialize the `workingSpace`
+   * 2. check - check if the tailed array (`workingSpace.arr`) has more items.
+   *    1. If yes, go to next, else go to `end` state.
+   * 3. assignParameters - setup the current item, index, and array parameters, including handling any binding. Only if the parameter is defined by the program.
+   * 4. body - execute the body of the function, with any return values going to the `iterationResultJsonPath`
+   * 5. handle result - optional - optionally handle the result and customize the tail operation. Often the tail and handle logic can be joined together into one state.
+   * 6. tail - if tail was not bypassed in the handle result step, update the `workingSpace.arr` to the tail of the array `workingSpace.arr[1:]`.
+   * 7. check - return to the check state
+   * 8. end - once the array is empty, execute the end state provided by the caller. Generally writing the result to the `workingSpace` location.
+   */
+  private iterateArrayMethod(
+    func: FunctionLike,
+    /**
+     * The array to iterate on as a json path.
+     */
+    arrayJsonPath: string,
+    /**
+     * When true, the current array location will be re-used to store the function result.
+     *
+     * `workingSpace.arr[0]`
+     *
+     * This option saves creating a new memory location for result, but means the original item is not available during handleResult.
+     *
+     * The `tail` step will erase this value. `workingSpace.arr[0] = workingSpace.arr[1:]`
+     */
+    overwriteIterationItemResult: boolean,
+    /**
+     * Additional values to be initialized in the first state of the iteration.
+     *
+     * Note: This should not make use of json path values from the state.
+     *       ResultSelector is used on the Map state which only references the result and not
+     *       the greater state.
+     */
+    initValues: Record<string, Parameters>,
+    /**
+     * Generate states to handle the output of the iteration function.
+     *
+     * iterationFunction -> handler (?) -> tail -> check
+     *
+     * if {@link ASLGraph.DeferNext} is given as the NEXT the "check" step will be wired. To navigate to the default "tail" state use the given `tailStateName`.
+     *
+     * if undefined, the body will go directly to the `tail` step and any output of the iteration method will be lost.
+     */
+    handleIterationResult:
+      | ((context: {
+          /**
+           * The location where the result of the function is stored.
+           */
+          iterationResult: string;
+          itemJsonPath: string;
+          tailStateName: string;
+          tailJsonPath: string;
+          /**
+           * The object key to assign the tail to.
+           *
+           * Example
+           * {
+           *    Type: "Pass",
+           *    Parameters: {
+           *       `${tailTarget}.$`: tailJsonPath
+           *    },
+           *    ResultPath: ResultPath
+           * }
+           */
+          tailTarget: string;
+          /**
+           * The position to update with the tailed array and any other data.
+           *
+           * [workingSpaceJsonPath]: {
+           *    [tailTarget]: [tailJsonPath],
+           *    ... anything else ...
+           * }
+           * =>
+           * [workingSpaceJsonPath]: {
+           *    arr.$: resultPath.arr[1:],
+           *    ... anything else ...
+           * }
+           */
+          workingSpaceJsonPath: string;
+        }) => ASLGraph.NodeState | ASLGraph.SubState)
+      | undefined,
+    /**
+     * A callback to return the end states(s).
+     *
+     * End should write over the working variable with the return value.
+     *
+     * return a special variable created during `init` and `handleIteration` as the method result.
+     *
+     * ex:
+     * {
+     *    Type: "Pass",
+     *    InputPath: `${workingVariable}.someAccValue`,
+     *    ResultPath: workingVariable
+     * }
+     */
+    getEndState: (
+      workingVariable: string
+    ) => ASLGraph.NodeState | ASLGraph.SubState
+  ): ASLGraph.OutputSubState {
+    const workingSpaceJsonPath = this.newHeapVariable();
+
+    const [itemParameter, indexParameter, arrayParameter] = func.parameters;
+
+    const workingArrayName = "arr";
+    const workingArray = `${workingSpaceJsonPath}.${workingArrayName}`; // { arr: [items] }
+    const headJsonPath = `${workingArray}[0]`;
+    const tailJsonPath = `${workingArray}[1:]`;
+    // when the index parameter is given, we zip the index and item into a new array. The item will actually be at arr[pos].item.
+    const itemJsonPath = indexParameter ? `${headJsonPath}.item` : headJsonPath;
+    // this path is only used when the index parameter is provided.
+    const indexJsonPath = `${headJsonPath}.index`;
+
+    const functionResult = overwriteIterationItemResult
+      ? headJsonPath
+      : this.newHeapVariable();
+
+    const assignParameters = ASLGraph.joinSubStates(
+      func,
+      itemParameter
+        ? this.evalDecl(itemParameter, { jsonPath: itemJsonPath })
+        : undefined,
+      indexParameter
+        ? this.evalDecl(indexParameter, {
+            jsonPath: indexJsonPath,
+          })
+        : undefined,
+      arrayParameter
+        ? this.evalDecl(arrayParameter, {
+            jsonPath: arrayJsonPath,
+          })
+        : undefined
+    );
+
+    /**
+     * Provide a globally unique state name to return from in the iteration body.
+     */
+    const uniqueReturnName = this.generatedNames.generateOrGet(func);
+
+    const functionBody = this.evalStmt(func.body, {
+      End: undefined,
+      ResultPath: functionResult,
+      Next: uniqueReturnName,
+    });
+
+    /**
+     * Get the caller provided handle state if provided.
+     */
+    const handleResult = handleIterationResult?.({
+      iterationResult: functionResult,
+      itemJsonPath,
+      tailStateName: "tail",
+      tailJsonPath,
+      tailTarget: workingArrayName,
+      workingSpaceJsonPath: workingSpaceJsonPath,
+    });
+
+    /**
+     * Get the caller provided end state, if provided.
+     */
+    const endState = getEndState(workingSpaceJsonPath);
+
+    return {
+      startState: "init",
+      states: {
+        init: indexParameter
+          ? {
+              ...this.zipArray(arrayJsonPath),
+              ResultSelector: {
+                // copy array to tail it
+                [`${workingArrayName}.$`]: "$",
+                ...initValues,
+              },
+              ResultPath: workingSpaceJsonPath,
+              Next: "check",
+            }
+          : {
+              Type: "Pass",
+              Parameters: {
+                // copy array to tail it
+                [`${workingArrayName}.$`]: arrayJsonPath,
+                ...initValues,
+              },
+              // use the eventual result location as a temp working space
+              ResultPath: workingSpaceJsonPath,
+              Next: "check",
+            },
+        check: {
+          Type: "Choice",
+          Choices: [{ ...ASL.isPresent(headJsonPath), Next: "assign" }],
+          Default: "end",
+        },
+        // unique return name used by deep returns
+        [uniqueReturnName]: {
+          Type: "Pass",
+          Next: handleResult ? "handleResult" : "tail",
+        },
+        // assign the item parameter the head of the temp array
+        assign: ASLGraph.updateDeferredNextStates(
+          { Next: "body" },
+          assignParameters ?? { Type: "Pass", Next: ASLGraph.DeferNext }
+        ),
+        // run the predicate function logic
+        body: ASLGraph.updateDeferredNextStates(
+          { Next: handleResult ? "handleResult" : "tail" },
+          functionBody ?? { Type: "Pass", Next: ASLGraph.DeferNext }
+        ),
+        ...(handleResult
+          ? {
+              handleResult: ASLGraph.updateDeferredNextStates(
+                { Next: "check" },
+                handleResult
+              ),
+            }
+          : {}),
+        // tail
+        tail: {
+          Type: "Pass",
+          InputPath: tailJsonPath,
+          ResultPath: workingArray,
+          Next: "check",
+        },
+        // parse the arrStr back to json and assign over the filter result value.
+        end: endState,
+      },
+      output: { jsonPath: workingSpaceJsonPath },
+    };
   }
 
   /**
@@ -3432,15 +3801,53 @@ export class ASL {
 
     return [internal(expr), ASLGraph.joinSubStates(expr, ...subStates)];
   }
+
+  /**
+   * Zip an array with it's index.
+   *
+   * In ASL, it is not possible to do arithmetic or get the length of an array, but
+   * the map state does give us the index.
+   *
+   * @param formatIndex allows the optional formatting of the index number, for example, turning it into a string.
+   * @returns a partial map state that results in an array of { index: number, item: arrayElement[index] }.
+   */
+  private zipArray(
+    arrayJsonPath: string,
+    formatIndex: (indexJsonPath: string) => string = (index) => index
+  ): Pick<MapTask, "Type" | "ItemsPath" | "Parameters" | "Iterator"> {
+    return {
+      Type: "Map" as const,
+      ItemsPath: arrayJsonPath,
+      Parameters: {
+        "index.$": formatIndex("$$.Map.Item.Index"),
+        "item.$": "$$.Map.Item.Value",
+      },
+      Iterator: this.aslGraphToStates({
+        Type: "Pass",
+        ResultPath: "$",
+        Next: ASLGraph.DeferNext,
+      }),
+    };
+  }
 }
 
-export function isMapOrForEach(expr: CallExpr): expr is CallExpr & {
+export function isForEach(expr: CallExpr): expr is CallExpr & {
   expr: PropAccessExpr;
 } {
   return (
     isPropAccessExpr(expr.expr) &&
     isIdentifier(expr.expr.name) &&
-    (expr.expr.name.name === "map" || expr.expr.name.name === "forEach")
+    expr.expr.name.name === "forEach"
+  );
+}
+
+export function isMap(expr: CallExpr): expr is CallExpr & {
+  expr: PropAccessExpr;
+} {
+  return (
+    isPropAccessExpr(expr.expr) &&
+    isIdentifier(expr.expr.name) &&
+    expr.expr.name.name === "map"
   );
 }
 
@@ -3499,8 +3906,8 @@ function analyzeFlow(node: FunctionlessNode): FlowResult {
     .reduce(
       (a, b) => ({ ...a, ...b }),
       isCallExpr(node) &&
-        ((isReferenceExpr(node.expr) && isIntegration(node.expr.ref())) ||
-          isMapOrForEach(node))
+        isReferenceExpr(node.expr) &&
+        isIntegration(node.expr.ref())
         ? { hasTask: true }
         : isThrowStmt(node)
         ? { hasThrow: true }

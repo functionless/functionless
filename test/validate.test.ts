@@ -48,6 +48,8 @@ const skipErrorCodes: ErrorCode[] = [
   ErrorCodes.Invalid_Input,
   // hard to validate, will be supported later
   ErrorCodes.Classes_are_not_supported,
+  // Deprecated - No longer used
+  ErrorCodes.StepFunction_invalid_filter_syntax,
 ];
 
 /**

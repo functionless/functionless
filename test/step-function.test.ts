@@ -2062,6 +2062,22 @@ test("list.map(item => task(item))", () => {
   expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
+test("list.forEach(item => )", () => {
+  const { stack } = initStepFunctionApp();
+  const definition = new ExpressStepFunction(
+    stack,
+    "fn",
+    async (input: { list: string[] }) => {
+      let a = "";
+      input.list.forEach((item) => {
+        a = `${a}${item}`;
+      });
+    }
+  ).definition;
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+});
+
 test("[1,2,3].map(item => item)", () => {
   const { stack } = initStepFunctionApp();
   const definition = new ExpressStepFunction<
@@ -2106,14 +2122,53 @@ test("[1,2,3,4].filter(item => item > 1 + 2)", () => {
   expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
+test("[1,2,3,4].filter((item, index) => item > index)", () => {
+  const { stack } = initStepFunctionApp();
+  const definition = new ExpressStepFunction(stack, "fn", async () => {
+    return [1, 2, 3, 4].filter((item, index) => item > index);
+  }).definition;
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+});
+
+test("[1,2,3,4].filter((item, index, array) => item > 1 + 2)", () => {
+  const { stack } = initStepFunctionApp();
+  const definition = new ExpressStepFunction(stack, "fn", async () => {
+    return [1, 2, 3, 4].filter((item, _, arr) => item > arr[0]);
+  }).definition;
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+});
+
+test("[1,2,3,4].filter((item, index, array) => item > 1 + 2)", () => {
+  const { stack } = initStepFunctionApp();
+  const definition = new ExpressStepFunction(stack, "fn", async () => {
+    return [1, 2, 3, 4].filter((item, _, [first]) => item > first);
+  }).definition;
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+});
+
 test("[1,2,3,4].filter(item => item > {})", () => {
   const { stack } = initStepFunctionApp();
-  expect(
-    () =>
-      new ExpressStepFunction(stack, "fn", async () => {
-        return [{}].filter((item) => item === { a: "a" });
-      })
-  ).toThrow("Filter expressions do not support object or array literals");
+  const { definition } = new ExpressStepFunction(stack, "fn", async () => {
+    return [{}].filter((item) => item === { a: "a" });
+  });
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+});
+
+test("[1,2,3,4].filter(item => item > {})", () => {
+  const { stack } = initStepFunctionApp();
+  const { definition } = new ExpressStepFunction(stack, "fn", async () => {
+    return [{ value: "a" }].filter((item) => {
+      const a = "a";
+      const { value } = item;
+      return value === a;
+    });
+  });
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
 // https://github.com/functionless/functionless/issues/209
