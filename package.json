@@ -22,6 +22,8 @@
     "release": "npx projen release",
     "test": "npx projen test",
     "test:fast": "npx projen test:fast",
+    "test:update": "npx projen test:update",
+    "test:watch": "npx projen test:watch",
     "unbump": "npx projen unbump",
     "upgrade": "npx projen upgrade",
     "watch": "npx projen watch",
@@ -37,6 +39,7 @@
     "@swc/jest": "^0.2.22",
     "@swc/register": "^0.1.10",
     "@types/fs-extra": "^9.0.13",
+    "@types/jest": "^28.1.6",
     "@types/minimatch": "^3.0.5",
     "@types/node": "^14",
     "@types/uuid": "^8.3.4",
@@ -58,6 +61,7 @@
     "eslint-plugin-prettier": "^4.2.1",
     "graphql-request": "^4.3.0",
     "jest": "^28.1.3",
+    "jest-junit": "^13",
     "json-schema": "^0.4.0",
     "npm-check-updates": "^15",
     "prettier": "^2.7.1",
@@ -68,6 +72,7 @@
     "swc-closure": "file:../swc-closure",
     "ts-jest": "^28.0.7",
     "ts-node": "^10.9.1",
+    "ts-patch": "^2.0.1",
     "typesafe-dynamodb": "0.1.5",
     "typescript": "4.7.2",
     "uuid": "^8.3.2"
@@ -89,6 +94,51 @@
   "main": "lib/index.js",
   "license": "Apache-2.0",
   "version": "0.0.0",
+  "jest": {
+    "collectCoverage": false,
+    "coveragePathIgnorePatterns": [
+      "/test/",
+      "/node_modules/",
+      "/lib"
+    ],
+    "moduleNameMapper": {
+      "^@fnls$": "<rootDir>/lib/index"
+    },
+    "transform": {
+      "^.+\\.(t|j)sx?$": [
+        "@swc/jest",
+        {}
+      ]
+    },
+    "testMatch": [
+      "<rootDir>/src/**/__tests__/**/*.ts?(x)",
+      "<rootDir>/(test|src)/**/*(*.)@(spec|test).ts?(x)"
+    ],
+    "clearMocks": true,
+    "coverageReporters": [
+      "json",
+      "lcov",
+      "clover",
+      "cobertura",
+      "text"
+    ],
+    "coverageDirectory": "coverage",
+    "testPathIgnorePatterns": [
+      "/node_modules/"
+    ],
+    "watchPathIgnorePatterns": [
+      "/node_modules/"
+    ],
+    "reporters": [
+      "default",
+      [
+        "jest-junit",
+        {
+          "outputDirectory": "test-reports"
+        }
+      ]
+    ]
+  },
   "types": "lib/index.d.ts",
   "lint-staged": {
     "*.{tsx,jsx,ts,js,json,md,css}": [

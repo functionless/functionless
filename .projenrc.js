@@ -96,6 +96,7 @@ const project = new CustomTypescriptProject({
     "eslint-plugin-no-only-tests",
     "graphql-request",
     "ts-node",
+    "ts-patch",
     /**
      * For CDK Local Stack tests
      */
@@ -119,8 +120,18 @@ const project = new CustomTypescriptProject({
     "jest",
     "ts-jest",
   ],
-  // we will manually set up jest because we need to use jest.config.ts
-  jest: false,
+  jestOptions: {
+    jestConfig: {
+      collectCoverage: false,
+      coveragePathIgnorePatterns: ["/test/", "/node_modules/", "/lib"],
+      moduleNameMapper: {
+        "^@fnls$": "<rootDir>/lib/index",
+      },
+      transform: {
+        "^.+\\.(t|j)sx?$": ["@swc/jest", {}],
+      },
+    },
+  },
   scripts: {
     localstack: "./scripts/localstack",
     "build:website": "npx tsc && cd ./website && yarn && yarn build",
@@ -150,7 +161,7 @@ const project = new CustomTypescriptProject({
       baseUrl: ".",
     },
   },
-  gitignore: [".DS_Store", ".dccache", ".swc", "test-reports"],
+  gitignore: [".DS_Store", ".dccache", ".swc"],
   releaseToNpm: true,
 
   depsUpgradeOptions: {
@@ -160,6 +171,10 @@ const project = new CustomTypescriptProject({
   },
   prettier: {},
 });
+// projen assumes ts-jest
+delete project.jest.config.globals;
+delete project.jest.config.preset;
+
 const packageJson = project.tryFindObjectFile("package.json");
 
 packageJson.addOverride("lint-staged", {

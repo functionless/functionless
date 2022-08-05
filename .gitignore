@@ -33,8 +33,10 @@ jspm_packages/
 .DS_Store
 .dccache
 .swc
-test-reports
 !/.projenrc.js
+/test-reports/
+junit.xml
+/coverage/
 !/.github/workflows/build.yml
 /dist/changelog.md
 /dist/version.txt
