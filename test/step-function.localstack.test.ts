@@ -514,7 +514,7 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
       return new StepFunction(parent, "sfn2", async (input) => {
         let a = "";
         const l = (await func()).map((x) => `n${x}`);
-        const l2 = input.arr.map((x) => `n${x}`);
+        const l2 = input.arr.map((x, i, [head]) => `n${i}${x}${head}`);
         input.arr.map((x) => {
           a = `${a}a${x}`;
           return a;
@@ -522,7 +522,7 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
         return `${l[0]}${l[1]}${l[2]}${l2[0]}${l2[1]}${l2[2]}${a}`;
       });
     },
-    "n1n2n3n1n2n3a1a2a3",
+    "n1n2n3n011n121n231a1a2a3",
     { arr: [1, 2, 3] }
   );
 

@@ -5826,7 +5826,7 @@ Object {
       "Type": "Task",
     },
     "1__for(i in [await task(input)]) 1": Object {
-      "InputPath": "$.heap4",
+      "ItemsPath": "$.heap4",
       "Iterator": Object {
         "StartAt": "Default",
         "States": Object {
@@ -6023,7 +6023,7 @@ Object {
       "Type": "Pass",
     },
     "1__for(i in input.items)": Object {
-      "InputPath": "$.heap1",
+      "ItemsPath": "$.heap1",
       "Iterator": Object {
         "StartAt": "Default",
         "States": Object {
@@ -6154,7 +6154,7 @@ Object {
   "StartAt": "Initialize Functionless Context",
   "States": Object {
     "1__for(i in input.items)": Object {
-      "InputPath": "$.heap0",
+      "ItemsPath": "$.heap0",
       "Iterator": Object {
         "StartAt": "Default",
         "States": Object {
@@ -6317,7 +6317,7 @@ Object {
   "StartAt": "Initialize Functionless Context",
   "States": Object {
     "1__for(i in input.items)": Object {
-      "InputPath": "$.heap0",
+      "ItemsPath": "$.heap0",
       "Iterator": Object {
         "StartAt": "Default",
         "States": Object {
@@ -6403,7 +6403,7 @@ Object {
   "StartAt": "Initialize Functionless Context",
   "States": Object {
     "1__for(i in input.items)": Object {
-      "InputPath": "$.heap0",
+      "ItemsPath": "$.heap0",
       "Iterator": Object {
         "StartAt": "Default",
         "States": Object {
@@ -6578,7 +6578,7 @@ Object {
   "StartAt": "Initialize Functionless Context",
   "States": Object {
     "1__for(i in input.items)": Object {
-      "InputPath": "$.heap0",
+      "ItemsPath": "$.heap0",
       "Iterator": Object {
         "StartAt": "Default",
         "States": Object {
@@ -6664,7 +6664,7 @@ Object {
   "StartAt": "Initialize Functionless Context",
   "States": Object {
     "1__for(i in input.items)": Object {
-      "InputPath": "$.heap0",
+      "ItemsPath": "$.heap0",
       "Iterator": Object {
         "StartAt": "Default",
         "States": Object {
@@ -7730,7 +7730,7 @@ Object {
   "StartAt": "Initialize Functionless Context",
   "States": Object {
     "1__for(x in input.items)": Object {
-      "InputPath": "$.heap0",
+      "ItemsPath": "$.heap0",
       "Iterator": Object {
         "StartAt": "Default",
         "States": Object {

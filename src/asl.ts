@@ -738,7 +738,7 @@ export class ASL {
           ? assignTempState
           : // if `ForIn`, map the array into a tuple of index and item
             ASLGraph.joinSubStates(stmt.expr, assignTempState, {
-              ...ASL.zipArray(
+              ...this.zipArray(
                 tempArrayPath,
                 (indexJsonPath) => `States.Format('{}', ${indexJsonPath})`
               ),
@@ -3065,6 +3065,10 @@ export class ASL {
     overwriteIterationItemResult: boolean,
     /**
      * Additional values to be initialized in the first state of the iteration.
+     *
+     * Note: This should not make use of json path values from the state.
+     *       ResultSelector is used on the Map state which only references the result and not
+     *       the greater state.
      */
     initValues: Record<string, Parameters>,
     /**
@@ -3194,26 +3198,27 @@ export class ASL {
      */
     const endState = getEndState(workingSpaceJsonPath);
 
-    // initial state of the `workingSpace`.
-    const initialState: Parameters = {
-      // copy array to tail it
-      [`${workingArrayName}.$`]: arrayJsonPath,
-      ...initValues,
-    };
-
     return {
       startState: "init",
       states: {
         init: indexParameter
           ? {
-              ...ASL.zipArray(arrayJsonPath),
-              ResultSelector: initialState,
+              ...this.zipArray(arrayJsonPath),
+              ResultSelector: {
+                // copy array to tail it
+                [`${workingArrayName}.$`]: "$",
+                ...initValues,
+              },
               ResultPath: workingSpaceJsonPath,
               Next: "check",
             }
           : {
               Type: "Pass",
-              Parameters: initialState,
+              Parameters: {
+                // copy array to tail it
+                [`${workingArrayName}.$`]: arrayJsonPath,
+                ...initValues,
+              },
               // use the eventual result location as a temp working space
               ResultPath: workingSpaceJsonPath,
               Next: "check",
@@ -3795,6 +3800,34 @@ export class ASL {
     };
 
     return [internal(expr), ASLGraph.joinSubStates(expr, ...subStates)];
+  }
+
+  /**
+   * Zip an array with it's index.
+   *
+   * In ASL, it is not possible to do arithmetic or get the length of an array, but
+   * the map state does give us the index.
+   *
+   * @param formatIndex allows the optional formatting of the index number, for example, turning it into a string.
+   * @returns a partial map state that results in an array of { index: number, item: arrayElement[index] }.
+   */
+  private zipArray(
+    arrayJsonPath: string,
+    formatIndex: (indexJsonPath: string) => string = (index) => index
+  ): Pick<MapTask, "Type" | "ItemsPath" | "Parameters" | "Iterator"> {
+    return {
+      Type: "Map" as const,
+      ItemsPath: arrayJsonPath,
+      Parameters: {
+        "index.$": formatIndex("$$.Map.Item.Index"),
+        "item.$": "$$.Map.Item.Value",
+      },
+      Iterator: this.aslGraphToStates({
+        Type: "Pass",
+        ResultPath: "$",
+        Next: ASLGraph.DeferNext,
+      }),
+    };
   }
 }
 
@@ -4958,39 +4991,6 @@ export namespace ASL {
 
   export const falseCondition = () => ASL.isNull("$$.Execution.Id");
   export const trueCondition = () => ASL.isNotNull("$$.Execution.Id");
-
-  /**
-   * Zip an array with it's index.
-   *
-   * In ASL, it is not possible to do arithmetic or get the length of an array, but
-   * the map state does give us the index.
-   *
-   * @param formatIndex allows the optional formatting of the index number, for example, turning it into a string.
-   * @returns a partial map state that results in an array of { index: number, item: arrayElement[index] }.
-   */
-  export const zipArray = (
-    arrayJsonPath: string,
-    formatIndex: (indexJsonPath: string) => string = (index) => index
-  ): Pick<MapTask, "Type" | "ItemsPath" | "Parameters" | "Iterator"> => {
-    return {
-      Type: "Map" as const,
-      ItemsPath: arrayJsonPath,
-      Parameters: {
-        "index.$": formatIndex("$$.Map.Item.Index"),
-        "item.$": "$$.Map.Item.Value",
-      },
-      Iterator: {
-        StartAt: "zip",
-        States: {
-          zip: {
-            Type: "Pass",
-            ResultPath: "$",
-            End: true,
-          },
-        },
-      },
-    };
-  };
 }
 
 /**
