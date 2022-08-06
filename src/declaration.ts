@@ -366,11 +366,7 @@ export enum VariableDeclKind {
 export class VariableDecl<
   E extends Expr | undefined = Expr | undefined
 > extends BaseDecl<NodeKind.VariableDecl, VariableDeclParent> {
-  constructor(
-    readonly name: BindingName,
-    readonly initializer: E,
-    readonly varKind: VariableDeclKind
-  ) {
+  constructor(readonly name: BindingName, readonly initializer: E) {
     super(NodeKind.VariableDecl, arguments);
     this.ensure(name, "name", NodeKind.BindingNames);
     this.ensure(initializer, "initializer", ["undefined", "Expr"]);
@@ -385,7 +381,10 @@ export class VariableDeclList extends BaseNode<
 > {
   readonly nodeKind: "Node" = "Node";
 
-  constructor(readonly decls: VariableDecl[]) {
+  constructor(
+    readonly decls: VariableDecl[],
+    readonly varKind: VariableDeclKind
+  ) {
     super(NodeKind.VariableDeclList, arguments);
     this.ensureArrayOf(decls, "decls", [NodeKind.VariableDecl]);
   }

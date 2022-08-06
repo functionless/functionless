@@ -492,6 +492,13 @@ export function compile(
             ts.factory.createArrayLiteralExpression(
               node.declarations.map((decl) => toExpr(decl, scope))
             ),
+            ts.factory.createNumericLiteral(
+              (node.flags & ts.NodeFlags.Const) !== 0
+                ? VariableDeclKind.Const
+                : (node.flags & ts.NodeFlags.Let) !== 0
+                ? VariableDeclKind.Let
+                : VariableDeclKind.Var
+            ),
           ]);
         } else if (ts.isVariableDeclaration(node)) {
           return newExpr(NodeKind.VariableDecl, [
@@ -503,13 +510,6 @@ export function compile(
             node.initializer
               ? toExpr(node.initializer, scope)
               : ts.factory.createIdentifier("undefined"),
-            ts.factory.createNumericLiteral(
-              (node.flags & ts.NodeFlags.Const) !== 0
-                ? VariableDeclKind.Const
-                : (node.flags & ts.NodeFlags.Let) !== 0
-                ? VariableDeclKind.Let
-                : VariableDeclKind.Var
-            ),
           ]);
         } else if (ts.isIfStatement(node)) {
           return newExpr(NodeKind.IfStmt, [

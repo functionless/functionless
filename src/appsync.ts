@@ -6,7 +6,11 @@ import {
   ToAttributeMap,
   ToAttributeValue,
 } from "typesafe-dynamodb/lib/attribute-value";
-import { FunctionLike, VariableDeclList } from "./declaration";
+import {
+  FunctionLike,
+  VariableDeclKind,
+  VariableDeclList,
+} from "./declaration";
 import { ErrorCodes, SynthError } from "./error-code";
 import {
   Argument,
@@ -482,7 +486,10 @@ function synthesizeFunctions(api: appsync.GraphqlApi, decl: FunctionLike) {
          * Flatten variable declarations into multiple variable statements.
          */
         return node.declList.decls.map(
-          (decl) => new VariableStmt(new VariableDeclList([decl]))
+          (decl) =>
+            new VariableStmt(
+              new VariableDeclList([decl], VariableDeclKind.Const)
+            )
         );
       } else if (isBinaryExpr(node)) {
         /**
