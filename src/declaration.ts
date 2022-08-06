@@ -357,10 +357,20 @@ export type VariableDeclParent =
   | ForOfStmt
   | VariableDeclList;
 
+export enum VariableDeclKind {
+  Const = 0,
+  Let = 1,
+  Var = 2,
+}
+
 export class VariableDecl<
   E extends Expr | undefined = Expr | undefined
 > extends BaseDecl<NodeKind.VariableDecl, VariableDeclParent> {
-  constructor(readonly name: BindingName, readonly initializer: E) {
+  constructor(
+    readonly name: BindingName,
+    readonly initializer: E,
+    readonly varKind: VariableDeclKind
+  ) {
     super(NodeKind.VariableDecl, arguments);
     this.ensure(name, "name", NodeKind.BindingNames);
     this.ensure(initializer, "initializer", ["undefined", "Expr"]);
