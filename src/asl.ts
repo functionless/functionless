@@ -129,7 +129,7 @@ import {
   invertBinaryOperator,
   isPromiseAll,
 } from "./util";
-import { visitBlock, visitEachChild } from "./visit";
+import { visitEachChild } from "./visit";
 
 export interface StateMachine<S extends States> {
   Version?: "1.0";
@@ -498,20 +498,21 @@ export class ASL {
     readonly role: aws_iam.IRole,
     decl: FunctionLike
   ) {
-    const self = this;
     this.decl = visitEachChild(decl, function normalizeAST(node):
       | FunctionlessNode
       | FunctionlessNode[] {
       if (isBlockStmt(node)) {
         return new BlockStmt([
           // for each block statement
-          ...visitBlock(
-            node,
-            function normalizeBlock(stmt) {
-              return visitEachChild(stmt, normalizeAST);
-            },
-            self.generatedNames
-          ).statements,
+          ...node.statements.flatMap((stmt) => {
+            const transformed = normalizeAST(stmt) as Stmt[];
+            if (Array.isArray(transformed)) {
+              return transformed;
+            } else {
+              return [transformed];
+            }
+          }),
+
           // re-write the AST to include explicit `ReturnStmt(NullLiteral())` statements
           // this simplifies the interpreter code by always having a node to chain onto, even when
           // the AST has no final `ReturnStmt` (i.e. when the function is a void function)
@@ -521,6 +522,16 @@ export class ASL {
             ? [new ReturnStmt(new NullLiteralExpr())]
             : []),
         ]);
+      } else if (isForOfStmt(node) && node.isAwait) {
+        throw new SynthError(
+          ErrorCodes.Unsupported_Feature,
+          `Step Functions does not yet support for-await, see https://github.com/functionless/functionless/issues/390`
+        );
+      } else if (isParameterDecl(node) && node.isRest) {
+        throw new SynthError(
+          ErrorCodes.Unsupported_Feature,
+          `Step Functions does not yet support rest parameters, see https://github.com/functionless/functionless/issues/391`
+        );
       }
       return visitEachChild(node, normalizeAST);
     });
