@@ -227,6 +227,7 @@ export class ElementAccessExpr extends BaseExpr<NodeKind.ElementAccessExpr> {
     super(NodeKind.ElementAccessExpr, arguments);
     this.ensure(expr, "expr", ["Expr"]);
     this.ensure(element, "element", ["Expr"]);
+    this.ensure(isOptional, "isOptional", ["undefined", "boolean"]);
   }
 }
 

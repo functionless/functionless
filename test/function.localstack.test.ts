@@ -443,6 +443,14 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
             "detail-type": "detail",
             source: "lambda",
             detail: {},
+            version: "1",
+            id: "bbbbbbbb-eeee-eeee-eeee-ffffffffffff",
+            account: "123456789012",
+            time: "2022-08-05T16:19:03Z",
+            region: "us-east-1",
+            resources: ["arn:aws:lambda:us-east-1:123456789012:function:foo"],
+            "trace-header":
+              "X-Amzn-Trace-Id: Root=1-5759e988-bd862e3fe1be46a994272793;Parent=53995c3f42cd8ad8;Sampled=1",
           });
         }
       );

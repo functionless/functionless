@@ -1,10 +1,16 @@
+/* eslint-disable no-bitwise */
 import path from "path";
 import minimatch from "minimatch";
 import type { PluginConfig, TransformerExtras } from "ts-patch";
 import ts from "typescript";
 import { assertDefined } from "./assert";
 import { makeFunctionlessChecker } from "./checker";
-import { ConstructorDecl, FunctionDecl, MethodDecl } from "./declaration";
+import {
+  ConstructorDecl,
+  FunctionDecl,
+  MethodDecl,
+  VariableDeclKind,
+} from "./declaration";
 import { ErrorCodes, SynthError } from "./error-code";
 import type {
   FunctionExpr,
@@ -337,9 +343,12 @@ export function compile(
               impl.parameters.map((param) =>
                 newExpr(NodeKind.ParameterDecl, [
                   toExpr(param.name, scope ?? impl),
-                  ...(param.initializer
-                    ? [toExpr(param.initializer, scope ?? impl)]
-                    : []),
+                  param.initializer
+                    ? toExpr(param.initializer, scope ?? impl)
+                    : ts.factory.createIdentifier("undefined"),
+                  param.dotDotDotToken
+                    ? ts.factory.createTrue()
+                    : ts.factory.createFalse(),
                 ])
               )
             ),
@@ -493,6 +502,13 @@ export function compile(
             ts.factory.createArrayLiteralExpression(
               node.declarations.map((decl) => toExpr(decl, scope))
             ),
+            ts.factory.createNumericLiteral(
+              (node.flags & ts.NodeFlags.Const) !== 0
+                ? VariableDeclKind.Const
+                : (node.flags & ts.NodeFlags.Let) !== 0
+                ? VariableDeclKind.Let
+                : VariableDeclKind.Var
+            ),
           ]);
         } else if (ts.isVariableDeclaration(node)) {
           return newExpr(NodeKind.VariableDecl, [
@@ -501,7 +517,9 @@ export function compile(
                   ts.factory.createStringLiteral(node.name.text),
                 ])
               : toExpr(node.name, scope),
-            ...(node.initializer ? [toExpr(node.initializer, scope)] : []),
+            node.initializer
+              ? toExpr(node.initializer, scope)
+              : ts.factory.createIdentifier("undefined"),
           ]);
         } else if (ts.isIfStatement(node)) {
           return newExpr(NodeKind.IfStmt, [
@@ -658,12 +676,20 @@ export function compile(
               "For in/of loops initializers should be an identifier or variable declaration."
             );
           }
+
           return newExpr(
             ts.isForOfStatement(node) ? NodeKind.ForOfStmt : NodeKind.ForInStmt,
             [
               toExpr(decl, scope),
               toExpr(node.expression, scope),
               toExpr(node.statement, scope),
+              ...(ts.isForOfStatement(node)
+                ? [
+                    node.awaitModifier
+                      ? ts.factory.createTrue()
+                      : ts.factory.createFalse(),
+                  ]
+                : []),
             ]
           );
         } else if (ts.isForStatement(node)) {

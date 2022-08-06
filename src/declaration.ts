@@ -209,10 +209,20 @@ export class ParameterDecl extends BaseDecl<
   NodeKind.ParameterDecl,
   ArrowFunctionExpr | FunctionDecl | FunctionExpr | SetAccessorDecl
 > {
-  constructor(readonly name: BindingName, readonly initializer?: Expr) {
+  constructor(
+    readonly name: BindingName,
+    readonly initializer: Expr | undefined,
+    /**
+     * Whether this ParameterDecl is a rest parameter
+     * ```ts
+     * function foo(...rest) {}
+     * ```
+     */ readonly isRest: boolean
+  ) {
     super(NodeKind.ParameterDecl, arguments);
     this.ensure(name, "name", NodeKind.BindingNames);
     this.ensure(initializer, "initializer", ["undefined", "Expr"]);
+    this.ensure(isRest, "isRest", ["boolean"]);
   }
 }
 
@@ -347,6 +357,12 @@ export type VariableDeclParent =
   | ForOfStmt
   | VariableDeclList;
 
+export enum VariableDeclKind {
+  Const = 0,
+  Let = 1,
+  Var = 2,
+}
+
 export class VariableDecl<
   E extends Expr | undefined = Expr | undefined
 > extends BaseDecl<NodeKind.VariableDecl, VariableDeclParent> {
@@ -365,7 +381,10 @@ export class VariableDeclList extends BaseNode<
 > {
   readonly nodeKind: "Node" = "Node";
 
-  constructor(readonly decls: VariableDecl[]) {
+  constructor(
+    readonly decls: VariableDecl[],
+    readonly varKind: VariableDeclKind
+  ) {
     super(NodeKind.VariableDeclList, arguments);
     this.ensureArrayOf(decls, "decls", [NodeKind.VariableDecl]);
   }

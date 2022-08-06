@@ -155,13 +155,15 @@ export namespace $SFN {
           typeof secondsOutput.value === "number"
         ) {
           return context.stateWithVoidOutput({
-            Type: "Wait" as const,
+            Type: "Wait",
             Seconds: secondsOutput.value,
+            Next: ASLGraph.DeferNext,
           });
         } else if (ASLGraph.isJsonPath(secondsOutput)) {
           return context.stateWithVoidOutput({
-            Type: "Wait" as const,
+            Type: "Wait",
             SecondsPath: secondsOutput.jsonPath,
+            Next: ASLGraph.DeferNext,
           });
         }
 
@@ -200,11 +202,13 @@ export namespace $SFN {
           return context.stateWithVoidOutput({
             Type: "Wait",
             Timestamp: timestampOutput.value,
+            Next: ASLGraph.DeferNext,
           });
         } else if (ASLGraph.isJsonPath(timestampOutput)) {
           return context.stateWithVoidOutput({
             Type: "Wait",
             TimestampPath: timestampOutput.jsonPath,
+            Next: ASLGraph.DeferNext,
           });
         }
 
@@ -321,7 +325,14 @@ export namespace $SFN {
     if (callbackfn === undefined || !isFunctionLike(callbackfn)) {
       throw new Error("missing callbackfn in $SFN.map");
     }
-    const callbackStates = context.evalStmt(callbackfn.body);
+    const callbackStates = context.evalStmt(
+      callbackfn.body,
+      // when a return statement is hit, end the sub-machine in the map and return the given value.
+      {
+        End: true,
+        ResultPath: "$",
+      }
+    );
 
     const props = call.args.length === 3 ? call.args[1]?.expr : undefined;
     let maxConcurrency: number | undefined;
@@ -403,6 +414,7 @@ export namespace $SFN {
             ...context.cloneLexicalScopeParameters(call),
             ...Object.fromEntries(parameters.map(({ param }) => param)),
           },
+          Next: ASLGraph.DeferNext,
         },
         call
       );
@@ -444,17 +456,26 @@ export namespace $SFN {
       return context.stateWithHeapOutput({
         Type: "Parallel",
         Branches: paths.map((func) => {
-          const funcBody = context.evalStmt(func.body);
+          const funcBody = context.evalStmt(
+            func.body,
+            // when a return statement is hit, end the sub-machine in the parallel branch and return the given value.
+            {
+              End: true,
+              ResultPath: "$",
+            }
+          );
 
           if (!funcBody) {
             return context.aslGraphToStates({
-              Type: "Pass" as const,
+              Type: "Pass",
               ResultPath: null,
+              Next: ASLGraph.DeferNext,
             });
           }
 
           return context.aslGraphToStates(funcBody);
         }),
+        Next: ASLGraph.DeferNext,
       });
     },
   });
@@ -800,7 +821,7 @@ abstract class BaseStepFunction<
       );
 
       return context.stateWithHeapOutput({
-        Type: "Task" as const,
+        Type: "Task",
         Resource: `arn:aws:states:::aws-sdk:sfn:${
           this.resource.stateMachineType ===
           aws_stepfunctions.StateMachineType.EXPRESS
@@ -811,6 +832,7 @@ abstract class BaseStepFunction<
           StateMachineArn: this.resource.stateMachineArn,
           ...evalInputs,
         },
+        Next: ASLGraph.DeferNext,
       });
     });
   }
@@ -1431,6 +1453,7 @@ class BaseStandardStepFunction<
           Type: "Task",
           Resource: "arn:aws:states:::aws-sdk:sfn:describeExecution",
           Parameters: context.toJsonAssignment("ExecutionArn", argValueOutput),
+          Next: ASLGraph.DeferNext,
         });
       });
     },

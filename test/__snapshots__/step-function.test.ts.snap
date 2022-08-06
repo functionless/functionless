@@ -171,6 +171,1275 @@ Object {
 }
 `;
 
+exports[`[1,2,3,4].filter((item, index) => item > index) 1`] = `
+Object {
+  "StartAt": "Initialize Functionless Context",
+  "States": Object {
+    "1__return [1, 2, 3, 4].filter(function(item, index))": Object {
+      "End": true,
+      "InputPath": "$.heap1",
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "1__return item > index": Object {
+      "InputPath": "$.heap3",
+      "Next": "handleResult__[1, 2, 3, 4].filter(function(item, index))",
+      "ResultPath": "$.heap2",
+      "Type": "Pass",
+    },
+    "Initialize Functionless Context": Object {
+      "Next": "return [1, 2, 3, 4].filter(function(item, index))",
+      "Parameters": Object {
+        "fnl_context": Object {
+          "null": null,
+        },
+      },
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "[1, 2, 3, 4].filter(function(item, index))": Object {
+      "ItemsPath": "$.heap0",
+      "Iterator": Object {
+        "StartAt": "Default",
+        "States": Object {
+          "Default": Object {
+            "End": true,
+            "ResultPath": "$",
+            "Type": "Pass",
+          },
+        },
+      },
+      "Next": "check__[1, 2, 3, 4].filter(function(item, index))",
+      "Parameters": Object {
+        "index.$": "$$.Map.Item.Index",
+        "item.$": "$$.Map.Item.Value",
+      },
+      "ResultPath": "$.heap1",
+      "ResultSelector": Object {
+        "arr.$": "$",
+        "arrStr": "[null",
+      },
+      "Type": "Map",
+    },
+    "assignFalse__return item > index": Object {
+      "Next": "1__return item > index",
+      "Result": false,
+      "ResultPath": "$.heap3",
+      "Type": "Pass",
+    },
+    "assignTrue__return item > index": Object {
+      "Next": "1__return item > index",
+      "Result": true,
+      "ResultPath": "$.heap3",
+      "Type": "Pass",
+    },
+    "check__[1, 2, 3, 4].filter(function(item, index))": Object {
+      "Choices": Array [
+        Object {
+          "IsPresent": true,
+          "Next": "function(item, index)",
+          "Variable": "$.heap1.arr[0]",
+        },
+      ],
+      "Default": "end__[1, 2, 3, 4].filter(function(item, index))",
+      "Type": "Choice",
+    },
+    "end__[1, 2, 3, 4].filter(function(item, index))": Object {
+      "Next": "set__end__[1, 2, 3, 4].filter(function(item, index))",
+      "Parameters": Object {
+        "result.$": "States.StringToJson(States.Format('{}]', $.heap1.arrStr))",
+      },
+      "ResultPath": "$.heap1",
+      "Type": "Pass",
+    },
+    "function(item, index)": Object {
+      "InputPath": "$.heap1.arr[0].item",
+      "Next": "index",
+      "ResultPath": "$.item",
+      "Type": "Pass",
+    },
+    "handleResult__[1, 2, 3, 4].filter(function(item, index))": Object {
+      "Choices": Array [
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.heap2",
+            },
+            Object {
+              "IsNull": false,
+              "Variable": "$.heap2",
+            },
+            Object {
+              "Or": Array [
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsString": true,
+                      "Variable": "$.heap2",
+                    },
+                    Object {
+                      "Not": Object {
+                        "And": Array [
+                          Object {
+                            "IsString": true,
+                            "Variable": "$.heap2",
+                          },
+                          Object {
+                            "StringEquals": "",
+                            "Variable": "$.heap2",
+                          },
+                        ],
+                      },
+                    },
+                  ],
+                },
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsNumeric": true,
+                      "Variable": "$.heap2",
+                    },
+                    Object {
+                      "Not": Object {
+                        "And": Array [
+                          Object {
+                            "IsNumeric": true,
+                            "Variable": "$.heap2",
+                          },
+                          Object {
+                            "NumericEquals": 0,
+                            "Variable": "$.heap2",
+                          },
+                        ],
+                      },
+                    },
+                  ],
+                },
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsBoolean": true,
+                      "Variable": "$.heap2",
+                    },
+                    Object {
+                      "BooleanEquals": true,
+                      "Variable": "$.heap2",
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+          "Next": "predicateTrue__handleResult__[1, 2, 3, 4].filter(function(item, index))",
+        },
+      ],
+      "Default": "tail__[1, 2, 3, 4].filter(function(item, index))",
+      "Type": "Choice",
+    },
+    "index": Object {
+      "InputPath": "$.heap1.arr[0].index",
+      "Next": "return item > index",
+      "ResultPath": "$.index",
+      "Type": "Pass",
+    },
+    "predicateTrue__handleResult__[1, 2, 3, 4].filter(function(item, index))": Object {
+      "Next": "check__[1, 2, 3, 4].filter(function(item, index))",
+      "Parameters": Object {
+        "arr.$": "$.heap1.arr[1:]",
+        "arrStr.$": "States.Format('{},{}', $.heap1.arrStr, States.JsonToString($.heap1.arr[0].item))",
+      },
+      "ResultPath": "$.heap1",
+      "Type": "Pass",
+    },
+    "return [1, 2, 3, 4].filter(function(item, index))": Object {
+      "Next": "[1, 2, 3, 4].filter(function(item, index))",
+      "Result": Array [
+        1,
+        2,
+        3,
+        4,
+      ],
+      "ResultPath": "$.heap0",
+      "Type": "Pass",
+    },
+    "return item > index": Object {
+      "Choices": Array [
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.item",
+            },
+            Object {
+              "Or": Array [
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsString": true,
+                      "Variable": "$.item",
+                    },
+                    Object {
+                      "StringGreaterThanPath": "$.index",
+                      "Variable": "$.item",
+                    },
+                  ],
+                },
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsBoolean": true,
+                      "Variable": "$.item",
+                    },
+                    Object {
+                      "IsNull": true,
+                      "Variable": "$$.Execution.Id",
+                    },
+                  ],
+                },
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsNumeric": true,
+                      "Variable": "$.item",
+                    },
+                    Object {
+                      "NumericGreaterThanPath": "$.index",
+                      "Variable": "$.item",
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+          "Next": "assignTrue__return item > index",
+        },
+      ],
+      "Default": "assignFalse__return item > index",
+      "Type": "Choice",
+    },
+    "set__end__[1, 2, 3, 4].filter(function(item, index))": Object {
+      "InputPath": "$.heap1.result[1:]",
+      "Next": "1__return [1, 2, 3, 4].filter(function(item, index))",
+      "ResultPath": "$.heap1",
+      "Type": "Pass",
+    },
+    "tail__[1, 2, 3, 4].filter(function(item, index))": Object {
+      "InputPath": "$.heap1.arr[1:]",
+      "Next": "check__[1, 2, 3, 4].filter(function(item, index))",
+      "ResultPath": "$.heap1.arr",
+      "Type": "Pass",
+    },
+  },
+}
+`;
+
+exports[`[1,2,3,4].filter((item, index, array) => item > 1 + 2) 1`] = `
+Object {
+  "StartAt": "Initialize Functionless Context",
+  "States": Object {
+    "1__return [1, 2, 3, 4].filter(function(item, _, arr))": Object {
+      "End": true,
+      "InputPath": "$.heap1",
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "1__return item > arr[0]": Object {
+      "InputPath": "$.heap3",
+      "Next": "handleResult__[1, 2, 3, 4].filter(function(item, _, arr))",
+      "ResultPath": "$.heap2",
+      "Type": "Pass",
+    },
+    "Initialize Functionless Context": Object {
+      "Next": "return [1, 2, 3, 4].filter(function(item, _, arr))",
+      "Parameters": Object {
+        "fnl_context": Object {
+          "null": null,
+        },
+      },
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "[1, 2, 3, 4].filter(function(item, _, arr))": Object {
+      "ItemsPath": "$.heap0",
+      "Iterator": Object {
+        "StartAt": "Default",
+        "States": Object {
+          "Default": Object {
+            "End": true,
+            "ResultPath": "$",
+            "Type": "Pass",
+          },
+        },
+      },
+      "Next": "check__[1, 2, 3, 4].filter(function(item, _, arr))",
+      "Parameters": Object {
+        "index.$": "$$.Map.Item.Index",
+        "item.$": "$$.Map.Item.Value",
+      },
+      "ResultPath": "$.heap1",
+      "ResultSelector": Object {
+        "arr.$": "$",
+        "arrStr": "[null",
+      },
+      "Type": "Map",
+    },
+    "_": Object {
+      "InputPath": "$.heap1.arr[0].index",
+      "Next": "arr",
+      "ResultPath": "$._",
+      "Type": "Pass",
+    },
+    "arr": Object {
+      "InputPath": "$.heap0",
+      "Next": "return item > arr[0]",
+      "ResultPath": "$.arr",
+      "Type": "Pass",
+    },
+    "assignFalse__return item > arr[0]": Object {
+      "Next": "1__return item > arr[0]",
+      "Result": false,
+      "ResultPath": "$.heap3",
+      "Type": "Pass",
+    },
+    "assignTrue__return item > arr[0]": Object {
+      "Next": "1__return item > arr[0]",
+      "Result": true,
+      "ResultPath": "$.heap3",
+      "Type": "Pass",
+    },
+    "check__[1, 2, 3, 4].filter(function(item, _, arr))": Object {
+      "Choices": Array [
+        Object {
+          "IsPresent": true,
+          "Next": "function(item, _, arr)",
+          "Variable": "$.heap1.arr[0]",
+        },
+      ],
+      "Default": "end__[1, 2, 3, 4].filter(function(item, _, arr))",
+      "Type": "Choice",
+    },
+    "end__[1, 2, 3, 4].filter(function(item, _, arr))": Object {
+      "Next": "set__end__[1, 2, 3, 4].filter(function(item, _, arr))",
+      "Parameters": Object {
+        "result.$": "States.StringToJson(States.Format('{}]', $.heap1.arrStr))",
+      },
+      "ResultPath": "$.heap1",
+      "Type": "Pass",
+    },
+    "function(item, _, arr)": Object {
+      "InputPath": "$.heap1.arr[0].item",
+      "Next": "_",
+      "ResultPath": "$.item",
+      "Type": "Pass",
+    },
+    "handleResult__[1, 2, 3, 4].filter(function(item, _, arr))": Object {
+      "Choices": Array [
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.heap2",
+            },
+            Object {
+              "IsNull": false,
+              "Variable": "$.heap2",
+            },
+            Object {
+              "Or": Array [
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsString": true,
+                      "Variable": "$.heap2",
+                    },
+                    Object {
+                      "Not": Object {
+                        "And": Array [
+                          Object {
+                            "IsString": true,
+                            "Variable": "$.heap2",
+                          },
+                          Object {
+                            "StringEquals": "",
+                            "Variable": "$.heap2",
+                          },
+                        ],
+                      },
+                    },
+                  ],
+                },
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsNumeric": true,
+                      "Variable": "$.heap2",
+                    },
+                    Object {
+                      "Not": Object {
+                        "And": Array [
+                          Object {
+                            "IsNumeric": true,
+                            "Variable": "$.heap2",
+                          },
+                          Object {
+                            "NumericEquals": 0,
+                            "Variable": "$.heap2",
+                          },
+                        ],
+                      },
+                    },
+                  ],
+                },
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsBoolean": true,
+                      "Variable": "$.heap2",
+                    },
+                    Object {
+                      "BooleanEquals": true,
+                      "Variable": "$.heap2",
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+          "Next": "predicateTrue__handleResult__[1, 2, 3, 4].filter(function(item, _, arr))",
+        },
+      ],
+      "Default": "tail__[1, 2, 3, 4].filter(function(item, _, arr))",
+      "Type": "Choice",
+    },
+    "predicateTrue__handleResult__[1, 2, 3, 4].filter(function(item, _, arr))": Object {
+      "Next": "check__[1, 2, 3, 4].filter(function(item, _, arr))",
+      "Parameters": Object {
+        "arr.$": "$.heap1.arr[1:]",
+        "arrStr.$": "States.Format('{},{}', $.heap1.arrStr, States.JsonToString($.heap1.arr[0].item))",
+      },
+      "ResultPath": "$.heap1",
+      "Type": "Pass",
+    },
+    "return [1, 2, 3, 4].filter(function(item, _, arr))": Object {
+      "Next": "[1, 2, 3, 4].filter(function(item, _, arr))",
+      "Result": Array [
+        1,
+        2,
+        3,
+        4,
+      ],
+      "ResultPath": "$.heap0",
+      "Type": "Pass",
+    },
+    "return item > arr[0]": Object {
+      "Choices": Array [
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.item",
+            },
+            Object {
+              "Or": Array [
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsString": true,
+                      "Variable": "$.item",
+                    },
+                    Object {
+                      "StringGreaterThanPath": "$.arr[0]",
+                      "Variable": "$.item",
+                    },
+                  ],
+                },
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsBoolean": true,
+                      "Variable": "$.item",
+                    },
+                    Object {
+                      "IsNull": true,
+                      "Variable": "$$.Execution.Id",
+                    },
+                  ],
+                },
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsNumeric": true,
+                      "Variable": "$.item",
+                    },
+                    Object {
+                      "NumericGreaterThanPath": "$.arr[0]",
+                      "Variable": "$.item",
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+          "Next": "assignTrue__return item > arr[0]",
+        },
+      ],
+      "Default": "assignFalse__return item > arr[0]",
+      "Type": "Choice",
+    },
+    "set__end__[1, 2, 3, 4].filter(function(item, _, arr))": Object {
+      "InputPath": "$.heap1.result[1:]",
+      "Next": "1__return [1, 2, 3, 4].filter(function(item, _, arr))",
+      "ResultPath": "$.heap1",
+      "Type": "Pass",
+    },
+    "tail__[1, 2, 3, 4].filter(function(item, _, arr))": Object {
+      "InputPath": "$.heap1.arr[1:]",
+      "Next": "check__[1, 2, 3, 4].filter(function(item, _, arr))",
+      "ResultPath": "$.heap1.arr",
+      "Type": "Pass",
+    },
+  },
+}
+`;
+
+exports[`[1,2,3,4].filter((item, index, array) => item > 1 + 2) 2`] = `
+Object {
+  "StartAt": "Initialize Functionless Context",
+  "States": Object {
+    "1__return [1, 2, 3, 4].filter(function(item, _, [first]))": Object {
+      "End": true,
+      "InputPath": "$.heap1",
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "1__return item > first": Object {
+      "InputPath": "$.heap3",
+      "Next": "handleResult__[1, 2, 3, 4].filter(function(item, _, [first]))",
+      "ResultPath": "$.heap2",
+      "Type": "Pass",
+    },
+    "Initialize Functionless Context": Object {
+      "Next": "return [1, 2, 3, 4].filter(function(item, _, [first]))",
+      "Parameters": Object {
+        "fnl_context": Object {
+          "null": null,
+        },
+      },
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "[ first ]": Object {
+      "InputPath": "$.heap0[0]",
+      "Next": "return item > first",
+      "ResultPath": "$.first",
+      "Type": "Pass",
+    },
+    "[1, 2, 3, 4].filter(function(item, _, [first]))": Object {
+      "ItemsPath": "$.heap0",
+      "Iterator": Object {
+        "StartAt": "Default",
+        "States": Object {
+          "Default": Object {
+            "End": true,
+            "ResultPath": "$",
+            "Type": "Pass",
+          },
+        },
+      },
+      "Next": "check__[1, 2, 3, 4].filter(function(item, _, [first]))",
+      "Parameters": Object {
+        "index.$": "$$.Map.Item.Index",
+        "item.$": "$$.Map.Item.Value",
+      },
+      "ResultPath": "$.heap1",
+      "ResultSelector": Object {
+        "arr.$": "$",
+        "arrStr": "[null",
+      },
+      "Type": "Map",
+    },
+    "_": Object {
+      "InputPath": "$.heap1.arr[0].index",
+      "Next": "[ first ]",
+      "ResultPath": "$._",
+      "Type": "Pass",
+    },
+    "assignFalse__return item > first": Object {
+      "Next": "1__return item > first",
+      "Result": false,
+      "ResultPath": "$.heap3",
+      "Type": "Pass",
+    },
+    "assignTrue__return item > first": Object {
+      "Next": "1__return item > first",
+      "Result": true,
+      "ResultPath": "$.heap3",
+      "Type": "Pass",
+    },
+    "check__[1, 2, 3, 4].filter(function(item, _, [first]))": Object {
+      "Choices": Array [
+        Object {
+          "IsPresent": true,
+          "Next": "function(item, _, [first])",
+          "Variable": "$.heap1.arr[0]",
+        },
+      ],
+      "Default": "end__[1, 2, 3, 4].filter(function(item, _, [first]))",
+      "Type": "Choice",
+    },
+    "end__[1, 2, 3, 4].filter(function(item, _, [first]))": Object {
+      "Next": "set__end__[1, 2, 3, 4].filter(function(item, _, [first]))",
+      "Parameters": Object {
+        "result.$": "States.StringToJson(States.Format('{}]', $.heap1.arrStr))",
+      },
+      "ResultPath": "$.heap1",
+      "Type": "Pass",
+    },
+    "function(item, _, [first])": Object {
+      "InputPath": "$.heap1.arr[0].item",
+      "Next": "_",
+      "ResultPath": "$.item",
+      "Type": "Pass",
+    },
+    "handleResult__[1, 2, 3, 4].filter(function(item, _, [first]))": Object {
+      "Choices": Array [
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.heap2",
+            },
+            Object {
+              "IsNull": false,
+              "Variable": "$.heap2",
+            },
+            Object {
+              "Or": Array [
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsString": true,
+                      "Variable": "$.heap2",
+                    },
+                    Object {
+                      "Not": Object {
+                        "And": Array [
+                          Object {
+                            "IsString": true,
+                            "Variable": "$.heap2",
+                          },
+                          Object {
+                            "StringEquals": "",
+                            "Variable": "$.heap2",
+                          },
+                        ],
+                      },
+                    },
+                  ],
+                },
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsNumeric": true,
+                      "Variable": "$.heap2",
+                    },
+                    Object {
+                      "Not": Object {
+                        "And": Array [
+                          Object {
+                            "IsNumeric": true,
+                            "Variable": "$.heap2",
+                          },
+                          Object {
+                            "NumericEquals": 0,
+                            "Variable": "$.heap2",
+                          },
+                        ],
+                      },
+                    },
+                  ],
+                },
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsBoolean": true,
+                      "Variable": "$.heap2",
+                    },
+                    Object {
+                      "BooleanEquals": true,
+                      "Variable": "$.heap2",
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+          "Next": "predicateTrue__handleResult__[1, 2, 3, 4].filter(function(item, _, [first])",
+        },
+      ],
+      "Default": "tail__[1, 2, 3, 4].filter(function(item, _, [first]))",
+      "Type": "Choice",
+    },
+    "predicateTrue__handleResult__[1, 2, 3, 4].filter(function(item, _, [first])": Object {
+      "Next": "check__[1, 2, 3, 4].filter(function(item, _, [first]))",
+      "Parameters": Object {
+        "arr.$": "$.heap1.arr[1:]",
+        "arrStr.$": "States.Format('{},{}', $.heap1.arrStr, States.JsonToString($.heap1.arr[0].item))",
+      },
+      "ResultPath": "$.heap1",
+      "Type": "Pass",
+    },
+    "return [1, 2, 3, 4].filter(function(item, _, [first]))": Object {
+      "Next": "[1, 2, 3, 4].filter(function(item, _, [first]))",
+      "Result": Array [
+        1,
+        2,
+        3,
+        4,
+      ],
+      "ResultPath": "$.heap0",
+      "Type": "Pass",
+    },
+    "return item > first": Object {
+      "Choices": Array [
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.item",
+            },
+            Object {
+              "Or": Array [
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsString": true,
+                      "Variable": "$.item",
+                    },
+                    Object {
+                      "StringGreaterThanPath": "$.first",
+                      "Variable": "$.item",
+                    },
+                  ],
+                },
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsBoolean": true,
+                      "Variable": "$.item",
+                    },
+                    Object {
+                      "IsNull": true,
+                      "Variable": "$$.Execution.Id",
+                    },
+                  ],
+                },
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsNumeric": true,
+                      "Variable": "$.item",
+                    },
+                    Object {
+                      "NumericGreaterThanPath": "$.first",
+                      "Variable": "$.item",
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+          "Next": "assignTrue__return item > first",
+        },
+      ],
+      "Default": "assignFalse__return item > first",
+      "Type": "Choice",
+    },
+    "set__end__[1, 2, 3, 4].filter(function(item, _, [first]))": Object {
+      "InputPath": "$.heap1.result[1:]",
+      "Next": "1__return [1, 2, 3, 4].filter(function(item, _, [first]))",
+      "ResultPath": "$.heap1",
+      "Type": "Pass",
+    },
+    "tail__[1, 2, 3, 4].filter(function(item, _, [first]))": Object {
+      "InputPath": "$.heap1.arr[1:]",
+      "Next": "check__[1, 2, 3, 4].filter(function(item, _, [first]))",
+      "ResultPath": "$.heap1.arr",
+      "Type": "Pass",
+    },
+  },
+}
+`;
+
+exports[`[1,2,3,4].filter(item => item > {}) 1`] = `
+Object {
+  "StartAt": "Initialize Functionless Context",
+  "States": Object {
+    "1__return [{}].filter(function(item))": Object {
+      "End": true,
+      "InputPath": "$.heap1",
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "1__return item == {a: \\"a\\"}": Object {
+      "InputPath": "$.heap3",
+      "Next": "handleResult__[{}].filter(function(item))",
+      "ResultPath": "$.heap2",
+      "Type": "Pass",
+    },
+    "Initialize Functionless Context": Object {
+      "Next": "return [{}].filter(function(item))",
+      "Parameters": Object {
+        "fnl_context": Object {
+          "null": null,
+        },
+      },
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "[{}].filter(function(item))": Object {
+      "Next": "check__[{}].filter(function(item))",
+      "Parameters": Object {
+        "arr.$": "$.heap0",
+        "arrStr": "[null",
+      },
+      "ResultPath": "$.heap1",
+      "Type": "Pass",
+    },
+    "assignFalse__return item == {a: \\"a\\"}": Object {
+      "Next": "1__return item == {a: \\"a\\"}",
+      "Result": false,
+      "ResultPath": "$.heap3",
+      "Type": "Pass",
+    },
+    "assignTrue__return item == {a: \\"a\\"}": Object {
+      "Next": "1__return item == {a: \\"a\\"}",
+      "Result": true,
+      "ResultPath": "$.heap3",
+      "Type": "Pass",
+    },
+    "check__[{}].filter(function(item))": Object {
+      "Choices": Array [
+        Object {
+          "IsPresent": true,
+          "Next": "item",
+          "Variable": "$.heap1.arr[0]",
+        },
+      ],
+      "Default": "end__[{}].filter(function(item))",
+      "Type": "Choice",
+    },
+    "end__[{}].filter(function(item))": Object {
+      "Next": "set__end__[{}].filter(function(item))",
+      "Parameters": Object {
+        "result.$": "States.StringToJson(States.Format('{}]', $.heap1.arrStr))",
+      },
+      "ResultPath": "$.heap1",
+      "Type": "Pass",
+    },
+    "handleResult__[{}].filter(function(item))": Object {
+      "Choices": Array [
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.heap2",
+            },
+            Object {
+              "IsNull": false,
+              "Variable": "$.heap2",
+            },
+            Object {
+              "Or": Array [
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsString": true,
+                      "Variable": "$.heap2",
+                    },
+                    Object {
+                      "Not": Object {
+                        "And": Array [
+                          Object {
+                            "IsString": true,
+                            "Variable": "$.heap2",
+                          },
+                          Object {
+                            "StringEquals": "",
+                            "Variable": "$.heap2",
+                          },
+                        ],
+                      },
+                    },
+                  ],
+                },
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsNumeric": true,
+                      "Variable": "$.heap2",
+                    },
+                    Object {
+                      "Not": Object {
+                        "And": Array [
+                          Object {
+                            "IsNumeric": true,
+                            "Variable": "$.heap2",
+                          },
+                          Object {
+                            "NumericEquals": 0,
+                            "Variable": "$.heap2",
+                          },
+                        ],
+                      },
+                    },
+                  ],
+                },
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsBoolean": true,
+                      "Variable": "$.heap2",
+                    },
+                    Object {
+                      "BooleanEquals": true,
+                      "Variable": "$.heap2",
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+          "Next": "predicateTrue__handleResult__[{}].filter(function(item))",
+        },
+      ],
+      "Default": "tail__[{}].filter(function(item))",
+      "Type": "Choice",
+    },
+    "item": Object {
+      "InputPath": "$.heap1.arr[0]",
+      "Next": "return item == {a: \\"a\\"}",
+      "ResultPath": "$.item",
+      "Type": "Pass",
+    },
+    "predicateTrue__handleResult__[{}].filter(function(item))": Object {
+      "Next": "check__[{}].filter(function(item))",
+      "Parameters": Object {
+        "arr.$": "$.heap1.arr[1:]",
+        "arrStr.$": "States.Format('{},{}', $.heap1.arrStr, States.JsonToString($.heap1.arr[0]))",
+      },
+      "ResultPath": "$.heap1",
+      "Type": "Pass",
+    },
+    "return [{}].filter(function(item))": Object {
+      "Next": "[{}].filter(function(item))",
+      "Result": Array [
+        Object {},
+      ],
+      "ResultPath": "$.heap0",
+      "Type": "Pass",
+    },
+    "return item == {a: \\"a\\"}": Object {
+      "Choices": Array [
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.item",
+            },
+            Object {
+              "IsNull": false,
+              "Variable": "$$.Execution.Id",
+            },
+          ],
+          "Next": "assignTrue__return item == {a: \\"a\\"}",
+        },
+      ],
+      "Default": "assignFalse__return item == {a: \\"a\\"}",
+      "Type": "Choice",
+    },
+    "set__end__[{}].filter(function(item))": Object {
+      "InputPath": "$.heap1.result[1:]",
+      "Next": "1__return [{}].filter(function(item))",
+      "ResultPath": "$.heap1",
+      "Type": "Pass",
+    },
+    "tail__[{}].filter(function(item))": Object {
+      "InputPath": "$.heap1.arr[1:]",
+      "Next": "check__[{}].filter(function(item))",
+      "ResultPath": "$.heap1.arr",
+      "Type": "Pass",
+    },
+  },
+}
+`;
+
+exports[`[1,2,3,4].filter(item => item > {}) 2`] = `
+Object {
+  "StartAt": "Initialize Functionless Context",
+  "States": Object {
+    "1__return [{value: \\"a\\"}].filter(function(item))": Object {
+      "End": true,
+      "InputPath": "$.heap1",
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "1__return value == a": Object {
+      "InputPath": "$.heap3",
+      "Next": "handleResult__[{value: \\"a\\"}].filter(function(item))",
+      "ResultPath": "$.heap2",
+      "Type": "Pass",
+    },
+    "Initialize Functionless Context": Object {
+      "Next": "return [{value: \\"a\\"}].filter(function(item))",
+      "Parameters": Object {
+        "fnl_context": Object {
+          "null": null,
+        },
+      },
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "[{value: \\"a\\"}].filter(function(item))": Object {
+      "Next": "check__[{value: \\"a\\"}].filter(function(item))",
+      "Parameters": Object {
+        "arr.$": "$.heap0",
+        "arrStr": "[null",
+      },
+      "ResultPath": "$.heap1",
+      "Type": "Pass",
+    },
+    "a = \\"a\\"": Object {
+      "Next": "{value} = item",
+      "Result": "a",
+      "ResultPath": "$.a",
+      "Type": "Pass",
+    },
+    "assignFalse__return value == a": Object {
+      "Next": "1__return value == a",
+      "Result": false,
+      "ResultPath": "$.heap3",
+      "Type": "Pass",
+    },
+    "assignTrue__return value == a": Object {
+      "Next": "1__return value == a",
+      "Result": true,
+      "ResultPath": "$.heap3",
+      "Type": "Pass",
+    },
+    "check__[{value: \\"a\\"}].filter(function(item))": Object {
+      "Choices": Array [
+        Object {
+          "IsPresent": true,
+          "Next": "item",
+          "Variable": "$.heap1.arr[0]",
+        },
+      ],
+      "Default": "end__[{value: \\"a\\"}].filter(function(item))",
+      "Type": "Choice",
+    },
+    "end__[{value: \\"a\\"}].filter(function(item))": Object {
+      "Next": "set__end__[{value: \\"a\\"}].filter(function(item))",
+      "Parameters": Object {
+        "result.$": "States.StringToJson(States.Format('{}]', $.heap1.arrStr))",
+      },
+      "ResultPath": "$.heap1",
+      "Type": "Pass",
+    },
+    "handleResult__[{value: \\"a\\"}].filter(function(item))": Object {
+      "Choices": Array [
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.heap2",
+            },
+            Object {
+              "IsNull": false,
+              "Variable": "$.heap2",
+            },
+            Object {
+              "Or": Array [
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsString": true,
+                      "Variable": "$.heap2",
+                    },
+                    Object {
+                      "Not": Object {
+                        "And": Array [
+                          Object {
+                            "IsString": true,
+                            "Variable": "$.heap2",
+                          },
+                          Object {
+                            "StringEquals": "",
+                            "Variable": "$.heap2",
+                          },
+                        ],
+                      },
+                    },
+                  ],
+                },
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsNumeric": true,
+                      "Variable": "$.heap2",
+                    },
+                    Object {
+                      "Not": Object {
+                        "And": Array [
+                          Object {
+                            "IsNumeric": true,
+                            "Variable": "$.heap2",
+                          },
+                          Object {
+                            "NumericEquals": 0,
+                            "Variable": "$.heap2",
+                          },
+                        ],
+                      },
+                    },
+                  ],
+                },
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsBoolean": true,
+                      "Variable": "$.heap2",
+                    },
+                    Object {
+                      "BooleanEquals": true,
+                      "Variable": "$.heap2",
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+          "Next": "predicateTrue__handleResult__[{value: \\"a\\"}].filter(function(item))",
+        },
+      ],
+      "Default": "tail__[{value: \\"a\\"}].filter(function(item))",
+      "Type": "Choice",
+    },
+    "item": Object {
+      "InputPath": "$.heap1.arr[0]",
+      "Next": "a = \\"a\\"",
+      "ResultPath": "$.item",
+      "Type": "Pass",
+    },
+    "predicateTrue__handleResult__[{value: \\"a\\"}].filter(function(item))": Object {
+      "Next": "check__[{value: \\"a\\"}].filter(function(item))",
+      "Parameters": Object {
+        "arr.$": "$.heap1.arr[1:]",
+        "arrStr.$": "States.Format('{},{}', $.heap1.arrStr, States.JsonToString($.heap1.arr[0]))",
+      },
+      "ResultPath": "$.heap1",
+      "Type": "Pass",
+    },
+    "return [{value: \\"a\\"}].filter(function(item))": Object {
+      "Next": "[{value: \\"a\\"}].filter(function(item))",
+      "Result": Array [
+        Object {
+          "value": "a",
+        },
+      ],
+      "ResultPath": "$.heap0",
+      "Type": "Pass",
+    },
+    "return value == a": Object {
+      "Choices": Array [
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.value",
+            },
+            Object {
+              "Or": Array [
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsNull": true,
+                      "Variable": "$.value",
+                    },
+                    Object {
+                      "IsNull": true,
+                      "Variable": "$.a",
+                    },
+                  ],
+                },
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsString": true,
+                      "Variable": "$.value",
+                    },
+                    Object {
+                      "StringEqualsPath": "$.a",
+                      "Variable": "$.value",
+                    },
+                  ],
+                },
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsBoolean": true,
+                      "Variable": "$.value",
+                    },
+                    Object {
+                      "BooleanEqualsPath": "$.a",
+                      "Variable": "$.value",
+                    },
+                  ],
+                },
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsNumeric": true,
+                      "Variable": "$.value",
+                    },
+                    Object {
+                      "NumericEqualsPath": "$.a",
+                      "Variable": "$.value",
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+          "Next": "assignTrue__return value == a",
+        },
+      ],
+      "Default": "assignFalse__return value == a",
+      "Type": "Choice",
+    },
+    "set__end__[{value: \\"a\\"}].filter(function(item))": Object {
+      "InputPath": "$.heap1.result[1:]",
+      "Next": "1__return [{value: \\"a\\"}].filter(function(item))",
+      "ResultPath": "$.heap1",
+      "Type": "Pass",
+    },
+    "tail__[{value: \\"a\\"}].filter(function(item))": Object {
+      "InputPath": "$.heap1.arr[1:]",
+      "Next": "check__[{value: \\"a\\"}].filter(function(item))",
+      "ResultPath": "$.heap1.arr",
+      "Type": "Pass",
+    },
+    "{value} = item": Object {
+      "InputPath": "$.item['value']",
+      "Next": "return value == a",
+      "ResultPath": "$.value",
+      "Type": "Pass",
+    },
+  },
+}
+`;
+
 exports[`[1,2,3,4].filter(item => item > 1 + 2) 1`] = `
 Object {
   "StartAt": "Initialize Functionless Context",
@@ -252,26 +1521,13 @@ Object {
       "Type": "Pass",
     },
     "1__return [1, 2, 3].map(function(item)) 1": Object {
-      "ItemsPath": "$.heap0",
-      "Iterator": Object {
-        "StartAt": "return item",
-        "States": Object {
-          "return item": Object {
-            "End": true,
-            "InputPath": "$.item",
-            "ResultPath": "$",
-            "Type": "Pass",
-          },
-        },
-      },
-      "MaxConcurrency": 1,
-      "Next": "1__return [1, 2, 3].map(function(item))",
+      "Next": "check__1__return [1, 2, 3].map(function(item)) 1",
       "Parameters": Object {
-        "fnl_context.$": "$.fnl_context",
-        "item.$": "$$.Map.Item.Value",
+        "arr.$": "$.heap0",
+        "arrStr": "[null",
       },
       "ResultPath": "$.heap1",
-      "Type": "Map",
+      "Type": "Pass",
     },
     "Initialize Functionless Context": Object {
       "Next": "return [1, 2, 3].map(function(item))",
@@ -283,6 +1539,40 @@ Object {
       "ResultPath": "$",
       "Type": "Pass",
     },
+    "check__1__return [1, 2, 3].map(function(item)) 1": Object {
+      "Choices": Array [
+        Object {
+          "IsPresent": true,
+          "Next": "item",
+          "Variable": "$.heap1.arr[0]",
+        },
+      ],
+      "Default": "end__1__return [1, 2, 3].map(function(item)) 1",
+      "Type": "Choice",
+    },
+    "end__1__return [1, 2, 3].map(function(item)) 1": Object {
+      "Next": "set__end__1__return [1, 2, 3].map(function(item)) 1",
+      "Parameters": Object {
+        "result.$": "States.StringToJson(States.Format('{}]', $.heap1.arrStr))",
+      },
+      "ResultPath": "$.heap1",
+      "Type": "Pass",
+    },
+    "handleResult__1__return [1, 2, 3].map(function(item)) 1": Object {
+      "Next": "check__1__return [1, 2, 3].map(function(item)) 1",
+      "Parameters": Object {
+        "arr.$": "$.heap1.arr[1:]",
+        "arrStr.$": "States.Format('{},{}', $.heap1.arrStr, States.JsonToString($.heap1.arr[0]))",
+      },
+      "ResultPath": "$.heap1",
+      "Type": "Pass",
+    },
+    "item": Object {
+      "InputPath": "$.heap1.arr[0]",
+      "Next": "return item",
+      "ResultPath": "$.item",
+      "Type": "Pass",
+    },
     "return [1, 2, 3].map(function(item))": Object {
       "Next": "1__return [1, 2, 3].map(function(item)) 1",
       "Result": Array [
@@ -291,6 +1581,18 @@ Object {
         3,
       ],
       "ResultPath": "$.heap0",
+      "Type": "Pass",
+    },
+    "return item": Object {
+      "InputPath": "$.item",
+      "Next": "handleResult__1__return [1, 2, 3].map(function(item)) 1",
+      "ResultPath": "$.heap1.arr[0]",
+      "Type": "Pass",
+    },
+    "set__end__1__return [1, 2, 3].map(function(item)) 1": Object {
+      "InputPath": "$.heap1.result[1:]",
+      "Next": "1__return [1, 2, 3].map(function(item))",
+      "ResultPath": "$.heap1",
       "Type": "Pass",
     },
   },
@@ -376,8 +1678,14 @@ Object {
   "States": Object {
     "1__return await Promise.all(input.list.map(function(item))).filter(function": Object {
       "End": true,
-      "InputPath": "$.heap1[?(@!=null)]",
+      "InputPath": "$.heap0[?(@!=null)]",
       "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "1__return task(item)": Object {
+      "InputPath": "$.heap1",
+      "Next": "handleResult__return await Promise.all(input.list.map(function(item))).filt",
+      "ResultPath": "$.heap0.arr[0]",
       "Type": "Pass",
     },
     "Initialize Functionless Context": Object {
@@ -391,35 +1699,61 @@ Object {
       "ResultPath": "$",
       "Type": "Pass",
     },
-    "return await Promise.all(input.list.map(function(item))).filter(function(it": Object {
-      "ItemsPath": "$.input.list",
-      "Iterator": Object {
-        "StartAt": "return task(item)",
-        "States": Object {
-          "1__return task(item)": Object {
-            "End": true,
-            "InputPath": "$.heap0",
-            "ResultPath": "$",
-            "Type": "Pass",
-          },
-          "return task(item)": Object {
-            "InputPath": "$.item",
-            "Next": "1__return task(item)",
-            "Resource": "__REPLACED_TOKEN",
-            "ResultPath": "$.heap0",
-            "Type": "Task",
-          },
+    "check__return await Promise.all(input.list.map(function(item))).filter(func": Object {
+      "Choices": Array [
+        Object {
+          "IsPresent": true,
+          "Next": "item",
+          "Variable": "$.heap0.arr[0]",
         },
-      },
-      "MaxConcurrency": 1,
-      "Next": "1__return await Promise.all(input.list.map(function(item))).filter(function",
+      ],
+      "Default": "end__return await Promise.all(input.list.map(function(item))).filter(functi",
+      "Type": "Choice",
+    },
+    "end__return await Promise.all(input.list.map(function(item))).filter(functi": Object {
+      "Next": "set__end__return await Promise.all(input.list.map(function(item))).filter(f",
       "Parameters": Object {
-        "fnl_context.$": "$.fnl_context",
-        "input.$": "$.input",
-        "item.$": "$$.Map.Item.Value",
+        "result.$": "States.StringToJson(States.Format('{}]', $.heap0.arrStr))",
       },
+      "ResultPath": "$.heap0",
+      "Type": "Pass",
+    },
+    "handleResult__return await Promise.all(input.list.map(function(item))).filt": Object {
+      "Next": "check__return await Promise.all(input.list.map(function(item))).filter(func",
+      "Parameters": Object {
+        "arr.$": "$.heap0.arr[1:]",
+        "arrStr.$": "States.Format('{},{}', $.heap0.arrStr, States.JsonToString($.heap0.arr[0]))",
+      },
+      "ResultPath": "$.heap0",
+      "Type": "Pass",
+    },
+    "item": Object {
+      "InputPath": "$.heap0.arr[0]",
+      "Next": "return task(item)",
+      "ResultPath": "$.item",
+      "Type": "Pass",
+    },
+    "return await Promise.all(input.list.map(function(item))).filter(function(it": Object {
+      "Next": "check__return await Promise.all(input.list.map(function(item))).filter(func",
+      "Parameters": Object {
+        "arr.$": "$.input.list",
+        "arrStr": "[null",
+      },
+      "ResultPath": "$.heap0",
+      "Type": "Pass",
+    },
+    "return task(item)": Object {
+      "InputPath": "$.item",
+      "Next": "1__return task(item)",
+      "Resource": "__REPLACED_TOKEN",
       "ResultPath": "$.heap1",
-      "Type": "Map",
+      "Type": "Task",
+    },
+    "set__end__return await Promise.all(input.list.map(function(item))).filter(f": Object {
+      "InputPath": "$.heap0.result[1:]",
+      "Next": "1__return await Promise.all(input.list.map(function(item))).filter(function",
+      "ResultPath": "$.heap0",
+      "Type": "Pass",
     },
   },
 }
@@ -544,7 +1878,7 @@ Object {
   "States": Object {
     "1__a = \`keyvaluea\`": Object {
       "InputPath": "$.heap0.string",
-      "Next": "tail__for({key,value} of input.value) 1",
+      "Next": "tail__for({key,value} of input.value)",
       "ResultPath": "$.a",
       "Type": "Pass",
     },
@@ -555,7 +1889,7 @@ Object {
       "Type": "Pass",
     },
     "Initialize Functionless Context": Object {
-      "Next": "for({key,value} of input.value)",
+      "Next": "a = \\"\\"",
       "Parameters": Object {
         "fnl_context": Object {
           "null": null,
@@ -563,6 +1897,12 @@ Object {
         "input.$": "$",
       },
       "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "a = \\"\\"": Object {
+      "Next": "for({key,value} of input.value)",
+      "Result": "",
+      "ResultPath": "$.a",
       "Type": "Pass",
     },
     "a = \`keyvaluea\`": Object {
@@ -574,18 +1914,12 @@ Object {
       "Type": "Pass",
     },
     "for({key,value} of input.value)": Object {
-      "Next": "for({key,value} of input.value) 1",
-      "Result": "",
-      "ResultPath": "$.a",
-      "Type": "Pass",
-    },
-    "for({key,value} of input.value) 1": Object {
       "InputPath": "$.input.value",
-      "Next": "hasNext__for({key,value} of input.value) 1",
+      "Next": "hasNext__for({key,value} of input.value)",
       "ResultPath": "$.heap1",
       "Type": "Pass",
     },
-    "hasNext__for({key,value} of input.value) 1": Object {
+    "hasNext__for({key,value} of input.value)": Object {
       "Choices": Array [
         Object {
           "IsPresent": true,
@@ -602,9 +1936,9 @@ Object {
       "ResultPath": "$",
       "Type": "Pass",
     },
-    "tail__for({key,value} of input.value) 1": Object {
+    "tail__for({key,value} of input.value)": Object {
       "InputPath": "$.heap1[1:]",
-      "Next": "hasNext__for({key,value} of input.value) 1",
+      "Next": "hasNext__for({key,value} of input.value)",
       "ResultPath": "$.heap1",
       "Type": "Pass",
     },
@@ -814,7 +2148,7 @@ Object {
     "returnEmpty__1__return await $SFN.map(input.value, function({value:b,arr:[c": Object {
       "Next": "1__return await $SFN.map(input.value, function({value:b,arr:[c]})).join()",
       "Result": "",
-      "ResultPath": "$.heap4",
+      "ResultPath": "$.heap4.string",
       "Type": "Pass",
     },
     "tail__1__return await $SFN.map(input.value, function({value:b,arr:[c]})).jo": Object {
@@ -844,7 +2178,7 @@ Object {
     },
     "return input.value.filter(function({value:b,arr:[c]}))": Object {
       "End": true,
-      "InputPath": "$.input.value[?(@[value]==@[arr][0])]",
+      "InputPath": "$.input.value[?(@['value']==@['arr'][0])]",
       "ResultPath": "$",
       "Type": "Pass",
     },
@@ -856,6 +2190,12 @@ exports[`binding functions forEach 1`] = `
 Object {
   "StartAt": "Initialize Functionless Context",
   "States": Object {
+    "1__return \`bc\`": Object {
+      "InputPath": "$.heap1.string",
+      "Next": "tail__input.value.forEach(function({value:b,arr:[c]}))",
+      "ResultPath": "$.heap0.arr[0]",
+      "Type": "Pass",
+    },
     "Initialize Functionless Context": Object {
       "Next": "input.value.forEach(function({value:b,arr:[c]}))",
       "Parameters": Object {
@@ -867,53 +2207,61 @@ Object {
       "ResultPath": "$",
       "Type": "Pass",
     },
-    "input.value.forEach(function({value:b,arr:[c]}))": Object {
-      "ItemsPath": "$.input.value",
-      "Iterator": Object {
-        "StartAt": "function({value:b,arr:[c]})",
-        "States": Object {
-          "1__return \`bc\`": Object {
-            "End": true,
-            "InputPath": "$.heap0.string",
-            "ResultPath": "$",
-            "Type": "Pass",
-          },
-          "[ c ]": Object {
-            "InputPath": "$.heap1['arr'][0]",
-            "Next": "return \`bc\`",
-            "ResultPath": "$.c",
-            "Type": "Pass",
-          },
-          "function({value:b,arr:[c]})": Object {
-            "InputPath": "$.heap1['value']",
-            "Next": "[ c ]",
-            "ResultPath": "$.b",
-            "Type": "Pass",
-          },
-          "return \`bc\`": Object {
-            "Next": "1__return \`bc\`",
-            "Parameters": Object {
-              "string.$": "States.Format('{}{}',$.b,$.c)",
-            },
-            "ResultPath": "$.heap0",
-            "Type": "Pass",
-          },
+    "[ c ]": Object {
+      "InputPath": "$.heap0.arr[0]['arr'][0]",
+      "Next": "return \`bc\`",
+      "ResultPath": "$.c",
+      "Type": "Pass",
+    },
+    "check__input.value.forEach(function({value:b,arr:[c]}))": Object {
+      "Choices": Array [
+        Object {
+          "IsPresent": true,
+          "Next": "{ value: b, arr: [ c ] }",
+          "Variable": "$.heap0.arr[0]",
         },
-      },
-      "MaxConcurrency": 1,
+      ],
+      "Default": "end__input.value.forEach(function({value:b,arr:[c]}))",
+      "Type": "Choice",
+    },
+    "end__input.value.forEach(function({value:b,arr:[c]}))": Object {
       "Next": "return \\"success\\"",
+      "Result": "$.fnl_context.null",
+      "ResultPath": "$.heap0",
+      "Type": "Pass",
+    },
+    "input.value.forEach(function({value:b,arr:[c]}))": Object {
+      "Next": "check__input.value.forEach(function({value:b,arr:[c]}))",
       "Parameters": Object {
-        "fnl_context.$": "$.fnl_context",
-        "heap1.$": "$$.Map.Item.Value",
-        "input.$": "$.input",
+        "arr.$": "$.input.value",
       },
-      "ResultPath": "$.heap2",
-      "Type": "Map",
+      "ResultPath": "$.heap0",
+      "Type": "Pass",
     },
     "return \\"success\\"": Object {
       "End": true,
       "Result": "success",
       "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "return \`bc\`": Object {
+      "Next": "1__return \`bc\`",
+      "Parameters": Object {
+        "string.$": "States.Format('{}{}',$.b,$.c)",
+      },
+      "ResultPath": "$.heap1",
+      "Type": "Pass",
+    },
+    "tail__input.value.forEach(function({value:b,arr:[c]}))": Object {
+      "InputPath": "$.heap0.arr[1:]",
+      "Next": "check__input.value.forEach(function({value:b,arr:[c]}))",
+      "ResultPath": "$.heap0.arr",
+      "Type": "Pass",
+    },
+    "{ value: b, arr: [ c ] }": Object {
+      "InputPath": "$.heap0.arr[0]['value']",
+      "Next": "[ c ]",
+      "ResultPath": "$.b",
       "Type": "Pass",
     },
   },
@@ -924,16 +2272,22 @@ exports[`binding functions map 1`] = `
 Object {
   "StartAt": "Initialize Functionless Context",
   "States": Object {
+    "1__return \`bc\`": Object {
+      "InputPath": "$.heap1.string",
+      "Next": "handleResult__return input.value.map(function({value:b,arr:[c]})).join()",
+      "ResultPath": "$.heap0.arr[0]",
+      "Type": "Pass",
+    },
     "1__return input.value.map(function({value:b,arr:[c]})).join()": Object {
       "End": true,
-      "InputPath": "$.heap4.string",
+      "InputPath": "$.heap3.string",
       "ResultPath": "$",
       "Type": "Pass",
     },
     "1__return input.value.map(function({value:b,arr:[c]})).join() 1": Object {
-      "InputPath": "$.heap2",
+      "InputPath": "$.heap0",
       "Next": "hasNext__1__return input.value.map(function({value:b,arr:[c]})).join() 1",
-      "ResultPath": "$.heap3",
+      "ResultPath": "$.heap2",
       "Type": "Pass",
     },
     "Initialize Functionless Context": Object {
@@ -947,12 +2301,46 @@ Object {
       "ResultPath": "$",
       "Type": "Pass",
     },
+    "[ c ]": Object {
+      "InputPath": "$.heap0.arr[0]['arr'][0]",
+      "Next": "return \`bc\`",
+      "ResultPath": "$.c",
+      "Type": "Pass",
+    },
     "append__1__return input.value.map(function({value:b,arr:[c]})).join() 1": Object {
       "Next": "tail__1__return input.value.map(function({value:b,arr:[c]})).join() 1",
       "Parameters": Object {
-        "string.$": "States.Format('{},{}', $.heap4.string, $.heap3[0])",
+        "string.$": "States.Format('{},{}', $.heap3.string, $.heap2[0])",
       },
-      "ResultPath": "$.heap4",
+      "ResultPath": "$.heap3",
+      "Type": "Pass",
+    },
+    "check__return input.value.map(function({value:b,arr:[c]})).join()": Object {
+      "Choices": Array [
+        Object {
+          "IsPresent": true,
+          "Next": "{ value: b, arr: [ c ] }",
+          "Variable": "$.heap0.arr[0]",
+        },
+      ],
+      "Default": "end__return input.value.map(function({value:b,arr:[c]})).join()",
+      "Type": "Choice",
+    },
+    "end__return input.value.map(function({value:b,arr:[c]})).join()": Object {
+      "Next": "set__end__return input.value.map(function({value:b,arr:[c]})).join()",
+      "Parameters": Object {
+        "result.$": "States.StringToJson(States.Format('{}]', $.heap0.arrStr))",
+      },
+      "ResultPath": "$.heap0",
+      "Type": "Pass",
+    },
+    "handleResult__return input.value.map(function({value:b,arr:[c]})).join()": Object {
+      "Next": "check__return input.value.map(function({value:b,arr:[c]})).join()",
+      "Parameters": Object {
+        "arr.$": "$.heap0.arr[1:]",
+        "arrStr.$": "States.Format('{},{}', $.heap0.arrStr, States.JsonToString($.heap0.arr[0]))",
+      },
+      "ResultPath": "$.heap0",
       "Type": "Pass",
     },
     "hasNext__1__return input.value.map(function({value:b,arr:[c]})).join() 1": Object {
@@ -961,12 +2349,12 @@ Object {
           "And": Array [
             Object {
               "IsPresent": true,
-              "Variable": "$.heap3[0]",
+              "Variable": "$.heap2[0]",
             },
             Object {
               "Not": Object {
                 "IsPresent": true,
-                "Variable": "$.heap4",
+                "Variable": "$.heap3",
               },
             },
           ],
@@ -977,13 +2365,13 @@ Object {
             Object {
               "Not": Object {
                 "IsPresent": true,
-                "Variable": "$.heap3[0]",
+                "Variable": "$.heap2[0]",
               },
             },
             Object {
               "Not": Object {
                 "IsPresent": true,
-                "Variable": "$.heap4",
+                "Variable": "$.heap3",
               },
             },
           ],
@@ -992,71 +2380,57 @@ Object {
         Object {
           "IsPresent": true,
           "Next": "append__1__return input.value.map(function({value:b,arr:[c]})).join() 1",
-          "Variable": "$.heap3[0]",
+          "Variable": "$.heap2[0]",
         },
       ],
       "Default": "1__return input.value.map(function({value:b,arr:[c]})).join()",
       "Type": "Choice",
     },
     "initValue__1__return input.value.map(function({value:b,arr:[c]})).join() 1": Object {
-      "InputPath": "$.heap3[0]",
+      "InputPath": "$.heap2[0]",
       "Next": "tail__1__return input.value.map(function({value:b,arr:[c]})).join() 1",
-      "ResultPath": "$.heap4.string",
+      "ResultPath": "$.heap3.string",
+      "Type": "Pass",
+    },
+    "return \`bc\`": Object {
+      "Next": "1__return \`bc\`",
+      "Parameters": Object {
+        "string.$": "States.Format('{}{}',$.b,$.c)",
+      },
+      "ResultPath": "$.heap1",
       "Type": "Pass",
     },
     "return input.value.map(function({value:b,arr:[c]})).join()": Object {
-      "ItemsPath": "$.input.value",
-      "Iterator": Object {
-        "StartAt": "function({value:b,arr:[c]})",
-        "States": Object {
-          "1__return \`bc\`": Object {
-            "End": true,
-            "InputPath": "$.heap0.string",
-            "ResultPath": "$",
-            "Type": "Pass",
-          },
-          "[ c ]": Object {
-            "InputPath": "$.heap1['arr'][0]",
-            "Next": "return \`bc\`",
-            "ResultPath": "$.c",
-            "Type": "Pass",
-          },
-          "function({value:b,arr:[c]})": Object {
-            "InputPath": "$.heap1['value']",
-            "Next": "[ c ]",
-            "ResultPath": "$.b",
-            "Type": "Pass",
-          },
-          "return \`bc\`": Object {
-            "Next": "1__return \`bc\`",
-            "Parameters": Object {
-              "string.$": "States.Format('{}{}',$.b,$.c)",
-            },
-            "ResultPath": "$.heap0",
-            "Type": "Pass",
-          },
-        },
-      },
-      "MaxConcurrency": 1,
-      "Next": "1__return input.value.map(function({value:b,arr:[c]})).join() 1",
+      "Next": "check__return input.value.map(function({value:b,arr:[c]})).join()",
       "Parameters": Object {
-        "fnl_context.$": "$.fnl_context",
-        "heap1.$": "$$.Map.Item.Value",
-        "input.$": "$.input",
+        "arr.$": "$.input.value",
+        "arrStr": "[null",
       },
-      "ResultPath": "$.heap2",
-      "Type": "Map",
+      "ResultPath": "$.heap0",
+      "Type": "Pass",
     },
     "returnEmpty__1__return input.value.map(function({value:b,arr:[c]})).join() ": Object {
       "Next": "1__return input.value.map(function({value:b,arr:[c]})).join()",
       "Result": "",
-      "ResultPath": "$.heap4",
+      "ResultPath": "$.heap3.string",
+      "Type": "Pass",
+    },
+    "set__end__return input.value.map(function({value:b,arr:[c]})).join()": Object {
+      "InputPath": "$.heap0.result[1:]",
+      "Next": "1__return input.value.map(function({value:b,arr:[c]})).join() 1",
+      "ResultPath": "$.heap0",
       "Type": "Pass",
     },
     "tail__1__return input.value.map(function({value:b,arr:[c]})).join() 1": Object {
-      "InputPath": "$.heap3[1:]",
+      "InputPath": "$.heap2[1:]",
       "Next": "hasNext__1__return input.value.map(function({value:b,arr:[c]})).join() 1",
-      "ResultPath": "$.heap3",
+      "ResultPath": "$.heap2",
+      "Type": "Pass",
+    },
+    "{ value: b, arr: [ c ] }": Object {
+      "InputPath": "$.heap0.arr[0]['value']",
+      "Next": "[ c ]",
+      "ResultPath": "$.b",
       "Type": "Pass",
     },
   },
@@ -1067,53 +2441,36 @@ exports[`binding functions use in map 1`] = `
 Object {
   "StartAt": "Initialize Functionless Context",
   "States": Object {
-    "1__return [1, 2, 3].map(function()).join() 1": Object {
+    "1__return [1, 2, 3].map(function()).join()": Object {
       "End": true,
       "InputPath": "$.heap4.string",
       "ResultPath": "$",
       "Type": "Pass",
     },
-    "1__return [1, 2, 3].map(function()).join() 1 1": Object {
-      "InputPath": "$.heap2",
-      "Next": "hasNext__1__return [1, 2, 3].map(function()).join() 1 1",
+    "1__return [1, 2, 3].map(function()).join() 1": Object {
+      "InputPath": "$.heap1",
+      "Next": "hasNext__1__return [1, 2, 3].map(function()).join() 1",
       "ResultPath": "$.heap3",
       "Type": "Pass",
     },
-    "1__return [1, 2, 3].map(function()).join() 1 2": Object {
-      "ItemsPath": "$.heap1",
-      "Iterator": Object {
-        "StartAt": "return \`valuev\`",
-        "States": Object {
-          "1__return \`valuev\`": Object {
-            "End": true,
-            "InputPath": "$.heap0.string",
-            "ResultPath": "$",
-            "Type": "Pass",
-          },
-          "return \`valuev\`": Object {
-            "Next": "1__return \`valuev\`",
-            "Parameters": Object {
-              "string.$": "States.Format('{}{}',$.value,$.v)",
-            },
-            "ResultPath": "$.heap0",
-            "Type": "Pass",
-          },
-        },
-      },
-      "MaxConcurrency": 1,
-      "Next": "1__return [1, 2, 3].map(function()).join() 1 1",
+    "1__return [1, 2, 3].map(function()).join() 2": Object {
+      "Next": "check__1__return [1, 2, 3].map(function()).join() 2",
       "Parameters": Object {
-        "fnl_context.$": "$.fnl_context",
-        "obj.$": "$.obj",
-        "v.$": "$.v",
-        "value.$": "$.value",
+        "arr.$": "$.heap0",
+        "arrStr": "[null",
       },
-      "ResultPath": "$.heap2",
-      "Type": "Map",
+      "ResultPath": "$.heap1",
+      "Type": "Pass",
+    },
+    "1__return \`valuev\`": Object {
+      "InputPath": "$.heap2.string",
+      "Next": "handleResult__1__return [1, 2, 3].map(function()).join() 2",
+      "ResultPath": "$.heap1.arr[0]",
+      "Type": "Pass",
     },
     "1__{ value, obj }": Object {
       "InputPath": "$$.Execution.Input['obj']",
-      "Next": "return [1, 2, 3].map(function()).join()",
+      "Next": "{value:v} = obj",
       "ResultPath": "$.obj",
       "Type": "Pass",
     },
@@ -1127,15 +2484,43 @@ Object {
       "ResultPath": "$",
       "Type": "Pass",
     },
-    "append__1__return [1, 2, 3].map(function()).join() 1 1": Object {
-      "Next": "tail__1__return [1, 2, 3].map(function()).join() 1 1",
+    "append__1__return [1, 2, 3].map(function()).join() 1": Object {
+      "Next": "tail__1__return [1, 2, 3].map(function()).join() 1",
       "Parameters": Object {
         "string.$": "States.Format('{},{}', $.heap4.string, $.heap3[0])",
       },
       "ResultPath": "$.heap4",
       "Type": "Pass",
     },
-    "hasNext__1__return [1, 2, 3].map(function()).join() 1 1": Object {
+    "check__1__return [1, 2, 3].map(function()).join() 2": Object {
+      "Choices": Array [
+        Object {
+          "IsPresent": true,
+          "Next": "return \`valuev\`",
+          "Variable": "$.heap1.arr[0]",
+        },
+      ],
+      "Default": "end__1__return [1, 2, 3].map(function()).join() 2",
+      "Type": "Choice",
+    },
+    "end__1__return [1, 2, 3].map(function()).join() 2": Object {
+      "Next": "set__end__1__return [1, 2, 3].map(function()).join() 2",
+      "Parameters": Object {
+        "result.$": "States.StringToJson(States.Format('{}]', $.heap1.arrStr))",
+      },
+      "ResultPath": "$.heap1",
+      "Type": "Pass",
+    },
+    "handleResult__1__return [1, 2, 3].map(function()).join() 2": Object {
+      "Next": "check__1__return [1, 2, 3].map(function()).join() 2",
+      "Parameters": Object {
+        "arr.$": "$.heap1.arr[1:]",
+        "arrStr.$": "States.Format('{},{}', $.heap1.arrStr, States.JsonToString($.heap1.arr[0]))",
+      },
+      "ResultPath": "$.heap1",
+      "Type": "Pass",
+    },
+    "hasNext__1__return [1, 2, 3].map(function()).join() 1": Object {
       "Choices": Array [
         Object {
           "And": Array [
@@ -1150,7 +2535,7 @@ Object {
               },
             },
           ],
-          "Next": "initValue__1__return [1, 2, 3].map(function()).join() 1 1",
+          "Next": "initValue__1__return [1, 2, 3].map(function()).join() 1",
         },
         Object {
           "And": Array [
@@ -1167,48 +2552,56 @@ Object {
               },
             },
           ],
-          "Next": "returnEmpty__1__return [1, 2, 3].map(function()).join() 1 1",
+          "Next": "returnEmpty__1__return [1, 2, 3].map(function()).join() 1",
         },
         Object {
           "IsPresent": true,
-          "Next": "append__1__return [1, 2, 3].map(function()).join() 1 1",
+          "Next": "append__1__return [1, 2, 3].map(function()).join() 1",
           "Variable": "$.heap3[0]",
         },
       ],
-      "Default": "1__return [1, 2, 3].map(function()).join() 1",
+      "Default": "1__return [1, 2, 3].map(function()).join()",
       "Type": "Choice",
     },
-    "initValue__1__return [1, 2, 3].map(function()).join() 1 1": Object {
+    "initValue__1__return [1, 2, 3].map(function()).join() 1": Object {
       "InputPath": "$.heap3[0]",
-      "Next": "tail__1__return [1, 2, 3].map(function()).join() 1 1",
+      "Next": "tail__1__return [1, 2, 3].map(function()).join() 1",
       "ResultPath": "$.heap4.string",
       "Type": "Pass",
     },
     "return [1, 2, 3].map(function()).join()": Object {
-      "InputPath": "$.obj['value']",
-      "Next": "return [1, 2, 3].map(function()).join() 1",
-      "ResultPath": "$.v",
-      "Type": "Pass",
-    },
-    "return [1, 2, 3].map(function()).join() 1": Object {
-      "Next": "1__return [1, 2, 3].map(function()).join() 1 2",
+      "Next": "1__return [1, 2, 3].map(function()).join() 2",
       "Result": Array [
         1,
         2,
         3,
       ],
+      "ResultPath": "$.heap0",
+      "Type": "Pass",
+    },
+    "return \`valuev\`": Object {
+      "Next": "1__return \`valuev\`",
+      "Parameters": Object {
+        "string.$": "States.Format('{}{}',$.value,$.v)",
+      },
+      "ResultPath": "$.heap2",
+      "Type": "Pass",
+    },
+    "returnEmpty__1__return [1, 2, 3].map(function()).join() 1": Object {
+      "Next": "1__return [1, 2, 3].map(function()).join()",
+      "Result": "",
+      "ResultPath": "$.heap4.string",
+      "Type": "Pass",
+    },
+    "set__end__1__return [1, 2, 3].map(function()).join() 2": Object {
+      "InputPath": "$.heap1.result[1:]",
+      "Next": "1__return [1, 2, 3].map(function()).join() 1",
       "ResultPath": "$.heap1",
       "Type": "Pass",
     },
-    "returnEmpty__1__return [1, 2, 3].map(function()).join() 1 1": Object {
-      "Next": "1__return [1, 2, 3].map(function()).join() 1",
-      "Result": "",
-      "ResultPath": "$.heap4",
-      "Type": "Pass",
-    },
-    "tail__1__return [1, 2, 3].map(function()).join() 1 1": Object {
+    "tail__1__return [1, 2, 3].map(function()).join() 1": Object {
       "InputPath": "$.heap3[1:]",
-      "Next": "hasNext__1__return [1, 2, 3].map(function()).join() 1 1",
+      "Next": "hasNext__1__return [1, 2, 3].map(function()).join() 1",
       "ResultPath": "$.heap3",
       "Type": "Pass",
     },
@@ -1216,6 +2609,12 @@ Object {
       "InputPath": "$$.Execution.Input['value']",
       "Next": "1__{ value, obj }",
       "ResultPath": "$.value",
+      "Type": "Pass",
+    },
+    "{value:v} = obj": Object {
+      "InputPath": "$.obj['value']",
+      "Next": "return [1, 2, 3].map(function()).join()",
+      "ResultPath": "$.v",
       "Type": "Pass",
     },
   },
@@ -1489,7 +2888,7 @@ Object {
   "StartAt": "Initialize Functionless Context",
   "States": Object {
     "Initialize Functionless Context": Object {
-      "Next": "return b",
+      "Next": "{arr:[b]} = input",
       "Parameters": Object {
         "fnl_context": Object {
           "null": null,
@@ -1500,15 +2899,15 @@ Object {
       "Type": "Pass",
     },
     "return b": Object {
-      "InputPath": "$.input['arr'][0]",
-      "Next": "return b 1",
-      "ResultPath": "$.b",
-      "Type": "Pass",
-    },
-    "return b 1": Object {
       "End": true,
       "InputPath": "$.b",
       "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "{arr:[b]} = input": Object {
+      "InputPath": "$.input['arr'][0]",
+      "Next": "return b",
+      "ResultPath": "$.b",
       "Type": "Pass",
     },
   },
@@ -1520,7 +2919,7 @@ Object {
   "StartAt": "Initialize Functionless Context",
   "States": Object {
     "Initialize Functionless Context": Object {
-      "Next": "return value",
+      "Next": "{value} = input",
       "Parameters": Object {
         "fnl_context": Object {
           "null": null,
@@ -1531,15 +2930,15 @@ Object {
       "Type": "Pass",
     },
     "return value": Object {
-      "InputPath": "$.input['value']",
-      "Next": "return value 1",
-      "ResultPath": "$.value",
-      "Type": "Pass",
-    },
-    "return value 1": Object {
       "End": true,
       "InputPath": "$.value",
       "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "{value} = input": Object {
+      "InputPath": "$.input['value']",
+      "Next": "return value",
+      "ResultPath": "$.value",
       "Type": "Pass",
     },
   },
@@ -1551,7 +2950,7 @@ Object {
   "StartAt": "Initialize Functionless Context",
   "States": Object {
     "Initialize Functionless Context": Object {
-      "Next": "return b",
+      "Next": "{value:{b}} = input",
       "Parameters": Object {
         "fnl_context": Object {
           "null": null,
@@ -1562,15 +2961,15 @@ Object {
       "Type": "Pass",
     },
     "return b": Object {
-      "InputPath": "$.input['value']['b']",
-      "Next": "return b 1",
-      "ResultPath": "$.b",
-      "Type": "Pass",
-    },
-    "return b 1": Object {
       "End": true,
       "InputPath": "$.b",
       "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "{value:{b}} = input": Object {
+      "InputPath": "$.input['value']['b']",
+      "Next": "return b",
+      "ResultPath": "$.b",
       "Type": "Pass",
     },
   },
@@ -1582,7 +2981,7 @@ Object {
   "StartAt": "Initialize Functionless Context",
   "States": Object {
     "Initialize Functionless Context": Object {
-      "Next": "return b",
+      "Next": "{value:b} = input",
       "Parameters": Object {
         "fnl_context": Object {
           "null": null,
@@ -1593,15 +2992,15 @@ Object {
       "Type": "Pass",
     },
     "return b": Object {
-      "InputPath": "$.input['value']",
-      "Next": "return b 1",
-      "ResultPath": "$.b",
-      "Type": "Pass",
-    },
-    "return b 1": Object {
       "End": true,
       "InputPath": "$.b",
       "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "{value:b} = input": Object {
+      "InputPath": "$.input['value']",
+      "Next": "return b",
+      "ResultPath": "$.b",
       "Type": "Pass",
     },
   },
@@ -1613,19 +3012,19 @@ Object {
   "StartAt": "Initialize Functionless Context",
   "States": Object {
     "\\"b\\"": Object {
-      "Next": "1__return value",
+      "Next": "1__{value} = input",
       "Result": "b",
       "ResultPath": "$.heap0",
       "Type": "Pass",
     },
-    "1__return value": Object {
+    "1__{value} = input": Object {
       "InputPath": "$.heap0",
-      "Next": "return value 1",
+      "Next": "return value",
       "ResultPath": "$.value",
       "Type": "Pass",
     },
     "Initialize Functionless Context": Object {
-      "Next": "return value",
+      "Next": "{value} = input",
       "Parameters": Object {
         "fnl_context": Object {
           "null": null,
@@ -1636,27 +3035,27 @@ Object {
       "Type": "Pass",
     },
     "return value": Object {
-      "Choices": Array [
-        Object {
-          "IsPresent": true,
-          "Next": "value__return value",
-          "Variable": "$.input['value']",
-        },
-      ],
-      "Default": "\\"b\\"",
-      "Type": "Choice",
-    },
-    "return value 1": Object {
       "End": true,
       "InputPath": "$.value",
       "ResultPath": "$",
       "Type": "Pass",
     },
-    "value__return value": Object {
+    "value__{value} = input": Object {
       "InputPath": "$.input['value']",
-      "Next": "1__return value",
+      "Next": "1__{value} = input",
       "ResultPath": "$.heap0",
       "Type": "Pass",
+    },
+    "{value} = input": Object {
+      "Choices": Array [
+        Object {
+          "IsPresent": true,
+          "Next": "value__{value} = input",
+          "Variable": "$.input['value']",
+        },
+      ],
+      "Default": "\\"b\\"",
+      "Type": "Choice",
     },
   },
 }
@@ -2983,9 +4382,9 @@ exports[`call AWS.DynamoDB.GetItem, then Lambda and return LiteralExpr 1`] = `
 Object {
   "StartAt": "Initialize Functionless Context",
   "States": Object {
-    "1__if(person.Item == undefined)": Object {
+    "1__person = await $AWS.DynamoDB.GetItem({Table: personTable, Key: {id: {S: ": Object {
       "InputPath": "$.heap0",
-      "Next": "if(person.Item == undefined) 1",
+      "Next": "if(person.Item == undefined)",
       "ResultPath": "$.person",
       "Type": "Pass",
     },
@@ -2996,7 +4395,7 @@ Object {
       "Type": "Pass",
     },
     "Initialize Functionless Context": Object {
-      "Next": "if(person.Item == undefined)",
+      "Next": "person = await $AWS.DynamoDB.GetItem({Table: personTable, Key: {id: {S: inp",
       "Parameters": Object {
         "fnl_context": Object {
           "null": null,
@@ -3007,20 +4406,6 @@ Object {
       "Type": "Pass",
     },
     "if(person.Item == undefined)": Object {
-      "Next": "1__if(person.Item == undefined)",
-      "Parameters": Object {
-        "Key": Object {
-          "id": Object {
-            "S.$": "$.input.id",
-          },
-        },
-        "TableName": "__REPLACED_TOKEN",
-      },
-      "Resource": "__REPLACED_ARN",
-      "ResultPath": "$.heap0",
-      "Type": "Task",
-    },
-    "if(person.Item == undefined) 1": Object {
       "Choices": Array [
         Object {
           "And": Array [
@@ -3038,6 +4423,20 @@ Object {
       ],
       "Default": "score = await computeScore({id: person.Item.id.S, name: person.Item.name.S}",
       "Type": "Choice",
+    },
+    "person = await $AWS.DynamoDB.GetItem({Table: personTable, Key: {id: {S: inp": Object {
+      "Next": "1__person = await $AWS.DynamoDB.GetItem({Table: personTable, Key: {id: {S: ",
+      "Parameters": Object {
+        "Key": Object {
+          "id": Object {
+            "S.$": "$.input.id",
+          },
+        },
+        "TableName": "__REPLACED_TOKEN",
+      },
+      "Resource": "__REPLACED_ARN",
+      "ResultPath": "$.heap0",
+      "Type": "Task",
     },
     "return null": Object {
       "End": true,
@@ -3073,14 +4472,14 @@ exports[`call Lambda Function, store as variable, return variable 1`] = `
 Object {
   "StartAt": "Initialize Functionless Context",
   "States": Object {
-    "1__return person": Object {
+    "1__person = await getPerson({id: input.id})": Object {
       "InputPath": "$.heap0",
-      "Next": "return person 1",
+      "Next": "return person",
       "ResultPath": "$.person",
       "Type": "Pass",
     },
     "Initialize Functionless Context": Object {
-      "Next": "return person",
+      "Next": "person = await getPerson({id: input.id})",
       "Parameters": Object {
         "fnl_context": Object {
           "null": null,
@@ -3090,8 +4489,8 @@ Object {
       "ResultPath": "$",
       "Type": "Pass",
     },
-    "return person": Object {
-      "Next": "1__return person",
+    "person = await getPerson({id: input.id})": Object {
+      "Next": "1__person = await getPerson({id: input.id})",
       "Parameters": Object {
         "id.$": "$.input.id",
       },
@@ -3099,7 +4498,7 @@ Object {
       "ResultPath": "$.heap0",
       "Type": "Task",
     },
-    "return person 1": Object {
+    "return person": Object {
       "End": true,
       "InputPath": "$.person",
       "ResultPath": "$",
@@ -3568,14 +4967,20 @@ exports[`closure from map 1`] = `
 Object {
   "StartAt": "Initialize Functionless Context",
   "States": Object {
-    "1__return input.list.map(function(item)) 1": Object {
+    "1__return \`aitem\`": Object {
+      "InputPath": "$.heap1.string",
+      "Next": "handleResult__return input.list.map(function(item))",
+      "ResultPath": "$.heap0.arr[0]",
+      "Type": "Pass",
+    },
+    "1__return input.list.map(function(item))": Object {
       "End": true,
-      "InputPath": "$.heap1",
+      "InputPath": "$.heap0",
       "ResultPath": "$",
       "Type": "Pass",
     },
     "Initialize Functionless Context": Object {
-      "Next": "return input.list.map(function(item))",
+      "Next": "a = \\"x\\"",
       "Parameters": Object {
         "fnl_context": Object {
           "null": null,
@@ -3585,43 +4990,68 @@ Object {
       "ResultPath": "$",
       "Type": "Pass",
     },
-    "return input.list.map(function(item))": Object {
-      "Next": "return input.list.map(function(item)) 1",
+    "a = \\"x\\"": Object {
+      "Next": "return input.list.map(function(item))",
       "Result": "x",
       "ResultPath": "$.a",
       "Type": "Pass",
     },
-    "return input.list.map(function(item)) 1": Object {
-      "ItemsPath": "$.input.list",
-      "Iterator": Object {
-        "StartAt": "return \`aitem\`",
-        "States": Object {
-          "1__return \`aitem\`": Object {
-            "End": true,
-            "InputPath": "$.heap0.string",
-            "ResultPath": "$",
-            "Type": "Pass",
-          },
-          "return \`aitem\`": Object {
-            "Next": "1__return \`aitem\`",
-            "Parameters": Object {
-              "string.$": "States.Format('{}{}',$.a,$.item)",
-            },
-            "ResultPath": "$.heap0",
-            "Type": "Pass",
-          },
+    "check__return input.list.map(function(item))": Object {
+      "Choices": Array [
+        Object {
+          "IsPresent": true,
+          "Next": "item",
+          "Variable": "$.heap0.arr[0]",
         },
-      },
-      "MaxConcurrency": 1,
-      "Next": "1__return input.list.map(function(item)) 1",
+      ],
+      "Default": "end__return input.list.map(function(item))",
+      "Type": "Choice",
+    },
+    "end__return input.list.map(function(item))": Object {
+      "Next": "set__end__return input.list.map(function(item))",
       "Parameters": Object {
-        "a.$": "$.a",
-        "fnl_context.$": "$.fnl_context",
-        "input.$": "$.input",
-        "item.$": "$$.Map.Item.Value",
+        "result.$": "States.StringToJson(States.Format('{}]', $.heap0.arrStr))",
+      },
+      "ResultPath": "$.heap0",
+      "Type": "Pass",
+    },
+    "handleResult__return input.list.map(function(item))": Object {
+      "Next": "check__return input.list.map(function(item))",
+      "Parameters": Object {
+        "arr.$": "$.heap0.arr[1:]",
+        "arrStr.$": "States.Format('{},{}', $.heap0.arrStr, States.JsonToString($.heap0.arr[0]))",
+      },
+      "ResultPath": "$.heap0",
+      "Type": "Pass",
+    },
+    "item": Object {
+      "InputPath": "$.heap0.arr[0]",
+      "Next": "return \`aitem\`",
+      "ResultPath": "$.item",
+      "Type": "Pass",
+    },
+    "return \`aitem\`": Object {
+      "Next": "1__return \`aitem\`",
+      "Parameters": Object {
+        "string.$": "States.Format('{}{}',$.a,$.item)",
       },
       "ResultPath": "$.heap1",
-      "Type": "Map",
+      "Type": "Pass",
+    },
+    "return input.list.map(function(item))": Object {
+      "Next": "check__return input.list.map(function(item))",
+      "Parameters": Object {
+        "arr.$": "$.input.list",
+        "arrStr": "[null",
+      },
+      "ResultPath": "$.heap0",
+      "Type": "Pass",
+    },
+    "set__end__return input.list.map(function(item))": Object {
+      "InputPath": "$.heap0.result[1:]",
+      "Next": "1__return input.list.map(function(item))",
+      "ResultPath": "$.heap0",
+      "Type": "Pass",
     },
   },
 }
@@ -4396,7 +5826,7 @@ Object {
       "Type": "Task",
     },
     "1__for(i in [await task(input)]) 1": Object {
-      "InputPath": "$.heap4",
+      "ItemsPath": "$.heap4",
       "Iterator": Object {
         "StartAt": "Default",
         "States": Object {
@@ -4582,7 +6012,7 @@ Object {
   "States": Object {
     "1__a = \`i\`": Object {
       "InputPath": "$.heap0.string",
-      "Next": "tail__for(i in input.items) 1",
+      "Next": "tail__for(i in input.items)",
       "ResultPath": "$.a",
       "Type": "Pass",
     },
@@ -4592,8 +6022,8 @@ Object {
       "ResultPath": "$.a",
       "Type": "Pass",
     },
-    "1__for(i in input.items) 1": Object {
-      "InputPath": "$.heap1",
+    "1__for(i in input.items)": Object {
+      "ItemsPath": "$.heap1",
       "Iterator": Object {
         "StartAt": "Default",
         "States": Object {
@@ -4604,7 +6034,7 @@ Object {
           },
         },
       },
-      "Next": "hasNext__for(i in input.items) 1",
+      "Next": "hasNext__for(i in input.items)",
       "Parameters": Object {
         "index.$": "States.Format('{}', $$.Map.Item.Index)",
         "item.$": "$$.Map.Item.Value",
@@ -4613,7 +6043,7 @@ Object {
       "Type": "Map",
     },
     "Initialize Functionless Context": Object {
-      "Next": "for(i in input.items)",
+      "Next": "a = \\"\\"",
       "Parameters": Object {
         "fnl_context": Object {
           "null": null,
@@ -4621,6 +6051,12 @@ Object {
         "input.$": "$",
       },
       "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "a = \\"\\"": Object {
+      "Next": "for(i in input.items)",
+      "Result": "",
+      "ResultPath": "$.a",
       "Type": "Pass",
     },
     "a = \`i\`": Object {
@@ -4646,14 +6082,8 @@ Object {
       "Type": "Pass",
     },
     "for(i in input.items)": Object {
-      "Next": "for(i in input.items) 1",
-      "Result": "",
-      "ResultPath": "$.a",
-      "Type": "Pass",
-    },
-    "for(i in input.items) 1": Object {
       "InputPath": "$.input.items",
-      "Next": "1__for(i in input.items) 1",
+      "Next": "1__for(i in input.items)",
       "ResultPath": "$.heap1",
       "Type": "Pass",
     },
@@ -4663,7 +6093,7 @@ Object {
       "ResultPath": "$.heap3",
       "Type": "Pass",
     },
-    "hasNext__for(i in input.items) 1": Object {
+    "hasNext__for(i in input.items)": Object {
       "Choices": Array [
         Object {
           "IsPresent": true,
@@ -4703,9 +6133,9 @@ Object {
       "ResultPath": "$",
       "Type": "Pass",
     },
-    "tail__for(i in input.items) 1": Object {
+    "tail__for(i in input.items)": Object {
       "InputPath": "$.heap1[1:]",
-      "Next": "hasNext__for(i in input.items) 1",
+      "Next": "hasNext__for(i in input.items)",
       "ResultPath": "$.heap1",
       "Type": "Pass",
     },
@@ -4724,7 +6154,7 @@ Object {
   "StartAt": "Initialize Functionless Context",
   "States": Object {
     "1__for(i in input.items)": Object {
-      "InputPath": "$.heap0",
+      "ItemsPath": "$.heap0",
       "Iterator": Object {
         "StartAt": "Default",
         "States": Object {
@@ -4887,7 +6317,7 @@ Object {
   "StartAt": "Initialize Functionless Context",
   "States": Object {
     "1__for(i in input.items)": Object {
-      "InputPath": "$.heap0",
+      "ItemsPath": "$.heap0",
       "Iterator": Object {
         "StartAt": "Default",
         "States": Object {
@@ -4973,7 +6403,7 @@ Object {
   "StartAt": "Initialize Functionless Context",
   "States": Object {
     "1__for(i in input.items)": Object {
-      "InputPath": "$.heap0",
+      "ItemsPath": "$.heap0",
       "Iterator": Object {
         "StartAt": "Default",
         "States": Object {
@@ -5148,7 +6578,7 @@ Object {
   "StartAt": "Initialize Functionless Context",
   "States": Object {
     "1__for(i in input.items)": Object {
-      "InputPath": "$.heap0",
+      "ItemsPath": "$.heap0",
       "Iterator": Object {
         "StartAt": "Default",
         "States": Object {
@@ -5234,7 +6664,7 @@ Object {
   "StartAt": "Initialize Functionless Context",
   "States": Object {
     "1__for(i in input.items)": Object {
-      "InputPath": "$.heap0",
+      "ItemsPath": "$.heap0",
       "Iterator": Object {
         "StartAt": "Default",
         "States": Object {
@@ -6079,7 +7509,7 @@ Object {
   "StartAt": "Initialize Functionless Context",
   "States": Object {
     "Initialize Functionless Context": Object {
-      "Next": "for(name of people)",
+      "Next": "people = [\\"sam\\", \\"sam\\"]",
       "Parameters": Object {
         "fnl_context": Object {
           "null": null,
@@ -6090,7 +7520,7 @@ Object {
       "Type": "Pass",
     },
     "await computeScore({id: input.id, name: name})": Object {
-      "Next": "tail__for(name of people) 1",
+      "Next": "tail__for(name of people)",
       "Parameters": Object {
         "id.$": "$.input.id",
         "name.$": "$.name",
@@ -6100,21 +7530,12 @@ Object {
       "Type": "Task",
     },
     "for(name of people)": Object {
-      "Next": "for(name of people) 1",
-      "Result": Array [
-        "sam",
-        "sam",
-      ],
-      "ResultPath": "$.people",
-      "Type": "Pass",
-    },
-    "for(name of people) 1": Object {
       "InputPath": "$.people",
-      "Next": "hasNext__for(name of people) 1",
+      "Next": "hasNext__for(name of people)",
       "ResultPath": "$.heap1",
       "Type": "Pass",
     },
-    "hasNext__for(name of people) 1": Object {
+    "hasNext__for(name of people)": Object {
       "Choices": Array [
         Object {
           "IsPresent": true,
@@ -6131,15 +7552,24 @@ Object {
       "ResultPath": "$.name",
       "Type": "Pass",
     },
+    "people = [\\"sam\\", \\"sam\\"]": Object {
+      "Next": "for(name of people)",
+      "Result": Array [
+        "sam",
+        "sam",
+      ],
+      "ResultPath": "$.people",
+      "Type": "Pass",
+    },
     "return null": Object {
       "End": true,
       "InputPath": "$.fnl_context.null",
       "ResultPath": "$",
       "Type": "Pass",
     },
-    "tail__for(name of people) 1": Object {
+    "tail__for(name of people)": Object {
       "InputPath": "$.heap1[1:]",
-      "Next": "hasNext__for(name of people) 1",
+      "Next": "hasNext__for(name of people)",
       "ResultPath": "$.heap1",
       "Type": "Pass",
     },
@@ -6300,7 +7730,7 @@ Object {
   "StartAt": "Initialize Functionless Context",
   "States": Object {
     "1__for(x in input.items)": Object {
-      "InputPath": "$.heap0",
+      "ItemsPath": "$.heap0",
       "Iterator": Object {
         "StartAt": "Default",
         "States": Object {
@@ -8213,28 +9643,60 @@ Object {
       "ResultPath": "$",
       "Type": "Pass",
     },
-    "return input.list.map(function(item)).filter(function(item))": Object {
-      "ItemsPath": "$.input.list",
-      "Iterator": Object {
-        "StartAt": "return item",
-        "States": Object {
-          "return item": Object {
-            "End": true,
-            "InputPath": "$.item",
-            "ResultPath": "$",
-            "Type": "Pass",
-          },
+    "check__return input.list.map(function(item)).filter(function(item))": Object {
+      "Choices": Array [
+        Object {
+          "IsPresent": true,
+          "Next": "item",
+          "Variable": "$.heap0.arr[0]",
         },
-      },
-      "MaxConcurrency": 1,
-      "Next": "1__return input.list.map(function(item)).filter(function(item))",
+      ],
+      "Default": "end__return input.list.map(function(item)).filter(function(item))",
+      "Type": "Choice",
+    },
+    "end__return input.list.map(function(item)).filter(function(item))": Object {
+      "Next": "set__end__return input.list.map(function(item)).filter(function(item))",
       "Parameters": Object {
-        "fnl_context.$": "$.fnl_context",
-        "input.$": "$.input",
-        "item.$": "$$.Map.Item.Value",
+        "result.$": "States.StringToJson(States.Format('{}]', $.heap0.arrStr))",
       },
       "ResultPath": "$.heap0",
-      "Type": "Map",
+      "Type": "Pass",
+    },
+    "handleResult__return input.list.map(function(item)).filter(function(item))": Object {
+      "Next": "check__return input.list.map(function(item)).filter(function(item))",
+      "Parameters": Object {
+        "arr.$": "$.heap0.arr[1:]",
+        "arrStr.$": "States.Format('{},{}', $.heap0.arrStr, States.JsonToString($.heap0.arr[0]))",
+      },
+      "ResultPath": "$.heap0",
+      "Type": "Pass",
+    },
+    "item": Object {
+      "InputPath": "$.heap0.arr[0]",
+      "Next": "return item",
+      "ResultPath": "$.item",
+      "Type": "Pass",
+    },
+    "return input.list.map(function(item)).filter(function(item))": Object {
+      "Next": "check__return input.list.map(function(item)).filter(function(item))",
+      "Parameters": Object {
+        "arr.$": "$.input.list",
+        "arrStr": "[null",
+      },
+      "ResultPath": "$.heap0",
+      "Type": "Pass",
+    },
+    "return item": Object {
+      "InputPath": "$.item",
+      "Next": "handleResult__return input.list.map(function(item)).filter(function(item))",
+      "ResultPath": "$.heap0.arr[0]",
+      "Type": "Pass",
+    },
+    "set__end__return input.list.map(function(item)).filter(function(item))": Object {
+      "InputPath": "$.heap0.result[1:]",
+      "Next": "1__return input.list.map(function(item)).filter(function(item))",
+      "ResultPath": "$.heap0",
+      "Type": "Pass",
     },
   },
 }
@@ -8585,28 +10047,60 @@ Object {
       "ResultPath": "$",
       "Type": "Pass",
     },
-    "return input.list.filter(function(item)).map(function(item))": Object {
-      "ItemsPath": "$.input.list[?(@.length>2)]",
-      "Iterator": Object {
-        "StartAt": "return item",
-        "States": Object {
-          "return item": Object {
-            "End": true,
-            "InputPath": "$.item",
-            "ResultPath": "$",
-            "Type": "Pass",
-          },
+    "check__return input.list.filter(function(item)).map(function(item))": Object {
+      "Choices": Array [
+        Object {
+          "IsPresent": true,
+          "Next": "item",
+          "Variable": "$.heap0.arr[0]",
         },
-      },
-      "MaxConcurrency": 1,
-      "Next": "1__return input.list.filter(function(item)).map(function(item))",
+      ],
+      "Default": "end__return input.list.filter(function(item)).map(function(item))",
+      "Type": "Choice",
+    },
+    "end__return input.list.filter(function(item)).map(function(item))": Object {
+      "Next": "set__end__return input.list.filter(function(item)).map(function(item))",
       "Parameters": Object {
-        "fnl_context.$": "$.fnl_context",
-        "input.$": "$.input",
-        "item.$": "$$.Map.Item.Value",
+        "result.$": "States.StringToJson(States.Format('{}]', $.heap0.arrStr))",
       },
       "ResultPath": "$.heap0",
-      "Type": "Map",
+      "Type": "Pass",
+    },
+    "handleResult__return input.list.filter(function(item)).map(function(item))": Object {
+      "Next": "check__return input.list.filter(function(item)).map(function(item))",
+      "Parameters": Object {
+        "arr.$": "$.heap0.arr[1:]",
+        "arrStr.$": "States.Format('{},{}', $.heap0.arrStr, States.JsonToString($.heap0.arr[0]))",
+      },
+      "ResultPath": "$.heap0",
+      "Type": "Pass",
+    },
+    "item": Object {
+      "InputPath": "$.heap0.arr[0]",
+      "Next": "return item",
+      "ResultPath": "$.item",
+      "Type": "Pass",
+    },
+    "return input.list.filter(function(item)).map(function(item))": Object {
+      "Next": "check__return input.list.filter(function(item)).map(function(item))",
+      "Parameters": Object {
+        "arr.$": "$.input.list[?(@.length>2)]",
+        "arrStr": "[null",
+      },
+      "ResultPath": "$.heap0",
+      "Type": "Pass",
+    },
+    "return item": Object {
+      "InputPath": "$.item",
+      "Next": "handleResult__return input.list.filter(function(item)).map(function(item))",
+      "ResultPath": "$.heap0.arr[0]",
+      "Type": "Pass",
+    },
+    "set__end__return input.list.filter(function(item)).map(function(item))": Object {
+      "InputPath": "$.heap0.result[1:]",
+      "Next": "1__return input.list.filter(function(item)).map(function(item))",
+      "ResultPath": "$.heap0",
+      "Type": "Pass",
     },
   },
 }
@@ -8618,8 +10112,14 @@ Object {
   "States": Object {
     "1__return Promise.all(input.list.filter(function(item)).map(function(item))": Object {
       "End": true,
-      "InputPath": "$.heap1",
+      "InputPath": "$.heap0",
       "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "1__return task(item)": Object {
+      "InputPath": "$.heap1",
+      "Next": "handleResult__return Promise.all(input.list.filter(function(item)).map(func",
+      "ResultPath": "$.heap0.arr[0]",
       "Type": "Pass",
     },
     "Initialize Functionless Context": Object {
@@ -8633,35 +10133,61 @@ Object {
       "ResultPath": "$",
       "Type": "Pass",
     },
-    "return Promise.all(input.list.filter(function(item)).map(function(item)))": Object {
-      "ItemsPath": "$.input.list[?(@.length>2)]",
-      "Iterator": Object {
-        "StartAt": "return task(item)",
-        "States": Object {
-          "1__return task(item)": Object {
-            "End": true,
-            "InputPath": "$.heap0",
-            "ResultPath": "$",
-            "Type": "Pass",
-          },
-          "return task(item)": Object {
-            "InputPath": "$.item",
-            "Next": "1__return task(item)",
-            "Resource": "__REPLACED_TOKEN",
-            "ResultPath": "$.heap0",
-            "Type": "Task",
-          },
+    "check__return Promise.all(input.list.filter(function(item)).map(function(it": Object {
+      "Choices": Array [
+        Object {
+          "IsPresent": true,
+          "Next": "item",
+          "Variable": "$.heap0.arr[0]",
         },
-      },
-      "MaxConcurrency": 1,
-      "Next": "1__return Promise.all(input.list.filter(function(item)).map(function(item))",
+      ],
+      "Default": "end__return Promise.all(input.list.filter(function(item)).map(function(item",
+      "Type": "Choice",
+    },
+    "end__return Promise.all(input.list.filter(function(item)).map(function(item": Object {
+      "Next": "set__end__return Promise.all(input.list.filter(function(item)).map(function",
       "Parameters": Object {
-        "fnl_context.$": "$.fnl_context",
-        "input.$": "$.input",
-        "item.$": "$$.Map.Item.Value",
+        "result.$": "States.StringToJson(States.Format('{}]', $.heap0.arrStr))",
       },
+      "ResultPath": "$.heap0",
+      "Type": "Pass",
+    },
+    "handleResult__return Promise.all(input.list.filter(function(item)).map(func": Object {
+      "Next": "check__return Promise.all(input.list.filter(function(item)).map(function(it",
+      "Parameters": Object {
+        "arr.$": "$.heap0.arr[1:]",
+        "arrStr.$": "States.Format('{},{}', $.heap0.arrStr, States.JsonToString($.heap0.arr[0]))",
+      },
+      "ResultPath": "$.heap0",
+      "Type": "Pass",
+    },
+    "item": Object {
+      "InputPath": "$.heap0.arr[0]",
+      "Next": "return task(item)",
+      "ResultPath": "$.item",
+      "Type": "Pass",
+    },
+    "return Promise.all(input.list.filter(function(item)).map(function(item)))": Object {
+      "Next": "check__return Promise.all(input.list.filter(function(item)).map(function(it",
+      "Parameters": Object {
+        "arr.$": "$.input.list[?(@.length>2)]",
+        "arrStr": "[null",
+      },
+      "ResultPath": "$.heap0",
+      "Type": "Pass",
+    },
+    "return task(item)": Object {
+      "InputPath": "$.item",
+      "Next": "1__return task(item)",
+      "Resource": "__REPLACED_TOKEN",
       "ResultPath": "$.heap1",
-      "Type": "Map",
+      "Type": "Task",
+    },
+    "set__end__return Promise.all(input.list.filter(function(item)).map(function": Object {
+      "InputPath": "$.heap0.result[1:]",
+      "Next": "1__return Promise.all(input.list.filter(function(item)).map(function(item))",
+      "ResultPath": "$.heap0",
+      "Type": "Pass",
     },
   },
 }
@@ -8673,8 +10199,14 @@ Object {
   "States": Object {
     "1__return input.list.forEach(function(item, i))": Object {
       "End": true,
-      "InputPath": "$.heap1",
+      "InputPath": "$.heap0",
       "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "1__return task(item)": Object {
+      "InputPath": "$.heap1",
+      "Next": "tail__return input.list.forEach(function(item, i))",
+      "ResultPath": "$.heap0.arr[0]",
       "Type": "Pass",
     },
     "Initialize Functionless Context": Object {
@@ -8688,69 +10220,103 @@ Object {
       "ResultPath": "$",
       "Type": "Pass",
     },
+    "check__return input.list.forEach(function(item, i))": Object {
+      "Choices": Array [
+        Object {
+          "IsPresent": true,
+          "Next": "function(item, i)",
+          "Variable": "$.heap0.arr[0]",
+        },
+      ],
+      "Default": "end__return input.list.forEach(function(item, i))",
+      "Type": "Choice",
+    },
+    "end__return input.list.forEach(function(item, i))": Object {
+      "Next": "1__return input.list.forEach(function(item, i))",
+      "Result": "$.fnl_context.null",
+      "ResultPath": "$.heap0",
+      "Type": "Pass",
+    },
+    "function(item, i)": Object {
+      "InputPath": "$.heap0.arr[0].item",
+      "Next": "i",
+      "ResultPath": "$.item",
+      "Type": "Pass",
+    },
+    "i": Object {
+      "InputPath": "$.heap0.arr[0].index",
+      "Next": "if(i == 0)",
+      "ResultPath": "$.i",
+      "Type": "Pass",
+    },
+    "if(i == 0)": Object {
+      "Choices": Array [
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.i",
+            },
+            Object {
+              "And": Array [
+                Object {
+                  "IsNumeric": true,
+                  "Variable": "$.i",
+                },
+                Object {
+                  "NumericEquals": 0,
+                  "Variable": "$.i",
+                },
+              ],
+            },
+          ],
+          "Next": "return task(item)",
+        },
+      ],
+      "Default": "return null",
+      "Type": "Choice",
+    },
     "return input.list.forEach(function(item, i))": Object {
       "ItemsPath": "$.input.list",
       "Iterator": Object {
-        "StartAt": "if(i == 0)",
+        "StartAt": "Default",
         "States": Object {
-          "1__return task(item)": Object {
+          "Default": Object {
             "End": true,
-            "InputPath": "$.heap0",
             "ResultPath": "$",
             "Type": "Pass",
-          },
-          "if(i == 0)": Object {
-            "Choices": Array [
-              Object {
-                "And": Array [
-                  Object {
-                    "IsPresent": true,
-                    "Variable": "$.i",
-                  },
-                  Object {
-                    "And": Array [
-                      Object {
-                        "IsNumeric": true,
-                        "Variable": "$.i",
-                      },
-                      Object {
-                        "NumericEquals": 0,
-                        "Variable": "$.i",
-                      },
-                    ],
-                  },
-                ],
-                "Next": "return task(item)",
-              },
-            ],
-            "Default": "return null",
-            "Type": "Choice",
-          },
-          "return null": Object {
-            "End": true,
-            "InputPath": "$.fnl_context.null",
-            "ResultPath": "$",
-            "Type": "Pass",
-          },
-          "return task(item)": Object {
-            "InputPath": "$.item",
-            "Next": "1__return task(item)",
-            "Resource": "__REPLACED_TOKEN",
-            "ResultPath": "$.heap0",
-            "Type": "Task",
           },
         },
       },
-      "MaxConcurrency": 1,
-      "Next": "1__return input.list.forEach(function(item, i))",
+      "Next": "check__return input.list.forEach(function(item, i))",
       "Parameters": Object {
-        "fnl_context.$": "$.fnl_context",
-        "i.$": "$$.Map.Item.Index",
-        "input.$": "$.input",
+        "index.$": "$$.Map.Item.Index",
         "item.$": "$$.Map.Item.Value",
       },
-      "ResultPath": "$.heap1",
+      "ResultPath": "$.heap0",
+      "ResultSelector": Object {
+        "arr.$": "$",
+      },
       "Type": "Map",
+    },
+    "return null": Object {
+      "InputPath": "$.fnl_context.null",
+      "Next": "tail__return input.list.forEach(function(item, i))",
+      "ResultPath": "$.heap0.arr[0]",
+      "Type": "Pass",
+    },
+    "return task(item)": Object {
+      "InputPath": "$.item",
+      "Next": "1__return task(item)",
+      "Resource": "__REPLACED_TOKEN",
+      "ResultPath": "$.heap1",
+      "Type": "Task",
+    },
+    "tail__return input.list.forEach(function(item, i))": Object {
+      "InputPath": "$.heap0.arr[1:]",
+      "Next": "check__return input.list.forEach(function(item, i))",
+      "ResultPath": "$.heap0.arr",
+      "Type": "Pass",
     },
   },
 }
@@ -8762,8 +10328,20 @@ Object {
   "States": Object {
     "1__return input.list.forEach(function(item, i))": Object {
       "End": true,
-      "InputPath": "$.heap2",
+      "InputPath": "$.heap0",
       "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "1__return task(input.list[0])": Object {
+      "InputPath": "$.heap1",
+      "Next": "tail__return input.list.forEach(function(item, i))",
+      "ResultPath": "$.heap0.arr[0]",
+      "Type": "Pass",
+    },
+    "1__return task(item)": Object {
+      "InputPath": "$.heap2",
+      "Next": "tail__return input.list.forEach(function(item, i))",
+      "ResultPath": "$.heap0.arr[0]",
       "Type": "Pass",
     },
     "Initialize Functionless Context": Object {
@@ -8777,76 +10355,192 @@ Object {
       "ResultPath": "$",
       "Type": "Pass",
     },
+    "check__return input.list.forEach(function(item, i))": Object {
+      "Choices": Array [
+        Object {
+          "IsPresent": true,
+          "Next": "function(item, i)",
+          "Variable": "$.heap0.arr[0]",
+        },
+      ],
+      "Default": "end__return input.list.forEach(function(item, i))",
+      "Type": "Choice",
+    },
+    "end__return input.list.forEach(function(item, i))": Object {
+      "Next": "1__return input.list.forEach(function(item, i))",
+      "Result": "$.fnl_context.null",
+      "ResultPath": "$.heap0",
+      "Type": "Pass",
+    },
+    "function(item, i)": Object {
+      "InputPath": "$.heap0.arr[0].item",
+      "Next": "i",
+      "ResultPath": "$.item",
+      "Type": "Pass",
+    },
+    "i": Object {
+      "InputPath": "$.heap0.arr[0].index",
+      "Next": "if(i == 0)",
+      "ResultPath": "$.i",
+      "Type": "Pass",
+    },
+    "if(i == 0)": Object {
+      "Choices": Array [
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.i",
+            },
+            Object {
+              "And": Array [
+                Object {
+                  "IsNumeric": true,
+                  "Variable": "$.i",
+                },
+                Object {
+                  "NumericEquals": 0,
+                  "Variable": "$.i",
+                },
+              ],
+            },
+          ],
+          "Next": "return task(item)",
+        },
+      ],
+      "Default": "return task(input.list[0])",
+      "Type": "Choice",
+    },
     "return input.list.forEach(function(item, i))": Object {
       "ItemsPath": "$.input.list",
       "Iterator": Object {
-        "StartAt": "if(i == 0)",
+        "StartAt": "Default",
         "States": Object {
-          "1__return task(input.list[0])": Object {
+          "Default": Object {
             "End": true,
-            "InputPath": "$.heap0",
             "ResultPath": "$",
             "Type": "Pass",
-          },
-          "1__return task(item)": Object {
-            "End": true,
-            "InputPath": "$.heap1",
-            "ResultPath": "$",
-            "Type": "Pass",
-          },
-          "if(i == 0)": Object {
-            "Choices": Array [
-              Object {
-                "And": Array [
-                  Object {
-                    "IsPresent": true,
-                    "Variable": "$.i",
-                  },
-                  Object {
-                    "And": Array [
-                      Object {
-                        "IsNumeric": true,
-                        "Variable": "$.i",
-                      },
-                      Object {
-                        "NumericEquals": 0,
-                        "Variable": "$.i",
-                      },
-                    ],
-                  },
-                ],
-                "Next": "return task(item)",
-              },
-            ],
-            "Default": "return task(input.list[0])",
-            "Type": "Choice",
-          },
-          "return task(input.list[0])": Object {
-            "InputPath": "$.input.list[0]",
-            "Next": "1__return task(input.list[0])",
-            "Resource": "__REPLACED_TOKEN",
-            "ResultPath": "$.heap0",
-            "Type": "Task",
-          },
-          "return task(item)": Object {
-            "InputPath": "$.item",
-            "Next": "1__return task(item)",
-            "Resource": "__REPLACED_TOKEN",
-            "ResultPath": "$.heap1",
-            "Type": "Task",
           },
         },
       },
-      "MaxConcurrency": 1,
-      "Next": "1__return input.list.forEach(function(item, i))",
+      "Next": "check__return input.list.forEach(function(item, i))",
       "Parameters": Object {
-        "fnl_context.$": "$.fnl_context",
-        "i.$": "$$.Map.Item.Index",
-        "input.$": "$.input",
+        "index.$": "$$.Map.Item.Index",
         "item.$": "$$.Map.Item.Value",
       },
-      "ResultPath": "$.heap2",
+      "ResultPath": "$.heap0",
+      "ResultSelector": Object {
+        "arr.$": "$",
+      },
       "Type": "Map",
+    },
+    "return task(input.list[0])": Object {
+      "InputPath": "$.input.list[0]",
+      "Next": "1__return task(input.list[0])",
+      "Resource": "__REPLACED_TOKEN",
+      "ResultPath": "$.heap1",
+      "Type": "Task",
+    },
+    "return task(item)": Object {
+      "InputPath": "$.item",
+      "Next": "1__return task(item)",
+      "Resource": "__REPLACED_TOKEN",
+      "ResultPath": "$.heap2",
+      "Type": "Task",
+    },
+    "tail__return input.list.forEach(function(item, i))": Object {
+      "InputPath": "$.heap0.arr[1:]",
+      "Next": "check__return input.list.forEach(function(item, i))",
+      "ResultPath": "$.heap0.arr",
+      "Type": "Pass",
+    },
+  },
+}
+`;
+
+exports[`list.forEach(item => ) 1`] = `
+Object {
+  "StartAt": "Initialize Functionless Context",
+  "States": Object {
+    "1__a = \`aitem\`": Object {
+      "InputPath": "$.heap1.string",
+      "Next": "return null 1",
+      "ResultPath": "$.a",
+      "Type": "Pass",
+    },
+    "Initialize Functionless Context": Object {
+      "Next": "a = \\"\\"",
+      "Parameters": Object {
+        "fnl_context": Object {
+          "null": null,
+        },
+        "input.$": "$",
+      },
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "a = \\"\\"": Object {
+      "Next": "input.list.forEach(function(item))",
+      "Result": "",
+      "ResultPath": "$.a",
+      "Type": "Pass",
+    },
+    "a = \`aitem\`": Object {
+      "Next": "1__a = \`aitem\`",
+      "Parameters": Object {
+        "string.$": "States.Format('{}{}',$.a,$.item)",
+      },
+      "ResultPath": "$.heap1",
+      "Type": "Pass",
+    },
+    "check__input.list.forEach(function(item))": Object {
+      "Choices": Array [
+        Object {
+          "IsPresent": true,
+          "Next": "item",
+          "Variable": "$.heap0.arr[0]",
+        },
+      ],
+      "Default": "end__input.list.forEach(function(item))",
+      "Type": "Choice",
+    },
+    "end__input.list.forEach(function(item))": Object {
+      "Next": "return null",
+      "Result": "$.fnl_context.null",
+      "ResultPath": "$.heap0",
+      "Type": "Pass",
+    },
+    "input.list.forEach(function(item))": Object {
+      "Next": "check__input.list.forEach(function(item))",
+      "Parameters": Object {
+        "arr.$": "$.input.list",
+      },
+      "ResultPath": "$.heap0",
+      "Type": "Pass",
+    },
+    "item": Object {
+      "InputPath": "$.heap0.arr[0]",
+      "Next": "a = \`aitem\`",
+      "ResultPath": "$.item",
+      "Type": "Pass",
+    },
+    "return null": Object {
+      "End": true,
+      "InputPath": "$.fnl_context.null",
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "return null 1": Object {
+      "InputPath": "$.fnl_context.null",
+      "Next": "tail__input.list.forEach(function(item))",
+      "ResultPath": "$.heap0.arr[0]",
+      "Type": "Pass",
+    },
+    "tail__input.list.forEach(function(item))": Object {
+      "InputPath": "$.heap0.arr[1:]",
+      "Next": "check__input.list.forEach(function(item))",
+      "ResultPath": "$.heap0.arr",
+      "Type": "Pass",
     },
   },
 }
@@ -8858,8 +10552,14 @@ Object {
   "States": Object {
     "1__return input.list.forEach(function(item))": Object {
       "End": true,
-      "InputPath": "$.heap1",
+      "InputPath": "$.heap0",
       "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "1__return task(item)": Object {
+      "InputPath": "$.heap1",
+      "Next": "tail__return input.list.forEach(function(item))",
+      "ResultPath": "$.heap0.arr[0]",
       "Type": "Pass",
     },
     "Initialize Functionless Context": Object {
@@ -8873,35 +10573,49 @@ Object {
       "ResultPath": "$",
       "Type": "Pass",
     },
-    "return input.list.forEach(function(item))": Object {
-      "ItemsPath": "$.input.list",
-      "Iterator": Object {
-        "StartAt": "return task(item)",
-        "States": Object {
-          "1__return task(item)": Object {
-            "End": true,
-            "InputPath": "$.heap0",
-            "ResultPath": "$",
-            "Type": "Pass",
-          },
-          "return task(item)": Object {
-            "InputPath": "$.item",
-            "Next": "1__return task(item)",
-            "Resource": "__REPLACED_TOKEN",
-            "ResultPath": "$.heap0",
-            "Type": "Task",
-          },
+    "check__return input.list.forEach(function(item))": Object {
+      "Choices": Array [
+        Object {
+          "IsPresent": true,
+          "Next": "item",
+          "Variable": "$.heap0.arr[0]",
         },
-      },
-      "MaxConcurrency": 1,
+      ],
+      "Default": "end__return input.list.forEach(function(item))",
+      "Type": "Choice",
+    },
+    "end__return input.list.forEach(function(item))": Object {
       "Next": "1__return input.list.forEach(function(item))",
+      "Result": "$.fnl_context.null",
+      "ResultPath": "$.heap0",
+      "Type": "Pass",
+    },
+    "item": Object {
+      "InputPath": "$.heap0.arr[0]",
+      "Next": "return task(item)",
+      "ResultPath": "$.item",
+      "Type": "Pass",
+    },
+    "return input.list.forEach(function(item))": Object {
+      "Next": "check__return input.list.forEach(function(item))",
       "Parameters": Object {
-        "fnl_context.$": "$.fnl_context",
-        "input.$": "$.input",
-        "item.$": "$$.Map.Item.Value",
+        "arr.$": "$.input.list",
       },
+      "ResultPath": "$.heap0",
+      "Type": "Pass",
+    },
+    "return task(item)": Object {
+      "InputPath": "$.item",
+      "Next": "1__return task(item)",
+      "Resource": "__REPLACED_TOKEN",
       "ResultPath": "$.heap1",
-      "Type": "Map",
+      "Type": "Task",
+    },
+    "tail__return input.list.forEach(function(item))": Object {
+      "InputPath": "$.heap0.arr[1:]",
+      "Next": "check__return input.list.forEach(function(item))",
+      "ResultPath": "$.heap0.arr",
+      "Type": "Pass",
     },
   },
 }
@@ -8913,8 +10627,14 @@ Object {
   "States": Object {
     "1__return Promise.all(input.list.map(function(item, i)))": Object {
       "End": true,
-      "InputPath": "$.heap1",
+      "InputPath": "$.heap0",
       "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "1__return task(item)": Object {
+      "InputPath": "$.heap1",
+      "Next": "handleResult__return Promise.all(input.list.map(function(item, i)))",
+      "ResultPath": "$.heap0.arr[0]",
       "Type": "Pass",
     },
     "Initialize Functionless Context": Object {
@@ -8928,69 +10648,115 @@ Object {
       "ResultPath": "$",
       "Type": "Pass",
     },
+    "check__return Promise.all(input.list.map(function(item, i)))": Object {
+      "Choices": Array [
+        Object {
+          "IsPresent": true,
+          "Next": "function(item, i)",
+          "Variable": "$.heap0.arr[0]",
+        },
+      ],
+      "Default": "end__return Promise.all(input.list.map(function(item, i)))",
+      "Type": "Choice",
+    },
+    "end__return Promise.all(input.list.map(function(item, i)))": Object {
+      "Next": "set__end__return Promise.all(input.list.map(function(item, i)))",
+      "Parameters": Object {
+        "result.$": "States.StringToJson(States.Format('{}]', $.heap0.arrStr))",
+      },
+      "ResultPath": "$.heap0",
+      "Type": "Pass",
+    },
+    "function(item, i)": Object {
+      "InputPath": "$.heap0.arr[0].item",
+      "Next": "i",
+      "ResultPath": "$.item",
+      "Type": "Pass",
+    },
+    "handleResult__return Promise.all(input.list.map(function(item, i)))": Object {
+      "Next": "check__return Promise.all(input.list.map(function(item, i)))",
+      "Parameters": Object {
+        "arr.$": "$.heap0.arr[1:]",
+        "arrStr.$": "States.Format('{},{}', $.heap0.arrStr, States.JsonToString($.heap0.arr[0]))",
+      },
+      "ResultPath": "$.heap0",
+      "Type": "Pass",
+    },
+    "i": Object {
+      "InputPath": "$.heap0.arr[0].index",
+      "Next": "if(i == 0)",
+      "ResultPath": "$.i",
+      "Type": "Pass",
+    },
+    "if(i == 0)": Object {
+      "Choices": Array [
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.i",
+            },
+            Object {
+              "And": Array [
+                Object {
+                  "IsNumeric": true,
+                  "Variable": "$.i",
+                },
+                Object {
+                  "NumericEquals": 0,
+                  "Variable": "$.i",
+                },
+              ],
+            },
+          ],
+          "Next": "return task(item)",
+        },
+      ],
+      "Default": "return null",
+      "Type": "Choice",
+    },
     "return Promise.all(input.list.map(function(item, i)))": Object {
       "ItemsPath": "$.input.list",
       "Iterator": Object {
-        "StartAt": "if(i == 0)",
+        "StartAt": "Default",
         "States": Object {
-          "1__return task(item)": Object {
+          "Default": Object {
             "End": true,
-            "InputPath": "$.heap0",
             "ResultPath": "$",
             "Type": "Pass",
-          },
-          "if(i == 0)": Object {
-            "Choices": Array [
-              Object {
-                "And": Array [
-                  Object {
-                    "IsPresent": true,
-                    "Variable": "$.i",
-                  },
-                  Object {
-                    "And": Array [
-                      Object {
-                        "IsNumeric": true,
-                        "Variable": "$.i",
-                      },
-                      Object {
-                        "NumericEquals": 0,
-                        "Variable": "$.i",
-                      },
-                    ],
-                  },
-                ],
-                "Next": "return task(item)",
-              },
-            ],
-            "Default": "return null",
-            "Type": "Choice",
-          },
-          "return null": Object {
-            "End": true,
-            "InputPath": "$.fnl_context.null",
-            "ResultPath": "$",
-            "Type": "Pass",
-          },
-          "return task(item)": Object {
-            "InputPath": "$.item",
-            "Next": "1__return task(item)",
-            "Resource": "__REPLACED_TOKEN",
-            "ResultPath": "$.heap0",
-            "Type": "Task",
           },
         },
       },
-      "MaxConcurrency": 1,
-      "Next": "1__return Promise.all(input.list.map(function(item, i)))",
+      "Next": "check__return Promise.all(input.list.map(function(item, i)))",
       "Parameters": Object {
-        "fnl_context.$": "$.fnl_context",
-        "i.$": "$$.Map.Item.Index",
-        "input.$": "$.input",
+        "index.$": "$$.Map.Item.Index",
         "item.$": "$$.Map.Item.Value",
       },
-      "ResultPath": "$.heap1",
+      "ResultPath": "$.heap0",
+      "ResultSelector": Object {
+        "arr.$": "$",
+        "arrStr": "[null",
+      },
       "Type": "Map",
+    },
+    "return null": Object {
+      "InputPath": "$.fnl_context.null",
+      "Next": "handleResult__return Promise.all(input.list.map(function(item, i)))",
+      "ResultPath": "$.heap0.arr[0]",
+      "Type": "Pass",
+    },
+    "return task(item)": Object {
+      "InputPath": "$.item",
+      "Next": "1__return task(item)",
+      "Resource": "__REPLACED_TOKEN",
+      "ResultPath": "$.heap1",
+      "Type": "Task",
+    },
+    "set__end__return Promise.all(input.list.map(function(item, i)))": Object {
+      "InputPath": "$.heap0.result[1:]",
+      "Next": "1__return Promise.all(input.list.map(function(item, i)))",
+      "ResultPath": "$.heap0",
+      "Type": "Pass",
     },
   },
 }
@@ -9002,8 +10768,20 @@ Object {
   "States": Object {
     "1__return Promise.all(input.list.map(function(item, i)))": Object {
       "End": true,
-      "InputPath": "$.heap2",
+      "InputPath": "$.heap0",
       "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "1__return task(input.list[0])": Object {
+      "InputPath": "$.heap1",
+      "Next": "handleResult__return Promise.all(input.list.map(function(item, i)))",
+      "ResultPath": "$.heap0.arr[0]",
+      "Type": "Pass",
+    },
+    "1__return task(item)": Object {
+      "InputPath": "$.heap2",
+      "Next": "handleResult__return Promise.all(input.list.map(function(item, i)))",
+      "ResultPath": "$.heap0.arr[0]",
       "Type": "Pass",
     },
     "Initialize Functionless Context": Object {
@@ -9017,76 +10795,116 @@ Object {
       "ResultPath": "$",
       "Type": "Pass",
     },
+    "check__return Promise.all(input.list.map(function(item, i)))": Object {
+      "Choices": Array [
+        Object {
+          "IsPresent": true,
+          "Next": "function(item, i)",
+          "Variable": "$.heap0.arr[0]",
+        },
+      ],
+      "Default": "end__return Promise.all(input.list.map(function(item, i)))",
+      "Type": "Choice",
+    },
+    "end__return Promise.all(input.list.map(function(item, i)))": Object {
+      "Next": "set__end__return Promise.all(input.list.map(function(item, i)))",
+      "Parameters": Object {
+        "result.$": "States.StringToJson(States.Format('{}]', $.heap0.arrStr))",
+      },
+      "ResultPath": "$.heap0",
+      "Type": "Pass",
+    },
+    "function(item, i)": Object {
+      "InputPath": "$.heap0.arr[0].item",
+      "Next": "i",
+      "ResultPath": "$.item",
+      "Type": "Pass",
+    },
+    "handleResult__return Promise.all(input.list.map(function(item, i)))": Object {
+      "Next": "check__return Promise.all(input.list.map(function(item, i)))",
+      "Parameters": Object {
+        "arr.$": "$.heap0.arr[1:]",
+        "arrStr.$": "States.Format('{},{}', $.heap0.arrStr, States.JsonToString($.heap0.arr[0]))",
+      },
+      "ResultPath": "$.heap0",
+      "Type": "Pass",
+    },
+    "i": Object {
+      "InputPath": "$.heap0.arr[0].index",
+      "Next": "if(i == 0)",
+      "ResultPath": "$.i",
+      "Type": "Pass",
+    },
+    "if(i == 0)": Object {
+      "Choices": Array [
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.i",
+            },
+            Object {
+              "And": Array [
+                Object {
+                  "IsNumeric": true,
+                  "Variable": "$.i",
+                },
+                Object {
+                  "NumericEquals": 0,
+                  "Variable": "$.i",
+                },
+              ],
+            },
+          ],
+          "Next": "return task(item)",
+        },
+      ],
+      "Default": "return task(input.list[0])",
+      "Type": "Choice",
+    },
     "return Promise.all(input.list.map(function(item, i)))": Object {
       "ItemsPath": "$.input.list",
       "Iterator": Object {
-        "StartAt": "if(i == 0)",
+        "StartAt": "Default",
         "States": Object {
-          "1__return task(input.list[0])": Object {
+          "Default": Object {
             "End": true,
-            "InputPath": "$.heap0",
             "ResultPath": "$",
             "Type": "Pass",
-          },
-          "1__return task(item)": Object {
-            "End": true,
-            "InputPath": "$.heap1",
-            "ResultPath": "$",
-            "Type": "Pass",
-          },
-          "if(i == 0)": Object {
-            "Choices": Array [
-              Object {
-                "And": Array [
-                  Object {
-                    "IsPresent": true,
-                    "Variable": "$.i",
-                  },
-                  Object {
-                    "And": Array [
-                      Object {
-                        "IsNumeric": true,
-                        "Variable": "$.i",
-                      },
-                      Object {
-                        "NumericEquals": 0,
-                        "Variable": "$.i",
-                      },
-                    ],
-                  },
-                ],
-                "Next": "return task(item)",
-              },
-            ],
-            "Default": "return task(input.list[0])",
-            "Type": "Choice",
-          },
-          "return task(input.list[0])": Object {
-            "InputPath": "$.input.list[0]",
-            "Next": "1__return task(input.list[0])",
-            "Resource": "__REPLACED_TOKEN",
-            "ResultPath": "$.heap0",
-            "Type": "Task",
-          },
-          "return task(item)": Object {
-            "InputPath": "$.item",
-            "Next": "1__return task(item)",
-            "Resource": "__REPLACED_TOKEN",
-            "ResultPath": "$.heap1",
-            "Type": "Task",
           },
         },
       },
-      "MaxConcurrency": 1,
-      "Next": "1__return Promise.all(input.list.map(function(item, i)))",
+      "Next": "check__return Promise.all(input.list.map(function(item, i)))",
       "Parameters": Object {
-        "fnl_context.$": "$.fnl_context",
-        "i.$": "$$.Map.Item.Index",
-        "input.$": "$.input",
+        "index.$": "$$.Map.Item.Index",
         "item.$": "$$.Map.Item.Value",
       },
-      "ResultPath": "$.heap2",
+      "ResultPath": "$.heap0",
+      "ResultSelector": Object {
+        "arr.$": "$",
+        "arrStr": "[null",
+      },
       "Type": "Map",
+    },
+    "return task(input.list[0])": Object {
+      "InputPath": "$.input.list[0]",
+      "Next": "1__return task(input.list[0])",
+      "Resource": "__REPLACED_TOKEN",
+      "ResultPath": "$.heap1",
+      "Type": "Task",
+    },
+    "return task(item)": Object {
+      "InputPath": "$.item",
+      "Next": "1__return task(item)",
+      "Resource": "__REPLACED_TOKEN",
+      "ResultPath": "$.heap2",
+      "Type": "Task",
+    },
+    "set__end__return Promise.all(input.list.map(function(item, i)))": Object {
+      "InputPath": "$.heap0.result[1:]",
+      "Next": "1__return Promise.all(input.list.map(function(item, i)))",
+      "ResultPath": "$.heap0",
+      "Type": "Pass",
     },
   },
 }
@@ -9098,8 +10916,14 @@ Object {
   "States": Object {
     "1__return Promise.all(input.list.map(function(item)))": Object {
       "End": true,
-      "InputPath": "$.heap1",
+      "InputPath": "$.heap0",
       "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "1__return task(item)": Object {
+      "InputPath": "$.heap1",
+      "Next": "handleResult__return Promise.all(input.list.map(function(item)))",
+      "ResultPath": "$.heap0.arr[0]",
       "Type": "Pass",
     },
     "Initialize Functionless Context": Object {
@@ -9113,35 +10937,61 @@ Object {
       "ResultPath": "$",
       "Type": "Pass",
     },
-    "return Promise.all(input.list.map(function(item)))": Object {
-      "ItemsPath": "$.input.list",
-      "Iterator": Object {
-        "StartAt": "return task(item)",
-        "States": Object {
-          "1__return task(item)": Object {
-            "End": true,
-            "InputPath": "$.heap0",
-            "ResultPath": "$",
-            "Type": "Pass",
-          },
-          "return task(item)": Object {
-            "InputPath": "$.item",
-            "Next": "1__return task(item)",
-            "Resource": "__REPLACED_TOKEN",
-            "ResultPath": "$.heap0",
-            "Type": "Task",
-          },
+    "check__return Promise.all(input.list.map(function(item)))": Object {
+      "Choices": Array [
+        Object {
+          "IsPresent": true,
+          "Next": "item",
+          "Variable": "$.heap0.arr[0]",
         },
-      },
-      "MaxConcurrency": 1,
-      "Next": "1__return Promise.all(input.list.map(function(item)))",
+      ],
+      "Default": "end__return Promise.all(input.list.map(function(item)))",
+      "Type": "Choice",
+    },
+    "end__return Promise.all(input.list.map(function(item)))": Object {
+      "Next": "set__end__return Promise.all(input.list.map(function(item)))",
       "Parameters": Object {
-        "fnl_context.$": "$.fnl_context",
-        "input.$": "$.input",
-        "item.$": "$$.Map.Item.Value",
+        "result.$": "States.StringToJson(States.Format('{}]', $.heap0.arrStr))",
       },
+      "ResultPath": "$.heap0",
+      "Type": "Pass",
+    },
+    "handleResult__return Promise.all(input.list.map(function(item)))": Object {
+      "Next": "check__return Promise.all(input.list.map(function(item)))",
+      "Parameters": Object {
+        "arr.$": "$.heap0.arr[1:]",
+        "arrStr.$": "States.Format('{},{}', $.heap0.arrStr, States.JsonToString($.heap0.arr[0]))",
+      },
+      "ResultPath": "$.heap0",
+      "Type": "Pass",
+    },
+    "item": Object {
+      "InputPath": "$.heap0.arr[0]",
+      "Next": "return task(item)",
+      "ResultPath": "$.item",
+      "Type": "Pass",
+    },
+    "return Promise.all(input.list.map(function(item)))": Object {
+      "Next": "check__return Promise.all(input.list.map(function(item)))",
+      "Parameters": Object {
+        "arr.$": "$.input.list",
+        "arrStr": "[null",
+      },
+      "ResultPath": "$.heap0",
+      "Type": "Pass",
+    },
+    "return task(item)": Object {
+      "InputPath": "$.item",
+      "Next": "1__return task(item)",
+      "Resource": "__REPLACED_TOKEN",
       "ResultPath": "$.heap1",
-      "Type": "Map",
+      "Type": "Task",
+    },
+    "set__end__return Promise.all(input.list.map(function(item)))": Object {
+      "InputPath": "$.heap0.result[1:]",
+      "Next": "1__return Promise.all(input.list.map(function(item)))",
+      "ResultPath": "$.heap0",
+      "Type": "Pass",
     },
   },
 }
@@ -9302,12 +11152,20 @@ Object {
       "Parameters": Object {
         "Entries": Array [
           Object {
+            "Account": "123456789012",
             "Detail": Object {
               "value.$": "$.input.id",
             },
             "DetailType": "someEvent",
             "EventBusName": "__REPLACED_TOKEN",
+            "Id": "bbbbbbbb-eeee-eeee-eeee-ffffffffffff",
+            "Region": "us-east-1",
+            "Resources": Array [
+              "__REPLACED_ARN",
+            ],
             "Source": "sfnTest",
+            "Time": "2022-08-05T16:19:03Z",
+            "Version": "1",
           },
         ],
       },
@@ -9435,14 +11293,14 @@ exports[`result = $SFN.map(list, (item) => task(item)) 1`] = `
 Object {
   "StartAt": "Initialize Functionless Context",
   "States": Object {
-    "1__return result": Object {
+    "1__result = await $SFN.map(input.list, function(item))": Object {
       "InputPath": "$.heap1",
-      "Next": "return result 1",
+      "Next": "return result",
       "ResultPath": "$.result",
       "Type": "Pass",
     },
     "Initialize Functionless Context": Object {
-      "Next": "return result",
+      "Next": "result = await $SFN.map(input.list, function(item))",
       "Parameters": Object {
         "fnl_context": Object {
           "null": null,
@@ -9452,7 +11310,7 @@ Object {
       "ResultPath": "$",
       "Type": "Pass",
     },
-    "return result": Object {
+    "result = await $SFN.map(input.list, function(item))": Object {
       "ItemsPath": "$.input.list",
       "Iterator": Object {
         "StartAt": "return task(item)",
@@ -9472,7 +11330,7 @@ Object {
           },
         },
       },
-      "Next": "1__return result",
+      "Next": "1__result = await $SFN.map(input.list, function(item))",
       "Parameters": Object {
         "fnl_context.$": "$.fnl_context",
         "input.$": "$.input",
@@ -9481,7 +11339,7 @@ Object {
       "ResultPath": "$.heap1",
       "Type": "Map",
     },
-    "return result 1": Object {
+    "return result": Object {
       "End": true,
       "InputPath": "$.result",
       "ResultPath": "$",
@@ -10025,14 +11883,14 @@ exports[`return AWS.DynamoDB.GetItem 1`] = `
 Object {
   "StartAt": "Initialize Functionless Context",
   "States": Object {
-    "1__if(person.Item == undefined)": Object {
+    "1__person = await $AWS.DynamoDB.GetItem({Table: personTable, Key: {id: {S: ": Object {
       "InputPath": "$.heap0",
-      "Next": "if(person.Item == undefined) 1",
+      "Next": "if(person.Item == undefined)",
       "ResultPath": "$.person",
       "Type": "Pass",
     },
     "Initialize Functionless Context": Object {
-      "Next": "if(person.Item == undefined)",
+      "Next": "person = await $AWS.DynamoDB.GetItem({Table: personTable, Key: {id: {S: inp",
       "Parameters": Object {
         "fnl_context": Object {
           "null": null,
@@ -10043,20 +11901,6 @@ Object {
       "Type": "Pass",
     },
     "if(person.Item == undefined)": Object {
-      "Next": "1__if(person.Item == undefined)",
-      "Parameters": Object {
-        "Key": Object {
-          "id": Object {
-            "S.$": "$.input.id",
-          },
-        },
-        "TableName": "__REPLACED_TOKEN",
-      },
-      "Resource": "__REPLACED_ARN",
-      "ResultPath": "$.heap0",
-      "Type": "Task",
-    },
-    "if(person.Item == undefined) 1": Object {
       "Choices": Array [
         Object {
           "And": Array [
@@ -10074,6 +11918,20 @@ Object {
       ],
       "Default": "return {id: person.Item.id.S, name: person.Item.name.S}",
       "Type": "Choice",
+    },
+    "person = await $AWS.DynamoDB.GetItem({Table: personTable, Key: {id: {S: inp": Object {
+      "Next": "1__person = await $AWS.DynamoDB.GetItem({Table: personTable, Key: {id: {S: ",
+      "Parameters": Object {
+        "Key": Object {
+          "id": Object {
+            "S.$": "$.input.id",
+          },
+        },
+        "TableName": "__REPLACED_TOKEN",
+      },
+      "Resource": "__REPLACED_ARN",
+      "ResultPath": "$.heap0",
+      "Type": "Task",
     },
     "return null": Object {
       "End": true,
@@ -10098,14 +11956,14 @@ exports[`return AWS.DynamoDB.GetItem dynamic parameters 1`] = `
 Object {
   "StartAt": "Initialize Functionless Context",
   "States": Object {
-    "1__if(person.Item == undefined)": Object {
+    "1__person = await $AWS.DynamoDB.GetItem({Table: personTable, Key: {id: {S: ": Object {
       "InputPath": "$.heap1",
-      "Next": "if(person.Item == undefined) 1",
+      "Next": "if(person.Item == undefined)",
       "ResultPath": "$.person",
       "Type": "Pass",
     },
-    "1__if(person.Item == undefined) 1": Object {
-      "Next": "1__if(person.Item == undefined)",
+    "1__person = await $AWS.DynamoDB.GetItem({Table: personTable, Key: {id: {S:  1": Object {
+      "Next": "1__person = await $AWS.DynamoDB.GetItem({Table: personTable, Key: {id: {S: ",
       "Parameters": Object {
         "Key": Object {
           "id": Object {
@@ -10119,7 +11977,7 @@ Object {
       "Type": "Task",
     },
     "Initialize Functionless Context": Object {
-      "Next": "if(person.Item == undefined)",
+      "Next": "person = await $AWS.DynamoDB.GetItem({Table: personTable, Key: {id: {S: inp",
       "Parameters": Object {
         "fnl_context": Object {
           "null": null,
@@ -10130,25 +11988,6 @@ Object {
       "Type": "Pass",
     },
     "if(person.Item == undefined)": Object {
-      "Choices": Array [
-        Object {
-          "And": Array [
-            Object {
-              "IsPresent": true,
-              "Variable": "$.input.id",
-            },
-            Object {
-              "IsNull": false,
-              "Variable": "$.input.id",
-            },
-          ],
-          "Next": "takeLeft__if(person.Item == undefined)",
-        },
-      ],
-      "Default": "takeRight__if(person.Item == undefined)",
-      "Type": "Choice",
-    },
-    "if(person.Item == undefined) 1": Object {
       "Choices": Array [
         Object {
           "And": Array [
@@ -10167,6 +12006,25 @@ Object {
       "Default": "return {id: person.Item.id.S, name: person.Item.name.S}",
       "Type": "Choice",
     },
+    "person = await $AWS.DynamoDB.GetItem({Table: personTable, Key: {id: {S: inp": Object {
+      "Choices": Array [
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.input.id",
+            },
+            Object {
+              "IsNull": false,
+              "Variable": "$.input.id",
+            },
+          ],
+          "Next": "takeLeft__person = await $AWS.DynamoDB.GetItem({Table: personTable, Key: {i",
+        },
+      ],
+      "Default": "takeRight__person = await $AWS.DynamoDB.GetItem({Table: personTable, Key: {",
+      "Type": "Choice",
+    },
     "return null": Object {
       "End": true,
       "InputPath": "$.fnl_context.null",
@@ -10182,14 +12040,14 @@ Object {
       "ResultPath": "$",
       "Type": "Pass",
     },
-    "takeLeft__if(person.Item == undefined)": Object {
+    "takeLeft__person = await $AWS.DynamoDB.GetItem({Table: personTable, Key: {i": Object {
       "InputPath": "$.input.id",
-      "Next": "1__if(person.Item == undefined) 1",
+      "Next": "1__person = await $AWS.DynamoDB.GetItem({Table: personTable, Key: {id: {S:  1",
       "ResultPath": "$.heap0",
       "Type": "Pass",
     },
-    "takeRight__if(person.Item == undefined)": Object {
-      "Next": "1__if(person.Item == undefined) 1",
+    "takeRight__person = await $AWS.DynamoDB.GetItem({Table: personTable, Key: {": Object {
+      "Next": "1__person = await $AWS.DynamoDB.GetItem({Table: personTable, Key: {id: {S:  1",
       "Result": "default",
       "ResultPath": "$.heap0",
       "Type": "Pass",
@@ -11029,13 +12887,21 @@ Object {
   "StartAt": "Initialize Functionless Context",
   "States": Object {
     "Initialize Functionless Context": Object {
-      "Next": "return {a: a, b: b, c: c}",
+      "Next": "a = {1: \\"value\\"}",
       "Parameters": Object {
         "fnl_context": Object {
           "null": null,
         },
       },
       "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "a = {1: \\"value\\"}": Object {
+      "Next": "b = a[1]",
+      "Result": Object {
+        "1": "value",
+      },
+      "ResultPath": "$.a",
       "Type": "Pass",
     },
     "b = a[1]": Object {
@@ -11046,19 +12912,11 @@ Object {
     },
     "c = a[\\"1\\"]": Object {
       "InputPath": "$.a['1']",
-      "Next": "return {a: a, b: b, c: c} 1",
+      "Next": "return {a: a, b: b, c: c}",
       "ResultPath": "$.c",
       "Type": "Pass",
     },
     "return {a: a, b: b, c: c}": Object {
-      "Next": "b = a[1]",
-      "Result": Object {
-        "1": "value",
-      },
-      "ResultPath": "$.a",
-      "Type": "Pass",
-    },
-    "return {a: a, b: b, c: c} 1": Object {
       "End": true,
       "Parameters": Object {
         "a.$": "$.a",
@@ -12098,9 +13956,15 @@ exports[`try { list.forEach(item => task(item)) } 1`] = `
 Object {
   "StartAt": "Initialize Functionless Context",
   "States": Object {
+    "1__return task(item)": Object {
+      "InputPath": "$.heap1",
+      "Next": "tail__try",
+      "ResultPath": "$.heap0.arr[0]",
+      "Type": "Pass",
+    },
     "1__try": Object {
       "End": true,
-      "InputPath": "$.heap1",
+      "InputPath": "$.heap0",
       "ResultPath": "$",
       "Type": "Pass",
     },
@@ -12121,7 +13985,30 @@ Object {
       "ResultPath": "$",
       "Type": "Pass",
     },
-    "try": Object {
+    "check__try": Object {
+      "Choices": Array [
+        Object {
+          "IsPresent": true,
+          "Next": "item",
+          "Variable": "$.heap0.arr[0]",
+        },
+      ],
+      "Default": "end__try",
+      "Type": "Choice",
+    },
+    "end__try": Object {
+      "Next": "1__try",
+      "Result": "$.fnl_context.null",
+      "ResultPath": "$.heap0",
+      "Type": "Pass",
+    },
+    "item": Object {
+      "InputPath": "$.heap0.arr[0]",
+      "Next": "return task(item)",
+      "ResultPath": "$.item",
+      "Type": "Pass",
+    },
+    "return task(item)": Object {
       "Catch": Array [
         Object {
           "ErrorEquals": Array [
@@ -12131,34 +14018,25 @@ Object {
           "ResultPath": null,
         },
       ],
-      "ItemsPath": "$.input.list",
-      "Iterator": Object {
-        "StartAt": "return task(item)",
-        "States": Object {
-          "1__return task(item)": Object {
-            "End": true,
-            "InputPath": "$.heap0",
-            "ResultPath": "$",
-            "Type": "Pass",
-          },
-          "return task(item)": Object {
-            "InputPath": "$.item",
-            "Next": "1__return task(item)",
-            "Resource": "__REPLACED_TOKEN",
-            "ResultPath": "$.heap0",
-            "Type": "Task",
-          },
-        },
-      },
-      "MaxConcurrency": 1,
-      "Next": "1__try",
-      "Parameters": Object {
-        "fnl_context.$": "$.fnl_context",
-        "input.$": "$.input",
-        "item.$": "$$.Map.Item.Value",
-      },
+      "InputPath": "$.item",
+      "Next": "1__return task(item)",
+      "Resource": "__REPLACED_TOKEN",
       "ResultPath": "$.heap1",
-      "Type": "Map",
+      "Type": "Task",
+    },
+    "tail__try": Object {
+      "InputPath": "$.heap0.arr[1:]",
+      "Next": "check__try",
+      "ResultPath": "$.heap0.arr",
+      "Type": "Pass",
+    },
+    "try": Object {
+      "Next": "check__try",
+      "Parameters": Object {
+        "arr.$": "$.input.list",
+      },
+      "ResultPath": "$.heap0",
+      "Type": "Pass",
     },
   },
 }
@@ -12170,8 +14048,14 @@ Object {
   "States": Object {
     "1__return input.list.forEach(function(item))": Object {
       "End": true,
-      "InputPath": "$.heap1",
+      "InputPath": "$.heap0",
       "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "1__try": Object {
+      "InputPath": "$.heap1",
+      "Next": "tail__return input.list.forEach(function(item))",
+      "ResultPath": "$.heap0.arr[0]",
       "Type": "Pass",
     },
     "Initialize Functionless Context": Object {
@@ -12185,50 +14069,64 @@ Object {
       "ResultPath": "$",
       "Type": "Pass",
     },
-    "return input.list.forEach(function(item))": Object {
-      "ItemsPath": "$.input.list",
-      "Iterator": Object {
-        "StartAt": "try",
-        "States": Object {
-          "1__try": Object {
-            "End": true,
-            "InputPath": "$.heap0",
-            "ResultPath": "$",
-            "Type": "Pass",
-          },
-          "catch__try": Object {
-            "End": true,
-            "InputPath": "$.fnl_context.null",
-            "ResultPath": "$",
-            "Type": "Pass",
-          },
-          "try": Object {
-            "Catch": Array [
-              Object {
-                "ErrorEquals": Array [
-                  "States.ALL",
-                ],
-                "Next": "catch__try",
-                "ResultPath": null,
-              },
-            ],
-            "InputPath": "$.item",
-            "Next": "1__try",
-            "Resource": "__REPLACED_TOKEN",
-            "ResultPath": "$.heap0",
-            "Type": "Task",
-          },
+    "catch__try": Object {
+      "InputPath": "$.fnl_context.null",
+      "Next": "tail__return input.list.forEach(function(item))",
+      "ResultPath": "$.heap0.arr[0]",
+      "Type": "Pass",
+    },
+    "check__return input.list.forEach(function(item))": Object {
+      "Choices": Array [
+        Object {
+          "IsPresent": true,
+          "Next": "item",
+          "Variable": "$.heap0.arr[0]",
         },
-      },
-      "MaxConcurrency": 1,
+      ],
+      "Default": "end__return input.list.forEach(function(item))",
+      "Type": "Choice",
+    },
+    "end__return input.list.forEach(function(item))": Object {
       "Next": "1__return input.list.forEach(function(item))",
+      "Result": "$.fnl_context.null",
+      "ResultPath": "$.heap0",
+      "Type": "Pass",
+    },
+    "item": Object {
+      "InputPath": "$.heap0.arr[0]",
+      "Next": "try",
+      "ResultPath": "$.item",
+      "Type": "Pass",
+    },
+    "return input.list.forEach(function(item))": Object {
+      "Next": "check__return input.list.forEach(function(item))",
       "Parameters": Object {
-        "fnl_context.$": "$.fnl_context",
-        "input.$": "$.input",
-        "item.$": "$$.Map.Item.Value",
+        "arr.$": "$.input.list",
       },
+      "ResultPath": "$.heap0",
+      "Type": "Pass",
+    },
+    "tail__return input.list.forEach(function(item))": Object {
+      "InputPath": "$.heap0.arr[1:]",
+      "Next": "check__return input.list.forEach(function(item))",
+      "ResultPath": "$.heap0.arr",
+      "Type": "Pass",
+    },
+    "try": Object {
+      "Catch": Array [
+        Object {
+          "ErrorEquals": Array [
+            "States.ALL",
+          ],
+          "Next": "catch__try",
+          "ResultPath": null,
+        },
+      ],
+      "InputPath": "$.item",
+      "Next": "1__try",
+      "Resource": "__REPLACED_TOKEN",
       "ResultPath": "$.heap1",
-      "Type": "Map",
+      "Type": "Task",
     },
   },
 }
@@ -12261,35 +14159,38 @@ Object {
       "ResultPath": "$",
       "Type": "Pass",
     },
-    "try": Object {
-      "Catch": Array [
+    "check__try": Object {
+      "Choices": Array [
         Object {
-          "ErrorEquals": Array [
-            "States.ALL",
-          ],
-          "Next": "catch__try",
-          "ResultPath": null,
+          "IsPresent": true,
+          "Next": "throw new Error(\\"cause\\")",
+          "Variable": "$.heap0.arr[0]",
         },
       ],
-      "ItemsPath": "$.input.list",
-      "Iterator": Object {
-        "StartAt": "throw new Error(\\"cause\\")",
-        "States": Object {
-          "throw new Error(\\"cause\\")": Object {
-            "Cause": "{\\"message\\":\\"cause\\"}",
-            "Error": "Error",
-            "Type": "Fail",
-          },
-        },
-      },
-      "MaxConcurrency": 1,
+      "Default": "end__try",
+      "Type": "Choice",
+    },
+    "end__try": Object {
       "Next": "1__try",
+      "Result": "$.fnl_context.null",
+      "ResultPath": "$.heap0",
+      "Type": "Pass",
+    },
+    "throw new Error(\\"cause\\")": Object {
+      "Next": "catch__try",
+      "Result": Object {
+        "message": "cause",
+      },
+      "ResultPath": null,
+      "Type": "Pass",
+    },
+    "try": Object {
+      "Next": "check__try",
       "Parameters": Object {
-        "fnl_context.$": "$.fnl_context",
-        "input.$": "$.input",
+        "arr.$": "$.input.list",
       },
       "ResultPath": "$.heap0",
-      "Type": "Map",
+      "Type": "Pass",
     },
   },
 }
@@ -12299,12 +14200,6 @@ exports[`try { list.forEach(item => throw) } catch (err) 1`] = `
 Object {
   "StartAt": "Initialize Functionless Context",
   "States": Object {
-    "1__catch__try": Object {
-      "InputPath": "$.fnl_tmp_0.0_ParsedError",
-      "Next": "catch(err)",
-      "ResultPath": "$.fnl_tmp_0",
-      "Type": "Pass",
-    },
     "1__try": Object {
       "End": true,
       "InputPath": "$.heap0",
@@ -12322,18 +14217,27 @@ Object {
       "ResultPath": "$",
       "Type": "Pass",
     },
-    "catch(err)": Object {
+    "catch__try": Object {
       "InputPath": "$.fnl_tmp_0",
       "Next": "if(err.message == \\"cause\\")",
       "ResultPath": "$.err",
       "Type": "Pass",
     },
-    "catch__try": Object {
-      "Next": "1__catch__try",
-      "Parameters": Object {
-        "0_ParsedError.$": "States.StringToJson($.fnl_tmp_0.Cause)",
-      },
-      "ResultPath": "$.fnl_tmp_0",
+    "check__try": Object {
+      "Choices": Array [
+        Object {
+          "IsPresent": true,
+          "Next": "throw new Error(\\"cause\\")",
+          "Variable": "$.heap0.arr[0]",
+        },
+      ],
+      "Default": "end__try",
+      "Type": "Choice",
+    },
+    "end__try": Object {
+      "Next": "1__try",
+      "Result": "$.fnl_context.null",
+      "ResultPath": "$.heap0",
       "Type": "Pass",
     },
     "if(err.message == \\"cause\\")": Object {
@@ -12375,35 +14279,21 @@ Object {
       "ResultPath": "$",
       "Type": "Pass",
     },
-    "try": Object {
-      "Catch": Array [
-        Object {
-          "ErrorEquals": Array [
-            "States.ALL",
-          ],
-          "Next": "catch__try",
-          "ResultPath": "$.fnl_tmp_0",
-        },
-      ],
-      "ItemsPath": "$.input.list",
-      "Iterator": Object {
-        "StartAt": "throw new Error(\\"cause\\")",
-        "States": Object {
-          "throw new Error(\\"cause\\")": Object {
-            "Cause": "{\\"message\\":\\"cause\\"}",
-            "Error": "Error",
-            "Type": "Fail",
-          },
-        },
+    "throw new Error(\\"cause\\")": Object {
+      "Next": "catch__try",
+      "Result": Object {
+        "message": "cause",
       },
-      "MaxConcurrency": 1,
-      "Next": "1__try",
+      "ResultPath": "$.fnl_tmp_0",
+      "Type": "Pass",
+    },
+    "try": Object {
+      "Next": "check__try",
       "Parameters": Object {
-        "fnl_context.$": "$.fnl_context",
-        "input.$": "$.input",
+        "arr.$": "$.input.list",
       },
       "ResultPath": "$.heap0",
-      "Type": "Map",
+      "Type": "Pass",
     },
   },
 }
@@ -12413,9 +14303,15 @@ exports[`try { list.map(item => task(item)) } 1`] = `
 Object {
   "StartAt": "Initialize Functionless Context",
   "States": Object {
+    "1__return task(item)": Object {
+      "InputPath": "$.heap1",
+      "Next": "handleResult__try",
+      "ResultPath": "$.heap0.arr[0]",
+      "Type": "Pass",
+    },
     "1__try": Object {
       "End": true,
-      "InputPath": "$.heap1",
+      "InputPath": "$.heap0",
       "ResultPath": "$",
       "Type": "Pass",
     },
@@ -12436,7 +14332,41 @@ Object {
       "ResultPath": "$",
       "Type": "Pass",
     },
-    "try": Object {
+    "check__try": Object {
+      "Choices": Array [
+        Object {
+          "IsPresent": true,
+          "Next": "item",
+          "Variable": "$.heap0.arr[0]",
+        },
+      ],
+      "Default": "end__try",
+      "Type": "Choice",
+    },
+    "end__try": Object {
+      "Next": "set__end__try",
+      "Parameters": Object {
+        "result.$": "States.StringToJson(States.Format('{}]', $.heap0.arrStr))",
+      },
+      "ResultPath": "$.heap0",
+      "Type": "Pass",
+    },
+    "handleResult__try": Object {
+      "Next": "check__try",
+      "Parameters": Object {
+        "arr.$": "$.heap0.arr[1:]",
+        "arrStr.$": "States.Format('{},{}', $.heap0.arrStr, States.JsonToString($.heap0.arr[0]))",
+      },
+      "ResultPath": "$.heap0",
+      "Type": "Pass",
+    },
+    "item": Object {
+      "InputPath": "$.heap0.arr[0]",
+      "Next": "return task(item)",
+      "ResultPath": "$.item",
+      "Type": "Pass",
+    },
+    "return task(item)": Object {
       "Catch": Array [
         Object {
           "ErrorEquals": Array [
@@ -12446,34 +14376,26 @@ Object {
           "ResultPath": null,
         },
       ],
-      "ItemsPath": "$.input.list",
-      "Iterator": Object {
-        "StartAt": "return task(item)",
-        "States": Object {
-          "1__return task(item)": Object {
-            "End": true,
-            "InputPath": "$.heap0",
-            "ResultPath": "$",
-            "Type": "Pass",
-          },
-          "return task(item)": Object {
-            "InputPath": "$.item",
-            "Next": "1__return task(item)",
-            "Resource": "__REPLACED_TOKEN",
-            "ResultPath": "$.heap0",
-            "Type": "Task",
-          },
-        },
-      },
-      "MaxConcurrency": 1,
-      "Next": "1__try",
-      "Parameters": Object {
-        "fnl_context.$": "$.fnl_context",
-        "input.$": "$.input",
-        "item.$": "$$.Map.Item.Value",
-      },
+      "InputPath": "$.item",
+      "Next": "1__return task(item)",
+      "Resource": "__REPLACED_TOKEN",
       "ResultPath": "$.heap1",
-      "Type": "Map",
+      "Type": "Task",
+    },
+    "set__end__try": Object {
+      "InputPath": "$.heap0.result[1:]",
+      "Next": "1__try",
+      "ResultPath": "$.heap0",
+      "Type": "Pass",
+    },
+    "try": Object {
+      "Next": "check__try",
+      "Parameters": Object {
+        "arr.$": "$.input.list",
+        "arrStr": "[null",
+      },
+      "ResultPath": "$.heap0",
+      "Type": "Pass",
     },
   },
 }
@@ -12485,8 +14407,14 @@ Object {
   "States": Object {
     "1__return Promise.all(input.list.map(function(item)))": Object {
       "End": true,
-      "InputPath": "$.heap1",
+      "InputPath": "$.heap0",
       "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "1__try": Object {
+      "InputPath": "$.heap1",
+      "Next": "handleResult__return Promise.all(input.list.map(function(item)))",
+      "ResultPath": "$.heap0.arr[0]",
       "Type": "Pass",
     },
     "Initialize Functionless Context": Object {
@@ -12500,50 +14428,76 @@ Object {
       "ResultPath": "$",
       "Type": "Pass",
     },
-    "return Promise.all(input.list.map(function(item)))": Object {
-      "ItemsPath": "$.input.list",
-      "Iterator": Object {
-        "StartAt": "try",
-        "States": Object {
-          "1__try": Object {
-            "End": true,
-            "InputPath": "$.heap0",
-            "ResultPath": "$",
-            "Type": "Pass",
-          },
-          "catch__try": Object {
-            "End": true,
-            "InputPath": "$.fnl_context.null",
-            "ResultPath": "$",
-            "Type": "Pass",
-          },
-          "try": Object {
-            "Catch": Array [
-              Object {
-                "ErrorEquals": Array [
-                  "States.ALL",
-                ],
-                "Next": "catch__try",
-                "ResultPath": null,
-              },
-            ],
-            "InputPath": "$.item",
-            "Next": "1__try",
-            "Resource": "__REPLACED_TOKEN",
-            "ResultPath": "$.heap0",
-            "Type": "Task",
-          },
+    "catch__try": Object {
+      "InputPath": "$.fnl_context.null",
+      "Next": "handleResult__return Promise.all(input.list.map(function(item)))",
+      "ResultPath": "$.heap0.arr[0]",
+      "Type": "Pass",
+    },
+    "check__return Promise.all(input.list.map(function(item)))": Object {
+      "Choices": Array [
+        Object {
+          "IsPresent": true,
+          "Next": "item",
+          "Variable": "$.heap0.arr[0]",
         },
-      },
-      "MaxConcurrency": 1,
-      "Next": "1__return Promise.all(input.list.map(function(item)))",
+      ],
+      "Default": "end__return Promise.all(input.list.map(function(item)))",
+      "Type": "Choice",
+    },
+    "end__return Promise.all(input.list.map(function(item)))": Object {
+      "Next": "set__end__return Promise.all(input.list.map(function(item)))",
       "Parameters": Object {
-        "fnl_context.$": "$.fnl_context",
-        "input.$": "$.input",
-        "item.$": "$$.Map.Item.Value",
+        "result.$": "States.StringToJson(States.Format('{}]', $.heap0.arrStr))",
       },
+      "ResultPath": "$.heap0",
+      "Type": "Pass",
+    },
+    "handleResult__return Promise.all(input.list.map(function(item)))": Object {
+      "Next": "check__return Promise.all(input.list.map(function(item)))",
+      "Parameters": Object {
+        "arr.$": "$.heap0.arr[1:]",
+        "arrStr.$": "States.Format('{},{}', $.heap0.arrStr, States.JsonToString($.heap0.arr[0]))",
+      },
+      "ResultPath": "$.heap0",
+      "Type": "Pass",
+    },
+    "item": Object {
+      "InputPath": "$.heap0.arr[0]",
+      "Next": "try",
+      "ResultPath": "$.item",
+      "Type": "Pass",
+    },
+    "return Promise.all(input.list.map(function(item)))": Object {
+      "Next": "check__return Promise.all(input.list.map(function(item)))",
+      "Parameters": Object {
+        "arr.$": "$.input.list",
+        "arrStr": "[null",
+      },
+      "ResultPath": "$.heap0",
+      "Type": "Pass",
+    },
+    "set__end__return Promise.all(input.list.map(function(item)))": Object {
+      "InputPath": "$.heap0.result[1:]",
+      "Next": "1__return Promise.all(input.list.map(function(item)))",
+      "ResultPath": "$.heap0",
+      "Type": "Pass",
+    },
+    "try": Object {
+      "Catch": Array [
+        Object {
+          "ErrorEquals": Array [
+            "States.ALL",
+          ],
+          "Next": "catch__try",
+          "ResultPath": null,
+        },
+      ],
+      "InputPath": "$.item",
+      "Next": "1__try",
+      "Resource": "__REPLACED_TOKEN",
       "ResultPath": "$.heap1",
-      "Type": "Map",
+      "Type": "Task",
     },
   },
 }
@@ -12576,35 +14530,47 @@ Object {
       "ResultPath": "$",
       "Type": "Pass",
     },
-    "try": Object {
-      "Catch": Array [
+    "check__try": Object {
+      "Choices": Array [
         Object {
-          "ErrorEquals": Array [
-            "States.ALL",
-          ],
-          "Next": "catch__try",
-          "ResultPath": null,
+          "IsPresent": true,
+          "Next": "throw new Error(\\"cause\\")",
+          "Variable": "$.heap0.arr[0]",
         },
       ],
-      "ItemsPath": "$.input.list",
-      "Iterator": Object {
-        "StartAt": "throw new Error(\\"cause\\")",
-        "States": Object {
-          "throw new Error(\\"cause\\")": Object {
-            "Cause": "{\\"message\\":\\"cause\\"}",
-            "Error": "Error",
-            "Type": "Fail",
-          },
-        },
-      },
-      "MaxConcurrency": 1,
-      "Next": "1__try",
+      "Default": "end__try",
+      "Type": "Choice",
+    },
+    "end__try": Object {
+      "Next": "set__end__try",
       "Parameters": Object {
-        "fnl_context.$": "$.fnl_context",
-        "input.$": "$.input",
+        "result.$": "States.StringToJson(States.Format('{}]', $.heap0.arrStr))",
       },
       "ResultPath": "$.heap0",
-      "Type": "Map",
+      "Type": "Pass",
+    },
+    "set__end__try": Object {
+      "InputPath": "$.heap0.result[1:]",
+      "Next": "1__try",
+      "ResultPath": "$.heap0",
+      "Type": "Pass",
+    },
+    "throw new Error(\\"cause\\")": Object {
+      "Next": "catch__try",
+      "Result": Object {
+        "message": "cause",
+      },
+      "ResultPath": null,
+      "Type": "Pass",
+    },
+    "try": Object {
+      "Next": "check__try",
+      "Parameters": Object {
+        "arr.$": "$.input.list",
+        "arrStr": "[null",
+      },
+      "ResultPath": "$.heap0",
+      "Type": "Pass",
     },
   },
 }
@@ -12614,12 +14580,6 @@ exports[`try { list.map(item => throw) } catch (err) 1`] = `
 Object {
   "StartAt": "Initialize Functionless Context",
   "States": Object {
-    "1__catch__try": Object {
-      "InputPath": "$.fnl_tmp_0.0_ParsedError",
-      "Next": "catch(err)",
-      "ResultPath": "$.fnl_tmp_0",
-      "Type": "Pass",
-    },
     "1__try": Object {
       "End": true,
       "InputPath": "$.heap0",
@@ -12637,18 +14597,29 @@ Object {
       "ResultPath": "$",
       "Type": "Pass",
     },
-    "catch(err)": Object {
+    "catch__try": Object {
       "InputPath": "$.fnl_tmp_0",
       "Next": "if(err.message == \\"cause\\")",
       "ResultPath": "$.err",
       "Type": "Pass",
     },
-    "catch__try": Object {
-      "Next": "1__catch__try",
+    "check__try": Object {
+      "Choices": Array [
+        Object {
+          "IsPresent": true,
+          "Next": "throw new Error(\\"cause\\")",
+          "Variable": "$.heap0.arr[0]",
+        },
+      ],
+      "Default": "end__try",
+      "Type": "Choice",
+    },
+    "end__try": Object {
+      "Next": "set__end__try",
       "Parameters": Object {
-        "0_ParsedError.$": "States.StringToJson($.fnl_tmp_0.Cause)",
+        "result.$": "States.StringToJson(States.Format('{}]', $.heap0.arrStr))",
       },
-      "ResultPath": "$.fnl_tmp_0",
+      "ResultPath": "$.heap0",
       "Type": "Pass",
     },
     "if(err.message == \\"cause\\")": Object {
@@ -12690,35 +14661,28 @@ Object {
       "ResultPath": "$",
       "Type": "Pass",
     },
-    "try": Object {
-      "Catch": Array [
-        Object {
-          "ErrorEquals": Array [
-            "States.ALL",
-          ],
-          "Next": "catch__try",
-          "ResultPath": "$.fnl_tmp_0",
-        },
-      ],
-      "ItemsPath": "$.input.list",
-      "Iterator": Object {
-        "StartAt": "throw new Error(\\"cause\\")",
-        "States": Object {
-          "throw new Error(\\"cause\\")": Object {
-            "Cause": "{\\"message\\":\\"cause\\"}",
-            "Error": "Error",
-            "Type": "Fail",
-          },
-        },
-      },
-      "MaxConcurrency": 1,
+    "set__end__try": Object {
+      "InputPath": "$.heap0.result[1:]",
       "Next": "1__try",
+      "ResultPath": "$.heap0",
+      "Type": "Pass",
+    },
+    "throw new Error(\\"cause\\")": Object {
+      "Next": "catch__try",
+      "Result": Object {
+        "message": "cause",
+      },
+      "ResultPath": "$.fnl_tmp_0",
+      "Type": "Pass",
+    },
+    "try": Object {
+      "Next": "check__try",
       "Parameters": Object {
-        "fnl_context.$": "$.fnl_context",
-        "input.$": "$.input",
+        "arr.$": "$.input.list",
+        "arrStr": "[null",
       },
       "ResultPath": "$.heap0",
-      "Type": "Map",
+      "Type": "Pass",
     },
   },
 }

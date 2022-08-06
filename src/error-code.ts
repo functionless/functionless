@@ -1221,51 +1221,11 @@ export namespace ErrorCodes {
     };
 
   /**
-   * Invalid Syntax in Step Function filter expressions.
-   *
-   * Functionless supports filtering arrays in {@link StepFunction} with limited syntax.
-   *
-   * Valid syntax
-   *
-   * ```ts
-   * new StepFunction(stack, 'fn', async (input) => {
-   *    [1,2,3].filter((item) => item > 1);
-   *
-   *    input.arr.filter((item) => item.name === "some string");
-   *
-   *    input.arr.filter(({ name }) => name === "some string");
-   * });
-   * ```
-   *
-   * Invalid syntax
-   *
-   * ```ts
-   * new StepFunction(stack, 'fn', async (input) => {
-   *    // invalid - index and array parameters are not supported.
-   *    [1,2,3].filter((val, index, array) => { array[0] === index });
-   *
-   *    // invalid - cannot reference parameters to parent closures.
-   *    [1,2,3].filter((val) => input.value === val);
-   *
-   *    // invalid - predicate function must be inline arrow or function
-   *    [1,2,3].filter(someFunctionReference);
-   *
-   *    // invalid - filter must be a single statement
-   *    [1,2,3].filter((item) => {
-   *       const value = "a";
-   *       return item === value;
-   *    });
-   *
-   *    // invalid - filter cannot use object or array literals
-   *    [{}].filter((item) => {
-   *       return item === {};
-   *    });
-   * });
-   * ```
+   * DEPRECATED - Step Function filter syntax contain the same limits as all other step function syntax.
    */
   export const StepFunction_invalid_filter_syntax: ErrorCode = {
     code: 10034,
-    type: ErrorType.ERROR,
+    type: ErrorType.DEPRECATED,
     title: "StepFunction invalid filter syntax",
   };
 
