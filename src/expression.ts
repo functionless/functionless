@@ -220,6 +220,7 @@ export class ElementAccessExpr extends BaseExpr<NodeKind.ElementAccessExpr> {
     super(NodeKind.ElementAccessExpr, arguments);
     this.ensure(expr, "expr", ["Expr"]);
     this.ensure(element, "element", ["Expr"]);
+    this.ensure(isOptional, "isOptional", ["undefined", "boolean"]);
   }
 }
 
@@ -227,10 +228,6 @@ export class Argument extends BaseExpr<NodeKind.Argument, CallExpr | NewExpr> {
   constructor(readonly expr?: Expr) {
     super(NodeKind.Argument, arguments);
     this.ensure(expr, "element", ["undefined", "Expr"]);
-  }
-
-  public clone(): this {
-    return new Argument(this.expr?.clone()) as this;
   }
 }
 

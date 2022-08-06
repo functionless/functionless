@@ -211,18 +211,18 @@ export class ParameterDecl extends BaseDecl<
 > {
   constructor(
     readonly name: BindingName,
-    readonly initializer: Expr | undefined
+    readonly initializer: Expr | undefined,
     /**
      * Whether this ParameterDecl is a rest parameter
      * ```ts
      * function foo(...rest) {}
      * ```
-     */,
-    readonly isRest: boolean
+     */ readonly isRest: boolean
   ) {
     super(NodeKind.ParameterDecl, arguments);
     this.ensure(name, "name", NodeKind.BindingNames);
     this.ensure(initializer, "initializer", ["undefined", "Expr"]);
+    this.ensure(isRest, "isRest", ["boolean"]);
   }
 }
 

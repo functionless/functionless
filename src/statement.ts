@@ -54,20 +54,14 @@ export abstract class BaseStmt<
 export class ExprStmt extends BaseStmt<NodeKind.ExprStmt> {
   constructor(readonly expr: Expr) {
     super(NodeKind.ExprStmt, arguments);
-  }
-
-  public clone(): this {
-    return new ExprStmt(this.expr.clone()) as this;
+    this.ensure(expr, "expr", ["Expr"]);
   }
 }
 
 export class VariableStmt extends BaseStmt<NodeKind.VariableStmt> {
   constructor(readonly declList: VariableDeclList) {
     super(NodeKind.VariableStmt, arguments);
-  }
-
-  public clone(): this {
-    return new VariableStmt(this.declList.clone()) as this;
+    this.ensure(declList, "declList", [NodeKind.VariableDeclList]);
   }
 }
 
@@ -86,14 +80,11 @@ export type BlockStmtParent =
 export class BlockStmt extends BaseStmt<NodeKind.BlockStmt, BlockStmtParent> {
   constructor(readonly statements: Stmt[]) {
     super(NodeKind.BlockStmt, arguments);
+    this.ensureArrayOf(statements, "statements", ["Stmt"]);
     statements.forEach((stmt, i) => {
       stmt.prev = i > 0 ? statements[i - 1] : undefined;
       stmt.next = i + 1 < statements.length ? statements[i + 1] : undefined;
     });
-  }
-
-  public clone(): this {
-    return new BlockStmt(this.statements.map((stmt) => stmt.clone())) as this;
   }
 
   public isFinallyBlock(): this is FinallyBlock {
@@ -128,26 +119,16 @@ export class BlockStmt extends BaseStmt<NodeKind.BlockStmt, BlockStmtParent> {
 export class ReturnStmt extends BaseStmt<NodeKind.ReturnStmt> {
   constructor(readonly expr: Expr) {
     super(NodeKind.ReturnStmt, arguments);
-  }
-
-  public clone(): this {
-    return new ReturnStmt(this.expr.clone()) as this;
+    this.ensure(expr, "expr", ["Expr"]);
   }
 }
 
 export class IfStmt extends BaseStmt<NodeKind.IfStmt> {
   constructor(readonly when: Expr, readonly then: Stmt, readonly _else?: Stmt) {
     super(NodeKind.IfStmt, arguments);
-    if (_else) {
-    }
-  }
-
-  public clone(): this {
-    return new IfStmt(
-      this.when.clone(),
-      this.then.clone(),
-      this._else?.clone()
-    ) as this;
+    this.ensure(when, "when", ["Expr"]);
+    this.ensure(then, "then", ["Stmt"]);
+    this.ensure(_else, "else", ["undefined", "Stmt"]);
   }
 }
 
@@ -165,15 +146,12 @@ export class ForOfStmt extends BaseStmt<NodeKind.ForOfStmt> {
     readonly isAwait: boolean
   ) {
     super(NodeKind.ForOfStmt, arguments);
-  }
-
-  public clone(): this {
-    return new ForOfStmt(
-      this.initializer.clone(),
-      this.expr.clone(),
-      this.body.clone(),
-      this.isAwait
-    ) as this;
+    this.ensure(initializer, "initializer", [
+      NodeKind.VariableDecl,
+      NodeKind.Identifier,
+    ]);
+    this.ensure(expr, "expr", ["Expr"]);
+    this.ensure(isAwait, "isAwait", ["boolean"]);
   }
 }
 
@@ -185,14 +163,6 @@ export class ForInStmt extends BaseStmt<NodeKind.ForInStmt> {
   ) {
     super(NodeKind.ForInStmt, arguments);
   }
-
-  public clone(): this {
-    return new ForInStmt(
-      this.initializer.clone(),
-      this.expr.clone(),
-      this.body.clone()
-    ) as this;
-  }
 }
 
 export class ForStmt extends BaseStmt<NodeKind.ForStmt> {
@@ -203,16 +173,14 @@ export class ForStmt extends BaseStmt<NodeKind.ForStmt> {
     readonly incrementor?: Expr
   ) {
     super(NodeKind.ForStmt, arguments);
-    // validate
-  }
-
-  public clone(): this {
-    return new ForStmt(
-      this.body.clone(),
-      this.initializer?.clone(),
-      this.condition?.clone(),
-      this.incrementor?.clone()
-    ) as this;
+    this.ensure(body, "body", [NodeKind.BlockStmt]);
+    this.ensure(initializer, "initializer", [
+      "undefined",
+      "Expr",
+      NodeKind.VariableDeclList,
+    ]);
+    this.ensure(condition, "condition", ["undefined", "Expr"]);
+    this.ensure(incrementor, "incrementor", ["undefined", "Expr"]);
   }
 }
 
@@ -220,19 +188,11 @@ export class BreakStmt extends BaseStmt<NodeKind.BreakStmt> {
   constructor() {
     super(NodeKind.BreakStmt, arguments);
   }
-
-  public clone(): this {
-    return new BreakStmt() as this;
-  }
 }
 
 export class ContinueStmt extends BaseStmt<NodeKind.ContinueStmt> {
   constructor() {
     super(NodeKind.ContinueStmt, arguments);
-  }
-
-  public clone(): this {
-    return new ContinueStmt() as this;
   }
 }
 
