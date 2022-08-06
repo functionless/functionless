@@ -928,11 +928,7 @@ export function compile(
 }
 
 function getBinaryOperator(op: ts.BinaryOperatorToken): BinaryOp | undefined {
-  return (
-    BinaryOperatorRemappings[
-      op.kind as keyof typeof BinaryOperatorRemappings
-    ] ?? (ts.tokenToString(op.kind) as BinaryOp)
-  );
+  return ts.tokenToString(op.kind) as BinaryOp;
 }
 
 function getPrefixUnaryOperator(
@@ -946,11 +942,6 @@ function getPostfixUnaryOperator(
 ): PostfixUnaryOp | undefined {
   return ts.tokenToString(op) as PostfixUnaryOp | undefined;
 }
-
-const BinaryOperatorRemappings: Record<number, BinaryOp> = {
-  [ts.SyntaxKind.EqualsEqualsEqualsToken]: "==",
-  [ts.SyntaxKind.ExclamationEqualsEqualsToken]: "!=",
-} as const;
 
 function param(name: string, spread: boolean = false) {
   return ts.factory.createParameterDeclaration(

@@ -1940,8 +1940,10 @@ export class ASL {
       } else if (
         expr.op === "&&" ||
         expr.op === "||" ||
+        expr.op === "===" ||
         expr.op === "==" ||
         expr.op == "!=" ||
+        expr.op == "!==" ||
         expr.op == ">" ||
         expr.op == "<" ||
         expr.op == ">=" ||
@@ -2742,7 +2744,11 @@ export class ASL {
       } else if (isBinaryExpr(expr)) {
         const left = toFilterCondition(expr.left);
         const right = toFilterCondition(expr.right);
-        return left && right ? `${left}${expr.op}${right}` : undefined;
+        return left && right
+          ? `${left}${
+              expr.op === "===" ? "==" : expr.op === "!==" ? "!=" : expr.op
+            }${right}`
+          : undefined;
       } else if (isUnaryExpr(expr)) {
         const right = toFilterCondition(expr.expr);
         return right ? `${expr.op}${right}` : undefined;
@@ -3721,7 +3727,9 @@ export class ASL {
 
           if (
             expr.op === "!=" ||
+            expr.op === "!==" ||
             expr.op === "==" ||
+            expr.op === "===" ||
             expr.op === ">" ||
             expr.op === "<" ||
             expr.op === ">=" ||
@@ -3731,9 +3739,10 @@ export class ASL {
               ASLGraph.isLiteralValue(leftOutput) &&
               ASLGraph.isLiteralValue(rightOutput)
             ) {
-              return (expr.op === "==" &&
+              return ((expr.op === "==" || expr.op === "===") &&
                 leftOutput.value === rightOutput.value) ||
-                (expr.op === "!=" && leftOutput.value !== rightOutput.value) ||
+                ((expr.op === "!=" || expr.op === "!==") &&
+                  leftOutput.value !== rightOutput.value) ||
                 (leftOutput.value !== null &&
                   rightOutput.value !== null &&
                   ((expr.op === ">" && leftOutput.value > rightOutput.value) ||
@@ -4799,10 +4808,15 @@ export namespace ASL {
 
   // for != use not(equals())
   export const VALUE_COMPARISONS: Record<
-    "==" | ">" | ">=" | "<=" | "<",
+    "===" | "==" | ">" | ">=" | "<=" | "<",
     Record<"string" | "boolean" | "number", keyof Condition | undefined>
   > = {
     "==": {
+      string: "StringEquals",
+      boolean: "BooleanEquals",
+      number: "NumericEquals",
+    },
+    "===": {
       string: "StringEquals",
       boolean: "BooleanEquals",
       number: "NumericEquals",
@@ -4870,10 +4884,11 @@ export namespace ASL {
   export const compare = (
     left: ASLGraph.JsonPath,
     right: ASLGraph.Output,
-    operator: keyof typeof VALUE_COMPARISONS | "!="
+    operator: keyof typeof VALUE_COMPARISONS
   ): Condition => {
     if (
       operator === "==" ||
+      operator === "===" ||
       operator === ">" ||
       operator === "<" ||
       operator === ">=" ||
@@ -4902,7 +4917,7 @@ export namespace ASL {
         );
       }
       return ASL.and(ASL.isPresent(left.jsonPath), condition);
-    } else if (operator === "!=") {
+    } else if (operator === "!=" || operator === "!==") {
       return ASL.not(ASL.compare(left, right, "=="));
     }
 
@@ -4913,7 +4928,7 @@ export namespace ASL {
   export const stringCompare = (
     left: ASLGraph.JsonPath,
     right: ASLGraph.Output,
-    operator: "==" | ">" | "<" | "<=" | ">="
+    operator: "===" | "==" | ">" | "<" | "<=" | ">="
   ) => {
     if (ASLGraph.isJsonPath(right) || typeof right.value === "string") {
       return ASL.and(
@@ -4938,7 +4953,7 @@ export namespace ASL {
   export const numberCompare = (
     left: ASLGraph.JsonPath,
     right: ASLGraph.Output,
-    operator: "==" | ">" | "<" | "<=" | ">="
+    operator: "===" | "==" | ">" | "<" | "<=" | ">="
   ) => {
     if (ASLGraph.isJsonPath(right) || typeof right.value === "number") {
       return ASL.and(
@@ -4963,7 +4978,7 @@ export namespace ASL {
   export const booleanCompare = (
     left: ASLGraph.JsonPath,
     right: ASLGraph.Output,
-    operator: "==" | ">" | "<" | "<=" | ">="
+    operator: "===" | "==" | ">" | "<" | "<=" | ">="
   ) => {
     if (ASLGraph.isJsonPath(right) || typeof right.value === "boolean") {
       return ASL.and(
@@ -4988,9 +5003,9 @@ export namespace ASL {
   export const nullCompare = (
     left: ASLGraph.JsonPath,
     right: ASLGraph.Output,
-    operator: "==" | ">" | "<" | "<=" | ">="
+    operator: "===" | "==" | ">" | "<" | "<=" | ">="
   ) => {
-    if (operator === "==") {
+    if (operator === "==" || operator === "===") {
       if (ASLGraph.isJsonPath(right)) {
         return ASL.and(ASL.isNull(left.jsonPath), ASL.isNull(right.jsonPath));
       } else if (right.value === null) {

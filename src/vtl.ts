@@ -364,7 +364,9 @@ export abstract class VTL {
       // VTL fails to evaluate binary expressions inside an object put e.g. $obj.put('x', 1 + 1)
       // a workaround is to use a temp variable.
       return this.var(
-        `${this.eval(node.left)} ${node.op} ${this.eval(node.right)}`
+        `${this.eval(node.left)} ${
+          node.op === "===" ? "==" : node.op === "!==" ? "!=" : node.op
+        } ${this.eval(node.right)}`
       );
     } else if (isBlockStmt(node)) {
       for (const stmt of node.statements) {

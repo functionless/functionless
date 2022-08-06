@@ -259,7 +259,15 @@ export class ConditionExpr extends BaseExpr<NodeKind.ConditionExpr> {
   }
 }
 
-export type ValueComparisonBinaryOp = "==" | "!=" | "<" | "<=" | ">" | ">=";
+export type ValueComparisonBinaryOp =
+  | "==="
+  | "=="
+  | "!="
+  | "!=="
+  | "<"
+  | "<="
+  | ">"
+  | ">=";
 export type MathBinaryOp = "/" | "*" | "+" | "-" | "%";
 export type MutationMathBinaryOp = "+=" | "*=" | "-=" | "/=" | "%=";
 export type ComparatorOp = "&&" | "||" | "??";
