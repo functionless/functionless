@@ -526,14 +526,14 @@ export class YieldExpr extends BaseExpr<NodeKind.YieldExpr> {
     /**
      * The expression to yield (or delegate) to.
      */
-    readonly expr: Expr | undefined,
+    readonly expr: Expr,
     /**
      * Is a `yield*` delegate expression.
      */
     readonly delegate: boolean
   ) {
     super(NodeKind.YieldExpr, arguments);
-    this.ensure(expr, "expr", ["undefined", "Expr"]);
+    this.ensure(expr, "expr", ["Expr"]);
     this.ensure(delegate, "delegate", ["boolean"]);
   }
 }
