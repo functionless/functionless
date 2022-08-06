@@ -327,9 +327,12 @@ export function compile(
               impl.parameters.map((param) =>
                 newExpr(NodeKind.ParameterDecl, [
                   toExpr(param.name, scope ?? impl),
-                  ...(param.initializer
-                    ? [toExpr(param.initializer, scope ?? impl)]
-                    : []),
+                  param.initializer
+                    ? toExpr(param.initializer, scope ?? impl)
+                    : ts.factory.createIdentifier("undefined"),
+                  param.dotDotDotToken
+                    ? ts.factory.createTrue()
+                    : ts.factory.createFalse(),
                 ])
               )
             ),
@@ -648,12 +651,20 @@ export function compile(
               "For in/of loops initializers should be an identifier or variable declaration."
             );
           }
+
           return newExpr(
             ts.isForOfStatement(node) ? NodeKind.ForOfStmt : NodeKind.ForInStmt,
             [
               toExpr(decl, scope),
               toExpr(node.expression, scope),
               toExpr(node.statement, scope),
+              ...(ts.isForOfStatement(node)
+                ? [
+                    node.awaitModifier
+                      ? ts.factory.createTrue()
+                      : ts.factory.createFalse(),
+                  ]
+                : []),
             ]
           );
         } else if (ts.isForStatement(node)) {

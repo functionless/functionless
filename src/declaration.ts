@@ -209,7 +209,17 @@ export class ParameterDecl extends BaseDecl<
   NodeKind.ParameterDecl,
   ArrowFunctionExpr | FunctionDecl | FunctionExpr | SetAccessorDecl
 > {
-  constructor(readonly name: BindingName, readonly initializer?: Expr) {
+  constructor(
+    readonly name: BindingName,
+    readonly initializer: Expr | undefined
+    /**
+     * Whether this ParameterDecl is a rest parameter
+     * ```ts
+     * function foo(...rest) {}
+     * ```
+     */,
+    readonly isRest: boolean
+  ) {
     super(NodeKind.ParameterDecl, arguments);
     this.ensure(name, "name", NodeKind.BindingNames);
     this.ensure(initializer, "initializer", ["undefined", "Expr"]);

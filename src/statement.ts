@@ -155,7 +155,14 @@ export class ForOfStmt extends BaseStmt<NodeKind.ForOfStmt> {
   constructor(
     readonly initializer: VariableDecl | Identifier,
     readonly expr: Expr,
-    readonly body: BlockStmt
+    readonly body: BlockStmt,
+    /**
+     * Whether this is a for-await-of statement
+     * ```ts
+     * for await (const a of b) { .. }
+     * ```
+     */
+    readonly isAwait: boolean
   ) {
     super(NodeKind.ForOfStmt, arguments);
   }
@@ -164,7 +171,8 @@ export class ForOfStmt extends BaseStmt<NodeKind.ForOfStmt> {
     return new ForOfStmt(
       this.initializer.clone(),
       this.expr.clone(),
-      this.body.clone()
+      this.body.clone(),
+      this.isAwait
     ) as this;
   }
 }
