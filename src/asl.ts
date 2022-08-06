@@ -4,7 +4,6 @@ import { assertNever } from "./assert";
 import {
   BindingElem,
   BindingName,
-  Decl,
   FunctionLike,
   ParameterDecl,
   VariableDecl,
@@ -111,7 +110,7 @@ import {
   isIntegrationCallPattern,
   tryFindIntegration,
 } from "./integration";
-import { FunctionlessNode } from "./node";
+import { BindingDecl, FunctionlessNode } from "./node";
 import {
   BlockStmt,
   BreakStmt,
@@ -472,6 +471,8 @@ export class ASL {
    */
   readonly decl: FunctionLike;
   private readonly stateNamesCount = new Map<string, number>();
+  private readonly variableNamesCount = new Map<string, number>();
+  private readonly variableNamesMap = new Map<FunctionlessNode, string>();
   private readonly generatedNames = new DeterministicNameGenerator();
 
   /**
@@ -499,7 +500,7 @@ export class ASL {
     decl: FunctionLike
   ) {
     const self = this;
-    this.decl = visitEachChild(decl, function normalizeAST(node):
+    this.decl = decl = visitEachChild(decl, function normalizeAST(node):
       | FunctionlessNode
       | FunctionlessNode[] {
       if (isBlockStmt(node)) {
@@ -525,12 +526,7 @@ export class ASL {
       return visitEachChild(node, normalizeAST);
     });
 
-    const inputParam = decl.parameters[0];
-
-    const states = this.evalStmt(this.decl.body, {
-      End: true,
-      ResultPath: "$",
-    });
+    const inputParam = this.decl.parameters[0];
 
     // only evaluate the input parameter if its a binding parameter.
     // We'll set input during context initialization
@@ -564,13 +560,18 @@ export class ASL {
         !inputParameterBinding &&
         isIdentifier(inputParam.name)
           ? {
-              [`${inputParam.name.name}.$`]: "$",
+              [`${this.getDeclarationName(inputParam as any)}.$`]: "$",
             }
           : {}),
       },
       ResultPath: "$",
       Next: ASLGraph.DeferNext,
     };
+
+    const states = this.evalStmt(this.decl.body, {
+      End: true,
+      ResultPath: "$",
+    });
 
     this.definition = this.aslGraphToStates(
       ASLGraph.joinSubStates(
@@ -593,6 +594,34 @@ export class ASL {
   public context = {
     null: `${FUNCTIONLESS_CONTEXT_JSON_PATH}.null`,
   };
+
+  private getDeclarationName(binding: BindingDecl & { name: Identifier }) {
+    if (!this.variableNamesMap.get(binding)) {
+      const name = binding.name.name;
+      const nameCount = this.variableNamesCount.get(name);
+      this.variableNamesMap.set(
+        binding,
+        nameCount ? `${name}__${nameCount}` : name
+      );
+      this.variableNamesCount.set(name, (nameCount ?? 0) + 1);
+    }
+    return this.variableNamesMap.get(binding);
+  }
+
+  private getIdentifierName(identifier: Identifier) {
+    const ref = identifier.lookup();
+
+    if (
+      (isBindingElem(ref) || isParameterDecl(ref) || isVariableDecl(ref)) &&
+      isIdentifier(ref.name)
+    ) {
+      return this.getDeclarationName(ref as any);
+    }
+    throw new SynthError(
+      ErrorCodes.Unexpected_Error,
+      `Unexpected lookup of identifier without valid declaration: ${identifier.name}`
+    );
+  }
 
   /**
    * Generates a valid, unique state name for the ASL machine.
@@ -753,10 +782,10 @@ export class ASL {
            */
           if (isForInStmt(stmt)) {
             const initializerName = isIdentifier(stmt.initializer)
-              ? stmt.initializer.name
+              ? this.getIdentifierName(stmt.initializer)
               : isVariableDecl(stmt.initializer) &&
                 isIdentifier(stmt.initializer.name)
-              ? stmt.initializer.name.name
+              ? this.getDeclarationName(stmt.initializer as any)
               : undefined;
 
             if (initializerName === undefined) {
@@ -790,13 +819,9 @@ export class ASL {
                 this.evalDecl(stmt.initializer, {
                   jsonPath: `${tempArrayPath}[0]`,
                 })!
-              : {
-                  Type: "Pass",
-                  node: stmt.initializer,
-                  InputPath: `${tempArrayPath}[0]`,
-                  ResultPath: `$.${stmt.initializer.name}`,
-                  Next: ASLGraph.DeferNext,
-                };
+              : this.evalAssignment(stmt.initializer, {
+                  jsonPath: `${tempArrayPath}[0]`,
+                })!;
           }
         })();
 
@@ -1790,7 +1815,7 @@ export class ASL {
         ) {
           return { jsonPath: `$$` };
         }
-        return { jsonPath: `$.${expr.name}` };
+        return { jsonPath: `$.${this.getIdentifierName(expr)}` };
       } else if (isPropAccessExpr(expr)) {
         if (isIdentifier(expr.name)) {
           return this.evalExpr(expr.expr, (output) => {
@@ -2220,14 +2245,16 @@ export class ASL {
     const parentStmt = isStmt(node) ? node : node.findParent(isStmt);
     const variableReferences =
       (parentStmt?.prev ?? parentStmt?.parent)?.getLexicalScope() ??
-      new Map<string, Decl>();
+      new Map<string, BindingDecl>();
     return {
       [`${FUNCTIONLESS_CONTEXT_NAME}.$`]: FUNCTIONLESS_CONTEXT_JSON_PATH,
       ...Object.fromEntries(
-        Array.from(variableReferences.entries()).map(([name]) => [
-          `${name}.$`,
-          `$.${name}`,
-        ])
+        Array.from(variableReferences.values())
+          .map((decl) =>
+            // assume there is an identifier name if it is in the lexical scope
+            this.getDeclarationName(decl as BindingDecl & { name: Identifier })
+          )
+          .map((name) => [`${name}.$`, `$.${name}`])
       ),
     };
   }
@@ -3308,7 +3335,7 @@ export class ASL {
         })
       ) {
         // the array element is assigned to $.0__[name]
-        return { jsonPath: `$.0__${access.element.name}` };
+        return { jsonPath: `$.0__${this.getIdentifierName(access.element)}` };
       }
     }
 
@@ -3414,11 +3441,12 @@ export class ASL {
     value: ASLGraph.Output
   ): ASLGraph.SubState | ASLGraph.NodeState | undefined {
     // assign an identifier the current value
-    if (isIdentifier(pattern) || isReferenceExpr(pattern)) {
+    if (isIdentifier(pattern)) {
       return ASLGraph.passWithInput(
         {
           Type: "Pass",
-          ResultPath: `$.${pattern.name}`,
+          node: pattern,
+          ResultPath: `$.${this.getIdentifierName(pattern)}`,
           Next: ASLGraph.DeferNext,
         },
         value
@@ -3955,7 +3983,7 @@ export namespace ASLGraph {
    *
    * The node is used to name the state.
    */
-  export type NodeState = State & {
+  export type NodeState<S extends State = State> = S & {
     node?: FunctionlessNode;
   };
 
@@ -4611,7 +4639,8 @@ export namespace ASLGraph {
    * Applies an {@link ASLGraph.Output} to a partial {@link Pass}
    */
   export const passWithInput = (
-    pass: Omit<Pass, "Parameters" | "InputPath" | "Result"> & CommonFields,
+    pass: Omit<NodeState<Pass>, "Parameters" | "InputPath" | "Result"> &
+      CommonFields,
     value: ASLGraph.Output
   ): Pass => {
     return {

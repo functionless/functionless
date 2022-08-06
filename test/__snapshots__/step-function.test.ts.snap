@@ -1832,12 +1832,6 @@ exports[`binding for 1`] = `
 Object {
   "StartAt": "Initialize Functionless Context",
   "States": Object {
-    "1__for({key,value} = {key: \\"x\\", value: \\"y\\"};;) 1": Object {
-      "Next": "return \`keyvalue\`",
-      "Result": "y",
-      "ResultPath": "$.value",
-      "Type": "Pass",
-    },
     "1__return \`keyvalue\`": Object {
       "End": true,
       "InputPath": "$.heap0.string",
@@ -1855,7 +1849,7 @@ Object {
       "Type": "Pass",
     },
     "for({key,value} = {key: \\"x\\", value: \\"y\\"};;)": Object {
-      "Next": "1__for({key,value} = {key: \\"x\\", value: \\"y\\"};;) 1",
+      "Next": "value",
       "Result": "x",
       "ResultPath": "$.key",
       "Type": "Pass",
@@ -1866,6 +1860,12 @@ Object {
         "string.$": "States.Format('{}{}',$.key,$.value)",
       },
       "ResultPath": "$.heap0",
+      "Type": "Pass",
+    },
+    "value": Object {
+      "Next": "return \`keyvalue\`",
+      "Result": "y",
+      "ResultPath": "$.value",
       "Type": "Pass",
     },
   },
@@ -1880,12 +1880,6 @@ Object {
       "InputPath": "$.heap0.string",
       "Next": "tail__for({key,value} of input.value)",
       "ResultPath": "$.a",
-      "Type": "Pass",
-    },
-    "1__{ key, value }": Object {
-      "InputPath": "$.heap1[0]['value']",
-      "Next": "a = \`keyvaluea\`",
-      "ResultPath": "$.value",
       "Type": "Pass",
     },
     "Initialize Functionless Context": Object {
@@ -1942,9 +1936,15 @@ Object {
       "ResultPath": "$.heap1",
       "Type": "Pass",
     },
+    "value": Object {
+      "InputPath": "$.heap1[0]['value']",
+      "Next": "a = \`keyvaluea\`",
+      "ResultPath": "$.value",
+      "Type": "Pass",
+    },
     "{ key, value }": Object {
       "InputPath": "$.heap1[0]['key']",
-      "Next": "1__{ key, value }",
+      "Next": "value",
       "ResultPath": "$.key",
       "Type": "Pass",
     },
@@ -1978,7 +1978,7 @@ Object {
             "ResultPath": "$",
             "Type": "Pass",
           },
-          "[ c ]": Object {
+          "c": Object {
             "InputPath": "$.heap1['arr'][0]",
             "Next": "return \`bc\`",
             "ResultPath": "$.c",
@@ -1986,7 +1986,7 @@ Object {
           },
           "function({value:b,arr:[c]})": Object {
             "InputPath": "$.heap1['value']",
-            "Next": "[ c ]",
+            "Next": "c",
             "ResultPath": "$.b",
             "Type": "Pass",
           },
@@ -2114,7 +2114,7 @@ Object {
             "ResultPath": "$",
             "Type": "Pass",
           },
-          "[ c ]": Object {
+          "c": Object {
             "InputPath": "$.heap1['arr'][0]",
             "Next": "return \`bc\`",
             "ResultPath": "$.c",
@@ -2122,7 +2122,7 @@ Object {
           },
           "function({value:b,arr:[c]})": Object {
             "InputPath": "$.heap1['value']",
-            "Next": "[ c ]",
+            "Next": "c",
             "ResultPath": "$.b",
             "Type": "Pass",
           },
@@ -2207,18 +2207,37 @@ Object {
       "ResultPath": "$",
       "Type": "Pass",
     },
-    "[ c ]": Object {
-      "InputPath": "$.heap0.arr[0]['arr'][0]",
-      "Next": "return \`bc\`",
-      "ResultPath": "$.c",
-      "Type": "Pass",
-    },
-    "check__input.value.forEach(function({value:b,arr:[c]}))": Object {
-      "Choices": Array [
-        Object {
-          "IsPresent": true,
-          "Next": "{ value: b, arr: [ c ] }",
-          "Variable": "$.heap0.arr[0]",
+    "input.value.forEach(function({value:b,arr:[c]}))": Object {
+      "ItemsPath": "$.input.value",
+      "Iterator": Object {
+        "StartAt": "function({value:b,arr:[c]})",
+        "States": Object {
+          "1__return \`bc\`": Object {
+            "End": true,
+            "InputPath": "$.heap0.string",
+            "ResultPath": "$",
+            "Type": "Pass",
+          },
+          "c": Object {
+            "InputPath": "$.heap1['arr'][0]",
+            "Next": "return \`bc\`",
+            "ResultPath": "$.c",
+            "Type": "Pass",
+          },
+          "function({value:b,arr:[c]})": Object {
+            "InputPath": "$.heap1['value']",
+            "Next": "c",
+            "ResultPath": "$.b",
+            "Type": "Pass",
+          },
+          "return \`bc\`": Object {
+            "Next": "1__return \`bc\`",
+            "Parameters": Object {
+              "string.$": "States.Format('{}{}',$.b,$.c)",
+            },
+            "ResultPath": "$.heap0",
+            "Type": "Pass",
+          },
         },
       ],
       "Default": "end__input.value.forEach(function({value:b,arr:[c]}))",
@@ -2392,10 +2411,38 @@ Object {
       "ResultPath": "$.heap3.string",
       "Type": "Pass",
     },
-    "return \`bc\`": Object {
-      "Next": "1__return \`bc\`",
-      "Parameters": Object {
-        "string.$": "States.Format('{}{}',$.b,$.c)",
+    "return input.value.map(function({value:b,arr:[c]})).join()": Object {
+      "ItemsPath": "$.input.value",
+      "Iterator": Object {
+        "StartAt": "function({value:b,arr:[c]})",
+        "States": Object {
+          "1__return \`bc\`": Object {
+            "End": true,
+            "InputPath": "$.heap0.string",
+            "ResultPath": "$",
+            "Type": "Pass",
+          },
+          "c": Object {
+            "InputPath": "$.heap1['arr'][0]",
+            "Next": "return \`bc\`",
+            "ResultPath": "$.c",
+            "Type": "Pass",
+          },
+          "function({value:b,arr:[c]})": Object {
+            "InputPath": "$.heap1['value']",
+            "Next": "c",
+            "ResultPath": "$.b",
+            "Type": "Pass",
+          },
+          "return \`bc\`": Object {
+            "Next": "1__return \`bc\`",
+            "Parameters": Object {
+              "string.$": "States.Format('{}{}',$.b,$.c)",
+            },
+            "ResultPath": "$.heap0",
+            "Type": "Pass",
+          },
+        },
       },
       "ResultPath": "$.heap1",
       "Type": "Pass",
@@ -2466,12 +2513,6 @@ Object {
       "InputPath": "$.heap2.string",
       "Next": "handleResult__1__return [1, 2, 3].map(function()).join() 2",
       "ResultPath": "$.heap1.arr[0]",
-      "Type": "Pass",
-    },
-    "1__{ value, obj }": Object {
-      "InputPath": "$$.Execution.Input['obj']",
-      "Next": "{value:v} = obj",
-      "ResultPath": "$.obj",
       "Type": "Pass",
     },
     "Initialize Functionless Context": Object {
@@ -2569,6 +2610,12 @@ Object {
       "ResultPath": "$.heap4.string",
       "Type": "Pass",
     },
+    "obj": Object {
+      "InputPath": "$$.Execution.Input['obj']",
+      "Next": "return [1, 2, 3].map(function()).join()",
+      "ResultPath": "$.obj",
+      "Type": "Pass",
+    },
     "return [1, 2, 3].map(function()).join()": Object {
       "Next": "1__return [1, 2, 3].map(function()).join() 2",
       "Result": Array [
@@ -2607,7 +2654,7 @@ Object {
     },
     "{ value, obj }": Object {
       "InputPath": "$$.Execution.Input['value']",
-      "Next": "1__{ value, obj }",
+      "Next": "obj",
       "ResultPath": "$.value",
       "Type": "Pass",
     },
@@ -2626,7 +2673,7 @@ Object {
   "StartAt": "Initialize Functionless Context",
   "States": Object {
     "Initialize Functionless Context": Object {
-      "Next": "[ b ]",
+      "Next": "b",
       "Parameters": Object {
         "fnl_context": Object {
           "null": null,
@@ -2635,7 +2682,7 @@ Object {
       "ResultPath": "$",
       "Type": "Pass",
     },
-    "[ b ]": Object {
+    "b": Object {
       "InputPath": "$$.Execution.Input['arr'][0]",
       "Next": "return b",
       "ResultPath": "$.b",
@@ -2656,7 +2703,7 @@ Object {
   "StartAt": "Initialize Functionless Context",
   "States": Object {
     "Initialize Functionless Context": Object {
-      "Next": "[ undefined, b ]",
+      "Next": "b",
       "Parameters": Object {
         "fnl_context": Object {
           "null": null,
@@ -2665,7 +2712,7 @@ Object {
       "ResultPath": "$",
       "Type": "Pass",
     },
-    "[ undefined, b ]": Object {
+    "b": Object {
       "InputPath": "$$.Execution.Input['arr'][1:]",
       "Next": "return b",
       "ResultPath": "$.b",
@@ -2686,7 +2733,7 @@ Object {
   "StartAt": "Initialize Functionless Context",
   "States": Object {
     "Initialize Functionless Context": Object {
-      "Next": "{ value }",
+      "Next": "value",
       "Parameters": Object {
         "fnl_context": Object {
           "null": null,
@@ -2701,7 +2748,7 @@ Object {
       "ResultPath": "$",
       "Type": "Pass",
     },
-    "{ value }": Object {
+    "value": Object {
       "InputPath": "$$.Execution.Input['value']",
       "Next": "return value",
       "ResultPath": "$.value",
@@ -2716,7 +2763,7 @@ Object {
   "StartAt": "Initialize Functionless Context",
   "States": Object {
     "Initialize Functionless Context": Object {
-      "Next": "{ b }",
+      "Next": "b",
       "Parameters": Object {
         "fnl_context": Object {
           "null": null,
@@ -2725,16 +2772,16 @@ Object {
       "ResultPath": "$",
       "Type": "Pass",
     },
+    "b": Object {
+      "InputPath": "$$.Execution.Input['value']['b']",
+      "Next": "return b",
+      "ResultPath": "$.b",
+      "Type": "Pass",
+    },
     "return b": Object {
       "End": true,
       "InputPath": "$.b",
       "ResultPath": "$",
-      "Type": "Pass",
-    },
-    "{ b }": Object {
-      "InputPath": "$$.Execution.Input['value']['b']",
-      "Next": "return b",
-      "ResultPath": "$.b",
       "Type": "Pass",
     },
   },
@@ -2746,7 +2793,7 @@ Object {
   "StartAt": "Initialize Functionless Context",
   "States": Object {
     "Initialize Functionless Context": Object {
-      "Next": "{ value: b }",
+      "Next": "b",
       "Parameters": Object {
         "fnl_context": Object {
           "null": null,
@@ -2755,16 +2802,16 @@ Object {
       "ResultPath": "$",
       "Type": "Pass",
     },
+    "b": Object {
+      "InputPath": "$$.Execution.Input['value']",
+      "Next": "return b",
+      "ResultPath": "$.b",
+      "Type": "Pass",
+    },
     "return b": Object {
       "End": true,
       "InputPath": "$.b",
       "ResultPath": "$",
-      "Type": "Pass",
-    },
-    "{ value: b }": Object {
-      "InputPath": "$$.Execution.Input['value']",
-      "Next": "return b",
-      "ResultPath": "$.b",
       "Type": "Pass",
     },
   },
@@ -2776,15 +2823,9 @@ Object {
   "StartAt": "Initialize Functionless Context",
   "States": Object {
     "\\"b\\"": Object {
-      "Next": "1__value = \\"b\\"",
+      "Next": "value",
       "Result": "b",
       "ResultPath": "$.heap0",
-      "Type": "Pass",
-    },
-    "1__value = \\"b\\"": Object {
-      "InputPath": "$.heap0",
-      "Next": "return value",
-      "ResultPath": "$.value",
       "Type": "Pass",
     },
     "Initialize Functionless Context": Object {
@@ -2803,6 +2844,12 @@ Object {
       "ResultPath": "$",
       "Type": "Pass",
     },
+    "value": Object {
+      "InputPath": "$.heap0",
+      "Next": "return value",
+      "ResultPath": "$.value",
+      "Type": "Pass",
+    },
     "value = \\"b\\"": Object {
       "Choices": Array [
         Object {
@@ -2816,7 +2863,7 @@ Object {
     },
     "value__value = \\"b\\"": Object {
       "InputPath": "$$.Execution.Input['value']",
-      "Next": "1__value = \\"b\\"",
+      "Next": "value",
       "ResultPath": "$.heap0",
       "Type": "Pass",
     },
@@ -2828,12 +2875,6 @@ exports[`binding prop with self default 1`] = `
 Object {
   "StartAt": "Initialize Functionless Context",
   "States": Object {
-    "1__value2 = value": Object {
-      "InputPath": "$.heap0",
-      "Next": "return value2",
-      "ResultPath": "$.value2",
-      "Type": "Pass",
-    },
     "Initialize Functionless Context": Object {
       "Next": "{ value, value2 = value }",
       "Parameters": Object {
@@ -2852,8 +2893,14 @@ Object {
     },
     "value": Object {
       "InputPath": "$.value",
-      "Next": "1__value2 = value",
+      "Next": "value2",
       "ResultPath": "$.heap0",
+      "Type": "Pass",
+    },
+    "value2": Object {
+      "InputPath": "$.heap0",
+      "Next": "return value2",
+      "ResultPath": "$.value2",
       "Type": "Pass",
     },
     "value2 = value": Object {
@@ -2869,7 +2916,7 @@ Object {
     },
     "value__value2 = value": Object {
       "InputPath": "$$.Execution.Input['value2']",
-      "Next": "1__value2 = value",
+      "Next": "value2",
       "ResultPath": "$.heap0",
       "Type": "Pass",
     },
@@ -3012,15 +3059,9 @@ Object {
   "StartAt": "Initialize Functionless Context",
   "States": Object {
     "\\"b\\"": Object {
-      "Next": "1__{value} = input",
+      "Next": "value",
       "Result": "b",
       "ResultPath": "$.heap0",
-      "Type": "Pass",
-    },
-    "1__{value} = input": Object {
-      "InputPath": "$.heap0",
-      "Next": "return value",
-      "ResultPath": "$.value",
       "Type": "Pass",
     },
     "Initialize Functionless Context": Object {
@@ -3040,9 +3081,15 @@ Object {
       "ResultPath": "$",
       "Type": "Pass",
     },
-    "value__{value} = input": Object {
+    "value": Object {
+      "InputPath": "$.heap0",
+      "Next": "return value 1",
+      "ResultPath": "$.value",
+      "Type": "Pass",
+    },
+    "value__return value": Object {
       "InputPath": "$.input['value']",
-      "Next": "1__{value} = input",
+      "Next": "value",
       "ResultPath": "$.heap0",
       "Type": "Pass",
     },
@@ -4382,18 +4429,6 @@ exports[`call AWS.DynamoDB.GetItem, then Lambda and return LiteralExpr 1`] = `
 Object {
   "StartAt": "Initialize Functionless Context",
   "States": Object {
-    "1__person = await $AWS.DynamoDB.GetItem({Table: personTable, Key: {id: {S: ": Object {
-      "InputPath": "$.heap0",
-      "Next": "if(person.Item == undefined)",
-      "ResultPath": "$.person",
-      "Type": "Pass",
-    },
-    "1__score = await computeScore({id: person.Item.id.S, name: person.Item.name": Object {
-      "InputPath": "$.heap1",
-      "Next": "return {id: person.Item.id.S, name: person.Item.name.S, score: score}",
-      "ResultPath": "$.score",
-      "Type": "Pass",
-    },
     "Initialize Functionless Context": Object {
       "Next": "person = await $AWS.DynamoDB.GetItem({Table: personTable, Key: {id: {S: inp",
       "Parameters": Object {
@@ -4406,6 +4441,20 @@ Object {
       "Type": "Pass",
     },
     "if(person.Item == undefined)": Object {
+      "Next": "person",
+      "Parameters": Object {
+        "Key": Object {
+          "id": Object {
+            "S.$": "$.input.id",
+          },
+        },
+        "TableName": "__REPLACED_TOKEN",
+      },
+      "Resource": "__REPLACED_ARN",
+      "ResultPath": "$.heap0",
+      "Type": "Task",
+    },
+    "if(person.Item == undefined) 1": Object {
       "Choices": Array [
         Object {
           "And": Array [
@@ -4424,19 +4473,11 @@ Object {
       "Default": "score = await computeScore({id: person.Item.id.S, name: person.Item.name.S}",
       "Type": "Choice",
     },
-    "person = await $AWS.DynamoDB.GetItem({Table: personTable, Key: {id: {S: inp": Object {
-      "Next": "1__person = await $AWS.DynamoDB.GetItem({Table: personTable, Key: {id: {S: ",
-      "Parameters": Object {
-        "Key": Object {
-          "id": Object {
-            "S.$": "$.input.id",
-          },
-        },
-        "TableName": "__REPLACED_TOKEN",
-      },
-      "Resource": "__REPLACED_ARN",
-      "ResultPath": "$.heap0",
-      "Type": "Task",
+    "person": Object {
+      "InputPath": "$.heap0",
+      "Next": "if(person.Item == undefined) 1",
+      "ResultPath": "$.person",
+      "Type": "Pass",
     },
     "return null": Object {
       "End": true,
@@ -4454,8 +4495,14 @@ Object {
       "ResultPath": "$",
       "Type": "Pass",
     },
+    "score": Object {
+      "InputPath": "$.heap1",
+      "Next": "return {id: person.Item.id.S, name: person.Item.name.S, score: score}",
+      "ResultPath": "$.score",
+      "Type": "Pass",
+    },
     "score = await computeScore({id: person.Item.id.S, name: person.Item.name.S}": Object {
-      "Next": "1__score = await computeScore({id: person.Item.id.S, name: person.Item.name",
+      "Next": "score",
       "Parameters": Object {
         "id.$": "$.person.Item.id.S",
         "name.$": "$.person.Item.name.S",
@@ -4472,12 +4519,6 @@ exports[`call Lambda Function, store as variable, return variable 1`] = `
 Object {
   "StartAt": "Initialize Functionless Context",
   "States": Object {
-    "1__person = await getPerson({id: input.id})": Object {
-      "InputPath": "$.heap0",
-      "Next": "return person",
-      "ResultPath": "$.person",
-      "Type": "Pass",
-    },
     "Initialize Functionless Context": Object {
       "Next": "person = await getPerson({id: input.id})",
       "Parameters": Object {
@@ -4489,8 +4530,14 @@ Object {
       "ResultPath": "$",
       "Type": "Pass",
     },
-    "person = await getPerson({id: input.id})": Object {
-      "Next": "1__person = await getPerson({id: input.id})",
+    "person": Object {
+      "InputPath": "$.heap0",
+      "Next": "return person 1",
+      "ResultPath": "$.person",
+      "Type": "Pass",
+    },
+    "return person": Object {
+      "Next": "person",
       "Parameters": Object {
         "id.$": "$.input.id",
       },
@@ -6070,7 +6117,7 @@ Object {
     "a = \`i\` 1": Object {
       "Next": "1__a = \`i\` 1",
       "Parameters": Object {
-        "string.$": "States.Format('{}',$.i)",
+        "string.$": "States.Format('{}',$.i__1)",
       },
       "ResultPath": "$.heap2",
       "Type": "Pass",
@@ -6124,7 +6171,7 @@ Object {
     "i 1": Object {
       "InputPath": "$.heap3[0]",
       "Next": "a = \`i\` 1",
-      "ResultPath": "$.i",
+      "ResultPath": "$.i__1",
       "Type": "Pass",
     },
     "return a": Object {
@@ -6233,7 +6280,7 @@ Object {
     "i 1": Object {
       "InputPath": "$.heap1[0]",
       "Next": "if(i == \\"1\\")",
-      "ResultPath": "$.i",
+      "ResultPath": "$.i__1",
       "Type": "Pass",
     },
     "if(i == \\"1\\")": Object {
@@ -6242,17 +6289,17 @@ Object {
           "And": Array [
             Object {
               "IsPresent": true,
-              "Variable": "$.i",
+              "Variable": "$.i__1",
             },
             Object {
               "And": Array [
                 Object {
                   "IsString": true,
-                  "Variable": "$.i",
+                  "Variable": "$.i__1",
                 },
                 Object {
                   "StringEquals": "1",
-                  "Variable": "$.i",
+                  "Variable": "$.i__1",
                 },
               ],
             },
@@ -6298,7 +6345,7 @@ Object {
     },
     "return i": Object {
       "End": true,
-      "InputPath": "$.i",
+      "InputPath": "$.i__1",
       "ResultPath": "$",
       "Type": "Pass",
     },
@@ -6482,7 +6529,7 @@ Object {
     "i 1": Object {
       "InputPath": "$.heap1[0]",
       "Next": "if(i == \\"1\\")",
-      "ResultPath": "$.i",
+      "ResultPath": "$.i__1",
       "Type": "Pass",
     },
     "if(i == \\"1\\")": Object {
@@ -6491,17 +6538,17 @@ Object {
           "And": Array [
             Object {
               "IsPresent": true,
-              "Variable": "$.i",
+              "Variable": "$.i__1",
             },
             Object {
               "And": Array [
                 Object {
                   "IsString": true,
-                  "Variable": "$.i",
+                  "Variable": "$.i__1",
                 },
                 Object {
                   "StringEquals": "1",
-                  "Variable": "$.i",
+                  "Variable": "$.i__1",
                 },
               ],
             },
@@ -6547,7 +6594,7 @@ Object {
     },
     "return i": Object {
       "End": true,
-      "InputPath": "$.i",
+      "InputPath": "$.i__1",
       "ResultPath": "$",
       "Type": "Pass",
     },
@@ -6743,7 +6790,7 @@ Object {
     "i 1": Object {
       "InputPath": "$.heap1[0]",
       "Next": "if(i == \\"1\\")",
-      "ResultPath": "$.i",
+      "ResultPath": "$.i__1",
       "Type": "Pass",
     },
     "if(i == \\"1\\")": Object {
@@ -6752,17 +6799,17 @@ Object {
           "And": Array [
             Object {
               "IsPresent": true,
-              "Variable": "$.i",
+              "Variable": "$.i__1",
             },
             Object {
               "And": Array [
                 Object {
                   "IsString": true,
-                  "Variable": "$.i",
+                  "Variable": "$.i__1",
                 },
                 Object {
                   "StringEquals": "1",
-                  "Variable": "$.i",
+                  "Variable": "$.i__1",
                 },
               ],
             },
@@ -6808,7 +6855,7 @@ Object {
     },
     "return i": Object {
       "End": true,
-      "InputPath": "$.i",
+      "InputPath": "$.i__1",
       "ResultPath": "$",
       "Type": "Pass",
     },
@@ -7105,15 +7152,6 @@ Object {
       "ResultPath": "$",
       "Type": "Pass",
     },
-    "[3, 4]": Object {
-      "Next": "2__for(i = [1, 2],j = [3, 4];i[0];i = i.slice(1) , j = j.slice(1))",
-      "Result": Array [
-        3,
-        4,
-      ],
-      "ResultPath": "$.j",
-      "Type": "Pass",
-    },
     "await task({i: i, j: j})": Object {
       "Next": "i = i.slice(1) , j = j.slice(1)",
       "Parameters": Object {
@@ -7125,7 +7163,7 @@ Object {
       "Type": "Task",
     },
     "for(i = [1, 2],j = [3, 4];i[0];i = i.slice(1) , j = j.slice(1))": Object {
-      "Next": "[3, 4]",
+      "Next": "j",
       "Result": Array [
         1,
         2,
@@ -7137,6 +7175,15 @@ Object {
       "InputPath": "$.i[1:]",
       "Next": "j = j.slice(1)",
       "ResultPath": "$.i",
+      "Type": "Pass",
+    },
+    "j": Object {
+      "Next": "2__for(i = [1, 2],j = [3, 4];i[0];i = i.slice(1) , j = j.slice(1))",
+      "Result": Array [
+        3,
+        4,
+      ],
+      "ResultPath": "$.j",
       "Type": "Pass",
     },
     "j = j.slice(1)": Object {
@@ -11293,12 +11340,6 @@ exports[`result = $SFN.map(list, (item) => task(item)) 1`] = `
 Object {
   "StartAt": "Initialize Functionless Context",
   "States": Object {
-    "1__result = await $SFN.map(input.list, function(item))": Object {
-      "InputPath": "$.heap1",
-      "Next": "return result",
-      "ResultPath": "$.result",
-      "Type": "Pass",
-    },
     "Initialize Functionless Context": Object {
       "Next": "result = await $SFN.map(input.list, function(item))",
       "Parameters": Object {
@@ -11310,7 +11351,13 @@ Object {
       "ResultPath": "$",
       "Type": "Pass",
     },
-    "result = await $SFN.map(input.list, function(item))": Object {
+    "result": Object {
+      "InputPath": "$.heap1",
+      "Next": "return result 1",
+      "ResultPath": "$.result",
+      "Type": "Pass",
+    },
+    "return result": Object {
       "ItemsPath": "$.input.list",
       "Iterator": Object {
         "StartAt": "return task(item)",
@@ -11330,7 +11377,7 @@ Object {
           },
         },
       },
-      "Next": "1__result = await $SFN.map(input.list, function(item))",
+      "Next": "result",
       "Parameters": Object {
         "fnl_context.$": "$.fnl_context",
         "input.$": "$.input",
@@ -11883,12 +11930,6 @@ exports[`return AWS.DynamoDB.GetItem 1`] = `
 Object {
   "StartAt": "Initialize Functionless Context",
   "States": Object {
-    "1__person = await $AWS.DynamoDB.GetItem({Table: personTable, Key: {id: {S: ": Object {
-      "InputPath": "$.heap0",
-      "Next": "if(person.Item == undefined)",
-      "ResultPath": "$.person",
-      "Type": "Pass",
-    },
     "Initialize Functionless Context": Object {
       "Next": "person = await $AWS.DynamoDB.GetItem({Table: personTable, Key: {id: {S: inp",
       "Parameters": Object {
@@ -11901,6 +11942,20 @@ Object {
       "Type": "Pass",
     },
     "if(person.Item == undefined)": Object {
+      "Next": "person",
+      "Parameters": Object {
+        "Key": Object {
+          "id": Object {
+            "S.$": "$.input.id",
+          },
+        },
+        "TableName": "__REPLACED_TOKEN",
+      },
+      "Resource": "__REPLACED_ARN",
+      "ResultPath": "$.heap0",
+      "Type": "Task",
+    },
+    "if(person.Item == undefined) 1": Object {
       "Choices": Array [
         Object {
           "And": Array [
@@ -11933,6 +11988,12 @@ Object {
       "ResultPath": "$.heap0",
       "Type": "Task",
     },
+    "person": Object {
+      "InputPath": "$.heap0",
+      "Next": "if(person.Item == undefined) 1",
+      "ResultPath": "$.person",
+      "Type": "Pass",
+    },
     "return null": Object {
       "End": true,
       "InputPath": "$.fnl_context.null",
@@ -11956,14 +12017,8 @@ exports[`return AWS.DynamoDB.GetItem dynamic parameters 1`] = `
 Object {
   "StartAt": "Initialize Functionless Context",
   "States": Object {
-    "1__person = await $AWS.DynamoDB.GetItem({Table: personTable, Key: {id: {S: ": Object {
-      "InputPath": "$.heap1",
-      "Next": "if(person.Item == undefined)",
-      "ResultPath": "$.person",
-      "Type": "Pass",
-    },
-    "1__person = await $AWS.DynamoDB.GetItem({Table: personTable, Key: {id: {S:  1": Object {
-      "Next": "1__person = await $AWS.DynamoDB.GetItem({Table: personTable, Key: {id: {S: ",
+    "1__if(person.Item == undefined)": Object {
+      "Next": "person",
       "Parameters": Object {
         "Key": Object {
           "id": Object {
@@ -12025,6 +12080,12 @@ Object {
       "Default": "takeRight__person = await $AWS.DynamoDB.GetItem({Table: personTable, Key: {",
       "Type": "Choice",
     },
+    "person": Object {
+      "InputPath": "$.heap1",
+      "Next": "if(person.Item == undefined) 1",
+      "ResultPath": "$.person",
+      "Type": "Pass",
+    },
     "return null": Object {
       "End": true,
       "InputPath": "$.fnl_context.null",
@@ -12042,12 +12103,12 @@ Object {
     },
     "takeLeft__person = await $AWS.DynamoDB.GetItem({Table: personTable, Key: {i": Object {
       "InputPath": "$.input.id",
-      "Next": "1__person = await $AWS.DynamoDB.GetItem({Table: personTable, Key: {id: {S:  1",
+      "Next": "1__if(person.Item == undefined)",
       "ResultPath": "$.heap0",
       "Type": "Pass",
     },
-    "takeRight__person = await $AWS.DynamoDB.GetItem({Table: personTable, Key: {": Object {
-      "Next": "1__person = await $AWS.DynamoDB.GetItem({Table: personTable, Key: {id: {S:  1",
+    "takeRight__if(person.Item == undefined)": Object {
+      "Next": "1__if(person.Item == undefined)",
       "Result": "default",
       "ResultPath": "$.heap0",
       "Type": "Pass",

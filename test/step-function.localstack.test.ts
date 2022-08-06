@@ -1618,7 +1618,7 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
   );
 
   // https://github.com/functionless/functionless/issues/369
-  test.skip(
+  test(
     "shadowing maintains state",
     (parent) =>
       new StepFunction(parent, "sfn", async () => {
