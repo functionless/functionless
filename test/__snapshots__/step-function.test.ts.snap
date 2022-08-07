@@ -10,7 +10,7 @@ Object {
         "fnl_context": Object {
           "null": null,
         },
-        "input.$": "$",
+        "input.$": "$$.Execution.Input",
       },
       "ResultPath": "$",
       "Type": "Pass",
@@ -127,7 +127,7 @@ Object {
         "fnl_context": Object {
           "null": null,
         },
-        "input.$": "$",
+        "input.$": "$$.Execution.Input",
       },
       "ResultPath": "$",
       "Type": "Pass",
@@ -729,12 +729,6 @@ Object {
       "ResultPath": "$",
       "Type": "Pass",
     },
-    "[ first ]": Object {
-      "InputPath": "$.heap0[0]",
-      "Next": "return item > first",
-      "ResultPath": "$.first",
-      "Type": "Pass",
-    },
     "[1, 2, 3, 4].filter(function(item, _, [first]))": Object {
       "ItemsPath": "$.heap0",
       "Iterator": Object {
@@ -761,7 +755,7 @@ Object {
     },
     "_": Object {
       "InputPath": "$.heap1.arr[0].index",
-      "Next": "[ first ]",
+      "Next": "first",
       "ResultPath": "$._",
       "Type": "Pass",
     },
@@ -794,6 +788,12 @@ Object {
         "result.$": "States.StringToJson(States.Format('{}]', $.heap1.arrStr))",
       },
       "ResultPath": "$.heap1",
+      "Type": "Pass",
+    },
+    "first": Object {
+      "InputPath": "$.heap0[0]",
+      "Next": "return item > first",
+      "ResultPath": "$.first",
       "Type": "Pass",
     },
     "function(item, _, [first])": Object {
@@ -1615,7 +1615,7 @@ Object {
         "fnl_context": Object {
           "null": null,
         },
-        "input.$": "$",
+        "input.$": "$$.Execution.Input",
       },
       "ResultPath": "$",
       "Type": "Pass",
@@ -1655,7 +1655,7 @@ Object {
         "fnl_context": Object {
           "null": null,
         },
-        "input.$": "$",
+        "input.$": "$$.Execution.Input",
       },
       "ResultPath": "$",
       "Type": "Pass",
@@ -1694,7 +1694,7 @@ Object {
         "fnl_context": Object {
           "null": null,
         },
-        "input.$": "$",
+        "input.$": "$$.Execution.Input",
       },
       "ResultPath": "$",
       "Type": "Pass",
@@ -1888,7 +1888,7 @@ Object {
         "fnl_context": Object {
           "null": null,
         },
-        "input.$": "$",
+        "input.$": "$$.Execution.Input",
       },
       "ResultPath": "$",
       "Type": "Pass",
@@ -1962,7 +1962,7 @@ Object {
         "fnl_context": Object {
           "null": null,
         },
-        "input.$": "$",
+        "input.$": "$$.Execution.Input",
       },
       "ResultPath": "$",
       "Type": "Pass",
@@ -1979,13 +1979,13 @@ Object {
             "Type": "Pass",
           },
           "c": Object {
-            "InputPath": "$.heap1['arr'][0]",
+            "InputPath": "$$.Map.Item.Value['arr'][0]",
             "Next": "return \`bc\`",
             "ResultPath": "$.c",
             "Type": "Pass",
           },
           "function({value:b,arr:[c]})": Object {
-            "InputPath": "$.heap1['value']",
+            "InputPath": "$$.Map.Item.Value['value']",
             "Next": "c",
             "ResultPath": "$.b",
             "Type": "Pass",
@@ -2003,10 +2003,9 @@ Object {
       "Next": "return \\"success\\"",
       "Parameters": Object {
         "fnl_context.$": "$.fnl_context",
-        "heap1.$": "$$.Map.Item.Value",
         "input.$": "$.input",
       },
-      "ResultPath": "$.heap2",
+      "ResultPath": "$.heap1",
       "Type": "Map",
     },
     "return \\"success\\"": Object {
@@ -2025,14 +2024,14 @@ Object {
   "States": Object {
     "1__return await $SFN.map(input.value, function({value:b,arr:[c]})).join()": Object {
       "End": true,
-      "InputPath": "$.heap4.string",
+      "InputPath": "$.heap3.string",
       "ResultPath": "$",
       "Type": "Pass",
     },
     "1__return await $SFN.map(input.value, function({value:b,arr:[c]})).join() 1": Object {
-      "InputPath": "$.heap2",
+      "InputPath": "$.heap1",
       "Next": "hasNext__1__return await $SFN.map(input.value, function({value:b,arr:[c]}))",
-      "ResultPath": "$.heap3",
+      "ResultPath": "$.heap2",
       "Type": "Pass",
     },
     "Initialize Functionless Context": Object {
@@ -2041,7 +2040,7 @@ Object {
         "fnl_context": Object {
           "null": null,
         },
-        "input.$": "$",
+        "input.$": "$$.Execution.Input",
       },
       "ResultPath": "$",
       "Type": "Pass",
@@ -2049,9 +2048,9 @@ Object {
     "append__1__return await $SFN.map(input.value, function({value:b,arr:[c]})).": Object {
       "Next": "tail__1__return await $SFN.map(input.value, function({value:b,arr:[c]})).jo",
       "Parameters": Object {
-        "string.$": "States.Format('{},{}', $.heap4.string, $.heap3[0])",
+        "string.$": "States.Format('{},{}', $.heap3.string, $.heap2[0])",
       },
-      "ResultPath": "$.heap4",
+      "ResultPath": "$.heap3",
       "Type": "Pass",
     },
     "hasNext__1__return await $SFN.map(input.value, function({value:b,arr:[c]}))": Object {
@@ -2060,12 +2059,12 @@ Object {
           "And": Array [
             Object {
               "IsPresent": true,
-              "Variable": "$.heap3[0]",
+              "Variable": "$.heap2[0]",
             },
             Object {
               "Not": Object {
                 "IsPresent": true,
-                "Variable": "$.heap4",
+                "Variable": "$.heap3",
               },
             },
           ],
@@ -2076,13 +2075,13 @@ Object {
             Object {
               "Not": Object {
                 "IsPresent": true,
-                "Variable": "$.heap3[0]",
+                "Variable": "$.heap2[0]",
               },
             },
             Object {
               "Not": Object {
                 "IsPresent": true,
-                "Variable": "$.heap4",
+                "Variable": "$.heap3",
               },
             },
           ],
@@ -2091,16 +2090,16 @@ Object {
         Object {
           "IsPresent": true,
           "Next": "append__1__return await $SFN.map(input.value, function({value:b,arr:[c]})).",
-          "Variable": "$.heap3[0]",
+          "Variable": "$.heap2[0]",
         },
       ],
       "Default": "1__return await $SFN.map(input.value, function({value:b,arr:[c]})).join()",
       "Type": "Choice",
     },
     "initValue__1__return await $SFN.map(input.value, function({value:b,arr:[c]}": Object {
-      "InputPath": "$.heap3[0]",
+      "InputPath": "$.heap2[0]",
       "Next": "tail__1__return await $SFN.map(input.value, function({value:b,arr:[c]})).jo",
-      "ResultPath": "$.heap4.string",
+      "ResultPath": "$.heap3.string",
       "Type": "Pass",
     },
     "return await $SFN.map(input.value, function({value:b,arr:[c]})).join()": Object {
@@ -2115,13 +2114,13 @@ Object {
             "Type": "Pass",
           },
           "c": Object {
-            "InputPath": "$.heap1['arr'][0]",
+            "InputPath": "$$.Map.Item.Value['arr'][0]",
             "Next": "return \`bc\`",
             "ResultPath": "$.c",
             "Type": "Pass",
           },
           "function({value:b,arr:[c]})": Object {
-            "InputPath": "$.heap1['value']",
+            "InputPath": "$$.Map.Item.Value['value']",
             "Next": "c",
             "ResultPath": "$.b",
             "Type": "Pass",
@@ -2139,22 +2138,21 @@ Object {
       "Next": "1__return await $SFN.map(input.value, function({value:b,arr:[c]})).join() 1",
       "Parameters": Object {
         "fnl_context.$": "$.fnl_context",
-        "heap1.$": "$$.Map.Item.Value",
         "input.$": "$.input",
       },
-      "ResultPath": "$.heap2",
+      "ResultPath": "$.heap1",
       "Type": "Map",
     },
     "returnEmpty__1__return await $SFN.map(input.value, function({value:b,arr:[c": Object {
       "Next": "1__return await $SFN.map(input.value, function({value:b,arr:[c]})).join()",
       "Result": "",
-      "ResultPath": "$.heap4.string",
+      "ResultPath": "$.heap3.string",
       "Type": "Pass",
     },
     "tail__1__return await $SFN.map(input.value, function({value:b,arr:[c]})).jo": Object {
-      "InputPath": "$.heap3[1:]",
+      "InputPath": "$.heap2[1:]",
       "Next": "hasNext__1__return await $SFN.map(input.value, function({value:b,arr:[c]}))",
-      "ResultPath": "$.heap3",
+      "ResultPath": "$.heap2",
       "Type": "Pass",
     },
   },
@@ -2171,7 +2169,7 @@ Object {
         "fnl_context": Object {
           "null": null,
         },
-        "input.$": "$",
+        "input.$": "$$.Execution.Input",
       },
       "ResultPath": "$",
       "Type": "Pass",
@@ -2202,42 +2200,23 @@ Object {
         "fnl_context": Object {
           "null": null,
         },
-        "input.$": "$",
+        "input.$": "$$.Execution.Input",
       },
       "ResultPath": "$",
       "Type": "Pass",
     },
-    "input.value.forEach(function({value:b,arr:[c]}))": Object {
-      "ItemsPath": "$.input.value",
-      "Iterator": Object {
-        "StartAt": "function({value:b,arr:[c]})",
-        "States": Object {
-          "1__return \`bc\`": Object {
-            "End": true,
-            "InputPath": "$.heap0.string",
-            "ResultPath": "$",
-            "Type": "Pass",
-          },
-          "c": Object {
-            "InputPath": "$.heap1['arr'][0]",
-            "Next": "return \`bc\`",
-            "ResultPath": "$.c",
-            "Type": "Pass",
-          },
-          "function({value:b,arr:[c]})": Object {
-            "InputPath": "$.heap1['value']",
-            "Next": "c",
-            "ResultPath": "$.b",
-            "Type": "Pass",
-          },
-          "return \`bc\`": Object {
-            "Next": "1__return \`bc\`",
-            "Parameters": Object {
-              "string.$": "States.Format('{}{}',$.b,$.c)",
-            },
-            "ResultPath": "$.heap0",
-            "Type": "Pass",
-          },
+    "c": Object {
+      "InputPath": "$.heap0.arr[0]['arr'][0]",
+      "Next": "return \`bc\`",
+      "ResultPath": "$.c",
+      "Type": "Pass",
+    },
+    "check__input.value.forEach(function({value:b,arr:[c]}))": Object {
+      "Choices": Array [
+        Object {
+          "IsPresent": true,
+          "Next": "{ value: b, arr: [ c ] }",
+          "Variable": "$.heap0.arr[0]",
         },
       ],
       "Default": "end__input.value.forEach(function({value:b,arr:[c]}))",
@@ -2279,7 +2258,7 @@ Object {
     },
     "{ value: b, arr: [ c ] }": Object {
       "InputPath": "$.heap0.arr[0]['value']",
-      "Next": "[ c ]",
+      "Next": "c",
       "ResultPath": "$.b",
       "Type": "Pass",
     },
@@ -2315,15 +2294,9 @@ Object {
         "fnl_context": Object {
           "null": null,
         },
-        "input.$": "$",
+        "input.$": "$$.Execution.Input",
       },
       "ResultPath": "$",
-      "Type": "Pass",
-    },
-    "[ c ]": Object {
-      "InputPath": "$.heap0.arr[0]['arr'][0]",
-      "Next": "return \`bc\`",
-      "ResultPath": "$.c",
       "Type": "Pass",
     },
     "append__1__return input.value.map(function({value:b,arr:[c]})).join() 1": Object {
@@ -2332,6 +2305,12 @@ Object {
         "string.$": "States.Format('{},{}', $.heap3.string, $.heap2[0])",
       },
       "ResultPath": "$.heap3",
+      "Type": "Pass",
+    },
+    "c": Object {
+      "InputPath": "$.heap0.arr[0]['arr'][0]",
+      "Next": "return \`bc\`",
+      "ResultPath": "$.c",
       "Type": "Pass",
     },
     "check__return input.value.map(function({value:b,arr:[c]})).join()": Object {
@@ -2411,38 +2390,10 @@ Object {
       "ResultPath": "$.heap3.string",
       "Type": "Pass",
     },
-    "return input.value.map(function({value:b,arr:[c]})).join()": Object {
-      "ItemsPath": "$.input.value",
-      "Iterator": Object {
-        "StartAt": "function({value:b,arr:[c]})",
-        "States": Object {
-          "1__return \`bc\`": Object {
-            "End": true,
-            "InputPath": "$.heap0.string",
-            "ResultPath": "$",
-            "Type": "Pass",
-          },
-          "c": Object {
-            "InputPath": "$.heap1['arr'][0]",
-            "Next": "return \`bc\`",
-            "ResultPath": "$.c",
-            "Type": "Pass",
-          },
-          "function({value:b,arr:[c]})": Object {
-            "InputPath": "$.heap1['value']",
-            "Next": "c",
-            "ResultPath": "$.b",
-            "Type": "Pass",
-          },
-          "return \`bc\`": Object {
-            "Next": "1__return \`bc\`",
-            "Parameters": Object {
-              "string.$": "States.Format('{}{}',$.b,$.c)",
-            },
-            "ResultPath": "$.heap0",
-            "Type": "Pass",
-          },
-        },
+    "return \`bc\`": Object {
+      "Next": "1__return \`bc\`",
+      "Parameters": Object {
+        "string.$": "States.Format('{}{}',$.b,$.c)",
       },
       "ResultPath": "$.heap1",
       "Type": "Pass",
@@ -2476,7 +2427,7 @@ Object {
     },
     "{ value: b, arr: [ c ] }": Object {
       "InputPath": "$.heap0.arr[0]['value']",
-      "Next": "[ c ]",
+      "Next": "c",
       "ResultPath": "$.b",
       "Type": "Pass",
     },
@@ -2612,7 +2563,7 @@ Object {
     },
     "obj": Object {
       "InputPath": "$$.Execution.Input['obj']",
-      "Next": "return [1, 2, 3].map(function()).join()",
+      "Next": "{value:v} = obj",
       "ResultPath": "$.obj",
       "Type": "Pass",
     },
@@ -2940,7 +2891,7 @@ Object {
         "fnl_context": Object {
           "null": null,
         },
-        "input.$": "$",
+        "input.$": "$$.Execution.Input",
       },
       "ResultPath": "$",
       "Type": "Pass",
@@ -2971,7 +2922,7 @@ Object {
         "fnl_context": Object {
           "null": null,
         },
-        "input.$": "$",
+        "input.$": "$$.Execution.Input",
       },
       "ResultPath": "$",
       "Type": "Pass",
@@ -3002,7 +2953,7 @@ Object {
         "fnl_context": Object {
           "null": null,
         },
-        "input.$": "$",
+        "input.$": "$$.Execution.Input",
       },
       "ResultPath": "$",
       "Type": "Pass",
@@ -3033,7 +2984,7 @@ Object {
         "fnl_context": Object {
           "null": null,
         },
-        "input.$": "$",
+        "input.$": "$$.Execution.Input",
       },
       "ResultPath": "$",
       "Type": "Pass",
@@ -3070,7 +3021,7 @@ Object {
         "fnl_context": Object {
           "null": null,
         },
-        "input.$": "$",
+        "input.$": "$$.Execution.Input",
       },
       "ResultPath": "$",
       "Type": "Pass",
@@ -3083,11 +3034,11 @@ Object {
     },
     "value": Object {
       "InputPath": "$.heap0",
-      "Next": "return value 1",
+      "Next": "return value",
       "ResultPath": "$.value",
       "Type": "Pass",
     },
-    "value__return value": Object {
+    "value__{value} = input": Object {
       "InputPath": "$.input['value']",
       "Next": "value",
       "ResultPath": "$.heap0",
@@ -3691,7 +3642,7 @@ Object {
         "fnl_context": Object {
           "null": null,
         },
-        "input.$": "$",
+        "input.$": "$$.Execution.Input",
       },
       "ResultPath": "$",
       "Type": "Pass",
@@ -4098,7 +4049,7 @@ Object {
         "fnl_context": Object {
           "null": null,
         },
-        "input.$": "$",
+        "input.$": "$$.Execution.Input",
       },
       "ResultPath": "$",
       "Type": "Pass",
@@ -4319,7 +4270,7 @@ Object {
         "fnl_context": Object {
           "null": null,
         },
-        "input.$": "$",
+        "input.$": "$$.Execution.Input",
       },
       "ResultPath": "$",
       "Type": "Pass",
@@ -4435,26 +4386,12 @@ Object {
         "fnl_context": Object {
           "null": null,
         },
-        "input.$": "$",
+        "input.$": "$$.Execution.Input",
       },
       "ResultPath": "$",
       "Type": "Pass",
     },
     "if(person.Item == undefined)": Object {
-      "Next": "person",
-      "Parameters": Object {
-        "Key": Object {
-          "id": Object {
-            "S.$": "$.input.id",
-          },
-        },
-        "TableName": "__REPLACED_TOKEN",
-      },
-      "Resource": "__REPLACED_ARN",
-      "ResultPath": "$.heap0",
-      "Type": "Task",
-    },
-    "if(person.Item == undefined) 1": Object {
       "Choices": Array [
         Object {
           "And": Array [
@@ -4475,9 +4412,23 @@ Object {
     },
     "person": Object {
       "InputPath": "$.heap0",
-      "Next": "if(person.Item == undefined) 1",
+      "Next": "if(person.Item == undefined)",
       "ResultPath": "$.person",
       "Type": "Pass",
+    },
+    "person = await $AWS.DynamoDB.GetItem({Table: personTable, Key: {id: {S: inp": Object {
+      "Next": "person",
+      "Parameters": Object {
+        "Key": Object {
+          "id": Object {
+            "S.$": "$.input.id",
+          },
+        },
+        "TableName": "__REPLACED_TOKEN",
+      },
+      "Resource": "__REPLACED_ARN",
+      "ResultPath": "$.heap0",
+      "Type": "Task",
     },
     "return null": Object {
       "End": true,
@@ -4525,18 +4476,18 @@ Object {
         "fnl_context": Object {
           "null": null,
         },
-        "input.$": "$",
+        "input.$": "$$.Execution.Input",
       },
       "ResultPath": "$",
       "Type": "Pass",
     },
     "person": Object {
       "InputPath": "$.heap0",
-      "Next": "return person 1",
+      "Next": "return person",
       "ResultPath": "$.person",
       "Type": "Pass",
     },
-    "return person": Object {
+    "person = await getPerson({id: input.id})": Object {
       "Next": "person",
       "Parameters": Object {
         "id.$": "$.input.id",
@@ -4571,7 +4522,7 @@ Object {
         "fnl_context": Object {
           "null": null,
         },
-        "input.$": "$",
+        "input.$": "$$.Execution.Input",
       },
       "ResultPath": "$",
       "Type": "Pass",
@@ -4638,7 +4589,7 @@ Object {
         "fnl_context": Object {
           "null": null,
         },
-        "input.$": "$",
+        "input.$": "$$.Execution.Input",
       },
       "ResultPath": "$",
       "Type": "Pass",
@@ -4705,7 +4656,7 @@ Object {
         "fnl_context": Object {
           "null": null,
         },
-        "input.$": "$",
+        "input.$": "$$.Execution.Input",
       },
       "ResultPath": "$",
       "Type": "Pass",
@@ -4742,7 +4693,7 @@ Object {
         "fnl_context": Object {
           "null": null,
         },
-        "input.$": "$",
+        "input.$": "$$.Execution.Input",
       },
       "ResultPath": "$",
       "Type": "Pass",
@@ -4848,7 +4799,7 @@ Object {
         "fnl_context": Object {
           "null": null,
         },
-        "input.$": "$",
+        "input.$": "$$.Execution.Input",
       },
       "ResultPath": "$",
       "Type": "Pass",
@@ -4896,7 +4847,7 @@ Object {
         "fnl_context": Object {
           "null": null,
         },
-        "input.$": "$",
+        "input.$": "$$.Execution.Input",
       },
       "ResultPath": "$",
       "Type": "Pass",
@@ -5032,7 +4983,7 @@ Object {
         "fnl_context": Object {
           "null": null,
         },
-        "input.$": "$",
+        "input.$": "$$.Execution.Input",
       },
       "ResultPath": "$",
       "Type": "Pass",
@@ -5178,7 +5129,7 @@ Object {
         "fnl_context": Object {
           "null": null,
         },
-        "input.$": "$",
+        "input.$": "$$.Execution.Input",
       },
       "ResultPath": "$",
       "Type": "Pass",
@@ -5244,7 +5195,7 @@ Object {
         "fnl_context": Object {
           "null": null,
         },
-        "input.$": "$",
+        "input.$": "$$.Execution.Input",
       },
       "ResultPath": "$",
       "Type": "Pass",
@@ -5302,7 +5253,7 @@ Object {
         "fnl_context": Object {
           "null": null,
         },
-        "input.$": "$",
+        "input.$": "$$.Execution.Input",
       },
       "ResultPath": "$",
       "Type": "Pass",
@@ -5360,7 +5311,7 @@ Object {
         "fnl_context": Object {
           "null": null,
         },
-        "input.$": "$",
+        "input.$": "$$.Execution.Input",
       },
       "ResultPath": "$",
       "Type": "Pass",
@@ -5430,7 +5381,7 @@ Object {
         "fnl_context": Object {
           "null": null,
         },
-        "input.$": "$",
+        "input.$": "$$.Execution.Input",
       },
       "ResultPath": "$",
       "Type": "Pass",
@@ -5511,7 +5462,7 @@ Object {
         "fnl_context": Object {
           "null": null,
         },
-        "input.$": "$",
+        "input.$": "$$.Execution.Input",
       },
       "ResultPath": "$",
       "Type": "Pass",
@@ -5581,7 +5532,7 @@ Object {
         "fnl_context": Object {
           "null": null,
         },
-        "input.$": "$",
+        "input.$": "$$.Execution.Input",
       },
       "ResultPath": "$",
       "Type": "Pass",
@@ -5693,7 +5644,7 @@ Object {
         "fnl_context": Object {
           "null": null,
         },
-        "input.$": "$",
+        "input.$": "$$.Execution.Input",
       },
       "ResultPath": "$",
       "Type": "Pass",
@@ -5778,7 +5729,7 @@ Object {
         "fnl_context": Object {
           "null": null,
         },
-        "input.$": "$",
+        "input.$": "$$.Execution.Input",
       },
       "ResultPath": "$",
       "Type": "Pass",
@@ -5898,7 +5849,7 @@ Object {
         "fnl_context": Object {
           "null": null,
         },
-        "input.$": "$",
+        "input.$": "$$.Execution.Input",
       },
       "ResultPath": "$",
       "Type": "Pass",
@@ -5987,7 +5938,7 @@ Object {
         "fnl_context": Object {
           "null": null,
         },
-        "input.$": "$",
+        "input.$": "$$.Execution.Input",
       },
       "ResultPath": "$",
       "Type": "Pass",
@@ -6095,7 +6046,7 @@ Object {
         "fnl_context": Object {
           "null": null,
         },
-        "input.$": "$",
+        "input.$": "$$.Execution.Input",
       },
       "ResultPath": "$",
       "Type": "Pass",
@@ -6226,7 +6177,7 @@ Object {
         "fnl_context": Object {
           "null": null,
         },
-        "input.$": "$",
+        "input.$": "$$.Execution.Input",
       },
       "ResultPath": "$",
       "Type": "Pass",
@@ -6389,7 +6340,7 @@ Object {
         "fnl_context": Object {
           "null": null,
         },
-        "input.$": "$",
+        "input.$": "$$.Execution.Input",
       },
       "ResultPath": "$",
       "Type": "Pass",
@@ -6475,7 +6426,7 @@ Object {
         "fnl_context": Object {
           "null": null,
         },
-        "input.$": "$",
+        "input.$": "$$.Execution.Input",
       },
       "ResultPath": "$",
       "Type": "Pass",
@@ -6650,7 +6601,7 @@ Object {
         "fnl_context": Object {
           "null": null,
         },
-        "input.$": "$",
+        "input.$": "$$.Execution.Input",
       },
       "ResultPath": "$",
       "Type": "Pass",
@@ -6736,7 +6687,7 @@ Object {
         "fnl_context": Object {
           "null": null,
         },
-        "input.$": "$",
+        "input.$": "$$.Execution.Input",
       },
       "ResultPath": "$",
       "Type": "Pass",
@@ -7384,7 +7335,7 @@ Object {
         "fnl_context": Object {
           "null": null,
         },
-        "input.$": "$",
+        "input.$": "$$.Execution.Input",
       },
       "ResultPath": "$",
       "Type": "Pass",
@@ -7438,7 +7389,7 @@ Object {
         "fnl_context": Object {
           "null": null,
         },
-        "input.$": "$",
+        "input.$": "$$.Execution.Input",
       },
       "ResultPath": "$",
       "Type": "Pass",
@@ -7561,7 +7512,7 @@ Object {
         "fnl_context": Object {
           "null": null,
         },
-        "input.$": "$",
+        "input.$": "$$.Execution.Input",
       },
       "ResultPath": "$",
       "Type": "Pass",
@@ -7651,7 +7602,7 @@ Object {
         "fnl_context": Object {
           "null": null,
         },
-        "input.$": "$",
+        "input.$": "$$.Execution.Input",
       },
       "ResultPath": "$",
       "Type": "Pass",
@@ -7802,7 +7753,7 @@ Object {
         "fnl_context": Object {
           "null": null,
         },
-        "input.$": "$",
+        "input.$": "$$.Execution.Input",
       },
       "ResultPath": "$",
       "Type": "Pass",
@@ -7986,7 +7937,7 @@ Object {
         "fnl_context": Object {
           "null": null,
         },
-        "input.$": "$",
+        "input.$": "$$.Execution.Input",
       },
       "ResultPath": "$",
       "Type": "Pass",
@@ -8571,7 +8522,7 @@ Object {
         "fnl_context": Object {
           "null": null,
         },
-        "input.$": "$",
+        "input.$": "$$.Execution.Input",
       },
       "ResultPath": "$",
       "Type": "Pass",
@@ -9073,7 +9024,7 @@ Object {
         "fnl_context": Object {
           "null": null,
         },
-        "input.$": "$",
+        "input.$": "$$.Execution.Input",
       },
       "ResultPath": "$",
       "Type": "Pass",
@@ -9131,7 +9082,7 @@ Object {
         "fnl_context": Object {
           "null": null,
         },
-        "input.$": "$",
+        "input.$": "$$.Execution.Input",
       },
       "ResultPath": "$",
       "Type": "Pass",
@@ -9334,7 +9285,7 @@ Object {
         "fnl_context": Object {
           "null": null,
         },
-        "input.$": "$",
+        "input.$": "$$.Execution.Input",
       },
       "ResultPath": "$",
       "Type": "Pass",
@@ -9392,7 +9343,7 @@ Object {
         "fnl_context": Object {
           "null": null,
         },
-        "input.$": "$",
+        "input.$": "$$.Execution.Input",
       },
       "ResultPath": "$",
       "Type": "Pass",
@@ -9555,7 +9506,7 @@ Object {
         "fnl_context": Object {
           "null": null,
         },
-        "input.$": "$",
+        "input.$": "$$.Execution.Input",
       },
       "ResultPath": "$",
       "Type": "Pass",
@@ -9685,7 +9636,7 @@ Object {
         "fnl_context": Object {
           "null": null,
         },
-        "input.$": "$",
+        "input.$": "$$.Execution.Input",
       },
       "ResultPath": "$",
       "Type": "Pass",
@@ -10089,7 +10040,7 @@ Object {
         "fnl_context": Object {
           "null": null,
         },
-        "input.$": "$",
+        "input.$": "$$.Execution.Input",
       },
       "ResultPath": "$",
       "Type": "Pass",
@@ -10175,7 +10126,7 @@ Object {
         "fnl_context": Object {
           "null": null,
         },
-        "input.$": "$",
+        "input.$": "$$.Execution.Input",
       },
       "ResultPath": "$",
       "Type": "Pass",
@@ -10262,7 +10213,7 @@ Object {
         "fnl_context": Object {
           "null": null,
         },
-        "input.$": "$",
+        "input.$": "$$.Execution.Input",
       },
       "ResultPath": "$",
       "Type": "Pass",
@@ -10397,7 +10348,7 @@ Object {
         "fnl_context": Object {
           "null": null,
         },
-        "input.$": "$",
+        "input.$": "$$.Execution.Input",
       },
       "ResultPath": "$",
       "Type": "Pass",
@@ -10521,7 +10472,7 @@ Object {
         "fnl_context": Object {
           "null": null,
         },
-        "input.$": "$",
+        "input.$": "$$.Execution.Input",
       },
       "ResultPath": "$",
       "Type": "Pass",
@@ -10615,7 +10566,7 @@ Object {
         "fnl_context": Object {
           "null": null,
         },
-        "input.$": "$",
+        "input.$": "$$.Execution.Input",
       },
       "ResultPath": "$",
       "Type": "Pass",
@@ -10690,7 +10641,7 @@ Object {
         "fnl_context": Object {
           "null": null,
         },
-        "input.$": "$",
+        "input.$": "$$.Execution.Input",
       },
       "ResultPath": "$",
       "Type": "Pass",
@@ -10837,7 +10788,7 @@ Object {
         "fnl_context": Object {
           "null": null,
         },
-        "input.$": "$",
+        "input.$": "$$.Execution.Input",
       },
       "ResultPath": "$",
       "Type": "Pass",
@@ -10979,7 +10930,7 @@ Object {
         "fnl_context": Object {
           "null": null,
         },
-        "input.$": "$",
+        "input.$": "$$.Execution.Input",
       },
       "ResultPath": "$",
       "Type": "Pass",
@@ -11101,7 +11052,7 @@ Object {
         "fnl_context": Object {
           "null": null,
         },
-        "input.$": "$",
+        "input.$": "$$.Execution.Input",
       },
       "ResultPath": "$",
       "Type": "Pass",
@@ -11189,7 +11140,7 @@ Object {
         "fnl_context": Object {
           "null": null,
         },
-        "input.$": "$",
+        "input.$": "$$.Execution.Input",
       },
       "ResultPath": "$",
       "Type": "Pass",
@@ -11240,7 +11191,7 @@ Object {
         "fnl_context": Object {
           "null": null,
         },
-        "input.$": "$",
+        "input.$": "$$.Execution.Input",
       },
       "ResultPath": "$",
       "Type": "Pass",
@@ -11298,7 +11249,7 @@ Object {
         "fnl_context": Object {
           "null": null,
         },
-        "input.$": "$",
+        "input.$": "$$.Execution.Input",
       },
       "ResultPath": "$",
       "Type": "Pass",
@@ -11346,18 +11297,18 @@ Object {
         "fnl_context": Object {
           "null": null,
         },
-        "input.$": "$",
+        "input.$": "$$.Execution.Input",
       },
       "ResultPath": "$",
       "Type": "Pass",
     },
     "result": Object {
       "InputPath": "$.heap1",
-      "Next": "return result 1",
+      "Next": "return result",
       "ResultPath": "$.result",
       "Type": "Pass",
     },
-    "return result": Object {
+    "result = await $SFN.map(input.list, function(item))": Object {
       "ItemsPath": "$.input.list",
       "Iterator": Object {
         "StartAt": "return task(item)",
@@ -11412,7 +11363,7 @@ Object {
         "fnl_context": Object {
           "null": null,
         },
-        "input.$": "$",
+        "input.$": "$$.Execution.Input",
       },
       "ResultPath": "$",
       "Type": "Pass",
@@ -11466,7 +11417,7 @@ Object {
         "fnl_context": Object {
           "null": null,
         },
-        "input.$": "$",
+        "input.$": "$$.Execution.Input",
       },
       "ResultPath": "$",
       "Type": "Pass",
@@ -11535,7 +11486,7 @@ Object {
         "fnl_context": Object {
           "null": null,
         },
-        "input.$": "$",
+        "input.$": "$$.Execution.Input",
       },
       "ResultPath": "$",
       "Type": "Pass",
@@ -11590,7 +11541,7 @@ Object {
         "fnl_context": Object {
           "null": null,
         },
-        "input.$": "$",
+        "input.$": "$$.Execution.Input",
       },
       "ResultPath": "$",
       "Type": "Pass",
@@ -11644,7 +11595,7 @@ Object {
         "fnl_context": Object {
           "null": null,
         },
-        "input.$": "$",
+        "input.$": "$$.Execution.Input",
       },
       "ResultPath": "$",
       "Type": "Pass",
@@ -11713,7 +11664,7 @@ Object {
         "fnl_context": Object {
           "null": null,
         },
-        "input.$": "$",
+        "input.$": "$$.Execution.Input",
       },
       "ResultPath": "$",
       "Type": "Pass",
@@ -11936,26 +11887,12 @@ Object {
         "fnl_context": Object {
           "null": null,
         },
-        "input.$": "$",
+        "input.$": "$$.Execution.Input",
       },
       "ResultPath": "$",
       "Type": "Pass",
     },
     "if(person.Item == undefined)": Object {
-      "Next": "person",
-      "Parameters": Object {
-        "Key": Object {
-          "id": Object {
-            "S.$": "$.input.id",
-          },
-        },
-        "TableName": "__REPLACED_TOKEN",
-      },
-      "Resource": "__REPLACED_ARN",
-      "ResultPath": "$.heap0",
-      "Type": "Task",
-    },
-    "if(person.Item == undefined) 1": Object {
       "Choices": Array [
         Object {
           "And": Array [
@@ -11974,8 +11911,14 @@ Object {
       "Default": "return {id: person.Item.id.S, name: person.Item.name.S}",
       "Type": "Choice",
     },
+    "person": Object {
+      "InputPath": "$.heap0",
+      "Next": "if(person.Item == undefined)",
+      "ResultPath": "$.person",
+      "Type": "Pass",
+    },
     "person = await $AWS.DynamoDB.GetItem({Table: personTable, Key: {id: {S: inp": Object {
-      "Next": "1__person = await $AWS.DynamoDB.GetItem({Table: personTable, Key: {id: {S: ",
+      "Next": "person",
       "Parameters": Object {
         "Key": Object {
           "id": Object {
@@ -11987,12 +11930,6 @@ Object {
       "Resource": "__REPLACED_ARN",
       "ResultPath": "$.heap0",
       "Type": "Task",
-    },
-    "person": Object {
-      "InputPath": "$.heap0",
-      "Next": "if(person.Item == undefined) 1",
-      "ResultPath": "$.person",
-      "Type": "Pass",
     },
     "return null": Object {
       "End": true,
@@ -12017,7 +11954,7 @@ exports[`return AWS.DynamoDB.GetItem dynamic parameters 1`] = `
 Object {
   "StartAt": "Initialize Functionless Context",
   "States": Object {
-    "1__if(person.Item == undefined)": Object {
+    "1__person = await $AWS.DynamoDB.GetItem({Table: personTable, Key: {id: {S: ": Object {
       "Next": "person",
       "Parameters": Object {
         "Key": Object {
@@ -12037,7 +11974,7 @@ Object {
         "fnl_context": Object {
           "null": null,
         },
-        "input.$": "$",
+        "input.$": "$$.Execution.Input",
       },
       "ResultPath": "$",
       "Type": "Pass",
@@ -12061,6 +11998,12 @@ Object {
       "Default": "return {id: person.Item.id.S, name: person.Item.name.S}",
       "Type": "Choice",
     },
+    "person": Object {
+      "InputPath": "$.heap1",
+      "Next": "if(person.Item == undefined)",
+      "ResultPath": "$.person",
+      "Type": "Pass",
+    },
     "person = await $AWS.DynamoDB.GetItem({Table: personTable, Key: {id: {S: inp": Object {
       "Choices": Array [
         Object {
@@ -12080,12 +12023,6 @@ Object {
       "Default": "takeRight__person = await $AWS.DynamoDB.GetItem({Table: personTable, Key: {",
       "Type": "Choice",
     },
-    "person": Object {
-      "InputPath": "$.heap1",
-      "Next": "if(person.Item == undefined) 1",
-      "ResultPath": "$.person",
-      "Type": "Pass",
-    },
     "return null": Object {
       "End": true,
       "InputPath": "$.fnl_context.null",
@@ -12103,12 +12040,12 @@ Object {
     },
     "takeLeft__person = await $AWS.DynamoDB.GetItem({Table: personTable, Key: {i": Object {
       "InputPath": "$.input.id",
-      "Next": "1__if(person.Item == undefined)",
+      "Next": "1__person = await $AWS.DynamoDB.GetItem({Table: personTable, Key: {id: {S: ",
       "ResultPath": "$.heap0",
       "Type": "Pass",
     },
-    "takeRight__if(person.Item == undefined)": Object {
-      "Next": "1__if(person.Item == undefined)",
+    "takeRight__person = await $AWS.DynamoDB.GetItem({Table: personTable, Key: {": Object {
+      "Next": "1__person = await $AWS.DynamoDB.GetItem({Table: personTable, Key: {id: {S: ",
       "Result": "default",
       "ResultPath": "$.heap0",
       "Type": "Pass",
@@ -12145,7 +12082,7 @@ Object {
         "fnl_context": Object {
           "null": null,
         },
-        "input.$": "$",
+        "input.$": "$$.Execution.Input",
       },
       "ResultPath": "$",
       "Type": "Pass",
@@ -12195,7 +12132,7 @@ Object {
         "fnl_context": Object {
           "null": null,
         },
-        "input.$": "$",
+        "input.$": "$$.Execution.Input",
       },
       "ResultPath": "$",
       "Type": "Pass",
@@ -12220,7 +12157,7 @@ Object {
         "fnl_context": Object {
           "null": null,
         },
-        "input.$": "$",
+        "input.$": "$$.Execution.Input",
       },
       "ResultPath": "$",
       "Type": "Pass",
@@ -12245,7 +12182,7 @@ Object {
         "fnl_context": Object {
           "null": null,
         },
-        "input.$": "$",
+        "input.$": "$$.Execution.Input",
       },
       "ResultPath": "$",
       "Type": "Pass",
@@ -12276,7 +12213,7 @@ Object {
         "fnl_context": Object {
           "null": null,
         },
-        "input.$": "$",
+        "input.$": "$$.Execution.Input",
       },
       "ResultPath": "$",
       "Type": "Pass",
@@ -12348,7 +12285,7 @@ Object {
         "fnl_context": Object {
           "null": null,
         },
-        "input.$": "$",
+        "input.$": "$$.Execution.Input",
       },
       "ResultPath": "$",
       "Type": "Pass",
@@ -12472,7 +12409,7 @@ Object {
         "fnl_context": Object {
           "null": null,
         },
-        "input.$": "$",
+        "input.$": "$$.Execution.Input",
       },
       "ResultPath": "$",
       "Type": "Pass",
@@ -12497,7 +12434,7 @@ Object {
         "fnl_context": Object {
           "null": null,
         },
-        "input.$": "$",
+        "input.$": "$$.Execution.Input",
       },
       "ResultPath": "$",
       "Type": "Pass",
@@ -12522,7 +12459,7 @@ Object {
         "fnl_context": Object {
           "null": null,
         },
-        "input.$": "$",
+        "input.$": "$$.Execution.Input",
       },
       "ResultPath": "$",
       "Type": "Pass",
@@ -12547,7 +12484,7 @@ Object {
         "fnl_context": Object {
           "null": null,
         },
-        "input.$": "$",
+        "input.$": "$$.Execution.Input",
       },
       "ResultPath": "$",
       "Type": "Pass",
@@ -12572,7 +12509,7 @@ Object {
         "fnl_context": Object {
           "null": null,
         },
-        "input.$": "$",
+        "input.$": "$$.Execution.Input",
       },
       "ResultPath": "$",
       "Type": "Pass",
@@ -12597,7 +12534,7 @@ Object {
         "fnl_context": Object {
           "null": null,
         },
-        "input.$": "$",
+        "input.$": "$$.Execution.Input",
       },
       "ResultPath": "$",
       "Type": "Pass",
@@ -12622,7 +12559,7 @@ Object {
         "fnl_context": Object {
           "null": null,
         },
-        "input.$": "$",
+        "input.$": "$$.Execution.Input",
       },
       "ResultPath": "$",
       "Type": "Pass",
@@ -12653,7 +12590,7 @@ Object {
         "fnl_context": Object {
           "null": null,
         },
-        "input.$": "$",
+        "input.$": "$$.Execution.Input",
       },
       "ResultPath": "$",
       "Type": "Pass",
@@ -12689,7 +12626,7 @@ Object {
         "fnl_context": Object {
           "null": null,
         },
-        "input.$": "$",
+        "input.$": "$$.Execution.Input",
       },
       "ResultPath": "$",
       "Type": "Pass",
@@ -12830,7 +12767,7 @@ Object {
         "fnl_context": Object {
           "null": null,
         },
-        "input.$": "$",
+        "input.$": "$$.Execution.Input",
       },
       "ResultPath": "$",
       "Type": "Pass",
@@ -13007,7 +12944,7 @@ Object {
         "fnl_context": Object {
           "null": null,
         },
-        "input.$": "$",
+        "input.$": "$$.Execution.Input",
       },
       "ResultPath": "$",
       "Type": "Pass",
@@ -13076,7 +13013,7 @@ Object {
         "fnl_context": Object {
           "null": null,
         },
-        "input.$": "$",
+        "input.$": "$$.Execution.Input",
       },
       "ResultPath": "$",
       "Type": "Pass",
@@ -13413,7 +13350,7 @@ Object {
         "fnl_context": Object {
           "null": null,
         },
-        "input.$": "$",
+        "input.$": "$$.Execution.Input",
       },
       "ResultPath": "$",
       "Type": "Pass",
@@ -13454,7 +13391,7 @@ Object {
         "fnl_context": Object {
           "null": null,
         },
-        "input.$": "$",
+        "input.$": "$$.Execution.Input",
       },
       "ResultPath": "$",
       "Type": "Pass",
@@ -13496,7 +13433,7 @@ Object {
         "fnl_context": Object {
           "null": null,
         },
-        "input.$": "$",
+        "input.$": "$$.Execution.Input",
       },
       "ResultPath": "$",
       "Type": "Pass",
@@ -13615,7 +13552,7 @@ Object {
         "fnl_context": Object {
           "null": null,
         },
-        "input.$": "$",
+        "input.$": "$$.Execution.Input",
       },
       "ResultPath": "$",
       "Type": "Pass",
@@ -13743,7 +13680,7 @@ Object {
         "fnl_context": Object {
           "null": null,
         },
-        "input.$": "$",
+        "input.$": "$$.Execution.Input",
       },
       "ResultPath": "$",
       "Type": "Pass",
@@ -13812,7 +13749,7 @@ Object {
         "fnl_context": Object {
           "null": null,
         },
-        "input.$": "$",
+        "input.$": "$$.Execution.Input",
       },
       "ResultPath": "$",
       "Type": "Pass",
@@ -13892,7 +13829,7 @@ Object {
         "fnl_context": Object {
           "null": null,
         },
-        "input.$": "$",
+        "input.$": "$$.Execution.Input",
       },
       "ResultPath": "$",
       "Type": "Pass",
@@ -14035,7 +13972,7 @@ Object {
         "fnl_context": Object {
           "null": null,
         },
-        "input.$": "$",
+        "input.$": "$$.Execution.Input",
       },
       "ResultPath": "$",
       "Type": "Pass",
@@ -14125,7 +14062,7 @@ Object {
         "fnl_context": Object {
           "null": null,
         },
-        "input.$": "$",
+        "input.$": "$$.Execution.Input",
       },
       "ResultPath": "$",
       "Type": "Pass",
@@ -14209,7 +14146,7 @@ Object {
         "fnl_context": Object {
           "null": null,
         },
-        "input.$": "$",
+        "input.$": "$$.Execution.Input",
       },
       "ResultPath": "$",
       "Type": "Pass",
@@ -14273,7 +14210,7 @@ Object {
         "fnl_context": Object {
           "null": null,
         },
-        "input.$": "$",
+        "input.$": "$$.Execution.Input",
       },
       "ResultPath": "$",
       "Type": "Pass",
@@ -14382,7 +14319,7 @@ Object {
         "fnl_context": Object {
           "null": null,
         },
-        "input.$": "$",
+        "input.$": "$$.Execution.Input",
       },
       "ResultPath": "$",
       "Type": "Pass",
@@ -14484,7 +14421,7 @@ Object {
         "fnl_context": Object {
           "null": null,
         },
-        "input.$": "$",
+        "input.$": "$$.Execution.Input",
       },
       "ResultPath": "$",
       "Type": "Pass",
@@ -14580,7 +14517,7 @@ Object {
         "fnl_context": Object {
           "null": null,
         },
-        "input.$": "$",
+        "input.$": "$$.Execution.Input",
       },
       "ResultPath": "$",
       "Type": "Pass",
@@ -14653,7 +14590,7 @@ Object {
         "fnl_context": Object {
           "null": null,
         },
-        "input.$": "$",
+        "input.$": "$$.Execution.Input",
       },
       "ResultPath": "$",
       "Type": "Pass",
@@ -14991,7 +14928,7 @@ Object {
         "fnl_context": Object {
           "null": null,
         },
-        "input.$": "$",
+        "input.$": "$$.Execution.Input",
       },
       "ResultPath": "$",
       "Type": "Pass",
@@ -15287,7 +15224,7 @@ Object {
         "fnl_context": Object {
           "null": null,
         },
-        "input.$": "$",
+        "input.$": "$$.Execution.Input",
       },
       "ResultPath": "$",
       "Type": "Pass",
@@ -15741,7 +15678,7 @@ Object {
         "fnl_context": Object {
           "null": null,
         },
-        "input.$": "$",
+        "input.$": "$$.Execution.Input",
       },
       "ResultPath": "$",
       "Type": "Pass",
@@ -15877,7 +15814,7 @@ Object {
         "fnl_context": Object {
           "null": null,
         },
-        "input.$": "$",
+        "input.$": "$$.Execution.Input",
       },
       "ResultPath": "$",
       "Type": "Pass",
@@ -16007,7 +15944,7 @@ Object {
         "fnl_context": Object {
           "null": null,
         },
-        "input.$": "$",
+        "input.$": "$$.Execution.Input",
       },
       "ResultPath": "$",
       "Type": "Pass",
@@ -16131,7 +16068,7 @@ Object {
         "fnl_context": Object {
           "null": null,
         },
-        "input.$": "$",
+        "input.$": "$$.Execution.Input",
       },
       "ResultPath": "$",
       "Type": "Pass",
@@ -16236,7 +16173,7 @@ Object {
         "fnl_context": Object {
           "null": null,
         },
-        "input.$": "$",
+        "input.$": "$$.Execution.Input",
       },
       "ResultPath": "$",
       "Type": "Pass",
@@ -16304,7 +16241,7 @@ Object {
         "fnl_context": Object {
           "null": null,
         },
-        "input.$": "$",
+        "input.$": "$$.Execution.Input",
       },
       "ResultPath": "$",
       "Type": "Pass",
@@ -16372,7 +16309,7 @@ Object {
         "fnl_context": Object {
           "null": null,
         },
-        "input.$": "$",
+        "input.$": "$$.Execution.Input",
       },
       "ResultPath": "$",
       "Type": "Pass",
@@ -16474,7 +16411,7 @@ Object {
     "Initialize Functionless Context": Object {
       "Next": "return {a: context.Execution.Name}",
       "Parameters": Object {
-        "_.$": "$",
+        "_.$": "$$.Execution.Input",
         "fnl_context": Object {
           "null": null,
         },
@@ -16507,7 +16444,7 @@ Object {
     "Initialize Functionless Context": Object {
       "Next": "return task(context)",
       "Parameters": Object {
-        "_.$": "$",
+        "_.$": "$$.Execution.Input",
         "fnl_context": Object {
           "null": null,
         },
@@ -16533,7 +16470,7 @@ Object {
     "Initialize Functionless Context": Object {
       "Next": "return context.Execution.Name",
       "Parameters": Object {
-        "_.$": "$",
+        "_.$": "$$.Execution.Input",
         "fnl_context": Object {
           "null": null,
         },
@@ -16564,7 +16501,7 @@ Object {
     "Initialize Functionless Context": Object {
       "Next": "return task(context.Execution.Id)",
       "Parameters": Object {
-        "_.$": "$",
+        "_.$": "$$.Execution.Input",
         "fnl_context": Object {
           "null": null,
         },
@@ -16596,7 +16533,7 @@ Object {
     "Initialize Functionless Context": Object {
       "Next": "return \`name: context.Execution.Id\`",
       "Parameters": Object {
-        "_.$": "$",
+        "_.$": "$$.Execution.Input",
         "fnl_context": Object {
           "null": null,
         },
@@ -16689,7 +16626,7 @@ Object {
         "fnl_context": Object {
           "null": null,
         },
-        "input.$": "$",
+        "input.$": "$$.Execution.Input",
       },
       "ResultPath": "$",
       "Type": "Pass",
@@ -16719,7 +16656,7 @@ Object {
         "fnl_context": Object {
           "null": null,
         },
-        "input.$": "$",
+        "input.$": "$$.Execution.Input",
       },
       "ResultPath": "$",
       "Type": "Pass",

@@ -97,12 +97,12 @@ import {
   isVoidExpr,
   isParenthesizedExpr,
   isImportKeyword,
-  isBindingPattern,
   isSetAccessorDecl,
   isGetAccessorDecl,
   isTaggedTemplateExpr,
   isOmittedExpr,
   isQuasiString,
+  isBindingPattern,
 } from "./guards";
 import {
   IntegrationImpl,
@@ -526,22 +526,19 @@ export class ASL {
       return visitEachChild(node, normalizeAST);
     });
 
-    const inputParam = this.decl.parameters[0];
+    const [inputParam, contextParam] = this.decl.parameters;
 
-    // only evaluate the input parameter if its a binding parameter.
-    // We'll set input during context initialization
-    const inputParameterBinding =
-      inputParam && isBindingPattern(inputParam.name)
-        ? // when we bind input, we can use the context execution input value as a source (same a `$` at the start of the machine)
-          this.evalDecl(inputParam, { jsonPath: "$$.Execution.Input" })
-        : undefined;
-
-    // only evaluate the context parameter if its a binding parameter.
-    // We'll inject the context variable if not deconstructed
-    const contextParameterBinding =
-      this.decl.parameters[1] && isBindingPattern(this.decl.parameters[1].name)
-        ? this.evalDecl(this.decl.parameters[1], { jsonPath: "$$" })
-        : undefined;
+    const [paramInitializer, paramStates] =
+      this.evalParameterDeclForStateParameter(
+        this.decl,
+        [inputParam, { jsonPath: "$$.Execution.Input" }],
+        [
+          contextParam && isBindingPattern(contextParam.name)
+            ? contextParam
+            : undefined,
+          { jsonPath: "$$" },
+        ]
+      );
 
     /**
      * Always inject this initial state into the machine. It does 3 things:
@@ -556,13 +553,7 @@ export class ASL {
       Type: "Pass",
       Parameters: {
         [FUNCTIONLESS_CONTEXT_NAME]: { null: null },
-        ...(inputParam &&
-        !inputParameterBinding &&
-        isIdentifier(inputParam.name)
-          ? {
-              [`${this.getDeclarationName(inputParam as any)}.$`]: "$",
-            }
-          : {}),
+        ...paramInitializer,
       },
       ResultPath: "$",
       Next: ASLGraph.DeferNext,
@@ -577,8 +568,7 @@ export class ASL {
       ASLGraph.joinSubStates(
         this.decl.body,
         functionlessContext,
-        inputParameterBinding,
-        contextParameterBinding,
+        paramStates,
         states
       )!,
       "Initialize Functionless Context"
@@ -3370,6 +3360,51 @@ export class ASL {
       ErrorCodes.StepFunctions_Invalid_collection_access,
       "Collection element accessor must be a constant string or number"
     );
+  }
+
+  /**
+   * In some cases, variable can be batch declared as state parameters.
+   * This method is an alternative to {@link evalDecl} which can evaluate multiple {@link ParameterDecl}s
+   * with initial values into a parameter object and any state to be run after (which setup any bound variables.)
+   *
+   * @returns a tuple tuple
+   *          1. a {@link Parameters} object intended to be used in the Parameters or ResultSelector of a state.
+   *             Contains the initialized parameter names. Could be empty.
+   *          2. a state or sub-state used to generate the bound names. May be undefined.
+   */
+  public evalParameterDeclForStateParameter(
+    node: FunctionlessNode,
+    ...parameters: [ParameterDecl | undefined, ASLGraph.JsonPath][]
+  ): [
+    Record<string, Parameters>,
+    ASLGraph.NodeState | ASLGraph.SubState | undefined
+  ] {
+    const [params, states] = parameters.reduce(
+      (
+        [params, states]: [
+          Record<string, Parameters>,
+          (ASLGraph.SubState | ASLGraph.NodeState | undefined)[]
+        ],
+        [decl, jsonPath]
+      ) => {
+        if (!decl) {
+          return [params, states];
+        }
+
+        return isIdentifier(decl.name)
+          ? [
+              {
+                ...params,
+                [`${this.getIdentifierName(decl.name)}.$`]: jsonPath.jsonPath,
+              },
+              states,
+            ]
+          : [params, [...states, this.evalAssignment(decl.name, jsonPath)]];
+      },
+      [{}, []]
+    );
+
+    return [params, ASLGraph.joinSubStates(node, ...states)];
   }
 
   public evalDecl(

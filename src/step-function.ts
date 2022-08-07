@@ -24,12 +24,10 @@ import { CallExpr } from "./expression";
 import { NativeIntegration } from "./function";
 import { PrewarmClients } from "./function-prewarm";
 import {
-  isBindingPattern,
   isComputedPropertyNameExpr,
   isErr,
   isFunctionLike,
   isGetAccessorDecl,
-  isIdentifier,
   isMethodDecl,
   isNumberLiteralExpr,
   isObjectLiteralExpr,
@@ -364,32 +362,20 @@ export namespace $SFN {
     return context.evalExpr(array, call, (_, { normalizeOutputToJsonPath }) => {
       const arrayPath = normalizeOutputToJsonPath().jsonPath;
 
-      const parameters = callbackfn.parameters.map((param, i) => {
-        const paramName = isIdentifier(param.name)
-          ? param.name.name
-          : // if the parameter is a binding pattern, we to assign the value to a variable first to access it in the map state.
-            context.newHeapVariableName();
+      const [itemParam, indexParam, arrayParam] = callbackfn.parameters;
 
-        return {
-          param: [
-            `${paramName}.$`,
-            i === 0
-              ? "$$.Map.Item.Value"
-              : i == 1
-              ? "$$.Map.Item.Index"
-              : arrayPath,
-          ],
-          states: isBindingPattern(param.name)
-            ? // if the param is a binding pattern, the value will be placed on the heap and then bound in the body
-              context.evalDecl(param, { jsonPath: `$.${paramName}` })
-            : undefined,
-        };
-      });
+      const [paramInit, paramStates] =
+        context.evalParameterDeclForStateParameter(
+          callbackfn,
+          [itemParam, { jsonPath: "$$.Map.Item.Value" }],
+          [indexParam, { jsonPath: "$$.Map.Item.Index" }],
+          [arrayParam, { jsonPath: arrayPath }]
+        );
 
       const bodyStates = ASLGraph.joinSubStates(
         callbackfn,
         // run any parameter initializers if they exist
-        ...parameters.map(({ states }) => states),
+        paramStates,
         callbackStates
       );
 
@@ -412,7 +398,7 @@ export namespace $SFN {
           ItemsPath: arrayPath,
           Parameters: {
             ...context.cloneLexicalScopeParameters(call),
-            ...Object.fromEntries(parameters.map(({ param }) => param)),
+            ...paramInit,
           },
           Next: ASLGraph.DeferNext,
         },
