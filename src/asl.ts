@@ -1922,10 +1922,11 @@ export class ASL {
         expr.op === "-" ||
         expr.op === "++" ||
         expr.op === "--" ||
-        expr.op === "~"
+        expr.op === "~" ||
+        expr.op === "+"
       ) {
         throw new SynthError(
-          ErrorCodes.Cannot_perform_arithmetic_on_variables_in_Step_Function,
+          ErrorCodes.Cannot_perform_arithmetic_or_bitwise_computations_on_variables_in_Step_Function,
           `Step Function does not support operator ${expr.op}`
         );
       }
@@ -2051,12 +2052,37 @@ export class ASL {
         expr.op === "-=" ||
         expr.op === "*=" ||
         expr.op === "/=" ||
-        expr.op === "%="
+        expr.op === "%=" ||
+        expr.op === "&" ||
+        expr.op === "&&=" ||
+        expr.op === "&=" ||
+        expr.op === "**" ||
+        expr.op === "**=" ||
+        expr.op === "<<" ||
+        expr.op === "<<=" ||
+        expr.op === ">>" ||
+        expr.op === ">>=" ||
+        expr.op === ">>>" ||
+        expr.op === ">>>=" ||
+        expr.op === "^" ||
+        expr.op === "^=" ||
+        expr.op === "|" ||
+        expr.op === "|="
       ) {
         // TODO: support string concat - https://github.com/functionless/functionless/issues/330
         throw new SynthError(
-          ErrorCodes.Cannot_perform_arithmetic_on_variables_in_Step_Function,
+          ErrorCodes.Cannot_perform_arithmetic_or_bitwise_computations_on_variables_in_Step_Function,
           `Step Function does not support operator ${expr.op}`
+        );
+      } else if (
+        expr.op === "instanceof" ||
+        // https://github.com/functionless/functionless/issues/393
+        expr.op === "??=" ||
+        expr.op === "||="
+      ) {
+        throw new SynthError(
+          ErrorCodes.Unsupported_Feature,
+          `Step Function does not support ${expr.op} operator`
         );
       }
       assertNever(expr.op);
@@ -3684,10 +3710,12 @@ export class ASL {
           expr.op === "++" ||
           expr.op === "--" ||
           expr.op === "-" ||
-          expr.op === "~"
+          expr.op === "~" ||
+          // https://github.com/functionless/functionless/issues/395
+          expr.op === "+"
         ) {
           throw new SynthError(
-            ErrorCodes.Cannot_perform_arithmetic_on_variables_in_Step_Function,
+            ErrorCodes.Cannot_perform_arithmetic_or_bitwise_computations_on_variables_in_Step_Function,
             `Step Function does not support operator ${expr.op}`
           );
         }
@@ -3793,11 +3821,36 @@ export class ASL {
             expr.op === "-=" ||
             expr.op === "*=" ||
             expr.op === "/=" ||
-            expr.op === "%="
+            expr.op === "%=" ||
+            expr.op === "&" ||
+            expr.op === "&&=" ||
+            expr.op === "&=" ||
+            expr.op === "**" ||
+            expr.op === "**=" ||
+            expr.op === "<<" ||
+            expr.op === "<<=" ||
+            expr.op === ">>" ||
+            expr.op === ">>=" ||
+            expr.op === ">>>" ||
+            expr.op === ">>>=" ||
+            expr.op === "^" ||
+            expr.op === "^=" ||
+            expr.op === "|" ||
+            expr.op === "|="
           ) {
             throw new SynthError(
-              ErrorCodes.Cannot_perform_arithmetic_on_variables_in_Step_Function,
+              ErrorCodes.Cannot_perform_arithmetic_or_bitwise_computations_on_variables_in_Step_Function,
               `Step Function does not support operator ${expr.op}`
+            );
+          } else if (
+            expr.op === "instanceof" ||
+            // https://github.com/functionless/functionless/issues/393
+            expr.op === "??=" ||
+            expr.op === "||="
+          ) {
+            throw new SynthError(
+              ErrorCodes.Unsupported_Feature,
+              `Step Function does not support ${expr.op} operator`
             );
           }
 

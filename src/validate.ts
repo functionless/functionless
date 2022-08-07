@@ -154,7 +154,7 @@ export function validate(
         return [
           newError(
             node,
-            ErrorCodes.Cannot_perform_arithmetic_on_variables_in_Step_Function
+            ErrorCodes.Cannot_perform_arithmetic_or_bitwise_computations_on_variables_in_Step_Function
           ),
         ];
       } else if (ts.isCallExpression(node)) {

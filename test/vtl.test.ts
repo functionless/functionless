@@ -2,10 +2,11 @@ import "jest";
 import {
   $util,
   AppsyncContext,
-  ComparatorOp,
-  MathBinaryOp,
+  ArithmeticOp,
+  BinaryLogicalOp,
+  EqualityOp,
+  RelationalOp,
   ResolverFunction,
-  ValueComparisonBinaryOp,
 } from "../src";
 import { reflect } from "../src/reflect";
 import { appsyncTestCase, testAppsyncVelocity } from "./util";
@@ -549,7 +550,12 @@ test("binary exprs value comparison", () => {
     reflect<
       ResolverFunction<
         { a: number; b: number },
-        Record<ValueComparisonBinaryOp, boolean>,
+        Record<
+          | EqualityOp
+          | Exclude<RelationalOp, "in" | "instanceof">
+          | Exclude<BinaryLogicalOp, "??">,
+          boolean | number
+        >,
         any
       >
     >(($context) => {
@@ -641,7 +647,7 @@ test("binary exprs logical", () => {
     reflect<
       ResolverFunction<
         { a: boolean; b: boolean },
-        Record<ComparatorOp, boolean>,
+        Record<BinaryLogicalOp, boolean>,
         any
       >
     >(($context) => {
@@ -688,7 +694,7 @@ test("binary exprs math", () => {
     reflect<
       ResolverFunction<
         { a: number; b: number },
-        Record<MathBinaryOp, number>,
+        Record<Exclude<ArithmeticOp, "**">, number>,
         any
       >
     >(($context) => {
