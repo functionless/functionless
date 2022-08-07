@@ -1,25 +1,42 @@
 import ts from "typescript";
 import { assertNever } from "./assert";
+import { VariableDeclKind } from "./declaration";
 import {
+  isArgument,
+  isArrayBinding,
   isArrayLiteralExpr,
   isArrowFunctionExpr,
+  isAwaitExpr,
   isBigIntExpr,
+  isBinaryExpr,
+  isBindingElem,
   isBlockStmt,
   isBooleanLiteralExpr,
   isCallExpr,
+  isClassDecl,
+  isClassExpr,
+  isClassStaticBlockDecl,
+  isComputedPropertyNameExpr,
+  isConstructorDecl,
   isElementAccessExpr,
+  isExprStmt,
   isFunctionDecl,
   isFunctionExpr,
   isFunctionLike,
+  isGetAccessorDecl,
   isIdentifier,
+  isMethodDecl,
   isNewExpr,
   isNullLiteralExpr,
   isNumberLiteralExpr,
+  isObjectBinding,
   isObjectLiteralExpr,
   isOmittedExpr,
   isParameterDecl,
   isPropAccessExpr,
   isPropAssignExpr,
+  isPropDecl,
+  isSetAccessorDecl,
   isSpreadAssignExpr,
   isSpreadElementExpr,
   isStringLiteralExpr,
@@ -27,6 +44,7 @@ import {
   isVariableDecl,
   isVariableDeclList,
   isVariableStmt,
+  isYieldExpr,
 } from "./guards";
 import { FunctionlessNode } from "./node";
 import { reflect } from "./reflect";
@@ -277,6 +295,8 @@ export function serializeClosure(func: AnyFunction): string {
         undefined,
         node.args.map((arg) => serializeAST(arg) as ts.Expression)
       );
+    } else if (isArgument(node)) {
+      return serializeAST(node.expr);
     } else if (isUndefinedLiteralExpr(node)) {
       return ts.factory.createIdentifier("undefined");
     } else if (isNullLiteralExpr(node)) {
@@ -314,6 +334,10 @@ export function serializeClosure(func: AnyFunction): string {
       return ts.factory.createSpreadElement(
         serializeAST(node.expr) as ts.Expression
       );
+    } else if (isComputedPropertyNameExpr(node)) {
+      return ts.factory.createComputedPropertyName(
+        serializeAST(node.expr) as ts.Expression
+      );
     } else if (isOmittedExpr(node)) {
       return ts.factory.createOmittedExpression();
     } else if (isVariableStmt(node)) {
@@ -323,13 +347,154 @@ export function serializeClosure(func: AnyFunction): string {
       );
     } else if (isVariableDeclList(node)) {
       return ts.factory.createVariableDeclarationList(
-        node.decls.map((decl) => serializeAST(decl) as ts.VariableDeclaration)
+        node.decls.map((decl) => serializeAST(decl) as ts.VariableDeclaration),
+        node.varKind === VariableDeclKind.Const
+          ? ts.NodeFlags.Const
+          : node.varKind === VariableDeclKind.Let
+          ? ts.NodeFlags.Let
+          : ts.NodeFlags.None
+      );
+    } else if (isVariableDecl(node)) {
+      return ts.factory.createVariableDeclaration(
+        serializeAST(node.name) as ts.BindingName,
+        undefined,
+        undefined,
+        node.initializer
+          ? (serializeAST(node.initializer) as ts.Expression)
+          : undefined
+      );
+    } else if (isBindingElem(node)) {
+      return ts.factory.createBindingElement(
+        node.rest
+          ? ts.factory.createToken(ts.SyntaxKind.DotDotDotToken)
+          : undefined,
+        node.propertyName
+          ? (serializeAST(node.propertyName) as ts.PropertyName)
+          : undefined,
+        serializeAST(node.name) as ts.BindingName,
+        node.initializer
+          ? (serializeAST(node.initializer) as ts.Expression)
+          : undefined
+      );
+    } else if (isObjectBinding(node)) {
+      return ts.factory.createObjectBindingPattern(
+        node.bindings.map(
+          (binding) => serializeAST(binding) as ts.BindingElement
+        )
+      );
+    } else if (isArrayBinding(node)) {
+      return ts.factory.createArrayBindingPattern(
+        node.bindings.map(
+          (binding) => serializeAST(binding) as ts.BindingElement
+        )
+      );
+    } else if (isClassDecl(node) || isClassExpr(node)) {
+      return (
+        isClassDecl(node)
+          ? ts.factory.createClassDeclaration
+          : ts.factory.createClassExpression
+      )(
+        undefined,
+        undefined,
+        node.name,
+        undefined,
+        node.heritage
+          ? [serializeAST(node.heritage) as ts.HeritageClause]
+          : undefined,
+        node.members.map((member) => serializeAST(member) as ts.ClassElement)
+      );
+    } else if (isClassStaticBlockDecl(node)) {
+      return ts.factory.createClassStaticBlockDeclaration(
+        undefined,
+        undefined,
+        serializeAST(node.block) as ts.Block
+      );
+    } else if (isConstructorDecl(node)) {
+      return ts.factory.createConstructorDeclaration(
+        undefined,
+        undefined,
+        node.parameters.map(
+          (param) => serializeAST(param) as ts.ParameterDeclaration
+        ),
+        serializeAST(node.body) as ts.Block
+      );
+    } else if (isPropDecl(node)) {
+      return ts.factory.createPropertyDeclaration(
+        undefined,
+        node.isStatic
+          ? [ts.factory.createModifier(ts.SyntaxKind.StaticKeyword)]
+          : undefined,
+        serializeAST(node.name) as ts.PropertyName,
+        undefined,
+        undefined,
+        node.initializer
+          ? (serializeAST(node.initializer) as ts.Expression)
+          : undefined
+      );
+    } else if (isMethodDecl(node)) {
+      return ts.factory.createMethodDeclaration(
+        undefined,
+        node.isAsync
+          ? [ts.factory.createModifier(ts.SyntaxKind.AsyncKeyword)]
+          : undefined,
+        node.isAsterisk
+          ? ts.factory.createToken(ts.SyntaxKind.AsteriskToken)
+          : undefined,
+        serializeAST(node.name) as ts.PropertyName,
+        undefined,
+        undefined,
+        node.parameters.map(
+          (param) => serializeAST(param) as ts.ParameterDeclaration
+        ),
+        undefined,
+        serializeAST(node.body) as ts.Block
+      );
+    } else if (isGetAccessorDecl(node)) {
+      return ts.factory.createGetAccessorDeclaration(
+        undefined,
+        undefined,
+        serializeAST(node.name) as ts.PropertyName,
+        [],
+        undefined,
+        serializeAST(node.body) as ts.Block
+      );
+    } else if (isSetAccessorDecl(node)) {
+      return ts.factory.createSetAccessorDeclaration(
+        undefined,
+        undefined,
+        serializeAST(node.name) as ts.PropertyName,
+        [serializeAST(node.parameter) as ts.ParameterDeclaration],
+        serializeAST(node.body) as ts.Block
+      );
+    } else if (isExprStmt(node)) {
+      return ts.factory.createExpressionStatement(
+        serializeAST(node.expr) as ts.Expression
+      );
+    } else if (isAwaitExpr(node)) {
+      return ts.factory.createAwaitExpression(
+        serializeAST(node.expr) as ts.Expression
+      );
+    } else if (isYieldExpr(node)) {
+      if (node.delegate) {
+        return ts.factory.createYieldExpression(
+          ts.factory.createToken(ts.SyntaxKind.AsteriskToken),
+          serializeAST(node.expr) as ts.Expression
+        );
+      } else {
+        return ts.factory.createYieldExpression(
+          undefined,
+          serializeAST(node.expr) as ts.Expression
+        );
+      }
+    } else if (isBinaryExpr(node)) {
+      return ts.factory.createBinaryExpression(
+        serializeAST(node.left) as ts.Expression,
+        ts.factory.createToken(),
+        serializeAST(node.right) as ts.Expression
       );
     } else {
       return assertNever(node);
     }
-
-    throw new Error("not yet implemented");
   }
 }
 
