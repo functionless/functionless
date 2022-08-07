@@ -609,6 +609,7 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
     (parent) => {
       return new StepFunction(parent, "sfn2", async (input) => {
         const c = input.a && input.b;
+        let x = "";
         return {
           andVar: c,
           and: input.a && input.b,
@@ -617,6 +618,17 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
           invNullCoal: input.nv ?? input.v,
           nullNull: input.nv ?? null,
           nullVal: null ?? input.v,
+          falsyChainOr:
+            input.b ||
+            input.z ||
+            ((x = `${x}1`), true) ||
+            ((x = `${x}2`), false) ||
+            input.v, // sets x+=1 returns true
+          truthyChainOr: input.b || ((x = `${x}3`), false) || input.arr, // sets x+=3 returns v
+          falsyChainAnd: input.z && ((x = `${x}4`), true), // returns zero
+          truthyChainAnd:
+            input.a && input.v && ((x = `${x}5`), true) && input.v, // sets x+=5, returns v
+          x,
         };
       });
     },
@@ -628,8 +640,13 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
       invNullCoal: "val",
       nullNull: null,
       nullVal: "val",
+      falsyChainOr: true,
+      truthyChainOr: ["1", "2"],
+      falsyChainAnd: 0,
+      truthyChainAnd: "val",
+      x: "135",
     },
-    { a: true, b: false, v: "val", nv: undefined }
+    { a: true, b: false, v: "val", nv: undefined, z: 0, arr: ["1", "2"] }
   );
 
   test(

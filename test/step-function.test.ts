@@ -3942,6 +3942,29 @@ describe("binding", () => {
     expect(normalizeDefinition(definition)).toMatchSnapshot();
   });
 
+  test("forOf weird values", () => {
+    const { stack } = initStepFunctionApp();
+    const definition = new StepFunction<{ value?: number[] }, string>(
+      stack,
+      "machine1",
+      async (input) => {
+        let a = "";
+        for (const val of input.value ?? [1, 2, 3]) {
+          a = `${val}${a}`;
+        }
+        for (const val of input.value || [1, 2, 3]) {
+          a = `${val}${a}`;
+        }
+        for (const val of ((a = "b"), true) && [1, 2, 3]) {
+          a = `${val}${a}`;
+        }
+        return a;
+      }
+    ).definition;
+
+    expect(normalizeDefinition(definition)).toMatchSnapshot();
+  });
+
   test("for", () => {
     const { stack } = initStepFunctionApp();
     const definition = new StepFunction(stack, "machine1", async () => {
