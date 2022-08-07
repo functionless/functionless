@@ -266,27 +266,74 @@ export class ConditionExpr extends BaseExpr<NodeKind.ConditionExpr> {
   }
 }
 
-export type ValueComparisonBinaryOp =
-  | "==="
-  | "=="
-  | "!="
-  | "!=="
-  | "<"
-  | "<="
-  | ">"
-  | ">=";
-export type MathBinaryOp = "/" | "*" | "+" | "-" | "%";
-export type MutationMathBinaryOp = "+=" | "*=" | "-=" | "/=" | "%=";
-export type ComparatorOp = "&&" | "||" | "??";
+/**
+ * @see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators#arithmetic_operators
+ */
+export type ArithmeticOp = "+" | "-" | "/" | "*" | "%" | "**";
 
-export type BinaryOp =
-  | MathBinaryOp
-  | MutationMathBinaryOp
-  | ValueComparisonBinaryOp
-  | ComparatorOp
-  | ","
+/**
+ * @see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators#assignment_operators
+ */
+export type AssignmentOp =
   | "="
-  | "in";
+  | "*="
+  | "**="
+  | "/="
+  | "%="
+  | "+="
+  | "-="
+  | "<<="
+  | ">>="
+  | ">>>="
+  | "&="
+  | "^="
+  | "|="
+  | "&&="
+  | "||="
+  | "??=";
+
+/**
+ * @see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators#binary_logical_operators
+ */
+export type BinaryLogicalOp = "&&" | "||" | "??";
+
+/**
+ * @see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators#bitwise_shift_operators
+ */
+export type BitwiseShiftOp = "<<" | ">>" | ">>>";
+
+/**
+ * @see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators#binary_bitwise_operators
+ */
+export type BitwiseBinaryOp = "&" | "|" | "^";
+
+/**
+ * @see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators#comma_operator
+ */
+export type CommaOp = ",";
+
+/**
+ * @see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators#equality_operators
+ */
+export type EqualityOp = "==" | "!=" | "===" | "!==";
+
+/**
+ * @see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators#relational_operators
+ */
+export type RelationalOp = "in" | "instanceof" | "<" | ">" | "<=" | ">=";
+
+/**
+ * @see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators
+ */
+export type BinaryOp =
+  | ArithmeticOp
+  | AssignmentOp
+  | BinaryLogicalOp
+  | BitwiseShiftOp
+  | BitwiseBinaryOp
+  | CommaOp
+  | EqualityOp
+  | RelationalOp;
 
 export class BinaryExpr extends BaseExpr<NodeKind.BinaryExpr> {
   constructor(
@@ -300,8 +347,15 @@ export class BinaryExpr extends BaseExpr<NodeKind.BinaryExpr> {
   }
 }
 
+/**
+ * @see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators#increment_and_decrement
+ */
 export type PostfixUnaryOp = "--" | "++";
-export type UnaryOp = "!" | "-" | "~" | PostfixUnaryOp;
+
+/**
+ * @see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators#unary_operators
+ */
+export type UnaryOp = "!" | "+" | "-" | "~" | PostfixUnaryOp;
 
 export class UnaryExpr extends BaseExpr<NodeKind.UnaryExpr> {
   constructor(readonly op: UnaryOp, readonly expr: Expr) {
