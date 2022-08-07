@@ -463,6 +463,9 @@ export abstract class VTL {
             node.args[0]?.expr,
             ...NodeKind.FunctionLike
           );
+
+          fn.parameters.forEach(validateParameterDecl);
+
           const initialValue = node.args[1];
 
           // (previousValue: string[], currentValue: string, currentIndex: number, array: string[])
@@ -1059,13 +1062,6 @@ export abstract class VTL {
 
       const next = expr.expr.expr;
 
-      if (isParameterDecl(value) && value.isRest) {
-        throw new SynthError(
-          ErrorCodes.Unsupported_Feature,
-          `VTL does not support rest parameters, see https://github.com/functionless/functionless/issues/391`
-        );
-      }
-
       /**
        * The variable name this iteration is expecting.
        * If the variable is a binding expression, create a new variable name to assign the previous value into.
@@ -1116,9 +1112,9 @@ const getMapForEachArgs = (call: CallExpr) => {
 };
 
 function validateParameterDecl(
-  decl: ParameterDecl
+  decl: ParameterDecl | undefined
 ): asserts decl is ParameterDecl & { isRest: false } {
-  if (isParameterDecl(decl) && decl.isRest) {
+  if (decl?.isRest) {
     throw new SynthError(
       ErrorCodes.Unsupported_Feature,
       `VTL does not support rest parameters, see https://github.com/functionless/functionless/issues/391`

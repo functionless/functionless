@@ -556,11 +556,13 @@ test("binary exprs value comparison", () => {
       const a = $context.arguments.a;
       const b = $context.arguments.b;
       return {
+        "!==": a != b,
         "!=": a != b,
         "&&": a && b,
         "||": a || b,
         "<": a < b,
         "<=": a <= b,
+        "===": a == b,
         "==": a == b,
         ">": a > b,
         ">=": a >= b,
@@ -571,9 +573,11 @@ test("binary exprs value comparison", () => {
   testAppsyncVelocity(templates[1], {
     arguments: { a: 1, b: 2 },
     resultMatch: {
+      "!==": true,
       "!=": true,
       "<": true,
       "<=": true,
+      "===": false,
       "==": false,
       ">": false,
       ">=": false,
@@ -583,9 +587,11 @@ test("binary exprs value comparison", () => {
   testAppsyncVelocity(templates[1], {
     arguments: { a: 2, b: 1 },
     resultMatch: {
+      "!==": true,
       "!=": true,
       "<": false,
       "<=": false,
+      "===": false,
       "==": false,
       ">": true,
       ">=": true,
@@ -595,9 +601,11 @@ test("binary exprs value comparison", () => {
   testAppsyncVelocity(templates[1], {
     arguments: { a: 1, b: 1 },
     resultMatch: {
+      "!==": false,
       "!=": false,
       "<": false,
       "<=": true,
+      "===": true,
       "==": true,
       ">": false,
       ">=": true,

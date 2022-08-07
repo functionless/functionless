@@ -1942,9 +1942,9 @@ export class ASL {
         expr.op === "&&" ||
         expr.op === "||" ||
         expr.op === "===" ||
-        expr.op === "!==" ||
         expr.op === "==" ||
         expr.op == "!=" ||
+        expr.op == "!==" ||
         expr.op == ">" ||
         expr.op == "<" ||
         expr.op == ">=" ||
@@ -2743,9 +2743,13 @@ export class ASL {
           return `${constant.constant}`;
         }
       } else if (isBinaryExpr(expr)) {
-        return `${toFilterCondition(expr.left)}${
-          expr.op === "===" ? "==" : expr.op === "!==" ? "!=" : expr.op
-        }${toFilterCondition(expr.right)}`;
+        const left = toFilterCondition(expr.left);
+        const right = toFilterCondition(expr.right);
+        return left && right
+          ? `${left}${
+              expr.op === "===" ? "==" : expr.op === "!==" ? "!=" : expr.op
+            }${right}`
+          : undefined;
       } else if (isUnaryExpr(expr)) {
         const right = toFilterCondition(expr.expr);
         return right ? `${expr.op}${right}` : undefined;
@@ -3724,9 +3728,9 @@ export class ASL {
 
           if (
             expr.op === "!=" ||
-            expr.op === "===" ||
             expr.op === "!==" ||
             expr.op === "==" ||
+            expr.op === "===" ||
             expr.op === ">" ||
             expr.op === "<" ||
             expr.op === ">=" ||
@@ -4881,7 +4885,7 @@ export namespace ASL {
   export const compare = (
     left: ASLGraph.JsonPath,
     right: ASLGraph.Output,
-    operator: keyof typeof VALUE_COMPARISONS | "!="
+    operator: keyof typeof VALUE_COMPARISONS
   ): Condition => {
     if (
       operator === "===" ||

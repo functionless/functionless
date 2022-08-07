@@ -392,21 +392,25 @@ Array [
 #set($context.stash.b = $context.arguments.b)
 #set($v1 = {})
 #set($v2 = $context.stash.a != $context.stash.b)
-$util.qr($v1.put('!=', $v2))
-#set($v3 = $context.stash.a && $context.stash.b)
-$util.qr($v1.put('&&', $v3))
-#set($v4 = $context.stash.a || $context.stash.b)
-$util.qr($v1.put('||', $v4))
-#set($v5 = $context.stash.a < $context.stash.b)
-$util.qr($v1.put('<', $v5))
-#set($v6 = $context.stash.a <= $context.stash.b)
-$util.qr($v1.put('<=', $v6))
-#set($v7 = $context.stash.a == $context.stash.b)
-$util.qr($v1.put('==', $v7))
-#set($v8 = $context.stash.a > $context.stash.b)
-$util.qr($v1.put('>', $v8))
-#set($v9 = $context.stash.a >= $context.stash.b)
-$util.qr($v1.put('>=', $v9))
+$util.qr($v1.put('!==', $v2))
+#set($v3 = $context.stash.a != $context.stash.b)
+$util.qr($v1.put('!=', $v3))
+#set($v4 = $context.stash.a && $context.stash.b)
+$util.qr($v1.put('&&', $v4))
+#set($v5 = $context.stash.a || $context.stash.b)
+$util.qr($v1.put('||', $v5))
+#set($v6 = $context.stash.a < $context.stash.b)
+$util.qr($v1.put('<', $v6))
+#set($v7 = $context.stash.a <= $context.stash.b)
+$util.qr($v1.put('<=', $v7))
+#set($v8 = $context.stash.a == $context.stash.b)
+$util.qr($v1.put('===', $v8))
+#set($v9 = $context.stash.a == $context.stash.b)
+$util.qr($v1.put('==', $v9))
+#set($v10 = $context.stash.a > $context.stash.b)
+$util.qr($v1.put('>', $v10))
+#set($v11 = $context.stash.a >= $context.stash.b)
+$util.qr($v1.put('>=', $v11))
 #return($v1)",
 ]
 `;
@@ -414,10 +418,12 @@ $util.qr($v1.put('>=', $v9))
 exports[`binary exprs value comparison 2`] = `
 Object {
   "!=": true,
+  "!==": true,
   "&&": 2,
   "<": true,
   "<=": true,
   "==": false,
+  "===": false,
   ">": false,
   ">=": false,
   "||": 1,
@@ -427,10 +433,12 @@ Object {
 exports[`binary exprs value comparison 3`] = `
 Object {
   "!=": true,
+  "!==": true,
   "&&": 1,
   "<": false,
   "<=": false,
   "==": false,
+  "===": false,
   ">": true,
   ">=": true,
   "||": 2,
@@ -440,10 +448,12 @@ Object {
 exports[`binary exprs value comparison 4`] = `
 Object {
   "!=": false,
+  "!==": false,
   "&&": 1,
   "<": false,
   "<=": true,
   "==": true,
+  "===": true,
   ">": false,
   ">=": true,
   "||": 1,

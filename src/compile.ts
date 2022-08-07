@@ -565,7 +565,7 @@ export function compile(
             toExpr(node.left, scope),
             ts.factory.createStringLiteral(
               assertDefined(
-                getBinaryOperator(node.operatorToken),
+                ts.tokenToString(node.operatorToken.kind) as BinaryOp,
                 `Binary operator token cannot be stringified: ${node.operatorToken.kind}`
               )
             ),
@@ -575,7 +575,7 @@ export function compile(
           return newExpr(NodeKind.UnaryExpr, [
             ts.factory.createStringLiteral(
               assertDefined(
-                getPrefixUnaryOperator(node.operator),
+                ts.tokenToString(node.operator) as UnaryOp,
                 `Unary operator token cannot be stringified: ${node.operator}`
               )
             ),
@@ -585,7 +585,7 @@ export function compile(
           return newExpr(NodeKind.PostfixUnaryExpr, [
             ts.factory.createStringLiteral(
               assertDefined(
-                getPostfixUnaryOperator(node.operator),
+                ts.tokenToString(node.operator) as PostfixUnaryOp,
                 `Unary operator token cannot be stringified: ${node.operator}`
               )
             ),
@@ -945,31 +945,6 @@ export function compile(
     };
   };
 }
-
-function getBinaryOperator(op: ts.BinaryOperatorToken): BinaryOp | undefined {
-  return (
-    BinaryOperatorRemappings[
-      op.kind as keyof typeof BinaryOperatorRemappings
-    ] ?? (ts.tokenToString(op.kind) as BinaryOp)
-  );
-}
-
-function getPrefixUnaryOperator(
-  op: ts.PrefixUnaryOperator
-): UnaryOp | undefined {
-  return ts.tokenToString(op) as UnaryOp | undefined;
-}
-
-function getPostfixUnaryOperator(
-  op: ts.PostfixUnaryOperator
-): PostfixUnaryOp | undefined {
-  return ts.tokenToString(op) as PostfixUnaryOp | undefined;
-}
-
-const BinaryOperatorRemappings: Record<number, BinaryOp> = {
-  [ts.SyntaxKind.EqualsEqualsEqualsToken]: "==",
-  [ts.SyntaxKind.ExclamationEqualsEqualsToken]: "!=",
-} as const;
 
 function param(name: string, spread: boolean = false) {
   return ts.factory.createParameterDeclaration(

@@ -982,7 +982,7 @@ Object {
       "ResultPath": "$",
       "Type": "Pass",
     },
-    "1__return item == {a: \\"a\\"}": Object {
+    "1__return item === {a: \\"a\\"}": Object {
       "InputPath": "$.heap3",
       "Next": "handleResult__[{}].filter(function(item))",
       "ResultPath": "$.heap2",
@@ -1007,14 +1007,14 @@ Object {
       "ResultPath": "$.heap1",
       "Type": "Pass",
     },
-    "assignFalse__return item == {a: \\"a\\"}": Object {
-      "Next": "1__return item == {a: \\"a\\"}",
+    "assignFalse__return item === {a: \\"a\\"}": Object {
+      "Next": "1__return item === {a: \\"a\\"}",
       "Result": false,
       "ResultPath": "$.heap3",
       "Type": "Pass",
     },
-    "assignTrue__return item == {a: \\"a\\"}": Object {
-      "Next": "1__return item == {a: \\"a\\"}",
+    "assignTrue__return item === {a: \\"a\\"}": Object {
+      "Next": "1__return item === {a: \\"a\\"}",
       "Result": true,
       "ResultPath": "$.heap3",
       "Type": "Pass",
@@ -1119,7 +1119,7 @@ Object {
     },
     "item": Object {
       "InputPath": "$.heap1.arr[0]",
-      "Next": "return item == {a: \\"a\\"}",
+      "Next": "return item === {a: \\"a\\"}",
       "ResultPath": "$.item",
       "Type": "Pass",
     },
@@ -1140,7 +1140,7 @@ Object {
       "ResultPath": "$.heap0",
       "Type": "Pass",
     },
-    "return item == {a: \\"a\\"}": Object {
+    "return item === {a: \\"a\\"}": Object {
       "Choices": Array [
         Object {
           "And": Array [
@@ -1153,10 +1153,10 @@ Object {
               "Variable": "$$.Execution.Id",
             },
           ],
-          "Next": "assignTrue__return item == {a: \\"a\\"}",
+          "Next": "assignTrue__return item === {a: \\"a\\"}",
         },
       ],
-      "Default": "assignFalse__return item == {a: \\"a\\"}",
+      "Default": "assignFalse__return item === {a: \\"a\\"}",
       "Type": "Choice",
     },
     "set__end__[{}].filter(function(item))": Object {
@@ -1185,7 +1185,7 @@ Object {
       "ResultPath": "$",
       "Type": "Pass",
     },
-    "1__return value == a": Object {
+    "1__return value === a": Object {
       "InputPath": "$.heap3",
       "Next": "handleResult__[{value: \\"a\\"}].filter(function(item))",
       "ResultPath": "$.heap2",
@@ -1216,14 +1216,14 @@ Object {
       "ResultPath": "$.a",
       "Type": "Pass",
     },
-    "assignFalse__return value == a": Object {
-      "Next": "1__return value == a",
+    "assignFalse__return value === a": Object {
+      "Next": "1__return value === a",
       "Result": false,
       "ResultPath": "$.heap3",
       "Type": "Pass",
     },
-    "assignTrue__return value == a": Object {
-      "Next": "1__return value == a",
+    "assignTrue__return value === a": Object {
+      "Next": "1__return value === a",
       "Result": true,
       "ResultPath": "$.heap3",
       "Type": "Pass",
@@ -1351,7 +1351,7 @@ Object {
       "ResultPath": "$.heap0",
       "Type": "Pass",
     },
-    "return value == a": Object {
+    "return value === a": Object {
       "Choices": Array [
         Object {
           "And": Array [
@@ -1412,10 +1412,10 @@ Object {
               ],
             },
           ],
-          "Next": "assignTrue__return value == a",
+          "Next": "assignTrue__return value === a",
         },
       ],
-      "Default": "assignFalse__return value == a",
+      "Default": "assignFalse__return value === a",
       "Type": "Choice",
     },
     "set__end__[{value: \\"a\\"}].filter(function(item))": Object {
@@ -1432,7 +1432,7 @@ Object {
     },
     "{value} = item": Object {
       "InputPath": "$.item['value']",
-      "Next": "return value == a",
+      "Next": "return value === a",
       "ResultPath": "$.value",
       "Type": "Pass",
     },
@@ -4294,7 +4294,7 @@ Object {
       "Default": "return null",
       "Type": "Choice",
     },
-    "if(item == \\"hello\\")": Object {
+    "if(item === \\"hello\\")": Object {
       "Choices": Array [
         Object {
           "And": Array [
@@ -4323,7 +4323,7 @@ Object {
     },
     "item": Object {
       "InputPath": "$.heap0[0]",
-      "Next": "if(item == \\"hello\\")",
+      "Next": "if(item === \\"hello\\")",
       "ResultPath": "$.item",
       "Type": "Pass",
     },
@@ -4384,7 +4384,7 @@ Object {
   "States": Object {
     "1__person = await $AWS.DynamoDB.GetItem({Table: personTable, Key: {id: {S: ": Object {
       "InputPath": "$.heap0",
-      "Next": "if(person.Item == undefined)",
+      "Next": "if(person.Item === undefined)",
       "ResultPath": "$.person",
       "Type": "Pass",
     },
@@ -4405,7 +4405,7 @@ Object {
       "ResultPath": "$",
       "Type": "Pass",
     },
-    "if(person.Item == undefined)": Object {
+    "if(person.Item === undefined)": Object {
       "Choices": Array [
         Object {
           "And": Array [
@@ -5061,7 +5061,7 @@ exports[`condition on task output 1`] = `
 Object {
   "StartAt": "Initialize Functionless Context",
   "States": Object {
-    "1__if(await task() == 1)": Object {
+    "1__if(await task() === 1)": Object {
       "Choices": Array [
         Object {
           "And": Array [
@@ -5089,7 +5089,7 @@ Object {
       "Type": "Choice",
     },
     "Initialize Functionless Context": Object {
-      "Next": "if(await task() == 1)",
+      "Next": "if(await task() === 1)",
       "Parameters": Object {
         "fnl_context": Object {
           "null": null,
@@ -5098,9 +5098,9 @@ Object {
       "ResultPath": "$",
       "Type": "Pass",
     },
-    "if(await task() == 1)": Object {
+    "if(await task() === 1)": Object {
       "InputPath": "$.fnl_context.null",
-      "Next": "1__if(await task() == 1)",
+      "Next": "1__if(await task() === 1)",
       "Resource": "__REPLACED_TOKEN",
       "ResultPath": "$.heap0",
       "Type": "Task",
@@ -5126,7 +5126,7 @@ Object {
   "StartAt": "Initialize Functionless Context",
   "States": Object {
     "Initialize Functionless Context": Object {
-      "Next": "if(input.id == \\"hello\\")",
+      "Next": "if(input.id === \\"hello\\")",
       "Parameters": Object {
         "fnl_context": Object {
           "null": null,
@@ -5150,7 +5150,7 @@ Object {
       "ResultPath": "$.heap0",
       "Type": "Task",
     },
-    "if(input.id == \\"hello\\")": Object {
+    "if(input.id === \\"hello\\")": Object {
       "Choices": Array [
         Object {
           "And": Array [
@@ -5192,7 +5192,7 @@ Object {
   "StartAt": "Initialize Functionless Context",
   "States": Object {
     "Initialize Functionless Context": Object {
-      "Next": "if(input.id == \\"hello\\")",
+      "Next": "if(input.id === \\"hello\\")",
       "Parameters": Object {
         "fnl_context": Object {
           "null": null,
@@ -5202,7 +5202,7 @@ Object {
       "ResultPath": "$",
       "Type": "Pass",
     },
-    "if(input.id == \\"hello\\")": Object {
+    "if(input.id === \\"hello\\")": Object {
       "Choices": Array [
         Object {
           "And": Array [
@@ -5250,7 +5250,7 @@ Object {
   "StartAt": "Initialize Functionless Context",
   "States": Object {
     "Initialize Functionless Context": Object {
-      "Next": "if(input.id == \\"hello\\")",
+      "Next": "if(input.id === \\"hello\\")",
       "Parameters": Object {
         "fnl_context": Object {
           "null": null,
@@ -5260,7 +5260,7 @@ Object {
       "ResultPath": "$",
       "Type": "Pass",
     },
-    "if(input.id == \\"hello\\")": Object {
+    "if(input.id === \\"hello\\")": Object {
       "Choices": Array [
         Object {
           "And": Array [
@@ -5308,7 +5308,7 @@ Object {
   "StartAt": "Initialize Functionless Context",
   "States": Object {
     "Initialize Functionless Context": Object {
-      "Next": "if(input.key == \\"sam\\")",
+      "Next": "if(input.key === \\"sam\\")",
       "Parameters": Object {
         "fnl_context": Object {
           "null": null,
@@ -5320,23 +5320,23 @@ Object {
     },
     "await task(input.key)": Object {
       "InputPath": "$.input.key",
-      "Next": "if(input.key == \\"sam\\")",
+      "Next": "if(input.key === \\"sam\\")",
       "Resource": "__REPLACED_TOKEN",
       "ResultPath": "$.heap0",
       "Type": "Task",
     },
-    "if(input.key == \\"sam\\")": Object {
+    "if(input.key === \\"sam\\")": Object {
       "Choices": Array [
         Object {
           "IsNull": false,
-          "Next": "if(input.key == \\"sam\\") 1",
+          "Next": "if(input.key === \\"sam\\") 1",
           "Variable": "$$.Execution.Id",
         },
       ],
       "Default": "return null",
       "Type": "Choice",
     },
-    "if(input.key == \\"sam\\") 1": Object {
+    "if(input.key === \\"sam\\") 1": Object {
       "Choices": Array [
         Object {
           "And": Array [
@@ -5357,7 +5357,7 @@ Object {
               ],
             },
           ],
-          "Next": "if(input.key == \\"sam\\")",
+          "Next": "if(input.key === \\"sam\\")",
         },
       ],
       "Default": "await task(input.key)",
@@ -5405,7 +5405,7 @@ Object {
       "Default": "return null",
       "Type": "Choice",
     },
-    "if(item == \\"hello\\")": Object {
+    "if(item === \\"hello\\")": Object {
       "Choices": Array [
         Object {
           "And": Array [
@@ -5434,7 +5434,7 @@ Object {
     },
     "item": Object {
       "InputPath": "$.heap0[0]",
-      "Next": "if(item == \\"hello\\")",
+      "Next": "if(item === \\"hello\\")",
       "ResultPath": "$.item",
       "Type": "Pass",
     },
@@ -5476,7 +5476,7 @@ Object {
       "ResultPath": "$.heap0",
       "Type": "Task",
     },
-    "if(input.key == \\"sam\\")": Object {
+    "if(input.key === \\"sam\\")": Object {
       "Choices": Array [
         Object {
           "And": Array [
@@ -5513,7 +5513,7 @@ Object {
       "Choices": Array [
         Object {
           "IsNull": false,
-          "Next": "if(input.key == \\"sam\\")",
+          "Next": "if(input.key === \\"sam\\")",
           "Variable": "$$.Execution.Id",
         },
       ],
@@ -5529,7 +5529,7 @@ Object {
   "StartAt": "Initialize Functionless Context",
   "States": Object {
     "Initialize Functionless Context": Object {
-      "Next": "if(input.val == \\"a\\")",
+      "Next": "if(input.val === \\"a\\")",
       "Parameters": Object {
         "fnl_context": Object {
           "null": null,
@@ -5539,7 +5539,7 @@ Object {
       "ResultPath": "$",
       "Type": "Pass",
     },
-    "if(input.val == \\"a\\")": Object {
+    "if(input.val === \\"a\\")": Object {
       "Choices": Array [
         Object {
           "And": Array [
@@ -5641,7 +5641,7 @@ Object {
   "StartAt": "Initialize Functionless Context",
   "States": Object {
     "Initialize Functionless Context": Object {
-      "Next": "if(input.val == \\"a\\")",
+      "Next": "if(input.val === \\"a\\")",
       "Parameters": Object {
         "fnl_context": Object {
           "null": null,
@@ -5651,7 +5651,7 @@ Object {
       "ResultPath": "$",
       "Type": "Pass",
     },
-    "if(input.val == \\"a\\")": Object {
+    "if(input.val === \\"a\\")": Object {
       "Choices": Array [
         Object {
           "And": Array [
@@ -6186,7 +6186,7 @@ Object {
     },
     "assignValue__i": Object {
       "InputPath": "$.heap0[0].item",
-      "Next": "if(input.items[i] == \\"1\\")",
+      "Next": "if(input.items[i] === \\"1\\")",
       "ResultPath": "$.0__i",
       "Type": "Pass",
     },
@@ -6232,11 +6232,11 @@ Object {
     },
     "i 1": Object {
       "InputPath": "$.heap1[0]",
-      "Next": "if(i == \\"1\\")",
+      "Next": "if(i === \\"1\\")",
       "ResultPath": "$.i",
       "Type": "Pass",
     },
-    "if(i == \\"1\\")": Object {
+    "if(i === \\"1\\")": Object {
       "Choices": Array [
         Object {
           "And": Array [
@@ -6263,7 +6263,7 @@ Object {
       "Default": "return i",
       "Type": "Choice",
     },
-    "if(input.items[i] == \\"1\\")": Object {
+    "if(input.items[i] === \\"1\\")": Object {
       "Choices": Array [
         Object {
           "And": Array [
@@ -6435,7 +6435,7 @@ Object {
     },
     "assignValue__i": Object {
       "InputPath": "$.heap0[0].item",
-      "Next": "if(input.items[i] == \\"1\\")",
+      "Next": "if(input.items[i] === \\"1\\")",
       "ResultPath": "$.0__i",
       "Type": "Pass",
     },
@@ -6481,11 +6481,11 @@ Object {
     },
     "i 1": Object {
       "InputPath": "$.heap1[0]",
-      "Next": "if(i == \\"1\\")",
+      "Next": "if(i === \\"1\\")",
       "ResultPath": "$.i",
       "Type": "Pass",
     },
-    "if(i == \\"1\\")": Object {
+    "if(i === \\"1\\")": Object {
       "Choices": Array [
         Object {
           "And": Array [
@@ -6512,7 +6512,7 @@ Object {
       "Default": "return i",
       "Type": "Choice",
     },
-    "if(input.items[i] == \\"1\\")": Object {
+    "if(input.items[i] === \\"1\\")": Object {
       "Choices": Array [
         Object {
           "And": Array [
@@ -6696,7 +6696,7 @@ Object {
     },
     "assignValue__i": Object {
       "InputPath": "$.heap0[0].item",
-      "Next": "if(input.items[i] == \\"1\\")",
+      "Next": "if(input.items[i] === \\"1\\")",
       "ResultPath": "$.0__i",
       "Type": "Pass",
     },
@@ -6742,11 +6742,11 @@ Object {
     },
     "i 1": Object {
       "InputPath": "$.heap1[0]",
-      "Next": "if(i == \\"1\\")",
+      "Next": "if(i === \\"1\\")",
       "ResultPath": "$.i",
       "Type": "Pass",
     },
-    "if(i == \\"1\\")": Object {
+    "if(i === \\"1\\")": Object {
       "Choices": Array [
         Object {
           "And": Array [
@@ -6773,7 +6773,7 @@ Object {
       "Default": "tail__for(i of input.items)",
       "Type": "Choice",
     },
-    "if(input.items[i] == \\"1\\")": Object {
+    "if(input.items[i] === \\"1\\")": Object {
       "Choices": Array [
         Object {
           "And": Array [
@@ -6868,7 +6868,7 @@ exports[`for(;;) loop 1`] = `
 Object {
   "StartAt": "Initialize Functionless Context",
   "States": Object {
-    "1__for(i = 0;i < 3;i = if(i == 0))": Object {
+    "1__for(i = 0;i < 3;i = if(i === 0))": Object {
       "Choices": Array [
         Object {
           "And": Array [
@@ -6895,14 +6895,14 @@ Object {
       "Default": "return null",
       "Type": "Choice",
     },
-    "1__i = if(i == 0)": Object {
+    "1__i = if(i === 0)": Object {
       "InputPath": "$.heap2",
-      "Next": "1__for(i = 0;i < 3;i = if(i == 0))",
+      "Next": "1__for(i = 0;i < 3;i = if(i === 0))",
       "ResultPath": "$.i",
       "Type": "Pass",
     },
     "Initialize Functionless Context": Object {
-      "Next": "for(i = 0;i < 3;i = if(i == 0))",
+      "Next": "for(i = 0;i < 3;i = if(i === 0))",
       "Parameters": Object {
         "fnl_context": Object {
           "null": null,
@@ -6911,26 +6911,26 @@ Object {
       "ResultPath": "$",
       "Type": "Pass",
     },
-    "assign__doFalse__i = if(i == 0)": Object {
+    "assign__doFalse__i = if(i === 0)": Object {
       "InputPath": "$.heap1",
-      "Next": "1__i = if(i == 0)",
+      "Next": "1__i = if(i === 0)",
       "ResultPath": "$.heap2",
       "Type": "Pass",
     },
     "await task(i)": Object {
       "InputPath": "$.i",
-      "Next": "i = if(i == 0)",
+      "Next": "i = if(i === 0)",
       "Resource": "__REPLACED_TOKEN",
       "ResultPath": "$.heap0",
       "Type": "Task",
     },
-    "doFalse__doFalse__i = if(i == 0)": Object {
-      "Next": "assign__doFalse__i = if(i == 0)",
+    "doFalse__doFalse__i = if(i === 0)": Object {
+      "Next": "assign__doFalse__i = if(i === 0)",
       "Result": 3,
       "ResultPath": "$.heap1",
       "Type": "Pass",
     },
-    "doFalse__i = if(i == 0)": Object {
+    "doFalse__i = if(i === 0)": Object {
       "Choices": Array [
         Object {
           "And": Array [
@@ -6951,31 +6951,31 @@ Object {
               ],
             },
           ],
-          "Next": "doTrue__doFalse__i = if(i == 0)",
+          "Next": "doTrue__doFalse__i = if(i === 0)",
         },
       ],
-      "Default": "doFalse__doFalse__i = if(i == 0)",
+      "Default": "doFalse__doFalse__i = if(i === 0)",
       "Type": "Choice",
     },
-    "doTrue__doFalse__i = if(i == 0)": Object {
-      "Next": "assign__doFalse__i = if(i == 0)",
+    "doTrue__doFalse__i = if(i === 0)": Object {
+      "Next": "assign__doFalse__i = if(i === 0)",
       "Result": 2,
       "ResultPath": "$.heap1",
       "Type": "Pass",
     },
-    "doTrue__i = if(i == 0)": Object {
-      "Next": "1__i = if(i == 0)",
+    "doTrue__i = if(i === 0)": Object {
+      "Next": "1__i = if(i === 0)",
       "Result": 1,
       "ResultPath": "$.heap2",
       "Type": "Pass",
     },
-    "for(i = 0;i < 3;i = if(i == 0))": Object {
-      "Next": "1__for(i = 0;i < 3;i = if(i == 0))",
+    "for(i = 0;i < 3;i = if(i === 0))": Object {
+      "Next": "1__for(i = 0;i < 3;i = if(i === 0))",
       "Result": 0,
       "ResultPath": "$.i",
       "Type": "Pass",
     },
-    "i = if(i == 0)": Object {
+    "i = if(i === 0)": Object {
       "Choices": Array [
         Object {
           "And": Array [
@@ -6996,10 +6996,10 @@ Object {
               ],
             },
           ],
-          "Next": "doTrue__i = if(i == 0)",
+          "Next": "doTrue__i = if(i === 0)",
         },
       ],
-      "Default": "doFalse__i = if(i == 0)",
+      "Default": "doFalse__i = if(i === 0)",
       "Type": "Choice",
     },
     "return null": Object {
@@ -7159,7 +7159,7 @@ exports[`for(;;) loop empty body 1`] = `
 Object {
   "StartAt": "Initialize Functionless Context",
   "States": Object {
-    "1__for(i = 0;i < 3;i = if(i == 0))": Object {
+    "1__for(i = 0;i < 3;i = if(i === 0))": Object {
       "Choices": Array [
         Object {
           "And": Array [
@@ -7180,20 +7180,20 @@ Object {
               ],
             },
           ],
-          "Next": "i = if(i == 0)",
+          "Next": "i = if(i === 0)",
         },
       ],
       "Default": "return null",
       "Type": "Choice",
     },
-    "1__i = if(i == 0)": Object {
+    "1__i = if(i === 0)": Object {
       "InputPath": "$.heap1",
-      "Next": "1__for(i = 0;i < 3;i = if(i == 0))",
+      "Next": "1__for(i = 0;i < 3;i = if(i === 0))",
       "ResultPath": "$.i",
       "Type": "Pass",
     },
     "Initialize Functionless Context": Object {
-      "Next": "for(i = 0;i < 3;i = if(i == 0))",
+      "Next": "for(i = 0;i < 3;i = if(i === 0))",
       "Parameters": Object {
         "fnl_context": Object {
           "null": null,
@@ -7202,19 +7202,19 @@ Object {
       "ResultPath": "$",
       "Type": "Pass",
     },
-    "assign__doFalse__i = if(i == 0)": Object {
+    "assign__doFalse__i = if(i === 0)": Object {
       "InputPath": "$.heap0",
-      "Next": "1__i = if(i == 0)",
+      "Next": "1__i = if(i === 0)",
       "ResultPath": "$.heap1",
       "Type": "Pass",
     },
-    "doFalse__doFalse__i = if(i == 0)": Object {
-      "Next": "assign__doFalse__i = if(i == 0)",
+    "doFalse__doFalse__i = if(i === 0)": Object {
+      "Next": "assign__doFalse__i = if(i === 0)",
       "Result": 3,
       "ResultPath": "$.heap0",
       "Type": "Pass",
     },
-    "doFalse__i = if(i == 0)": Object {
+    "doFalse__i = if(i === 0)": Object {
       "Choices": Array [
         Object {
           "And": Array [
@@ -7235,31 +7235,31 @@ Object {
               ],
             },
           ],
-          "Next": "doTrue__doFalse__i = if(i == 0)",
+          "Next": "doTrue__doFalse__i = if(i === 0)",
         },
       ],
-      "Default": "doFalse__doFalse__i = if(i == 0)",
+      "Default": "doFalse__doFalse__i = if(i === 0)",
       "Type": "Choice",
     },
-    "doTrue__doFalse__i = if(i == 0)": Object {
-      "Next": "assign__doFalse__i = if(i == 0)",
+    "doTrue__doFalse__i = if(i === 0)": Object {
+      "Next": "assign__doFalse__i = if(i === 0)",
       "Result": 2,
       "ResultPath": "$.heap0",
       "Type": "Pass",
     },
-    "doTrue__i = if(i == 0)": Object {
-      "Next": "1__i = if(i == 0)",
+    "doTrue__i = if(i === 0)": Object {
+      "Next": "1__i = if(i === 0)",
       "Result": 1,
       "ResultPath": "$.heap1",
       "Type": "Pass",
     },
-    "for(i = 0;i < 3;i = if(i == 0))": Object {
-      "Next": "1__for(i = 0;i < 3;i = if(i == 0))",
+    "for(i = 0;i < 3;i = if(i === 0))": Object {
+      "Next": "1__for(i = 0;i < 3;i = if(i === 0))",
       "Result": 0,
       "ResultPath": "$.i",
       "Type": "Pass",
     },
-    "i = if(i == 0)": Object {
+    "i = if(i === 0)": Object {
       "Choices": Array [
         Object {
           "And": Array [
@@ -7280,10 +7280,10 @@ Object {
               ],
             },
           ],
-          "Next": "doTrue__i = if(i == 0)",
+          "Next": "doTrue__i = if(i === 0)",
         },
       ],
-      "Default": "doFalse__i = if(i == 0)",
+      "Default": "doFalse__i = if(i === 0)",
       "Type": "Choice",
     },
     "return null": Object {
@@ -7611,7 +7611,7 @@ Object {
     },
     "catch(err)": Object {
       "InputPath": "$.fnl_tmp_0",
-      "Next": "if(err.message == \\"you dun' goofed\\")",
+      "Next": "if(err.message === \\"you dun' goofed\\")",
       "ResultPath": "$.err",
       "Type": "Pass",
     },
@@ -7647,7 +7647,7 @@ Object {
       "Default": "return null",
       "Type": "Choice",
     },
-    "if(err.message == \\"you dun' goofed\\")": Object {
+    "if(err.message === \\"you dun' goofed\\")": Object {
       "Choices": Array [
         Object {
           "And": Array [
@@ -7809,7 +7809,7 @@ exports[`if (?? === typeof x) 1`] = `
 Object {
   "StartAt": "Initialize Functionless Context",
   "States": Object {
-    "5__if(input.id == undefined)": Object {
+    "5__if(input.id === undefined)": Object {
       "Choices": Array [
         Object {
           "And": Array [
@@ -7934,7 +7934,7 @@ Object {
       "Type": "Choice",
     },
     "Initialize Functionless Context": Object {
-      "Next": "if(input.id == undefined)",
+      "Next": "if(input.id === undefined)",
       "Parameters": Object {
         "fnl_context": Object {
           "null": null,
@@ -7944,7 +7944,7 @@ Object {
       "ResultPath": "$",
       "Type": "Pass",
     },
-    "boolean__if(input.id == undefined)": Object {
+    "boolean__if(input.id === undefined)": Object {
       "Next": "input.id",
       "Result": "boolean",
       "ResultPath": "$.heap0",
@@ -7969,12 +7969,12 @@ Object {
       "Type": "Pass",
     },
     "boolean__input.id 3": Object {
-      "Next": "5__if(input.id == undefined)",
+      "Next": "5__if(input.id === undefined)",
       "Result": "boolean",
       "ResultPath": "$.heap4",
       "Type": "Pass",
     },
-    "if(input.id == undefined)": Object {
+    "if(input.id === undefined)": Object {
       "Choices": Array [
         Object {
           "And": Array [
@@ -7987,7 +7987,7 @@ Object {
               "Variable": "$.input.id",
             },
           ],
-          "Next": "string__if(input.id == undefined)",
+          "Next": "string__if(input.id === undefined)",
         },
         Object {
           "And": Array [
@@ -8000,7 +8000,7 @@ Object {
               "Variable": "$.input.id",
             },
           ],
-          "Next": "boolean__if(input.id == undefined)",
+          "Next": "boolean__if(input.id === undefined)",
         },
         Object {
           "And": Array [
@@ -8013,15 +8013,15 @@ Object {
               "Variable": "$.input.id",
             },
           ],
-          "Next": "number__if(input.id == undefined)",
+          "Next": "number__if(input.id === undefined)",
         },
         Object {
           "IsPresent": true,
-          "Next": "object__if(input.id == undefined)",
+          "Next": "object__if(input.id === undefined)",
           "Variable": "$.input.id",
         },
       ],
-      "Default": "undefined__if(input.id == undefined)",
+      "Default": "undefined__if(input.id === undefined)",
       "Type": "Choice",
     },
     "input.id": Object {
@@ -8224,7 +8224,7 @@ Object {
       "Default": "undefined__input.id 3",
       "Type": "Choice",
     },
-    "number__if(input.id == undefined)": Object {
+    "number__if(input.id === undefined)": Object {
       "Next": "input.id",
       "Result": "number",
       "ResultPath": "$.heap0",
@@ -8249,12 +8249,12 @@ Object {
       "Type": "Pass",
     },
     "number__input.id 3": Object {
-      "Next": "5__if(input.id == undefined)",
+      "Next": "5__if(input.id === undefined)",
       "Result": "number",
       "ResultPath": "$.heap4",
       "Type": "Pass",
     },
-    "object__if(input.id == undefined)": Object {
+    "object__if(input.id === undefined)": Object {
       "Next": "input.id",
       "Result": "object",
       "ResultPath": "$.heap0",
@@ -8279,7 +8279,7 @@ Object {
       "Type": "Pass",
     },
     "object__input.id 3": Object {
-      "Next": "5__if(input.id == undefined)",
+      "Next": "5__if(input.id === undefined)",
       "Result": "object",
       "ResultPath": "$.heap4",
       "Type": "Pass",
@@ -8326,7 +8326,7 @@ Object {
       "ResultPath": "$",
       "Type": "Pass",
     },
-    "string__if(input.id == undefined)": Object {
+    "string__if(input.id === undefined)": Object {
       "Next": "input.id",
       "Result": "string",
       "ResultPath": "$.heap0",
@@ -8351,12 +8351,12 @@ Object {
       "Type": "Pass",
     },
     "string__input.id 3": Object {
-      "Next": "5__if(input.id == undefined)",
+      "Next": "5__if(input.id === undefined)",
       "Result": "string",
       "ResultPath": "$.heap4",
       "Type": "Pass",
     },
-    "undefined__if(input.id == undefined)": Object {
+    "undefined__if(input.id === undefined)": Object {
       "Next": "input.id",
       "Result": "undefined",
       "ResultPath": "$.heap0",
@@ -8381,7 +8381,7 @@ Object {
       "Type": "Pass",
     },
     "undefined__input.id 3": Object {
-      "Next": "5__if(input.id == undefined)",
+      "Next": "5__if(input.id === undefined)",
       "Result": "undefined",
       "ResultPath": "$.heap4",
       "Type": "Pass",
@@ -8394,7 +8394,7 @@ exports[`if (typeof x === ??) 1`] = `
 Object {
   "StartAt": "Initialize Functionless Context",
   "States": Object {
-    "5__if(input.id == undefined)": Object {
+    "5__if(input.id === undefined)": Object {
       "Choices": Array [
         Object {
           "And": Array [
@@ -8519,7 +8519,7 @@ Object {
       "Type": "Choice",
     },
     "Initialize Functionless Context": Object {
-      "Next": "if(input.id == undefined)",
+      "Next": "if(input.id === undefined)",
       "Parameters": Object {
         "fnl_context": Object {
           "null": null,
@@ -8529,7 +8529,7 @@ Object {
       "ResultPath": "$",
       "Type": "Pass",
     },
-    "boolean__if(input.id == undefined)": Object {
+    "boolean__if(input.id === undefined)": Object {
       "Next": "input.id",
       "Result": "boolean",
       "ResultPath": "$.heap0",
@@ -8554,12 +8554,12 @@ Object {
       "Type": "Pass",
     },
     "boolean__input.id 3": Object {
-      "Next": "5__if(input.id == undefined)",
+      "Next": "5__if(input.id === undefined)",
       "Result": "boolean",
       "ResultPath": "$.heap4",
       "Type": "Pass",
     },
-    "if(input.id == undefined)": Object {
+    "if(input.id === undefined)": Object {
       "Choices": Array [
         Object {
           "And": Array [
@@ -8572,7 +8572,7 @@ Object {
               "Variable": "$.input.id",
             },
           ],
-          "Next": "string__if(input.id == undefined)",
+          "Next": "string__if(input.id === undefined)",
         },
         Object {
           "And": Array [
@@ -8585,7 +8585,7 @@ Object {
               "Variable": "$.input.id",
             },
           ],
-          "Next": "boolean__if(input.id == undefined)",
+          "Next": "boolean__if(input.id === undefined)",
         },
         Object {
           "And": Array [
@@ -8598,15 +8598,15 @@ Object {
               "Variable": "$.input.id",
             },
           ],
-          "Next": "number__if(input.id == undefined)",
+          "Next": "number__if(input.id === undefined)",
         },
         Object {
           "IsPresent": true,
-          "Next": "object__if(input.id == undefined)",
+          "Next": "object__if(input.id === undefined)",
           "Variable": "$.input.id",
         },
       ],
-      "Default": "undefined__if(input.id == undefined)",
+      "Default": "undefined__if(input.id === undefined)",
       "Type": "Choice",
     },
     "input.id": Object {
@@ -8809,7 +8809,7 @@ Object {
       "Default": "undefined__input.id 3",
       "Type": "Choice",
     },
-    "number__if(input.id == undefined)": Object {
+    "number__if(input.id === undefined)": Object {
       "Next": "input.id",
       "Result": "number",
       "ResultPath": "$.heap0",
@@ -8834,12 +8834,12 @@ Object {
       "Type": "Pass",
     },
     "number__input.id 3": Object {
-      "Next": "5__if(input.id == undefined)",
+      "Next": "5__if(input.id === undefined)",
       "Result": "number",
       "ResultPath": "$.heap4",
       "Type": "Pass",
     },
-    "object__if(input.id == undefined)": Object {
+    "object__if(input.id === undefined)": Object {
       "Next": "input.id",
       "Result": "object",
       "ResultPath": "$.heap0",
@@ -8864,7 +8864,7 @@ Object {
       "Type": "Pass",
     },
     "object__input.id 3": Object {
-      "Next": "5__if(input.id == undefined)",
+      "Next": "5__if(input.id === undefined)",
       "Result": "object",
       "ResultPath": "$.heap4",
       "Type": "Pass",
@@ -8911,7 +8911,7 @@ Object {
       "ResultPath": "$",
       "Type": "Pass",
     },
-    "string__if(input.id == undefined)": Object {
+    "string__if(input.id === undefined)": Object {
       "Next": "input.id",
       "Result": "string",
       "ResultPath": "$.heap0",
@@ -8936,12 +8936,12 @@ Object {
       "Type": "Pass",
     },
     "string__input.id 3": Object {
-      "Next": "5__if(input.id == undefined)",
+      "Next": "5__if(input.id === undefined)",
       "Result": "string",
       "ResultPath": "$.heap4",
       "Type": "Pass",
     },
-    "undefined__if(input.id == undefined)": Object {
+    "undefined__if(input.id === undefined)": Object {
       "Next": "input.id",
       "Result": "undefined",
       "ResultPath": "$.heap0",
@@ -8966,7 +8966,7 @@ Object {
       "Type": "Pass",
     },
     "undefined__input.id 3": Object {
-      "Next": "5__if(input.id == undefined)",
+      "Next": "5__if(input.id === undefined)",
       "Result": "undefined",
       "ResultPath": "$.heap4",
       "Type": "Pass",
@@ -9021,7 +9021,7 @@ Object {
   "StartAt": "Initialize Functionless Context",
   "States": Object {
     "Initialize Functionless Context": Object {
-      "Next": "if(input.val == \\"a\\")",
+      "Next": "if(input.val === \\"a\\")",
       "Parameters": Object {
         "fnl_context": Object {
           "null": null,
@@ -9031,7 +9031,7 @@ Object {
       "ResultPath": "$",
       "Type": "Pass",
     },
-    "if(input.val == \\"a\\")": Object {
+    "if(input.val === \\"a\\")": Object {
       "Choices": Array [
         Object {
           "And": Array [
@@ -9079,7 +9079,7 @@ Object {
   "StartAt": "Initialize Functionless Context",
   "States": Object {
     "Initialize Functionless Context": Object {
-      "Next": "if(input.val != \\"a\\")",
+      "Next": "if(input.val !== \\"a\\")",
       "Parameters": Object {
         "fnl_context": Object {
           "null": null,
@@ -9089,10 +9089,10 @@ Object {
       "ResultPath": "$",
       "Type": "Pass",
     },
-    "if(input.val != \\"a\\")": Object {
+    "if(input.val !== \\"a\\")": Object {
       "Choices": Array [
         Object {
-          "Next": "if(input.val == \\"b\\")",
+          "Next": "if(input.val === \\"b\\")",
           "Not": Object {
             "And": Array [
               Object {
@@ -9118,7 +9118,7 @@ Object {
       "Default": "return \\"woop\\"",
       "Type": "Choice",
     },
-    "if(input.val == \\"b\\")": Object {
+    "if(input.val === \\"b\\")": Object {
       "Choices": Array [
         Object {
           "And": Array [
@@ -9282,7 +9282,7 @@ Object {
   "StartAt": "Initialize Functionless Context",
   "States": Object {
     "Initialize Functionless Context": Object {
-      "Next": "if(input.id == \\"hello\\")",
+      "Next": "if(input.id === \\"hello\\")",
       "Parameters": Object {
         "fnl_context": Object {
           "null": null,
@@ -9292,7 +9292,7 @@ Object {
       "ResultPath": "$",
       "Type": "Pass",
     },
-    "if(input.id == \\"hello\\")": Object {
+    "if(input.id === \\"hello\\")": Object {
       "Choices": Array [
         Object {
           "And": Array [
@@ -9340,7 +9340,7 @@ Object {
   "StartAt": "Initialize Functionless Context",
   "States": Object {
     "Initialize Functionless Context": Object {
-      "Next": "if(input.id == \\"hello\\")",
+      "Next": "if(input.id === \\"hello\\")",
       "Parameters": Object {
         "fnl_context": Object {
           "null": null,
@@ -9350,7 +9350,7 @@ Object {
       "ResultPath": "$",
       "Type": "Pass",
     },
-    "if(input.id == \\"hello\\")": Object {
+    "if(input.id === \\"hello\\")": Object {
       "Choices": Array [
         Object {
           "And": Array [
@@ -10245,11 +10245,11 @@ Object {
     },
     "i": Object {
       "InputPath": "$.heap0.arr[0].index",
-      "Next": "if(i == 0)",
+      "Next": "if(i === 0)",
       "ResultPath": "$.i",
       "Type": "Pass",
     },
-    "if(i == 0)": Object {
+    "if(i === 0)": Object {
       "Choices": Array [
         Object {
           "And": Array [
@@ -10380,11 +10380,11 @@ Object {
     },
     "i": Object {
       "InputPath": "$.heap0.arr[0].index",
-      "Next": "if(i == 0)",
+      "Next": "if(i === 0)",
       "ResultPath": "$.i",
       "Type": "Pass",
     },
-    "if(i == 0)": Object {
+    "if(i === 0)": Object {
       "Choices": Array [
         Object {
           "And": Array [
@@ -10684,11 +10684,11 @@ Object {
     },
     "i": Object {
       "InputPath": "$.heap0.arr[0].index",
-      "Next": "if(i == 0)",
+      "Next": "if(i === 0)",
       "ResultPath": "$.i",
       "Type": "Pass",
     },
-    "if(i == 0)": Object {
+    "if(i === 0)": Object {
       "Choices": Array [
         Object {
           "And": Array [
@@ -10831,11 +10831,11 @@ Object {
     },
     "i": Object {
       "InputPath": "$.heap0.arr[0].index",
-      "Next": "if(i == 0)",
+      "Next": "if(i === 0)",
       "ResultPath": "$.i",
       "Type": "Pass",
     },
-    "if(i == 0)": Object {
+    "if(i === 0)": Object {
       "Choices": Array [
         Object {
           "And": Array [
@@ -11885,7 +11885,7 @@ Object {
   "States": Object {
     "1__person = await $AWS.DynamoDB.GetItem({Table: personTable, Key: {id: {S: ": Object {
       "InputPath": "$.heap0",
-      "Next": "if(person.Item == undefined)",
+      "Next": "if(person.Item === undefined)",
       "ResultPath": "$.person",
       "Type": "Pass",
     },
@@ -11900,7 +11900,7 @@ Object {
       "ResultPath": "$",
       "Type": "Pass",
     },
-    "if(person.Item == undefined)": Object {
+    "if(person.Item === undefined)": Object {
       "Choices": Array [
         Object {
           "And": Array [
@@ -11958,7 +11958,7 @@ Object {
   "States": Object {
     "1__person = await $AWS.DynamoDB.GetItem({Table: personTable, Key: {id: {S: ": Object {
       "InputPath": "$.heap1",
-      "Next": "if(person.Item == undefined)",
+      "Next": "if(person.Item === undefined)",
       "ResultPath": "$.person",
       "Type": "Pass",
     },
@@ -11987,7 +11987,7 @@ Object {
       "ResultPath": "$",
       "Type": "Pass",
     },
-    "if(person.Item == undefined)": Object {
+    "if(person.Item === undefined)": Object {
       "Choices": Array [
         Object {
           "And": Array [
@@ -13854,7 +13854,7 @@ Object {
     },
     "catch(err)": Object {
       "InputPath": "$.fnl_tmp_0",
-      "Next": "if(err.message == \\"you dun' goofed\\")",
+      "Next": "if(err.message === \\"you dun' goofed\\")",
       "ResultPath": "$.err",
       "Type": "Pass",
     },
@@ -13890,7 +13890,7 @@ Object {
       "Default": "finally",
       "Type": "Choice",
     },
-    "if(err.message == \\"you dun' goofed\\")": Object {
+    "if(err.message === \\"you dun' goofed\\")": Object {
       "Choices": Array [
         Object {
           "And": Array [
@@ -14219,7 +14219,7 @@ Object {
     },
     "catch__try": Object {
       "InputPath": "$.fnl_tmp_0",
-      "Next": "if(err.message == \\"cause\\")",
+      "Next": "if(err.message === \\"cause\\")",
       "ResultPath": "$.err",
       "Type": "Pass",
     },
@@ -14240,7 +14240,7 @@ Object {
       "ResultPath": "$.heap0",
       "Type": "Pass",
     },
-    "if(err.message == \\"cause\\")": Object {
+    "if(err.message === \\"cause\\")": Object {
       "Choices": Array [
         Object {
           "And": Array [
@@ -14599,7 +14599,7 @@ Object {
     },
     "catch__try": Object {
       "InputPath": "$.fnl_tmp_0",
-      "Next": "if(err.message == \\"cause\\")",
+      "Next": "if(err.message === \\"cause\\")",
       "ResultPath": "$.err",
       "Type": "Pass",
     },
@@ -14622,7 +14622,7 @@ Object {
       "ResultPath": "$.heap0",
       "Type": "Pass",
     },
-    "if(err.message == \\"cause\\")": Object {
+    "if(err.message === \\"cause\\")": Object {
       "Choices": Array [
         Object {
           "And": Array [
@@ -15136,7 +15136,7 @@ Object {
     },
     "catch(err)": Object {
       "InputPath": "$.fnl_tmp_0",
-      "Next": "if(err.message == \\"sam\\")",
+      "Next": "if(err.message === \\"sam\\")",
       "ResultPath": "$.err",
       "Type": "Pass",
     },
@@ -15155,7 +15155,7 @@ Object {
       "ResultPath": "$.heap1",
       "Type": "Task",
     },
-    "if(err.message == \\"sam\\")": Object {
+    "if(err.message === \\"sam\\")": Object {
       "Choices": Array [
         Object {
           "And": Array [
@@ -15491,11 +15491,11 @@ Object {
     },
     "catch__try": Object {
       "InputPath": "$.fnl_tmp_0",
-      "Next": "if(err.message == \\"cause\\")",
+      "Next": "if(err.message === \\"cause\\")",
       "ResultPath": "$.err",
       "Type": "Pass",
     },
-    "if(err.message == \\"cause\\")": Object {
+    "if(err.message === \\"cause\\")": Object {
       "Choices": Array [
         Object {
           "And": Array [
@@ -15706,7 +15706,7 @@ Object {
     },
     "catch(err)": Object {
       "InputPath": "$.fnl_tmp_0",
-      "Next": "if(err.message == \\"cause\\")",
+      "Next": "if(err.message === \\"cause\\")",
       "ResultPath": "$.err",
       "Type": "Pass",
     },
@@ -15718,7 +15718,7 @@ Object {
       "ResultPath": "$.fnl_tmp_0",
       "Type": "Pass",
     },
-    "if(err.message == \\"cause\\")": Object {
+    "if(err.message === \\"cause\\")": Object {
       "Choices": Array [
         Object {
           "And": Array [
@@ -15823,7 +15823,7 @@ Object {
     },
     "catch(err)": Object {
       "InputPath": "$.fnl_tmp_0",
-      "Next": "if(err.message == \\"cause\\")",
+      "Next": "if(err.message === \\"cause\\")",
       "ResultPath": "$.err",
       "Type": "Pass",
     },
@@ -15835,7 +15835,7 @@ Object {
       "ResultPath": "$.fnl_tmp_0",
       "Type": "Pass",
     },
-    "if(err.message == \\"cause\\")": Object {
+    "if(err.message === \\"cause\\")": Object {
       "Choices": Array [
         Object {
           "And": Array [
@@ -15972,7 +15972,7 @@ Object {
     },
     "catch(err)": Object {
       "InputPath": "$.fnl_tmp_0",
-      "Next": "if(err.message == \\"cause\\")",
+      "Next": "if(err.message === \\"cause\\")",
       "ResultPath": "$.err",
       "Type": "Pass",
     },
@@ -15984,7 +15984,7 @@ Object {
       "ResultPath": "$.fnl_tmp_0",
       "Type": "Pass",
     },
-    "if(err.message == \\"cause\\")": Object {
+    "if(err.message === \\"cause\\")": Object {
       "Choices": Array [
         Object {
           "And": Array [
@@ -16077,11 +16077,11 @@ Object {
     },
     "catch__try": Object {
       "InputPath": "$.fnl_tmp_0",
-      "Next": "if(err.message == \\"cause\\")",
+      "Next": "if(err.message === \\"cause\\")",
       "ResultPath": "$.err",
       "Type": "Pass",
     },
-    "if(err.message == \\"cause\\")": Object {
+    "if(err.message === \\"cause\\")": Object {
       "Choices": Array [
         Object {
           "And": Array [
@@ -16679,12 +16679,12 @@ Object {
   "States": Object {
     "1__cond = await task()": Object {
       "InputPath": "$.heap0",
-      "Next": "while (cond == null)",
+      "Next": "while (cond === null)",
       "ResultPath": "$.cond",
       "Type": "Pass",
     },
     "Initialize Functionless Context": Object {
-      "Next": "while (cond == null)",
+      "Next": "while (cond === null)",
       "Parameters": Object {
         "fnl_context": Object {
           "null": null,
@@ -16706,7 +16706,7 @@ Object {
       "ResultPath": "$",
       "Type": "Pass",
     },
-    "while (cond == null)": Object {
+    "while (cond === null)": Object {
       "Choices": Array [
         Object {
           "And": Array [
@@ -16783,12 +16783,12 @@ Object {
   "States": Object {
     "1__cond = await task()": Object {
       "InputPath": "$.heap0",
-      "Next": "while (cond == null)",
+      "Next": "while (cond === null)",
       "ResultPath": "$.cond",
       "Type": "Pass",
     },
     "Initialize Functionless Context": Object {
-      "Next": "while (cond == null)",
+      "Next": "while (cond === null)",
       "Parameters": Object {
         "fnl_context": Object {
           "null": null,
@@ -16810,7 +16810,7 @@ Object {
       "ResultPath": "$",
       "Type": "Pass",
     },
-    "while (cond == null)": Object {
+    "while (cond === null)": Object {
       "Choices": Array [
         Object {
           "And": Array [

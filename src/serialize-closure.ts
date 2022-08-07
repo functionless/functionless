@@ -486,13 +486,37 @@ export function serializeClosure(func: AnyFunction): string {
           serializeAST(node.expr) as ts.Expression
         );
       }
-    } else if (isBinaryExpr(node)) {
-      return ts.factory.createBinaryExpression(
-        serializeAST(node.left) as ts.Expression,
-        ts.factory.createToken(),
-        serializeAST(node.right) as ts.Expression
-      );
-    } else {
+    }
+    // else if (isBinaryExpr(node)) {
+    //   return ts.factory.createBinaryExpression(
+    //     serializeAST(node.left) as ts.Expression,
+    //     ts.factory.createToken(
+    //       node.op === "!="
+    //         ? ts.SyntaxKind.ExclamationEqualsToken
+    //         : node.op === "!=="
+    //         ? ts.SyntaxKind.ExclamationEqualsEqualsToken
+    //         : node.op === "=="
+    //         ? ts.SyntaxKind.EqualsEqualsToken
+    //         : node.op === "==="
+    //         ? ts.SyntaxKind.EqualsEqualsEqualsToken
+    //         : node.op === "%"
+    //         ? ts.SyntaxKind.PercentToken
+    //         : node.op === "%="
+    //         ? ts.SyntaxKind.PercentEqualsToken
+    //         : node.op === "&&"
+    //         ? ts.SyntaxKind.AmpersandAmpersandToken
+    //         : node.op === "&"
+    //         ? ts.SyntaxKind.AmpersandAmpersandToken
+    //         : node.op === "*"
+    //         ? ts.SyntaxKind.AsteriskToken
+    //         : node.op === "**"
+    //         ? ts.SyntaxKind.AsteriskToken
+    //         : undefined!
+    //     ),
+    //     serializeAST(node.right) as ts.Expression
+    //   );
+    // }
+    else {
       return assertNever(node);
     }
   }
