@@ -21,6 +21,10 @@
       "type": "build"
     },
     {
+      "name": "@functionless/ast-reflection",
+      "type": "build"
+    },
+    {
       "name": "@swc/cli",
       "type": "build"
     },
@@ -169,11 +173,6 @@
     {
       "name": "standard-version",
       "version": "^9",
-      "type": "build"
-    },
-    {
-      "name": "swc-closure",
-      "version": "file:../swc-closure",
       "type": "build"
     },
     {

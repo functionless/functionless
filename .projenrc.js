@@ -116,7 +116,7 @@ const project = new CustomTypescriptProject({
     "@swc/core",
     "@swc/register",
     "@swc/jest",
-    "swc-closure@file:../swc-closure",
+    "@functionless/ast-reflection",
     "jest",
     "ts-jest",
   ],

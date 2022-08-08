@@ -1040,6 +1040,9 @@
     minimatch "^3.1.2"
     strip-json-comments "^3.1.1"
 
+"@functionless/ast-reflection@file:../swc-closure":
+  version "0.1.0"
+
 "@functionless/nodejs-closure-serializer@^0.1.1":
   version "0.1.1"
   resolved "https://registry.yarnpkg.com/@functionless/nodejs-closure-serializer/-/nodejs-closure-serializer-0.1.1.tgz#2c56bbe164c3447d55ff8162472e9c0b59c1e690"
@@ -1714,7 +1717,7 @@
     "@babel/parser" "^7.1.0"
     "@babel/types" "^7.0.0"
 
-"@types/babel__traverse@*", "@types/babel__traverse@^7.0.4", "@types/babel__traverse@^7.0.6":
+"@types/babel__traverse@*", "@types/babel__traverse@^7.0.6":
   version "7.18.0"
   resolved "https://registry.yarnpkg.com/@types/babel__traverse/-/babel__traverse-7.18.0.tgz#8134fd78cb39567465be65b9fdc16d378095f41f"
   integrity sha512-v4Vwdko+pgymgS+A2UIaJru93zQd85vIGWObM5ekZNdXCKtDYqATlEYnWgfo86Q6I1Lh0oXnksDnMU1cwmlPDw==
@@ -7560,9 +7563,6 @@ supports-preserve-symlinks-flag@^1.0.0:
   version "1.0.0"
   resolved "https://registry.yarnpkg.com/supports-preserve-symlinks-flag/-/supports-preserve-symlinks-flag-1.0.0.tgz#6eda4bd344a3c94aea376d4cc31bc77311039e09"
   integrity sha512-ot0WnXS9fgdkgIcePe6RHNk1WA8+muPa6cSjeR3V8K27q9BB1rTE3R1p7Hv0z1ZyAc8s6Vvv8DIyWf681MAt0w==
-
-"swc-closure@file:../swc-closure":
-  version "0.1.0"
 
 table@^6.8.0:
   version "6.8.0"
