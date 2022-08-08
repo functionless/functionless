@@ -1,10 +1,16 @@
+/* eslint-disable no-bitwise */
 import path from "path";
 import minimatch from "minimatch";
 import type { PluginConfig, TransformerExtras } from "ts-patch";
 import ts from "typescript";
 import { assertDefined } from "./assert";
 import { makeFunctionlessChecker } from "./checker";
-import type { ConstructorDecl, FunctionDecl, MethodDecl } from "./declaration";
+import {
+  ConstructorDecl,
+  FunctionDecl,
+  MethodDecl,
+  VariableDeclKind,
+} from "./declaration";
 import { ErrorCodes, SynthError } from "./error-code";
 import type {
   FunctionExpr,
@@ -327,9 +333,12 @@ export function compile(
               impl.parameters.map((param) =>
                 newExpr(NodeKind.ParameterDecl, [
                   toExpr(param.name, scope ?? impl),
-                  ...(param.initializer
-                    ? [toExpr(param.initializer, scope ?? impl)]
-                    : []),
+                  param.initializer
+                    ? toExpr(param.initializer, scope ?? impl)
+                    : ts.factory.createIdentifier("undefined"),
+                  param.dotDotDotToken
+                    ? ts.factory.createTrue()
+                    : ts.factory.createFalse(),
                 ])
               )
             ),
@@ -483,6 +492,13 @@ export function compile(
             ts.factory.createArrayLiteralExpression(
               node.declarations.map((decl) => toExpr(decl, scope))
             ),
+            ts.factory.createNumericLiteral(
+              (node.flags & ts.NodeFlags.Const) !== 0
+                ? VariableDeclKind.Const
+                : (node.flags & ts.NodeFlags.Let) !== 0
+                ? VariableDeclKind.Let
+                : VariableDeclKind.Var
+            ),
           ]);
         } else if (ts.isVariableDeclaration(node)) {
           return newExpr(NodeKind.VariableDecl, [
@@ -491,7 +507,9 @@ export function compile(
                   ts.factory.createStringLiteral(node.name.text),
                 ])
               : toExpr(node.name, scope),
-            ...(node.initializer ? [toExpr(node.initializer, scope)] : []),
+            node.initializer
+              ? toExpr(node.initializer, scope)
+              : ts.factory.createIdentifier("undefined"),
           ]);
         } else if (ts.isIfStatement(node)) {
           return newExpr(NodeKind.IfStmt, [
@@ -537,7 +555,7 @@ export function compile(
             toExpr(node.left, scope),
             ts.factory.createStringLiteral(
               assertDefined(
-                getBinaryOperator(node.operatorToken),
+                ts.tokenToString(node.operatorToken.kind) as BinaryOp,
                 `Binary operator token cannot be stringified: ${node.operatorToken.kind}`
               )
             ),
@@ -547,7 +565,7 @@ export function compile(
           return newExpr(NodeKind.UnaryExpr, [
             ts.factory.createStringLiteral(
               assertDefined(
-                getPrefixUnaryOperator(node.operator),
+                ts.tokenToString(node.operator) as UnaryOp,
                 `Unary operator token cannot be stringified: ${node.operator}`
               )
             ),
@@ -557,7 +575,7 @@ export function compile(
           return newExpr(NodeKind.PostfixUnaryExpr, [
             ts.factory.createStringLiteral(
               assertDefined(
-                getPostfixUnaryOperator(node.operator),
+                ts.tokenToString(node.operator) as PostfixUnaryOp,
                 `Unary operator token cannot be stringified: ${node.operator}`
               )
             ),
@@ -566,9 +584,7 @@ export function compile(
         } else if (ts.isReturnStatement(node)) {
           return newExpr(
             NodeKind.ReturnStmt,
-            node.expression
-              ? [toExpr(node.expression, scope)]
-              : [newExpr(NodeKind.NullLiteralExpr, [])]
+            node.expression ? [toExpr(node.expression, scope)] : []
           );
         } else if (ts.isObjectLiteralExpression(node)) {
           return newExpr(NodeKind.ObjectLiteralExpr, [
@@ -648,12 +664,20 @@ export function compile(
               "For in/of loops initializers should be an identifier or variable declaration."
             );
           }
+
           return newExpr(
             ts.isForOfStatement(node) ? NodeKind.ForOfStmt : NodeKind.ForInStmt,
             [
               toExpr(decl, scope),
               toExpr(node.expression, scope),
               toExpr(node.statement, scope),
+              ...(ts.isForOfStatement(node)
+                ? [
+                    node.awaitModifier
+                      ? ts.factory.createTrue()
+                      : ts.factory.createFalse(),
+                  ]
+                : []),
             ]
           );
         } else if (ts.isForStatement(node)) {
@@ -663,34 +687,49 @@ export function compile(
             toExpr(node.condition, scope),
             toExpr(node.incrementor, scope),
           ]);
-        } else if (
-          ts.isTemplateExpression(node) ||
-          ts.isTaggedTemplateExpression(node)
-        ) {
-          const template = ts.isTemplateExpression(node) ? node : node.template;
-          const exprs = [];
-          if (ts.isNoSubstitutionTemplateLiteral(template)) {
-            return newExpr(NodeKind.TaggedTemplateExpr, [quasi(template.text)]);
-          }
-          if (template.head.text) {
-            exprs.push(quasi(template.head.text));
-          }
-          for (const span of template.templateSpans) {
-            exprs.push(toExpr(span.expression, scope));
-            if (span.literal.text) {
-              exprs.push(quasi(span.literal.text));
-            }
-          }
-          return newExpr(
-            ts.isTemplateExpression(node)
-              ? NodeKind.TemplateExpr
-              : NodeKind.TaggedTemplateExpr,
-            [ts.factory.createArrayLiteralExpression(exprs)]
-          );
+        } else if (ts.isTemplateExpression(node)) {
+          return newExpr(NodeKind.TemplateExpr, [
+            // head
+            toExpr(node.head, scope),
+            // spans
+            ts.factory.createArrayLiteralExpression(
+              node.templateSpans.map((span) => toExpr(span, scope))
+            ),
+          ]);
+        } else if (ts.isTaggedTemplateExpression(node)) {
+          return newExpr(NodeKind.TaggedTemplateExpr, [
+            toExpr(node.tag, scope),
+            toExpr(node.template, scope),
+          ]);
+        } else if (ts.isNoSubstitutionTemplateLiteral(node)) {
+          return newExpr(NodeKind.NoSubstitutionTemplateLiteral, [
+            ts.factory.createStringLiteral(node.text),
+          ]);
+        } else if (ts.isTemplateSpan(node)) {
+          return newExpr(NodeKind.TemplateSpan, [
+            toExpr(node.expression, scope),
+            toExpr(node.literal, scope),
+          ]);
+        } else if (ts.isTemplateHead(node)) {
+          return newExpr(NodeKind.TemplateHead, [
+            ts.factory.createStringLiteral(node.text),
+          ]);
+        } else if (ts.isTemplateMiddle(node)) {
+          return newExpr(NodeKind.TemplateMiddle, [
+            ts.factory.createStringLiteral(node.text),
+          ]);
+        } else if (ts.isTemplateTail(node)) {
+          return newExpr(NodeKind.TemplateTail, [
+            ts.factory.createStringLiteral(node.text),
+          ]);
         } else if (ts.isBreakStatement(node)) {
-          return newExpr(NodeKind.BreakStmt, []);
+          return newExpr(NodeKind.BreakStmt, [
+            ...(node.label ? [toExpr(node.label, scope)] : []),
+          ]);
         } else if (ts.isContinueStatement(node)) {
-          return newExpr(NodeKind.ContinueStmt, []);
+          return newExpr(NodeKind.ContinueStmt, [
+            ...(node.label ? [toExpr(node.label, scope)] : []),
+          ]);
         } else if (ts.isTryStatement(node)) {
           return newExpr(NodeKind.TryStmt, [
             toExpr(node.tryBlock, scope),
@@ -804,10 +843,12 @@ export function compile(
           return newExpr(NodeKind.DebuggerStmt, []);
         } else if (ts.isLabeledStatement(node)) {
           return newExpr(NodeKind.LabelledStmt, [
+            toExpr(node.label, scope),
             toExpr(node.statement, scope),
           ]);
         } else if (ts.isSwitchStatement(node)) {
           return newExpr(NodeKind.SwitchStmt, [
+            toExpr(node.expression, scope),
             ts.factory.createArrayLiteralExpression(
               node.caseBlock.clauses.map((clause) => toExpr(clause, scope))
             ),
@@ -879,12 +920,6 @@ export function compile(
         }
       }
 
-      function quasi(literal: string): ts.Expression {
-        return newExpr(NodeKind.QuasiString, [
-          ts.factory.createStringLiteral(literal),
-        ]);
-      }
-
       function string(literal: string): ts.Expression {
         return newExpr(NodeKind.StringLiteralExpr, [
           ts.factory.createStringLiteral(literal),
@@ -900,31 +935,6 @@ export function compile(
     };
   };
 }
-
-function getBinaryOperator(op: ts.BinaryOperatorToken): BinaryOp | undefined {
-  return (
-    BinaryOperatorRemappings[
-      op.kind as keyof typeof BinaryOperatorRemappings
-    ] ?? (ts.tokenToString(op.kind) as BinaryOp)
-  );
-}
-
-function getPrefixUnaryOperator(
-  op: ts.PrefixUnaryOperator
-): UnaryOp | undefined {
-  return ts.tokenToString(op) as UnaryOp | undefined;
-}
-
-function getPostfixUnaryOperator(
-  op: ts.PostfixUnaryOperator
-): PostfixUnaryOp | undefined {
-  return ts.tokenToString(op) as PostfixUnaryOp | undefined;
-}
-
-const BinaryOperatorRemappings: Record<number, BinaryOp> = {
-  [ts.SyntaxKind.EqualsEqualsEqualsToken]: "==",
-  [ts.SyntaxKind.ExclamationEqualsEqualsToken]: "!=",
-} as const;
 
 function param(name: string, spread: boolean = false) {
   return ts.factory.createParameterDeclaration(

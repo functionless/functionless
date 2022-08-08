@@ -33,6 +33,9 @@ export const isFunctionExpr = typeGuard(NodeKind.FunctionExpr);
 export const isIdentifier = typeGuard(NodeKind.Identifier);
 export const isImportKeyword = typeGuard(NodeKind.ImportKeyword);
 export const isNewExpr = typeGuard(NodeKind.NewExpr);
+export const isNoSubstitutionTemplateLiteral = typeGuard(
+  NodeKind.NoSubstitutionTemplateLiteral
+);
 export const isNullLiteralExpr = typeGuard(NodeKind.NullLiteralExpr);
 export const isNumberLiteralExpr = typeGuard(NodeKind.NumberLiteralExpr);
 export const isObjectLiteralExpr = typeGuard(NodeKind.ObjectLiteralExpr);
@@ -42,7 +45,6 @@ export const isPostfixUnaryExpr = typeGuard(NodeKind.PostfixUnaryExpr);
 export const isPrivateIdentifier = typeGuard(NodeKind.PrivateIdentifier);
 export const isPropAccessExpr = typeGuard(NodeKind.PropAccessExpr);
 export const isPropAssignExpr = typeGuard(NodeKind.PropAssignExpr);
-export const isQuasiString = typeGuard(NodeKind.QuasiString);
 export const isReferenceExpr = typeGuard(NodeKind.ReferenceExpr);
 export const isRegexExpr = typeGuard(NodeKind.RegexExpr);
 export const isSpreadAssignExpr = typeGuard(NodeKind.SpreadAssignExpr);
@@ -78,6 +80,11 @@ export const isLiteralPrimitiveExpr = typeGuard(
   NodeKind.NumberLiteralExpr,
   NodeKind.StringLiteralExpr
 );
+
+export const isTemplateHead = typeGuard(NodeKind.TemplateHead);
+export const isTemplateSpan = typeGuard(NodeKind.TemplateSpan);
+export const isTemplateMiddle = typeGuard(NodeKind.TemplateMiddle);
+export const isTemplateTail = typeGuard(NodeKind.TemplateTail);
 
 export function isStmt(a: any): a is Stmt {
   return isNode(a) && a.nodeKind === "Stmt";

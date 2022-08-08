@@ -129,6 +129,15 @@ export const synthesizePatternDocument = (
 ): PatternDocument => {
   const func = validateFunctionLike(predicate, "synthesizeEventPattern");
 
+  func.parameters.forEach(({ isRest }) => {
+    if (isRest) {
+      throw new SynthError(
+        ErrorCodes.Unsupported_Feature,
+        `Event Bridge does not yet support rest parameters, see https://github.com/functionless/functionless/issues/391`
+      );
+    }
+  });
+
   const [eventDecl = undefined] = func.parameters;
 
   const evalExpr = (expr: Expr): PatternDocument => {
@@ -154,9 +163,9 @@ export const synthesizePatternDocument = (
   };
 
   const evalBinary = (expr: BinaryExpr): PatternDocument => {
-    if (expr.op === "==") {
+    if (expr.op === "==" || expr.op === "===") {
       return evalEquals(expr);
-    } else if (expr.op === "!=") {
+    } else if (expr.op === "!=" || expr.op === "!==") {
       return evalNotEquals(expr);
     } else if ([">", ">=", "<", "<="].includes(expr.op)) {
       return evalNumericRange(expr);

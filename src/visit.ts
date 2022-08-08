@@ -1,4 +1,8 @@
-import { VariableDecl, VariableDeclList } from "./declaration";
+import {
+  VariableDecl,
+  VariableDeclKind,
+  VariableDeclList,
+} from "./declaration";
 import { Expr, Identifier } from "./expression";
 import { isNode } from "./guards";
 import { FunctionlessNode } from "./node";
@@ -73,7 +77,10 @@ export function visitBlock(
     function hoist(expr: Expr): Identifier {
       const id = new Identifier(nameGenerator.generateOrGet(expr));
       const stmt = new VariableStmt(
-        new VariableDeclList([new VariableDecl(id.clone(), expr.clone())])
+        new VariableDeclList(
+          [new VariableDecl(id.clone(), expr.clone())],
+          VariableDeclKind.Const
+        )
       );
       nestedTasks.push(stmt);
       return id;

@@ -26,7 +26,7 @@ test("returns a string", () => {
     NodeKind.ArrowFunctionExpr
   );
   expect(
-    assertNodeKind(fn.body.statements[0], NodeKind.ReturnStmt).expr.kindName
+    assertNodeKind(fn.body.statements[0], NodeKind.ReturnStmt).expr?.kindName
   ).toEqual("StringLiteralExpr");
 });
 

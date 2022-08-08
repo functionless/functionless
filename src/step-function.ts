@@ -323,6 +323,7 @@ export namespace $SFN {
     if (callbackfn === undefined || !isFunctionLike(callbackfn)) {
       throw new Error("missing callbackfn in $SFN.map");
     }
+
     const callbackStates = context.evalStmt(
       callbackfn.body,
       // when a return statement is hit, end the sub-machine in the map and return the given value.

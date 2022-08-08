@@ -18,15 +18,16 @@ import {
   Identifier,
   NullLiteralExpr,
   PropAccessExpr,
-  QuasiString,
 } from "./expression";
 import {
   isArgument,
   isArrayBinding,
   isArrayLiteralExpr,
   isAwaitExpr,
+  isBigIntExpr,
   isBinaryExpr,
   isBindingElem,
+  isBindingPattern,
   isBlockStmt,
   isBooleanLiteralExpr,
   isBreakStmt,
@@ -42,6 +43,7 @@ import {
   isContinueStmt,
   isDebuggerStmt,
   isDefaultClause,
+  isDeleteExpr,
   isDoStmt,
   isElementAccessExpr,
   isEmptyStmt,
@@ -50,59 +52,60 @@ import {
   isExprStmt,
   isForInStmt,
   isForOfStmt,
+  isForStmt,
   isFunctionLike,
+  isGetAccessorDecl,
   isIdentifier,
   isIfStmt,
+  isImportKeyword,
   isLabelledStmt,
   isLiteralExpr,
   isMethodDecl,
   isNewExpr,
   isNode,
+  isNoSubstitutionTemplateLiteral,
   isNullLiteralExpr,
   isNumberLiteralExpr,
   isObjectBinding,
   isObjectLiteralExpr,
+  isOmittedExpr,
   isParameterDecl,
+  isParenthesizedExpr,
   isPostfixUnaryExpr,
+  isPrivateIdentifier,
   isPropAccessExpr,
   isPropAssignExpr,
   isPropDecl,
   isReferenceExpr,
+  isRegexExpr,
   isReturnStmt,
+  isSetAccessorDecl,
   isSpreadAssignExpr,
   isSpreadElementExpr,
   isStmt,
   isStringLiteralExpr,
   isSuperKeyword,
   isSwitchStmt,
+  isTaggedTemplateExpr,
   isTemplateExpr,
+  isTemplateHead,
+  isTemplateMiddle,
+  isTemplateSpan,
+  isTemplateTail,
   isThisExpr,
   isThrowStmt,
   isTryStmt,
   isTypeOfExpr,
   isUnaryExpr,
   isUndefinedLiteralExpr,
+  isVariableDecl,
+  isVariableDeclList,
   isVariableReference,
   isVariableStmt,
+  isVoidExpr,
   isWhileStmt,
   isWithStmt,
-  isForStmt,
-  isVariableDeclList,
-  isVariableDecl,
-  isPrivateIdentifier,
   isYieldExpr,
-  isBigIntExpr,
-  isRegexExpr,
-  isDeleteExpr,
-  isVoidExpr,
-  isParenthesizedExpr,
-  isImportKeyword,
-  isSetAccessorDecl,
-  isGetAccessorDecl,
-  isTaggedTemplateExpr,
-  isOmittedExpr,
-  isQuasiString,
-  isBindingPattern,
 } from "./guards";
 import {
   IntegrationImpl,
@@ -128,7 +131,7 @@ import {
   invertBinaryOperator,
   isPromiseAll,
 } from "./util";
-import { visitBlock, visitEachChild } from "./visit";
+import { visitEachChild } from "./visit";
 
 export interface StateMachine<S extends States> {
   Version?: "1.0";
@@ -499,20 +502,21 @@ export class ASL {
     readonly role: aws_iam.IRole,
     decl: FunctionLike
   ) {
-    const self = this;
     this.decl = decl = visitEachChild(decl, function normalizeAST(node):
       | FunctionlessNode
       | FunctionlessNode[] {
       if (isBlockStmt(node)) {
         return new BlockStmt([
           // for each block statement
-          ...visitBlock(
-            node,
-            function normalizeBlock(stmt) {
-              return visitEachChild(stmt, normalizeAST);
-            },
-            self.generatedNames
-          ).statements,
+          ...node.statements.flatMap((stmt) => {
+            const transformed = normalizeAST(stmt) as Stmt[];
+            if (Array.isArray(transformed)) {
+              return transformed;
+            } else {
+              return [transformed];
+            }
+          }),
+
           // re-write the AST to include explicit `ReturnStmt(NullLiteral())` statements
           // this simplifies the interpreter code by always having a node to chain onto, even when
           // the AST has no final `ReturnStmt` (i.e. when the function is a void function)
@@ -522,6 +526,16 @@ export class ASL {
             ? [new ReturnStmt(new NullLiteralExpr())]
             : []),
         ]);
+      } else if (isForOfStmt(node) && node.isAwait) {
+        throw new SynthError(
+          ErrorCodes.Unsupported_Feature,
+          `Step Functions does not yet support for-await, see https://github.com/functionless/functionless/issues/390`
+        );
+      } else if (isParameterDecl(node) && node.isRest) {
+        throw new SynthError(
+          ErrorCodes.Unsupported_Feature,
+          `Step Functions does not yet support rest parameters, see https://github.com/functionless/functionless/issues/391`
+        );
       }
       return visitEachChild(node, normalizeAST);
     });
@@ -983,14 +997,16 @@ export class ASL {
         };
       });
     } else if (isReturnStmt(stmt)) {
-      return this.evalExprToSubState(stmt.expr, (output) =>
-        ASLGraph.passWithInput(
-          {
-            Type: "Pass",
-            ...returnPass,
-          },
-          output
-        )
+      return this.evalExprToSubState(
+        stmt.expr ?? stmt.fork(new NullLiteralExpr()),
+        (output) =>
+          ASLGraph.passWithInput(
+            {
+              Type: "Pass",
+              ...returnPass,
+            },
+            output
+          )
       );
     } else if (isVariableStmt(stmt)) {
       return ASLGraph.joinSubStates(
@@ -1603,11 +1619,19 @@ export class ASL {
 
     if (isTemplateExpr(expr)) {
       return this.evalContext(expr, (evalExpr) => {
-        const elementOutputs = expr.spans.map((span) =>
-          isQuasiString(span)
-            ? { value: span.value, containsJsonPath: false }
-            : evalExpr(span)
-        );
+        const elementOutputs = [
+          {
+            value: expr.head.text,
+            containsJsonPath: false,
+          },
+          ...expr.spans.flatMap((span) => [
+            evalExpr(span.expr),
+            {
+              value: span.literal.text,
+              containsJsonPath: false,
+            },
+          ]),
+        ];
 
         /**
          * Step Functions `States.Format` has a bug which fails when a jsonPath does not start with a
@@ -1926,10 +1950,11 @@ export class ASL {
         expr.op === "-" ||
         expr.op === "++" ||
         expr.op === "--" ||
-        expr.op === "~"
+        expr.op === "~" ||
+        expr.op === "+"
       ) {
         throw new SynthError(
-          ErrorCodes.Cannot_perform_arithmetic_on_variables_in_Step_Function,
+          ErrorCodes.Cannot_perform_arithmetic_or_bitwise_computations_on_variables_in_Step_Function,
           `Step Function does not support operator ${expr.op}`
         );
       }
@@ -1944,8 +1969,10 @@ export class ASL {
       } else if (
         expr.op === "&&" ||
         expr.op === "||" ||
+        expr.op === "===" ||
         expr.op === "==" ||
         expr.op == "!=" ||
+        expr.op == "!==" ||
         expr.op == ">" ||
         expr.op == "<" ||
         expr.op == ">=" ||
@@ -2053,12 +2080,37 @@ export class ASL {
         expr.op === "-=" ||
         expr.op === "*=" ||
         expr.op === "/=" ||
-        expr.op === "%="
+        expr.op === "%=" ||
+        expr.op === "&" ||
+        expr.op === "&&=" ||
+        expr.op === "&=" ||
+        expr.op === "**" ||
+        expr.op === "**=" ||
+        expr.op === "<<" ||
+        expr.op === "<<=" ||
+        expr.op === ">>" ||
+        expr.op === ">>=" ||
+        expr.op === ">>>" ||
+        expr.op === ">>>=" ||
+        expr.op === "^" ||
+        expr.op === "^=" ||
+        expr.op === "|" ||
+        expr.op === "|="
       ) {
         // TODO: support string concat - https://github.com/functionless/functionless/issues/330
         throw new SynthError(
-          ErrorCodes.Cannot_perform_arithmetic_on_variables_in_Step_Function,
+          ErrorCodes.Cannot_perform_arithmetic_or_bitwise_computations_on_variables_in_Step_Function,
           `Step Function does not support operator ${expr.op}`
+        );
+      } else if (
+        expr.op === "instanceof" ||
+        // https://github.com/functionless/functionless/issues/393
+        expr.op === "??=" ||
+        expr.op === "||="
+      ) {
+        throw new SynthError(
+          ErrorCodes.Unsupported_Feature,
+          `Step Function does not support ${expr.op} operator`
         );
       }
       assertNever(expr.op);
@@ -2748,7 +2800,11 @@ export class ASL {
       } else if (isBinaryExpr(expr)) {
         const left = toFilterCondition(expr.left);
         const right = toFilterCondition(expr.right);
-        return left && right ? `${left}${expr.op}${right}` : undefined;
+        return left && right
+          ? `${left}${
+              expr.op === "===" ? "==" : expr.op === "!==" ? "!=" : expr.op
+            }${right}`
+          : undefined;
       } else if (isUnaryExpr(expr)) {
         const right = toFilterCondition(expr.expr);
         return right ? `${expr.op}${right}` : undefined;
@@ -2829,7 +2885,9 @@ export class ASL {
       return undefined;
     };
 
-    const expression = toFilterCondition(stmt.expr);
+    const expression = toFilterCondition(
+      stmt.expr ?? stmt.fork(new NullLiteralExpr())
+    );
     return expression
       ? {
           jsonPath: `${valueJsonPath.jsonPath}[?(${expression})]`,
@@ -3730,10 +3788,12 @@ export class ASL {
           expr.op === "++" ||
           expr.op === "--" ||
           expr.op === "-" ||
-          expr.op === "~"
+          expr.op === "~" ||
+          // https://github.com/functionless/functionless/issues/395
+          expr.op === "+"
         ) {
           throw new SynthError(
-            ErrorCodes.Cannot_perform_arithmetic_on_variables_in_Step_Function,
+            ErrorCodes.Cannot_perform_arithmetic_or_bitwise_computations_on_variables_in_Step_Function,
             `Step Function does not support operator ${expr.op}`
           );
         }
@@ -3773,7 +3833,9 @@ export class ASL {
 
           if (
             expr.op === "!=" ||
+            expr.op === "!==" ||
             expr.op === "==" ||
+            expr.op === "===" ||
             expr.op === ">" ||
             expr.op === "<" ||
             expr.op === ">=" ||
@@ -3783,9 +3845,10 @@ export class ASL {
               ASLGraph.isLiteralValue(leftOutput) &&
               ASLGraph.isLiteralValue(rightOutput)
             ) {
-              return (expr.op === "==" &&
+              return ((expr.op === "==" || expr.op === "===") &&
                 leftOutput.value === rightOutput.value) ||
-                (expr.op === "!=" && leftOutput.value !== rightOutput.value) ||
+                ((expr.op === "!=" || expr.op === "!==") &&
+                  leftOutput.value !== rightOutput.value) ||
                 (leftOutput.value !== null &&
                   rightOutput.value !== null &&
                   ((expr.op === ">" && leftOutput.value > rightOutput.value) ||
@@ -3836,11 +3899,36 @@ export class ASL {
             expr.op === "-=" ||
             expr.op === "*=" ||
             expr.op === "/=" ||
-            expr.op === "%="
+            expr.op === "%=" ||
+            expr.op === "&" ||
+            expr.op === "&&=" ||
+            expr.op === "&=" ||
+            expr.op === "**" ||
+            expr.op === "**=" ||
+            expr.op === "<<" ||
+            expr.op === "<<=" ||
+            expr.op === ">>" ||
+            expr.op === ">>=" ||
+            expr.op === ">>>" ||
+            expr.op === ">>>=" ||
+            expr.op === "^" ||
+            expr.op === "^=" ||
+            expr.op === "|" ||
+            expr.op === "|="
           ) {
             throw new SynthError(
-              ErrorCodes.Cannot_perform_arithmetic_on_variables_in_Step_Function,
+              ErrorCodes.Cannot_perform_arithmetic_or_bitwise_computations_on_variables_in_Step_Function,
               `Step Function does not support operator ${expr.op}`
+            );
+          } else if (
+            expr.op === "instanceof" ||
+            // https://github.com/functionless/functionless/issues/393
+            expr.op === "??=" ||
+            expr.op === "||="
+          ) {
+            throw new SynthError(
+              ErrorCodes.Unsupported_Feature,
+              `Step Function does not support ${expr.op} operator`
             );
           }
 
@@ -4852,10 +4940,15 @@ export namespace ASL {
 
   // for != use not(equals())
   export const VALUE_COMPARISONS: Record<
-    "==" | ">" | ">=" | "<=" | "<",
+    "===" | "==" | ">" | ">=" | "<=" | "<",
     Record<"string" | "boolean" | "number", keyof Condition | undefined>
   > = {
     "==": {
+      string: "StringEquals",
+      boolean: "BooleanEquals",
+      number: "NumericEquals",
+    },
+    "===": {
       string: "StringEquals",
       boolean: "BooleanEquals",
       number: "NumericEquals",
@@ -4923,10 +5016,11 @@ export namespace ASL {
   export const compare = (
     left: ASLGraph.JsonPath,
     right: ASLGraph.Output,
-    operator: keyof typeof VALUE_COMPARISONS | "!="
+    operator: keyof typeof VALUE_COMPARISONS | "!=" | "!=="
   ): Condition => {
     if (
       operator === "==" ||
+      operator === "===" ||
       operator === ">" ||
       operator === "<" ||
       operator === ">=" ||
@@ -4955,7 +5049,7 @@ export namespace ASL {
         );
       }
       return ASL.and(ASL.isPresent(left.jsonPath), condition);
-    } else if (operator === "!=") {
+    } else if (operator === "!=" || operator === "!==") {
       return ASL.not(ASL.compare(left, right, "=="));
     }
 
@@ -4966,7 +5060,7 @@ export namespace ASL {
   export const stringCompare = (
     left: ASLGraph.JsonPath,
     right: ASLGraph.Output,
-    operator: "==" | ">" | "<" | "<=" | ">="
+    operator: "===" | "==" | ">" | "<" | "<=" | ">="
   ) => {
     if (ASLGraph.isJsonPath(right) || typeof right.value === "string") {
       return ASL.and(
@@ -4991,7 +5085,7 @@ export namespace ASL {
   export const numberCompare = (
     left: ASLGraph.JsonPath,
     right: ASLGraph.Output,
-    operator: "==" | ">" | "<" | "<=" | ">="
+    operator: "===" | "==" | ">" | "<" | "<=" | ">="
   ) => {
     if (ASLGraph.isJsonPath(right) || typeof right.value === "number") {
       return ASL.and(
@@ -5016,7 +5110,7 @@ export namespace ASL {
   export const booleanCompare = (
     left: ASLGraph.JsonPath,
     right: ASLGraph.Output,
-    operator: "==" | ">" | "<" | "<=" | ">="
+    operator: "===" | "==" | ">" | "<" | "<=" | ">="
   ) => {
     if (ASLGraph.isJsonPath(right) || typeof right.value === "boolean") {
       return ASL.and(
@@ -5041,9 +5135,9 @@ export namespace ASL {
   export const nullCompare = (
     left: ASLGraph.JsonPath,
     right: ASLGraph.Output,
-    operator: "==" | ">" | "<" | "<=" | ">="
+    operator: "===" | "==" | ">" | "<" | "<=" | ">="
   ) => {
-    if (operator === "==") {
+    if (operator === "==" || operator === "===") {
       if (ASLGraph.isJsonPath(right)) {
         return ASL.and(ASL.isNull(left.jsonPath), ASL.isNull(right.jsonPath));
       } else if (right.value === null) {
@@ -5077,7 +5171,7 @@ function toStateName(node: FunctionlessNode): string {
     }
   }
   function inner(node: Exclude<FunctionlessNode, BlockStmt>): string {
-    if (isExpr(node) || isQuasiString(node)) {
+    if (isExpr(node)) {
       return nodeToString(node);
     } else if (isIfStmt(node)) {
       return `if(${nodeToString(node.when)})`;
@@ -5166,7 +5260,11 @@ function toStateName(node: FunctionlessNode): string {
       isSuperKeyword(node) ||
       isSwitchStmt(node) ||
       isWithStmt(node) ||
-      isYieldExpr(node)
+      isYieldExpr(node) ||
+      isTemplateHead(node) ||
+      isTemplateMiddle(node) ||
+      isTemplateTail(node) ||
+      isTemplateSpan(node)
     ) {
       throw new SynthError(
         ErrorCodes.Unsupported_Feature,
@@ -5181,13 +5279,7 @@ function toStateName(node: FunctionlessNode): string {
 }
 
 function nodeToString(
-  expr?:
-    | Expr
-    | ParameterDecl
-    | BindingName
-    | BindingElem
-    | VariableDecl
-    | QuasiString
+  expr?: Expr | ParameterDecl | BindingName | BindingElem | VariableDecl
 ): string {
   if (!expr) {
     return "";
@@ -5270,9 +5362,11 @@ function nodeToString(
   } else if (isStringLiteralExpr(expr)) {
     return `"${expr.value}"`;
   } else if (isTemplateExpr(expr)) {
-    return `\`${expr.spans
-      .map((e) => (isStringLiteralExpr(e) ? e.value : nodeToString(e)))
-      .join("")}\``;
+    return `${expr.head.text}${expr.spans
+      .map((span) => `\${${nodeToString(span.expr)}}${span.literal.text}`)
+      .join("")}`;
+  } else if (isNoSubstitutionTemplateLiteral(expr)) {
+    return `\`${expr.text}\``;
   } else if (isTypeOfExpr(expr)) {
     return `typeof ${nodeToString(expr.expr)}`;
   } else if (isUnaryExpr(expr)) {
@@ -5325,8 +5419,6 @@ function nodeToString(
     );
   } else if (isOmittedExpr(expr)) {
     return "undefined";
-  } else if (isQuasiString(expr)) {
-    return expr.value;
   } else {
     return assertNever(expr);
   }
