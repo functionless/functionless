@@ -709,10 +709,9 @@ export class Function<
               `While serializing ${_resource.node.path}:\n\n${e.message}`
             );
           } else if (e instanceof Error) {
-            throw e;
-            // throw Error(
-            //   `While serializing ${_resource.node.path}:\n\n${e.message}`
-            // );
+            throw Error(
+              `While serializing ${_resource.node.path}:\n\n${e.message}`
+            );
           }
         }
       })()
@@ -921,7 +920,7 @@ export async function serialize(
                 // register(func, ast)
                 // => func
                 return ts.visitEachChild(
-                  node.arguments[0],
+                  node.arguments[0]!,
                   eraseBindAndRegister,
                   ctx
                 );
@@ -929,7 +928,7 @@ export async function serialize(
                 // bind(func, self, ...args)
                 // => func.bind(self, ...args)
                 return ts.factory.createCallExpression(
-                  eraseBindAndRegister(node.arguments[0]) as ts.Expression,
+                  eraseBindAndRegister(node.arguments[0]!) as ts.Expression,
                   undefined,
                   node.arguments.map(
                     (arg) => eraseBindAndRegister(arg) as ts.Expression
@@ -1137,7 +1136,7 @@ export async function bundle(text: string): Promise<esbuild.OutputFile> {
   });
 
   // a bundled output will be one file
-  return bundle.outputFiles[0];
+  return bundle.outputFiles[0]!;
 }
 
 // to prevent the closure serializer from trying to import all of functionless.

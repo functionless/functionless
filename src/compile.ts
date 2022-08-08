@@ -110,16 +110,7 @@ export function compile(
     ? _config.exclude.map((pattern) => minimatch.makeRe(path.resolve(pattern)))
     : [];
   const checker = makeFunctionlessChecker(program.getTypeChecker());
-  const getUniqueId = (() => {
-    const uniqueIds = new Map<ts.Node, number>();
-    let i = 1; // start counter from 1 so that unresolvable names can use 0
-    return (node: ts.Node) => {
-      if (!uniqueIds.has(node)) {
-        uniqueIds.set(node, i++);
-      }
-      return uniqueIds.get(node)!;
-    };
-  })();
+
   return (ctx) => {
     const functionless = ts.factory.createUniqueName("functionless");
     return (sf) => {
@@ -824,7 +815,7 @@ export function compile(
               // extends
               node.heritageClauses?.flatMap((clause) =>
                 clause.token === ts.SyntaxKind.ExtendsKeyword &&
-                clause.types[0].expression !== undefined
+                clause.types[0]?.expression !== undefined
                   ? [toExpr(clause.types[0].expression, scope)]
                   : []
               )[0] ?? ts.factory.createIdentifier("undefined"),
@@ -902,14 +893,7 @@ export function compile(
         );
       }
 
-      function ref(node: ts.Identifier) {
-        const symbol = checker.getSymbolAtLocation(node);
-
-        const id = symbol?.valueDeclaration
-          ? getUniqueId(symbol.valueDeclaration)
-          : symbol?.declarations?.[0]
-          ? getUniqueId(symbol.declarations[0])
-          : 0;
+      function ref(node: ts.Expression) {
         return newExpr(NodeKind.ReferenceExpr, [
           ts.factory.createStringLiteral(exprToString(node)),
           ts.factory.createArrowFunction(
@@ -920,8 +904,6 @@ export function compile(
             undefined,
             node
           ),
-          ts.factory.createNumericLiteral(id),
-          ts.factory.createIdentifier("__filename"),
         ]);
       }
 

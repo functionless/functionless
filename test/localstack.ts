@@ -160,7 +160,7 @@ export const localstackTestSuite = (
 
     stackOutputs = (
       await CF.describeStacks({ StackName: stack.stackName }).promise()
-    ).Stacks?.[0].Outputs;
+    ).Stacks?.[0]?.Outputs;
   });
 
   // @ts-ignore
@@ -188,7 +188,7 @@ export const localstackTestSuite = (
       // eslint-disable-next-line no-only-tests/no-only-tests
       const t = only ? test.only : test;
       t(name, async () => {
-        const context = testContexts[i];
+        const context = testContexts[i]!;
         if ("error" in context) {
           throw context.error;
         } else if ("output" in context) {

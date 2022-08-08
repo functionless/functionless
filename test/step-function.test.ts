@@ -44,7 +44,7 @@ const expectTaskToMatch = (
 
   expect(key).toBeDefined();
 
-  const task = <Task>definition.States[key];
+  const task = <Task>definition.States[key!];
 
   expect(task).toMatchObject(partialTask);
 };
@@ -315,6 +315,26 @@ test("let empty", () => {
     a = "b";
     // returning undefined is invalid.
     return a;
+  }).definition;
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+});
+
+test("shadow", () => {
+  const { stack } = initStepFunctionApp();
+  const definition = new ExpressStepFunction(stack, "fn", () => {
+    const a = ""; // a
+    const a__2 = ""; // take a future updated name, a__2
+    for (const b in [1, 2, 3]) {
+      const a = ""; // take a future real name, a__1
+      const a__1 = ""; // name already exists, will use a__1__1
+      if (a === "") {
+        const a = ""; // a__3
+        return `${a}${b}${a__1}`;
+      }
+    }
+
+    return `${a}${a__2}`;
   }).definition;
 
   expect(normalizeDefinition(definition)).toMatchSnapshot();
@@ -1037,7 +1057,7 @@ test("for return", () => {
     (input) => {
       for (const i in input.items) {
         if (input.items[i] === "1") {
-          return input.items[i];
+          return input.items[i]!;
         }
       }
 
@@ -1064,7 +1084,7 @@ test("for continue", () => {
         if (input.items[i] === "1") {
           continue;
         }
-        return input.items[i];
+        return input.items[i]!;
       }
 
       for (const i of input.items) {
@@ -1091,7 +1111,7 @@ test("for break", () => {
         if (input.items[i] === "1") {
           break;
         }
-        return input.items[i];
+        return input.items[i]!;
       }
 
       for (const i of input.items) {
@@ -2134,7 +2154,7 @@ test("[1,2,3,4].filter((item, index) => item > index)", () => {
 test("[1,2,3,4].filter((item, index, array) => item > 1 + 2)", () => {
   const { stack } = initStepFunctionApp();
   const definition = new ExpressStepFunction(stack, "fn", async () => {
-    return [1, 2, 3, 4].filter((item, _, arr) => item > arr[0]);
+    return [1, 2, 3, 4].filter((item, _, arr) => item > arr[0]!);
   }).definition;
 
   expect(normalizeDefinition(definition)).toMatchSnapshot();
@@ -2143,7 +2163,7 @@ test("[1,2,3,4].filter((item, index, array) => item > 1 + 2)", () => {
 test("[1,2,3,4].filter((item, index, array) => item > 1 + 2)", () => {
   const { stack } = initStepFunctionApp();
   const definition = new ExpressStepFunction(stack, "fn", async () => {
-    return [1, 2, 3, 4].filter((item, _, [first]) => item > first);
+    return [1, 2, 3, 4].filter((item, _, [first]) => item > first!);
   }).definition;
 
   expect(normalizeDefinition(definition)).toMatchSnapshot();
@@ -3735,13 +3755,12 @@ describe("binding", () => {
 
     test("array", () => {
       const { stack } = initStepFunctionApp();
-      const definition = new StepFunction<{ arr: string[] }, string>(
-        stack,
-        "machine1",
-        async ({ arr: [b] }) => {
-          return b;
-        }
-      ).definition;
+      const definition = new StepFunction<
+        { arr: string[] },
+        string | undefined
+      >(stack, "machine1", async ({ arr: [b] }) => {
+        return b;
+      }).definition;
 
       expect(normalizeDefinition(definition)).toMatchSnapshot();
     });
@@ -3820,16 +3839,15 @@ describe("binding", () => {
 
     test("array", () => {
       const { stack } = initStepFunctionApp();
-      const definition = new StepFunction<{ arr: string[] }, string>(
-        stack,
-        "machine1",
-        async (input) => {
-          const {
-            arr: [b],
-          } = input;
-          return b;
-        }
-      ).definition;
+      const definition = new StepFunction<
+        { arr: string[] },
+        string | undefined
+      >(stack, "machine1", async (input) => {
+        const {
+          arr: [b],
+        } = input;
+        return b;
+      }).definition;
 
       expect(normalizeDefinition(definition)).toMatchSnapshot();
     });

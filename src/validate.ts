@@ -12,7 +12,12 @@ import {
   RuleInterface,
   typeMatch,
 } from "./checker";
-import { ErrorCode, ErrorCodes, formatErrorMessage } from "./error-code";
+import {
+  ErrorCode,
+  ErrorCodes,
+  formatErrorMessage,
+  SynthError,
+} from "./error-code";
 import { anyOf, hasOnlyAncestors } from "./util";
 
 /**
@@ -205,6 +210,7 @@ export function validate(
             const [callback] = node.arguments;
 
             if (
+              callback &&
               !(
                 ts.isFunctionExpression(callback) ||
                 ts.isArrowFunction(callback)
@@ -407,7 +413,7 @@ export function validate(
       ];
     } else if (
       checker.isPromiseAllCall(node) &&
-      (node.arguments.length < 1 ||
+      (!node.arguments[0] ||
         !checker.isPromiseArray(checker.getTypeAtLocation(node.arguments[0])))
     ) {
       return [newError(node, ErrorCodes.Unsupported_Use_of_Promises)];
@@ -441,7 +447,7 @@ export function validate(
         integrationCodeKind?.startsWith("$AWS.Lambda")
       ) {
         if (
-          node.arguments.length > 0 &&
+          node.arguments[0] &&
           !ts.isObjectLiteralExpression(node.arguments[0])
         ) {
           return [
@@ -641,6 +647,13 @@ export function validate(
     if (kind === "AwsMethod") {
       // @ts-ignore
       const [props, request, responses, errors] = node.arguments ?? [];
+
+      if (!props || !request || !responses) {
+        throw new SynthError(
+          ErrorCodes.Invalid_Input,
+          "ApiMethod requires a props (1), request (2), and responses (3) argument."
+        );
+      }
 
       const diagnostics = [
         ...collectEachChildRecursive(request, validateApiNode),

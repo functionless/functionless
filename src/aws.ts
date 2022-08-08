@@ -418,7 +418,7 @@ export namespace $AWS {
     >({
       kind: "$AWS.Lambda.Invoke",
       asl(call, context) {
-        const input = call.args[0].expr;
+        const input = call.args[0]?.expr;
         if (input === undefined) {
           throw new Error("missing argument 'input'");
         } else if (!isObjectLiteralExpr(input)) {
@@ -533,7 +533,7 @@ function makeDynamoIntegration<
     kind: `$AWS.DynamoDB.${operationName}`,
     apiGWVtl: {
       renderRequest(call, context) {
-        const input = call.args[0].expr;
+        const input = call.args[0]?.expr;
         if (!isObjectLiteralExpr(input)) {
           throw new SynthError(
             ErrorCodes.Expected_an_object_literal,

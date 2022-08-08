@@ -18,7 +18,7 @@ test("turns a single line function into a return", () => {
     NodeKind.ArrowFunctionExpr
   );
 
-  expect(fn.body.statements[0].kindName).toEqual("ReturnStmt");
+  expect(fn.body.statements[0]?.kindName).toEqual("ReturnStmt");
 });
 
 test("returns a string", () => {
@@ -195,22 +195,22 @@ test("ObjectBinding with out-of-bound reference", () => {
   const [binding1, binding2, binding3] = func.body.statements.map((stmt) => {
     const varStmt = assertNodeKind(stmt, NodeKind.VariableStmt);
     const varDecl = assertNodeKind(
-      varStmt.declList.decls[0].name,
+      varStmt.declList.decls[0]?.name,
       NodeKind.ObjectBinding
     );
     assertNodeKind(
-      varStmt.declList.decls[0].initializer,
+      varStmt.declList.decls[0]?.initializer,
       NodeKind.ReferenceExpr
     );
     return varDecl.bindings[0];
   });
 
-  assertNodeKind(binding1.name, NodeKind.Identifier);
-  assertNodeKind(binding2.name, NodeKind.Identifier);
-  assertNodeKind(binding2.propertyName, NodeKind.Identifier);
-  assertNodeKind(binding3.name, NodeKind.Identifier);
-  assertNodeKind(binding3.propertyName, NodeKind.Identifier);
-  assertNodeKind(binding3.initializer, NodeKind.Identifier);
+  assertNodeKind(binding1?.name, NodeKind.Identifier);
+  assertNodeKind(binding2?.name, NodeKind.Identifier);
+  assertNodeKind(binding2?.propertyName, NodeKind.Identifier);
+  assertNodeKind(binding3?.name, NodeKind.Identifier);
+  assertNodeKind(binding3?.propertyName, NodeKind.Identifier);
+  assertNodeKind(binding3?.initializer, NodeKind.Identifier);
 });
 
 test("ArrayBinding with out-of-bound reference", () => {
@@ -231,20 +231,20 @@ test("ArrayBinding with out-of-bound reference", () => {
   const [binding1, binding2] = func.body.statements.map((stmt) => {
     const varStmt = assertNodeKind(stmt, NodeKind.VariableStmt);
     const varDecl = assertNodeKind(
-      varStmt.declList.decls[0].name,
+      varStmt.declList.decls[0]?.name,
       NodeKind.ArrayBinding
     );
     assertNodeKind(
-      varStmt.declList.decls[0].initializer,
+      varStmt.declList.decls[0]?.initializer,
       NodeKind.ReferenceExpr
     );
 
     return assertNodeKind(varDecl.bindings[0], NodeKind.BindingElem);
   });
 
-  assertNodeKind(binding1.name, NodeKind.Identifier);
-  assertNodeKind(binding2.name, NodeKind.Identifier);
-  assertNodeKind(binding2.initializer, NodeKind.Identifier);
+  assertNodeKind(binding1?.name, NodeKind.Identifier);
+  assertNodeKind(binding2?.name, NodeKind.Identifier);
+  assertNodeKind(binding2?.initializer, NodeKind.Identifier);
 });
 
 test("reflect on a bound function declaration", () => {

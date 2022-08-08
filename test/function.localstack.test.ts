@@ -276,7 +276,7 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
         }
       );
     },
-    (context) => context.function
+    (context) => context.function!
   );
 
   test(

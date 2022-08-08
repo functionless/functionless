@@ -566,7 +566,7 @@ function synthesizeFunctions(api: appsync.GraphqlApi, decl: FunctionLike) {
    * If the first parameter is not a binding pattern, we'll just rename the name later
    */
   if (
-    updatedDecl.parameters.length > 0 &&
+    updatedDecl.parameters[0] &&
     isBindingPattern(updatedDecl.parameters[0].name)
   ) {
     template.evalDecl(updatedDecl.parameters[0], "$context");
@@ -581,7 +581,7 @@ function synthesizeFunctions(api: appsync.GraphqlApi, decl: FunctionLike) {
           ErrorCodes.Unexpected_Error,
           "Expected a single integration call in a statement."
         );
-      } else if (integrations.length === 1) {
+      } else if (integrations[0]) {
         const integrationCall = integrations[0];
         const ref = integrationCall.expr.ref();
         if (!isIntegration<Integration>(ref)) {
@@ -619,7 +619,7 @@ function synthesizeFunctions(api: appsync.GraphqlApi, decl: FunctionLike) {
           );
         } else if (
           isVariableStmt(stmt) &&
-          stmt.declList.decls[0].initializer &&
+          stmt.declList.decls[0]?.initializer &&
           isIntegrationCallPattern(stmt.declList.decls[0].initializer)
         ) {
           const preTemplate = new AppsyncVTL(...(pre ? [pre] : []));

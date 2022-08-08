@@ -1,10 +1,10 @@
 import { aws_iam } from "aws-cdk-lib";
 import { Construct } from "constructs";
+import { BindingPattern } from "typescript";
 import { assertNever } from "./assert";
 import {
   BindingElem,
   BindingName,
-  Decl,
   FunctionLike,
   ParameterDecl,
   VariableDecl,
@@ -115,7 +115,7 @@ import {
   isIntegrationCallPattern,
   tryFindIntegration,
 } from "./integration";
-import { FunctionlessNode } from "./node";
+import { BindingDecl, FunctionlessNode } from "./node";
 import {
   BlockStmt,
   BreakStmt,
@@ -132,6 +132,7 @@ import {
   evalToConstant,
   invertBinaryOperator,
   isPromiseAll,
+  UniqueNameGenerator,
 } from "./util";
 import { visitEachChild } from "./visit";
 
@@ -475,7 +476,13 @@ export class ASL {
    * The {@link FunctionLike} AST representation of the State Machine.
    */
   readonly decl: FunctionLike;
-  private readonly stateNamesCount = new Map<string, number>();
+  private readonly stateNamesGenerator = new UniqueNameGenerator(
+    (name, n) => `${name} ${n}`
+  );
+  private readonly variableNamesGenerator = new UniqueNameGenerator(
+    (name, n) => `${name}__${n}`
+  );
+  private readonly variableNamesMap = new Map<FunctionlessNode, string>();
   private readonly generatedNames = new DeterministicNameGenerator();
 
   /**
@@ -502,7 +509,7 @@ export class ASL {
     readonly role: aws_iam.IRole,
     decl: FunctionLike
   ) {
-    this.decl = visitEachChild(decl, function normalizeAST(node):
+    this.decl = decl = visitEachChild(decl, function normalizeAST(node):
       | FunctionlessNode
       | FunctionlessNode[] {
       if (isBlockStmt(node)) {
@@ -540,27 +547,23 @@ export class ASL {
       return visitEachChild(node, normalizeAST);
     });
 
-    const inputParam = decl.parameters[0];
+    const [inputParam, contextParam] = this.decl.parameters;
 
-    const states = this.evalStmt(this.decl.body, {
-      End: true,
-      ResultPath: "$",
-    });
-
-    // only evaluate the input parameter if its a binding parameter.
-    // We'll set input during context initialization
-    const inputParameterBinding =
-      inputParam && isBindingPattern(inputParam.name)
-        ? // when we bind input, we can use the context execution input value as a source (same a `$` at the start of the machine)
-          this.evalDecl(inputParam, { jsonPath: "$$.Execution.Input" })
-        : undefined;
-
-    // only evaluate the context parameter if its a binding parameter.
-    // We'll inject the context variable if not deconstructed
-    const contextParameterBinding =
-      this.decl.parameters[1] && isBindingPattern(this.decl.parameters[1].name)
-        ? this.evalDecl(this.decl.parameters[1], { jsonPath: "$$" })
-        : undefined;
+    // get the State Parameters and ASLGraph states to initialize any provided parameters (assignment and binding).
+    const [paramInitializer, paramStates] =
+      this.evalParameterDeclForStateParameter(
+        this.decl,
+        [inputParam, { jsonPath: "$$.Execution.Input" }],
+        [
+          // for the context parameter, we only want to assign up front if we need to bind parameter names.
+          // in the case a simple `Identifier` is used as the parameter name, we'll inject the jsonPath "$$" later.
+          // This should save us space on the state by not assigning the entire context object when not needed.
+          contextParam && isBindingPattern(contextParam.name)
+            ? contextParam
+            : undefined,
+          { jsonPath: "$$" },
+        ]
+      );
 
     /**
      * Always inject this initial state into the machine. It does 3 things:
@@ -575,24 +578,22 @@ export class ASL {
       Type: "Pass",
       Parameters: {
         [FUNCTIONLESS_CONTEXT_NAME]: { null: null },
-        ...(inputParam &&
-        !inputParameterBinding &&
-        isIdentifier(inputParam.name)
-          ? {
-              [`${inputParam.name.name}.$`]: "$",
-            }
-          : {}),
+        ...paramInitializer,
       },
       ResultPath: "$",
       Next: ASLGraph.DeferNext,
     };
 
+    const states = this.evalStmt(this.decl.body, {
+      End: true,
+      ResultPath: "$",
+    });
+
     this.definition = this.aslGraphToStates(
       ASLGraph.joinSubStates(
         this.decl.body,
         functionlessContext,
-        inputParameterBinding,
-        contextParameterBinding,
+        paramStates,
         states
       )!,
       "Initialize Functionless Context"
@@ -610,6 +611,50 @@ export class ASL {
   };
 
   /**
+   * Returns a unique name for a declaration.
+   *
+   * The first time we see a declaration, the name will be the same as the identifier name.
+   *
+   * All future unique declarations with the same name will see an incremented number suffixed to the identifier.
+   *
+   * ```ts
+   * const a;
+   * const a; // a__1
+   * const a; // a__2
+   * for(let a in []) // a__3
+   * ```
+   */
+  private getDeclarationName(binding: BindingDecl & { name: Identifier }) {
+    if (!this.variableNamesMap.get(binding)) {
+      const name = binding.name.name;
+      this.variableNamesMap.set(
+        binding,
+        this.variableNamesGenerator.getUnique(name)
+      );
+    }
+    return this.variableNamesMap.get(binding);
+  }
+
+  /**
+   * Returns the unique variable name which has been registered for this identifier.
+   *
+   * Expects an {@link Identifier} which has a discoverable declaration.
+   *
+   * @see getDeclarationName
+   */
+  private getIdentifierName(identifier: Identifier) {
+    const ref = identifier.lookup();
+
+    if (
+      (isBindingElem(ref) || isParameterDecl(ref) || isVariableDecl(ref)) &&
+      isIdentifier(ref.name)
+    ) {
+      return this.getDeclarationName(ref as BindingDecl & { name: Identifier });
+    }
+    throw new ReferenceError(`${identifier.name} is not defined`);
+  }
+
+  /**
    * Generates a valid, unique state name for the ASL machine.
    *
    * * Truncates the name to 75 characters
@@ -619,15 +664,7 @@ export class ASL {
   private createUniqueStateName(stateName: string): string {
     const truncatedStateName =
       stateName.length > 75 ? stateName.slice(0, 75) : stateName;
-    if (this.stateNamesCount.has(truncatedStateName)) {
-      const count = this.stateNamesCount.get(truncatedStateName)!;
-      this.stateNamesCount.set(truncatedStateName, count + 1);
-      const updatedName = `${truncatedStateName} ${count}`;
-      this.stateNamesCount.set(updatedName, 1);
-      return updatedName;
-    }
-    this.stateNamesCount.set(truncatedStateName, 1);
-    return truncatedStateName;
+    return this.stateNamesGenerator.getUnique(truncatedStateName);
   }
 
   /**
@@ -768,10 +805,12 @@ export class ASL {
            */
           if (isForInStmt(stmt)) {
             const initializerName = isIdentifier(stmt.initializer)
-              ? stmt.initializer.name
+              ? this.getIdentifierName(stmt.initializer)
               : isVariableDecl(stmt.initializer) &&
                 isIdentifier(stmt.initializer.name)
-              ? stmt.initializer.name.name
+              ? this.getDeclarationName(
+                  stmt.initializer as VariableDecl & { name: Identifier }
+                )
               : undefined;
 
             if (initializerName === undefined) {
@@ -805,13 +844,9 @@ export class ASL {
                 this.evalDecl(stmt.initializer, {
                   jsonPath: `${tempArrayPath}[0]`,
                 })!
-              : {
-                  Type: "Pass",
-                  node: stmt.initializer,
-                  InputPath: `${tempArrayPath}[0]`,
-                  ResultPath: `$.${stmt.initializer.name}`,
-                  Next: ASLGraph.DeferNext,
-                };
+              : this.evalAssignment(stmt.initializer, {
+                  jsonPath: `${tempArrayPath}[0]`,
+                })!;
           }
         })();
 
@@ -1815,7 +1850,7 @@ export class ASL {
         ) {
           return { jsonPath: `$$` };
         }
-        return { jsonPath: `$.${expr.name}` };
+        return { jsonPath: `$.${this.getIdentifierName(expr)}` };
       } else if (isPropAccessExpr(expr)) {
         if (isIdentifier(expr.name)) {
           return this.evalExpr(expr.expr, (output) => {
@@ -2273,14 +2308,16 @@ export class ASL {
     const parentStmt = isStmt(node) ? node : node.findParent(isStmt);
     const variableReferences =
       (parentStmt?.prev ?? parentStmt?.parent)?.getLexicalScope() ??
-      new Map<string, Decl>();
+      new Map<string, BindingDecl>();
     return {
       [`${FUNCTIONLESS_CONTEXT_NAME}.$`]: FUNCTIONLESS_CONTEXT_JSON_PATH,
       ...Object.fromEntries(
-        Array.from(variableReferences.entries()).map(([name]) => [
-          `${name}.$`,
-          `$.${name}`,
-        ])
+        Array.from(variableReferences.values())
+          .map((decl) =>
+            // assume there is an identifier name if it is in the lexical scope
+            this.getDeclarationName(decl as BindingDecl & { name: Identifier })
+          )
+          .map((name) => [`${name}.$`, `$.${name}`])
       ),
     };
   }
@@ -2970,7 +3007,7 @@ export class ASL {
       expr: PropAccessExpr;
     }
   ) {
-    const callbackfn = expr.args[0].expr;
+    const callbackfn = expr.args[0]?.expr;
     if (!isFunctionLike(callbackfn)) {
       throw new SynthError(
         ErrorCodes.Invalid_Input,
@@ -3050,7 +3087,7 @@ export class ASL {
       expr: PropAccessExpr;
     }
   ) {
-    const callbackfn = expr.args[0].expr;
+    const callbackfn = expr.args[0]?.expr;
     if (!isFunctionLike(callbackfn)) {
       throw new SynthError(
         ErrorCodes.Invalid_Input,
@@ -3367,7 +3404,7 @@ export class ASL {
         })
       ) {
         // the array element is assigned to $.0__[name]
-        return { jsonPath: `$.0__${access.element.name}` };
+        return { jsonPath: `$.0__${this.getIdentifierName(access.element)}` };
       }
     }
 
@@ -3402,6 +3439,88 @@ export class ASL {
       ErrorCodes.StepFunctions_Invalid_collection_access,
       "Collection element accessor must be a constant string or number"
     );
+  }
+
+  /**
+   * In some cases, variable can be batch declared as state parameters.
+   * This method is an alternative to {@link evalDecl} which can evaluate multiple {@link ParameterDecl}s
+   * with initial values into a parameter object and any state to be run after (which setup any bound variables.)
+   *
+   * Parameter with identifier names become State Parameter keys
+   *
+   * `(input) => {}`
+   * ->
+   * ```ts
+   * {
+   *    Type: "Pass", // or Task, Name, etc
+   *    Parameters: {
+   *       "input.$": jsonPath
+   *    }
+   * }
+   * ```
+   *
+   * `({ value }) => {}`
+   * ->
+   * ```ts
+   * {
+   *    Type: "Pass",
+   *    InputPath: jsonPath,
+   *    ResultPath: "$.value"
+   * }
+   * ```
+   *
+   * A Parameter object will be more efficient as multiple values can be bound in a single State rather than multiple passes.
+   *
+   * However:
+   * 1. a State Parameter object can only override the entire state, it cannot update or add a subset of all variable names.
+   * 2. a State Parameter object only supports json path computation. Complex situations like invoking an {@link Integration} or
+   *    default value support for binding patterns would not be supported.
+   *
+   * @returns a tuple of
+   *          1. a {@link Parameters} object intended to be used in the Parameters or ResultSelector of a state.
+   *             Contains the initialized parameter names. Could be empty.
+   *          2. a state or sub-state used to generate the bound names. May be undefined.
+   */
+  public evalParameterDeclForStateParameter(
+    node: FunctionlessNode,
+    ...parameters: [
+      parameter: ParameterDecl | undefined,
+      valuePath: ASLGraph.JsonPath
+    ][]
+  ): [
+    Record<string, Parameters>,
+    ASLGraph.NodeState | ASLGraph.SubState | undefined
+  ] {
+    // Parameter with identifier names become State Parameter keys
+    const params = Object.fromEntries(
+      parameters
+        .filter(
+          (
+            parameter
+          ): parameter is [
+            ParameterDecl & { name: Identifier },
+            ASLGraph.JsonPath
+          ] => isIdentifier(parameter[0]?.name)
+        )
+        .map(([decl, { jsonPath }]) => [
+          [`${this.getIdentifierName(decl.name)}.$`],
+          jsonPath,
+        ])
+    );
+
+    // Parameters with binding names because variable assignments.
+    const states = parameters
+      .filter(
+        (
+          parameter
+        ): parameter is [
+          ParameterDecl & { name: BindingPattern },
+          ASLGraph.JsonPath
+        ] => isBindingPattern(parameter[0]?.name)
+      )
+      .map(([decl, jsonPath]) => this.evalAssignment(decl.name, jsonPath));
+
+    return [params, ASLGraph.joinSubStates(node, ...states)];
   }
 
   public evalDecl(
@@ -3473,11 +3592,12 @@ export class ASL {
     value: ASLGraph.Output
   ): ASLGraph.SubState | ASLGraph.NodeState | undefined {
     // assign an identifier the current value
-    if (isIdentifier(pattern) || isReferenceExpr(pattern)) {
+    if (isIdentifier(pattern)) {
       return ASLGraph.passWithInput(
         {
           Type: "Pass",
-          ResultPath: `$.${pattern.name}`,
+          node: pattern,
+          ResultPath: `$.${this.getIdentifierName(pattern)}`,
           Next: ASLGraph.DeferNext,
         },
         value
@@ -4034,7 +4154,7 @@ export namespace ASLGraph {
   export interface SubState {
     startState: string;
     node?: FunctionlessNode;
-    states?: { [stateName: string]: ASLGraph.NodeState | ASLGraph.SubState };
+    states: { [stateName: string]: ASLGraph.NodeState | ASLGraph.SubState };
   }
 
   export const isStateOrSubState = anyOf(isState, ASLGraph.isSubState);
@@ -4044,7 +4164,7 @@ export namespace ASLGraph {
    *
    * The node is used to name the state.
    */
-  export type NodeState = State & {
+  export type NodeState<S extends State = State> = S & {
     node?: FunctionlessNode;
   };
 
@@ -4148,7 +4268,7 @@ export namespace ASLGraph {
     return realStates.length === 0
       ? undefined
       : realStates.length === 1
-      ? { node, ...realStates[0] }
+      ? { node, ...realStates[0]! }
       : {
           startState: "0",
           node,
@@ -4416,7 +4536,7 @@ export namespace ASLGraph {
       if (!(from in transitionMap)) {
         transitionMap[from] = new Set();
       }
-      transitionMap[from].add(to);
+      transitionMap[from]!.add(to);
     };
     const internal = (
       parentName: string,
@@ -4442,9 +4562,16 @@ export namespace ASLGraph {
           parent: stateNameMap,
           localNames: getStateNames(parentName, states),
         };
-        return Object.entries(states.states ?? {}).flatMap(([key, state]) =>
-          internal(nameMap.localNames[key], state, nameMap)
-        );
+        return Object.entries(states.states).flatMap(([key, state]) => {
+          const parentName = nameMap.localNames[key];
+          if (!parentName) {
+            throw new SynthError(
+              ErrorCodes.Unexpected_Error,
+              `Expected all local state names to be provided with a parent name, found ${key}`
+            );
+          }
+          return internal(parentName, state, nameMap);
+        });
       }
     };
 
@@ -4477,7 +4604,7 @@ export namespace ASLGraph {
       if (visited.has(state)) return;
       visited.add(state);
       if (state in matrix) {
-        matrix[state].forEach(depthFirst);
+        matrix[state]?.forEach(depthFirst);
       }
     };
 
@@ -4526,7 +4653,7 @@ export namespace ASLGraph {
           name,
           visitTransition(state, (transition) =>
             transition in emptyTransitions
-              ? emptyTransitions[transition]
+              ? emptyTransitions[transition]!
               : transition
           ),
         ],
@@ -4595,7 +4722,7 @@ export namespace ASLGraph {
             }
             return transition in emptyStates
               ? getNext(
-                  emptyStates[transition].Next!,
+                  emptyStates[transition]!.Next!,
                   seen ? [...seen, transition] : [transition]
                 )
               : transition;
@@ -4666,7 +4793,7 @@ export namespace ASLGraph {
       } else {
         const find = (nameMap: NameMap): string => {
           if (next in nameMap.localNames) {
-            return nameMap.localNames[next];
+            return nameMap.localNames[next]!;
           } else if (nameMap.parent) {
             return find(nameMap.parent);
           } else {
@@ -4700,7 +4827,8 @@ export namespace ASLGraph {
    * Applies an {@link ASLGraph.Output} to a partial {@link Pass}
    */
   export const passWithInput = (
-    pass: Omit<Pass, "Parameters" | "InputPath" | "Result"> & CommonFields,
+    pass: Omit<NodeState<Pass>, "Parameters" | "InputPath" | "Result"> &
+      CommonFields,
     value: ASLGraph.Output
   ): Pass => {
     return {
@@ -4753,24 +4881,24 @@ export namespace ASL {
 
   export const and = (...cond: (Condition | undefined)[]): Condition => {
     const conds = cond.filter((c): c is Condition => !!c);
-    return conds.length === 1
-      ? conds[0]
+    return conds.length > 1
+      ? {
+          And: conds,
+        }
       : conds.length === 0
       ? ASL.trueCondition()
-      : {
-          And: conds,
-        };
+      : conds[0]!;
   };
 
   export const or = (...cond: (Condition | undefined)[]): Condition => {
     const conds = cond.filter((c): c is Condition => !!c);
-    return conds.length === 1
-      ? conds[0]
+    return conds.length > 1
+      ? {
+          Or: conds,
+        }
       : conds.length === 0
       ? ASL.trueCondition()
-      : {
-          Or: conds,
-        };
+      : conds[0]!;
   };
 
   export const not = (cond: Condition): Condition => ({

@@ -31,7 +31,7 @@ describe("step function integration", () => {
       })
     );
 
-    testAppsyncVelocity(templates[1], {
+    testAppsyncVelocity(templates[1]!, {
       resultMatch: {
         params: {
           body: {
@@ -55,7 +55,7 @@ describe("step function integration", () => {
       })
     );
 
-    testAppsyncVelocity(templates[1], {
+    testAppsyncVelocity(templates[1]!, {
       resultMatch: {
         params: {
           body: {
@@ -79,7 +79,7 @@ describe("step function integration", () => {
       })
     );
 
-    testAppsyncVelocity(templates[1], {
+    testAppsyncVelocity(templates[1]!, {
       arguments: { id: "1" },
       resultMatch: {
         params: {
@@ -100,7 +100,7 @@ describe("step function integration", () => {
       })
     );
 
-    testAppsyncVelocity(templates[1], {
+    testAppsyncVelocity(templates[1]!, {
       arguments: { id: "1" },
       resultMatch: {
         params: {
@@ -139,7 +139,7 @@ describe("step function integration", () => {
       })
     );
 
-    testAppsyncVelocity(templates[1]);
+    testAppsyncVelocity(templates[1]!);
   });
 });
 
@@ -169,7 +169,7 @@ test("machine describe exec return", () => {
     })
   );
 
-  testAppsyncVelocity(templates[1]);
+  testAppsyncVelocity(templates[1]!);
 });
 
 test("machine describe exec var", () => {
@@ -183,7 +183,7 @@ test("machine describe exec var", () => {
     })
   );
 
-  testAppsyncVelocity(templates[1]);
+  testAppsyncVelocity(templates[1]!);
 });
 
 test("deconstruct integration response", () => {
@@ -197,7 +197,7 @@ test("deconstruct integration response", () => {
     })
   );
 
-  testAppsyncVelocity(templates[1]);
+  testAppsyncVelocity(templates[1]!);
 });
 
 describe("step function describe execution", () => {
@@ -210,7 +210,7 @@ describe("step function describe execution", () => {
       })
     );
 
-    testAppsyncVelocity(templates[1]);
+    testAppsyncVelocity(templates[1]!);
   });
 
   test("machine with trace header", () => {
@@ -245,7 +245,7 @@ test("multiple isolated integrations", () => {
     }
   );
 
-  testAppsyncVelocity(templates[1]);
+  testAppsyncVelocity(templates[1]!);
 });
 
 test("multiple linked integrations", () => {
@@ -259,7 +259,7 @@ test("multiple linked integrations", () => {
     })
   );
 
-  testAppsyncVelocity(templates[1]);
+  testAppsyncVelocity(templates[1]!);
 });
 
 test("multiple linked integrations pre-compute", () => {
@@ -277,7 +277,7 @@ test("multiple linked integrations pre-compute", () => {
     }
   );
 
-  testAppsyncVelocity(templates[1]);
+  testAppsyncVelocity(templates[1]!);
 });
 
 test("multiple linked integrations post-compute", () => {
@@ -292,7 +292,7 @@ test("multiple linked integrations post-compute", () => {
     })
   );
 
-  testAppsyncVelocity(templates[1]);
+  testAppsyncVelocity(templates[1]!);
 });
 
 test("multiple linked integrations with props", () => {
@@ -309,7 +309,7 @@ test("multiple linked integrations with props", () => {
     }
   );
 
-  testAppsyncVelocity(templates[1]);
+  testAppsyncVelocity(templates[1]!);
 });
 
 // https://github.com/functionless/functionless/issues/212
@@ -327,7 +327,7 @@ test("multiple nested integrations", () => {
     }
   );
 
-  testAppsyncVelocity(templates[1]);
+  testAppsyncVelocity(templates[1]!);
 });
 
 // https://github.com/functionless/functionless/issues/212
@@ -351,7 +351,7 @@ test("multiple nested integrations prop access", () => {
     }
   );
 
-  testAppsyncVelocity(templates[1]);
+  testAppsyncVelocity(templates[1]!);
 });
 
 test("integrations separated by in", () => {
@@ -374,7 +374,7 @@ test("integrations separated by in", () => {
     }
   );
 
-  testAppsyncVelocity(templates[1]);
+  testAppsyncVelocity(templates[1]!);
 });
 
 test("multiple linked integrations with mutation", () => {
@@ -388,7 +388,7 @@ test("multiple linked integrations with mutation", () => {
     })
   );
 
-  testAppsyncVelocity(templates[1]);
+  testAppsyncVelocity(templates[1]!);
 });
 
 test("return error", () => {
